@@ -236,7 +236,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.18 $} {$Date: 2004/01/28 19:52:45 $}]
+        {$Revision: 1.19 $} {$Date: 2004/02/13 05:09:54 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1282,7 +1282,7 @@ Description of the tabs:
        } $Gui(WCA)
     }
 
-    TooltipAdd $f.fSect1.fCol2.fRunRemote "You can run the segmentation remotly on another machine - enter machine name in the blank field"
+    TooltipAdd $f.fSect1.fCol2.fRunRemote "You can run the segmentation remotly on another machine - enter username@machine name in the blank field"
 
     DevAddLabel $f.fSect1.fCol1.lDICEMeasure "Dice Measure:"
     frame  $f.fSect1.fCol2.fDICEMeasure -bg $Gui(activeWorkspace)
@@ -1805,17 +1805,18 @@ proc EMSegmentUpdateMRML {} {
            # Set current class to current SuperClass
            EMSegmentTransfereClassType 0 0
         } else {
-        set EMSegment(SuperClass) $NumClass
-    }
+           set EMSegment(SuperClass) $NumClass
+        }
         set EMSegment(NewSuperClassName) [SegmenterSuperClass($pid,node) GetName]
         EMSegmentChangeSuperClassName 0 -1
 
-        set InputChannelWeights [SegmenterClass($pid,node) GetInputChannelWeights]
+        set EMSegment(Cattrib,$NumClass,LocalPriorWeight)    [SegmenterSuperClass($pid,node) GetLocalPriorWeight]
+        set InputChannelWeights [SegmenterSuperClass($pid,node) GetInputChannelWeights]
         for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
            if {[lindex $InputChannelWeights $y] == ""} {set EMSegment(Cattrib,$NumClass,InputChannelWeights,$y) 1.0
-       } else {
+           } else {
              set EMSegment(Cattrib,$NumClass,InputChannelWeights,$y) [lindex $InputChannelWeights $y]
-       }
+           }
         }
 
         set EMSegment(Cattrib,$NumClass,Prob) [SegmenterSuperClass($pid,node) GetProb]
@@ -2079,7 +2080,7 @@ proc EMSegmentBuildWeightPannel {f Sclass Tab} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentSaveSetting {FileFlag {FileName -1}} {
+proc EMSegmentSaveSetting {FileFlag {FileName -1} {CheckToProceed 1}} {
     global EMSegment Volume Mrml
     # -------------------------------------------------------------------
     # 1.) Segmenter 
@@ -2153,7 +2154,7 @@ proc EMSegmentSaveSetting {FileFlag {FileName -1}} {
    # We can directly save as a file
    if {$FileFlag} {
        if {$FileName == -1} {MainMenu File SaveAs
-   } else {MainMrmlWrite $FileName}
+       } else {MainMrmlWrite $FileName $CheckToProceed}
    }       
 }
 
@@ -2321,22 +2322,35 @@ proc EMSegmentStartEM { {save_mode "save"} } {
    set VolIndex [lindex $EMSegment(SelVolList,VolumeList) 0]
    if {$EMSegment(RunRemoteFlag)} {
       # 1.) Save the file
-      EMSegmentSaveSetting 1 [file join $env(SLICER_HOME) TempBlubber.xml]
-      # 2.) Run the command
-      puts "============================================================================"
-      puts "Runing segmentation on  $EMSegment(RunRemoteServer) "
-      exec ssh $EMSegment(RunRemoteServer) "cd [file join $env(SLICER_HOME) Modules/vtkEMPrivateSegment/scripts/]; ./segmentSubject [file join $env(SLICER_HOME) TempBlubber.xml] 0"
-      puts "Returning to Slicer - if errors occured, they will be displayed above"
-      puts "============================================================================"      
-      bell
-      bell
-      bell
-      # Check if a file was written back if not error occured
-      if {[file join $Mrml(dir) EMResult [lindex [Volume($VolIndex,node) GetImageRange] 0]] == 0} {
+      if {[string first @ $EMSegment(RunRemoteServer)] == -1} {
+         DevErrorWindow "Please define in Run Remotely : username@machine \nCurrent setting:  $EMSegment(RunRemoteServer)" 
+         set ErrorFlag 1
+      } else { 
+
+        EMSegmentSaveSetting 1 [file join $env(SLICER_HOME) TempBlubber.xml] 0
+
+        # 2.) Run the command
+        puts "============================================================================"
+        puts "Runing segmentation on $EMSegment(RunRemoteServer) "
+        puts "Log file is stored at $env(SLICER_HOME)/TempBlubber.log"
+        if {[catch {exec ssh $EMSegment(RunRemoteServer) "cd [file join $env(SLICER_HOME) Modules/vtkEMPrivateSegment/scripts/]; source setEnvironment; rm $env(SLICER_HOME)/TempBlubber.log; ./segmentSubject [file join $env(SLICER_HOME) TempBlubber.xml] 0 >& $env(SLICER_HOME)/TempBlubber.log"} msg] } {
+          puts $msg
+          set ErrorFlag 1
+        }
+        DevInfoWindow "Remote segmentation completed. Log File $env(SLICER_HOME)/TempBlubber.log will be deleted after this window closes!"
+    
+        puts "Returning to Slicer - if errors occured, they will be displayed above"
+        puts "============================================================================"      
+        bell
+        bell
+        bell
+        # Check if a file was written back if not error occured
+        if {[file join $Mrml(dir) EMResult [lindex [Volume($VolIndex,node) GetImageRange] 0]] == 0} {
           set ErrorFlag 1
           DevErrorWindow "Error Report: \n Segmentation did not work properly. \nLook in other windows for error messages!"
-      }
-   } else {
+        }
+    }
+  } else {
      set EMSegment(VolumeNameList) ""
      foreach v $Volume(idList) {lappend EMSegment(VolumeNameList)  [Volume($v,node) GetName]}
      set NumInputImagesSet [EMSegmentAlgorithmStart] 
@@ -2409,7 +2423,11 @@ proc EMSegmentStartEM { {save_mode "save"} } {
    # 6. Clean up mess 
    # ----------------------------------------------
    if {$EMSegment(RunRemoteFlag)} {
-       exec rm [file join $env(SLICER_HOME) TempBlubber.xml]
+       catch {exec rm [file join $env(SLICER_HOME) TempBlubber.xml]}
+       catch {exec rm [file join $env(SLICER_HOME) TempBlubber.log]}
+       if {$ErrorFlag == 0 } {
+          catch {exec rm [file join $env(SLICER_HOME) EMResult].* }
+       }
    } else {
      # This is done so the vtk instance won't be called again when saving the model
      if {$EMSegment(SegmentMode) > 0} {
@@ -2604,7 +2622,7 @@ proc EMSegmentDisplayClassDefinition {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
-   global EMSegment Gui
+   global EMSegment Gui Volume
    set Sclass $EMSegment(Class)
    if {$EMSegment(Cattrib,$Sclass,IsSuperClass)} {
      # Transfer from Class to SuperClass
@@ -2630,6 +2648,13 @@ proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
      set Label $EMSegment(Cattrib,$Sclass,Label)
      set Color $Gui(activeWorkspace)
 
+     # Make sure infromation from below is by default used 
+     set EMSegment(Cattrib,$Sclass,LocalPriorWeight)  1.0  
+     for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
+         set EMSegment(Cattrib,$Sclass,InputChannelWeights,$y) 1.0
+     }
+     set EMSegment(Cattrib,$Sclass,ProbabilityData) $Volume(idNone)
+ 
      # 4.) Change Class Panels 
      $EMSegment(DE-mbIntClass).m delete [expr $ClassIndex + 1] [expr $ClassIndex + 1]
      # Check if it is currently selected => if so change to none
@@ -2650,9 +2675,16 @@ proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
      EMSegmentChangeSuperClass $Sclass $ActiveGui
    } else {
      # Transfer from SuperClass to Class
-     # 1.) Remove all sub classes
+     # 1.) Remove all sub classes and set parameters correctly
      set EMSegment(NumClassesNew) 0
      EMSegmentCreateDeleteClasses 1 $DeleteNode
+
+     # Make sure infromation from below is by default used 
+     set EMSegment(Cattrib,$Sclass,LocalPriorWeight)  0.0  
+     for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
+         set EMSegment(Cattrib,$Sclass,InputChannelWeights,$y) 1.0
+     }
+     set EMSegment(Cattrib,$Sclass,ProbabilityData) $Volume(idNone)
 
      # 2.) Remove from SuperClass List and add to Class List
      set index [lsearch -exact $EMSegment(GlobalSuperClassList)  $Sclass]
