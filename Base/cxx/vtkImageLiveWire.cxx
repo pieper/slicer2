@@ -823,9 +823,14 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 // algorithm to fill the output from the input.
 // It just executes a switch statement to call the correct function for
 // the datas data types.
-void vtkImageLiveWire::Execute(vtkImageData **inDatas, 
-                   vtkImageData *outData)
+void vtkImageLiveWire::ExecuteData(vtkDataObject *)
 {
+  vtkImageData *outData = this->GetOutput();
+  outData->SetExtent(this->GetOutput()->GetWholeExtent());
+  outData->AllocateScalars();
+
+  vtkImageData **inDatas = (vtkImageData **) this->GetInputs();
+
   void **inPtrs = new void*[this->NumberOfInputs];
   void *outPtr;
   int i;
@@ -859,19 +864,19 @@ void vtkImageLiveWire::Execute(vtkImageData **inDatas,
 
       // 2D input is required
       int ext[6];
-      inDatas[i]->GetExtent(ext);
+      this->GetInput(i)->GetExtent(ext);
       if (ext[4] != ext[5]) {
     vtkErrorMacro(<<"Input is not 2D");
     return;
       }
 
       // input pointers        
-      inPtrs[i] = inDatas[i]->GetScalarPointerForExtent(ext);
+      inPtrs[i] = this->GetInput(i)->GetScalarPointerForExtent(ext);
     }
 
   outPtr = outData->GetScalarPointerForExtent(outData->GetExtent());
   
-  switch (inDatas[0]->GetScalarType())
+  switch (this->GetInput(0)->GetScalarType())
     {
     case VTK_DOUBLE:
       vtkImageLiveWireExecute(this, inDatas, (double **)(inPtrs), outData, (double *)(outPtr));

@@ -347,7 +347,7 @@ protected:
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6],
                 int whichInput);
   void ExecuteInformation(){this->vtkImageMultipleInputFilter::ExecuteInformation();};
-  virtual void Execute(vtkImageData **inDatas, vtkImageData *outData);  
+  virtual void ExecuteData(vtkDataObject *);
 };
 
 #endif

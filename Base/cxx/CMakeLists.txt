@@ -16,6 +16,7 @@ SOURCE_FILES (Base_SRCS
 	vtkImageFrameSource.cxx vtkImageLabelChange.cxx vtkImageLabelOutline.cxx
 	vtkImageLabelVOI.cxx vtkImageLiveWire.cxx 
 	vtkImageLiveWireScale.cxx vtkImageMeasureVoxels.cxx
+	vtkImageLiveWireEdgeWeights.cxx
 	vtkImageNeighborhoodFilter.cxx vtkImageOverlay.cxx vtkImagePlot.cxx
 	vtkImageRealtimeScan.cxx vtkImageReformat.cxx vtkImageReformatIJK.cxx
 	vtkImageReplaceRegion.cxx vtkImageResize.cxx vtkImageStatistics.cxx
