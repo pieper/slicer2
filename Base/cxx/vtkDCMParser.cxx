@@ -403,80 +403,70 @@ void vtkDCMParser::ReadElement(DCMDataElementStruct *des)
       PrevFileIOMessage = FileIOMessage;
 
       switch(TransferSyntax)
-    {
-    case TFS_IVRLE:
-      /*if(MachineLittleEndian)
-        MustSwap = 0;
-      else
-      MustSwap = 1;*/
-      
-      des->GroupCode = ReadUINT16();
-      des->ElementCode = ReadUINT16();
-      des->Length = ReadUINT32();
+      {
+      case TFS_IVRLE:
+      case TFS_IVRBE:
+        
+        des->GroupCode = ReadUINT16();
+        des->ElementCode = ReadUINT16();
+        des->Length = ReadUINT32();
 
-      des->NextBlock = ftell(file_in);
-      if(des->Length != 0xffffffff)
-        des->NextBlock += des->Length;
+        des->NextBlock = ftell(file_in);
+        if(des->Length != 0xffffffff)
+          des->NextBlock += des->Length;
 
-      sprintf(des->VR, "??");
-      
-      break;
-      
-    case TFS_EVRLE:
-    case TFS_EVRBE:
-      /*if((MachineLittleEndian && (TransferSyntax == TFS_EVRLE)) ||
-         (!MachineLittleEndian && (TransferSyntax == TFS_EVRBE)))
-        MustSwap = 0;
-      else
-      MustSwap = 1;*/
-      
-      des->GroupCode = ReadUINT16();
-      des->ElementCode = ReadUINT16();
-      
-      if((des->GroupCode) == 0xfffe)
-        {
-          if((des->ElementCode == 0xe000) ||
-         (des->ElementCode == 0xe00d) ||
-         (des->ElementCode == 0xe0dd))
-        { // must be implicit VR always
-          des->Length = ReadUINT32();
+        sprintf(des->VR, "??");
+        
+        break;
+        
+      case TFS_EVRLE:
+      case TFS_EVRBE:
+        
+        des->GroupCode = ReadUINT16();
+        des->ElementCode = ReadUINT16();
+        
+        if((des->GroupCode) == 0xfffe)
+          {
+            if((des->ElementCode == 0xe000) ||
+             (des->ElementCode == 0xe00d) ||
+             (des->ElementCode == 0xe0dd))
+            { // must be implicit VR always
+              des->Length = ReadUINT32();
 
-          des->NextBlock = ftell(file_in);
-          if(des->Length != 0xffffffff)
-            des->NextBlock += des->Length;
+              des->NextBlock = ftell(file_in);
+              if(des->Length != 0xffffffff)
+                des->NextBlock += des->Length;
 
-          sprintf(des->VR, "??");
+              sprintf(des->VR, "??");
 
-          return;
-        }
-        }
-      
-      ReadText(des->VR, 2); // getting VR
-      
-      if((strcmp(des->VR, "OB") == 0) ||
-         (strcmp(des->VR, "OW") == 0) ||
-         (strcmp(des->VR, "SQ") == 0) ||
-         (strcmp(des->VR, "UN") == 0) ||
-         (strcmp(des->VR, "UT") == 0)
-         )
-        {
-          des->Length = ReadUINT16(); // reserved field
-          des->Length = ReadUINT32();
-          des->NextBlock = ftell(file_in);
-          if(des->Length != 0xffffffff)
-        des->NextBlock += des->Length;
-        }
-      else
-        {
-          //MustSwap = 1;
-          des->Length = ReadUINT16();
-          des->NextBlock = ftell(file_in);
-          if(des->Length != 0xffffffff)
-        des->NextBlock += des->Length;
-        }
-      
-      break;
-    }
+              return;
+            }
+          }
+        
+        ReadText(des->VR, 2); // getting VR
+        
+        if((strcmp(des->VR, "OB") == 0) ||
+           (strcmp(des->VR, "OW") == 0) ||
+           (strcmp(des->VR, "SQ") == 0) ||
+           (strcmp(des->VR, "UN") == 0) ||
+           (strcmp(des->VR, "UT") == 0)
+           )
+          {
+            des->Length = ReadUINT16(); // reserved field
+            des->Length = ReadUINT32();
+            des->NextBlock = ftell(file_in);
+            if(des->Length != 0xffffffff)
+              des->NextBlock += des->Length;
+          } else
+          {
+            des->Length = ReadUINT16();
+            des->NextBlock = ftell(file_in);
+            if(des->Length != 0xffffffff)
+              des->NextBlock += des->Length;
+          }
+        
+        break;
+      }
     }
 }
 
@@ -501,6 +491,12 @@ void vtkDCMParser::ReadDICOMMetaHeaderInfo()
   short check;
   unsigned char *ptr;
 
+  int implicit = -1; // sp 2002-08-08 
+                     // implicit headers are rare, but occur
+                     // -1 means don't know yet
+                     // 0 means 2 char VR (value rep) code exists
+                     // 1 means gotta guess the VR from context (dictionary)
+
   DCMDataElementStruct des;
 
   if(this->file_in == NULL)
@@ -510,7 +506,7 @@ void vtkDCMParser::ReadDICOMMetaHeaderInfo()
   ptr = (unsigned char *)&check;
   MachineLittleEndian = (ptr[0] == 0x01);
   tfs = TFS_IVRLE;
-  TransferSyntax = TFS_EVRLE;
+  TransferSyntax = TFS_EVRLE;  // explicit to start with
 
   PrevFileIOMessage = FileIOMessage = 0;
 
@@ -519,11 +515,39 @@ void vtkDCMParser::ReadDICOMMetaHeaderInfo()
   fread(buff, 132, 1, file_in);
   if((buff[128] == 'D') && (buff[129] == 'I')
      && (buff[130] == 'C') && (buff[131] == 'M'))
-    {  
-      do
+  {  
+    do
     {
       //file_pos = ftell(file_in);
       ReadElement(&des);
+
+      // check to see if this is implicit header - done first time through
+      if (implicit == -1)
+        { 
+        if ( (des.GroupCode != 0x0002) || (des.ElementCode != 0x0) )
+          {
+          // bad case - metaheader should start with length
+          // guess that it's implicit
+          implicit = 0;
+          TransferSyntax = TFS_EVRLE; // class flag used in reading
+          }
+        else
+          {
+          if (strcmp(des.VR, "UL") == 0) // it has a VR field
+            {
+            implicit = 0;
+            TransferSyntax = TFS_EVRLE; // class flag used in reading
+            }
+          else
+            {
+            implicit = 1;
+            UnreadLastElement();
+            TransferSyntax = TFS_IVRLE; // class flag used in reading
+            ReadElement(&des); // re-read without the 2 VR bytes
+            }
+          }
+        }
+
 
       if(des.GroupCode != 0x0002)
         {
@@ -557,27 +581,38 @@ void vtkDCMParser::ReadDICOMMetaHeaderInfo()
           stringncopy(TransferSyntaxUID, buff, 64);
 
           if(strcmp(buff, "1.2.840.10008.1.2") == 0)
-        {
-          //printf("\tImplicit VR Little Endian\n");
-          tfs = TFS_IVRLE; // not necessary to set here
-        }
+          {
+            //printf("\tImplicit VR Little Endian\n");
+            tfs = TFS_IVRLE; 
+          }
           else
           if(strcmp(buff, "1.2.840.10008.1.2.1") == 0)
-        {
-          //printf("\tExplicit VR Little Endian\n");
-          tfs = TFS_EVRLE;
-        }
+          {
+            //printf("\tExplicit VR Little Endian\n");
+            tfs = TFS_EVRLE;
+          }
           else
           if(strcmp(buff, "1.2.840.10008.1.2.2") == 0)
-        {
-          //printf("\tExplicit VR Big Endian\n");
-          tfs = TFS_EVRBE;
-        }
+          {
+            //printf("\tExplicit VR Big Endian\n");
+            tfs = TFS_EVRBE;
+          }
           else
-        {
-          //printf("\tNot found: assuming explicit VR Little Endian\n");
-          tfs = TFS_EVRLE;
-        }
+          if(strcmp(buff, "1.2.840.113619.5.2") == 0)
+          {
+            //printf("\tImplicit VR Big Endian\n");
+            
+            //
+            // claims to be BE but header info is LE
+            // and data is BE
+            //
+            tfs = TFS_IVRBE;  
+          }
+          else
+          {
+            //printf("\tNot found: assuming explicit VR Little Endian\n");
+            tfs = TFS_EVRLE;
+          }
 
           break;
 
@@ -596,20 +631,21 @@ void vtkDCMParser::ReadDICOMMetaHeaderInfo()
         }
     }
     while(1);
-    }
-  else
-    {
-      tfs = TFS_IVRLE; // not necessary to set here
-      //printf("No MetaHeader Info!\n");
-      //printf("Assuming Implicit VR Little Endian Transfer Syntax.\n");
-      HeaderStartPos = file_pos;
-      fseek(file_in, file_pos, SEEK_SET);
-    }
+  } else
+  {
+    tfs = TFS_IVRLE; // not necessary to set here
+    //printf("No MetaHeader Info!\n");
+    //printf("Assuming Implicit VR Little Endian Transfer Syntax.\n");
+    HeaderStartPos = file_pos;
+    fseek(file_in, file_pos, SEEK_SET);
+  }
 
   TransferSyntax = tfs;
 
-  if((MachineLittleEndian && (tfs == TFS_EVRBE)) ||
-     (!MachineLittleEndian && ((tfs == TFS_EVRLE) || (tfs == TFS_IVRLE))))
+  // note special handling of GE broken Implicit BE
+  if( (MachineLittleEndian && ((tfs == TFS_EVRBE))) ||
+     ( !MachineLittleEndian && 
+        ((tfs == TFS_EVRLE) || (tfs == TFS_IVRLE) || (tfs == TFS_IVRBE)) ))
     MustSwap = 1;
   else
     MustSwap = 0;
@@ -776,10 +812,10 @@ int vtkDCMParser::GetTransferSyntax()
 
 const char *vtkDCMParser::GetTransferSyntaxAsString()
 {
-  if((TransferSyntax >= 1) && (TransferSyntax <=3))
+  if((TransferSyntax >= 1) && (TransferSyntax <=4))
     return TFS_String[TransferSyntax - 1];
   else
-    return TFS_String[3];
+    return TFS_String[4];
 }
 
 char *vtkDCMParser::stringncopy(char *dest, const char *src, long max)

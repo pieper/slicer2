@@ -47,6 +47,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define TFS_IVRLE 1
 #define TFS_EVRLE 2
 #define TFS_EVRBE 3
+#define TFS_IVRBE 4 // GE private syntax, but it does show up 
 
 /*typedef short INT16;
 typedef unsigned short UINT16;
@@ -80,6 +81,7 @@ static char *TFS_String[32] =
   "Implicit VR Little Endian",
   "Explicit VR Little Endian",
   "Explicit VR Big Endian",
+  "Implicit VR Big Endian",
   "Unknown"
 };
 
