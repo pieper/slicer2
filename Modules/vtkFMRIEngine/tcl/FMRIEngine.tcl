@@ -186,7 +186,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.34.2.4 $} {$Date: 2005/01/20 20:24:23 $}]
+        {$Revision: 1.34.2.5 $} {$Date: 2005/01/21 16:45:15 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -434,7 +434,7 @@ proc FMRIEngineBuildGUI {} {
         eval {radiobutton $f.r$param -width 20 -text $name \
             -variable FMRIEngine(tcPlottingOption) -value $param \
             -relief raised -offrelief raised -overrelief raised \
-            -selectcolor blue} $Gui(WEA)
+            -selectcolor white} $Gui(WEA)
         pack $f.r$param -side top -pady $Gui(pad) 
     } 
 
@@ -527,8 +527,8 @@ proc FMRIEngineBuildUIForDetectors {parent} {
     pack $f.l -side left -padx $Gui(pad) -fill x -anchor w
 
     # GLM is default format 
-    set detectorList [list t-test GLM MI-1 MI-2]
-    set df [lindex $detectorList 1] 
+    set detectorList [list GLM]
+    set df [lindex $detectorList 0] 
     eval {menubutton $f.mbType -text $df \
           -relief raised -bd 2 -width 20 \
           -menu $f.mbType.m} $Gui(WMBA)
@@ -550,7 +550,7 @@ proc FMRIEngineBuildUIForDetectors {parent} {
     eval {entry $f.eName -width 20 \
                 -textvariable FMRIEngine(actVolName)} $Gui(WEA)
     pack $f.label $f.eName -side left -expand false -fill x -padx 6
-    bind $f.eName <Enter> "FMRIEngineComputeActivationVolume"
+    bind $f.eName <Return> "FMRIEngineComputeActivationVolume"
     TooltipAdd $f.eName "Input a name for your activation volume."
  
     # Apply frame
