@@ -89,6 +89,7 @@ proc Usage {} {
 set SLICER(threaded) "true"
 set SLICER(tkcon) "true"
 set verbose 0
+set Module(verbose) 0
 set strippedargs ""
 foreach a $argv {
     switch -glob -- $a {
@@ -202,6 +203,17 @@ proc SplashShow { {delayms 7000} } {
 SplashShow
 
 
+#
+# startup with the tkcon
+#
+if { $SLICER(tkcon) == "true" } { 
+    set av $argv; set argv "" ;# keep tkcon from trying to interpret command line args
+    source $prog/tkcon.tcl
+    ::tkcon::Init
+    tkcon attach main
+    wm geometry .tkcon +10-50
+    set argv $av
+}
 
 #
 # set statup options - convert backslashes from windows
@@ -275,17 +287,6 @@ if { $tcl_platform(platform) == "windows" } {
     o Delete
 }
 
-#
-# startup with the tkcon
-#
-if { $SLICER(tkcon) == "true" } { 
-    set av $argv; set argv "" ;# keep tkcon from trying to interpret command line args
-    source $prog/tkcon.tcl
-    ::tkcon::Init
-    tkcon attach main
-    wm geometry .tkcon +10-50
-    set argv $av
-}
 
 # Source Tcl scripts
 # Source optional local copies of files with programming changes
