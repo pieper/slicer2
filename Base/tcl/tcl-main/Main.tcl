@@ -422,6 +422,10 @@ proc MainInit {} {
     set Module(activeID) ""
     set Module(freezer) ""
 
+    # In each module's Init procedure, set Module(moduleName,category) to one of these strings.
+    # If you use lindex, larger indices will indicate less tested modules.
+    set Module(categories) {Core Beta Experimental}
+
     foreach m $Module(idList) {
         set Module($m,more) 0
         set Module($m,row1List) ""
@@ -450,7 +454,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.103 $} {$Date: 2004/01/31 23:31:20 $}]
+        {$Revision: 1.104 $} {$Date: 2004/03/11 17:54:37 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -634,6 +638,8 @@ proc MainBuildGUI {} {
         "MainMenu Help Modules"
     $Gui(mHelp) add command -label "Module Credits..." -command \
         "MainMenu Help Credits"
+    $Gui(mHelp) add command -label "Module Categories..." -command \
+        "MainMenu Help Categories"
     $Gui(mHelp) add command -label "Turn Tooltips Off/On" -command \
         "TooltipToggle"
     
@@ -1645,7 +1651,7 @@ http://www.vtk.org"
             }
             "Copyright" {
                 MsgPopup Copyright $x $y "\
-(c) Copyright 2001 Massachusetts Institute of Technology
+(c) Copyright 2004 Massachusetts Institute of Technology
 
 Permission is hereby granted, without payment, to copy, modify, display 
 and distribute this software and its documentation, if any, for any purpose, 
@@ -1677,11 +1683,15 @@ http://www.slicer.org"
             }
             "Modules" {
                 set msg [FormatModuleInfo]
-                MsgPopup Version $x $y $msg {Module Summaries}
+                MsgPopup ModuleInfo $x $y $msg {Module Summaries}
             }
             "Credits" {
                 set msg [FormatModuleCredits]
-                MsgPopup Version $x $y $msg {Module Credits}
+                MsgPopup ModuleCredits $x $y $msg {Module Credits}
+            }
+            "Categories" {
+                set msg [FormatModuleCategories]
+                MsgPopup ModuleCategories $x $y $msg {Module Categories}
             }
         }
     }
@@ -1971,3 +1981,24 @@ proc FormatModuleCredits {} {
     return $s
 }
 
+#-------------------------------------------------------------------------------
+# .PROC FormatModuleCategories
+# Returns a formatted string with the categories of the modules.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FormatModuleCategories {} {
+    global Module
+
+    set s "" 
+    foreach m $Module(idList) {
+        if {[info exists Module($m,category)]} {
+            set s [format "%s%-30s" $s "$m:"]            
+            set s "${s}\t$Module($m,category)\n"
+        } else {
+            set s "$s$m: \n"
+        }
+    }
+
+    return $s
+}
