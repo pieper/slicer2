@@ -78,7 +78,7 @@ proc TwinDisplayInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.1 $} {$Date: 2005/01/04 20:14:57 $}]
+        {$Revision: 1.1.2.2 $} {$Date: 2005/01/04 23:20:08 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -127,9 +127,6 @@ proc TwinDisplayBuildGUI {} {
     #
     #-------------------------------------------
 
-    if {$::Module(verbose)} { 
-         DevInfoWindow "Starting TwinDisplayBuildGUI"
-    }
     #-------------------------------------------
     # Help frame
     #-------------------------------------------
@@ -140,13 +137,9 @@ then they are numbered 0 and 1.  To change the screen of the TwinDisplay window,
 you need to change the number on the interface, AND toggle the TwinDisplay window
 off and on."
     regsub -all "\n" $help { } help
-    if {$::Module(verbose)} { 
-         DevInfoWindow "set help:\n $help"
-    }
+
     MainHelpApplyTags TwinDisplay $help
     MainHelpBuildGUI TwinDisplay
-
-    if {$::Module(verbose)} { DevInfoWindow "done main help build gui"}
 
     #-------------------------------------------
     # TwinDisplay frame
@@ -154,14 +147,10 @@ off and on."
     set fTwinDisplay $Module(TwinDisplay,fTwinDisplay)
     set f $fTwinDisplay
 
-    if {$::Module(verbose)} { DevInfoWindow "set fTwinDisplay"}
-    if {$::Module(verbose)} { DevInfoWindow "fTwinDisplay = $fTwinDisplay"}
-
     frame $f.fGrid -bg $Gui(activeWorkspace) -relief groove -bd 3
     frame $f.fMode -bg $Gui(activeWorkspace)
     pack $f.fMode $f.fGrid \
         -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
-    if {$::Module(verbose)} { DevInfoWindow "done grid and mode set up"}
 
     #-------------------------------------------
     # TwinDisplay->Mode Frame
@@ -177,7 +166,6 @@ off and on."
             -indicatoron 0 -command "TwinDisplayApply"} $Gui(WCA)
         pack $f.r$value -side left -padx 0 -pady 0
     }
-           if {$::Module(verbose)} { DevInfoWindow "done mode"}
     #-------------------------------------------
     # TwinDisplay->Grid Frame
     #-------------------------------------------
@@ -193,14 +181,9 @@ off and on."
         grid $f.l$param $f.e$param -padx $Gui(pad) -pady $Gui(pad) -sticky e
         grid $f.e$param -sticky w
     }
-   if {$::Module(verbose)} { DevInfoWindow "done grid but for apply"}
-
     eval {button $f.b -text "Apply" -command "TwinDisplayApply"} $Gui(WBA)
     grid $f.b -columnspan 2 -padx $Gui(pad) -pady $Gui(pad) 
 
-    if {$::Module(verbose)} { 
-        DevInfoWindow "******************\nDone TwinDisplayBuildGUI"
-    }
 }
 
 #-------------------------------------------------------------------------------
