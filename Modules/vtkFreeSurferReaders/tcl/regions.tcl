@@ -65,7 +65,13 @@ itcl::body regions::constructor {args} {
     set _w .$_name
 
     toplevel $_w
-    wm title $_w "Parcellation Options"
+    wm title $_w "BIRN Query Atlas"
+
+    # put the app name and logo at the bottom
+    catch {
+        set im [image create photo -file $::PACKAGE_DIR_BIRNDUP/../../../images/new-birn.ppm]
+        pack [label $w.logo -image $im -bg white] -fill x -anchor s -side left
+    }
 
     #
     # configuration panel
@@ -230,18 +236,16 @@ itcl::body regions::apply {} {
     # - set the colors for the model's lookuptable
     # - put the anatomical labels into a member array for access later
     #
-    set scalaridx [[$Model($_id,polyData) GetPointData] SetActiveScalars "labels"] 
 
-    if { $scalaridx == "-1" } {
+    set scalars [[$Model($_id,polyData) GetPointData] GetArray "labels"] 
+    if { $scalars == "" } {
         set scalars scalars_$_name
         catch "$scalars Delete"
         vtkIntArray $scalars
         $scalars SetName "labels"
         [$Model($_id,polyData) GetPointData] AddArray $scalars
         [$Model($_id,polyData) GetPointData] SetActiveScalars "labels"
-    } else {
-        set scalars [[$Model($_id,polyData) GetPointData] GetScalars $scalaridx]
-    }
+    } 
 
     set lutid [expr 1 + [llength $::Lut(idList)]]
     lappend ::Lut(idList) $lutid
@@ -270,7 +274,7 @@ itcl::body regions::apply {} {
         set _labels(-1) "unknown"
     }
 
-    ModelsSetScalarsLut $_id $lutid
+    ModelsSetScalarsLut $_id $lutid "false"
     set ::Model(scalarVisibilityAuto) 0
     set entries [lsort -integer [array names _labels]]
     MainModelsSetScalarRange $_id [lindex $entries 0] [lindex $entries end]
@@ -406,13 +410,6 @@ proc regions::dist {currmin x0 y0 z0 x1 y1 z1} {
 itcl::body regions::findptscalars {} {
     global Point Model
 
-    # set some fiducials defaults for easier reading
-    set fid $::Fiducials(activeListID)
-    FiducialsSetScale $fid 3
-    Fiducials($fid,node) SetTextSize 8.5
-    Fiducials($fid,node) SetColor 1 1 1
-    set $::Fiducials(textSelColor) "1 1 0"
-
     $_labellistbox delete 0 end
     set _ptlabels ""
     set _ptscalars ""
@@ -437,6 +434,11 @@ itcl::body regions::findptscalars {} {
             }
         }
         set scalars [[$Model($_id,polyData) GetPointData] GetScalars]
+        set scalars [[$Model($_id,polyData) GetPointData] GetArray "labels"] 
+        if { $scalars == "" } {
+            DevErrorWindow "No labels loaded for Model [Model(0,node) GetName)]"
+            return
+        }
         set s [$scalars GetValue $minpt]
         lappend _ptscalars $s
         lappend _ptlabels $_labels($s)
@@ -676,7 +678,7 @@ proc QueryAtlas_fdemo {} {
 
     set mydata c:/pieper/bwh/data/staple/average7
 
-    vtkFreeSurferReadersLoadModel $mydata/surf/lh.pial
+    set modelid [vtkFreeSurferReadersLoadModel $mydata/surf/lh.pial]
     #r configure -annotfile $mydata/label/lh_aparc.annot 
     r configure -annotfile $mydata/label/lh.atlas2002_simple.annot 
     r configure -talfile $mydata/mri/transforms/talairach.xfm
@@ -686,7 +688,55 @@ proc QueryAtlas_fdemo {} {
     r configure -javapath [file normalize "$fstcldir/../talairach"]
     r configure -model lh-pial
     r apply
+
+    set lutid [MainLutsGetLutIDByName "InvGray"]
+    foreach scalarfile [glob $mydata/../../staple/stap*/*lh*.vtk] {
+        ModelsAddScalars $scalarfile
+        ModelsSetScalarsLut $modelid $lutid "false"
+    }
+
+    # 
+    # create a Sum Of Activtations scalar field
+    #
+    # TODO there should be a self demo mode for slicer --demo with a menu of options...
+
+    catch "fdemo_sum Delete"
+    set ptdata [$::Model($modelid,polyData) GetPointData]
+    set narrays [$ptdata GetNumberOfArrays]
+    for {set i 0} {$i < $narrays} {incr i} {
+        set arr [$ptdata GetArray $i]
+        if { [$arr GetNumberOfComponents] == 1 &&
+                [$arr GetName] != "labels" } {
+            set arrtuples [$arr GetNumberOfTuples]
+            if { [info command fdemo_sum] == "" } {
+                vtkShortArray fdemo_sum
+                fdemo_sum SetNumberOfTuples $arrtuples
+                for {set tuple 0} {$tuple < $arrtuples} {incr tuple} {
+                    fdemo_sum SetTuple1 $tuple 0
+                }
+            }
+            if { $arrtuples != [fdemo_sum GetNumberOfTuples] } { 
+                puts stderr "bad number of tuples for $arr"
+                return
+            }
+            puts "adding scalars [$arr GetName]"
+            for {set tuple 0} {$tuple < $arrtuples} {incr tuple} {
+                set sum [fdemo_sum GetTuple1 $tuple]
+                set newval [$arr GetTuple1 $tuple]
+                fdemo_sum SetTuple1 $tuple [expr $sum + $newval]
+            }
+        }
+    }
+    $ptdata AddArray fdemo_sum
+    fdemo_sum SetName "Sum Of Staple Activations"
+    $ptdata SetActiveScalars [fdemo_sum GetName]
+
+    # update the auto scalar range
+    set ::Model(scalarVisibilityAuto) 1
+    ModelsPropsApplyButNotToNew
 }
+
+
 itcl::body regions::demo {} {
     
     # - read in lh.pial 
