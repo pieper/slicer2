@@ -1,4 +1,3 @@
-
 package require Iwidgets
 #
 # a toplevel window that displays cortical parcellation options
@@ -14,11 +13,14 @@ if { [itcl::find class regions] == "" } {
         public variable talfile "" {}
         public variable browser {/usr/bin/mozilla} {}
         public variable site "google" {}
-        public variable afnidir "/home/ajoyner/afnifile/atlas/Release"
+        public variable afnidir "/home/ajoyner/apps/Release"
         public variable arrow "" {}
         public variable arrowout "" {}
         public variable tmpdir "" {}
-
+        public variable umlsfile "" {}
+        public variable umlslabel0 "" {}
+        public variable umlslabel1 "" {}
+        public variable umlsid "" {}
         variable _Blabel ""
 
         variable _sites "google arrowsmith pubmed jneurosci ibvd mediator all"
@@ -45,6 +47,7 @@ if { [itcl::find class regions] == "" } {
         method findptscalars {} {}
         method talairach {} {}
         method refresh {args} {}
+        method umls {} {}
         method demo {} {}
     }
 }
@@ -69,6 +72,14 @@ itcl::body regions::constructor {args} {
     set _modelmenu [iwidgets::Optionmenu $cs.model]
     $_modelmenu configure -labeltext "Model:" -command "$this configure -model \[$_modelmenu get\]"
     refresh model
+    foreach i $Model(idList) {
+        set name [Model($i,node) GetName]
+        $_modelmenu insert end $name
+        if { $model == "" } {
+            set model $name
+            set _id $i
+        }
+    }
     pack $_modelmenu -expand true -fill x
 
     frame $cs.annot
@@ -110,7 +121,6 @@ itcl::body regions::constructor {args} {
     ::iwidgets::Scrolledlistbox $_labellistbox -hscrollmode dynamic -vscrollmode dynamic
     pack $_labellistbox -fill both -expand true
 
-
     ::iwidgets::Entryfield $cs.terms -labeltext "Extra Terms:" -textvariable [::itcl::scope _terms]
     pack $cs.terms -fill both -expand true
     
@@ -126,6 +136,12 @@ itcl::body regions::constructor {args} {
 
     button $cs.query -text "Query" -command "$this query"
     pack $cs.query -side left
+    button $cs.smart -text "SMART Atlas" -command "exec $browser http://animal.ucsd.edu:8030/jnlp/atlas.jnlp"
+    pack $cs.smart -side bottom
+    button $cs.connect -text "Swanson's Connectivity Tool (BAMS)" -command "exec $browser http://brancusi.usc.edu/bkms/about.html"
+    pack $cs.connect -side left
+    button $cs.braininfo -text "Washington University's BrainInfo" -command "exec $browser http://braininfo.rprc.washington.edu/mainmenu.html"
+    pack $cs.braininfo -side left
 
     #
     # try to determine browser automatically
@@ -226,7 +242,6 @@ itcl::body regions::apply {} {
     $fssar SetColorTableOutput $lut
     $fssar ReadFSAnnotation
 
-    array unset _labels
     array set _labels [$fssar GetColorTableNames]
 
     set ::Model(scalarVisibilityAuto) 0
@@ -389,15 +404,44 @@ itcl::body regions::findptscalars {} {
         set s [$scalars GetValue $minpt]
         lappend _ptscalars $s
         lappend _ptlabels $_labels($s)
+        set umlslabel0 $_labels($s)
+        $this umls
         if { $mindist > 2} {
-           $_labellistbox insert end "Point Not on Surface" 
+           $_labellistbox insert end "pt $id Not on Surface Model" 
+        } elseif { $umlsid == "" } {
+           $_labellistbox insert end "pt $id $_labels($s) ($s)"
         } else {
-           $_labellistbox insert end "pt $id $_labels($s) ($s)" 
+           $_labellistbox insert end "pt $id $_labels($s) ($s) - Freesurfer UMLS ID $umlsid"
         }
         $this talairach
-        if { $_Blabel != "" } {
+        set umlslabel0 [lindex $_Blabel 2]
+        set umlsid ""
+        $this umls
+        if { [lindex $_Blabel 2] != "" && $umlsid == "" } {
             $_labellistbox insert end "pt $id $_Blabel mm"
+        } elseif { [lindex $_Blabel 2] != "" && $umlsid != "" } {
+            $_labellistbox insert end "pt $id $_Blabel mm - Talairach UMLS ID $umlsid"
         }
+}
+}
+
+itcl::body regions::umls {} {
+    set umls [open $umlsfile r]
+    gets $umls line
+    set n 0
+    while { ![eof $umls] } {
+        set labelline [split $line ,]    
+        set label($n,0) [lindex $labelline 1]
+        set label($n,1) [lindex $labelline 2]
+        set label($n,2) [lindex $labelline 3]
+        set n [expr ($n + 1)]
+        gets $umls line
+        }
+    close $umls
+    for {set i 0} {$i < $n} {incr i} {
+        if {$umlslabel0 == $label($i,0)} {
+            set umlsid $label($i,1)
+    }
     }
 }
 
@@ -473,8 +517,7 @@ itcl::body regions::talairach {} {
           set sw 10 }
        if {$x0 >  0 && $y0 > 23 && $z0 < 0} { 
           set sw 11 }
-       puts "sw $sw" 
-
+       
        #RAS -> Talairach coordinate transformation
        set tal(1) [expr ($x0 * $_mtx(1,1,$sw)) + ($y0 * $_mtx(1,2,$sw)) + ($z0 * $_mtx(1,3,$sw))]     
        set tal(2) [expr ($x0 * $_mtx(2,1,$sw)) + ($y0 * $_mtx(2,2,$sw)) + ($z0 * $_mtx(2,3,$sw))]
@@ -519,32 +562,26 @@ itcl::body regions::talairach {} {
        set mtal(2) [expr ($tal(1) * $tf2(2,1)) + ($tal(2) * $tf2(2,2)) + ($tal(3) * $tf2(2,3))]
        set mtal(3) [expr ($tal(1) * $tf2(3,1)) + ($tal(2) * $tf2(3,2)) + ($tal(3) * $tf2(3,3))] 
     } 
-    set tal(1) [format "%3.0f" $tal(1)]
-    set tal(2) [format "%3.0f" $tal(2)]
-    set tal(3) [format "%3.0f" $tal(3)]
+    set tal(1) [expr round($tal(1))]
+    set tal(2) [expr round($tal(2))]
+    set tal(3) [expr round($tal(3))]
+
     puts "Talairached Coord $tal(1) $tal(2) $tal(3)"
     puts "MNI Coord $mtal(1) $mtal(2) $mtal(3)"
-    #write out coordinate for Talairach Daemon query
-    set outfile [open "$afnidir/TDpoints.txt" w+]
-    seek $outfile 0 start
-    puts $outfile "$tal(1) $tal(2) $tal(3)"
-    close $outfile
-    #Read in labels from Talairach Daemon
-    set infile [open "$afnidir/TDresult.txt" r+]
-    gets $infile line
-    set line [split $line ,]
-    if {[lindex $line 0] == "Record Number"} {
-        gets $infile line 
-        set line [split $line ,]}
+    #open socket, send coordinate to Talairach Daemon query
+    set sock [socket localhost 19000]
+    puts $sock "$tal(1) $tal(2) $tal(3)          "
+    flush $sock
+
+    set lab [gets $sock]
+    close $sock
+    set lab [split $lab ,]
     set _Blabel ""
-    lappend _Blabel [lindex $line 6]
-    lappend _Blabel [lindex $line 7]
-    lappend _Blabel [lindex $line 8]
-    lappend _Blabel [lindex $line 9]
+    lappend _Blabel [lindex $lab 2]
+    lappend _Blabel [lindex $lab 3]
+    lappend _Blabel [lindex $lab 4]
+    lappend _Blabel [lindex $lab 5]
     puts "$_Blabel"
-    close $infile
-    set outfile [open "/home/ajoyner/TDpoints.txt" w+]
-    seek $outfile 0 start
 }
 
 itcl::body regions::refresh {args} {
@@ -581,15 +618,13 @@ itcl::body regions::demo {} {
         $this configure -talfile $mydata/mri/transforms/talairach.xfm
 
     } else {
-        $this configure -labelfile "/home/ajoyner/slicer/Simple_surface_labels2002.txt"
-        #$this configure -annotfile "/home/ajoyner/slicer/MGH-Siemens15-JJ/label/lh.aparc.pannot"
-        #$this configure -talfile "/home/ajoyner/slicer/MGH-Siemens15-JJ/mri/transforms/talairach1.xfm"
-        $this configure -annotfile "/home/ajoyner/bert/bert/label/lh_aparc.pannot"
-        $this configure -talfile "/home/ajoyner/bn1295/bn1295+tlrc.HEAD"
-        $this configure -arrow "/home/ajoyner/regions/QueryA.html"
-        $this configure -arrowout "/home/ajoyner/regions/QueryAout.html"
+       
+        $this configure -annotfile "/home/ajoyner/brains/MGH-Siemens15-SP.1-uw/label/lh.aparc.annot"
+        $this configure -talfile "/home/ajoyner/brains/MGH-Siemens15-SP.1-uw/mri/transforms/talairach.xfm"
+        $this configure -arrow "/home/ajoyner/docs/regions/QueryA.html"
+        $this configure -arrowout "/home/ajoyner/docs/regions/QueryAout.html"
+        $this configure -umlsfile "/home/ajoyner/docs/regions/label2UMLS.txt"
         $this configure -model lh-pial
     }
-
     $this apply
 }
