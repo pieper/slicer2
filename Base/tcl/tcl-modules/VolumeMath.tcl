@@ -135,7 +135,7 @@ proc VolumeMathInit {} {
 	#   appropriate info when the module is checked in.
 	#   
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.22 $} {$Date: 2002/01/26 23:34:33 $}]
+		{$Revision: 1.23 $} {$Date: 2002/02/19 22:38:48 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -1040,6 +1040,45 @@ proc VolumeMathDoDistMap {} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC VolumeMathDoAbs
+#   Actually do the VolumeMath Absolute Value
+#
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathDoAbs {} {
+	global VolumeMath Volume
+
+        # Check to make sure no volume is none
+
+    if {[VolumeMathCheckErrors] == 1} {
+        return
+    }
+    if {[VolumeMathPrepareResultVolume] == 1} {
+        return
+    }
+
+    set v3 $VolumeMath(Volume3)
+    set v2 $VolumeMath(Volume2)
+    set v1 $VolumeMath(Volume1)
+
+    # Set up the VolumeMath Abs
+
+    vtkImageMathematics SubMath
+    SubMath SetInput1 [Volume($v2,vol) GetOutput]
+    SubMath SetInput2 [Volume($v1,vol) GetOutput]
+    SubMath SetOperationToAbsoluteValue
+
+    # Start copying in the output data.
+    # Taken from MainVolumesCopyData
+
+    Volume($v3,vol) SetImageData [SubMath GetOutput]
+    MainVolumesUpdate $v3
+
+    SubMath Delete
+}
+
+
+#-------------------------------------------------------------------------------
 # .PROC VolumeMathDoResample
 #   Actually do the Resampling
 #
@@ -1121,7 +1160,7 @@ proc VolumeMathDoAnd {} {
     if {[VolumeMathCheckErrors] == 1} {
         return
     }
-    # the parameter 1 tells it to use the name from the 
+    # the parameter 1 tells it  to use the name from the 
     # logic operation selected, instead of the math op.
     if {[VolumeMathPrepareResultVolume 1] == 1} {
         return
