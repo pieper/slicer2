@@ -104,7 +104,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.7 $} {$Date: 2004/04/07 01:32:31 $}]
+            {$Revision: 1.8 $} {$Date: 2004/04/07 01:46:23 $}]
 
     # Define Tabs
     #------------------------------------
@@ -4029,11 +4029,11 @@ proc ConvertVolumeToTensors {} {
        # set the no diffusion input
        DTMRI SetNoDiffusionImage [extract6 GetOutput]
        DTMRI SetNoDiffusionImage [math2 GetOutput]
-    } else
+    } else {
        DTMRI SetNoDiffusionImage [extract6 GetOutput]
     }    
     
-     puts "----------- DTMRI update --------"
+     puts "3----------- DTMRI update --------"
      DTMRI Update
      puts "----------- after DTMRI update --------"
 
@@ -4252,7 +4252,7 @@ proc ConvertLSDIrecon {} {
     DTMRI SetNoDiffusionImage [extract6 GetOutput]
     
     
-    puts "----------- DTMRI update --------"
+    puts "1----------- DTMRI update --------"
     DTMRI Update
     puts "----------- after DTMRI update --------"
 
@@ -4431,7 +4431,7 @@ proc MyConvertVolumeToTensors {} {
     }
 
     
-    puts "----------- DTMRI update --------"
+    puts "2----------- DTMRI update --------"
     DTMRI Update
     puts "----------- after DTMRI update --------"
 
