@@ -1,14 +1,15 @@
+package require vtk
+package require vtkSlicerBase
+
+# this script tests vtkImageCloseUp2D 
+
 catch {load vtktcl}
 source vtkImageInclude.tcl
 
 # Image pipeline
 
-vtkImageReader reader
-  reader ReleaseDataFlagOff
-  reader SetDataByteOrderToLittleEndian
-  reader SetDataExtent 0 255 0 255 22 22
-  reader SetFilePrefix "../../../vtkdata/fullHead/headsq"
-  reader SetDataMask 0x7fff
+vtkPNGReader reader
+reader SetFileName $VTK_DATA_ROOT/Data/fullhead15.png
 
 vtkImageCloseUp2D CloseUp
   CloseUp SetInput [reader GetOutput]
@@ -18,10 +19,9 @@ vtkImageCloseUp2D CloseUp
   CloseUp SetY 150
 
 vtkImageViewer viewer
-  viewer SetInput [CloseUp GetOutput]
-  viewer SetZSlice 22
-  viewer SetColorWindow 2000
-  viewer SetColorLevel 1000
+viewer SetInput [CloseUp GetOutput]
+viewer SetColorWindow 163
+viewer SetColorLevel 360
 
 #make interface
 source WindowLevelInterface.tcl
