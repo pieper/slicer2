@@ -255,8 +255,9 @@ itcl::body dup_sort::sort {} {
         DevWarningWindow "No series selected for masking - Mask Master ignored."
     }
 
-    if { $has_mask == "yes" && $_series($_series(master),deident_method) != "Deface" } {
-        DevErrorWindow "Master series ($_series(master)) must be set to deface to be used as a mask"
+    if { $_series(master) != "" && ($_series($_series(master),deident_method) != "Deface") } {
+        DevErrorWindow "Master series must be set to deface to be used as a mask.  Leave Mask Master blank if no masking is needed."
+        set _series(master) ""
         return
     }
 
