@@ -285,7 +285,7 @@ public:
   void EndEvolution();
 
   // Set a curvature weight for the geodesic framework
-  void SetCurvatureWeight( float* CW)
+  void SetCurvatureWeights( float* CW)
   //
   {
     curvature_weight = CW;
