@@ -683,6 +683,48 @@ void vtkMrmlVolumeNode::ComputeRasToIjkFromScanOrder(char *order)
   for(i=0;i<3;i++) ctr[i]=(fbr[i]+ltl[i])/2.0;
   for (i=0;i<4;i++) for (j=0;j<3;j++) crn[i][j]-=ctr[j];
 
+  // Handle the case where frequency and phase encoding
+  // directions have been swapped in the image.
+  // Added by odonnell and haker, 4/2002, for 
+  // diffusion tensor data
+  if (this->FrequencyPhaseSwap)
+    {// This is what we are going for:
+      // axial RotateZ(90)
+      // sagittal do nothing
+      // coronal RotateZ(270)
+
+      double tmp;
+      if (!strcmp(order,"SI") || !strcmp(order,"IS"))
+        {
+          // axial
+          for(i=0;i<4;i++)
+            {
+              // Normally, x is across, y is down.
+              // Here though, the image is rotated 90 deg cw, so
+              // set x=y and y=-x
+              tmp=crn[i][0]; crn[i][0]=crn[i][1]; crn[i][1]=-tmp;
+            }
+        }
+      else
+        {
+          if (!strcmp(order,"RL") || !strcmp(order,"LR"))  
+            {
+              // sagittal, do nothing
+            }
+          else
+            {
+              // coronal
+              for(i=0;i<4;i++)
+                {
+                  // Normally, x is across, y is down.
+                  // Here though, the image is rotated 90 deg cc, so
+                  // set x=-y and y=x
+                  tmp=crn[i][0]; crn[i][0]=-crn[i][1]; crn[i][1]=tmp;
+                }             
+            }
+        }
+    }
+
   // Map (x,y,z) to (r,a,s) by scan order
   if (!strcmp(order,"SI") || !strcmp(order,"IS"))
   {
@@ -834,71 +876,6 @@ int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
       else this->SetScanOrder("SI");      
     }
   }
-
-  // odonnell diffusion tensor data.
-  // Sometimes the frequency and phase encode directions are swapped.
-  // This has the effect of rotating the image by 90 or 270 degrees,
-  // depending on the image orientation (ax/sag/cor).
-  // This is still being tested.
-  if (this->FrequencyPhaseSwap)
-    {
-      cout <<"Rotating swapped image" << endl;
-      // "if patient id == 74 rotate to the left on Tuesday"
-      char *order = this->GetScanOrder();
-      float newftr[3], newftl[3], newfbr[3], newltl[3];
-      // This is what we are going for:
-      // axial RotateZ(90)
-      // sagittal do nothing
-      // coronal RotateZ(270)
-      if (!strcmp(order,"SI") || !strcmp(order,"IS"))
-        {
-          cout << "axial DTI" << endl;
-          // axial
-          for (i=0; i<3; i++)
-            {
-              // ftr <- ftl
-              newftr[i] = ftl[i];
-              // fbr <- ftr
-              newfbr[i] = ftr[i];
-              // ftl <- old bottom left, calculate this one
-              // vector from right to left plus bottom right 
-              newftl[i] = ftl[i] - ftr[i] + fbr[i];
-
-              // ltl <- old bottom left of last slice
-              // vector from 1st to last slice plus old bottom left  
-              newltl[i] = ltl[i] - ftl[i] + newftl[i];
-            }
-        }
-      if (!strcmp(order,"PA") || !strcmp(order,"AP"))
-        {
-          cout << "coronal DTI" << endl;
-          // coronal
-          for (i=0; i<3; i++)
-            {
-              // ftr <- fbr
-              newftr[i] = fbr[i];
-              // fbr <- old bottom left, calculate this one
-              // vector from right to left plus bottom right 
-              newfbr[i] = ftl[i] - ftr[i] + fbr[i];
-              // ftl <- ftr
-              newftl[i] = ftr[i];
-
-              // ltl <- ltr
-              // vector from 1st to last slice plus old top right
-              newltl[i] = ltl[i] - ftl[i] + newftl[i];
-            }
-        }
-
-      // Redo this
-      // Pack volume corners into Corners[][]
-      for(i=0;i<3;i++)
-        {
-          Corners[i][0]=newftl[i];  // first slice, top left
-          Corners[i][1]=newftr[i];  // first slice, top right
-          Corners[i][2]=newfbr[i];  // first slice, bottom right
-          Corners[i][3]=newltl[i];  // last slice, top left
-        }
-    } // end odonnell diffusion tensor data
 
   // Create Ijk matrix with volume "Corner points" as columns.
   // Slicer's ijk coordinate origin is at a corner of the volume 
