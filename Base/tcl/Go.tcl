@@ -43,7 +43,7 @@ set verbose 0
 if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
     set prog [file dirname $argv0]
 } else {
-    set prog [file join $env(SLICER_HOME) program]
+    set prog [file join $env(SLICER_HOME) Base/tcl]
 }
 # Don't use "."
 if {$prog == "."} {
