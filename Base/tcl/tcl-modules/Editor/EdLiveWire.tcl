@@ -28,6 +28,7 @@
 #   EdLiveWireToggleWeight
 #   EdLiveWireRaiseEdgeImageWin
 #   EdLiveWireUpdateEdgeImageWin
+#   EdLiveWireWriteEdgeImage
 #   EdLiveWireGetFeatureParams
 #   EdLiveWireSetFeatureParams
 #   EdLiveWireAdvancedApply
@@ -57,6 +58,7 @@
 #   EdLiveWireTrain
 #   EdLiveWireReadFeatureParams
 #   EdLiveWireWriteFeatureParams
+#   EdLiveWireTestCF
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -216,9 +218,10 @@ proc EdLiveWireBuildGUI {} {
     frame $f.fContour   -bg $Gui(activeWorkspace)
     frame $f.fReset   -bg $Gui(activeWorkspace)
     frame $f.fApply     -bg $Gui(activeWorkspace)
+    frame $f.fTest     -bg $Gui(activeWorkspace)
     frame $f.fFile     -bg $Gui(activeWorkspace)
     pack $f.fFile $f.fGrid $f.fInteract $f.fContour $f.fReset  \
-	    $f.fApply  \
+	    $f.fApply $f.fTest \
 	    -side top -pady $Gui(pad) -fill x
     #pack $f.fFile -side top  -pady [expr 3*$Gui(pad)] -fill x
 
@@ -275,6 +278,17 @@ proc EdLiveWireBuildGUI {} {
     pack $f.bApply
     TooltipAdd $f.bApply \
 	    "Apply the LiveWire contour you have drawn."
+
+    #-------------------------------------------
+    # TabbedFrame->Basic->Test frame
+    #-------------------------------------------
+    set f $Ed(EdLiveWire,frame).fTabbedFrame.fBasic.fTest
+    
+    eval {button $f.bTest -text "Test quadrature filter input on slice" \
+	    -command "EdLiveWireTestCF"} $Gui(WBA) {-width 30}
+    pack $f.bTest
+    TooltipAdd $f.bTest \
+	    "hello"
 
     #-------------------------------------------
     # TabbedFrame->Basic->File frame
@@ -712,6 +726,12 @@ proc EdLiveWireUpdateEdgeImageWin {viewerWidget edgeNum} {
     #HistogramWidgetRender $Ed(EdLiveWire,edgeHistWidget$s)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdLiveWireWriteEdgeImage
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdLiveWireWriteEdgeImage {} {
     global Ed Slice
     
@@ -1818,6 +1838,12 @@ proc EdLiveWireWriteFeatureParams {} {
     puts "Saved settings to file $Ed($e,trainingOutputFileName)"
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdLiveWireTestCF
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdLiveWireTestCF {} {
     global Ed Volume Slice
 

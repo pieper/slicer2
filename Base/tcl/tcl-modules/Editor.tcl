@@ -48,6 +48,7 @@
 #   EditorHideWorking
 #   EditorShowWorking
 #   EditorSetEffect
+#   EditorExitEffect
 #   EditorGetInputID
 #   EditorActivateUndo
 #   EditorUpdateAfterUndo
@@ -66,6 +67,12 @@
 #   EditorRead
 #   EditorClear
 #   EditorMerge
+#   EditorLog
+#   EditorIncrementAndLogEvent
+#   EditorLogEventOnce
+#   EditorReplaceAndLogEvent
+#   EditorStartTiming name
+#   EditorStopTiming name
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -89,13 +96,15 @@ proc EditorInit {} {
     set Module($m,procVTK)   EditorBuildVTK
     set Module($m,procEnter) EditorEnter
     set Module($m,procExit) EditorExit
-    
+    # logging
+    set Module($m,procSessionLog) EditorLog
+
     # Define Dependencies
     set Module($m,depend) "Labels"
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.47 $} {$Date: 2001/02/22 15:19:21 $}]
+	    {$Revision: 1.48 $} {$Date: 2001/03/10 01:20:08 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -1011,6 +1020,9 @@ proc EditorBuildGUI {} {
 proc EditorEnter {} {
     global Editor Volume Slice Module Ed
 
+    # logging
+    EditorStartTiming "Editor"
+
     # If the Original is None, then select what's being displayed,
     # otherwise the first volume in the mrml tree.
 
@@ -1033,13 +1045,9 @@ proc EditorEnter {} {
     # if we have entered right to the Details tab, need to call 
     # the procEnter of the effect
     if {$Module(Editor,$Module(Editor,row),tab) == "Details"} {
-	# Call the Enter procedure of the active effect
-	set e $Editor(activeID)
-	if {[info exists Ed($e,procEnter)] == 1} {
-	    puts "calling $Ed($e,procEnter)"
-	    $Ed($e,procEnter)
-	}
+	EditorUpdateEffect
     }
+
 }
 
 
@@ -1059,9 +1067,10 @@ proc EditorExit {} {
 
     # make sure exit gets called for the active effect
     # (to turn off effects that use pipelined filters w/ Slicer)
-    if {[info exists Ed($e,procExit)] == 1} {
-	$Ed($e,procExit)
-    }
+    EditorExitEffect $e
+    
+    # logging
+    EditorStopTiming "Editor"
 }
 
 #-------------------------------------------------------------------------------
@@ -1099,10 +1108,12 @@ proc EditorMakeModel {} {
 #-------------------------------------------------------------------------------
 proc EditorMotion {x y} {
     global Ed Editor 
-    
+
     switch $Editor(activeID) {
 	"EdLiveWire" {
 	    EdLiveWireMotion $x $y
+	    # only log this if it's used
+	    EditorIncrementAndLogEvent "motion"    
 	}
     }
     
@@ -1115,7 +1126,9 @@ proc EditorMotion {x y} {
 # .END
 #-------------------------------------------------------------------------------
 proc EditorB1 {x y} {
-    global Ed Editor Slice
+    global Ed Editor 
+
+    EditorIncrementAndLogEvent "b1click"
     
     switch $Editor(activeID) {
 	"EdDraw" {
@@ -1169,8 +1182,10 @@ proc EditorB1 {x y} {
 proc EditorB1Motion {x y} {
     global Ed Editor Slice Interactor
 
+    EditorIncrementAndLogEvent "b1motion"
+
     set s $Slice(activeID)
-    
+
     switch $Editor(activeID) {
 	"EdDraw" {
 	    # Act depending on the draw mode:
@@ -1382,11 +1397,16 @@ proc EditorSetComposite {v} {
 proc EditorUpdateEffect {} {
     global Editor Ed
     
+    # logging
+    # this is the only place where procEnters are called, so:
+    EditorStartTiming $Editor(activeID)
+
     # Call the Enter procedure of the active effect
     set e $Editor(activeID)
     if {[info exists Ed($e,procEnter)] == 1} {
 	$Ed($e,procEnter)
     }
+
 }
 
 #-------------------------------------------------------------------------------
@@ -1673,19 +1693,32 @@ proc EditorSetEffect {e} {
     # But don't do this if there's no change.
     #
     if {$e != $prevID} {
-	if {[info exists Ed($prevID,procExit)] == 1} {
-	    $Ed($prevID,procExit)
-	}
-    }
-    
-    # Show "Details" frame
-    raise $Ed($e,frame)
+	EditorExitEffect $prevID
 
-    if {$e != $prevID} {
-	if {[info exists Ed($e,procEnter)] == 1} {
-	    $Ed($e,procEnter)
-	}
+	# Show "Details" frame (GUI for the new effect)
+	raise $Ed($e,frame)
+
+	# execute enter procedure
+	EditorUpdateEffect
     }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EditorExitEffect
+# Calls the exit procedure of the effect, if one exists
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EditorExitEffect {effect} {
+    global Ed
+
+    if {[info exists Ed($effect,procExit)] == 1} {
+	$Ed($effect,procExit)
+    }
+
+    # logging
+    # this is the only place where procExits are called, so:
+    EditorStopTiming $effect
 }
 
 #-------------------------------------------------------------------------------
@@ -1748,9 +1781,7 @@ proc EditorUpdateAfterUndo {} {
     MainVolumesUpdate $w
 
     # Update the effect panel GUI by re-running it's Enter procedure
-    if {[info exists Ed($e,procEnter)] == 1} {
-	$Ed($e,procEnter)
-    }
+    EditorUpdateEffect
     
     # Mark the volume as changed
     set Volume($w,dirty) 1
@@ -2313,3 +2344,161 @@ proc EditorMerge {op arg} {
     MainVolumesUpdate $bg
     RenderAll
 }
+
+#-------------------------------------------------------------------------------
+# .PROC EditorLog
+# returns the whole log string: everything this module has logged.
+# It is called by SessionLog module when it is time to write the log file
+# or display the current log info.
+# This proc actually calls SessionLogGenericLog to do most of the work.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EditorLog {} {
+    global Editor Volume
+
+    # log any final items from this module:
+    # list all volumes in the slicer
+    # the syntax is complicated b/c first item in the description
+    # pairs is the name of the database column (which will be auto generated)
+    foreach v $Volume(idList) {
+	set name [Volume($v,node) GetName]
+	set file [Volume($v,node) GetFullPrefix]
+	set datatype "{info,volume}"
+	set id "{volumeid,$v}"
+	set infotype "{infotype,name}"
+	set var "\{$datatype,$id,$infotype\}"
+	set Editor(log,$var) $name
+	set infotype "{infotype,filename}"
+	set var "\{$datatype,$id,$infotype\}"
+	set Editor(log,$var) $file
+    }
+
+    # use the generic logging procedure 
+    # which grabs everything in $Editor(log,*)
+    return [SessionLogGenericLog Editor]
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EditorIncrementAndLogEvent
+# record an event in the Editor(log,*) subarray
+# (will be written to log file later)
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EditorIncrementAndLogEvent {event} {
+    global Editor Volume Label Slice
+
+    # key-value pairs describing the event
+    set datatype "{event,$event}"
+    set module "{module,Editor}"
+    set submodule "{submodule,$Editor(activeID)}"
+    set workingid "{workingid,$Editor(idWorking)}"
+    set originalid "{originalid,$Editor(idOriginal)}"
+    set label "{label,$Label(label)}"
+    set slice  "{slice,$Slice(activeID)}"
+    #set eventinfo "{eventinfo,}"
+
+    # variable name is a (comma-separated) list describing the exact event
+    set var "\{$datatype,$module,$submodule,$workingid,$originalid,$label,$slice\}"
+    # initialize the count of these events
+    if {[info exists Editor(log,$var)] == 0} {
+	set Editor(log,$var) 0
+    }
+    # increment number of events
+    # (if this overflows, it will wrap negative, not give an error)
+    incr Editor(log,$var)
+    #puts "$var: $Editor(log,$var)"
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EditorLogEventOnce
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EditorLogEventOnce {event value {info ""}} {
+    global Editor Volume Label Slice
+
+    # key-value pairs describing the event
+    set datatype "{event,$event}"
+
+    # variable name is a list describing the exact event
+    set var "\{$datatype,$info\}"
+
+    # log only if event has not happened already
+    if {[info exists Editor(log,$var)] == 0} {
+	set Editor(log,$var) $value
+	#puts "$var: $Editor(log,$var)"
+    }
+
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EditorReplaceAndLogEvent
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EditorReplaceAndLogEvent {event value {info ""}} {
+    global Editor Volume Label Slice
+
+    # key-value pairs describing the event
+    set datatype "{event,$event}"
+
+    # variable name is a list describing the exact event
+    set var "\{$datatype,$info\}"
+
+    # write over previous record of event if any
+    set Editor(log,$var) $value
+    #puts "$var: $Editor(log,$var)"
+
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EditorStartTiming
+# grab clock value now
+# .ARGS
+# m name of the module we are timing
+# .END
+#-------------------------------------------------------------------------------
+proc EditorStartTiming {m} {
+    global Editor
+
+    set Editor(logInfo,$m,startTime) [clock seconds]
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EditorStopTiming
+# add to the total time in editor (or submodule) so far
+# .ARGS
+# m name of the module we are timing
+# .END
+#-------------------------------------------------------------------------------
+proc EditorStopTiming {m} {
+    global Editor
+
+    # can't stop if we never started
+    if {[info exists Editor(logInfo,$m,startTime)] == 0} {
+	return
+    }
+
+    set Editor(logInfo,$m,endTime) [clock seconds]
+    set elapsed \
+	    [expr $Editor(logInfo,$m,endTime) - $Editor(logInfo,$m,startTime)]
+    
+    # variable name is a list describing the exact event
+    # the first thing is datatype: time is the database table
+    # it should go in, and elapsed describes the type of time...
+    set var "\{{time,elapsed},{module,Editor},{submodule,$m}\}"
+
+    # initialize the variable if needed
+    if {[info exists Editor(log,$var)] == 0} {
+	set Editor(log,$var) 0
+    }
+    
+    # increment total time
+    set total [expr $elapsed + $Editor(log,$var)]
+    set Editor(log,$var) $total    
+}
+

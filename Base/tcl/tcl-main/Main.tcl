@@ -336,7 +336,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.53 $} {$Date: 2001/02/22 15:20:08 $}]
+		{$Revision: 1.54 $} {$Date: 2001/03/10 01:20:07 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -898,6 +898,7 @@ proc MainRemoveModelActor { m } {
 proc MainSetup {} {
 	global Module Gui Volume Slice View Model Color Matrix Options Preset
 
+    puts "main: recalling presets here!"
 	# Set current values to preset 0 (user preferences)
 	MainOptionsRecallPresets $Preset(userOptions)
 
@@ -1350,9 +1351,23 @@ proc MainSaveMRMLQuery { } {
 # .END
 #-------------------------------------------------------------------------------
 proc MainExitProgram { } {
-	global Gui
+    global Module
 	
-	exit
+    # logging
+    if {[IsModule SessionLog] == 1} {
+	# Execute Exit procedure (if one exists for the prevID module)
+	# This is so that it can log anything final it should log.
+	set prevID $Module(activeID)
+	if {[info exists Module($prevID,procExit)] == 1} {
+	    $Module($prevID,procExit)
+	}
+
+	# write out the log file if we are logging
+	SessionLogEndSession
+    }
+    # end logging
+
+    exit
 }
 
 #-------------------------------------------------------------------------------
