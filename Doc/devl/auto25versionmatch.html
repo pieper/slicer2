@@ -1,0 +1,31 @@
+<title>Matching Versions of VTK and Slicer</title>
+<p>
+The current CVS version of slicer2 works with 
+<a href="http://public.kitware.com/VTK/files/release/4.0/">VTK 4.0</a>.
+<p>
+This point marks a break in the release structure, as both VTK and Slicer moved to new CVS
+directories. Slicer2 can be checked out with the same CVS pserver as previous versions, but the checkout
+command must be given the argument slicer2 instead of slicer. VTK changed their CVS pserver to use
+uppercase VTK instead of vtk, and VTK must be passed to the checkout command instead of vtk in
+order to access versions 4.0 and above.
+<p>
+The 1.3.* versions of Slicer that can be obtained through the ftp site work with 
+<a href="http://public.kitware.com/cgi-bin/cvsweb.cgi/vtk/?only_with_tag=release-3-2">VTK 3.2</a>
+availble via Kitware's CVS server, via the tag release-3-2. This slicer version was built from 
+the slicer source code in SPL's CVS repository tagged with release-1_2_3-02_25_2002.
+<br>
+
+The 1.2.2 version on the ftp site works with <a
+href="http://public.kitware.com/cgi-bin/cvsweb.cgi/vtk/?only_with_tag=release-3-1">VTK 3.1</a>, which 
+Kitware no longer distributes as a package, but can be obtained through CVS via the tag release-3-1. 
+<p>
+If you are working in the SPL at Brigham and Women's, there are a few compiled versions on the Solaris system to which you have access:
+<ul>
+<li>slicer2 is the first release of the slicer2 code, from December, 2002, and works with VTK 4.0. We
+are currently supporting and developing against this version.
+<li>(slicer-old is ancient, it holds the original code by Dave Gering, Peter Everett) - this has been
+superceded by slicer2 as their code has been reincorporated into the latest release.
+<li>slicer-stable is a stable version of slicer, it runs with VTK 3.1
+<li>slicer was for general use/beta testing, it runs with VTK 3.2
+<li>slicer-nightly was for alpha testing new modules
+</ul>
