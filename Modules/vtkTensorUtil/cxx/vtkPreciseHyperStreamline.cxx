@@ -3,8 +3,8 @@
 Program:   Visualization Toolkit
 Module:    $RCSfile: vtkPreciseHyperStreamline.cxx,v $
 Language:  C++
-Date:      $Date: 2004/07/29 16:27:41 $
-Version:   $Revision: 1.2 $
+Date:      $Date: 2004/07/29 16:40:05 $
+Version:   $Revision: 1.3 $
 
 Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
 All rights reserved.
@@ -30,7 +30,7 @@ PURPOSE.  See the above copyright notice for more information.
 #include "vtkPreciseHyperArray.h"
 #include "vtkPreciseHyperPoint.h"
 
-vtkCxxRevisionMacro(vtkPreciseHyperStreamline, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkPreciseHyperStreamline, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkPreciseHyperStreamline);
 
 
@@ -571,7 +571,7 @@ void vtkPreciseHyperStreamline::Execute()
       totalLength += sPtr->D;
     } //for each hyperstreamline
   if ( totalLength < this->MinimumPropagationDistance ) {
-    delete[] this->Streamers[ptId];
+    delete [] this->Streamers;
     this->NumberOfStreamers = 0;
     this->Streamers = NULL;
   }
