@@ -78,7 +78,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-		{$Revision: 1.52 $} {$Date: 2002/02/07 15:40:28 $}]
+		{$Revision: 1.53 $} {$Date: 2002/02/11 19:08:19 $}]
 
 	set Mrml(colorsUnsaved) 0
 }
@@ -806,7 +806,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 					    $n AddDICOMFileName $DICOMName
 					}
 				    }
-				    "dicomMultiFrameOffsetList" {
+				"dicommultiframeoffsetlist" {
 					set offsetlist {}
 					eval {lappend offsetlist} $val
 					foreach offset $offsetlist {
