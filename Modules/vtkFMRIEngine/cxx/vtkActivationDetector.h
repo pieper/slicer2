@@ -79,21 +79,21 @@ public:
     vtkSetMacro(DetectionMethod, int);
 
     // Description:
-    // Sets the number of predictors in the model.
-    vtkSetMacro(NumberOfPredictors, int);
+    // Gets the number of regressors 
+    vtkGetMacro(NoOfRegressors, int);
 
     // Description:
-    // Sets the stimulus that is used to detect activation.
-    void SetStimulus(vtkFloatArray *stim);
+    // Sets the regressors 
+    void SetRegressors(vtkFloatArray *regressors);
 
     // Description:
-    // Detects activation voxel time course 
-    float Detect(vtkFloatArray *timeCourse); 
+    // Fits linear model (voxel by voxel) 
+    void Detect(vtkFloatArray *timeCourse, float *beta, float *cov); 
 
 private:
     int DetectionMethod;  // 1 - GLM; 2 - MI
-    int NumberOfPredictors;
-    vtkFloatArray *Stimulus;
+    int NoOfRegressors;
+    vtkFloatArray *Regressors;
 
     int *Dimensions;
     float **DesignMatrix;

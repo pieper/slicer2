@@ -79,6 +79,7 @@ vtkActivationDetector::vtkActivationDetector()
 {
     this->Dimensions = NULL;
     this->DesignMatrix = NULL;
+    this->NoOfRegressors = 0;
 }
 
 
@@ -99,25 +100,20 @@ vtkActivationDetector::~vtkActivationDetector()
 }
 
 
-void vtkActivationDetector::SetStimulus(vtkFloatArray *stim)
+void vtkActivationDetector::SetRegressors(vtkFloatArray *regressors)
 {
-    this->Stimulus = stim;
-}
-
-
-float vtkActivationDetector::Detect(vtkFloatArray *timeCourse)
-{
-    float *tcArray = timeCourse->GetPointer(0);
-    float *stimArray = this->Stimulus->GetPointer(0);
-    int numberOfVolumes = timeCourse->GetNumberOfTuples();
+    this->Regressors = regressors;
+    this->NoOfRegressors = this->Regressors->GetNumberOfComponents();
 
     if (this->Dimensions == NULL)
     {
         this->Dimensions = new int[2];
     }  
-    this->Dimensions[0] = numberOfVolumes;
-    // The extra 1 is for mean normalization during glm computation
-    this->Dimensions[1] = this->NumberOfPredictors+1; 
+
+    // Number of volumes
+    this->Dimensions[0] = this->Regressors->GetNumberOfTuples();
+    // Number of evs (predictors)
+    this->Dimensions[1] = this->NoOfRegressors;
 
     if (this->DesignMatrix == NULL)
     {
@@ -125,17 +121,25 @@ float vtkActivationDetector::Detect(vtkFloatArray *timeCourse)
         for (int i = 0; i < this->Dimensions[0]; i++)
         {
             this->DesignMatrix[i] = new float[this->Dimensions[1]];
-            this->DesignMatrix[i][0] = 1.0;
-            this->DesignMatrix[i][1] = stimArray[i];
+            for (int j = 0; j < this->Dimensions[1]; j++)
+            {
+                this->DesignMatrix[i][j] = this->Regressors->GetComponent(i,j);
+            }
         } 
     }
+}
 
-    float t;
+ 
+void vtkActivationDetector::Detect(vtkFloatArray *timeCourse, float *beta, float *cov)
+{
     if (this->DetectionMethod == ACTIVATION_DETECTION_METHOD_GLM)
     {
-        t = GeneralLinearModel::ComputeVoxelActivation(this->DesignMatrix, this->Dimensions, tcArray); 
+        float *tcArray = timeCourse->GetPointer(0);
+        GeneralLinearModel::FitModel(this->DesignMatrix, 
+                                     this->Dimensions, 
+                                     tcArray,
+                                     beta,
+                                     cov); 
     }
-
-    return t;
 }
 

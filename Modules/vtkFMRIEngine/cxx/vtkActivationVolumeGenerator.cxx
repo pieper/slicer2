@@ -51,7 +51,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ==============================================================================*/
 
 
-#include "GeneralLinearModel.h"
 #include "vtkActivationVolumeGenerator.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageData.h"
@@ -66,8 +65,7 @@ vtkStandardNewMacro(vtkActivationVolumeGenerator);
 
 vtkActivationVolumeGenerator::vtkActivationVolumeGenerator()
 {
-    this->Detector = NULL; 
-    this->lowerThreshold = 0;
+    this->ContrastVector = NULL;
 }
 
 
@@ -76,67 +74,72 @@ vtkActivationVolumeGenerator::~vtkActivationVolumeGenerator()
 }
 
 
-vtkFloatArray *vtkActivationVolumeGenerator::GetTimeCourse(int i, int j, int k)
+void vtkActivationVolumeGenerator::SetContrastVector(vtkIntArray *vec)
 {
-    // Checks the input list
-    if (this->NumberOfInputs == 0 || this->GetInput(0) == NULL)
-    {
-        vtkErrorMacro( <<"No input image data in this filter.");
-        return NULL;
-    }
-
-    vtkFloatArray *timeCourse = vtkFloatArray::New();
-    timeCourse->SetNumberOfTuples(this->NumberOfInputs);
-    timeCourse->SetNumberOfComponents(1);
-    for (int ii = 0; ii < this->NumberOfInputs; ii++)
-    {
-        short *val = (short *)this->GetInput(ii)->GetScalarPointer(i, j, k); 
-        timeCourse->SetComponent(ii, 0, *val); 
-    }
-
-    return timeCourse;
+    this->ContrastVector = vec;
 }
 
 
-void vtkActivationVolumeGenerator::SetDetector(vtkActivationDetector *detector)
+void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *input, vtkImageData* output)
 {
-    this->Detector = detector;
-}
-
-
-void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
-{
-    if (this->NumberOfInputs == 0 || this->GetInput(0) == NULL)
+    if (this->GetInput() == NULL)
     {
         vtkErrorMacro( << "No input image data in this filter.");
         return;
     }
 
-    // for progress update
+    // for progress update (bar)
     unsigned long count = 0;
     unsigned long target;
 
     // Sets up properties for output vtkImageData
     int imgDim[3];  
-    this->GetInput(0)->GetDimensions(imgDim);
+    this->GetInput()->GetDimensions(imgDim);
     output->SetScalarType(VTK_FLOAT);
-    output->SetOrigin(this->GetInput(0)->GetOrigin());
-    output->SetSpacing(this->GetInput(0)->GetSpacing());
+    output->SetOrigin(this->GetInput()->GetOrigin());
+    output->SetSpacing(this->GetInput()->GetSpacing());
     output->SetNumberOfScalarComponents(1);
     output->SetDimensions(imgDim[0], imgDim[1], imgDim[2]);
     output->AllocateScalars();
-   
-    // Array holding time course of a voxel
-    vtkFloatArray *tc = vtkFloatArray::New();
-    tc->SetNumberOfTuples(this->NumberOfInputs);
-    tc->SetNumberOfComponents(1);
-
+  
     target = (unsigned long)(imgDim[0]*imgDim[1]*imgDim[2] / 50.0);
     target++;
 
-    float t = 0.0;
     int indx = 0;
-    vtkDataArray *scalarsInOutput = output->GetPointData()->GetScalars();
+    vtkDataArray *scalarsOutput = output->GetPointData()->GetScalars();
+
+    vtkDataArray *scalarsInput = this->GetInput()->GetPointData()->GetScalars();
+    int numOfEVs = (scalarsInput->GetNumberOfTuples()) / 2;
+
+    // set up the contrast vector
+    int lenOfContrastVec = this->ContrastVector->GetNumberOfTuples();
+    if (lenOfContrastVec > numOfEVs) 
+    {
+        vtkErrorMacro( << "The length of the contrast vector is greater than the number of total EVs.");
+        return;
+    }
+
+    float *contrastVec = new float [lenOfContrastVec];
+    if (contrastVec == NULL)
+    {
+        vtkErrorMacro( << "Memory allocation failed.");
+        return;
+    }
+
+    for (int i = 0; i < lenOfContrastVec; i++)
+    {
+        contrastVec[i] = this->ContrastVector->GetComponent(i, 0);
+    }
+
+
+    float *beta = new float [lenOfContrastVec]; 
+    float *cov  = new float [lenOfContrastVec];
+    if (beta == NULL || cov == NULL)
+    {
+        vtkErrorMacro( << "Memory allocation failed.");
+        return;
+    }
+
     // Voxel iteration through the entire image volume
     for (int kk = 0; kk < imgDim[2]; kk++)
     {
@@ -144,28 +147,32 @@ void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *inputs, vtkImageD
         {
             for (int ii = 0; ii < imgDim[0]; ii++)
             {
-                // Gets time course for this voxel
-                float total = 0.0;
-                for (int i = 0; i < this->NumberOfInputs; i++)
-                {
-                    short *value 
-                        = (short *)this->GetInput(i)->GetScalarPointer(ii, jj, kk);
-                    tc->SetComponent(i, 0, *value);
-                    total += *value;
-                }   
+                // computes ...
+                float newBeta = 0.0;
+                float newcov = 0.0;
+                int yy = 0;
+                for (int d = 0; d < lenOfContrastVec; d++) {
+                    beta[d] = scalarsInput->GetComponent(indx, yy++);
+                    cov[d] = scalarsInput->GetComponent(indx, yy++);
 
-                if ((total/this->NumberOfInputs) < lowerThreshold)
-                {
-                    t = 0.0;
-                }
-                else
-                {
-                    t = this->Detector->Detect(tc);
-                    // all negative t values are changed to positive 
-                    t = (t < 0.0 ? (-t) : t);
+                    beta[d] = beta[d] * contrastVec[d];
+                    newBeta = newBeta + beta[d];
+
+                    cov[d] = cov[d] * contrastVec[d];
+                    newcov = newcov + cov[d] * cov[d];
                 }
 
-                scalarsInOutput->SetComponent(indx++, 0, t);
+                float t = 0.0; 
+                if (newcov != 0.0)
+                {
+                    t = newBeta / sqrt(sqrt(newcov)); 
+                    if (t < 0.0)
+                    {
+                        t = t * (-1);
+                    }
+                }
+
+                scalarsOutput->SetComponent(indx++, 0, t);
 
                 if (!(count%target))
                 {
@@ -176,21 +183,22 @@ void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *inputs, vtkImageD
         } 
     }
 
-    GeneralLinearModel::Free();
-    tc->Delete();
+    delete [] beta;
+    delete [] cov;
+    delete [] contrastVec;
 
     // Scales the scalar values in the activation volume between 0 - 100
     vtkFloatingPointType range[2];
     float value;
     float newValue;
     output->GetScalarRange(range);
-    lowRange = range[0];
-    highRange = range[1];
+    this->lowRange = range[0];
+    this->highRange = range[1];
     for (int i = 0; i < indx; i++)
     {
-        value = scalarsInOutput->GetComponent(i, 0); 
+        value = scalarsOutput->GetComponent(i, 0); 
         newValue = 100 * (value - range[0]) / (range[1] - range[0]);
-        scalarsInOutput->SetComponent(i, 0, newValue);
+        scalarsOutput->SetComponent(i, 0, newValue);
 
         if (!(count%target))
         {

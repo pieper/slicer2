@@ -55,45 +55,37 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #include <vtkFMRIEngineConfigure.h>
-#include "vtkFloatArray.h"
-#include "vtkActivationDetector.h"
-#include "vtkMultiInputsSimpleImageToImageFilter.h"
+#include "vtkSimpleImageToImageFilter.h"
+#include "vtkIntArray.h"
 
-class  VTK_FMRIENGINE_EXPORT vtkActivationVolumeGenerator : public vtkMultiInputsSimpleImageToImageFilter
+
+class  VTK_FMRIENGINE_EXPORT vtkActivationVolumeGenerator : public vtkSimpleImageToImageFilter
 {
 public:
     static vtkActivationVolumeGenerator *New();
-    vtkTypeMacro(vtkActivationVolumeGenerator, vtkMultiInputsSimpleImageToImageFilter);
+    vtkTypeMacro(vtkActivationVolumeGenerator, vtkSimpleImageToImageFilter);
 
     // Description:
-    // Returns the time course of a specified voxel (i, j, k).
-    vtkFloatArray *GetTimeCourse(int i, int j, int k);
-
-    // Description:
-    // Sets the activation detector.
-    void SetDetector(vtkActivationDetector *detector);
-
-    // Description:
-    // Sets lower threshold.
-    void SetLowerThreshold(int low) {lowerThreshold = low;}
-
-    // Description:
-    // Gets low range. 
+    // Gets the low range. 
     float GetLowRange() {return lowRange;}
  
     // Description:
-    // Gets high range. 
+    // Gets the high range. 
     float GetHighRange() {return highRange;}
-    
+
+    // Description:
+    // Sets the contrast vector. 
+    void SetContrastVector(vtkIntArray *vec);
+
 protected:
     vtkActivationVolumeGenerator();
     ~vtkActivationVolumeGenerator();
 
-    void SimpleExecute(vtkImageData* input,vtkImageData* output);
-    vtkActivationDetector *Detector;
-    int lowerThreshold;
+    void SimpleExecute(vtkImageData *input,vtkImageData *output);
     float lowRange;
     float highRange;
+
+    vtkIntArray *ContrastVector;
 };
 
 
