@@ -61,6 +61,10 @@ vtkDistractorSource \
 vtkMrmlFiducialsNode \
 vtkMrmlEndFiducialsNode \
 vtkMrmlPointNode \
+vtkMrmlPathNode \
+vtkMrmlEndPathNode \
+vtkMrmlLandmarkNode 
+
 #vtkSurfaceProps \
 #vtkMathUtils \
 #vtkBoolTess \
