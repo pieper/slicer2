@@ -2353,8 +2353,9 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
       curvterm *= coeff_curvature;
 
       this->mean_curv      += curvterm;
-      ut = curvterm;
-    }
+      }
+    } // coeff_curvature >0
+    ut = curvterm;
 
     //--------------------------------------------------
     // Data Attachment Term
@@ -2441,8 +2442,8 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
       } // end switch
 
       this->mean_advection += imcomp;
-      ut -= imcomp;
-    }        
+    } //  fabsf(AdvectionCoeff)>1E-10
+    ut -= imcomp;
       //      g = exp(-sqrt(normcompsq)/0.3);
 
     //--------------------------------------------------
@@ -2480,8 +2481,8 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
       balloonterm *= sqrt(Gx*Gx+Gy*Gy+Gz*Gz);
 
       this->mean_balloon   += balloonterm;
-      ut -= balloonterm;
     }
+    ut -= balloonterm;
 
 
     //--------------------------------------------------
@@ -2553,6 +2554,8 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
 
       ut = min(max(StepDt*ut,-Band),Band);
       newU[p]=u0+ut;
+
+      /*
     }
     else {
       if (curvature_data!=NULL) curvature_data[p] = 0;
@@ -2561,6 +2564,7 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
       if (balloon_data !=NULL)  balloon_data  [p] = 0;
       newU[p]=u0; 
     }
+      */
 
     if (!this->touched && 
         (((this->flag[p]&NEGMINE) && newU[p]>0) || 
