@@ -81,7 +81,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.42 $} {$Date: 2003/04/29 21:54:52 $}]
+        {$Revision: 1.43 $} {$Date: 2003/06/03 20:49:24 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -518,6 +518,12 @@ proc ModelMakerTransform {volume} {
     }
 
     vtkTransform tran
+    # special trick to avoid vtk 4.2 legacy hack message 
+    # (adds a concatenated identity transform to the transform)
+    if { [info commands __dummy_transform] == "" } {
+        vtkTransform __dummy_transform
+    }
+    tran SetInput __dummy_transform
     tran Concatenate $mat
 
     vtkTransformPolyDataFilter transformer
@@ -905,14 +911,17 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     
     # Read orientation matrix and permute the images if necessary.
     vtkTransform rot
-    set matrixList [Volume($v,node) GetRasToVtkMatrix]
-    for {set row 0} { $row < 4 } {incr row} {
-        for {set col 0} {$col < 4} {incr col} {
-            [rot GetMatrix] SetElement $row $col \
-                [lindex $matrixList [expr $row*4+$col]]
-        }
+
+    # special trick to avoid vtk 4.2 legacy hack message 
+    # (adds a concatenated identity transform to the transform)
+    if { [info commands __dummy_transform] == "" } {
+        vtkTransform __dummy_transform
     }
-    [rot GetMatrix] Invert
+    rot SetInput __dummy_transform
+
+    set matrixList [Volume($v,node) GetRasToVtkMatrix]
+    eval rot SetMatrix $matrixList
+    eval rot Inverse
 
     # Threshold so the only values are the desired label.
     # But do this only for label maps
