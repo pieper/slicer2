@@ -15,7 +15,7 @@ SET (PROJECT_URL "http://www.slicer.org/")
 
 # Dart server configuration 
 SET (ROLLUP_URL "http://${DROP_SITE}/cgi-bin/slicer-rollup-dashboard.sh")
-SET (CVS_WEB_URL "http://${DROP_SITE}/cgi-bin/cvsweb.cgi/slicer/")
+SET (CVS_WEB_URL "http://${DROP_SITE}/cgi-bin/develop/viewcvs.cgi/")
 SET (CVS_WEB_CVSROOT "slicer2")
 SET (USE_DOXYGEN "Off")
 SET (DOXYGEN_URL "http://${DROP_SITE}/VTK/doc/nightly/html/" )
