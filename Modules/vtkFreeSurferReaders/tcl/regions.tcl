@@ -53,6 +53,7 @@ if { [itcl::find class regions] == "" } {
         method talairach {} {}
         method refresh {args} {}
         method umls {} {}
+        method fdemo {} {}
         method demo {} {}
     }
 }
@@ -242,8 +243,12 @@ itcl::body regions::apply {} {
         set scalars [[$Model($_id,polyData) GetPointData] GetScalars $scalaridx]
     }
 
-    set lut [Model($_id,mapper,viewRen) GetLookupTable]
-    $lut SetRampToLinear
+    set lutid [expr 1 + [llength $::Lut(idList)]]
+    lappend ::Lut(idList) $lutid
+    set ::Lut($lutid,name) "Freesurfer"
+    set lut Lut($lutid,lut)
+    catch "$lut Delete"
+    vtkLookupTable $lut
 
     set fssar fssar_$_name
     catch "$fssar Delete"
@@ -251,10 +256,21 @@ itcl::body regions::apply {} {
     $fssar SetFileName $annotfile
     $fssar SetOutput $scalars
     $fssar SetColorTableOutput $lut
-    $fssar ReadFSAnnotation
+    set ret [$fssar ReadFSAnnotation]
+    if { $ret == 6 } {
+        set fstcldir [file normalize $::PACKAGE_DIR_VTKFREESURFERREADERS/../../../tcl]
+        $fssar SetColorTableFileName $fstcldir/Simple_surface_labels2002.txt
+        $fssar UseExternalColorTableFileOn
+        set ret [$fssar ReadFSAnnotation]
+        puts $ret
+    }
 
     array set _labels [$fssar GetColorTableNames]
+    if { ![info exists _labels(-1)] } {
+        set _labels(-1) "unknown"
+    }
 
+    ModelsSetScalarsLut $_id $lutid
     set ::Model(scalarVisibilityAuto) 0
     set entries [lsort -integer [array names _labels]]
     MainModelsSetScalarRange $_id [lindex $entries 0] [lindex $entries end]
@@ -390,6 +406,13 @@ proc regions::dist {currmin x0 y0 z0 x1 y1 z1} {
 itcl::body regions::findptscalars {} {
     global Point Model
 
+    # set some fiducials defaults for easier reading
+    set fid $::Fiducials(activeListID)
+    FiducialsSetScale $fid 3
+    Fiducials($fid,node) SetTextSize 8.5
+    Fiducials($fid,node) SetColor 1 1 1
+    set $::Fiducials(textSelColor) "1 1 0"
+
     $_labellistbox delete 0 end
     set _ptlabels ""
     set _ptscalars ""
@@ -420,13 +443,19 @@ itcl::body regions::findptscalars {} {
         set fsurferlab $_labels($s)
         set umlslabel0 $fsurferlab
         $this umls
+        set ptinfo ""
         if { $mindist > 2} {
-           $_labellistbox insert end "pt $id Not on Surface Model" 
+            set ptinfo "pt $id Not on Surface Model" 
         } elseif { $umlsid == "" } {
-           $_labellistbox insert end "pt $id $fsurferlab ($s)"
+            set ptinfo "pt $id $fsurferlab ($s)"
         } else {
-           $_labellistbox insert end "pt $id $fsurferlab ($s) - Freesurfer UMLS ID $umlsid"
+            set ptinfo "pt $id $fsurferlab ($s) - UMLS ID $umlsid"
         }
+        $_labellistbox insert end $ptinfo
+        # put the label on two lines for the fiducial
+        regsub -all -- "-" $ptinfo "\n        " ptinfo
+        Point($id,node) SetName $ptinfo
+
         $this talairach
         
         set umlslabel0 $talgyrlab
@@ -440,7 +469,8 @@ itcl::body regions::findptscalars {} {
         if { $Brodmannlab != ""} {
             $_labellistbox insert end "pt $id $Brodmannlab - $range mm"
         } 
-}
+    }
+    FiducialsUpdateMRML
 }
 
 itcl::body regions::umls {} {
@@ -454,18 +484,22 @@ itcl::body regions::umls {} {
         set label($n,2) [lindex $labelline 3]
         set n [expr ($n + 1)]
         gets $umls line
-        }
+    }
     close $umls
     for {set i 0} {$i < $n} {incr i} {
         if {$umlslabel0 == $label($i,0)} {
             set umlsid $label($i,1)
-    }
+        }
     }
 }
 
 itcl::body regions::talairach {} {
     global Point Model
 
+    if { ![file exists $talfile] } {
+        puts stderr "no talairach file"
+        return
+    }
     #get coordinate from Slicer
     scan $xyz "%f %f %f" x0 y0 z0
         
@@ -631,6 +665,27 @@ itcl::body regions::refresh {args} {
     }
 }
 
+proc QueryAtlas_fdemo {} {
+    
+    set fstcldir [file normalize $::PACKAGE_DIR_VTKFREESURFERREADERS/../../../tcl]
+
+    regions r
+
+    r configure -arrow $fstcldir/QueryA.html
+    r configure -arrowout [r cget -tmpdir]/QueryAout.html
+
+    set mydata c:/pieper/bwh/data/staple/average7
+
+    vtkFreeSurferReadersLoadModel $mydata/surf/lh.pial
+    r configure -annotfile $mydata/label/lh_aparc.annot 
+    r configure -talfile $mydata/mri/transforms/talairach.xfm
+    r configure -arrow "$fstcldir/QueryA.html"
+    r configure -arrowout "$fstcldir/QueryAout.html"
+    r configure -umlsfile "$fstcldir/label2UMLS.txt"
+    r configure -javapath [file normalize "$fstcldir/../talairach"]
+    r configure -model lh-pial
+    r apply
+}
 itcl::body regions::demo {} {
     
     # - read in lh.pial 
