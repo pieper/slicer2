@@ -13,17 +13,22 @@ if { [itcl::find class regions] == "" } {
         public variable talfile "" {}
         public variable browser {/usr/bin/mozilla} {}
         public variable site "google" {}
-        public variable afnidir "/home/ajoyner/apps/Release"
+        public variable wlabel "Brodmann" {}
         public variable arrow "" {}
         public variable arrowout "" {}
+        public variable javapath "" {}
         public variable tmpdir "" {}
+        public variable fsurferlab "" {}
+        public variable talgyrlab "" {} 
+        public variable Brodmannlab "" {}
+        public variable range "" {}
         public variable umlsfile "" {}
         public variable umlslabel0 "" {}
         public variable umlslabel1 "" {}
         public variable umlsid "" {}
-        variable _Blabel ""
-
+        
         variable _sites "google arrowsmith pubmed jneurosci ibvd mediator all"
+        variable _wlabels "Brodmann Talairach Freesurfer" 
         variable _terms ""
 
         variable _name ""
@@ -133,6 +138,12 @@ itcl::body regions::constructor {args} {
         $cs.site insert end $s
     }
     pack $cs.site -side left
+
+    ::iwidgets::Optionmenu $cs.wlabel -labeltext "Label Type:" -command "$this configure -wlabel \[$cs.wlabel get\]"
+    foreach s $_wlabels {
+        $cs.wlabel insert end $s
+    }
+    pack $cs.wlabel -side left
 
     button $cs.query -text "Query" -command "$this query"
     pack $cs.query -side left
@@ -281,29 +292,31 @@ itcl::body regions::query {} {
             }
         }
     }
-
-
-    #Create Pubmed query
-    if { $_Blabel != "" } {
-        set BrodSwitch [split [lindex $_Blabel 2]]
-        puts [lindex $BrodSwitch 0]
-        puts "$_Blabel"
-        if { [lindex $_Blabel 2] == "*" } {
-            set terms [lindex $_Blabel 0]
-        } elseif { [lindex $BrodSwitch 0] == "Brodmann" } {
-            set area [lindex $BrodSwitch 2]
-            set term2 [lindex $_Blabel 0]
-            if { $site == "pubmed" } {   
-                set terms "\"BA $area\" NOT (barium OR (ba AND \"2+\")) OR (Brodmann AND $area) OR ($term2)"
-            } elseif { $site == "arrowsmith" } {
-                set termA "&quot BA $area &quot NOT (barium OR (ba AND &quot 2+ &quot)) OR (Brodmann AND $area) AND ($term2)"
-            } elseif { $site == "jneurosci" } {
-               set terms "\"BA $area\" OR (Brodmann AND $area) AND ($term2)"
-            } else { 
-                set terms [lindex $_Blabel 2]
-                set termA [lindex $_Blabel 2]
+    switch $wlabel {
+           "Brodmann" {
+           #Create Pubmed query
+           if { $Brodmannlab != "" } {
+              set BrodSwitch [split $Brodmannlab]
+              set area [lindex $BrodSwitch 2]
+              if { $site == "pubmed" } {   
+                  set terms "\"BA $area\" NOT (barium OR (ba AND \"2+\")) OR (Brodmann AND $area)"
+              } elseif { $site == "arrowsmith" } {
+                  set terms "&quot BA $area &quot NOT (barium OR (ba AND &quot 2+ &quot)) OR (Brodmann AND $area)"
+              } elseif { $site == "jneurosci" } {
+                  set terms "\"BA $area\" OR (Brodmann AND $area)"
+              } else { 
+                  set terms $Brodmannlab
+                }
+              }
             }
-        }
+            
+           "Talairach" {
+              set terms $talgyrlab 
+           }
+
+           "Freesurferlab" {
+              set terms $fsurferlab
+           }
     }
     regsub -all "{" $terms "" terms
     regsub -all "}" $terms "" terms
@@ -323,7 +336,7 @@ itcl::body regions::query {} {
                 puts $queryout $line
             }
             seek $queryout 0 current
-            puts $queryout "<input type=\"hidden\" name=\"A-query\" value=\"$termA\" /> $termA \n" 
+            puts $queryout "<input type=\"hidden\" name=\"A-query\" value=\"$terms\" /> $terms \n" 
             gets $query line
             gets $query line
             while { ![eof $query] } {
@@ -404,34 +417,29 @@ itcl::body regions::findptscalars {} {
         set s [$scalars GetValue $minpt]
         lappend _ptscalars $s
         lappend _ptlabels $_labels($s)
-        set umlslabel0 $_labels($s)
+        set fsurferlab $_labels($s)
+        set umlslabel0 $fsurferlab
         $this umls
         if { $mindist > 2} {
            $_labellistbox insert end "pt $id Not on Surface Model" 
         } elseif { $umlsid == "" } {
-           $_labellistbox insert end "pt $id $_labels($s) ($s)"
+           $_labellistbox insert end "pt $id $fsurferlab ($s)"
         } else {
-           $_labellistbox insert end "pt $id $_labels($s) ($s) - Freesurfer UMLS ID $umlsid"
+           $_labellistbox insert end "pt $id $fsurferlab ($s) - Freesurfer UMLS ID $umlsid"
         }
         $this talairach
-        set umlslabel0 [lindex $_Blabel 0]
+        
+        set umlslabel0 $talgyrlab
         set umlsid ""
         $this umls
-        if { [lindex $_Blabel 2] != "" && $umlsid == "" } {
-            $_labellistbox insert end "pt $id [lindex $_Blabel 0] "
-        } elseif { [lindex $_Blabel 2] != "" && $umlsid != "" } {
-            $_labellistbox insert end "pt $id [lindex $_Blabel 0] - Talairach UMLS ID $umlsid"
+        if { $talgyrlab != "" && $umlsid == "" } {
+            $_labellistbox insert end "pt $id $talgyrlab"
+        } elseif { $talgyrlab != "" && $umlsid != "" } {
+            $_labellistbox insert end "pt $id $talgyrlab - Talairach UMLS ID $umlsid"
         }
-        set umlslabel0 [lindex $_Blabel 2]
-        set umlsid ""
-        $this umls
-        if { [lindex $_Blabel 2] != "" && $umlsid == "" } {
-            $_labellistbox insert end "pt $id [lindex $_Blabel 2] - [lindex $_Blabel 3] mm"
-
-        } elseif { [lindex $_Blabel 2] != "" && $umlsid != "" } {
-            $_labellistbox insert end "pt $id [lindex $_Blabel 2] - [lindex $_Blabel 3]mm - Talairach UMLS ID $umlsid"
-        }
-
+        if { $Brodmannlab != ""} {
+            $_labellistbox insert end "pt $id $Brodmannlab - $range mm"
+        } 
 }
 }
 
@@ -457,11 +465,6 @@ itcl::body regions::umls {} {
 
 itcl::body regions::talairach {} {
     global Point Model
-
-    if { ![file exists $afnidir] } {
-        set _Blabel ""
-        return
-    }
 
     #get coordinate from Slicer
     scan $xyz "%f %f %f" x0 y0 z0
@@ -575,12 +578,11 @@ itcl::body regions::talairach {} {
     set tal(1) [expr round($tal(1))]
     set tal(2) [expr round($tal(2))]
     set tal(3) [expr round($tal(3))]
-    set path "/home/ajoyner/docs/regions/java/talairach"
     puts "Talairached Coord $tal(1) $tal(2) $tal(3)"
     puts "MNI Coord $mtal(1) $mtal(2) $mtal(3)"
     #open socket, send coordinate to Talairach Daemon query
     if {[catch {set sock [socket localhost 19000]}]} {
-         exec "$path/runtd.sh" &
+         exec "$javapath/runtd.sh" &
          }
     while {[catch {set sock [socket localhost 19000]}]} {
          after 500
@@ -592,12 +594,9 @@ itcl::body regions::talairach {} {
     set lab [gets $sock]
     close $sock
     set lab [split $lab ,]
-    set _Blabel ""
-    lappend _Blabel [lindex $lab 2]
-    lappend _Blabel [lindex $lab 3]
-    lappend _Blabel [lindex $lab 4]
-    lappend _Blabel [lindex $lab 5]
-    puts "$_Blabel"
+    set talgyrlab [lindex $lab 2]
+    set Brodmannlab [lindex $lab 4]
+    set range [lindex $lab 5]
 }
 
 itcl::body regions::refresh {args} {
@@ -629,17 +628,23 @@ itcl::body regions::demo {} {
     $this configure -arrowout [$this cget -tmpdir]/QueryAout.html
 
     set mydata c:/pieper/bwh/data/MGH-Siemens15-SP.1-uw
+    #set slicer c:/???/slicer2/Modules/vtkFreeSurferReaders
     if { [file exists $mydata] } {
         $this configure -annotfile $mydata/label/rh.aparc.annot 
         $this configure -talfile $mydata/mri/transforms/talairach.xfm
-
+        $this configure -arrow "$slicer/tcl/QueryA.html"
+        $this configure -arrowout "$slicer/tcl/QueryAout.html"
+        $this configure -umlsfile "$slicer/tcl/label2UMLS.txt"
+        $this configure -javapath "$slicer/talairach"
+        $this configure -model lh-pial
     } else {
-       
+        set ucsddata /home/ajoyner/docs/regions
         $this configure -annotfile "/home/ajoyner/brains/MGH-Siemens15-SP.1-uw/label/lh.aparc.annot"
         $this configure -talfile "/home/ajoyner/brains/MGH-Siemens15-SP.1-uw/mri/transforms/talairach.xfm"
-        $this configure -arrow "/home/ajoyner/docs/regions/QueryA.html"
-        $this configure -arrowout "/home/ajoyner/docs/regions/QueryAout.html"
-        $this configure -umlsfile "/home/ajoyner/docs/regions/label2UMLS.txt"
+        $this configure -arrow "$ucsddata/QueryA.html"
+        $this configure -arrowout "$ucsddata/QueryAout.html"
+        $this configure -umlsfile "$ucsddata/label2UMLS.txt"
+        $this configure -javapath "$ucsddata/java/talairach"
         $this configure -model lh-pial
     }
     $this apply
