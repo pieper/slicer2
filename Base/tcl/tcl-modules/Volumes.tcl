@@ -528,7 +528,7 @@ Ron, the interpolation button won't work without downloading dll's again.
 	# Props->Bot->Header->Entry frame
 	#-------------------------------------------
 
-	# Entry fields
+	# Entry fields (the loop makes a frame for each variable)
 	foreach param "firstPattern resolution \
 		pixelSize sliceThickness sliceSpacing \
 		gantryDetectorTilt" \
@@ -549,7 +549,7 @@ Ron, the interpolation button won't work without downloading dll's again.
 		pack $f.e$param -side left -padx $Gui(pad) -expand 1 -fill x
 	}
 
-	#Orientation Menu
+	# Orientation Menu
 	set f $fProps.fBot.fHeader.fEntry
 
 	set param "order"
@@ -714,7 +714,16 @@ proc VolumesPropsApply {} {
 		} else {
 			if {[GetHeaderInfo [file join $Path(root) $Volume(first)] \
 				$Volume(last) $n 1] == "-1"} {
-			    puts "error: no header info"}
+			    set msg "No header information found. Please enter header info manually."
+			    puts $msg
+			    tk_messageBox -message $msg
+			    # set readHeaders to manual
+			    set Volume(readHeaders) "0"
+			    # switch to vols->props->header frame
+			    set Volume(propertyType) Header
+			    VolumesSetPropertyType
+			    return
+			}
 		}
 
 		$n SetName $Volume(name)
