@@ -62,12 +62,11 @@ vtkImagePlot plot
   set v [plot MapBinToScalar $b]
   puts "b=$b --> v=$v"
 
-
 vtkImageViewer viewer
 viewer SetInput [plot GetOutput]
 viewer SetZSlice 0 
-viewer SetColorWindow 2000
-viewer SetColorLevel 1000
+viewer SetColorWindow 1516
+viewer SetColorLevel -333
 
 #make interface
 source [file join [file dirname [info script]] WindowLevelInterface.tcl]

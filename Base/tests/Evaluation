@@ -1,2 +1,3 @@
-TestImageZoom2D.tcl    OK   bad_test   vtkImageZoom2D
+TestImageZoom2D.tcl    OK   bad_test    vtkImageZoom2D
 TestImageCloseUp2D.tcl OK   goot_test   vtkImageCloseUp2D
+TestImagePlot          OK   looks_good  vtkImageBimodalAnalysis_vtkImagePlot
