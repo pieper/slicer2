@@ -59,7 +59,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "itkImageRegionIterator.h"
 #include "itkQuaternionRigidTransform.h"
 #include "itkQuaternionRigidTransformGradientDescentOptimizer.h"
-#include "itkKLHistogramImageToImageMetric.h"
+#include "itkKLCompareHistogramImageToImageMetric.h"
 #include "itkLinearInterpolateImageFunction.h"
 #include "itkImageRegistrationMethod.h"
 #include "itkNumericTraits.h"
@@ -137,12 +137,13 @@ void vtkITKKullbackLeiblerTransform::PrintSelf(ostream& os, vtkIndent indent)
     }
   os << "TrainingTransform: " << this->TrainingTransform << endl;
   if(this->TrainingTransform)
-    {
+    {           
     this->TrainingTransform->PrintSelf(os,indent.GetNextIndent());
     }
   os << "HistSizeSource: " << this->HistSizeSource << endl;
   os << "HistSizeTarget: " << this->HistSizeTarget << endl;
   os << "HistEpsilon: "    << this->HistEpsilon    << endl;
+
 }
 
 //----------------------------------------------------------------------------
@@ -170,9 +171,11 @@ static void vtkITKKLExecute(vtkITKKullbackLeiblerTransform *self,
   // Set Up the KL Metric
   // --------------------------------------
 
+
+
   typedef itk::AffineTransform< double, 3 > TrainingTransformType;
   TrainingTransformType::Pointer ITKTrainingTransform = TrainingTransformType::New();
-  typedef TrainingTransformType::ParametersType ParametersType;
+  typedef typename TrainingTransformType::ParametersType ParametersType;
 
   ParametersType parameters( ITKTrainingTransform->GetNumberOfParameters() );
   
@@ -198,10 +201,14 @@ static void vtkITKKLExecute(vtkITKKullbackLeiblerTransform *self,
   ITKTrainingTransform->SetParameters(parameters);
 
 #if defined(__GNUC__)
-# if (__GNUC__ >= 30000)
+#if (__GNUC__ >= 3)
   KLRegistrator->SetTrainingTransform(ITKTrainingTransform);
-# endif
+#else
+ self->SetError(2);
+ return;
 #endif
+#endif
+  
   KLRegistrator->SetTrainingFixedImage(VTKtoITKImage(self->GetTrainingTargetImage(),(RegistratorType::FixedImageType *)(NULL)));
   KLRegistrator->SetTrainingMovingImage(VTKtoITKImage(self->GetTrainingSourceImage(),(RegistratorType::MovingImageType *)(NULL)));
 
@@ -209,7 +216,7 @@ static void vtkITKKLExecute(vtkITKKullbackLeiblerTransform *self,
   //  KLRegistrator->GetTrainingFixedImage()
   //  KLRegistrator->GetTrainingMovingImage()->UnRegister();
 
-  typedef RegistratorType::HistogramSizeType HistogramSizeType;
+  typedef typename RegistratorType::HistogramSizeType HistogramSizeType;
 
   HistogramSizeType histSize;
   histSize[0] = self->GetHistSizeSource();
@@ -217,6 +224,8 @@ static void vtkITKKLExecute(vtkITKKullbackLeiblerTransform *self,
   KLRegistrator->SetHistogramSize(histSize);
 
   KLRegistrator->SetHistogramEpsilon(self->GetHistEpsilon());
+
+  self->Print(std::cout);
 
   // ----------------------------------------
   // Do the Registratioon Configuration
