@@ -69,8 +69,9 @@ IF (VTKRIGIDINTENSITYREGISTRATION_CAN_BUILD)
   #
 
   SUBDIRS(cxx)
-  SUBDIRS(KullbackLeibler)
-  SUBDIRS(MutualInformation)
+  # commented out and everything is now in one library.
+  #SUBDIRS(KullbackLeibler)
+  #SUBDIRS(MutualInformation)
 
   CONFIGURE_FILE(${VTKRIGIDINTENSITYREGISTRATION_SOURCE_DIR}/test/tcl/TestBase.tcl.in
                  ${VTKRIGIDINTENSITYREGISTRATION_SOURCE_DIR}/test/tcl/TestBase.tcl

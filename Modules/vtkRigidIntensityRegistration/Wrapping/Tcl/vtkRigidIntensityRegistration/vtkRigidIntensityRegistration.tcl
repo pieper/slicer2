@@ -5,8 +5,7 @@ package require vtk
 # library is uniquely available through this module
 #
 
-if {[::vtk::load_component vtkMutualInformationRegistrationTCL] == "" &&
-    [::vtk::load_component vtkKullbackLeiblerRegistrationTCL] == "" } {
+if {[::vtk::load_component vtkRigidIntensityRegistrationTCL] == "" } {
 
     global PACKAGE_DIR_VTKRigidIntensityRegistration
     package provide vtkRigidIntensityRegistration 1.0
