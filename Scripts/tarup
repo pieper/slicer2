@@ -8,6 +8,13 @@
 # NOTE: You must compile Tcl, Tk, and VTK first and set 
 # their paths below.
 
+# another note:  the following need to be manually grabbed and put 
+# into the install package (or added to this script)...
+
+# program/loc.txt
+# program/bin/print_header
+# for BWH only : program/mi-bin and servers/SignaSP/spl_server
+
 # Paths to your Tcl and Tk
 setenv MY_TCL /export/bigsur/vtk/tcl8.3.0/
 setenv MY_TK /export/bigsur/vtk/tk8.3.0/
