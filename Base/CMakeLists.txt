@@ -69,3 +69,6 @@ IF (VTKSLICER_CAN_BUILD)
   INCLUDE_DIRECTORIES(${VTKSLICER_BINARY_DIR})
 
 ENDIF (VTKSLICER_CAN_BUILD)
+
+# Include the standard Dart testing module
+INCLUDE (${CMAKE_ROOT}/Modules/Dart.cmake)
