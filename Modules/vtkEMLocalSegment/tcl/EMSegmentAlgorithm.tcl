@@ -109,27 +109,25 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet} {
       # Setup PCA parameter
       if {$EMSegment(Cattrib,$i,PCAMeanData) !=  $Volume(idNone) } {
          set NumEigenModes [llength $EMSegment(Cattrib,$i,PCAEigen)]
-         vtkImagePCAApply EMSegment(Cattrib,$i,vtkImagePCAApply) 
-         # Kilan: first Rotate and translate the image before setting them in vtkImagePCAApply
+         # Kilan: first Rotate and translate the image before setting them 
          # Remember to first calculathe first the inverse of the two because we go from case2 to patient and data is given form patient to case2
+     EMSegment(vtkEMSegment) SetPCANumberOfEigenModes $NumEigenModes
 
-         EMSegment(Cattrib,$i,vtkImagePCAApply) SetMean [Volume($EMSegment(Cattrib,$i,PCAMeanData),vol) GetOutput]
-         foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
-           EMSegment(Cattrib,$i,vtkImagePCAApply)  SetEigenVectorIndex [lindex $EigenList 0]  [Volume([lindex $EigenList 2],vol) GetOutput] 
+         EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume($EMSegment(Cattrib,$i,PCAMeanData),vol) GetOutput]
+      incr NumInputImagesSet
+
+     foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
+             EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet   [Volume([lindex $EigenList 2],vol) GetOutput] 
+         incr NumInputImagesSet
          }
           
          # Have to do it seperate otherwise EigenValues get deleted 
          foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
-            EMSegment(Cattrib,$i,vtkImagePCAApply)  SetEigenValue [lindex $EigenList 0] [lindex $EigenList 1] 
+             EMSegment(vtkEMSegment)  SetPCAEigenValue [lindex $EigenList 0] [lindex $EigenList 1] 
          }
-         EMSegment(Cattrib,$i,vtkImagePCAApply) Update
-         EMSegment(vtkEMSegment) SetPCAShapePtr     EMSegment(Cattrib,$i,vtkImagePCAApply)
          eval EMSegment(vtkEMSegment) SetPCAScale   $EMSegment(Cattrib,$i,PCAScale)
-     EMSegment(vtkEMSegment) SetPCAMaxDist      $EMSegment(Cattrib,$i,PCAMaxDist)
-     EMSegment(vtkEMSegment) SetPCADistVariance $EMSegment(Cattrib,$i,PCADistVariance)
-         # Not Necessary: just if you do not want ot use all eignevectors  then set it 
-         # puts "NumberOfEigenModes [llength  $EMSegment(Cattrib,$i,PCAEigen)] "
-     #  EMSegment(vtkEMSegment) SetPCANumberOfEigenModes [llength  $EMSegment(Cattrib,$i,PCAEigen)] 
+         EMSegment(vtkEMSegment) SetPCAMaxDist      $EMSegment(Cattrib,$i,PCAMaxDist)
+         EMSegment(vtkEMSegment) SetPCADistVariance $EMSegment(Cattrib,$i,PCADistVariance)
       } 
     }
     EMSegment(vtkEMSegment) SetTissueProbability $EMSegment(Cattrib,$i,Prob)
@@ -208,23 +206,6 @@ proc EMSegmentSetVtkClassSettingOld {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC  EMSegmentDeletevtkImagePCAApply 
-# After each segmentation we need to delete all vtkImagePCAApply filters
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentDeletevtkImagePCAApply { SuperClass } {
-  global EMSegment
-  foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
-    if {$EMSegment(Cattrib,$i,IsSuperClass)} {
-      EMSegmentDeletevtkImagePCAApply $i 
-    } else {
-    catch {EMSegment(Cattrib,$i,vtkImagePCApply) Delete}
-    }
-  }
-} 
- 
-#-------------------------------------------------------------------------------
 # .PROC EMSegmentAlgorithmStart
 # Sets up the segmentation algorithm
 # .ARGS
@@ -289,9 +270,11 @@ proc EMSegmentAlgorithmStart { } {
        eval EMSegment(vtkEMSegment) SetSegmentationBoundaryMax $EMSegment(SegmentationBoundaryMax,0) $EMSegment(SegmentationBoundaryMax,1) $EMSegment(SegmentationBoundaryMax,2)
    }
 
-   EMSegment(vtkEMSegment) SetPrintIntermediateResults  $EMSegment(PrintIntermediateResults) 
-   EMSegment(vtkEMSegment) SetPrintIntermediateSlice  $EMSegment(PrintIntermediateSlice) 
+   EMSegment(vtkEMSegment) SetPrintIntermediateResults    $EMSegment(PrintIntermediateResults) 
+   EMSegment(vtkEMSegment) SetPrintIntermediateSlice      $EMSegment(PrintIntermediateSlice) 
    EMSegment(vtkEMSegment) SetPrintIntermediateFrequency  $EMSegment(PrintIntermediateFrequency) 
+   EMSegment(vtkEMSegment) SetPrintPCAParameters          $EMSegment(PrintPCAParameters) 
+   EMSegment(vtkEMSegment) SetPrintDICEResults            $EMSegment(PrintDICEResults) 
 
    return $NumInputImagesSet
 }
@@ -387,6 +370,5 @@ proc EMSegmentTrainCIMField {} {
 #-------------------------------------------------------------------------------
 proc EMSegmentAlgorithmDeletevtkEMSegment { } {
      global EMSegment
-     EMSegmentDeletevtkImagePCAApply 0
      EMSegment(vtkEMSegment) Delete
  }
