@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: MultiResMIRegistration.cxx,v $
   Language:  C++
-  Date:      $Date: 2003/12/07 22:32:41 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2004/01/02 21:11:39 $
+  Version:   $Revision: 1.2 $
 
   Copyright (c) 2002 Insight Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -19,6 +19,7 @@
 
 #include "SimpleApp.h"
 #include "itkExceptionObject.h"
+#include "vtkRigidIntensityRegistrationConfigure.h"
 
 
 int main(int argc, char *argv[])
