@@ -3182,17 +3182,17 @@ proc EndoscopicAddLandmarkDirectionSpecified {{coords ""} {list ""}} {
         if { $Endoscopic(path,activeId) == "None" } {
             set numList $Endoscopic(path,nextAvailableId)
             set list Path${numList}_
-        EndoscopicCreateAndActivatePath $list
-        incr Endoscopic(path,nextAvailableId)
+            EndoscopicCreateAndActivatePath $list
+            incr Endoscopic(path,nextAvailableId)
         } else {
-        set id $Endoscopic(path,activeId)
-        set list $Endoscopic($id,path,name)
-    }
+            set id $Endoscopic(path,activeId)
+            set list $Endoscopic($id,path,name)
+        }
     } else {
-    if {[info exists Fiducials($list,fid)] == 0} {    
-        # if the list doesn't exist, create it
-        EndoscopicCreateAndActivatePath $list
-    }
+        if {[info exists Fiducials($list,fid)] == 0} {    
+            # if the list doesn't exist, create it
+            EndoscopicCreateAndActivatePath $list
+        }
     }
     # make that list active
     FiducialsSetActiveList $list
@@ -3243,9 +3243,9 @@ proc EndoscopicUpdateLandmark {} {
     # update the selected pid
     set pid $Endoscopic(selectedFiducialPoint) 
     if {$pid != ""} {
-    Point($pid,node) SetXYZ [$cam_mat GetElement 0 3] [$cam_mat GetElement 1 3] [$cam_mat GetElement 2 3]
-    Point($pid,node) SetFXYZ [$fp_mat GetElement 0 3] [$fp_mat GetElement 1 3] [$fp_mat GetElement 2 3]
-    MainUpdateMRML
+        Point($pid,node) SetXYZ [$cam_mat GetElement 0 3] [$cam_mat GetElement 1 3] [$cam_mat GetElement 2 3]
+        Point($pid,node) SetFXYZ [$fp_mat GetElement 0 3] [$fp_mat GetElement 1 3] [$fp_mat GetElement 2 3]
+        MainUpdateMRML
     }
 }
 
