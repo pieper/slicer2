@@ -76,7 +76,7 @@ proc GuiInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo Gui \
-    {$Revision: 1.47 $} {$Date: 2003/05/21 19:45:34 $}]
+    {$Revision: 1.48 $} {$Date: 2003/06/06 19:27:47 $}]
 
 
     # enable tooltips by default.  This should check user preferences somehow.
@@ -534,14 +534,14 @@ proc MakeVTKImageWindow {name {input ""}} {
 proc ExposeTkImageViewer {widget x y w h} {
 
    # Do not render if we are already rendering
-   if {[GetWidgetVariableValue $widget Rendering] == 1} {
+   if {[::vtk::get_widget_variable_value $widget Rendering] == 1} {
       return
    }
 
    # empty the queue of any other expose events
-   SetWidgetVariableValue $widget Rendering 1
+   ::vtk::set_widget_variable_value $widget Rendering 1
    update
-   SetWidgetVariableValue $widget Rendering 0
+   ::vtk::set_widget_variable_value $widget Rendering 0
 
    # ignore the region to redraw for now.
    $widget Render

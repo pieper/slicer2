@@ -885,14 +885,14 @@ proc MainInteractorThreshold {s x y xLast yLast} {
 proc MainInteractorExpose {widget} {
 
    # Do not render if we are already rendering
-   if {[GetWidgetVariableValue $widget Rendering] == 1} {
+   if {[::vtk::get_widget_variable_value $widget Rendering] == 1} {
       return
    }
 
    # empty the que of any other expose events
-   SetWidgetVariableValue $widget Rendering 1
+   ::vtk::set_widget_variable_value $widget Rendering 1
    update
-   SetWidgetVariableValue $widget Rendering 0
+   ::vtk::set_widget_variable_value $widget Rendering 0
 
    # ignore the region to redraw for now.
    $widget Render
