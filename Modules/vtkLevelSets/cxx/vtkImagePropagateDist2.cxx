@@ -380,10 +380,11 @@ void vtkImagePropagateDist2::IsoSurfDist3D( )
 
   fprintf(stderr,"IsoSurf3D() compute \n");
 
-  for(z=1; z<=tz-2; z++) {
-  for(y=1; y<=ty-2; y++) {
+  // for safety on the list...
+  for(z=1; z<=tz-3; z++) {
+  for(y=1; y<=ty-3; y++) {
   inPtr  = (float*) inputImage ->GetScalarPointer(1,y,z);
-  for(x=1; x<=tx-2; x++) {
+  for(x=1; x<=tx-3; x++) {
 
     val0 = *inPtr-threshold;
     sign = (val0>0); 
@@ -1433,10 +1434,18 @@ void vtkImagePropagateDist2::new3D_update_neighbors2( const int& k,  int* n, flo
 {
 
     register int       p,tp,pn;
-    register float    dxp,dyp,dzp;
+    register float     dxp,dyp,dzp;
+    register int       p0,x0,y0,z0;
 
     p=list0[k];
     list_elts[p].GetPosTrack(dxp,dyp,dzp,tp);
+
+    x0 = p%tx;
+    p0 = (p-x0)/tx;
+    y0 = p0%ty;
+    z0 = (p0-y0)/ty;
+  
+    // Check for image limits...
 
     register float    dxpp = dxp+1;
     register float    dxpm = dxp-1;
@@ -1464,6 +1473,8 @@ void vtkImagePropagateDist2::new3D_update_neighbors2( const int& k,  int* n, flo
 
     register float    val; 
 
+    // This procedure is not safe because we can endup out of the image ...
+
     
     // Check list1 for 26 additions
     CheckIncList1(26);
@@ -1473,7 +1484,7 @@ void vtkImagePropagateDist2::new3D_update_neighbors2( const int& k,  int* n, flo
 #define DISTANCE(x,y,z) (x*x+y*y+z*z) 
     //#define DISTANCE(x,y,z) ComputeDistance(x,y,z)
 
-#define DIRECT_NEIGHBOR(incim,dx1,dy1,dz1,sum) \
+#define DIRECT_NEIGHBOR(incim,dx1,dy1,dz1,sum) {    \
     pn = p+incim; \
     switch (list_elts[pn].GetState()) { \
     case POINT_NOT_PARSED:  { \
@@ -1499,43 +1510,59 @@ void vtkImagePropagateDist2::new3D_update_neighbors2( const int& k,  int* n, flo
       if (val>neigh_dist) neighbor.SetPosTrack( dx1,dy1,dz1, tp,val);\
     }\
       }  break;\
-    } // end switch
+    }} // end switch // end of DEFINE block 
 
     // -X+Y+Z+ -X+Y+Z- -X-Y-Z+ -X+-Y-Z-
-    DIRECT_NEIGHBOR(n[0],  dxpm, dypm, dzpm, dxp2m+dyp2m+dzp2m)
-    DIRECT_NEIGHBOR(n[1],  dxpm, dypm, dzp , dxp2m+dyp2m      )
-    DIRECT_NEIGHBOR(n[2],  dxpm, dypm, dzpp, dxp2m+dyp2m+dzp2p)
+    if (x0>0) {
+      if (y0>0) {
+        if (z0>0)  DIRECT_NEIGHBOR(n[0],  dxpm, dypm, dzpm, dxp2m+dyp2m+dzp2m)
+                   DIRECT_NEIGHBOR(n[1],  dxpm, dypm, dzp , dxp2m+dyp2m      )
+    if (z0<tz) DIRECT_NEIGHBOR(n[2],  dxpm, dypm, dzpp, dxp2m+dyp2m+dzp2p)
+      }
 
-    DIRECT_NEIGHBOR(n[3],  dxpm, dyp,  dzpm, dxp2m      +dzp2m)
-    DIRECT_NEIGHBOR(  -1,  dxpm, dyp,  dzp , dxp2m            )
-    DIRECT_NEIGHBOR(n[5],  dxpm, dyp,  dzpp, dxp2m      +dzp2p)
+      if (z0>0)  DIRECT_NEIGHBOR(n[3],  dxpm, dyp,  dzpm, dxp2m      +dzp2m)
+                 DIRECT_NEIGHBOR(  -1,  dxpm, dyp,  dzp , dxp2m            )
+      if (z0<tz) DIRECT_NEIGHBOR(n[5],  dxpm, dyp,  dzpp, dxp2m      +dzp2p)
 
-    DIRECT_NEIGHBOR(n[6],  dxpm, dypp, dzpm, dxp2m+dyp2p+dzp2m)
-    DIRECT_NEIGHBOR(n[7],  dxpm, dypp, dzp , dxp2m+dyp2p      )
-    DIRECT_NEIGHBOR(n[8],  dxpm, dypp, dzpp, dxp2m+dyp2p+dzp2p)
+      if (y0<ty) {
+        if (z0>0)  DIRECT_NEIGHBOR(n[6],  dxpm, dypp, dzpm, dxp2m+dyp2p+dzp2m)
+                   DIRECT_NEIGHBOR(n[7],  dxpm, dypp, dzp , dxp2m+dyp2p      )
+        if (z0<tz) DIRECT_NEIGHBOR(n[8],  dxpm, dypp, dzpp, dxp2m+dyp2p+dzp2p)
+      }
+    }
 
-    DIRECT_NEIGHBOR(n[9],  dxp,  dypm, dzpm,       dyp2m+dzp2m)
-    DIRECT_NEIGHBOR( -tx,  dxp,  dypm, dzp ,       dyp2m      )
-    DIRECT_NEIGHBOR(n[11], dxp,  dypm, dzpp,       dyp2m+dzp2p)
+    if (y0>0) {
+      if (z0>0)  DIRECT_NEIGHBOR(n[9],  dxp,  dypm, dzpm,       dyp2m+dzp2m)
+                 DIRECT_NEIGHBOR( -tx,  dxp,  dypm, dzp ,       dyp2m      )
+      if (z0<tz) DIRECT_NEIGHBOR(n[11], dxp,  dypm, dzpp,       dyp2m+dzp2p)
+    }
 
-    DIRECT_NEIGHBOR( -txy, dxp,  dyp,  dzpm,             dzp2m)
-    DIRECT_NEIGHBOR(  txy, dxp,  dyp,  dzpp,             dzp2p)
+    if (z0>0)  DIRECT_NEIGHBOR( -txy, dxp,  dyp,  dzpm,             dzp2m)
+    if (z0<tz) DIRECT_NEIGHBOR(  txy, dxp,  dyp,  dzpp,             dzp2p)
 
-    DIRECT_NEIGHBOR(n[14], dxp,  dypp, dzpm,       dyp2p+dzp2m)
-    DIRECT_NEIGHBOR( tx,   dxp,  dypp, dzp ,       dyp2p      )
-    DIRECT_NEIGHBOR(n[16], dxp,  dypp, dzpp,       dyp2p+dzp2p)
+    if (y0<ty) {
+      if (z0>0)  DIRECT_NEIGHBOR(n[14], dxp,  dypp, dzpm,       dyp2p+dzp2m)
+                 DIRECT_NEIGHBOR( tx,   dxp,  dypp, dzp ,       dyp2p      )
+      if (z0<tz) DIRECT_NEIGHBOR(n[16], dxp,  dypp, dzpp,       dyp2p+dzp2p)
+    }
 
-    DIRECT_NEIGHBOR(n[17], dxpp, dypm, dzpm,dxp2p+dyp2m +dzp2m)
-    DIRECT_NEIGHBOR(n[18], dxpp, dypm, dzp ,dxp2p+dyp2m      )
-    DIRECT_NEIGHBOR(n[19], dxpp, dypm, dzpp,dxp2p+dyp2m +dzp2p)
+    if (x0<tx) {
+      if (y0>0) {
+        if (z0>0)  DIRECT_NEIGHBOR(n[17], dxpp, dypm, dzpm,dxp2p+dyp2m +dzp2m)
+                   DIRECT_NEIGHBOR(n[18], dxpp, dypm, dzp ,dxp2p+dyp2m      )
+        if (z0<tz) DIRECT_NEIGHBOR(n[19], dxpp, dypm, dzpp,dxp2p+dyp2m +dzp2p)
+      }
 
-    DIRECT_NEIGHBOR(n[20], dxpp, dyp,  dzpm,dxp2p+       dzp2m)
-    DIRECT_NEIGHBOR( 1,    dxpp, dyp,  dzp ,dxp2p            )
-    DIRECT_NEIGHBOR(n[22], dxpp, dyp,  dzpp,dxp2p+       dzp2p)
+      if (z0>0)  DIRECT_NEIGHBOR(n[20], dxpp, dyp,  dzpm,dxp2p+       dzp2m)
+                 DIRECT_NEIGHBOR( 1,    dxpp, dyp,  dzp ,dxp2p            )
+      if (z0<tz) DIRECT_NEIGHBOR(n[22], dxpp, dyp,  dzpp,dxp2p+       dzp2p)
 
-    DIRECT_NEIGHBOR(n[23], dxpp, dypp, dzpm,dxp2p+dyp2p +dzp2m)
-    DIRECT_NEIGHBOR(n[24], dxpp, dypp, dzp ,dxp2p+dyp2p      )
-    DIRECT_NEIGHBOR(n[25], dxpp, dypp, dzpp,dxp2p+dyp2p +dzp2p)
+      if (y0<ty) {
+        if (z0>0)  DIRECT_NEIGHBOR(n[23], dxpp, dypp, dzpm,dxp2p+dyp2p +dzp2m)
+                   DIRECT_NEIGHBOR(n[24], dxpp, dypp, dzp ,dxp2p+dyp2p      )
+        if (z0<tz) DIRECT_NEIGHBOR(n[25], dxpp, dypp, dzpp,dxp2p+dyp2p +dzp2p)
+      }
+    }
 
 
 } // new3D_update_neighbors2
@@ -1655,6 +1682,7 @@ void vtkImagePropagateDist2::PropagateDanielsson3D_new( )
 
     int       iteration;
     register float     val;
+
     PD_element2 pt0;
     float* buf;
     int distmap_count = 0;
@@ -1720,7 +1748,6 @@ void vtkImagePropagateDist2::PropagateDanielsson3D_new( )
     
     list_tmp         = list1;
     list_tmp_maxsize = list1_maxsize;
-
     list1         = list_remaining_trial;
     list1_maxsize = list_remaining_trial_maxsize;
     list1_size    = list_remaining_trial_size;
@@ -1730,9 +1757,11 @@ void vtkImagePropagateDist2::PropagateDanielsson3D_new( )
     list_remaining_trial_size    = 0;
 
 
+    
     for(k=0;k<5;k++) neighbors_type[k]=0;
     total_track_discarded=0;
     min_dist_neighbors=3;
+
 
     //    printf("list0_size .. = %9d \n",list0_size);
     for(k=0;k<list0_size;k++) {
@@ -1765,6 +1794,7 @@ void vtkImagePropagateDist2::PropagateDanielsson3D_new( )
     }
 
     printf("min dist = %f \n",min_dist_neighbors);
+
 
     // First iteration, we complete list0 ...
     if (iteration>1) list0_size = 0;

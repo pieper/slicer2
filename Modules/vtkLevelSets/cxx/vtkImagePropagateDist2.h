@@ -35,8 +35,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkImagePropagateDist2.h,v $
   Language:  C++
-  Date:      $Date: 2005/02/05 18:26:30 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2005/03/31 16:07:02 $
+  Version:   $Revision: 1.5 $
   Author:    Karl Krissian
 
 =========================================================================*/
@@ -79,7 +79,7 @@ class PD_element2 {
       const unsigned char& st,
            const int& t,
 const float& sqd) 
-   {
+  {
      x=px;
      y=py;
      z=pz;
