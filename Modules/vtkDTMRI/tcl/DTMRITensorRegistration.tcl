@@ -1044,7 +1044,7 @@ proc  DTMRIRegTransformScale { Source Target} {
    if { $DTMRI(reg,Scale) <= 0} {
     return 0
    }
-   
+   catch "div Delete"
    vtkImageMathematics div
    div SetOperationToMultiplyByK
    div SetConstantK  $DTMRI(reg,Scale)
@@ -1056,6 +1056,7 @@ proc  DTMRIRegTransformScale { Source Target} {
  # or Volume($DTMRI(reg,InputVolTarget),vol) SetImageData [div GetOutput] , but maybe they share the same copy of data.
 
    div Delete
+   catch "div2 Delete"
    vtkImageMathematics div2
    div2 SetOperationToMultiplyByK
    div2 SetConstantK $DTMRI(reg,Scale)
@@ -2604,23 +2605,13 @@ proc DTMRIRegColorComparison {} {
       exslice SetSlicePeriod $sliceper
       exslice SetModeToSLICE
       exslice Update
-      #check SetInput2 [exslice GetOutput]
       catch "shift Delete"
       vtkImageShiftScale shift    
       shift SetInput [exslice GetOutput]
       shift SetOutputScalarTypeToUnsignedChar
       shift Update
       app SetInput 1 [shift GetOutput]
-      catch "shift Delete"
-      vtkImageShiftScale shift    
-      shift SetInput [exslice GetOutput]
-      shift SetOutputScalarTypeToUnsignedChar
-      shift SetScale 0
-      shift Update
-
-      app SetInput 2 [shift GetOutput]
     } else {
-      #check SetInput2 [math GetOutput]
       catch "shift Delete"
       vtkImageShiftScale shift    
       shift SetInput [abs GetOutput]
@@ -2638,18 +2629,13 @@ proc DTMRIRegColorComparison {} {
       }
     }
     
-    #check SetNumberOfDivisions $DTMRI(reg,checkx) $DTMRI(reg,checky) $DTMRI(reg,checkz)
-    #check Update
     app Update
     
     # Create a new volume based on the name of the source volume and the node descirption of the target volume
-    #set v1 $SourceVolume
-    #set v2name  [Volume($SourceVolume,node) GetName]
     set v2 [DTMRICreateEmptyVolume $DTMRI(ResultTensor) ""  "Color Comparison" ]
 
     Volume($v2,node) SetInterpolate 0
     Volume($v2,vol) SetImageData [app GetOutput]
-    #check Delete
     MainVolumesUpdate $v2
     Volume($v2,node) SetScalarType [[shift GetOutput] GetScalarType]
     math Delete
