@@ -131,7 +131,7 @@ public:
   //#if !(defined(_sgi_)) 
   //  friend ostream& operator << <>(ostream&, const vtkMinHeap<T>& p);
   //#else
-  friend ostream& operator << <>(ostream&, const vtkMinHeap<T>& p);
+    friend ostream& operator << (ostream&, const vtkMinHeap<T>& p);
   //#endif
 
 };
