@@ -81,6 +81,7 @@ proc Usage { {msg ""} } {
     set msg "$msg\n   --no-threads : disables multi threading"
     set msg "$msg\n   --no-tkcon : disables tk console"
     set msg "$msg\n   --load-dicom <dir> : read dicom files from <dir> at startup"
+    set msg "$msg\n   --script <file.tcl> : script to execute after slicer loads"
     puts stderr $msg
     tk_messageBox -message $msg -title $SLICER(version) -type ok
 }
@@ -93,6 +94,7 @@ set SLICER(tkcon) "true"
 set verbose 0
 set Module(verbose) 0
 set SLICER(load-dicom) ""
+set SLICER(script) ""
 set strippedargs ""
 set argc [llength $argv]
 for {set i 0} {$i < $argc} {incr i} {
@@ -114,12 +116,24 @@ for {set i 0} {$i < $argc} {incr i} {
         "--no-tkcon" {
             set SLICER(tkcon) "false"
         }
-        "--load-dicom*" {
+        "--load-dicom" {
             incr i
             if { $i == $argc } {
                 Usage "missing argument for $a\n"
             } else {
                 set SLICER(load-dicom) [lindex $argv $i]
+                if { [file type $SLICER(load-dicom)] == "file" } {
+                    # user picked a file, load all dicoms in same dir
+                    set SLICER(load-dicom) [file dir $SLICER(load-dicom)]
+                }
+            }
+        }
+        "--script" {
+            incr i
+            if { $i == $argc } {
+                Usage "missing argument for $a\n"
+            } else {
+                set SLICER(script) [lindex $argv $i]
             }
         }
         "-*" {
@@ -235,9 +249,9 @@ if { $SLICER(tkcon) == "true" } {
 regsub -all {\\} $env(SLICER_HOME) / slicer_home
 regsub -all {\\} $env(HOME) / user_home
 regsub -all {\\} $env(VTK_SRC_DIR) / vtk_src_dir
-lappend auto_path $slicer_home/Base/tcl 
-lappend auto_path $slicer_home/Base/Wrapping/Tcl/vtkSlicerBase
-lappend auto_path $vtk_src_dir/Wrapping/Tcl
+#lappend auto_path $slicer_home/Base/tcl 
+#lappend auto_path $slicer_home/Base/Wrapping/Tcl/vtkSlicerBase
+#lappend auto_path $vtk_src_dir/Wrapping/Tcl
 
 package require vtkSlicerBase ;# this pulls in all of slicer
 
@@ -281,6 +295,8 @@ foreach modulePath "${baseModulePath} ${userModulePath}" {
         }
     }
 }
+
+
 #
 # turn off if user wants - re-enabled threading by default
 # based on Raul's fixes to vtkImageReformat 2002-11-26
@@ -503,7 +519,9 @@ foreach name $ordered {
 # sub sections of the interface, ie the Volumes or the Editors scripts 
 # ie no matches for Vol*Init or Ed*Init
 if {[info exists Module(customModules)]  == 1} {
-    puts "Custom modules we need to add: $Module(customModules)"
+    if { $verbose == 1 } {
+        puts "Custom modules we need to add: $Module(customModules)"
+    }
     # it's already been sourced, so just add to the foundOrdered list
     foreach customModule $Module(customModules) {
         lappend foundOrdered $customModule
@@ -557,20 +575,26 @@ MainBoot [lindex $argv 0]
 set View(render_on) 0
 
 #
-# read volume specified on command line
+# read a dicom volume specified on command line
 #
 if { $SLICER(load-dicom) != "" } {
-    global Volumes
+    global Volumes 
     VolumesSetPropertyType VolDicom
     MainVolumesSetActive NEW
     Tab Volumes row1 Props
     set Volumes(DICOMStartDir) $SLICER(load-dicom)
-    DICOMSelectMain $Volume(dICOMFileListbox) 
+    DICOMSelectMain $Volume(dICOMFileListbox) "autoload"
+    VolumesSetPropertyType VolHeader
+    VolumesPropsApply
+    RenderAll
+    Tab Data
 }
 
 
+#
 # override the built in exit routine to provide cleanup
 # (for people who type exit into the console)
+#
 rename exit tcl_exit
 proc exit {} {
     MainExitProgram
@@ -594,3 +618,8 @@ if {[info exists env(SLICER_SCRIPT)] != 0 && $env(SLICER_SCRIPT) != ""} {
     }
 }
 
+### or run a script specified on the command line with --script
+
+if { $SLICER(script) != "" } {
+    source $SLICER(script)
+}
