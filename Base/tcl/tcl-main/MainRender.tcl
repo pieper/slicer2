@@ -41,7 +41,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc Render3D {{scale ""}} {
-	global Video viewWin Twin twinWin View
+	global Video viewWin Twin twinWin View Slice
 
 	$viewWin Render
 	
@@ -56,44 +56,126 @@ proc Render3D {{scale ""}} {
 		VideoSave
 	}
 
-	if { $View(movie) > 0 } {
-		# Compute filename
-		set ext(PPM)  ppm
-		set ext(TIFF) tif
-		set ext(BMP)  bmp
-		set filename [format %04d.$ext($View(movieFileType)) $View(movieFrame)]
-		set filename [file join $View(movieDirectory) $filename]
-		# Write file
-		switch $View(movieFileType) {
+	if { $View(movie) > 0 && $View(movieSlices) == 0} {
+	    # Compute filename
+	    set ext(PPM)  ppm
+	    set ext(TIFF) tif
+	    set ext(BMP)  bmp
+	    set filename [format %04d.$ext($View(movieFileType)) $View(movieFrame)]
+	    set filename [file join $View(movieDirectory) $filename]
+	    # Write file
+	    switch $View(movieFileType) {
 		"PPM" {
-			$viewWin SetFileName $filename
-			$viewWin SaveImageAsPPM
+		    $viewWin SetFileName $filename
+		    $viewWin SaveImageAsPPM
 		}
 		"TIFF" {
-			vtkWindowToImageFilter filter
-			filter SetInput $viewWin
-			vtkTIFFWriter writer
-			writer SetInput [filter GetOutput]
-			writer SetFileName $filename
-			writer Write
-			filter Delete
-			writer Delete
+		    vtkWindowToImageFilter filter
+		    filter SetInput $viewWin
+		    vtkTIFFWriter writer
+		    writer SetInput [filter GetOutput]
+		    writer SetFileName $filename
+		    writer Write
+		    filter Delete
+		    writer Delete
 		}
 		"BMP" {
-			vtkWindowToImageFilter filter
-			filter SetInput $viewWin
-			vtkBMPWriter writer
-			writer SetInput [filter GetOutput]
-			writer SetFileName $filename
-			writer Write
-			filter Delete
-			writer Delete
+		    vtkWindowToImageFilter filter
+		    filter SetInput $viewWin
+		    vtkBMPWriter writer
+		    writer SetInput [filter GetOutput]
+		    writer SetFileName $filename
+		    writer Write
+		    filter Delete
+		    writer Delete
 		}
-		}
-		incr View(movieFrame)
-	}
-}
+	    }
+	    incr View(movieFrame)
+	} elseif { $View(movie) > 0 && $View(movieSlices) > 0} {
 
+	    # first append the 3 slices horizontally
+	    vtkImageAppend imAppendSl
+	    imAppendSl SetAppendAxis 0
+	    foreach s $Slice(idList) {
+		vtkWindowToImageFilter IFSl$s
+		IFSl$s SetInput sl${s}Win
+		imAppendSl AddInput [IFSl$s GetOutput]
+	    }
+
+	    set w [winfo width .tViewer]
+	    # translate if viewer width is bigger
+	    vtkImageTranslateExtent imTrans
+	    imTrans SetTranslation [expr ($w - 768)/2] 0 0
+	    imTrans SetInput [imAppendSl GetOutput]
+	    #pad them with the width of the viewer
+	    vtkImageConstantPad imPad
+	    imPad SetInput [imTrans GetOutput]
+	    imPad SetOutputWholeExtent 0 $w 0 256 0 0
+	    
+	    
+	    # then append the image of the 3 slices to the viewWin screen
+	    # vertically
+	    vtkImageAppend imAppendAll
+	    imAppendAll SetAppendAxis 1
+	    vtkWindowToImageFilter IFVW
+	    IFVW SetInput $viewWin
+	    imAppendAll AddInput [imPad GetOutput]
+	    imAppendAll AddInput [IFVW GetOutput]
+
+
+
+	    #vtkImageClip imClip
+	    #imClip SetInput [imAppendSl GetOutput]
+	    #set h [winfo height .tViewer]
+	    #set w [winfo width .tViewer]
+	    #puts "width $w height $h"
+	    #imClip SetOutputWholeExtent 0 $w 0 $h 0 0
+	    #imClip ReleaseDataFlagOff
+
+	    
+
+	    # Compute filename
+	    set ext(PPM)  ppm
+	    set ext(TIFF) tif
+	    set ext(BMP)  bmp
+	    set filename [format %04d.$ext($View(movieFileType)) $View(movieFrame)]
+	    set filename [file join $View(movieDirectory) $filename]
+	    # Write file
+	    switch $View(movieFileType) {
+		"PPM" {
+		    $viewWin SetFileName $filename
+		    $viewWin SaveImageAsPPM
+		}
+		"TIFF" {
+		    vtkTIFFWriter writer
+		    writer SetInput [imAppendAll GetOutput]
+		    writer SetFileName $filename
+		    writer Write
+		    
+		    writer Delete
+		}
+		"BMP" {
+		    vtkBMPWriter writer
+		    writer SetInput [imAppendAll GetOutput]
+		    writer SetFileName $filename
+		    writer Write
+		    
+		    writer Delete
+		}
+	    }
+	    incr View(movieFrame)
+
+	    imAppendSl Delete
+	    imAppendAll Delete
+	    IFVW Delete
+	    IFSl0 Delete
+	    IFSl1 Delete
+	    IFSl2 Delete
+	    imPad Delete
+	    imTrans Delete
+	    #imClip Delete
+	}
+    }
 #-------------------------------------------------------------------------------
 # .PROC RenderSlice
 # 
@@ -147,10 +229,12 @@ proc RenderSlices {{scale ""}} {
 proc RenderAll { {scale ""}} {
 	global Slice
 
-	Render3D
-	foreach s $Slice(idList) {
-		RenderSlice $s
-	}
+    foreach s $Slice(idList) {
+	RenderSlice $s
+    }
+    # render3d last in case we want the newly rendered slices in the movie
+    Render3D
+    
 }
  
 #-------------------------------------------------------------------------------
@@ -162,5 +246,6 @@ proc RenderAll { {scale ""}} {
 proc RenderBoth {s {scale ""}} {
 
 	RenderSlice $s
+    # render3d last in case we want the newly rendered slices in the movie
 	Render3D
 }

@@ -60,7 +60,7 @@ proc ViewInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.20 $} {$Date: 2001/09/21 01:06:57 $}]
+		{$Revision: 1.21 $} {$Date: 2001/10/10 02:59:54 $}]
 
 	set View(movie) 0
 	set View(movieDirectory) "/tmp"
@@ -126,7 +126,8 @@ called <I>movie.mpg</I>.
 	frame $f.fStereo  -bg $Gui(activeWorkspace) -relief groove -bd 3
 	frame $f.fCloseup -bg $Gui(activeWorkspace)
 	frame $f.fMovie   -bg $Gui(activeWorkspace) -relief groove -bd 3
-	pack $f.fSize $f.fBg $f.fCloseup $f.fStereo $f.fMovie \
+	frame $f.fMovieSlices   -bg $Gui(activeWorkspace) -relief groove -bd 3
+	pack $f.fSize $f.fBg $f.fCloseup $f.fStereo $f.fMovie $f.fMovieSlices\
 		-side top -pady $Gui(pad) -padx $Gui(pad) -fill x
 
 	#-------------------------------------------
@@ -221,8 +222,9 @@ called <I>movie.mpg</I>.
 	#-------------------------------------------
 	set f $fView.fMovie
 	
-    	eval {checkbutton $f.cMovie -text "Record Movie" -variable View(movie) \
-		-width 16 -indicatoron 0 } $Gui(WCA)
+    	eval {checkbutton $f.cMovie -text "Record Movie (3D View)" -variable View(movie) \
+		-width 22 -indicatoron 0 } $Gui(WCA)
+	eval {checkbutton $f.cMovieSlices -text "with slice windows (not ppm)" -variable View(movieSlices) -indicatoron 1 } $Gui(WCA)
 	eval {label $f.lFrame -text "Next frame #:"} $Gui(WLA)
 	eval {entry $f.eFrame -width 6 -textvariable View(movieFrame)} $Gui(WEA)
  
@@ -231,6 +233,7 @@ called <I>movie.mpg</I>.
 	eval {entry $f.ePrefix -width 16 -textvariable View(movieDirectory)} $Gui(WEA)
 
 	grid $f.cMovie -columnspan 2 -padx $Gui(pad) -pady $Gui(pad)
+	grid $f.cMovieSlices -columnspan 2 -padx $Gui(pad) -pady $Gui(pad)
 	grid $f.lFrame $f.eFrame -sticky w -padx $Gui(pad) -pady $Gui(pad)
 	grid $f.lPrefix $f.ePrefix -sticky w -padx $Gui(pad) -pady $Gui(pad)
         grid configure $f.lFrame -sticky e
