@@ -61,8 +61,12 @@ set ::CMAKE_PATH $::SLICER_LIB/CMake-build
 set ::GSL_LIB_DIR $::SLICER_LIB/gsl/lib
 set ::GSL_INC_DIR $::SLICER_LIB/gsl/include
 set ::GSL_SRC_DIR $::SLICER_LIB/gsl-build/gsl
+#set ::GSL_LIB_DIR $::SLICER_LIB/gsl-build/gsl-mirror/lib
+#set ::GSL_INC_DIR $::SLICER_LIB/gsl/include
+#set ::GSL_SRC_DIR $::SLICER_LIB/gsl-build/gsl
 set ::SOV_BINARY_DIR " "
 #set ::SOV_BINARY_DIR $::SLICER_LIB/SOViewer-build
+
 
 ## system dependent variables
 
@@ -74,7 +78,8 @@ switch $tcl_platform(os) {
         set ::COMPILER_PATH "/local/os/bin"
         set ::COMPILER "g++"
         set ::CMAKE $::CMAKE_PATH/bin/cmake
-        set ::MAKE "gmake -j15" 
+        #set ::MAKE "gmake -j15"
+        set ::MAKE "gmake"
     }
     "Linux" {
         set ::VTKSLICERBASE_BUILD_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/vtkSlicerBase.so
@@ -124,10 +129,29 @@ switch $tcl_platform(os) {
         #set ::COMPILER_PATH ""
         #set MSVC6 1
 
+        if {[info exists ::env(MSVC6)]} {
+            set MSVC6 $::env(MSVC6)
+        } else {
+        }
+
         ## for Visual Studio 7:
-        set ::GENERATOR "Visual Studio 7" 
-        set ::MAKE "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET/Common7/IDE/devenv"
-        set ::COMPILER_PATH "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET/Common7/Vc7/bin"
+        if {[info exists ::env(GENERATOR)]} {
+            set ::GENERATOR $::env(GENERATOR)
+        } else {
+            set ::GENERATOR "Visual Studio 7" 
+        }
+
+        if {[info exists ::env(MAKE)]} {
+            set ::MAKE $::env(MAKE)
+        } else {
+            set ::MAKE "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET/Common7/IDE/devenv"
+        }
+
+        if {[info exists ::env(COMPILER_PATH)]} {
+            set ::COMPILER_PATH $::env(COMPILER_PATH)
+        } else {
+            set ::COMPILER_PATH "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET/Common7/Vc7/bin"
+        }
 
         ## for Visual Studio 7.1:
         #set ::GENERATOR "Visual Studio 7 .NET 2003" 
