@@ -139,6 +139,8 @@ if {$cleanarg != -1} {
         set argv ""
     }
 }
+
+
 if { $argv != "" && $argv != {} } {
     set newtargets ""
     foreach argmodule $argv {
@@ -172,6 +174,10 @@ if { $CLEANFLAG } {
     }
 }
 
+#
+# go through each target module and do cmake then build
+# - use custom cmake argument if specified
+#
 set failed ""
 foreach target $TARGETS {
 
@@ -185,28 +191,22 @@ foreach target $TARGETS {
 
     puts "running cmake ..."
 
+    set cmakecmd [list $CMAKE $target -G$GENERATOR \
+        $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 \
+        $VTK_ARG6 $VTK_ARG7 \
+        $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4] 
+
     if {[file exists [file join $target cmaker_local.tcl]]} {
-        # Define SLICER_MODULE_ARG1 to 3 in cmaker_local.tcl
+        # Define SLICER_MODULE_ARG in cmaker_local.tcl
         source [file join $target cmaker_local.tcl]
-        puts "$CMAKE $target -G$GENERATOR \
-            $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 $VTK_ARG7 \
-            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4 $SLICER_MODULE_ARG1 $SLICER_MODULE_ARG2 $SLICER_MODULE_ARG3 $SLICER_MODULE_ARG4"
-        if { [ catch [list exec $CMAKE $target -G$GENERATOR \
-            $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 $VTK_ARG7 \
-            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4 $SLICER_MODULE_ARG1 $SLICER_MODULE_ARG2 $SLICER_MODULE_ARG3 $SLICER_MODULE_ARG4] err ]} {
-            # catch here so that the build can continue if they're just warnings
-            puts "\n--------\nCMAKE error using cmaker_local.tcl: $err\n--------\n"
+        foreach elem $SLICER_MODULE_ARG  {
+            lappend command $elem 
         }
-    } else {
-        puts "$CMAKE $target -G$GENERATOR \
-            $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 $VTK_ARG7 \
-            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4 "
-        if { [ catch [list exec $CMAKE $target -G$GENERATOR \
-                          $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 $VTK_ARG7 \
-                          $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4] err]} {
-            # catch here so that the build can continue if they're just warnings
-            puts "\n----------\nCMAKE error: $err\n-----------\n"
-        }
+    }
+    puts $cmakecmd
+    if { [ catch "exec $cmakecmd" err] } {
+        # catch here so that the build can continue if they're just warnings
+        puts "\n----------\nCMAKE error: $err\n-----------\n"
     }
 
     switch $tcl_platform(os) {
