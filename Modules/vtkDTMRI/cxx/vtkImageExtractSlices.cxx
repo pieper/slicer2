@@ -76,7 +76,7 @@ void vtkImageExtractSlices::ExecuteInformation(vtkImageData *input,
   
   if(this->Mode == MODEVOLUME) {
     totalInSlices = inExt[5] - inExt[4] + 1;
-  if(fmod(totalInSlices,this->SlicePeriod)!=0) {
+  if(fmod((float)totalInSlices,(float)this->SlicePeriod)!=0) {
      vtkErrorMacro("We cannot run");
      return;
   }
@@ -88,7 +88,7 @@ void vtkImageExtractSlices::ExecuteInformation(vtkImageData *input,
   if(this->Mode == MODEMOSAIC) {
     outExt[0] = 0;
     totalInSlices = (inExt[1] - inExt[0] + 1);
-    if(fmod(totalInSlices,this->MosaicTiles)!=0) {
+    if(fmod((float)totalInSlices,(float)this->MosaicTiles)!=0) {
      vtkErrorMacro("Too few or too many tiles per slice.");
      return;
     }
@@ -97,7 +97,7 @@ void vtkImageExtractSlices::ExecuteInformation(vtkImageData *input,
  
    outExt[2] = 0;
     totalInSlices = (inExt[3] - inExt[2] + 1);
-    if(fmod(totalInSlices,this->MosaicTiles)!=0) {
+    if(fmod((float)totalInSlices,(float)this->MosaicTiles)!=0) {
      vtkErrorMacro("Too few or too many tiles per slice.");
      return;
     }
@@ -181,7 +181,7 @@ static void vtkImageExtractSlicesExecute1(vtkImageExtractSlices *self,
       slice = inExt[4] + idxZ;
       if (self->GetMode() == MODESLICE)
         {
-        extract = (fmod(slice,period) == offset);
+        extract = (fmod((float)slice,(float)period) == offset);
         }
       else
         {
@@ -276,8 +276,8 @@ static void vtkImageExtractSlicesExecute2(vtkImageExtractSlices *self,
   for (idxZ = 0; idxZ <= maxZ; idxZ++)
     {
       //Initialize pointer to input data for each output slice
-      nc = int (fmod(outExt[4]+idxZ,tiles));
-      nr = int (floor((tiles*tiles-1-outExt[4]-idxZ)/tiles));
+      nc = int (fmod((float)(outExt[4]+idxZ),(float)tiles));
+      nr = int (floor((float)((tiles*tiles-1-outExt[4]-idxZ)/tiles)));
 
       inIncZ = nc * dimX + nr * dimX*tiles* dimY;
       inPtr = initPtr+ inIncZ +outExt[0] + inIncY*outExt[2];
