@@ -126,7 +126,7 @@ public:
   typedef Superclass::OptimizerType           OptimizerType;
 
   /** Metric Type. */
-  typedef Superclass::MetricType              MetricType;
+  typedef typename Superclass::MetricType              MetricType;
 
   /** Interpolation Type. */
   typedef Superclass::InterpolatorType        InterpolatorType;
@@ -141,11 +141,11 @@ public:
   typedef Superclass::RegistrationType        RegistrationType;
 
   /** Transform parameters type. */
-  typedef Superclass::ParametersType          ParametersType;
+  typedef typename Superclass::ParametersType          ParametersType;
 
   /** Affine transform type. */
-  typedef Superclass::AffineTransformType    AffineTransformType;
-  typedef Superclass::AffineTransformPointer AffineTransformPointer;
+  typedef typename Superclass::AffineTransformType    AffineTransformType;
+  typedef typename Superclass::AffineTransformPointer AffineTransformPointer;
 
   // ----------------------------------------------------------------------
   // Set the Parameters for the Metric
@@ -180,9 +180,9 @@ public:
       m_Metric->SetTrainingFixedImage(TrainingFixedImage);
       m_Metric->SetTrainingFixedImageRegion( TrainingFixedImage->GetBufferedRegion() );
      }
-  void SetTrainingTransform(  const AffineTransformType::Pointer TrainingTransform )
+  void SetTrainingTransform(  const typename AffineTransformType::Pointer TrainingTransform )
     { m_Metric->SetTrainingTransform(TrainingTransform); }
-  void SetTrainingInterpolator( const InterpolatorType::Pointer TrainingInterpolator )
+  void SetTrainingInterpolator( const typename InterpolatorType::Pointer TrainingInterpolator )
     { m_Metric->SetTrainingInterpolator(TrainingInterpolator); }
   void SetHistogram( const HistogramType TrainingHistogram )
     { m_Metric->SetTrainingHistogram(TrainingHistogram); }
