@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.72 $} {$Date: 2004/04/16 21:38:23 $}]
+    {$Revision: 1.73 $} {$Date: 2004/04/22 22:30:19 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -495,7 +495,7 @@ proc MainVolumesWrite {v prefix} {
     }
     if { [Volume($v,vol) GetReadWrite] == "" } {
         # no readwrite means it'll use the ImageWriter which needs this pattern and type
-        Volume($v,node) SetFilePattern "%s.%d"
+        Volume($v,node) SetFilePattern "%s.%03d"
         Volume($v,node) SetFileType "Headerless"
     }
 
@@ -1281,3 +1281,61 @@ proc MainVolumesRenumber {vid} {
         return 0
     }
 }
+
+#-------------------------------------------------------------------------------
+# .PROC MainVolumesGetVolumeByName 
+# returns the id of first match for a name
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainVolumesGetVolumeByName {name} {
+
+    set nvols [Mrml(dataTree) GetNumberOfVolumes]
+    for {set vv 0} {$vv < $nvols} {incr vv} {
+        set n [Mrml(dataTree) GetNthVolume $vv]
+        if { $name == [$n GetName] } {
+            return [DataGetIdFromNode $n]
+        }
+    }
+    return $::Volume(idNone)
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainVolumesGetVolumesByNamePattern
+# returns a list of IDs for a given pattern
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainVolumesGetVolumesByNamePattern {pattern} {
+
+    set ids ""
+    set nvols [Mrml(dataTree) GetNumberOfVolumes]
+    for {set vv 0} {$vv < $nvols} {incr vv} {
+        set n [Mrml(dataTree) GetNthVolume $vv]
+        if { [string match $pattern [$n GetName]] } {
+            lappend ids [DataGetIdFromNode $n]
+        }
+    }
+    return $ids
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainVolumesDeleteVolumeByName 
+# clean up volumes before reloading them
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainVolumesDeleteVolumeByName {name} {
+
+    set nvols [Mrml(dataTree) GetNumberOfVolumes]
+    for {set vv 0} {$vv < $nvols} {incr vv} {
+        set n [Mrml(dataTree) GetNthVolume $vv]
+        if { $name == [$n GetName] } {
+            set id [DataGetIdFromNode $n]
+            global Volume
+            MainMrmlDeleteNode Volume $id
+            break
+        }
+    }
+}
+
