@@ -905,6 +905,30 @@ proc QueryAtlas_fdemo { {demodata c:/pieper/bwh/data/fbirn-phantom-staple/averag
     # update the auto scalar range
     set ::Model(scalarVisibilityAuto) 1
     ModelsPropsApplyButNotToNew
+    QueryAtlas_custom_view $modelid
+}
+
+proc QueryAtlas_custom_view {modelid} {
+
+    set lutid [MainLutsGetLutIDByName "InvGray"]
+    MainModelsSetScalarRange $modelid 0 255
+    Lut($lutid,lut) SetTableValue 0  0.5 0.5 0.5  1
+    for { set i 1 } { $i < 64 } { incr i } {
+        Lut($lutid,lut) SetTableValue $i 1 [expr $i / 64.] 0 1
+    }
+
+    [Model($modelid,actor,viewRen) GetProperty] SetSpecularPower 200
+    [Model($modelid,actor,viewRen) GetProperty] SetSpecularColor 1 1 1
+    [Model($modelid,actor,viewRen) GetProperty] SetSpecular .25
+
+    set ::View(LightKeyToBackRatio) 3.75
+    set ::View(LightKeyToFillRatio) 6.55
+    set ::View(LightKeyToHeadRatio) 1.10
+    ViewSwitchLightKit 
+
+    set ::Anno(box) 0
+    set ::Anno(letters) 0
+    MainAnnoSetVisibility
 }
 
 proc QueryAtlas_mdemo { {demodata c:/pieper/bwh/data/MGH-Siemens15-SP.1-uw} } {
