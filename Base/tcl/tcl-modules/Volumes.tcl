@@ -99,7 +99,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.85 $} {$Date: 2003/08/11 13:05:10 $}]
+            {$Revision: 1.86 $} {$Date: 2003/08/11 19:23:17 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -1755,7 +1755,10 @@ proc VolumesReformatSave {} {
         global Mrml savedir
         set Mrml(dir) $savedir
     }
-    if {$Volumes(prefixSave) == ""} {return}
+    if {$Volumes(prefixSave) == ""} {
+        DevErrorWindow "Set a file prefix to save the volume"
+        return
+    }
     
     
     
@@ -1764,6 +1767,11 @@ proc VolumesReformatSave {} {
     set s $Slice(activeID)
     # make the slice the right orientation to get the right reformat
     # matrix
+    # check to make sure that the saveOrder was set
+    if {[info exists Volumes(reformat,saveOrder)] == 0} {
+        DevErrorWindow "Please choose a scan order"
+        return
+    }
     MainSlicesSetOrient $s $Volumes(reformat,saveOrder)
 
     scan [Volume($Volume(activeID),node) GetImageRange] "%d %d" lo hi
@@ -1779,7 +1787,7 @@ proc VolumesReformatSave {} {
     
     Volumes(reformatter) SetInput [Volume($Volume(activeID),vol) GetOutput]
     Volumes(reformatter) SetWldToIjkMatrix [[Volume($Volume(activeID),vol) GetMrmlNode] GetWldToIjk]
-    Volumes(reformatter) SetInterpolate [[Volume($Volume(activeID),vol) GetMrmlNode] GetInterpolate]
+    Volumes(reformatter) SetInterpolate 1
     Volumes(reformatter) SetResolution [lindex [Volume($Volume(activeID),node) GetDimensions] 0]
     # Volumes(reformatter) SetFieldOfView [expr [lindex [Volume($Volume(activeID),node) GetDimensions] 0] * [lindex [Volume($Volume(activeID),node) GetSpacing] 0]]
     set maxfov 0
@@ -1802,7 +1810,12 @@ proc VolumesReformatSave {} {
     
     set ref [Slicer GetReformatMatrix $s]
     
-    set ii 0
+    # need the slices to be written out as 1-n, instead of 0-(n-1)
+    # set ii 0
+    set ii 1
+    if {$::Module(verbose)} {
+        puts "VolumesReformatSave: starting file names from $ii"
+    }
     set lo [expr -1 * round ($maxfov / 2.)]
     set hi [expr -1 * $lo]
     for {set i $lo} {$i<= $hi} {set i [expr $i + 1]} {

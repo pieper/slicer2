@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.63 $} {$Date: 2003/07/25 18:43:54 $}]
+    {$Revision: 1.64 $} {$Date: 2003/08/11 19:23:31 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -440,6 +440,17 @@ proc MainVolumesWrite {v prefix} {
     set Gui(progressText) "Writing [Volume($v,node) GetName]"
     puts "Writing '$fileFull' ..."
     Volume($v,vol) Write
+    puts " ...checking to see if need to rename volume files from 0-(n-1) to 1-n"
+    set renumberFlag [MainVolumesRenumber $v]
+    if {$renumberFlag == 1} {
+        puts " ...renumbering successful"
+    } else {
+        if {$renumberFlag == 0} {
+            puts " ...renumbering not necessary"
+        } else {
+            puts " ...renumbering failed."
+        }
+    }
     puts " ...done."
 
     # put MRML file in dir where volume was saved, name it after the volume
@@ -466,9 +477,9 @@ proc MainVolumesWrite {v prefix} {
         puts "MainVolumesWrite: setting full prefix to $fileFull"
     }
     Volume($v,node) SetFullPrefix $fileFull
+
     # Wrote it, so not dirty (changed since read/wrote)
     set Volume($v,dirty) 0
-    
 }
 
 
@@ -1129,4 +1140,74 @@ proc MainVolumesSetGUIDefaults {} {
     set Volume(readHeaders) 1
     set Volume(labelMap) 0
     set Volume(lastNum) ""
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainVolumesRenumber
+# This procedure will rename the files that were written out during the Volume($vid,vol) Write call.
+# A change to vtk caused the image writer to start writing volume files at 0 instead of 1, but 
+# we require the files to be numbered according to the actual image range, instead of image range - 1.
+# This does not check/change the mrml tree nor the mrml file, as the error condition resulted from 
+# the files being written out from 0 to n-1 while the mrml file records 1 to n.
+# Returns 1 if renumbered successfully, -1 if failed in renumbering, 0 if didn't need to renumber
+# .ARGS
+# vid the id of the volume that's just been written, and needs to be renumbered
+# .END
+#-------------------------------------------------------------------------------
+
+proc MainVolumesRenumber {vid} {
+    global Volume
+
+    set imageRange [[Volume($vid,vol) GetOutput] GetWholeExtent]
+    set lo [lindex $imageRange 4]
+    set hi [lindex $imageRange 5]
+    set prefix  [Volume($vid,node) GetFullPrefix] 
+    set pattern [Volume($vid,node) GetFilePattern]
+    
+    set zeroFile [format $pattern $prefix 0]
+
+    if {$::Module(verbose)} {
+        puts "MainVolumesRenumber: Renumbering volume $vid (does not touch mrml file)"
+        puts "\t checking if need to shift image range $lo $hi to [expr $lo + 1] [expr $hi + 1]"
+        puts "\t image dimensions [[Volume($vid,vol) GetOutput] GetDimensions]"
+        puts "\t prefix $prefix"
+        puts "\t pattern $pattern"
+        puts "\t checking to see if file exists:\n\t\t$zeroFile"
+    }
+
+    if {[file exists $zeroFile] == 1} {
+        # the files were started from 0, instead of 1
+        if {$::Module(verbose)} {
+            puts "MainVolumesRenumber: $zeroFile exists, must renumber them starting from 1"
+        }
+        # find the last file, double check that hi exists, and hi+1 does not. If hi+1 exists already,
+        # error for now, todo: loop until find a file that doesn't exist, starting from zero
+        set lastFile [format $pattern $prefix $hi]
+        set newLastFile [format $pattern $prefix [expr $hi + 1]]
+        if {[file exists $lastFile] == 1 && [file exists $newLastFile] == 0} {
+            if {$::Module(verbose)} {
+                puts "MainVolumesRenumber: $lastFile exists and $newLastFile does not, renumbering proceeding"
+            }
+            for {set srcNum $hi ; set destNum [expr $hi + 1]} {$srcNum >= 0 && $destNum > 0} {incr srcNum -1 ; incr destNum -1} {
+                set srcFile [format $pattern $prefix $srcNum]
+                set destFile [format $pattern $prefix $destNum]
+                if {$::Module(verbose)} { 
+                    puts "Renaming $srcFile to $destFile"
+                }
+                if {[catch {file rename $srcFile $destFile} errmsg] != 0} {
+                    puts "MainVolumesRenumber: ERROR renaming $srcFile to $destFile:\n\t$errmsg"
+                }
+               
+            }
+            return 1
+        } else {
+            puts "MainVolumesRenumber: ERROR: either $lastFile does not exist or $newLastFile does,\nrenumbering cancelled."
+            return -1
+        }
+    } else {
+        if {$::Module(verbose)} {
+            puts "\t zero file does not exist, returning noop"
+        }
+        return 0
+    }
 }
