@@ -134,7 +134,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.48 $} {$Date: 2004/11/17 00:15:48 $}]
+                  {$Revision: 1.49 $} {$Date: 2004/11/17 00:48:38 $}]
 
      # Define Tabs
     #------------------------------------
@@ -1029,8 +1029,8 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     set f $fDisplay.fActive
 
     # menu to select active DTMRI
-    DevAddSelectButton  Tensor $f Active "Active DTMRI volume:" Grid \
-    "Active DTMRI" 13 BLA
+    DevAddSelectButton  Tensor $f Active "Active DTMRI:" Pack \
+    "Active DTMRI" 20 BLA 
     
     # Append these menus and buttons to lists 
     # that get refreshed during UpdateMRML
@@ -1792,8 +1792,8 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     set f $fROI.fActive
 
     # menu to select active DTMRI
-    DevAddSelectButton  Tensor $f Active "Active DTMRI:" Grid \
-    "Active DTMRI" 13 BLA
+    DevAddSelectButton  Tensor $f Active "Active DTMRI:" Pack \
+    "Active DTMRI" 20 BLA 
     
     # Append these menus and buttons to lists 
     # that get refreshed during UpdateMRML
@@ -1971,8 +1971,8 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     set f $fScalars.fActive
 
     # menu to select active DTMRI
-    DevAddSelectButton  Tensor $f Active "Active DTMRI:" Grid \
-    "Active DTMRI" 13 BLA
+    DevAddSelectButton  Tensor $f Active "Active DTMRI:" Pack \
+    "Active DTMRI" 20 BLA 
     
     # Append these menus and buttons to lists 
     # that get refreshed during UpdateMRML
@@ -1996,7 +1996,7 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
 
     eval {label $f.lMath -text "Create Volume: "} $Gui(WLA)
     eval {menubutton $f.mbMath -text $DTMRI(scalars,operation) \
-          -relief raised -bd 2 -width 12 \
+          -relief raised -bd 2 -width 20 \
           -menu $f.mbMath.m} $Gui(WMBA)
 
     eval {menu $f.mbMath.m} $Gui(WMA)
@@ -2509,8 +2509,8 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     set f $fSave.fActive
 
     # menu to select active DTMRI
-    DevAddSelectButton  Tensor $f Active "Active DTMRI:" Grid \
-    "Active DTMRI" 13 BLA
+    DevAddSelectButton  Tensor $f Active "Active DTMRI:" Pack \
+    "Active DTMRI" 20 BLA 
     
     # Append these menus and buttons to lists 
     # that get refreshed during UpdateMRML
@@ -2522,39 +2522,21 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     #-------------------------------------------
     set f $fSave.fTop
 
-    DevAddButton $f.bSave "Save Tensor" {DTMRIWriteStructuredPoints $DTMRI(devel,fileName)}
+    DevAddButton $f.bSave "Save Tensors" {DTMRIWriteStructuredPoints $DTMRI(devel,fileName)}
     pack $f.bSave -side top -padx $Gui(pad) -pady $Gui(pad)
-    TooltipAdd $f.bSave "Save Tensor to vtk file format"
+    TooltipAdd $f.bSave "Save tensor data (Active DTMRI) to vtk file format."
 
     #-------------------------------------------
     # Save->Middle frame
     #-------------------------------------------
     set f $fSave.fMiddle
-    frame $f.fEntry  -bg $Gui(activeWorkspace)
-    frame $f.fEntry2  -bg $Gui(activeWorkspace)
     frame $f.fButton  -bg $Gui(activeWorkspace)
-    pack $f.fEntry $f.fEntry2 $f.fButton -side top -padx $Gui(pad) -pady $Gui(pad)
-
-    set f $fSave.fMiddle.fEntry
-    
-    DevAddLabel $f.l "dir:"
-    eval {entry $f.e -width 25 -textvariable \
-              DTMRI(devel,subdir) \
-          } $Gui(WEA)    
-    pack $f.l $f.e -side left -padx $Gui(pad) -pady 2        
-    TooltipAdd $f.e "Directory where text files with points will be saved"
-
-    set f $fSave.fMiddle.fEntry2
-    DevAddLabel $f.l "name:"
-    eval {entry $f.e -width 25 -textvariable \
-              DTMRI(devel,fileNamePoints) \
-          } $Gui(WEA)    
-    pack $f.l $f.e -side left -padx $Gui(pad) -pady 2        
-    TooltipAdd $f.e "Filename prefix of text files with points"
+    pack $f.fButton -side top -padx $Gui(pad) -pady $Gui(pad)
 
     set f $fSave.fMiddle.fButton
-    DevAddButton $f.bApply "Save streamlines in scaled IJK" \
+    DevAddButton $f.bApply "Save tract points" \
         {DTMRISaveStreamlinesAsIJKPoints}
+    TooltipAdd $f.bApply "Save text file(s) with the tract paths.\n This does not save vtk models."
 
     pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad) 
 }
