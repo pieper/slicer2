@@ -141,18 +141,6 @@ if { [file exists $localvarsfile] } {
     exit 1
 }
 
-
-if { $GENLIB(clean) } {
-    file delete -force $SLICER_LIB
-}
-
-if { ![file exists $SLICER_LIB] } {
-    file mkdir $SLICER_LIB
-}
-
-# set up cross platform files to check for existence
-
-
 #initialize Windows and Darwin platform variables
 switch $tcl_platform(os) {
     "SunOS" -
@@ -170,6 +158,24 @@ switch $tcl_platform(os) {
     }
 }
 
+# tcl file delete is broken on Darwin, so use rm -rf instead
+if { $GENLIB(clean) } {
+    puts "Deleting slicer lib files..."
+    if { $isDarwin } {
+    runcmd rm -rf $SLICER_LIB
+    if { file exists $SLICER_HOME/isPatched } {
+        runcmd rm $SLICER_HOME/isPatched
+    }
+    } else {
+    file delete -force $SLICER_LIB
+    }
+}
+
+if { ![file exists $SLICER_LIB] } {
+    file mkdir $SLICER_LIB
+}
+
+# set up cross platform files to check for existence
 switch $tcl_platform(os) {
     "SunOS" -
     "Linux" -
@@ -185,6 +191,7 @@ switch $tcl_platform(os) {
         set vtkTkLib $TCL_LIB_DIR/libtk8.4.so
         set vtkTclsh $TCL_BIN_DIR/tclsh8.4
         set itkTestFile $ITK_BINARY_PATH/bin/libITKCommon.so
+    set tkEventPatch $SLICER_HOME/tkEventPatch.diff
     }
     default {
         # different windows machines return different values, assume if none of the above, windows
@@ -263,10 +270,6 @@ if { ![file exists $tclTestFile] } {
     runcmd cvs -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/tcl login
     runcmd cvs -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tcl checkout -r $tclTag tcl
 
-    if {$isDarwin} {
-    # patch tk before building - placeholder
-    }
-
     if {$isWindows} {
         # can't do windows
     } else {
@@ -283,6 +286,28 @@ if { ![file exists $tkTestFile] } {
 
     runcmd cvs -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/tktoolkit login
     runcmd cvs -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tktoolkit checkout -r $tkTag tk
+
+    if {$isDarwin} {
+    if { ![file exists $SLICER_HOME/isPatched] } {
+        if { [file exists $tkEventPatch] } {
+        puts "Patching..."
+        cd $SLICER_LIB/tcl/tk/generic
+        runcmd cp $SLICER_HOME/tkEventPatch.diff $SLICER_LIB/tcl/tk/generic 
+        runcmd patch -i tkEventPatch.diff
+
+        # create a file to make sure tkEvent.c isn't patched twice
+        runcmd touch $SLICER_HOME/isPatched
+        file delete $SLICER_LIB/tcl/tk/generic/tkEventPatch.diff
+        } else { 
+        puts "Download tkEvent patch from Xythos and place in $SLICER_HOME"  
+        puts "then run genlib.tcl again.  Download from:"
+        puts "https://share.spl.harvard.edu/xythoswfs/webui/share/birn/public/software/External/Patches"
+        exit
+        } 
+    } else {
+        puts "tkEvent.c already patched."
+    }
+    }
 
     if {$isWindows} {
         # can't do windows
