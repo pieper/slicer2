@@ -54,7 +54,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc MultiVolumeReaderInit {} { 
-    global MultiVolumeReader Module Volume Model
+    global MultiVolumeReader Module Volume Model env
     
     set m MultiVolumeReader
 
@@ -71,7 +71,7 @@ proc MultiVolumeReaderInit {} {
     #  Set the level of development that this module falls under, from the list defined in Main.tcl,
     #  Module(categories) or pick your own
     #  This is included in the Help->Module Categories menu item
-    set Module($m,category) "IO"
+    set Module($m,category) "I/O"
 
     # Define Tabs
     #------------------------------------
@@ -149,7 +149,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6.2.4 $} {$Date: 2004/12/13 18:36:01 $}]
+        {$Revision: 1.6.2.5 $} {$Date: 2005/01/20 20:22:05 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -162,6 +162,11 @@ proc MultiVolumeReaderInit {} {
 #    set MultiVolumeReader(Volume1) $Volume(idNone)
 #    set MultiVolumeReader(Model1)  $Model(idNone)
 #    set MultiVolumeReader(FileName)  ""
+
+    set MultiVolumeReader(modulePath) "$env(SLICER_HOME)/Modules/MultiVolumeReader"
+
+    # Source all appropriate tcl files here. 
+    source "$MultiVolumeReader(modulePath)/tcl/DICOMHelper.tcl"
 }
 
 
@@ -200,15 +205,15 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
 
     # The Volume frame
     set f $parent.fVols
-    DevAddLabel $f.lNote "Configure the reader:"
+    DevAddLabel $f.lNote "Configure the multi-volume reader:"
     frame $f.fConfig -bg $Gui(activeWorkspace) -relief groove -bd 2 
     pack $f.lNote -side top -pady 6 
     pack $f.fConfig -side top
 
     set f $parent.fVols.fConfig
-    set MultiVolumeReader(fileTypes) {hdr .bxh}
+    # set MultiVolumeReader(fileTypes) {bxh .dcm .hdr}
     DevAddFileBrowse $f MultiVolumeReader "fileName" "File Name:" \
-        "MultiVolumeReaderSetFileFilter" "\$MultiVolumeReader(fileTypes)" \
+        "MultiVolumeReaderSetFileFilter" "bxh .dcm .hdr" \
         "\$Volume(DefaultDir)" "Open" "Browse for a volume file" "" "Absolute"
 
     frame $f.fFilter -bg $Gui(activeWorkspace)
@@ -223,7 +228,7 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
     eval {radiobutton $f.r1 -width 27 -text {Load a single file} \
         -variable MultiVolumeReader(filterChoice) -value single \
         -relief flat -offrelief flat -overrelief raised \
-        -selectcolor blue} $Gui(WEA)
+        -selectcolor white} $Gui(WEA)
     pack $f.r1 -side top -pady 2 
     TooltipAdd $f.r1 $filter 
     frame $f.fMulti -bg $Gui(activeWorkspace) -relief groove -bd 1 
@@ -232,7 +237,7 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
     eval {radiobutton $f.r2 -width 27 -text {Load multiple files} \
         -variable MultiVolumeReader(filterChoice) -value multiple \
         -relief flat -offrelief flat -overrelief raised \
-        -selectcolor blue} $Gui(WEA)
+        -selectcolor white} $Gui(WEA)
     TooltipAdd $f.r2 $filter 
 
     DevAddLabel $f.lFilter " Filter:"
@@ -274,14 +279,6 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
     # The Navigate frame
     set f $parent.fNav
 
-    DevAddButton $f.bSet "Set Window/Level/Thresholds" \
-        "MultiVolumeReaderSetWindowLevelThresholds" 30
-    # put a tooltip over the button 
-    TooltipAdd $f.bSet \
-        "Set window, level and low/high threshold\n\
-        for the first volume. Hit this button to set\n\
-        the same values for the entire sequence."
- 
     DevAddLabel $f.lVolNo "Vol Index:"
     eval {scale $f.sSlider \
         -orient horizontal \
@@ -297,7 +294,6 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
         "Slide this scale to navigate multi-volume sequence."
  
     #The "sticky" option aligns items to the left (west) side
-    grid $f.bSet -row 0 -column 0 -columnspan 2 -padx 5 -pady 3 -sticky w
     grid $f.lVolNo -row 1 -column 0 -padx 1 -pady 1 -sticky w
     grid $f.sSlider -row 1 -column 1 -padx 1 -pady 1 -sticky w
 }
@@ -386,6 +382,10 @@ proc MultiVolumeReaderSetFileFilter {} {
             $MultiVolumeReader(multipleRadiobutton) configure -state active 
             $MultiVolumeReader(filterEntry) configure -state normal 
         }
+        ".dcm" {
+            $MultiVolumeReader(multipleRadiobutton) configure -state active 
+            $MultiVolumeReader(filterEntry) configure -state normal 
+        }
         ".bxh" {
             set MultiVolumeReader(filterChoice) single
             $MultiVolumeReader(multipleRadiobutton) configure -state disabled 
@@ -436,6 +436,9 @@ proc MultiVolumeReaderLoad {} {
         ".bxh" {
             set val [MultiVolumeReaderLoadBXH]
         }
+        ".dcm" {
+            set val [MultiVolumeReaderLoadDICOM]
+        }
         default {
             DevErrorWindow "Can't read this file for a volume sequence: $fileName."
             set val 1
@@ -465,6 +468,47 @@ proc MultiVolumeReaderLoad {} {
 
 
 #-------------------------------------------------------------------------------
+# .PROC MultiVolumeReaderGetFilelistFromFilter 
+# Returns a list of file names that match the user's filter. 
+# .ARGS
+# extension the image file extension such as .hdr, .dcm, or .bxh
+# .END
+#-------------------------------------------------------------------------------
+proc MultiVolumeReaderGetFilelistFromFilter {extension} {
+    global MultiVolumeReader 
+
+    set path [file dirname $MultiVolumeReader(fileName)]
+    set name [file tail $MultiVolumeReader(fileName)]
+
+    set filter $MultiVolumeReader(filter)
+    string trim $filter
+    set len [string length $filter]
+    if {$len == 0} {
+        set filter "*.*" 
+    } 
+
+    set ext [file extension $filter]
+
+    if {$ext == ".*"} {
+        set len [string length $filter]
+        set filter [string replace $filter [expr $len-2] end $extension] 
+    } elseif {$ext == $extension} {
+    } else {
+        set filter $filter$extension
+    }
+
+    set pattern [file join $path $filter]
+    set fileList [glob -nocomplain $pattern]
+    if {$fileList == ""} {
+        DevErrorWindow "No image file is matched through your filter: $filter"
+        return "" 
+    }
+
+    return [lsort -dictionary $fileList]
+}
+
+
+#-------------------------------------------------------------------------------
 # .PROC MultiVolumeReaderLoadAnalyze 
 # Loads Analyze volumes. It returns 0 if successful; 1 otherwise. 
 # .ARGS
@@ -477,36 +521,10 @@ proc MultiVolumeReaderLoadAnalyze {} {
 
     set fileName $MultiVolumeReader(fileName)
     set analyzeFiles [list $fileName]
- 
+  
     # file filter
     if {$MultiVolumeReader(filterChoice) == "multiple"} {
-        set path [file dirname $fileName]
-        set name [file tail $fileName]
-
-        set filter $MultiVolumeReader(filter)
-        string trim $filter
-        set len [string length $filter]
-        if {$len == 0} {
-            lappend analyzeFiles $fileName
-        } else {
-            set hdr ".hdr"
-            set ext [file extension $filter]
-
-            if {$ext == ".*"} {
-                set filter [string replace $filter [expr $len-2] end $hdr] 
-            } elseif {$ext == $hdr} {
-            } else {
-                set filter $filter$hdr
-            }
-            set pattern [file join $path $filter]
-            set fileList [glob -nocomplain $pattern]
-            if {$fileList == ""} {
-                DevErrorWindow "No Analyze file is selected through your filter: $filter"
-                return 1
-            }
-
-            set analyzeFiles [lsort -dictionary $fileList]
-        }
+        set analyzeFiles [MultiVolumeReaderGetFilelistFromFilter ".hdr"]
     }
 
     foreach f $analyzeFiles { 
@@ -556,4 +574,40 @@ proc MultiVolumeReaderLoadBXH {} {
 
     return 0
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC MultiVolumeReaderLoadDICOM 
+# Loads DICOM volume(s). It returns 0 if successful; 1 otherwise. 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MultiVolumeReaderLoadDICOM {} {
+    global MultiVolumeReader DICOMHelper Volume Mrml
+
+    set fileName $MultiVolumeReader(fileName)
+    set dcmFiles [list $fileName]
+ 
+    # file filter
+    if {$MultiVolumeReader(filterChoice) == "multiple"} {
+        set dcmFiles [MultiVolumeReaderGetFilelistFromFilter ".dcm"]
+    }
+
+    set val [DICOMHelperLoad $dcmFiles]
+    if {$val == 1} {
+        return 1
+    }
+
+    set MultiVolumeReader(firstMRMLid) [lindex $DICOMHelper(MRMLid) 0] 
+    set MultiVolumeReader(lastMRMLid) [lindex $DICOMHelper(MRMLid) end] 
+    set MultiVolumeReader(noOfVolumes) [llength $DICOMHelper(MRMLid)] 
+    set MultiVolumeReader(volumeExtent) $DICOMHelper(volumeExtent) 
+
+    # show the first volume by default
+    MainSlicesSetVolumeAll Back $MultiVolumeReader(firstMRMLid)
+    RenderAll
+
+    return 0
+}
+
 
