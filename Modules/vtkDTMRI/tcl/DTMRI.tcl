@@ -104,7 +104,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.8 $} {$Date: 2004/04/07 01:46:23 $}]
+            {$Revision: 1.9 $} {$Date: 2004/04/09 19:55:28 $}]
 
     # Define Tabs
     #------------------------------------
@@ -3909,24 +3909,62 @@ proc ConvertVolumeToTensors {} {
     vtkTransform trans    
     puts "If not phase-freq flipped, swapping x and y in gradient directions"
     set swap [Volume($v,node) GetFrequencyPhaseSwap]
-    if {$swap == 0} {
-    set elements "\
-                    {0 1 0 0}  \
-                    {1 0 0 0}  \
-                    {0 0 1 0}  \
-                    {0 0 0 1}  "
+    if {$swap == 0} {    
+       # Gunnar Farneback, April 6, 2004
+       #
+       # Apparently nobody understands all the involved coordinate
+       # systems well enough to actually know how the gradient
+       # directions should be transformed. This piece of code is
+       # based on the hypothesis that the transformation matrices
+       # only need to depend on the scan order and that the values
+       # can be determined experimentally. It is perfectly possible
+       # that this may break from changes elsewhere.
+       #
+       # If somebody reading this does know how to properly do these
+       # transforms, please replace this code with something better.
+       #
+       # So far IS and PA have been experimentally verified.
+       # SI is hypothesized to be the same as IS.
+       # AP is hypothesized to be the same as PA.
+       set scanorder [Volume($v,node) GetScanOrder]
+       puts $scanorder
+       switch $scanorder {
+           "SI" -
+           "IS" {
+               set elements "\
+                                {0 1 0 0}  \
+                                {1 0 0 0}  \
+                                {0 0 -1 0}  \
+                                {0 0 0 1}  "
+           }
+           "AP" -
+           "PA" {
+               set elements "\
+                                {0 1 0 0}  \
+                                {-1 0 0 0}  \
+                                {0 0 -1 0}  \
+                                {0 0 0 1}  "
+           }
+           default {
+               set elements "\
+                                {0 1 0 0}  \
+                                {1 0 0 0}  \
+                                {0 0 1 0}  \
+                                {0 0 0 1}  "
+           }
+       }
 
-    set rows {0 1 2 3}
-    set cols {0 1 2 3}    
-    foreach row $rows {
-        foreach col $cols {
-        [trans GetMatrix] SetElement $row $col \
-            [lindex [lindex $elements $row] $col]
-        }
-    }
-    }   else { 
-    puts "Creating DTMRIs with -y for vtk compliance"
-    trans Scale 1 -1 1
+       set rows {0 1 2 3}
+       set cols {0 1 2 3}    
+       foreach row $rows {
+           foreach col $cols {
+               [trans GetMatrix] SetElement $row $col \
+                   [lindex [lindex $elements $row] $col]
+           }
+       }    
+    } else { 
+       puts "Creating DTMRIs with -y for vtk compliance"
+       trans Scale 1 -1 1
     }
     DTMRI SetTransform trans
     trans Delete
