@@ -19,6 +19,7 @@ ordered='Data
         EMSegment'
 suppressed='Custom
         CustomCsys
+	OsteoPlan
         Anatomy'
 
 </Options>
