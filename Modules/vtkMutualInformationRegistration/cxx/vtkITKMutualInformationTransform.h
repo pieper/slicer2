@@ -55,6 +55,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 //
 // .SECTION Thanks
 // Thanks to Samson Timoner who wrote this class.
+// Thanks to Steve Pieper who wrote the initial version of the class.
 
 #include "vtkLinearTransform.h"
 
