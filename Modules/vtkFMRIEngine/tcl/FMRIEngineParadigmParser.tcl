@@ -248,9 +248,10 @@ proc FMRIEngineCreateStimulusArray {} {
     global FMRIEngine
 
     # if the stimulus array exists, remove it
-    if {[info exists FMRIEngine(stimulus)]} {
+    if {[info commands FMRIEngine(stimulus)] != ""} {
         FMRIEngine(stimulus) Delete
     }
+    unset -nocomplain FMRIEngine(stimulus)
 
     set totalVolumes [lindex $FMRIEngine(paradigm) 0]
     vtkFloatArray FMRIEngine(stimulus)     
