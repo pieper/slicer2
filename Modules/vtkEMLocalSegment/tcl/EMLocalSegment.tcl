@@ -245,7 +245,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2003/09/16 13:23:14 $}]
+        {$Revision: 1.6 $} {$Date: 2003/10/03 19:53:28 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1677,18 +1677,19 @@ proc EMSegmentUpdateMRML {} {
         set LocalPriorPrefix [SegmenterClass($pid,node) GetLocalPriorPrefix]
         set LocalPriorName   [SegmenterClass($pid,node) GetLocalPriorName]
         set LocalPriorRange  [SegmenterClass($pid,node) GetLocalPriorRange]
-        set EMSegment(Cattrib,$NumClass,ProbabilityData) ""
+        set EMSegment(Cattrib,$NumClass,ProbabilityData) $Volume(idNone) 
+
+        set WeightConfidenceName   [SegmenterClass($pid,node) GetWeightConfidenceName]
+        set EMSegment(Cattrib,$NumClass,WeightConfidenceData) $Volume(idNone) 
+
         foreach VolID $Volume(idList) VolAttr $VolumeList {
             if {([lindex $VolAttr 0] == $LocalPriorName) && ([lindex $VolAttr 1] == $LocalPriorRange)} {
-        if {([lindex $VolAttr 2] == $LocalPriorPrefix) || ([lindex $VolAttr 3] == $LocalPriorPrefix)} {
-                  set EMSegment(Cattrib,$NumClass,ProbabilityData) $VolID
-                  break;
-        }
+               if {([lindex $VolAttr 2] == $LocalPriorPrefix) || ([lindex $VolAttr 3] == $LocalPriorPrefix)} {set EMSegment(Cattrib,$NumClass,ProbabilityData) $VolID
+               }
             }
+        if {([lindex $VolAttr 0] == $WeightConfidenceName) && ($WeightConfidenceName != "") } { set EMSegment(Cattrib,$NumClass,WeightConfidenceData) $VolID }
         }
-        if {$EMSegment(Cattrib,$NumClass,ProbabilityData) == ""} {
-           set EMSegment(Cattrib,$NumClass,ProbabilityData) $Volume(idNone) 
-        }
+
         set index 0
         set LogCovariance  [SegmenterClass($pid,node) GetLogCovariance]
         set LogMean [SegmenterClass($pid,node) GetLogMean]
@@ -1965,7 +1966,7 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
           SegmenterSuperClass($pid,node) SetProb        $EMSegment(Cattrib,$i,Prob)  
           SegmenterSuperClass($pid,node) SetNumClasses  [llength $EMSegment(Cattrib,$i,ClassList)]
 
-      set LastNode [EMSegmentSaveSettingSuperClass $i $EMSegment(Cattrib,$i,Node)]
+          set LastNode [EMSegmentSaveSettingSuperClass $i $EMSegment(Cattrib,$i,Node)]
       } else {
       # A normal class
       if {$EMSegment(Cattrib,$i,Node) == ""} {set EMSegment(Cattrib,$i,Node) [MainMrmlInsertAfterNode $LastNode SegmenterClass] }
@@ -1986,6 +1987,14 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
              SegmenterClass($pid,node) SetLocalPriorPrefix ""
              SegmenterClass($pid,node) SetLocalPriorName   ""
           }
+
+          set v $EMSegment(Cattrib,$i,WeightConfidenceData) 
+          if {$v != $Volume(idNone) } {
+             SegmenterClass($pid,node) SetWeightConfidenceName [Volume($v,node) GetName]
+          if { [Volume($v,node) GetName] == ""} {puts "EMSegmentSaveSettingSuperClass: Error: No name was defined for the volume assigned to WeightConfidence!"
+          }
+          } else { SegmenterClass($pid,node) SetWeightConfidenceName  ""}
+
           set LogMean ""
           set LogCovariance ""
           for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
@@ -3310,6 +3319,7 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
         unset EMSegment(Cattrib,$i,ColorCode) EMSegment(Cattrib,$i,Label)  
         unset EMSegment(Cattrib,$i,Prob) EMSegment(Cattrib,$i,ProbabilityData)
         unset EMSegment(Cattrib,$i,ShapeParameter)
+        unset EMSegment(Cattrib,$i,WeightConfidenceData)
 
         for {set y 0} {$y <  $EMSegment(MaxInputChannelDef)} {incr y} {
           unset  EMSegment(Cattrib,$i,LogMean,$y)
@@ -3393,6 +3403,7 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
 
       # Special EMSegment(SegmentMode) == 1 Variables     
       set EMSegment(Cattrib,$i,ProbabilityData) $Volume(idNone)
+      set EMSegment(Cattrib,$i,WeightConfidenceData) $Volume(idNone)
     }
     # Define CIM Field as Matrix M(Class1,Class2,Relation of Pixels)
     # where the "Relation of the Pixels" can be set as Pixel with "left", 
