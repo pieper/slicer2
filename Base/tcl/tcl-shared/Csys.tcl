@@ -106,6 +106,10 @@ proc CsysActorSelected {widget x y} {
 
     global Csys Ev 
 
+    if { ![info exists Csys(active)] } {
+        # in case we get a motion callback before the module is initialized...
+        return
+    }
 
     if { $Csys(active) > 0 } {
         if { [SelectPick Csys(picker) $widget $x $y] != 0 } {
