@@ -152,6 +152,8 @@ label .splash.l -image $splashim
 place .splash.l -relx 0.5 -rely 0.35 -anchor center
 label .splash.t -text "Please be aware that Slicer is not validated and \nis for Research Use Only.\n\nSee www.slicer.org for license details." -bg white -fg red
 place .splash.t -relx 0.5 -rely 0.75 -anchor center
+label .splash.v -text "Version: $SLICER(version)" -bg white -fg darkblue
+place .splash.v -relx 0.5 -rely 0.95 -anchor center
 after 7000 "destroy .splash; image delete $splashim"
 proc raisesplash {} { if {[winfo exists .splash]} {raise .splash; after 100 "after idle raisesplash"}}
 raisesplash
