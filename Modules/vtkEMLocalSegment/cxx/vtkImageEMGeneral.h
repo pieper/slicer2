@@ -220,13 +220,14 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMGeneral : public vtkImageMultipleInput
   // Calculate the Gauss-Lookup-Table for one tissue class 
   static int CalculateGaussLookupTable(double *GaussLookupTable,double **ValueTable,double **InvCovMatrix, double InvSqrtDetCovMatrix, 
                                        double *ValueVec,int GaussTableIndex,int TableSize,int NumberOfInputImages, int index);
+//Kilian
+//ETX
   // Description :
   // Calculates DICE and Jakobian Simularity Measure 
   // Value defines the vooxel with those label to be measured
   // Returns  Dice sim measure
   static float CalcSimularityMeasure (vtkImageData *Image1, vtkImageData *Image2,float val, int PrintRes);
-//Kilian
-//ETX
+
 protected:
   vtkImageEMGeneral() {};
   vtkImageEMGeneral(const vtkImageEMGeneral&) {};
