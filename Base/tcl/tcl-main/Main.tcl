@@ -309,7 +309,7 @@ proc MainInit {} {
 	set Module(procRecallPresets) ""
 	set m Main
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.21 $} {$Date: 2000/02/14 22:25:26 $}]
+		{$Revision: 1.22 $} {$Date: 2000/02/14 22:26:45 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -692,8 +692,8 @@ proc MainBuildGUI {} {
 	# Fade button
 	#-------------------------------------------
 	eval {checkbutton $f.cFade \
-		-text Fade -width 5 -variable Slice(fade) \
-		-width 17 -indicatoron 0 \
+		-text Fade -variable Slice(fade) \
+		-width 5 -indicatoron 0 \
 		-command "MainSlicesSetFadeAll; RenderAll"} $Gui(WCA)
 
 	pack $f.bExit $f.sOpacity $f.cFade -side top -pady $Gui(pad)
