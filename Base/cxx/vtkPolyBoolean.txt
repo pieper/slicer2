@@ -1,2 +1,0 @@
-vtkPolyBoolean - an object that performs high speed boolean operations
-between two vtkPolyData dataset polyhedra. The output is type vtkPolyData.
