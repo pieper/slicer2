@@ -144,7 +144,7 @@ itcl::configbody isprogress::use_main_progress {
        MainStartProgress 
        global Gui
        set Gui(progressText) $_progress_text
-       puts $_progress_text
+       puts "isprogress: $_progress_text"
    }
 }
 
