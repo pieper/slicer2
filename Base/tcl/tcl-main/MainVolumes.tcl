@@ -58,7 +58,7 @@ proc MainVolumesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.46 $} {$Date: 2001/11/12 23:20:40 $}]
+		{$Revision: 1.47 $} {$Date: 2002/01/21 18:16:13 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -824,8 +824,9 @@ proc MainVolumesSetActive {v} {
 			set Volume(firstFile) [format $Volume(filePattern) \
 				[Volume($v,node) GetFilePrefix] $lo]
 
-			scan [Volume($v,node) GetSpacing] "%f %f %f" pix pix thick
-			set Volume(pixelSize) $pix
+			scan [Volume($v,node) GetSpacing] "%f %f %f" pixw pixh thick
+			set Volume(pixelWidth) $pixw
+			set Volume(pixelHeight) $pixh
 			set Volume(sliceThickness) $thick
 			# display default for spacing
 			set Volume(sliceSpacing) 0
@@ -1038,7 +1039,8 @@ proc MainVolumesSetGUIDefaults {} {
     set Volume(width) [lindex [default GetDimensions] 0]
     set Volume(height) [lindex [default GetDimensions] 1]
     set spacing [default GetSpacing]
-    set Volume(pixelSize) [lindex $spacing 0]
+    set Volume(pixelWidth) [lindex $spacing 0]
+    set Volume(pixelHeight) [lindex $spacing 1]
     set Volume(sliceThickness) [lindex $spacing 2]
     set Volume(sliceSpacing) 0.0
     set Volume(gantryDetectorTilt) [default GetTilt]

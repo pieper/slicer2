@@ -156,7 +156,7 @@ DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-                {$Revision: 1.54 $} {$Date: 2002/01/05 17:21:22 $}]
+                {$Revision: 1.55 $} {$Date: 2002/01/21 18:16:13 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -614,9 +614,10 @@ acquisition.
 
 	# Entry fields (the loop makes a frame for each variable)
 	foreach param "filePattern width height \
-		pixelSize sliceThickness sliceSpacing" \
+		pixelWidth pixelHeight sliceThickness sliceSpacing" \
 		name "{File Pattern} \
-		{Width in pixels} {Height in pixels} {Pixel Size (mm)} \
+		{Width in pixels} {Height in pixels} {Pixel Width (mm)} \
+		{Pixel Height (mm)} \
 		{Slice Thickness} {Slice Spacing}" {
 
 	    set f $fProps.fBot.fHeader.fEntry
@@ -917,7 +918,7 @@ proc VolumesManualSetPropertyType {n} {
     }
     $n SetImageRange $firstNum $Volume(lastNum)
     $n SetDimensions $Volume(width) $Volume(height)
-    eval $n SetSpacing $Volume(pixelSize) $Volume(pixelSize) \
+    eval $n SetSpacing $Volume(pixelWidth) $Volume(pixelHeight) \
             [expr $Volume(sliceSpacing) + $Volume(sliceThickness)]
     $n SetScalarTypeTo$Volume(scalarType)
     $n SetNumScalars $Volume(numScalars)
@@ -1025,10 +1026,15 @@ proc VolumesPropsApply {} {
         return
     }
     # pixel size
-    if {[ValidateFloat $Volume(pixelSize)] == 0} {
+    if {[ValidateFloat $Volume(pixelWidth)] == 0} {
         tk_messageBox -message "The pixel size must be a number."
         return
     }
+    if {[ValidateFloat $Volume(pixelHeight)] == 0} {
+        tk_messageBox -message "The pixel size must be a number."
+        return
+    }
+
     # slice thickness
     if {[ValidateFloat $Volume(sliceThickness)] == 0} {
         tk_messageBox -message "The slice thickness must be a number."
@@ -1160,7 +1166,7 @@ proc VolumesPropsApply {} {
     Volume($m,node) SetName $Volume(name)
     Volume($m,node) SetDescription $Volume(desc)
     Volume($m,node) SetLabelMap $Volume(labelMap)
-    eval Volume($m,node) SetSpacing $Volume(pixelSize) $Volume(pixelSize) \
+    eval Volume($m,node) SetSpacing $Volume(pixelWidth) $Volume(pixelHeight) \
             [expr $Volume(sliceSpacing) + $Volume(sliceThickness)]
     Volume($m,node) SetTilt $Volume(gantryDetectorTilt)
     
@@ -2410,9 +2416,12 @@ proc DICOMReadHeaderValues { filename } {
 
 	if { [parser FindElement 0x0028 0x0030] == "1" } {
 	    set NextBlock [lindex [split [parser ReadElement]] 4]
-	    set Volume(pixelSize) [parser ReadFloatAsciiNumeric $NextBlock]
+	    set Volume(pixelWidth) [parser ReadFloatAsciiNumeric $NextBlock]
+	    set Volume(pixelHeight) [parser ReadFloatAsciiNumeric $NextBlock]
+
 	} else  {
-	    set Volume(pixelSize) "unknown"
+	    set Volume(pixelWidth) "unknown"
+	    set Volume(pixelHeight) "unknown"
 	}
 
 	if { [parser FindElement 0x0018 0x0050] == "1" } {

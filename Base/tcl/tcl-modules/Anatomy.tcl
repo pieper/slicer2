@@ -142,7 +142,7 @@ proc AnatomyInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.3 $} {$Date: 2001/12/21 00:00:01 $}]
+	    {$Revision: 1.4 $} {$Date: 2002/01/21 18:16:13 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -655,8 +655,8 @@ proc AnatomyWriteHTML {{filename ""}} {
 	puts $id "\t\t<!-- total number of slices in acquisition -->"
 	puts $id "\t\t<param name=\"NUMBERSLICES\" value=\"$Volume(lastNum)\">"
 	puts $id "\t\t<!-- in-slice pixel dimensions -->"
-	puts $id "\t\t<param name=\"PIXELWIDTH\" value=\"$Volume(pixelSize)\">"
-	puts $id "\t\t<param name=\"PIXELHEIGHT\" value=\"$Volume(pixelSize)\">"
+	puts $id "\t\t<param name=\"PIXELWIDTH\" value=\"$Volume(pixelWidth)\">"
+	puts $id "\t\t<param name=\"PIXELHEIGHT\" value=\"$Volume(pixelHeight)\">"
 	puts $id "\t\t<!-- slice spacing -->"
 	puts $id "\t\t<param name=\"PIXELZ\" value=\"[expr $Volume(sliceThickness)+$Volume(sliceSpacing)]\">"
 	
