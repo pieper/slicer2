@@ -12,6 +12,11 @@
 package ifneeded vtkinit {4.2} {
   namespace eval ::vtk::init {
     proc load_library_package {libName libPath {libPrefix {lib}}} {
+      if { $::tcl_platform(platform) == "windows" } {
+        set libPrefix "debug/"
+      } else {
+        set libPrefix "lib"
+      }
       set libExt [info sharedlibextension]
       set currentDirectory [pwd]
       set libFile [file join $libPath "$libPrefix$libName$libExt"]
@@ -35,14 +40,9 @@ package ifneeded vtkinit {4.2} {
 foreach kit { Common Filtering IO Imaging Graphics
               Rendering Hybrid 
               Patented  } {
-  if { $::tcl_platform(platform) == "windows" } {
-    set libPrefix ""
-  } else {
-    set libPrefix "lib"
-  }
   package ifneeded "vtk${kit}TCL" {4.2} "
     package require -exact vtkinit {4.2}
-    ::vtk::init::load_library_package {vtk${kit}TCL} {$::env(VTK_BIN_DIR)/bin} $libPrefix
+    ::vtk::init::load_library_package {vtk${kit}TCL} {$::env(VTK_BIN_DIR)/bin}
   "
   package ifneeded "vtk[string tolower ${kit}]" {4.2} "
     package require -exact vtkinit {4.2}
