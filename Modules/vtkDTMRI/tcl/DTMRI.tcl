@@ -123,7 +123,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.27 $} {$Date: 2004/09/01 16:26:29 $}]
+                  {$Revision: 1.28 $} {$Date: 2004/09/13 17:24:09 $}]
 
      # Define Tabs
     #------------------------------------
@@ -2820,16 +2820,10 @@ proc RunLSDIrecon {} {
     #puts $Volume(DefaultDir)
 
     puts "Copying LSDIrecon_par to Volume Data directory..."
-    catch {exec cp $PACKAGE_DIR_VTKDTMRI/../../../LSDIrecon_par $Volume(DefaultDir)} writingerror
-    if {$writingerror != ""} {
-         puts $writingerror
-         set a [lindex $writingerror 0]
-         if {$a == "cp:"} {
-             DevInfoWindow "You don't have permission \n to write in the selected directory."
-             return
-         }
-         
-         return
+    set a [catch {file copy $PACKAGE_DIR_VTKDTMRI/../../../LSDIrecon_par $Volume(DefaultDir)}]
+    if {$a} {
+       DevInfoWindow "You don't have permission \n to write in the selected directory."
+       return
     }
 
     puts "Changing to Volume Data directory..."
@@ -3085,8 +3079,8 @@ proc RunLSDIrecon {} {
 
     if { [file exists $PACKAGE_DIR_VTKDTMRI/../../../data/] != 0 } then {
 
-        set DTMRI(patternnamesdef) [exec ls $PACKAGE_DIR_VTKDTMRI/../../../data/]
-
+        #set DTMRI(patternnamesdef) [exec ls $PACKAGE_DIR_VTKDTMRI/../../../data/]
+      set DTMRI(patternnamesdef) [glob -tail -directory $PACKAGE_DIR_VTKDTMRI/../../../data/ *]
       # check if the file contains pattern information
       foreach pattern $DTMRI(patternnamesdef) {
         set DTMRI(ispatternfile) 0
@@ -3139,7 +3133,8 @@ proc RunLSDIrecon {} {
      
    if { [file exists $env(HOME)/PatternsData/] != 0 } then {
 
-        set DTMRI(localpatternnamesdef) [exec ls $env(HOME)/PatternsData/]
+    #set DTMRI(localpatternnamesdef) [exec ls $env(HOME)/PatternsData/]
+    set DTMRI(localpatternnamesdef) [glob -tail -directory $env(HOME)/PatternsData/ *]
     set DTMRI(localpatternnames) ""
 
     # check if the file contains pattern information
