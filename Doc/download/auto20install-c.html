@@ -1,14 +1,14 @@
 <title>Install at BWH</title>
 
-<h3>Installation in the Open MR</h3>
+<h3>OpenMR Installation Instructions</h3>
 
 <h4>Accounts</h4>
 <p>
 Install everything as the "surg" user, and always run slicer as the "surg" user.
 
-<h4>Install Instructions</h4>
+<h4>Install the Software Packages</h4>
 <p>
-Unzip packages to create the following directory structure inside a main directory named "slicer":
+Unzip packages (from the ftp site) to create the following directory structure inside a main directory named "slicer":
 <ul>
 <li><b>pkg</b> -- contains all packages downloaded for installation
 <br>&nbsp;<li><b>slicer-1.2.2</b> -- most recent version of slicer
@@ -24,7 +24,7 @@ Perform the following:
 <br>&nbsp;<li>Add the above "bin" directory to the "PATH" environment variable in surg's "~/.tcshrc" file.
 </ol>
 
-<h4>Edit Tcl Files to Change Defaults in New Slicer</h4>
+<h4>Edit tcl Files to Change Defaults in New Slicer</h4>
 <p>
 <table cellpadding=3 cellspacing=3 border=0 align=center>
 <tr>
@@ -39,8 +39,13 @@ Perform the following:
 <tr>
 <td class=box1>
   <div class=q>tcl-modules/Twin.tcl</div>
-  <div class=a>Add "set Twin(screen) 1" after the current line: "set Twin(screen) 0".
-  Add any other lines as desired to change the size and position of the window.</div>
+  <div class=a>Edit "set Twin(screen) 0" to become "set Twin(screen) 1".
+  Add any other lines as desired to change the size and position of the window. For example:<br>
+  &nbsp;&nbsp;set Twin(xPos) 30<br>
+  &nbsp;&nbsp;set Twin(yPos) 0<br>
+  &nbsp;&nbsp;set Twin(width) 550<br>
+  &nbsp;&nbsp;set Twin(height) 440<br>
+</div>
 </tr>
 <tr>
 <td class=box0>
