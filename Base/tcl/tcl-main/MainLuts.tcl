@@ -41,12 +41,12 @@ proc MainLutsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainLuts \
-        {$Revision: 1.14 $} {$Date: 2002/03/21 23:05:22 $}]
+        {$Revision: 1.15 $} {$Date: 2002/07/26 23:47:25 $}]
 
     # Create an ID for Labels
     set Lut(idLabel) -1
 
-    set Lut(idList) " 0 1 2 $Lut(idLabel)"
+    set Lut(idList) " 0 1 2 3 4 5 $Lut(idLabel)"
 
     set Lut(0,name) Gray
     set Lut(0,fileName) ""
@@ -71,6 +71,31 @@ proc MainLutsInit {} {
     set Lut(2,saturationRange) "1 1"
     set Lut(2,valueRange) "1 1"
     set Lut(2,annoColor) "1 1 1"
+
+    set Lut(3,name) Ocean
+    set Lut(3,fileName) ""
+    set Lut(3,numberOfColors) 256
+    set Lut(3,hueRange) "0.666667 0.5"
+    set Lut(3,saturationRange) "1 1"
+    set Lut(3,valueRange) "1 1"
+    set Lut(3,annoColor) "0 0 1"
+    
+    set Lut(4,name) Desert
+    set Lut(4,fileName) ""
+    set Lut(4,numberOfColors) 256
+    set Lut(4,hueRange) "0 0.1"
+    set Lut(4,saturationRange) "1 1"
+    set Lut(4,valueRange) "1 1"
+    set Lut(4,annoColor) "0 0 1"
+
+    set Lut(5,name) InvGray
+    set Lut(5,fileName) ""
+    set Lut(5,numberOfColors) 256
+    set Lut(5,hueRange) "0 0"
+    set Lut(5,saturationRange) "0 0"
+    set Lut(5,valueRange) "1 0"
+    set Lut(5,annoColor) "0 1 1"
+
 }
 
 #-------------------------------------------------------------------------------
