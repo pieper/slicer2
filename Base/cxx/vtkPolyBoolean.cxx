@@ -496,13 +496,13 @@ void vtkPolyBoolean::Execute()
     {
     for ( ii=0; ii<numInputPointsA; ii++ )
       {
-      this->NewPoints->SetPoint( ii, inputA->GetPoint( ii ) );
+      this->NewPoints->InsertPoint( ii, inputA->GetPoint( ii ) );
       }
     if ( this->BPoints == NULL )
       this->BuildBPoints( XformBtoA );
     for ( ii=0; ii<numInputPointsB; ii++ )
       {
-      this->NewPoints->SetPoint( ii+this->IdOffsetB,
+      this->NewPoints->InsertPoint( ii+this->IdOffsetB,
                                  this->BPoints->GetPoint( ii ) );
       }
     }
@@ -658,7 +658,7 @@ int vtkPolyBoolean::ProcessTwoNodes( vtkOBBNode *nodeA,
   vtkIdType *ptIds;
   static vtkIdList *cellIdsA = vtkIdList::New();
   static vtkIdList *cellIdsB = vtkIdList::New();
-  vtkFloatingPointType p[3][3];
+  vtkFloatingPointType p0[3], p1[3], p2[3];
 
   cellIdsA->Allocate(CELLS_PER_BUCKET+10);
   cellIdsB->Allocate(CELLS_PER_BUCKET+10);
@@ -693,13 +693,13 @@ int vtkPolyBoolean::ProcessTwoNodes( vtkOBBNode *nodeA,
       {
       case VTK_TRIANGLE:
         pbool->PolyDataB->GetCellPoints( cellIdB, numPts, ptIds );
-        pbool->BPoints->GetPoint( ptIds[0], p[0] );
-        pbool->BPoints->GetPoint( ptIds[1], p[1] );
-        pbool->BPoints->GetPoint( ptIds[2], p[2] );
+        pbool->BPoints->GetPoint( ptIds[0], p0 );
+        pbool->BPoints->GetPoint( ptIds[1], p1 );
+        pbool->BPoints->GetPoint( ptIds[2], p2 );
         // ptIds[] holds the ids if the B triangle points.
         // Go further only if triB intersects OBB-A
         if ( pbool->OBBTreeA->vtkOBBTree::TriangleIntersectsNode(
-                                         nodeA, p[0], p[1], p[2], NULL ) )
+                                         nodeA, p0, p1, p2, NULL ) )
           { // This cell qualifies for further testing
           cellIdsB->InsertNextId( cellIdB );
           pbool->AddCellTriangles( cellIdB, ptIds, type, numPts, 1 );
@@ -733,13 +733,13 @@ int vtkPolyBoolean::ProcessTwoNodes( vtkOBBNode *nodeA,
       {
       case VTK_TRIANGLE:
       pbool->GetInput()->GetCellPoints( cellIdA, numPts, ptIds );
-      InputA->GetPoint( ptIds[0], p[0] );
-      InputA->GetPoint( ptIds[1], p[1] );
-      InputA->GetPoint( ptIds[2], p[2] );
+      InputA->GetPoint( ptIds[0], p0 );
+      InputA->GetPoint( ptIds[1], p1 );
+      InputA->GetPoint( ptIds[2], p2 );
       // ptIds[] holds the ids if the A triangle points.
       // Go further only if triA intersects OBB-B
       if ( pbool->OBBTreeB->vtkOBBTree::TriangleIntersectsNode(
-                                        nodeB, p[0], p[1], p[2], XformAtoB ) )
+                                        nodeB, p0, p1, p2, XformAtoB ) )
         { // This cell qualifies for further testing
         cellIdsA->InsertNextId( cellIdA );
         pbool->AddCellTriangles( cellIdA, ptIds, type, numPts, 0 );
