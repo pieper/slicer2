@@ -19,7 +19,8 @@ set __comment__ {
     - copies each of the modules libs and wrapping files
     - removes CVS dirs that have been copied by accident
     - makes a .tar.gz or a .zip of the resulting distribution
-    - TODO: uploads to a web site for distribution
+    - if SLICER(state) is -dev, uploads to snapshots web site for testing
+       else uploads to birn rack for wider distribution
 
     It does all this while taking into account platform differences in naming schemes
     and directory layouts.
@@ -244,7 +245,7 @@ proc tarup { {destdir "auto"} } {
             set moddir $::env(SLICER_HOME)/Modules/$mod
         } else {
             foreach m $::env(SLICER_MODULES) {
-                if { [file exists $m/mod] } {
+                if { [file exists $m/$mod] } {
                     set moddir $m/$mod
                     break
                 }
@@ -328,15 +329,21 @@ proc tarup { {destdir "auto"} } {
         }
     }
 
-    puts " -- upload to birn rack"
+    if { $::SLICER(state) == "-dev" } {
+        set scpdestination "pieper@slicerl.bwh.harvard.edu:/usr/local/apache2/htdocs/snapshots"
+    } else {
+        set scpdestination "pieper@gpop.bwh.harvard.edu:slicer-dist"
+    }
+
+    puts " -- upload to $scpdestination"
     switch $::env(BUILD) {
         "solaris8" -
         "redhat7.3" - 
         "Darwin" {
-            exec xterm -e scp $archroot.tar.gz pieper@gpop.bwh.harvard.edu:slicer-dist
+            exec xterm -e scp $archroot.tar.gz $scpdestination
         }
         "Win32VC7" { 
-            exec rxvt -e scp $archroot.zip pieper@gpop.bwh.harvard.edu:slicer-dist &
+            exec rxvt -e scp $archroot.zip $scpdestination &
         }
     }
 
