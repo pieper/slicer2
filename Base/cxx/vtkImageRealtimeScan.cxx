@@ -181,9 +181,12 @@ Sends command 'cmd' to the server.
 ******************************************************************************/
 long vtkImageRealtimeScan::SendServer(int cmd)
 {
-    long len, n, nbytes=0;
+    long nbytes=0;
+#ifndef _WIN32
+    long n, len;
     char buf[LEN_NBYTES];
-
+#endif
+    
     if (Test) return 0;
 
     // Return if not connected yet
@@ -225,9 +228,12 @@ coordinate systems.
 int vtkImageRealtimeScan::SetPosition(short tblPos, short patEntry, 
                                       short patPos)
 {
-    long len, n, nbytes=0;
+    long nbytes=0;
+#ifndef _WIN32
+    long len, n;
     char buf[LEN_NBYTES];
-
+#endif
+    
     if (Test) return 0;
 
     // Return if not connected yet
@@ -300,10 +306,10 @@ int vtkImageRealtimeScan::OpenConnection(char *hostname, int port)
 #ifndef _WIN32
     struct sockaddr_in serv_addr;
     struct hostent *hostptr;
-#endif
     int len, n;
     char buf[100];
-
+#endif
+    
     // If already connected, then just verify the connection
     if (sockfd >= 0)
         return CheckConnection();
@@ -397,13 +403,13 @@ PollRealtime
 ******************************************************************************/
 int vtkImageRealtimeScan::PollRealtime()
 {
-    long len, n, nbytes;
     static char buf[200];
-    vtkFloatingPointType matrix[16];
-    int i,j;
     
 #ifndef _WIN32
-
+    long len, n, nbytes;
+    vtkFloatingPointType matrix[16];
+    int i, j;
+    
     // Request the update info
     nbytes = SendServer(CMD_UPDATE);
     if (nbytes < 0) return -1;
@@ -452,7 +458,9 @@ void vtkImageRealtimeScan::ExecuteInformation()
     vtkFloatingPointType spacing[3];
     short dim[3];
     int i, j, ext[6];
+#ifndef _WIN32
     long n, nbytes;
+#endif
     static char buf[200];
     vtkFloatingPointType matrix[16];
     
