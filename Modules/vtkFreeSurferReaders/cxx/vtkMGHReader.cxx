@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkMGHReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2003/02/19 23:55:50 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/02/20 13:27:27 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================*/
 #include "vtkMGHReader.h"
@@ -107,6 +107,9 @@ vtkDataArray *vtkMGHReader::ReadVolumeData()
   vtkIntArray           *intScalars = NULL;
   vtkFloatArray         *floatScalars = NULL;
   void* destData;
+  short* short_destData;
+  int* int_destData;
+  float* float_destData;
   FILE *fp;
   int numRead;
   int numPts;
@@ -202,24 +205,24 @@ vtkDataArray *vtkMGHReader::ReadVolumeData()
       return NULL;
     }
   } else {
+    short_destData = (short *)destData;
+    int_destData = (int *)destData;
+    float_destData = (float *)destData;
     for( int nZ = 0; nZ < this->DataDimensions[2]; nZ++ ) {
       for( int nY = 0; nY < this->DataDimensions[1]; nY++ ) {
     for( int nX = 0; nX < this->DataDimensions[0]; nX++ ) {
       switch ( this->ScalarType ) {
       case VTK_SHORT:
         vtkFSIO::ReadShort( fp, s );
-        *(short*)destData = s;
-        (short*)destData += 1;
+        *short_destData++ = s;
         break;
       case VTK_INT:
         vtkFSIO::ReadInt( fp, i );
-        *(int*)destData = i;
-        (int*)destData += 1;
+        *int_destData++ = i;
         break;
       case VTK_FLOAT:
         vtkFSIO::ReadFloat( fp, f );
-        *(float*)destData = f;
-        (float*)destData += 1;
+        *float_destData++ = f;
         break;
       default:
         vtkErrorMacro(<< "Volume type not supported.");
