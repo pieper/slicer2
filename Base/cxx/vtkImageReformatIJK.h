@@ -24,6 +24,36 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // .NAME vtkImageReformatIJK -  
 // .SECTION Description
 // non-oblique reformatting (axial, sagittal, coronal orientations only).
+//
+// Description added by odonnell 4/02:
+// This class is never used for actual reformatting (i.e. image generation).
+// It is just used in two places in vtkMrmlSlicer.cxx.
+// It is used to compute the reformat matrix for IJK-based reformatting
+// and also for converting points to IJK for manual editing.
+// The sequence of events (from vtkMrmlSlicer.cxx) is:
+//
+//  vtkImageReformatIJK *ijk = this->ReformatIJK;
+//  ijk->SetWldToIjkMatrix(node->GetWldToIjk());
+//  ijk->SetInput(vol->GetOutput());
+//  ijk->SetInputOrderString(node->GetScanOrder());
+//  ijk->SetOutputOrderString(orderString);
+//  ijk->SetSlice(offset);
+//  ijk->ComputeTransform();
+//  ijk->ComputeOutputExtent();
+//  ijk->ComputeReformatMatrix(ref);
+//
+//
+//  So this class just encapsulates the logic needed to calculate this matrix.
+//
+//  Note the reformat matrix is the matrix that would move a standard
+//  axial plane through the origin into the location where the slice
+//  is desired.  So this is defined in world space in the slicer, NOT
+//  IJK.  So this file basically converts the IJK notion of a slice
+//  through the array into the appropriate world-space matrix, using
+//  knowledge of the volume's location/scale from this->WldToIjkMatrix
+//  and using the extent of the image data to see where this slice
+//  should be placed in world space.
+//
 
 #ifndef __vtkImageReformatIJK_h
 #define __vtkImageReformatIJK_h

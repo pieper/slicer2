@@ -130,6 +130,16 @@ void vtkImageReformatIJK::SetOutputOrderString(char *str)
   }
 }
 
+//----------------------------------------------------------------------------
+// Description:
+// comment added by odonnell 4/02.
+// this function is used by vtkMrmlSlicer.
+// It computes the transform from "XYZ" to "IJK."
+// Apparently XYZ is in "array coordinates" where the array
+// has been rotated into RAS.  IJK is "array coordinates" as
+// the array is stored in memory.  So note that Axial IS XYZ to IJK
+// would be the identity matrix except that the x-axis is
+// flipped to put patient left on image right.
 void vtkImageReformatIJK::ComputeTransform()
 {
   // IS = [-x  y  z]
@@ -187,17 +197,25 @@ void vtkImageReformatIJK::ComputeTransform()
 }
 
 //----------------------------------------------------------------------------
+// Description:
+// comment added by odonnell 4/02.
+// this function is also used by vtkMrmlSlicer.
+// The logic in this function is used to 
 void vtkImageReformatIJK::ComputeOutputExtent()
 {
   int i, inExt[6], ijk[3], dot;
   float x[4]={1,0,0,1}, y[4]={0,1,0,1}, z[4]={0,0,1,1};
 
+  // the whole extent of the input is needed to see
+  // where the requested slice lies in the volume.
   this->GetInput()->GetWholeExtent(inExt);
 
   // Output is XYZ, input is IJK
   // tran: XYZ->IJK
   
     // Convert origin from XYZ to IJK space
+  // (find unit vectors in IJK space corresponding to 
+  // the XYZ (RAS without voxel scaling) unit vectors.)
     this->tran->MultiplyPoint(x, this->XStep);
     this->tran->MultiplyPoint(y, this->YStep);
     this->tran->MultiplyPoint(z, this->ZStep);
@@ -208,6 +226,10 @@ void vtkImageReformatIJK::ComputeOutputExtent()
     return;
   }
     
+  // begin point conversion ...
+  // Convert this IJK point (the end of the volume)
+  // into a point in XYZ space.  So this point is the last
+  // pixel in the last slice.
   ijk[0] = inExt[1];
   ijk[1] = inExt[3];
   ijk[2] = inExt[5];
@@ -256,12 +278,18 @@ void vtkImageReformatIJK::ComputeOutputExtent()
     this->Origin[1] += this->ZStep[1] * dot;
     this->Origin[2] += this->ZStep[2] * dot;
   }
+  // ... end point conversion
 
+  // now go perpendicular to the plane (along Z)
+  // until we reach the location of the last pixel
+  // in the desired slice.
   // advance by slice
   this->Origin[0] += this->ZStep[0] * this->Slice;
   this->Origin[1] += this->ZStep[1] * this->Slice;
   this->Origin[2] += this->ZStep[2] * this->Slice;
 
+  // this is apparently unused later: looks like it
+  // was for reformatting the whole volume, slice by slice.
     // Create array of indices
   int size = (this->OutputExtent[3]-this->OutputExtent[2]+1)*
     (this->OutputExtent[1]-this->OutputExtent[0]+1);
@@ -271,6 +299,11 @@ void vtkImageReformatIJK::ComputeOutputExtent()
 }
 
 //----------------------------------------------------------------------------
+// Description:
+// comment added by odonnell 4/02.
+// This function is used by vtkMrmlSlicer in the process of converting
+// points from 2d image coordinates (mouse clicks) into ijk array
+// indices (for drawing)
 void vtkImageReformatIJK::SetIJKPoint(int i, int j, int k)
 {
   int v, dot, dijk[3], x, y;
@@ -322,6 +355,12 @@ void Cross(float *a, float *b, float *c)
 }
 
 //----------------------------------------------------------------------------
+// Description:
+// comment added by odonnell 4/02.
+// this is also used by vtkMrmlSlicer.
+// It actually computes the reformat matrix to pass into
+// the vtkImageReformat class, which actually takes the 
+// input volume and extracts slices.
 void vtkImageReformatIJK::ComputeReformatMatrix(vtkMatrix4x4 *ref)
 {
   float O[4], X[4], Y[4], C[4];
@@ -422,6 +461,7 @@ void vtkImageReformatIJK::ComputeReformatMatrix(vtkMatrix4x4 *ref)
 }
 
 //----------------------------------------------------------------------------
+// not used since this is not used as an image filter.
 void vtkImageReformatIJK::ExecuteInformation(vtkImageData *inData, vtkImageData *outData)
 {    
   if (this->GetMTime() > this->TransformTime) 
@@ -433,6 +473,7 @@ void vtkImageReformatIJK::ExecuteInformation(vtkImageData *inData, vtkImageData 
 }
 
 //----------------------------------------------------------------------------
+// not used since this is not used as an image filter.
 void vtkImageReformatIJK::ComputeInputUpdateExtent(int inExt[6], int outExt[6])
 {
   // Use full input extent
@@ -440,6 +481,7 @@ void vtkImageReformatIJK::ComputeInputUpdateExtent(int inExt[6], int outExt[6])
 }
 
 //----------------------------------------------------------------------------
+// not used since this is not used as an image filter.
 // Description:
 // This templated function executes the filter for any type of data.
 template <class T>
@@ -525,6 +567,7 @@ static void vtkImageReformatIJKExecute(vtkImageReformatIJK *self,
 }
 
 //----------------------------------------------------------------------------
+// not used since this is not used as an image filter.
 // Description:
 // This method is passed a input and output data, and executes the filter
 // algorithm to fill the output from the input.
