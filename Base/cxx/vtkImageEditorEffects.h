@@ -50,6 +50,7 @@ public:
   void Dilate(float fg, float bg, int neighbors, int iterations);
   void ErodeDilate(float fg, float bg, int neighbors, int iterations);
   void DilateErode(float fg, float bg, int neighbors, int iterations);
+  void IdentifyIslands(int bg, int fgMin, int fgMax);
   void RemoveIslands(int bg, int fgMin, int fgMax, int minSize);
   void ChangeIsland(int newLabel, int xSeed, int ySeed, int zSeed);
   void MeasureIsland(int xSeed, int ySeed, int zSeed);

@@ -686,8 +686,8 @@ Models are fun. Do you like models, Ron?
 		}
 	}
 	
+	# Initialize to the first effect
 	EditorSetEffect EdNone
-
 }
 
 #-------------------------------------------------------------------------------
@@ -783,6 +783,9 @@ proc EditorB1 {x y} {
 		EditorChangeInputLabel $x $y
 	}
 	"EdRemoveIslands" {
+		EditorChangeInputLabel $x $y
+	}
+	"EdIdentifyIslands" {
 		EditorChangeInputLabel $x $y
 	}
 	}
@@ -1239,6 +1242,9 @@ proc EditorUpdateAfterUndo {} {
 		$Ed($e,procEnter)
 	}
 
+	# Mark the volume as changed
+	set Volume($w,dirty) 1
+
 	RenderAll
 }
 
@@ -1463,6 +1469,9 @@ proc EdUpdateAfterApplyEffect {v {render All}} {
 	# Render
 	Render$render
 
+	# Mark the volume as changed
+	set Volume($w,dirty) 1
+
 	$Editor(lRunTime)   config -text \
 		"[format "%.2f" [Ed(editor) GetRunTime]] sec,"
 	$Editor(lTotalTime) config -text \
@@ -1561,6 +1570,9 @@ proc EditorClear {data} {
 	copy SetOutput ""
 	copy Delete
 
+	# Mark the volume as changed
+	set Volume($v,dirty) 1
+
 	MainVolumesUpdate $v
 	RenderAll
 }
@@ -1645,6 +1657,9 @@ Merge with the Working or Composite, not '$bgName'"; return}
 		over Delete
 	}
 		
+	# Mark the volume as changed
+	set Volume($bg,dirty) 1
+
 	# Update pipeline and gui
 	MainVolumesUpdate $bg
 	RenderAll

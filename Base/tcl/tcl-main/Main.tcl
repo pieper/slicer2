@@ -309,7 +309,7 @@ proc MainInit {} {
 	set Module(procRecallPresets) ""
 	set m Main
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.19 $} {$Date: 2000/02/13 22:20:58 $}]
+		{$Revision: 1.20 $} {$Date: 2000/02/14 18:46:06 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -1117,13 +1117,21 @@ proc MainExitQuery { } {
 	set volumes ""
 	foreach v $Volume(idList) {
 		if {$Volume($v,dirty) == 1} {
-			set volumes "$volumes [Volume($v,node) GetName]"
+			if {$volumes == ""} {
+				set volumes "[Volume($v,node) GetName]"
+			} else {
+				set volumes "${volumes}, [Volume($v,node) GetName]"
+			}
 		}
 	}
 	set models ""
 	foreach v $Model(idList) {
 		if {$Model($v,dirty) == 1} {
-			set models "$models [Model($v,node) GetName]"
+			if {$models == ""} {
+				set models "[Model($v,node) GetName]"
+			} else {
+				set models "${models}, [Model($v,node) GetName]"
+			}
 		}
 	}
 
@@ -1146,7 +1154,7 @@ $models\n\n"
 #	set x 0
 #	set y [expr [winfo rooty $Gui(bExit)] - 60]
 	set x 20
-	set y 20
+	set y 50
 	YesNoPopup Exit $x $y $msg MainExitProgram 
 }
 

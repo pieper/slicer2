@@ -703,7 +703,9 @@ proc MainInteractorExit {widget} {
 
 	# Turn off cursor anno
 	foreach name "$Anno(mouseList)" {
-		Anno($s,$name,actor) SetVisibility 0
+		if {[info command Anno($s,$name,actor)] != ""} {
+			Anno($s,$name,actor) SetVisibility 0
+		}
 	}
 
 	# Render

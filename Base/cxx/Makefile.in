@@ -19,10 +19,10 @@ ABSTRACT =
 CONCRETE = \
 vtkImageAccumulateDiscrete \
 vtkImageBimodalAnalysis \
-vtkImageCCA \
 vtkImageClipInteractive \
 vtkImageClipper \
 vtkImageCloseUp2D \
+vtkImageConnectivity \
 vtkImageCopy \
 vtkImageCrossHair2D \
 vtkImageDouble2D \

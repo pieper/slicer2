@@ -745,6 +745,23 @@ void vtkImageEditor::Apply()
   if (this->Dimension == EDITOR_DIM_MULTI || 
       this->Dimension == EDITOR_DIM_3D)
   {
+    // ERROR
+    // If the user does 2 consecutive Apply()'s too quickly,
+    // then the UndoOutput==NULL here.
+    // I can avoid the error by just ignoring the second
+    // Apply, as I'm implementing here, but this should be 
+    // handled better in the future.
+    if (this->UndoOutput == NULL)
+    {
+      vtkDebugMacro(<<"UndoOutput=NULL because called Apply twice too fast!");
+      this->TotalTime = 0;
+      if (this->EndMethod)
+      {
+        (*this->EndMethod)(this->EndMethodArg);
+      } 
+      return;
+    }
+
     this->SwapOutputs();
 
     // Make sure UndoOutput has same extent as Output, else delete it.
@@ -767,7 +784,6 @@ void vtkImageEditor::Apply()
       this->UndoDimension = this->Dimension;
     }
   }
-
 
   // Measure total processing time, including overhead
   this->TotalTime = (float)(clock() - tStartTotal) / CLOCKS_PER_SEC;

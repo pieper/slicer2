@@ -28,7 +28,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <stdio.h>
 #include "vtkImageEditorEffects.h"
 #include "vtkImageErode.h"
-#include "vtkImageCCA.h"
+#include "vtkImageConnectivity.h"
 #include "vtkImageLabelChange.h"
 #include "vtkImageFillROI.h"
 #include "vtkImageThresholdBeyond.h"
@@ -244,76 +244,138 @@ void vtkImageEditorEffects::DilateErode(float fg, float bg, int neighbors,
 }
 
 //----------------------------------------------------------------------------
+void vtkImageEditorEffects::IdentifyIslands(int bg, int fgMin, int fgMax)
+{
+  vtkImageConnectivity *con  = vtkImageConnectivity::New();
+
+  con->SetBackground(bg);
+  con->SetMinForeground(fgMin);
+  con->SetMaxForeground(fgMax);
+
+  con->SetFunctionToIdentifyIslands();
+
+  this->Apply(con, con);
+
+  con->SetInput(NULL);
+  con->SetOutput(NULL);
+  con->Delete();
+}
+
+//----------------------------------------------------------------------------
 void vtkImageEditorEffects::RemoveIslands(int bg, int fgMin, int fgMax,
                                       int minSize)
 {
-  vtkImageCCA *cca  = vtkImageCCA::New();
+  vtkImageConnectivity *con  = vtkImageConnectivity::New();
+  int native = 0;
 
-  cca->SetBackground(bg);
-  cca->SetMinForeground(fgMin);
-  cca->SetMaxForeground(fgMax);
+  con->SetBackground(bg);
+  con->SetMinForeground(fgMin);
+  con->SetMaxForeground(fgMax);
 
-  cca->SetFunctionToRemoveIslands();
-  cca->SetMinSize(minSize);
+  con->SetFunctionToRemoveIslands();
+  con->SetMinSize(minSize);
 
-  this->Apply(cca, cca);
+   // Can we use native slicing for speed?
+  if (!strcmp(this->GetOutputSliceOrder(),"SI") || 
+      !strcmp(this->GetOutputSliceOrder(),"IS"))
+  {
+    if (!strcmp(this->GetInputSliceOrder(),"SI") || 
+        !strcmp(this->GetInputSliceOrder(),"IS"))
+    {
+      native = 1;
+    }
+  }
+  if (!strcmp(this->GetOutputSliceOrder(),"PA") || 
+      !strcmp(this->GetOutputSliceOrder(),"AP"))
+  {
+    if (!strcmp(this->GetInputSliceOrder(),"PA") || 
+        !strcmp(this->GetInputSliceOrder(),"AP"))
+    {
+      native = 1;
+    }
+  }
+  if (!strcmp(this->GetOutputSliceOrder(),"RL") || 
+      !strcmp(this->GetOutputSliceOrder(),"LR"))
+  {
+    if (!strcmp(this->GetInputSliceOrder(),"RL") || 
+        !strcmp(this->GetInputSliceOrder(),"LR"))
+    {
+      native = 1;
+    }
+  }
+  if (this->GetDimension() != EDITOR_DIM_MULTI)
+  {
+    native = 0;
+  }
+  if (native)
+  {
+    con->SliceBySliceOn();
+    this->SetDimensionTo3D();
+  }
 
-  cca->SetInput(NULL);
-  cca->SetOutput(NULL);
-  cca->Delete();
+  this->Apply(con, con);
+
+  if (native)
+  {
+    this->SetDimensionToMulti();
+  }
+
+  con->SetInput(NULL);
+  con->SetOutput(NULL);
+  con->Delete();
 }
 
 //----------------------------------------------------------------------------
 void vtkImageEditorEffects::ChangeIsland(int outputLabel, 
 	int xSeed, int ySeed, int zSeed)
 {
-  vtkImageCCA *cca  = vtkImageCCA::New();
+  vtkImageConnectivity *con  = vtkImageConnectivity::New();
 
-	cca->SetFunctionToChangeIsland();
-	cca->SetOutputLabel(outputLabel);
-	cca->SetSeed(xSeed, ySeed, zSeed);
-  cca->SetBackground(0);
+	con->SetFunctionToChangeIsland();
+	con->SetOutputLabel(outputLabel);
+	con->SetSeed(xSeed, ySeed, zSeed);
+  con->SetBackground(0);
 
-  this->Apply(cca, cca);
+  this->Apply(con, con);
 
-  cca->SetInput(NULL);
-  cca->SetOutput(NULL);
-  cca->Delete();
+  con->SetInput(NULL);
+  con->SetOutput(NULL);
+  con->Delete();
 }
 
 //----------------------------------------------------------------------------
 void vtkImageEditorEffects::MeasureIsland(int xSeed, int ySeed, int zSeed)
 {
-  vtkImageCCA *cca  = vtkImageCCA::New();
+  vtkImageConnectivity *con  = vtkImageConnectivity::New();
 
-	cca->SetFunctionToMeasureIsland();
-	cca->SetSeed(xSeed, ySeed, zSeed);
-  cca->SetBackground(0);
+	con->SetFunctionToMeasureIsland();
+	con->SetSeed(xSeed, ySeed, zSeed);
+  con->SetBackground(0);
 
-  this->Apply(cca, cca);
+  this->Apply(con, con);
 
-  this->LargestIslandSize = cca->GetLargestIslandSize();
-  this->IslandSize = cca->GetIslandSize();
+  this->LargestIslandSize = con->GetLargestIslandSize();
+  this->IslandSize = con->GetIslandSize();
 
-  cca->SetInput(NULL);
-  cca->SetOutput(NULL);
-  cca->Delete();
+  con->SetInput(NULL);
+  con->SetOutput(NULL);
+  con->Delete();
 }
 
 //----------------------------------------------------------------------------
 void vtkImageEditorEffects::SaveIsland(int xSeed, int ySeed, int zSeed)
 {
-  vtkImageCCA *cca  = vtkImageCCA::New();
+  vtkImageConnectivity *con  = vtkImageConnectivity::New();
 
-	cca->SetFunctionToSaveIsland();
-	cca->SetSeed(xSeed, ySeed, zSeed);
-  cca->SetBackground(0);
+	con->SetFunctionToSaveIsland();
+	con->SetSeed(xSeed, ySeed, zSeed);
+  con->SetBackground(0);
 
-  this->Apply(cca, cca);
+  this->Apply(con, con);
 
-  cca->SetInput(NULL);
-  cca->SetOutput(NULL);
-  cca->Delete();
+  con->SetInput(NULL);
+  con->SetOutput(NULL);
+  con->Delete();
 }
 
 //----------------------------------------------------------------------------

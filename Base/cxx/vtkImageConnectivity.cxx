@@ -25,34 +25,7 @@ PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
 'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
-/*=============================================================================
-Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
- 
-Direct all questions on this copyright to gering@ai.mit.edu.
-The following terms apply to all files associated with the software unless
-explicitly disclaimed in individual files.   
-
-The authors hereby grant permission to use, copy, and distribute this
-software and its documentation for any NON-COMMERCIAL purpose, provided
-that existing copyright notices are retained verbatim in all copies.
-The authors grant permission to modify this software and its documentation 
-for any NON-COMMERCIAL purpose, provided that such modifications are not 
-distributed without the explicit consent of the authors and that existing
-copyright notices are retained in all copies. Some of the algorithms
-implemented by this software are patented, observe all applicable patent law.
-
-IN NO EVENT SHALL THE AUTHORS OR DISTRIBUTORS BE LIABLE TO ANY PARTY FOR
-DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT
-OF THE USE OF THIS SOFTWARE, ITS DOCUMENTATION, OR ANY DERIVATIVES THEREOF,
-EVEN IF THE AUTHORS HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-THE AUTHORS AND DISTRIBUTORS SPECIFICALLY DISCLAIM ANY WARRANTIES, INCLUDING,
-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
-'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
-MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-=============================================================================*/
-#include "vtkImageCCA.h"
+#include "vtkImageConnectivity.h"
 #include "vtkObjectFactory.h"
 #include <time.h>
 #include <string.h>
@@ -65,56 +38,60 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 //------------------------------------------------------------------------------
-vtkImageCCA* vtkImageCCA::New()
+vtkImageConnectivity* vtkImageConnectivity::New()
 {
   // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkImageCCA");
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkImageConnectivity");
   if(ret)
     {
-    return (vtkImageCCA*)ret;
+    return (vtkImageConnectivity*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  return new vtkImageCCA;
+  return new vtkImageConnectivity;
 }
 
 //----------------------------------------------------------------------------
 // Description:
 // Constructor sets default values
-vtkImageCCA::vtkImageCCA()
+vtkImageConnectivity::vtkImageConnectivity()
 {
   this->Background = 0;
   this->MinForeground = VTK_SHORT_MIN;
   this->MaxForeground = VTK_SHORT_MAX;
   this->MinSize = 10000;
-  this->function = FUNCTION_MEASURE;
+  this->function = CONNECTIVITY_MEASURE;
   this->OutputLabel = 1;
+  this->SliceBySlice = 0;
   this->LargestIslandSize = this->IslandSize = 0;
   this->Seed[0] = this->Seed[1] = this->Seed[2] = 0;
 }
 
-char* vtkImageCCA::GetFunctionString()
+char* vtkImageConnectivity::GetFunctionString()
 {
   switch (this->function) 
   {
-    case FUNCTION_REMOVE:
+    case CONNECTIVITY_IDENTIFY:
+      return "IdentifyIslands";
+    case CONNECTIVITY_REMOVE:
       return "RemoveIslands";
-    case FUNCTION_CHANGE:
+    case CONNECTIVITY_CHANGE:
       return "ChangeIsland";
-    case FUNCTION_MEASURE:
+    case CONNECTIVITY_MEASURE:
       return "MeasureIsland";
-    case FUNCTION_SAVE:
+    case CONNECTIVITY_SAVE:
       return "SaveIsland";
    default:
       return "ERROR: Unknown";
   }
 }
 
-/*************************************************************************
-The following procedures were written by Andre Robatino on November 1999
-
-connect
-recursive_copy
-*************************************************************************/
+//************************************************************************
+// The following procedures were written by Andre Robatino 
+// in November, 1999
+//
+// connect
+// recursive_copy
+//************************************************************************
 
 int connect(int, size_t *, char *, char, size_t *, size_t *);
 static void recursive_copy(int, size_t);
@@ -228,207 +205,12 @@ static void recursive_copy(
   return;
 }
 
-/*************************************************************************
-The following procedures were written by Andre Robatino on 8/5/97
-and modified only slightly by Dave Gering on 5/29/99:
-
-connect
-recursive_copy_from
-recursive_copy_to
-*************************************************************************/
-/*
-
-int connect(int, int *, short *, int *, int *);
-static void recursive_copy_from(int, int);
-static void recursive_copy_to(int, int);
-
-static int *g_axis_len, *g_outimage_ptr, *g_pad_outimage_ptr;
-static short *g_inimage_ptr;
-
-int connect(
-     int rank,
-     int *axis_len,
-     short *inimage,
-     int *outimage,
-     int *num_components)
-{
-  int i;
-  int data_len, *pad_outimage, **path_image, **path_stride;
-  int *pad_outimage_ptr, *pad_outimage_end, *imagep, *stride, stridev, label, **path_image_ptr, *path_image_ptrv, **path_stride_ptr, *path_stride_ptrv;
-
-  // Check rank is 2D or 3D
-  if (rank <= 0) {
-    printf("Rank must be positive\n");
-    return -1;
-  }
-
-  // Allocate stride
-  stride = new int[2*rank+1];
-
-  data_len = stride[0] = 1;
-
-  for (i=0; i<rank; i++) {
-    // Check axis len > 0
-    if (axis_len[i] <= 0) {
-      printf("axis len not positive\n");
-      return -1;
-    }
-    data_len *= axis_len[i];
-    stride[i+1] = stride[i]*(axis_len[i] + 2);
-  }
-  
-  // Allocate
-  pad_outimage = new int[stride[rank]];
-  path_image   = new int*[data_len];
-  path_stride  = new int*[data_len];
-  
-  g_axis_len = axis_len;
-  g_inimage_ptr = inimage;
-  g_pad_outimage_ptr = pad_outimage;
-  
-  recursive_copy_from(rank-1, 1);
-
-  label = 0;
-  path_image_ptr = path_image;
-  path_stride_ptr = path_stride;
-  pad_outimage_ptr = pad_outimage;
-  pad_outimage_end = pad_outimage + stride[rank];
- 
-  for (i=0; i<rank; i++) {
-    stride[i+rank] = -stride[i];
-  }
-  stride[2*rank] = 0;
-
-  do {
-    if (*pad_outimage_ptr) 
-      continue;
-    
-    *(path_image_ptrv = pad_outimage_ptr) = ++label;
-    path_stride_ptrv = stride;
-   
-    while (1) 
-    {
-      while (stridev = *path_stride_ptrv++) 
-      {
-        if (*(imagep = path_image_ptrv + stridev)) 
-          continue;
-
-        *path_image_ptr++ = path_image_ptrv;
-        *(path_image_ptrv = imagep) = label;
-        *path_stride_ptr++ = path_stride_ptrv;
-        path_stride_ptrv = stride;
-      }
-
-      if (path_image_ptr == path_image) 
-        break;
-      
-      path_image_ptrv = *--path_image_ptr;
-      path_stride_ptrv = *--path_stride_ptr;
-    }
-  } while (++pad_outimage_ptr < pad_outimage_end);
-
-  if (num_components != NULL) 
-    *num_components = label;
-
-  // Cleanup
-
-  delete [] stride;
-  delete [] path_image;
-  delete [] path_stride;
-
-  g_outimage_ptr = outimage;
-  g_pad_outimage_ptr = pad_outimage;
-
-  recursive_copy_to(rank-1, 1);
-
-  delete [] pad_outimage;
-  return 0;
-}
-
-static void recursive_copy_from(
-     int axis,
-     int flag)
-{
-  int i, axis_len;
-
-  axis_len = g_axis_len[axis];
-
-  if (axis) {
-    recursive_copy_from(axis-1, 0);
-
-    for (i=0; i<axis_len; i++) {
-      recursive_copy_from(axis-1, flag);
-    }
-    recursive_copy_from(axis-1, 0);
-  } else {
-    int *pad_outimage_ptr, *pad_outimage_end;
-    short *inimage_ptr;
-
-    inimage_ptr = g_inimage_ptr;
-    pad_outimage_ptr = g_pad_outimage_ptr;
-    *pad_outimage_ptr++ = -1;
-    pad_outimage_end = pad_outimage_ptr + axis_len;
-   
-    if (flag) {
-      while (pad_outimage_ptr < pad_outimage_end) {
-        *pad_outimage_ptr++ = (*inimage_ptr++)? 0 : -1;
-      }
-    } else {
-      while (pad_outimage_ptr < pad_outimage_end) {
-        *pad_outimage_ptr++ = -1;
-      }
-    }
-    *pad_outimage_ptr++ = -1;
-    g_pad_outimage_ptr = pad_outimage_ptr;
-    g_inimage_ptr = inimage_ptr;
-  }
-  return;
-}
-
-static void recursive_copy_to(
-     int axis,
-     int flag)
-{
-  int i, axis_len;
- 
-  axis_len = g_axis_len[axis];
-
-  if (axis) {
-    recursive_copy_to(axis-1, 0);
-
-    for (i=0; i<axis_len; i++) {
-      recursive_copy_to(axis-1, flag);
-    }
-    recursive_copy_to(axis-1, 0);
-  } else {
-    int *outimage_ptr, *pad_outimage_ptr, *pad_outimage_end;
-
-    outimage_ptr = g_outimage_ptr;
-    pad_outimage_ptr = g_pad_outimage_ptr;
-    pad_outimage_ptr++;
- 
-    if (flag) {
-      pad_outimage_end = pad_outimage_ptr + axis_len;
-
-      while (pad_outimage_ptr < pad_outimage_end) {
-        *outimage_ptr++ = *pad_outimage_ptr++;
-      }
-    } else {
-      pad_outimage_ptr += axis_len;
-    }
-    pad_outimage_ptr++;
-    g_pad_outimage_ptr = pad_outimage_ptr;
-    g_outimage_ptr = outimage_ptr;
-  }
-  return;
-}
-*/
-//----------------------------------------------------------------------------
+//***********************************************************************
 // End Andre's cool routines.
-//----------------------------------------------------------------------------
+//************************************************************************
 
 
-static void vtkImageCCAExecute(vtkImageCCA *self,
+static void vtkImageConnectivityExecute(vtkImageConnectivity *self,
 				     vtkImageData *inData, short *inPtr,
 				     vtkImageData *outData, short *outPtr, 
 				     int outExt[6])
@@ -443,33 +225,36 @@ static void vtkImageCCAExecute(vtkImageCCA *self,
   short maxForegnd = (short)self->GetMaxForeground();
   short newLabel = (short)self->GetOutputLabel();
   short seedLabel, maxLabel;
-  int largest, len=1, j;
+  int largest, len=1, nxy, z, nz, j;
   int *census = NULL;
   int seed[3];
   int minSize = self->GetMinSize();
   short pix;
-  int SaveIsland    = self->GetFunction() == FUNCTION_SAVE;
-  int MeasureIsland = self->GetFunction() == FUNCTION_MEASURE;
-  int ChangeIsland  = self->GetFunction() == FUNCTION_CHANGE;
-  int RemoveIslands = self->GetFunction() == FUNCTION_REMOVE;
+  int IdentifyIslands = self->GetFunction() == CONNECTIVITY_IDENTIFY;
+  int RemoveIslands   = self->GetFunction() == CONNECTIVITY_REMOVE;
+  int ChangeIsland    = self->GetFunction() == CONNECTIVITY_CHANGE;
+  int SaveIsland      = self->GetFunction() == CONNECTIVITY_SAVE;
+  int MeasureIsland   = self->GetFunction() == CONNECTIVITY_MEASURE;
+  int SliceBySlice    = self->GetSliceBySlice();
 
-  size_t conSeedLabel, i, idx;
   // connect
+  size_t conSeedLabel, i, idx, dz;
   int rank;
   size_t *axis_len=NULL;
   short bg = self->GetBackground();
   short bgMask = 0;
   short fgMask = 1;
   char inbackground = (char)bgMask;
-  size_t numIslands=0;
   char *conInput=NULL;
   size_t *conOutput=NULL;
+  size_t *numIslands=NULL;
 
   // Image bounds
   outMin0 = outExt[0];   outMax0 = outExt[1];
   outMin1 = outExt[2];   outMax1 = outExt[3];
   outMin2 = outExt[4];   outMax2 = outExt[5];
 
+  // Computer Parameters for connect().
   rank = (outExt[5]==outExt[4]) ? 2 : 3;
   axis_len = new size_t[rank+1];
   axis_len[0] = outExt[1]-outExt[0]+1;
@@ -481,6 +266,7 @@ static void vtkImageCCAExecute(vtkImageCCA *self,
   }
   conInput = new char[len];
   conOutput = new size_t[len];
+  numIslands = new size_t[axis_len[2]];
 
   // Get increments to march through data continuously
   outData->GetContinuousIncrements(outExt, outInc0, outInc1, outInc2);
@@ -540,7 +326,7 @@ static void vtkImageCCAExecute(vtkImageCCA *self,
   }
 
   ///////////////////////////////////////////////////////////////
-  // Remove:
+  // Remove, Identify:
   // ----------------------
   // Create a mask where everything outside [min,max] or in the
   // sea (bg) is in the background.
@@ -553,7 +339,7 @@ static void vtkImageCCAExecute(vtkImageCCA *self,
   //
   ///////////////////////////////////////////////////////////////
 
-  if (RemoveIslands)
+  if (RemoveIslands || IdentifyIslands)
   {
 	  inPtr0 = inPtr;
 	  i = 0;
@@ -641,15 +427,35 @@ static void vtkImageCCAExecute(vtkImageCCA *self,
 
 
   ///////////////////////////////////////////////////////////////
-  // Save, Change, Measure, Remove
-  // -----------------------------
+  // Save, Change, Measure, Remove, Identify
+  // ---------------------------------------
   // Run Connectivity
   // 
   ///////////////////////////////////////////////////////////////
 
-  if (SaveIsland || ChangeIsland || MeasureIsland || RemoveIslands)
+  if (SaveIsland || ChangeIsland || MeasureIsland || RemoveIslands || IdentifyIslands)
   {
-    connect(rank, axis_len, conInput, inbackground, conOutput, &numIslands);
+    nz = 1;
+    if (SliceBySlice && RemoveIslands)
+    {
+      // If SliceBySlice, then call connect() for each slice
+      nxy = axis_len[0] * axis_len[1];
+      nz = axis_len[2];
+      rank = 2;
+      int axis_len2 = axis_len[2];
+      axis_len[2] = 1;
+
+      for (z=0; z < nz; z++)
+      {
+        connect(rank, axis_len, &conInput[nxy*z], inbackground, 
+          &conOutput[nxy*z], &numIslands[z]);
+      }
+      axis_len[2] = axis_len2;
+    }
+    else
+    {
+      connect(rank, axis_len, conInput, inbackground, conOutput, &numIslands[0]);
+    }
   }
 
 
@@ -681,23 +487,128 @@ static void vtkImageCCAExecute(vtkImageCCA *self,
   if (RemoveIslands || MeasureIsland)
   {
     // For each label value, count the number of pixels with that label
-    census = new int[numIslands+1];
-    memset(census, 0, (numIslands+1)*sizeof(int));
-
-	  i = 0;
-    for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++) {
-    for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++) {
-    for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+    // If SliceBySlice, then work on each slice one at a time
+    len = 0;
+    for (z=0; z<nz; z++)
     {
-      idx = conOutput[i];
-      if (idx >= 0 && idx <= numIslands)
+      len += numIslands[z] + 1;
+    }
+    census = new int[len];
+    memset(census, 0, len*sizeof(int));
+
+    if (nz == 1)
+    {
+	    i = 0;
+      for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++) {
+      for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++) {
+      for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
       {
-        census[idx] = census[idx] +1;
-      }
-      i++;
-    }//for0
-    }//for1
-    }//for2
+        idx = conOutput[i];
+        if (idx >= 0 && idx <= numIslands[0])
+        {
+          census[idx] = census[idx] + 1;
+        }
+        i++;
+      }//for0
+      }//for1
+      }//for2
+    } 
+    else 
+    {
+      dz = 0;
+	    i = 0;
+      for (z=0; z < nz; z++)
+      {
+        for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++) {
+        for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+        {
+          idx = conOutput[i];
+          if (idx >= 0 && idx <= numIslands[z])
+          {
+            census[dz+idx] = census[dz+idx] + 1;
+          }
+          i++;
+        }//for0
+        }//for1
+
+        dz += numIslands[z]+1;
+      }//forz
+    }
+  }
+
+
+  ///////////////////////////////////////////////////////////////
+  // Remove
+  // -----------------------------
+  // Output gets input except where islands too small
+  //
+  //   outData[i] = inData[i],  census[conOutput[i]] >= minIslandSize
+  //              = bg,    else
+  //
+  ///////////////////////////////////////////////////////////////
+
+  if (RemoveIslands)
+  {
+    if (nz == 1)
+    {
+      inPtr0 = inPtr;
+      outPtr0 = outPtr;
+	    i = 0;
+      for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++) {
+      for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++) {
+      for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+      {
+        if (census[conOutput[i]] >= minSize)
+        {
+          *outPtr0 = *inPtr0;
+        }
+        else
+        {
+          *outPtr0 = bg;
+        }
+	      i++;
+        outPtr0++;
+        inPtr0++;
+      }//for0
+      outPtr0 += outInc1;
+      inPtr0 += inInc1;
+      }//for1
+      outPtr0 += outInc2;
+      inPtr0 += inInc2;
+      }//for2
+    }
+    else 
+    {
+      dz = 0;
+	    i = 0;
+      inPtr0 = inPtr;
+      outPtr0 = outPtr;
+      for (z=0; z < nz; z++)
+      {
+        for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++) {
+        for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+        {
+          if (census[dz+conOutput[i]] >= minSize)
+          {
+           *outPtr0 = *inPtr0;
+          }
+          else
+          {
+            *outPtr0 = bg;
+          }
+	        i++;
+          outPtr0++;
+          inPtr0++;
+        }//for0
+        outPtr0 += outInc1;
+        inPtr0 += inInc1;
+        }//for1
+        outPtr0 += outInc2;
+        inPtr0 += inInc2;
+
+        dz += numIslands[z] + 1;
+      }//z
+    }//else
   }
 
 
@@ -716,7 +627,7 @@ static void vtkImageCCAExecute(vtkImageCCA *self,
   {
     // Find largest island
     largest = 0;
-    for (i=0; i<=numIslands; i++)
+    for (i=0; i<=numIslands[0]; i++)
     {
       if (i != bg)
       {
@@ -750,14 +661,37 @@ static void vtkImageCCAExecute(vtkImageCCA *self,
     }//for2
   }
 
+  
   ///////////////////////////////////////////////////////////////
-  // Remove
+  // Identify
   // -----------------------------
-  // Output gets input except where islands too small
+  // Output gets the output of connect()
   //
-  //   outData[i] = inData[i],  census[conOutput[i]] >= minIslandSize
-  //              = bg,    else
+  //   outData[i] = conOutput[i]
   //
+  ///////////////////////////////////////////////////////////////
+
+  if (IdentifyIslands)
+  {
+    outPtr0 = outPtr;
+	  i = 0;
+    for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++) {
+    for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++) {
+    for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+    {
+      *outPtr0 = (short)conOutput[i];
+	    i++;
+      outPtr0++;
+    }//for0
+    outPtr0 += outInc1;
+    }//for1
+    outPtr0 += outInc2;
+    }//for2
+  }
+
+  ///////////////////////////////////////////////////////////////
+  // Remove, Identify
+  // -----------------------------
   // Output gets input where the input was thresholded away
   //
   //   outData[i] = inData[i],  inData[i] outside [min,max]
@@ -765,34 +699,8 @@ static void vtkImageCCAExecute(vtkImageCCA *self,
   //
   ///////////////////////////////////////////////////////////////
 
-  if (RemoveIslands)
+  if (RemoveIslands || IdentifyIslands)
   {
-    inPtr0 = inPtr;
-    outPtr0 = outPtr;
-	  i = 0;
-    for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++) {
-    for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++) {
-    for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
-    {
-      if (census[conOutput[i]] >= minSize)
-      {
-        *outPtr0 = *inPtr0;
-      }
-      else
-      {
-        *outPtr0 = bg;
-      }
-	    i++;
-      outPtr0++;
-      inPtr0++;
-    }//for0
-    outPtr0 += outInc1;
-    inPtr0 += inInc1;
-    }//for1
-    outPtr0 += outInc2;
-    inPtr0 += inInc2;
-    }//for2
-
 	  if(minForegnd > VTK_SHORT_MIN || maxForegnd < VTK_SHORT_MAX)
 	  {
       inPtr0 = inPtr;
@@ -800,7 +708,7 @@ static void vtkImageCCAExecute(vtkImageCCA *self,
       for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++) {
       for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++) {
       for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
-	  {
+	    {
 		  pix = *inPtr0;
       if (pix < minForegnd || pix > maxForegnd)
       {
@@ -908,6 +816,7 @@ static void vtkImageCCAExecute(vtkImageCCA *self,
   ///////////////////////////////////////////////////////////////
 
   delete [] axis_len;
+  delete [] numIslands;
   delete [] conInput;
   delete [] conOutput;
 }
@@ -919,7 +828,7 @@ static void vtkImageCCAExecute(vtkImageCCA *self,
 // algorithm to fill the output from the input.
 // It just executes a switch statement to call the correct function for
 // the datas data types.
-void vtkImageCCA::Execute(vtkImageData *inData, vtkImageData *outData)
+void vtkImageConnectivity::Execute(vtkImageData *inData, vtkImageData *outData)
 {
   int outExt[6], id=0, s;
   outData->GetWholeExtent(outExt);
@@ -944,11 +853,11 @@ void vtkImageCCA::Execute(vtkImageData *inData, vtkImageData *outData)
     return;
   }
 
-  vtkImageCCAExecute(this, inData, (short *)inPtr, 
+  vtkImageConnectivityExecute(this, inData, (short *)inPtr, 
           outData, (short *)(outPtr), outExt);
 }
 
-void vtkImageCCA::PrintSelf(ostream& os, vtkIndent indent)
+void vtkImageConnectivity::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkImageToImageFilter::PrintSelf(os,indent);
   

@@ -194,7 +194,7 @@ proc EdThresholdBuildGUI {} {
 		bind $f.e${slider} <FocusOut> "EdThresholdUpdate; RenderActive;"
 		set c {scale $f.s${slider} -from $Ed(EdThreshold,rangeLow) -to $Ed(EdThreshold,rangeHigh)\
 			-length 140 -variable Ed(EdThreshold,[Uncap $slider])  -resolution 1 \
-			-command "EdThresholdUpdate; RenderActive"\
+			-command "EdThresholdUpdateInit $f.s$slider"\
 			$Gui(WSA) -sliderlength 14 }; eval [subst $c]
 		grid $f.l${slider} $f.e${slider} $f.s${slider} -padx 2 -pady $Gui(pad) \
 			-sticky news
@@ -326,11 +326,16 @@ proc EdThresholdSetInteract {} {
 	RenderAll
 }
 
+proc EdThresholdUpdateInit {widget {value ""}} {
+
+	$widget config -command "EdThresholdUpdate; RenderActive"
+}
+
 #-------------------------------------------------------------------------------
 # .PROC EdThresholdUpdate
 # .END
 #-------------------------------------------------------------------------------
-proc EdThresholdUpdate {} {
+proc EdThresholdUpdate {{value ""}} {
 	global Ed Label Slice
 
 	# Validate input
