@@ -347,7 +347,6 @@ static void DrawLinesFast(int nx, int ny, int nPts, int *xPts, int *yPts,
 						}
 						// Draw point with radius r
 						outPtr[y*nx+x] = value;
-						*outPtr = value;
 					}
 				}
 				else
