@@ -17,6 +17,8 @@ vtkPreciseHyperStreamlinePoints.cxx
 vtkPreciseHyperStreamline.cxx
 vtkTensorImplicitFunctionToFunctionSet.cxx
 vtkBSplineInterpolateImageFunction.cxx
+vtkImageGetTensorComponents.cxx
+vtkImageSetTensorComponents.cxx
 vtkInteractiveTensorGlyph.cxx
 vtkTensorMask.cxx
 vtkTensorMathematics.cxx
