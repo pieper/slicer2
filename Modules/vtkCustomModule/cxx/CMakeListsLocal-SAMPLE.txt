@@ -20,6 +20,18 @@ vtkMyAbstractClass1
 ...
 )
 
+# You can add additional include paths here
+INCLUDE_DIRECTORIES(
+${VTKMYCLASS_SOURCE_DIR}/include
+)
+
+# Add additional directories to look in for libraries
+LINK_DIRECTORIES(
+${VTKMYCLASS_SOURCE_DIR}/lib
+)
+
+
+
 # To add a list of additional libraries you need to link with, uncomment
 # the following line.  The library names should omit the "lib" and any
 # trailing suffix.
