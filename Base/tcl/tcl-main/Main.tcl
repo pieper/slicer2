@@ -455,7 +455,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.106 $} {$Date: 2004/03/24 17:36:49 $}]
+        {$Revision: 1.107 $} {$Date: 2004/04/13 20:48:51 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -703,30 +703,10 @@ proc MainBuildGUI {} {
     # Modules Menu - delayed till here, for now, so that can change the text on Module(rMore) 
     MainBuildCategoryIDLists
     if {$::Module(verbose)} {
-    foreach category $Module(categories) {
-        if {[info exists Module(idList,$category)]} {
-            # create a cascade menu for it
-            eval {menu $Gui(mModules).m$category} $Gui(SMA)
-            $Gui(mModules) add cascade -label "$category" -menu $Gui(mModules).m$category
-            # then add it's modules
-            foreach module $Module(idList,$category) {
-                # for now, just switch to the tab for this module, if it has a gui
-                if { [info exists Module($module,procGUI)] } {
-                    if {$Module(more) == 1} {
-                        $Gui(mModules).m$category add command -label "$module" \
-                            -command "set Module(btn) More; Tab $module; $Module(rMore) config -text $module"
-                    } else {
-                        # just tab to the module, don't have to reset the Module(rMore) text 
-                        # because no More button exists
-                        $Gui(mModules).m$category add command -label "$module" -command "Tab $module"
-                    }
-                }
-            }
-        } else {
-            puts "Modules Menu: no modules in ID list for $category"
-        }
+        MainBuildCategoryMenu
     }
-    }
+    
+
 
     # Add the arrow image (the one that makes the scrollbar appear) 
     # at the end of the row 
@@ -2049,7 +2029,7 @@ proc FormatModuleCategories {} {
 # .PROC MainBuildCategoryIDLists
 # Takes module ids from the Module(idList), checks to see if they have a category defined in
 # the variable Module($module,category), and if so, adds the module id to the list being built in
-# Module(idList,$category).
+# Module(idList,$category). Also appends Module(categories) with any missing categories.
 # Also alphabetises the modules lists, except for the Core one.
 # .ARGS
 # .END
@@ -2057,14 +2037,27 @@ proc FormatModuleCategories {} {
 proc MainBuildCategoryIDLists {} {
     global Module
 
-    # Grab all the modules and put them in categories
+    # reset the unfiled list
+    set Module(idList,Unfiled) {}
+
+    # Grab all the modules and put them in categories,
+    # add them to the category list if they're not there yet
     foreach mod $Module(idList) {
         if {[info exists Module($mod,category)]} {
-            lappend Module(idList,$Module($mod,category)) $mod
+            set cat $Module($mod,category)
+            lappend Module(idList,$cat) $mod
+            if {[lsearch $Module(categories) $cat] == -1} {
+                # not in the list of categories, add it
+                lappend Module(categories) $cat
+            }
         } else {
             lappend Module(idList,Unfiled) $mod
         }
     }
+    
+    # build a list of current categories
+    puts "MainBuildCategoryIDLists: Categories:  $Module(categories)"
+
     # put all but the core modules in alpha order (there may not be any Unfiled ones)
     foreach cat  $Module(categories) {
         if {$cat != "Core" &&
@@ -2076,4 +2069,46 @@ proc MainBuildCategoryIDLists {} {
         }
     }
 
+
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainBuildCategoryMenu
+# Deletes any entries from the Module menu, and then adds cascades for each 
+# category and populates them. Each entry will call Tab with the module name.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+
+proc MainBuildCategoryMenu {} {
+    global Module Gui
+
+    # remove any current entries
+    $Gui(mModules) delete 0 end
+
+    foreach category $Module(categories) {
+        if {[info exists Module(idList,$category)]} {
+            # create a cascade menu for it
+            eval {menu $Gui(mModules).m$category} $Gui(SMA)
+            $Gui(mModules) add cascade -label "$category" -menu $Gui(mModules).m$category
+            # then add it's modules
+            foreach module $Module(idList,$category) {
+                # for now, just switch to the tab for this module, if it has a gui
+                if { [info exists Module($module,procGUI)] } {
+                    if {$Module(more) == 1} {
+                        $Gui(mModules).m$category add command -label "$module" \
+                            -command "set Module(btn) More; Tab $module; $Module(rMore) config -text $module"
+                    } else {
+                        # just tab to the module, don't have to reset the Module(rMore) text 
+                        # because no More button exists
+                        $Gui(mModules).m$category add command -label "$module" -command "Tab $module"
+                    }
+                }
+            }
+        } else {
+            if {$::Module(verbose)} {
+                puts "Modules Menu: no modules in ID list for $category"
+            }
+        }
+    }
 }
