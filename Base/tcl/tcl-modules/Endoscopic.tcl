@@ -262,7 +262,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.83 $} {$Date: 2004/12/07 18:58:55 $}] 
+    {$Revision: 1.84 $} {$Date: 2004/12/14 21:37:15 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -2999,7 +2999,7 @@ proc EndoscopicUpdateVirtualEndoscope {vcam {coordList ""}} {
         # ACTOR FOCAL POINT
         # we only have information about the position of the camera and the 
         # focal point. Extrapolate the additional information from that 
-        $vcam SetPosition [lindex $coordList 0] [lindex $coordList 1] [lindex $coordList 2]
+        $vcam SetPosition [lindex $coordList 0] [lindex $coordList 1] [expr [lindex $coordList 2] +2]
         $vcam SetFocalPoint [lindex $coordList 3] [lindex $coordList 4] [lindex $coordList 5] 
         # use prior information to prevent the View from flipping at undefined
         # boundary points (i.e when the viewUp and the viewPlaneNormal are 
@@ -3019,7 +3019,7 @@ proc EndoscopicUpdateVirtualEndoscope {vcam {coordList ""}} {
         # so set the position, focal point, and view up (the z unit vector of 
         # the camera actor's orientation [the 3rd column of its world matrix])
         set cam_mat [Endoscopic(cam,actor) GetMatrix]   
-        $vcam SetPosition [$cam_mat GetElement 0 3] [$cam_mat GetElement 1 3] [$cam_mat GetElement 2 3]     
+        $vcam SetPosition [$cam_mat GetElement 0 3] [$cam_mat GetElement 1 3] [expr [$cam_mat GetElement 2 3] +2]     
         set fp_mat [Endoscopic(fp,actor) GetMatrix]
         $vcam SetFocalPoint [$fp_mat GetElement 0 3] [$fp_mat GetElement 1 3] [$fp_mat GetElement 2 3] 
         $vcam SetViewUp [$cam_mat GetElement 0 2] [$cam_mat GetElement 1 2] [$cam_mat GetElement 2 2] 
@@ -5484,7 +5484,7 @@ proc EndoscopicEndZoom {widget ycoord} {
 
 proc EndoscopicPickFlatPoint {widget xcoord ycoord} {
     global Select Endoscopic Model Fiducials
-
+puts "start pick: clock format [clock seconds]"
     set name $Endoscopic($widget,name)
     
     vtkCellPicker TempCellPicker
@@ -5498,8 +5498,9 @@ proc EndoscopicPickFlatPoint {widget xcoord ycoord} {
     set fy [lindex $Select(xyz) 1]
     set fz [lindex $Select(xyz) 2]
     
-    EndoscopicAddTargetInFlatWindow $widget $fx $fy $fz
+puts "end pick : clock format [clock seconds]"
     
+        
 #get the picked pointId from the picker, and pass the pointId to the 3D model in slicer
 
     set name $Endoscopic(flatColon,name)  
@@ -5507,10 +5508,10 @@ proc EndoscopicPickFlatPoint {widget xcoord ycoord} {
     
 #reduce point number by half
     set numP [$polyData GetNumberOfPoints]
- puts "nump for the doubled model is: $numP"
+# puts "nump for the doubled model is: $numP"
     set numP  [expr $numP/2] 
- puts "nump for the single model is: $numP"    
-       
+# puts "nump for the single model is: $numP"    
+puts "start locate point: clock format [clock seconds]"     
     vtkPointLocator tempPointLocator
     tempPointLocator SetDataSet $polyData
 
@@ -5519,15 +5520,19 @@ proc EndoscopicPickFlatPoint {widget xcoord ycoord} {
     set z [lindex $Select(xyz) 2]
     
     set pointId [tempPointLocator FindClosestPoint $x $y $z]
- puts "picked pointId from the double model is $pointId"
-    
+# puts "picked pointId from the double model is $pointId"
+puts "end locate point: clock format [clock seconds]"    
 # check if the pointId is larger than numP
        if {$pointId > $numP} {
        set pointId [expr $pointId - $numP]
        }
        
- puts "picked pointId from the single model is $pointId"     
+ puts "picked pointId from the single model is $pointId"   
+
        
+    EndoscopicAddTargetInFlatWindow $widget $fx $fy $fz
+
+    
     EndoscopicAddTargetFromFlatColon $pointId
             
     } else {
@@ -5546,7 +5551,7 @@ proc EndoscopicPickFlatPoint {widget xcoord ycoord} {
 proc EndoscopicAddTargetInFlatWindow {widget x y z} {
 
     global Select Endoscopic
-
+puts  "start draw in flatwindow: clock format [clock seconds]"
     set name $Endoscopic($widget,name)
     set renderer [[[$widget GetRenderWindow] GetRenderers] GetItemAsObject 0]
     set count $Endoscopic($name,lineCount)
@@ -5641,7 +5646,7 @@ proc EndoscopicAddTargetInFlatWindow {widget x y z} {
     
     aLineR Delete
     aLineRMapper Delete
-
+puts "end draw in flatwindow: clock format [clock seconds]"
 }
 
 #-------------------------------------------------------------------
@@ -5718,9 +5723,9 @@ proc EndoscopicAddTargetFromFlatColon {pointId} {
     Point($closestPid,node) SetFXYZ $fx $fy $fz
 # use the SetDescription to store and save $pointId information.
     Point($closestPid,node) SetDescription $pointId
-
+#puts "start 1st mrml update: clock format [clock seconds]"
 #    MainUpdateMRML
-    
+#puts "end 1st mrml update: clock format [clock seconds]"   
     EndoscopicFiducialsPointSelectedCallback $fid $closestPid
     
 # set the original axial slice to that location
@@ -5738,10 +5743,8 @@ proc EndoscopicAddTargetFromFlatColon {pointId} {
     MainSlicesSetOffset 1 [expr round([expr [lindex $dim 0] - [lindex $oriSlice 0]])]
     MainSlicesSetOffset 2 [expr round([lindex $oriSlice 1])]
 
-    } else {
-    return
-    }
-    
+    } 
+        
     RenderAll
     
 # create targets   
@@ -5845,10 +5848,8 @@ tempPointLocator Delete
     MainSlicesSetOffset 1 [expr round([expr [lindex $dim 0] - [lindex $oriSlice 0]])]
     MainSlicesSetOffset 2 [expr round([lindex $oriSlice 1])]
 
-    } else {
-    return
-    }
-    
+    } 
+        
     RenderAll
     
 
@@ -5971,16 +5972,14 @@ puts "pointId from 3D colon is: $pointId"
     MainSlicesSetOffset 1 [expr round([expr [lindex $dim 0] - [lindex $oriSlice 0]])]
     MainSlicesSetOffset 2 [expr round([lindex $oriSlice 1])]
 
-    } else {
-    return
-    }
-    
+    } 
+        
     RenderAll
     
     
 # Create Targets    
     EndoscopicCreateTargets
-    
+#puts "target created??"    
 # update targets in the flat window
     if {$Endoscopic(FlatWindows) != ""} {
 
@@ -6080,7 +6079,7 @@ proc EndoscopicMainFileCloseUpdated {}  {
 proc EndoscopicCreateTargets {} {
 
     global Endoscopic Point Fiducials Module
-   
+puts "start create target: clock format [clock seconds]"
 # get the ids of the selected fiducial
     set pid $Endoscopic(selectedFiducialPoint) 
     set fid $Endoscopic(selectedFiducialList)
@@ -6138,15 +6137,19 @@ proc EndoscopicCreateTargets {} {
     Point($targetpid,node) SetName [concat $Fiducials($targetfid,name) $index]
 # use the SetDescription to store and save $pointId information.
     Point($targetpid,node) SetDescription $pointId
-
+    
+puts "start 2nd mrml update: clock format [clock seconds]"
     MainUpdateMRML
+puts "end 2nd mrml update: clock format [clock seconds]"
 
 ########## Get Number of Targets ################
 
     set Endoscopic(totalTargets) [llength $Fiducials($targetfid,pointIdList)]
     set Endoscopic(selectedTarget) $index
 
-puts " Target $index, pointId is $pointId"
+#puts " Target $index, pointId is $pointId"
+
+puts "end create target: clock format [clock seconds]"
 }
 
 #-------------------------------------------------------------------------------------
@@ -6331,10 +6334,8 @@ proc EndoscopicSelectTarget {sT} {
     MainSlicesSetOffset 1 [expr round([expr [lindex $dim 0] - [lindex $oriSlice 0]])]
     MainSlicesSetOffset 2 [expr round([lindex $oriSlice 1])]
 
-    } else {
-    return
-    }
-    
+    } 
+        
     RenderAll
     
 
