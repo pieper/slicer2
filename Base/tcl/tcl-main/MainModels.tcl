@@ -88,7 +88,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.54 $} {$Date: 2003/03/13 22:30:56 $}]
+        {$Revision: 1.55 $} {$Date: 2003/03/19 17:13:09 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -353,6 +353,12 @@ proc MainModelsRead {m} {
         # read in a free surfer file
         vtkFSSurfaceReader reader
         reader SetFileName $fileName
+    }  elseif {$suffix == ".stl"} {
+        # read in an STL file (CAD) if the Psyclon Reader module has been loaded
+        package require vtkPsyclonReader
+        vtkPsyclonReader reader
+        reader SetFileName $fileName
+        reader ReleaseDataFlagOn
     }
 
 
@@ -1096,6 +1102,7 @@ since the last time it was saved."
         return
     }
 
+    # TODO: this may not be a vtk file, now that we can read in CAD and Freesurfer and Analyze files
     Model($m,node) SetFileName [MainFileGetRelativePrefix $prefix].vtk
     Model($m,node) SetFullFileName \
         [file join $Mrml(dir) [Model($m,node) GetFileName]]
