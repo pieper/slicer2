@@ -35,23 +35,24 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 class VTK_SLICER_BASE_EXPORT vtkImageDouble2D : public vtkImageToImageFilter
 {
 public:    
-    static vtkImageDouble2D *New();
+  static vtkImageDouble2D *New();
   vtkTypeMacro(vtkImageDouble2D,vtkImageToImageFilter);
-    void PrintSelf(ostream& os, vtkIndent indent);
+  void PrintSelf(ostream& os, vtkIndent indent);
 
 protected:
-    vtkImageDouble2D();
-    ~vtkImageDouble2D(){};
-    vtkImageDouble2D(const vtkImageDouble2D&) {};
-    void operator=(const vtkImageDouble2D&) {};
+  vtkImageDouble2D();
+  ~vtkImageDouble2D(){};
+  vtkImageDouble2D(const vtkImageDouble2D&) {};
+  void operator=(const vtkImageDouble2D&) {};
 
-    // Override this function since inExt != outExt
-    void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
+  // Override this function since inExt != outExt
+  void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
   
-    void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
+  void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
+  void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
 
-    void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
-        int extent[6], int id);
+  void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
+                       int extent[6], int id);
 };
 
 #endif

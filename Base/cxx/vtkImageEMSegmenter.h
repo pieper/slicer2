@@ -137,7 +137,7 @@ protected:
   void DeleteVariables();
 
   void operator=(const vtkImageEMSegmenter&) {};
-  void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
+
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,int outExt[6], int id);
 
   // Description:

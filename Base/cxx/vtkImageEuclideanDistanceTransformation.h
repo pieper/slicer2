@@ -26,8 +26,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkImageEuclideanDistanceTransformation.h,v $
   Language:  C++
-  Date:      $Date: 2002/05/08 18:57:46 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2002/05/14 11:00:43 $
+  Version:   $Revision: 1.7 $
   Thanks:    Olivier Cuisenaire who developed this class
              URL: http://ltswww.epfl.ch/~cuisenai
          Email: Olivier.Cuisenaire@epfl.ch
@@ -144,6 +144,8 @@ protected:
   int ConsiderAnisotropy;
 
   void ExecuteInformation(vtkImageData *input, vtkImageData *output);
+  void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
+
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,
                int outExt[6], int threadId);
