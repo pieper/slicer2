@@ -154,7 +154,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.28 $} {$Date: 2002/01/26 23:59:03 $}]
+		{$Revision: 1.29 $} {$Date: 2002/02/07 15:38:25 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -1200,7 +1200,7 @@ proc TetraMeshProcessEdges {} {
 #### be OK.
 ######################################################################
 
-set range [$CurrentTetraMesh GetScalarRange]
+set range [[[$CurrentTetraMesh GetCellData] GetScalars] GetRange]
 set lowscalar [ lindex $range 0 ] 
 set highscalar [ lindex $range 1 ] 
 
@@ -1208,6 +1208,14 @@ set highscalar [ lindex $range 1 ]
   ## so that each model gets a different color
 set LOWSCALAR $lowscalar
 set HIGHSCALAR $highscalar
+set EPSILON [expr ($highscalar-$lowscalar)/1000]
+
+if {$EPSILON == 0} {set EPSILON 0.001}
+
+set HaveInt 0
+if { [IsInt $lowscalar] && [IsInt $highscalar] } {
+  set HaveInt 1
+}
 
 #######################################################################
 #### Setup the pipeline: Threshold the data, grab lines, Transform
@@ -1253,9 +1261,15 @@ set first $Model(idNone)
 
 set ReturnVal  ""
 while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
-#  puts "starting new"
-  ### Get the lowest Scalar Data
-  Thresh ThresholdBetween $lowscalar $lowscalar
+    #  puts "starting new"
+    ### Get the lowest Scalar Data
+    if {$HaveInt} {
+        Thresh ThresholdBetween $lowscalar $lowscalar
+    } else {
+        Thresh ThresholdBetween $lowscalar $highscalar
+        set lowscalar [expr 2 * $highscalar]
+    }
+  puts $lowscalar
   ### Finish the pipeline
   TransformPolyData Update
 
@@ -1276,7 +1290,7 @@ while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
   TetraMeshCopyPolyData [TransformPolyData GetOutput] $m
 
   ### Get the remaining Data ###
-  Thresh ThresholdBetween [ expr { $lowscalar + 0.01} ] $highscalar
+  Thresh ThresholdBetween [ expr { $lowscalar + $EPSILON} ] $highscalar
   set CurrentTetraMesh [Thresh GetOutput]
   $CurrentTetraMesh Update
   set range [$CurrentTetraMesh GetScalarRange]
@@ -1593,7 +1607,11 @@ proc TetraMeshProcessSurfaces {} {
 #  This did the range of the scalar data and point data
 #set range [$CurrentTetraMesh GetScalarRange]
 # This is what we want
-set range [[[$CurrentTetraMesh GetCellData] GetScalars] GetRange]
+if {$TetraMesh(SurfacesUseCellData) == 1} {
+    set range [[[$CurrentTetraMesh GetCellData] GetScalars] GetRange]
+} else {
+    set range [[[$CurrentTetraMesh GetPointData] GetScalars] GetRange]
+}
 set lowscalar [ lindex $range 0 ] 
 set highscalar [ lindex $range 1 ] 
 
@@ -1601,6 +1619,15 @@ set highscalar [ lindex $range 1 ]
   ## so that each model gets a different color
 set LOWSCALAR $lowscalar
 set HIGHSCALAR $highscalar
+
+set EPSILON [expr ($highscalar-$lowscalar)/1000]
+
+if {$EPSILON == 0} {set EPSILON 0.001}
+
+set HaveInt 0
+if { [IsInt $lowscalar] && [IsInt $highscalar] } {
+  set HaveInt 1
+}
 
 #######################################################################
 #### Setup the pipeline: Threshold the data, convert to PolyData, Transform
@@ -1613,7 +1640,11 @@ set HIGHSCALAR $highscalar
 vtkThreshold Thresh
   Thresh SetInput $CurrentTetraMesh
   # Only take cells whose entire cells satisfy the criteria
+if {$TetraMesh(SurfacesUseCellData) == 1} {
   Thresh SetAttributeModeToUseCellData
+} else {
+  Thresh SetAttributeModeToUsePointData
+}
   Thresh AllScalarsOn 
 
   #############################################################
@@ -1646,9 +1677,14 @@ set first $Model(idNone)
 set ReturnVal "";
 
 while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
-#  puts "starting new"
-  ### Get the lowest Scalar Data
-  Thresh ThresholdBetween $lowscalar $lowscalar
+    #  puts "starting new"
+    ### Get the lowest Scalar Data
+    if {$HaveInt} {
+        Thresh ThresholdBetween $lowscalar $lowscalar
+    } else {
+        Thresh ThresholdBetween $lowscalar $highscalar
+        set lowscalar [expr 2 * $highscalar]
+    }
   ### Finish the pipeline
   TransformPolyData Update
 
@@ -1669,7 +1705,7 @@ while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
   TetraMeshCopyPolyData [TransformPolyData GetOutput] $m
 
   ### Get the remaining Data ###
-  Thresh ThresholdBetween [ expr { $lowscalar + 0.01} ] $highscalar
+  Thresh ThresholdBetween [ expr { $lowscalar + $EPSILON} ] $highscalar
   set CurrentTetraMesh [Thresh GetOutput]
   $CurrentTetraMesh Update
   set range [$CurrentTetraMesh GetScalarRange]
@@ -1717,7 +1753,7 @@ proc TetraMeshCopyPolyData  {PolyData m} {
   set Model($m,polyData) TetModelPolyData$a
   $Model($m,polyData) CopyStructure $PolyData
   [ $Model($m,polyData) GetPointData] PassData [$PolyData GetPointData ]
-  [ $Model($m,polyData) GetCellData]  PassData  [$PolyData GetCellData ]
+  [ $Model($m,polyData) GetCellData]  PassData [$PolyData GetCellData ]
 
   ### The next line would replace the last bunch if we didn't care about
   ### deleting the inputs causing the results to be deleted.
