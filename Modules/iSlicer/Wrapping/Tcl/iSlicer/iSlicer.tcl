@@ -11,10 +11,12 @@ if { [info commands isvolume] == "" } {
     package provide iSlicer 1.0
 
     # source the Module's tcl file that contains it's init procedure
+    # (note imrml.tcl not included for default load)
     set files {
-        collapsablewidget.itk imrml.tcl ismodel.tcl isvolume.tcl isframes.tcl
+        collapsablewidget.itk ismodel.tcl isvolume.tcl isframes.tcl
         is3d.tcl isregistration.tcl evaluation-movies.tcl isbutton.tcl 
         istask.tcl spinfloat.tcl }
+
         
     foreach f $files {
         source $PACKAGE_DIR_ISLICER/../../../tcl/$f
