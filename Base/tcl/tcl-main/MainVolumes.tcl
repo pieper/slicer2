@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.74 $} {$Date: 2004/06/01 21:17:51 $}]
+    {$Revision: 1.75 $} {$Date: 2004/06/17 18:59:46 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -374,6 +374,9 @@ proc MainVolumesRead {v} {
             switch -glob [Volume($v,node) GetFileType] {
                 "*Radiological" {
                     anreader SetFlippingSequence "0"
+                }
+                "*EPIReconPA" {
+                    anreader SetFlippingSequence "1"
                 }
                 "*Neurological" {
                 }
