@@ -110,8 +110,10 @@ proc MainVolumesUpdateMRML {} {
 	# Build any new volumes
 	#--------------------------------------------------------
 	foreach v $Volume(idList) {
-		if {[MainVolumesCreate $v] == 1} {
+		if {[MainVolumesCreate $v] >= 0} {
 			# Success
+		} else {
+			MainMrmlDeleteNodeDuringUpdate Volume $v
 		}
 	}  
 
