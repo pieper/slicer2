@@ -1,0 +1,68 @@
+<html>
+<head>
+<title>Making Slicer Run on Win2k</title>
+</head>
+
+<body>
+This guide was written by <a href="mailto:pieper@bwh.harvard.edu">Steve Pieper</a> with additions by Hanifa Dostmohamed and applies to Slicer version 2.
+
+<p>
+You will need to have some software on your machine to get started:
+<ul>
+<li>Microsoft developer studio<br>
+Either version 6 or 7 (7 is also called .NET).  You can get just the
+c++ compiler at staples or someplace for about $99 (US).
+
+<li>cygwin<br>
+Get this from <a
+href="http://sources.redhat.com/">sources.redhat.com</a> by
+downloading and running the setup.exe program.  If you've got fast
+internet (and plenty of disk space, I hope) you should go ahead and
+install everything on the options list.  Be sure to at least get cvs.
+
+<li>cmake<br>
+You can get this from <a href="http://www.cmake.org/">cmake.org</a>.
+Get the latest version of CMakeSetup.exe.
+
+<li>tcl<br>
+Probably the easiest thing is to get the latest release of ActiveState
+Tcl from <a href="http://tcl.activestate.com/">tcl.activestate.com</a>
+and install it.
+
+<li>vtk<br>
+You should get either the released vtk 4 or 4.1 from
+<a href="http://public.kitware.com/vtk/">public.kitware.com/vtk</a>
+and compile it against the version of tcl you downloaded.  See the vtk
+site for instructions.  You'll need to use CMakeSetup.exe (pretty much
+like ccmake on unix, but with a gui). Configure with tcl, tkwidget, patented, local, shared, hybrid. Make sure WRAP_TCL and VTK_USE_HYBRID  are set to ON. For more hints, see <a href="index.html#4">Building Slicer</a>
+</ul>
+<p>
+THEN, once you've got all that,  you need to get slicer2:
+<ul>
+<li>In a cygwin window, go to your dev directory and do:
+<p>
+cvs -d :pserver:anonymous@cvs.spl.harvard.edu:/projects/cvs/slicer login
+
+<p>
+cvs -d :pserver:anonymous@cvs.spl.harvard.edu:/projects/cvs/slicer checkout
+slicer2
+<p>
+If you have problems logging into the cvs server because your cvspass
+file couldnt be found, set your HOME variable to the right path and
+use the tcsh shell instead of bash.
+<li>Then you'll need to make a sub dir in the slicer2/Base/builds dir for Win32VC7 and
+point CMakeSetup.exe to Base as the src and your new builds dir as the
+destination, and point it to your vtk4.x build and you should be all set
+to compile.
+<li>You have two options now:
+    <ol>
+    <li>Edit slicer.bat and change the variables to describe your paths.
+And also look at Base/tcl/Go.tcl and change paths there too. Then just run slicer.bat (whew!)
+    <li>Generate an all in one executable for your OS by running slicer2/Scripts/launcher/make-launchers.tcl, this will create slicer2/slicer2-win32.exe which you can then double click on to run the program.
+    </ol>
+</ul>
+
+
+</body>
+
+</html>

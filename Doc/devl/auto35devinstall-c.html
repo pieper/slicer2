@@ -1,0 +1,178 @@
+<html>
+<head>
+<title>Making Slicer Run on Linux/Solaris</title>
+</head>
+
+<body>
+This guide was written by <a href="mailto:kcy@bwh.harvard.edu">Krishna Yeshwant</a> and applies to Slicer version 2.
+<p>
+This is a brief step-by-step procedure for the Slicer2 installation
+starting from downloading VTK, Slicer2, and CMake.  It may be missing
+steps, but ought to provide a general overview along with some specific
+CMake options.  This procedure worked for me on a SunOS-5.8 machine
+in the SPL.
+
+<h2>Preparation</h2>
+<ol>
+<li>Download VTK 4.0 from Kitware.com
+<li>Download Slicer2.0 from CVS
+<li>Download CMake from Kitware.com
+<li>Uncompress all.
+<li>Install CMake
+</ol>
+
+<h2>VTK Compilation</h2>
+
+<ol>
+<li>Run ccmake in VTK directory and set the flags as follows.
+<table>
+<tr><td>
+  BUILD_EXAMPLES</td><td>                  *ON 
+</td></tr><tr><td>
+  BUILD_SHARED_LIBS </td><td>              *ON 
+</td></tr><tr><td>
+  BUILD_TESTING  </td><td>                 *OFF 
+</td></tr><tr><td>
+  CMAKE_CXX_FLAGS </td><td>                * 
+</td></tr><tr><td>
+  CMAKE_C_FLAGS </td><td>                  * 
+</td></tr><tr><td>
+  CMAKE_INSTALL_PREFIX </td><td>           */usr/local 
+</td></tr><tr><td>
+  DART_ROOT  </td><td>                     *NOTFOUND 
+</td></tr><tr><td>
+  VTK_DATA_ROOT </td><td>                  *NOTFOUND 
+</td></tr><tr><td>
+  VTK_USE_ANSI_STDLIB </td><td>            *ON 
+</td></tr><tr><td>
+  VTK_USE_HYBRID     </td><td>             *ON 
+</td></tr><tr><td>
+  VTK_USE_PARALLEL  </td><td>              *ON 
+</td></tr><tr><td>
+  VTK_USE_PATENTED  </td><td>              *ON 
+</td></tr><tr><td>
+  VTK_USE_RENDERING </td><td>              *ON 
+</td></tr><tr><td>
+  VTK_USE_VOLUMEPRO  </td><td>             *OFF 
+</td></tr><tr><td>
+  VTK_WRAP_JAVA     </td><td>              *OFF 
+</td></tr><tr><td>
+  VTK_WRAP_PYTHON   </td><td>              *ON
+</td></tr><tr><td>
+  VTK_WRAP_TCL       </td><td>             *ON
+</td></tr>
+</table>
+
+<li>Configure and generate.
+
+<li>Run make in VTK directory (takes a while)
+</ol>
+
+<h2>Slicer 2 Compilation</h2>
+
+<ol>
+<li>Go to slicer2/Base/builds
+
+<li>mkdir solaris8 or redhat-7.3 (or whatever the target platform is)
+
+<li> run ccmake ../..
+    <ol>
+    <li> Ignore:<br>
+    Warning. VTK might be found on your system as different flavours: 
+installed
+    VTK or built VTK. Please make sure that the VTK_INSTALL_PATH or
+    VTK_BINARY_PATH setting reflects which VTK you are planning to use, 
+then set
+    ONE of the USE_INSTALLED_VTK or USE_BUILT_VTK setting to ON.
+
+    <li>Change settings to:<br>
+<table>
+<tr><td>
+  BUILD_TESTING </td><td>                    ON
+</td></tr><tr><td>
+  CMAKE_CXX_FLAGS   </td><td>               -O2
+</td></tr><tr><td>
+  CMAKE_C_FLAGS    </td><td>                -O2
+</td></tr><tr><td>
+  CMAKE_INSTALL_PREFIX</td><td>             /usr/local
+</td></tr><tr><td>
+  DART_ROOT        </td><td>                NOTFOUND
+</td></tr><tr><td>
+  USE_INSTALLED_VTK </td><td>               OFF
+</td></tr><tr><td>
+  VTK_BINARY_PATH   </td><td>               /local/os/src/vtk-4.0
+</td></tr><tr><td>
+  VTK_INSTALL_PATH  </td><td>               NOTFOUND
+</td></tr></table>
+   <li>Hit [c]onfigure once to bring up the following<br>
+<table>
+<tr><td>
+  BUILD_SHARED_LIBS  </td><td>             *ON
+</td></tr><tr><td>
+  USE_BUILT_VTK      </td><td>             *ON
+</td></tr><tr><td>
+  WRAP_PYTHON        </td><td>             *ON
+</td></tr><tr><td>
+  WRAP_TCL           </td><td>             *ON
+</td></tr><tr><td>
+  BUILD_TESTING      </td><td>              ON
+</td></tr><tr><td>
+  USE_INSTALLED_VTK  </td><td>              OFF
+</td></tr><tr><td>
+  VTK_BINARY_PATH    </td><td>              /local/os/src/vtk-4.0
+</td></tr><tr><td>
+  VTK_INSTALL_PATH   </td><td>              NOTFOUND
+</td></tr></table>
+
+   <li>Hit [c]onfigure twice to bring up the following (again)<br>
+<table>
+<tr><td>
+  BUILD_SHARED_LIBS   </td><td>            *ON
+</td></tr><tr><td>
+  USE_BUILT_VTK        </td><td>           *ON
+</td></tr><tr><td>
+  WRAP_PYTHON         </td><td>            *ON
+</td></tr><tr><td>
+  WRAP_TCL           </td><td>             *ON
+</td></tr><tr><td>
+  BUILD_TESTING      </td><td>              ON
+</td></tr><tr><td>
+  USE_INSTALLED_VTK  </td><td>              OFF
+</td></tr><tr><td>
+  VTK_BINARY_PATH    </td><td>              /local/os/src/vtk-4.0
+</td></tr><tr><td>
+  VTK_INSTALL_PATH   </td><td>              NOTFOUND
+</td></tr></table>
+   <li>Hit [c]onfigure thrice to bring up the following (yet again)<br>
+<table>
+<tr><td>
+  BUILD_SHARED_LIBS   </td><td>             ON
+</td></tr><tr><td>
+   BUILD_TESTING       </td><td>             ON
+</td></tr><tr><td>
+   USE_BUILT_VTK       </td><td>             ON
+</td></tr><tr><td>
+   USE_INSTALLED_VTK   </td><td>             OFF
+</td></tr><tr><td>
+   VTK_BINARY_PATH     </td><td>             /local/os/src/vtk-4.0
+</td></tr><tr><td>
+   VTK_INSTALL_PATH    </td><td>             NOTFOUND
+</td></tr><tr><td>
+   WRAP_PYTHON         </td><td>             ON
+</td></tr><tr><td>
+   WRAP_TCL            </td><td>             ON
+</td></tr></table>
+     <ul>
+     <li> ALSO, [g] generate option appeared.
+     </ul>
+
+   <li>Hit [g]enerate
+
+   <li>Type make in Base/builds/solaris8 directory (or whatever directory
+      corresponds to the target platform)
+   </ol>
+</ol>
+
+</body>
+
+</html>
