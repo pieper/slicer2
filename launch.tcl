@@ -129,23 +129,32 @@ set env(TK_LIBRARY) $env(SLICER_HOME)/Lib/$env(BUILD)/ActiveTcl-8.4.1/lib/tk8.4
 set env(TCLLIBPATH) "$env(SLICER_HOME)/Base/Wrapping/Tcl/vtkSlicerBase $env(TCLLIBPATH)"
 set env(TCLLIBPATH) "$env(VTK_SRC_DIR)/Wrapping/Tcl $env(TCLLIBPATH)"
 
+
 #
 # Add the module bin directories to the load library path 
 # and the Wrapping/Tcl directories to the tcl library path
-# check both the base slicer home and the user's home dir
+# check :
+# - Bbase in slicer home 
+# - the user's home dir Modules directory
+# - dirs listed in the SLICER_MODULES env variable
 #
-
-set baseModulePath ${env(SLICER_HOME)}/Modules
+regsub -all {\\} $env(SLICER_HOME) / slicer_home
 regsub -all {\\} $env(HOME) / home
-set userModulePath $home/Modules
-foreach modulePath "${baseModulePath} ${userModulePath}" {
-    set modulePaths [glob -nocomplain ${modulePath}/vtk*]
-    foreach dir $modulePaths {
+set modulePaths $slicer_home/Modules
+lappend modulePaths $home/Modules
+if { [info exists env(SLICER_MODULES)] } {
+    eval lappend modulePaths $env(SLICER_MODULES)
+}
+
+set env(SLICER_MODULES_TO_REQUIRE) ""
+foreach modulePath $modulePaths {
+    set modules [glob -nocomplain $modulePath/vtk*]
+    foreach dir $modules {
         # get the module name
         regexp "$modulePath/(\.\*)" $dir match moduleName
         # if it's not the custom one, append it to the path
         if {[string first Custom $moduleName] == -1} {
-            puts "Adding module to library paths: ${moduleName}"
+            lappend env(SLICER_MODULES_TO_REQUIRE) $moduleName
             switch $env(BUILD) {
                 "solaris8" -
                 "Darwin" -
