@@ -238,7 +238,7 @@ void vtkImagePropagateDist2::ExecuteData(vtkDataObject *outData)
     if (narrowband==NULL) IsoSurfDist3D();
     // no multithread yet ...
     else                  IsoSurfDist3D_band( 0, bandsize-1);
-    PropagateDanielsson3D();
+    PropagateDanielsson3D_new();
   }
 
   //  FreeLists();
@@ -987,9 +987,9 @@ void vtkImagePropagateDist2::InitLists()
 
   //------ Allocate the information
 
-  list0_maxsize = 500000;
-  list1_maxsize = 500000;
-  list_remaining_trial_maxsize = 500000;
+  list0_maxsize = 120000;
+  list1_maxsize = 120000;
+  list_remaining_trial_maxsize = 120000;
 
   // list of points in the front
   if (list0==NULL)  list0 = new int[list0_maxsize]; 
@@ -1030,10 +1030,10 @@ int vtkImagePropagateDist2::IncList0()
     // resize the list
     int* newlist;
 
-    list0_maxsize += 500000;
+    list0_maxsize += 120000;
     newlist = new int[list0_maxsize];
     // use memcpy
-    memcpy(newlist,list0,4*(list0_size-1));
+    memcpy(newlist,list0,sizeof(int)*(list0_size-1));
     delete [] list0;
     list0 = newlist;
   }
@@ -1052,10 +1052,30 @@ int vtkImagePropagateDist2::IncList1()
     // resize the list
     int* newlist;
 
-    list1_maxsize += 500000;
+    list1_maxsize += 120000;
     newlist = new int[list1_maxsize];
     // use memcpy
-    memcpy(newlist,list1,4*(list1_size-1));
+    memcpy(newlist,list1,sizeof(int)*(list1_size-1));
+    delete [] list1;
+    list1 = newlist;
+  }
+
+  return n;
+}
+
+
+//----------------------------------------------------------------------
+int vtkImagePropagateDist2::CheckIncList1(int n)
+//
+{
+  if (list1_size+n>=list1_maxsize) {
+    // resize the list
+    int* newlist;
+
+    list1_maxsize += 120000;
+    newlist = new int[list1_maxsize];
+    // use memcpy
+    memcpy(newlist,list1,sizeof(int)*(list1_size));
     delete [] list1;
     list1 = newlist;
   }
@@ -1074,10 +1094,10 @@ int vtkImagePropagateDist2::IncListRemainingTrial()
     // resize the list
     int* newlist;
 
-    list_remaining_trial_maxsize += 500000;
+    list_remaining_trial_maxsize += 120000;
     newlist = new int[list_remaining_trial_maxsize];
     // use memcpy
-    memcpy(newlist,list_remaining_trial,4*(list_remaining_trial_size-1));
+    memcpy(newlist,list_remaining_trial,sizeof(int)*(list_remaining_trial_size-1));
     delete [] list_remaining_trial;
     list_remaining_trial = newlist;
   }
@@ -1223,14 +1243,13 @@ void vtkImagePropagateDist2::PropagateDanielsson3D( )
       p    = list0[k];
       pt0  = list_elts[p];
       tp   = pt0.GetTrack();
-      val0 = buf[tp];
 
       if (buf[p]>0) {
-    val_min_pos = min(val_min_pos,buf[p]);
-    val_max_pos = max(val_max_pos,buf[p]);
+       val_min_pos = min(val_min_pos,buf[p]);
+       val_max_pos = max(val_max_pos,buf[p]);
       } else {
-    val_min_neg = min(val_min_neg,buf[p]);
-    val_max_neg = max(val_max_neg,buf[p]);
+       val_min_neg = min(val_min_neg,buf[p]);
+       val_max_neg = max(val_max_neg,buf[p]);
       }
 
       x0 = p%tx;
@@ -1244,92 +1263,97 @@ void vtkImagePropagateDist2::PropagateDanielsson3D( )
 
       // Check the neighbors for trial
       for(l=0;l<26;l++) {
-
+    
     //        if ((dxp*nx[l]+dyp*ny[l]+dzp*nz[l])<0) continue;
-
+    
     pn = p+n[l];
     x1 = x0+nx[l];
     y1 = y0+ny[l];
     z1 = z0+nz[l];
-
         // Check the limits
-        if ((x1>=0)&&(x1<tx)&&
+    if   ((x1>=0)&&(x1<tx)&&
             (y1>=0)&&(y1<ty)&&
             (z1>=0)&&(z1<tz))
+      
       {
+
 
         PD_element2& neighbor = list_elts[pn];
 
         if (neighbor.GetTrack()==tp) continue;
 
 
-          switch (neighbor.GetState()) {
-      case POINT_NOT_PARSED:
-        neighbor.SetState(POINT_TRIAL);
-      case POINT_TRIAL:
-        list1[IncList1()]=pn;
-            neighbor.SetState(POINT_TRIAL_INLIST);
-      case POINT_TRIAL_INLIST:
-        dx = pt0.X()+nx[l];
-        dy = pt0.Y()+ny[l];
-        dz = pt0.Z()+nz[l];
-        bufn = buf+pn;
-        // Positive side
-        if (*bufn>0) {
-          val =  sqrt(dx*dx+dy*dy+dz*dz);
-          if (val<*bufn) {
+    switch (neighbor.GetState()) {
+    case POINT_NOT_PARSED:
+      neighbor.SetState(POINT_TRIAL);
+    case POINT_TRIAL:
+      list1[IncList1()]=pn;
+      neighbor.SetState(POINT_TRIAL_INLIST);
+    case POINT_TRIAL_INLIST:
+      dx = pt0.X()+nx[l];
+      dy = pt0.Y()+ny[l];
+      dz = pt0.Z()+nz[l];
+      bufn = buf+pn;
+      // Positive side
+      if (*bufn>0) {
+        val =  dx*dx+dy*dy+dz*dz;
+        if (val<*bufn) {
+          /*
         if (val<known_dist_pos) {
-          printf("val<known_dist_pos; val0=%f val=%f (dx,dy,dz)=(%f,%f,%f)\n",val0, val,dx,dy,dz);
-          printf("point (%3d,%3d,%3d) \n",x1,y1,z1);
+        printf("val<known_dist_pos; val0=%f val=%f (dx,dy,dz)=(%f,%f,%f)\n",val0, val,dx,dy,dz);
+        printf("point (%3d,%3d,%3d) \n",x1,y1,z1);
         }
-        *bufn = val;
-        neighbor.SetPosTrack( dx,dy,dz, tp);
-                neighbor.SetPrevNeighbor(l);
-          }
-        } else
+          */
+          *bufn = val;
+          neighbor.SetPosTrack( dx,dy,dz, tp);
+          neighbor.SetPrevNeighbor(l);
+        }
+      } else
         // Negative side
         if (*bufn<0) {
-          val =  - sqrt(dx*dx+dy*dy+dz*dz);
+          val =  - dx*dx+dy*dy+dz*dz;
           if (val>*bufn) {
-        if (val>known_dist_neg) {
+        /*
+          if (val>known_dist_neg) {
           printf("val>known_dist_neg; val0=%f val=%f (dx,dy,dz)=(%f,%f,%f)\n",val0,val,dx,dy,dz);
           printf("point (%3d,%3d,%3d) \n",x1,y1,z1);
-        }
+          }
+        */
         *bufn = val;
         neighbor.SetPosTrack( dx,dy,dz, tp);
-                neighbor.SetPrevNeighbor(l);
+        neighbor.SetPrevNeighbor(l);
           }
         } // end if
-    //        else
-        //  fprintf(stderr," *bufn == 0 ! \n");
-        break;
-        
-      case POINT_SET_FRONT:
-      case POINT_SET:
+      //        else
+      //  fprintf(stderr," *bufn == 0 ! \n");
+      break;
+      
+        case POINT_SET_FRONT:
+        case POINT_SET:
         // check for skeleton ...
         if ((buf[p]<0)&&
         (buf[pn]<0)&&
         (!pt0.GetSkeleton())&&
         (!neighbor.GetSkeleton())) 
-          {
-
+        {
+        
         dxpn = neighbor.X();
         dypn = neighbor.Y();
         dzpn = neighbor.Z();
         if ((dxp*dxpn+dyp*dypn+dzp*dzpn)<0) {
-          if (buf[p]<buf[pn])
+        if (buf[p]<buf[pn])
             list_elts[p].SetSkeleton(1);
-          else
+        else
             list_elts[pn].SetSkeleton(1);
         }
-          } 
-
-      } // end switch
-
-    } // if pn in [0,size-1]
+        } 
+      
+    } // end switch
+    
+      } // if pn in [0,size-1]
       } // for l in [0,25]
     } // for k in [0,list0_size-1]
-
+    
 
     SaveDistance(      distmap_count);
     SaveState(         distmap_count);
@@ -1370,9 +1394,11 @@ void vtkImagePropagateDist2::PropagateDanielsson3D( )
       }
     }
 
+    /*
     SaveDistance(      distmap_count);
     SaveState(         distmap_count);
     SaveTrajectories3D(distmap_count++);
+    */
 
     //    printf("list0_size = %5d  min = %f, borne max = %f \n",
     //       list0_size, val_min, known_dist+step_dist);
@@ -1387,6 +1413,209 @@ void vtkImagePropagateDist2::PropagateDanielsson3D( )
   //  FreeDistanceArray();
 
 } // PropagateDanielsson3D()
+
+
+float vtkImagePropagateDist2::ComputeDistance(const float& dx, const float& dy, const float& dz)
+{
+  //  return sqrt(dx*dx+dy*dy+dz*dz);
+  return dx*dx+dy*dy+dz*dz;
+}
+
+//----------------------------------------------------------------------
+void vtkImagePropagateDist2::PropagateDanielsson3D_new( )
+{
+
+    // 0: know values in the front
+    // 1: value to compute in the front  
+    register float     dx,dy,dz;
+    register int       n[26];
+    register int       nx[26];
+    register int       ny[26];
+    register int       nz[26];
+    register int       l;
+    register int       tp;
+    register int       p,k,pn,state;
+
+    int                x0,y0,z0,x1,y1,z1,p0;
+    float                dxp,dyp,dzp;
+    float                dxpn,dypn,dzpn;
+    int                i,j;
+    register float known_dist_pos;
+    register float known_dist_neg;
+    register float known_dist_pos2;
+    register float known_dist_neg2;
+    register float next_dist_pos;
+    register float next_dist_neg;
+    register float step_dist;
+
+    int       iteration;
+    register float     val;
+    register float  a,b,c,current_dist,neigh_dist;
+
+    PD_element2 pt0;
+    float* buf;
+    float* bufn;
+    int distmap_count = 0;
+
+
+    //  PreComputeDistanceArray();
+
+    //  memcpy(outputImage->GetScalarPointer(),
+    //     inputImage->GetScalarPointer(),
+    //     imsize*sizeof(float));
+
+  buf    = (float*) outputImage ->GetScalarPointer();
+
+  //------- initialize neighbors
+  l = 0;
+  for(i=-1;i<=1;i+=1)
+    for(j=-tx;j<=tx;j+=tx)
+      for(k=-txy;k<=txy;k+=txy) {
+    if ((i==0)&&(j==0)&&(k==0)) continue;
+        ((i<0)?nx[l]=-1:((i>0)?nx[l]=1:nx[l]=0));
+        ((j<0)?ny[l]=-1:((j>0)?ny[l]=1:ny[l]=0));
+        ((k<0)?nz[l]=-1:((k>0)?nz[l]=1:nz[l]=0));
+    n[l]=i+j+k;
+    l++;
+      }
+
+  if (mindist>0) mindist = 0;
+  if (maxdist<0) maxdist = 0;
+
+  step_dist  = 0.6;
+  known_dist_pos = 0;
+  known_dist_neg = 0;
+
+  //--- First list list0 already created by IsoSurfDist3D
+
+  iteration = 0;
+
+  // Already done ...
+  //  for(k=0;k<list0_size;k++) list_elts[list0[k]].SetState(POINT_SET_FRONT);
+  next_dist_pos = known_dist_pos = 0;
+  next_dist_neg = known_dist_neg = 0;
+
+  SaveDistance(      distmap_count);
+  SaveState(         distmap_count);
+  SaveTrajectories3D(distmap_count++);
+
+  list_remaining_trial_size = 0;
+
+  while ((known_dist_pos<maxdist)||(known_dist_neg>mindist)) {
+
+    iteration++;
+    printf("known dist [%3.3f,%3.3f] \n",known_dist_neg,known_dist_pos);
+    if (known_dist_pos<maxdist) next_dist_pos = known_dist_pos+step_dist;
+    if (known_dist_neg>mindist) next_dist_neg = known_dist_neg-step_dist;
+
+    //------ Create the trial points
+    list1_size = 0;
+
+    // Put the remaining trial points in the list
+    for(k=0;k<list_remaining_trial_size;k++) {
+      p = list_remaining_trial[k];
+      list1[IncList1()]=p;
+      list_elts[p].SetState(POINT_TRIAL_INLIST);
+    }
+    list_remaining_trial_size = 0;
+
+    for(k=0;k<list0_size;k++) {
+      p    = list0[k];
+      pt0  = list_elts[p];
+      tp   = pt0.GetTrack();
+      dxp=pt0.X();
+    //dxp_2 = dxp+dxp;
+      dyp=pt0.Y();
+    //dyp_2 = dyp+dyp;
+      dzp=pt0.Z();
+    //dzp_2 = dzp+dzp;
+      current_dist = buf[p];
+
+      // Check list1 for 26 additions
+      CheckIncList1(26);
+
+      // Check the neighbors for trial
+      for(l=0;l<26;l++) {
+    
+    state=list_elts[p+n[l]].GetState();
+    if (state==POINT_SET_FRONT) continue;
+    if (state==POINT_SET) continue;
+    //        if ((dxp*nx[l]+dyp*ny[l]+dzp*nz[l])<0) continue;
+    
+    pn = p+n[l];
+        PD_element2& neighbor = list_elts[pn];
+        if (neighbor.GetTrack()==tp) continue;
+    bufn = buf+pn;
+    neigh_dist = *bufn;
+
+    switch (state) {
+    case POINT_NOT_PARSED:
+    case POINT_TRIAL:
+      list1[list1_size++]=pn;
+      neighbor.SetState(POINT_TRIAL_INLIST);
+    case POINT_TRIAL_INLIST:
+      dx = dxp+nx[l];
+      dy = dyp+ny[l];
+      dz = dzp+nz[l];
+      // Positive side
+      if (neigh_dist>0) {
+        val =  ComputeDistance(dx,dy,dz);
+        if (val<neigh_dist) {
+          *bufn = val;
+          neighbor.SetPosTrack( dx,dy,dz, tp);
+        }
+      } else
+        // Negative side
+        if (neigh_dist<0) {
+          val =  - ComputeDistance(dx,dy,dz);
+          if (val>neigh_dist) {
+        *bufn = val;
+        neighbor.SetPosTrack( dx,dy,dz, tp);
+          }
+        } // end if
+      break;
+    } // end switch
+    
+      } // for l in [0,25]
+    } // for k in [0,list0_size-1]
+    
+
+    for(k=0;k<list0_size;k++)  list_elts[list0[k]].SetState( POINT_SET);
+
+    // First iteration, we complete list0 ...
+    if (iteration>1) list0_size = 0;
+
+
+    known_dist_pos = next_dist_pos;
+    known_dist_neg = next_dist_neg;
+
+    known_dist_pos2 = known_dist_pos*known_dist_pos;
+    known_dist_neg2 = known_dist_neg*known_dist_neg;
+
+    //    val_min = maxdist;
+    list_remaining_trial_size = 0;
+    for(k=0;k<list1_size;k++) {
+      p = list1[k];
+      // update the list of known points in the front
+      if (((buf[p]>0)&&(buf[p]<=known_dist_pos2)&&(known_dist_pos<maxdist))||
+          ((buf[p]<0)&&(buf[p]>=known_dist_neg2)&&(known_dist_neg>mindist))) {
+        list0[IncList0()] = p;
+        list_elts[p].SetState( POINT_SET_FRONT);
+        //if (fabs(buf[p])<val_min)
+        //  val_min = fabs(buf[p]);
+      }
+      else 
+        if (((buf[p]>0)&&(known_dist_pos<maxdist))||
+           ((buf[p]<0)&&(known_dist_neg>mindist)))
+        {
+          list_remaining_trial[IncListRemainingTrial()] = p;
+          list_elts[p].SetState( POINT_TRIAL);
+      }
+    }
+
+  } // end while
+
+} // PropagateDanielsson3D_new()
 
 
 

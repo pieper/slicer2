@@ -35,8 +35,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkImagePropagateDist2.h,v $
   Language:  C++
-  Date:      $Date: 2004/08/16 21:52:20 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2005/02/04 18:46:07 $
+  Version:   $Revision: 1.3 $
   Author:    Karl Krissian
 
 =========================================================================*/
@@ -199,6 +199,7 @@ protected:
 
   void PropagateDanielsson2D();
   void PropagateDanielsson3D();
+  void PropagateDanielsson3D_new();
 
   // Methods for saving information from the process as images
   void SaveTrajectories2D( int num);
@@ -212,7 +213,10 @@ protected:
 
   int IncList0();
   int IncList1();
+  int CheckIncList1(int);
   int IncListRemainingTrial();
+
+  float ComputeDistance(const float& dx, const float& dy, const float& dz);
 
 //BTX
   float maxdist;
