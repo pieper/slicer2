@@ -74,7 +74,7 @@
 #   AlignmentsBuildBoxesForList
 #   AlignmentsDeleteFiducialsList
 #   AlignmentsApplyFiducialSelection
-#   AlignmentsFidPickCancel
+#   AlignmentsFidSelectCancel
 #   AlignmentsSlicesSetOrientAll
 #   AlignmentsSlicesSetOrient
 #   AlignmentsSlicesOffsetUpdated
@@ -91,10 +91,12 @@
 #   AlignmentsExit
 #   AlignmentsViewerUpdate
 #   AlignmentsTestSliceControls
-#   MainViewerShowSliceControls
-#   MainViewerHideSliceControls
+#TBD: change the name of these to be AlignmentsShow...
+#   AlignmentsViewerShowSliceControls
+#   AlignmentsViewerHideSliceControls
 #   AlignmentsSetRegTabState
 #   AlignmentsTestHead
+#   AlignmentsMainFileCloseUpdated
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -122,14 +124,15 @@ proc AlignmentsInit {} {
 
     # Callbacks from other modules
     set Module($m,procViewerUpdate) AlignmentsViewerUpdate
+    set Module($m,procMainFileCloseUpdateEntered) AlignmentsMainFileCloseUpdated
     set Module($m,fiducialsStartCallback) AlignmentsFiducialsUpdated
-
+    
     # Define Dependencies
     set Module($m,depend) ""
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.2 $} {$Date: 2002/07/26 23:20:04 $}]
+            {$Revision: 1.3 $} {$Date: 2002/07/27 21:14:06 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -831,7 +834,7 @@ proc AlignmentsBuildGUI {} {
     DevAddButton $f.bApply "Apply" "AlignmentsApplyFiducialSelection" 8
 
     #Clear the Fiducial lists
-    DevAddButton $f.bCancel "Cancel" "AlignmentsFidPickCancel" 8
+    DevAddButton $f.bCancel "Cancel" "AlignmentsFidSelectCancel" 8
     
     grid $f.bApply $f.bCancel -padx $Gui(pad)  
 
@@ -1023,7 +1026,7 @@ proc AlignmentsBuildGUI {} {
     eval {button $f.bWarp -text "Warp" \
           -command "AlignmentsWhichCommand"} $Gui(WBA) {-width 10}
     eval {button $f.bCancel -text "Cancel" \
-          -command "AlignmentsFidPickCancel"} $Gui(WBA) {-width 10}
+          -command "AlignmentsFidSelectCancel"} $Gui(WBA) {-width 10}
     grid $f.bWarp $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
     
     #-------------------------------------------
@@ -2658,6 +2661,8 @@ proc AlignmentsFiducialPick {} {
     set Matrix(tAuto) $t
     if {$t == ""} {
         tk_messageBox -message "Please select a transform"
+    set Matrix(regMech) ""
+    raise $Matrix(fAlignBegin)
         return
     } 
 
@@ -2684,6 +2689,11 @@ proc AlignmentsFiducialPick {} {
         Tab Alignments row1 Auto
         set Module(freezer) "Alignments row1 Auto" 
         raise $Matrix(f$Matrix(regMech))
+
+        #I put this in here because it was giving an error when the user tried to close 
+        #the file or do any other operation on the fiduicials tab before the mouse was 
+        #moved in the 3D view
+        set Matirx(currentDataList) ""
 
         AlignmentsMatRenUpdateCamera
         
@@ -3308,12 +3318,12 @@ proc AlignmentsApplyFiducialSelection {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC AlignmentsFidPickCancel
+# .PROC AlignmentsFidSelectCancel
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc AlignmentsFidPickCancel {} {
+proc AlignmentsFidSelectCancel {} {
     global Matrix Module Gui Slice View Fiducials
 
     set Matrix(currentDataList) ""
@@ -3950,7 +3960,7 @@ proc AlignmentsTestSliceControls {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC MainViewerShowSliceControls
+# .PROC AlignmentsViewerShowSliceControls
 # 
 # .ARGS
 # .END
@@ -3963,7 +3973,7 @@ proc AlignmentsViewerShowSliceControls {s} {
     }
 }
 #-------------------------------------------------------------------------------
-# .PROC MainViewerHideSliceControls
+# .PROC AlignmentsViewerHideSliceControls
 # 
 # .ARGS
 # .END
@@ -4077,15 +4087,31 @@ proc AlignmentsSetColorCorrespondence {} {
     RenderAll
 }
 
+#-------------------------------------------------------------------------------
+# .PROC AlignmentsMainFileCloseUpdated
+# Called when File close is seleceted from the main menu.
+# Added this because the new slice actors allowing the viewing of the split 
+# view were not being deleted when the file was closed.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc AlignmentsMainFileCloseUpdated {} {
+    global Matrix Slice
+
+    if { $Matrix(FiducialPickEntered) == 1} {
+       puts "hello"
+       AlignmentsFidSelectCancel
+    }
+}
 
 #-------------------------------------------------------------------------------
 # .PROC AlignmentsExit
-# 
+# Called when the Alignments module is exit
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc AlignmentsExit {} {
-    global Fiducials Matrix
+    global Matrix
     
     popEventManager 
     Render3D 
