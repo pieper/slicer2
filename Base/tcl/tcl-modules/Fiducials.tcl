@@ -82,7 +82,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.26 $} {$Date: 2002/09/13 01:53:19 $}]
+        {$Revision: 1.27 $} {$Date: 2002/11/07 03:21:11 $}]
     
     # Initialize module-level variables
     
@@ -1391,7 +1391,8 @@ proc FiducialsSetFiducialsVisibility {name {visibility ""} {rendererName ""}} {
 proc FiducialsSetActiveList {name {menu ""} {scroll ""}} {
     
     global Fiducials Point Module
-    
+
+if {[lsearch $Fiducials(listOfNames) $name] != -1} {
     set Fiducials(activeList) $name
     if { $menu == "" } {
     foreach m $Fiducials(mbActiveList) {
@@ -1448,6 +1449,7 @@ foreach m $Module(idList) {
         $Module($m,fiducialsActivatedListCallback)  $type $name $id
     }
     }
+}
 }
 }
 
