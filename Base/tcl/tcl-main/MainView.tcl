@@ -66,7 +66,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
     set m MainView
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.41 $} {$Date: 2002/11/12 13:09:53 $}]
+    {$Revision: 1.42 $} {$Date: 2002/11/13 23:15:34 $}]
 
     set View(viewerHeightNormal) 656
     set View(viewerWidth)  956 
@@ -570,7 +570,7 @@ proc MainViewNavReset {x y {cmd ""}} {
                         $View(viewCam) SetViewUp     0   1   0
                     }
                 }
-        viewRen ResetCameraClippingRange
+                viewRen ResetCameraClippingRange
                 $View(viewCam) ComputeViewPlaneNormal
                 $View(viewCam) OrthogonalizeViewUp
 
