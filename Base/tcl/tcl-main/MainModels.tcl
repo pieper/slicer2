@@ -74,7 +74,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.44 $} {$Date: 2001/12/26 15:23:39 $}]
+		{$Revision: 1.45 $} {$Date: 2001/12/26 15:36:19 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""
@@ -1076,7 +1076,7 @@ since the last time it was saved."
 		[file join $Mrml(dir) [Model($m,node) GetFileName]]
 
 	vtkPolyDataWriter writer
-        writer SetFileTypeToASCII
+#        writer SetFileTypeToASCII
 	writer SetInput $Model($m,polyData)
 	writer SetFileType 2
 	writer SetFileName [Model($m,node) GetFullFileName]
