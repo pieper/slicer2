@@ -157,11 +157,13 @@ if {$resp == "cancel"} {
 switch $env(BUILD) {
     "solaris8" -
     "redhat7.3" {
-        # need to run the specially modified tcl interp in the executable 'vtk'
-        # on unix
-        eval exec $env(VTK_BIN_DIR)/bin/vtk $env(SLICER_HOME)/Base/tcl/Go.tcl $argv &
+        # - need to run the specially modified tcl interp in the executable 'vtk' on unix
+        # - don't put process in background so that jdemo can track its status
+        eval exec $env(VTK_BIN_DIR)/bin/vtk $env(SLICER_HOME)/Base/tcl/Go.tcl $argv
     }
     "Win32VC7" {
+        # put slicer in the background on windows so it won't be "Not Responding" in
+        # task manager
         eval exec $env(TCL_BIN_DIR)/wish84.exe $env(SLICER_HOME)/Base/tcl/Go.tcl $argv &
     }
 }
