@@ -1399,7 +1399,7 @@ eval {label $f.lTitle -text "Step 4. "} $Gui(WTA)
 
     # Done in CrossSectionCreateAdvancedGUI
 
-    CrossSectionCreateAdvancedGUI $f cam   visible   noColor size
+#    CrossSectionCreateAdvancedGUI $f cam   visible   noColor size
 #    CrossSectionCreateAdvancedGUI $f Lens  notvisible color
 #    CrossSectionCreateAdvancedGUI $f Box   notvisible color
 #    CrossSectionCreateAdvancedGUI $f fp    visible    color
