@@ -75,7 +75,7 @@ proc MatricesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.17 $} {$Date: 2000/03/06 00:08:05 $}]
+		{$Revision: 1.18 $} {$Date: 2000/03/06 17:55:01 $}]
 
 	# Props
 	set Matrix(propertyType) Basic
@@ -885,7 +885,6 @@ proc MatricesManualTranslate {param {value ""}} {
 		MainUpdateMRML
 		Render$Matrix(render)
 	}
-	update
 }
 
 #-------------------------------------------------------------------------------
