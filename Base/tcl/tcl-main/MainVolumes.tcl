@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.79 $} {$Date: 2004/09/17 15:37:57 $}]
+    {$Revision: 1.80 $} {$Date: 2004/10/07 20:55:13 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -306,7 +306,7 @@ proc MainVolumesCreate {v} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesRead {v} {
-    global Volume Gui
+    global Volume Gui Module
 
     # Check that all files exist
     scan [Volume($v,node) GetImageRange] "%d %d" lo hi
@@ -351,9 +351,10 @@ proc MainVolumesRead {v} {
             }
         }
         default {
-            if {[CheckVolumeExists [Volume($v,node) GetFullPrefix] \
-                     [Volume($v,node) GetFilePattern] $lo $hi] != ""} {
-                DevErrorWindow "Non DICOM volume does not exist. Checked pattern [Volume($v,node) GetFilePattern] and prefix [Volume($v,node) GetFullPrefix] for lo = $lo and hi = $hi"
+            set retval [CheckVolumeExists [Volume($v,node) GetFullPrefix] \
+                     [Volume($v,node) GetFilePattern] $lo $hi]
+            if {$retval != ""} {
+                DevErrorWindow "Non DICOM volume does not exist, missing file '$retval'.\nChecked pattern [Volume($v,node) GetFilePattern] and prefix [Volume($v,node) GetFullPrefix] for lo = $lo and hi = $hi"
                 return -1
             }
         }
@@ -399,22 +400,6 @@ proc MainVolumesRead {v} {
                 VolAnalyzeCleanupCompressed [Volume($v,node) GetFullPrefix] 
             }
         }
-        "MGH" {
-            DevErrorWindow "MainVolumes: Have an MGH volume, special reader attempt..."
-            if { [info commands vtkMGHReader] == "" } {
-                DevErrorWindow "No MGH Reader available."
-                return -1
-            }
-            catch "mghreader Delete"
-            vtkMGHReader mghreader
-            
-            mghreader SetFileName [Volume($v,node) GetFullPrefix]
-            mghreader Update
-            mghreader ReadVolumeHeader
-            [[mghreader GetOutput] GetPointData] SetScalars [mghreader ReadVolumeData]
-            Volume($v,vol) SetImageData [mghreader GetOutput]
-            mghreader Delete
-        }
         "StructuredPoints" {
             catch "spreader Delete"
             vtkStructuredPointsReader spreader
@@ -446,10 +431,37 @@ proc MainVolumesRead {v} {
             spreader Delete
         }
         default {
-            Volume($v,vol) Read
+            # check to see if any other readers have been registered with this file type
+            set foundModuleReader 0
+            foreach m $Module(idList) { 
+                if {[catch { set retval [info exists Module($m,readerProc,$volumeFileType)] } errmsg ]} { 
+                    puts "MainVolumesRead: Error finding a read proc for file type $volumeFileType: $errmsg" 
+                } else { 
+                    if {$retval} { 
+                        if {$::Module(verbose)} {
+                            puts "Calling reader for $volumeFileType = $Module($m,readerProc,$volumeFileType)" 
+                        }
+                        $Module($m,readerProc,$volumeFileType) $v
+                        set foundModuleReader 1
+                    } 
+                }
+            }
+            if {!$foundModuleReader} {
+                if {$::Module(verbose)} {
+                    # Volume($v,vol) DebugOn
+                }
+                set readMSstr [time {Volume($v,vol) Read}]
+                set readMS [lindex [split $readMSstr] 0]
+                puts "[expr $readMS / 1000000.0] seconds to read volume $v"
+                if {$::Module(verbose)} {
+                    # Volume($v,vol) DebugOff
+                }
+            }
         }
     }
-
+    if {$::Module(verbose)} {
+        puts "\tDone Read, calling update on volume $v"
+    }
     Volume($v,vol) Update
     puts "...finished reading [Volume($v,node) GetName]"
 
