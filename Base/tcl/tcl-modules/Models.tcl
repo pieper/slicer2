@@ -67,7 +67,7 @@ proc ModelsInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.23 $} {$Date: 2000/07/27 22:53:52 $}]
+		{$Revision: 1.24 $} {$Date: 2000/07/31 16:14:46 $}]
 
 	# Props
 	set Model(propertyType) Basic
@@ -781,7 +781,6 @@ proc ModelsPropsApply {} {
 			return
 		}
 		set Model(freeze) 0
-		MainModelsSetActive $i
 		set m $i
 	}
 
