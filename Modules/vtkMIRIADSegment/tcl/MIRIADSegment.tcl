@@ -151,7 +151,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.25 $} {$Date: 2004/02/20 13:06:30 $}]
+        {$Revision: 1.26 $} {$Date: 2004/02/24 23:36:56 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1012,9 +1012,9 @@ proc MIRIADSegmentSetEMParameters { } {
         "$mp(NormalWhiteMatter,logmeans,PD) $mp(NormalWhiteMatter,logmeans,T2)" \
         "$mp(CorticalGrayMatter,logmeans,PD) $mp(CorticalGrayMatter,logmeans,T2)" ]
     set ::MIRIADSegment(logcovs,3) [list \
-        "$mp(CSF,logcov,PD) $mp(CSF,logcov,cross) $mp(CSF,logcov,cross) $mp(CSF,logmeans,T2)" \
-        "$mp(NormalWhiteMatter,logcov,PD) $mp(NormalWhiteMatter,logcov,cross) $mp(NormalWhiteMatter,logcov,cross) $mp(NormalWhiteMatter,logmeans,T2)" \
-        "$mp(CorticalGrayMatter,logcov,PD) $mp(CorticalGrayMatter,logcov,cross) $mp(CorticalGrayMatter,logcov,cross) $mp(CorticalGrayMatter,logmeans,T2)" ]
+        "$mp(CSF,logcov,PD) $mp(CSF,logcov,cross) $mp(CSF,logcov,cross) $mp(CSF,logcov,T2)" \
+        "$mp(NormalWhiteMatter,logcov,PD) $mp(NormalWhiteMatter,logcov,cross) $mp(NormalWhiteMatter,logcov,cross) $mp(NormalWhiteMatter,logcov,T2)" \
+        "$mp(CorticalGrayMatter,logcov,PD) $mp(CorticalGrayMatter,logcov,cross) $mp(CorticalGrayMatter,logcov,cross) $mp(CorticalGrayMatter,logcov,T2)" ]
 
     # ---------------------------------------------------------------------------------
     # Define parameters for children of GM
@@ -1093,18 +1093,19 @@ proc MIRIADSegmentRunEM { {mode "full"} } {
         set ::EMSegment(SegmentationBoundaryMax,0) 256
         set ::EMSegment(SegmentationBoundaryMax,1) 256
         set t2 [MIRIADSegmentGetVolumeByName "T2"]
-        set end [linex [Volume($t2,node) GetImageRange] 1]
+        set end [lindex [Volume($t2,node) GetImageRange] 1]
         set ::EMSegment(SegmentationBoundaryMax,2) $end
         set ::EMSegment(EMiteration) 5
         set ::EMSegment(MFAiteration) 2
     } else {
         # preview mode
+        upvar #0 MIRIADParameters mp  ;# for typing simplicity and readability
         set ::EMSegment(SegmentationBoundaryMin,0) 1
         set ::EMSegment(SegmentationBoundaryMin,1) 1
-        set ::EMSegment(SegmentationBoundaryMin,2) 31
+        set ::EMSegment(SegmentationBoundaryMin,2) [expr 1+$mp(previewslice)]
         set ::EMSegment(SegmentationBoundaryMax,0) 128
         set ::EMSegment(SegmentationBoundaryMax,1) 256
-        set ::EMSegment(SegmentationBoundaryMax,2) 31
+        set ::EMSegment(SegmentationBoundaryMax,2) [expr 1+$mp(previewslice)]
         set ::EMSegment(EMiteration) 5
         set ::EMSegment(MFAiteration) 2
     }
