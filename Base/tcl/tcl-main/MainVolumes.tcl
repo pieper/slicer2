@@ -152,6 +152,13 @@ proc MainVolumesUpdateMRML {} {
 		}
 	}
 
+	# Registration
+	foreach v $Volume(idList) {
+		if {$v != $Volume(idList)} {
+			MainVolumesUpdate $v
+		}
+	}
+
 	# In case we changed the name of the active transform
 	MainVolumesSetActive $Volume(activeID)
 }
