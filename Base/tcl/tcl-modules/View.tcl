@@ -59,7 +59,7 @@ proc ViewInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.16 $} {$Date: 2001/04/27 15:24:12 $}]
+		{$Revision: 1.17 $} {$Date: 2001/04/27 15:24:56 $}]
 
 	set View(movie) 0
 	set View(movieDirectory) "/tmp"
