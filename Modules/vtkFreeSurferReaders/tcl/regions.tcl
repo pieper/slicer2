@@ -1,4 +1,6 @@
 package require Iwidgets
+package require http
+package require tls
 #
 # a toplevel window that displays cortical parcellation options
 # - meant to be sourced into the slicer
@@ -26,8 +28,14 @@ if { [itcl::find class regions] == "" } {
         public variable umlslabel0 "" {}
         public variable umlslabel1 "" {}
         public variable umlsid "" {}
-        
-        variable _sites "google arrowsmith pubmed jneurosci ibvd mediator all"
+        public variable which "" {}
+        public variable ucsddata "" {}
+        public variable regionspath "" {}
+        public variable dir "" {}
+        public variable talumls "" {}
+        public variable fsumls "" {}
+
+        variable _sites "arrowsmith pubmed jneurosci UMLS-Browser google ibvd mediator all "
         variable _wlabels "Brodmann Talairach Freesurfer" 
         variable _terms ""
 
@@ -48,6 +56,7 @@ if { [itcl::find class regions] == "" } {
 
         method apply {} {}
         method query {} {}
+        method statistics {} {}
         method findptscalars {} {}
         method talairach {} {}
         method refresh {args} {}
@@ -71,6 +80,7 @@ itcl::body regions::constructor {args} {
         set im [image create photo -file $::PACKAGE_DIR_BIRNDUP/../../../images/new-birn.ppm]
         pack [label $w.logo -image $im -bg white] -fill x -anchor s -side left
     }
+
 
     #
     # configuration panel
@@ -114,11 +124,11 @@ itcl::body regions::constructor {args} {
     pack $cs.tal.btal -side left
 
     ::iwidgets::Labeledwidget::alignlabels $_modelmenu $cs.annot.eannot $cs.tal.etal 
-
-    button $cs.apply -text "Apply" -command "$this apply"
-    pack $cs.apply
-
-
+    
+    radiobutton $cs.r1 -text "Raw Image (Use AFNI Talairach Header)" -variable which -value 1
+    radiobutton $cs.r2 -text "Talaraiched Image (Do not use AFNI Talairach Header)" -variable which -value 2
+    pack $cs.r1 $cs.r2
+    
     #
     # fiducials panel
     #
@@ -153,13 +163,15 @@ itcl::body regions::constructor {args} {
 
     button $cs.query -text "Query" -command "$this query"
     pack $cs.query -side left
-    button $cs.smart -text "SMART Atlas" -command "exec $browser http://animal.ucsd.edu:8030/jnlp/atlas.jnlp"
+    button $cs.stats -text "Get Statistics" -command "$this statistics"
+    pack $cs.stats -side left
+    button $cs.smart -text "SMART Atlas" -command "exec $browser http://imhotep.ucsd.edu:7873/haiyun/jnlp/atlas.jnlp &"
     pack $cs.smart -side bottom
-    button $cs.connect -text "Swanson's Connectivity Tool (BAMS)" -command {exec $browser http://brancusi.usc.edu/bkms/about.html}
+    button $cs.connect -text "Connectivity Tool (BAMS)" -command "exec $browser http://brancusi.usc.edu/bkms/about.html &"
     pack $cs.connect -side left
-    button $cs.braininfo -text "Washington University's BrainInfo" -command {exec $browser http://braininfo.rprc.washington.edu/mainmenu.html}
+    button $cs.braininfo -text "BrainInfo" -command "exec $browser http://braininfo.rprc.washington.edu/mainmenu.html &"
     pack $cs.braininfo -side left
-
+    
     #
     # try to determine browser automatically
     #
@@ -235,7 +247,7 @@ itcl::body regions::apply {} {
     # - set the colors for the model's lookuptable
     # - put the anatomical labels into a member array for access later
     #
-
+    
     set scalars [[$Model($_id,polyData) GetPointData] GetArray "labels"] 
     if { $scalars == "" } {
         set scalars scalars_$_name
@@ -281,6 +293,35 @@ itcl::body regions::apply {} {
     Render3D
 }
 
+itcl::body regions::statistics {} {
+    global Model
+    set csvfile [open $dir/test.csv r+]
+    set idfile [open $dir/idfile.txt w+]
+    gets $csvfile line
+    while { ![eof $csvfile] } {
+        gets $csvfile line
+        set ucid [split $line ,]
+        puts $idfile [lindex $ucid 0]
+    }
+    close $csvfile
+    close $idfile    
+    
+    exec $javapath/soap_client/run.sh $dir/idfile.txt UCSD00156805 & 
+    after 5000
+    set results [open $javapath/soap_client/results.txt r+]
+
+    gets $results line
+    gets $results line
+    gets $results line
+       
+    gets $results line
+       
+    #list containing all stats variables
+    set stats [split $line]
+
+    close $results
+}
+
 itcl::body regions::query {} {
     global Model
 
@@ -311,34 +352,42 @@ itcl::body regions::query {} {
             }
         }
     }
-
     switch $wlabel {
-       "Brodmann" {
-            #Create Pubmed query
-            if { $Brodmannlab != "" } {
-                set BrodSwitch [split $Brodmannlab]
-                set area [lindex $BrodSwitch 2]
-                if { $site == "pubmed" } {   
-                    set terms "\"BA $area\" NOT (barium OR (ba AND \"2+\")) OR (Brodmann AND $area)"
-                } elseif { $site == "arrowsmith" } {
-                    set terms "&quot BA $area &quot NOT (barium OR (ba AND &quot 2+ &quot)) OR (Brodmann AND $area)"
-                } elseif { $site == "jneurosci" } {
-                    set terms "\"BA $area\" OR (Brodmann AND $area)"
-                } else { 
+           "Brodmann" {
+           #Create Pubmed query
+           if { $Brodmannlab != "" } {
+              set BrodSwitch [split $Brodmannlab]
+              if { [lindex $BrodSwitch 0] == "Brodmann" } {
+                 set area [lindex $BrodSwitch 2]
+                 if { $site == "pubmed" } {   
+                     set terms "\"BA $area\" NOT (barium OR (ba AND \"2+\")) OR (Brodmann AND $area)"
+                 } elseif { $site == "arrowsmith" } {
+                     set terms "&quot BA $area &quot NOT (barium OR (ba AND &quot 2+ &quot)) OR (Brodmann AND $area)"
+                 } elseif { $site == "jneurosci" } {
+                     set terms "\"BA $area\" OR (Brodmann AND $area)"
+                 } else { 
+                     set terms $Brodmannlab
+                   }
+               } else {
                     set terms $Brodmannlab
-                }
-            }
-        }
+               }            
+             }
+           }
             
-        "Talairach" {
-            set terms $talgyrlab 
-        }
+           "Talairach" {
+              set terms $talgyrlab 
+              set umlsid $talumls
+           }
 
-        "Freesurferlab" {
-            set terms $fsurferlab
-        }
+           "Freesurfer" {
+              set terms $fsurferlab
+              set umlsid $fsumls
+           }
+           
+           "UMLS" {
+              set terms $umlsid
+           }
     }
-
     regsub -all "{" $terms "" terms
     regsub -all "}" $terms "" terms
         
@@ -375,6 +424,11 @@ itcl::body regions::query {} {
         "pubmed" {
             catch "exec \"$browser\" http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=search&db=PubMed&term=$terms &"
         }
+        "UMLS-Browser" {
+            set address http://ape.ucsd.edu/srb/cgi-bin/umls.cgi?id=$umlsid
+            puts $address
+            catch "exec \"$browser\" $address &"
+        }
         "jneurosci" {
             catch "exec \"$browser\" http://www.jneurosci.org/cgi/search?volume=&firstpage=&sendit=Search&author1=&author2=&titleabstract=&fulltext=$terms &"
         }
@@ -387,7 +441,7 @@ itcl::body regions::query {} {
             catch "exec \"$browser\" http://www.jneurosci.org/cgi/search?volume=&firstpage=&sendit=Search&author1=&author2=&titleabstract=&fulltext=$terms &"
         }
         "mediator" {
-            tk_messageBox -title "Slicer" -message "Mediator not yet implemented." -type ok -icon error
+            tk_messageBox -title "Slicer" -message "Mediator interface not yet implemented." -type ok -icon error
         }
     }
 }
@@ -413,7 +467,7 @@ itcl::body regions::findptscalars {} {
 
     $_labellistbox delete 0 end
     set _ptlabels ""
-
+    
     foreach id $Point(idList) {
 
         set _xyz [Point($id,node) GetXYZ]
@@ -450,42 +504,44 @@ itcl::body regions::findptscalars {} {
             set fsurferlab $_labels($s)
             set umlslabel0 $fsurferlab
             $this umls
-            if { $mindist > 2} {
-                set ptinfo "Not on Surface Model" 
-            } elseif { $umlsid == "" } {
-                set ptinfo " - $fsurferlab ($s)"
-            } else {
-                set ptinfo " - $fsurferlab ($s) - UMLS ID $umlsid"
-            }
+            set fsumls $umlsid
+            set ptinfo ""
+        if { $mindist > 2} {
+            set ptinfo "" 
+        } elseif { $umlsid == "" } {
+            set ptinfo "pt $id - Freesurfer - $fsurferlab ($s)"
+        } else {
+            set ptinfo "pt $id - Freesurfer - $fsurferlab ($s) - UMLS ID $umlsid"
         }
-
+        }
         if { [Point($id,node) GetDescription] != "" } {
             regsub -all -- "_" [Point($id,node) GetDescription] " " lab
             set ptinfo "$ptinfo - $lab"
             lappend _ptlabels $lab
         }
-
+        
         $_labellistbox insert end $ptinfo
         # put the label on two lines for the fiducial
         regsub -all -- "-" $ptinfo "\n        " ptinfo
         Point($id,node) SetName $ptinfo
-
+       
         $this talairach
         
         set umlslabel0 $talgyrlab
         set umlsid ""
         $this umls
+        set talumls $umlsid
         if { $talgyrlab != "" && $umlsid == "" } {
-            $_labellistbox insert end "pt $id $talgyrlab"
+            $_labellistbox insert end "pt $id - Talairach - $talgyrlab"
         } elseif { $talgyrlab != "" && $umlsid != "" } {
-            $_labellistbox insert end "pt $id $talgyrlab - Talairach UMLS ID $umlsid"
+            $_labellistbox insert end "pt $id - Talairach - $talgyrlab - Talairach UMLS ID $umlsid"
         }
         if { $Brodmannlab != ""} {
-            $_labellistbox insert end "pt $id $Brodmannlab - $range mm"
+            $_labellistbox insert end "pt $id - Brodmann - $Brodmannlab - $range mm"
         } 
+ 
     }
-
-    FiducialsUpdateMRML
+ FiducialsUpdateMRML
 }
 
 itcl::body regions::umls {} {
@@ -499,7 +555,7 @@ itcl::body regions::umls {} {
         set label($n,2) [lindex $labelline 3]
         set n [expr ($n + 1)]
         gets $umls line
-    }
+        }
     close $umls
     for {set i 0} {$i < $n} {incr i} {
         if {$umlslabel0 == $label($i,0)} {
@@ -510,7 +566,7 @@ itcl::body regions::umls {} {
 
 itcl::body regions::talairach {} {
     global Point Model
-
+    global which
     if { ![file exists $talfile] } {
         puts stderr "no talairach file"
         return
@@ -526,109 +582,116 @@ itcl::body regions::talairach {} {
     #
     # parse the Talairach Transform
     #
-    set switch [split $talfile .]
-    #use AFNI talairach file for transformation
-    if {[lindex $switch end] == "HEAD"} {
-       set fp [open $talfile "r"]
-       gets $fp line
-       while {$line != "name  = WARP_DATA"} {
-            gets $fp line
-       }
-       gets $fp line
+    if { $which == 1} {
+       set switch [split $talfile .]
+       #use AFNI talairach file for transformation
+       if {[lindex $switch end] == "HEAD"} {
+          set fp [open $talfile "r"]
+          gets $fp line
+          while {$line != "name  = WARP_DATA"} {
+               gets $fp line
+          }
+          gets $fp line
    
-       #import 12 Basic Linear Transformations from AFNI Talairach header
-       for {set n 0} {$n < 12} {incr n} {
-           gets $fp line
-           scan $line "%f %f %f %f %f" _mtx(1,1,$n) _mtx(1,2,$n) _mtx(1,3,$n) _mtx(2,1,$n) _mtx(2,2,$n)
-           gets $fp line
-           scan $line "%f %f %f %f" _mtx(2,3,$n) _mtx(3,1,$n) _mtx(3,2,$n) _mtx(3,3,$n)
-           gets $fp line
-           gets $fp line
-           scan $line "%f %f %f %f %f" _b1 _b2 _b3 bvec(1,$n) bvec(2,$n)
-           gets $fp line
-           scan $line "%f" bvec(3,$n)
-           gets $fp line
-       }
-       close $fp
+          #import 12 Basic Linear Transformations from AFNI Talairach header
+          for {set n 0} {$n < 12} {incr n} {
+              gets $fp line
+              scan $line "%f %f %f %f %f" _mtx(1,1,$n) _mtx(1,2,$n) _mtx(1,3,$n) _mtx(2,1,$n) _mtx(2,2,$n)
+              gets $fp line
+              scan $line "%f %f %f %f" _mtx(2,3,$n) _mtx(3,1,$n) _mtx(3,2,$n) _mtx(3,3,$n)
+              gets $fp line
+              gets $fp line
+              scan $line "%f %f %f %f %f" _b1 _b2 _b3 bvec(1,$n) bvec(2,$n)
+              gets $fp line
+              scan $line "%f" bvec(3,$n)
+              gets $fp line
+          }
+          close $fp
                  
-       set x0 [expr $x0 * -1.]
-       set y0 [expr $y0 * -1.]
+          set x0 [expr $x0 * -1.]
+          set y0 [expr $y0 * -1.]
 
-       #test for which BLT to use
-       if {$x0 <= 0 && $y0 < 0 && $z0 >= 0} { 
-          set sw 0 }
-       if {$x0 >  0 && $y0 < 0 && $z0 >= 0} { 
-          set sw 1 }
-       if {$x0 <= 0 && $y0 >= 0 && $y0 <= 23 && $z0 >= 0} {
-          set sw 2 }
-       if {$x0 >  0 && $y0 >= 0 && $y0 <= 23 && $z0 >= 0} { 
-          set sw 3 }
-       if {$x0 <= 0 && $y0 > 23 && $z0 >= 0} { 
-          set sw 4 }
-       if {$x0 >  0 && $y0 > 23 && $z0 >= 0} { 
-          set sw 5 }
-       if {$x0 <= 0 && $y0 < 0 && $z0 < 0} { 
-          set sw 6 }
-       if {$x0 >  0 && $y0 < 0 && $z0 < 0} { 
-          set sw 7 }
-       if {$x0 <= 0 && $y0 >= 0 && $y0 <= 23 && $z0 < 0} { 
-          set sw 8 }
-       if {$x0 >  0 && $y0 >= 0 && $y0 <= 23 && $z0 < 0} { 
-          set sw 9 }
-       if {$x0 <= 0 && $y0 > 23 && $z0 < 0} { 
-          set sw 10 }
-       if {$x0 >  0 && $y0 > 23 && $z0 < 0} { 
-          set sw 11 }
+          #test for which BLT to use
+          if {$x0 <= 0 && $y0 < 0 && $z0 >= 0} { 
+             set sw 0 }
+          if {$x0 >  0 && $y0 < 0 && $z0 >= 0} { 
+             set sw 1 }
+          if {$x0 <= 0 && $y0 >= 0 && $y0 <= 23 && $z0 >= 0} {
+             set sw 2 }
+          if {$x0 >  0 && $y0 >= 0 && $y0 <= 23 && $z0 >= 0} { 
+             set sw 3 }
+          if {$x0 <= 0 && $y0 > 23 && $z0 >= 0} { 
+             set sw 4 }
+          if {$x0 >  0 && $y0 > 23 && $z0 >= 0} { 
+             set sw 5 }
+          if {$x0 <= 0 && $y0 < 0 && $z0 < 0} { 
+             set sw 6 }
+          if {$x0 >  0 && $y0 < 0 && $z0 < 0} { 
+             set sw 7 }
+          if {$x0 <= 0 && $y0 >= 0 && $y0 <= 23 && $z0 < 0} { 
+             set sw 8 }
+          if {$x0 >  0 && $y0 >= 0 && $y0 <= 23 && $z0 < 0} { 
+             set sw 9 }
+          if {$x0 <= 0 && $y0 > 23 && $z0 < 0} { 
+             set sw 10 }
+          if {$x0 >  0 && $y0 > 23 && $z0 < 0} { 
+             set sw 11 }
        
-       #RAS -> Talairach coordinate transformation
-       set tal(1) [expr ($x0 * $_mtx(1,1,$sw)) + ($y0 * $_mtx(1,2,$sw)) + ($z0 * $_mtx(1,3,$sw))]     
-       set tal(2) [expr ($x0 * $_mtx(2,1,$sw)) + ($y0 * $_mtx(2,2,$sw)) + ($z0 * $_mtx(2,3,$sw))]
-       set tal(3) [expr ($x0 * $_mtx(3,1,$sw)) + ($y0 * $_mtx(3,2,$sw)) + ($z0 * $_mtx(3,3,$sw))]   
-       #final step of conversion
-       set tal(1) [expr ($tal(1) - $bvec(1,$sw))]
-       set tal(2) [expr ($tal(2) - $bvec(2,$sw))]
-       set tal(3) [expr ($tal(3) - $bvec(3,$sw))]
+          #RAS -> Talairach coordinate transformation
+          set tal(1) [expr ($x0 * $_mtx(1,1,$sw)) + ($y0 * $_mtx(1,2,$sw)) + ($z0 * $_mtx(1,3,$sw))]     
+          set tal(2) [expr ($x0 * $_mtx(2,1,$sw)) + ($y0 * $_mtx(2,2,$sw)) + ($z0 * $_mtx(2,3,$sw))]
+          set tal(3) [expr ($x0 * $_mtx(3,1,$sw)) + ($y0 * $_mtx(3,2,$sw)) + ($z0 * $_mtx(3,3,$sw))]   
+          #final step of conversion
+          set tal(1) [expr ($tal(1) - $bvec(1,$sw))]
+          set tal(2) [expr ($tal(2) - $bvec(2,$sw))]
+          set tal(3) [expr ($tal(3) - $bvec(3,$sw))]
     
-       set tal(1) [expr $tal(1) * -1.]
-       set tal(2) [expr $tal(2) * -1.]
+          set tal(1) [expr $tal(1) * -1.]
+          set tal(2) [expr $tal(2) * -1.]
     
-       #Use .xfm file for Talairach transformation
-    } elseif { [lindex $switch end] == "xfm" } {
-       array unset _mtx
-       set fp [open $talfile "r"]
-       gets $fp line
-       while {$line != "Linear_Transform ="} {
-           gets $fp line
-       }
-       gets $fp line
-       scan $line "%f %f %f %f" _mtx(1,1) _mtx(1,2) _mtx(1,3) _mtx(1,4)
-       gets $fp line
-       scan $line "%f %f %f %f" _mtx(2,1) _mtx(2,2) _mtx(2,3) _mtx(2,4)
-       gets $fp line
-       scan $line "%f %f %f %f" _mtx(3,1) _mtx(3,2) _mtx(3,3) _mtx(3,4)
+          #Use .xfm file for Talairach transformation
+       } elseif { [lindex $switch end] == "xfm" } {
+          array unset _mtx
+          set fp [open $talfile "r"]
+          gets $fp line
+          while {$line != "Linear_Transform ="} {
+              gets $fp line
+          }
+          gets $fp line
+          scan $line "%f %f %f %f" _mtx(1,1) _mtx(1,2) _mtx(1,3) _mtx(1,4)
+          gets $fp line
+          scan $line "%f %f %f %f" _mtx(2,1) _mtx(2,2) _mtx(2,3) _mtx(2,4)
+          gets $fp line
+          scan $line "%f %f %f %f" _mtx(3,1) _mtx(3,2) _mtx(3,3) _mtx(3,4)
 
-       close $fp
-       set r0 1
-       set tal(1) [expr ($x0 * $_mtx(1,1)) + ($y0 * $_mtx(1,2)) + ($z0 * $_mtx(1,3)) + ($r0 * $_mtx(1,4))]      
-       set tal(2) [expr ($x0 * $_mtx(2,1)) + ($y0 * $_mtx(2,2)) + ($z0 * $_mtx(2,3)) + ($r0 * $_mtx(2,4))]
-       set tal(3) [expr ($x0 * $_mtx(3,1)) + ($y0 * $_mtx(3,2)) + ($z0 * $_mtx(3,3)) + ($r0 * $_mtx(3,4))]
-       puts "MNI T-Coord $tal(1) $tal(2) $tal(3)"
+          close $fp
+          set r0 1
+          set tal(1) [expr ($x0 * $_mtx(1,1)) + ($y0 * $_mtx(1,2)) + ($z0 * $_mtx(1,3)) + ($r0 * $_mtx(1,4))]      
+          set tal(2) [expr ($x0 * $_mtx(2,1)) + ($y0 * $_mtx(2,2)) + ($z0 * $_mtx(2,3)) + ($r0 * $_mtx(2,4))]
+          set tal(3) [expr ($x0 * $_mtx(3,1)) + ($y0 * $_mtx(3,2)) + ($z0 * $_mtx(3,3)) + ($r0 * $_mtx(3,4))]
+          puts "MNI T-Coord $tal(1) $tal(2) $tal(3)"
+       }
+       #Tournoux -> MNI conversion
+       if {$tal(3) >= 0} {
+          set mtal(1) [expr ($tal(1) * $tf1(1,1)) + ($tal(2) * $tf1(1,2)) + ($tal(3) * $tf1(1,3))]       
+          set mtal(2) [expr ($tal(1) * $tf1(2,1)) + ($tal(2) * $tf1(2,2)) + ($tal(3) * $tf1(2,3))]
+          set mtal(3) [expr ($tal(1) * $tf1(3,1)) + ($tal(2) * $tf1(3,2)) + ($tal(3) * $tf1(3,3))]   
+       } else {
+          set mtal(1) [expr ($tal(1) * $tf2(1,1)) + ($tal(2) * $tf2(1,2)) + ($tal(3) * $tf2(1,3))]       
+          set mtal(2) [expr ($tal(1) * $tf2(2,1)) + ($tal(2) * $tf2(2,2)) + ($tal(3) * $tf2(2,3))]
+          set mtal(3) [expr ($tal(1) * $tf2(3,1)) + ($tal(2) * $tf2(3,2)) + ($tal(3) * $tf2(3,3))] 
+       } 
+       set tal(1) [expr round($tal(1))]
+       set tal(2) [expr round($tal(2))]
+       set tal(3) [expr round($tal(3))]
+       #puts "Talairached Coord $tal(1) $tal(2) $tal(3)"
+       #puts "MNI Coord $mtal(1) $mtal(2) $mtal(3)"
+    } elseif { $which == 2 } {
+       set tal(1) [expr round($x0)]
+       set tal(2) [expr round($y0)]
+       set tal(3) [expr round($z0)]
     }
-    #Tournoux -> MNI conversion
-    if {$tal(3) >= 0} {
-       set mtal(1) [expr ($tal(1) * $tf1(1,1)) + ($tal(2) * $tf1(1,2)) + ($tal(3) * $tf1(1,3))]       
-       set mtal(2) [expr ($tal(1) * $tf1(2,1)) + ($tal(2) * $tf1(2,2)) + ($tal(3) * $tf1(2,3))]
-       set mtal(3) [expr ($tal(1) * $tf1(3,1)) + ($tal(2) * $tf1(3,2)) + ($tal(3) * $tf1(3,3))]   
-    } else {
-       set mtal(1) [expr ($tal(1) * $tf2(1,1)) + ($tal(2) * $tf2(1,2)) + ($tal(3) * $tf2(1,3))]       
-       set mtal(2) [expr ($tal(1) * $tf2(2,1)) + ($tal(2) * $tf2(2,2)) + ($tal(3) * $tf2(2,3))]
-       set mtal(3) [expr ($tal(1) * $tf2(3,1)) + ($tal(2) * $tf2(3,2)) + ($tal(3) * $tf2(3,3))] 
-    } 
-    set tal(1) [expr round($tal(1))]
-    set tal(2) [expr round($tal(2))]
-    set tal(3) [expr round($tal(3))]
-    puts "Talairached Coord $tal(1) $tal(2) $tal(3)"
-    puts "MNI Coord $mtal(1) $mtal(2) $mtal(3)"
+    puts "$tal(1) $tal(2) $tal(3)"
     #open socket, send coordinate to Talairach Daemon query
     if {[catch {set sock [socket localhost 19000]}]} {
          # exec "$javapath/runtd.sh" &
@@ -648,7 +711,7 @@ itcl::body regions::talairach {} {
              puts "no response from talairach server"
              return
          }
-    }
+    }    
     #set sock [socket localhost 19000]
     puts $sock "$tal(1) $tal(2) $tal(3)          "
     flush $sock
@@ -751,7 +814,6 @@ proc QueryAtlas_fdemo { {demodata c:/pieper/bwh/data/fbirn-phantom-staple/averag
     ModelsPropsApplyButNotToNew
 }
 
-    
 proc QueryAtlas_mdemo { {demodata c:/pieper/bwh/data/MGH-Siemens15-SP.1-uw} } {
     
     set fstcldir [file normalize $::PACKAGE_DIR_VTKFREESURFERREADERS/../../../tcl]
@@ -783,12 +845,10 @@ proc QueryAtlas_mdemo { {demodata c:/pieper/bwh/data/MGH-Siemens15-SP.1-uw} } {
     RenderAll
 }
 
-
 itcl::body regions::demo {} {
     
     # - read in lh.pial 
     # - make scalars visible
-
 
     set fstcldir [file normalize $::PACKAGE_DIR_VTKFREESURFERREADERS/../../../tcl]
 
@@ -796,9 +856,9 @@ itcl::body regions::demo {} {
     $this configure -arrowout [$this cget -tmpdir]/QueryAout.html
 
     set mydata c:/pieper/bwh/data/MGH-Siemens15-SP.1-uw
-
+    
     if { [file exists $mydata] } {
-        vtkFreeSurferReadersLoadModel $mydata/surf/lh.pial
+       vtkFreeSurferReadersLoadModel $mydata/surf/lh.pial
         $this configure -annotfile $mydata/label/lh.aparc.annot 
         $this configure -talfile $mydata/mri/transforms/talairach.xfm
         $this configure -arrow "$fstcldir/QueryA.html"
@@ -807,13 +867,15 @@ itcl::body regions::demo {} {
         $this configure -javapath [file normalize "$fstcldir/../talairach"]
         $this configure -model lh-pial
     } else {
-        set ucsddata /home/ajoyner/docs/regions
-        $this configure -annotfile "/home/ajoyner/brains/MGH-Siemens15-SP.1-uw/label/lh.aparc.annot"
-        $this configure -talfile "/home/ajoyner/brains/MGH-Siemens15-SP.1-uw/mri/transforms/talairach.xfm"
-        $this configure -arrow "$ucsddata/QueryA.html"
-        $this configure -arrowout "$ucsddata/QueryAout.html"
-        $this configure -umlsfile "$ucsddata/label2UMLS.txt"
-        $this configure -javapath "$ucsddata/java/talairach"
+        set ucsddata /home/ajoyner/apps/slicer2.2-dev-linux-x86-2003-09-05
+        set regionspath /Modules/vtkFreeSurferReaders
+        $this configure -annotfile "$ucsddata/brain/label/lh.aparc.annot"
+        $this configure -talfile "$ucsddata/brain/mri/transforms/MGHBrain+tlrc.HEAD"
+        $this configure -arrow "$ucsddata/$regionspath/tcl/QueryA.html"
+        $this configure -arrowout "$ucsddata/$regionspath/tcl/QueryAout.html"
+        $this configure -umlsfile "$ucsddata/$regionspath/tcl/label2UMLS.txt"
+        $this configure -javapath $ucsddata/$regionspath/java
+        $this configure -dir $ucsddata
         $this configure -model lh-pial
     }
     $this apply
