@@ -374,7 +374,7 @@ void vtkImageCurveRegion::ExecuteDataGauss(vtkDataObject *output) {
   int *outExt;
   float *value   = new float[this->Dimension];
   float **InvCov = new float*[this->Dimension];
-  for (int idxR = 0 ; idxR < this->Dimension; idxR++) InvCov[idxR] = new float[this->Dimension];
+  for (idxR = 0 ; idxR < this->Dimension; idxR++) InvCov[idxR] = new float[this->Dimension];
   float DetCov;
   float InvSqrtDetCov;
   bool FlagInit = false;
@@ -457,7 +457,7 @@ void vtkImageCurveRegion::ExecuteDataGauss(vtkDataObject *output) {
     outPtr += outIncZ;
   }
   delete[] LogValue;
-  for (int idxR = 0 ; idxR < this->Dimension; idxR++) delete[] InvCov[idxR];
+  for (idxR = 0 ; idxR < this->Dimension; idxR++) delete[] InvCov[idxR];
   delete[] InvCov;
   delete[] value;  
 }
