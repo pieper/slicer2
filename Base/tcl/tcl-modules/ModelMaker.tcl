@@ -83,7 +83,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.48 $} {$Date: 2004/06/24 21:54:25 $}]
+        {$Revision: 1.49 $} {$Date: 2004/09/17 15:38:26 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -802,9 +802,9 @@ proc ModelMakerSmooth {m iterations} {
     $p BoundarySmoothingOff
     [$p GetOutput] ReleaseDataFlagOn
     set Gui(progressText) "Smoothing $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    $p AddObserver StartEvent     MainStartProgress
+    $p AddObserver ProgressEvent "MainShowProgress $p"
+    $p AddObserver EndEvent       MainEndProgress
     set ModelMaker(t,$p) [expr [lindex [time {$p Update}] 0]/1000000.0]
     set ModelMaker(n,$p) [[$p GetOutput] GetNumberOfPolys]
     set ModelMaker($m,nPolys) $ModelMaker(n,$p)
@@ -860,9 +860,9 @@ proc ModelMakerReverseNormals {{m ""}} {
     $p ReverseNormalsOn
     [$p GetOutput] ReleaseDataFlagOn
     set Gui(progressText) "Reversing $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    $p AddObserver StartEvent     MainStartProgress
+    $p AddObserver ProgressEvent "MainShowProgress $p"
+    $p AddObserver EndEvent       MainEndProgress
 
     set p stripper
     vtkStripper $p
@@ -947,9 +947,9 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     $p ThresholdBetween $Label(label) $Label(label)
     [$p GetOutput] ReleaseDataFlagOn
     set Gui(progressText) "Threshold $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    $p AddObserver StartEvent     MainStartProgress
+    $p AddObserver ProgressEvent "MainShowProgress $p"
+    $p AddObserver EndEvent       MainEndProgress
 
     vtkImageToStructuredPoints to
     to SetInput [thresh GetOutput]
@@ -964,9 +964,9 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     $p ComputeNormalsOff
     [$p GetOutput] ReleaseDataFlagOn
     set Gui(progressText) "Marching $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    $p AddObserver StartEvent     MainStartProgress
+    $p AddObserver ProgressEvent "MainShowProgress $p"
+    $p AddObserver EndEvent       MainEndProgress
     set ModelMaker(t,$p) [expr [lindex [time {$p Update}] 0]/1000000.0]
     set ModelMaker(n,$p) [[$p GetOutput] GetNumberOfPolys]
 
@@ -999,9 +999,9 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     $p SetErrorIncrement .0002
     [$p GetOutput] ReleaseDataFlagOn
     set Gui(progressText) "Decimating $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    $p AddObserver StartEvent     MainStartProgress
+    $p AddObserver ProgressEvent "MainShowProgress $p"
+    $p AddObserver EndEvent       MainEndProgress
     set ModelMaker(t,$p) [expr [lindex [time {$p Update}] 0]/1000000.0]
     set ModelMaker(n,$p) [[$p GetOutput] GetNumberOfPolys]
     
@@ -1024,9 +1024,9 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
         $p ReverseNormalsOn
         [$p GetOutput] ReleaseDataFlagOn
         set Gui(progressText) "Reversing $name"
-        $p SetStartMethod     MainStartProgress
-        $p SetProgressMethod "MainShowProgress $p"
-        $p SetEndMethod       MainEndProgress
+        $p AddObserver StartEvent     MainStartProgress
+        $p AddObserver ProgressEvent "MainShowProgress $p"
+        $p AddObserver EndEvent       MainEndProgress
     }
 
     if { $ModelMaker(UseSinc) == 1} {
@@ -1051,9 +1051,9 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     $p BoundarySmoothingOff
     [$p GetOutput] ReleaseDataFlagOn
     set Gui(progressText) "Smoothing $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    $p AddObserver StartEvent     MainStartProgress
+    $p AddObserver ProgressEvent "MainShowProgress $p"
+    $p AddObserver EndEvent       MainEndProgress
     set ModelMaker(t,$p) [expr [lindex [time {$p Update}] 0]/1000000.0]
     set ModelMaker(n,$p) [[$p GetOutput] GetNumberOfPolys]
     set ModelMaker($m,nPolys) $ModelMaker(n,$p)
@@ -1063,9 +1063,9 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     $p SetInput [smoother GetOutput]
     $p SetTransform rot
     set Gui(progressText) "Transforming $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    $p AddObserver StartEvent     MainStartProgress
+    $p AddObserver ProgressEvent "MainShowProgress $p"
+    $p AddObserver EndEvent       MainEndProgress
     [$p GetOutput] ReleaseDataFlagOn
 
     set p normals
@@ -1075,18 +1075,18 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     $p SetFeatureAngle 60
     $p Splitting$ModelMaker(SplitNormals)
     set Gui(progressText) "Normals $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    $p AddObserver StartEvent     MainStartProgress
+    $p AddObserver ProgressEvent "MainShowProgress $p"
+    $p AddObserver EndEvent       MainEndProgress
     [$p GetOutput] ReleaseDataFlagOn
 
     set p stripper
     vtkStripper $p
     $p SetInput [normals GetOutput]
     set Gui(progressText) "Stripping $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    $p AddObserver StartEvent     MainStartProgress
+    $p AddObserver ProgressEvent "MainShowProgress $p"
+    $p AddObserver EndEvent       MainEndProgress
     [$p GetOutput] ReleaseDataFlagOff
 
     # polyData will survive as long as it's the input to the mapper

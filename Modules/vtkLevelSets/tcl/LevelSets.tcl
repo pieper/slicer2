@@ -168,7 +168,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.31 $} {$Date: 2004/08/11 14:51:52 $}]
+        {$Revision: 1.32 $} {$Date: 2004/09/17 15:42:31 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1822,9 +1822,9 @@ proc LevelSetsStart {} {
 
   #  set p LevelSets(curv)
   set Gui(progressText) "Pre-processing for Level Set"
-  LevelSets(curv) SetStartMethod      MainStartProgress
-  LevelSets(curv) SetProgressMethod  "MainShowProgress LevelSets(curv)"
-  LevelSets(curv) SetEndMethod        MainEndProgress
+    LevelSets(curv) AddObserver StartEvent MainStartProgress
+    LevelSets(curv) AddObserver ProgressEvent "MainShowProgress LevelSets(curv)"
+    LevelSets(curv) AddObserver EndEvent MainEndProgress
 
   LevelSets(curv) InitEvolution
 

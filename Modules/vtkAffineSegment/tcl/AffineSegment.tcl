@@ -481,9 +481,9 @@ EdAffineSegment(castToShort) SetInput $vtkImageDataOriginal
 EdAffineSegment(AffineEvolve) SetInput [EdAffineSegment(castToShort) GetOutput]
 EdAffineSegment(AffineEvolve) SetOutput $vtkImageDataWorking
 
-     EdAffineSegment(AffineEvolve) SetStartMethod     MainStartProgress
-     EdAffineSegment(AffineEvolve) SetProgressMethod  "MainShowProgress EdAffineSegment(AffineEvolve)"
-     EdAffineSegment(AffineEvolve) SetEndMethod       MainEndProgress
+     EdAffineSegment(AffineEvolve) AddObserver StartEvent     MainStartProgress
+     EdAffineSegment(AffineEvolve) AddObserver ProgressEvent  "MainShowProgress EdAffineSegment(AffineEvolve)"
+     EdAffineSegment(AffineEvolve) AddObserver EndEvent       MainEndProgress
 #MainShowProgress EdAffineSegment(AffineEvolve)
 MainStartProgress
 
@@ -658,9 +658,9 @@ if { [EdAffineSegment(AffineEvolve) nValidSeeds]>0 } {
 EdAffineSegment(AffineEvolve) SetInput [EdAffineSegment(castToShort) GetOutput]
 
 
-     EdAffineSegment(AffineEvolve) SetStartMethod     MainStartProgress
-     EdAffineSegment(AffineEvolve) SetProgressMethod  "MainShowProgress EdAffineSegment(AffineEvolve)"
-     EdAffineSegment(AffineEvolve) SetEndMethod       MainEndProgress
+     EdAffineSegment(AffineEvolve) AddObserver StartEvent     MainStartProgress
+     EdAffineSegment(AffineEvolve) AddObserver ProgressEvent  "MainShowProgress EdAffineSegment(AffineEvolve)"
+     EdAffineSegment(AffineEvolve) AddObserver EndEvent       MainEndProgress
 
 
 #set outdat [EdAffineSegment(AffineEvolve) GetOutput]

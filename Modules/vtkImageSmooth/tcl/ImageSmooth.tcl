@@ -158,7 +158,7 @@ proc ImageSmoothInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2004/04/13 21:17:59 $}]
+        {$Revision: 1.3 $} {$Date: 2004/09/17 15:42:14 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -633,9 +633,9 @@ proc RunImageSmooth {} {
 
   
   set Gui(progressText)     "executing one iteration"
-  ImgSmooth SetStartMethod      MainStartProgress
-  ImgSmooth SetProgressMethod  "MainShowProgress ImgSmooth"
-  ImgSmooth SetEndMethod        MainEndProgress
+  ImgSmooth AddObserver StartEvent MainStartProgress
+  ImgSmooth AddObserver ProgressEvent "MainShowProgress ImgSmooth"
+  ImgSmooth AddObserver EndEvent MainEndProgress
 
   puts "RunImageSmooth 4"
 

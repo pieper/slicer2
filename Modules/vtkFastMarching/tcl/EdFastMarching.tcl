@@ -441,10 +441,9 @@ EdFastMarching(castToShort) SetInput $vtkImageDataOriginal
 EdFastMarching(FastMarching) SetInput [EdFastMarching(castToShort) GetOutput]
 EdFastMarching(FastMarching) SetOutput $vtkImageDataWorking
 
-     EdFastMarching(FastMarching) SetStartMethod     MainStartProgress
-     EdFastMarching(FastMarching) SetProgressMethod  "MainShowProgress EdFastMarching(FastMarching)"
-     EdFastMarching(FastMarching) SetEndMethod       MainEndProgress
-#MainShowProgress EdFastMarching(FastMarching)
+    EdFastMarching(FastMarching) AddObserver StartEvent MainStartProgress
+    EdFastMarching(FastMarching) AddObserver ProgressEvent "MainShowProgress EdFastMarching(FastMarching)"
+    EdFastMarching(FastMarching) AddObserver EndEvent MainEndProgress
 MainStartProgress
 
 EdFastMarching(FastMarching) Modified
@@ -616,9 +615,9 @@ EdFastMarching(FastMarching) SetOutput $vtkImageDataWorking
 #MainShowProgress EdFastMarching(FastMarching)
 #MainStartProgress
 
-     EdFastMarching(FastMarching) SetStartMethod     MainStartProgress
-     EdFastMarching(FastMarching) SetProgressMethod  "MainShowProgress EdFastMarching(FastMarching)"
-     EdFastMarching(FastMarching) SetEndMethod       MainEndProgress
+    EdFastMarching(FastMarching) AddObserver StartEvent MainStartProgress
+    EdFastMarching(FastMarching) AddObserver ProgressEvent "MainShowProgress EdFastMarching(FastMarching)"
+    EdFastMarching(FastMarching) AddObserver EndEvent MainEndProgress
 
 
 EdFastMarching(FastMarching) Modified

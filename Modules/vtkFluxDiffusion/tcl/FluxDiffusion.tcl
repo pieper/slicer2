@@ -158,7 +158,7 @@ proc FluxDiffusionInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.11 $} {$Date: 2004/08/11 14:40:35 $}]
+        {$Revision: 1.12 $} {$Date: 2004/09/17 15:41:23 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -799,9 +799,9 @@ proc RunFluxDiffusion {} {
 
 
   set Gui(progressText)     "Processing Flux Diffusion"
-  aniso SetStartMethod      MainStartProgress
-  aniso SetProgressMethod  "MainShowProgress aniso"
-  aniso SetEndMethod        MainEndProgress
+  aniso AddObserver StartEvent MainStartProgress
+  aniso AddObserver ProgressEvent "MainShowProgress aniso"
+  aniso AddObserver EndEvent MainEndProgress
 
   aniso SetNumberOfThreads     $FluxDiffusion(NumberOfThreads)
   aniso SetTruncNegValues      $FluxDiffusion(TruncNegValues)

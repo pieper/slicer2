@@ -137,7 +137,7 @@ proc CorCTAInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2004/04/13 21:05:22 $}]
+        {$Revision: 1.5 $} {$Date: 2004/09/17 15:40:10 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -450,14 +450,14 @@ proc CorCTAThinning {} {
     DistTrans SetMaximumDistance 10
     DistTrans SetAlgorithmToSaitoCached
     set Gui(progressText) "Computing distance transform"
-    DistTrans SetStartMethod MainStartProgress
-    DistTrans SetProgressMethod "MainShowProgress DistTrans"
-    DistTrans SetEndMethod MainEndProgress
+    DistTrans AddObserver StartEvent MainStartProgress
+    DistTrans AddObserver ProgressEvent "MainShowProgress DistTrans"
+    DistTrans AddObserver EndEvent MainEndProgress
     DistTrans Update
     set Gui(progressText) "Thinning"
-    Thinning SetStartMethod MainStartProgress
-    Thinning SetProgressMethod "MainShowProgress Thinning"
-    Thinning SetEndMethod MainEndProgress
+    Thinning AddObserver StartEvent MainStartProgress
+    Thinning AddObserver ProgressEvent "MainShowProgress Thinning"
+    Thinning AddObserver EndEvent MainEndProgress
     Thinning SetInput [Volume($input,vol) GetOutput]
     Thinning SetMaxThreshold 100000
     Thinning SetCriterion [DistTrans GetOutput]
@@ -483,9 +483,9 @@ proc CorCTAConvert {} {
     vtkSkeleton2Lines Converter
     
     set Gui(progressText) "Creating lines"
-    Converter SetStartMethod MainStartProgress
-    Converter SetProgressMethod "MainShowProgress Converter"
-    Converter SetEndMethod MainEndProgress
+    Converter AddObserver StartEvent MainStartProgress
+    Converter AddObserver ProgressEvent "MainShowProgress Converter"
+    Converter AddObserver EndEvent MainEndProgress
     
     set n [MainMrmlAddNode Model]
     $n SetName $CorCTA(ModelName)

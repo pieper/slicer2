@@ -367,9 +367,9 @@ proc PathPlanningExtractCenterline {} {
 
             PathPlanning(labelMapFilter) Delete
             vtkDataSetToLabelMap PathPlanning(labelMapFilter)
-            #PathPlanning(labelMapFilter) SetStartMethod       MainStartProgress
-            #PathPlanning(labelMapFilter) SetProgressMethod   "MainShowProgress PathPlanning(labelMapFilter)"
-            #PathPlanning(labelMapFilter) SetEndMethod         MainEndProgress
+            PathPlanning(labelMapFilter) AddObserver StartEvent       MainStartProgress
+            PathPlanning(labelMapFilter) AddObserver ProgressEvent   "MainShowProgress PathPlanning(labelMapFilter)"
+            PathPlanning(labelMapFilter) AddObserver EndEvent         MainEndProgress
             PathPlanning(labelMapFilter) SetUseBoundaryVoxels 1
             PathPlanning(labelMapFilter) SetInput [PathPlanning(triangleFilter) GetOutput]
             PathPlanning(labelMapFilter) SetOutputSpacing $PathPlanning(voxelSize) $PathPlanning(voxelSize) $PathPlanning(voxelSize)
@@ -404,9 +404,9 @@ proc PathPlanningExtractCenterline {} {
                 PathPlanning(dist) SetInput [Volume(1,vol) GetOutput]
             }
 
-        #PathPlanning(dist) SetStartMethod       MainStartProgress
-            #PathPlanning(dist) SetProgressMethod   "MainShowProgress PathPlanning(dist)"
-            #PathPlanning(dist) SetEndMethod         MainEndProgress
+            PathPlanning(dist) AddObserver StartEvent       MainStartProgress
+            PathPlanning(dist) AddObserver ProgressEvent   "MainShowProgress PathPlanning(dist)"
+            PathPlanning(dist) AddObserver EndEvent         MainEndProgress
             PathPlanning(dist) SetMaximumDistance $PathPlanning(dist,maxDistance)
             PathPlanning(dist) SetInitialize 1
             PathPlanning(dist) SetConsiderAnisotropy 0
@@ -460,9 +460,9 @@ proc PathPlanningExtractCenterline {} {
         # DO NOT UNCOMMENT UNTIL vtkImageDijkstra has appropriate
         # UpdateProgress calls...
 
-        #PathPlanning(dijkstra) SetStartMethod       MainStartProgress
-            #PathPlanning(dijkstra) SetProgressMethod   "MainShowProgress PathPlanning(dijkstra)"
-            #PathPlanning(dijkstra) SetEndMethod         MainEndProgress
+            #PathPlanning(dijkstra) AddObserver StartEvent       MainStartProgress
+            #PathPlanning(dijkstra) AddObserver ProgressEvent   "MainShowProgress PathPlanning(dijkstra)"
+            #PathPlanning(dijkstra) AddObserver EndEvent         MainEndProgress
 
             PathPlanning(dijkstra) SetUseInverseExponentialDistance $PathPlanning(useExponential) 
             PathPlanning(dijkstra) SetUseInverseSquaredDistance $PathPlanning(useSquared) 

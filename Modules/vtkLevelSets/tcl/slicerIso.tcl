@@ -925,9 +925,9 @@ proc SModelMakerMarch {m v threshold decimateIterations smoothIterations} {
     $p ComputeNormalsOff
     [$p GetOutput] ReleaseDataFlagOn
     set Gui(progressText) "Marching $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    $p AddObserver StartEvent MainStartProgress
+    $p AddObserver ProgressEvent "MainShowProgress $p"
+    $p AddObserver EndEvent MainEndProgress
     set ModelMaker(t,$p) [expr [lindex [time {$p Update}] 0]/1000000.0]
     set ModelMaker(n,$p) [[$p GetOutput] GetNumberOfPolys]
 
@@ -959,9 +959,9 @@ proc SModelMakerMarch {m v threshold decimateIterations smoothIterations} {
     $p SetErrorIncrement .0002
     [$p GetOutput] ReleaseDataFlagOn
     set Gui(progressText) "Decimating $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    $p AddObserver StartEvent MainStartProgress
+    $p AddObserver ProgressEvent "MainShowProgress $p"
+    $p AddObserver EndEvent MainEndProgress
     set ModelMaker(t,$p) [expr [lindex [time {$p Update}] 0]/1000000.0]
     set ModelMaker(n,$p) [[$p GetOutput] GetNumberOfPolys]
     
@@ -984,9 +984,9 @@ proc SModelMakerMarch {m v threshold decimateIterations smoothIterations} {
         $p ReverseNormalsOn
         [$p GetOutput] ReleaseDataFlagOn
         set Gui(progressText) "Reversing $name"
-        $p SetStartMethod     MainStartProgress
-        $p SetProgressMethod "MainShowProgress $p"
-        $p SetEndMethod       MainEndProgress
+        $p AddObserver StartEvent MainStartProgress
+        $p AddObserver ProgressEvent "MainShowProgress $p"
+        $p AddObserver EndEvent MainEndProgress
     }
 
 
@@ -1006,9 +1006,9 @@ proc SModelMakerMarch {m v threshold decimateIterations smoothIterations} {
     $p SetConvergence 0
     [$p GetOutput] ReleaseDataFlagOn
     set Gui(progressText) "Smoothing $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    $p AddObserver StartEvent MainStartProgress
+    $p AddObserver ProgressEvent "MainShowProgress $p"
+    $p AddObserver EndEvent MainEndProgress
     set ModelMaker(t,$p) [expr [lindex [time {$p Update}] 0]/1000000.0]
     set ModelMaker(n,$p) [[$p GetOutput] GetNumberOfPolys]
     set ModelMaker($m,nPolys) $ModelMaker(n,$p)
@@ -1021,9 +1021,9 @@ proc SModelMakerMarch {m v threshold decimateIterations smoothIterations} {
     $p SetInput [smoother GetOutput]
     $p SetTransform rot
     set Gui(progressText) "Transforming $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    $p AddObserver StartEvent MainStartProgress
+    $p AddObserver ProgressEvent "MainShowProgress $p"
+    $p AddObserver EndEvent MainEndProgress
     [$p GetOutput] ReleaseDataFlagOn
 
     #
@@ -1034,9 +1034,9 @@ proc SModelMakerMarch {m v threshold decimateIterations smoothIterations} {
     $p SetInput [transformer GetOutput]
     $p SetFeatureAngle 60
     set Gui(progressText) "Normals $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    $p AddObserver StartEvent MainStartProgress
+    $p AddObserver ProgressEvent "MainShowProgress $p"
+    $p AddObserver EndEvent MainEndProgress
     [$p GetOutput] ReleaseDataFlagOn
 
     #
@@ -1046,9 +1046,9 @@ proc SModelMakerMarch {m v threshold decimateIterations smoothIterations} {
     vtkStripper $p
     $p SetInput [normals GetOutput]
     set Gui(progressText) "Stripping $name"
-    $p SetStartMethod     MainStartProgress
-    $p SetProgressMethod "MainShowProgress $p"
-    $p SetEndMethod       MainEndProgress
+    $p AddObserver StartEvent MainStartProgress
+    $p AddObserver ProgressEvent "MainShowProgress $p"
+    $p AddObserver EndEvent MainEndProgress
     [$p GetOutput] ReleaseDataFlagOff
 
     # polyData will survive as long as it's the input to the mapper

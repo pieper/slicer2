@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.78 $} {$Date: 2004/09/16 19:38:03 $}]
+    {$Revision: 1.79 $} {$Date: 2004/09/17 15:37:57 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -119,6 +119,7 @@ proc MainVolumesBuildVTK {} {
     Volume($v,vol) AddObserver StartEvent      MainStartProgress
     Volume($v,vol) AddObserver ProgressEvent  "MainShowProgress Volume($v,vol)"
     Volume($v,vol) AddObserver EndEvent        MainEndProgress
+
     # Don't call the next line, because the Lut isn't created yet.
     # And, the None volume doesn't need it.
     # Volume($v,vol) SetLabelIndirectLUT Lut($Lut(idLabel),indirectLUT)
@@ -274,9 +275,9 @@ proc MainVolumesCreate {v} {
     Volume($v,vol) SetLookupTable       Lut([Volume($v,node) GetLUTName],lut)
     Volume($v,vol) SetHistogramHeight   $Volume(histHeight)
     Volume($v,vol) SetHistogramWidth    $Volume(histWidth)
-    Volume($v,vol) AddObserver SetStartEvent       MainStartProgress
-    Volume($v,vol) AddObserver SetProgressEvent   "MainShowProgress Volume($v,vol)"
-    Volume($v,vol) AddObserver SetEndEvent         MainEndProgress
+    Volume($v,vol) AddObserver StartEvent       MainStartProgress
+    Volume($v,vol) AddObserver ProgressEvent   "MainShowProgress Volume($v,vol)"
+    Volume($v,vol) AddObserver EndEvent         MainEndProgress
 
     # Label maps ALWAYS use the Label indirectLUT, and are not interpolated
     if {[Volume($v,node) GetLabelMap] == 1} {

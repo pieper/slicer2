@@ -123,7 +123,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.29 $} {$Date: 2004/09/15 20:37:28 $}]
+                  {$Revision: 1.30 $} {$Date: 2004/09/17 15:40:26 $}]
 
      # Define Tabs
     #------------------------------------
@@ -4159,9 +4159,9 @@ proc DTMRIAddStreamline {} {
 
     #DTMRI(vtk,$streamline) DebugOn
 
-    #DTMRI(vtk,$streamline) SetStartMethod      MainStartProgress
-    #DTMRI(vtk,$streamline) SetProgressMethod  "MainShowProgress DTMRI(vtk,$streamline)"
-    #DTMRI(vtk,$streamline) SetEndMethod        MainEndProgress
+    DTMRI(vtk,$streamline) AddObserver StartEvent MainStartProgress
+    DTMRI(vtk,$streamline) AddObserver ProgressEvent "MainShowProgress DTMRI(vtk,$streamline)"
+    DTMRI(vtk,$streamline) AddObserver EndEvent MainEndProgress
 
 
     # Display of DTMRI streamline: LUT and Mapper
@@ -4256,9 +4256,9 @@ proc DTMRIAddPreciseStreamline {} {
 
     #DTMRI(vtk,$streamline) DebugOn
 
-    #DTMRI(vtk,$streamline) SetStartMethod      MainStartProgress
-    #DTMRI(vtk,$streamline) SetProgressMethod  "MainShowProgress DTMRI(vtk,$streamline)"
-    #DTMRI(vtk,$streamline) SetEndMethod        MainEndProgress
+    DTMRI(vtk,$streamline) AddObserver StartEvent MainStartProgress
+    DTMRI(vtk,$streamline) AddObserver ProgressEvent "MainShowProgress DTMRI(vtk,$streamline)"
+    DTMRI(vtk,$streamline) AddObserver EndEvent MainEndProgress
 
 
     # Display of DTMRI streamline: LUT and Mapper
@@ -5083,9 +5083,9 @@ proc DTMRIDoMath {{operation ""}} {
     math SetScaleFactor $DTMRI(scalars,scaleFactor)
     math SetInput 0 $input
     math SetOperationTo$operation
-    math SetStartMethod      MainStartProgress
-    math SetProgressMethod  "MainShowProgress math"
-    math SetEndMethod        MainEndProgress
+    math AddObserver StartEvent MainStartProgress
+    math AddObserver ProgressEvent "MainShowProgress math"
+    math AddObserver EndEvent MainEndProgress
     set Gui(progressText) "Creating Volume $operation"
 
     # put the filter output into a slicer volume
@@ -5429,10 +5429,9 @@ proc DTMRIBuildVTK {} {
     DTMRIAddObjectProperty $object ScaleFactor 5000 float {Scale Factor}
     DTMRIAddObjectProperty $object ClampScaling 0 bool {Clamp Scaling}
     DTMRIAddObjectProperty $object ExtractEigenvalues 1 bool {Extract Eigenvalues}
-    DTMRI(vtk,$object) SetStartMethod      MainStartProgress
-
-    DTMRI(vtk,$object) SetProgressMethod  "MainShowProgress DTMRI(vtk,$object)"
-    DTMRI(vtk,$object) SetEndMethod        MainEndProgress
+    DTMRI(vtk,$object) AddObserver StartEvent MainStartProgress
+    DTMRI(vtk,$object) AddObserver ProgressEvent "MainShowProgress DTMRI(vtk,$object)"
+    DTMRI(vtk,$object) AddObserver EndEvent MainEndProgress
     
     set object glyphs,trans
     DTMRIMakeVTKObject vtkTransform $object
@@ -5492,9 +5491,9 @@ proc DTMRIBuildVTK {} {
     #DTMRIMakeVTKObject vtkHyperStreamline $object
     DTMRIMakeVTKObject vtkHyperStreamlinePoints $object
     
-    DTMRI(vtk,$object) SetStartMethod      MainStartProgress
-    DTMRI(vtk,$object) SetProgressMethod  "MainShowProgress DTMRI(vtk,$object)"
-    DTMRI(vtk,$object) SetEndMethod        MainEndProgress
+    DTMRI(vtk,$object) AddObserver StartEvent MainStartProgress
+    DTMRI(vtk,$object) AddObserver ProgressEvent "MainShowProgress DTMRI(vtk,$object)"
+    DTMRI(vtk,$object) AddObserver EndEvent MainEndProgress
 
     #DTMRIAddObjectProperty $object StartPosition {9 9 -9} float {Start Pos}
     #DTMRIAddObjectProperty $object IntegrateMinorEigenvector \

@@ -251,9 +251,9 @@ proc MainDataCreate {ModuleArray d {objectType ""}} {
 
     # Progress methods
     #--------------------------------------------------------
-    $data SetStartMethod       MainStartProgress
-    $data SetProgressMethod   "MainShowProgress $data"
-    $data SetEndMethod         MainEndProgress
+    $data AddObserver StartEvent       MainStartProgress
+    $data AddObserver ProgressEvent   "MainShowProgress $data"
+    $data AddObserver EndEvent         MainEndProgress
 
     # Here the module can hook in to set the new Data
     # object's properties (as defined by user in GUI)
