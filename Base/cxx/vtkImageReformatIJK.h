@@ -72,7 +72,13 @@ public:
     void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
-  // 
+  // XStep, YStep, ZStep, and Origin are
+  // Given delta_x = 1 in IJK Space, XStep is the resulting step in RAS space
+  // Given delta_y = 1 in IJK Space, YStep is the resulting step in RAS space
+  // Given delta_z = 1 in IJK Space, ZStep is the resulting step in RAS space
+  // I'm pretty sure Origin is the Origin in IJK space in RAS, but I'm not
+  // positive.
+  // Note: As far as I can tell, no one ever uses these functions.
     vtkGetVector4Macro(XStep, float);
     vtkGetVector4Macro(YStep, float);
     vtkGetVector4Macro(ZStep, float);
@@ -83,22 +89,26 @@ public:
     vtkSetMacro(Slice, int);
     vtkGetMacro(Slice, int);
 
+
   // Description:
-  // 
+  // Set Input order and output order to: SI IS LR RL AP PA 
+  void SetInputOrderString(char *str);
+  void SetOutputOrderString(char *str);
+
+
+  // Description:
+  // Integer corresponding to the input order
+  // The following constants are defined in vtkImageReformatIJK.h
+  // ORDER_IS, ORDER_SI, ORDER_LR, ORDER_RL, ORDER_PA, ORDER_AP
   vtkSetMacro(InputOrder, int);
   vtkGetMacro(InputOrder, int);
   vtkSetMacro(OutputOrder, int);
   vtkGetMacro(OutputOrder, int);
-  
-  // Description:
-  // 
-  void SetInputOrderString(char *str);
-  void SetOutputOrderString(char *str);
 
-    vtkGetObjectMacro(Indices, vtkIntArray);
+  vtkGetObjectMacro(Indices, vtkIntArray);
 
-    vtkGetObjectMacro(WldToIjkMatrix, vtkMatrix4x4);
-    vtkSetObjectMacro(WldToIjkMatrix, vtkMatrix4x4);
+  vtkGetObjectMacro(WldToIjkMatrix, vtkMatrix4x4);
+  vtkSetObjectMacro(WldToIjkMatrix, vtkMatrix4x4);
 
   void ComputeReformatMatrix(vtkMatrix4x4 *ref);
 
@@ -121,8 +131,6 @@ public:
   vtkIntArray *Indices;
 
   void ComputeTransform();
-  // test (wrap problem: the above fcn is not getting wrapped)
-  void ComputeTransform2(){this->ComputeTransform();};
 
   void ComputeOutputExtent();
 
@@ -139,7 +147,7 @@ protected:
     void ComputeInputUpdateExtent(int inExt[6],int outExt[6]);
     void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
 
-    void Execute(vtkImageData *inData, vtkImageData *outData);
+    void ExecuteData(vtkDataObject *);
 };
 
 #endif
