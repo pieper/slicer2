@@ -15,7 +15,7 @@
 # doing an internal (with MI) or external (up for ftp) install.
 # Finally, set the MY_OLD_SLICER variable to point to a previous
 # version of the slicer where we will grab executables not in CVS
-# (program/loc.txt, program/mi-bin and servers/SignaSP/spl_server) 
+# (program/loc.txt, program/mi-bin and servers/Flashpoint/spl_server) 
 #
 
 # --------------------------------------------------------------
@@ -30,7 +30,7 @@ setenv BWH_INSTALL 1
 # Set the directory of an older version of the slicer
 # where we will look for the following things:
 # program/loc.txt  (this is a demo of locator)
-# For BWH only : program/mi-bin and servers/SignaSP/spl_server
+# For BWH only : program/mi-bin and servers/Flashpoint/spl_server
 setenv MY_OLD_SLICER /local/pkg/slicer-1.0.1
 
 # Set the version number of the slicer directory to create
@@ -64,7 +64,7 @@ setenv CVSROOT :pserver:anonymous@cvs.spl.harvard.edu:/projects/cvs/slicer
 #  End of variables to edit before running the tarup script.
 # --------------------------------------------------------------
 
-echo Slicer tarup script '$Revision: 1.19 $'...
+echo Slicer tarup script '$Revision: 1.20 $'...
 echo Tcl path: $MY_TCL
 echo Tk path: $MY_TK
 echo Tcl/Tk version: $MY_VER_NUM
@@ -90,7 +90,7 @@ cp ${MY_OLD_SLICER}/program/loc.txt program
 if (${BWH_INSTALL} == 1) then
     cp -rp ${MY_OLD_SLICER}/program/mi-bin program
 endif
-cp ${MY_OLD_SLICER}/servers/SignaSP/spl_server servers/SignaSP
+cp ${MY_OLD_SLICER}/servers/Flashpoint/spl_server servers/Flashpoint
 
 # Now copy Tcl, Tk, and VTK stuff into the install directory
 echo Copying tcl and tk binaries
