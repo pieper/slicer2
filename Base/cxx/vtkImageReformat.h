@@ -130,6 +130,12 @@ protected:
     void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
     void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
         int extent[6], int id);
+
+  // We override this in order to allocate output tensors
+  // before threading happens.  This replaces the superclass 
+  // vtkImageToImageFilter's Execute function.
+  void Execute();
+
 };
 
 #endif
