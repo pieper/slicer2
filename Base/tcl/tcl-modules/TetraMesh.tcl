@@ -154,7 +154,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.30 $} {$Date: 2002/02/19 01:28:15 $}]
+		{$Revision: 1.31 $} {$Date: 2002/02/19 22:36:13 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -535,9 +535,29 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is c
 	# Visualize->Options->Surface
 	#-------------------------------------------
         set f $fVisualize.fOptions.fSurfaces
+        set ff $f
 
+	foreach frame "Label CD SN" {
+            frame $f.f$frame -bg $Gui(activeWorkspace)
+            pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+	}
+
+        set f $ff.fLabel
         DevAddLabel $f.l "Grab Surfaces of the mesh"
         pack $f.l -side left -padx $Gui(pad)
+
+        set f $ff.fCD
+	DevAddLabel $f.lCD "Use Cell Data:"
+	eval {checkbutton $f.cCD \
+		 -variable TetraMesh(SurfacesUseCellData) -indicatoron 1} $Gui(WCA)
+        pack $f.lCD $f.cCD -side left -padx $Gui(pad)
+
+        set f $ff.fSN
+	DevAddLabel $f.lSN "Smooth Normals:"
+	eval {checkbutton $f.cSN \
+		 -variable TetraMesh(SurfacesSmoothNormals) -indicatoron 1} $Gui(WCA)
+
+        pack $f.lSN $f.cSN -side left -padx $Gui(pad)
 
 	#-------------------------------------------
 	# Visualize->Options->Edges
@@ -809,7 +829,7 @@ proc TetraMeshPropsApply {} {
 
  set v $TetraMesh(activeID)
 
- MainTetraMeshVtkDataToTclData TetraMesh($v,node)
+ MainTetraMeshTclDataToVtkData TetraMesh($v,node)
 
  MainUpdateMRML
 }
@@ -1666,6 +1686,18 @@ vtkTransformPolyDataFilter TransformPolyData
   TransformPolyData SetInput [gf GetOutput]
   TransformPolyData SetTransform TheTransform
 
+set EndPipeLine "TransformPolyData"
+
+
+if {$TetraMesh(SurfacesSmoothNormals) == 1} {
+
+    vtkPolyDataNormals Normals
+      Normals SetInput [TransformPolyData GetOutput]
+      Normals SetFeatureAngle 60
+
+    set EndPipeLine "Normals"
+}
+
  ######################################################################
  #### For each Scalar Determine if there is any points in there
  #### If so, create an output model
@@ -1685,7 +1717,7 @@ while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
         set lowscalar [expr 2 * $highscalar]
     }
   ### Finish the pipeline
-  TransformPolyData Update
+  $EndPipeLine Update
 
   ### Create the new Model
   set m [ TetraMeshCreateModel $modelbasename$lowscalar $LOWSCALAR $HIGHSCALAR ]
@@ -1701,7 +1733,7 @@ while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
   ### Need to copy the output of the pipeline so that the results
   ### Don't get over-written later. Also, when we delete the inputs,
   ### We don't want the outputs deleted. These lines should prevent this.
-  TetraMeshCopyPolyData [TransformPolyData GetOutput] $m
+  TetraMeshCopyPolyData [$EndPipeLine GetOutput] $m
 
   ### Get the remaining Data ###
   Thresh ThresholdBetween [ expr { $lowscalar + $EPSILON} ] $highscalar
@@ -1717,10 +1749,10 @@ while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
 
 #   puts [ $Model($m,polyData) GetNumberOfPolys]
 
-#TransformMesh Delete
 
-#ugw Delete
-#testme Delete
+if {$TetraMesh(SurfacesSmoothNormals) == 1} {
+  Normals Delete
+}
 TheTransform Delete
 TransformPolyData Delete
 Thresh Delete

@@ -64,7 +64,7 @@ proc MainTetraMeshInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.6 $} {$Date: 2002/02/19 01:29:12 $}]
+		{$Revision: 1.7 $} {$Date: 2002/02/19 22:36:13 $}]
 
 	set TetraMesh(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -640,7 +640,7 @@ proc MainTetraMeshVtkDataToTclData {mrmlnode} {
 
     foreach item     "Name FileName Description Opacity \
             Clipping  DisplaySurfaces SurfacesUseCellData \
-            DisplayEdges    \
+            SurfacesSmoothNormals DisplayEdges    \
             DisplayNodes    NodeScaling NodeSkip      \
             DisplayScalars  ScalarScaling  ScalarSkip \
             DisplayVectors  VectorScaling  VectorSkip" {
@@ -661,7 +661,7 @@ proc MainTetraMeshTclDataToVtkData {mrmlnode} {
 
     foreach item     "Name FileName Description Opacity \
             Clipping  DisplaySurfaces SurfacesUseCellData \
-            DisplayEdges    \
+            SurfacesSmoothNormals DisplayEdges    \
             Clipping        DisplaySurfaces DisplayEdges  \
             DisplayNodes    NodeScaling     NodeSkip \
             DisplayScalars  ScalarScaling   ScalarSkip \
@@ -712,7 +712,7 @@ proc MainTetraMeshProcessMrml {attr} {
             "vectorscaling"    {$n SetVectorScaling $val}
             "vectorskip"       {$n SetVectorSkip    $val}
         }
-        foreach item "Clipping SurfacesUseCellData" {
+        foreach item "Clipping SurfacesUseCellData SurfacesSmoothNormals" {
             if {[string tolower $item] == $lowkey} {
                 if {$val == "yes" || $val == "true"} {
                     $n Set$item 1
