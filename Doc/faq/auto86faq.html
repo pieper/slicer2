@@ -1,0 +1,20 @@
+<title>Other Model Formats</title>
+<li class=faq>
+<p class=question>
+How can I export other model file formats from Slicer?
+<p class=answer>
+VTK supplies classes to export some standard formats once you have a vtk model file:
+<a href="http://www.vtk.org/doc/nightly/html/classvtkExporter.html">vtkExporter</a>. <br>
+To use them, you can refer to the following example that outputs a volume in STL format, you can type this into the tkcon that comes up when you start slicer:<br>
+<p class=code>
+<pre>
+vtkPolyDataReader pdr
+pdr SetFileName in.vtk
+vtkSTLWriter sw
+sw SetFileName out.stl
+sw SetInput [pdr GetOutput]
+sw Write
+</pre>
+</p>
+
+</li>
