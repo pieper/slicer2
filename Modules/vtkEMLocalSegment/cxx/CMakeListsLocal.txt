@@ -12,19 +12,19 @@
 
 IF (WIN32) 
     SET (LOCAL_MODULE_SRCS
-        vtkDataTimeDef  
-        vtkFileOps
-        vtkImageEMLocalSegmenter
-        vtkImageEMGeneral  
+        vtkDataTimeDef.cxx
+        vtkFileOps.cxx
+        vtkImageEMLocalSegmenter.cxx
+        vtkImageEMGeneral.cxx
     )
-    SET_SOURCE_FILES_PROPERTIES ( vtkThread ABSTRACT )
+    SET_SOURCE_FILES_PROPERTIES ( vtkThread.cxx ABSTRACT )
 ELSE (WIN32)
     SET (LOCAL_MODULE_SRCS
-        vtkDataTimeDef  
-        vtkFileOps
-        vtkImageEMLocalSegmenter
-        vtkImageEMGeneral  
-        vtkThread
+        vtkDataTimeDef.cxx
+        vtkFileOps.cxx
+        vtkImageEMLocalSegmenter.cxx
+        vtkImageEMGeneral.cxx
+        vtkThread.cxx
     )
 ENDIF (WIN32)
 
@@ -45,9 +45,9 @@ LINK_LIBRARIES (${VTKSLICERBASE_BUILD_LIB})
 
 
 # Add additional directories to look in for libraries
-LINK_DIRECTORIES(
-${VTKMYCLASS_SOURCE_DIR}/lib
-)
+#LINK_DIRECTORIES(
+#${VTKMYCLASS_SOURCE_DIR}/lib
+#)
 
 
 
@@ -61,4 +61,4 @@ ${VTKMYCLASS_SOURCE_DIR}/lib
 # It should happen in the CMakeLists.txt file that includes this one,
 # but because of a CMake bug that doesn't work.
 #
-ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} LOCAL_MODULE_SRCS)
+ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} ${LOCAL_MODULE_SRCS})

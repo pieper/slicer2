@@ -6,7 +6,7 @@
 # suffixes.
 
 SET (LOCAL_MODULE_SRCS
-vtkAnisoGaussSeidel
+vtkAnisoGaussSeidel.cxx
 )
 
 
@@ -26,4 +26,4 @@ vtkAnisoGaussSeidel
 # It should happen in the CMakeLists.txt file that includes this one,
 # but because of a CMake bug that doesn't work.
 #
-ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} LOCAL_MODULE_SRCS)
+ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} ${LOCAL_MODULE_SRCS})

@@ -6,12 +6,12 @@
 # suffixes.
 
 SET(LOCAL_MODULE_SRCS
-vtkFSIO
-vtkCORReader
-vtkMGHReader
-vtkFSSurfaceReader
-vtkFSSurfaceScalarReader
-vtkFSSurfaceAnnotationReader
+vtkFSIO.cxx
+vtkCORReader.cxx
+vtkMGHReader.cxx
+vtkFSSurfaceReader.cxx
+vtkFSSurfaceScalarReader.cxx
+vtkFSSurfaceAnnotationReader.cxx
 )
 
 
@@ -32,4 +32,4 @@ vtkFSSurfaceAnnotationReader
 # It should happen in the CMakeLists.txt file that includes this one,
 # but because of a CMake bug that doesn't work.
 #
-ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} LOCAL_MODULE_SRCS)
+ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} ${LOCAL_MODULE_SRCS})

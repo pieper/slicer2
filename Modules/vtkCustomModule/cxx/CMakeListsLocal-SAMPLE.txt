@@ -12,8 +12,8 @@
 
 # note: - SET replaced SOURCE_FILES for cmake 1.6
 SET(LOCAL_MODULE_SRCS
-vtkMyClass1
-vtkMyClass2
+vtkMyClass1.cxx
+vtkMyClass2.cxx
 ...
 )
 
@@ -23,7 +23,7 @@ vtkMyClass2
 
 # replaced ABSTRACT_FILES from cmake before 1.6
 SET_SOURCE_FILES_PROPERTIES (
-vtkMyAbstractClass1
+vtkMyAbstractClass1.cxx
 ABSTRACT
 )
 
@@ -60,4 +60,4 @@ ${VTKMYCLASS_SOURCE_DIR}/lib
 # It should happen in the CMakeLists.txt file that includes this one,
 # but because of a CMake bug that doesn't work.
 #
-ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} LOCAL_MODULE_SRCS)
+ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} ${LOCAL_MODULE_SRCS})

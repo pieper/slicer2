@@ -7,7 +7,7 @@
 
 # for cmake after version 1.6, SET replaced the other SOURCE_FILES:
 SET(LOCAL_MODULE_SRCS
-vtkFastMarching
+vtkFastMarching.cxx
 )
 
 
@@ -25,4 +25,4 @@ vtkFastMarching
 # It should happen in the CMakeLists.txt file that includes this one,
 # but because of a CMake bug that doesn't work.
 #
-ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} LOCAL_MODULE_SRCS)
+ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} ${LOCAL_MODULE_SRCS})

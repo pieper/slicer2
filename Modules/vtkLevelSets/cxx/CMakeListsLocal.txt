@@ -12,12 +12,12 @@
 
 # note: - SET replaced SOURCE_FILES for cmake 1.6
 SET(LOCAL_MODULE_SRCS
-vtkLevelSetFastMarching
-vtkImageFastSignedChamfer
-vtkImageIsoContourDist
-vtkImagePropagateDist
-vtkImagePropagateDist2
-vtkLevelSets
+vtkLevelSetFastMarching.cxx
+vtkImageFastSignedChamfer.cxx
+vtkImageIsoContourDist.cxx
+vtkImagePropagateDist.cxx
+vtkImagePropagateDist2.cxx
+vtkLevelSets.cxx
 )
 
 
@@ -26,7 +26,7 @@ vtkLevelSets
 
 # replaced ABSTRACT_FILES from cmake before 1.6
 SET_SOURCE_FILES_PROPERTIES (
-vtkMinHeap
+vtkMinHeap.h
 ABSTRACT
 )
 
@@ -63,4 +63,4 @@ ${VTKLEVELSETS_SOURCE_DIR}/lib
 # It should happen in the CMakeLists.txt file that includes this one,
 # but because of a CMake bug that doesn't work.
 #
-ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} LOCAL_MODULE_SRCS)
+ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} ${LOCAL_MODULE_SRCS})
