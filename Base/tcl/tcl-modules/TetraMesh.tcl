@@ -154,7 +154,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.31 $} {$Date: 2002/02/19 22:36:13 $}]
+		{$Revision: 1.32 $} {$Date: 2002/02/25 13:42:35 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -1150,14 +1150,14 @@ proc SetModelMoveOriginMatrix {n matrix} {
 
     set numy [lindex [$n GetDimensions] 1]
     set ytrans [expr $numy * $Space1 ]
-    puts $ytrans
+#   puts $ytrans
     set ytrans [expr $ytrans - $Space1 * 0.5 ]
     $matrix SetElement 1 3 $ytrans
 
-    puts [$matrix GetElement 0 3]
-    puts [$matrix GetElement 1 3]
-    puts [$matrix GetElement 2 3]
-    puts [$matrix GetElement 3 3]
+#    puts [$matrix GetElement 0 3]
+#    puts [$matrix GetElement 1 3]
+#    puts [$matrix GetElement 2 3]
+#    puts [$matrix GetElement 3 3]
 }
 
 #-------------------------------------------------------------------------------
@@ -1180,8 +1180,10 @@ proc TetraMeshGetTransform {} {
 
   set v $Volume(activeID)
 
-  puts "$v"
+#  puts "$v"
+#  puts "$Volume(idNone)"
   if {$v != "" && $v != $Volume(idNone) } {
+      puts "Got Here"
       SetModelMoveOriginMatrix Volume($v,node) ModelMoveOriginMatrix
       ModelMoveOriginMatrix Print
       TheTransform PostMultiply
@@ -1190,6 +1192,12 @@ proc TetraMeshGetTransform {} {
      } else {
        TheTransform Identity
    }
+
+#  set matrix [TheTransform GetMatrix] 
+#  puts [$matrix GetElement 0 3]
+#  puts [$matrix GetElement 1 3]
+#  puts [$matrix GetElement 2 3]
+#  puts [$matrix GetElement 3 3]
 }
 
 #-------------------------------------------------------------------------------
@@ -1287,7 +1295,7 @@ while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
         Thresh ThresholdBetween $lowscalar $highscalar
         set lowscalar [expr 2 * $highscalar]
     }
-  puts $lowscalar
+#  puts $lowscalar
   ### Finish the pipeline
   TransformPolyData Update
 
@@ -1694,6 +1702,7 @@ if {$TetraMesh(SurfacesSmoothNormals) == 1} {
     vtkPolyDataNormals Normals
       Normals SetInput [TransformPolyData GetOutput]
       Normals SetFeatureAngle 60
+      Normals SplittingOff
 
     set EndPipeLine "Normals"
 }
