@@ -214,7 +214,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.21 $} {$Date: 2005/03/31 17:41:57 $}]
+        {$Revision: 1.22 $} {$Date: 2005/03/31 19:15:56 $}]
 
 }
 
@@ -3730,7 +3730,7 @@ proc vtkFreeSurferReadersGDFPlotGetClassIndexFromLabel { iID iLabel } {
     return -1
 }
 
-# Our callbacks.
+# GDF callbacks.
 proc vtkFreeSurferReadersGDFPlotCBCloseWindow { iID } {
     global vtkFreeSurferReaders
     set vtkFreeSurferReaders(gWidgets,$iID,bWindowBuilt) 0
@@ -3785,36 +3785,6 @@ proc vtkFreeSurferReadersGDFPlotPrint { iID } {
     gdfPrintStdout $vtkFreeSurferReaders(gGDF,$iID,object)
 }
 
-# GDF callbacks.
-proc vtkFreeSurferReadersGDFPlotCBCloseWindow { iID } {
-    global vtkFreeSurferReaders
-    set vtkFreeSurferReaders(gWidgets,$iID,bWindowBuilt) 0
-}
-
-proc vtkFreeSurferReadersGDFPlotCBLegendEnter { iID igw } {
-    vtkFreeSurferReadersGDFPlotHilightElement $iID [$igw legend get current]
-}
-
-proc vtkFreeSurferReadersGDFPlotCBLegendLeave { iID igw } {
-    vtkFreeSurferReadersGDFPlotUnhilightElement $iID [$igw legend get current]
-}
-
-proc vtkFreeSurferReadersGDFPlotCBLegendClick { iID igw } {
-    vtkFreeSurferReadersGDFPlotToggleVisibility $iID [$igw legend get current]
-    vtkFreeSurferReadersGDFPlotPlotData $iID
-}
-
-proc vtkFreeSurferReadersGDFPlotCBGraphMotion { iID igw iX iY } {
-    vtkFreeSurferReadersGDFPlotUnfocusElement $iID
-    set lResult [vtkFreeSurferReadersGDFPlotFindMousedElement $iID $iX $iY]
-    set element [lindex $lResult 0]
-    if { "$element" != "" } { 
-        set index [lindex $lResult 1]
-        set x [lindex $lResult 2]
-        set y [lindex $lResult 3]
-        vtkFreeSurferReadersGDFPlotFocusElement $iID $element $index $x $y
-    }
-}
 
 
 # Show or hide the window. If it hasn't been built, builds the window
@@ -4637,7 +4607,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.21 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.22 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
