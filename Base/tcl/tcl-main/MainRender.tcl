@@ -59,41 +59,27 @@ proc Render3D {{scale ""}} {
         VideoSave
     }
 
+    # Kilian 16-Sep-02: Changed strucutre a little bit for saving Images to update to VTK4.0 
+    # Compute filename add additional once     
+    set ext(BMP) bmp
+    set ext(JPEG) jpg 
+    set ext(PNG) png
+    set ext(PNM) pnm
+    set ext(PostScript) ps
+    set ext(TIFF) tif
+    set filename [format %04d.$ext($View(movieFileType)) $View(movieFrame)]
+    set filename [file join $View(movieDirectory) $filename]
+
     if { $View(movie) > 0 && $View(movieSlices) == 0} {
-        # Compute filename
-        set ext(PPM)  ppm
-        set ext(TIFF) tif
-        set ext(BMP)  bmp
-        set filename [format %04d.$ext($View(movieFileType)) $View(movieFrame)]
-        set filename [file join $View(movieDirectory) $filename]
         # Write file
-        switch $View(movieFileType) {
-        "PPM" {
-            $viewWin SetFileName $filename
-            $viewWin SaveImageAsPPM
-        }
-        "TIFF" {
-            vtkWindowToImageFilter filter
-            filter SetInput $viewWin
-            vtkTIFFWriter writer
-            writer SetInput [filter GetOutput]
-            writer SetFileName $filename
-            writer Write
-            filter Delete
-            writer Delete
-        }
-        "BMP" {
-            vtkWindowToImageFilter filter
-            filter SetInput $viewWin
-            vtkBMPWriter writer
-            writer SetInput [filter GetOutput]
-            writer SetFileName $filename
-            writer Write
-            filter Delete
-            writer Delete
-        }
-        }
-        incr View(movieFrame)
+        vtkWindowToImageFilter filter
+        filter SetInput $viewWin
+        vtk${View(movieFileType)}Writer writer
+        writer SetInput [filter GetOutput]
+        writer SetFileName $filename
+        writer Write
+        filter Delete
+        writer Delete
     } elseif { $View(movie) > 0 && $View(movieSlices) > 0} {
 
         # first append the 3 slices horizontally
@@ -135,38 +121,12 @@ proc Render3D {{scale ""}} {
         #imClip SetOutputWholeExtent 0 $w 0 $h 0 0
         #imClip ReleaseDataFlagOff
 
-        
-
-        # Compute filename
-        set ext(PPM)  ppm
-        set ext(TIFF) tif
-        set ext(BMP)  bmp
-        set filename [format %04d.$ext($View(movieFileType)) $View(movieFrame)]
-        set filename [file join $View(movieDirectory) $filename]
         # Write file
-        switch $View(movieFileType) {
-        "PPM" {
-            $viewWin SetFileName $filename
-            $viewWin SaveImageAsPPM
-        }
-        "TIFF" {
-            vtkTIFFWriter writer
-            writer SetInput [imAppendAll GetOutput]
-            writer SetFileName $filename
-            writer Write
-            
-            writer Delete
-        }
-        "BMP" {
-            vtkBMPWriter writer
-            writer SetInput [imAppendAll GetOutput]
-            writer SetFileName $filename
-            writer Write
-            
-            writer Delete
-        }
-        }
-        incr View(movieFrame)
+    vtk${View(movieFileType)}Writer writer
+    writer SetInput [imAppendAll GetOutput]
+    writer SetFileName $filename
+    writer Write
+    writer Delete
 
         imAppendSl Delete
         imAppendAll Delete
@@ -177,8 +137,9 @@ proc Render3D {{scale ""}} {
         imPad Delete
         imTrans Delete
         #imClip Delete
-    }
-    }
+     }
+     incr View(movieFrame)
+}
 #-------------------------------------------------------------------------------
 # .PROC RenderSlice
 # 

@@ -64,12 +64,12 @@ proc ViewInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.29 $} {$Date: 2002/04/16 14:47:38 $}]
+        {$Revision: 1.30 $} {$Date: 2002/09/18 05:15:17 $}]
 
     set View(movie) 0
     set View(movieDirectory) "/tmp"
     set View(movieFrame) 1
-    set View(movieFileType) "PPM"
+    set View(movieFileType) "PNG"
 }
 
 #-------------------------------------------------------------------------------
@@ -243,7 +243,7 @@ current View (with or without the slice windows) by
 left-clicking in 3D View. If you leave this button selected, 
 a frame will be saved everytime the 3D View is rendered "
     
-    eval {checkbutton $f.cMovieSlices -text "with slice windows (not ppm)" -variable View(movieSlices) -indicatoron 1 } $Gui(WCA)
+    eval {checkbutton $f.cMovieSlices -text "with slice windows" -variable View(movieSlices) -indicatoron 1 } $Gui(WCA)
     TooltipAdd $f.cMovieSlices "When this button is selected, the frames saved will contain the 2D window slices"
 
     eval {label $f.lFrame -text "Next frame #:"} $Gui(WLA)
@@ -262,13 +262,13 @@ a frame will be saved everytime the 3D View is rendered "
 
     # File type
     eval {label $f.lFile -text "File type:"} $Gui(WLA)
-    eval {menubutton $f.mbFile -text $View(movieFileType) -width 5 -menu $f.mbFile.m} \
+    eval {menubutton $f.mbFile -text $View(movieFileType) -width 10 -menu $f.mbFile.m} \
         $Gui(WMBA)
     grid $f.lFile $f.mbFile -sticky w -padx $Gui(pad) -pady $Gui(pad)
     grid configure $f.lFile -sticky e
 
     eval {menu $f.mbFile.m} $Gui(WMA)
-    foreach item "PPM TIFF BMP" {
+    foreach item "BMP JPEG PNG PNM PostScript TIFF" {
         $f.mbFile.m add command -label $item -command "ViewSetMovieFileType $item"
     }
 
