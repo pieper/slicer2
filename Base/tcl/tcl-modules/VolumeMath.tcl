@@ -123,7 +123,7 @@ proc VolumeMathInit {} {
 	#   appropriate info when the module is checked in.
 	#   
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.15 $} {$Date: 2001/08/03 12:21:08 $}]
+		{$Revision: 1.16 $} {$Date: 2001/12/17 17:43:28 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -230,19 +230,19 @@ proc VolumeMathBuildGUI {} {
 	set help "
 This Module Exists to do things like subtract and add volumes.
 It also exists to find the distance between two points in a volume.
-Currently, the distance finder is not functional.
+Currently, the distance finder is not functional.<P>
 
-For Subtraction: If you wish to subtract two volumes that have
+For Subtraction or Addition: If you wish to subtract two volumes that have
  different spacings or numbers of voxels, or if a transform exists
  between the two images, you MUST resample one image in the coordinates
  of the other. (Note that this module doesn't currently check to make sure
  you did everything correctly. One day...) Once the images are subtracted, the
  results are sometimes difficult to look at. I recommend taking the
- Absolute Valute of the results of the subtraction. <p>
+ Absolute Valute of the results of the subtraction. <P>
 
 Distance Maps yield the square of the distance.
 
-<b>Known Bugs<b>Don't set the output to be one of the input
+<P><B>Known Bugs</B>Don't set the output to be one of the input
 files. Sometimes it doesn't work.
 "
 	regsub -all "\n" $help {} help
@@ -280,13 +280,13 @@ files. Sometimes it doesn't work.
         #
 
         set row 1
-	foreach p "Subtract Resample Abs DistMap Hausdorff" {
+	foreach p "Subtract Add Resample Abs DistMap Hausdorff" {
             eval {radiobutton $f.f.$row.r$p \
 			-text "$p" -command "VolumeMathSetMathType" \
 			-variable VolumeMath(MathType) -value $p -width 10 \
 			-indicatoron 0} $Gui(WCA)
 		pack $f.f.$row.r$p -side left -pady 0
-            if { $p == "Abs" } {incr row};
+            if { $p == "Resample" } {incr row};
 	}
 
 	pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
@@ -518,6 +518,10 @@ proc VolumeMathSetMathType {}  {
         $a configure -text "Volume2:"
         $b configure -text "- Volume1:"
         $c configure -text "= Volume3:"
+    } elseif {$VolumeMath(MathType) == "Add" } {
+        $a configure -text "Volume2:"
+        $b configure -text "+ Volume1:"
+        $c configure -text "= Volume3:"
     } elseif {$VolumeMath(MathType) == "Resample" } {
         $a configure -text "Resample"
         $b configure -text "in the coordinates of"
@@ -599,8 +603,8 @@ proc VolumeMathCheckErrors {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC VolumeMathDoSubtract
-#   Actually do the VolumeMath
+# .PROC VolumeMathDoMath
+#   Calls the correct function
 #
 # .END
 #-------------------------------------------------------------------------------
@@ -609,10 +613,11 @@ proc VolumeMathDoMath {} {
 
 
     if { $VolumeMath(MathType) == "Subtract" } {VolumeMathDoSubtract}
+    if { $VolumeMath(MathType) == "Add" }      {VolumeMathDoAdd}
     if { $VolumeMath(MathType) == "Resample" } {VolumeMathDoResample}
     if { $VolumeMath(MathType) == "Abs" }      {VolumeMathDoAbs}
     if { $VolumeMath(MathType) == "DistMap" }  {VolumeMathDoDistMap}
-    if { $VolumeMath(MathType) == "Hausdorff" }  {VolumeMathDoHausdorff}
+    if { $VolumeMath(MathType) == "Hausdorff"} {VolumeMathDoHausdorff}
 
     # This is necessary so that the data is updated correctly.
     # If the programmers forgets to call it, it looks like nothing
@@ -657,6 +662,44 @@ proc VolumeMathDoSubtract {} {
     MainVolumesUpdate $v3
 
     SubMath Delete
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathDoAdd
+#   Actually do the VolumeMath Addition
+#
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathDoAdd {} {
+	global VolumeMath Volume
+
+        # Check to make sure no volume is none
+
+    if {[VolumeMathCheckErrors] == 1} {
+        return
+    }
+    if {[VolumeMathPrepareResultVolume] == 1} {
+        return
+    }
+
+    set v3 $VolumeMath(Volume3)
+    set v2 $VolumeMath(Volume2)
+    set v1 $VolumeMath(Volume1)
+
+    # Set up the VolumeMath Add
+
+    vtkImageMathematics AddMath
+    AddMath SetInput1 [Volume($v2,vol) GetOutput]
+    AddMath SetInput2 [Volume($v1,vol) GetOutput]
+    AddMath SetOperationToAdd
+
+    # Start copying in the output data.
+    # Taken from MainVolumesCopyData
+
+    Volume($v3,vol) SetImageData [AddMath GetOutput]
+    MainVolumesUpdate $v3
+
+    AddMath Delete
 }
 
 #-------------------------------------------------------------------------------
