@@ -167,7 +167,7 @@ DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-                {$Revision: 1.60 $} {$Date: 2002/02/06 22:16:24 $}]
+                {$Revision: 1.61 $} {$Date: 2002/02/15 15:40:26 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -2286,7 +2286,7 @@ proc ChangeDir { dirlist } {
     
     $dirlist delete 0 end
     $dirlist insert end "../"
-    foreach match [glob -nocomplain *] {
+    foreach match [lsort -dictionary [glob -nocomplain *]] {
         if {[file isdirectory $match]} {
             $dirlist insert end $match/
         } else  {
