@@ -89,6 +89,7 @@ proc Usage { {msg ""} } {
     set msg "$msg\n   --load-freesurfer-volume <COR-.info> : read freesurfer files"
     set msg "$msg\n   --load-freesurfer-label-volume <COR-.info> : read freesurfer label files"
     set msg "$msg\n   --load-freesurfer-model <file> : read freesurfer model file"
+    set msg "$msg\n   --load-bxh <file.bxh> : read bxh file from <file.bxh>"
     set msg "$msg\n   --script <file.tcl> : script to execute after slicer loads"
     set msg "$msg\n   --exec <tcl code> : some code to execute after slicer loads"
     set msg "$msg\n   --all-info : print out all of the version info and continue"
@@ -110,6 +111,7 @@ set SLICER(load-analyze) ""
 set SLICER(load-freesurfer-volume) ""
 set SLICER(load-freesurfer-label-volume) ""
 set SLICER(load-freesurfer-model) ""
+set SLICER(load-bxh) ""
 set SLICER(script) ""
 set SLICER(exec) ""
 set SLICER(versionInfo) ""
@@ -185,6 +187,15 @@ for {set i 0} {$i < $argc} {incr i} {
                 lappend SLICER(load-freesurfer-model) [lindex $argv $i]
             }
         }
+        "--load-bxh" {
+            incr i
+            if { $i == $argc } {
+                Usage "missing argument for $a\n"
+            } else {
+                lappend SLICER(load-bxh) [lindex $argv $i]
+            }
+        }
+ 
         "--script" {
             incr i
             if { $i == $argc } {
@@ -646,7 +657,7 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.75 2004/04/14 17:22:01 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.76 2004/05/20 16:30:23 hliu Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
@@ -706,6 +717,22 @@ foreach arg $SLICER(load-freesurfer-model) {
     vtkFreeSurferReadersLoadModel $arg
 }
 
+#
+# read bxh volumes specified on command line
+#
+foreach arg $SLICER(load-bxh) {
+    if { [catch "package require vtkCISGFile"] } {
+        DevErrorWindow "vtkCISGFile Module required for --load-bxh option."
+        break
+    }
+    if { [catch "package require vtkBXH"] } {
+        DevErrorWindow "vtkBXH Module required for --load-bxh option."
+        break
+    }
+
+    set ::VolBXH(bxh-fileName) $arg
+    VolBXHLoadVolumes  
+}
 
 #
 # override the built in exit routine to provide cleanup
