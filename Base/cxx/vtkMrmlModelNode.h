@@ -57,6 +57,11 @@ public:
   void Copy(vtkMrmlNode *node);
 
   // Description:
+  // Model ID
+  vtkSetStringMacro(ModelID);
+  vtkGetStringMacro(ModelID);
+  
+  // Description:
   // Path of the data file, relative to the MRML file
   vtkSetStringMacro(FileName);
   vtkGetStringMacro(FileName);
@@ -119,6 +124,7 @@ protected:
   void operator=(const vtkMrmlModelNode&) {};
 
   // Strings
+  char *ModelID;
   char *FileName;
   char *FullFileName;
   char *Color;

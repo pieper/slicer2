@@ -45,6 +45,7 @@ vtkMrmlModelNode* vtkMrmlModelNode::New()
 vtkMrmlModelNode::vtkMrmlModelNode()
 {
   // Strings
+  this->ModelID = NULL;
   this->FileName = NULL;
   this->Color = NULL;
   this->FullFileName = NULL;
@@ -68,6 +69,11 @@ vtkMrmlModelNode::~vtkMrmlModelNode()
 {
   this->RasToWld->Delete();
 
+  if (this->ModelID)
+  {
+    delete [] this->ModelID;
+    this->ModelID = NULL;
+  }
   if (this->FileName)
   {
     delete [] this->FileName;
@@ -95,6 +101,10 @@ void vtkMrmlModelNode::Write(ofstream& of, int nIndent)
   of << i1 << "<Model";
 
   // Strings
+  if (this->ModelID && strcmp(this->ModelID, ""))
+  {
+    of << " id='" << this->ModelID << "'";
+  }
   if (this->Name && strcmp(this->Name, "")) 
   {
     of << " name='" << this->Name << "'";
@@ -146,7 +156,7 @@ void vtkMrmlModelNode::Write(ofstream& of, int nIndent)
 
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
-// Does NOT copy: ID, FilePrefix, Name
+// Does NOT copy: ID, FilePrefix, Name, ModelID
 void vtkMrmlModelNode::Copy(vtkMrmlNode *anode)
 {
   vtkMrmlNode::MrmlNodeCopy(anode);
@@ -185,6 +195,8 @@ void vtkMrmlModelNode::PrintSelf(ostream& os, vtkIndent indent)
   
   vtkMrmlNode::PrintSelf(os,indent);
 
+  os << indent << "ModelID: " <<
+    (this->ModelID ? this->ModelID : "(none)") << "\n";
   os << indent << "Name: " <<
     (this->Name ? this->Name : "(none)") << "\n";
   os << indent << "FileName: " <<

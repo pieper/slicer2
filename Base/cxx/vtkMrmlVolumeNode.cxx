@@ -44,9 +44,8 @@ vtkMrmlVolumeNode* vtkMrmlVolumeNode::New()
 //----------------------------------------------------------------------------
 vtkMrmlVolumeNode::vtkMrmlVolumeNode()
 {
-  // vtkMrmlVolumeNode's attributes
-
   // Strings
+  this->VolumeID = NULL;
   this->FilePattern = NULL;
   this->FilePrefix = NULL;
   this->RasToIjkMatrix = NULL;
@@ -115,6 +114,11 @@ vtkMrmlVolumeNode::~vtkMrmlVolumeNode()
   this->RasToIjk->Delete();
   this->Position->Delete();
 
+  if (this->VolumeID)
+  {
+    delete [] this->VolumeID;
+    this->VolumeID = NULL;
+  }
   if (this->FilePattern)
   {
     delete [] this->FilePattern;
@@ -164,7 +168,6 @@ vtkMrmlVolumeNode::~vtkMrmlVolumeNode()
   // End
 }
 
-
 //----------------------------------------------------------------------------
 char* vtkMrmlVolumeNode::GetScalarTypeAsString()
 {
@@ -208,6 +211,10 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
   of << i1 << "<Volume";
   
   // Strings
+  if (this->VolumeID && strcmp(this->VolumeID,""))
+  {
+    of << " id='" << this->VolumeID << "'";
+  }
   if (this->Name && strcmp(this->Name, "")) 
   {
     of << " name='" << this->Name << "'";
@@ -343,7 +350,7 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
 
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
-// Does NOT copy: ID, FilePrefix, Name
+// Does NOT copy: ID, FilePrefix, Name, VolumeID
 void vtkMrmlVolumeNode::Copy(vtkMrmlNode *anode)
 {
   vtkMrmlNode::MrmlNodeCopy(anode);
@@ -459,6 +466,8 @@ void vtkMrmlVolumeNode::PrintSelf(ostream& os, vtkIndent indent)
   
   vtkMrmlNode::PrintSelf(os,indent);
 
+  os << indent << "VolumeID: " <<
+    (this->VolumeID ? this->VolumeID : "(none)") << "\n";
   os << indent << "Name: " <<
     (this->Name ? this->Name : "(none)") << "\n";
   os << indent << "FilePattern: " <<
@@ -994,16 +1003,16 @@ void vtkMrmlVolumeNode::AddDICOMFileName(char *str)
   DICOMFiles++;
 }
 
+char *vtkMrmlVolumeNode::GetDICOMFileName(int idx)
+{
+  return DICOMFileList[idx];
+}
+
 void vtkMrmlVolumeNode::SetDICOMFileName(int idx, char *str)
 {
   delete [] DICOMFileList[idx];
   DICOMFileList[idx] = new char [strlen(str) + 1];
   strcpy(DICOMFileList[idx], str);
-}
-
-char *vtkMrmlVolumeNode::GetDICOMFileName(int idx)
-{
-  return DICOMFileList[idx];
 }
 
 void vtkMrmlVolumeNode::DeleteDICOMFileNames()

@@ -65,6 +65,11 @@ class VTK_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
   //--------------------------------------------------------------------------
   
   // Description:
+  // Volume ID
+  vtkSetStringMacro(VolumeID);
+  vtkGetStringMacro(VolumeID);
+  
+  // Description:
   // The pattern for naming the files expressed in C language syntax. 
   // For example, a file named skin.001 has a patter of %s.%03d, and a file
   // named skin.1 has a pattern of %s.%d
@@ -288,8 +293,8 @@ class VTK_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
   // DICOMFileList
   int GetNumberOfDICOMFiles() { return DICOMFiles; }
   void AddDICOMFileName(char *);
-  void SetDICOMFileName(int idx, char *str);
   char *GetDICOMFileName(int idx);
+  void SetDICOMFileName(int idx, char *str);
   void DeleteDICOMFileNames();
   char **GetDICOMFileNamesPointer() { return DICOMFileList;}
 
@@ -305,6 +310,7 @@ protected:
     float ox, float oy, float oz);
 
   // Strings
+  char *VolumeID;
   char *FilePattern;
   char *FilePrefix;
   char *FullPrefix;
