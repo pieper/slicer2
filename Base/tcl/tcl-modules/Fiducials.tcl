@@ -104,7 +104,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.53 $} {$Date: 2004/08/10 19:51:48 $}]
+        {$Revision: 1.53.2.1 $} {$Date: 2004/12/22 19:06:25 $}]
     
     # Initialize module-level variables
     
@@ -905,7 +905,12 @@ proc FiducialsUpdateMRML {} {
             set efid [$item GetID]
             # if the Mrml ID is not in the list already, then this
             # a new Fiducials Node/EndNode pair
-        
+            # there could be an end node w/o a starting node, so make sure that fid has been set
+            if { [info exists fid] == 0 } {
+                puts "FiducialsUpdateMRML:\nWarning: an EndFiducialsNode of id $efid has been found w/o the id of the starting node being found previously."
+                break
+            } 
+
             # update the modified point List for all the existing Fiducials Node
             if { $Fiducials($fid,pointsExist) ==  1} { 
                 FiducialsVTKUpdatePoints $fid $symbolSize $textSize
