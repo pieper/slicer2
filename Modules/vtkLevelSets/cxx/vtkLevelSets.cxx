@@ -414,11 +414,9 @@ void vtkLevelSets::DistanceMap()
   
 
   if (distance_data!=NULL) {
-    float* ptr;
     int  i;
     for(i=0;i<imsize;i++) {
       distance_data[i] = u[this->current][i];
-      ptr++;
     }
   }
 
@@ -2260,7 +2258,7 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
     double Vx,Vy,Vz;
 
     double vel;
-    double Gx,Gy,Gz,Gnorm,sp,norm_vel;
+    double Gx,Gy,Gz,Gnorm,norm_vel;
  
 
     //  if (GB_debug) {
