@@ -1,37 +1,36 @@
 proc XformInit { } {
+    
 
 }
 
-proc XformAxisStart { widget axis x y } {
-    global lastX lastY lastAxis
-    global Xform Selected Csys Model
-
-    puts "axis interaction begins"
-
-    # Push Event Manager onto event stack 
-    set Xform(eventManager) [subst { \
-        {$widget <Control-B1-Motion> {XformAxis %W %x %y 1}} \
-#        {$widget <Control-B2-Motion> {XformAxis %W %x %y 2}} \
-        {$widget <Shift-B1-Motion> {XformAxis %W %x %y 2}} \
-        {$widget <ButtonRelease> {XformAxisEnd %W %x %y 1}} }]
+proc XformAxisStart { module actor widget axis x y } {
+    global lastX lastY lastAxis $module
+    global Xform Selected Csys Model Gui
     
-    pushEventManager $Xform(eventManager)
+    #tk_messageBox -message "start axis $axis"
+    # Push Event Manager onto event stack 
+    # create the bindings 
+    EvDeclareEventHandler xformEv <B1-Motion> "XformAxis $module $actor %W %x %y 1"
+    EvDeclareEventHandler xformEv <B3-Motion> "XformAxis $module $actor %W %x %y 2"
+    EvDeclareEventHandler xformEv <ButtonRelease> "XformAxisEnd XformEvents %W %x %y 1"
+    EvAddWidgetToBindingSet XformEvents $Gui(fViewWin) {xformEv}
+    EvActivateBindingSet XformEvents
 
     # Initialize Csys motion variables
     set lastX $x
     set lastY $y
     set lastAxis $axis
-    Csys(xform) SetMatrix [[viewRen GetActiveCamera] GetViewTransform]
-    Csys(actor) GetMatrix Csys(matrix)
-    Csys(xform) Concatenate Csys(matrix)
+    ${module}($actor,xform) SetMatrix [[viewRen GetActiveCamera] GetViewTransform]
+    ${module}($actor,actor) GetMatrix ${module}($actor,matrix)
+    ${module}($actor,xform) Concatenate ${module}($actor,matrix)
     foreach id $Selected(Model) {
-    Model($id,actor,viewRen) GetMatrix Csys(inverse)
-    Csys(inverse) Invert
-    ####        Csys(actXform) PostMultiply
-    Csys(actXform) SetMatrix Csys(matrix)
-    Csys(actXform) Concatenate Csys(inverse)
-    Csys(actXform) SetPoint 0 0 0 1
-    eval Model($id,actor,viewRen) SetOrigin [Csys(actXform) GetPoint]
+    Model($id,actor,viewRen) GetMatrix ${module}($actor,inverse)
+    ${module}($actor,inverse) Invert
+    ####        ${module}($actor,actXform) PostMultiply
+    ${module}($actor,actXform) SetMatrix ${module}($actor,matrix)
+    ${module}($actor,actXform) Concatenate ${module}($actor,inverse)
+    ${module}($actor,actXform) SetPoint 0 0 0 1
+    eval Model($id,$actor,viewRen) SetOrigin [${module}($actor,actXform) GetPoint]
     }
 #    DebugMsg [concat "Starting axis-based transformation with axis " $axis ]
     set Xform(xform) [vtkTransform Xform(xform)]
@@ -40,37 +39,29 @@ proc XformAxisStart { widget axis x y } {
 }
 
 
-proc XformAxisEnd { widget x y button } {
+proc XformAxisEnd { bindingSet widget x y button } {
     global Xform
     global lastX lastY lastAxis
-    
 #    DebugMsg [concat "Ending axis xform " $lastAxis]
     if {[info exists Xform(xform)]} {
     Xform(xform) Delete
     }
-
-    popHandler $widget <ButtonRelease>
-    popHandler $widget <Control-B1-Motion>
-#    popHandler $widget <Control-B2-Motion>
-    popHandler $widget <Shift-B1-Motion>
-#    popHandler $widget <Shift-Control-B1-Motion>
-    
-#    popEventManager
+    EvDeactivateBindingSet $bindingSet
 }
 
 
-proc XformAxis { widget x y button } {
-    global lastX lastY lastAxis
-    global Selected Model
-    
+proc XformAxis { module actor widget x y button } {
+    global lastX lastY lastAxis $module
+    global Selected Model Module
+     
     set cam [viewRen GetActiveCamera]
     set deltaX [expr $x - $lastX]
     set deltaY [expr $lastY - $y]
-    set axisX [[Csys(xform) GetMatrix] GetElement 0 $lastAxis]
-    set axisY [[Csys(xform) GetMatrix] GetElement 1 $lastAxis]
-    set unitX [Csys(matrix) GetElement 0 $lastAxis]
-    set unitY [Csys(matrix) GetElement 1 $lastAxis]
-    set unitZ [Csys(matrix) GetElement 2 $lastAxis]
+    set axisX [[${module}($actor,xform) GetMatrix] GetElement 0 $lastAxis]
+    set axisY [[${module}($actor,xform) GetMatrix] GetElement 1 $lastAxis]
+    set unitX [${module}($actor,matrix) GetElement 0 $lastAxis]
+    set unitY [${module}($actor,matrix) GetElement 1 $lastAxis]
+    set unitZ [${module}($actor,matrix) GetElement 2 $lastAxis]
     set norm [expr $axisX*$axisX + $axisY*$axisY]
     if { $norm < 0.00001 } { set norm 1.0 }
     set norm [expr sqrt($norm)]
@@ -87,7 +78,7 @@ proc XformAxis { widget x y button } {
     set dotprod 0.0
     }
 #    DebugMsg [concat "moving " $lastAxis $dotprod $xprod "..." ]
-    Csys(actor) AddPosition [expr $unitX*$dotprod] [expr $unitY*$dotprod] \
+    ${module}($actor,actor) AddPosition [expr $unitX*$dotprod] [expr $unitY*$dotprod] \
         [expr $unitZ*$dotprod]
     foreach id $Selected(Model) {
     Model($id,actor,viewRen) RotateWXYZ $angle $unitX $unitY $unitZ
@@ -95,12 +86,12 @@ proc XformAxis { widget x y button } {
         [expr $unitY*$dotprod] [expr $unitZ*$dotprod]
     }
     if { $lastAxis == 0 } {
-    Csys(actor) RotateX $angle
+    ${module}($actor,actor) RotateX $angle
     } else {
     if { $lastAxis == 1 } {
-        Csys(actor) RotateY $angle
+        ${module}($actor,actor) RotateY $angle
     } else {
-        Csys(actor) RotateZ $angle
+        ${module}($actor,actor) RotateZ $angle
     }   }
     if { [info commands cutactor] != "" } {
     cutactor AddPosition [expr $unitX*$dotprod] \
@@ -117,6 +108,16 @@ proc XformAxis { widget x y button } {
     
     set lastX $x
     set lastY $y
-    Render3D
-    
+
+    # Call each Module's "XformMotion" routine
+    # This is a callback mechanism that allows modules
+    # to do appropriate things with the Xform's motion
+    #-------------------------------------------
+    foreach m $Module(idList) {
+    if {[info exists Module($m,procXformMotion)] == 1} {
+        if {$Module(verbose) == 1} {puts "XformMotion: $m"}
+        $Module($m,procXformMotion) ${module}($actor,actor)
+    }
+    }
+    Render3D    
 }
