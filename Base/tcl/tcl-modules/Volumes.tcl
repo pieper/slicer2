@@ -102,7 +102,7 @@ proc VolumesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-                {$Revision: 1.37 $} {$Date: 2000/10/31 00:30:29 $}]
+                {$Revision: 1.38 $} {$Date: 2000/11/06 23:57:16 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -782,6 +782,14 @@ acquisition.
 	#-------------------------------------------
 	set f $fOther.fRange.fSliders
 
+	# Lauren and Samson found a big bad BUGGIE (on chianti, Linux box.)
+	# The FocusOut event is called every time the mouse leaves the 
+	# left Slicer window, if the cursor is left in the entry box.
+	# Even when in other modules, if the cursor is still there,
+	# this stuff gets called over and over...
+	# Bug when the active volume is NEW and then this stuff is called on
+	# it.  Other little buggies everywhere FocusOut is used in the Slicer.
+	# "This is really annoying."
 	foreach slider "Low High" {
 		eval {label $f.l${slider} -text "${slider}:"} $Gui(WLA)
 		eval {entry $f.e${slider} -width 7 \
