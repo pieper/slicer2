@@ -17,10 +17,7 @@ IF (WIN32)
         vtkImageEMLocalSegmenter
         vtkImageEMGeneral  
     )
-    # Place names of abstract class implementations here. No file suffixes.
-    # Comment this out if there are no abstracts.
-
-    SET_SOURCE_FILES_PROPERTIES ( ABSTRACT vtkThread)
+    SET_SOURCE_FILES_PROPERTIES ( vtkThread ABSTRACT )
 ELSE (WIN32)
     SET (LOCAL_MODULE_SRCS
         vtkDataTimeDef  
