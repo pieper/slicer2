@@ -50,8 +50,12 @@ vtkImageLiveWire* vtkImageLiveWire::New()
 vtkImageLiveWire::vtkImageLiveWire()
 {
   // settings to be changed by user
-  memset(this->StartPoint, 0, 2*sizeof(int));
-  memset(this->EndPoint, 0, 2*sizeof(int));
+  for (int i=0; i<2; i++) 
+    {
+      // not initialized yet
+      this->StartPoint[i] = -1;
+      this->EndPoint[i] = -1;
+    }
   memset(this->PrevEndPoint, 0, 2*sizeof(int));
   this->MaxEdgeCost = 255;
   this->Verbose = 0;
@@ -60,9 +64,8 @@ vtkImageLiveWire::vtkImageLiveWire()
   // output
   this->ContourEdges = vtkPoints::New();
   this->ContourPixels = vtkPoints::New();
-  // these are created when output edges/pixels exist
-  this->NewEdges = NULL;
-  this->NewPixels = NULL;
+  this->NewEdges = vtkPoints::New();
+  this->NewPixels = vtkPoints::New();
 
   // all inputs 
   this->NumberOfRequiredInputs = 5;
@@ -215,9 +218,9 @@ void vtkImageLiveWire::SetStartPoint(int x, int y)
   int numEdgePoints, numPixPoints;
 
   // if we have a previous short path, add it to contour 
-  // and start next short path from its end
-  // (even if end point doesn't match where the user clicked.)
-  if (this->NewEdges)
+  // and start next short path from contour's end
+  // (even if end point of contour doesn't match where the user clicked.)
+  if (this->NewEdges->GetNumberOfPoints())
     {
       // Lauren need to check if clicked twice on same start point???
 
@@ -309,6 +312,12 @@ void vtkImageLiveWire::SetEndPoint(int x, int y)
   int modified = 0;
   int extent[6];
 
+  // if there is no start point yet, don't set the end point
+  if (this->StartPoint[0] == -1 || this->StartPoint[1] == -1)
+    {
+      return;
+    }
+
   // just check against the first edge input
   if (this->GetInput(1)) 
     {
@@ -367,17 +376,19 @@ void vtkImageLiveWire::ClearContour()
 
   this->ContourPixels->Reset();
   this->ContourEdges->Reset();
-  // clear output points
-  if (this->NewEdges)
+  this->NewEdges->Reset();
+  this->NewPixels->Reset();
+
+  // unset start and end points
+  for (int i=0; i<2; i++) 
     {
-      this->NewEdges->Delete();
-      this->NewEdges = NULL;
+      // not initialized yet
+      this->StartPoint[i] = -1;
+      this->EndPoint[i] = -1;
     }
-  if (this->NewPixels)
-    {
-      this->NewPixels->Delete();
-      this->NewPixels = NULL;
-    }
+
+  // Next Execute will output a clear image.
+  this->Modified();
 
   if (this->Verbose > 0)
     {
@@ -400,6 +411,24 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 
   clock_t tStart, tEnd, tDiff;
   tStart = clock();
+
+  int sizeX, sizeY, sizeZ, outExt[6];
+  outData->GetExtent(outExt);
+  sizeX = outExt[1] - outExt[0] + 1; 
+  sizeY = outExt[3] - outExt[2] + 1; 
+  sizeZ = outExt[5] - outExt[4] + 1;
+  // clear the output (will draw a contour over it later).
+  memset(outPtr, 0, sizeX*sizeY*sizeZ*sizeof(T));   
+
+  int *start = self->GetStartPoint();
+  int *end = self->GetEndPoint();
+
+  // if the start or end points are not set, just output the clear image.
+  if (start[0] == -1 || start[1] == -1 || end[0] == -1 || end[1] == -1)
+    {
+      //cout << "clear image output since point(s) -1" << endl;
+      return;
+    }  
 
   // Lauren test if input image is different, must deallocate all stuff.
   // Need to override SetInput! (also check for 2D input, etc.)
@@ -449,9 +478,6 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   T* edges[4] = {upEdgeVal, downEdgeVal, leftEdgeVal, rightEdgeVal};
 
   // ----------------  Dijkstra ------------------ //
-
-  int *start = self->GetStartPoint();
-  int *end = self->GetEndPoint();
 
   // cumulative cost of "longest shortest" path found so far
   int currentCC = self->GetCurrentCC();
@@ -565,15 +591,17 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   // save cost for next time
   self->SetCurrentCC(currentCC);
   
-  cout << "current cc: " << currentCC << endl;
+  //cout << "current cc: " << currentCC << endl;
 
   // ------- Trace the shortest path using the Dir array. -----------//
 
   // Lauren row column, x and y confusing.  test/fix it all.
 
-  // clear old shortest path points
+  // clear previous shortest path points
   vtkPoints *newEdges = self->GetNewEdges();
   vtkPoints *newPixels = self->GetNewPixels();
+  newEdges->Reset();
+  newPixels->Reset();
   vtkPoints *tempPixels = vtkPoints::New();
 
   // current spot on path of arrows
@@ -643,20 +671,9 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
     }  
 
   // ----------------  Output Image  ------------------ //
-  int sizeX, sizeY, sizeZ, outExt[6];
-  outData->GetExtent(outExt);
-  sizeX = outExt[1] - outExt[0] + 1; 
-  sizeY = outExt[3] - outExt[2] + 1; 
-  sizeZ = outExt[5] - outExt[4] + 1;
-
-  // could draw over inData or over clear...
-  //outData->CopyAndCastFrom(inDatas[0], inDatas[0]->GetExtent());
-  // clear the output
-  memset(outPtr, 0, sizeX*sizeY*sizeZ*sizeof(T));   
-
-  T outLabel = (T)self->GetLabel();
 
   // draw points over image
+  T outLabel = (T)self->GetLabel();
   numPoints = newPixels->GetNumberOfPoints();
   for (int i=0; i<numPoints; i++)
     {
@@ -678,14 +695,14 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 
 
   // ------------- test --------------
-  numPoints = newEdges->GetNumberOfPoints();
-  for (int i=0; i<numPoints; i++)
-    {
-      //cout << ".";
-      point = newEdges->GetPoint(i);
-      //cout << (int)point[0] + ((int)point[1])*sizeX << endl;
-      outPtr[(int)point[0] + ((int)point[1])*sizeX] += 5;
-    }
+//    numPoints = newEdges->GetNumberOfPoints();
+//    for (int i=0; i<numPoints; i++)
+//      {
+//        //cout << ".";
+//        point = newEdges->GetPoint(i);
+//        //cout << (int)point[0] + ((int)point[1])*sizeX << endl;
+//        outPtr[(int)point[0] + ((int)point[1])*sizeX] += 5;
+//      }
   // ------------- end test --------------
 
   // test points
@@ -734,25 +751,14 @@ void vtkImageLiveWire::Execute(vtkImageData **inData,
   // Lauren check this
   // 2D input is required
 
-  // clear and reallocate output points (shortest path)
-  if (this->NewEdges)
-    {
-      this->NewEdges->Delete();
-      this->NewEdges = NULL;
-    }
-  if (this->NewPixels)
-    {
-      this->NewPixels->Delete();
-      this->NewPixels = NULL;
-    }
-  this->NewEdges = vtkPoints::New();
-  this->NewPixels = vtkPoints::New();
-
-
-  void *inPtr[2], *outPtr;
+  void *inPtr[5], *outPtr;
 
   inPtr[0] = inData[0]->GetScalarPointerForExtent(inData[0]->GetExtent());
   inPtr[1] = inData[1]->GetScalarPointerForExtent(inData[1]->GetExtent());
+  inPtr[2] = inData[2]->GetScalarPointerForExtent(inData[2]->GetExtent());
+  inPtr[3] = inData[3]->GetScalarPointerForExtent(inData[3]->GetExtent());
+  inPtr[4] = inData[4]->GetScalarPointerForExtent(inData[4]->GetExtent());
+
   outPtr = outData->GetScalarPointerForExtent(outData->GetExtent());
   
   switch (inData[0]->GetScalarType())
