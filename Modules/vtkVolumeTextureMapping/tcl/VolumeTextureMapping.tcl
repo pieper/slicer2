@@ -1856,7 +1856,9 @@ proc VolumeTextureMappingUpdateMRML {} {
     #
     set n $Volume(idNone)
     if {[lsearch $Volume(idList) $VolumeTextureMapping(idOriginal1)] == -1} {
-        VolumeTextureMappingSetOriginal $n
+        VolumeTextureMappingSetOriginal1 $n
+        VolumeTextureMappingSetOriginal2 $n
+        VolumeTextureMappingSetOriginal3 $n
     }
     
     # Original1 Volume menu
