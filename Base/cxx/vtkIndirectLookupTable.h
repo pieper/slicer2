@@ -124,6 +124,7 @@ public:
   // Initialize the map to translate all input scalar values to 
   // the DirectDefaultIndex into the LookupTable
   void InitDirect();
+#if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2)
 
   // Description:
   // Map one value through the lookup table and return the color as
@@ -131,6 +132,8 @@ public:
   float *GetColor(float x) { 
     return vtkScalarsToColors::GetColor(x); }
   void GetColor(float x, float rgb[3]);
+
+#endif
 
   // Description:
   // Specifically set a certain input scalar value to map to a
