@@ -173,7 +173,8 @@ package require vtkSlicerBase ;# this pulls in all of slicer
 
 # Set path to search for plug-in modules, and require them
 set modulePath $slicer_home/Modules
-set modulePaths [glob $modulePath/vtk*]
+set modulePaths ""
+catch {set modulePaths [glob $modulePath/vtk*]}
 
 # do two separate loops to solve interdependency problems between modules, add all modules to the autopath first so that any package requiring another module can find it if they are not loaded in the right order
 foreach dir $modulePaths {
