@@ -183,10 +183,12 @@ proc MainDataUpdateMRML {ModuleArray} {
 #-------------------------------------------------------------------------------
 # .PROC MainDataCreate
 #  Actually create a data object.  Called from MainDataUpdateMRML.
+#  Each module must add its own actor to the scene after
+#  using this procedure to create a vtkMrmlData* object for it.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MainDataCreate {ModuleArray d} {
+proc MainDataCreate {ModuleArray d {objectType ""}} {
 
     #puts "Lauren in MainData create $ModuleArray $d"
 
@@ -194,6 +196,12 @@ proc MainDataCreate {ModuleArray d} {
     #--------------------------------------------------------
     if {[IsModule $ModuleArray] == "0"} {
     return
+    }
+
+    # Default value of vtkMrmlData subclass to create
+    #--------------------------------------------------------
+    if {$objectType == ""} {
+        set objectType $ModuleArray
     }
 
     # Get access to the global module array
@@ -217,7 +225,8 @@ proc MainDataCreate {ModuleArray d} {
 
     # Create vtkMrmlData* object 
     #--------------------------------------------------------
-    vtkMrmlData${ModuleArray} $data
+    #vtkMrmlData${ModuleArray} $data
+    vtkMrmlData${objectType} $data
 
     # Connect data object with the MRML node
     #--------------------------------------------------------
@@ -229,22 +238,12 @@ proc MainDataCreate {ModuleArray d} {
     $data SetProgressMethod   "MainShowProgress $data"
     $data SetEndMethod         MainEndProgress
 
-    # Set data object's properties using tcl vars from GUI
-    # (Lauren the data object should really get most/all of this from the node)
-    # Lauren this is for specific tcl stuff volumes/models.tcl do here
+    # Here the module can hook in to set the new Data
+    # object's properties (as defined by user in GUI)
     #--------------------------------------------------------
     Main${ModuleArray}SetAllVariablesToData $d
 
-    # Add its actor to the scene
-    # Lauren this is not general: volumes share the slice
-    # actors, each model has its own actor, etc.
-    # Each module is responsible for doing this I guess
-    #MainAddActor ???
-
-    # Lauren should we add the actor here or only when vis this dataset?
-
-    # Lauren fix this junk
-    # Mark it as unsaved and created on the fly.
+    # Mark the object as unsaved and created on the fly.
     # If it actually isn't being created on the fly, I can't tell that from
     # inside this procedure, so the "fly" variable will be set to 0 in the
     # MainDataUpdateMRML procedure.
@@ -285,13 +284,15 @@ proc MainDataRead {ModuleArray d} {
 
     # Check FileName
     #--------------------------------------------------------
-    # Lauren what about complicated junk for filenames?
-    #set fileName [$node GetFullFileName]
-    set fileName [$node GetFileName]
-    if {$fileName == ""} {return}
-    
-    if {[CheckFileExists $fileName] == 0} {
-    return -1
+    # this test works in simple case where node has 1 filename
+    # for volumes this test can't work and should
+    # be handled by data object instead
+    set fileName ""
+    catch {set fileName [$node GetFileName]}
+    if {$fileName != ""} {
+        if {[CheckFileExists $fileName] == 0} {
+            return -1
+        }
     }
     
     # Display appropriate text over progress bar while reading
@@ -311,13 +312,11 @@ proc MainDataRead {ModuleArray d} {
     # Now we either do pipeline junk here,
     # or we write vtkMrmlSlicerTensors to handle it
 
-    # Lauren fix this junk
-    # Mark this tensor as saved
+    # Mark this tensor as saved already
     set Array($d,dirty) 0
 
     # Return success code 
     #--------------------------------------------------------
-    # (Lauren handle failure)
     return 1
 }
 
@@ -359,7 +358,7 @@ proc MainDataDelete {ModuleArray d} {
 
     # Remove actors from renderers
     #--------------------------------------------------------
-    # Lauren actor handling is not general yet
+    # Actor handling is not general and must be done by the module
     #MainRemoveActor $d
     
     # Delete VTK objects 
