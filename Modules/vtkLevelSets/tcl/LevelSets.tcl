@@ -154,7 +154,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2003/04/28 19:01:02 $}]
+        {$Revision: 1.3 $} {$Date: 2003/04/30 15:05:47 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1042,7 +1042,7 @@ proc LevelSetsPrepareResultVolume {}  {
         set node [Volume($v2,vol) GetMrmlNode]
         Mrml(dataTree) RemoveItem $node 
         set nodeBefore [Volume($v1,vol) GetMrmlNode]
-    Mrml(dataTree) InsertAfterItem $nodeBefore $node
+        Mrml(dataTree) InsertAfterItem $nodeBefore $node
         MainUpdateMRML
     } else {
 
@@ -1050,7 +1050,7 @@ proc LevelSetsPrepareResultVolume {}  {
         # If so, let's ask. If no, return.
          
         set v2name  [Volume($v2,node) GetName]
-    set continue [DevOKCancel "Overwrite $v2name?"]
+        set continue [DevOKCancel "Overwrite $v2name?"]
           
         if {$continue == "cancel"} { return 1 }
         # They say it is OK, so overwrite!
@@ -1256,15 +1256,25 @@ proc RunLevelSetsBegin {} {
   vtk_th ReplaceInOn
   vtk_th ReplaceOutOn
   vtk_th SetInValue 0
-  vtk_th SetOutValue 100
+  vtk_th SetOutValue 10
   vtk_th SetOutputScalarTypeToUnsignedChar
 
   Volume($res,vol) SetImageData [vtk_th GetOutput]
 
   foreach s $Slice(idList) {
-    set Slice($s,foreVolID) $res
+    set Slice($s,labelVolID) $res
+    set Slice($s,foreVolID)  0
   }
-  MainSlicesSetFadeAll 0.5
+
+  set Slice(opacity) 0.2
+  MainSlicesSetOpacityAll
+
+
+  # set the window and level
+  set Volume(activeID) $res
+  MainVolumesSetParam Window 10
+  MainVolumesSetParam Level  5
+  MainVolumesRender
 
   MainVolumesUpdate $res
 
@@ -1291,7 +1301,7 @@ proc RunLevelSetsBegin {} {
 #-------------------------------------------------------------------------------
 proc ReRunLevelSets {} {
 
-  global LevelSets 
+  global LevelSets Slice
 
   set input $LevelSets(InputVol)
   set res $LevelSets(ResultVol)
@@ -1320,10 +1330,26 @@ proc ReRunLevelSets {} {
   vtk_th ReplaceInOn
   vtk_th ReplaceOutOn
   vtk_th SetInValue 0
-  vtk_th SetOutValue 100
+  vtk_th SetOutValue 10
   vtk_th SetOutputScalarTypeToUnsignedChar
 
   Volume($res,vol) SetImageData [vtk_th GetOutput]
+
+  foreach s $Slice(idList) {
+    set Slice($s,labelVolID) $res
+    set Slice($s,foreVolID)  0
+  }
+
+  set Slice(opacity) 0.2
+  MainSlicesSetOpacityAll
+
+
+  # set the window and level
+  set Volume(activeID) $res
+  MainVolumesSetParam Window 10
+  MainVolumesSetParam Level  5
+  MainVolumesRender
+
   MainVolumesUpdate $res
 
   vtk_th   Delete
@@ -1398,7 +1424,7 @@ proc  LevelSetsCreateModel {} {
   }
 
   if { $LevelSets(Processing) != "OFF" } {
-    SModelMakerCreate [Volume($res,node) GetName] "LS-Model" 0 0 1
+    SModelMakerCreate [Volume($res,node) GetName] "LS_Model[LevelSets(curv) Getstep]" 0 0 1
   }
 
 }
