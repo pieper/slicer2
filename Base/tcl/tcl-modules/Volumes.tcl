@@ -156,7 +156,7 @@ DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-                {$Revision: 1.52 $} {$Date: 2001/08/21 13:23:04 $}]
+                {$Revision: 1.53 $} {$Date: 2001/11/29 21:07:00 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -781,7 +781,7 @@ acquisition.
     #-------------------------------------------
     set f $fProps.fBot.fDICOM.fApply
     
-    DevAddButton $f.bApply "Header" "VolumesPropsApply; RenderAll" 8
+    DevAddButton $f.bApply "Header" "set Volume(propertyType) Header; VolumesSetPropertyType" 8
     DevAddButton $f.bCancel "Cancel" "VolumesPropsCancel" 8
     grid $f.bApply $f.bCancel -padx $Gui(pad)
     
@@ -2550,11 +2550,13 @@ proc DICOMPredictScanOrder { file1 file2 } {
 	set thickness $diff
     }
 
-    if {[expr abs($thickness - $Volume(sliceThickness))] > 0.05} {
-	set answer [tk_messageBox -message "Slice thickness is $Volume(sliceThickness) in the header, but $thickness when calculated from Slice Positions.\nWould you like to use the calculated one ($thickness)?" \
-			-type yesno -icon question -title "Slice thickness question."]
-	if {$answer == "yes"} {
-	    set Volume(sliceThickness) $thickness
+    if {$Volume(sliceThickness) != "unknown"} {
+	if {[expr abs($thickness - $Volume(sliceThickness))] > 0.05} {
+	    set answer [tk_messageBox -message "Slice thickness is $Volume(sliceThickness) in the header, but $thickness when calculated from Slice Positions.\nWould you like to use the calculated one ($thickness)?" \
+			    -type yesno -icon question -title "Slice thickness question."]
+	    if {$answer == "yes"} {
+		set Volume(sliceThickness) $thickness
+	    }
 	}
     }
 
