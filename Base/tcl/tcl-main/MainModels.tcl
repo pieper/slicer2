@@ -224,7 +224,7 @@ proc MainModelsRead {m} {
 	global Model Gui
 
 	# If fileName = "", then do nothing
-	set fileName [Model($m,node) GetFileName]
+	set fileName [Model($m,node) GetFullFileName]
 	if {$fileName == ""} {return}
 
 	# Check fileName
@@ -764,19 +764,21 @@ proc MainModelsRegisterModel {m rasToWld} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsWrite {{m ""}} {
-	global Model Gui
+	global Model Gui Path
 
 	if {$m == ""} {
 		set m $Model(activeID)
 	}
 	if {$m == ""} {return}
 
-	Model($m,node) SetFileName $Model(fileName).vtk
+	Model($m,node) SetFileName "$Model(fileName).vtk"
+	Model($m,node) SetFullFuleName \
+		[file join $Path(root) [Model($m,node) GetFileName]]
 
 	vtkPolyDataWriter writer
 	writer SetInput $Model($m,polyData)
 	writer SetFileType 2
-	writer SetFileName [Model($m,node) GetFileName]
+	writer SetFileName [Model($m,node) GetFullFileName]
 	set Gui(progressText) "Writing [Model($m,node) GetName]"
 	writer SetStartMethod     MainStartProgress
 	writer SetProgressMethod "MainShowProgress writer"

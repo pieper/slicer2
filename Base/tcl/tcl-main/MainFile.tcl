@@ -2,6 +2,8 @@
 proc MainFileInit {} {
 	global Module File Path
 
+	set Path(printHeader) [file join $Path(program) [file join bin print_header_NT]]
+
 	lappend Module(procGUI) MainFileBuildGUI
 
 	set File(filePrefix) $Path(prefixOpenFile)
@@ -106,7 +108,7 @@ proc MainFileOpenApply {} {
 	# Relative to root
 	set mrmlFile [file join $Path(root) $File(filePrefix).mrml]
 
-	MainMrmlReadDag $mrmlFile
+	MainMrmlRead $mrmlFile
 	MainUpdateMRML
 	MainSetup
 	RenderAll
@@ -114,8 +116,28 @@ proc MainFileOpenApply {} {
 	if {$File(callback) != ""} {
 		$File(callback)
 	}
+}
 
+proc MainFileSaveAs {} {
+	global Mrml Path
 
+}
+
+proc MainFileSave {} {
+	global Mrml Path
+
+	set filename $Path(mrmlFile)
+	if {$filename == ""} {
+		MainFileSaveAs
+	}
+
+	# Always save with an ".xml" extension
+	if {[file extension $filename] == ".mrml"} {
+		set filename "[string range $filename 0 \
+			[expr [string length $filename] - 6]].xml"
+	}
+	
+	MainMrmlWrite $filename
 }
 
 #-------------------------------------------------------------------------------
@@ -370,15 +392,21 @@ proc CheckFileExists {filename {verbose 1}} {
 }
 
 #-------------------------------------------------------------------------------
-# MainFileFindLastImageNumber
+# MainFileFindImageNumber
 #
 # 'firstFile' is a full path 
 #-------------------------------------------------------------------------------
-proc MainFileFindLastImageNumber {firstFile} {
+proc MainFileFindImageNumber {which firstFile} {
 
-	scan [file extension $firstFile] "%d" firstNum
-	if {[info exists firstNum] == 0} {
-		set firstNum 0
+	if {[regexp {\.([0-9]*)([^0-9]*)$} $firstFile match firstNum suffix] == 0} {
+		return ""
+	}
+	# Rid unnecessary 0's
+	set firstNum [string trimleft $firstNum "0"]
+	if {$firstNum == ""} {set firstNum 0}
+
+	if {$which == "First"} {
+		return $firstNum
 	}
 
 	# Find filePattern of firstFile

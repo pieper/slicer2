@@ -224,14 +224,17 @@ proc DataDisplayTree {{index end}} {
 				}
 				set line "Color: $name"
 			}
-			vtkMrmlTransformNode {
+			vtkMrmlMatrixNode {
 				set desc [$node GetDescription]
 				set name [$node GetName]
 				if {$name == ""} {set name $desc}
-				set line "Transform: $name"
+				set line "Matrix: $name"
+			}
+			vtkMrmlTransformNode {
+				set line "Transform"
 			}
 			vtkMrmlEndTransformNode {
-				set line "End Transform"
+				set line "EndTransform"
 			}
 		}
 		
@@ -302,7 +305,7 @@ proc DataGetIdFromNode {node} {
 }
 
 proc DataClipboardCopy {node} {
-	global Data Mrml Volume Model Transform Color
+	global Data Mrml Volume Model Transform Matrix Color
 	
 	# If the clipboard already has a node, delete it
 	if {$Data(clipboard) != ""} {
@@ -408,15 +411,15 @@ proc DataEditNode {} {
 		set id [DataGetIdFromNode $node]
 		MainModelsSetActive $id
 		if {[IsModule Models] == 1} {
-			set Model(propType) Basic
+			set Model(propertyType) Basic
 			Tab Models row1 Props
 		}
 	}
-	"vtkMrmlTransformNode" {
+	"vtkMrmlMatrixNode" {
 		set id [DataGetIdFromNode $node]
-		MainTransformsSetActive $id
-		if {[IsModule Transforms] == 1} {
-			Tab Transforms row1 Props
+		MainMatricesSetActive $id
+		if {[IsModule Matrices] == 1} {
+			Tab Matrices row1 Props
 		}
 	}
 	}
@@ -426,7 +429,8 @@ proc DataAddModel {} {
 	global Model Module
 
 	if {[IsModule Models] == 1} {
-		set Model(propType) Basic
+		set Model(propertyType) Basic
+		ModelsSetPropertyType
 		MainModelsSetActive NEW
 		set Model(freeze) 1
 		Tab Models row1 Props
@@ -434,16 +438,20 @@ proc DataAddModel {} {
 	}
 }
 
-proc DataAddTransform {} {
-	global Transform Module
+proc DataAddMatrix {} {
+	global Matrix Module
 
-	if {[IsModule Transforms] == 1} {
-		set Transform(propType) Basic
-		MainTransformsSetActive NEW
-		set Transform(freeze) 1
-		Tab Transforms row1 Props
+	if {[IsModule Matrixs] == 1} {
+		set Matrix(propertyType) Basic
+		MatrixSetPropertyType
+		MainMatricesSetActive NEW
+		set Matrix(freeze) 1
+		Tab Matrices row1 Props
 		set Module(freezer) "Data row1 List"
 	}
+}
+
+proc DataAddTransform {} {
 }
 
 proc DataEndTransform {} {
@@ -454,7 +462,8 @@ proc DataAddVolume {} {
 	global Volume Module
 
 	if {[IsModule Volumes] == 1} {
-		set Volume(propType) Basic
+		set Volume(propertyType) Basic
+		VolumesSetPropertyType
 		MainVolumesSetActive NEW
 		set Volume(freeze) 1
 		Tab Volumes row1 Props

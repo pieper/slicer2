@@ -505,7 +505,7 @@ proc ModelsSetPrefix {} {
 }
 
 proc ModelsPropsApply {} {
-	global Model Label Module Mrml
+	global Model Label Module Mrml Path
 
 	set m $Model(activeID)
 	if {$m == ""} {return}
@@ -524,6 +524,7 @@ proc ModelsPropsApply {} {
 		# These get set down below, but we need them before MainUpdateMRML
 		$n SetName $Model(name)
 		$n SetFileName "$Model(prefix).vtk"
+		$n SetFullFileName [file join $Path(root) [$n GetFileName]]
 		$n SetColor $Label(name)
 
 		Mrml(dataTree) AddItem $n
@@ -535,6 +536,7 @@ proc ModelsPropsApply {} {
 
 	Model($m,node) SetName $Model(name)
 	Model($m,node) SetFileName "$Model(prefix).vtk"
+	Model($m,node) SetFullFileName [file join $Path(root) [Model($m,node) GetFileName]]
 	Model($m,node) SetDescription $Model(desc)
 	MainModelsSetCulling $m $Model(culling)
 	MainModelsSetScalarVisibility $m $Model(scalarVisibility)

@@ -34,42 +34,23 @@
 #   MainMrmlRead
 #==========================================================================auto=
 
-proc MainMrmlClearList {} {
-	global Model Volume Color Transform
-
-	set Volume(idListDelete) ""  
-	set Model(idListDelete) ""
-	set Color(idListDelete) ""
-	set Transform(idListDelete) ""
-	set Transform(end,idListDelete) ""
-}
-
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlInit
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlInit {} {
-	global Model Volume Color Transform
+	global Model Volume Color Transform EndTransform Matrix
+	global TransferFunction WindowLevel TFPoint ColorLUT Options
 
-	set Color(nextID) 0
-	set Model(nextID) 0
+	foreach node "Color Model Volume Transform EndTransform Matrix \
+		TransferFunction WindowLevel TFPoint ColorLUT Options" {
+		set ${node}(nextID) 0
+		set ${node}(idList) ""
+		set ${node}(idListDelete) ""
+	}
 	set Volume(nextID) 1
-	set Transform(nextID) 0
-	set Transform(end,nextID) 0
 
-	set Color(idList) ""
-	set Model(idList) ""
-	set Volume(idList) ""
-	set Transform(idList) ""
-	set Transform(end,idList) ""
-
-	set Volume(idListDelete) ""  
-	set Model(idListDelete) ""
-	set Color(idListDelete) ""
-	set Transform(idListDelete) ""
-	set Transform(end,idListDelete) ""
-
-	# Read MRML defaults file
+	# Read MRML defaults file for version 1.0
 	set fileName [ExpandPath "Defaults.mrml"]
 	if {[CheckFileExists $fileName] == "0"} {
 		set msg "Unable to read file MRML defaults file '$fileName'"
@@ -78,6 +59,40 @@ proc MainMrmlInit {} {
 		return	
 	}
 	MRMLReadDefaults $fileName
+
+	set Path(mrmlFile) ""
+}
+
+
+proc MainMrmlUpdateMRML {} {
+	global Mrml
+
+	# Compute geometric relationships
+	if {[info command Mrml(dataTree)] != ""} {
+		Mrml(dataTree) ComputeTransforms
+	}
+}
+
+proc MainMrmlDumpTree {type} {
+	global Mrml
+
+	set tree Mrml(${type}Tree)
+	$tree InitTraversal
+	set node [$tree GetNextItem]
+    while {$node != ""} {
+		puts "dump='$node'"
+		set node [$tree GetNextItem]
+    }
+}
+
+proc MainMrmlClearList {} {
+	global Model Volume Color Transform EndTransform Matrix
+	global TransferFunction WindowLevel TFPoint ColorLUT Options
+
+	foreach node "Color Model Volume Transform EndTransform Matrix \
+		TransferFunction WindowLevel TFPoint ColorLUT Options" {
+		set ${node}(idListDelete) ""
+	}
 }
 
 #-------------------------------------------------------------------------------
@@ -85,74 +100,171 @@ proc MainMrmlInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteNode {nodeType id} {
-	global Model Volume Color Transform
+	global Mrml Model Volume Color Transform EndTransform Matrix
+	global TransferFunction WindowLevel TFPoint ColorLUT Options
 
 	upvar $nodeType Array
 
-	set end ""
-	if {$nodeType == "TransformEnd"} {
-		set end "end,"
-	}
 	set tree "dataTree"
 	if {$nodeType == "Color"} {
 		set tree "colorTree"
 	}
 
 	MainMrmlClearList
-	set Array(${end}idListDelete) $id
+	set Array(idListDelete) $id
 
 	# Remove node's ID from idList
-	set i [lsearch $Array(${end}idList) $id]
+	set i [lsearch $Array(idList) $id]
 	if {$i == -1} {return}
-	set Array(${end}idList) [lreplace $Array(${end}idList) $i $i]
+	set Array(idList) [lreplace $Array(idList) $i $i]
 
 	# Remove node from tree, and delete it
-	Mrml($tree) RemoveItem ${nodeType}(${end}$id,node)
-	${nodeType}(${end}$id,node) Delete
+	Mrml($tree) RemoveItem ${nodeType}($id,node)
+	${nodeType}($id,node) Delete
 
 	MainUpdateMRML
 
 	MainMrmlClearList
 }
 
-#-------------------------------------------------------------------------------
-# .PROC MainMrmlReadDag
-# .END
-#-------------------------------------------------------------------------------
-proc MainMrmlReadDag {mrmlFile} {
-	global Lut Dag Volume Model Config Color Gui Path env Transform
+proc MainMrmlDeleteAll {} {
+	global Mrml Model Volume Color Transform EndTransform Matrix
+	global TransferFunction WindowLevel TFPoint ColorLUT Options
 
-	# Determine name of MRML input file.
-	# Append ".mrml" if necessary.
-	set fileName $mrmlFile
+	# Volumes are a special case because the "None" always exists
+	foreach id $Volume(idList) {
+		if {$id != $Volume(idNone)} {
 
-	if {$fileName == ""} {
-		set Dag(read) [MRMLCreateDag]
-	} else {
-		if {[file extension $fileName] != ".mrml"} {
-			set fileName "$fileName.mrml"
-		}
-		# Read MRML input file
-		if {[CheckFileExists $fileName] == "0"} {
-			set msg "Unable to read input MRML file '$fileName'"
-			puts $msg
-			tk_messageBox -message $msg
-			return	
-		}
-		set Dag(read) [MRMLRead $fileName]
-		if {$Dag(read) == "-1"} {
-			tk_messageBox -message "Error reading MRML file: '$fileName'\n\
-				See message written in console." 
-			return
+			# Add to the deleteList
+			lappend Volume(idListDelete) $id
+
+			# Remove from the idList
+			set i [lsearch $Volume(idList) $id]
+			set Volume(idList) [lreplace $Volume(idList) $i $i]
+
+			# Remove node from tree, and delete it
+			Mrml(dataTree) RemoveItem Volume($id,node)
+			Volume($id,node) Delete
 		}
 	}
 
-	# Store directory name
+	# dataTree
+	foreach node "Model Transform EndTransform Matrix \
+		TransferFunction WindowLevel TFPoint ColorLUT Options" {
+		upvar 0 $node Array
+
+		foreach id $Array(idList) {
+
+			# Add to the deleteList
+			lappend Array(idListDelete) $id
+
+			# Remove from the idList
+			set i [lsearch $Array(idList) $id]
+			set Array(idList) [lreplace $Array(idList) $i $i]
+
+			# Remove node from tree, and delete it
+			Mrml(dataTree) RemoveItem ${node}($id,node)
+			${node}($id,node) Delete
+		}
+	}
+
+	# colorTree
+	foreach node "Color" {
+		upvar 0 $node Array
+
+		foreach id $Array(idList) {
+
+			# Add to the deleteList
+			lappend Array(idListDelete) $id
+
+			# Remove from the idList
+			set i [lsearch $Array(idList) $id]
+			set Array(idList) [lreplace $Array(idList) $i $i]
+
+			# Remove node from tree, and delete it
+			Mrml(colorTree) RemoveItem ${node}($id,node)
+			${node}($id,node) Delete
+		}
+	}
+
+	MainUpdateMRML
+
+	MainMrmlClearList
+}
+
+proc MainMrmlRead {mrmlFile} {
+	global Path Mrml
+
+	# Open the file 'mrmlFile' to determine which MRML version it is,
+	# and then call the appropriate routine to handle it.
+
+	# Determine name of MRML input file.
+	# Append ".mrml" or ".xml" if necessary.
+	set fileName $mrmlFile
+	if {[file extension $fileName] != ".mrml" && [file extension $fileName] != ".xml"} {
+		if {[file exists $fileName.xml] == 1} {
+			set fileName $fileName.xml
+		} else {
+			set fileName "$fileName.mrml"
+		}
+	}
+
+	# Check the file exists
+	if {[CheckFileExists $fileName] == "0"} {
+		set errmsg "Unable to read input MRML file '$fileName'"
+		puts $errmsg
+		tk_messageBox -message $errmsg
+		return	
+	}
+
+	# Store file and directory name
 	set dir [file dirname $fileName]
 	if {$dir == "" || $dir == "."} {
 		set dir [pwd]
 	}
 	set Path(root) $dir
+	set Path(mrmlFile) $fileName
+
+	# Build a MRML Tree for data, and another for colors and LUTs
+	if {[info command Mrml(dataTree)] == ""} {
+		vtkMrmlTree Mrml(dataTree)
+	}
+	if {[info command Mrml(colorTree)] == ""} {
+		vtkMrmlTree Mrml(colorTree)
+	}
+
+	MainMrmlDeleteAll
+
+	# Open the file to determine it's type
+	set fid [open $fileName r]
+	gets $fid line
+ 	close $fid
+	if {[lindex $line 0] == "MRML"} {
+		puts "MRML V1.0"
+		MainMrmlReadVersion1.0 $fileName
+		MainMrmlBuildTreesVersion1.0
+    } else {
+		puts "MRML V2.0"
+		set tags [MainMrmlReadVersion2.0 $fileName]
+		set tags [MainMrmlAddColors $tags]
+		MainMrmlBuildTreesVersion2.0 $tags
+	}
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlReadVersion1.0
+# .END
+#-------------------------------------------------------------------------------
+proc MainMrmlReadVersion1.0 {fileName} {
+	global Lut Dag Volume Model Config Color Gui Path env Transform
+
+	# Read file
+	set Dag(read) [MRMLRead $fileName]
+	if {$Dag(read) == "-1"} {
+		tk_messageBox -message "Error reading MRML file: '$fileName'\n\
+			See message written in console." 
+		return
+	}
 
 	# Expand URLs
 	set Dag(expanded) [MRMLExpandUrls $Dag(read) $Path(root)]
@@ -180,48 +292,193 @@ proc MainMrmlReadDag {mrmlFile} {
 	}
 }
 
-proc MainMrmlBuildTrees {} {
-	global Dag Color Model Volume Transform
+
+proc MainMrmlReadVersion2.0 {fileName} {
+
+	# Returns list of tags on success else 0
+
+	# Read file
+	if {[catch {set fid [open $fileName r]} errmsg] == 1} {
+		puts $errmsg
+		tk_messagebox -message $errmsg
+		return 0
+	}
+	set mrml [read $fid]
+	close $fid
+
+	# Check that it's the right file type
+	if {[regexp {<!DOCTYPE MRML SYSTEM "mrml20.dtd">} $mrml match] == 0} {
+		set errmsg "The file is MRML version 2.0"
+		tk_messageBox -message $errmsg
+		return 0
+	}
+
+	# Strip off everything but the body
+	if {[regexp {<MRML>(.*)</MRML>} $mrml match mrml] == 0} {
+		# There's no content in the file
+		return ""
+	}
+
+	# Strip leading white space
+	regsub "^\[\n\t \]*" $mrml "" mrml
+
+	set tags1 ""
+	while {$mrml != ""} {
+
+		# Find next tag
+		if {[regexp {^<([^ >]*)([^>]*)>} $mrml match tag attr] == 0} {
+				set errmsg "Invalid MRML file. Can't parse tags:\n$mrml"
+			puts "$errmsg"
+			tk_messageBox -message "$errmsg"
+			return 0
+		}
+
+		# Strip off this tag, so we can continue.
+		if {[lsearch "Transform /Transform" $tag] != -1} {
+			set str "<$tag>"
+		} else {
+			set str "</$tag>"
+		}
+		set i [string first $str $mrml]
+		set mrml [string range $mrml [expr $i + [string length $str]] end]
+
+		# Give the EndTransform tag a name
+		if {$tag == "/Transform"} {
+			set tag EndTransform
+		}
+
+		# Append to List of tags1
+		lappend tags1 "$tag $attr"
+
+		# Strip leading white space
+		regsub "^\[\n\t \]*" $mrml "" mrml
+	}
+
+	# Parse the attribute list for each tag
+	set tags2 ""
+	foreach pair $tags1 {
+		set tag [lindex $pair 0]
+		set attr [lreplace $pair 0 0]
+
+		# Strip leading white space
+		regsub "^\[\n\t \]*" $attr "" attr
+
+		set attrList ""
+		set ignore 0
+		while {$attr != ""} {
+		
+			# Find the next key=value pair (and also strip it off... all in one step!)
+			if {[regexp "^(\[^=\]*)\[\n\t \]*=\[\n\t \]*\['\"\](\[^'\"\]*)\['\"\](.*)$" \
+				$attr match key value attr] == 0} {
+				set errmsg "Invalid MRML file. Can't parse attributes:\n$attr"
+				puts "$errmsg"
+				tk_messageBox -message "$errmsg"
+				return 0
+			}
+			if {$key == "ignore" && $value == "yes"} {
+				set ignore 1
+			}
+			lappend attrList "$key $value"
+
+			# Strip leading white space
+			regsub "^\[\n\t \]*" $attr "" attr
+		}
+
+		# Add this tag if we're not ignoring it
+		if {$ignore == 0} {
+			lappend tags2 "$tag $attrList"
+		}
+	}
+	return $tags2
+}
+
+proc MainMrmlAddColors {tags} {
+
+	# If there are no Color nodes, then read, and append default colors.
+	# Return a new list of tags, possibly including default colors.
+
+	set colors 0
+	foreach pair $tags {
+		set tag  [lindex $pair 0]
+		if {$tag == "Color"} {
+			set colors 1
+		}
+	}
+	if {$colors == 1} {return}
 	
-	# Build a MRML Tree for data, and another for colors and LUTs
+	set fileName [ExpandPath Colors.xml]
+	set tagsColors [MainMrmlReadVersion2.0 $fileName]
+	if {$tagsColors == 0} {
+		set msg "Unable to read file default MRML color file '$fileName'"
+		puts $msg
+		tk_messageBox -message $msg
+		return	
+	}
 
-	vtkMrmlTree Mrml(dataTree)
-	vtkMrmlTree Mrml(colorTree)
+	return "$tags $tagsColors"
+}
 
-	# Dag
+proc MainMrmlBuildTreesVersion1.0 {} {
+	global Dag Color Model Volume Transform EndTransform Matrix Path
+	
 	set level 0
 	set transformCount($level) 0
 	set dag $Dag(withColors)
 	set num [MRMLGetNumNodes $dag]
+
 	for {set j 0} {$j < $num} {incr j} {
 		set node [MRMLGetNode $dag $j]
 		set type [MRMLGetNodeType $node]
 		switch $type {
 		
 		"Separator" {
+			# Increment the separator level.
+			# Initialize the counter of transforms inside this separator.
+			# Add a Transform node.
+			
 			incr level
 			set transformCount($level) 0
+
+			set i $Transform(nextID)
+			incr Transform(nextID)
+			vtkMrmlTransformNode Transform($i,node)
+			Mrml(dataTree) AddItem Transform($i,node)
 		}
 		
 		"End" {
-			foreach c $transformCount($level) {
-				set i $Transform(end,nextID)
-				incr Transform(end,nextID)
-				vtkMrmlEndTransformNode Transform(end,$i,node)
+			# For each transform inside this separator, add an EndTransform node.
+			# Also add an EndTransform node for this separator itself.
 
-				Mrml(dataTree) AddItem Transform(end,$i,node)
+			for {set c 0} {$c < $transformCount($level)} {incr c} {
+				set i $EndTransform(nextID)
+				incr EndTransform(nextID)
+				vtkMrmlEndTransformNode EndTransform($i,node)
+				Mrml(dataTree) AddItem EndTransform($i,node)
 			}
-			decr level
+			set level [expr $level - 1]
+
+			set i $EndTransform(nextID)
+			incr EndTransform(nextID)
+			vtkMrmlEndTransformNode EndTransform($i,node)
+			Mrml(dataTree) AddItem EndTransform($i,node)
 		}
 		
 		"Transform" {
+			# Increment the count of transforms inside the current separator.
+			# Add a Transform node and a Matrix node.
+			
 			incr transformCount($level)
 
 			set i $Transform(nextID)
 			incr Transform(nextID)
-			lappend Transform(idList) $i
 			vtkMrmlTransformNode Transform($i,node)
-			set n Transform($i,node)
+			Mrml(dataTree) AddItem Transform($i,node)
+
+			set i $Matrix(nextID)
+			incr Matrix(nextID)
+			lappend Matrix(idList) $i
+			vtkMrmlMatrixNode Matrix($i,node)
+			set n Matrix($i,node)
 			$n SetID           $i
 			$n SetDescription  [MRMLGetValue $node desc]
 			$n SetName         [MRMLGetValue $node name]
@@ -293,8 +550,8 @@ proc MainMrmlBuildTrees {} {
 			$n SetRasToIjkMatrix   [MRMLGetValue $node rasToIjkMatrix]
 			$n SetRasToVtkMatrix   [MRMLGetValue $node rasToVtkMatrix]
 			$n UseRasToVtkMatrixOn
-			$n SetFilePrefix       [MRMLGetValue $node filePrefix]
 			$n SetFilePattern      [MRMLGetValue $node filePattern]
+			$n SetFilePrefix       [MRMLGetValue $node filePrefix]
 			$n SetFullPrefix       [MRMLGetValue $node filePrefix]
 			$n SetWindow           [MRMLGetValue $node window]
 			$n SetLevel            [MRMLGetValue $node level]
@@ -302,7 +559,7 @@ proc MainMrmlBuildTrees {} {
 			$n SetLabelMap         [MRMLGetValue $node labelMap]
 			$n SetScanOrder        [MRMLGetValue $node scanOrder]
 
-			# Options DAVE
+			# Options NOT CURRENTLY SUPPORTED
 			set program [lindex [MRMLGetValue $node options] 0]
 			set options [lrange [MRMLGetValue $node options] 1 end]
 			if {$program == "slicer"} {
@@ -335,26 +592,206 @@ proc MainMrmlBuildTrees {} {
 		}
 		}
 	}
-	puts "Colors: $Color(idList)"
-	puts "Models: $Model(idList)"
-	puts "Volumes: $Volume(idList)"
+
+	# Add EndTransforms for each transform at the base level
+	# (outside all separators)
+	for {set c 0} {$c < $transformCount($level)} {incr c} {
+		set i $EndTransform(nextID)
+		incr EndTransform(nextID)
+		vtkMrmlEndTransformNode EndTransform($i,node)
+		Mrml(dataTree) AddItem EndTransform($i,node)
+	}
 }
 
-proc MainMrmlUpdateMRML {} {
+proc MainMrmlBuildTreesVersion2.0 {tags} {
+	global Mrml Path
+	global Model Volume Color Transform EndTransform Matrix
+	global TransferFunction WindowLevel TFPoint ColorLUT Options
+	
+	foreach pair $tags {
+		set tag  [lindex $pair 0]
+		set attr [lreplace $pair 0 0]
+
+		switch $tag {
+		
+		"Transform" {
+			set i $Transform(nextID)
+			incr Transform(nextID)
+			vtkMrmlTransformNode Transform($i,node)
+			Mrml(dataTree) AddItem Transform($i,node)
+		}
+		
+		"EndTransform" {
+			set i $EndTransform(nextID)
+			incr EndTransform(nextID)
+			vtkMrmlEndTransformNode EndTransform($i,node)
+			Mrml(dataTree) AddItem EndTransform($i,node)
+		}
+		
+		"Matrix" {
+			set i $Matrix(nextID)
+			incr Matrix(nextID)
+			lappend Matrix(idList) $i
+			vtkMrmlMatrixNode Matrix($i,node)
+			set n Matrix($i,node)
+			$n SetID           $i
+			foreach a $attr {
+				set key [lindex $a 0]
+				set val [lreplace $a 0 0]
+				switch $key {
+				"desc"   {$n SetDescription $val}
+				"name"   {$n SetName        $val}
+				"matrix" {$n SetMatrix      $val}
+				}
+			}
+			Mrml(dataTree) AddItem $n
+		}
+
+		"Color" {
+			set i $Color(nextID)
+			incr Color(nextID)
+			lappend Color(idList) $i
+			vtkMrmlColorNode Color($i,node)
+			set n Color($i,node)
+			$n SetID           $i
+			foreach a $attr {
+				set key [lindex $a 0]
+				set val [lreplace $a 0 0]
+				switch $key {
+				"desc"         {$n SetDescription  $val}
+				"name"         {$n SetName         $val}
+				"ambient"      {$n SetAmbient      $val}
+				"diffuse"      {$n SetDiffuse      $val}
+				"specular"     {$n SetSpecular     $val}
+				"power"        {$n SetPower        $val}
+				"labels"       {$n SetLabels       $val}
+				"diffuseColor" {eval $n SetDiffuseColor $val}
+				}
+			}
+			Mrml(colorTree) AddItem $n
+		}
+		
+		"Model" {
+			set i $Model(nextID)
+			incr Model(nextID)
+			lappend Model(idList) $i
+			vtkMrmlModelNode Model($i,node)
+			set n Model($i,node)
+			$n SetID               $i
+			foreach a $attr {
+				set key [lindex $a 0]
+				set val [lreplace $a 0 0]
+				switch $key {
+				"desc"             {$n SetDescription  $val}
+				"name"             {$n SetName         $val}
+				"fileName"         {$n SetFileName     $val}
+				"color"            {$n SetColor        $val}
+				"opacity"          {$n SetOpacity      $val}
+				"scalarRange"      {eval $n SetScalarRange $val}
+				"visibility" {
+					if {$val == "yes"} {
+						$n SetVisibility 1
+					} else {
+						$n SetVisibility 0
+					}
+				}
+				"clipping" {
+					if {$val == "yes"} {
+						$n SetClipping 1
+					} else {
+						$n SetClipping 0
+					}
+				}
+				"backfaceCulling" {
+					if {$val == "yes"} {
+						$n SetBackfaceCulling 1
+					} else {
+						$n SetBackfaceCulling 0
+					}
+				}
+				"scalarVisibility" {
+					if {$val == "yes"} {
+						$n SetScalarVisibility 1
+					} else {
+						$n SetScalarVisibility 0
+					}
+				}
+				}
+			}
+
+			# Compute full path name relative to the MRML file
+			$n SetFullFileName [file join $Path(root) [$n GetFileName]]
+
+			Mrml(dataTree) AddItem $n
+		}
+		
+		"Volume" {
+			set i $Volume(nextID)
+			incr Volume(nextID)
+			lappend Volume(idList) $i
+			vtkMrmlVolumeNode Volume($i,node)
+			set n Volume($i,node)
+			$n SetID     $i 
+			foreach a $attr {
+				set key [lindex $a 0]
+				set val [lreplace $a 0 0]
+				switch $key {
+				"desc"            {$n SetDescription    $val}
+				"name"            {$n SetName           $val}
+				"filePattern"     {$n SetFilePattern    $val}
+				"filePrefix"      {$n SetFilePrefix     $val}
+				"imageRange"      {eval $n SetImageRange     $val}
+				"littleEndian"    {$n SetLittleEndian   $val}
+				"spacing"         {eval $n SetSpacing        $val}
+				"dimensions"      {eval $n SetDimensions     $val}
+				"labelMap"        {$n SetLabelMap       $val}
+				"scalarType"      {$n SetScalarTypeTo$val}
+				"numScalars"      {$n SetNumScalars     $val}
+				"rasToIjkMatrix"  {$n SetRasToIjkMatrix $val}
+				"rasToVtkMatrix"  {$n SetRasToVtkMatrix $val}
+				"colorLUT"        {$n SetLUTName        $val}
+				"window"          {$n SetWindow         $val}
+				"level"           {$n SetLevel          $val}
+				"lowerThreshold"  {$n SetLowerThreshold $val}
+				"upperThreshold"  {$n SetUpperThreshold $val}
+				"autoWindowLevel" {
+					if {$val == "yes"} {
+						$n SetAutoWindowLevel 1
+					} else {
+						$n SetAutoWindowLevel 0
+					}
+				}
+				"autoThreshold" {
+					if {$val == "yes"} {
+						$n SetAutoThreshold 1
+					} else {
+						$n SetAutoThreshold 0
+					}
+				}
+				"interpolate" {
+					if {$val == "yes"} {
+						$n SetInterpolate 1
+					} else {
+						$n SetInterpolate 0
+					}
+				}
+				}
+			}
+
+			# Compute full path name relative to the MRML file
+			$n SetFullPrefix [file join $Path(root) [$n GetFilePrefix]]
+			
+			$n UseRasToVtkMatrixOn
+
+			Mrml(dataTree) AddItem $n
+		}
+		}
+	}
+}
+
+proc MainMrmlWrite {filename} {
 	global Mrml
 
-	# Compute geometric relationships
-	Mrml(dataTree) ComputeTransforms
+	Mrml(dataTree) Write $filename
 }
 
-proc MainMrmlDumpTree {type} {
-	global Mrml
-
-	set tree Mrml(${type}Tree)
-	$tree InitTraversal
-	set node [$tree GetNextItem]
-    while {$node != ""} {
-		puts "dump='$node'"
-		set node [$tree GetNextItem]
-    }
-}

@@ -113,7 +113,7 @@ proc MainVolumesUpdateMRML {} {
 		if {[MainVolumesCreate $v] == 1} {
 			# Success
 		}
-	}    
+	}  
 
 	# Delete any old volumes
 	#--------------------------------------------------------
@@ -122,6 +122,7 @@ proc MainVolumesUpdateMRML {} {
 			# Success
 		}
 	}
+
 	# Did we delete the active volume?
 	if {[lsearch $Volume(idList) $Volume(activeID)] == -1} {
 		MainVolumesSetActive [lindex $Volume(idList) 0]
@@ -170,12 +171,9 @@ proc MainVolumesCreate {v} {
 		return 0
 	}
 
-	# Skip imaginary volumes (id < 0)
-	if {$v <= 0} {return 0}
-	
 	# Check that all files exist
 	scan [Volume($v,node) GetImageRange] "%d %d" lo hi
-	if {[CheckVolumeExists [Volume($v,node) GetFilePrefix] \
+	if {[CheckVolumeExists [Volume($v,node) GetFullPrefix] \
 		[Volume($v,node) GetFilePattern] $lo $hi] != ""} {
 		set str "Unable to build the VTK objects for Volumes."
 		puts $str
@@ -493,6 +491,16 @@ proc MainVolumesSetActive {{v ""}} {
 		# Use defaults to update GUI
 		vtkMrmlVolumeNode default
 		set Volume(name) [default GetName]
+		set Volume(firstPattern) %s.%03d
+		set Volume(order) SI
+		set spacing [default GetSpacing]
+		set Volume(littleEndian) [default GetLittleEndian]
+		set Volume(resolution) [lindex [default GetDimensions] 0]
+		set Volume(pixelSize) [lindex $spacing 0]
+		set Volume(sliceThickness) [lindex $spacing 2]
+		set Volume(sliceSpacing) 0.0
+		set Volume(gantryDetectorTilt) [default GetTilt]
+		set Volume(desc) [default GetDescription]
 		default Delete
 
 	} else {

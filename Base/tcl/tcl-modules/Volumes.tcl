@@ -27,10 +27,15 @@
 #===============================================================================
 # FILE:        Volumes.tcl
 # DATE:        12/09/1999 14:15
-# LAST EDITOR: gering
+# LAST EDITOR: odonnell
 # PROCEDURES:  
 #   VolumesInit
 #   VolumesBuildGUI
+#   VolumesSetPropertyType
+#   VolumesPropsApply
+#   VolumesPropsCancel
+#   VolumesSetFirst
+#   VolumesSetOrder
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -38,7 +43,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesInit {} {
-	global Volume Module Gui
+	global Volume Module Gui Path
 
 	# Define Tabs
 	set m Volumes
@@ -57,9 +62,34 @@ proc VolumesInit {} {
 
 	# Props
 	set Volume(propertyType) Basic
-	set Volume(name) ""
 	set Volume(desc) ""
-
+	set Volume(first) $Path(prefixOpenVolume)
+	set Volume(orderMenu) "{Sagittal:LR} {Sagittal:RL} {Axial:SI}\
+		{Axial:IS} {Coronal:AP} {Coronal:PA}"
+	set Volume(orderList) "LR RL SI IS AP PA OB" 
+	set Volume(name) [file root [file tail $Volume(first)]]
+	set Volume(littleEndian) 0
+	set Volume(firstPattern) %s.%03d
+	set Volume(littleEndian) 0
+	set Volume(resolution) 256
+	set Volume(pixelSize) 0.9375
+	set Volume(sliceThickness) 1.5
+	set Volume(sliceSpacing) 0.0
+	set Volume(gantryDetectorTilt) 0
+	set Volume(order) LR
+	set Volume(desc) ""
+	set Volume(readHeaders) 1
+	set Volume(labelMap) 0
+	# Transform
+	set Volume(transformName) ""
+	set Volume(transformMatrix) "1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"
+	set Volume(transformTranslateX) 0
+	set Volume(transformTranslateY) 0
+	set Volume(transformTranslateZ) 0
+	set Volume(transformRotateX) 0
+	set Volume(transformRotateY) 0
+	set Volume(transformRotateZ) 0
+	set Volume(transformDesc) ""
 }
 
 #-------------------------------------------------------------------------------
@@ -80,7 +110,7 @@ proc VolumesBuildGUI {} {
 	#     Type
 	#   Bot
 	#     Basic
-	#     Advanced
+	#     Header
 	# Other
 	#-------------------------------------------
 
@@ -245,7 +275,9 @@ Ron, the interpolation button won't work without downloading dll's again.
 	set f $fDisplay.fHistogram.fLut
 
 	set c {label $f.lLUT -text "Palette:" $Gui(WLA)}; eval [subst $c]
-	set c {menubutton $f.mbLUT -text "Gray" -relief raised -bd 2 -width 9 \
+	set c {menubutton $f.mbLUT \
+		-text "$Lut([lindex $Lut(idList) 0],name)" \
+			-relief raised -bd 2 -width 9 \
 		-menu $f.mbLUT.menu $Gui(WMBA)}; eval [subst $c]
 		set c {menu $f.mbLUT.menu $Gui(WMA)}; eval [subst $c]
 		# Add menu items
@@ -305,7 +337,7 @@ Ron, the interpolation button won't work without downloading dll's again.
 	#-------------------------------------------
 	set f $fProps.fBot
 
-	foreach type "Basic Advanced" {
+	foreach type "Basic Header" {
 		frame $f.f${type} -bg $Gui(activeWorkspace)
 		place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
 		set Volume(f${type}) $f.f${type}
@@ -343,7 +375,7 @@ Ron, the interpolation button won't work without downloading dll's again.
 
 	eval {label $f.l -text "Properties:"} $Gui(BLA)
 	frame $f.f -bg $Gui(backdrop)
-	foreach p "Basic Advanced" {
+	foreach p "Basic Header" {
 		eval {radiobutton $f.f.r$p \
 			-text "$p" -command "VolumesSetPropertyType" \
 			-variable Volume(propertyType) -value $p -width 8 \
@@ -357,30 +389,118 @@ Ron, the interpolation button won't work without downloading dll's again.
 	#-------------------------------------------
 	set f $fProps.fBot.fBasic
 
-	frame $f.fName    -bg $Gui(activeWorkspace)
+	frame $f.fVolume  -bg $Gui(activeWorkspace) -relief groove -bd 3
 	frame $f.fApply   -bg $Gui(activeWorkspace)
-	pack $f.fName $f.fApply \
+	pack $f.fVolume $f.fApply \
 		-side top -fill x -pady $Gui(pad)
 
 	#-------------------------------------------
-	# Props->Bot->Advanced frame
+	# Props->Bot->Basic->fVolume frame
 	#-------------------------------------------
-	set f $fProps.fBot.fAdvanced
 
-	frame $f.fDesc    -bg $Gui(activeWorkspace)
-	frame $f.fApply   -bg $Gui(activeWorkspace)
-	pack $f.fDesc $f.fApply \
-		-side top -fill x -pady $Gui(pad)
+	set f $fProps.fBot.fBasic.fVolume
+	frame $f.fInstr    -bg $Gui(activeWorkspace)
+	frame $f.fFirst    -bg $Gui(activeWorkspace)
+	frame $f.fLast     -bg $Gui(activeWorkspace)
+	frame $f.fHeaders  -bg $Gui(activeWorkspace)
+	frame $f.fLabelMap -bg $Gui(activeWorkspace)
+	frame $f.fOptions  -bg $Gui(activeWorkspace)
+	frame $f.fDesc     -bg $Gui(activeWorkspace)
 
-	#-------------------------------------------
-	# Props->Bot->Basic->Name frame
-	#-------------------------------------------
-	set f $fProps.fBot.fBasic.fName
+	pack $f.fInstr $f.fFirst $f.fLast $f.fHeaders $f.fLabelMap $f.fOptions \
+		$f.fDesc -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
-	eval {label $f.l -text "Name:" } $Gui(WLA)
-	eval {entry $f.e -textvariable Volume(name)} $Gui(WEA)
-	pack $f.l -side left -padx $Gui(pad)
-	pack $f.e -side left -padx $Gui(pad) -expand 1 -fill x
+	# Instr
+	set f $fProps.fBot.fBasic.fVolume.fInstr
+
+	set c {label $f.l -text "First Image File:" \
+		$Gui(WLA)}; eval [subst $c]
+	set c {button $f.bFind -text "Browse..." -width 9 \
+		-command "VolumesSetFirst" $Gui(WBA)}; eval [subst $c]
+	pack $f.l $f.bFind -side left -padx $Gui(pad) 
+
+	# First
+	set f $fProps.fBot.fBasic.fVolume.fFirst
+
+	set c {entry $f.eFirst -textvariable Volume(first) \
+		$Gui(WEA)}; eval [subst $c]
+		bind $f.eFirst <Return> "VolumesSetFirst"
+		bind $f.eFirst <Tab> "VolumesSetLast"
+	pack $f.eFirst -side left -padx $Gui(pad) -expand 1 -fill x
+
+	# Last
+	set f $fProps.fBot.fBasic.fVolume.fLast
+
+	set c {label $f.lLast -text "Number of Last Image:" \
+		 $Gui(WLA)}; eval [subst $c]
+	set c {entry $f.eLast -textvariable Volume(last) $Gui(WEA)}
+		eval [subst $c]
+	pack $f.lLast -side left -padx $Gui(pad)
+	pack $f.eLast -side left -padx $Gui(pad) -expand 1 -fill x
+
+	# Headers
+	set f $fProps.fBot.fBasic.fVolume.fHeaders
+
+	frame $f.fTitle -bg $Gui(activeWorkspace)
+	frame $f.fBtns -bg $Gui(activeWorkspace)
+   	pack $f.fTitle $f.fBtns -side left -pady 5
+
+	set c {label $f.fTitle.l -text "Image Headers:" $Gui(WLA)}
+		eval [subst $c]
+	pack $f.fTitle.l -side left -padx $Gui(pad) -pady 0
+
+	foreach text "Auto Manual" \
+		value "1 0" \
+		width "5 7" {
+		set c {radiobutton $f.fBtns.rMode$value -width $width \
+			-text "$text" -value "$value" -variable Volume(readHeaders) \
+			-indicatoron 0 $Gui(WCA)}
+			eval [subst $c]
+		pack $f.fBtns.rMode$value -side left -padx 0 -pady 0
+	}
+
+	# LabelMap
+	set f $fProps.fBot.fBasic.fVolume.fLabelMap
+
+	frame $f.fTitle -bg $Gui(activeWorkspace)
+	frame $f.fBtns -bg $Gui(activeWorkspace)
+   	pack $f.fTitle $f.fBtns -side left -pady 5
+
+	set c {label $f.fTitle.l -text "Image Data:" $Gui(WLA)}
+		eval [subst $c]
+	pack $f.fTitle.l -side left -padx $Gui(pad) -pady 0
+
+	foreach text "{Grayscale} {Label Map}" \
+		value "0 1" \
+		width "9 9 " {
+		set c {radiobutton $f.fBtns.rMode$value -width $width \
+			-text "$text" -value "$value" -variable Volume(labelMap) \
+			-indicatoron 0 $Gui(WCA)}
+			eval [subst $c]
+		pack $f.fBtns.rMode$value -side left -padx 0 -pady 0
+	}
+
+	# Options
+	set f $fProps.fBot.fBasic.fVolume.fOptions
+
+	set c {label $f.lName -text "Name:" \
+		 $Gui(WLA)}; eval [subst $c]
+	set c {entry $f.eName -textvariable Volume(name) -width 13 $Gui(WEA)}
+		eval [subst $c]
+	pack  $f.lName -side left -padx $Gui(pad) 
+	pack $f.eName -side left -padx $Gui(pad) -expand 1 -fill x
+	pack $f.lName -side left -padx $Gui(pad) 
+
+	# Desc row
+	set f $fProps.fBot.fBasic.fVolume.fDesc
+
+	set c {label $f.lDesc -text "Optional Description:" \
+		 $Gui(WLA)}; eval [subst $c]
+	set c {entry $f.eDesc -textvariable Volume(desc) $Gui(WEA)}
+		eval [subst $c]
+	pack $f.lDesc -side left -padx $Gui(pad)
+	pack $f.eDesc -side left -padx $Gui(pad) -expand 1 -fill x
+
 
 	#-------------------------------------------
 	# Props->Bot->Basic->Apply frame
@@ -393,20 +513,71 @@ Ron, the interpolation button won't work without downloading dll's again.
 		-command "VolumesPropsCancel"} $Gui(WBA) {-width 8}
 	grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
 
-	#-------------------------------------------
-	# Props->Bot->Advanced->Desc frame
-	#-------------------------------------------
-	set f $fProps.fBot.fAdvanced.fDesc
-
-	eval {label $f.l -text "Optional Description:"} $Gui(WLA)
-	eval {entry $f.e -textvariable Volume(desc)} $Gui(WEA)
-	pack $f.l -side top -padx $Gui(pad) -fill x -anchor w
-	pack $f.e -side top -padx $Gui(pad) -expand 1 -fill x
 
 	#-------------------------------------------
-	# Props->Bot->Advanced->Apply frame
+	# Props->Bot->Header frame
 	#-------------------------------------------
-	set f $fProps.fBot.fAdvanced.fApply
+	set f $fProps.fBot.fHeader
+
+	frame $f.fEntry   -bg $Gui(activeWorkspace)
+	frame $f.fApply   -bg $Gui(activeWorkspace)
+	pack $f.fEntry $f.fApply \
+		-side top -fill x -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Props->Bot->Header->Entry frame
+	#-------------------------------------------
+
+	# Entry fields
+	foreach param "firstPattern resolution \
+		pixelSize sliceThickness sliceSpacing \
+		gantryDetectorTilt" \
+		name "{File Pattern} \
+		{Resolution (width in pixels)} {Pixel Size (mm)} \
+		{Slice Thickness} {Slice Spacing} {Slice Tilt}" {
+
+	    set f $fProps.fBot.fHeader.fEntry
+	    frame $f.f$param   -bg $Gui(activeWorkspace)
+	    pack $f.f$param \
+		    -side top -fill x -pady $Gui(pad)
+
+	    set f $f.f$param
+		set c {label $f.l$param -text "$name:" $Gui(WLA)}; eval [subst $c]
+		set c {entry $f.e$param -width 10 -textvariable Volume($param) $Gui(WEA)}
+			eval [subst $c]
+		pack $f.l$param -side left -padx $Gui(pad) -fill x -anchor w
+		pack $f.e$param -side left -padx $Gui(pad) -expand 1 -fill x
+	}
+
+	#Orientation Menu
+	set f $fProps.fBot.fHeader.fEntry
+
+	set param "order"
+	frame $f.f$param -bg $Gui(activeWorkspace)
+	pack $f.f$param \
+		-side top -fill x -pady $Gui(pad)
+
+	set f $f.f$param
+	set c {label $f.l${param} -text "Orient:" $Gui(WLA)}; eval [subst $c]
+	set c {menubutton $f.mb${param} -relief raised -bd 2 \
+		-text "[lindex $Volume(${param}Menu) 0]" \
+		-width 10 -menu $f.mb${param}.menu $Gui(WMBA)}; eval [subst $c]
+	set Volume(mb${param}) $f.mb${param}
+	set c {menu $f.mb${param}.menu $Gui(WMA)}; eval [subst $c]
+	
+	set m $f.mb${param}.menu
+	foreach type $Volume(${param}Menu) {
+	    $m add command -label $type -command "VolumesSetOrder $type"
+	}
+	pack $f.l${param} -side left -padx $Gui(pad) -fill x -anchor w
+	pack $f.mb${param} -side left -padx $Gui(pad) -expand 1 -fill x 
+
+
+
+	#-------------------------------------------
+	# Props->Bot->Header->Apply frame
+	#-------------------------------------------
+	set f $fProps.fBot.fHeader.fApply
 
 	eval {button $f.bApply -text "Apply" \
 		-command "VolumesPropsApply; RenderAll"} $Gui(WBA) {-width 8}
@@ -497,14 +668,20 @@ proc VolumesSetPropertyType {} {
 }
  
 proc VolumesPropsApply {} {
-	global Volume Label Module Mrml
+	global Volume Label Module Mrml Path
 
-	tk_messageBox -message "Can't add volumes yet."
-	VolumesPropsCancel
-	return
-	
 	set m $Volume(activeID)
 	if {$m == ""} {return}
+	
+	# Manual headers
+	if {$Volume(readHeaders) == "0"} {
+		# if on basic frame, switch to header frame.
+	    if {$Volume(propertyType) != "Header"} {
+			set Volume(propertyType) Header
+			VolumesSetPropertyType
+			return
+	    }
+	}
 
 	if {$m == "NEW"} {
 		set i $Volume(nextID)
@@ -515,6 +692,29 @@ proc VolumesPropsApply {} {
 		$n SetID               $i
 
 		# These get set down below, but we need them before MainUpdateMRML
+
+		# Manual headers
+		if {$Volume(readHeaders) == "0"} {
+			$n SetFilePrefix [file root $Volume(first)]
+			$n SetFilePattern $Volume(firstPattern)
+			$n SetFullPrefix [file join $Path(root) [$n GetFilePrefix]]
+			set firstNum [MainFileFindImageNumber First \
+				[file join $Path(root) $Volume(first)]]
+			$n SetImageRange $firstNum $Volume(last)
+			$n SetDimensions $Volume(resolution) $Volume(resolution)
+			eval $n SetSpacing $Volume(pixelSize) $Volume(pixelSize) \
+				[expr $Volume(sliceSpacing) + $Volume(sliceThickness)]
+	#		$n SetScalarTypeTo$Volume(scalarType)
+	#		$n SetNumScalars $Volume(numScalars)
+			$n SetLittleEndian $Volume(littleEndian)
+			$n SetTilt $Volume(gantryDetectorTilt)
+			$n ComputeRasToIjkFromScanOrder $Volume(order)
+		
+		# Read headers
+		} else {
+			GetHeaderInfo [file join $Path(root) $Volume(first)] $Volume(last) $n 1
+		}
+
 		$n SetName $Volume(name)
 
 		Mrml(dataTree) AddItem $n
@@ -525,6 +725,14 @@ proc VolumesPropsApply {} {
 	}
 
 	Volume($m,node) SetName $Volume(name)
+	Volume($m,node) SetFilePrefix [file root $Volume(first)]
+	Volume($m,node) SetFilePattern $Volume(firstPattern)
+	# *** fix this:
+	Volume($m,node) SetFullPrefix  $Volume(first)
+	# this needs print header to get first image number
+	set firstNum [MainFileFindImageNumber First \
+			[file join $Path(root) $Volume(first)]]
+	Volume($m,node) SetImageRange $firstNum $Volume(last)
 
 	# If tabs are frozen, then 
 	if {$Module(freezer) != ""} {
@@ -555,3 +763,53 @@ proc VolumesPropsCancel {} {
 	}
 }
 
+#-------------------------------------------------------------------------------
+# VolumesSetFirst
+#-------------------------------------------------------------------------------
+proc VolumesSetFirst {} {
+	global Volume Path
+	
+	set typelist {
+		{"All Datas" {*}}
+	}
+	set filename [GetOpenFile $Path(root) $Volume(first) \
+		$typelist 001 "First Image in Volume" 0]
+	if {$filename == ""} {return}
+    
+	# Store for next time 
+	set Path(prefixOpenVolume) [file root $filename]
+
+	# volumeFirst is a relative name (prefix.001) to the root.
+	# volumeLast is an image number
+	
+	set Volume(first) $filename
+	set Volume(name)  [file root [file tail $filename]]
+	set Volume(last)  [MainFileFindImageNumber Last \
+		[file join $Path(root) $filename]]
+
+puts "file tail filename [file tail $filename]"
+puts "	[file join $Path(root) $filename]"
+puts " last image number: [MainFileFindImageNumber Last\
+		[file join $Path(root) $filename]]"
+}
+#-------------------------------------------------------------------------------
+# VolumesSetOrder
+#-------------------------------------------------------------------------------
+proc VolumesSetOrder {order} {
+	global Volume Gui
+
+        set Volume(order) [lindex $Volume(orderList)\
+		[lsearch $Volume(orderMenu) $order]]
+        $Volume(mborder) config -text $order
+}
+
+#-------------------------------------------------------------------------------
+# VolumesSetLast
+#-------------------------------------------------------------------------------
+proc VolumesSetLast {} {
+	global Path Volume
+
+	set Volume(last) [MainFileFindImageNumber Last\
+		[file join $Path(root) $Volume(first)]]
+	set Volume(name) [file root [file tail $Volume(first)]]
+}

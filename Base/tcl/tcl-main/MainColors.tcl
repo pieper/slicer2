@@ -92,10 +92,10 @@ proc MainColorsUpdateMRML {} {
 
 	# Set colors for each label value
 	$iLut InitDirect
-    set tree Mrml(colorTree) 
-    set node [$tree InitColorTraversal]
+	set tree Mrml(colorTree) 
+	set node [$tree InitColorTraversal]
 	set n 0
-    while {$node != ""} {
+	while {$node != ""} {
 		set diffuseColor [$node GetDiffuseColor]
 		eval $lut SetTableValue [expr $n+2] $diffuseColor 1.0
 
@@ -103,7 +103,7 @@ proc MainColorsUpdateMRML {} {
 		foreach v $values {
 			$iLut MapDirect $v [expr $n+2]
 		}
-        set node [$tree GetNextColor]
+		set node [$tree GetNextColor]
 		incr n
 	}
 	$iLut Build
@@ -113,7 +113,7 @@ proc MainColorsUpdateMRML {} {
 # .PROC MainColorsSetActive
 # .END
 #-------------------------------------------------------------------------------
-proc MainColorsSetActive {{c ""}} {
+proc MainColorsSetActive {c} {
 	global Color
 
 	set Color(activeID) $c

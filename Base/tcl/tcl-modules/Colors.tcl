@@ -233,6 +233,10 @@ proc ColorsApply {} {
 proc ColorsUpdateMRML {} {
 	global Color
 
+	if {$Color(idList) == ""} {
+		return
+	}
+	
 	ColorsDisplayColors
 	ColorsSelectColor $Color(activeID)
 	ColorsSelectLabel 0
@@ -286,6 +290,8 @@ proc ColorsSetColor {{value ""}} {
 
 	# Set the new color from the GUI into the node
 	set c $Color(activeID)
+	if {$c == ""} {return}
+
 	Color($c,node) SetDiffuseColor $Color(red) $Color(green) $Color(blue)
 	foreach param "Ambient Diffuse Specular Power" {
 		Color($c,node) Set$param $Color([Uncap $param])
@@ -345,6 +351,7 @@ proc ColorsDisplayLabels {} {
 
 	# Append new
 	set c $Color(activeID)
+	if {$c == ""} {return}
 
 	set Color(label) ""
 	foreach label [Color($c,node) GetLabels] {
@@ -366,8 +373,12 @@ proc ColorsSelectLabel {{i ""}} {
 	$Color(fLabelList) selection set $i $i
 	
 	set c $Color(activeID)
-	set labels [Color($c,node) GetLabels]
-	set Color(label) [lindex $labels $i]
+	if {$c == ""} {
+		set Color(label) ""
+	} else {
+		set labels [Color($c,node) GetLabels]
+		set Color(label) [lindex $labels $i]
+	}
 }
 
 #-------------------------------------------------------------------------------

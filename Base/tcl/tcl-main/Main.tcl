@@ -186,8 +186,7 @@ proc MainBoot {{mrmlFile ""}} {
 	# Load MRML data
 	#-------------------------------------------	
 	puts "Loading MRML"
-	MainMrmlReadDag $mrmlFile
-	MainMrmlBuildTrees
+	MainMrmlRead $mrmlFile
 	MainUpdateMRML
 
 	#-------------------------------------------
@@ -364,6 +363,10 @@ proc MainBuildGUI {} {
 	}
 	$Gui(mFile) add command -label "Open..." -command \
 		"MainMenu File Open"
+	$Gui(mFile) add command -label "Save" -command \
+		"MainMenu File Save"
+	$Gui(mFile) add command -label "Save As..." -command \
+		"MainMenu File SaveAs"
 	$Gui(mFile) add separator
 	$Gui(mFile) add command -label "Exit" -command MainExitProgram
 	$Gui(mHelp) add command -label "Documentation..." -command \
@@ -624,7 +627,7 @@ proc MainBuildGUI {} {
 proc MainUpdateMRML {} {
 	global Module Label
 	
-	set verbose 0
+	set verbose 1
 	
 	# Call each "MRML" routine that's not part of a module
 	#-------------------------------------------
@@ -636,8 +639,8 @@ proc MainUpdateMRML {} {
 	MainVolumesUpdateMRML
 	if {$verbose == 1} {puts "MRML: MainModels"}
 	MainModelsUpdateMRML
-	if {$verbose == 1} {puts "MRML: MainTransforms"}
-	MainTransformsUpdateMRML
+	if {$verbose == 1} {puts "MRML: MainMatrices"}
+	MainMatricesUpdateMRML
 
 	foreach p $Module(procMRML) {
 		if {$verbose == 1} {puts "MRML: $p"}
@@ -659,7 +662,7 @@ proc MainUpdateMRML {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSetup {} {
-	global Module Gui Volume Slice View Model Color Transform
+	global Module Gui Volume Slice View Model Color Matrix
 
 	# idList is: -2 -1 0 1
 	set len [llength $Volume(idList)]
@@ -702,9 +705,9 @@ proc MainSetup {} {
 	}
 
 	# Active transform
-	set m [lindex $Transform(idList) 0]
+	set m [lindex $Matrix(idList) 0]
 	if {$m != ""} {	
-		MainTransformsSetActive $m
+		MainMatricesSetActive $m
 	}
 
 	# Active color
@@ -735,6 +738,7 @@ proc Tab {m {row ""} {tab ""}} {
 	if {$Module(freezer) != ""} {
 		set Module(btn) $Module(activeID)
 		set Module(moreBtn) 0
+		tk_messageBox -message "Please press the Apply or Cancel button."
 		return
 	}
 
@@ -930,6 +934,12 @@ proc MainMenu {menu cmd} {
 		switch $cmd {
 		"Open" {
 			MainFileOpenPopup "" 50 50
+		}
+		"Save" {
+			MainFileSave
+		}
+		"SaveAs" {
+			MainFileSaveAs
 		}
 		}
 	}

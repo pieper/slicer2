@@ -1570,6 +1570,8 @@ proc EditorWriteOutput {data} {
 		}
 	}
 	Volume($v,node) SetFilePrefix $filePrefix
+	Volume($v,node) SetFullPrefix \
+		[file join $Path(root) [Volume($v,node) GetFilePrefix]]
 
 	# Write volume data
 	set Gui(progressText) "Writing [Volume($v,node) GetName]"
@@ -1582,6 +1584,8 @@ proc EditorWriteOutput {data} {
 	# to the MRML file.
 	set filename "$fileFull.mrml"
 	Volume($v,node) SetFilePrefix [file root [file tail $filePrefix]]
+	Volume($v,node) SetFullPrefix \
+		[file join $Path(root) [Volume($v,node) GetFilePrefix]]
 
 	# DAVE interpolate off
 
