@@ -84,6 +84,22 @@ public:
   vtkSetMacro(Prob, double);
   vtkGetMacro(Prob, double);
 
+  // Description:
+  // This variable allows to control the influence of the LocalPrioir in the segmentation process 
+  // LocalPriorWeight = 1.0 default setting; 0.0 => LocalPrior is ignored
+  // Note: this variable is applied to all the subclasses during the segmentation bc the subclasses define the local Prior 
+  vtkGetMacro(LocalPriorWeight,float);
+  vtkSetMacro(LocalPriorWeight,float);
+
+  // Description:
+  // This paramters allows the individual influence of each channel in the segmentation process 
+  // by default 
+  // The weight confidence measure describes the confidence in the weights form the EM algorithm
+  // where the length(InputChannelWeights) = # of input channels 
+  // Note: this variable is applied to all the subclasses during the segmentation bc the subclasses define the Tissue Cass Distributioon 
+  vtkSetStringMacro(InputChannelWeights);
+  vtkGetStringMacro(InputChannelWeights);
+
 protected:
   vtkMrmlSegmenterSuperClassNode();
   ~vtkMrmlSegmenterSuperClassNode();
@@ -92,6 +108,9 @@ protected:
 
   int NumClasses;
   double Prob;
+  
+  float  LocalPriorWeight;
+  char   *InputChannelWeights;  
 };
 
 #endif

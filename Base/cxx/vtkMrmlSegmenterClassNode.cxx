@@ -67,6 +67,8 @@ vtkMrmlSegmenterClassNode::vtkMrmlSegmenterClassNode()
   this->Prob             = 0.0;
   this->ShapeParameter   = 0.0;
   this->WeightConfidenceName = NULL;
+  this->LocalPriorWeight = 1.0;
+  this->InputChannelWeights = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -97,6 +99,11 @@ vtkMrmlSegmenterClassNode::~vtkMrmlSegmenterClassNode()
     delete [] this->WeightConfidenceName;
     this->WeightConfidenceName = NULL;
   } 
+  
+  if (this->InputChannelWeights) {
+    delete [] this->InputChannelWeights;
+    this->InputChannelWeights = NULL;
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -140,6 +147,12 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
     of << " WeightConfidenceName='" << this->WeightConfidenceName << "'";
   }
 
+  if (this->InputChannelWeights && strcmp(this->InputChannelWeights, "")) 
+  {
+    of << " InputChannelWeights='" << this->InputChannelWeights << "'";
+  }
+  of << " LocalPriorWeight='" << this->LocalPriorWeight << "'";
+
   of << "></SegmenterClass>\n";;
 }
 
@@ -160,7 +173,8 @@ void vtkMrmlSegmenterClassNode::Copy(vtkMrmlNode *anode)
   this->SetLogMean(node->LogMean);
   this->SetLogCovariance(node->LogCovariance);
   this->SetWeightConfidenceName(node->WeightConfidenceName);
-
+  this->SetInputChannelWeights(node->InputChannelWeights);
+  this->SetLocalPriorWeight(node->LocalPriorWeight);
 }
 
 //----------------------------------------------------------------------------
@@ -186,10 +200,13 @@ void vtkMrmlSegmenterClassNode::PrintSelf(ostream& os, vtkIndent indent)
     (this->LogMean ? this->LogMean : "(none)") << "\n";
    os << indent << "LogCovariance: " <<
     (this->LogCovariance ? this->LogCovariance : "(none)") << "\n";
-
    os << indent << "WeightConfidenceName: " <<
     (this->WeightConfidenceName ? this->WeightConfidenceName : "(none)") << "\n";
 
+   os << indent << "InputChannelWeights: " <<
+    (this->InputChannelWeights ? this->InputChannelWeights : "(none)") << "\n";
+
+   os << indent << "LocalPriorWeight: " << this->LocalPriorWeight << "\n";
 }
 
 

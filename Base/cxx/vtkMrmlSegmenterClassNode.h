@@ -115,6 +115,20 @@ public:
   vtkSetStringMacro(WeightConfidenceName);
   vtkGetStringMacro(WeightConfidenceName);
 
+  // Description:
+  // This variable allows to control the influence of the LocalPrioir in the segmentation process 
+  // LocalPriorWeight = 1.0 default setting; 0.0 => LocalPrior is ignored 
+  vtkGetMacro(LocalPriorWeight,float);
+  vtkSetMacro(LocalPriorWeight,float);
+
+  // Description:
+  // This paramters allows the individual influence of each channel in the segmentation process 
+  // by default 
+  // The weight confidence measure describes the confidence in the weights form the EM algorithm
+  // where the length(InputChannelWeights) = # of input channels 
+  vtkSetStringMacro(InputChannelWeights);
+  vtkGetStringMacro(InputChannelWeights);
+
 protected:
   vtkMrmlSegmenterClassNode();
   ~vtkMrmlSegmenterClassNode();
@@ -131,6 +145,8 @@ protected:
   char   *LogMean;
   char   *LogCovariance;
   char   *WeightConfidenceName;
+  float  LocalPriorWeight;
+  char   *InputChannelWeights;  
 };
 
 #endif

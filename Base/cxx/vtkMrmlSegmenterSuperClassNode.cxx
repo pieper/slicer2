@@ -61,10 +61,17 @@ vtkMrmlSegmenterSuperClassNode::vtkMrmlSegmenterSuperClassNode() {
   this->Indent     = 1;
   this->NumClasses = 0;
   this->Prob       = 0.0;
+  this->LocalPriorWeight = 1.0;
+  this->InputChannelWeights = NULL;
 }
 
 //----------------------------------------------------------------------------
-vtkMrmlSegmenterSuperClassNode::~vtkMrmlSegmenterSuperClassNode() { }
+vtkMrmlSegmenterSuperClassNode::~vtkMrmlSegmenterSuperClassNode() { 
+  if (this->InputChannelWeights) {
+    delete [] this->InputChannelWeights;
+    this->InputChannelWeights = NULL;
+  }
+}
 
 //----------------------------------------------------------------------------
 void vtkMrmlSegmenterSuperClassNode::Write(ofstream& of, int nIndent)
@@ -76,6 +83,13 @@ void vtkMrmlSegmenterSuperClassNode::Write(ofstream& of, int nIndent)
   if (this->Name && strcmp(this->Name, "")) of << " name ='" << this->Name << "'";
   of << " NumClasses ='" << this->NumClasses << "'";
   of << " Prob='" << this->Prob << "'";
+
+  if (this->InputChannelWeights && strcmp(this->InputChannelWeights, "")) 
+  {
+    of << " InputChannelWeights='" << this->InputChannelWeights << "'";
+  }
+  of << " LocalPriorWeight='" << this->LocalPriorWeight << "'";
+  
   of << ">\n";
 }
 
@@ -88,6 +102,8 @@ void vtkMrmlSegmenterSuperClassNode::Copy(vtkMrmlNode *anode)
   vtkMrmlSegmenterSuperClassNode *node = (vtkMrmlSegmenterSuperClassNode *) anode;
   this->NumClasses = node->NumClasses;
   this->Prob = node->Prob;
+  this->SetInputChannelWeights(node->InputChannelWeights);
+  this->SetLocalPriorWeight(node->LocalPriorWeight);
 }
 
 //----------------------------------------------------------------------------
@@ -97,6 +113,11 @@ void vtkMrmlSegmenterSuperClassNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Name: " << (this->Name ? this->Name : "(none)") << "\n";
   os << indent << "NumClasses: "                << this->NumClasses      <<  "\n"; 
   os << indent << "Prob: " << this->Prob << "\n"; 
+  os << indent << "InputChannelWeights: " <<
+    (this->InputChannelWeights ? this->InputChannelWeights : "(none)") << "\n";
+
+  os << indent << "LocalPriorWeight: " << this->LocalPriorWeight << "\n";
+
 }
 
 
