@@ -188,5 +188,5 @@ proc CustomCount {} {
 	global Custom
 
 	incr Custom(count)
-	$Custom(lStuff) config -text "You clicked the button $Custom(stuff) times"
+	$Custom(lStuff) config -text "You clicked the button $Custom(count) times"
 }
