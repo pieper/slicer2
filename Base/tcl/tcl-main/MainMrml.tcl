@@ -78,7 +78,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.68 $} {$Date: 2002/11/15 23:20:24 $}]
+        {$Revision: 1.69 $} {$Date: 2002/11/19 17:25:03 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -1138,7 +1138,13 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                             $n SetInModel 0
                         }
                     }
-                    "clipstate" { $n SetClipState $val}
+                    "clipstate" { 
+                        switch $val {
+                            "true" { set val 1 }
+                            "false" { set val 0 }
+                        }
+                        $n SetClipState $val
+                    }
                     "cliptype" { $n SetClipType $val}
                     "zoom" {$n SetZoom $val}
                     "backvolrefid" {$n SetBackVolRefID $val}
