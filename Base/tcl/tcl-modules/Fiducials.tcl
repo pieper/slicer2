@@ -129,7 +129,7 @@ proc FiducialsInit {} {
 	#   appropriate info when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.3 $} {$Date: 2000/07/28 17:36:54 $}]
+		{$Revision: 1.4 $} {$Date: 2000/08/08 15:27:59 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -381,11 +381,9 @@ Help for Fiducials Panel
 proc FiducialsUpdateGUI {} {
 	global Fiducials Volume
 
-   DevUpdateSelectButton Volume Fiducials Volume1 Volume1 DevSelect
-   DevUpdateSelectButton Model  Fiducials Model1  Model1  DevSelect
+   DevUpdateNodeSelectButton Volume Fiducials Volume1 Volume1 DevSelectNode
+   DevUpdateNodeSelectButton Model  Fiducials Model1  Model1  DevSelectNode
 }
-
-
 
 #-------------------------------------------------------------------------------
 # .PROC FiducialsSetTxtScale
