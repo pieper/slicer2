@@ -82,6 +82,7 @@ proc Usage { {msg ""} } {
     set msg "$msg\n   --no-tkcon : disables tk console"
     set msg "$msg\n   --load-dicom <dir> : read dicom files from <dir> at startup"
     set msg "$msg\n   --script <file.tcl> : script to execute after slicer loads"
+    set msg "$msg\n   --version : print out the version info and continue"
     puts stderr $msg
     tk_messageBox -message $msg -title $SLICER(version) -type ok
 }
@@ -95,6 +96,7 @@ set verbose 0
 set Module(verbose) 0
 set SLICER(load-dicom) ""
 set SLICER(script) ""
+set SLICER(versionInfo) ""
 set strippedargs ""
 set argc [llength $argv]
 for {set i 0} {$i < $argc} {incr i} {
@@ -135,6 +137,28 @@ for {set i 0} {$i < $argc} {incr i} {
             } else {
                 set SLICER(script) [lindex $argv $i]
             }
+        }
+        "--version" {
+            # for data provenance, print out the executable name, version, vtk and version, compiler name and version and arguments
+            # executable-name version libname libversion [compilername compilerversion] cvstag -arg1 val1 -arg2 val2
+            set execName ""
+            switch $tcl_platform(os) {
+                "SunOS" {
+                    set execName "slicer2-solaris-sparc"
+                }
+                "Linux" {
+                    set execName "slicer2-linux-x86"
+                }
+                "Darwin" {
+                    set execName "slicer2-darwin-ppc"
+                }
+                default {
+                    set execName "slicer2-win32.exe"
+                }
+            }
+            # add in the compiler info after MainBoot is called
+            set SLICER(versionInfo)  "$execName $argv\n${SLICER(version)} CVS: {$Id: Go.tcl,v 1.48 2003/03/19 22:55:57 nicole Exp $} Platform: $tcl_platform(os)"
+
         }
         "-*" {
             Usage "unknown option $a\n"
@@ -574,6 +598,15 @@ set View(render_on) 1
 MainBoot [lindex $argv 0]
 set View(render_on) 0
 
+### print out the versioning info
+if { $SLICER(versionInfo) != "" } {
+    # have to get the compiler information after MainBoot
+    set compilerVersion [Slicer GetCompilerVersion]
+    set compilerName [Slicer GetCompilerName]
+    set SLICER(versionInfo) "$SLICER(versionInfo) ${compilerName}: $compilerVersion"
+    puts "$SLICER(versionInfo)"
+}
+
 #
 # read a dicom volume specified on command line
 #
@@ -623,3 +656,5 @@ if {[info exists env(SLICER_SCRIPT)] != 0 && $env(SLICER_SCRIPT) != ""} {
 if { $SLICER(script) != "" } {
     source $SLICER(script)
 }
+
+
