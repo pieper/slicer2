@@ -44,6 +44,7 @@
 #   MainFileFindUniqueName
 #   MainFileCreateDirectory
 #   CheckVolumeExists
+#   MainFileParseImageFile ImageFile
 #   MainFileFindImageNumber which firstfile
 #==========================================================================auto=
 
@@ -68,7 +69,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.35 $} {$Date: 2002/07/02 21:09:11 $}]
+        {$Revision: 1.36 $} {$Date: 2002/07/02 22:47:49 $}]
 
     set File(filePrefix) data
 }
@@ -797,6 +798,46 @@ proc CheckFileExists {filename {verbose 1}} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC MainFileParseImageFile
+#
+# Takes in the imagefile and returns
+# the pattern,prefix, number, and stuff after the number in a list
+#
+# example: /tmp/file.001.gz returns  %s.%03d%s /tmp/file 1 .gz
+# example: /tmp/file.001    returns  %s.%03d%s /tmp/file 1  
+#
+# .ARGS
+# str ImageFile the file name
+# .END
+# 
+#-------------------------------------------------------------------------------
+proc MainFileParseImageFile {ImageFile} {
+    ##  Parse the file into its prefix, number, and perhaps stuff afterwards
+    ##   Note: find the last consecutive string of digits
+    if {[regexp {^(.+)\.([0-9]+)(\.[^\.0-9]*)?$} $ImageFile match filePrefix \
+            num afterStuff] == 0} {
+        DevErrorWindow "Could not parse $ImageFile in MainFileFindImageNumber"
+        return ""
+    }
+
+    # Rid unnecessary 0's
+    set ZerolessNum [string trimleft $num "0"]
+    if {$ZerolessNum == ""} {set ZerolessNum 0}
+
+    ## Did we trim zeros? This tells us how to look for files
+    if { [string equal $ZerolessNum $num] == 1 } {
+        set pattern "%s.%d%s";        
+    } else {
+        ## Someday, we'll have to check for things other than 001...
+        set pattern "%s.%03d%s";
+    }
+
+    set a ""
+    lappend a  $pattern $filePrefix $ZerolessNum $afterStuff
+    return $a
+}
+
+#-------------------------------------------------------------------------------
 # .PROC MainFileFindImageNumber
 #
 # .ARGS
@@ -806,28 +847,16 @@ proc CheckFileExists {filename {verbose 1}} {
 # 
 #-------------------------------------------------------------------------------
 proc MainFileFindImageNumber {which firstFile} {
-    ##  Parse the file into its prefix, number, and perhaps stuff afterwards
-    ##   Note: find the last consecutive string of digits
-  if {[regexp {^(.+)\.([0-9]+)(\.[^\.0-9]*)?$} $firstFile match filePrefix \
-          num afterStuff] == 0} {
-       DevErrorWindow "Could not parse $firstFile in MainFileFindImageNumber"
-       return ""
-    }
+    set parsing [MainFileParseImageFile $firstFile]
 
-    # Rid unnecessary 0's
-    set firstNum [string trimleft $num "0"]
-    if {$firstNum == ""} {set firstNum 0}
+    set pattern    [lindex $parsing 0]
+    set filePrefix [lindex $parsing 1]
+    set firstNum   [lindex $parsing 2]
+    set afterStuff [lindex $parsing 3]
 
     ## Do they just want the first number?
     if {$which == "First"} { return $firstNum  }
 
-    ## Did we trim zeros? This tells us how to look for files
-    if { [string equal $firstNum $num] == 1 } {
-        set pattern "%s.%d%s";        
-    } else {
-        ## Someday, we'll have to check for things other than 001...
-        set pattern "%s.%03d%s";
-    }
     # puts "Pattern: $pattern"
     # puts "firstFile: $firstFile "
     set firstFile [format $pattern $filePrefix $firstNum $afterStuff]
@@ -852,5 +881,3 @@ proc MainFileFindImageNumber {which firstFile} {
     }
     return $lastNum
 }
-
-
