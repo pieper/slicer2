@@ -99,7 +99,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   }
 
 
-vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.5 $");
+vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.6 $");
 vtkStandardNewMacro(vtkITKMutualInformationTransform);
 
 //----------------------------------------------------------------------------
@@ -331,7 +331,13 @@ static void vtkITKMutualInformationExecute(vtkITKMutualInformationTransform *sel
   //
   // Start registration
   //
-  MIRegistrator->Execute();
+  try { MIRegistrator->Execute(); }
+  catch( itk::ExceptionObject & err )
+    {
+      std::cout << "Caught an exception: " << std::endl;
+      std::cout << err << std::endl;
+      return;
+    }
 
   MIRegistrator->ResultsToMatrix(matrix);
 
