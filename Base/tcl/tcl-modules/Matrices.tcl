@@ -73,7 +73,7 @@ proc MatricesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.29 $} {$Date: 2002/05/09 15:56:34 $}]
+            {$Revision: 1.30 $} {$Date: 2002/07/17 14:31:10 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -98,6 +98,10 @@ proc MatricesInit {} {
     set Matrix(regRotLR) 0
     set Matrix(regRotIS) 0
     set Matrix(regRotPA) 0
+
+    #Create a new renderer in order to display the split view
+    vtkRenderer matRen
+    lappend Module(Renderers) matRen
 }
 
 #-------------------------------------------------------------------------------
