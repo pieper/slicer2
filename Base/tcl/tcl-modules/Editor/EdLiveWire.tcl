@@ -548,7 +548,8 @@ proc EdLiveWireRaiseEdgeImageWin {} {
     set f $w.fTop.fRight
 
     # histogram
-    source /scratch/src/slicer/program/vtkHistogramWidget.tcl
+    #source /scratch/src/slicer/program/vtkHistogramWidget.tcl
+    source vtkHistogramWidget.tcl
     set hist [vtkHistogramWidget $f.hist]
     scan [[Ed(EdLiveWire,viewer$s) GetInput] GetExtent] "%d %d %d %d %d %d" x1 x2 y1 y2 z1 z2
     # this should match the first image displayed
@@ -1136,11 +1137,6 @@ proc EdLiveWireApply {} {
 	return
     }
     
-    # testing
-    source "/scratch/src/slicer/program/debug.tcl"
-    set file "/scratch/src/slicer/program/test.txt"
-    writePoints $rasPoints $file
-
     set e EdLiveWire
 
     # the working volume is editor input (where we want to draw)
