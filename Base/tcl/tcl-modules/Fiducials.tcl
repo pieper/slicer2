@@ -82,7 +82,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.28 $} {$Date: 2002/11/13 23:16:21 $}]
+        {$Revision: 1.29 $} {$Date: 2002/12/03 23:27:09 $}]
     
     # Initialize module-level variables
     
@@ -1047,11 +1047,31 @@ proc FiducialsResetVariables {} {
 
 ##################### CREATION ####################################
 
+#-------------------------------------------------------------------------------
+# .PROC FiducialsCheckListExistence
+# Checks the Mrml tree to see if any lists with that name already exist 
+# .ARGS 
+#  int existence 1 if a list with that name exists, 0 otherwise
+# .END
+#-------------------------------------------------------------------------------
 
+proc FiducialsCheckListExistence {name} {
+
+    global Fiducials
+    
+    set existingLists $Fiducials(idList)
+    foreach fid $existingLists {
+    if { [Fiducials($fid,node) GetName] == $name & [lsearch $Fiducials(listOfNames) $name] != -1} {
+        return 1 
+    } 
+    } 
+    # if no list with that name is found, return 0
+    return 0
+}
 
 #-------------------------------------------------------------------------------
 # .PROC FiducialsCreateFiducialsList
-# Create a new Fiducials/EndFiducials nodes with that name that will hold a set of points
+# Create a new Fiducials/pEndFiducials nodes with that name that will hold a set of points
 # If a list with that name exists already, return -1
 # If the new Fiducials/EndFiducials pair is created, return its id  
 # .ARGS 
@@ -1062,7 +1082,7 @@ proc FiducialsCreateFiducialsList {type name {textSize ""} {symbolSize ""}} {
     global Fiducials Point
     
     # search in the existing lists to see if one already exists with that name
-    if { [lsearch $Fiducials(listOfNames) $name] == -1 } {
+    if { [FiducialsCheckListExistence $name] == 0 } {
     
     set fid [[MainMrmlAddNode Fiducials] GetID] 
     
@@ -1238,7 +1258,20 @@ proc FiducialsDeletePoint {fid pid} {
     # remove the id from the list
     set Fiducials($fid,selectedPointIdList) [lreplace $Fiducials($fid,selectedPointIdList) $index $index]
     }
-    
+    # remove the id from the fiducials list it belongs to
+    set index [lsearch $Fiducials($fid,pointIdList) $pid]
+    if { $index != -1 } {
+    # remove the id from the list
+    set Fiducials($fid,pointIdList) [lreplace $Fiducials($fid,pointIdList) $index $index]
+    }
+    foreach r $Fiducials(renList) {
+        $r RemoveActor Point($pid,follower,$r)
+        Point($pid,follower,$r) Delete
+    }
+    Point($pid,mapper) Delete
+    Point($pid,text) Delete
+
+
     # delete from Mrml
     MainMrmlDeleteNode Point $pid
     MainUpdateMRML
@@ -1392,7 +1425,7 @@ proc FiducialsSetActiveList {name {menu ""} {scroll ""}} {
     
     global Fiducials Point Module
 
-    if {[lsearch $Fiducials(listOfNames) $name] != -1} {
+    if { [FiducialsCheckListExistence $name] == 1 } {
         set Fiducials(activeList) $name
         if { $menu == "" } {
             foreach m $Fiducials(mbActiveList) {
