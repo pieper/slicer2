@@ -63,7 +63,7 @@ proc ModelsInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.32 $} {$Date: 2001/04/12 17:44:59 $}]
+		{$Revision: 1.33 $} {$Date: 2001/05/18 20:48:12 $}]
 
 	# Props
 	set Model(propertyType) Basic
@@ -849,7 +849,7 @@ proc ModelsPropsCancel {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ModelsMeter {} {
-	global Model
+	global Model Module
 
 	# Count the polygons in each model
 	set total 0
@@ -872,7 +872,10 @@ proc ModelsMeter {} {
 			# polyData will survive as long as it's the input to the mapper
 			set Model($m,polyData) [stripper GetOutput]
 			$Model($m,polyData) Update
-			Model($m,mapper) SetInput $Model($m,polyData)
+
+		    foreach r $Module(Renderers) {
+			Model($m,mapper,$r) SetInput $Model($m,polyData)
+		    }
 
 			stripper SetOutput ""
 			foreach p "triangle stripper" {

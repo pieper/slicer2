@@ -63,7 +63,7 @@ proc ModelMakerInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.27 $} {$Date: 2001/04/13 20:45:05 $}]
+		{$Revision: 1.28 $} {$Date: 2001/05/18 20:48:11 $}]
 
 	# Create
 	set ModelMaker(idVolume) $Volume(idNone)
@@ -395,7 +395,7 @@ Also save your MRML file by selecting <B>Save</B> from the <B>File</B> menu.
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerTransform {volume} {
-	global ModelMaker Model Volume Matrix
+	global ModelMaker Model Volume Matrix Module
 	
 	if {$volume == 1} {
 		# See if the volume exists
@@ -443,8 +443,9 @@ proc ModelMakerTransform {volume} {
 	# polyData will survive as long as it's the input to the mapper
 	set Model($m,polyData) [$p GetOutput]
 	$Model($m,polyData) Update
-	Model($m,mapper) SetInput $Model($m,polyData)
-
+	foreach r $Module(Renderers) {
+	    Model($m,mapper,$r) SetInput $Model($m,polyData)
+	}
 	stripper SetOutput ""
 	foreach p "transformer normals stripper" {
 		$p SetInput ""
@@ -648,7 +649,7 @@ proc ModelMakerSmoothWrapper {{m ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerSmooth {m iterations} {
-	global Model Gui ModelMaker
+	global Model Gui ModelMaker Module
 
 	set name [Model($m,node) GetName]
 
@@ -685,8 +686,9 @@ proc ModelMakerSmooth {m iterations} {
 	# polyData will survive as long as it's the input to the mapper
 	set Model($m,polyData) [$p GetOutput]
 	$Model($m,polyData) Update
-	Model($m,mapper) SetInput $Model($m,polyData)
-
+    foreach r $Module(Renderers) {
+	Model($m,mapper,$r) SetInput $Model($m,polyData)
+    }
 	stripper SetOutput ""
 	foreach p "smoother normals stripper" {
 		$p SetInput ""
@@ -704,7 +706,7 @@ proc ModelMakerSmooth {m iterations} {
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerReverseNormals {{m ""}} {
-	global Model Gui ModelMaker
+	global Model Gui ModelMaker Module
 
 	if {$m == ""} {
 		set m $Model(activeID)
@@ -731,8 +733,9 @@ proc ModelMakerReverseNormals {{m ""}} {
 	# polyData will survive as long as it's the input to the mapper
 	set Model($m,polyData) [$p GetOutput]
 	$Model($m,polyData) Update
-	Model($m,mapper) SetInput $Model($m,polyData)
-
+	foreach r $Module(Renderers) {
+	    Model($m,mapper,$r) SetInput $Model($m,polyData)
+	}
 	stripper SetOutput ""
 	foreach p "reverser stripper" {
 		$p SetInput ""
@@ -750,7 +753,7 @@ proc ModelMakerReverseNormals {{m ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerMarch {m v decimateIterations smoothIterations} {
-	global Model ModelMaker Gui Label
+	global Model ModelMaker Gui Label Module
 	
 	if {$ModelMaker(marching) == 1} {
 		puts "already marching"
@@ -929,8 +932,9 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 	# polyData will survive as long as it's the input to the mapper
 	set Model($m,polyData) [$p GetOutput]
 	$Model($m,polyData) Update
-	Model($m,mapper) SetInput $Model($m,polyData)
-
+	foreach r $Module(Renderers) {
+	    Model($m,mapper,$r) SetInput $Model($m,polyData)
+	}
 	stripper SetOutput ""
 	foreach p "to thresh mcubes decimator reverser transformer smoother normals stripper" {
 		$p SetInput ""

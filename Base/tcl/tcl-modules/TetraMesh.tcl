@@ -143,7 +143,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.11 $} {$Date: 2001/03/08 01:17:29 $}]
+		{$Revision: 1.12 $} {$Date: 2001/05/18 20:48:11 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -693,7 +693,7 @@ $CurrentTetraMesh Update
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshProcessEdges {} {
-	global TetraMesh Model Volume
+	global TetraMesh Model Volume Module
 
 ######################################################################
 #### Get the input mesh
@@ -800,9 +800,12 @@ set HIGHSCALAR $highscalar
   #  set Model($m,polyData) [gf GetOutput]
   #  $Model($m,polyData) Update
   #  puts [ $Model($m,polyData) GetNumberOfPolys]
-  Model($m,mapper) SetInput $Model($m,polyData)
+   $Model($m,polyData) Update
+   foreach r $Module(Renderers) {
+       Model($m,mapper,$r) SetInput $Model($m,polyData)
+   }
    puts [ $Model($m,polyData) GetNumberOfPolys]
-
+   
   #############################################################
   #### Clean Up
   #############################################################
@@ -832,7 +835,7 @@ set TetraMesh(modelbasename) ""
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshProcessEdges2 {} {
-	global TetraMesh Model Volume
+	global TetraMesh Model Volume Module
 
 ######################################################################
 #### Get the input mesh
@@ -980,7 +983,9 @@ while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
   #  set Model($m,polyData) [gf GetOutput]
   #  $Model($m,polyData) Update
   #  puts [ $Model($m,polyData) GetNumberOfPolys]
-  Model($m,mapper) SetInput $Model($m,polyData)
+  foreach r $Module(Renderers) {
+      Model($m,mapper,$r) SetInput $Model($m,polyData)
+  }
 
   ### Get the remaining Data ###
   Thresh ThresholdBetween [ expr { $lowscalar + 0.01} ] $highscalar
@@ -1054,7 +1059,7 @@ set TetraMesh(modelbasename) ""
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshProcessVField {} {
-	global TetraMesh Model Volume
+	global TetraMesh Model Volume Module
 
 ######################################################################
 #### Get the data
@@ -1140,7 +1145,10 @@ set m [ TetraMeshCreateModel ${modelbasename}Vector 0 10 \
   [ $Model($m,polyData) GetPointData] PassData [[TransformPolyData GetOutput] GetPointData]
   [ $Model($m,polyData) GetCellData] PassData [[TransformPolyData GetOutput] GetCellData]
 
-  Model($m,mapper) SetInput $Model($m,polyData)
+foreach r $Module(Renderers) {
+    Model($m,mapper,$r) SetInput $Model($m,polyData)
+}
+
 
 #TransformMesh Delete
 
@@ -1165,7 +1173,7 @@ set TetraMesh(modelbasename) ""
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshProcessSurface {} {
-	global TetraMesh Model Volume
+	global TetraMesh Model Volume Module
 
 ######################################################################
 #### Get the data
@@ -1313,7 +1321,10 @@ while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
   #  set Model($m,polyData) [gf GetOutput]
   #  $Model($m,polyData) Update
   #  puts [ $Model($m,polyData) GetNumberOfPolys]
-  Model($m,mapper) SetInput $Model($m,polyData)
+  foreach r $Module(Renderers) {
+      Model($m,mapper,$r) SetInput $Model($m,polyData)
+  }
+  
 
   ### Get the remaining Data ###
   Thresh ThresholdBetween [ expr { $lowscalar + 0.01} ] $highscalar
