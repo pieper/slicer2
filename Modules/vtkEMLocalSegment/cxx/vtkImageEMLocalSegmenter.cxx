@@ -302,7 +302,7 @@ bool vtkImageEMLocalSegmenter::CheckInputImage(vtkImageData * inData,int DataTyp
 //----------------------------------------------------------------------------
 void vtkImageEMLocalSegmenter::SetNumClasses(int NumberOfClasses)
 {
-  int z,y,x;
+  int z,y;
   if (this->NumInputImages < 1) {
     vtkErrorMacro(<< "Number of Input Images has to be defined before setting the number of classes");
     return;
@@ -518,8 +518,6 @@ static void MeanFieldApproximation3D(int id,
   int i,j,k, 
     JumpHorizontal  = imgY*NumClasses,
     JumpSlice       = imgXY*NumClasses;
-  int LeftOverX,LeftOverY;
-  int StartPixel;
   double *w_m_outStart = w_m_output;
   double *wxp = new double[NumClasses],*wxpPtr = wxp,*wxn = new double[NumClasses],*wxnPtr = wxn, *wyn = new double[NumClasses],*wynPtr = wyn,
          *wyp = new double[NumClasses],*wypPtr = wyp,*wzn = new double[NumClasses],*wznPtr = wzn, *wzp = new double[NumClasses],*wzpPtr = wzp;  
@@ -637,7 +635,7 @@ static void MeanFieldApproximation3D(int id,
         // Kilian May 2002: I believe the form underneath is correct - Tina's PhD thesis displays it exactly like underneath 
     mp = TissueProbability[i] * (1-Alpha+Alpha*exp((*wxp++) + (*wxn++) + (*wyp++) + (*wyn++) + (*wzp++) + (*wzn++)));
     if (ProbDataLocal[i]) mp *= double(*ProbDataPtr[i]);
-    w_m_output[i] = mp*vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[i],cY_M, LogMu[i],InvLogCov[i],NumInputImages); 
+    w_m_output[i] = mp*vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[i],cY_M, LogMu[i],InvLogCov[i],NumInputImages);
     normRow += w_m_output[i];
       } 
       wxp = wxpPtr; wxn = wxnPtr; wyn = wynPtr; wyp = wypPtr; wzn = wznPtr; wzp = wzpPtr;
@@ -1010,7 +1008,9 @@ int vtkImageEMLocalSegmenter::MF_Approx_Workpile(double *w_m_input,unsigned char
 // implementation from Carl-Fredrik Westin, Mats Bjornemo and Anders Brun
 template  <class T>
 static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,T **ProbDataPtrStart, double** InputVector, unsigned char *OutputVector) {
-  cout << "This Computer has " << vtkThreadNumCpus(void)  << " Processors" << endl;
+  #ifndef _WIN32
+    cout << "This Computer has " << vtkThreadNumCpus(void)  << " Processors" << endl;
+  #endif
   cout << "vtkImageEMLocalAlgorithm: Initialize Variables" << endl;
 
   // Read variables Class Definition
@@ -1034,8 +1034,8 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,T **ProbData
   // Bias Information
   int BiasPrint             = self->GetBiasPrint();
   int BiasLengthFileName    = 0;
-  if (self->GetBiasRootFileName() != NULL) BiasLengthFileName = strlen(self->GetBiasRootFileName());
-  char BiasRootFileName[BiasLengthFileName + 1];
+  if (self->GetBiasRootFileName() != NULL) BiasLengthFileName = int(strlen(self->GetBiasRootFileName()));
+  char *BiasRootFileName = new char[BiasLengthFileName + 1];
   if ((BiasPrint) && (BiasLengthFileName)) strcpy(BiasRootFileName,self->GetBiasRootFileName());
   else sprintf(BiasRootFileName,"\n");
 
@@ -1051,7 +1051,7 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,T **ProbData
   int imgXY = ImageMaxY*ImageMaxX;
   
 
-  char filename[50];
+  // char filename[50];
   T **ProbDataPtrCopy = new T*[NumClasses];
   for (i =0;i<NumClasses;i++) {
     ProbDataPtrCopy[i] = ProbDataPtrStart[i];
@@ -1148,10 +1148,12 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,T **ProbData
   FILE **BiasFile = new FILE*[NumInputImages];
   bool PrintBiasFlag;
   if (BiasLengthFileName) BiasLengthFileName = BiasLengthFileName + 7 + NumInputImages/10;
-  char BiasFileName[BiasLengthFileName + 1];
+  char *BiasFileName = new char[BiasLengthFileName + 1];
   if (BiasLengthFileName == 0)  sprintf(BiasFileName,"\n");
 
+#ifndef _WIN32
   START_PRECISE_TIMING;
+#endif
   // ------------------------------------------------------------
   // Start Algorithm 
   // ------------------------------------------------------------
@@ -1361,10 +1363,13 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,T **ProbData
       self->DeterminLabelMap(OutputVector, w_m,imgXY,ImageMaxZ);
     }    
   }
+#ifndef _WIN32
   END_PRECISE_TIMING;
   SHOW_ELAPSED_PRECISE_TIME;  
+#endif
   // cout << "Calculation Time: " << (clock() - start_time)/double(CLOCKS_PER_SEC) << " seconds " << endl;
-
+  delete[] BiasRootFileName;
+  delete[] BiasFileName;
   delete[] ProbDataPtrCopy;
   delete[] BiasFile;
 
@@ -1401,7 +1406,7 @@ static void vtkImageEMLocalSegmenterExecute(vtkImageEMLocalSegmenter *self,doubl
   // -----------------------------------------------------
   // 1.) Allocate Memory 
   // -----------------------------------------------------
-  int idxR, idxY, idxZ,idx1;
+  int idxR, idxY, idxZ;
   int outIncX, outIncY, outIncZ;
   int ImageMaxX = self->GetImageMaxX();
   int ImageMaxY = self->GetImageMaxY();

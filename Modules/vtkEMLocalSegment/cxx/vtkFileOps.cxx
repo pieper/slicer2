@@ -117,7 +117,7 @@ void  vtkFileOps::WriteDoubleToUShortToGEFile(char* FileName, double* vec,int XS
 // Functions to write Short Data to an MRI File
 // ---------------------------------------------------------
 /* Copyright (c) Simon Warfield simonw@bwh.harvard.edu */
-/* $Id: vtkFileOps.cxx,v 1.1 2003/05/12 17:38:54 pieper Exp $ */
+/* $Id: vtkFileOps.cxx,v 1.2 2003/05/12 19:46:00 pohl Exp $ */
 int vtkFileOps::uncompressedFileName(char *fname, char **newFileName)
 {
 #ifndef _WIN32
@@ -137,8 +137,8 @@ int vtkFileOps::uncompressedFileName(char *fname, char **newFileName)
       (*newFileName) = strdup(fname); /* Use the same name */
       assert((*newFileName) != NULL);
     }
-  return 0; /* Success */
 #endif
+  return 0; /* Success */
 }
 
 /* Return -1 on error, return 1 if file is compressed, 
@@ -203,6 +203,7 @@ int vtkFileOps::fileIsCompressed(char *fname, char **newFileName)
   }
   return fileIsCompressed;
 #endif
+  return 0;
 }
 
 char* vtkFileOps::pathComponent(char *fname)
@@ -272,6 +273,7 @@ int vtkFileOps::makeDirectoryIfNeeded(char *fname)
   free(path);
   return retval;
 #endif
+  return 0;
 }
 
 short vtkFileOps::convertShortFromGE(short ge)
@@ -394,6 +396,7 @@ int vtkFileOps::WriteMRIfile(char *fname, unsigned char *header, int headersize,
 
   return npixels; /* Success */
 #endif
+  return 0;
 }
 
 int vtkFileOps::WriteMRIfile(char *fname, double *data, int np)

@@ -191,6 +191,8 @@ public:
   // Convolution in all three direction 
   // Can be made using less memory but then it will be probably be slower
   void Conv(float v[],int vLen);
+  // Kilian : Just to be compatible with older version
+  void Conv(double v[],int vLen);
   int ConvMultiThread(float* filter, int filterLen);
   // Start -  Multi Thread Function
   int ConvolutionFilter_workpile(float *input, float *filter, int M1, int M2, int N1, int N2, int O1, int O2);
@@ -249,6 +251,14 @@ public:
 
   float& operator () (int t1, int t2, int z,int y, int x) {return this->TriVolume[t1][t2](z,y,x);}
   const float& operator () (int t1, int t2, int z,int y, int x) const {return this->TriVolume[t1][t2](z,y,x);}
+
+  // Kilian : Just to be complient with old version
+  void Conv(double v[],int vLen) {
+    float *v_f = new float[vLen];
+    for (int i = 0; i < vLen; i++) v_f[i] = float(v[i]);
+    this->Conv(v_f,vLen);  
+    delete[] v_f;
+  }
 
   void Conv(float v[],int vLen) {
     int x,y;

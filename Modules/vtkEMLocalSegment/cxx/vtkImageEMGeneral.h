@@ -207,6 +207,7 @@ class VTK_EXPORT vtkImageEMGeneral : public vtkImageMultipleInputFilter
   static float FastGaussMulti(double inverse_sqrt_det_covariance, float x,int dim);
   // Description :
   // Same as FastGauss - just for multi dimensional input 
+  static float FastGaussMulti(double inverse_sqrt_det_covariance, double* x,double *mu, double **inv_cov, int dim);
   static float FastGaussMulti(double inverse_sqrt_det_covariance, float* x,double *mu, double **inv_cov, int dim);
 
   // Description :
@@ -395,7 +396,16 @@ inline float vtkImageEMGeneral::FastGauss2(double inverse_sqrt_det_covariance, f
 inline float vtkImageEMGeneral::FastGaussMulti(double inverse_sqrt_det_covariance, float x,int dim) {
   return pow(EMSEGMENT_ONE_OVER_ROOT_2_PI,dim) * inverse_sqrt_det_covariance * qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * x);
 }
-
+// Kilian- this is just so we can work with older versions
+inline float vtkImageEMGeneral::FastGaussMulti(double inverse_sqrt_det_covariance, double* x,double *mu, double **inv_cov, int dim) {
+  float result;
+  float *x_f = new float[dim];
+  for (int i = 0 ; i < dim ; i++) x_f[i] = float(x[i]);
+  result =  vtkImageEMGeneral::FastGaussMulti(inverse_sqrt_det_covariance, x_f,mu, inv_cov, dim);
+  delete []x_f;
+  return result;
+  
+}
 // Kilian change to use normal guass
 inline float vtkImageEMGeneral::FastGaussMulti(double inverse_sqrt_det_covariance, float* x,double *mu, double **inv_cov, int dim) {
   if (dim <2) return (float) vtkImageEMGeneral::FastGauss(inverse_sqrt_det_covariance,x[0]- float(mu[0]));

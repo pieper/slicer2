@@ -95,6 +95,14 @@ void EMVolume::Test(int Vdim) {
 #endif
 }
 
+// Kilian : This is just so we are compatible with older version
+void EMVolume::Conv(double v[],int vLen) {
+  float *v_f = new float[vLen];
+  for (int i = 0; i < vLen; i++) v_f[i] = float(v[i]);
+  this->Conv(v_f,vLen);  
+  delete[] v_f;
+}
+
 void EMVolume::Conv(float v[],int vLen) {
   this->ConvY(v,vLen);
   this->ConvX(v,vLen);
