@@ -64,7 +64,7 @@ proc TwinInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.8 $} {$Date: 2000/02/28 17:56:19 $}]
+		{$Revision: 1.9 $} {$Date: 2000/09/10 22:08:52 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -186,6 +186,8 @@ proc TwinApply {} {
 		if {[info exists twinWin] == 0 || [info command $twinWin] == ""} {
 			set twinWin [Twin(display) GetImageWindow $Twin(screen)]
 			$twinWin AddImager twinRen
+			$twinWin DoubleBufferOn
+
 		}
 		$twinWin SetPosition $Twin(xPos) $Twin(yPos)
 		$twinWin SetSize $Twin(width) $Twin(height)
