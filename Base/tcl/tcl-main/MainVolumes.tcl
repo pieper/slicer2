@@ -107,6 +107,8 @@ proc MainVolumesBuildVTK {} {
 proc MainVolumesUpdateMRML {} {
 	global Volume Lut Gui
 
+    puts "Volume(idList) $Volume(idList)"
+
 	# Build any new volumes
 	#--------------------------------------------------------
 	foreach v $Volume(idList) {
@@ -498,11 +500,14 @@ proc MainVolumesSetActive {{v ""}} {
 			$mb config -text [Volume($v,node) GetName]
 		}
 
+		
 		# Update GUI
 		foreach item "Window Level AutoWindowLevel UpperThreshold LowerThreshold \
 			AutoThreshold Interpolate" {
 			set Volume([Uncap $item]) [Volume($v,node) Get$item]
 		}
+
+
 		if {[IsModule Volumes] == 1} {
 			# LUT menu
 			$Volume(mbLUT) config -text \
@@ -512,6 +517,35 @@ proc MainVolumesSetActive {{v ""}} {
 				histMapper SetInput [Volume($v,vol) GetHistogramPlot]
 				histWin Render
 			}
+
+			# Update Volumes->Props GUI
+			foreach item "filePattern gantryDetectorTilt numScalars \
+				name desc labelMap" vtkname "FilePattern Tilt \
+				NumScalars Name Description LabelMap" {
+			    set Volume($item) [Volume($v,node) Get$vtkname]
+			}
+			# update menus
+			VolumesSetScalarType [lindex "Char UnsignedChar Short {UnsignedShort} \ 
+			{Int} UnsignedInt Long UnsignedLong Float Double" \
+				[lsearch "2 3 4 5 6 7 8 9 10 11"  [Volume($v,node) GetScalarType]]]
+			VolumesSetScanOrder [Volume($v,node) GetScanOrder]
+
+			scan [Volume($v,node) GetImageRange] "%d %d" lo hi
+			set Volume(lastNum) $hi
+			set Volume(firstFile) [format $Volume(filePattern) \
+				[Volume($v,node) GetFilePrefix] $lo]
+
+			puts " SPACING: [scan [Volume($v,node) GetSpacing] "%d %d %d" pix pix thick]"
+			set Volume(pixelSize) $pix
+#			set Volume(sliceThickness) $thick
+			# use default for spacing
+			set Volume(sliceSpacing) 0
+
+			scan [Volume($v,node) GetDimensions] "%d %d" dim dim
+			set Volume(resolution) $dim
+
+			# use default for readHeaders
+			set Volume(readHeaders) 1
 		}
 
 		# Slider range (obviously must be set before window/level)
@@ -704,7 +738,7 @@ proc MainVolumesUpdateSliderRange {} {
 	}
 }
 
-# Set defaults for the Volumes GUI.
+# Set defaults for the Volumes-> Props GUI.
 proc MainVolumesSetGUIDefaults {} {
     global Volume
 
@@ -721,8 +755,10 @@ proc MainVolumesSetGUIDefaults {} {
     set Volume(sliceSpacing) 0.0
     set Volume(gantryDetectorTilt) [default GetTilt]
     set Volume(desc) [default GetDescription]
-    set Volume(scalarType) [default GetScalarType]
     set Volume(numScalars) [default GetNumScalars]
+    set Volume(scalarType) [lindex "Char UnsignedChar Short {UnsignedShort} \ 
+    {Int} UnsignedInt Long UnsignedLong Float Double"\
+	    [lsearch "2 3 4 5 6 7 8 9 10 11"  [default GetScalarType]]]
     default Delete
 
     # Set GUI defaults
