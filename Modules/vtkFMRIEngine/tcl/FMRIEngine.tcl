@@ -46,7 +46,7 @@
 #   FMRIEngineLoadVolumes 
 #   FMRIEngineLoadAnalyzeVolumes 
 #   FMRIEngineComputeActivationVolume 
-#   FMRIEngineClear 
+#   FMRIEngineSetWindowAndLevel
 #   FMRIEnginePushBindings 
 #   FMRIEnginePopBindings 
 #   FMRIEngineCreateBindings  
@@ -162,7 +162,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.9 $} {$Date: 2004/06/17 19:47:14 $}]
+        {$Revision: 1.10 $} {$Date: 2004/06/23 21:56:09 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -397,8 +397,6 @@ proc FMRIEngineBuildGUI {} {
 proc FMRIEngineSetImageFormat {imgFormat} {
     global Volume FMRIEngine
     
-    FMRIEngineClear
-
     set FMRIEngine(imageFormat) $imgFormat
 
     # configure menubutton
@@ -422,12 +420,13 @@ proc FMRIEngineBuildUIForAnalyze {parent} {
     global FMRIEngine Gui Volume 
 
     set f $parent
-    frame $f.fVolume -bg $Gui(activeWorkspace) -relief groove -bd 3
-    frame $f.fSlider -bg $Gui(activeWorkspace)
-    frame $f.fApply  -bg $Gui(activeWorkspace)
-    frame $f.fStatus  -bg $Gui(activeWorkspace)
+    frame $f.fVolume   -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fSlider   -bg $Gui(activeWorkspace)
+    frame $f.fWinLevel -bg $Gui(activeWorkspace)
+    frame $f.fApply    -bg $Gui(activeWorkspace)
+    frame $f.fStatus   -bg $Gui(activeWorkspace)
  
-    pack $f.fVolume $f.fSlider $f.fApply $f.fStatus \
+    pack $f.fVolume $f.fSlider $f.fWinLevel $f.fApply $f.fStatus \
         -side top -fill x -pady $Gui(pad)
 
     set f $parent.fVolume
@@ -451,16 +450,19 @@ proc FMRIEngineBuildUIForAnalyze {parent} {
     set FMRIEngine(slider) $f.slider
     pack $f.label $f.slider -side left -expand false -fill x
 
+    set f $parent.fWinLevel
+    DevAddButton $f.bWL "Adjust Window/Level" "FMRIEngineSetWindowAndLevel" 20 
+    pack $f.bWL -side top -pady 8 
+
     set f $parent.fApply
     DevAddButton $f.bApply "Apply" "FMRIEngineLoadVolumes" 8 
     DevAddButton $f.bCancel "Cancel" "VolumesPropsCancel" 8 
     grid $f.bApply $f.bCancel -padx $Gui(pad)
 
-
     set f $parent.fStatus
     set FMRIEngine(name) " "
     eval {label $f.eName -textvariable FMRIEngine(name) -width 50} $Gui(WLA)
-    pack $f.eName -side left -padx 0 -pady 30
+    pack $f.eName -side left -padx 0 -pady 25 
 }
 
 
@@ -553,14 +555,14 @@ proc FMRIEngineLoadAnalyzeVolumes {} {
     $FMRIEngine(slider) set 0 
     $FMRIEngine(slider) configure -showvalue 1 
 
-    if {[info exists FMRIEngine(lastIndex)]} {
+    if {[info exists FMRIEngine(noOfAnalyzeVolumes)]} {
         set i 1
-        while {$i <= $FMRIEngine(lastIndex)} {
+        while {$i <= $FMRIEngine(noOfAnalyzeVolumes)} {
             unset FMRIEngine($i,id)
             incr i
         }
 
-        unset FMRIEngine(lastIndex)
+        unset FMRIEngine(noOfAnalyzeVolumes)
     }
 
     set fileName $Volume(VolAnalyze,FileName)
@@ -569,10 +571,8 @@ proc FMRIEngineLoadAnalyzeVolumes {} {
         return
     }
 
-    set lastSlash [string last "/" $fileName]
-    set path [string range $fileName 0 $lastSlash]
+    set path [file dirname $fileName]
     set pattern [file join $path "*.hdr"]
-
     set fileList [glob -nocomplain $pattern]
     if {$fileList == ""} {
         set path $Mrml(dir)
@@ -585,7 +585,6 @@ proc FMRIEngineLoadAnalyzeVolumes {} {
 
     foreach f $analyzeFiles { 
 
-        puts "reading $f"
         MainVolumesSetActive "NEW"
         set Volume(VolAnalyze,FileName) $f
         set FMRIEngine($t,f) $f
@@ -602,12 +601,9 @@ proc FMRIEngineLoadAnalyzeVolumes {} {
         set id [VolAnalyzeApply "PA"]
         set FMRIEngine($t,id) $id
 
-
-        MainVolumesSetParam Window 800
-        MainVolumesSetParam Level  500
         incr t
     }
-    set FMRIEngine(lastIndex) [llength $analyzeFiles] 
+    set FMRIEngine(noOfAnalyzeVolumes) [llength $analyzeFiles] 
 
     # Add volumes into vtkActivationVolumeGenerator
     if {[info exists FMRIEngine(actvolgen)]} {
@@ -693,8 +689,6 @@ proc FMRIEngineComputeActivationVolume {} {
     $n SetName "Activation"
     $n SetDescription "Activation"
 
-    
-
     eval Volume($i,node) SetSpacing [$id GetSpacing]
     Volume($i,node) SetScanOrder [Volume($FMRIEngine(1,id),node) GetScanOrder]
     Volume($i,node) SetNumScalars [$id GetNumberOfScalarComponents]
@@ -713,55 +707,30 @@ proc FMRIEngineComputeActivationVolume {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineClear 
-# Gets ready for next run 
-# .ARGS
+# .PROC FMRIEngineSetWindowAndLevel
+# For a time series, set window and level for all volumes
+# with the first volume's values
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineClear {} {
-    global FMRIEngine Volume
- 
-    set FMRIEngine(bxh-fileName) ""
-    set Volume(VolAnalyze,FileName) ""
+proc FMRIEngineSetWindowAndLevel {} {
+   global FMRIEngine Volume 
 
-    set slider [$FMRIEngine(slider) get] 
-    if {$slider == 0} {
+    if {[info exists FMRIEngine(noOfAnalyzeVolumes)] == 0} {
+        DevErrorWindow "Please load volumes first."
         return
     }
+    set win [Volume(1,node) GetWindow]
+    set level [Volume(1,node) GetLevel]
+    set len $FMRIEngine(noOfAnalyzeVolumes)
 
-    $FMRIEngine(slider) configure -from 0 -to 0 
-    $FMRIEngine(slider) configure -state disabled 
-    $FMRIEngine(slider) configure -showvalue 0 
-
-    if {[info exist FMRIEngine(lastindex)]} {
-        set ii 1
-        while {$ii <= $FMRIEngine(lastindex) } {
-            Volume($ii,vol,rw) Delete
-            incr ii
-        }
+    set i 1 
+    while {$i <= $len} {
+        # If AutoWindowLevel is ON, we can't set new values for window and level.
+        Volume($i,node) AutoWindowLevelOff
+        Volume($i,node) SetWindow $win 
+        Volume($i,node) SetLevel $level 
+        incr i
     }
-    
-    if {[info exists FMRIEngine(lastindex)]} {
-        unset FMRIEngine(lastindex)
-    }
-    if {[info exists FMRIEngine(actvolgen)]} {
-        $FMRIEngine(actvolgen) Delete
-        unset FMRIEngine(actvolgen)
-    }
-    if {[info exists FMRIEngine(stimulus)]} {
-        $FMRIEngine(stimulus) Delete
-        unset FMRIEngine(stimulus)
-    }
-    if {[info exists FMRIEngine(detector)]} {
-        $FMRIEngine(detector) Delete
-        unset FMRIEngine(detector)
-    }
-
-    MainMrmlDeleteAll
-    MainUpdateMRML
-    MainSetup
-    RenderAll
-    MainMrmlBuildTreesVersion2.0 [MainMrmlAddColors ""]  
 }
 
 
