@@ -136,8 +136,6 @@ proc EdLiveWireBuildVTK {} {
     
     # Lauren rename these dumb things!
 
-    set fakeInput [Volume($Volume(idNone),vol) GetOutput]
-
     foreach s $Slice(idList) {    
 	# this filter feeds edges to live wire
 	vtkImageLiveWireTester Ed(EdLiveWire,lwSetup$s)
@@ -160,17 +158,21 @@ proc EdLiveWireBuildVTK {} {
 	# debug
 	Ed(EdLiveWire,lwPath$s)  SetVerbose 0
 
-	# pipeline:
+	###### pipeline  #####	
+	# tell helper setup filter about lw filter
 	Ed(EdLiveWire,lwSetup$s) SetLiveWire Ed(EdLiveWire,lwPath$s)
 
-	# Lauren is this needed?
-	# give a blank input for now, just to get things connected
-	Ed(EdLiveWire,lwSetup$s) SetInput $fakeInput
-	# now hook up edge filters and livewire filters
+	# hook up edge inputs to the above live wire short path filter
 	Ed(EdLiveWire,lwSetup$s) InitializePipeline
 
 	# LiveWire short path filter gets 0th input from setup filter
 	Ed(EdLiveWire,lwPath$s) SetOriginalImage [Ed(EdLiveWire,lwSetup$s) GetOutput]
+	# edge filters get their 0th inputs from setup filter also
+	for {set f 0} {$f < $Ed(EdLiveWire,numEdgeFilters)} {incr f} {
+	    set filt [Ed(EdLiveWire,lwSetup$s) GetEdgeFilter $f]
+	    $filt SetOriginalImage [Ed(EdLiveWire,lwSetup$s) GetOutput]
+	}
+	###### end pipeline  #####	
 
 	# for looking at edge weight image
 	vtkImageViewer Ed(EdLiveWire,viewer$s)
@@ -983,7 +985,7 @@ proc EdLiveWireStartPipeline {} {
     # set up pipeline
     foreach s $Slice(idList) {
 	Slicer SetFirstFilter $s Ed(EdLiveWire,lwSetup$s)
-	Slicer SetLastFilter  $s Ed(EdLiveWire,lwPath$s)  
+	Slicer SetLastFilter  $s Ed(EdLiveWire,lwPath$s) 
     }
 
     # Layers: Back=Original, Fore=Working
@@ -994,7 +996,9 @@ proc EdLiveWireStartPipeline {} {
     # only apply filters to active slice
     Slicer FilterActiveOn
 
+    # force upper slicer pipeline to execute
     Slicer ReformatModified
+    # update slicer object (gives all the nice reformatted slices)
     Slicer Update
 }
 
