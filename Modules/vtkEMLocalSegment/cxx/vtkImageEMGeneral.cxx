@@ -30,7 +30,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // #include <unistd.h>
 
 
-
+ 
 // ---------------------------------------------------------------------------------------------
 //  -*- Mode: C++;  -*-
 //  File: qgauss.hh
@@ -66,7 +66,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 // Does no conditional branching on alpha or sparc :Jun  7, 1995
 
- float qnexp2(float x)
+float vtkImageEMGeneral_qnexp2(float x)
 {
     unsigned result_bits;
     unsigned bits = COERCE(x, unsigned int);
@@ -100,7 +100,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 {
     float tmp = float(inverse_sigma * x);
     return (double) EMSEGMENT_ONE_OVER_ROOT_2_PI * inverse_sigma 
-    * qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * tmp * tmp);
+    * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * tmp * tmp);
 }
 
 // An approximation to the Gaussian function.
@@ -109,10 +109,10 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 {
     float tmp = float(inverse_sigma * x);
 #ifndef _WIN32
-    cerr << "Result " << tmp << " " << inverse_sigma * x << " " << qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * tmp * tmp) << endl ;
+    cerr << "Result " << tmp << " " << inverse_sigma * x << " " << vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * tmp * tmp) << endl ;
 #endif
     return (double) EMSEGMENT_ONE_OVER_ROOT_2_PI * inverse_sigma 
-    * qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * tmp * tmp);
+    * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * tmp * tmp);
 }
 // Same as FastGauss - just for 2 Dimensional multi dimensional input 
  float vtkImageEMGeneral::FastGauss2(double inverse_sqrt_det_covariance, float *x ,double *mu,  double **inv_cov) {
@@ -120,12 +120,12 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
          term2 = x[1] - float(mu[1]);
   // Kilian: can be done faster: term1*(inv_cov[0][0]*term1 + 2.0*inv_cov[0][1]*term2) + term2*term2*inv_cov[1][1];
   term2 = term1*(float(inv_cov[0][0])*term1 + float(inv_cov[0][1])*term2) + term2*(float(inv_cov[1][0])*term1 + float(inv_cov[1][1])*term2);
-  return EMSEGMENT_ONE_OVER_2_PI * float(inverse_sqrt_det_covariance)  * qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * term2);
+  return EMSEGMENT_ONE_OVER_2_PI * float(inverse_sqrt_det_covariance)  * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * term2);
 }
 
 // Same as FastGauss - just for multi dimensional input ->  x = (vec - mu) * InvCov *(vec - mu) 
  float vtkImageEMGeneral::FastGaussMulti(double inverse_sqrt_det_covariance, float x,int dim) {
-  return pow(EMSEGMENT_ONE_OVER_ROOT_2_PI,dim) * inverse_sqrt_det_covariance * qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * x);
+  return pow(EMSEGMENT_ONE_OVER_ROOT_2_PI,dim) * inverse_sqrt_det_covariance * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * x);
 }
 
  float vtkImageEMGeneral::FastGaussMulti(double inverse_sqrt_det_covariance, float* x,double *mu, double **inv_cov, int dim) {
@@ -148,10 +148,10 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // root of the argument, in other words, the
 // argument should already be squared.
 
- float qgauss_sqrt(float inverse_sigma, float x)
+float vtkImageEMGeneral_qgauss_sqrt(float inverse_sigma, float x)
 {
     return EMSEGMENT_ONE_OVER_ROOT_2_PI * inverse_sigma 
-    * qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * inverse_sigma * inverse_sigma * x);
+    * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * inverse_sigma * inverse_sigma * x);
 }
 
 // ---------------------------------
@@ -834,7 +834,7 @@ void vtkImageEMGeneral::TestMatrixFunctions(int MatrixDim,int iter) {
   delete[] out;
 }
 
-float CountLabel(vtkImageThreshold* trash,vtkImageData * Input, float val) {
+float vtkImageEMGeneral_CountLabel(vtkImageThreshold* trash,vtkImageData * Input, float val) {
   float result;
   trash->SetInput(Input); 
   trash->ThresholdBetween(val,val);
@@ -863,15 +863,15 @@ float vtkImageEMGeneral::CalcSimularityMeasure (vtkImageData *Image1, vtkImageDa
   vtkImageMathematics *MathImg = vtkImageMathematics::New();
   float result;
   float NumMeasure;
-  float DivMeasure = CountLabel(Trash1,Image1, val); 
-  DivMeasure += CountLabel(Trash2,Image2, val); 
+  float DivMeasure = vtkImageEMGeneral_CountLabel(Trash1,Image1, val); 
+  DivMeasure += vtkImageEMGeneral_CountLabel(Trash2,Image2, val); 
 
   // Find out overlapping volume 
   MathImg->SetOperationToAdd();
   MathImg->SetInput(0,Trash1->GetOutput());
   MathImg->SetInput(1,Trash2->GetOutput());
   MathImg->Update();
-  NumMeasure = CountLabel(Final,MathImg->GetOutput(),2);
+  NumMeasure = vtkImageEMGeneral_CountLabel(Final,MathImg->GetOutput(),2);
   if (DivMeasure > 0) result = 2.0*NumMeasure / DivMeasure;
   else result = -1.0;
   if (PrintRes) {
