@@ -84,7 +84,7 @@ proc ColorsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27 $} {$Date: 2004/04/13 21:00:03 $}]
+        {$Revision: 1.28 $} {$Date: 2005/03/24 20:45:39 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -287,7 +287,7 @@ proc ColorsSetFileName {}  {
 #-------------------------------------------------------------------------------
 proc ColorsLoadApply {} {
     global Color
-    puts "ColorsLoadApply: experimental load of a new xml file with colour nodes"
+    puts "ColorsLoadApply: experimental load of a new xml file with colour nodes\n\t$Color(fileName)"
     MainMrmlDeleteColors
     MainMrmlAddColorsFromFile $Color(fileName)
     # TODO: update the gui's Edit Colors panel now, and the Select a Color canvas
