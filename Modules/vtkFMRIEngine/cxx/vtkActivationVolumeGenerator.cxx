@@ -49,10 +49,9 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // us not to compute t values of voxels outside the brain. The 
 // threshold (150) may be different run by run. Need a general algorithm
 // here to do masking.
-#define BrainMaskThreshold 150.0
+#define BrainMaskThreshold 200.0
 
-// TODO: The threshold of 1.5 probably needs to be removed.
-#define TTestThreshold 1.5
+#define TTestThreshold 0.0 
 
 
 vtkStandardNewMacro(vtkActivationVolumeGenerator);
@@ -142,17 +141,31 @@ void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *inputs, vtkImageD
 
                 if ((total/this->NumberOfInputs) < BrainMaskThreshold)
                 {
-                    t = 0.0;
+                    t = TTestThreshold;
                 }
                 else
                 {
                     t = this->Detector->Detect(tc);
-                    t = (t < TTestThreshold ? 0.0 : t);
+                    // all negative t values are changed to 0
+                    t = (t < TTestThreshold ? TTestThreshold : t);
                 }
 
                 scalarsInOutput->SetComponent(indx++, 0, t);
             }
         } 
     }
+
+    // Scales the scalar values in the activation volume between 0 - 100
+    float range[2];
+    float value;
+    float newValue;
+    output->GetScalarRange(range);
+    for (int i = 0; i < indx; i++)
+    {
+        value = scalarsInOutput->GetComponent(i, 0); 
+        newValue = 100 * (value - range[0]) / (range[1] - range[0]);
+        scalarsInOutput->SetComponent(i, 0, newValue);
+    }
+
     tc->Delete();
 }
