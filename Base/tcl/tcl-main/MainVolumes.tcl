@@ -58,7 +58,7 @@ proc MainVolumesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.45 $} {$Date: 2001/07/06 19:47:33 $}]
+		{$Revision: 1.46 $} {$Date: 2001/11/12 23:20:40 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -324,7 +324,7 @@ proc MainVolumesWrite {v prefix} {
 	# So don't write it if it's not dirty.
 	if {$Volume($v,dirty) == 0} {
 	    set answer [tk_messageBox -type yesno -message \
-			    "This volume shold not be saved\nbecause it has not been changed\n\
+			    "This volume should not be saved\nbecause it has not been changed\n\
  since the last time it was saved.\nDo you really want to save it?"]
 	    if {$answer == "no"} {
 		return
