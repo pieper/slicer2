@@ -82,7 +82,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-		{$Revision: 1.25 $} {$Date: 2001/02/19 17:53:24 $}]
+		{$Revision: 1.26 $} {$Date: 2001/03/23 22:40:42 $}]
 
 	# Initialize Variables
 	set Slice(idList) "0 1 2"
@@ -1115,8 +1115,10 @@ proc MainSlicesWrite {filename} {
 	# Write it
 	set s $Slice(activeID)
 	set ext [file extension $filename]
+    set success 0
 	switch $ext {
 	".tif" {
+	    set success 1
 		vtkWindowToImageFilter filter
 		filter SetInput sl${s}Win
 
@@ -1128,6 +1130,7 @@ proc MainSlicesWrite {filename} {
 		writer Delete
 	}
 	".bmp" {
+	    set success 1
 		vtkWindowToImageFilter filter
 		filter SetInput sl${s}Win
 
@@ -1139,6 +1142,7 @@ proc MainSlicesWrite {filename} {
 		writer Delete
 	}
 	".ppm" {
+	    set success 1
 		vtkWindowToImageFilter filter
 		filter SetInput sl${s}Win
 
@@ -1149,6 +1153,10 @@ proc MainSlicesWrite {filename} {
 		filter Delete
 		writer Delete
 	}
+	}
+	if {$success == "0"} {
+	    puts "Unable to save view.  Did you choose a filename extension?"
+	    return
 	}
 	puts "Saved view: $filename"
 
