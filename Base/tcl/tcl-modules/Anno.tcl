@@ -50,7 +50,7 @@ proc AnnoInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.13 $} {$Date: 2002/01/26 21:45:23 $}]
+		{$Revision: 1.14 $} {$Date: 2002/01/26 22:11:23 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -85,8 +85,17 @@ proc AnnoBuildGUI {} {
 	# Help frame
 	#-------------------------------------------
 	set help "
+This module allows the user to control the text displayed on the slices
+and in 3D, as well as the 3D box, etc.
+
+<BR>
+The <B>Visibility</B> tab allows you to turn off and on the annotation.
 Press a button in to make its corresponding type of annotation visible.
 Note that there is 3D annotation and 2D annotation for the slice windows.
+
+<BR> The <B>Mode</B> tab controls the type of coordinates and pixel
+values displayed on the 2D slices, as well as the 3D behavior of the
+cube and axes.  
 "
 	regsub -all "\n" $help { } help
 	MainHelpApplyTags Anno $help
@@ -157,13 +166,17 @@ Note that there is 3D annotation and 2D annotation for the slice windows.
 	#-------------------------------------------
 	set f $fMode.fCoords
 
+	set tip1 "Display of coordinates on 2D slices:\n"
 	eval {label $f.l -text "Slice Cursor:"} $Gui(WLA)
 	frame $f.f -bg $Gui(activeWorkspace)
-	foreach mode "RAS IJK XY" {
+	foreach mode "RAS IJK XY" \
+		tip {"RAS coordinates" "array indices into volume" \
+		"2D slice coordinates"} {
 		eval {radiobutton $f.f.r$mode -width 4 \
 			-text "$mode" -variable Anno(cursorMode) -value $mode \
 			-indicatoron 0} $Gui(WCA)
 		pack $f.f.r$mode -side left -padx 0 -pady 0
+		TooltipAdd $f.f.r$mode "$tip1 $tip"
 	}
 	pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
 
@@ -172,14 +185,22 @@ Note that there is 3D annotation and 2D annotation for the slice windows.
 	#-------------------------------------------
 	set f $fMode.fPrecision
 
+	set tip1 "Display of pixel values on 2D slices:\n"
 	eval {label $f.l -text "Pixel Display:"} $Gui(WLA)
 	frame $f.f -bg $Gui(activeWorkspace)
-	foreach button "int flt full" mode "%.f %6.2f %f" text "1 1.00 full" {
+	foreach button "int flt full" \
+		mode "%.f %6.2f %f" \
+		text "1 1.00 full" \
+		tip {"integer display" "floating point" \
+		"full: all decimal places shown"} \
+		{
 		eval {radiobutton $f.f.r$button -width 4 \
 			-text "$text" -variable Anno(pixelDispFormat) \
 			-value $mode \
 			-indicatoron 0} $Gui(WCA)
 		pack $f.f.r$button -side left -padx 0 -pady 0
+		TooltipAdd $f.f.r$button "$tip1 $tip"
+	    
 	}
 	pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
 
