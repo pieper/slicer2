@@ -419,7 +419,7 @@ itcl::body regions::talairach {} {
     #
     set switch [split $talfile .]
     #use AFNI talairach file for transformation
-    if {[lindex $switch 1] == "HEAD"} {
+    if {[lindex $switch end] == "HEAD"} {
        set fp [open $talfile "r"]
        gets $fp line
        while {$line != "name  = WARP_DATA"} {
@@ -485,7 +485,7 @@ itcl::body regions::talairach {} {
        set tal(2) [expr $tal(2) * -1.]
     
        #Use .xfm file for Talairach transformation
-    } elseif { [lindex $switch 1] == "xfm" } {
+    } elseif { [lindex $switch end] == "xfm" } {
        array unset _mtx
        set fp [open $talfile "r"]
        gets $fp line
