@@ -37,13 +37,14 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkAnisoGaussSeidel.cxx,v $
   Language:  C++
-  Date:      $Date: 2003/04/29 17:47:12 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2003/05/07 16:34:48 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================*/
 
 #include "vtkAnisoGaussSeidel.h"
 #include "vtkObjectFactory.h"
+#include "vtkPointData.h"
 #include "vtkStructuredPoints.h"
 #include "vtkFloatArray.h"
 #include "vtkStructuredPointsWriter.h"
