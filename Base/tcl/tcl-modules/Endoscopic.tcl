@@ -262,7 +262,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.96 $} {$Date: 2005/02/15 18:32:58 $}] 
+    {$Revision: 1.97 $} {$Date: 2005/02/15 20:20:16 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -5629,7 +5629,7 @@ proc EndoscopicPickFlatPoint {widget xcoord ycoord} {
      
      set numP [$polyData3D GetNumberOfPoints]
     
-puts "start pick: clock format [clock seconds]"
+#puts "start pick: clock format [clock seconds]"
     set name $Endoscopic($widget,name)
     
     vtkCellPicker TempCellPicker
@@ -5643,7 +5643,7 @@ puts "start pick: clock format [clock seconds]"
     set fy [lindex $Select(xyz) 1]
     set fz [lindex $Select(xyz) 2]
     
-puts "end pick : clock format [clock seconds]"
+#puts "end pick : clock format [clock seconds]"
     
         
 #get the picked pointId from the picker, and pass the pointId to the 3D model in slicer
@@ -5656,7 +5656,7 @@ puts "end pick : clock format [clock seconds]"
 # puts "nump for the doubled model is: $numP"
 #    set numP  [expr $numP/2] 
 # puts "nump for the single model is: $numP"    
-puts "start locate point: clock format [clock seconds]"     
+#puts "start locate point: clock format [clock seconds]"     
     vtkPointLocator tempPointLocator
     tempPointLocator SetDataSet $polyData
 
@@ -5666,13 +5666,13 @@ puts "start locate point: clock format [clock seconds]"
     
     set pointId [tempPointLocator FindClosestPoint $fx $fy $fz]
 # puts "picked pointId from the double model is $pointId"
-puts "end locate point: clock format [clock seconds]"    
+#puts "end locate point: clock format [clock seconds]"    
 # check if the pointId is larger than numP
        if {$pointId > $numP} {
        set pointId [expr $pointId - $numP]
        }
        
- puts "picked pointId from the single model is $pointId"   
+# puts "picked pointId from the single model is $pointId"   
 
        
     EndoscopicAddTargetInFlatWindow $widget $fx $fy $fz
@@ -5696,7 +5696,7 @@ puts "end locate point: clock format [clock seconds]"
 proc EndoscopicAddTargetInFlatWindow {widget x y z} {
 
     global Select Endoscopic
-puts  "start draw in flatwindow: clock format [clock seconds]"
+#puts  "start draw in flatwindow: clock format [clock seconds]"
     set name $Endoscopic($widget,name)
     set renderer [[[$widget GetRenderWindow] GetRenderers] GetItemAsObject 0]
     set count $Endoscopic($name,lineCount)
@@ -5791,7 +5791,7 @@ puts  "start draw in flatwindow: clock format [clock seconds]"
     
     aLineR Delete
     aLineRMapper Delete
-puts "end draw in flatwindow: clock format [clock seconds]"
+#puts "end draw in flatwindow: clock format [clock seconds]"
 }
 
 #-------------------------------------------------------------------
@@ -5929,7 +5929,7 @@ proc EndoscopicAddTargetFromSlices {x y z} {
      set pointId [tempPointLocator FindClosestPoint $x $y $z]
      set point(xyz) [$polyData GetPoint $pointId]
 
-puts "pointId from Slices is: $pointId"
+#puts "pointId from Slices is: $pointId"
 
 #  active list (should be the default path just created from the automatic tab)
     set fid $Fiducials($Fiducials(activeList),fid)
@@ -6053,7 +6053,7 @@ proc EndoscopicAddTargetFromWorldCoordinates {sx sy sz} {
      set pointId [tempPointLocator FindClosestPoint $sx $sy $sz]
      set point(xyz) [$polyData GetPoint $pointId]
 
-puts "pointId from 3D colon is: $pointId"
+#puts "pointId from 3D colon is: $pointId"
 
       tempPointLocator Delete
       
@@ -6224,7 +6224,7 @@ proc EndoscopicMainFileCloseUpdated {}  {
 proc EndoscopicCreateTargets {} {
 
     global Endoscopic Point Fiducials Module
-puts "start create target: clock format [clock seconds]"
+#puts "start create target: clock format [clock seconds]"
 # get the ids of the selected fiducial
     set pid $Endoscopic(selectedFiducialPoint) 
     set fid $Endoscopic(selectedFiducialList)
@@ -6283,9 +6283,9 @@ puts "start create target: clock format [clock seconds]"
 # use the SetDescription to store and save $pointId information.
     Point($targetpid,node) SetDescription $pointId
     
-puts "start 2nd mrml update: clock format [clock seconds]"
+#puts "start 2nd mrml update: clock format [clock seconds]"
     MainUpdateMRML
-puts "end 2nd mrml update: clock format [clock seconds]"
+#puts "end 2nd mrml update: clock format [clock seconds]"
 
 ########## Get Number of Targets ################
 
@@ -6294,7 +6294,7 @@ puts "end 2nd mrml update: clock format [clock seconds]"
 
 #puts " Target $index, pointId is $pointId"
 
-puts "end create target: clock format [clock seconds]"
+#puts "end create target: clock format [clock seconds]"
 }
 
 #-------------------------------------------------------------------------------------
