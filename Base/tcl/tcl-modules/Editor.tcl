@@ -107,7 +107,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.59 $} {$Date: 2002/06/06 20:32:56 $}]
+        {$Revision: 1.60 $} {$Date: 2002/06/06 22:26:51 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -1210,10 +1210,10 @@ proc EditorB1 {x y} {
     "EdLabelVOI" {
         EdLabelVOIB1 $x $y
     }
+    default {
     # the default case handles editor effects loaded as modules
     # - in the future we may need a way to register custom
     #   actions
-    default {
         EditorChangeInputLabel $x $y    
     }
     }
