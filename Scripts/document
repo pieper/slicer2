@@ -4,28 +4,28 @@
 # Run this script to automatically generate the slicer website
 # (with tcl code documentation!).
 #
-# Then open slicer/program/doc/index.html to SEE the website.
+# Then open slicer2/Doc/index.html to SEE the website.
 # 
-# All auto* files in the slicer/doc subdirectories will be
+# All auto* files in the slicer2/Doc subdirectories will be
 # combined into one index.html file for that subdirectory,
 # with the appropriate website formatting.
 #
-# Also, all tcl files in your SLICER_HOME/program directory will
+# Also, all tcl files in your SLICER_HOME/Base/tcl directory will
 # be parsed to create the info pages under the Developer's Guide
 # in the website.  The quality of the documentation depends on 
 # the comment program having been run recently.  
-# This is the script slicer/comment.
+# This is the script slicer2/Scripts/document.
 #
 # ######  To edit the website: ########
-# 1.Look in the slicer/program/doc/devl for formatting examples,
+# 1.Look in the slicer2/Doc/devl for formatting examples,
 # also visible under Developer's Guide in the website.
 # 2. Edit appropriate file and run this script.
 #
 # ######  To add a new file to the website: ########
-# 1. Add an autoXX.html file to a subdirectory of slicer/doc.
+# 1. Add an autoXX.html file to a subdirectory of slicer2/Doc.
 # (auto* files will be combined in alphabetical order into index.html)
-# 2. Edit slicer/doc/index.html to add your new section to the 
-# javascript table of contents.
+# 2. Edit slicer2/Doc/index.html to add your new section to the 
+# table of contents.
 # 3. Run this script.
 #
 ###############################################################
@@ -35,7 +35,7 @@
 if (${?SLICER_HOME} == 0) then
     setenv SLICER_HOME /home/nicole/Src/slicer
 endif
-
+cd 
 if (${?LD_LIBRARY_PATH} == 0) then
     setenv LD_LIBRARY_PATH ${SLICER_HOME}/lib:/local/lib
 else
@@ -47,8 +47,8 @@ setenv TCL_LIBRARY ${SLICER_HOME}/lib/tcl8.3
 # Produce the web pages and tcl documentation
 # exec 
 echo "Producing documentation pages - web site and tcl code docs"
-tclsh $SLICER_HOME/program/GoDocument.tcl
+tclsh $SLICER_HOME/Base/tcl/GoDocument.tcl
 
 # Produce the VTK class documentation
 echo "Producing the VTK documentation, based on SLICER_HOME = ${SLICER_HOME}"
-doxygen $SLICER_HOME/vtksrc/Doxyfile
+doxygen $SLICER_HOME/Base/cxx/Doxyfile
