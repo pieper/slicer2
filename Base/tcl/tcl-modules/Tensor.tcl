@@ -113,7 +113,7 @@ proc TensorInit {} {
     # Set Version Info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.8 $} {$Date: 2002/02/18 02:05:41 $}]
+	    {$Revision: 1.9 $} {$Date: 2002/03/12 18:00:48 $}]
     
     # Props: GUI tab we are currently on
     #------------------------------------
@@ -164,7 +164,7 @@ proc TensorInit {} {
     set Tensor(mode,glyphEigenvectorList,tooltips) {{When displaying tensors as Lines, use the eigenvector corresponding to the largest eigenvalue.} {When displaying tensors as Lines, use the eigenvector corresponding to the middle eigenvalue.} {When displaying tensors as Lines, use the eigenvector corresponding to the smallest eigenvalue.}}
 
     # type of glyph coloring
-    set Tensor(mode,glyphColor) Linear
+    set Tensor(mode,glyphColor) Direction; # default to direction
     set Tensor(mode,glyphColorList) {Linear Planar Spherical Max Middle Min MaxMinusMiddle RA FA Direction}
     set Tensor(mode,glyphColorList,tooltip) {Color tensors according to Linear, Planar, or Spherical measures, with the Max, Middle, or Min eigenvalue, with relative or fractional anisotropy (RA or FA), or by direction of major eigenvector.}
 
@@ -1835,6 +1835,7 @@ proc TensorUpdateActor {actor} {
     [$actor GetProperty] SetAmbient $Tensor(actor,ambient)
     [$actor GetProperty] SetDiffuse $Tensor(actor,diffuse)
     [$actor GetProperty] SetSpecular $Tensor(actor,specular)
+    [$actor GetProperty] SetOpacity $Tensor(actor,opacity)
 
 }
 
@@ -1870,25 +1871,28 @@ proc TensorUpdate {} {
 	
 	puts "thresholding by $Tensor(mode,threshold)"
 	set math Tensor(vtk,thresh,math)
-	
+
+	# calculate trace or whatever we are thresholding by
 	$math SetInput 0 [Tensor($t,data) GetOutput]
 	$math SetOperationTo$Tensor(mode,threshold)
-	
-	set thresh Tensor(vtk,thresh,threshold)
-	$thresh ThresholdBetween $Tensor(thresh,threshold,lower) \
+
+	# threshold to make a mask of the area of interest
+	set thresh1 Tensor(vtk,thresh,threshold)
+	$thresh1 ThresholdBetween $Tensor(thresh,threshold,lower) \
 		$Tensor(thresh,threshold,upper)
 
 	# this line seems to be needed
-	$thresh Update
+	$thresh1 Update
 	
 	#Tensor(vtk,glyphs) SetScalarMask [$thresh GetOutput]
 	# tell our filter to use this information
 	#Tensor(vtk,glyphs) MaskGlyphsWithScalarsOn
 
-	set mask Tensor(vtk,thresh,mask)
-	$mask SetImageInput [Tensor($t,data) GetOutput]
+	#  set tensors to 0 outside of mask generated above
+	set mask1 Tensor(vtk,thresh,mask)
+	$mask1 SetImageInput [Tensor($t,data) GetOutput]
 
-	set dataSource [$mask GetOutput]
+	set dataSource [$mask1 GetOutput]
     } else {
 	set dataSource [Tensor($t,data) GetOutput]
 	#Tensor(vtk,glyphs) MaskGlyphsWithScalarsOff
@@ -1959,18 +1963,32 @@ proc TensorUpdate {} {
 		
 		# Lauren these should match the tensor resolution?
 		# Use the extents to figure this out
-		Tensor(vtk,reformat) SetResolution 128
+		set ext [[Tensor($Tensor(activeID),data) GetOutput] GetExtent]
+		set resx [expr [lindex $ext 1] - [lindex $ext 0] + 1]
+		set resy [expr [lindex $ext 3] - [lindex $ext 2] + 1]
+		if {$resx > $resy} {
+		    set res $resx
+		} else {
+		    set res $resy
+		}
+		#Tensor(vtk,reformat) SetResolution 128
+		Tensor(vtk,reformat) SetResolution $res
+
 		#Tensor(vtk,reformat) SetFieldOfView 128
-		# Lauren this should hook in better
-		# Follow active slice for now
-		#set m [Slicer GetReformatMatrix $Slice(activeID)]
 		set m [Slicer GetReformatMatrix $slice]
 		Tensor(vtk,reformat) SetReformatMatrix $m
 		set visSource [Tensor(vtk,reformat) GetOutput]
 		
-		# Want actor to be positioned with the slice
-		Tensor(vtk,glyphs,actor) SetUserMatrix $m
-		
+		# Position glyphs with the slice.
+		# The glyph filter will transform output points by this 
+		# matrix.  We can't just move the actor in space
+		# since this will rotate the tensors, so this is wrong:
+		# Tensor(vtk,glyphs,actor) SetUserMatrix $m
+		vtkTransform t1
+		t1 SetMatrix $m
+		Tensor(vtk,glyphs) SetUserMatrix t1
+		t1 Delete
+
 	    } else {
 		# We are displaying the whole volume of glyphs!
 		set visSource $preprocessedSource
@@ -1978,16 +1996,13 @@ proc TensorUpdate {} {
 		# Want actor to be positioned in center with slices
 		vtkTransform t1
 		TensorCalculateActorMatrix t1 $Tensor(activeID)
-
-		#t1 Identity
-		#t1 PreMultiply
-		#t1 SetMatrix [$node GetWldToIjk]
-		#t1 Inverse
-		#scan [$node GetSpacing] "%g %g %g" res_x res_y res_z
-		##t1 PostMultiply
-		#t1 PreMultiply
-		#t1 Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] [expr 1.0 / $res_z]
-		Tensor(vtk,glyphs,actor) SetUserMatrix [t1 GetMatrix]
+		
+		# Position glyphs in the volume.
+		# The glyph filter will transform output points by this 
+		# matrix.  We can't just move the actor in space
+		# since this will rotate the tensors, so this is wrong:
+		#Tensor(vtk,glyphs,actor) SetUserMatrix [t1 GetMatrix]
+		Tensor(vtk,glyphs) SetUserMatrix t1
 		t1 Delete
 	    }
 
@@ -2057,9 +2072,10 @@ proc TensorUpdate {} {
     $Tensor(gui,mbVisMode)	config -text $mode
 
 
-    # make sure the scalars are updated
-    TensorUpdateGlyphScalarRange
-
+    # make sure the scalars are updated (if we have anything displayed)
+    if {$mode != "None"} {
+	TensorUpdateGlyphScalarRange
+    }
     # update 3D window (causes pipeline update)
     Render3D
 }
@@ -2705,123 +2721,54 @@ proc ConvertVolumeToTensors {} {
     # tensor creation filter
     vtkImageDiffusionTensor tensor
     tensor SetNumberOfGradients $numberOfGradientImages
-    
+
     # --------------------------------------------------------
-    # We want the tensors to rotate with the volume (when it
-    # is properly rotated for axial, sag, cor orientations).  
+    # Rotate tensors to RAS
+    # --------------------------------------------------------
+    # We want the tensors to be calculated in the RAS coordinate system
     # So rotate the gradient basis.
     # (this matrix JUST does the rotation needed for ijk->ras)
-    #vtkTransform transform
-    #vtkMatrix4x4 matRotate
-    #Volume($v,node) MakePermuteMatrix matRotate [Volume($v,node) GetScanOrder] 
-    #transform SetMatrix matRotate
 
-    ##[transform GetMatrix] Invert
-    #tensor SetTransform transform
-    #transform Delete
-    #matRotate Delete
-    # --------------------------------------------------------
+    #{0 -1 0 0}  \
+	    #{1 0 0 0}  \
+		#    {0  0 -1 0}  \
+		 #   {0  0 0 1}  \
 
-    # Lauren perhaps rm the rotation matrix stuff above and in the class
-
-    # Rotate the gradient vectors if needed.
-    set order [Volume($v,node) GetScanOrder]
-    set id 0
-    switch $order {
-	"IS" { 
-	    set id 0
-	}
-	"SI" {
-	    set id 0
-	}
-	"AP" {
-	    set id 1
-	}
-	"PA" {
-	    set id 1
-	}
-	"LR" {
-	    set id 2
-	}
-	"RL" {
-	    set id 2
-	}
+    # Rotate tensors into RAS coordinate system.
+    # the upper left 3x3 part of this matrix is the rotation
+    # it also has voxel scaling, so we want to remove this
+    vtkTransform transform
+    transform SetMatrix [Volume($v,node)  GetRasToIjk]
+    # now it's ijk to ras
+    transform Inverse
+    # remove the scaling
+    scan [Volume($v,node) GetSpacing] "%g %g %g" res_x res_y res_z
+    # if the volume was swapped these are reversed
+    if {[Volume($v,node) GetFrequencyPhaseSwap] == 1} {
+	set tmp $res_x
+	set res_x $res_y
+	set res_y $tmp
     }
-
-    # only sag is okay -- maybe we need -y!  since the
-    # vtk y-axis is negative perhaps the polydata is messed up.
-
-    # I don't get it
-    # it seems that if the gradient vectors are in RAS-space
-    # then we are set.
-    # so it seems that this could happen once to the gradients
-    # and be the same for all orientations since supine.  why not?
-    # (note that applying an external transform to the volume
-    # will not work on the tensors too right now)
-    switch $id {
-	"0" {
-	    # axial: swap x/y in plane of tensors is goal?
-	    # tried swap xy, rot 90 abt z, swap xz...
-	    set elements "\
-		    {0 0 1 0}  \
-		    {0 1 0 0}  \
-		    {1 0 0 0}  \
-		    {0 0 0 1}  \
-		    "
-	}
-	"1" {
-	    # coronal: rotate tensors 90 deg in plane
-	    # so swap y and z
-	    set elements "\
-		    {1 0 0 0}  \
-		    {0 0 1 0}  \
-		    {0 -1 0 0}  \
-		    {0 0 0 1}  \
-		    "
-	    
-	}
-	"2" {
-	    # sagittal: do nothing
-	    # the gradient vectors are correct for sagittal
-	    # identity matrix
-	    set elements "\
-		    {1 0 0 0}  \
-		    {0 1 0 0}  \
-		    {0 0 1 0}  \
-		    {0 0 0 1}  \
-		    "
-	}
-    }
-
-
-    # try -y!!!!!
-    set elements "\
-	    {1  0 0 0}  \
-	    {0 -1 0 0}  \
-	    {0  0 1 0}  \
-	    {0  0 0 1}  \
-	    "
-
-    # Lauren test
-    # do nothing always!
-    set elements "\
-	    {1 0 0 0}  \
-	    {0 1 0 0}  \
-	    {0 0 1 0}  \
-	    {0 0 0 1}  "
-
-    vtkTransform trans    
-    set rows {0 1 2 3}
-    set cols {0 1 2 3}    
-    foreach row $rows {
-	foreach col $cols {
-	    [trans GetMatrix] SetElement $row $col \
-		    [lindex [lindex $elements $row] $col]
-	}
-    }
-    
+    # we want -y since vtk flips the y axis
+    set res_y [expr -$res_y]
+    transform Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] \
+	    [expr 1.0 / $res_z]
+    # remove the translation part from the last column
+    [transform GetMatrix] SetElement 0 3 0
+    [transform GetMatrix] SetElement 1 3 0
+    [transform GetMatrix] SetElement 2 3 0
+    # set element (4,4) to 1: homogeneous point
+    [transform GetMatrix] SetElement 3 3 1
     # Tensor creation filter will transform gradient dirs by this matrix
-    tensor SetTransform trans
+    tensor SetTransform transform
+    puts "-----------------------------------"
+    puts [transform Print]
+    puts "-----------------------------------"
+    transform Delete
+
+    # --------------------------------------------------------
+    # End rotate tensors to RAS
+    # --------------------------------------------------------
 
     # produce input vols for tensor creation
     set inputNum 0
@@ -2862,6 +2809,7 @@ proc ConvertVolumeToTensors {} {
 	eval {Volume($id,node) SetSpacing} [Volume($id,node) GetSpacing]
 
 	set order [Volume($id,node) GetScanOrder]
+	puts "-------computing ras to ijk from scan order----"
 	Volume($id,node) ComputeRasToIjkFromScanOrder $order
 
 
@@ -2903,9 +2851,20 @@ proc ConvertVolumeToTensors {} {
 	# update slicer internals
 	MainVolumesUpdate $id
     }
-    # also set the no diffusion input
-    # Lauren the real pipeline should average these 2
-    tensor SetNoDiffusionImage [extract6 GetOutput]
+
+    # average the two slices of no gradient 
+    vtkImageMathematics math
+    math SetOperationToAdd
+    math SetInput 0 [extract6 GetOutput]
+    math SetInput 1 [extract7 GetOutput]
+
+    vtkImageMathematics math2
+    math2 SetOperationToMultiplyByK
+    math2 SetConstantK 0.5
+    math2 SetInput 0 [math GetOutput]
+    
+    # set the no diffusion input
+    tensor SetNoDiffusionImage [math2 GetOutput]
     
     
     puts "----------- tensor update --------"
@@ -2963,8 +2922,14 @@ proc ConvertVolumeToTensors {} {
 	extract$slice SetOutput ""
 	extract$slice Delete
     }
+
+    math SetOutput ""
+    math2 SetOutput ""
+    tensor SetOutput ""
+
     tensor Delete
-    trans Delete
+    math Delete
+    math2 Delete
 }
 
 #-------------------------------------------------------------------------------
@@ -3107,6 +3072,7 @@ proc TensorCalculateActorMatrix {transform t} {
     # the data knows its spacing already so remove it
     # (otherwise the actor would be stretched, ouch)
     scan [$node GetSpacing] "%g %g %g" res_x res_y res_z
+
     $transform Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] \
 	    [expr 1.0 / $res_z]
 }
@@ -3228,9 +3194,17 @@ proc TensorAddStreamline {} {
     #Tensor(vtk,$streamline) SetEndMethod        MainEndProgress
 
     # Lauren put these in the GUI
-    Tensor(vtk,$streamline) SetMaximumPropagationDistance 60
-    #Tensor(vtk,$streamline) SetIntegrationStepLength 0.01
-    #Tensor(vtk,$streamline) SetStepLength 0.0001
+    Tensor(vtk,$streamline) SetMaximumPropagationDistance 30
+
+    #nominal integration step size (expressed as a fraction of the
+    #size of each cell)  0.2 is default
+    Tensor(vtk,$streamline) SetIntegrationStepLength 0.1
+
+    # Set / get the length of a tube segment composing the
+    #hyperstreamline. The length is specified as a fraction of the
+    #diagonal length of the input bounding box  0.01 is default
+    Tensor(vtk,$streamline) SetStepLength 0.005
+
     Tensor(vtk,$streamline) SetRadius 0.25 
     Tensor(vtk,$streamline) SetNumberOfSides 30
     Tensor(vtk,$streamline) SetIntegrationDirection 2
@@ -3339,7 +3313,9 @@ proc TensorDoDiffusion {} {
     # Lauren
     # hack so we can use settings from GUI
     # but pipeline will disconnect -- why won't it anyway?
-    vtkImageTensorDiffusion diff
+    #vtkImageTensorDiffusion diff
+    puts "Doing diffusion in 2D"
+    vtkImageTensorDiffusion2D diff
     foreach prop {NumberOfIterations S} {
 	diff Set$prop [Tensor(vtk,diffusion) Get$prop]
     }
@@ -3368,7 +3344,7 @@ proc TensorDoDiffusion {} {
     # hack to see things since floats and slicer don't work
     vtkImageMathematics math
     math SetOperationToMultiplyByK
-    math SetConstantK 1000
+    math SetConstantK 10000
     math SetInput 0 [diff GetOutput]
     math Update
 
@@ -3379,6 +3355,7 @@ proc TensorDoDiffusion {} {
     set v [TensorCreateEmptyVolume $t $description $name]
     puts "created volume $v"
     Volume($v,node) SetScalarTypeToFloat
+    Volume($v,node) InterpolateOff
     #Volume($v,vol) SetImageData [diff GetOutput]
     Volume($v,vol) SetImageData [math GetOutput]
     MainVolumesUpdate $v
