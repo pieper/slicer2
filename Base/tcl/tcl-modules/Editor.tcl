@@ -73,81 +73,82 @@
 # .END
 #-------------------------------------------------------------------------------
 proc EditorInit {} {
-	global Editor Ed Gui Volume Module env Path
-
-	# Define Tabs
-	set m Editor
-	set Module($m,row1List) "Help Volumes Effects Details"
-	set Module($m,row1Name) "{Help} {Volumes} {Effects} {Details}"
-	set Module($m,row1,tab) Volumes
-
-	# Define Procedures
-	set Module($m,procGUI)   EditorBuildGUI
-	set Module($m,procMRML)  EditorUpdateMRML
-	set Module($m,procVTK)   EditorBuildVTK
-	set Module($m,procEnter) EditorEnter
-
-	# Define Dependencies
-	set Module($m,depend) "Labels"
-
-	# Set version info
-	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.27 $} {$Date: 2000/04/17 20:03:38 $}]
-
-	# Initialize globals
-	set Editor(idOriginal)  $Volume(idNone)
-	set Editor(idWorking)   NEW
-	set Editor(idComposite) NEW
-	set Editor(undoActive)  0
-	set Editor(effectMore)  0
-	set Editor(activeID)    TBD
-	set Editor(firstReset)  0
-	set Editor(prefixComposite) ""
-	set Editor(prefixWorking) ""
-	set Editor(fgName) Working
-	set Editor(bgName) Composite
-
-	# Look for Editor effects and form an array, Ed, for them.
-	# Each effect has a *.tcl file in the tcl-modules/Editor directory.
-	set Ed(idList) ""
-
-	set prog $Path(program)
-	set dir  [file join [file join $prog tcl-modules] Editor]
-	# fullname is the full path name
-	foreach fullname [glob -nocomplain $dir/*.tcl] {
-		if {[regexp "$dir/(\.*).tcl" $fullname match name] == 1} {
-			lappend Ed(idList) $name
-			# If there's an error, print the fullname:
-			if {[catch {source $fullname} errmsg] == 1} {
-				puts "ERROR in $fullname:\n $errmsg"
-				source $fullname
-			}
-		}
+    global Editor Ed Gui Volume Module env Path
+    
+    # Define Tabs
+    set m Editor
+    set Module($m,row1List) "Help Setup Effects Details Merge"
+    set Module($m,row1Name) "{Help} {Setup} {Effects} {Details} {Merge}"
+    set Module($m,row1,tab) Setup
+    
+    # Define Procedures
+    set Module($m,procGUI)   EditorBuildGUI
+    set Module($m,procMRML)  EditorUpdateMRML
+    set Module($m,procVTK)   EditorBuildVTK
+    set Module($m,procEnter) EditorEnter
+    
+    # Define Dependencies
+    set Module($m,depend) "Labels"
+    
+    # Set version info
+    lappend Module(versions) [ParseCVSInfo $m \
+	    {$Revision: 1.28 $} {$Date: 2000/07/20 22:33:32 $}]
+    
+    # Initialize globals
+    set Editor(idOriginal)  $Volume(idNone)
+    set Editor(idWorking)   NEW
+    set Editor(idComposite) NEW
+    set Editor(undoActive)  0
+    set Editor(effectMore)  0
+    set Editor(activeID)    TBD
+    set Editor(firstReset)  0
+    set Editor(prefixComposite) ""
+    set Editor(prefixWorking) ""
+    set Editor(fgName) Working
+    set Editor(bgName) Composite
+    set Editor(nameWorking) Working
+    
+    # Look for Editor effects and form an array, Ed, for them.
+    # Each effect has a *.tcl file in the tcl-modules/Editor directory.
+    set Ed(idList) ""
+    
+    set prog $Path(program)
+    set dir  [file join [file join $prog tcl-modules] Editor]
+    # fullname is the full path name
+    foreach fullname [glob -nocomplain $dir/*.tcl] {
+	if {[regexp "$dir/(\.*).tcl" $fullname match name] == 1} {
+	    lappend Ed(idList) $name
+	    # If there's an error, print the fullname:
+	    if {[catch {source $fullname} errmsg] == 1} {
+		puts "ERROR in $fullname:\n $errmsg"
+		source $fullname
+	    }
 	}
-
-	# Initialize effects
-	if {$Module(verbose) == 1} {
-		puts Editor-Init:
+    }
+    
+    # Initialize effects
+    if {$Module(verbose) == 1} {
+	puts Editor-Init:
+    }
+    foreach m $Ed(idList) {
+	if {[info command ${m}Init] != ""} {
+	    if {$Module(verbose) == 1} {
+		puts ${m}Init
+	    }
+	    ${m}Init
 	}
-	foreach m $Ed(idList) {
-		if {[info command ${m}Init] != ""} {
-			if {$Module(verbose) == 1} {
-				puts ${m}Init
-			}
-			${m}Init
-		}
-	}
-
-	# Order effects by increasing rank
-	set pairs ""
-	foreach m $Ed(idList) {
-		lappend pairs "$m $Ed($m,rank)"
-	}
-	set pairs [lsort -index 1 -integer -increasing $pairs]
-	set Ed(idList) ""
-	foreach p $pairs {
-		lappend Ed(idList) [lindex $p 0]
-	}
+    }
+    
+    # Order effects by increasing rank
+    set pairs ""
+    foreach m $Ed(idList) {
+	lappend pairs "$m $Ed($m,rank)"
+    }
+    set pairs [lsort -index 1 -integer -increasing $pairs]
+    set Ed(idList) ""
+    foreach p $pairs {
+	lappend Ed(idList) [lindex $p 0]
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -228,15 +229,22 @@ proc EditorUpdateMRML {} {
 			$m add command -label [Volume($v,node) GetName] -command \
 				"EditorSetWorking $v; RenderAll"
 		}
-		if {[Volume($v,node) GetName] == "Working"} {
-			set idWorking $v
-		}
 	}
-	# If there is working, then select it, else add a NEW option
-	if {$idWorking != ""} {
-		EditorSetWorking $idWorking
+	
+	# Always add a NEW option
+	$m add command -label NEW -command "EditorSetWorking NEW; RenderAll"
+
+	# Set the working volume
+	EditorSetWorking $Editor(idWorking)
+
+	# Working Volume name field  (name for the NEW volume to be created)
+	#---------------------------------------------------------------------------
+	set v $Editor(idWorking)
+	if {$v != "NEW"} {
+	    set Editor(nameWorking) [Volume($v,node) GetName]
+	    puts $Editor(nameWorking)
 	} else {
-		$m add command -label NEW -command "EditorSetWorking NEW; RenderAll"
+	    set Editor(nameWorking) Working
 	}
 
 	# Composite Volume menu
@@ -253,7 +261,7 @@ proc EditorUpdateMRML {} {
 			set idComposite $v
 		}
 	}
-	# If there is working, then select it, else add a NEW option
+	# If there is composite, then select it, else add a NEW option
 	if {$idComposite != ""} {
 		EditorSetComposite $idComposite
 	} else {
@@ -319,36 +327,44 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 
 
 	############################################################################
-	#                                 Volumes
+	#                                 Setup
 	############################################################################
 
 	#-------------------------------------------
-	# Volumes frame
+	# Setup frame
 	#-------------------------------------------
-	set fVolumes $Module(Editor,fVolumes)
-	set f $fVolumes
+	set fSetup $Module(Editor,fSetup)
+	set f $fSetup
 
 	frame $f.fHelp      -bg $Gui(activeWorkspace)
-	frame $f.fOriginal  -bg $Gui(activeWorkspace)
+	frame $f.fOriginal  -bg $Gui(activeWorkspace) -relief groove -bd 3
 	frame $f.fWorking   -bg $Gui(activeWorkspace) -relief groove -bd 3
-	frame $f.fComposite -bg $Gui(activeWorkspace) -relief groove -bd 3
-	frame $f.fMerge     -bg $Gui(activeWorkspace) -relief groove -bd 3
 
-	pack $f.fOriginal $f.fHelp $f.fWorking $f.fComposite $f.fMerge \
+	pack $f.fOriginal  $f.fWorking $f.fHelp \
 		-side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
 	#-------------------------------------------
-	# Volumes->Help
+	# Setup->Help
 	#-------------------------------------------
-	set f $fVolumes.fHelp
+	set f $fSetup.fHelp
 
-	eval {label $f.l -text "Click the 'Effects' tab to begin."} $Gui(WLA)
+	eval {label $f.l -text "Click the 'Effects' tab to begin editing."} $Gui(WLA)
 	pack $f.l
 
 	#-------------------------------------------
-	# Volumes->Original
+	# Setup->Original
 	#-------------------------------------------
-	set f $fVolumes.fOriginal
+	set f $fSetup.fOriginal
+
+	frame $f.fMenu -bg $Gui(activeWorkspace)
+	frame $f.fHelp -bg $Gui(activeWorkspace)
+
+	pack $f.fHelp $f.fMenu -side top -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Setup->Original->Menu
+	#-------------------------------------------
+	set f $fSetup.fOriginal.fMenu
 
 	# Volume menu
 	eval {label $f.lOriginal -text "Original Volume:"} $Gui(WTA)
@@ -363,23 +379,35 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 	set Editor(mbOriginal) $f.mbOriginal
 	set Editor(mOriginal)  $f.mbOriginal.m
 
+	#-------------------------------------------
+	# Setup->Original->Help
+	#-------------------------------------------
+	set f $fSetup.fOriginal.fHelp
+
+	# Help text
+	eval {label $f.lOriginal -text "Choose an input grayscale volume."} $Gui(WTA)
+	pack $f.lOriginal -padx $Gui(pad) -side left -anchor e
 
 	#-------------------------------------------
-	# Volumes->Working
+	# Setup->Working
 	#-------------------------------------------
-	set f $fVolumes.fWorking
+	set f $fSetup.fWorking
 
 	frame $f.fMenu -bg $Gui(activeWorkspace)
+	frame $f.fHelp -bg $Gui(activeWorkspace)
+	frame $f.fName -bg $Gui(activeWorkspace)
 	frame $f.fPrefix -bg $Gui(activeWorkspace)
 	frame $f.fBtns   -bg $Gui(activeWorkspace)
-	pack $f.fMenu -side top -pady $Gui(pad)
+
+	pack $f.fHelp $f.fMenu -side top -pady $Gui(pad)
+	pack $f.fName -side top -pady $Gui(pad) -fill x
 	pack $f.fPrefix -side top -pady $Gui(pad) -fill x
 	pack $f.fBtns -side top -pady $Gui(pad)
 
 	#-------------------------------------------
-	# Volumes->Working->Menu
+	# Setup->Working->Menu
 	#-------------------------------------------
-	set f $fVolumes.fWorking.fMenu
+	set f $fSetup.fWorking.fMenu
 
 	# Volume menu
 	eval {label $f.lWorking -text "Working Volume:"} $Gui(WTA)
@@ -394,19 +422,41 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 	set Editor(mWorking)  $f.mbWorking.m
 
 	#-------------------------------------------
-	# Volumes->Working->Prefix
+	# Setup->Working->Help
 	#-------------------------------------------
-	set f $fVolumes.fWorking.fPrefix
+	set f $fSetup.fWorking.fHelp
 
-	eval {label $f.l -text "Prefix:"} $Gui(WLA)
+	# Help text
+	eval {label $f.lWorking -text "Choose a labelmap to edit."} $Gui(WTA)
+	pack $f.lWorking -padx $Gui(pad) -side left -anchor e
+
+	#-------------------------------------------
+	# Setup->Working->Prefix
+	#-------------------------------------------
+	set f $fSetup.fWorking.fPrefix
+
+	eval {label $f.l -text "File Prefix:"} $Gui(WLA)
 	eval {entry $f.e -textvariable Editor(prefixWorking)} $Gui(WEA)
 	pack $f.l -padx 3 -side left
 	pack $f.e -padx 3 -side left -expand 1 -fill x
 
 	#-------------------------------------------
-	# Volumes->Working->Btns
+	# Setup->Working->Name
 	#-------------------------------------------
-	set f $fVolumes.fWorking.fBtns
+	set f $fSetup.fWorking.fName
+
+	eval {label $f.l -text "Descriptive Name:"} $Gui(WLA)
+	eval {entry $f.e -textvariable Editor(nameWorking)} $Gui(WEA)
+	pack $f.l -padx 3 -side left
+	pack $f.e -padx 3 -side left -expand 1 -fill x
+
+	# Save widget for disabling name field if not NEW volume
+	set Editor(eNameWorking) $f.e
+
+	#-------------------------------------------
+	# Setup->Working->Btns
+	#-------------------------------------------
+	set f $fSetup.fWorking.fBtns
 
 	eval {button $f.bWrite -text "Save" -width 5 \
 		-command "EditorWrite Working; RenderAll"} $Gui(WBA)
@@ -415,98 +465,6 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 	eval {button $f.bRead -text "Read" -width 5 \
 		-command "EditorRead Working; RenderAll"} $Gui(WBA)
 	pack $f.bWrite $f.bRead $f.bClear -side left -padx $Gui(pad)
-
-
-	#-------------------------------------------
-	# Volumes->Composite
-	#-------------------------------------------
-	set f $fVolumes.fComposite
-
-	frame $f.fMenu   -bg $Gui(activeWorkspace)
-	frame $f.fPrefix -bg $Gui(activeWorkspace)
-	frame $f.fBtns   -bg $Gui(activeWorkspace)
-	pack $f.fMenu -side top -pady $Gui(pad)
-	pack $f.fPrefix -side top -pady $Gui(pad) -fill x
-	pack $f.fBtns -side top -pady $Gui(pad)
-
-	#-------------------------------------------
-	# Volumes->Composite->Menu
-	#-------------------------------------------
-	set f $fVolumes.fComposite.fMenu
-
-	# Volume menu
-	eval {label $f.lComposite -text "Composite Volume:"} $Gui(WTA)
-
-	eval {menubutton $f.mbComposite -text "NEW" -relief raised -bd 2 -width 18 \
-		-menu $f.mbComposite.m} $Gui(WMBA)
-	eval {menu $f.mbComposite.m} $Gui(WMA)
-	pack $f.lComposite $f.mbComposite -padx $Gui(pad) -side left
-
-	# Save widgets for changing
-	set Editor(mbComposite) $f.mbComposite
-	set Editor(mComposite)  $f.mbComposite.m
-
-	#-------------------------------------------
-	# Volumes->Composite->Prefix
-	#-------------------------------------------
-	set f $fVolumes.fComposite.fPrefix
-
-	eval {label $f.l -text "Prefix:"} $Gui(WLA)
-	eval {entry $f.e \
-		-textvariable Editor(prefixComposite)} $Gui(WEA)
-	pack $f.l -padx 3 -side left
-	pack $f.e -padx 3 -side left -expand 1 -fill x
-
-	#-------------------------------------------
-	# Volumes->Composite->Btns
-	#-------------------------------------------
-	set f $fVolumes.fComposite.fBtns
-
-	eval {button $f.bWrite -text "Save" -width 5 \
-		-command "EditorWrite Composite; RenderAll"} $Gui(WBA)
-	eval {button $f.bClear -text "Clear to 0's" -width 12 \
-		-command "EditorClear Composite; RenderAll"} $Gui(WBA)
-	eval {button $f.bRead -text "Read" -width 5 \
-		-command "EditorRead Composite; RenderAll"} $Gui(WBA)
-	pack $f.bWrite $f.bRead $f.bClear -side left -padx $Gui(pad)
-
-
-	#-------------------------------------------
-	# Volumes->Merge
-	#-------------------------------------------
-	set f $fVolumes.fMerge
-
-	eval {label $f.lTitle -text "Combine 2 Label Maps"} $Gui(WTA)
-	frame $f.f  -bg $Gui(activeWorkspace)
-	eval {button $f.b -text "Merge" -width 6 \
-		-command "EditorMerge merge 0; RenderAll"} $Gui(WBA)
-	pack $f.lTitle $f.f $f.b -pady $Gui(pad) -side top
-
-	set f $fVolumes.fMerge.f
-
-	eval {label $f.l1 -text "Write"} $Gui(WLA)
-
-	eval {menubutton $f.mbFore -text "$Editor(fgName)" -relief raised -bd 2 -width 9 \
-		-menu $f.mbFore.m} $Gui(WMBA)
-	eval {menu $f.mbFore.m} $Gui(WMA)
-	set Editor(mbFore) $f.mbFore
-	set m $Editor(mbFore).m
-	foreach v "Working Composite Original" {
-		$m add command -label $v -command "EditorMerge Fore $v"
-	}
-
-	eval {label $f.l2 -text "over"} $Gui(WLA)
-
-	eval {menubutton $f.mbBack -text "$Editor(bgName)" -relief raised -bd 2 -width 9 \
-		-menu $f.mbBack.m} $Gui(WMBA)
-	eval {menu $f.mbBack.m} $Gui(WMA)
-	set Editor(mbBack) $f.mbBack
-	set m $Editor(mbBack).m
-	foreach v "Working Composite" {
-		$m add command -label $v -command "EditorMerge Back $v"
-	}
-
-	pack $f.mbFore $f.l2 $f.mbBack -padx $Gui(pad) -side left -anchor w
 
 
 	############################################################################
@@ -715,6 +673,124 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 		place $f.f$e -in $f -relheight 1.0 -relwidth 1.0
 		set Ed($e,frame) $f.f$e
 	}
+
+
+	############################################################################
+	#                                 Merge
+	############################################################################
+
+	#-------------------------------------------
+	# Merge frame
+	#-------------------------------------------
+	set fMerge $Module(Editor,fMerge)
+	set f $fMerge
+
+	frame $f.fHelp      -bg $Gui(activeWorkspace)
+	frame $f.fComposite -bg $Gui(activeWorkspace) -relief groove -bd 3
+	frame $f.fMerge     -bg $Gui(activeWorkspace) -relief groove -bd 3
+
+	pack $f.fHelp $f.fComposite $f.fMerge \
+		-side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+	#-------------------------------------------
+	# Merge->Help
+	#-------------------------------------------
+	set f $fMerge.fHelp
+
+	eval {label $f.l -text "Merge two label maps:\nthe first will be copied onto the second."} $Gui(WLA)
+	pack $f.l
+
+	#-------------------------------------------
+	# Merge->Composite
+	#-------------------------------------------
+	set f $fMerge.fComposite
+
+	frame $f.fMenu   -bg $Gui(activeWorkspace)
+	frame $f.fPrefix -bg $Gui(activeWorkspace)
+	frame $f.fBtns   -bg $Gui(activeWorkspace)
+	pack $f.fMenu -side top -pady $Gui(pad)
+	pack $f.fPrefix -side top -pady $Gui(pad) -fill x
+	pack $f.fBtns -side top -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Merge->Composite->Menu
+	#-------------------------------------------
+	set f $fMerge.fComposite.fMenu
+
+	# Volume menu
+	eval {label $f.lComposite -text "Composite Volume:"} $Gui(WTA)
+
+	eval {menubutton $f.mbComposite -text "NEW" -relief raised -bd 2 -width 18 \
+		-menu $f.mbComposite.m} $Gui(WMBA)
+	eval {menu $f.mbComposite.m} $Gui(WMA)
+	pack $f.lComposite $f.mbComposite -padx $Gui(pad) -side left
+
+	# Save widgets for changing
+	set Editor(mbComposite) $f.mbComposite
+	set Editor(mComposite)  $f.mbComposite.m
+
+	#-------------------------------------------
+	# Merge->Composite->Prefix
+	#-------------------------------------------
+	set f $fMerge.fComposite.fPrefix
+
+	eval {label $f.l -text "File Prefix:"} $Gui(WLA)
+	eval {entry $f.e \
+		-textvariable Editor(prefixComposite)} $Gui(WEA)
+	pack $f.l -padx 3 -side left
+	pack $f.e -padx 3 -side left -expand 1 -fill x
+
+	#-------------------------------------------
+	# Merge->Composite->Btns
+	#-------------------------------------------
+	set f $fMerge.fComposite.fBtns
+
+	eval {button $f.bWrite -text "Save" -width 5 \
+		-command "EditorWrite Composite; RenderAll"} $Gui(WBA)
+	eval {button $f.bClear -text "Clear to 0's" -width 12 \
+		-command "EditorClear Composite; RenderAll"} $Gui(WBA)
+	eval {button $f.bRead -text "Read" -width 5 \
+		-command "EditorRead Composite; RenderAll"} $Gui(WBA)
+	pack $f.bWrite $f.bRead $f.bClear -side left -padx $Gui(pad)
+
+
+	#-------------------------------------------
+	# Merge->Merge
+	#-------------------------------------------
+	set f $fMerge.fMerge
+
+	eval {label $f.lTitle -text "Combine 2 Label Maps"} $Gui(WTA)
+	frame $f.f  -bg $Gui(activeWorkspace)
+	eval {button $f.b -text "Merge" -width 6 \
+		-command "EditorMerge merge 0; RenderAll"} $Gui(WBA)
+	pack $f.lTitle $f.f $f.b -pady $Gui(pad) -side top
+
+	set f $fMerge.fMerge.f
+
+	eval {label $f.l1 -text "Write"} $Gui(WLA)
+
+	eval {menubutton $f.mbFore -text "$Editor(fgName)" -relief raised -bd 2 -width 9 \
+		-menu $f.mbFore.m} $Gui(WMBA)
+	eval {menu $f.mbFore.m} $Gui(WMA)
+	set Editor(mbFore) $f.mbFore
+	set m $Editor(mbFore).m
+	foreach v "Working Composite Original" {
+		$m add command -label $v -command "EditorMerge Fore $v"
+	}
+
+	eval {label $f.l2 -text "over"} $Gui(WLA)
+
+	eval {menubutton $f.mbBack -text "$Editor(bgName)" -relief raised -bd 2 -width 9 \
+		-menu $f.mbBack.m} $Gui(WMBA)
+	eval {menu $f.mbBack.m} $Gui(WMA)
+	set Editor(mbBack) $f.mbBack
+	set m $Editor(mbBack).m
+	foreach v "Working Composite" {
+		$m add command -label $v -command "EditorMerge Back $v"
+	}
+
+	pack $f.mbFore $f.l2 $f.mbBack -padx $Gui(pad) -side left -anchor w
+
 
 	############################################################################
 	#                                 Effects
@@ -988,14 +1064,19 @@ proc EditorSetWorking {v} {
 	}
 	set Editor(idWorking) $v
 	
-	# Change button text, and show file prefix
+	# Change button text, show name and file prefix
+	# Disable name field if not NEW volume
 	if {$v == "NEW"} {
 		$Editor(mbWorking) config -text $v
 		set Editor(prefixWorking) ""
+		set Editor(nameWorking) Working
+		$Editor(eNameWorking) configure -state normal
 	} else {
 		$Editor(mbWorking) config -text [Volume($v,node) GetName]
 		set Editor(prefixWorking) [MainFileGetRelativePrefix \
 			[Volume($v,node) GetFilePrefix]]
+		set Editor(nameWorking) [Volume($v,node) GetName]
+		$Editor(eNameWorking) configure -state disabled
 	}
 
 	# Refresh the effect, if it's an interactive one
@@ -1107,19 +1188,29 @@ proc EditorGetWorkingID {} {
 	if {$Editor(idWorking) != "NEW"} {
 		return $Editor(idWorking)
 	}
-	
+
 	# Create the node
 	set n [MainMrmlAddNode Volume]
 	set v [$n GetID]
+
 	$n SetDescription "Working Volume=$v"
-	$n SetName        "Working"
 	$n SetLUTName     $Lut(idLabel)
 	$n InterpolateOff
 	$n LabelMapOn
 
+	# Make sure the name entered is okay, else use default
+	if {[ValidateName $Editor(nameWorking)] == 0} {
+	    puts "The Descriptive Name can consist of letters, digits, dashes, or underscoresonly. Using default name Working"
+	    $n SetName Working
+	} else {
+	    $n SetName $Editor(nameWorking)   
+	}
+	
 	# Create the volume
 	MainVolumesCreate $v
 	Volume($v,vol) UseLabelIndirectLUTOn
+
+	EditorSetWorking $v
 
         # This updates all the buttons to say that the
         # Volume List has changed.
