@@ -279,6 +279,10 @@ protected:
   MIRegistration();
   ~MIRegistration();
 
+  // Description:
+  // Print everything
+  virtual void PrintSelf(std::ostream& os, Indent indent) const;
+
 private:
   MIRegistration( const Self& ); //purposely not implemented
   void operator=( const Self& ); //purposely not implemented
