@@ -68,6 +68,12 @@ vtkMrmlSegmenterSuperClassNode::vtkMrmlSegmenterSuperClassNode() {
   this->PrintBias           = 0;
   this->PrintLabelMap       = 0;
   this->PrintWeights        = 0;
+
+  this->PrintEMLabelMapConvergence  = 0;
+  this->PrintEMWeightsConvergence = 0;
+  this->BoundaryStopEMType  = 0;
+  this->BoundaryStopEMValue = 0.0; 
+  this->BoundaryStopEMMaxIterations = 0; 
 }
 
 //----------------------------------------------------------------------------
@@ -99,7 +105,11 @@ void vtkMrmlSegmenterSuperClassNode::Write(ofstream& of, int nIndent)
   of << " PrintBias='" << this->PrintBias << "'";
   of << " PrintLabelMap='" << this->PrintLabelMap << "'";
   of << " PrintFrequency='" << this->PrintFrequency << "'";
-
+  of << " PrintEMLabelMapConvergence='" << this->PrintEMLabelMapConvergence <<  "'";
+  of << " PrintEMWeightsConvergence='" << this->PrintEMWeightsConvergence  <<  "'";
+  of << " BoundaryStopEMType='" << this->BoundaryStopEMType  <<  "'";
+  of << " BoundaryStopEMValue='" << this->BoundaryStopEMValue <<  "'";
+  of << " BoundaryStopEMMaxIterations='" << this->BoundaryStopEMMaxIterations <<  "'";
   of << ">\n";
 }
 
@@ -119,6 +129,12 @@ void vtkMrmlSegmenterSuperClassNode::Copy(vtkMrmlNode *anode)
   this->PrintLabelMap  = node->PrintLabelMap;
   this->PrintFrequency = node->PrintFrequency;
 
+  this->PrintEMLabelMapConvergence  = node->PrintEMLabelMapConvergence;
+  this->PrintEMWeightsConvergence   = node->PrintEMWeightsConvergence;
+  this->BoundaryStopEMType          = node->BoundaryStopEMType;
+  this->BoundaryStopEMValue         = node->BoundaryStopEMValue; 
+  this->BoundaryStopEMMaxIterations = node->BoundaryStopEMMaxIterations; 
+
 }
 
 //----------------------------------------------------------------------------
@@ -133,10 +149,15 @@ void vtkMrmlSegmenterSuperClassNode::PrintSelf(ostream& os, vtkIndent indent)
 
   os << indent << "LocalPriorWeight: " << this->LocalPriorWeight << "\n";
 
-  os << indent << " PrintWeights:   " << this->PrintWeights << "\n";
-  os << indent << " PrintBias:      " << this->PrintBias << "\n";
-  os << indent << " PrintLabelMap:  " << this->PrintLabelMap << "\n";
-  os << indent << " PrintFrequency: " << this->PrintFrequency << "\n";
+  os << indent << "PrintWeights:   " << this->PrintWeights << "\n";
+  os << indent << "PrintBias:      " << this->PrintBias << "\n";
+  os << indent << "PrintLabelMap:  " << this->PrintLabelMap << "\n";
+  os << indent << "PrintFrequency: " << this->PrintFrequency << "\n";
+  os << indent << "PrintEMLabelMapConvergence:  " << this->PrintEMLabelMapConvergence << "\n";
+  os << indent << "PrintEMWeightsConvergence:   " << this->PrintEMWeightsConvergence << "\n";
+  os << indent << "BoundaryStopEMType:          " << this->BoundaryStopEMType  << "\n";
+  os << indent << "BoundaryStopEMValue:         " << this->BoundaryStopEMValue << "\n";
+  os << indent << "BoundaryStopEMMaxIterations: " << this->BoundaryStopEMMaxIterations << "\n";
 }
 
 

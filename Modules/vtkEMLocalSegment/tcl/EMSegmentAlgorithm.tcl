@@ -91,7 +91,13 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintBias      $EMSegment(Cattrib,$SuperClass,PrintBias)
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintLabelMap  $EMSegment(Cattrib,$SuperClass,PrintLabelMap)
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetProbDataWeight $EMSegment(Cattrib,$SuperClass,LocalPriorWeight)
-  
+
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintEMLabelMapConvergence  $EMSegment(Cattrib,$SuperClass,PrintEMLabelMapConvergence)
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintEMWeightsConvergence   $EMSegment(Cattrib,$SuperClass,PrintEMWeigthsMapConvergence)
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetBoundaryStopEMType          $EMSegment(Cattrib,$SuperClass,BoundaryStopEMType)
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetBoundaryStopEMValue         $EMSegment(Cattrib,$SuperClass,BoundaryStopEMValue)
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetBoundaryStopEMMaxIterations $EMSegment(Cattrib,$SuperClass,BoundaryStopEMMaxIterations)
+
   set ClassIndex 0
   foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
     if {$EMSegment(Cattrib,$i,IsSuperClass)} {

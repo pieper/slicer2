@@ -37,6 +37,13 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageData.h"
 #include "vtkOStreamWrapper.h"
 
+#ifndef EM_VTK_OLD_SETTINGS
+#if (VTK_MAJOR_VERSION == 4 && (VTK_MINOR_VERSION >= 3 || (VTK_MINOR_VERSION == 2 && VTK_BUILD_VERSION > 5)))
+  #define EM_VTK_OLD_SETTINGS 0 
+#else
+  #define EM_VTK_OLD_SETTINGS 1
+#endif
+#endif
 
 // For Super Class and sub class
 enum classType {CLASS, SUPERCLASS};

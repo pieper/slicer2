@@ -144,17 +144,21 @@ proc EMLocalSegmentInit {} {
 proc EMSegmentInit {} {
     global EMSegment Module Volume Model Mrml Color Slice Gui env
 
+    # Ensures that model is only initialized once 
+    if {[info exists EMSegment(SegmentMode)]} {
+        return  
+    } 
+
+
     # For later version where we can use local prios
     # Public Version  = 1
     # Private Version = 2
-
     if { [catch "package require vtkEMPrivateSegment"] } {
       set EMSegment(SegmentMode) 0
     } else {
       puts "Load Private EM-Version"
       set EMSegment(SegmentMode) 1
     } 
-
     ##set EMSegment(SegmentMode) 0
 
     # Source EMSegmentAlgorithm.tcl File 
@@ -179,7 +183,7 @@ proc EMSegmentInit {} {
     #   row2List = an optional second row of tabs if the first row is too small
     #   row2Name = like row1
     #   row2,tab = like row1 
-    #
+  
     set m EMSegment
     set Module($m,row1List) "Help EM Class CIM Setting"
     set Module($m,row1Name) "{Help} {EM} {Class} {CIM} {Setting}"
@@ -245,7 +249,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.39 $} {$Date: 2004/09/08 22:29:53 $}]
+        {$Revision: 1.40 $} {$Date: 2004/09/25 08:28:12 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1824,12 +1828,16 @@ proc EMSegmentUpdateMRML {} {
       
           set EMSegment(Cattrib,$NumClass,Prob)     [SegmenterSuperClass($pid,node) GetProb]
 
-      set EMSegment(Cattrib,$NumClass,PrintWeights)    [SegmenterSuperClass($pid,node) GetPrintWeights]
-      set EMSegment(Cattrib,$NumClass,PrintFrequency)  [SegmenterSuperClass($pid,node) GetPrintFrequency]
-      set EMSegment(Cattrib,$NumClass,PrintBias)       [SegmenterSuperClass($pid,node) GetPrintBias]
-      set EMSegment(Cattrib,$NumClass,PrintLabelMap)   [SegmenterSuperClass($pid,node) GetPrintLabelMap]
+          set EMSegment(Cattrib,$NumClass,PrintWeights)    [SegmenterSuperClass($pid,node) GetPrintWeights]
+          set EMSegment(Cattrib,$NumClass,PrintFrequency)  [SegmenterSuperClass($pid,node) GetPrintFrequency]
+          set EMSegment(Cattrib,$NumClass,PrintBias)       [SegmenterSuperClass($pid,node) GetPrintBias]
+          set EMSegment(Cattrib,$NumClass,PrintLabelMap)   [SegmenterSuperClass($pid,node) GetPrintLabelMap]
 
-
+          set EMSegment(Cattrib,$NumClass,PrintEMLabelMapConvergence)  [SegmenterSuperClass($pid,node)  GetPrintEMLabelMapConvergence]       
+          set EMSegment(Cattrib,$NumClass,PrintEMWeightsConvergence)   [SegmenterSuperClass($pid,node)  GetPrintEMWeightsConvergence]       
+          set EMSegment(Cattrib,$NumClass,BoundaryStopEMType)          [SegmenterSuperClass($pid,node)  GetBoundaryStopEMType]
+          set EMSegment(Cattrib,$NumClass,BoundaryStopEMValue)         [SegmenterSuperClass($pid,node)  GetBoundaryStopEMValue]
+          set EMSegment(Cattrib,$NumClass,BoundaryStopEMMaxIterations) [SegmenterSuperClass($pid,node)  GetBoundaryStopEMMaxIterations]
 
           # Create Sub Classes
           set EMSegment(NumClassesNew)          [SegmenterSuperClass($pid,node) GetNumClasses]       
@@ -2591,6 +2599,9 @@ proc EMSegmentStartEM { {save_mode "save"} } {
      set EMSegment(VolumeNameList) ""
      foreach v $Volume(idList) {lappend EMSegment(VolumeNameList)  [Volume($v,node) GetName]}
      set NumInputImagesSet [EMSegmentAlgorithmStart] 
+     # For debugging
+     puts [EMSegment(vtkEMSegment) Print]
+
      EMSegment(vtkEMSegment) Update
      if {[EMSegment(vtkEMSegment) GetErrorFlag]} {
          set ErrorFlag 1
@@ -3953,6 +3964,11 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses} {
       unset EMSegment(Cattrib,$i,PrintBias) 
       unset EMSegment(Cattrib,$i,PrintLabelMap)  
       unset EMSegment(Cattrib,$i,PrintFrequency) 
+      unset EMSegment(Cattrib,$i,PrintEMLabelMapConvergence)
+      unset EMSegment(Cattrib,$i,PrintEMWeigthsMapConvergence)
+      unset EMSegment(Cattrib,$i,BoundaryStopEMType)
+      unset EMSegment(Cattrib,$i,BoundaryStopEMValue)
+      unset EMSegment(Cattrib,$i,BoundaryStopEMMaxIterations)
       }
       # Reconfigure width and height of canvas
       if {$ChangeGui} {EMSegmentSetCIMMatrix} 
@@ -4039,6 +4055,11 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses} {
       set EMSegment(Cattrib,$i,PrintBias) 0
       set EMSegment(Cattrib,$i,PrintLabelMap) 0 
       set EMSegment(Cattrib,$i,PrintFrequency) 0
+      set EMSegment(Cattrib,$i,PrintEMLabelMapConvergence)   0
+      set EMSegment(Cattrib,$i,PrintEMWeigthsMapConvergence) 0
+      set EMSegment(Cattrib,$i,BoundaryStopEMType)  0
+      set EMSegment(Cattrib,$i,BoundaryStopEMValue) 0.0
+      set EMSegment(Cattrib,$i,BoundaryStopEMMaxIterations) 0 
     }
     # Define CIM Field as Matrix M(Class1,Class2,Relation of Pixels)
     # where the "Relation of the Pixels" can be set as Pixel with "left", 

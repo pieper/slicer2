@@ -117,6 +117,33 @@ public:
   vtkGetMacro(PrintWeights, int);
   vtkSetMacro(PrintWeights, int);
 
+ // Description:
+  // Prints out the number of voxels changed from last to this EM iteration
+  vtkGetMacro(PrintEMLabelMapConvergence, int);  
+  vtkSetMacro(PrintEMLabelMapConvergence, int);  
+
+  // Description:
+  // Prints out the difference in percent 
+  vtkGetMacro(PrintEMWeightsConvergence, int);
+  vtkSetMacro(PrintEMWeightsConvergence, int);
+
+  // Description:  
+  // After which criteria should be stopped   
+  // 0 = fixed iterations 
+  // 1 = Absolut measure 
+  // 2 = Relative measure 
+  vtkGetMacro(BoundaryStopEMType,int); 
+  vtkSetMacro(BoundaryStopEMType,int); 
+  
+  // Description:  
+  // What is the obundary value, note if the number of iterations 
+  // extend EMiter than stops than
+  vtkGetMacro(BoundaryStopEMValue,float);      
+  vtkSetMacro(BoundaryStopEMValue,float); 
+
+  vtkGetMacro(BoundaryStopEMMaxIterations,int); 
+  vtkSetMacro(BoundaryStopEMMaxIterations,int); 
+
 protected:
   vtkMrmlSegmenterSuperClassNode();
   ~vtkMrmlSegmenterSuperClassNode();
@@ -134,6 +161,18 @@ protected:
   int PrintBias;
   int PrintLabelMap;
 
+  int PrintEMLabelMapConvergence;  // Prints out the number of voxels changed from last to this iteration
+  int PrintEMWeightsConvergence; // Prints out the difference in percent 
+
+  int BoundaryStopEMType;       // After which criteria should be stopped   
+                                // 0 = fixed iterations 
+                                // 1 = Absolut measure 
+                                // 2 = Relative measure
+  float BoundaryStopEMValue;    // What is the obundary value, note if the number of iterations 
+                                // extend EMiter than stops than
+                                // if (BoundaryStopEMType = 1) than it is percent
+
+  int BoundaryStopEMMaxIterations;
 };
 
 #endif
