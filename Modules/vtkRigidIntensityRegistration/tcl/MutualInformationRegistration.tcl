@@ -101,7 +101,7 @@ proc MutualInformationRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2003/12/08 03:53:20 $}]
+        {$Revision: 1.4 $} {$Date: 2003/12/09 01:43:09 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -214,7 +214,8 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     <LI><B>The Algorithm </B> 
     This is an automatic method of registering two images using mutual information of the two images. It is based on the methods of Wells and Viola (1996).
     <LI><B>Limitations</B>
-    The algorithm has a finite capture range. Rotations of more than 30 degrees will likely not be found. Rotations of 10 degrees will likely be found. Thus, an initial alignment can be important. Also, cascades of transforms do not work. CT (or anything with gantry tilt) will not work. 
+    The algorithm has a finite capture range. Rotations of more than 30 degrees will likely not be found. Rotations of 10 degrees will likely be found. Thus, an initial alignment can be important. Anything with gantry tilt (like CT) 
+will not work. Also, arbitrary cascades of transforms are not allowed. All of the transforms that affect the Reference volume must also affect the Moving volume. The Moving volume must have one additional matrix, which will be set by this method.
     <LI><B>Easiest way to begin</B>
     Select a \"Volume to Move\" and a \"Reference Volume\" and click \"Start\".
     <LI><B>Normal: Coarse</B>
