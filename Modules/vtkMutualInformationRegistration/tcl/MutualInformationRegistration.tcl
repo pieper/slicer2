@@ -101,7 +101,7 @@ proc MutualInformationRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2003/09/10 15:40:33 $}]
+        {$Revision: 1.4 $} {$Date: 2003/09/17 17:13:16 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -116,12 +116,12 @@ proc MutualInformationRegistrationInit {} {
     set MutualInformationRegistration(FileName)  ""
 
     global Matrix MutualInformationRegistration
-    set Matrix(autoFast) mi-fast.txt
-    set Matrix(autoSlow) mi-slow.txt
+    #set Matrix(autoFast) mi-fast.txt
+    #set Matrix(autoSlow) mi-slow.txt
     set Matrix(allowAutoUndo) 0
 
     ## Set the default to fast registration
-    MutualInformationRegistrationFastParam
+    MutualInformationRegistrationCoarseParam
 }
 #-------------------------------------------------------------------------------
 # .PROC MutualInformationRegistrationBuildSubGui
@@ -178,6 +178,8 @@ proc MutualInformationRegistrationBuildSubGui {f} {
         pack $f.r$level -side left -padx 0 
     }
 
+    set MutualInformationRegistration(Level) Normal
+
     #-------------------------------------------
     # Level frame
     #-------------------------------------------
@@ -208,10 +210,12 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     This is an automatic method of registering two images using mutual information of the two images. It is based on the methods of Wells and Viola (1996).
     <LI><B>Limitations</B>
     Cascades of transforms may not work.
-    <LI><B>Normal:Slow</B>
-    The Slow method will generally do a good job on all images. It takes 5 to 10 minutes to run. It requires no user intervention. The user can walk away and the algorithm will finish.
-    <LI><B>Normal:Fast</B>
-    The Fast method will generally do a good job on most images. The Fast method updates regularly so that the user can stop the algorithm if she is satified.
+    <LI><B>Normal: Coarse</B>
+    The Coarse method will generally do a good job on all images. It takes 5 to 10 minutes to run. It requires no user intervention; and will finish on its own. Though, it updates regularly so that the user can stop the algorithm is she is satisfied. 
+    <LI><B>Normal: Fine</B>
+    The Fine method can be run after the Coarse method to fine tune the result. Again, the Fine method updates regularly so that the user can stop the algorithm if she is satified. Otherwise, it will run until finished.
+    <LI><B>Normal: Good and Slow</B>
+    This method is designed for the user to be able to walk away, and come back and find a good registration. This method can be slow, but almost always yields a good result. It does not update the alignment until finished.
     <LI><B>Advanced</B>
     Change these at your own risk. The input images are normalized, so that the source and target standard deviations should generally be smaller than 1. There are arguments they should be much smaller than 1, but changing them does not seem to make a big difference. The number of samples per iteration can be increased, but also does not seem to help alot. The translation scale is roughly a measure of how much to scale translations over rotations. A variety of numbers may work here. The learning rate should generally be less than 0.001, and often much smaller. The number of update iterations is generally between 100 and 2500
     </UL>"
@@ -255,16 +259,27 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     frame $f.fBtns -bg $Gui(activeWorkspace)
     pack $f.fTitle $f.fBtns -side left -padx 5
 
-    eval {label $f.fTitle.lSpeed -text "Run Speed:"} $Gui(WLA)
+    eval {label $f.fTitle.lSpeed -text "Run Objective:"} $Gui(WLA)
     pack $f.fTitle.lSpeed
 
-    foreach text "Fast Slow" value "Fast Slow" \
-        width "6 6" {
-        eval {radiobutton $f.fBtns.rSpeed$value -width $width \
-        -text "$text" -value "$value" -command MutualInformationRegistration${value}Param \
-            -indicatoron 0} $Gui(WCA)
-        pack $f.fBtns.rSpeed$value -side left -padx 4 -pady 2
+    # the first row and second row
+    frame $f.fBtns.1 -bg $Gui(inactiveWorkspace)
+    frame $f.fBtns.2 -bg $Gui(inactiveWorkspace)
+    pack $f.fBtns.1 $f.fBtns.2 -side top -fill x -anchor w
+
+    set row 1
+    foreach text "Coarse Fine {Good and Slow}" value "Coarse Fine GSlow" \
+        width "6 6 15" {
+        eval {radiobutton $f.fBtns.$row.r$value -width $width \
+        -text "$text" -value "$value" \
+        -command MutualInformationRegistration${value}Param \
+        -variable MutualInformationRegistration(Objective) \
+        -indicatoron 0} $Gui(WCA) 
+        pack $f.fBtns.$row.r$value -side left -padx 4 -pady 2
+        if { $value == "Fine" } {incr row};
     }
+
+   set MutualInformationRegistration(Objective) Coarse
 
     #-------------------------------------------
     # Level->Normal->Run frame
@@ -368,7 +383,7 @@ proc MutualInformationRegistrationSetLevel {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationFastParam
+# .PROC MutualInformationRegistrationCoarseParam
 #
 #  These parameters should allow the user the ability to intervene
 #  and decide when he/she is done.
@@ -376,7 +391,7 @@ proc MutualInformationRegistrationSetLevel {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationFastParam {} {
+proc MutualInformationRegistrationCoarseParam {} {
     global MutualInformationRegistration
 
     set MutualInformationRegistration(Resolution)       128
@@ -395,15 +410,45 @@ proc MutualInformationRegistrationFastParam {} {
     set MutualInformationRegistration(TargetShrinkFactors)   "1 1 1"
 }
 
+
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationSlowParam
+# .PROC MutualInformationRegistrationFineParam
+#
+#  These parameters should allow the user the ability to intervene
+#  and decide when he/she is done.
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MutualInformationRegistrationFineParam {} {
+    global MutualInformationRegistration
+
+    set MutualInformationRegistration(Resolution)       128
+    set MutualInformationRegistration(LearningRate)    .00001
+    set MutualInformationRegistration(UpdateIterations) 100
+    set MutualInformationRegistration(NumberOfSamples)  50
+    set MutualInformationRegistration(TranslateScale)   320
+    # If Wells, Viola, Atsumi, etal, 
+    # used 2 and 4. Wells claims exact number not critical (personal communication)
+    # They scaled data 0...256.
+    # We scale data -1 to 1.
+    # 2/256*2 = 0.015
+    set MutualInformationRegistration(SourceStandardDeviation) 0.4
+    set MutualInformationRegistration(TargetStandardDeviation) 0.4
+    set MutualInformationRegistration(SourceShrinkFactors)   "1 1 1"
+    set MutualInformationRegistration(TargetShrinkFactors)   "1 1 1"
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC MutualInformationRegistrationGSlowParam
 #
 # This should run until completion and give a good registration
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationSlowParam {} {
+proc MutualInformationRegistrationGSlowParam {} {
     global MutualInformationRegistration
 
     set MutualInformationRegistration(Resolution)       128
