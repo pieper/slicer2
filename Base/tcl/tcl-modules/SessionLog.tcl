@@ -119,7 +119,7 @@ proc SessionLogInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.19 $} {$Date: 2005/01/28 21:45:01 $}]
+        {$Revision: 1.20 $} {$Date: 2005/03/24 20:46:35 $}]
 
     # Initialize module-level variables
     set SessionLog(fileName)  ""
@@ -554,7 +554,9 @@ proc SessionLogEndSession {} {
     global SessionLog
 
     if {$SessionLog(currentlyLogging) == 0} {
-        if {$::Module(verbose)} { DevInfoWindow "SessionLogEndSession:\nSession log is currently logging, cannot end session" }
+        if {$::Module(verbose)} { 
+            puts "SessionLogEndSession:\nSession log is currently logging, cannot end session" 
+        }
         return
     }
     
