@@ -21,6 +21,7 @@ proc RigidIntensityRegistrationInit {} {
     #  reached for any questions people may have regarding your module. 
     #  This is included in the  Help->Module Credits menu item.
     set Module($m,author) "Samson Timoner MIT AI Lab"
+    set Module($m,category) "Registration"
 
     # Define Tabs
     #------------------------------------
@@ -99,7 +100,7 @@ proc RigidIntensityRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2003/12/29 21:26:29 $}]
+        {$Revision: 1.8 $} {$Date: 2004/04/13 21:33:57 $}]
 
     # Initialize module-level variables
     #------------------------------------
