@@ -132,7 +132,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.4 $} {$Date: 2002/07/27 22:56:30 $}]
+            {$Revision: 1.5 $} {$Date: 2002/07/28 06:01:21 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -748,7 +748,7 @@ proc AlignmentsBuildGUI {} {
     set f $f.fColorCorresp  
         
     eval {checkbutton $f.cColorCorresp -variable Matrix(colorCorresp) \
-          -text "Color correspondence" -command "AlignmentsSetColorCorrespondence" \
+          -text "View Color Correspondence" -command "AlignmentsSetColorCorrespondence" \
           -indicatoron 0} $Gui(WCA)
     
     #If in the future "Ocean" and "Desert" LUT names change, then change this tooltip 
@@ -1132,36 +1132,21 @@ proc AlignmentsBuildGUI {} {
 #-------------------------------------------------------------------------------
 proc AlignmentsBuildVTK {} {
     global Matrix Slice View Volume
-    
-   
+        
     foreach layer "Back Fore" {    
         if {$layer == "Fore" } { 
-           AlignmentsSetActiveSlicer Slicer
-         } else {        
+            AlignmentsSetActiveSlicer Slicer
+        } else {        
             AlignmentsSetActiveSlicer MatSlicer
         }
-
-     foreach s $Slice(idList) { 
-         vtkImageMapToColors Matrix(Mapper$s$layer)
-         MainSlicesBuildVTKForSliceActor $s,$layer
-         Slice($s,$layer,planeActor) SetUserMatrix [$Matrix(activeSlicer) GetReformatMatrix $s]
-
-         Matrix(Mapper$s$layer) SetOutputFormatToRGBA
-    
-         switch $layer {
-         "Fore" {
-             Matrix(Mapper$s$layer) SetInput [[$Matrix(activeSlicer) GetForeReformat3DView $s] GetOutput]
-         }
-         "Back" {
-             Matrix(Mapper$s$layer) SetInput [[$Matrix(activeSlicer) GetBackReformat3DView $s] GetOutput]
-         }
-         }       
-         
-         Slice($s,$layer,texture) SetInput [Matrix(Mapper$s$layer) GetOutput]
-         Slice($s,$layer,planeMapper) SetInput [Slice($s,$layer,planeSource) GetOutput]   
-         Slice($s,$layer,planeActor) SetTexture Slice($s,$layer,texture)
-         
-     }
+        
+        foreach s $Slice(idList) { 
+            MainSlicesBuildVTKForSliceActor $s,$layer
+            Slice($s,$layer,planeActor) SetUserMatrix [$Matrix(activeSlicer) GetReformatMatrix $s]
+            Slice($s,$layer,planeMapper) SetInput [Slice($s,$layer,planeSource) GetOutput]   
+            Slice($s,$layer,planeActor) SetTexture Slice($s,$layer,texture)
+            
+        }
     }
 }
 
@@ -2239,14 +2224,16 @@ proc AlignmentsB1Motion {x y} {
 # float y the y position of the mouse cursor where zooming stops
 # .END
 #-------------------------------------------------------------------------------
-proc AlignmentsB3Motion {x y} {
+proc AlignmentsB3Motion {widget x y} {
     global Interactor View Matrix
 
-    if {$Matrix(FiducialPickEntered) == 1} {
+#This should work, however the y axis seems to be flipped 
+#so I am not calling it for now until the problem is fixed 
+#Therefore you cannot zoom the volume in the MatRen for now
     set s $Interactor(s)
     scan [MainInteractorXY $s $x $y] "%d %d %d %d" xs ys x y 
     
-    AlignmentsInteractorZoom $s $xs $ys $Interactor(xsLast) $Interactor(ysLast)   
+    MatricesInteractorZoom $s $xs $ys $Interactor(xsLast) $Interactor(ysLast)   
     
     # Cursor
     MainInteractorCursor $s $xs $ys $x $y
@@ -2258,7 +2245,6 @@ proc AlignmentsB3Motion {x y} {
     
     # Render this slice
     MainInteractorRender
-    }
 }
 
 #-------------------------------------------------------------------------------
@@ -2267,15 +2253,14 @@ proc AlignmentsB3Motion {x y} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc AlignmentsInteractorZoom {s x y xLast yLast} {
-    global Interactor Anno 
+proc AlignmentsZoom {s x y xLast yLast} {
+    global View Interactor Anno 
     
     set dy [expr $yLast - $y]
-    
+    # log base b of x = log(x) / log(b)
     set b      1.02
    
-    #set zPrev [[$Interactor(Slicer) GetBackReformat $s] GetZoom]
-    set zPrev [$Interactor(Slicer) GetZoomNew $s]
+    set zPrev [[$Interactor(activeSlicer) GetBackReformat $s] GetZoom]   
     set dyPrev [expr log($zPrev) / log($b)]
 
     set zoom [expr pow($b, ($dy + $dyPrev))]
@@ -2289,6 +2274,7 @@ proc AlignmentsInteractorZoom {s x y xLast yLast} {
     AlignmentsSlicesSetZoom $s $z
 }
 
+     
 #-------------------------------------------------------------------------------
 # .PROC AlignmentsSlicesSetZoom
 # 
@@ -2301,15 +2287,38 @@ proc AlignmentsInteractorZoom {s x y xLast yLast} {
 proc AlignmentsSlicesSetZoom {s {zoom}} {
     global Matrix Slice
 
-        puts "this is the zoom $zoom" 
     # if user-entered zoom is okay then do the rest of the procedure
-    if {$Matrix(activeSlicer) == "Slicer"} {
+    if {$Matrix(activeSlicer) == "Slicer"} {     
+        # if called without a zoom arg it's from user entry
+        if {$zoom == ""} {
+            if {[ValidateFloat $Slice($s,zoom)] == 0} {
+                tk_messageBox -message "The zoom must be a number."
+                
+                # reset the zoom
+                set Slice($s,zoom) [Slicer GetZoom $s]
+                return
+            }
+            # if user-entered zoom is okay then do the rest of the procedure
+            set zoom $Slice($s,zoom)
+        }
         # Change Slice's Zoom variable
-            set Slice($s,zoom) $zoom    
+        set Slice($s,zoom) $zoom    
         # Use Attila's new zooming code
         Slicer SetZoomNew $s $zoom
         Slicer Update
-    } else { 
+    } else {
+        # if called without a zoom arg it's from user entry
+        if {$zoom == ""} {
+            if {[ValidateFloat $Matrix($s,zoom)] == 0} {
+                tk_messageBox -message "The zoom must be a number."
+                
+                # reset the zoom
+                set Matrix($s,zoom) [MatSlicer GetZoom $s]
+                return
+            }
+            # if user-entered zoom is okay then do the rest of the procedure
+            set zoom $Matrix($s,zoom)
+        }
         # Change Slice's Zoom variable
         set Matrix($s,zoom) $zoom    
         # Use Attila's new zooming code
@@ -2778,6 +2787,7 @@ proc AlignmentsFiducialPick {} {
     }
 }
 
+
 #-------------------------------------------------------------------------------
 # .PROC AlignmentsSplitVolumes
 # 
@@ -2790,56 +2800,54 @@ proc AlignmentsFiducialPick {} {
 proc AlignmentsSplitVolumes {v ren layer} {
     global Volume Slice View Matrix Lut Anno Gui
 
-    AlignmentsSetActiveSlicer Slicer
+    MainSlicesSetVolumeAll Fore $Matrix(refVolume)
+    MainSlicesSetVolumeAll Back $Matrix(volume)
 
-    if {$ren=="matRen"} {
-        MatSlicer DeepCopy Slicer
+    MatSlicer DeepCopy Slicer
     MatSlicer SetLabelIndirectLUT Lut($Lut(idLabel),indirectLUT)
-        MatSlicer SetForeOpacity 0
-        foreach s $Slice(idList) {
-            set Matrix($s,orient) $Slice($s,orient)
-            set Matrix($s,zoom) 1 
-          # set Matrix($s,offsetIncrement) $Slice($s,offsetIncrement)
-            AlignmentsSlicesSetSliderRange $s
-            set Matrix($s,offset) $Slice($s,offset)     
-        }
-        AlignmentsSetActiveSlicer MatSlicer
+    MatSlicer SetForeOpacity 0
+
+    foreach s $Slice(idList) {
+        set Matrix($s,orient) $Slice($s,orient)
+        set Matrix($s,zoom) $Slice($s,zoom) 
+        set Matrix($s,offsetIncrement) $Slice($s,offsetIncrement)
+        AlignmentsSlicesSetSliderRange $s
+        set Matrix($s,offset) $Slice($s,offset)     
     }
 
+    MainSlicesSetVolumeAll Back $Matrix(refVolume)
+    MainSlicesSetVolumeAll Fore 0
     
-    #Need this new Mapper because the colors get messed up if we use the other one
-    foreach s $Slice(idList) {    
-    Matrix(Mapper$s$layer) SetLookupTable [Volume($v,vol) GetIndirectLUT]
-    $ren RemoveActor Slice($s,planeActor)
-        eval Slice($s,$layer,planeActor) SetScale [Slice($s,planeActor) GetScale]
-        $ren AddActor Slice($s,$layer,planeActor)
-    set Matrix($s,$layer,visibility) $Slice($s,visibility)
-        Slice($s,$layer,planeActor) SetVisibility [Slice($s,planeActor) GetVisibility] 
-    } 
+    MatSlicer SetBackVolume Volume($Matrix(volume),vol)
+    MatSlicer SetForeVolume Volume(0,vol)
        
-    #tbd : this should be called when the camera is updated for matren
-    #Set the scale for the letter actors in the new renderer
-    set scale [expr $View(fov) * $Anno(letterSize) ]
-    foreach axis "R A S L P I" {
-    ${axis}ActorMatRen SetScale  $scale $scale $scale 
-    }
-            
-    #THIS IS TEMP
-    set pos [expr   $View(fov) * 0.6]
-    set neg [expr - $View(fov) * 0.6]
-    RActorMatRen SetPosition $pos 0.0  0.0
-    AActorMatRen SetPosition 0.0  $pos 0.0
-    SActorMatRen SetPosition 0.0  0.0  $pos 
-    LActorMatRen SetPosition $neg 0.0  0.0
-    PActorMatRen SetPosition 0.0  $neg 0.0
-    IActorMatRen SetPosition 0.0  0.0  $neg   
+    foreach s $Slice(idList) {    
+        #Set the textures for the slice actors 
+        Slice($s,Fore,texture) SetInput [Slicer GetOutput $s]
+        Slice($s,Back,texture) SetInput [MatSlicer GetOutput $s]
 
-     #Set the orientation for the MatSlicer to be AxiSagCor
+        #This is for the viewRen/Slicer/Fore
+        viewRen RemoveActor Slice($s,planeActor)
+        eval Slice($s,Fore,planeActor) SetScale [Slice($s,planeActor) GetScale]
+        viewRen AddActor Slice($s,Fore,planeActor)
+        set Matrix($s,Fore,visibility) $Slice($s,visibility)
+        Slice($s,Fore,planeActor) SetVisibility [Slice($s,planeActor) GetVisibility] 
+
+        #This is for the matRen/MatSlicer/Back
+        matRen RemoveActor Slice($s,planeActor)
+        eval Slice($s,Back,planeActor) SetScale [Slice($s,planeActor) GetScale]
+        matRen AddActor Slice($s,Back,planeActor)
+        set Matrix($s,Back,visibility) $Slice($s,visibility)
+        Slice($s,Back,planeActor) SetVisibility [Slice($s,planeActor) GetVisibility] 
+    } 
+
     AlignmentsSlicesSetOrientAll AxiSagCor
-    $Matrix(activeSlicer) Update    
+
+    Slicer Update
+    MatSlicer Update
     Render3D
 
-    # TEMP -put a "push bindings someplace -see how its done in select.tcl
+    # TEMP - Need to put a push bindings someplace
     set widgets "$Gui(fSl0Win) $Gui(fSl1Win) $Gui(fSl2Win)"
     foreach widget $widgets {
     bind $widget <KeyPress-p> {
@@ -2934,13 +2942,28 @@ proc AlignmentsAddLetterActors {} {
 # .END
 #-------------------------------------------------------------------------------
 proc AlignmentsMatRenUpdateCamera {} {
-    global View
+    global View Anno
     
     eval $View(MatCam) SetClippingRange [$View(viewCam) GetClippingRange]
     eval $View(MatCam) SetPosition [$View(viewCam) GetPosition]
     eval $View(MatCam) SetFocalPoint [$View(viewCam) GetFocalPoint]
     eval $View(MatCam) SetViewUp [$View(viewCam) GetViewUp]
     $View(MatCam) ComputeViewPlaneNormal  
+
+    #Set the scale for the letter actors in the new renderer
+    set scale [expr $View(fov) * $Anno(letterSize) ]
+    foreach axis "R A S L P I" {
+    ${axis}ActorMatRen SetScale  $scale $scale $scale 
+    }
+            
+    set pos [expr   $View(fov) * 0.6]
+    set neg [expr - $View(fov) * 0.6]
+    RActorMatRen SetPosition $pos 0.0  0.0
+    AActorMatRen SetPosition 0.0  $pos 0.0
+    SActorMatRen SetPosition 0.0  0.0  $pos 
+    LActorMatRen SetPosition $neg 0.0  0.0
+    PActorMatRen SetPosition 0.0  $neg 0.0
+    IActorMatRen SetPosition 0.0  0.0  $neg   
 }
 
 
@@ -3160,10 +3183,6 @@ proc AlignmentsFiducialsUpdated {} {
          [lsearch $Fiducials(listOfNames) $Matrix(FidAlignRefVolumeName)] == -1} { 
         return
     } else {
-#Set all the other fiducials the user picked elsewhere to be invisible
-#       FiducialsSetFiducialsVisibility NONE 0 matRen
-#    FiducialsSetFiducialsVisibility NONE 0 viewRen
-    #Now Set only the ones that are picked for the datasets to be visibile
         FiducialsSetFiducialsVisibility $Matrix(FidAlignVolumeName) 0 viewRen
         FiducialsSetFiducialsVisibility $Matrix(FidAlignRefVolumeName) 1 viewRen
         FiducialsSetFiducialsVisibility $Matrix(FidAlignVolumeName) 1 matRen
@@ -3333,6 +3352,10 @@ proc AlignmentsApplyFiducialSelection {} {
 
     #Apply the rigid transformation
     AlignmentsLandTrans
+
+    #Set the fore and back volumes to be the reference volume and the volume to move
+    MainSlicesSetVolumeAll Fore $Matrix(refVolume)
+    MainSlicesSetVolumeAll Back $Matrix(volume)
     
     #Indicate to the user that registration is complete
     set Matrix(regMech) ""
@@ -3342,6 +3365,10 @@ proc AlignmentsApplyFiducialSelection {} {
     MainViewerSetMode
 
     MainSlicesSetOrientAll AxiSagCor
+
+    #Make any other fiducials that were there before dissapear
+    FiducialsSetFiducialsVisibility NONE 0 viewRen
+
     }
 }
 
@@ -3412,6 +3439,11 @@ proc AlignmentsFidSelectCancel {} {
         the Foreground to the Background slice."
 
     set Matrix(FiducialPickEntered) 0
+
+    #Set the fore and back volumes to be the reference volume and the volume to move
+    MainSlicesSetVolumeAll Fore $Matrix(refVolume)
+    MainSlicesSetVolumeAll Back $Matrix(volume)
+    
     AlignmentsSetRegTabState normal
     MainViewerSetMode
     MainSlicesSetOrientAll AxiSagCor 
@@ -3851,7 +3883,7 @@ proc AlignmentsLandTrans {} {
 proc AlignmentsSetActiveSlicer {whichSlicer} {
     global Matrix Interactor
     set Matrix(activeSlicer) $whichSlicer
-    set Interactor(Slicer) $whichSlicer
+    set Interactor(activeSlicer) $whichSlicer
 }
 
 
@@ -3865,78 +3897,71 @@ proc AlignmentsSetActiveSlicer {whichSlicer} {
 proc AlignmentsViewerUpdate {} {
     global Module View Gui Slice Matrix
 
-    # do nothing if we are in some other module
+    # Check to see if we are in the alignments module 
+    # and that the fiducial selection mode has been entered.
     if {$Module(activeID) != "Alignments" || $Matrix(FiducialPickEntered) != 1} {
         return
     }         
+
+    #These are the settings that normally occur for the vtkMrmlSlicer object.
+    #We need to do the same steps for MatSlicer In order to keep the display the same
     switch $View(mode) {
-    "Normal" {
-    #pack forget all the Fiducial Pick Frames
-    pack forget $Gui(fTop) $Gui(fMid) $Gui(fBot)
-    pack forget $Gui(fTop) $Gui(fMatVol) $Gui(fMatMidSlicer) $Gui(fBot)
-    #Repack the GUI
-    pack $Gui(fTop) -side top
-    pack $Gui(fMatVol) -side top -expand 0 -fill x 
-    pack $Gui(fMatMidSlicer) -side top -expand 1 -fill x
-    pack $Gui(fBot) -side top
+        "Normal" {
+            #pack forget all the Fiducial Pick Frames
+            pack forget $Gui(fTop) $Gui(fMid) $Gui(fBot)
+            pack forget $Gui(fTop) $Gui(fMatVol) $Gui(fMatMidSlicer) $Gui(fBot)
+            #Repack the GUI with the control panel for split volumes
+            pack $Gui(fTop) -side top
+            pack $Gui(fMatVol) -side top -expand 0 -fill x 
+            pack $Gui(fMatMidSlicer) -side top -expand 1 -fill x
+            pack $Gui(fBot) -side top            
+            foreach s $Slice(idList) {
+                MatSlicer SetDouble $s 0
+                MatSlicer SetCursorPosition $s 128 128
+            }
+        }
+        "3D" {
+            #unpack the controls for the fiducial selection mode
+            pack forget $Gui(fMatVol) $Gui(fMatMidSlicer)
+        }
+        "Quad256" {
+            #unpack the controls for the fiducial selection mode
+            pack forget $Gui(fMatVol) $Gui(fMatMidSlicer)
+            foreach s $Slice(idList) {
+                MatSlicer SetDouble $s 0
+                MatSlicer SetCursorPosition $s 128 128
+            }
+        }
+        "Quad512" {
+            #unpack the controls for the fiducial selection mode
+            pack forget $Gui(fMatVol) $Gui(fMatMidSlicer)
+            foreach s $Slice(idList) {          
+                MatSlicer SetDouble $s 1
+                MatSlicer SetCursorPosition $s 256 256
+            }
+        }
+        "Single512" {
+            #unpack the controls for the fiducial selection mode
+            pack forget $Gui(fMatVol) $Gui(fMatMidSlicer)
+            foreach s $Slice(idList) {
+                MatSlicer SetDouble $s 0
+                MatSlicer SetCursorPosition $s 128 128
+            }
+            set s 0
+            MatSlicer SetDouble $s 1
+            MatSlicer SetCursorPosition $s 256 256
+        }       
     } 
-    "3D" {
-    pack forget $Gui(fMatVol) $Gui(fMatMidSlicer)
-    }
-    "Quad256" {
-    pack forget $Gui(fMatVol) $Gui(fMatMidSlicer)
-    foreach s $Slice(idList) {
+    if {$View(mode) == "Quad256" || $View(mode) == "Quad512" || $View(mode) == "Single512" } {
+        # Make the thumbnails for the fiducial selection mode pop up when 
+        # mouse goes over Orient thumbnail instead of the original slicer controls.
+        foreach s $Slice(idList) {
         lower $Gui(fSlice$s).fThumb
         raise $Gui(fSlice$s).fThumbMat
-    }
-    }
-    "Quad512" {
-    # remove middle control stuff we added
-    pack forget $Gui(fMatVol) $Gui(fMatMidSlicer)
-    # make our controls pop up when mouse goes over Orient thumbnail
-    # (instead of original slicer controls)
-     foreach s $Slice(idList) {
-         #raise $Gui(fSlice$s).fThumb
-         # undo the normal raise that just happened
-         lower $Gui(fSlice$s).fThumb
-         # raise ours instead
-         raise $Gui(fSlice$s).fThumbMat
-     }
-    }
-    "Single512" {
-    pack forget $Gui(fMatVol) $Gui(fMatMidSlicer)
-    foreach s $Slice(idList) {
-         #raise $Gui(fSlice$s).fThumb
-         # undo the normal raise that just happened
-         lower $Gui(fSlice$s).fThumb
-         # raise ours instead
-         raise $Gui(fSlice$s).fThumbMat
         }
     }
-    }
-    if {$View(mode) == "Normal" || $View(mode) == "Quad256"} {
-    foreach s $Slice(idList) {
-        MatSlicer SetDouble $s 0
-        MatSlicer SetCursorPosition $s 128 128
-        }
-    } elseif {$View(mode) == "Quad512"} {
-    foreach s $Slice(idList) {
-        MatSlicer SetDouble $s 1
-        MatSlicer SetCursorPosition $s 256 256
-    }
-    } elseif {$View(mode) == "Single512"} {
-    foreach s $Slice(idList) {
-        MatSlicer SetDouble $s 0
-        MatSlicer SetCursorPosition $s 128 128
-        }
-    set s 0
-    MatSlicer SetDouble $s 1
-    MatSlicer SetCursorPosition $s 256 256
-    }    
     MatSlicer Update
 }
-
-
 
 #-------------------------------------------------------------------------------
 # .PROC AlignmentsTestSliceControls
@@ -3977,7 +4002,8 @@ proc AlignmentsTestSliceControls {} {
         eval {label $f.lOrientMat -text "INIT" -width 12} \
             $Gui(WLA) {-bg $Gui(slice$s)}
         pack $f.lOrientMat
-# ljo what do we do here?
+# we need to lower these because they show up when the slicer is first loaded and they
+#should be lowered. -- How to lower them?
 #        lower $f.lOrientMat
 
         # Show the full controls when the mouse enters the thumbnail
