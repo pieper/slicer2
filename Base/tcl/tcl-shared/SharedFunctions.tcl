@@ -31,7 +31,7 @@
 
 #-------------------------------------------------------------------------------
 # .PROC SharedModelLookup
-# Gets the internal model ID that belongs to a give alphanumerical model ID.
+# Gets the internal model ID that belongs to a given alphanumerical model ID.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -51,7 +51,7 @@ proc SharedModelLookup {ModelRefID} {
 
 #-------------------------------------------------------------------------------
 # .PROC SharedVolumeLookup
-# Gets the internal volume ID that belongs to a give alphanumerical volume ID.
+# Gets the internal volume ID that belongs to a given alphanumerical volume ID.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -73,7 +73,7 @@ proc SharedVolumeLookup {VolumeRefID} {
 # .PROC SharedGetModelsInGroup
 # Gets all the models in a model group (including all dependent model groups).
 # .ARGS
-# modelgroup: the group where to get the dependend models from
+# modelgroup: the group where to get the dependent models from
 # umodels: a list where the models are stored
 # changeExpansion: if >=0, change the variable Model(id,expansion) to this value,
 # but only in the group $modelgroup
@@ -119,10 +119,10 @@ proc SharedGetModelsInGroup {modelgroup umodels {changeExpansion -1}} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC SharedGetModelsInGroup
+# .PROC SharedGetModelsInGroupOnly
 # Gets all the models in a model group (without dependent model groups).
 # .ARGS
-# modelgroup: the group where to get the dependend models from
+# modelgroup: the group where to get the dependent models from
 # umodels: a list where the models are stored
 # .END
 #-------------------------------------------------------------------------------

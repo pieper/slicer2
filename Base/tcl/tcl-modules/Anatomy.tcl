@@ -121,7 +121,7 @@ proc AnatomyInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.1 $} {$Date: 2001/11/13 20:44:53 $}]
+	    {$Revision: 1.2 $} {$Date: 2001/11/23 19:16:56 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1142,7 +1142,10 @@ proc AnatomySaveColors {name} {
     		if {$pos != -1} {
     			set label_str [string range $label_str 0 [expr $pos-1]]
     		}
-    		
+    		if {$label_str == ""} {
+			set label_str "1"
+		}
+		
     		puts -nonewline $id "$name [lindex $color 0] [lindex $color 1] [lindex $color 2] "
     		# puts -nonewline $id "[$pr GetAmbient] [$pr GetDiffuse] [$pr GetSpecular] [$pr GetSpecularPower] "
     		puts $id $label_str
