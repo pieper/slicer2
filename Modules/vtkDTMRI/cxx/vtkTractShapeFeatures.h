@@ -47,6 +47,12 @@ class VTK_DTMRI_EXPORT vtkTractShapeFeatures : public vtkObject
   vtkSetMacro(Sigma,double);
   vtkGetMacro(Sigma,double);
 
+  // Description
+  // For Hausdorff only.  Use every Nth point on the tract path for 
+  // comparison. 
+  vtkSetClampMacro(HausdorffN,int,1,100);
+  vtkGetMacro(HausdorffN,int);
+
   
   //BTX
   // (wrapping doesn't work here so exclude this with BTX)
@@ -91,6 +97,7 @@ class VTK_DTMRI_EXPORT vtkTractShapeFeatures : public vtkObject
 
   vtkCollection *InputStreamlines;
   double Sigma;
+  int HausdorffN;
 
   vtkImageData *InterTractDistanceMatrixImage;
   vtkImageData *InterTractSimilarityMatrixImage;

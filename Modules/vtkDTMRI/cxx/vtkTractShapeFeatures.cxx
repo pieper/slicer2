@@ -21,7 +21,7 @@
 
 
 
-vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkTractShapeFeatures);
 
 vtkCxxSetObjectMacro(vtkTractShapeFeatures, InputStreamlines, vtkCollection);
@@ -38,6 +38,8 @@ vtkTractShapeFeatures::vtkTractShapeFeatures()
   this->Sigma = 100;
 
   this->FeatureType = MEAN_AND_COVARIANCE;
+
+  this->HausdorffN = 10;
 }
 
 vtkTractShapeFeatures::~vtkTractShapeFeatures()
@@ -171,10 +173,10 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
     }
 
   vtkDebugMacro( "Traverse STREAMLINES" );
-  double sumDist, countDist, minDist, currDist;
+  double sumDist, sumSqDist, maxMinDist, countDist, minDist, currDist;
   TractPointsListType::InstanceIdentifier count1, count2, increment;
   unsigned int size1, size2;
-  increment = 20;
+  increment = this->HausdorffN;
   typedef itk::Statistics::EuclideanDistance< XYZVectorType > 
     DistanceMetricType;
   DistanceMetricType::Pointer distanceMetric = DistanceMetricType::New();
@@ -203,6 +205,8 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
 
       // vars for computing distance
       sumDist = 0;
+      maxMinDist = 0;
+      sumSqDist = 0;
       countDist = 0;
 
       size1 = sample1->Size();
@@ -210,7 +214,7 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
       while( count1 < size1 )
         {
           // minDist is min dist so far to this point
-          minDist=VTK_FLOAT_MAX;
+          minDist=VTK_DOUBLE_MAX;
           
           size2 = sample2->Size();
           count2 = 0;
@@ -229,7 +233,12 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
           count2+=increment;
         }
           // accumulate the min dist to this point
-          sumDist = sumDist + minDist; 
+      sumDist = sumDist + minDist; 
+          sumSqDist = sumSqDist + minDist*minDist; 
+
+      // find max of min dists so far
+          if (minDist > maxMinDist) {maxMinDist = minDist;}
+
           countDist++;
           vtkDebugMacro( "sumDist: " << sumDist);
           count1+=increment;
@@ -240,8 +249,17 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
       // normal Hausdorff is the max of the min dists.
       // Note this is a symmetric distance measure, we use the 
       // average of dist(a->b) and (b->a):
-      (*this->InterTractDistanceMatrix)[i][j] += sumDist/(countDist*2);
-      (*this->InterTractDistanceMatrix)[j][i] += sumDist/(countDist*2);
+      // in a standard normal distribution, 80% of the distribution
+      // is to the left of 0.842 (CDF(0.842)=80%)
+
+      //double tmp = sumDist/countDist + 0.842*sqrt(sumSqDist);
+
+      // normal
+      double tmp = sumDist/countDist;
+      // for 90 %
+      //double tmp = sumDist + 1.28*sqrt(sumSqDist);
+      (*this->InterTractDistanceMatrix)[i][j] += tmp/2;
+      (*this->InterTractDistanceMatrix)[j][i] += tmp/2;
       //(*this->InterTractDistanceMatrix)[i][j] += i+j;
     }
     }
