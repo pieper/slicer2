@@ -177,6 +177,8 @@ void vtkImageReformatIJK::ComputeTransform()
   this->tran = vtkTransform::New();
   this->tran->SetMatrix(*output);
   this->tran->Inverse();
+	// Set the vtkTransform to PreMultiply so a concatenated matrix, C,
+	// is multiplied by the existing matrix, M, to form M`= M*C (not C*M)
   this->tran->PreMultiply();
   this->tran->Concatenate(input);
   // Now convert it to OutputToInput
@@ -424,7 +426,7 @@ void vtkImageReformatIJK::ComputeReformatMatrix(vtkMatrix4x4 *ref)
 }
 
 //----------------------------------------------------------------------------
-void vtkImageReformatIJK::ExecuteInformation()
+void vtkImageReformatIJK::ExecuteInformation(vtkImageData *inData, vtkImageData *outData)
 {    
   if (this->GetMTime() > this->TransformTime) 
   {
@@ -437,8 +439,8 @@ void vtkImageReformatIJK::ExecuteInformation()
 //----------------------------------------------------------------------------
 void vtkImageReformatIJK::ComputeInputUpdateExtent(int inExt[6], int outExt[6])
 {
-    // Use full input extent
-    this->GetInput()->GetWholeExtent(inExt);
+  // Use full input extent
+  this->GetInput()->GetWholeExtent(inExt);
 }
 
 //----------------------------------------------------------------------------
@@ -486,43 +488,44 @@ static void vtkImageReformatIJKExecute(vtkImageReformatIJK *self,
   y = origin[1];
   z = origin[2];
 
-		// Loop through output pixels
-		for (idxY = 0; idxY <= maxY; idxY++)
-		{
-			for (idxX = 0; idxX <= maxX; idxX++)
-			{				
-				// Test if coordinates are outside extent
-				if ((x < inExt[0]) || (y < inExt[2]) || (z < inExt[4]) ||
+	// Loop through output pixels
+	for (idxY = 0; idxY <= maxY; idxY++)
+	{
+		for (idxX = 0; idxX <= maxX; idxX++)
+		{				
+			// Test if coordinates are outside extent
+			if ((x < inExt[0]) || (y < inExt[2]) || (z < inExt[4]) ||
 					(x > inExt[1]) || (y > inExt[3]) || (z > inExt[5]))
-				{
-					*outPtr = 0;
-					*indices = -1;
-				}
-				else {
-         	idx = z*nxy+y*nx+x;
-					*outPtr = inPtr[idx];
-         	*indices = idx;
-				}
-				outPtr++;
-        indices++;
-
-				// Step volume coordinates in xs direction
-				x += xStep[0];
-				y += xStep[1];
-				z += xStep[2];
+			{
+				*outPtr = 0;
+				*indices = -1;
 			}
-			outPtr  += outIncY;
+			else 
+      {
+        idx = z*nxy+y*nx+x;
+				*outPtr = inPtr[idx];
+        *indices = idx;
+			}
+			outPtr++;
+       indices++;
 
-			// Rewind volume coordinates back to first column
-			x -= xRewind[0];
-			y -= xRewind[1];
-			z -= xRewind[2];
-
-			// Step volume coordinates in ys direction
-			x += yStep[0];
-			y += yStep[1];
-			z += yStep[2];
+			// Step volume coordinates in xs direction
+			x += xStep[0];
+			y += xStep[1];
+			z += xStep[2];
 		}
+		outPtr  += outIncY;
+
+		// Rewind volume coordinates back to first column
+		x -= xRewind[0];
+		y -= xRewind[1];
+		z -= xRewind[2];
+
+		// Step volume coordinates in ys direction
+		x += yStep[0];
+		y += yStep[1];
+		z += yStep[2];
+	}
 }
 
 //----------------------------------------------------------------------------

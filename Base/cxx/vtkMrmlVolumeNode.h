@@ -42,7 +42,7 @@ class VTK_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
 {
 public:
   static vtkMrmlVolumeNode *New();
-  const char *GetClassName() {return "vtkMrmlVolumeNode";};
+  vtkTypeMacro(vtkMrmlVolumeNode,vtkMrmlNode);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   //--------------------------------------------------------------------------

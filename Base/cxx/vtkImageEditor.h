@@ -25,13 +25,19 @@ PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
 'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
-// .NAME vtkImageEditor - Writes images to files.
+// .NAME vtkImageEditor - Applies editing effects to volumes.
 // .SECTION Description
-// vtkImageEditor writes images to files with any data type. The data type of
-// the file is the same scalar type as the input.  The dimensionality
-// determines whether the data will be written in one or multiple files.
-// This class is used as the superclass of most image writing classes 
-// such as vtkBMPWriter etc. It supports streaming.
+// vtkImageEditor allows a volume (vtkImageData) to be edited by applying
+// filters derived from vtkImageToImageFilter to the data set on a 3D,
+// single slice, or multi-slice basis.  There is a single level of undo to
+// restore the volume to its previous value.  The effects can be implemented
+// by passing the data through a pipelined chain of filters by specifying the
+// first and last filters in the chain using the SetFirstFilter() and 
+// SetLastFilter().  The LastFilter can equal the FirstFilter to use a chain
+// of length 1.  The usefulness of this class lies in its abstraction of the
+// ability to Undo() an effect, and to apply the effect to the entire volume,
+// or just one slice, or to every slice one at a time. The slices may be
+// oriented in any of the 3 possible directions for a volume.
 
 #ifndef __vtkImageEditor_h
 #define __vtkImageEditor_h
@@ -55,16 +61,26 @@ class VTK_EXPORT vtkImageEditor : public vtkProcessObject
 {
 public:
   static vtkImageEditor *New();
-  const char *GetClassName() {return "vtkImageEditor";};
+  vtkTypeMacro(vtkImageEditor,vtkProcessObject);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   // Description:
-  // Set/Get the input object from the image pipeline.
+  // Set/Get the input data set for the image pipeline.
+  // Use the UseInput() function to specify whether to use this input.
   void SetInput(vtkImageData *input);
   vtkImageData *GetInput();
 
   // Description:
-  // Dimension
+  // When on, then the input data set using the SetInput() function
+  // is processed.  When off, the current output data set is used
+  // as input to the next processing effect.
+  vtkGetMacro(UseInput, int);
+  vtkSetMacro(UseInput, int);
+  vtkBooleanMacro(UseInput, int);
+
+  // Description:
+  // Set/Get the scope of the effect.  The effect can be applied to
+  // the entire volume, or just one slice, or to every slice one at a time.
   vtkSetMacro(Dimension, int);
   vtkGetMacro(Dimension, int);
   void SetDimensionToSingle() {this->SetDimension(EDITOR_DIM_SINGLE);};
@@ -73,46 +89,58 @@ public:
   char* GetDimensionString();
 
   // Description:
-  vtkGetMacro(UseInput, int);
-  vtkSetMacro(UseInput, int);
-  vtkBooleanMacro(UseInput, int);
-
-  // Description:
-  // Slice to edit when Dimension is 2D
+  // Specify which slice to edit when the Dimension is set to Single.
   vtkGetMacro(Slice, int);
   vtkSetMacro(Slice, int);
   
   // Description:
-  // Orientation of slices to edit
+  // Set/Get the orientation and scan order of the slices in the input.
+  // Possible strings are SI or IS (for axial slices), LR or RL
+  // (for sagittal), and AP or PA (for coronal).
   vtkSetStringMacro(InputSliceOrder);
   vtkGetStringMacro(InputSliceOrder);
+
+  // Description:
+  // Set/Get the orientation of the output slice when the Dimension is
+  // set to Single or Multi.  Possibilities are IS, LR, or PA.
+  // For example, IS would process the axial slices, while LR would
+  // process sagittal slices.  This produces different results for
+  // effects that depend on each voxel's neighborhood, such as Erode,
+  // but not Threshold.
   vtkSetStringMacro(OutputSliceOrder);
   vtkGetStringMacro(OutputSliceOrder);
 
   // Description:
-  // 1 when can undo, else 0
+  // Get whether the Undo() function can be called.
+  // A value of 1 indicates the most recently applied effect is undoable,
+  // while 0 indicates not.
   vtkGetMacro(Undoable, int);
   vtkSetMacro(Undoable, int);
 
   // Description:
-  // Undo last filters
+  // Undo the last call of the Apply() function to return the output
+  // volume to the values it had.  The Undoable flag indicates when
+  // Undo may be called.
   void Undo();
 
   // Description:
-  // Apply filters
+  // Apply the effect by filtering the data with a pipeline of
+  // filters that begin with FirstFilter and end with LastFilter.
+  // The Last and First can be the same for an effect that can
+  // be achieved with one filter.
   void Apply();
   void Apply(vtkImageToImageFilter *firstFilter,
     vtkImageToImageFilter *lastFilter);
-
-  // Description:
-  //
   vtkSetObjectMacro(FirstFilter, vtkImageToImageFilter);
   vtkGetObjectMacro(FirstFilter, vtkImageToImageFilter);
   vtkSetObjectMacro(LastFilter, vtkImageToImageFilter);
   vtkGetObjectMacro(LastFilter, vtkImageToImageFilter);
 
   // Description:
-  // The whole extent of the input has to be set explicitely.
+  // Apply the effect to a clipped portion of the input.
+  vtkGetMacro(Clip, int);
+  vtkSetMacro(Clip, int);
+  vtkBooleanMacro(Clip, int);
   void SetClipExtent(int extent[6]);
   void SetClipExtent(int minX, int maxX, int minY, int maxY,
                             int minZ, int maxZ);
@@ -120,19 +148,19 @@ public:
   int *GetClipExtent() {return this->ClipExtent;}
 
   // Description:
-  vtkGetMacro(Clip, int);
-  vtkSetMacro(Clip, int);
-  vtkBooleanMacro(Clip, int);
-
-  // Description:
-  // Output
+  // Set/Get the output of the effect.
+  // Users should not use UndoOutput unless they know what they're doing.
+  // The UndoOutput data set exists for internal use of undoing 3D and
+  // multi-slice effects.
   vtkGetObjectMacro(Output, vtkImageData);
   vtkSetObjectMacro(Output, vtkImageData);
   vtkSetObjectMacro(UndoOutput, vtkImageData);
   vtkGetObjectMacro(UndoOutput, vtkImageData);
 
   // Description:
-  // Time of Apply in seconds
+  // Time of Apply in seconds.  The RunTime is the actual time of
+  // the algorithmic processing, while the TotalTime also includes
+  // overhead.
   vtkGetMacro(RunTime, float);
   vtkGetMacro(TotalTime, float);
 	
@@ -142,33 +170,43 @@ protected:
   vtkImageEditor(const vtkImageEditor&) {};
   void operator=(const vtkImageEditor&) {};
 
+  // When "Dimension" is "Single", then the input slice is copied
+  // to "Region" before the effect is applied.  Then it can be restored
+  // from Region to perform an Undo.
   vtkGetObjectMacro(Region, vtkImageData);
   vtkSetObjectMacro(Region, vtkImageData);
+
+  // "Indices" stores the voxel index into the input volume for each
+  // pixel in "Region"
   vtkGetObjectMacro(Indices, vtkIntArray);
   vtkSetObjectMacro(Indices, vtkIntArray);
 
+  // Swap the Output and UndoOutput pointers.
+  // For example, this is how Undo is achieved after a 3D effect.
   void SwapOutputs();
 
+  // Pointers to the first and last filters in the pipeline for
+  // performing the effect.
   vtkImageToImageFilter *FirstFilter;
   vtkImageToImageFilter *LastFilter;
 
-  int Slice;
-  int Dimension;
-  int UndoDimension;
-  char *InputSliceOrder;
-  char *OutputSliceOrder;
-  int Undoable;
-  int UseInput;
-  int Clip;
-  int ClipExtent[6];
-  float RunTime;
-  float TotalTime;
+  int Slice;                // slice number for Dimension=Single
+  int Dimension;            // 3D, Single, or Multi
+  int UndoDimension;        // the Dimension of the effect to undo
+  char *InputSliceOrder;    // slice order of the volume to be affected
+  char *OutputSliceOrder;   // slice order of the output volume
+  int Undoable;             // flag to indicate if can undo
+  int UseInput;             // flag to indicate whether to use the input
+  int Clip;                 // flag to indicate whether to clip
+  int ClipExtent[6];        // the extent to clip to when clipping
+  float RunTime;            // measure of effect processing time in seconds
+  float TotalTime;          // measure of effect and overhead in seconds
 
-  vtkImageData *Output;
-  vtkImageData *UndoOutput;
+  vtkImageData *Output;     // the output of the most recent effect
+  vtkImageData *UndoOutput; // the output if we undo a 3D or Multi slice effect
 
-  vtkImageData *Region;
-  vtkIntArray *Indices;
+  vtkImageData *Region;     // the output if we undo a Single slice effect
+  vtkIntArray *Indices;     // the indices for how Region was extracted 
 };
 
 #endif

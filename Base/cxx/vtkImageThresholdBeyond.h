@@ -41,7 +41,7 @@ class VTK_EXPORT vtkImageThresholdBeyond : public vtkImageThreshold
 {
 public:
   static vtkImageThresholdBeyond *New();
-  const char *GetClassName() {return "vtkImageThresholdBeyond";};
+  vtkTypeMacro(vtkImageThresholdBeyond,vtkImageThreshold);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   // Description:

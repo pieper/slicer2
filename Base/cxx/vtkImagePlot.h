@@ -39,7 +39,7 @@ class VTK_EXPORT vtkImagePlot : public vtkImageToImageFilter
 {
 public:
   static vtkImagePlot *New();
-  const char *GetClassName() {return "vtkImagePlot";};
+  vtkTypeMacro(vtkImagePlot,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   // Description:

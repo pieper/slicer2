@@ -39,7 +39,7 @@ class VTK_EXPORT vtkImageEditorEffects : public vtkImageEditor
 {
 public:
   static vtkImageEditorEffects *New();
-  const char *GetClassName() {return "vtkImageEditorEffects";};
+  vtkTypeMacro(vtkImageEditorEffects,vtkImageEditor);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   void Clear();

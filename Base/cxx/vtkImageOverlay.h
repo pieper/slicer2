@@ -40,7 +40,7 @@ class VTK_EXPORT vtkImageOverlay : public vtkImageMultipleInputFilter
 {
 public:
   static vtkImageOverlay *New();
-  const char *GetClassName() {return "vtkImageOverlay";};
+  vtkTypeMacro(vtkImageOverlay,vtkImageMultipleInputFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

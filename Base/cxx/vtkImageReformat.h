@@ -32,15 +32,15 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageReformat_h
 #define __vtkImageReformat_h
 
-#include "vtkImageFilter.h"
+#include "vtkImageToImageFilter.h"
 #include "vtkMatrix4x4.h"
 #include "vtkIntArray.h"
 
-class VTK_EXPORT vtkImageReformat : public vtkImageFilter
+class VTK_EXPORT vtkImageReformat : public vtkImageToImageFilter
 {
 public:
 	static vtkImageReformat *New();
-	const char *GetClassName() {return "vtkImageReformat";};
+  vtkTypeMacro(vtkImageReformat,vtkImageToImageFilter);
 	void PrintSelf(ostream& os, vtkIndent indent);
 
 	vtkGetMacro(Interpolate, int);

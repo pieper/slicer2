@@ -243,7 +243,7 @@ void vtkImageClipper::ThreadedExecute(vtkImageData *inData,
 
 void vtkImageClipper::PrintSelf(ostream& os, vtkIndent indent)
 {
-	vtkImageFilter::PrintSelf(os,indent);
+	vtkImageToImageFilter::PrintSelf(os,indent);
 
 	os << indent << "ReplaceIn: " << this->ReplaceIn << "\n";
 	os << indent << "InValue: " << this->InValue << "\n";

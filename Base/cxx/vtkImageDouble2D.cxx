@@ -227,6 +227,6 @@ void vtkImageDouble2D::ThreadedExecute(vtkImageData *inData,
 
 void vtkImageDouble2D::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageFilter::PrintSelf(os,indent);
+  vtkImageToImageFilter::PrintSelf(os,indent);
 }
 

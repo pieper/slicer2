@@ -33,18 +33,18 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageCCA_h
 #define __vtkImageCCA_h
 
-#include "vtkImageFilter.h"
+#include "vtkImageToImageFilter.h"
 
 #define FUNCTION_REMOVE 1
 #define FUNCTION_CHANGE 2
 #define FUNCTION_MEASURE 3
 #define FUNCTION_SAVE 4
 
-class VTK_EXPORT vtkImageCCA : public vtkImageFilter
+class VTK_EXPORT vtkImageCCA : public vtkImageToImageFilter
 {
 public:
 	static vtkImageCCA *New();
-	const char *GetClassName() {return "vtkImageCCA";};
+  vtkTypeMacro(vtkImageCCA,vtkImageToImageFilter);
 	void PrintSelf(ostream& os, vtkIndent indent);
 
   // Function

@@ -46,7 +46,7 @@ class VTK_EXPORT vtkMrmlVolume : public vtkProcessObject
 {
 public:
   static vtkMrmlVolume *New();
-  const char *GetClassName() {return "vtkMrmlVolume";};
+  vtkTypeMacro(vtkMrmlVolume,vtkProcessObject);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   // Description:

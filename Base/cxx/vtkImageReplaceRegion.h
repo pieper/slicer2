@@ -33,16 +33,16 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageReplaceRegion_h
 #define __vtkImageReplaceRegion_h
 
-#include "vtkImageTrulyInPlaceFilter.h"
+#include "vtkImageInPlaceFilter.h"
 
 #include "vtkIntArray.h"
 #include "vtkImageData.h"
 
-class VTK_EXPORT vtkImageReplaceRegion : public vtkImageTrulyInPlaceFilter
+class VTK_EXPORT vtkImageReplaceRegion : public vtkImageInPlaceFilter
 {
 public:
   static vtkImageReplaceRegion *New();
-  const char *GetClassName() {return "vtkImageReplaceRegion";};
+  vtkTypeMacro(vtkImageReplaceRegion,vtkImageInPlaceFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

@@ -444,9 +444,7 @@ void vtkMrmlVolume::Read()
   reader->SetProgressMethod(vtkMrmlVolumeProgress, (void *)this);
  
   // Read it
-  vtkDebugMacro(<<"here0");
   reader->Update();
-  vtkDebugMacro(<<"here1");
 
   // Detach image data from reader
   this->SetImageData(reader->GetOutput());
@@ -461,9 +459,7 @@ void vtkMrmlVolume::Read()
   } 
 
   // Update W/L
-  vtkDebugMacro(<<"here2");
   this->Update();
-  vtkDebugMacro(<<"here3");
 }
 
 //----------------------------------------------------------------------------

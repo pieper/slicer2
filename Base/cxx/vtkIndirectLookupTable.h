@@ -57,7 +57,7 @@ class VTK_EXPORT vtkIndirectLookupTable : public vtkScalarsToColors
 {
 public:
   static vtkIndirectLookupTable *New();
-  const char *GetClassName() {return "vtkIndirectLookupTable";};
+  vtkTypeMacro(vtkIndirectLookupTable,vtkScalarsToColors);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

@@ -32,13 +32,13 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageDouble2D_h
 #define __vtkImageDouble2D_h
 
-#include "vtkImageFilter.h"
+#include "vtkImageToImageFilter.h"
 
-class VTK_EXPORT vtkImageDouble2D : public vtkImageFilter
+class VTK_EXPORT vtkImageDouble2D : public vtkImageToImageFilter
 {
 public:	
 	static vtkImageDouble2D *New();
-	const char *GetClassName() {return "vtkImageDouble2D";};
+  vtkTypeMacro(vtkImageDouble2D,vtkImageToImageFilter);
 	void PrintSelf(ostream& os, vtkIndent indent);
 
 protected:

@@ -42,7 +42,7 @@ class VTK_EXPORT vtkMrmlMatrixNode : public vtkMrmlNode
 {
 public:
   static vtkMrmlMatrixNode *New();
-  const char *GetClassName() {return "vtkMrmlMatrixNode";};
+  vtkTypeMacro(vtkMrmlMatrixNode,vtkMrmlNode);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   // Description:

@@ -38,7 +38,7 @@ class VTK_EXPORT vtkImageResize : public vtkImageToImageFilter
 {
 public:
   static vtkImageResize *New();
-  const char *GetClassName() {return "vtkImageResize";};
+  vtkTypeMacro(vtkImageResize,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   // Description:

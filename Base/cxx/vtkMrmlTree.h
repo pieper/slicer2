@@ -49,7 +49,7 @@ class VTK_EXPORT vtkMrmlTree : public vtkCollection
 {
 public:
   static vtkMrmlTree *New();
-  const char *GetClassName() {return "vtkMrmlTree";};
+  vtkTypeMacro(vtkMrmlTree,vtkCollection);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

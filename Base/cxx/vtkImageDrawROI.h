@@ -44,7 +44,7 @@ class VTK_EXPORT vtkImageDrawROI : public vtkImageInPlaceFilter
 {
 public:	
 	static vtkImageDrawROI *New();
-	const char *GetClassName() {return "vtkImageDrawROI";};
+  vtkTypeMacro(vtkImageDrawROI,vtkImageInPlaceFilter);
 	void PrintSelf(ostream& os, vtkIndent indent);
 
 	void SelectPoint(int x, int y);

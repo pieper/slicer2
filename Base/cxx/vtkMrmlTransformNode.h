@@ -42,7 +42,7 @@ class VTK_EXPORT vtkMrmlTransformNode : public vtkMrmlNode
 {
 public:
   static vtkMrmlTransformNode *New();
-  const char *GetClassName() {return "vtkMrmlTransformNode";};
+  vtkTypeMacro(vtkMrmlTransformNode,vtkMrmlNode);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   //--------------------------------------------------------------------------

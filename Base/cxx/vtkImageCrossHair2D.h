@@ -39,7 +39,7 @@ class VTK_EXPORT vtkImageCrossHair2D : public vtkImageInPlaceFilter
 {
 public:
 	static vtkImageCrossHair2D *New();
-	const char *GetClassName() {return "vtkImageCrossHair2D";};
+  vtkTypeMacro(vtkImageCrossHair2D,vtkImageInPlaceFilter);
 	void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

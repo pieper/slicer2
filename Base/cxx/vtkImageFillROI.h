@@ -45,7 +45,7 @@ class VTK_EXPORT vtkImageFillROI : public vtkImageInPlaceFilter
 {
 public:
 	static vtkImageFillROI *New();
-	const char *GetClassName() {return "vtkImageFillROI";};
+  vtkTypeMacro(vtkImageFillROI,vtkImageInPlaceFilter);
 	void PrintSelf(ostream& os, vtkIndent indent);
 
 	vtkSetMacro(Value, float);

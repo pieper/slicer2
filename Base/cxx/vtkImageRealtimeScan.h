@@ -80,7 +80,7 @@ class VTK_EXPORT vtkImageRealtimeScan : public vtkImageSource
 {
 public:
 	static vtkImageRealtimeScan *New();
-	const char *GetClassName() {return "vtkImageRealtimeScan";};
+  vtkTypeMacro(vtkImageRealtimeScan,vtkImageSource);
 	void PrintSelf(ostream& os, vtkIndent indent);
 
 	void UpdateInformation();

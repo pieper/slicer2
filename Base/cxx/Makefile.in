@@ -31,7 +31,6 @@ vtkImageEditor \
 vtkImageEditorEffects \
 vtkImageErode \
 vtkImageFillROI \
-vtkImageFrameSource \
 vtkImageLabelChange \
 vtkImageLabelOutline \
 vtkImageOverlay \
@@ -42,7 +41,6 @@ vtkImageReformatIJK \
 vtkImageReplaceRegion \
 vtkImageResize \
 vtkImageThresholdBeyond \
-vtkImageTrulyInPlaceFilter \
 vtkImageZoom2D \
 vtkIndirectLookupTable \
 vtkMrmlSlicer \
@@ -55,8 +53,12 @@ vtkMrmlEndTransformNode \
 vtkMrmlColorNode \
 vtkMrmlTree \
 vtkMrmlTransformNode \
-vtkXDisplayWindow \
 vtkMrmlOptionsNode \
+
+
+#vtkImageFrameSource \
+#vtkXDisplayWindow \
+
 
 #------------------------------------------------------------------------------
 # Autoconfig defines that can be overridden in user.make

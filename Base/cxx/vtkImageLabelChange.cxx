@@ -164,7 +164,7 @@ void vtkImageLabelChange::ThreadedExecute(vtkImageData *inData,
 
 void vtkImageLabelChange::PrintSelf(ostream& os, vtkIndent indent)
 {
-	vtkImageFilter::PrintSelf(os,indent);
+	vtkImageToImageFilter::PrintSelf(os,indent);
         
 	os << indent << "InputLabel: " << this->InputLabel << "\n";
 	os << indent << "OutputLabel: " << this->OutputLabel << "\n";

@@ -32,16 +32,16 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageReformatIJK_h
 #define __vtkImageReformatIJK_h
 
-#include "vtkImageFilter.h"
+#include "vtkImageToImageFilter.h"
 #include "vtkMatrix4x4.h"
 #include "vtkTransform.h"
 #include "vtkIntArray.h"
 
-class VTK_EXPORT vtkImageReformatIJK : public vtkImageFilter
+class VTK_EXPORT vtkImageReformatIJK : public vtkImageToImageFilter
 {
 public:
 	static vtkImageReformatIJK *New();
-	const char *GetClassName() {return "vtkImageReformatIJK";};
+  vtkTypeMacro(vtkImageReformatIJK,vtkImageToImageFilter);
 	void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -98,12 +98,15 @@ public:
 protected:
   vtkImageReformatIJK();
   ~vtkImageReformatIJK();
+	vtkImageReformatIJK(const vtkImageReformatIJK&) {};
+	void operator=(const vtkImageReformatIJK&) {};
+
   vtkTimeStamp TransformTime;
   int OutputExtent[6];
 
 	// Override this function since inExt != outExt
 	void ComputeInputUpdateExtent(int inExt[6],int outExt[6]);
-	void ExecuteInformation();
+	void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
 
 	void Execute(vtkImageData *inData, vtkImageData *outData);
 };

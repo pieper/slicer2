@@ -39,7 +39,7 @@ class VTK_EXPORT vtkImageErode : public vtkImageSpatialFilter
 {
 public:
   static vtkImageErode *New();
-  const char *GetClassName() {return "vtkImageErode";};
+  vtkTypeMacro(vtkImageErode,vtkImageSpatialFilter);
 	
   // Description: 
   // create set and get functions for Background and Foreground

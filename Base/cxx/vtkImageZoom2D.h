@@ -32,13 +32,13 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageZoom2D_h
 #define __vtkImageZoom2D_h
 
-#include "vtkImageFilter.h"
+#include "vtkImageToImageFilter.h"
 
 class VTK_EXPORT vtkImageZoom2D : public vtkImageToImageFilter
 {
 public:
 	static vtkImageZoom2D *New();
-	const char *GetClassName() {return "vtkImageZoom2D";};
+  vtkTypeMacro(vtkImageZoom2D,vtkImageToImageFilter);
 	void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

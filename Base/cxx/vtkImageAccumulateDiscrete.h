@@ -43,7 +43,7 @@ class VTK_EXPORT vtkImageAccumulateDiscrete : public vtkImageToImageFilter
 {
 public:
   static vtkImageAccumulateDiscrete *New();
-  const char *GetClassName() {return "vtkImageAccumulateDiscrete";};
+  vtkTypeMacro(vtkImageAccumulateDiscrete,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
 
 protected:

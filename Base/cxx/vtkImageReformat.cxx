@@ -85,7 +85,7 @@ vtkImageReformat::~vtkImageReformat()
 
 void vtkImageReformat::PrintSelf(ostream& os, vtkIndent indent)
 {
-	vtkImageFilter::PrintSelf(os,indent);
+	vtkImageToImageFilter::PrintSelf(os,indent);
   
 	os << indent << "YStep[0]:    " << this->YStep[0] << "\n";
 	os << indent << "YStep[1]:    " << this->YStep[1] << "\n";

@@ -40,7 +40,7 @@ class VTK_EXPORT vtkMrmlOptionsNode : public vtkMrmlNode
 {
 public:
   static vtkMrmlOptionsNode *New();
-  const char *GetClassName() {return "vtkMrmlOptionsNode";};
+  vtkTypeMacro(vtkMrmlOptionsNode,vtkMrmlNode);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   //--------------------------------------------------------------------------

@@ -75,7 +75,7 @@ public:
 
   // The Usual vtk class functions
   static vtkMrmlSlicer *New();
-  const char *GetClassName() {return "vtkMrmlSlicer";};
+  vtkTypeMacro(vtkMrmlSlicer,vtkObject);
   void PrintSelf(ostream& os, vtkIndent indent);
     
   // Description:

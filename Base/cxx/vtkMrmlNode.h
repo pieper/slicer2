@@ -41,7 +41,7 @@ class VTK_EXPORT vtkMrmlNode : public vtkObject
 {
 public:
   static vtkMrmlNode *New();
-  const char *GetClassName() {return "vtkMrmlNode";};
+  vtkTypeMacro(vtkMrmlNode,vtkObject);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   // Copy the node's parameters to this object

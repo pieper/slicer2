@@ -950,7 +950,7 @@ void vtkImageCCA::Execute(vtkImageData *inData, vtkImageData *outData)
 
 void vtkImageCCA::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageFilter::PrintSelf(os,indent);
+  vtkImageToImageFilter::PrintSelf(os,indent);
   
   os << indent << "Background:        " << this->Background << "\n";
   os << indent << "MinForeground:     " << this->MinForeground << "\n";

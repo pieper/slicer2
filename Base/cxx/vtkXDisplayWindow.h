@@ -37,7 +37,7 @@ class VTK_EXPORT vtkXDisplayWindow : public vtkObject
 {
 public:
   static vtkXDisplayWindow *New();
-  const char *GetClassName() {return "vtkXDisplayWindow";};
+  vtkTypeMacro(vtkXDisplayWindow,vtkImageToImageFilter);
 
   vtkRenderWindow* GetRenderWindow(int screen);
   vtkImageWindow* GetImageWindow(int screen);

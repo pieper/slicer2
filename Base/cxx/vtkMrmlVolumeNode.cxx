@@ -406,7 +406,8 @@ void vtkMrmlVolumeNode::SetRasToWld(vtkMatrix4x4 *rasToWld)
   // Form  wldToIjk = RasToIjk * WldToRas 
   //                = RasToIjk * Inv(RasToWld)
 
-  // PostMultiply so concatenating C to M makes M=C*M
+	// Set the vtkTransform to PostMultiply so a concatenated matrix, C,
+	// is multiplied by the existing matrix, M, to form M`= C*M (not M*C)
   vtkTransform *transform = vtkTransform::New();
   transform->PostMultiply();
 
@@ -517,6 +518,17 @@ static void MakePermuteMatrix(vtkMatrix4x4 *mat, char *order)
     orient = 3;
   }
 
+  // IS = [-x  y  z]
+  // LR = [-y  z  x]
+  // PA = [-x  z  y]
+  //
+  // That is, the IStoXYZ matrix has column vectors [-x y z]
+  //
+  // IS = -1  0  0  0   LR =  0  0  1  0   PA = -1  0  0  0
+  //       0  1  0  0        -1  0  0  0         0  0  1  0
+  //       0  0  1  0         0  1  0  0         0  1  0  0
+  //       0  0  0  1         0  0  0  0         0  0  0  0
+  //
   switch (orient)
   {
     // Axial
@@ -552,7 +564,7 @@ static void MakePermuteMatrix(vtkMatrix4x4 *mat, char *order)
       mat->SetElement(1, 0,  0.0); mat->SetElement(1, 1,  0.0);
       mat->SetElement(1, 2,  1.0); mat->SetElement(1, 3,  0.0);
 
-      mat->SetElement(2, 0,  0.0); mat->SetElement(2, 1, -1.0);
+      mat->SetElement(2, 0,  0.0); mat->SetElement(2, 1,  1.0);
       mat->SetElement(2, 2,  0.0); mat->SetElement(2, 3,  0.0);
     }
 
@@ -569,6 +581,8 @@ static void MakePermuteMatrix(vtkMatrix4x4 *mat, char *order)
 
   // Z-reflect
   vtkTransform *tran = vtkTransform::New();
+	// Set the vtkTransform to PostMultiply so a concatenated matrix, C,
+	// is multiplied by the existing matrix, M, to form M`= C*M (not M*C)
   tran->PostMultiply();
   tran->Identity();
   // Z:
@@ -666,7 +680,7 @@ static void MakeVolumeMatrix(vtkMatrix4x4 *mat, vtkMatrix4x4 *matRotate,
 	// 0 0 0     4
 
 	// Scale3
-	// vx  0  0  0112
+	// vx  0  0  0
 	//  0 vy  0  0
 	//  0  0 vz  0
 	//  0  0  0  1
@@ -677,11 +691,11 @@ static void MakeVolumeMatrix(vtkMatrix4x4 *mat, vtkMatrix4x4 *matRotate,
 	//  0 sh  1  0
 	//  0  0  0  1
 
-	// Set the vtkTransform to PostMultiply so a concatenated matVol, C,
-	// is multiplied by the existing matVol, M: C*M (not M*C)
+	// Set the vtkTransform to PostMultiply so a concatenated matrix, C,
+	// is multiplied by the existing matrix, M, to form M`= C*M (not M*C)
 	tran->PostMultiply();
 
-	// M = O*R*Y*S*C  
+	// M = O*R*Y*Sh*S*C  
 	// Order of operation: Center, Scale, Shear, Y-Reflect, Rotate, Offset
 	
 	tran->Identity();
@@ -698,7 +712,7 @@ static void MakeVolumeMatrix(vtkMatrix4x4 *mat, vtkMatrix4x4 *matRotate,
 	// O:
 	tran->Translate(ox, oy, oz);
 
-	tran->Inverse();
+  tran->Inverse();
 
   tran->GetMatrix(mat);
 
@@ -733,11 +747,11 @@ static void MakePositionMatrix(vtkMatrix4x4 *mat, vtkMatrix4x4 *matRotate,
 	//  0 sh  1  0
 	//  0  0  0  1
 
-	// Set the vtkTransform to PostMultiply so a concatenated matVol, C,
-	// is multiplied by the existing matVol, M: C*M (not M*C)
+	// Set the vtkTransform to PostMultiply so a concatenated matrix, C,
+	// is multiplied by the existing matrix, M, to form M`= C*M (not M*C)
 	tran->PostMultiply();
 
-	// M = O*R*Y*S*C  
+	// M = O*R*Y*Sh*C  
 	// Order of operation: Scaled-Center, Shear, Y-Reflect, Rotate, Offset
 	
 	tran->Identity();
@@ -794,6 +808,7 @@ void vtkMrmlVolumeNode::ComputeRasToIjk(vtkMatrix4x4 *matRotate,
 
   // RAS -> VTK
   yDir = 1.0;
+
   MakeVolumeMatrix(mat, matRotate, yDir, nx, ny, nz, vx, vy, vz, 
     ox, oy, oz, sh);
   this->SetRasToVtkMatrix(GetMatrixToString(mat));
@@ -867,7 +882,7 @@ int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
   if (!orient)
   {
     // Error! (probably read a no-header image)
-	return(-1);
+	  return(-1);
   }
 
 	// Determine acquisition order 

@@ -39,7 +39,7 @@ class VTK_EXPORT vtkImageLabelOutline : public vtkImageSpatialFilter
 {
 public:
 	static vtkImageLabelOutline *New();
-	const char *GetClassName() {return "vtkImageLabelOutline";};
+  vtkTypeMacro(vtkImageLabelOutline,vtkImageSpatialFilter);
 	void PrintSelf(ostream& os, vtkIndent indent);
 
 	vtkSetMacro(Background, float);

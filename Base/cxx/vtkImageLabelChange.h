@@ -33,13 +33,13 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageLabelChange_h
 #define __vtkImageLabelChange_h
 
-#include "vtkImageFilter.h"
+#include "vtkImageToImageFilter.h"
 
-class VTK_EXPORT vtkImageLabelChange : public vtkImageFilter
+class VTK_EXPORT vtkImageLabelChange : public vtkImageToImageFilter
 {
 public:
 	static vtkImageLabelChange *New();
-	const char *GetClassName() {return "vtkImageLabelChange";};
+  vtkTypeMacro(vtkImageLabelChange,vtkImageToImageFilter);
 	void PrintSelf(ostream& os, vtkIndent indent);
 
 	vtkSetMacro(InputLabel, float);

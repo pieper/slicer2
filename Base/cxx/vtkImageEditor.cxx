@@ -60,18 +60,21 @@ vtkImageEditor::vtkImageEditor()
   this->OutputSliceOrder = new char[3];
   strcpy(this->OutputSliceOrder, "SI");
 
-  this->RunTime = 0.0;
-  this->TotalTime = 0.0;
-  this->Clip = 0;  
   this->UseInput = 1;
   this->Slice = 0;
+  this->Clip = 0;  
   this->UndoDimension = this->Dimension = EDITOR_DIM_3D;
   this->Undoable = 0;
+  this->RunTime = 0.0;
+  this->TotalTime = 0.0;
 
+  // By setting to the largest possible extent, an error will be generated
+  // to warn the user if they attempt to clip without specifying the extent.
+  // So do change this to avoid an error message!
   for (i=0; i<3; i++)
   {
-    this->ClipExtent[i*2] = -VTK_LARGE_INTEGER;
-    this->ClipExtent[i*2+1] = VTK_LARGE_INTEGER;
+    this->ClipExtent[i*2]   = -VTK_LARGE_INTEGER;
+    this->ClipExtent[i*2+1] =  VTK_LARGE_INTEGER;
   }
   this->FirstFilter = NULL;
   this->LastFilter = NULL;
@@ -79,12 +82,12 @@ vtkImageEditor::vtkImageEditor()
   this->Indices = NULL;
   this->Output  = NULL;
   this->UndoOutput = NULL;
-
 }
 
 //----------------------------------------------------------------------------
 vtkImageEditor::~vtkImageEditor()
 {
+  // We must delete any objects we created
   if (this->InputSliceOrder)
   {
     delete [] this->InputSliceOrder;
@@ -237,6 +240,9 @@ char* vtkImageEditor::GetDimensionString()
 //----------------------------------------------------------------------------
 void vtkImageEditorProgress(void *arg)
 {
+  // This function is a callback for the FirstFilter for the purpose
+  // of reporting processing progress to the user.
+  
   vtkImageEditor *self = (vtkImageEditor *)(arg);
   vtkImageToImageFilter *filter = self->GetFirstFilter();
   if (filter)
@@ -311,7 +317,8 @@ void vtkImageEditor::Apply()
     return;
   }
   
-  // Progress callback
+  // Attach the Progress callback to the first filter, unless Multi-slice.
+  // Multi-slice progress is computed after each slice. 
   if (this->Dimension != EDITOR_DIM_MULTI)
   {
     this->FirstFilter->SetProgressMethod(
@@ -324,65 +331,231 @@ void vtkImageEditor::Apply()
     (*this->StartMethod)(this->StartMethodArg);
   }
   
+  // Start measuring the total time that "Apply" takes.
   tStartTotal = clock();
   
+  ///////////////////////////////////////////////////////////////////////////
+  // Here are the processing steps for each Dimension.
+  //
+  // Single:
+  //   1.) If UseInput=1
+  //         If Output has a different extent from Input
+  //           Delete Output and create a new one of all 0's
+  //   2.) Extract Region from Input if UseInput=1, else Output.
+  //   3.) Region->filter->replace-in-Output
+  //   4.) Delete UndoOutput.
+  //   5.) Allow Undo.
+  //
+  // Multi:
+  //   1.) If UseInput=1
+  //         If UndoOutput has a different extent from Input
+  //           Delete UndoOutput and create a new one of all 0's
+  //       Else
+  //         If UndoOutput has a different extent from Output
+  //           Delete UndoOutput and create a new one of all 0's
+  //   2.) If UseInput=1, do 1 slice at a time:
+  //         Input->filter->replace-in-UndoOutput
+  //       Else
+  //         Output->filter->replace-in-UndoOutput
+  //   3.) Swap UndoOutput with Output
+  //   4.) If Output and UndoOutput have differing extents, delete UndoOutput.
+  //   5.) Allow Undo if UndoOutput != NULL
+  //
+  // 3D:
+  //   1.) If UseInput=1
+  //         Input->filter->UndoOutput
+  //       Else
+  //         Output->filter->UndoOutput
+  //   3.) Swap UndoOutput with Output
+  //   4.) If Output and UndoOutput have differing extents, delete UndoOutput.
+  //   5.) Allow Undo if UndoOutput != NULL
+  //
+  //
+  // To reuse some code, it is organized as follows:
+  // -----------------------------------------------
+  // If Single
+  //       If UseInput=1
+  //         If Output has a different extent from Input
+  //           Delete Output and create a new one of all 0's
+  // 
+  // If Multi
+  //       If UseInput=1
+  //         If UndoOutput has a different extent from Input
+  //           Delete UndoOutput and create a new one of all 0's
+  //       Else
+  //         If UndoOutput has a different extent from Output
+  //           Delete UndoOutput and create a new one of all 0's
+  //
+  // If UseInput=1
+  //   input = Input
+  // Else
+  //   input = Output
+  //
+  // Switch Dimension
+  //   Single:
+  //     input->extract-slice->filter->replace-in-Output
+  //     Delete UndoOutput.
+  //     Allow Undo.
+  //
+  //    Multi:
+  //      Do 1 slice at a time:
+  //        input->filter->replace-in-UndoOutput
+  //
+  //    3D:
+  //      input->filter->UndoOutput
+  //
+  // If Multi or 3D
+  //   Swap UndoOutput with Output
+  //   If Output and UndoOutput have differing extents, delete UndoOutput.
+  //   Allow Undo if UndoOutput != NULL
+  //
+  ///////////////////////////////////////////////////////////////////////////
+
+  // Check Output for Single-slice
+  if (this->Dimension == EDITOR_DIM_SINGLE)
+  {
+    newOutput = 0;
+    
+    // If the output does not exist, or has the wrong extent,
+    // then we'll need to create a new one.
+
+    if (this->UseInput)
+    {
+      if (this->Output == NULL)
+      {
+        newOutput = 1;
+      }
+      else if (this->UseInput == 1)
+      {
+        // Make sure Output has same extent as Input
+        this->GetInput()->GetWholeExtent(inExt);
+        this->Output->GetWholeExtent(outExt);
+        if ((inExt[0] != outExt[0])||(inExt[1] != outExt[1])||
+            (inExt[2] != outExt[2])||(inExt[3] != outExt[3])||
+            (inExt[4] != outExt[4])||(inExt[5] != outExt[5]))
+        {
+          newOutput = 1;
+        }
+      }
+      if (newOutput)
+      {
+        vtkImageCopy *copy = vtkImageCopy::New();
+        copy->SetInput(this->GetInput());
+        copy->ClearOn();
+        copy->Update();
+        this->SetOutput(copy->GetOutput());
+        // NOTE:
+        // copy->Delete() performs copy->SetInput(NULL) 
+        // but not                 copy->SetOutput(NULL)
+        // so I have to detach the output here:
+        copy->SetOutput(NULL);
+        copy->Delete();
+      }
+    }
+  }
+
+  // Check UndoOutput for Multi-slice
+  if (this->Dimension == EDITOR_DIM_MULTI)
+  {
+    newOutput = 0;
+    
+    // If the UndoOutput does not exist, or has the wrong extent,
+    // then we'll need to create a new one.
+    
+    // UseInput=1
+    if (this->UseInput)
+    {
+      if (this->UndoOutput == NULL)
+      {
+        newOutput = 1;
+      }
+      else
+      {
+        // Make sure UndoOutput has same extent as Input
+        this->GetInput()->GetWholeExtent(inExt);
+        this->UndoOutput->GetWholeExtent(outExt);
+        if ((inExt[0] != outExt[0])||(inExt[1] != outExt[1])||
+            (inExt[2] != outExt[2])||(inExt[3] != outExt[3])||
+            (inExt[4] != outExt[4])||(inExt[5] != outExt[5]))
+        {
+          newOutput = 1;
+        }
+      }
+      if (newOutput)
+      {
+        vtkImageCopy *copy = vtkImageCopy::New();
+        copy->SetInput(this->GetInput());
+        copy->ClearOn();
+        copy->Update();
+        this->SetUndoOutput(copy->GetOutput());
+        copy->SetOutput(NULL);
+        copy->Delete();
+      }
+    }
+    // UseInput=0
+    else
+    {
+      if (this->UndoOutput == NULL)
+      {
+        newOutput = 1;
+      }
+      else
+      {
+        // Make sure UndoOutput has same extent as Output
+        this->Output->GetWholeExtent(inExt);
+        this->UndoOutput->GetWholeExtent(outExt);
+        if ((inExt[0] != outExt[0])||(inExt[1] != outExt[1])||
+            (inExt[2] != outExt[2])||(inExt[3] != outExt[3])||
+            (inExt[4] != outExt[4])||(inExt[5] != outExt[5]))
+        {
+          newOutput = 1;
+        }
+      }
+      if (newOutput)
+      {
+        vtkImageCopy *copy = vtkImageCopy::New();
+        copy->SetInput(this->Output);
+        copy->ClearOn();
+        copy->Update();
+        this->SetUndoOutput(copy->GetOutput());
+        copy->SetOutput(NULL);
+        copy->Delete();
+      }
+    }
+  }
+
+  // Get the input, which is either an externally set volume,
+  // or the Output of the last effect.
+  if (this->UseInput)
+  {
+    input = this->GetInput();
+  }
+  else 
+  {
+    input = this->Output;
+  }
+
+    vtkImageData *data = this->Output;
+
+  // Depending on the scope of the effect...
   switch(this->Dimension)
   {
-  // Single
+
+  // Single-slice
   case EDITOR_DIM_SINGLE:
 
     // We will process a slice from the input,
     // and copy the processed slice into the Output.
 
-    // Delete the UndoOutput.
-    this->SetUndoOutput(NULL);
-
-    // If the output does not exist, or has the wrong extent,
-    // then create it
-    if (this->Output == NULL)
-    {
-      newOutput = 1;
-    }
-    else
-    {
-      // Make sure output has same extent as the ORIGINAL input
-      this->GetInput()->GetWholeExtent(inExt);
-      this->Output->GetWholeExtent(outExt);
-      if ((inExt[0] != outExt[0])||(inExt[1] != outExt[1])||
-          (inExt[2] != outExt[2])||(inExt[3] != outExt[3])||
-          (inExt[4] != outExt[4])||(inExt[5] != outExt[5]))
-      {
-        newOutput = 1;
-      }
-    }
-    if (newOutput)
-    {
-      vtkImageCopy *copy = vtkImageCopy::New();
-      copy->SetInput(this->GetInput());
-      copy->ClearOn();
-      copy->Update();
-      this->SetOutput(copy->GetOutput());
-      // NOTE:
-      // copy->Delete() performs copy->SetInput(NULL) 
-      // but not                 copy->SetOutput(NULL)
-      copy->SetOutput(NULL);
-      copy->Delete();
-    }
-    
-    // Get the input
-    if (this->UseInput)
-    {
-      input = this->GetInput();
-    }
-    else 
-    {
-      input = this->Output;
-    }
-
-    // For undo, need to store the region from the output, not input
+    // Make "Undo" possible, and extract the slice to affect
+    // from the input.
     reformat = vtkImageReformatIJK::New();
     if (this->UseInput)
     {
+      // For undo, we need to store the region we're about to overwrite
+      // in the current Output.
+
+      // Use "reformat" to extract the slice.
       reformat->SetInput(this->Output);
       reformat->SetInputOrderString(this->InputSliceOrder);
       reformat->SetOutputOrderString(this->OutputSliceOrder);
@@ -391,11 +564,15 @@ void vtkImageEditor::Apply()
       reformat->SetSlice(this->Slice);
       reformat->Update();
 
+      // And store the extracted slice as "Region".
+      // Also store the indices that we'll need to restore the region.
       this->SetRegion(reformat->GetOutput());
       this->SetIndices(reformat->GetIndices());
       reformat->SetOutput(NULL);
       reformat->Delete();
 
+      // Now extract the slice from the input that we're going to apply
+      // the effect to.
       reformat = vtkImageReformatIJK::New();
       reformat->SetInput(input);
       reformat->SetInputOrderString(this->InputSliceOrder);
@@ -407,6 +584,8 @@ void vtkImageEditor::Apply()
     }
     else
     {
+      // Since the input is also the output, we don't need to perform
+      // the second reformat done in the above case.
       reformat->SetInput(this->Output);
       reformat->SetInputOrderString(this->InputSliceOrder);
       reformat->SetOutputOrderString(this->OutputSliceOrder);
@@ -419,114 +598,51 @@ void vtkImageEditor::Apply()
       this->SetIndices(reformat->GetIndices());
     }
 
+    // Connect the reformatted slice to the filters, and execute.
     this->FirstFilter->SetInput(reformat->GetOutput());
     tStart = clock();
     this->LastFilter->Update();
     this->RunTime = (float)(clock() - tStart) / CLOCKS_PER_SEC;
 
-    // In-place filters are not in place if the in/out extents differ,
-    // or the input's ReleaseData flag is off
-    replace  = vtkImageReplaceRegion::New();
+    // Copy the 2D from the effect-processing pipeline into the 3D Output 
+    // using the Indices.  
+    // NOTE: vtkImageReplaceRegion derived from vtkImageInPlace, which is 
+    // not in place unless Output's ReleaseDataFlag is on.
+    this->Output->ReleaseDataFlagOn();
+    replace = vtkImageReplaceRegion::New();
     replace->SetInput(this->Output);
-    replace->SetOutput(this->Output);
     replace->SetIndices(reformat->GetIndices());
     replace->SetRegion(this->LastFilter->GetOutput());
-    replace->Modified();
     replace->Update();
 
-    // Detach Output from source
+    // Reset Output pointer
+    this->SetOutput(replace->GetOutput());
+
+    // Detach Output from sources
     replace->SetOutput(NULL);
     replace->SetRegion(NULL);
     replace->Delete();
+
     reformat->SetOutput(NULL);
     reformat->Delete();
 
+    // Delete the UndoOutput (by reducing its reference count to 0).
+    // We will undo by copying one slice, rather than storing the
+    // entire volume.
+    this->SetUndoOutput(NULL);
+
+    // Allow undo
     this->Undoable = 1;
     this->UndoDimension = this->Dimension;
     break;
  
-  // Multi
+
+  // Multi-slice
   case EDITOR_DIM_MULTI:
 
     // One slice at a time, we will process a slice from the input,
-    // and copy the processes slice into the UndoOutput.
-
-    // If the output does not exist, or has the wrong extent,
-    // then create it
-    if (this->Output == NULL)
-    {
-      newOutput = 1;
-    }
-    else
-    {
-      // Make sure output has same extent as the ORIGINAL input
-      this->GetInput()->GetWholeExtent(inExt);
-      this->Output->GetWholeExtent(outExt);
-      if ((inExt[0] != outExt[0])||(inExt[1] != outExt[1])||
-          (inExt[2] != outExt[2])||(inExt[3] != outExt[3])||
-          (inExt[4] != outExt[4])||(inExt[5] != outExt[5]))
-      {
-        newOutput = 1;
-      }
-    }
-    if (newOutput)
-    {
-      vtkImageCopy *copy = vtkImageCopy::New();
-      copy->SetInput(this->GetInput());
-      copy->ClearOn();
-      copy->Update();
-      this->SetOutput(copy->GetOutput());
-      // NOTE:
-      // copy->Delete() performs copy->SetInput(NULL) 
-      // but not                 copy->SetOutput(NULL)
-      copy->SetOutput(NULL);
-      copy->Delete();
-    }
+    // and copy the processed slice into UndoOutput.
     
-    // If the UndoOutput does not exist, create it with all 0's.
-    // If it exists, but has the wrong extent, then UnRegister it,
-    // and create a new one with all 0's.
-    newOutput = 0;
-    if (this->UndoOutput == NULL)
-    {
-      newOutput = 1;
-    }
-    else
-    {
-      // Make sure undooutput has same extent as input
-      this->GetInput()->GetWholeExtent(inExt);
-      this->UndoOutput->GetWholeExtent(outExt);
-      if ((inExt[0] != outExt[0])||(inExt[1] != outExt[1])||
-         (inExt[2] != outExt[2])||(inExt[3] != outExt[3])||
-         (inExt[4] != outExt[4])||(inExt[5] != outExt[5]))
-      {
-        newOutput = 1;
-      }
-    }
-    if (newOutput)
-    {
-      vtkImageCopy *copy = vtkImageCopy::New();
-      copy->SetInput(this->GetInput());
-      copy->ClearOn();
-      copy->Update();
-      this->SetUndoOutput(copy->GetOutput());
-      // NOTE:
-      // copy->Delete() performs copy->SetInput(NULL) 
-      // but not                 copy->SetOutput(NULL)
-      copy->SetOutput(NULL);
-      copy->Delete();
-    }
-
-    // Get the input
-    if (this->UseInput)
-    {
-      input = this->GetInput();
-    }
-    else 
-    {
-      input = this->Output;
-    }
-
     // Now safe to begin
     reformat = vtkImageReformatIJK::New();
     reformat->SetInput(input);
@@ -536,27 +652,35 @@ void vtkImageEditor::Apply()
     reformat->ComputeOutputExtent();
     sMax = reformat->GetNumSlices(); 
 
-    replace  = vtkImageReplaceRegion::New();
-    replace->SetInput(this->UndoOutput);
-    replace->SetOutput(this->UndoOutput);
-    replace->SetIndices(reformat->GetIndices());
-    
     // Filter each slice one at a time
     this->RunTime = 0.0;
     for (s=0; s < sMax; s++)
     {
+      // Extract the slice
       reformat->SetSlice(s);
       reformat->Update();
 
-      this->FirstFilter->SetInput(reformat->GetOutput());
+      // Filter the slice
       tStart = clock();
+      this->FirstFilter->SetInput(reformat->GetOutput());
       this->LastFilter->Update();
       this->RunTime += (float)(clock() - tStart);
 
+      // Copy the filtered slice into UndoOutput
+      // NOTE: vtkImageReplaceRegion derived from vtkImageInPlace, which is 
+      // not in place unless UndoOutput's ReleaseDataFlag is on.
+      replace = vtkImageReplaceRegion::New();
+      replace->SetInput(this->UndoOutput);
       replace->SetRegion(this->LastFilter->GetOutput());
-      replace->Modified();
+      replace->SetIndices(reformat->GetIndices());
+      this->UndoOutput->ReleaseDataFlagOn();
       replace->Update();
-    
+      this->SetUndoOutput(replace->GetOutput());
+      replace->SetOutput(NULL);
+      replace->SetRegion(NULL);
+      replace->Delete();
+
+      // Update progress
       if (sMax > 1)
       { 
         this->UpdateProgress((float)s/(float)(sMax-1));
@@ -564,70 +688,12 @@ void vtkImageEditor::Apply()
     }
     this->RunTime /= (float)CLOCKS_PER_SEC;
 
-    // Detach Output from source
-    replace->SetOutput(NULL);
-    replace->SetRegion(NULL);
-    replace->Delete();
     reformat->SetOutput(NULL);
     reformat->Delete();
-      
-    this->SwapOutputs();
-
-    if (this->UndoOutput != NULL)
-    {
-      this->Undoable = 1;
-      this->UndoDimension = this->Dimension;
-    }
    break;
 
   // 3D
   case EDITOR_DIM_3D:
-
-    if (this->UseInput == 0)
-    {
-    if (this->Output == NULL)
-    {
-      newOutput = 1;
-    }
-    else
-    {
-      // Make sure output has same extent as the ORIGINAL input
-      this->GetInput()->GetWholeExtent(inExt);
-      this->Output->GetWholeExtent(outExt);
-      if ((inExt[0] != outExt[0])||(inExt[1] != outExt[1])||
-          (inExt[2] != outExt[2])||(inExt[3] != outExt[3])||
-          (inExt[4] != outExt[4])||(inExt[5] != outExt[5]))
-      {
-        newOutput = 1;
-      }
-    }
-    }
-    if (newOutput)
-    {
-      vtkImageCopy *copy = vtkImageCopy::New();
-      copy->SetInput(this->GetInput());
-      copy->ClearOn();
-      copy->Update();
-      this->SetOutput(copy->GetOutput());
-      // NOTE:
-      // copy->Delete() performs copy->SetInput(NULL) 
-      // but not                 copy->SetOutput(NULL)
-      copy->SetOutput(NULL);
-      copy->Delete();
-    }
-
-    // Get the input
-    if (this->UseInput)
-    {
-      input = this->GetInput();
-    }
-    else 
-    {
-      input = this->Output;
-    }
-
-    // 1.) Output->filter->UndoOutput
-    // 2.) Swap Output with UndoOutput
     
     // Optionally clip, and attach output to source
     if (this->Clip)
@@ -671,17 +737,39 @@ void vtkImageEditor::Apply()
 
       this->SetUndoOutput(this->LastFilter->GetOutput());
     } 
+    break;
+  }
 
+
+  // Determine if can undo
+  if (this->Dimension == EDITOR_DIM_MULTI || 
+      this->Dimension == EDITOR_DIM_3D)
+  {
     this->SwapOutputs();
-  
+
+    // Make sure UndoOutput has same extent as Output, else delete it.
+    if (this->UndoOutput != NULL)
+    {
+      this->Output->GetWholeExtent(inExt);
+      this->UndoOutput->GetWholeExtent(outExt);
+      if ((inExt[0] != outExt[0])||(inExt[1] != outExt[1])||
+          (inExt[2] != outExt[2])||(inExt[3] != outExt[3])||
+          (inExt[4] != outExt[4])||(inExt[5] != outExt[5]))
+      {
+        this->SetUndoOutput(NULL);
+      }
+    }
+
+    // Allow Undo if UndoOutput exists
     if (this->UndoOutput != NULL)
     {
       this->Undoable = 1;
       this->UndoDimension = this->Dimension;
     }
-    break;
   }
 
+
+  // Measure total processing time, including overhead
   this->TotalTime = (float)(clock() - tStartTotal) / CLOCKS_PER_SEC;
 
   // End progress reporting
@@ -694,6 +782,7 @@ void vtkImageEditor::Apply()
 //----------------------------------------------------------------------------
 void vtkImageEditor::Undo()
 {
+  // Only undo if you can
   if (this->Undoable == 0) 
   {
     return;
@@ -703,21 +792,30 @@ void vtkImageEditor::Undo()
   {
   case EDITOR_DIM_MULTI:
   case EDITOR_DIM_3D:
+    // If the effect was applied to the entire volume, then just swap the
+    // volume pointers so the output is the previous volume.
 
     this->SwapOutputs();
     break;
 
   case EDITOR_DIM_SINGLE:
+    // If the effect was applied to one slice, then take the pixels
+    // that were stored in Region before applying the effect,
+    // and copy them into Output.  The Indices array stores where to 
+    // place each pixel from Region into Output.
 
-    // Connect output to source
+    // NOTE: vtkImageReplaceRegion derived from vtkImageInPlace, which is 
+    // not in place unless Output's ReleaseDataFlag is on.
+    this->Output->ReleaseDataFlagOn();
+
     vtkImageReplaceRegion *replace  = vtkImageReplaceRegion::New();
     replace->SetInput(this->Output);
-    replace->SetOutput(this->Output);
-
-    // Execute
     replace->SetRegion(this->Region);
     replace->SetIndices(this->Indices);
     replace->Update();
+
+    // Reset Output pointer
+    this->SetOutput(replace->GetOutput());
 
     // Detach Output from source
     replace->SetRegion(NULL);

@@ -36,7 +36,7 @@ class VTK_EXPORT vtkImageFrameSource : public vtkImageSource
 {
 public:
 	static vtkImageFrameSource *New();
-	const char *GetClassName() {return "vtkImageFrameSource";};
+  vtkTypeMacro(vtkImageFrameSource,vtkImageSource);
  	void PrintSelf(ostream& os, vtkIndent indent);
 
 	void SetExtent(int xMin, int xMax, int yMin, int yMax);

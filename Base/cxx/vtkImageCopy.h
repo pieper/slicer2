@@ -40,10 +40,9 @@ class VTK_EXPORT vtkImageCopy : public vtkImageToImageFilter
 {
 public:
   static vtkImageCopy *New();
-  const char *GetClassName() {return "vtkImageCopy";};
+  vtkTypeMacro(vtkImageCopy,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
   
-
   // Description:
   // If Clear is set to 1, the output image is all zeros.
   // If Clear is set to 0, the output image is a copy of the input.
