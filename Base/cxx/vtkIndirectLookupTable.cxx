@@ -435,9 +435,13 @@ static void vtkIndirectLookupTableMapData(vtkIndirectLookupTable *self,
   unsigned short *map = self->GetMap()->GetPointer(0);
   
   // DAVE do this safer
+  //
+  // Karl Krissian: pb with unsigned ...
+  // range is -32768, 32767, can not be converted to unsigned short for example ...
+  //
   T v;
-  T min = (T)range[0];
-  T max = (T)range[1];
+  short min = (short)range[0];
+  short max = (short)range[1];
 
   for (i=0; i<length; i++)
   {
@@ -485,6 +489,7 @@ void vtkIndirectLookupTable::MapScalarsThroughTable2(void *input,
                         int inputIncrement,
                                             int outputFormat)
 {
+
   switch (inputDataType)
     {
     case VTK_CHAR:
