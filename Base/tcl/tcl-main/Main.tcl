@@ -368,7 +368,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.87 $} {$Date: 2002/11/05 14:53:51 $}]
+        {$Revision: 1.88 $} {$Date: 2002/11/05 17:47:50 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -538,6 +538,8 @@ proc MainBuildGUI {} {
         "MainViewSetBackgroundColor White; Render3D"
 
     # Help menu
+    $Gui(mHelp) add command -label "About..." -command \
+        "MainMenu Help About"
     $Gui(mHelp) add command -label "Documentation..." -command \
         "MainMenu Help Documentation"
     $Gui(mHelp) add command -label "Copyright..." -command \
@@ -1520,6 +1522,21 @@ proc MainMenu {menu cmd} {
     
     "Help" {
         switch $cmd {
+            "About" {
+                global SLICER tcl_patchLevel
+                catch "__version Delete"
+                vtkVersion __version
+                set msg "Slicer Version $SLICER(version)
+http://www.slicer.org
+
+Tcl/Tk Version $tcl_patchLevel
+http://www.tcl.tk
+
+VTK Version [__version GetVTKVersion]
+http://www.vtk.org"
+                catch "__version Delete"
+                MsgPopup Version $x $y $msg {About Slicer}
+            }
             "Copyright" {
                 MsgPopup Copyright $x $y "\
 (c) Copyright 2001 Massachusetts Institute of Technology
