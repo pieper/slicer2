@@ -1394,7 +1394,23 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,Tin **ProbDa
 
       InputChannelWeights = ((vtkImageEMLocalClass*) ClassList[i])->GetInputChannelWeights();
  
-      EMLocalSegment_CalcWeightedCovariance(self,InverseWeightedLogCov[index], InvSqrtDetWeightedLogCov[index], InputChannelWeights, LogCovariance[index], VirtualNumInputImages[i], NumInputImages);
+  if (EMLocalSegment_CalcWeightedCovariance(self,InverseWeightedLogCov[index], InvSqrtDetWeightedLogCov[index], InputChannelWeights, LogCovariance[index], VirtualNumInputImages[i],NumInputImages) == 0) {
+    vtkEMAddErrorMessageSelf("vtkImageEMPrivateAlgorithm: weighted covariance has a non positive determinante  for class with index "<< index << ". See shell for more specific output!");
+    cout << "InvSqrtDetWeightedLogCov: " << InvSqrtDetWeightedLogCov[index] << " VirtualNumInputImages: " <<  VirtualNumInputImages[i] << endl  << "LogCovariance :";  
+    for (x =0 ; x <NumInputImages; x ++ ) {
+      for (y =0 ; y <NumInputImages; y ++ ) cout << LogCovariance[index][x][y] << " ";
+      cout << " | ";
+    }
+    cout << endl << "Weighted LogCovariance : "; 
+    for (x =0 ; x <NumInputImages; x ++ ) {
+      for (y =0 ; y <NumInputImages; y ++ ) cout << LogCovariance[index][x][y]*InputChannelWeights[x]*InputChannelWeights[y] << " ";
+      cout << " | ";
+    }
+         
+        cout << endl;  
+ 
+    SegmentLevelSucessfullFlag = 0;
+      }
 #if (EMVERBOSE)
       cout << "=========== "<< index << " =============" << endl;
       cout << "InvSqrtDetWeightedLogCov: " << InvSqrtDetWeightedLogCov[index] << " VirtualNumInputImages: " <<  VirtualNumInputImages[i] << endl  << "InverseWeightedLogCov :";  ;
@@ -1417,9 +1433,22 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,Tin **ProbDa
 
       for (k = 0;k < NumChildClasses[i]; k++) {
     if (EMLocalSegment_CalcWeightedCovariance(self,InverseWeightedLogCov[index], InvSqrtDetWeightedLogCov[index], InputChannelWeights, LogCovariance[index], VirtualNumInputImages[i],NumInputImages) == 0) {
-          vtkEMAddErrorMessageSelf("vtkImageEMPrivateAlgorithm: Could not calculate of the inverse weighted covariance for class with index "<< index); 
+          vtkEMAddErrorMessageSelf("vtkImageEMPrivateAlgorithm: weighted covariance has a non positive determinante  for class with index "<< index << ". See shell for more specific output!");
+          cout << "InvSqrtDetWeightedLogCov: " << InvSqrtDetWeightedLogCov[index] << " VirtualNumInputImages: " <<  VirtualNumInputImages[i] << endl  << "LogCovariance :";  
+          for (x =0 ; x <NumInputImages; x ++ ) {
+         for (y =0 ; y <NumInputImages; y ++ ) cout << LogCovariance[index][x][y] << " ";
+          cout << " | ";
+           }
+      cout << endl << "Weighted LogCovariance : "; 
+          for (x =0 ; x <NumInputImages; x ++ ) {
+         for (y =0 ; y <NumInputImages; y ++ ) cout << LogCovariance[index][x][y]*InputChannelWeights[x]*InputChannelWeights[y] << " ";
+          cout << " | ";
+           }
+           
+          cout << endl;  
       SegmentLevelSucessfullFlag = 0;
-    }  
+    }
+      
 #if (EMVERBOSE)
     cout << "=========== "<< index << " =============" << endl;
     cout << "InvSqrtDetWeightedLogCov: " << InvSqrtDetWeightedLogCov[index] << " VirtualNumInputImages: " <<  VirtualNumInputImages[i] << endl << "InverseWeightedLogCov: ";  
