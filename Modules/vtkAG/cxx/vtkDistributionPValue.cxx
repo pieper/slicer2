@@ -227,11 +227,11 @@ static void vtkDistributionPValueExecute(vtkDistributionPValue *self,
         d=vtkMath::Determinant3x3(B);
         if(d!=0)
           {
-          v=pow(vtkMath::Determinant3x3(A1),N1/2.)/pow(N1,N1*3/2.)
+            v=pow((double)vtkMath::Determinant3x3(A1),(double)(N1/2.))/pow((double)N1,(double)(N1*3/2.))
             *
-            pow(vtkMath::Determinant3x3(A2),N2/2.)/pow(N2,N2*3/2.)
+            pow((double)vtkMath::Determinant3x3(A2),(double)(N2/2.))/pow((double)N2,(double)(N2*3/2.))
             *
-            pow(N,N*3/2.)/pow(d,N/2.);
+            pow((double)N,(double)(N*3/2.))/pow((double)d,(double)(N/2.));
 
           gsl_integration_qags(&F,0,v,0,1e-7,1000,w,&result,&error);
           l=result;

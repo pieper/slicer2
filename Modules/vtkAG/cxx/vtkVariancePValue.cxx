@@ -297,7 +297,7 @@ static void vtkVariancePValueExecute(vtkVariancePValue *self,
           else
             {
             //l1s=V1*pow(n,p*n/2.)/(pow(n1,p*n1/2.)*pow(n2,p*n2/2.));
-            l1s=V1*pow(pow(1/k1,k1)*pow(1/k2,k2),p*n/2.);
+            l1s=V1*pow((double)(pow((double)(1/k1),(double)k1)*pow((double)(1/k2),(double)k2)),(double)(p*n/2.));
             r=1-(1./n1+1./n2-1./n)*(2*p*p+3*p-1)/(6*(p+1)*(q-1));
             o2=p*(p+1)*((p-1)*(p+2)*(1./(n1*n1)+1./(n2*n2)-1./(n*n))-
                         6*(q-1)*pow(1-r,2))/(48*r*r);
