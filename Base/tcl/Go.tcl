@@ -84,6 +84,7 @@ foreach a $argv {
         "--verbose" -
         "-v" {
             set verbose 1
+            set Module(verbose) 1
         }
         "--help" -
         "-h" {
@@ -235,31 +236,31 @@ if {1} {
 proc ReadModuleNames {filename} {
 
     if {$filename == ""} {
-    return [list "" ""]
+        return [list "" ""]
     }
 
     set tags [MainMrmlReadVersion2.0 $filename 0]
     if {$tags == 0} {
-    return [list "" ""]
+        return [list "" ""]
     }
 
     foreach pair $tags {
-    set tag  [lindex $pair 0]
-    set attr [lreplace $pair 0 0]
-    
-    switch $tag {
+        set tag  [lindex $pair 0]
+        set attr [lreplace $pair 0 0]
         
-        "Options" {
-        foreach a $attr {
-            set key [lindex $a 0]
-            set val [lreplace $a 0 0]
-            set node($key) $val
+        switch $tag {
+            
+            "Options" {
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    set node($key) $val
+                }
+                if {$node(program) == "slicer" && $node(contents) == "modules"} {
+                    return [list $node(ordered) $node(suppressed)]
+                }
+            }
         }
-        if {$node(program) == "slicer" && $node(contents) == "modules"} {
-            return [list $node(ordered) $node(suppressed)]
-        }
-        }
-    }
     }
     return [list "" ""]
 }
@@ -278,7 +279,7 @@ proc FindNames {dir} {
     set names ""
 
     # Form a full path by appending the name (ie: Volumes) to
-        # a local, and then central, directory.
+    # a local, and then central, directory.
     set local   $dir
     set central [file join $prog $dir]
 
