@@ -173,10 +173,14 @@ public:
   // Description:
   // Either set all the images and transform and interpolator, or
   // just set the histogram
-  MovingImageType *SetTrainingMovingImage( const MovingImageType *TrainingMovingImage )
+  void SetTrainingMovingImage( const MovingImageType *TrainingMovingImage )
     { m_Metric->SetTrainingMovingImage(TrainingMovingImage); }
-  FixedImageType *SetTrainingFixedImage(  const FixedImageType  *TrainingFixedImage )
-    { m_Metric->SetTrainingFixedImage(TrainingFixedImage); }
+
+  void SetTrainingFixedImage(  const FixedImageType  *TrainingFixedImage )
+    { 
+      m_Metric->SetTrainingFixedImage(TrainingFixedImage);
+      m_Metric->SetTrainingFixedImageRegion( TrainingFixedImage->GetBufferedRegion() );
+     }
   void SetTrainingTransform(  const AffineTransformType::Pointer TrainingTransform )
     { m_Metric->SetTrainingTransform(TrainingTransform); }
   void SetTrainingInterpolator( const InterpolatorType::Pointer TrainingInterpolator )
