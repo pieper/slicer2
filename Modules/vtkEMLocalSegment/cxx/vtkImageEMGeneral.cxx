@@ -24,6 +24,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageEMGeneral.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageData.h"
+#include "vtkImageWriter.h"
 
 #include <stdio.h>
 // #include <stdlib.h>
@@ -587,6 +588,90 @@ void vtkImageEMGeneral::CalculateLogMeanandLogCovariance(double *mu, double *Sig
   for (int k=0; k< NumberOfClasses;k++) logSigma[k] = sqrt(logSigma[k]); 
 
   delete[] LogTestSequence;
+}
+
+// Specifically defined function for opening files within EM iterations to keep the naming convention  
+FILE* vtkImageEMGeneral::OpenTextFile(const char* FileDir, const char FileName[], int Label, int LabelFlag, 
+                      const char *LevelName, int LevelNameFlag, int iter, int IterFlag, 
+                      const char FileSucessMessage[], char OpenFileName[]) {
+  FILE* OpenFile;
+  sprintf(OpenFileName,"%s/%s",FileDir,FileName,LevelName);
+  if (LabelFlag)     sprintf(OpenFileName,"%s_C%02d",OpenFileName,Label);
+  if (LevelNameFlag) sprintf(OpenFileName,"%s_L%s",OpenFileName,LevelName);
+  if (IterFlag)      sprintf(OpenFileName,"%s_I%02d",OpenFileName,iter);
+  sprintf(OpenFileName,"%s.txt",OpenFileName);
+
+#ifdef _WIN32
+  OpenFile= fopen(OpenFileName, "wb");
+#else 
+  OpenFile= fopen(OpenFileName, "w");
+#endif
+
+  if (OpenFile && FileSucessMessage) cout << FileSucessMessage  << OpenFileName << endl;
+  return OpenFile;
+}
+
+void* vtkImageEMGeneral::GetPointerToVtkImageData(vtkImageData *Image, int DataType, int Ext[6]) {
+ Image->SetWholeExtent(Ext);
+ Image->SetExtent(Ext); 
+ Image->SetNumberOfScalarComponents(1);
+ Image->SetScalarType(DataType); 
+ Image->AllocateScalars(); 
+ return Image->GetScalarPointerForExtent(Ext);
+}
+
+//----------------------------------------------------------------------------
+//Could not put it into another file like vtkImageGeneral - then it would seg falt - do not ask me why 
+void vtkImageEMGeneral::GEImageReader(vtkImageReader *VOLUME, const char FileName[], int Zmin, int Zmax, int ScalarType) {
+  cout << "Load file " <<  FileName << endl;
+  VOLUME->ReleaseDataFlagOff();
+  VOLUME->SetDataScalarType(ScalarType);
+  VOLUME->SetDataSpacing(0.9375,0.9375,1.5);
+  VOLUME->SetFilePattern("%s.%03d");
+  VOLUME->SetFilePrefix(FileName);
+  VOLUME->SetDataExtent(0, 255, 0 ,255 , Zmin , Zmax);
+  VOLUME->SetNumberOfScalarComponents(1);
+  VOLUME->SetDataByteOrderToLittleEndian();
+  VOLUME->Update();
+}
+
+//----------------------------------------------------------------------------
+int vtkImageEMGeneral::GEImageWriter(vtkImageData *Volume, char *FileName,int PrintFlag) {
+  if (PrintFlag) cout << "Write to file " <<  FileName << endl;
+
+#ifdef _WIN32 
+  // Double or Float is not correctly printed out in windwos 
+  if (Volume->GetScalarType() == VTK_DOUBLE || Volume->GetScalarType() == VTK_FLOAT) {
+    int *Extent =Volume->GetExtent();
+    void* VolumeDataPtr = Volume->GetScalarPointerForExtent(Extent);
+    int ImageX = Extent[1] - Extent[0] +1; 
+    int ImageY = Extent[3] - Extent[2] +1; 
+    int ImageXY = ImageX * ImageY;
+
+    int outIncX, OutIncY, outIncZ;
+    Volume->GetContinuousIncrements(Extent, outIncX, OutIncY, outIncZ);
+
+    if (OutIncY != 0 || outIncZ != 0 ) return 0;
+    
+    char *SliceFileName = new char[int(strlen(FileName)) + 6];
+    for (int i = Extent[4]; i <= Extent[5]; i++) {
+      sprintf(SliceFileName,"%s.%03d",FileName,i);
+      switch (Volume->GetScalarType()) {
+    vtkTemplateMacro5(WriteToFlippedGEFile,SliceFileName,(VTK_TT*)  VolumeDataPtr, ImageX, ImageY, ImageXY);
+      }
+    }
+    delete []SliceFileName;
+    return 1;
+  }
+#endif
+
+  vtkImageWriter *Write=vtkImageWriter::New();
+  Write->SetInput(Volume);
+  Write->SetFilePrefix(FileName);
+  Write->SetFilePattern("%s.%03d");
+  Write->Write();
+  Write->Delete();
+  return 1;
 }
 
 // -------------------------------------------------------------------------------------------------------------------

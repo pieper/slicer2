@@ -47,6 +47,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkThread.h"
 #include "vtkDataTimeDef.h"
 #include "vtkFileOps.h" 
+#include "vtkImageReader.h"
 
 
 
@@ -83,6 +84,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define EMSEGMENT_FIRST    16
 #define EMSEGMENT_LAST     32 
 #define EMSEGMENT_DEFINED  64
+#define EMSEGMENT_INCORRECT_MODEL  64
+#define EMSEGMENT_CORRECT_MODEL  ~EMSEGMENT_INCORRECT_MODEL
 #define EMSEGMENT_NOTROI  128
 
 
@@ -241,6 +244,17 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMGeneral : public vtkImageMultipleInput
   // Value defines the vooxel with those label to be measured
   // Returns  Dice sim measure
   static float CalcSimularityMeasure (vtkImageData *Image1, vtkImageData *Image2,float val, int PrintRes);
+
+  // Description:
+  // Opens text file with the a file name according to Kilian's EM nameing convention 
+  static FILE* OpenTextFile(const char* FileDir, const char FileName[], int Label, int LabelFlag, 
+                const char *LevelName, int LevelNameFlag, int iter, int IterFlag, 
+                const char FileSucessMessage[],char OpenFileName[]);
+
+  void* GetPointerToVtkImageData(vtkImageData *Image, int DataType, int Ext[6]); 
+  void  GEImageReader(vtkImageReader *VOLUME, const char FileName[], int Zmin, int Zmax, int ScalarType);
+  int   GEImageWriter(vtkImageData *Volume, char *FileName,int PrintFlag);
+
 
 protected:
   vtkImageEMGeneral() {};
@@ -486,46 +500,46 @@ inline float vtkImageEMGeneral::FastGaussMulti(const double inverse_sqrt_det_cov
         func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10,arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25, arg26); } \
         break
 
-#define vtkTemplateMacro20(func,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20) \
+#define vtkTemplateMacro25(func,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25) \
       case VTK_DOUBLE: \
         { typedef double VTK_TT; \
-        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20); } \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25); } \
         break; \
       case VTK_FLOAT: \
         { typedef float VTK_TT; \
-        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20); } \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25); } \
         break; \
       case VTK_LONG: \
         { typedef long VTK_TT; \
-        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20); } \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25); } \
         break; \
       case VTK_UNSIGNED_LONG: \
         { typedef unsigned long VTK_TT; \
-        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20); } \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25); } \
         break; \
       case VTK_INT: \
         { typedef int VTK_TT; \
-        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20); } \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25); } \
         break; \
       case VTK_UNSIGNED_INT: \
         { typedef unsigned int VTK_TT; \
-        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20); } \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25); } \
         break; \
       case VTK_SHORT: \
         { typedef short VTK_TT; \
-        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20); } \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25); } \
         break; \
       case VTK_UNSIGNED_SHORT: \
         { typedef unsigned short VTK_TT; \
-        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20); } \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25); } \
         break; \
       case VTK_CHAR: \
         { typedef char VTK_TT; \
-        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20); } \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25); } \
         break; \
       case VTK_UNSIGNED_CHAR: \
         { typedef unsigned char VTK_TT; \
-        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20); } \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25); } \
         break
 
 #define vtkTemplateMacro13(func,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12, arg13) \
@@ -568,48 +582,6 @@ inline float vtkImageEMGeneral::FastGaussMulti(const double inverse_sqrt_det_cov
       case VTK_UNSIGNED_CHAR: \
         { typedef unsigned char VTK_TT; \
         func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13); } \
-        break
-
-#define vtkTemplateMacro12(func,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11,arg12) \
-      case VTK_DOUBLE: \
-        { typedef double VTK_TT; \
-        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12); } \
-        break; \
-      case VTK_FLOAT: \
-        { typedef float VTK_TT; \
-        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12); } \
-        break; \
-      case VTK_LONG: \
-        { typedef long VTK_TT; \
-        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12); } \
-        break; \
-      case VTK_UNSIGNED_LONG: \
-        { typedef unsigned long VTK_TT; \
-        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12); } \
-        break; \
-      case VTK_INT: \
-        { typedef int VTK_TT; \
-        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12); } \
-        break; \
-      case VTK_UNSIGNED_INT: \
-        { typedef unsigned int VTK_TT; \
-        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12); } \
-        break; \
-      case VTK_SHORT: \
-        { typedef short VTK_TT; \
-        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12); } \
-        break; \
-      case VTK_UNSIGNED_SHORT: \
-        { typedef unsigned short VTK_TT; \
-        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12); } \
-        break; \
-      case VTK_CHAR: \
-        { typedef char VTK_TT; \
-        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12); } \
-        break; \
-      case VTK_UNSIGNED_CHAR: \
-        { typedef unsigned char VTK_TT; \
-        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12); } \
         break
 
 
