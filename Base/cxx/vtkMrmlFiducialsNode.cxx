@@ -96,8 +96,8 @@ void vtkMrmlFiducialsNode::Write(ofstream& of, int nIndent)
       of << " description='" << this->Description << "'";
     }
      of << " type='" << this->Type << "'";
-     of << " symbol size='" << this->SymbolSize << "'";
-     of << " text size='" << this->TextSize << "'";
+     of << " symbolSize='" << this->SymbolSize << "'";
+     of << " textSize='" << this->TextSize << "'";
      of << " visibility='" << this->Visibility << "'";
      of << " color='" << this->Color[0] << " " << this->Color[1] << " " <<
                     this->Color[2] << "'";

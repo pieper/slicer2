@@ -101,7 +101,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.34 $} {$Date: 2003/05/26 22:47:05 $}]
+        {$Revision: 1.35 $} {$Date: 2003/05/27 21:53:16 $}]
     
     # Initialize module-level variables
     
@@ -572,7 +572,11 @@ proc FiducialsVTKCreateFiducialsList { id type {scale ""} {textScale ""} {visibi
     if {$textScale == "" } {
         set textScale $Fiducials(textScale)
     }
+
     set Fiducials($id,scale) $scale
+    set Fiducials($id,textScale) $textScale
+    
+    set Fiducials($id,scale) [Fiducials($id,node) GetSymbolSize]
     set Fiducials($id,textScale) $textScale
 
     vtkPoints Fiducials($id,points)
@@ -875,6 +879,9 @@ proc FiducialsUpdateMRML {} {
             set Fiducials($fid,textScale) $textSize
             set visibility [$item GetVisibility]
             set Fiducials($fid,visibility) $visibility
+
+    puts "$name $textSize $symbolSize"
+
             FiducialsVTKCreateFiducialsList $fid $type $symbolSize $textSize $visibility
         }
 
@@ -1180,8 +1187,8 @@ proc FiducialsCreateFiducialsList {type name {textSize ""} {symbolSize ""}} {
         
         Fiducials($fid,node) SetName $name
         Fiducials($fid,node) SetType $type
-        #Fiducials($fid,node) SetTextSize $textSize
-        #Fiducials($fid,node) SetSymbolSize $SymbolSize
+        Fiducials($fid,node) SetTextSize $textSize
+        Fiducials($fid,node) SetSymbolSize $symbolSize
         MainMrmlAddNode EndFiducials
 
         MainUpdateMRML
