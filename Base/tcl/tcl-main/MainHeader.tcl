@@ -626,14 +626,16 @@ proc GetHeaderInfo {img1 num2 node tk} {
 
     # parse out the filename pattern etc from the image name, no afterstuff in pattern
     set parsing [MainFileParseImageFile $img1 0]
-    puts "GetHeaderInfo return from MainFileParseImageFile $parsing"
-
+    if {$::Module(verbose) == 1} { 
+        puts "GetHeaderInfo return from MainFileParseImageFile $parsing"
+    }
     set filePattern    [lindex $parsing 0]
     set prefix [lindex $parsing 1]
     set num1   [lindex $parsing 2]
 
-
-    puts "GetHeaderInfo: filePattern $filePattern prefix $prefix num2 $num2"
+    if {$::Module(verbose) == 1} { 
+        puts "GetHeaderInfo: filePattern $filePattern prefix $prefix num2 $num2"
+    }
 
     # Compute the full path of the last image in the volume
     set img2 [format $filePattern $prefix $num2]
@@ -674,12 +676,16 @@ proc GetHeaderInfo {img1 num2 node tk} {
         
         # Parse headers
         set errmsg [ParsePrintHeader $hdr1 Header1]
-        puts "ParsePrintHeader 1 errors = $errmsg"
+        if {$::Module(verbose) == 1} { 
+            puts "ParsePrintHeader 1 errors = $errmsg"
+        }
         if {$errmsg != ""} {
             return $errmsg
         }
         set errmsg [ParsePrintHeader $hdr2 Header2]
-        puts "ParsePrintHeader 2 errors = $errmsg"
+        if {$::Module(verbose) == 1} { 
+            puts "ParsePrintHeader 2 errors = $errmsg"
+        }
         if {$errmsg != ""} {
             return $errmsg
         }
