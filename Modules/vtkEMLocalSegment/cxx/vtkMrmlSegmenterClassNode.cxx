@@ -60,31 +60,25 @@ vtkMrmlSegmenterClassNode::vtkMrmlSegmenterClassNode()
 {
   // vtkMrmlNode's attributes => Tabs following sub classes  
   this->Indent     = 1;
+  this->Label            = 0;
+
+  this->ShapeParameter   = 0.0;
+
   this->LocalPriorPrefix = NULL; 
   this->LocalPriorName   = NULL; 
   memset(this->LocalPriorRange,0,2*sizeof(int));
+
   this->LogMean          = NULL;
   this->LogCovariance    = NULL;
-  this->Label            = 0;
-  this->Prob             = 0.0;
-  this->ShapeParameter   = 0.0;
-  this->LocalPriorWeight = 1.0;
-  this->InputChannelWeights = NULL;
+
   this->PCAMeanName      = NULL; 
   memset(this->PCAFileRange,0,2*sizeof(int));
   this->PCAMaxDist       = 0.0;
   this->PCADistVariance  = 0.0; 
   this->ReferenceStandardFileName     = NULL; 
   
-  this->PrintWeights        = 0;
   this->PrintQuality        = 0;
   this->PrintPCA            = 0;
-
-  memset(this->RegistrationTranslation,0,3*sizeof(double));
-  memset(this->RegistrationRotation,0,3*sizeof(double));
-  for (int i =0; i < 3; i++) RegistrationScale[i]= 1.0;
-  for (int i = 0; i < 6; i++) this->RegistrationCovariance[i] = 1.0;
-  this->RegistrationCovariance[6] = this->RegistrationCovariance[7] = this->RegistrationCovariance[8] = 0.1;
 }
 
 //----------------------------------------------------------------------------
@@ -111,11 +105,6 @@ vtkMrmlSegmenterClassNode::~vtkMrmlSegmenterClassNode()
     this->LogCovariance = NULL;
   }
   
-  if (this->InputChannelWeights) {
-    delete [] this->InputChannelWeights;
-    this->InputChannelWeights = NULL;
-  }
-
   if (this->PCAMeanName)
   {
     delete [] this->PCAMeanName;
@@ -143,7 +132,9 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
     of << " name ='" << this->Name << "'";
   }
   of << " Label='" << this->Label << "'";
-  of << " Prob='" << this->Prob << "'";
+
+  this->vtkMrmlSegmenterGenericClassNode::Write(of,nIndent);
+
   of << " ShapeParameter='" << this->ShapeParameter << "'";
   
   if (this->LocalPriorPrefix && strcmp(this->LocalPriorPrefix, "")) 
@@ -168,12 +159,6 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
     of << " LogCovariance='" << this->LogCovariance << "'";
   }
 
-  if (this->InputChannelWeights && strcmp(this->InputChannelWeights, "")) 
-  {
-    of << " InputChannelWeights='" << this->InputChannelWeights << "'";
-  }
-  of << " LocalPriorWeight='" << this->LocalPriorWeight << "'";
-
   if (this->PCAMeanName && strcmp( this->PCAMeanName, "")) 
   {
     of << " PCAMeanName='" << this->PCAMeanName << "'";
@@ -187,17 +172,9 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
 
   of << " PCAMaxDist='" << this->PCAMaxDist << "'";
   of << " PCADistVariance='" << this->PCADistVariance << "'";
-  of << " PrintWeights='" << this->PrintWeights << "'";
+
   of << " PrintQuality='" << this->PrintQuality << "'";
   of << " PrintPCA='" << this->PrintPCA << "'";
-
-  if  (this->RegistrationTranslation[0] || this->RegistrationTranslation[1] || this->RegistrationTranslation[2]) of << " RegistrationTranslation='" << this->RegistrationTranslation[0] << " " << this->RegistrationTranslation[1] << " " << this->RegistrationTranslation[2] << "'";
-  if  (this->RegistrationRotation[0] || this->RegistrationRotation[1] || this->RegistrationRotation[2]) of << " RegistrationRotation='" << this->RegistrationRotation[0] << " " << this->RegistrationRotation[1] << " " << this->RegistrationRotation[2] << "'";
-  if  ((this->RegistrationScale[0] != 1) || (this->RegistrationScale[1] != 1) || (this->RegistrationScale[2] != 1)) of << " RegistrationScale='" << this->RegistrationScale[0] << " " << this->RegistrationScale[1] << " " << this->RegistrationScale[2] << "'";
-
-  of << " RegistrationCovariance='";
-  for(int i=0; i < 9; i++)  of << this->RegistrationCovariance[i] << " ";
-  of << "'"; 
 
   of << ">\n";
 }
@@ -208,30 +185,24 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
 void vtkMrmlSegmenterClassNode::Copy(vtkMrmlNode *anode)
 {
   vtkMrmlNode::MrmlNodeCopy(anode);
+  vtkMrmlSegmenterGenericClassNode::Copy(anode);
+
   vtkMrmlSegmenterClassNode *node = (vtkMrmlSegmenterClassNode *) anode;
 
   this->SetLabel(node->Label);
-  this->SetProb(node->Prob);
   this->SetShapeParameter(node->ShapeParameter);
   this->SetLocalPriorPrefix(node->LocalPriorPrefix); 
   this->SetLocalPriorName(node->LocalPriorName); 
   this->SetLocalPriorRange(node->LocalPriorRange); 
   this->SetLogMean(node->LogMean);
   this->SetLogCovariance(node->LogCovariance);
-  this->SetInputChannelWeights(node->InputChannelWeights);
-  this->SetLocalPriorWeight(node->LocalPriorWeight);
   this->SetPCAFileRange(node->PCAFileRange);
   this->SetPCAMeanName(node->PCAMeanName);
   this->SetReferenceStandardFileName(node->ReferenceStandardFileName);
-  this->SetRegistrationTranslation(node->RegistrationTranslation);
-  this->SetRegistrationRotation(node->RegistrationRotation);
-  this->SetRegistrationScale(node->RegistrationScale);
-  this->SetRegistrationCovariance(node->RegistrationCovariance);
 
   this->SetPCAMaxDist(node->PCAMaxDist);
   this->SetPCADistVariance(node->PCADistVariance);
 
-  this->SetPrintWeights(node->PrintWeights);
   this->SetPrintQuality(node->PrintQuality);
   this->SetPrintPCA(node->PrintPCA);
 }
@@ -243,7 +214,8 @@ void vtkMrmlSegmenterClassNode::PrintSelf(ostream& os, vtkIndent indent)
    os << indent << "Name: " <<
     (this->Name ? this->Name : "(none)") << "\n";
    os << indent << "Label: " << this->Label << "\n";
-   os << indent << "Prob: " << this->Prob << "\n";
+  this->vtkMrmlSegmenterGenericClassNode::PrintSelf(os, indent);
+
    os << indent << "ShapeParameter: " << this->ShapeParameter << "\n";
 
    os << indent << "LocalPriorPrefix: " <<
@@ -251,15 +223,11 @@ void vtkMrmlSegmenterClassNode::PrintSelf(ostream& os, vtkIndent indent)
    os << indent << "LocalPriorName: " <<
     (this->LocalPriorName ? this->LocalPriorName : "(none)") << "\n";
    os << indent << "LocalPriorRange: " << this->LocalPriorRange[0] << ", " << this->LocalPriorRange[1] << "\n" ;
-   os << indent << "LocalPriorWeight: " << this->LocalPriorWeight << "\n";
 
    os << indent << "LogMean: " <<
     (this->LogMean ? this->LogMean : "(none)") << "\n";
    os << indent << "LogCovariance: " <<
     (this->LogCovariance ? this->LogCovariance : "(none)") << "\n";
-
-   os << indent << "InputChannelWeights: " << 
-    (this->InputChannelWeights ? this->InputChannelWeights : "(none)") << "\n";
 
    os << indent << "ReferenceStandardFileName: " <<  (this->ReferenceStandardFileName ? this->ReferenceStandardFileName : "(none)") << "\n"; 
    os << indent << "PCAMeanName:               " <<  (this->PCAMeanName ? this->PCAMeanName : "(none)") << "\n"; 
@@ -267,14 +235,6 @@ void vtkMrmlSegmenterClassNode::PrintSelf(ostream& os, vtkIndent indent)
    os << indent << "PCAMaxDist:                " << this->PCAMaxDist << "\n";
    os << indent << "PCADistVariance:           " << this->PCADistVariance << "\n";
 
-   os << indent << "PrintWeights:              " << this->PrintWeights << "\n";
    os << indent << "PrintQuality:              " << this->PrintQuality << "\n";
    os << indent << "PrintPCA:                  " << this->PrintPCA << "\n";
-
-   os << indent << "RegistrationTranslation:   " << this->RegistrationTranslation[0] << ", " << this->RegistrationTranslation[1] << ", " << this->RegistrationTranslation[2] << "\n" ;
-   os << indent << "RegistrationRotation:      " << this->RegistrationRotation[0] << ", " << this->RegistrationRotation[1] << ", " << this->RegistrationRotation[2] << "\n" ;
-   os << indent << "RegistrationScale:         " << this->RegistrationScale[0] << ", " << this->RegistrationScale[1] << ", " << this->RegistrationScale[2] << "\n" ;
-   os << indent << "RegistrationCovariance:    " ;
-   for (int i = 0 ; i < 9 ; i++)  os << RegistrationCovariance[i] << " "; 
-   os << "\n" ;
 }

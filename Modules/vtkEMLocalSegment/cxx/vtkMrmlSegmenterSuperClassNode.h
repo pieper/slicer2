@@ -48,7 +48,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 //#include <iostream.h>
 //#include <fstream.h>
-#include "vtkMrmlNode.h"
+#include "vtkMrmlSegmenterGenericClassNode.h"
 #include "vtkSlicer.h"
 #include <vtkEMLocalSegmentConfigure.h>
 
@@ -56,7 +56,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // Extensions for later are planned
 // Kilian 07-Oct-02
 
-class VTK_EMLOCALSEGMENT_EXPORT vtkMrmlSegmenterSuperClassNode : public vtkMrmlNode
+class VTK_EMLOCALSEGMENT_EXPORT vtkMrmlSegmenterSuperClassNode : public vtkMrmlSegmenterGenericClassNode
 {
 public:
   static vtkMrmlSegmenterSuperClassNode *New();
@@ -80,27 +80,6 @@ public:
   vtkSetMacro(NumClasses, int);
   vtkGetMacro(NumClasses, int);
 
-   // Description:
-  // Get/Set for Segmenter
-  vtkSetMacro(Prob, double);
-  vtkGetMacro(Prob, double);
-
-  // Description:
-  // This variable allows to control the influence of the LocalPrioir in the segmentation process 
-  // LocalPriorWeight = 1.0 default setting; 0.0 => LocalPrior is ignored
-  // Note: this variable is applied to all the subclasses during the segmentation bc the subclasses define the local Prior 
-  vtkGetMacro(LocalPriorWeight,float);
-  vtkSetMacro(LocalPriorWeight,float);
-
-  // Description:
-  // This paramters allows the individual influence of each channel in the segmentation process 
-  // by default 
-  // The weight confidence measure describes the confidence in the weights form the EM algorithm
-  // where the length(InputChannelWeights) = # of input channels 
-  // Note: this variable is applied to all the subclasses during the segmentation bc the subclasses define the Tissue Cass Distributioon 
-  vtkSetStringMacro(InputChannelWeights);
-  vtkGetStringMacro(InputChannelWeights);
-
   // Description:
   // Print out the result after how many steps  (-1 == just last result, 0 = No Printing, i> 0 => every i-th slice )
   vtkGetMacro(PrintFrequency, int);
@@ -112,10 +91,6 @@ public:
   vtkGetMacro(PrintLabelMap, int);
   vtkSetMacro(PrintLabelMap, int);  
 
-  // Description:
-  // Print out Weights (1 = Normal 2=as shorts normed to 1000)   
-  vtkGetMacro(PrintWeights, int);
-  vtkSetMacro(PrintWeights, int);
 
   // Description:
   // Prints out the number of voxels changed from last to this EM iteration
@@ -171,30 +146,10 @@ public:
   vtkGetMacro(BoundaryStopMFAMaxIterations,int); 
   vtkSetMacro(BoundaryStopMFAMaxIterations,int); 
 
-  // Description:  
-  // Translation from patient case to atlas space   
-  vtkGetVector3Macro(RegistrationTranslation, double);
-  vtkSetVector3Macro(RegistrationTranslation, double);
-
-  // Description:
-  // Rotation from patient case to atlas space   
-  vtkGetVector3Macro(RegistrationRotation, double);
-  vtkSetVector3Macro(RegistrationRotation, double);
-
-  // Description:
-  // Scale from patient case to atlas space   
-  vtkGetVector3Macro(RegistrationScale, double);
-  vtkSetVector3Macro(RegistrationScale, double);
-
   // Description:
   // Scale from patient case to atlas space   
   vtkGetMacro(RegistrationType, int);
   vtkSetMacro(RegistrationType, int);
-
-  // Description:
-  // Diagonal Covariance Matrix (describing the zero Mean Gaussian distribution of the class registration parameters 
-  vtkGetVectorMacro(RegistrationCovariance,double,9); 
-  vtkSetVectorMacro(RegistrationCovariance,double,9);
 
 protected:
   vtkMrmlSegmenterSuperClassNode();
@@ -203,12 +158,7 @@ protected:
   void operator=(const vtkMrmlSegmenterSuperClassNode&) {};
 
   int NumClasses;
-  double Prob;
-  
-  float  LocalPriorWeight;
-  char   *InputChannelWeights;  
-  
-  int PrintWeights;
+
   int PrintFrequency;
   int PrintBias;
   int PrintLabelMap;
@@ -232,10 +182,6 @@ protected:
   float BoundaryStopMFAValue;    
   int BoundaryStopMFAMaxIterations;
 
-  double RegistrationTranslation[3];
-  double RegistrationRotation[3];
-  double RegistrationScale[3];
-  double RegistrationCovariance[9];
   int    RegistrationType; 
 
 };

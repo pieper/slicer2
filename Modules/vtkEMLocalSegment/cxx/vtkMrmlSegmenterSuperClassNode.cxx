@@ -60,14 +60,10 @@ vtkMrmlSegmenterSuperClassNode::vtkMrmlSegmenterSuperClassNode() {
   // vtkMrmlNode's attributes => Tabs following sub classes  
   this->Indent     = 1;
   this->NumClasses = 0;
-  this->Prob       = 0.0;
-  this->LocalPriorWeight = 1.0;
-  this->InputChannelWeights = NULL;
 
   this->PrintFrequency      = 0;
   this->PrintBias           = 0;
   this->PrintLabelMap       = 0;
-  this->PrintWeights        = 0;
 
   this->PrintEMLabelMapConvergence  = 0;
   this->PrintEMWeightsConvergence = 0;
@@ -81,21 +77,11 @@ vtkMrmlSegmenterSuperClassNode::vtkMrmlSegmenterSuperClassNode() {
   this->BoundaryStopMFAValue = 0.0; 
   this->BoundaryStopMFAMaxIterations = 0; 
 
-  memset(this->RegistrationTranslation,0,3*sizeof(double));
-  memset(this->RegistrationRotation,0,3*sizeof(double));
-  for (int i =0; i < 3; i++) RegistrationScale[i]= 1.0;
-  for (int i = 0; i < 6; i++) this->RegistrationCovariance[i] = 1.0;
-  this->RegistrationCovariance[6] = this->RegistrationCovariance[7] = this->RegistrationCovariance[8] = 0.1;
-
   this->RegistrationType = 0;
 }
 
 //----------------------------------------------------------------------------
 vtkMrmlSegmenterSuperClassNode::~vtkMrmlSegmenterSuperClassNode() { 
-  if (this->InputChannelWeights) {
-    delete [] this->InputChannelWeights;
-    this->InputChannelWeights = NULL;
-  }
 }
 
 //----------------------------------------------------------------------------
@@ -107,15 +93,9 @@ void vtkMrmlSegmenterSuperClassNode::Write(ofstream& of, int nIndent)
   of << i1 << "<SegmenterSuperClass";
   if (this->Name && strcmp(this->Name, "")) of << " name ='" << this->Name << "'";
   of << " NumClasses ='" << this->NumClasses << "'";
-  of << " Prob='" << this->Prob << "'";
+  this->vtkMrmlSegmenterGenericClassNode::Write(of,nIndent);
+  of << " RegistrationType='" << this->RegistrationType << "' ";
 
-  if (this->InputChannelWeights && strcmp(this->InputChannelWeights, "")) 
-  {
-    of << " InputChannelWeights='" << this->InputChannelWeights << "'";
-  }
-  of << " LocalPriorWeight='" << this->LocalPriorWeight << "'";
-
-  of << " PrintWeights='" << this->PrintWeights << "'";
   of << " PrintBias='" << this->PrintBias << "'";
   of << " PrintLabelMap='" << this->PrintLabelMap << "'";
   of << " PrintFrequency='" << this->PrintFrequency << "'";
@@ -132,17 +112,6 @@ void vtkMrmlSegmenterSuperClassNode::Write(ofstream& of, int nIndent)
   of << " BoundaryStopMFAValue='" << this->BoundaryStopMFAValue <<  "'";
   of << " BoundaryStopMFAMaxIterations='" << this->BoundaryStopMFAMaxIterations <<  "'";
 
-  if  (this->RegistrationTranslation[0] || this->RegistrationTranslation[1] || this->RegistrationTranslation[2]) 
-    of << " RegistrationTranslation='" << this->RegistrationTranslation[0] << " " << this->RegistrationTranslation[1] << " " << this->RegistrationTranslation[2] << "'";
-  if  (this->RegistrationRotation[0] || this->RegistrationRotation[1] || this->RegistrationRotation[2]) 
-    of << " RegistrationRotation='" << this->RegistrationRotation[0] << " " << this->RegistrationRotation[1] << " " << this->RegistrationRotation[2] << "'";
-  if  ((this->RegistrationScale[0] != 1) || (this->RegistrationScale[1] != 1) || (this->RegistrationScale[2] != 1)) 
-    of << " RegistrationScale='" << this->RegistrationScale[0] << " " << this->RegistrationScale[1] << " " << this->RegistrationScale[2] << "'";
-
-  of << " RegistrationType='" << this->RegistrationType << "' ";
-  of << " RegistrationCovariance='";
-  for(int i=0; i < 9; i++)  of << this->RegistrationCovariance[i] << " ";
-  of << "'"; 
   of << ">\n";
 
 }
@@ -153,12 +122,11 @@ void vtkMrmlSegmenterSuperClassNode::Write(ofstream& of, int nIndent)
 void vtkMrmlSegmenterSuperClassNode::Copy(vtkMrmlNode *anode)
 {
   vtkMrmlNode::MrmlNodeCopy(anode);
+  vtkMrmlSegmenterGenericClassNode::Copy(anode);
   vtkMrmlSegmenterSuperClassNode *node = (vtkMrmlSegmenterSuperClassNode *) anode;
+
   this->NumClasses = node->NumClasses;
-  this->Prob = node->Prob;
-  this->SetInputChannelWeights(node->InputChannelWeights);
-  this->SetLocalPriorWeight(node->LocalPriorWeight);
-  this->PrintWeights   = node->PrintWeights;
+
   this->PrintBias      = node->PrintBias;
   this->PrintLabelMap  = node->PrintLabelMap;
   this->PrintFrequency = node->PrintFrequency;
@@ -175,10 +143,6 @@ void vtkMrmlSegmenterSuperClassNode::Copy(vtkMrmlNode *anode)
   this->BoundaryStopMFAValue         = node->BoundaryStopMFAValue; 
   this->BoundaryStopMFAMaxIterations = node->BoundaryStopMFAMaxIterations; 
 
-  memcpy(this->RegistrationTranslation,node->RegistrationTranslation,3*sizeof(double));
-  memcpy(this->RegistrationRotation, node->RegistrationRotation,3*sizeof(double));
-  memcpy(this->RegistrationScale,node->RegistrationScale,3*sizeof(double));
-  memcpy(this->RegistrationCovariance,node->RegistrationCovariance,9*sizeof(double));
   this->RegistrationType = node->RegistrationType;
 }
 
@@ -188,13 +152,9 @@ void vtkMrmlSegmenterSuperClassNode::PrintSelf(ostream& os, vtkIndent indent)
   vtkMrmlNode::PrintSelf(os,indent);
   os << indent << "Name: " << (this->Name ? this->Name : "(none)") << "\n";
   os << indent << "NumClasses: "                << this->NumClasses      <<  "\n"; 
-  os << indent << "Prob: " << this->Prob << "\n"; 
-  os << indent << "InputChannelWeights: " <<
-    (this->InputChannelWeights ? this->InputChannelWeights : "(none)") << "\n";
+  this->vtkMrmlSegmenterGenericClassNode::PrintSelf(os, indent);
+  os << indent << "RegistrationType:             " << this->RegistrationType<< "\n" ;
 
-  os << indent << "LocalPriorWeight: " << this->LocalPriorWeight << "\n";
-
-  os << indent << "PrintWeights:   " << this->PrintWeights << "\n";
   os << indent << "PrintBias:      " << this->PrintBias << "\n";
   os << indent << "PrintLabelMap:  " << this->PrintLabelMap << "\n";
   os << indent << "PrintFrequency: " << this->PrintFrequency << "\n";
@@ -210,14 +170,6 @@ void vtkMrmlSegmenterSuperClassNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "BoundaryStopMFAType:          " << this->BoundaryStopMFAType  << "\n";
   os << indent << "BoundaryStopMFAValue:         " << this->BoundaryStopMFAValue << "\n";
   os << indent << "BoundaryStopMFAMaxIterations: " << this->BoundaryStopMFAMaxIterations << "\n";
-
-  os << indent << "RegistrationTranslation:      " << this->RegistrationTranslation[0] << ", " << this->RegistrationTranslation[1] << ", " << this->RegistrationTranslation[2] << "\n" ;
-  os << indent << "RegistrationRotation:         " << this->RegistrationRotation[0] << ", " << this->RegistrationRotation[1] << ", " << this->RegistrationRotation[2] << "\n" ;
-  os << indent << "RegistrationScale:            " << this->RegistrationScale[0] << ", " << this->RegistrationScale[1] << ", " << this->RegistrationScale[2] << "\n" ;
-  os << indent << "RegistrationCovariance:       " ;
-  for (int i = 0 ; i < 9 ; i++)  os << RegistrationCovariance[i] << " "; 
-  os << "\n" ;
-  os << indent << "RegistrationType:             " << this->RegistrationType<< "\n" ;
 }
 
 

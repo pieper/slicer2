@@ -48,11 +48,11 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 //#include <iostream.h>
 //#include <fstream.h>
-#include "vtkMrmlNode.h"
+#include "vtkMrmlSegmenterGenericClassNode.h"
 #include "vtkSlicer.h"
 #include <vtkEMLocalSegmentConfigure.h>
 
-class VTK_EMLOCALSEGMENT_EXPORT vtkMrmlSegmenterClassNode : public vtkMrmlNode
+class VTK_EMLOCALSEGMENT_EXPORT vtkMrmlSegmenterClassNode : public vtkMrmlSegmenterGenericClassNode
 {
 public:
   static vtkMrmlSegmenterClassNode *New();
@@ -74,11 +74,6 @@ public:
   // Get/Set for SegmenterClass
   vtkGetMacro(Label, int);
   vtkSetMacro(Label, int);
-
-  // Description:
-  // Get/Set for SegmenterClass
-  vtkGetMacro(Prob, double);
-  vtkSetMacro(Prob, double);
 
   // Description:
   // Get/Set for SegmenterClass
@@ -111,20 +106,6 @@ public:
   vtkGetStringMacro(LogCovariance);
 
   // Description:
-  // This variable allows to control the influence of the LocalPrioir in the segmentation process 
-  // LocalPriorWeight = 1.0 default setting; 0.0 => LocalPrior is ignored 
-  vtkGetMacro(LocalPriorWeight,float);
-  vtkSetMacro(LocalPriorWeight,float);
-
-  // Description:
-  // This paramters allows the individual influence of each channel in the segmentation process 
-  // by default 
-  // The weight confidence measure describes the confidence in the weights form the EM algorithm
-  // where the length(InputChannelWeights) = # of input channels 
-  vtkSetStringMacro(InputChannelWeights);
-  vtkGetStringMacro(InputChannelWeights);
-
-  // Description:
   // Get/Set for SegmenterClass
   vtkSetStringMacro(ReferenceStandardFileName);
   vtkGetStringMacro(ReferenceStandardFileName);
@@ -149,11 +130,6 @@ public:
   vtkSetMacro(PCADistVariance,double);
 
   // Description:
-  // Print out Weights (1 = Normal 2=as shorts normed to 1000)   
-  vtkGetMacro(PrintWeights, int);
-  vtkSetMacro(PrintWeights, int);
-  
-  // Description:
   // Currenly only the following values defined 
   // 0 = Do not Print out any print quality 
   // 1 = Do a DICE comparison
@@ -163,27 +139,6 @@ public:
   vtkSetMacro(PrintPCA,int);
   vtkGetMacro(PrintPCA,int);
 
-
-  // Description:
-  // Translation from patient case to atlas space   
-  vtkGetVector3Macro(RegistrationTranslation, double);
-  vtkSetVector3Macro(RegistrationTranslation, double);
-
-  // Description:
-  // Rotation from patient case to atlas space   
-  vtkGetVector3Macro(RegistrationRotation, double);
-  vtkSetVector3Macro(RegistrationRotation, double);
-
-  // Description:
-  // Scale from patient case to atlas space   
-  vtkGetVector3Macro(RegistrationScale, double);
-  vtkSetVector3Macro(RegistrationScale, double);
-
-  // Description:
-  // Diagonal Covariance Matrix (describing the zero Mean Gaussian distribution of the class registration parameters 
-  vtkGetVectorMacro(RegistrationCovariance,double,9); 
-  vtkSetVectorMacro(RegistrationCovariance,double,9);
-
 protected:
   vtkMrmlSegmenterClassNode();
   ~vtkMrmlSegmenterClassNode();
@@ -192,7 +147,7 @@ protected:
 
   // I do not know how to better Identify my Images
   int    Label;
-  double Prob;
+
   float  ShapeParameter;
   char   *LocalPriorPrefix; 
   char   *LocalPriorName;
@@ -200,21 +155,15 @@ protected:
   char   *LogMean;
   char   *LogCovariance;
   float  LocalPriorWeight;
-  char   *InputChannelWeights;
+
   char   *PCAMeanName;
   int    PCAFileRange[2];
   double PCAMaxDist;
   double PCADistVariance;
   char   *ReferenceStandardFileName;
 
-  int    PrintWeights;
   int    PrintQuality;        // Prints out a quality measure of the current result ( 1=  Dice )
   int    PrintPCA;            // Print out PCA Parameters at each step 
-
-  double RegistrationTranslation[3];
-  double RegistrationRotation[3];
-  double RegistrationScale[3];
-  double RegistrationCovariance[9];
 };
 
 #endif
