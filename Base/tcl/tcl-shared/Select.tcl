@@ -144,7 +144,7 @@ proc SelectPick { picker widget x y } {
         set Select(actor) [$assemblyNode GetProp]
 
         if { $Select(actor) == ""} {
-        return 0
+            return 0
         }
         set Select(actor) [$picker GetActor]
         set Select(xyz) [$picker GetPickPosition]
@@ -154,9 +154,9 @@ proc SelectPick { picker widget x y } {
         # should return the point XYZ, not the picked XYZ.
         #
         foreach fid $Fiducials(idList) {
-          if { $Select(actor) == "Fiducials($fid,actor)" } {
-            set pid [FiducialsPointIdFromGlyphCellId $fid $Select(cellId)]
-            set Select(xyz) [FiducialsWorldPointXYZ $fid $pid]
+            if { $Select(actor) == "Fiducials($fid,actor)" } {
+                set pid [FiducialsPointIdFromGlyphCellId $fid $Select(cellId)]
+                set Select(xyz) [FiducialsWorldPointXYZ $fid $pid]
             }
         }
         return 1
@@ -165,7 +165,8 @@ proc SelectPick { picker widget x y } {
 
 #-------------------------------------------------------------------------------
 # .PROC SelectPickRenderer
-# 
+# there can be multiple renderers in a view port and this figures
+# out which one the pick point falls by looking at the viewports.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -185,10 +186,10 @@ proc SelectPickRenderer { widget x y } {
         set maxY [expr [lindex $vPort 3] * $winHeight]
         if { $x>=$minX && $x<=$maxX && $y>=$minY && $y<=$maxY } {
             set retRen $thisR
-            }
         }
-    return $retRen
     }
+    return $retRen
+}
 
 #-------------------------------------------------------------------------------
 # .PROC SelectPickable

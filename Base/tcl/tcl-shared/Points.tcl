@@ -169,7 +169,7 @@ proc PointsBuildVTK {} {
     viewRen AddActor $Point(actor)
 
     #puts "PointsBuildVTK end"
-    }
+}
 
 #-------------------------------------------------------------------------------
 # .PROC PointIdFromGlyphCellId
@@ -183,7 +183,7 @@ proc PointIdFromGlyphCellId { cellId } {
     set num [$Point(glyphPD) GetNumberOfCells]
     set vtkId [expr $cellId/$num]
     return [lindex $Point(idList) $vtkId]
-    }
+}
 
 
 #-------------------------------------------------------------------------------
@@ -206,11 +206,11 @@ proc PointsNew { x y z {name PNT}} {
     set Point($id,desc) ""
     if { $name == "PNT" } {
         append Point($id,name) [format %03d $id]
-        }
+    }
     PointsRefreshVTK
 
     return $id
-    }
+}
 
 # status 1=toggle status. status 2=deselect
 proc PointsSelect { pntid {status 1} } {
@@ -242,9 +242,9 @@ proc PointsDeleteAll {} {
     if { [info exists Points(idList)] } {
         foreach id $Points(idList) {
             PointsDelete $id
-            }
         }
     }
+}
 
 #-------------------------------------------------------------------------------
 # .PROC PointsDelete
@@ -258,20 +258,20 @@ proc PointsDelete { pntid } {
     set idx [lsearch $Point(idList) $pntid]
     puts [concat "DEBUG: PointsDelete: idx: " $idx]
     if { $idx < 0 } {
-    return
+        return
     }
     
-    #    incr Point(num) -1
+    #    incr Point(num) -1y
     [viewRen GetActors] RemoveItem Point($pntid,follower)
     foreach foo [array names Point $pntid,*] {
-    unset Point($foo)
+        unset Point($foo)
     }
     if { $idx >= 0 } {
-    set Point(idList) [lreplace $Point(idList) $idx $idx]
+        set Point(idList) [lreplace $Point(idList) $idx $idx]
     }
     set selidx [lsearch $Point(selected) $pntid]
     if { $selidx >= 0 } {
-    set Point(selected) [lreplace $Point(selected) $selidx $selidx]
+        set Point(selected) [lreplace $Point(selected) $selidx $selidx]
     }
     PointsRefreshVTK
 }
@@ -288,11 +288,15 @@ proc PointsRefreshVTK {} {
     $Point(vtkPoints) SetNumberOfPoints 0
     $Point(vtkFloatArray) SetNumberOfTuples 0
     foreach id $Point(idList) {
+        if {![info exists Point($id,xyz)]} {
+            puts "no xyz for point $id"
+            continue
+        }
         set vtkId [eval $Point(vtkPoints) InsertNextPoint $Point($id,xyz)]
         $Point(vtkFloatArray) InsertNextTuple1 0
         if { [info commands Point($id,text)] == "" } {
             set Point($id,text) [vtkVectorText Point($id,text)]
-            }
+        }
         Point($id,text) SetText $Point($id,name)
         if { [info commands Point($id,mapper)] == "" } {
             set Point($id,mapper) [vtkPolyDataMapper \
@@ -300,13 +304,13 @@ proc PointsRefreshVTK {} {
             set Point($id,textxform) [vtkTransformPolyDataFilter \
                         Point($id,textxform)]
             Point($id,textxform) SetTransform Point(textxform)
-            }
+        }
         Point($id,textxform) SetInput [Point($id,text) GetOutput]
         Point($id,mapper) SetInput [Point($id,textxform) GetOutput]
         if { [info commands Point($id,follower)] == "" } {
             set Point($id,follower) [vtkFollower \
                         Point($id,follower)]
-            }
+        }
         Point($id,follower) SetMapper Point($id,mapper)
         Point($id,follower) SetCamera [viewRen GetActiveCamera]
         Point($id,follower) SetVisibility $Point(textvisible)
@@ -314,19 +318,23 @@ proc PointsRefreshVTK {} {
         eval Point($id,follower) SetPosition $Point($id,xyz)
         [viewRen GetActors] RemoveItem Point($id,follower)
         viewRen AddActor Point($id,follower)
-        }
+    }
     foreach id $Point(selected) {
         set vtkId [PointsVTKId $id]
         $Point(vtkFloatArray) SetTuple1 $vtkId 1
-        eval [Point($id,follower) GetProperty] SetColor $Point(textselcolor)
+        if { [info commands Point($id,follower)] == "" } {
+            puts "no follower for point $id"
+        } else {
+            eval [Point($id,follower) GetProperty] SetColor $Point(textselcolor)
         }
+    }
     $Point(vtkPoints) Modified
     $Point(vtkFloatArray) Modified
 
     if { [info command OsteoPlanRefreshGUI] != "" } {
         OsteoPlanRefreshGUI
-        }
-        }
+    }
+}
 
 #-------------------------------------------------------------------------------
 # .PROC PointsVTKId

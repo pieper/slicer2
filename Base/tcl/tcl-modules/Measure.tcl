@@ -99,7 +99,7 @@ proc MeasureInit {} {
     
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.9 $} {$Date: 2002/07/10 12:53:18 $}]
+        {$Revision: 1.10 $} {$Date: 2002/08/23 19:16:56 $}]
     
     # Initialize module-level variables
     #    set Measure(Model1) $Model(idNone)
@@ -679,53 +679,53 @@ proc MeasureIntersection { } {
     #    DebugMsg "finding cross section of $idA with $idB"
     
     if { $idA > -1 && $idB > -1 && $idA != $idB } {
-    Measure(filterA) SetInput [Model($idA,mapper,viewRen) GetInput]
-    Measure(filterB) SetInput [Model($idB,mapper,viewRen) GetInput]
-    Measure(cutter) SetXformA [Model($idA,actor,viewRen) GetMatrix]
-    Measure(cutter) SetXformB [Model($idB,actor,viewRen) GetMatrix]
-    #    Model($idA,mapper,viewRen) SetInput [Measure(cutter) GetOutput]
-    Measure(cutter) UpdateCutter
-    Measure(cutResult) Initialize
-    Measure(cutResult) CopyStructure [Measure(cutter) GetOutput]
-    Measure(cutResult) Squeeze
-    Measure(cutResult) Modified
-    
+        Measure(filterA) SetInput [Model($idA,mapper,viewRen) GetInput]
+        Measure(filterB) SetInput [Model($idB,mapper,viewRen) GetInput]
+        Measure(cutter) SetXformA [Model($idA,actor,viewRen) GetMatrix]
+        Measure(cutter) SetXformB [Model($idB,actor,viewRen) GetMatrix]
+        #    Model($idA,mapper,viewRen) SetInput [Measure(cutter) GetOutput]
+        Measure(cutter) UpdateCutter
+        Measure(cutResult) Initialize
+        Measure(cutResult) CopyStructure [Measure(cutter) GetOutput]
+        Measure(cutResult) Squeeze
+        Measure(cutResult) Modified
+        
 
-    # Measure volume of cutResult <vtkPolyData>
-    vtkSurfaceProps surfProps
-    set vol -1000
-    
-    surfProps SetInput Measure(cutResult)
-    surfProps Update
-    set vol [surfProps GetVolume]
-    
-    if { $vol < 0.0 } {
-        set vol [expr -1*$vol]
-    }
+        # Measure volume of cutResult <vtkPolyData>
+        vtkSurfaceProps surfProps
+        set vol -1000
+        
+        surfProps SetInput Measure(cutResult)
+        surfProps Update
+        set vol [surfProps GetVolume]
+        
+        if { $vol < 0.0 } {
+            set vol [expr -1*$vol]
+        }
 
-    ###    set name [$currModel GetName]
-    set msg [concat "Volume of intersection =" [expr $vol*.001] "(ml)"]
-    MeasureOutput $msg
-    set err [surfProps GetVolumeError]
-    if { [expr $err * 10000] > $vol } {
-        set msg [concat "Warning: volume of intersection may not be valid."]
+        ###    set name [$currModel GetName]
+        set msg [concat "Volume of intersection =" [expr $vol*.001] "(ml)"]
         MeasureOutput $msg
-    }
-    
-    surfProps Delete
-    
-    #    puts [Measure(cutter) GetIntersectionCount]
-    #    puts [Measure(cutter) GetTriangleCount]
-    
-    # previous method was to set the cutResult to be a model, then measure the volume
-    # of that model
-    #    Model($idB,mapper,viewRen) SetInput Measure(cutResult)
-    
-    #    puts  Measure(cutter) NodeCount
-    
-    Render3D
+        set err [surfProps GetVolumeError]
+        if { [expr $err * 10000] > $vol } {
+            set msg [concat "Warning: volume of intersection may not be valid."]
+            MeasureOutput $msg
+        }
+        
+        surfProps Delete
+        
+        #    puts [Measure(cutter) GetIntersectionCount]
+        #    puts [Measure(cutter) GetTriangleCount]
+        
+        # previous method was to set the cutResult to be a model, then measure the volume
+        # of that model
+        #    Model($idB,mapper,viewRen) SetInput Measure(cutResult)
+        
+        #    puts  Measure(cutter) NodeCount
+        
+        Render3D
     } else {
-    puts "Cutting not defined."
+        puts "Cutting not defined."
     }
 }
 
@@ -738,7 +738,7 @@ proc MeasureOutput { msg } {
     global Gui Measure
     
     foreach foo $Measure(listbox) {
-    $foo insert end $msg
+        $foo insert end $msg
     }
 }
 
@@ -758,9 +758,9 @@ proc get_distance { a_id b_id } {
     set b_pos $Point($b_id,xyz)
     set dist 0
     for { set ii 0 } { $ii<3 } { incr ii } {
-    set delta [expr [lindex $a_pos $ii] - [lindex $b_pos $ii]]
-    set delta [expr $delta * $delta]
-    set dist [expr $dist + $delta]
+        set delta [expr [lindex $a_pos $ii] - [lindex $b_pos $ii]]
+        set delta [expr $delta * $delta]
+        set dist [expr $dist + $delta]
     }
     set dist [expr sqrt( $dist )]
     #    DebugMsg [concat "Distance = " $dist "mm"]
@@ -921,29 +921,39 @@ proc addGlyphPoint { widget x y } {
     MeasureSetGlyphsPickable 0
     #MeasureSetCsysPickable 1
 
+    #
+    # first see if an existing point was picked
+    #
     if { [SelectPick Point(picker) $widget $x $y] == 0 } {
-    #    DebugMsg "NoCsysPick"
-    MeasureSetModelsPickable 1
-    #MeasureSetCsysPickable 0
-    if { [SelectPick Point(picker) $widget $x $y] == 0 } {
-        #        DebugMsg [concat "Nothing picked at" $x "," $y "in" $widget ]
-    } else {
-        set actor [Point(picker) GetActor]
-        set Point(model) ""
-        foreach id $Model(idList) {
-        foreach r $Module(Renderers) {
-            #            DebugMsg [concat "Check if " $actor " is " $id " " $r]
-            if { $actor == "Model($id,actor,$r)" } {    
-            #            DebugMsg [concat "Choosing model " $id]
-            set Point(model) Model($id,actor,$r)
-            } 
-        }
-        }
-        eval PointsNew [Point(picker) GetPickPosition]
-        MeasureRefreshGUI
-        Render3D
-    }  
-}
+        #    DebugMsg "NoCsysPick"
+        MeasureSetModelsPickable 1
+        #MeasureSetCsysPickable 0
+
+        #
+        # then check for a model
+        #
+        if { [SelectPick Point(picker) $widget $x $y] == 0 } {
+            #        DebugMsg [concat "Nothing picked at" $x "," $y "in" $widget ]
+        } else {
+            #
+            # hit a model, means add a point
+            #
+            set actor [Point(picker) GetActor]
+            set Point(model) ""
+            foreach id $Model(idList) {
+                foreach r $Module(Renderers) {
+                    #            DebugMsg [concat "Check if " $actor " is " $id " " $r]
+                    if { $actor == "Model($id,actor,$r)" } {    
+                    #            DebugMsg [concat "Choosing model " $id]
+                        set Point(model) Model($id,actor,$r)
+                    } 
+                }
+            }
+            eval PointsNew [Point(picker) GetPickPosition]
+            MeasureRefreshGUI
+            Render3D
+        }  
+    }
 }
 
 
@@ -1027,15 +1037,15 @@ proc MeasureSetModelsPickable { pickable } {
     
     #    DebugMsg MeasureSetModelsPickable
     foreach foo $Model(idList) {
-    set r  [lindex $Module(Renderers) 0]
+        set r  [lindex $Module(Renderers) 0]
 
-    set actor Model($foo,actor,$r)
-    #    DebugMsg [concat Model $foo SetPickable $pickable]
-    if { [$actor GetVisibility] } {
-        $actor SetPickable $pickable
-    } else {
-        $actor SetPickable 0
-    }
+        set actor Model($foo,actor,$r)
+        #    DebugMsg [concat Model $foo SetPickable $pickable]
+        if { [$actor GetVisibility] } {
+            $actor SetPickable $pickable
+        } else {
+            $actor SetPickable 0
+        }
     }
 }
 
