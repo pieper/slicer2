@@ -7,6 +7,8 @@
 #define min(a,b) __min((a),(b))
 #endif
 
+#include <vtkObject.h>
+
 /*
 
   This class is used by vtkFastMarching to estimate the probability density function
@@ -14,7 +16,7 @@
 
  */
 
-class FMpdf
+class FMpdf : public vtkObject
 {
   // the histogram
   int *bins;
