@@ -102,7 +102,7 @@ proc MutualInformationRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2003/12/28 23:25:56 $}]
+        {$Revision: 1.8 $} {$Date: 2004/07/06 16:02:16 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -608,13 +608,12 @@ proc MutualInformationRegistrationAutoRun {} {
     source $env(SLICER_HOME)/Modules/iSlicer/tcl/isregistration.tcl
 
     ## if it is not already there, create it.
-    set notalreadythere [catch ".mi cget -background"]
-    if {$notalreadythere} {
+    if { [info command .mi.reg] == "" } {
+        catch "destroy .mi"
         toplevel .mi
         wm withdraw .mi
         isregistration .mi.reg
     }
-    # catch "destroy .mi"
 
     .mi.reg config \
         -source          $RigidIntensityRegistration(sourceId)          \
@@ -645,13 +644,13 @@ proc MutualInformationRegistrationAutoRun {} {
 #-------------------------------------------------------------------------------
 proc MutualInformationRegistrationStop {} {
     global MutualInformationRegistration RigidIntensityRegistration
-.mi.reg stop
-$MutualInformationRegistration(b1Run) configure -command \
-                                      "MutualInformationRegistrationAutoRun"
-$MutualInformationRegistration(b2Run) configure -command \
-                                      "MutualInformationRegistrationAutoRun"
-$MutualInformationRegistration(b1Run) configure -text "Start"
-$MutualInformationRegistration(b2Run) configure -text "Start"
+    .mi.reg stop
+    $MutualInformationRegistration(b1Run) configure -command \
+                                          "MutualInformationRegistrationAutoRun"
+    $MutualInformationRegistration(b2Run) configure -command \
+                                          "MutualInformationRegistrationAutoRun"
+    $MutualInformationRegistration(b1Run) configure -text "Start"
+    $MutualInformationRegistration(b2Run) configure -text "Start"
 }
 
 
