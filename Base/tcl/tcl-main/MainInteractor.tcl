@@ -158,7 +158,7 @@ proc MainInteractorBind {widget} {
     if {[IsModule Fiducials] == 1 || [IsModule Alignments] == 1} {
     bind $widget <KeyPress-p> {
          if { [SelectPick2D %W %x %y] != 0 } \
-             { eval FiducialsCreatePointFromWorldXYZ "default" $Select(xyz) ; MainUpdateMRML; Render3D}
+             { set ::Fiducial(Pick2D) 1; eval FiducialsCreatePointFromWorldXYZ "default" $Select(xyz) ; set ::Fiducial(Pick2D) 0; MainUpdateMRML; Render3D}
      }
     }
 
@@ -235,21 +235,21 @@ proc MainInteractorCursor {s xs ys x y} {
         }
         if {[info command Anno($s,cur1,mapper)] != ""} {
             switch $Anno(cursorMode) {
-            "RAS" {
-                Anno($s,cur1,mapper) SetInput [format "R %.f" $xRas]
-                Anno($s,cur2,mapper) SetInput [format "A %.f" $yRas]
-                Anno($s,cur3,mapper) SetInput [format "S %.f" $zRas]
-            }
-            "IJK" {
-                Anno($s,cur1,mapper) SetInput [format "I %.f" $xIjk]
-                Anno($s,cur2,mapper) SetInput [format "J %.f" $yIjk]
-                Anno($s,cur3,mapper) SetInput [format "K %.f" $zIjk]
-            }
-            "XY" {
-                Anno($s,cur1,mapper) SetInput [format "X %.f" $x]
-                Anno($s,cur2,mapper) SetInput [format "Y %.f" $y]
-                Anno($s,cur3,mapper) SetInput " "
-            }
+                "RAS" {
+                    Anno($s,cur1,mapper) SetInput [format "R %.f" $xRas]
+                    Anno($s,cur2,mapper) SetInput [format "A %.f" $yRas]
+                    Anno($s,cur3,mapper) SetInput [format "S %.f" $zRas]
+                }
+                "IJK" {
+                    Anno($s,cur1,mapper) SetInput [format "I %.f" $xIjk]
+                    Anno($s,cur2,mapper) SetInput [format "J %.f" $yIjk]
+                    Anno($s,cur3,mapper) SetInput [format "K %.f" $zIjk]
+                }
+                "XY" {
+                    Anno($s,cur1,mapper) SetInput [format "X %.f" $x]
+                    Anno($s,cur2,mapper) SetInput [format "Y %.f" $y]
+                    Anno($s,cur3,mapper) SetInput " "
+                }
             }
         }
         if {[info command Anno($s,curBack,mapper)] != ""} {
@@ -257,6 +257,26 @@ proc MainInteractorCursor {s xs ys x y} {
                 [format "Bg $Anno(pixelDispFormat)" $backPix]
             Anno($s,curFore,mapper) SetInput \
                 [format "Fg $Anno(pixelDispFormat)" $forePix]
+        }
+        set backnode [[$Interactor(activeSlicer) GetBackVolume $s] GetMrmlNode]
+        if { [$backnode GetLUTName] == -1 } {
+            set curtext [Anno($s,curBack,mapper) GetInput] 
+            set labelid [MainColorsGetColorFromLabel $backPix]
+            set label [Color($labelid,node) GetName]
+            Anno($s,curBack,mapper) SetInput "$curtext : $label"
+            set ::Anno(curBack,label) $label
+        } else {
+            set ::Anno(curBack,label) ""
+        }
+        set forenode [[$Interactor(activeSlicer) GetForeVolume $s] GetMrmlNode]
+        if { [$forenode GetLUTName] == -1 } {
+            set curtext [Anno($s,curFore,mapper) GetInput] 
+            set labelid [MainColorsGetColorFromLabel $forePix]
+            set label [Color($labelid,node) GetName]
+            Anno($s,curFore,mapper) SetInput "$curtext : $label"
+            set ::Anno(curFore,label) $label
+        } else {
+            set ::Anno(curFore,label) ""
         }
     } else {
         foreach name "$Anno(mouseList)" {
@@ -296,6 +316,8 @@ proc MainInteractorKeyPress {key widget x y} {
     set s $Interactor(s)
     if {$s == ""} {return}
 
+    MainInteractorMotion $widget $x $y
+    
     switch $key {
         "Right" {
             MainSlicesSetOffset $s Next;
