@@ -175,7 +175,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2004/11/12 19:32:08 $}]
+        {$Revision: 1.8 $} {$Date: 2005/01/21 18:10:32 $}]
 
 }
 
@@ -2424,5 +2424,1189 @@ proc vtkFreeSurferReadersSetColourFileName {} {
     global vtkFreeSurferReaders Volume
     if {$::Module(verbose)} {
         puts "vtkFreeSurferReadersSetColourFileName: colour file name set to $vtkFreeSurferReaders(colourFileName)"
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersGDFInit
+# Initializes the list of valid markers and colours for GDF
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersGDFInit {} {
+    global vtkFreeSurferReaders 
+
+    set vtkFreeSurferReaders(kValid,lMarkers)  {square circle diamond plus cross splus scross triangle}
+    set vtkFreeSurferReaders(kValid,lColors) {red blue green yellow black purple orange pink brown}
+    set vtkFreeSurferReaders(gGDF,lID) {}
+    # should check to see here if the library is loaded
+
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersGDFPlotBuildWindow
+# Creates the window for plotting into.
+# vtkFreeSurferReaders(gGDF) - information gleaned from the header file.
+#   lID - list of IDs
+#   ID
+#     bReadHeader - whether or not his GDF is parsed correctly
+#     title - title of the graph
+#     measurementName - label for the measurement
+#     subjectName - subject name
+#     dataFileName - data file name
+#     cClasses - number of classes
+#     classes,n - n is 0 -> cClasses
+#       label - label for this class
+#       marker - marker for this class
+#       color - color for this class
+#       subjects,n - n is 0 -> num subjects in this class
+#         index - index of the subject
+#     classes,label - label is the label
+#       index - index is the index of this label
+#     cVariables - number of variables
+#     variables,n - n is 0 -> cVariables
+#       label - label for this variable
+#     nDefaultVariable - index of default variable
+#     cSubjects - number of subjects
+#     subjects,n - n is 0 -> cSubjects
+#       id - label of this subject
+#       nClass - index of class of this subject
+#       variables,n - n is 0 -> cVariables
+#         value - value for this variable for this subject
+# vtkFreeSurferReaders(gPlot) - information about the plot, including current state.n
+#   ID
+#     state
+#       nVariable - the index of the current variable
+#       info - the info string displayed in lwInfo
+#       lPoints - list of points
+#       pointsChanged - dirty flag for points
+#       data,subjects,n - where n is 0 -> cSubjects
+#         variable - variable value for this subject (for state,nVariable)
+#         measurement - measurement value for this subject
+#       hiElement - name of hilighted element in plot
+#       subjects,n - where n is 0 -> cSubjects
+#         visible - whether or not is visible
+#       classes,n - where n is 0 -> cClasses
+#         visible - whether or not is visible
+#       legend - subject or class
+#       bTryRegressionLine - whether or not to try getting the offset/slope
+# vtkFreeSurferReaders(gWidgets) - names of widgets
+#   ID
+#     wwTop - the top window
+#     gwPlot - the graph widget
+#     lwInfo - the info label widget
+#     bWindowBuilt - boolean indicating if the window has been built
+#     state
+#       window
+#         geometry - if hidden and reshown, will appear with same geometry
+# .ARGS
+# iID window id 
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersGDFPlotBuildWindow { iID } {
+    global vtkFreeSurferReaders 
+
+    set wwTop         .fsgdf-$iID
+    set gwPlot        $wwTop.gwPlot
+    set lwInfo        $wwTop.lwInfo
+    set owVar         $wwTop.owVar
+    set owLegendMode  $wwTop.owLegendMode
+    set fwClassConfig $wwTop.fwClassConfig
+
+
+    # Make the to window and set its title.
+    toplevel $wwTop -height 500 -width 500
+    wm title $wwTop $vtkFreeSurferReaders(gGDF,$iID,title)
+
+    if { [catch "package require BLT"] } {
+        DevErrorWindow "Must have the BLT package for plotting."
+        return
+    }
+    # Make the graph.
+    blt::graph $gwPlot \
+        -title $vtkFreeSurferReaders(gGDF,$iID,title) \
+        -plotbackground white \
+        -relief raised -border 2
+
+    # Bind our callbacks.
+    $gwPlot legend bind all <Enter> [list vtkFreeSurferReadersGDFPlotCBLegendEnter $iID %W]
+    $gwPlot legend bind all <Leave> [list vtkFreeSurferReadersGDFPlotCBLegendLeave $iID %W]
+    $gwPlot legend bind all <ButtonPress-1> [list vtkFreeSurferReadersGDFPlotCBLegendClick $iID %W]
+    bind $gwPlot <Motion> [list vtkFreeSurferReadersGDFPlotCBGraphMotion $iID %W %x %y]
+    bind $gwPlot <Destroy> [list vtkFreeSurferReadersGDFPlotCBCloseWindow $iID] 
+
+    # Hooking up the zoom functions seems to break some of the other
+    # bindings. Needs more work.  
+    # Blt_ZoomStack $gwPlot
+
+    # Set the y axis label to the measurement name.
+    $gwPlot axis configure y -title $vtkFreeSurferReaders(gGDF,$iID,measurementName)
+
+    # Make the info label.
+    set vtkFreeSurferReaders(gPlot,$iID,state,info) ""
+    # tkuMakeActiveLabel
+    # will need to update this
+    DevAddLabel $lwInfo $vtkFreeSurferReaders(gPlot,$iID,state,info)
+
+    # Make the variable menu.
+    iwidgets::optionmenu $owVar \
+        -labeltext "Variable menu" \
+        -command "vtkFreeSurferReadersGDFPlotSetVariable $iID" 
+        # -labelfont $::Gui(WLA)
+
+    # Make the mode menu.
+    iwidgets::optionmenu $owLegendMode \
+        -labeltext "Mode menu" \
+        -command "vtkFreeSurferReadersGDFPlotSetMode $iID" 
+        # -labelfont $::Gui(WLA)
+    $owLegendMode config -state disabled 
+    $owLegendMode add command subject -label "View by subject"
+    $owLegendMode add command class -label "View by class"
+    $owLegendMode config -state normal 
+
+    # Make a frame for the class controls, which we'll fill in later.
+    iwidgets::labeledframe $fwClassConfig -labeltext "Configure Classes"
+
+    # Place everything in the window.
+    grid $gwPlot        -column 0 -row 0 -columnspan 3 -sticky news
+    grid $lwInfo        -column 0 -row 1 -sticky nwe
+    grid $owLegendMode  -column 1 -row 1 -sticky se
+    grid $owVar         -column 2 -row 1 -sticky se
+    grid $fwClassConfig -column 0 -row 2 -columnspan 3 -sticky ews
+    grid columnconfigure $wwTop 0 -weight 1
+    grid columnconfigure $wwTop 1 -weight 0
+    grid columnconfigure $wwTop 2 -weight 0
+    grid rowconfigure $wwTop 0 -weight 1
+    grid rowconfigure $wwTop 1 -weight 0
+    grid rowconfigure $wwTop 2 -weight 0
+
+    # Set the names in the gWidgets array.
+    set vtkFreeSurferReaders(gWidgets,$iID,wwTop)          $wwTop
+    set vtkFreeSurferReaders(gWidgets,$iID,gwPlot)         $gwPlot
+    set vtkFreeSurferReaders(gWidgets,$iID,lwInfo)         $lwInfo
+    set vtkFreeSurferReaders(gWidgets,$iID,owVar)          $owVar
+    set vtkFreeSurferReaders(gWidgets,$iID,fwClassConfig)  [$fwClassConfig childsite]
+
+    # Build the dynamic window elements for the window.
+    vtkFreeSurferReadersGDFPlotBuildDynamicWindowElements $iID
+
+    # Set the variable menu value to the header's default variable
+    # index.
+    $owVar config -value $vtkFreeSurferReaders(gGDF,$iID,nDefaultVariable)
+
+    # Set our initial legen mode to class.
+    $owLegendMode config -value class
+
+    # Create the pen for our active element.
+    $gwPlot pen create activeElement \
+        -symbol circle -color red -pixels 0.2i -fill ""
+
+    # Note that the window has been built.
+    set vtkFreeSurferReaders(gWidgets,$iID,bWindowBuilt) 1
+}
+
+# Builds the window elements that are dependant on data, including the
+# variable menu and the class configuration section.
+proc vtkFreeSurferReadersGDFFPlotBuildDynamicWindowElements { iID } {
+    global vtkFreeSurferReaders
+
+    # First delete all entries in the menu. Then for each variable,
+    # make an entry with that variable's label. The command for the
+    # menu has already been set.
+    $vtkFreeSurferReaders(gWidgets,$iID,owVar) config -state disabled
+    set lEntries [$vtkFreeSurferReaders(gWidgets,$iID,owVar) entries]
+    foreach entry $lEntries { 
+        $vtkFreeSurferReaders(gWidgets,$iID,owVar) delete $entry
+    }
+    for { set nVar 0 } { $nVar < $gGDF($iID,cVariables) } { incr nVar } {
+        $vtkFreeSurferReaders(gWidgets,$iID,owVar) add command $nVar \
+            -label "$vtkFreeSurferReaders(gGDF,$iID,variables,$nVar,label)"
+    }
+    $vtkFreeSurferReaders(gWidgets,$iID,owVar) config -state normal
+
+    # Fill out the class config frame. For each class, make an entry
+    # with an option widget for colors and one for markers. Set up the
+    # entries appropriately and bind it to the right variable.
+    for { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$iID,cClasses) } { incr nClass } {
+
+        set lw       $vtkFreeSurferReaders(gWidgets,$iID,fwClassConfig).lw$nClass
+        set owMarker $vtkFreeSurferReaders(gWidgets,$iID,fwClassConfig).owMarker$nClass
+        set owColor  $vtkFreeSurferReaders(gWidgets,$iID,fwClassConfig).owColor$nClass
+
+        DevAddLabel $lw $vtkFreeSurferReaders(gGDF,$iID,classes,$nClass,label) 
+
+        iwidgets::optionmenu $owMarker \
+            -command "vtkFreeSurferReadersPlotSetNthClassMarker $iID $nClass" 
+            # -labelfont $::Gui(WLA)
+        $owMarker config -state disabled
+        foreach marker $kValid(lMarkers) {
+            $owMarker add command $marker -label $marker
+        }
+        $owMarker config -state normal
+        $owMarker config -value $vtkFreeSurferReaders(gGDF,$iID,classes,$nClass,marker)
+        
+        iwidgets::optionmenu $owColor \
+            -command "vtkFreeSurferReadersPlotSetNthClassColor $iID $nClass" 
+            # -labelfont $::Gui(WLA)
+        $owColor config -state disabled
+        foreach color $vtkFreeSurferReaders(kValid,lColors) {
+            $owColor add command $color -label $color
+        }
+        $owColor config -state normal
+        $owColor config -value $vtkFreeSurferReaders(gGDF,$iID,classes,$nClass,color)
+        
+        # We're packing them in two columns (of three columns each).
+        set nCol [expr ($nClass % 2) * 3]
+        set nRow [expr $nClass / 2]
+        grid $lw       -column $nCol            -row $nRow -sticky ew
+        grid $owMarker -column [expr $nCol + 1] -row $nRow -sticky ew
+        grid $owColor  -column [expr $nCol + 2] -row $nRow -sticky ew
+    }
+    grid columnconfigure $vtkFreeSurferReaders(gWidgets,$iID,fwClassConfig) 0 -weight 1
+    grid columnconfigure $vtkFreeSurferReaders(gWidgets,$iID,fwClassConfig) 1 -weight 0
+    grid columnconfigure $vtkFreeSurferReaders(gWidgets,$iID,fwClassConfig) 2 -weight 0
+    grid columnconfigure $vtkFreeSurferReaders(gWidgets,$iID,fwClassConfig) 3 -weight 1
+    grid columnconfigure $vtkFreeSurferReaders(gWidgets,$iID,fwClassConfig) 4 -weight 0
+    grid columnconfigure $vtkFreeSurferReaders(gWidgets,$iID,fwClassConfig) 5 -weight 0
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Parse the header file, using the gdf functions to read it and pull
+# data out of it. Returns -1 if there was an error, else it returns an
+# ID number for the fsgdf.
+proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
+    global vtkFreeSurferReaders
+
+    # Generate a new ID.
+    set ID 0
+    while { [lsearch -exact $vtkFreeSurferReaders(gGDF,lID) $ID] != -1 } { incr ID }
+
+    set err [catch {set vtkFreeSurferReaders(gGDF,$ID,object) [gdfRead $ifnHeader 1]}]
+    if { $err } {
+        puts "vtkFreeSurferReadersPlotParseHeader: Couldn't init GDF."
+        return -1
+    }
+
+    # Grab all the data and put it into our TCL object. All these gdf*
+    # functions return a list of results. The first is an integer
+    # representing a result code. The second -> whatever is the actual
+    # result of the function.
+    set lResults [gdfGetTitle $vtkFreeSurferReaders(gGDF,$ID,object) ignore]
+    set err [lindex $lResults 0]
+    if { 0 == $err } {
+        set vtkFreeSurferReaders(gGDF,$ID,title)  [lindex $lResults 1]
+    } else {
+        puts "WARNING: Could not get the graph title."
+        set vtkFreeSurferReaders(gGDF,$ID,title)  "Untitled graph"
+    }
+
+    set lResults [gdfGetMeasurementName $vtkFreeSurferReaders(gGDF,$ID,object) ignore]
+    set err [lindex $lResults 0]
+    if { 0 == $err } {
+        set vtkFreeSurferReaders(gGDF,$ID,measurementName)  [lindex $lResults 1]
+    } else {
+        puts "WARNING: Could not get the measurement label."
+        set vtkFreeSurferReaders(gGDF,$ID,measurementName)  "Measurement"
+    }
+
+    set lResults [gdfGetSubjectName $vtkFreeSurferReaders(gGDF,$ID,object) ignore]
+    set err [lindex $lResults 0]
+    if { 0 == $err } {
+        set vtkFreeSurferReaders(gGDF,$ID,subjectName)  [lindex $lResults 1]
+    } else {
+        puts "WARNING: Could not get the subject name."
+        set vtkFreeSurferReaders(gGDF,$ID,subjectName) "Unknown"
+    }
+
+
+    set lResults [gdfGetDataFileName $vtkFreeSurferReaders(gGDF,$ID,object) ignore]
+    set err [lindex $lResults 0]
+    if { 0 == $err } {
+        set vtkFreeSurferReaders(gGDF,$ID,dataFileName)  [lindex $lResults 1]
+    } else {
+        puts "WARNING: Could not get the data file name."
+        set vtkFreeSurferReaders(gGDF,$ID,dataFileName)  "Unknown"
+    }
+
+
+    set lResults [gdfGetNumClasses $vtkFreeSurferReaders(gGDF,$ID,object)]
+    set err [lindex $lResults 0]
+    if { 0 == $err } {
+        set vtkFreeSurferReaders(gGDF,$ID,cClasses)  [lindex $lResults 1]
+
+        # If they didn't specify color or marker for the class, use
+        # these and increment so all the classes are different.
+        set nColor 0
+        set nMarker 0
+
+        for { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$ID,cClasses) } { incr nClass } {
+
+            set lResults [gdfGetNthClassLabel $vtkFreeSurferReaders(gGDF,$ID,object) $nClass ignore]
+            set err [lindex $lResults 0]
+            if { 0 == $err } {
+                set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label)  [lindex $lResults 1]
+            } else {
+                puts "WARNING: Could not get ${nClass}th label."
+                set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label) "Class $nClass"
+            }
+            
+            set lResults [gdfGetNthClassMarker $vtkFreeSurferReaders(gGDF,$ID,object) $nClass ignore]
+            set err [lindex $lResults 0]
+            if { 0 == $err } {
+                set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,marker)  [lindex $lResults 1]
+            } else {
+                puts "WARNING: Could not get ${nClass}th label."
+                set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,marker) ""
+            }
+            
+            
+            # Look for the marker in the array of valid markers. If
+            # it's not found, output a warning and set it to the
+            # default.
+            set n [lsearch -exact $vtkFreeSurferReaders(kValid,lMarkers) \
+                       $vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,marker)]
+            if { $n == -1 } {
+                puts "WARNING: Marker for class $vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label) was invalid."
+                set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,marker) \
+                    [lindex $vtkFreeSurferReaders(kValid,lMarkers) $nMarker]
+                incr nMarker
+                if { $nMarker >= [llength $vtkFreeSurferReaders(kValid,lMarkers)] } {set nMarker 0 }
+            }
+            
+            set lResults [gdfGetNthClassColor $vtkFreeSurferReaders(gGDF,$ID,object) $nClass ignore]
+            set err [lindex $lResults 0]
+            if { 0 == $err } {
+                set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,color)  [lindex $lResults 1]
+            } else {
+                puts "WARNING: Could not get ${nClass}th label."
+                set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,color) ""
+            }
+            
+
+            # Look for the coclor in the array of valid color. If
+            # it's not found, output a warning and set it to the
+            # default.
+            set n [lsearch -exact $vtkFreeSurferReaders(kValid,lColors) \
+                       $vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,color)]
+            if { $n == -1 } {
+                puts "WARNING: Color for class $vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label) was invalid."
+                set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,color) \
+                    [lindex $vtkFreeSurferReaders(kValid,lColors) $nColor]
+                incr nColor
+                if { $nColor >= [llength $vtkFreeSurferReaders(kValid,lColors)] } { set nColor 0 }
+            }
+            
+            # This is the reverse lookup for a class label -> index.
+            set vtkFreeSurferReaders(gGDF,$ID,classes,$vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label),index) $nClass
+            
+            # Initialize all classes as visible.
+            set vtkFreeSurferReaders(gPlot,$ID,state,classes,$nClass,visible) 1
+        }
+    } else {
+        puts "ERROR: Could not get number of classes."
+        return -1
+    }
+
+
+    set lResults [gdfGetNumVariables $vtkFreeSurferReaders(gGDF,$ID,object)]
+    set err [lindex $lResults 0]
+    if { 0 == $err } {
+        set vtkFreeSurferReaders(gGDF,$ID,cVariables)  [lindex $lResults 1]
+
+        for { set nVariable 0 } \
+            { $nVariable < $vtkFreeSurferReaders(gGDF,$ID,cVariables) } { incr nVariable } {
+                
+                set lResults [gdfGetNthVariableLabel $vtkFreeSurferReaders(gGDF,$ID,object) $nVariable ignore]
+                set err [lindex $lResults 0]
+                if { 0 == $err } {
+                    set vtkFreeSurferReaders(gGDF,$ID,variables,$nVariable,label)  [lindex $lResults 1]
+                } else {
+                    puts "WARNING: Could not get ${nClass}th label."
+                    set vtkFreeSurferReaders(gGDF,$ID,variables,$nVariable,label)  "Variable $nVariable"
+                }
+                
+            }
+    } else {
+        puts "ERROR: Could not get number of variables."
+        return -1
+    }
+    
+
+    set lResults [gdfGetDefaultVariable $vtkFreeSurferReaders(gGDF,$ID,object) ignore]
+    set err [lindex $lResults 0]
+    if { 0 == $err } {
+        set vtkFreeSurferReaders(gGDF,$ID,defaultVariable)  [lindex $lResults 1]
+    } else {
+        puts "WARNING: Could not get default variable."
+        set vtkFreeSurferReaders(gGDF,$ID,defaultVariable) $vtkFreeSurferReaders(gGDF,$ID,variables,0,label)
+    }
+
+    set lResults [gdfGetDefaultVariableIndex $vtkFreeSurferReaders(gGDF,$ID,object)]
+    set err [lindex $lResults 0]
+    if { 0 == $err } {
+        set vtkFreeSurferReaders(gGDF,$ID,nDefaultVariable)  [lindex $lResults 1]
+    } else {
+        puts "WARNING: Could not get default variable index."
+        set vtkFreeSurferReaders(gGDF,$ID,defaultVariable) 0
+    }
+
+    set lResults [gdfGetNumSubjects $vtkFreeSurferReaders(gGDF,$ID,object)]
+    set err [lindex $lResults 0]
+    if { 0 == $err } {
+        set vtkFreeSurferReaders(gGDF,$ID,cSubjects)  [lindex $lResults 1]
+
+        for { set nSubject 0 } \
+            { $nSubject < $vtkFreeSurferReaders(gGDF,$ID,cSubjects) } { incr nSubject } {
+                
+                set lResults [gdfGetNthSubjectID $vtkFreeSurferReaders(gGDF,$ID,object) $nSubject ignore]
+                set err [lindex $lResults 0]
+                if { 0 == $err } {
+                    set vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubject,id)  [lindex $lResults 1]
+                } else {
+                    puts "WARNING: Could not get ${nSubject}th subject."
+                    set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label) "Subject $nSubject"
+                }
+                
+                set lResults [gdfGetNthSubjectClass $vtkFreeSurferReaders(gGDF,$ID,object) $nSubject]
+                set err [lindex $lResults 0]
+                if { 0 == $err } {
+                    set vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubject,nClass)  [lindex $lResults 1]
+                } else {
+                    puts "WARNING: Could not get ${nSubject}th subject."
+                    set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label) 0
+                }
+                
+                
+                for { set nVariable 0 } \
+                    { $nVariable < $vtkFreeSurferReaders(gGDF,$ID,cVariables) } { incr nVariable } {
+                        
+                        set lResults [gdfGetNthSubjectNthValue \
+                                          $vtkFreeSurferReaders(gGDF,$ID,object) $nSubject $nVariable]
+                        set err [lindex $lResults 0]
+                        if { 0 == $err } {
+                            set vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubject,variables,$nVariable,value) \
+                                [lindex $lResults 1]
+                        } else {
+                            puts "WARNING: Could not value for ${nSubject}th subject ${nVariable}th variable."
+                            set vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubject,variables,$nVariable,value) 0
+                        }
+                    }
+                
+                # Initialize all subjects as visible.
+                set vtkFreeSurferReaders(gPlot,$ID,state,subjects,$nSubject,visible) 1
+            }
+    } else {
+        puts "ERROR: Could not get number of subjects."
+        return -1
+    }
+    
+
+    # This groups the subjects by the class they are in. For each
+    # class, for each subject, if the subject is in the class, assign
+    # the subject index to that subject-in-class index.
+    for  { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$ID,cClasses) } { incr nClass } {
+        set nSubjInClass 0
+        for { set nSubj 0 } { $nSubj < $vtkFreeSurferReaders(gGDF,$ID,cSubjects) } { incr nSubj } {
+            if { $vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubj,nClass) == $nClass } {
+                set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,subjects,$nSubjInClass,index) $nSubj
+                incr nSubjInClass
+            }
+        }
+    }
+    
+    # We now have a header.
+    set vtkFreeSurferReaders(gGDF,$ID,bReadHeader) 1
+
+    # Start out trying to find the offset/slope for a class/var.
+    set vtkFreeSurferReaders(gPlot,$ID,state,bTryRegressionLine) 1
+
+    # If we have a window, build the dynamic elements.
+    if { [info exists vtkFreeSurferReaders(gWidgets,$ID,bWindowBuilt)] && 
+         $vtkFreeSurferReaders(gWidgets,$ID,bWindowBuilt) } {
+        vtkFreeSurferReadersPlotBuildDynamicWindowElements $ID
+    }
+
+    if { 0 } {
+        puts "$vtkFreeSurferReaders(gGDF,$ID,cClasses) classes:"
+        for { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$ID,cClasses) } { incr nClass } {
+            puts "$nClass: label=$vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label) marker=$vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,marker) color=$vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,color) reverse index=$vtkFreeSurferReaders(gGDF,$ID,classes,$vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label),index)"
+        }
+        
+        puts "$vtkFreeSurferReaders(gGDF,$ID,cVariables) variables:"
+        for { set nVar 0 } { $nVar < $vtkFreeSurferReaders(gGDF,$ID,cVariables) } { incr nVar } {
+            puts "$nVar: label=$vtkFreeSurferReaders(gGDF,$ID,variables,$nVar,label)"
+        }
+        
+        puts "$vtkFreeSurferReaders(gGDF,$ID,cSubjects) subjects:"
+        for { set nSubj 0 } { $nSubj < $vtkFreeSurferReaders(gGDF,$ID,cSubjects) } { incr nSubj } {
+            puts "$nSubj: id=$vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubj,id) class=$vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubj,nClass)"
+        }
+    }
+    
+    lappend vtkFreeSurferReaders(gGDF,lID) $ID
+    return $ID
+}
+
+# This plots the current data on the graph. It is fast enough that it
+# can be called any time the data is changed to completely redraw it
+# from scratch.
+proc vtkFreeSurferReadersPlotPlotData { iID } {
+    global vtkFreeSurferReaders
+
+    # Don't plot if the window isn't built or we don't have data.
+    if { ![info exists vtkFreeSurferReaders(gWidgets,$iID,bWindowBuilt)] ||
+         ![info exists vtkFreeSurferReaders(gGDF,$iID,bReadHeader)] ||
+         !$vtkFreeSurferReaders(gWidgets,$iID,bWindowBuilt) || 
+         !$vtkFreeSurferReaders(gGDF,$iID,bReadHeader) } {
+        puts "vtkFreeSurferReadersPlotPlotData: the window isn't built or we don't have data"
+        return
+    }
+
+    set gw $vtkFreeSurferReaders(gWidgets,$iID,gwPlot)
+
+    # Set the x axis title to the label of the current variable.
+    $gw axis configure x \
+        -title $vtkFreeSurferReaders(gGDF,$iID,variables,$vtkFreeSurferReaders(gPlot,$iID,state,nVariable),label)
+
+    # Remove all the elements and markers from the graph.
+    set lElements [$gw element names *]
+    foreach element $lElements {
+        $gw element delete $element
+    }
+    set lMarkers [$gw marker names *]
+    foreach marker $lMarkers {
+        $gw marker delete $marker
+    }
+    
+    # If we have no points, return.
+    if { ![info exists vtkFreeSurferReaders(gPlot,$iID,state,lPoints)] || 
+         [llength $vtkFreeSurferReaders(gPlot,$iID,state,lPoints)] == 0 } {
+        return
+    }
+
+    # Depending on our legend mode, we'll draw by class or subject.
+    if { $vtkFreeSurferReaders(gPlot,$iID,state,legend) == "class" } {
+    
+        # For each class, for each subject, if the subject's class is
+        # the same as the current class, get its data points and add
+        # them to a list. Then draw the entire list of data in the
+        # class's color/marker. If the class is hidden, set the color
+        # to white (so it shows up white in the legend) and hide the
+        # element.
+        for  { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$iID,cClasses) } { incr nClass } {
+            
+            set lData {}
+            set nSubjInClass 0
+            for { set nSubj 0 } { $nSubj < $vtkFreeSurferReaders(gGDF,$iID,cSubjects) } { incr nSubj } {
+                
+                if { $vtkFreeSurferReaders(gGDF,$iID,subjects,$nSubj,nClass) == $nClass } {
+                    
+                    if { $vtkFreeSurferReaders(gPlot,$iID,state,pointsChanged) } {
+                        vtkFreeSurferReadersPlotCalculateSubjectMeasurement $iID $nSubj
+                    }
+                    
+                    set vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,variable) \
+                        $vtkFreeSurferReaders(gGDF,$iID,subjects,$nSubj,variables,$vtkFreeSurferReaders(gPlot,$iID,state,nVariable),value)
+                    
+                    lappend lData $vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,variable)
+                    lappend lData $vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,measurement)
+                }
+            }
+            
+            if { $vtkFreeSurferReaders(gPlot,$iID,state,classes,$nClass,visible) } {
+                set bHide 0
+                set color $vtkFreeSurferReaders(gGDF,$iID,classes,$nClass,color)
+            } else {
+                set bHide 1
+                set color white
+            }
+            $gw element create $vtkFreeSurferReaders(gGDF,$iID,classes,$nClass,label) \
+                -data $lData \
+                -symbol $vtkFreeSurferReaders(gGDF,$iID,classes,$nClass,marker) \
+                -color $color -linewidth 0 -outlinewidth 1 -hide $bHide \
+                -activepen activeElement
+        }
+        
+    } else {
+        
+        
+        # For each subject, if the points have changed, calculate the #
+        # measurements. Get the variable value. If the subject is visible,
+        # set # the hide flag to 0 and the color to the subject's class
+        # color, else # set the hide flag to 1 and set the color to
+        # white. Create the # element.
+        for { set nSubj 0 } { $nSubj < $vtkFreeSurferReaders(gGDF,$iID,cSubjects) } { incr nSubj } {
+            
+            if { $vtkFreeSurferReaders(gPlot,$iID,state,pointsChanged) } {
+                vtkFreeSurferReadersPlotCalculateSubjectMeasurement $iID $nSubj
+            }
+            
+            set vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,variable) \
+                $vtkFreeSurferReaders(gGDF,$iID,subjects,$nSubj,variables,$vtkFreeSurferReaders(gPlot,$iID,state,nVariable),value)
+            
+            if {  $vtkFreeSurferReaders(gPlot,$iID,state,subjects,$nSubj,visible) } {
+                set bHide 0
+                set color $vtkFreeSurferReaders(gGDF,$iID,classes,$vtkFreeSurferReaders(gGDF,$iID,subjects,$nSubj,nClass),color)
+            } else {
+                set bHide 1
+                set color white
+            }
+            $gw element create $vtkFreeSurferReaders(gGDF,$iID,subjects,$nSubj,id) \
+                -data [list $vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,variable) \
+                           $vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,measurement)] \
+                -symbol $vtkFreeSurferReaders(gGDF,$iID,classes,$vtkFreeSurferReaders(gGDF,$iID,subjects,$nSubj,nClass),marker) \
+                -color $color -linewidth 0 -outlinewidth 1 -hide $bHide \
+                -activepen activeElement
+        }
+    }
+
+    # If we're trying to draw the regression line, for each class, if
+    # the class is visible, get the offset and slope for that class
+    # and the current variable. This depends on the point we're
+    # drawing, so get the avg of all the points if necessary. Then
+    # make a marker calculating two points on the line. if
+    # gdfOffsetSlope() fails, set the bTryRegressionLine flag to
+    # false, so we won't try drawing it again.
+    if { $vtkFreeSurferReaders(gPlot,$iID,state,bTryRegressionLine) } {
+
+        for  { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$iID,cClasses) } { incr nClass } {
+        
+            if { $vtkFreeSurferReaders(gPlot,$iID,state,classes,$nClass,visible) } {
+        
+                set nVar $vtkFreeSurferReaders(gPlot,$iID,state,nVariable)
+                
+                # Calc the avg offset and slope for all points.
+                set offset 0
+                set slope 0
+                set cGood 0
+                foreach lPoint $vtkFreeSurferReaders(gPlot,$iID,state,lPoints) {
+                    scan $lPoint "%d %d %d" x y z
+                    set lResults [gdfOffsetSlope $vtkFreeSurferReaders(gGDF,$iID,object) \
+                                      $nClass $nVar $x $y $z]
+                    set err [lindex $lResults 0]
+                    if { 0 == $err } {
+                        set offset [expr $offset + [lindex $lResults 1]]
+                        set slope [expr $slope + [lindex $lResults 2]]
+                        incr cGood
+                    } else {
+                        set vtkFreeSurferReaders(gPlot,$iID,state,bTryRegressionLine) 0
+                        break
+                    }
+                    
+                    if { $cGood > 0 } {
+                        set x1 -200
+                        set y1 [expr ($slope * $x1) + $offset]
+                        set x2 200
+                        set y2 [expr ($slope * $x2) + $offset]
+                        
+                        $gw marker create line \
+                            -coords [list $x1 $y1 $x2 $y2] \
+                            -outline $vtkFreeSurferReaders(gGDF,$iID,classes,$nClass,color) \
+                            -dashes {5 5}
+                    }
+                }
+            }
+            
+            if { $vtkFreeSurferReaders(gPlot,$iID,state,bTryRegressionLine) == 0 } { break }
+        }
+    }
+    
+    set vtkFreeSurferReaders(gPlot,$iID,state,pointsChanged) 0
+}
+
+
+# Accesses and calculates the (averaged if necessary) measurment
+# values at the current point(s). Stores the values in gPlot.
+proc vtkFreeSurferReadersPlotCalculateSubjectMeasurement { iID inSubject } {
+    global vtkFreeSurferReaders
+
+    # Get the average of the points we've been given.
+    set meas 0
+    set cGood 0
+    foreach lPoint $vtkFreeSurferReaders(gPlot,$iID,state,lPoints) {
+    
+        scan $lPoint "%d %d %d" x y z
+        set lResults [gdfGetNthSubjectMeasurement $vtkFreeSurferReaders(gGDF,$iID,object) \
+                          $inSubject $x $y $z]
+        set err [lindex $lResults 0]
+        if { 0 == $err } {
+            set meas [expr $meas + [lindex $lResults 1]]
+            incr cGood
+        }
+    }
+    if { $cGood > 0 } {
+        set meas [expr $meas / $cGood.0]
+    }
+    
+    # Store the values in gPlot.
+    set vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$inSubject,measurement) $meas
+}
+
+
+
+# Hilight/UnhilightElement works on an element by name (which could be
+# a subject or class, depending on viewing mode). It will
+# select/unselect the element name in the legend and change the
+# drawing pen of the element in the graph, which if activated draws it
+# with a red circle around it.
+proc vtkFreeSurferReadersGDFPloHilightElement { iID iElement } {
+    global vtkFreeSurferReaders
+    $vtkFreeSurferReaders(gWidgets,$iID,gwPlot) legend activate $iElement
+    $vtkFreeSurferReaders(gWidgets,$iID,gwPlot) element activate $iElement
+}
+
+proc vtkFreeSurferReadersGDFPlotUnhilightElement { iID iElement } {
+    global vtkFreeSurferReaders
+    $vtkFreeSurferReaders(gWidgets,$iID,gwPlot) legend deactivate $iElement
+    $vtkFreeSurferReadersgWidgets,$iID,gwPlot) element deactivate $iElement
+}
+
+# Shows or hide an element by name, in subject or class mode. Changes
+# the value of the gPlot visibility flag.
+proc vtkFreeSurferReadersGDFPlotToggleVisibility { iID iElement } {
+    global vtkFreeSurferReaders
+
+    # If we're in subject legend mode, the legend label is a subject
+    # name. Get the subject index and toggle its visibility. If we're in
+    # class legend mode, the legend label is a class name, so get the
+    # class index and toggle its visibility.
+    if { $vtkFreeSurferReaders(gPlot,$iID,state,legend) == "subject" } {
+        set nSubj [vtkFreeSurferReadersGDFPlotGetSubjectIndexFromID $iID $iElement]
+        if { $vtkFreeSurferReaders(gPlot,$iID,state,subjects,$nSubj,visible) } {
+            set vtkFreeSurferReaders(gPlot,$iID,state,subjects,$nSubj,visible) 0
+        } else {
+            set vtkFreeSurferReaders(gPlot,$iID,state,subjects,$nSubj,visible) 1
+        }
+    } else {
+        set nClass [vtkFreeSurferReadersGDFPlotGetClassIndexFromLabel $iID $iElement]
+        if { $vtkFreeSurferReaders(gPlot,$iID,state,classes,$nClass,visible) } {
+            set vtkFreeSurferReaders(gPlot,$iID,state,classes,$nClass,visible) 0
+        } else {
+            set vtkFreeSurferReaders(gPlot,$iID,state,classes,$nClass,visible) 1
+        }
+    }
+}
+
+# Focus/Unfocus is called to 'mouseover' an element. It
+# Hilight/Unhilights an element and puts or removes the subject name
+# in a text marker in the graph.
+proc vtkFreeSurferReadersGDFPlotUnfocusElement { iID } {
+    global vtkFreeSurferReaders
+
+    # If we have a focused element, unhighlight it, set the
+    # highlighted element name to null, and delete the hover text
+    # marker.
+    if { [info exists vtkFreeSurferReaders(gPlot,$iID,state,hiElement)] && \
+             "$vtkFreeSurferReaders(gPlot,$iID,state,hiElement)" != "" } {
+        vtkFreeSurferReadersGDFPlotUnhilightElement $iID $vtkFreeSurferReaders(gPlot,$iID,state,hiElement)
+        set vtkFreeSurferReaders(gPlot,$iID,state,hiElement) ""
+        $vtkFreeSurferReaders(gWidgets,$iID,gwPlot) marker delete hover
+    }
+}
+
+proc vtkFreeSurferReadersGDFPlotFocusElement { iID iElement inSubjInClass iX iY } {
+    global vtkFreeSurferReaders
+
+    # Set the highlighted element name and highlight the element.
+    set vtkFreeSurferReaders(gPlot,$iID,state,hiElement) $iElement
+    vtkFreeSurferReadersGDFPlotHilightElement $iID $vtkFreeSurferReaders(gPlot,$iID,state,hiElement)
+
+    # Need to get the subject name. If we're in subject mode, this is
+    # just the element name, otherwise we're getting the class name in
+    # the element name so get the class index, then use that and the
+    # parameter we got (index of the data point, also the
+    # subject-in-class index) to get th subject index, and then the
+    # subject name.
+    if { $vtkFreeSurferReaders(gPlot,$iID,state,legend) == "subject" } {
+        set sId $iElement
+    } else {
+        set nClass [vtkFreeSurferReadersGDFPlotGetClassIndexFromLabel $iID $iElement]
+        set nSubj $vtkFreeSurferReaders(gGDF,$iID,classes,$nClass,subjects,$inSubjInClass,index)
+        set sId $vtkFreeSurferReaders(gGDF,$iID,subjects,$nSubj,id)
+    }
+    $vtkFreeSurferReaders(gWidgets,$iID,gwPlot) marker create text \
+        -name hover -text $sId -anchor nw \
+        -coords [list $iX $iY]
+}
+
+
+# Finds the element under the mouse.
+proc vtkFreeSurferReadersGDFPlotFindMousedElement { iID iX iY } {
+    global vtkFreeSurferReaders
+    set bFound [$vtkFreeSurferReaders(gWidgets,$iID,gwPlot) element closest $iX $iY aFound -halo 10]
+    if { $bFound } {
+        return [list $aFound(name) $aFound(index) $aFound(x) $aFound(y)]
+    }
+    return ""
+}
+
+
+# Converts from subject or class names to indicies.
+proc vtkFreeSurferReadersGDFPlotGetSubjectIndexFromID { iID iSubjID } {
+    global vtkFreeSurferReaders
+    for { set nSubj 0 } { $nSubj < $vtkFreeSurferReaders(gGDF,$iID,cSubjects) } { incr nSubj } {
+        if { "$iSubjID" == "$vtkFreeSurferReaders(gGDF,$iID,subjects,$nSubj,id)" } { 
+            return $nSubj 
+        }
+    }
+    return -1
+}
+
+proc vtkFreeSurferReadersGDFPlotGetClassIndexFromLabel { iID iLabel } {
+    global vtkFreeSurferReaders
+    for { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$iID,cClasses) } { incr nClass } {
+        if { "$iLabel" == "$vtkFreeSurferReaders(gGDF,$iID,classes,$nClass,label)" } { 
+            return $nClass 
+        }
+    }
+    return -1
+}
+
+# Our callbacks.
+proc vtkFreeSurferReadersGDFPlotCBCloseWindow { iID } {
+    global vtkFreeSurferReaders
+    set vtkFreeSurferReaders(gWidgets,$iID,bWindowBuilt) 0
+}
+
+proc vtkFreeSurferReadersGDFPlotCBLegendEnter { iID igw } {
+    vtkFreeSurferReadersGDFPlotHilightElement $iID [$igw legend get current]
+}
+
+proc vtkFreeSurferReadersGDFPlotCBLegendLeave { iID igw } {
+    vtkFreeSurferReadersGDFPlotUnhilightElement $iID [$igw legend get current]
+}
+
+proc vtkFreeSurferReadersGDFPlotCBLegendClick { iID igw } {
+    vtkFreeSurferReadersGDFPlotToggleVisibility $iID [$igw legend get current]
+    vtkFreeSurferReadersGDFPlotPlotData $iID
+}
+
+proc vtkFreeSurferReadersGDFPlotCBGraphMotion { iID igw iX iY } {
+    vtkFreeSurferReadersGDFPlotUnfocusElement $iID
+    set lResult [vtkFreeSurferReadersGDFPlotFindMousedElement $iID $iX $iY]
+    set element [lindex $lResult 0]
+    if { "$element" != "" } { 
+        set index [lindex $lResult 1]
+        set x [lindex $lResult 2]
+        set y [lindex $lResult 3]
+        vtkFreeSurferReadersGDFPlotFocusElement $iID $element $index $x $y
+    }
+}
+
+# Read a header file.
+proc vtkFreeSurferReadersGDFPlotRead { ifnHeader } {
+    global vtkFreeSurferReaders
+    if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
+        return -1 
+    }
+    set ID [vtkFreeSurferReadersGDFPlotParseHeader $ifnHeader]
+    return $ID
+}
+
+# Print information about the header.
+proc vtkFreeSurferReadersGDFPlotPrint { iID } {
+    global vtkFreeSurferReaders
+    if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
+        puts "vtkFreeSurferReadersGDFPlotPrint: gb lib is not loaded."
+        return 
+    }
+    if { [lsearch $vtkFreeSurferReaders(gGDF,lID) $iID] == -1 } { 
+        puts "ID $iID not found"
+        return 
+    }
+    gdfPrintStdout $vtkFreeSurferReaders(gGDF,$iID,object)
+}
+
+# GDF callbacks.
+proc vtkFreeSurferReadersGDFPlotCBCloseWindow { iID } {
+    global vtkFreeSurferReaders
+    set vtkFreeSurferReaders(gWidgets,$iID,bWindowBuilt) 0
+}
+
+proc vtkFreeSurferReadersGDFPlotCBLegendEnter { iID igw } {
+    vtkFreeSurferReadersGDFPlotHilightElement $iID [$igw legend get current]
+}
+
+proc vtkFreeSurferReadersGDFPlotCBLegendLeave { iID igw } {
+    vtkFreeSurferReadersGDFPlotUnhilightElement $iID [$igw legend get current]
+}
+
+proc vtkFreeSurferReadersGDFPlotCBLegendClick { iID igw } {
+    vtkFreeSurferReadersGDFPlotToggleVisibility $iID [$igw legend get current]
+    vtkFreeSurferReadersGDFPlotPlotData $iID
+}
+
+proc vtkFreeSurferReadersGDFPlotCBGraphMotion { iID igw iX iY } {
+    vtkFreeSurferReadersGDFPlotUnfocusElement $iID
+    set lResult [vtkFreeSurferReadersGDFPlotFindMousedElement $iID $iX $iY]
+    set element [lindex $lResult 0]
+    if { "$element" != "" } { 
+        set index [lindex $lResult 1]
+        set x [lindex $lResult 2]
+        set y [lindex $lResult 3]
+        vtkFreeSurferReadersGDFPlotFocusElement $iID $element $index $x $y
+    }
+}
+
+
+# Show or hide the window. If it hasn't been built, builds the window
+# first.
+proc vtkFreeSurferReadersPlotShowWindow { iID } {
+    global vtkFreeSurferReaders
+    if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
+        puts "vtkFreeSurferReadersPlotShowWindow: gb lib not loaded."
+        return 
+    }
+    if { [lsearch $vtkFreeSurferReaders(gGDF,lID) $iID] == -1 } { 
+        puts "ID $iID not found"
+        return 
+    }
+    if { ![info exists vtkFreeSurferReaders(gWidgets,$iID,bWindowBuilt)] ||
+         !$vtkFreeSurferReaders(gWidgets,$iID,bWindowBuilt) } {
+        vtkFreeSurferReadersPlotBuildWindow $iID
+    }
+    wm deiconify $vtkFreeSurferReaders(gWidgets,$iID,wwTop)
+    if { [info exists vtkFreeSurferReaders(gWidgets,$iID,state,window,geometry)] } {
+        wm geometry $vtkFreeSurferReaders(gWidgets,$iID,wwTop) $vtkFreeSurferReaders(gWidgets,$iID,state,window,geometry)
+    }
+}
+
+proc vtkFreeSurferReadersPlotHideWindow { iID } {
+    global vtkFreeSurferReaders
+    if { !$vtkFreeSurferReaders(gbLibLoaded) } { return }
+    if { [lsearch $vtkFreeSurferReaders(gGDF,lID) $iID] == -1 } { 
+        puts "ID $iID not found"
+        return 
+    }
+    if { [info exists vtkFreeSurferReaders(gWidgets,$iID,wwTop)] } {
+        set vtkFreeSurferReaders(gWidgets,$iID,state,window,geometry) \
+        [wm geometry $vtkFreeSurferReaders(gWidgets,$iID,wwTop)]
+        wm withdraw $vtkFreeSurferReaders(gWidgets,$iID,wwTop)
+    }
+}
+
+
+# Set the current variable.
+proc vtkFreeSurferReadersPlotSetVariable { iID inVariable } {
+    global vtkFreeSurferReaders 
+    if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
+        puts "vtkFreeSurferReadersPlotSetVariable: gb lib not loaded."
+        return 
+    }
+    if { [lsearch $vtkFreeSurferReaders(gGDF,lID) $iID] == -1 } { 
+        puts "ID $iID not found"
+        return 
+    }
+
+    set vtkFreeSurferReaders(gPlot,$iID,state,nVariable) $inVariable
+
+    vtkFreeSurferReadersPlotPlotData $iID
+}
+
+
+# Set legend mode to subject or class.
+proc vtkFreeSurferReadersPlotSetMode { iID iMode } {
+    global vtkFreeSurferReaders
+    if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
+        puts "vtkFreeSurferReadersPlotSetMode: gb lib not loaded."
+        return 
+    }
+    if { [lsearch $vtkFreeSurferReaders(gGDF,lID) $iID] == -1 } { 
+        puts "ID $iID not found"
+        return 
+    }
+    if { $iMode != "subject" && $iMode != "class" } { 
+        return 
+    }
+
+    set vtkFreeSurferReaders(gPlot,$iID,state,legend) $iMode
+
+    vtkFreeSurferReadersPlotPlotData $iID
+}
+
+
+# Set display settings for a class.
+proc vtkFreeSurferReadersPlotSetNthClassMarker { iID inClass iMarker } {
+    global vtkFreeSurferReaders
+    if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
+        puts "vtkFreeSurferReadersPlotSetNthClassMarker: gb lib not loaded."
+        return 
+    }
+    if { [lsearch $vtkFreeSurferReaders(gGDF,lID) $iID] == -1 } { 
+        puts "ID $iID not found"
+        return 
+    }
+    if { $inClass < 0 || $inClass >= $vtkFreeSurferReaders(gGDF,$iID,cClasses) } { 
+        return 
+    }
+    if { [lsearch -exact $vtkFreeSurferReaders(kValid,lMarkers) $iMarker] == -1 } { 
+        return 
+    }
+
+    set vtkFreeSurferReaders(gGDF,$iID,classes,$inClass,marker) $iMarker
+
+    vtkFreeSurferReadersPlotPlotData $iID
+}
+
+proc vtkFreeSurferReadersPlotSetNthClassColor { iID inClass iColor } {
+    global vtkFreeSurferReaders 
+    if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
+        puts "vtkFreeSurferReadersPlotSetNthClassColor: gb lib not loaded."
+        return 
+    }
+    if { [lsearch $vtkFreeSurferReaders(gGDF,lID) $iID] == -1 } { 
+        puts "ID $iID not found"
+        return 
+    }
+    if { $inClass < 0 || $inClass >= $vtkFreeSurferReaders(gGDF,$iID,cClasses) } { 
+        return 
+    }
+    if { [lsearch -exact $vtkFreeSurferReaders(kValid,lColors) $iColor] == -1 } { 
+        return 
+    }
+
+    set vtkFreeSurferReaders(gGDF,$iID,classes,$inClass,color) $iColor
+
+    vtkFreeSurferReadersPlotPlotData $iID
+}
+
+
+# Choose a point to be displayed. Either choose one point or make a
+# point list to be averaged.
+proc vtkFreeSurferReadersPlotSetPoint { iID iX iY iZ } {
+    global vtkFreeSurferReaders 
+    if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
+        puts "vtkFreeSurferReadersPlotSetPoint: gb lib not loaded."
+        return 
+    }
+    if { [lsearch $vtkFreeSurferReaders(gGDF,lID) $iID] == -1 } { 
+        puts "ID $iID not found"
+        return 
+    }
+    vtkFreeSurferReadersPlotBeginPointList $iID
+    vtkFreeSurferReadersPlotAddPoint $iID $iX $iY $iZ
+    vtkFreeSurferReadersPlotEndPointList $iID
+}
+
+proc vtkFreeSurferReadersPlotBeginPointList { iID } {
+    global vtkFreeSurferReaders
+    if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
+        puts "vtkFreeSurferReadersPlotBeginPointList: gb lib not loaded."
+        return 
+    }
+    if { [lsearch $vtkFreeSurferReaders(gGDF,lID) $iID] == -1 } { 
+        puts "ID $iID not found"
+        return 
+    }
+    set vtkFreeSurferReaders(gPlot,$iID,state,lPoints) {}
+}
+
+proc vtkFreeSurferReadersPlotAddPoint { iID iX iY iZ } {
+    global vtkFreeSurferReaders
+    if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
+        puts "vtkFreeSurferReadersPlotAddPoint: gb lib not loaded."
+        return 
+    }
+    if { [lsearch $vtkFreeSurferReaders(gGDF,lID) $iID] == -1 } { 
+        puts "ID $iID not found"
+        return 
+    }
+    lappend vtkFreeSurferReaders(gPlot,$iID,state,lPoints) [list $iX $iY $iZ]
+    set vtkFreeSurferReaders(gPlot,$iID,state,pointsChanged) 1
+}
+
+proc vtkFreeSurferReadersPlotEndPointList { iID } {
+    global vtkFreeSurferReaders
+    if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
+        puts "vtkFreeSurferReadersPlotEndPointList: gb lib not loaded."
+        return 
+    }
+    if { [lsearch $vtkFreeSurferReaders(gGDF,lID) $iID] == -1 } { 
+        puts "ID $iID not found"
+        return 
+    }
+    vtkFreeSurferReadersPlotPlotData $iID
+}
+
+
+# Set the info string displayed under the graph.
+proc vtkFreeSurferReadersPlotSetInfo { iID isInfo } {
+    global vtkFreeSurferReaders
+    if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
+        puts "vtkFreeSurferReadersPlotSetInfo: gb lib is not loaded."
+        return 
+    }
+    if { [lsearch $vtkFreeSurferReaders(gGDF,lID) $iID] == -1 } { 
+        puts "ID $iID not found"
+        return 
+    }
+    set vtkFreeSurferReaders(gPlot,$iID,state,info) $isInfo
+}
+
+
+# Save the currently plotted data to a table.
+proc vtkFreeSurferReadersPlotSaveToTable { iID ifnTable } {
+    global vtkFreeSurferReaders
+    if { [lsearch $vtkFreeSurferReaders(gGDF,lID) $iID] == -1 } { 
+        puts "ID $iID not found"
+        return 
+    }
+
+    set fp 0
+    set err [catch {set fp [open $ifnTable w+]}]
+    if { $err || $fp == 0 } {
+        puts "vtkFreeSurferReadersPlotSaveToTable: Couldn't write file $ifnTable."
+        return
+    }
+    
+    puts $fp "Graph: $vtkFreeSurferReaders(gGDF,$iID,title)"
+    puts $fp "Data: $vtkFreeSurferReaders(gGDF,$iID,dataFileName)"
+    puts $fp "Variable: $vtkFreeSurferReaders(gGDF,$iID,variables,$vtkFreeSurferReaders(gPlot,$iID,state,nVariable),label)"
+    puts $fp "Measurement: $vtkFreeSurferReaders(gGDF,$iID,measurementName)"
+    puts $fp "subject id, class id, variable value, measurement value"
+    puts $fp "------------"
+    for { set nSubj 0 } { $nSubj < $vtkFreeSurferReaders(gGDF,$iID,cSubjects) } { incr nSubj } {
+
+        set subjLabel $vtkFreeSurferReaders(gGDF,$iID,subjects,$nSubj,id)
+        set classLabel $vtkFreeSurferReaders(gGDF,$iID,classes,$vtkFreeSurferReaders(gGDF,$iID,subjects,$nSubj,nClass),label)
+        set var $vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,variable)
+        set meas $vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,measurement)
+
+        puts $fp "$subjLabel $classLabel $var $meas"
+    }
+    puts $fp "------------"
+    puts ""
+
+    close $fp
+}
+
+
+# Save the current plot graphic to a postscript file.
+proc vtkFreeSurferReadersPlotSaveToPostscript { iID ifnPS } {
+    global vtkFreeSurferReaders
+    if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
+        puts "vtkFreeSurferReadersPlotSaveToPostscript: gb lib not loaded."
+        return 
+    }
+    if { [lsearch $vtkFreeSurferReaders(gGDF,lID) $iID] == -1 } { 
+        puts "ID $iID not found"
+        return 
+    }
+    set err [catch {$vtkFreeSurferReaders(gWidgets,$iID,gwPlot) postscript output $ifnPS} sResult]
+    if { $err } {
+        puts "vtkFreeSurferReadersPlotSaveToPostscript: Could not save postscript file: $sResult"
     }
 }
