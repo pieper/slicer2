@@ -101,7 +101,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.95 $} {$Date: 2004/04/13 21:00:11 $}]
+            {$Revision: 1.96 $} {$Date: 2004/07/19 22:18:25 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -147,7 +147,7 @@ proc VolumesInit {} {
     # get the init functions from the modules, skipping base tcl file init procedures
     foreach c $cmds {
         if {$Module(verbose) == 1} {puts "vol-init = $c"}
-        if {$c != "VolumesInit" && $c != "VolumeMathInit" && $c != "VolRendInit"} {
+        if {$c != "VolumesInit" && $c != "VolumeMathInit" && $c != "VolRendInit" && $c != "VolumeTextureMappingInit"} {
             scan $c "%\[^I\]sInit" name
             lappend Volume(readerModules,idList) $name
         }
