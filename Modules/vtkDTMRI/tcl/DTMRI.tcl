@@ -123,7 +123,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.24 $} {$Date: 2004/08/16 23:29:04 $}]
+                  {$Revision: 1.25 $} {$Date: 2004/08/17 15:49:58 $}]
 
      # Define Tabs
     #------------------------------------
@@ -1059,7 +1059,7 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
                     -pages {{Display Glyphs} {Tractography}} \
                     -pad 2 \
                     -bg $Gui(activeWorkspace) \
-                    -height 375 \
+                    -height 600 \
                     -width 240
     pack $f.fNotebook -fill both -expand 1
 
@@ -3068,7 +3068,6 @@ proc RunLSDIrecon {} {
        }
 
 
-        #set path [open $PACKAGE_DIR_VTKDTMRI/../../../data/ {RDONLY}]
     
 
      # put pattern information into modules variables
@@ -3081,8 +3080,6 @@ proc RunLSDIrecon {} {
           if {[lindex $line 0] != "vtkDTMRIprotocol"} {
             if {[lindex $line 0] != ""} {
             if {[lindex $line 0] != "#"} {
-#               set name [lindex $line 0]
-#               lappend DTMRI(patternnames) $name
             for {set i 0} {$i<[llength $line]} {incr i} {
              
                 lappend DTMRI($pattern,parameters) [lindex $line $i]
@@ -3138,8 +3135,6 @@ proc RunLSDIrecon {} {
         if {[lindex $line 0] != "vtkDTMRIprotocol"} {
             if {[lindex $line 0] != ""} {
             if {[lindex $line 0] != "#"} {
-#                set name [lindex $line 0]
-#                lappend DTMRI(patternnames) $name
             for {set i 0} {$i<[llength $line]} {incr i} {
              
                 lappend DTMRI($pattern,parameters) [lindex $line $i]
@@ -3151,6 +3146,7 @@ proc RunLSDIrecon {} {
 
         }
 
+     }
      }
 
     destroy $Module(DTMRI,fConvert).fConvert.fPattern.mbPattern.menu
@@ -3167,11 +3163,11 @@ proc RunLSDIrecon {} {
      
         "
 
-       
+     }  
         pack  $Module(DTMRI,fConvert).fConvert.fPattern.mbPattern -side left -padx $Gui(pad) -pady $Gui(pad) -after $Module(DTMRI,fConvert).fConvert.fPattern.lLabel
         
-    }
-    }
+    
+    
 }
  
 
