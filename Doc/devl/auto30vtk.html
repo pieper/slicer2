@@ -113,7 +113,7 @@ Make sure <code>WRAP_TCL</code> is set to <code>ON</code>, and you are configure
 Once you're happy with your settings, you will need to type c to configure (repeat until all fields are filled in) and then g to generate make files.<br>
 <code>ccmake</code> writes a file called <code>CMakeCache.txt</code>. If you have errors using <code>
 ccmake</code> or compiling you may wish to edit that file directly, and
-then simply run <code>cmake</code>,", which will read the file.  However, it is
+then simply run <code>cmake</code>, which will read the file.  However, it is
 often better to erase all subdirectories and start again.
 <p>
 Then run <code>make</code> in the <code>slicer2/Base/builds/[my-os]</code> directory. Repeat for any modules that you wish to build, starting in <code>slicer2/Base/vtkCustomModule</code> if you wish a practice directory.
@@ -127,7 +127,7 @@ the launch process is now in <code>launch.tcl</code> and <code>cvs</code> has th
 
 <p>
 <h3>5. Running Tests of the slicer code</h3><br>
-You need to have downloaded VTK4 data from <a href="http://www.vtk.org/files/release/4.2/VTKData-4.2.tar.gz">http://www.vtk.org/files/release/4.2/VTKData-4.2.tar.gz</a>. Then set the environment variable <code>VTK_DATA_ROOT</code> to point to where you installed it.<br>
+You need to have downloaded VTK4 data from <a href="http://prdownloads.sourceforge.net/vtk/VTKData-4.2.tar.gz?download">http://prdownloads.sourceforge.net/vtk/VTKData-4.2.tar.gz?download</a>. Then set the environment variable <code>VTK_DATA_ROOT</code> to point to where you installed it.<br>
 The <code>launch.tcl</code> script will accept a path to a Tcl script to execute, instead of the Slicer user interface. You can call it via:
 <pre><p class=code>
 cd ${SLICER_HOME}/Base/tests<br>
@@ -143,7 +143,7 @@ Set the following environment variables appropriately, as they are set automatic
   LD_LIBRARY_PATH ${SLICER_HOME}/Base/builds/[my-os]/bin:${LD_LIBRARY_PATH}<br>
   TCLLIBPATH "${SLICER_HOME}/Base/Wrapping/Tcl/vtkSlicerBase /usr/local/src/vtk4/VTK/Wrapping/Tcl"
 </p></pre>
- To run <code>TestImageCloseUp2D.tcl</code>," for example, do the following:
+ To run <code>TestImageCloseUp2D.tcl</code>, for example, do the following:
 <pre><p class=code>
  cd ${SLICER_HOME}/Base/tests<br>
  vtk TestImageCloseUp2D.tcl
