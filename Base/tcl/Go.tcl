@@ -280,7 +280,7 @@ package require vtkSlicerBase ;# this pulls in all of slicer
 foreach m $env(SLICER_MODULES_TO_REQUIRE) {
     puts "Loading Module $m..."
     if { [catch {package require $m} errVal] } {
-        puts stderr "ERROR while requiring  $m:\n$errVal"
+        puts stderr "Warning: can't load module $m:\n$errVal"
     }
 }
 
@@ -561,7 +561,7 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "VTK: ${vtkVersion} TCL: ${tcl_patchLevel} TK: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo) ${compilerName}: $compilerVersion ${libVersions} CVS: [ParseCVSInfo " " {$Id: Go.tcl,v 1.52 2003/05/06 18:44:25 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo) ${compilerName}: $compilerVersion ${libVersions} CVS: [ParseCVSInfo " " {$Id: Go.tcl,v 1.53 2003/05/18 14:17:59 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
