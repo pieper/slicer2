@@ -39,7 +39,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc CustomCsysInit {} {
-    global CustomCsys Module Volume Model
+    global CustomCsys Module Volume Model Csys
 
     set m CustomCsys
     
@@ -49,12 +49,12 @@ proc CustomCsysInit {} {
     set Module($m,author) "Delphine, Nain, SlicerHaker, delfin@mit.edu"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2002/06/17 20:10:34 $}]
+        {$Revision: 1.4 $} {$Date: 2002/11/14 18:57:03 $}]
 
     # Define Tabs
     #------------------------------------
     set Module($m,row1List) "Help Stuff"
-    set Module($m,row1Name) "{Help} {Tons o' Stuff}"
+    set Module($m,row1Name) "{Help} {Coord Sys}"
     set Module($m,row1,tab) Stuff
 
     # Define Procedures
@@ -77,6 +77,11 @@ proc CustomCsysInit {} {
     #------------------------------------
     # This module depends on Csys
     set Module($m,depend) Csys
+
+
+    # set to 1 when the Csys is visible and should be Picked on
+    # mouse down
+    set Csys(active) 0
 
 }
 #-------------------------------------------------------------------------------
@@ -151,7 +156,7 @@ mouse in the appropriate direction.
 To Rotate: press the right mouse button over 
 the axis you want to rotate and move the 
 mouse in the appropriate direction." } $Gui(WLA)
-pack $f.lhow
+    pack $f.lhow
 }
 
 #-------------------------------------------------------------------------------
@@ -172,6 +177,8 @@ pack $f.lhow
 proc CustomCsysEnter {} {
     global CustomCsys Csys
 
+    set Csys(active) 1
+
     MainAddActor CustomCsys(csys,actor)
     Render3D
 }
@@ -185,6 +192,8 @@ proc CustomCsysEnter {} {
 #-------------------------------------------------------------------------------
 proc CustomCsysExit {} {
     global CustomCsys Csys
+
+    set Csys(active) 0
     MainRemoveActor CustomCsys(csys,actor)
     Render3D
 }

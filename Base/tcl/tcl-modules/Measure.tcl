@@ -99,7 +99,7 @@ proc MeasureInit {} {
     
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.13 $} {$Date: 2002/11/06 22:02:44 $}]
+        {$Revision: 1.14 $} {$Date: 2002/11/14 18:57:05 $}]
     
     # Initialize module-level variables
     #    set Measure(Model1) $Model(idNone)
@@ -274,7 +274,7 @@ proc TopFrameBuildGUI {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MeasureSetCsysVisibility {} { 
-    global Measure
+    global Measure 
     
     Measure(Csys,actor) SetVisibility $Measure(Csys,visible)
     MeasureSetCsysPickable $Measure(Csys,visible)
@@ -1096,11 +1096,15 @@ proc MeasureSetModelsPickable { pickable } {
 # .END
 #-------------------------------------------------------------------------------
 proc MeasureSetCsysPickable { pickable } {
+    global Csys
+
     #    DebugMsg "MeasureSetCsysPickable"
     foreach foo {Measure(Csys,Xactor) Measure(Csys,Yactor) Measure(Csys,Zactor)} {
     #    DebugMsg [concat $foo SetPickable $pickable]
     $foo SetPickable $pickable
     }
+
+    set Csys(active) $pickable
 }
 
 

@@ -93,60 +93,62 @@ proc CsysActorSelected {widget x y} {
     global Csys Ev 
 
 
-    if { [SelectPick Csys(picker) $widget $x $y] != 0 } {
-    
-    # get the path of actors selected by the picker
-    set assemblyPath [Csys(picker) GetPath]
-    $assemblyPath InitTraversal
-    set assemblyNode [$assemblyPath GetLastNode]
-    set pickactor [$assemblyNode GetProp]
+    if { $Csys(active) > 0 } {
+        if { [SelectPick Csys(picker) $widget $x $y] != 0 } {
+        
+            # get the path of actors selected by the picker
+            set assemblyPath [Csys(picker) GetPath]
+            $assemblyPath InitTraversal
+            set assemblyNode [$assemblyPath GetLastNode]
+            set pickactor [$assemblyNode GetProp]
 
-    # shouldn't happen, but defensive programming can't hurt
-    if {$pickactor == ""} {
-        # problem here, just go back to the regular interaction mode
-       return 0
-    }
-    
-    foreach module $Csys(modules) {
-    foreach actor $Csys($module,actors) {
-        
-        if { [$pickactor GetProperty] == [${module}($actor,Xactor) GetProperty] } {
-        
-        eval [${module}($actor,Xactor) GetProperty] SetColor \
-            $Csys(xactor,selectedColor)
-        eval [${module}($actor,Yactor) GetProperty] SetColor \
-            $Csys(yactor,color)
-        eval [${module}($actor,Zactor) GetProperty] SetColor \
-            $Csys(zactor,color)
-        Render3D
-        XformAxisStart $module $actor $widget 0 $x $y
-        return 1
-        } elseif { [$pickactor GetProperty] == [${module}($actor,Yactor) GetProperty] } {
-        eval [${module}($actor,Xactor) GetProperty] SetColor \
-            $Csys(xactor,color) 
-        eval [${module}($actor,Yactor) GetProperty] SetColor \
-            $Csys(yactor,selectedColor)
-        eval [${module}($actor,Zactor) GetProperty] SetColor \
-            $Csys(zactor,color)
-        Render3D 
-        XformAxisStart $module $actor $widget 1 $x $y
-        return 1
-        } elseif { [$pickactor GetProperty]  == [${module}($actor,Zactor) GetProperty] } {
-        eval [${module}($actor,Xactor) GetProperty] SetColor \
-            $Csys(xactor,color) 
-        eval [${module}($actor,Yactor) GetProperty] SetColor \
-            $Csys(yactor,color) 
-        eval [${module}($actor,Zactor) GetProperty] SetColor \
-            $Csys(zactor,selectedColor)
-        Render3D
-        XformAxisStart $module $actor $widget 2 $x $y
-        return 1
+            # shouldn't happen, but defensive programming can't hurt
+            if {$pickactor == ""} {
+                # problem here, just go back to the regular interaction mode
+               return 0
+            }
+            
+            foreach module $Csys(modules) {
+                foreach actor $Csys($module,actors) {
+                    
+                    if { [$pickactor GetProperty] == [${module}($actor,Xactor) GetProperty] } {
+                    
+                        eval [${module}($actor,Xactor) GetProperty] SetColor \
+                            $Csys(xactor,selectedColor)
+                        eval [${module}($actor,Yactor) GetProperty] SetColor \
+                            $Csys(yactor,color)
+                        eval [${module}($actor,Zactor) GetProperty] SetColor \
+                            $Csys(zactor,color)
+                        Render3D
+                        XformAxisStart $module $actor $widget 0 $x $y
+                        return 1
+                    } elseif { [$pickactor GetProperty] == [${module}($actor,Yactor) GetProperty] } {
+                        eval [${module}($actor,Xactor) GetProperty] SetColor \
+                            $Csys(xactor,color) 
+                        eval [${module}($actor,Yactor) GetProperty] SetColor \
+                            $Csys(yactor,selectedColor)
+                        eval [${module}($actor,Zactor) GetProperty] SetColor \
+                            $Csys(zactor,color)
+                        Render3D 
+                        XformAxisStart $module $actor $widget 1 $x $y
+                        return 1
+                    } elseif { [$pickactor GetProperty]  == [${module}($actor,Zactor) GetProperty] } {
+                        eval [${module}($actor,Xactor) GetProperty] SetColor \
+                            $Csys(xactor,color) 
+                        eval [${module}($actor,Yactor) GetProperty] SetColor \
+                            $Csys(yactor,color) 
+                        eval [${module}($actor,Zactor) GetProperty] SetColor \
+                            $Csys(zactor,selectedColor)
+                        Render3D
+                        XformAxisStart $module $actor $widget 2 $x $y
+                        return 1
+                    }
+                }
+            }
         }
+        # if we got to this point, no csys got selected
+        return 0
     }
-    }
-}
-# if we got to this point, no csys got selected
-return 0
 }
 
 ##################################################################
@@ -167,7 +169,7 @@ proc CsysParams { module actor {axislen -1} {axisrad -1} {conelen -1} } {
     
     if { $axislen == -1 } { set axislen 100 }
     if { $axisrad == -1 } { set axisrad [expr $axislen*0.02] }
-    if { $conelen == -1 } { set conelen [expr $axislen*0.2]}
+    if { $conelen == -1 } { set conelen [expr $axislen*0.2] }
     set axislen [expr $axislen-$conelen]
     
     set ${module}($actor,size) $axislen
@@ -262,8 +264,8 @@ proc CsysCreate { module actor axislen axisrad conelen  } {
     
     # store all the csys actors by module
     if {[info exists Csys($module,actors)] == 0 } {
-    set Csys($module,actors) $actor
+        set Csys($module,actors) $actor
     } else {
-    lappend Csys($module,actors) $actor
+        lappend Csys($module,actors) $actor
     }
 }
