@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# Copyright (c) 2001 Surgical Planning Lab, Brigham and Women's Hospital
+# Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
 #  
 # Direct all questions regarding this copyright to slicer@ai.mit.edu.
 # The following terms apply to all files associated with the software unless
@@ -28,78 +28,8 @@
 # FILE:        Endoscopic.tcl
 # PROCEDURES:  
 #   EndoscopicInit
-#   EndoscopicBuildVTK
-#   EndoscopicBuildVTK
-#   EndoscopicCreateCamera
-#   EndoscopicSetParamCamera
-#   EndoscopicCreateFocalPoint
-#   EndoscopicCreateFocalPoint
-#   EndoscopicCreateLandmarks
-#   EndoscopicCreateLandmarks
-#   EndoscopicCreatePath
-#   EndoscopicCreatePath
 #   EndoscopicBuildGUI
-#   EndoscopicBuildGUI
-#   EndoscopicEnter
-#   EndoscopicExit
-#   EndoscopicUpdateGUI
-#   EndoscopicAddEndoscopicView
-#   EndoscopicAddEndoscopicView
-#   EndoscopicRemoveEndoscopicView
-#   EndoscopicRemoveEndoscopicView
-#   EndoscopicCreateAdvancedGUI
-#   EndoscopicCreateAdvancedGUI
-#   EndoscopicSetActive
-#   EndoscopicPopupCallback
-#   EndoscopicSetVisibility
-#   EndoscopicSetSize
-#   EndoscopicSetSize
-#   EndoscopicSetCameraPosition
-#   EndoscopicSetCameraPosition
-#   EndoscopicSetCameraDirection
-#   EndoscopicSetCameraDirection
-#   EndoscopicSetCameraZoom
-#   EndoscopicSetCameraZoom
-#   EndoscopicSetCameraAngle
-#   EndoscopicSetCameraAngle
-#   EndoscopicSetFocalAndCameraPath
-#   EndoscopicSetFocalAndCameraPath
-#   EndoscopicUpdateCamera
-#   EndoscopicUpdateCamera
-#   EndoscopicComputeRandomPath
-#   EndoscopicComputeRandomPath
-#   EndoscopicDeleteRandomPath
-#   EndoscopicDeleteRandomPath
-#   EndoscopicComputePath
-#   EndoscopicComputePath
-#   EndoscopicViewPath
-#   EndoscopicViewPath
-#   EndoscopicStopPath
-#   EndoscopicStopPath
-#   EndoscopicResetStopPath
-#   EndoscopicResetPath
-#   EndoscopicResetPath
-#   EndoscopicSetPathFrame
-#   EndoscopicSetPathFrame
-#   EndoscopicAddLandmark
-#   EndoscopicDeleteLandmark
-#   EndoscopicSetFlyDirection
-#   EndoscopicSetSpeed
-#   EndoscopicSetCameraAxis
-#   EndoscopicDeletePath
-#   EndoscopicDeletePathAndMrml
-#   EndoscopicLightFollowEndoCamera
-#   EndoscopicViewSetBackgroundColor
-#   EndoscopicViewSetBackgroundColor
-#   EndoscopicSetModelsVisibilityInside
-#   EndoscopicSetModelsVisibilityInside
-#   EndoscopicSetSliceDriver
-#   EndoscopicSetSliceDriver
-#   EndoscopicSetPosition
-#   EndoscopicSetSlicePosition
-#   EndoscopicUpdateMRML
-#   EndoscopicReadNewPath
-#   MainMrmlInsertBeforeNode nodeType
+#   EndoscopicCount
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -115,6 +45,49 @@
 #  int Endoscopic(count) counts the button presses for the demo 
 #  list Endoscopic(eventManager)  list of event bindings used by this module
 #-------------------------------------------------------------------------------
+    
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicEnter
+# Called when this module is entered by the user.  Pushes the event manager
+# for this module. 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+    proc EndoscopicEnter {} {
+    global Endoscopic View viewWin
+    
+    # Push event manager
+    #------------------------------------
+    # Description:
+    #   So that this module's event bindings don't conflict with other 
+    #   modules, use our bindings only when the user is in this module.
+    #   The pushEventManager routine saves the previous bindings on 
+    #   a stack and binds our new ones.
+    #   (See slicer/program/tcl-shared/Events.tcl for more details.)
+    pushEventManager $Endoscopic(eventManager)
+
+	EndoscopicAddEndoscopicView
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicExit
+# Called when this module is exited by the user.  Pops the event manager
+# for this module.  
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EndoscopicExit {} {
+    global Model
+    # Pop event manager
+    #------------------------------------
+    # Description:
+    #   Use this with pushEventManager.  popEventManager removes our 
+    #   bindings when the user exits the module, and replaces the 
+    #   previous ones.
+    #
+    
+    popEventManager
+}
 
 
 #-------------------------------------------------------------------------------
@@ -149,9 +122,9 @@ proc EndoscopicInit {} {
 	#
 
 	set m Endoscopic
-	set Module($m,row1List) "Help Camera Path Advanced"
-        set Module($m,row1Name) "{Help} {Camera} {Path} {Advanced}"
-	set Module($m,row1,tab) Camera
+	set Module($m,row1List) "Help Init Camera Path Advanced"
+        set Module($m,row1Name) "{Help} {Init} {Camera} {Path} {Advanced}"
+	set Module($m,row1,tab) Init
 
 	# Define Procedures
 	#------------------------------------
@@ -221,7 +194,7 @@ proc EndoscopicInit {} {
 	#   The strings with the $ symbol tell CVS to automatically insert the
 	#   appropriate revision number and date when the module is checked in.
 	#  	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.3 $} {$Date: 2001/01/11 18:48:42 $}]
+		{$Revision: 1.4 $} {$Date: 2001/02/14 23:11:33 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -286,7 +259,7 @@ proc EndoscopicInit {} {
     #  RA/IS/LR axis
     # if it is relative, the camera will move along its
     #  own axis 
-    set Model(cam,axis) Absolute
+    set Model(cam,axis) absolute
     
     # Model variables
     
@@ -321,7 +294,7 @@ proc EndoscopicInit {} {
     # Path variable
     set Path(flyDirection) "Forward"
     set Path(speed) 1
-    set Path(random) 1
+    set Path(random) 0
     set Path(first) 1
     set Path(i) 0
     set Path(stepStr) 0
@@ -347,12 +320,6 @@ proc EndoscopicInit {} {
 # .END
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicBuildVTK
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicBuildVTK {} {
         global Endoscopic Model
 
@@ -374,16 +341,11 @@ proc EndoscopicBuildVTK {} {
         # add the CameraActor only to viewRen, not endRen
         viewRen AddActor Model(cam,actor)
 	viewRen AddActor Model(fp,actor)
-        viewRen AddActor Model(fLand,actor)
-	viewRen AddActor Model(fPath,actor)
-
-        MainAddActor Model(cLand,actor)
-        MainAddActor Model(cPath,actor)
 
         vtkMath Path(math)
 
-    # force the camera and fp to be invisible until the user enters the endoscopic
-    # module
+    # force the camera and fp to be invisible until the user enters the 
+    # endoscopic module
 
     Model(cam,actor) SetVisibility 0
     Model(fp,actor) SetVisibility 0
@@ -544,7 +506,8 @@ proc EndoscopicBuildVTK {} {
 	    #also, set the size of the focal Point actor
 	    set Model(fp,size) [expr 4 * $Model(cam,size)]
 	    Model(fp,source) SetRadius $Model(fp,size)
-
+	    
+	    
 	    EndoscopicUpdateCamera
 	}
 
@@ -556,12 +519,6 @@ proc EndoscopicBuildVTK {} {
 # .END
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicCreateFocalPoint
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicCreateFocalPoint {} {
          global Model
 
@@ -587,12 +544,6 @@ proc EndoscopicCreateFocalPoint {} {
 # .END
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicCreateLandmarks
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicCreateLandmarks {} {
          global Model
 
@@ -609,7 +560,7 @@ proc EndoscopicCreateLandmarks {} {
 	vtkCardinalSpline Model($l,aSplineY)
 	vtkCardinalSpline Model($l,aSplineZ)
 	
-	Model($l,polyData)  SetPoints Model($l,inputPoints)
+	Model($l,polyData)   SetPoints Model($l,inputPoints)
 	Model($l,source)     SetRadius $Model($l,size)
 	Model($l,source)     SetPhiResolution 10
 	Model($l,source)     SetThetaResolution 10
@@ -622,7 +573,7 @@ proc EndoscopicCreateLandmarks {} {
 	eval [Model($l,actor) GetProperty] SetDiffuseColor $Model($l,color)
 	[Model($l,actor) GetProperty] SetSpecular .3
 	[Model($l,actor) GetProperty] SetSpecularPower 30
-	
+
     }
 }
 
@@ -635,23 +586,15 @@ proc EndoscopicCreateLandmarks {} {
 # .END
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicCreatePath
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicCreatePath {} {
          global Model
 
         foreach p "cPath fPath" {
-
 	    vtkPolyData         Model($p,polyData)
 	    vtkCellArray        Model($p,lines)    
 	    vtkTubeFilter       Model($p,source)
 	    vtkPolyDataMapper   Model($p,mapper)    
 	    vtkActor            Model($p,actor)
-	    
 
 	    Model($p,polyData)     SetLines  Model($p,lines)
 	    Model($p,source)       SetNumberOfSides 8
@@ -675,23 +618,12 @@ proc EndoscopicCreatePath {} {
 # .END
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicBuildGUI
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicBuildGUI {} {
-	global Gui Endoscopic Path Module Volume Model Advanced Slice
+	global Gui Endoscopic Path Module Volume Model Advanced Slice View
 
-        set boxTexts "{R Box} {G Box} {B Box}"
-	set boxAxi "rbox gbox bbox"
 
-        set lensTexts "{R Lens} {G Lens} {B Lens}"
-        set lensAxi "rlens glens blens"
-
-        set LposTexts "{L} {P} {I}"
-        set RposTexts "{R} {A} {S}"
+        set LposTexts "{L<->R } {P<->A } {I<->S }"
+        set RposTexts "{Pitch  } {Roll  } {Yaw  }"
         set posAxi "x y z"
 
         set dirTexts "{X} {Y} {Z}"
@@ -780,6 +712,48 @@ proc EndoscopicBuildGUI {} {
         MainHelpBuildGUI Endoscopic
 
 	#-------------------------------------------
+	# Init frame
+	#-------------------------------------------
+	set fInit $Module(Endoscopic,fInit)
+	set f $fInit
+	frame $f.fSize -bg $Gui(activeWorkspace) 
+        pack $f.fSize -side top -pady 0 -padx 0 -fill x
+
+	#-------------------------------------------
+	# Init->Size Frame
+	#-------------------------------------------
+	set f $fInit.fSize
+	
+	frame $f.fTitle -bg $Gui(activeWorkspace)
+	frame $f.fBtns -bg $Gui(activeWorkspace)
+	frame $f.fTitle2 -bg $Gui(activeWorkspace)
+   	pack $f.fTitle $f.fBtns $f.fTitle2 -side top -pady 5
+
+        
+        eval {label $f.fTitle.lTitle -text "
+If your screen allows, you can change 
+the width of the view screen to have 
+a better Endoscopic view:"} $Gui(WLA)
+        pack $f.fTitle.lTitle -side left -padx $Gui(pad) -pady 0
+
+        eval {label $f.fBtns.lW -text "Width:"} $Gui(WLA)
+	eval {entry $f.fBtns.eWidth -width 5 -textvariable View(viewerWidth)} $Gui(WEA)
+        bind $f.fBtns.eWidth  <Return> {MainViewerSetMode}
+        eval {menubutton $f.fMBtns -text "choose" -menu $f.fMBtns.fMenu} $Gui(WMBA)
+	eval {menu $f.fMBtns.fMenu} $Gui(WMA)
+	$f.fMBtns.fMenu add command -label 1000 -command {set View(viewerWidth) 1000; MainViewerSetMode}
+	$f.fMBtns.fMenu add command -label 768 -command {set View(viewerWidth) 768; MainViewerSetMode}
+	
+	grid $f.fBtns.lW $f.fBtns.eWidth $f.fMBtns -padx $Gui(pad)
+
+	set text "
+Now go to start, go to the Camera tab 
+If you need help, go to the Help tab"
+
+	eval {label $f.fTitle2.lTitle -text $text} $Gui(WLA)
+        pack $f.fTitle2.lTitle -side left -padx $Gui(pad) -pady 0
+
+	#-------------------------------------------
 	# Advanced frame
 	#-------------------------------------------
 	set fAdvanced $Module(Endoscopic,fAdvanced)
@@ -787,8 +761,6 @@ proc EndoscopicBuildGUI {} {
 
 	frame $f.fTop -bg $Gui(activeWorkspace) 
 	frame $f.fMid -bg $Gui(activeWorkspace) 
-	#frame $f.fBot -bg $Gui(activeWorkspace) 
-	#pack $f.fTop $f.fMid $f.fBot -side top -pady 0 -padx 0 -fill x
         pack $f.fTop $f.fMid -side top -pady 0 -padx 0 -fill x
 
 	#-------------------------------------------
@@ -841,27 +813,8 @@ proc EndoscopicBuildGUI {} {
 	#-------------------------------------------
 	set f $fAdvanced.fMid.fAngle
 
-	eval {label $f.l2 -height 2 -text "Lens Angle:"} $Gui(WTA)
+        EndoscopicCreateLabelAndSlider $f l2 2 "Lens Angle" "Angle" horizontal 0 360 110 Model(cam,AngleStr) "EndoscopicSetCameraAngle" 5 90
 
-	# Position Sliders	    
-	    eval {scale $f.sAngle -from 0 -to 360 -length 110 \
-		    -variable Model(cam,AngleStr) \
-	            -command "EndoscopicSetCameraAngle; Render3D" \
-	            -resolution 1} $Gui(WSA)
-    
-	    eval {entry $f.eAngle \
-		    -textvariable Model(cam,AngleStr) -width 5} $Gui(WEA)
-	    bind $f.eAngle <Return> \
-		    "EndoscopicSetCameraAngle; Render3D"
-	    bind $f.eAngle <FocusOut> \
-		    "EndoscopicSetCameraAngle; Render3D"
-
-	# Grid
-	    grid $f.l2 $f.eAngle $f.sAngle -padx $Gui(pad)   
-   
-	
-	# default color values for the lens sliders
-	$f.sAngle set 90
 
 	#-------------------------------------------
 	# Advanced->Mid->Vis frame
@@ -869,10 +822,8 @@ proc EndoscopicBuildGUI {} {
 	
         set f $fAdvanced.fMid.fVis
 
-	eval {checkbutton $f.vPath \
-		-text "Show Inside Models" -variable Advanced(ModelsVisibilityInside) -width 18 -indicatoron 0 -command "EndoscopicSetModelsVisibilityInside; Render3D"} $Gui(WCA)            
-	
-	pack $f.vPath -padx 2 -pady 2
+       EndoscopicCreateCheckbutton $f "Path" "Show Inside Models" Advanced(ModelsVisibilityInside) 18 0 "EndoscopicSetModelsVisibilityInside"
+
 
         #-------------------------------------------
 	# Advanced->Mid->Toggle frame
@@ -881,15 +832,14 @@ proc EndoscopicBuildGUI {} {
         set f $fAdvanced.fMid.fToggle
 
 	eval {label $f.l -height 2 -text "Cam Direction:"} $Gui(WTA)
-
-	foreach value "Relative Absolute" width "9 8" {
+	foreach value "relative absolute" width "9 8" {
 	    eval {radiobutton $f.r$value -width $width \
 		    -text "$value" -value "$value" -variable Endoscopic(flyDirection)\
 		    -indicatoron 0 -command "EndoscopicSetCameraAxis $value; Render3D"} $Gui(WCA) 
 	}       
-	$f.rAbsolute select
+	$f.rabsolute select
 
-	grid $f.l $f.rAbsolute $f.rRelative  -padx $Gui(pad) -pady $Gui(pad)
+	grid $f.l $f.rabsolute $f.rrelative  -padx $Gui(pad) -pady $Gui(pad)
 	
 
         #-------------------------------------------
@@ -909,10 +859,9 @@ proc EndoscopicBuildGUI {} {
 	#-------------------------------------------
 	set f $fCamera.fTop
 
-	frame $f.fToggle  -bg $Gui(activeWorkspace)
 	frame $f.fTitle   -bg $Gui(activeWorkspace)
 	frame $f.fPos     -bg $Gui(activeWorkspace)
-	pack  $f.fTitle $f.fToggle $f.fPos\
+	pack  $f.fTitle $f.fPos\
 		-side top 
 	
 
@@ -923,42 +872,22 @@ proc EndoscopicBuildGUI {} {
         set f $fCamera.fTop.fTitle
 
 	eval {label $f.l -height 1 -text "Camera Position"} $Gui(WTA)
-	pack $f.l
+	eval {button $f.r \
+		-text "reset" -width 10 -command "EndoscopicResetCameraPosition; Render3D"} $Gui(WBA)            
+	grid $f.l $f.r -padx 1 -pady 1
 
 	#-------------------------------------------
 	# Camera->Top->Pos frame
 	#-------------------------------------------
 	set f $fCamera.fTop.fPos
 
+
 	# Position Sliders
-	foreach slider $posAxi Ltext $LposTexts Rtext $RposTexts {
+	foreach slider $posAxi Ltext $LposTexts Rtext $RposTexts orient "horizontal horizontal vertical" {
 
+	    EndoscopicCreateLabelAndSlider $f l$slider 0 "$Ltext" $slider $orient -180 180 110 Model(cam,${slider}Str) "EndoscopicSetCameraPosition $slider" 5 0
 
-	    eval {label $f.l$slider -text "$Ltext"} $Gui(WTA)
-	    eval {scale $f.s${slider} -from -180 -to 180 -length 110 \
-		    -variable Model(cam,${slider}Str) \
-		    -command "EndoscopicSetCameraPosition $slider; Render3D" \
-		    -resolution 1} $Gui(WSA)	   
-	    eval {label $f.r$slider -text "$Rtext"} $Gui(WTA)
-	    eval {entry $f.e${slider} \
-		    -textvariable Model(cam,${slider}Str) -width 5} $Gui(WEA)
-	    bind $f.e${slider} <Return> \
-		    "EndoscopicSetCameraPosition $slider; Render3D"
-	    bind $f.e${slider} <FocusOut> \
-		    "EndoscopicSetCameraPosition $slider; Render3D"
-	    
-	    
-
-
-	# Grid
-	grid $f.e$slider $f.l$slider $f.s$slider $f.r$slider -padx $Gui(pad) 
-	grid $f.l$slider $f.r$slider -sticky s
 	}
-	
-	# default values for the position sliders
-	$f.sx set 0
-	$f.sy set 0
-	$f.sz set 0
 
 
 	#-------------------------------------------
@@ -979,41 +908,21 @@ proc EndoscopicBuildGUI {} {
         set f $fCamera.fMid.fTitle
 
 	eval {label $f.l -height 1 -text "Camera Rotation"} $Gui(WTA)
-	pack $f.l
+	eval {button $f.r \
+		-text "reset" -width 10 -command "EndoscopicResetCameraDirection; Render3D"} $Gui(WBA)            
+	grid $f.l $f.r -padx 1 -pady 1
 
 	#-------------------------------------------
 	# Camera->Mid->Pos frame
 	#-------------------------------------------
 	set f $fCamera.fMid.fPos
 
-	# Position Sliders
-	foreach slider $dirAxi Ltext $LposTexts Rtext $RposTexts {
-	    eval {label $f.l${slider} -text "$Ltext:"} $Gui(WLA)
-	    
-	    eval {scale $f.s${slider} -from -180 -to 180 -length 110 \
-		    -variable Model(cam,${slider}Str) \
-		    -command "EndoscopicSetCameraDirection $slider; Render3D" \
-		    -resolution 1} $Gui(WSA)
-	    eval {label $f.r${slider} -text "$Rtext:"} $Gui(WLA)
+	# Rotation Sliders
+	foreach slider $dirAxi Rtext $RposTexts orient "horizontal horizontal vertical" {
 
-	    eval {entry $f.e${slider} \
-		    -textvariable Model(cam,${slider}Str) -width 5} $Gui(WEA)
-	    bind $f.e${slider} <Return> \
-		    "EndoscopicSetCameraDirection $slider; Render3D"
-	    bind $f.e${slider} <FocusOut> \
-		    "EndoscopicSetCameraDirection $slider; Render3D"
-
-	# Grid
-	    grid $f.e$slider $f.l$slider $f.s$slider $f.r$slider -padx $Gui(pad)
-	    grid $f.l$slider -sticky e
+	    EndoscopicCreateLabelAndSlider $f l$slider 0 "$Rtext" $slider $orient -180 180 110 Model(cam,${slider}Str) "EndoscopicSetCameraDirection $slider" 5 0
 	
 	}
-	
-	# default color values for the lens sliders
-	$f.srx set 0
-	$f.sry set 0
-	$f.srz set 0
-
 
 	#-------------------------------------------
 	# Camera->Mid->Title2 frame
@@ -1031,27 +940,7 @@ proc EndoscopicBuildGUI {} {
 
 	# Position Sliders
 	
-	    eval {label $f.lzoom -text "In"} $Gui(WLA)
-	    
-	    eval {scale $f.szoom -from 1 -to 500 -length 110 \
-		    -variable Model(cam,zoomStr) \
-		    -command "EndoscopicSetCameraZoom; Render3D" \
-		    -resolution 1} $Gui(WSA)
-	    eval {label $f.rzoom -text "Out"} $Gui(WLA)
-
-	    eval {entry $f.ezoom \
-		    -textvariable Model(cam,zoomStr) -width 5} $Gui(WEA)
-	    bind $f.ezoom <Return> \
-		    "EndoscopicSetCameraZoom; Render3D"
-	    bind $f.ezoom <FocusOut> \
-		    "EndoscopicSetCameraZoom; Render3D"
-
-	# Grid
-	    grid $f.ezoom $f.lzoom $f.szoom $f.rzoom -padx $Gui(pad)
-	    grid $f.lzoom -sticky e
-	
-	# default color values for the lens sliders
-	$f.szoom set 30
+	    EndoscopicCreateLabelAndSlider $f lzoom 0 "In<->Out" $slider horizontal 1 500 110 Model(cam,zoomStr) "EndoscopicSetCameraZoom" 5 30
 
 
 	#-------------------------------------------
@@ -1081,9 +970,9 @@ proc EndoscopicBuildGUI {} {
 		-command "EndoscopicAddLandmark; Render3D"} $Gui(WBA)
 	eval {button $f.fBtns.bDelete -text "Delete" -width 7 \
 		-command "EndoscopicDeleteLandmark; Render3D"} $Gui(WBA)
-	eval {button $f.fBtns.bDeletePathAndMrml -text "Delete Path" -width 10 \
-		-command "EndoscopicDeletePathAndMrml; Render3D"} $Gui(WBA)
-	pack $f.fBtns.bAdd $f.fBtns.bDelete $f.fBtns.bDeletePathAndMrml -side top -padx $Gui(pad) -pady $Gui(pad)
+	eval {button $f.fBtns.bDeletePath -text "Delete Path" -width 10 \
+		-command "EndoscopicDeletePath; Render3D"} $Gui(WBA)
+	pack $f.fBtns.bAdd $f.fBtns.bDelete $f.fBtns.bDeletePath -side top -padx $Gui(pad) -pady $Gui(pad)
 	
 	pack $f.lTitle -side top -pady 2
 	pack $f.list $f.fBtns -side left -pady $Gui(pad)
@@ -1256,59 +1145,64 @@ proc EndoscopicBuildGUI {} {
 
 	eval {button $f.cRandPath \
 		-text "Compute Random path" -width 20 -command "EndoscopicComputeRandomPath; Render3D"} $Gui(WBA) {-bg $Path(rColor)}           
+
+	eval {button $f.dRandPath \
+		-text "Delete Random path" -width 20 -command "EndoscopicDeletePath; Render3D"} $Gui(WBA) {-bg $Path(rColor)}           
 	
 	eval {checkbutton $f.cPath \
 		-text "RollerCoaster" -variable Path(rollerCoaster) -width 18 -indicatoron 0 -command "Render3D"} $Gui(WBA) {-bg $Path(rColor)}             
-	pack $f.cRandPath $f.cPath -padx $Gui(pad) -pady $Gui(pad)
-
-
-	    }	
+	pack $f.cRandPath $f.dRandPath $f.cPath -padx $Gui(pad) -pady $Gui(pad)
+    }	
 	
-
     
 #-------------------------------------------------------------------------------
-# .PROC EndoscopicEnter
-# Called when this module is entered by the user.  Pushes the event manager
-# for this module. 
+# .PROC EndoscopicCreateLabelAndSlider
+# 
+# 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-    proc EndoscopicEnter {} {
-    global Endoscopic View viewWin
+    proc EndoscopicCreateLabelAndSlider {f labelName labelHeight labelText sliderName orient from to length variable commandString entryWidth defaultSliderValue} {
+
+	global Gui Model
+	eval {label $f.$labelName -height $labelHeight -text $labelText} $Gui(WTA)
+	
+	# Sliders	    
+	eval {scale $f.s$sliderName -from $from -to $to -length $length \
+		-variable $variable -orient vertical\
+		-command "$commandString; Render3D" \
+		-resolution 1} $Gui(WSA)
+	eval {entry $f.e$sliderName \
+		-textvariable $variable -width $entryWidth} $Gui(WEA)
+	bind $f.e$sliderName <Return> \
+		"$commandString; Render3D"
+	bind $f.e$sliderName <FocusOut> \
+		"$commandString; Render3D"
+	
+	# Grid
+	grid $f.$labelName $f.e$sliderName $f.s$sliderName -padx 0 -pady 0
+	
+	# default value for the slider
+	$f.s$sliderName set $defaultSliderValue
+    }
+
     
-    # Push event manager
-    #------------------------------------
-    # Description:
-    #   So that this module's event bindings don't conflict with other 
-    #   modules, use our bindings only when the user is in this module.
-    #   The pushEventManager routine saves the previous bindings on 
-    #   a stack and binds our new ones.
-    #   (See slicer/program/tcl-shared/Events.tcl for more details.)
-    pushEventManager $Endoscopic(eventManager)
-
-	EndoscopicAddEndoscopicView
-}
-
 #-------------------------------------------------------------------------------
-# .PROC EndoscopicExit
-# Called when this module is exited by the user.  Pops the event manager
-# for this module.  
+# .PROC EndoscopicCreateCheckbutton
+# 
+# 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EndoscopicExit {} {
-
-    # Pop event manager
-    #------------------------------------
-    # Description:
-    #   Use this with pushEventManager.  popEventManager removes our 
-    #   bindings when the user exits the module, and replaces the 
-    #   previous ones.
-    #
-    popEventManager
-
-
+proc EndoscopicCreateCheckbutton {f name text variable width on command} {
+    global Advanced Gui
+    eval {checkbutton $f.v$name \
+	    -text $text -variable $variable -width $width -indicatoron $on -command "$command; Render3D"} $Gui(WCA)            
+    
+    pack $f.v$name -padx 2 -pady 2
 }
+
+
 
 
 #-------------------------------------------------------------------------------
@@ -1339,12 +1233,6 @@ proc EndoscopicUpdateGUI {} {
 # .END
 #----------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicAddEndoscopicView
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicAddEndoscopicView {} {
     global View viewWin Gui
 
@@ -1357,19 +1245,11 @@ proc EndoscopicAddEndoscopicView {} {
 	EndoscopicSetVisibility fp
 	EndoscopicSetVisibility fLand
 	EndoscopicSetVisibility fPath
-	
 	EndoscopicUpdateCamera
         $viewWin AddRenderer endRen	
 	viewRen SetViewport 0 0 .5 1
         endRen SetViewport .5 0 1 1
         MainViewerSetEndoscopicViewOn
-        # before we change, the width, save the default width
-        # IMPORTANT: should be set View(defaultViewerWidth) $View(viewerWidth)
-        # but the viewerWidth is not set to 768, instead it is hard-coded!!
-        # talk to Lauren about this
-        set View(defaultViewerWidth) 768
-    
-        set View(viewerWidth) 1000
         MainViewerSetMode $View(mode) 
     }
 }
@@ -1382,12 +1262,6 @@ proc EndoscopicAddEndoscopicView {} {
 # .END
 #----------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicRemoveEndoscopicView
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicRemoveEndoscopicView {} {
     global Endoscopic View viewWin Gui
 
@@ -1405,11 +1279,9 @@ proc EndoscopicRemoveEndoscopicView {} {
 	Model(fLand,actor) SetVisibility 0
 	Model(fPath,actor) SetVisibility 0
 	
-
         $viewWin RemoveRenderer endRen	
 	viewRen SetViewport 0 0 1 1
         MainViewerSetEndoscopicViewOff
-        set View(viewerWidth) $View(defaultViewerWidth)
         MainViewerSetMode $View(mode) 
     }
 }
@@ -1421,12 +1293,6 @@ proc EndoscopicRemoveEndoscopicView {} {
 # .END
 #----------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicCreateAdvancedGUI
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicCreateAdvancedGUI {f a {vis ""} {col ""} {size ""}} {
     global Gui Model Color Advanced
 
@@ -1547,12 +1413,6 @@ proc EndoscopicSetVisibility {a} {
 # .END
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicSetSize
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicSetSize {a} {
     global Advanced Model Path
     
@@ -1575,12 +1435,6 @@ proc EndoscopicSetSize {a} {
 # .END
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicSetCameraPosition
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicSetCameraPosition {{value ""}} {
 	global Endoscopic View Model
 
@@ -1623,7 +1477,7 @@ proc EndoscopicSetCameraPosition {{value ""}} {
 	
 	# if we want to go along the camera's own axis (Relative mode)
 
-	if { $Model(cam,axis) == "Relative" } {
+	if { $Model(cam,axis) == "relative" } {
 	    set Model(cam,x) [expr $Model(cam,x) + ($Model(cam,tempX) - $Model(cam,xStr)) * $LR(x) + ($Model(cam,tempY) - $Model(cam,yStr)) * $IO(x) + ($Model(cam,tempZ) - $Model(cam,zStr)) * $Up(x)] 
 	    set Model(cam,y) [expr $Model(cam,y) + ($Model(cam,tempX) - $Model(cam,xStr)) * $LR(y) + ($Model(cam,tempY) - $Model(cam,yStr)) * $IO(y) + ($Model(cam,tempZ) - $Model(cam,zStr)) * $Up(y)] 
 	    set Model(cam,z) [expr $Model(cam,z) + ($Model(cam,tempX) - $Model(cam,xStr)) * $LR(z) + ($Model(cam,tempY) - $Model(cam,yStr)) * $IO(z) + ($Model(cam,tempZ) - $Model(cam,zStr)) * $Up(z)] 
@@ -1631,7 +1485,7 @@ proc EndoscopicSetCameraPosition {{value ""}} {
 
 	# else if we want to go along the absolute RA, IS, LR axis
 
-	} elseif { $Model(cam,axis) == "Absolute" } {
+	} elseif { $Model(cam,axis) == "absolute" } {
 	    set Model(cam,x) $Model(cam,xStr) 
 	    set Model(cam,y) $Model(cam,yStr) 
 	    set Model(cam,z) $Model(cam,zStr) 
@@ -1650,18 +1504,41 @@ proc EndoscopicSetCameraPosition {{value ""}} {
 
 	Model(cam,actor) SetPosition $Model(cam,x) $Model(cam,y) $Model(cam,z)
 	Model(fp,actor) SetPosition $Model(fp,x) $Model(fp,y) $Model(fp,z)
-	
 	EndoscopicUpdateCamera
 
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC EndoscopicSetCameraDirection
+# .PROC EndoscopicResetCameraPosition
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
+proc EndoscopicResetCameraPosition {} {
+    global Model
+
+    EndoscopicSetFocalAndCameraPosition 0 0 0 [expr $Model(fp,x) - $Model(cam,x)] [expr $Model(fp,y) - $Model(cam,y)] [expr $Model(fp,z) - $Model(cam,z)]
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicResetCameraDirection
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EndoscopicResetCameraDirection {} {
+    global Model
+
+    # we reset the rotation around the absolute y axis
+    set Model(cam,yRotation) 0
+    set Model(cam,viewUpX) 0
+    set Model(cam,viewUpY) 0
+    set Model(cam,viewUpZ) 1
+    set y [expr $Model(cam,y) + $Model(cam,FPdistance)]
+    EndoscopicSetFocalAndCameraPosition $Model(cam,x) $Model(cam,y) $Model(cam,z) $Model(cam,x) $y $Model(cam,z)
+}
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetCameraDirection
@@ -1669,6 +1546,7 @@ proc EndoscopicSetCameraPosition {{value ""}} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
+
 proc EndoscopicSetCameraDirection {{value ""}} {
 	global Endoscopic View Model
 
@@ -1703,7 +1581,6 @@ proc EndoscopicSetCameraDirection {{value ""}} {
 	    set Model(fp,x) [expr $Model(cam,x)]
 	    set Model(fp,y) [expr $Model(cam,y) + $Model(fp,distance) * {cos($Model(cam,xRotationRad))}] 
 	    set Model(fp,z) [expr $Model(cam,z) + $Model(fp,distance) * {sin($Model(cam,xRotationRad))}] 
-	    #puts "first $Model(fp,x) $Model(fp,y) $Model(fp,z)"
 	}
 
 	if { $value == "rz" || $value == "rx"} {
@@ -1722,8 +1599,8 @@ proc EndoscopicSetCameraDirection {{value ""}} {
 	
 	if { $value == "ry" } {
 	    # change the View up
-	    set Model(cam,viewUpX) [expr sin($Model(cam,yRotationRad))]
-	    set Model(cam,viewUpZ) [expr cos($Model(cam,yRotationRad))]
+	    set Model(cam,viewUpX) [expr sin(-$Model(cam,yRotationRad))]
+	    set Model(cam,viewUpZ) [expr cos(-$Model(cam,yRotationRad))]
 	}	
 	    
 	Model(fp,actor) SetPosition $Model(fp,x) $Model(fp,y) $Model(fp,z)
@@ -1739,12 +1616,6 @@ proc EndoscopicSetCameraDirection {{value ""}} {
 # .END
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicSetCameraZoom
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicSetCameraZoom {} {
     global Endoscopic Model View
     
@@ -1774,12 +1645,6 @@ proc EndoscopicSetCameraZoom {} {
 # .END
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicSetCameraAngle
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicSetCameraAngle {} {
     global Endoscopic Model View
 
@@ -1788,20 +1653,13 @@ proc EndoscopicSetCameraAngle {} {
     
 }
 
-#-----------------------------------------------------------------------------
-# .PROC EndoscopicSetFocalAndCameraPath
-# 
-# .ARGS
-# .END
-#-----------------------------------------------------------------------------
-
 #-------------------------------------------------------------------------------
-# .PROC EndoscopicSetFocalAndCameraPath
+# .PROC EndoscopicSetFocalAndCameraPosition
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EndoscopicSetFocalAndCameraPath {x y z FPx FPy FPz} {
+proc EndoscopicSetFocalAndCameraPosition {x y z FPx FPy FPz} {
 	global Endoscopic View Path Model
 
 
@@ -1864,8 +1722,18 @@ proc EndoscopicSetFocalAndCameraPath {x y z FPx FPy FPz} {
     # the problem is we calculate the angle of rotation from the z axis,
     # we want it from the y axis, so the real xRot is 90 degrees - xRot
     set Model(cam,xRotation) [expr 90 - $Model(cam,xRotation)]
-    
+
+    if { $Model(cam,xRotation) <= 0.05 && $Model(cam,xRotation) >= 0 } {
+	set Model(cam,xRotation) 0
+    }
+    if { $Model(cam,xRotation) >= -0.05 && $Model(cam,xRotation) <= 0 } {
+	set Model(cam,xRotation) 0
+    }
+    if { $Model(cam,zRotation) == 0.0} {
+	set Model(cam,zRotation) 0
+    }
     set Model(cam,rxStr)  $Model(cam,xRotation)
+    set Model(cam,ryStr)  $Model(cam,yRotation)
     set Model(cam,rzStr)  $Model(cam,zRotation)    
     Model(cam,actor) SetOrientation $Model(cam,xRotation) $Model(cam,yRotation) $Model(cam,zRotation)
     
@@ -1879,12 +1747,6 @@ proc EndoscopicSetFocalAndCameraPath {x y z FPx FPy FPz} {
 # .END
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicUpdateCamera
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicUpdateCamera {} {
     global Endoscopic Model View
    
@@ -1909,6 +1771,218 @@ proc EndoscopicUpdateCamera {} {
 
 
 #-------------------------------------------------------------------------------
+# .PROC EndoscopicAddLandmark
+#
+# 
+# 
+# .END
+#-------------------------------------------------------------------------------
+proc EndoscopicAddLandmark {} {
+
+    global Endoscopic Model Path View Fiducials EndFiducials Point EndPath Landmark
+    
+    # if the path already existing is random, delete it
+    if { $Path(random) == 1 } {
+	EndoscopicDeletePath
+    }
+    if { $Path(numLandmarks) < 0} {
+	puts "we have a problem!!! numLandmarks < 0"
+    }
+    set i $Path(numLandmarks)
+    
+    set Model(cLand,$i,x) $Model(cam,x)
+    set Model(cLand,$i,y) $Model(cam,y)
+    set Model(cLand,$i,z) $Model(cam,z)
+    set Model(fLand,$i,x) $Model(fp,x)
+    set Model(fLand,$i,y) $Model(fp,y)
+    set Model(fLand,$i,z) $Model(fp,z)
+    
+    
+    $Path(fLandmarkList) insert end "$Model(cLand,$i,x) $Model(cLand,$i,y) $Model(cLand,$i,z)"
+    incr Path(numLandmarks)
+    
+    EndoscopicAddToMrml $i $Model(cLand,$i,x) $Model(cLand,$i,y) $Model(cLand,$i,z) $Model(fLand,$i,x) $Model(fLand,$i,y) $Model(fLand,$i,z)
+    
+    MainUpdateMRML
+    
+    foreach m {c f} {
+   
+	set numberOfInputPoints $Path(numLandmarks)
+	
+	# if we are building a new path, reset all the variables
+	if { $numberOfInputPoints == 1 } {
+	    Model(${m}Land,aSplineX) RemoveAllPoints
+	    Model(${m}Land,aSplineY) RemoveAllPoints
+	    Model(${m}Land,aSplineZ) RemoveAllPoints
+	    Model(${m}Land,inputPoints) Reset
+	    viewRen AddActor Model(${m}Land,actor)
+	    viewRen AddActor Model(${m}Path,actor)
+	    endRen RemoveActor Model(${m}Land,actor)
+	    endRen RemoveActor Model(${m}Path,actor)
+	}
+	
+	set i [expr $numberOfInputPoints - 1]
+	Model(${m}Land,aSplineX) AddPoint $i $Model(${m}Land,$i,x)
+	Model(${m}Land,aSplineY) AddPoint $i $Model(${m}Land,$i,y)
+	Model(${m}Land,aSplineZ) AddPoint $i $Model(${m}Land,$i,z)
+	Model(${m}Land,inputPoints) InsertPoint $i $Model(${m}Land,$i,x) $Model(${m}Land,$i,y) $Model(${m}Land,$i,z)
+	set Path(landmarkExists) 1
+	
+	EndoscopicComputePath $m
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicDeleteLandmark
+#
+# 
+# 
+# .END
+#-------------------------------------------------------------------------------
+proc EndoscopicDeleteLandmark {} {
+    global Endoscopic Model View Path EndPath Landmark Fiducials EndFiducials Point View
+
+    # delete the curSelection and shift the indices of the points
+
+    set d [expr [$Path(fLandmarkList) curselection]]
+    if { $d == "" } {
+	# no selection, so do nothing 
+    } else {
+	if {$Path(numLandmarks) <= 1} {
+	    EndoscopicDeletePath
+	} else {
+	    set Path(numLandmarks) [expr $Path(numLandmarks) - 1]
+	    $Path(fLandmarkList) delete $d
+	    
+	    
+	    MainMrmlUndoAddNode Landmark $Model(cam,$d,LandmarkNode)
+
+	    for {set i $d} {$i<$Path(numLandmarks)} {incr i 1} {
+
+		set Model(cLand,$i,x) $Model(cLand,[expr $i + 1],x)
+		set Model(cLand,$i,y) $Model(cLand,[expr $i + 1],y)
+		set Model(cLand,$i,z) $Model(cLand,[expr $i + 1],z)
+		
+		set Model(fLand,$i,x) $Model(fLand,[expr $i + 1],x)
+		set Model(fLand,$i,y) $Model(fLand,[expr $i + 1],y)
+		set Model(fLand,$i,z) $Model(fLand,[expr $i + 1],z)
+		
+		set Model(cam,$i,LandmarkNode) $Model(cam,[expr $i + 1],LandmarkNode)
+		$Model(cam,$i,LandmarkNode) SetPathPosition $i
+	    }
+	    
+
+	    MainUpdateMRML
+
+	    foreach m {c f} {
+		# we want to remove item d, so rebuild the whole spline
+		Model(${m}Land,inputPoints) Reset
+		set numberOfInputPoints $Path(numLandmarks)
+		
+		# clear the splines
+		Model(${m}Land,aSplineX) RemoveAllPoints
+		Model(${m}Land,aSplineY) RemoveAllPoints
+		Model(${m}Land,aSplineZ) RemoveAllPoints
+		
+		for {set i 0} {$i<$numberOfInputPoints} {incr i 1} {
+		    Model(${m}Land,aSplineX) AddPoint $i $Model(${m}Land,$i,x)
+		    Model(${m}Land,aSplineY) AddPoint $i $Model(${m}Land,$i,y)
+		    Model(${m}Land,aSplineZ) AddPoint $i $Model(${m}Land,$i,z)
+		    Model(${m}Land,inputPoints) InsertPoint $i $Model(${m}Land,$i,x) $Model(${m}Land,$i,y) $Model(${m}Land,$i,z)
+		    
+		}
+		EndoscopicComputePath $m
+	    }
+	}
+    }
+}
+
+
+
+ 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicComputePath
+# 
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EndoscopicComputePath {{m ""}} {
+
+    global Endoscopic Model View Path
+
+    set numberOfInputPoints $Path(numLandmarks)
+    Model(${m}Land,polyData) Modified
+    Model(${m}Land,points) Reset
+    Model(${m}Path,lines) Reset 
+    Model(${m}Path,polyData) Modified
+    	
+    set numberOfOutputPoints [expr $numberOfInputPoints * 10]
+    if {$m == "c"} {
+	$Path(stepScale) config -to [expr $numberOfOutputPoints - 1]
+    }
+    
+    if { $numberOfInputPoints > 1 } {
+
+	for {set i 0} {$i< $numberOfOutputPoints} {incr i 1} {
+	    set t [expr ( $numberOfInputPoints - 1.0 ) / ( $numberOfOutputPoints - 1) * $i]
+	    Model(${m}Land,points) InsertPoint $i [Model(${m}Land,aSplineX) Evaluate $t] [Model(${m}Land,aSplineY) Evaluate $t] [Model(${m}Land,aSplineZ) Evaluate $t]
+	}
+	set Path(exists) 1
+	    
+	Model(${m}Path,lines) InsertNextCell $numberOfOutputPoints
+	
+	for {set i 0} {$i< $numberOfOutputPoints} {incr i 1} {
+	    Model(${m}Path,lines) InsertCellPoint $i
+	}
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicDeletePath
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EndoscopicDeletePath {} {
+	global Endoscopic Path Fiducials EndFiducials Point Model Landmark EndPath
+
+    if { $Path(exists) == 1 } {
+	for {set d 0} {$d<$Path(numLandmarks)} {incr d 1} {
+	    MainMrmlUndoAddNode Landmark $Model(cam,$d,LandmarkNode)	   
+	}
+	
+	if { $Model(cam,PathNode) != ""} {
+	    MainMrmlUndoAddNode Path $Model(cam,PathNode)
+	    set Model(cam,PathNode) ""
+	}
+	if { $Model(cam,EndPathNode) != ""} {
+	    MainMrmlUndoAddNode EndPath $Model(cam,EndPathNode)
+	    set Model(cam,EndPathNode) ""
+	}
+	
+	MainUpdateMRML
+	
+ 	set Path(numLandmarks) 0
+
+	foreach m {c f} {
+	    MainRemoveActor Model(cLand,actor)
+	    MainRemoveActor Model(fLand,actor)
+	    MainRemoveActor Model(cPath,actor)
+	    MainRemoveActor Model(fPath,actor)
+	}
+	
+	$Path(fLandmarkList) delete 0 end
+	set Path(exists) 0
+	set Path(landmarkExists) 0
+	set Path(random) 0
+    }
+}
+
+
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicComputeRandomPath
 # 
 # 
@@ -1916,190 +1990,32 @@ proc EndoscopicUpdateCamera {} {
 # .END
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicComputeRandomPath
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicComputeRandomPath {} {
-    global Endoscopic View Path Model
+    global Endoscopic View Path Model Landmark EndPath Path
    
     if { $Path(exists) == 1} {
-	EndoscopicDeletePathAndMrml
+	EndoscopicDeletePath
     }
-
-    set Path(random) 1
-
-    set numberOfInputPoints 20    
-
-    Model(cLand,inputPoints) Reset
-
-    # clear the splines
-    Model(cLand,aSplineX) RemoveAllPoints
-    Model(cLand,aSplineY) RemoveAllPoints
-    Model(cLand,aSplineZ) RemoveAllPoints
-    
-    # generate random points    
-    for {set i 0} {$i<$numberOfInputPoints} {incr i 1} {
+    for {set i 0} {$i<20} {incr i 1} {
 	set x  [expr [Path(math) Random -1 1] * 100]
 	set y  [expr [Path(math) Random -1 1] * 100]
 	set z  [expr [Path(math) Random -1 1] * 100]
-	Model(cLand,aSplineX) AddPoint $i $x
-	Model(cLand,aSplineY) AddPoint $i $y
-	Model(cLand,aSplineZ) AddPoint $i $z
-	Model(cLand,inputPoints) InsertPoint $i $x $y $z
-    }
-    
-    Model(cLand,polyData) Modified
-    
-    # create a line
+	set Model(cLand,$i,x) $x
+	set Model(cLand,$i,y) $y
+	set Model(cLand,$i,z) $z
+	set Model(fLand,$i,x) $x
+	set Model(fLand,$i,y) $y
+	set Model(fLand,$i,z) $z
+	    
+	$Path(fLandmarkList) insert end "$Model(cLand,$i,x) $Model(cLand,$i,y) $Model(cLand,$i,z)"
+	set Path(numLandmarks) [expr $i + 1]
 
-    set numberOfOutputPoints 200
-    $Path(stepScale) config -to 196
-
-    Model(cLand,points) Reset
-    Model(cPath,lines) Reset 
-    
-    if { $numberOfInputPoints > 1 } {
-	# create a line
-	
-	for {set i 0} {$i< $numberOfOutputPoints} {incr i 1} {
-	    set t [expr ( $numberOfInputPoints - 1.0 ) / ( $numberOfOutputPoints - 1) * $i]
-	    Model(cLand,points) InsertPoint $i [Model(cLand,aSplineX) Evaluate $t] [Model(cLand,aSplineY) Evaluate $t] [Model(cLand,aSplineZ) Evaluate $t]
-	}
-	set Path(exists) 1
-    }	
-	
-    Model(cPath,polyData) Modified
-    Model(cPath,lines) InsertNextCell $numberOfOutputPoints
-    
-    for {set i 0} {$i< $numberOfOutputPoints} {incr i 1} {
-	Model(cPath,lines) InsertCellPoint $i
+	EndoscopicAddToMrml $i $Model(cLand,$i,x) $Model(cLand,$i,y) $Model(cLand,$i,z) $Model(fLand,$i,x) $Model(fLand,$i,y) $Model(fLand,$i,z)	
     }
-    
-    set Path(landmarkExists) 1
-    set Path(exists) 1
+    MainUpdateMRML
+    set Path(random) 1    
+    EndoscopicCreateNewPath
 }
-
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicDeleteRandomPath
-# 
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicDeleteRandomPath
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EndoscopicDeleteRandomPath {} {
-    global Endoscopic Model View Path
-   
-
-    set Path(random) 0
-    set numberOfInputPoints 0    
-
-    Model(cLand,inputPoints) Reset
-
-    # clear the splines
-    
-    Model(cLand,aSplineX) RemoveAllPoints
-    Model(cLand,aSplineY) RemoveAllPoints
-    Model(cLand,aSplineZ) RemoveAllPoints
-    
-    Model(cLand,polyData) Modified
-    
-    # create a line
-
-    set numberOfOutputPoints 0
-    Model(cLand,points) Reset
-    Model(cPath,lines) InsertNextCell $numberOfOutputPoints
-    Model(cPath,polyData) Modified
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicComputePath
-# 
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicComputePath
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EndoscopicComputePath {{? ""} {d ""}} {
-    global Endoscopic Model View Path 
-   
-    
-    
-    set Path(random) 0
-    set numberOfInputPoints $Path(numLandmarks)
-    
-    if {$d == ""} {
-	set i [expr $numberOfInputPoints - 1]
-	Model(${?}Land,aSplineX) AddPoint $i $Model(${?}Land,$i,x)
-	Model(${?}Land,aSplineY) AddPoint $i $Model(${?}Land,$i,y)
-	Model(${?}Land,aSplineZ) AddPoint $i $Model(${?}Land,$i,z)
-	Model(${?}Land,inputPoints) InsertPoint $i $Model(${?}Land,$i,x) $Model(${?}Land,$i,y) $Model(${?}Land,$i,z)
-
-    } else {
-
-	# we want to remove item d, so rebuild the whole spline
-	Model(${?}Land,inputPoints) Reset
-	
-	# clear the splines
-	Model(${?}Land,aSplineX) RemoveAllPoints
-	Model(${?}Land,aSplineY) RemoveAllPoints
-	Model(${?}Land,aSplineZ) RemoveAllPoints
-	
-	for {set i 0} {$i<$numberOfInputPoints} {incr i 1} {
-	    Model(${?}Land,aSplineX) AddPoint $i $Model(${?}Land,$i,x)
-	    Model(${?}Land,aSplineY) AddPoint $i $Model(${?}Land,$i,y)
-	    Model(${?}Land,aSplineZ) AddPoint $i $Model(${?}Land,$i,z)
-	    Model(${?}Land,inputPoints) InsertPoint $i $Model(${?}Land,$i,x) $Model(${?}Land,$i,y) $Model(${?}Land,$i,z)
-	}
-    }
-    
-    Model(${?}Land,polyData) Modified
-    set Path(landmarkExists) 1
-    
-    set numberOfOutputPoints [expr $numberOfInputPoints * 10]
-    $Path(stepScale) config -to [expr $numberOfOutputPoints - 1]
-    Model(${?}Land,points) Reset
-    Model(${?}Path,lines) Reset 
-    
-    if { $numberOfInputPoints > 1 } {
-	# create a line
-	
-	for {set i 0} {$i< $numberOfOutputPoints} {incr i 1} {
-	    set t [expr ( $numberOfInputPoints - 1.0 ) / ( $numberOfOutputPoints - 1) * $i]
-	    Model(${?}Land,points) InsertPoint $i [Model(${?}Land,aSplineX) Evaluate $t] [Model(${?}Land,aSplineY) Evaluate $t] [Model(${?}Land,aSplineZ) Evaluate $t]
-	}
-	set Path(exists) 1
-    }	
-    
-    Model(${?}Path,polyData) Modified
-    Model(${?}Path,lines) InsertNextCell $numberOfOutputPoints
-    
-    for {set i 0} {$i< $numberOfOutputPoints} {incr i 1} {
-	Model(${?}Path,lines) InsertCellPoint $i
-    }
-
-    endRen RemoveActor Model(${?}Land,actor)        
-    endRen RemoveActor Model(${?}Path,actor)
-}
-
-
 
 
 #-------------------------------------------------------------------------------
@@ -2110,12 +2026,6 @@ proc EndoscopicComputePath {{? ""} {d ""}} {
 # .END
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicViewPath
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicViewPath {} {
     global Endoscopic Model View Path Module
     
@@ -2129,7 +2039,7 @@ proc EndoscopicViewPath {} {
     
     for {set Path(i) $Path(stepStr)} {$Path(i)< $numPoints - $var} {incr Path(i) $Path(speed)} { 
 	if {$Path(stop) == "0"} {
-	    set Path(stepStr) $Path(i)	
+	    set Path(stepStr) $Path(i)
             EndoscopicSetPathFrame
             update	    	
 	    Render3D	
@@ -2148,24 +2058,12 @@ proc EndoscopicViewPath {} {
 # .END
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicStopPath
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicStopPath {} {
     global Endoscopic Model View Path Module
     	
 	set Path(stop) 1
 }
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicResetStopPath
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicResetStopPath {} {
     global Endoscopic Model View Path Module
     	
@@ -2181,12 +2079,6 @@ proc EndoscopicResetStopPath {} {
 # .END
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicResetPath
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicResetPath {} {
     global Endoscopic Model View Path Module
     	
@@ -2206,12 +2098,6 @@ proc EndoscopicResetPath {} {
 # .END
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicSetPathFrame
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicSetPathFrame {} {
     global Endoscopic Model View Path
     
@@ -2233,109 +2119,45 @@ proc EndoscopicSetPathFrame {} {
 	    set Path(i) $Path(stepStr)
 	    set l [Model(cLand,points) GetPoint $Path(i)] 
 	    set l2 [Model(${which}Land,points) GetPoint [expr $Path(i) + $var ]]
-	    EndoscopicSetFocalAndCameraPath [lindex $l 0] [lindex $l 1] [lindex $l 2] [lindex $l2 0] [lindex $l2 1] [lindex $l2 2]	    
+	    EndoscopicSetFocalAndCameraPosition [lindex $l 0] [lindex $l 1] [lindex $l 2] [lindex $l2 0] [lindex $l2 1] [lindex $l2 2]	    
 	} elseif { $Path(flyDirection) == "Backward" } {
 	    set Path(i) $Path(stepStr)
 	    set l [Model(cLand,points) GetPoint $Path(i)]
 	    set l2 [Model(${which}Land,points) GetPoint [expr $Path(i) - $var ]]
-	    EndoscopicSetFocalAndCameraPath [lindex $l 0] [lindex $l 1] [lindex $l 2] [lindex $l2 0] [lindex $l2 1] [lindex $l2 2]
+	    EndoscopicSetFocalAndCameraPosition [lindex $l 0] [lindex $l 1] [lindex $l 2] [lindex $l2 0] [lindex $l2 1] [lindex $l2 2]
 	}
     }
 }
     
-    
-    
 
 #-------------------------------------------------------------------------------
-# .PROC EndoscopicAddLandmark
-#
-# 
-# 
+# .PROC EndoscopicAddToMrml id cx cy cz fx fy fz
+# creates the Path and EndPath nodes if they don't already exist
+# creates a Landmark node at the position i with camera position = cx,cy,cz
+# and focalPoint position = fx, fy, fz 
+# MainUpdateMrml is not called in this procedure because if a path is created
+# automatically, we only want to update the Mrml file once with the new path
+# So the developper is responsible for calling MainUpdateMrml once it is 
+# appropriate to write the new nodes to the Mrml file
 # .END
 #-------------------------------------------------------------------------------
-proc EndoscopicAddLandmark {} {
-
-    global Endoscopic Model Path View Fiducials EndFiducials Point EndPath Landmark
+proc EndoscopicAddToMrml {id cx cy cz fx fy fz} {
+    global Model Landmark Path EndPath
     
-
-    if { $Path(random) == 1 } {
-	EndoscopicDeleteRandomPath
-    }
-    
-    set i $Path(numLandmarks)
-    set Model(fLand,$i,x) $Model(fp,x)
-    set Model(fLand,$i,y) $Model(fp,y)
-    set Model(fLand,$i,z) $Model(fp,z)
-
-    set Model(cLand,$i,x) $Model(cam,x)
-    set Model(cLand,$i,y) $Model(cam,y)
-    set Model(cLand,$i,z) $Model(cam,z)
-
-    $Path(fLandmarkList) insert end "$Model(cam,x) $Model(cam,y) $Model(cam,z)"
-    incr Path(numLandmarks)
-
     # do if there is none
     if { $Model(cam,PathNode) == "" && $Model(cam,EndPathNode) == "" } {
 	set Model(cam,PathNode) [MainMrmlAddNode Path]  
 	set Model(cam,EndPathNode) [MainMrmlAddNode EndPath]  
     }
-  
-    set Model(cam,$i,LandmarkNode) [MainMrmlInsertBeforeNode $Model(cam,EndPathNode) Landmark]
-    set pid [$Model(cam,$i,LandmarkNode) GetID]
-    Landmark($pid,node) SetXYZ $Model(cLand,$i,x) \
-	    $Model(cLand,$i,y) \
-	    $Model(cLand,$i,z)
-    Landmark($pid,node) SetFXYZ $Model(fLand,$i,x) \
-	    $Model(fLand,$i,y) \
-	    $Model(fLand,$i,z)
-    Landmark($pid,node) SetPathPosition $i 
     
-    MainUpdateMRML
-    
-    
-    EndoscopicComputePath c
-    EndoscopicComputePath f
+
+    set Model(cam,$id,LandmarkNode) [MainMrmlInsertBeforeNode $Model(cam,EndPathNode) Landmark]
+    set pid [$Model(cam,$id,LandmarkNode) GetID]
+    Landmark($pid,node) SetXYZ $cx $cy $cz
+    Landmark($pid,node) SetFXYZ $fx $fy $fz
+    Landmark($pid,node) SetPathPosition $id     
+
 }
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicDeleteLandmark
-#
-# 
-# 
-# .END
-#-------------------------------------------------------------------------------
-proc EndoscopicDeleteLandmark {} {
-    global Endoscopic Model View Path EndPath Landmark Fiducials EndFiducials Point View
-
-    # delete the curSelection and shift the indices of the points
-
-    set d [$Path(fLandmarkList) curselection]
-    if { $d == "" } {
-	# no selection, so do nothing 
-    } else {
-	set Path(numLandmarks) [expr $Path(numLandmarks) - 1]
-	
-	$Path(fLandmarkList) delete $d
-	MainMrmlUndoAddNode Landmark $Model(cam,$d,LandmarkNode)
-	MainUpdateMRML
-
-	for {set i $d} {$i<$Path(numLandmarks)} {incr i 1} {
-	    set Model(cLand,$i,x) $Model(cLand,[expr $i + 1],x)
-	    set Model(cLand,$i,y) $Model(cLand,[expr $i + 1],y)
-	    set Model(cLand,$i,z) $Model(cLand,[expr $i + 1],z)
-	    
-	    set Model(fLand,$i,x) $Model(fLand,[expr $i + 1],x)
-	    set Model(fLand,$i,y) $Model(fLand,[expr $i + 1],y)
-	    set Model(fLand,$i,z) $Model(fLand,[expr $i + 1],z)
-
-	    set Model(cam,$i,LandmarkNode) $Model(cam,[expr $i + 1],LandmarkNode)
-	}
-	
-	EndoscopicComputePath c $d
-	EndoscopicComputePath f $d
-    }
-}
-
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetFlyDirection
@@ -2378,7 +2200,7 @@ proc EndoscopicSetCameraAxis {{axis ""}} {
     global Endoscopic Model
     
     if {$axis != ""} {
-	if {$axis == "Absolute" || $axis == "Relative"} {
+	if {$axis == "absolute" || $axis == "relative"} {
 	    set Model(cam,axis) $axis
 	} else {
 	    return
@@ -2387,63 +2209,6 @@ proc EndoscopicSetCameraAxis {{axis ""}} {
 }
 
 
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicDeletePath
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EndoscopicDeletePath {} {
-	global Endoscopic Path Fiducials EndFiducials Point Model Landmark EndPath
-
-    set Model(cam,PathNode) ""
-    set Model(cam,EndPathNode) ""
-
-    if { $Path(random) == 0 } {
-	set Path(numLandmarks) 0
-	EndoscopicComputePath c -1
-	EndoscopicComputePath f -1
-
-	$Path(fLandmarkList) delete 0 end
-	set Path(exists) 0
-	set Path(landmarkExists) 0
-    } else {
-	EndoscopicDeleteRandomPath
-	set Path(exists) 0
-    }
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicDeletePathAndMrml
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EndoscopicDeletePathAndMrml {} {
-	global Endoscopic Path Fiducials EndFiducials Point Model Landmark EndPath
-
-    if { $Path(random) == 0 } {
-
-	if { $Model(cam,PathNode) != ""} {
-	    MainMrmlUndoAddNode Path $Model(cam,PathNode)
-	    set Model(cam,PathNode) ""
-	}
-	if { $Model(cam,EndPathNode) != ""} {
-	    MainMrmlUndoAddNode EndPath $Model(cam,EndPathNode)
-	    set Model(cam,EndPathNode) ""
-	}
-	for {set d 0} {$d<$Path(numLandmarks)} {incr d 1} {
-	MainMrmlUndoAddNode Landmark $Model(cam,$d,LandmarkNode)
-	}
-	MainUpdateMRML
-	EndoscopicDeletePath
-    } else {
-	EndoscopicDeleteRandomPath
-	set Path(exists) 0
-    }
-}
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicLightFollowEndoCamera
@@ -2482,12 +2247,6 @@ proc EndoscopicLightFollowEndoCamera {} {
 # .END
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicViewSetBackgroundColor
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicViewSetBackgroundColor {} {
     global View
     
@@ -2504,12 +2263,6 @@ proc EndoscopicViewSetBackgroundColor {} {
 # .END
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicSetModelsVisibilityInside
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicSetModelsVisibilityInside {} {
     global View Model Advanced
 
@@ -2533,12 +2286,6 @@ proc EndoscopicSetModelsVisibilityInside {} {
 # .END
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicSetSliceDriver
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicSetSliceDriver {a} {
     global Endoscopic Model View Slice
 
@@ -2572,18 +2319,12 @@ proc EndoscopicSetSliceDriver {a} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC EndoscopicSetPosition
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
 # .PROC EndoscopicSetSlicePosition
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
+
 proc EndoscopicSetSlicePosition {a} {
     global Model View Slice
 
@@ -2604,6 +2345,7 @@ proc EndoscopicSetSlicePosition {a} {
 proc EndoscopicUpdateMRML {} {
 	global Mrml Path Model
 
+
     Mrml(dataTree) ComputeTransforms
     Mrml(dataTree) InitTraversal
     set item [Mrml(dataTree) GetNextItem]
@@ -2614,111 +2356,122 @@ proc EndoscopicUpdateMRML {} {
 	    # if the Path is the same than the one we are working on,
 	    # don't update anything
 	    set pid [$item GetID]
-	    puts "pid $pid"
 	    if { $Model(cam,PathNode) != "" && $pid == [$Model(cam,PathNode) GetID]} {
-		    break
+		break
 	    }   
+	    # if there is no pathNode yet and we are reading one, set
+	    # the Model(cam,PathNode) variable
+	    if { $Model(cam,PathNode) == ""} {
+		set Model(cam,PathNode) $item  
+		#check that a path doesn't exist on the screen
+		if {$Path(numLandmarks) != 0} {
+		    puts "we are about to create a new path, but one exists on the screen"
+		}
+	    }
 	}
 	if { [$item GetClassName] == "vtkMrmlLandmarkNode" } {
+	    	    
 	    set lid [$item GetID]
-	    EndoscopicReadNewPath $item $lid
+	    set i [Landmark($lid,node) GetPathPosition]
+	    set l [Landmark($lid,node) GetXYZ]
+	    set Model(cLand,$i,x) [lindex $l 0]
+	    set Model(cLand,$i,y) [lindex $l 1]
+	    set Model(cLand,$i,z) [lindex $l 2]
+	    set f [Landmark($lid,node) GetFXYZ]
+	    set Model(fLand,$i,x) [lindex $f 0]
+	    set Model(fLand,$i,y) [lindex $f 1]
+	    set Model(fLand,$i,z) [lindex $f 2]
+	    set Model(cam,$i,LandmarkNode) $item
+	    $Path(fLandmarkList) insert end "$l"
+	    set Path(numLandmarks) [expr $i + 1]
 	}
 
 	if { [$item GetClassName] == "vtkMrmlEndPathNode" } {
+	    # if there is no EndPathNode yet and we are reaading one, set
+	    # the Model(cam,PathNode) variable
+	    if { $Model(cam,EndPathNode) == ""} {
+		set Model(cam,EndPathNode) $item  
+	    }
 	}
 
 	set item [Mrml(dataTree) GetNextItem]
     }
 
-    # if we haven't encountered a path node, then delete the current path
+    # if we haven't encountered a path node (ie the user closed the file and
+    # an UpdateMrml was made), then delete the current path
+    # (we don't call EndoscopicDeletePath, because the procedure also deletes
+    # the Mrml nodes and in this case, the Mrml nodes are already deleted)
     if {$Path(vtkNodeRead) == 0} {
-	EndoscopicDeletePath
+	 	set Path(numLandmarks) 0
+
+	puts "in delete path"
+
+	# get rid of path actors
+	foreach m {c f} {
+	    MainRemoveActor Model(cLand,actor)
+	    MainRemoveActor Model(fLand,actor)
+	    MainRemoveActor Model(cPath,actor)
+	    MainRemoveActor Model(fPath,actor)
+	}
+	
+	# reset the pointers to the path nodes
+	set Model(cam,PathNode) ""
+	set Model(cam,EndPathNode) ""
+
+	# clear the scroll text
+	$Path(fLandmarkList) delete 0 end
+	
+	# reset the path variables
+	set Path(exists) 0
+	set Path(landmarkExists) 0
+	set Path(random) 0
     } else {
-	# reset the variable for the next MrmlUpdate
+	# create the path and reset the variable for the next MrmlUpdate
 	set Path(vtkNodeRead) 0
+	EndoscopicCreateNewPath	
     }
 }
 
 #-------------------------------------------------------------------------------
-# .PROC EndoscopicReadNewPath
+# .PROC EndoscopicCreateNewPath
 #
 # 
 # 
 # .END
 #-------------------------------------------------------------------------------
-    proc EndoscopicReadNewPath {item lid} {
-
-	global Endoscopic Model View Path View Fiducials EndFiducials Point
-	
-	puts "in update"
-	
-	    set i [Landmark($lid,node) GetPathPosition]
-	    puts "lid = $lid i = $i"
-	    set l [Landmark($lid,node) GetXYZ]
-  	      set Model(cLand,$i,x) [lindex $l 0]
-	      set Model(cLand,$i,y) [lindex $l 1]
-	      set Model(cLand,$i,z) [lindex $l 2]
-	    set f [Landmark($lid,node) GetFXYZ]
-	      set Model(fLand,$i,x) [lindex $f 0]
-	      set Model(fLand,$i,y) [lindex $f 1]
-	      set Model(fLand,$i,z) [lindex $f 2]
-
-
-	    set Model(cam,$i,LandmarkNode) $item
-	    
-	    $Path(fLandmarkList) insert end "$l"
-	    set Path(numLandmarks) [expr $i + 1]
-	    
-	    EndoscopicComputePath c
-	    EndoscopicComputePath f	
+proc EndoscopicCreateNewPath {} {
+    
+    global Endoscopic Model View Path View Fiducials EndFiducials Point
+    
+    if { $Path(numLandmarks) < 0} {
+	puts "we have a problem!!! numLandmarks < 0"
     }
     
+    set numberOfInputPoints $Path(numLandmarks)
     
-
-#-------------------------------------------------------------------------------
-# .PROC MainMrmlInsertBeforeNode
-#
-#  Adds a node to the data tree.
-#  Returns the MrmlMode
-# 
-# .ARGS
-#  str nodeType the type of node, \"Volume\", \"Color\", etc.
-# .END
-#-------------------------------------------------------------------------------
-proc MainMrmlInsertBeforeNode {nodeBefore nodeType} {
-	global Mrml Model Volume Color Transform EndTransform Matrix Options
-	global TransferFunction WindowLevel TFPoint ColorLUT 
-	global Fiducials EndFiducials Point 
-        global Path EndPath Landmark Array 
-    
-
-	upvar $nodeType Array
-
-	set tree "dataTree"
-	if {$nodeType == "Color"} {
-		set tree "colorTree"
+    foreach m {c f} {
+	Model(${m}Land,aSplineX) RemoveAllPoints
+	Model(${m}Land,aSplineY) RemoveAllPoints
+	Model(${m}Land,aSplineZ) RemoveAllPoints
+	Model(${m}Land,inputPoints) Reset
+	viewRen AddActor Model(${m}Land,actor)
+	viewRen AddActor Model(${m}Path,actor)
+	endRen RemoveActor Model(${m}Land,actor)
+	endRen RemoveActor Model(${m}Path,actor)
+	
+	
+	for {set i 0} {$i<$numberOfInputPoints} {incr i 1} {
+	    Model(${m}Land,aSplineX) AddPoint $i $Model(${m}Land,$i,x)
+	    Model(${m}Land,aSplineY) AddPoint $i $Model(${m}Land,$i,y)
+	    Model(${m}Land,aSplineZ) AddPoint $i $Model(${m}Land,$i,z)
+	    Model(${m}Land,inputPoints) InsertPoint $i $Model(${m}Land,$i,x) $Model(${m}Land,$i,y) $Model(${m}Land,$i,z)
 	}
-
-	# Add ID to idList
-	set i $Array(nextID)
-	incr Array(nextID)
-	lappend Array(idList) $i
-
-	# Put the None volume at the end
-	if {$nodeType == "Volume"} {
-		set j [lsearch $Volume(idList) $Volume(idNone)]
-		set Volume(idList) "[lreplace $Volume(idList) $j $j] $Volume(idNone)"
-	}
-
-	# Create vtkMrmlNode
-	set n ${nodeType}($i,node)
-
-	vtkMrml${nodeType}Node $n
-	$n SetID $i
-
-	# Add node to tree
-	Mrml($tree) InsertBeforeItem $nodeBefore $n
-
-	# Return node
-	return ${nodeType}($i,node)
+	set Path(landmarkExists) 1
+	
+	EndoscopicComputePath $m
+    }
 }
+
+
+
+

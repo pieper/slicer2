@@ -75,7 +75,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.29 $} {$Date: 2001/01/11 18:48:37 $}]
+		{$Revision: 1.30 $} {$Date: 2001/02/14 23:11:32 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""
@@ -228,9 +228,9 @@ proc MainModelsShouldBeAVtkClass {m} {
 	    # For now, the back face color is the same as the front
 	    Model($m,actor,$r) SetBackfaceProperty $Model($m,prop,$r)
 	}
-
 	set Model($m,clipped) 0
 	set Model($m,displayScalarBar) 0
+
 }
 
 #-------------------------------------------------------------------------------
@@ -808,7 +808,6 @@ proc MainModelsSetOpacity {m {value ""}} {
 	    }
 	}
 	Model($m,node) SetOpacity $Model($m,opacity)
-        
 	$Model($m,prop,viewRen) SetOpacity [Model($m,node) GetOpacity]
 	
 	# If this is the active model, update GUI

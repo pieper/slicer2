@@ -68,7 +68,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
         set m MainView
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.24 $} {$Date: 2001/01/11 18:48:38 $}]
+		{$Revision: 1.25 $} {$Date: 2001/02/14 23:11:32 $}]
 
 	set View(viewerHeightNormal) 656
 	set View(viewerWidth)  956 
@@ -81,7 +81,6 @@ viewMode='Normal' viewBgColor='Blue'"
 
 	# Configurable
 	set View(mode) Normal
-	# Changed by Delphine
 	set View(viewerWidth)  768 
 	set View(viewerHeight) 700 
 	set View(toolbarPosition) Top
@@ -441,10 +440,8 @@ proc MainViewLightFollowCamera {} {
 		eval $currentLight SetPosition   [$View(viewCam) GetPosition]
 		eval $currentLight SetFocalPoint [$View(viewCam) GetFocalPoint]
 	}
-
-	puts "[$currentLight GetPosition]"
-	puts "[$currentLight GetFocalPoint]"
     }
+
 
 
 #-------------------------------------------------------------------------------

@@ -76,7 +76,7 @@ proc DataInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.29 $} {$Date: 2001/01/11 18:48:41 $}]
+		{$Revision: 1.30 $} {$Date: 2001/02/14 23:11:33 $}]
 
 	set Data(index) ""
 	set Data(clipboard) ""
@@ -89,7 +89,7 @@ proc DataInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc DataUpdateMRML {} {
-	global Gui Model Slice Module Color Volume Label
+	global Gui Model Slice Module Color Volume Label 
 
 	# List of nodes
 	DataDisplayTree
@@ -331,6 +331,10 @@ proc DataDisplayTree {{index end}} {
 				set name [$node GetContents]
 				set line "Options: $name"
 			}
+			vtkMrmlLandmarkNode {
+			    set name [$node GetName]
+			    set line "Landmark: camera XYZ = [$node GetXYZ], focalPoint XYZ =[$node GetFXYZ], position = [$node GetPathPosition], id = [$node GetID]"
+			}
 			default {
 				set name [$node GetName]
 				set desc [$node GetDescription]
@@ -339,7 +343,8 @@ proc DataDisplayTree {{index end}} {
 		}
 		
 		if {$class == "vtkMrmlEndTransformNode" || \
-		    $class == "vtkMrmlEndFiducialsNode" } {
+		    $class == "vtkMrmlEndFiducialsNode" || \
+		    $class == "vtkMrmlEndPathNode" } {
 			set depth [expr $depth - 1]
 		}
 
@@ -350,6 +355,7 @@ proc DataDisplayTree {{index end}} {
 		$Data(fNodeList) insert end ${tabs}$line
 
 		if {$class == "vtkMrmlTransformNode" || \
+	            $class == "vtkMrmlPathNode" || \
 		    $class == "vtkMrmlFiducialsNode" } {
 			incr depth
 		}

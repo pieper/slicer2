@@ -72,7 +72,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-		{$Revision: 1.36 $} {$Date: 2001/01/11 18:48:37 $}]
+		{$Revision: 1.37 $} {$Date: 2001/02/14 23:11:32 $}]
 
 	set Mrml(filePrefix) data
 	set Mrml(colorsUnsaved) 0
@@ -148,7 +148,7 @@ proc MainMrmlPrint {tags} {
 		set tag  [lindex $pair 0]
 		set attr [lreplace $pair 0 0]
 
-		# Process EndTransform & EndFiducials
+		# Process EndTransform & EndFiducials & EndPath
 		if {$tag == "EndTransform" || $tag == "EndFiducials" || $tag == "EndPath"} {
 			set level [expr $level - 1]
 		}
@@ -237,6 +237,55 @@ proc MainMrmlAddNode {nodeType} {
 
 	# Add node to tree
 	Mrml($tree) AddItem $n
+
+	# Return node
+	return ${nodeType}($i,node)
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlInsertBeforeNode
+#
+#  Adds a node to the data tree right after NodeBefore
+#  Returns the MrmlMode
+# 
+# .ARGS
+#  str nodeType the type of node, \"Volume\", \"Color\", etc.
+# .END
+#-------------------------------------------------------------------------------
+proc MainMrmlInsertBeforeNode {nodeBefore nodeType} {
+	global Mrml Model Volume Color Transform EndTransform Matrix Options
+	global TransferFunction WindowLevel TFPoint ColorLUT 
+	global Fiducials EndFiducials Point 
+        global Path EndPath Landmark Array 
+    
+
+	upvar $nodeType Array
+
+	set tree "dataTree"
+	if {$nodeType == "Color"} {
+		set tree "colorTree"
+	}
+
+	# Add ID to idList
+	set i $Array(nextID)
+	incr Array(nextID)
+	lappend Array(idList) $i
+
+	# Put the None volume at the end
+	if {$nodeType == "Volume"} {
+		set j [lsearch $Volume(idList) $Volume(idNone)]
+		set Volume(idList) "[lreplace $Volume(idList) $j $j] $Volume(idNone)"
+	}
+
+	# Create vtkMrmlNode
+	set n ${nodeType}($i,node)
+
+	vtkMrml${nodeType}Node $n
+	$n SetID $i
+
+	# Add node to tree
+	Mrml($tree) InsertBeforeItem $nodeBefore $n
 
 	# Return node
 	return ${nodeType}($i,node)

@@ -52,7 +52,7 @@ proc MainViewerInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainViewer \
-		{$Revision: 1.15 $} {$Date: 2001/01/11 18:48:39 $}]
+		{$Revision: 1.16 $} {$Date: 2001/02/14 23:11:33 $}]
 
         # Props
 	set Gui(midHeight) 1
@@ -275,7 +275,7 @@ proc MainViewerUserResize {} {
 
 	regexp {([^x]*)x([^\+]*)} [wm geometry .tViewer] match w h
 
-	if {$View(mode) == "3D"} {
+    	if {$View(mode) == "3D"} {
 		# Find the smallest dimension
 		set d $w
 		if {$h < $w} {
@@ -286,6 +286,7 @@ proc MainViewerUserResize {} {
 			set View(viewerHeight) $h
 			$Gui(fViewWin) config \
 				-width $View(viewerWidth) -height $View(viewerHeight)
+		    MainViewerAddViewsSeparation $View(viewerWidth) $View(viewerHeight)
 		}
 	} elseif {$View(mode) == "Normal"} {
 		set View(viewerHeightNormal) [expr $h - 256 - $Gui(midHeight)]
@@ -327,16 +328,25 @@ proc MainViewerAddViewsSeparation {p1 p2} {
 	global Gui View
     
     if { $View(EndoscopicViewOn) == 1 } {
+	Gui(viewport,actor) SetVisibility 1
 	Gui(viewport,source) SetPoint1 [expr ($p1 / 2) - 2] $p2 0
 	Gui(viewport,source) SetPoint2 [expr ($p1/ 2) - 2] 0 0
     } else {
 	# make the separation invisible by putting it on the border of the
 	# MainView window
-	Gui(viewport,source) SetPoint1 $p1 $p2 0
-	Gui(viewport,source) SetPoint2 $p1 0 0
+	Gui(viewport,actor) SetVisibility 0
+	#Gui(viewport,source) SetPoint1 $p1 $p2 0
+	#Gui(viewport,source) SetPoint2 $p1 0 0
     }
 }
  
+
+#-------------------------------------------------------------------------------
+# .PROC MainViewerSetEndoscopicViewOn
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MainViewerSetEndoscopicViewOn {} {
 
     global View
@@ -393,9 +403,8 @@ proc MainViewerSetMode {{mode ""}} {
 		$Gui(fSl0Win)  config -width 256 -height 256
 		$Gui(fSl1Win)  config -width 256 -height 256
 		$Gui(fSl2Win)  config -width 256 -height 256
-		$Gui(fViewWin) config -width $View(viewerWidth) -height $View(viewerHeightNormal)
+		$Gui(fViewWin) config -width 768 -height $View(viewerHeightNormal)
 
-	        # Delphine
 	        MainViewerAddViewsSeparation $View(viewerWidth) $View(viewerHeightNormal)
 
 		# Do NOT show the thumbnails on top of the slice images
@@ -465,7 +474,7 @@ proc MainViewerSetMode {{mode ""}} {
 		pack $f.fSlice0 $f.fViewWin -in $Gui(fTop) -side left -anchor n
 		pack $f.fSlice1 $f.fSlice2  -in $Gui(fBot) -side left -anchor w
 
-		wm geometry .tViewer 1000x1000
+		wm geometry .tViewer 768x768
 		wm resizable .tViewer 0 0
 		$Gui(fViewWin) config -width 256 -height 256
 		$Gui(fSl0Win)  config -width 512 -height 512
@@ -505,6 +514,7 @@ proc MainViewerSetMode {{mode ""}} {
 		Slicer SetDouble $s 1
 		Slicer SetCursorPosition $s 256 256
 	}
+	
 	Slicer Update
 }
 

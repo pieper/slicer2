@@ -338,7 +338,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.50 $} {$Date: 2001/01/11 18:48:34 $}]
+		{$Revision: 1.51 $} {$Date: 2001/02/14 23:11:31 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -819,8 +819,13 @@ proc MainUpdateMRML {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainAddActor {actor}
+#  Use this method if you want to add an actor that IS NOT A MODEL
+#  If your actor is a model, use MainAddModelActor
 #
 #  With this procedure, the actor is added  to all existing Renderers
+#  If you want to add your actor to a specific renderer, for example viewRen 
+#  use the vtk call:
+#          viewRen AddActor $actor
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -836,7 +841,13 @@ proc MainAddActor { a } {
 #-------------------------------------------------------------------------------
 # .PROC MainAddModelActor {modelID}
 #
-#  With this procedure, a different actor for the same model is added to each existing Renderer
+#  Use this method if you want to add an actor that is a model.
+#  
+#  With this procedure, a different actor for the same model is added to each 
+#  existing Renderer. 
+#  This allows each renderer to display the same models with different 
+#  properties (ie we want the bladder to be visible in the Endoscopic
+#  View, but not the MainView)
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
