@@ -61,14 +61,6 @@ set ::CMAKE_PATH $::SLICER_LIB/CMake-build
 set ::GSL_LIB_DIR $::SLICER_LIB/gsl/lib
 set ::GSL_INC_DIR $::SLICER_LIB/gsl/include
 
-##
-# my custom configuration:
-#
-set ::TCL_BIN_DIR c:/Tcl/bin
-set ::TCL_LIB_DIR c:/Tcl/lib
-set ::TCL_INCLUDE_DIR c:/Tcl/include
-set ::CMAKE_PATH "c:/Program Files/CMake20"
-
 ## system dependent variables
 
 switch $tcl_platform(os) {
