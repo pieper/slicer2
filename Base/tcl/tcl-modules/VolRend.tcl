@@ -70,7 +70,7 @@ proc VolRendInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.2 $} {$Date: 2001/07/03 16:11:37 $}]
+	    {$Revision: 1.3 $} {$Date: 2001/07/06 19:50:54 $}]
 
     set Module($m,row1List) "Help Settings Transfer"
     set Module($m,row1Name) "{Help} {Settings} {Transfer Functions}"
@@ -125,8 +125,41 @@ proc VolRendBuildGUI {} {
     # Write the "help" in the form of psuedo-html.  
     # Refer to the documentation for details on the syntax.
     #
+#    set help "
+#    The VolRend module is under heavy development."
+
     set help "
-    The VolRend module is under heavy development."
+Volume rendering using available VTK classes.
+<P>
+Description by tabs:
+  <P><B>Settings:</B>
+  <UL>
+    <LI>Ref Volume: the volume used for rendering
+    <LI>Sample distance: sample distance along the ray. The smaller, the result looks
+ better, but the calculation takes much more time.
+    <LI>Hide Volume on Module Exit: since volume rendering is a very time consuming
+ process, the volume should be rendered only if it is really necessary.
+    <LI>Interpolation: nearest neighbor or linear
+    <LI>Volume rendering methods: Composite, MIP (maximum intensity projection),
+ Isosurface.
+  </UL>
+  <P><B>Transfer functions:</B><BR>
+ Transfer functions play a crucial role in the rendering process. Along the ray,
+ at every position, the given voxel value will be turned into a color and opacity
+ value according to these. These functions are defined by the values at given
+ positions and linear interpolation is used between them.<BR>
+  <UL>
+    <LI>Scalar Opacity Box: defines the function which assigns the opacity value
+ for a given voxel value
+    <LI>Color Transfer Box: defines the function which assigns the color value
+ for a given voxel value
+    <LI>Gradient Opacity Box: at every position, the gradient is calculated, and the
+ value of this function is multiplied by the Scalar Opacity value to get the
+ final opacity value.
+  </UL>
+"
+
+
     regsub -all "\n" $help {} help
     MainHelpApplyTags VolRend $help
     MainHelpBuildGUI VolRend
@@ -740,7 +773,7 @@ proc VolRendReadTransferFunctions {} {
     $VolRend(ColorTransferBox) insert insert "end"
 
     $VolRend(GradientOpacityBox) delete 1.0 end
-    $VolRend(GradientOpacityBox) insert insert "ColorTransferBox\n"
+    $VolRend(GradientOpacityBox) insert insert "GradientOpacityBox\n"
     if {[info exists node(GradientOpacityTransferFunction)] == "1"} {
 	foreach {gradient value} $node(GradientOpacityTransferFunction) {
 	    $VolRend(GradientOpacityBox) insert insert "$gradient $value\n"
@@ -856,7 +889,7 @@ proc VolRendRecallPresets {p} {
     $VolRend(ColorTransferBox) insert insert "end"
 
     $VolRend(GradientOpacityBox) delete 1.0 end
-    $VolRend(GradientOpacityBox) insert insert "ColorTransferBox\n"
+    $VolRend(GradientOpacityBox) insert insert "GradientOpacityBox\n"
     if {[info exists Preset(VolRend,$p,gradientOpacityTransferFunction)] == "1"} {
 	foreach {gradient value} $Preset(VolRend,$p,gradientOpacityTransferFunction) {
 	    $VolRend(GradientOpacityBox) insert insert "$gradient $value\n"
