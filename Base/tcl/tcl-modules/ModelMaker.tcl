@@ -83,7 +83,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.47 $} {$Date: 2004/04/13 21:00:08 $}]
+        {$Revision: 1.48 $} {$Date: 2004/06/24 21:54:25 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -790,7 +790,7 @@ proc ModelMakerSmooth {m iterations} {
     } else {
         # Laplacian
         vtkSmoothPolyDataFilter $p
-    # This next line massively rounds corners
+        # This next line massively rounds corners
         $p SetRelaxationFactor .33
         $p SetFeatureAngle 60
         $p SetConvergence 0
@@ -1032,6 +1032,10 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     if { $ModelMaker(UseSinc) == 1} {
         vtkWindowedSincPolyDataFilter smoother
         smoother SetPassBand .1
+        if { $smoothIterations == 1 } {
+            DevWarningWindow "Smoothing value of 1 not allowed for Sinc filter.  Using 2 smoothing iterations."
+            set smoothIterations 2
+        }
     } else {
         vtkSmoothPolyDataFilter smoother
     # This next line massively rounds corners
