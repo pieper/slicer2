@@ -28,14 +28,16 @@
 #   VolumeMathEnter
 #   VolumeMathExit
 #   VolumeMathSetMathType
+#   VolumeMathSetLogicType
 #   VolumeMathPrepareResultVolume
 #   VolumeMathPrepareResult
 #   VolumeMathDoMath
+#   VolumeMathDoLogic
 #   VolumeMathDoSubtract
 #   VolumeMathDoAdd
 #   VolumeMathDoHausdorff
 #   VolumeMathDoDistMap
-#   VolumeMathDoAbs
+#   VolumeMathDoAnd
 #   VolumeMathDoResample
 #   VolumeMathCount
 #==========================================================================auto=
@@ -125,7 +127,7 @@ proc VolumeMathInit {} {
 	#   appropriate info when the module is checked in.
 	#   
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.19 $} {$Date: 2002/01/11 22:00:52 $}]
+		{$Revision: 1.20 $} {$Date: 2002/01/13 22:25:43 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -656,6 +658,12 @@ proc VolumeMathSetMathType {} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathSetLogicType
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc VolumeMathSetLogicType {} {
 
     global Module VolumeMath
@@ -763,6 +771,12 @@ proc VolumeMathDoMath {} {
     MainVolumesUpdate $v3
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathDoLogic
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc VolumeMathDoLogic {} {
 	global VolumeMath Volume
 

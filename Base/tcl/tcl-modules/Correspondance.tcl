@@ -24,11 +24,14 @@
 # PROCEDURES:  
 #   CorrespondanceInit
 #   CorrespondanceBuildGUI
-#   CorrespondanceEnter
-#   CorrespondanceExit
+#   CorrespondanceCreateModelGUI widget int
+#   CorrespondanceConfigScrolledGUI canvasScrolledGUI fScrolledGUI
+#   CorrespondanceDeleteModelGUI widget int
 #   CorrespondanceUpdateGUI
-#   CorrespondanceProcessCorrespond
 #   CorrespondanceCorrespondSurfaces
+#   CorrespondanceCorrespondSurfaces
+#   CorrespondanceMatchSurface
+#   CorrespondanceMatchSurface
 #==========================================================================auto=
 
 
@@ -124,7 +127,7 @@ proc CorrespondanceInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.2 $} {$Date: 2002/01/10 20:15:21 $}]
+		{$Revision: 1.3 $} {$Date: 2002/01/13 22:25:08 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -412,6 +415,12 @@ proc CorrespondanceUpdateGUI {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC CorrespondanceCorrespondSurfaces
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc CorrespondanceCorrespondSurfaces {} {
     global Correspondance Model Mrml
 
@@ -471,6 +480,12 @@ proc CorrespondanceCorrespondSurfaces {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC CorrespondanceMatchSurface
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc CorrespondanceMatchSurface {m} {
 	global Correspondance Model Volume Module
 
