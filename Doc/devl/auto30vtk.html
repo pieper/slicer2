@@ -1,18 +1,73 @@
-<title>Build VTK</title>
+<title>Build Slicer</title>
 
 <p> These instructions are for Unix/Linux machines, but doing basically the same thing under Windows will also work.
 
 <p>
-Make sure that Tcl and Tk are installed on your machine.  They can be downloaded from
-<a href="http://dev.scriptics.com/software/tcltk/">http://dev.scriptics.com/software/tcltk/</a>.
+Make sure that Tcl and Tk are installed on your machine.  They can be downloaded from <a href="http://aspn.activestate.com/ASPN/Tcl">http://aspn.activestate.com/ASPN/Tcl</a> (includes incrTcl and IWidgets)
 Any tcl/tk version greater than 8.3 should work fine. 
 <p>
 Obtain the VTK (Visualization Toolkit) source code.  It can be downloaded from 
 <a href="http://public.kitware.com/">http://public.kitware.com/</a>.
-We are currently developing with <a href="http://public.kitware.com/VTK/files/release/3.2/">vtk3.2</a> (release version).
+We are currently developing with <a href="http://public.kitware.com/VTK/files/release/4.0/">vtk4.0</a> (release version).
 
 <p> The classes that Slicer adds to VTK are found in the directory
-slicer/vtksrc.  In order to compile our code with VTK, copy all files
+slicer2/Base/cxx. 
+<p>
+<b>1. Get Slicer2</b><br>
+You will need to check the source code out from CVS in order to get the latest version:
+<pre><p class=code>setenv CVSROOT :pserver:anonymous@cvs.spl.harvard.edu:/projects/cvs/slicer<br>
+  cvs login<br>
+  cvs co slicer2</p></pre>
+Replace anonymous with your user name if you have one.
+<p>
+<b>2. Compile Slicer2</b><br>
+
+<pre><p class=code>cd slicer2/Base/builds<br>
+  mkdir my-os<br>
+  cd slicer2/Base/builds/my-os<br>
+  ccmake -i ../../<br>
+  make</p></pre>
+Replace my-os with the name of your operating system, ie solaris or linux.<br>
+You will need to point ccmake to either the installed or the built versions of vtk4.0. At the SPL you can use /local/os/src/vtk-4.0 for the VTK_BINARY_PATH, as it has been built in the proper configuration (configured with tcl, tkwidget, patented, local, and shared). Make sure WRAP_TCL is set to ON. Once you're happy with your settings, you will need to type c to configure (repeate until all fields are filled in) and then g to generate make files.<br>
+ccmake writes a file called CMakeCache.txt. If you have errors using
+ccmake or compiling you may wish to edit that file directly, and
+then simply run "cmake", which will read the file.  However, it is
+often better to erase all subdirectories and start again.
+
+<p>
+<b>3. Running the Slicer</b><br>
+Edit the file slicer2/slicer and change the following lines:
+<pre><p class=code>setenv SLICER_HOME /path_to_slicer2/slicer2<br>
+   setenv LD_LIBRARY_PATH ${SLICER_HOME}/Base/builds/my-os/bin<br>
+setenv TCL_LIBRARY /path_to_lib/tcl8.3<br>
+setenv TK_LIBRARY /path_to_lib/tk8.3<br>
+setenv TCLLIBPATH "${SLICER_HOME}/Base/Wrapping/Tcl/vtkSlicerBase /usr/local/src/vtk4/VTK/Wrapping/Tcl ${TCLLIBPATH}"
+</pre>
+You will need to change the Tcl and Tk library variables to point to the directories that contain the library files (at the SPL, these are currently found in /local/os/lib/)
+
+<p>
+<b>4. Running Tests of the slicer code</b><br>
+You need to have downloaded VTK4 data.<br>
+Set the following environment variables appropriately:
+<pre><p class=code>
+ setenv SLICER_HOME /path_to_slicer2/slicer2<br>
+ setenv TCL_LIBRARY /path_to_lib/tcl8.3<br>
+ setenv TK_LIBRARY  /path_to_lib/tk8.3<br>
+ setenv VTK_DATA_ROOT /projects/VTKData/<br>
+ setenv LD_LIBRARY_PATH ${SLICER_HOME}/Base/builds/my-os/bin:${LD_LIBRARY_PATH}<br>
+ setenv TCLLIBPATH "${SLICER_HOME}/Base/Wrapping/Tcl/vtkSlicerBase /usr/local/src/vtk4/VTK/Wrapping/Tcl"
+</p></pre>
+ To run "TestImageCloseUp2D.tcl" for example, do the following:
+<pre><p class=code>
+ cd ${SLICER_HOME}/Base/tests<br>
+ vtk TestImageCloseUp2D.tcl
+</p></pre>
+
+
+<h3>Slicer versions below 2.0</h3>
+
+The classes that Slicer adds to VTK are found in the directory
+slicer/vtksrc. In order to compile our code with VTK, copy all files
 from this directory into the vtk/local directory. (This is the
 directory provided by Kitware for local development.)
 
@@ -37,8 +92,9 @@ Or edit the slicer script so that it will find your files.
 
 <h3>Matching Versions of VTK and Slicer</h3>
 <p>
-The current and release-1_2_3-02_25_2002 tagged versions of Slicer that can be obtained through CVS work with <a href="http://public.kitware.com/VTK/files/release/3.2/">VTK 3.2</a>.<br>
-The 1.3.0 version of Slicer that can be obtained through the ftp site works with <a href="http://public.kitware.com/VTK/files/release/3.2/">VTK 3.2</a>. This version was built from the source code tagged with release-1_2_3-02_25_2002.<br>
+The current CVS version of slicer2 works with <a href="http://public.kitware.com/VTK/files/release/4.0/">VTK 4.0</a>.<br>
+
+The 1.3.* versions of Slicer that can be obtained through the ftp site work with <a href="http://public.kitware.com/VTK/files/release/3.2/">VTK 3.2</a>. This version was built from the source code tagged with release-1_2_3-02_25_2002.<br>
 the 1.2.2 version on the ftp site works with VTK 3.1, which Kitware no longer distributes.
 <p>
 If you are working in the SPL at Brigham and Women's, there are a few compiled versions on the Solaris system to which you have access:
