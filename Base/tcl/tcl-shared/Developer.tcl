@@ -313,7 +313,7 @@ proc DevAddSelectButton { TabName f aLabel message pack {tooltip ""} \
 
     if {$pack == "Pack"} {
         if {$message != ""} {pack $Label -side left -padx $Gui(pad) -pady 0} 
-        pack $menubutton -side left -padx $Gui(pad) -pady 0 
+        pack $menubutton -side left -padx $Gui(pad) -pady $Gui(pad) 
     } else {
         if {$message != ""} { grid $Label -sticky e -padx $Gui(pad) -pady $Gui(pad)}
         grid $menubutton -sticky e -padx $Gui(pad) -pady $Gui(pad)
