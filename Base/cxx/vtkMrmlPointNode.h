@@ -57,13 +57,23 @@ public:
   vtkSetVector3Macro(XYZ,float);
   vtkGetVectorMacro(XYZ,float,3);
 
+  // Description:
+  // Get/Set for endoscopic point
+  vtkSetVector3Macro(FXYZ,float);
+  vtkGetVectorMacro(FXYZ,float,3);
+  
+  vtkSetMacro(Index,int);
+  vtkGetMacro(Index,int);
+
 protected:
   vtkMrmlPointNode();
   ~vtkMrmlPointNode();
   vtkMrmlPointNode(const vtkMrmlPointNode&) {};
   void operator=(const vtkMrmlPointNode&) {};
 
+  int Index;
   float XYZ[3];
+  float FXYZ[3];
 };
 
 #endif
