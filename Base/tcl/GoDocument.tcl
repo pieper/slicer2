@@ -31,8 +31,20 @@ source [file join [file join $prog tcl-main] Comment.tcl]
 source [file join [file join $prog tcl-main] Document.tcl]
 
 # Run
-if {$argv == ""} {
-    set argv "doc tcl"
+if {$::verbose} {
+    puts "argv = $argv"
 }
-DocumentAll $prog $outputdir $argv
+
+# change in the calling sequence, assumes you want to do both tcl and docs unless otherwise specified
+set what ""
+if {$::doTclFlag} {
+    lappend what tcl
+}
+if {$::doDocFlag} {
+    lappend what doc
+}
+if {$::verbose} {
+    puts "what = $what, modulename = $::moduleName"
+}
+DocumentAll $prog $outputdir $what $::moduleName
 # exit
