@@ -1,4 +1,3 @@
-
 /*=auto=========================================================================
 
 (c) Copyright 2001 Massachusetts Institute of Technology
@@ -440,6 +439,76 @@ void vtkMrmlVolumeNode::SetScanOrder(char *s)
   }
 }
 
+
+// This function solves the 4x4 matrix equation
+// A*B=C for the unknown matrix B, given matrices A and C.
+// While this is equivalent to B=Inverse(A)*C, this function uses
+// faster and more accurate methods (LU factorization) than finding a 
+// matrix inverse and multiplying.  Returns 0 on failure.
+//----------------------------------------------------------------------------
+static int SolveABeqCforB(vtkMatrix4x4 * A,  vtkMatrix4x4 * B,
+  vtkMatrix4x4 * C)
+{
+  double *a[4],*ct[4];
+  double ina[16],inct[16];
+  int ret,i,j,index[4];
+  for(i=0;i<4;i++)
+  {
+    a[i]=ina+4*i;
+    ct[i]=inct+4*i;
+    for(j=0;j<4;j++) 
+    {
+      a[i][j]=A->GetElement(i,j);
+      ct[i][j]=C->GetElement(j,i);
+    }
+  }
+  ret=vtkMath::LUFactorLinearSystem(a,index,4);
+  if (ret)
+  {
+    for(i=0;i<4;i++)
+      vtkMath::LUSolveLinearSystem(a,index,ct[i],4);
+    for(i=0;i<4;i++)
+      for(j=0;j<4;j++)
+        B->SetElement(i,j,floor(ct[j][i]*1e10+0.5)*(1e-10));
+  }
+  return(ret);
+}
+
+
+// This function solves the 4x4 matrix equation
+// A*B=C for the unknown matrix A, given matrices B and C.
+// While this is equivalent to A=C*Inverse(B), this function uses
+// faster and more accurate methods (LU factorization) than finding a 
+// matrix inverse and multiplying.  Returns 0 on failure.
+//----------------------------------------------------------------------------
+static int SolveABeqCforA(vtkMatrix4x4 * A,  vtkMatrix4x4 * B,
+  vtkMatrix4x4 * C)
+{
+  double *a[4],*ct[4];
+  double ina[16],inct[16];
+  int ret,i,j,index[4];
+  for(i=0;i<4;i++)
+  {
+    a[i]=ina+4*i;
+    ct[i]=inct+4*i;
+    for(j=0;j<4;j++) 
+    {
+      a[i][j]=B->GetElement(j,i);
+      ct[i][j]=C->GetElement(i,j);
+    }
+  }
+  ret=vtkMath::LUFactorLinearSystem(a,index,4);
+  if (ret)
+  {
+    for(i=0;i<4;i++)
+      vtkMath::LUSolveLinearSystem(a,index,ct[i],4);
+    for(i=0;i<4;i++)
+      for(j=0;j<4;j++)
+        A->SetElement(i,j,floor(ct[i][j]*1e10+0.5)*(1e-10)); 
+  }
+  return(ret);
+}
+
 //----------------------------------------------------------------------------
 void vtkMrmlVolumeNode::SetRasToWld(vtkMatrix4x4 *rasToWld)
 {
@@ -458,29 +527,13 @@ void vtkMrmlVolumeNode::SetRasToWld(vtkMatrix4x4 *rasToWld)
   }
   SetMatrixToString(this->Position, this->PositionMatrix);
 
-  // Form WldToIjk matrix to pass to reformatter
-  // --------------------------------------------
-
-  // Form  wldToIjk = RasToIjk * WldToRas 
-  //                = RasToIjk * Inv(RasToWld)
-
-	// Set the vtkTransform to PostMultiply so a concatenated matrix, C,
-	// is multiplied by the existing matrix, M, to form M`= C*M (not M*C)
-  vtkTransform *transform = vtkTransform::New();
-  transform->PostMultiply();
-
-  // Invert RasToWld and concatenate it onto the WldToIjk.
-  transform->SetMatrix(*rasToWld);
-  transform->Inverse();
- 
-  transform->Concatenate(this->RasToIjk);
+  // Form WldToIjk matrix to pass to reformatter, by
+  // solving WldToIjk*RasToWld=RasToIjk for WldToIjk
+  // -----------------------------------------------
+  SolveABeqCforA(this->WldToIjk,rasToWld,this->RasToIjk);
   
-  transform->GetMatrix(this->WldToIjk);
-  // This line is necessary after the transform->GetMatrix call
-  // to force reformatters to update
+  // This line is necessary to force reformatters to update.
   this->WldToIjk->Modified();
-  
-  transform->Delete();
 }
 
 //----------------------------------------------------------------------------
@@ -560,26 +613,6 @@ void vtkMrmlVolumeNode::PrintSelf(ostream& os, vtkIndent indent)
     for(idx = 0; idx < DICOMFiles; idx++)
       os << indent << DICOMFileList[idx] << "\n";
   // End
-}
-
-//----------------------------------------------------------------------------
-static void Normalize(float *a)
-{
-	float d = sqrt(a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);
-
-	if (d == 0) return;
-	a[0] = a[0] / d;
-	a[1] = a[1] / d;
-	a[2] = a[2] / d;
-}
-
-// Cross a = b x c 
-//----------------------------------------------------------------------------
-static void Cross(float *a, float *b, float *c)
-{
-  a[0] = b[1]*c[2] - c[1]*b[2];
-  a[1] = c[0]*b[2] - b[0]*c[2];
-  a[2] = b[0]*c[1] - c[0]*b[1];
 }
 
 //----------------------------------------------------------------------------
@@ -666,28 +699,6 @@ void vtkMrmlVolumeNode::ComputeRasToIjkFromScanOrder(char *order)
   this->ComputeRasToIjkFromCorners(NULL,ftl,ftr,fbr,NULL,ltl);
 }
 
-// vtkMatrix4x4::Invert is unstable.
-// This function just calls the more stable vtkMath::InvertMatrix
-// In and Out can point to the same vtkMatrix4x4.
-//----------------------------------------------------------------------------
-int StableInvert(vtkMatrix4x4 * In, vtkMatrix4x4 * Out)
-{
-  double *in[4],*out[4];
-  double indata[16],outdata[16];
-  int ret,i,j;
-  for(i=0;i<4;i++)
-    {
-    in[i]=indata+4*i;
-    out[i]=outdata+4*i;
-    for(j=0;j<4;j++) in[i][j]=In->GetElement(i,j);
-    }
-  ret=vtkMath::InvertMatrix(in,out,4);
-  if (ret)
-    for(i=0;i<4;i++)
-      for(j=0;j<4;j++)
-        Out->SetElement(i,j,out[i][j]);
-  return(ret);
-}
 
 //----------------------------------------------------------------------------
 int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
@@ -700,21 +711,17 @@ int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
   // which has in its columns the homogeneous RAS coordinates of four
   // corners of the data volume.  We then create another matrix called
   // Ijk, which has in its columns the IJK coordinates of those same four
-  // corners.  Then since the conversion matrix RasToIjk satisfies the
-  // equation RasToIjk*Ras=Ijk, we find RasToIjk using the formula
-  // RasToIjk=Ijk*Inverse(Ras). 
+  // corners.  We then solve for RasToIjk in the equation RasToIjk*Ras=Ijk.
 
-  float ScanDir[3],XDir[3],YDir[3],Corners[3][4];
+  float ScanDir[3],XDir[3],YDir[3],Corners[3][4],tmp,offset;
   int i,j,nx,ny,nz;
-
-  vtkMatrix4x4 *Ijk = vtkMatrix4x4::New();
-  vtkMatrix4x4 *Vtk;
-  vtkMatrix4x4 *Ras = vtkMatrix4x4::New();
-  vtkMatrix4x4 *InvRas = vtkMatrix4x4::New();
-  vtkMatrix4x4 *RasToIjk = vtkMatrix4x4::New();
-  vtkMatrix4x4 *RasToVtk = vtkMatrix4x4::New();
-  vtkMatrix4x4 *ScaleMat = vtkMatrix4x4::New();
-  vtkMatrix4x4 *Position = vtkMatrix4x4::New();
+  vtkMatrix4x4 *Ijk_ = vtkMatrix4x4::New();
+  vtkMatrix4x4 *Vtk_; // Just a pointer, no Delete() required.
+  vtkMatrix4x4 *Ras_ = vtkMatrix4x4::New();
+  vtkMatrix4x4 *RasToIjk_ = vtkMatrix4x4::New();
+  vtkMatrix4x4 *RasToVtk_ = vtkMatrix4x4::New();
+  vtkMatrix4x4 *InvScale_ = vtkMatrix4x4::New();
+  vtkMatrix4x4 *Position_ = vtkMatrix4x4::New();
 
   nx = this->Dimensions[0];  // pixel columns in an image (x direction)
   ny = this->Dimensions[1];  // pixel rows in an image (y direction)
@@ -727,14 +734,12 @@ int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
   {
     // (We probably have read a no-header image)
     // Clean up
-    Ijk->Delete();
-    // Vtk->Delete();  We shouldn't have a Delete() for Vtk
-    Ras->Delete();
-    InvRas->Delete();
-    RasToIjk->Delete();
-    RasToVtk->Delete();
-    ScaleMat->Delete();
-    Position->Delete();
+    Ijk_->Delete();
+    Ras_->Delete();
+    RasToIjk_->Delete();
+    RasToVtk_->Delete();
+    InvScale_->Delete();
+    Position_->Delete();
     return(-1);
   }
 
@@ -765,22 +770,21 @@ int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
       (ScanDir[2]==0.0)))
   {
     // Zero slice thickness is a failure
-    if (this->Spacing[2]<=0.0) 
+    if (this->Spacing[2]<=0.0)
     {
       // Clean up
-      Ijk->Delete();
-      // Vtk->Delete();  We shouldn't have a Delete() for Vtk
-      Ras->Delete();
-      InvRas->Delete();
-      RasToIjk->Delete();
-      RasToVtk->Delete();
-      ScaleMat->Delete();
-      Position->Delete();
+      Ijk_->Delete();
+      Ras_->Delete();
+      RasToIjk_->Delete();
+      RasToVtk_->Delete();
+      InvScale_->Delete();
+      Position_->Delete();
       return(-1);
     }
+
     // For single slice, set scan direction perpendicular to image.
-    Cross(ScanDir,XDir,YDir);
-    Normalize(ScanDir);
+    vtkMath::Cross(XDir,YDir,ScanDir);
+    vtkMath::Normalize(ScanDir);
     for (i=0;i<3;i++)
       {
       ScanDir[i]*=this->Spacing[2];
@@ -819,80 +823,84 @@ int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
   // Slicer's ijk coordinate origin is at a corner of the volume 
   // parallelepiped, not the center of the imaged voxel.
 
-  Ijk->Zero();
+  // This offset will be changed to 0.5 from 0.0 per 2/8/2002 Slicer 
+  // development meeting, to move ijk coordinates to voxel centers.
+  offset=0.0;
+
+  Ijk_->Zero();
   // ftl in Ijk coordinates
-  Ijk->SetElement(0,0,0.0);
-  Ijk->SetElement(1,0,0.0);  
-  Ijk->SetElement(2,0,0.5);  // Not 0.0
-  Ijk->SetElement(3,0,1.0);  
+  Ijk_->SetElement(0,0,0.0-offset);
+  Ijk_->SetElement(1,0,0.0-offset);  
+  Ijk_->SetElement(2,0,0.5-offset);  // Not 0.0
+  Ijk_->SetElement(3,0,1.0);  
   // ftr in Ijk coordinates
-  Ijk->SetElement(0,1,(float)nx);  
-  Ijk->SetElement(1,1,0.0);  
-  Ijk->SetElement(2,1,0.5);  // Not 0.0
-  Ijk->SetElement(3,1,1.0);  
+  Ijk_->SetElement(0,1,(float)nx-offset);  
+  Ijk_->SetElement(1,1,0.0-offset);  
+  Ijk_->SetElement(2,1,0.5-offset);  // Not 0.0
+  Ijk_->SetElement(3,1,1.0);  
   // fbr in Ijk coordinates
-  Ijk->SetElement(0,2,(float)nx);  
-  Ijk->SetElement(1,2,(float)ny);  
-  Ijk->SetElement(2,2,0.5);  // Not 0.0
-  Ijk->SetElement(3,2,1.0);  
+  Ijk_->SetElement(0,2,(float)nx-offset);  
+  Ijk_->SetElement(1,2,(float)ny-offset);  
+  Ijk_->SetElement(2,2,0.5-offset);  // Not 0.0
+  Ijk_->SetElement(3,2,1.0);  
   // ltl in Ijk coordinates
-  Ijk->SetElement(0,3,0.0);  
-  Ijk->SetElement(1,3,0.0);  
-  Ijk->SetElement(2,3,(float)(nz-1)+0.5); // Not nz-1
-  Ijk->SetElement(3,3,1.0);  
+  Ijk_->SetElement(0,3,0.0-offset);  
+  Ijk_->SetElement(1,3,0.0-offset);  
+  Ijk_->SetElement(2,3,(float)(nz-1)+0.5-offset); // Not nz-1
+  Ijk_->SetElement(3,3,1.0);  
 
   // Pack Ras matrix with "Corner Points"
-  Ras->Zero();
+  Ras_->Zero();
   for(j=0;j<4;j++)
   {
-    for(i=0;i<3;i++) Ras->SetElement(i,j,Corners[i][j]);
-    Ras->SetElement(3,j,1.0);
+    for(i=0;i<3;i++) Ras_->SetElement(i,j,Corners[i][j]);
+    Ras_->SetElement(3,j,1.0);
   }
-  Ras->SetElement(3,3,1.0);
+  Ras_->SetElement(3,3,1.0);
 
-  // Since RasToIjk*Ras=Ijk, RasToIjk=Ijk*inverse(Ras)
-  // Ras->Invert(Ras,InvRas); // Invert() is unstable
-  StableInvert(Ras,InvRas);
-  Ijk->Multiply4x4(Ijk,InvRas,RasToIjk);
+  // Solve RasToIjk*Ras=Ijk for RasToIjk.
+  SolveABeqCforA(RasToIjk_,Ras_,Ijk_);
 
   // Vtk coordinates differ from Ijk in the direction
   // of the j axis, i.e. Vtk=(i,ny-1-j,k)
-  Vtk=Ijk;  // Vtk was not created with New()
-  Vtk->SetElement(1,0,(float)ny);  // ftl
-  Vtk->SetElement(1,1,(float)ny);  // ftr
-  Vtk->SetElement(1,2,0);          // fbr
-  Vtk->SetElement(1,3,(float)ny);  // ltl
+  Vtk_=Ijk_;  // Vtk was not created with New()
+  Vtk_->SetElement(1,0,(float)ny-offset);  // ftl
+  Vtk_->SetElement(1,1,(float)ny-offset);  // ftr
+  Vtk_->SetElement(1,2,0.0-offset);        // fbr
+  Vtk_->SetElement(1,3,(float)ny-offset);  // ltl
   
-  // Since RasToVtk*Ras=Vtk, RasToVtk=Vtk*inverse(Ras)
-  Vtk->Multiply4x4(Vtk,InvRas,RasToVtk);
-  
+  // Solve RasToVtk*Ras=Vtk for RasToVtk.
+  SolveABeqCforA(RasToVtk_,Ras_,Vtk_);  
+
   // Figure out the "Position Matrix" which converts
   // from scaled Vtk coordinates to Ras coordinates.
   // Formula: Position = VtkToRas*Inverse(ScaleMat)
-  //                   = Inverse(ScaleMat*RasToVtk),
+  //        or  RasToVtk*Position=Inverse(ScaleMat)
   // where ScaleMat is a diagonal scaling matrix with diagonal
   // elements equal to the pixel size and slice thickness.
-
-  ScaleMat->Identity();
-  for (i=0;i<3;i++) ScaleMat->SetElement(i,i,this->Spacing[i]);
-  ScaleMat->Multiply4x4(ScaleMat,RasToVtk,Position);
-  // Position->Invert();  // Invert() is unstable
-  StableInvert(Position,Position);
+  InvScale_->Identity();
+  for (i=0;i<3;i++) 
+  {
+    tmp=this->Spacing[i];
+    tmp=(tmp<=0.0)?(1.0):(1.0/tmp);
+    InvScale_->SetElement(i,i,tmp);
+  }
+  // Solve RasToVtk*Position=InvScale for Position.
+  SolveABeqCforB(RasToVtk_,Position_,InvScale_);
 
   // Convert matrices to strings
-  this->SetRasToIjkMatrix(GetMatrixToString(RasToIjk));
-  this->SetRasToVtkMatrix(GetMatrixToString(RasToVtk));
-  this->SetPositionMatrix(GetMatrixToString(Position));
+  this->SetRasToIjkMatrix(GetMatrixToString(RasToIjk_));
+  this->SetRasToVtkMatrix(GetMatrixToString(RasToVtk_));
+  this->SetPositionMatrix(GetMatrixToString(Position_));
 
   // Clean up
-  Ijk->Delete();
+  Ijk_->Delete();
   // Vtk->Delete();  We shouldn't have a Delete() for Vtk
-  Ras->Delete();
-  InvRas->Delete();
-  RasToIjk->Delete();
-  RasToVtk->Delete();
-  ScaleMat->Delete();
-  Position->Delete();
+  Ras_->Delete();
+  RasToIjk_->Delete();
+  RasToVtk_->Delete();
+  InvScale_->Delete();
+  Position_->Delete();
 
   return(0);
 }
