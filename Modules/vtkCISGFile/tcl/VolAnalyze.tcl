@@ -283,7 +283,8 @@ proc VolAnalyzeApply {{EPIReconOrder ""}} {
 
     set Volume(gantryDetectorTilt) 0
     set Volume(numScalars) 1
-    set Volume(scalarType) [$imdata GetScalarTypeAsString]
+    set scalarType [$imdata GetScalarTypeAsString]
+    set Volume(scalarType) [VolumesVtkToSlicerScalarType $scalarType]
     set Volume(readHeaders) 0
     set Volume(filePattern) %s
     set Volume(dimensions) "[lindex $dims 0] [lindex $dims 1]"
