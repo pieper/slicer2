@@ -164,7 +164,7 @@ switch $tcl_platform(os) {
         set vtkTclLib $TCL_LIB_DIR/libtcl8.4.so 
         set vtkTkLib $TCL_LIB_DIR/libtk8.4.so
         set vtkTclsh $TCL_BIN_DIR/tclsh8.4
-        set itkTestFile $ITK_BINARY_PATH/lib/libITKCommon.so
+        set itkTestFile $ITK_BINARY_PATH/bin/libITKCommon.so
     }
     default {
         # different windows machines return different values, assume if none of the above, windows
