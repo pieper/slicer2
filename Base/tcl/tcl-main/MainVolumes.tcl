@@ -54,11 +54,11 @@ proc MainVolumesInit {} {
     lappend Module(procGUI)  MainVolumesBuildGUI
     lappend Module(procVTK)  MainVolumesBuildVTK
         
-        set m MainVolumes
+    set m MainVolumes
 
-        # Set version info
-        lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.50 $} {$Date: 2002/05/24 22:50:52 $}]
+    # Set version info
+    lappend Module(versions) [ParseCVSInfo $m \
+    {$Revision: 1.51 $} {$Date: 2002/08/22 19:50:10 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -643,16 +643,16 @@ proc MainVolumesUpdate {v} {
          if {$v == $Slice($s,backVolID)} {
             Slicer SetBackVolume $s Volume($n,vol)
             Slicer SetBackVolume $s Volume($v,vol)
-        }
+         }
          if {$v == $Slice($s,foreVolID)} {
             Slicer SetForeVolume $s Volume($n,vol)
             Slicer SetForeVolume $s Volume($v,vol)
-        }
+         }
          if {$v == $Slice($s,labelVolID)} {
             Slicer SetLabelVolume $s Volume($n,vol)
             Slicer SetLabelVolume $s Volume($v,vol)
-        }
-        MainSlicesSetOffset $s
+         }
+         MainSlicesSetOffset $s
     }
     Slicer ReformatModified
     Slicer Update
@@ -688,7 +688,7 @@ proc MainVolumesRender {{scale ""}} {
             set hit 1
             Volume($v,vol) Update
             RenderSlice $s
-        }
+         }
     }
     if {$hit == 1} {
         Render3D
@@ -708,9 +708,9 @@ proc MainVolumesRenderActive {{scale ""}} {
     set v $Volume(activeID)
 
     set s $Slice(activeID)
-     if {$v == $Slice($s,backVolID) || $v == $Slice($s,foreVolID)} {
+    if {$v == $Slice($s,backVolID) || $v == $Slice($s,foreVolID)} {
         Volume($v,vol) Update
-        RenderSlice $s
+            RenderSlice $s
     } else {
         MainVolumesRender
     }
@@ -785,7 +785,7 @@ proc MainVolumesSetActive {v} {
 
             # Change button text on slice menu (in case name changed)
             foreach s $Slice(idList) {
-                 if {$v == $Slice($s,backVolID)} {
+                if {$v == $Slice($s,backVolID)} {
                     MainSlicesConfigGui $s fOrient.mbBackVolume$s \
                         "-text [Volume($v,node) GetName]"
                 }
@@ -993,7 +993,7 @@ proc MainVolumesSetParam {Param {value ""}} {
     # 
     # Booboo
     #
-     } else {
+    } else {
         puts "MainVolumesSetParam: Unknown param=$param"
         return
     }
