@@ -205,9 +205,9 @@ void vtkDataSetToLabelMap::Execute()
             // if the inside point is on an edge, do nothing
             
             
-            i = floor((insidePoint[0] - this->OutputOrigin[0])/ this->OutputSpacing[0]);
-            j = floor((insidePoint[1] - this->OutputOrigin[1])/ this->OutputSpacing[1]);
-            k = floor((insidePoint[2] - this->OutputOrigin[2])/ this->OutputSpacing[2]);
+            i = (int) floor((insidePoint[0] - this->OutputOrigin[0])/ this->OutputSpacing[0]);
+            j = (int) floor((insidePoint[1] - this->OutputOrigin[1])/ this->OutputSpacing[1]);
+            k = (int) floor((insidePoint[2] - this->OutputOrigin[2])/ this->OutputSpacing[2]);
             
             idx = jkFactor*k + this->OutputDimensions[0]*j + i;
             //printf(" scalar id %i is 1", idx);
@@ -399,7 +399,7 @@ void vtkDataSetToLabelMap::ComputeOutputParameters()
   // set the sample dimensions to be the edges of the bounding box + 2 voxels
   for (int i=0; i<3; i++)
     {
-      this->OutputDimensions[i] = ((ceil(bounds[2*i+1]) - floor(bounds[2*i])) / this->OutputSpacing[i]) + 2;
+      this->OutputDimensions[i] = (int) ((ceil(bounds[2*i+1]) - floor(bounds[2*i])) / this->OutputSpacing[i]) + 2;
     }
   
   
