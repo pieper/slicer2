@@ -242,7 +242,7 @@ proc VolAnalyzeApply {} {
             set compressed 1
             set ret [catch {
                 package require fileutil 1.5.1
-                set tmp [::fileutil::tempdir]
+                set tmp [VolAnalyzetempdir]
                 file copy $root.hdr $tmp/$tail.hdr
                 file copy $root.img.gz $tmp/$tail.img.gz
                 exec gzip -d $tmp/$tail.img.gz} res]
@@ -431,3 +431,71 @@ proc VolAnalyzeMainFileCloseUpdate {} {
         }
     }
 }
+
+
+## copied from tcllib ##
+#
+# ::fileutil::tempdir --
+#
+#    Return the correct directory to use for temporary files.
+#    Python attempts this sequence, which seems logical:
+#
+#       1. The directory named by the `TMPDIR' environment variable.
+#
+#       2. The directory named by the `TEMP' environment variable.
+#
+#       3. The directory named by the `TMP' environment variable.
+#
+#       4. A platform-specific location:
+#            * On Macintosh, the `Temporary Items' folder.
+#
+#            * On Windows, the directories `C:\\TEMP', `C:\\TMP',
+#              `\\TEMP', and `\\TMP', in that order.
+#
+#            * On all other platforms, the directories `/tmp',
+#              `/var/tmp', and `/usr/tmp', in that order.
+#
+#        5. As a last resort, the current working directory.
+#
+# Arguments:
+#    None.
+#
+# Side Effects:
+#    None.
+#
+# Results:
+#    The directory for temporary files.
+
+proc VolAnalyzetempdir {} {
+    global tcl_platform env
+    set attempdirs [list]
+
+    foreach tmp {TMPDIR TEMP TMP} {
+        if { [info exists env($tmp)] } {
+            lappend attempdirs $env($tmp)
+        }
+    }
+
+    switch $tcl_platform(platform) {
+        windows {
+            lappend attempdirs "C:\\TEMP" "C:\\TMP" "\\TEMP" "\\TMP"
+        }
+        macintosh {
+            set tmpdir $env(TRASH_FOLDER)  ;# a better place?
+        }
+        default {
+            lappend attempdirs [file join / tmp] \
+            [file join / var tmp] [file join / usr tmp]
+        }
+    }
+
+    foreach tmp $attempdirs {
+        if { [file isdirectory $tmp] && [file writable $tmp] } {
+            return $tmp
+        }
+    }
+
+    # If nothing else worked...
+    return [pwd]
+}
+
