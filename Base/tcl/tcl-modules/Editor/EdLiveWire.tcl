@@ -195,6 +195,32 @@ proc EdLiveWireBuildVTK {} {
 proc EdLiveWireBuildGUI {} {
     global Ed Gui Label Volume
 
+    #-------------------------------------------
+    # Frame Hierarchy:
+    #-------------------------------------------
+    # TabbedFrame
+    #   Basic
+    #     File
+    #     Grid
+    #     Render
+    #     Contour
+    #     Reset
+    #     Apply
+    #     Test (not used)
+    #   Training
+    #     Grid 
+    #     Slices 
+    #     TrainingMode 
+    #     TrainingFile
+    #     Train
+    #   Advanced
+    #     Settings
+    #       EdgeDir
+    #       Features
+    #       Apply
+    #     TrainingFile
+    #-------------------------------------------
+    
     set f $Ed(EdLiveWire,frame)
 
     # this makes the navigation menu (buttons) and the tabs (frames).
@@ -623,7 +649,8 @@ proc EdLiveWireToggleWeight {feat} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWirePrettyPicture
-# 
+# Turn off display of the livewire \"tail\" so that saving current slice
+# image looks nice.  Don't forget to turn the \"tail\" back on...
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -783,7 +810,8 @@ proc EdLiveWireRaiseEdgeImageWin {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireUpdateEdgeImageWin
-# Display the edge image from the requested filter 
+# For viewing the inputs to the livewire: displays the edge image inputs
+# to the livewire filter of the active slice.
 # (up, down, left, or right edges can be shown).
 # .ARGS
 # widget viewerWidget what to render
@@ -815,7 +843,8 @@ proc EdLiveWireUpdateEdgeImageWin {viewerWidget edgeNum} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireWriteEdgeImage
-# Dump edge image to a file
+# Dump edge image to a file (ppm).
+# Uses default filename edgeImageX.001, where X = edge number.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -855,7 +884,8 @@ proc EdLiveWireWriteEdgeImage {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireGetFeatureParams
-# initialize tcl variables that mirror vtk object settings
+# Initialize tcl variables that mirror vtk object settings.
+# So correct settings display on Settings GUI.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -891,8 +921,8 @@ proc EdLiveWireGetFeatureParams {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireSetFeatureParams
-# set vtkImageLiveWireEdgeWeights filters settings from tcl variables
-# sets one of the active slice's filters
+# Set vtkImageLiveWireEdgeWeights filters settings from tcl variables.
+# Sets one of the active slice's filters.
 # .ARGS
 # int edgedir edge filter to set parameters in (optional, defaults to active one)
 # .END
@@ -948,7 +978,7 @@ proc EdLiveWireSetFeatureParams {{edgedir ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireSetFeatureParamsForAllFilters
-# Set the settings from the GUI into all filters for this slice
+# Set the settings from the GUI into all filters for the active slice.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1036,7 +1066,7 @@ proc EdLiveWireStartPipeline {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireStopPipeline
-# Shut down the pipeline that hooks into the slicer object
+# Shuts down the pipeline that hooks into the slicer object.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1144,8 +1174,7 @@ proc EdLiveWireUpdate {type} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireB1
-# When mouse is clicked, handle new contour if needed and 
-# pass location to live wire filter.
+# When mouse is clicked, pass location to live wire filter.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1161,14 +1190,15 @@ proc EdLiveWireB1 {x y} {
 	set Ed(EdLiveWire,activeSlice) $s
 	#	EdLiveWireResetSlice $s
     }
-    
+
+    # tell the livewire filter its start point
     Ed(EdLiveWire,lwPath$s) SetStartPoint $x $y
 }
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireMotion
-# When mouse moves over slice, if pipeline is operational, 
-# pass end point to live wire filter and then render the slice.
+# When mouse moves over slice, if we already have a start click, 
+# pass end point (current mouse location) to live wire filter.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1187,7 +1217,8 @@ proc EdLiveWireMotion {x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireRenderInteractive
-# 
+# Render whatever the user has requested on the Basic GUI 
+# (one slice, 3 slices, or 3D).
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1199,7 +1230,8 @@ proc EdLiveWireRenderInteractive {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireLabel
-# Called when label changes.
+# Called when label changes.  Updates label in Slicer and also Livewire
+# objects.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1226,7 +1258,7 @@ proc EdLiveWireLabel {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireClearCurrentSlice
-# Clears contour from filters and makes slice redraw
+# Clears contour from filters and makes slice redraw.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1243,7 +1275,7 @@ proc EdLiveWireClearCurrentSlice {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireClearLastSegment
-# 
+# Clear the latest part of the livewire: start over from the previous click.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------

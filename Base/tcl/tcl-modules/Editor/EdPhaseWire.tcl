@@ -92,7 +92,7 @@ proc EdPhaseWireInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdPhaseWireBuildVTK
-# 
+# build vtk objects used in this module
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -187,6 +187,22 @@ proc EdPhaseWireBuildVTK {} {
 proc EdPhaseWireBuildGUI {} {
     global Ed Gui Label Volume
 
+    #-------------------------------------------
+    # Frame Hierarchy:
+    #-------------------------------------------
+    # TabbedFrame
+    #   Basic
+    #     Grid
+    #     Render
+    #     Contour
+    #     Reset
+    #     Apply
+    #   Advanced
+    #     Settings
+    #       InputImages
+    #       Phase
+    #-------------------------------------------
+
     set f $Ed(EdPhaseWire,frame)
 
     # this makes the navigation menu (buttons) and the tabs (frames).
@@ -219,9 +235,8 @@ proc EdPhaseWireBuildGUI {} {
     frame $f.fContour   -bg $Gui(activeWorkspace)
     frame $f.fReset   -bg $Gui(activeWorkspace)
     frame $f.fApply     -bg $Gui(activeWorkspace)
-    frame $f.fTest     -bg $Gui(activeWorkspace)
     pack $f.fGrid $f.fRender $f.fContour $f.fReset  \
-	    $f.fApply $f.fTest \
+	    $f.fApply \
 	    -side top -pady $Gui(pad)
 
     # Standard Editor interface buttons
@@ -366,7 +381,8 @@ proc EdPhaseWireBuildGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdPhaseWirePrettyPicture
-# 
+# Turn off display of the livewire \"tail\" so that saving current slice
+# image looks nice.  Don't forget to turn the \"tail\" back on...
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -526,7 +542,8 @@ proc EdPhaseWireRaiseEdgeImageWin {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdPhaseWireUpdateEdgeImageWin
-# Display the edge image from the requested filter 
+# For viewing the inputs to the livewire: displays the edge image inputs
+# to the livewire filter of the active slice.
 # (up, down, left, or right edges can be shown).
 # .ARGS
 # widget viewerWidget what to render
@@ -558,7 +575,8 @@ proc EdPhaseWireUpdateEdgeImageWin {viewerWidget edgeNum} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdPhaseWireWriteEdgeImage
-# Dump edge image to a file
+# Dump edge image to a file (ppm).
+# Uses default filename edgeImageX.001, where X = edge number.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -621,6 +639,7 @@ proc EdPhaseWireStartPipeline {} {
     # only apply filters to active slice
     Slicer FilterActiveOn
 
+    # set up the phase/cert inputs and pipeline
     EdPhaseWireUsePhasePipeline
 
     # force upper slicer pipeline to execute
@@ -632,7 +651,7 @@ proc EdPhaseWireStartPipeline {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdPhaseWireStopPipeline
-# Shut down the pipeline that hooks into the slicer object
+# Shuts down the pipeline that hooks into the slicer object.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -768,8 +787,8 @@ proc EdPhaseWireB1 {x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdPhaseWireMotion
-# When mouse moves over slice, if pipeline is operational, 
-# pass end point to live wire filter and then render the slice.
+# When mouse moves over slice, if we already have a start click, 
+# pass end point (current mouse location) to live wire filter.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -829,7 +848,7 @@ proc EdPhaseWireLabel {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdPhaseWireClearCurrentSlice
-# Clears contour from filters and makes slice redraw
+# Clears contour from filters and makes slice redraw.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -845,7 +864,7 @@ proc EdPhaseWireClearCurrentSlice {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdPhaseWireClearLastSegment
-# 
+# Clear the latest part of the livewire: start over from the previous click.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1020,7 +1039,9 @@ proc EdPhaseWireUseDistanceFromPreviousContour {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdPhaseWireFindInputPhaseVolumes
-# 
+# Figures out which volumes to use as phase and cert inputs to livewire.
+# Currently they must be named phase and cert.  In future, they should
+# be dynamically created during segmentation and not read in.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1065,7 +1086,7 @@ proc EdPhaseWireFindInputPhaseVolumes {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdPhaseWireUsePhasePipeline
-# 
+# Set up the part of the pipeline that processes the phase and cert images.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
