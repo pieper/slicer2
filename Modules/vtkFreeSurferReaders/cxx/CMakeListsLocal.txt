@@ -11,6 +11,7 @@ vtkCORReader
 vtkMGHReader
 vtkFSSurfaceReader
 vtkFSSurfaceScalarReader
+vtkFSSurfaceAnnotationReader
 )
 
 
