@@ -287,5 +287,10 @@ proc GetHeaderInfo {img1 num2 node tk} {
 		$Header2(rC)  $Header2(aC)  $Header2(sC) \
 		$Header2(rTL) $Header2(aTL) $Header2(sTL)]
 	# result should be -1 if header info bad/nonexistent
+
+	# If description field is empty, then write the scan order
+	if {[$node GetDescription] == ""} {
+		$node SetDescription [$node GetScanOrder]
+	}
 	return $result
 }
