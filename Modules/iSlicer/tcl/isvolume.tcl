@@ -95,6 +95,8 @@ if { [itcl::find class isvolume] == "" } {
       method ren {} {return $_ren}
       method tkrw {} {return $_tkrw}
       method rw {} {return [$_tkrw GetRenderWindow]}
+
+      # Note: use SetUpdateExtent to get full volume in the imagedata
       method imagedata {} {return [$_reslice GetOutput]}
 
       method screensave { filename } {} ;# TODO should be moved to superclass
@@ -402,7 +404,8 @@ itcl::configbody isvolume::resolution {
     set spacing [expr $View(fov) / (1.0 * $res)]
 
     $_reslice SetOutputSpacing $spacing $spacing $spacing 
-    $_reslice SetOutputExtent 0 $res 0 $res 0 $res
+    set ext [expr $res -1]
+    $_reslice SetOutputExtent 0 $ext 0 $ext 0 $ext
 
     $_slider configure -from 0
     $_slider configure -to $res
