@@ -160,7 +160,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8 $} {$Date: 2003/05/28 23:41:49 $}]
+        {$Revision: 1.9 $} {$Date: 2003/05/29 03:41:50 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -253,7 +253,7 @@ proc LevelSetsUpdateGUI {} {
     
     DevUpdateNodeSelectButton Volume LevelSets InputVol        InputVol        DevSelectNode
     DevUpdateNodeSelectButton Volume LevelSets InitVol         InitVol         DevSelectNode 
-    DevUpdateNodeSelectButton Volume LevelSets ResultVol       ResultVol       DevSelectNode 0 1 1
+    DevUpdateNodeSelectButton Volume LevelSets ResultVol       ResultVol       DevSelectNode 0 1 0
     DevUpdateNodeSelectButton Volume LevelSets LabelResultVol  LabelResultVol  DevSelectNode 0 1 1
 }
 
@@ -753,8 +753,12 @@ proc LevelSetsBuildMainFrame {} {
     #-------------------------------------------
     set f $fMain.fModel
 
+    DevAddButton $f.bUpdate   "UpdateResult" "LevelSetsUpdateResults"
+    pack  $f.bUpdate -side top -fill x -padx 2 -pady 2 -expand 1
+
     DevAddButton $f.bModel     "CreateModel" "LevelSetsCreateModel"
     pack  $f.bModel -side top -fill x -padx 2 -pady 2 -expand 1
+
 
 }
 #----- LevelSetsBuildMainFrame
@@ -796,16 +800,17 @@ proc LevelSetsBuildEquFrame {} {
     set f $fEqu.fSmoothingParam
 
     eval {label $f.lSmoothingParam -text "Smoothing Parameters:"} $Gui(WLA)
-        
-    #--------------------------------------------------
-    eval {label $f.lCurvCoeff -text "CurvCoeff:" \
-          -width 16 -justify right } $Gui(WLA)
-    eval {entry $f.eCurvCoeff -justify right -width 6 \
-          -textvariable  LevelSets(CurvCoeff)  } $Gui(WEA)
-    grid $f.lCurvCoeff $f.eCurvCoeff     -pady 0 -padx $Gui(pad) -sticky e
-    grid $f.eCurvCoeff  -sticky w
-
     grid $f.lSmoothingParam     -pady 2 -padx $Gui(pad) -sticky e
+
+    #--------------------------------------------------
+    eval {label $f.lDoMean -text "DoMean:" \
+          -width 16 -justify right } $Gui(WLA)
+    eval {entry $f.eDoMean -justify right -width 6 \
+          -textvariable  LevelSets(DoMean)  } $Gui(WEA)
+    TooltipAdd $f.lDoMean " {0,1};  '0': minimal curvature evolution, '1': mean curvature evolution. "
+    grid $f.lDoMean $f.eDoMean -pady 0 -padx $Gui(pad) -sticky e
+    grid $f.eDoMean  -sticky w
+
 
 
     #-------------------------------------------
@@ -814,16 +819,18 @@ proc LevelSetsBuildEquFrame {} {
     set f $fEqu.fAdvectionParam
 
     eval {label $f.lAdvectionParam -text "Advection Parameters:"} $Gui(WLA)
+    grid $f.lAdvectionParam     -pady 2 -padx $Gui(pad) -sticky e
         
-    #--------------------------------------------------
-#    eval {label $f.lCurvCoeff -text "CurvCoeff:" \
+    eval {label $f.lAdvectionScheme -text "Advection scheme:" \
           -width 16 -justify right } $Gui(WLA)
-#    eval {entry $f.eCurvCoeff -justify right -width 6 \
-          -textvariable  LevelSets(CurvCoeff)  } $Gui(WEA)
-#    grid $f.lCurvCoeff $f.eCurvCoeff     -pady 0 -padx $Gui(pad) -sticky e
-#    grid $f.eCurvCoeff  -sticky w
 
-#    grid $f.lAdvectionParam     -pady 2 -padx $Gui(pad) -sticky e
+    TooltipAdd $f.lAdvectionScheme " {0,1 or 2};  \n '1': ADVECTION_CENTRAL_VECTORS Liana's code scheme, \n '0': ADVECTION_UPWIND_VECTORS standard scheme, gradient of the gradient norm scalar the levelset normal, \n '2': ADVECTION_MORPHO normalized zero-crossing of the sec. order derivatives in the gradient direction"
+
+    eval {entry $f.eAdvectionScheme -justify right -width 6 \
+          -textvariable  LevelSets(AdvectionScheme)  } $Gui(WEA)
+    grid $f.lAdvectionScheme $f.eAdvectionScheme     -pady 0 -padx $Gui(pad) -sticky e
+    grid $f.eAdvectionScheme  -sticky w
+
 
     #-------------------------------------------
     # Parameters->EquationParam Frame
@@ -839,6 +846,7 @@ proc LevelSetsBuildEquFrame {} {
           -width 16 -justify right } $Gui(WLA)
     eval {entry $f.eBalloonCoeff -justify right -width 6 \
           -textvariable  LevelSets(BalloonCoeff)  } $Gui(WEA)
+#    TooltipAdd $f.eBalloonCoeff " {0,1};  '0': minimal curvature evolution, '1': mean curvature evolution. "
     grid $f.lBalloonCoeff $f.eBalloonCoeff     -pady 0 -padx $Gui(pad) -sticky e
     grid $f.eBalloonCoeff  -sticky w
 
@@ -848,17 +856,18 @@ proc LevelSetsBuildEquFrame {} {
           -width 16 -justify right } $Gui(WLA)
     eval {entry $f.eAttachCoeff -justify right -width 6 \
           -textvariable  LevelSets(AttachCoeff)  } $Gui(WEA)
+    
     grid $f.lAttachCoeff $f.eAttachCoeff     -pady 0 -padx $Gui(pad) -sticky e
     grid $f.eAttachCoeff  -sticky w
 
 
     #--------------------------------------------------
-    eval {label $f.lDoMean -text "DoMean:" \
+    eval {label $f.lCurvCoeff -text "Smoothing Coeff:" \
           -width 16 -justify right } $Gui(WLA)
-    eval {entry $f.eDoMean -justify right -width 6 \
-          -textvariable  LevelSets(DoMean)  } $Gui(WEA)
-    grid $f.lDoMean $f.eDoMean -pady 0 -padx $Gui(pad) -sticky e
-    grid $f.eDoMean  -sticky w
+    eval {entry $f.eCurvCoeff -justify right -width 6 \
+          -textvariable  LevelSets(CurvCoeff)  } $Gui(WEA)
+    grid $f.lCurvCoeff $f.eCurvCoeff     -pady 0 -padx $Gui(pad) -sticky e
+    grid $f.eCurvCoeff  -sticky w
 
 
     #--------------------------------------------------
@@ -1164,6 +1173,34 @@ proc LevelSetsUpdateResults {} {
 
 
 #-------------------------------------------------------------------------------
+# .PROC LevelSetsUpdateParams
+#
+#   Update the parameters that don't need reinitialization
+#
+# .END
+#-------------------------------------------------------------------------------
+proc LevelSetsUpdateParams {} {
+#    ----------------------
+
+  global LevelSets 
+
+  # Number of iterations
+  LevelSets(curv) SetNumIters            $LevelSets(NumIters)
+  LevelSets(curv) SetAdvectionCoeff      $LevelSets(AttachCoeff)
+  LevelSets(curv) Setcoeff_curvature     $LevelSets(CurvCoeff)
+  LevelSets(curv) SetDoMean              $LevelSets(DoMean)
+  LevelSets(curv) SetStepDt              $LevelSets(StepDt)
+  LevelSets(curv) SetEvolveThreads       $LevelSets(NumberOfThreads)
+
+  # ------ Set Narrow Band Size ------------------------ 
+  LevelSets(curv) SetBand                $LevelSets(BandSize)
+  LevelSets(curv) SetTube                $LevelSets(TubeSize)
+  LevelSets(curv) SetReinitFreq          $LevelSets(ReinitFreq)
+}
+#----- LevelSetsUpdateParams
+
+
+#-------------------------------------------------------------------------------
 # .PROC RunLevelSetsBegin
 #
 #   Initialize and run the Level Set
@@ -1232,20 +1269,15 @@ proc RunLevelSetsBegin {} {
   # ------ Set Parameters -----------------------------
   #
 
+  LevelSetsUpdateParams
+
   # Set the Dimension
   LevelSets(curv) SetDimension           $LevelSets(Dimension)
   # Threshold on the cumulative gradient histogram
   LevelSets(curv) SetHistoGradThreshold  $LevelSets(HistoGradThreshold)
-  # Number of iterations
-  LevelSets(curv) SetNumIters            $LevelSets(NumIters)
+
   # Scheme and Coefficient for the advection force
-  LevelSets(curv) Setadvection_scheme    2
-  LevelSets(curv) SetAdvectionCoeff      $LevelSets(AttachCoeff)
-  # Coefficient for the curvature term
-  LevelSets(curv) Setcoeff_curvature     $LevelSets(CurvCoeff)
-  LevelSets(curv) SetDoMean              $LevelSets(DoMean)
-  # Evolution step of the PDE
-  LevelSets(curv) SetStepDt              $LevelSets(StepDt)
+  LevelSets(curv) Setadvection_scheme    $LevelSets(AdvectionScheme)
 
   if {$LevelSets(LowIThreshold) > 0} {
       LevelSets(curv) SetUseLowThreshold 1
@@ -1264,9 +1296,6 @@ proc RunLevelSetsBegin {} {
   # Method 0: Liana's code, 1: Fast Marching, 2: Fast Chamfer Distance
   LevelSets(curv) SetDMmethod            2
 
-  # Set the number of threads
-  LevelSets(curv) SetEvolveThreads       $LevelSets(NumberOfThreads)
-
   #
   # ------ Set the expansion image ---------------------
   #
@@ -1281,19 +1310,6 @@ proc RunLevelSetsBegin {} {
   LevelSets(curv) Setballoon_coeff            $LevelSets(BalloonCoeff)
   LevelSets(curv) SetProbabilityThreshold     $LevelSets(ProbabilityThreshold)
   LevelSets(curv) SetProbabilityHighThreshold $LevelSets(ProbabilityHighThreshold)
-
-  #
-  # ------ Set Narrow Band Size ------------------------ 
-  #
-
-  # Size of the band
-  LevelSets(curv) SetBand                $LevelSets(BandSize)
-
-  # Size of the tube (inner part of the narrow band)
-  LevelSets(curv) SetTube                $LevelSets(TubeSize)
-  
-  # Reinitialization frequency
-  LevelSets(curv) SetReinitFreq          $LevelSets(ReinitFreq)
 
 
   #
@@ -1374,6 +1390,8 @@ proc ReRunLevelSets {} {
 
   [Volume($input,vol) GetOutput]   SetSpacing 1 1 1
   LevelSets(output)                SetSpacing 1 1 1
+
+  LevelSetsUpdateParams
 
   for {set j 0} {$j < $LevelSets(NumIters)} {incr j} {
     puts $j
