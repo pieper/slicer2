@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.73 $} {$Date: 2004/04/22 22:30:19 $}]
+    {$Revision: 1.74 $} {$Date: 2004/06/01 21:17:51 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -343,6 +343,12 @@ proc MainVolumesRead {v} {
                 return -1
             }
         }
+        "StructuredPoints" {
+            if { ! [ file exists [Volume($v,node) GetFullPrefix] ] } {
+                DevErrorWindow "StructuredPoints volume does not exist: [Volume($v,node) GetFullPrefix]"
+                return -1
+            }
+        }
         default {
             if {[CheckVolumeExists [Volume($v,node) GetFullPrefix] \
                      [Volume($v,node) GetFilePattern] $lo $hi] != ""} {
@@ -401,6 +407,36 @@ proc MainVolumesRead {v} {
             [[mghreader GetOutput] GetPointData] SetScalars [mghreader ReadVolumeData]
             Volume($v,vol) SetImageData [mghreader GetOutput]
             mghreader Delete
+        }
+        "StructuredPoints" {
+            catch "spreader Delete"
+            vtkStructuredPointsReader spreader
+            spreader SetFileName [Volume($v,node) GetFullPrefix]
+            spreader Update
+            Volume($v,vol) SetImageData [spreader GetOutput]
+
+            set ext [[spreader GetOutput] GetExtent]
+            Volume($v,node) SetImageRange [lindex $ext 4] [lindex $ext 5]
+            set xdim [expr [lindex $ext 1] - [lindex $ext 0] +1]
+            set ydim [expr [lindex $ext 3] - [lindex $ext 2] +1]
+            Volume($v,node) SetDimensions $xdim $ydim
+            eval Volume($v,node) SetSpacing [[spreader GetOutput] GetSpacing]
+            Volume($v,node) SetScalarType [[spreader GetOutput] GetScalarType]
+            if { [[[spreader GetOutput] GetPointData] GetScalars] == "" } {
+                set n [[[[spreader GetOutput] GetPointData] GetScalars] GetNumberOfComponents]
+                Volume($v,node) SetNumScalars $n
+            } else {
+                Volume($v,node) SetNumScalars 0
+            }
+            Volume($v,node) ComputeRasToIjkFromScanOrder [Volume($v,node) GetScanOrder]
+
+            # set up ReadWrite node to write file if it gets modified
+            # TODO - set up node to automatically write if volume is modified
+            ##vtkMrmlDataVolumeReadWriteStructuredPoints Volume($v,vol,rw)
+            ##Volume($v,vol)  SetReadWrite Volume($v,vol,rw)
+            ##Volume($v,vol,rw) SetFileName [Volume($v,node) GetFullPrefix]
+
+            spreader Delete
         }
         default {
             Volume($v,vol) Read
