@@ -68,7 +68,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.31 $} {$Date: 2002/03/21 23:05:22 $}]
+        {$Revision: 1.32 $} {$Date: 2002/05/21 18:45:23 $}]
 
     set File(filePrefix) data
 }
@@ -234,6 +234,8 @@ proc MainFileClose {} {
     RenderAll
     # Restore default MRML file name
     MainMrmlSetFile "data"
+    # Restore default colors
+    MainMrmlBuildTreesVersion2.0 [MainMrmlAddColors ""]   
 }
 
 #-------------------------------------------------------------------------------

@@ -66,7 +66,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.45 $} {$Date: 2002/04/16 17:30:12 $}]
+            {$Revision: 1.46 $} {$Date: 2002/05/21 18:44:58 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -774,7 +774,10 @@ proc ModelsSetFileName {} {
     puts "$Model(FileName), $Model(name)"
     # Guess the color
     set name [string tolower $Model(name)]
-    set guess [Color($Color(activeID),node) GetName]
+    set guess ""
+    if { $Color(activeID) != "" } {
+        set guess [Color($Color(activeID),node) GetName]
+    }
     foreach c $Color(idList) {
         set n [string tolower [Color($c,node) GetName]]
         if {[string first $name $n] != -1} {
@@ -782,7 +785,9 @@ proc ModelsSetFileName {} {
         }
     }
 
-    LabelsSetColor $guess
+    if { $guess != "" } {
+        LabelsSetColor $guess
+    } 
 }
 
 #-------------------------------------------------------------------------------
