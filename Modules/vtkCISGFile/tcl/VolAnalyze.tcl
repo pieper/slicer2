@@ -223,9 +223,35 @@ proc VolAnalyzeApply {} {
     if { ![info exists Volume(name)] } { set Volume(name) "Analyze"}
 
     if {[ValidateName $Volume(name)] == 0} {
-        tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
+        DevErrorWindow "The name can consist of letters, digits, dashes, or underscores"
         return
     }
+
+    #
+    # if this is a compressed image file, uncompress to tmp dir and read from there
+    #
+    set compressed 0
+    set root [file root $Volume(VolAnalyze,FileName)]
+    set tail [file tail $root]
+    if { ! [file exists $root.img] } {
+        if { ! [file exists $root.img.gz] } {
+            DevErrorWindow "Can't find $root.img or $root.img.gz"
+            return
+        } else {
+            # compressed version exists, uncompress and make it the one to read
+            set compressed 1
+            set ret [catch "
+                file copy $root.hdr /tmp/$tail.hdr
+                file copy $root.img.gz /tmp/$tail.img.gz
+                exec gunzip /tmp/$tail.img.gz" res]
+            if { $ret } {
+                DevErrorWindow $res
+                return
+            }
+            set Volume(VolAnalyze,FileName) /tmp/$tail.hdr
+        }
+    }
+
 
     # add a mrml node
     set n [MainMrmlAddNode Volume]
@@ -348,6 +374,11 @@ proc VolAnalyzeApply {} {
     }
 
     # Update all fields that the user changed (not stuff that would need a file reread)
+
+    if { $compressed } {
+        file delete /tmp/$tail.hdr
+        file delete /tmp/$tail.img
+    }
 
     return $i
 }
