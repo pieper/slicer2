@@ -126,15 +126,16 @@ proc DTMRIInit {} {
 
     # Source all appropriate tcl files here. 
     source "$env(SLICER_HOME)/Modules/vtkDTMRI/tcl/notebook.tcl"
-
-     
+    # Load tensor registration module.
+    source "$env(SLICER_HOME)/Modules/vtkDTMRI/tcl/DTMRITensorRegistration.tcl"
+    DTMRIRegInit 
     # Module Summary Info
     #------------------------------------
     set Module($m,overview) "Diffusion DTMRI MRI visualization and more..."
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.49 $} {$Date: 2004/11/17 00:48:38 $}]
+                  {$Revision: 1.50 $} {$Date: 2004/11/23 22:31:43 $}]
 
      # Define Tabs
     #------------------------------------
@@ -142,8 +143,8 @@ proc DTMRIInit {} {
     set Module($m,row1Name) "{Help} {Input} {Convert} {Disp} {ROI}"
     set Module($m,row1,tab) Input
     # Use these lines to add a second row of tabs
-    set Module($m,row2List) "Scalars Advanced Save"
-    set Module($m,row2Name) "{Scalars} {Advanced} {Save}"
+    set Module($m,row2List) "Scalars Advanced Regist Save"
+    set Module($m,row2Name) "{Scalars} {Advanced} {Regist} {Save}"
     set Module($m,row2,tab) Scalars
     
 
@@ -461,6 +462,11 @@ proc DTMRIInit {} {
     set DTMRI(mode,autoTractsLabel,tooltip) "A tract will be seeded in each voxel of the ROI which is colored with this label."
 
     #------------------------------------
+    # Init the tensor registration
+    #------------------------------------
+    DTMRIRegInit
+
+    #------------------------------------
     # Variables for preprocessing
     #------------------------------------
 
@@ -555,7 +561,7 @@ proc DTMRIInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIUpdateMRML {} {
-    global Tensor
+    global Tensor DTMRI
 
     set t $Tensor(activeID)
     
@@ -569,6 +575,28 @@ proc DTMRIUpdateMRML {} {
         DTMRI(vtk,streamlineControl) SetWorldToTensorScaledIJK transform
         transform Delete 
     }
+
+    # Do MRML update for Tensor Registration tab. Necessary because
+    # multiple lists are used.
+    if {([catch "package require vtkAG"]==0)&&([info exist DTMRI(reg,AG)])} {
+      # This is needed to handle deletion of tensors.
+      if {[catch "Tensor($DTMRI(InputTensorSource),node) GetName"]==1} {
+    set DTMRI(InputTensorSource) $Tensor(idNone)
+        $DTMRI(mbInputTensorSource) config -text None
+      }
+      if {[catch "Tensor($DTMRI(InputTensorTarget),node) GetName"]==1} {
+    set DTMRI(InputTensorTarget) $Tensor(idNone)
+        $DTMRI(mbInputTensorTarget) config -text None
+      }
+      if {[catch "Tensor($DTMRI(ResultTensor),node) GetName"]==1} {
+    set DTMRI(ResultTensor) -5
+      }
+      DevUpdateNodeSelectButton Tensor DTMRI InputTensorSource   InputTensorSource   DevSelectNode
+      DevUpdateNodeSelectButton Tensor DTMRI InputTensorTarget   InputTensorTarget   DevSelectNode 0 0 0 DTMRIReg2DUpdate
+      DevUpdateNodeSelectButton Tensor DTMRI ResultTensor  ResultTensor  DevSelectNode  0 1 0
+      DevSelectNode Tensor $DTMRI(ResultTensor) DTMRI ResultTensor ResultTensor
+      DevUpdateNodeSelectButton Volume DTMRI InputCoregVol InputCoregVol DevSelectNode
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -579,7 +607,7 @@ proc DTMRIUpdateMRML {} {
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIEnter {} {
-    global DTMRI Slice View
+    global DTMRI Slice View 
     
     # set global flag to avoid possible render loop
     set View(resetCameraClippingRange) 0
@@ -1944,6 +1972,15 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     TooltipAdd  $f.eOutput $DTMRI(mode,maskLabel,tooltip)
     TooltipAdd  $f.eName $DTMRI(mode,maskLabel,tooltip)
 
+
+#######################################################################################
+#######################################################################################
+#######################################################################################
+    #-------------------------------------------
+    # Regist frame
+    #-------------------------------------------
+    
+    DTMRIBuildRegistFrame
 
 #######################################################################################
 #######################################################################################
@@ -4639,6 +4676,7 @@ proc DTMRIDoMath {{operation ""}} {
     puts "DTMR: scale factor $DTMRI(scalars,scaleFactor)"
 
     # create vtk object to do the operation
+    catch "math Delete"
     vtkTensorMathematics math
     math SetScaleFactor $DTMRI(scalars,scaleFactor)
     math SetInput 0 $input
