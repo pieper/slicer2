@@ -63,7 +63,7 @@
 #   LocatorConnect
 #   LocatorLoopFile
 #   LocatorLoopImages
-#   LocatorLoopSignaSP
+#   LocatorLoopFlashpoint
 #   LocatorFilePrefix
 #   LocatorImagesPrefix
 #   LocatorStorePresets
@@ -106,7 +106,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.35 $} {$Date: 2004/04/13 21:00:06 $}]
+        {$Revision: 1.36 $} {$Date: 2004/08/11 19:21:01 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -153,7 +153,7 @@ proc LocatorInit {} {
     set Locator(prefixRealtime) ""
     
     # Servers
-    set Locator(serverList) "File SignaSP Images Csys"
+    set Locator(serverList) "Flashpoint File Images Csys"
     set Locator(server) [lindex $Locator(serverList) 0]
     set Locator(connect) 0
     set Locator(pause) 0
@@ -167,10 +167,10 @@ proc LocatorInit {} {
     set Locator(File,msPoll) 100
     set Locator(File,prefix) loc
     set Locator(File,fid)    ""
-    # SignaSP
-    set Locator(SignaSP,msPoll) 100
-    set Locator(SignaSP,port)   10000
-    set Locator(SignaSP,host)   mrtws
+    # Flashpoint
+    set Locator(Flashpoint,msPoll) 100
+    set Locator(Flashpoint,port)   10000
+    set Locator(Flashpoint,host)   mrtws
     # Images
     set Locator(Images,msPoll)   1000
     set Locator(Images,prefix)   ""
@@ -233,9 +233,9 @@ proc LocatorBuildVTK {} {
     #------------------------#
     # Realtime image source
     #------------------------#
-    # SignaSP
-    vtkImageRealtimeScan Locator(SignaSP,src)
-#    Locator(SignaSP,src) SetTest 1
+    # Flashpoint
+    vtkImageRealtimeScan Locator(Flashpoint,src)
+#    Locator(Flashpoint,src) SetTest 1
 
     # Images
     vtkMrmlVolumeNode Locator(Images,node)
@@ -336,10 +336,10 @@ set the <B>Driver</B> to <B>Locator</B>.
 <BR><LI><B>Server:</B> There are several ways to acquire realtime information
 about a Locator or images:
 <BR><B>File</B> will read Locator positions from a text file.
-<BR><B>SignaSP</B> will read Locator positions and realtime images from
-a server process running on the GE Signa SP workstation.
+<BR><B>Flashpoint</B> will read Locator positions and realtime images from
+a server process running on the GE Flashpoint workstation.
 <BR><B>Images</B> will read images on disk as if to emulate realtime images
-coming from a Signa SP scanner.
+coming from a Flashpoint scanner.
 <BR><LI><B>Handpiece</B> Specify how the Locator is rendered in the 3D view
 window.  The <B>Normal</B> is the direction along the tip of the Locator's
 needle.  The <B>Transverse</B> is angled 90 degrees away from the Normal
@@ -660,9 +660,9 @@ know the location of the tip of this device rather than the Locator.
 
 
     #-------------------------------------------
-    # Server->Bot->SignaSP frame
+    # Server->Bot->Flashpoint frame
     #-------------------------------------------
-    set f $fServer.fBot.fSignaSP
+    set f $fServer.fBot.fFlashpoint
 
     frame $f.fStatus  -bg $Gui(activeWorkspace)
     frame $f.fGrid    -bg $Gui(activeWorkspace) -relief groove -bd 3
@@ -672,9 +672,9 @@ know the location of the tip of this device rather than the Locator.
         -side top -fill x -pady $Gui(pad)
 
     #-------------------------------------------
-    # Server->Bot->SignaSP->Status frame
+    # Server->Bot->Flashpoint->Status frame
     #-------------------------------------------
-    set f $fServer.fBot.fSignaSP.fStatus
+    set f $fServer.fBot.fFlashpoint.fStatus
 
     eval {label $f.lLocTitle -text "Locator Status"} $Gui(WTA)
     eval {label $f.lLocStatus -text "None" -width 8} $Gui(WLA)
@@ -682,14 +682,14 @@ know the location of the tip of this device rather than the Locator.
     set Locator(lLocStatus) $f.lLocStatus
 
     #-------------------------------------------
-    # Server->Bot->SignaSP->Grid frame
+    # Server->Bot->Flashpoint->Grid frame
     #-------------------------------------------
-    set f $fServer.fBot.fSignaSP.fGrid
+    set f $fServer.fBot.fFlashpoint.fGrid
 
     eval {label $f.lTitle -text "Server Connection"} $Gui(WTA)
     grid $f.lTitle -columnspan 2 -pady $Gui(pad)
 
-    set s SignaSP
+    set s Flashpoint
     foreach x "host port msPoll" text \
         "{Host name} {Port number} {Update period (ms)}" {
         eval {label $f.l$x -text "${text}:"} $Gui(WLA)
@@ -699,9 +699,9 @@ know the location of the tip of this device rather than the Locator.
     }
 
     #-------------------------------------------
-    # Server->Bot->SignaSP->Patient frame
+    # Server->Bot->Flashpoint->Patient frame
     #-------------------------------------------
-    set f $fServer.fBot.fSignaSP.fPatient
+    set f $fServer.fBot.fFlashpoint.fPatient
 
     eval {label $f.lTitle -text "Patient Position"} $Gui(WTA)
 
@@ -727,9 +727,9 @@ know the location of the tip of this device rather than the Locator.
     grid $f.mbTblPos $f.mbPatEntry $f.mbPatPos -sticky w
 
     #-------------------------------------------
-    # Server->Bot->SignaSP->Num frame
+    # Server->Bot->Flashpoint->Num frame
     #-------------------------------------------
-    set f $fServer.fBot.fSignaSP.fNum
+    set f $fServer.fBot.fFlashpoint.fNum
 
     eval {label $f.l -text "Current Image Number"} $Gui(WLA)
     eval {entry $f.e -textvariable Locator(imageNum) -width 6 -state disabled} $Gui(WEA)
@@ -901,7 +901,7 @@ proc LocatorSetPatientPosition {{key ""} {value ""}} {
     }
 
     # Send to MRT workstation
-    Locator(SignaSP,src) SetPosition \
+    Locator(Flashpoint,src) SetPosition \
         [lsearch $Locator(tblPosList)   $Locator(tblPos)] \
         [lsearch $Locator(patEntryList) $Locator(patEntry)] \
         [lsearch $Locator(patPosList)   $Locator(patPos)]
@@ -1565,10 +1565,10 @@ proc LocatorConnect {{value ""}} {
             LocatorLoopFile
         }
 
-        "SignaSP" {
+        "Flashpoint" {
             if {$Gui(pc) == 1} {
                 tk_messageBox -message "\
-The 3D Slicer may connect to a GE SignaSP scanner from a 
+The 3D Slicer may connect to a GE Flashpoint scanner from a 
 Sun UltraSPARC, but not a PC.\n\n\
 Set the server to 'Images' to process images on disk as
 if they were coming from a scanner in real time."
@@ -1578,18 +1578,18 @@ if they were coming from a scanner in real time."
 
 
             # You have to actually connect, dumbo
-            set status [Locator(SignaSP,src) OpenConnection \
-             $Locator(SignaSP,host) $Locator(SignaSP,port)]
+            set status [Locator(Flashpoint,src) OpenConnection \
+             $Locator(Flashpoint,host) $Locator(Flashpoint,port)]
             if {$status == -1} {
                 tk_messageBox -icon error -type ok -title $Gui(title) -message "Type start_spl_server on the mrt workstation, rookie\n\
-host='$Locator(SignaSP,host)' port='$Locator(SignaSP,port)'"
+host='$Locator(Flashpoint,host)' port='$Locator(Flashpoint,port)'"
                 set Locator(loop) 0
                 set Locator(connect) 0
                 return
             }
             set Locator(loop) 1
             $Locator(mbActive) config -state disabled
-            LocatorLoopSignaSP
+            LocatorLoopFlashpoint
         }
 
         "Images" {
@@ -1620,8 +1620,8 @@ host='$Locator(SignaSP,host)' port='$Locator(SignaSP,port)'"
             }
         }
 
-        "SignaSP" {
-            Locator(SignaSP,src) CloseConnection
+        "Flashpoint" {
+            Locator(Flashpoint,src) CloseConnection
             set Locator(loop) 0
         }
 
@@ -1786,12 +1786,12 @@ proc LocatorLoopImages {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC LocatorLoopSignaSP
+# .PROC LocatorLoopFlashpoint
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc LocatorLoopSignaSP {} {
+proc LocatorLoopFlashpoint {} {
     global Slice Volume Locator
     
     if {$Locator(loop) == 0} {
@@ -1801,21 +1801,21 @@ proc LocatorLoopSignaSP {} {
         return
     }
 
-    set status [Locator(SignaSP,src) PollRealtime]
+    set status [Locator(Flashpoint,src) PollRealtime]
     if {$status == -1} {
         puts "ERROR: PollRealtime"
         LocatorConnect 0
         return
     }
-    set newImage   [Locator(SignaSP,src) GetNewImage]
-    set newLocator [Locator(SignaSP,src) GetNewLocator]
+    set newImage   [Locator(Flashpoint,src) GetNewImage]
+    set newLocator [Locator(Flashpoint,src) GetNewLocator]
 
     #----------------    
     # NEW LOCATOR
     #----------------
     if {$newLocator != 0} {
-        set locStatus [Locator(SignaSP,src) GetLocatorStatus]
-        set locMatrix [Locator(SignaSP,src) GetLocatorMatrix]
+        set locStatus [Locator(Flashpoint,src) GetLocatorStatus]
+        set locMatrix [Locator(Flashpoint,src) GetLocatorMatrix]
             
         # Report status to user
         if {$locStatus == 0} {
@@ -1846,31 +1846,31 @@ proc LocatorLoopSignaSP {} {
     if {$newImage != 0} {
         
         # Force an update so I can read the new matrix
-        Locator(SignaSP,src) Modified
-        Locator(SignaSP,src) Update
+        Locator(Flashpoint,src) Modified
+        Locator(Flashpoint,src) Update
     
         # Update patient position
         set Locator(tblPos)   [lindex $Locator(tblPosList) \
-            [Locator(SignaSP,src) GetTablePosition]]
+            [Locator(Flashpoint,src) GetTablePosition]]
         set Locator(patEntry) [lindex $Locator(patEntryList) \
-            [Locator(SignaSP,src) GetPatientEntry]]
+            [Locator(Flashpoint,src) GetPatientEntry]]
         set Locator(patPos)   [lindex $Locator(patPosList) \
-            [Locator(SignaSP,src) GetPatientPosition]]
+            [Locator(Flashpoint,src) GetPatientPosition]]
         LocatorSetPatientPosition
 
         # Get other header values
-        set Locator(recon)    [Locator(SignaSP,src) GetRecon]
-        set Locator(imageNum) [Locator(SignaSP,src) GetImageNum]
-        set minVal [Locator(SignaSP,src) GetMinValue]
-        set maxVal [Locator(SignaSP,src) GetMaxValue]
-        set imgMatrix [Locator(SignaSP,src) GetImageMatrix]
+        set Locator(recon)    [Locator(Flashpoint,src) GetRecon]
+        set Locator(imageNum) [Locator(Flashpoint,src) GetImageNum]
+        set minVal [Locator(Flashpoint,src) GetMinValue]
+        set maxVal [Locator(Flashpoint,src) GetMaxValue]
+        set imgMatrix [Locator(Flashpoint,src) GetImageMatrix]
         puts mat=$imgMatrix
         puts "ima=$Locator(imageNum), recon=$Locator(recon), range=$minVal $maxVal"
 
         # Copy the image to the Realtime volume
         set v [LocatorGetRealtimeID]
         vtkImageCopy copy
-        copy SetInput [Locator(SignaSP,src) GetOutput]
+        copy SetInput [Locator(Flashpoint,src) GetOutput]
         copy Update
         copy SetInput ""
         Volume($v,vol) SetImageData [copy GetOutput]
@@ -1906,10 +1906,10 @@ proc LocatorLoopSignaSP {} {
     # Call update instead of update idletasks so that we
     # process user input like changing slice orientation
     update
-    if {[ValidateInt $Locator(SignaSP,msPoll)] == 0} {
-        set Locator(SignaSP,msPoll) 100
+    if {[ValidateInt $Locator(Flashpoint,msPoll)] == 0} {
+        set Locator(Flashpoint,msPoll) 100
     }
-    after $Locator(SignaSP,msPoll) LocatorLoopSignaSP
+    after $Locator(Flashpoint,msPoll) LocatorLoopFlashpoint
 }
 
 #-------------------------------------------------------------------------------
