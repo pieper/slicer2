@@ -260,6 +260,8 @@ proc MainInteractorCursor {s xs ys x y} {
 proc MainInteractorKeyPress {key widget x y} {
     global View Slice Interactor Module Editor
 
+    focus $widget
+
     # Determine which slice this is
     set s $Interactor(s)
     if {$s == ""} {return}
@@ -416,6 +418,8 @@ proc MainInteractorShiftMotion {widget x y} {
 #-------------------------------------------------------------------------------
 proc MainInteractorB1 {widget x y} {
     global Interactor Module
+
+    focus $widget
     
     set s $Interactor(s)
     scan [MainInteractorStartMotion $widget $x $y] "%d %d %d %d" xs ys x y 
@@ -423,12 +427,12 @@ proc MainInteractorB1 {widget x y} {
     # Here is a switch statement for the current active module,
     # but it really should be Peter Everett's stack for bindings.
     switch $Module(activeID) {
-    "Editor" {
-        EditorB1 $x $y
-    }
-    "Alignments" {
-        AlignmentsB1 $x $y
-    }
+        "Editor" {
+            EditorB1 $x $y
+        }
+        "Alignments" {
+            AlignmentsB1 $x $y
+        }
     }
 
     # Cursor
@@ -886,7 +890,7 @@ proc MainInteractorRender {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorEnter {widget x y} {
-    global Interactor
+    global Interactor Gui
 
     # Determine what slice this is
     set s [string index $widget [expr [string length $widget] - 4]]
@@ -896,8 +900,11 @@ proc MainInteractorEnter {widget x y} {
     MainViewSetWelcome sl$s
 
     # Focus
-    set Interactor(oldFocus) [focus]
-    focus $widget
+    # - do click focus on PC, but focus-follows-mouse on unix
+    if { !$Gui(pc) } {
+        set Interactor(oldFocus) [focus]
+        focus $widget
+    }
 
     # Get the renderer window dimensions
     set Interactor(xSize) [lindex [$widget configure -width] 4]
@@ -914,7 +921,7 @@ proc MainInteractorEnter {widget x y} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorExit {widget} {
-    global Interactor Anno 
+    global Interactor Anno Gui
 
     set s $Interactor(s)
     
@@ -933,7 +940,9 @@ proc MainInteractorExit {widget} {
     MainInteractorRender
 
     # Return the focus
-    focus $Interactor(oldFocus)
+    if { !$Gui(pc) } {
+        focus $Interactor(oldFocus)
+    }
 }
 
 #-------------------------------------------------------------------------------

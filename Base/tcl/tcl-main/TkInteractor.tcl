@@ -26,6 +26,7 @@
 #   Expose
 #   UpdateRenderer
 #   Enter
+#   Leave
 #   StartMotion
 #   EndMotion
 #   Rotate
@@ -81,23 +82,23 @@ proc CreateAndBindTkEvents { widget } {
     EvDeclareEventHandler tkRegularEvents <KeyPress-w> Wireframe
     EvDeclareEventHandler tkRegularEvents <KeyPress-s> Surface
     EvDeclareEventHandler tkRegularEvents <Enter> {Enter %W %x %y;}
-    EvDeclareEventHandler tkRegularEvents <Leave> {focus $oldFocus;}
+    EvDeclareEventHandler tkRegularEvents <Leave> {Leave %W %x %y;}
     EvDeclareEventHandler tkRegularEvents <Expose> {Expose %W}
 
     if {[IsModule Fiducials] == 1 ||[IsModule Alignments] == 1} {
         EvDeclareEventHandler tkRegularEvents <KeyPress-p> { 
-        if { [SelectPick Fiducials(picker) %W %x %y] != 0 } \
-            { eval FiducialsCreatePointFromWorldXYZ "default" $Select(xyz) ; MainUpdateMRML; Render3D}
+            if { [SelectPick Fiducials(picker) %W %x %y] != 0 } \
+                { eval FiducialsCreatePointFromWorldXYZ "default" $Select(xyz) ; MainUpdateMRML; Render3D}
         }
     
-    EvDeclareEventHandler tkRegularEvents <KeyPress-q> {
-        if { [SelectPick Fiducials(picker) %W %x %y] != 0} \
-        {FiducialsSelectionFromPicker $Select(actor) $Select(cellId)}
-    }
+        EvDeclareEventHandler tkRegularEvents <KeyPress-q> {
+            if { [SelectPick Fiducials(picker) %W %x %y] != 0} \
+                {FiducialsSelectionFromPicker $Select(actor) $Select(cellId)}
+        }
     
-    EvDeclareEventHandler tkRegularEvents <KeyPress-d> {
-        if { [SelectPick Fiducials(picker) %W %x %y] != 0} \
-            {FiducialsDeleteFromPicker $Select(actor) $Select(cellId)}
+        EvDeclareEventHandler tkRegularEvents <KeyPress-d> {
+            if { [SelectPick Fiducials(picker) %W %x %y] != 0} \
+                {FiducialsDeleteFromPicker $Select(actor) $Select(cellId)}
         }
     }
 
@@ -201,11 +202,27 @@ proc UpdateRenderer {widget x y} {
 # .END
 #-------------------------------------------------------------------------------
 proc Enter {widget x y} {
-    global oldFocus
+    global oldFocus Gui
 
-    set oldFocus [focus]
-    focus $widget
+    if { !$Gui(pc) } {
+        set oldFocus [focus]
+        focus $widget
+    }
     UpdateRenderer $widget $x $y
+}
+
+#-------------------------------------------------------------------------------
+# .PROC Leave
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc Leave {widget x y} {
+    global oldFocus Gui
+
+    if { !$Gui(pc) } {
+        focus $oldFocus
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -220,6 +237,7 @@ proc StartMotion {widget x y} {
     global LastX LastY
     global RendererFound
 
+    focus $widget
 
     # check to see if a csys is selected
     # if a csys was selected (indicated by the fact that the call to 
@@ -229,11 +247,12 @@ proc StartMotion {widget x y} {
 
     if { [CsysActorSelected $widget $x $y] == 0} {
 
-    # if no Csys was selected, update the renderer as usual
-    UpdateRenderer $widget $x $y
-    if { ! $RendererFound } { return }
-    
-    $CurrentRenderWindow SetDesiredUpdateRate 5.0
+        # if no Csys was selected, update the renderer as usual
+        UpdateRenderer $widget $x $y
+
+        if { ! $RendererFound } { return }
+        
+        $CurrentRenderWindow SetDesiredUpdateRate 5.0
     }
 }
 
