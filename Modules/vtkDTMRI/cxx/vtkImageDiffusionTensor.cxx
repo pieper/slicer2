@@ -327,9 +327,9 @@ static void vtkImageDiffusionTensorExecute(vtkImageDiffusionTensor *self,
               // Pixel operation              
               outTensors->SetTuple(ptId,(float *)outT);
               // copy no diffusion data through for scalars
-              //*outPtr = *inPtrs[0];
+              *outPtr = *inPtrs[0];
               // use the trace as the scalar
-              *outPtr = (outT[0][0]+outT[1][1]+outT[2][2]);
+              //*outPtr = (outT[0][0]+outT[1][1]+outT[2][2]);
                              
               ptId ++;
               inPtrs[0]++;
