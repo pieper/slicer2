@@ -69,6 +69,7 @@ proc EMSegmentCutOutRegion {ThreshInstance MathInstance ResultVolume ProbVolume 
 # EMSegment(GaussCurveCalc,Sum), EMSegment(GaussCurveCalc,LogGaussFlag), EMSegment(GaussCurveCalc,CutOffAbsolut), 
 # EMSegment(GaussCurveCalc,CutOffPercent), EMSegment(GaussCurveCalc,MaxProb),  EMSegment(GaussCurveCalc,GreyMin,x), 
 # and EMSegment(GaussCurveCalc,GreyMax,x)
+# VolDataType is the type of the volumes in MRIVolumeList
 proc EMSegmentGaussCurveCalculation {CutOffProbability LogGaussFlag MRIVolumeList ProbVolume VolDataType} {
     global EMSegment
      # Initialize values 
