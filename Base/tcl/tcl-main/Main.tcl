@@ -131,8 +131,26 @@ proc MainBoot {{mrmlFile ""}} {
 	#-------------------------------------------
 	foreach m $Module(idList) {
 		if {[info command ${m}Init] != ""} {
-			puts "INIT: ${m}Init"
+			if {$Module(verbose) == 1} {
+				puts "INIT: ${m}Init"
+			}
 			${m}Init
+		}
+	}
+
+	#-------------------------------------------
+	# Check module dependencies.
+	#-------------------------------------------
+	foreach m $Module(idList) {
+		if {[info exists Module($m,depend)] == 1} {
+			foreach d $Module($m,depend) {
+				if {[lsearch "$Module(idList) $Module(sharedList)" $d] == -1} {
+					tk_messageBox -message "\
+The '$m' module depends on the '$d' module, which is not present.\n\
+The 3D Slicer will exit so the problem can be corrected."
+					exit
+				}
+			}
 		}
 	}
 
@@ -145,7 +163,9 @@ proc MainBoot {{mrmlFile ""}} {
 	#-------------------------------------------
 	foreach m $Module(idList) {
 		if {[info exists Module($m,procVTK)] == 1} {
-			puts "VTK: $m"
+			if {$Module(verbose) == 1} {
+				puts "VTK: $m"
+			}
 			$Module($m,procVTK)
 		}
 	}
@@ -156,7 +176,9 @@ proc MainBoot {{mrmlFile ""}} {
 	MainBuildGUI
 	
 	foreach p "MainViewBuildGUI MainModelsBuildGUI $Module(procGUI)" {
-		puts "GUI: $p"
+		if {$Module(verbose) == 1} {
+			puts "GUI: $p"
+		}
 		$p
 	}
 	MainViewSetFov
@@ -172,7 +194,9 @@ proc MainBoot {{mrmlFile ""}} {
 	foreach m $Module(idList) {
 		# See if the module has a GUI callback procedure
 		if {[info exists Module($m,procGUI)] == 1} {
-			puts "GUI: $Module($m,procGUI)"
+			if {$Module(verbose) == 1} {
+				puts "GUI: $Module($m,procGUI)"
+			}
 			$Module($m,procGUI)
 		}
 		if {$checkSliceRender == 1} {
@@ -187,7 +211,6 @@ proc MainBoot {{mrmlFile ""}} {
 	# Load MRML data
 	#-------------------------------------------	
 	update
-	puts "Loading MRML"
 	MainMrmlRead $mrmlFile
 	MainUpdateMRML
 
@@ -219,6 +242,8 @@ proc MainBoot {{mrmlFile ""}} {
 proc MainInit {} {
 	global Module Gui env Path View Anno Mrml
 	
+	set Module(verbose) 0
+	
 	set Path(tmpDir) tmp 
 	set Path(printHeaderPath) bin/print_header
 	set Path(printHeaderFirstWord) print_header
@@ -227,7 +252,7 @@ proc MainInit {} {
 	set Mrml(dir) [pwd]
 
 	GuiInit
-	puts "Starting $Gui(title)..."
+	puts "Launching $Gui(title)..."
 
 	# If paths are relative, then make them rooted to Slicer's home
 	set Path(printHeaderPath) \
@@ -259,7 +284,9 @@ proc MainInit {} {
 	#-------------------------------------------
 	foreach m "$Module(mainList) $Module(sharedList)" {
 		if {[info command ${m}Init] != "" && $m != "Main"} {
-			puts "INIT: ${m}Init"
+			if {$Module(verbose) == 1} {
+				puts "INIT: ${m}Init"
+			}
 			${m}Init
 		}
 	}
@@ -281,10 +308,14 @@ proc MainBuildVTK {} {
 	# Call each "BuildVTK" routine that's not part of a module
 	#-------------------------------------------
 	foreach p $Module(procVTK) {
-		puts "VTK: $p"
+		if {$Module(verbose) == 1} {
+			puts "VTK: $p"
+		}
 		$p
 	}
-	puts MainAnnoBuildVTK
+	if {$Module(verbose) == 1} {
+		puts MainAnnoBuildVTK
+	}
 	MainAnnoBuildVTK
 	
 	# Now that the MainLut non-module has built the indirectLUT,
@@ -371,6 +402,11 @@ proc MainBuildGUI {} {
 		"MainMenu File Save"
 	$Gui(mFile) add command -label "Save As..." -command \
 		"MainMenu File SaveAs"
+	$Gui(mFile) add separator
+	$Gui(mFile) add command -label "Save 3D View" -command \
+		"MainMenu File Save3D"
+	$Gui(mFile) add command -label "Save Slice" -command \
+		"MainMenu File SaveSlice"
 	$Gui(mFile) add separator
 	$Gui(mFile) add command -label "Close" -command \
 		"MainMenu File Close"
@@ -620,7 +656,9 @@ proc MainBuildGUI {} {
 	pack $f.canvas
 
 	foreach p "MainAnnoBuildGUI " {
-		puts "GUI: $p"
+		if {$Module(verbose) == 1} {
+			puts "GUI: $p"
+		}
 		$p
 	}
 	MainViewerAnno 256
@@ -633,7 +671,7 @@ proc MainBuildGUI {} {
 proc MainUpdateMRML {} {
 	global Module Label
 	
-	set verbose 1
+	set verbose $Module(verbose)
 	
 	# Call each "MRML" routine that's not part of a module
 	#-------------------------------------------
@@ -950,6 +988,12 @@ proc MainMenu {menu cmd} {
 		}
 		"SaveAs" {
 			MainFileSaveAsPopup "" 50 50
+		}
+		"Save3D" {
+			MainViewSaveView
+		}
+		"SaveSlice" {
+			SlicesSave
 		}
 		"Close" {
 			MainFileClose

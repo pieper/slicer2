@@ -65,8 +65,6 @@ proc MatricesInit {} {
 
 	# Props
 	set Matrix(propertyType) Basic
-	set Matrix(name) ""
-	set Matrix(desc) ""
 
 	set Matrix(autoOutput) mi-output.mrml
 	set Matrix(autoInput)  mi-input.pmrml
@@ -77,6 +75,12 @@ proc MatricesInit {} {
 	set Matrix(refVolume) $Volume(idNone)
 	set Matrix(allowAutoUndo) 0
 	set Matrix(tAuto) ""
+	set Matrix(mouse) Translate
+	set Matrix(xHome) 0
+	set Matrix(yHome) 0
+	set Matrix(prevTranLR) 0
+	set Matrix(prevTranPA) 0
+	set Matrix(prevTranIS) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -85,7 +89,7 @@ proc MatricesInit {} {
 #-------------------------------------------------------------------------------
 proc MatricesUpdateMRML {} {
 	global Matrix Volume
-	
+
 	# Menu of Volumes
 	# ------------------------------------
 	set m $Matrix(mbVolume).m
@@ -212,8 +216,9 @@ Ron is nice.
 	set f $fProps.fBot.fBasic
 
 	frame $f.fName    -bg $Gui(activeWorkspace)
+	frame $f.fMatrix  -bg $Gui(activeWorkspace)
 	frame $f.fApply   -bg $Gui(activeWorkspace)
-	pack $f.fName $f.fApply \
+	pack $f.fName $f.fMatrix $f.fApply \
 		-side top -fill x -pady $Gui(pad)
 
 	#-------------------------------------------
@@ -233,6 +238,16 @@ Ron is nice.
 
 	eval {label $f.l -text "Name:" } $Gui(WLA)
 	eval {entry $f.e -textvariable Matrix(name)} $Gui(WEA)
+	pack $f.l -side left -padx $Gui(pad)
+	pack $f.e -side left -padx $Gui(pad) -expand 1 -fill x
+
+	#-------------------------------------------
+	# Props->Bot->Basic->Matrix frame
+	#-------------------------------------------
+	set f $fProps.fBot.fBasic.fMatrix
+
+	eval {label $f.l -text "Matrix:" } $Gui(WLA)
+	eval {entry $f.e -textvariable Matrix(matrix)} $Gui(WEA)
 	pack $f.l -side left -padx $Gui(pad)
 	pack $f.e -side left -padx $Gui(pad) -expand 1 -fill x
 
@@ -281,8 +296,21 @@ Ron is nice.
 	frame $f.fRender    -bg $Gui(activeWorkspace)
 	frame $f.fTranslate -bg $Gui(activeWorkspace) -relief groove -bd 2
 	frame $f.fRotate    -bg $Gui(activeWorkspace) -relief groove -bd 2
-	pack $f.fActive $f.fRender  $f.fTranslate $f.fRotate\
-		-side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+	frame $f.fBtns      -bg $Gui(activeWorkspace)
+	frame $f.fMouse    -bg $Gui(activeWorkspace)
+	pack $f.fActive $f.fRender  $f.fTranslate $f.fRotate $f.fBtns $f.fMouse\
+		-side top -pady 4 -padx $Gui(pad) -fill x
+
+	#-------------------------------------------
+	# Manual->Btns frame
+	#-------------------------------------------
+	set f $fManual.fBtns
+
+	eval {button $f.bIdentity -text "Identity" \
+		-command "MatricesIdentity; RenderAll"} $Gui(WBA) {-width 8}
+	eval {button $f.bInvert -text "Invert" \
+		-command "MatricesInvert; RenderAll"} $Gui(WBA) {-width 8}
+	grid $f.bIdentity $f.bInvert -padx $Gui(pad) -pady $Gui(pad)
 
 	#-------------------------------------------
 	# Manual->Active frame
@@ -343,6 +371,7 @@ Ron is nice.
 			-command "MatricesManualTranslate regTran${slider}" \
 			-variable Matrix(regTran${slider}) -resolution 1 $Gui(WSA)} 
 			eval [subst $c]
+		bind $f.s${slider} <Leave> "MatricesManualTranslate regTran$slider"
 
 		grid $f.l${slider} $f.e${slider} $f.s${slider} -pady 2
 	}
@@ -375,6 +404,28 @@ Ron is nice.
 
 		grid $f.l${slider} $f.e${slider} $f.s${slider} -pady 2
 	}
+
+    #-------------------------------------------
+    # Manual->Mouse Frame
+    #-------------------------------------------
+    set f $fManual.fMouse
+
+    frame $f.fTitle -bg $Gui(activeWorkspace)
+    frame $f.fBtns -bg $Gui(activeWorkspace)
+    pack $f.fTitle $f.fBtns -side left -padx 5
+
+    set c {label $f.fTitle.l -text "Mouse Action: " $Gui(WLA)}
+        eval [subst $c]
+    pack $f.fTitle.l
+
+    foreach text "Translate Rotate" value "Translate Rotate" \
+        width "10 7" {
+        set c {radiobutton $f.fBtns.rSpeed$value -width $width \
+            -text "$text" -value "$value" -variable Matrix(mouse) \
+            -indicatoron 0 $Gui(WCA)}
+            eval [subst $c]
+        pack $f.fBtns.rSpeed$value -side left -padx 0 -pady 0
+    }
 
 
 	#-------------------------------------------
@@ -519,6 +570,26 @@ Ron is nice.
 	set f $fFiducial.fPeter
 }
 
+proc MatricesIdentity {} {
+	global Matrix
+	
+	set m $Matrix(activeID)
+	if {$m == ""} {return}
+	
+	[Matrix($m,node) GetTransform] Identity
+	MainUpdateMRML
+}
+
+proc MatricesInvert {} {
+	global Matrix
+	
+	set m $Matrix(activeID)
+	if {$m == ""} {return}
+	
+	[Matrix($m,node) GetTransform] Inverse
+	MainUpdateMRML
+}
+
 #-------------------------------------------------------------------------------
 # .PROC MatricesSetPropertyType
 # .END
@@ -531,6 +602,33 @@ proc MatricesSetPropertyType {} {
  
 proc MatricesPropsApply {} {
 	global Matrix Label Module Mrml
+
+	# Validate Input
+	
+	# Ensure matrix is 16 numbers
+	if {[llength $Matrix(matrix)] != 16} {
+		tk_messageBox -message \
+		"The matrix must be 16 numbers to form a 4-by-4 row-major matrix"
+		return
+	}
+	foreach n $Matrix(matrix) {
+		if {[ValidateFloat $n] == 0} {
+			tk_messageBox -message "\
+The matrix must be 16 numbers to form a 4-by-4 row-major matrix,\n\
+but '$n' is not a number."
+			return
+		}
+	}
+
+	# Validate name
+	if {$Matrix(name) == ""} {
+		tk_messageBox -message "Please enter a name that will allow you to distinguish this matrix."
+		return
+	}
+	if {[ValidateName $Matrix(name)] == 0} {
+		tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
+		return
+	}
 
 	set m $Matrix(activeID)
 	if {$m == ""} {return}
@@ -554,6 +652,7 @@ proc MatricesPropsApply {} {
 	}
 
 	Matrix($m,node) SetName $Matrix(name)
+	Matrix($m,node) SetMatrix $Matrix(matrix)
 
 	# If tabs are frozen, then 
 	if {$Module(freezer) != ""} {
@@ -602,38 +701,132 @@ proc MatricesManualTranslate {param {value ""}} {
 		set Matrix($param) $value
 	}
 
+	# Validate input
+	if {[ValidateFloat $value] == 0} {
+		tk_messageBox -message "$value must be a floating point number"
+		return
+	}
+
 	# If there is no active transform, then do nothing
 	set t $Matrix(activeID)
-	if {$t == ""} {return}
+	if {$t == "" || $t == "NEW"} {return}
 
 	# Transfer values from GUI to active transform
 	set tran [Matrix($t,node) GetTransform]
-	vtkMatrix4x4 mat
-	$tran GetMatrix mat
+	set mat  [$tran GetMatrixPointer]
 	
 	switch $param {
 		"regTranLR" {
-			set oldVal [mat GetElement 0 3]
-			mat SetElement 0 3 $value
+			set oldVal [$mat GetElement 0 3]
 		}
 		"regTranPA" {
-			set oldVal [mat GetElement 1 3]
-			mat SetElement 1 3 $value
+			set oldVal [$mat GetElement 1 3]
 		}
 		"regTranIS" {
-			set oldVal [mat GetElement 2 3]
-			mat SetElement 2 3 $value
+			set oldVal [$mat GetElement 2 3]
 		}
 	}
 
 	# Update all MRML only if the values changed
 	if {$oldVal != $value} {
-		$tran SetMatrix mat
-
+		switch $param {
+		"regTranLR" {
+			$mat SetElement 0 3 $value
+		}
+		"regTranPA" {
+			$mat SetElement 1 3 $value
+		}
+		"regTranIS" {
+			$mat SetElement 2 3 $value
+		}
+		}
 		MainUpdateMRML
 		Render$Matrix(render)
 	}
-	mat Delete
+	update
+}
+
+proc MatricesManualTranslateDual {param1 value1 param2 value2} {
+	global Matrix
+
+	# Validate input
+	if {[ValidateFloat $value1] == 0} {
+		tk_messageBox -message "$value1 must be a floating point number"
+		return
+	}
+	if {[ValidateFloat $value2] == 0} {
+		tk_messageBox -message "$value2 must be a floating point number"
+		return
+	}
+
+	# Value is blank if used entry field instead of slider
+	set Matrix($param1) $value1
+	set Matrix($param2) $value2
+
+	# If there is no active transform, then do nothing
+	set t $Matrix(activeID)
+	if {$t == "" || $t == "NEW"} {return}
+
+	# Transfer values from GUI to active transform
+	set tran [Matrix($t,node) GetTransform]
+	set mat  [$tran GetMatrixPointer]
+	
+	switch $param1 {
+		"regTranLR" {
+			set oldVal1 [$mat GetElement 0 3]
+		}
+		"regTranPA" {
+			set oldVal1 [$mat GetElement 1 3]
+		}
+		"regTranIS" {
+			set oldVal1 [$mat GetElement 2 3]
+		}
+	}
+	switch $param2 {
+		"regTranLR" {
+			set oldVal2 [$mat GetElement 0 3]
+		}
+		"regTranPA" {
+			set oldVal2 [$mat GetElement 1 3]
+		}
+		"regTranIS" {
+			set oldVal2 [$mat GetElement 2 3]
+		}
+	}
+
+	# Update all MRML only if the values changed
+	if {$oldVal1 != $value1} {
+		switch $param1 {
+		"regTranLR" {
+			$mat SetElement 0 3 $value1
+		}
+		"regTranPA" {
+			$mat SetElement 1 3 $value1
+		}
+		"regTranIS" {
+			$mat SetElement 2 3 $value1
+		}
+		}
+	}
+	if {$oldVal2 != $value2} {
+		switch $param2 {
+		"regTranLR" {
+			$mat SetElement 0 3 $value2
+		}
+		"regTranPA" {
+			$mat SetElement 1 3 $value2
+		}
+		"regTranIS" {
+			$mat SetElement 2 3 $value2
+		}
+		}
+	}
+	if {$oldVal2 != $value2 || $oldVal1 != $value1} {
+		MainUpdateMRML
+		if {$Matrix(render) == "All"} {
+			Render3D
+		}
+	}
 }
 
 
@@ -641,7 +834,7 @@ proc MatricesManualTranslate {param {value ""}} {
 # .PROC MatricesManualRotate
 # .END
 #-------------------------------------------------------------------------------
-proc MatricesManualRotate {param {value ""}} {
+proc MatricesManualRotate {param {value ""} {mouse 0}} {
 	global Matrix
 
 	# "value" is blank if used entry field instead of slider
@@ -651,9 +844,15 @@ proc MatricesManualRotate {param {value ""}} {
 		set Matrix($param) $value
 	}
 
+	# Validate input
+	if {[ValidateFloat $value] == 0} {
+		tk_messageBox -message "$value must be a floating point number"
+		return
+	}
+
 	# If there is no active transform, then do nothing
 	set t $Matrix(activeID)
-	if {$t == ""} {return}
+	if {$t == "" || $t == "NEW"} {return}
 
 	# If this is a different axis of rotation than last time,
 	# then store the current transform in "Matrix(rotMatrix)"
@@ -684,43 +883,42 @@ proc MatricesManualRotate {param {value ""}} {
 	}
 
 	# Now, concatenate the rotation with the stored transform
-	vtkTransform tran
-	tran SetMatrix Matrix(rotMatrix)
+	set tran Matrix($t,transform)
+	$tran SetMatrix Matrix(rotMatrix)
 	switch $param {
 		"regRotLR" {
-			tran RotateX $value
+			$tran RotateX $value
 		}
 		"regRotPA" {
-			tran RotateY $value
+			$tran RotateY $value
 		}
 		"regRotIS" {
-			tran RotateZ $value
+			$tran RotateZ $value
 		}
 	}
 
 	# Only UpdateMRML if the transform changed
-	# (There must be a simpler way to do this)
-	
-	vtkMatrix4x4 mat
-	tran GetMatrix mat
-	vtkMatrix4x4 mat2
-	[Matrix($t,node) GetTransform] GetMatrix mat2
+	set mat1 [Matrix($t,transform) GetMatrixPointer]
+	set mat2 [[Matrix($t,node) GetTransform] GetMatrixPointer]
 	set differ 0
 	for {set i 0} {$i < 4} {incr i} {
 		for {set j 0} {$j < 4} {incr j} {
-			if {[mat GetElement $i $j] != [mat2 GetElement $i $j]} {
+			if {[$mat1 GetElement $i $j] != [$mat2 GetElement $i $j]} {
 				set differ 1
 			}
 		}
 	}
 	if {$differ == 1} {
-		Matrix($t,node) SetTransform tran
+		[Matrix($t,node) GetTransform] DeepCopy $tran
 		MainUpdateMRML
-		Render$Matrix(render)
+		if {$mouse == 1} {
+			if {$Matrix(render) == "All"} {
+				Render3D
+			}
+		} else {
+			Render$Matrix(render)
+		}
 	}
-	tran Delete
-	mat Delete
-	mat2 Delete
 }
 
 #-------------------------------------------------------------------------------
@@ -985,6 +1183,11 @@ proc MatricesAutoApply {} {
 	$tran SetMatrix mat
 	mat Delete
 
+	# Change name
+	if {[Matrix($t,node) GetName] == "manual"} {
+		Matrix($t,node) SetName auto
+	}
+
 	# Allow undo
 	$Matrix(bUndo) configure -state normal
 
@@ -1011,3 +1214,167 @@ proc MatricesAutoUndo {} {
 	MainUpdateMRML
 	RenderAll
 }
+
+################################################################################
+#                             Event Bindings
+################################################################################
+
+
+#-------------------------------------------------------------------------------
+# .PROC MatricesB1
+# .END
+#-------------------------------------------------------------------------------
+proc MatricesB1 {x y} {
+	global Matrix Slice
+
+	set s $Slice(activeID)
+	set orient [Slicer GetOrientString $s]
+	if {[lsearch "Axial Sagittal Coronal" $orient] == -1} {
+		tk_messageBox -message \
+			"Set 'Orient' to Axial, Sagittal, or Coronal."
+		return
+	}
+	set Matrix(xHome) $x
+	set Matrix(yHome) $y
+
+	# Translate
+	if {$Matrix(mouse) == "Translate"} {
+
+		Anno($s,msg,mapper) SetInput "0 mm"
+		Anno($s,r1,actor)  SetVisibility 1
+		Anno($s,r1,source) SetPoint1 $x $y 0
+		Anno($s,r1,source) SetPoint2 $x [expr $y+1] 0
+			
+		# To make this translation add to the current translation amount,
+		# store the current amount.
+		set Matrix(prevTranLR) $Matrix(regTranLR)
+		set Matrix(prevTranPA) $Matrix(regTranPA)
+		set Matrix(prevTranIS) $Matrix(regTranIS)
+	}
+	# Rotate
+	if {$Matrix(mouse) == "Rotate"} {
+
+		Anno($s,msg,mapper) SetInput "0 deg"
+		Anno($s,r1,actor)  SetVisibility 1
+		Anno($s,r1,source) SetPoint1 128 128 0
+		Anno($s,r1,source) SetPoint2 $x $y 0
+		Anno($s,r2,actor)  SetVisibility 1
+		Anno($s,r2,source) SetPoint1 128 128 0
+		Anno($s,r2,source) SetPoint2 $x $y 0
+	}
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MatricesB1Motion
+# .END
+#-------------------------------------------------------------------------------
+proc MatricesB1Motion {x y} {
+	global Matrix Slice Interactor View Anno
+
+	# This only works on orthogonal slices
+	set s $Slice(activeID)
+	set orient [Slicer GetOrientString $s]
+	if {[lsearch "Axial Sagittal Coronal" $orient] == -1} {
+		return
+	}
+
+	# Translate
+	if {$Matrix(mouse) == "Translate"} {
+	
+		set xPixels [expr $x - $Matrix(xHome)]
+		set yPixels [expr $y - $Matrix(yHome)]
+		set xMm [PixelsToMm $xPixels $View(fov) 256 $Slice($s,zoom)]
+		set yMm [PixelsToMm $yPixels $View(fov) 256 $Slice($s,zoom)]
+		
+		Anno($s,r1,source) SetPoint2 $x $y 0
+
+		switch $orient {
+			Axial {
+				# X:R->L, Y:P->A
+				set xMm [expr -$xMm]
+				set text "LR: $xMm, PA: $yMm mm"
+				Anno($s,msg,mapper)  SetInput $text
+				MatricesManualTranslateDual \
+					regTranLR [expr $xMm + $Matrix(prevTranLR)] \
+					regTranPA [expr $yMm + $Matrix(prevTranPA)]
+			}
+			Sagittal {
+				# X:A->P, Y:I->S
+				set xMm [expr -$xMm]
+				set text "PA: $xMm, IS: $yMm mm"
+				Anno($s,msg,mapper)  SetInput $text
+				MatricesManualTranslateDual \
+					regTranPA [expr $xMm + $Matrix(prevTranPA)] \
+					regTranIS [expr $yMm + $Matrix(prevTranIS)]
+			}
+			Coronal {
+				# X:R->L, Y:I->S
+				set xMm [expr -$xMm]
+				set text "LR: $xMm, IS: $yMm mm"
+				Anno($s,msg,mapper)  SetInput $text
+				MatricesManualTranslateDual \
+					regTranLR [expr $xMm + $Matrix(prevTranLR)] \
+					regTranIS [expr $yMm + $Matrix(prevTranIS)]
+			}
+		}
+	}
+
+	# Rotate
+	if {$Matrix(mouse) == "Rotate"} {
+	
+		set degrees [Angle2D 128 128 $Matrix(xHome) $Matrix(yHome) \
+			128 128 $x $y]
+		set degrees [expr int($degrees)]
+		Anno($s,r2,source) SetPoint2 $x $y 0
+			
+		switch $orient {
+			Axial {
+				# IS-axis
+				set text "IS-axis: $degrees deg"
+				Anno($s,msg,mapper)  SetInput $text
+				MatricesManualRotate regRotIS $degrees 1
+			}
+			Sagittal {
+				# LR-axis
+				set text "LR-axis: $degrees deg"
+				Anno($s,msg,mapper)  SetInput $text
+				MatricesManualRotate regRotLR $degrees 1
+			}
+			Coronal {
+				# PA-axis
+				set degrees [expr -$degrees]
+				set text "PA-axis: $degrees deg"
+				Anno($s,msg,mapper)  SetInput $text
+				MatricesManualRotate regRotPA $degrees 1
+			}
+		}
+	}
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MatricesB1Release
+# .END
+#-------------------------------------------------------------------------------
+proc MatricesB1Release {x y} {
+	global Matrix Slice
+
+	set s $Slice(activeID)
+	set orient [Slicer GetOrientString $s]
+	if {[lsearch "Axial Sagittal Coronal" $orient] == -1} {
+		return
+	}
+
+	# Translate
+	if {$Matrix(mouse) == "Translate"} {
+		Anno($s,msg,mapper) SetInput ""
+		Anno($s,r1,actor)  SetVisibility 0
+	}
+
+	# Rotate
+	if {$Matrix(mouse) == "Rotate"} {
+		Anno($s,msg,mapper) SetInput ""
+		Anno($s,r1,actor)  SetVisibility 0
+		Anno($s,r2,actor)  SetVisibility 0
+	}
+}
+

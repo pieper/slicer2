@@ -333,12 +333,23 @@ proc EdThresholdSetInteract {} {
 proc EdThresholdUpdate {} {
 	global Ed Label Slice
 
+	# Validate input
+	if {[ValidateInt $Ed(EdThreshold,lower)] == 0} {
+		tk_messageBox -message "Lo threshold is not an integer."
+		return
+	}
+	if {[ValidateInt $Ed(EdThreshold,upper)] == 0} {
+		tk_messageBox -message "Hi threshold is not an integer."
+		return
+	}
+	if {$Label(label) == ""} {
+		return
+	}
+
 	foreach s $Slice(idList) {
 		Ed(EdThreshold,thresh$s) SetReplaceIn     $Ed(EdThreshold,replaceIn)
 		Ed(EdThreshold,thresh$s) SetReplaceOut    $Ed(EdThreshold,replaceOut)
-		if {$Label(label) != ""} {
-			Ed(EdThreshold,thresh$s) SetInValue       $Label(label)
-		}
+		Ed(EdThreshold,thresh$s) SetInValue       $Label(label)
 		Ed(EdThreshold,thresh$s) SetOutValue      $Ed(EdThreshold,bg)
 		Ed(EdThreshold,thresh$s) ThresholdBetween $Ed(EdThreshold,lower) $Ed(EdThreshold,upper)
 	}
@@ -373,22 +384,33 @@ proc EdThresholdLabel {} {
 proc EdThresholdApply {} {
 	global Ed Volume Label Gui
 
-	set v [EditorGetInputID $Ed(EdThreshold,input)]
-	EdSetupBeforeApplyEffect $Ed(EdThreshold,scope) $v
+	set e EdThreshold
+	set v [EditorGetInputID $Ed($e,input)]
 
-	set Gui(progressText) "Threshold [Volume($v,node) GetName]"
-	
-	if {$Label(label) == ""} {
-		tk_messageBox -message "Please specify an input label, first."
+	# Validate input
+	if {[ValidateInt $Ed($e,lower)] == 0} {
+		tk_messageBox -message "Lo threshold is not an integer."
+		return
+	}
+	if {[ValidateInt $Ed($e,upper)] == 0} {
+		tk_messageBox -message "Hi threshold is not an integer."
+		return
+	}
+	if {[ValidateInt $Label(label)] == 0} {
+		tk_messageBox -message "Output label is not an integer."
 		return
 	}
 
-	set min        $Ed(EdThreshold,lower)
-	set max        $Ed(EdThreshold,upper)
+	EdSetupBeforeApplyEffect $Ed($e,scope) $v
+
+	set Gui(progressText) "Threshold [Volume($v,node) GetName]"	
+
+	set min        $Ed($e,lower)
+	set max        $Ed($e,upper)
 	set in         $Label(label)
-	set out        $Ed(EdThreshold,bg)
-	set replaceIn  $Ed(EdThreshold,replaceIn)
-	set replaceOut $Ed(EdThreshold,replaceOut)
+	set out        $Ed($e,bg)
+	set replaceIn  $Ed($e,replaceIn)
+	set replaceOut $Ed($e,replaceOut)
 	Ed(editor)     Threshold $min $max $in $out $replaceIn $replaceOut
 	Ed(editor)     SetInput ""
 	Ed(editor)     UseInputOff

@@ -216,6 +216,23 @@ proc GuiInit {} {
 	}
 }
 
+proc ValidateFloat {s} {
+	# Return 1 if valid, else 0
+	if {$s == ""} {return 0}
+	return [regexp {^([0-9-]+|([0-9-]*\.[0-9]*))$} $s]
+}
+
+proc ValidateName {s} {
+	# Return 1 if valid, else 0
+	return [regexp {^([a-zA-Z0-9_-]*)$} $s]
+}
+
+proc ValidateInt {s} {
+	# Return 1 if valid, else 0
+	if {$s == ""} {return 0}
+	return [regexp {^([0-9-]*)$} $s]
+}
+
 #-------------------------------------------------------------------------------
 # .PROC InfoWidget
 # .END

@@ -298,6 +298,9 @@ proc MainInteractorB1 {widget x y} {
 	"Editor" {
 		EditorB1 $x $y
 	}
+	"Matrices" {
+		MatricesB1 $x $y
+	}
 	}
 
 	# Cursor
@@ -337,6 +340,9 @@ proc MainInteractorB1Release {widget x y} {
 	"Editor" {
 		EditorB1Release $x $y
 	}
+	"Matrices" {
+		MatricesB1Release $x $y
+	}
 	}
 
 	Anno($s,msg,actor)  SetVisibility 0
@@ -373,6 +379,9 @@ proc MainInteractorB1Motion {widget x y} {
 	switch $Module(activeID) {
 	"Editor" {
 		EditorB1Motion $x $y
+	}
+	"Matrices" {
+		MatricesB1Motion $x $y
 	}
 	}
 
@@ -743,3 +752,43 @@ proc MainInteractorReset {widget x y} {
 	MainInteractorRender
 	RenderSlices
 }
+
+proc PixelsToMm {pix fov dim mag} {
+	# mm = pix * fov/dim / mag
+	# pix = mm * dim/fox * mag
+
+	return [expr int($pix * $fov/$dim / $mag + 0.5)]
+}
+
+proc Distance3D {x1 y1 z1 x2 y2 z2} {
+	set dx [expr $x2 - $x1]
+	set dy [expr $y2 - $y1]
+	set dz [expr $z2 - $z1]
+	return [expr sqrt($dx*$dx + $dy*$dy + $dz*$dz)]
+}
+
+proc Angle2D {ax1 ay1 ax2 ay2 bx1 by1 bx2 by2} {
+
+	# Form vector 'a'=[ax ay] with magnitude 'am' 
+	set ax [expr $ax2 - $ax1]
+	set ay [expr $ay2 - $ay1]
+	set am [expr sqrt($ax*$ax + $ay*$ay)]
+
+	# Form vector 'b'=[bx by] with magnitude 'bm' 
+	set bx [expr $bx2 - $bx1]
+	set by [expr $by2 - $by1]
+	set bm [expr sqrt($bx*$bx + $by*$by)]
+
+	# Find angle between a, b from their dot product
+	set dot [expr $ax*$bx + $ay*$by]
+	if {$am == 0 || $bm == 0} {return 0}
+	set deg [expr acos($dot/($am*$bm))]
+
+	# See if angle is negative from the cross product of a and b
+	if {$ax*$by - $bx*$ay > 0} {
+		set deg [expr -$deg] 
+	}
+
+	return [expr $deg*180/3.1415962]
+}
+

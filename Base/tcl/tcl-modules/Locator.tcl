@@ -499,6 +499,20 @@ proc LocatorSetTransverseVisibility {} {
 proc LocatorSetColor {{value ""}} {
 	global Locator
 
+	# Validate input
+	if {[ValidateFloat $Locator(red)] == 0} {
+		tk_messageBox -message "Red must be a number between 0.0 and 1.0"
+		return
+	}
+	if {[ValidateFloat $Locator(green)] == 0} {
+		tk_messageBox -message "Green must be a number between 0.0 and 1.0"
+		return
+	}
+	if {[ValidateFloat $Locator(blue)] == 0} {
+		tk_messageBox -message "Blue must be a number between 0.0 and 1.0"
+		return
+	}
+
 	set color "$Locator(red) $Locator(green) $Locator(blue)"
 	foreach actor $Locator(actors) {
 		eval [${actor}Actor GetProperty] SetColor $color
@@ -516,6 +530,19 @@ proc LocatorSetColor {{value ""}} {
 proc LocatorSetSize {} {
 	global Locator
 
+	if {[ValidateFloat $Locator(radius)] == 0} {
+		tk_messageBox -message "Radius must be a floating point number"
+		return
+	}
+	if {[ValidateFloat $Locator(normalLen)] == 0} {
+		tk_messageBox -message "Normal Length must be a floating point number"
+		return
+	}
+	if {[ValidateFloat $Locator(transverseLen)] == 0} {
+		tk_messageBox -message "Transverse Length must be a floating point number"
+		return
+	}
+
 	normalSource SetRadius $Locator(radius) 
 	normalSource SetHeight $Locator(normalLen)
 	transverseSource SetRadius $Locator(radius) 
@@ -529,6 +556,16 @@ proc LocatorSetSize {} {
 #-------------------------------------------------------------------------------
 proc LocatorSetMatrices {} {
 	global Locator
+
+	if {[ValidateFloat $Locator(radius)] == 0} {
+		return
+	}
+	if {[ValidateFloat $Locator(normalLen)] == 0} {
+		return
+	}
+	if {[ValidateFloat $Locator(transverseLen)] == 0} {
+		return
+	}
 
 	# Find transform, N, that brings the locator coordinate frame 
 	# into the scanner frame.  Then invert N to M and set it to the locator's
@@ -652,6 +689,13 @@ proc LocatorSetMatrices {} {
 proc LocatorSetPosition {{value ""}} {
 	global Locator
 
+	foreach p "px py pz nx ny nz tx ty tz" {
+		if {[ValidateFloat $Locator(${p}Str)] == 0} {
+			tk_messageBox -message "Floating point numbers required."
+			return
+		}
+	}
+
 	# Read matrix
 	set Locator(px) $Locator(pxStr) 
 	set Locator(py) $Locator(pyStr) 
@@ -672,6 +716,13 @@ proc LocatorSetPosition {{value ""}} {
 #-------------------------------------------------------------------------------
 proc LocatorUseLocatorMatrix {} {
 	global Locator Slice
+
+	foreach p "normalOffset transverseOffset crossOffset" {
+		if {[ValidateFloat $Locator($p)] == 0} {
+			tk_messageBox -message "$p must be a floating point number."
+			return
+		}
+	}
 
 	# Form arrays so we can use vector processing functions
 	set P(x) $Locator(px)

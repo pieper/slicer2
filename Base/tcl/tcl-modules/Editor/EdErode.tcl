@@ -46,6 +46,7 @@ proc EdErodeInit {} {
 	set Ed($e,desc)      "Label pixels that are on the perimeter."
 	set Ed($e,rank)      2
 	set Ed($e,procGUI)   EdErodeBuildGUI
+	set Ed($e,procEnter) EdErodeEnter
 
 	# Required
 	set Ed($e,scope) Multi 
@@ -147,22 +148,48 @@ proc EdErodeBuildGUI {} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC EdErodeEnter
+# .END
+#-------------------------------------------------------------------------------
+proc EdErodeEnter {} {
+	global Ed
+
+	LabelsColorWidgets
+}
+
+#-------------------------------------------------------------------------------
 # .PROC EdErodeApply
 # .END
 #-------------------------------------------------------------------------------
 proc EdErodeApply {effect} {
 	global Ed Volume Label Gui
 
-	set v [EditorGetInputID $Ed(EdErode,input)]
+	set e EdErode
+	set v [EditorGetInputID $Ed($e,input)]
 
-	EdSetupBeforeApplyEffect $Ed(EdErode,scope) $v
+	# Validate input
+	if {[ValidateInt $Ed($e,fill)] == 0} {
+		tk_messageBox -message "Fill value is not an integer."
+		return
+	}
+	if {[ValidateInt $Ed($e,iterations)] == 0} {
+		tk_messageBox -message "Iterations is not an integer."
+		return
+	}
+	if {[ValidateInt $Label(label)] == 0} {
+		tk_messageBox -message "Value To Erode is not an integer."
+		return
+	}
+
+
+	EdSetupBeforeApplyEffect $Ed($e,scope) $v
 
 	set Gui(progressText) "$effect [Volume($v,node) GetName]"
 	
 	set fg         $Label(label)
-	set bg         $Ed(EdErode,fill)
-	set neighbors  $Ed(EdErode,neighbors)     
-	set iterations $Ed(EdErode,iterations)
+	set bg         $Ed($e,fill)
+	set neighbors  $Ed($e,neighbors)     
+	set iterations $Ed($e,iterations)
 	Ed(editor)     $effect $fg $bg $neighbors $iterations
 	Ed(editor)     SetInput ""
 	Ed(editor)     UseInputOff

@@ -170,8 +170,8 @@ Models are fun. Do you like models, Ron?
 
 	set c {button $f.bTransform  -text "Add Transform" \
 		-command "DataAddTransform" $Gui(WBA)}; eval [subst $c]
-	set c {button $f.bEnd  -text "End Transform" \
-		-command "DataEndTransform" $Gui(WBA)}; eval [subst $c]
+	set c {button $f.bEnd  -text "Add Matrix" \
+		-command "DataAddMatrix" $Gui(WBA)}; eval [subst $c]
 
 	pack $f.bTransform $f.bEnd -side left -padx $Gui(pad)
 
@@ -196,6 +196,7 @@ Models are fun. Do you like models, Ron?
 	bind all <Control-x> {DataCutNode}
 	bind all <Control-c> {DataCopyNode}
 	bind all <Control-v> {DataPasteNode}
+	bind all <Control-d> {DataDeleteNode}
 	pack $f.list -side top -expand 1 -fill both
 
 	# Menu for right mouse button
@@ -218,6 +219,8 @@ Models are fun. Do you like models, Ron?
 	$m add command -label "Paste (Ctrl+v)" -command "DataPasteNode" \
 		-state disabled
 	incr id
+	set Data(rightMenu,Delete)  $id
+	$m add command -label "Delete (Ctrl+d)" -command "DataDeleteNode"
 	$m add command -label "-- Close Menu --" -command "$Data(rightMenu) unpost"
 
 }
@@ -324,11 +327,11 @@ proc DataPostRightMenu {x y} {
 	# If no selection, then disable certain menu entries
 	set m $Data(rightMenu)
 	if {$index == ""} {
-		foreach entry "Cut Copy Edit" {
+		foreach entry "Cut Copy Edit Delete" {
 			$m entryconfigure $Data(rightMenu,$entry) -state disabled
 		}
 	} else {
-		foreach entry "Cut Copy Edit" {
+		foreach entry "Cut Copy Edit Delete" {
 			$m entryconfigure $Data(rightMenu,$entry) -state normal
 		}
 	}
@@ -344,7 +347,7 @@ proc DataPostRightMenu {x y} {
 proc DataGetTypeFromNode {node} {
 
 	if {[regexp {(.*)\((.*),} $node match nodeType id] == 0} {
-		tk_messageBox -message "Ooops!"
+		tk_messageBox -message "Ooops! node='$node'"
 		return ""
 	}
 	return $nodeType
@@ -368,7 +371,7 @@ proc DataGetIdFromNode {node} {
 # .END
 #-------------------------------------------------------------------------------
 proc DataClipboardCopy {node} {
-	global Data Mrml Volume Model Transform Matrix Color
+	global Data Mrml Volume Model Transform EndTransform Matrix Color
 	
 	# If the clipboard already has a node, delete it
 	if {$Data(clipboard) != ""} {
@@ -424,6 +427,24 @@ proc DataCutNode {} {
 	MainUpdateMRML
 }
 
+proc DataDeleteNode {} {
+	global Data Mrml Volume Model Transform EndTransform Matrix Color
+
+	# Get the selected node
+	set n [$Data(fNodeList) curselection]
+	if {$n == ""} {return}
+	set node [Mrml(dataTree) GetNthItem $n]
+
+	# Delete
+	set nodeType [DataGetTypeFromNode $node]
+	set id [DataGetIdFromNode $node]
+	# For the next line to work, Volume, Model, etc need to
+	# be on the "global" line of this procedure
+	MainMrmlDeleteNode $nodeType $id
+
+	RenderAll
+}
+
 #-------------------------------------------------------------------------------
 # .PROC DataCopyNode
 # .END
@@ -454,6 +475,14 @@ proc DataPasteNode {} {
 
 	# Get the selected node
 	set n [$Data(fNodeList) curselection]
+
+	# Empty list is a special case
+	if {[$Data(fNodeList) index end] == 0} {
+		Mrml(dataTree) AddItem [DataClipboardPaste]
+		MainUpdateMRML
+		return
+	}
+	
 	if {$n == ""} {
 		tk_messageBox -message "First select an item to paste after."
 		return
@@ -502,7 +531,7 @@ proc DataEditNode {} {
 		set id [DataGetIdFromNode $node]
 		MainMatricesSetActive $id
 		if {[IsModule Matrices] == 1} {
-			Tab Matrices row1 Props
+			Tab Matrices row1 Manual
 		}
 	}
 	}
@@ -532,9 +561,9 @@ proc DataAddModel {} {
 proc DataAddMatrix {} {
 	global Matrix Module
 
-	if {[IsModule Matrixs] == 1} {
+	if {[IsModule Matrices] == 1} {
 		set Matrix(propertyType) Basic
-		MatrixSetPropertyType
+		MatricesSetPropertyType
 		MainMatricesSetActive NEW
 		set Matrix(freeze) 1
 		Tab Matrices row1 Props
@@ -547,13 +576,40 @@ proc DataAddMatrix {} {
 # .END
 #-------------------------------------------------------------------------------
 proc DataAddTransform {} {
-}
+	global Transform Matrix EndTransform
 
-#-------------------------------------------------------------------------------
-# .PROC DataEndTransform
-# .END
-#-------------------------------------------------------------------------------
-proc DataEndTransform {} {
+	# Add Transform, Matrix, EndTransform
+	
+	# Transform
+	set i $Transform(nextID)
+	incr Transform(nextID)
+	lappend Transform(idList) $i
+	vtkMrmlTransformNode Transform($i,node)
+	set n Transform($i,node)
+	$n SetID $i
+	Mrml(dataTree) AddItem $n
+
+	# Matrix
+	set i $Matrix(nextID)
+	incr Matrix(nextID)
+	lappend Matrix(idList) $i
+	vtkMrmlMatrixNode Matrix($i,node)
+	set n Matrix($i,node)
+	$n SetID $i
+	$n SetName new
+	Mrml(dataTree) AddItem $n
+	MainMatricesSetActive $i
+
+	# EndTransform
+	set i $EndTransform(nextID)
+	incr EndTransform(nextID)
+	lappend EndTransform(idList) $i
+	vtkMrmlEndTransformNode EndTransform($i,node)
+	set n EndTransform($i,node)
+	$n SetID $i
+	Mrml(dataTree) AddItem $n
+
+	MainUpdateMRML
 }
 
 

@@ -94,12 +94,30 @@ Models are fun. Do you like models, Ron?
 	set fView $Module(View,fView)
 	set f $fView
 
+	frame $f.fSize    -bg $Gui(activeWorkspace) -relief groove -bd 3
+	frame $f.fBg      -bg $Gui(activeWorkspace)
 	frame $f.fStereo  -bg $Gui(activeWorkspace)
-	frame $f.fSize    -bg $Gui(activeWorkspace)
 	frame $f.fCloseup -bg $Gui(activeWorkspace)
-	pack $f.fSize $f.fCloseup $f.fStereo \
-		-side top -pady $Gui(pad) -fill x
+	pack $f.fSize $f.fBg $f.fCloseup $f.fStereo \
+		-side top -pady $Gui(pad) -padx $Gui(pad) -fill x
 
+	#-------------------------------------------
+	# View->Bg Frame
+	#-------------------------------------------
+	set f $fView.fBg
+	
+    set c {label $f.l -text "Background Color: " $Gui(WLA)}
+		eval [subst $c]
+	pack $f.l -side left -padx $Gui(pad) -pady 0
+
+	foreach value "Blue Black" width "5 6" {
+		set c {radiobutton $f.r$value -width $width \
+			-text "$value" -value "$value" -variable View(bgName) \
+			-indicatoron 0 -command "MainViewSetBackgroundColor; Render3D" $Gui(WCA)}
+			eval [subst $c]
+		pack $f.r$value -side left -padx 0 -pady 0
+	}
+	
 	#-------------------------------------------
 	# View->Closeup Frame
 	#-------------------------------------------

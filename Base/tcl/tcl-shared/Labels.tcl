@@ -107,7 +107,7 @@ proc LabelsUpdateMRML {} {
 	# If no label, take the first one for this color
 	if {$Label(label) == ""} {
 		set labels [Color($Label(activeID),node) GetLabels]
-		set Label(label) [lindex $labels 0]
+		set LabelsSelectLabel [lindex $labels 0]
 	}
 
 	LabelsDisplayColors
@@ -560,6 +560,9 @@ proc LabelsSetColor {colorName} {
 	# DAVE clean this crap up, or just leave it. Ha!
 
 	if {$c == ""} {
+		set c [lindex $Color(idList) 0]
+	}
+	if {$c == ""} {
 		# Update GUI
 		set Label(name)    ""
 		set Label(diffuse) "0 0 0"
@@ -597,7 +600,6 @@ proc LabelsColorWidgets {} {
 proc LabelsFindLabel {} {
 	global Label Mrml
 
-puts LabelsFindLabel
 	set c [MainColorsGetColorFromLabel $Label(label)]
 	if {$c == ""} {
 		# Update GUI

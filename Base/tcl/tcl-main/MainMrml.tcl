@@ -317,11 +317,11 @@ proc MainMrmlRead {mrmlFile} {
 		}
 	}
 	if {$version == 1} {
-		puts "MRML V1.0"
+		puts "Reading MRML V1.0: $fileName"
 		MainMrmlReadVersion1.0 $fileName
 		MainMrmlBuildTreesVersion1.0
 	} else {
-		puts "MRML V2.0"
+		puts "Reading MRML V2.0: $fileName"
 		set tags [MainMrmlReadVersion2.0 $fileName]
 		set tags [MainMrmlAddColors $tags]
 		MainMrmlBuildTreesVersion2.0 $tags

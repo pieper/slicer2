@@ -59,6 +59,11 @@ proc MainMatricesInit {} {
 	set Matrix(regRotIS)   0
 	set Matrix(rotAxis) ""
 	set Matrix(freeze) ""
+
+	# Props
+	set Matrix(name) "manual"
+	set Matrix(desc) ""
+	set Matrix(matrix) "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1"
 }
 
 #-------------------------------------------------------------------------------
@@ -175,6 +180,19 @@ proc MainMatricesSetActive {t} {
 
 	if {$Matrix(freeze) == 1} {return}
 	
+	# Don't reset the rotAxis if we're not changing the active matrix.
+	# Just update the GUI. NOTE: Registration fails without this section.
+	if {$t != "" && $t != "NEW" && $t == $Matrix(activeID)} {
+		set Matrix(name)   [Matrix($t,node) GetName]
+		set Matrix(desc)   [Matrix($t,node) GetDescription]
+		set Matrix(matrix) [Matrix($t,node) GetMatrix]
+		set mat [[Matrix($t,node) GetTransform] GetMatrix]
+		set Matrix(regTranLR) [$mat GetElement 0 3]
+		set Matrix(regTranPA) [$mat GetElement 1 3]
+		set Matrix(regTranIS) [$mat GetElement 2 3]
+		return
+	}
+	
 	# Set activeID to t
 	set Matrix(activeID) $t
 
@@ -190,7 +208,9 @@ proc MainMatricesSetActive {t} {
 		}
 		# Use defaults to update GUI
 		vtkMrmlMatrixNode default
-		set Matrix(name) [default GetName]
+		set Matrix(name)   [default GetName]
+		set Matrix(desc)   [default GetDescription]
+		set Matrix(matrix) [default GetMatrix]
 		default Delete
 		set Matrix(regTranLR) 0
 		set Matrix(regTranPA) 0
@@ -201,7 +221,9 @@ proc MainMatricesSetActive {t} {
 			$mb config -text [Matrix($t,node) GetName]
 		}
 		# Update GUI
-		set Matrix(name) [Matrix($t,node) GetName]
+		set Matrix(name)   [Matrix($t,node) GetName]
+		set Matrix(desc)   [Matrix($t,node) GetDescription]
+		set Matrix(matrix) [Matrix($t,node) GetMatrix]
 		set mat [[Matrix($t,node) GetTransform] GetMatrix]
 		set Matrix(regTranLR) [$mat GetElement 0 3]
 		set Matrix(regTranPA) [$mat GetElement 1 3]

@@ -153,6 +153,12 @@ proc EdChangeIslandApply {} {
 	set e EdChangeIsland
 	set v [EditorGetInputID $Ed($e,input)]
 
+	# Validate input
+	if {[ValidateInt $Label(label)] == 0} {
+		tk_messageBox -message "New Label is not an integer."
+		return
+	}
+
 	EdSetupBeforeApplyEffect $Ed($e,scope) $v
 
 	set Gui(progressText) "Change Island in [Volume($v,node) GetName]"

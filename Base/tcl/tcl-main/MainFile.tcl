@@ -378,7 +378,7 @@ proc MainFileGetRelativePrefix {filename} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileFindUniqueName
-# Form an absolute filename by concatenating the root, name, "." and ext.
+# Form an absolute filename by concatenating the root, name, and ext.
 # If a file of this name already exists, then find a number to add before the
 # extension that would make it unique.  Return this filename.
 # Note: the prefix cannot be blank, or "" is returned.
@@ -401,13 +401,13 @@ proc MainFileFindUniqueName {root prefix ext} {
     set abs [file join $root $prefix]
 
 	set num ""
-    set filename $abs$num.$ext
+    set filename $abs$num$ext
     if {[file exists $filename] == 1} {
 		set num 1
-		set filename $abs$num.$ext
+		set filename $abs$num$ext
 		while {[file exists $filename] == 1} {
 			incr num
-			set filename $abs$num.$ext
+			set filename $abs$num$ext
 		}
 	}
 	return $filename

@@ -267,6 +267,9 @@ proc MainModelsRead {m} {
 	reader SetOutput ""
 	reader Delete
 
+	# Mark this model as saved
+	set Model($m,dirty) 0
+
 	return 0
 }
 
@@ -312,6 +315,9 @@ proc MainModelsCreateUnreadable {} {
 	incr Model(nextID)
 	lappend Model(idList) $m
 	set Model(num) [llength $Model(idList)]
+
+	# Mark this model as unsaved
+	set Model($m,dirty) 1
 
 	return $m
 }
@@ -774,6 +780,15 @@ proc MainModelsWrite {m prefix} {
 		return
 	}
 
+	# I don't understand this, but the model disappears from view after the
+	# call to "writer Write", unless the model has been edited, like smoothed.
+	# So don't write it if it's not dirty.
+	if {$Model($m,dirty) == 0} {
+		tk_messageBox -message \
+			"This model will not be saved\nbecause it has not been changed."
+		return
+	}
+
 	Model($m,node) SetFileName "$prefix.vtk"
 	Model($m,node) SetFullFileName \
 		[file join $Mrml(dir) [Model($m,node) GetFileName]]
@@ -787,9 +802,11 @@ proc MainModelsWrite {m prefix} {
 	writer SetStartMethod     MainStartProgress
 	writer SetProgressMethod "MainShowProgress writer"
 	writer SetEndMethod       MainEndProgress
-	writer Update
+	writer Write
 
 	writer SetInput ""
 	writer Delete
+
+	set Model($m,dirty) 0
 }
 

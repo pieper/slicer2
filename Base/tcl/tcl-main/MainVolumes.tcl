@@ -107,8 +107,6 @@ proc MainVolumesBuildVTK {} {
 proc MainVolumesUpdateMRML {} {
 	global Volume Lut Gui
 
-    puts "Volume(idList) $Volume(idList)"
-
 	# Build any new volumes
 	#--------------------------------------------------------
 	foreach v $Volume(idList) {

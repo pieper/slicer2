@@ -260,7 +260,34 @@ proc EdDrawApply {} {
 	set e EdDraw
 	set v [EditorGetInputID $Ed($e,input)]
  
+	# Validate input
+	if {[ValidateInt $Label(label)] == 0} {
+		tk_messageBox -message "Output label is not an integer."
+		return
+	}
+	if {[ValidateInt $Ed($e,radius)] == 0} {
+		tk_messageBox -message "Point Radius is not an integer."
+		return
+	}
+
 	EdSetupBeforeApplyEffect $Ed($e,scope) $v
+
+	# Only draw on native slices
+	set outOrder [Ed(editor) GetOutputSliceOrder]
+	set inOrder  [Ed(editor) GetInputSliceOrder]
+	if {$outOrder != $inOrder} {
+		if {$inOrder == "LR" || $inOrder == "RL"} {
+			set native Sagittal
+		}
+		if {$inOrder == "AP" || $inOrder == "PA"} {
+			set native Coronal
+		}
+		if {$inOrder == "IS" || $inOrder == "SI"} {
+			set native Axial
+		}
+		tk_messageBox -message "Please draw on the $native slice instead."
+		return
+	}
 
 	set Gui(progressText) "Draw on [Volume($v,node) GetName]"
 	
@@ -270,6 +297,7 @@ proc EdDrawApply {} {
 	set points   [Slicer DrawGetPoints]
 	Ed(editor)   Draw $label $points $radius $shape
 
+	# Dump points
 #	set n [$points GetNumberOfPoints]
 #	for {set i 0} {$i < $n} {incr i} {
 #		puts [$points GetPoint $i]

@@ -142,6 +142,16 @@ proc EdChangeLabelApply {} {
 	set e EdChangeLabel
 	set v [EditorGetInputID $Ed($e,input)]
 
+	# Validate input
+	if {[ValidateInt $Ed($e,inputLabel)] == 0} {
+		tk_messageBox -message "Value To Change is not an integer."
+		return
+	}
+	if {[ValidateInt $Label(label)] == 0} {
+		tk_messageBox -message "Output label is not an integer."
+		return
+	}
+
 	EdSetupBeforeApplyEffect $Ed($e,scope) $v
 
 	set Gui(progressText) "Change Label in [Volume($v,node) GetName]"

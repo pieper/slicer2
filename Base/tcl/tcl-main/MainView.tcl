@@ -74,7 +74,8 @@ proc MainViewInit {} {
 	set View(toolbarPosition) Top
 	set View(bgColorR) .7
 	set View(bgColorG) .7
-	set View(bgColorB) .9 
+	set View(bgColorB) .9
+	set View(bgName) Blue
 	set View(fov) 220.0
 	set View(spin) 0
 	set View(spinDir) Right
@@ -114,6 +115,7 @@ proc MainViewInit {} {
 	set View(magWin) Welcome
 	set View(inWin) none
 	set View(viewPrefix) view
+	set View(ext) .tif
 }
 
 #-------------------------------------------------------------------------------
@@ -311,7 +313,7 @@ proc MainViewBuildGUI {} {
 	pack $f.eSave -side left -padx 2 -expand 1 -fill x
 	
 	#-------------------------------------------
-	# Nav->Save
+	# Nav->Mode
 	#-------------------------------------------
 	set f $Gui(fNav).fBot.fMode
 
@@ -322,6 +324,25 @@ proc MainViewBuildGUI {} {
 		pack $f.rMode$value -side left
 	}
 
+}
+
+proc MainViewSetBackgroundColor {} {
+	global View
+	
+	switch $View(bgName) {
+	"Blue" {
+		set View(bgColorR) .7
+		set View(bgColorG) .7
+		set View(bgColorB) .9
+	}
+	"Black" {
+		set View(bgColorR) 0
+		set View(bgColorG) 0
+		set View(bgColorB) 0
+	}
+	}
+	eval viewRen SetBackground \
+		$View(bgColorR) $View(bgColorG) $View(bgColorB)
 }
 
 #-------------------------------------------------------------------------------
@@ -649,7 +670,7 @@ proc MainViewSaveView {} {
 	}
 
 	# Get a unique filename by appending a number to the prefix
-	set filename [MainFileFindUniqueName $Mrml(dir) $View(viewPrefix) ppm]
+	set filename [MainFileFindUniqueName $Mrml(dir) $View(viewPrefix) $View(ext)]
 
 	MainViewWriteView $filename
 }
@@ -672,10 +693,12 @@ proc MainViewSaveViewPopup {} {
 	set filename [file join $Mrml(dir) $View(viewPrefix)]
 	set dir [file dirname $filename]
 	set typelist {
+		{"TIFF File" {".tif"}}
 		{"PPM File" {".ppm"}}
+		{"BMP File" {".bmp"}}
 		{"All Files" {*}}
 	}
-	set filename [tk_getSaveFile -title "Save 3D View" -defaultextension ".ppm"\
+	set filename [tk_getSaveFile -title "Save 3D View" -defaultextension $View(ext)\
 		-filetypes $typelist -initialdir "$dir" -initialfile $filename]
 
 	# Do nothing if the user cancelled
@@ -690,8 +713,35 @@ proc MainViewWriteView {filename} {
 	MainFileCreateDirectory $filename
 	
 	# Write it
-	$viewWin SetFileName $filename
-	$viewWin SaveImageAsPPM
+	set ext [file extension $filename]
+	switch $ext {
+	".tif" {
+		vtkWindowToImageFilter filter
+		filter SetInput $viewWin
+
+		vtkTIFFWriter writer
+		writer SetInput [filter GetOutput]
+		writer SetFileName $filename
+		writer Write
+		filter Delete
+		writer Delete
+	}
+	".bmp" {
+		vtkWindowToImageFilter filter
+		filter SetInput $viewWin
+
+		vtkBMPWriter writer
+		writer SetInput [filter GetOutput]
+		writer SetFileName $filename
+		writer Write
+		filter Delete
+		writer Delete
+	}
+	".ppm" {
+		$viewWin SetFileName $filename
+		$viewWin SaveImageAsPPM
+	}
+	}
 	puts "Saved view: $filename"
 
 	# Store the new prefix for next time
@@ -706,6 +756,6 @@ proc MainViewWriteView {filename} {
 	} else {
 		set View(viewPrefix) [file rootname $absPrefix]
 	}
-
+	set View(ext) [file extension $filename]
 }
 

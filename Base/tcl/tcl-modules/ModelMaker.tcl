@@ -50,14 +50,17 @@ proc ModelMakerInit {} {
 
 	# Define Tabs
 	set m ModelMaker
-	set Module($m,row1List) "Help Create Edit"
-	set Module($m,row1Name) "{Help} {Create} {Edit} "
+	set Module($m,row1List) "Help Create Edit Save"
+	set Module($m,row1Name) "{Help} {Create} {Edit} {Save} "
 	set Module($m,row1,tab) Create
 
 	# Define Procedures
 	set Module($m,procGUI) ModelMakerBuildGUI
 	set Module($m,procMRML) ModelMakerUpdateMRML
 	set Module($m,procEnter) ModelMakerEnter
+
+	# Define Dependencies
+	set Module($m,depend) "Labels"
 
 	# Create
 	set ModelMaker(idVolume) 0
@@ -176,7 +179,7 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fCreate.fGrid
 
-	foreach Param "{Model Name} Smooth Decimate" width "13 7 7" {
+	foreach Param "Name Smooth Decimate" width "13 7 7" {
 		eval {label $f.l$Param -text "$Param:"} $Gui(WLA)
 		eval {entry $f.e$Param -width $width \
 			-textvariable ModelMaker([Uncap $Param])} $Gui(WEA)
@@ -210,8 +213,7 @@ Models are fun. Do you like models, Ron?
 
 	frame $f.fActive -bg $Gui(activeWorkspace)
 	frame $f.fGrid   -bg $Gui(activeWorkspace) -relief groove -bd 3
-	frame $f.fWrite  -bg $Gui(activeWorkspace) -relief groove -bd 3
-	pack  $f.fActive $f.fGrid $f.fWrite \
+	pack  $f.fActive $f.fGrid \
 		-side top -padx $Gui(pad) -pady 10 -fill x
 
 	#-------------------------------------------
@@ -248,9 +250,19 @@ Models are fun. Do you like models, Ron?
 	grid $f.e$Param -sticky w
 
 	#-------------------------------------------
-	# Edit->Write frame
+	# Save frame
 	#-------------------------------------------
-	set f $fEdit.fWrite
+	set fSave $Module(ModelMaker,fSave)
+	set f $fSave
+
+	frame $f.fWrite  -bg $Gui(activeWorkspace) -relief groove -bd 3
+	pack  $f.fWrite \
+		-side top -padx $Gui(pad) -pady 10 -fill x
+
+	#-------------------------------------------
+	# Save->Write frame
+	#-------------------------------------------
+	set f $fSave.fWrite
 
 	eval {label $f.l -text "Save model as a VTK file"} $Gui(WTA)
 	frame $f.f -bg $Gui(activeWorkspace)
@@ -335,6 +347,28 @@ proc ModelMakerSetVolume {v} {
 proc ModelMakerCreate {} {
 	global Model ModelMaker Label
 
+	# Validate name
+	if {$ModelMaker(name) == ""} {
+		tk_messageBox -message "Please enter a name that will allow you to distinguish this model."
+		return
+	}
+	if {[ValidateName $ModelMaker(name)] == 0} {
+		tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
+		return
+	}
+
+	# Validate smooth
+	if {[ValidateInt $ModelMaker(smooth)] == 0} {
+		tk_messageBox -message "The number of smoothing iterations must be an integer."
+		return
+	}
+
+	# Validate decimate
+	if {[ValidateInt $ModelMaker(decimate)] == 0} {
+		tk_messageBox -message "The number of decimate iterations must be an integer."
+		return
+	}
+
 	set m [MainModelsCreateUnreadable]
 	set v $ModelMaker(idVolume)
 	Model($m,node) SetName $ModelMaker(name)
@@ -379,6 +413,12 @@ proc ModelMakerSmoothWrapper {{m ""}} {
 		set m $Model(activeID)
 	}
 	if {$m == ""} {return}
+
+	# Validate smooth
+	if {[ValidateInt $ModelMaker(edit,smooth)] == 0} {
+		tk_messageBox -message "The number of smoothing iterations must be an integer."
+		return
+	}
 
 	ModelMakerSmooth $m $ModelMaker(edit,smooth)
 }
@@ -432,6 +472,9 @@ proc ModelMakerSmooth {m iterations} {
 		$p SetInput ""
 		$p Delete
 	}
+
+	# Mark this model as unsaved
+	set Model($m,dirty) 1
 }
 
 #-------------------------------------------------------------------------------
@@ -439,7 +482,7 @@ proc ModelMakerSmooth {m iterations} {
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerMarch {m v decimateIterations smoothIterations} {
-	global Model ModelMaker Gui
+	global Model ModelMaker Gui Label
 	
 	if {$ModelMaker(marching) == 1} {
 		puts "already marching"
@@ -501,9 +544,29 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 	vtkImageToStructuredPoints to
 	to SetInput [$src GetOutput]
 
+	# Threshold so the only values are the desired label.
+	# But do this only for label maps.
+	set p thresh
+	vtkImageThresholdBeyond $p
+	$p SetInput [to GetOutput]
+	$p SetReplaceIn 0
+	$p SetReplaceOut 0
+	if {[Volume($v,node) GetLabelMap] == 1} {
+		$p SetReplaceIn 1
+		$p SetReplaceOut 1
+	}
+	$p SetInValue 1
+	$p SetOutValue 0
+	$p ThresholdBetween $Label(label) $Label(label)
+	[$p GetOutput] ReleaseDataFlagOn
+	set Gui(progressText) "Threshold $name"
+	$p SetStartMethod     MainStartProgress
+	$p SetProgressMethod "MainShowProgress $p"
+	$p SetEndMethod       MainEndProgress
+
 	set p mcubes
 	vtkMarchingCubes $p
-	$p SetInput [to GetOutput]
+	$p SetInput [thresh GetOutput]
 	$p SetValue 0 1
 	$p ComputeScalarsOff
 	$p ComputeGradientsOff
@@ -593,7 +656,7 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 	Model($m,mapper) SetInput $Model($m,polyData)
 
 	stripper SetOutput ""
-	foreach p "to flip mcubes decimator transformer smoother normals stripper" {
+	foreach p "to thresh flip mcubes decimator transformer smoother normals stripper" {
 		$p SetInput ""
 		$p Delete
 	}

@@ -59,6 +59,9 @@ proc ModelsInit {} {
 	set Module($m,procGUI) ModelsBuildGUI
 	set Module($m,procMRML) ModelsUpdateMRML
 
+	# Define Dependencies
+	set Module($m,depend) "Labels"
+
 	# Props
 	set Model(propertyType) Basic
 	set Model(name) ""
@@ -520,6 +523,7 @@ proc ModelsSetPrefix {} {
 			set guess [Color($c,node) GetName]
 		}
 	}
+
 	LabelsSetColor $guess
 }
 
@@ -529,6 +533,26 @@ proc ModelsSetPrefix {} {
 #-------------------------------------------------------------------------------
 proc ModelsPropsApply {} {
 	global Model Label Module Mrml
+
+	# Validate name
+	if {$Model(name) == ""} {
+		tk_messageBox -message "Please enter a name that will allow you to distinguish this model."
+		return
+	}
+	if {[ValidateName $Model(name)] == 0} {
+		tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
+		return
+	}
+
+	# Validate scalar range
+	if {[ValidateFloat $Model(scalarLo)] == 0} {
+		tk_messageBox -message "The scalar range must be numbers"
+		return
+	}
+	if {[ValidateFloat $Model(scalarHi)] == 0} {
+		tk_messageBox -message "The scalar range must be numbers"
+		return
+	}
 
 	set m $Model(activeID)
 	if {$m == ""} {return}

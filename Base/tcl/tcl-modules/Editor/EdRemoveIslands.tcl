@@ -184,6 +184,24 @@ proc EdRemoveIslandsApply {} {
 	set e EdRemoveIslands
 	set v [EditorGetInputID $Ed($e,input)]
 
+	# Validate input
+	if {[ValidateInt $Label(label)] == 0} {
+		tk_messageBox -message "Label Of The Sea is not an integer."
+		return
+	}
+	if {[ValidateInt $Ed($e,minSize)] == 0} {
+		tk_messageBox -message "Min Island Area is not an integer."
+		return
+	}
+	if {[ValidateInt $Ed($e,fgMin)] == 0} {
+		tk_messageBox -message "Min Threshold is not an integer."
+		return
+	}
+	if {[ValidateInt $Ed($e,fgMax)] == 0} {
+		tk_messageBox -message "Max Threshold is not an integer."
+		return
+	}
+
 	EdSetupBeforeApplyEffect $Ed($e,scope) $v
 
 	set Gui(progressText) "RemoveIslands in [Volume($v,node) GetName]"

@@ -81,6 +81,9 @@ proc EditorInit {} {
 	set Module($m,procVTK)   EditorBuildVTK
 	set Module($m,procEnter) EditorEnter
 
+	# Define Dependencies
+	set Module($m,depend) "Labels"
+
 	# Initialize globals
 	set Editor(idOriginal)  0
 	set Editor(idWorking)   NEW
@@ -111,9 +114,14 @@ proc EditorInit {} {
 	}
 
 	# Initialize effects
-	puts Editor-Init:
+	if {$Module(verbose) == 1} {
+		puts Editor-Init:
+	}
 	foreach m $Ed(idList) {
 		if {[info command ${m}Init] != ""} {
+			if {$Module(verbose) == 1} {
+				puts ${m}Init
+			}
 			${m}Init
 		}
 	}
@@ -135,7 +143,7 @@ proc EditorInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EditorBuildVTK {} {
-	global Editor Ed
+	global Editor Ed Module
 
 	vtkImageEditorEffects Ed(editor)
 	Ed(editor) SetStartMethod     MainStartProgress
@@ -143,10 +151,14 @@ proc EditorBuildVTK {} {
 	Ed(editor) SetEndMethod       MainEndProgress
 
 	# Initialize effects
-	puts Editor-VTK:
+	if {$Module(verbose) == 1} {
+		puts Editor-VTK:
+	}
 	foreach e $Ed(idList) {
 		if {[info exists Ed($e,procVTK)] == 1} {
-			puts $Ed($e,procVTK)
+			if {$Module(verbose) == 1} {
+				puts $Ed($e,procVTK)
+			}
 			$Ed($e,procVTK)
 		}
 	}
@@ -329,7 +341,7 @@ Models are fun. Do you like models, Ron?
 	foreach s $Slice(idList) text "Red Yellow Green" width "4 7 6" {
 		set c {radiobutton $f.r$s -width $width -indicatoron 0\
 			-text "$text" -value "$s" -variable Slice(activeID) \
-			-command "MainSlicesSetActive" $Gui(WCA) -bg $Gui(slice$s)}
+			-command "MainSlicesSetActive" $Gui(WCA) -selectcolor  $Gui(slice$s)}
 			eval [subst $c]
 		pack $f.r$s -side left -fill x -anchor e
 	}
@@ -486,10 +498,14 @@ Models are fun. Do you like models, Ron?
 	#                                 Effects
 	############################################################################
 
-	puts Editor-GUI:
+	if {$Module(verbose) == 1} {
+		puts Editor-GUI:
+	}
 	foreach e $Ed(idList) {
 		if {[info exists Ed($e,procGUI)] == 1} {
-			puts $Ed($e,procGUI)
+			if {$Module(verbose) == 1} {
+				puts $Ed($e,procGUI)
+			}
 			$Ed($e,procGUI)
 		}
 	}
@@ -1353,10 +1369,7 @@ proc EdSetupBeforeApplyEffect {scope v} {
 		Ed(editor) SetOutputSliceOrder $order
 		Ed(editor) SetInputSliceOrder [Volume($v,node) GetScanOrder]
 		Ed(editor) SetSlice $slice
-		puts "EDITOR: orient=$orient slice=$slice"
 	}
-
-#dbg	set Volume(data) [Volume($w,vol) GetImageData]
 }
 
 #-------------------------------------------------------------------------------
@@ -1371,8 +1384,6 @@ proc EdUpdateAfterApplyEffect {v {render All}} {
 
 	# Get output from editor
 	Volume($w,vol) SetImageData [Ed(editor) GetOutput]
-#dbg	set data [Volume($w,vol) GetImageData]
-#dbg	tk_messageBox -message "data=$data, was=$Volume(data)"
 	EditorActivateUndo [Ed(editor) GetUndoable]
 
 	# Keep a copy for undo
@@ -1404,7 +1415,6 @@ proc EdUpdateAfterApplyEffect {v {render All}} {
 	# the volume, so I need to set them to what's on the GUI:
 	foreach s $Slice(idList) {
 		Slicer SetOffset $s $Slice($s,offset)
-#		puts "UpdateAfterApplyEffect: s=$s offset=$Slice($s,offset)"
 	}
 
 	# Render
@@ -1561,6 +1571,12 @@ proc EditorMerge {data overwriteComposite} {
 #-------------------------------------------------------------------------------
 proc EditorWriteOutput {data} {
 	global Volume Gui Path Lut tcl_platform Mrml Editor
+
+	# If the volume doesn't exist yet, then don't write it, duh!
+	if {$Editor(id$data) == "NEW"} {
+		tk_messageBox -message "Nothing to write."
+		return
+	}
 
 	switch $data {
 		Composite {set v [EditorGetCompositeID]}

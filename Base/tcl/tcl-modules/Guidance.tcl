@@ -266,11 +266,18 @@ Models are fun. Do you like models, Ron?
 # 'value' comes from the sliders, but is unused here.
 #-------------------------------------------------------------------------------
 proc GuidanceSetTargetPosition {{value ""}} {
-	global Target InitProc
+	global Target
 
-	# Load GUI faster
-	if {![info exists InitProc(GuidanceSetTargetPosition)]} {
-		set InitProc(GuidanceSetTargetPosition) 1
+	if {[ValidateFloat $Target(xStr)] == 0} {
+		tk_messageBox -message "LR is not a floating point number."
+		return
+	}
+	if {[ValidateFloat $Target(yStr)] == 0} {
+		tk_messageBox -message "PA is not a floating point number."
+		return
+	}
+	if {[ValidateFloat $Target(zStr)] == 0} {
+		tk_messageBox -message "IS is not a floating point number."
 		return
 	}
 

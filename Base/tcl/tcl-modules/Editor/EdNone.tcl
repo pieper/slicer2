@@ -41,7 +41,7 @@ proc EdNoneInit {} {
 
 	set e EdNone
 	set Ed($e,name)      "None"
-	set Ed($e,desc)      "No effect."
+	set Ed($e,desc)      "First, select an effect."
 	set Ed($e,rank)      100
 }
 
