@@ -75,7 +75,7 @@ proc LDMMViewerInit {} {
     #  reached for any questions people may have regarding your module. 
     #  This is included in the  Help->Module Credits menu item.
     set Module($m,author) "Steve Pieper, SPL, pieper@bwh.harvard.edu"
-    set Module($m,category) [lindex $Module(categories) 2]
+    set Module($m,category) "Visualisation"
 
     # Define Tabs
     #------------------------------------
@@ -156,7 +156,7 @@ proc LDMMViewerInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2004/03/15 21:07:26 $}]
+        {$Revision: 1.8 $} {$Date: 2004/04/13 21:09:14 $}]
 
     # Initialize module-level variables
     #------------------------------------

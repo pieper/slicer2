@@ -21,7 +21,7 @@ proc CISGFileInit {} {
     #  reached for any questions people may have regarding your module. 
     #  This is included in the  Help->Module Credits menu item.
     set Module($m,author) "Steve Pieper, SPL, pieper@bwh.harvard.edu"
-    set Module($m,category) [lindex $Module(categories) 2]
+    set Module($m,category) "IO"
 
     # Define Tabs
     #------------------------------------
@@ -100,7 +100,7 @@ proc CISGFileInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2004/03/15 21:07:59 $}]
+        {$Revision: 1.3 $} {$Date: 2004/04/13 21:09:35 $}]
 
     # Initialize module-level variables
     #------------------------------------
