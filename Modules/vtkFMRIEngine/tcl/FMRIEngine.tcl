@@ -170,7 +170,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.22 $} {$Date: 2004/08/12 20:48:20 $}]
+        {$Revision: 1.23 $} {$Date: 2004/08/23 21:45:15 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1150,7 +1150,7 @@ proc FMRIEnginePopBindings {} {
 proc FMRIEngineCreateBindings {} {
     global Gui Ev
 
-    EvDeclareEventHandler FMRIEngineSlicesEvents <ButtonPress-1> \
+    EvDeclareEventHandler FMRIEngineSlicesEvents <Motion> \
         { FMRIEnginePopUpPlot %x %y }
             
     EvAddWidgetToBindingSet FMRISlice0Events $Gui(fSl0Win) {FMRIEngineSlicesEvents}
