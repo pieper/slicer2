@@ -78,8 +78,8 @@ class VTK_DTMRI_EXPORT vtkTractShapeFeatures : public vtkObject
 
   // Description
   // Get the images which contain the matrices above (for visualization)
-  vtkGetObjectMacro(InterTractDistanceMatrixImage, vtkImageData);
-  vtkGetObjectMacro(InterTractSimilarityMatrixImage, vtkImageData);
+  vtkImageData *GetInterTractDistanceMatrixImage();
+  vtkImageData *GetInterTractSimilarityMatrixImage();
 
   void SetFeatureTypeToHausdorff()
     {
@@ -90,6 +90,10 @@ class VTK_DTMRI_EXPORT vtkTractShapeFeatures : public vtkObject
       this->SetFeatureType(MEAN_AND_COVARIANCE);
     };
   vtkGetMacro(FeatureType,int);
+
+  // Description
+  // Make a vtk image to visualize contents of a vnl matrix
+  vtkImageData * ConvertVNLMatrixToVTKImage(OutputType *matrix, vtkImageData *image);
 
  protected:
   vtkTractShapeFeatures();

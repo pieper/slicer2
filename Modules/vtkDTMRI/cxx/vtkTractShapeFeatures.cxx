@@ -21,7 +21,7 @@
 
 
 
-vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.3 $");
+vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.4 $");
 vtkStandardNewMacro(vtkTractShapeFeatures);
 
 vtkCxxSetObjectMacro(vtkTractShapeFeatures, InputStreamlines, vtkCollection);
@@ -65,6 +65,46 @@ void vtkTractShapeFeatures::PrintSelf(ostream& os, vtkIndent indent)
 
 }
 
+vtkImageData * vtkTractShapeFeatures::GetInterTractSimilarityMatrixImage()
+{
+  return (this->ConvertVNLMatrixToVTKImage(this->InterTractSimilarityMatrix,this->InterTractSimilarityMatrixImage));
+}
+
+vtkImageData * vtkTractShapeFeatures::GetInterTractDistanceMatrixImage()
+{
+  return (this->ConvertVNLMatrixToVTKImage(this->InterTractDistanceMatrix,this->InterTractDistanceMatrixImage));
+}
+
+vtkImageData * vtkTractShapeFeatures::ConvertVNLMatrixToVTKImage(OutputType *matrix, vtkImageData *image)
+{
+  // If the image hasn't been created, create it
+  if (image == NULL)
+    {
+      image = vtkImageData::New();
+
+      if (matrix != NULL)
+    {
+      int rows = matrix->rows();
+      int cols = matrix->cols();
+      image->SetDimensions(cols,rows,1);
+      image->SetScalarTypeToDouble();
+      image->AllocateScalars();
+      double *imageArray = (double *) image->GetScalarPointer();
+      
+      for (int idx1 = rows-1; idx1 >= 0; idx1--)
+        {
+          for (int idx2 = 0; idx2 < cols; idx2++)
+        {
+          *imageArray = (*matrix)[idx1][idx2];
+          imageArray++;
+        }
+        }
+    }
+    }
+
+  return (image);
+
+}
 
 void vtkTractShapeFeatures::GetPointsFromHyperStreamlinePointsSubclass(TractPointsListType::Pointer sample, vtkHyperStreamlinePoints *currStreamline)
 {
@@ -265,11 +305,7 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
     }
 
 
-  // to convert distances to similarities/weights
-  double sigmasq=this->Sigma*this->Sigma;
-
-  // Also create vtkImageDatas which contain the same information as matrices.
-  // This is for visualization.
+  // Delete any old vtkImageDatas which contain old matrix info
   if (this->InterTractDistanceMatrixImage) 
     {
       this->InterTractDistanceMatrixImage->Delete();
@@ -279,21 +315,10 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
       this->InterTractSimilarityMatrixImage->Delete();
     }
 
-  this->InterTractDistanceMatrixImage = vtkImageData::New();
-  this->InterTractDistanceMatrixImage->
-    SetDimensions(numberOfStreamlines,numberOfStreamlines,1);
-  this->InterTractDistanceMatrixImage->SetScalarTypeToDouble();
-  this->InterTractDistanceMatrixImage->AllocateScalars();
-  double *distImage = (double *) this->InterTractDistanceMatrixImage->GetScalarPointer();
+  // to convert distances to similarities/weights
+  double sigmasq=this->Sigma*this->Sigma;
 
-  this->InterTractSimilarityMatrixImage = vtkImageData::New();
-  this->InterTractSimilarityMatrixImage->
-    SetDimensions(numberOfStreamlines,numberOfStreamlines,1);
-  this->InterTractSimilarityMatrixImage->SetScalarTypeToDouble();
-  this->InterTractSimilarityMatrixImage->AllocateScalars();
-  double *weightImage = (double *) this->InterTractSimilarityMatrixImage->GetScalarPointer();
-
-  // Now create similarity matrix and copy into images
+  // Now create similarity matrix
   for (int idx1 = 0; idx1 < numberOfStreamlines; idx1++)
     {
       for (int idx2 = 0; idx2 < numberOfStreamlines; idx2++)
@@ -301,14 +326,6 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
       // save the similarity in a matrix
       (*this->InterTractSimilarityMatrix)[idx1][idx2] = 
         exp(-((*this->InterTractDistanceMatrix)[idx1][idx2])/sigmasq);
-      
-      // save it also into the images for visualization
-      *distImage = (*this->InterTractDistanceMatrix)[idx1][idx2];
-      *weightImage = (*this->InterTractSimilarityMatrix)[idx1][idx2]; 
-      
-      distImage++;
-      weightImage++;
-
     }
     }
   vtkDebugMacro( "Hausdorff distances computed." );
@@ -483,8 +500,8 @@ void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
   this->InterTractSimilarityMatrix = 
     new OutputType(features->Size(),features->Size(),0);
 
-  // Also create vtkImageDatas which contain the same information.
-  // This is for visualization.
+
+  // Delete any old vtkImageDatas which contain old matrix info
   if (this->InterTractDistanceMatrixImage) 
     {
       this->InterTractDistanceMatrixImage->Delete();
@@ -493,20 +510,6 @@ void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
     {
       this->InterTractSimilarityMatrixImage->Delete();
     }
-
-  this->InterTractDistanceMatrixImage = vtkImageData::New();
-  this->InterTractDistanceMatrixImage->
-    SetDimensions(features->Size(),features->Size(),1);
-  this->InterTractDistanceMatrixImage->SetScalarTypeToDouble();
-  this->InterTractDistanceMatrixImage->AllocateScalars();
-  double *distImage = (double *) this->InterTractDistanceMatrixImage->GetScalarPointer();
-
-  this->InterTractSimilarityMatrixImage = vtkImageData::New();
-  this->InterTractSimilarityMatrixImage->
-    SetDimensions(features->Size(),features->Size(),1);
-  this->InterTractSimilarityMatrixImage->SetScalarTypeToDouble();
-  this->InterTractSimilarityMatrixImage->AllocateScalars();
-  double *weightImage = (double *) this->InterTractSimilarityMatrixImage->GetScalarPointer();
 
   // Now we need to iterate over features and create feature distance matrix
   FeatureListType::Iterator iter1 = features->Begin() ;
@@ -540,13 +543,6 @@ void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
       // save the similarity in a matrix
       (*this->InterTractSimilarityMatrix)[idx1][idx2] = 
         exp(-((*this->InterTractDistanceMatrix)[idx1][idx2])/sigmasq);
-
-      // save it also into the images for visualization
-      *distImage = (*this->InterTractDistanceMatrix)[idx1][idx2];
-      *weightImage = (*this->InterTractSimilarityMatrix)[idx1][idx2]; 
-      
-      distImage++;
-      weightImage++;
 
       vtkDebugMacro( "id1 = " << iter1.GetInstanceIdentifier()  
              << " id2 = " << iter2.GetInstanceIdentifier()  

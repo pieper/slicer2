@@ -61,7 +61,7 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
     {
       // Don't delete this here if it is non-NULL, because the
       // class that created it is responsible for deleting it.
-      // (It is not a reference-counted object.)
+      // (It is not a VTK reference-counted object.)
       this->InputWeightMatrix = matrix;
     };
   
@@ -93,7 +93,7 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
   // Description
   // Get the intermediate computations of this class as images 
   // for visualization
-  vtkGetObjectMacro(NormalizedWeightMatrixImage, vtkImageData);
+  vtkImageData *GetNormalizedWeightMatrixImage();
   vtkGetObjectMacro(EigenvectorsImage, vtkImageData);
 
   // Description
@@ -116,12 +116,17 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
     };
   vtkGetMacro(EmbeddingNormalization,int);
 
+  // Description
+  // Make a vtk image to visualize contents of a vnl matrix
+  vtkImageData * ConvertVNLMatrixToVTKImage(InputType *matrix, vtkImageData *image);
+
  protected:
   vtkNormalizedCuts();
   ~vtkNormalizedCuts() {};
 
   //BTX
   InputType *InputWeightMatrix;
+  InputType *EigenvectorMatrix;
   OutputClassifierType::Pointer OutputClassifier;
   //ETX
 

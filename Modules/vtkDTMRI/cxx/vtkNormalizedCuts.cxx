@@ -18,14 +18,12 @@
 #include <ctime>
 
 
-vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.6 $");
+vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.7 $");
 vtkStandardNewMacro(vtkNormalizedCuts);
 
 
 vtkNormalizedCuts::vtkNormalizedCuts()
 {
-  //this->InputWeightMatrix = NULL;
-
   this->NumberOfClusters = 2;
   this->NumberOfEigenvectors = this->InternalNumberOfEigenvectors;
   this->EmbeddingNormalization = ROW_SUM;
@@ -97,22 +95,11 @@ void vtkNormalizedCuts::ComputeClusters()
   // number then take 1/sqrt of it.  Then multiply columns and rows 
   // by this.
   // Iterate over the matrix to perform normalization.
-  // Also create a vtkImageData which contains the same information.
-  // This is for visualization.
-  // Also create vtkImageDatas which contain the same information.
-  // This is for visualization.
+  // Delete any old image from previous inputs
   if (this->NormalizedWeightMatrixImage) 
     {
       this->NormalizedWeightMatrixImage->Delete();
     }
-  this->NormalizedWeightMatrixImage = vtkImageData::New();
-  this->NormalizedWeightMatrixImage->
-    SetDimensions(this->InputWeightMatrix->cols(),
-          this->InputWeightMatrix->rows(),1);
-  this->NormalizedWeightMatrixImage->SetScalarTypeToDouble();
-  this->NormalizedWeightMatrixImage->AllocateScalars();
-  double *weightMatrixImage = (double *) this->NormalizedWeightMatrixImage->
-    GetScalarPointer();
 
   idx1=0;
   while (idx1 < this->InputWeightMatrix->rows())
@@ -124,9 +111,6 @@ void vtkNormalizedCuts::ComputeClusters()
         ((*this->InputWeightMatrix)[idx1][idx2])/
         (rowWeightSum[idx1]*rowWeightSum[idx2]);
       
-      *weightMatrixImage = (*this->InputWeightMatrix)[idx1][idx2]; 
-      weightMatrixImage++;
-
       idx2++;
     }
       idx1++;
@@ -403,5 +387,43 @@ void vtkNormalizedCuts::ComputeClusters()
     return;
   }
   //this->OutputClassifier->GetOutput()->DebugOn();
+
+}
+
+
+
+vtkImageData * vtkNormalizedCuts::GetNormalizedWeightMatrixImage()
+{
+  return (this->ConvertVNLMatrixToVTKImage(this->InputWeightMatrix,this->NormalizedWeightMatrixImage));
+}
+
+vtkImageData * vtkNormalizedCuts::ConvertVNLMatrixToVTKImage(InputType *matrix, vtkImageData *image)
+{
+  // If the image hasn't been created, create it
+  if (image == NULL)
+    {
+      image = vtkImageData::New();
+
+      if (matrix != NULL)
+    {
+      int rows = matrix->rows();
+      int cols = matrix->cols();
+      image->SetDimensions(cols,rows,1);
+      image->SetScalarTypeToDouble();
+      image->AllocateScalars();
+      double *imageArray = (double *) image->GetScalarPointer();
+      
+      for (int idx1 = rows-1; idx1 >= 0; idx1--)
+        {
+          for (int idx2 = 0; idx2 < cols; idx2++)
+        {
+          *imageArray = (*matrix)[idx1][idx2];
+          imageArray++;
+        }
+        }
+    }
+    }
+
+  return (image);
 
 }
