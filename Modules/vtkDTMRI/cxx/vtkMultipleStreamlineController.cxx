@@ -805,6 +805,7 @@ vtkHyperStreamline * vtkMultipleStreamlineController::CreateHyperStreamline()
         }
       break;
     }
+    return (NULL);
 }
 
 //----------------------------------------------------------------------------
