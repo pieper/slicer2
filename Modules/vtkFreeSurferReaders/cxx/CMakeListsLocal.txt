@@ -7,6 +7,7 @@
 
 SET(LOCAL_MODULE_SRCS
 vtkFSIO.cxx
+vtkBVolumeReader.cxx
 vtkCORReader.cxx
 vtkMGHReader.cxx
 vtkFSSurfaceReader.cxx
