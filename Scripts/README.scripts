@@ -1,0 +1,102 @@
+----------------------------------------------------------
+README file describing the scripts in the slicer2/Scripts directory.
+----------------------------------------------------------
+
+NOTE TO WINDOWS USERS:
+Only advanced users/developers need to read this file, since the 
+windows installation puts all of these items on the program menu 
+for you.
+
+
+BEFORE USING SCRIPTS ON UNIX:
+Set the SLICER_HOME environment variable in all scripts 
+to the directory where you installed the slicer.
+
+
+----------------------------------------------------------
+##### slicer2/slicer #####
+----------------------------------------------------------
+Runs the slicer.
+
+UNIX usage: slicer <filename.mrml> OR slicer <filename.xml> OR slicer <filename>
+Windows Usage: wish82.exe Go.tcl <filename like above>
+
+The filename argument is optional and is to conveniently
+load a mrml file when the slicer starts.  Also useful
+for Windows shortcuts to open a specific MRML file, as in:  
+wish82.exe Go.tcl <filename>
+
+Under Unix, the slicer script runs the vtk shell and sources 
+slicer2/Base/tcl/Go.tcl.
+
+----------------------------------------------------------
+##### comment #####
+----------------------------------------------------------
+Comments tcl files:
+
+PLEASE ADD COMMENTS (AND HELP) TO ANY NEW MODULES!  THANK YOU.
+
+Puts comment headers above all procedures and collects
+all procedure names and variables at the top of the file.
+
+Runs slicer2/Base/tcl/GoComment.tcl.  Under Windows, sourcing
+GoComment.tcl has the same effect as running the script on UNIX.
+
+UNIX Usage: comment
+Windows Usage: wish82.exe GoComment.tcl
+
+Please see slicer2/Base/tcl/tcl-modules/Custom.tcl (Developer's example 
+module) for how to fill in the automatic comment headers.
+These headers are grabbed for the tcl documentation on
+the website (see document.tcl).
+
+----------------------------------------------------------
+##### document #####
+----------------------------------------------------------
+Creates the website (same as www.slicer.org).
+
+Runs slicer2/Base/tcl/GoDocument.tcl.  Under Windows, sourcing
+GoDocument.tcl has the same effect as running the script on UNIX.
+You can set your SLICER_DOC environment variable to select the
+directory in which to place the documentation. 
+
+UNIX Usage: document
+Windows Usage: wish82.exe GoDocument.tcl
+
+For tcl web documentation, the above comment script should be
+run regularly and the headers filled in.
+
+The script is commented: see it for more details about 
+adding to the website.
+
+----------------------------------------------------------
+##### mrmlize #####
+----------------------------------------------------------
+Creates a mrml file for a volume, give it the first image name and the
+number of the last image in the volume.  
+Runs slicer2/Base/tcl/GoMrmlize.tcl.
+
+UNIX Usage: mrmlize <img1> <num2>
+Windows Usage: wish82.exe GoMrmlize.tcl <img1> <num2>
+
+
+----------------------------------------------------------
+##### printmrml #####
+----------------------------------------------------------
+Prints a MRML file.
+Runs slicer2/Base/tcl/GoPrintMrml.tcl.
+
+UNIX Usage: printmrml <filename>
+Windows Usage: tclsh82.exe GoPrintMrml.tcl <filename>
+
+
+----------------------------------------------------------
+##### configline #####
+----------------------------------------------------------
+This is a convenience file for developers.
+
+It is the line used when running configure for compiling vtk.
+
+Usage: copy to vtk directory, run ./configline in vtk directory
+to configure vtk for the slicer.
+
