@@ -153,8 +153,8 @@ proc MainMrmlDeleteNodeDuringUpdate {nodeType id} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteNode {nodeType id} {
-	global Mrml Model Volume Color Transform EndTransform Matrix
-	global TransferFunction WindowLevel TFPoint ColorLUT Options
+	global Mrml Model Volume Color Transform EndTransform Matrix Options
+	global TransferFunction WindowLevel TFPoint ColorLUT 
 
 	upvar $nodeType Array
 
@@ -223,7 +223,6 @@ proc MainMrmlDeleteAll {} {
 			Mrml(dataTree) RemoveItem ${node}($id,node)
 			${node}($id,node) Delete
 
-		    puts "deleted node $node $id"
 		}
 	}
 
@@ -329,7 +328,7 @@ proc MainMrmlRead {mrmlFile} {
 	# Colors don't need saving now
 	set Mrml(colorsUnsaved) 0
 
-	# Open the file to determine it's type
+	# Open the file to determine its type
 	set version 2
 	if {$fileName == ""} {
 		set version 1
@@ -478,6 +477,9 @@ proc MainMrmlReadVersion2.0 {fileName} {
 			# Strip leading white space
 			regsub "^\[\n\t \]*" $attr "" attr
 		}
+
+		# Add the options (the "stuffing" from inside the start and end tags)
+		lappend attrList "options $stuffing"
 
 		# Add this tag if we're not ignoring it
 		if {$ignore == 0} {
@@ -897,7 +899,12 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 
 		"Options" {
 		    puts "MainMrml Build Trees 2: Options found"
-		    # (Lauren) make a vtk object and all that here 
+		    set i $Options(nextID)
+		    incr Options(nextID)
+		    lappend Options(idList) $i
+		    vtkMrmlOptionsNode Options($i,node)
+		    set n Options($i,node)
+		    $n SetID           $i
 
 		    foreach a $attr {
 			set key [lindex $a 0]
@@ -907,8 +914,12 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 			switch $key {
 			    "viewMode"     {MainViewerSetMode $val}
 			    "viewBgColor"  {MainViewSetBackgroundColor $val}
+			    "options"      {$n SetOptions $val}
+			    "program"      {$n SetProgram $val}
+			    "contents"     {$n SetContents $val}
 			}
 		    }
+		    Mrml(dataTree) AddItem $n
 		}
 
 	    }

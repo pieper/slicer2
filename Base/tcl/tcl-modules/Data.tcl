@@ -289,6 +289,9 @@ proc DataDisplayTree {{index end}} {
 			vtkMrmlEndTransformNode {
 				set line "EndTransform"
 			}
+			vtkMrmlOptionsNode {
+				set line "Options"
+			}
 		}
 		
 		if {$class == "vtkMrmlEndTransformNode"} {
@@ -371,7 +374,8 @@ proc DataGetIdFromNode {node} {
 # .END
 #-------------------------------------------------------------------------------
 proc DataClipboardCopy {nodes} {
-	global Data Mrml Volume Model Transform EndTransform Matrix Color
+	global Data Mrml Volume Model Transform EndTransform Matrix Options
+        global Color 
 	
 	# If the clipboard already has a node(s), delete it
 	if {$Data(clipboard) != ""} {
@@ -437,7 +441,7 @@ proc DataCutNode {} {
 # .END
 #-------------------------------------------------------------------------------
 proc DataDeleteNode {} {
-	global Data Mrml Volume Model Transform EndTransform Matrix Color
+	global Data Mrml Volume Model Transform EndTransform Matrix Color Options
 
 	# Get the index of selected node(s)
 	set selection [$Data(fNodeList) curselection]
