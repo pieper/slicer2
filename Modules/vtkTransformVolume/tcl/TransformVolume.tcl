@@ -105,7 +105,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2005/03/14 22:55:50 $}]
+        {$Revision: 1.5 $} {$Date: 2005/03/16 00:09:44 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -579,8 +579,11 @@ proc TransformVolumeUpdateResample {} {
             set TransformVolume(OutputOrientation) [Volume($v,node) GetScanOrder]
         }
     }
+
     set TransformVolume(ForceOutputOrientation) ""
-    $TransformVolume(orientation) select $TransformVolume(OutputOrientation)
+    if {[info exists TransformVolume(OutputOrientation)]} {
+        $TransformVolume(orientation) select $TransformVolume(OutputOrientation)
+    }
 }
 
 #-----------------------------
