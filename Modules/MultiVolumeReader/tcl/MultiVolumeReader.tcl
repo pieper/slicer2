@@ -149,7 +149,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.19 $} {$Date: 2005/03/18 14:38:22 $}]
+        {$Revision: 1.20 $} {$Date: 2005/03/18 16:03:28 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -447,7 +447,7 @@ proc MultiVolumeReaderLoad {{status 0}} {
                 set name 1
                 set MultiVolumeReader(defaultSequenceName) $name
             }
-            set sequenceName "defSeqName$name" 
+            set sequenceName "multiVol$name" 
         }
         if {[info exists MultiVolumeReader(sequenceNames)]} {
             set found [lsearch -exact $MultiVolumeReader(sequenceNames) $sequenceName]
