@@ -28,19 +28,20 @@
 # FILE:        Widgets.tcl
 # PROCEDURES:  
 #   ScrolledText
+#   TabbedFrame
 #==========================================================================auto=
 
 # This file contains widgets that may be useful to developers
 # of Slicer modules.
 #
-#   ScrolledText                    A text box with a scrollbar
+#   ScrolledText     A text box with a scrollbar
 #
-#
+#   Tabbed Frame     Makes button navigation menu and multiple frames ("tabs")
 
 
 #-------------------------------------------------------------------------------
 # .PROC ScrolledText
-# 
+# Makes a simple scrolled text box.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -61,3 +62,86 @@ proc ScrolledText { f args } {
     grid columnconfigure $f 0 -weight 1
     return $f.text
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC TabbedFrame
+# This creates a menu of buttons and the frames they tab to.  
+# It saves the path to each frame and creates an indicator
+# variable to tell which is the current frame, and it puts
+# these things into your global array, in case they are needed.
+# Before calling this, you need
+# to make a frame for the buttons to go into and also a frame
+# for all the frames to go into, and pass these as parameters.  It is
+# very important to make the frame to hold frames have height 310 or
+# things won't show up inside. See MeasureVol.tcl for an example of 
+# how to use this. 
+# .ARGS
+# str arrayName        name of the global array for your module.
+# str buttonsFrame     the frame you created for the buttons
+# str tabsFrame        the frame you created to hold all tabs (height =310!)
+# str buttonsLabel     label to go to left of button menu
+# str tabs             list of the tabs to create. no whitespace in tab names.
+# str titles           list of titles corresponding to each tab.  shown on buttons.
+# str tooltips         list of tooltips to appear over buttons. optional.
+# .END
+#-------------------------------------------------------------------------------
+proc TabbedFrame {arrayName buttonsFrame tabsFrame buttonsLabel tabs titles {tooltips ""}} {
+    global Gui Widgets $arrayName
+
+    # get the global array.
+    upvar #0 $arrayName globalArray
+
+    
+    ###### First make the buttons inside the buttonsFrame. #####
+    set f $buttonsFrame
+
+    # set button width to max word length
+    set width 0
+    foreach title $titles {
+	if {[expr [string length $title] +2] > $width} {
+	    set width [expr [string length $title] +2]
+	}
+    }
+
+    # label next to the buttons
+    eval {label $f.l -text $buttonsLabel} $Gui(BLA)
+
+    # make buttons for navigation btwn frames
+    frame $f.f -bg $Gui(backdrop)
+    foreach tab $tabs title $titles {
+	eval {radiobutton $f.f.r$tab \
+		-text "$title" \
+		-command "raise $tabsFrame.f$tab" \
+		-variable "$arrayName\(TabbedFrame,$tabsFrame,tab)" \
+		-value $tab -width  $width \
+		-indicatoron 0} $Gui(WCA)
+	pack $f.f.r$tab -side left -padx 0
+    }
+    pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
+
+    # add tooltips 
+    if {[llength $tooltips] == [llength $tabs]} {
+	foreach tab $tabs tip $tooltips {
+	    TooltipAdd $f.f.r$tab $tip
+	}
+    }
+
+    ###### Next make the frames that the buttons will tab to #####
+    set f $tabsFrame
+    
+    foreach tab $tabs {
+	frame $f.f$tab -bg $Gui(activeWorkspace)
+	place $f.f$tab -in $f -relheight 1.0 -relwidth 1.0
+	set globalArray(TabbedFrame,$tabsFrame,f$tab) $f.f$tab
+    }
+
+
+    ###### Make the first tab active #####
+    set first [lindex $tabs 0]
+    # press first button
+    set globalArray(TabbedFrame,$tabsFrame,tab) $first
+    # go to first tab
+    raise $tabsFrame.f$first
+}
+
