@@ -49,10 +49,10 @@ proc ModelsInit {} {
     set Module($m,row1List) "Help Display Props Clip Meter"
     set Module($m,row1Name) "{Help} {Display} {Props} {Clip} {Meter}"
     set Module($m,row1,tab) Display
-# Use these lines to add a second row of tabs
-#    set Module($m,row2List) "Meter"
-#    set Module($m,row2Name) "{Meter}"
-#    set Module($m,row2,tab) Meter
+    # Use these lines to add a second row of tabs
+    #    set Module($m,row2List) "Meter"
+    #    set Module($m,row2Name) "{Meter}"
+    #    set Module($m,row2,tab) Meter
 
     # Module Summary Info
     set Module($m,overview) "3D surface models."
@@ -66,7 +66,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.44 $} {$Date: 2002/03/21 23:05:27 $}]
+            {$Revision: 1.45 $} {$Date: 2002/04/16 17:30:12 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -74,9 +74,9 @@ proc ModelsInit {} {
     # Meter
     set Model(meter,first) 1
 
-        set Model(DefaultDir) "";
+    set Model(DefaultDir) "";
 
-        # Scroll Bar Interation
+    # Scroll Bar Interation
 }
 
 #-------------------------------------------------------------------------------
@@ -144,7 +144,7 @@ proc ModelsUpdateMRML {} {
     # Now build GUI for any models not in hierarchies
     foreach m $Model(idList) {
         if {[lsearch $hierarchyModelList $m] == -1} {
-        set gui [expr $gui + [MainModelsCreateGUI $Model(fScrolledGUI) $m]]
+            set gui [expr $gui + [MainModelsCreateGUI $Model(fScrolledGUI) $m]]
         }
     }
 
@@ -155,8 +155,8 @@ proc ModelsUpdateMRML {} {
 
     # Tell the scrollbar to update if the gui height changed
     if {$gui > 0} {
-            ModelsConfigScrolledGUI $Model(canvasScrolledGUI) \
-                                    $Model(fScrolledGUI)
+        ModelsConfigScrolledGUI $Model(canvasScrolledGUI) \
+                $Model(fScrolledGUI)
     }
 
     # Refresh  GUIs (in case color changed)
@@ -173,7 +173,7 @@ proc ModelsUpdateMRML {} {
         catch {set c $ModelGroup($mg,colorID)}
         MainModelGroupsRefreshGUI $mg $c
     }
-    }
+}
 
 #-------------------------------------------------------------------------------
 # .PROC ModelsBuildGUI
@@ -210,36 +210,36 @@ proc ModelsBuildGUI {} {
     # Help frame
     #-------------------------------------------
     set help "
-Description by tab:<BR>
-<UL>
-<LI><B>Display:</B> Click the button with the model's name to
-set its visibility, and move the slider to affect its opacity.
-For a menu of additional options, click the button with the
-<B>Right</B> mouse button.<BR>
-<LI><B>Props:</B> Another way of setting the model's properties
-than via the menu on the <B>Display</B> tab. You must click the
-<B>Apply</B> button for your changes to take effect.<BR>
+    Description by tab:<BR>
+    <UL>
+    <LI><B>Display:</B> Click the button with the model's name to
+    set its visibility, and move the slider to affect its opacity.
+    For a menu of additional options, click the button with the
+    <B>Right</B> mouse button.<BR>
+    <LI><B>Props:</B> Another way of setting the model's properties
+    than via the menu on the <B>Display</B> tab. You must click the
+    <B>Apply</B> button for your changes to take effect.<BR>
 
-<LI><B>Clip:</B> The slice planes can act as clipping planes to give
-you vision inside the model. Select whether each plane should not
-clip, or clip the portion of the model lying on the its positive or
-its negative side. You may change the effect of clipping with multiple
-planes. <BR>
+    <LI><B>Clip:</B> The slice planes can act as clipping planes to give
+    you vision inside the model. Select whether each plane should not
+    clip, or clip the portion of the model lying on the its positive or
+    its negative side. You may change the effect of clipping with multiple
+    planes. <BR>
 
-Note that to clip a particular model, you must turn clipping on for that model.
-Do that in the Props:Advanced section.
+    Note that to clip a particular model, you must turn clipping on for that model.
+    Do that in the Props:Advanced section.
 
-<BR><B>TIP</B> Clip the skin to see the other models inside the
-body while still retaining the skin as a landmark.<BR>
-<LI><B>Meter:</B> Click the <B>Measure Performance</B> button
-to display the number of polygons in each model and the time
-to render them all.
+    <BR><B>TIP</B> Clip the skin to see the other models inside the
+    body while still retaining the skin as a landmark.<BR>
+    <LI><B>Meter:</B> Click the <B>Measure Performance</B> button
+    to display the number of polygons in each model and the time
+    to render them all.
 
-<LI><B>Other Notes:</B><BR>
-If <B>Backface Culling</B> is on, you will see nothing when looking inside a clipped model. If Backface Culling is off, you will the inside of the model when looking inside a clipped model.
+    <LI><B>Other Notes:</B><BR>
+    If <B>Backface Culling</B> is on, you will see nothing when looking inside a clipped model. If Backface Culling is off, you will the inside of the model when looking inside a clipped model.
 
 
-"
+    "
     regsub -all "\n" $help { } help
     MainHelpApplyTags Models $help
     MainHelpBuildGUI Models
@@ -253,7 +253,7 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
     frame $f.fTitle -bg $Gui(activeWorkspace)
     frame $f.fAll -bg $Gui(activeWorkspace)
     frame $f.fRend -bg $Gui(activeWorkspace)
-        frame $f.fGrid -bg $Gui(activeWorkspace)
+    frame $f.fGrid -bg $Gui(activeWorkspace)
     frame $f.fScroll -bg $Gui(activeWorkspace)
     pack $f.fTitle $f.fAll $f.fRend -side top -pady $Gui(pad)
     pack $f.fGrid $f.fScroll -side top -pady 1
@@ -264,34 +264,34 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
     set f $fDisplay.fTitle
 
     eval {label $f.lTitle -justify left -text \
-        "Click the right mouse button on\nthe name of a model for options."} $Gui(WLA)
+            "Click the right mouse button on\nthe name of a model for options."} $Gui(WLA)
     pack $f.lTitle
-        
-        #-------------------------------------------
+    
+    #-------------------------------------------
     # fDisplay->Rend frame
     #-------------------------------------------
- 
+    
     set f $fDisplay.fRend
 
-        eval {label $f.label -text "Choose a screen:"} $Gui(WLA)
-        eval {menubutton $f.fMenuB -text "viewRen" -menu $f.fMenuB.menu} $Gui(WMBA)
-        TooltipAdd $f.fMenuB "Choose in which screen you want to change the options of a model"
-        eval {menu $f.fMenuB.menu} $Gui(WMA)
-           foreach rend $Module(Renderers) {
-           $f.fMenuB.menu add command -label $rend -command "$f.fMenuB configure -text $rend; MainModelsSetRenderer $rend"
-       }
-       
-       pack $f.label $f.fMenuB  -side left -padx $Gui(pad) -pady 0
+    eval {label $f.label -text "Choose a screen:"} $Gui(WLA)
+    eval {menubutton $f.fMenuB -text "viewRen" -menu $f.fMenuB.menu} $Gui(WMBA)
+    TooltipAdd $f.fMenuB "Choose in which screen you want to change the options of a model"
+    eval {menu $f.fMenuB.menu} $Gui(WMA)
+    foreach rend $Module(Renderers) {
+        $f.fMenuB.menu add command -label $rend -command "$f.fMenuB configure -text $rend; MainModelsSetRenderer $rend"
+    }
+    
+    pack $f.label $f.fMenuB  -side left -padx $Gui(pad) -pady 0
 
     #-------------------------------------------
     # fDisplay->All frame
     #-------------------------------------------
     set f $fDisplay.fAll
 
-        DevAddButton $f.bAll "Show All" \
-                "MainModelsSetVisibility All; Render3D" 10 
-        DevAddButton $f.bNone "Show None" \
-                "MainModelsSetVisibility None; Render3D" 10 
+    DevAddButton $f.bAll "Show All" \
+            "MainModelsSetVisibility All; Render3D" 10 
+    DevAddButton $f.bNone "Show None" \
+            "MainModelsSetVisibility None; Render3D" 10 
     pack $f.bAll $f.bNone -side left -padx $Gui(pad) -pady 0
 
     #-------------------------------------------
@@ -341,9 +341,9 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
     #-------------------------------------------
     set f $fProps.fTop.fActive
 
-        eval {label $f.lActive -text "Active Model: "} $Gui(BLA)
+    eval {label $f.lActive -text "Active Model: "} $Gui(BLA)
     eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
-        -menu $f.mbActive.m} $Gui(WMBA)
+            -menu $f.mbActive.m} $Gui(WMBA)
     eval {menu $f.mbActive.m} $Gui(WMA)
     pack $f.lActive $f.mbActive -side left
 
@@ -356,13 +356,13 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
     #-------------------------------------------
     set f $fProps.fTop.fType
 
-        eval {label $f.l -text "Properties:"} $Gui(BLA)
+    eval {label $f.l -text "Properties:"} $Gui(BLA)
     frame $f.f -bg $Gui(backdrop)
     foreach p "Basic Advanced" {
         eval {radiobutton $f.f.r$p \
-            -text "$p" -command "ModelsSetPropertyType" \
-            -variable Model(propertyType) -value $p -width 8 \
-            -indicatoron 0} $Gui(WCA)
+                -text "$p" -command "ModelsSetPropertyType" \
+                -variable Model(propertyType) -value $p -width 8 \
+                -indicatoron 0} $Gui(WCA)
         pack $f.f.r$p -side left -padx 0
     }
     pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
@@ -378,7 +378,7 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
     frame $f.fGrid    -bg $Gui(activeWorkspace)
     frame $f.fApply   -bg $Gui(activeWorkspace)
     pack $f.fFileName $f.fName $f.fColor $f.fGrid $f.fApply \
-        -side top -fill x -pady $Gui(pad)
+            -side top -fill x -pady $Gui(pad)
 
     #-------------------------------------------
     # Props->Bot->Advanced frame
@@ -389,12 +389,12 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
     frame $f.fCulling -bg $Gui(activeWorkspace)
     frame $f.fScalars -bg $Gui(activeWorkspace) -relief groove -bd 3
     frame $f.fDesc    -bg $Gui(activeWorkspace)
-        # Got rid of the Apply frame, it is unnecessary.
-#    frame $f.fApply   -bg $Gui(activeWorkspace)
-#    pack $f.fClipping $f.fCulling $f.fScalars $f.fDesc $f.fApply \
-#        -side top -fill x -pady $Gui(pad)
+    # Got rid of the Apply frame, it is unnecessary.
+    #    frame $f.fApply   -bg $Gui(activeWorkspace)
+    #    pack $f.fClipping $f.fCulling $f.fScalars $f.fDesc $f.fApply \
+            #        -side top -fill x -pady $Gui(pad)
     pack $f.fClipping $f.fCulling $f.fScalars $f.fDesc  \
-        -side top -fill x -pady $Gui(pad)
+            -side top -fill x -pady $Gui(pad)
 
     #-------------------------------------------
     # Props->Bot->Basic->Name frame
@@ -411,7 +411,7 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
     #-------------------------------------------
     set f $fProps.fBot.fBasic.fFileName
 
-        DevAddFileBrowse $f Model FileName "Model File (.vtk)" "ModelsSetFileName" "vtk" "\$Model(DefaultDir)"  "Browse for a Model" 
+    DevAddFileBrowse $f Model FileName "Model File (.vtk)" "ModelsSetFileName" "vtk" "\$Model(DefaultDir)"  "Browse for a Model" 
 
     #-------------------------------------------
     # Props->Bot->Basic->Color frame
@@ -420,8 +420,8 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 
     DevAddButton $f.b "Color:" "ShowColors"
     eval {entry $f.e -width 20 \
-        -textvariable Label(name)} $Gui(WEA) \
-        {-bg $Gui(activeWorkspace) -state disabled}
+            -textvariable Label(name)} $Gui(WEA) \
+            {-bg $Gui(activeWorkspace) -state disabled}
     pack $f.b $f.e -side left -padx $Gui(pad) -pady $Gui(pad) -fill x
 
     lappend Label(colorWidgetList) $f.e
@@ -434,15 +434,15 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
     # Visible
     DevAddLabel $f.lV "Visible:"
     eval {checkbutton $f.c \
-         -variable Model(visibility) -indicatoron 1} $Gui(WCA)
+            -variable Model(visibility) -indicatoron 1} $Gui(WCA)
 
     # Opacity
     DevAddLabel $f.lO "Opacity:"
     eval {entry $f.e -textvariable Model(opacity) \
-        -width 3} $Gui(WEA)
+            -width 3} $Gui(WEA)
     eval {scale $f.s -from 0.0 -to 1.0 -length 50 \
-        -variable Model(opacity) \
-        -resolution 0.1} $Gui(WSA) {-sliderlength 14}
+            -variable Model(opacity) \
+            -resolution 0.1} $Gui(WSA) {-sliderlength 14}
 
     grid $f.lV $f.c $f.lO $f.e $f.s
 
@@ -451,7 +451,7 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
     #-------------------------------------------
     set f $fProps.fBot.fBasic.fApply
 
-        DevAddButton $f.bApply "Apply" "ModelsPropsApply; Render3D" 8
+    DevAddButton $f.bApply "Apply" "ModelsPropsApply; Render3D" 8
     DevAddButton $f.bCancel "Cancel" "ModelsPropsCancel" 8
     grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
 
@@ -463,10 +463,10 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
     # Visible
     DevAddLabel $f.l "Clipping:"
     eval {checkbutton $f.c \
-         -variable Model(clipping) -indicatoron 1 \
-        -command "ModelsPropsApplyButNotToNew; Render3D"} $Gui(WCA)
+            -variable Model(clipping) -indicatoron 1 \
+            -command "ModelsPropsApplyButNotToNew; Render3D"} $Gui(WCA)
 
-        DevAddButton $f.bSmooth "Smooth Normals" "ModelsSmoothNormals; Render3D" 13
+    DevAddButton $f.bSmooth "Smooth Normals" "ModelsSmoothNormals; Render3D" 13
 
     pack $f.l $f.c $f.bSmooth -side left -padx $Gui(pad)
 
@@ -480,12 +480,12 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
     pack $f.l $f.f -side left -padx $Gui(pad)
 
     foreach text "{Yes} {No}" \
-        value "1 0" \
-        width "4 4" {
+            value "1 0" \
+            width "4 4" {
         eval {radiobutton $f.f.rMode$value -width $width \
-            -text "$text" -value "$value" -variable Model(culling)\
-                        -command "ModelsPropsApplyButNotToNew; Render3D" \
-            -indicatoron 0} $Gui(WCA)
+                -text "$text" -value "$value" -variable Model(culling)\
+                -command "ModelsPropsApplyButNotToNew; Render3D" \
+                -indicatoron 0} $Gui(WCA)
         pack $f.f.rMode$value -side left -padx 0 -pady 0
     }
 
@@ -495,10 +495,12 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
     set f $fProps.fBot.fAdvanced.fScalars
 
     frame $f.fVisible -bg $Gui(activeWorkspace)
+    frame $f.fAutoRange   -bg $Gui(activeWorkspace)
     frame $f.fRange   -bg $Gui(activeWorkspace)
-    pack $f.fVisible $f.fRange -side top -pady $Gui(pad)
+    pack $f.fVisible $f.fAutoRange $f.fRange -side top -pady $Gui(pad)
     set fVisible $f.fVisible
     set fRange $f.fRange
+    set fAutoRange $f.fAutoRange
 
     # fVisible
     set f $fVisible
@@ -508,12 +510,29 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
     pack $f.l $f.f -side left -padx $Gui(pad) -pady 0
 
     foreach text "{Yes} {No}" \
-        value "1 0" \
-        width "4 4" {
+            value "1 0" \
+            width "4 4" {
         eval {radiobutton $f.f.rMode$value -width $width \
-            -text "$text" -value "$value" -variable Model(scalarVisibility) \
-                         -command "ModelsPropsApplyButNotToNew; Render3D" \
-            -indicatoron 0} $Gui(WCA)
+                -text "$text" -value "$value" -variable Model(scalarVisibility) \
+                -command "ModelsPropsApplyButNotToNew; Render3D" \
+                -indicatoron 0} $Gui(WCA)
+        pack $f.f.rMode$value -side left
+    }
+
+    # fAutoRange
+    set f $fAutoRange
+
+    DevAddLabel $f.l "Scalar Range:"
+    frame $f.f -bg $Gui(activeWorkspace)
+    pack $f.l $f.f -side left -padx $Gui(pad) -pady 0
+
+    foreach text "{Auto} {Manual}" \
+            value "1 0" {
+        eval {radiobutton $f.f.rMode$value \
+                -text "$text" -value "$value" \
+                -variable Model(scalarVisibilityAuto) \
+                -command "ModelsPropsApplyButNotToNew; Render3D" \
+                -indicatoron 0} $Gui(WCA)
         pack $f.f.rMode$value -side left
     }
 
@@ -525,7 +544,7 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
     bind $f.eLo <Return> "ModelsPropsApplyButNotToNew; Render3D"
     bind $f.eLo <FocusOut> "ModelsPropsApplyButNotToNew; Render3D"
     eval {entry $f.eHi -width 6 -textvariable Model(scalarHi) } $Gui(WEA)
-        bind $f.eHi <Return> "ModelsPropsApplyButNotToNew; Render3D"
+    bind $f.eHi <Return> "ModelsPropsApplyButNotToNew; Render3D"
     bind $f.eHi <FocusOut> "ModelsPropsApplyButNotToNew; Render3D"
     pack $f.l $f.eLo $f.eHi -side left -padx $Gui(pad)
 
@@ -541,15 +560,15 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
     pack $f.l -side top -padx $Gui(pad) -fill x -anchor w
     pack $f.e -side top -padx $Gui(pad) -expand 1 -fill x
 
-         # Unnecessary
-#        #-------------------------------------------
-#        # Props->Bot->Advanced->Apply frame
-#        #-------------------------------------------
-#        set f $fProps.fBot.fAdvanced.fApply
-#
-#        DevAddButton $f.bApply "Apply" "ModelsPropsApply; Render3D" 8
-#        DevAddButton $f.bCancel "Cancel" "ModelsPropsCancel" 8
-#        grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
+    # Unnecessary
+    #        #-------------------------------------------
+    #        # Props->Bot->Advanced->Apply frame
+    #        #-------------------------------------------
+    #        set f $fProps.fBot.fAdvanced.fApply
+    #
+    #        DevAddButton $f.bApply "Apply" "ModelsPropsApply; Render3D" 8
+    #        DevAddButton $f.bCancel "Cancel" "ModelsPropsCancel" 8
+    #        grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
 
 
     #-------------------------------------------
@@ -569,11 +588,11 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
     set f $fClip.fHelp
 
     eval {label $f.l  -justify left -text "The slices clip all models that\n\
-have clipping turned on.\n\n\
-To turn clipping on for a model,\n\
-click with the right mouse button\n\
-on the model's name on the Props:\n\
-Advanced page, and select 'Clipping'."} $Gui(WLA)
+            have clipping turned on.\n\n\
+            To turn clipping on for a model,\n\
+            click with the right mouse button\n\
+            on the model's name on the Props:\n\
+            Advanced page, and select 'Clipping'."} $Gui(WLA)
     pack $f.l
 
     #-------------------------------------------
@@ -588,87 +607,87 @@ Advanced page, and select 'Clipping'."} $Gui(WLA)
         frame $f.f$s -bg $Gui(activeWorkspace)
         foreach text "Off + -" value "0 1 2" width "4 2 2" {
             eval {radiobutton $f.f$s.r$value -width $width \
-                -text "$text" -value "$value" -variable Slice($s,clipState) \
-                -indicatoron 0 \
-                -command "MainSlicesSetClipState $s; MainModelsRefreshClipping; Render3D" \
-                } $Gui(WCA) {-bg $Gui(slice$s)}
-            pack $f.f$s.r$value -side left -padx 0 -pady 0
-        }
-        grid $f.l$s $f.f$s -pady $Gui(pad)
-    }
-
-    #-------------------------------------------
-    # fClip->ClipType frame
-    #-------------------------------------------
-    set f $fClip.fClipType
-
-    eval {label $f.l  -justify left -text \
-"Clipping can either be done as Intersection\n\
-or Union. Intersection clips all regions that\n\
-satisfy the constraints of all clipping planes.\n\
-Union clips all regions that satisfy the\n\
-constrains of at least one clipping plane.\n"} $Gui(WLA)
-
-    grid $f.l
-
-        foreach p "Union Intersection" {
-            eval {radiobutton $f.r$p -width 10 \
-                    -text "$p" -value "$p" \
-                    -variable Slice(clipType) \
-                   -command "Slice(clipPlanes) SetOperationTypeTo$p; Render3D"\
+                    -text "$text" -value "$value" -variable Slice($s,clipState) \
                     -indicatoron 0 \
-                } $Gui(WCA) 
-        grid $f.r$p -padx 0 -pady 0
+                    -command "MainSlicesSetClipState $s; MainModelsRefreshClipping; Render3D" \
+                } $Gui(WCA) {-bg $Gui(slice$s)}
+        pack $f.f$s.r$value -side left -padx 0 -pady 0
     }
+    grid $f.l$s $f.f$s -pady $Gui(pad)
+}
 
-    #-------------------------------------------
-    # Meter frame
-    #-------------------------------------------
-    set fMeter $Module(Models,fMeter)
-    set f $fMeter
+#-------------------------------------------
+# fClip->ClipType frame
+#-------------------------------------------
+set f $fClip.fClipType
 
-    foreach frm "Apply Results" {
-        frame $f.f$frm -bg $Gui(activeWorkspace)
-        pack  $f.f$frm -side top -pady $Gui(pad)
-    }
+eval {label $f.l  -justify left -text \
+        "Clipping can either be done as Intersection\n\
+        or Union. Intersection clips all regions that\n\
+        satisfy the constraints of all clipping planes.\n\
+        Union clips all regions that satisfy the\n\
+        constrains of at least one clipping plane.\n"} $Gui(WLA)
 
-    #-------------------------------------------
-    # Meter->Apply frame
-    #-------------------------------------------
-    set f $fMeter.fApply
+grid $f.l
 
-    set text "Measure Performance"
-        DevAddButton $f.bMeasure $text "ModelsMeter" \
-                [expr [string length $text] + 1]
-    pack $f.bMeasure
+foreach p "Union Intersection" {
+    eval {radiobutton $f.r$p -width 10 \
+            -text "$p" -value "$p" \
+            -variable Slice(clipType) \
+            -command "Slice(clipPlanes) SetOperationTypeTo$p; Render3D"\
+            -indicatoron 0 \
+        } $Gui(WCA) 
+    grid $f.r$p -padx 0 -pady 0
+}
 
-    #-------------------------------------------
-    # Meter->Results frame
-    #-------------------------------------------
-    set f $fMeter.fResults
+#-------------------------------------------
+# Meter frame
+#-------------------------------------------
+set fMeter $Module(Models,fMeter)
+set f $fMeter
 
-    frame $f.fTop -bg $Gui(activeWorkspace)
-    frame $f.fBot -bg $Gui(activeWorkspace)
-    pack $f.fTop $f.fBot -side top -pady $Gui(pad)
+foreach frm "Apply Results" {
+    frame $f.f$frm -bg $Gui(activeWorkspace)
+    pack  $f.f$frm -side top -pady $Gui(pad)
+}
 
-    set f $fMeter.fResults.fTop
-    eval {label $f.l -justify left -text ""} $Gui(WLA)
-    pack $f.l
-    set Model(meter,msgTop) $f.l
+#-------------------------------------------
+# Meter->Apply frame
+#-------------------------------------------
+set f $fMeter.fApply
 
-    set f $fMeter.fResults.fBot
-    eval {label $f.lL -justify left -text ""} $Gui(WLA)
-    eval {label $f.lR -justify right -text ""} $Gui(WLA)
-    pack $f.lL $f.lR -side left -padx $Gui(pad)
-    set Model(meter,msgLeft) $f.lL
-    set Model(meter,msgRight) $f.lR
+set text "Measure Performance"
+DevAddButton $f.bMeasure $text "ModelsMeter" \
+        [expr [string length $text] + 1]
+pack $f.bMeasure
 
-    set Model(canvasScrolledGUI)  $Module(Models,fDisplay).fScroll.cGrid
-        set Model(fScrolledGUI)       $Model(canvasScrolledGUI).fListItems
-        DevCreateScrollList $Module(Models,fDisplay).fScroll \
-                            MainModelsCreateGUI \
-                            ModelsConfigScrolledGUI \
-                            "$Model(idList)"
+#-------------------------------------------
+# Meter->Results frame
+#-------------------------------------------
+set f $fMeter.fResults
+
+frame $f.fTop -bg $Gui(activeWorkspace)
+frame $f.fBot -bg $Gui(activeWorkspace)
+pack $f.fTop $f.fBot -side top -pady $Gui(pad)
+
+set f $fMeter.fResults.fTop
+eval {label $f.l -justify left -text ""} $Gui(WLA)
+pack $f.l
+set Model(meter,msgTop) $f.l
+
+set f $fMeter.fResults.fBot
+eval {label $f.lL -justify left -text ""} $Gui(WLA)
+eval {label $f.lR -justify right -text ""} $Gui(WLA)
+pack $f.lL $f.lR -side left -padx $Gui(pad)
+set Model(meter,msgLeft) $f.lL
+set Model(meter,msgRight) $f.lR
+
+set Model(canvasScrolledGUI)  $Module(Models,fDisplay).fScroll.cGrid
+set Model(fScrolledGUI)       $Model(canvasScrolledGUI).fListItems
+DevCreateScrollList $Module(Models,fDisplay).fScroll \
+        MainModelsCreateGUI \
+        ModelsConfigScrolledGUI \
+        "$Model(idList)"
 }
 
 #-------------------------------------------------------------------------------
@@ -689,8 +708,8 @@ proc ModelsConfigScrolledGUI {canvasScrolledGUI fScrolledGUI} {
     set canvas $canvasScrolledGUI
     set m [lindex $Model(idList) 0]
 
-        # y spacing important for calculation of frame height for scrolling
-        set pady 2
+    # y spacing important for calculation of frame height for scrolling
+    set pady 2
 
     if {$m != ""} {
         # Find the height of a single button
@@ -711,7 +730,7 @@ proc ModelsConfigScrolledGUI {canvasScrolledGUI fScrolledGUI} {
         set height [expr {$numLines * $incr}]
         # Find the width of the scrolling region
         update;     # wait for some stuff to be done before requesting
-                # window positions
+        # window positions
         set last_x [winfo x $lastButton]
         set width [expr $last_x + [winfo reqwidth $lastButton]]
         $canvas config -scrollregion "0 0 $width $height"
@@ -747,12 +766,12 @@ proc ModelsSetFileName {} {
     # Do nothing if the user cancelled
     if {$Model(FileName) == ""} {return}
 
-        # Update the Default Directory
-        set Model(DefaultDir) [file dirname $Model(FileName)]
+    # Update the Default Directory
+    set Model(DefaultDir) [file dirname $Model(FileName)]
 
     # Name the model based on the entered file.
     set Model(name) [ file root [file tail $Model(FileName)]]
-        puts "$Model(FileName), $Model(name)"
+    puts "$Model(FileName), $Model(name)"
     # Guess the color
     set name [string tolower $Model(name)]
     set guess [Color($Color(activeID),node) GetName]
@@ -794,6 +813,9 @@ proc ModelsPropsApplyButNotToNew {} {
 proc ModelsPropsApply {} {
     global Model Label Module Mrml
 
+    set m $Model(activeID)
+    if {$m == ""} {return}
+
     # Validate name
     if {$Model(name) == ""} {
         DevWarningWindow "Please enter a name that will allow you to distinguish this model."
@@ -802,6 +824,14 @@ proc ModelsPropsApply {} {
     if {[ValidateName $Model(name)] == 0} {
         DevWarningWindow "The name can consist of letters, digits, dashes, or underscores"
         return
+    }
+
+    # compute scalar range if Auto is requested by user
+    # if NEW, there's no polydata yet so can't get its range
+    if {$Model(scalarVisibilityAuto) == "1" && $m != "NEW"} {
+        set range [$Model($m,polyData) GetScalarRange]
+        set Model(scalarLo) [lindex $range 0]
+        set Model(scalarHi) [lindex $range 1]
     }
 
     # Validate scalar range
@@ -814,8 +844,6 @@ proc ModelsPropsApply {} {
         return
     }
 
-    set m $Model(activeID)
-    if {$m == ""} {return}
 
     if {$m == "NEW"} {
         # Ensure FileName not blank
@@ -902,7 +930,7 @@ proc ModelsPropsCancel {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ModelsSmoothNormals {} {
-   global Model Module
+    global Model Module
 
     set m $Model(activeID)
 
@@ -921,7 +949,7 @@ proc ModelsSmoothNormals {} {
         }
 
         foreach p "ModelNormals" {
-#            $p SetInput ""
+            #            $p SetInput ""
             $p Delete
         }
     }
@@ -959,7 +987,7 @@ proc ModelsMeter {} {
             $Model($m,polyData) Update
 
             foreach r $Module(Renderers) {
-            Model($m,mapper,$r) SetInput $Model($m,polyData)
+                Model($m,mapper,$r) SetInput $Model($m,polyData)
             }
 
             stripper SetOutput ""
@@ -968,7 +996,7 @@ proc ModelsMeter {} {
                 $p Delete
             }
         }
-#        puts "m=$m: ref=[$Model($m,polyData) GetReferenceCount]"
+        #        puts "m=$m: ref=[$Model($m,polyData) GetReferenceCount]"
 
         set n $Model($m,nPolys)
         if {[Model($m,node) GetVisibility] == 1} {
@@ -988,9 +1016,9 @@ proc ModelsMeter {} {
     }
 
     set msgTop "\
-Total visible polygons: $total\n\
-Render time: [format "%.3f" [expr $t/1000000.0]]\n\
-Polygons/sec rendered: [format "%.0f" $rate]"
+            Total visible polygons: $total\n\
+            Render time: [format "%.3f" [expr $t/1000000.0]]\n\
+            Polygons/sec rendered: [format "%.0f" $rate]"
 
     $Model(meter,msgTop) config -text $msgTop
     $Model(meter,msgLeft) config -text $msgLeft
