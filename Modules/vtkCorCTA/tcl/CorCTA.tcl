@@ -57,6 +57,7 @@ proc CorCTAInit {} {
     #  reached for any questions people may have regarding your module. 
     #  This is included in the  Help->Module Credits menu item.
     set Module($m,author) "Arne Hans, SPL"
+    set Module($m,category) "Application"
 
     # Define Tabs
     #------------------------------------
@@ -136,7 +137,7 @@ proc CorCTAInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2004/03/02 15:28:21 $}]
+        {$Revision: 1.4 $} {$Date: 2004/04/13 21:05:22 $}]
 
     # Initialize module-level variables
     #------------------------------------

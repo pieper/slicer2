@@ -110,6 +110,7 @@ proc MorphometricsInit {} {
     #  reached for any questions people may have regarding your module. 
     #  This is included in the  Help->Module Credits menu item.
     set Module($m,author) "Axel Krauth, University of Passau, krauth@fmi.uni-passau.de"
+    set Module($m,category) "Measurement"
 
     # Define Tabs
     #------------------------------------
@@ -193,7 +194,7 @@ proc MorphometricsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2004/02/07 23:53:59 $}]
+        {$Revision: 1.7 $} {$Date: 2004/04/13 21:05:53 $}]
 
     # Initialize module-level variables
     #------------------------------------
