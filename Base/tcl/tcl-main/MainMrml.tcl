@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.84 $} {$Date: 2003/06/02 22:51:36 $}]
+        {$Revision: 1.85 $} {$Date: 2003/06/03 19:03:00 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -2047,7 +2047,7 @@ proc MainMrmlCheckVolumes {filename} {
        set node [Mrml(dataTree) GetNextItem]
   }
   if {[string length $volumelist]} {
-      YesNoPopup MrmlCheckVolumes 20 50 "The following volumes will not be saved in the XML-file,\n because the first volume file does not exist:\n $volumelist\nWrite XML-file anyway?" "MainMrmlWriteProceed $filename" 
+      YesNoPopup MrmlCheckVolumes 20 50 "The following volumes will not be saved in the XML-file,\n because the first volume file does not exist:\n $volumelist\nWrite XML-file anyway?" "MainMrmlWriteProceed \{$filename\}" 
   } else {
       MainMrmlWriteProceed $filename
       
