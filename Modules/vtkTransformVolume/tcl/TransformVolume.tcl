@@ -46,8 +46,8 @@ proc TransformVolumeInit {} {
     #   row2,tab = like row1 
     #
 
-    set Module($m,row1List) "Help Main"
-    set Module($m,row1Name) "{Help} {Main} "
+    set Module($m,row1List) "Help Main Resample"
+    set Module($m,row1Name) "{Help} {Main} {Resample}"
     set Module($m,row1,tab) Main
     
     # Define Procedures
@@ -105,7 +105,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2005/03/07 20:41:53 $}]
+        {$Revision: 1.3 $} {$Date: 2005/03/12 17:55:38 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -115,7 +115,6 @@ proc TransformVolumeInit {} {
     #   the procedures in this module and others need to access.
     #
     set TransformVolume(resultPrefix) "xformed"
-
 }
 
 # NAMING CONVENTION:
@@ -214,8 +213,7 @@ proc TransformVolumeBuildGUI {} {
     # Main frame
     #-------------------------------------------
     set fMain $Module(TransformVolume,fMain)
-    set f $fMain
-    
+
     set f $fMain.fTitle
     frame $f -bg $Gui(activeWorkspace)
     pack $f -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
@@ -225,7 +223,9 @@ proc TransformVolumeBuildGUI {} {
     # Transform node
     istransformoption  $f.matopt -labeltext "Transform Node" -labelpos w \
         -background "#e2cdba" -foreground "#000000" \
-        -labelfont {helvetica 8} -labelmargin 5
+        -labelfont {helvetica 8} -labelmargin 5 \
+        -command TransformVolumeUpdateResample
+
     set TransformVolume(transform) $f.matopt
     
     $TransformVolume(transform) allowNone 0
@@ -239,10 +239,12 @@ proc TransformVolumeBuildGUI {} {
     $TransformVolume(displacementVol) numScalars 3
     $TransformVolume(displacementVol) allowNone 1
    
-    # Referebce volume
+    # Reference volume
     isvolumeoption  $f.volref -labeltext "Reference(like) Volume" -labelpos w \
         -background "#e2cdba" -foreground "#000000" \
-        -labelfont {helvetica 8} -labelmargin 5
+        -labelfont {helvetica 8} -labelmargin 5 \
+        -command TransformVolumeUpdateResample
+
     set TransformVolume(referenceVol) $f.volref
 
     $TransformVolume(referenceVol) allowNone 1
@@ -253,10 +255,6 @@ proc TransformVolumeBuildGUI {} {
         -fill x \
         -expand yes
 
-#    pack $f.volopt -side top -padx $Gui(pad) -pady $Gui(pad)
-#    pack $f.volref -side top -padx $Gui(pad) -pady $Gui(pad)
-
-
     # Result prefix
     set f $fMain.fPrefix
     frame $f -bg $Gui(activeWorkspace)
@@ -266,6 +264,21 @@ proc TransformVolumeBuildGUI {} {
     pack $f.lPrefix -side left -padx $Gui(pad)
     pack $f.ePrefix -side left -padx $Gui(pad) -expand 1 -fill x
 
+    # Interpolation Mode
+    set f $fMain.fInterpolationMode
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx 0 -pady $Gui(pad) -fill x
+
+    eval {label $f.lInterpolationMode -text "Interpolation Mode:"} $Gui(WLA)
+    #Create label foreach type of interpolation
+    foreach label {"NearestNeighbor" "Linear" "Cubic"} text {"Nearest Neighbor" "Linear" "Cubic"} {
+        eval {radiobutton $f.rb$label -text $text -variable TransformVolume(InterpolationMode) -value $label} $Gui(WLA)
+    }
+    set TransformVolume(InterpolationMode) Cubic
+    pack $f.lInterpolationMode -side top -padx $Gui(pad) -pady $Gui(pad)
+    pack $f.rbNearestNeighbor $f.rbLinear $f.rbCubic -side left -anchor w -padx 1 -pady $Gui(pad)
+
+
     # Transform button
     set f $fMain.fRun
     frame $f -bg $Gui(activeWorkspace)
@@ -273,6 +286,85 @@ proc TransformVolumeBuildGUI {} {
     DevAddButton $f.bRun "Do Transform" "TransformVolumeRun"
     pack $f.bRun -pady $Gui(pad)
     TooltipAdd $f.bRun "Transform volumes"
+
+
+    #-------------------------------------------
+    # Resample frame
+    #-------------------------------------------
+    set fResample $Module(TransformVolume,fResample)
+    
+    set f $fResample.fTitle
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
+    
+    set f $fResample  
+
+    # Reasmple->Orientation
+    iwidgets::radiobox $f.rborient -labeltext "New Orientation" -labelpos n \
+        -background "#e2cdba" -foreground "#000000" \
+        -labelfont {helvetica 8} -orient horizontal \
+        -command TransformVolumeOrientation
+
+    set TransformVolume(orientation) $f.rborient
+
+    foreach or {"LR" "RL" "PA" "AP" "IS" "SI"} {
+        $f.rborient add $or -text $or
+    }
+    pack $f.rborient -side top -padx $Gui(pad) -pady $Gui(pad)
+
+    # Resample->Spacing
+    set f $fResample.fOutputSpacing
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx 0 -pady $Gui(pad) -fill x
+
+    set f $fResample.fOutputSpacing
+    eval {label $f.lOutputSpacing -text "New Spacing"} $Gui(WLA)
+    pack $f.lOutputSpacing -side top -padx $Gui(pad) -pady $Gui(pad)
+    eval {label $f.lOutputSpacingI -text "I:"} $Gui(WLA)
+    eval {entry $f.eOutputSpacingI -width 6 -textvariable TransformVolume(OutputSpacingI) } $Gui(WEA)
+    eval {label $f.lOutputSpacingJ -text "J:"} $Gui(WLA)
+    eval {entry $f.eOutputSpacingJ -width 6 -textvariable TransformVolume(OutputSpacingJ) } $Gui(WEA)
+    eval {label $f.lOutputSpacingK -text "K:"} $Gui(WLA)
+    eval {entry $f.eOutputSpacingK -width 6 -textvariable TransformVolume(OutputSpacingK) } $Gui(WEA)
+    pack $f.lOutputSpacingI $f.eOutputSpacingI $f.lOutputSpacingJ $f.eOutputSpacingJ $f.lOutputSpacingK $f.eOutputSpacingK -side left -padx $Gui(pad) -pady $Gui(pad)
+    
+    # Resample->Dimenisons
+    set f $fResample.fOutputDimension
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx 0 -pady $Gui(pad) -fill x
+
+    set f $fResample.fOutputDimension
+    eval {label $f.lOutputDimension -text "New Dimensions"} $Gui(WLA)
+    pack $f.lOutputDimension -side top -padx $Gui(pad) -pady $Gui(pad)
+    eval {label $f.lOutputDimensionI -text "I:"} $Gui(WLA)
+    eval {entry $f.eOutputDimensionI -width 6 -textvariable TransformVolume(OutputDimensionI) } $Gui(WEA)
+    eval {label $f.lOutputDimensionJ -text "J:"} $Gui(WLA)
+    eval {entry $f.eOutputDimensionJ -width 6 -textvariable TransformVolume(OutputDimensionJ) } $Gui(WEA)
+    eval {label $f.lOutputDimensionK -text "K:"} $Gui(WLA)
+    eval {entry $f.eOutputDimensionK -width 6 -textvariable TransformVolume(OutputDimensionK) } $Gui(WEA)
+    pack $f.lOutputDimensionI $f.eOutputDimensionI $f.lOutputDimensionJ $f.eOutputDimensionJ $f.lOutputDimensionK $f.eOutputDimensionK -side left -padx $Gui(pad) -pady $Gui(pad)
+   
+    # Resample->Set Extent
+    set f $fResample.fSetExtent
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx 0 -pady $Gui(pad) -fill x
+  
+    set f $fResample.fSetExtent
+    DevAddButton $f.bIsoExtentI " Auto I "  AutoDimensionI
+    DevAddButton $f.bIsoExtentJ " Auto J "  AutoDimensionJ
+    DevAddButton $f.bIsoExtentK " Auto K "  AutoDimensionK
+    pack $f.bIsoExtentI  $f.bIsoExtentJ $f.bIsoExtentK -side left -padx $Gui(pad)
+    
+    # Resample->Auto Extent
+    set f $fResample.fAutoDimension
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx 0 -pady $Gui(pad) -fill x
+  
+    set f $fResample.fAutoDimension
+    DevAddButton $f.bAutoDimension "Auto Dimension"  AutoDimension
+    pack $f.bAutoDimension -side left -padx $Gui(pad) -pady $Gui(pad)
+
+    
 }
 
 proc TransformVolumeUpdateGUI {} {
@@ -283,11 +375,7 @@ proc TransformVolumeUpdateGUI {} {
 }
 
 proc TransformVolumeRun {} {
-   global TransformVolume Volume
-    
-    
-    # set reference volume
-    set vRef [$TransformVolume(referenceVol) selectedID]
+    global TransformVolume Volume
     
     # get displacement volume
     set vDisp [$TransformVolume(displacementVol) selectedID]
@@ -297,19 +385,23 @@ proc TransformVolumeRun {} {
     catch "destroy .isv"
     
     isvolume .isv
-
+    
     foreach v $volIDs {
         
         puts " TransformVolume : transforming volume [Volume($v,node) GetName]"
         
-        if {$vRef == "" || $vRef == $Volume(idNone)} {
-            #use source as reference
-            set vRef $v
-        }
-        
         .isv configure -volume [Volume($v,node) GetName]
         
-        .isv configure -refvolume [Volume($vRef,node) GetName]
+        .isv configure -orientation $TransformVolume(OutputOrientation)
+
+        .isv configure -interpolation $TransformVolume(InterpolationMode)
+
+        .isv set_spacing $TransformVolume(OutputSpacingI) \
+            $TransformVolume(OutputSpacingJ) \
+            $TransformVolume(OutputSpacingK)
+        .isv set_dimensions $TransformVolume(OutputDimensionI) \
+            $TransformVolume(OutputDimensionJ) \
+            $TransformVolume(OutputDimensionK)
         
         if {$vDisp != "" && $vDisp != $Volume(idNone)} {
             .isv configure -warpvolume [Volume($vDisp,node) GetName]
@@ -345,39 +437,42 @@ proc TransformVolumeGetVolumes {transformId} {
     global Data Mrml Transform EndTransform
     
     set volIDs ""
-    set tree Mrml(dataTree)
-    $tree InitTraversal
-    set node [$tree GetNextItem]
-    
-    set insideTransform 0
-    set done 0
-    while {$node != ""} {
-        
-        set nodeClass [$node GetClassName]
-        
-        switch $nodeClass {
-            "vtkMrmlVolumeNode" {
-                if {$insideTransform != 0} {
-                    set id [DataGetIdFromNode $node]
-                    lappend volIDs $id
-                }
-            }
-            "vtkMrmlTransformNode" {
-                if {[$node GetName] == [Transform($transformId,node) GetName]} {
-                    incr insideTransform
-                }
-            }
-            "vtkMrmlEndTransformNode" {
-                if {[$node GetName] == [EndTransform($transformId,node) GetName]} {
-                    incr insideTransform -1
-                    set done 1
-                }
-            }
-        }
-        if {$done} {
-            break
-        }
+
+    if {$transformId != ""} {
+        set tree Mrml(dataTree)
+        $tree InitTraversal
         set node [$tree GetNextItem]
+        
+        set insideTransform 0
+        set done 0
+        while {$node != ""} {
+            
+            set nodeClass [$node GetClassName]
+            
+            switch $nodeClass {
+                "vtkMrmlVolumeNode" {
+                    if {$insideTransform != 0} {
+                        set id [DataGetIdFromNode $node]
+                        lappend volIDs $id
+                    }
+                }
+                "vtkMrmlTransformNode" {
+                    if {[$node GetName] == [Transform($transformId,node) GetName]} {
+                        incr insideTransform
+                    }
+                }
+                "vtkMrmlEndTransformNode" {
+                    if {[$node GetName] == [EndTransform($transformId,node) GetName]} {
+                        incr insideTransform -1
+                        set done 1
+                    }
+                }
+            }
+            if {$done} {
+                break
+            }
+            set node [$tree GetNextItem]
+        }
     }
     return $volIDs
 }
@@ -394,4 +489,64 @@ proc TransformVolumeVolumeExists {name} {
         }
     }
     return 0
+}
+
+#-----------------------------
+proc TransformVolumeOrientation {} {
+    global TransformVolume
+
+    set TransformVolume(OutputOrientation) [$TransformVolume(orientation) get]
+}
+
+#-----------------------------
+proc TransformVolumeUpdateResample {} {
+    global TransformVolume Volume
+
+    # set reference volume
+    set vRef [$TransformVolume(referenceVol) selectedID]
+
+    # get volumes to transform under a transform node
+    set volIDs [TransformVolumeGetVolumes [$TransformVolume(transform) selectedID]]
+        
+    set v $Volume(idNone)
+
+    if {$vRef == "" || $vRef == $Volume(idNone)} {
+        # use source as reference
+        if {[llength $volIDs] != 0} {
+            set v [lindex $volIDs 0]
+        }
+    } else {
+        # use reference volume
+        set v $vRef
+    }
+    
+    if {$v != $Volume(idNone)} {
+        set spacing [split [[Volume($v,vol) GetOutput] GetSpacing]] 
+
+        set TransformVolume(OutputSpacingI) [lindex $spacing 0] 
+        set TransformVolume(OutputSpacingJ) [lindex $spacing 1] 
+        set TransformVolume(OutputSpacingK) [lindex $spacing 2] 
+
+        set dimension [split [[Volume($v,vol) GetOutput] GetDimensions]] 
+        
+        set TransformVolume(OutputDimensionI) [expr round(abs([lindex $dimension 0]))]
+        set TransformVolume(OutputDimensionJ) [expr round(abs([lindex $dimension 1]))]
+        set TransformVolume(OutputDimensionK) [expr round(abs([lindex $dimension 2]))]
+
+        set TransformVolume(OutputOrientation) [Volume($v,node) GetScanOrder]
+        $TransformVolume(orientation) select $TransformVolume(OutputOrientation)
+    }
+}
+
+proc AutoDimension {} {
+    tk_messageBox -message "NOT IMPLEMENTED YET"
+}
+proc AutoDimensionI {} {
+    tk_messageBox -message "NOT IMPLEMENTED YET"
+}
+proc AutoDimensionJ {} {
+    tk_messageBox -message "NOT IMPLEMENTED YET"
+}
+proc AutoDimensionK {} {
+    tk_messageBox -message "NOT IMPLEMENTED YET"
 }
