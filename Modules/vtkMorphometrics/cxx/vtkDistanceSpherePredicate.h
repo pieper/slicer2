@@ -59,16 +59,14 @@ class VTK_MORPHOMETRICS_EXPORT vtkDistanceSpherePredicate : public vtkPredicate
   vtkGetMacro(OnlyInside,bool);
 
 
-  vtkSetMacro(OnlyInside,int);
-
-  vtkSetClampMacro(MaximalDistance,float,0,FLT_MAX);
-  vtkGetMacro(MaximalDistance,float);
+  vtkSetClampMacro(MaximalDistance,vtkFloatingPointType,0,FLT_MAX);
+  vtkGetMacro(MaximalDistance,vtkFloatingPointType);
   
   // override in order to reflect changes in Sphere
   unsigned long int GetMTime();
 
 
-  virtual bool P(float* x);
+  virtual bool P(vtkFloatingPointType* x);
   virtual void InitP();
 
  protected:
@@ -81,7 +79,7 @@ class VTK_MORPHOMETRICS_EXPORT vtkDistanceSpherePredicate : public vtkPredicate
 
   vtkSphereSource* Sphere;
   bool OnlyInside;
-  float MaximalDistance;
+  vtkFloatingPointType MaximalDistance;
 };
 
 #endif

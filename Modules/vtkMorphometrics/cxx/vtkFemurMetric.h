@@ -68,7 +68,7 @@ class VTK_MORPHOMETRICS_EXPORT vtkFemurMetric : public vtkObject
   vtkGetObjectMacro(Femur,vtkPolyData);
   void SetFemur(vtkPolyData*);
 
-  vtkGetMacro(NeckShaftAngle,float);
+  vtkGetMacro(NeckShaftAngle,vtkFloatingPointType);
 
  // representation of the approximation of the head sphere
   vtkGetObjectMacro(HeadSphere,vtkSphereSource);
@@ -77,14 +77,14 @@ class VTK_MORPHOMETRICS_EXPORT vtkFemurMetric : public vtkObject
 
   vtkGetObjectMacro(ShaftAxis,vtkAxisSource);
 
-  vtkGetVector3Macro(HeadCenter,float);
-  vtkSetVector3Macro(HeadCenter,float);
+  vtkGetVector3Macro(HeadCenter,vtkFloatingPointType);
+  vtkSetVector3Macro(HeadCenter,vtkFloatingPointType);
 
-  vtkGetVector3Macro(NeckShaftCenter,float);
-  vtkSetVector3Macro(NeckShaftCenter,float);
+  vtkGetVector3Macro(NeckShaftCenter,vtkFloatingPointType);
+  vtkSetVector3Macro(NeckShaftCenter,vtkFloatingPointType);
 
-  vtkGetVector3Macro(DistalPoint,float);
-  vtkSetVector3Macro(DistalPoint,float);
+  vtkGetVector3Macro(DistalPoint,vtkFloatingPointType);
+  vtkSetVector3Macro(DistalPoint,vtkFloatingPointType);
  
  // ensure that the geometry fulfills some properties, i.e. the head
  // of femur is in the halfspace specified by the NeckShaftPlane
@@ -113,13 +113,13 @@ class VTK_MORPHOMETRICS_EXPORT vtkFemurMetric : public vtkObject
 
   vtkPolyData* Femur;
 
-  float NeckShaftAngle;
+  vtkFloatingPointType NeckShaftAngle;
 
-  float* HeadCenter;
+  vtkFloatingPointType* HeadCenter;
  
-  float* NeckShaftCenter;
+  vtkFloatingPointType* NeckShaftCenter;
 
-  float* DistalPoint;
+  vtkFloatingPointType* DistalPoint;
 
   vtkDataSetTriangleFilter* TriangledFemur;
 
@@ -129,13 +129,17 @@ class VTK_MORPHOMETRICS_EXPORT vtkFemurMetric : public vtkObject
 
   vtkImageDijkstra* Dijkstra;
 
-  void FittAxis(vtkAxisSource*,float* source,float* sink);
+  void FittAxis(vtkAxisSource*,vtkFloatingPointType* source,vtkFloatingPointType* sink);
   void FindPoints();
-  void FindDeepestPoint(float*);
+  void FindDeepestPoint(vtkFloatingPointType*);
   void FindNearestInside(int* p);
 
   bool IsInsideVolume(int* p){return IsInsideVolume(p[0],p[1],p[2]);};
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 3)
+  bool IsInsideVolume(int x,int y, int z){return 2== ((int)(Volume->GetOutput()->GetScalarComponentAsDouble(x,y,z,0)));};
+#else
   bool IsInsideVolume(int x,int y, int z){return 2== ((int)(Volume->GetOutput()->GetScalarComponentAsFloat(x,y,z,0)));};
+#endif
 };
 
 #endif

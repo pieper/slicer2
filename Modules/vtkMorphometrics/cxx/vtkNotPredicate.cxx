@@ -39,7 +39,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <iostream>
 #include <assert.h>
 
-bool vtkNotPredicate::P(float* x) 
+bool vtkNotPredicate::P(vtkFloatingPointType* x) 
 { 
   return !Operand->P(x);
 }

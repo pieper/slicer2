@@ -70,11 +70,11 @@ void vtkEuclideanLineFit::UpdateDirection()
 {
   vtkMath::Normalize(Direction);
 
-  float dir_x = Direction[0] / 2;
-  float dir_y = (1+Direction[1]) / 2;
-  float dir_z = Direction[2] / 2;
+  vtkFloatingPointType dir_x = Direction[0] / 2;
+  vtkFloatingPointType dir_y = (1+Direction[1]) / 2;
+  vtkFloatingPointType dir_z = Direction[2] / 2;
 
-  float norm =  sqrt(dir_x*dir_x + dir_y*dir_y + dir_z*dir_z);
+  vtkFloatingPointType norm =  sqrt(dir_x*dir_x + dir_y*dir_y + dir_z*dir_z);
   dir_x = dir_x / norm;
   dir_y = dir_y / norm;
   dir_z = dir_z / norm;
@@ -115,12 +115,12 @@ vtkEuclideanLineFit::vtkEuclideanLineFit()
   OrientationFilter = vtkTransformFilter::New();
   Orientation = vtkTransform::New();
   
-  Center = (float*) malloc(3*sizeof(float));
+  Center = (vtkFloatingPointType*) malloc(3*sizeof(vtkFloatingPointType));
   Center[0] = 0;
   Center[1] = 0;
   Center[2] = 0;
 
-  Direction = (float*) malloc(3*sizeof(float));
+  Direction = (vtkFloatingPointType*) malloc(3*sizeof(vtkFloatingPointType));
   Direction[0] = 0;
   Direction[1] = 1;
   Direction[2] = 0;

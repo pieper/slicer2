@@ -56,8 +56,8 @@ class VTK_MORPHOMETRICS_EXPORT vtkBooksteinSphereFit : public vtkPolyDataToPolyD
   void Delete();
   vtkTypeMacro(vtkBooksteinSphereFit,vtkPolyDataToPolyDataFilter);
   
-  vtkGetVector3Macro(Center,float);
-  vtkGetMacro(Radius,float);
+  vtkGetVector3Macro(Center,vtkFloatingPointType);
+  vtkGetMacro(Radius,vtkFloatingPointType);
   
   void PrintSelf();
   protected:
@@ -71,8 +71,8 @@ class VTK_MORPHOMETRICS_EXPORT vtkBooksteinSphereFit : public vtkPolyDataToPolyD
   
   // used for visualizing the result of the sphere fit
   vtkSphereSource* Base;
-  float* Center;
-  float  Radius;
+  vtkFloatingPointType* Center;
+  vtkFloatingPointType  Radius;
   
   // Sphere fitting with the Bookstein algorithm is
   // a least squares problem whose matrix has
@@ -81,7 +81,7 @@ class VTK_MORPHOMETRICS_EXPORT vtkBooksteinSphereFit : public vtkPolyDataToPolyD
 
   // Derive from the solution of the least squares problem 
   // the geometrical solution.
-  void GeometricalSolution(float alpha,float beta,float gamma,float delta);
+  void GeometricalSolution(vtkFloatingPointType alpha,vtkFloatingPointType beta,vtkFloatingPointType gamma,vtkFloatingPointType delta);
 
   // the quality of the radius can be improved by using
   // the radius a euclidean best fitting sphere would have

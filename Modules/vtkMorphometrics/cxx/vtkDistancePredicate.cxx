@@ -53,7 +53,7 @@ unsigned long vtkDistancePredicate::GetMTime()
 }
 
 
-bool vtkDistancePredicate::P(float* x) 
+bool vtkDistancePredicate::P(vtkFloatingPointType* x) 
 { 
   if(!OnlyInside || Hull->Inside(x))
     {
@@ -82,10 +82,6 @@ vtkDistancePredicate* vtkDistancePredicate::New()
 void vtkDistancePredicate::Delete()
 {
   delete this;
-
-}
-void vtkDistancePredicate::PrintSelf()
-{
 
 }
 

@@ -65,7 +65,7 @@ void vtkBooksteinSphereFit::Execute()
   vtkPolyData *input = (vtkPolyData *)this->Inputs[0];
   vtkPolyData *output = this->GetOutput();
   vtkIdType nr_points = input->GetNumberOfPoints();
-  float* point;
+  vtkFloatingPointType* point;
 
   double* line = (double*)malloc(4*sizeof(double));
   line[3] = 1;
@@ -99,7 +99,7 @@ void vtkBooksteinSphereFit::Execute()
   output->SetPolys(((vtkPolyData*)Base->GetOutput())->GetPolys());
 }
 
-void vtkBooksteinSphereFit::GeometricalSolution(float alpha,float beta,float gamma,float delta)
+void vtkBooksteinSphereFit::GeometricalSolution(vtkFloatingPointType alpha,vtkFloatingPointType beta,vtkFloatingPointType gamma,vtkFloatingPointType delta)
 {
   Center[0] = - alpha/2;
   Center[1] = - beta/2;
@@ -110,9 +110,9 @@ void vtkBooksteinSphereFit::GeometricalSolution(float alpha,float beta,float gam
 
 void vtkBooksteinSphereFit::BestEuclideanFitRadius(vtkPoints* points)
 {
-  float newRadius = 0;
-  float norm;
-  float* point_i;
+  vtkFloatingPointType newRadius = 0;
+  vtkFloatingPointType norm;
+  vtkFloatingPointType* point_i;
   for(vtkIdType i=0;i<points->GetNumberOfPoints();i++)
     {
       point_i = points->GetPoint(i);
@@ -148,7 +148,7 @@ void vtkBooksteinSphereFit::PrintSelf()
 
 vtkBooksteinSphereFit::vtkBooksteinSphereFit()
 {
-  Center = (float*) malloc(3*sizeof(float));
+  Center = (vtkFloatingPointType*) malloc(3*sizeof(vtkFloatingPointType));
   Center[0] = 0;
   Center[1] = 0;
   Center[2] = 0;

@@ -36,7 +36,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <vtkObjectFactory.h>
 #include <vtkMath.h>
 
-void vtkAxisSource::SetDirection(float x,float y,float z)
+void vtkAxisSource::SetDirection(vtkFloatingPointType x,vtkFloatingPointType y,vtkFloatingPointType z)
 {
   Direction[0] = x;
   Direction[1] = y;
@@ -49,12 +49,12 @@ void vtkAxisSource::SetDirection(float x,float y,float z)
   Modified();
 }
  
-void vtkAxisSource::SetDirection(float* d)
+void vtkAxisSource::SetDirection(vtkFloatingPointType* d)
 {
   SetDirection(d[0],d[1],d[2]);
 }
 
-void vtkAxisSource::SetCenter(float x,float y,float z)
+void vtkAxisSource::SetCenter(vtkFloatingPointType x,vtkFloatingPointType y,vtkFloatingPointType z)
 {
   Center[0] = x;
   Center[1] = y;
@@ -65,7 +65,7 @@ void vtkAxisSource::SetCenter(float x,float y,float z)
   Modified();
 }
 
-void vtkAxisSource::SetCenter(float* p)
+void vtkAxisSource::SetCenter(vtkFloatingPointType* p)
 {
   SetCenter(p[0],p[1],p[2]);
 }
@@ -99,8 +99,8 @@ void vtkAxisSource::PrintSelf()
 
 vtkAxisSource::vtkAxisSource()
 {
-  Direction = (float*)malloc(3*sizeof(float));
-  Center  = (float*)malloc(3*sizeof(float));;
+  Direction = (vtkFloatingPointType*)malloc(3*sizeof(vtkFloatingPointType));
+  Center  = (vtkFloatingPointType*)malloc(3*sizeof(vtkFloatingPointType));;
 
   AxisSource = vtkCylinderSource::New();
   AxisFilter = vtkTransformPolyDataFilter::New();
@@ -133,7 +133,7 @@ vtkAxisSource::~vtkAxisSource()
 void vtkAxisSource::UpdateRepresentation()
 {
   double* dir = AxisTransform->TransformNormal(0,1,0);
-  float* pos = AxisTransform->GetPosition();
+  vtkFloatingPointType* pos = AxisTransform->GetPosition();
   
   for(int i = 0;i<3;i++)
     {
@@ -148,15 +148,15 @@ void vtkAxisSource::UpdateRepresentation()
 // the vector halfway between (0,1,0) and the intended direction around 180 degrees.
 void vtkAxisSource::UpdateVisualization()
 {
-  float dir_x = Direction[0];
-  float dir_y = Direction[1];
-  float dir_z = Direction[2];
+  vtkFloatingPointType dir_x = Direction[0];
+  vtkFloatingPointType dir_y = Direction[1];
+  vtkFloatingPointType dir_z = Direction[2];
 
   dir_x = dir_x / 2;
   dir_y = (1+dir_y) / 2;
   dir_z = dir_z / 2;
 
-  float norm =  sqrt(dir_x*dir_x + dir_y*dir_y + dir_z*dir_z);
+  vtkFloatingPointType norm =  sqrt(dir_x*dir_x + dir_y*dir_y + dir_z*dir_z);
   dir_x = dir_x / norm;
   dir_y = dir_y / norm;
   dir_z = dir_z / norm;
@@ -181,8 +181,8 @@ void vtkAxisSource::Execute()
   output->SetLines(input->GetLines());
 }
 
-float vtkAxisSource::Angle(float* n)
+vtkFloatingPointType vtkAxisSource::Angle(vtkFloatingPointType* n)
 {
-  float angle = acos(vtkMath::Dot(Direction,n) / vtkMath::Norm(n));
+  vtkFloatingPointType angle = acos(vtkMath::Dot(Direction,n) / vtkMath::Norm(n));
   return angle*vtkMath::RadiansToDegrees();
 }

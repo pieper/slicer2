@@ -78,7 +78,7 @@ vtkPelvisMetric::vtkPelvisMetric()
   AcetabularPlane->SetCenter(-88.6134,-4.64934,87.0443);
   AcetabularPlane->SetNormal(-0.721505,0.320132,-0.613959);
 
-  Center = (float*)malloc(3*sizeof(float)); 
+  Center = (vtkFloatingPointType*)malloc(3*sizeof(vtkFloatingPointType)); 
   Center[0] = 0;
   Center[1] = 0;
   Center[2] = 0;
@@ -138,11 +138,11 @@ void vtkPelvisMetric::Normalize()
   // those are invariants needed for computing the angles.
 
   // acetabular plane normal not pointing towards center of gravity
-  float p_acetabulum = vtkMath::Dot(AcetabularPlane->GetCenter(),AcetabularPlane->GetNormal());
-  float p_center = vtkMath::Dot(Center,AcetabularPlane->GetNormal());
+  vtkFloatingPointType p_acetabulum = vtkMath::Dot(AcetabularPlane->GetCenter(),AcetabularPlane->GetNormal());
+  vtkFloatingPointType p_center = vtkMath::Dot(Center,AcetabularPlane->GetNormal());
   if(p_center>p_acetabulum)
     {
-      float* normal = AcetabularPlane->GetNormal();
+      vtkFloatingPointType* normal = AcetabularPlane->GetNormal();
       
       for(int i=0;i<3;i++)
     normal[i] = -normal[i];
@@ -151,7 +151,7 @@ void vtkPelvisMetric::Normalize()
   
   // OBS! this invariant is also enforced in NormalizeXAxis
   // center of actabular plane in FrontalAxis halfspace
-  float* frontalAxisDirection = WorldToObject->TransformFloatNormal(1,0,0);
+  vtkFloatingPointType* frontalAxisDirection = WorldToObject->TransformNormal(1,0,0);
   p_acetabulum = vtkMath::Dot(AcetabularPlane->GetCenter(),frontalAxisDirection);
   p_center = vtkMath::Dot(Center,frontalAxisDirection);
   if(p_acetabulum<p_center)
@@ -167,10 +167,10 @@ void vtkPelvisMetric::Normalize()
 }
 
 // also done for the WorldToObject transformation in Normalize();
-void vtkPelvisMetric::NormalizeXAxis(float* n)
+void vtkPelvisMetric::NormalizeXAxis(vtkFloatingPointType* n)
 {
-  float p_acetabulum = vtkMath::Dot(AcetabularPlane->GetCenter(),n);
-  float p_center = vtkMath::Dot(Center,n);
+  vtkFloatingPointType p_acetabulum = vtkMath::Dot(AcetabularPlane->GetCenter(),n);
+  vtkFloatingPointType p_center = vtkMath::Dot(Center,n);
   if(p_acetabulum<p_center)
     {
       for(int i=0;i<3;i++)
@@ -178,17 +178,17 @@ void vtkPelvisMetric::NormalizeXAxis(float* n)
     }
 }
 
-float vtkPelvisMetric::Angle(float* n,float* Direction)
+vtkFloatingPointType vtkPelvisMetric::Angle(vtkFloatingPointType* n,vtkFloatingPointType* Direction)
 {
-  float angle = acos(vtkMath::Dot(Direction,n) / vtkMath::Norm(n));
+  vtkFloatingPointType angle = acos(vtkMath::Dot(Direction,n) / vtkMath::Norm(n));
   return angle*vtkMath::RadiansToDegrees();
 }
 
 
 void vtkPelvisMetric::UpdateAngles()
 {
-  float* normal_in_obj = WorldToObject->TransformFloatNormal(AcetabularPlane->GetNormal());
-  float* reference_n = (float*) malloc(3*sizeof(float));
+  vtkFloatingPointType* normal_in_obj = WorldToObject->TransformNormal(AcetabularPlane->GetNormal());
+  vtkFloatingPointType* reference_n = (vtkFloatingPointType*) malloc(3*sizeof(vtkFloatingPointType));
 
   for(int i = 0;i<3;i++)
     reference_n[i] = 0;
@@ -202,7 +202,7 @@ void vtkPelvisMetric::UpdateAngles()
   InclinationAngle = 90 - Angle(reference_n,normal_in_obj);
 
   // Clean up of inclination computation
-  normal_in_obj = WorldToObject->TransformFloatNormal(AcetabularPlane->GetNormal());
+  normal_in_obj = WorldToObject->TransformNormal(AcetabularPlane->GetNormal());
 
   // Anteversion
   normal_in_obj[2]= 0;
@@ -264,19 +264,19 @@ void vtkPelvisMetric::SymmetryAdaptedWorldCsys(void)
   vtkMatrix4x4* obj = WorldToObject->GetMatrix();
 
   // write the symmetry axis - the one with the smallest angle to (1,0,0) - into the first column 
-  float* axis = (float*)malloc(3*sizeof(float));
+  vtkFloatingPointType* axis = (vtkFloatingPointType*)malloc(3*sizeof(vtkFloatingPointType));
 
   axis[0] = 1;
   axis[1] = 0;
   axis[2] = 0;
   NormalizeXAxis(axis);
 
-  float* candidate = vPA->GetXAxis();
+  vtkFloatingPointType* candidate = vPA->GetXAxis();
   NormalizeXAxis(candidate);
   for(int i =0;i<3;i++)
     obj->SetElement(i,0,candidate[i]);
 
-  float distance = vtkMath::Distance2BetweenPoints(candidate,axis);
+  vtkFloatingPointType distance = vtkMath::Distance2BetweenPoints(candidate,axis);
 
   candidate = vPA->GetYAxis();
   NormalizeXAxis(candidate);
@@ -304,7 +304,7 @@ void vtkPelvisMetric::SymmetryAdaptedWorldCsys(void)
   axis[1] = 1;
   axis[2] = 0;
 
-  float p = vtkMath::Dot(candidate,axis);
+  vtkFloatingPointType p = vtkMath::Dot(candidate,axis);
   for(int i = 0;i < 3;i++)
     axis[i] = axis[i] - p*candidate[i];
   vtkMath::Normalize(axis);
@@ -313,7 +313,7 @@ void vtkPelvisMetric::SymmetryAdaptedWorldCsys(void)
     obj->SetElement(i,1,axis[i]);
 
   // the last vector is automatically the crossproduct of the first two.
-  float* third = (float*)malloc(3*sizeof(float));
+  vtkFloatingPointType* third = (vtkFloatingPointType*)malloc(3*sizeof(vtkFloatingPointType));
   vtkMath::Cross(candidate,axis,third);
 
   for(int i = 0;i < 3;i++)

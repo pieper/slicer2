@@ -43,7 +43,7 @@ void vtkPrincipalAxes::Execute()
   vtkPolyData *input = (vtkPolyData *)this->Inputs[0];
   vtkPolyData *output = this->GetOutput();
   vtkIdType nr_points = input->GetNumberOfPoints();
-  float* x ;
+  vtkFloatingPointType* x ;
 
   // reset the intermediate arrays
   for(int i =0;i<3;i++)
@@ -135,22 +135,22 @@ void vtkPrincipalAxes::PrintSelf()
 
 vtkPrincipalAxes::vtkPrincipalAxes()
 {
-  Center = (float*) malloc(3*sizeof(float));
+  Center = (vtkFloatingPointType*) malloc(3*sizeof(vtkFloatingPointType));
   Center[0] = 0;
   Center[1] = 0;
   Center[2] = 0;
 
-  XAxis = (float*) malloc(3*sizeof(float));
+  XAxis = (vtkFloatingPointType*) malloc(3*sizeof(vtkFloatingPointType));
   XAxis[0] = 1;
   XAxis[1] = 0;
   XAxis[2] = 0;
 
-  YAxis = (float*) malloc(3*sizeof(float));
+  YAxis = (vtkFloatingPointType*) malloc(3*sizeof(vtkFloatingPointType));
   YAxis[0] = 0;
   YAxis[1] = 1;
   YAxis[2] = 0;
 
-  ZAxis = (float*) malloc(3*sizeof(float));
+  ZAxis = (vtkFloatingPointType*) malloc(3*sizeof(vtkFloatingPointType));
   ZAxis[0] = 0;
   ZAxis[1] = 0;
   ZAxis[2] = 1;

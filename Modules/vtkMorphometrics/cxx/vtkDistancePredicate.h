@@ -54,21 +54,20 @@ class VTK_MORPHOMETRICS_EXPORT vtkDistancePredicate : public vtkPredicate
   static vtkDistancePredicate* New();
   void Delete();
   vtkTypeMacro(vtkDistancePredicate,vtkPredicate);
-  void PrintSelf();
   
   vtkSetObjectMacro(Hull,vtkConvexHullInexact);
 
   vtkSetMacro(OnlyInside,bool);
   vtkGetMacro(OnlyInside,bool);
 
-  vtkSetClampMacro(MaximalDistance,float,0,FLT_MAX);
-  vtkGetMacro(MaximalDistance,float);
+  vtkSetClampMacro(MaximalDistance,vtkFloatingPointType,0,FLT_MAX);
+  vtkGetMacro(MaximalDistance,vtkFloatingPointType);
   
   // override in order to reflect changes in Hull
   unsigned long int GetMTime();
 
 
-  virtual bool P(float* x);
+  virtual bool P(vtkFloatingPointType* x);
   virtual void InitP();
 
  protected:
@@ -80,7 +79,7 @@ class VTK_MORPHOMETRICS_EXPORT vtkDistancePredicate : public vtkPredicate
   void operator=(const vtkDistancePredicate);
   vtkConvexHullInexact* Hull;
   bool OnlyInside;
-  float MaximalDistance;
+  vtkFloatingPointType MaximalDistance;
 };
 
 #endif

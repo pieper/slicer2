@@ -60,7 +60,7 @@ class VTK_MORPHOMETRICS_EXPORT vtkHalfspacePredicate : public vtkPredicate
   // override in order to reflect changes in Halfspace
   unsigned long int GetMTime();
 
-  virtual bool P(float* x);
+  virtual bool P(vtkFloatingPointType* x);
   virtual void InitP();
 
  protected:
@@ -72,11 +72,11 @@ class VTK_MORPHOMETRICS_EXPORT vtkHalfspacePredicate : public vtkPredicate
   void operator=(const vtkHalfspacePredicate);
 
   vtkPlaneSource* Halfspace;
-  float* Normal;
-  float* Origin;
+  vtkFloatingPointType* Normal;
+  vtkFloatingPointType* Origin;
 
   // p = vtkMath::Dot(Normal,Origin)
-  float p;
+  vtkFloatingPointType p;
 };
 
 #endif

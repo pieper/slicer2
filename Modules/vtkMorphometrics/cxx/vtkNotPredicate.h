@@ -54,7 +54,7 @@ class VTK_MORPHOMETRICS_EXPORT vtkNotPredicate : public vtkPredicate
   // overriding in order to reflect updates in Operand
   unsigned long int GetMTime();
 
-  virtual bool P(float* x);
+  virtual bool P(vtkFloatingPointType* x);
   virtual void InitP();
 
  protected:

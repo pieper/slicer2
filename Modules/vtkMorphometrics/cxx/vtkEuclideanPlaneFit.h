@@ -51,8 +51,8 @@ class VTK_MORPHOMETRICS_EXPORT vtkEuclideanPlaneFit : public vtkPolyDataToPolyDa
   void Delete();
   vtkTypeMacro(vtkEuclideanPlaneFit,vtkPolyDataToPolyDataFilter);
 
-  vtkGetVector3Macro(Center,float);
-  vtkGetVector3Macro(Normal,float);
+  vtkGetVector3Macro(Center,vtkFloatingPointType);
+  vtkGetVector3Macro(Normal,vtkFloatingPointType);
 
   void PrintSelf();
  protected:
@@ -64,8 +64,8 @@ class VTK_MORPHOMETRICS_EXPORT vtkEuclideanPlaneFit : public vtkPolyDataToPolyDa
   vtkEuclideanPlaneFit(vtkEuclideanPlaneFit&);
   void operator=(const vtkEuclideanPlaneFit);
 
-  float* Center;
-  float* Normal;
+  vtkFloatingPointType* Center;
+  vtkFloatingPointType* Normal;
 
   vtkPrincipalAxes* CoordinateSystem;
   vtkPlaneSource* FittingPlane;

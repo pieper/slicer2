@@ -77,15 +77,15 @@ class VTK_MORPHOMETRICS_EXPORT vtkPelvisMetric : public vtkObject
   vtkTypeMacro(vtkPelvisMetric,vtkObject);
   void PrintSelf();
 
-  vtkGetMacro(InclinationAngle,float);
-  vtkGetMacro(AnteversionAngle,float);
+  vtkGetMacro(InclinationAngle,vtkFloatingPointType);
+  vtkGetMacro(AnteversionAngle,vtkFloatingPointType);
 
   void SetPelvis(vtkPolyData*);
   vtkGetObjectMacro(Pelvis,vtkPolyData);
   vtkGetObjectMacro(WorldToObject,vtkTransform);
 
  // center of gravity of the member Pelvis
-  vtkGetVector3Macro(Center,float);
+  vtkGetVector3Macro(Center,vtkFloatingPointType);
 
   vtkGetObjectMacro(AcetabularPlane,vtkPlaneSource);
 
@@ -118,16 +118,16 @@ class VTK_MORPHOMETRICS_EXPORT vtkPelvisMetric : public vtkObject
   vtkPolyData* Pelvis;
 
  // center of gravity of Pelvis
-  float* Center;
+  vtkFloatingPointType* Center;
 
-  float InclinationAngle;
-  float AnteversionAngle;
+  vtkFloatingPointType InclinationAngle;
+  vtkFloatingPointType AnteversionAngle;
 
   // recompute the angles
   void UpdateAngles();
-  float Angle(float* Direction,float* n);
+  vtkFloatingPointType Angle(vtkFloatingPointType* Direction,vtkFloatingPointType* n);
 
-  void NormalizeXAxis(float* n);
+  void NormalizeXAxis(vtkFloatingPointType* n);
 
   // transformation matrix from world coordinates to current object coordinate system
   vtkTransform* WorldToObject;

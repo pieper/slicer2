@@ -43,18 +43,18 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <functional>
 #include <numeric>
 
-static float* headCenter = NULL;
-static float* add = NULL;
+static vtkFloatingPointType* headCenter = NULL;
+static vtkFloatingPointType* add = NULL;
 
-struct less_mag : public std::binary_function<float*, float*, bool> {
-  bool operator()(float* x,float* y) 
+struct less_mag : public std::binary_function<vtkFloatingPointType*, vtkFloatingPointType*, bool> {
+  bool operator()(vtkFloatingPointType* x,vtkFloatingPointType* y) 
   {
     for(int i =0;i<3;i++)
       add[i] = x[i] + headCenter[i];
-    float a = vtkMath::Dot(add,add);
+    vtkFloatingPointType a = vtkMath::Dot(add,add);
     for(int i =0;i<3;i++)
       add[i] = y[i] + headCenter[i];
-    float b = vtkMath::Dot(add,add);
+    vtkFloatingPointType b = vtkMath::Dot(add,add);
     return a < b;
   }
 };
@@ -63,38 +63,38 @@ void vtkFemurMetric::FindPoints()
 {
   vtkPoints* p = Femur->GetPoints();
   if(add==NULL)
-    add = (float*) malloc (3*sizeof(float));
+    add = (vtkFloatingPointType*) malloc (3*sizeof(vtkFloatingPointType));
   if(headCenter == NULL)
-    headCenter = (float*) malloc (3*sizeof(float));
+    headCenter = (vtkFloatingPointType*) malloc (3*sizeof(vtkFloatingPointType));
   
   for(int i =0;i<3;i++)
     headCenter[i] = - HeadSphere->GetCenter()[i];
 
-  std::vector<float*> V;
+  std::vector<vtkFloatingPointType*> V;
   for(int i = 0;i<p->GetNumberOfPoints();i++)
     {
       V.push_back(p->GetPoint(i));
     }
   
   std::sort(V.begin(), V.end(), less_mag());
-  float* last = V.back();
+  vtkFloatingPointType* last = V.back();
   for(int i =0;i<3;i++)
     DistalPoint[i] = V.back()[i];
 
-  std::vector<float> diff;
+  std::vector<vtkFloatingPointType> diff;
   
-  for(std::vector<float*>::iterator iter = V.begin(); iter != V.end();iter++)
+  for(std::vector<vtkFloatingPointType*>::iterator iter = V.begin(); iter != V.end();iter++)
     {
-      float* b = *(iter++);
+      vtkFloatingPointType* b = *(iter++);
       if(iter == V.end())
     break;
-      float* a = *(iter--);
-      float a_minus_b = 0;
+      vtkFloatingPointType* a = *(iter--);
+      vtkFloatingPointType a_minus_b = 0;
       for(int i =0;i<3;i++)
     a_minus_b = (a[i] - b[i]) * (a[i] - b[i]);
       diff.push_back(sqrt(a_minus_b));
     }
-  std::vector<float>::iterator maxDiff= std::max_element(diff.begin(),diff.end());
+  std::vector<vtkFloatingPointType>::iterator maxDiff= std::max_element(diff.begin(),diff.end());
 
   int index = std::distance(diff.begin(),maxDiff);
 
@@ -171,7 +171,7 @@ void vtkFemurMetric::SetFemur(vtkPolyData* newFemur)
   Modified();
 }
 
-void vtkFemurMetric::FittAxis(vtkAxisSource* axis,float* source,float* sink)
+void vtkFemurMetric::FittAxis(vtkAxisSource* axis,vtkFloatingPointType* source,vtkFloatingPointType* sink)
 {
   vtkPolyData* Path = vtkPolyData::New();
   vtkPoints* PathPoints = vtkPoints::New();
@@ -224,11 +224,11 @@ vtkFemurMetric::vtkFemurMetric()
   DepthAnnotatedVolume = NULL;
   Dijkstra = NULL;
 
-  HeadCenter = (float*)malloc(3*sizeof(float));
+  HeadCenter = (vtkFloatingPointType*)malloc(3*sizeof(vtkFloatingPointType));
  
-  NeckShaftCenter  = (float*)malloc(3*sizeof(float));
+  NeckShaftCenter  = (vtkFloatingPointType*)malloc(3*sizeof(vtkFloatingPointType));
 
-  DistalPoint  = (float*)malloc(3*sizeof(float));
+  DistalPoint  = (vtkFloatingPointType*)malloc(3*sizeof(vtkFloatingPointType));
 
   NeckAxis->SetCenter(-113.749,-5.89667,52.48);
   NeckAxis->SetDirection(0.643935,0.458941,0.612144);
@@ -265,9 +265,9 @@ vtkFemurMetric::~vtkFemurMetric()
 // - the shaft axis points from the upper end towards the lower end of the shaft
 void vtkFemurMetric::Normalize()
 {
-  float* n;
-  float* x0;
-  float* x1;
+  vtkFloatingPointType* n;
+  vtkFloatingPointType* x0;
+  vtkFloatingPointType* x1;
 
   // - the axis of the neck axis points from neck towards head
   // implemented: we simply ensure that the center of the 
@@ -339,7 +339,7 @@ void vtkFemurMetric::Precompute()
   ComputeNeckShaftAngle();
 }
 
-void vtkFemurMetric::FindDeepestPoint(float* p) 
+void vtkFemurMetric::FindDeepestPoint(vtkFloatingPointType* p) 
 {
   int* coords = (int*)malloc(3*sizeof(int));
   for(int i=0;i<3;i++)
@@ -348,7 +348,11 @@ void vtkFemurMetric::FindDeepestPoint(float* p)
 
   FindNearestInside(coords);
   
-  float currentDepth = DepthAnnotatedVolume->GetOutput()->GetScalarComponentAsFloat(coords[0],coords[1],coords[2],0);
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 3)
+  vtkFloatingPointType currentDepth = DepthAnnotatedVolume->GetOutput()->GetScalarComponentAsDouble(coords[0],coords[1],coords[2],0);
+#else
+  vtkFloatingPointType currentDepth = DepthAnnotatedVolume->GetOutput()->GetScalarComponentAsFloat(coords[0],coords[1],coords[2],0);
+#endif
   bool isDeepestPoint = false;
 
   while(!isDeepestPoint)
@@ -364,7 +368,11 @@ void vtkFemurMetric::FindDeepestPoint(float* p)
         {
           if(!IsInsideVolume(i,j,k))
         continue;
-          float depth = DepthAnnotatedVolume->GetOutput()->GetScalarComponentAsFloat(i,j,k,0);
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 3)
+          vtkFloatingPointType depth = DepthAnnotatedVolume->GetOutput()->GetScalarComponentAsDouble(i,j,k,0);
+#else
+          vtkFloatingPointType depth = DepthAnnotatedVolume->GetOutput()->GetScalarComponentAsFloat(i,j,k,0);
+#endif
           if(depth> currentDepth)
         {
           currentDepth = depth;

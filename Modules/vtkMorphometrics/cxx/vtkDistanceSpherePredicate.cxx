@@ -49,9 +49,9 @@ unsigned long vtkDistanceSpherePredicate::GetMTime()
 }
 
 
-bool vtkDistanceSpherePredicate::P(float* x) 
+bool vtkDistanceSpherePredicate::P(vtkFloatingPointType* x) 
 { 
-  float d = 0;
+  vtkFloatingPointType d = 0;
   for(int i =0;i<3;i++)
     d += (x[i] - Sphere->GetCenter()[i])*(x[i] - Sphere->GetCenter()[i]);
   d = sqrt(d);

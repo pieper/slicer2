@@ -90,12 +90,12 @@ void vtkEuclideanPlaneFit::PrintSelf()
 
 vtkEuclideanPlaneFit::vtkEuclideanPlaneFit()
 {
-  Center = (float*) malloc(3*sizeof(float));
+  Center = (vtkFloatingPointType*) malloc(3*sizeof(vtkFloatingPointType));
   Center[0] = 0;
   Center[1] = 0;
   Center[2] = 0;
 
-  Normal = (float*) malloc(3*sizeof(float));
+  Normal = (vtkFloatingPointType*) malloc(3*sizeof(vtkFloatingPointType));
   Normal[0] = 0;
   Normal[1] = 0;
   Normal[2] = 1;

@@ -58,7 +58,7 @@ class VTK_MORPHOMETRICS_EXPORT vtkAndPredicate : public vtkPredicate
   //override in order to reflect changes in LeftOperand or RightOperand
   unsigned long int GetMTime();
 
-  virtual bool P(float* x);
+  virtual bool P(vtkFloatingPointType* x);
   virtual void InitP();
 
  protected:

@@ -53,7 +53,7 @@ void vtkPredicateFilter::Execute()
   vtkIdType ccn = 0;
   vtkIdType nn = 0;
 
-  float* x;
+  vtkFloatingPointType* x;
 
   if(input == NULL ) return;
 
@@ -132,7 +132,7 @@ void vtkPredicateFilter:: ExecuteUpdateStrips(vtkPolyData* input,vtkPolyData* ou
   vtkCellArray *outputStrips = vtkCellArray::New();
   vtkCellArray *outputStrips2 = vtkCellArray::New();
   vtkCellArray *inputStrips = input->GetStrips();
-  float* x;
+  vtkFloatingPointType *x;
   vtkIdType *pts = 0;
   vtkIdType npts = 0;
   int nr_inserted=0;

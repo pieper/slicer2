@@ -57,14 +57,14 @@ class VTK_MORPHOMETRICS_EXPORT vtkConePredicate : public vtkPredicate
   
   vtkSetObjectMacro(Axis,vtkAxisSource);
 
-  vtkSetMacro(MaximalAngle,float);
-  vtkGetMacro(MaximalAngle,float);
+  vtkSetMacro(MaximalAngle,vtkFloatingPointType);
+  vtkGetMacro(MaximalAngle,vtkFloatingPointType);
 
   // override in order to reflect changes in Axis
   unsigned long int GetMTime();
 
 
-  virtual bool P(float* x);
+  virtual bool P(vtkFloatingPointType* x);
   virtual void InitP();
 
  protected:
@@ -77,11 +77,11 @@ class VTK_MORPHOMETRICS_EXPORT vtkConePredicate : public vtkPredicate
 
   vtkAxisSource* Axis;
 
-  float MaximalAngle;
+  vtkFloatingPointType MaximalAngle;
 
   // for deciding P(x) I currently need a vector pointer
   // this is the temp variable for this
-  float* DiffVector;
+  vtkFloatingPointType* DiffVector;
 };
 
 #endif

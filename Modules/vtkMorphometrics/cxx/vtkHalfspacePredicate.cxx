@@ -39,7 +39,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <iostream>
 #include <assert.h>
 
-bool vtkHalfspacePredicate::P(float* x) 
+bool vtkHalfspacePredicate::P(vtkFloatingPointType* x) 
 { 
   return p <= vtkMath::Dot(Normal,x);
 }
@@ -110,8 +110,8 @@ vtkHalfspacePredicate::vtkHalfspacePredicate()
 {
 
   Halfspace = NULL;
-  Normal = (float*) malloc(3*sizeof(float));
-  Origin = (float*) malloc(3*sizeof(float));
+  Normal = (vtkFloatingPointType*) malloc(3*sizeof(vtkFloatingPointType));
+  Origin = (vtkFloatingPointType*) malloc(3*sizeof(vtkFloatingPointType));
 }
 
 vtkHalfspacePredicate::~vtkHalfspacePredicate()

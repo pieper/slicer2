@@ -54,14 +54,14 @@ class VTK_MORPHOMETRICS_EXPORT vtkConvexHullInexact : public vtkPolyDataToPolyDa
   vtkTypeMacro(vtkConvexHullInexact,vtkPolyDataToPolyDataFilter);
   void PrintSelf();
  
-  bool Inside(float* x);
+  bool Inside(vtkFloatingPointType* x);
 
   // When a point is inside the hull, the exact distance to the surface of the hull is returned.
   // When a point is outside of the hull, this function may return
   // FLT_MAX when it couldn't find the projection point of x onto the hull.
   // In that case an error message is printed.
-  float DistanceFromConvexHull(float* x);
-  float DistanceFromConvexHull(float x,float y,float z);
+  vtkFloatingPointType DistanceFromConvexHull(vtkFloatingPointType* x);
+  vtkFloatingPointType DistanceFromConvexHull(vtkFloatingPointType x,vtkFloatingPointType y,vtkFloatingPointType z);
   void SetGranularity(int newGranularity);
  protected:
   vtkConvexHullInexact();
@@ -91,7 +91,7 @@ class VTK_MORPHOMETRICS_EXPORT vtkConvexHullInexact : public vtkPolyDataToPolyDa
 
   // the _real_ internal representation of the convex hull.
   // its size is 3*((2*Granularity +1)^Dimension - (2*Granularity-1)^Dimension)
-  float*** ConvexHull;
+  vtkFloatingPointType*** ConvexHull;
   
   // Extremal points of the convex hull. Their convex combination is the convex hull
   vtkPoints* Extremals;
@@ -104,16 +104,16 @@ class VTK_MORPHOMETRICS_EXPORT vtkConvexHullInexact : public vtkPolyDataToPolyDa
 
   // Convenience function. Returns true iff
   // at least one entry of n equals Granularity or -Granularity
-  bool AtLeastOneNeighbourDistEntry(float* n);
+  bool AtLeastOneNeighbourDistEntry(vtkFloatingPointType* n);
 
   // Convenience function. Returns true iff
   // n is strictly positive regarding lexicographic order.
-  bool LexPositive(float* n);
+  bool LexPositive(vtkFloatingPointType* n);
 
   // Convenience function. Updates n to the next
   // larger vector fulfilling AtLeastOneNeighbourDistEntry
   // and LexPositive
-  void NextNormal(float* n);
+  void NextNormal(vtkFloatingPointType* n);
 
   // Update the argument polydata to be a visualization
   // of the convex hull

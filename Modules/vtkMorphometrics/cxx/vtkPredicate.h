@@ -53,7 +53,7 @@ class VTK_MORPHOMETRICS_EXPORT vtkPredicate : public vtkObject
   void Delete();
   vtkTypeMacro(vtkPredicate,vtkObject);
   void PrintSelf();
-  virtual bool P(float* x);
+  virtual bool P(vtkFloatingPointType* x);
   virtual void InitP();
 
  protected:

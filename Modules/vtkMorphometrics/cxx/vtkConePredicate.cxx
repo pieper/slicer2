@@ -53,14 +53,14 @@ unsigned long vtkConePredicate::GetMTime()
   return mTime;
 }
 
-bool vtkConePredicate::P(float* x) 
+bool vtkConePredicate::P(vtkFloatingPointType* x) 
 { 
   for(int i =0;i<3;i++)
     {
       DiffVector[i] = x[i] - Axis->GetCenter()[i];
     }
   
-  float Angle = Axis->Angle(DiffVector);
+  vtkFloatingPointType Angle = Axis->Angle(DiffVector);
 
   return Angle <= MaximalAngle;
 }
@@ -96,7 +96,7 @@ vtkConePredicate::vtkConePredicate()
 {
   Axis = NULL;
   MaximalAngle=45;
-  DiffVector = (float*)malloc(3*sizeof(float));
+  DiffVector = (vtkFloatingPointType*)malloc(3*sizeof(vtkFloatingPointType));
 }
 
 vtkConePredicate::~vtkConePredicate()

@@ -54,8 +54,8 @@ class VTK_MORPHOMETRICS_EXPORT vtkEuclideanLineFit : public vtkPolyDataToPolyDat
   void Delete();
   vtkTypeMacro(vtkEuclideanLineFit,vtkPolyDataToPolyDataFilter);
 
-  vtkGetVector3Macro(Center,float);
-  vtkGetVector3Macro(Direction,float);
+  vtkGetVector3Macro(Center,vtkFloatingPointType);
+  vtkGetVector3Macro(Direction,vtkFloatingPointType);
 
   void PrintSelf();
  protected:
@@ -72,8 +72,8 @@ class VTK_MORPHOMETRICS_EXPORT vtkEuclideanLineFit : public vtkPolyDataToPolyDat
   vtkTransformFilter* OrientationFilter;
   vtkTransform* Orientation;
 
-  float* Center;
-  float* Direction;
+  vtkFloatingPointType* Center;
+  vtkFloatingPointType* Direction;
 
   vtkPrincipalAxes* CoordinateSystem;
 

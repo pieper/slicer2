@@ -52,11 +52,11 @@ class VTK_MORPHOMETRICS_EXPORT vtkPrincipalAxes : public vtkPolyDataToPolyDataFi
   void Delete();
   vtkTypeMacro(vtkPrincipalAxes,vtkPolyDataToPolyDataFilter);
 
-  vtkGetVector3Macro(Center,float);
-  vtkGetVector3Macro(XAxis,float);
-  vtkGetVector3Macro(YAxis,float);
-  vtkGetVector3Macro(ZAxis,float);
- void Execute();
+  vtkGetVector3Macro(Center,vtkFloatingPointType);
+  vtkGetVector3Macro(XAxis,vtkFloatingPointType);
+  vtkGetVector3Macro(YAxis,vtkFloatingPointType);
+  vtkGetVector3Macro(ZAxis,vtkFloatingPointType);
+  void Execute();
   void PrintSelf();
  protected:
   vtkPrincipalAxes();
@@ -66,10 +66,10 @@ class VTK_MORPHOMETRICS_EXPORT vtkPrincipalAxes : public vtkPolyDataToPolyDataFi
   vtkPrincipalAxes(vtkPrincipalAxes&);
   void operator=(const vtkPrincipalAxes);
 
-  float* Center;
-  float* XAxis;
-  float* YAxis;
-  float* ZAxis;
+  vtkFloatingPointType* Center;
+  vtkFloatingPointType* XAxis;
+  vtkFloatingPointType* YAxis;
+  vtkFloatingPointType* ZAxis;
 
   // a matrix of the eigenvalue problem
   double** eigenvalueProblem;

@@ -97,13 +97,13 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define EPSILON 0.000001
 
 
-bool vtkConvexHullInexact::Inside(float* x)
+bool vtkConvexHullInexact::Inside(vtkFloatingPointType* x)
 {
   for(int i =0;i<NumberNormals;i++)
     {
-      float smallest_p = vtkMath::Dot(ConvexHull[i][0],ConvexHull[i][1]);
-      float largest_p = vtkMath::Dot(ConvexHull[i][0],ConvexHull[i][2]);
-      float p_x = vtkMath::Dot(ConvexHull[i][0],x);
+      vtkFloatingPointType smallest_p = vtkMath::Dot(ConvexHull[i][0],ConvexHull[i][1]);
+      vtkFloatingPointType largest_p = vtkMath::Dot(ConvexHull[i][0],ConvexHull[i][2]);
+      vtkFloatingPointType p_x = vtkMath::Dot(ConvexHull[i][0],x);
       if((p_x < smallest_p - EPSILON) || (largest_p < p_x - EPSILON))
     return false;
     }
@@ -112,26 +112,26 @@ bool vtkConvexHullInexact::Inside(float* x)
 
 
 
-float vtkConvexHullInexact::DistanceFromConvexHull(float x,float y,float z)
+vtkFloatingPointType vtkConvexHullInexact::DistanceFromConvexHull(vtkFloatingPointType x,vtkFloatingPointType y,vtkFloatingPointType z)
 {
-  float* t = (float*) malloc(sizeof(float)*3);
+  vtkFloatingPointType* t = (vtkFloatingPointType*) malloc(sizeof(vtkFloatingPointType)*3);
   t[0] = x;
   t[1] = y;
   t[2] = z;
-  float result = DistanceFromConvexHull(t);
+  vtkFloatingPointType result = DistanceFromConvexHull(t);
   free(t);
   return result;
 }
 
-float vtkConvexHullInexact::DistanceFromConvexHull(float* x)
+vtkFloatingPointType vtkConvexHullInexact::DistanceFromConvexHull(vtkFloatingPointType* x)
 {
-  float result = FLT_MAX;
+  vtkFloatingPointType result = FLT_MAX;
   if(Inside(x))
     {
       for(int i =0;i<NumberNormals;i++)
     {
-      float distance1 = fabs(vtkMath::Dot(ConvexHull[i][0],x) - vtkMath::Dot(ConvexHull[i][0],ConvexHull[i][1]));
-      float distance2 = fabs(vtkMath::Dot(ConvexHull[i][0],x) - vtkMath::Dot(ConvexHull[i][0],ConvexHull[i][2]));
+      vtkFloatingPointType distance1 = fabs(vtkMath::Dot(ConvexHull[i][0],x) - vtkMath::Dot(ConvexHull[i][0],ConvexHull[i][1]));
+      vtkFloatingPointType distance2 = fabs(vtkMath::Dot(ConvexHull[i][0],x) - vtkMath::Dot(ConvexHull[i][0],ConvexHull[i][2]));
       if(distance1 < result)
         result = distance1;
       if(distance2 < result)
@@ -140,12 +140,12 @@ float vtkConvexHullInexact::DistanceFromConvexHull(float* x)
     }
   else
     {
-      float* p = (float*)malloc(Dimension*sizeof(float));
+      vtkFloatingPointType* p = (vtkFloatingPointType*)malloc(Dimension*sizeof(vtkFloatingPointType));
       for(int i =0;i<NumberNormals;i++)
     for(int j =1;j<3;j++)
       {
-        float* normal = ConvexHull[i][0];
-        float distance = fabs(vtkMath::Dot(normal,x) - vtkMath::Dot(normal,ConvexHull[i][j]));
+        vtkFloatingPointType* normal = ConvexHull[i][0];
+        vtkFloatingPointType distance = fabs(vtkMath::Dot(normal,x) - vtkMath::Dot(normal,ConvexHull[i][j]));
         // project on plane:
         // we normalize on the case that the point is not in the defined halfspace,
         // therefore we have to invert distance in the case j=2;
@@ -180,21 +180,21 @@ void vtkConvexHullInexact::UpdateExtremalPoints()
     IntersectionProblem[i] = (double*)malloc(Dimension*sizeof(double));
 
   double* LoadVector = (double*)malloc(Dimension*sizeof(double));
-  float* Solution = (float*)malloc(Dimension*sizeof(float));
+  vtkFloatingPointType* Solution = (vtkFloatingPointType*)malloc(Dimension*sizeof(vtkFloatingPointType));
   for(int i=0;i<2*NumberNormals;i++)
     {
-      float* normal_i = ConvexHull[i/2][0];
-      float p_i = vtkMath::Dot(normal_i,ConvexHull[i/2][1 + (i%2)]);
+      vtkFloatingPointType* normal_i = ConvexHull[i/2][0];
+      vtkFloatingPointType p_i = vtkMath::Dot(normal_i,ConvexHull[i/2][1 + (i%2)]);
       for(int j=i+1;j<2*NumberNormals;j++)
     {
       if(i/2 == j/2) continue;
-      float* normal_j = ConvexHull[j/2][0];
-      float p_j = vtkMath::Dot(normal_j,ConvexHull[j/2][1 + (j%2)]);
+      vtkFloatingPointType* normal_j = ConvexHull[j/2][0];
+      vtkFloatingPointType p_j = vtkMath::Dot(normal_j,ConvexHull[j/2][1 + (j%2)]);
       for(int k=j+1;k<2*NumberNormals;k++)
         {
           if(j/2 == k/2) continue;
-          float* normal_k = ConvexHull[k/2][0];
-          float p_k = vtkMath::Dot(normal_k,ConvexHull[k/2][1 + (k%2)]);
+          vtkFloatingPointType* normal_k = ConvexHull[k/2][0];
+          vtkFloatingPointType p_k = vtkMath::Dot(normal_k,ConvexHull[k/2][1 + (k%2)]);
           IntersectionProblem[0][0]=normal_i[0];
           IntersectionProblem[0][1]=normal_i[1];
           IntersectionProblem[0][2]=normal_i[2];
@@ -213,9 +213,9 @@ void vtkConvexHullInexact::UpdateExtremalPoints()
 
           if(vtkMath::SolveLinearSystem(IntersectionProblem,LoadVector,3)!=0 )
         {
-          Solution[0] = (float) LoadVector[0];
-          Solution[1] = (float) LoadVector[1];
-          Solution[2] = (float) LoadVector[2];
+          Solution[0] = (vtkFloatingPointType) LoadVector[0];
+          Solution[1] = (vtkFloatingPointType) LoadVector[1];
+          Solution[2] = (vtkFloatingPointType) LoadVector[2];
           if(Inside(Solution)) // == is part of the convex hull
             {
               // assert that it is not already inside
@@ -283,7 +283,7 @@ void vtkConvexHullInexact::Polygonize(vtkPolyData* output)
 void vtkConvexHullInexact::UpdateConvexHull(vtkPoints* v)
 {
   if(v->GetNumberOfPoints()==0) return;
-  float* x0 = v->GetPoint(0);
+  vtkFloatingPointType* x0 = v->GetPoint(0);
 
 
   // Initialize to one point
@@ -299,10 +299,10 @@ void vtkConvexHullInexact::UpdateConvexHull(vtkPoints* v)
   // iterative updating of the convex hull
   for (int i = 0; i< v->GetNumberOfPoints();i++)
     {
-      float* p0 = v->GetPoint(i);
+      vtkFloatingPointType* p0 = v->GetPoint(i);
       for(int j= 0; j<NumberNormals;j++)
     {
-      float* n = ConvexHull[j][0];
+      vtkFloatingPointType* n = ConvexHull[j][0];
 
       bool smaller_p  =  vtkMath::Dot(n,p0) < vtkMath::Dot(n,ConvexHull[j][1]);
       bool larger_p   =  vtkMath::Dot(n,p0) > vtkMath::Dot(n,ConvexHull[j][2]);
@@ -407,7 +407,7 @@ void vtkConvexHullInexact::operator=(const vtkConvexHullInexact)
 
 // think of the normal n as a number to the base 2*(Granularity + 1)
 // then the next normal is  n+1
-void vtkConvexHullInexact::NextNormal(float* n)
+void vtkConvexHullInexact::NextNormal(vtkFloatingPointType* n)
 {
   for(int i= Dimension-1;i>=0;i--)
     {
@@ -422,7 +422,7 @@ void vtkConvexHullInexact::NextNormal(float* n)
 }
 
 // returns true iff n strictly lexicographic positive
-bool vtkConvexHullInexact::LexPositive(float* n)
+bool vtkConvexHullInexact::LexPositive(vtkFloatingPointType* n)
 {
   for(int i =0;i<Dimension;i++)
     {
@@ -432,7 +432,7 @@ bool vtkConvexHullInexact::LexPositive(float* n)
   return false;
 }
 
-bool vtkConvexHullInexact::AtLeastOneNeighbourDistEntry(float* n)
+bool vtkConvexHullInexact::AtLeastOneNeighbourDistEntry(vtkFloatingPointType* n)
 {
   for(int i = 0;i<Dimension;i++)
     {
@@ -480,19 +480,19 @@ void vtkConvexHullInexact::SetGranularity(int newGranularity)
     PolygonPoints[i] = (vtkIdType*)malloc(NumberNormals*sizeof(vtkIdType));
 
 
-  ConvexHull = (float***) malloc(NumberNormals*sizeof(float**));
+  ConvexHull = (vtkFloatingPointType***) malloc(NumberNormals*sizeof(vtkFloatingPointType**));
   for(int i =0;i<NumberNormals;i++)
     {
-      ConvexHull[i] = (float**) malloc(3*sizeof(float*));
+      ConvexHull[i] = (vtkFloatingPointType**) malloc(3*sizeof(vtkFloatingPointType*));
       for(int j=0;j<3;j++)
     {
-      ConvexHull[i][j] = (float*) malloc(Dimension*sizeof(float));
+      ConvexHull[i][j] = (vtkFloatingPointType*) malloc(Dimension*sizeof(vtkFloatingPointType));
     }
     }
   
 
   // insert new normals
-  float* n = (float*) malloc(Dimension*sizeof(float));
+  vtkFloatingPointType* n = (vtkFloatingPointType*) malloc(Dimension*sizeof(vtkFloatingPointType));
 
   for(int i=0;i<Dimension;i++)
     n[i] = 0;

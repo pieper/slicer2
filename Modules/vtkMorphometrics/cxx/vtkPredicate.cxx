@@ -37,7 +37,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <iostream>
 #include <assert.h>
 
-bool vtkPredicate::P(float* x)
+bool vtkPredicate::P(vtkFloatingPointType* x)
 {
   return true;
 }

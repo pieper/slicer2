@@ -54,19 +54,19 @@ class VTK_MORPHOMETRICS_EXPORT vtkAxisSource : public vtkPolyDataSource
   vtkTypeMacro(vtkAxisSource,vtkPolyDataSource);
   void PrintSelf();
 
-  vtkGetVector3Macro(Center,float);
-  vtkGetVector3Macro(Direction,float);
+  vtkGetVector3Macro(Center,vtkFloatingPointType);
+  vtkGetVector3Macro(Direction,vtkFloatingPointType);
 
-  void SetDirection(float,float,float);
-  void SetDirection(float*);
+  void SetDirection(vtkFloatingPointType,vtkFloatingPointType,vtkFloatingPointType);
+  void SetDirection(vtkFloatingPointType*);
 
-  void SetCenter(float,float,float);
-  void SetCenter(float*);
+  void SetCenter(vtkFloatingPointType,vtkFloatingPointType,vtkFloatingPointType);
+  void SetCenter(vtkFloatingPointType*);
  
  // compute the angle between the direction of the argument axis or vector
  // returns degrees
- float Angle(float*);
- float Angle(vtkAxisSource* right) {return Angle(right->Direction);};
+ vtkFloatingPointType Angle(vtkFloatingPointType*);
+ vtkFloatingPointType Angle(vtkAxisSource* right) {return Angle(right->Direction);};
 
  protected:
   vtkAxisSource();
@@ -83,8 +83,8 @@ class VTK_MORPHOMETRICS_EXPORT vtkAxisSource : public vtkPolyDataSource
   vtkTransform* AxisTransform;
 
  // internal representation
-  float* Direction;
-  float* Center;
+  vtkFloatingPointType* Direction;
+  vtkFloatingPointType* Center;
 
  // two functions for making both representations consistent with each other.
  // the new values for the visualization variables or representation variables
