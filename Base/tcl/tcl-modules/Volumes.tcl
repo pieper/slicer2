@@ -166,7 +166,7 @@ DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-                {$Revision: 1.64 $} {$Date: 2002/03/21 23:05:28 $}]
+                {$Revision: 1.65 $} {$Date: 2002/03/25 23:55:36 $}]
 
     # Props
     set Volume(propertyType) Basic
@@ -191,7 +191,10 @@ DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
        Volumes(writer) SetEndMethod        MainEndProgress
 
        set Volumes(prefixSave) ""
-           
+
+       # added by odonnell for DTI data: will move to submodule
+       set Volume(tensors,pfSwap) 0
+       set Volume(tensors,DTIdata) 0  
 }
 #-------------------------------------------------------------------------------
 # .PROC VolumesBuildGUI
@@ -631,24 +634,62 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
     # Props->Bot->Header->Entry frame
     #-------------------------------------------
 
-    # Entry fields (the loop makes a frame for each variable)
-    foreach param "filePattern width height \
-        pixelWidth pixelHeight sliceThickness sliceSpacing" \
-        name "{File Pattern} \
-        {Width in pixels} {Height in pixels} {Pixel Width (mm)} \
-        {Pixel Height (mm)} \
-        {Slice Thickness} {Slice Spacing}" {
+        # Entry fields (the loop makes a frame for each variable)
+        foreach param "filePattern" name "{File Pattern}" {
 
-        set f $fProps.fBot.fHeader.fEntry
-        frame $f.f$param   -bg $Gui(activeWorkspace)
-        pack $f.f$param -side top -fill x -pady 2
+            set f $fProps.fBot.fHeader.fEntry
+            frame $f.f$param   -bg $Gui(activeWorkspace)
+            pack $f.f$param -side top -fill x -pady 2
 
-        set f $f.f$param
-        eval {label $f.l$param -text "$name:"} $Gui(WLA)
-        eval {entry $f.e$param -width 10 -textvariable Volume($param)} $Gui(WEA)
-        pack $f.l$param -side left -padx $Gui(pad) -fill x -anchor w
-        pack $f.e$param -side left -padx $Gui(pad) -expand 1 -fill x
-    }
+            set f $f.f$param
+            eval {label $f.l$param -text "$name:"} $Gui(WLA)
+            eval {entry $f.e$param -width 10 -textvariable Volume($param)} $Gui(WEA)
+            pack $f.l$param -side left -padx $Gui(pad) -fill x -anchor w
+            pack $f.e$param -side left -padx $Gui(pad) -expand 1 -fill x
+        }
+
+        set Volume(entryBoxWidth) 7
+
+        # two entry boxes per line to save space
+        foreach params "{width height} \
+                {pixelWidth pixelHeight} "\
+                name "{Image Size} \
+                {Pixel Size}" \
+                tip1 "{width height} {width height}" \
+                tip "{units are pixels} \
+                {units are mm}" {
+
+            set f $fProps.fBot.fHeader.fEntry
+            set param [lindex $params 0]
+            frame $f.f$param   -bg $Gui(activeWorkspace)
+            pack $f.f$param -side top -fill x -pady 2 
+
+            set f $f.f$param
+            eval {label $f.l$param -text "$name:"} $Gui(WLA)
+            pack $f.l$param -side left -padx $Gui(pad) -fill x -anchor w
+            foreach param $params t $tip1 {
+                eval {entry $f.e$param -width $Volume(entryBoxWidth) \
+                        -textvariable Volume($param)} $Gui(WEA)
+                pack $f.e$param -side right -padx $Gui(pad) 
+                TooltipAdd $f.e$param "$t: $tip"
+            }
+        }
+
+        # now back to one box per line
+        foreach param "sliceThickness sliceSpacing" \
+                name "{Slice Thickness} {Slice Spacing}" {
+
+            set f $fProps.fBot.fHeader.fEntry
+            frame $f.f$param   -bg $Gui(activeWorkspace)
+            pack $f.f$param -side top -fill x -pady 2
+
+            set f $f.f$param
+            eval {label $f.l$param -text "$name:"} $Gui(WLA)
+            eval {entry $f.e$param -width $Volume(entryBoxWidth)\
+                    -textvariable Volume($param)} $Gui(WEA)
+            pack $f.l$param -side left -padx $Gui(pad) -fill x -anchor w
+            pack $f.e$param -side left -padx $Gui(pad) -expand 1 -fill x
+        }
 
     # Scan Order Menu
     set f $fProps.fBot.fHeader.fEntry
@@ -724,6 +765,28 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
                         -variable Volume(littleEndian) } $Gui(WCA)
         pack $f.f.r$value -side left -fill x
     }
+
+        # odonnell Diffusion tensors (DTI data)
+        set f $fProps.fBot.fHeader.fEntry
+        frame $f.fTensor -bg $Gui(activeWorkspace)
+        pack $f.fTensor -side top -fill x -pady 2       
+        set f $f.fTensor
+
+        eval {checkbutton $f.cTensor \
+                -text "DTI data" -variable Volume(tensors,DTIdata) \
+                -indicatoron 0} $Gui(WCA)
+        pack $f.cTensor -side left -padx $Gui(pad)
+        TooltipAdd $f.cTensor "Diffusion tensor data"
+
+        foreach value "1 0" text "{Swap} {No Swap}" \
+                tip {{Phase/Frequency Swapped DTI data (PF swap)} \
+                {No Phase/Frequency Swap in DTI data}} {
+            eval {radiobutton $f.r$value \
+                        -indicatoron 0 -text $text -value $value \
+                        -variable Volume(tensors,pfSwap) } $Gui(WCA)
+            pack $f.r$value -side left -fill x
+            TooltipAdd  $f.r$value $tip
+        }
 
 
     #-------------------------------------------
@@ -1105,6 +1168,14 @@ proc VolumesManualSetPropertyType {n} {
     $n SetLittleEndian $Volume(littleEndian)
     $n SetTilt $Volume(gantryDetectorTilt)
     $n ComputeRasToIjkFromScanOrder $Volume(scanOrder)
+
+    # added by odonnell for DTI data: will move to submodule
+    if {$Volume(tensors,DTIdata) == 1} {
+        #$n UseFrequencyPhaseSwapOn
+        $n SetFrequencyPhaseSwap $Volume(tensors,pfSwap)
+        # recompute for test
+        $n ComputeRasToIjkFromScanOrder $Volume(scanOrder)
+    }
 }
 
 
