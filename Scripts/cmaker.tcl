@@ -1,7 +1,18 @@
-#!/local/os/bin/tclsh
+#!tclsh
 #
 # make slicerbase and all the modules using the same configurations
 # - sp 2003-01-25
+#
+# This is a utility script to help manage the combination of many Modules
+# needing to be built on many platforms.  To use this, edit the variables
+# at the top level to reflect your local configuration.  You will need to have
+# a version of vtk built using the same compiler options picked here.  In general,
+# much of the state will be inherited from the vtk build (e.g. where tcl is
+# installed).  
+#
+# When you run this, build errors may not be easy to debug -- if there are errors,
+# go to the appropriate build directory and run make or dev studio by hand
+# and get the build working from there.
 #
 
 switch $tcl_platform(os) {
@@ -12,6 +23,7 @@ switch $tcl_platform(os) {
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
         set GENERATOR "Unix Makefiles"
         set COMPILER "/usr/bin/g++"
+        set CMAKE cmake
     }
     "Linux" {
         set SLICER_HOME /home/nicole/slicer2
@@ -19,7 +31,8 @@ switch $tcl_platform(os) {
         set BUILD redhat7.3
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
         set GENERATOR "Unix Makefiles" 
-    set COMPILER "g++"
+        set COMPILER "g++"
+        set CMAKE cmake
     }
     "Darwin" {
         set SLICER_HOME /Users/pieper/slicer2/latest/slicer2
@@ -28,6 +41,7 @@ switch $tcl_platform(os) {
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.dylib
         set GENERATOR "Unix Makefiles" 
         set COMPILER "c++"
+        set CMAKE cmake
     }
     default {
         # different windows machines say different things, so assume
@@ -40,6 +54,7 @@ switch $tcl_platform(os) {
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/debug/vtkSlicerBase.lib
         set GENERATOR "Visual Studio 7" 
         set COMPILER "cl"
+        set CMAKE "c:/Program Files/CMake/bin/cmake.exe"
     }
 }
 
@@ -64,7 +79,6 @@ foreach dir $modulePaths {
         }
     }
 }
-# puts "Using TARGETS = ${TARGETS}"
 
 # use an already built version of vtk
 set VTK_ARG1 "-DUSE_BUILT_VTK:BOOL=ON"
@@ -79,9 +93,9 @@ switch $tcl_platform(os) {
         set VTK_ARG5 "-DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=/usr/bin/g++"
     }
     default {
-        set VTK_ARG3 ""
-        set VTK_ARG4 ""
-        set VTK_ARG5 ""
+        set VTK_ARG3 "-DDUMMY:BOOL=ON"
+        set VTK_ARG4 "-DDUMMY:BOOL=ON"
+        set VTK_ARG5 "-DDUMMY:BOOL=ON"
     }
 }
 # make sure to generate shared libraries
@@ -102,10 +116,10 @@ foreach target $TARGETS {
     puts "enter directory $build..."
 
     puts "running cmake ..."
-    puts "cmake $SLICER_HOME/$target -G$GENERATOR \
+    puts "$CMAKE $SLICER_HOME/$target -G$GENERATOR \
         $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 \
         $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3"
-    exec cmake $SLICER_HOME/$target -G$GENERATOR \
+    exec $CMAKE $SLICER_HOME/$target -G$GENERATOR \
         $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 \
         $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3
 
