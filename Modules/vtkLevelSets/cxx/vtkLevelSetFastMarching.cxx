@@ -35,8 +35,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkLevelSetFastMarching.cxx,v $
   Language:  C++
-  Date:      $Date: 2003/10/03 15:33:24 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2004/08/11 15:40:04 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================*/
 #include "vtkLevelSetFastMarching.h"
@@ -174,6 +174,8 @@ vtkLevelSetFastMarching::vtkLevelSetFastMarching() : mh(100000)
 
   narrowband = NULL;
   bandsize   = 0;
+
+  UseGaussianForce = 0;
 
 } // vtkLevelSetFastMarching::vtkLevelSetFastMarching()
 
@@ -515,6 +517,9 @@ void vtkLevelSetFastMarching::AddAcceptedPoint( short x, short y, short z, int p
       cost = 1;
     else {
           F    =  force_buf[neighbors[n]];
+      if (UseGaussianForce) 
+        F = exp(-(F-IntensityMean)*(F-IntensityMean)/
+            IntensityStandardDeviation/IntensityStandardDeviation);
       if (F < 1E-5)
         cost = 1E5;
       else
@@ -886,7 +891,10 @@ inline float vtkLevelSetFastMarching::ComputeValueDikjstra( short x, short y, sh
     F = 1;
   else {
     F = *(force_buf+pos);
-  }
+    if (UseGaussianForce) 
+      F = exp(-(F-IntensityMean)*(F-IntensityMean)/
+          IntensityStandardDeviation/IntensityStandardDeviation);
+ }
 
   if (F<1E-5) 
     return maxTime;
@@ -971,6 +979,9 @@ unsigned char vtkLevelSetFastMarching::ComputeValueSethian( FM_TrialPoint& trial
     cost = 1;
   else {
     F = *(force_buf+trial.impos);
+    if (UseGaussianForce) 
+      F = exp(-(F-IntensityMean)*(F-IntensityMean)/
+          IntensityStandardDeviation/IntensityStandardDeviation);
     if (F==1) 
       cost=1;
     else
@@ -1086,6 +1097,9 @@ inline unsigned char vtkLevelSetFastMarching::ComputeValueSethian2( FM_TrialPoin
     cost = 1;
   else {
     F = *(force_buf+trial.impos);
+    if (UseGaussianForce) 
+      F = exp(-(F-IntensityMean)*(F-IntensityMean)/
+          IntensityStandardDeviation/IntensityStandardDeviation);
     if (F==1) 
       cost=1;
     else
@@ -1739,7 +1753,13 @@ void vtkLevelSetFastMarching::InitIsoSurf()
 
   //  Set the  trial points
   //  fprintf(stderr, ";\n");
-  For(z,2,tz-3)
+
+  switch (dim) {
+  case VTK_MODE_2D: zmin = zmax = 0;        break;
+  case VTK_MODE_3D: zmin = 2; zmax = tz-3;  break;
+  }
+
+  For(z,zmin,zmax)
   For(y,2,ty-3)
     pos = z*txy+y*tx+2;
     For(x,2,tx-3)

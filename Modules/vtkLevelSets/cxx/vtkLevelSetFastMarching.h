@@ -215,6 +215,14 @@ public:
 
   void SetNarrowBand( int* band, int size);
 
+  //
+  void SetGaussianForce( float mean, float sd)
+    {
+      UseGaussianForce=1;
+      IntensityMean=mean;
+      IntensityStandardDeviation=sd;
+    }
+
 protected:
   vtkLevelSetFastMarching();
   ~vtkLevelSetFastMarching();
@@ -289,6 +297,12 @@ protected:
   // Narrow Band Information
   int*           narrowband;
   int            bandsize;  
+
+  // Gaussian Intensity Based Force
+  int         UseGaussianForce;
+  float       IntensityMean;
+  float       IntensityStandardDeviation;
+
 
 //ETX
 
