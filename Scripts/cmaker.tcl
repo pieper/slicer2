@@ -42,7 +42,7 @@ if { [file exists $localvarsfile] } {
 ##
 ## All arguments do nothing by default
 ##
-foreach var "VTK_ARG1 VTK_ARG2 VTK_ARG3 VTK_ARG4 VTK_ARG5 VTK_ARG6 VTK_ARG7 VTK_ARG8 SLICER_ARG1 SLICER_ARG2 SLICER_ARG3 SLICER_ARG4" {
+foreach var "VTK_ARG1 VTK_ARG2 VTK_ARG3 VTK_ARG4 VTK_ARG5 VTK_ARG6 VTK_ARG7 VTK_ARG8 VTK_ARG9 SLICER_ARG1 SLICER_ARG2 SLICER_ARG3 SLICER_ARG4" {
     set $var "-DDUMMY:BOOL=ON"
 }
 
@@ -54,6 +54,7 @@ set SLICER_ARG4 "-DVTKSLICERBASE_BUILD_TCL_LIB:PATH=$VTKSLICERBASE_BUILD_TCL_LIB
 # use an already built version of vtk
 set VTK_ARG1 "-DUSE_BUILT_VTK:BOOL=ON"
 set VTK_ARG2 "-DVTK_DIR:PATH=$VTK_DIR"
+
 
 ## some operating systems 
 switch $tcl_platform(os) {
@@ -82,6 +83,9 @@ if { $ITK_BINARY_PATH != "" } {
 if {[file isdirectory $SLICER_DATA_ROOT]} {
     set VTK_ARG8 "-DSLICER_DATA_ROOT:PATH=$SLICER_DATA_ROOT"
 }
+
+# needed to compile using freetype
+set VTK_ARG9 "-DVTK_SRC_DIR:PATH=$VTK_SRC_DIR"
 
 #
 # ----------------------------- Shouldn't need to edit anything below here...
@@ -208,7 +212,7 @@ foreach target $TARGETS {
 
         set cmakecmd [list $CMAKE $target -G$GENERATOR \
             $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 \
-            $VTK_ARG6 $VTK_ARG7 \
+            $VTK_ARG6 $VTK_ARG7 $VTK_ARG8 $VTK_ARG9 \
             $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4] 
 
         if {[file exists [file join $target cmaker_local.tcl]]} {
