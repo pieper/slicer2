@@ -110,7 +110,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.14 $} {$Date: 2004/07/27 17:25:54 $}]
+            {$Revision: 1.15 $} {$Date: 2004/07/27 18:36:22 $}]
 
     # Define Tabs
     #------------------------------------
@@ -473,6 +473,7 @@ proc DTMRIInit {} {
 
     DTMRIMakeVTKObject vtkTensorImplicitFunctionToFunctionSet itf
     set DTMRI(vtk,BSpline,init) 0
+    set DTMRI(vtk,BSpline,data) 0
 
     for {set i 0} {$i < 6} {incr i 1} {
     DTMRIMakeVTKObject vtkBSplineInterpolateImageFunction impComp($i)
@@ -3178,13 +3179,18 @@ proc DTMRIUpdateTractingMethod { TractingMethod } {
         raise $DTMRI(stream,tractingFrame,NoSpline)
         focus $DTMRI(stream,tractingFrame,NoSpline)
         $DTMRI(gui,mbTractingMethod)    config -text $TractingMethod
-
+        
         }
         "BSpline" {
         raise $DTMRI(stream,tractingFrame,BSpline)
         focus $DTMRI(stream,tractingFrame,BSpline)
         $DTMRI(gui,mbTractingMethod)    config -text $TractingMethod
-        if { $DTMRI(vtk,BSpline,init) == 1 } {
+        if { $DTMRI(vtk,BSpline,init) == 0 && $DTMRI(vtk,BSpline,data) == 1} {
+            set DTMRI(vtk,BSpline,init) 1;
+            for {set i 0} {$i < 6} {incr i} {
+            DTMRI(vtk,extractor($i)) Update
+            DTMRI(vtk,bspline($i)) SetInput [DTMRI(vtk,extractor($i)) GetOutput]
+            }
             DTMRIUpdateBSplineOrder $DTMRI(stream,BSplineOrder)
             for {set i 0} {$i < 6} {incr i} {
             DTMRI(vtk,bspline($i)) Update
@@ -4653,6 +4659,23 @@ proc ConvertVolumeToTensors {} {
     DTMRI Update
     #Tensor($n,data) SetData [DTMRI GetOutput]
     Tensor($n,data) SetImageData [DTMRI GetOutput]
+    set DTMRI(vtk,BSpline,data) 1
+
+    for {set i 0} {$i < 6} {incr i} {
+    DTMRI(vtk,extractor($i)) SetInput [DTMRI GetOutput]
+    }
+    if { $DTMRI(stream,tractingMethod) == "BSpline" } {
+    set DTMRI(vtk,BSpline,init) 1;
+    for {set i 0} {$i < 6} {incr i} {
+        DTMRI(vtk,extractor($i)) Update
+        DTMRI(vtk,bspline($i)) SetInput [DTMRI(vtk,extractor($i)) GetOutput]
+    }
+    DTMRIUpdateBSplineOrder $DTMRI(stream,BSplineOrder)
+    for {set i 0} {$i < 6} {incr i} {
+        DTMRI(vtk,bspline($i)) Update
+        DTMRI(vtk,impComp($i)) SetInput [DTMRI(vtk,bspline($i)) GetOutput]
+    }
+    }
 
     # This updates all the buttons to say that the
     # Volume List has changed.
