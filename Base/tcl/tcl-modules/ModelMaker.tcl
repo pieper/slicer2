@@ -68,7 +68,7 @@ proc ModelMakerInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.23 $} {$Date: 2000/02/28 17:56:17 $}]
+		{$Revision: 1.24 $} {$Date: 2000/10/19 18:08:32 $}]
 
 	# Create
 	set ModelMaker(idVolume) $Volume(idNone)
@@ -802,7 +802,7 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 	$p SetInput [Volume($v,vol) GetOutput]
 	$p SetReplaceIn 1
 	$p SetReplaceOut 1
-	$p SetInValue 100
+	$p SetInValue 200
 	$p SetOutValue 0
 	$p ThresholdBetween $Label(label) $Label(label)
 	[$p GetOutput] ReleaseDataFlagOn
@@ -818,7 +818,7 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 	set p mcubes
 	vtkMarchingCubes $p
 	$p SetInput [to GetOutput]
-	$p SetValue 0 100
+	$p SetValue 0 100.5
 	$p ComputeScalarsOff
 	$p ComputeGradientsOff
 	$p ComputeNormalsOff
