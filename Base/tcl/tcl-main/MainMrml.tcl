@@ -78,7 +78,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.56 $} {$Date: 2002/03/25 23:59:17 $}]
+        {$Revision: 1.57 $} {$Date: 2002/03/27 15:51:31 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -729,6 +729,10 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 
             # Compute full path name relative to the MRML file
             $n SetFullFileName [file join $Mrml(dir) [$n GetFileName]]
+            # Generate model ID if necessary
+           if {[$n GetModelID] == ""} {
+               $n SetModelID "M[$n GetID]"
+           }
         }
         
         "Volume" {
@@ -805,14 +809,14 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                         set DICOMName [file join $Mrml(dir) $file]
                         $n AddDICOMFileName $DICOMName
                     }
-                    }
+                }
                 "dicommultiframeoffsetlist" {
                     set offsetlist {}
                     eval {lappend offsetlist} $val
                     foreach offset $offsetlist {
                         $n AddDICOMMultiFrameOffset $offset
                     }
-                    }
+                }
                     "frequencyphaseswap" {
                         # added by odonnell for DTI data: will move 
                         # to submodule of Volumes.tcl
@@ -820,12 +824,17 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                             $n SetFrequencyPhaseSwap 1
                         }
                     }
+
                 }
             }
 
             # Compute full path name relative to the MRML file
             $n SetFullPrefix [file join $Mrml(dir) [$n GetFilePrefix]]
-            
+            # Set volume ID if necessary
+            if {[$n GetVolumeID] == ""} {
+                $n SetVolumeID "V[$n GetID]"
+            }
+
             $n UseRasToVtkMatrixOn
         }
 
