@@ -10,6 +10,7 @@ if {[info commands vtkFreeSurferReaders] != "" ||
     global PACKAGE_DIR_VTKFREESURFERREADERS
 #    source  [file join $PACKAGE_DIR_VTKFREESURFERREADERS/../../../tcl/VolFreeSurferReaders.tcl]
     source  [file join $PACKAGE_DIR_VTKFREESURFERREADERS/../../../tcl/vtkFreeSurferReaders.tcl]
+    source  [file join $PACKAGE_DIR_VTKFREESURFERREADERS/../../../tcl/regions.tcl]
     package provide vtkFreeSurferReaders 1.0
 
     # add this module's name to the list of custom modules in order 
