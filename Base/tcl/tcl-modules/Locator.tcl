@@ -46,6 +46,7 @@
 #   LocatorSetDriver
 #   LocatorSetVisibility
 #   LocatorSetTransverseVisibility
+#   LocatorSetGuideVisibility
 #   LocatorSetColor
 #   LocatorSetSize
 #   LocatorSetMatrices
@@ -95,7 +96,7 @@ proc LocatorInit {} {
 
     # Set Default Presets
     set Module(Locator,presets) "0,driver='User' 1,driver='User' 2,driver='User'\
-    visibility='0' transverseVisibility='1' normalLen='100' transverseLen='25'\
+    visibility='0' transverseVisibility='1' guideVisibility='1' normalLen='100' transverseLen='25'\
      radius='3.0' diffuseColor='0.9 0.9 0.1'"
 
     # Define Dependencies
@@ -103,7 +104,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.32 $} {$Date: 2003/03/19 19:16:31 $}]
+        {$Revision: 1.33 $} {$Date: 2004/01/01 20:33:15 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -128,6 +129,8 @@ proc LocatorInit {} {
     # Locator attributes
     set Locator(visibility) 0
     set Locator(transverseVisibility) 1
+    set Locator(guideVisibility) 1
+    set Locator(guideSteps) 5 ;# only settable at startup time
     set Locator(normalLen) 100
     set Locator(transverseLen) 25
     set Locator(radius) 3.0
@@ -140,12 +143,15 @@ proc LocatorInit {} {
     set Locator(diffuseColor) ".9 .9 .1"
     scan $Locator(diffuseColor) "%g %g %g" Locator(red) Locator(green) Locator(blue)
 
+    # Fiducial Attributes
+    set Locator(fiducialName) ""
+
     # Realtime image
     set Locator(idRealtime)     NEW
     set Locator(prefixRealtime) ""
     
     # Servers
-    set Locator(serverList) "File SignaSP Images"
+    set Locator(serverList) "File SignaSP Images Csys"
     set Locator(server) [lindex $Locator(serverList) 0]
     set Locator(connect) 0
     set Locator(pause) 0
@@ -169,7 +175,8 @@ proc LocatorInit {} {
     set Locator(Images,firstNum) 1
     set Locator(Images,lastNum)  1
     set Locator(Images,increment) 1
-
+    # Csys
+    set Locator(csysVisible) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -261,12 +268,24 @@ proc LocatorBuildVTK {} {
         eval [${actor}Actor GetProperty] SetColor $Locator(diffuseColor)
         ${actor}Actor SetUserMatrix Locator(normalMatrix)
 
+    for {set i 0} {$i < $::Locator(guideSteps)} {incr i} {
+        set actor guide$i
+        MakeVTKObject Cylinder ${actor}
+            ${actor}Source SetRadius .5
+            ${actor}Source SetHeight 10.
+            ${actor}Actor SetPosition 0 [expr $Locator(normalLen) / -2. - 20 * (1+$i)] 0
+            eval [${actor}Actor GetProperty] SetColor 1 0 0
+            ${actor}Actor SetUserMatrix Locator(normalMatrix)
+            lappend Locator(actors) $actor
+    }
+
     set actor transverse
     MakeVTKObject Cylinder ${actor}
         ${actor}Source SetRadius $Locator(radius) 
         ${actor}Source SetHeight [expr $Locator(transverseLen)]
         eval [${actor}Actor GetProperty] SetColor $Locator(diffuseColor)
         ${actor}Actor SetUserMatrix Locator(transverseMatrix)
+
     
     set actor tip
     MakeVTKObject Sphere ${actor}
@@ -340,11 +359,12 @@ know the location of the tip of this device rather than the Locator.
 
     # Frames
     frame $f.fConn     -bg $Gui(activeWorkspace) -relief groove -bd 3
-    frame $f.fDriver   -bg $Gui(activeWorkspace) -relief groove -bd 3 
     frame $f.fVis      -bg $Gui(activeWorkspace) 
+    frame $f.fFid      -bg $Gui(activeWorkspace) -relief groove -bd 3 
+    frame $f.fDriver   -bg $Gui(activeWorkspace) -relief groove -bd 3 
     frame $f.fRealtime -bg $Gui(activeWorkspace) -relief groove -bd 3
 
-    pack $f.fConn $f.fVis $f.fDriver $f.fRealtime \
+    pack $f.fConn $f.fVis $f.fFid $f.fDriver $f.fRealtime \
         -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
     #-------------------------------------------
@@ -416,7 +436,39 @@ know the location of the tip of this device rather than the Locator.
     eval {checkbutton $f.cTransverse \
         -text "Handle" -variable Locator(transverseVisibility) -width 7 \
         -indicatoron 0 -command "LocatorSetTransverseVisibility; Render3D"} $Gui(WCA)
-    pack $f.cLocator $f.cTransverse -side left -padx $Gui(pad)
+    eval {checkbutton $f.cGuide \
+        -text "Guide" -variable Locator(guideVisibility) -width 5 \
+        -indicatoron 0 -command "LocatorSetGuideVisibility; Render3D"} $Gui(WCA)
+    pack $f.cLocator $f.cTransverse $f.cGuide -side left -padx $Gui(pad)
+
+    #-------------------------------------------
+    # Tracking->Fid Frame
+    #-------------------------------------------
+    set f $fTracking.fFid
+
+    frame $f.fAddDel -bg $Gui(activeWorkspace)
+    frame $f.fName -bg $Gui(activeWorkspace)
+    pack $f.fAddDel -side top -pady $Gui(pad)
+    pack $f.fName -side top -pady $Gui(pad)
+
+    #-------------------------------------------
+    # Tracking->Fid->AddDel Frame
+    #-------------------------------------------
+    eval {button $f.fAddDel.bFiducial \
+        -text "Add Fiducial" -width 12 \
+        -command "LocatorCreateFiducial; Render3D"} $Gui(WBA)
+    eval {button $f.fAddDel.bFiducialDel \
+        -text "Delete Fiducial" -width 15 \
+        -command "LocatorDeleteFiducial; Render3D"} $Gui(WBA)
+    pack $f.fAddDel.bFiducial $f.fAddDel.bFiducialDel -side left -padx $Gui(pad)
+
+    #-------------------------------------------
+    # Tracking->Fid->Name Frame
+    #-------------------------------------------
+    eval {label $f.fName.lName -text "Name:"} $Gui(WTA)
+    eval {entry $f.fName.eFiducialName -width 25 -textvariable Locator(fiducialName) } $Gui(WEA)
+    bind $f.fName.eFiducialName <Return> {LocatorNameUpated}
+    pack $f.fName.lName $f.fName.eFiducialName -side left -padx $Gui(pad)
 
 
     #-------------------------------------------
@@ -681,6 +733,15 @@ know the location of the tip of this device rather than the Locator.
     eval {entry $f.e -textvariable Locator(imageNum) -width 6 -state disabled} $Gui(WEA)
     pack $f.l $f.e -side left -padx $Gui(pad)
 
+    #-------------------------------------------
+    # Server->Bot->File frame
+    #-------------------------------------------
+    set f $fServer.fBot.fCsys
+
+    eval {checkbutton $f.cCsys \
+        -text "Csys" -variable Locator(csysVisible) -width 4 \
+        -indicatoron 0 -command "LocatorCsysToggle"} $Gui(WCA)
+    pack $f.cCsys -side top -fill x -pady $Gui(pad)
 
 
     #-------------------------------------------
@@ -899,6 +960,7 @@ proc LocatorSetVisibility {} {
         ${actor}Actor SetVisibility $Locator(visibility)
     }
     LocatorSetTransverseVisibility
+    LocatorSetGuideVisibility
 }
 
 #-------------------------------------------------------------------------------
@@ -912,6 +974,22 @@ proc LocatorSetTransverseVisibility {} {
 
     if {$Locator(visibility) == 1} {
         transverseActor SetVisibility $Locator(transverseVisibility)
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC LocatorSetGuideVisibility
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc LocatorSetGuideVisibility {} {
+    global Locator 
+
+    if {$Locator(visibility) == 1} {
+        for {set i 0} {$i < $::Locator(guideSteps)} {incr i} {
+            guide${i}Actor SetVisibility $Locator(guideVisibility)
+        }
     }
 }
 
@@ -975,6 +1053,69 @@ proc LocatorSetSize {} {
     transverseSource SetRadius $Locator(radius) 
     transverseSource SetHeight [expr $Locator(transverseLen)]
     tipSource SetRadius [expr 1.5 * $Locator(radius)] 
+}
+
+#-------------------------------------------------------------------------------
+# .PROC LocatorCreateFiducial 
+# Make a fiducial at the tip of the Locator.  Create a locator list if it 
+# doesn't already exist.  
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc LocatorCreateFiducial {} {
+    if { ![FiducialsCheckListExistence "Locator"] } {
+        FiducialsCreateFiducialsList default "Locator"
+    }
+    set pid [FiducialsCreatePointFromWorldXYZ "Locator" $::Locator(px) $::Locator(py) $::Locator(pz)]
+    Point($pid,node) SetOrientationWXYZFromMatrix4x4 Locator(transverseMatrix)
+    FiducialsUpdateMRML
+}
+
+#-------------------------------------------------------------------------------
+# .PROC LocatorDeleteFiducial 
+# Delete last fiducial on Locator list if it exists 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc LocatorDeleteFiducial {} {
+
+    if { ![FiducialsCheckListExistence "Locator" fid] } {
+        return
+    }
+
+    if { [llength $::Fiducials($fid,pointIdList)] == 0 } {
+        return
+    }
+
+    set pid [lindex $::Fiducials($fid,pointIdList) end]
+
+    FiducialsDeletePoint $fid $pid
+    FiducialsUpdateMRML
+}
+
+#-------------------------------------------------------------------------------
+# .PROC LocatorNameUpated
+# Change the name of the last fiducial created
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc LocatorNameUpated {} {
+
+    if { ![FiducialsCheckListExistence "Locator" fid] } {
+        DevErrorWindow "Must have created locator fiducials before changing name"
+        return
+    }
+
+    if { [llength $::Fiducials($fid,pointIdList)] == 0 } {
+        DevErrorWindow "Must have created locator fiducials before changing name"
+        return
+    }
+
+    set pid [lindex $::Fiducials($fid,pointIdList) end]
+
+    Point($pid,node) SetName $::Locator(fiducialName)
+    set ::Locator(fiducialName) ""
+    FiducialsUpdateMRML
 }
 
 #-------------------------------------------------------------------------------
@@ -1409,7 +1550,7 @@ proc LocatorConnect {{value ""}} {
         switch $Locator(server) {
 
         "File" {
-            set filename [file join $Mrml(dir) $Locator(File,prefix)].txt
+            set filename [file join $::env(SLICER_HOME) servers $Locator(File,prefix)].txt
             if {[catch {set Locator(File,fid) [open $filename r]} errmsg] == 1} {
                 puts $errmsg
                 tk_messageBox -message $errmsg
@@ -1854,7 +1995,7 @@ proc LocatorStorePresets {p} {
     foreach s $Slice(idList) {
         set Preset(Locator,$p,$s,driver) $Locator($s,driver)
     }
-    foreach k "visibility transverseVisibility normalLen transverseLen\
+    foreach k "visibility transverseVisibility guideVisibility normalLen transverseLen\
         radius diffuseColor" {
         set Preset(Locator,$p,$k) $Locator($k)
     }
@@ -1866,7 +2007,7 @@ proc LocatorRecallPresets {p} {
     foreach s $Slice(idList) {
         LocatorSetDriver $s $Preset(Locator,$p,$s,driver)
     }
-    foreach k "visibility transverseVisibility normalLen transverseLen\
+    foreach k "visibility transverseVisibility guideVisibility normalLen transverseLen\
         radius diffuseColor" {
         set Locator($k) $Preset(Locator,$p,$k)
     }
@@ -1875,4 +2016,90 @@ proc LocatorRecallPresets {p} {
     LocatorSetColor
     LocatorSetSize
     LocatorSetMatrices
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC LocatorCsysToggle
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc LocatorCsysToggle {} {
+    if { $::Locator(csysVisible) } {
+        LocatorCsysOn
+    } else {
+        LocatorCsysOff
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC LocatorCsysOn
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc LocatorCsysOn {} {
+    global Locator Csys
+
+    if { [info command Locator(csys,actor)] == "" } { 
+        CsysCreate Locator csys -1 -1 -1
+        set ::Module(Locator,procXformMotion) LocatorCsysCallback
+    }
+
+    set Csys(active) 1
+    MainAddActor Locator(csys,actor)
+    LocatorCsysCallback 
+}
+
+#-------------------------------------------------------------------------------
+# .PROC LocatorCsysOff
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc LocatorCsysOff {} {
+    global Locator Csys
+
+    if { [info command Locator(csys,actor)] == "" } { 
+        return
+    }
+
+    set Csys(active) 0
+    MainRemoveActor Locator(csys,actor)
+    Render3D
+}
+
+#-------------------------------------------------------------------------------
+# .PROC LocatorCsysCallback
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc LocatorCsysCallback {args} {
+
+    if { [info command Locator(csys,actor)] == "" } { 
+        return
+    }
+
+    set mat [Locator(csys,actor) GetMatrix]
+    set ::Locator(px) [$mat GetElement 0 3]
+    set ::Locator(py) [$mat GetElement 1 3]
+    set ::Locator(pz) [$mat GetElement 2 3]
+    set ::Locator(nx) [$mat GetElement 0 0]
+    set ::Locator(ny) [$mat GetElement 1 0]
+    set ::Locator(nz) [$mat GetElement 2 0]
+    set ::Locator(tx) [$mat GetElement 0 1]
+    set ::Locator(ty) [$mat GetElement 1 1]
+    set ::Locator(tz) [$mat GetElement 2 1]
+
+    LocatorUseLocatorMatrix
+
+    # Render the slices that the locator is driving
+    foreach s $::Slice(idList) {
+        if {[Slicer GetDriver $s] == 1} {
+            RenderSlice $s
+        }
+    }
+    Render3D
 }
