@@ -55,7 +55,7 @@ void vtkImageAccumulateDiscrete::ExecuteInformation(vtkImageData *vtkNotUsed(inp
 
   ext[1] = MAX_ACCUMULATION_BIN;
 
-  float origin[3], spacing[1];
+  float origin[3], spacing[3];
   spacing[0] = spacing[1] = spacing[2] = 1;
   origin[0] = -32768;
   origin[1] = origin[2] = 0;
