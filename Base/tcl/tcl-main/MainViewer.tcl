@@ -48,7 +48,7 @@ proc MainViewerInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainViewer \
-		{$Revision: 1.17 $} {$Date: 2001/02/19 17:53:25 $}]
+		{$Revision: 1.18 $} {$Date: 2001/11/09 17:40:01 $}]
 
         # Props
 	set Gui(midHeight) 1
@@ -68,7 +68,12 @@ proc MainViewerBuildGUI {} {
 	# Viewer window
 	#-------------------------------------------
 	toplevel     .tViewer -visual {truecolor 24} -bg $Gui(backdrop)
+
 	wm resizable .tViewer 0 1
+    # never allow resize for Ron's laptop
+    if {$Gui(pc) == "1"} {
+	wm resizable .tViewer 0 0
+    }
 	wm title     .tViewer "Viewer"
 	# sum heights of 3d window, slice, and middle button frame
 	set h [expr $View(viewerHeightNormal) + 256 + $Gui(midHeight)]
@@ -395,7 +400,13 @@ proc MainViewerSetMode {{mode ""}} {
 
 		set w [expr $View(viewerHeightNormal) + $Gui(midHeight) + 256]
 		wm geometry .tViewer $View(viewerWidth)x$w
+
 		wm resizable .tViewer 0 1
+	    # never allow resize for Ron's laptop
+	    if {$Gui(pc) == "1"} {
+		wm resizable .tViewer 0 0
+	    }
+
 		$Gui(fSl0Win)  config -width 256 -height 256
 		$Gui(fSl1Win)  config -width 256 -height 256
 		$Gui(fSl2Win)  config -width 256 -height 256
@@ -455,6 +466,16 @@ proc MainViewerSetMode {{mode ""}} {
 		$Gui(fSl0Win)  config -width 512 -height 512
 		$Gui(fSl1Win)  config -width 512 -height 512
 		$Gui(fSl2Win)  config -width 512 -height 512
+		
+		# Ron's laptop
+		if {$Gui(pc) == "1"} {
+			# allow user to maximize window which can help
+			wm resizable .tViewer 0 1
+			# this does not work though it's in the man pgs
+			# if the user does a maximize in the upper
+			# right corner all things will render okay.
+			#wm state .tViewer zoomed
+		}	
 
 	        # Delphine
 	        MainViewerAddViewsSeparation 512 512
@@ -476,6 +497,16 @@ proc MainViewerSetMode {{mode ""}} {
 		$Gui(fSl0Win)  config -width 512 -height 512
 		$Gui(fSl1Win)  config -width 256 -height 256
 		$Gui(fSl2Win)  config -width 256 -height 256
+
+		# Ron's laptop
+		if {$Gui(pc) == "1"} {
+			# allow user to maximize window which can help
+			wm resizable .tViewer 0 1
+			# this does not work though it's in the man pgs
+			# if the user does a maximize in the upper
+			# right corner all things will render okay.
+			#wm state .tViewer zoomed
+		}	
 
 	        # Delphine
 	        MainViewerAddViewsSeparation 256 256
