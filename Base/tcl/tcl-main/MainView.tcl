@@ -63,7 +63,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
         set m MainView
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.27 $} {$Date: 2001/04/04 03:11:28 $}]
+		{$Revision: 1.28 $} {$Date: 2001/05/18 22:26:56 $}]
 
 	set View(viewerHeightNormal) 656
 	set View(viewerWidth)  956 
@@ -337,12 +337,16 @@ proc MainViewBuildGUI {} {
 		-side left -padx 3
 }
 
-#-------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
 # .PROC MainViewSetBackgroundColor
-# 
+#  Change the background color of all the renderers in Module(Renderers)
+#  The background color is stored in View(bgName) and it should match "Blue",
+#  "Midnight" or "Black"
+#
 # .ARGS
 # .END
-#-------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
+
 proc MainViewSetBackgroundColor {{col ""}} {
     global View Module
     
