@@ -71,7 +71,7 @@ proc MainMrmlReadVersion2.x {fileName {verbose 1}} {
     # Read file
     if {[catch {set fid [open $fileName r]} errmsg] == 1} {
         puts $errmsg
-        tk_messagebox -message $errmsg
+        tk_messageBox -message $errmsg
         return 0
     }
     set mrml [read $fid]
