@@ -15,9 +15,9 @@
 #  include <unistd.h>
 #else
 #  include <io.h>
-//#  include <GL/glext.h>
-#  include <glext.h>
 #endif
+
+#include "glext.h"
 
 
 #if !defined(HAVE_GLCOLORTABLE) && defined(HAVE_GLCOLORTABLEEXT)
