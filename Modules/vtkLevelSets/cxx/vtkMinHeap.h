@@ -54,8 +54,13 @@
 
 //BTX
 
+template < class T >  
+class vtkMinHeap;
+
 // Template ??
 //
+template<class T>
+ostream& operator << (ostream& os, const vtkMinHeap<T>& p);
 
 //----------------------------------------------------------------------
 template < class T > class /* VTK_LEVELSETS_EXPORT */ vtkMinHeap
@@ -123,11 +128,11 @@ public:
 
   void ChangeValue(int n, const T& elt);
 
-#if !(defined(_sgi_)) 
+  //#if !(defined(_sgi_)) 
+  //  friend ostream& operator << <>(ostream&, const vtkMinHeap<T>& p);
+  //#else
   friend ostream& operator << <>(ostream&, const vtkMinHeap<T>& p);
-#else
-  friend ostream& operator << (ostream&, const vtkMinHeap<T>& p);
-#endif
+  //#endif
 
 };
 
