@@ -94,7 +94,7 @@ itcl::body dup_review::run {studydir} {
     # TODO - this avoids warning messages when slicer starts
     set ::env(SLICER_CUSTOM_CONFIG) "true"
     # TODO - this is linux only
-    exec $::env(SLICER_HOME)/slicer2-linux-x86 $::PACKAGE_DIR_BIRNDUP/../../../tcl/gonogo.tcl $studydir
+    exec $::env(SLICER_HOME)/slicer2-linux-x86 --agree_to_license $::PACKAGE_DIR_BIRNDUP/../../../tcl/gonogo.tcl $studydir
 
     package require fileutil
     set to_upload [::fileutil::cat $studydir/upload_list.txt]
