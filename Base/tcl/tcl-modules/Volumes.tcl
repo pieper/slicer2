@@ -71,7 +71,7 @@ proc VolumesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.30 $} {$Date: 2000/02/28 17:56:19 $}]
+		{$Revision: 1.31 $} {$Date: 2000/07/28 17:49:11 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -81,7 +81,7 @@ proc VolumesInit {} {
 	set Volume(scanOrderMenu) "{Sagittal:LR} {Sagittal:RL} {Axial:SI}\
 		{Axial:IS} {Coronal:AP} {Coronal:PA}"
 	# corresponding values to use in Volume(scanOrder)
-	set Volume(scanOrderList) "LR RL SI IS AP PA OB" 
+	set Volume(scanOrderList) "LR RL SI IS AP PA" 
 	
 	MainVolumesSetGUIDefaults
 }
@@ -548,51 +548,48 @@ acquisition.
 	    pack $f.e$param -side left -padx $Gui(pad) -expand 1 -fill x
 	}
 
-	# scan order Menu
-	set param scanOrder
-	set name "Scan Order"
+	# Scan Order Menu
 	set f $fProps.fBot.fHeader.fEntry
-	frame $f.f$param -bg $Gui(activeWorkspace)
-	pack $f.f$param -side top -fill x -pady 2
+	frame $f.fscanOrder -bg $Gui(activeWorkspace)
+	pack $f.fscanOrder -side top -fill x -pady 2
 	
-	set f $f.f$param
-	eval {label $f.l${param} -text "$name:"} $Gui(WLA)
-	# button text corresponds to default scan order value in Volume(scanOrder)
-	eval {menubutton $f.mb${param} -relief raised -bd 2 \
+	set f $f.fscanOrder
+	eval {label $f.lscanOrder -text "Scan Order:"} $Gui(WLA)
+	# button text corresponds to default scan order value Volume(scanOrder)
+	eval {menubutton $f.mbscanOrder -relief raised -bd 2 \
 		-text [lindex $Volume(scanOrderMenu)\
 		[lsearch $Volume(scanOrderList) $Volume(scanOrder)]] \
-		-width 10 -menu $f.mb${param}.menu} $Gui(WMBA)
-	set Volume(mb${param}) $f.mb${param}
-	eval {menu $f.mb${param}.menu} $Gui(WMA)
+		-width 10 -menu $f.mbscanOrder.menu} $Gui(WMBA)
+	set Volume(mbscanOrder) $f.mbscanOrder
+	eval {menu $f.mbscanOrder.menu} $Gui(WMA)
 	
-	set m $f.mb${param}.menu
-	foreach label $Volume(${param}Menu)  value $Volume(${param}List) {
+	set m $f.mbscanOrder.menu
+	foreach label $Volume(scanOrderMenu) value $Volume(scanOrderList) {
 	    $m add command -label $label -command "VolumesSetScanOrder $value"
 	}
-	pack $f.l${param} -side left -padx $Gui(pad) -fill x -anchor w
-	pack $f.mb${param} -side left -padx $Gui(pad) -expand 1 -fill x 
+	pack $f.lscanOrder -side left -padx $Gui(pad) -fill x -anchor w
+	pack $f.mbscanOrder -side left -padx $Gui(pad) -expand 1 -fill x 
+
     
-	# scalar type menu
-	set param scalarType
-	set name "Scalar Type"
+	# Scalar Type Menu
 	set f $fProps.fBot.fHeader.fEntry
-	frame $f.f$param -bg $Gui(activeWorkspace)
-	pack $f.f$param -side top -fill x -pady 2
+	frame $f.fscalarType -bg $Gui(activeWorkspace)
+	pack $f.fscalarType -side top -fill x -pady 2
 	
-	set f $f.f$param
-	eval {label $f.l${param} -text "$name:"} $Gui(WLA)
-	eval {menubutton $f.mb${param} -relief raised -bd 2 \
+	set f $f.fscalarType
+	eval {label $f.lscalarType -text "Scalar Type:"} $Gui(WLA)
+	eval {menubutton $f.mbscalarType -relief raised -bd 2 \
 		-text $Volume(scalarType)\
-		-width 10 -menu $f.mb${param}.menu} $Gui(WMBA)
-	set Volume(mb${param}) $f.mb${param}
-	eval {menu $f.mb${param}.menu} $Gui(WMA)
+		-width 10 -menu $f.mbscalarType.menu} $Gui(WMBA)
+	set Volume(mbscalarType) $f.mbscalarType
+	eval {menu $f.mbscalarType.menu} $Gui(WMA)
 	
-	set m $f.mb${param}.menu
-	foreach type $Volume(${param}Menu) {
+	set m $f.mbscalarType.menu
+	foreach type $Volume(scalarTypeMenu) {
 	    $m add command -label $type -command "VolumesSetScalarType $type"
 	}
-	pack $f.l${param} -side left -padx $Gui(pad) -fill x -anchor w
-	pack $f.mb${param} -side left -padx $Gui(pad) -expand 1 -fill x 
+	pack $f.lscalarType -side left -padx $Gui(pad) -fill x -anchor w
+	pack $f.mbscalarType -side left -padx $Gui(pad) -expand 1 -fill x 
     
 	# more Entry fields (the loop makes a frame for each variable)
 	foreach param "	gantryDetectorTilt numScalars" \
