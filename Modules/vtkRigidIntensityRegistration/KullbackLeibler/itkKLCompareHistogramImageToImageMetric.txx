@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkKLCompareHistogramImageToImageMetric.txx,v $
   Language:  C++
-  Date:      $Date: 2004/01/01 01:04:16 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2004/01/01 01:55:31 $
+  Version:   $Revision: 1.4 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -66,7 +66,7 @@ TMovingImage>
   double TrainingFreq = training_it.GetFrequency()+m_Epsilon;
   double MeasuredFreq = measured_it.GetFrequency()+m_Epsilon;
 
-  KL += TrainingFreq*log(TrainingFreq/MeasuredFreq);
+  KL += MeasuredFreq*log(MeasuredFreq/TrainingFreq);
 
   ++measured_it;
   ++training_it;
@@ -80,14 +80,14 @@ TMovingImage>
   HistogramFrequencyType totalMeasuredFreq = histogram.GetTotalFrequency();
 
   // The actual number of total frequency is a bit larger
-  // than the number of counst because we add m_Epsilon to every bin
+  // than the number of counts because we add m_Epsilon to every bin
   double AdjustedTotalTrainingFreq = totalTrainingFreq +
     m_HistogramSize[0]*m_HistogramSize[1]*m_Epsilon;
   double AdjustedTotalMeasuredFreq = totalMeasuredFreq +
     m_HistogramSize[0]*m_HistogramSize[1]*m_Epsilon;
 
-  KL = -KL/static_cast<MeasureType>(AdjustedTotalTrainingFreq)
-    - log(AdjustedTotalMeasuredFreq/AdjustedTotalTrainingFreq);
+  KL = KL/static_cast<MeasureType>(AdjustedTotalMeasuredFreq)
+  - log(AdjustedTotalMeasuredFreq/AdjustedTotalTrainingFreq);
 
   return KL;
 }
