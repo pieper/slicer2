@@ -94,7 +94,7 @@ vtkMrmlVolumeNode::vtkMrmlVolumeNode()
   this->SetImageRange(1, 1);
   this->SetDimensions(256, 256);
   this->SetSpacing(0.9375, 0.9375, 1.5);
-  this->ComputeRasToIjkFromScanOrder("LR");
+  this->ComputeRasToIjkFromScanOrder(this->ScanOrder);
 
   // Added by Attila Tanacs 10/10/2000 1/4/02
 
