@@ -87,7 +87,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-		{$Revision: 1.21 $} {$Date: 2000/07/26 19:14:13 $}]
+		{$Revision: 1.22 $} {$Date: 2000/09/14 21:34:54 $}]
 
 	# Initialize Variables
 	set Slice(idList) "0 1 2"
@@ -226,8 +226,8 @@ proc MainSlicesBuildVTK {} {
 		Slice($s,outlineActor) SetUserMatrix [Slicer GetReformatMatrix $s]
 		Slice($s,outlineActor) SetVisibility $Slice($s,visibility) 
 
-		viewRen AddActor Slice($s,outlineActor)
-		viewRen AddActor Slice($s,planeActor)
+		MainAddActor Slice($s,outlineActor)
+		MainAddActor Slice($s,planeActor)
 
 		# Clip
 		MainSlicesSetClipState $s

@@ -55,7 +55,7 @@ proc MainAnnoInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainAnno \
-		{$Revision: 1.9 $} {$Date: 2000/02/28 17:56:08 $}]
+		{$Revision: 1.10 $} {$Date: 2000/09/14 21:34:53 $}]
 
 	# Preset Defaults
 	set Module(Anno,presets) "box='1' axes='0' outline='0' letters='1' cross='1'\
@@ -107,7 +107,7 @@ hashes='1' mouse='1'"
 # .END
 #-------------------------------------------------------------------------------
 proc MainAnnoBuildVTK {} {
-	global Gui Anno View Slice
+	global Gui Anno View Slice 
 
   
 	#---------------------------------------------
@@ -136,7 +136,7 @@ proc MainAnnoBuildVTK {} {
 			${axis}AxisActor SetScale $fov2 $fov2 $fov2
 			[${axis}AxisActor GetProperty] SetColor 1.0 0.0 1.0
 
-		viewRen AddActor ${axis}AxisActor
+		MainAddActor ${axis}AxisActor
 	}
 	set pos  1.2
 	set neg -1.2
@@ -160,8 +160,10 @@ proc MainAnnoBuildVTK {} {
 		vtkFollower ${axis}Actor
 			${axis}Actor SetMapper ${axis}Mapper
 			${axis}Actor SetScale  $scale $scale $scale 
-    
+
+	    # add only to the Main View window
 		viewRen AddActor ${axis}Actor
+
 	}
 	set pos [expr   $View(fov) * 0.6]
 	set neg [expr - $View(fov) * 0.6]
@@ -183,7 +185,7 @@ proc MainAnnoBuildVTK {} {
 #-------------------------------------------------------------------------------
 proc MainAnnoBuildGUI {} {
 	global Gui Anno View Slice
-
+    
 	#---------------------------------------------
 	# SLICE ANNO
 	#---------------------------------------------
@@ -268,6 +270,7 @@ proc MainAnnoBuildGUI {} {
 	foreach axis "R A S L P I" {
 		${axis}Actor SetCamera $View(viewCam)
 	}
+
 }
 
 #-------------------------------------------------------------------------------

@@ -62,7 +62,7 @@ proc GuiInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo Gui \
-		{$Revision: 1.20 $} {$Date: 2000/07/28 18:44:46 $}]
+		{$Revision: 1.21 $} {$Date: 2000/09/14 21:34:52 $}]
 
 	if {$tcl_platform(platform) == "windows"} {
 		set Gui(pc) 1
@@ -503,7 +503,9 @@ proc MakeVTKObject {shape name} {
 	vtkActor ${name}Actor
 		${name}Actor SetMapper ${name}Mapper
 		[${name}Actor GetProperty] SetColor 1.0 0.0 0.0
-	viewRen AddActor ${name}Actor
+        MainAddActor ${name}Actor
+
+
 }
 
 #-------------------------------------------------------------------------------

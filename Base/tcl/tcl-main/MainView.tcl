@@ -67,7 +67,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
         set m MainView
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.20 $} {$Date: 2000/07/25 17:11:26 $}]
+		{$Revision: 1.21 $} {$Date: 2000/09/14 21:34:54 $}]
 
 	set View(viewerHeightNormal) 656
 	set View(viewerWidth)  956 
@@ -80,7 +80,8 @@ viewMode='Normal' viewBgColor='Blue'"
 
 	# Configurable
 	set View(mode) Normal
-	set View(viewerWidth)  700 
+	# Changed by Delphine
+	set View(viewerWidth)  768 
 	set View(viewerHeight) 700 
 	set View(toolbarPosition) Top
 	set View(bgColor) ".7 .7 .9"
@@ -104,6 +105,7 @@ viewMode='Normal' viewBgColor='Blue'"
 	# Init
 	set View(rotateDegrees) 15
 	set View(baselineClippingRange) "1 2001"
+	set View(endoscopicClippingRange) "1 1000"
 	set View(magWin) Welcome
 	set View(inWin) none
 	set View(viewPrefix) view
@@ -120,7 +122,8 @@ proc MainViewBuildVTK {} {
 	global View Slice
 
 	# Set background color
-	eval viewRen SetBackground $View(bgColor)
+
+        eval viewRen SetBackground $View(bgColor)
 
 	# Closeup magnification of the slice with the cursor over it
 	#--------------------------------------------
@@ -320,7 +323,7 @@ proc MainViewBuildGUI {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewSetBackgroundColor {{col ""}} {
-    global View
+    global View Module
     
     
     # set View(bgName) if called with an argument
@@ -343,7 +346,9 @@ proc MainViewSetBackgroundColor {{col ""}} {
 	    set View(bgColor) "0 0 0.3"
 	}
     }
-    eval viewRen SetBackground $View(bgColor)
+    foreach m $Module(Renderers) {
+	eval $m SetBackground $View(bgColor)
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -374,14 +379,20 @@ proc MainViewLightFollowCamera {} {
 	global View
 	
 	# 3D Viewer
+
 	set lights [viewRen GetLights]
+
 	$lights InitTraversal
 	set currentLight [$lights GetNextItem]
 	if {$currentLight != ""} {
 		eval $currentLight SetPosition   [$View(viewCam) GetPosition]
 		eval $currentLight SetFocalPoint [$View(viewCam) GetFocalPoint]
 	}
-}
+
+	puts "[$currentLight GetPosition]"
+	puts "[$currentLight GetFocalPoint]"
+    }
+
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewNavReset

@@ -44,16 +44,17 @@
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewerInit {} {
-	global Module Gui Slice
+	global Module Gui Slice View
 
 	# Don't register the BuildGUI routine, because it gets called specifically
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainViewer \
-		{$Revision: 1.12 $} {$Date: 2000/02/28 17:56:13 $}]
+		{$Revision: 1.13 $} {$Date: 2000/09/14 21:34:54 $}]
 
         # Props
 	set Gui(midHeight) 1
+        set View(EndoscopicViewOn) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -63,7 +64,7 @@ proc MainViewerInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewerBuildGUI {} {
-	global Gui View viewWin Slice
+	global Gui View viewWin Slice Module
 
 	#-------------------------------------------
 	# Viewer window
@@ -91,8 +92,11 @@ proc MainViewerBuildGUI {} {
 	pack $Gui(fBot) -side top
 
 	set Gui(fViewWin) $Gui(fViewer).fViewWin
-	vtkTkRenderWidget $Gui(fViewWin) -width 768 -height $View(viewerHeightNormal)
+
+	vtkTkRenderWidget $Gui(fViewWin) -width $View(viewerHeight) -height $View(viewerHeightNormal)
 	BindTkRenderWidget $Gui(fViewWin)
+
+
 
 	#-------------------------------------------
 	# Mid->Slice$s frames
@@ -195,7 +199,6 @@ proc MainViewerBuildGUI {} {
 		set win sl$s
 		MakeVTKImageWindow $win
 		${win}Mapper SetInput [Slicer GetCursor $s]
-
 		set Gui(f${frm}Win) $f.f${frm}Win
 		vtkTkImageWindowWidget $Gui(f${frm}Win) -iw ${win}Win -width 256 -height 256
 		pack $Gui(f${frm}Win) -side left -fill both -expand 1
@@ -214,6 +217,22 @@ proc MainViewerBuildGUI {} {
 	$viewWin Render
 	update
 	set Gui(midHeight) [winfo height $Gui(fMid)]
+
+	#---------------------------------------------
+        # VIEWPORT SEPARATOR
+        #---------------------------------------------
+
+        vtkLineSource Gui(viewport,source)
+        Gui(viewport,source) SetPoint1 [expr $View(viewerWidth) / 2] $View(viewerHeight) 0
+        Gui(viewport,source) SetPoint2 [expr $View(viewerWidth) / 2] 0 0
+        vtkPolyDataMapper2D Gui(viewport,mapper)
+        Gui(viewport,mapper) SetInput [Gui(viewport,source) GetOutput]
+        vtkActor2D Gui(viewport,actor)
+        Gui(viewport,actor) SetMapper Gui(viewport,mapper)
+        Gui(viewport,actor) SetLayerNumber 1
+        eval [Gui(viewport,actor) GetProperty] SetColor "1 1 0.5"
+        Gui(viewport,actor) SetVisibility 1
+        viewRen AddActor2D Gui(viewport,actor)
 }
 
 #-------------------------------------------------------------------------------
@@ -291,6 +310,42 @@ proc MainViewerAnno {s dim} {
 	}
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC MainViewerAddViewsSeparation
+# 
+#  Set the position of the line that separates the viewport of the 3D viewer 
+#  in two (so that the view window and the endoscopic window are separated)
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainViewerAddViewsSeparation {p1 p2} {
+	global Gui View
+    
+    if { $View(EndoscopicViewOn) == 1 } {
+	Gui(viewport,source) SetPoint1 [expr ($p1 / 2) - 2] $p2 0
+	Gui(viewport,source) SetPoint2 [expr ($p1/ 2) - 2] 0 0
+    } else {
+	# make the separation invisible by putting it on the border of the
+	# MainView window
+	Gui(viewport,source) SetPoint1 $p1 $p2 0
+	Gui(viewport,source) SetPoint2 $p1 0 0
+    }
+}
+ 
+proc MainViewerSetEndoscopicViewOn {} {
+
+    global View
+    set View(EndoscopicViewOn) 1
+}
+
+proc MainViewerSetEndoscopicViewOff {} {
+
+    global View
+    set View(EndoscopicViewOn) 0
+}
+
 #-------------------------------------------------------------------------------
 # .PROC MainViewerSetMode
 # 
@@ -324,12 +379,15 @@ proc MainViewerSetMode {{mode ""}} {
 		pack $Gui(fBot) -side top
 
 		set w [expr $View(viewerHeightNormal) + $Gui(midHeight) + 256]
-		wm geometry .tViewer 768x$w
+		wm geometry .tViewer $View(viewerWidth)x$w
 		wm resizable .tViewer 0 1
 		$Gui(fSl0Win)  config -width 256 -height 256
 		$Gui(fSl1Win)  config -width 256 -height 256
 		$Gui(fSl2Win)  config -width 256 -height 256
-		$Gui(fViewWin) config -width 768 -height $View(viewerHeightNormal)
+		$Gui(fViewWin) config -width $View(viewerWidth) -height $View(viewerHeightNormal)
+
+	        # Delphine
+	        MainViewerAddViewsSeparation $View(viewerWidth) $View(viewerHeightNormal)
 
 		# Do NOT show the thumbnails on top of the slice images
 		foreach s $Slice(idList) {
@@ -347,6 +405,9 @@ proc MainViewerSetMode {{mode ""}} {
 		wm geometry .tViewer ${wReq}x$hReq
 		wm resizable .tViewer 1 1
 		$Gui(fViewWin) config -width $wReq -height $hReq
+       	        
+	        # Delphine
+	        MainViewerAddViewsSeparation $wReq $hReq
 	}
 	"Quad256" {
 		pack $Gui(fTop) $Gui(fBot) -side top
@@ -360,7 +421,10 @@ proc MainViewerSetMode {{mode ""}} {
 		$Gui(fSl1Win)  config -width 256 -height 256
 		$Gui(fSl2Win)  config -width 256 -height 256
 
-		# Show the control thumbnails on top of the slice images
+	        # Delphine
+	        MainViewerAddViewsSeparation 256 256
+		
+	        # Show the control thumbnails on top of the slice images
 		foreach s $Slice(idList) {
 			raise $Gui(fSlice$s).fThumb
 			MainViewerAnno $s 256
@@ -378,6 +442,9 @@ proc MainViewerSetMode {{mode ""}} {
 		$Gui(fSl1Win)  config -width 512 -height 512
 		$Gui(fSl2Win)  config -width 512 -height 512
 
+	        # Delphine
+	        MainViewerAddViewsSeparation 512 512
+
 		# Show the control thumbnails on top of the slice images
 		foreach s $Slice(idList) {
 			raise $Gui(fSlice$s).fThumb
@@ -389,12 +456,16 @@ proc MainViewerSetMode {{mode ""}} {
 		pack $f.fSlice0 $f.fViewWin -in $Gui(fTop) -side left -anchor n
 		pack $f.fSlice1 $f.fSlice2  -in $Gui(fBot) -side left -anchor w
 
-		wm geometry .tViewer 768x768
+		wm geometry .tViewer 1000x1000
 		wm resizable .tViewer 0 0
 		$Gui(fViewWin) config -width 256 -height 256
 		$Gui(fSl0Win)  config -width 512 -height 512
 		$Gui(fSl1Win)  config -width 256 -height 256
 		$Gui(fSl2Win)  config -width 256 -height 256
+
+	        # Delphine
+	        MainViewerAddViewsSeparation 256 256
+
 
 		# Show the control thumbnails on top of the slice images
 		foreach s $Slice(idList) {

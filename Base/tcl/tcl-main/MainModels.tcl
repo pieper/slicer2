@@ -72,7 +72,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.24 $} {$Date: 2000/07/26 19:13:00 $}]
+		{$Revision: 1.25 $} {$Date: 2000/09/14 21:34:53 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""
@@ -177,11 +177,15 @@ proc MainModelsUpdateMRML {} {
 # recompiling C++ code, right Peter?  
 #
 # This procedure performs what the vtkMrmlModel would do in its constructor.
+#
+#  With this procedure, a same model will have as many actors and properties 
+#  as there are renderers. This is to be able to set different properties (ie
+#  opacity) on different renderers for the same model
 # 
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsShouldBeAVtkClass {m} {
-	global Model Slice
+	global Model Slice Module
 
 	# Mapper
 	vtkPolyDataMapper Model($m,mapper)
@@ -204,39 +208,46 @@ proc MainModelsShouldBeAVtkClass {m} {
 	Model($m,clipper) SetClipFunction Slice(clipPlanes)
 	Model($m,clipper) SetValue 0.0
 
-	# Actor
-	vtkActor Model($m,actor)
-	Model($m,actor) SetMapper Model($m,mapper)
+        vtkMatrix4x4 Model($m,rasToWld)
+    
+        foreach r $Module(Renderers) {
 
-	# Registration
-	vtkMatrix4x4 Model($m,rasToWld)
-	Model($m,actor) SetUserMatrix [Model($m,node) GetRasToWld]
+	    # Actor
+	    vtkActor Model($m,actor,$r)
+	    Model($m,actor,$r) SetMapper Model($m,mapper)
+	    
+	    # Registration
+	    Model($m,actor,$r) SetUserMatrix [Model($m,node) GetRasToWld]
 
-	# Property
-	set Model($m,prop)  [Model($m,actor) GetProperty]
+	    # Property
+	    set Model($m,prop,$r)  [Model($m,actor,$r) GetProperty]
 
-	# For now, the back face color is the same as the front
-	Model($m,actor) SetBackfaceProperty $Model($m,prop)
+	    # For now, the back face color is the same as the front
+	    Model($m,actor,$r) SetBackfaceProperty $Model($m,prop,$r)
+	}
 
 	set Model($m,clipped) 0
+
 }
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsCreate
 #
 # This procedure creates a model but does not read it.
-# 
+#
 # Returns:
 #  1 - success
 #  0 - model already exists
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsCreate {m} {
-    global Model View Slice Gui
+    global Model View Slice Gui Module
 
 	# See if it already exists
-	if {[info command Model($m,actor)] != ""} {
+        foreach r $Module(Renderers) {
+	    if {[info command Model($m,actor,$r)] != ""} {
 		return 0
+	    }
 	}
 
 	MainModelsShouldBeAVtkClass	$m	
@@ -248,8 +259,8 @@ proc MainModelsCreate {m} {
 	MainModelsSetColor $m
 	MainModelsCreateGUI $Gui(wModels).fGrid $m
 
-	viewRen AddActor Model($m,actor)
-
+	MainAddModelActor $m
+	
 	# Mark it as unsaved and created on the fly.
 	# If it actually isn't being created on the fly, I can't tell that from
 	# inside this procedure, so the "fly" variable will be set to 0 in the
@@ -349,17 +360,22 @@ proc MainModelsDelete {m} {
 	global Model View Gui Dag Module
 
 	# If we've already deleted this one, then do nothing
-	if {[info command Model($m,actor)] == ""} {
+        foreach r $Module(Renderers) {
+	    if {[info command Model($m,actor,$r)] == ""} {
 		return 0
+	    }
 	}
 
 	# Remove actors from renderers
-	viewRen RemoveActor Model($m,actor)
 
+	MainRemoveModelActor $m
+	
 	# Delete VTK objects (and remove commands from TCL namespace)
 	Model($m,clipper) Delete
 	Model($m,mapper) Delete
-	Model($m,actor) Delete
+        foreach r $Module(Renderers) {
+	    Model($m,actor,$r) Delete
+	}
 	Model($m,rasToWld) Delete
 
 	# The polyData should be gone from reference counting, but I'll make sure:
@@ -481,6 +497,7 @@ proc MainModelsCreateGUI {f m} {
 		-resolution 0.1} $Gui(WSA) {-sliderlength 14 \
 		-troughcolor [MakeColorNormalized \
 			[Color($Model($m,colorID),node) GetDiffuseColor]]}
+		puts "$Model($m,colorID)"
 
 	# Clipping
 #	eval {checkbutton $f.cClip${m} -variable Model($m,clipping) \
@@ -609,7 +626,7 @@ proc MainModelsSetActive {m} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsSetColor {m {name ""}} {
-	global Model Color Gui
+	global Model Color Gui Module
 
 	if {$name == ""} {
 		set name [Model($m,node) GetColor]
@@ -625,14 +642,14 @@ proc MainModelsSetColor {m {name ""}} {
 		}
 	}
 	set c $Model($m,colorID)
-
-	$Model($m,prop) SetAmbient       [Color($c,node) GetAmbient]
-	$Model($m,prop) SetDiffuse       [Color($c,node) GetDiffuse]
-	$Model($m,prop) SetSpecular      [Color($c,node) GetSpecular]
-	$Model($m,prop) SetSpecularPower [Color($c,node) GetPower]
-	eval $Model($m,prop) SetColor    [Color($c,node) GetDiffuseColor]
+        foreach r $Module(Renderers) {
+	    $Model($m,prop,$r) SetAmbient       [Color($c,node) GetAmbient]
+	    $Model($m,prop,$r) SetDiffuse       [Color($c,node) GetDiffuse]
+	    $Model($m,prop,$r) SetSpecular      [Color($c,node) GetSpecular]
+	    $Model($m,prop,$r) SetSpecularPower [Color($c,node) GetPower]
+	    eval $Model($m,prop,$r) SetColor    [Color($c,node) GetDiffuseColor]
+	}
 }
-
 #-------------------------------------------------------------------------------
 # .PROC MainModelsSetVisibility
 # 
@@ -640,38 +657,43 @@ proc MainModelsSetColor {m {name ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsSetVisibility {model {value ""}} {
-	global Model
+	global Model Module
 
-	if {[string compare $model "None"] == 0} {
-		foreach m $Model(idList) {
-			set Model($m,visibility) 0
-			Model($m,node)  SetVisibility 0
-			Model($m,actor) SetVisibility [Model($m,node) GetVisibility] 
-		}
-	} elseif {[string compare $model "All"] == 0} {
-		foreach m $Model(idList) {
-			set Model($m,visibility) 1
-			Model($m,node)  SetVisibility 1 
-			Model($m,actor) SetVisibility [Model($m,node) GetVisibility] 
-		}
-	} else {
-		if {$model == ""} {return}
-		set m $model
-		# Check if model exists
-		if {[lsearch $Model(idList) $m] == -1} {
-			return
-		}
-		if {$value != ""} {
-			set Model($m,visibility) $value
-		}
-		Model($m,node)  SetVisibility $Model($m,visibility)
-		Model($m,actor) SetVisibility [Model($m,node) GetVisibility] 
-
-		# If this is the active model, update GUI
-		if {$m == $Model(activeID)} {
-			set Model(visibility) [Model($m,node) GetVisibility]
-		}
+    if {[string compare $model "None"] == 0} {
+	foreach m $Model(idList) {
+	    set Model($m,visibility) 0
+	    Model($m,node)  SetVisibility 0
+	    foreach r $Module(Renderers) {
+		Model($m,actor,$r) SetVisibility [Model($m,node) GetVisibility] 
+	    }
 	}
+    } elseif {[string compare $model "All"] == 0} {
+	foreach m $Model(idList) {
+	    set Model($m,visibility) 1
+	    Model($m,node)  SetVisibility 1
+	    foreach r $Module(Renderers) { 
+		Model($m,actor,$r) SetVisibility [Model($m,node) GetVisibility] 
+	    }
+	}
+    } else {
+	if {$model == ""} {return}
+	set m $model
+	# Check if model exists
+	if {[lsearch $Model(idList) $m] == -1} {
+	    return
+	}
+	if {$value != ""} {
+	    set Model($m,visibility) $value
+	}
+	Model($m,node)  SetVisibility $Model($m,visibility)
+        foreach r $Module(Renderers) {
+	    Model($m,actor,$r) SetVisibility [Model($m,node) GetVisibility] 
+	}
+	# If this is the active model, update GUI
+	if {$m == $Model(activeID)} {
+	    set Model(visibility) [Model($m,node) GetVisibility]
+	}
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -780,8 +802,9 @@ proc MainModelsSetOpacity {m {value ""}} {
 	    }
 	}
 	Model($m,node) SetOpacity $Model($m,opacity)
-	$Model($m,prop) SetOpacity [Model($m,node) GetOpacity]
-
+        
+	$Model($m,prop,viewRen) SetOpacity [Model($m,node) GetOpacity]
+	
 	# If this is the active model, update GUI
 	if {$m == $Model(activeID)} {
 			set Model(opacity) [Model($m,node) GetOpacity]
@@ -795,21 +818,25 @@ proc MainModelsSetOpacity {m {value ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsSetCulling {m {value ""}} {
-	global Model
+	global Model Module
 
 	if {$value != ""} {
 		set Model($m,backfaceCulling) $value
 	}
 	Model($m,node) SetBackfaceCulling $Model($m,backfaceCulling)
-	$Model($m,prop) SetBackfaceCulling \
-		[Model($m,node) GetBackfaceCulling]
-
+	
+	foreach r $Module(Renderers) {
+	    $Model($m,prop,$r) SetBackfaceCulling \
+		    [Model($m,node) GetBackfaceCulling]
+	}
+	
 	# If this is the active model, update GUI
 	if {$m == $Model(activeID)} {
-			set Model(backfaceCulling) [Model($m,node) GetBackfaceCulling]
+	    set Model(backfaceCulling) [Model($m,node) GetBackfaceCulling]
 	}
-}
- 
+    
+    }
+    
 #-------------------------------------------------------------------------------
 # .PROC MainModelsSetScalarVisibility
 # 

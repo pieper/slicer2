@@ -72,7 +72,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-		{$Revision: 1.34 $} {$Date: 2000/07/25 17:11:26 $}]
+		{$Revision: 1.35 $} {$Date: 2000/09/14 21:34:53 $}]
 
 	set Mrml(filePrefix) data
 	set Mrml(colorsUnsaved) 0
@@ -89,10 +89,11 @@ proc MainMrmlInitIdLists {} {
 	global Model Volume Color Transform EndTransform Matrix
 	global TransferFunction WindowLevel TFPoint ColorLUT Options
 	global Fiducials EndFiducials Point
+        global Path EndPath Landmark
 
 	foreach node "Color Model Volume Transform EndTransform Matrix \
 		TransferFunction WindowLevel TFPoint ColorLUT Options \
-		Fiducials EndFiducials Point" {
+		Fiducials EndFiducials Point Path EndPath Landmark" {
 		set ${node}(nextID) 0
 		set ${node}(idList) ""
 		set ${node}(idListDelete) ""
@@ -148,7 +149,7 @@ proc MainMrmlPrint {tags} {
 		set attr [lreplace $pair 0 0]
 
 		# Process EndTransform & EndFiducials
-		if {$tag == "EndTransform" || $tag == "EndFiducials"} {
+		if {$tag == "EndTransform" || $tag == "EndFiducials" || $tag == "EndPath"} {
 			set level [expr $level - 1]
 		}
 		set indent ""
@@ -158,8 +159,8 @@ proc MainMrmlPrint {tags} {
 
 		puts "${indent}$tag"
 
-		# Process Transform & Fiducals
-		if {$tag == "Transform" || $tag == "Fiducials"} {
+		# Process Transform & Fiducials
+		if {$tag == "Transform" || $tag == "Fiducials" || $tag == "Path"} {
 			incr level
 		}
 		set indent ""
@@ -185,10 +186,11 @@ proc MainMrmlClearList {} {
 	global Model Volume Color Transform EndTransform Matrix
 	global TransferFunction WindowLevel TFPoint ColorLUT Options
 	global Fiducials EndFiducials Point
+        global Path EndPath Landmark
 
 	foreach node "Color Model Volume Transform EndTransform Matrix \
 		TransferFunction WindowLevel TFPoint ColorLUT Options \
-		Fiducials EndFiducials Point" {
+		Fiducials EndFiducials Point Path EndPath Landmark" {
 		set ${node}(idListDelete) ""
 	}
 }
@@ -206,7 +208,9 @@ proc MainMrmlClearList {} {
 proc MainMrmlAddNode {nodeType} {
 	global Mrml Model Volume Color Transform EndTransform Matrix Options
 	global TransferFunction WindowLevel TFPoint ColorLUT 
-	global Fiducials EndFiducials Point
+	global Fiducials EndFiducials Point 
+        global Path EndPath Landmark Array 
+    
 
 	upvar $nodeType Array
 
@@ -248,6 +252,7 @@ proc MainMrmlUndoAddNode {nodeType n} {
 	global Mrml Model Volume Color Transform EndTransform Matrix Options
 	global TransferFunction WindowLevel TFPoint ColorLUT 
 	global Fiducials EndFiducials Point
+        global Path EndPath Landmark Array
 
 	upvar $nodeType Array
 
@@ -277,6 +282,7 @@ proc MainMrmlDeleteNodeDuringUpdate {nodeType id} {
 	global Mrml Model Volume Color Transform EndTransform Matrix
 	global TransferFunction WindowLevel TFPoint ColorLUT Options
 	global Fiducials EndFiducials Point
+        global Path EndPath Landmark
 
 	upvar $nodeType Array
 
@@ -307,6 +313,7 @@ proc MainMrmlDeleteNode {nodeType id} {
 	global Mrml Model Volume Color Transform EndTransform Matrix Options
 	global TransferFunction WindowLevel TFPoint ColorLUT 
 	global Fiducials EndFiducials Point
+        global Path EndPath Landmark
 
 	upvar $nodeType Array
 
@@ -343,6 +350,7 @@ proc MainMrmlDeleteAll {} {
 	global Mrml Model Volume Color Transform EndTransform Matrix
 	global TransferFunction WindowLevel TFPoint ColorLUT Options
 	global Fiducials EndFiducials Point
+        global Path EndPath Landmark
 
 	# Volumes are a special case because the "None" always exists
 	foreach id $Volume(idList) {
@@ -364,7 +372,7 @@ proc MainMrmlDeleteAll {} {
 	# dataTree
 	foreach node "Model Transform EndTransform Matrix \
 		TransferFunction WindowLevel TFPoint ColorLUT Options \
-		Fiducials EndFiducials Point" {
+		Fiducials EndFiducials Point Path EndPath Landmark" {
 		upvar 0 $node Array
 
 		foreach id $Array(idList) {
@@ -541,6 +549,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 	global Model Volume Color Transform EndTransform Matrix
 	global TransferFunction WindowLevel TFPoint ColorLUT Options
 	global Preset Fiducials EndFiducials Point
+        global Path EndPath Landmark
 
 	foreach pair $tags {
 		set tag  [lindex $pair 0]
@@ -739,7 +748,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 				MainOptionsUseDefaultPresets
 				MainOptionsParsePresets $attr
 			}
-		}
+		    }
 
 		"Fiducials" {
 			set n [MainMrmlAddNode Fiducials]
@@ -757,13 +766,36 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 				"desc"             {$n SetDescription  $val}
 				"name"             {$n SetName         $val}
 				"xyz"              {eval $n SetXYZ     $val}
-				}
+			    }
+
 			}
+		    }
+		"Path" {
+			set n [MainMrmlAddNode Path]
 		}
 		
+		"EndPath" {
+			set n [MainMrmlAddNode EndPath]
+		}
+		"Landmark" {
+			set n [MainMrmlAddNode Landmark]
+			foreach a $attr {
+				set key [lindex $a 0]
+				set val [lreplace $a 0 0]
+				switch $key {
+				"desc"             {$n SetDescription  $val}
+				"name"             {$n SetName         $val}
+				"pathPosition"    {eval $n SetPathPosition  $val}
+				"xyz"              {eval $n SetXYZ     $val}
+				"focalxyz"              {eval $n SetFXYZ     $val}
+
+
+			    }
+			}
+		    }
+		}
 	    }
 	}
-}
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlReadVersion1.0
@@ -774,6 +806,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 proc MainMrmlReadVersion1.0 {fileName} {
 	global Lut Dag Volume Model Config Color Gui Mrml env Transform
 	global Fiducials EndFiducials Point
+        global Path EndPath Landmark
 
 	# Read file
 	if {$fileName == ""} {
@@ -800,7 +833,8 @@ proc MainMrmlReadVersion1.0 {fileName} {
 proc MainMrmlBuildTreesVersion1.0 {} {
 	global Dag Color Model Volume Transform EndTransform Matrix Path
 	global Fiducials EndFiducials Point
-	
+	global Path EndPath Landmark
+
 	set level 0
 	set transformCount($level) 0
 	set dag $Dag(expanded)

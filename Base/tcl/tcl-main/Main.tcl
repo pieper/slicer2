@@ -33,6 +33,8 @@
 #   MainBuildGUI
 #   MainBuildModuleTabs ModuleName
 #   MainUpdateMRML
+#   MainAddActor
+#   MainRemoveActor
 #   MainSetup
 #   IsModule
 #   Tab
@@ -127,6 +129,7 @@ proc MainBoot {{mrmlFile ""}} {
 	Slicer SetFieldOfView $View(fov)
 
 	vtkRenderer viewRen
+	lappend Module(Renderers) viewRen
  	set View(viewCam) [viewRen GetActiveCamera]
 
 	MainViewerBuildGUI
@@ -329,10 +332,11 @@ proc MainInit {} {
 	set Module(procMRML) ""
 	set Module(procStorePresets) ""
 	set Module(procRecallPresets) ""
+	set Module(Renderers) ""
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.46 $} {$Date: 2000/08/09 21:09:17 $}]
+		{$Revision: 1.47 $} {$Date: 2000/09/14 21:34:52 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -809,6 +813,70 @@ proc MainUpdateMRML {} {
 		}
 	}
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC MainAddActor {actor}
+#
+#  With this procedure, the actor is added  to all existing Renderers
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainAddActor { a } {
+    global Module 
+    
+    foreach r $Module(Renderers) {
+	$r AddActor $a
+    }   
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC MainAddModelActor {modelID}
+#
+#  With this procedure, a different actor for the same model is added to each existing Renderer
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainAddModelActor { m } {
+    global Module 
+    
+    foreach r $Module(Renderers) {
+	$r AddActor Model($m,actor,$r)
+    }   
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC MainRemoveActor {actor}
+#  With this procedure, the actor is removed from all existing Renderers
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainRemoveActor { a } {
+	global Module 
+
+    foreach m $Module(Renderers) {
+	$m RemoveActor $a
+    }
+}
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC MainRemoveModelActor {modelID}
+#  With this procedure, every actor for the model is removed from all existing Renderers
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainRemoveModelActor { m } {
+	global Module 
+
+    foreach r $Module(Renderers) {
+	$r RemoveActor Model($m,actor,$r)
+    }
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC MainSetup
