@@ -259,7 +259,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.51 $} {$Date: 2005/03/04 21:52:10 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.52 $} {$Date: 2005/03/07 02:43:05 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -2507,11 +2507,10 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
           } else {
              SegmenterClass($pid,node) SetLocalPriorName   ""
           }
-          eval SegmenterClass($pid,node) SetPCAMaxDist         $EMSegment(Cattrib,$i,PCAMaxDist)
-          eval SegmenterClass($pid,node) SetPCADistVariance    $EMSegment(Cattrib,$i,PCADistVariance)
 
           if {$EMSegment(Cattrib,$i,PCAMeanData) != $Volume(idNone) } {
-             SegmenterClass($pid,node) SetPCAMeanName  [Volume($EMSegment(Cattrib,$i,PCAMeanData),node) GetName]
+             Segmente
+rClass($pid,node) SetPCAMeanName  [Volume($EMSegment(Cattrib,$i,PCAMeanData),node) GetName]
           } else {
              SegmenterClass($pid,node) SetPCAMeanName  ""
           }
