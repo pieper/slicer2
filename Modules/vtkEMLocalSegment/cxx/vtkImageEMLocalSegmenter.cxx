@@ -23,15 +23,138 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 // Since 22-Apr-02 vtkImageEMLocal3DSegmenter is called vtkImageEMLocalSegmenter - Kilian
 // EMLocal =  using EM Algorithm with Local Tissue Class Probability
-
 #include "vtkImageEMLocalSegmenter.h"
 #include "vtkObjectFactory.h"
-// This has always to be defined when using vtkDataTimeDef . Do not ask me why
+
+// ------------------------------------------------------------------
+// To Communicate with Samson
+#ifdef VTKEMPRIVATE_TETRA_MESH_FLAG
+#include "DeformableModel.h"
+#include "samfunc.h"
+#endif
+// End Samson interface
+
+#include "vtkImageReader.h"
+#include "vtkImageWriter.h"
+// ------------------------------------------------------------------
+
+#define vtkTemplateMacro26(func,arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10,arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25, arg26) \
+      case VTK_DOUBLE: \
+        { typedef double VTK_TT; \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10,arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25, arg26); } \
+        break; \
+      case VTK_FLOAT: \
+        { typedef float VTK_TT; \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10,arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25, arg26); } \
+        break; \
+      case VTK_LONG: \
+        { typedef long VTK_TT; \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10,arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25, arg26); } \
+        break; \
+      case VTK_UNSIGNED_LONG: \
+        { typedef unsigned long VTK_TT; \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10,arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25, arg26); } \
+        break; \
+      case VTK_INT: \
+        { typedef int VTK_TT; \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10,arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25, arg26); } \
+        break; \
+      case VTK_UNSIGNED_INT: \
+        { typedef unsigned int VTK_TT; \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10,arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25, arg26); } \
+        break; \
+      case VTK_SHORT: \
+        { typedef short VTK_TT; \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10,arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25, arg26); } \
+        break; \
+      case VTK_UNSIGNED_SHORT: \
+        { typedef unsigned short VTK_TT; \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10,arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25, arg26); } \
+        break; \
+      case VTK_CHAR: \
+        { typedef char VTK_TT; \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10,arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25, arg26); } \
+        break; \
+      case VTK_UNSIGNED_CHAR: \
+        { typedef unsigned char VTK_TT; \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10,arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24, arg25, arg26); } \
+        break
+
+
+#define vtkTemplateMacro11(func,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11) \
+      case VTK_DOUBLE: \
+        { typedef double VTK_TT; \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11); } \
+        break; \
+      case VTK_FLOAT: \
+        { typedef float VTK_TT; \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11); } \
+        break; \
+      case VTK_LONG: \
+        { typedef long VTK_TT; \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11); } \
+        break; \
+      case VTK_UNSIGNED_LONG: \
+        { typedef unsigned long VTK_TT; \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11); } \
+        break; \
+      case VTK_INT: \
+        { typedef int VTK_TT; \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11); } \
+        break; \
+      case VTK_UNSIGNED_INT: \
+        { typedef unsigned int VTK_TT; \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11); } \
+        break; \
+      case VTK_SHORT: \
+        { typedef short VTK_TT; \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11); } \
+        break; \
+      case VTK_UNSIGNED_SHORT: \
+        { typedef unsigned short VTK_TT; \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11); } \
+        break; \
+      case VTK_CHAR: \
+        { typedef char VTK_TT; \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11); } \
+        break; \
+      case VTK_UNSIGNED_CHAR: \
+        { typedef unsigned char VTK_TT; \
+        func(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11); } \
+        break
+
+// This has always to be defined when using vtkPrivateDataTimeDef . Do not ask me why
 extern "C" {
   struct timeval preciseTimeEnd;
   struct timeval preciseTimeStart;
 }
 
+// Just for debugging
+void EMLocalSegment_PrintMatrix3DPrivate(double ***mat, int zMax,int yMax,int xMax) {
+  int y,x,z;
+  for (z = 0; z < zMax; z++) {
+    for (y = 0; y < yMax; y++) {
+      for (x = 0; x < xMax; x++)
+    cout << mat[z][y][x] << " ";
+          cout   << endl;
+    }
+    cout   << endl;
+  }
+}
+
+void EMLocalSegment_PrintMatrixPrivate(double **mat,int yMax,int xMax) {
+  int y,x;
+  for (y = 0; y < yMax; y++) {
+    for (x = 0; x < xMax; x++)
+      cout << mat[y][x] << " ";
+    cout   << endl;
+  }
+  cout   << endl;
+}
+
+//------------------------------------------------------------------------------
+// Define Procedures for vtkImageEMLocalSegmenter
+//------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 vtkImageEMLocalSegmenter* vtkImageEMLocalSegmenter::New()
 {
@@ -48,158 +171,171 @@ vtkImageEMLocalSegmenter* vtkImageEMLocalSegmenter::New()
 //----------------------------------------------------------------------------
 vtkImageEMLocalSegmenter::vtkImageEMLocalSegmenter()
 {
-  this->NumInputImages = 0;   // Number of input images for the segmentation - Has to be defined before Mu, Sigma and NumClasses
-  this->NumClasses = 0;       // Number of Classes - has to be set to 0 bc currently nothing is set
-  this->NumIter = 1;          // Number of EM-MRF Iterations
-  this->NumRegIter = 1;       // Number of Regularizing Iterations
-  this->Alpha = 0.7;          // 0 <= alpha <= 1. Be carefull - has great influence over outcome 
-  this->SmoothingWidth = 11;  // Width for Gausian to regularize weights
-  this->SmoothingSigma = 5;   // Sigma paramter for regularizing Gaussian
-  this->StartSlice = 1;       // First Slide to be segmented
-  this->EndSlice = 1;         // Last Slide to be segmented  
-  this->PrintIntermediateResults = 0 ;   // Print intermediate results in a Matlab File (No = 0, Yes = 1)
-  this->PrintIntermediateSlice = 1 ;     // Print out the result of which slice  
-  this->PrintIntermediateFrequency = 1 ; // Print out the result after how many steps
+  this->NumEMShapeIter = 1;              // Number of iterations between EM and Shape deformation (Samson)
+  this->NumIter = 1;                     // Number of EM-MRF Iterations
+  this->NumRegIter = 1;                  // Number of Regularizing Iterations
+  this->Alpha = 0.7;                     // 0 <= alpha <= 1. Be carefull - has great influence over outcome 
+  this->SmoothingWidth = 11;             // Width for Gausian to regularize weights
+  this->SmoothingSigma = 5;              // Sigma paramter for regularizing Gaussian
+  this->NumInputImages = 0;              // Number of input images
+ 
+  this->PrintDir = NULL;                 // Directory in which everything should be printed out  
+  memset(this->Extent, 0, sizeof(int)*6);  // Need to know the original extent for several functions in the class 
 
   this->NumberOfTrainingSamples = 0;     // Number of Training Samples Probability Image has been summed up over !
-  this->ImageMaxZ = 0;                   // MaxZ = EndSlice - StartSlice + 1;  
-  this->ImageMaxY = 0;                   // Size of volume in Y direction (normally 256 or 512)
-  this->ImageMaxX = 0;                   // Size of volume in X direction (normally 256 or 512)
   this->ImageProd = 0;                   // Size of Image = maxX*maxY*maxZ
 
-  this->IntensityAvgClass = -1;          // Label of Tissue class for which Intensity value is defined, = -1 => no intensity correction 
-  this->BiasPrint = 1;                   // Should the bias field be printed or not
+  this->IntensityAvgClass = NULL;          // Label of Tissue class for which Intensity value is defined, = -1 => no intensity correction 
 
-  this->ErrorFlag = 0;                  // Did a user error occure
-  this->LogMu = NULL;this->LogCovariance = NULL;this->Label = NULL;this->TissueProbability = NULL;this->MrfParams = NULL;
-  this->ProbDataPtr = NULL;this->ProbDataIncY = NULL; this->ProbDataIncZ = NULL; this->ProbDataLocal =NULL; this->IntensityAvgValuePreDef = NULL;
-  this->IntensityAvgValueCurrent = NULL; this->BiasRootFileName = NULL; this->ErrorMessage = NULL;
+  this->HeadClass = NULL;
+  this->activeSuperClass = NULL;
+  this->activeClass      = NULL;
+  this->activeClassType  = SUPERCLASS;
+
+  this->IntensityAvgValuePreDef = NULL;this->IntensityAvgValueCurrent = NULL; 
 }
 
+//------------------------------------------------------------------------------
 vtkImageEMLocalSegmenter::~vtkImageEMLocalSegmenter(){
   this->DeleteVariables();
 }
 
 //----------------------------------------------------------------------------
-void vtkImageEMLocalSegmenter::PrintSelf(ostream& os, vtkIndent indent) {
-  int x,y,i;
-  // vtkIndent indent;
-  os << indent << "NumIter:                    " << this->NumIter << "\n";
-  os << indent << "NumRegIter:                 " << this->NumRegIter << "\n";
-  os << indent << "Alpha:                      " << this->Alpha << "\n";
-  os << indent << "SmoothingWidth:             " << this->SmoothingWidth << "\n";
-  os << indent << "SmoothingSigma:             " << this->SmoothingSigma << "\n";
-  os << indent << "StartSlice:                 " << this->StartSlice << "\n";
-  os << indent << "EndSlice:                   " << this->EndSlice << "\n";
-  os << indent << "PrintIntermediateResults:   " << this->PrintIntermediateResults<< "\n";
-  os << indent << "PrintIntermediateSlice:     " << this->PrintIntermediateSlice << "\n";
-  os << indent << "PrintIntermediateFrequency: " << this->PrintIntermediateFrequency << "\n";
-  os << indent << "NumClasses:                 " << this->NumClasses << endl;
-  os << indent << "NumInputImages:             " << this->NumInputImages << "\n";
-  os << indent << "BiasPrint:                  " << this->BiasPrint << "\n";
-  if (this->BiasPrint) {
-    os << indent << "BiasRootFileName:           "; 
-    if (BiasRootFileName) os << this->BiasRootFileName;
-    else os << "(none)";
-    os << "\n";
-  }
-  os << indent << "ImageMaxX:                  " << this->ImageMaxX << "\n";
-  os << indent << "ImageMaxY:                  " << this->ImageMaxY << "\n";
-  os << indent << "ImageMaxZ:                  " << this->ImageMaxZ << "\n";
-  os << indent << "ImageProd:                  " << this->ImageProd << "\n";
-  os << indent << "NumberOfTrainingSamples:    " << this->NumberOfTrainingSamples << "\n";
-  os << indent << "IntensityAvgClass:          " ;
-  if (this->IntensityAvgClass > -1) {
-    os << this->Label[this->IntensityAvgClass] << "\n";
-    os << indent << "IntensityAvgValuePreDef:    ";
-    for (i = 0; i< this->NumInputImages;i++) os << this->IntensityAvgValuePreDef[i] << " ";
-    os  << "\n";
-    os << indent << "IntensityAvgValueCurrent:   ";
-    for (i = 0; i< this->NumInputImages;i++) os << this->IntensityAvgValueCurrent[i] << " ";
-    os  << "\n";
-  }  else  os << "(none)\n";
+void vtkImageEMLocalSegmenter::PrintSelf(ostream& os,vtkIndent indent) {
+  int i;
+   // vtkImageEMGeneral::PrintSelf(os,indent);
+   
+   os << indent << "NumEMShapeIter:             " << this->NumEMShapeIter << "\n";
+   os << indent << "NumIter:                    " << this->NumIter << "\n";
+   os << indent << "NumRegIter:                 " << this->NumRegIter << "\n";
+   os << indent << "Alpha:                      " << this->Alpha << "\n";
+   os << indent << "SmoothingWidth:             " << this->SmoothingWidth << "\n";
+   os << indent << "SmoothingSigma:             " << this->SmoothingSigma << "\n";
 
-  for (i = 0; i < this->NumClasses; i++) {
-    os << indent << "------------------------------------------ CLASS ----------------------------------------------" << endl;
-    os << indent << "Label:              " << this->Label[i] << endl;
-    os << indent << "Tissue Probability: " << this->TissueProbability[i] <<endl;
-    os << indent << "ProbDataLocal:      " << this->ProbDataLocal[i] << endl;
-    if (this->ProbDataLocal[i]) {
-      os << indent << "   ProbDataPtr:  " << this->ProbDataPtr[i] << endl;
-      os << indent << "   ProbDataIncY: " << this->ProbDataIncY[i] << endl;
-      os << indent << "   ProbDataIncZ: " << this->ProbDataIncZ[i] << endl;
-    }
-    os << indent << "LogMu:              ";
-    for (x= 0 ; x < this->NumInputImages; x ++) os << this->LogMu[i][x] << " ";
-    os<< endl;
-
-    os << indent << "LogCovariance:      ";
-    for (y= 0 ; y < this->NumInputImages; y ++) {
-      for (x= 0; x < this->NumInputImages; x++)  os << this->LogCovariance[i][y][x] << " " ;
-      if ( y < (this->NumInputImages-1)) os<< "| ";
-    }
-    os<< endl;
-  }
-}
-
-void vtkImageEMLocalSegmenter::ResetErrorSettings() {
-  if (this->ErrorMessage) {
-    this->ErrorMessage->rdbuf()->freeze(0);
-    delete this->ErrorMessage;
-  }
-  // I did not know how to differently flush the stream;
-  this->ErrorMessage = new vtkOStrStreamWrapper;
-  this->ErrorFlag = 0;
-}
-
-char* vtkImageEMLocalSegmenter::GetErrorMessages() {
-  if (this->ErrorMessage) return this->ErrorMessage->str();
-  else return NULL;
-}
-
-#define vtkEMLocalSetErrorMessage(Message,Flag, x)                          \
-   {                                                                   \
-     vtkOStreamWrapper::EndlType endl;                                 \
-     vtkOStreamWrapper::UseEndl(endl);                                 \
-     Message->rdbuf()->freeze(0);                                      \
-     cerr << "- Error: " << x << "\n";                              \
-     (*Message) << "- Error: " << x << "\n";                           \
-     Flag =  1;                                                        \
+   os << indent << "NumInputImages:             " << this->NumInputImages << "\n";
+   os << indent << "PrintDir:                   " << (this->PrintDir ? this->PrintDir : "(none)") << "\n"; 
+   os << indent << "NumberOfTrainingSamples:    " << this->NumberOfTrainingSamples << "\n";
+   os << indent << "IntensityAvgValuePreDef:    "; 
+   for (i = 0; i< this->NumInputImages;i++) os << this->IntensityAvgValuePreDef[i] << " ";
+   os  << "\n";
+   os << indent << "IntensityAvgValueCurrent:   ";
+   for (i = 0; i< this->NumInputImages;i++) os << this->IntensityAvgValueCurrent[i] << " ";
+   os  << "\n";
+   os << indent << "IntensityAvgClass:          " ;
+   if (this->IntensityAvgClass) os << this->IntensityAvgClass->GetLabel() << "\n";
+   else  os << "(none)\n";
+   os << indent << "activeSuperClass:           " ;
+   if (this->activeSuperClass) os << this->activeSuperClass->GetLabel() << "\n";
+   else os << "(none) \n"; 
+   os << indent << "activeClassType:            ";
+   if (activeClassType == CLASS) {
+     os << "CLASS" << "\n";
+     os << indent << "activeClass:                "; 
+     if (this->activeClass) os << ((vtkImageEMClass*)this->activeClass)->GetLabel() << "\n";
+     else os << "(none) \n";
+   } else {
+      os << "SUPERCLASS" << "\n";
+      os << indent << "activeClass:                ";
+      if (this->activeClass) os << ((vtkImageEMSuperClass*)this->activeClass)->GetLabel() << "\n";
+      else os << "(none) \n";
    }
+   os << indent << "Extent:                     " ;
+   for (i=0; i < 6; i++) os << this->Extent[i]<< " " ; 
+   os << "\n";
 
+   this->HeadClass->PrintSelf(os,indent);
+}
+//----------------------------------------------------------------------------
+// Calculates the weighted inverse covariance 
+int EMLocalSegment_CalcWeightedCovariance(vtkImageEMLocalSegmenter* self,double** WeightedInvCov, double & SqrtDetWeightedInvCov, float* Weights, double** LogCov, int & VirtualDim,int dim) {
+  int x,y,Xindex,Yindex;
+  // Calculate the weighted coveriance => inpput channels are differently weighted
+  VirtualDim = 0; 
+  for (x=0;x < dim ; x++)  if (Weights[x] > 0.0) VirtualDim ++;
+  for (x=0; x < dim ; x++) memset(WeightedInvCov[x],0,sizeof(double)*dim);
+  if (VirtualDim == 0) {
+    vtkEMAddWarningMessageSelf("EMLocalSegment_CalcWeightedCovariance:  All Weights are set to 0");
+    SqrtDetWeightedInvCov =0;
+    return 1;
+  }
+  double** InvLogCov     = new double*[VirtualDim];
+  double** VirtualLogCov = new double*[VirtualDim];
+  Xindex = 0; 
+  // Take out rows with zeros to decrease dimension
+  for (x=0; x < VirtualDim ; x++) {
+    InvLogCov[x] = new double[VirtualDim];
+    VirtualLogCov[x] = new double[VirtualDim];
+    while (Weights[Xindex] == 0.0) Xindex ++;
+    Yindex = 0;
+    for (y=0;y < VirtualDim; y++) {
+       while (Weights[Yindex] == 0.0) Yindex ++;
+       VirtualLogCov[x][y] = LogCov[Xindex][Yindex];
+       Yindex ++; 
+    }
+    Xindex ++;
+  }
+  // Calculate Invers of the matrix
+  if (vtkImageEMGeneral::InvertMatrix(VirtualLogCov,InvLogCov,VirtualDim) == 0 ) return 0;
+ 
+  // Theory behind calculating weighted inverse 
+  // P(x|tissue) = 1/(2pi)^(n/2)  * 1/ Det(S)^0.5 * e^ -0.5( (x-m) S^-1 (x-m) )
+  // P(x|tissue,InputWeight) =  1/(2pi)^(Nvirtual/2)  * det(S'^-1)^0.5 * e^ -0.5( (x-m) S'^-1 (x-m) )
+  // where (x-m) S'^-1 (x-m) = (x-m) .* InputWeight S^-1 (x-m) .* InputWeight  
+  // =>  for n = 2 S'^-1 = ( w1*w1*s11 w1*w2*s12 | w1*w2*s21  w2*w2*s22) where InputWeight = (w1 w2) and S^-1 = (s11 s12 | s21 s22)  
+  // Nvirual = # of wi which are non-zero
+ 
+  // Copy over values and multipky them with weights
+
+
+
+  Xindex = 0;
+  for (x=0; x < VirtualDim ; x++) {
+    while (Weights[Xindex] == 0.0) Xindex ++;
+    Yindex = 0;
+    for (y=0;y < VirtualDim; y++) {
+       while (Weights[Yindex] == 0.0) Yindex ++;
+       WeightedInvCov[Xindex][Yindex] = InvLogCov[x][y] * double(Weights[Xindex] * Weights[Yindex]); 
+       Yindex ++;
+    }
+    Xindex ++;
+  }
+
+  // Calculate the weighted determinant 
+  SqrtDetWeightedInvCov = sqrt(vtkImageEMGeneral::determinant(WeightedInvCov,VirtualDim));
+  // Take out rows with zeros to dcrease dimension
+  for (x=0; x < VirtualDim ; x++) {
+    delete[] InvLogCov[x];
+    delete[] VirtualLogCov[x];
+  }
+  delete[] InvLogCov;
+  delete[] VirtualLogCov;
+
+  if (SqrtDetWeightedInvCov != SqrtDetWeightedInvCov)  return 0;
+  return 1;
+}
 
 //------------------------------------------------------------------------------
 template <class Tin, class Tprob>
-static double vtkImageEMLocalSegmenterCalculateIntensityCorrection(vtkImageEMLocalSegmenter* self, Tin *in1Ptr, Tprob **ProbDataPtr, int InputIndex,int inIncY, int inIncZ) {
-  int label = self->GetIntensityAvgClass();
+static double vtkImageEMLocalSegmenterCalculateIntensityCorrection(vtkImageEMLocalSegmenter* self, Tin *in1Ptr, Tprob *ProbDataPtr, int InputIndex,int inIncY, int inIncZ) {
+  vtkImageEMClass* IntensityAvgClass = self->GetIntensityAvgClass();
   // Intensity correction is disabled !
-  if (label < 0) return 0.0;
-  int tissue = -1;
-  int z = 1,y,x ;
+  if (IntensityAvgClass == NULL) return 0.0;
+  int z,y,x;
   double result;
-  // Debugging
-  while ((tissue == -1) && (z <= self->GetNumClasses())) {
-    if (label == self->GetLabel(z)) tissue = z-1;
-    z++;
-  }
-  if (tissue == -1) {
-    cout << "vtkImageEMLocalSegmenterCalculateIntensityCorrection::Warning: Label definition for IntensityAvgClass ("<< label <<") does not match any class label. Intensity correction is deactivated !" << endl;
-    return 0.0; 
-  }
-  if ((self->GetProbDataLocal())[tissue] == 0) {
-    cout << "vtkImageEMLocalSegmenterCalculateIntensityCorrection::Warning:No probability data map defined for class "<<  tissue+1 << ". Intensity correction is deactivated !"<< endl;
+  if (IntensityAvgClass->GetProbDataWeight() == 0.0) {
+    vtkEMAddWarningMessageSelf("vtkImageEMLocalSegmenterCalculateIntensityCorrection:No probability data map defined for class "<< IntensityAvgClass->GetLabel() << ". Intensity correction is deactivated !");
     return 0.0;
   }
 
-  int ProbDataIncY   = (self->GetProbDataIncY())[tissue];
-  int ProbDataIncZ   = (self->GetProbDataIncZ())[tissue];
-  int ImageMaxZ      = self->GetImageMaxZ();
-  int ImageMaxY      = self->GetImageMaxY();
-  int ImageMaxX      = self->GetImageMaxX();
+  int ProbDataIncY   = IntensityAvgClass->GetProbDataIncY();
+  int ProbDataIncZ   = IntensityAvgClass->GetProbDataIncZ();
+  int ImageMaxZ      = self->GetDimensionZ();
+  int ImageMaxY      = self->GetDimensionY();
+  int ImageMaxX      = self->GetDimensionX();
   int SampleCount   = 0;
   double SampleValue = 0.0;
   int border = int(0.95 * double(self->GetNumberOfTrainingSamples()));
-  Tprob* ProbDataCopyPtr = ProbDataPtr[tissue];
+  Tprob* ProbDataCopyPtr = ProbDataPtr;
   for (z=0; z < ImageMaxZ; z++) {
     for (y=0; y < ImageMaxY; y++) {
       for (x=0; x < ImageMaxX; x++) {
@@ -216,71 +352,39 @@ static double vtkImageEMLocalSegmenterCalculateIntensityCorrection(vtkImageEMLoc
     in1Ptr += inIncZ;
     ProbDataCopyPtr += ProbDataIncZ;
   }
-  ProbDataCopyPtr = ProbDataPtr[tissue];
-
+  ProbDataCopyPtr = ProbDataPtr;
   if (SampleCount) {
     result = SampleValue /double(SampleCount);
     // printf("IntensityCorrection:: Input: %d Samples: %d Average: %.4f",InputIndex,SampleCount, result); 
     cout << "IntensityCorrection:: Input: "<< InputIndex << " Samples: " << SampleCount << " Average: "<< result; 
     self->SetIntensityAvgValueCurrent(result,InputIndex); 
-    if (self->GetIntensityAvgValuePreDef(InputIndex+1) < 0.0) {
+    if (self->GetIntensityAvgValuePreDef(InputIndex) < 0.0) {
       cout << endl;
-        return 0.0;
+      return 0.0;
     }
-    result -= self->GetIntensityAvgValuePreDef(InputIndex+1);
+    result -= self->GetIntensityAvgValuePreDef(InputIndex);
     if (fabs(result) < 1e-3) result = 0.0;
     cout << " Delta Correction: "<< result << endl;
     return result;
   }
-  cout << "vtkImageEMLocalSegmenterCalculateIntensityCorrection::Warning:No samples could be taken for intensity correction for image " << InputIndex +1 <<".  Intensity correction is deactivated !"<< endl;
+  vtkEMAddWarningMessageSelf("vtkImageEMLocalSegmenterCalculateIntensityCorrection::No samples could be taken for intensity correction for image " << InputIndex <<".  Intensity correction is deactivated !");
   return 0.0;
-}
-
-
-void vtkImageEMLocalSegmenter::WriteShortDataToMRIFile(char* filename, short* data, int StartSlice, int EndSlice,int IncY,int IncZ) { 
-  int JumpPerSlice = (this->ImageMaxX + IncY)*this->ImageMaxY + IncZ;
-  int NumPixelPerSlice = this->ImageMaxX*this->ImageMaxY;
-  int i;
-  char *NewFileName = new char[strlen(filename) + 5];
-  vtkFileOps write; 
-  cout << "vtkImageEMLocalSegmenter::WriteDataToMRIFile: Writing File "<< filename <<".* !" <<endl;  
-  data +=  JumpPerSlice * StartSlice;  
-  for (i = StartSlice; i<= EndSlice; i++) { 
-    sprintf(NewFileName,"%s.%03d",filename,i);
-    // Currently we have no header
-    write.WriteMRIfile(NewFileName, NULL,0,data, NumPixelPerSlice);
-    if (i < EndSlice) data += JumpPerSlice;
-  }
-  delete []NewFileName;
-}
-
-void vtkImageEMLocalSegmenter::WriteDoubleDataToMRIFile(char* filename, double* data, int StartSlice, int EndSlice,int IncY,int IncZ) { 
-  int JumpPerSlice = (this->ImageMaxX + IncY)*this->ImageMaxY + IncZ;
-  int NumPixelPerSlice = this->ImageMaxX*this->ImageMaxY;
-  int i;
-  char *NewFileName = new char[strlen(filename) + 5];
-  vtkFileOps write; 
-  cout << "vtkImageEMLocalSegmenter::WriteDoubleDataToMRIFile: Writing File "<< filename <<".* !" <<endl;  
-  data +=  JumpPerSlice * StartSlice;  
-  for (i = StartSlice; i<= EndSlice; i++) { 
-    sprintf(NewFileName,"%s.%03d",filename,i);
-    // Currently we have no header
-    write.WriteMRIfile(NewFileName, data, NumPixelPerSlice);
-    if (i < EndSlice) data += JumpPerSlice;
-  }
-  delete []NewFileName;
 }
 
 //----------------------------------------------------------------------------
 // This templated function executes the filter for any type of data.
 template <class T>
-static void vtkImageEMLocalSegmenterReadInputChannel(vtkImageEMLocalSegmenter *self,vtkImageData *in1Data, T *in1Ptr,int inExt[6],int rowLength,int maxY,int StartEndSlice,double ** InputVector,int InputIndex)
+static void vtkImageEMLocalSegmenterReadInputChannel(vtkImageEMLocalSegmenter *self,vtkImageData *in1Data, T *in1Ptr,int inExt[6],float** InputVector,int InputIndex)
 {
 
   int idxR, idxY, idxZ;
   int inIncX, inIncY, inIncZ;
-  int maxXY = rowLength*maxY;;
-  int StartSlice = self->GetStartSlice();
+  int *SegmentationBoundaryMin = self->GetSegmentationBoundaryMin();
+  int *SegmentationBoundaryMax = self->GetSegmentationBoundaryMax();
+  int ImageMaxZ = self->GetDimensionZ();
+  int ImageMaxY = self->GetDimensionY();
+  int ImageMaxX = self->GetDimensionX();
+
   int index = 0; 
   double IntensityCorrection;
 
@@ -288,312 +392,396 @@ static void vtkImageEMLocalSegmenterReadInputChannel(vtkImageEMLocalSegmenter *s
   in1Data->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
   // We assume here input is 1 scalar -> it is checked in CheckInputImages
 
-  //2.)  Define InputVector by reading the log gray values of the image
-  in1Ptr += ((rowLength+inIncY)*maxY + inIncZ)*(StartSlice -1); 
+  int LengthOfXDim = inExt[1] - inExt[0]+1 + inIncY;
+  int LengthOfYDim = LengthOfXDim*(inExt[3] - inExt[2]+1) + inIncZ;  
+  int jump = (SegmentationBoundaryMin[0] - 1) + (SegmentationBoundaryMin[1] - 1) * LengthOfXDim
+              + LengthOfYDim *(SegmentationBoundaryMin[2] - 1);
 
-  switch (self->GetInput(0)->GetScalarType()) {
-    case VTK_DOUBLE:         IntensityCorrection = vtkImageEMLocalSegmenterCalculateIntensityCorrection(self,in1Ptr,(double**) self->GetProbDataPtr(),InputIndex, inIncY, inIncZ); break;
-    case VTK_FLOAT:          IntensityCorrection = vtkImageEMLocalSegmenterCalculateIntensityCorrection(self,in1Ptr,(float**) self->GetProbDataPtr(), InputIndex, inIncY, inIncZ); break; 
-    case VTK_LONG:           IntensityCorrection = vtkImageEMLocalSegmenterCalculateIntensityCorrection(self,in1Ptr,(long**) self->GetProbDataPtr(),InputIndex, inIncY, inIncZ); break; 
-    case VTK_UNSIGNED_LONG:  IntensityCorrection = vtkImageEMLocalSegmenterCalculateIntensityCorrection(self,in1Ptr,(unsigned long**) self->GetProbDataPtr(),InputIndex, inIncY, inIncZ); break; 
-    case VTK_INT:            IntensityCorrection = vtkImageEMLocalSegmenterCalculateIntensityCorrection(self,in1Ptr,(int**) self->GetProbDataPtr(),InputIndex, inIncY, inIncZ); break; 
-    case VTK_UNSIGNED_INT:   IntensityCorrection = vtkImageEMLocalSegmenterCalculateIntensityCorrection(self,in1Ptr,(unsigned int**) self->GetProbDataPtr(),InputIndex, inIncY, inIncZ); break; 
-    case VTK_SHORT:          IntensityCorrection = vtkImageEMLocalSegmenterCalculateIntensityCorrection(self,in1Ptr,(short**) self->GetProbDataPtr(),InputIndex, inIncY, inIncZ); break; 
-    case VTK_UNSIGNED_SHORT: IntensityCorrection = vtkImageEMLocalSegmenterCalculateIntensityCorrection(self,in1Ptr,(unsigned short**) self->GetProbDataPtr(),InputIndex, inIncY, inIncZ); break; 
-    case VTK_CHAR:           IntensityCorrection = vtkImageEMLocalSegmenterCalculateIntensityCorrection(self,in1Ptr,(char**) self->GetProbDataPtr(),InputIndex, inIncY, inIncZ); break; 
-    case VTK_UNSIGNED_CHAR:  IntensityCorrection = vtkImageEMLocalSegmenterCalculateIntensityCorrection(self,in1Ptr,(unsigned char**) self->GetProbDataPtr(),InputIndex, inIncY, inIncZ); break;
-  default:
-    cout << "vtkImageEMLocalSegmenterReadInputChannel: Unknown ScalarType" << endl;
-    return;
-  } 
-  
+  int BoundaryDataIncY = LengthOfXDim - ImageMaxX;
+  int BoundaryDataIncZ = LengthOfYDim - ImageMaxY *LengthOfXDim;
 
-  for (idxZ = 0; idxZ < StartEndSlice ; idxZ++) { 
-    for (idxY = maxY-1; idxY > -1; idxY--) {
-      for (idxR = 0; idxR < rowLength; idxR++) {
+  in1Ptr += jump;
+
+  // cout << "jump " << jump << "BoundaryDataIncY " << BoundaryDataIncY << " BoundaryDataIncZ " << BoundaryDataIncZ << endl;
+ 
+  vtkImageEMClass* IntensityAvgClass = self->GetIntensityAvgClass();
+  if (IntensityAvgClass == NULL) {
+    cout <<"vtkImageEMLocalSegmenterReadInputChannel: Intensiy correction not activated!" << endl;
+    IntensityCorrection = 0.0;
+  } else {
+
+    switch (in1Data->GetScalarType()) {
+       case VTK_DOUBLE:         IntensityCorrection = vtkImageEMLocalSegmenterCalculateIntensityCorrection(self,in1Ptr,(double*) IntensityAvgClass->GetProbDataPtr(),InputIndex, BoundaryDataIncY, BoundaryDataIncZ); break;
+       case VTK_FLOAT:          IntensityCorrection = vtkImageEMLocalSegmenterCalculateIntensityCorrection(self,in1Ptr,(float*) IntensityAvgClass->GetProbDataPtr(), InputIndex, BoundaryDataIncY, BoundaryDataIncZ); break; 
+       case VTK_LONG:           IntensityCorrection = vtkImageEMLocalSegmenterCalculateIntensityCorrection(self,in1Ptr,(long*) IntensityAvgClass->GetProbDataPtr(),InputIndex, BoundaryDataIncY, BoundaryDataIncZ); break; 
+       case VTK_UNSIGNED_LONG:  IntensityCorrection = vtkImageEMLocalSegmenterCalculateIntensityCorrection(self,in1Ptr,(unsigned long*) IntensityAvgClass->GetProbDataPtr(),InputIndex, BoundaryDataIncY, BoundaryDataIncZ); break; 
+       case VTK_INT:            IntensityCorrection = vtkImageEMLocalSegmenterCalculateIntensityCorrection(self,in1Ptr,(int*) IntensityAvgClass->GetProbDataPtr(),InputIndex, BoundaryDataIncY, BoundaryDataIncZ); break; 
+       case VTK_UNSIGNED_INT:   IntensityCorrection = vtkImageEMLocalSegmenterCalculateIntensityCorrection(self,in1Ptr,(unsigned int*) IntensityAvgClass->GetProbDataPtr(),InputIndex, BoundaryDataIncY, BoundaryDataIncZ); break; 
+       case VTK_SHORT:          IntensityCorrection = vtkImageEMLocalSegmenterCalculateIntensityCorrection(self,in1Ptr,(short*) IntensityAvgClass->GetProbDataPtr(),InputIndex, BoundaryDataIncY, BoundaryDataIncZ); break; 
+       case VTK_UNSIGNED_SHORT: IntensityCorrection = vtkImageEMLocalSegmenterCalculateIntensityCorrection(self,in1Ptr,(unsigned short*) IntensityAvgClass->GetProbDataPtr(),InputIndex, BoundaryDataIncY, BoundaryDataIncZ); break; 
+       case VTK_CHAR:           IntensityCorrection = vtkImageEMLocalSegmenterCalculateIntensityCorrection(self,in1Ptr,(char*) IntensityAvgClass->GetProbDataPtr(),InputIndex, BoundaryDataIncY, BoundaryDataIncZ); break; 
+       case VTK_UNSIGNED_CHAR:  IntensityCorrection = vtkImageEMLocalSegmenterCalculateIntensityCorrection(self,in1Ptr,(unsigned char*) IntensityAvgClass->GetProbDataPtr(),InputIndex, BoundaryDataIncY, BoundaryDataIncZ); break; 
+      default:
+        cout << "vtkImageEMLocalSegmenterReadInputChannel: Unknown ScalarType" << endl;
+        return;
+    } 
+
+  }
+  for (idxZ = 0; idxZ < ImageMaxZ ; idxZ++) { 
+    for (idxY = 0; idxY <  ImageMaxY; idxY++) {
+      for (idxR = 0; idxR < ImageMaxX; idxR++) {
     if (double(* in1Ptr) >  IntensityCorrection) {
-      InputVector[index][InputIndex] = log(double(* in1Ptr) +1 - IntensityCorrection);
+      InputVector[index][InputIndex] = log(float(* in1Ptr) +1 - IntensityCorrection);
     } else {
       InputVector[index][InputIndex] = 0.0;
     }
     index ++; 
     in1Ptr++;
       }
-      in1Ptr += inIncY;
+      in1Ptr += BoundaryDataIncY;
     }
-    in1Ptr += inIncZ;
+    in1Ptr += BoundaryDataIncZ;
   }
 }
-
-
 
 //----------------------------------------------------------------------------
-template <class T>
-static void vtkImageEMLocalSegmenterIncrementProbDataPointer(vtkImageEMLocalSegmenter *self,int NumClass, T *inProbDataPtr, int jump) {
-  self->SetProbDataPtr((void*) (inProbDataPtr + jump),NumClass);
-}
-
-//------------------------------------------------------------------------------
-void vtkImageEMLocalSegmenter::SetNumInputImages(int number) {
-  if (this->NumClasses > 0) {
-    vtkErrorMacro(<< "Number of Input Images cannot be changed anymore after Number of Tissue classes have been set !");
-    return;
+template  <class T>
+static void vtkImageEMLocalSegmenterShapeInit(T **ProbDataPtr,int index, int IncY, int IncZ, int imgX, int imgY, int imgZ) {
+  // Initalize values
+  int y,z;
+  T* OriginalPtr = ProbDataPtr[index];
+  ProbDataPtr[index] = new T[((imgX+IncY)*imgY+IncZ)*imgZ];
+  T* NewProbDataPtr = ProbDataPtr[index];
+  int cpsize = sizeof(T)* imgX;
+  int StepSize = imgX + IncY; 
+  for (z=0; z < imgZ; z++) {
+    for (y=0; y < imgY; y++) {
+      memcpy (NewProbDataPtr,OriginalPtr,cpsize);
+      NewProbDataPtr += StepSize;
+      OriginalPtr += StepSize;
+    }
+    NewProbDataPtr += IncZ;
+    OriginalPtr += IncZ;
   }
-  this->NumInputImages = number;
 }
 
+//----------------------------------------------------------------------------
+template  <class T>
+static void vtkImageEMLocalSegmenterShapeUpdate(vtkImageEMLocalSegmenter *self,T *ProbDataPtr,int IncY, int IncZ, bool *UpdatePtr, int imgX, int imgY, int imgZ, float ShapePara) {
+  // Initalize values
+  cout << "Updating Probability Maps" << endl;
+  if (ShapePara == 0) return;
+  int x,y,z;
+  for (z=0; z < imgZ; z++) {
+    for (y=0; y < imgY; y++) {
+      for (x=0; x < imgX; x++) {
+    *ProbDataPtr = T((1.0 - ShapePara)*float(*ProbDataPtr) +  ShapePara * float(self->GetNumberOfTrainingSamples()) * float(*UpdatePtr));
+    UpdatePtr ++;
+    ProbDataPtr++;
+      }
+      ProbDataPtr += IncY;
+    }
+    ProbDataPtr += IncZ;
+  }
+}
+
+//----------------------------------------------------------------------------
+template  <class T> static void vtkImageEMLocalSegmenterShapeDelete(T **ProbDataPtr,int index) {
+  delete[] ProbDataPtr[index]; 
+  ProbDataPtr[index] = NULL;
+}
+
+//----------------------------------------------------------------------------
+//Could not put it into another file like vtkImageGeneral - then it would seg falt - do not ask me why 
+void* GetPointerToVtkImageData(vtkImageData *Image, int DataType, int Ext[6]) {
+ Image->SetWholeExtent(Ext);
+ Image->SetExtent(Ext); 
+ Image->SetNumberOfScalarComponents(1);
+ Image->SetScalarType(DataType); 
+ Image->AllocateScalars(); 
+ return Image->GetScalarPointerForExtent(Ext);
+}
+
+//----------------------------------------------------------------------------
+//Could not put it into another file like vtkImageGeneral - then it would seg falt - do not ask me why 
+void ShortGEImageReader(vtkImageReader *VOLUME, const char FileName[], int Zmin, int Zmax) {
+  cout << "Load file " <<  FileName << endl;
+  VOLUME->ReleaseDataFlagOff();
+  VOLUME->SetDataScalarTypeToShort();
+  VOLUME->SetDataSpacing(0.9375,0.9375,1.5);
+  VOLUME->SetFilePattern("%s.%03d");
+  VOLUME->SetFilePrefix(FileName);
+  VOLUME->SetDataExtent(0, 255, 0 ,255 , Zmin , Zmax);
+  VOLUME->SetNumberOfScalarComponents(1);
+  VOLUME->SetDataByteOrderToLittleEndian();
+  VOLUME->Update();
+}
+
+//----------------------------------------------------------------------------
+void GEImageWriter(vtkImageData *Volume, char *FileName) {
+  cout << "Write to file " <<  FileName << endl;
+  vtkImageWriter *Write=vtkImageWriter::New();
+  Write->SetInput(Volume);
+  Write->SetFilePrefix(FileName);
+  Write->SetFilePattern("%s.%03d");
+  Write->Write();
+  Write->Delete();
+}
+
+//----------------------------------------------------------------------------
+// Returns 1 if voxel x is along a boundary !
+// Kilian Do not concider right now if it is int  
+int  vtkImageEMSegmentCheckBoundary(char *BinMapPtr, unsigned char* RegionFlags, int ImageMaxX, int ImageMaxY) {
+  char VoxelLabel = *BinMapPtr;
+  int ImgXY = ImageMaxX*ImageMaxY;
+
+  // Voxel is not at the Northern Border of the image  
+  if (!(*RegionFlags & EMSEGMENT_NORTH) && (VoxelLabel != BinMapPtr[-1]))         return 1;
+  if (!(*RegionFlags & EMSEGMENT_SOUTH) && (VoxelLabel != BinMapPtr[1]))          return 1;
+  if (!(*RegionFlags & EMSEGMENT_WEST)  && (VoxelLabel != BinMapPtr[-ImageMaxX])) return 1;
+  if (!(*RegionFlags & EMSEGMENT_EAST)  && (VoxelLabel != BinMapPtr[ImageMaxX]))  return 1;
+  if (!(*RegionFlags & EMSEGMENT_FIRST) && (VoxelLabel != BinMapPtr[-ImgXY]))     return 1;
+  if (!(*RegionFlags & EMSEGMENT_LAST)  && (VoxelLabel != BinMapPtr[ImgXY]))      return 1;
+  return 0;
+}
+
+//----------------------------------------------------------------------------
+// Counts discrepency between neighbors 
+float vtkImageEMSEgment_CountDifferentNeighbors(float** w_m, unsigned char* RegionFlags, int ImageMaxX, int ImageMaxY, int StructureIndex, int NumClasses, int *NumChildClasses) {
+  float result = 0;
+
+  int ClassIndex = 0;
+  int ImgXY = ImageMaxX* ImageMaxY;  
+  for (int k=0;k< NumClasses ;k++){
+    if (k !=  StructureIndex) {
+      for (int l=0;l< NumChildClasses[k];l++){
+    if (!(*RegionFlags & EMSEGMENT_NORTH)) result += w_m[ClassIndex][-1];
+    if (!(*RegionFlags & EMSEGMENT_SOUTH)) result += w_m[ClassIndex][1]; 
+    if (!(*RegionFlags & EMSEGMENT_WEST))  result += w_m[ClassIndex][-ImageMaxX]; 
+    if (!(*RegionFlags & EMSEGMENT_EAST))  result += w_m[ClassIndex][ImageMaxX];  
+    if (!(*RegionFlags & EMSEGMENT_FIRST)) result += w_m[ClassIndex][-ImgXY];
+        if (!(*RegionFlags & EMSEGMENT_LAST))  result += w_m[ClassIndex][ImgXY];
+    ClassIndex ++;
+      }
+    } else {ClassIndex += NumChildClasses[k];}
+  }
+  return result;
+}
+
+//----------------------------------------------------------------------------
+// Transferes the data wrom the working extent (that is only the area defined by the SegmentationBounday)
+// to the Extent of the output
+template <class TIn, class TOut>
+static void vtkImageEMLocalSegmenter_TransfereDataToOuputExtension(vtkImageEMLocalSegmenter *self,TIn* inputExtension_Vector, TOut* outputExtension_Ptr, int outputExtent_Inc[3]) {
+  // -----------------------------------------------------
+  // 1.) Setup Parameteres 
+  // -----------------------------------------------------
+  // Get increments to march through data
+  int *outputExtension = self->GetExtent();
+  int *SegmentationBoundaryMin = self->GetSegmentationBoundaryMin();
+  int DimensionX = self->GetDimensionX();
+  int DimensionY = self->GetDimensionY();
+  int DimensionZ = self->GetDimensionZ();
+
+  int idxR, idxY, idxZ;
+
+  // We assume output is 1 scalar 
+  TOut* outputExtensionStart_Ptr = outputExtension_Ptr; 
+
+  int LengthOfXDim = outputExtension[1] - outputExtension[0] +1  + outputExtent_Inc[1];
+  int LengthOfYDim = LengthOfXDim*(outputExtension[3] - outputExtension[2] + 1) +  outputExtent_Inc[2];  
+  // Location of the first voxel 
+  outputExtensionStart_Ptr += (SegmentationBoundaryMin[0] - 1) + (SegmentationBoundaryMin[1] - 1) * LengthOfXDim
+         + LengthOfYDim *(SegmentationBoundaryMin[2] - 1);
+
+  int BoundaryDataIncY = LengthOfXDim - DimensionX;
+  int BoundaryDataIncZ = LengthOfYDim - DimensionY *LengthOfXDim;
+
+  // -----------------------------------------------------
+  // 2.) Set output to zero 
+  // -----------------------------------------------------
+
+  // Initializa output by setting it to zero
+  for (idxZ = outputExtension[4]; idxZ <= outputExtension[5]; idxZ++) {
+    for (idxY = outputExtension[2]; idxY <= outputExtension[3]; idxY++) {
+      memset(outputExtension_Ptr,0,sizeof(TOut)*(outputExtension[1] - outputExtension[0] + 1));
+      outputExtension_Ptr +=  LengthOfXDim;
+    }
+  }
+  outputExtension_Ptr = outputExtensionStart_Ptr ;  
+
+
+  // -----------------------------------------------------
+  // 3.) Define output in working Extension 
+  // -----------------------------------------------------
+  int index = 0;
+  // 3.) Write result in outPtr
+  for (idxZ = 0; idxZ < DimensionZ; idxZ++) {
+    for (idxY = 0; idxY < DimensionY; idxY++) {
+      for (idxR = 0; idxR < DimensionX; idxR++) {
+        *outputExtension_Ptr = (TOut) inputExtension_Vector[index];
+    index ++; 
+        outputExtension_Ptr++;
+      }
+      outputExtension_Ptr +=  BoundaryDataIncY;
+    }
+    outputExtension_Ptr +=  BoundaryDataIncZ;
+  }
+}
+
+//----------------------------------------------------------------------------
+// Transferes the data from the  working extent (that is only the area defined by the SegmentationBounday)
+// to the Extent of the output and prints it out 
+template <class TIn>
+static void vtkImageEMLocalSegmenter_PrintDataToOutputExtension(vtkImageEMLocalSegmenter *self,TIn* inputExtension_Vector, int outputScalar, char* FileName){
+  vtkImageData *OriginalExtension_Data = vtkImageData::New(); 
+  int ChangedExtent[6];
+  memcpy(ChangedExtent, self->GetExtent(), sizeof(int)*6); 
+  // Just move it one up - this is just a shortcut - fix it later 
+  // Whatever extent [4] and [5] is set to that will the numbering of the slice number int the print out 
+  if (!ChangedExtent[4]) {
+    ChangedExtent[4] ++;
+    ChangedExtent[5] ++;
+  }
+  TIn* OriginalExtension_DataPtr = (TIn*) GetPointerToVtkImageData(OriginalExtension_Data,outputScalar,ChangedExtent);
+  int outIncX, OutIncY, outIncZ;
+  OriginalExtension_Data->GetContinuousIncrements(self->GetExtent(), outIncX, OutIncY, outIncZ);
+  int outInc[3] = {outIncX, OutIncY, outIncZ};
+  vtkImageEMLocalSegmenter_TransfereDataToOuputExtension(self,inputExtension_Vector,OriginalExtension_DataPtr ,outInc);
+  
+  GEImageWriter(OriginalExtension_Data,FileName);
+  OriginalExtension_Data->Delete();    
+}
+//------------------------------------------------------------------------------
+int* vtkImageEMLocalSegmenter::GetSegmentationBoundaryMin() {
+  if (!this->HeadClass) {
+    vtkEMAddErrorMessage("No Head Class defined");
+    return NULL;
+  } 
+  return this->HeadClass->GetSegmentationBoundaryMin();
+} 
+
+int* vtkImageEMLocalSegmenter::GetSegmentationBoundaryMax() {
+  if (!this->HeadClass) {
+    vtkEMAddErrorMessage("No Head Class defined");
+    return NULL;
+  } 
+  return this->HeadClass->GetSegmentationBoundaryMax();
+} 
+
+
+int vtkImageEMLocalSegmenter::GetDimensionX() {
+  if (!this->HeadClass) {
+    vtkEMAddErrorMessage("No Head Class defined");
+    return -1;
+  } 
+  return this->HeadClass->GetDataDim()[0];
+}
+
+int vtkImageEMLocalSegmenter::GetDimensionY() {
+  if (!this->HeadClass) {
+    vtkEMAddErrorMessage("No Head Class defined");
+    return -1;
+  } 
+  return this->HeadClass->GetDataDim()[1];
+}
+
+int vtkImageEMLocalSegmenter::GetDimensionZ() {
+  if (!this->HeadClass) {
+    vtkEMAddErrorMessage("No Head Class defined");
+    return -1;
+  } 
+  return this->HeadClass->GetDataDim()[2];
+}
 
 //------------------------------------------------------------------------------
-bool vtkImageEMLocalSegmenter::CheckInputImage(vtkImageData * inData,int DataTypeOrig, int DataTypeNew, int num, int outExt[6]) {
+int vtkImageEMLocalSegmenter::CheckInputImage(vtkImageData * inData,int DataTypeOrig, float DataSpacingOrig[3], int num) {
   // Check if InData is defined 
   int inExt[6];
-  if (inData == 0) {
-    vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Probability Map for class "<< num << " must be specified.");
-    return false;
+  float DataSpacingNew[3];
+  if (inData == NULL) {
+    vtkEMAddErrorMessage("CheckInputImage: Input "<< num << " must be specified.");
+    return 1;
   }
 
   // Check for Data Type if correct : Remember ProbabilityData all has to be of the same data Type
-  if (DataTypeOrig != DataTypeNew) {
-    vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Probability Map for class "<< num << " has wrong data type - not conform with others.");
-    return false;
-  }
+  int DataTypeNew = inData->GetScalarType();
+  if (DataTypeOrig != DataTypeNew) 
+    vtkEMAddErrorMessage("CheckInputImage: Input "<< num << " has wrong data type ("<< inData->GetScalarType() << ") instead of " 
+                            << DataTypeOrig << "! Note: VTK_FLOAT="<< VTK_FLOAT <<", VTK_SHORT=" << VTK_SHORT );
 
   // Check if it is one of the registered types
   if ((DataTypeNew != VTK_DOUBLE) && (DataTypeNew != VTK_FLOAT) && 
       (DataTypeNew != VTK_LONG) && (DataTypeNew != VTK_UNSIGNED_LONG) && (DataTypeNew != VTK_INT) && (DataTypeNew != VTK_UNSIGNED_INT) && 
-      (DataTypeNew != VTK_SHORT) && (DataTypeNew != VTK_UNSIGNED_SHORT) && (DataTypeNew != VTK_CHAR) && (DataTypeNew != VTK_UNSIGNED_CHAR)) return false;
+      (DataTypeNew != VTK_SHORT) && (DataTypeNew != VTK_UNSIGNED_SHORT) && (DataTypeNew != VTK_CHAR) && (DataTypeNew != VTK_UNSIGNED_CHAR)) vtkEMAddErrorMessage("Input "<< num << " has not known data type.");
 
   // Check for dimenstion of InData
   // Could be easily fixed if needed 
   inData->GetWholeExtent(inExt);
-  if ((inExt[1] != outExt[1]) || (inExt[0] != outExt[0]) || (inExt[3] != outExt[3]) || (inExt[2] != outExt[2]) || (inExt[5] != outExt[5]) || (inExt[4] != outExt[4])) {
-    vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Execute: Extension of Input Image " << num << ", " << inExt[0] << "," << inExt[1] << "," << inExt[2] << "," << inExt[3] << "," << inExt[4] << "," << inExt[5] 
-                  << "is not alligned with output image "  << outExt[0] << "," << outExt[1] << "," << outExt[2] << "," << outExt[3] << "," << outExt[4] << " " << outExt[5]);
-    return false;
-  }
-  if (inData->GetNumberOfScalarComponents() != 1) {
-    vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Execute: This filter assumes input to filter is defined with one scalar component. " << num  << " has " << inData->GetNumberOfScalarComponents() 
+  if ((inExt[1] != this->Extent[1]) || (inExt[0] != this->Extent[0]) || (inExt[3] != this->Extent[3]) || (inExt[2] != this->Extent[2]) || (inExt[5] != this->Extent[5]) || (inExt[4] != this->Extent[4])) 
+    vtkEMAddErrorMessage("CheckInputImage: Extension of Input Image " << num << ", " << inExt[0] << "," << inExt[1] << "," << inExt[2] << "," << inExt[3] << "," << inExt[4] << "," << inExt[5] 
+                  << "is not alligned with output image "  << this->Extent[0] << "," << this->Extent[1] << "," << this->Extent[2] << "," << this->Extent[3] << "," << this->Extent[4] << " " << this->Extent[5]);
+
+  if (inData->GetNumberOfScalarComponents() != 1) 
+    vtkEMAddErrorMessage("CheckInputImage: This filter assumes input to filter is defined with one scalar component. " << num  << " has " << inData->GetNumberOfScalarComponents() 
                   << " Can be easily changed !");
-    return false;
-  }
+
+  inData->GetSpacing(DataSpacingNew);
+  if ((DataSpacingOrig[0] !=  DataSpacingNew[0]) || (DataSpacingOrig[1] !=  DataSpacingNew[1]) || (DataSpacingOrig[2] !=  DataSpacingNew[2])) 
+    vtkEMAddErrorMessage("CheckInputImage: Data Spacing of input images is unequal" );
   // Kilian Check for orientation has to be done in TCL !!!!
-  return true;
+  return this->GetErrorFlag();
 }
 
-//----------------------------------------------------------------------------
-// We need to create a special SetNumClass, bc whenver NumClasses are set, we 
-// also have to set arrays which depend on the number of classes e.g. prob
-//----------------------------------------------------------------------------
-void vtkImageEMLocalSegmenter::SetNumClasses(int NumberOfClasses)
-{
-  int z,y;
-  if (this->NumInputImages < 1) {
-    vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Number of Input Images has to be defined before setting the number of classes");
+//------------------------------------------------------------------------------
+void vtkImageEMLocalSegmenter::SetNumInputImages(int number) {
+  // Right now can just define it once
+  // this->DeleteVariables();
+  if (this->NumInputImages > 0) {
+     vtkEMAddErrorMessage( "Number of input images was previously defined ! ");
     return;
   }
-
-  if (this->NumClasses == NumberOfClasses) return;
-
-  this->DeleteVariables();
-  if (NumberOfClasses > 0 ) {
-    // Create new space for variables
-    this->LogMu         = new double*[NumberOfClasses];
-    this->LogCovariance = new double**[NumberOfClasses];
-    for (z=0; z < NumberOfClasses; z++) {
-      this->LogMu[z]         = new double[this->NumInputImages];
-      this->LogCovariance[z] = new double*[this->NumInputImages];
-      for (y=0; y < this->NumInputImages ; y++) this->LogCovariance[z][y] = new double[this->NumInputImages];
-    } 
-
-    this->Label             = new int[NumberOfClasses];
-    this->TissueProbability = new double[NumberOfClasses];
-    this->ProbDataLocal     = new int[NumberOfClasses];
-    this->ProbDataPtr       = new void*[NumberOfClasses];
-    this->ProbDataIncY      = new int[NumberOfClasses];
-    this->ProbDataIncZ      = new int[NumberOfClasses];
-
-    this->IntensityAvgValuePreDef = new double[this->NumInputImages];
-    this->IntensityAvgValueCurrent = new double[this->NumInputImages];
-
-    this->MrfParams = new double**[6];
-    for (z=0; z < 6; z++) {
-      this->MrfParams[z] = new double*[NumberOfClasses];
-      for (y=0;y < NumberOfClasses; y ++) 
-    this->MrfParams[z][y] = new double[NumberOfClasses];
-    }
-    for (z= 0; z < NumberOfClasses; z++) {
-      this->Label[z] = -1;
-      this->TissueProbability[z] = -1;
-      this->ProbDataPtr[z] = NULL;
-      this->ProbDataIncY[z] = -1;
-      this->ProbDataIncZ[z] = -1;
-
-      for (y= 0; y <this->NumInputImages; y++) {
-    this->LogMu[z][y] = -1;
-    memset(this->LogCovariance[z][y], 0,this->NumInputImages*sizeof(double));
-      }
-    }
-
-    for (z=0; z <this->NumInputImages; z++) {  
+  if (number > 0 ) {
+    this->IntensityAvgValuePreDef = new double[number];
+    this->IntensityAvgValueCurrent = new double[number];
+ 
+    for (int z=0; z < number; z++) {  
       this->IntensityAvgValuePreDef[z] = -1.0;
       this->IntensityAvgValueCurrent[z] = -1.0;
     }
-
-    for (z=0; z < 6; z++) {
-      for (y=0;y < NumberOfClasses; y ++) memset(this->MrfParams[z][y], 0,NumberOfClasses*sizeof(double)); 
-    }
-  } else {
-    this->LogMu = NULL;this->LogCovariance = NULL;this->TissueProbability = NULL;this->Label = NULL; this->MrfParams = NULL;this->ProbDataLocal;
-    this->ProbDataPtr = NULL; this->ProbDataIncY = NULL; this->ProbDataIncZ = NULL;this->IntensityAvgValuePreDef = NULL;this->IntensityAvgValueCurrent = NULL;
   }
-  this->NumClasses = NumberOfClasses;
+  this->NumInputImages = number;
 }
 
-//---------------------------------------------------------------------
-// Checks of all paramters are declared  
-// 1  = eveything correct
-// -1 = Dimension of Volume not correct
-// -2 = Not all Mu defined correctly
-// -3 = Not all Covariance defined correctly
-// -4 = Not all Prob defined correctly
-// -5 = Not all MrfParams defined correctly
-// -6 = Not all Classes have labels defined
-
-int vtkImageEMLocalSegmenter::checkValues()
-{
-  int i,k,j;
-  double ***LogCovariance   = this->GetLogCovariance();
-  for (i=0;i < this->NumClasses; i++) {
-    if (this->Label[i] < 0) {
-      vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag, "Color[" << i+1 <<"] = " << this->Label[i] << " is not defined");
-      return -6;
-    } 
-    if (this->TissueProbability[i] < 0) {
-      vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"TissueProbability[" << i+1 <<"] = " << this->TissueProbability[i] << " is not defined");
-      return -7;
-    } 
-    for (j = 0; j < this->NumInputImages; j++) {
-      if (this->LogMu[i][j] < 0) {
-        vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag, "Mu[" << i+1<<"][" << j+1 <<"] = " << this->LogMu[i][j] << " must be greater than 0!");
-        return -2;
-      }
-    }
-
-    // Check if matrix is symmetric
-    for (j=0; j< this->NumInputImages; j++) {
-      for (k=j+1; k <   this->NumInputImages; k++) 
-        if (this->LogCovariance[i][j][k] != this->LogCovariance[i][k][j]) {
-          vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Covariance must be syymetric for tissue class " << i+1);
-          return -3;
-        }
-    }
-    // Check if the matrix is positiv - Jakobian is devilish it changes the matrix this->LogCovariance[i]
-    //if (vtkMath::JacobiN(this->LogCovariance[i],this->NumInputImages,eigval, eigvec) == 0) {
-    //        cout << "vtkImageEMLocalSegmenter:checkValues:  Cannot calculate Eigenvalues for Covariance for tissue class " << i+1 << ". Check Matrix !"<< endl;
-    //      return -3;
-    // }
-    //if (eigval[this->NumInputImages-1] < 1e-5) {
-    //      cout << "vtkImageEMLocalSegmenter:checkValues:  Covariance for tissue class " << i+1 << "is a singular matrix, almost singular (must be regular) or not positiv definit!"<< endl;
-    //      return -3;
-    // }
-
-    // This is just for additional checking so we can tell the user propally 
-    double **InvLogCov = new double*[NumInputImages];
-    for (j=0; j<NumInputImages; j++) InvLogCov[j] = new double[NumInputImages];
-
-    if (vtkImageEMGeneral::InvertMatrix(LogCovariance[i],InvLogCov,NumInputImages) == 0) {
-      vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Could not caluclate the Inverse of the Log Covariance of tissue class "<<i <<". Covariance Matrix is probably almost signular!");
-      for (j=0; j<NumInputImages; j++) delete[] InvLogCov[j];
-      delete[] InvLogCov;
-      return -4;
-    } 
-    for (j=0; j<NumInputImages; j++) delete[] InvLogCov[j];
-    delete[] InvLogCov;
-    if  (vtkImageEMGeneral::determinant(LogCovariance[i],NumInputImages) <= 0.0) {; 
-      vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Coveriance Matrix for tissue class "<<i<<" is probably almost signular or not positiv! Could not calculate the inverse determinant of it ");
-      return -6;
-    }
-
- 
-    for (j = 0; j < this->NumClasses; j++) {
-       for (k = 0; k < 6; k++) {
-     if ((this->MrfParams[k][j][i] < 0) || (this->MrfParams[k][j][i] > 1)) {
-       vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"vtkImageEMLocalSegmenter:checkValues:  MrfParams[" << k+1 <<"] [" << j+1 <<"] [" << i+1 <<"] = " << this->MrfParams[k][j][i] << " is not between 0 and 1!");
-       return -5;
-     }
-       }
-    }
-  }
-  return 1;
-}
-
-//----------------------------------------------------------------------------
-// Define the arrays 
-//----------------------------------------------------------------------------
-void vtkImageEMLocalSegmenter::SetLogMu(double mu, int y, int x){
-  if ((y<1) || (y > this->NumClasses) || (x<1) || (x > this->NumInputImages) || (mu < 0)) {
-      vtkErrorMacro(<<"Error: Incorrect input");
-    return;
-  }
-  this->LogMu[y-1][x-1] = mu;
-}
-
-void vtkImageEMLocalSegmenter::SetLogCovariance(double value, int z, int y, int x){
-  if ((z<1) || (z > this->NumClasses) || (y<1) || (y > this->NumInputImages) || (x<1) || (x > this->NumInputImages)) {
-    vtkErrorMacro(<<"Error: Incorrect input");
-    return;
-  }
-  this->LogCovariance[z-1][y-1][x-1] = value;
-}
-
-void vtkImageEMLocalSegmenter::SetLabel(int label, int index){
-  if ((index<1) || (index > this->NumClasses) || (label < 0)) {
-    vtkErrorMacro(<<"vtkImageEMLocalSegmenter::SetLabel: Incorrect input");
-    return;
-  }
-  this->Label[index-1] = label;
-}
-
+//------------------------------------------------------------------------------
 void vtkImageEMLocalSegmenter::SetIntensityAvgValuePreDef(double value, int index){
-  if ((index<1) || (index > this->NumInputImages)) {
-    vtkErrorMacro(<<"vtkImageEMLocalSegmenter::SetIntensityAvgValue: Incorrect input");
+  if ((index<0) || (index > this->NumInputImages)) {
+     vtkEMAddErrorMessage("vtkImageEMLocalSegmenter::SetIntensityAvgValue: Incorrect input");
     return;
   }
-  this->IntensityAvgValuePreDef[index-1] = value;
+  this->IntensityAvgValuePreDef[index] = value;
 }
 
-void vtkImageEMLocalSegmenter::SetProbDataLocal(int value, int index){
-  if ((index<1) || (index > this->NumClasses)) {
-    vtkErrorMacro(<<"vtkImageEMLocalSegmenter::SetProbDataLocal: Incorrect input");
-    return;
-  }
-  this->ProbDataLocal[index-1] = value;
-}
+// --------------------------------------------------------------------------------------------------------------------------
+//  Probability Functions 
+// --------------------------------------------------------------------------------------------------------------------------
 
-void vtkImageEMLocalSegmenter::SetTissueProbability(double value, int index) {
-  if ((index<1) || (index > this->NumClasses) || (value  < 0) || (value  > 1.0)) {
-    vtkErrorMacro(<<"vtkImageEMLocalSegmenter::TissueProbability: Incorrect input index "<< index << " value " << value);
-    return;
-  }
-  this->TissueProbability[index-1] = value;
-}
-
-void vtkImageEMLocalSegmenter::SetMarkovMatrix(double value, int k, int j, int i) {
-  if ((j<1) || (j > this->NumClasses) ||
-      (i<1) || (i > this->NumClasses) ||
-      (k<1) || (k > 6) || (value < 0) || (value > 1)) {
-     vtkErrorMacro (<< "Error: Incorrect input");
-    return;
-  }
-  this->MrfParams[k-1][j-1][i-1] = value;
+// Close to Sandies original approach +(part of ISBI04)
+inline double vtkEMLocalSegment_ConditionalTissueProbability(const double TissueProbability, const double InvSqrtDetLogCov, 
+                                                               const float *cY_M,  const double  *LogMu, double **InvLogCov, 
+                                                               const int NumInputImages, const int  VirtualNumInputImages) {
+   return TissueProbability  * vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov,cY_M, LogMu,InvLogCov,NumInputImages, VirtualNumInputImages); 
 }
 
 // -----------------------------------------------------------
 // Calculate MF - parrallelised version 
 // -----------------------------------------------------------
+
+
+
 template  <class T>
-static void MeanFieldApproximation3D(int id,
-                     double *w_m_input, 
+static void EMLocalSegment_MeanFieldApproximation3D(int id,
+                     float **w_m_input, 
                      unsigned char* MapVector, 
                      float *cY_M, 
                      int imgX, 
@@ -602,28 +790,47 @@ static void MeanFieldApproximation3D(int id,
                      int StartVoxel, 
                      int EndVoxel,
                                      int NumClasses,
+                     int NumTotalTypeCLASS,
+                     int*  NumChildClasses,
                      int NumInputImages, 
                      double Alpha, 
                      double ***MrfParams,
                      T **ProbDataPtr, 
                      int *ProbDataIncY, 
                      int *ProbDataIncZ,
-                     int *ProbDataLocal,
+                     float *ProbDataWeight,
+                                     float *ProbDataMinusWeight,
                      double **LogMu, 
                      double ***InvLogCov, 
                      double *InvSqrtDetLogCov,
                      double *TissueProbability,
-                     double *w_m_output) {
+                     int  *VirtualNumInputImages,
+                     float **w_m_output) {
 
-  double normRow;                                 
-  double mp;  
-  int i,j,k, 
-    JumpHorizontal  = imgY*NumClasses,
-    JumpSlice       = imgXY*NumClasses;
-  double *w_m_outStart = w_m_output;
+  float normRow;                                 
+  double NeighborhoodEnergy;
+  double ConditionalTissueProbability;
+  double SpatialTissueDistribution;
+  
+  int i,j,k,l, index, 
+    JumpHorizontal  = imgX,
+    JumpSlice       = imgXY;
+  // double **wm_input_start = new double[NumTotalTypeCLASS];
   double *wxp = new double[NumClasses],*wxpPtr = wxp,*wxn = new double[NumClasses],*wxnPtr = wxn, *wyn = new double[NumClasses],*wynPtr = wyn,
          *wyp = new double[NumClasses],*wypPtr = wyp,*wzn = new double[NumClasses],*wznPtr = wzn, *wzp = new double[NumClasses],*wzpPtr = wzp;  
   
+
+  // cout << "imgX " << imgX << " imgY " << imgY << " imgXY " << imgXY << " StartVoxel " << StartVoxel  << " EndVoxel " << EndVoxel  << " NumClasses " << NumClasses  << "    NumTotalTypeCLASS " << NumTotalTypeCLASS << " NumInputImages " <<  NumInputImages << " Alpha  " << Alpha  << endl;
+
+  // for (i=0; i< NumTotalTypeCLASS; i++) wm_input_start[i] = wm_input[i];
+
+  //for (i=0 ; i < NumClasses; i++) {
+  //  for (l=0;l< NumChildClasses[i];l++){
+  //        cout << index  << " " << TissueProbability[index] << " " << ProbDataPtr[index] << " " << InvSqrtDetLogCov[index] << " " << LogMu[index] << " " << InvLogCov[index] << " " << NumInputImages << endl;
+  //      index ++;
+  //      }
+  // }
+
   // -----------------------------------------------------------
   // neighbouring field values
   // -----------------------------------------------------------
@@ -642,88 +849,77 @@ static void MeanFieldApproximation3D(int id,
   // Calculate Neighbouring Tissue Relationships
   // -----------------------------------------------------------
 
-  // Debug
-  // vtkImageEMLocalSegmenter Test;
-  // char filename[50];
-  // char varname[50];
-  // double *weight = new double[imgXY];
-//    while (j < NumClasses) { 
-//      // Retrieve the vector with certain slice and class from w_m
-//      for (i = 0; i < imgXY; i++) weight[i] = w_m_input[j+i*NumClasses];
-//      j++;
-//      sprintf(varname,"weight(%d,:)",j);
-//      sprintf(filename,"EMLocalSegmResult%dWeight%d.m",id,j);
-//      Test.WriteVectorToFile(filename,varname,weight,imgXY);
-//    }
+  unsigned char* MapVectorPtr = MapVector;
 
   j = StartVoxel;
+  bool flag = false;
+  int ClassIndex;
+  int blub0 = 0 ;
+  int blub1 = 0 ;
+
   while (j< EndVoxel) {
-    // cout << j << endl;
-    // if OutputVector == 64 => Label Class is already predefined for this pixel
-    // cout << j <<  " --  " << StartVoxel << endl;
-    // if (j == 3421) {
-   //      cout << "Hey ------------" << endl;
-   //      cout << bool(*MapVector&EMSEGMENT_WEST)  << " " 
-   //           << bool(*MapVector&EMSEGMENT_EAST)  << " " 
-   //           << bool(*MapVector&EMSEGMENT_NORTH)  << " " 
-   //           << bool(*MapVector&EMSEGMENT_SOUTH)  << " " << bool(*MapVector&EMSEGMENT_FIRST)  << " " << bool(*MapVector&EMSEGMENT_LAST)  << " " << bool(*MapVector < EMSEGMENT_DEFINED) << endl;
-   //      cout << "Op ------------" << endl;
-   //  }
 
     if (*MapVector < EMSEGMENT_DEFINED) {
       // Is is 0 => it is not an edge -> fast smmothing
       if (*MapVector) {
     for (i=0;i< NumClasses ;i++){
       *wxp=*wxn=*wyn=*wyp=*wzn=*wzp=0;
-      if (i > 0) w_m_input -= NumClasses; 
-      for (k=0;k< NumClasses ;k++){
-        // f(j,l,h-1)
-        if (*MapVector&EMSEGMENT_WEST) *wxn += (*w_m_input)*MrfParams[3][k][i]; 
-        else                     *wxn += w_m_input[-JumpHorizontal]*MrfParams[3][k][i];
-        // f(j,l,h+1)
-        if (*MapVector&EMSEGMENT_EAST) *wxp += (*w_m_input)*MrfParams[0][k][i];
-        else                     *wxp += w_m_input[JumpHorizontal]*MrfParams[0][k][i];
-        //  Remember: The picture is upside down:
-        // Therefore I had to switch the MRF paramters 1 (South) and 4(North)
-        // f(j,l-1,h)
-        if (*MapVector&EMSEGMENT_NORTH)  *wyn += (*w_m_input)*MrfParams[1][k][i];                       
-        else                     *wyn += w_m_input[-NumClasses]*MrfParams[1][k][i]; 
-        // f(j,l+1,h)
-        if (*MapVector&EMSEGMENT_SOUTH)  *wyp += (*w_m_input)*MrfParams[4][k][i];
-        else  *wyp += w_m_input[NumClasses]*MrfParams[4][k][i];
-        // f(j-1,l,h)
-        if (*MapVector&EMSEGMENT_FIRST) *wzn += (*w_m_input)*MrfParams[5][k][i];  
-        else                     *wzn += w_m_input[-JumpSlice]*MrfParams[5][k][i]; 
-        // f(j+1,l,h)
-        if (*MapVector&EMSEGMENT_LAST)  *wzp += (*w_m_input)*MrfParams[2][k][i]; 
-        else                     *wzp += w_m_input[JumpSlice]*MrfParams[2][k][i]; 
-        w_m_input ++;
+          ClassIndex = 0;
+          for (k=0;k< NumClasses ;k++){
+        for (l=0;l< NumChildClasses[k];l++){
+          // f(j,l,h-1)
+          if (*MapVector&EMSEGMENT_WEST) *wxn += (*w_m_input[ClassIndex])*(float)MrfParams[3][k][i]; 
+          else                     *wxn += w_m_input[ClassIndex][-JumpHorizontal]*(float)MrfParams[3][k][i];
+          // f(j,l,h+1)
+          if (*MapVector&EMSEGMENT_EAST) *wxp += (*w_m_input[ClassIndex])*(float)MrfParams[0][k][i];
+          else                     *wxp += w_m_input[ClassIndex][JumpHorizontal]*(float)MrfParams[0][k][i];
+          //  Remember: The picture is upside down:
+          // Therefore I had to switch the MRF parameters 1 (South) and 4(North)
+          // f(j,l-1,h)
+          if (*MapVector&EMSEGMENT_NORTH)  *wyn += (*w_m_input[ClassIndex])*(float)MrfParams[1][k][i];                       
+          else                     *wyn += w_m_input[ClassIndex][-1]*(float)MrfParams[1][k][i]; 
+          // f(j,l+1,h)
+          if (*MapVector&EMSEGMENT_SOUTH)  *wyp += (*w_m_input[ClassIndex])*(float)MrfParams[4][k][i];
+          else                     *wyp += w_m_input[ClassIndex][1]*(float)MrfParams[4][k][i];
+          // f(j-1,l,h)
+          if (*MapVector&EMSEGMENT_FIRST) *wzn += (*w_m_input[ClassIndex])*(float)MrfParams[5][k][i];  
+          else                     *wzn += w_m_input[ClassIndex][-JumpSlice]*(float)MrfParams[5][k][i]; 
+          // f(j+1,l,h)
+          if (*MapVector&EMSEGMENT_LAST)  *wzp += (*w_m_input[ClassIndex])*(float)MrfParams[2][k][i]; 
+          else                     *wzp += w_m_input[ClassIndex][JumpSlice]*(float)MrfParams[2][k][i]; 
+
+              ClassIndex ++;
+        }
       }
       wxn++;wxp++;wyn++;wyp++;wzn++;wzp++;
     }
-      } else {
+     } else {
     for (i=0;i<NumClasses ;i++){
       *wxp=*wxn=*wyn=*wyp=*wzn=*wzp=0;
-      if (i>0) w_m_input -= NumClasses; 
+      ClassIndex = 0;
       for (k=0;k<NumClasses ;k++){
-        // f(j,l,h-1)
-        *wxn += w_m_input[-JumpHorizontal]*MrfParams[3][k][i];
-        // f(j,l,h+1)
-        *wxp += w_m_input[JumpHorizontal]*MrfParams[0][k][i];
-        // f(j,l-1,h)
-        *wyn += w_m_input[-NumClasses]*MrfParams[4][k][i]; 
-        // f(j,l+1,h)
-        *wyp += w_m_input[NumClasses]*MrfParams[1][k][i];
-        // f(j-1,l,h)
-        *wzn += w_m_input[-JumpSlice]*MrfParams[5][k][i]; 
-        // f(j+1,l,h)
-        *wzp += w_m_input[JumpSlice]*MrfParams[2][k][i]; 
-        w_m_input ++;
+        for (l=0;l< NumChildClasses[k];l++){
+          // f(j,l,h-1)
+          *wxn += w_m_input[ClassIndex][-JumpHorizontal]*(float)MrfParams[3][k][i];
+          // f(j,l,h+1)
+          *wxp += w_m_input[ClassIndex][JumpHorizontal]*(float)MrfParams[0][k][i];
+          // f(j,l-1,h)
+          *wyn += w_m_input[ClassIndex][-1]*(float)MrfParams[4][k][i]; 
+          // f(j,l+1,h)
+          *wyp += w_m_input[ClassIndex][1]*(float)MrfParams[1][k][i];
+          // f(j-1,l,h)
+          *wzn += w_m_input[ClassIndex][-JumpSlice]*(float)MrfParams[5][k][i]; 
+          // f(j+1,l,h)
+          *wzp += w_m_input[ClassIndex][JumpSlice]*(float)MrfParams[2][k][i]; 
+          ClassIndex ++;
+        }
       }
+      // cout << "Result " << i << " " << *wxp << " " <<  *wxn  << " " << *wyn << " " << *wyp << " " << *wzn << " " << *wzp << endl;      
+
       wxn++;wxp++;wyn++;wyp++;wzn++;wzp++;
     }
       }
-      wxp = wxpPtr; wxn = wxnPtr; wyn = wynPtr; wyp = wypPtr; wzn = wznPtr; wzp = wzpPtr;      
+      wxp = wxpPtr; wxn = wxnPtr; wyn = wynPtr; wyp = wypPtr; wzn = wznPtr; wzp = wzpPtr; 
       // -----------------------------------------------------------
       // Calculate Probabilities and Update Weights
       // -----------------------------------------------------------
@@ -731,50 +927,81 @@ static void MeanFieldApproximation3D(int id,
       //.*(1- alpha + alpha*wyp).*(1-alpha + alpha*wyn).*(1- alpha + alpha*wzp).*(1-alpha + alpha*wzn);
       // w have to be normalized !
       normRow = 0;
+      index = 0;
+      // if ((j == 13891) || (j == 13946)) cout << "duda0 " << j << " " << ((*MapVector&EMSEGMENT_WEST) ? 1 : 0) << " " << ((*MapVector&EMSEGMENT_EAST) ? 1 : 0) << " - " << ((*MapVector&EMSEGMENT_FIRST) ? 1 : 0)<< " " << ((*MapVector&EMSEGMENT_LAST) ? 1 : 0) << " " << ((*MapVector&EMSEGMENT_SOUTH) ? 1 : 0) << " " << ((*MapVector&EMSEGMENT_NORTH) ? 1 : 0) << endl;
+
       for (i=0; i<NumClasses; i++) {
         // Goes a little bit further in the branches - like it better
         // it should be exp(*ProbData)[i] from Tina's thesis I say now bc values with zero probability will be still displayed
         // Kilian May 2002: I believe the form underneath is correct - Tina's PhD thesis displays it exactly like underneath 
-    mp = TissueProbability[i] * (1-Alpha+Alpha*exp((*wxp++) + (*wxn++) + (*wyp++) + (*wyn++) + (*wzp++) + (*wzn++)));
-    if (ProbDataLocal[i]) mp *= double(*ProbDataPtr[i]);
-    w_m_output[i] = mp*vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[i],cY_M, LogMu[i],InvLogCov[i],NumInputImages,NumInputImages);
-    normRow += w_m_output[i];
-      } 
+    // if (((j == 13891) || (j == 13946)) && i == 0) cout << "duda1 " << i << " " << j << " " << *wxp  << " " <<  *wxn  <<  " " << *wyp  << " " <<  *wyn  <<  " " << *wzp  << " " <<  *wzn  <<  endl;
+    NeighborhoodEnergy = (1-Alpha+Alpha*exp((*wxp++) + (*wxn++) + (*wyp++) + (*wyn++) + (*wzp++) + (*wzn++)));
+    for (l=0;l< NumChildClasses[i];l++){
+       ConditionalTissueProbability = TissueProbability[i] * vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[index],cY_M, LogMu[index],InvLogCov[index],NumInputImages, VirtualNumInputImages[i]); 
+           SpatialTissueDistribution    = ProbDataMinusWeight[i] + ProbDataWeight[i]*(ProbDataPtr[index] == NULL ? 0.0 : double(*ProbDataPtr[index]));
+           w_m_output[index][j] = (float) NeighborhoodEnergy *  SpatialTissueDistribution *  ConditionalTissueProbability;
+          // if (((j == 13891) || (j == 13946)) && i == 0) {
+        // cout << "duda2 " << index << " " << j << " " << w_m_output[index][j]  << " " <<  mp   << " " << TissueProbability[i] << " " << ProbDataMinusWeight[i] << " " <<ProbDataWeight[i]  << " " << *ProbDataPtr[index]  << " ";
+          //  for (int blub2=0; blub2 < 2; blub2++) cout <<  cY_M[blub2] << " "; 
+      //  cout << endl;
+      // }
+      normRow += w_m_output[index][j];
+      index ++;
+    } 
+      }
       wxp = wxpPtr; wxn = wxnPtr; wyn = wynPtr; wyp = wypPtr; wzn = wznPtr; wzp = wzpPtr;
       // I do not know if I should assign it ot first or second term
       if (normRow == 0.0) {
+    index = 0;
     for (i=0; i<NumClasses; i++) {
-      w_m_output[i] =  TissueProbability[i] * exp((*wxp++) + (*wxn++) + (*wyp++) + (*wyn++) + (*wzp++) + (*wzn++));
-      normRow += w_m_output[i];
+       NeighborhoodEnergy = TissueProbability[i] * exp((*wxp++) + (*wxn++) + (*wyp++) + (*wyn++) + (*wzp++) + (*wzn++));
+      for (l=0;l< NumChildClasses[i];l++){
+        w_m_output[index][j] =  float( NeighborhoodEnergy); 
+        normRow += w_m_output[index][j];
+        index ++;
+      }
     } 
     wxp = wxpPtr; wxn = wxnPtr; wyn = wynPtr; wyp = wypPtr; wzn = wznPtr; wzp = wzpPtr;
     if (normRow == 0.0) {
+      index = 0;
       for (i=0; i<NumClasses; i++) {
-        // (*w_m_output)[i] = vtkImageEMGeneral::LookupGauss(GaussLookupTable[i],TableLBound[i],TableUBound[i],TableResolution[i],*cY_M, NumInputImages);
-        w_m_output[i] = TissueProbability[i] * vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[i],cY_M, LogMu[i],InvLogCov[i], NumInputImages, NumInputImages); 
-        normRow += w_m_output[i];
+        for (l=0;l< NumChildClasses[i];l++){
+              // the line below is the same as 
+              // vtkEMLocalSegment_ConditionalTissueProbability(TissueProbability[i], InvSqrtDetLogCov[index],cY_M, LogMu[index],InvLogCov[index],NumInputImages, VirtualNumInputImages[i]); 
+              // Just changed for speed (about 5% faster )
+          w_m_output[index][j] = (float) (float) TissueProbability[i] * vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[index],cY_M, LogMu[index],InvLogCov[index],NumInputImages, VirtualNumInputImages[i]); 
+                
+          normRow += w_m_output[index][j];
+          index ++;
+        }
       } 
     }
     if (normRow == 0.0) {normRow = 1;}
       }
       // Norm Weights
-      for (i=0; i< NumClasses; i++) {
-    (*w_m_output ++) /= normRow;       
+      for (i=0; i<  NumTotalTypeCLASS; i++) {
+    w_m_output[i][j] /= normRow; 
       }
-          
-    } else {
-      w_m_output += NumClasses;
-      w_m_input += NumClasses;
     }
     cY_M += NumInputImages;MapVector++;
-    for (i=0; i < NumClasses; i++) { if (ProbDataLocal[i]) ProbDataPtr[i] ++;}
+    for (i=0; i < NumTotalTypeCLASS; i++) {
+      w_m_input[i] ++;
+      if (ProbDataPtr[i]) ProbDataPtr[i] ++;
+    }
     j++;
-    if (j % imgX) {
-      for (i=0; i < NumClasses; i++) { if (ProbDataLocal[i]) ProbDataPtr[i] += ProbDataIncY[i];}
-      if (j % imgXY) for (i=0; i < NumClasses; i++) { if (ProbDataLocal[i]) ProbDataPtr[i] += ProbDataIncZ[i];}
+    if (!(j % imgX)) {
+      blub0 ++ ;
+      for (i=0; i < NumTotalTypeCLASS; i++) { if (ProbDataPtr[i]) ProbDataPtr[i] += ProbDataIncY[i];}
+      if (!(j % imgXY)) {blub1++;
+         for (i=0; i <  NumTotalTypeCLASS; i++) { 
+     if (ProbDataPtr[i]) ProbDataPtr[i] += ProbDataIncZ[i];}
+      }
     }
   }
-  w_m_output = w_m_outStart;
+
+  // cout << " Blubber " << blub0 << " " << blub1 << endl;
+
+
   //j = 0;
   //while (j < NumClasses) { 
   //      // Retrieve the vector with certain slice and class from w_m
@@ -789,7 +1016,9 @@ static void MeanFieldApproximation3D(int id,
   // sprintf(filename,"ProbDataPtr.%d",id);
   // test.WriteMRIfile(filename,NULL, 0,(short*)*w_m, 256*256);
 
-  // Delete Variables
+  // Reset and Delete Variables
+  // for (i=0; i< NumTotalTypeCLASS; i++) wm_input[i] = wm_input_start[i];
+  // delete[] wm_input_start;
   delete[] wxp;delete[] wxn;delete[] wyn;delete[] wyp;delete[] wzn;delete[] wzp;
 }
 
@@ -797,283 +1026,329 @@ static void MeanFieldApproximation3D(int id,
 // Calculate MF - parrallelised version 
 // user interface when called with threads 
 // -----------------------------------------------------------
-void MeanFieldApproximation3DThread(void *jobparm) {
-  MF_Approximation_Work *job = (MF_Approximation_Work *)jobparm;
-  switch (job->ProbDataType) {
-    case VTK_DOUBLE:    MeanFieldApproximation3D(job->id, job->w_m_input,job->MapVector,job->cY_M,job->imgX,job->imgY,job->imgXY,job->StartVoxel,job->EndVoxel,
-                         job->NumClasses,job->NumInputImages,job->Alpha,job->MrfParams, (double**) job->ProbDataPtr, job->ProbDataIncY,
-                         job->ProbDataIncZ, job->ProbDataLocal, job->LogMu,job->InvLogCov,job->InvSqrtDetLogCov,job->TissueProbability,
-                         job->w_m_output);
-    break; 
-    case VTK_FLOAT:  MeanFieldApproximation3D(job->id,job->w_m_input,job->MapVector,job->cY_M,job->imgX,job->imgY,job->imgXY,job->StartVoxel,job->EndVoxel,
-                         job->NumClasses,job->NumInputImages,job->Alpha,job->MrfParams, (float**) job->ProbDataPtr, job->ProbDataIncY,
-                         job->ProbDataIncZ, job->ProbDataLocal, job->LogMu,job->InvLogCov,job->InvSqrtDetLogCov,job->TissueProbability,
-                             job->w_m_output);
-    break; 
-    case VTK_LONG:  MeanFieldApproximation3D(job->id,job->w_m_input,job->MapVector,job->cY_M,job->imgX,job->imgY,job->imgXY,job->StartVoxel,job->EndVoxel,
-                         job->NumClasses,job->NumInputImages,job->Alpha,job->MrfParams, (long**) job->ProbDataPtr, job->ProbDataIncY,
-                         job->ProbDataIncZ, job->ProbDataLocal, job->LogMu,job->InvLogCov,job->InvSqrtDetLogCov,job->TissueProbability,
-                             job->w_m_output); 
-    break; 
-    case VTK_UNSIGNED_LONG:   MeanFieldApproximation3D(job->id,job->w_m_input,job->MapVector,job->cY_M,job->imgX,job->imgY,job->imgXY,job->StartVoxel,job->EndVoxel,
-                         job->NumClasses,job->NumInputImages,job->Alpha,job->MrfParams, (unsigned long**) job->ProbDataPtr, 
-                         job->ProbDataIncY, job->ProbDataIncZ, job->ProbDataLocal, job->LogMu,job->InvLogCov,job->InvSqrtDetLogCov,
-                         job->TissueProbability,job->w_m_output);
-    break; 
-    case VTK_INT:  MeanFieldApproximation3D(job->id,job->w_m_input,job->MapVector,job->cY_M,job->imgX,job->imgY,job->imgXY,job->StartVoxel,job->EndVoxel,
-                         job->NumClasses,job->NumInputImages,job->Alpha,job->MrfParams, (int**) job->ProbDataPtr, job->ProbDataIncY,
-                         job->ProbDataIncZ, job->ProbDataLocal, job->LogMu,job->InvLogCov,job->InvSqrtDetLogCov,job->TissueProbability,
-                             job->w_m_output);
-    break; 
-    case VTK_UNSIGNED_INT:  MeanFieldApproximation3D(job->id,job->w_m_input,job->MapVector,job->cY_M,job->imgX,job->imgY,job->imgXY,job->StartVoxel,job->EndVoxel,
-                         job->NumClasses,job->NumInputImages,job->Alpha,job->MrfParams, (unsigned int**) job->ProbDataPtr, 
-                         job->ProbDataIncY, job->ProbDataIncZ, job->ProbDataLocal, job->LogMu,job->InvLogCov, job->InvSqrtDetLogCov, 
-                         job->TissueProbability,job->w_m_output);
-    break; 
-    case VTK_SHORT:  MeanFieldApproximation3D(job->id,job->w_m_input,job->MapVector,job->cY_M,job->imgX,job->imgY,job->imgXY,job->StartVoxel,job->EndVoxel,
-                         job->NumClasses,job->NumInputImages,job->Alpha,job->MrfParams, (short**) job->ProbDataPtr, job->ProbDataIncY,
-                         job->ProbDataIncZ, job->ProbDataLocal, job->LogMu,job->InvLogCov,job->InvSqrtDetLogCov,job->TissueProbability,
-                             job->w_m_output);
-    break; 
-    case VTK_UNSIGNED_SHORT:   MeanFieldApproximation3D(job->id,job->w_m_input,job->MapVector,job->cY_M,job->imgX,job->imgY,job->imgXY,job->StartVoxel,job->EndVoxel,
-                         job->NumClasses,job->NumInputImages,job->Alpha,job->MrfParams, (unsigned short**) job->ProbDataPtr, 
-                         job->ProbDataIncY,job->ProbDataIncZ, job->ProbDataLocal, job->LogMu,job->InvLogCov,job->InvSqrtDetLogCov,
-                         job->TissueProbability,job->w_m_output);
-    break; 
-    case VTK_CHAR:   MeanFieldApproximation3D(job->id,job->w_m_input,job->MapVector,job->cY_M,job->imgX,job->imgY,job->imgXY,job->StartVoxel,job->EndVoxel,
-                         job->NumClasses,job->NumInputImages,job->Alpha,job->MrfParams, (char**) job->ProbDataPtr, job->ProbDataIncY,
-                         job->ProbDataIncZ, job->ProbDataLocal, job->LogMu,job->InvLogCov,job->InvSqrtDetLogCov,job->TissueProbability,
-                             job->w_m_output);
-    break; 
-    case VTK_UNSIGNED_CHAR:  MeanFieldApproximation3D(job->id,job->w_m_input,job->MapVector,job->cY_M,job->imgX,job->imgY,job->imgXY,job->StartVoxel,job->EndVoxel,
-                         job->NumClasses,job->NumInputImages,job->Alpha,job->MrfParams, (unsigned char**) job->ProbDataPtr, 
-                         job->ProbDataIncY,job->ProbDataIncZ, job->ProbDataLocal, job->LogMu,job->InvLogCov,job->InvSqrtDetLogCov,
-                         job->TissueProbability,job->w_m_output);
-    break;
-    default:
-    return;
-  }
+void EMLocalSegment_MeanFieldApproximation3DThread(void *jobparm) {
+  vtkImageEMLocal_MF_Approximation_Work *job = (vtkImageEMLocal_MF_Approximation_Work *)jobparm;
+  // Define Type of ProbDataPtr
+   switch (job->ProbDataType) {
+    vtkTemplateMacro26(EMLocalSegment_MeanFieldApproximation3D,job->id, job->w_m_input,job->MapVector,job->cY_M,job->imgX,job->imgY,
+                       job->imgXY,job->StartVoxel,job->EndVoxel, job->NumClasses, job->NumTotalTypeCLASS, job->NumChildClasses, 
+                       job->NumInputImages, job->Alpha,job->MrfParams, (VTK_TT**) job->ProbDataPtr, job->ProbDataIncY,
+                       job->ProbDataIncZ, job->ProbDataWeight, job->ProbDataMinusWeight, job->LogMu,job->InvLogCov,
+                       job->InvSqrtDetLogCov, job->TissueProbability, job->VirtualNumInputImages,job->w_m_output);
+
+   }
 }
 
 // -----------------------------------------------------------
-// Print out results into a file "EMLocalSegmResult<name>.m"
-// Results can be display with Matlab Program listed below 
-// -----------------------------------------------------------
-void vtkImageEMLocalSegmenter::PrintMatlabGraphResults(int iter,int slice,int FullProgram,int imgXY, double *w_m) {
-  char filename[40];
-  char varname[40];
-  int appendFlag = 0;
-  int c;
+void vtkImageEMLocalSegmenter::PrintIntermediateResultsToFile(int iter, float **w_m, short* ROI, unsigned char* OutputVector, int NumTotalTypeCLASS, int* NumChildClasses, 
+                                  vtkImageEMSuperClass* actSupCl, char* LevelName, void **ClassList, classType *ClassListType, int* LabelList, 
+                                  FILE** QualityFile) {
   vtkFileOps write;
 
-  double *weight = new double[imgXY];
-  // double *b_mvec = new double[imgXY];
-  unsigned char *ind_Vector = new unsigned char[imgXY];
-  this->DeterminLabelMap(ind_Vector, w_m,imgXY,1);
-  sprintf(filename,"EMLocalSegmResult%dImage.m",iter);
-  write.WriteVectorMatlabFile(filename,"Image",ind_Vector, imgXY);  
+  // -----------------------------------------------------------
+  // 1. Print out Weights
+  // -----------------------------------------------------------
 
-  c = 0;
-  w_m += imgXY*(slice-1)*this->NumClasses; 
-  while (c < this->NumClasses) { 
-    // Retrieve the vector with certain slice and class from w_m
-    for (int i = 0; i < imgXY; i++) weight[i] = w_m[c+i*this->NumClasses];
-    c++;
-    sprintf(varname,"weight(%d,:)",c);
-    sprintf(filename,"EMLocalSegmResult%dWeight%d.m",iter,c);
-    write.WriteVectorMatlabFile(filename,varname,weight,imgXY);
-    // GE Format
-    sprintf(filename,"EMLocalSegmResult%dWeight%d.%03d",iter,c,this->StartSlice+slice-1);
-    // KILIAN - not in old FileOps
-    //write. WriteDoubleToGEFile(filename,weight,imgXY);
+  // Check if anybody wants to print out weights
+  int WeightFlag     = 0; 
+  int NumClasses = actSupCl->GetNumClasses();
+  { 
+    int c = 0 ;
+    while ((c < NumClasses) && (!WeightFlag)) {
+      if (((ClassListType[c] == CLASS)      && (((vtkImageEMClass*) ClassList[c])->GetPrintWeights())) ||
+      ((ClassListType[c] == SUPERCLASS) && (((vtkImageEMSuperClass*) ClassList[c])->GetPrintWeights())) ) WeightFlag = 1;
+      c++;
+    }
+  }
+  if (WeightFlag) {
+    char *FileName = new char [strlen(this->PrintDir) + 29 + this->NumInputImages/10 + strlen(LevelName) +iter/10];
+    // Just a dummy so it does not cut of the last directory ! => will create this->PrintDir if needed  
+    sprintf(FileName,"%s/weights/blub",this->PrintDir);
+    
+    if (write.makeDirectoryIfNeeded(FileName) == -1) {
+      vtkEMAddErrorMessage( "Could not create the follwoing directory :" << this->PrintDir << "/weights");
+      return;
+    } 
+    cout << "Weights will be printed in directory "<< this->PrintDir << "/weights" << endl;
+   
+    int index =0;
+    float *outputWeight = NULL;
+    int PrintClassWeight;
+    float *sumWeight = NULL;
+    for ( int c = 0 ; c < NumClasses; c++) {
+      PrintClassWeight = 0;
+      // Define outputWeight
+      if (ClassListType[c] == CLASS) {
+    if (((vtkImageEMClass*) ClassList[c])->GetPrintWeights()) {
+      outputWeight = w_m[index]; 
+      PrintClassWeight = 1;
+    }
+    index ++;
+      } else {
+    if (((vtkImageEMSuperClass*) ClassList[c])->GetPrintWeights() ) {
+      PrintClassWeight = 1;
+      // Add the weights of all the substructures together
+      sumWeight= new float[this->ImageProd]; 
+      memcpy(sumWeight,w_m[index],sizeof(float)*this->ImageProd); 
+      index ++;
+      for (int i = 1 ; i < NumChildClasses[c]; i++) {
+        for (int x = 0 ; x < this->ImageProd; x++) sumWeight[x] += w_m[index][x];
+        index ++;
+      }
+      outputWeight = sumWeight; 
+    } else {
+      index += NumChildClasses[c];
+    }
+      }
+      // Define Filename 
+      sprintf(FileName,"%s/weights/EMWeightL%sI%dC%d",this->PrintDir,LevelName,iter,c);
+      // Print out data 
+      switch (((vtkImageEMClass*) ClassList[c])->GetPrintWeights()) {
+         case 1:  
+       vtkImageEMLocalSegmenter_PrintDataToOutputExtension(this,outputWeight,VTK_FLOAT,FileName);
+       break;
+         case 2:
+       short *outputShortWeight = new short[this->ImageProd];
+       for (int i = 0 ; i < this->ImageProd; i++) outputShortWeight[i] = short(1000.0 *outputWeight[i]); 
+       vtkImageEMLocalSegmenter_PrintDataToOutputExtension(this,outputShortWeight,VTK_SHORT,FileName);
+       delete[] outputShortWeight;
+       break;
+      }
+      if (sumWeight) {
+    delete[] sumWeight;
+    sumWeight = NULL;
+      }
+    }
+    delete[] FileName;
   }
 
-  c=0;
-//    b_m += imgXY*(slice-1); 
-//    while (c < this->NumInputImages) { 
-//      // Retrieve the vector with certain slice and class from w_m
-//      for (int i = 0; i < imgXY; i++) b_mvec[i] = b_m [c+i*this->NumClasses];
-//      c++;
-//      sprintf(varname,"b_m(%d,:)",c);
-//      sprintf(filename,"EMLocalSegmResult%dBias%d.m",iter,c);
-//      this->WriteVectorToFile(filename,varname,b_mvec,imgXY);
-//    }
-  // sprintf(filename,"EMLocalSegmResult%db_m.m",iter);
-  // this->WriteMatrixToFile(filename,"b_m",b_m,imgXY,this->NumInputImages);
 
-  if (FullProgram) {
-    sprintf(filename,"EMLocalSegmResult%d.m",iter);
-    FILE *f = (strcmp(filename,"-"))?fopen(filename,((appendFlag)?"a":"w")):stdout;
-    if ( f == NULL ) {
-      cerr << "Could not open file " << filename << "\n";
+  // -----------------------------------------------------------
+  // Define Label Map 
+  // -----------------------------------------------------------
+  vtkImageData *LabelMap_WorkingExtension_Data  = NULL;
+  short* LabelMap_WorkingExtension_Ptr = NULL;
+  vtkImageData *LabelMap_OriginalExtension_Data = NULL;
+  short* LabelMap_OriginalExtension_DataPtr = NULL;
+ 
+  // Generate LabelMap if necessary
+  if (actSupCl->GetPrintLabelMap() || QualityFile) {
+    // Define Label Map with the exetensions defined by the SegmentationBoundary
+    int Ext[6] = { 0, this->GetDimensionX()-1, 0, this->GetDimensionY()-1, 0, this->GetDimensionZ()-1};
+    LabelMap_WorkingExtension_Data = vtkImageData::New(); 
+    LabelMap_WorkingExtension_Ptr = (short*) GetPointerToVtkImageData(LabelMap_WorkingExtension_Data ,VTK_SHORT,Ext);    
+    this->DetermineLabelMap(LabelMap_WorkingExtension_Ptr, NumTotalTypeCLASS, NumChildClasses, actSupCl, ROI, this->ImageProd, w_m);
+
+    // Transfere it to output Extension
+    if (actSupCl->GetPrintLabelMap() || QualityFile) {  
+      LabelMap_OriginalExtension_Data = vtkImageData::New();  
+      LabelMap_OriginalExtension_DataPtr = (short*) GetPointerToVtkImageData(LabelMap_OriginalExtension_Data,VTK_SHORT,this->Extent);
+      int outIncX, outIncY, outIncZ;
+      LabelMap_OriginalExtension_Data->GetContinuousIncrements(this->Extent, outIncX, outIncY, outIncZ);
+      int outInc[3] = {outIncX, outIncY, outIncZ};
+      vtkImageEMLocalSegmenter_TransfereDataToOuputExtension(this,LabelMap_WorkingExtension_Ptr,LabelMap_OriginalExtension_DataPtr ,outInc);
+    }
+  }
+
+  // -----------------------------------------------------------
+  //  Print Label Map 
+  // -----------------------------------------------------------
+  if (actSupCl->GetPrintLabelMap()) {
+    // Define File
+    char FileName[1000];
+    cout << "Labelmap will be printed in directory "<< this->PrintDir << "/labelmaps" << endl;
+    sprintf(FileName,"%s/labelmaps/EMLabelMapL%sI%d",this->PrintDir,LevelName,iter); 
+    if (write.makeDirectoryIfNeeded(FileName) == -1) {
+      vtkEMAddErrorMessage( "Could not create the directory :" << this->PrintDir << "/LabelMaps");
       return;
     }
-
-    fprintf(f,"%% (c) Copyright 2002 Massachusetts Institute of Technology\n");
-    fprintf(f,"%% Result of the %d iteration of the EM Algorithm\n",iter);
-    fprintf(f,"EMLocalSegmResult%dImage\n",iter);
-    fprintf(f,"figure(%d1)\n",iter);
-    fprintf(f,"set(%d1, 'position', [10 445 300 300]);\n",iter);
-    fprintf(f,"imagesc([reshape(Image(:),[%d %d])]);\n",this->ImageMaxX,this->ImageMaxY);
-    fprintf(f,"title('Label Map - Iteration %d');\n", iter);
-    // fprintf(f,"colormap([0 0 1; 0 1 0; 1 0 0; 1 1 0;]);\n");
-    fprintf(f,"colormap('default');\n");
-    fprintf(f,"\n");
-
-    fprintf(f,"figure(%d2);\n",iter);
-    fprintf(f,"set(%d2, 'position', [10 10 1210 360]);\n",iter);
-    fprintf(f,"colormap(gray); \n");
-    fprintf(f,"dwm=[];\n");
-    for (c = 1; c <= this->NumClasses ; c++ ) 
-      fprintf(f,"EMLocalSegmResult%dWeight%d\n",iter,c); 
-    fprintf(f,"for t=1:%d\n",this->NumClasses);
-    fprintf(f,"  temp_m=reshape(weight(t,:),[%d %d]);\n",this->ImageMaxX, this->ImageMaxY); 
-    fprintf(f,"  dwm = [dwm,  temp_m(:,:)];\n");
-    fprintf(f,"end\n");
-    fprintf(f,"imagesc([dwm]);\n");
-    fprintf(f,"title('Weights - Iteration %d');\n", iter);
-    fprintf(f,"\n");
-
-    //  fprintf(f,"figure(%d3);\n",iter);
-//      fprintf(f,"set(%d3, 'position', [110 110 1310 460]);\n",iter);
-//      fprintf(f,"colormap(gray); \n");
-//      fprintf(f,"bwm=[];\n");
-//      for (c = 1; c <= this->NumInputImages ; c++ ) 
-//        fprintf(f,"EMLocalSegmResult%dBias%d\n",iter,c); 
-//      fprintf(f,"for t=1:%d\n",this->NumInputImages);
-//      fprintf(f,"  temp_m=reshape(b_m(t,:),[%d %d]);\n",this->ImageMaxX, this->ImageMaxY); 
-//      fprintf(f,"  bwm = [bwm,  temp_m(:,:)];\n");
-//      fprintf(f,"end\n");
-//      fprintf(f,"imagesc([bwm]);\n");
-//      fprintf(f,"title('Bias - Iteration %d');\n", iter);
-//      fprintf(f,"\n");
-    fflush(f);
-    fclose(f);
+    GEImageWriter(LabelMap_OriginalExtension_Data,FileName);
   }
-  // delete[] b_mvec;
-  delete[] weight;
-  delete[] ind_Vector;
-}
 
-void vtkImageEMLocalSegmenter::DeterminLabelMap(unsigned char* LabelMap, double * w_m, int imgXY, int imgZ) { 
-  int idx,l,MaxProbIndex;
-  double MaxProbValue;
-  int max = imgXY*imgZ;
-  for (idx = 0; idx < max ; idx++) {
-    MaxProbValue = (*w_m);
-    MaxProbIndex = 0;
-    w_m ++;
-    for (l=1; l<this->NumClasses; l++) {
-      if ( (*w_m) > MaxProbValue) {MaxProbValue = (*w_m); MaxProbIndex = l;}
-      w_m++;
+  // -----------------------------------------------------------
+  //  Print Quality Measure 
+  // -----------------------------------------------------------
+  if (QualityFile) {
+    // Write into the file
+    cout << "===================================================" << endl;
+    int index = 0;
+    for ( int c = 0 ; c < NumClasses; c++) {
+      if (ClassListType[c] == CLASS) {
+    int PrintQuality = ((vtkImageEMClass*) ClassList[c])->GetPrintQuality();    
+    if  (PrintQuality &&  (QualityFile[PrintQuality -1])) {     
+      vtkImageData *QualityReference = ((vtkImageEMClass*) ClassList[c])->GetReferenceStandard();
+      switch (PrintQuality) {
+      case 1: fprintf(QualityFile[PrintQuality -1],"%10f ",vtkImageEMGeneral::CalcSimularityMeasure(LabelMap_OriginalExtension_Data,QualityReference, LabelList[c],1)); 
+        break;
+        // Fill in other quality standards if needed
+      }
+      cout << endl;
+
     }
-    *(LabelMap++) = this->Label[MaxProbIndex];
+    // Fill the other spaces 
+        index ++;
+      } else {
+    index += NumChildClasses[c];
+      }
+    }
+    cout << "===================================================" << endl;
+    for (int i = 0; i < EMSEGMENT_NUM_OF_QUALITY_MEASURE ; i++) if (QualityFile[i]) fprintf(QualityFile[i],"\n");
   }
+
+  if (LabelMap_WorkingExtension_Data) LabelMap_WorkingExtension_Data->Delete();
+  if (LabelMap_OriginalExtension_Data) LabelMap_OriginalExtension_Data->Delete();
 }
 
+//------------------------------------------------------------------------------
+void vtkImageEMLocalSegmenter::DetermineLabelMap(short* LabelMap, int NumTotalTypeCLASS, int* NumChildClasses, vtkImageEMSuperClass* head, short* ROI, int ImageMax, float **w_m) { 
+  int    NumClasses        = head->GetNumClasses();
+  void** ClassList         = head->GetClassList(); 
+  classType* ClassListType = head->GetClassListType(); 
+  short HeadLabel          = head->GetLabel();
+  int    idx,l,k,MaxProbIndex, ClassIndex;
+  float  MaxProbValue, temp;
+  short *Label             = new short[NumClasses];
+  float **w_mPtr = new float*[NumTotalTypeCLASS];
+  for (l=0;l< NumTotalTypeCLASS;l++) w_mPtr[l] = w_m[l];
+
+  for (idx = 0; idx <NumClasses; idx ++) {
+    if (ClassListType[idx] == CLASS) Label[idx] = ((vtkImageEMClass*) ClassList[idx])->GetLabel();
+    else Label[idx] = ((vtkImageEMSuperClass*) ClassList[idx])->GetLabel();
+  }
+  for (idx = 0; idx < ImageMax ; idx++) {
+    if ((ROI == NULL) || (*ROI++ == HeadLabel)) {
+      MaxProbValue = -1;
+      MaxProbIndex = 0;
+      ClassIndex = 0;
+      for (l=0; l< NumClasses; l++) {
+    temp = 0;
+        // cout << " | ";
+    for (k=0; k < NumChildClasses[l]; k++) {
+      temp += *w_m[ClassIndex];
+          // cout << *w_m[ClassIndex] << " " ;
+          w_m[ClassIndex]++;
+          ClassIndex ++;
+    }
+        // cout << endl;
+    if (!(temp == temp)) {
+      cout << "Error in index "<< idx << " Produced a nan " << endl;
+      exit(1);
+    }
+          if ( temp > MaxProbValue) {MaxProbValue = temp; MaxProbIndex = l;}
+      } 
+      *LabelMap++ = Label[MaxProbIndex];
+    } else {
+      *LabelMap++ = 0;
+      for (l=0;l< NumTotalTypeCLASS;l++) w_m[l] ++;
+    } 
+  }
+  for (l=0;l< NumTotalTypeCLASS;l++) w_m[l] = w_mPtr[l];
+  delete[] w_mPtr;
+  delete[] Label;
+ 
+  //   if (DebugImage) cout << " ---------------------------- End of Error index ------------------" << endl;
+}
+
+
+
+
+//    if (DebugImagePtr) {
+//      if (0 && (Label[MaxProbIndex] != *DebugImagePtr) && (Label[MaxProbIndex] != 1) && (*DebugImagePtr != 153)) {
+//         cout << idx << " " <<Label[MaxProbIndex] << "-" << *DebugImagePtr <<" " <<  bool(*LabelMap&EMSEGMENT_WEST)  << " " << bool(*LabelMap&EMSEGMENT_NORTH)  <<  " " 
+//          << bool(*LabelMap&EMSEGMENT_EAST)  << " " << bool(*LabelMap&EMSEGMENT_SOUTH)  << " " << bool(*LabelMap&EMSEGMENT_FIRST)  << " " << bool(*LabelMap&EMSEGMENT_LAST)  << " " 
+//          << bool(*LabelMap&EMSEGMENT_DEFINED);
+//         
+//         for (k = 0 ; k < NumClasses; k++) {
+//           w_m[k] --;
+//           cout << " " << *w_m[k]++ ; 
+//         }
+//         cout << endl;
+//      } 
+//      DebugImagePtr++;
+//    }
+
+
+//------------------------------------------------------------------------------
 // Special Vector and Matrix functions
 void vtkImageEMLocalSegmenter::DeleteVariables() {
-  int z,y;
-  if (this->NumClasses > 0 ){
-    delete[] this->ProbDataLocal;
-    delete[] this->Label;
-    delete[] this->TissueProbability;
-    delete[] this->ProbDataPtr;
-    delete[] this->ProbDataIncY;
-    delete[] this->ProbDataIncZ;
-    delete[] this->IntensityAvgValuePreDef;
-    delete[] this->IntensityAvgValueCurrent;
-    delete[] this->BiasRootFileName;
+  if (this->IntensityAvgValuePreDef)  delete[] this->IntensityAvgValuePreDef;
+  if (this->IntensityAvgValueCurrent) delete[] this->IntensityAvgValueCurrent;
+  if (this->PrintDir) delete[] this->PrintDir;
 
-    for (z=0; z< this->NumClasses; z ++) { 
-       for (y=0; y < this->NumInputImages; y++)  delete[] this->LogCovariance[z][y];
-       delete[] this->LogCovariance[z];
-       delete[] this->LogMu[z]; 
-    }
-    delete[] this->LogCovariance;
-    delete[] this->LogMu; 
+  this->NumInputImages = 0 ;
+  this->IntensityAvgValuePreDef = NULL;this->IntensityAvgValueCurrent = NULL;this->PrintDir = NULL;
+  this->IntensityAvgClass;this->activeSuperClass = NULL;this->activeClass = NULL;
 
-    for (z=0; z< 6; z ++) { 
-      for (y=0; y < this->NumClasses; y++)
-    delete[] this->MrfParams[z][y];
-      delete[] this->MrfParams[z];
-    }
-    delete[] this->MrfParams;
- 
-    if (this->ErrorMessage) {
-        this->ErrorMessage->rdbuf()->freeze(0);
-        delete this->ErrorMessage;
-        this->ErrorMessage = NULL;
-    }
-
-
-    this->LogMu = NULL;this->LogCovariance = NULL;this->TissueProbability;this->Label;this->MrfParams = NULL;this->ProbDataLocal;
-    this->ProbDataPtr = NULL; this->ProbDataIncY = NULL; this->ProbDataIncZ = NULL; this->IntensityAvgValuePreDef = NULL;this->IntensityAvgValueCurrent = NULL;    
-    this->BiasRootFileName = NULL;
-  }
+  if (this->DebugImage) delete[] this->DebugImage;
+  this->DebugImage = NULL;
 }
 
 // -----------------------------------------------------------
 // Calculate MF - necessary for parrallising algorithm
 // -----------------------------------------------------------
-
-int vtkImageEMLocalSegmenter::MF_Approx_Workpile(double *w_m_input,unsigned char* MapVector, float *cY_M, int imgXY,
-                           double ***InvLogCov,double *InvSqrtDetLogCov,double *w_m_output) {
+int vtkImageEMLocalSegmenter::MF_Approx_Workpile(float **w_m_input,unsigned char* MapVector, float *cY_M, int imgXY,
+                           double ***InvLogCov,double *InvSqrtDetLogCov,  int NumTotalTypeCLASS, 
+                                                   int* NumChildClasses, int NumClasses, void** ProbDataPtr, int* ProbDataIncY, 
+                           int* ProbDataIncZ, float *ProbDataWeight, float *ProbDataMinusWeight,
+                                                   double** LogMu, double* TissueProbability, int *VirtualNumInputImages, vtkImageEMSuperClass* head, float **w_m_output) {
   #define MAXMFAPPROXIMATIONWORKERTHREADS 32
   int numthreads = 0;
   int jobsize,i,j;
   int StartIndex = 0;
   int StartPointer;
+  int NumInputImages = this->NumInputImages;
 
-  MF_Approximation_Work job[MAXMFAPPROXIMATIONWORKERTHREADS];
-
-#ifdef _WIN32
+  vtkImageEMLocal_MF_Approximation_Work job[MAXMFAPPROXIMATIONWORKERTHREADS];
+#ifdef _WIN32  
   numthreads = 1;
-#else
+#else 
   workpile_t workpile;
   vtkThread thread;
   numthreads = vtkThreadNumCpus(void) ;
 
   assert((numthreads <= MAXMFAPPROXIMATIONWORKERTHREADS) && (numthreads > 0));
 
-  workpile = thread.work_init(numthreads,MeanFieldApproximation3DThread, numthreads);
+  workpile = thread.work_init(numthreads,EMLocalSegment_MeanFieldApproximation3DThread, numthreads);
 #endif
   jobsize = this->ImageProd/numthreads;
 
   for (i = 0; i < numthreads; i++) {
-    job[i].id               = i;
-    job[i].w_m_input        = w_m_input  + StartIndex*this->NumClasses;
-    job[i].MapVector        = MapVector  + StartIndex;
-    job[i].cY_M             = cY_M       + StartIndex*this->NumInputImages;
-    job[i].imgX             = this->ImageMaxX;
-    job[i].imgY             = this->ImageMaxY;
-    job[i].imgXY            = imgXY;
-    job[i].StartVoxel       = StartIndex;
-    job[i].EndVoxel         = StartIndex + jobsize;
-    job[i].NumClasses       = this->NumClasses;
-    job[i].NumInputImages   = this->NumInputImages;
-    job[i].Alpha            = this->Alpha;
-    job[i].MrfParams        = this->MrfParams;      
+    job[i].id                = i;
+    job[i].w_m_input         = new float*[NumTotalTypeCLASS];
+    for (j=0; j <NumTotalTypeCLASS; j++) job[i].w_m_input[j] = w_m_input[j]  + StartIndex;
+    job[i].MapVector         = MapVector  + StartIndex;
+    job[i].cY_M              = cY_M       + StartIndex*NumInputImages;
+    job[i].imgX              = this->GetDimensionX();
+    job[i].imgY              = this->GetDimensionY();
+    job[i].imgXY             = imgXY;
+    job[i].StartVoxel        = StartIndex;
+    job[i].EndVoxel          = StartIndex + jobsize;
+    job[i].NumClasses        = NumClasses;
+    job[i].NumTotalTypeCLASS = NumTotalTypeCLASS;
+    job[i].NumChildClasses   = NumChildClasses;
+    job[i].NumInputImages    = NumInputImages;
+    job[i].Alpha             = this->Alpha;
+    job[i].MrfParams         = head->GetMrfParams();      
     // --- Begin ProbDataPtr Definition
-    job[i].ProbDataType     = this->GetInput(0)->GetScalarType(); 
-    job[i].ProbDataLocal     = this->ProbDataLocal; 
-    job[i].ProbDataPtr      = new void*[this->NumClasses];
-    for (j=0; j <this->NumClasses; j++) {
-      StartPointer  = ((this->ImageMaxX + this->ProbDataIncY[j])*this->ImageMaxY + this->ProbDataIncZ[j])*(StartIndex/imgXY); // Z direction
-      StartPointer += (this->ImageMaxX + this->ProbDataIncY[j])*((StartIndex/this->ImageMaxX) % this->ImageMaxY); // Y direction
-      StartPointer += StartIndex % this->ImageMaxX; // X Direction 
-      if (job[i].ProbDataLocal[j]) {
+    job[i].ProbDataType      = this->GetInput(0)->GetScalarType(); 
+    job[i].ProbDataPtr       = new void*[NumTotalTypeCLASS];
+ 
+    for (j=0; j <NumTotalTypeCLASS; j++) {
+      StartPointer  = ((this->GetDimensionX() + ProbDataIncY[j])*this->GetDimensionY() + ProbDataIncZ[j])*(StartIndex/imgXY); // Z direction
+      StartPointer += (this->GetDimensionX() + ProbDataIncY[j])*((StartIndex/this->GetDimensionX()) % this->GetDimensionY()); // Y direction
+      StartPointer += StartIndex % this->GetDimensionX(); // X Direction 
+      if (ProbDataPtr[j]) {
     switch (job[i].ProbDataType) {
-          case VTK_DOUBLE:         job[i].ProbDataPtr[j] =  (void *) ((double *) this->ProbDataPtr[j] + StartPointer); break;
-          case VTK_FLOAT:          job[i].ProbDataPtr[j] =  (void *) ((float *) this->ProbDataPtr[j] + StartPointer); break;
-          case VTK_LONG:           job[i].ProbDataPtr[j] =  (void *) ((long *) this->ProbDataPtr[j] + StartPointer); break;
-          case VTK_UNSIGNED_LONG:  job[i].ProbDataPtr[j] =  (void *) ((unsigned long *) this->ProbDataPtr[j] + StartPointer); break;
-          case VTK_INT:            job[i].ProbDataPtr[j] =  (void *) ((int *) this->ProbDataPtr[j] + StartPointer); break;
-          case VTK_UNSIGNED_INT:   job[i].ProbDataPtr[j] =  (void *) ((unsigned int *) this->ProbDataPtr[j] + StartPointer); break;
-    case VTK_SHORT:            job[i].ProbDataPtr[j] =  (void *) ((short *) this->ProbDataPtr[j] + StartPointer); break;
-          case VTK_UNSIGNED_SHORT: job[i].ProbDataPtr[j] =  (void *) ((unsigned short *) this->ProbDataPtr[j] + StartPointer); break;
-          case VTK_CHAR:           job[i].ProbDataPtr[j] =  (void *) ((char *) this->ProbDataPtr[j] + StartPointer); break;
-          case VTK_UNSIGNED_CHAR:  job[i].ProbDataPtr[j] =  (void *) ((unsigned char *) this->ProbDataPtr[j] + StartPointer); break;
+          case VTK_DOUBLE:         job[i].ProbDataPtr[j] =  (void *) ((double *) ProbDataPtr[j] + StartPointer); break;
+          case VTK_FLOAT:          job[i].ProbDataPtr[j] =  (void *) ((float *) ProbDataPtr[j] + StartPointer); break;
+          case VTK_LONG:           job[i].ProbDataPtr[j] =  (void *) ((long *) ProbDataPtr[j] + StartPointer); break;
+          case VTK_UNSIGNED_LONG:  job[i].ProbDataPtr[j] =  (void *) ((unsigned long *) ProbDataPtr[j] + StartPointer); break;
+          case VTK_INT:            job[i].ProbDataPtr[j] =  (void *) ((int *) ProbDataPtr[j] + StartPointer); break;
+          case VTK_UNSIGNED_INT:   job[i].ProbDataPtr[j] =  (void *) ((unsigned int *) ProbDataPtr[j] + StartPointer); break;
+    case VTK_SHORT:            job[i].ProbDataPtr[j] =  (void *) ((short *) ProbDataPtr[j] + StartPointer); break;
+          case VTK_UNSIGNED_SHORT: job[i].ProbDataPtr[j] =  (void *) ((unsigned short *) ProbDataPtr[j] + StartPointer); break;
+          case VTK_CHAR:           job[i].ProbDataPtr[j] =  (void *) ((char *) ProbDataPtr[j] + StartPointer); break;
+          case VTK_UNSIGNED_CHAR:  job[i].ProbDataPtr[j] =  (void *) ((unsigned char *) ProbDataPtr[j] + StartPointer); break;
     default:
       cout << "Execute: Unknown ScalarType" << endl;
       return 1;
@@ -1082,14 +1357,19 @@ int vtkImageEMLocalSegmenter::MF_Approx_Workpile(double *w_m_input,unsigned char
     job[i].ProbDataPtr[j] = NULL;
       }    
     }               
-    job[i].ProbDataIncY      = this->ProbDataIncY;
-    job[i].ProbDataIncZ      = this->ProbDataIncZ;
+    job[i].ProbDataIncY        = ProbDataIncY;
+    job[i].ProbDataIncZ        = ProbDataIncZ;
+    job[i].ProbDataWeight      = ProbDataWeight;
+    job[i].ProbDataMinusWeight = ProbDataMinusWeight;
+   
     // --- End ProbDataPtr Definition
-    job[i].w_m_output        = w_m_output + StartIndex*this->NumClasses;
-    job[i].LogMu             = this->LogMu;
-    job[i].InvLogCov         = InvLogCov;
-    job[i].InvSqrtDetLogCov  = InvSqrtDetLogCov;
-    job[i].TissueProbability = this->TissueProbability;
+    job[i].w_m_output            = new float*[NumTotalTypeCLASS];
+    for (j=0; j <NumTotalTypeCLASS; j++) job[i].w_m_output[j] = w_m_output[j];
+    job[i].LogMu                 = LogMu;
+    job[i].InvLogCov             = InvLogCov;
+    job[i].InvSqrtDetLogCov      = InvSqrtDetLogCov;
+    job[i].TissueProbability     = TissueProbability;
+    job[i].VirtualNumInputImages =  VirtualNumInputImages;
     StartIndex += jobsize;
 #ifdef _WIN32
     MeanFieldApproximation3DThread(&job[i]);
@@ -1102,101 +1382,406 @@ int vtkImageEMLocalSegmenter::MF_Approx_Workpile(double *w_m_input,unsigned char
   /* In order to avoid a memory leak they should now all be killed off,
    *   or asked to suicide
    */
-#ifdef _WIN32
-#else
+#ifndef _WIN32
   thread.work_wait(workpile);
   thread.work_finished_forever(workpile);
 #endif
   // Delete here
-  for (i=0; i <numthreads; i++) delete[] job[i].ProbDataPtr;        
+  for (i=0; i <numthreads; i++) {
+    delete[] job[i].w_m_input;
+    delete[] job[i].ProbDataPtr;        
+    delete[] job[i].w_m_output;
+
+  }
   return 0; /* Success */
 }
 
-//----------------------------------------------------------------------------
-// The EM Algorithm based on Tina Kapur PhD Thesis and the Matlab 
-// implementation from Carl-Fredrik Westin, Mats Bjornemo and Anders Brun
-template  <class T>
-static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,T **ProbDataPtrStart, double** InputVector, unsigned char *OutputVector) {
-  #ifndef _WIN32
-    cout << "This Computer has " << vtkThreadNumCpus(void)  << " Processors" << endl;
-  #endif
-  cout << "vtkImageEMLocalAlgorithm: Version (2.0) June-2003: Initialize Variables" << endl;
-  // Kilian - Debug
-  // vtkIndent indent;
-  // self->PrintSelf(cout, indent);
-  // Read variables Class Definition
+template  <class Tin>
+static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,Tin **ProbDataPtrStart, float** InputVector, short *ROI, EMTriVolume& iv_m, EMVolume *r_m, float **w_m, char *LevelName, int &SegmentLevelSucessfullFlag) {
+  cout << "vtkImageEMPrivateAlgorithm: Initialize Variables for " << LevelName <<  endl;
 
-  int ImageProd             = self->GetImageProd();
-  int NumClasses            = self->GetNumClasses();
-  int NumInputImages        = self->GetNumInputImages(); 
-  int ImageMaxZ             = self->GetImageMaxZ();
-  int ImageMaxY             = self->GetImageMaxY();
-  int ImageMaxX             = self->GetImageMaxX();
-  int NumIter               = self->GetNumIter();
-  int NumRegIter            = self->GetNumRegIter();
-  int *ProbDataIncZ         = self->GetProbDataIncZ();
-  int *ProbDataIncY         = self->GetProbDataIncY();
-  double **LogMu            = self->GetLogMu();
-  double ***LogCovariance   = self->GetLogCovariance();
-  double *TissueProbability = self->GetTissueProbability();
-  double Alpha              = self->GetAlpha();
-  int SmoothingWidth        = self->GetSmoothingWidth();
-  int SmoothingSigma        = self->GetSmoothingSigma();
-  // Bias Information
-  int BiasPrint             = self->GetBiasPrint();
-  int BiasLengthFileName    = 0;
-  if (self->GetBiasRootFileName() != NULL) BiasLengthFileName = int(strlen(self->GetBiasRootFileName()));
-  char *BiasRootFileName = new char[BiasLengthFileName + 2];
-  if ((BiasPrint) && (BiasLengthFileName)) strcpy(BiasRootFileName,self->GetBiasRootFileName());
-  else sprintf(BiasRootFileName,"\n");
-
-  // Define Default OutputVector
-  memset(OutputVector, 0, ImageProd*sizeof(unsigned char));
-  // Check if everything is set correctly
-  if (self->checkValues() < 0) return;
+  SegmentLevelSucessfullFlag = 1;
   // ------------------------------------------------------
   // General Variables 
   // ------------------------------------------------------
-  int i,j,k,l,m,n,index, x,y,z;
-  int iter,regiter;
-  int imgXY = ImageMaxY*ImageMaxX;
+  int i,j,k,l,m,n,x,y,z;
+  int iter,regiter, index, lindex, mindex;
+
+  // ------------------------------------------------------
+  // Variables defined by current SuperClass and this Filter
+  // ------------------------------------------------------
+  int ImageProd             = self->GetImageProd();
+  vtkImageEMSuperClass* actSupCl    = self->GetActiveSuperClass();
+  void** ClassList          = actSupCl->GetClassList();
+  classType* ClassListType  = actSupCl->GetClassListType();
   
+  int NumClasses            = actSupCl->GetNumClasses();
+  int NumInputImages        = self->GetNumInputImages();
+  int NumTotalTypeCLASS     = actSupCl->GetTotalNumberOfClasses(false);
 
-  // char filename[50];
-  T **ProbDataPtrCopy = new T*[NumClasses];
-  for (i =0;i<NumClasses;i++) {
-    ProbDataPtrCopy[i] = ProbDataPtrStart[i];
+  int ImageMaxZ             = self->GetDimensionZ();
+  int ImageMaxY             = self->GetDimensionY();
+  int ImageMaxX             = self->GetDimensionX();
+  int imgXY                 = ImageMaxY*ImageMaxX;
+  int NumIter               = self->GetNumIter();
+  int NumRegIter            = self->GetNumRegIter();
+  double Alpha              = self->GetAlpha();
 
-    // sprintf(filename,"ImageWeight%d",i);
-    // self->WriteShortDataToMRIFile(filename, (short*) ProbDataPtrCopy[i],0,self->GetEndSlice()-self->GetStartSlice(),ProbDataIncY[i],ProbDataIncZ[i]);
+  int *ProbDataIncZ = new int[NumTotalTypeCLASS];           
+  int *ProbDataIncY = new int[NumTotalTypeCLASS];       
+  actSupCl->GetProbDataIncYandZ(ProbDataIncY,ProbDataIncZ,0);
+  
+  double *TissueProbability        = new double[NumClasses];
+  float  *ProbDataWeight           = new float[NumClasses];
+  float  *ProbDataMinusWeight      = new float[NumClasses];
+
+  // if on of the weights is set to 0 the virtual dimension is one minus the real dimensio = NimInputImages -> necessary to calculate gaussian curve 
+  // -> otherwise you get different reuslts from segmenting something with weight =(1,0) in comaprison to the equivalent one dimensional input channel segmentation 
+  int *VirtualNumInputImages       = new int[NumClasses];
+  float *InputChannelWeights;
+
+  Tin **ProbDataPtrCopy = new Tin*[NumTotalTypeCLASS];
+  for (i =0;i<NumTotalTypeCLASS;i++)  ProbDataPtrCopy[i] = ProbDataPtrStart[i]; 
+
+
+  double **LogMu                   = new double*[NumTotalTypeCLASS];
+  double ***LogCovariance          = new double**[NumTotalTypeCLASS];
+ 
+  // double **WeightedLogMu           = new double*[NumTotalTypeCLASS];
+  double ***InverseWeightedLogCov  = new double**[NumTotalTypeCLASS];
+  double *InvSqrtDetWeightedLogCov = new double[NumTotalTypeCLASS];
+  
+  int NumberOfTrainingSamples       =  self->GetNumberOfTrainingSamples();
+  int *LabelList                    = new int[NumTotalTypeCLASS];
+  int *CurrentLabelList             = new int[NumClasses];
+
+  // Define Files that should be printed in 
+  for (i = 0; i < NumClasses; i ++) {
+    if (ClassListType[i] == CLASS) {
+      CurrentLabelList[i] = ((vtkImageEMClass*) ClassList[i])->GetLabel();
+    } else {
+      CurrentLabelList[i] = ((vtkImageEMSuperClass*) ClassList[i])->GetLabel();
+    }
   }
+
+  // ------------------------------------------------------
+  // Variables defined by Subclasses
+  // ------------------------------------------------------
+  for (i = 0; i < NumTotalTypeCLASS; i++) {
+    InverseWeightedLogCov[i]  = new double*[NumInputImages];
+    for (x = 0; x < NumInputImages; x++)     InverseWeightedLogCov[i][x]  = new double[NumInputImages];
+  }
+
+  // Kilian Get the LogCovariance - change everyhting from here 
+  actSupCl->GetTissueDefinition(LabelList,LogMu, LogCovariance,0);
+
+  classType *ClassType = new classType[NumClasses] ;
+  // Number of child classes => if class is of Type CLASS => is set to 1
+  // otherwise it is ther number of children of TYPE CLASS
+  int *NumChildClasses = new int[NumClasses];
+
+  // VirtualOveralInputChannelFlag[i] = 0 => input channel i is not used by any class 
+  // VirtualOveralInputChannelFlag[i] = 1 => input channel i is used by at least one class 
+  int *VirtualOveralInputChannelFlag = new int[NumInputImages];
+  memset(VirtualOveralInputChannelFlag, 0, sizeof(int)*NumInputImages);    
+
+  // VirtualOveralInputChannelNum defines the number of real input channels analyzed by all tissue classes together 
+  // if VirtualOveralInputChannelNum < NumInputChannel => at least one input channel is not used by any tissue class
+
+  int VirtualOveralInputChannelNum = 0;
+  index = 0;
+  for (i=0; i < NumClasses; i++) {
+    if (ClassListType[i] == CLASS) {
+      NumChildClasses[i]   = 1;
+      TissueProbability[i]  = ((vtkImageEMClass*) ClassList[i])->GetTissueProbability();
+
+      ProbDataWeight[i]     = ((vtkImageEMClass*) ClassList[i])->GetProbDataWeight();      
+      ProbDataMinusWeight[i] =  float(NumberOfTrainingSamples)*(1.0 - ProbDataWeight[i]);
+
+      InputChannelWeights = ((vtkImageEMClass*) ClassList[i])->GetInputChannelWeights();
+ 
+      EMLocalSegment_CalcWeightedCovariance(self,InverseWeightedLogCov[index], InvSqrtDetWeightedLogCov[index], InputChannelWeights, LogCovariance[index], VirtualNumInputImages[i], NumInputImages);
+#if (EMVERBOSE)
+      cout << "=========== "<< index << " =============" << endl;
+      cout << "InvSqrtDetWeightedLogCov: " << InvSqrtDetWeightedLogCov[index] << " VirtualNumInputImages: " <<  VirtualNumInputImages[i] << endl  << "InverseWeightedLogCov :";  ;
+      for (x =0 ; x <NumInputImages; x ++ ) {
+    for (y =0 ; y <NumInputImages; y ++ ) fprintf(stdout, "%8.5f ", InverseWeightedLogCov[index][x][y]);
+    cout << " | ";
+      }
+      cout << endl;
+#endif
+      index ++;
+
+    } else  {
+      NumChildClasses[i]   = ((vtkImageEMSuperClass*) ClassList[i])->GetTotalNumberOfClasses(false);
+      TissueProbability[i] = ((vtkImageEMSuperClass*) ClassList[i])->GetTissueProbability();
+      ProbDataWeight[i]    = ((vtkImageEMSuperClass*) ClassList[i])->GetProbDataWeight();
+      if (NumChildClasses[i]) ProbDataMinusWeight[i] =  float(NumberOfTrainingSamples)* (1.0 - ProbDataWeight[i])/float(NumChildClasses[i]);
+      else ProbDataMinusWeight[i] = 0.0;
+
+      InputChannelWeights = ((vtkImageEMSuperClass*) ClassList[i])->GetInputChannelWeights();
+
+      for (k = 0;k < NumChildClasses[i]; k++) {
+    if (EMLocalSegment_CalcWeightedCovariance(self,InverseWeightedLogCov[index], InvSqrtDetWeightedLogCov[index], InputChannelWeights, LogCovariance[index], VirtualNumInputImages[i],NumInputImages) == 0) {
+          vtkEMAddErrorMessageSelf("vtkImageEMPrivateAlgorithm: Could not calculate of the inverse weighted covariance for class with index "<< index); 
+      SegmentLevelSucessfullFlag = 0;
+    }  
+#if (EMVERBOSE)
+    cout << "=========== "<< index << " =============" << endl;
+    cout << "InvSqrtDetWeightedLogCov: " << InvSqrtDetWeightedLogCov[index] << " VirtualNumInputImages: " <<  VirtualNumInputImages[i] << endl << "InverseWeightedLogCov: ";  
+    for (x =0 ; x <NumInputImages; x ++ ) {
+      for (y =0 ; y <NumInputImages; y ++ ) fprintf(stdout, "%8.5f ", InverseWeightedLogCov[index][x][y]);
+      cout << " | ";
+    }
+    cout << endl;
+#endif
+    index ++; 
+      }
+    }
+    for (k= 0; k < NumInputImages; k++) { 
+       if (InputChannelWeights[k] > 0.0) VirtualOveralInputChannelFlag[k] = 1; 
+    }
+  } 
+
+  for (k= 0; k < NumInputImages; k++) { 
+    if (VirtualOveralInputChannelFlag[k]) VirtualOveralInputChannelNum ++;
+  }
+
+
+  int SmoothingWidth        = self->GetSmoothingWidth();
+  int SmoothingSigma        = self->GetSmoothingSigma();
+  // Bias Information
+  int BiasPrint             = actSupCl->GetPrintBias();
+  int BiasLengthFileName    = 0;
+  if (self->GetPrintDir() != NULL) BiasLengthFileName = int(strlen(self->GetPrintDir()));
+  char *PrintDir = new char[BiasLengthFileName + 2];
+  if (((BiasPrint) )&& (BiasLengthFileName)) strcpy(PrintDir,self->GetPrintDir());
+  else sprintf(PrintDir,"\n");
+
+
+
+  // -----------------------------------------------------------
+  // Variables defined for PCA 
+  // -----------------------------------------------------------
+  float **PCAMeanShapePtr =  new float*[NumTotalTypeCLASS];
+  float ***PCAEigenVectorsPtr = new float**[NumTotalTypeCLASS]; 
+
+  double **PCAScale                        = new double*[NumTotalTypeCLASS];
+  double *PCAMaxDist                       = new double[NumTotalTypeCLASS];
+  double *PCADistVariance                  = new double[NumTotalTypeCLASS];
+  double *PCAInverseDistVariance           = new double[NumTotalTypeCLASS];
+  double *PCASqrtInverseDistVariance       = new double[NumTotalTypeCLASS];
+
+  double **PCAShapeParameters              = new double*[NumTotalTypeCLASS];
+  double **PCAShapeNumerator               = new double*[NumTotalTypeCLASS];
+
+  double **PCAParameters                   = new double*[NumTotalTypeCLASS];
+  int    *PCANumberOfEigenModes            = new int[NumTotalTypeCLASS];
+
+  float  **PCAInverseEigenValues           = new float*[NumTotalTypeCLASS];
+  double **PCAEigenValues                  = new double*[NumTotalTypeCLASS];
+
+  float  **PCAMeanShapeMinusMaxDist        = new float*[NumTotalTypeCLASS];
+
+  char   **PCAIndicatorFlags               = new char*[NumTotalTypeCLASS]; 
+ 
+  int    *PCAMeanShapeIncY                 = new int[NumTotalTypeCLASS];
+  int    *PCAMeanShapeIncZ                 = new int[NumTotalTypeCLASS];
+  float  **PCAMeanShapePtrStart            = new float*[NumTotalTypeCLASS];
+
+  int    **PCAEigenVectorsIncY             = new int*[NumTotalTypeCLASS];
+  int    **PCAEigenVectorsIncZ             = new int*[NumTotalTypeCLASS];
+  float  ***PCAEigenVectorsPtrStart        = new float**[NumTotalTypeCLASS];
+  char   **PCABINMap                       = new char*[NumTotalTypeCLASS];
+  char   **PCABINMapStart                  = new char*[NumTotalTypeCLASS];
+
+  for (i = 0; i < NumTotalTypeCLASS; i++) {
+    PCANumberOfEigenModes[i]  = 0;
+    
+    if (PCANumberOfEigenModes[i]) {
+      if (Alpha) {
+        vtkEMAddWarningMessageSelf("Because PCA Shape Parameters are acitvated we will set Alpha to 0!");
+        Alpha = 0.0;
+      } 
+      cout << "Class " << i << " has ShapePtr defined" << endl;
+      if (PCADistVariance[i] <= 0.0) {
+    vtkEMAddErrorMessageSelf("vtkImageEMPrivateAlgorithm: PCADistVariance has to be greater than 0 ! ");
+        SegmentLevelSucessfullFlag = 0 ;
+      }
+      PCAShapeNumerator[i]          = new double[PCANumberOfEigenModes[i]];
+
+      PCAInverseDistVariance[i] = 1.0 / PCADistVariance[i];
+      PCASqrtInverseDistVariance[i] = sqrt(PCAInverseDistVariance[i]);
+
+      PCAInverseEigenValues[i] = new float[PCANumberOfEigenModes[i]];
+      for (j = 0 ; j < PCANumberOfEigenModes[i]; j++) {
+    PCAShapeParameters[i][j] = -0.0;
+
+    if (PCAEigenValues[i][j] < 0.001)  {
+      vtkEMAddErrorMessageSelf("vtkImageEMPrivateAlgorithm: Eigenvalue "<< j << " is to smalle (" << PCAEigenValues[i][j]<<")!");
+      exit(1);
+    } 
+    PCAInverseEigenValues[i][j] = 1.0 / PCAEigenValues[i][j];
+      }
+
+      // -----------------------------------------------------------------------
+      // Pointers to EigenVectors and generate MeanShape
+      // Voxels x NumberOfEigenVectors
+   
+      PCAMeanShapeMinusMaxDist[i]   = new float[ImageProd]; 
+
+      index =0; 
+      PCAMeanShapePtrStart[i] = PCAMeanShapePtr[i];
+
+      PCAEigenVectorsPtrStart[i] = new float*[PCANumberOfEigenModes[i]];
+      for (j = 0; j < PCANumberOfEigenModes[i]; j++) PCAEigenVectorsPtrStart[i][j] = PCAEigenVectorsPtr[i][j];
+
+      PCAIndicatorFlags[i] = new char[ImageProd];
+
+      for (z = 0 ; z < ImageMaxZ; z ++)  {
+    for (y = 0 ; y < ImageMaxY; y ++)  {
+      for (x = 0 ; x < ImageMaxX; x ++)  {
+        PCAMeanShapeMinusMaxDist[i][index] = float(*PCAMeanShapePtr[i]) - PCAMaxDist[i];
+        PCAMeanShapePtr[i]++;
+           
+            // Tutorial un Bitwise OR
+        // Explanation: |= is a bitwise or that means for a|= b it compares all the bits in a with b and if there is a bit 
+        // in a which equals 0 amd in b 1 than that bit in a is set to 1  
+        // To unset it do  a &= !b
+        // if a = 0 then a!= b is equivalent to a =b 
+        // if a = 1 then a |= 2 => a = 3
+            // PCAIndicatorFlags[i][index] = "0" equals the ascii  0 where  PCAIndicatorFlags[i][index]  = 0 all bits are set to 0 
+            // so numbers are represented always by their bit code and not the ascii code ! 
+        PCAIndicatorFlags[i][index] = EMSEGMENT_PCA_EIGENVECTORS_ZERO;
+        for (k = 0 ; k < PCANumberOfEigenModes[i]; k++) {
+          if ((*PCAEigenVectorsPtr[i][k] !=  0) && (PCAIndicatorFlags[i][index] & EMSEGMENT_PCA_EIGENVECTORS_ZERO)) PCAIndicatorFlags[i][index] = 0;
+          PCAEigenVectorsPtr[i][k]++;
+        }
+            index ++;
+      }
+      PCAMeanShapePtr[i] += PCAMeanShapeIncY[i];
+      for (k = 0 ; k < PCANumberOfEigenModes[i]; k++) PCAEigenVectorsPtr[i][k] += PCAEigenVectorsIncY[i][k];
+    }
+    PCAMeanShapePtr[i] += PCAMeanShapeIncZ[i];
+    for (k = 0 ; k < PCANumberOfEigenModes[i]; k++) PCAEigenVectorsPtr[i][k] += PCAEigenVectorsIncZ[i][k];
+      }
+      PCAMeanShapePtr[i] = PCAMeanShapePtrStart[i];
+      for (k = 0 ; k < PCANumberOfEigenModes[i]; k++) PCAEigenVectorsPtr[i][k] = PCAEigenVectorsPtrStart[i][k];
+
+      PCABINMap[i] = new char[ImageProd];
+      PCABINMapStart[i] = PCABINMap[i];
+
+      // PCA Parameter Print out 
+      if (0) {
+    vtkIndent indent; 
+        ((vtkImageEMClass*)  ClassList[i])->PrintPCAParameters(cout,indent);
+        cout << indent << "PCAMaxDist            : " << PCAMaxDist[i] << endl;
+        cout << indent << "PCADistVariance       : " << PCADistVariance[i] << endl;
+        cout << indent << "PCAInverseDistVariance    : " << PCAInverseDistVariance[i] << endl;
+        cout << indent << "PCASqrtInverseDistVariance: " << PCASqrtInverseDistVariance[i] << endl;
+        cout << indent << "PCANumberOfEigenModes : " << PCANumberOfEigenModes[i] << endl;
+        cout << indent << "PCAShapeParameters    : ";
+        for (j = 0 ; j < PCANumberOfEigenModes[i]; j++) cout << PCAShapeParameters[i][j] << " " ;
+        cout << endl;
+        cout << indent << "PCAInverseEigenValues : ";
+        for (j = 0 ; j < PCANumberOfEigenModes[i]; j++) cout << PCAInverseEigenValues[i][j] << " " ;
+        cout << endl;
+      }
+    } else {
+      PCAIndicatorFlags[i]  = NULL; 
+      PCAInverseDistVariance[i]     = 0.0;
+      PCASqrtInverseDistVariance[i] = 0.0;
+      PCAMeanShapeMinusMaxDist[i]   = NULL;
+      PCAInverseEigenValues[i]      = NULL;
+      PCAMeanShapePtrStart[i]       = NULL;   
+      PCAEigenVectorsPtrStart[i]    = NULL;
+      PCAShapeNumerator[i]          = NULL;
+      PCABINMap[i]                  = NULL;
+      PCABINMapStart[i]             = NULL;
+    }
+  }
+
+  FILE **PCAFile = NULL; 
+  int PCAFlag    = 0; 
+  { 
+    int c = 0 ;
+    while ((c < NumClasses) && (!PCAFlag)) {
+      if ((ClassListType[c] == CLASS) && ((vtkImageEMClass*) ClassList[c])->GetPrintPCA()) PCAFlag = 1;
+      c++;
+    }
+  }
+
+  if (PCAFlag) {
+    PCAFile = new FILE*[NumClasses];
+    char PCAFileName[1000];
+    index = 0;
+    for (int c = 0; c < NumClasses; c++) { 
+      if (ClassListType[c] == CLASS) {
+    if (((vtkImageEMClass*) ClassList[c])->GetPrintPCA() && PCANumberOfEigenModes[index]) {
+      sprintf(PCAFileName,"%s/ShapePara_C%d_L%s.txt",self->GetPrintDir(),CurrentLabelList[c],LevelName);
+      PCAFile[c]= fopen(PCAFileName, "w");
+      if ( PCAFile[i] == NULL ) {
+        vtkEMAddErrorMessageSelf("Could not open file " << PCAFileName);
+      } else {
+        cout << "Write PCAParameters to : " << PCAFileName << endl;
+      }
+    } else {
+      PCAFile[c] = NULL;
+    }
+    index ++;
+      } else {
+    index += NumChildClasses[c];
+    PCAFile[c] = NULL;
+      }
+    }
+  } 
+
+  // -----------------------------------------------------------
+  // Print Quality Measure  Setup 
+  // -----------------------------------------------------------
+  int QualityFlag = 0;
+  FILE **QualityFile  = NULL; 
+ 
+  {
+    i = 0;
+    while ((i < NumClasses) && !QualityFlag) {
+      if ((ClassListType[i]== CLASS) && (((vtkImageEMClass*) ClassList[i])->GetPrintQuality())) QualityFlag = 1;
+      i++;
+    }
+  }
+  if (QualityFlag) {
+    QualityFile = new FILE*[EMSEGMENT_NUM_OF_QUALITY_MEASURE];
+    char FileName[1000]; 
+    for (i = 0; i < EMSEGMENT_NUM_OF_QUALITY_MEASURE ; i++) QualityFile[i] = NULL;
+    for (int c = 0; c < NumClasses; c++) {
+      if (ClassListType[c]== CLASS) {
+    int PrintQuality = ((vtkImageEMClass*) ClassList[c])->GetPrintQuality();
+    if  (PrintQuality  && (!QualityFile[PrintQuality -1])) { 
+      switch (((vtkImageEMClass*) ClassList[c])->GetPrintQuality ()) {
+        case 1 :  sprintf(FileName,"%s/DiceL%s.txt",self->GetPrintDir(),LevelName); break;
+          // Later fill in the names of all the other quality measures 
+      }
+      QualityFile[PrintQuality-1] = fopen(FileName, "w");
+      if (QualityFile[PrintQuality-1] == NULL ) {
+        vtkEMAddErrorMessageSelf("Could not open file " << FileName);
+        return;
+      }
+      cout << "Quality Parameters will be saved in : " << FileName << endl;
+      for (k= 0 ; k < NumClasses ; k++) 
+        if ((ClassListType[k]== CLASS) && (((vtkImageEMClass*) ClassList[k])->GetPrintQuality() == PrintQuality) )
+          fprintf(QualityFile[PrintQuality-1],"     %2d    ", LabelList[k]);
+      fprintf(QualityFile[PrintQuality-1],"\n"); 
+    }
+      }
+    }
+  }
+
   // ------------------------------------------------------
   // Setting up Class Distribution 
   // Calculate the mean of the log(greyvalue+1), 
   // currently we have the mean over the grey scale values !
   // ------------------------------------------------------
-  double *InvSqrtDetLogCov = new double[NumClasses];
-  double ***InvLogCov      = new double**[NumClasses];
-  for (i=0; i<NumClasses; i++) {
-    InvLogCov[i] = new double*[NumInputImages];
-    for (j=0; j<NumInputImages; j++) {
-      InvLogCov[i][j] = new double[NumInputImages];
-    }
-  }
-  int SIZEOF_NUMCLASS_DOUBLE = NumClasses*sizeof(double);
 
-  for (i=0; i < NumClasses; i++) {
-    if (vtkImageEMGeneral::InvertMatrix(LogCovariance[i],InvLogCov[i],NumInputImages) == 0) {
-      cout << "Could not caluclate the Inverse of the Log Covariance of tissue class "<<i <<". Covariance Matrix is probably almost signular!" << endl;
-      return;
-    } 
-    InvSqrtDetLogCov[i] = vtkImageEMGeneral::determinant(LogCovariance[i],NumInputImages);
-    if  (InvSqrtDetLogCov[i] <= 0.0) {
-      cerr << "Coveriance Matrix (value= " << InvSqrtDetLogCov[i] <<") for tissue class "<<i<<" is probably almost signular or not positiv! Could not calculate the inverse determinant of it " << endl;
-      return;
-    } 
-    InvSqrtDetLogCov[i] = sqrt(1/InvSqrtDetLogCov[i]);
-  }
   // ------------------------------------------------------------
   // EM-MF Variables 
   // ------------------------------------------------------------
@@ -1204,76 +1789,202 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,T **ProbData
   // double *b_m = new double[NumInputImages*ImageProd], *b_mPtr = b_m; // dimension NumInputImages x ImageProd 
   // memset(b_m[i], 0, sizeof(double)*NumInputImages*ImageProd);
   double b_m;
+  double ConditionalTissueProbability;
+  double SpatialTissueDistribution;
 
-  double *w_m = new double[NumClasses*ImageProd],*w_mPtr = w_m; // Result of Weights after trad. E Step -  dimesion NumClasses x ImageProd
-  memset(w_m,0,sizeof(double)*NumClasses*ImageProd);
-
-  double *w_m_second = new double[NumClasses*ImageProd],*w_m_secondPtr = w_m_second; // Needed for Parallelising MF-Approximation
+  float **w_mPtr        = new float*[NumTotalTypeCLASS];
+  // Needed for Parallelising MF-Approximation
+  float **w_m_second    = new float*[NumTotalTypeCLASS];
+  float **w_m_secondPtr = new float*[NumTotalTypeCLASS];
+  // cout << "1" << endl;
+  for (i=0; i<NumTotalTypeCLASS; i++) {
+    w_mPtr[i] = w_m[i]; // Result of Weights after trad. E Step -  dimesion NumClasses x ImageProd
+    w_m_second[i] = new float[ImageProd];
+    w_m_secondPtr[i] = w_m_second[i]; 
+  }
 
   float *cY_M = new float[NumInputImages* ImageProd], *cY_MPtr = cY_M; // cY_M correct log intensity - dimension NumInputImages x ImageProd
-  // We assume the input is always positive - otherwise you have to take fabs(InputImage)  
-  // cY_M  = fabs(InputVector - b_m) = {b_m ==0} = fabs(InputVector) = InputVector;
-  for (i=0; i< ImageProd; i++) {
-    for (j=0; j< NumInputImages; j++) {
-      (*cY_M) = (float)InputVector[i][j];  
-      cY_M ++;
-    }
-  }
-  cY_M = cY_MPtr;
-  
-  unsigned char *OutputVectorPtr = OutputVector;
-  int ProbValue;
-  double normRow;   
 
-  for (i=0;                    i < imgXY ; i++)           OutputVector[i] |= EMSEGMENT_FIRST; 
-  for (i=ImageProd-imgXY;i < ImageProd ; i++) OutputVector[i] |= EMSEGMENT_LAST;
-  index = 0;
-  for (j=0; j < ImageMaxZ; j++) { 
-    for (i=0;          i<ImageMaxY;   i++)                     OutputVector[i+index] |= EMSEGMENT_WEST;
-    for (i=imgXY-ImageMaxY; i<imgXY;  i++)                     OutputVector[i+index] |= EMSEGMENT_EAST;
-    index += imgXY;
-  } 
-  //  Remember: The picture is upside down - I left the orientation but later on in the MF step the MRF Matirx is changed
-  for (i=0;                 i<ImageProd;i+=ImageMaxY)  OutputVector[i] |= EMSEGMENT_NORTH;
-  for (i=ImageMaxY-1; i<ImageProd;i+=ImageMaxY)  OutputVector[i] |= EMSEGMENT_SOUTH;
+  unsigned char *OutputVector = new unsigned char[ImageProd];
+  unsigned char *OutputVectorPtr = OutputVector;
+  short *ROIPtr = ROI;
+  float       **InputVectorPtr = InputVector;
+  
+  int ProbValue;
+  float normRow;   
+
+  memset(OutputVector, 0, ImageProd*sizeof(unsigned char));
+  // EMSEGMENT_DEFINED = this is an already defined voxel from previous segmentation
+  //                     or only one tissue class has acceptable values (see later)   
+  if (ROI) {
+    // 1.) Check what the region of interest is 
+    for (i=0; i < ImageProd; i++) {
+      if ((*ROI++) != actSupCl->GetLabel()) *OutputVector |= EMSEGMENT_NOTROI; 
+      OutputVector ++;
+    }
+    OutputVector = OutputVectorPtr; ROI = ROIPtr;
+  }
+  // 2.) Check every voxel if it has a defined neighbor or an edge
+  for (i=0; i < ImageProd; i++) {
+    if (*OutputVector < EMSEGMENT_NOTROI) {
+      if (i % ImageMaxX)                  {
+           if (OutputVector[-1]&EMSEGMENT_NOTROI)          *OutputVector |= EMSEGMENT_NORTH;
+      } else { *OutputVector |= EMSEGMENT_NORTH;}
+
+      if ((i+1) % ImageMaxX)              {if (OutputVector[1]&EMSEGMENT_NOTROI)           *OutputVector |= EMSEGMENT_SOUTH;
+      } else { *OutputVector |= EMSEGMENT_SOUTH;}
+             
+      if (int(i/ImageMaxX)%ImageMaxY)     {if  (OutputVector[-ImageMaxX]&EMSEGMENT_NOTROI) *OutputVector |= EMSEGMENT_WEST;
+      } else { *OutputVector |= EMSEGMENT_WEST;}
+  
+      if (int(i/ImageMaxX + 1)%ImageMaxY) {if (OutputVector[ImageMaxX]&EMSEGMENT_NOTROI)   *OutputVector |= EMSEGMENT_EAST;
+      } else { *OutputVector |= EMSEGMENT_EAST;}
+
+      if (int(i/imgXY))                   {if (OutputVector[-imgXY]&EMSEGMENT_NOTROI)      *OutputVector |= EMSEGMENT_FIRST;
+      } else { *OutputVector |= EMSEGMENT_FIRST;}
+
+      if (int(i/imgXY +1)% ImageMaxZ )    {if (OutputVector[+imgXY]&EMSEGMENT_NOTROI)      *OutputVector |= EMSEGMENT_LAST;
+      } else { *OutputVector |= EMSEGMENT_LAST;}
+    }
+    OutputVector ++;
+  }
+  OutputVector = OutputVectorPtr;
+
   // ------------------------------------------------------------
   // M Step Variables 
   // ------------------------------------------------------------
   double lbound = (-(SmoothingWidth-1)/2); // upper bound = - lbound
-  double temp;
-  double *skern = new double[SmoothingWidth]; 
-  for (i=0; i < SmoothingWidth; i++) skern[i] = vtkImageEMGeneral::FastGauss(1.0 / SmoothingSigma,i + lbound);
+  float temp;
+  float *skern = new float[SmoothingWidth];
+  // Kilian change to normal gaussian 
+  for (i=0; i < SmoothingWidth; i++) skern[i] = float(vtkImageEMGeneral::FastGauss(1.0 / SmoothingSigma,i + lbound));
 
-  EMVolume *r_m  = new EMVolume[NumInputImages]; // weighted residuals
-  for (i=0; i < NumInputImages; i++) {
-    r_m[i].Resize(ImageMaxZ,ImageMaxY,ImageMaxX);
+  double **iv_mat     = new double*[VirtualOveralInputChannelNum];
+  double **inv_iv_mat = new double*[VirtualOveralInputChannelNum];
+  for (i=0; i < VirtualOveralInputChannelNum; i++) {
+    iv_mat[i]     = new double[VirtualOveralInputChannelNum];
+    inv_iv_mat[i] = new double[VirtualOveralInputChannelNum];
   }
 
-  EMTriVolume iv_m(NumInputImages,ImageMaxZ,ImageMaxY,ImageMaxX); // weighted inverse covariances 
-  double **iv_mat     = new double*[NumInputImages];
-  double **inv_iv_mat = new double*[NumInputImages];
-  for (i=0; i < NumInputImages; i++) {
-    iv_mat[i]     = new double[NumInputImages];
-    inv_iv_mat[i] = new double[NumInputImages];
-  }
-
-  // Bias Field 
   FILE **BiasFile = new FILE*[NumInputImages];
   bool PrintBiasFlag;
-  if (BiasLengthFileName) BiasLengthFileName = BiasLengthFileName + 7 + NumInputImages/10;
-  char *BiasFileName = new char[BiasLengthFileName + 2];
-  if (BiasLengthFileName == 0) {
-    sprintf(BiasFileName,"\n");
-    for (int i = 0 ; i < NumInputImages; i++) BiasFile[i] = NULL;
-  }
+  if (BiasLengthFileName) BiasLengthFileName = BiasLengthFileName + 15 + NumInputImages/10 + int(strlen(LevelName));
+  char *BiasFileName = new char[BiasLengthFileName+2];
+  if (BiasLengthFileName == 0)  sprintf(BiasFileName,"\n");
 
 #ifndef _WIN32
   START_PRECISE_TIMING;
 #endif
-  // ------------------------------------------------------------
-  // Start Algorithm 
-  // ------------------------------------------------------------
-  for (iter=1; iter <= NumIter;iter++){
+
+  if (SegmentLevelSucessfullFlag) {
+    // ------------------------------------------------------------
+    // Start Algorithm 
+    // ------------------------------------------------------------
+    for (iter=1; iter <= NumIter;iter++){
+      // -----------------------------------------------------------
+      // Intensity Correction 
+      // -----------------------------------------------------------
+      // cout << "Iter " << iter << endl;
+      // estimate the smoothed image inhomoginities (bias + resiuduum)
+      // transform r (smoothed weighted residuals) by iv (smoother inv covariances)
+      // b_m = r_m./iv_m ;
+      // Bias can only be calculated in the top level => The rest we leave out
+      // If numiter == 1 => bias is iv_m and r_m are never calculated -> this line has to be changed when we want to handle different itteration per hierarchy level sequence ! 
+      if (((ROI) && (NumIter > 1)) || (iter > 1)) {
+      // cout << "-------------------- Bias Field Correction -------------------" << endl; 
+    // If needed the bias can also be printed out if ROI != NULL - just have to do slight modifications 
+          PrintBiasFlag = bool((iter ==  NumIter) && BiasPrint && BiasLengthFileName && (ROI == NULL));
+          if (PrintBiasFlag) cout << "vtkImageEMPrivateAlgorithm: Write Bias to " << PrintDir << endl;
+  
+          for (i = 0; i<ImageMaxZ;i++){
+        // Open File to write Bias Field
+        if (PrintBiasFlag) {
+           for (l=0; l< NumInputImages; l++) { 
+             sprintf(BiasFileName,"%s/Bias_%s_Ch%d.%03d",PrintDir,LevelName,l,i+1);
+             BiasFile[l]= fopen(BiasFileName, "w");
+             if ( BiasFile[l] == NULL ) {
+               vtkEMAddErrorMessageSelf("vtkImageEMPrivateAlgorithm::Error: Could not open file " << BiasFileName);
+               PrintBiasFlag = 0; 
+               for (k=0; k< l; k++) fclose(BiasFile[l]);
+               l = NumInputImages;
+             }
+           }
+        }
+            // Define Bias Value
+        for (j = 0; j<ImageMaxY;j++){
+          for (k = 0; k<ImageMaxX;k++){
+            if (*OutputVector++ < EMSEGMENT_NOTROI) {
+                  lindex =0;
+          for (l=0; l< VirtualOveralInputChannelNum ; l++) {
+                    while (!VirtualOveralInputChannelFlag[lindex]) lindex ++; 
+            iv_mat[l][l] = iv_m(lindex,lindex,i,j,k);
+                    mindex = 0;
+            for (m = 0; m<= l; m++) {
+              while (!VirtualOveralInputChannelFlag[mindex]) mindex ++; 
+              iv_mat[m][l] = iv_mat[l][m] = iv_m(lindex,mindex,i,j,k);
+                      mindex ++;
+            }
+                    lindex ++;
+          }
+          if (vtkImageEMGeneral::InvertMatrix(iv_mat, inv_iv_mat,VirtualOveralInputChannelNum)) {
+            lindex = 0;
+            for (l=0; l< NumInputImages; l++) {
+              b_m = 0.0;
+              if (VirtualOveralInputChannelFlag[l]) {
+            mindex = 0;
+            for (m = 0; m< NumInputImages; m++) {
+              if (VirtualOveralInputChannelFlag[m]) {
+                b_m += inv_iv_mat[lindex][mindex]*r_m[m](i,j,k);
+                mindex ++;
+              }
+            }
+            lindex ++;
+            (*cY_M ++) = fabs((*InputVector)[l] - b_m);
+              } else {cY_M ++;}
+              if (PrintBiasFlag) {
+            // b_m = r_m[l](i,j,k);
+            fwrite(&b_m, sizeof(double), 1, BiasFile[l]); 
+            // fwrite(&(*InputVector)[l], sizeof(float), 1, BiasFile[l]); 
+              }
+            }
+          } else { 
+            b_m = 0.0;
+            for (l=0; l< NumInputImages; l++) {
+                      (*cY_M ++) = fabs((*InputVector)[l]);
+              if (PrintBiasFlag) {
+            // b_m = r_m[l](i,j,k);
+            fwrite(&b_m, sizeof(double), 1, BiasFile[l]); 
+            // fwrite(&(*InputVector)[l], sizeof(float), 1, BiasFile[l]); 
+              }
+            }
+          }
+            } else {
+              cY_M += NumInputImages;
+            }
+            InputVector++;
+        }
+        }
+        if (PrintBiasFlag) {
+          for (l=0; l< NumInputImages; l++) {
+            fflush(BiasFile[l]);
+            fclose(BiasFile[l]);
+          }
+        }
+      }
+        } else {
+          // The first time !
+        // cY_M  = fabs(InputVector - b_m) = {b_m ==0} = fabs(InputVector) = InputVector;
+          // we assume InputVector >= 0
+        for (i=0; i< ImageProd; i++) {
+           // Kili change it if you have too
+           memcpy(cY_M,(*InputVector),sizeof(float)*NumInputImages);
+           cY_M += NumInputImages;
+           InputVector++;
+        }
+        }
+  
+        cY_M = cY_MPtr;OutputVector = OutputVectorPtr;InputVector = InputVectorPtr;
+  
     // -----------------------------------------------------------
     // E-Step
     // -----------------------------------------------------------
@@ -1281,345 +1992,1443 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,T **ProbData
     // Ininitialize first iteration
     // This is the EM Algorithm with out MF Part -> The Regulizing part is the part where 
     // the MF part is added
-   if ((iter == 1) || (Alpha == 0)) { 
-      cout << "vtkImageEMLocalAlgorithm: "<< iter << ". Estep " << endl;
+  
+    cout << "vtkImageEMPrivateAlgorithm: "<< iter << ". Estep " << endl;
+    if ((iter == 1) || (Alpha == 0)) { 
       for (z = 0; z < ImageMaxZ ; z++) {
         for (y = 0; y < ImageMaxY ; y++) {
           for (x = 0; x < ImageMaxX ; x++) {
-        normRow = 0;
-        ProbValue = -2;
-        for (j=0; j < NumClasses; j++) {
-          // check down a little bit later
-          // (*w_m)[j] = (*ProbabilityData)[j]*vtkImageEMGeneral::LookupGauss(GaussLookupTable[j],TableLBound[j],TableUBound[j],TableResolution[j],*cY_M, NumInputImages);
-          // (*w_m)[j] = ProbabilityData[i][j]*vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[j],*cY_M, LogMu[j],InvLogCov[j],NumInputImages);
-          w_m[j] = TissueProbability[j] * vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[j],cY_M, LogMu[j],InvLogCov[j],NumInputImages, NumInputImages);
-
-          if (ProbDataPtrCopy[j]) w_m[j] *= ((double) *ProbDataPtrCopy[j]);
-          normRow += w_m[j];
-          // Predefine those areas where only one Atlas map has a value
-          if (ProbValue != -1) {
-        if (ProbDataPtrCopy[j]) {
-          if (*ProbDataPtrCopy[j] > 0) {
-            if (ProbValue == -2) ProbValue = j; //no other class has (*ProbDataPtrCopy[j]) > 0 so far
-            else ProbValue = -1;                //more than one other class has (*ProbDataPtrCopy[j]) > 0 so far
-          }
-        } else {
-          if (ProbValue == -2) ProbValue = j; 
-          else ProbValue = -1;                
+#if (EMVERBOSE)
+        cout << "============================================================" << endl;
+        cout << "Z:" << z << "Y:" << y << "X:" << x << "  cY_M: "; 
+        for (l= 0 ; l <  NumInputImages; l ++) {
+          cout << cY_M[l] << " " ;
         }
+        
+        fprintf(stdout, "\nw_m               class SubCl ClaIdx  PrbMinus  PWeight   PrbData  TisProb  IntensProb\n"); 
+#endif
+        if (*OutputVector < EMSEGMENT_NOTROI) {
+          normRow = 0;
+          ProbValue = -2;
+          index = 0;
+          for (i=0; i < NumClasses; i++) {
+            
+            for (k=0;k< NumChildClasses[i];k++) {
+              // check down a little bit later
+              // (*w_m)[j] = (*ProbabilityData)[j]*vtkImageEMGeneral::LookupGauss(GaussLookupTable[j],TableLBound[j],TableUBound[j],TableResolution[j],*cY_M, NumInputImages);
+              // (*w_m)[j] = ProbabilityData[i][j]*vtkImageEMGeneral::FastGaussMulti(InvSqrtDetWeightedLogCov[j],*cY_M, LogMu[j],InvLogCov[j],NumInputImages);
+              // If we have a superclass we have to calculate differently!
+              // The proability atlas of a super class is the sum of all its sub classes 
+              // Atlas[SC] = 1 - weight + weight * sum_{sub\in SC}(Atlas[sub])
+              //           = sum_{sub\in SC}((1 - weight) / (# of Sub)  + weight * Atlas[sub])
+              ConditionalTissueProbability =  TissueProbability[i]* vtkImageEMGeneral::FastGaussMulti(InvSqrtDetWeightedLogCov[index],cY_M, LogMu[index],
+                                                          InverseWeightedLogCov[index],NumInputImages, VirtualNumInputImages[i]);
+              
+              // Work of MICCAI02 and ISBI04 
+              SpatialTissueDistribution    = ProbDataMinusWeight[i]  + ProbDataWeight[i] *float(ProbDataPtrCopy[index] == NULL ? 0.0 : *ProbDataPtrCopy[index]);
+  
+              // ----------------------------------------------------------------------------
+              // MICCAI 04 - Shape Stuff 
+              // Note:  we can also multiply with other spatial tissue distribution 
+              //        - does not change anything in the algorithm  
+              // ----------------------------------------------------------------------------
+              if (PCANumberOfEigenModes[index]) {
+            // Section I See failed parts at the end of the file 
+            // Kilian: Automize it later
+            // The Distance Map Suggerstst that it is Inside the objects 
+            // This is essentially my heavisdide function 
+            // This WORKS 
+            double ShapeTissueDistribution = 1.0;
+            if (!PCABINMap[i]) {
+              // I let away the normalizing Factor 
+              ShapeTissueDistribution = 1.0/(EMSEGMENT_E);  
+            } 
+            PCABINMap[i] ++;
+            float SpatialWeightTerm = 2.0;
+            *w_m[index] = (float)  float(NumberOfTrainingSamples) * ConditionalTissueProbability 
+              * pow(SpatialTissueDistribution/double(NumberOfTrainingSamples), 1.0 /SpatialWeightTerm) 
+              * pow(ShapeTissueDistribution, SpatialWeightTerm); 
+              }  else {
+            *w_m[index] = (float)  ConditionalTissueProbability * SpatialTissueDistribution; 
+              }
+              normRow += *w_m[index];
+#if (EMVERBOSE)
+              fprintf(stdout, "w_m: %12g i:%2d  k:%2d  ind:%2d  PMW:%3.2f  PDW:%3.2f  PDP:", *w_m[index],i,k,index,ProbDataMinusWeight[i], ProbDataWeight[i]); 
+              if (ProbDataPtrCopy[index] == NULL) cout << "NULL ";
+              else  fprintf(stdout, "%3d ", *ProbDataPtrCopy[index]);
+              fprintf(stdout, " TP:%3.2f  GID:%5.4f \n", TissueProbability[i], 
+                  (float)vtkImageEMGeneral::FastGaussMulti(InvSqrtDetWeightedLogCov[index], cY_M, LogMu[index],InverseWeightedLogCov[index],
+                                       NumInputImages, VirtualNumInputImages[i]));
+#endif
+              // Predefine those areas where only one Atlas map has a value
+              if (ProbValue != -1) {
+            if ((ProbDataPtrCopy[index] && (*ProbDataPtrCopy[index] > 0)) || (ProbDataWeight[i] < 1.0)) {
+              if (ProbValue == -2) ProbValue = i; //no other class has (*ProbDataPtrCopy[j]) > 0 so far
+              else if (ProbValue !=i) ProbValue = -1;                //more than one other class has (*ProbDataPtrCopy[j]) > 0 so far
+            } 
+              }
+              index ++;
+            }
           }
         }
         // There is a problem if normRow is 0 -> happens quite frequently with local priors
         // Just assing it to local prior for inital setting. The second term is not of such great value
         // because we do not know anything about bias -> Probability Map is more precise
+  #if (EMVERBOSE)
+        fprintf(stdout, "normRow: %8g \n",normRow);
+  #endif
         if (normRow == 0.0) {
-          for (j=0; j < NumClasses; j++) {
-        if (ProbDataPtrCopy[j]) w_m[j] = double(*ProbDataPtrCopy[j]);
-        normRow += w_m[j];
+          index = 0;
+          for (i=0; i < NumClasses; i++) {
+            for (k=0;k< NumChildClasses[i];k++) {
+              if (ProbDataPtrCopy[index]) 
+            *w_m[index] += ProbDataMinusWeight[i] + ProbDataWeight[i] * float(*ProbDataPtrCopy[index]);
+              else if (ProbDataWeight[i] > 0.0) *w_m[index] += ProbDataMinusWeight[i];
+              normRow += *w_m[index];
+              index ++; 
+            }
           }
           if (normRow == 0.0) {
-        for (j=0; j < NumClasses; j++) {
-          // vtkImageEMGeneral::LookupGauss(GaussLookupTable[j],TableLBound[j],TableUBound[j],TableResolution[j],*cY_M, NumInputImages);
-          // (*w_m)[j] = TissueProbability[j]*vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[j],*cY_M, LogMu[j],InvLogCov[j],NumInputImages); 
-          w_m[j] = TissueProbability[j]*vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[j],cY_M, LogMu[j],InvLogCov[j],NumInputImages, NumInputImages); 
-          normRow += w_m[j];
-        }
+            index = 0;
+            for (j=0; j <  NumClasses ; j++) {
+              for (k=0;k< NumChildClasses[j];k++) { 
+            // The line below is the same as ConditionalTissueProbability is the same as 
+            (float) vtkEMLocalSegment_ConditionalTissueProbability(TissueProbability[j], InvSqrtDetWeightedLogCov[index],cY_M, LogMu[index],
+                                         InverseWeightedLogCov[index],NumInputImages, VirtualNumInputImages[j]);   
+            *w_m[index] = (float) (float) TissueProbability[j]* vtkImageEMGeneral::FastGaussMulti(InvSqrtDetWeightedLogCov[index],cY_M, LogMu[index],
+                                                          InverseWeightedLogCov[index],NumInputImages, VirtualNumInputImages[j]); 
+            normRow += *w_m[index];
+            index ++;
+              }
+            }
           }
           if (normRow == 0.0) {normRow = 1;}
         }
         // Normalize Rows and find Maxium of every Row and write it in Matrix        
         if (ProbValue > -2) {
-          for (j=0; j < NumClasses; j++) {w_m[j] /= normRow;}
-          
+          for (j=0; j < NumTotalTypeCLASS; j++) *w_m[j] /= normRow;
           // Label for this pixel ia lready defined
           if (ProbValue > -1) {
-        // Has to be done that way otherwise w_m_second is not defined at those places and that is deadramental in the M Step (think about w_m[-ImgY])
-        *OutputVector |= EMSEGMENT_DEFINED;
-        memcpy(w_m_second,w_m,SIZEOF_NUMCLASS_DOUBLE);
+            // Has to be done that way otherwise w_m_second is not defined at those places and that is deadramental in the M Step (think about w_m[-ImgY])
+            *OutputVector |= EMSEGMENT_DEFINED;
+            for (j=0; j < NumTotalTypeCLASS; j++) *w_m_second[j] = *w_m[j];
           }
-
+          
         } else { 
           // Probabilityt Map is 0 for every class -> Label is assigned to first class
-          *w_m = 1;
-          for (j=1; j < NumClasses; j++) {w_m[j] = 0;}
+          **w_m = **w_m_second = 1.0;
+          for (j=1; j < NumTotalTypeCLASS; j++) *w_m[j] = *w_m_second[j] = 0.0;
+          
           // *OutputVector = (int) Label[0]; 
           *OutputVector |= EMSEGMENT_DEFINED; 
-          // See not above
-          memcpy(w_m_second,w_m,SIZEOF_NUMCLASS_DOUBLE);
         }
-        w_m += NumClasses;w_m_second +=NumClasses;cY_M += NumInputImages; OutputVector++;
-        for (j=0; j < NumClasses; j++) {if (ProbDataPtrCopy[j]) ProbDataPtrCopy[j] ++;}
+        cY_M += NumInputImages; OutputVector++;
+        for (j=0; j < NumTotalTypeCLASS; j++) { 
+          w_m[j] ++; w_m_second[j]++; 
+          if (ProbDataPtrCopy[j]) ProbDataPtrCopy[j] ++;
+        }
+          }
+          for (j=0; j < NumTotalTypeCLASS; j++) {
+        if (ProbDataPtrCopy[j]) ProbDataPtrCopy[j] += ProbDataIncY[j];
+        for (l = 0 ; l < PCANumberOfEigenModes[j]; l++) PCAEigenVectorsPtr[j][l] += PCAEigenVectorsIncY[j][l];
+        if (PCAMeanShapePtr[j])  PCAMeanShapePtr[j] += PCAMeanShapeIncY[j];
+          }
+        }
+        for (j=0; j < NumTotalTypeCLASS; j++) {
+          if (ProbDataPtrCopy[j]) ProbDataPtrCopy[j] += ProbDataIncZ[j];
+          for (l = 0 ; l < PCANumberOfEigenModes[j]; l++)  PCAEigenVectorsPtr[j][l] += PCAEigenVectorsIncZ[j][l];
+          if (PCAMeanShapePtr[j])  PCAMeanShapePtr[j] += PCAMeanShapeIncZ[j];
+        }
+      } // End of for (z = 0; z < ImageMaxZ ; z++) 
+
+      cY_M = cY_MPtr;OutputVector = OutputVectorPtr;
+      for (j=0; j < NumTotalTypeCLASS; j++) {
+        w_m[j]                         = w_mPtr[j];
+        w_m_second[j]                  = w_m_secondPtr[j];
+        ProbDataPtrCopy[j]             = ProbDataPtrStart[j];
+        for (l = 0 ; l < PCANumberOfEigenModes[j]; l++)  PCAEigenVectorsPtr[j][l] = PCAEigenVectorsPtrStart[j][l];
+        if (PCAMeanShapePtr[j])  PCAMeanShapePtr[j] = PCAMeanShapePtrStart[j];
+        PCABINMap[j] = PCABINMapStart[j];
       }
-      for (j=0; j < NumClasses; j++) {if (ProbDataPtrCopy[j]) ProbDataPtrCopy[j] += ProbDataIncY[j];}
-    }
-    for (j=0; j < NumClasses; j++) {if (ProbDataPtrCopy[j]) ProbDataPtrCopy[j] += ProbDataIncZ[j];}
-      }
-      cY_M = cY_MPtr;w_m = w_mPtr;w_m_second = w_m_secondPtr;OutputVector = OutputVectorPtr;
-      for (j=0; j < NumClasses; j++) ProbDataPtrCopy[j] = ProbDataPtrStart[j];
-    }
-   // self->PrintMatlabGraphResults(iter,self->GetPrintIntermediateSlice(),1, imgXY, w_m);
+    }   // End of if ((iter == 1) || (Alpha == 0)) ...  
     // -----------------------------------------------------------
     // regularize weights using a mean-field approximation
     // -----------------------------------------------------------
     if (Alpha > 0) {
       for (regiter=1; regiter <= NumRegIter; regiter++) {
-    cout << "vtkImageEMLocalAlgorithm: "<< regiter << ". EM - MF Iteration" << endl;
-    if (regiter%2) self->MF_Approx_Workpile(w_m,OutputVector,cY_M,imgXY,InvLogCov,InvSqrtDetLogCov,w_m_second);
-    else self->MF_Approx_Workpile(w_m_second,OutputVector,cY_M,imgXY,InvLogCov,InvSqrtDetLogCov,w_m);
+        cout << "vtkImageEMPrivateAlgorithm: "<< regiter << ". EM - MF Iteration" << endl;
+        if (regiter%2) self->MF_Approx_Workpile(w_m,OutputVector,cY_M,imgXY,InverseWeightedLogCov,InvSqrtDetWeightedLogCov,NumTotalTypeCLASS,
+                            NumChildClasses,NumClasses,(void**) ProbDataPtrStart, ProbDataIncY,ProbDataIncZ,
+                            ProbDataWeight, ProbDataMinusWeight, LogMu,TissueProbability,VirtualNumInputImages, actSupCl, w_m_second);
+        else self->MF_Approx_Workpile(w_m_second,OutputVector,cY_M,imgXY,InverseWeightedLogCov,InvSqrtDetWeightedLogCov,NumTotalTypeCLASS,NumChildClasses,
+                      NumClasses,(void**) ProbDataPtrStart,ProbDataIncY,ProbDataIncZ,ProbDataWeight,
+                      ProbDataMinusWeight, LogMu,TissueProbability, VirtualNumInputImages, actSupCl, w_m);
       }
       // if it is an odd number of iterations w_m_second holds the current result ! -> Therefore we have to change it !
-      if (NumRegIter%2) memcpy(w_m,w_m_second,sizeof(double)*NumClasses*ImageProd);;
+      if (NumRegIter%2) {
+        for (j=0; j < NumTotalTypeCLASS; j++) memcpy(w_m[j],w_m_second[j],sizeof(float)*ImageProd);
+      }
     }
-
-    // Does not work
-    //for (i=0; i < NumClasses; i++) {
-      // sprintf(filename,"ImageWeight%d",i);
-      // self->WriteDoubleDataToMRIFile(filename, w_m,0,self->GetEndSlice()-self->GetStartSlice(),0,0);
-      //w_m += ImageProd;
-    // }
-    // w_m = w_mPtr;
-
-    if ((self->GetPrintIntermediateResults()) && ((iter%self->GetPrintIntermediateFrequency()) == 0)){
-      cout << "vtkImageEMLocalAlgorithm: Print intermediate result " << endl;
-      self->PrintMatlabGraphResults(iter,self->GetPrintIntermediateSlice(),1, imgXY, w_m);
-      cout << "vtkImageEMLocalAlgorithm: Return to Algorithm " << endl;
-    }
+#if (EMVERBOSE)
+    cout << "End of E-Step with MFA " << endl;    
+#endif   
+    // -----------------------------------------------------------
+    // M-step
+    // -----------------------------------------------------------
     if (iter < NumIter) {
-      cout << "vtkImageEMLocalAlgorithm: Mstep " << endl;
-      // -----------------------------------------------------------
-      // M-step
-      // -----------------------------------------------------------
+      // cout << "vtkImageEMPrivateAlgorithm: Mstep " << endl;
       // compute weighted residuals 
       // r_m  = (w_m.*(repmat(cY_M,[1 num_classes]) - repmat(mu,[prod(imS) 1])))*(ivar)';
       // iv_m = w_m * ivar';
-      // Compare to sandy i = l => he does exactly the same thing as I do 
-      index =0;
-      for (l=0; l<NumInputImages; l++) {
-    r_m[l].SetValue(0.0);
+      // Compare to sandy i = l => he does exactly the same thing as I do
+      
+      // Shape Initialize values  
+       
+      for (i=0; i< NumTotalTypeCLASS; i++) {
+        if (PCANumberOfEigenModes[i]) {
+          memset(PCAShapeParameters[i], 0, sizeof(double)*PCANumberOfEigenModes[i]);
+          memset(PCAShapeNumerator[i],0, sizeof(double)*PCANumberOfEigenModes[i]);
+        }
       }
-      iv_m.SetValue(0.0);
+      int VoxelIndex = 0;
       for (i = 0; i< ImageMaxZ;i++){
-    for (j = 0; j<ImageMaxX;j++){
-      for (k = 0; k<ImageMaxY;k++){
-
-        for (l=0; l<NumClasses; l++) {
-          for (m=0; m<NumInputImages; m++) {  
-        for (n=0; n<NumInputImages; n++) {
-          temp =  *w_m * InvLogCov[l][m][n];
-          r_m[m](i,k,j)     += temp * (InputVector[index][n] - LogMu[l][n]);
-          if (n <= m) iv_m(m,n,i,k,j) += temp;
-        }
+        for (k = 0; k<ImageMaxY;k++){
+          for (j = 0; j<ImageMaxX;j++){
+        if (*OutputVector < EMSEGMENT_NOTROI) {
+          for (m=0; m<NumInputImages; m++) {
+            r_m[m](i,k,j) = 0.0;
+            for (n=0; n<=m; n++) iv_m(m,n,i,k,j) = 0.0;
+          } 
+          
+          for (l=0; l< NumTotalTypeCLASS; l++) {
+            //------------------------------------------------------------
+            // Calculate Bias Parameters  
+            //------------------------------------------------------------
+            for (m=0; m<NumInputImages; m++) {  
+              for (n=0; n<NumInputImages; n++) {
+            temp =  *w_m[l] * float(InverseWeightedLogCov[l][m][n]);
+            r_m[m](i,k,j)     += temp * ((*InputVector)[n] - float(LogMu[l][n]));
+            if (n <= m) iv_m(m,n,i,k,j) += temp;
+              }
+            }
+            //------------------------------------------------------------
+            // Calculate Shape parameters  - Section I - 
+            // See failed trails at the end of the file
+            //------------------------------------------------------------
+            if (PCANumberOfEigenModes[l]) {
+              // Integrate over the border 
+              if (vtkImageEMSegmentCheckBoundary(&PCABINMap[l][VoxelIndex],OutputVector, ImageMaxX, ImageMaxY)) {
+            for (m = 0 ; m < PCANumberOfEigenModes[l]; m++) PCAShapeParameters[l][m] -= *w_m[l] * double(*PCAEigenVectorsPtr[l][m]);
+              }
+              for (m = 0; m < PCANumberOfEigenModes[l]; m++) PCAEigenVectorsPtr[l][m] ++;
+            }
+            w_m[l]++;
           }
-          w_m++;
+        } else { 
+          for (l=0; l< NumTotalTypeCLASS; l++) {
+            w_m[l] ++;
+            for (m = 0; m < PCANumberOfEigenModes[l]; m++) PCAEigenVectorsPtr[l][m] ++;
+          }
         }
-        index ++;
+        InputVector ++;
+        OutputVector ++;
+        VoxelIndex ++;
+          }
+          for (l=0; l< NumTotalTypeCLASS; l++) {
+        for (m = 0; m < PCANumberOfEigenModes[l]; m++) PCAEigenVectorsPtr[l][m] += PCAEigenVectorsIncY[l][m];        
+        if (PCAMeanShapePtr[l]) PCAMeanShapePtr[l] += PCAMeanShapeIncY[l];        
+          }
+        } 
+        for (l=0; l< NumTotalTypeCLASS; l++) {
+          for (m = 0; m < PCANumberOfEigenModes[l]; m++) PCAEigenVectorsPtr[l][m] += PCAEigenVectorsIncZ[l][m];     
+          if (PCAMeanShapePtr[l]) PCAMeanShapePtr[l] += PCAMeanShapeIncZ[l];        
+        }
+      } // End of for (z = 0; z < ImageMaxZ ; z++) 
+      for (l=0; l< NumTotalTypeCLASS; l++) {
+        w_m[l] = w_mPtr[l];
+        for (m = 0; m < PCANumberOfEigenModes[l]; m++) PCAEigenVectorsPtr[l][m] = PCAEigenVectorsPtrStart[l][m];        
+        if (PCAMeanShapePtr[l]) PCAMeanShapePtr[l] = PCAMeanShapePtrStart[l];        
       }
-    }
-      }
-      w_m = w_mPtr;
+      OutputVector = OutputVectorPtr;InputVector = InputVectorPtr;
+      //------------------------------------------------------------
+      // Finalize Bias Parameters  
+      //------------------------------------------------------------
       //  smooth residuals and inv covariances - 3D
       // w(k) = sum(u(j)*v(k+1-j))
+      
+      // Kilian - when you change the window size (SegmentationBoundary) then it will have an impact on the convolution  
+      // Otherwise there is still a bug in the software
+      // 20-Nov-03 I checked it - Printed out the weights -> they7 are correct - then I let it iterate 10 times just commenting out the convolutio part 
+      // no difference between Acitvated SegmentationBoundary and not Activated one !  
       iv_m.Conv(skern,SmoothingWidth);
-      for (i=0; i<NumInputImages; i++) r_m[i].Conv(skern,SmoothingWidth);
-      // estimate the smoothed bias
-      // transform r (smoothed weighted residuals) by iv (smoother inv covariances)
-      // b_m = r_m./iv_m ;
-
-      index = 0;
-      PrintBiasFlag = bool((iter ==  NumIter-1) && BiasPrint && BiasLengthFileName);
-      if (PrintBiasFlag) cout << "vtkImageEMLocalAlgorithm: Write Bias to " << BiasRootFileName << endl;
-      for (i = 0; i<ImageMaxZ;i++){
-    // Open File to write Bias Field
-    if (PrintBiasFlag) {
-       for (l=0; l< NumInputImages; l++) { 
-         sprintf(BiasFileName,"%sCh%d.%03d",BiasRootFileName,l,i);
-         BiasFile[l]= fopen(BiasFileName, "w");
-         if ( BiasFile[l] == NULL ) {
-           cerr << "vtkImageEMLocalAlgorithm::Error: Could not open file " << BiasFileName << "\n";
-           PrintBiasFlag = 0; 
-           for (k=0; k< l; k++) fclose(BiasFile[l]);
-           l = NumInputImages;
-         }
-       }
-    }
-    for (k = 0; k<ImageMaxX;k++){
-      for (j = 0; j<ImageMaxY;j++){
-        for (l=0; l< NumInputImages; l++) {
-          iv_mat[l][l] = iv_m(l,l,i,j,k);
-          for (m = 0; m<= l; m++) iv_mat[m][l] = iv_mat[l][m] = iv_m(l,m,i,j,k);
+      for (i=0; i<NumInputImages; i++) r_m[i].Conv(skern,SmoothingWidth);  
+      //------------------------------------------------------------
+      // Finalize Shape Parameters  - Section II
+      // See failed trails at the end of the file
+      //------------------------------------------------------------
+      
+      // We currently do not do anyhting here - I just left it in to use it later - Kilian July 04
+      if (0) {
+        for (i=0; i< NumTotalTypeCLASS; i++) {
+          if (PCANumberOfEigenModes[i]) {    
+        for (m = 0; m < PCANumberOfEigenModes[i]; m++) {
+          // Should be miltpling  by Eigenvallues  => Instabiles it 
+          // PCAShapeParameters[i][m] =  PCAShapeParameters[i][m]; 
+          // In the brackets are defined the parameter which are input for the vtkImagePCAApply filter (in temrs of standard deviation)
         }
-        if (vtkImageEMGeneral::InvertMatrix(iv_mat, inv_iv_mat, NumInputImages)) {
-          for (l=0; l< NumInputImages; l++) {
-        b_m = 0.0;
-        for (m = 0; m< NumInputImages; m++) b_m += inv_iv_mat[l][m]*r_m[m](i,j,k);
-        (*cY_M ++) = fabs(InputVector[index][l] - b_m);
-        if (PrintBiasFlag) fwrite(&b_m, sizeof(double), 1, BiasFile[l]); 
           }
-        } else if (PrintBiasFlag) {
-          b_m = 0.0;
-          for (l=0; l< NumInputImages; l++) fwrite(&b_m, sizeof(double), 1, BiasFile[l]); 
         }
-        index++;
       }
-    }      
-    if (PrintBiasFlag) {
-      for (l=0; l< NumInputImages; l++) {
-        fflush(BiasFile[l]);
-        fclose(BiasFile[l]);
-      }
+    } // End of M-Step (if (iter < NumIter) ..)
+#if (EMVERBOSE)
+    cout << "End of M-Step " << endl;
+#endif   
+    // -----------------------------------------------------------
+    // Print out Parameters
+    // -----------------------------------------------------------
+    if ( ( (actSupCl->GetPrintFrequency()) && (iter % (actSupCl->GetPrintFrequency()) == 0) ) || ((iter == NumIter ) && (actSupCl->GetPrintFrequency() == -1)) ) {
+      cout << "vtkImageEMPrivateAlgorithm: Print intermediate result to " <<self->GetPrintDir() << endl;
+      self->PrintIntermediateResultsToFile(iter, w_m, ROI, OutputVector, NumTotalTypeCLASS, NumChildClasses, actSupCl, LevelName, ClassList, ClassListType, LabelList, 
+                          QualityFile);
+      cout << "vtkImageEMPrivateAlgorithm: Return to Algorithm " << endl;
     }
-      }
-      cY_M = cY_MPtr;
-    } else {
-      // -----------------------------------------------------------
-      // Copy results to Image
-      // -----------------------------------------------------------
-      // Find out the maximum propability assigned to a certain class 
-      // and assign that pixel to that class
-      self->DeterminLabelMap(OutputVector, w_m,imgXY,ImageMaxZ);
-    }    
-  }
+      } // End Of EM-Algorithm ( for (iter=1; iter <= NumIter;iter++) ....
+  } //  if (SegmentLevelSucessfullFlag)  ...
 #ifndef _WIN32
   END_PRECISE_TIMING;
   SHOW_ELAPSED_PRECISE_TIME;  
 #endif
-  // cout << "Calculation Time: " << (clock() - start_time)/double(CLOCKS_PER_SEC) << " seconds " << endl;
-  delete[] BiasRootFileName;
-  delete[] BiasFileName;
-  delete[] BiasFile;
-  delete[] ProbDataPtrCopy;
 
+#if (EMVERBOSE)
+  cout << "Start Deleting Classes " << endl;   
+#endif
 
-  delete[] InvSqrtDetLogCov;
-  for (i=0; i<NumClasses; i++) {
-    for (j=0; j<NumInputImages; j++) {
-      delete[] InvLogCov[i][j];
+  if (QualityFile) {
+    for (i = 0; i < EMSEGMENT_NUM_OF_QUALITY_MEASURE ; i++) {
+      if (QualityFile[i] != NULL) {
+    fflush(QualityFile[i]);
+    fclose(QualityFile[i]);   
+      }
     }
-    delete[] InvLogCov[i];
+    delete[] QualityFile;
   }
-  delete[] InvLogCov;
 
-  delete[] w_m;
+  delete[] LabelList;
+  delete[] CurrentLabelList;
+  delete[] ProbDataIncY;
+  delete[] ProbDataIncZ;
+  delete[] TissueProbability;
+  delete[] ProbDataWeight;
+  delete[] ProbDataMinusWeight;
+  delete[] ClassType;
+  delete[] NumChildClasses;
+  delete[] PrintDir;
+  delete[] BiasFileName;
+  delete[] LogMu;
+  delete[] LogCovariance;
+  delete[] VirtualNumInputImages;
+  delete[] VirtualOveralInputChannelFlag;
+
+  for (i = 0; i < NumTotalTypeCLASS; i++) {
+    for (x = 0; x < NumInputImages; x++)  delete[] InverseWeightedLogCov[i][x]; 
+    delete[] InverseWeightedLogCov[i];
+  }
+  delete[] InverseWeightedLogCov;  
+  delete[] InvSqrtDetWeightedLogCov; 
+
+  delete[] OutputVector;
+  delete[] ProbDataPtrCopy;
+  delete[] BiasFile;
+  for (i=0;i < NumTotalTypeCLASS; i++)  delete[] w_m_second[i];
+  delete[] w_mPtr;
   delete[] w_m_second;
-  delete[] cY_M;
+  delete[] w_m_secondPtr;
 
+  delete[] cY_M;
   delete[] skern;
-  for (i=0; i < NumInputImages; i++) {
+
+  for (i=0; i <  VirtualOveralInputChannelNum; i++) {
     delete[] iv_mat[i];
     delete[] inv_iv_mat[i];
   }
   delete[] iv_mat;
   delete[] inv_iv_mat;
 
-  delete []r_m;
-  cout << "vtkImageEMLocalAlgorithm: Finished " << endl;
+  delete[] PCAScale;
+  delete[] PCAMaxDist;
+  delete[] PCADistVariance;
+  delete[] PCAParameters;
+  for (i = 0; i < NumTotalTypeCLASS; i++) if (PCAShapeNumerator[i]) delete[] PCAShapeNumerator[i];  
+  delete[] PCAShapeNumerator;
+
+  delete[] PCANumberOfEigenModes;
+  delete[] PCAInverseDistVariance;
+  delete[] PCASqrtInverseDistVariance;
+
+  delete[] PCAInverseEigenValues;
+  for (i = 0; i < NumTotalTypeCLASS; i++) if (PCAMeanShapeMinusMaxDist[i] != NULL) delete[] PCAMeanShapeMinusMaxDist[i];
+  delete[] PCAMeanShapeMinusMaxDist;  
+
+  if (PCAFile) {
+    for (i = 0; i < NumClasses; i++) if (PCAFile[i] != NULL) {
+      fflush(PCAFile[i]);
+      fclose(PCAFile[i]);   
+    }
+    delete[] PCAFile;
+  }
+
+  for (i = 0; i < NumTotalTypeCLASS; i++) if (PCAIndicatorFlags[i]) delete[] PCAIndicatorFlags[i];
+  delete[] PCAIndicatorFlags;  
+  delete[] PCAMeanShapeIncY;
+  delete[] PCAMeanShapeIncZ;
+  delete[] PCAMeanShapePtrStart; 
+
+  delete[] PCAEigenVectorsIncY;
+  delete[] PCAEigenVectorsIncZ;
+  for (i = 0; i < NumTotalTypeCLASS; i++) {
+    if (PCAEigenVectorsPtrStart[i]) delete[] PCAEigenVectorsPtrStart[i];
+  }
+  delete[] PCAEigenVectorsPtrStart; 
+  
+  delete[] PCAEigenValues;
+
+  for (i = 0; i < NumTotalTypeCLASS; i++) if (PCABINMap[i]) delete[] PCABINMap[i] ;
+  delete[] PCABINMap; 
+  delete[] PCABINMapStart; 
+
+  // cout << "vtkImageEMPrivateAlgorithm: Finished " << endl;
 }
+
+template  <class Tin>
+static void vtkImageEMLocalAlgorithm_(vtkImageEMLocalSegmenter *self,Tin **ProbDataPtrStart, float** InputVector, short *ROI, EMTriVolume& iv_m, EMVolume *r_m, float **w_m, char *LevelName, int &SegmentLevelSucessfullFlag) {
+  cout << "vtkImageEMLocalAlgorithm: Initialize Variables for " << LevelName <<  endl;
+
+  SegmentLevelSucessfullFlag = 1;
+  // ------------------------------------------------------
+  // General Variables 
+  // ------------------------------------------------------
+  int i,j,k,l,m,n,x,y,z;
+  int iter,regiter, index, lindex, mindex;
+
+  // ------------------------------------------------------
+  // Variables defined by current SuperClass and this Filter
+  // ------------------------------------------------------
+  int ImageProd             = self->GetImageProd();
+  vtkImageEMSuperClass* actSupCl    = self->GetActiveSuperClass();
+  void** ClassList          = actSupCl->GetClassList();
+  classType* ClassListType  = actSupCl->GetClassListType();
+  
+  int NumClasses            = actSupCl->GetNumClasses();
+  int NumInputImages        = self->GetNumInputImages();
+  int NumTotalTypeCLASS     = actSupCl->GetTotalNumberOfClasses(false);
+
+  int ImageMaxZ             = self->GetDimensionZ();
+  int ImageMaxY             = self->GetDimensionY();
+  int ImageMaxX             = self->GetDimensionX();
+  int imgXY                 = ImageMaxY*ImageMaxX;
+  int NumIter               = self->GetNumIter();
+  int NumRegIter            = self->GetNumRegIter();
+  double Alpha              = self->GetAlpha();
+
+  int *ProbDataIncZ = new int[NumTotalTypeCLASS];           
+  int *ProbDataIncY = new int[NumTotalTypeCLASS];       
+  actSupCl->GetProbDataIncYandZ(ProbDataIncY,ProbDataIncZ,0);
+  
+  double *TissueProbability        = new double[NumClasses];
+  float  *ProbDataWeight           = new float[NumClasses];
+  float  *ProbDataMinusWeight      = new float[NumClasses];
+
+  // if on of the weights is set to 0 the virtual dimension is one minus the real dimensio = NimInputImages -> necessary to calculate gaussian curve 
+  // -> otherwise you get different reuslts from segmenting something with weight =(1,0) in comaprison to the equivalent one dimensional input channel segmentation 
+  int *VirtualNumInputImages       = new int[NumClasses];
+  float *InputChannelWeights;
+
+  Tin **ProbDataPtrCopy = new Tin*[NumTotalTypeCLASS];
+  for (i =0;i<NumTotalTypeCLASS;i++)  ProbDataPtrCopy[i] = ProbDataPtrStart[i]; 
+
+
+  double **LogMu                   = new double*[NumTotalTypeCLASS];
+  double ***LogCovariance          = new double**[NumTotalTypeCLASS];
+ 
+  // double **WeightedLogMu           = new double*[NumTotalTypeCLASS];
+  double ***InverseWeightedLogCov  = new double**[NumTotalTypeCLASS];
+  double *InvSqrtDetWeightedLogCov = new double[NumTotalTypeCLASS];
+  
+  int NumberOfTrainingSamples       =  self->GetNumberOfTrainingSamples();
+  int *LabelList                    = new int[NumTotalTypeCLASS];
+  int *CurrentLabelList             = new int[NumClasses];
+
+  // Define Files that should be printed in 
+  for (i = 0; i < NumClasses; i ++) {
+    if (ClassListType[i] == CLASS) {
+      CurrentLabelList[i] = ((vtkImageEMClass*) ClassList[i])->GetLabel();
+    } else {
+      CurrentLabelList[i] = ((vtkImageEMSuperClass*) ClassList[i])->GetLabel();
+    }
+  }
+
+  // ------------------------------------------------------
+  // Variables defined by Subclasses
+  // ------------------------------------------------------
+  for (i = 0; i < NumTotalTypeCLASS; i++) {
+    InverseWeightedLogCov[i]  = new double*[NumInputImages];
+    for (x = 0; x < NumInputImages; x++)     InverseWeightedLogCov[i][x]  = new double[NumInputImages];
+  }
+
+  // Kilian Get the LogCovariance - change everyhting from here 
+  actSupCl->GetTissueDefinition(LabelList,LogMu, LogCovariance,0);
+
+  classType *ClassType = new classType[NumClasses] ;
+  // Number of child classes => if class is of Type CLASS => is set to 1
+  // otherwise it is ther number of children of TYPE CLASS
+  int *NumChildClasses = new int[NumClasses];
+
+  // VirtualOveralInputChannelFlag[i] = 0 => input channel i is not used by any class 
+  // VirtualOveralInputChannelFlag[i] = 1 => input channel i is used by at least one class 
+  int *VirtualOveralInputChannelFlag = new int[NumInputImages];
+  memset(VirtualOveralInputChannelFlag, 0, sizeof(int)*NumInputImages);    
+
+  // VirtualOveralInputChannelNum defines the number of real input channels analyzed by all tissue classes together 
+  // if VirtualOveralInputChannelNum < NumInputChannel => at least one input channel is not used by any tissue class
+
+  int VirtualOveralInputChannelNum = 0;
+  index = 0;
+  for (i=0; i < NumClasses; i++) {
+    if (ClassListType[i] == CLASS) {
+      NumChildClasses[i]   = 1;
+      TissueProbability[i]  = ((vtkImageEMClass*) ClassList[i])->GetTissueProbability();
+
+      ProbDataWeight[i]     = ((vtkImageEMClass*) ClassList[i])->GetProbDataWeight();      
+      ProbDataMinusWeight[i] =  float(NumberOfTrainingSamples)*(1.0 - ProbDataWeight[i]);
+
+      InputChannelWeights = ((vtkImageEMClass*) ClassList[i])->GetInputChannelWeights();
+ 
+      EMLocalSegment_CalcWeightedCovariance(self,InverseWeightedLogCov[index], InvSqrtDetWeightedLogCov[index], InputChannelWeights, LogCovariance[index], VirtualNumInputImages[i], NumInputImages);
+#if (EMVERBOSE)
+      cout << "=========== "<< index << " =============" << endl;
+      cout << "InvSqrtDetWeightedLogCov: " << InvSqrtDetWeightedLogCov[index] << " VirtualNumInputImages: " <<  VirtualNumInputImages[i] << endl  << "InverseWeightedLogCov :";  ;
+      for (x =0 ; x <NumInputImages; x ++ ) {
+    for (y =0 ; y <NumInputImages; y ++ ) fprintf(stdout, "%8.5f ", InverseWeightedLogCov[index][x][y]);
+    cout << " | ";
+      }
+      cout << endl;
+#endif
+      index ++;
+
+    } else  {
+      NumChildClasses[i]   = ((vtkImageEMSuperClass*) ClassList[i])->GetTotalNumberOfClasses(false);
+      TissueProbability[i] = ((vtkImageEMSuperClass*) ClassList[i])->GetTissueProbability();
+      ProbDataWeight[i]    = ((vtkImageEMSuperClass*) ClassList[i])->GetProbDataWeight();
+      if (NumChildClasses[i]) ProbDataMinusWeight[i] =  float(NumberOfTrainingSamples)* (1.0 - ProbDataWeight[i])/float(NumChildClasses[i]);
+      else ProbDataMinusWeight[i] = 0.0;
+
+      InputChannelWeights = ((vtkImageEMSuperClass*) ClassList[i])->GetInputChannelWeights();
+
+      for (k = 0;k < NumChildClasses[i]; k++) {
+    if (EMLocalSegment_CalcWeightedCovariance(self,InverseWeightedLogCov[index], InvSqrtDetWeightedLogCov[index], InputChannelWeights, LogCovariance[index], VirtualNumInputImages[i],NumInputImages) == 0) {
+          vtkEMAddErrorMessageSelf("vtkImageEMLocalAlgorithm: Could not calculate of the inverse weighted covariance for class with index "<< index); 
+      SegmentLevelSucessfullFlag = 0;
+    }  
+#if (EMVERBOSE)
+    cout << "=========== "<< index << " =============" << endl;
+    cout << "InvSqrtDetWeightedLogCov: " << InvSqrtDetWeightedLogCov[index] << " VirtualNumInputImages: " <<  VirtualNumInputImages[i] << endl << "InverseWeightedLogCov: ";  
+    for (x =0 ; x <NumInputImages; x ++ ) {
+      for (y =0 ; y <NumInputImages; y ++ ) fprintf(stdout, "%8.5f ", InverseWeightedLogCov[index][x][y]);
+      cout << " | ";
+    }
+    cout << endl;
+#endif
+    index ++; 
+      }
+    }
+    for (k= 0; k < NumInputImages; k++) { 
+       if (InputChannelWeights[k] > 0.0) VirtualOveralInputChannelFlag[k] = 1; 
+    }
+  } 
+
+  for (k= 0; k < NumInputImages; k++) { 
+    if (VirtualOveralInputChannelFlag[k]) VirtualOveralInputChannelNum ++;
+  }
+
+
+  int SmoothingWidth        = self->GetSmoothingWidth();
+  int SmoothingSigma        = self->GetSmoothingSigma();
+  // Bias Information
+  int BiasPrint             = actSupCl->GetPrintBias();
+  int BiasLengthFileName    = 0;
+  if (self->GetPrintDir() != NULL) BiasLengthFileName = int(strlen(self->GetPrintDir()));
+  char *PrintDir = new char[BiasLengthFileName + 2];
+  if (((BiasPrint) )&& (BiasLengthFileName)) strcpy(PrintDir,self->GetPrintDir());
+  else sprintf(PrintDir,"\n");
+
+  // -----------------------------------------------------------
+  // Print Quality Measure  Setup 
+  // -----------------------------------------------------------
+  int QualityFlag = 0;
+  FILE **QualityFile  = NULL; 
+ 
+  {
+    i = 0;
+    while ((i < NumClasses) && !QualityFlag) {
+      if ((ClassListType[i]== CLASS) && (((vtkImageEMClass*) ClassList[i])->GetPrintQuality())) QualityFlag = 1;
+      i++;
+    }
+  }
+  if (QualityFlag) {
+    QualityFile = new FILE*[EMSEGMENT_NUM_OF_QUALITY_MEASURE];
+    char FileName[1000]; 
+    for (i = 0; i < EMSEGMENT_NUM_OF_QUALITY_MEASURE ; i++) QualityFile[i] = NULL;
+    for (int c = 0; c < NumClasses; c++) {
+      if (ClassListType[c]== CLASS) {
+    int PrintQuality = ((vtkImageEMClass*) ClassList[c])->GetPrintQuality();
+    if  (PrintQuality  && (!QualityFile[PrintQuality -1])) { 
+      switch (((vtkImageEMClass*) ClassList[c])->GetPrintQuality ()) {
+        case 1 :  sprintf(FileName,"%s/DiceL%s.txt",self->GetPrintDir(),LevelName); break;
+          // Later fill in the names of all the other quality measures 
+      }
+      QualityFile[PrintQuality-1] = fopen(FileName, "w");
+      if (QualityFile[PrintQuality-1] == NULL ) {
+        vtkEMAddErrorMessageSelf("Could not open file " << FileName);
+        return;
+      }
+      cout << "Quality Parameters will be saved in : " << FileName << endl;
+      for (k= 0 ; k < NumClasses ; k++) 
+        if ((ClassListType[k]== CLASS) && (((vtkImageEMClass*) ClassList[k])->GetPrintQuality() == PrintQuality) )
+          fprintf(QualityFile[PrintQuality-1],"     %2d    ", LabelList[k]);
+      fprintf(QualityFile[PrintQuality-1],"\n"); 
+    }
+      }
+    }
+  }
+
+  // ------------------------------------------------------
+  // Setting up Class Distribution 
+  // Calculate the mean of the log(greyvalue+1), 
+  // currently we have the mean over the grey scale values !
+  // ------------------------------------------------------
+
+  // ------------------------------------------------------------
+  // EM-MF Variables 
+  // ------------------------------------------------------------
+  // bias for emseg+mrf - got rid of it to save memory 
+  // double *b_m = new double[NumInputImages*ImageProd], *b_mPtr = b_m; // dimension NumInputImages x ImageProd 
+  // memset(b_m[i], 0, sizeof(double)*NumInputImages*ImageProd);
+  double b_m;
+  double ConditionalTissueProbability;
+  double SpatialTissueDistribution;
+
+  float **w_mPtr        = new float*[NumTotalTypeCLASS];
+  // Needed for Parallelising MF-Approximation
+  float **w_m_second    = new float*[NumTotalTypeCLASS];
+  float **w_m_secondPtr = new float*[NumTotalTypeCLASS];
+  // cout << "1" << endl;
+  for (i=0; i<NumTotalTypeCLASS; i++) {
+    w_mPtr[i] = w_m[i]; // Result of Weights after trad. E Step -  dimesion NumClasses x ImageProd
+    w_m_second[i] = new float[ImageProd];
+    w_m_secondPtr[i] = w_m_second[i]; 
+  }
+
+  float *cY_M = new float[NumInputImages* ImageProd], *cY_MPtr = cY_M; // cY_M correct log intensity - dimension NumInputImages x ImageProd
+
+  unsigned char *OutputVector = new unsigned char[ImageProd];
+  unsigned char *OutputVectorPtr = OutputVector;
+  short *ROIPtr = ROI;
+  float       **InputVectorPtr = InputVector;
+  
+  int ProbValue;
+  float normRow;   
+
+  memset(OutputVector, 0, ImageProd*sizeof(unsigned char));
+  // EMSEGMENT_DEFINED = this is an already defined voxel from previous segmentation
+  //                     or only one tissue class has acceptable values (see later)   
+  if (ROI) {
+    // 1.) Check what the region of interest is 
+    for (i=0; i < ImageProd; i++) {
+      if ((*ROI++) != actSupCl->GetLabel()) *OutputVector |= EMSEGMENT_NOTROI; 
+      OutputVector ++;
+    }
+    OutputVector = OutputVectorPtr; ROI = ROIPtr;
+  }
+  // 2.) Check every voxel if it has a defined neighbor or an edge
+  for (i=0; i < ImageProd; i++) {
+    if (*OutputVector < EMSEGMENT_NOTROI) {
+      if (i % ImageMaxX)                  {
+           if (OutputVector[-1]&EMSEGMENT_NOTROI)          *OutputVector |= EMSEGMENT_NORTH;
+      } else { *OutputVector |= EMSEGMENT_NORTH;}
+
+      if ((i+1) % ImageMaxX)              {if (OutputVector[1]&EMSEGMENT_NOTROI)           *OutputVector |= EMSEGMENT_SOUTH;
+      } else { *OutputVector |= EMSEGMENT_SOUTH;}
+             
+      if (int(i/ImageMaxX)%ImageMaxY)     {if  (OutputVector[-ImageMaxX]&EMSEGMENT_NOTROI) *OutputVector |= EMSEGMENT_WEST;
+      } else { *OutputVector |= EMSEGMENT_WEST;}
+  
+      if (int(i/ImageMaxX + 1)%ImageMaxY) {if (OutputVector[ImageMaxX]&EMSEGMENT_NOTROI)   *OutputVector |= EMSEGMENT_EAST;
+      } else { *OutputVector |= EMSEGMENT_EAST;}
+
+      if (int(i/imgXY))                   {if (OutputVector[-imgXY]&EMSEGMENT_NOTROI)      *OutputVector |= EMSEGMENT_FIRST;
+      } else { *OutputVector |= EMSEGMENT_FIRST;}
+
+      if (int(i/imgXY +1)% ImageMaxZ )    {if (OutputVector[+imgXY]&EMSEGMENT_NOTROI)      *OutputVector |= EMSEGMENT_LAST;
+      } else { *OutputVector |= EMSEGMENT_LAST;}
+    }
+    OutputVector ++;
+  }
+  OutputVector = OutputVectorPtr;
+
+  // ------------------------------------------------------------
+  // M Step Variables 
+  // ------------------------------------------------------------
+  double lbound = (-(SmoothingWidth-1)/2); // upper bound = - lbound
+  float temp;
+  float *skern = new float[SmoothingWidth];
+  // Kilian change to normal gaussian 
+  for (i=0; i < SmoothingWidth; i++) skern[i] = float(vtkImageEMGeneral::FastGauss(1.0 / SmoothingSigma,i + lbound));
+
+  double **iv_mat     = new double*[VirtualOveralInputChannelNum];
+  double **inv_iv_mat = new double*[VirtualOveralInputChannelNum];
+  for (i=0; i < VirtualOveralInputChannelNum; i++) {
+    iv_mat[i]     = new double[VirtualOveralInputChannelNum];
+    inv_iv_mat[i] = new double[VirtualOveralInputChannelNum];
+  }
+
+  FILE **BiasFile = new FILE*[NumInputImages];
+  bool PrintBiasFlag;
+  if (BiasLengthFileName) BiasLengthFileName = BiasLengthFileName + 15 + NumInputImages/10 + int(strlen(LevelName));
+  char *BiasFileName = new char[BiasLengthFileName+2];
+  if (BiasLengthFileName == 0)  sprintf(BiasFileName,"\n");
+
+#ifndef _WIN32
+  START_PRECISE_TIMING;
+#endif
+
+  if (SegmentLevelSucessfullFlag) {
+    // ------------------------------------------------------------
+    // Start Algorithm 
+    // ------------------------------------------------------------
+    for (iter=1; iter <= NumIter;iter++){
+      // -----------------------------------------------------------
+      // Intensity Correction 
+      // -----------------------------------------------------------
+      // cout << "Iter " << iter << endl;
+      // estimate the smoothed image inhomoginities (bias + resiuduum)
+      // transform r (smoothed weighted residuals) by iv (smoother inv covariances)
+      // b_m = r_m./iv_m ;
+      // Bias can only be calculated in the top level => The rest we leave out
+      // If numiter == 1 => bias is iv_m and r_m are never calculated -> this line has to be changed when we want to handle different itteration per hierarchy level sequence ! 
+      if (((ROI) && (NumIter > 1)) || (iter > 1)) {
+      // cout << "-------------------- Bias Field Correction -------------------" << endl; 
+    // If needed the bias can also be printed out if ROI != NULL - just have to do slight modifications 
+          PrintBiasFlag = bool((iter ==  NumIter) && BiasPrint && BiasLengthFileName && (ROI == NULL));
+          if (PrintBiasFlag) cout << "vtkImageEMLocalAlgorithm: Write Bias to " << PrintDir << endl;
+  
+          for (i = 0; i<ImageMaxZ;i++){
+        // Open File to write Bias Field
+        if (PrintBiasFlag) {
+           for (l=0; l< NumInputImages; l++) { 
+             sprintf(BiasFileName,"%s/Bias_%s_Ch%d.%03d",PrintDir,LevelName,l,i+1);
+             BiasFile[l]= fopen(BiasFileName, "w");
+             if ( BiasFile[l] == NULL ) {
+               vtkEMAddErrorMessageSelf("vtkImageEMLocalAlgorithm::Error: Could not open file " << BiasFileName);
+               PrintBiasFlag = 0; 
+               for (k=0; k< l; k++) fclose(BiasFile[l]);
+               l = NumInputImages;
+             }
+           }
+        }
+            // Define Bias Value
+        for (j = 0; j<ImageMaxY;j++){
+          for (k = 0; k<ImageMaxX;k++){
+            if (*OutputVector++ < EMSEGMENT_NOTROI) {
+                  lindex =0;
+          for (l=0; l< VirtualOveralInputChannelNum ; l++) {
+                    while (!VirtualOveralInputChannelFlag[lindex]) lindex ++; 
+            iv_mat[l][l] = iv_m(lindex,lindex,i,j,k);
+                    mindex = 0;
+            for (m = 0; m<= l; m++) {
+              while (!VirtualOveralInputChannelFlag[mindex]) mindex ++; 
+              iv_mat[m][l] = iv_mat[l][m] = iv_m(lindex,mindex,i,j,k);
+                      mindex ++;
+            }
+                    lindex ++;
+          }
+          if (vtkImageEMGeneral::InvertMatrix(iv_mat, inv_iv_mat,VirtualOveralInputChannelNum)) {
+            lindex = 0;
+            for (l=0; l< NumInputImages; l++) {
+              b_m = 0.0;
+              if (VirtualOveralInputChannelFlag[l]) {
+            mindex = 0;
+            for (m = 0; m< NumInputImages; m++) {
+              if (VirtualOveralInputChannelFlag[m]) {
+                b_m += inv_iv_mat[lindex][mindex]*r_m[m](i,j,k);
+                mindex ++;
+              }
+            }
+            lindex ++;
+            (*cY_M ++) = fabs((*InputVector)[l] - b_m);
+              } else {cY_M ++;}
+              if (PrintBiasFlag) {
+            // b_m = r_m[l](i,j,k);
+            fwrite(&b_m, sizeof(double), 1, BiasFile[l]); 
+            // fwrite(&(*InputVector)[l], sizeof(float), 1, BiasFile[l]); 
+              }
+            }
+          } else { 
+            b_m = 0.0;
+            for (l=0; l< NumInputImages; l++) {
+                      (*cY_M ++) = fabs((*InputVector)[l]);
+              if (PrintBiasFlag) {
+            // b_m = r_m[l](i,j,k);
+            fwrite(&b_m, sizeof(double), 1, BiasFile[l]); 
+            // fwrite(&(*InputVector)[l], sizeof(float), 1, BiasFile[l]); 
+              }
+            }
+          }
+            } else {
+              cY_M += NumInputImages;
+            }
+            InputVector++;
+        }
+        }
+        if (PrintBiasFlag) {
+          for (l=0; l< NumInputImages; l++) {
+            fflush(BiasFile[l]);
+            fclose(BiasFile[l]);
+          }
+        }
+      }
+        } else {
+          // The first time !
+        // cY_M  = fabs(InputVector - b_m) = {b_m ==0} = fabs(InputVector) = InputVector;
+          // we assume InputVector >= 0
+        for (i=0; i< ImageProd; i++) {
+           // Kili change it if you have too
+           memcpy(cY_M,(*InputVector),sizeof(float)*NumInputImages);
+           cY_M += NumInputImages;
+           InputVector++;
+        }
+        }
+  
+        cY_M = cY_MPtr;OutputVector = OutputVectorPtr;InputVector = InputVectorPtr;
+  
+    // -----------------------------------------------------------
+    // E-Step
+    // -----------------------------------------------------------
+    // cY_m = abs(Y - b_m(:));  -> corrected log intensities we will do this now at the end of the M-Step to save memory 
+    // Ininitialize first iteration
+    // This is the EM Algorithm with out MF Part -> The Regulizing part is the part where 
+    // the MF part is added
+  
+    cout << "vtkImageEMLocalAlgorithm: "<< iter << ". Estep " << endl;
+    if ((iter == 1) || (Alpha == 0)) { 
+      for (z = 0; z < ImageMaxZ ; z++) {
+        for (y = 0; y < ImageMaxY ; y++) {
+          for (x = 0; x < ImageMaxX ; x++) {
+#if (EMVERBOSE)
+        cout << "============================================================" << endl;
+        cout << "Z:" << z << "Y:" << y << "X:" << x << "  cY_M: "; 
+        for (l= 0 ; l <  NumInputImages; l ++) {
+          cout << cY_M[l] << " " ;
+        }
+        
+        fprintf(stdout, "\nw_m               class SubCl ClaIdx  PrbMinus  PWeight   PrbData  TisProb  IntensProb\n"); 
+#endif
+        if (*OutputVector < EMSEGMENT_NOTROI) {
+          normRow = 0;
+          ProbValue = -2;
+          index = 0;
+          for (i=0; i < NumClasses; i++) {
+            
+            for (k=0;k< NumChildClasses[i];k++) {
+              // check down a little bit later
+              // (*w_m)[j] = (*ProbabilityData)[j]*vtkImageEMGeneral::LookupGauss(GaussLookupTable[j],TableLBound[j],TableUBound[j],TableResolution[j],*cY_M, NumInputImages);
+              // (*w_m)[j] = ProbabilityData[i][j]*vtkImageEMGeneral::FastGaussMulti(InvSqrtDetWeightedLogCov[j],*cY_M, LogMu[j],InvLogCov[j],NumInputImages);
+              // If we have a superclass we have to calculate differently!
+              // The proability atlas of a super class is the sum of all its sub classes 
+              // Atlas[SC] = 1 - weight + weight * sum_{sub\in SC}(Atlas[sub])
+              //           = sum_{sub\in SC}((1 - weight) / (# of Sub)  + weight * Atlas[sub])
+              ConditionalTissueProbability =  TissueProbability[i]* vtkImageEMGeneral::FastGaussMulti(InvSqrtDetWeightedLogCov[index],cY_M, LogMu[index],
+                                                          InverseWeightedLogCov[index],NumInputImages, VirtualNumInputImages[i]);
+              
+              // Work of MICCAI02 and ISBI04 
+              SpatialTissueDistribution    = ProbDataMinusWeight[i]  + ProbDataWeight[i] *float(ProbDataPtrCopy[index] == NULL ? 0.0 : *ProbDataPtrCopy[index]);
+  
+              // ----------------------------------------------------------------------------
+              // MICCAI 04 - Shape Stuff 
+              // Note:  we can also multiply with other spatial tissue distribution 
+              //        - does not change anything in the algorithm  
+              // ----------------------------------------------------------------------------
+              *w_m[index] = (float)  ConditionalTissueProbability * SpatialTissueDistribution; 
+              normRow += *w_m[index];
+#if (EMVERBOSE)
+              fprintf(stdout, "w_m: %12g i:%2d  k:%2d  ind:%2d  PMW:%3.2f  PDW:%3.2f  PDP:", *w_m[index],i,k,index,ProbDataMinusWeight[i], ProbDataWeight[i]); 
+              if (ProbDataPtrCopy[index] == NULL) cout << "NULL ";
+              else  fprintf(stdout, "%3d ", *ProbDataPtrCopy[index]);
+              fprintf(stdout, " TP:%3.2f  GID:%5.4f \n", TissueProbability[i], 
+                  (float)vtkImageEMGeneral::FastGaussMulti(InvSqrtDetWeightedLogCov[index], cY_M, LogMu[index],InverseWeightedLogCov[index],
+                                       NumInputImages, VirtualNumInputImages[i]));
+#endif
+              // Predefine those areas where only one Atlas map has a value
+              if (ProbValue != -1) {
+            if ((ProbDataPtrCopy[index] && (*ProbDataPtrCopy[index] > 0)) || (ProbDataWeight[i] < 1.0)) {
+              if (ProbValue == -2) ProbValue = i; //no other class has (*ProbDataPtrCopy[j]) > 0 so far
+              else if (ProbValue !=i) ProbValue = -1;                //more than one other class has (*ProbDataPtrCopy[j]) > 0 so far
+            } 
+              }
+              index ++;
+            }
+          }
+        }
+        // There is a problem if normRow is 0 -> happens quite frequently with local priors
+        // Just assing it to local prior for inital setting. The second term is not of such great value
+        // because we do not know anything about bias -> Probability Map is more precise
+  #if (EMVERBOSE)
+        fprintf(stdout, "normRow: %8g \n",normRow);
+  #endif
+        if (normRow == 0.0) {
+          index = 0;
+          for (i=0; i < NumClasses; i++) {
+            for (k=0;k< NumChildClasses[i];k++) {
+              if (ProbDataPtrCopy[index]) 
+            *w_m[index] += ProbDataMinusWeight[i] + ProbDataWeight[i] * float(*ProbDataPtrCopy[index]);
+              else if (ProbDataWeight[i] > 0.0) *w_m[index] += ProbDataMinusWeight[i];
+              normRow += *w_m[index];
+              index ++; 
+            }
+          }
+          if (normRow == 0.0) {
+            index = 0;
+            for (j=0; j <  NumClasses ; j++) {
+              for (k=0;k< NumChildClasses[j];k++) { 
+            // The line below is the same as ConditionalTissueProbability is the same as 
+            (float) vtkEMLocalSegment_ConditionalTissueProbability(TissueProbability[j], InvSqrtDetWeightedLogCov[index],cY_M, LogMu[index],
+                                         InverseWeightedLogCov[index],NumInputImages, VirtualNumInputImages[j]);   
+            *w_m[index] = (float) (float) TissueProbability[j]* vtkImageEMGeneral::FastGaussMulti(InvSqrtDetWeightedLogCov[index],cY_M, LogMu[index],
+                                                          InverseWeightedLogCov[index],NumInputImages, VirtualNumInputImages[j]); 
+            normRow += *w_m[index];
+            index ++;
+              }
+            }
+          }
+          if (normRow == 0.0) {normRow = 1;}
+        }
+        // Normalize Rows and find Maxium of every Row and write it in Matrix        
+        if (ProbValue > -2) {
+          for (j=0; j < NumTotalTypeCLASS; j++) *w_m[j] /= normRow;
+          // Label for this pixel ia lready defined
+          if (ProbValue > -1) {
+            // Has to be done that way otherwise w_m_second is not defined at those places and that is deadramental in the M Step (think about w_m[-ImgY])
+            *OutputVector |= EMSEGMENT_DEFINED;
+            for (j=0; j < NumTotalTypeCLASS; j++) *w_m_second[j] = *w_m[j];
+          }
+          
+        } else { 
+          // Probabilityt Map is 0 for every class -> Label is assigned to first class
+          **w_m = **w_m_second = 1.0;
+          for (j=1; j < NumTotalTypeCLASS; j++) *w_m[j] = *w_m_second[j] = 0.0;
+          
+          // *OutputVector = (int) Label[0]; 
+          *OutputVector |= EMSEGMENT_DEFINED; 
+        }
+        cY_M += NumInputImages; OutputVector++;
+        for (j=0; j < NumTotalTypeCLASS; j++) { 
+          w_m[j] ++; w_m_second[j]++; 
+          if (ProbDataPtrCopy[j]) ProbDataPtrCopy[j] ++;
+        }
+          }
+        }
+        for (j=0; j < NumTotalTypeCLASS; j++) {
+          if (ProbDataPtrCopy[j]) ProbDataPtrCopy[j] += ProbDataIncZ[j];
+        }
+      } // End of for (z = 0; z < ImageMaxZ ; z++) 
+
+      cY_M = cY_MPtr;OutputVector = OutputVectorPtr;
+      for (j=0; j < NumTotalTypeCLASS; j++) {
+        w_m[j]                         = w_mPtr[j];
+        w_m_second[j]                  = w_m_secondPtr[j];
+        ProbDataPtrCopy[j]             = ProbDataPtrStart[j];
+      }
+    }   // End of if ((iter == 1) || (Alpha == 0)) ...  
+    // -----------------------------------------------------------
+    // regularize weights using a mean-field approximation
+    // -----------------------------------------------------------
+    if (Alpha > 0) {
+      for (regiter=1; regiter <= NumRegIter; regiter++) {
+        cout << "vtkImageEMLocalAlgorithm: "<< regiter << ". EM - MF Iteration" << endl;
+        if (regiter%2) self->MF_Approx_Workpile(w_m,OutputVector,cY_M,imgXY,InverseWeightedLogCov,InvSqrtDetWeightedLogCov,NumTotalTypeCLASS,
+                            NumChildClasses,NumClasses,(void**) ProbDataPtrStart, ProbDataIncY,ProbDataIncZ,
+                            ProbDataWeight, ProbDataMinusWeight, LogMu,TissueProbability,VirtualNumInputImages, actSupCl, w_m_second);
+        else self->MF_Approx_Workpile(w_m_second,OutputVector,cY_M,imgXY,InverseWeightedLogCov,InvSqrtDetWeightedLogCov,NumTotalTypeCLASS,NumChildClasses,
+                      NumClasses,(void**) ProbDataPtrStart,ProbDataIncY,ProbDataIncZ,ProbDataWeight,
+                      ProbDataMinusWeight, LogMu,TissueProbability, VirtualNumInputImages, actSupCl, w_m);
+      }
+      // if it is an odd number of iterations w_m_second holds the current result ! -> Therefore we have to change it !
+      if (NumRegIter%2) {
+        for (j=0; j < NumTotalTypeCLASS; j++) memcpy(w_m[j],w_m_second[j],sizeof(float)*ImageProd);
+      }
+    }
+#if (EMVERBOSE)
+    cout << "End of E-Step with MFA " << endl;    
+#endif   
+    // -----------------------------------------------------------
+    // M-step
+    // -----------------------------------------------------------
+    if (iter < NumIter) {
+      // cout << "vtkImageEMLocalAlgorithm: Mstep " << endl;
+      // compute weighted residuals 
+      // r_m  = (w_m.*(repmat(cY_M,[1 num_classes]) - repmat(mu,[prod(imS) 1])))*(ivar)';
+      // iv_m = w_m * ivar';
+      // Compare to sandy i = l => he does exactly the same thing as I do
+      
+      // Shape Initialize values  
+       
+      int VoxelIndex = 0;
+      for (i = 0; i< ImageMaxZ;i++){
+        for (k = 0; k<ImageMaxY;k++){
+          for (j = 0; j<ImageMaxX;j++){
+        if (*OutputVector < EMSEGMENT_NOTROI) {
+          for (m=0; m<NumInputImages; m++) {
+            r_m[m](i,k,j) = 0.0;
+            for (n=0; n<=m; n++) iv_m(m,n,i,k,j) = 0.0;
+          } 
+          
+          for (l=0; l< NumTotalTypeCLASS; l++) {
+            //------------------------------------------------------------
+            // Calculate Bias Parameters  
+            //------------------------------------------------------------
+            for (m=0; m<NumInputImages; m++) {  
+              for (n=0; n<NumInputImages; n++) {
+            temp =  *w_m[l] * float(InverseWeightedLogCov[l][m][n]);
+            r_m[m](i,k,j)     += temp * ((*InputVector)[n] - float(LogMu[l][n]));
+            if (n <= m) iv_m(m,n,i,k,j) += temp;
+              }
+            }
+            //------------------------------------------------------------
+            // Calculate Shape parameters  - Section I - 
+            // See failed trails at the end of the file
+            //------------------------------------------------------------
+            w_m[l]++;
+          }
+        } else { 
+          for (l=0; l< NumTotalTypeCLASS; l++) {
+            w_m[l] ++;
+          }
+        }
+        InputVector ++;
+        OutputVector ++;
+        VoxelIndex ++;
+          }
+        } 
+      } // End of for (z = 0; z < ImageMaxZ ; z++) 
+      for (l=0; l< NumTotalTypeCLASS; l++) {
+        w_m[l] = w_mPtr[l];
+      }
+      OutputVector = OutputVectorPtr;InputVector = InputVectorPtr;
+      //------------------------------------------------------------
+      // Finalize Bias Parameters  
+      //------------------------------------------------------------
+      //  smooth residuals and inv covariances - 3D
+      // w(k) = sum(u(j)*v(k+1-j))
+      
+      // Kilian - when you change the window size (SegmentationBoundary) then it will have an impact on the convolution  
+      // Otherwise there is still a bug in the software
+      // 20-Nov-03 I checked it - Printed out the weights -> they7 are correct - then I let it iterate 10 times just commenting out the convolutio part 
+      // no difference between Acitvated SegmentationBoundary and not Activated one !  
+      iv_m.Conv(skern,SmoothingWidth);
+      for (i=0; i<NumInputImages; i++) r_m[i].Conv(skern,SmoothingWidth);  
+    } // End of M-Step (if (iter < NumIter) ..)
+#if (EMVERBOSE)
+    cout << "End of M-Step " << endl;
+#endif   
+    // -----------------------------------------------------------
+    // Print out Parameters
+    // -----------------------------------------------------------
+    if ( ( (actSupCl->GetPrintFrequency()) && (iter % (actSupCl->GetPrintFrequency()) == 0) ) || ((iter == NumIter ) && (actSupCl->GetPrintFrequency() == -1)) ) {
+      cout << "vtkImageEMLocalAlgorithm: Print intermediate result to " <<self->GetPrintDir() << endl;
+      self->PrintIntermediateResultsToFile(iter, w_m, ROI, OutputVector, NumTotalTypeCLASS, NumChildClasses, actSupCl, LevelName, ClassList, ClassListType, LabelList, QualityFile);
+      cout << "vtkImageEMLocalAlgorithm: Return to Algorithm " << endl;
+    }
+      } // End Of EM-Algorithm ( for (iter=1; iter <= NumIter;iter++) ....
+  } //  if (SegmentLevelSucessfullFlag)  ...
+#ifndef _WIN32
+  END_PRECISE_TIMING;
+  SHOW_ELAPSED_PRECISE_TIME;  
+#endif
+
+#if (EMVERBOSE)
+  cout << "Start Deleting Classes " << endl;   
+#endif
+
+  if (QualityFile) {
+    for (i = 0; i < EMSEGMENT_NUM_OF_QUALITY_MEASURE ; i++) {
+      if (QualityFile[i] != NULL) {
+    fflush(QualityFile[i]);
+    fclose(QualityFile[i]);   
+      }
+    }
+    delete[] QualityFile;
+  }
+
+  delete[] LabelList;
+  delete[] CurrentLabelList;
+  delete[] ProbDataIncY;
+  delete[] ProbDataIncZ;
+  delete[] TissueProbability;
+  delete[] ProbDataWeight;
+  delete[] ProbDataMinusWeight;
+  delete[] ClassType;
+  delete[] NumChildClasses;
+  delete[] PrintDir;
+  delete[] BiasFileName;
+  delete[] LogMu;
+  delete[] LogCovariance;
+  delete[] VirtualNumInputImages;
+  delete[] VirtualOveralInputChannelFlag;
+
+  for (i = 0; i < NumTotalTypeCLASS; i++) {
+    for (x = 0; x < NumInputImages; x++)  delete[] InverseWeightedLogCov[i][x]; 
+    delete[] InverseWeightedLogCov[i];
+  }
+  delete[] InverseWeightedLogCov;  
+  delete[] InvSqrtDetWeightedLogCov; 
+
+  delete[] OutputVector;
+  delete[] ProbDataPtrCopy;
+  delete[] BiasFile;
+  for (i=0;i < NumTotalTypeCLASS; i++)  delete[] w_m_second[i];
+  delete[] w_mPtr;
+  delete[] w_m_second;
+  delete[] w_m_secondPtr;
+
+  delete[] cY_M;
+  delete[] skern;
+
+  for (i=0; i <  VirtualOveralInputChannelNum; i++) {
+    delete[] iv_mat[i];
+    delete[] inv_iv_mat[i];
+  }
+  delete[] iv_mat;
+  delete[] inv_iv_mat;
+
+  // cout << "vtkImageEMLocalAlgorithm: Finished " << endl;
+ }
+//------------------------------------------------------------------------------
+// Needed to define hierarchies! => this will be done at a later point int time at vtkImageEMSuperClass
+// I did this design to multi thread it later
+// If you start it always set ROI == NULL
+int vtkImageEMLocalSegmenter::HierarchicalSegmentation(vtkImageEMSuperClass* head, float** InputVector,short *ROI, short *OutputVector, EMTriVolume & iv_m, EMVolume *r_m,char* LevelName) {
+  cout << "Start vtkImageEMLocalSegmenter::HierarchicalSegmentation"<< endl;  
+  // Nothing to segment
+  if (head->GetNumClasses() ==0) {
+    if (ROI == NULL) memset(OutputVector,0, sizeof(short)*this->ImageProd);
+    return 0;
+  }
+
+  // ---------------------------------------------------------------
+  // 1. Define Variables
+  // ---------------------------------------------------------------
+  cout <<"====================================== Segmenting Level " << LevelName << " ==========================================" << endl;
+  int       i;
+  char      *NewLevelName = new char[strlen(LevelName)+5];
+  void      **ClassList = head->GetClassList();
+  classType *ClassListType = head->GetClassListType();
+  int       NumClasses = head->GetNumClasses();
+  int       NumTotalTypeCLASS = head->GetTotalNumberOfClasses(false); // This includes only classes from Type CLASSES  
+  int       SegmentLevelSucessfullFlag;
+
+  // The follwoing division is done for multi threading purposes -> even though it is currently not implemented 
+  // you would also have to make a copy of iv_m and r_m . I currently do not do it because it takes to much space
+  // Also first install zoom function before doing it !
+  // I will do it sometime
+  // Note: ROI is Region of Interest => Read Only ! OutputVecotr is Write only !  
+  // It needs to be a class of vtkImageEMLocalSegmenter => therefore we cannot use outPtr instead of OutputVactor 
+  short *SegmentationResult = new short[this->ImageProd],
+        *ROIPtr             = ROI, 
+        *SegResultPtr       = SegmentationResult,
+        *OutputVectorPtr    = OutputVector;
+
+  memset(SegmentationResult,0,sizeof(short)*this->ImageProd);
+
+
+
+  float **w_m            = new float*[NumTotalTypeCLASS];
+  for (i=0; i<NumTotalTypeCLASS; i++) w_m[i] = new float[this->ImageProd];
+  void  **ProbDataPtr    = new void*[NumTotalTypeCLASS];
+  head->GetProbDataPtr(ProbDataPtr,0);
+
+  // This is retroactive - it gives the warning here that the superclass ignores prob data even though that was important on the 
+  // last level segmentation where the super class was involved - this is just simpler to program
+  if ((head->GetProbDataWeight() == 0.0) && (this->GetHeadClass() != head)) {
+    for (i=0; i<NumTotalTypeCLASS; i++) {
+      if (ProbDataPtr[i]) {
+    i = NumTotalTypeCLASS;
+    vtkEMAddWarningMessage("Super Class segmented on Level " << LevelName  << " has ProbDataWeight == 0.0, but there are sub classes that have probability maps defined\n          => Probability Maps will be ignored!");
+      } 
+    }
+  }
+
+  bool          UpdateShapeFlag  = true;
+  int           *NumChildClasses = new int[NumClasses];
+
+  for (i=0; i < NumClasses; i++) {
+      if ((ClassListType[i] == CLASS) && (((vtkImageEMClass*) ClassList[i])->GetShapeParameter())) {
+    cout << "Activate Shape Prior Setting for tissue class " << i << endl; 
+    UpdateShapeFlag = true;
+        switch (this->GetInput(0)->GetScalarType()) {
+       vtkTemplateMacro7(vtkImageEMLocalSegmenterShapeInit,(VTK_TT**) ProbDataPtr,i, 
+                 ((vtkImageEMClass*) ClassList[i])->GetProbDataIncY(), ((vtkImageEMClass*) ClassList[i])->GetProbDataIncZ(), 
+                 this->GetDimensionX(),this->GetDimensionY(),this->GetDimensionZ());
+    }
+      }
+  }
+  this->activeSuperClass = head;
+  // ---------------------------------------------------------------
+  // 2. Segment Subject
+  // ---------------------------------------------------------------
+#ifdef VTKEMPRIVATE_TETRA_MESH_FLAG
+  int n,z,x;
+  int idxZ, idxY, idxX;
+  float *w_mPtr;  
+  bool  *FinalShapeResults            = new bool[this->ImageProd];
+  bool  *InitialShapeResults     = new bool[this->ImageProd];
+  DeformableModelInterface SamsonInterface;
+  // We need debugging information right now - otherwise uncomment 
+  SetVeryQuiet();
+  SamsonInterface.SetNumWeights(NumTotalTypeCLASS);
+  SamsonInterface.SetWeights(w_m);
+  SamsonInterface.SetNumx(this->GetDimensionX());
+  SamsonInterface.SetNumy(this->GetDimensionY());
+  SamsonInterface.SetNumz(this->GetDimensionZ());
+  SamsonInterface.SetSpacing(this->GetInput(0)->GetSpacing());
+  SamsonInterface.SetFinalOutput(FinalShapeResults);
+  SamsonInterface.SetInitialOutput(InitialShapeResults);
+  SamsonInterface.SetOutputPath(this->PrintDir);
+
+  for (n= 0; n < this->NumEMShapeIter; n++) { 
+    cout <<"================ Iteration " << n+1<< " ================" << endl;
+
+    SamsonInterface.SetIter(n+1);
+    // 1. Step:  Read external file (weights) so that you cna jump over initial segmentation 
+    if (EM_DEBUG && this->DebugImage && (UpdateShapeFlag)) {
+      z = 0;
+      for (i=0; i < NumClasses; i++) {
+    if ((ClassListType[i] == CLASS) && (((vtkImageEMClass*) ClassList[i])->GetShapeParameter())) {
+      cout << "ShapeResult for class "<< i << " is updated with external file " << endl;
+      for (x = 0 ; x < this->ImageProd; x++)  FinalShapeResults[x] = bool(this->DebugImage[z][x]);
+      z++;
+      switch (this->GetInput(0)->GetScalarType()) {
+        vtkTemplateMacro9(vtkImageEMLocalSegmenterShapeUpdate,this,(VTK_TT*) ProbDataPtr[i],
+                  ((vtkImageEMClass*) ClassList[i])->GetProbDataIncY(), ((vtkImageEMClass*) ClassList[i])->GetProbDataIncZ(), 
+                  FinalShapeResults, this->GetDimensionX(),this->GetDimensionY(),this->GetDimensionZ(),
+                  ((vtkImageEMClass*) ClassList[i])->GetShapeParameter());
+      }
+    }
+      }
+    }
+    // 2. Step: Segment images  
+    switch (this->GetInput(0)->GetScalarType()) {
+      vtkTemplateMacro11(vtkImageEMLocalAlgorithm,this,(VTK_TT**) ProbDataPtr, InputVector, ROI,iv_m,r_m,w_m, LevelName, SegmentLevelSucessfullFlag);
+    }
+
+    // 3. Step: Update atlas 
+
+    if (((EM_DEBUG == 0) || (this->DebugImage == NULL)) && (UpdateShapeFlag) && (n < (this->NumEMShapeIter -1))) {
+      for (i=0; i < NumClasses; i++) {
+    if ((ClassListType[i] == CLASS) && (((vtkImageEMClass*) ClassList[i])->GetShapeParameter())) {
+      cout <<  "Updating Shape Prior Setting for tissue class " << i << endl;
+          SamsonInterface.SetTissueLabel(((vtkImageEMClass*) ClassList[i])->GetLabel());
+          SamsonInterface.SetWeightIndex(i);
+          cout << "Check if weights are OK - if program stops weights were not OK" << endl; 
+          SamsonInterface.CheckWeights();
+          if (SamsonInterface.CheckAllVarSet()) { 
+            
+            DoDeformableModel(SamsonInterface);
+        switch (this->GetInput(0)->GetScalarType()) {
+          vtkTemplateMacro10(vtkImageEMLocalSegmenterShapeUpdate,this,(VTK_TT*) ProbDataPtr[i],
+                   ((vtkImageEMClass*) ClassList[i])->GetProbDataIncY(), ((vtkImageEMClass*) ClassList[i])->GetProbDataIncZ(), 
+                 FinalShapeResults, this->GetDimensionX(),this->GetDimensionY(),this->GetDimensionZ(),
+                   ((vtkImageEMClass*) ClassList[i])->GetShapeParameter());
+        }
+      } else {
+            vtkEMAddErrorMessageSelf("vtkImageEMLocalSegmenter::HierarchicalSegmentation: Could not update probability atlas bc not all values were set !");
+      }
+    }
+      }
+    } else { n  = this->NumEMShapeIter;}
+  }
+  delete[] InitialShapeResults; 
+  delete[] FinalShapeResults; 
+  cout <<"================ End Iteration ================" << endl;
+#else 
+  // Normal Segmentation without Samson stuff
+  switch (this->GetInput(0)->GetScalarType()) {
+    vtkTemplateMacro9(vtkImageEMLocalAlgorithm,this,(VTK_TT**) ProbDataPtr , InputVector, ROI,iv_m,r_m,w_m, LevelName, SegmentLevelSucessfullFlag);
+  }
+#endif
+
+  if (SegmentLevelSucessfullFlag) { 
+    // ---------------------------------------------------------------
+    // 3. Analyze weights to determine label map and clean up 
+    // ---------------------------------------------------------------
+    for (i=0; i < NumClasses; i++) NumChildClasses[i]   = ((ClassListType[i] == CLASS) ? 1 : ((vtkImageEMSuperClass*) ClassList[i])->GetTotalNumberOfClasses(false));
+   // this->PrintIntermediateResultsToFile(2, w_m, OutputVector, NumTotalTypeCLASS, NumChildClasses, this->activeSuperClass, LevelName);
+    this->DetermineLabelMap(SegmentationResult, NumTotalTypeCLASS, NumChildClasses, this->activeSuperClass, ROI, this->ImageProd, w_m);
+  
+    if (UpdateShapeFlag) {
+      // Delete all ProbDataPtr that where created for classes that are constraint by shape parameters 
+      for (i=0; i < NumClasses; i++) {
+        if ((ClassListType[i] == CLASS) && (((vtkImageEMClass*) ClassList[i])->GetShapeParameter())) {
+      cout <<  "Deleting Shape Prior Setting for tissue class " << i << endl; 
+      // Probably wont work this way
+      switch (this->GetInput(0)->GetScalarType()) {
+            case VTK_DOUBLE:         vtkImageEMLocalSegmenterShapeDelete((double**) ProbDataPtr,i); break;
+            case VTK_FLOAT:          vtkImageEMLocalSegmenterShapeDelete((float**) ProbDataPtr,i); break;
+            case VTK_LONG:           vtkImageEMLocalSegmenterShapeDelete((long**) ProbDataPtr,i); break;
+            case VTK_UNSIGNED_LONG:  vtkImageEMLocalSegmenterShapeDelete((unsigned long**) ProbDataPtr,i); break;
+            case VTK_INT:            vtkImageEMLocalSegmenterShapeDelete((int**) ProbDataPtr,i); break;
+            case VTK_UNSIGNED_INT:   vtkImageEMLocalSegmenterShapeDelete((unsigned int**) ProbDataPtr,i); break;
+            case VTK_SHORT:          vtkImageEMLocalSegmenterShapeDelete((short**) ProbDataPtr,i); break;
+            case VTK_UNSIGNED_SHORT: vtkImageEMLocalSegmenterShapeDelete((unsigned short**) ProbDataPtr,i); break;
+            case VTK_CHAR:           vtkImageEMLocalSegmenterShapeDelete((char**) ProbDataPtr,i); break;
+            case VTK_UNSIGNED_CHAR:  vtkImageEMLocalSegmenterShapeDelete((unsigned char**) ProbDataPtr,i); break;
+            default:
+          cout << "vtkImageEMLocalSegmenter::HierarchicalSegmentation Unknown ScalarType" << endl;
+          return 0 ;
+      }
+        }
+      }
+    }
+  }
+  delete[] NumChildClasses;
+  delete[] ProbDataPtr;   
+ 
+  for (i=0; i<NumTotalTypeCLASS; i++) delete[] w_m[i]; 
+  delete []w_m  ;
+
+  if (SegmentLevelSucessfullFlag) { 
+    // ---------------------------------------------------------------
+    // 4. Segment Subclasses
+    // ---------------------------------------------------------------
+    // Super Class Labels have to be unique (except HeadClass => not defined !) and not equal to zero
+    // Transfere segmentation results to OutputVector  
+    for (i=0; i < this->ImageProd; i++) {
+      // Remeber ROI is initiated with NULL -> only on second level it gets extended 
+      if ((ROIPtr == NULL) || (*ROIPtr++ == head->GetLabel())) *OutputVectorPtr = *SegResultPtr; 
+      OutputVectorPtr++;
+      SegResultPtr++; 
+    }
+  
+    OutputVectorPtr = OutputVector;SegResultPtr = SegmentationResult; ROIPtr = ROI;
+  
+    // 4.) Run it for all sub Superclasses
+    for (i=0; i <NumClasses; i++) {
+      // need to save results
+      if (ClassListType[i] == SUPERCLASS &&  SegmentLevelSucessfullFlag) {
+        sprintf(NewLevelName,"%s.%d",LevelName,i);
+        // we should really create a copy of iv_m and r_m !! otherwise things can go wrong here
+         SegmentLevelSucessfullFlag = this->HierarchicalSegmentation((vtkImageEMSuperClass*) ClassList[i],InputVector,SegmentationResult,OutputVector,iv_m,r_m,NewLevelName);
+      } 
+    }
+  }
+  delete []SegmentationResult;
+  delete []NewLevelName;
+  cout << "End vtkImageEMLocalSegmenter::HierachicalSegmentation"<< endl; 
+  return SegmentLevelSucessfullFlag;
+}
+
 
 //----------------------------------------------------------------------------
 // This templated function executes the filter for any type of data.
 template <class TOut>
-static void vtkImageEMLocalSegmenterExecute(vtkImageEMLocalSegmenter *self,double **InputVector,vtkImageData *outData, TOut *outPtr,int outExt[6])
+static void vtkImageEMLocalSegmenterExecute(vtkImageEMLocalSegmenter *self,float **InputVector,vtkImageData *outData, TOut *outPtr,int outExt[6])
 {
+  // cout << "Start vtkImageEMLocalSegmenterExecute "<< endl;
   // -----------------------------------------------------
-  // 1.) Allocate Memory 
+  // 1.) Setup  Hierarchical Segmentation
   // -----------------------------------------------------
-  int idxR, idxY, idxZ;
+  int NumInputImages = self->GetNumInputImages();
+  short *OutputVector = new short[self->GetImageProd()];
+  char LevelName[3];
+  int DimensionX = self->GetDimensionX();
+  int DimensionY = self->GetDimensionY();
+  int DimensionZ = self->GetDimensionZ();
+
+  EMTriVolume iv_m(NumInputImages,DimensionZ,DimensionY,DimensionX); // weighted inverse covariances 
+  EMVolume *r_m  = new EMVolume[NumInputImages]; // weighted residuals
+  for (int i=0; i < NumInputImages; i++) r_m[i].Resize(DimensionZ,DimensionY,DimensionX);
+  // Print information
+#ifndef _WIN32
+  cout << "This Computer has " << vtkThreadNumCpus(void)  << " Processors" << endl;
+#endif
+
+  if ( (DimensionX != (outExt[1] - outExt[0] +1)) ||(DimensionY != (outExt[3] - outExt[2] +1)) ||(DimensionZ != (outExt[5] - outExt[4] +1)))  
+    cout << "Segmentation Boundary is activated (" <<DimensionX  <<"," << DimensionY << "," << DimensionZ <<") !" << endl;    
+
+  // Label All SuperClasses 
+  {
+    int TotalNumClasses = self->GetHeadClass()->GetTotalNumberOfClasses(1);
+      short *LabelList = new short[TotalNumClasses];
+      memset(LabelList,0,sizeof(short)*TotalNumClasses);
+      // Get all existing labels
+      self->GetHeadClass()->GetAllLabels(LabelList,0,TotalNumClasses);
+      // Label all super classes
+      self->GetHeadClass()->LabelAllSuperClasses(LabelList,TotalNumClasses);
+      delete[] LabelList;
+  }
+
+  // self->GetHeadClass()->DefineAllLogInvCovParamters();
+  // self->GetHeadClass()->Print("");  
+  sprintf(LevelName,"1");
+
+  // Run Algorithm
+  cout << "Deformable Model Setting: ";
+#ifdef VTKEMPRIVATE_TETRA_MESH_FLAG
+  cout << "On" << endl;
+#else
+  cout << "Off" << endl;
+#endif
+
+  // -----------------------------------------------------
+  // 2.) Run  Hierarchical Segmentation
+  // -----------------------------------------------------
+  if (self->HierarchicalSegmentation(self->GetHeadClass(),InputVector, NULL, OutputVector,iv_m,r_m,LevelName) == 0) {
+      memset(OutputVector,0,sizeof(short)*self->GetImageProd());
+  }
+
+  // -----------------------------------------------------
+  // 3.) Define   int outIncX, outIncY, outIncZ;
+  // -----------------------------------------------------
   int outIncX, outIncY, outIncZ;
-  int ImageMaxX = self->GetImageMaxX();
-  int ImageMaxY = self->GetImageMaxY();
-  int ImageMaxZ = self->GetImageMaxZ();
-  int maxZ = outExt[5] - outExt[4] + 1;
-  int index = 0;
-  int NumProbMap = 0 ;
-  unsigned char *OutputVector = new unsigned char[ImageMaxZ*ImageMaxY*ImageMaxX];
-  
-  // -----------------------------------------------------
-  // 2.) Define Output
-  // -----------------------------------------------------
-
-  // Get increments to march through data 
   outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
-  // We assume output is 1 scalar 
-  //outData->GetIncements(X,Y,Z) gives you the increments you have to add to go from 
-  // poit to point(X, eg 1) row to row (Y eg 256) and slice to slice (Z, eg 256*256)
-  
-  // 1.) Read thorugh beginning slides we do not want to read through for input and output
-  for (idxZ = 1; idxZ < self->GetStartSlice(); idxZ++) {
-    for (idxY = 0; idxY < ImageMaxY; idxY++) {
-      for (idxR = 0; idxR < ImageMaxX; idxR++) {
-    *outPtr = 0;
-    outPtr++;
-      }
-      outPtr += outIncY;
-    }
-    outPtr += outIncZ; 
-  }
+  int outInc[3] = {outIncX, outIncY, outIncZ};
+  vtkImageEMLocalSegmenter_TransfereDataToOuputExtension(self,OutputVector,outPtr,outInc);
 
-  switch (self->GetInput(0)->GetScalarType()) {
-    case VTK_DOUBLE:         vtkImageEMLocalAlgorithm(self,(double**) self->GetProbDataPtr(), InputVector, OutputVector); break;
-    case VTK_FLOAT:          vtkImageEMLocalAlgorithm(self,(float**) self->GetProbDataPtr(), InputVector, OutputVector); break; 
-    case VTK_LONG:           vtkImageEMLocalAlgorithm(self,(long**) self->GetProbDataPtr(), InputVector, OutputVector); break; 
-    case VTK_UNSIGNED_LONG:  vtkImageEMLocalAlgorithm(self,(unsigned long**) self->GetProbDataPtr(), InputVector, OutputVector); break; 
-    case VTK_INT:            vtkImageEMLocalAlgorithm(self,(int**) self->GetProbDataPtr(), InputVector, OutputVector); break; 
-    case VTK_UNSIGNED_INT:   vtkImageEMLocalAlgorithm(self,(unsigned int**) self->GetProbDataPtr(), InputVector, OutputVector); break; 
-    case VTK_SHORT:          vtkImageEMLocalAlgorithm(self,(short**) self->GetProbDataPtr(), InputVector, OutputVector); break; 
-    case VTK_UNSIGNED_SHORT: vtkImageEMLocalAlgorithm(self,(unsigned short**) self->GetProbDataPtr(), InputVector, OutputVector); break; 
-    case VTK_CHAR:           vtkImageEMLocalAlgorithm(self,(char**) self->GetProbDataPtr(), InputVector, OutputVector); break; 
-    case VTK_UNSIGNED_CHAR:  vtkImageEMLocalAlgorithm(self,(unsigned char**) self->GetProbDataPtr(), InputVector, OutputVector); break;
-  default:
-    cout << "Execute: Unknown ScalarType" << endl;
-    return;
-  } 
-  // 5.) Write result in outPtr
-  for (idxZ = 0; idxZ < ImageMaxZ; idxZ++) {
-    for (idxY = 0; idxY < ImageMaxY; idxY++) {
-      for (idxR = 0; idxR < ImageMaxX; idxR++) {
-    *outPtr = (TOut) (OutputVector[index]);
-    index ++; 
-    outPtr++;
-      }
-      outPtr += outIncY;
-    }
-    outPtr += outIncZ;
-  }
-  // 6.) Run through the end slides that were not segmented
-  for (idxZ = self->GetEndSlice(); idxZ < maxZ; idxZ++) {
-    for (idxY = 0; idxY < ImageMaxY; idxY++) {
-      for (idxR = 0; idxR < ImageMaxX; idxR++) {
-    *outPtr = 0;
-    outPtr++;
-      }
-      outPtr += outIncY;
-    }
-    outPtr += outIncZ; 
-  }
   delete[] OutputVector;
-  //EMVolume test(5,5,5);
-  // test.Test(3);
+  delete[] r_m;
+
+  cout << "End vtkImageEMLocalSegmenterExecute "<< endl;
 }
+
+
 
 //----------------------------------------------------------------------------
 // This method is passed a input and output datas, and executes the filter
 // algorithm to fill the output from the inputs.
 // It just executes a switch statement to call the correct function for
 // the datas data types.
-
 void vtkImageEMLocalSegmenter::ExecuteData(vtkDataObject *)
 {
+  cout << "Public Version" << endl;
   void *outPtr;
-  int idx1;
-  int outExt[6];
-  int inIncX;
-  int StartInputImages = 0;
-  int jump;
+  int idx1, i;
   int NumProbMap = 0;
   int FirstProbMapDef = -1;
-  this->ResetErrorSettings(); 
-  // vtk4
+  // vtk4 - to find out more about the next couple of lines look at vtkImageEMGenericClass.cxx   
   vtkImageData **inData  = (vtkImageData **) this->GetInputs();
   vtkImageData *outData = this->GetOutput();
-  outData->GetWholeExtent(outExt);
-  outData->SetExtent(outExt); 
+  // Magically the extent corresponds with the input extent !
+  outData->GetWholeExtent(this->Extent);
+
+  outData->SetExtent(this->Extent); 
   outData->AllocateScalars(); 
   // vtk4
   // -----------------------------------------------------
@@ -1627,92 +3436,132 @@ void vtkImageEMLocalSegmenter::ExecuteData(vtkDataObject *)
   // -----------------------------------------------------
   vtkDebugMacro(<< "Execute: inData = " << inData << ", outData = " << outData);
 
-  for (idx1=0 ; idx1<this->NumClasses; idx1++) {
-    if (this->ProbDataLocal[idx1]) StartInputImages ++;
-  }
-  if (this->NumberOfTrainingSamples < 1) {
-    vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Number of Training Samples taken for the probability map has to be defined first!");
+  this->ResetErrorMessage();
+  this->ResetWarningMessage();
+
+  // this->NumberOfInputs = Actual number of inputs defined
+  if (this->NumInputImages > this->NumberOfInputs) {
+    vtkEMAddErrorMessage( "NumOfInputs ("<< this->NumberOfInputs << ") is greater than the number of Input images defined ("<<this->NumberOfInputs<<")!");
     return;
-  }
-  if (this->ProbDataLocal) {
-    if ((StartInputImages+this-> NumInputImages) > this->NumberOfInputs) {
-      vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Not enough Input images defined (defined :"<< this->NumberOfInputs << ", need: "<< StartInputImages+this->NumInputImages);
-      return;
-    }
   } 
-  if (outData == NULL) {
-    vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Ouput must be specified.");
+
+  if (this->NumberOfTrainingSamples < 1) {
+     vtkEMAddErrorMessage( "Number of Training Samples taken for the probability map has to be defined first!");
     return;
   }
+
+  if (outData == NULL) {
+     vtkEMAddErrorMessage( "Ouput must be specified.");
+    return;
+  }
+
+  // Did we define a superclass
+  if (!this->HeadClass) {
+    vtkEMAddErrorMessage( "No Head Class is defined !");
+    return;
+  } 
+
+  this->HeadClass->Update();
+  if (this->HeadClass->GetErrorFlag()) {
+    vtkEMAddErrorMessage( "The following Error's occured during the class definition:" << endl << this->HeadClass->GetErrorMessages());
+    return;
+  }
+
+  if (this->HeadClass->GetWarningFlag()) 
+    vtkEMAddWarningMessage( "The following Warning's occured during the class definition:" << endl << this->HeadClass->GetWarningMessages());
+  
+  // Check if everything coresponds to each other
+  if (!inData[0]) {
+    vtkEMAddErrorMessage( "First image input is not defined !");
+    return;
+  }
+  if ((this->HeadClass->GetProbDataScalarType() > -1) && (this->HeadClass->GetProbDataScalarType() !=  inData[0]->GetScalarType())) {
+    vtkEMAddErrorMessage( "Scalar Type of Probability maps defined in classes does not correspond to scalar type of input image1");
+    return;
+  }
+
+  if (this->HeadClass->GetNumInputImages() != this->NumInputImages) {
+    vtkEMAddErrorMessage("Number of Input images of classes differes from number of images defined for this filter!");
+    return;
+  }
+ 
   // -----------------------------------------------------
   // Define Image Parameters
   // -----------------------------------------------------
-  this->ImageMaxX = (outExt[1] - outExt[0]+1)*this->GetInput(StartInputImages)->GetNumberOfScalarComponents();
-  this->ImageMaxY = outExt[3] - outExt[2] + 1; // outExt[3/2] = Relative Maximum/Minimum Y index  
-  this->ImageMaxZ = this->EndSlice - this->StartSlice + 1;
-  this->ImageProd = this->ImageMaxZ * this->ImageMaxY * this->ImageMaxX;
+  // this->GetInput(StartInputImages)  = first intensity input
+  this->ImageProd = this->GetDimensionX() * this->GetDimensionY() * this->GetDimensionZ();
 
   // -----------------------------------------------------
   // Checking dimension with start and end slice 
   // -----------------------------------------------------
   // Making sure values are set correctly
-  if ((this->StartSlice < 1) || (this->StartSlice > this->EndSlice) || (this->EndSlice > (outExt[5] - outExt[4] + 1))) {
-    vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Start Slice,"<<this->StartSlice<< ", or EndSlice," << this->EndSlice << ", not defined correctly !");
+  { 
+    int* BoundaryMin = this->GetSegmentationBoundaryMin();
+    int* BoundaryMax = this->GetSegmentationBoundaryMax();
+    for (i=0; i < 3; i++) {
+      int Dimension = this->Extent[i*2+1] - this->Extent[i*2] + 1;  
+      if ((BoundaryMin[i] > Dimension) || (BoundaryMin[i] < 1)) {
+    vtkEMAddErrorMessage( "SegmentationBoundaryMin[" <<i<<"]=" << BoundaryMin[i] << " is not defined correctly ! Should not be smaller than "<<  Dimension << " and larger 0 !");
     return;
+      }
+      if ((BoundaryMax[i] > Dimension) || (BoundaryMax[i] < BoundaryMin[i]) ) {
+    vtkEMAddErrorMessage( "SegmentationBoundaryMax[" <<i<<"]=" << BoundaryMax[i] << " is not defined correctly ! Should not be larger than "<<  Dimension 
+                  << " and not smaller than SegmentationBoundaryMin (" << BoundaryMin[i] << ") !");
+    return;
+      }
+    }
   }
   // -----------------------------------------------------
-  // 1.) Check Probability Maps
+  // Read Input Images
   // -----------------------------------------------------
-  // First find out here the first map is defined for the label
-  for (idx1 = 0; idx1 < this->NumClasses ; ++idx1){
-    // Wherever no local label map is defined we have to catch it when a local label map is needed and therefore make two cases 
-    if (this->ProbDataLocal[idx1]) {
-      if (FirstProbMapDef == -1)  FirstProbMapDef =  NumProbMap; 
-      if (this->CheckInputImage(inData[NumProbMap],this->GetInput(FirstProbMapDef)->GetScalarType(),this->GetInput(NumProbMap)->GetScalarType(),NumProbMap+1,outExt) == false) return ;
-      inData[NumProbMap]->GetContinuousIncrements(outExt, inIncX, this->ProbDataIncY[idx1], this->ProbDataIncZ[idx1]);
-      
-      jump = ((this->ImageMaxX + this->ProbDataIncY[idx1])*this->ImageMaxY + this->ProbDataIncZ[idx1])*(this->StartSlice - 1);
-      // Because in check I make sure outExt = inExt the following line is true 
-       switch (this->GetInput(NumProbMap)->GetScalarType()) {
-     vtkTemplateMacro4(vtkImageEMLocalSegmenterIncrementProbDataPointer,this,idx1, (VTK_TT*) inData[NumProbMap]->GetScalarPointerForExtent(outExt), jump);
-      default:
-    vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Execute: Unknown ScalarType");
-    return;
-      } 
-       NumProbMap ++;
-    } else {
-      // Wherever no local label map is defined we have to catch it when a local label map is needed and therefore make two cases 
-      this->ProbDataPtr[idx1] = NULL;
-    }
-    
-  } 
-  // -----------------------------------------------------
-  // 2.) Read Input Images
-  // -----------------------------------------------------
-  double **InputVector = new double*[this->ImageProd];
-  for(idx1 = 0; idx1 <this->ImageProd; idx1++) InputVector[idx1] = new double[this->NumInputImages];
-
-  for (idx1 = StartInputImages ; idx1 < StartInputImages+this->NumInputImages ; ++idx1){
-    if (this->CheckInputImage(inData[idx1],this->GetInput(idx1)->GetScalarType(),this->GetInput(idx1)->GetScalarType(),idx1+1,outExt) == false) return;
-    // Because in check I make sure outExt = inExt the following line is true 
+  float **InputVector = new float*[this->ImageProd];
+  for(idx1 = 0; idx1 <this->ImageProd; idx1++) InputVector[idx1] = new float[this->NumInputImages];
+ 
+  for (idx1 = 0; idx1 < this->NumInputImages ; idx1++){  
+    if (this->CheckInputImage(inData[idx1],this->GetInput(0)->GetScalarType(), this->GetInput(0)->GetSpacing(), idx1+1)) return;
     switch (this->GetInput(idx1)->GetScalarType()) {
-      vtkTemplateMacro9(vtkImageEMLocalSegmenterReadInputChannel,this, inData[idx1], (VTK_TT *)(inData[idx1]->GetScalarPointerForExtent(outExt)),outExt,this->ImageMaxX,this->ImageMaxY,this->ImageMaxZ,InputVector,idx1-StartInputImages);
+      vtkTemplateMacro6(vtkImageEMLocalSegmenterReadInputChannel,this, inData[idx1], (VTK_TT *)(inData[idx1]->GetScalarPointerForExtent(this->Extent)),this->Extent,InputVector,idx1);
     default:
-      vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Execute: Unknown ScalarType");
+      vtkEMAddErrorMessage( "Execute: Unknown ScalarType");
       return;
     } 
-
   }
+
   // -----------------------------------------------------
-  // 2.) Read Probability Data and execute Segmentation Algorithmm
+  // Read in Debugging Data 
+  // -----------------------------------------------------
+  // For Debugging:
+  if (EM_DEBUG && (idx1 < this->NumberOfInputs)) {
+    this->DebugImage = new short*[this->NumberOfInputs - idx1];
+    i = 0;
+    while (idx1 < this->NumberOfInputs) {
+      cout << "Loading EMDEBUG Volume ("<< idx1 << ") into EMAlgorithm .....................";
+      this->DebugImage[i] = (short*) inData[idx1]->GetScalarPointerForExtent(this->Extent);
+      idx1 ++;
+      i++;
+      cout << "Finshed" << endl;
+    }
+  } else {
+    this->DebugImage = NULL; 
+  }
+
+#if (EMVERBOSE)
+  vtkIndent indent;
+  this->PrintSelf(cout,indent); 
+#endif
+
+  // -----------------------------------------------------
+  // Execute Segmentation Algorithmm
   // -----------------------------------------------------
   outPtr = outData->GetScalarPointerForExtent(outData->GetExtent());
   switch (this->GetOutput()->GetScalarType()) {
-    vtkTemplateMacro5(vtkImageEMLocalSegmenterExecute, this, InputVector, outData, (VTK_TT*)outPtr,outExt);
+    vtkTemplateMacro5(vtkImageEMLocalSegmenterExecute, this, InputVector, outData, (VTK_TT*)outPtr,this->Extent);
   default:
-    vtkEMLocalSetErrorMessage(this->ErrorMessage,this->ErrorFlag,"Execute: Unknown ScalarType");
+    vtkEMAddErrorMessage("Execute: Unknown ScalarType");
     return;
   }
   for(idx1 = 0; idx1 <this->ImageProd; idx1++) delete[] InputVector[idx1];
   delete[] InputVector;
 }
+
+

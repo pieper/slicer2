@@ -1,6 +1,6 @@
 /*=auto=========================================================================
 
-(c) Copyright 2001 Massachusetts Institute of Technology
+(c) Copyright 2001 Massachusetts Institute of Technology 
 
 Permission is hereby granted, without payment, to copy, modify, display 
 and distribute this software and its documentation, if any, for any purpose, 
@@ -23,42 +23,60 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 // .NAME vtkImageEMLocalSegmenter
 // Since 22-Apr-02 vtkImageEMLocal3DSegmenter is called vtkImageEMLocalSegmenter - Kilian
-// EMLocal =  using EM Algorithm with Local Tissue Class Probability
+// EMLocal =  using EM Algorithm with Private Tissue Class Probability
 #ifndef __vtkImageEMLocalSegmenter_h
 #define __vtkImageEMLocalSegmenter_h 
+  
+#include "vtkImageEMGeneral.h" 
+#include <vtkEMLocalSegmentConfigure.h> 
+#include "vtkImageData.h"
+#include "vtkImageEMSuperClass.h"
 
-#include "vtkImageEMGeneral.h"
-//BTX
+// Just for debugging purposes
+#define EM_DEBUG 1
+
+// Do you want to run the code with all the print outs (set 1) or not (0)
+#define EMVERBOSE 0
+// ---------------------------------------------------
+// Kilian through out later 
+# // Definition for PCA
+#define EMSEGMENT_PCA_GREATER_MAX_DIST     1 
+#define EMSEGMENT_PCA_EIGENVECTORS_ZERO    2
+
+
+//BTX  
 // Needed to parallelise the algorithm
 typedef struct {
   int           id ;
-  double        *w_m_input;
+  float         **w_m_input;
   unsigned char *MapVector;
-  float         *cY_M;
+  float         *cY_M; 
   int           imgX;
-  int           imgY;
+  int           imgY; 
   int           imgXY;
   int           StartVoxel;
   int           EndVoxel;
   int           NumClasses;
+  int           NumTotalTypeCLASS;
+  int*          NumChildClasses;
   int           NumInputImages;
   double        Alpha;
   double        ***MrfParams;
   void          ** ProbDataPtr;
   int           *ProbDataIncY; 
   int           *ProbDataIncZ; 
+  float         *ProbDataWeight;
+  float         *ProbDataMinusWeight;
   int           ProbDataType;
-  int*          ProbDataLocal;
   double        **LogMu;
   double        ***InvLogCov;
   double        *InvSqrtDetLogCov;
   double        *TissueProbability;
-  double        *w_m_output;
-} MF_Approximation_Work;
+  int           *VirtualNumInputImages;
+  float         **w_m_output;
+} vtkImageEMLocal_MF_Approximation_Work;
 
-//ETX
-// End of parallel specific implementation
- 
+//ETX 
 class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGeneral
 {
   public:
@@ -68,10 +86,12 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGene
   static vtkImageEMLocalSegmenter *New();
   vtkTypeMacro(vtkImageEMLocalSegmenter,vtkObject);
   void PrintSelf(ostream& os, vtkIndent indent);
- 
   // -----------------------------------------------------
   // Setting Algorithm 
   // -----------------------------------------------------
+  vtkSetMacro(NumEMShapeIter,int);
+  vtkGetMacro(NumEMShapeIter,int);
+
   vtkSetMacro(NumIter, int);
   vtkGetMacro(NumIter, int);
 
@@ -90,171 +110,129 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGene
   void SetNumberOfTrainingSamples(int Number) {this->NumberOfTrainingSamples = Number;}
   vtkGetMacro(NumberOfTrainingSamples, int);
 
-  vtkSetMacro(StartSlice, int);
-  vtkGetMacro(StartSlice, int);
+  int* GetSegmentationBoundaryMin();
+  int* GetSegmentationBoundaryMax();
 
-  vtkSetMacro(EndSlice, int);
-  vtkGetMacro(EndSlice, int);
+  int* GetExtent(){return this->Extent;}
 
-  // Description:
-  // PrintIntermediateResults = 1 => Prints out intermediate result of 
-  // the algorithm in a matlab file. The file is called  EMLocalSegmResult<iteration>.m  
-  vtkSetMacro(PrintIntermediateResults, int); 
-  vtkGetMacro(PrintIntermediateResults, int); 
-
-  // Description:
-  // Print out the result of which slice 
-  vtkSetMacro(PrintIntermediateSlice, int); 
-  vtkGetMacro(PrintIntermediateSlice, int); 
+  // -----------------------------------------------------
+  // Print functions 
+  // -----------------------------------------------------
+  vtkGetStringMacro(PrintDir);
+  vtkSetStringMacro(PrintDir);
 
   // Description:
-  // Print out the result after how many iteration steps
-  vtkSetMacro(PrintIntermediateFrequency, int); 
-  vtkGetMacro(PrintIntermediateFrequency, int); 
-
-  // Description:
-  // Changing NumClasses re-defines also all the arrays which depon the number of classes e.g. prob
-  void SetNumClasses(int NumberOfClasses);
-  vtkGetMacro(NumClasses, int);
-
-  // Description:
-  // Number of input images for the segmentation - Has to be defined before Mu, Sigma and NumClasses
+  // Number of input images for the segmentation - Has to be defined before defining any class specific setting 
+  // Otherwise they get deleted
   // Be carefull: this is just the number of images not attlases, 
   // e.g. I have 5 tissue classes and 3 Inputs (T1, T2, SPGR) -> NumInputImages = 3
   void SetNumInputImages(int number);
-  vtkGetMacro(NumInputImages, int);
+  int GetNumInputImages() {return this->NumInputImages;} 
 
-  // -----------------------------------------------------
-  // Class Function
-  // -----------------------------------------------------
-  void SetTissueProbability(double value, int index);
-
-  void SetInputIndex(int index, vtkImageData *image) {this->SetInput(index,image);}
-
-  // Description:
-  // Mu is now of dimesion (Number of Tissue Classes) x (Number of Input Images) 
-  void SetLogMu(double mu, int y,int x);
-
-  // Description:
-  // Sigma is now of dimesion (Number of Tissue Classes) x (Number of Input Images) x (Number of Input Images) 
-  // This is the Coveriance Matrix for our Tissue Class Gauss distribution
-  // Be careful: the Matrix must be regluar, also we use the inverse of the squarred cov matrix and the 
-  // determinand of the coveriance matrix for the Gauss Calculations => 
-  // gaus[i] = 1/(sqrt(2*pi)det(Sigma[i]))^NumInputImages * exp((x-mu[i])'* Inverse(Sigma[i]^2) *(x-mu[i]))    
-  void SetLogCovariance(double value, int z, int y,int x);
-
-  void SetLabel(int label, int index);
-  int GetLabel(int index) {return this->Label[index-1];}
-
-  // Description:
-  // Does the class use a local prior map or not 
-  void SetProbDataLocal(int value, int index);
-
-  // Description:
-  // Defines the tissue class interaction matrix MrfParams(k,i,j)
-  // where k = direction [1...6], 
-  //       i = class of the current pixel t+1 
-  //       j = class of neighbouring pixel t 
-  void SetMarkovMatrix(double value, int j, int i, int k);
-
-  void SetProbDataPtr(void *ptr,int NumClass) { this->ProbDataPtr[NumClass] = ptr;} 
-
-  // -----------------------------------------------------
-  // Input Image
-  // -----------------------------------------------------
-  vtkGetMacro(ImageMaxZ, int);
-
-  vtkGetMacro(ImageMaxY, int);
-
-  vtkGetMacro(ImageMaxX, int);
+  void SetImageInput(int index, vtkImageData *image) {this->SetInput(index,image);}
 
   vtkGetMacro(ImageProd, int); 
 
-  // Description:
-  // Writes data into a MRI file 
-  // Writes an array of shorts to a MRI File - good for debugging
-  void WriteShortDataToMRIFile(char* filename, short* data, int StartSlice, int EndSlice,int IncY,int IncZ);
-  void WriteDoubleDataToMRIFile(char* filename, double* data, int StartSlice, int EndSlice,int IncY,int IncZ);
+  // Desciption:
+  // Dimension of work area => SegmentationBoundaryMax[i] - SegmentationBoundaryMin[i] + 1 
+  int GetDimensionX();
+  int GetDimensionY();
+  int GetDimensionZ();
 
   // -----------------------------------------------------
   // EM-MF Function 
   // -----------------------------------------------------  
   // Description:
   // Defines the Label map of a given image
-  void DeterminLabelMap(unsigned char *LabelMap, double * w_m, int imgXY,int imgZ);
+  static void DetermineLabelMap(short *LabelMap, int NumTotalTypeCLASS, int* NumChildClasses, vtkImageEMSuperClass* head,  short* ROI,int ImageMax, float **w_m);
 
   // Desciption:
   // Special function for parallelise MF part -> Creating Threads 
-  int MF_Approx_Workpile(double * w_m_input,unsigned char* MapVector, float *cY_M, int imgXY,double ***LogCov,double *InvSqrtDetLogCov,double *w_m_output);
+  int MF_Approx_Workpile(float **w_m_input,unsigned char* MapVector, float *cY_M, int imgXY,double ***InvLogCov,
+                         double *InvSqrtDetLogCov, int NumTotalTypeCLASS, int* NumChildClasses, int NumClasses, void** ProbDataPtr, 
+                         int* ProbDataIncY, int* ProbDataIncZ, float* ProbDataWeight, float *ProbDataMinusWeight, double** LogMu, 
+                         double* TissueProbability, int *VirtualNumInputImages, vtkImageEMSuperClass* head, float **_m_output);
 
   // Description:
-  // Print out intermediate result of the algorithm in a matlab file
-  // The file is called  EMLocalSegmResult<iteration>.m
-  void PrintMatlabGraphResults(int iter,int slice,int FullProgram,int imgXY, double * w_m);
-
-  // Description:
-  // Before EM Algorithm is started it checks of all values are set correctly
-  int checkValues(); 
-
-  // -----------------------------------------------------
-  // Special Function that should not be tickelt, bc 
-  // they return pointers - tcl cannot deal with it 
-  // -----------------------------------------------------  
-//BTX
-  void**    GetProbDataPtr() {return this->ProbDataPtr;}
-  int*      GetProbDataIncZ() {return this->ProbDataIncZ;}
-  int*      GetProbDataIncY() {return this->ProbDataIncY;}
-  int*      GetProbDataLocal() {return this->ProbDataLocal;}
-  double*   GetTissueProbability() {return this->TissueProbability;}
-  double**  GetLogMu() {return this->LogMu;}
-  double*** GetLogCovariance() {return this->LogCovariance;}
-//ETX
+  // Print out intermediate result of the algorithm in a  file
+  // The file is called  this->PrintIntermediateDir/EM*.m
+  void PrintIntermediateResultsToFile(int iter, float **w_m, short *ROI, unsigned char* OutputVector, int NumTotalTypeCLASS, int* NumChildClasses, 
+                      vtkImageEMSuperClass* actSupCl, char* LevelName, void **ClassList, classType *ClassListType, int* LabelList, 
+                      FILE** QualityFile);
 
   // -----------------------------------------------------
   // Intensity Correction 
   // -----------------------------------------------------
-  
-  vtkGetMacro(IntensityAvgClass,int);   
-  vtkSetMacro(IntensityAvgClass,int);   
-  double GetIntensityAvgValuePreDef(int index) {return this->IntensityAvgValuePreDef[index-1];}
+
+  // Sets the class given as intensity class 
+  void SetIntensityAvgClass(vtkImageEMClass *init) {this->IntensityAvgClass = init;}
+
+  //BTX
+  vtkImageEMClass* GetIntensityAvgClass() {return this->IntensityAvgClass;}
+  //ETX  
+  double GetIntensityAvgValuePreDef(int index) {return this->IntensityAvgValuePreDef[index];}
   void SetIntensityAvgValuePreDef(double value, int index);
 
-  double GetIntensityAvgValueCurrent(int index) {return this->IntensityAvgValueCurrent[index-1];}
-  //BTX
-  // Not for tcl use - 0 <index < NumInputImages
+  double GetIntensityAvgValueCurrent(int index) {return this->IntensityAvgValueCurrent[index];}
   void SetIntensityAvgValueCurrent(double value, int index) {this->IntensityAvgValueCurrent[index] = value;}
+ 
+  //BTX
+  vtkImageEMSuperClass* GetActiveSuperClass() {return this->activeSuperClass;}
+  vtkImageEMSuperClass* GetHeadClass() {return this->HeadClass;}
   //ETX
+  int HierarchicalSegmentation(vtkImageEMSuperClass* head, float** InputVector,short *ROI, short *OutputVector, EMTriVolume & iv_m, EMVolume *r_m, char* LevelName);
 
-  // -----------------------------------------------------
-  // Bias 
-  // -----------------------------------------------------
-  vtkGetStringMacro(BiasRootFileName);
-  vtkSetStringMacro(BiasRootFileName);
-  vtkGetMacro(BiasPrint, int);
-  vtkSetMacro(BiasPrint, int);
+  //Kilian rewrite it 
+  void PrintSuperClass () {
+    printf("Current: %f Prob: %f Label: %d Parent: %f \n", activeSuperClass, activeSuperClass->GetTissueProbability(), activeSuperClass->GetLabel(), activeSuperClass->GetParentClass());
+  } 
 
-  vtkGetMacro(ErrorFlag, int);
-  char* GetErrorMessages(); 
+  // Desciption:
+  // Head Class is the inital class under which all subclasses are attached  
+  void SetHeadClass(vtkImageEMSuperClass *InitHead) {
+    InitHead->Update(); 
+    if (InitHead->GetErrorFlag()) {
+      // This is done before this->Update() so we cannot use Error Message Report;
+      vtkErrorMacro(<<"Cannot set HeadClass because the class given has its ErrorFlag activated !");
+      return;
+    }
+    this->HeadClass   = InitHead;
+    this->activeClass = (void*) InitHead;
+    this->activeClassType  = SUPERCLASS;
+  }
 
+  // =============================
+  // For Message Protocol
+  char* GetErrorMessages() {return this->ErrorMessage.GetMessages(); }
+  int GetErrorFlag() {return  this->ErrorMessage.GetFlag();}
+  void ResetErrorMessage() {this->ErrorMessage.ResetParameters();}
+  // So we can also enter streams for functions outside vtk
+  ProtocolMessages* GetErrorMessagePtr(){return &this->ErrorMessage;}
+
+  char* GetWarningMessages() {return this->WarningMessage.GetMessages(); }
+  int GetWarningFlag() {return  this->WarningMessage.GetFlag();}
+  void ResetWarningMessage() {this->WarningMessage.ResetParameters();}
+  ProtocolMessages* GetWarningMessagePtr(){return &this->WarningMessage;}
+  //ETX
 protected:
   vtkImageEMLocalSegmenter();
   vtkImageEMLocalSegmenter(const vtkImageEMLocalSegmenter&) {};
-  ~vtkImageEMLocalSegmenter();
-
+  ~vtkImageEMLocalSegmenter(); 
   void DeleteVariables();
 
   void operator=(const vtkImageEMLocalSegmenter&) {};
-  void ExecuteData(vtkDataObject *);
+  void ExecuteData(vtkDataObject *);   
 
+  //BTX
   // Description:
   // Checks all intput image if they have coresponding dimensions 
-  bool CheckInputImage(vtkImageData * inData,int DataTypeOrig, int DataTypeNew, int num,int *outExt);
+  int CheckInputImage(vtkImageData * inData,int DataTypeOrig, float DataSpacingOrig[3], int num);
 
   // Description:
   // Resets the error flag and messages 
-  void ResetErrorSettings();  
+  void ResetMessageSettings();  
 
-  int NumClasses;      // Number of Classes
+  int NumEMShapeIter; // How many times should the iteration between EM and Shape be repeated 
   int NumIter;         // Number of EM-iterations
   int NumRegIter;      // Number of iteration in E- Step to regularize weights 
   double Alpha;        // alpha - Paramter 0<= alpaha <= 1
@@ -262,45 +240,37 @@ protected:
   int SmoothingWidth;  // Width for Gausian to regularize weights   
   int SmoothingSigma;  // Sigma paramter for regularizing Gaussian
 
-  int StartSlice;      // First Slide to be segmented
-  int EndSlice;        // Last Slide to be segmented 
+  int NumInputImages;               // Number of input images  
  
-  int PrintIntermediateResults;    //  Print intermediate results in a Matlab File (No = 0, Yes = 1)
-  int PrintIntermediateSlice;      //  Print out the result of which slide 
-  int PrintIntermediateFrequency;  //  Print out the result after how many steps 
-
-  int NumInputImages;              // Number of input images for the segmentation - Has to be defined before Mu, Sigma and NumClasses
-                                   // Be carefull: this is just the number of images not attlases, 
-                                   // e.g. I have 5 tissue classes and 3 Inputs (T1, T2, SPGR) -> NumInputImages = 3
-  double **LogMu;                 // Intensity distribution of the classes (changed for Multi Dim Version)
-  double ***LogCovariance;        // Intensity distribution of the classes (changed for Multi Dim Version) -> This is the Coveriance Matrix
-                                 // Be careful: the Matrix must be symmetric and positiv definite,
-  int *Label;                    // Prior Probability of the classes
-  double ***MrfParams;           // Markov Model Parameters: Matrix3D mrfparams(this->NumClasses,this->NumClasses,4);
-  double *TissueProbability;     // Global Tissue Probability
+  // These are defined in vtkEMImagePrivateSegment
+  char* PrintDir;        // In which directory should the results be printed  
 
   // New Variables for Local Version 
-  int ImageMaxZ;                  // MaxZ = EndSlice - StartSlice + 1;  
-  int ImageMaxY;                  // Size of volume in Y direction (normally 256 or 512)
-  int ImageMaxX;                  // Size of volume in X direction (normally 256 or 512)
-  int ImageProd;                  // Size of Image = ImageMaxX*ImageMaxY*ImageMaxZ
+  int ImageProd;                   // Size of Image = DimensionX*DimensionY*DimensionZ
+
+  int Extent[6];                  // Extent of images - needed for several inputs 
 
   int NumberOfTrainingSamples;    // Number of Training Samples Probability Image has been summed up over !  
-  int   *ProbDataIncY;            // Increments for probability data in Y Dimension 
-  int   *ProbDataIncZ;            // Increments for probability data in Z Dimension
-  void **ProbDataPtr;             // Pointer to Probability Data 
-  int   *ProbDataLocal;          // Do we use the local Prior or not for every class individual 
 
-  // New Variables for Intensity corecetion
-  int IntensityAvgClass;          // Label of Tissue class for which Intensity value is defined, = -1 => no intensity correction 
+  //BTX
+  vtkImageEMClass *IntensityAvgClass;          // Label of Tissue class for which Intensity value is defined, = -1 => no intensity correction
+
+  //ETX 
   double* IntensityAvgValuePreDef;  // Average intensity gray value (not log gray value) for the class and every input channel - this is predefined
   double* IntensityAvgValueCurrent; // Average intensity gray value (not log gray value) of the current image 
-  // Bias Field Print Out Variables
-  char* BiasRootFileName;
-  int BiasPrint;
+  //BTX
 
-  vtkOStrStreamWrapper *ErrorMessage;
-  int ErrorFlag;
+  vtkImageEMSuperClass *activeSuperClass;   // Currently Active Super Class -> Important for interface with TCL
+  classType    activeClassType;
+
+  vtkImageEMSuperClass *HeadClass;          // Initial Class
+  //ETX 
+  void *activeClass;               // Currently Active Class -> Important for interface with TCL
+
+  short**  DebugImage;             // Just used for debuging
+
+  ProtocolMessages ErrorMessage;    // Lists all the error messges -> allows them to be displayed in tcl too 
+  ProtocolMessages WarningMessage;  // Lists all the warning messges -> allows them to be displayed in tcl too 
 
 };
 #endif
