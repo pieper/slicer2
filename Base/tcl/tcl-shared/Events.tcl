@@ -28,9 +28,9 @@
 # FILE:        Events.tcl
 # PROCEDURES:  
 #   EventsInit
-#   pushHandler
-#   popHandler
-#   pushEventManager
+#   pushHandler widget event script
+#   popHandler widget event
+#   pushEventManager manager
 #   popEventManager
 #==========================================================================auto=
 # Events.tcl
@@ -64,7 +64,7 @@ proc EventsInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.7 $} {$Date: 2000/05/05 19:02:39 $}]
+	    {$Revision: 1.8 $} {$Date: 2000/07/26 19:11:39 $}]
     
     # Props
     set Events(managerStack) ""

@@ -33,6 +33,7 @@
 #   DevAddButton ButtonName Message Command Width
 #   DevAddSelectButton TabName Label Message Pack
 #   DevUpdateSelectButton ArrayName type Label Name CommandSet None New LabelMap
+#   DevUpdateSelectButton
 #   DevSelect type id ArrayName VolumeLabel VolumeName
 #   DevSelect
 #   DevCreateNewCopiedVolume VolumeId Description VolName
@@ -260,6 +261,12 @@ proc DevAddSelectButton { TabName f aLabel message pack } {
 #        }
 #}   
 
+#-------------------------------------------------------------------------------
+# .PROC DevUpdateSelectButton
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DevUpdateSelectButton { type ArrayName Label Name { CommandSet "DevSelect" } { None 1 } { New 0 } { LabelMap 1 }  } {
 
 	global Volume Model
