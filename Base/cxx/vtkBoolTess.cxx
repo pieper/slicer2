@@ -25,7 +25,6 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <stdlib.h>
 //#include <iostream.h>
 #include <stdio.h>
-#include "vtkWin32Header.h"
 #include "vtkBoolTess.h"
 
 #define SIGN(x) (x>0?1:(x<0?-1:0))
