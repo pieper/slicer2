@@ -98,15 +98,15 @@ proc LocatorInit {} {
 
     # Set Default Presets
     set Module(Locator,presets) "0,driver='User' 1,driver='User' 2,driver='User'\
-    visibility='0' transverseVisibility='1' guideVisibility='1' normalLen='100' transverseLen='25'\
-     radius='3.0' diffuseColor='0.9 0.9 0.1'"
+    visibility='0' transverseVisibility='1' guideVisibility='0' normalLen='100' transverseLen='25'\
+     radius='3.0' diffuseColor='0 0.9 0'"
 
     # Define Dependencies
     set Module($m,depend) ""
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.37 $} {$Date: 2004/09/16 19:46:28 $}]
+        {$Revision: 1.38 $} {$Date: 2004/09/21 18:01:49 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -142,7 +142,7 @@ proc LocatorInit {} {
     set Locator(0,driver) User
     set Locator(1,driver) User
     set Locator(2,driver) User
-    set Locator(diffuseColor) ".9 .9 .1"
+    set Locator(diffuseColor) "0 0.9 0"
     scan $Locator(diffuseColor) "%g %g %g" Locator(red) Locator(green) Locator(blue)
 
     # Fiducial Attributes
@@ -273,7 +273,7 @@ proc LocatorBuildVTK {} {
     for {set i 0} {$i < $::Locator(guideSteps)} {incr i} {
         set actor guide$i
         MakeVTKObject Cylinder ${actor}
-            ${actor}Source SetRadius .5
+            ${actor}Source SetRadius 1.1 
             ${actor}Source SetHeight 10.
             ${actor}Actor SetPosition 0 [expr $Locator(normalLen) / -2. - 20 * (1+$i)] 0
             eval [${actor}Actor GetProperty] SetColor 1 0 0
