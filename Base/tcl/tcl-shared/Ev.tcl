@@ -56,24 +56,26 @@
 # your module handles into different groups.  For example, you might
 # have bindings for different kinds of widgets in your module's
 # implementation.  Or perhaps your module has different modes that
-# require different bindings.  That's where a event set name that's a
+# require different bindings.  That's where an event set name that's a
 # list might come in handy: your set could be called {Editor
 # keyEvents} or {Endoscopic globalViewNavigation} or whatever you'd
-# like. To keep things organized. You might even be able to use
-# bindings from other modules to avoid reimplementing functionality:
-# someone else has already done the work, why not use it?
+# like. You might even be able to use bindings from other modules to
+# avoid reimplementing functionality: someone else has already done
+# the work, why not use it?
 #
 # Part of the beauty of event sets is that they don't bind directly to
 # widgets; instead they bind to an intermediate name (the event set
-# name).  That means in order to do anything, event sets have to be
-# bound to widgets.  Binding sets provide this service.  Where event
-# sets are a named collection of event / handler pairs, binding sets
-# are a named collection of widget and event sets associations.  To a
-# binding set, you bind the set name to the behaviors (event bindings)
-# you want each widget in your module to have.  Then, in with one
-# command, you can activate those behaviors for all of your widgets
-# at once (or, similarly, restore the bindings that existed before
-# your module became active). 
+# name).  (In fact, you can initialize them before you even have
+# widgets, which means that a module can set up behavior for other
+# modules to use.)  That means in order to do anything, event sets
+# have to be bound to widgets.  Binding sets provide this service.
+# Where event sets are a named collection of event / handler pairs,
+# binding sets are a named collection of widget and event sets
+# associations.  To a binding set, you bind the set name to the
+# behaviors (event bindings) you want each widget in your module to
+# have.  Then, with one command, you can activate those behaviors
+# for all of your widgets at once (or, similarly, restore the bindings
+# that existed before your module became active).
 #
 # When you add a widget to a binding set, you supply the event sets
 # that implement the behavior you want the widget to have.  Notice
@@ -82,9 +84,9 @@
 # different behaviors.  Let's say that I'm writing an image editing
 # module that has two modes: viewing and editing.  Some behavior is
 # common in the two modes (maybe I want the "m" key to pull up a
-# magnifier.  Other behavior is mode-specific: a button click might
-# start a line drawing in editor mode, but only the coordinate in
-# viewing mode.  
+# magnifier for either viewing or editing).  Other behavior is
+# mode-specific: a button click might start a line drawing in editor
+# mode, but only print the coordinate in viewing mode.
 #
 # A collection of event sets can implement this functionality.  One
 # event set (say, {Editor base}) includes all the bindings for the
@@ -166,7 +168,7 @@ proc EvInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.1 $} {$Date: 2002/03/25 04:30:32 $}]
+            {$Revision: 1.2 $} {$Date: 2002/03/26 21:53:42 $}]
 }
 
 #-------------------------------------------------------------------------------
