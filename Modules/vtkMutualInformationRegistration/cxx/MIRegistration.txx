@@ -90,7 +90,8 @@ MIRegistration<TFixedImage,TMovingImage>::MIRegistration()
   m_InitialParameters.Fill(0.0);
   m_InitialParameters[3] = 1.0;
 
-  // Not sure about this affine transform yet
+  // This Affine Transform is only used to return an Affine Transform
+  // should it be requested.
   m_AffineTransform  = AffineTransformType::New();
 
   // Setup a registration observer
