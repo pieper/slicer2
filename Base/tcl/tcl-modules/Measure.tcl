@@ -39,13 +39,13 @@ proc MeasureInit {} {
     
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2002/04/16 18:25:07 $}]
+        {$Revision: 1.6 $} {$Date: 2002/05/09 14:50:42 $}]
     
     # Initialize module-level variables
     #    set Measure(Model1) $Model(idNone)
     array set Point {scale 5.0 selected {} \
         vtkPoints "Point(vtkPoints)" \
-        vtkScalars "Point(vtkScalars)" -1,name "<None>"}
+        vtkFloatArray "Point(vtkScalars)" -1,name "<None>"}
     # Event Bindings
     set Measure(eventManager) { \
         {$Gui(fViewWin) <Control-1> {addGlyphPoint %W %x %y}} \

@@ -16,6 +16,8 @@ ordered='Data
 	Slices 
 	Colors 
 	Custom'
-suppressed=''
+suppressed='EMSegment
+        PolyBoolean
+'
 </Options>
 </MRML>

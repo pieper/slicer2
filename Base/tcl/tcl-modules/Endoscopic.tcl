@@ -904,7 +904,7 @@ proc EndoscopicCreateLandmarks {} {
     vtkCardinalSpline Endoscopic($l,aSplineX)
     vtkCardinalSpline Endoscopic($l,aSplineY)
     vtkCardinalSpline Endoscopic($l,aSplineZ)
-    vtkScalars        Endoscopic($l,scalars)
+    vtkFloatArray     Endoscopic($l,scalars)
 
     Endoscopic($l,polyData)   SetPoints Endoscopic($l,keyPoints)
     Endoscopic($l,source)     SetRadius $Endoscopic($l,size)
@@ -992,11 +992,12 @@ proc EndoscopicCreateVector {} {
     EndoscopicVectorParams 10
     
     vtkPolyData         Endoscopic(vector,polyData)
-    vtkVectors          Endoscopic(vector,vectors)
+    vtkFloatArray       Endoscopic(vector,vectors)
+    Endoscopic(vector,vectors) SetNumberOfComponents 3
     vtkGlyph3D          Endoscopic(vector,glyph)
     vtkPolyDataMapper   Endoscopic(vector,mapper)
     vtkActor            Endoscopic(vector,actor)
-    vtkScalars          Endoscopic(vector,scalars)
+    vtkFloatArray       Endoscopic(vector,scalars)
     
     Endoscopic(vector,polyData) SetPoints Endoscopic(cLand,keyPoints)
     #    Endoscopic(vector,polyData) SetPoints Endoscopic(cLand,graphicalInterpolatedPoints)
@@ -2140,8 +2141,8 @@ proc EndoscopicVectorSelected {id} {
 
     global Endoscopic
 
-    Endoscopic(vector,scalars) SetScalar $Endoscopic(vector,selectedID) 0.5
-    Endoscopic(vector,scalars) SetScalar $id 0
+    Endoscopic(vector,scalars) SetTuple1 $Endoscopic(vector,selectedID) 0.5
+    Endoscopic(vector,scalars) SetTuple1 $id 0
     Endoscopic(vector,polyData) Modified
     set Endoscopic(vector,selectedID) $id    
   #  EndoscopicMoveGyroToVector $id
@@ -2165,8 +2166,8 @@ proc EndoscopicLandmarkSelected {{id ""}} {
     set id [$Endoscopic(path,fLandmarkList) curselection]
     }
     
-    Endoscopic(cLand,scalars) SetScalar $Endoscopic(cLand,selectedID) 0.2 
-    Endoscopic(cLand,scalars) SetScalar $id 0 
+    Endoscopic(cLand,scalars) SetTuple1 $Endoscopic(cLand,selectedID) 0.2 
+    Endoscopic(cLand,scalars) SetTuple1 $id 0 
     Endoscopic(cLand,polyData) Modified
     set Endoscopic(cLand,selectedID) $id    
     EndoscopicUpdateSelectionLandmarkList $id
@@ -3076,7 +3077,7 @@ proc EndoscopicUpdateLandmark {} {
     Endoscopic(${m}Land,aSplineZ) AddPoint $i $Endoscopic(${m}Land,$i,z)
     
     Endoscopic(${m}Land,keyPoints) SetPoint $i $Endoscopic(${m}Land,$i,x) $Endoscopic(${m}Land,$i,y) $Endoscopic(${m}Land,$i,z)
-    Endoscopic(${m}Land,scalars) SetScalar $i 0.2
+    Endoscopic(${m}Land,scalars) SetTuple1 $i 0.2
     
     }
 

@@ -14,7 +14,7 @@ proc PointsInit {} {
         model "" \
         selected "" \
         vtkPoints "Point(vtkPoints)" \
-        vtkScalars "Point(vtkScalars)" -1,name "<None>"}
+        vtkFloatArray "Point(vtkFloatArray)" -1,name "<None>"}
     set Point(textscale) 6
     set Point(textpush) 10
     set Point(textvisible) 1
@@ -84,11 +84,11 @@ proc PointsBuildVTK {} {
       glyphFilter SetTransform glyphTransform
 
     set Point(vtkPoints) [vtkPoints Point(vtkPoints)]
-    set Point(vtkScalars) [vtkScalars Point(vtkScalars)]
+    set Point(vtkFloatArray) [vtkFloatArray Point(vtkFloatArray)]
 
     set Point(positions) [vtkPolyData Point(positions)]
       $Point(positions) SetPoints $Point(vtkPoints)
-      [$Point(positions) GetPointData] SetScalars $Point(vtkScalars)
+      [$Point(positions) GetPointData] SetScalars $Point(vtkFloatArray)
 
     set Point(selected) [list]
 
@@ -209,10 +209,10 @@ proc PointsRefreshVTK {} {
     global Point
 
     $Point(vtkPoints) SetNumberOfPoints 0
-    $Point(vtkScalars) SetNumberOfScalars 0
+    $Point(vtkFloatArray) SetNumberOfTuples 0
     foreach id $Point(idList) {
         set vtkId [eval $Point(vtkPoints) InsertNextPoint $Point($id,xyz)]
-        $Point(vtkScalars) InsertNextScalar 0
+        $Point(vtkFloatArray) InsertNextTuple1 0
         if { [info commands Point($id,text)] == "" } {
             set Point($id,text) [vtkVectorText Point($id,text)]
             }
@@ -240,11 +240,11 @@ proc PointsRefreshVTK {} {
         }
     foreach id $Point(selected) {
         set vtkId [PointsVTKId $id]
-        $Point(vtkScalars) SetScalar $vtkId 1
+        $Point(vtkFloatArray) SetScalar $vtkId 1
         eval [Point($id,follower) GetProperty] SetColor $Point(textselcolor)
         }
     $Point(vtkPoints) Modified
-    $Point(vtkScalars) Modified
+    $Point(vtkFloatArray) Modified
 
     if { [info command OsteoPlanRefreshGUI] != "" } {
         OsteoPlanRefreshGUI

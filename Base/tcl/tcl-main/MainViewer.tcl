@@ -48,7 +48,7 @@ proc MainViewerInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainViewer \
-        {$Revision: 1.22 $} {$Date: 2002/04/03 06:05:22 $}]
+        {$Revision: 1.23 $} {$Date: 2002/05/09 14:50:42 $}]
 
         # Props
     set Gui(midHeight) 1
@@ -202,7 +202,7 @@ proc MainViewerBuildGUI {} {
         MakeVTKImageWindow $win
         ${win}Mapper SetInput [Slicer GetCursor $s]
         set Gui(f${frm}Win) $f.f${frm}Win
-        vtkTkImageWindowWidget $Gui(f${frm}Win) -iw ${win}Win -width 256 -height 256
+        vtkTkRenderWidget $Gui(f${frm}Win) -rw ${win}Win -width 256 -height 256
         pack $Gui(f${frm}Win) -side left -fill both -expand 1
 
         MainInteractorBind $Gui(f${frm}Win)

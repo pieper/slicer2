@@ -355,7 +355,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.73 $} {$Date: 2002/04/16 14:46:46 $}]
+        {$Revision: 1.74 $} {$Date: 2002/05/09 14:50:42 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -729,7 +729,7 @@ proc MainBuildGUI {} {
     if {$View(createMagWin) == "Yes"} {
         MakeVTKImageWindow mag 
 
-        vtkTkImageWindowWidget $f.fMag -iw magWin \
+        vtkTkRenderWidget $f.fMag -rw magWin \
             -width $Gui(magDim) -height $Gui(magDim)  
         bind $f.fMag <Expose> {ExposeTkImageViewer %W %x %y %w %h}
         pack $f.fMag

@@ -469,7 +469,7 @@ proc EdPhaseWireBuildVTK {} {
         [Ed(EdPhaseWire,lwPath$s) GetInput 0]
     Ed(EdPhaseWire,viewer$s) SetColorWindow 256
     Ed(EdPhaseWire,viewer$s) SetColorLevel 127.5
-    [Ed(EdPhaseWire,viewer$s) GetImageWindow] DoubleBufferOn
+    [Ed(EdPhaseWire,viewer$s) GetRenderWindow] DoubleBufferOn
     
     # pipeline
     set totalInputs 9

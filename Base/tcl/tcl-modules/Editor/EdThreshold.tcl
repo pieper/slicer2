@@ -149,7 +149,7 @@ proc EdThresholdBuildGUI {} {
         MakeVTKImageWindow editThreshHist
         editThreshHistMapper SetInput [Volume(0,vol) GetHistogramPlot]
 
-        vtkTkImageWindowWidget $f.fHist -iw editThreshHistWin \
+        vtkTkRenderWidget $f.fHist -rw editThreshHistWin \
             -width $Volume(histWidth) -height $Volume(histHeight)  
         bind $f.fHist <Expose> {ExposeTkImageViewer %W %x %y %w %h}
         pack $f.fHist

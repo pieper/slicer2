@@ -85,7 +85,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.66 $} {$Date: 2002/04/09 19:17:53 $}]
+            {$Revision: 1.67 $} {$Date: 2002/05/09 14:50:43 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -377,7 +377,7 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
         MakeVTKImageWindow hist
         histMapper SetInput [Volume(0,vol) GetHistogramPlot]
 
-        vtkTkImageWindowWidget $f.fHist -iw histWin \
+        vtkTkRenderWidget $f.fHist -rw histWin \
             -width $Volume(histWidth) -height $Volume(histHeight)  
         bind $f.fHist <Expose> {ExposeTkImageViewer %W %x %y %w %h}
         pack $f.fHist

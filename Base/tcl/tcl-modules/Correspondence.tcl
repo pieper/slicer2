@@ -131,7 +131,7 @@ proc CorrespondenceInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2002/03/21 23:05:24 $}]
+        {$Revision: 1.4 $} {$Date: 2002/05/09 14:50:42 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -522,7 +522,7 @@ vtkIntArray seen
   }
 
 puts "Increment: $Increment"
-vtkScalars Scalars
+vtkFloatArray Scalars
 set p 0
 for {set i 0} { $i < $NumSelectNode } {incr i 1} {
     # increment $p
@@ -532,7 +532,7 @@ for {set i 0} { $i < $NumSelectNode } {incr i 1} {
         incr p  
         if {$p >= $NumSelectNode} {set p [expr $p - $NumSelectNode] }
     }
-    Scalars InsertScalar $i [expr $i * $Increment]
+    Scalars InsertTuple1 $i [expr $i * $Increment]
     seen SetValue $p 1
     puts "$i $p"
 }

@@ -80,7 +80,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.15 $} {$Date: 2002/04/10 22:23:25 $}]
+        {$Revision: 1.16 $} {$Date: 2002/05/09 14:50:42 $}]
     
     # Initialize module-level variables
     
@@ -381,7 +381,7 @@ proc FiducialsVTKCreateFiducialsList { id } {
 
     vtkPoints Fiducials($id,points)
     
-    vtkScalars Fiducials($id,scalars)
+    vtkFloatArray Fiducials($id,scalars)
     
     vtkPolyData Fiducials($id,pointsPD)
     Fiducials($id,pointsPD) SetPoints Fiducials($id,points)
@@ -463,12 +463,12 @@ proc FiducialsVTKUpdatePoints {} {
         Fiducials($fid,xform)
     Fiducials(tmpXform) SetMatrix Fiducials($fid,xform)
     Fiducials($fid,points) SetNumberOfPoints 0
-    Fiducials($fid,scalars) SetNumberOfScalars 0
+    Fiducials($fid,scalars) SetNumberOfTuples 0
     
     foreach pid $Fiducials($fid,pointIdList) {
         set xyz [Point($pid,node) GetXYZ]
         eval Fiducials($fid,points) InsertNextPoint $xyz
-        Fiducials($fid,scalars) InsertNextScalar 0        
+        Fiducials($fid,scalars) InsertNextTuple1 0        
         eval Fiducials(tmpXform) SetPoint $xyz 1
         set xyz [Fiducials(tmpXform) GetPoint]
         foreach r $Module(Renderers) {
@@ -483,7 +483,7 @@ proc FiducialsVTKUpdatePoints {} {
         # see if that point was previously selected
         if {[lsearch $Fiducials($fid,oldSelectedPointIdList) $pid] != -1} { 
             # color the point
-            Fiducials($fid,scalars) SetScalar [FiducialsScalarIdFromPointId $fid $pid] 1
+            Fiducials($fid,scalars) SetTuple1 [FiducialsScalarIdFromPointId $fid $pid] 1
             # color the text
             foreach r $Module(Renderers) {
             eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textSelColor)
@@ -926,7 +926,7 @@ proc FiducialsUpdateSelectionForActor {fid} {
     if {[lsearch $Fiducials($fid,selectedPointIdList) $pid] != -1} { 
     
         # color the point to show it is selected
-        Fiducials($fid,scalars) SetScalar [FiducialsScalarIdFromPointId $fid $pid] 1
+        Fiducials($fid,scalars) SetTuple1 [FiducialsScalarIdFromPointId $fid $pid] 1
         # color the text
         foreach r $Module(Renderers) {
         eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textSelColor)
@@ -934,7 +934,7 @@ proc FiducialsUpdateSelectionForActor {fid} {
         # if it is not selected
     } else {
         # color the point the default color
-        Fiducials($fid,scalars) SetScalar [FiducialsScalarIdFromPointId $fid $pid] 0
+        Fiducials($fid,scalars) SetTuple1 [FiducialsScalarIdFromPointId $fid $pid] 0
         # uncolor the text
         foreach r $Module(Renderers) {
         eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textColor)

@@ -62,7 +62,7 @@ proc TwinInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.14 $} {$Date: 2002/03/21 23:05:28 $}]
+        {$Revision: 1.15 $} {$Date: 2002/05/09 14:50:43 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -76,7 +76,7 @@ proc TwinBuildVTK {} {
 
     vtkXDisplayWindow Twin(display)
 
-    vtkImager twinRen
+    vtkRenderer twinRen
 
     vtkImageFrameSource Twin(src)
     Twin(src) SetExtent 0 [expr $Twin(width)-1] 0 [expr $Twin(height)-1]
@@ -182,8 +182,8 @@ proc TwinApply {} {
     if {$Twin(mode) == "On"} {
         # If window does not exist, create it
         if {[info exists twinWin] == 0 || [info command $twinWin] == ""} {
-            set twinWin [Twin(display) GetImageWindow $Twin(screen)]
-            $twinWin AddImager twinRen
+            set twinWin [Twin(display) GetRenderWindow $Twin(screen)]
+            $twinWin AddRenderer twinRen
             $twinWin DoubleBufferOn
 
         }

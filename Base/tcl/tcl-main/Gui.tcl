@@ -58,7 +58,7 @@ proc GuiInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo Gui \
-        {$Revision: 1.36 $} {$Date: 2002/03/21 23:05:21 $}]
+        {$Revision: 1.37 $} {$Date: 2002/05/09 14:50:42 $}]
 
 
     # enable tooltips by default.  This should check user preferences somehow.
@@ -493,10 +493,10 @@ proc MakeVTKImageWindow {name {input ""}} {
 
     vtkActor2D ${name}Actor
         ${name}Actor SetMapper ${name}Mapper
-    vtkImager ${name}Imager
+    vtkRenderer ${name}Imager
         ${name}Imager AddActor2D ${name}Actor
-    vtkImageWindow ${name}Win
-        ${name}Win AddImager ${name}Imager
+    vtkRenderWindow ${name}Win
+        ${name}Win AddRenderer ${name}Imager
 
     # This line prevents repainting the screen after each 2D 
     # actor is drawn.  It must be called before creating the window.
