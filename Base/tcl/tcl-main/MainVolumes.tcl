@@ -58,7 +58,7 @@ proc MainVolumesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.36 $} {$Date: 2001/02/19 17:53:25 $}]
+		{$Revision: 1.37 $} {$Date: 2001/04/02 20:19:59 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -727,6 +727,7 @@ proc MainVolumesSetActive {v} {
 
 		    # Added by Attila Tanacs 10/17/2000
 		    $Volume(dICOMFileListbox) delete 0 end
+		    set Volume(dICOMFileList) {}
 		    # End
 		}
 
