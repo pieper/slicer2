@@ -61,7 +61,9 @@ vtkImageWarp::vtkImageWarp()
   this->GeneralTransform=vtkGeneralTransform::New();
   this->WorkTransform=vtkGridTransform::New();
   this->IntensityTransform=0;
-  this->ResliceTensors=0;
+  // Modified by Caan
+  this->ResliceTensors=1;
+ // this->ResliceTensors=1;
 }
 
 vtkImageWarp::~vtkImageWarp()
@@ -270,7 +272,9 @@ static void vtkImageWarpSSDExecute2(vtkImageData* t,T1* tptr,
     mptr=(unsigned char*)(m->GetScalarPointerForExtent(ext));
     }
 
+  int weight[5];
   int comp=t->GetNumberOfScalarComponents();
+  
   double ssd=0;
   for(int z=ext[4];z<=ext[5];++z)
     {
@@ -452,7 +456,8 @@ void vtkImageWarp::InternalUpdate()
   float ssde=this->GetSSDEpsilon();
   float MinStdDev=this->GetMinimumStandardDeviation();
   float StdDev=this->GetMaximumStandardDeviation();
-
+  int reslicetensorinterv=5;
+  
   if(StdDev < MinStdDev)
     {
     StdDev=MinStdDev;
@@ -486,86 +491,7 @@ void vtkImageWarp::InternalUpdate()
       // Set Transform to current displacement grid.
       this->WorkTransform->SetDisplacementGrid(this->Displacements[l]);
       
-      // pipeline objects
-      vtkImageReslice* reslice = 0;
-      if(!this->ResliceTensors)
-    {
-    reslice = vtkImageReslice::New();
-    }
-      else
-    {
-    reslice = vtkImageResliceST::New();
-    }
-      vtkImageTransformIntensity* transint = vtkImageTransformIntensity::New();
-      vtkImageGaussianSmooth* tsmooth = vtkImageGaussianSmooth::New();
-      vtkImageGaussianSmooth* ssmooth = vtkImageGaussianSmooth::New();
-      vtkImageWarpForce* force = 0;
-      switch(this->ForceType)
-        {
-        case VTK_IMAGE_WARP_DM:
-          force = vtkImageWarpDMForce::New();
-          break;
-        case VTK_IMAGE_WARP_OF:
-          force = vtkImageWarpOFForce::New();
-          break;
-        default:
-          vtkErrorMacro(<< "Unknown warp force");
-          break;
-        }
-      vtkImageMathematics* addvelo = vtkImageMathematics::New();
-      vtkImageGaussianSmooth* smooth = vtkImageGaussianSmooth::New();
-
-      // reslice source
-      reslice->SetInput(this->Sources[l]);
-      reslice->SetResliceTransform(this->GeneralTransform);
-      reslice->SetInformationInput(this->Targets[l]);
-      reslice->WrapOff();
-      reslice->MirrorOff();
-      reslice->SetInterpolationMode(this->GetInterpolation());
-      reslice->ReleaseDataFlagOn();
-
-      // find intensity correction
-      // initialize intensity transformation
-      if(this->IntensityTransform)
-    {
-    this->IntensityTransform->SetTarget(this->Targets[l]);
-    this->IntensityTransform->SetSource(reslice->GetOutput());
-    this->IntensityTransform->SetMask(mask);
-    }
-      
-      // correct source intensities
-      transint->SetInput(reslice->GetOutput());
-      transint->SetIntensityTransform(this->IntensityTransform);
-      // Debug      transint->ReleaseDataFlagOn();
-      
-      // smooth target
-      tsmooth->SetInput(this->Targets[l]);
-      tsmooth->SetStandardDeviations(0,0,0);
-      //tsmooth->ReleaseDataFlagOn();
-      
-      // smooth source
-      ssmooth->SetInput(transint->GetOutput());
-      ssmooth->SetStandardDeviations(0,0,0);
-      // ssmooth->ReleaseDataFlagOn();
-      
-      // compute force
-      force->SetTarget(tsmooth->GetOutput());
-      force->SetSource(ssmooth->GetOutput());
-      force->SetDisplacement(this->Displacements[l]);
-      force->SetMask(mask);
-      //force->ReleaseDataFlagOn();
-      
-      // combine previous and new forces
-      addvelo->SetInput1(this->Displacements[l]);
-      addvelo->SetInput2(force->GetOutput());
-      addvelo->SetOperationToAdd();
-      // addvelo->ReleaseDataFlagOn();
-      
-      // smooth deformation
-      smooth->SetInput(addvelo->GetOutput());
-      smooth->SetStandardDeviations(StdDev,StdDev,StdDev);
-      //smooth->ReleaseDataFlagOff();
-      
+     
       // where the hell can I find a portable include file 
       // that defines DBL_MAX?
       // double lastssd=DBL_MAX;
@@ -573,17 +499,91 @@ void vtkImageWarp::InternalUpdate()
       double ssd=0;
       for(int i=0;i<(l+1)*this->MaximumIterations;++i)
     {
+
+
+        // pipeline objects
+        vtkImageReslice* reslice = 0;
+        // As tensor reorientation is very slow, only do it
+    // every reslicetensorinterv steps.
+    if(!this->ResliceTensors)
+      {
+      reslice = vtkImageReslice::New();
+        }
+        else
+      {
+      if(i%reslicetensorinterv)
+        {
+        reslice = vtkImageReslice::New();
+        }
+      else
+        {
+        reslice = vtkImageResliceST::New();
+        }
+      }
+        vtkImageTransformIntensity* transint = vtkImageTransformIntensity::New();
+
+        vtkImageWarpForce* force = 0;
+
+        switch(this->ForceType)
+          {
+          case VTK_IMAGE_WARP_DM:
+            force = vtkImageWarpDMForce::New();
+            break;
+          case VTK_IMAGE_WARP_OF:
+            force = vtkImageWarpOFForce::New();
+            break;
+          default:
+            vtkErrorMacro(<< "Unknown warp force");
+            break;
+          }
+        vtkImageMathematics* addvelo = vtkImageMathematics::New();
+        vtkImageGaussianSmooth* smooth = vtkImageGaussianSmooth::New();
+
+        // reslice source
+        reslice->SetInput(this->Sources[l]);
+        reslice->SetResliceTransform(this->GeneralTransform);
+        reslice->SetInformationInput(this->Targets[l]);
+        reslice->WrapOff();
+        reslice->MirrorOff();
+        reslice->SetInterpolationMode(this->GetInterpolation());
+        reslice->ReleaseDataFlagOn();
+
+        // find intensity correction
+        // initialize intensity transformation
+        if(this->IntensityTransform)
+      {
+      this->IntensityTransform->SetTarget(this->Targets[l]);
+      this->IntensityTransform->SetSource(reslice->GetOutput());
+        this->IntensityTransform->SetMask(mask);
+      }
+      
+        // correct source intensities
+        transint->SetInput(reslice->GetOutput());
+        transint->SetIntensityTransform(this->IntensityTransform);
+        
+        // compute force
+        force->SetTarget(this->Targets[l]);
+        force->SetSource(transint->GetOutput());
+        force->SetDisplacement(this->Displacements[l]);
+        force->SetMask(mask);
+      
+        // combine previous and new forces
+        addvelo->SetInput1(this->Displacements[l]);
+        addvelo->SetInput2(force->GetOutput());
+        addvelo->SetOperationToAdd();
+      
+        // smooth deformation
+        smooth->SetInput(addvelo->GetOutput());
+        smooth->SetStandardDeviations(StdDev,StdDev,StdDev);
+
+
+
+
+
+
     if(this->UseSSD)
           {
-//           cout << "begin" << endl;
-//           reslice->Update();
-//           Write(reslice->GetOutput(),"/tmp/rs.vtk");
-//           cout << "reslice" << endl;
-//           transint->Update();
-//           cout << "transint" << endl;
-//           Write(transint->GetOutput(),"/tmp/ti.vtk");
           ssd=this->SSD(this->Targets[l],transint->GetOutput(),mask);
-//           cout << "ssd" << endl;
           }
     if(this->Verbose)
       {
@@ -599,7 +599,6 @@ void vtkImageWarp::InternalUpdate()
       }
 
     if(this->UseSSD &&
-       //       ((lastssd-ssd)<(lastssd*ssde)) &&
        ((lastssd-ssd)<=(lastssd*ssde)) &&
        (i>=this->MinimumIterations))
       {
@@ -607,60 +606,23 @@ void vtkImageWarp::InternalUpdate()
       }
     lastssd = ssd;
 
-//         tsmooth->Update();
-//         Write(tsmooth->GetOutput(),"/tmp/ts.vtk");
-//         cout << "tsmooth" << endl;
-//         ssmooth->Update();
-//         Write(ssmooth->GetOutput(),"/tmp/ss.vtk");
-//         cout << "ssmooth" << endl;
-//         force->Update();
-//         Write(force->GetOutput(),"/tmp/fi.vtk");
-//         cout << "force" << endl;
-//         addvelo->Update();
-//         Write(addvelo->GetOutput(),"/tmp/av.vtk");
-//         cout << "addvelo" << endl;
-//         smooth->Update();
-//         Write(smooth->GetOutput(),"/tmp/sm.vtk");
-//         cout << "smooth" << endl;
-
-//         if(i==15) exit(0);
-     smooth->Update();
+        // This triggers the warping.
+    smooth->Update();
      this->Displacements[l]->DeepCopy(smooth->GetOutput());
-//         cout << "copy" << endl;
-//         Write(this->Displacements[l],"/tmp/d.vtk");
-//        if(i==0) exit(0);
 
-//     double diff=this->MaxDispDiff(smooth->GetOutput(),
-//                                       this->Displacements[l],mask);
-//     if(this->Verbose)
-//       {
-//       cout << "\r  Iteration " << i << ": "
-//                << "MaxDiff=" << diff ;
-//           cout.flush();
-//       }
-//         this->MaxDiff=0.05;
-//         if(diff <= this->MaxDiff)
-//           {
-//           break;
-//           }
-//         this->Displacements[l]->DeepCopy(smooth->GetOutput());
-    }
+    reslice->Delete();
+        transint->Delete();
+        force->Delete();
+        addvelo->Delete();
+        smooth->Delete();
 
-//       cout << "over" << endl;
+    } // end i (iterations)
+
       
       if(this->Verbose)
     {
     cout << endl;
     }
-
-      reslice->Delete();
-      transint->Delete();
-      tsmooth->Delete();
-      ssmooth->Delete();
-      force->Delete();
-      addvelo->Delete();
-      smooth->Delete();
-//       cout << "delete" << endl;
       }
     
     // if at last level, decrease smoothing
@@ -675,7 +637,9 @@ void vtkImageWarp::InternalUpdate()
       }
     else
       {
+      cout << "Update pyramid...";
       this->UpdatePyramid(l);
+      cout << "Done" << endl;
       }
     }
     
@@ -683,7 +647,7 @@ void vtkImageWarp::InternalUpdate()
   // the displacement the transform, and invert it so it represents a
   // forward transform.
     if(this->Verbose)
-      {  cout << "start invert displacement " ;
+     {  cout << "start invert displacement " ;
       cout.flush();
     }
   
