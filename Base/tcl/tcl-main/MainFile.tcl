@@ -86,7 +86,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.57 $} {$Date: 2004/07/22 15:57:29 $}]
+        {$Revision: 1.58 $} {$Date: 2004/10/07 21:14:59 $}]
 
     set File(filePrefix) data
 }
@@ -897,12 +897,15 @@ proc MainFileCreateDirectory {filename} {
 proc CheckVolumeExists {filePrefix filePattern firstNum lastNum  {verbose 0} } {
     global Gui
 
+    if {$::Module(verbose)} {
+        puts "CheckVolumeExists:\n\tfilePrefix = $filePrefix \tfilePattern = $filePattern\n\tfirstNum = $firstNum\n\tlastNum = $lastNum"
+    }
     # Check that it's a prefix, not a directory
     if {[file isdirectory $filePrefix] == 1} {
         # if the file pattern is from a dicom, the prefix may be  a directory
         tk_messageBox -icon error -title $Gui(title) -message \
-            "CheckVolumeExists: '$filePrefix' is a directory instead of a prefix\n(pattern = $filePattern)."
-        return ERROR
+            "CheckVolumeExists: '$filePrefix' is a directory instead of a prefix, unless this is a DICOM volume, errors may ensue.\n(pattern = $filePattern)."
+        # return ERROR
     }
 
     # Check directory is there
@@ -1011,6 +1014,7 @@ proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
     set ftail [file tail $ImageFile]
     set fdir [file dirname $ImageFile]
     set fext [file extension $ftail]
+    set fname [file rootname $ftail]
     # update: instead of using a regexp to see if the file name starts with letters, 
     # check to see if the file name is constant and therefore the extension is changing.
     # this tests to see if anything else in the directory has the same extension as the first file, 
@@ -1023,16 +1027,31 @@ proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
         if {$::Module(verbose)} {
             puts "MainFileParseImageFile: have a volume with only one file, returning a pattern of %s."
         }
-        return "%s"
+        return "%s $ImageFile 0"
+    }
+    if {$fext == ".bfloat"} {
+        if {$::Module(verbose)} {
+            puts "MainFileParseImageFile: bfloat volume, returning default pattern of %s_%03d.bfloat."
+        }
+        if {[regexp {(.+)_([0-9]*)$} $fname match filePrefix num] == 0} {
+            set filePrefix $fdir/$fname
+            set ZerolessNum 0
+        } else {
+            set filePrefix $fdir/$filePrefix
+            set ZerolessNum [string trimleft $num "0"]
+            if {$ZerolessNum == ""} {set ZerolessNum 0}
+        }
+        return "%s_%03d.bfloat $filePrefix $ZerolessNum"
     }
     # this will fail if there's another volume in the directory with the same 
     # extension: second test = ftail is in the list, and any other elements
-    # have a different rootname. First test that there *is* an extension.
+    # have a different rootname. First test that there *is* an extension. Last test
+    # that the file name isn't all numbers before the extension
     set filesWithSameExtension [glob -directory $fdir -tails *$fext]
     if {$::Module(verbose)} {
         puts "files with same extension = $filesWithSameExtension"
     }
-    if {$fext != "" && ($filesWithSameExtension == $ftail || ([lsearch $filesWithSameExtension $ftail] != -1 && [lsearch $filesWithSameExtension [file rootname $ImageFile]\*] == -1))} {
+    if {$fext != "" && ($filesWithSameExtension == $ftail || ([lsearch $filesWithSameExtension $ftail] != -1 && [lsearch $filesWithSameExtension [file rootname $ImageFile]\*] == -1 && [string is integer $fname] != 1))} {
         # the file starts with letters
         if {$::Module(verbose)} {
             puts "File starts with letters"
@@ -1047,7 +1066,7 @@ proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
             if {$::Module(verbose)} {
                 DevErrorWindow "Could not parse \"$ImageFile\" in MainFileParseImageFile (postfixFlag = $postfixFlag)"
             }
-            puts "Could not parse \"$ImageFile\" in MainFileParseImageFile (postfixFlag = $postfixFlag)"
+            puts "Could not parse \"$ImageFile\" in MainFileParseImageFile\n\tpostfixFlag = $postfixFlag\n\tftail = $ftail\n\tfdir = $fdir\n\tfext = \"$fext\""
             return ""
         }
         
