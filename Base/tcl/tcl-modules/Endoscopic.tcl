@@ -1627,6 +1627,10 @@ eval {label $f.lTitle -text "Step 4. "} $Gui(WTA)
     
     pack $f.cmodels
 
+    # reinstating the show path toggle button
+    EndoscopicCreateCheckButton $f.cPath Endoscopic(path,showPath) "Show Path" "EndoscopicShowPath; Render3D"
+    pack $f.cPath
+
     # The following GUI commands are commented out because collision detection has not
     # been tested since the upgrade from slicer1 to slicer2 and the sunchronized fly-through
     # code is for internal research only at this point.
@@ -1638,7 +1642,7 @@ eval {label $f.lTitle -text "Step 4. "} $Gui(WTA)
     #set f $fAdvanced.fMid.fToggle
     
 
-
+    
     #eval {label $f.l -height 2 -text "Collision Detection:"} $Gui(WTA)
     #eval {menubutton $f.fMBtns -text "off" -menu $f.fMBtns.fMenu} $Gui(WMBA)  
     #eval {menu $f.fMBtns.fMenu} $Gui(WMA) 
@@ -3230,9 +3234,11 @@ proc EndoscopicComputeRandomPath {} {
 #-------------------------------------------------------------------------------
 proc EndoscopicShowPath {} {
     global Path Endoscopic
-
+    puts "TEMPORARILY DISABLED - pending bugfix"
+    if {0} {
     if {$Endoscopic(path,exists) == 1} {
         if {$Endoscopic(path,showPath) == 1} {
+            
             foreach m {c f} {
                 endoscopicScreen AddActor Endoscopic(${m}Land,actor)
                 endoscopicScreen AddActor Endoscopic(${m}Path,actor)
@@ -3244,7 +3250,7 @@ proc EndoscopicShowPath {} {
             }
         }
     }
-
+    }
 }
 
 #-------------------------------------------------------------------------------
