@@ -1292,6 +1292,10 @@ global View VolumeTextureMapping Volume  Module
    if {$VolumeTextureMapping(idOriginal[expr $i+1]) != $Volume(idNone)} {
         set id $VolumeTextureMapping(idOriginal[expr $i+1])
 
+        if { ![info exists VolumeTextureMapping(colorTable$i)] } {
+            break
+        }
+
         if {$VolumeTextureMapping(colorTable$i) != [Volume($id,node) GetLUTName]} {
             set VolumeTextureMapping(colorTable$i) [ Volume($id,node) GetLUTName]
             VolumeTextureMapping(texturevolumeMapper) SetColorTable Lut($VolumeTextureMapping(colorTable$i),lut) $i
