@@ -66,7 +66,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.46 $} {$Date: 2002/05/21 18:44:58 $}]
+            {$Revision: 1.47 $} {$Date: 2002/08/22 19:04:52 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -1013,7 +1013,7 @@ proc ModelsMeter {} {
 
 
     # Compute rate
-    set t [lindex [time {Render3D}] 0]
+    set t [lindex [time {Render3D; update}] 0]
     if {$t > 0} {
         set rate [expr $total / ($t/1000000.0)]
     } else {
