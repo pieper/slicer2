@@ -300,7 +300,7 @@ proc CrossSectionInit {} {
     set Module($m,depend) ""
 
     set Module($m,author) "Sylvain Bouix, SPL, sylvain@bwh.harvard.edu"
-    set Module($m,overview) "Similar to the endoscopic module"
+    set Module($m,overview) "Used to measure vessel cross sections"
     set Module($m,category) "Visualisation"
 
     # Define Procedures
@@ -1086,9 +1086,19 @@ proc CrossSectionBuildGUI {} {
     #-------------------------------------------
     # Help frame
     #-------------------------------------------
-    set help "
+    set help "This module is used to measure vessel cross sections.
+<P>
+Description by tabs:
+    <LI><B>Display</B>
+<BR> This Tab permits you to set display parameters.
+    <LI><B>Path</B>
+<BR> This Tab allows you to create a path. 
+    <BR><B>Automatically:</B>
+<BR>You can select a closed model, a start and end point on the model, and hit Extract Centerline and a path will be generated between the points of the model.
+<BR><B>Advanced:</B>
+<BR>This option allows you to use a distance map for a more manual mode.
     <LI><B>Advanced</B>
-    <BR>This Tab allows you to change color and size parameters for the camera, focal point, landmarks and path. You can also change the virtual camera's lens angle for a wider view.
+    <BR>This Tab allows you to change visibility, color and size parameters for the camera, focal point, landmarks and path. You can also change the virtual camera's lens angle for a wider view.
     "
     regsub -all "\n" $help { } help
     MainHelpApplyTags CrossSection $help
