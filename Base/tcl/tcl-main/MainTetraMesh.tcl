@@ -79,7 +79,7 @@ proc MainTetraMeshInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.11 $} {$Date: 2003/03/19 19:16:26 $}]
+        {$Revision: 1.12 $} {$Date: 2003/07/22 20:38:45 $}]
 
     set TetraMesh(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -344,6 +344,12 @@ proc MainTetraMeshWrite {v prefix} {
     vtkMrmlTree tree
     tree AddItem TetraMesh($v,node)
     tree Write $filename
+    if {[tree GetErrorCode] != 0} {
+        puts "ERROR: MainTetraMeshWrite: unable to write MRML file $filename"
+        tree RemoveAllItems
+        tree Delete
+        return
+    }
     tree RemoveAllItems
     tree Delete
     puts "Saved MRML file: $filename"
