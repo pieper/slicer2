@@ -63,7 +63,7 @@ proc MainVolumesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.32 $} {$Date: 2000/07/28 17:55:26 $}]
+		{$Revision: 1.33 $} {$Date: 2000/10/24 17:44:11 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -268,10 +268,15 @@ proc MainVolumesRead {v} {
 
 	# Check that all files exist
 	scan [Volume($v,node) GetImageRange] "%d %d" lo hi
-	if {[CheckVolumeExists [Volume($v,node) GetFullPrefix] \
-		[Volume($v,node) GetFilePattern] $lo $hi] != ""} {
-		return -1
-	}
+
+    # Removed by Attila Tanacs 10/16/2000
+
+	#if {[CheckVolumeExists [Volume($v,node) GetFullPrefix] \
+	\#	[Volume($v,node) GetFilePattern] $lo $hi] != ""} {
+	#	return -1
+	#}
+
+    # End
 
 	set Gui(progressText) "Reading [Volume($v,node) GetName]"
 
@@ -724,6 +729,10 @@ proc MainVolumesSetActive {v} {
 		    # Update buttons
 		    VolumesSetScanOrder $Volume(scanOrder)
 		    VolumesSetScalarType $Volume(scalarType)
+
+		    # Added by Attila Tanacs 10/17/2000
+		    $Volume(dICOMFileListbox) delete 0 end
+		    # End
 		}
 
 	} else {
@@ -777,7 +786,17 @@ proc MainVolumesSetActive {v} {
 				name desc labelMap littleEndian" vtkname "FilePattern Tilt \
 				NumScalars Name Description LabelMap LittleEndian" {
 			    set Volume($item) [Volume($v,node) Get$vtkname]
-			}
+            }
+            
+            # Added by Attila Tanacs 10/10/2000
+            set Volume(dICOMFileList) {}
+            for  {set i 0} {$i < [Volume($v,node) GetNumberOfDICOMFiles]} {incr i} {
+                lappend Volume(dICOMFileList) [Volume($v,node) GetDICOMFileName $i]
+            }
+            $Volume(dICOMFileListbox) delete 0 end
+            eval {$Volume(dICOMFileListbox) insert end} $Volume(dICOMFileList)
+            # End
+
 			# update menus
 			VolumesSetScalarType [lindex "Char UnsignedChar Short {UnsignedShort} \ 
 			{Int} UnsignedInt Long UnsignedLong Float Double" \
@@ -1011,6 +1030,10 @@ proc MainVolumesSetGUIDefaults {} {
 	    [lsearch "2 3 4 5 6 7 8 9 10 11"  [default GetScalarType]]]
     default Delete
 
+    # Added by Attila Tanacs 10/10/2000
+    set Volume(numDICOMFiles) 0
+    # End
+    
     # Set GUI defaults
     set Volume(firstFile) ""
     set Volume(readHeaders) 1
