@@ -15,7 +15,7 @@
 #define volumeBox 3
 
 #ifndef VTK_IMPLEMENT_MESA_CXX
-vtkCxxRevisionMacro(vtkOpenGLVolumeTextureMapper3D, "$Revision: 1.14 $");
+vtkCxxRevisionMacro(vtkOpenGLVolumeTextureMapper3D, "$Revision: 1.15 $");
 vtkStandardNewMacro(vtkOpenGLVolumeTextureMapper3D);
 #endif
 
@@ -537,7 +537,7 @@ vtkFloatingPointType cameraPosition[3];
   
   //the amount of planes used to build the volume
   int numQuads = this->GetNumberOfPlanes();
-  float diagonal = sqrt(boxSize*boxSize+boxSize*boxSize+boxSize*boxSize);
+  float diagonal = sqrt((double)(boxSize*boxSize+boxSize*boxSize+boxSize*boxSize));
   
   //calculate the normalvector
   normal[0] = (cameraPosition[0]-focalPoint[0]); 
