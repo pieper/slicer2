@@ -1563,6 +1563,13 @@ proc EdLiveWireTrain {} {
 
 	set filt [Ed($e,lwSetup$s) GetEdgeFilter $f]
 	
+	# see if the edge filter already has its other inputs
+	if {[$filt GetNumberOfInputs] < 1} {
+	    tk_messageBox -message \
+		    "Please try training again after LiveWire initialization has finished."
+	    return
+	}
+	
 	puts "edge direction: [$filt GetEdgeDirection]"
 
 	# tell filter to do training calculations
