@@ -24,6 +24,8 @@ vtkEuclideanLineFit.cxx
 vtkEuclideanPlaneFit.cxx
 vtkBooksteinSphereFit.cxx
 vtkLargeLeastSquaresProblem.cxx
+vtkFemurMetric.cxx
+vtkPelvisMetric.cxx
 )
 
 ## classes that one does not want tcl wrapped
