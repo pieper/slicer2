@@ -228,15 +228,19 @@ proc EdPhaseWireSetOmega {omega} {
 proc EdPhaseWireBuildVTK {} {
     global Ed Volume Slice
 
-    ### This is a fix so that reformatting the extra volumes will work
-    vtkMultiThreader temp
-    #set normalthreads [temp GetGlobalDefaultNumberOfThreads]
-    temp SetGlobalDefaultNumberOfThreads 1
-    temp Delete
-    # now only one thread will be used for our reformatting
-    # when the reformatter objects are created by slicer object below
-    # NOTE this affects all objects created from now on - should reset
-    ### end fix
+    # removed threading change here - now can be set by
+    # passing --no-threads to the Go.tcl script - sp 2002-11-26
+    if {0} {
+        ### This is a fix so that reformatting the extra volumes will work
+        vtkMultiThreader temp
+        #set normalthreads [temp GetGlobalDefaultNumberOfThreads]
+        temp SetGlobalDefaultNumberOfThreads 1
+        temp Delete
+        # now only one thread will be used for our reformatting
+        # when the reformatter objects are created by slicer object below
+        # NOTE this affects all objects created from now on - should reset
+        ### end fix
+    }
     
     set e EdPhaseWire
 
