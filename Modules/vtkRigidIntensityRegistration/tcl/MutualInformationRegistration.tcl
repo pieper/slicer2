@@ -7,7 +7,8 @@
 # .END
 #-------------------------------------------------------------------------------
 proc MutualInformationRegistrationInit {} {
-    global MutualInformationRegistration Module Volume Model
+    global RigidIntensityRegistration MutualInformationRegistration 
+    global Module Volume Model
 
     set m MutualInformationRegistration
 
@@ -101,7 +102,7 @@ proc MutualInformationRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2003/12/09 01:43:09 $}]
+        {$Revision: 1.5 $} {$Date: 2003/12/18 02:25:04 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -110,20 +111,13 @@ proc MutualInformationRegistrationInit {} {
     #   This is a handy method for organizing the global variables that
     #   the procedures in this module and others need to access.
     #
-    set MutualInformationRegistration(count) 0
-    set MutualInformationRegistration(Volume1) $Volume(idNone)
-    set MutualInformationRegistration(Model1)  $Model(idNone)
-    set MutualInformationRegistration(FileName)  ""
+    set RigidIntensityRegistration(sourceId) $Volume(idNone)
+    set RigidIntensityRegistration(targetId) $Volume(idNone)
+    set RigidIntensityRegistration(matrixId) ""
 
-    set MutualInformationRegistration(sourceId) $Volume(idNone)
-    set MutualInformationRegistration(targetId) $Volume(idNone)
-    set MutualInformationRegistration(matrixId) ""
+    set RigidIntensityRegistration(Repeat) 1
 
-    set MutualInformationRegistration(Repeat) 1
-
-    global Matrix MutualInformationRegistration
-    #set Matrix(autoFast) mi-fast.txt
-    #set Matrix(autoSlow) mi-slow.txt
+    global Matrix 
     set Matrix(allowAutoUndo) 0
 
     ## Set the default to fast registration
@@ -141,7 +135,7 @@ proc MutualInformationRegistrationInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MutualInformationRegistrationBuildSubGui {f} {
-    global Gui Matrix MutualInformationRegistration
+    global Gui Matrix RigidIntensityRegistration MutualInformationRegistration
 
     set framename $f
 
@@ -310,7 +304,7 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
     foreach value "1 0" text "Yes No" width "4 3" {
         eval {radiobutton $f.f.r$value -width $width \
               -indicatoron 0 -text "$text" -value "$value" \
-              -variable MutualInformationRegistration(Repeat) } $Gui(WCA)
+              -variable RigidIntensityRegistration(Repeat) } $Gui(WCA)
         pack $f.f.r$value -side left -fill x -anchor w
     }
 
@@ -352,22 +346,37 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
     foreach param { \
                    {UpdateIterations} \
                    {LearningRate} \
-                   {SourceStandardDeviation} \
-                   {TargetStandardDeviation} \
                    {SourceShrinkFactors} \
                    {TargetShrinkFactors} \
-                   {NumberOfSamples} \
                    {TranslateScale} \
                    } name \
                   { \
                    {Update Iterations} \
                    {Learning Rate} \
-                   {Source Standard Deviation} \
-                   {Target Standard Deviation} \
                    {Source MultiRes Reduction} \
                    {Target Multires Reduction} \
-                   {Number Of Samples} \
                    {Translate Scale} \
+                   } {
+        set f $fadvanced.fParam
+        frame $f.f$param   -bg $Gui(activeWorkspace)
+        pack $f.f$param -side top -fill x -pady 2
+        
+        set f $f.f$param
+        eval {label $f.l$param -text "$name:"} $Gui(WLA)
+        eval {entry $f.e$param -width 10 -textvariable RigidIntensityRegistration($param)} $Gui(WEA)
+        pack $f.l$param -side left -padx $Gui(pad) -fill x -anchor w
+        pack $f.e$param -side left -padx $Gui(pad) -expand 1
+    }
+
+    foreach param { \
+                   {NumberOfSamples} \
+                   {SourceStandardDeviation} \
+                   {TargetStandardDeviation} \
+                   } name \
+                  { \
+                   {Number Of Samples} \
+                   {Source Standard Deviation} \
+                   {Target Standard Deviation} \
                    } {
         set f $fadvanced.fParam
         frame $f.f$param   -bg $Gui(activeWorkspace)
@@ -392,7 +401,6 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
     }
     pack $f.bRun -side left -padx $Gui(pad) -pady $Gui(pad)
     set MutualInformationRegistration(b2Run) $f.bRun
-
 }  
 
 #-------------------------------------------------------------------------------
@@ -405,7 +413,7 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
 # .END
 #-------------------------------------------------------------------------------
 proc MutualInformationRegistrationSetLevel {} {
-    global MutualInformationRegistration
+    global MutualInformationRegistration RigidIntensityRegistration
 
     set level $MutualInformationRegistration(Level)
     raise $MutualInformationRegistration(f${level})
@@ -422,23 +430,24 @@ proc MutualInformationRegistrationSetLevel {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MutualInformationRegistrationCoarseParam {} {
-    global MutualInformationRegistration
+    global MutualInformationRegistration RigidIntensityRegistration
 
-    set MutualInformationRegistration(Resolution)       128
-    set MutualInformationRegistration(LearningRate)    3e-5
-    set MutualInformationRegistration(UpdateIterations) 100
-    set MutualInformationRegistration(NumberOfSamples)  50
-    set MutualInformationRegistration(TranslateScale)   320
+    set RigidIntensityRegistration(Resolution)       128
+    set RigidIntensityRegistration(LearningRate)    3e-5
+    set RigidIntensityRegistration(UpdateIterations) 100
+    set RigidIntensityRegistration(TranslateScale)   320
+    set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
+    set RigidIntensityRegistration(TargetShrinkFactors)   "1 1 1"
+    set RigidIntensityRegistration(Repeat) 1
+
     # If Wells, Viola, Atsumi, etal, 
     # used 2 and 4. Wells claims exact number not critical (personal communication)
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
+    set MutualInformationRegistration(NumberOfSamples)  50
     set MutualInformationRegistration(SourceStandardDeviation) 0.4
     set MutualInformationRegistration(TargetStandardDeviation) 0.4
-    set MutualInformationRegistration(SourceShrinkFactors)   "1 1 1"
-    set MutualInformationRegistration(TargetShrinkFactors)   "1 1 1"
-    set MutualInformationRegistration(Repeat) 1
 }
 
 
@@ -452,13 +461,16 @@ proc MutualInformationRegistrationCoarseParam {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MutualInformationRegistrationFineParam {} {
-    global MutualInformationRegistration
+    global MutualInformationRegistration RigidIntensityRegistration
 
-    set MutualInformationRegistration(Resolution)       128
-    set MutualInformationRegistration(LearningRate)     3e-6
-    set MutualInformationRegistration(UpdateIterations) 100
-    set MutualInformationRegistration(NumberOfSamples)  50
-    set MutualInformationRegistration(TranslateScale)   320
+    set RigidIntensityRegistration(Resolution)       128
+    set RigidIntensityRegistration(LearningRate)     3e-6
+    set RigidIntensityRegistration(UpdateIterations) 100
+    set RigidIntensityRegistration(TranslateScale)   320
+    set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
+    set RigidIntensityRegistration(TargetShrinkFactors)   "1 1 1"
+    set RigidIntensityRegistration(Repeat) 1
+
     # If Wells, Viola, Atsumi, etal, 
     # used 2 and 4. Wells claims exact number not critical (personal communication)
     # They scaled data 0...256.
@@ -466,9 +478,7 @@ proc MutualInformationRegistrationFineParam {} {
     # 2/256*2 = 0.015
     set MutualInformationRegistration(SourceStandardDeviation) 0.4
     set MutualInformationRegistration(TargetStandardDeviation) 0.4
-    set MutualInformationRegistration(SourceShrinkFactors)   "1 1 1"
-    set MutualInformationRegistration(TargetShrinkFactors)   "1 1 1"
-    set MutualInformationRegistration(Repeat) 1
+    set MutualInformationRegistration(NumberOfSamples)  50
 }
 
 
@@ -481,23 +491,24 @@ proc MutualInformationRegistrationFineParam {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MutualInformationRegistrationGSlowParam {} {
-    global MutualInformationRegistration
+    global MutualInformationRegistration RigidIntensityRegistration
 
-    set MutualInformationRegistration(Resolution)       128
-    set MutualInformationRegistration(UpdateIterations) "500 1000"
-    set MutualInformationRegistration(LearningRate)    "0.0001 0.00001"
-    set MutualInformationRegistration(NumberOfSamples)  50
-    set MutualInformationRegistration(TranslateScale)   320
+    set RigidIntensityRegistration(Resolution)       128
+    set RigidIntensityRegistration(UpdateIterations) "500 1000"
+    set RigidIntensityRegistration(LearningRate)    "0.0001 0.00001"
+    set RigidIntensityRegistration(TranslateScale)   320
+    set RigidIntensityRegistration(SourceShrinkFactors)   "2 2 2"
+    set RigidIntensityRegistration(TargetShrinkFactors)   "2 2 2"
+    set RigidIntensityRegistration(Repeat) 0
+
     # If Wells, Viola, Atsumi, etal, 
     # used 2 and 4. Wells claims exact number not critical (personal communication)
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
+    set MutualInformationRegistration(NumberOfSamples)  50
     set MutualInformationRegistration(SourceStandardDeviation) 0.4
     set MutualInformationRegistration(TargetStandardDeviation) 0.4
-    set MutualInformationRegistration(SourceShrinkFactors)   "2 2 2"
-    set MutualInformationRegistration(TargetShrinkFactors)   "2 2 2"
-    set MutualInformationRegistration(Repeat) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -509,36 +520,38 @@ proc MutualInformationRegistrationGSlowParam {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MutualInformationRegistrationVerySlowParam {} {
-    global MutualInformationRegistration
+    global MutualInformationRegistration RigidIntensityRegistration
 
-    set MutualInformationRegistration(Resolution)       128 
-    set MutualInformationRegistration(UpdateIterations) "2500 2500 2500 2500 2500"
-    set MutualInformationRegistration(LearningRate)    "1e-4 1e-5 5e-6 1e-6 5e-7"
-    set MutualInformationRegistration(NumberOfSamples)  50
-    set MutualInformationRegistration(TranslateScale)   320
+    set RigidIntensityRegistration(Resolution)       128 
+    set RigidIntensityRegistration(UpdateIterations) "2500 2500 2500 2500 2500"
+    set RigidIntensityRegistration(LearningRate)    "1e-4 1e-5 5e-6 1e-6 5e-7"
+    set RigidIntensityRegistration(NumberOfSamples)  50
+    set RigidIntensityRegistration(TranslateScale)   320
+    set RigidIntensityRegistration(SourceShrinkFactors)   "4 4 1"
+    set RigidIntensityRegistration(TargetShrinkFactors)   "4 4 1"
+    set RigidIntensityRegistration(Repeat) 0
+
     # If Wells, Viola, Atsumi, etal, 
     # used 2 and 4. Wells claims exact number not critical (personal communication)
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
+    set MutualInformationRegistration(NumberOfSamples)          "50"
     set MutualInformationRegistration(SourceStandardDeviation) 0.4
     set MutualInformationRegistration(TargetStandardDeviation) 0.4
-    set MutualInformationRegistration(SourceShrinkFactors)   "4 4 1"
-    set MutualInformationRegistration(TargetShrinkFactors)   "4 4 1"
-    set MutualInformationRegistration(Repeat) 0
 }
 
 
 #-------------------------------------------------------------------------------
 # .PROC MutualInformationRegistrationEnter
 # Called when this module is entered by the user.  Pushes the event manager
-# for this module. 
+# for this module. This never gets called.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 
 proc MutualInformationRegistrationEnter {} {
-    global MutualInformationRegistration
+    global MutualInformationRegistration RigidIntensityRegistration
     
     # Push event manager
     #------------------------------------
@@ -559,7 +572,7 @@ proc MutualInformationRegistrationEnter {} {
 #-------------------------------------------------------------------------------
 # .PROC MutualInformationRegistrationExit
 # Called when this module is exited by the user.  Pops the event manager
-# for this module.  
+# for this module. This never gets called. 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -576,108 +589,25 @@ proc MutualInformationRegistrationExit {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationTestTransformConnection
-#
-# Makesure the transformid has an effect on the volumeid
-# returns the error message, on "" if none
-#
-# desiredresult is the number of transforms that should affect the volumeid
-#  it should be 1 or 0
-# Matrix(transformid,node) should affect the volumeid of interest IF
-# desiredresult is set to 1
-#
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc MutualInformationRegistrationTestTransformConnections \
-       {volumeid transformid desiredresult} {
-
- set name [Volume($volumeid,node) GetName]
-
- vtkTransform MIRegTmpTransform
-
- Mrml(dataTree) ComputeNodeTransform Volume($volumeid,node) MIRegTmpTransform
-
- set NumTrans [MIRegTmpTransform GetNumberOfConcatenatedTransforms]
-
- if {$NumTrans > 1} {
-     MIRegTmpTransform Delete
-     return "There are several transforms affecting $name. Sorry. We do not handle more than 1 transform. Please simplify your MRML file"
- }
-
- if {$desiredresult == 0} {
-     MIRegTmpTransform Delete
-     if {$NumTrans == 0} {
-     return ""
-     } else {
-     return "There is a transform affecting $name. There should not be one. Please remove it."
-     }
- }
-
- if {$desiredresult == 1} {
-     if {$NumTrans == 0} {
-     MIRegTmpTransform Delete
-     return "No transform affecting $name. Is it possible you have a transform affecting the Refence Volume rather than the Volume to Move?"
-     }
-     set tmptrans [MIRegTmpTransform GetConcatenatedTransform 0]
-     if {$tmptrans != [Matrix($transformid,node) GetTransform] } {
-         MIRegTmpTransform Delete
-     return "The transform you have selected does not seem to be the one affecting $name. Please choose the correct transform."
-     }
- }
-
- MIRegTmpTransform Delete
- return ""
-}
-
-#-------------------------------------------------------------------------------
 # .PROC MutualInformationRegistrationAutoRun
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MutualInformationRegistrationAutoRun {} {
-    global Matrix MutualInformationRegistration
+    global Matrix MutualInformationRegistration RigidIntensityRegistration
 
     if {[RigidIntensityRegistrationCheckSetUp] == 0} {
       return 0
     }
 
-    if {[llength $MutualInformationRegistration(LearningRate) ] != \
-        [llength $MutualInformationRegistration(UpdateIterations) ] } {
-       DevErrorWindow "Must Have same number of levels of iterations as learning rates"
-       return 0
-     }
-
-    # sourceId = ID of volume to register (source, moving)
-    # targetId = ID of reference volume   (target, stationary)
-    # matrixId = ID of the transform to change
-    set MutualInformationRegistration(sourceId) $Matrix(volume)
-    set MutualInformationRegistration(targetId) $Matrix(refVolume)
-    set MutualInformationRegistration(matrixId) $Matrix(activeID)
-
 #    Gering version disabled
 #    MutualInformationRegistrationAutoRun_Vtk  
 
-     MutualInformationRegistrationAutoRun_Itk 
-}
-
-#-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationAutoRun_Itk
-#
-# use the vtkITK interface to the ITK MI registration routines
-# - builds a new user interface panel to control the process
-#
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-
-proc MutualInformationRegistrationAutoRun_Itk { } {
     global Path env Gui Matrix Volume MutualInformationRegistration
 
     # TODO make islicer a package
     source $env(SLICER_HOME)/Modules/iSlicer/tcl/isregistration.tcl
-#    source $env(SLICER_HOME)/Modules/vtkMutualInformationRegistration/tcl/ItkToSlicerTransform.tcl
 
     ## if it is not already there, create it.
     set notalreadythere [catch ".mi cget -background"]
@@ -691,9 +621,9 @@ proc MutualInformationRegistrationAutoRun_Itk { } {
     .mi.reg config \
         -update_procedure MutualInformationRegistrationUpdateParam         \
         -stop_procedure MutualInformationRegistrationStop                  \
-        -source          $MutualInformationRegistration(sourceId)          \
-        -target          $MutualInformationRegistration(targetId)          \
-        -resolution      $MutualInformationRegistration(Resolution)        
+        -source          $RigidIntensityRegistration(sourceId)          \
+        -target          $RigidIntensityRegistration(targetId)          \
+        -resolution      $RigidIntensityRegistration(Resolution)        
 
     puts "to see the pop-up window, type: pack .mi.reg -fill both -expand true"
   #  pack .mi.reg -fill both -expand true
@@ -713,23 +643,24 @@ proc MutualInformationRegistrationAutoRun_Itk { } {
 # .END
 #-------------------------------------------------------------------------------
 proc MutualInformationRegistrationUpdateParam {} {
-    global MutualInformationRegistration
+    global MutualInformationRegistration RigidIntensityRegistration
 
     .mi.reg config \
         -update_procedure MutualInformationRegistrationUpdateParam         \
-        -transform       $MutualInformationRegistration(matrixId)          \
-        -source          $MutualInformationRegistration(sourceId)          \
-        -target          $MutualInformationRegistration(targetId)          \
-        -resolution      $MutualInformationRegistration(Resolution)        \
-        -iterations      $MutualInformationRegistration(UpdateIterations)  \
+        -transform       $RigidIntensityRegistration(matrixId)          \
+        -source          $RigidIntensityRegistration(sourceId)          \
+        -target          $RigidIntensityRegistration(targetId)          \
+        -resolution      $RigidIntensityRegistration(Resolution)        \
+        -iterations      $RigidIntensityRegistration(UpdateIterations)  \
+        -learningrate    $RigidIntensityRegistration(LearningRate)      \
+        -source_shrink   $RigidIntensityRegistration(SourceShrinkFactors) \
+        -target_shrink   $RigidIntensityRegistration(TargetShrinkFactors) \
+        -auto_repeat     $RigidIntensityRegistration(Repeat) \
+        -translatescale  $RigidIntensityRegistration(TranslateScale)    \
         -samples         $MutualInformationRegistration(NumberOfSamples)   \
-        -learningrate    $MutualInformationRegistration(LearningRate)      \
-        -translatescale  $MutualInformationRegistration(TranslateScale)    \
         -source_standarddev $MutualInformationRegistration(SourceStandardDeviation)  \
-        -target_standarddev $MutualInformationRegistration(TargetStandardDeviation)  \
-        -source_shrink $MutualInformationRegistration(SourceShrinkFactors) \
-        -target_shrink $MutualInformationRegistration(TargetShrinkFactors) \
-        -auto_repeat   $MutualInformationRegistration(Repeat) 
+        -target_standarddev $MutualInformationRegistration(TargetStandardDeviation)  
+
 }
 
 #-------------------------------------------------------------------------------
@@ -739,7 +670,7 @@ proc MutualInformationRegistrationUpdateParam {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MutualInformationRegistrationStop {} {
-    global MutualInformationRegistration
+    global MutualInformationRegistration RigidIntensityRegistration
 .mi.reg stop
 $MutualInformationRegistration(b1Run) configure -command \
                                       "MutualInformationRegistrationAutoRun"
