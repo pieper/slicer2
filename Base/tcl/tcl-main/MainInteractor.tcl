@@ -125,9 +125,8 @@ proc MainInteractorBind {widget} {
     bind $widget <Right>             {MainInteractorKeyPress Right %W %x %y}
 
     # Added for Fiducials
-    if {[IsModule Fiducials] == 1 || [IsModule Matrices] == 1} {
+    if {[IsModule Fiducials] == 1 || [IsModule Alignments] == 1} {
      bind $widget <KeyPress-p> {
-         puts "hello"
          if { [SelectPick2D %W %x %y] != 0 } \
              { eval FiducialsCreatePointFromWorldXYZ "default" $Select(xyz) ; MainUpdateMRML; Render3D}
      }
@@ -332,8 +331,8 @@ proc MainInteractorB1 {widget x y} {
     "Editor" {
         EditorB1 $x $y
     }
-    "Matrices" {
-        MatricesB1 $x $y
+    "Alignments" {
+        AlignmentsB1 $x $y
     }
     }
 
@@ -378,8 +377,8 @@ proc MainInteractorB1Release {widget x y} {
     "Editor" {
         EditorB1Release $x $y
     }
-    "Matrices" {
-        MatricesB1Release $x $y
+    "Alignments" {
+        AlignmentsB1Release $x $y
     }
     }
 
@@ -422,8 +421,8 @@ proc MainInteractorB1Motion {widget x y} {
     "Editor" {
         EditorB1Motion $x $y
     }
-    "Matrices" {
-        MatricesB1Motion $x $y
+    "Alignments" {
+        AlignmentsB1Motion $x $y
     }
     }
 
