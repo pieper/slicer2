@@ -165,11 +165,11 @@ void vtkImageLiveWire::AllocatePathInformation(int numRows, int numCols)
     }
   if (!this->L)
     {
-      this->L = new array2D<bool>(numRows, numCols, false);
+      this->L = new array2D<int>(numRows, numCols, 0);
     }
   if (!this->B)
     {
-      this->B = new array2D<bool>(numRows, numCols, false);
+      this->B = new array2D<int>(numRows, numCols, 0);
     }
 }
 
@@ -236,8 +236,11 @@ void vtkImageLiveWire::SetStartPoint(int x, int y)
 	{
 	  this->ContourEdges->InsertNextPoint(this->NewEdges->GetPoint(i));
 	}
+
       numPoints = this->NewPixels->GetNumberOfPoints();
-      for (int i = 0; i < numPoints; i++)
+      // confuses compilers
+      //for (int i = 0; i < numPoints; i++)
+      for (i = 0; i < numPoints; i++)
 	{
 	  this->ContourPixels->InsertNextPoint(this->NewPixels->GetPoint(i));
 	}
@@ -439,8 +442,8 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   circularQueue *Q = self->Q;
   array2D<int> &CC = (*self->CC);
   array2D<int> &Dir = (*self->Dir);
-  array2D<bool> &L = (*self->L);
-  array2D<bool> &B = (*self->B);
+  array2D<int> &L = (*self->L);
+  array2D<int> &B = (*self->B);
 
   const int NONE = self->NONE;
   const int UP = self->UP;
@@ -479,9 +482,10 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   // cumulative cost of "longest shortest" path found so far
   int currentCC = self->GetCurrentCC();
   
-  int currentX, currentY;
+  int currentX = -1;
+  int currentY = -1;
   // while end point not in L keep checking out neighbors of current point
-  while ( L(end[0],end[1]) == false) 
+  while ( L(end[0],end[1]) == 0) 
     {
 
       // get min vertex from Q 
@@ -649,6 +653,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
       tempPixels->InsertNextPoint(colorX,colorY,0);
       //newEdges->InsertNextPoint(traceX,traceY,0);
       newEdges->InsertNextPoint(traceX,traceY,Dir(traceX,traceY));
+
     } // end while
 
   if (self->GetVerbose() > 0) 
@@ -669,11 +674,12 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
     }  
 
   // ----------------  Output Image  ------------------ //
-
   // draw points over image
   T outLabel = (T)self->GetLabel();
   numPoints = newPixels->GetNumberOfPoints();
-  for (int i=0; i<numPoints; i++)
+  // confuses compilers
+  //for (int i=0; i<numPoints; i++)
+  for (i=0; i<numPoints; i++)
     {
       //cout << ".";
       point = newPixels->GetPoint(i);
@@ -684,7 +690,9 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   // draw previously chosen contour over image
   vtkPoints *contour = self->GetContourPixels();
   numPoints = contour->GetNumberOfPoints();
-  for (int i=0; i<numPoints; i++)
+  // confuses compilers
+  //for (int i=0; i<numPoints; i++)
+  for (i=0; i<numPoints; i++)
     {
       //cout << ".";
       point = contour->GetPoint(i);
@@ -695,7 +703,9 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 
   // ------------- test --------------
   numPoints = newEdges->GetNumberOfPoints();
-  for (int i=0; i<numPoints; i++)
+  // confuses compilers
+  //for (int i=0; i<numPoints; i++)
+  for (i=0; i<numPoints; i++)
     {
       //cout << ".";
       point = newEdges->GetPoint(i);

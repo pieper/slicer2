@@ -367,7 +367,7 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
     }
 
   // offsets to index into neighboring pixels
-  int n[neighborhoodWidth*neighborhoodWidth];
+  int *n = new int[neighborhoodWidth*neighborhoodWidth];
 
   // loop through neighborhood indices and record offsets 
   // from inPtr0 in n[] array
@@ -399,7 +399,7 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
   int maxEdge = self->GetMaxEdgeWeight();
 
   // temporary storage of features computed at a voxel
-  float features[numFeatures];
+  float *features = new float[numFeatures];
 
   // Lauren fix this (SLOW!!!!!!!!!!!)
   // temporary storage of neighbors for calculations
@@ -729,6 +729,15 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
       inTPtr2 += inInc2;
       outPtr2 += outInc2;
     }//for2
+
+  if (n != NULL) 
+    {
+      delete [] n;
+    }
+  if (features != NULL) 
+    {
+      delete [] features;
+    }
 
 #ifdef LIVEWIRE_TRAINING_EXPERIMENT
   file.close();

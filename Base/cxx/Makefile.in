@@ -67,12 +67,11 @@ vtkMrmlPathNode \
 vtkMrmlEndPathNode \
 vtkMrmlLandmarkNode \
 vtkImageMeasureVoxels \
-vtkImageNeighborhoodFilter 
-
-#vtkImageLiveWire \
-#vtkImageLiveWireTester \
-
-#vtkImageLiveWireEdgeWeights
+vtkImageNeighborhoodFilter \
+vtkImageLiveWire \
+vtkImageLiveWireTester \
+vtkImageLiveWireEdgeWeights \
+vtkImageBandedDistanceMap
 
 #vtkSurfaceProps \
 #vtkMathUtils \

@@ -283,7 +283,7 @@ class circularQueue {
   LinkedList *A;
   ListElement *Circle;
   int C;
-  bool Verbose;
+  int Verbose;
 };
 
 // start Tcl wrapping again (cryptic acronym for End Tcl Exclude)
@@ -393,11 +393,11 @@ public:
 
   // Description:
   // L is the list of edges ("bels") which have already been processed
-  array2D<bool> *L;
+  array2D<int> *L;
 
   // Description:
   // B is list of edges ("bels") on the contour already
-  array2D<bool> *B;
+  array2D<int> *B;
   //ETX
   // ---- End of data structures for internal use in path computation -- //
 

@@ -137,7 +137,7 @@ public:
     {return this->FeatureSettings[f].TransformParams[p];};
   float GetWeightForFeature(int f)
     {return this->FeatureSettings[f].Weight;};
-  float SetWeightForFeature(int f, float w)
+  void SetWeightForFeature(int f, float w)
     {this->FeatureSettings[f].Weight = w;};
 
   // Description:

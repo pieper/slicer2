@@ -24,7 +24,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <stdio.h>
 #include "vtkVersion.h"
 #if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2)
-#include "vtkCommand.h"
+//#include "vtkCommand.h"
 #endif
 #include "vtkMrmlVolume.h"
 #include "vtkObjectFactory.h"
