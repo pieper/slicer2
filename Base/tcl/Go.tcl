@@ -155,9 +155,6 @@ foreach dir $modulePaths {
     }
 }
 
-# special hack for BIRN
-source ${slicer_home}/Modules/mrmlyze/mrmlyze.tcl
-
 # turn off warnings about old function use
 if { $tcl_platform(platform) == "windows" } {
     vtkObject o
