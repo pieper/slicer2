@@ -91,6 +91,8 @@ itcl::body dup_review::run {studydir} {
 
     $parent log "starting review of $studydir"
 
+    # TODO - this avoids warning messages when slicer starts
+    set ::env(SLICER_CUSTOM_CONFIG) "true"
     # TODO - this is linux only
     exec $::env(SLICER_HOME)/slicer2-linux-x86 $::PACKAGE_DIR_BIRNDUP/../../../tcl/gonogo.tcl $studydir
 
@@ -105,6 +107,9 @@ itcl::body dup_review::run {studydir} {
             set sourcedir [::fileutil::cat $studydir/source_directory] 
             DevErrorWindow "The study in $sourcedir did not pass review.  Manual defacing must be used."
             file delete -force $studydir
+            $parent log "manual defacing needed for $studydir"
+            $parent refresh 
+            return
         }
     }
     close [open $studydir/ready_for_upload "w"]
