@@ -25,7 +25,7 @@
 # 'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
-# FILE:        Volume2.tcl
+# FILE:        VolumeMath.tcl
 # PROCEDURES:  
 #   VolumeMathInit
 #   VolumeMathUpdateGUI
@@ -108,7 +108,7 @@ proc VolumeMathInit {} {
 	#   Record any other modules that this one depends on.  This is used 
 	#   to check that all necessary modules are loaded when Slicer runs.
 	#   
-	set Module($m,depend) "GUI"
+	set Module($m,depend) ""
 
         # Set version info
 	#------------------------------------
@@ -118,7 +118,7 @@ proc VolumeMathInit {} {
 	#   appropriate info when the module is checked in.
 	#   
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.1 $} {$Date: 2000/03/01 03:51:16 $}]
+		{$Revision: 1.2 $} {$Date: 2000/03/02 01:38:08 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -161,9 +161,9 @@ proc VolumeMathInit {} {
 proc VolumeMathUpdateGUI {} {
 	global VolumeMath Volume
 
-    GUIUpdateVolume VolumeMath Volume1 Volume1 GUISetVolume
-    GUIUpdateVolume VolumeMath Volume2 Volume2 GUISetVolume
-    GUIUpdateVolume VolumeMath Volume3 Volume3 GUISetVolume
+    DevUpdateSelectButton Volume VolumeMath Volume1 Volume1 DevSelect
+    DevUpdateSelectButton Volume VolumeMath Volume2 Volume2 DevSelect
+    DevUpdateSelectButton Volume VolumeMath Volume3 Volume3 DevSelect 0 1 1
 }
 
 #-------------------------------------------------------------------------------
@@ -247,9 +247,9 @@ Also, this module only does subtraction.
 	#-------------------------------------------
 	set f $fMath.fGrid
 
-        GUIAddVolumeSelectButton VolumeMath $f Volume2 "Volume2:" Grid
-        GUIAddVolumeSelectButton VolumeMath $f Volume1 "- Volume1:" Grid
-        GUIAddVolumeSelectButton VolumeMath $f Volume3 "= Volume3:" Grid
+        DevAddSelectButton VolumeMath $f Volume2 "Volume2:" Grid
+        DevAddSelectButton VolumeMath $f Volume1 "- Volume1:" Grid
+        DevAddSelectButton VolumeMath $f Volume3 "= Volume3:" Grid
 
 	#-------------------------------------------
 	# Math->Pack frame
@@ -257,7 +257,7 @@ Also, this module only does subtraction.
 
 	set f $fMath.fPack
 
-        GUIAddbutton $f.bRun "Run" "VolumeMathDoMath" 
+        DevAddButton $f.bRun "Run" "VolumeMathDoMath" 
 
 	pack $f.bRun
 
@@ -267,6 +267,62 @@ Also, this module only does subtraction.
 
         set fDistance $Module(VolumeMath,fDistance)
         set f $fDistance
+
+#### Junk that I hope will turn into the getting info from a mouse.
+#        # VolumeMathDistance
+#        "VolumeMathDistance" {
+#                # Get RAS coordinates
+#                Slicer SetReformatPoint $s $x $y
+#                scan [Slicer GetRasPoint] "%g %g %g" xRas yRas zRas
+##		ViewSetFocalPoint $xRas $yRas $zRas
+#
+#                # Zoom
+#                Slicer SetZoomCenter $s $x $y
+#
+#                RenderAll
+#                VolumeMathUpdatePoint $xRas $yRas $zRas 
+#
+#
+#        # VolumeMathDistance
+#        "VolumeMathDistance" {
+#                # Get RAS coordinates
+#                Slicer SetReformatPoint $s $x $y
+#                scan [Slicer GetRasPoint] "%g %g %g" xRas yRas zRas
+##		ViewSetFocalPoint $xRas $yRas $zRas
+#
+#                SliceMouseAnno $xScr $yScr $x $y
+#
+#                # Zoom
+#                Slicer SetZoomCenter $s $x $y
+#
+#                RenderAll
+#                VolumeMathUpdatePoint $xRas $yRas $zRas 
+#        }
+#
+#       global Slice
+#        set fslice $Gui(fMid)
+#
+#
+#        foreach s $Slice(idList) {
+#                bind $f.fSlice$s <ButtonPress-1> "puts yo"
+#                bind $f.fSlice$s <B1-Motion>     "puts yo"
+#        }
+#
+#
+#        bind 
+#
+#bind $VolumeMath(fNodeList) <Button-3>  {VolumeMathPostRightMenu %X %Y}
+#bind $VolumeMath(fNodeList) <Double-1>  {VolumeMathEditNode}
+#
+#        # initialize key-bindings (and hide class Listbox Control button ops)
+#        set VolumeMath(eventMgr) [subst { \
+#                Listbox,<Control-Button-1>  {} \
+#                Listbox,<Control-B1-Motion>  {} \
+#                all,<Control-e> {VolumeMathEditNode} \
+#                all,<Control-x> {VolumeMathCutNode} \
+#                all,<Control-v> {VolumeMathPasteNode} \
+#                all,<Control-d> {VolumeMathDeleteNode} }]
+#
 
         frame $f.fGrid -bg $Gui(activeWorkspace)
         frame $f.fPack -bg $Gui(activeWorkspace)
@@ -281,7 +337,7 @@ Also, this module only does subtraction.
 
 	foreach i "2 1" {
                 # Radio Button For Each Point
-#        GUIAddRadiobutton $f.rPoint$i "Point $i" VolumeMath(CurrentPoint) 
+#        DevAddRadiobutton $f.rPoint$i "Point $i" VolumeMath(CurrentPoint) 
 
 		eval  {radiobutton $f.rPoint$i -width 9  \
 			-text "Point $i" -value $i    \
@@ -336,10 +392,28 @@ Also, this module only does subtraction.
          grid $f.lMagnitude -sticky e 
 }   
 
+proc VolumeMathEnter {} { 
+    global VolumeMath
+
+    array set mgr $VolumeMath(eventMgr)
+    pushEventManager mgr
+
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathExit
+# 
+#  On Exit, get rid of the event manager.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathExit {} {
+    popEventManager
+}
 
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathDoMath
-#   Actually do the the VolumeMath
+#   Actually do the VolumeMath
 #
 # .END
 #-------------------------------------------------------------------------------
@@ -351,17 +425,38 @@ proc VolumeMathDoMath {} {
   	  if {($VolumeMath(Volume1) == $Volume(idNone)) || \
   	     ($VolumeMath(Volume2) == $Volume(idNone)) || \
   	     ($VolumeMath(Volume3) == $Volume(idNone))} {
-                GUIErrorWindow "You cannot use Volume \"None\""
+                DevErrorWindow "You cannot use Volume \"None\""
 		return
           }
 
-	tk_messageBox -type yesno -message "You clicked the VolumeMath Button"
+        
+	tk_messageBox -type yesno -message "You chose $VolumeMath(Volume1) $VolumeMath(Volume2) $VolumeMath(Volume3)"
 
 	set v3 $VolumeMath(Volume3)
 	set v2 $VolumeMath(Volume2)
 	set v1 $VolumeMath(Volume1)
 
-        # Set up the VolumeMathion
+        # Do we need to Create a New Volume?
+        # If so, let's do it.
+
+          if {$v3 == -5 } {
+              set v3 [DevCreateNewCopiedVolume $v2 "" "VolumeMathResult" ]
+          } else {
+
+        # Are We Overwriting a volume?
+        # If so, let's ask. If no, return.
+         
+        set v3name  [Volume($v3,node) GetName]
+	set continue [tk_messageBox -type okcancel -message "Overwrite $v3name?"]
+#          YesNoPopup OverWrite 20 50 "" return
+          
+        if {$continue == "cancel"} return
+        # They say it is OK, so overwrite!
+              
+           Volume($v3,node) Copy Volume($v2,node)
+          }
+
+        # Set up the VolumeMath Subtract
 
           vtkImageMathematics SubMath
           SubMath SetInput1 [Volume($v2,vol) GetOutput]
@@ -369,34 +464,12 @@ proc VolumeMathDoMath {} {
           SubMath SetOperationToSubtract
 
        # Start copying in the output data.
+       # Taken from MainVolumesCopyData
 
-#          Volume($v3,vol) SetDataExtent \
-#                  [[Volume($v2,vol) GetOutput] GetWholeExtent]
-#          Volume($v3,vol) SetInput [SubMath GetOutput]
-#          Volume($v3,vol) Merge 0
+        Volume($v3,vol) SetImageData [SubMath GetOutput]
 
-       # Copy attributes to result
-
-          Volume($v3,vol) CopyTransformAttributes Volume($v2,vol)
-          Volume($v3,vol) CopyReaderAttributes Volume($v2,vol)
-
-       # Copy parameters that are kept in TCL rather than C++
-       # Copy Tcl attributes
-
-       EditCopyVolumeAttributes $v2 $v3
-
-     # Update GUI if changing active volume.
-          #Slicer RefreshVolumes
-          #VolumeUpdateActiveGUI
-
-# Methods from vtkMrmlVolumeReader:
-#  SetDataExtent	 with 6 args x1 x2 y1 y2 z1 z2 (i,j,k)
-
-  SubMath Delete
+        SubMath Delete
 }   
-
-
-
 
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathCount
