@@ -133,7 +133,7 @@ set env(TK_LIBRARY) $env(SLICER_HOME)/Lib/$env(BUILD)/ActiveTcl-8.4.1/lib/tk8.4
 
 # add the default search locations for tcl packages
 set env(TCLLIBPATH) "$env(SLICER_HOME)/Base/Wrapping/Tcl/vtkSlicerBase $env(TCLLIBPATH)"
-set env(TCLLIBPATH) "$env(VTK_SRC_DIR)/Wrapping/Tcl $env(TCLLIBPATH)"
+set env(TCLLIBPATH) "$env(VTK_BIN_DIR)/Wrapping/Tcl $env(TCLLIBPATH)"
 
 
 #
