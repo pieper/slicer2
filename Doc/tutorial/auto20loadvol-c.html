@@ -1,0 +1,64 @@
+<title>DICOM</title>
+
+<ul>
+<li>
+Press <b>Add Volume</b> in the Data panel.  This will take you to the Props tab of the Volumes panel.  
+
+<li>
+Press <b>DICOM</b> button.
+
+<li>
+Press <b>Select DICOM Volume</b> button.
+
+<li>
+A dialog box appears. Select the start directory for search and press <b>OK</b>.
+After pressing <b>OK</b>, the whole directory structure starting
+at the selected directory will be traversed and every files will be checked
+whether they are DICOM files or not. Important information, such as
+the name and ID of the patient, the study UID (unique identifier), and
+the series UID will be extracted from each DICOM file.
+
+<li>
+After the search, a new dialog box appears.
+Here you can select a patient, a study of this patient, a series of
+this study, and the files of this series.<br>
+By default, all files of the first series of the first study of the
+first patient will be selected.
+
+<li>
+After pressing <b>OK</b>, the header data of the first file
+will be extracted. If you wish, you can select an other file and
+press <b>Extract Header</b>.
+You can check and modify the extracted values by pressing
+the <b>Header</b> button.
+
+<li>
+With the <b>Image Data</b> buttons in the <b>Basic</b> section,
+select whether your images are grayscale or label maps
+(the output of a segmentation).
+
+<li>
+The <b>Name</b> field is the name that your volume will have within the Slicer.  You may change this to something descriptive, like "presurgical SPGR," if you would like.
+
+<li>
+If you would like, enter a description in the optional <b>Description</b> field.
+
+<li>
+Finally, hit the <b>Apply</b> button to read in the volume.  (Hint: to see the images in the 3D View, hit the "V" for visibility buttons in the 3D window.)
+
+</ul>
+
+<p>
+Note that DICOM is a HUGE standard and we don't intend to read all flavours of
+it. We assume that the slices of the volume are stored in seperate files,
+are not compressed, and that the header data is correct (contains
+the correct values of study and series UIDs).<br>
+For determining the correct slice order, we use the following heuristic.
+First, we try to find the Image Number (0x0020,0x0013) data element. If this is not
+present, we try the Slice Location (0x0020,0x1041) data element.
+If none of them is available, the files will be ordered as they were
+found - and that is possibly not the correct order.
+If you have such a volume, please send us.<br>
+A restriction of Slicer is that slice thickness and slice spacing
+must be the same for every slices.
+</p>
