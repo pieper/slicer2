@@ -58,7 +58,7 @@ proc GuiInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo Gui \
-		{$Revision: 1.32 $} {$Date: 2002/01/28 03:30:34 $}]
+		{$Revision: 1.33 $} {$Date: 2002/02/25 18:33:11 $}]
 
 
     # enable tooltips by default.  This should check user preferences somehow.
@@ -272,14 +272,13 @@ proc GuiInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ValidateFloat
+# Return 1 if valid, else 0
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc ValidateFloat {s} {
-	# Return 1 if valid, else 0
-	if {$s == ""} {return 0}
-	return [regexp {^([0-9-]+|([0-9-]*\.[0-9]*))$} $s]
+proc ValidateFloat { var } {
+ return [expr ![ catch { expr $var + 1.0 } ] ]
 }
 
 #-------------------------------------------------------------------------------
