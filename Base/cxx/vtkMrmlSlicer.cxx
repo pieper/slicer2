@@ -248,17 +248,19 @@ vtkMrmlSlicer::vtkMrmlSlicer()
   this->ReformatCoronalN[2] = 0 ;
 
   // set the user defined matrix for each slice
-  for (int s=0; s<NUM_SLICES; s++)
-    {
-      this->NewOrientN[s][0] = 0;
-      this->NewOrientN[s][1] = 0;
-      this->NewOrientN[s][2] = -1;
-      this->NewOrientT[s][0] = 1;
-      this->NewOrientT[s][1] = 0;
-      this->NewOrientT[s][2] = 0;
-      this->NewOrientP[s][0] = 0;
-      this->NewOrientP[s][1] = 0;
-      this->NewOrientP[s][2] = 0;
+  for (int ss=0; ss<NUM_SLICES; ss++)  
+	  // sp 2002-02-13 changed var to ss since s declared above 
+	  // doesn't work on windows compiler
+    { 
+      this->NewOrientN[ss][0] = 0;
+      this->NewOrientN[ss][1] = 0;
+      this->NewOrientN[ss][2] = -1;
+      this->NewOrientT[ss][0] = 1;
+      this->NewOrientT[ss][1] = 0;
+      this->NewOrientT[ss][2] = 0;
+      this->NewOrientP[ss][0] = 0;
+      this->NewOrientP[ss][1] = 0;
+      this->NewOrientP[ss][2] = 0;
     }
   // Draw
   this->DrawX = this->DrawY = 0;
