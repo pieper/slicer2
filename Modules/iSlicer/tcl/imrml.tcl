@@ -269,18 +269,27 @@ body iwidgets::Imrml::collapse_all {} {
 #
 proc iwidgets::Imrml::test {} {
     
+    tk_messageBox -message "Sorry, the TclDOM interface has changed in non-compatible ways."
+    return
+
     wm withdraw .
-    console show
-    catch "destroy .t"
-    toplevel .t
-    wm geometry .t 700x500+20+20
-    wm title .t "MRML Editor"
+    # console show
+    set t .imrml_test
+    catch "destroy $t"
+    toplevel $t
+    wm geometry $t 700x500+20+20
+    wm title $t "MRML Editor"
 
-    iwidgets::imrml .t.imrml
-    pack .t.imrml -fill both -expand true
+    iwidgets::imrml $t.imrml
+    pack $t.imrml -fill both -expand true
 
-    button .t.exit -text exit -command exit
-    pack .t.exit -side bottom -fill x -expand false
+    button $t.exit -text close -command "destroy $t.imrml"
+    pack $t.exit -side bottom -fill x -expand false
+
+    set ret [catch {
+        $t.imrml configure -filename $::Mrml(dir)/$::File(filePrefix).xml
+    } res]
+    if { $ret } { puts $res }
 
 }
 
