@@ -38,6 +38,7 @@ option add *is3d.background #000000 widgetDefault
 option add *is3d.longitude 0 widgetDefault
 option add *is3d.latitude 0 widgetDefault
 option add *is3d.distance 800 widgetDefault
+option add *is3d.colorscheme "gray" widgetDefault
 
 #
 # The class definition - define if needed (not when re-sourcing)
@@ -62,6 +63,7 @@ if { [itcl::find class is3d] == "" } {
       itk_option define -longitude longitude Longitude {}
       itk_option define -latitude latitude Latitude {}
       itk_option define -distance distance Distance {}
+      itk_option define -colorscheme colorscheme Colorscheme {}
 
       # widgets for the control area
       variable _controls
@@ -92,7 +94,7 @@ if { [itcl::find class is3d] == "" } {
       method rw {} {return [$_tkrw GetRenderWindow]}
       method camera {} {return [$_ren GetActiveCamera]}
       method longlatdist { {long 0} {lat 0} {dist 0} } {}
-      method screensave { filename } {} ;# TODO should be moved to superclass
+      method screensave { filename {imagetype "PNM"}} {} ;# TODO should be moved to superclass
     }
 }
 
@@ -120,7 +122,7 @@ itcl::body is3d::constructor {args} {
     set cs [$_controls childsite]
 
     set _slider $cs.slider
-    scale $_slider -orient horizontal -command "return; $this configure -slice "
+    scale $_slider -from -180 -to 180 -orient horizontal -command "$this configure -longitude "
     pack $_slider -side top -expand true -fill x
 
     
@@ -215,6 +217,43 @@ itcl::configbody is3d::distance {
     $this longlatdist $itk_option(-longitude) $itk_option(-latitude) $itk_option(-distance) 
 }
 
+#-------------------------------------------------------------------------------
+# OPTION: -colorscheme
+#
+# DESCRIPTION: pre-canned rendering parameters
+#-------------------------------------------------------------------------------
+itcl::configbody is3d::colorscheme {
+
+    switch $itk_option(-colorscheme) {
+        "gray" {
+            $_opaxfer RemoveAllPoints
+            $_opaxfer AddPoint  0   0.0
+            $_opaxfer AddPoint  20   0.0
+            #$_opaxfer AddPoint  20   0.5
+            #$_opaxfer AddPoint  65   0.8
+            #$_opaxfer AddPoint  100   0.9
+            $_opaxfer AddPoint  30   1.0
+
+            $_colxfer RemoveAllPoints
+            $_colxfer AddRGBPoint      0.0 0.0 0.0 0.0
+            #$_colxfer AddRGBPoint     10.0 0.5 0.5 0.5
+            $_colxfer AddRGBPoint     10.0 1.0 1.0 1.0
+            $_colxfer AddRGBPoint     128.0 1.0 1.0 1.0
+        }
+        "default" {
+            $_opaxfer RemoveAllPoints
+            $_opaxfer AddPoint  20   0.0
+            $_opaxfer AddPoint  255  0.2
+
+            $_colxfer RemoveAllPoints
+            $_colxfer AddRGBPoint      0.0 0.0 0.0 0.0
+            $_colxfer AddRGBPoint     64.0 1.0 0.0 0.0
+            $_colxfer AddRGBPoint    128.0 0.0 0.0 1.0
+            $_colxfer AddRGBPoint    192.0 0.0 1.0 0.0
+            $_colxfer AddRGBPoint    255.0 0.0 0.2 0.0
+        }
+    }
+}
 
 itcl::configbody is3d::isvolume {
 
@@ -243,26 +282,8 @@ itcl::configbody is3d::isvolume {
 
     # Create transfer mapping scalar value to color
     vtkColorTransferFunction $_colxfer
-    set colorscheme "gray"
-    switch $colorscheme {
-        "gray" {
-            $_opaxfer AddPoint  20   0.0
-            $_opaxfer AddPoint  96   0.2
 
-            $_colxfer AddRGBPoint      0.0 0.0 0.0 0.0
-            $_colxfer AddRGBPoint     64.0 0.5 0.5 0.5
-            $_colxfer AddRGBPoint     128.0 1.0 1.0 1.0
-        }
-        "default" {
-            $_opaxfer AddPoint  20   0.0
-            $_opaxfer AddPoint  255  0.2
-            $_colxfer AddRGBPoint      0.0 0.0 0.0 0.0
-            $_colxfer AddRGBPoint     64.0 1.0 0.0 0.0
-            $_colxfer AddRGBPoint    128.0 0.0 0.0 1.0
-            $_colxfer AddRGBPoint    192.0 0.0 1.0 0.0
-            $_colxfer AddRGBPoint    255.0 0.0 0.2 0.0
-        }
-    }
+    $this configure -colorscheme "gray"
 
     # The property describes how the data will look
     vtkVolumeProperty $_volprop
@@ -328,23 +349,46 @@ itcl::body is3d::longlatdist { {long 0} {lat 0} {dist 0} } {
 
 }
 
-
-itcl::body is3d::screensave { filename } {
+itcl::body is3d::screensave { filename {imagetype "PNM"} } {
 # TODO should be moved to superclass
 
     set wif ::wif_$_name
-    set pnmw ::pnmw_$_name
+    set imgw ::imgw_$_name
     catch "$wif Delete"
-    catch "$pnmw Delete"
+    catch "$imgw Delete"
 
     vtkWindowToImageFilter $wif 
     $wif SetInput [[$this tkrw] GetRenderWindow]
-    vtkPNMWriter $pnmw 
-    $pnmw SetInput [$wif GetOutput]
-    $pnmw SetFileName $filename
-    $pnmw Write
 
-    $pnmw Delete
+    switch $imagetype {
+        "PNM" - "PPM" {
+            vtkPNMWriter $imgw 
+        }
+        "JPG" - "JPEG" {
+            vtkJPEGWriter $imgw 
+        }
+        "BMP" {
+            vtkBMPWriter $imgw 
+        }
+        "PS" - "PostScript" - "postscript" {
+            vtkPostScriptWriter $imgw 
+        }
+        "TIF" - "TIFF" {
+            vtkTIFFWriter $imgw 
+        }
+        "PNG" {
+            vtkPNGWriter $imgw 
+        }
+        default {
+            error "unknown image format $imagetype; options are PNM, JPG, BMP, PS, TIFF, PNG"
+        }
+    }
+        
+    $imgw SetInput [$wif GetOutput]
+    $imgw SetFileName $filename
+    $imgw Write
+
+    $imgw Delete
     $wif Delete
 } 
 
