@@ -48,7 +48,7 @@ proc MainViewerInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainViewer \
-        {$Revision: 1.23 $} {$Date: 2002/05/09 14:50:42 $}]
+        {$Revision: 1.24 $} {$Date: 2002/07/26 23:41:52 $}]
 
         # Props
     set Gui(midHeight) 1
@@ -369,12 +369,19 @@ proc MainViewerSetSecondViewOff {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewerSetMode
-# 
+# Changes Viewer window to be Normal, Quad256, Quad512, etc.
+# Called from the main View menu in the slicer.
+# At the end, there is a hook for modules who wish to change
+# something in the window when it changes. (for example change the
+# size of images they are outputting for 512 mode, etc).
+# To use this, declare the following in your module's init routine:
+# set Module($m,procViewerUpdate) MyModuleViewerUpdate.
+#
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MainViewerSetMode {{mode ""}} {
-    global Slice View Gui Anno
+proc MainViewerSetMode {{mode ""} {verbose ""}} {
+    global Slice View Gui Anno Module
 
     # set View(mode) if called with an argument
     if {$mode != ""} {
@@ -544,5 +551,15 @@ proc MainViewerSetMode {{mode ""}} {
     }
     
     Slicer Update
+
+ 
+    # Call each Module's ViewerUpdate Routine
+    #-------------------------------------------
+    foreach m $Module(idList) {
+        if {[info exists Module($m,procViewerUpdate)] == 1} {
+            if {$verbose == 1} {puts "procViewerUpdate: $m"}
+            $Module($m,procViewerUpdate)
+        }
+    }
 }
 
