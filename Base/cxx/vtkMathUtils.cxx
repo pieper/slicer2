@@ -261,7 +261,8 @@ void vtkMathUtils::Outer2(float x[2], float y[2], float A[2][2])
     }
 }
 
-static void vtkMathUtils::MatrixMultiply(double **A, double **B, double **C, int rowA, 
+// Remove static from here
+void vtkMathUtils::MatrixMultiply(double **A, double **B, double **C, int rowA, 
                int colA, int rowB, int colB)
 {
   // we need colA == rowB 
@@ -292,7 +293,8 @@ static void vtkMathUtils::MatrixMultiply(double **A, double **B, double **C, int
     }
 }
 
-static void vtkMathUtils::PrintMatrix(double **A, int rowA, int colA)
+// Remove static from here
+void vtkMathUtils::PrintMatrix(double **A, int rowA, int colA)
 {
   int j,k;
 
