@@ -103,6 +103,7 @@ switch $tcl_platform(os) {
         set ::VTKSLICERBASE_BUILD_TCL_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/$::VTK_BUILD_TYPE/vtkSlicerBaseTCL.lib
         set ::GENERATOR "Visual Studio 7" 
         set ::COMPILER "cl"
+        set ::COMPILER_PATH ""
         set ::CMAKE $::CMAKE_PATH/bin/cmake.exe
         set ::MAKE "devenv /$::VTK_BUILD_TYPE"
 
