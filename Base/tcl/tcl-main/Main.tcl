@@ -131,6 +131,8 @@
 proc MainBoot {{mrmlFile ""}} {
     global Module Gui Dag Anno View Slice viewWin verbose
 
+    set mrmlFile [file normalize $mrmlFile] ;# remove backslashes on windows
+
     # See which module prevents a slice window from rendering
     set checkSliceRender 0
 
@@ -457,7 +459,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.111 $} {$Date: 2004/07/24 15:00:59 $}]
+        {$Revision: 1.112 $} {$Date: 2004/07/26 13:55:54 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
