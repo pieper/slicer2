@@ -72,7 +72,10 @@
 <!ELEMENT ModelGroup (ModelGroup | Model)*>
 <!ATTLIST ModelGroup 
     name NMTOKEN #REQUIRED
-    description CDATA"">
+    description CDATA""
+    color NMTOKEN ""
+    opacity NMTOKEN "1.0"
+    visibility (true | false) "true">
 
 <!ELEMENT TransferFunction ((TFPoint)* | WindowLevel)>
 <!ATTLIST TransferFunction name ID #REQUIRED>
