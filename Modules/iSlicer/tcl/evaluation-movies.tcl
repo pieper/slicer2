@@ -4,8 +4,7 @@
 
 #
 #
-source $env(SLICER_HOME)/Modules/iSlicer/tcl/isvolume.tcl
-source $env(SLICER_HOME)/Modules/iSlicer/tcl/is3d.tcl
+package require iSlicer
 
 proc eval_movies { {dir /tmp} {steps 120} {skip 1} } {
     
@@ -14,11 +13,12 @@ proc eval_movies { {dir /tmp} {steps 120} {skip 1} } {
     wm title .eval "Evaluation Movies Render Window"
     wm geometry .eval +0+0
 
-    pack [isvolume .eval.isv] -side left
+    isvolume .eval.isv
     .eval.isv volmenu_update
     .eval.isv configure -resolution 256 -volume 1
     .eval.isv configure -orientation coronal
     .eval.isv configure -orientation axial
+    pack .eval.isv -side left
     pack [is3d .eval.is3d -isvolume .eval.isv -background #000000] -side left
 
     raise .eval
@@ -26,6 +26,8 @@ proc eval_movies { {dir /tmp} {steps 120} {skip 1} } {
     if { ![file exists $dir] } {
         file mkdir $dir
     }
+
+    return
 
     eval_3d_movie $dir $steps
     eval_slice_movie $dir axial $skip
@@ -49,22 +51,9 @@ proc eval_3d_movie { dir steps } {
         .eval.is3d configure -longitude $l
         .eval.is3d expose
         update
-        .eval.is3d screensave [format /tmp/is%04d.ppm $f]
+        .eval.is3d screensave [format $dir/face-%04d.png $f] PNG
         incr f
     }
-
-    puts ""
-    puts "encoding..."
-
-    set ret [catch "exec /usr/local/bin/ffmpeg -i /tmp/is%04d.ppm -y $dir/deface_render.mpg" res]
-    puts $res
-
-    puts "deleting..."
-    for {set ff 0} {$ff <= $f} {incr ff} {
-        file delete [format /tmp/is%04d.ppm $ff]
-    }
-    puts "done."
-
 }
 
 proc eval_slice_movie { dir orientation { step 1 } } {
@@ -81,19 +70,7 @@ proc eval_slice_movie { dir orientation { step 1 } } {
         puts -nonewline "$s..." ; flush stdout
         .eval.isv configure -slice $s
         update
-        .eval.isv screensave [format /tmp/is%04d.ppm $s]
+        .eval.isv screensave [format $dir/slices-$orientation-%04d.png $s] PNG
     }
-
-    puts ""
-    puts "encoding..."
-
-    set ret [catch "exec /usr/local/bin/ffmpeg -i /tmp/is%04d.ppm -y $dir/deface_$orientation.mpg" res]
-    puts $res
-
-    puts "deleting..."
-    for {set ff 0} {$ff <= 256} {incr ff $step} {
-        file delete [format /tmp/is%04d.ppm $ff]
-    }
-    puts "done."
 }
 
