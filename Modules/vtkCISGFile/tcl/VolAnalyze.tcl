@@ -343,9 +343,6 @@ proc VolAnalyzeApply {} {
         eval $cmd
     }
  
-    puts "New FreeSurfer Volume:"
-    [Volume($i,vol) GetOutput] Print
-
     # set active volume on all menus
     MainVolumesSetActive $i
 
@@ -367,6 +364,8 @@ proc VolAnalyzeApply {} {
     }
 
     # Update all fields that the user changed (not stuff that would need a file reread)
+
+    return $i
 }
 
 
