@@ -218,11 +218,19 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
     this->Description = new char[3];
     strcpy(this->Description, this->ScanOrder);
   }
+  char CheckVolumeFile[1000];
+  sprintf(CheckVolumeFile,this->FilePattern,this->FullPrefix,this->ImageRange[0]);
+  FILE *file = fopen(CheckVolumeFile,"r"); 
+  if ( file== NULL) {
+    cerr << "Could not open " << CheckVolumeFile << "! "<< endl;
+    cerr << "Volume node will not be saved. Might not have read access to the file !" << endl;
+    return;
+  }
+  fclose(file);
 
   vtkIndent i1(nIndent);
-
   of << i1 << "<Volume";
-  
+
   // Strings
   if (this->VolumeID && strcmp(this->VolumeID,""))
   {
