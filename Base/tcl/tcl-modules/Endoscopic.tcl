@@ -259,7 +259,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.72 $} {$Date: 2004/10/19 20:06:41 $}] 
+    {$Revision: 1.73 $} {$Date: 2004/10/21 20:43:18 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -369,6 +369,9 @@ proc EndoscopicInit {} {
     set Endoscopic(flatColon,yCamDist) 5.0
 #   trace add variable Endoscopic(flatColon,yCamDist) write EndoscopicTempProc
     set Endoscopic(flatColon,zCamDist) 5.0
+    
+    set Endoscopic(flatColon,speed) 0.1
+    set Endoscopic(flatColon,stop) 0
     
     # lights
     set Endoscopic(flatColon,LightElev) 0
@@ -1566,7 +1569,7 @@ Rotate the axis by pressing the right mouse button and moving the mouse."
         {"Create a Fly-Through Path Manually" \
          "Create a Fly-Through Path Automatically with the CPP Algorithm"\
          "Advanced Option for the CPP Algorithm"}\
-     0 Automatic 
+     0 Manual 
     
     foreach i $PathMenu {
         $f.fTop.fTabbedFrameButtons.f.r$i configure -command "EndoscopicExecutePathTab $i"
@@ -4870,7 +4873,7 @@ proc EndoscopicCancelFlatFile {} {
 #-------------------------------------------------------------------------------
 
 proc EndoscopicAddFlatView {} {
-    global Gui Mrml Models Endoscopic Fiducials View viewWin MainViewer Slice Module
+    global Gui Endoscopic View viewWin MainViewer Slice Module
 
     # deny if the user clicks 'Choose' when the selection box is empty
     if {$Endoscopic(FlatSelect) == ""} {
@@ -4894,7 +4897,7 @@ proc EndoscopicAddFlatView {} {
     # create new toplevel for the flattened image
     toplevel .t$name -visual best
     wm title .t$name $name
-    wm geometry .t$name -0-0
+    wm geometry .t$name -0+0
     wm protocol .t$name WM_DELETE_WINDOW "EndoscopicRemoveFlatView $name"
     wm withdraw .
  
@@ -4909,44 +4912,81 @@ proc EndoscopicAddFlatView {} {
     # control frames
     frame .t$name.controls
    
-    # x frame: Pan Left<->Right, zoom in, zoom out, reset view port, quit
+    # x frame: Scroll, Stop, Reset, Progress, Speed, and Close Flat Colon
     set xfrm [frame .t$name.controls.xfrm]
     
-    set lrfrm [frame .t$name.controls.xfrm.lrfrm]
-    set lrlbl [label $lrfrm.lbl -text "Left<-->Right" -font {helvetica 10} ]
+    set playfrm [frame .t$name.controls.xfrm.playfrm]
+    set scrbut [button $playfrm.scrbut -text "Scroll" -font {helvetica 10 bold} \
+    -command "EndoscopicScrollFlatColon $f.flatRenderWidget$name"]
+    set stpbut [button $playfrm.stpbut -text "Stop" -font {helvetica 10 bold} \
+    -command "EndoscopicStopFlatColon"]
+    set resbut [button $playfrm.resbut -text "Reset" -font {helvetica 10 bold} \
+    -command "EndoscopicResetFlatColon $f.flatRenderWidget$name"]
+    pack $scrbut -side left -padx 2 -expand yes -fill x
+    pack $stpbut -side left -padx 2 -expand yes -fill x
+    pack $resbut -side left -padx 2 -expand yes -fill x
+    
+    
+    set progfrm [frame .t$name.controls.xfrm.progfrm]
+    set proglbl [label $progfrm.lbl -text "Progress:  " -font {helvetica 10 bold} ]
+    set Endoscopic(flatScale,progress) [scale $progfrm.progress -from 0 -to 250 -res 0.5 -orient horizontal \
+                                     -variable Endoscopic(flatColon,xCamDist)  -bg $Endoscopic(path,sColor) ]
+    pack $proglbl -side left
+    pack $Endoscopic(flatScale,progress) -side right
+    
+    
+    set speedfrm [frame .t$name.controls.xfrm.speedfrm]
+    set speedlbl [label $speedfrm.lbl -text "Speed:      " -font {helvetica 10 bold} ]
+    set Endoscopic(flatScale,speed) [scale $speedfrm.speed -from 0.1 -to 5 -res 0.1 -orient horizontal \
+                                     -variable Endoscopic(flatColon,speed)  -bg $Endoscopic(path,sColor) ]
+    pack $speedlbl -side left
+    pack $Endoscopic(flatScale,speed) -side right
+    
+    
+    set updatefrm [frame .t$name.controls.xfrm.updatefrm]
+    set updatebut [button $updatefrm.updatebut -text "Update Targets on Flat Colon" -font {helvetica 10 bold} \
+    -command "EndoscopicUpdateTargetsInFlatWindow $f.flatRenderWidget$name"]
+    pack $updatebut -side left -padx 2 -expand yes
 
-    set Endoscopic(flatScale,panlr) [scale $lrfrm.leftright -from 0 -to 250 -res 0.5 -orient horizontal  -variable Endoscopic(flatColon,xCamDist) ]
-    pack $lrlbl -side top
-    pack $Endoscopic(flatScale,panlr) -side top
+
+    #pack xfrm
+    pack $playfrm -side top -pady 4 -expand yes
+    pack $progfrm -side top -pady 4 -expand yes
+    pack $speedfrm -side top -pady 4 -expand yes
+    pack $updatefrm -side top -pady 4 -expand yes
     
  
-    set zoomfrm [frame .t$name.controls.xfrm.zoomfrm]        
+    
+    # y frame: Zoom, Center Viewpoint, and Close Flat Colon
+    set yfrm [frame .t$name.controls.yfrm]
+    
+    set zoomfrm [frame .t$name.controls.yfrm.zoomfrm]        
     set camZoomlbl [label $zoomfrm.lbl -text "Zoom In<-->Zoom Out" -font {helvetica 10}]
     set Endoscopic(flatScale,camZoom) [scale $zoomfrm.camZoom -from 0 -to 100 -res 0.5 -orient horizontal  -variable Endoscopic(flatColon,zCamDist)]
     pack $camZoomlbl -side top
     pack $Endoscopic(flatScale,camZoom) -side top
     
-    
-    set resetfrm [frame $xfrm.resetfrm]
-    set resetbut [button $resetfrm.resetbut -text "Reset" -font {helvetica 10 bold} \
+      
+    set optzfrm [frame $yfrm.optzfrm]
+    set optzbut [button $optzfrm.optzbut -text "Center Viewpoint" -font {helvetica 10 bold} \
     -command "EndoscopicResetFlatCameraDist $f.flatRenderWidget$name"]
-    set quitbut [button $resetfrm.quitbut -text "Quit" -font {helvetica 10 bold} \
+    
+    set quitbut [button $optzfrm.quitbut -text "Close Flat Colon" -font {helvetica 10 bold} \
     -command "EndoscopicRemoveFlatView $name"]
-    pack $resetbut -side left -padx 2 -expand yes -fill x
-    pack $quitbut -side right -padx 2 -expand yes -fill x
+    pack $optzbut -side top -pady 4 -expand yes -fill x
+    pack $quitbut -side bottom -pady 4 -expand yes -fill x
+
     
-    pack $lrfrm -side top -pady 4 -expand yes
+    #pack yfrm
     pack $zoomfrm -side top -pady 4 -expand yes
-    pack $resetfrm -side bottom -expand yes
-    
-    # y frame: move the camera in the y direction
-    set yfrm [frame .t$name.controls.yfrm]
+    pack $optzfrm -side top -pady 4 -expand yes
+
+    # the following scale is left un-packed, because it will be removed eventually
     set udlbl [label $yfrm.lbl -text "Up/Down" -font {helvetica 10} ]
     set Endoscopic(flatScale,panud) [scale $yfrm.updown -from -10 -to 10 -res 0.5 -orient vertical -variable Endoscopic(flatColon,yCamDist)]
-    set updatebut [button $yfrm.updatebut -text "Update Targets" -font {helvetica 10 bold}]
-    pack $udlbl $Endoscopic(flatScale,panud) -side top -pady 4 -expand yes
-    pack  $updatebut -side bottom -pady 2 -expand yes -fill y
-    
+    #pack $udlbl $Endoscopic(flatScale,panud) -side top -pady 4 -expand yes
+
+        
     # light frame: change the light positions, elevation and azimuth
     set lfrm [frame .t$name.controls.lfrm]
     
@@ -4996,7 +5036,7 @@ proc EndoscopicAddFlatView {} {
      EndoscopicCreateFlatBindings $f.flatRenderWidget$name
     
     # Update targets (Fiducials) that were saved in the MRML Tree
-    $updatebut config -command "EndoscopicUpdateTargetsInFlatWindow $f.flatRenderWidget$name"
+ #   $updatebut config -command "EndoscopicUpdateTargetsInFlatWindow $f.flatRenderWidget$name"
 
     # create a vtkPolyDataReader
     vtkPolyDataReader TempPolyReader   
@@ -5053,13 +5093,13 @@ proc EndoscopicAddFlatView {} {
     set Endoscopic(flatColon,yMid) [expr [expr $Endoscopic(flatColon,yMin) + $Endoscopic(flatColon,yMax)]/2]
 
 # re-config the scale according to the size of the flat colon        
-    $Endoscopic(flatScale,panlr) config -from [expr [expr floor($Endoscopic(flatColon,xMin))]-1] -to [expr ceil($Endoscopic(flatColon,xMax))]
+    $Endoscopic(flatScale,progress) config -from [expr [expr floor($Endoscopic(flatColon,xMin))]-1] -to [expr ceil($Endoscopic(flatColon,xMax))]
     $Endoscopic(flatScale,panud) config -from [expr [expr ceil($Endoscopic(flatColon,yMin))]-2] -to [expr [expr ceil($Endoscopic(flatColon,yMax))]+2]
     $Endoscopic(flatScale,camZoom) config -from 0 -to [expr [expr ceil($Endoscopic(flatColon,zOpt))] + 40]
 
 # set initial camera position   
     set Endoscopic(flatColon,xCamDist) [expr [expr floor($Endoscopic(flatColon,xMin))]-1]
-    $Endoscopic(flatScale,panlr) set $Endoscopic(flatColon,xCamDist)
+    $Endoscopic(flatScale,progress) set $Endoscopic(flatColon,xCamDist)
     
     set Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,yMid)
     $Endoscopic(flatScale,panud) set $Endoscopic(flatColon,yCamDist)
@@ -5075,7 +5115,7 @@ proc EndoscopicAddFlatView {} {
     # $Navigator($name,camera) Zoom 1
   
     # add command for moving the colon in x y directions and zooming.  
-    $Endoscopic(flatScale,panlr) config -command "EndoscopicMoveCameraX $f.flatRenderWidget$name"
+    $Endoscopic(flatScale,progress) config -command "EndoscopicMoveCameraX $f.flatRenderWidget$name"
     $Endoscopic(flatScale,panud) config -command "EndoscopicMoveCameraY $f.flatRenderWidget$name" 
     $Endoscopic(flatScale,camZoom) config -command "EndoscopicMoveCameraZ $f.flatRenderWidget$name"
     
@@ -5106,6 +5146,7 @@ proc EndoscopicAddFlatView {} {
     set Endoscopic($name,lineCount) 0
     #set Endoscopic(FlatSelect) ""
     
+    set Endoscopic(flatColon,speed) 0.2
 
     #Render
     [$f.flatRenderWidget$name GetRenderWindow] Render    
@@ -5266,13 +5307,21 @@ proc EndoscopicEndPan {widget xcoord ycoord} {
     set x2 [expr $x1 - [expr $dx * .1]]
     set y2 [expr $y1 + [expr $dy * .1]]
     
+    if {$x2 < [expr ceil($Endoscopic(flatColon,xMax))] } {
+    
     $Endoscopic($name,camera) SetFocalPoint $x2 $y2 0
     $Endoscopic($name,camera) SetPosition $x2 $y2 $z1
     
     set Endoscopic(flatColon,xCamDist) $x2
     set Endoscopic(flatColon,yCamDist) $y2
 
-    [$widget GetRenderWindow] Render     
+    [$widget GetRenderWindow] Render
+    
+    } elseif {$x2 < [expr [expr floor($Endoscopic(flatColon,xMin))]-0.5] } {
+    set Endoscopic(flatColon,xCamDist) [expr floor($Endoscopic(flatColon,xMin))]
+    } else {
+    set Endoscopic(flatColon,xCamDist) [expr ceil($Endoscopic(flatColon,xMax))]
+    }
      
 }
 
@@ -5297,7 +5346,7 @@ proc EndoscopicEndZoom {widget ycoord} {
     
      # log base b of x = log(x) / log(b)
      set b      1.02
-     set zPrev  1
+     set zPrev  1.5
      set dyPrev [expr log($zPrev) / log($b)]
 
      set zoom [expr pow($b, ($dy + $dyPrev))]
@@ -6133,7 +6182,7 @@ proc EndoscopicSelectTarget {sT} {
     $Endoscopic($name,camera) SetFocalPoint $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) 0
     $Endoscopic($name,camera) SetPosition $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zCamDist)
   
-    $Endoscopic(flatScale,panlr) set $Endoscopic(flatColon,xCamDist)
+    $Endoscopic(flatScale,progress) set $Endoscopic(flatColon,xCamDist)
     $Endoscopic(flatScale,panud) set $Endoscopic(flatColon,yCamDist)
     $Endoscopic(flatScale,camZoom) set $Endoscopic(flatColon,zCamDist)
  
@@ -6326,7 +6375,7 @@ proc EndoscopicMoveCameraY {widget {Endoscopic(flatColon,yCamDist)""}} {
 }
 
 #------------------------------------------------------------------------------------------
-# .PROC EndoscopicMoveCameraX
+# .PROC EndoscopicMoveCameraZ
 # zoom the camera in the flat colon window along the z axis (in and out of the screen)
 #------------------------------------------------------------------------------------------
 
@@ -6347,11 +6396,12 @@ proc EndoscopicMoveCameraZ {widget {Endoscopic(flatColon,zCamDist)""}} {
 }
 
 #------------------------------------------------------------------------------------------
-# .PROC EndoscopicMoveCameraX
+# .PROC EndoscopicResetFlatCameraDist
 # reset the camera in the flat colon window to an optimum location along the z axis based on the size of the colon
 #------------------------------------------------------------------------------------------
 
 proc EndoscopicResetFlatCameraDist {widget} {
+
     global Endoscopic
 
    set name $Endoscopic($widget,name)
@@ -6364,7 +6414,7 @@ proc EndoscopicResetFlatCameraDist {widget} {
   $Endoscopic($name,camera) SetFocalPoint $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) 0
   $Endoscopic($name,camera) SetPosition $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zCamDist)
   
-  $Endoscopic(flatScale,panlr) set $Endoscopic(flatColon,xCamDist)
+  $Endoscopic(flatScale,progress) set $Endoscopic(flatColon,xCamDist)
   $Endoscopic(flatScale,panud) set $Endoscopic(flatColon,yCamDist)
   $Endoscopic(flatScale,camZoom) set $Endoscopic(flatColon,zCamDist)
           
@@ -6372,3 +6422,64 @@ proc EndoscopicResetFlatCameraDist {widget} {
   
     
 }
+
+proc EndoscopicScrollFlatColon {widget} {
+
+    global Endoscopic
+
+   
+   set name $Endoscopic($widget,name)
+   set position [$Endoscopic($name,camera) GetPosition]
+   
+   set Endoscopic(flatColon,xCamDist) [lindex $position 0]
+#   set speed $Endoscopic(flatColon,speed)
+   
+#   set seg [expr $Endoscopic(flatColon,xMax) / $Endoscopic(flatColon,speed)]
+#   set seg [expr ceil($seg)]
+     
+   
+     while {$Endoscopic(flatColon,xCamDist) < $Endoscopic(flatColon,xMax)} {
+     
+       if {$Endoscopic(flatColon,stop) == "0"} {
+   
+       set  Endoscopic(flatColon,xCamDist) [expr  $Endoscopic(flatColon,xCamDist) + $Endoscopic(flatColon,speed)]
+   
+       EndoscopicMoveCameraX  $widget $Endoscopic(flatColon,xCamDist)
+       
+       update
+       } else {
+       EndoscopicResetStop
+       break
+       }
+     }
+   
+
+     
+}
+
+proc EndoscopicStopFlatColon {} {
+
+    global Endoscopic
+    
+    set Endoscopic(flatColon,stop) 1
+
+}
+
+proc EndoscopicResetFlatColon {widget} {
+
+    global Endoscopic
+    
+    set Endoscopic(flatColon,xCamDist) [expr [expr floor($Endoscopic(flatColon,xMin))]-1] 
+    
+    EndoscopicMoveCameraX  $widget $Endoscopic(flatColon,xCamDist)
+    
+}
+
+proc EndoscopicResetStop {} {
+
+     global Endoscopic
+     
+     set Endoscopic(flatColon,stop) 0
+}
+
+
