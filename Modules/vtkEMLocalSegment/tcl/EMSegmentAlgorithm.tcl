@@ -112,10 +112,10 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet} {
          vtkImagePCAApply EMSegment(Cattrib,$i,vtkImagePCAApply) 
      set NumEigenValues [llength $EMSegment(Cattrib,$i,PCAEigen)]
      EMSegment(Cattrib,$i,vtkImagePCAApply) SetNumberOfEigenValues $NumEigenValues
-         EMSegment(Cattrib,$i,vtkImagePCAApply) SetMean $EMSegment(Cattrib,$i,PCAMeanData) 
+         EMSegment(Cattrib,$i,vtkImagePCAApply) SetMean [Volume($EMSegment(Cattrib,$i,PCAMeanData),vol) GetOutput]
          foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
             EMSegment(Cattrib,$i,vtkImagePCAApply)  SetEigenValue [lindex $EigenList 0] [lindex $EigenList 1] 
-        EMSegment(Cattrib,$i,vtkImagePCAApply)  SetEigenVector [lindex $EigenList 0]  [Volume([lindex $EigenList 2],vol) GetOutput] 
+        EMSegment(Cattrib,$i,vtkImagePCAApply)  SetEigenVectorIndex [lindex $EigenList 0]  [Volume([lindex $EigenList 2],vol) GetOutput] 
      }
      EMSegment(Cattrib,$i,vtkImagePCAApply) Update
      EMSegment(vtkEMSegment) SetPCAShapePtr EMSegment(Cattrib,$i,vtkImagePCAApply)
