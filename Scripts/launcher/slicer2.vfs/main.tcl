@@ -135,14 +135,12 @@ if {$resp == "cancel"} {
     exit
 }
 
-parray env
-
 switch $env(BUILD) {
     "solaris8" -
     "redhat7.3" {
         # need to run the specially modified tcl interp in the executable 'vtk'
         # on unix
-        eval exec $env(VTK_BIN_DIR)/vtk $env(SLICER_HOME)/Base/tcl/Go.tcl $argv &
+        eval exec $env(VTK_BIN_DIR)/bin/vtk $env(SLICER_HOME)/Base/tcl/Go.tcl $argv &
     }
     "Win32VC7" {
         eval exec $env(TCL_BIN_DIR)/wish84.exe $env(SLICER_HOME)/Base/tcl/Go.tcl $argv &
