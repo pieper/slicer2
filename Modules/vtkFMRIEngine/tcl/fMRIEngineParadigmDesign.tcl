@@ -241,8 +241,7 @@ proc fMRIEngineShowConditionToEdit {} {
         if {$found >= 0} {
             if {! $fMRIEngine(checkbuttonRunIdentical) &&
                 $fMRIEngine(noOfRuns) > 1} {
-                set run2 $fMRIEngine(curRunForConditionShow)
-                fMRIEngineSelectRunForConditionConfig $run2 
+                fMRIEngineSelectRunForConditionConfig $run 
             }
 
             set fMRIEngine(entry,title) $fMRIEngine($run,$title,title)
@@ -253,6 +252,9 @@ proc fMRIEngineShowConditionToEdit {} {
         }
 
         set fMRIEngine(indexForEdit,condsListBox) $curs
+
+    } else {
+        DevErrorWindow "Select a condition to edit."
     }
 }
 
@@ -281,15 +283,30 @@ proc fMRIEngineDeleteCondition {} {
         set found [lsearch -exact $fMRIEngine($run,conditionList) $title]
 
         if {$found >= 0} {
-            set fMRIEngine($run,conditionList) \
-                [lreplace $fMRIEngine($run,conditionList) $found $found]
-            unset -nocomplain fMRIEngine($run,$title,title)
-            unset -nocomplain fMRIEngine($run,$title,startVol)
-            unset -nocomplain fMRIEngine($run,$title,onsets)
-            unset -nocomplain fMRIEngine($run,$title,durations)
-        }
+            $fMRIEngine(condsListBox) delete $curs 
 
-        $fMRIEngine(condsListBox) delete $curs 
+            if {! $fMRIEngine(checkbuttonRunIdentical)} {
+                set fMRIEngine($run,conditionList) \
+                    [lreplace $fMRIEngine($run,conditionList) $found $found]
+                unset -nocomplain fMRIEngine($run,$title,title)
+                unset -nocomplain fMRIEngine($run,$title,startVol)
+                unset -nocomplain fMRIEngine($run,$title,onsets)
+                unset -nocomplain fMRIEngine($run,$title,durations)
+            } else {
+                for {set r 1} {$r <= $fMRIEngine(noOfRuns)} {incr r} {
+                    set fMRIEngine($r,conditionList) \
+                        [lreplace $fMRIEngine($r,conditionList) $found $found]
+                    unset -nocomplain fMRIEngine($r,$title,title)
+                    unset -nocomplain fMRIEngine($r,$title,startVol)
+                    unset -nocomplain fMRIEngine($r,$title,onsets)
+                    unset -nocomplain fMRIEngine($r,$title,durations)
+                }
+            }
+
+            fMRIEngineShowConditions 
+       }
+    } else {
+        DevErrorWindow "Select a condition to delete."
     }
 }
 
@@ -418,12 +435,12 @@ proc fMRIEngineIdenticalizeConditions {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC fMRIEngineAddOrEditCondition
-# Adds or edit a condition 
+# .PROC fMRIEngineEditCondition
+# Edits a condition 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineAddOrEditCondition {} {
+proc fMRIEngineEditCondition {} {
     global fMRIEngine
 
     set title [string trim $fMRIEngine(entry,title)]
@@ -432,74 +449,189 @@ proc fMRIEngineAddOrEditCondition {} {
     set onsets [string trim $fMRIEngine(entry,onsets)]
     set durations [string trim $fMRIEngine(entry,durations)]
 
-    # Error checking
+    set curs [$fMRIEngine(condsListBox) curselection]
+    if {$curs != ""} {
+        set con [$fMRIEngine(condsListBox) get $curs] 
+        if {$con != ""} {
+            set i 1 
+            set i2 [string first ":" $con]
+            set run [string range $con $i [expr $i2-1]] 
+            set t [string range $con [expr $i2+1] end] 
+        }
+
+        set run [string trim $run]
+        set t [string trim $title]
+        if {$fMRIEngine($run,tr) == $tr                 &&
+            [info exists fMRIEngine($run,$t,title)]     &&
+            $fMRIEngine($run,$t,title) == $title        &&
+            $fMRIEngine($run,$t,startVol) == $startVol  &&
+            $fMRIEngine($run,$t,onsets) == $onsets      &&
+            $fMRIEngine($run,$t,durations) == $durations} {
+            DevErrorWindow "This condition already exists."
+            return
+        }
+
+        fMRIEngineDeleteCondition
+        fMRIEngineAddCondition
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineAddCondition
+# Adds a condition 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineAddCondition {} {
+    global fMRIEngine
+
+    set title [string trim $fMRIEngine(entry,title)]
+    set tr [string trim $fMRIEngine(entry,tr)]
+    set startVol [string trim $fMRIEngine(entry,startVol)]
+    set onsets [string trim $fMRIEngine(entry,onsets)]
+    set durations [string trim $fMRIEngine(entry,durations)]
+
+    set currRun $fMRIEngine(curRunForConditionConfig)
+    set found -1
+    if {[info exists fMRIEngine($currRun,conditionList)]} {
+        set found [lsearch -exact $fMRIEngine($currRun,conditionList) $title]
+    }
+
+    if {! $fMRIEngine(checkbuttonRunIdentical)} { 
+        if {$found == -1} {
+            lappend fMRIEngine($currRun,conditionList) $title
+        } else {
+            if {$fMRIEngine($currRun,tr) == $tr                     &&
+                $fMRIEngine($currRun,$title,title) == $title        &&
+                $fMRIEngine($currRun,$title,startVol) == $startVol  &&
+                $fMRIEngine($currRun,$title,onsets) == $onsets      &&
+                $fMRIEngine($currRun,$title,durations) == $durations} {
+                DevErrorWindow "This condition already exists."
+                return
+            }
+        }
+
+        set fMRIEngine($currRun,designType) $fMRIEngine(paradigmDesignType)
+        set fMRIEngine($currRun,tr) $tr
+
+        set fMRIEngine($currRun,$title,title) $title
+        set fMRIEngine($currRun,$title,startVol) $startVol
+        set fMRIEngine($currRun,$title,onsets) $onsets
+        set fMRIEngine($currRun,$title,durations) $durations
+    } else {
+        for {set r 1} {$r <= $fMRIEngine(noOfRuns)} {incr r} {
+            if {$found == -1} {
+                lappend fMRIEngine($r,conditionList) $title
+            } else {
+                if {$fMRIEngine($r,tr) == $tr                     &&
+                    $fMRIEngine($r,$title,title) == $title        &&
+                    $fMRIEngine($r,$title,startVol) == $startVol  &&
+                    $fMRIEngine($r,$title,onsets) == $onsets      &&
+                    $fMRIEngine($r,$title,durations) == $durations} {
+                    DevErrorWindow "This condition already exists."
+                    return
+                }
+            }
+
+            set fMRIEngine($r,designType) $fMRIEngine(paradigmDesignType)
+            set fMRIEngine($r,tr) $tr
+
+            set fMRIEngine($r,$title,title) $title
+            set fMRIEngine($r,$title,startVol) $startVol
+            set fMRIEngine($r,$title,onsets) $onsets
+            set fMRIEngine($r,$title,durations) $durations
+        }
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineAddOrEditCondition
+# Adds or edit a condition 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineAddOrEditCondition {} {
+    global fMRIEngine
+
+    # Error checking all input
+
+    set title [string trim $fMRIEngine(entry,title)]
     if {$title == ""} {
         DevErrorWindow "Input a unique name for this condition."
         return
     }
-    if {$tr == ""} {
+
+    set tr [string trim $fMRIEngine(entry,tr)]
+    set b [string is integer -strict $tr]
+    if {$b == 0 || $tr < 1} {
         DevErrorWindow "Input the TR in seconds."
         return
     }
-    if {$startVol == ""} {
-        DevErrorWindow "Input the start volume number"
+
+    set startVol [string trim $fMRIEngine(entry,startVol)]
+    set b [string is integer -strict $startVol]
+    if {$b == 0 || $startVol < 0} {
+        DevErrorWindow "Input the start volume index"
         return
     }
+
+    set errorMsg "Input the onsets vector in multiples of TR."
+    set onsets [string trim $fMRIEngine(entry,onsets)]
     if {$onsets == ""} {
-        DevErrorWindow "Input the onset vector in seconds."
+        DevErrorWindow $errorMsg 
         return
     }
-    if {$fMRIEngine(paradigmDesignType) != "event-related" && $durations == ""} {
-        DevErrorWindow "Input the duration vector in seconds."
-        return
-    }
-
-    set currRun $fMRIEngine(curRunForConditionConfig)
-    set found -1
-    set b [info exists fMRIEngine($currRun,conditionList)]
-    if {$b} {
-        set found [lsearch -exact $fMRIEngine($currRun,conditionList) $title]
-    }
-
-    if {$found == -1} {
-        lappend fMRIEngine($currRun,conditionList) $title
-    }
-    
-    set fMRIEngine($currRun,designType) $fMRIEngine(paradigmDesignType)
-    set fMRIEngine($currRun,tr) $tr
-
-    set fMRIEngine($currRun,$title,title) $title
-    set fMRIEngine($currRun,$title,startVol) $startVol
-    set fMRIEngine($currRun,$title,onsets) $onsets
-    set fMRIEngine($currRun,$title,durations) $durations
-
-    if {$fMRIEngine(checkbuttonRunIdentical)} {
-        set runs [string trim $fMRIEngine(noOfRuns)]
-        if {$runs > 1} {
-            $fMRIEngine(gui,runListMenuForConditionConfig) delete 0 end
-            set count 2 
-            while {$count <= $runs} {
-                set b [info exists fMRIEngine($count,conditionList)]
-                if {$b} {
-                    set found [lsearch -exact $fMRIEngine($count,conditionList) $title]
-                }
-
-                if {$found == -1} {
-                    lappend fMRIEngine($count,conditionList) $title
-                }
-
-                set fMRIEngine($count,designType) $fMRIEngine(paradigmDesignType)
-                set fMRIEngine($count,tr) $fMRIEngine(1,tr) 
-
-                set fMRIEngine($count,$title,title) $fMRIEngine(1,$title,title)  
-                set fMRIEngine($count,$title,startVol) $fMRIEngine(1,$title,startVol) 
-                set fMRIEngine($count,$title,onsets) $fMRIEngine(1,$title,onsets) 
-                set fMRIEngine($count,$title,durations) $fMRIEngine(1,$title,durations) 
-
-                incr count
-            } 
+    # replace multiple spaces in the middle of the string by one space  
+    regsub -all {( )+} $onsets " " onsets 
+    set onsetsList [split $onsets " "]     
+    set len1 [llength $onsetsList]
+    foreach i $onsetsList { 
+        set v [string trim $i]
+        set b [string is integer -strict $v]
+        if {$b == 0 || $v < 0} {
+            DevErrorWindow $errorMsg 
+            return
         }
-    } 
+    }
+
+    if {$fMRIEngine(paradigmDesignType) != "event-related"} {
+        set errorMsg "Input the durations vector in multiples of TR."
+        set durations [string trim $fMRIEngine(entry,durations)]
+        if {$durations == ""} {
+            DevErrorWindow $errorMsg 
+            return
+        }
+        # replace multiple spaces in the middle of the string by one space  
+        regsub -all {( )+} $durations " " durations 
+        set durationsList [split $durations " "]     
+        set len2 [llength $durationsList]
+
+        # onsets vector must have the same length as the durations vector
+        if {$len1 != $len2} {
+            DevErrorWindow "Onsets and durations vectors must have the same length." 
+            return
+        }
+
+        foreach i $durationsList { 
+            set v [string trim $i]
+            set b [string is integer -strict $v]
+            if {$b == 0 || $v < 1} {
+                DevErrorWindow $errorMsg 
+                return
+            }
+        }
+    }
+
+    set curs [$fMRIEngine(condsListBox) curselection]
+    if {$curs != ""} {
+        # assume to edit a condition
+        fMRIEngineEditCondition
+    } else {
+        # add a new condition
+        fMRIEngineAddCondition
+    }
 
     fMRIEngineShowConditions 
 }
