@@ -132,7 +132,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.3 $} {$Date: 2002/07/27 21:14:06 $}]
+            {$Revision: 1.4 $} {$Date: 2002/07/27 22:56:30 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -748,9 +748,17 @@ proc AlignmentsBuildGUI {} {
     set f $f.fColorCorresp  
         
     eval {checkbutton $f.cColorCorresp -variable Matrix(colorCorresp) \
-          -text "View the color correspondence \n between the two overlayed images" -command "AlignmentsSetColorCorrespondence" \
+          -text "Color correspondence" -command "AlignmentsSetColorCorrespondence" \
           -indicatoron 0} $Gui(WCA)
     
+    #If in the future "Ocean" and "Desert" LUT names change, then change this tooltip 
+    TooltipAdd $f.cColorCorresp "
+    Press this button to turn on or off the colors that are applied to the reference volume and the volume to move. 
+    
+    When the button is on, the reference volume is colored blue and the volume to move is colored red. Pink indicates the amount of convergence between the two volumes when they are overlayed. 
+
+    When the button is off, the reference volume and the volume to move are returned to greyscale."
+                            
     pack $f.cColorCorresp -pady 20
 
 
@@ -2690,6 +2698,20 @@ proc AlignmentsFiducialPick {} {
         set Module(freezer) "Alignments row1 Auto" 
         raise $Matrix(f$Matrix(regMech))
 
+       
+        #Set the fade opacity slider to be disabled and change the tooltip 
+        #to indicate to the users that it is disabled in this mode
+        #We dont want the fore fade opacity slider to be active here because
+        #we want them to see the volumes as two separate entities. 
+        #The slider is set back to normal when the user exits the fiducial 
+        #selection mode (which occurs when the press cancel or apply or 
+        #when the exit the scene altogether).
+        set f .tMain.fDisplay.fRight
+        $f.sOpacity configure -state disabled
+        #if the volumes are currently overlayed then set the opacity to be 1
+        MainSlicesSetOpacityAll 1
+        TooltipAdd $f.sOpacity "The opacity slider is diabled in this mode"
+    
         #I put this in here because it was giving an error when the user tried to close 
         #the file or do any other operation on the fiduicials tab before the mouse was 
         #moved in the 3D view
@@ -3277,7 +3299,7 @@ proc AlignmentsApplyFiducialSelection {} {
     set Matrix(mainview,visibility) 1
     AlignmentsUpdateMainViewVisibility
         
-        #Unpack the Slice controls that are specific to the fiducials selection tab
+    #Unpack the Slice controls that are specific to the fiducials selection tab
     AlignmentsUnpackFidSelectScreenControls
      
     #set the slices that were visible in the fiducial selection mode to be 
@@ -3302,6 +3324,13 @@ proc AlignmentsApplyFiducialSelection {} {
     set Matrix(FiducialPickEntered) 0
         AlignmentsSetRegTabState normal    
 
+    #Set the fade opacity slider to be enabled again and change the tooltip 
+    #back to what it usually says
+        set f .tMain.fDisplay.fRight
+        $f.sOpacity configure -state normal
+        TooltipAdd $f.sOpacity "Slice overlay slider: Fade from\n\
+        the Foreground to the Background slice."
+
     #Apply the rigid transformation
     AlignmentsLandTrans
     
@@ -3309,10 +3338,10 @@ proc AlignmentsApplyFiducialSelection {} {
     set Matrix(regMech) ""
     raise $Matrix(fAlignBegin)
        
-        #Set the mode back to the normal view
+    #Set the mode back to the normal view
     MainViewerSetMode
 
-        MainSlicesSetOrientAll AxiSagCor
+    MainSlicesSetOrientAll AxiSagCor
     }
 }
 
@@ -3374,6 +3403,13 @@ proc AlignmentsFidSelectCancel {} {
     #Delete the Fiducials Lists and any associate text boxes
     AlignmentsDeleteFiducialsList $Matrix(FidAlignRefVolumeName) $Matrix(FidRefVolPointBoxes)
     AlignmentsDeleteFiducialsList $Matrix(FidAlignVolumeName) $Matrix(FidVolPointBoxes)
+
+    #Set the fade opacity slider to be enabled again and change the tooltip 
+    #back to what it usually says
+    set f .tMain.fDisplay.fRight
+    $f.sOpacity configure -state normal
+    TooltipAdd $f.sOpacity "Slice overlay slider: Fade from\n\
+        the Foreground to the Background slice."
 
     set Matrix(FiducialPickEntered) 0
     AlignmentsSetRegTabState normal
