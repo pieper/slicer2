@@ -11,6 +11,7 @@ switch $tcl_platform(os) {
         set BUILD solaris8
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
         set GENERATOR "Unix Makefiles"
+    set COMPILER "/usr/bin/g++"
     }
     "Linux" {
         set SLICER_HOME /home/nicole/slicer2
@@ -18,6 +19,15 @@ switch $tcl_platform(os) {
         set BUILD redhat7.3
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
         set GENERATOR "Unix Makefiles" 
+    set COMPILER "g++"
+    }
+    "Darwin" {
+        set SLICER_HOME /Users/pieper/slicer2/latest/slicer2
+        set VTK_BINARY_PATH /Users/pieper/downloads/vtk/vtk4.2/VTK-4.2.1-build
+        set BUILD Darwin
+        set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.dylib
+        set GENERATOR "Unix Makefiles" 
+    set COMPILER "c++"
     }
     default {
         # different windows machines say different things, so assume
@@ -29,6 +39,7 @@ switch $tcl_platform(os) {
         set BUILD Win32VC7
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/debug/vtkSlicerBase.lib
         set GENERATOR "Visual Studio 7" 
+    set COMPILER "cl"
     }
 }
 
@@ -62,8 +73,8 @@ set VTK_ARG2 "-DVTK_BINARY_PATH:PATH=$VTK_BINARY_PATH"
 set VTK_ARG3 "-DCMAKE_BACKWARDS_COMPATIBILITY:STRING=1.2"
 # explicitly specify the compiler used to compile the version of vtk that 
 # we link with
-set VTK_ARG4 "-DCMAKE_CXX_COMPILER:STRING=g++"
-set VTK_ARG5 "-DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=/usr/bin/g++"
+set VTK_ARG4 "-DCMAKE_CXX_COMPILER:STRING=$COMPILER"
+set VTK_ARG5 "-DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER"
 # make sure to generate shared libraries
 set VTK_ARG6 "-DBUILD_SHARED_LIBS:BOOL=ON"
 
@@ -82,12 +93,16 @@ foreach target $TARGETS {
     puts "enter directory $build..."
 
     puts "running cmake ..."
+    puts "cmake $SLICER_HOME/$target -G$GENERATOR \
+        $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 \
+        $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3"
     exec cmake $SLICER_HOME/$target -G$GENERATOR \
         $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 \
         $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3
 
     switch $tcl_platform(os) {
         "SunOS" -
+        "Darwin" -
         "Linux" {
             puts "running: make"
             puts [catch "exec make" res]
