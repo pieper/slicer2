@@ -156,7 +156,7 @@ proc LDMMViewerInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.11 $} {$Date: 2004/07/24 20:50:57 $}]
+        {$Revision: 1.12 $} {$Date: 2004/07/25 12:58:24 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -470,8 +470,8 @@ proc LDMMViewerShowVectors {} {
     set f0 [lindex $::LDMMViewer(vectorfiles) 0]
     vtkExtractVOI LDMMevoi
     #LDMMevoi SetSampleRate 2 2 2
-    #LDMMevoi SetSampleRate 4 4 4
-    LDMMevoi SetSampleRate 8 8 8
+    LDMMevoi SetSampleRate 4 4 4
+    #LDMMevoi SetSampleRate 8 8 8
     LDMMevoi SetInput [LDMMspr_$f0 GetOutput]
 
     vtkGlyph3D LDMMg3d
