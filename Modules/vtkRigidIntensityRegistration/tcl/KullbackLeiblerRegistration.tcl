@@ -105,7 +105,7 @@ proc KullbackLeiblerRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2003/12/28 23:25:19 $}]
+        {$Revision: 1.7 $} {$Date: 2003/12/29 14:54:08 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -526,6 +526,9 @@ proc KullbackLeiblerRegistrationCoarseParam {} {
     set KullbackLeiblerRegistration(NumberOfSamples)  50
     set KullbackLeiblerRegistration(SourceStandardDeviation) 0.4
     set KullbackLeiblerRegistration(TargetStandardDeviation) 0.4
+    set KullbackLeiblerRegistration(HistSizeSource) 64
+    set KullbackLeiblerRegistration(HistSizeTarget) 64
+    set KullbackLeiblerRegistration(Epsilon)        1e-12
 }
 
 
