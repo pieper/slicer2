@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2002/10/07 21:08:47 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2003/01/09 15:45:14 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================*/
 #include "vtkFSSurfaceReader.h"
@@ -108,6 +108,7 @@ void vtkFSSurfaceReader::Execute()
   float locations[3];
   int fvIndex;
   int faceIncrement;
+  int faceMultiplier;
   vtkIdType faceIndices[4];
   vtkPoints *outputVertices;
   vtkCellArray *outputFaces;
@@ -183,8 +184,25 @@ void vtkFSSurfaceReader::Execute()
     break;
   }
 
+  // In quad files, we want to skip every other face but count twice
+  // as many of them. This has to do with the way they are stored;
+  // here we just generate quads where as in the old code they
+  // generated tries from the quads. (Trust me.) In tri files, we use
+  // every face.
+  switch (magicNumber) {
+  case FS_QUAD_FILE_MAGIC_NUMBER: 
+  case FS_NEW_QUAD_FILE_MAGIC_NUMBER: 
+    faceIncrement = 2;
+    faceMultiplier = 2;
+    break;
+  case FS_TRIANGLE_FILE_MAGIC_NUMBER: 
+    faceIncrement = 1;
+    faceMultiplier = 1;
+    break;
+  }
+
 #if FS_DEBUG
-  cerr << numVertices << " vertices, " << numFaces << " faces" << endl;
+  cerr << numVertices << " vertices, " << numFaces * faceMultiplier << " faces" << endl;
 #endif
 
   // If quad files, there are four vertices per face, in tri files,
@@ -264,22 +282,10 @@ void vtkFSSurfaceReader::Execute()
 #endif
   }
 
-  // In quad files, we want to skip every other face. This has to do
-  // with the way they are stored; here we just generate quads where
-  // as in the old code they generated tries from the quads. (Trust
-  // me.) In tri files, we use every face.
-  switch (magicNumber) {
-  case FS_QUAD_FILE_MAGIC_NUMBER: 
-  case FS_NEW_QUAD_FILE_MAGIC_NUMBER: 
-    faceIncrement = 2;
-    break;
-  case FS_TRIANGLE_FILE_MAGIC_NUMBER: 
-    faceIncrement = 1;
-    break;
-  }
-
   // For each face...
-  for (fIndex = 0; fIndex < numFaces; fIndex += faceIncrement) {
+  for (fIndex = 0; 
+       fIndex < numFaces * faceMultiplier; 
+       fIndex += faceIncrement) {
 
     // For each vertex in the face...
     for (fvIndex = 0; fvIndex < numVerticesPerFace; fvIndex++) {
