@@ -95,8 +95,8 @@ vtkDCMLister \
 vtkResliceImage \
 vtkImageEuclideanDistanceTransformation  \
 vtkImageStatistics \
-vtkImageLabelVOI\
-vtkImageEMMarkov\
+vtkImageLabelVOI \
+vtkImageEMMarkov \
 vtkImageEMSegmenter 
 
 #vtkSurfaceProps \
