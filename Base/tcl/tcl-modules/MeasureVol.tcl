@@ -94,7 +94,7 @@ proc MeasureVolInit {} {
     # Set version info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.1 $} {$Date: 2000/10/26 22:28:36 $}]
+	    {$Revision: 1.2 $} {$Date: 2000/10/27 20:49:17 $}]
     
     # Initialize module-level variables
     #------------------------------------
@@ -122,7 +122,10 @@ proc MeasureVolBuildGUI {} {
     #     File
     #     Measure
     # Results
+    #   Volume
     #   Output
+    #     Label
+    #     TextBox
     #-------------------------------------------
     
     #-------------------------------------------
@@ -133,13 +136,15 @@ proc MeasureVolBuildGUI {} {
     # Refer to the documentation for details on the syntax.
     #
     set help "
-    The MeasureVol module is an example for developers.  It shows how to add a module 
-    to the Slicer.  The source code is in slicer/program/tcl-modules/MeasureVol.tcl.
+    The MeasureVol module measures the volume of segmented structures in a labelmap.  
+    It outputs a file containing the total volume in milliliters for each label value.
     <P>
     Description by tab:
     <BR>
     <UL>
-    <LI><B>Tons o' Setup:</B> This tab is a demo for developers.
+    <LI><B>Measure:</B> First enter a filename.  Then click the Measure Button
+    to measure the volumes and output your file.
+    <LI><B>Results:</B> Go to 'Results' to see the output file.
     "
     regsub -all "\n" $help {} help
     # remove emacs indentation
@@ -227,20 +232,45 @@ proc MeasureVolBuildGUI {} {
     set fResults $Module(MeasureVol,fResults)
     set f $fResults
 
-    foreach frame "Output" {
-	frame $f.f$frame -bg $Gui(activeWorkspace)
-	pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-    }
+    frame $f.fVolume -bg $Gui(activeWorkspace) 
+    pack $f.fVolume -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+    frame $f.fOutput -bg $Gui(activeWorkspace) -relief groove -bd 3   
+    pack $f.fOutput -side top -padx $Gui(pad) -pady $Gui(pad) -fill x 
+
+    #-------------------------------------------
+    # Results->Volume frame
+    #-------------------------------------------
+    set f $fResults.fVolume
+
+    DevAddLabel $f.lResultVol ""
+    pack $f.lResultVol -side top -padx $Gui(pad)  -pady $Gui(pad) -fill x
+    set MeasureVol(lResultVol)  $f.lResultVol
+
     
     #-------------------------------------------
     # Results->Output frame
     #-------------------------------------------
     set f $fResults.fOutput
-    
-    DevAddLabel $f.lTextBox "|   Label   |   Voxels   |    mL     |     %     |"
-    pack $f.lTextBox -side top -padx $Gui(pad)  -pady $Gui(pad) -fill x
+
+    foreach frame "Label  TextBox" {
+	frame $f.f$frame -bg $Gui(activeWorkspace) 
+	pack $f.f$frame -side top -padx $Gui(pad) -pady 0 -fill x
+    }
+
+    #-------------------------------------------
+    # Results->Output->Label frame
+    #-------------------------------------------
+    set f $fResults.fOutput.fLabel
+
+    DevAddLabel $f.lTextBox "  Label\t\tVolume in mL"
+    pack $f.lTextBox -side left -padx $Gui(pad)  -pady $Gui(pad)
     set MeasureVol(lTextBox) $f.lTextBox
-    
+
+    #-------------------------------------------
+    # Results->Output->TextBox frame
+    #-------------------------------------------
+    set f $fResults.fOutput.fTextBox
     set MeasureVol(textBox) [ScrolledText $f.tText -width 40 -height 8]
     pack $f.tText -side top -fill both -expand true
     
@@ -313,18 +343,13 @@ proc MeasureVolVolume {} {
     set v $Volume(activeID)
 
     # pipeline
-    vtkImageAccumulateDiscrete accum
     vtkImageMeasureVoxels measure
-
-    accum SetInput [Volume($v,vol) GetImageData]
-
-    measure SetInput [accum GetOutput]
+    measure SetInput [Volume($v,vol) GetImageData]
     measure SetFileName $MeasureVol(fileName)
     measure Update
 
     # delete objects we created
     measure Delete
-    accum Delete
 
     puts "Lauren check file exists"
 
@@ -332,6 +357,10 @@ proc MeasureVolVolume {} {
     set in [open $MeasureVol(fileName)]
     $MeasureVol(textBox) insert end [read $in]
     close $in
+
+    # label output in Results frame
+    $MeasureVol(lResultVol) configure -text \
+	    "Results for [Volume($v,node) GetName] volume:"
 
     # tab to Results frame if desired
     YesNoPopup test1 100 100 \
