@@ -57,7 +57,7 @@ IF (VTKRIGIDINTENSITYREGISTRATION_CAN_BUILD)
   # numerous dependencies problems.
   #
 
-  #SUBDIRS(cxx)
+  SUBDIRS(cxx)
   SUBDIRS(KullbackLeibler)
   SUBDIRS(MutualInformation)
 
