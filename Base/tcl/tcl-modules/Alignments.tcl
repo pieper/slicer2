@@ -149,7 +149,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.33 $} {$Date: 2004/06/25 21:34:01 $}]
+            {$Revision: 1.34 $} {$Date: 2005/01/28 21:45:00 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -1758,7 +1758,9 @@ proc AlignmentsSetRefVolume {{v ""}} {
     $Matrix(rFidScActivateRefVolume) config  -text "[Volume($v,node) GetName]"
 
     #Print out what the user has set as the reference volume
-    puts "this is the refVolumeName: $Matrix(FidAlignRefVolumeName)"
+    if {$::Module(verbose)} {
+        puts "AlignmentsSetRefVolume: this is the refVolumeName: $Matrix(FidAlignRefVolumeName)"
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -1797,7 +1799,9 @@ proc AlignmentsSetVolume {{v ""}} {
     $Matrix(rFidScActivateVolume) config  -text "[Volume($v,node) GetName]"
 
     #Print out what the user has set as the volume to move
-    puts "this is the FidAlignVolumeName: $Matrix(FidAlignVolumeName)"   
+    if {$::Module(verbose)} {
+        puts "AlignmentsSetVolume: this is the FidAlignVolumeName: $Matrix(FidAlignVolumeName)"   
+    }
 }
 
 ################################################################################
@@ -2129,16 +2133,22 @@ proc AlignmentsSetRegistrationMode {} {
     global Matrix
 
     if {$Matrix(f$Matrix(regMode)) == "$Matrix(fFidAlign)"} {
-        puts "you are in the fiducial alignment mode"
+        if {$::Module(verbose)} {
+            puts "you are in the fiducial alignment mode"
+        }
         AlignmentsFidAlignGo
         return
     } elseif {$Matrix(f$Matrix(regMode)) == "$Matrix(fTPS)"} {
-        puts "you are in the Thin plate spline registration mode"
+        if {$::Module(verbose)} {
+            puts "you are in the Thin plate spline registration mode"
+        }
         #TPS is not currently implemented in this version.
         raise $Matrix(f$Matrix(regMode))
         return
     } elseif {$Matrix(f$Matrix(regMode)) == "$Matrix(fIntensity)"} {
-        puts "you are in the registration by itensity mode"
+        if {$::Module(verbose)} {
+            puts "you are in the registration by itensity mode"
+        }
         raise $Matrix(f$Matrix(regMode))
         focus $Matrix(f$Matrix(regMode))
     }

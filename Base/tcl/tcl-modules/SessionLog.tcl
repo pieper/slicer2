@@ -119,7 +119,7 @@ proc SessionLogInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.18 $} {$Date: 2004/04/13 21:00:10 $}]
+        {$Revision: 1.19 $} {$Date: 2005/01/28 21:45:01 $}]
 
     # Initialize module-level variables
     set SessionLog(fileName)  ""
@@ -249,13 +249,16 @@ proc SessionLogBuildGUI {} {
     # Refer to the documentation for details on the syntax.
     #
     set help "
-    The SessionLog module records info about your segmentation session
-    for research purposes and to improve the Slicer.
+    The SessionLog module records info about your segmentation session 
+    for research purposes and to improve the Slicer. 
+    <BR>Editing mouse motions and clicks are recorded. 
+    <BR>This modules will log information for any module that's defined a procSessionLog and adds information to the record.
     <P>
     Description by tab:
     <BR>
     <UL>
-    <LI><B>Tons o' Start:</B> This tab is a demo for developers.
+    <LI><B>Start:</B> Set the log file name here, and start/stop logging.
+    <LI><B>Log:</B> View the logged information here. Click on Show Current Log to see information.
     "
     regsub -all "\n" $help {} help
     # remove emacs-style indentation from the 'html'
@@ -318,7 +321,8 @@ proc SessionLogBuildGUI {} {
     #-------------------------------------------
     set f $fStart.fBottom.fStart
 
-    DevAddButton $f.bStart "Start Logging" SessionLogStartLogging 15
+    # call start logging with a 1 if triggered by the button press
+    DevAddButton $f.bStart "Start Logging" {SessionLogStartLogging 1} 15
     TooltipAdd $f.bStart "Start logging each time before editing."
 
     pack $f.bStart -side top -padx $Gui(pad) -pady $Gui(pad)
@@ -407,22 +411,23 @@ proc SessionLogExit {} {
 proc SessionLogStartLogging {{tk "0"}} {
     global SessionLog env
 
+    if {$::Module(verbose)} { puts "SessionLogStartLogging: tk $tk" }
     # if this proc was called by hitting a button, $tk ==1
     if {$tk == "1"} {
-    if {$SessionLog(currentlyLogging) == 1} {
-        tk_messageBox -message "Already logging."
-        return
-    }
-    # make sure we have a filename.
-    if {$SessionLog(fileName) == ""} {
-        tk_messageBox -message "Please choose a filename first."
-        return
-    }
-    # let users know we are logging
-    set red [MakeColor "200 60 60"]
-    $SessionLog(lLogging) config -text \
-        "Logging is on." \
-        -fg $red
+        if {$SessionLog(currentlyLogging) == 1} {
+            tk_messageBox -message "Already logging."
+            return
+        }
+        # make sure we have a filename.
+        if {$SessionLog(fileName) == ""} {
+            tk_messageBox -message "Please choose a filename first."
+            return
+        }
+        # let users know we are logging
+        set red [MakeColor "200 60 60"]
+        $SessionLog(lLogging) config -text \
+            "Logging is on." \
+            -fg $red
     }
     
     # make a funny joke
@@ -549,11 +554,12 @@ proc SessionLogEndSession {} {
     global SessionLog
 
     if {$SessionLog(currentlyLogging) == 0} {
-    return
+        if {$::Module(verbose)} { DevInfoWindow "SessionLogEndSession:\nSession log is currently logging, cannot end session" }
+        return
     }
     
     if {$SessionLog(fileName) == ""} {
-    SessionLogSetFilenameAutomatically
+        SessionLogSetFilenameAutomatically
     }
 
     # make sure we record final times

@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.80 $} {$Date: 2004/10/07 20:55:13 $}]
+    {$Revision: 1.81 $} {$Date: 2005/01/28 21:45:45 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -451,9 +451,9 @@ proc MainVolumesRead {v} {
                     # Volume($v,vol) DebugOn
                 }
                 set readMSstr [time {Volume($v,vol) Read}]
-                set readMS [lindex [split $readMSstr] 0]
-                puts "[expr $readMS / 1000000.0] seconds to read volume $v"
+                set readMS [lindex [split $readMSstr] 0]                
                 if {$::Module(verbose)} {
+                    puts "[expr $readMS / 1000000.0] seconds to read volume $v"
                     # Volume($v,vol) DebugOff
                 }
             }

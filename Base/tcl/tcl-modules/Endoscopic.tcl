@@ -262,7 +262,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.92 $} {$Date: 2005/01/27 17:44:18 $}] 
+    {$Revision: 1.93 $} {$Date: 2005/01/28 21:45:00 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -5287,7 +5287,7 @@ proc EndoscopicRemoveFlatView {{name ""}} {
         Endoscopic($frame,FlatColonActor) Delete
         Endoscopic($frame,outlineActor) Delete
         Endoscopic($frame,lightKit) Delete
-        Endoscopic($frame,light) Delete    
+        Endoscopic($frame,light) Delete
         }
     
      set index [lsearch -exact $Endoscopic(FlatWindows) $name]
@@ -5508,7 +5508,6 @@ proc EndoscopicBuildFlatBoundary {{name ""}} {
 
     
 }
-
 
 #test proc to track mouse location in the flat window
 proc EndoscopicMouseLocation {widget xcoord ycoord} {
@@ -6458,6 +6457,8 @@ proc EndoscopicSelectTarget {sT} {
     set pointId [Point($pid,node) GetDescription]
 #puts "the id of the verticie is $pointId"
 #test end        
+
+
     EndoscopicResetCameraDirection    
     EndoscopicUpdateVirtualEndoscope $Endoscopic(activeCam) [concat [Point($pid,node) GetFXYZ] [Point($pid,node) GetXYZ]]
    
@@ -6636,9 +6637,9 @@ proc EndoscopicUpdateTargetsInFlatWindow {widget} {
                     for {set i 0} {$i < $numP} {incr i} {
                          set pid [lindex $list $i]
                          set pointIdT1 [Point($pid,node) GetDescription]
-    # puts "p was $pointId"     
+    # puts "p was $pointIdT1"     
              set pointIdT2 [expr $pointIdT1 + $numP3D]
-    # puts "p is $pointId"
+    # puts "p is $pointIdT2"
                          set polyData $Endoscopic($name,polyData)
                          set pointT1(xyz) [$polyData GetPoint $pointIdT1]
              set pointT2(xyz) [$polyData GetPoint $pointIdT2]

@@ -104,7 +104,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.54 $} {$Date: 2004/12/23 18:05:04 $}]
+        {$Revision: 1.55 $} {$Date: 2005/01/28 21:45:01 $}]
     
     # Initialize module-level variables
     
@@ -905,7 +905,12 @@ proc FiducialsUpdateMRML {} {
             set efid [$item GetID]
             # if the Mrml ID is not in the list already, then this
             # a new Fiducials Node/EndNode pair
-        
+            # there could be an end node w/o a starting node, so make sure that fid has been set
+            if { [info exists fid] == 0 } {
+                puts "FiducialsUpdateMRML:\nWarning: an EndFiducialsNode of id $efid has been found w/o the id of the starting node being found previously."
+                break
+            } 
+
             # update the modified point List for all the existing Fiducials Node
             if { $Fiducials($fid,pointsExist) ==  1} { 
                 FiducialsVTKUpdatePoints $fid $symbolSize $textSize
@@ -1074,7 +1079,7 @@ proc FiducialsUpdateMRML {} {
     if {$readOldNodesForCompatibility == 1} {
 
         # tell the user to save the file
-        puts "The file read uses a deprecated version of the endoscopic path.\n The current data was updated to use the new version. \nPlease save the scene and use that new file instead to not get this message again."
+        puts "The file read uses a deprecated version of the endoscopic path.\nThe current data was updated to use the new version.\nPlease save the scene and use that new file instead to not get this message again.\n"
         MainUpdateMRML
     }
 

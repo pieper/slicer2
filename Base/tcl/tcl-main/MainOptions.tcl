@@ -80,7 +80,7 @@ proc MainOptionsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainOptions \
-    {$Revision: 1.25 $} {$Date: 2003/04/14 20:03:08 $}]
+    {$Revision: 1.26 $} {$Date: 2005/01/28 21:45:44 $}]
 
     # Props
     set Options(program) "slicer"
@@ -97,7 +97,7 @@ proc MainOptionsInit {} {
     
     set Scenes(oldMRML) 0
     set Scenes(nameList) ""
-    
+    set Scenes(currentScene) "default"
 }
 
 #-------------------------------------------------------------------------------
@@ -282,6 +282,7 @@ proc MainOptionsUseDefaultPresets {} {
         if {[info exists Module($m,presets)] == 1} {
             foreach p "$Preset(idList)" {
                 foreach key $Preset($m,keys) {
+                    if {$::Module(verbose)} { puts "MainOptionsUseDefaultPresets $m $p $key"}
                     set Preset($m,$p,$key) $Preset($m,default,$key)
                 }
             }
@@ -372,6 +373,7 @@ proc MainOptionsRetrievePresetValues {} {
             if {$currentScene == "default"} {
                 set currentScene "0"
             }
+            if {$::Module(verbose)} { puts "MainOptionsRetrievePresetValues: current scene = $currentScene" }
             if {$currentScene != "0" && [lsearch $Scenes(nameList) $currentScene] == -1 } {
                 # don't add the default values to the scenes list
                 # but only if it doesn't yet exist in the list
@@ -380,6 +382,7 @@ proc MainOptionsRetrievePresetValues {} {
             }
             # set all presets to default settings
             MainOptionsUseDefaultPresetsForOneScene $currentScene
+            set ::Scenes(currentScene) $currentScene
         }
         if {[string compare -length 9 $node "EndScenes"] == 0} {
             set currentScene ""
@@ -440,6 +443,8 @@ proc MainOptionsRetrievePresetValues {} {
             set Preset(View,$currentScene,clippingRange) [$node GetClippingRange]
             set Preset(View,$currentScene,viewMode) [$node GetViewMode]
             set Preset(View,$currentScene,viewBgColor) [$node GetViewBgColor]
+            set Preset(View,$currentScene,textureInterpolation) [$node GetViewTextureInterpolation]
+            set Preset(View,$currentScene,textureResolution) [$node GetViewTextureResolution]
             set Preset(Anno,$currentScene,box) [$node GetShowBox]
             set Preset(Anno,$currentScene,axes) [$node GetShowAxes]
             set Preset(Anno,$currentScene,outline) [$node GetShowSliceBounds]
@@ -631,6 +636,9 @@ proc MainOptionsUnparsePresets {{presetNum ""}} {
         $node SetClippingRange $Preset(View,$p,clippingRange)
         $node SetViewMode $Preset(View,$p,viewMode)
         $node SetViewBgColor $Preset(View,$p,viewBgColor)
+        $node SetViewTextureResolution $Preset(View,$p,textureResolution)
+        $node SetViewTextureInterpolation $Preset(View,$p,textureInterpolation)
+
         $node SetShowBox $Preset(Anno,$p,box)
         $node SetShowAxes $Preset(Anno,$p,axes)
         $node SetShowSliceBounds $Preset(Anno,$p,outline)
@@ -709,6 +717,7 @@ proc MainOptionsUnparsePresets {{presetNum ""}} {
 proc MainOptionsPreset {p state} {
     global View Gui Preset
 
+    if {$::Module(verbose)} { puts "MainOptionsPreset $p $state"}
     if {$state == "Press"} {
         set Preset($p,state) $state
         after 250 "MainOptionsPresetCallback $p; RenderAll" ;# TODO: eliminate this 'after'
@@ -755,6 +764,7 @@ proc MainOptionsRecallPresets {p} {
     global Module
 
     # Set current to the preset value
+    if {$::Module(verbose)} { puts "MainOptionsRecallPresets: p = $p"}
     foreach m $Module(procRecallPresets) {
         $m $p
     }
@@ -770,7 +780,9 @@ proc MainOptionsStorePresets {p} {
     global Module
     
     # Set preset value to the current
+    if {$::Module(verbose)} { puts "MainOptionsSTOREPresets"}
     foreach m $Module(procStorePresets) {
+        if {$::Module(verbose)} { puts "MainOptionsStorePresets: $m $p" }
         $m $p
     }
 }

@@ -86,7 +86,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.58 $} {$Date: 2004/10/07 21:14:59 $}]
+        {$Revision: 1.59 $} {$Date: 2005/01/28 21:45:44 $}]
 
     set File(filePrefix) data
 }
@@ -511,7 +511,8 @@ proc MainFileOpenApply {} {
     MainMrmlRead $filename
     MainUpdateMRML
     MainOptionsRetrievePresetValues
-    MainSetup
+    # need to pass a scene number here, or user or system defaults
+    MainSetup $::Scenes(currentScene)
     RenderAll
 
     if {$File(callback) != ""} {
@@ -1093,7 +1094,9 @@ proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
         }
     } else {
         # assume that the number part is first, then a constant extenion
-        puts "Trying to parse as a dicom file"
+        if {$::Module(verbose)} {
+            puts "Trying to parse as a dicom file"
+        }
         set filePrefix [file dirname $ImageFile]/
         set num [file rootname [file tail $ImageFile]]
         # check to see if we really have a number here
