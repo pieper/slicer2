@@ -144,7 +144,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.23 $} {$Date: 2003/07/29 13:41:32 $}]
+            {$Revision: 1.24 $} {$Date: 2003/07/30 21:20:29 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -1577,12 +1577,16 @@ proc AlignmentsManualRotate {param {value ""} {mouse 0}} {
     # Validate input
     if {[ValidateFloat $value] == 0} {
         tk_messageBox -message "$value must be a floating point number"
+        set Matrix(inManualRotate) 0
         return
     }
 
     # If there is no active transform, then do nothing
     set t $Matrix(activeID)
-    if {$t == "" || $t == "NEW"} {return}
+    if {$t == "" || $t == "NEW"} {
+        set Matrix(inManualRotate) 0
+        return
+    }
 
     # If this is a different axis of rotation than last time,
     # then store the current transform in "Matrix(rotMatrix)"
