@@ -455,7 +455,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.108 $} {$Date: 2004/04/14 18:17:36 $}]
+        {$Revision: 1.109 $} {$Date: 2004/06/11 17:43:49 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -702,10 +702,8 @@ proc MainBuildGUI {} {
 
     # Modules Menu - delayed till here, for now, so that can change the text on Module(rMore) 
     MainBuildCategoryIDLists
-    if {$::Module(verbose)} {
-        MainBuildCategoryMenu
-    }
-    
+    MainBuildCategoryMenu
+        
 
 
     # Add the arrow image (the one that makes the scrollbar appear) 
@@ -2056,7 +2054,9 @@ proc MainBuildCategoryIDLists {} {
     }
     
     # build a list of current categories
-    puts "MainBuildCategoryIDLists: Categories:  $Module(categories)"
+    if {$::Module(verbose)} {
+        puts "MainBuildCategoryIDLists: Categories:  $Module(categories)"
+    }
 
     # put all but the core modules in alpha order (there may not be any Unfiled ones)
     foreach cat  $Module(categories) {
