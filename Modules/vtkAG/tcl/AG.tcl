@@ -147,7 +147,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2003/10/03 17:13:55 $}]
+        {$Revision: 1.3 $} {$Date: 2004/11/04 22:35:55 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -929,12 +929,12 @@ proc AGPrepareResultVolume {}  {
         set node [Volume($v2,vol) GetMrmlNode]
         Mrml(dataTree) RemoveItem $node 
         set nodeBefore [Volume($v1,vol) GetMrmlNode]
-    Mrml(dataTree) InsertAfterItem $nodeBefore $node
-    set AG(ResultVol) $v2
-    #VolumesUpdateMRML
+        Mrml(dataTree) InsertAfterItem $nodeBefore $node
+        set AG(ResultVol) $v2
+        #VolumesUpdateMRML
         MainUpdateMRML
-    AGUpdateGUI
-    incr AG(CountNewResults)
+        AGUpdateGUI
+        incr AG(CountNewResults)
 
     } else { 
     
@@ -942,7 +942,7 @@ proc AGPrepareResultVolume {}  {
         # If so, let's ask. If no, return.
     
         set v2name  [Volume($v2,node) GetName]
-    set continue [DevOKCancel "Overwrite $v2name?"]
+        set continue [DevOKCancel "Overwrite $v2name?"]
           
         if {$continue == "cancel"} { return 1 }
         # They say it is OK, so overwrite!
@@ -953,28 +953,28 @@ proc AGPrepareResultVolume {}  {
 
     if { ($AG(InputVolSource2) != $Volume(idNone)) && ($AG(InputVolTarget2) != $Volume(idNone)) } {
 
-    if {($v2_2 == -5)} {
-        
-        set v1_2 $AG(InputVolTarget2)      
-        set v2_2 [DevCreateNewCopiedVolume $v1_2 ""  "AGResult2_$AG(CountNewResults)" ]
-        set node [Volume($v2_2,vol) GetMrmlNode]
-        Mrml(dataTree) RemoveItem $node 
-        set nodeBefore [Volume($v1_2,vol) GetMrmlNode]
-        Mrml(dataTree) InsertAfterItem $nodeBefore $node
-        set AG(ResultVol2) $v2_2
-        #VolumesUpdateMRML
-        MainUpdateMRML
+        if {($v2_2 == -5)} {
+            
+            set v1_2 $AG(InputVolTarget2)      
+            set v2_2 [DevCreateNewCopiedVolume $v1_2 ""  "AGResult2_$AG(CountNewResults)" ]
+            set node [Volume($v2_2,vol) GetMrmlNode]
+            Mrml(dataTree) RemoveItem $node 
+            set nodeBefore [Volume($v1_2,vol) GetMrmlNode]
+            Mrml(dataTree) InsertAfterItem $nodeBefore $node
+            set AG(ResultVol2) $v2_2
+            #VolumesUpdateMRML
+            MainUpdateMRML
 
-        
-    } else {
-        
-        set v2name_2  [Volume($v2_2,node) GetName]
-        set continue [DevOKCancel "Overwrite $v2name_2?"]
-        
-        if {$continue == "cancel"} { return 1 }
-        # They say it is OK, so overwrite
-        Volume($v2_2,node) Copy Volume($AG(InputVolTarget2),node)
-    }
+            
+        } else {
+            
+            set v2name_2  [Volume($v2_2,node) GetName]
+            set continue [DevOKCancel "Overwrite $v2name_2?"]
+            
+            if {$continue == "cancel"} { return 1 }
+            # They say it is OK, so overwrite
+            Volume($v2_2,node) Copy Volume($AG(InputVolTarget2),node)
+        }
     } 
     
     return 0
