@@ -35,7 +35,7 @@ isvolume - a widget for looking at Slicer volumes
 option add *isvolume.background #000000 widgetDefault
 option add *isvolume.orientation Axial widgetDefault
 option add *isvolume.volume "None" widgetDefault
-option add *isvolume.slice 0 widgetDefault
+option add *isvolume.slice 128 widgetDefault
 option add *isvolume.interpolation linear widgetDefault
 option add *isvolume.resolution 256 widgetDefault
 option add *isvolume.transform "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1" widgetDefault
@@ -132,7 +132,9 @@ itcl::body isvolume::constructor {args} {
     set cs [$_controls childsite]
 
     set _slider $cs.slider
-    scale $_slider -orient horizontal -command "$this configure -slice "
+    scale $_slider -orient horizontal 
+    $_slider set 128
+    $_slider configure -command "$this configure -slice "
     pack $_slider -side top -expand true -fill x
 
     set _orientmenu $cs.orientmenu
@@ -388,11 +390,17 @@ itcl::body isvolume::expose {} {
 # METHOD: volmenu_update
 #
 # DESCRIPTION: create the array of volume names and ids
-#              The array can be accessed by volume Id or volume name.
-#              However, should two names be the same, the second one
-#              overwrites the first.
+# - use the id to form a unique name in the menu
+# - id map can be accessed by name, id, or name__id
 #-------------------------------------------------------------------------------
 itcl::body isvolume::volmenu_update {} {
+
+    if { [info exists itk_option(-volume)] && $itk_option(-volume) != "" } {
+        set v $itk_option(-volume)
+        set current_id $_VolIdMap($v)
+    } else {
+        set current_id -1
+    }
 
     array unset _VolIdMap
 
@@ -403,12 +411,21 @@ itcl::body isvolume::volmenu_update {} {
         set _VolIdMap(${name}__$id)  $id 
     }
 
+    set ocmd [$_volmenu cget -command]
+    $_volmenu configure -command ""
     $_volmenu delete 0 end
     foreach id $::Volume(idList) {
         set name [Volume($id,node) GetName]
         $_volmenu insert end  ${name}__$id
     }
-    $_volmenu select 0
+    $_volmenu configure -command $ocmd
+
+    set idindex [lsearch $::Volume(idList) $current_id]
+    if { $idindex == -1 } {
+        $_volmenu select 0
+    } else {
+        $_volmenu select $idindex
+    }
 }
 
 
@@ -421,6 +438,10 @@ itcl::body isvolume::volmenu_update {} {
 #           
 #-------------------------------------------------------------------------------
 itcl::body isvolume::transform_update {} {
+
+    if { ![info exists itk_option(-volume)] || $itk_option(-volume) == "" } {
+        return
+    }
 
     set id $_VolIdMap($itk_option(-volume))
 
@@ -637,10 +658,18 @@ proc isvolume_demo {} {
     #wm geometry .isvolumedemo 400x700
 
     pack [isvolume .isvolumedemo.isv] -fill both -expand true
+
+    if { [lsearch $::Module(idList) iSlicer] == -1 } {
+        lappend ::Module(idList) iSlicer
+        set ::Module(iSlicer,procMRML) iSlicerUpdateMRML
+    }
 }
 
 proc iSlicerUpdateMRML {} {
-    .isvolumedemo.isv configure -transform [Matrix(0,node) GetMatrix]
+    
+    foreach isv [itcl::find objects -class isvolume] {
+        $isv volmenu_update
+    }
 }
 
 proc isvolume_transform_test {} {
