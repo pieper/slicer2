@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceScalarReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2002/10/07 22:07:00 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2002/10/07 23:33:38 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================*/
 #include "vtkFSSurfaceScalarReader.h"
@@ -129,4 +129,22 @@ void vtkFSSurfaceScalarReader::ReadFSScalars()
 void vtkFSSurfaceScalarReader::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkDataReader::PrintSelf(os,indent);
+}
+//----------------------------------------------------------------------------
+void vtkFSSurfaceScalarReader::SetOutput(vtkFloatArray *output)
+{
+    if (output == NULL)
+    {
+        cerr << "ERROR: vtkFSSurfaceScalarReader::SetOutput passed a null pointer." << endl;
+        return;
+    }
+    if (output->IsA("vtkDataObject"))
+    {
+        this->vtkSource::SetNthOutput(0,(vtkDataObject*)output);
+    }
+    else
+    {
+        cerr << "ERROR: vtkFSSurfaceScalarReader::SetOutput passed a pointer to something not a vtkDataObject" << endl;
+        return;
+    }
 }
