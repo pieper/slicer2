@@ -113,12 +113,16 @@ proc EdPhaseWireInit {} {
 
     # center frequency controls sensitivity to different size image features
     # choices for omega (these should be chosen more carefully)
-    set Ed(EdPhaseWire,omega,idList) {PiOverThree PiOverFour PiOverSix}
-    #set Ed(EdPhaseWire,omega,nameList) {"pi/3" "pi/4" "pi/6"}
+    # note that the mult by cos^2 kills high freq parts of filter and 
+    # means we need higher freqs. here than we were using before, 
+    # in order to get good results w/ small structures
+    # (unless this is caused by something else -- like larger 
+    # kernel size?)
+    set Ed(EdPhaseWire,omega,idList) {Pi PiOverSqrtTwo PiOverTwo }
     set Ed(EdPhaseWire,omega,nameList) {"small" "medium" "large"}
     # current omega
-    set Ed(EdPhaseWire,omega,id) PiOverThree
-    set Ed(EdPhaseWire,omega,name) "pi/3"
+    set Ed(EdPhaseWire,omega,id) PiOverSqrtTwo
+    set Ed(EdPhaseWire,omega,name) "medium"
 
     # whether to w/l before computing phase
     set Ed($e,useWindowLevel) 1
