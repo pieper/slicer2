@@ -202,6 +202,145 @@ void vtkImageLiveWireEdgeWeights::GetFeatureSettingsString(char *settings)
 
 //----------------------------------------------------------------------------
 // Description:
+// Set the direction of the weighted graph edges 
+// that this filter should output
+void vtkImageLiveWireEdgeWeights::SetEdgeDirection(int dir)
+{
+
+  if (this->Neighborhood != 3) 
+    {
+      vtkErrorMacro("Only neighborhood width of 3 supported now");
+      return;      
+    }
+
+  // This confusing code is following the "graph edges are
+  // cracks between pixels" method of creating the 
+  // Livewire input graph.  So the center of the filter
+  // kernel is *between* two pixels.
+
+
+  // set up filter directionality
+  // ----------------------------------------------
+  // From paper, layout of neighborhood is:
+  // t | u
+  //   ^
+  // p | q  (p,q = the "bel" whose upward edge we are computing)
+  // v | w
+  // I want clockwise segmentation, so "q" should be inside the contour.
+
+  // compute these edges at each pixel, x:
+  //
+  //  ->  ^
+  //  | x |
+  //  V  <-
+  //
+  // then the right and down arrows belong to the upper left corner
+  // and the other two to the lower right corner.
+  // so shifting output images will give the correct:
+  //
+  //    ^
+  //  <-|->
+  //    V
+  // where each pixel has the correct weight for 
+  // all of one corner's outward paths
+  // (segmentation is done on the borders between pixels)
+  
+  // neighborhood looks like:
+  // 6 7 8
+  // 3 4 5
+  // 0 1 2
+
+  // rotate neighborhood for all edges.
+      
+  switch (dir) 
+    {
+    case UP_EDGE:
+      {
+	//      | 7 | 8 |        | t | u |
+	//          ^       OR       ^
+	// bel: | 4 | 5 |        | p | q |
+	//      | 1 | 2 |        | v | w |
+	//
+	t = 7; 
+	u = 8;
+	p = 4;
+	q = 5;
+	v = 1;
+	w = 2;
+	this->EdgeDirection = dir;
+	break;
+      }
+    case DOWN_EDGE:
+      {
+	//      | 6 | 7 |        | w | v |
+	// bel: | 3 | 4 |   OR   | q | p |
+	//          v                v
+	//      | 0 | 1 |        | u | t |
+	//
+	t = 1; 
+	u = 0;
+	p = 4;
+	q = 3;
+	v = 7;
+	w = 6;
+	this->EdgeDirection = dir;
+	break;
+      }
+    case LEFT_EDGE:
+      {
+	//  6   7  8              u   q  w
+	//  -- <- --        OR    -- <- --
+	//  3   4  5              t   p  v
+	t = 3; 
+	u = 6;
+	p = 4;
+	q = 7;
+	v = 5;
+	w = 8;
+	this->EdgeDirection = dir;
+	break;
+      }
+    case RIGHT_EDGE:
+      {
+	//  3  4   5              v  p   t
+	//  -- -> --        OR    -- -> --
+	//  0  1   2              w  q   u
+	t = 5; 
+	u = 2;
+	p = 4;
+	q = 1;
+	v = 3;
+	w = 0;
+	this->EdgeDirection = dir;
+	break;
+      }
+    default:
+      {
+	cout << "ERROR in vtkImageLiveWireEdgeWeights: "
+	     << "bad edge direction of: "
+	     << dir
+	     << "Defaulting to UP_EDGE" << '\n';
+	this->SetEdgeDirection(UP_EDGE);
+	break;
+      }
+    }
+
+}
+
+void vtkImageLiveWireEdgeWeights::GetKernelIndices(int &t, int &u, 
+						   int &p, int &q, 
+						   int &v, int &w)
+{
+  t = this->t;
+  u = this->u;
+  p = this->p;
+  q = this->q;
+  v = this->v;
+  w = this->w;
+
+}
+//----------------------------------------------------------------------------
+// Description:
 // This templated function executes the filter for any type of data.
 // For every pixel in the foreground, if a neighbor is in the background,
 // then the pixel becomes background.
@@ -225,34 +364,32 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
   int hoodIdx0, hoodIdx1, hoodIdx2;
   int offsetPtr0, offsetPtr1, offsetPtr2;
   int *nPtr0, *nPtr1, *nPtr2;
-  // Lauren should loop through hoodCopy nicer!
-  int maskInc0, maskInc1, maskInc2;
   // The extent of the whole input image
   int inImageMin0, inImageMin1, inImageMin2;
   int inImageMax0, inImageMax1, inImageMax2;
-  // Other
   T *outPtr = (T*)outData->GetScalarPointerForExtent(outExt);
   unsigned long count = 0;
   unsigned long target;
+  int t,u,p,q,v,w;
+  int numFeatures, neighborhoodWidth;
 
-  clock_t tStart, tEnd, tDiff;
-  tStart = clock();
+  //clock_t tStart, tEnd, tDiff;
+  //tStart = clock();
   
   // how many features to compute per voxel
-  int numFeatures = self->GetNumberOfFeatures();
+  numFeatures = self->GetNumberOfFeatures();
   
   // Get information to march through data
   inDatas[0]->GetIncrements(inInc0, inInc1, inInc2); 
   self->GetInput()->GetWholeExtent(inImageMin0, inImageMax0, inImageMin1,
 				   inImageMax1, inImageMin2, inImageMax2);
-  //cout << inImageMin2 << " " << inImageMax2 << '\n';
   outData->GetIncrements(outInc0, outInc1, outInc2); 
   outMin0 = outExt[0];   outMax0 = outExt[1];
   outMin1 = outExt[2];   outMax1 = outExt[3];
   outMin2 = outExt[4];   outMax2 = outExt[5];
 
   // Neighborhood around current voxel
-  //----- Lauren this is hard-coded for Neighborhood == 3 now: -----
+  // Lauren we only handle Neighborhood == 3 now
   hoodMin0 = - 1;
   hoodMin1 = - 1;
   hoodMin2 = 0;
@@ -260,143 +397,23 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
   hoodMax0 = 1;
   hoodMax1 = 1;
   hoodMax2 = 0;
-  //cout << hoodMin0<<hoodMax0<<hoodMin1 <<hoodMax1 << hoodMin2 <<hoodMax2 << '\n';
-  // Set up mask info
-  //  maskPtr = (unsigned char *)(self->GetMaskPointer());
-  // Lauren use to loop through hoodCopy
-  // Lauren fix this!
-  maskInc0 = 1;
-  maskInc1 = 3;
-  maskInc2 = 9;
 
   // in and out should be marching through corresponding pixels.
   target = (unsigned long)((outMax2-outMin2+1)*
 			   (outMax1-outMin1+1)/50.0);
   target++;
 
+  // only 3 is supported now
+  neighborhoodWidth = self->GetNeighborhood();
 
-  // set up filter directionality
-  // ----------------------------------------------
-  // From paper, layout of neighborhood is:
-  // t | u
-  //   ^
-  // p | q  (p,q = the "bel" whose upward edge we are computing)
-  // v | w
-  // I want clockwise segmentation, so "q" should be inside.
+  // get indices into neighborhood for this edge orientation
+  self->GetKernelIndices(t,u,p,q,v,w);
 
-  int neighborhoodWidth = self->GetNeighborhood();
-
-  int t,u,p,q,v,w;
-  t = u = p = q = v = w = 0;
-
-  if (neighborhoodWidth == 3) 
-    {
-      // compute these edges at each pixel, x:
-      //
-      //  ->  ^
-      //  | x |
-      //  V  <-
-      //
-      // then the right and down arrows belong to the upper left corner
-      // and the other two to the lower right corner.
-      // so shifting output images will give the correct:
-      //
-      //    ^
-      //  <-|->
-      //    V
-      // where each pixel has the correct weight for 
-      // all of one corner's outward paths
-      // (segmentation is done on the borders between pixels)
-      
-      // neighborhood looks like:
-      // 0 1 2
-      // 3 4 5
-      // 6 7 8
-      // rotate neighborhood for all edges.
-      
-      switch (self->GetEdgeDirection()) 
-	{
-	case UP_EDGE:
-	  {
-	    //      | 7       | 8       |
-	    // bel: | 4 (out) | 5 (in)  |
-	    //                V
-	    //      | 6       | 7       |
-	    //
-	    // this seems to point down, but so does vtk's y-axis.
-	    t = 7; 
-	    u = 8;
-	    p = 4;
-	    q = 5;
-	    v = 1;
-	    w = 2;
-	    break;
-	  }
-	case DOWN_EDGE:
-	  {
-	    //      | 6       | 7      |
-	    // bel:           ^
-	    //      | 3 (in)  | 4 (in) |
-	    //      | 0       | 1      |
-	    //
-	    t = 1; 
-	    u = 0;
-	    p = 4;
-	    q = 3;
-	    v = 7;
-	    w = 6;
-	    break;
-	  }
-	case LEFT_EDGE:
-	  {
-	    //  6  bel: 7 (out)  8
-	    //         <----
-	    //  3       4 (in)   5
-	    t = 3; 
-	    u = 6;
-	    p = 4;
-	    q = 7;
-	    v = 5;
-	    w = 8;
-	    break;
-	  }
-	case RIGHT_EDGE:
-	  {
-	    // 3  bel: 4 (out)   5
-	    //         ---->
-	    // 0       1 (in)    2
-	    t = 5; 
-	    u = 2;
-	    p = 4;
-	    q = 1;
-	    v = 3;
-	    w = 0;
-	    break;
-	  }
-	default:
-	  {
-	    cout << "ERROR in vtkImageLiveWireEdgeWeights: "
-		 << "bad edge direction of: "
-		 << self->GetEdgeDirection() 
-		 << "Defaulting to UP_EDGE" << '\n';
-	    self->SetEdgeDirection(UP_EDGE);
-	    t = 7; 
-	    u = 8;
-	    p = 4;
-	    q = 5;
-	    v = 1;
-	    w = 2;
-	    break;
-	  }
-	}
-      
-    }
-
-  // offsets to index into neighboring pixels
+  // offsets to index into neighborhood pixels
   int *n = new int[neighborhoodWidth*neighborhoodWidth];
-
+  
   // loop through neighborhood indices and record offsets 
-  // from inPtr0 in n[] array
+  // from inPtr0 in n[] array 
   offsetPtr2 = inInc0*hoodMin0 + inInc1*hoodMin1 + inInc2*hoodMin2;
   nPtr2 = n;
   for (hoodIdx2 = hoodMin2; hoodIdx2 <= hoodMax2; ++hoodIdx2)
@@ -439,10 +456,9 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
       sumOfWeights += self->GetWeightForFeature(i);
     }
 
-  float testMax = -1;
-  float testMin = 256;
-  float testMax2 = -1;
-  float testMin2 = 256;
+  // factor to scale output values from 1 to maxEdge.
+  float edgeFactor = maxEdge/sumOfWeights;
+
 
   // loop through pixels of output
   outPtr2 = outPtr;
@@ -470,14 +486,10 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 	  inTPtr0 = inTPtr1;
 	  for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
 	    {
-	      //cout << "(" << outIdx0 << "," << outIdx1 <<"," << outIdx2 <<")" << '\n';
-
 	      // ---- Neighborhood Operations ---- //
 
-	      // make sure *entire* kernel is within boundaries.
-	      // Note this means that a 3-D kernel won't 
-	      // work on 2-D input!
-	      // Lauren this is faster but better other way?
+	      // make sure *entire* kernel is within boundaries
+	      // this is a bit faster and we don't care about edges of image
 	      if (outIdx0 + hoodMin0 >= inImageMin0 &&
 		  outIdx0 + hoodMax0 <= inImageMax0 &&
 		  outIdx1 + hoodMin1 >= inImageMin1 &&
@@ -485,14 +497,9 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 		  outIdx2 + hoodMin2 >= inImageMin2 &&
 		  outIdx2 + hoodMax2 <= inImageMax2)
 		{
-		  // Lauren!  if gradient doesn't agree with desired one,
-		  // this is when q/p should be switched!  so 
-		  // need to keep track of *desired* gradient!  It is not correct right now!
-
 		  // FEATURES
-		  // (Please document all new features here.)
-		  // 0: in pix magnitude = q OR p, depending on gradient dir
-		  // 1: out pix magnitude = p OR q, "
+		  // 0: in pix magnitude = q 
+		  // 1: out pix magnitude = p
 		  // 2: outpix-inpix = p-q
 		  // 3: gradient = (1/3)*(p+t+v-u-q-w)				
 		  // 4: gradient = (1/2)*(p+t/2+v/2 -u-q/2-w/2)
@@ -501,38 +508,13 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 		  if (neighborhoodWidth == 3) 
 		    {
 		      T *ptr = inPtr0;
-		      // Compute various features:			  
+		      // Compute various features:
+		      // Lauren we assume NumberOfFeatures = 6
+		      features[0] = *(ptr+n[q]); 
+		      features[1] = *(ptr+n[p]);
 		      features[2] = *(ptr+n[p]) - *(ptr+n[q]);
 
-		      //  		  cout << n[p] << '\n';
-		      //  			  cout << n[q] << '\n';
-		      //  			  cout << n[t] << '\n';
-		      //  			  cout << n[u] << '\n';
-		      //  			  cout << n[v] << '\n';
-		      //  			  cout << n[w] << '\n';
-
 		      features[3] = .333333*(*(ptr+n[p])+*(ptr+n[t])+*(ptr+n[v])-*(ptr+n[u])-*(ptr+n[q])-*(ptr+n[w]));
-
-
-		      features[0] = *(ptr+n[q]); // "in"
-		      features[1] = *(ptr+n[p]);
-
-		      // Lauren: if f3 > 0 actually the 'inside' pixel 
-		      // is darker.  so the below code is backwards:
-		      // switching is only good for consistency if we 
-		      // don't know the desired gradient, it seems...
-
-		      // "in" corresponds to side of bel with higher intensity//  .
-//  		      if (features[3] > 0)
-//  			{
-//  			  features[0] = *(ptr+n[q]); // "in"
-//  			  features[1] = *(ptr+n[p]);
-//  			}
-//  		      else 
-//  			{
-//  			  features[0] = *(ptr+n[p]);
-//  			  features[1] = *(ptr+n[q]);
-//  			}
 
 		      features[4] = .5*(*(ptr+n[p])+*(ptr+n[t])/2+*(ptr+n[v])/2
 					-*(ptr+n[u])-*(ptr+n[q])/2-*(ptr+n[w])/2);
@@ -540,89 +522,26 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 					 *(ptr+n[p])-*(ptr+n[w]) + *(ptr+n[v])-*(ptr+n[q]));
 		    }
 		  else
-		    if (neighborhoodWidth == 5) 
-		      {
-			// compute same stuff as above smaller kernel
-			    
-			// in pix magnitude = p
-			features[0] = n[12];
-			// out pix magnitude = q
-			features[1] = n[11];
-			// inpix-outpix = p-q
-			features[2] = n[12]-n[11];
-			// gradient = (1/3)*(p+t+v-u-q-w)
-			features[3] = .333333*(n[11]+n[6]+n[16]
-					       -n[7]-n[12]-n[17]);
-			// gradient = (1/2)*(p+t/2+v/2 -u-q/2-w/2)
-			features[4] = .5*(n[11]+n[6]/2+n[16]/2
-					  -n[7]-n[12]/2-n[17]/2);
-			// gradient = (1/4)*(p-u + t-q + p-w + v-q)
-			features[5] = .25*(n[11]-n[7] + n[6]-n[12] + 
-					   n[11]-n[17] + n[16]-n[12]);
+		    {
+		      // we don't handle other neighorhood sizes
+		      memset(features,0,numFeatures*sizeof(float));
+		    }
 
-			// compute larger kernel size things
-			// 2 in pix avg magnitude
-			features[6] = .5*(n[12] + n[13]);
-			// 2 out pix avg magnitude
-			features[7] = .5*(n[10] + n[11]);
-			// 4 in pix avg magnitude
-			features[8] = .25*(n[12]+n[13]+n[8]+n[18]);
-			// 4 out pix avg magnitude
-			features[9] = .25*(n[10]+n[11]+n[5]+n[15]);
-
-			// weird: sort of std. dev (in)
-			features[10] = n[8]+n[13]+n[18]-3*n[12];
-			features[11] = n[5]+n[10]+n[15]-3*n[11];
-
-			// variances...
-			// 2 in pix var
-			float m = features[6];
-			features[12] = .5*((n[12]-m)*(n[12]-m) + 
-					   (n[13]-m)*(n[13]-m));
-			// 2 out pix var
-			m = features[9];
-			features[13] = .5*((n[10]-m)*(n[10]-m) + 
-					   (n[11]-m)*(n[11]-m));
-			// 4 in pix var
-			m = features[8];
-			features[14] = .25*((n[12]-m)*(n[12]-m) + 
-					    (n[13]-m)*(n[13]-m) +
-					    (n[8]-m)*(n[8]-m) +
-					    (n[18]-m)*(n[18]-m));
-
-			// 4 out pix var
-			m = features[9];
-			features[15] = .25*((n[10]-m)*(n[10]-m) + 
-					    (n[11]-m)*(n[11]-m) +
-					    (n[5]-m)*(n[5]-m) +
-					    (n[15]-m)*(n[15]-m));
-			// Lauren need to do in/out depending on gradient dir!
-			    
-			//also 3 pix mean, var?
-			    
-						
-		      }			
-
-		  // Lauren 3D kernel someday!!!!!!
-
+		  // TRAINING
 		  // If we are in training mode, need to compute
 		  // average values of each feature over certain
 		  // points in the image
+		  // ----------------------------------------------
 		  if (self->GetTrainingMode()) 
 		    {
-		      float point[3];
-		      point[0] = outIdx0;
-		      point[1] = outIdx1;
-		      point[2] = 0;
-		      
 		      // if this (inside, or 'q') pixel is in the
 		      // segmented area, and its neighboring
 		      // outside, or 'p', pixel, is NOT.
 		      if (*(inTPtr0 + n[q]) == 1 && *(inTPtr0 + n[p]) == 0){
-			//cout << "point: " << point[0] << " " << point[1];
+			//cout << "point: " << outIdx0 << " " << outIdx1;
 			for (int i=0;i<numFeatures;i++)
 			  {
-			    // train at this spot
+			    // train each feature at this spot
 			    average[i] += features[i];
 			    variance[i] += (features[i])*(features[i]);
 			  }		
@@ -637,44 +556,23 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 		    {
 		      props = self->GetFeatureSettings(i);
 
-		      // don't compute if weight is 0
+		      // don't compute slow gaussian if weight is 0
 		      if (props->Weight != 0) 
 			{
-			  //sum += props->Weight*GaussianC(features[i],props->TransformParams[0],props->TransformParams[1]);
+			  sum += props->Weight*GaussianC(features[i],props->TransformParams[0],props->TransformParams[1]);
 
-			  // junk for testing:
-			  float tmp2 = GaussianC(features[i],props->TransformParams[0],props->TransformParams[1]);
-			  if (tmp2 > 1)
-			    cout << "feature " << i << " too large: " << tmp2 << '\n';
-			  
-			  float tmp = props->Weight*tmp2;
-			  if (tmp < testMin) 
-			    testMin = tmp;
-			  else
-			    if (tmp > testMax)
-			      testMax = tmp;
-			 
-			  sum += tmp;
-			  
 			}
 		    }
 		  // each feature is between 0 and its Weight.  
 		  // normalize sum to 1 and multiply by max edge cost.
-		  *outPtr0 = (T) (sum*maxEdge/sumOfWeights);
-		  float tmp = (sum*maxEdge/sumOfWeights);
-		  if (tmp < testMin2) 
-		    testMin2 = tmp;
-		  
-		  if (tmp > testMax2)
-		    testMax2 = tmp;
-		  
+		  *outPtr0 = (T) (sum*edgeFactor);
 
 		  if (*outPtr0 > maxEdge) 
 		    {
 		      cout << "ERROR in vtkImageLWEdgeWeights: edge cost too high " << *outPtr0 << '\n';
 		    }
 		      
-		}  // end neighborhood operations
+		}  // end if whole kernel in bounds
 	      else
 		{
 		  // handle boundaries: default output equal to max edge value
@@ -696,6 +594,7 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
       outPtr2 += outInc2;
     }//for2
 
+  // Clean up temp storage
   if (n != NULL) 
     {
       delete [] n;
@@ -705,6 +604,7 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
       delete [] features;
     }
 
+  // Finish training computations
   if (self->GetTrainingMode()) 
     {
       // increment the running number of points
@@ -712,9 +612,10 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
       numPoints += numberOfTrainingPoints;
       self->SetRunningNumberOfTrainingPoints(numPoints);
 
-      cout << "total points: " << numPoints << "num points: " << numberOfTrainingPoints << '\n';
+      //cout << "total points: " << numPoints << "num points: " << numberOfTrainingPoints << '\n';
 
-      // if we are not doing running totals, finish computing averages
+      // if we are not doing running totals (multi-slice training), 
+      // finish computing averages.
       // (this could also be the last slice of a running total)
       if (!self->GetTrainingComputeRunningTotals())
 	{
@@ -725,11 +626,11 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 	    for (int i=0;i<numFeatures;i++)
 	      {
 		average[i] = average[i]/numPoints;
-		cout << "avg: " << average[i] << " ";
+		//cout << "avg: " << average[i] << " ";
 		variance[i] = variance[i]/numPoints - (average[i])*(average[i]);
-		cout << "var: " << variance[i] << " ";
+		//cout << "var: " << variance[i] << " ";
 	      }			  
-	    cout << '\n';
+	    //cout << '\n';
 	    
 	    // set the total number of points used to compute the averages
 	    self->SetNumberOfTrainingPoints(numPoints);
@@ -738,7 +639,6 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 	    self->SetRunningNumberOfTrainingPoints(0);
 	    
 	    // set this filter's settings to the trained ones.
-	    // Lauren do weight if train it later
 	    for (int f=0;f<numFeatures;f++)
 	      {
 		self->SetParamForFeature(f,0,average[f]);
@@ -754,10 +654,9 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 	}
     }
 
-  //cout << "min: " << testMin << " max: " << testMax << " min2: " << testMin2 << " max2: " << testMax2 << '\n';
-  tEnd = clock();
-  tDiff = tEnd - tStart;
-  cout << "time: " << tDiff << '\n';
+  //tEnd = clock();
+  //tDiff = tEnd - tStart;
+  //cout << "time: " << tDiff << '\n';
 }
 
 //----------------------------------------------------------------------------

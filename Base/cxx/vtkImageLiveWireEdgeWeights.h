@@ -102,7 +102,7 @@ public:
 #define LEFT_EDGE 2
 #define RIGHT_EDGE 3
   vtkGetMacro(EdgeDirection, int);
-  vtkSetMacro(EdgeDirection, int);
+  void SetEdgeDirection(int edge);
 
   // Description: 
   // Set/Get the filename where the feature values will be written
@@ -187,6 +187,10 @@ public:
   // internal access from Execute: don't call this
   vtkSetMacro(NumberOfTrainingPoints,int);
 
+  // Description:
+  // internal access from Execute: don't call this
+  void GetKernelIndices(int &t, int &u, int &p, int &q, int &v, int &w);
+
 protected:
   vtkImageLiveWireEdgeWeights();
   ~vtkImageLiveWireEdgeWeights();
@@ -224,6 +228,10 @@ protected:
   // Description:
   // total number of points used in computing averages/variances
   int NumberOfTrainingPoints;
+
+  //BTX
+  int t,u,p,q,v,w;
+  //ETX
 
   void ExecuteInformation(vtkImageData **inputs, vtkImageData *output); 
 
