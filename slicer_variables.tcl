@@ -46,7 +46,7 @@ switch $tcl_platform(os) {
     }
 }
 
-puts "SLICER_HOME is $::SLICER_HOME"
+puts stderr "SLICER_HOME is $::SLICER_HOME"
 
 set ::SLICER_LIB $SLICER_HOME/Lib/$::env(BUILD)
 set ::VTK_DIR  $::SLICER_LIB/VTK-build
