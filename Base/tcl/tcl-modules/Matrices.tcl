@@ -73,7 +73,7 @@ proc MatricesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.24 $} {$Date: 2002/01/26 23:34:31 $}]
+		{$Revision: 1.25 $} {$Date: 2002/02/28 01:30:45 $}]
 
 	# Props
 	set Matrix(propertyType) Basic
@@ -1230,7 +1230,11 @@ Automatic registration is presently available only on UNIX systems."
 	puts $fid "matrix [Matrix($t,node) GetMatrix]"
 	MatricesWritePseudoMrmlVolume $fid $v
 
-	close $fid
+	if {[catch {close $fid} errorMessage]} {
+		tk_messageBox -type ok -message "The following error occurred saving a file: ${errorMessage}"
+		puts "Aborting due to : ${errorMessage}"
+   		exit 1
+  	}
 
 	# Command to run MI
 	set argBin     "[file join $Path(program) mi-bin]"
