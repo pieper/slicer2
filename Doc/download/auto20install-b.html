@@ -12,7 +12,7 @@ computer before you may begin the installation process.
 <h4>System Requirements</h4>
 <ul>
 <li><b>Memory</b>:  Minimum 128Mb, recommended 256Mb or greater.
-<li><b>Disk Space</b>: 11.5Mb to download the installer, which expands to about 45Mb. The tutorial data set requires 37Mb.
+<li><b>Disk Space</b>: 11.5Mb to download the installer, which expands to about 45Mb. The tutorial data set requires 37Mb. For Slicer2, the installer is about 80Mb, and expands to 335Mb since it contains the source code and executables for Windows, Linux and Solaris.
 <li><b>Processor Speed</b>: Has been successfully run on a 333MHz machine with Win 95, though faster processor speeds are recommended.
 <li><b>Graphics Card</b>: Some older video cards and some laptops
 restrict the amount of memory allocated to graphics functions and may
@@ -33,7 +33,7 @@ The installation may overwrite VTK or TCL/TK libraries in your
 <ol>
 
 <li>
-If you already have an older version of Slicer installed, uninstall
+If you already have an older version, such as Slicer 1.3, installed via the InstallShield self extracting executable, uninstall
 it.  Slicer can be removed using the standard tools in the Windows
 Control Panel. For example, with Windows 2000, from the <b>Start</b>
 menu, select <b>Settings</b>, then <b>Control Panel</b>, then
@@ -41,15 +41,15 @@ menu, select <b>Settings</b>, then <b>Control Panel</b>, then
 uninstall.
 
 <br>&nbsp;<li>
-Download the PC version of Slicer onto your computer. FTP instructions
+Download Slicer2 onto your computer. FTP instructions
 were emailed to you upon receipt of your signed Software License
 Agreement. If you have not done this yet, click <a
 href='index.html#1'>here</a>.
 
 <br>&nbsp;<li>
-Double-click on the self extracting executable file to start the
-installation procedure. 
-
+Double-click on the archive files (usually a .tar.gz that Winzip can handle) to extract it to a directory using folder names. Under Options, Configuration, the Miscellaneous tab, ensure that the TAR file smart CR/LF conversion option is not checked, otherwise the image files will not be extracted properly.
+Please make sure that there are no spaces in any of the directories included in the path to  where you have extracted slicer2, for example, put it in "C:\slicer2". 
+<!--
 <br>&nbsp;<li>
 When the install shield has completed, a shortcut will appear in your
 <b>Start</b> Menu, under <b>Programs</b>.
@@ -69,6 +69,9 @@ If you are running Windows 95, you will need to reboot your machine after instal
 <br>&nbsp;<li>
 You are now ready to run by clicking on <b>Start</b> then
 <b>Programs</b> then the Slicer shortcut.
+-->
+<br>&nbsp;<li>You are now ready to run by double clicking on <b>slicer2-win32.exe</b>.
+
 </ol>
 
 <!---------------------------------- FAQ ------------------------------------->
@@ -79,8 +82,8 @@ You are now ready to run by clicking on <b>Start</b> then
 </tr>
 <tr>
 <td class=box0>
-    <div class=q>What if I need more detailed instructions for installing under WindowsNT?</div>
-    <div class=a>Look in the Developers Guide, under <a href="../devl/index.html#5">WinNT Install</a></div>
+    <div class=q>What if I need more detailed instructions for installing under Windows?</div>
+    <div class=a>Look in the Developers Guide, under <a href="../devl/index.html#5">Windows Install</a></div>
 </td>
 </tr>
 <tr>
