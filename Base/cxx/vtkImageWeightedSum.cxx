@@ -1,0 +1,311 @@
+/*=auto=========================================================================
+
+(c) Copyright 2001 Massachusetts Institute of Technology
+
+Permission is hereby granted, without payment, to copy, modify, display 
+and distribute this software and its documentation, if any, for any purpose, 
+provided that the above copyright notice and the following three paragraphs 
+appear on all copies of this software.  Use of this software constitutes 
+acceptance of these terms and conditions.
+
+IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, 
+INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE 
+AND ITS DOCUMENTATION, EVEN IF MIT HAS BEEN ADVISED OF THE POSSIBILITY OF 
+SUCH DAMAGE.
+
+MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING, 
+BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR 
+A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+
+THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE 
+MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+
+=========================================================================auto=*/
+#include "vtkImageWeightedSum.h"
+#include "vtkObjectFactory.h"
+#include <math.h>
+#include <time.h>
+
+//------------------------------------------------------------------------------
+vtkImageWeightedSum* vtkImageWeightedSum::New()
+{
+  // First try to create the object from the vtkObjectFactory
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkImageWeightedSum");
+  if(ret)
+    {
+      return (vtkImageWeightedSum*)ret;
+    }
+  // If the factory was unable to create the object, then create it here.
+  return new vtkImageWeightedSum;
+}
+
+//----------------------------------------------------------------------------
+// Description:
+// Constructor sets default values
+vtkImageWeightedSum::vtkImageWeightedSum()
+{
+  // all inputs 
+  this->NumberOfRequiredInputs = 1;
+  this->NumberOfInputs = 0;
+
+  // array of weights: need as many as inputs
+  // Lauren should default to 1/NumberOfInputs if not set!
+  this->Weights = vtkFloatArray::New();
+  // 1st component is set by user, second is normalized
+  this->Weights->SetNumberOfComponents(2);
+}
+
+
+//----------------------------------------------------------------------------
+vtkImageWeightedSum::~vtkImageWeightedSum()
+{
+  if (this->Weights != NULL)
+    {
+      this->Weights->Delete();
+    }
+}
+
+# define COMPONENT_WEIGHT 0
+# define COMPONENT_NORM_WEIGHT 1
+
+void vtkImageWeightedSum::NormalizeWeights()
+{
+  // sum weights and norm each one by this
+  int numberOfWeights = this->Weights->GetNumberOfTuples();
+  float sum = 0;
+
+  // sum weights (component 0)
+  for (int i = 0; i < numberOfWeights; i++) {
+    sum += this->Weights->GetComponent(i,COMPONENT_WEIGHT);
+  }
+  
+  // normalize by sum (and set component 1)
+  float norm;
+  for (int j = 0; j < numberOfWeights; j++) {
+    norm = this->Weights->GetComponent(j,COMPONENT_WEIGHT)/sum;
+    this->Weights->SetComponent(j,COMPONENT_NORM_WEIGHT,norm);
+  }
+}
+
+void vtkImageWeightedSum::SetWeightForInput(int i, float w)
+{
+  this->Weights->InsertComponent(i,COMPONENT_WEIGHT,w);
+  // need to fill entire component, so set norm weight to 0 for now
+  this->Weights->InsertComponent(i,COMPONENT_NORM_WEIGHT,0);
+  this->NormalizeWeights();
+  this->Modified();
+}
+
+float vtkImageWeightedSum::GetWeightForInput(int i) {
+
+  return(this->Weights->GetComponent(i,COMPONENT_WEIGHT));
+
+}
+
+float vtkImageWeightedSum::GetNormalizedWeightForInput(int i) {
+
+  return(this->Weights->GetComponent(i,COMPONENT_NORM_WEIGHT));
+
+}
+
+void vtkImageWeightedSum::CheckWeights() {
+
+  int numberOfWeights = this->Weights->GetNumberOfTuples();
+  int numberOfInputs = this->GetNumberOfInputs();
+  
+  if (numberOfWeights < numberOfInputs) {
+    // set the ones that haven't been set yet to 1
+    for (int i = numberOfWeights; i < numberOfInputs; i++) {
+      
+      this->Weights->InsertComponent(i,COMPONENT_WEIGHT,1);
+      // need to fill entire component, so set norm weight to 0 for now
+      this->Weights->InsertComponent(i,COMPONENT_NORM_WEIGHT,0);
+    }
+    
+    this->NormalizeWeights();
+  }
+}
+
+
+//----------------------------------------------------------------------------
+// Description:
+// This templated function executes the filter for any type of data.
+template <class T>
+static void vtkImageWeightedSumExecute(vtkImageWeightedSum *self,
+					      vtkImageData **inDatas, T **inPtrs,
+					      vtkImageData *outData,
+					      int outExt[6], int id)
+{
+  // For looping though output (and input) pixels.
+  int outMin0, outMax0, outMin1, outMax1, outMin2, outMax2;
+  int outIdx0, outIdx1, outIdx2;
+  int inInc0, inInc1, inInc2;
+  int inPhaseInc0, inPhaseInc1, inPhaseInc2;
+  int outInc0, outInc1, outInc2;
+  T **inPtrs0, **inPtrs1, **inPtrs2; 
+  T *outPtr0, *outPtr1, *outPtr2;
+  // The extent of the whole input image
+  int inImageMin0, inImageMin1, inImageMin2;
+  int inImageMax0, inImageMax1, inImageMax2;
+  T *outPtr = (T*)outData->GetScalarPointerForExtent(outExt);
+  unsigned long count = 0;
+  unsigned long target;
+  int numberOfInputs;
+  clock_t tStart, tEnd, tDiff;
+  tStart = clock();
+
+  // Get information to march through data
+  // all indatas are the same type, so use the same increments
+  inDatas[0]->GetIncrements(inInc0, inInc1, inInc2); 
+
+  // march through all inputs using array of input pointers.
+  numberOfInputs = self->GetNumberOfInputs();
+  inPtrs0 = new T*[numberOfInputs];
+  inPtrs1 = new T*[numberOfInputs];
+  inPtrs2 = new T*[numberOfInputs];
+
+  self->GetInput()->GetWholeExtent(inImageMin0, inImageMax0, inImageMin1,
+				   inImageMax1, inImageMin2, inImageMax2);
+
+  outData->GetIncrements(outInc0, outInc1, outInc2); 
+  outMin0 = outExt[0];   outMax0 = outExt[1];
+  outMin1 = outExt[2];   outMax1 = outExt[3];
+  outMin2 = outExt[4];   outMax2 = outExt[5];
+
+  // in and out should be marching through corresponding pixels.
+  target = (unsigned long)((outMax2-outMin2+1)*
+			   (outMax1-outMin1+1)/50.0);
+  target++;
+
+  // make sure that weights have been set adequately.
+  self->CheckWeights();
+
+  // loop through pixels of output (and all inputs)
+  int i = 0;
+  outPtr2 = outPtr;
+  for (i = 0; i < numberOfInputs; i++) {
+    inPtrs2[i] = inPtrs[i];
+  }
+  for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
+    {
+      outPtr1 = outPtr2;
+      for (i = 0; i < numberOfInputs; i++) {
+	inPtrs1[i] = inPtrs2[i];
+      }
+      for (outIdx1 = outMin1; 
+	   !self->AbortExecute && outIdx1 <= outMax1; outIdx1++)
+	{
+	  if (!id) 
+	    {
+	      if (!(count%target))
+		{
+		  self->UpdateProgress(count/(50.0*target));
+		}
+	      count++;
+	    }
+	      
+	  outPtr0 = outPtr1;
+	  for (i = 0; i < numberOfInputs; i++) {
+	    inPtrs0[i] = inPtrs1[i];
+	  }
+	  for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+	    {
+	      T sum = 0;
+	      for (i = 0; i < numberOfInputs; i++) {
+		 sum += (*inPtrs0[i]) * self->GetNormalizedWeightForInput(i);
+
+	      }
+	      *outPtr0 = sum;
+
+	      for (i = 0; i < numberOfInputs; i++) {
+		inPtrs0[i] += inInc0;
+	      }
+	      outPtr0 += outInc0;
+	    }//for0
+	  for (i = 0; i < numberOfInputs; i++) {
+	    inPtrs1[i] += inInc1;
+	  }
+	  outPtr1 += outInc1;
+	}//for1
+      for (i = 0; i < numberOfInputs; i++) {
+	inPtrs2[i] += inInc2;
+      }
+      outPtr2 += outInc2;
+    }//for2
+
+  tEnd = clock();
+  tDiff = tEnd - tStart;
+  //cout << "sum time: " << tDiff << endl;
+}
+
+//----------------------------------------------------------------------------
+// Description:
+// This method is passed a input and output data, and executes the filter
+// algorithm to fill the output from the input.
+// It just executes a switch statement to call the correct function for
+// the datas data types.
+void vtkImageWeightedSum::ThreadedExecute(vtkImageData **inDatas, 
+						 vtkImageData *outData,
+						 int outExt[6], int id)
+{
+  void **inPtrs = new void*[this->NumberOfInputs];
+  void *outPtr;
+  
+  for (int i = 0; i < this->NumberOfInputs; i++) 
+    {
+      inPtrs[i] = inDatas[i]->GetScalarPointerForExtent(inDatas[i]->GetExtent());
+    }
+
+  outPtr = outData->GetScalarPointerForExtent(outData->GetExtent());
+
+  switch (inDatas[0]->GetScalarType())
+    {
+    case VTK_FLOAT:
+      vtkImageWeightedSumExecute(this, inDatas, (float **)(inPtrs), 
+					outData, outExt, id);
+      break;
+    default:
+      vtkErrorMacro(<< "Execute: Bad input ScalarType, float needed");
+      return;
+    }
+
+  delete [] inPtrs;
+}
+
+// This should check all inputs are same type and size
+//----------------------------------------------------------------------------
+// Make sure both the inputs are the same size. Doesn't really change 
+// the output. Just performs a sanity check
+void vtkImageWeightedSum::ExecuteInformation(vtkImageData **inputs,
+						     vtkImageData *output)
+{
+  int *in1Ext, *in2Ext;
+
+  // we require that all inputs have been set.
+  if (this->NumberOfInputs < this->NumberOfRequiredInputs)
+    {
+      vtkErrorMacro(<< "ExecuteInformation: Expected " << this->NumberOfRequiredInputs << " inputs, got only " << this->NumberOfInputs);
+      return;      
+    }
+  
+  in1Ext = inputs[0]->GetWholeExtent();
+
+  if (this->NumberOfInputs > 1)
+    {
+      in2Ext = inputs[1]->GetWholeExtent();
+    }
+  else
+    return;
+
+  if (in1Ext[0] != in2Ext[0] || in1Ext[1] != in2Ext[1] || 
+      in1Ext[2] != in2Ext[2] || in1Ext[3] != in2Ext[3] || 
+      in1Ext[4] != in2Ext[4] || in1Ext[5] != in2Ext[5])
+    {
+      vtkErrorMacro("ExecuteInformation: Inputs are not the same size.");
+      return;
+    }
+
+  // we like floats
+  output->SetNumberOfScalarComponents(1);
+  output->SetScalarType(VTK_FLOAT);
+}
