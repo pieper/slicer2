@@ -110,6 +110,13 @@ public:
   unsigned int GetTargetShrinkFactors(const int &dir)
     { return TargetShrink[dir]; }
 
+
+  // Description:
+  // Reset the Multiresolution Settings
+  // It blanks the LearningRate and NumberOfIterations
+  void ResetMultiResolutionSettings() 
+    { LearningRate->Reset(); MaxNumberOfIterations->Reset(); };
+
   // Description:
   // Set the learning rate for the algorithm.
   // Generally between 0 and 1, most often 1e-4 or below

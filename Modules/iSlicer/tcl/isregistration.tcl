@@ -339,12 +339,17 @@ itcl::body isregistration::step {} {
 
     $_reg SetNumberOfSamples $itk_option(-samples)
 
+    ## Reset for MultiResSettings
+    $_reg ResetMultiResolutionSettings
+
     # set for MultiResStuff
     foreach iter  $itk_option(-iterations) {
+#        puts "$_reg SetNextMaxNumberOfIterations $iter"
         $_reg SetNextMaxNumberOfIterations $iter
     }
     foreach rate $itk_option(-learningrate) {
-    $_reg SetNextLearningRate  $rate
+#        puts "$_reg SetNextLearningRate  $rate"
+        $_reg SetNextLearningRate  $rate
     }
 
     if {[llength $itk_option(-iterations) ] != \

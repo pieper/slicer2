@@ -101,7 +101,7 @@ proc MutualInformationRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2003/09/10 15:07:01 $}]
+        {$Revision: 1.3 $} {$Date: 2003/09/10 15:40:33 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -407,8 +407,8 @@ proc MutualInformationRegistrationSlowParam {} {
     global MutualInformationRegistration
 
     set MutualInformationRegistration(Resolution)       128
-    set MutualInformationRegistration(LearningRate)    .0001
-    set MutualInformationRegistration(UpdateIterations) 2500
+    set MutualInformationRegistration(UpdateIterations) "500 1000"
+    set MutualInformationRegistration(LearningRate)    "0.0001 0.00001"
     set MutualInformationRegistration(NumberOfSamples)  50
     set MutualInformationRegistration(TranslateScale)   320
     # If Wells, Viola, Atsumi, etal, 
@@ -418,8 +418,8 @@ proc MutualInformationRegistrationSlowParam {} {
     # 2/256*2 = 0.015
     set MutualInformationRegistration(SourceStandardDeviation) 0.4
     set MutualInformationRegistration(TargetStandardDeviation) 0.4
-    set MutualInformationRegistration(SourceShrinkFactors)   "1 1 1"
-    set MutualInformationRegistration(TargetShrinkFactors)   "1 1 1"
+    set MutualInformationRegistration(SourceShrinkFactors)   "2 2 2"
+    set MutualInformationRegistration(TargetShrinkFactors)   "2 2 2"
 
 }
 
