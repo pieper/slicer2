@@ -51,11 +51,11 @@
 #-------------------------------------------------------------------------------
 # .PROC  EMSegmentSetVtkSuperClassSetting
 # Setting up everything for the super classes  
-# Only loaded for private version
+# Only loaded for private version 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet } {
+proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet} {
   global EMSegment Volume
   # Reads in the value for each class individually
   EMSegment(vtkEMSegment) SetNumClasses [llength $EMSegment(Cattrib,$SuperClass,ClassList)]
@@ -108,9 +108,18 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet } {
       }
       # Setup PCA parameter
       if {$EMSegment(Cattrib,$i,PCAMeanData) !=  $Volume(idNone) } {
-         # Kilian: Define here  
-      }
 
+         vtkImagePCAApply EMSegment(Cattrib,$i,vtkImagePCAApply) 
+     set NumEigenValues [llength $EMSegment(Cattrib,$i,PCAEigen)]
+     EMSegment(Cattrib,$i,vtkImagePCAApply) SetNumberOfEigenValues $NumEigenValues
+         EMSegment(Cattrib,$i,vtkImagePCAApply) SetMean $EMSegment(Cattrib,$i,PCAMeanData) 
+         foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
+            EMSegment(Cattrib,$i,vtkImagePCAApply)  SetEigenValue [lindex $EigenList 0] [lindex $EigenList 1] 
+        EMSegment(Cattrib,$i,vtkImagePCAApply)  SetEigenVector [lindex $EigenList 0]  [Volume([lindex $EigenList 2],vol) GetOutput] 
+     }
+     EMSegment(Cattrib,$i,vtkImagePCAApply) Update
+     EMSegment(vtkEMSegment) SetPCAShapePtr EMSegment(Cattrib,$i,vtkImagePCAApply)
+      }
     }
     EMSegment(vtkEMSegment) SetTissueProbability $EMSegment(Cattrib,$i,Prob)
     for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
@@ -125,7 +134,12 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet } {
   }
    return $NumInputImagesSet
 }
-
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentSetVtkClassSettingOld
+# Old function for Setting up everything for the EMAlgorithm
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EMSegmentSetVtkClassSettingOld {} {
   global EMSegment Volume
 
@@ -181,6 +195,24 @@ proc EMSegmentSetVtkClassSettingOld {} {
   # Transfer Bias Print out Information
   if {$EMSegment(BiasPrint)} {EMSegment(vtkEMSegment) SetBiasRootFileName $EMSegment(BiasRootFileName)}
 }
+
+#-------------------------------------------------------------------------------
+# .PROC  EMSegmentDeletevtkImagePCAApply 
+# After each segmentation we need to delete all vtkImagePCAApply filters
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMSegmentDeletevtkImagePCAApply { SuperClass } {
+  global EMSegment
+  foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
+    if {$EMSegment(Cattrib,$i,IsSuperClass)} {
+      EMSegmentDeletevtkImagePCAApply $i 
+    } else {
+    catch {EMSegment(Cattrib,$i,vtkImagePCApply) Delete}
+    }
+  }
+} 
+ 
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentAlgorithmStart
 # Sets up the segmentation algorithm
@@ -335,3 +367,15 @@ proc EMSegmentTrainCIMField {} {
     # Move Button to Edit
     # set EMSegment(TabbedFrame,$EMSegment(Ma-tabCIM),tab) Edit
 }
+
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentAlgorithmDeletevtkEMSegment
+# Delete vtkEMSegment related parameters 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMSegmentAlgorithmDeletevtkEMSegment { } {
+     global EMSegment
+     EMSegmentDeletevtkImagePCAApply 0
+     EMSegment(vtkEMSegment) Delete
+ }

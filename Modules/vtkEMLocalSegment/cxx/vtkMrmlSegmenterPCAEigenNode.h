@@ -73,7 +73,14 @@ public:
   // Description:
   // Get/Set for SegmenterPCAEigen
   vtkGetMacro(Number, int);
-  vtkSetMacro(Number, int);
+  void SetNumber(int init) { 
+    this->Number = init; 
+    char *NameInit = new char[10];
+    sprintf(NameInit,"%d",init);
+    // So Name shows up in Data Window 
+    this->SetName(NameInit);
+    delete []NameInit;
+  }
 
   // Description:
   // Get/Set for SegmenterPCAEigen

@@ -235,7 +235,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.22 $} {$Date: 2004/02/19 03:04:16 $}]
+        {$Revision: 1.23 $} {$Date: 2004/02/20 14:11:12 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1622,7 +1622,7 @@ proc EMSegmentLoadMRML {tag attr} {
                     "localpriorweight"     {$n SetLocalPriorWeight $val}
                     "inputchannelweights"  {$n SetInputChannelWeights $val}
                     "pcameanname"          {$n SetPCAMeanName $val}
-                    "pcafilerange"         {$n SetPCAFileRange $val}
+                    "pcafilerange"         {eval $n SetPCAFileRange $val}
                 }
             }
     }
@@ -1940,13 +1940,13 @@ proc EMSegmentUpdateMRML {} {
         set pid [$item GetID]
     set NumClass $EMSegment(Class)
         # EigenList is defined by (Number, EigenValue, EigenVectorData, NodeID)        
-        set  EigenList [SegmenterPCAEigenClass($pid,node) GetNumber]
-        lappend  EigenList [SegmenterPCAEigenClass($pid,node) GetEigenValue]
-        set EigenVectorName [SegmenterPCAEigenClass($pid,node) GetEigenVectorName]
+        set  EigenList [SegmenterPCAEigen($pid,node) GetNumber]
+        lappend  EigenList [SegmenterPCAEigen($pid,node) GetEigenValue]
+        set EigenVectorName [SegmenterPCAEigen($pid,node) GetEigenVectorName]
         set EigenVectorID $Volume(idNone)
         foreach VolID $Volume(idList) VolAttr $VolumeList {
             if {([lindex $VolAttr 0] == $EigenVectorName) && ($EigenVectorName != "") && ([lindex $VolAttr 1] == $EMSegment(Cattrib,$NumClass,PCAFileRange))} { 
-        set EigenVectorID  $VolID 
+              set EigenVectorID  $VolID 
             }
     }
         lappend EigenList  $EigenVectorID
@@ -2270,10 +2270,10 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
       }
           set index 0
           foreach EigenList $EMSegment(Cattrib,$i,PCAEigen)  {
-             set Number [lindex $EigneList 0]
-             set EigenValue [lindex $EigneList 1]
-             set EigenVectorData [lindex $EigneList 2]
-             set NodeItem [lindex $EigneList 3]
+             set Number [lindex $EigenList 0]
+             set EigenValue [lindex $EigenList 1]
+             set EigenVectorData [lindex $EigenList 2]
+             set NodeItem [lindex $EigenList 3]
 
               #No Node defined 
              if { $NodeItem == "" } { 
@@ -2524,7 +2524,7 @@ proc EMSegmentStartEM { {save_mode "save"} } {
      }
      EMSegment(vtkEMSegment) SetOutput ""
      # Delete instance
-     EMSegment(vtkEMSegment) Delete
+     EMSegmentAlgorithmDeletevtkEMSegment
    }
    # ----------------------------------------------
    # 7. Run Dice measure if necessary 
@@ -3719,10 +3719,10 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
         unset EMSegment(Cattrib,$i,Prob) EMSegment(Cattrib,$i,ProbabilityData)
         unset EMSegment(Cattrib,$i,PCAMeanData) EMSegment(Cattrib,$i,PCAFileRange) 
         unset EMSegment(Cattrib,$i,ShapeParameter)
-    foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
-        if {[lindex $EigenList 3] != ""} {MainMrmlDeleteNode SegmenterPCAEigen [[lindex $EigenList 3] GetID] }
-    }
-        unset EMSegment(Cattrib,$i,PCAEigen) ""
+        foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
+           if {[lindex $EigenList 3] != ""} {MainMrmlDeleteNode SegmenterPCAEigen [[lindex $EigenList 3] GetID] }
+        }
+        unset EMSegment(Cattrib,$i,PCAEigen) 
 
 
         for {set y 0} {$y <  $EMSegment(MaxInputChannelDef)} {incr y} {
