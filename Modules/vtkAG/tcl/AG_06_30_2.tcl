@@ -147,7 +147,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2003/10/01 21:19:51 $}]
+        {$Revision: 1.1.1.1 $} {$Date: 2003/10/01 21:19:51 $}]
 
     # Initialize module-level variables
     #------------------------------------
