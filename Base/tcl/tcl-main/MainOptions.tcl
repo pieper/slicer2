@@ -307,10 +307,9 @@ proc MainOptionsUnparsePresets {} {
 				# Careful: if the user never clicked the button, then the preset
 				# doesn't exist.
 				if {[info exists Preset($name)] == 1} {
-					if {$Preset($name) != $Model($m,$key)} {
-						set wrote 1
-						set options "$options $name='$Preset($name)'"
-					}
+					# I could do a comparison with a default, but naahhh.
+					set wrote 1
+					set options "$options $name='$Preset($name)'"
 				}
 			}
 		}	

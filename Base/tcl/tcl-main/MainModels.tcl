@@ -1,4 +1,4 @@
-#=auto==========================================================================
+b#=auto==========================================================================
 # Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
 #  
 # Direct all questions regarding this copyright to slicer@ai.mit.edu.
@@ -837,7 +837,7 @@ since the last time it was saved."
 		return
 	}
 
-	Model($m,node) SetFileName [MainFileGetRelativePrefix $prefix.vtk]
+	Model($m,node) SetFileName [MainFileGetRelativePrefix $prefix].vtk
 	Model($m,node) SetFullFileName \
 		[file join $Mrml(dir) [Model($m,node) GetFileName]]
 
@@ -868,6 +868,8 @@ proc MainModelsStorePresets {p} {
 	foreach m $Model(idList) {
 		set Preset(Models,$p,$m,visibility) $Model($m,visibility)
 		set Preset(Models,$p,$m,opacity)    $Model($m,opacity)
+		set Preset(Models,$p,$m,clipping)   $Model($m,clipping)
+		set Preset(Models,$p,$m,backfaceCulling)   $Model($m,backfaceCulling)
 	}
 }
 	    
@@ -881,12 +883,13 @@ proc MainModelsRecallPresets {p} {
 		if {[info exists Preset(Models,$p,$m,opacity)] == 1} {
 			MainModelsSetOpacity $m $Preset(Models,$p,$m,opacity)
 		}
+		if {[info exists Preset(Models,$p,$m,clipping)] == 1} {
+			MainModelsSetClipping $m $Preset(Models,$p,$m,clipping)
+		}
+		if {[info exists Preset(Models,$p,$m,backfaceCulling)] == 1} {
+			MainModelsSetCulling $m $Preset(Models,$p,$m,backfaceCulling)
+		}
 	}	
 }
 
-
-
-
-
-		
 

@@ -310,7 +310,7 @@ proc MainInit {} {
 	set Module(procRecallPresets) ""
 	set m Main
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.23 $} {$Date: 2000/02/16 14:16:58 $}]
+		{$Revision: 1.24 $} {$Date: 2000/02/17 18:13:21 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -986,7 +986,7 @@ proc MainShowProgress {filter} {
 	}
        
 	set BarId [$Gui(fStatus).canvas create rect 0 0 [expr $progress*$width] \
-		$height -fill [MakeColorNormalized ".7 .7 .9"]]
+		$height -fill [MakeColorNormalized ".5 .5 1.0"]]
  
 	set TextId [$Gui(fStatus).canvas create text [expr $width/2] \
 		[expr $height/3] -anchor center -justify center -text \
