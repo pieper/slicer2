@@ -8,3 +8,4 @@ TestImageWeightedSum.tcl OK goot_test   vtkImageWeightedSum
 TestImageStatistics.tcl OK goot_test    vtkImageStatistics
 TestImageFIllROI.tcl    OK bad_test     vtkImageFillROI
 TestIndirectLookupTable OK not_sure     vtkIndirectLookupTable
+TestImageReformat       OK not_sure     vtkImageReformat

@@ -75,12 +75,17 @@ viewer SetColorLevel 1000
 source [file join [file dirname [info script]] WindowLevelInterface.tcl]
 
 ireform SetPoint 20 30
-puts "wld = [ireform GetWldPoint]"
-puts "ijk = [ireform GetIjkPoint]"
+#puts "wld = [ireform GetWldPoint]"
+#puts "ijk = [ireform GetIjkPoint]"
 
+set wld  [ireform GetWldPoint]
+set ijk  [ireform GetIjkPoint]
 
+if {[lindex $wld 0] != "0"} {error "Didn't get right answer for wld \"x\"!"}
+if {[lindex $wld 1] != "0"} {error "Didn't get right answer for wld \"y\"!"}
+if {[lindex $wld 2] != "0"} {error "Didn't get right answer for wld \"z\"!"}
 
-
-
-
+if {[lindex $ijk 0] != "128"} {error "Didn't get right answer for ijk \"x\"!" }
+if {[lindex $ijk 1] != "106.987"} {error "Didn't get right answer for ijk \"y\"!" }
+if {[lindex $ijk 2] != "29.75"} {error "Didn't get right answer for ijk \"z\"!" }
 
