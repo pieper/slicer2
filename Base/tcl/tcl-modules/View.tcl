@@ -48,8 +48,8 @@ proc ViewInit {} {
 
 	# Define Tabs
 	set m View
-	set Module($m,row1List) "Help View"
-	set Module($m,row1Name) "Help View"
+	set Module($m,row1List) "Help View Lights"
+	set Module($m,row1Name) "Help View Lights"
 	set Module($m,row1,tab) View
 
 	# Define Procedures
@@ -60,7 +60,7 @@ proc ViewInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.18 $} {$Date: 2001/05/12 15:50:42 $}]
+		{$Revision: 1.19 $} {$Date: 2001/09/20 20:11:34 $}]
 
 	set View(movie) 0
 	set View(movieDirectory) "/tmp"
@@ -99,8 +99,8 @@ set the size of the window to the desired size of the saved image.
 <BR><LI><B>Closeup</B> The Closeup window magnifies the slice window
 around the mouse cursor.  This option is not presently available on PCs.
 <BR><LI><B>Stereo</B> The Stereo mode allows viewing the 3D window in
-3D if you have Red/Blue glasses.  If you have chrystal eyes glasses,
-then edit the Slicer's TCL code to change the stereo mode in VTK.
+3D if you have Red/Blue glasses.  If you have crystal eyes glasses,
+then select the CrystalEyes stereo mode.
 <BR><LI><B>Background Color</B> When you threshold graylevel volumes,
 the view will look better if the background is black.
 <BR><LI><B>Record Movie</B> When this button is activated the 3D view
@@ -123,7 +123,7 @@ called <I>movie.mpg</I>.
 
 	frame $f.fSize    -bg $Gui(activeWorkspace) -relief groove -bd 3
 	frame $f.fBg      -bg $Gui(activeWorkspace)
-	frame $f.fStereo  -bg $Gui(activeWorkspace)
+	frame $f.fStereo  -bg $Gui(activeWorkspace) -relief groove -bd 3
 	frame $f.fCloseup -bg $Gui(activeWorkspace)
 	frame $f.fMovie   -bg $Gui(activeWorkspace) -relief groove -bd 3
 	pack $f.fSize $f.fBg $f.fCloseup $f.fStereo $f.fMovie \
@@ -184,6 +184,30 @@ called <I>movie.mpg</I>.
 	# View->Stereo Frame
 	#-------------------------------------------
 	set f $fView.fStereo
+
+	frame $f.fStereoType -bg $Gui(activeWorkspace)
+	frame $f.fStereoOn -bg $Gui(activeWorkspace)
+   	pack $f.fStereoType $f.fStereoOn -side top -pady 5
+
+	#-------------------------------------------
+	# View->Stereo->StereoType Frame
+	#-------------------------------------------
+	set f $fView.fStereo.fStereoType
+
+	foreach value "RedBlue CrystalEyes" width "12 12" {
+		eval {radiobutton $f.r$value -width $width \
+			-text "$value" -value "$value" \
+			-variable View(stereoType) \
+			-indicatoron 0 \
+			-command "MainViewSetStereo; Render3D"} \
+			$Gui(WCA)
+		pack $f.r$value -side left -padx 0 -pady 0
+	}
+
+	#-------------------------------------------
+	# View->Stereo->StereoOn Frame
+	#-------------------------------------------
+	set f $fView.fStereo.fStereoOn
 	
 	# Stereo button
     eval {checkbutton $f.cStereo \
@@ -223,6 +247,15 @@ called <I>movie.mpg</I>.
 		$f.mbFile.m add command -label $item -command "ViewSetMovieFileType $item"
 	}
 
+
+	#-------------------------------------------
+	# Lights frame
+	#-------------------------------------------
+	set fLights $Module(View,fLights)
+	set f $fLights
+	
+	eval {label $f.l -text "This is a nice place\n to put lighting controls\n for the light kit. "} $Gui(WLA)
+	pack $f.l -side left -padx $Gui(pad) -pady 0
 }
 
 #-------------------------------------------------------------------------------
