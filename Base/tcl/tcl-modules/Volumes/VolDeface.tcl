@@ -206,7 +206,7 @@ proc DefaceFindDICOM2 { StartDir AddDir Pattern } {
                        set StudyInstanceUID [string range $StudyInstanceUID [expr $zeros - 4] end]
                     } else {
                        set zeros [expr 4 - $zeros]
-                       for {set lloop $zeros} {$lloop > 0} {decr lloop } {
+                       for {set lloop $zeros} {$lloop > 0} {inrc lloop -1} {
                           set StudyInstanceUID "0$StudyInstanceUID"
                        }
                     }             
@@ -749,7 +749,6 @@ proc DefaceInvoke { parent idsnames study series fileNames } {
     global DefaceDir DefaceMaskDirList 
     global env
 
-    puts "DEFACE_DATA: $env(DEFACE_DATA)" 
     if { ![info exists env(DEFACE_DATA)] || \
     [file isdirectory $env(DEFACE_DATA)] == 0 } {
         set msg "1 Please set environmental variable DEFACE_DATA as\n"
@@ -757,6 +756,7 @@ proc DefaceInvoke { parent idsnames study series fileNames } {
         tk_messageBox -message $msg
         return 0
     }
+    puts "DEFACE_DATA: $env(DEFACE_DATA)" 
   
     set num [llength $DefaceMask]
     set ll_count 0
