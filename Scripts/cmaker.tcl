@@ -9,8 +9,8 @@ switch $tcl_platform(os) {
         # TODO
     }
     "Linux" {
-        set SLICER_HOME /home/pieper/slicer2/latest/slicer2
-        set VTK_BINARY_PATH /projects/birn/slicer2/Lib/redhat7.3/vtk/VTK-build
+        set SLICER_HOME /home/nicole/slicer2
+        set VTK_BINARY_PATH /usr/local/include/vtk
         set BUILD redhat7.3
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
         set GENERATOR "Unix Makefiles" 
@@ -36,12 +36,16 @@ set TARGETS {
         Modules/vtkFluxDiffusion
         Modules/vtkFreeSurferReaders
         Modules/vtkITK
-        Modules/vtkSlicerTensors
     }
 
 
 set VTK_ARG1 "-DUSE_BUILT_VTK:BOOL=ON"
 set VTK_ARG2 "-DVTK_BINARY_PATH:PATH=$VTK_BINARY_PATH"
+set VTK_ARG3 "-DCMAKE_BACKWARDS_COMPATIBILITY:STRING=1.2"
+set VTK_ARG4 "-DCMAKE_CXX_COMPILER:STRING=g++"
+set VTK_ARG5 "-DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=/usr/bin/g++"
+set VTK_ARG6 "-DBUILD_SHARED_LIBS:BOOL=ON"
+
 set SLICER_ARG1 "-DVTKSLICERBASE_SOURCE_DIR:PATH=$SLICER_HOME/Base"
 set SLICER_ARG2 "-DVTKSLICERBASE_BUILD_DIR:PATH=$SLICER_HOME/Base/builds/$BUILD"
 set SLICER_ARG3 "-DVTKSLICERBASE_BUILD_LIB:PATH=$SLICER_HOME/Base/builds/$BUILD/bin/debug/vtkSlicerBase.lib"
@@ -58,7 +62,7 @@ foreach target $TARGETS {
 
     puts "running cmake ..."
     exec cmake $SLICER_HOME/$target -G$GENERATOR \
-        $VTK_ARG1 $VTK_ARG2 \
+        $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 \
         $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3
 
     switch $tcl_platform(os) {
