@@ -101,7 +101,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.44 $} {$Date: 2004/01/05 22:35:50 $}]
+        {$Revision: 1.45 $} {$Date: 2004/01/26 13:07:54 $}]
     
     # Initialize module-level variables
     
@@ -660,13 +660,26 @@ proc FiducialsVTKCreatePoint { fid pid visibility} {
     global Fiducials Point Mrml Module
     
     
-    vtkVectorText Point($pid,text)
+    if { [info command vtkTextureText] != "" } {
+        vtkTextureText Point($pid,text)
+        Point($pid,text) SetBlur 2
+        Point($pid,text) SetStyle 2
+    } else {
+        vtkVectorText Point($pid,text)
+        Point($pid,text) SetText "   [Point($pid,node) GetName]"
+        vtkPolyDataMapper Point($pid,mapper)
+        Point($pid,mapper) SetInput [Point($pid,text) GetOutput]
+    }
     Point($pid,text) SetText "   [Point($pid,node) GetName]"
-    vtkPolyDataMapper Point($pid,mapper)
-    Point($pid,mapper) SetInput [Point($pid,text) GetOutput]
+
     foreach r $Fiducials(renList) {
         vtkFollower Point($pid,follower,$r)
-        Point($pid,follower,$r) SetMapper Point($pid,mapper)
+        if { [info command vtkTextureText] != "" } {
+            Point($pid,follower,$r) SetMapper [[Point($pid,text) GetFollower] GetMapper]
+            Point($pid,follower,$r) SetTexture [Point($pid,text) GetTexture]
+        } else {
+            Point($pid,follower,$r) SetMapper Point($pid,mapper)
+        }
         Point($pid,follower,$r) SetCamera [$r GetActiveCamera]
 
         # user matrix was making text disappear - changed to scale -sp 2002-12-15
@@ -1088,7 +1101,9 @@ proc FiducialsResetVariables {} {
                 $r RemoveActor Point($pid,follower,$r)
                 Point($pid,follower,$r) Delete
             }
-            Point($pid,mapper) Delete
+            if { [info command vtkTextureText] == "" } {
+                Point($pid,mapper) Delete
+            }
             Point($pid,text) Delete
         }
         
@@ -1491,7 +1506,9 @@ proc FiducialsDeletePoint {fid pid} {
         $r RemoveActor Point($pid,follower,$r)
         Point($pid,follower,$r) Delete
     }
-    Point($pid,mapper) Delete
+    if { [info command vtkTextureText] == "" } {
+        Point($pid,mapper) Delete
+    }
     Point($pid,text) Delete
 
     unset Point($pid,actor)
