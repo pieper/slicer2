@@ -105,7 +105,7 @@ proc MeasureInit {} {
     
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.19 $} {$Date: 2003/07/17 16:35:48 $}]
+        {$Revision: 1.20 $} {$Date: 2003/08/06 23:12:05 $}]
     
     # Initialize module-level variables
     #    set Measure(Model1) $Model(idNone)
@@ -222,7 +222,7 @@ The measurement tools can be used to calculate the:
           'Measure' drop down list box.  
           Note that only the distance 
           between the first two fiducials 
-          selected will be reported if
+          selected on the active list will be reported if
           more than one fiducial has been
           selected.
 
@@ -234,7 +234,7 @@ The measurement tools can be used to calculate the:
           the 'Measure' drop down list
           box.  Note that only the angle
           between the first three
-          fiducials selected will be
+          fiducials selected on the active list will be
           reported if more than one
           fiducial has been selected.
           Also, note that the angle
@@ -678,11 +678,18 @@ proc MeasureDistance {} {
 proc MeasureAngle {} {
     global Point
     
-    set list [FiducialsGetAllSelectedPointIdList]
+    # set list [FiducialsGetAllSelectedPointIdList]
+    # get the selected points from the ACTIVE list
+    set list [FiducialsGetActiveSelectedPointIdList]
     set idA [lindex $list 0]
     set idB [lindex $list 1]
     set idC [lindex $list 2]
     set npts [llength $list]
+    if {$idA == "" || $idB == "" || $idC == ""} {
+        set msg "Warning: the active list ($::Fiducials(activeList)) does not have three points selected to measure the angle between."
+        MeasureOutput $msg
+        return
+    }
     ##    set idA [lindex $Point(selected) 0]
     ##    set idB [lindex $Point(selected) 1]
     ##    set idC [lindex $Point(selected) 2]
