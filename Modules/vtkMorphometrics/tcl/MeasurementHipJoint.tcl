@@ -68,6 +68,9 @@ proc MorphometricsHipJointMeasurementWrapper {} {
 #-------------------------------------------------------------------------------
 proc MorphometricsHipJointMeasurementInit {} {
     global Morphometrics
+    # setup variables for saving
+    set Morphometrics(MeasurementHipJointResultSaveFile) ""
+    set Morphometrics(MeasurementHipJointId) 0
 
     # initialize all vtkObjects which contain all basic and derived objects describing the geometry
     MorphometricsHipJointMeasurementInitGeometry
@@ -216,9 +219,55 @@ proc MorphometricsHipJointResultUserInterface {frame} {
     pack $frame.linclinationangle -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
     DevAddButton $frame.createModels "Create Result Models" [list eval [subst -nocommands {MorphometricsHipJointCreateResultModels; Render3D}]]
-    pack $frame.createModels -side bottom -padx $Gui(pad) -pady $Gui(pad)
+    pack $frame.createModels -side top -padx $Gui(pad) -pady $Gui(pad)
+
+    # frame for saving the results into a CSV file
+    frame $frame.fsaveFile  -bg $Gui(activeWorkspace)
+    text $frame.fsaveFile.tInstructions -wrap word -bg $Gui(normalButton) -height 7
+    $frame.fsaveFile.tInstructions insert end "Ignore the warning about overwriting the result file. The results will be appended to already existing data. The order of the values is explained at the top of the file"
+    pack $frame.fsaveFile.tInstructions -side top -padx $Gui(pad) -pady $Gui(pad)
+
+
+    frame $frame.fsaveFile.fID  -bg $Gui(activeWorkspace)
+
+    DevAddLabel $frame.fsaveFile.fID.lID "ID in CSV-file"
+    pack $frame.fsaveFile.fID.lID -side left -padx $Gui(pad) -pady $Gui(pad)
+
+    DevAddEntry Morphometrics MeasurementHipJointId $frame.fsaveFile.fID.eID
+    pack $frame.fsaveFile.fID.eID -side right -padx $Gui(pad) -pady $Gui(pad)
+
+    pack $frame.fsaveFile.fID -side top -padx $Gui(pad) -pady $Gui(pad)
+
+    DevAddFileBrowse $frame.fsaveFile Morphometrics MeasurementHipJointResultSaveFile "Save Results" MorphometricsHipJointSaveResult "" "" "Save"
+
+    pack $frame.fsaveFile -side bottom -padx $Gui(pad) -pady $Gui(pad)
 
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC MorphometricsHipJointSaveResult
+# Add the results of the measurement to a CSV-file, eventually create it.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MorphometricsHipJointSaveResult {} {
+    global Morphometrics
+
+    set yourId 234
+    set fileToAdd $Morphometrics(MeasurementHipJointResultSaveFile)
+
+    if {![DevFileExists $fileToAdd]} {
+    set channel [open $fileToAdd w]
+    puts $channel "\# id , CCD-angle, inclination, anteversion"
+    close $channel
+    }
+
+    set channel [open $fileToAdd a]
+    puts $channel "$Morphometrics(MeasurementHipJointId), [Femur GetNeckShaftAngle], [Pelvis GetInclinationAngle],  [Pelvis GetAnteversionAngle]"
+    close $channel
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC MorphometricsHipJointCreateResultsModels
@@ -288,7 +337,7 @@ proc MorphometricsHipJointDisplayInit {} {
     vtkPredicateFilter vPF1
     vtkDistancePredicate vDP1
 
-    # vtkObjects needed for computing the acetabular plane
+    # vtkObjects needed for computing the acetabular plane 
     vtkAxisSource coneAxis
     vtkPredicateFilter coneHip
     vtkPredicateFilter borderJoint
@@ -298,7 +347,6 @@ proc MorphometricsHipJointDisplayInit {} {
     vtkAndPredicate andHipJoint
     vtkConvexHullInexact roiHip
     vtkDistancePredicate nearConvexHullHipJoint
-
 }
 
 proc PelvisPrecompute {} {
@@ -338,6 +386,7 @@ proc PelvisPrecompute {} {
     set normal [vprince GetZAxis]
     [Pelvis GetAcetabularPlane] SetCenter [lindex $center 0] [lindex $center 1] [lindex $center 2]
     [Pelvis GetAcetabularPlane] SetNormal [lindex $normal 0] [lindex $normal 1] [lindex $normal 2]
+    
 }
 
 proc MorphometricsHipJointPelvisFemurHeadAxis {Axis factor } {
@@ -362,15 +411,15 @@ proc MorphometricsHipJointPelvisFemurHeadAxis {Axis factor } {
     set angle [expr acos($length / [expr sqrt($length * $length + $femurRadius * $femurRadius)])]
     return [expr $angle *  57.2957795131]
 }
-
 #-------------------------------------------------------------------------------
 # .PROC MorphometricsHipJointCreateModel
-# Create a MRML node for $polydata with name $name. No fancy stuff is done, so 
-# this could be in Base/tcl/tcl-main/ModelMaker.tcl as well. This function is 
+# Create a MRML node for $polydata with name $name. No fancy stuff is done, so
+# this could be in Base/tcl/tcl-main/ModelMaker.tcl as well. This function is
 # based upon the function for creating a model out of a segmentation.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
+
 proc MorphometricsHipJointCreateModel {polydata name} {
     global Model Module ModelMaker Label
 
