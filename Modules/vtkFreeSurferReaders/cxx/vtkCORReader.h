@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkCORReader.h,v $
   Language:  C++
-  Date:      $Date: 2002/08/16 22:12:26 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2002/10/04 17:43:13 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================*/
 // .NAME vtkFSSurfaceReader - read a surface file from Freesurfer tools
@@ -38,7 +38,7 @@ public:
   // Other objects make use of these methods but we don't. Left here
   // but not implemented.
   vtkStructuredPoints *GetImage(int ImageNumber);
-
+    
 protected:
   vtkCORReader();
   ~vtkCORReader();

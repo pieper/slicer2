@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkCORReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2002/08/16 22:12:26 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2002/10/04 17:43:12 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================*/
 #include "vtkCORReader.h"
@@ -35,6 +35,7 @@ vtkCORReader::vtkCORReader()
   this->DataDimensions[0] = 
     this->DataDimensions[1] = 
     this->DataDimensions[2] = 0;
+
 }
 
 vtkCORReader::~vtkCORReader()
@@ -117,6 +118,7 @@ vtkDataArray *vtkCORReader::ReadVolumeData()
   // Create the scalars for all of the images. Set the element size
   // for the data we will read, always a uchar. 
   vtkDebugMacro (<< "Creating vtkUnsignedCharArray");
+
   scalars = vtkUnsignedCharArray::New();
   if ( NULL == scalars ) 
     {
@@ -147,6 +149,7 @@ vtkDataArray *vtkCORReader::ReadVolumeData()
 
     // Read 256*256 unsigned chars of data into the volume.
     vtkDebugMacro(<< "Reading volume data" );
+
     numRead = fread( pixels, elementSize, numPtsPerSlice, fp );
     if ( numRead != numPtsPerSlice )
       {
@@ -178,6 +181,7 @@ void vtkCORReader::ReadVolumeHeader()
 
   // Make the header file name and open it.
   sprintf(headerFile, "%s/COR-.info", this->FilePrefix);
+
   fp = fopen(headerFile, "r");
   if ( !fp )
     {

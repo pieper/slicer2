@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2002/08/16 22:12:26 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2002/10/04 17:43:13 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================*/
 #include "vtkFSSurfaceReader.h"
@@ -176,7 +176,7 @@ void vtkFSSurfaceReader::Execute()
   ReadInt3 (surfaceFile, magicNumber);
   if (magicNumber != FS_QUAD_FILE_MAGIC_NUMBER &&
       magicNumber != FS_NEW_QUAD_FILE_MAGIC_NUMBER) {
-    vtkErrorMacro (<< "Wrong file type");
+      vtkErrorMacro (<< "vtkFSSurfaceReader.cxx Execute: Wrong file type when loading " << this->FileName << "\n magic number = " << magicNumber << ", should be " << FS_QUAD_FILE_MAGIC_NUMBER << " or " << FS_NEW_QUAD_FILE_MAGIC_NUMBER);
     return;
   }
 
@@ -202,7 +202,7 @@ void vtkFSSurfaceReader::Execute()
   faces = (FSFace*) calloc (numFaces, sizeof(FSFace));
   if (NULL == vertices || NULL == faces) {
     vtkErrorMacro (<< "Couldn't allocate vertex or face connectivity "
-           "structuroes, unable to calc normals");
+           "structures, unable to calc normals");
   }
 #endif
 
