@@ -37,8 +37,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkAnisoGaussSeidel.cxx,v $
   Language:  C++
-  Date:      $Date: 2004/02/11 23:35:24 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2004/02/20 00:55:26 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================*/
 
@@ -867,7 +867,7 @@ float vtkAnisoGaussSeidel::Iterate3D()
                 )/8.0;
 
         hessien[2][2] = ( *(Iconv+txy  ) - 2*(*Iconv  ) + *(Iconv-txy  ) +
-              *(Iconv+txy+1) - 2*(*Iconv+1) + *(Iconv-txy+1)
+              *(Iconv+txy+1) - 2*(*(Iconv+1)) + *(Iconv-txy+1)
                 )/2.0;
 
         // Compute the basis (e0, e1, e2):
@@ -939,7 +939,7 @@ float vtkAnisoGaussSeidel::Iterate3D()
     // Computing the Hessian matrix in (x,y+1/2,z)
         hessien[0][0] = (
                          *(Iconv+1   )-2*(*Iconv   )+*(Iconv-1   ) +
-                 *(Iconv+1+tx)-2*(*Iconv+tx)+*(Iconv-1+tx) 
+                 *(Iconv+1+tx)-2*(*(Iconv+tx))+*(Iconv-1+tx) 
                 )/2.0;
 
         hessien[1][0] = 
@@ -965,7 +965,7 @@ float vtkAnisoGaussSeidel::Iterate3D()
 
         hessien[2][2] = (
                    *(Iconv+txy)    - 2*(*Iconv   ) + *(Iconv-txy) +
-                 *(Iconv+txy+tx) - 2*(*Iconv+tx) + *(Iconv-txy+tx)
+                 *(Iconv+txy+tx) - 2*(*(Iconv+tx)) + *(Iconv-txy+tx)
                 )/2.0;
 
 
@@ -1036,7 +1036,7 @@ float vtkAnisoGaussSeidel::Iterate3D()
 
     // Computing the Hessian matrix in (x,y,z+1/2)
         hessien[0][0] = ( *(Iconv+1)    -2*(*Iconv    )+*(Iconv-1    ) +
-               *(Iconv+1+txy)-2*(*Iconv+txy)+*(Iconv-1+txy)
+               *(Iconv+1+txy)-2*(*(Iconv+txy))+*(Iconv-1+txy)
                 )/2.0;
 
         hessien[1][0] = 
@@ -1054,7 +1054,7 @@ float vtkAnisoGaussSeidel::Iterate3D()
 
         hessien[1][1] = ( 
                    *(Iconv+tx) - 2*(*Iconv) + *(Iconv-tx) +
-                 *(Iconv+tx+txy) - 2*(*Iconv+txy) + *(Iconv-tx+txy)
+                 *(Iconv+tx+txy) - 2*(*(Iconv+txy)) + *(Iconv-tx+txy)
                  )/2.0;
 
         hessien[2][1] = 
@@ -1398,7 +1398,7 @@ float vtkAnisoGaussSeidel::Iterate3D( vtkImageData *inData,  int inExt[6],
                 )/8.0;
 
         hessien[2][2] = ( *(Iconv+zp  ) - 2*(*Iconv  ) + *(Iconv+zm  ) +
-              *(Iconv+zp+xp) - 2*(*Iconv+xp) + *(Iconv+zm+xp)
+              *(Iconv+zp+xp) - 2*(*(Iconv+xp)) + *(Iconv+zm+xp)
                 )/2.0;
 
         // Compute the basis (e0, e1, e2):
@@ -1471,7 +1471,7 @@ float vtkAnisoGaussSeidel::Iterate3D( vtkImageData *inData,  int inExt[6],
     // Computing the Hessian matrix in (x,y+1/2,z)
         hessien[0][0] = (
                          *(Iconv+xp   )-2*(*Iconv   )+*(Iconv+xm   ) +
-                 *(Iconv+xp+yp)-2*(*Iconv+yp)+*(Iconv+xm+yp) 
+                 *(Iconv+xp+yp)-2*(*(Iconv+yp))+*(Iconv+xm+yp) 
                 )/2.0;
 
         hessien[1][0] = 
@@ -1498,7 +1498,7 @@ float vtkAnisoGaussSeidel::Iterate3D( vtkImageData *inData,  int inExt[6],
 
         hessien[2][2] = (
                    *(Iconv+zp)    - 2*(*Iconv   ) + *(Iconv+zm) +
-                 *(Iconv+zp+yp) - 2*(*Iconv+yp) + *(Iconv+zm+yp)
+                 *(Iconv+zp+yp) - 2*(*(Iconv+yp)) + *(Iconv+zm+yp)
                 )/2.0;
 
 
@@ -1570,7 +1570,7 @@ float vtkAnisoGaussSeidel::Iterate3D( vtkImageData *inData,  int inExt[6],
 
     // Computing the Hessian matrix in (x,y,z+1/2)
         hessien[0][0] = ( *(Iconv+xp)    -2*(*Iconv    )+*(Iconv+xm    ) +
-               *(Iconv+xp+zp)-2*(*Iconv+zp)+*(Iconv+xm+zp)
+               *(Iconv+xp+zp)-2*(*(Iconv+zp))+*(Iconv+xm+zp)
                 )/2.0;
 
         hessien[1][0] = 
@@ -1588,7 +1588,7 @@ float vtkAnisoGaussSeidel::Iterate3D( vtkImageData *inData,  int inExt[6],
 
         hessien[1][1] = ( 
                    *(Iconv+yp) - 2*(*Iconv) + *(Iconv+ym) +
-                 *(Iconv+yp+zp) - 2*(*Iconv+zp) + *(Iconv+ym+zp)
+                 *(Iconv+yp+zp) - 2*(*(Iconv+zp)) + *(Iconv+ym+zp)
                  )/2.0;
 
         hessien[2][1] = 
