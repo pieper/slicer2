@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2001 Massachusetts Institute of Technology
+# (c) Copyright 2002 Massachusetts Institute of Technology
 #
 # Permission is hereby granted, without payment, to copy, modify, display 
 # and distribute this software and its documentation, if any, for any purpose, 
@@ -41,7 +41,7 @@
 proc PrintCopyright {fid isTcl} {
     if {$isTcl == 1} {
         puts $fid \
-"# (c) Copyright 2001 Massachusetts Institute of Technology
+"# (c) Copyright [clock format [clock seconds] -format %Y] Massachusetts Institute of Technology
 #
 # Permission is hereby granted, without payment, to copy, modify, display 
 # and distribute this software and its documentation, if any, for any purpose, 
@@ -64,7 +64,7 @@ proc PrintCopyright {fid isTcl} {
     } else {
         puts $fid "/*=auto=========================================================================
 
-(c) Copyright 2001 Massachusetts Institute of Technology
+(c) Copyright [clock format [clock seconds] -format %Y] Massachusetts Institute of Technology
 
 Permission is hereby granted, without payment, to copy, modify, display 
 and distribute this software and its documentation, if any, for any purpose, 
