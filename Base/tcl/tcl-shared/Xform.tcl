@@ -72,7 +72,8 @@ proc XformAxisStart { module actor widget axis x y } {
 
     #    DebugMsg [concat "Starting axis-based transformation with axis " $axis ]
     set Xform(xform) [vtkTransform Xform(xform)]
-    Xform(xform) Identity Xform(xform) PostMultiply
+    Xform(xform) Identity 
+    Xform(xform) PostMultiply
 }
 
 
