@@ -595,8 +595,9 @@ itcl::body regions::findptscalars {} {
             tc-$id CreateLine 0 0 0
             tc-$id SetLinePoint1Local 0 0 0
             tc-$id SetScale 7 
-            tc-$id SetBoxEdgeColor 1 1 1
+            tc-$id SetBoxEdgeColor 0 0 0
             tc-$id SetOpacityBase 0.7
+            tc-$id SetBoxEdgeWidth 1.0
             eval tc-$id SetOffsetActorAndMarker Model($_id,actor,viewRen) [Point($id,node) GetXYZ] 0 0 -10
             tc-$id AddActors viewRen
         }
@@ -845,7 +846,6 @@ proc QueryAtlas_fdemo { {demodata c:/pieper/bwh/data/fbirn-phantom-staple/averag
     #
     # TODO there should be a self demo mode for slicer --demo with a menu of options...
 
-if {0} {
     catch "fdemo_sum Delete"
     set ptdata [$::Model($modelid,polyData) GetPointData]
     set narrays [$ptdata GetNumberOfArrays]
@@ -876,7 +876,6 @@ if {0} {
     $ptdata AddArray fdemo_sum
     fdemo_sum SetName "Sum Of Staple Activations"
     $ptdata SetActiveScalars [fdemo_sum GetName]
-}
 
     # update the auto scalar range
     set ::Model(scalarVisibilityAuto) 1
