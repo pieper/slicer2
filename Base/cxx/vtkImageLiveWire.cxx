@@ -212,7 +212,9 @@ void vtkImageLiveWire::SetStartPoint(int x, int y)
      
   //cout << "extent:" << extent[0] << extent[1] << extent[2] << extent[3] << extent[4] << extent[5] <<endl;
 
+  // Lauren handle shift in edge images
   // crop point with image coordinates
+  // Lauren remove the outer "if"
   if (x < extent[0] || x > extent[1] ||
       y < extent[2] || y > extent[3]) 
     {
@@ -249,6 +251,54 @@ void vtkImageLiveWire::SetStartPoint(int x, int y)
       this->Modified();
     }
   //cout << "deallocated" << endl;
+}
+//----------------------------------------------------------------------------
+// This method sets the EndPoint 
+void vtkImageLiveWire::SetEndPoint(int x, int y)
+{
+  int modified = 0;
+  int extent[6];
+
+  // just check against the first edge input
+  if (this->GetInput(1)) 
+    {
+      this->GetInput(1)->GetExtent(extent);
+    }
+  else
+    {
+      cout << "LiveWire SetEndPoint: No input 1 yet!" << endl;
+      memset(extent, 0, 6*sizeof(int));
+    }
+     
+  // Lauren handle shift in edge images
+  // crop point with image coordinates
+  // Lauren remove the outer "if"
+  if (x < extent[0] || x > extent[1] ||
+      y < extent[2] || y > extent[3]) 
+    {
+      cout << "Coords (" << x << "," << y << ") are outside of image!" << endl;      
+      // Lauren test!
+      if (x < extent[0]) x = extent[0]+1;
+      else
+	if (x > extent[1]) x = extent[1];
+      
+      if (y < extent[2]) y = extent[2];
+      else
+	if (y > extent[3]) y = extent[3];
+    }
+
+  cout << "Coords of end point: (" << x << "," << y << ")" << endl;      
+  
+  if (this->EndPoint[0] != x)
+    {
+      modified = 1;
+      this->EndPoint[0] = x;
+    }
+  if (this->EndPoint[1] != y)
+    {
+      modified = 1;
+      this->EndPoint[1] = y;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -288,31 +338,24 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   const int LEFT = self->LEFT;
   const int RIGHT = self->RIGHT;
   
-  //************* Lauren fix how this is working!!!!!!!!!!!!!!!!!!!!!!!!!*****************
-  // these two match:
+  // neighbors, arrows, and edges match:
   int neighbors[4][2] = {{0,1},{0,-1},{-1,0},{1,0}};
   int arrows[4] = {UP, DOWN, LEFT, RIGHT};
+  // to access edge images (not perfectly aligned)
+  int offset[4][2] = {{-1,-1},{0,0},{-1,-1},{0,0}};
 
-  // Lauren this is confusing: use up, down, L, R...
-  vtkImageData *topEdge, *bottomEdge, *leftEdge, *rightEdge;
-  topEdge = self->GetTopEdges();
-  bottomEdge = self->GetTopEdges();
+  vtkImageData *upEdge, *downEdge, *leftEdge, *rightEdge;
+  upEdge = self->GetUpEdges();
+  downEdge = self->GetDownEdges();
+  leftEdge = self->GetLeftEdges();
   rightEdge = self->GetRightEdges();
-  leftEdge = self->GetTopEdges();
-  T *topEdgeVal = (T*)topEdge->GetScalarPointerForExtent(topEdge->GetExtent());
-  T *bottomEdgeVal = (T*)bottomEdge->GetScalarPointerForExtent(bottomEdge->GetExtent());
-  T *rightEdgeVal = (T*)rightEdge->GetScalarPointerForExtent(rightEdge->GetExtent());
+
+  T *upEdgeVal = (T*)upEdge->GetScalarPointerForExtent(upEdge->GetExtent());
+  T *downEdgeVal = (T*)downEdge->GetScalarPointerForExtent(downEdge->GetExtent());
   T *leftEdgeVal = (T*)leftEdge->GetScalarPointerForExtent(leftEdge->GetExtent());
-  // Lauren use the proper edge maps!!!!!!!!!!!!!
-  // Lauren this matches with the neighbors: ????
-  // ascii art explains why 'top' edge matches with 'right' direction, etc.
-  //    ->
-  //  ^   |
-  //  |   v
-  //   <-
-  T* edges[4] = {rightEdgeVal, leftEdgeVal, leftEdgeVal, topEdgeVal};
-  T* edge;
-  
+  T *rightEdgeVal = (T*)rightEdge->GetScalarPointerForExtent(rightEdge->GetExtent());
+
+  T* edges[4] = {upEdgeVal, downEdgeVal, leftEdgeVal, rightEdgeVal};
 
   // ----------------  Dijkstra ------------------ //
 
@@ -330,7 +373,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
       // get min vertex from Q 
       ListElement *min = Q->GetListElement(currentCC);
 
-      // Lauren test if same as last point.
+      // debug: test if same as last point.
       if (min->Coord[0] == currentX && min->Coord[1] == currentY)
 	{
 	  cout << "ERROR in vtkImageLiveWireExecute: same point as last time!" << endl;
@@ -373,21 +416,34 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
       // check out its 4 neighbors
       int oldCC, tempCC;
       int x,y;
+      T* edge;
 
       for (int n=0; n<4; n++) 
 	{
 	  x = currentX + neighbors[n][0];
 	  y = currentY + neighbors[n][1];
 
-	  if (y < numrows && x < numcols && x > 0 && y > 0) 
+	  // if neighbor in image
+	  if (y < numrows && x < numcols && x >= 0 && y >= 0) 
 	    {
+	      // save previous cost to reach this point
 	      oldCC = CC(x,y);
 	      edge = edges[n];
-	      // Lauren is edge image being accessed right?
-	      // Lauren get int input!
-	      // Lauren is casting to int faster?
-	      //tempCC = currentCC + 1/(1+edge[(x) + y*numcols]);
-	      tempCC = currentCC + (int)edge[(x) + y*numcols];
+
+	      // find new path's cost.
+	      // (first handle shift in UP and LEFT edge images)
+	      int ex = x + offset[n][0];
+	      int ey = y + offset[n][1];
+	      // if edge cost in (shifted) edge image
+	      if (ey < numrows && ex < numcols && ex >= 0 && ey >= 0) 
+		{
+		  tempCC = currentCC + (int)edge[x + y*numcols];
+		}
+	      else
+		{
+		  // handle border condition
+		  tempCC = currentCC + self->GetMaxEdgeCost();
+		}
 
 	      if (self->GetVerbose() > 2) 
 		{

@@ -81,10 +81,11 @@ vtkImageLiveWireEdgeWeights::vtkImageLiveWireEdgeWeights()
   this->FileName = NULL;
 
   this->MaxEdgeWeight = 255;
-  
-  this->Difference = 0.25;
-  this->InsidePixel = 0.1;
-  this->OutsidePixel = 0.1;
+  this->EdgeDirection = DOWN_EDGE;
+
+//    this->Difference = 0.25;
+//    this->InsidePixel = 0.1;
+//    this->OutsidePixel = 0.1;
 
   this->NumberOfFeatures = 6;
 
@@ -176,7 +177,7 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
   inData->GetIncrements(inInc0, inInc1, inInc2); 
   self->GetInput()->GetWholeExtent(inImageMin0, inImageMax0, inImageMin1,
 				   inImageMax1, inImageMin2, inImageMax2);
-  cout << inImageMin2 << " " << inImageMax2 << endl;
+  //cout << inImageMin2 << " " << inImageMax2 << endl;
   outData->GetIncrements(outInc0, outInc1, outInc2); 
   outMin0 = outExt[0];   outMax0 = outExt[1];
   outMin1 = outExt[2];   outMax1 = outExt[3];
@@ -187,7 +188,7 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
   // Neighborhood around current voxel
   self->GetRelativeHoodExtent(hoodMin0, hoodMax0, hoodMin1, 
 			      hoodMax1, hoodMin2, hoodMax2);
-  cout << hoodMin0<<hoodMax0<<hoodMin1 <<hoodMax1 << hoodMin2 <<hoodMax2 << endl;
+  //cout << hoodMin0<<hoodMax0<<hoodMin1 <<hoodMax1 << hoodMin2 <<hoodMax2 << endl;
   // Set up mask info
   //  maskPtr = (unsigned char *)(self->GetMaskPointer());
   // Lauren use to loop through hoodCopy
@@ -201,19 +202,13 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 			   (outMax1-outMin1+1)/50.0);
   target++;
 
-  // Lauren  ??  short??
   // scale factor (edges go from 1 to this number)
   int maxEdge = self->GetMaxEdgeWeight();
-
-  // multipliers set by user
-  //float diff = self->GetDifference();
-  //float inpix = self->GetInsidePixel();
-  //float outpix = self->GetOutsidePixel();
 
   // temporary storage of features computed at a voxel
   float features[self->GetNumberOfFeatures()];
 
-  // for temporary storage of neighbors for calculations
+  // temporary storage of neighbors for calculations
   float n[self->GetKernelSize()[0]*self->GetKernelSize()[1]*self->GetKernelSize()[2]];
 
   // loop through components
@@ -244,7 +239,7 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 		  // Default output equal to max edge value
 		  *outPtr0 = maxEdge;
 
-		  // make sure entire kernel is within boundaries.
+		  // make sure *entire* kernel is within boundaries.
 		  // Note this means that a 3-D kernel won't 
 		  // work on 2-D input!
 		  // Lauren this is faster but better other way?
@@ -255,13 +250,6 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 		      outIdx2 + hoodMin2 >= inImageMin2 &&
 		      outIdx2 + hoodMax2 <= inImageMax2)
 		    {
-
-		      //Lauren leftover from testing 5 like it's 3.
-//  		  if (outIdx0 - 1 >= inImageMin0 &&
-//  		      outIdx0 + 1 <= inImageMax0 &&
-//  		      outIdx1 - 1 >= inImageMin1 &&
-//  		      outIdx1 + 1 <= inImageMax1)
-//  		    {
 		      // loop through neighborhood pixels.
 		      // Lauren copy them into n, neighborhood temp array
 		      hoodPtr2 = inPtr0 + inInc0*hoodMin0 + inInc1*hoodMin1 
@@ -288,46 +276,164 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 			  hoodPtr2 += inInc2;
 			  hoodCopyPtr2 += maskInc2;
 			}//for2  
-		  
-		      // this filter assumes bel
-		      // | out | in |
-		      //       V
-		      // rotate input for all bels.
 
-		      // Compute various features.
-		      
+		      // ----------------------------------------------
+		      // From paper, layout of neighborhood is:
+		      // t | u
+		      //   ^
+		      // p | q  (p,q = the "bel" whose upward edge we are computing)
+		      // v | w
+		      // I want clockwise segmentation, so "q" should be inside.
+
+		      // Lauren!  if gradient doesn't agree with desired one,
+		      // this is when q/p should be switched!  so 
+		      // need to keep track of this!  It is not correct right now!
+
+		      // Document all new features here:
+		      // 0: in pix magnitude = q OR p, depending on gradient dir
+		      // 1: out pix magnitude = p OR q, "
+		      // 2: outpix-inpix = p-q
+		      // 3: gradient = (1/3)*(p+t+v-u-q-w)				
+		      // 4: gradient = (1/2)*(p+t/2+v/2 -u-q/2-w/2)
+		      // 5: gradient = (1/4)*(p-u + t-q + p-w + v-q)
+		      // ----------------------------------------------
+
 		      if (self->GetKernelSize()[0] == 3) 
 			{
-			  // The "in" features correspond to 
-			  // the side of the bel with higher intensity.
-			  // inpix-outpix = p-q
-			  features[2] = n[3]-n[4];
-			  features[3] = .333333*(n[3]+n[0]+n[6]-n[1]-n[4]-n[7]);
+			  // compute these edges at each pixel, x:
+			  //
+			  //  ->  ^
+			  //  | x |
+			  //  V  <-
+			  //
+			  // then the right and down belong to the upper left corner
+			  // and the other two to the lower right corner.
+			  // so shifting output images will give the correct
+			  //
+			  //    ^
+			  //  <-|->
+			  //    V
+			  // where each pixel has the correct weight for 
+			  // all of one corner's outward paths
+			  // (segmentation is done on the borders between pixels)
+
+			  // neighborhood looks like:
+			  // 0 1 2
+			  // 3 4 5
+			  // 6 7 8
+			  // rotate neighborhood for all edges.
+
+			  int t,u,p,q,v,w;
+			  switch (self->GetEdgeDirection()) 
+			    {
+			    case UP_EDGE:
+			      {
+				// bel:           ^
+				//      | 4 (out) | 5 (in)|
+				t = 1; 
+				u = 2;
+				p = 4;
+				q = 5;
+				v = 7;
+				w = 8;
+				break;
+			      }
+			    case DOWN_EDGE:
+			      {
+				// bel: | 3 (in) | 4 (out) |
+				//               V
+				t = 7; 
+				u = 6;
+				p = 4;
+				q = 3;
+				v = 1;
+				w = 0;
+				break;
+			      }
+			    case LEFT_EDGE:
+			      {
+				// bel: 4 (in)
+				//     <----
+				//      7 (out)
+				t = 6; 
+				u = 3;
+				p = 4;
+				q = 4;
+				v = 5;
+				w = 2;
+				break;
+			      }
+			    case RIGHT_EDGE:
+			      {
+				// bel: 1 (out)
+				//      ---->
+				//      4 (in)
+				t = 2; 
+				u = 5;
+				p = 1;
+				q = 4;
+				v = 0;
+				w = 3;
+				break;
+			      }
+			    default:
+			      {
+				cout << "ERROR: bad edge direction" << endl;
+				return;
+			      }
+			    }
+
+			  // Compute various features:			  
+			  features[2] = n[p]-n[q];
+			  features[3] = .333333*(n[p]+n[t]+n[v]-n[u]-n[q]-n[w]);
+			  // "in" corresponds to side of bel with higher intensity.
 			  if (features[3] > 0)
 			    {
-			      // in pix magnitude = q
-			      features[0] = n[4];
-			      // out pix magnitude = p
-			      features[1] = n[3];
+			      features[0] = n[q]; // "in"
+			      features[1] = n[p];
 			    }
 			  else 
 			    {
-			      // in pix magnitude = p
-			      features[0] = n[3];
-			      // out pix magnitude = q
-			      features[1] = n[4];
+			      features[0] = n[p];
+			      features[1] = n[q];
 			    }
+			  features[4] = .5*(n[p]+n[t]/2+n[v]/2
+					    -n[u]-n[q]/2-n[w]/2);
+			  features[5] = .25*(n[p]-n[u] + n[t]-n[q] + 
+					     n[p]-n[w] + n[v]-n[q]);
+
+
+
+//  			  // The "in" features correspond to 
+//  			  // the side of the bel with higher intensity.
+//  			  // inpix-outpix = p-q
+//  			  features[2] = n[3]-n[4];
+//  			  features[3] = .333333*(n[3]+n[0]+n[6]-n[1]-n[4]-n[7]);
+//  			  if (features[3] > 0)
+//  			    {
+//  			      // in pix magnitude = q
+//  			      features[0] = n[4];
+//  			      // out pix magnitude = p
+//  			      features[1] = n[3];
+//  			    }
+//  			  else 
+//  			    {
+//  			      // in pix magnitude = p
+//  			      features[0] = n[3];
+//  			      // out pix magnitude = q
+//  			      features[1] = n[4];
+//  			    }
 			      
-			  // inpix-outpix = p-q
-			  //features[2] = n[3]-n[4];
-			  // gradient = (1/3)*(p+t+v-u-q-w)
-			  features[3] = .333333*(n[3]+n[0]+n[6]-n[1]-n[4]-n[7]);
-			  // gradient = (1/2)*(p+t/2+v/2 -u-q/2-w/2)
-			  features[4] = .5*(n[3]+n[0]/2+n[6]/2
-					    -n[1]-n[4]/2-n[7]/2);
-			  // gradient = (1/4)*(p-u + t-q + p-w + v-q)
-			  features[5] = .25*(n[3]-n[1] + n[0]-n[4] + 
-					     n[3]-n[7] + n[6]-n[4]);
+//  			  // inpix-outpix = p-q
+//  			  //features[2] = n[3]-n[4];
+//  			  // gradient = (1/3)*(p+t+v-u-q-w)
+//  			  //features[3] = .333333*(n[3]+n[0]+n[6]-n[1]-n[4]-n[7]);
+//  			  // gradient = (1/2)*(p+t/2+v/2 -u-q/2-w/2)
+//  			  features[4] = .5*(n[3]+n[0]/2+n[6]/2
+//  					    -n[1]-n[4]/2-n[7]/2);
+//  			  // gradient = (1/4)*(p-u + t-q + p-w + v-q)
+//  			  features[5] = .25*(n[3]-n[1] + n[0]-n[4] + 
+//  					     n[3]-n[7] + n[6]-n[4]);
 
 			}
 		      else

@@ -72,6 +72,15 @@ public:
   vtkSetMacro(MaxEdgeWeight, int);
 
   // Description:
+  // Direction of edges to compute
+#define UP_EDGE 0
+#define DOWN_EDGE 1
+#define LEFT_EDGE 2
+#define RIGHT_EDGE 3
+  vtkGetMacro(EdgeDirection, int);
+  vtkSetMacro(EdgeDirection, int);
+
+  // Description:
   // 
   vtkGetMacro(Difference, float);
   vtkSetMacro(Difference, float);
@@ -105,7 +114,12 @@ public:
 
   // Description:
   // Get all parameters used to compute the ith feature
-  featureProperties *GetFeatureSettings(int i) {return &this->FeatureSettings[i];};
+  featureProperties *GetFeatureSettings(int f) {return &this->FeatureSettings[f];};
+  // for access from tcl
+  int GetNumberOfParamsForFeature(int f) 
+    {return this->FeatureSettings[f].NumberOfParams;};
+  float GetParamForFeature(int f, int p)
+    {return this->FeatureSettings[f].TransformParams[p];};
 
 protected:
   vtkImageLiveWireEdgeWeights();
@@ -116,7 +130,8 @@ protected:
   // User settings that affect edge weight calculation
   float Difference;
   float InsidePixel;
-  float OutsidePixel;
+  float OutsidePixel; 
+  int EdgeDirection;
 
   // Total number of features to compute
   int NumberOfFeatures;

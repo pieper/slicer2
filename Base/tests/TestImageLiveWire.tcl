@@ -33,44 +33,32 @@ vtkImageLiveWire lw
 lw SetVerbose 1
 
 foreach dir {0 1 2 3} name {Up Down Left Right} {
+    #### cost to travel along edges in graph (aka pixel edges)
     vtkImageLiveWireEdgeWeights lwedge$dir
     lwedge$dir SetInput [clip GetOutput]
     lwedge$dir SetEdgeDirection $dir
     lwedge$dir Update
 
-    # set livewire's 4 edge inputs
+    #### set livewire's 4 edge inputs
     lw Set${name}Edges [lwedge$dir GetOutput]
-
-    puts "update ext [[lwedge$dir GetOutput] GetUpdateExtent]"
-    puts "whole ext [[lwedge$dir GetOutput] GetWholeExtent]"
 }
 
-# also set livewire's original image input.
+#### important: also set livewire's original image input.
 lw SetOriginalImage [clip GetOutput]
 
-# problems with 0 (inf loop?) and 256 (dump core) as coords.
-puts "1"
-lw SetStartPoint 253 253
-puts "2"
-lw SetEndPoint 1 1
-puts "3"
-
-puts "out update ext [[lw GetOutput] GetUpdateExtent]"
-puts "out whole ext [[lw GetOutput] GetWholeExtent]"
-puts "in update ext [[lw GetInput] GetUpdateExtent]"
-puts "in whole ext [[lw GetInput] GetWholeExtent]"
+#### set start and end points of the path.
+lw SetStartPoint 0 253
+lw SetEndPoint 1 0
 
 # Update lw so we can grab the points info
 puts "---"
 lw Update
 puts "---"
 
-############################
 set points [lw GetContourPoints]
 set numPoints [$points GetNumberOfPoints]
 puts "numPoints: $numPoints"
 puts "bounds: [$points GetBounds]"
-############################
 
 # viewer
 vtkImageViewer viewer
@@ -90,6 +78,8 @@ BindTkImageViewer .top.f.v
 #make interface
 source WindowLevelInterface.tcl
 
+
+######## unfinished attempt at interactivity...
 # bindings
 bind .top.f.v <Button-1> {addPoint %x %y}
 

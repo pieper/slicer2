@@ -11,7 +11,7 @@ source ../../imaging/examplesTcl/TkImageViewerInteractor.tcl
 vtkImageReader reader
 reader ReleaseDataFlagOff
 reader SetDataByteOrderToLittleEndian
-reader SetDataExtent 0 255 0 255 1 93
+reader SetDataExtent 0 255 0 255 1 94
 reader SetFilePrefix "../../../vtkdata/fullHead/headsq"
 reader SetDataMask 0x7fff
 
@@ -22,8 +22,6 @@ reader SetDataMask 0x7fff
 
 vtkImageLiveWireEdgeWeights lwedge
 lwedge SetInput [reader GetOutput]
-lwedge SetNeighborhoodToLine 2
-lwedge SetMaxEdgeWeight 255
 
 # viewer
 vtkImageViewer viewer

@@ -305,15 +305,18 @@ public:
   vtkSetMacro(Label, int);
   vtkGetMacro(Label, int);
 
+  // Lauren handle shift in edge images
   // Description:
   // Starting point of shortest path (mouse click #1)
   void SetStartPoint(int x, int y);
   void SetStartPoint(int *point){this->SetStartPoint(point[0],point[1]);};
   vtkGetVector2Macro(StartPoint, int);
 
+  // Lauren handle shift in edge images
   // Description:
   // Ending point of shortest path (mouse click #2)
-  vtkSetVector2Macro(EndPoint, int);
+  void SetEndPoint(int x, int y);
+  void SetEndPoint(int *point){this->SetEndPoint(point[0],point[1]);};
   vtkGetVector2Macro(EndPoint, int);
 
   // Description:
@@ -332,24 +335,24 @@ public:
   vtkImageData *GetOriginalImage() {return this->GetInput(0);}
 
   // Description:
-  // Top edges, direction from L to R  (corresponds to Dir RIGHT)
-  void SetTopEdges(vtkImageData *image) {this->SetInput(1,image);}
-  vtkImageData *GetTopEdges() {return this->GetInput(1);}
+  // edge costs (for traveling UP to the next pixel)
+  void SetUpEdges(vtkImageData *image) {this->SetInput(1,image);}
+  vtkImageData *GetUpEdges() {return this->GetInput(1);}
 
   // Description:
-  // Right edges, direction downward (corresponds to Dir DOWN)
-  void SetRightEdges(vtkImageData *image) {this->SetInput(2,image);}
-  vtkImageData *GetRightEdges() {return this->GetInput(2);}
+  // edge costs
+  void SetDownEdges(vtkImageData *image) {this->SetInput(2,image);}
+  vtkImageData *GetDownEdges() {return this->GetInput(2);}
 
   // Description:
-  // Bottom edges, direction from R to L (corresponds to Dir LEFT)
-  void SetBottomEdges(vtkImageData *image) {this->SetInput(3,image);}
-  vtkImageData *GetBottomEdges() {return this->GetInput(3);}
+  // edge costs
+  void SetLeftEdges(vtkImageData *image) {this->SetInput(3,image);}
+  vtkImageData *GetLeftEdges() {return this->GetInput(3);}
 
   // Description:
-  // Left edges, direction upward (corresponds to Dir UP)
-  void SetLeftEdges(vtkImageData *image) {this->SetInput(4,image);}
-  vtkImageData *GetLeftEdges() {return this->GetInput(4);}
+  // edge costs
+  void SetRightEdges(vtkImageData *image) {this->SetInput(4,image);}
+  vtkImageData *GetRightEdges() {return this->GetInput(4);}
 
   // Description:
   // Cumulative cost of current path.
