@@ -435,7 +435,7 @@ proc VolFreeSurferReadersBuildSurface {m} {
     #
     Model($m,node) SetName $Volume(name)
     Model($m,node) SetFileName $Volume(VolFreeSurferReaders,FileName)
-    set Model($m,polyData) [Model($m,normals) GetOutput]
+    set Model($m,polyData) [Model($m,stripper) GetOutput]
     $Model($m,polyData) Update
 
     # always read in the thickness file
