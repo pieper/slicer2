@@ -151,7 +151,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.18 $} {$Date: 2004/02/10 17:49:55 $}]
+        {$Revision: 1.19 $} {$Date: 2004/02/15 15:12:22 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -777,7 +777,9 @@ proc MIRIADSegmentSetEMParameters {} {
     # Kilian: 08-Feb-04 To use Hierarchy Setting you currently need SegmentMode 2
     # Generally this variable should neve be set without running  EMSegmentBuildGUI  
     # Talk with Steve about it 
-    set ::EMSegment(SegmentMode) 2
+
+    # TODO error if no private segment
+
     set ::EMSegment(DebugVolume) 1
 
     #
