@@ -67,7 +67,7 @@ proc EdLiveWireInit {} {
     
     set e EdLiveWire
     set Ed($e,name)      "LiveWire"
-    set Ed($e,initials)  "LW"
+    set Ed($e,initials)  "Lw"
     set Ed($e,desc)      "LiveWire: quick 2D segmentation."
     set Ed($e,rank)      1
     set Ed($e,procGUI)   EdLiveWireBuildGUI
@@ -88,7 +88,8 @@ proc EdLiveWireInit {} {
     # training vars
     set Ed($e,trainingRadius) 0
     set Ed($e,trainingFileName) "TrainMeansVars.txt"
-    
+    set Ed(EdLiveWire,trainingEdgeDir)  0
+
     # slider range
     set Ed($e,sliderLow) 0.0
     set Ed($e,sliderHigh) 1.0
@@ -99,6 +100,15 @@ proc EdLiveWireInit {} {
     # mode of user interaction (choices are LiveWire or Training)
     set Ed($e,mode) LiveWire
     set Ed($e,previousMode) LiveWire
+
+    # mode of acquiring training points image 
+    # choices are CurrentSlice, DrawOnSlice, or RangeOfSlices
+    set Ed(EdLiveWire,trainingMode) CurrentSlice
+    
+    # first and last slices to use for training
+    set Ed(EdLiveWire,trainingSlice1) 0
+    set Ed(EdLiveWire,trainingSlice2) 0
+
 }
 
 #-------------------------------------------------------------------------------
@@ -136,10 +146,6 @@ proc EdLiveWireBuildVTK {} {
 	# pipeline
 	Ed(EdLiveWire,lwSetup$s) SetLiveWire Ed(EdLiveWire,lwPath$s)
 	Ed(EdLiveWire,lwPath$s) SetOriginalImage [Ed(EdLiveWire,lwSetup$s) GetOutput]
-	# Lauren make slicer take LW output straight????????
-	vtkImageCopy Ed(EdLiveWire,copy$s)
-	Ed(EdLiveWire,copy$s) SetInput [Ed(EdLiveWire,lwPath$s) GetOutput]
-
 	# for looking at edge weight image
 	vtkImageViewer Ed(EdLiveWire,viewer$s)
 	Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,lwSetup$s) GetEdgeImage 0]
@@ -151,6 +157,10 @@ proc EdLiveWireBuildVTK {} {
     
     # initialize tcl variables that mirror vtk object settings
     EdLiveWireGetFeatureParams
+
+    # some filters that are regularly used
+    #vtkImageMathematics Ed(EdLiveWire,imageMath)
+    vtkImageThresholdBeyond Ed(EdLiveWire,imageThreshold)
 }
 
 #-------------------------------------------------------------------------------
@@ -165,10 +175,12 @@ proc EdLiveWireBuildGUI {} {
     set f $Ed(EdLiveWire,frame)
 
     # this makes the navigation menu (buttons) and the tabs (frames).
-    set label "LW Settings:"
-    set subframes {Basic Advanced}
-    set buttonText {"Basic" "Advanced"}
-    set tooltips {"For Users" "For Developers"}
+    set label "Settings:"
+    set subframes {Basic Training Advanced}
+    set buttonText {"Basic" "Train" "Adv."}
+    set tooltips {"Basic: For Users" \
+	    "Training: Teach LW to segment your data"\
+	    "Advanced: for Developers"}
 
     TabbedFrame EdLiveWire $f $label $subframes $buttonText \
 	    $tooltips
@@ -180,17 +192,15 @@ proc EdLiveWireBuildGUI {} {
     
     # Standard stuff
     frame $f.fInput     -bg $Gui(activeWorkspace)
-    frame $f.fScope     -bg $Gui(activeWorkspace)
     frame $f.fInteract  -bg $Gui(activeWorkspace)
     frame $f.fGrid      -bg $Gui(activeWorkspace)
+    frame $f.fContour   -bg $Gui(activeWorkspace)
     frame $f.fApply     -bg $Gui(activeWorkspace)
-    pack $f.fGrid $f.fInput $f.fScope \
-	    $f.fInteract $f.fApply \
+    pack $f.fGrid $f.fInput \
+	    $f.fInteract $f.fContour $f.fApply \
 	    -side top -pady $Gui(pad) -fill x
     
     # Standard Editor interface buttons
-    EdBuildScopeGUI $Ed(EdLiveWire,frame).fTabbedFrame.fBasic.fScope Ed(EdLiveWire,scope) Multi
-
     EdBuildInputGUI $Ed(EdLiveWire,frame).fTabbedFrame.fBasic.fInput Ed(EdLiveWire,input) \
 	    "-command EdLiveWireSetInput"
     
@@ -214,6 +224,15 @@ proc EdLiveWireBuildGUI {} {
     grid $f.eOutput $f.eName -sticky w
     
     lappend Label(colorWidgetList) $f.eName
+
+
+    #-------------------------------------------
+    # TabbedFrame->Basic->Contour frame
+    #-------------------------------------------
+    set f $Ed(EdLiveWire,frame).fTabbedFrame.fBasic.fContour
+    eval {button $f.bContour -text "Use previous segmented slice:" \
+	    -command "EdLiveWireUseDistanceFromPreviousContour"} $Gui(WBA)
+    pack $f.bContour
     
     #-------------------------------------------
     # TabbedFrame->Basic->Apply frame
@@ -224,9 +243,97 @@ proc EdLiveWireBuildGUI {} {
 	    -command "EdLiveWireApply"} $Gui(WBA) {-width 8}
     pack $f.bApply
 
-    eval {button $f.bTest -text "Test" \
-	    -command "EdLiveWireRaiseEdgeImageWin"} $Gui(WBA) {-width 8}
-    pack $f.bTest
+    #-------------------------------------------
+    # TabbedFrame->Training frame
+    #-------------------------------------------
+    set f $Ed(EdLiveWire,frame).fTabbedFrame.fTraining
+
+    #-------------------------------------------
+    # TabbedFrame->Training->TrainingFile frame
+    #-------------------------------------------
+    set f $Ed(EdLiveWire,frame).fTabbedFrame.fTraining
+    frame $f.fTrainingFile   -bg $Gui(activeWorkspace)
+    pack $f.fTrainingFile -side top -pady $Gui(pad) -fill x
+    set f $f.fTrainingFile
+
+    DevAddFileBrowse $f Ed "EdLiveWire,trainingFileName" "Output File:" [] "txt" [] \
+	    "Save" "Output File" "Choose the file where the training information will be written."
+
+    #-------------------------------------------
+    # TabbedFrame->Training->Train frame
+    #-------------------------------------------
+    set f $Ed(EdLiveWire,frame).fTabbedFrame.fTraining
+
+    frame $f.fSlices   -bg $Gui(activeWorkspace)
+    pack $f.fSlices -side top -pady $Gui(pad) -fill x
+    frame $f.fTrain   -bg $Gui(activeWorkspace)
+    pack $f.fTrain -side top -pady $Gui(pad) -fill x    
+
+    set f $Ed(EdLiveWire,frame).fTabbedFrame.fTraining.fSlices
+
+    foreach lab {"first slice:" "last slice:"} s "1 2" {
+	eval {label $f.lSlice$s -text $lab} $Gui(WLA)
+	#grid $f.lSlice$s -row $s -col 0
+	eval {entry $f.eSlice$s -width 3 \
+		-textvariable Ed(EdLiveWire,trainingSlice$s)} $Gui(WEA)
+	#grid $f.eSlice$s -row $s -col 1
+	pack $f.lSlice$s $f.eSlice$s -side left -pady $Gui(pad) -padx $Gui(pad)	
+    }
+
+    set f $Ed(EdLiveWire,frame).fTabbedFrame.fTraining.fTrain
+    #$f configure  -relief groove -bd 3 -bg $Gui(activeWorkspace)
+
+    frame $f.fTrainingMode   -bg $Gui(activeWorkspace)
+    pack $f.fTrainingMode -side top -pady $Gui(pad) -padx $Gui(pad)
+    frame $f.fTrainingButton   -bg $Gui(activeWorkspace)
+    pack $f.fTrainingButton -side top -pady $Gui(pad) -padx $Gui(pad)
+
+    set f $Ed(EdLiveWire,frame).fTabbedFrame.fTraining.fTrain.fTrainingMode
+
+    #eval {label $f.lTrainingMode -text "Training:"} $Gui(WLA)
+    #pack $f.lTrainingMode -side left
+
+    set tips "{Draw on a slice to mark areas for training.}\
+	    {Use the contour from the current slice.}\
+	    {Train from first slice to last slice.}"
+	    
+    foreach mode "DrawOnSlice CurrentSlice RangeOfSlices" \
+	    text {"Draw Contour" "Current Slice" "Several Slices" } \
+	    width "12 12 12" tip $tips {
+	eval {radiobutton $f.r$mode -width $width -indicatoron 0\
+		-text "$text" -value "$mode" \
+		-variable Ed(EdLiveWire,trainingMode)} $Gui(WCA)
+	pack $f.r$mode -side left -fill x -anchor e
+	TooltipAdd $f.r$mode $tip
+    }
+
+    # the above did -command "EdLiveWireSetMode" before
+
+    set f $Ed(EdLiveWire,frame).fTabbedFrame.fTraining.fTrain.fTrainingButton
+
+    eval {button $f.bTrain -text "Train LiveWire from Contour" \
+	    -command "EdLiveWireTrain"} $Gui(WBA) {-width 30}
+    pack $f.bTrain -side top
+
+    TooltipAdd $f.bTrain \
+	    "Teach livewire using the contour you have drawn.\nSettings will be written to the file you have selected."
+
+
+    #-------------------------------------------
+    # TabbedFrame->Training->Read frame
+    #-------------------------------------------
+    set f $Ed(EdLiveWire,frame).fTabbedFrame.fTraining
+
+    frame $f.fRead   -bg $Gui(activeWorkspace)
+    pack $f.fRead -side top -pady $Gui(pad) -fill x
+    set f $f.fRead
+
+    eval {button $f.bRead -text "Read LiveWire Settings" \
+	    -command "EdLiveWireReadTrainedValues"} $Gui(WBA) {-width 20}
+    pack $f.bRead
+
+    TooltipAdd $f.bRead \
+	    "Read LiveWire settings from the file you have selected."
 
     #-------------------------------------------
     # TabbedFrame->Advanced frame
@@ -273,10 +380,13 @@ proc EdLiveWireBuildGUI {} {
 
 	set row [expr $feat +1]
 	
-	# 0th column is feature name
-	eval {label $f.lfeatureName$feat -text $name} $Gui(WLA)
-	grid $f.lfeatureName$feat  -row $row -column 0 -sticky w \
-		-ipadx 2 -ipady 2
+	# 0th column is feature name (on a button that can turn feature off)
+	set Ed(EdLiveWire,weightOff,$feat) 0
+	eval {button $f.rfeatureName$feat -width 12 -text "$name" \
+		-command "EdLiveWireToggleWeight $feat"} $Gui(WBA)
+
+	grid $f.rfeatureName$feat  -row $row -column 0 -sticky w \
+		-ipadx 1 -ipady 2
 
 	# 1st column is feature weight
 	eval {entry $f.eFeature${feat}Weight -width 6 \
@@ -322,42 +432,24 @@ proc EdLiveWireBuildGUI {} {
 	    -command "EdLiveWireRaiseEdgeImageWin"} $Gui(WBA) {-width 20}
     pack $f.bPopup
 
-    #-------------------------------------------
-    # TabbedFrame->Advanced->Settings->Train frame
-    #-------------------------------------------
-    set f $Ed(EdLiveWire,frame).fTabbedFrame.fAdvanced.fSettings
-
-    frame $f.fTrain   -bg $Gui(activeWorkspace)
-    pack $f.fTrain -side top -pady $Gui(pad) -fill x
-    set f $f.fTrain
-
-    foreach mode "LiveWire Training" text "Off On" width "3 3" {
-	radiobutton $f.r$mode -width $width -indicatoron 0\
-		-text "$text" -value "$mode" \
-		-variable Ed(EdLiveWire,mode) \
-		-command "EdLiveWireSetMode"
-	pack $f.r$mode -side left -fill x -anchor e
-    }
-
-    eval {button $f.bTrain -text "Train" \
-	    -command "EdLiveWireTrain"} $Gui(WBA) {-width 20}
-    pack $f.bTrain
-
-    #-------------------------------------------
-    # TabbedFrame->Advanced->Settings->Read frame
-    #-------------------------------------------
-    set f $Ed(EdLiveWire,frame).fTabbedFrame.fAdvanced.fSettings
-
-    frame $f.fRead   -bg $Gui(activeWorkspace)
-    pack $f.fRead -side top -pady $Gui(pad) -fill x
-    set f $f.fRead
-
-    eval {button $f.bRead -text "Read" \
-	    -command "EdLiveWireReadTrainedValues"} $Gui(WBA) {-width 20}
-    pack $f.bRead
-
 }
 
+proc EdLiveWireToggleWeight {feat} {
+    global Ed
+
+    if {$Ed(EdLiveWire,weightOff,$feat) == 0} {
+	# if button pressed, set weight to 0
+	set Ed(EdLiveWire,feature$feat,weight) 0
+	# the weight is turned off now:
+	set Ed(EdLiveWire,weightOff,$feat) 1
+    } else {
+	# if unpressing button, set weight to 1
+	set Ed(EdLiveWire,feature$feat,weight) 1
+	# the weight is turned on now:
+	set Ed(EdLiveWire,weightOff,$feat) 0
+    }
+
+}
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireRaiseEdgeImageWin
@@ -382,30 +474,56 @@ proc EdLiveWireRaiseEdgeImageWin {} {
     # make the pop up window
     toplevel $w
 
+    # top frame
+    frame $w.fTop
+    pack $w.fTop -side top
+
+    # bottom (controls) frame
+    frame $w.fBottom
+    pack $w.fBottom -side top -fill both
+    
+    # left-hand frame
+    frame $w.fTop.fLeft
+    pack $w.fTop.fLeft -side left
+
+    # right-hand frame
+    frame $w.fTop.fRight
+    pack $w.fTop.fRight -side left
+
+    #-------------------------------------------
+    # Left frame
+    #-------------------------------------------
+
     # put image viewer in it
-    frame $w.fwin
-    set f $w.fwin
+    #frame $w.fTop
+    set f $w.fTop.fLeft
     vtkTkImageViewerWidget $f.v$s -width 256 -height 256 \
 	    -iv Ed(EdLiveWire,viewer$s)
-    pack $f -side top -fill both
+    pack $f.v$s -side left -fill both
     bind $f.v$s <Expose> {ExposeTkImageViewer %W %x %y %w %h}
-    pack $f.v$s -side top
     set viewerWidget $f.v$s
 
-    # radiobuttons switch between edge images
-    frame $w.fedgeBtns
-    set f $w.fedgeBtns
-    label $f.lradio -text "Edge Direction"
-    pack $f.lradio -side left
-    #Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,lwSetup$s) GetEdgeImage 0]
-    foreach edge "0 1 2 3" text "0 1 2 3" width "2 2 2 2" {
-	radiobutton $f.r$edge -width $width -indicatoron 0\
-		-text "$text" -value "$edge" \
-		-variable Ed(EdLiveWire,edge$s) \
-		-command "Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,lwSetup$s) GetEdgeImage $edge]; $viewerWidget Render" 
-	pack $f.r$edge -side left -fill x -anchor e
-    }
-    pack $f -side top
+    #-------------------------------------------
+    # Right frame
+    #-------------------------------------------
+    set f $w.fTop.fRight
+
+    # histogram
+    source /scratch/src/slicer/program/vtkHistogramWidget.tcl
+    set hist [vtkHistogramWidget $f.hist]
+    scan [[Ed(EdLiveWire,viewer$s) GetInput] GetExtent] "%d %d %d %d %d %d" x1 x2 y1 y2 z1 z2
+    # this should match the first image displayed
+    HistogramWidgetSetInput $hist [Ed(EdLiveWire,viewer$s) GetInput]
+    HistogramWidgetSetExtent $hist $x1 $x2 $y1 $y2 $z1 $z2
+    pack $hist -side left -padx 3 -pady 3 -fill both -expand t
+    HistogramWidgetBind $f.hist
+
+    # save vars 
+    set Ed(EdLiveWire,edgeHistWidget$s) $hist
+
+    #-------------------------------------------
+    # Bottom frame
+    #-------------------------------------------
 
     # window/level controls   
     set win [Ed(EdLiveWire,viewer$s) GetColorWindow]
@@ -413,8 +531,8 @@ proc EdLiveWireRaiseEdgeImageWin {} {
     set Ed(EdLiveWire,viewerWindow$s) $win
     set Ed(EdLiveWire,viewerLevel$s) $lev
 
-    frame $w.fwinlevel
-    set f $w.fwinlevel
+    frame $w.fBottom.fwinlevel
+    set f $w.fBottom.fwinlevel
     frame $f.f1
     label $f.f1.windowLabel -text "Window"
     scale $f.f1.window -from 1 -to [expr $win * 2]  \
@@ -432,11 +550,27 @@ proc EdLiveWireRaiseEdgeImageWin {} {
     pack $f.f1.windowLabel $f.f1.window -side left
     pack $f.f2.levelLabel $f.f2.level -side left
     
+
+    # radiobuttons switch between edge images
+    frame $w.fBottom.fedgeBtns
+    set f $w.fBottom.fedgeBtns
+    label $f.lradio -text "Edge Direction"
+    pack $f.lradio -side left
+    #Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,lwSetup$s) GetEdgeImage 0]
+    foreach edge "0 1 2 3" text "0 1 2 3" width "2 2 2 2" {
+	radiobutton $f.r$edge -width $width -indicatoron 0\
+		-text "$text" -value "$edge" \
+		-variable Ed(EdLiveWire,edge$s) \
+		-command "EdLiveWireUpdateEdgeImageWin $viewerWidget $edge"
+	pack $f.r$edge -side left -fill x -anchor e
+    }
+    pack $f -side top
+
     #"Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,lwSetup$s) GetEdgeImage $edge]; $viewer Render" 
     #"Ed(EdLiveWire,viewer$s) SetInput [Slicer GetActiveOutput $s]; $viewer Render" 
     # make close button
-    frame $w.fcloseBtn
-    set f $w.fcloseBtn
+    frame $w.fBottom.fcloseBtn
+    set f $w.fBottom.fcloseBtn
     button $f.b -text Close -command "lower $w"
     pack $f -side top
     pack $f.b -side top -fill x
@@ -444,6 +578,21 @@ proc EdLiveWireRaiseEdgeImageWin {} {
 }
 
 
+proc EdLiveWireUpdateEdgeImageWin {viewerWidget edgeNum} {
+    global Slice Ed
+    
+    set s $Slice(activeID)
+    
+    # image window
+    Ed(EdLiveWire,viewer$s) SetInput [Ed(EdLiveWire,lwSetup$s) GetEdgeImage $edgeNum]
+    $viewerWidget Render
+
+    # histogram
+    HistogramWidgetSetInput $Ed(EdLiveWire,edgeHistWidget$s) [Ed(EdLiveWire,viewer$s) GetInput]
+    scan [[Ed(EdLiveWire,viewer$s) GetInput] GetExtent] "%d %d %d %d %d %d" x1 x2 y1 y2 z1 z2
+    HistogramWidgetSetExtent $Ed(EdLiveWire,edgeHistWidget$s) $x1 $x2 $y1 $y2 $z1 $z2
+    HistogramWidgetRender $Ed(EdLiveWire,edgeHistWidget$s)
+}
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireGetFeatureParams
@@ -549,6 +698,8 @@ proc EdLiveWireAdvancedApply {} {
  
     EdLiveWireSetFeatureParams
 
+    Slicer ReformatModified
+    Slicer Update
 }
 
 
@@ -567,8 +718,7 @@ proc EdLiveWireStartPipeline {} {
     # set up pipeline
     foreach s $Slice(idList) {
 	Slicer SetFirstFilter $s Ed(EdLiveWire,lwSetup$s)
-	# Lauren fix? (make slicer accept multiple image filter too)
-	Slicer SetLastFilter  $s Ed(EdLiveWire,copy$s)
+	Slicer SetLastFilter  $s Ed(EdLiveWire,lwPath$s)  
     }
     # Layers: Back=Original, Fore=Working
     if {$Ed(EdLiveWire,input) == "Original"} {
@@ -606,8 +756,6 @@ proc EdLiveWireStopPipeline {} {
 #-------------------------------------------------------------------------------
 proc EdLiveWireEnter {} {
     global Ed Label Slice
-
-    puts "ENTER."
 
     # all 4 edge filters need to execute
     set Ed(EdLiveWire,numEdgeFiltersReady) 0
@@ -647,6 +795,9 @@ proc EdLiveWireEnter {} {
     } else {
 	Slicer DrawSetColor 0 0 0
     }
+    
+    # make sure tcl vars correspond to vtk filter settings
+    EdLiveWireGetFeatureParams
 }
 
 #-------------------------------------------------------------------------------
@@ -934,8 +1085,6 @@ proc EdLiveWireApply {} {
     set file "/scratch/src/slicer/program/test.txt"
     writePoints $rasPoints $file
 
-    puts "a1"
-
     set e EdLiveWire
 
     # the working volume is editor input (where we want to draw)
@@ -959,8 +1108,6 @@ proc EdLiveWireApply {} {
     # text over blue progress bar
     set Gui(progressText) "Livewire [Volume($v,node) GetName]"	
 
-    puts "a2"
-
     # attributes of region to draw
     set label    $Label(label)
     set radius   $Ed($e,radius)
@@ -970,8 +1117,6 @@ proc EdLiveWireApply {} {
     # giving them to the Editor object.    
     #vtkPoints ijkPoints
     #Slicer ComputeIjkPoints $rasPoints ijkPoints
-
-    puts "a3"
 
     puts "ras:  [$rasPoints GetNumberOfPoints]"
     #puts "ijk: [ijkPoints GetNumberOfPoints]"
@@ -990,22 +1135,16 @@ proc EdLiveWireApply {} {
     # trouble with crashing here. why?
     #Ed(editor)   Draw $label ijkPoints $radius $shape
 
-    puts "a4"
-
     #ijkPoints Delete
 
     # clear points that livewire object was storing
     EdLiveWireResetSlice $s
-
-    puts "a5"
 
     # reset editor object
     Ed(editor)     SetInput ""
     Ed(editor)     UseInputOff
 
     EdUpdateAfterApplyEffect $v Active
-
-    puts "a6"
 
     # always delete points for now...
     Slicer DrawDeleteAll
@@ -1114,6 +1253,176 @@ proc EdLiveWireSetMode {} {
     set Ed($e,previousMode) $Ed($e,mode)
 }
 
+
+################################
+# Lauren make a function in the slicer that reformats a slice
+# and makes it available!
+# this code should not all be in tcl!
+###############################
+
+
+proc EdLiveWireReformatSlice {offset realReformat {volume "Working"}} {
+    global Ed Slice Volume View Label
+    
+    # reformat slice of Working or Original volume
+    set s $Slice(activeID)
+    if {$volume == "Working"} {
+	set v [EditorGetWorkingID]
+    } else {
+	set v [EditorGetOriginalID]
+    }
+    set vol Volume($v,vol)
+    set node Volume($v,node)
+
+    # proper way to set fov for correct reformatting
+    # Lauren this should be used for all reformatting in the slicer!
+    set dim     [lindex [$node GetDimensions] 0]
+    set spacing [lindex [$node GetSpacing] 0]
+    set fov     [expr $dim*$spacing]
+
+    # use a reformat IJK to compute the reformat matrix
+    vtkImageReformatIJK reformat
+    vtkMatrix4x4 ref
+    reformat SetWldToIjkMatrix [$node GetWldToIjk]
+    reformat SetInput [$vol GetOutput]
+    reformat SetInputOrderString [$node GetScanOrder]
+    puts "scan order from node: [$node GetScanOrder]"
+    # output order should match the displayed slices:
+    set orient [Slicer GetOrientString $s]
+    puts "orient: $orient"
+
+    # know orientation is IJK since we're in the editor:
+    set order ""
+    switch $orient {
+	"OrigSlice" {
+	    puts "original slice"
+	    set order [$node GetScanOrder]
+	}
+	"AxiSlice" {
+	    set order "IS"
+	}
+	"SagSlice" {
+	    set order "LR"
+	}
+	"CorSlice" {
+	    set order "PA"
+	}
+    } 
+    if {$order == ""} {
+	puts "ERROR in EdLiveWire.tcl: scan order not found!"
+    }
+
+    puts "order found as: $order"
+    reformat SetOutputOrderString $order
+    reformat SetSlice $offset
+    #reformat ComputeTransform  BUG: this is not wrapped!
+    reformat ComputeTransform2
+    reformat ComputeOutputExtent
+    reformat Update
+    reformat ComputeReformatMatrix ref   
+    #puts [ref Print]
+
+    # give the matrix to a real reformatter
+    #vtkImageReformat realReformat 
+    $realReformat SetInput [$vol GetOutput]
+    $realReformat SetReformatMatrix ref
+    $realReformat SetWldToIjkMatrix [$node GetWldToIjk]
+    # no interpolation for Working
+    $realReformat InterpolateOff
+    # Lauren fix these: should match current reformatter settings
+    # so that images will line up.
+    $realReformat SetResolution 256
+    $realReformat SetFieldOfView 240
+
+    reformat Delete
+    ref Delete
+}
+
+proc EdLiveWireUseDistanceFromPreviousContour {} {
+    global Ed Slice
+    
+    set s $Slice(activeID)
+
+    # image we need is the previous one from the Working
+    # volume (the last slice a contour was drawn on)
+    # Lauren: may need to add OR subtract 1, depending!
+    set offset [expr $Slice($s,offset) - 1]
+    puts "offset: $offset"
+    
+    EdLiveWireGetContourSlice $offset
+
+    # test image is okay
+    Ed(EdLiveWire,viewer$s) SetColorWindow 15
+    Ed(EdLiveWire,viewer$s) SetColorLevel 5
+    Ed(EdLiveWire,viewer$s) SetInput $Ed(EdLiveWire,contourSlice)
+
+}
+
+proc EdLiveWireGetContourSlice {offset} {
+    global Ed Slice Volume View Label
+
+    set s $Slice(activeID)  
+    
+    # first reformat the appropriate slice
+    vtkImageReformat realReformat
+    EdLiveWireReformatSlice $offset realReformat
+    
+    # 1. remove other labels from image.
+    set lab 0
+    if {$Label(label) == ""} {
+	puts "ERROR in EdLiveWire, no label exists"
+    } else {
+	set lab $Label(label)
+    }    
+    puts " LABEL: $Label(label)"
+
+    #vtkImageThresholdBeyond thresh
+    Ed(EdLiveWire,imageThreshold) SetReplaceIn 1
+    Ed(EdLiveWire,imageThreshold) SetReplaceOut 1
+    # output 1's for the label we want
+    Ed(EdLiveWire,imageThreshold) SetInValue 1
+    Ed(EdLiveWire,imageThreshold) SetOutValue 0
+    Ed(EdLiveWire,imageThreshold) SetInput [realReformat GetOutput]
+    Ed(EdLiveWire,imageThreshold) ThresholdBetween $lab $lab
+
+    # result:
+    set Ed(EdLiveWire,contourSlice) [Ed(EdLiveWire,imageThreshold) GetOutput]
+
+    realReformat Delete
+
+    return
+
+    # Lauren get rid of the following, probably:
+
+    # pipeline to get just the boundary of the segmented area:
+    #2. get actual border btwn structure and non
+    vtkImageErode erode
+    erode SetBackground 0
+    erode SetForeground 1
+    erode SetInput [thresh GetOutput]  
+    # subtract eroded from regular for 1-pix border
+    #vtkImageMathematics Ed(EdLiveWire,imageMath)
+    Ed(EdLiveWire,imageMath) SetInput1 [thresh GetOutput]
+    Ed(EdLiveWire,imageMath) SetInput2 [erode GetOutput]
+    Ed(EdLiveWire,imageMath) SetOperationToSubtract
+
+    set Ed(EdLiveWire,contourSlice) [Ed(EdLiveWire,imageMath) GetOutput]    
+
+    # test
+    #Ed(EdLiveWire,viewer$s) SetInput [realReformat GetOutput]    
+    #Ed(EdLiveWire,viewer$s) SetInput [border GetOutput]    
+
+    # make a distance map!!!!!!!!!
+
+    # pass reformatted slice on to the edge weight filter
+    
+    #puts "output: [ [realReformat GetOutput] Print]"
+    realReformat Delete
+    thresh Delete
+    erode Delete
+    #border Delete
+}
+
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireTrain
 # 
@@ -1123,38 +1432,120 @@ proc EdLiveWireSetMode {} {
 proc EdLiveWireTrain {} {
     global Ed Slice Volume
 
-    if {$Ed(EdLiveWire,mode) != "Training"} {
-	puts "Can't train if not in training mode"
-	return
-    }
+    #if {$Ed(EdLiveWire,mode) != "Training"} {
+	#puts "Can't train if not in training mode"
+	#return
+    #}
 
     set s $Slice(activeID)
     set e EdLiveWire
+
+    # set the training image input to the edge filter.
+    # (for now, just train with the first edge filter)
+    # $Ed($e,numEdgeFilters)
     for {set f 0} {$f < $Ed($e,numEdgeFilters)} {incr f} {
 	set filt [Ed($e,lwSetup$s) GetEdgeFilter $f]
-	$filt TrainingModeOn
-	
-	# Lauren for now set the 2nd input to this too!
-	$filt SetPreviousContourImage [Slicer GetActiveOutput $s]
 
-
-	# draw points on a blank slice for input to filter
-	vtkImageFillROI fillroi
-	fillroi SetInput [Volume($Volume(idNone),vol) GetImageData]
-	fillroi SetValue 1
-	fillroi SetRadius $Ed($e,trainingRadius)
-
-	fillroi SetShapeString Lines
-	fillroi SetPoints [Slicer DrawGetPoints]
-	
-	$filt SetTrainingPointsImage [fillroi GetOutput]
-
-	fillroi Delete
-
+	$filt TrainingModeOn		
 	# output means, averages:
 	$filt SetTrainingFileName $Ed($e,trainingFileName)
+
+	puts "mode: $Ed(EdLiveWire,trainingMode)"
+
+	switch $Ed(EdLiveWire,trainingMode) {
+	    "DrawOnSlice" {
+		# draw points on a blank slice for input to filter
+		vtkImageFillROI fillroi
+		fillroi SetInput [Volume($Volume(idNone),vol) GetImageData]
+		fillroi SetValue 1
+		fillroi SetRadius $Ed($e,trainingRadius)
+		
+		fillroi SetShapeString Lines
+		fillroi SetPoints [Slicer DrawGetPoints]
+		
+		$filt SetTrainingPointsImage [fillroi GetOutput]
+		
+		# Lauren for now set the 2nd input to this too!
+		$filt SetPreviousContourImage [fillroi GetOutput]
+		
+		fillroi Delete
+		
+		$filt Update
+
+	    }	    
+	    "CurrentSlice" {
+		# reformat current slice in working volume
+		EdLiveWireGetContourSlice $Slice($s,offset)
+		
+		# test image is okay
+		#Ed(EdLiveWire,viewer$s) SetColorWindow 8
+		#Ed(EdLiveWire,viewer$s) SetColorLevel 3
+		#Ed(EdLiveWire,viewer$s) SetInput $Ed(EdLiveWire,contourSlice)
+		
+		$filt SetTrainingPointsImage $Ed(EdLiveWire,contourSlice)
+		
+		# Lauren for now set the 2nd input to this too!
+		$filt SetPreviousContourImage $Ed(EdLiveWire,contourSlice)
+
+		$filt SetEdgeDirection $Ed(EdLiveWire,trainingEdgeDir)
+
+		$filt Update		
+	    }
+	    "RangeOfSlices" {
+		# validate user input
+		if {[ValidateInt $Ed(EdLiveWire,trainingSlice1)] == 0} {
+		    tk_messageBox  -message \
+			    "The slice number must be an integer."
+		    return
+		}	
+		if {[ValidateInt $Ed(EdLiveWire,trainingSlice2)] == 0} {
+		    tk_messageBox  -message \
+			    "The slice number must be an integer."
+		    return
+		}	
+
+		# tell filter to compute across many slices
+		$filt TrainingComputeRunningTotalsOn
+
+		vtkImageReformat origReformat
+		# reformat each slice since we want to train in the 
+		# same orientation as drawing will be done
+		for {set i $Ed(EdLiveWire,trainingSlice1)} \
+			{$i <= $Ed(EdLiveWire,trainingSlice2)} {incr i} {
+		    puts "processing slice number $i"
+
+		    # reformat slice in working volume
+		    EdLiveWireGetContourSlice $i
+		    $filt SetTrainingPointsImage $Ed(EdLiveWire,contourSlice)
+
+		    # reformat the same slice in original volume
+		    EdLiveWireReformatSlice $i origReformat "Original"
+		    $filt SetOriginalImage [origReformat GetOutput]    
+
+		    # test image is okay
+		    Ed(EdLiveWire,viewer$s) SetColorWindow 8
+		    Ed(EdLiveWire,viewer$s) SetColorLevel 3
+		    Ed(EdLiveWire,viewer$s) SetInput $Ed(EdLiveWire,contourSlice)
+	    
+		    # Lauren for now set the 2nd input to this too!
+		    $filt SetPreviousContourImage $Ed(EdLiveWire,contourSlice)
+		    
+		    # if last slice, stop running total
+		    if {$i == $Ed(EdLiveWire,trainingSlice2)} {
+			$filt TrainingComputeRunningTotalsOff
+		    }
+
+		    $filt Update
+		}
+		origReformat Delete
+	    }
+	    
+	}
     }
 
+    $filt TrainingModeOff
+
+    Slicer ReformatModified
     Slicer Update
 }
 
@@ -1166,7 +1557,8 @@ proc EdLiveWireReadTrainedValues {} {
     # Lauren these should really be options....
     set in [open $Ed($e,trainingFileName)]
     set numbers [read $in]
-    
+    close $in
+
     # Lauren need more error checking in case num params changes!
 
     set index 0
