@@ -341,7 +341,10 @@ protected:
   void          Evolve();
   void          Evolve3D();
   void          Evolve2D();
+
   unsigned char CheckConvergence();
+  void          CheckConvergenceNew();
+
   void          ExecuteInformation()
     {
       this->vtkImageToImageFilter::ExecuteInformation();
@@ -400,15 +403,17 @@ protected:
   // current elt used
   int            current;
 
-  int*           bnd;
-  unsigned char  bnd_allocated;
-  unsigned char* flag;
-  unsigned char  flag_allocated;
-  int            bnd_pc;
-  int            bnd_maxsize;
+  //------------------- Narrow Band information
+  int*             bnd;
+  float*           bnd_initialvalues;
+  unsigned char    bnd_allocated;
+  unsigned char*   flag;
+  unsigned char    flag_allocated;
+  int              bnd_pc;
+  int              bnd_maxsize;
 
-  int            distmap_count;
-  int            band_count;
+  int              distmap_count;
+  int              band_count;
 
   unsigned char *stored_seg;
   unsigned char stored_seg_allocated;

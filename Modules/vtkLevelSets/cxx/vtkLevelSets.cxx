@@ -240,6 +240,7 @@ vtkLevelSets::~vtkLevelSets()
 
   if (bnd_allocated) {
     delete [] bnd;
+    delete [] bnd_initialvalues;
     delete [] flag;
     bnd_allocated = 0;
     //    flag_allocated = 0;
@@ -475,7 +476,7 @@ void vtkLevelSets::DistanceMapCurves()
 {
      float *U=u[this->current];
      float u0,upx,upy,upz,umx,umy,umz;
-     float Dpx,Dmx, Dpy,Dmy, Dpz,Dmz, deltap=0,deltam=0;
+     float Dpx,Dmx, Dpy,Dmy, Dpz=0,Dmz=0, deltap=0,deltam=0;
      float *newU=u[1-this->current];
      int   loop, bpc, seen;
      int   p = 0,b;
@@ -1211,6 +1212,43 @@ unsigned char vtkLevelSets::CheckConvergence( )
 } // CheckConvergence()
 
 
+//--------------------------------------------------------------------------
+// Check the convergence.
+void vtkLevelSets::CheckConvergenceNew( )
+{
+
+  register float *U =this->u[  this->current];
+  int b,i;
+  // histogram of the log of the changes
+  int loghisto[5];
+  int logdiff;
+
+  if (!bnd_allocated)
+    return;
+  if (GB_debug) fprintf(stderr, "vtkLevelSets::CheckConvergenceNew( ) begin \n");
+  
+  for(i=0;i<5;i++) loghisto[i]=0;
+
+  // Loop over the Narrow Band and check the intensity change
+  for(b=0;b<this->bnd_pc;b++) {
+    logdiff = (int) log(fabs(bnd_initialvalues[b]-U[this->bnd[b]]));
+    if (-logdiff<=0) loghisto[0]++;
+    else
+      if (-logdiff>=4) loghisto[4]++;
+      else
+    loghisto[-logdiff]++;
+  }
+
+  // print the convergence results
+  printf("\nConv test :");
+  for(i=0;i<5;i++)
+    printf(" %d, %02.2f  ",i,(loghisto[i]*100.0)/this->bnd_pc);
+  
+  if (GB_debug) fprintf(stderr, "vtkLevelSets::CheckConvergenceNew( ) end \n");
+
+} // CheckConvergenceNew()
+
+
 //---------------------------------------------------------------------------
 //
 inline void vtkLevelSets::ExtractCoords(int p, short& x, short& y, short& z)
@@ -1227,15 +1265,9 @@ inline void vtkLevelSets::ExtractCoords(int p, short& x, short& y, short& z)
 void vtkLevelSets::MakeBand( )
 {
 
-  /*
-  switch (DMmethod) {
-  case 0: 
-  case 1: 
-  case 2: 
-    MakeBand0(); break;
-  }
-  */
-  MakeBand0(); 
+  // before creating the new band, check the convergence
+  this->CheckConvergenceNew();
+  this->MakeBand0(); 
 
   /*
    // Save the result
@@ -1313,7 +1345,7 @@ void vtkLevelSets::MakeBand0( )
     register int   x,y,z;
     register float *U =this->u[  this->current];
     register float *nU=this->u[1-this->current];
-    register float u0,u1;
+    register float u0=0,u1;
     register float val;
     register unsigned char* flag_ptr;
     register int*           bnd_ptr;
@@ -1334,11 +1366,12 @@ void vtkLevelSets::MakeBand0( )
   // which is in general not necessary ...
   if (!bnd_allocated)     {
     // allocate at 15% of the image size
-    bnd_maxsize    = (int) (imsize*0.15);
+    bnd_maxsize             = (int) (imsize*0.15);
     fprintf(stderr,"Band Allocation %d \n",bnd_maxsize);
-    this->bnd      = new int           [bnd_maxsize];
-    this->flag     = new unsigned char [imsize];
-    bnd_allocated  = 1;
+    this->bnd               = new int           [bnd_maxsize];
+    this->bnd_initialvalues = new float         [bnd_maxsize];
+    this->flag              = new unsigned char [imsize];
+    bnd_allocated           = 1;
     ADDMEMORY("vtkLevelSets::MakeBand0() band size bnd + flag ", bnd_maxsize*sizeof(int)+imsize)
     //    flag_allocated = 1;
   }
@@ -1374,6 +1407,7 @@ void vtkLevelSets::MakeBand0( )
         this->flag[p]|=POSMINE;
       
     this->bnd[this->bnd_pc]=p;
+    this->bnd_initialvalues[this->bnd_pc]=u0;
     this->bnd_pc++;
         if (bnd_pc>=bnd_maxsize) 
       ResizeBand();
@@ -1420,6 +1454,7 @@ void vtkLevelSets::MakeBand0( )
         flag_ptr[p] = inband;
         nU[p] = val;
         bnd_ptr[this->bnd_pc]=p;
+        this->bnd_initialvalues[this->bnd_pc]=val;
         this->bnd_pc++;
         if (bnd_pc>=bnd_maxsize) {
           ResizeBand();
@@ -1476,6 +1511,7 @@ void vtkLevelSets::MakeBand0( )
         flag_ptr[p] = inband;
         nU[p] = val;
         bnd_ptr[this->bnd_pc]=p;
+        this->bnd_initialvalues[this->bnd_pc]=val;
         this->bnd_pc++;
         if (bnd_pc>=bnd_maxsize) {
           ResizeBand();
@@ -1532,6 +1568,7 @@ void vtkLevelSets::MakeBand0( )
         flag_ptr[p] = inband;
         nU[p] = val;
         bnd_ptr[this->bnd_pc]=p;
+        this->bnd_initialvalues[this->bnd_pc]=val;
         this->bnd_pc++;
         if (bnd_pc>=bnd_maxsize) {
           ResizeBand();
@@ -1641,6 +1678,7 @@ void vtkLevelSets::ResizeBand()
 //                   ----------
 {
   int*           new_band;
+  float*         new_bandval;
   int            new_maxsize;
 
   // add 15% of the image size
@@ -1651,6 +1689,11 @@ void vtkLevelSets::ResizeBand()
   memcpy(new_band,bnd,bnd_maxsize*sizeof(int));
   delete [] bnd;
   bnd = new_band;
+
+  new_bandval = new float[new_maxsize];
+  memcpy(new_bandval,bnd_initialvalues,bnd_maxsize*sizeof(float));
+  delete [] bnd_initialvalues;
+  bnd_initialvalues = new_bandval;
 
   /*
   new_flag = new unsigned char[new_maxsize];
@@ -2181,7 +2224,7 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
     register double i0x,i0y,i0z;
     register double delta0,sqrtdelta0;
     register double imx,imy,imz;
-    register double D0xy,D0yz,D0zx;
+    register double D0xy=0,D0yz=0,D0zx=0;
     register double normcompsq;
     register double D_x,Dx,D_y,Dy,D_z,Dz;
     register double Dpmx=0;
@@ -2998,14 +3041,14 @@ void vtkLevelSets::PreComputeDataAttachment()
     float ipmy;
     float ipmz;
     float i0xy,i0yz,i0zx,i0;
-    float i0x,i0y,i0z;
+    float i0x,i0y,i0z=0;
     register float upx,upy,upz,umx,umy,umz;
-    float gradnorm;
-    float DAx,DAy,DAz;
+    float gradnorm=0;
+    float DAx=0,DAy=0,DAz=0;
     float* im   = (float*) this->inputImage->GetScalarPointer();;
     //    int imsize;
 
-    float norm, maxnorm;
+    float norm=0, maxnorm;
 
   this->SetProgressText("Precompute Data Attachement");
 
@@ -3189,7 +3232,7 @@ void vtkLevelSets::NormalizeSecDerGrad()
   int            sign, neigh_sign;
   float          val0,val1,diff;
   unsigned char  grad_computed;
-  float          norm;
+  float          norm=0;
   float          Grad[3];
   register int   x,y,z;
   int            n,p;
@@ -3199,7 +3242,7 @@ void vtkLevelSets::NormalizeSecDerGrad()
   float          threshold;
   int*           histo;
   int            histosize;
-  int            zmin,zmax,nmax;
+  int            zmin=0,zmax=0,nmax=0;
 
 
   this->SetProgressText("Normalize 2nd Deriv Gradient");
