@@ -30,7 +30,7 @@ c:\tcl.
 	    
 	  <li>If pcmaker.exe is not present in VTK\pcmaker, compile it using Visual C++
 	    
-	  <li>Make the following directories:
+	  <li>Create the following directories:
 	    <ul>
 	      <li>VTK\pcmaker\tcllib\generic
 	      <li>VTK\pcmaker\tcllib\win
@@ -107,7 +107,13 @@ c:\tcl.
 		      <li>Library prefix:  vtk
 		      <li>Press OK
 		    </ul>
-		  <li>Press OK and wait until pcmaker finishes
+		  <li>Press OK and wait until pcmaker finishes. If an
+		  error box pops up stating that you need to increase
+		  MAX_DEPENDS, modify makedepend.cxx (in the VTK
+		  directory, not in pcmaker) to use 3000 for
+		  MAX_DEPENDS and recompile the whole pcmaker project
+		  (the Visual Studio project file can be found in
+		  pcmaker directory).  
 		</ul>
 	    </ul>
 	    
