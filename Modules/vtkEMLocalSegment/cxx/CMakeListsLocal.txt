@@ -10,21 +10,26 @@
 # and 'MYCLASS' to your module name (all CAPS)
 #
 
-SET (LOCAL_MODULE_SRCS
-vtkDataTimeDef  
-vtkFileOps
-vtkImageEMLocalSegmenter
-vtkImageEMGeneral  
-)
+IF (WIN32) 
+    SET (LOCAL_MODULE_SRCS
+        vtkDataTimeDef  
+        vtkFileOps
+        vtkImageEMLocalSegmenter
+        vtkImageEMGeneral  
+    )
+    # Place names of abstract class implementations here. No file suffixes.
+    # Comment this out if there are no abstracts.
 
-
-# Place names of abstract class implementations here. No file suffixes.
-# Comment this out if there are no abstracts.
-
-SET_SOURCE_FILES_PROPERTIES (
-vtkThread
-ABSTRACT
-)
+    SET_SOURCE_FILES_PROPERTIES ( ABSTRACT vtkThread)
+ELSE (WIN32)
+    SET (LOCAL_MODULE_SRCS
+        vtkDataTimeDef  
+        vtkFileOps
+        vtkImageEMLocalSegmenter
+        vtkImageEMGeneral  
+        vtkThread
+    )
+ENDIF (WIN32)
 
 # You can add additional include paths here
 #INCLUDE_DIRECTORIES(
