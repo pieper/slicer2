@@ -6,7 +6,10 @@
 #include <stdlib.h>
 
 #include <math.h>
+
+#if defined(__sun)
 #include <ieeefp.h>
+#endif
 
 #include <algorithm>
 
