@@ -65,8 +65,8 @@ if { [itcl::find class isregistration] == "" } {
         #
         
         
-        itk_option define -target target Target {}
-        itk_option define -source source Source {}
+        itk_option define -target target Target {0}
+        itk_option define -source source Source {0}
         itk_option define -transform transform Transform {}
         itk_option define -resolution resolution Resolution 128
         itk_option define -samples samples Samples 50
@@ -106,8 +106,10 @@ if { [itcl::find class isregistration] == "" } {
         # vtk instances
         variable _reg ""
         variable _matrix ""
+    variable _targetchangeinfo ""
         variable _targetcast ""
         variable _targetnorm ""
+    variable _sourcechangeinfo ""
         variable _sourcecast ""
         variable _sourcenorm ""
 
@@ -130,6 +132,8 @@ if { [itcl::find class isregistration] == "" } {
 # ------------------------------------------------------------------
 itcl::body isregistration::constructor {args} {
     component hull configure -borderwidth 0
+
+    global Volume
 
     # make a unique name associated with this object
     set _name [namespace tail $this]
@@ -194,23 +198,18 @@ itcl::body isregistration::constructor {args} {
 
     set _targetcast ::targetcast_$_name
     set _targetnorm ::targetnorm_$_name
+    set _targetchangeinfo ::targetchangeinfo_$_name
     catch "$_targetcast Delete"
     catch "$_targetnorm Delete"
-
-    ## hack by Samson
-    set _targetchangeinfo ::targetchangeinfo_$_name
-    set _sourcechangeinfo ::sourcechangeinfo_$_name
     catch "$_targetchangeinfo Delete"
-    catch "$_sourcechangeinfo Delete"
+
+    vtkImageChangeInformation $_targetchangeinfo
+    $_targetchangeinfo CenterImageOn
+    $_targetchangeinfo SetInput [$_targetvol imagedata]
+    $_targetchangeinfo SetInput [Volume($Volume(idNone),vol) GetOutput]
 
     vtkImageCast $_targetcast
     $_targetcast SetOutputScalarTypeToFloat
-    $_targetcast SetInput [$_targetvol imagedata]
-
-    ### big hack by Samson -- turned on
-    vtkImageChangeInformation $_targetchangeinfo
-    $_targetchangeinfo CenterImageOn
-    $_targetchangeinfo SetInput [Volume($Matrix(refVolume),vol) GetOutput]
     $_targetcast SetInput [$_targetchangeinfo GetOutput]
 
     vtkITKNormalizeImageFilter $_targetnorm
@@ -219,19 +218,21 @@ itcl::body isregistration::constructor {args} {
     ##
     ## Cast source image to float and normalize
     ##
+
     set _sourcecast ::sourcecast_$_name
     set _sourcenorm ::sourcenorm_$_name
+    set _sourcechangeinfo ::sourcechangeinfo_$_name
     catch "$_sourcecast Delete"
     catch "$_sourcenorm Delete"
+    catch "$_sourcechangeinfo Delete"
+
+    vtkImageChangeInformation $_sourcechangeinfo
+    $_sourcechangeinfo CenterImageOn
+    $_sourcechangeinfo SetInput [$_sourcevol imagedata]
+    $_sourcechangeinfo SetInput [Volume($Volume(idNone),vol) GetOutput]
 
     vtkImageCast $_sourcecast
     $_sourcecast SetOutputScalarTypeToFloat
-    $_sourcecast SetInput [$_sourcevol imagedata]
-
-    ### big hack by Samson -- turned on
-    vtkImageChangeInformation $_sourcechangeinfo
-    $_sourcechangeinfo CenterImageOn
-    $_sourcechangeinfo SetInput [Volume($Matrix(volume),vol) GetOutput]
     $_sourcecast SetInput [$_sourcechangeinfo GetOutput]
 
     vtkITKNormalizeImageFilter $_sourcenorm
@@ -248,9 +249,6 @@ itcl::body isregistration::constructor {args} {
 
     $_reg SetTargetImage [$_targetnorm GetOutput]
     $_reg SetSourceImage [$_sourcenorm GetOutput]
-
-#    $_reg SetTargetImage [$_targetcast GetOutput]
-#    $_reg SetSourceImage [$_sourcecast GetOutput]
 
     eval itk_initialize $args
 }
@@ -278,11 +276,11 @@ itcl::configbody isregistration::target {
     if {$itk_option(-target) == ""} {
         return
     }
-    puts "got here in target"
     $_targetvol configure -volume $itk_option(-target)
     $_targetvol configure -resolution $itk_option(-resolution)
     $_targetvol configure -orientation coronal ;# TODO extra config due to isvolume bug
     $_targetvol configure -orientation axial
+    $_targetchangeinfo SetInput [Volume($itk_option(-target),vol) GetOutput]
 }
 
 #-------------------------------------------------------------------------------
@@ -299,11 +297,11 @@ itcl::configbody isregistration::source {
     if {$itk_option(-source) == ""} {
         return
     }
-    puts "got here in source"
     $_sourcevol configure -volume $itk_option(-source)
     $_sourcevol configure -resolution $itk_option(-resolution)
     $_sourcevol configure -orientation coronal ;# TODO extra config due to isvolume bug
     $_sourcevol configure -orientation axial
+    $_sourcechangeinfo SetInput [Volume($itk_option(-source),vol) GetOutput]
 }
 
 #-------------------------------------------------------------------------------
@@ -337,27 +335,6 @@ itcl::body isregistration::step {} {
 
     ## update any parameters
     $itk_option(-update_procedure);
-
-#     puts "0 [Volume(0,vol) GetOutput]"
-#     puts "1 [Volume(1,vol) GetOutput]"
-#     puts "2 [Volume(2,vol) GetOutput]"
-#     puts "target c getinfo [::changeinfo__mi_reg_lwchildsite_target GetInput]"
-#
-#    catch "aw Delete"
-#    vtkImageWriter aw
-#      aw SetInput [::changeinfo__mi_reg_lwchildsite_target GetOutput]
-#      aw SetFilePrefix "/bigscratch/tmp/ftarget"
-#      aw SetFilePattern "%s.%03d"
-#      aw Write
-#      aw Delete
-#
-#    catch "aw Delete"
-#    vtkImageWriter aw
-#      aw SetInput [::changeinfo__mi_reg_lwchildsite_source GetOutput]
-#      aw SetFilePrefix "/bigscratch/tmp/fsource"
-#      aw SetFilePattern "%s.%03d"
-#      aw Write
-#      aw Delete
 
     #######
     ## set the default values
@@ -556,6 +533,8 @@ itcl::body isregistration::update_slicer_mat {} {
     puts "P2"
     puts [$this StringMatrix [$this getP2]]
 
+## (p1^-1 mat p2)^-1 = p2^-1 mat^-1 p1
+## So, both of these are identical.
     if {0} {
     set p2mat [$this getP1]
     $p2mat Invert
@@ -567,18 +546,6 @@ itcl::body isregistration::update_slicer_mat {} {
     $mat Invert
     $this GetSimilarityMatrix $p2mat $mat [$this getP1]
     }
-
-#    $mat Multiply4x4 $mat [$this getP1] $mat
-#    puts "intermediate"
-#    puts [$this StringMatrix $mat]
-
-#    set tmpnode ::tmpnode_$_name
-#    catch "$tmpnode Delete"
-#    vtkMrmlVolumeNode $tmpnode
-#    $tmpnode SolveABeqCforB [$this getP2] $mat $mat
-#    set tmpmat [$this getP2]
-#    $tmpmat Invert
-#    $mat Multiply4x4 $tmpmat $mat $mat
 
     Matrix($t,node) SetMatrix [$this StringMatrix $mat]
 
@@ -637,6 +604,9 @@ itcl::body isregistration::set_init_mat {} {
 #    $p1mat Invert
 #    $this GetSimilarityMatrix [$this getP2] $mat $p1mat
 #    $mat Invert
+
+## (p2 mat p1^-1)^-1 = p1 mat^-1 p2^-1
+## So, both of these are identical.
 
     if {0} {
 ### works
@@ -747,13 +717,12 @@ itcl::body isregistration::GetSimilarityMatrix { s2 mat s1 } {
 #-------------------------------------------------------------------------------
 
 itcl::body isregistration::getP1 {  } {
-    global Matrix
 
     set _p1 ::matrixp1_$_name
     catch  "$_p1 Delete"
     vtkMatrix4x4 $_p1
 
-    GetSlicerToItkMatrix Volume($Matrix(volume),node) $_p1
+    GetSlicerToItkMatrix Volume($itk_option(-source),node) $_p1
     puts [$this StringMatrix $_p1]
     return $_p1
 }
@@ -766,13 +735,12 @@ itcl::body isregistration::getP1 {  } {
 #-------------------------------------------------------------------------------
 
 itcl::body isregistration::getP2 {  } {
-    global Matrix
 
     set _p2 ::matrixp2_$_name
     catch  "$_p2 Delete"
     vtkMatrix4x4 $_p2
 
-    GetSlicerToItkMatrix Volume($Matrix(refVolume),node) $_p2
+    GetSlicerToItkMatrix Volume($itk_option(-target),node) $_p2
     puts [$this StringMatrix $_p2]
     return $_p2
 }
