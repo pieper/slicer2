@@ -63,7 +63,10 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
   this->UseVtkHyperStreamline();
 
   // the number of actors displayed in the scene
-  this->NumberOfVisibleActors=0;
+  this->NumberOfVisibleActors=0;  
+
+  // for tract clustering
+  this->TractClusterer = vtkClusterTracts::New();
 }
 
 //----------------------------------------------------------------------------
@@ -866,13 +869,20 @@ void vtkMultipleStreamlineController::SeedStreamlineFromPoint(double x,
   pointw[0]=x;
   pointw[1]=y;
   pointw[2]=z;
-  
+
+  vtkDebugMacro("Starting streamline from point " << pointw[0] << " " << pointw[1] << " " << pointw[2]);
+
   // Transform from world coords to scaled ijk of the input tensors
   this->WorldToTensorScaledIJK->TransformPoint(pointw,point);
 
+  vtkDebugMacro("Starting streamline from point " << point[0] << " " << point[1] << " " << point[2]);
+
   // make sure it is within the bounds of the tensor dataset
   if (!this->PointWithinTensorData(point,pointw))
-    return;
+    {
+      vtkErrorMacro("Point " << x << ", " << y << ", " << z << " outside of tensor dataset.");
+      return;
+    }
 
   // Now create a streamline and put it on the collection.
   newStreamline=this->CreateHyperStreamline();
@@ -894,7 +904,7 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROI()
   int inExt[6];
   double point[3], point2[3];
   unsigned long count = 0;
-  unsigned long target;
+  //unsigned long target;
   short *inPtr;
   vtkHyperStreamline *newStreamline;
 
@@ -1200,6 +1210,58 @@ void vtkMultipleStreamlineController::SeedAndSaveStreamlinesFromROI(char *points
   // Close text file
   filePoints.close();
   fileAttribs.close();
+
+}
+
+
+void vtkMultipleStreamlineController::ClusterTracts(int tmp)
+{
+  int numberOfClusters= this->TractClusterer->GetNormalizedCuts()->GetNumberOfClusters();
+
+  this->TractClusterer->SetInputStreamlines(this->Streamlines);
+  this->TractClusterer->ComputeClusters();
+  vtkClusterTracts::OutputType * membershipSample =  this->TractClusterer->GetOutputMembershipSample();
+
+  if (membershipSample == NULL)
+    {
+      vtkErrorMacro("Error when computing clusters.");
+      return;      
+    }
+
+  vtkClusterTracts::OutputType::ConstIterator iter = membershipSample->Begin();
+
+  // Color tracts based on class membership...
+  vtkLookupTable *lut = vtkLookupTable::New();
+  lut->SetTableRange (0, numberOfClusters-1);
+  lut->SetNumberOfTableValues (numberOfClusters);
+  lut->Build();
+
+  double rgba[4];
+  int idx1=0;
+  vtkActor *currActor;
+  vtkPolyDataMapper *currMapper;
+  while ( iter != membershipSample->End() )
+    {
+      vtkDebugMacro("measurement vector = " << iter.GetMeasurementVector() << "class label = " << iter.GetClassLabel());
+      
+      currActor = (vtkActor *) this->Actors->GetItemAsObject(idx1);
+      currMapper = (vtkPolyDataMapper *) this->Mappers->GetItemAsObject(idx1);
+
+      if (currActor && currMapper) 
+    {
+      lut->GetColor(iter.GetClassLabel(),rgba);
+      vtkDebugMacro("rgb " << rgba[0] << " " << rgba[1] << " " << rgba[2]); 
+      currActor->GetProperty()->SetColor(rgba[0],rgba[1],rgba[2]); 
+          currMapper->SetScalarVisibility(0);
+    }
+      else
+    {
+      vtkErrorMacro("Classified actor " << idx1 << " not found.");
+    }
+      
+      idx1++;
+      ++iter;
+    }
 
 }
 

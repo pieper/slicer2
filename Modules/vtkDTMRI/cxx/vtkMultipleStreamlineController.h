@@ -1,4 +1,4 @@
-// .NAME vtkImageDiffusionTensor - 
+// .NAME vtkMultipleStreamlineController - 
 // .SECTION Description
 // Creates and manages a vtkCollection of vtkHyperStreamlines.
 //
@@ -26,6 +26,7 @@
 #include "vtkProperty.h"
 #include "vtkLookupTable.h"
 #include "vtkMrmlTree.h"
+#include "vtkClusterTracts.h"
 
 
 #define USE_VTK_HYPERSTREAMLINE 0
@@ -204,6 +205,17 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   vtkGetObjectMacro(VtkPreciseHyperStreamlinePointsSettings,
                     vtkPreciseHyperStreamlinePoints);
 
+  // Description
+  // Color tracts based on clustering.
+  // Colors the paths that have already been created using this class.
+  // The argument (int tmp) is only there because under windows the 
+  // wrapping failed with no argument.
+  void ClusterTracts(int tmp);
+
+  // Description
+  // Get object that performs clustering (to set parameters)
+  vtkGetObjectMacro(TractClusterer,vtkClusterTracts);
+
 
   // Description
   // To do list:
@@ -261,6 +273,8 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // The error code contains a possible error that occured while
   // writing a file.
   vtkSetMacro( ErrorCode, unsigned long );
+
+  vtkClusterTracts *TractClusterer;
 
   unsigned long ErrorCode;
 };

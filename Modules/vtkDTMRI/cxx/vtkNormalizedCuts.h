@@ -1,0 +1,120 @@
+// .NAME vtkNormalizedCuts - Cluster N items using input NxN weight matrix.
+
+// .SECTION Description
+// Implementation of the Normalized Cuts algorithm for spectral clustering,
+// as described in:
+// Fowlkes et al., Spectral Grouping Using the Nystrom Method
+// IEEE TRANSACTIONS ON PATTERN ANALYSIS AND MACHINE INTELLIGENCE, 
+// VOL. 26, NO. 2, FEBRUARY 2004
+// The output is an itk classifier object, with labels for each of 
+// the N input items.
+
+// .SECTION See Also
+// vtkClusterTracts vtkTractShapeFeatures
+
+#ifndef __vtkNormalizedCuts_h
+#define __vtkNormalizedCuts_h
+
+#include "vtkDTMRIConfigure.h"
+#include "vtkObject.h"
+// use itk numerics lib (vnl)
+#include "vnl/vnl_matrix.h"
+// ITK objects
+#include "itkListSample.h"
+#include "itkVector.h"
+#include "itkSampleClassifier.h"
+
+// Forward declarations to avoid including header files here.
+// Goes along with use of new vtkCxxSetObjectMacro
+class vtkImageData;
+
+class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
+{
+ public:
+  // Description
+  // Construct
+  static vtkNormalizedCuts *New();
+
+  vtkTypeRevisionMacro(vtkNormalizedCuts,vtkObject);
+  void PrintSelf(ostream& os, vtkIndent indent);
+
+  // Description
+  // Compute the output
+  void ComputeClusters();
+
+  // Description
+  // Use the matrix format provided by vnl for the input similarity matrix
+  //BTX
+  typedef vnl_matrix<double> InputType;
+  // TEST increase this, see comment in cxx file
+  const static int InternalNumberOfEigenvectors = 3;
+
+  typedef itk::Vector< double, InternalNumberOfEigenvectors > EmbedVectorType;
+  typedef itk::Statistics::ListSample< EmbedVectorType > EmbedSampleType;
+  typedef itk::Statistics::SampleClassifier< EmbedSampleType > OutputClassifierType;
+
+  //ETX
+
+  // Description
+  // Set/Get input to this class
+  void SetInputWeightMatrix(InputType* matrix)
+    {
+      // Don't delete this here if it is non-NULL, because the
+      // class that created it is responsible for deleting it.
+      // (It is not a reference-counted object.)
+      this->InputWeightMatrix = matrix;
+    };
+  
+  InputType *GetInputWeightMatrix()
+    {
+      return this->InputWeightMatrix;
+    };
+
+  //BTX
+  // Description
+  // Get the classifier which is output from this class
+  OutputClassifierType::Pointer GetOutputClassifier() 
+    {
+      return this->OutputClassifier;
+    }
+  //ETX
+
+  // Description
+  // Number of clusters to output
+  vtkSetMacro(NumberOfClusters,int);
+  vtkGetMacro(NumberOfClusters,int);
+
+  // Description
+  // Number of eigenvectors to use in the embedding
+  // NOTE not currently implemented due to fixed-length itk vector
+  vtkSetMacro(NumberOfEigenvectors,int);
+  vtkGetMacro(NumberOfEigenvectors,int);
+
+  // Description
+  // Get the intermediate computations of this class as images 
+  // for visualization
+  vtkGetObjectMacro(NormalizedWeightMatrixImage, vtkImageData);
+  vtkGetObjectMacro(EigenvectorsImage, vtkImageData);
+
+ protected:
+  vtkNormalizedCuts();
+  ~vtkNormalizedCuts() {};
+
+  //BTX
+  InputType *InputWeightMatrix;
+  OutputClassifierType::Pointer OutputClassifier;
+  //ETX
+
+  int NumberOfClusters;
+  int NumberOfEigenvectors;
+
+  vtkImageData *NormalizedWeightMatrixImage;
+  vtkImageData *EigenvectorsImage;
+
+ private:
+  vtkNormalizedCuts(const vtkNormalizedCuts&); // Not implemented.
+  void operator=(const vtkNormalizedCuts&); // Not implemented.
+};
+
+#endif
+

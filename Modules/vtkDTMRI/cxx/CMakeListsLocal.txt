@@ -1,6 +1,14 @@
 # CMakeListsLocal.txt sample file.
 # Copy it to CMakeListsLocal.txt and edit to match your files.
 
+# Find ITK
+INCLUDE (${CMAKE_ROOT}/Modules/FindITK.cmake)
+
+# Use ITK.  This sets up include/link directories for us.
+IF (USE_ITK_FILE)
+  INCLUDE(${USE_ITK_FILE})
+ENDIF(USE_ITK_FILE)
+
 # The names of the source files for your module go here. Include
 # abstract files noted below in this list too. Do not include file
 # suffixes.
@@ -21,6 +29,9 @@ vtkODFGlyph.cxx
 #vtkStreamlineConvolve.cxx
 #vtkPruneStreamline.cxx
 #vtkHyperStreamlineDTMRI.cxx
+vtkTractShapeFeatures.cxx
+vtkNormalizedCuts.cxx
+vtkClusterTracts.cxx
 )
 
 ## classes that one does not want tcl wrapped
@@ -51,12 +62,25 @@ INCLUDE_DIRECTORIES(
    ${VTKSLICERBASE_SOURCE_DIR}/cxx 
    ${VTKSLICERBASE_BUILD_DIR}
    ${VTKTENSORUTIL_SOURCE_DIR}/cxx
-   ${VTKTENSORUTIL_BUILD_DIR}   
-
+   ${VTKTENSORUTIL_BUILD_DIR} 
 )
 
-LINK_LIBRARIES (${VTKSLICERBASE_BUILD_LIB} ${VTKTENSORUTIL_BUILD_LIB} ${VTKTENSORUTIL_BUILD_TCL_LIB})
+LINK_LIBRARIES (${VTKSLICERBASE_BUILD_LIB} ${VTKTENSORUTIL_BUILD_LIB} ${VTKTENSORUTIL_BUILD_TCL_LIB} )
 
+
+ADD_LIBRARY ( ${LOCAL_LIBRARY_BASENAME} ${LOCAL_MODULE_SRCS})
+
+TARGET_LINK_LIBRARIES (
+${LOCAL_LIBRARY_BASENAME}
+ITKAlgorithms
+ITKNumerics 
+ITKCommon
+ITKBasicFilters
+ITKNumerics
+ITKBasicFilters
+ITKIO
+ITKDICOMParser
+)
 
 # Add additional directories to look in for libraries
 LINK_DIRECTORIES(
