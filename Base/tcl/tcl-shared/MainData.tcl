@@ -164,8 +164,8 @@ proc MainDataUpdateMRML {ModuleArray} {
     
     # Delete any old data objects
     #--------------------------------------------------------
-    foreach m $Array(idListDelete) {
-        MainDataDelete $d
+    foreach d $Array(idListDelete) {
+        MainDataDelete $ModuleArray $d
     }
     # Did we delete the active data?
     if {[lsearch $Array(idList) $Array(activeID)] == -1} {
