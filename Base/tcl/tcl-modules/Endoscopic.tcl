@@ -433,8 +433,7 @@ proc EndoscopicInit {} {
     $View(endCam) SetFocalPoint 0 30 0
     $View(endCam) SetViewUp 0 0 1
     $View(endCam) ComputeViewPlaneNormal        
-    set View(endoscopicClippingRange) ".01 1000"
-    eval $View(endCam) SetClippingRange $View(endoscopicClippingRange)
+    endoscopicRen ResetCameraClippingRange
     
     ### create bindings
     EndoscopicCreateBindings
@@ -2611,7 +2610,7 @@ proc EndoscopicUpdateVirtualEndoscope {{coordList ""}} {
     set Endoscopic(cam,viewPlaneNormalZ) [expr -[lindex $l 2]]
     
     EndoscopicSetCameraViewAngle
-    eval $View(endCam) SetClippingRange $View(endoscopicClippingRange)    
+    endoscopicRen ResetCameraClippingRange
     EndoscopicLightFollowEndoCamera
 }
 
