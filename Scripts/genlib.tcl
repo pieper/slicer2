@@ -176,7 +176,8 @@ switch $tcl_platform(os) {
         set itclTestFile $TCL_LIB_DIR/itcl3.2/itcl32.dll
         set iwidgetsTestFile $TCL_LIB_DIR/iwidgets4.0.2/iwidgets.tcl
         set bltTestFile $TCL_BIN_DIR/BLT24.dll
-        set gslTestFile $GSL_LIB_DIR/gsl.dll
+        #set gslTestFile $GSL_LIB_DIR/gsl.dll
+        set gslTestFile $GSL_LIB_DIR/gsl.lib
         set vtkTestFile $VTK_DIR/bin/$VTK_BUILD_TYPE/vtk.exe
         set vtkTclLib $TCL_LIB_DIR/tcl84.lib
         set vtkTkLib $TCL_LIB_DIR/tk84.lib
@@ -197,17 +198,13 @@ if { ![file exists $CMAKE] } {
 
     if {$isWindows} {
         puts stderr "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --"
-        puts stderr "-- genlib.tcl cannot generate the cmake binaries for windows --"
-        puts stderr "1) Get a copy of cmake 2.0.1 from www.cmake.org."
-        puts stderr "2) Set the CMAKE_PATH in slicer_variables.tcl."
+        puts stderr "-- genlib.tcl cannot generate the certain binaries for windows --"
         puts stderr ""
-        puts stderr "-- genlib.tcl cannot generate the tcl binaries for windows --"
-        puts stderr "1) Get a copy of Tcl 8.4 from tcl.activestate.com."
-        puts stderr "2) Set the TCL_BIN_DIR, TCL_LIB_DIR and TCL_INCLUDE_DIR in slicer_variables.tcl."
-        puts stderr "3) Get BLT from http://prdownloads.sourceforge.net/blt/blt24z-for-tcl84.exe?download"
-        puts stderr "4) Install BLT to a *different* directory than where you installed activetcl"
-        puts stderr "5) copy BLT24.dll and BLT24lite24.dll to TCL_BIN_DIR"
-        puts stderr "6) copy blt2.4 to TCL_LIB_DIR"
+        puts stderr "You can download a precompiled set of binaries here:"
+        puts stderr ""
+        puts stderr "http://www.na-mic.org/Wiki/images/8/88/Slicer2.4-Lib-win32.zip"
+        puts stderr ""
+        puts stderr "Place the contents of the archive in your slicer2 directory."
         puts stderr ""
         puts stderr "With these pieces in place, genlib can build VTK and ITK"
         puts stderr "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --"
