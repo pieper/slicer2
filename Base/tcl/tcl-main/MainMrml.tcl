@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainMrml \
-    {$Revision: 1.98 $} {$Date: 2003/12/17 18:53:43 $}]
+    {$Revision: 1.99 $} {$Date: 2004/01/01 20:31:07 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -541,22 +541,22 @@ proc MainMrmlDeleteAll {} {
     # dataTree
     foreach node $Mrml(nodeTypeList) {
         if {$node != "Volume" && $node != "Color"} {
-        upvar #0 $node Array
-        
-        foreach id $Array(idList) {
+            upvar #0 $node Array
+            
+            foreach id $Array(idList) {
 
-            # Add to the deleteList
-            lappend Array(idListDelete) $id
+                # Add to the deleteList
+                lappend Array(idListDelete) $id
 
-            # Remove from the idList
-            set i [lsearch $Array(idList) $id]
-            set Array(idList) [lreplace $Array(idList) $i $i]
+                # Remove from the idList
+                set i [lsearch $Array(idList) $id]
+                set Array(idList) [lreplace $Array(idList) $i $i]
 
-            # Remove node from tree, and delete it
-            Mrml(dataTree) RemoveItem ${node}($id,node)
-            ${node}($id,node) Delete
+                # Remove node from tree, and delete it
+                Mrml(dataTree) RemoveItem ${node}($id,node)
+                ${node}($id,node) Delete
 
-        }
+            }
         }
     }
 
