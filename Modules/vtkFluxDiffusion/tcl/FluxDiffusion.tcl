@@ -146,6 +146,10 @@ proc FluxDiffusionInit {} {
     #   
     set Module($m,depend) ""
 
+    set Module($m,overview) "Anisotropic diffusion, using the basis formed by the gradient\n\t\tand the principal curvature directions and smoothes differently in each direction."
+    set Module($m,author) "Karl Krissian, SPL, karl@bwh.harvard.edu"
+    set Module($m,category) [lindex $Module(categories) 1]
+
     # Set version info
     #------------------------------------
     # Description:
@@ -154,7 +158,7 @@ proc FluxDiffusionInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8 $} {$Date: 2004/01/27 17:50:49 $}]
+        {$Revision: 1.9 $} {$Date: 2004/03/15 21:11:22 $}]
 
     # Initialize module-level variables
     #------------------------------------
