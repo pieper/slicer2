@@ -186,7 +186,7 @@ proc EdPhaseWireSetOmega {omega} {
 
 
 	Ed($e,phase,reader$o) SetFilePattern "%s.%03d"
-	#Ed($e,phase,reader$o) SetDataByteOrderToLittleEndian
+	Ed($e,phase,reader$o) SetDataByteOrderToBigEndian
 	Ed($e,phase,reader$o) SetDataExtent 0 $width 0 $width $o $o
 	Ed($e,phase,reader$o) SetFilePrefix $fullpath
 	#reader SetDataScalarTypeToFloat
