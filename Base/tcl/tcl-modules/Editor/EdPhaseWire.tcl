@@ -886,11 +886,9 @@ proc EdPhaseWireUpdate {type {param ""}} {
 	    set Ed($e,shape) [Slicer GetShapeString]
 	}
 	PhaseOffset {
-	    puts "var: $Ed(EdPhaseWire,phaseOffset) param: $param"
 	    foreach s $Slice(idList) {
 		Ed($e,phaseScale$s) SetShift \
 			[EdPhaseConvertToRadians $Ed($e,phaseOffset)]
-		puts "radians: [EdPhaseConvertToRadians $Ed($e,phaseOffset)]"
 		Ed($e,phaseScale$s) Update
 
 		# clear the cached information in livewire
