@@ -347,11 +347,13 @@ if {$::env(BUILD) == $solaris ||
         exit
     }
 
-fileevent $fp readable "file_event $fp"
-
-set END 0
-while { ![catch "pid $fp"] && ![eof $fp] } {
-    vwait END
+if {[info exists fp]} {
+    fileevent $fp readable "file_event $fp"
+    
+    set END 0
+    while { ![catch "pid $fp"] && ![eof $fp] } {
+        vwait END
+    }
 }
 
 exit
