@@ -31,6 +31,7 @@
 # FILE:        AG.tcl
 # PROCEDURES:  
 #   AGInit
+#   AGUpdateMRML
 #   AGBuildGUI
 #   AGBuildHelpFrame
 #   AGBuildMainFrame
@@ -147,7 +148,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2004/11/23 23:14:38 $}]
+        {$Revision: 1.5 $} {$Date: 2004/11/24 18:10:58 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -988,61 +989,6 @@ proc AGExit {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC AGCount
-#
-# This routine demos how to make button callbacks and use global arrays
-# for object oriented programming.
-# .END
-#-------------------------------------------------------------------------------
-proc AGCount {} {
-    global AG
-    
-    incr AG(count)
-    $AG(lParameters) config -text "You clicked the button $AG(count) times"
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC AGShowFile
-#
-# This routine demos how to make button callbacks and use global arrays
-# for object oriented programming.
-# .END
-#-------------------------------------------------------------------------------
-proc AGShowFile {} {
-    global AG
-    
-    $AG(lfile) config -text "You entered: $AG(FileName)"
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC AGBindingCallback
-# Demo of callback routine for bindings
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc AGBindingCallback { event W X Y x y t } {
-    global AG
-
-    set insertText "$event at: $X $Y\n"
-    
-    switch $event {
-    "Shift-2" {
-        set insertText "Don't poke the Slicer!\n"
-    }
-    "Shift-3" {
-        set insertText "Ouch!\n"
-    }
-
-    }
-#    $AG(textBox) insert end $insertText
-
-}
-
-
-#-------------------------------------------------------------------------------
 # .PROC AGPrepareResult
 #   Create the New Volume if necessary. Otherwise, ask to overwrite.
 #   returns 1 if there is are errors 0 otherwise
@@ -1194,7 +1140,8 @@ proc  AGIntensityTransform {Source} {
     switch $AG(Intensity_tfm) {
       "mono-functional"  {
           puts "$AG(Intensity_tfm)==mono-functional is true"
-          vtkLTSPolynomialIT tfm
+          catch "tfm Delete"
+      vtkLTSPolynomialIT tfm
           tfm SetDegree $AG(Degree)
           tfm SetRatio $AG(Ratio)  
           tfm SetNumberOfFunctions $AG(Nb_of_functions)
@@ -1206,7 +1153,8 @@ proc  AGIntensityTransform {Source} {
       }
       "piecewise-median" {
           puts " intensity+tfm is piecewise-median"
-          vtkPWMedianIT tfm
+          catch "tfm Delete"
+      vtkPWMedianIT tfm
           if {([llength $AG(Nb_of_pieces)] == 0) && ($AG(Boundaries) == 0)} { 
             $Source  Update
             set low_high [$Source  GetScalarRange]
@@ -1276,7 +1224,7 @@ proc  AGTransformScale { Source Target} {
    if { $AG(Scale) <= 0} {
     return 0
    }
-   
+   catch "div Delete"
    vtkImageMathematics div
    div SetOperationToMultiplyByK
    div SetConstantK  $AG(Scale)
@@ -1288,6 +1236,7 @@ proc  AGTransformScale { Source Target} {
  # or Volume($AG(InputVolTarget),vol) SetImageData [div GetOutput] , but maybe they share the same copy of data.
 
    div Delete
+   catch "div2 Delete"
    vtkImageMathematics div2
    div2 SetOperationToMultiplyByK
    div2 SetConstantK $AG(Scale)
@@ -2046,7 +1995,7 @@ proc RunAG {} {
       MainVolumesUpdate $AG(ResultVol)
       #[Reslicer GetOutput] SetOrigin 0 0 0
   } else {
-      
+      catch "extractImage Delete"
       vtkImageExtractComponents extractImage
       extractImage SetInput Resampled
       #[Reslicer GetOutput]
@@ -2056,7 +2005,7 @@ proc RunAG {} {
       
       Volume($AG(ResultVol),vol) SetImageData [extractImage  GetOutput]
       
-      
+      catch "extractImage2 Delete"
       vtkImageExtractComponents extractImage2
       #extractImage2 SetInput [Reslicer GetOutput]
       extractImage2 SetInput Resampled
@@ -3234,7 +3183,7 @@ proc AGColorComparison {} {
     set dim1 [[app GetInput 1] GetDimensions]
     foreach d0 $dim0 d1 $dim1 {
       if {$d0!=$d1} {
-        DevErrorWindow "Dimensionalities of result and target do not match. If you did a 2D-registration, set Scope back to 2D."
+        DevErrorWindow "Dimensionalities of result and target do not match."
         return
       }
     }
