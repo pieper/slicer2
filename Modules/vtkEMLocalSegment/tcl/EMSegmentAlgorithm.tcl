@@ -113,6 +113,9 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopMFAType                  $EMSegment(Cattrib,$SuperClass,StopMFAType)
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopMFAValue                 $EMSegment(Cattrib,$SuperClass,StopMFAValue)
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopBiasCalculation          $EMSegment(Cattrib,$SuperClass,StopBiasCalculation)
+  puts "EMSegment(Cattrib,$SuperClass,PrintShapeSimularityMeasure) $EMSegment(Cattrib,$SuperClass,PrintShapeSimularityMeasure)"
+
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintShapeSimularityMeasure  $EMSegment(Cattrib,$SuperClass,PrintShapeSimularityMeasure)
 
   
   # Current Legacy - I have to fix gui
@@ -139,11 +142,12 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
 
       if {$EMSegment(Cattrib,$i,ProbabilityData) != $Volume(idNone)} {
           # Pipeline does not automatically update volumes bc of fake first input  
-      Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) Update
+          Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) Update
           EMSegment(Cattrib,$i,vtkImageEMClass) SetProbDataPtr [Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) GetOutput]
       
-      } else {
-      set EMSegment(Cattrib,$i,LocalPriorWeight) 0.0
+      # Kilian: Currently LocalPriorWeight is also used for shape parameters - should change it later
+      } elseif {$EMSegment(Cattrib,$i,PCAMeanData) ==  $Volume(idNone)} {
+          set EMSegment(Cattrib,$i,LocalPriorWeight) 0.0
       }
       EMSegment(Cattrib,$i,vtkImageEMClass) SetProbDataWeight $EMSegment(Cattrib,$i,LocalPriorWeight)
 
@@ -173,25 +177,25 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
             # Remember to first calculathe first the inverse of the two because we go from case2 to patient and data is given form patient to case2
             EMSegment(Cattrib,$i,vtkImageEMClass) SetPCANumberOfEigenModes $NumEigenModes
 
-        # Pipeline does not automatically update volumes bc of fake first input  
-        Volume($EMSegment(Cattrib,$i,PCAMeanData),vol) Update
+           # Pipeline does not automatically update volumes bc of fake first input  
+            Volume($EMSegment(Cattrib,$i,PCAMeanData),vol) Update
             EMSegment(Cattrib,$i,vtkImageEMClass) SetPCAMeanShape [Volume($EMSegment(Cattrib,$i,PCAMeanData),vol) GetOutput]
 
-            set NumInputImagesSet 0
+            set NumInputImagesSet 1 
             foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
           # Pipeline does not automatically update volumes bc of fake first input  
-          [Volume([lindex $EigenList 2],vol) GetOutput] Update
+              [Volume([lindex $EigenList 2],vol) GetOutput] Update
               EMSegment(Cattrib,$i,vtkImageEMClass) SetPCAEigenVector [Volume([lindex $EigenList 2],vol) GetOutput] $NumInputImagesSet  
               incr NumInputImagesSet
             } 
           
             # Have to do it seperate otherwise EigenValues get deleted 
             foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
-              EMSegment(Cattrib,$i,vtkImageEMClass)  SetPCAEigenValue [lindex $EigenList 0] [lindex $EigenList 1] 
+              EMSegment(Cattrib,$i,vtkImageEMClass)  SetPCAEigenValues [lindex $EigenList 0] [lindex $EigenList 1] 
            }
-           eval EMSegment(Cattrib,$i,vtkImageEMClass) SetPCAScale   $EMSegment(Cattrib,$i,PCAScale)
-           EMSegment(Cattrib,$i,vtkImageEMClass) SetPCAMaxDist      $EMSegment(Cattrib,$i,PCAMaxDist)
-           EMSegment(Cattrib,$i,vtkImageEMClass) SetPCADistVariance $EMSegment(Cattrib,$i,PCADistVariance)
+           # MICCAI 04 Stuff
+       # EMSegment(Cattrib,$i,vtkImageEMClass) SetPCAMaxDist      $EMSegment(Cattrib,$i,PCAMaxDist)
+           # EMSegment(Cattrib,$i,vtkImageEMClass) SetPCADistVariance $EMSegment(Cattrib,$i,PCADistVariance)
       } 
 
       EMSegment(Cattrib,$i,vtkImageEMClass) SetPrintQuality $EMSegment(Cattrib,$i,PrintQuality)
@@ -258,11 +262,11 @@ proc EMSegmentSetVtkLocalSuperClassSetting {SuperClass} {
 
       if {$EMSegment(Cattrib,$i,ProbabilityData) != $Volume(idNone)} {
           # Pipeline does not automatically update volumes bc of fake first input  
-      Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) Update
+          Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) Update
           EMSegment(Cattrib,$i,vtkImageEMClass) SetProbDataPtr [Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) GetOutput]
       
       } else {
-      set EMSegment(Cattrib,$i,LocalPriorWeight) 0.0
+         set EMSegment(Cattrib,$i,LocalPriorWeight) 0.0
       }
       EMSegment(Cattrib,$i,vtkImageEMClass) SetProbDataWeight $EMSegment(Cattrib,$i,LocalPriorWeight)
 

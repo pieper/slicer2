@@ -71,6 +71,7 @@ vtkMrmlSegmenterSuperClassNode::vtkMrmlSegmenterSuperClassNode() {
   this->StopEMValue = 0.0; 
   this->StopEMMaxIter = 0; 
 
+  this->PrintShapeSimularityMeasure = 0;
   this->PrintMFALabelMapConvergence  = 0;
   this->PrintMFAWeightsConvergence = 0;
   this->StopMFAType         = 0;
@@ -114,7 +115,7 @@ void vtkMrmlSegmenterSuperClassNode::Write(ofstream& of, int nIndent)
   of << " StopMFAMaxIter='" << this->StopMFAMaxIter <<  "'";
   of << " StopStopBiasCalculation='" << this->StopBiasCalculation <<  "'";
   of << " GenerateBackgroundProbability='" << this->GenerateBackgroundProbability <<  "'";
-
+  of << " PrintShapeSimularityMeasure='" << this->PrintShapeSimularityMeasure << "'";
   of << ">\n";
 
 }
@@ -149,6 +150,7 @@ void vtkMrmlSegmenterSuperClassNode::Copy(vtkMrmlNode *anode)
 
   this->RegistrationType              = node->RegistrationType;
   this->GenerateBackgroundProbability = node->GenerateBackgroundProbability;
+  this->PrintShapeSimularityMeasure   = node->PrintShapeSimularityMeasure;
 }
 
 //----------------------------------------------------------------------------
@@ -166,18 +168,17 @@ void vtkMrmlSegmenterSuperClassNode::PrintSelf(ostream& os, vtkIndent indent)
 
   os << indent << "PrintEMLabelMapConvergence:    " << this->PrintEMLabelMapConvergence << "\n";
   os << indent << "PrintEMWeightsConvergence:     " << this->PrintEMWeightsConvergence << "\n";
-  os << indent << "StopEMType:            " << this->StopEMType  << "\n";
-  os << indent << "StopEMValue:           " << this->StopEMValue << "\n";
-  os << indent << "StopEMMaxIter:   " << this->StopEMMaxIter << "\n";
+  os << indent << "StopEMType:                    " << this->StopEMType  << "\n";
+  os << indent << "StopEMValue:                   " << this->StopEMValue << "\n";
+  os << indent << "StopEMMaxIter:                 " << this->StopEMMaxIter << "\n";
 
   os << indent << "PrintMFALabelMapConvergence:   " << this->PrintMFALabelMapConvergence << "\n";
   os << indent << "PrintMFAWeightsConvergence:    " << this->PrintMFAWeightsConvergence << "\n";
-  os << indent << "StopMFAType:           " << this->StopMFAType  << "\n";
-  os << indent << "StopMFAValue:          " << this->StopMFAValue << "\n";
-  os << indent << "StopMFAMaxIter:        " << this->StopMFAMaxIter << "\n";
-  os << indent << "StopBiasCalculation:   " << this->StopBiasCalculation << "\n";
+  os << indent << "StopMFAType:                   " << this->StopMFAType  << "\n";
+  os << indent << "StopMFAValue:                  " << this->StopMFAValue << "\n";
+  os << indent << "StopMFAMaxIter:                " << this->StopMFAMaxIter << "\n";
+  os << indent << "StopBiasCalculation:           " << this->StopBiasCalculation << "\n";
 
   os << indent << "GenerateBackgroundProbability: " << this->GenerateBackgroundProbability << "\n";
+  os << indent << "PrintShapeSimularityMeasure:   " << this->PrintShapeSimularityMeasure << "\n";
 }
-
-

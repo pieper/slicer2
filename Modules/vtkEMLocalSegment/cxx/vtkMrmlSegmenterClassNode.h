@@ -106,11 +106,6 @@ public:
   vtkGetStringMacro(PCAMeanName);
 
   // Description:
-  // Get/Set for SegmenterClass
-  vtkGetVector2Macro(PCAFileRange, int);
-  vtkSetVector2Macro(PCAFileRange, int);
-
-  // Description:
   // Maximum distance inside the object 
   vtkGetMacro(PCAMaxDist,double);
   vtkSetMacro(PCAMaxDist,double);
@@ -145,7 +140,6 @@ protected:
   float  LocalPriorWeight;
 
   char   *PCAMeanName;
-  int    PCAFileRange[2];
   double PCAMaxDist;
   double PCADistVariance;
   char   *ReferenceStandardFileName;

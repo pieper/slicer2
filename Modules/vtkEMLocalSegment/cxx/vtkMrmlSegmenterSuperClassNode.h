@@ -91,6 +91,10 @@ public:
   vtkGetMacro(PrintLabelMap, int);
   vtkSetMacro(PrintLabelMap, int);  
 
+ // Description:
+  // Prints out the shape  cost at each voxel 
+  vtkGetMacro(PrintShapeSimularityMeasure, int);
+  vtkSetMacro(PrintShapeSimularityMeasure, int);
 
   // Description:
   // Prints out the number of voxels changed from last to this EM iteration
@@ -177,8 +181,9 @@ protected:
   int PrintBias;
   int PrintLabelMap;
 
+  int PrintShapeSimularityMeasure; // Prints out the shape cost at each voxel 
   int PrintEMLabelMapConvergence;  // Prints out the number of voxels changed from last to this iteration
-  int PrintEMWeightsConvergence; // Prints out the difference in percent 
+  int PrintEMWeightsConvergence;   // Prints out the difference in percent 
 
   int StopEMType;       // After which criteria should be stopped   
                                 // 0 = fixed iterations 
@@ -195,7 +200,7 @@ protected:
   int StopMFAType;       
   float StopMFAValue;    
   int StopMFAMaxIter;
-int StopBiasCalculation;
+  int StopBiasCalculation;
 
   int    RegistrationType; 
   int GenerateBackgroundProbability;

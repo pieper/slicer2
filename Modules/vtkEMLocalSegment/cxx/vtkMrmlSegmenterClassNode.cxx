@@ -70,7 +70,6 @@ vtkMrmlSegmenterClassNode::vtkMrmlSegmenterClassNode()
   this->LogCovariance    = NULL;
 
   this->PCAMeanName      = NULL; 
-  memset(this->PCAFileRange,0,2*sizeof(int));
   this->PCAMaxDist       = 0.0;
   this->PCADistVariance  = 0.0; 
   this->ReferenceStandardFileName     = NULL; 
@@ -152,7 +151,6 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
   {
     of << " ReferenceStandardFileName='" << this->ReferenceStandardFileName << "'";
   }
-  if  (this->PCAFileRange[0] || this->PCAFileRange[1]) of << " PCAFileRange='" << this->PCAFileRange[0] << " " << this->PCAFileRange[1] << "'";
 
   of << " PCAMaxDist='" << this->PCAMaxDist << "'";
   of << " PCADistVariance='" << this->PCADistVariance << "'";
@@ -178,7 +176,6 @@ void vtkMrmlSegmenterClassNode::Copy(vtkMrmlNode *anode)
   this->SetLocalPriorName(node->LocalPriorName); 
   this->SetLogMean(node->LogMean);
   this->SetLogCovariance(node->LogCovariance);
-  this->SetPCAFileRange(node->PCAFileRange);
   this->SetPCAMeanName(node->PCAMeanName);
   this->SetReferenceStandardFileName(node->ReferenceStandardFileName);
 
@@ -210,7 +207,6 @@ void vtkMrmlSegmenterClassNode::PrintSelf(ostream& os, vtkIndent indent)
 
    os << indent << "ReferenceStandardFileName: " <<  (this->ReferenceStandardFileName ? this->ReferenceStandardFileName : "(none)") << "\n"; 
    os << indent << "PCAMeanName:               " <<  (this->PCAMeanName ? this->PCAMeanName : "(none)") << "\n"; 
-   os << indent << "PCAFileRange:              " << this->PCAFileRange[0] << ", " << this->PCAFileRange[1] << "\n" ;
    os << indent << "PCAMaxDist:                " << this->PCAMaxDist << "\n";
    os << indent << "PCADistVariance:           " << this->PCADistVariance << "\n";
 

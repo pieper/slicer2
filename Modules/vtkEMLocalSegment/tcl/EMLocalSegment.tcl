@@ -158,13 +158,14 @@ proc EMSegmentInit {} {
     # For later version where we can use local prios
     # Public Version  = 1
     # Private Version = 2
-    if { [catch "package require vtkEMPrivateSegment"] } {
-      set EMSegment(SegmentMode) 0
-    } else {
-      puts "Load Private EM-Version"
-      set EMSegment(SegmentMode) 1
-    } 
-    # set EMSegment(SegmentMode) 0
+   
+    #if { [catch "package require vtkEMPrivateSegment"] } {
+    #  set EMSegment(SegmentMode) 0
+    #} else {
+    #  puts "Load Private EM-Version"
+    #  set EMSegment(SegmentMode) 1
+    #} 
+    set EMSegment(SegmentMode) 0
 
     # Source EMSegmentAlgorithm.tcl File 
     source $::PACKAGE_DIR_VTKEMLocalSegment/../../../tcl/EMSegmentAlgorithm.tcl
@@ -258,7 +259,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.50 $} {$Date: 2005/02/25 01:59:07 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.51 $} {$Date: 2005/03/04 21:52:10 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -2506,7 +2507,6 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
           } else {
              SegmenterClass($pid,node) SetLocalPriorName   ""
           }
-          eval SegmenterClass($pid,node) SetPCAFileRange       $EMSegment(Cattrib,$i,PCAFileRange)
           eval SegmenterClass($pid,node) SetPCAMaxDist         $EMSegment(Cattrib,$i,PCAMaxDist)
           eval SegmenterClass($pid,node) SetPCADistVariance    $EMSegment(Cattrib,$i,PCADistVariance)
 
@@ -5023,9 +5023,10 @@ proc EMSegmentCreateGraphDisplayButton {f} {
 #-------------------------------------------------------------------------------
 proc EMSegmentShowGraphWindow {{x 0} {y 0}} {
     global EMSegment Gui
-
+    puts blubber
     # Recreate popup if user killed it
     if {([winfo exists $Gui(wEMSegment)] == 0) || (($EMSegment(NumGraph) == 1) && ($EMSegment(NumInputChannel) > 1)) || (($EMSegment(NumGraph) == 3) && ($EMSegment(NumInputChannel) < 2))  } {
+        puts "hello "
         EMSegmentCreateGraphWindow
     }
 
@@ -5033,6 +5034,7 @@ proc EMSegmentShowGraphWindow {{x 0} {y 0}} {
     EMSegmentUpdateClasses 0 
     # LabelsUnHideLabels
     ShowPopup $Gui(wEMSegment) $x $y
+    
 }
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentCreateGraphWindow
