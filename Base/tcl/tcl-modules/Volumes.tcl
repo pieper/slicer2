@@ -899,10 +899,8 @@ proc VolumesSetFirst {} {
 	if {$filename == ""} {return}
 
 	# Store first image file as a relative filename to the root (prefix.001)
-	puts "filename=$filename"
 	set Volume(firstFile) [MainFileGetRelativePrefix $filename][file \
 		extension $filename]
-	puts "first=$Volume(firstFile)"
 
 	set Volume(name)  [file root [file tail $filename]]
 

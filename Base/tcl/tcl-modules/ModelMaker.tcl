@@ -70,6 +70,7 @@ proc ModelMakerInit {} {
 	set ModelMaker(smooth) 5
 	set ModelMaker(decimate) 1
 	set ModelMaker(marching) 0
+	set ModelMaker(label2) 0
 
 	# Edit
 	set ModelMaker(edit,smooth) 5
@@ -172,14 +173,15 @@ Models are fun. Do you like models, Ron?
 
 	eval {button $f.bLabel -text "Label:" \
 		-command "ShowLabels ModelMakerLabelCallback"} $Gui(WBA)
-	eval {entry $f.eLabel -width 6 \
-		-textvariable Label(label)} $Gui(WEA)
+	eval {entry $f.eLabel -width 6 -textvariable Label(label)} $Gui(WEA)
+	eval {entry $f.eLabel2 -width 6 -textvariable ModelMaker(label2)} $Gui(WEA)
 	bind $f.eLabel <Return>   "LabelsFindLabel; ModelMakerLabelCallback"
 	bind $f.eLabel <FocusOut> "LabelsFindLabel; ModelMakerLabelCallback"
-	eval {entry $f.eName -width 13 \
+	eval {entry $f.eName -width 10 \
 		-textvariable Label(name)} $Gui(WEA) \
 		{-bg $Gui(activeWorkspace) -state disabled}
-	grid $f.bLabel $f.eLabel $f.eName -padx $Gui(pad) -pady $Gui(pad) -sticky e
+	grid $f.bLabel $f.eLabel $f.eLabel2 $f.eName \
+		-padx $Gui(pad) -pady $Gui(pad) -sticky e
 
 	lappend Label(colorWidgetList) $f.eName
 
@@ -344,21 +346,20 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fSave.fWrite
 
-	eval {label $f.l -text "Save model as a VTK file"} $Gui(WTA)
-	frame $f.f -bg $Gui(activeWorkspace)
+	eval {label $f.l1 -text "Save model as a VTK file"} $Gui(WTA)
+	eval {label $f.l2 -text "File Prefix (without .vtk):"} $Gui(WLA)
 	eval {entry $f.e -textvariable ModelMaker(prefix) -width 50} $Gui(WEA)
-	bind $f.e <Return> {ModelMakerSetPrefix}
-	eval {button $f.b -text "Write" -width 6 \
-		-command "ModelMakerWrite; Render3D"} $Gui(WBA)
-
-	pack $f.l $f.f -side top -pady $Gui(pad)
+	frame $f.f -bg $Gui(activeWorkspace)
+	pack $f.l1 -side top -pady $Gui(pad) -padx $Gui(pad)
+	pack $f.l2 -side top -pady $Gui(pad) -padx $Gui(pad) -anchor w
 	pack $f.e -side top -pady $Gui(pad) -padx $Gui(pad) -expand 1 -fill x
-	pack $f.b -side top -pady $Gui(pad)
+	pack $f.f -side top -pady $Gui(pad) -padx $Gui(pad)
 
-	eval {label $f.f.l -text "File Prefix (without .vtk)"} $Gui(WLA)
-	eval {button $f.f.b -text "Browse..." -width 10 \
-		-command "ModelMakerSetPrefix"} $Gui(WBA)
-	pack $f.f.l $f.f.b -side left -padx $Gui(pad)
+	eval {button $f.f.bSave -text "Save" -width 5 \
+		-command "ModelMakerWrite; Render3D"} $Gui(WBA)
+	eval {button $f.f.bRead -text "Read" -width 5 \
+		-command "ModelMakerRead; Render3D"} $Gui(WBA)
+	pack $f.f.bSave $f.f.bRead -side left -padx $Gui(pad)
 }
 
 proc ModelMakerTransform {volume} {
@@ -424,45 +425,41 @@ proc ModelMakerTransform {volume} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC ModelMakerSetPrefix
-# .END
-#-------------------------------------------------------------------------------
-proc ModelMakerSetPrefix {} {
-	global ModelMaker Mrml
-
-	# Cannot have blank prefix
-	if {$ModelMaker(prefix) == ""} {
-		set ModelMaker(prefix) model
-	}
-
- 	# Show popup initialized to the last file saved
-	set filename [file join $Mrml(dir) $ModelMaker(prefix)]
-	set dir [file dirname $filename]
-	set typelist {
-		{"VTK Files" {.vtk}}
-		{"All Files" {*}}
-	}
-	set filename [tk_getSaveFile -title "Save Model" -defaultextension ".vtk"\
-		-filetypes $typelist -initialdir "$dir" -initialfile $filename]
-
-	# Do nothing if the user cancelled
-	if {$filename == ""} {return}
-
-	# Store it as a relative prefix for next time
-	set ModelMaker(prefix) [MainFileGetRelativePrefix $filename]
-
-	# Actually do it now
-	ModelMakerWrite
-}
-
-#-------------------------------------------------------------------------------
 # .PROC ModelMakerWrite
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerWrite {} {
 	global ModelMaker Model
 
-	MainModelsWrite $Model(activeID) $ModelMaker(prefix)
+	# Show user a File dialog box
+	set m $Model(activeID)
+	set ModelMaker(prefix) [MainFileSaveModel $m $ModelMaker(prefix)]
+	if {$ModelMaker(prefix) == ""} {return}
+
+	# Write
+	MainModelsWrite $m $ModelMaker(prefix)
+
+	# Prefix changed, so update the Models->Props tab
+	MainModelsSetActive $m
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ModelMakerRead
+# .END
+#-------------------------------------------------------------------------------
+proc ModelMakerRead {} {
+	global ModelMaker Model
+
+	# Show user a File dialog box
+	set m $Model(activeID)
+	set ModelMaker(prefix) [MainFileOpenModel $m $ModelMaker(prefix)]
+	if {$ModelMaker(prefix) == ""} {return}
+	
+	# Read
+	MainModelsRead $m $ModelMaker(prefix)
+
+	# Prefix changed, so update the Models->Props tab
+	MainModelsSetActive $m
 }
 
 #-------------------------------------------------------------------------------
@@ -488,9 +485,10 @@ proc ModelMakerSetVolume {v} {
     $ModelMaker(mbVolume) config -text [Volume($v,node) GetName]
 
 	# Initialize the label to the highest value in the volume
-	set Label(label) [Volume($v,vol) GetRangeHigh]
+	set Label(label) [Volume($v,vol) GetRangeLow]
 	LabelsFindLabel
 	ModelMakerLabelCallback
+	set ModelMaker(label2) [Volume($v,vol) GetRangeHigh]
 }
 
 #-------------------------------------------------------------------------------
@@ -522,12 +520,17 @@ proc ModelMakerCreate {} {
 		return
 	}
 
-	set m [MainModelsCreateUnreadable]
-	set v $ModelMaker(idVolume)
-	Model($m,node) SetName $ModelMaker(name)
-	Model($m,node) SetColor $Label(name)
+	# Create the model's MRML node
+	set n [MainMrmlAddNode Model]
+	$n SetName  $ModelMaker(name)
+	$n SetColor $Label(name)
+
+	# Create the model
+	set m [$n GetID]
+	MainModelsCreate $m
 
 	# Registration
+	set v $ModelMaker(idVolume)
 	Model($m,node) SetRasToWld [Volume($v,node) GetRasToWld]
 
 	if {[ModelMakerMarch $m $v $ModelMaker(decimate) $ModelMaker(smooth)] != 0} {
@@ -551,8 +554,10 @@ $ModelMaker(n,mcubes) polygons reduced to $ModelMaker(n,decimator)."
 proc ModelMakerLabelCallback {} {
 	global Label ModelMaker
 
-	set ModelMaker(name) $Label(name)
+	set ModelMaker(name)   $Label(name)
 	set ModelMaker(prefix) $Label(name)
+
+	set ModelMaker(label2) $Label(label)
 }
 
 #-------------------------------------------------------------------------------
@@ -653,19 +658,10 @@ proc ModelMakerReverseNormals {{m ""}} {
 	$p SetStartMethod     MainStartProgress
 	$p SetProgressMethod "MainShowProgress $p"
 	$p SetEndMethod       MainEndProgress
-	set ModelMaker(t,$p) [expr [lindex [time {$p Update}] 0]/1000000.0]
-	set ModelMaker(n,$p) [[$p GetOutput] GetNumberOfPolys]
-	set ModelMaker($m,nPolys) $ModelMaker(n,$p)
-
-	set p normals
-	vtkPolyDataNormals $p
-    $p SetInput [reverser GetOutput]
-    $p SetFeatureAngle 60
-    [$p GetOutput] ReleaseDataFlagOn
 
 	set p stripper
 	vtkStripper $p
-    $p SetInput [normals GetOutput]
+    $p SetInput [reverser GetOutput]
 	[$p GetOutput] ReleaseDataFlagOff
 
 	# polyData will survive as long as it's the input to the mapper
@@ -674,7 +670,7 @@ proc ModelMakerReverseNormals {{m ""}} {
 	Model($m,mapper) SetInput $Model($m,polyData)
 
 	stripper SetOutput ""
-	foreach p "reverser normals stripper" {
+	foreach p "reverser stripper" {
 		$p SetInput ""
 		$p Delete
 	}
@@ -737,7 +733,8 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 			set el [[rot GetMatrix] GetElement $col 0]
 			[rot GetMatrix] SetElement $col 0 [expr -1*$el]
 		}
-		puts permute
+		# We could either permute the matrix, or flip the data.
+		# puts permute
 		# vtkTransform permute
 		# [permute GetMatrix] SetElement 0 0 -1
 		# reader SetTransform permute
@@ -748,18 +745,19 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 	}
 
 	# Threshold so the only values are the desired label.
-	# But do this only for label maps.
+	# But do this only for label maps
 	set p thresh
 	vtkImageThresholdBeyond $p
 	$p SetInput [$src GetOutput]
 	$p SetReplaceIn 0 
-	$p SetReplaceOut 0 
-	if {[Volume($v,node) GetLabelMap] == 1} {
+	$p SetReplaceOut 0
+	if {[Volume($v,node) GetLabelMap] == 1 || 1 == 1} {
 		$p SetReplaceIn 1
 		$p SetReplaceOut 1
 	}
-	$p SetInValue 1
+	$p SetInValue $Label(label)
 	$p SetOutValue 0
+# DAVE crashes:	$p ThresholdBetween $Label(label) $ModelMaker(label2)
 	$p ThresholdBetween $Label(label) $Label(label)
 	[$p GetOutput] ReleaseDataFlagOn
 	set Gui(progressText) "Threshold $name"
@@ -773,7 +771,11 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 	set p mcubes
 	vtkMarchingCubes $p
 	$p SetInput [to GetOutput]
-	$p SetValue 0 1
+	if {[Volume($v,node) GetLabelMap] == 1 || 1 == 1} {
+		$p SetValue 0 $Label(label)
+	} else {
+		$p SetValue $Label(label) $ModelMaker(label2)
+	}
 	$p ComputeScalarsOff
 	$p ComputeGradientsOff
 	$p ComputeNormalsOff
@@ -788,13 +790,15 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 	# If there are no polygons, then the smoother gets mad, so stop.
 	if {$ModelMaker(n,$p) == 0} {
 		tk_messageBox -message "No polygons can be created."
+		thresh SetInput ""
 		to SetInput ""
-		mcubes SetInput ""
 		flip SetInput ""
+		mcubes SetInput ""
+		rot Delete
+		flip Delete
+		thresh Delete
 		to Delete
 		mcubes Delete
-		flip Delete
-		rot Delete
 		set ModelMaker(marching) 0
 		return -1
 	}

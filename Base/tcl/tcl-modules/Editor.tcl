@@ -60,7 +60,6 @@
 #   EdUpdateAfterApplyEffect
 #   EditorClearOutput
 #   EditorMerge
-#   EditorWriteOutput
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -350,23 +349,23 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fVolumes.fWorking.fPrefix
 
+	eval {label $f.l -text "Prefix:"} $Gui(WLA)
 	set c {entry $f.e \
 		-textvariable Editor(prefixWorking) $Gui(WEA)}; eval [subst $c]
-	eval {button $f.b -text "Browse" -width 6 \
-		-command "EditorSetPrefix Working"} $Gui(WBA)
-	pack $f.b $f.e -padx 3 -side left -expand 1 -fill x
+	pack $f.l -padx 3 -side left
+	pack $f.e -padx 3 -side left -expand 1 -fill x
 
 	#-------------------------------------------
 	# Volumes->Working->Btns
 	#-------------------------------------------
 	set f $fVolumes.fWorking.fBtns
 
-	set c {button $f.bWrite -text "Write" -width 6 \
-		-command "EditorWriteOutput Working; RenderAll" $Gui(WBA)}; eval [subst $c]
+	set c {button $f.bWrite -text "Save" -width 5 \
+		-command "EditorWrite Working; RenderAll" $Gui(WBA)}; eval [subst $c]
 	set c {button $f.bClear -text "Clear to 0's" -width 12 \
-		-command "EditorClearOutput Working; RenderAll" $Gui(WBA)}; eval [subst $c]
+		-command "EditorClear Working; RenderAll" $Gui(WBA)}; eval [subst $c]
 	set c {button $f.bRead -text "Read" -width 5 \
-		-command "EditorReadOutput Working; RenderAll" $Gui(WBA)}; eval [subst $c]
+		-command "EditorRead Working; RenderAll" $Gui(WBA)}; eval [subst $c]
 	pack $f.bWrite $f.bRead $f.bClear -side left -padx $Gui(pad)
 
 
@@ -404,11 +403,11 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fVolumes.fComposite.fPrefix
 
-	eval {button $f.b -text "Browse" -width 6 \
-		-command "EditorSetPrefix Composite"} $Gui(WBA)
+	eval {label $f.l -text "Prefix:"} $Gui(WLA)
 	set c {entry $f.e \
 		-textvariable Editor(prefixComposite) $Gui(WEA)}; eval [subst $c]
-	pack $f.b $f.e -padx 3 -side left -expand 1 -fill x
+	pack $f.l -padx 3 -side left
+	pack $f.e -padx 3 -side left -expand 1 -fill x
 
 	#-------------------------------------------
 	# Volumes->Composite->Btns
@@ -416,11 +415,11 @@ Models are fun. Do you like models, Ron?
 	set f $fVolumes.fComposite.fBtns
 
 	set c {button $f.bWrite -text "Write" -width 6 \
-		-command "EditorWriteOutput Composite; RenderAll" $Gui(WBA)}; eval [subst $c]
+		-command "EditorWrite Composite; RenderAll" $Gui(WBA)}; eval [subst $c]
 	set c {button $f.bClear -text "Clear to 0's" -width 12 \
-		-command "EditorClearOutput Composite; RenderAll" $Gui(WBA)}; eval [subst $c]
+		-command "EditorClear Composite; RenderAll" $Gui(WBA)}; eval [subst $c]
 	set c {button $f.bRead -text "Read" -width 5 \
-		-command "EditorReadOutput Composite; RenderAll" $Gui(WBA)}; eval [subst $c]
+		-command "EditorRead Composite; RenderAll" $Gui(WBA)}; eval [subst $c]
 	pack $f.bWrite $f.bRead $f.bClear -side left -padx $Gui(pad)
 
 
@@ -782,6 +781,7 @@ proc EditorB1Motion {x y} {
 		"Draw" {
 			Slicer DrawInsertPoint $x $y
 
+# DAVE: allow drawing on non-native slices someday
 #			Slicer SetReformatPoint $s $x $y
 #			scan [Slicer GetIjkPoint] "%g %g %g" i j k
 #			puts "Slicer DrawInsertPoint $x $y ijk=$i $j $k s=$s"
@@ -874,8 +874,9 @@ proc EditorSetOriginal {v} {
 	# Change button text
     $Editor(mbOriginal) config -text [Volume($v,node) GetName]
 
+	# Update the display and the effect.
 	if {$Editor(activeID) != "EdNone"} {
-		# Display the origin as the background on the slices
+		# Display the original in the background layer of the slices
 		EditorResetDisplay
 
 		# Refresh the effect, if it's an interactive one
@@ -1479,31 +1480,70 @@ proc EdUpdateAfterApplyEffect {v {render All}} {
 #                           OUTPUT
 ################################################################################
 
+proc EditorWrite {data} {
+	global Volume Editor
 
-#-------------------------------------------------------------------------------
-# .PROC EditorReadOutput
-#
-# Clear either the Working or Composite data to all zeros.
-# .END
-#-------------------------------------------------------------------------------
-proc EditorReadOutput {data} {
-	global Volume Editor Slice
+	# If the volume doesn't exist yet, then don't write it, duh!
+	if {$Editor(id$data) == "NEW"} {
+		tk_messageBox -message "Nothing to write."
+		return
+	}
+
+	switch $data {
+		Composite {set v [EditorGetCompositeID]}
+		Working   {set v [EditorGetWorkingID]}
+	}
+
+	# Show user a File dialog box
+	set Editor(prefix$data) [MainFileSaveVolume $v $Editor(prefix$data)]
+	if {$Editor(prefix$data) == ""} {return}
+
+	# Write
+	MainVolumesWrite $v $Editor(prefix$data)
+
+	# Prefix changed, so update the Volumes->Props tab
+	MainVolumesSetActive $v
+}
+
+proc EditorRead {data} {
+	global Volume Editor
+
+	# If the volume doesn't exist yet, then don't read it, duh!
+	if {$Editor(id$data) == "NEW"} {
+		tk_messageBox -message "Nothing to read."
+		return
+	}
 
 	switch $data {
 		Composite {set v $Editor(idComposite)}
 		Working   {set v $Editor(idWorking)}
 	}
 
+	# Show user a File dialog box
+	set Editor(prefix$data) [MainFileOpenVolume $v $Editor(prefix$data)]
+	if {$Editor(prefix$data) == ""} {return}
+	
+	# Read
+	MainVolumesRead $v $Editor(prefix$data)
+
+	# Prefix changed, so update the Models->Props tab
+	MainVolumesSetActive $m
 }
 
 #-------------------------------------------------------------------------------
-# .PROC EditorClearOutput
+# .PROC EditorClear
 #
 # Clear either the Working or Composite data to all zeros.
 # .END
 #-------------------------------------------------------------------------------
-proc EditorClearOutput {data} {
+proc EditorClear {data} {
 	global Volume Editor Slice
+
+	# If the volume doesn't exist yet, then don't write it, duh!
+	if {$Editor(id$data) == "NEW"} {
+		tk_messageBox -message "Nothing to clear."
+		return
+	}
 
 	switch $data {
 		Composite {set v $Editor(idComposite)}
@@ -1640,86 +1680,5 @@ Merge with the Working or Composite, not '$bgName'"; return}
 		Slicer SetOffset $s $Slice($s,offset)
 	}
 	RenderAll
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EditorWriteOutput
-#
-# Write either the Working or Composite output to disk.
-# .END
-#-------------------------------------------------------------------------------
-proc EditorWriteOutput {data} {
-	global Volume Gui Path Lut tcl_platform Mrml Editor
-
-	# If the volume doesn't exist yet, then don't write it, duh!
-	if {$Editor(id$data) == "NEW"} {
-		tk_messageBox -message "Nothing to write."
-		return
-	}
-
-	switch $data {
-		Composite {set v [EditorGetCompositeID]}
-		Working   {set v [EditorGetWorkingID]}
-	}
-
-	# Change prefix and header to differ from the input volume
-	#
-	set filePrefix $Editor(prefix$data)
-	set fileFull [file join $Mrml(dir) $filePrefix]
-
-	# Check that it's not blank
-	if {[file isdirectory $fileFull] == 1} {
-		tk_messageBox -icon error -title $Gui(title) \
-			-message "Please enter a file prefix for the $data volume."
-		return 0
-	}
-	
-	# Check that it's a prefix, not a directory
-	if {[file isdirectory $fileFull] == 1} {
-		tk_messageBox -icon error -title $Gui(title) \
-			-message "Please enter a file prefix, not a directory,\n\
-			for the $data volume."
-		return 0
-	}
-
-	# Check that the directory exists
-	set dir [file dirname $fileFull]
-	if {[file isdirectory $dir] == 0} {
-		if {$dir != ""} {
-			file mkdir $dir
-		}
-		if {[file isdirectory $dir] == 0} {
-			tk_messageBox -icon info -type ok -title $Gui(title) \
-			-message "Failed to make '$dir', so using current directory."
-			set dir ""
-		}
-	}
-	Volume($v,node) SetFilePrefix $filePrefix
-	Volume($v,node) SetFullPrefix $fileFull
-
-	# interpolate off
-	Volume($v,node) InterpolateOff
-
-	# Determine if littleEndian
-	if {$tcl_platform(machine) == "intel" || $tcl_platform(machine) == "mips"} {
-		Volume($v,node) SetLittleEndian 1
-	} else {
-		Volume($v,node) SetLittleEndian 1
-	}
-
-	# Write volume data
-	set Gui(progressText) "Writing [Volume($v,node) GetName]"
-	puts "Writing '$fileFull' ..."
-	Volume($v,vol) Write
-	puts " ...done."
-
-	# Write MRML file
-	set filename $fileFull.xml
-	vtkMrmlTree tree
-	tree AddItem Volume($v,node)
-	tree Write $filename
-	tree RemoveAllItems
-	tree Delete
-	puts "Saved MRML file: $filename"
 }
 

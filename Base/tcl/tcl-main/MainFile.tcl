@@ -398,6 +398,146 @@ proc MainFileOpenApply {} {
 	}
 }
 
+proc MainFileSaveModel {m prefix} {
+	global Model Mrml
+
+	# Ensure model exists
+	if {$m == "" || $m == "NEW" || [lsearch $Model(idList) $m] == -1} {
+		tk_messageBox -message "\
+Use this utility to save a model that is already in the 3D Slicer."
+		return ""
+	}
+
+	# Cannot have blank prefix
+	if {$prefix == ""} {
+		set prefix [Model($m,node) GetName]
+		if {$prefix == ""} {	
+			set prefix model
+		}
+	}
+
+ 	# Show popup initialized to "prefix"
+	set filename [file join $Mrml(dir) $prefix]
+	set dir [file dirname $filename]
+	set typelist {
+		{"VTK Files" {.vtk}}
+		{"All Files" {*}}
+	}
+	set filename [tk_getSaveFile -title "Save Model" -defaultextension .vtk \
+		-filetypes $typelist -initialdir $dir -initialfile $filename]
+
+	# Do nothing if the user cancelled
+	if {$filename == ""} {return ""}
+
+	# Remember to store it as a relative prefix for next time
+	return [MainFileGetRelativePrefix $filename]
+}
+
+proc MainFileOpenModel {m prefix} {
+	global Model Mrml
+
+	# Ensure model exists
+	if {$m == "" || $m == "NEW" || [lsearch $Model(idList) $m] == -1} {
+		tk_messageBox -message "\
+Use this utility to re-read a model that is already in the 3D Slicer.\n\
+To read a model for the first time, click 'Add Model' on the Data panel."
+		return ""
+	}
+
+	# Cannot have blank prefix
+	if {$prefix == ""} {
+		set prefix [Model($m,node) GetName]
+		if {$prefix == ""} {	
+			set prefix model
+		}
+	}
+
+ 	# Show popup initialized to the last file saved
+	set filename [file join $Mrml(dir) $prefix]
+	set dir [file dirname $filename]
+	set typelist {
+		{"VTK Files" {.vtk}}
+		{"All Files" {*}}
+	}
+	set filename [tk_getOpenFile -title "Open Model" -defaultextension .vtk \
+		-filetypes $typelist -initialdir $dir -initialfile $filename]
+
+	# Do nothing if the user cancelled
+	if {$filename == ""} {return ""}
+
+	# Remember to store it as a relative prefix for next time
+	return [MainFileGetRelativePrefix $filename]
+}
+
+proc MainFileSaveVolume {v prefix} {
+	global Volume Mrml
+
+	# Ensure volume exists
+	if {$v == "" || $v == "NEW" || [lsearch $Volume(idList) $v] == -1} {
+		tk_messageBox -message "\
+Use this utility to save a volume that already exists in the 3D Slicer."
+		return ""
+	}
+
+	# Cannot have blank prefix
+	if {$prefix == ""} {
+		set prefix [Volume($v,node) GetName]
+		if {$prefix == ""} {	
+			set prefix volume
+		}
+	}
+
+ 	# Show popup initialized to "prefix"
+	set filename [file join $Mrml(dir) $prefix]
+	set dir [file dirname $filename]
+	set typelist {
+		{"All Files" {*}}
+	}
+	set filename [tk_getSaveFile -title "Save Volume" \
+		-filetypes $typelist -initialdir $dir -initialfile $filename]
+
+	# Do nothing if the user cancelled
+	if {$filename == ""} {return ""}
+
+	# Remember to store it as a relative prefix for next time
+	return [MainFileGetRelativePrefix $filename]
+}
+
+proc MainFileOpenVolume {v prefix} {
+	global Volume Mrml
+
+	# Ensure volume exists
+	if {$v == "" || $v == "NEW" || [lsearch $Volume(idList) $v] == -1} {
+		tk_messageBox -message "\
+Use this utility to re-read a volume that is already in the 3D Slicer.\n\
+To read a volume for the first time, click 'Add Volume' on the Data panel."
+		return ""
+	}
+
+	# Cannot have blank prefix
+	if {$prefix == ""} {
+		set prefix [Volume($v,node) GetName]
+		if {$prefix == ""} {	
+			set prefix volume
+		}
+	}
+
+ 	# Show popup initialized to the last file saved
+	set filename [file join $Mrml(dir) $prefix]
+	set dir [file dirname $filename]
+	set typelist {
+		{"All Files" {*}}
+	}
+	set filename [tk_getOpenFile -title "Open Volume" \
+		-filetypes $typelist -initialdir $dir -initialfile $filename]
+
+	# Do nothing if the user cancelled
+	if {$filename == ""} {return ""}
+
+	# Remember to store it as a relative prefix for next time
+	return [MainFileGetRelativePrefix $filename]
+}
+
 #-------------------------------------------------------------------------------
 # .PROC MainFileGetRelativePrefix
 # .END

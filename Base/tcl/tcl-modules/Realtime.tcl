@@ -51,15 +51,15 @@ proc RealtimeUpdateMRML {} {
 	#
 	set n $Volume(idNone)
 	if {[lsearch $Volume(idList) $Realtime(idRealtime)] == -1} {
-		RealtimeSetRealtimeVolume $n
+		RealtimeSetRealtime $n
 	}
 	if {$Realtime(idBaseline) != "NEW" && \
 		[lsearch $Volume(idList) $Realtime(idBaseline)] == -1} {
-		RealtimeSetBaselineVolume NEW
+		RealtimeSetBaseline NEW
 	}
 	if {$Realtime(idResult) != "NEW" && \
 		[lsearch $Volume(idList) $Realtime(idResult)] == -1} {
-		RealtimeSetResultVolume NEW
+		RealtimeSetResult NEW
 	}
 
 	# Realtime Volume menu
@@ -68,7 +68,7 @@ proc RealtimeUpdateMRML {} {
 	$m delete 0 end
 	foreach v $Volume(idListForMenu) {
 		$m add command -label [Volume($v,node) GetName] -command \
-			"RealtimeSetRealtimeVolume $v; RenderAll"
+			"RealtimeSetRealtime $v; RenderAll"
 	}
 
 	# Baseline Volume menu
@@ -79,7 +79,7 @@ proc RealtimeUpdateMRML {} {
 	foreach v $Volume(idListForMenu) {
 		if {$v != $Volume(idNone) && $v != $Realtime(idResult)} {
 			$m add command -label [Volume($v,node) GetName] -command \
-				"RealtimeSetBaselineVolume $v; RenderAll"
+				"RealtimeSetBaseline $v; RenderAll"
 		}
 		if {[Volume($v,node) GetName] == "Baseline"} {
 			set idBaseline $v
@@ -87,9 +87,9 @@ proc RealtimeUpdateMRML {} {
 	}
 	# If there is Baseline, then select it, else add a NEW option
 	if {$idBaseline != ""} {
-		RealtimeSetBaselineVolume $idBaseline
+		RealtimeSetBaseline $idBaseline
 	} else {
-		$m add command -label NEW -command "RealtimeSetBaselineVolume NEW; RenderAll"
+		$m add command -label NEW -command "RealtimeSetBaseline NEW; RenderAll"
 	}
 
 	# Result Volume menu
@@ -100,7 +100,7 @@ proc RealtimeUpdateMRML {} {
 	foreach v $Volume(idListForMenu) {
 		if {$v != $Volume(idNone) && $v != $Realtime(idBaseline)} {
 			$m add command -label [Volume($v,node) GetName] -command \
-				"RealtimeSetResultVolume $v; RenderAll"
+				"RealtimeSetResult $v; RenderAll"
 		}
 		if {[Volume($v,node) GetName] == "Result"} {
 			set idResult $v
@@ -108,9 +108,9 @@ proc RealtimeUpdateMRML {} {
 	}
 	# If there is working, then select it, else add a NEW option
 	if {$idResult != ""} {
-		RealtimeSetResultVolume $idResult
+		RealtimeSetResult $idResult
 	} else {
-		$m add command -label NEW -command "RealtimeSetResultVolume NEW; RenderAll"
+		$m add command -label NEW -command "RealtimeSetResult NEW; RenderAll"
 	}
 }
 
@@ -232,7 +232,7 @@ Models are fun. Do you like models, Ron?
 	set c {button $f.bRead -text "Read" -width 5 \
 		-command "RealtimeReadOutput Baseline; RenderAll" $Gui(WBA)}; eval [subst $c]
 	set c {button $f.bSet -text "Copy Realtime" -width 14 \
-		-command "RealtimeSetBaseline; RenderAll" $Gui(WBA)}; eval [subst $c]
+		-command "RealtimeMakeBaseline; RenderAll" $Gui(WBA)}; eval [subst $c]
 	pack $f.bWrite $f.bRead $f.bSet -side left -padx $Gui(pad)
 
 
@@ -378,16 +378,21 @@ proc RealtimeSetPrefix {data} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC RealtimeSetRealtimeVolume
+# .PROC RealtimeSetRealtime
 # .END
 #-------------------------------------------------------------------------------
-proc RealtimeSetRealtimeVolume {v} {
+proc RealtimeSetRealtime {v} {
 	global Realtime Volume
 
 	if {$v == $Realtime(idBaseline)} {
 		tk_messageBox -message "The Realtime and Baseline volumes must differ."
 		return
 	}
+	if {$v == $Realtime(idResult)} {
+		tk_messageBox -message "The Realtime and Result volumes must differ."
+		return
+	}
+
 	set Realtime(idRealtime) $v
 	
 	# Change button text
@@ -395,10 +400,10 @@ proc RealtimeSetRealtimeVolume {v} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC RealtimeSetBaselineVolume
+# .PROC RealtimeSetBaseline
 # .END
 #-------------------------------------------------------------------------------
-proc RealtimeSetBaselineVolume {v} {
+proc RealtimeSetBaseline {v} {
 	global Realtime Volume
 
 	if {$v == [RealtimeGetRealtimeID]} {
@@ -420,10 +425,10 @@ proc RealtimeSetBaselineVolume {v} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC RealtimeSetResultVolume
+# .PROC RealtimeSetResult
 # .END
 #-------------------------------------------------------------------------------
-proc RealtimeSetResultVolume {v} {
+proc RealtimeSetResult {v} {
 	global Realtime Volume
 
 	if {$v == [RealtimeGetRealtimeID]} {
@@ -545,7 +550,7 @@ proc RealtimeGetResultID {} {
 }
 
 
-proc RealtimeSetBaseline {} {
+proc RealtimeMakeBaseline {} {
 }
 
 proc RealtimeReadOutput {data} {

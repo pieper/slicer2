@@ -60,9 +60,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc GuiInit {} {
-	global Gui Path InitProc tcl_platform
-
-	set InitProc() ""
+	global Gui Path tcl_platform
 
 	if {$tcl_platform(platform) == "windows"} {
 		set Gui(pc) 1

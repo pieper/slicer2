@@ -138,17 +138,26 @@ proc MainMrmlAddNode {nodeType} {
 		set tree "colorTree"
 	}
 
+	# Add ID to idList
 	set i $Array(nextID)
 	incr Array(nextID)
 	lappend Array(idList) $i
-	vtkMrml${nodeType}Node ${nodeType}($i,node)
-	${nodeType}($i,node) SetID $i
 
+	# Create vtkMrmlNode
+	set n ${nodeType}($i,node)
+	vtkMrml${nodeType}Node $n
+	$n SetID $i
+
+	# Add node to tree
+	Mrml($tree) AddItem $n
+
+	# Return node
 	return ${nodeType}($i,node)
 }
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlDeleteNodeDuringUpdate
+# Call this routine to delete a node during MainUpdateMRML
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteNodeDuringUpdate {nodeType id} {
@@ -516,12 +525,10 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 		
 		"Transform" {
 			set n [MainMrmlAddNode Transform]
-			Mrml(dataTree) AddItem $n
 		}
 		
 		"EndTransform" {
 			set n [MainMrmlAddNode EndTransform]
-			Mrml(dataTree) AddItem $n
 		}
 		
 		"Matrix" {
@@ -535,7 +542,6 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 				"matrix" {$n SetMatrix      $val}
 				}
 			}
-			Mrml(dataTree) AddItem $n
 		}
 
 		"Color" {
@@ -554,7 +560,6 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 				"diffuseColor" {eval $n SetDiffuseColor $val}
 				}
 			}
-			Mrml(colorTree) AddItem $n
 		}
 		
 		"Model" {
@@ -602,8 +607,6 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 
 			# Compute full path name relative to the MRML file
 			$n SetFullFileName [file join $Mrml(dir) [$n GetFileName]]
-
-			Mrml(dataTree) AddItem $n
 		}
 		
 		"Volume" {
@@ -660,8 +663,6 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 			$n SetFullPrefix [file join $Mrml(dir) [$n GetFilePrefix]]
 			
 			$n UseRasToVtkMatrixOn
-
-			Mrml(dataTree) AddItem $n
 		}
 
 		"Options" {
@@ -676,7 +677,6 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 					"contents"     {$n SetContents $val}
 				}
 		    }
-		    Mrml(dataTree) AddItem $n
 
 			# If these are presets, then do preset stuff on stuffing, not attr
 			if {[$n GetContents] == "presets"} {
@@ -737,7 +737,6 @@ proc MainMrmlBuildTreesVersion1.0 {} {
 			set transformCount($level) 0
 
 			set n [MainMrmlAddNode Transform]
-			Mrml(dataTree) AddItem $n
 		}
 		
 		"End" {
@@ -746,12 +745,10 @@ proc MainMrmlBuildTreesVersion1.0 {} {
 
 			for {set c 0} {$c < $transformCount($level)} {incr c} {
 				set n [MainMrmlAddNode EndTransform]
-				Mrml(dataTree) AddItem $n
 			}
 			set level [expr $level - 1]
 
 			set n [MainMrmlAddNode EndTransform]
-			Mrml(dataTree) AddItem $n
 		}
 		
 		"Transform" {
@@ -761,7 +758,6 @@ proc MainMrmlBuildTreesVersion1.0 {} {
 			incr transformCount($level)
 
 			set n [MainMrmlAddNode Transform]
-			Mrml(dataTree) AddItem $n
 
 			set n [MainMrmlAddNode Matrix]
 			$n SetDescription  [MRMLGetValue $node desc]
@@ -772,7 +768,6 @@ proc MainMrmlBuildTreesVersion1.0 {} {
 			$n RotateY         [MRMLGetValue $node rotateY]
 			$n RotateZ         [MRMLGetValue $node rotateZ]
 			eval $n Translate  [MRMLGetValue $node translate]
-			Mrml(dataTree) AddItem $n
 		}
 
 		"Color" {
@@ -785,8 +780,6 @@ proc MainMrmlBuildTreesVersion1.0 {} {
 			$n SetPower        [MRMLGetValue $node power]
 			$n SetLabels       [MRMLGetValue $node labels]
 			eval $n SetDiffuseColor [MRMLGetValue $node diffuseColor]
-
-			Mrml(colorTree) AddItem $n
 		}
 		
 		"Model" {
@@ -802,8 +795,6 @@ proc MainMrmlBuildTreesVersion1.0 {} {
 			$n SetBackfaceCulling  [MRMLGetValue $node backfaceCulling]
 			$n SetScalarVisibility [MRMLGetValue $node scalarVisibility]
 			eval $n SetScalarRange [MRMLGetValue $node scalarRange]
-
-			Mrml(dataTree) AddItem $n
 		}
 		
 		"Volume" {
@@ -854,8 +845,6 @@ proc MainMrmlBuildTreesVersion1.0 {} {
 #			} else {
 #				$n AutoThresholdOff
 #			}
-
-			Mrml(dataTree) AddItem $n
 		}
 		}
 	}
@@ -864,7 +853,6 @@ proc MainMrmlBuildTreesVersion1.0 {} {
 	# (outside all separators)
 	for {set c 0} {$c < $transformCount($level)} {incr c} {
 		set n [MainMrmlAddNode EndTransform]
-		Mrml(dataTree) AddItem $n
 	}
 }
 

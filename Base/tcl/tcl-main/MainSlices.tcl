@@ -71,11 +71,11 @@ proc MainSlicesInit {} {
 	lappend Module(procRecallPresets) MainSlicesRecallPresets
 	set Module(Slices,presets) "opacity='1.0' \
 0,visibility='0' 0,backVolID='0' 0,foreVolID='0' 0,labelVolID='0' \
-0,orient='Axial' 0,offset='0' 0,zoom='1.0' \
+0,orient='Axial' 0,offset='0' 0,zoom='1.0' 0,clipState='1'\
 1,visibility='0' 1,backVolID='0' 1,foreVolID='0' 1,labelVolID='0' \
-1,orient='Sagittal' 1,offset='0' 1,zoom='1.0' \
+1,orient='Sagittal' 1,offset='0' 1,zoom='1.0' 1,clipState='1' \
 2,visibility='0' 2,backVolID='0' 2,foreVolID='0' 2,labelVolID='0' \
-2,orient='Coronal' 2,offset='0' 2,zoom='1.0'"
+2,orient='Coronal' 2,offset='0' 2,zoom='1.0' 2,clipState='1'"
 
 	set Slice(idList) "0 1 2"
 
@@ -121,7 +121,6 @@ proc MainSlicesInit {} {
 	}
 }
 
-#
 #-------------------------------------------------------------------------------
 # Variables
 #-------------------------------------------------------------------------------
@@ -272,11 +271,11 @@ proc MainSlicesBuildControls {s F} {
 
 	set c {entry $f.eOffset -width 4 \
 		-textvariable Slice($s,offset) $Gui(WEA)}; eval [subst $c]
-		bind $f.eOffset <Return>   "MainSlicesSetOffsetCallback $s"
-		bind $f.eOffset <FocusOut> "MainSlicesSetOffsetCallback $s"
+		bind $f.eOffset <Return>   "MainSlicesSetOffset $s; RenderBoth $s"
+		bind $f.eOffset <FocusOut> "MainSlicesSetOffset $s; RenderBoth $s"
 	set c {scale $f.sOffset -from -$fov2 -to $fov2 \
 		-variable Slice($s,offset) -length 180 -resolution 1.0 -command \
-		"MainSlicesSetOffsetCallback $s" $Gui(WSA) -troughcolor $Gui(slice$s) }
+		"MainSlicesSetOffsetInit $s $f.sOffset" $Gui(WSA) -troughcolor $Gui(slice$s) }
 		eval [subst $c]
 
 	pack $f.sOffset $f.eOffset -side left -anchor w -padx 2 -pady 0
@@ -428,9 +427,12 @@ proc MainSlicesVolumeParam {s param value} {
 # Usage: MainSlicesSetClipState id
 # .END
 #-------------------------------------------------------------------------------
-proc MainSlicesSetClipState {s} {
+proc MainSlicesSetClipState {s {state ""}} {
 	global Gui Slice
 
+	if {$state != ""} {
+		set Slice($s,clipState) $state
+	}
 	set state $Slice($s,clipState)
 
 	if {$state == "1"} {
@@ -658,22 +660,12 @@ proc MainSlicesSetVolume {Layer s v} {
 	MainSlicesSetSliderRange $s
 }
 
-#-------------------------------------------------------------------------------
-# .PROC MainSlicesSetOffsetCallback
-# .END
-#-------------------------------------------------------------------------------
-proc MainSlicesSetOffsetCallback {s {value ""}} {
-	global Slice InitProc
+proc MainSlicesSetOffsetInit {s widget {value ""}} {
 
-	# Load GUI faster
-	if {![info exists InitProc(MainSlicesSetOffsetCallback$s)]} {
-		set InitProc(MainSlicesSetOffsetCallback$s) 1
-		return
-	}
+	# This prevents Tk from calling RenderBoth when it first creates
+	# the slider, but before a user uses it.
 
-	MainSlicesSetOffset $s $value
-
-	RenderBoth $s
+	$widget config -command "MainSlicesSetOffset $s; RenderBoth $s"
 }
 
 #-------------------------------------------------------------------------------
@@ -994,6 +986,7 @@ proc MainSlicesStorePresets {p} {
 		set Preset(Slices,$p,$s,orient)     $Slice($s,orient)
 		set Preset(Slices,$p,$s,offset)     $Slice($s,offset)
 		set Preset(Slices,$p,$s,zoom)       $Slice($s,zoom)
+		set Preset(Slices,$p,$s,clipState)  $Slice($s,clipState)
 		set Preset(Slices,$p,$s,backVolID)  $Slice($s,backVolID)
 		set Preset(Slices,$p,$s,foreVolID)  $Slice($s,foreVolID)
 		set Preset(Slices,$p,$s,labelVolID) $Slice($s,labelVolID)
@@ -1013,6 +1006,7 @@ proc MainSlicesRecallPresets {p} {
 		MainSlicesSetOrient $s $Preset(Slices,$p,$s,orient)
 		MainSlicesSetOffset	$s $Preset(Slices,$p,$s,offset)
 		MainSlicesSetZoom $s $Preset(Slices,$p,$s,zoom)
+		MainSlicesSetClipState $s $Preset(Slices,$p,$s,clipState)
 	}
 	MainSlicesSetOpacityAll $Preset(Slices,$p,opacity)
 }

@@ -76,6 +76,17 @@ proc MainModelsInit {} {
 	set Model(mbActiveList) ""
 	set Model(mActiveList)  ""
 
+	# Props
+	set Model(name) ""
+	set Model(prefix) ""
+	set Model(visibility) 1
+	set Model(opacity) 1.0
+	set Model(clipping) 0
+	set Model(culling) 1
+	set Model(scalarVisibility) 0
+	set Model(scalarLo) 0
+	set Model(scalarHi) 100
+	set Model(desc) ""
 }
 
 #-------------------------------------------------------------------------------
@@ -88,21 +99,24 @@ proc MainModelsUpdateMRML {} {
 	# Build any new models
 	#--------------------------------------------------------
 	foreach m $Model(idList) {
-		if {[MainModelsCreate $m] >= 0} {
-			# Success, so Build GUI
-			MainModelsCreateGUI $Gui(wModels).fGrid $m
-		} else {
-			MainMrmlDeleteNodeDuringUpdate Model $m
+		if {[MainModelsCreate $m] > 0} {
+
+			# Mark it as not being created on the fly 
+			# since it was added from the Data module or read in from MRML
+			set Model($m,fly) 0
+
+			# Read
+			if {[MainModelsRead $m] < 0} {
+				# failed
+				MainMrmlDeleteNodeDuringUpdate Model $m
+			}
 		}
 	}
 
 	# Delete any old models
 	#--------------------------------------------------------
 	foreach m $Model(idListDelete) {
-		if {[MainModelsDelete $m] == 1} {
-			# Success, so delete GUI
-			MainModelsDeleteGUI $Gui(wModels).fGrid $m
-		}
+		MainModelsDelete $m
 	}
 	# Did we delete the active model?
 	if {[lsearch $Model(idList) $Model(activeID)] == -1} {
@@ -113,7 +127,7 @@ proc MainModelsUpdateMRML {} {
 	#--------------------------------------------------------
 	foreach m $Model(idList) {
 
-		MainModelsSetClip $m
+		MainModelsSetClipping $m
 		MainModelsSetColor $m
 		MainModelsSetCulling $m
 		MainModelsSetVisibility $m
@@ -150,7 +164,7 @@ proc MainModelsUpdateMRML {} {
 # There should be a vtkMrmlModel class just like there is a vtkMrmlVolume
 # class.  However, developers are hacking new model code on the fly and
 # probably benefit more by only having to change tcl scripts rather than
-# recompiling C++ code.  
+# recompiling C++ code, right Peter?  
 #
 # This procedure performs what the vtkMrmlModel would do in its constructor.
 # 
@@ -159,13 +173,26 @@ proc MainModelsUpdateMRML {} {
 proc MainModelsShouldBeAVtkClass {m} {
 	global Model Slice
 
+	# Mapper
+	vtkPolyDataMapper Model($m,mapper)
+
+	# Create a sphere as a default model
+	vtkSphereSource src
+	src SetRadius 10
+	
+	# Delete the src, leaving the data in Model($m,polyData)
+	# polyData will survive as long as it's the input to the mapper
+	#
+	set Model($m,polyData) [src GetOutput]
+	$Model($m,polyData) Update
+	Model($m,mapper) SetInput $Model($m,polyData)
+	src SetOutput ""
+	src Delete
+
 	# Clipper
 	vtkClipPolyData Model($m,clipper)
 	Model($m,clipper) SetClipFunction Slice(clipPlanes)
 	Model($m,clipper) SetValue 0.0
-
-	# Mapper
-	vtkPolyDataMapper Model($m,mapper)
 
 	# Actor
 	vtkActor Model($m,actor)
@@ -178,21 +205,20 @@ proc MainModelsShouldBeAVtkClass {m} {
 	# Property
 	set Model($m,prop)  [Model($m,actor) GetProperty]
 
-	# For now, the back face color is the same
+	# For now, the back face color is the same as the front
 	Model($m,actor) SetBackfaceProperty $Model($m,prop)
+
+	set Model($m,clipped) 0
 }
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsCreate
 #
-# This procedure creates a model that was read in from a MRML file.
-# To create a model on the fly (such as after segmenting a label map),
-# call MainModelsCreateUnreadable
+# This procedure creates a model but does not read it.
 # 
 # Returns:
 #  1 - success
 #  0 - model already exists
-# -1 - can't open file
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsCreate {m} {
@@ -204,19 +230,22 @@ proc MainModelsCreate {m} {
 	}
 
 	MainModelsShouldBeAVtkClass	$m	
-	MainModelsInitGUIVariables $m
 
-	# Read it in from disk
-	set status [MainModelsRead $m]
-	if {$status != 0} {
-		return $status
-	}
+	MainModelsInitGUIVariables $m
 
 	# Need to call this before MainModelsCreateGUI so the
 	# variable Model($m,colorID) is created and valid
 	MainModelsSetColor $m
+	MainModelsCreateGUI $Gui(wModels).fGrid $m
 
 	viewRen AddActor Model($m,actor)
+
+	# Mark it as unsaved and created on the fly.
+	# If it actually isn't being created on the fly, I can't tell that from
+	# inside this procedure, so the "fly" variable will be set to 0 in the
+	# MainModelsUpdateMRML procedure.
+	set Model($m,dirty) 1
+	set Model($m,fly) 1
 
 	return 1
 }
@@ -259,7 +288,14 @@ proc MainModelsRead {m} {
 	# Read it in now
 	set Gui(progressText) "Reading $name"
 	puts "Reading model $name..."
-    [reader GetOutput] ReleaseDataFlagOn
+	
+	# NOTE: if I have the following line, then when I
+	# set the clipper's input to be Model($m,polyData), then
+	# polyData (being the reader's output) releases it's polygon
+	# data while still existing as a VTK object.
+	# So if I clip, then unclip a model, the model disappears.
+	# I'm leaving the following line here to ensure no one uses it:
+    # [reader GetOutput] ReleaseDataFlagOff
 
 	# Delete the reader, leaving the data in Model($m,polyData)
 	# polyData will survive as long as it's the input to the mapper
@@ -274,56 +310,7 @@ proc MainModelsRead {m} {
 	# Mark this model as saved
 	set Model($m,dirty) 0
 
-	return 0
-}
-
-#-------------------------------------------------------------------------------
-# .PROC MainModelsCreateUnreadable
-# Call this routine instead of MainModelsCreate to add a model on the fly.
-# .END
-#-------------------------------------------------------------------------------
-proc MainModelsCreateUnreadable {} {
-	global Volume Model View Gui Module
-
-	# DAVE: Ignore adding it to the MRML tree for now
-	
-	# Find the next available ID
-	set m $Model(nextID)
-	
-	# MRML node
-	vtkMrmlModelNode Model($m,node)
-
-	MainModelsShouldBeAVtkClass	$m
-	MainModelsInitGUIVariables $m
-
-	# Create a thing
-	vtkSphereSource src
-	src SetRadius 10
-	
-	# Delete the src, leaving the data in Model($m,polyData)
-	# polyData will survive as long as it's the input to the mapper
-	set Model($m,polyData) [src GetOutput]
-	$Model($m,polyData) Update
-	Model($m,mapper) SetInput $Model($m,polyData)
-	src SetOutput ""
-	src Delete
-
-	# Need to call this before MainModelsCreateGUI so the
-	# variable Model($m,colorID) created and valid
-	MainModelsSetColor $m
-
-	viewRen AddActor Model($m,actor)
-
-	# Assign an ID
-	set Model($m,id) $m
-	incr Model(nextID)
-	lappend Model(idList) $m
-	set Model(num) [llength $Model(idList)]
-
-	# Mark this model as unsaved
-	set Model($m,dirty) 1
-
-	return $m
+	return 1
 }
 
 #-------------------------------------------------------------------------------
@@ -361,6 +348,7 @@ proc MainModelsDelete {m} {
 	Model($m,mapper) Delete
 	Model($m,actor) Delete
 	Model($m,rasToWld) Delete
+
 	# The polyData should be gone from reference counting, but I'll make sure:
 	catch {Model($m,polyData) Delete}
 
@@ -371,12 +359,8 @@ proc MainModelsDelete {m} {
 		}
 	}
 
-	# Delete ID from array
-	set i [lsearch $Model(idList) $m]
-	set Model(idList) [lreplace $Model(idList) $i $i]
-
-	# Delete node from dag
-
+	MainModelsDeleteGUI $Gui(wModels).fGrid $m
+	
 	return 1
 }
 
@@ -424,7 +408,17 @@ proc MainModelsBuildGUI {} {
 	#-------------------------------------------
 	# Models->Grid frame
 	#-------------------------------------------
-	# Done in MainModelsCreateGUI
+	set f $Gui(wModels).fGrid
+	set c {label $f.lV -text Visibility $Gui(WLA)}; eval [subst $c]
+	set c {label $f.lO -text Opacity $Gui(WLA)}; eval [subst $c]
+#	set c {label $f.lC -text Clip $Gui(WLA)}; eval [subst $c]
+#	grid $f.lV $f.lO $f.lC -pady 2 -padx 2
+	grid $f.lV $f.lO -pady 2 -padx 2
+	grid $f.lO -columnspan 2
+#	grid $f.lC -column 3
+
+	# Rest Done in MainModelsCreateGUI
+
 }
 
 #-------------------------------------------------------------------------------
@@ -437,7 +431,7 @@ proc MainModelsCreateGUI {f m} {
 	# If the GUI already exists, then just change name.
 	if {[info command $f.c$m] != ""} {
 		$f.c$m config -text "[Model($m,node) GetName]"
-		return
+		return 0
 	}
 
 	# Name / Visible
@@ -453,7 +447,7 @@ proc MainModelsCreateGUI {f m} {
 		"MainModelsSetActive $m; ShowColors MainModelsPopupCallback"
 	$men add check -label "Clipping" \
 		-variable Model($m,clipping) \
-		-command "MainModelsSetClip $m; Render3D"
+		-command "MainModelsSetClipping $m; Render3D"
 	$men add check -label "Backface culling" \
 		-variable Model($m,backfaceCulling) \
 		-command "MainModelsSetCulling $m; Render3D"
@@ -471,19 +465,22 @@ proc MainModelsCreateGUI {f m} {
 	bind $f.e${m} <FocusOut> "MainModelsSetOpacity $m; Render3D"
 	set c {scale $f.s${m} -from 0.0 -to 1.0 -length 50 \
 		-variable Model($m,opacity) \
-		-command "MainModelsSetOpacity $m; Render3D" \
+		-command "MainModelsSetOpacityInit $m $f.s$m" \
 		-resolution 0.1 $Gui(WSA) -sliderlength 14 \
 		-troughcolor [MakeColorNormalized \
 			[Color($Model($m,colorID),node) GetDiffuseColor]]}
 		eval [subst $c]
 
 	# Clipping
-	set c {checkbutton $f.cClip${m} \
-		-variable Model($m,clipping) \
-		-command "MainModelsSetClip $m; Render3D" $Gui(WCA) -indicatoron 1}
-		eval [subst $c]
+#	set c {checkbutton $f.cClip${m} \
+#		-variable Model($m,clipping) \
+#		-command "MainModelsSetClipping $m; Render3D" $Gui(WCA) -indicatoron 1}
+#		eval [subst $c]
 
-	grid $f.c${m} $f.e${m} $f.s${m} $f.cClip$m -pady 2 -padx 2
+#	grid $f.c${m} $f.e${m} $f.s${m} $f.cClip$m -pady 2 -padx 2
+	grid $f.c${m} $f.e${m} $f.s${m} -pady 2 -padx 2
+
+	return 1
 }
 
 #-------------------------------------------------------------------------------
@@ -510,14 +507,16 @@ proc MainModelsDeleteGUI {f m} {
 
 	# If the GUI already deleted, return
 	if {[info command $f.c$m] == ""} {
-		return
+		return 0
 	}
 
 	# Destroy TK widgets
 	destroy $f.c$m
 	destroy $f.e$m
 	destroy $f.s$m
-	destroy $f.cClip$m
+#	destroy $f.cClip$m
+
+	return 1
 }
 
 #-------------------------------------------------------------------------------
@@ -559,6 +558,8 @@ proc MainModelsSetActive {m} {
 		vtkMrmlModelNode default
 		set Model(name)             [default GetName]
 		set Model(prefix)           [file root [default GetFileName]]
+		set Model(visibility)       [default GetVisibility]
+		set Model(opacity)          [default GetOpacity]
 		set Model(culling)          [default GetBackfaceCulling]
 		set Model(scalarVisibility) [default GetScalarVisibility]
 		set Model(scalarLo)         [lindex [default GetScalarRange] 0]
@@ -572,6 +573,9 @@ proc MainModelsSetActive {m} {
 		}
 		set Model(name)             [Model($m,node) GetName]
 		set Model(prefix)           [file root [Model($m,node) GetFileName]]
+		set Model(visibility)       [Model($m,node) GetVisibility]
+		set Model(clipping)         [Model($m,node) GetClipping]
+		set Model(opacity)          [Model($m,node) GetOpacity]
 		set Model(culling)          [Model($m,node) GetBackfaceCulling]
 		set Model(scalarVisibility) [Model($m,node) GetScalarVisibility]
 		set Model(scalarLo)         [lindex [Model($m,node) GetScalarRange] 0]
@@ -641,30 +645,40 @@ proc MainModelsSetVisibility {model {value ""}} {
 		}
 		Model($m,node)  SetVisibility $Model($m,visibility)
 		Model($m,actor) SetVisibility [Model($m,node) GetVisibility] 
+
+		# If this is the active model, update GUI
+		if {$m == $Model(activeID)} {
+			set Model(visibility) [Model($m,node) GetVisibility]
+		}
 	}
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MainModelsRefreshClip
+# .PROC MainModelsRefreshClipping
 # .END
 #-------------------------------------------------------------------------------
-proc MainModelsRefreshClip {} {
+proc MainModelsRefreshClipping {} {
 	global Model Slice
 
 	# If no functions are added, then don't clip
 	foreach m $Model(idList) {
-		MainModelsSetClip $m
+		MainModelsSetClipping $m
 	}
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MainModelsSetClip
+# .PROC MainModelsSetClipping
 # .END
 #-------------------------------------------------------------------------------
-proc MainModelsSetClip {m} {
+proc MainModelsSetClipping {m {value ""}} {
 	global Model Slice
 
 	if {$m == ""} {return}
+
+	if {$value != ""} {
+		set Model($m,clipping) $value
+	}
+	Model($m,node) SetClipping $Model($m,clipping)
 		
 	set union 0
 	foreach s $Slice(idList) {
@@ -673,30 +687,41 @@ proc MainModelsSetClip {m} {
 
 	# Automatically turn backface culling OFF during clipping
 
-	# Clip
-	if {$Model($m,clipping) == 1 && $union > 0} {
-		# polyData --> clipper --> mapper
-		Model($m,clipper) SetInput $Model($m,polyData)
-		Model($m,mapper) SetInput [Model($m,clipper) GetOutput]
+	# If we should be clipped, and we're not, then CLIP IT.
+	#
+	if {$Model($m,clipping) == 1 && $union > 0 && $Model($m,clipped) == 0} {
 
+		set Model($m,clipped) 1
+
+		#   polyData --> clipper --> mapper
+		Model($m,clipper) SetInput $Model($m,polyData)
+		Model($m,mapper)  SetInput [Model($m,clipper) GetOutput]
+
+		# Show backface
 		set Model($m,oldCulling) [Model($m,node) GetBackfaceCulling]
 		MainModelsSetCulling $m 0
 	
-	# No clip
-	} else {
-		# polyData --> mapper
-		# The order of the next 2 line is important.  If you are clipping and
-		# you set input of the clipper to "" (NULL), then the polyData's
-		# reference count is decremented.  This will cause the polyData to be
-		# deleted unless you first increment its reference count by setting
-		# to be the mapper's input.
+	# If we shouldn't be clipped, and we are, then UN-CLIP IT.
+	#
+	} elseif {($Model($m,clipping) == 0 || $union <= 0) && $Model($m,clipped) == 1} {
+
+		set Model($m,clipped) 0
+
 		Model($m,mapper) SetInput $Model($m,polyData)
 		Model($m,clipper) SetInput ""
 
-		if {[info exists Model($m,oldCulling)] == 1} {
-			MainModelsSetCulling $m $Model($m,oldCulling)
-		}
+		MainModelsSetCulling $m $Model($m,oldCulling)
 	}
+
+	# If this is the active model, update GUI
+	if {$m == $Model(activeID)} {
+			set Model(clipping) [Model($m,node) GetClipping]
+	}
+}
+
+proc MainModelsSetOpacityInit {m widget {value ""}} {
+
+	$widget config -command "MainModelsSetOpacity $m; Render3D"
 }
 
 #-------------------------------------------------------------------------------
@@ -718,6 +743,11 @@ proc MainModelsSetOpacity {m {value ""}} {
 	}
 	Model($m,node) SetOpacity $Model($m,opacity)
 	$Model($m,prop) SetOpacity [Model($m,node) GetOpacity]
+
+	# If this is the active model, update GUI
+	if {$m == $Model(activeID)} {
+			set Model(opacity) [Model($m,node) GetOpacity]
+	}
 }
 
 #-------------------------------------------------------------------------------
@@ -736,7 +766,7 @@ proc MainModelsSetCulling {m {value ""}} {
 
 	# If this is the active model, update GUI
 	if {$m == $Model(activeID)} {
-		set Model(culling) $Model($m,backfaceCulling)
+			set Model(backfaceCulling) [Model($m,node) GetBackfaceCulling]
 	}
 }
  
@@ -756,7 +786,7 @@ proc MainModelsSetScalarVisibility {m {value ""}} {
 
 	# If this is the active model, update GUI
 	if {$m == $Model(activeID)} {
-		set Model(scalarVisibility) $Model($m,backfaceCulling)
+			set Model(scalarVisibility) [Model($m,node) GetScalarVisibility]
 	}
 }
  
@@ -804,7 +834,7 @@ proc MainModelsWrite {m prefix} {
 	if {$Model($m,dirty) == 0} {
 		tk_messageBox -message \
 			"This model will not be saved\nbecause it has not been changed\n\
-			since the last time it was saved."
+since the last time it was saved."
 		return
 	}
 

@@ -65,13 +65,6 @@ proc ModelsInit {} {
 
 	# Props
 	set Model(propertyType) Basic
-	set Model(name) ""
-	# also Model(prefix)
-	set Model(culling) 1
-	set Model(scalarVisibility) 0
-	set Model(scalarLo) 0
-	set Model(scalarHi) 100
-	set Model(desc) ""
 
 	# Meter
 	set Model(meter,first) 1
@@ -85,19 +78,28 @@ proc ModelsUpdateMRML {} {
 	global Gui Model Slice Module Color Volume Label
 
 	# Create the GUI for any new models
+	set gui 0
 	foreach m $Model(idList) {
-		MainModelsCreateGUI $Module(Models,fDisplay).fGrid $m
+#		MainModelsCreateGUI $Module(Models,fDisplay).fGrid $m
+		set gui [expr $gui + [MainModelsCreateGUI $Model(fScrolledGUI) $m]]
 	}
 
 	# Delete the GUI for any old models
 	foreach m $Model(idListDelete) {
-		MainModelsDeleteGUI $Module(Models,fDisplay).fGrid $m
+#		MainModelsDeleteGUI $Module(Models,fDisplay).fGrid $m
+		set gui [expr $gui + [MainModelsDeleteGUI $Model(fScrolledGUI) $m]]
+	}
+
+	if {$gui > 0} {
+		ModelsConfigScrolledGUI
 	}
 
 	# Refresh the GUI for all models (in case color changed)
 	foreach m $Model(idList) {
 		set c $Model($m,colorID)
-		$Module(Models,fDisplay).fGrid.s$m config \
+#		$Module(Models,fDisplay).fGrid.s$m config \
+#			-troughcolor [MakeColorNormalized [Color($c,node) GetDiffuseColor]]
+		$Model(fScrolledGUI).s$m config \
 			-troughcolor [MakeColorNormalized [Color($c,node) GetDiffuseColor]]
 	}
 }
@@ -150,7 +152,9 @@ Models are fun. Do you like models, Ron?
 	frame $f.fTitle -bg $Gui(activeWorkspace)
 	frame $f.fAll -bg $Gui(activeWorkspace)
 	frame $f.fGrid -bg $Gui(activeWorkspace)
-	pack $f.fTitle $f.fAll $f.fGrid -side top -pady $Gui(pad)
+	frame $f.fScroll -bg $Gui(activeWorkspace)
+	pack $f.fTitle $f.fAll -side top -pady $Gui(pad)
+	pack $f.fGrid $f.fScroll -side top -pady 1
 
 	#-------------------------------------------
 	# fDisplay->Title frame
@@ -175,6 +179,15 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	# fDisplay->Grid frame
 	#-------------------------------------------
+	set f $Module(Models,fDisplay).fGrid
+	set c {label $f.lV -text Visibility $Gui(WLA)}; eval [subst $c]
+	set c {label $f.lO -text Opacity $Gui(WLA)}; eval [subst $c]
+#	set c {label $f.lC -text Clip $Gui(WLA)}; eval [subst $c]
+#	grid $f.lV $f.lO $f.lC -pady 2 -padx 2
+#	grid $f.lC -column 3
+	grid $f.lV $f.lO -pady 0 -padx 12
+	grid $f.lO -columnspan 2
+
 	# Done in MainModelsCreateGUI
 
 	#-------------------------------------------
@@ -247,8 +260,9 @@ Models are fun. Do you like models, Ron?
 	frame $f.fPrefix  -bg $Gui(activeWorkspace) -relief groove -bd 3
 	frame $f.fName    -bg $Gui(activeWorkspace)
 	frame $f.fColor   -bg $Gui(activeWorkspace)
+	frame $f.fGrid    -bg $Gui(activeWorkspace)
 	frame $f.fApply   -bg $Gui(activeWorkspace)
-	pack $f.fPrefix $f.fName $f.fColor $f.fApply \
+	pack $f.fPrefix $f.fName $f.fColor $f.fGrid $f.fApply \
 		-side top -fill x -pady $Gui(pad)
 
 	#-------------------------------------------
@@ -256,11 +270,12 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fProps.fBot.fAdvanced
 
+	frame $f.fClipping -bg $Gui(activeWorkspace)
 	frame $f.fCulling -bg $Gui(activeWorkspace)
 	frame $f.fScalars -bg $Gui(activeWorkspace) -relief groove -bd 3
 	frame $f.fDesc    -bg $Gui(activeWorkspace)
 	frame $f.fApply   -bg $Gui(activeWorkspace)
-	pack $f.fCulling $f.fScalars $f.fDesc $f.fApply \
+	pack $f.fClipping $f.fCulling $f.fScalars $f.fDesc $f.fApply \
 		-side top -fill x -pady $Gui(pad)
 
 	#-------------------------------------------
@@ -304,6 +319,26 @@ Models are fun. Do you like models, Ron?
 	lappend Label(colorWidgetList) $f.e
 
 	#-------------------------------------------
+	# Props->Bot->Basic->Grid frame
+	#-------------------------------------------
+	set f $fProps.fBot.fBasic.fGrid
+
+	# Visible
+	eval {label $f.lV -text "Visible:"} $Gui(WLA)
+	eval {checkbutton $f.c \
+		 -variable Model(visibility) -indicatoron 1} $Gui(WCA)
+
+	# Opacity
+	eval {label $f.lO -text "Opacity:"} $Gui(WLA)
+	eval {entry $f.e -textvariable Model(opacity) \
+		-width 3} $Gui(WEA)
+	eval {scale $f.s -from 0.0 -to 1.0 -length 50 \
+		-variable Model(opacity) \
+		-resolution 0.1} $Gui(WSA) {-sliderlength 14}
+
+	grid $f.lV $f.c $f.lO $f.e $f.s
+
+	#-------------------------------------------
 	# Props->Bot->Basic->Apply frame
 	#-------------------------------------------
 	set f $fProps.fBot.fBasic.fApply
@@ -313,6 +348,19 @@ Models are fun. Do you like models, Ron?
 	eval {button $f.bCancel -text "Cancel" \
 		-command "ModelsPropsCancel"} $Gui(WBA) {-width 8}
 	grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
+
+
+	#-------------------------------------------
+	# Props->Bot->Advanced->Clipping frame
+	#-------------------------------------------
+	set f $fProps.fBot.fAdvanced.fClipping
+
+	# Visible
+	eval {label $f.l -text "Clipping:"} $Gui(WLA)
+	eval {checkbutton $f.c \
+		 -variable Model(clipping) -indicatoron 1} $Gui(WCA)
+
+	pack $f.l $f.c -side left -padx $Gui(pad)
 
 	#-------------------------------------------
 	# Props->Bot->Advanced->Culling frame
@@ -405,10 +453,11 @@ Models are fun. Do you like models, Ron?
 	set f $fClip.fHelp
 
 	eval {label $f.l  -justify left -text "The slices clip the models that\n\
-		have clipping turned on.\n\n\
-		To turn clipping on for a model,\n\
-		check the box to the right of the\n\
-		model's name on the Display page."} $Gui(WLA)
+have clipping turned on.\n\n\
+To turn clipping on for a model,\n\
+click with the right mouse button\n\
+on the model's name on the Display\n\
+page, and select 'Clipping'."} $Gui(WLA)
 	pack $f.l
 
 	#-------------------------------------------
@@ -425,7 +474,7 @@ Models are fun. Do you like models, Ron?
 			eval {radiobutton $f.f$s.r$value -width $width \
 				-text "$text" -value "$value" -variable Slice($s,clipState) \
 				-indicatoron 0 \
-				-command "MainSlicesSetClipState $s; MainModelsRefreshClip; Render3D" \
+				-command "MainSlicesSetClipState $s; MainModelsRefreshClipping; Render3D" \
 				} $Gui(WCA) {-bg $Gui(slice$s)}
 			pack $f.f$s.r$value -side left -padx 0 -pady 0
 		}
@@ -476,7 +525,84 @@ Models are fun. Do you like models, Ron?
 	set Model(meter,msgLeft) $f.lL
 	set Model(meter,msgRight) $f.lR
 
+	
+
+	ModelsBuildScrolledGUI 
 }
+
+proc ModelsBuildScrolledGUI {} {
+	global Model Gui Module
+	
+	set f $Module(Models,fDisplay).fScroll
+
+        # Delete everything from last time
+        set canvas $f.cGrid
+		set Model(canvasScrolledGUI) $canvas
+        catch {destroy $canvas}
+        set s $f.sGrid
+        catch {destroy $s}
+
+        canvas $canvas -yscrollcommand "$s set" -bg $Gui(activeWorkspace)
+        eval "scrollbar $s -command \"ModelsCheckScrollLimits $canvas yview\"	\
+		$Gui(WSBA)"
+        pack $s -side right -fill y
+        pack $canvas -side top -fill both -expand true
+
+        set f $canvas.fModels
+        frame $f -bd 0 -bg $Gui(activeWorkspace)
+    
+        # put the frame inside the canvas (so it can scroll)
+        $canvas create window 0 0 -anchor nw -window $f
+
+        # y spacing important for calculation of frame height for scrolling
+        set pady 2
+
+	set Model(fScrolledGUI) $f
+	foreach m $Model(idList) {
+		MainModelsCreateGUI $f $m
+	}
+
+	ModelsConfigScrolledGUI
+}
+
+proc ModelsConfigScrolledGUI {} {
+	global Model
+
+	set f $Model(fScrolledGUI)
+	set canvas $Model(canvasScrolledGUI)
+	set m [lindex $Model(idList) 0]
+	set pady 2
+
+	if {$m != ""} {
+	    # Find the height of a single button
+	    set lastButton $f.c$m
+	    set width [winfo reqwidth $lastButton]
+	    # Find how many modules (lines) in the frame
+	    set numLines [llength $Model(idList)]
+	    # Find the height of a line
+	    set incr [expr {[winfo reqheight $lastButton] + 2*$pady}]
+	    # Find the total height that should scroll
+	    set height [expr {$numLines * $incr}]
+
+	    $canvas config -scrollregion "0 0 1 $height"
+	    $canvas config -yscrollincrement $incr -confine true
+	}
+}
+
+# This procedure allows scrolling only if the entire frame is not visible
+proc ModelsCheckScrollLimits {args} {
+
+    set canvas [lindex $args 0]
+    set view   [lindex $args 1]
+    set fracs [$canvas $view]
+
+    if {double([lindex $fracs 0]) == 0.0 && \
+	    double([lindex $fracs 1]) == 1.0} {
+	return
+    }
+    eval $args
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC ModelsSetPropertyType
@@ -600,6 +726,9 @@ proc ModelsPropsApply {} {
 	Model($m,node) SetFileName "$Model(prefix).vtk"
 	Model($m,node) SetFullFileName [file join $Mrml(dir) [Model($m,node) GetFileName]]
 	Model($m,node) SetDescription $Model(desc)
+	MainModelsSetClipping $m $Model(clipping)
+	MainModelsSetVisibility $m $Model(visibility)
+	MainModelsSetOpacity $m $Model(opacity)
 	MainModelsSetCulling $m $Model(culling)
 	MainModelsSetScalarVisibility $m $Model(scalarVisibility)
 	MainModelsSetScalarRange $m $Model(scalarLo) $Model(scalarHi)

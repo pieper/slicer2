@@ -56,7 +56,7 @@ proc MainVolumesInit {} {
         
         set m MainVolumes
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.18 $} {$Date: 2000/02/11 19:12:30 $}]
+		{$Revision: 1.19 $} {$Date: 2000/02/13 17:31:34 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -83,7 +83,8 @@ proc MainVolumesInit {} {
 proc MainVolumesBuildVTK {} {
 	global Volume Lut
 	
-	# Make the None Volume
+	# Make the None Volume, which can never be deleted
+	#---------------------------------------------------
 	set v $Volume(idNone)
 
 	vtkMrmlVolumeNode Volume($v,node)
@@ -94,11 +95,15 @@ proc MainVolumesBuildVTK {} {
 	$n SetLUTName 0
 
 	vtkMrmlVolume Volume($v,vol)
-	Volume($v,vol) SetMrmlNode Volume($v,node)
-	Volume($v,vol) SetHistogramWidth $Volume(histWidth)
-	Volume($v,vol) SetHistogramHeight $Volume(histHeight)
+	Volume($v,vol) SetMrmlNode         Volume($v,node)
+	Volume($v,vol) SetLabelIndirectLUT Lut($Lut(idLabel),indirectLUT)
+	Volume($v,vol) SetHistogramWidth   $Volume(histWidth)
+	Volume($v,vol) SetHistogramHeight  $Volume(histHeight)
+	Volume($v,vol) SetStartMethod      MainStartProgress
+	Volume($v,vol) SetProgressMethod  "MainShowProgress Volume($v,vol)"
+	Volume($v,vol) SetEndMethod        MainEndProgress
 
-	# Have the slicer use this NoneVolume instead of its own
+	# Have the slicer use this NoneVolume instead of its own creation
 	Slicer SetNoneVolume Volume($v,vol)
 }
 
@@ -112,19 +117,22 @@ proc MainVolumesUpdateMRML {} {
 	# Build any new volumes
 	#--------------------------------------------------------
 	foreach v $Volume(idList) {
-		if {[MainVolumesCreate $v] >= 0} {
-			# Success
-		} else {
-			MainMrmlDeleteNodeDuringUpdate Volume $v
+		if {[MainVolumesCreate $v] > 0} {
+			# Mark it as not being created on the fly 
+			# since it was added from the Data module or read in from MRML
+			set Volume($v,fly) 0
+
+			if {[MainVolumesRead $v] < 0} {
+				# Failed, so axe it
+				MainMrmlDeleteNodeDuringUpdate Volume $v
+			}
 		}
 	}  
 
 	# Delete any old volumes
 	#--------------------------------------------------------
 	foreach v $Volume(idListDelete) {
-		if {[MainVolumesDelete $v] == 1} {
-			# Success
-		}
+		MainVolumesDelete $v
 	}
 
 	# Did we delete the active volume?
@@ -168,7 +176,6 @@ proc MainVolumesUpdateMRML {} {
 # Returns:
 #  1 - success
 #  0 - already built this volume
-# -1 - failed to read files
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesCreate {v} {
@@ -178,6 +185,49 @@ proc MainVolumesCreate {v} {
 	if {[info command Volume($v,vol)] != ""} {
 		return 0
 	}
+
+	# If no LUT name, use first LUT in the list
+	if {[Volume($v,node) GetLUTName] == ""} {
+		Volume($v,node) SetLUTName [lindex $Lut(idList) 0]
+	}
+
+	# Create vtkMrmlVolume
+	vtkMrmlVolume Volume($v,vol)
+	Volume($v,vol) SetMrmlNode          Volume($v,node)
+	Volume($v,vol) SetLabelIndirectLUT  Lut($Lut(idLabel),indirectLUT)
+	Volume($v,vol) SetLookupTable       Lut([Volume($v,node) GetLUTName],lut)
+	Volume($v,vol) SetHistogramHeight   $Volume(histHeight)
+	Volume($v,vol) SetHistogramWidth    $Volume(histWidth)
+	Volume($v,vol) SetStartMethod       MainStartProgress
+	Volume($v,vol) SetProgressMethod   "MainShowProgress Volume($v,vol)"
+	Volume($v,vol) SetEndMethod         MainEndProgress
+
+	# Label maps ALWAYS use the Label indirectLUT, and are not interpolated
+	if {[Volume($v,node) GetLabelMap] == 1} {
+		Volume($v,vol)  UseLabelIndirectLUTOn
+		Volume($v,node) InterpolateOff
+	}
+
+	# Mark it as unsaved and created on the fly.
+	# If it actually isn't being created on the fly, I can't tell that from
+	# inside this procedure, so the "fly" variable will be set to 0 in the
+	# MainVolumesUpdateMRML procedure.
+	set Volume($v,dirty) 1
+	set Volume($v,fly) 1
+
+	return 1
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainVolumesRead
+#
+# Returns:
+#  1 - success
+# -1 - failed to read files
+# .END
+#-------------------------------------------------------------------------------
+proc MainVolumesRead {v} {
+	global Volume
 
 	# Check that all files exist
 	scan [Volume($v,node) GetImageRange] "%d %d" lo hi
@@ -189,29 +239,6 @@ proc MainVolumesCreate {v} {
 		return -1
 	}
 
-	# If no LUT name, use first
-	if {[Volume($v,node) GetLUTName] == ""} {
-		Volume($v,node) SetLUTName [lindex $Lut(idList) 0]
-	}
-
-	# Create vtkMrmlVolume
-	vtkMrmlVolume Volume($v,vol)
-	Volume($v,vol) SetMrmlNode Volume($v,node)
-	Volume($v,vol) SetLabelIndirectLUT Lut($Lut(idLabel),indirectLUT)
-	Volume($v,vol) UseLabelIndirectLUTOff
-	Volume($v,vol) SetLookupTable Lut([Volume($v,node) GetLUTName],lut)
-	Volume($v,vol) SetHistogramHeight $Volume(histHeight)
-	Volume($v,vol) SetHistogramWidth  $Volume(histWidth)
-	Volume($v,vol) RangeAutoOn
-
-	# Label maps use the Label indirectLUT
-	if {[Volume($v,node) GetLabelMap] == 1} {
-		Volume($v,vol) UseLabelIndirectLUTOn
-	}	
-
-	Volume($v,vol) SetStartMethod     MainStartProgress
-	Volume($v,vol) SetProgressMethod "MainShowProgress Volume($v,vol)"
-	Volume($v,vol) SetEndMethod       MainEndProgress
 	set Gui(progressText) "Reading [Volume($v,node) GetName]"
 
 	puts "Reading volume: [Volume($v,node) GetName]..."
@@ -219,7 +246,92 @@ proc MainVolumesCreate {v} {
 	Volume($v,vol) Update
 	puts "...finished reading [Volume($v,node) GetName]"
 
+	# Mark this volume as saved
+	set Volume($v,dirty) 0
+
 	return 1
+}
+#-------------------------------------------------------------------------------
+# .PROC MainVolumesWrite
+# .END
+#-------------------------------------------------------------------------------
+proc MainVolumesWrite {v prefix} {
+	global Volume Gui Mrml
+
+	if {$v == ""} {
+		return
+	}
+	if {$prefix == ""} {
+		tk_messageBox -message "Please provide a file prefix."
+		return
+	}
+
+	# So don't write it if it's not dirty.
+	if {$Volume($v,dirty) == 0} {
+		tk_messageBox -message \
+			"This volume will not be saved\nbecause it has not been changed\n\
+since the last time it was saved."
+		return
+	}
+
+	# Form and check file prefix
+	set filePrefix $prefix
+	set fileFull [file join $Mrml(dir) $filePrefix]
+
+	# Check that it's not blank
+	if {[file isdirectory $fileFull] == 1} {
+		tk_messageBox -icon error -title $Gui(title) \
+			-message "Please enter a file prefix for the $data volume."
+		return 0
+	}
+	
+	# Check that it's a prefix, not a directory
+	if {[file isdirectory $fileFull] == 1} {
+		tk_messageBox -icon error -title $Gui(title) \
+			-message "Please enter a file prefix, not a directory,\n\
+			for the $data volume."
+		return 0
+	}
+
+	# Check that the directory exists
+	set dir [file dirname $fileFull]
+	if {[file isdirectory $dir] == 0} {
+		if {$dir != ""} {
+			file mkdir $dir
+		}
+		if {[file isdirectory $dir] == 0} {
+			tk_messageBox -icon info -type ok -title $Gui(title) \
+			-message "Failed to make '$dir', so using current directory."
+			set dir ""
+		}
+	}
+	Volume($v,node) SetFilePrefix $filePrefix
+	Volume($v,node) SetFullPrefix $fileFull
+
+	# Determine if littleEndian
+	if {$tcl_platform(machine) == "intel" || $tcl_platform(machine) == "mips"} {
+		Volume($v,node) SetLittleEndian 1
+	} else {
+		Volume($v,node) SetLittleEndian 1
+	}
+
+	# Write volume data
+	set Gui(progressText) "Writing [Volume($v,node) GetName]"
+	puts "Writing '$fileFull' ..."
+	Volume($v,vol) Write
+	puts " ...done."
+
+	# Write MRML file
+	set filename $fileFull.xml
+	vtkMrmlTree tree
+	tree AddItem Volume($v,node)
+	tree Write $filename
+	tree RemoveAllItems
+	tree Delete
+	puts "Saved MRML file: $filename"
+
+	# Wrote it, so not dirty (changed since read/wrote)
+	set Volume($v,dirty) 0
 }
 
 
@@ -612,7 +724,7 @@ proc MainVolumesSetActive {{v ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesSetParam {Param {value ""}} {
-	global Volume Slice Lut InitProc
+	global Volume Slice Lut
 
 	# Initialize param, v, value
 	set param [Uncap $Param]
