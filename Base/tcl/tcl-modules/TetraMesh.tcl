@@ -155,7 +155,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.25 $} {$Date: 2002/01/13 22:29:17 $}]
+		{$Revision: 1.26 $} {$Date: 2002/01/15 01:25:46 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -171,7 +171,7 @@ proc TetraMeshInit {} {
 	set TetraMesh(eventManager)  ""
         set TetraMesh(DefaultDir) ""
 
-        set TetraMesh(propertyType) "Basic"
+        set TetraMesh(PolyDataNum) 0
         # 
         #
         # The following matrix exists to move the origin
@@ -919,7 +919,14 @@ proc TetraMeshProcessTetraMesh {} {
 
     set TetraMesh(ProcessMesh) [TetraMesh($TetraMesh(activeID),data) GetOutput]
     ## Do the processing
-    TetraMeshProcess${TetraMesh(ProcessType)}
+    set newmodels [TetraMeshProcess${TetraMesh(ProcessType)}]
+    foreach a $newmodels {
+        puts $a
+        Mrml(dataTree) RemoveItem Model($a,node)
+        Mrml(dataTree) InsertAfterItem TetraMesh($TetraMesh(activeID),node) \
+                                       Model($a,node)
+    }
+
 
     set v  $TetraMesh(activeID)
     ## Change the node to say what is displayed.
@@ -1167,106 +1174,13 @@ proc TetraMeshGetTransform {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC TetraMeshProcessEdges2
-#
-# Takes a TetraMesh and produces a Model of Edges
-# which is returned
-# .END
-#-------------------------------------------------------------------------------
-proc TetraMeshProcessEdges2 {} {
-	global TetraMesh Model Volume Module
-
-######################################################################
-#### Get the input mesh
-######################################################################
-
-    set modelbasename "$TetraMesh(modelbasename)"
-
-    set CurrentTetraMesh $TetraMesh(ProcessMesh)
-
-######################################################################
-#### Get the range of the data, not exactly thread safe. See vtkDataSet.h
-#### But, since we are not concurrently modifying the dataset, we should
-#### be OK.
-######################################################################
-
-set range [$CurrentTetraMesh GetScalarRange]
-set lowscalar [ lindex $range 0 ] 
-set highscalar [ lindex $range 1 ] 
-  ## need to hold on to full range of scalars
-  ## so that each model gets a different color
-set LOWSCALAR $lowscalar
-set HIGHSCALAR $highscalar
-
-#######################################################################
-#### Setup the pipeline: Get edges, convert to PolyData, Transform
-#######################################################################
-
-  #############################################################
-  #### Get Edges
-  #############################################################
-
-  vtkExtractEdges TetraEdges
-    TetraEdges SetInput $CurrentTetraMesh
-
-#  #############################################################
-#  #### Convert to Tubes
-#  #############################################################
-#
-#
-#  Converting to Tubes used too much memory and it lost color
-#  And, all I really wanted was lines.
-#
-#   vtkTubeFilter TetraTubes
-#     TetraTubes SetInput [TetraEdges GetOutput]
-#     TetraTubes SetRadius $TetraMesh(TetraTubeRadius)
-#
-  #############################################################
-  #### Set Lookup Table??? Not yet...
-  #############################################################
-
-  TetraMeshGetTransform
-  set v $Volume(activeID)
-
-  vtkTransformPolyDataFilter TransformPolyData
-    TransformPolyData SetInput [TetraEdges GetOutput]
-    TransformPolyData SetTransform TheTransform
-  TransformPolyData Update
-
-  ######################################################################
-  #### Now, create the model
-  ######################################################################
-
-  ### Create the new Model
-  set m [ TetraMeshCreateModel $modelbasename $LOWSCALAR $HIGHSCALAR ]
-
-  #############################################################
-  #### Copy the output and set up the renderers
-  #############################################################
-
-  ### Need to copy the output of the pipeline so that the results
-  ### Don't get over-written later. Also, when we delete the inputs,
-  ### We don't want the outputs deleted. These lines should prevent this.
-  TetraMeshCopyPolyData [TransformPolyData GetOutput] $m
-
-  puts [ $Model($m,polyData) GetNumberOfPolys]
-   
-  #############################################################
-  #### Clean Up
-  #############################################################
-
-  TheTransform Delete
-  TransformPolyData Delete
-  TetraEdges Delete
-#  TetraTubes Delete
-
-}      
-
-#-------------------------------------------------------------------------------
 # .PROC TetraMeshProcessEdges
 #
 # Takes a TetraMesh and produces a Model of Edges
 # which is returned
+#
+# Returns the ids of the models created
+#
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshProcessEdges {} {
@@ -1337,6 +1251,7 @@ vtkTransformPolyDataFilter TransformPolyData
 set i 0
 set first $Model(idNone)
 
+set ReturnVal  ""
 while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
 #  puts "starting new"
   ### Get the lowest Scalar Data
@@ -1369,6 +1284,7 @@ while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
   set highscalar [ lindex $range 1 ]
   incr i
 #  puts [ $Model($m,polyData) GetNumberOfPolys]
+  set ReturnVal "$ReturnVal $m"
 }
 
 #   puts [ $Model($m,polyData) GetNumberOfPolys]
@@ -1381,7 +1297,7 @@ TheTransform Delete
 TransformPolyData Delete
 Thresh Delete
 TetraEdges Delete
-
+return $ReturnVal
 }   
 
 
@@ -1390,6 +1306,8 @@ TetraEdges Delete
 #
 # Takes a TetraMesh and produces a Model of the
 # Scalar Field in the nodes of the mesh
+#
+# Returns the ids of the models created
 #
 # .END
 #-------------------------------------------------------------------------------
@@ -1458,6 +1376,7 @@ PointSelection Delete
 ScalarGlyph Delete
 
 set TetraMesh(modelbasename) ""
+return $m
 }
 
 
@@ -1468,6 +1387,8 @@ set TetraMesh(modelbasename) ""
 # nodes in the Mesh
 #
 # Only one line difference between this and TetraMeshProcessScalar
+#
+# Returns the ids of the models created
 #
 # .END
 #-------------------------------------------------------------------------------
@@ -1534,7 +1455,7 @@ TransPoints Delete
 TetraSphere Delete
 PointSelection Delete
 ScalarGlyph Delete
-
+return $m
 }
 
 #-------------------------------------------------------------------------------
@@ -1542,6 +1463,8 @@ ScalarGlyph Delete
 #
 # Takes a TetraMesh and produces a Model for the
 # vector field in the point data
+#
+# Returns the ids of the models created
 #
 # .END
 #-------------------------------------------------------------------------------
@@ -1636,6 +1559,7 @@ TransformPolyData Delete
 TetraCone Delete
 PointSelection Delete
 VectorGlyph Delete
+return $m
 }
 
 #-------------------------------------------------------------------------------
@@ -1643,6 +1567,8 @@ VectorGlyph Delete
 # 
 # Takes a TetraMesh and produces a Model for the
 # surfaces in the data
+#
+# Returns the ids of the models created
 #
 # .ARGS
 # .END
@@ -1717,6 +1643,7 @@ vtkTransformPolyDataFilter TransformPolyData
 
 set i 0
 set first $Model(idNone)
+set ReturnVal "";
 
 while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
 #  puts "starting new"
@@ -1750,6 +1677,7 @@ while { [$CurrentTetraMesh GetNumberOfPoints] > 0 } {
   set highscalar [ lindex $range 1 ]
   incr i
 #  puts [ $Model($m,polyData) GetNumberOfPolys]
+  set ReturnVal "$ReturnVal $m"
 }
 
 #   puts [ $Model($m,polyData) GetNumberOfPolys]
@@ -1762,7 +1690,7 @@ TheTransform Delete
 TransformPolyData Delete
 Thresh Delete
 gf Delete
-
+return $ReturnVal
 }
 
 #-------------------------------------------------------------------------------
@@ -1779,13 +1707,14 @@ gf Delete
 # .END
 #-------------------------------------------------------------------------------
 proc TetraMeshCopyPolyData  {PolyData m} {
-    global Model Module 
+    global Model Module TetraMesh
 
   ### Need to copy the output of the pipeline so that the results
   ### Don't get over-written later. Also, when we delete the inputs,
   ### We don't want the outputs deleted. These lines should prevent this.
-  vtkPolyData ModelPolyData$m
-  set Model($m,polyData) ModelPolyData$m
+  set a $TetraMesh(PolyDataNum)
+  vtkPolyData TetModelPolyData$a
+  set Model($m,polyData) TetModelPolyData$a
   $Model($m,polyData) CopyStructure $PolyData
   [ $Model($m,polyData) GetPointData] PassData [$PolyData GetPointData ]
   [ $Model($m,polyData) GetCellData]  PassData  [$PolyData GetCellData ]
@@ -1800,6 +1729,7 @@ proc TetraMeshCopyPolyData  {PolyData m} {
   foreach r $Module(Renderers) {
       Model($m,mapper,$r) SetInput $Model($m,polyData)
   }
+  incr TetraMesh(PolyDataNum)
 }
 
 #-------------------------------------------------------------------------------
@@ -1808,6 +1738,8 @@ proc TetraMeshCopyPolyData  {PolyData m} {
 # This file has almost everything you need to create a model.
 # You still need to assign the PolyData and finish the pipeline
 # through to the mapper.
+#
+# Returns the model id.
 #
 # .ARGS
 # .END

@@ -64,7 +64,7 @@ proc MainTetraMeshInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.2 $} {$Date: 2002/01/13 22:24:03 $}]
+		{$Revision: 1.3 $} {$Date: 2002/01/15 01:25:46 $}]
 
 	set TetraMesh(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -111,7 +111,7 @@ proc MainTetraMeshUpdateMRML {} {
 
 			if {[MainTetraMeshRead $v] < 0} {
 			    # Let the user know about the error
-			    tk_messageBox -message "Could not read TetraMesh [TetraMesh($v,node) GetFullPrefix]."
+			    tk_messageBox -message "Could not read TetraMesh [TetraMesh($v,node) GetFileName]."
 			    # Failed, so axe it
 			    MainMrmlDeleteNodeDuringUpdate TetraMesh $v
 			} else {
@@ -880,11 +880,14 @@ proc MainTetraMeshVisualize { v } {
     set TetraMesh(ProcessMesh) [TetraMesh($v,data) GetOutput]
     foreach item "Surfaces Nodes Edges Scalars Vectors" {
         if {$TetraMesh(Display$item) == "1"} {
-            puts "Got Here"
-            TetraMeshProcess$item
+             set newmodels  [ TetraMeshProcess$item ]
+            foreach a $newmodels {
+                puts $a
+                Mrml(dataTree) RemoveItem Model($a,node)
+                Mrml(dataTree) InsertAfterItem TetraMesh($v,node) Model($a,node)
+            }
         }
     }
-
 #    Opacity 
 #    Clipping
 }
