@@ -240,7 +240,11 @@ void vtkImageDijkstra::RunDijkstra(vtkDataArray *scalars,int startv, int endv)
       // u is now in s since the shortest path to u is determined
       // remove from the front set >1
       float u_weight;
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION > 0)      
       u = PQ->Pop(u_weight,0);
+#else
+      u = PQ->Pop(0, u_weight);
+#endif
       //printf("looking at id %i that has priority %f",u,u_weight);
      
       this->Visited->SetValue(u, 1);
