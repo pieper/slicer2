@@ -21,6 +21,8 @@ class VTK_IMAGESMOOTH_EXPORT vtkImageSmooth : public vtkImageToImageFilter
   // Get/Set the number of iterations of smoothing that is to be done
   vtkSetMacro(NumberOfIterations,int);
   vtkGetMacro(NumberOfIterations,int);
+  vtkSetMacro(Dimensions,int);
+  vtkGetMacro(Dimensions,int);
   
  
   void ComputeInputUpdateExtent(int inExt[6], 
@@ -35,6 +37,7 @@ class VTK_IMAGESMOOTH_EXPORT vtkImageSmooth : public vtkImageToImageFilter
   //Data
   int NumberOfIterations;
   float dt;
+  int Dimensions;
 
   protected:
   vtkImageSmooth();
