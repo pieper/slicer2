@@ -58,7 +58,8 @@
 # How to add a new morphometric tool:
 # 1.) Write an initialization function for your tool. In this function you
 #     call MorphometricsAddMeasurement with the tools name as well as the 
-#     workflow of the tool and a list of measurements your tool provides.
+#     workflow of the tool, a list of measurements your tool provides and
+#     a function which initializes your module.
 #     For initializing your workflow use $Morphometrics(workflowFrame) as the
 #     frame where the workflow should be displayed.
 # 2.) Append your initialization function to the list of tool initialization 
@@ -70,8 +71,8 @@
 #          has to be called prior to every call to MorphometricsAddMeasurement.
 #        - Steps.tcl is a collection of step-factories, those may shorten 
 #          development time for you ;)
-#        - The Morphometrics module provides a Csys, make use of it via
-#          MorphometricsPositionCsys, MorphometricsHideCsys and MorphometricsViewCsys
+#        - The Morphometrics module provides a Csys, helper functions are
+#          available in CsysHelper.tcl
 #===============================================================================
 # Internal Structure:
 # Basically the Morphometrics module keeps a list of available tools, updates
@@ -192,7 +193,7 @@ proc MorphometricsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2004/01/23 21:43:57 $}]
+        {$Revision: 1.4 $} {$Date: 2004/01/23 22:14:38 $}]
 
     # Initialize module-level variables
     #------------------------------------
