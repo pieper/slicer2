@@ -74,7 +74,7 @@ global Path
 set splashim [image create photo -file [file join $Path(program) gui/welcome.ppm]]
 label .splash.l -image $splashim
 place .splash.l -relx 0.5 -rely 0.35 -anchor center
-label .splash.t -text "Please be aware that Slicer is not validated and is for Research Use Only.\n\nSee www.slicer.org for license details." -bg white -fg red
+label .splash.t -text "Please be aware that Slicer is not validated and \nis for Research Use Only.\n\nSee www.slicer.org for license details." -bg white -fg red
 place .splash.t -relx 0.5 -rely 0.75 -anchor center
 wm withdraw .
 update
