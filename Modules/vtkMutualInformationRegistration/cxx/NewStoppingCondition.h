@@ -46,7 +46,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 namespace itk
 {
 
-class NewStoppingCondition : public itk::Command 
+class VTK_MUTUALINFORMATIONREGISTRATION_EXPORT NewStoppingCondition : public itk::Command 
 {
 public:
   /** Standard class typedefs. */
