@@ -357,7 +357,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.76 $} {$Date: 2002/05/10 15:29:36 $}]
+        {$Revision: 1.77 $} {$Date: 2002/05/13 14:26:04 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -1687,7 +1687,7 @@ proc MainExitProgram { } {
 
     foreach w [info commands .*] {
         if {[winfo class $w] == "vtkTkRenderWidget"} {
-            destroy $w
+            catch "destroy $w"
         }
     }
 
