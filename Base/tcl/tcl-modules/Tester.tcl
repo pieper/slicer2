@@ -138,7 +138,7 @@ proc TesterInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.1 $} {$Date: 2000/08/08 15:44:48 $}]
+		{$Revision: 1.2 $} {$Date: 2000/08/09 21:13:09 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -405,6 +405,10 @@ proc TesterRebuildGui {ModuleName} {
     catch {destroy $f.f${m}row2}
     MainBuildModuleTabs $ModuleName
     $Module($ModuleName,procGUI)
+    
+    # Other Stuff that is Useful
+    MainUpdateMRML
+
 #    $Module(Tester,procEnter)
 #    Tab Tester row1 Source
 }
