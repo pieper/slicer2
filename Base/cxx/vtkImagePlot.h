@@ -27,7 +27,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 // .NAME vtkImagePlot - duh
 // .SECTION Description
-// This filter does stuff
+// This filter displays a plot of the input data.  It expects input only along
+// the x-axis and will create basically a bar graph of it. 
+// Used to make the histogram in the slicer.
 
 #ifndef __vtkImagePlot_h
 #define __vtkImagePlot_h
@@ -43,37 +45,37 @@ public:
   void PrintSelf(ostream& os, vtkIndent indent);
   
   // Description:
-  // The whole extent of the output has to be set explicitely.
+  // 
   vtkSetMacro(Height, int);
   vtkGetMacro(Height, int);
 
   // Description:
-  // The whole extent of the output has to be set explicitely.
+  // 
   vtkSetMacro(Thickness, int);
   vtkGetMacro(Thickness, int);
 
   // Description:
-  // The whole extent of the output has to be set explicitely.
+  // 
   vtkSetVector2Macro(DataRange, int);
   vtkGetVector2Macro(DataRange, int);
 
   // Description:
-  // The whole extent of the output has to be set explicitely.
+  // 
   vtkSetVector2Macro(DataDomain, int);
   vtkGetVector2Macro(DataDomain, int);
 
   // Description:
-  // The whole extent of the output has to be set explicitely.
+  // Color of the curve to draw. (?)
   vtkSetVector3Macro(Color, float);
   vtkGetVector3Macro(Color, float);
 
   // Description:
-  // The whole extent of the output has to be set explicitely.
+  // 
   vtkSetObjectMacro(LookupTable,vtkScalarsToColors);
   vtkGetObjectMacro(LookupTable,vtkScalarsToColors);
 
   // Description:
-  // The whole extent of the output has to be set explicitely.
+  // 
   int MapBinToScalar(int bin);
   int MapScalarToBin(int scalar);
 
