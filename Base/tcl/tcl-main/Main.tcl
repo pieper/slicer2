@@ -137,7 +137,7 @@ proc MainBoot {{mrmlFile ""}} {
 
     vtkRenderer viewRen
     lappend Module(Renderers) viewRen
-     set View(viewCam) [viewRen GetActiveCamera]
+    set View(viewCam) [viewRen GetActiveCamera]
 
     MainViewerBuildGUI
 
@@ -289,7 +289,7 @@ The 3D Slicer will exit so the problem can be corrected."
     bind .tViewer <Configure> "MainViewerUserResize"
     puts "Ready"
 
-    }
+}
     
 #-------------------------------------------------------------------------------
 # .PROC MainInit
@@ -357,7 +357,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.80 $} {$Date: 2002/08/22 15:04:31 $}]
+        {$Revision: 1.81 $} {$Date: 2002/08/22 19:44:48 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -969,7 +969,7 @@ proc MainAddActor { a } {
     global Module 
     
     foreach r $Module(Renderers) {
-    $r AddActor $a
+        $r AddActor $a
     }   
 }
 
@@ -992,7 +992,7 @@ proc MainAddModelActor { m } {
     global Module 
     
     foreach r $Module(Renderers) {
-    $r AddActor Model($m,actor,$r)
+        $r AddActor Model($m,actor,$r)
     }   
 }
 
@@ -1008,7 +1008,7 @@ proc MainRemoveActor { a } {
     global Module 
 
     foreach m $Module(Renderers) {
-    $m RemoveActor $a
+        $m RemoveActor $a
     }
 }
 
@@ -1025,7 +1025,7 @@ proc MainRemoveModelActor { m } {
     global Module 
 
     foreach r $Module(Renderers) {
-    $r RemoveActor Model($m,actor,$r)
+        $r RemoveActor Model($m,actor,$r)
     }
 }
 
@@ -1127,10 +1127,10 @@ proc Tab {m {row ""} {tab ""}} {
    
     # Frozen?
     if {$Module(freezer) != ""} {
-    set Module(btn) $Module(activeID)
-    set Module(moreBtn) 0
-    tk_messageBox -message "Please press the Apply or Cancel button."
-    return
+        set Module(btn) $Module(activeID)
+        set Module(moreBtn) 0
+        tk_messageBox -message "Please press the Apply or Cancel button."
+        return
     }
     
     # No modules?
@@ -1154,40 +1154,40 @@ proc Tab {m {row ""} {tab ""}} {
     
     # If "menu" then use currently selected menu item
     if {$m == "Menu"} {
-    set m [$Module(rMore) cget -text]
+        set m [$Module(rMore) cget -text]
     }
     
     # Remember prev
     set prevID $Module(activeID)
     if {$prevID != ""} {
-    set prevRow $Module($prevID,row)
-    set prevTab $Module($prevID,$prevRow,tab)
+        set prevRow $Module($prevID,row)
+        set prevTab $Module($prevID,$prevRow,tab)
     }
     
     # If no change, do nichts
     if {$m == $prevID} {
-    if {$row == $prevRow} {
-        if {$tab == $prevTab } {
-        return
+        if {$row == $prevRow} {
+            if {$tab == $prevTab } {
+                return
+            }
         }
-    }
     }
     
     # Reset previous tab button
     if {$prevID != ""} {
-    $Gui(fTabs).f${prevID}${prevRow}.b${prevTab} config \
-        -bg $Gui(backdrop) -fg $Gui(textLight) \
-        -activebackground $Gui(backdrop) -activeforeground $Gui(textLight)
+        $Gui(fTabs).f${prevID}${prevRow}.b${prevTab} config \
+            -bg $Gui(backdrop) -fg $Gui(textLight) \
+            -activebackground $Gui(backdrop) -activeforeground $Gui(textLight)
     }
     
     # If no row specified, then use default
     if {$row == ""} {
-    set row $Module($m,row)
+        set row $Module($m,row)
     }
     
     # If no btn specified, then use default
     if {$tab == ""} {
-    set tab $Module($m,$row,tab)
+        set tab $Module($m,$row,tab)
     }
     
     # Set new
@@ -1201,17 +1201,17 @@ proc Tab {m {row ""} {tab ""}} {
     
     # Shrink names of inactive tabs.
     foreach long $Module($m,${row}List) name $Module($m,${row}Name) {
-    $Module($m,b$long) config -text "$name" -width \
-        [expr [string length "$name"] + 1]
+        $Module($m,b$long) config -text "$name" -width \
+            [expr [string length "$name"] + 1]
     }
     
     # Expand name of active tab (only if "name" is shorter)
     set idx [lsearch $Module($m,${row}List) $tab]
     set name [lindex $Module($m,${row}Name) $idx]
     if {[string length $name] < [string length $tab]} {
-    set name $tab
+        set name $tab
     } else {
-    set name $name
+        set name $name
     }
     $Module($m,b$tab) config -text $name \
         -width [expr [string length $name] + 1]
@@ -1223,9 +1223,9 @@ proc Tab {m {row ""} {tab ""}} {
     
     # Execute Exit procedure (if one exists for the prevID module)
     if {$prevID != $m} {
-    if {[info exists Module($prevID,procExit)] == 1} {
-        $Module($prevID,procExit)
-    }
+        if {[info exists Module($prevID,procExit)] == 1} {
+            $Module($prevID,procExit)
+        }
     }
     
     # Raise the default screen first to hide the previous module tab
@@ -1241,19 +1241,19 @@ proc Tab {m {row ""} {tab ""}} {
     # the current panel
     
     if {$tab == "Help"} {
-    set Module(scrollbar,helpTabActive) 1
-    # don't need to call MainSetScrollbarVisibility to lower the scrollbar 
-    # since the panel is raised above it already
-    
+        set Module(scrollbar,helpTabActive) 1
+        # don't need to call MainSetScrollbarVisibility to lower the scrollbar 
+        # since the panel is raised above it already
+
     } else {
-    set Module(scrollbar,helpTabActive) 0
-    set reqHeight [winfo reqheight $Module($m,f$tab)] 
-    MainSetScrollbarHeight $reqHeight
-    if {$reqHeight > [winfo height .tMain.fControls.fWorkspace]} { 
-        MainSetScrollbarVisibility 1
-    } else {
-        MainSetScrollbarVisibility 0
-    }
+        set Module(scrollbar,helpTabActive) 0
+        set reqHeight [winfo reqheight $Module($m,f$tab)] 
+        MainSetScrollbarHeight $reqHeight
+        if {$reqHeight > [winfo height .tMain.fControls.fWorkspace]} { 
+            MainSetScrollbarVisibility 1
+        } else {
+            MainSetScrollbarVisibility 0
+        }
     }
     
     set Module(btn) $m
@@ -1264,16 +1264,16 @@ proc Tab {m {row ""} {tab ""}} {
     
     # Execute Entrance procedure
     if {$prevID != $m} {
-    if {[info exists Module($m,procEnter)] == 1} {
-        $Module($m,procEnter)
-    }
+        if {[info exists Module($m,procEnter)] == 1} {
+            $Module($m,procEnter)
+        }
     }
     
     # Toggle more radio button
     if {$Module($m,more) == 1} {
-    set Module(moreBtn) 1
+        set Module(moreBtn) 1
     } else {
-    set Module(moreBtn) 0
+        set Module(moreBtn) 0
     }
 }
 
@@ -1330,14 +1330,14 @@ proc MainSetScrollbarVisibility {{vis ""}} {
         
     # if the user has specified a visibility, change Module(scrollbar,visible)
     if { $vis == 1 || $vis == 0} {
-    set Module(scrollbar,visible) $vis
+        set Module(scrollbar,visible) $vis
     }
     # otherwise leave Module(scrollbar,visible) the way it is
     
     if { $Module(scrollbar,visible) == 1 && $Module(scrollbar,helpTabActive) == 0} {
-    raise $Module(scrollbar,widget)
+        raise $Module(scrollbar,widget)
     } else {
-    lower $Module(scrollbar,widget)
+        lower $Module(scrollbar,widget)
     }
     
 }
@@ -1356,15 +1356,15 @@ proc MainResizeDisplayFrame {} {
     set displayHeight [winfo reqheight .tMain.fDisplay]
 
     if {$Module(display,lowered) == 1} {
-    pack forget .tMain.fDisplay 
-    set Module(.tMain.fControls,height) [expr $Module(.tMain.fControls,height) + $displayHeight]
-    set Module(.tMain.fControls,scrolledHeight) [expr $Module(.tMain.fControls,scrolledHeight) + $displayHeight]
-    .tMain.fControls configure -height $Module(.tMain.fControls,height)
+        pack forget .tMain.fDisplay 
+        set Module(.tMain.fControls,height) [expr $Module(.tMain.fControls,height) + $displayHeight]
+        set Module(.tMain.fControls,scrolledHeight) [expr $Module(.tMain.fControls,scrolledHeight) + $displayHeight]
+        .tMain.fControls configure -height $Module(.tMain.fControls,height)
     } else {
-    pack .tMain.fDisplay -before .tMain.fStatus -expand 1 -fill both -padx 0 -pady 0
-    set Module(.tMain.fControls,height) [expr $Module(.tMain.fControls,height) - $displayHeight]
-    set Module(.tMain.fControls,scrolledHeight) [expr $Module(.tMain.fControls,scrolledHeight) - $displayHeight]
-    .tMain.fControls configure -height $Module(.tMain.fControls,height)
+        pack .tMain.fDisplay -before .tMain.fStatus -expand 1 -fill both -padx 0 -pady 0
+        set Module(.tMain.fControls,height) [expr $Module(.tMain.fControls,height) - $displayHeight]
+        set Module(.tMain.fControls,scrolledHeight) [expr $Module(.tMain.fControls,scrolledHeight) - $displayHeight]
+        .tMain.fControls configure -height $Module(.tMain.fControls,height)
     }   
 
     # update the scrollbar
@@ -1377,11 +1377,11 @@ proc MainResizeDisplayFrame {} {
     MainSetScrollbarHeight $reqHeight
 
     if {$reqHeight > $Module(.tMain.fControls,scrolledHeight)} { 
-    MainSetScrollbarVisibility 1
+        MainSetScrollbarVisibility 1
     } else {
-    MainSetScrollbarVisibility 0
+        MainSetScrollbarVisibility 0
     }
-    
+
 }
 
 #-------------------------------------------------------------------------------
@@ -1465,43 +1465,43 @@ proc MainMenu {menu cmd} {
     
     "File" {
         switch $cmd {
-        "Open" {
-            MainFileOpenPopup "" 50 50
-        }
-        "Save" {
-            MainFileSave
-        }
-        "SaveAs" {
-            MainFileSaveAsPopup "" 50 50
-        }
-        "SaveWithOptions" {
-            MainFileSaveWithOptions
-        }
-        "SaveOptions" {
-            MainFileSaveOptions
-        }
-        "Save3D" {
-            MainViewSaveView
-        }
-        "SaveSlice" {
-            MainSlicesSave
-        }
-        "Save3DAs" {
-            MainViewSaveViewPopup
-        }
-        "SaveSliceAs" {
-            MainSlicesSavePopup
-        }
-        "Close" {
-            MainFileClose
-        }
+            "Open" {
+                MainFileOpenPopup "" 50 50
+            }
+            "Save" {
+                MainFileSave
+            }
+            "SaveAs" {
+                MainFileSaveAsPopup "" 50 50
+            }
+            "SaveWithOptions" {
+                MainFileSaveWithOptions
+            }
+            "SaveOptions" {
+                MainFileSaveOptions
+            }
+            "Save3D" {
+                MainViewSaveView
+            }
+            "SaveSlice" {
+                MainSlicesSave
+            }
+            "Save3DAs" {
+                MainViewSaveViewPopup
+            }
+            "SaveSliceAs" {
+                MainSlicesSavePopup
+            }
+            "Close" {
+                MainFileClose
+            }
         }
     }
     
     "Help" {
         switch $cmd {
-        "Copyright" {
-            MsgPopup Copyright $x $y "\
+            "Copyright" {
+                MsgPopup Copyright $x $y "\
 (c) Copyright 2001 Massachusetts Institute of Technology
 
 Permission is hereby granted, without payment, to copy, modify, display 
@@ -1521,30 +1521,30 @@ A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
 
 THE SOFTWARE IS PROVIDED \"AS IS.\"  MIT HAS NO OBLIGATION TO PROVIDE 
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS."
-        }
-        "Documentation" {
-            MsgPopup Documentation $x $y "\
+            }
+            "Documentation" {
+                MsgPopup Documentation $x $y "\
 For the latest documentation, visit:
 
 http://www.slicer.org"
-        }
-        "Version" {
-            set msg [FormatCVSInfo $Module(versions)]
-            MsgPopup Version $x $y $msg {Module Version Info}
-        }
-        "Modules" {
-            set msg [FormatModuleInfo]
-            MsgPopup Version $x $y $msg {Module Summaries}
-        }
-        "Credits" {
-            set msg [FormatModuleCredits]
-            MsgPopup Version $x $y $msg {Module Credits}
-        }
+            }
+            "Version" {
+                set msg [FormatCVSInfo $Module(versions)]
+                MsgPopup Version $x $y $msg {Module Version Info}
+            }
+            "Modules" {
+                set msg [FormatModuleInfo]
+                MsgPopup Version $x $y $msg {Module Summaries}
+            }
+            "Credits" {
+                set msg [FormatModuleCredits]
+                MsgPopup Version $x $y $msg {Module Credits}
+            }
         }
     }
     "View" {
-        MainViewerSetMode $cmd
-    }  
+            MainViewerSetMode $cmd
+        }  
     }
 }
 
@@ -1654,7 +1654,7 @@ proc MainSaveMRMLQuery { } {
 #-------------------------------------------------------------------------------
 # .PROC MainExitProgram
 #
-#  Exit the Program
+#  Exit the Program with cleanup
 # .END
 #-------------------------------------------------------------------------------
 proc MainExitProgram { } {
@@ -1662,15 +1662,15 @@ proc MainExitProgram { } {
     
     # logging
     if {[IsModule SessionLog] == 1} {
-    # Execute Exit procedure (if one exists for the prevID module)
-    # This is so that it can log anything final it should log.
-    set prevID $Module(activeID)
-    if {[info exists Module($prevID,procExit)] == 1} {
-        $Module($prevID,procExit)
-    }
+        # Execute Exit procedure (if one exists for the prevID module)
+        # This is so that it can log anything final it should log.
+        set prevID $Module(activeID)
+        if {[info exists Module($prevID,procExit)] == 1} {
+            $Module($prevID,procExit)
+        }
 
-    # write out the log file if we are logging
-    SessionLogEndSession
+        # write out the log file if we are logging
+        SessionLogEndSession
     }
     # end logging
 
@@ -1694,7 +1694,7 @@ proc MainExitProgram { } {
         }
     }
 
-    exit
+    tcl_exit
 }
 
 #-------------------------------------------------------------------------------
@@ -1748,7 +1748,7 @@ proc Cross {aArray bArray cArray} {
 proc ParseCVSInfo {module args} {
     set l $module 
     foreach a $args {
-    lappend l [string trim $a {$ \t}]
+        lappend l [string trim $a {$ \t}]
     }
     return $l
 }
@@ -1762,8 +1762,8 @@ proc ParseCVSInfo {module args} {
 proc FormatCVSInfo {versions} {
     set s ""
     foreach v "$versions" {
-    set s [format "%s%-30s" $s "[lindex $v 0]:"]
-    set s "${s}\t[lindex $v 1]\t\t[lindex $v 2]\n"
+        set s [format "%s%-30s" $s "[lindex $v 0]:"]
+        set s "${s}\t[lindex $v 1]\t\t[lindex $v 2]\n"
     }
     return $s
 }
@@ -1779,12 +1779,12 @@ proc FormatModuleInfo {} {
 
     set s "" 
     foreach m $Module(idList) {
-    if {[info exists Module($m,overview)]} {
-        set s [format "%s%-30s" $s "$m:"]
-        set s "${s}\t$Module($m,overview)\n"
-    } else {
-        set s "$s$m: \n"
-    }
+        if {[info exists Module($m,overview)]} {
+            set s [format "%s%-30s" $s "$m:"]
+            set s "${s}\t$Module($m,overview)\n"
+        } else {
+            set s "$s$m: \n"
+        }
     }
 
     return $s
@@ -1801,12 +1801,12 @@ proc FormatModuleCredits {} {
 
     set s "" 
     foreach m $Module(idList) {
-    if {[info exists Module($m,author)]} {
-        set s [format "%s%-30s" $s "$m:"]
-        set s "${s}\t$Module($m,author)\n"
-    } else {
-        set s "$s$m: \n"
-    }
+        if {[info exists Module($m,author)]} {
+            set s [format "%s%-30s" $s "$m:"]
+            set s "${s}\t$Module($m,author)\n"
+        } else {
+            set s "$s$m: \n"
+        }
     }
 
     return $s
