@@ -63,8 +63,8 @@ proc ReadInput {filename} {
 # .END
 #-------------------------------------------------------------------------------
 proc HtmlHead {fid title} {
-	puts $fid "\
-<html>
+	puts $fid \
+"<html>
 <head>
 <title>$title</title>
 <link rel=stylesheet type='text/css' href='../style.css'>
@@ -79,8 +79,8 @@ proc HtmlHead {fid title} {
 # .END
 #-------------------------------------------------------------------------------
 proc HtmlFoot {fid} {
-	puts $fid "\
-</body>
+	puts $fid \
+"</body>
 </html>"
 }
 
@@ -91,8 +91,8 @@ proc HtmlFoot {fid} {
 # .END
 #-------------------------------------------------------------------------------
 proc HtmlTableStart {fid options} {
-	puts $fid "\
-<p>
+	puts $fid \
+"<p>
 <table cellpadding=10 cellspacing=0 border=0 $options>
 <tr>
 <td>
@@ -106,12 +106,11 @@ proc HtmlTableStart {fid options} {
 # .END
 #-------------------------------------------------------------------------------
 proc HtmlTableEnd {fid} {
-	puts $fid "\
-	</table>
+	puts $fid \
+"	</table>
 </td>
 </tr>
-</table>
-<br>"
+</table>"
 }
 
 #-------------------------------------------------------------------------------
@@ -127,8 +126,8 @@ proc DocumentProc {fid p} {
 	set desc $Comments($p,desc)
 	set args $Comments($p,argList)
 
-	puts $fid "\
-<a name='$name'></a>
+	puts $fid \
+"<a name='$name'></a>
 <h2>$name</h2>
 <p>
 $desc
@@ -136,30 +135,29 @@ $desc
 
 	if {$args != ""} {
 		HtmlTableStart $fid "align=center"
-		puts $fid "\
-	<tr>
+		puts $fid \
+"	<tr>
 	<th class=box>Parameter</th>
 	<th class=box>Type</th>
 	<th class=box>Description</th>
-	</tr>
-"
+	</tr>"
+
 		set n 1
 		foreach a $args {
 			set n [expr [incr n] % 2]
 			set type $Comments($p,$a,type)
 			set name $Comments($p,$a,name)
 			set desc $Comments($p,$a,desc)
-			puts $fid "\
-	<tr>
+			puts $fid \
+"	<tr>
 	<td class=box$n>$name</td>
 	<td class=box$n>$type</td>
 	<td class=box$n>$desc</td>
 	</td>
-	</tr>
-"
+	</tr>"
 		}
+		HtmlTableEnd $fid
 	}
-	HtmlTableEnd $fid
 }
 
 #-------------------------------------------------------------------------------
@@ -183,16 +181,16 @@ proc DocumentFile {docdir dir filename} {
 	HtmlHead $fid $name
 
 	# List procecures
-	puts $fid "\
-<h2><font color='#993333'>[file tail $filename]</font> Procedures:</h2>
+	puts $fid \
+"<h2><font color='#993333'>[file tail $filename]</font> Procedures:</h2>
 <ul>"
 	foreach p $Comments(idList) {
 		set name $Comments($p,proc)
-		puts $fid "\
-<li><a href='#$name'>$name</a>"
+		puts $fid \
+"<li><a href='#$name'>$name</a>"
 	}
-	puts $fid "\
-</ul>"
+	puts $fid \
+"</ul>"
 
 	# Document each procedure
 	foreach p $Comments(idList) {
@@ -220,8 +218,8 @@ proc DocumentIndex {docdir} {
 	}
 
 	# Head
-	puts $fid "\
-<html>
+	puts $fid \
+"<html>
 <head>
 <title>TCL Source Index</title>
 <link rel=stylesheet type='text/css' href='style.css'>
@@ -230,16 +228,16 @@ proc DocumentIndex {docdir} {
 
 	# List files
 	foreach dir [lsort $Index(dirList)] {
-		puts $fid "\
-<h2>$dir</h2>
+		puts $fid \
+"<h2>$dir</h2>
 <ul>"
 
 		foreach name [lsort $Index($dir)] {
-			puts $fid "\
-<li><a href='[file join $dir $name.html]'>$name</a>"
+			puts $fid \
+"<li><a href='[file join $dir $name.html]'>$name</a>"
 		}
-		puts $fid "\
-</ul>"
+		puts $fid \
+"</ul>"
 	}
 
 	HtmlFoot $fid
