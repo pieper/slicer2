@@ -143,21 +143,24 @@ foreach v $envVars {
 # 
 if {$::env(BUILD) == $solaris || 
     $::env(BUILD) == $linux} {
-        # add vtk, slicer, and tcl bins
+        # add vtk, gsl, slicer, and tcl bins
         set ::env(LD_LIBRARY_PATH) $::env(VTK_DIR)/bin:$::env(LD_LIBRARY_PATH)
         set ::env(LD_LIBRARY_PATH) $::env(ITK_BINARY_PATH)/bin:$::env(LD_LIBRARY_PATH)
+        set ::env(LD_LIBRARY_PATH) $::env(GSL_LIB_DIR):$::env(LD_LIBRARY_PATH)
         set ::env(LD_LIBRARY_PATH) $::env(SLICER_HOME)/Base/builds/$::env(BUILD)/bin:$::env(LD_LIBRARY_PATH)
         set ::env(LD_LIBRARY_PATH) $::env(TCL_LIB_DIR):$::env(LD_LIBRARY_PATH)
     } elseif {$::env(BUILD) ==  $darwin} { 
-        # add vtk, slicer, and tcl bins
+        # add vtk, gsl, slicer, and tcl bins
         set ::env(DYLD_LIBRARY_PATH) $::env(VTK_DIR)/bin:$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(ITK_BINARY_PATH)/bin:$::env(DYLD_LIBRARY_PATH)
+        set ::env(DYLD_LIBRARY_PATH) $::env(GSL_LIB_DIR):$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(SLICER_HOME)/Base/builds/$::env(BUILD)/bin:$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(TCL_LIB_DIR):$::env(DYLD_LIBRARY_PATH)
     } elseif {$::env(BUILD) == $windows} {
-        # add vtk, slicer, and tcl bins
+        # add vtk, gsl, slicer, and tcl bins
         set ::env(Path) $::env(VTK_DIR)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
         set ::env(Path) $::env(ITK_BINARY_PATH)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
+        set ::env(Path) $::env(GSL_LIB_DIR)\;$::env(Path)
         set ::env(Path) $::env(SLICER_HOME)/Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
         set ::env(Path) $::env(TCL_BIN_DIR)\;$::env(Path)
     } else {
