@@ -44,9 +44,11 @@ proc Usage { {msg ""} } {
     set msg "$msg\nusage: document.tcl  \[options\]"
     set msg "$msg\n  \[options\] is one of the following:"
     set msg "$msg\n   --help : prints this message and exits"
-    set msg "$msg\n   --no-doxy : does not generate the doxygen pages"
+    set msg "$msg\n   --no-doc: don't create the web pages from the auto html files"
+    set msg "$msg\n   --no-tcl: don't create the tcl source file documentation"
+    set msg "$msg\n   --no-doxy : does not generate the vtk class doxygen pages"
     set msg "$msg\n   --no-mods : skip doing the documentation for the modules"
-    set msg "$msg\n   --mod : just do the documentation for the module specified next, suppresses the other modules"
+    set msg "$msg\n   --mod : just do the documentation for the module specified, suppresses the other modules"
     set msg "$msg\n   --verbose : print out extra debugging info"
     puts stderr $msg
 }
@@ -59,12 +61,20 @@ set strippedargs ""
 set ::doModsFlag 1
 set ::isModFlag 0
 set ::verbose 0
+set ::doDocFlag 1
+set ::doTclFlag 1
 
 for {set i 0} {$i < $argc} {incr i} {
     set a [lindex $argv $i]
     switch -glob -- $a {
         "--no-doxy" { 
             set DOCUMENT(dodoxy) 0
+        }
+        "--no-tcl" {
+            set ::doTclFlag 0
+        }
+        "--no-doc" {
+            set ::doDocFlag 0
         }
         "--help" -
         "-h" {
@@ -91,6 +101,7 @@ for {set i 0} {$i < $argc} {incr i} {
 }
 set argv $strippedargs
 set argc [llength $argv]
+set ::moduleName [lindex $argv 0]
 
 # Produce the web pages and tcl documentation
 # exec 
@@ -108,23 +119,23 @@ if {$DOCUMENT(dodoxy) == 1} {
     puts $res
 
     set modulePaths ""
-    set moddir [file join $::SLICER_HOME Modules]
+    set ::modDir [file join $::SLICER_HOME Modules]
     set modsToLink ""
 
     if {$::isModFlag} {
-        set modname [lindex $argv 0]
-        if {$modname != ""} {
+        
+        if {$::moduleName != ""} {
             # set up this module's path
-            set modulePaths [file join $moddir $modname]
-            if {$::verbose} { puts "isModFlag is true, modname = $modname" }
+            set modulePaths [file join $::modDir $::moduleName]
+            if {$::verbose} { puts "isModFlag is true, modname = $::moduleName" }
         }
     } else {
         # otherwise do all the modules
         if {$::doModsFlag} {
             if {$::verbose} { 
-                puts "\nisModFlag $isModFlag, doModsFlag $::doModsFlag. Getting modulepaths in $moddir."
+                puts "\nisModFlag $isModFlag, doModsFlag $::doModsFlag. Getting modulepaths in $::modDir."
             }
-            set modulePaths [glob -nocomplain $moddir/*]
+            set modulePaths [glob -nocomplain $::modDir/*]
         }
     }
     if {$::verbose} {
