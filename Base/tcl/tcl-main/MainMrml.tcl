@@ -83,8 +83,8 @@ proc MainMrmlInit {} {
         Hierarchy EndHierarchy ModelGroup EndModelGroup ModelRef \
         Scenes EndScenes VolumeState EndVolumeState CrossSection SceneOptions ModelState \
         Locator TetraMesh"
-
-    MainMrmlInitIdLists 
+ 
+    MainMrmlInitIdLists
 
     # Read MRML defaults file for version 1.0
     set fileName [ExpandPath "Defaults.mrml"]
@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainMrml \
-    {$Revision: 1.97 $} {$Date: 2003/12/17 15:54:16 $}]
+    {$Revision: 1.98 $} {$Date: 2003/12/17 18:53:43 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -112,20 +112,45 @@ proc MainMrmlInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlInitIdLists {} {
-    global Mrml 
-    eval {global} $Mrml(nodeTypeList)
-     
-    foreach node $Mrml(nodeTypeList) {
-        set ${node}(nextID) 0
-        set ${node}(idList) ""
-        set ${node}(idListDelete) ""
-    }
-    # Volumes are a special case because the "None" always exists
-    
+    global Mrml Volume
+    MainMrmlUpdateIdLists "$Mrml(nodeTypeList)"
+    # Volumes are a special case because the "None" always exists    
     set Volume(idList) 0
     set Volume(nextID) 1
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlUpdateIdLists
+# 
+# Updates the Id list for each data type
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainMrmlUpdateIdLists {nodeTypeList} {
+    global Mrml 
+    eval {global} $nodeTypeList
+     
+    foreach node $nodeTypeList {
+        set ${node}(nextID) 0
+        set ${node}(idList) ""
+        set ${node}(idListDelete) ""
+    }
+}
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlAppendnodeTypeList 
+#  Call this function in your init function if your module addds new nodes 
+#  to the Mrml Tree.
+#  Example: vtkEMLocalSegment/tcl/EMLocalSegment 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainMrmlAppendnodeTypeList {MRMLnodeTypeList} {
+    global Mrml
+    set Mrml(nodeTypeList) "$Mrml(nodeTypeList) $MRMLnodeTypeList" 
+
+    MainMrmlUpdateIdLists "$MRMLnodeTypeList"
+}
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlUpdateMRML
 # 
