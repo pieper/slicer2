@@ -87,8 +87,14 @@ vtkDataSet* vtkTimeCoursePlotActor2::CreateDataSet(vtkFloatArray *yPoints, float
 }
 
 
-void vtkTimeCoursePlotActor2::SetPlot(vtkFloatArray *timeCourse, vtkFloatArray *model, int waveform)
+void vtkTimeCoursePlotActor2::SetPlot(vtkFloatArray *timeCourse, vtkFloatArray *model)
 {
+
+    if (timeCourse == NULL || model == NULL)
+    {
+        cout << "Got null pointer at vtkTimeCoursePlotActor2::SetPlot()" << endl;
+    }
+
     // Creates x points
     float *xPoints = new float [timeCourse->GetNumberOfTuples()];
     for (int i = 0; i < timeCourse->GetNumberOfTuples(); i++)
@@ -98,52 +104,24 @@ void vtkTimeCoursePlotActor2::SetPlot(vtkFloatArray *timeCourse, vtkFloatArray *
     // Creates data set for time course  
     vtkDataSet* tcDataSet = CreateDataSet(timeCourse, xPoints);
 
-    // Max/min values in the time course
-    float max = 0.0;
-    float min = 1000000.0;
-    float *tcPtr = timeCourse->GetPointer(0); 
-    for (int i = 0; i < timeCourse->GetNumberOfTuples(); i++)
-    {
-        if (tcPtr[i] < min)
-        {
-            min = tcPtr[i];
-        }
-        if (tcPtr[i] > max)
-        {
-            max = tcPtr[i];
-        }
-    }
-
     // Scales model for plotting 
+    float range1[2], range2[2];
+    timeCourse->GetRange(range1, 0);
+    model->GetRange(range2, 0);
+    float middle1 = (range1[0] + range1[1]) / 2;
+    float middle2 = (range2[0] + range2[1]) / 2;
+    float diff = middle2 - middle1;
+
     int size = model->GetNumberOfTuples();
     float *stimPtr = model->GetPointer(0);  
-    float middle = (max + min) / 2;
     vtkFloatArray *tc = vtkFloatArray::New();
     tc->SetNumberOfTuples(size);
     tc->SetNumberOfComponents(1);
-    if (waveform == 0) // square waveform 
+    float tmp;
+    for (int i = 0; i < size; i++)
     {
-        float tmp;
-        for (int i = 0; i < size; i++)
-        {
-            if (stimPtr[i] != 0.0)
-            {
-                tmp = (max + min) / 2;
-            }
-            else
-            {
-                tmp = min;
-            }
-            tc->SetComponent(i, 0, tmp);
-        }
-    }
-    else if (waveform == 1) // sinusoid
-    {
-        for (int i = 0; i < size; i++)
-        {
-            float tmp = middle + (stimPtr[i] / 2) * (max - middle);
-            tc->SetComponent(i, 0, tmp);
-        }
+        tmp = stimPtr[i] - diff;
+        tc->SetComponent(i, 0, tmp);
     }
 
     // Creates data set for model 
@@ -172,7 +150,7 @@ void vtkTimeCoursePlotActor2::SetPlot(vtkFloatArray *timeCourse, vtkFloatArray *
     this->GetLegendBoxActor()->SetEntryString(0, "Signal");
     this->GetLegendBoxActor()->SetEntryString(1, "Model");
     this->LegendOn();
-    this->SetYRange(min, max);
+    this->SetYRange(range1[0], range1[1]);
     this->SetNumberOfXLabels(13);
 }
 
