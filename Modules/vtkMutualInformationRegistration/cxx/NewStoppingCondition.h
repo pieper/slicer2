@@ -37,6 +37,9 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // .SECTION Description
 // Stopping condition for MutualInformationRegistration algorithm
 
+#ifndef __NewStoppingCondition_h
+#define __NewStoppingCondition_h
+
 #include "MIRegistration.h"
 #include "vtkMutualInformationRegistrationConfigure.h"
 
@@ -59,43 +62,38 @@ public:
   itkTypeMacro(NewStoppingCondition, Object);
 
 protected:
-  NewStoppingCondition() {};
+  NewStoppingCondition();
+  ~NewStoppingCondition();
 
 public:
+  //
+  // The type definitions
+  //
+
   //  typedef RegularStepGradientDescentOptimizer     OptimizerType;
   typedef MIRegistration< Image<float,3>,Image<float,3> >::OptimizerType  OptimizerType;
   typedef OptimizerType                          *OptimizerPointer;
 
+  //  typedef QuaternionRigidTransform< double >       TransformType;
+  typedef MIRegistration< Image<float,3>,Image<float,3> >::TransformType TransformType;
+
+  typedef AffineTransform<double,3>   AffineTransformType;
+  typedef AffineTransformType::Pointer AffineTransformPointer;
+
   /** A new iteration is starting, so reset all convergence settings */
-  void Reset() {};
+  void Reset();
 
   /** The iteration event has occured */
   void Execute(itk::Object * object, 
-               const itk::EventObject & event)
-  {
-    OptimizerPointer optimizer = 
-                      dynamic_cast< OptimizerPointer >( object );
-
-    if( typeid( event ) != typeid( itk::IterationEvent ) )
-      {
-      return;
-      }
-
-    if (optimizer->GetCurrentIteration() == 0)
-      {
-        this->Reset();
-      }
-
-      std::cout << optimizer->GetCurrentIteration() << " = ";
-      std::cout << optimizer->GetValue() << " : ";
-      std::cout << optimizer->GetCurrentPosition() << std::endl;
-
-  }
+               const itk::EventObject & event);
 
   /** a const execute command, un-necessary */
   void Execute(const itk::Object *caller, const itk::EventObject & event)
   { Execute( (const itk::Object *)caller, event);  }
-
+protected:
+  vtkMatrix4x4 *last,*current,*change_mat;
+  TransformType::Pointer             m_Transform;
 };
 
 } /* end namespace itk */
+#endif /* __NewStoppingCondition__h */
