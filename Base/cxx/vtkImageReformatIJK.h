@@ -21,9 +21,9 @@ THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
-// .NAME vtkImageReformatIJK -  Flexible threshold
+// .NAME vtkImageReformatIJK -  
 // .SECTION Description
-// vtkImageReformatIJK Can do binary or continous thresholding
+// non-oblique reformatting (axial, sagittal, coronal orientations only).
 
 #ifndef __vtkImageReformatIJK_h
 #define __vtkImageReformatIJK_h
@@ -88,7 +88,11 @@ public:
   int InputOrder;
   int OutputOrder;
   vtkIntArray *Indices;
+
   void ComputeTransform();
+  // test (wrap problem: the above fcn is not getting wrapped)
+  void ComputeTransform2(){this->ComputeTransform();};
+
   void ComputeOutputExtent();
 
 protected:
