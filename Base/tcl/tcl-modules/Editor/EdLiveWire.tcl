@@ -114,6 +114,9 @@ proc EdLiveWireInit {} {
     set Ed(EdLiveWire,trainingSlice1) 0
     set Ed(EdLiveWire,trainingSlice2) 0
 
+    # edge direction displayed and modified in advanced gui
+    set Ed(EdLiveWire,activeEdgeDirection) 0
+
 }
 
 #-------------------------------------------------------------------------------
@@ -182,6 +185,12 @@ proc EdLiveWireBuildVTK {} {
     # some filters that are regularly used
     #vtkImageMathematics Ed(EdLiveWire,imageMath)
     vtkImageThresholdBeyond Ed(EdLiveWire,imageThreshold)
+
+    # make list of edge numbers
+    set Ed(EdLiveWire,edgeIDList) ""
+    for {set i 0} {$i < $Ed(EdLiveWire,numEdgeFilters)} {incr i} {
+	lappend  Ed(EdLiveWire,edgeIDList) $i
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -431,21 +440,39 @@ proc EdLiveWireBuildGUI {} {
     #eval {label $f.l -text "Edge Direction:"} $Gui(WLA)
     #pack $f.l -side left -padx $Gui(pad) -fill x
 
-    set Ed(EdLiveWire,settingsEdgeDir) 0
     set tips {"Show settings for UP edges" \
 	    "Show settings for DOWN edges" \
 	    "Show settings for LEFT edges" \
-	    "Show settings for RIGHT edges" }
-    foreach edge {0 1 2 3} text "^ v <- ->" width "2 2 3 3" tip $tips {
+	    "Show settings for RIGHT edges" \
+	    "Show settings for UP_LEFT edges" \
+	    "Show settings for UP_RIGHT edges" \
+	    "Show settings for DOWN_LEFT edges" \
+	    "Show settings for DOWN_RIGHT edges" \
+	      }
+
+    #set texts {"^" "v" "<-" "->" "^\\"  "/^" "v/" "\\v"}
+    set texts {"^" "v" "<-" "->" "'\\"  "/'" ",/" "\\,"}
+
+    set widths "2 2 3 3 3 3 3 3"
+
+    # chop lists if not this many edge filters
+    puts "edges: $Ed(EdLiveWire,numEdgeFilters)"
+    puts "length: [llength $tips]"
+    if {$Ed(EdLiveWire,numEdgeFilters) < [llength $tips] } {
+	set tips [lreplace tips $Ed(EdLiveWire,numEdgeFilters) end]
+	set texts [lreplace texts $Ed(EdLiveWire,numEdgeFilters) end]
+	set widths [lreplace widths $Ed(EdLiveWire,numEdgeFilters) end]
+    }
+    foreach edge $Ed(EdLiveWire,edgeIDList) text $texts width $widths tip $tips {
 	eval {radiobutton $f.r$edge -width $width -indicatoron 0\
-		-text "$text" -value "$edge" \
-		-variable Ed(EdLiveWire,settingsEdgeDir) \
-		-command {puts $Ed(EdLiveWire,settingsEdgeDir)}} \
-		$Gui(WCA) 
+		  -text "$text" -value "$edge" \
+		  -variable Ed(EdLiveWire,activeEdgeDirection) \
+		  -command EdLiveWireSetActiveEdgeDirection }\
+	    $Gui(WCA) 
 	pack $f.r$edge -side left -fill x -anchor e
 	TooltipAdd $f.r$edge $tip
     }
-    
+
     #-------------------------------------------
     # TabbedFrame->Advanced->Settings->Features frame
     #-------------------------------------------
@@ -466,6 +493,8 @@ proc EdLiveWireBuildGUI {} {
 	incr n
     }
 
+    set buttontip "Click to toggle this feature off (weight = 0) and back on (weight = 1)"
+
     # loop over features
     for {set feat 0} {$feat < $Ed(EdLiveWire,numFeatures)} {incr feat} {
 	
@@ -478,10 +507,10 @@ proc EdLiveWireBuildGUI {} {
 	
 	# 0th column is feature name (on a button that can turn feature off)
 	set Ed(EdLiveWire,weightOff,$feat) 0
-	eval {button $f.rfeatureName$feat -width 11 -text "$name" \
+	eval {button $f.bfeatureName$feat -width 11 -text "$name" \
 		-command "EdLiveWireToggleWeight $feat"} $Gui(WBA)
-
-	grid $f.rfeatureName$feat  -row $row -column 0 -sticky w \
+	TooltipAdd $f.bfeatureName$feat $buttontip
+	grid $f.bfeatureName$feat  -row $row -column 0 -sticky w \
 		-ipadx 1
 
 	# 1st column is feature weight
@@ -512,8 +541,14 @@ proc EdLiveWireBuildGUI {} {
     eval {button $f.bApply -text "Apply" \
 	    -command "EdLiveWireAdvancedApply"} $Gui(WBA) {-width 7}
     TooltipAdd $f.bApply \
-	    "Apply these settings so they will be used for LiveWire segmentation."
+	    "Apply these settings to the current directional filter."
     pack $f.bApply  -side left
+
+    eval {button $f.bApplyToAll -text "ApplyToAll" \
+	    -command "EdLiveWireAdvancedApplyToAll"} $Gui(WBA) {-width 10}
+    TooltipAdd $f.bApplyToAll \
+	    "Apply these settings to all directional filters (UP, DOWN, etc.)."
+    pack $f.bApplyToAll  -side left
 
     eval {button $f.bPopup -text "View Edges" \
 	    -command "EdLiveWireRaiseEdgeImageWin"} $Gui(WBA) {-width 12}
@@ -534,6 +569,15 @@ proc EdLiveWireBuildGUI {} {
 	    
 }
 
+proc EdLiveWireSetActiveEdgeDirection {} {
+    global Ed
+
+    puts $Ed(EdLiveWire,activeEdgeDirection)
+
+    # refresh values on GUI
+    EdLiveWireGetFeatureParams
+}
+
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireToggleWeight
 # Set weight for feature to 0 when the button is pressed,
@@ -544,7 +588,7 @@ proc EdLiveWireBuildGUI {} {
 #-------------------------------------------------------------------------------
 proc EdLiveWireToggleWeight {feat} {
     global Ed
-
+    
     if {$Ed(EdLiveWire,weightOff,$feat) == 0} {
 	# if button pressed, set weight to 0
 	set Ed(EdLiveWire,feature$feat,weight) 0
@@ -665,12 +709,8 @@ proc EdLiveWireRaiseEdgeImageWin {} {
     set f $w.fBottom.fedgeBtns
     label $f.lradio -text "Edge Direction"
     pack $f.lradio -side left
-    # make list of edge numbers
-    set edges ""
-    for {set i 0} {$i < $Ed(EdLiveWire,numEdgeFilters)} {incr i} {
-	lappend edges $i
-    }
-    foreach edge $edges text $edges {
+
+    foreach edge $Ed(EdLiveWire,edgeIDList) text $Ed(EdLiveWire,edgeIDList) {
 	radiobutton $f.r$edge -width 2 -indicatoron 0\
 		-text "$text" -value "$edge" \
 		-variable Ed(EdLiveWire,edge$s) \
@@ -773,29 +813,29 @@ proc EdLiveWireGetFeatureParams {} {
     global Ed Slice
     
     set s $Slice(activeID)
+    set e $Ed(EdLiveWire,activeEdgeDirection) 
 
     # set up parameters for control of edge filters  
-    set default [Ed(EdLiveWire,lwSetup$s) GetEdgeFilter 0]
-    set Ed(EdLiveWire,numFeatures) [$default GetNumberOfFeatures]
+    set filter [Ed(EdLiveWire,lwSetup$s) GetEdgeFilter $e]
+    set Ed(EdLiveWire,numFeatures) [$filter GetNumberOfFeatures]
     
     # loop over features
     for {set f 0} {$f < $Ed(EdLiveWire,numFeatures)} {incr f} {
 
 	# get weight (importance given to feature)
 	set Ed(EdLiveWire,feature$f,weight) \
-		[$default GetWeightForFeature $f]	
+		[$filter GetWeightForFeature $f]	
 	
 	# get number of params for feature calculation
 	set Ed(EdLiveWire,feature$f,numParams) \
-		[$default GetNumberOfParamsForFeature $f]
+		[$filter GetNumberOfParamsForFeature $f]
 
 	# loop over params for each feature
 	for {set p 0} {$p < $Ed(EdLiveWire,feature$f,numParams)} {incr p} {
 	    set Ed(EdLiveWire,feature$f,param$p) \
-		    [$default GetParamForFeature $f $p]
+		[$filter GetParamForFeature $f $p]
 	}
     }
-
 }
 
 
@@ -805,11 +845,16 @@ proc EdLiveWireGetFeatureParams {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EdLiveWireSetFeatureParams {} {
+proc EdLiveWireSetFeatureParams {{edgedir ""}} {
     global Ed Slice
 
     # Lauren do this for all slices or just active?
     # Lauren need to check bounds better, and also make filters modified...
+    # Lauren do for just the right filter or all!
+
+    if {$edgedir == ""} {
+	set edgedir $Ed(EdLiveWire,activeEdgeDirection)
+    }
 
     # Validate input:
     # loop over features
@@ -832,27 +877,36 @@ proc EdLiveWireSetFeatureParams {} {
     }
 
     # Set in vtk-land:
-    # loop over slices
-    foreach s $Slice(idList) {    
-	# loop over edge filters
-	for {set filter 0} {$filter < $Ed(EdLiveWire,numEdgeFilters)} {incr filter} {
-	    set filt [Ed(EdLiveWire,lwSetup$s) GetEdgeFilter $filter]
-	    
-	    # loop over features
-	    for {set feat 0} {$feat < $Ed(EdLiveWire,numFeatures)} {incr feat} {
-		
-		# set weight (importance given to feature)
-		$filt SetWeightForFeature $feat $Ed(EdLiveWire,feature$feat,weight)
-		
-		# loop over params for each feature
-		for {set p 0} {$p < $Ed(EdLiveWire,feature$feat,numParams)} {incr p} {
-		    $filt SetParamForFeature $feat $p $Ed(EdLiveWire,feature$feat,param$p)
-		}
-	    }
-	    
+
+    # only modify filters for the active slice
+    set s $Slice(activeID)
+    
+    # get filter that corresponds to the active edge direction selected in the GUI
+    set filt [Ed(EdLiveWire,lwSetup$s) GetEdgeFilter $edgedir]
+    
+    # loop over features
+    for {set feat 0} {$feat < $Ed(EdLiveWire,numFeatures)} {incr feat} {
+	
+	# set weight (importance given to feature)
+	$filt SetWeightForFeature $feat $Ed(EdLiveWire,feature$feat,weight)
+	
+	# loop over params for each feature
+	for {set p 0} {$p < $Ed(EdLiveWire,feature$feat,numParams)} {incr p} {
+	    $filt SetParamForFeature $feat $p $Ed(EdLiveWire,feature$feat,param$p)
 	}
     }
 }
+
+
+proc EdLiveWireSetFeatureParamsForAllFilters {} {
+    global Ed
+    
+    for {set i 0} {$i < $Ed(EdLiveWire,numEdgeFilters)} {incr i} {
+
+	EdLiveWireSetFeatureParams $i
+    }
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC EdLiveWireAdvancedApply
@@ -866,6 +920,23 @@ proc EdLiveWireAdvancedApply {} {
     global Ed
 
     EdLiveWireSetFeatureParams
+
+    Slicer ReformatModified
+    Slicer Update
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EdLiveWireAdvancedApply
+# Changes filter settings:
+# calls EdLiveWireSetFeatureParams and makes Slicer update.
+# Called using Apply button in advanced tab.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EdLiveWireAdvancedApplyToAll {} {
+    global Ed
+
+    EdLiveWireSetFeatureParamsForAllFilters
 
     Slicer ReformatModified
     Slicer Update
