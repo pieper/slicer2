@@ -360,7 +360,7 @@ static void ConvertColor(float *f, unsigned char *c)
 //static void vtkImagePlotExecute(vtkImagePlot *self,
 //				  vtkImageData *inData,  T *inPtr,  int inExt[6],
 //				  vtkImageData *outData, unsigned char *outPtr, int outExt[6])
-void vtkImagePlotExecute::vtkImagePlotExecute(
+void vtkImagePlot::vtkImagePlotExecute(
 				  vtkImageData *inData,  unsigned char *inPtr,  int inExt[6],
 				  vtkImageData *outData, unsigned char *outPtr, int outExt[6])
 {
@@ -384,11 +384,11 @@ void vtkImagePlotExecute::vtkImagePlotExecute(
 	nc = outData->GetNumberOfScalarComponents();
 	nxnc = nx*nc;
 
-  ConvertColor(self->GetColor(), color);
+  ConvertColor(this->GetColor(), color);
 
   // Scale all bins
-	self->GetDataDomain(domain);
-  self->GetDataRange(range);
+	this->GetDataDomain(domain);
+  this->GetDataRange(range);
   
   // Get increments to march through data 
   inData->GetContinuousIncrements(outExt, inIncX, inIncY, inIncZ);
