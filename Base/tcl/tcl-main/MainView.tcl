@@ -67,7 +67,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
         set m MainView
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.21 $} {$Date: 2000/09/14 21:34:54 $}]
+		{$Revision: 1.22 $} {$Date: 2000/10/02 19:57:38 $}]
 
 	set View(viewerHeightNormal) 656
 	set View(viewerWidth)  956 
@@ -95,6 +95,7 @@ viewMode='Normal' viewBgColor='Blue'"
 	set View(stereoType) RedBlue
 	set View(closeupVisibility) On
 	set View(createMagWin) Yes
+	set View(parallelScale) $View(fov)
 
 	# Bug in OpenGL on Windows98 version II ??
 	if {$Gui(pc) == 1} {
@@ -167,13 +168,14 @@ proc MainViewBuildGUI {} {
 	# Nav
 	#	Top
 	#	  Dir
-	#	  Preset
 	#     Move
 	#       Rotate
+	#       FOV
 	#   Bot
-	#     Btns2
+	#     Preset
+	#     Center
 	#     Save
-	#     Mode
+	#     Parallel
 	#-------------------------------------------
 
 	#-------------------------------------------
@@ -260,7 +262,7 @@ proc MainViewBuildGUI {} {
 	eval {label $f.lFov -text "FOV:"} $Gui(WLA)
 	eval {entry $f.eFov -textvariable View(fov) -width 7} $Gui(WEA)
 	bind $f.eFov <Return> {MainViewSetFov; RenderAll}
-
+        TooltipAdd $f.eFov "field of view"
 	pack $f.lFov $f.eFov -side left -padx 2 -pady 0
 
 	#-------------------------------------------
@@ -271,8 +273,9 @@ proc MainViewBuildGUI {} {
 	frame $f.fSave -bg $Gui(activeWorkspace)
 	frame $f.fPreset  -bg $Gui(activeWorkspace)
 	frame $f.fCenter  -bg $Gui(activeWorkspace)
+	frame $f.fParallel  -bg $Gui(activeWorkspace)
 
-	pack $f.fPreset $f.fCenter $f.fSave -side top -pady 2 -fill x
+	pack $f.fPreset $f.fCenter $f.fSave $f.fParallel -side top -pady 2 -fill x
 
 	#-------------------------------------------
 	# View->Nav->Bot->Preset Frame
@@ -288,6 +291,7 @@ proc MainViewBuildGUI {} {
 	    eval {button $f.c$p -text $p -width 2} $Gui(WBA)
 	    bind $f.c$p <ButtonPress>   "MainOptionsPreset $p Press"
 	    bind $f.c$p <ButtonRelease> "MainOptionsPreset $p Release"
+	    TooltipAdd $f.c$p "Click to recall, hold down to save."
 	    pack $f.c$p -side left -padx 2 
 	}
 	
@@ -311,9 +315,31 @@ proc MainViewBuildGUI {} {
 		-command "MainViewSaveView"} $Gui(WBA)
 	eval {entry $f.eSave -textvariable View(viewPrefix)} $Gui(WEA)
 	bind $f.eSave <Return> {MainViewSaveViewPopup}
+        TooltipAdd $f.bSave "Save the 3D window in the chosen filename."
 
 	pack $f.bSave -side left -padx 3
 	pack $f.eSave -side left -padx 2 -expand 1 -fill x
+
+	#-------------------------------------------
+	# View->Nav->Bot->Parallel Frame
+	#-------------------------------------------
+	set f $Gui(fNav).fBot.fParallel
+
+	# Parallel button
+	eval {checkbutton $f.cParallel \
+        -text "Parallel" -variable View(parallelProjection) -width 7 \
+        -indicatoron 0 -command "MainViewSetParallelProjection"} $Gui(WCA)
+        TooltipAdd $f.cParallel "Toggle parallel/perspective projection"
+
+	# Scale Label
+	eval {label $f.lParallelScale -text "Scale:"} $Gui(WLA)
+
+	#  Scale entry box
+	eval {entry $f.eParallelScale -textvariable View(parallelScale)} $Gui(WEA)
+        TooltipAdd $f.eParallelScale "Scale for parallel projection"
+
+	pack $f.cParallel $f.lParallelScale $f.eParallelScale \
+		-side left -padx 3
 }
 
 #-------------------------------------------------------------------------------
@@ -367,6 +393,32 @@ proc MainViewSetFov {} {
 	# Update slice offset, registration annotation
 	MainAnnoSetFov
 	MainSlicesSetFov
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainViewSetParallelProjection
+# Turn on/off parallel projection for the camera.
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainViewSetParallelProjection {} {
+    global View Gui Slice
+
+    puts $View(parallelProjection)
+
+    if {$View(parallelProjection) == 1} {
+	if {[ValidateFloat $View(parallelScale)] == 0} {
+	    tk_messageBox -message "The scale must be a number."
+	    set View(parallelScale) $View(fov)
+	}    
+	$View(viewCam) ParallelProjectionOn
+	$View(viewCam) SetParallelScale $View(parallelScale)
+    } else {
+	$View(viewCam) ParallelProjectionOff
+    }	
+
+    Render3D
 }
 
 #-------------------------------------------------------------------------------
