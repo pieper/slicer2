@@ -101,7 +101,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.99 $} {$Date: 2004/09/16 19:34:48 $}]
+            {$Revision: 1.100 $} {$Date: 2004/11/09 18:46:43 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -127,6 +127,7 @@ proc VolumesInit {} {
     Volumes(writer) AddObserver EndEvent        MainEndProgress
 
     set Volumes(prefixSave) ""
+    set Volumes(prefixCORSave) ""
 
     set Volumes(exportFileType) Radiological
     set Volumes(exportFileTypeList) {Radiological Neurological}
@@ -702,9 +703,13 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     # Frames
     frame $f.fActive -bg $Gui(backdrop) -relief sunken -bd 2
     frame $f.fFile -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fCORFile -bg $Gui(activeWorkspace) -relief groove -bd 3
 
     pack $f.fActive -side top -pady $Gui(pad) -padx $Gui(pad)
     pack $f.fFile  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+    eval {label $fExport.l -text "Export Analyze Format\nWarning: there is a pixel shift\nbug in the output"} $Gui(WLA)
+    pack  $fExport.l -side top -padx $Gui(pad)    
+    pack $f.fCORFile  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
 
     #-------------------------------------------
     # Export->Active frame
@@ -728,11 +733,9 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
 
     set f $fExport.fFile
 
-    eval {label $fExport.l -text "Export Analyze Format\nWarning: there is a pixel shift\nbug in the output"} $Gui(WLA)
-    pack  $fExport.l -side top -padx $Gui(pad)    
 
     eval {button $f.bWrite -text "Save" -width 5 \
-        -command "VolumesExport"} $Gui(WBA)
+        -command "VolumesAnalyzeExport"} $Gui(WBA)
     TooltipAdd $f.bWrite "Save the Volume."
     pack  $f.bWrite -side bottom -padx $Gui(pad)    
 
@@ -750,8 +753,21 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
                   -indicatoron 0} $Gui(WCA) 
         pack $f.rMode$type -side left -padx $Gui(pad) -pady 0
         TooltipAdd  $f.rMode$type $tip
-    }   
+    }
     
+    #-------------------------------------------
+    # Export->CORFilename frame
+    #-------------------------------------------
+
+    set f $fExport.fCORFile
+
+    eval {button $f.bWrite -text "Save" -width 5 \
+        -command "VolumesCORExport"} $Gui(WBA)
+    TooltipAdd $f.bWrite "Save the Volume."
+    pack  $f.bWrite -side bottom -padx $Gui(pad)    
+
+    DevAddFileBrowse $f Volumes "prefixCORSave" "COR File:" "" "info" "\$Volume(DefaultDir)" "Save" "Browse for a COR file location (will save images and COR-.info file to directory)" "Absolute"
+
     #-------------------------------------------
     # Other frame
     #-------------------------------------------
@@ -1195,7 +1211,7 @@ proc VolumesPropsApply {} {
                         VolumesManualSetPropertyType  Volume($m,node)
                     } else {
                         # Read headers
-                if {[VolumesAutomaticSetPropertyType Volume($m,node)] == 0} {
+                        if {[VolumesAutomaticSetPropertyType Volume($m,node)] == 0} {
                             return
                         }
                     }
@@ -1899,12 +1915,12 @@ proc VolumesReformatSave {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC VolumesExport
+# .PROC VolumesAnalyzeExport
 # - export to Analyze Format 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc VolumesExport {} {
+proc VolumesAnalyzeExport {} {
     
     global Volume Volumes
     
@@ -1912,7 +1928,8 @@ proc VolumesExport {} {
     set v $Volume(activeID)
 
     if { $v == 0 } {
-        DevInfoWindow "VolumesExport: Please select a volume to export."
+        DevInfoWindow "VolumesAnalyzeExport: Please select a volume to export."
+        return
     }
 
     
@@ -1923,7 +1940,7 @@ proc VolumesExport {} {
     }
 
     if { [catch "package require vtkCISGFile"] } {
-        DevErrorWindow "VolumesExport: vtkCISGFile Module is missing.  Cannot export Analyze format."
+        DevErrorWindow "VolumesAnalyzeExport: vtkCISGFile Module is missing.  Cannot export Analyze format."
         return;
     }
 
@@ -1932,7 +1949,7 @@ proc VolumesExport {} {
     }
     
     if { [catch "package require iSlicer"] } {
-        DevErrorWindow "VolumesExport: iSlicer Module missing.  Cannot export Analyze format."
+        DevErrorWindow "VolumesAnalyzeExport: iSlicer Module missing.  Cannot export Analyze format."
         return;
     }
 
@@ -1985,5 +2002,77 @@ proc VolumesExport {} {
     export_flipX Delete
     export_flipY Delete
     catch "destroy $w"
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolumesCORExport
+# - export to Analyze Format 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc VolumesCORExport {} {
+    
+    global Volume Volumes
+    
+    # get the chosen volume
+    set v $Volume(activeID)
+
+    if { $v == 0 } {
+        DevInfoWindow "VolumesCORExport: Please select a volume to export."
+        return
+    }
+    
+    if { $Volumes(prefixCORSave) == "" } {
+        DevInfoWindow "VolumesCORExport: Please select an export directory."
+        return
+    }
+
+    if { ![file isdirectory $Volumes(prefixCORSave)] } {
+        set Volumes(prefixCORSave) [file dirname $Volumes(prefixCORSave)]
+    }
+
+    catch "export_iwriter Delete"
+    vtkImageWriter export_iwriter 
+    export_iwriter SetInput [Volume($v,vol) GetOutput]
+    export_iwriter SetFilePattern $Volumes(prefixCORSave)/COR-%03d
+    export_iwriter SetFileDimensionality 2
+    export_iwriter Write
+    export_iwriter Delete
+
+    # rename the files to go from 1-256 rather than 0-255
+    for {set i 255} {$i >= 0} {incr i -1} {
+        set ii [format %03d $i]
+        set newii [format %03d [expr 1 + $i]]
+        file rename $Volumes(prefixCORSave)/COR-$ii $Volumes(prefixCORSave)/COR-$newii  
+    }
+
+    set Volumes(prefixCORSave) $Volumes(prefixCORSave)/COR-.info
+    set fp [open $Volumes(prefixCORSave) "w"]
+    puts $fp "imnr0 1
+imnr1 256
+ptype 2
+x 256
+y 256
+fov 0.256
+thick 0.001
+psiz 0.001
+locatn 0
+strtx -0.128
+endx 0.128
+strty -0.128
+endy 0.128
+strtz -0.128
+endz 0.128
+tr 0.000000
+te 0.000000
+ti 0.000000
+flip angle 0.000000
+ras_good_flag 1
+x_ras -1.000000 0.000000 0.000000
+y_ras 0.000000 0.000000 -1.000000
+z_ras 0.000000 1.000000 0.000000
+c_ras 0.000000 0.000000 0.000000"
+    close $fp
+
 }
 
