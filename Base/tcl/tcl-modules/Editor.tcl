@@ -97,7 +97,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.37 $} {$Date: 2000/11/13 05:57:44 $}]
+	    {$Revision: 1.38 $} {$Date: 2000/11/13 17:00:05 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -113,7 +113,6 @@ proc EditorInit {} {
     set Editor(bgName) Composite
     set Editor(nameWorking) Working
     set Editor(eventManager)  {  }
-    set Editor(prefixSave) ""
 
     # Look for Editor effects and form an array, Ed, for them.
     # Each effect has a *.tcl file in the tcl-modules/Editor directory.
@@ -249,7 +248,6 @@ proc EditorUpdateMRML {} {
     set v $Editor(idWorking)
     if {$v != "NEW"} {
 	set Editor(nameWorking) [Volume($v,node) GetName]
-	puts $Editor(nameWorking)
     } else {
 	set Editor(nameWorking) Working
     }
@@ -352,7 +350,7 @@ proc EditorBuildGUI {} {
     
     # this makes the navigation menu (buttons) and the tabs.
     TabbedFrame MeasureVol $f ""\
-	    {Setup Merge File} {"Setup" "Merge" "File"} \
+	    {Setup Merge File} {"Setup" "Merge" "Save"} \
 	    {"Choose volumes before editing." \
 	    "Merge two labelmaps." \
 	    "Save a labelmap."}
@@ -444,7 +442,7 @@ proc EditorBuildGUI {} {
     
     eval {label $f.l -text "Descriptive Name:"} $Gui(WLA)
     eval {entry $f.e -textvariable Editor(nameWorking)} $Gui(WEA)
-    TooltipAdd $f.e "You may name your NEW volume."
+    TooltipAdd $f.e "Nickname your NEW volume."
     pack $f.l -padx 3 -side left
     pack $f.e -padx 3 -side left -expand 1 -fill x
     
@@ -458,7 +456,7 @@ proc EditorBuildGUI {} {
     set f $fVolumes.fTabbedFrame.fSetup.fStart
     
     DevAddButton $f.bStart "Start Editing" "Tab Editor row1 Effects"
-    TooltipAdd $f.bStart "Go!"    
+    TooltipAdd $f.bStart "Go go go!"  
     pack $f.bStart -side top -padx $Gui(pad) -pady $Gui(pad)
  
     
@@ -614,7 +612,7 @@ proc EditorBuildGUI {} {
     set f $fVolumes.fTabbedFrame.fFile.fVol.fPrefix
     
     eval {label $f.l -text "Filename Prefix:"} $Gui(WLA)
-    eval {entry $f.e -textvariable Editor(prefixWorking)} $Gui(WEA)
+    eval {entry $f.e -textvariable Editor(prefixSave)} $Gui(WEA)
     TooltipAdd $f.e "To save the Volume, enter the prefix here or just click Save."
     pack $f.l -padx 3 -side left
     pack $f.e -padx 3 -side left -expand 1 -fill x
@@ -1895,6 +1893,12 @@ proc EditorWriteVolume {} {
     # get the chosen volume
     set v $Volume(activeID)
 
+    # set initial directory to dir where vol last opened if unset
+    if {$Editor(prefixSave) == ""} {
+	set Editor(prefixSave) \
+		[file join $Volume(DefaultDir) [Volume($v,node) GetName]]
+    }
+    
     # Show user a File dialog box
     set Editor(prefixSave) [MainFileSaveVolume $v $Editor(prefixSave)]
     if {$Editor(prefixSave) == ""} {return}
