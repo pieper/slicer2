@@ -755,12 +755,12 @@ void vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
 			     ftr[1] == fbr[1] && ftr[2] != fbr[2])
   {
     orient = 3;
-	}
+  }
   if (!orient)
   {
     // Error! (probably read a no-header image)
 	this->SetScanOrder("ER");
-	return
+	return;
   }
 
 	// Determine acquisition order 
