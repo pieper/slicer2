@@ -450,7 +450,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.98 $} {$Date: 2003/05/01 17:51:05 $}]
+        {$Revision: 1.99 $} {$Date: 2003/05/07 21:46:13 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -1808,20 +1808,26 @@ proc MainExitProgram { } {
 #    DebugLeaks PrintCurrentLeaks
 
 
+    #
     # as of vtk4, you want to close all your vtk/tk windows before
     # exiting to avoid a crash
+    #
+    # unfortunate hack - need to turn off warning about widget deletion order
+    catch "__exit_object Delete"
+    vtkObject __exit_object 
+    __exit_object SetGlobalWarningDisplay 0
 
-    foreach rw [vtkRenderWindow ListInstances] {
-        catch "$rw Delete"
-    }
     foreach w [info commands .*] {
         if { ![catch "winfo class $w"] } {
             if {[winfo class $w] == "vtkTkRenderWidget"} {
+                set renwin [$w GetRenderWindow]
+                if { [info command $renwin] != "" } {
+                    $renwin Delete
+                }
                 catch "destroy $w"
             }
         }
     }
-
     tcl_exit
 }
 
