@@ -43,7 +43,7 @@ foreach kit { Common Filtering IO Imaging Graphics
     if { $::tcl_platform(platform) == "windows" } {
       package ifneeded "vtk${kit}TCL" {4.4} "
         package require -exact vtkinit {4.4}
-        ::vtk::init::load_library_package {vtk${kit}TCL} {$::env(VTK_DIR)/bin/Debug}
+        ::vtk::init::load_library_package {vtk${kit}TCL} {$::env(VTK_DIR)/bin/$::env(VTK_BUILD_TYPE)}
       "
   } else {
       package ifneeded "vtk${kit}TCL" {4.4} "
