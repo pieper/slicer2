@@ -35,6 +35,8 @@ isvolume - a widget for looking at Slicer volumes
 option add *isvolume.background #000000 widgetDefault
 option add *isvolume.orientation Axial widgetDefault
 option add *isvolume.volume "None" widgetDefault
+option add *isvolume.refvolume "None" widgetDefault
+option add *isvolume.warpvolume "None" widgetDefault
 option add *isvolume.slice 128 widgetDefault
 option add *isvolume.interpolation linear widgetDefault
 option add *isvolume.resolution 256 widgetDefault
@@ -59,6 +61,8 @@ if { [itcl::find class isvolume] == "" } {
       itk_option define -background background Background {}
       itk_option define -orientation orientation Orientation {}
       itk_option define -volume volume Volume "None"
+      itk_option define -refvolume refvolume Refvolume "None"
+      itk_option define -warpvolume warpvolume Refvolume "None"
       itk_option define -slice slice Slice 0
       itk_option define -interpolation interpolation Interpolation {linear}
       itk_option define -resolution resolution Resolution {256}
@@ -86,6 +90,8 @@ if { [itcl::find class isvolume] == "" } {
       variable _changeinfo
 
       # internal state variables
+      variable _refVolId 0
+      variable _warpVolId 0
       variable _VolIdMap
       variable _volume_serial 0
 
@@ -102,10 +108,11 @@ if { [itcl::find class isvolume] == "" } {
       method imagedata {} {return [$_reslice GetOutput]}
 
       method screensave { filename {imagetype "PNM"} } {} ;# TODO should be moved to superclass
-
       method volmenu_update {} {}
       method transform_update {} {}
       method slicer_volume { {name ""} } {}
+      method refvolume_update {} {}
+      method order_to_orientation  { {order "LR"} } {}
     }
 }
 
@@ -319,6 +326,57 @@ itcl::configbody isvolume::volume {
 }
 
 #-------------------------------------------------------------------------------
+# OPTION: -refvolume
+#
+# DESCRIPTION: which slicer volume to use as a reference for metadata:
+# spacing dimensions and scan order
+# The argument can be the volume name or the volume Id. The volume
+# Id is strongly prefered because it is unique.
+#-------------------------------------------------------------------------------
+itcl::configbody isvolume::refvolume {
+    global Volume
+
+    set volname $itk_option(-refvolume)
+
+    if { $volname == "" } {
+        set volname "None"
+    }
+
+    set _refVolId $_VolIdMap($volname)
+
+    if { ![info exists _VolIdMap($_refVolId)] } {
+        set _refVolId 0
+        error "bad volume id $_refVolId for $volname"
+    }
+}
+
+#-------------------------------------------------------------------------------
+# OPTION: -warpvolume
+#
+# DESCRIPTION: which slicer volume to use as a reference for metadata:
+# spacing dimensions and scan order
+# The argument can be the volume name or the volume Id. The volume
+# Id is strongly prefered because it is unique.
+#-------------------------------------------------------------------------------
+itcl::configbody isvolume::warpvolume {
+    global Volume
+
+    set volname $itk_option(-warpvolume)
+
+    if { $volname == "" } {
+        set volname "None"
+    }
+
+    set _warpVolId $_VolIdMap($volname)
+
+    if { ![info exists _VolIdMap($_warpVolId)] } {
+        set _warpVolId 0
+        error "bad volume id $_warpVolId for $volname"
+    }
+}
+
+
+#-------------------------------------------------------------------------------
 # OPTION: -orientation
 #
 # DESCRIPTION: which slicer volume to display in this isvolume
@@ -443,12 +501,17 @@ itcl::body isvolume::volmenu_update {} {
 #           
 #-------------------------------------------------------------------------------
 itcl::body isvolume::transform_update {} {
+    global Volume
 
     if { ![info exists itk_option(-volume)] || $itk_option(-volume) == "" } {
         return
     }
 
-    set id $_VolIdMap($itk_option(-volume))
+    if {$_refVolId == 0} {
+        set id $_VolIdMap($itk_option(-volume))
+    } else {
+        set id $_refVolId
+    }
 
     #
     # first, make the transform to put the images
@@ -480,8 +543,8 @@ itcl::body isvolume::transform_update {} {
         }
     }
 
-
     # TODO - add other orientations here...
+
     catch "transposematrix Delete"
     vtkMatrix4x4 transposematrix
     switch $itk_option(-orientation) {
@@ -519,6 +582,9 @@ itcl::body isvolume::transform_update {} {
         transposematrix SetElement 0 $i [expr -1 * [transposematrix GetElement 0 $i]]
     }
 
+
+    set id $_VolIdMap($itk_option(-volume))
+
     #
     # make a matrix of the supplied transform - positions the volume
     # in RAS space (inverted for use with ImageReslice)
@@ -550,6 +616,15 @@ itcl::body isvolume::transform_update {} {
     transposematrix Delete
 
     $_xform SetMatrix $_ijkmatrix
+
+    # concatenate with displacement field transform
+    if {$_warpVolId != "" && $_warpVolId != $Volume(idNone)} {
+        catch "dispXform Delete"
+        vtkGridTransform dispXform 
+        dispXform SetDisplacementGrid [Volume($_warpVolId,vol) GetOutput]
+        $_xform Concatenate dispXform
+    }
+
     $_reslice SetResliceTransform $_xform 
 
 }
@@ -636,30 +711,95 @@ itcl::body isvolume::slicer_volume { {name ""} } {
     # - then set up the volume node parameters and make it visible in slicer
     #
 
-    $this configure -orientation Sagittal
+    # determine orientation
+    if {$_refVolId == 0} {
+        set order [::Volume($i,node) GetScanOrder]
+    } else {
+        set order [::Volume($_refVolId,node) GetScanOrder]
+    }
+
+    set orientation [$this order_to_orientation]
+
+    $this configure -orientation $orientation
+
+    $this refvolume_update 
+
+    $_reslice Update
 
     vtkImageData $id
     eval [$this imagedata] SetUpdateExtent [[$this imagedata] GetWholeExtent]
     [$this imagedata] Update
     $id DeepCopy [$this imagedata]
 
-    eval ::Volume($i,node) SetSpacing [$id GetSpacing]
-
-    ::Volume($i,node) SetScanOrder RL
     ::Volume($i,node) SetNumScalars 1
     ::Volume($i,node) SetScalarType [$id GetScalarType]
-    ::Volume($i,node) SetDimensions [lindex [$id GetDimensions] 0] [lindex [$id GetDimensions] 1]
-    ::Volume($i,node) SetImageRange 1 $itk_option(-resolution)
 
+    if {$_refVolId == 0} {
+        eval ::Volume($i,node) SetSpacing [$id GetSpacing]
+        
+        ::Volume($i,node) SetScanOrder RL
+        ::Volume($i,node) SetDimensions [lindex [$id GetDimensions] 0] [lindex [$id GetDimensions] 1]
+        ::Volume($i,node) SetImageRange 1 $itk_option(-resolution)
+        
+    } else {
+        eval ::Volume($i,node) SetSpacing [::Volume($_refVolId,node) GetSpacing]
+        
+        ::Volume($i,node) SetScanOrder [::Volume($_refVolId,node) GetScanOrder]
+
+        ::Volume($i,node) SetDimensions [lindex [::Volume($_refVolId,node) GetDimensions] 0] [lindex [::Volume($_refVolId,node) GetDimensions] 1]
+        eval ::Volume($i,node) SetImageRange [::Volume($_refVolId,node) GetImageRange]
+         
+    }
+
+    ### THIS MAY CHANGE ScanOrder ???
     ::Volume($i,node) ComputeRasToIjkFromScanOrder [::Volume($i,node) GetScanOrder]
-
-    MainUpdateMRML
-
     Volume($i,vol) SetImageData $id
+    MainUpdateMRML
 
     Slicer SetOffset 0 0
     MainSlicesSetVolumeAll Back $i
     RenderAll
+
+
+}
+
+# ------------------------------------------------------------------
+
+itcl::body isvolume::refvolume_update {} {
+    if {$_refVolId != 0} {
+        set spacing [split [[Volume($_refVolId,vol) GetOutput] GetSpacing]] 
+        
+        $_reslice SetOutputSpacing [lindex $spacing 0] [lindex $spacing 1] [lindex $spacing 2]
+        
+        set dimension [split [[Volume($_refVolId,vol) GetOutput] GetDimensions]] 
+        
+        set extentx [expr round(abs([lindex $dimension 0]))]
+        set extenty [expr round(abs([lindex $dimension 1]))]
+        set extentz [expr round(abs([lindex $dimension 2]))]
+        $_reslice SetOutputExtent  0 [expr $extentx - 1]\
+                0 [expr $extenty - 1]\
+                0 [expr $extentz - 1] 
+        
+        $this transform_update
+    }
+}
+
+# ------------------------------------------------------------------
+itcl::body isvolume::order_to_orientation {{order "LR"}} {
+    set orientation "Sagital"
+    switch $order {
+        "LR" -
+        "RL" { set orientation "Sagittal" }
+        "IS" -
+        "SI" { set orientation "Axial" }
+        "PA" -
+        "AP" { set orientation "Coronal" }
+        #TODO - gantry tilt not supported
+        default {
+            error "unknown image scan order $order"
+        }
+    }
+    return $orientation
 }
 
 # ------------------------------------------------------------------
