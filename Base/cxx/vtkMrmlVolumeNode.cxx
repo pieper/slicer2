@@ -1,3 +1,4 @@
+
 /*=auto=========================================================================
 
 (c) Copyright 2001 Massachusetts Institute of Technology
@@ -26,6 +27,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <string.h>
 #include <math.h>
 #include "vtkMrmlVolumeNode.h"
+#include "vtkMath.h"
 #include "vtkObjectFactory.h"
 
 //------------------------------------------------------------------------------
@@ -664,6 +666,29 @@ void vtkMrmlVolumeNode::ComputeRasToIjkFromScanOrder(char *order)
   this->ComputeRasToIjkFromCorners(NULL,ftl,ftr,fbr,NULL,ltl);
 }
 
+// vtkMatrix4x4::Invert is unstable.
+// This function just calls the more stable vtkMath::InvertMatrix
+// In and Out can point to the same vtkMatrix4x4.
+//----------------------------------------------------------------------------
+int StableInvert(vtkMatrix4x4 * In, vtkMatrix4x4 * Out)
+{
+  double *in[4],*out[4];
+  double indata[16],outdata[16];
+  int ret,i,j;
+  for(i=0;i<4;i++)
+    {
+    in[i]=indata+4*i;
+    out[i]=outdata+4*i;
+    for(j=0;j<4;j++) in[i][j]=In->GetElement(i,j);
+    }
+  ret=vtkMath::InvertMatrix(in,out,4);
+  if (ret)
+    for(i=0;i<4;i++)
+      for(j=0;j<4;j++)
+        Out->SetElement(i,j,out[i][j]);
+  return(ret);
+}
+
 //----------------------------------------------------------------------------
 int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
   float *fc, float *ftl, float *ftr, float *fbr,
@@ -826,7 +851,8 @@ int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
   Ras->SetElement(3,3,1.0);
 
   // Since RasToIjk*Ras=Ijk, RasToIjk=Ijk*inverse(Ras)
-  Ras->Invert(Ras,InvRas);
+  // Ras->Invert(Ras,InvRas); // Invert() is unstable
+  StableInvert(Ras,InvRas);
   Ijk->Multiply4x4(Ijk,InvRas,RasToIjk);
 
   // Vtk coordinates differ from Ijk in the direction
@@ -850,7 +876,8 @@ int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
   ScaleMat->Identity();
   for (i=0;i<3;i++) ScaleMat->SetElement(i,i,this->Spacing[i]);
   ScaleMat->Multiply4x4(ScaleMat,RasToVtk,Position);
-  Position->Invert();
+  // Position->Invert();  // Invert() is unstable
+  StableInvert(Position,Position);
 
   // Convert matrices to strings
   this->SetRasToIjkMatrix(GetMatrixToString(RasToIjk));
