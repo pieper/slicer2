@@ -67,7 +67,7 @@ proc AnnoInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.19 $} {$Date: 2003/03/19 19:16:30 $}]
+        {$Revision: 1.19.2.1 $} {$Date: 2003/08/06 23:19:11 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -165,6 +165,11 @@ cube and axes.
         pack $f.c${anno} -side top -fill x -padx $Gui(pad) -pady $Gui(pad) 
     }
 
+    # add a radio button to toggle closing the cross hairs
+    eval {checkbutton $f.cCrossIntersect -text "Intersect Crosshairs" \
+              -variable Anno(crossIntersect) -indicatoron 0 \
+              -command "MainAnnoSetCrossIntersect; RenderSlices"} $Gui(WCA)
+    pack $f.cCrossIntersect -side top -fill x -padx $Gui(pad) -pady $Gui(pad)
 
     #-------------------------------------------
     # Mode frame

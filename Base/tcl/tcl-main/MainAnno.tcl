@@ -66,7 +66,7 @@ proc MainAnnoInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainAnno \
-        {$Revision: 1.23 $} {$Date: 2003/03/19 19:16:23 $}]
+        {$Revision: 1.23.2.1 $} {$Date: 2003/08/06 23:19:52 $}]
 
     # Preset Defaults
     set Module(Anno,presets) "box='1' axes='0' outline='0' letters='1' cross='0'\
@@ -77,6 +77,7 @@ hashes='1' mouse='1'"
     set Anno(outline) 0
     set Anno(letters) 1
     set Anno(cross) 0
+    set Anno(crossIntersect) 0
     set Anno(hashes) 1
     set Anno(mouse) 1
 
@@ -415,6 +416,13 @@ proc MainAnnoSetVisibility {} {
     MainAnnoSetCrossVisibility  mag    $Anno(cross)
     MainAnnoSetHashesVisibility mag    $Anno(hashes)
 
+    # disable the cross intersection button if the cross hairs are not visible
+    if {!$Anno(cross)} {
+        $::Module(Anno,fVisibility).fVis.cCrossIntersect configure -state disabled
+    } else {
+        $::Module(Anno,fVisibility).fVis.cCrossIntersect configure -state active
+    }
+
     foreach s $Slice(idList) {
         if {$Anno(outline) == 1} {
             Slice($s,outlineActor) SetVisibility $Slice($s,visibility)
@@ -439,6 +447,10 @@ proc MainAnnoSetCrossVisibility {win vis} {
     Slicer SetShowCursor $vis
 }
 
+proc MainAnnoSetCrossIntersect {} {
+    global Anno
+    Slicer SetCursorIntersect $Anno(crossIntersect)
+}
 #-------------------------------------------------------------------------------
 # .PROC MainAnnoSetHashesVisibility
 # 
