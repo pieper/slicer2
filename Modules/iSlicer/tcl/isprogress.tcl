@@ -84,8 +84,8 @@ itcl::body isprogress::constructor {args} {
     set  _geometry      "400x15"
     set  _abort         "0"
     set  _use_main_progress "1"
-    puts $_w
-    puts $_name
+    # puts $_w
+    # puts $_name
     global Gui
 
     catch {toplevel $_w}
@@ -144,7 +144,7 @@ itcl::configbody isprogress::use_main_progress {
        MainStartProgress 
        global Gui
        set Gui(progressText) $_progress_text
-       puts $_progress_text
+       puts "isprogress: $_progress_text"
    }
 }
 
@@ -152,7 +152,7 @@ itcl::configbody isprogress::use_main_progress {
 
 itcl::configbody isprogress::vtk_process_object {
    if {$itk_option(-vtk_process_object) != ""} {
-       $itk_option(-vtk_process_object) SetProgressMethod \
+       $itk_option(-vtk_process_object) AddObserver ProgressEvent \
        "$this update_progress $itk_option(-vtk_process_object)"
    }
 }
