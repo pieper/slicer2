@@ -278,16 +278,16 @@ public:
   // Description:
   // Either set all the images and transform and interpolator, or
   // just set the histogram
-  MovingImageType *SetGivenMovingImage( const MovingImageType *GivenMovingImage )
-    { m_Metric->SetGivenMovingImage(GivenMovingImage); }
-  FixedImageType *SetGivenFixedImage(  const FixedImageType  *GivenFixedImage )
-    { m_Metric->SetGivenFixedImage(GivenFixedImage); }
-  void SetGivenTransform(   const AffineTransformType::Pointer GivenTransform )
-    { m_Metric->SetGivenTransform(GivenTransform); }
-  void SetGivenInterpolator( const InterpolatorType::Pointer GivenInterpolator )
-    { m_Metric->SetGivenInterpolator(GivenInterpolator); }
-  void SetHistogram( const HistogramType GivenHistogram )
-    { m_Metric->SetGivenHistogram(GivenHistogram); }
+  MovingImageType *SetTrainingMovingImage( const MovingImageType *TrainingMovingImage )
+    { m_Metric->SetTrainingMovingImage(TrainingMovingImage); }
+  FixedImageType *SetTrainingFixedImage(  const FixedImageType  *TrainingFixedImage )
+    { m_Metric->SetTrainingFixedImage(TrainingFixedImage); }
+  void SetTrainingTransform(   const AffineTransformType::Pointer TrainingTransform )
+    { m_Metric->SetTrainingTransform(TrainingTransform); }
+  void SetTrainingInterpolator( const InterpolatorType::Pointer TrainingInterpolator )
+    { m_Metric->SetTrainingInterpolator(TrainingInterpolator); }
+  void SetHistogram( const HistogramType TrainingHistogram )
+    { m_Metric->SetTrainingHistogram(TrainingHistogram); }
 
     // Description:
     // Set the size of the histogram for the metric
