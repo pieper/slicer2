@@ -163,7 +163,7 @@ if { $GENLIB(clean) } {
     puts "Deleting slicer lib files..."
     if { $isDarwin } {
     runcmd rm -rf $SLICER_LIB
-    if { file exists $SLICER_HOME/isPatched } {
+    if { [file exists $SLICER_HOME/isPatched] } {
         runcmd rm $SLICER_HOME/isPatched
     }
     } else {
