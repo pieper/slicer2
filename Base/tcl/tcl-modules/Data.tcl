@@ -74,7 +74,7 @@ proc DataInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.41 $} {$Date: 2002/04/23 23:13:43 $}]
+        {$Revision: 1.42 $} {$Date: 2002/06/28 20:33:57 $}]
 
     set Data(index) ""
     set Data(clipboard) ""
@@ -760,15 +760,22 @@ proc DataAddTransformFromSelection {} {
 # of the matrix is \"manual$i\" where $i is the id number
 # of the matrix. But, you can change that easily enough...
 #
+# There is an extra argument CallUpdate. It can be 1 or 0, defaults to 1.
+# The great majority of the time, you want to call MainUpdateMRML. But
+# sometimes, you want to wait to call MainUpdateMRML until you have done
+# a whole bunch of things. This way, you don't end up redrawing a lot.
+# If CallUpdate is set to 0, it is the programmer's just to Call MainUpdateMRML eventually.
+#
 # If append, firstSel and lastSel are not checked.
 #
 # .ARGS
 # bool append if 1, simply appends the transform to the end of the tree
 # vtkMrmlNode firstSel The first item to be included in the transform
 # vtkMrmlNode lastSel  The last item to be included in the transform
+# bool CallUpdate, typically you want to call MainUpdateMRML after you add a transform, but if you are doing lots of updates, you may not want to.
 # .END
 #-------------------------------------------------------------------------------
-proc DataAddTransform {append firstSel lastSel} {
+proc DataAddTransform {append firstSel lastSel {CallUpdate "1"} } {
     global Transform Matrix Mrml EndTransform
 
     ###########
@@ -829,7 +836,9 @@ proc DataAddTransform {append firstSel lastSel} {
     Mrml(dataTree) InsertAfterItem $lastSel $n
     }
 
-    MainUpdateMRML
+    if {$CallUpdate == 1} {
+        MainUpdateMRML
+    }
 
     ### Return the id of the matrix 
 
