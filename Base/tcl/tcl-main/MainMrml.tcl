@@ -33,7 +33,7 @@
 #   MainMrmlDumpTree
 #   MainMrmlPrint
 #   MainMrmlClearList
-#   MainMrmlAddNode
+#   MainMrmlAddNode nodeType
 #   MainMrmlUndoAddNode
 #   MainMrmlDeleteNodeDuringUpdate
 #   MainMrmlDeleteNode
@@ -72,7 +72,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-		{$Revision: 1.31 $} {$Date: 2000/02/28 17:56:11 $}]
+		{$Revision: 1.32 $} {$Date: 2000/03/01 02:21:01 $}]
 
 	set Mrml(filePrefix) data
 	set Mrml(colorsUnsaved) 0
@@ -191,8 +191,12 @@ proc MainMrmlClearList {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlAddNode
+#
+#  Adds a node to the data tree.
+#  Returns the MrmlMode
 # 
 # .ARGS
+#  str nodeType the type of node, \"Volume\", \"Color\", etc.
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlAddNode {nodeType} {
@@ -423,7 +427,7 @@ proc MainMrmlSetFile {filename} {
 #
 #
 #  Delete the loaded Mrml data from memory.  Replace with a new Mrml file.
-#  Append ".xml" or ".mrml" an necessary to the file name as necessary.
+#  Append \".xml\" or \".mrml\" an necessary to the file name as necessary.
 # .ARGS
 # str mrmlFile name of a MRML file to load
 # .END
