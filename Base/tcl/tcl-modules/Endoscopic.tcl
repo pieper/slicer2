@@ -259,7 +259,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.75 $} {$Date: 2004/11/01 22:04:57 $}] 
+    {$Revision: 1.76 $} {$Date: 2004/11/01 22:40:10 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -5307,8 +5307,8 @@ proc EndoscopicEndPan {widget xcoord ycoord} {
     set y1 [lindex $position 1]
     set z1 [lindex $position 2]
 
-    set x2 [expr $x1 - [expr $dx * .1]]
-    set y2 [expr $y1 + [expr $dy * .1]]
+    set x2 [expr $x1 - [expr $dx * .01]]
+    set y2 [expr $y1 + [expr $dy * .01]]
     
     if {$x2 < [expr ceil($Endoscopic(flatColon,xMax))] } {
     
@@ -5754,7 +5754,7 @@ tempPointLocator Delete
 #-----------------------------------------------------------------------------------------
 
 proc EndoscopicAddTargetFromWorldCoordinates {sx sy sz cellId} {
-     global Endoscopic Point Fiducials Select Model View Slice
+     global Endoscopic Point Fiducials Select Model View Slice Volume Volumes
 
 #  If no path selected, do nothing.
 
@@ -5898,7 +5898,9 @@ proc EndoscopicLoadTargets { }  {
          set targetlist [FiducialsGetPointIdListFromName $targetlistname]
          set num [llength $targetlist] 
          set Endoscopic(selectedTarget) 1
+     
          EndoscopicSelectTarget $Endoscopic(selectedTarget)
+     
          set Endoscopic(totalTargets) $num
      
                 if {$Endoscopic(FlatWindows) != ""} {
@@ -6156,7 +6158,7 @@ proc EndoscopicDeleteActiveTarget {} {
 
 proc EndoscopicSelectTarget {sT} {
 
-    global Fiducials Endoscopic Point
+    global Fiducials Endoscopic Point Volume Volumes
 
 # select target in 3D
     if {$Endoscopic(path,activeId) == "None"} {
@@ -6176,10 +6178,11 @@ proc EndoscopicSelectTarget {sT} {
 
     set index [expr $index - 1]
     set pid [lindex $list $index]
-    
-    set fx [lindex [Point($pid,node) GetFXYX] 0]
-    set fy [lindex [Point($pid,node) GetFXYX] 1]
-    set fz [lindex [Point($pid,node) GetFXYX] 2]
+  
+    set point(xyz) [Point($pid,node) GetFXYZ]
+    set fx [lindex $point(xyz) 0]
+    set fy [lindex $point(xyz) 1]
+    set fz [lindex $point(xyz) 2]
     
     EndoscopicResetCameraDirection    
     EndoscopicUpdateVirtualEndoscope $Endoscopic(activeCam) [concat [Point($pid,node) GetFXYZ] [Point($pid,node) GetXYZ]]
