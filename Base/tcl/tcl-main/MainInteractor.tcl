@@ -152,7 +152,8 @@ proc MainInteractorBind {widget} {
     bind $widget <Right>             {MainInteractorKeyPress Right %W %x %y}
     bind $widget <Delete>            {MainInteractorKeyPress Delete %W %x %y}
     bind $widget <KeyPress-0>        {MainInteractorKeyPress 0 %W %x %y}
-
+    bind $widget <KeyPress-d>        {MainInteractorKeyPress d %W %x %y}
+    bind $widget <KeyPress-c>        {MainInteractorKeyPress c %W %x %y}
     # Added for Fiducials
     if {[IsModule Fiducials] == 1 || [IsModule Alignments] == 1} {
     bind $widget <KeyPress-p> {
@@ -341,7 +342,21 @@ proc MainInteractorKeyPress {key widget x y} {
                 }
             }
         }
-        "0" {
+        "d" {
+            switch $Module(activeID) {
+                "Editor" {
+                    EditorSetEffect EdDraw
+                }
+            }
+        }
+        "c" {
+            switch $Module(activeID) {
+               "Editor" {
+                   EditorSetEffect EdChangeIsland
+               }        
+            }
+         }
+         "0" {
             switch $Module(activeID) {
                 "Editor" {
                     switch $Editor(activeID) {
