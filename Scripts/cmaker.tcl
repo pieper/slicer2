@@ -117,7 +117,9 @@ foreach dir $modulePaths {
     if { [string match "vtk*" $moduleName] 
          && ![string match "*CustomModule*" $moduleName] 
          && [file exists $dir/cxx] 
-         && [file exists $dir/cxx/CMakeListsLocal.txt]} {
+         && [file exists $dir/cxx/CMakeListsLocal.txt]
+         && [llength [glob -nocomplain $dir/cxx/*.cxx]] > 0 } {
+
         if {[file exists [file join $dir cmaker_local.tcl]]} {
             lappend TARGETS $dir
         } else {
