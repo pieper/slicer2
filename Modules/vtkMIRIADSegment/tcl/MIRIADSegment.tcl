@@ -151,7 +151,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.15 $} {$Date: 2004/02/09 20:48:05 $}]
+        {$Revision: 1.16 $} {$Date: 2004/02/10 00:09:10 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -739,11 +739,12 @@ proc MIRIADSegmentSubTreeClassDefinition {SuperClass} {
         lcov $::MIRIADSegment(logcovs,$SuperClass) {
             EMSegmentChangeClass $class
             if {$::EMSegment(Cattrib,$class,IsSuperClass)} { 
-                MIRIADSegmentSubTreeClassDefinition $i ;# recursive call to this proc
+                MIRIADSegmentSubTreeClassDefinition $class ;# recursive call to this proc
             } else {
-                set ::EMSegment(ProbVolumeSelect) [MIRIADSegmentGetVolumeByName $probvol]                   EMSegmentProbVolumeSelectNode \
-                    Volume [MIRIADSegmentGetVolumeByName $probvol] \
-                    EMSegment EM-ProbVolumeSelect ProbVolumeSelect
+                set ::EMSegment(ProbVolumeSelect) [MIRIADSegmentGetVolumeByName $probvol]   
+                EMSegmentProbVolumeSelectNode \
+                Volume [MIRIADSegmentGetVolumeByName $probvol] \
+                EMSegment EM-ProbVolumeSelect ProbVolumeSelect
 
                 set index 0
                 for {set y 0} {$y < $::EMSegment(NumInputChannel)} {incr y} {
@@ -767,7 +768,10 @@ proc MIRIADSegmentSubTreeClassDefinition {SuperClass} {
 #-------------------------------------------------------------------------------
 proc MIRIADSegmentSetEMParameters {} {
 
-    set ::EMSegment(SegmentMode) 1
+    # Kilian: 08-Feb-04 To use Hierarchy Setting you currently need SegmentMode 2
+    # Generally this variable should neve be set without running  EMSegmentBuildGUI  
+    # Talk with Steve about it 
+    # set ::EMSegment(SegmentMode) 2
     set ::EMSegment(DebugVolume) 1
 
     #
@@ -824,14 +828,12 @@ proc MIRIADSegmentSetEMParameters {} {
     EMSegmentSumGlobalUpdate                  ;# Update SuperClass before it is set to BRAIN
 
     # b.) Define SuperClass parameters
-    EMSegmentChangeClass 3                    ;# Set Active Class 
-    set EMSegment(Cattrib,3,IsSuperClass) 1
-    puts "Hello1"
-    EMSegmentTransfereClassType 0 1           ;# Transfer ClassType to Superclass
-   puts "Hello2"
+    EMSegmentChangeClass 3                    ;# Set Active Class
+    set ::EMSegment(Cattrib,3,IsSuperClass) 1
+    EMSegmentTransfereClassType 1 1           ;# Transfer ClassType to Superclass
     # c.) Create subclasses 
     set ::EMSegment(NumClassesNew) 3      
-    EMSegmentCreateDeleteClasses 0 1          ;# 1. Parameter = ChangeGui; 
+    EMSegmentCreateDeleteClasses 1 1          ;# 1. Parameter = ChangeGui; 
                                               ;# 2. Parameter =  DeleteNode  
     # d.) Define CIM if necessary
     # foreach Name $EMSegment(CIMList) {
@@ -884,9 +886,8 @@ proc MIRIADSegmentSetEMParameters {} {
         {0.0049 -0.0019 -0.0019 0.0711} 
     }
 
-    MIRIADSegmentSubTreeClassDefinition 0 ;# call the recursive operation to set values
-
     EMSegmentChangeSuperClass 0 1 ;# change gui to show HEAD node
+    MIRIADSegmentSubTreeClassDefinition 0 ;# call the recursive operation to set values
 }
 
 
@@ -1001,7 +1002,9 @@ proc MIRIADSegmentGetVolumeByName {name} {
             return [DataGetIdFromNode $n]
         }
     }
-    return -1
+    # Steve Change it - otherwise I get errors bc there is no volume with ID -1 but ID = 0 => none Volume  
+    # return -1
+    return $::Volume(idNone)
 }
 
 #-------------------------------------------------------------------------------
