@@ -189,10 +189,15 @@ itcl::body isvolume::constructor {args} {
     pack $itk_interior.sframe -fill both -expand true
     set cs [$itk_interior.sframe childsite]
     set _tkrw $cs.tkrw
-    set _renwin ::renwin_$_name
-    catch "$_renwin Delete"
-    vtkRenderWindow $_renwin
-    vtkTkRenderWidget $_tkrw -width 256 -height 256 -rw $_renwin
+    if { $::tcl_platform(platform) != "windows" } {
+        set _renwin ::renwin_$_name
+        catch "$_renwin Delete"
+        vtkRenderWindow $_renwin
+        vtkTkRenderWidget $_tkrw -width 256 -height 256 -rw $_renwin
+    } else {
+        vtkTkRenderWidget $_tkrw -width 256 -height 256 
+        set _renwin [$this rw]
+    }
 
     pack $_tkrw -expand true -fill both
     bind $_tkrw <Expose> "$this expose"
@@ -853,7 +858,9 @@ itcl::body isvolume::set_dimensions  {dimensionI dimensionJ dimensionK} {
 # render windows and vtkTkRenderWidget
 
 itcl::body isvolume::pre_destroy {} {
-    catch "$_renwin Delete"
+    if { $::tcl_platform(platform) != "windows" } {
+        $_renwin Delete
+    }
     destroy $_tkrw 
     $_ren Delete
     $_mapper Delete
