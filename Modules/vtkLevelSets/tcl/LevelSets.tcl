@@ -168,7 +168,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.25 $} {$Date: 2004/04/13 21:19:14 $}]
+        {$Revision: 1.26 $} {$Date: 2004/04/14 14:25:03 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -186,6 +186,9 @@ proc LevelSetsInit {} {
     set LevelSets(InitVolIntensity0)          "Bright"
     set LevelSets(InitVolIntensity1)          "Dark"
     set LevelSets(InitVolIntensity)           $LevelSets(InitVolIntensity0)
+
+    set LevelSets(GreyScaleName) "LevelSetsResult"
+    set LevelSets(LabelMapName)  "LS_labelmap"
 
     set LevelSets(upsample_xcoeff)            "1"
     set LevelSets(upsample_ycoeff)            "1"
@@ -310,10 +313,12 @@ set Gui(myWLA) {  -font {helvetica 8} \
 proc LevelSetsUpdateGUI {} {
     global LevelSets Volume
     
+puts "LevelSetsUpdateGui \n"
+
     DevUpdateNodeSelectButton Volume LevelSets InputVol        InputVol        DevSelectNode
     DevUpdateNodeSelectButton Volume LevelSets InitVol         InitVol         DevSelectNode 
-    DevUpdateNodeSelectButton Volume LevelSets ResultVol       ResultVol       DevSelectNode 0 1 0
-    DevUpdateNodeSelectButton Volume LevelSets LabelResultVol  LabelResultVol  DevSelectNode 0 1 1
+#    DevUpdateNodeSelectButton Volume LevelSets ResultVol       ResultVol       DevSelectNode 0 1 0
+#    DevUpdateNodeSelectButton Volume LevelSets LabelResultVol  LabelResultVol  DevSelectNode 0 1 1
 }
 
 
@@ -825,9 +830,30 @@ proc LevelSetsBuildMainFrame {} {
     # Parameters->Input/Output Frame
     #-------------------------------------------
     set f $fMain.fIO
-    myDevAddSelectButton  LevelSets $f InputVol       "Input Volume"     Pack
-    myDevAddSelectButton  LevelSets $f ResultVol      "Greyscale Result" Pack
-    myDevAddSelectButton  LevelSets $f LabelResultVol "Labelmap result"  Pack
+    myDevAddSelectButton  LevelSets $f InputVol       "Input"     Pack
+    myDevAddSelectButton  LevelSets $f ResultVol      "Greyscale" Pack
+
+    eval {label $f.lGreyScaleName -text "GS name:"\
+          -width 12 -justify right } $Gui(myWTA)
+    eval {entry $f.eGreyScaleName -justify left -width 14 \
+          -textvariable  LevelSets(GreyScaleName)  } $Gui(myWEA)
+  
+    grid $f.lGreyScaleName $f.eGreyScaleName -pady $Gui(pad) -padx $Gui(pad) -sticky w
+
+
+    myDevAddSelectButton  LevelSets $f LabelResultVol "Labelmap"  Pack
+
+
+   eval {label $f.lLabelMapName -text "LM name:"\
+          -width 12 -justify right } $Gui(myWTA)
+    eval {entry $f.eLabelMapName -justify left -width 14 \
+          -textvariable  LevelSets(LabelMapName)  } $Gui(myWEA)
+
+    grid $f.lLabelMapName $f.eLabelMapName  -pady $Gui(pad) -padx $Gui(pad) -sticky w
+
+    DevUpdateNodeSelectButton Volume LevelSets ResultVol       ResultVol       DevSelectNode 0 1 0
+    DevUpdateNodeSelectButton Volume LevelSets LabelResultVol  LabelResultVol  DevSelectNode 0 1 1
+  
 
 
     #-------------------------------------------
@@ -1369,7 +1395,7 @@ proc LevelSetsPrepareResultVolume {}  {
 
     # Check for Greyscale result
     if {$v2 == -5 } {
-        set v2 [DevCreateNewCopiedVolume $v1 ""  "LevelSetsResult" ]
+        set v2 [DevCreateNewCopiedVolume $v1 ""  $LevelSets(GreyScaleName) ]
         set node [Volume($v2,vol) GetMrmlNode]
         Mrml(dataTree) RemoveItem $node 
         set nodeBefore [Volume($v1,vol) GetMrmlNode]
@@ -1389,7 +1415,7 @@ proc LevelSetsPrepareResultVolume {}  {
 
     # Check for Labelmap result
     if {$lm == -5 } {
-        set lm [DevCreateNewCopiedVolume $v1 ""  "LS_labelmap" ]
+        set lm [DevCreateNewCopiedVolume $v1 ""  $LevelSets(LabelMapName) ]
         set node [Volume($lm,vol) GetMrmlNode]
         Mrml(dataTree) RemoveItem $node 
         set nodeBefore [Volume($v1,vol) GetMrmlNode]
