@@ -30,11 +30,11 @@ JIT::JIT( int dimX, int dimY, int dimZ )
 
   _avg = new float [ dimX*dimY*dimZ ];
   assert( _avg!=NULL );
-  printf("allocation _avg = %d\n",dimX*dimY*dimZ*sizeof(float));
+  //printf("allocation _avg = %d\n",dimX*dimY*dimZ*sizeof(float));
 
   _phi = new float [ dimX*dimY*dimZ ];
   assert( _phi!=NULL );
-  printf("allocation _phi = %d\n",dimX*dimY*dimZ*sizeof(float));
+  //printf("allocation _phi = %d\n",dimX*dimY*dimZ*sizeof(float));
 
 
   float sigma = 1.0;
@@ -56,14 +56,14 @@ void JIT::setDepth(int depth)
   // max value of the volume
   this->depth=depth;
 
-  printf("jit.depth=%d\n",this->depth);
+  //printf("jit.depth=%d\n",this->depth);
 }
 void JIT::setSigma(float s)
 {
   // max value of the volume
   this->sigma=s;
 
-  printf("jit.sigma=%f\n",this->sigma);
+  //printf("jit.sigma=%f\n",this->sigma);
 
   float sum=0.0;
 
@@ -96,7 +96,7 @@ void JIT::setStdev(int stdev)
   // max value of the volume
   this->stdev=stdev;
 
-  printf("jit.stdev=%d\n",this->stdev);
+  //printf("jit.stdev=%d\n",this->stdev);
 }
 
 
@@ -108,7 +108,7 @@ void JIT::setInData( short* indata )
 
 JIT::~JIT()
 {
-  printf("JIT::~JIT()\n");
+  //printf("JIT::~JIT()\n");
   assert( initialized );
   
   delete [] status;
@@ -220,7 +220,7 @@ static void vtkFastMarchingExecute(vtkFastMarching *self,
                    vtkImageData *outData, short *outPtr, 
                    int outExt[6])
 {
-  printf("static void vtkFastMarchingExecute\n");
+  //printf("static void vtkFastMarchingExecute\n");
 
   double sumT=0.0;
   int n=0;
@@ -240,7 +240,7 @@ static void vtkFastMarchingExecute(vtkFastMarching *self,
     break;
     }
 
-  cout << "TOTAL: " << n << " iterations" << endl;
+  cout << "Fast Marching : " << n << " steps" << endl;
 
 }
 
@@ -265,7 +265,7 @@ void vtkFastMarching::setSeed(void)
       node[f.nodeIndex].T=dx/jit->value(f.nodeIndex);    
       
       insert( f );
-      printf("init tree %f \n",node[f.nodeIndex].T);
+      //printf("init tree %f \n",node[f.nodeIndex].T);
     }
 
   // init this here because we are going to starts a new
@@ -284,7 +284,7 @@ void vtkFastMarching::setSeed(void)
 // the datas data types.
 void vtkFastMarching::ExecuteData(vtkDataObject *)
 {
-  printf("vtkFastMarching::Execute\n");
+  //printf("vtkFastMarching::Execute\n");
 
   vtkImageData *inData = this->GetInput();
   vtkImageData *outData = this->GetOutput();
@@ -489,7 +489,7 @@ vtkFastMarching::vtkFastMarching()
 
 void vtkFastMarching::init(int dimX, int dimY, int dimZ)
 {
-  printf("vtkFastMarching::init(%d,%d,%d) %xd\n",dimX,dimY,dimZ,this);
+  //printf("vtkFastMarching::init(%d,%d,%d) %xd\n",dimX,dimY,dimZ,this);
 
   nNeighbors=6;
   dx=1.0;
@@ -506,7 +506,7 @@ void vtkFastMarching::init(int dimX, int dimY, int dimZ)
 
   node = new FMnode[ dimX*dimY*dimZ ];
   assert( node!=NULL );
-  printf("allocation: node=%d\n",dimX*dimY*dimZ*sizeof(FMnode) );
+  //printf("allocation: node=%d\n",dimX*dimY*dimZ*sizeof(FMnode) );
 
 
   int index=0;
@@ -529,25 +529,25 @@ void vtkFastMarching::init(int dimX, int dimY, int dimZ)
 
 void vtkFastMarching::setDepth(int depth) 
 {
-  printf("vtkFastMarching::setDepth(%d)\n",depth);
+  //printf("vtkFastMarching::setDepth(%d)\n",depth);
   jit->setDepth(depth);
 }
 
 void vtkFastMarching::setSigma(float s) 
 {
-  printf("vtkFastMarching::setSigma(%f)\n",s);
+  //printf("vtkFastMarching::setSigma(%f)\n",s);
   jit->setSigma(s);
 }
 
 void vtkFastMarching::setStdev(int stdev) 
 {
-  printf("vtkFastMarching::setStdev(%d)\n",stdev);
+  //printf("vtkFastMarching::setStdev(%d)\n",stdev);
   jit->setStdev(stdev);
 }
 
 void vtkFastMarching::setInData(short* data)
 {
-  printf("vtkFastMarching::setInData\n");
+  //printf("vtkFastMarching::setInData\n");
   jit->setInData(data);
 }
 
@@ -559,7 +559,7 @@ void vtkFastMarching::setOutData(short* data)
 void vtkFastMarching::setSeedAndLabel(int xSeed, int ySeed, int zSeed,
                       int label)
 {
-  printf("vtkFastMarching::setSeedAndLabel(%d,%d,%d,%d)\n",xSeed,ySeed,zSeed,label);
+  //printf("vtkFastMarching::setSeedAndLabel(%d,%d,%d,%d)\n",xSeed,ySeed,zSeed,label);
 
   this->xSeed=xSeed;
   this->ySeed=ySeed;
@@ -571,7 +571,7 @@ void vtkFastMarching::setSeedAndLabel(int xSeed, int ySeed, int zSeed,
 
 void vtkFastMarching::show( void )
 {
-  printf("vtkFastMarching::show\n");
+  //printf("vtkFastMarching::show\n");
   assert( initialized );
 
   /*  
@@ -638,7 +638,7 @@ void vtkFastMarching::show( void )
 
   VecInt points=knownPoints[nEvolutions];
 
-  printf("%d points to show\n",points.size());
+  //printf("%d points to show\n",points.size());
 
   
   for(n=0;n<points.size();n++)
@@ -780,7 +780,7 @@ void vtkFastMarching::show( void )
 vtkFastMarching::~vtkFastMarching()
 {
   // assert( initialized );
-  printf("vtkFastMarching::~vtkFastMarching() %xd\n",this);
+  //printf("vtkFastMarching::~vtkFastMarching() %xd\n",this);
 
 
   /* all the delete below are done by unInit() */
@@ -852,7 +852,7 @@ bool vtkFastMarching::updateEstim(int index)
       float std=sqrt( estM2/(double)estN-moy*moy );
       assert( estM2/(double)estN-moy*moy>0.0 );
 
-      printf("\nmoy=%f\tstd=%f ",moy,std);
+      //printf("\nmoy=%f\tstd=%f ",moy,std);
 
       if( (dt-moy) > 4.0*std )
     {
@@ -883,7 +883,7 @@ double vtkFastMarching::step( void )
 
   if( emptyTree() )
     {
-      cout << "emptyTree() is true here !" << endl;
+      //cout << "emptyTree() is true here !" << endl;
       return INF;
     }
 
@@ -896,7 +896,7 @@ double vtkFastMarching::step( void )
     {
       if( emptyTree() )
     {
-      cout << "emptyTree() is true !" << endl;
+      //cout << "emptyTree() is true !" << endl;
       return INF;
     }
 
@@ -1013,7 +1013,7 @@ double vtkFastMarching::computeT(int index)
   }
 
   if (A==0) {
-    printf("A==0 \n");
+    //printf("A==0 \n");
     /*
       printf("A=0, index=%d\n",index);
       printf("Txm=%f, Tym=%f, Txp=%f, Typ=%f\n",Txm, Tym, Txp, Typ);
@@ -1065,7 +1065,7 @@ void vtkFastMarching::setRAStoIJKmatrix
  float m31, float m32, float m33, float m34,
  float m41, float m42, float m43, float m44)
 {
-  printf("vtkFastMarching::setRAStoIJKmatrix\n");
+  //printf("vtkFastMarching::setRAStoIJKmatrix\n");
 
   this->m11=m11;
   this->m12=m12;
@@ -1093,7 +1093,7 @@ void vtkFastMarching::setRAStoIJKmatrix
 void vtkFastMarching::addMask( float centerX, float centerY, float centerZ,
                    float R, float theta, float phi )
 {
-  printf("vtkFastMarching::addMask(%f,%f,%f,%f,%f,%f)\n",centerX,centerY,centerZ,R,theta,phi);
+  //printf("vtkFastMarching::addMask(%f,%f,%f,%f,%f,%f)\n",centerX,centerY,centerZ,R,theta,phi);
 
   theta=M_PI*(theta+90)/180.0;
   phi=M_PI*phi/180.0;
@@ -1191,7 +1191,7 @@ void vtkFastMarching::back1Step( void )
 void vtkFastMarching::unInit( void )
 {
   assert( initialized );
-  printf("vtkFastMarching::unInit() %xd\n",this);
+  //printf("vtkFastMarching::unInit() %xd\n",this);
 
   delete [] node;
 

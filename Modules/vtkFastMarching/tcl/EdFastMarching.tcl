@@ -404,8 +404,8 @@ proc EdFastMarchingOutputMask {} {
         set R $EdFastMarching($mask.r)
 
         EdFastMarching(FastMarching) addMask $r $a $s $R $THETA $PHI
-        puts "mask $i"
-        puts "$r $a $s $THETA $PHI $R"
+        #puts "mask $i"
+        #puts "$r $a $s $THETA $PHI $R"
     }
     }
 }
@@ -513,7 +513,7 @@ proc EdFastMarchingEnter {} {
     # Make sure we're colored
     LabelsColorWidgets
 
-    puts "taille $Slice(idList)"
+    #puts "taille $Slice(idList)"
     foreach s $Slice(idList) {
         set dim$s [expr [Slicer GetOffsetRangeHigh $s]-[Slicer GetOffsetRangeLow  $s]]
     }
@@ -521,11 +521,11 @@ proc EdFastMarchingEnter {} {
     if {$Ed(EdFastMarching,initialized)==0} {
 
     set Ed(EdFastMarching,initialized) 1
-    puts "FM Init($dim0,$dim1,$dim2)"
+    #puts "FM Init($dim0,$dim1,$dim2)"
 
     # create the vtk object and initialize it
     vtkFastMarching EdFastMarching(FastMarching) 
-    puts "vtkFastMarching EdFastMarching(FastMarching)"
+    #puts "vtkFastMarching EdFastMarching(FastMarching)"
     EdFastMarching(FastMarching) init  [expr $dim0+1] [expr $dim2+1] [expr $dim1+1]
 
     }
@@ -578,7 +578,7 @@ proc EdFastMarchingExit {} {
     if {$Ed(EdFastMarching,initialized)==1} {
 
     set Ed(EdFastMarching,initialized) 0
-    puts "FM Destructor"
+    #puts "FM Destructor"
 
     EdFastMarching(FastMarching) unInit
     }    
@@ -630,7 +630,7 @@ proc EdFastMarchingToggleWaitingCenterClick {} {
 proc EdFastMarchingApply {} {
     global Ed Volume Label Gui EdFastMarching
 
-    puts " EdFastMarchingApply "
+    #puts " EdFastMarchingApply "
 
     set e EdFastMarching
 
@@ -655,16 +655,16 @@ proc EdFastMarchingApply {} {
     return
     }
 
-    puts "FM depth= $EdFastMarching(Depth) stdev=$EdFastMarching(Stdev)"
+    #puts "FM depth= $EdFastMarching(Depth) stdev=$EdFastMarching(Stdev)"
 
 
     # pass parameters to vtk object
     EdFastMarching(FastMarching) setDepth $EdFastMarching(Depth)
-    puts setDepth
+    #puts setDepth
     EdFastMarching(FastMarching) setStdev $EdFastMarching(Stdev)
-    puts setStdev
+    #puts setStdev
     EdFastMarching(FastMarching) setSigma $EdFastMarching(Sigma)
-    puts setSigma
+    #puts setSigma
 
     scan [Volume($v,node) GetRasToVtkMatrix] \
     "%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f" \
@@ -674,7 +674,7 @@ proc EdFastMarchingApply {} {
     m41 m42 m43 m44;
 
     if {$Ed($e,waitingCenterClick)==1} {
-    puts "Ed($e,waitingCenterClick)==1"
+    #puts "Ed($e,waitingCenterClick)==1"
 
     EdFastMarchingToggleWaitingCenterClick
 
@@ -694,7 +694,7 @@ proc EdFastMarchingApply {} {
     set EdFastMarching($mask.A) $A
     set EdFastMarching($mask.S) $S
 
-    puts "EdFastMarching(mask.R) $R"
+    #puts "EdFastMarching(mask.R) $R"
 
     EdFastMarchingChangedCoord
     
@@ -702,7 +702,7 @@ proc EdFastMarchingApply {} {
     }
 
 
-    puts "FM SetRAStoIJKmatrix $m11 $m12 $m13 $m14 $m21 $m22 $m23 $m24 $m31 $m32 $m33 $m34 $m41 $m42 $m43 $m44"
+    #puts "FM SetRAStoIJKmatrix $m11 $m12 $m13 $m14 $m21 $m22 $m23 $m24 $m31 $m32 $m33 $m34 $m41 $m42 $m43 $m44"
 
 
     EdFastMarching(FastMarching) setRAStoIJKmatrix $m11 $m12 $m13 $m14 $m21 $m22 $m23 $m24 $m31 $m32 $m33 $m34 $m41 $m42 $m43 $m44
@@ -715,7 +715,7 @@ proc EdFastMarchingApply {} {
     set y       $Ed($e,ySeed)
     set z       $Ed($e,zSeed)
     set label   $Label(label)
-    puts "FM $x $y $z $label"
+    #puts "FM $x $y $z $label"
 
     Ed(editor)  UseInputOn
 
