@@ -72,7 +72,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.25 $} {$Date: 2000/09/14 21:34:53 $}]
+		{$Revision: 1.26 $} {$Date: 2000/11/07 05:14:02 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""
@@ -227,7 +227,7 @@ proc MainModelsShouldBeAVtkClass {m} {
 	}
 
 	set Model($m,clipped) 0
-
+	set Model($m,displayScalarBar) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -483,6 +483,9 @@ proc MainModelsCreateGUI {f m} {
 	$men add check -label "Scalar Visibility" \
 		-variable Model($m,scalarVisibility) \
 		-command "MainModelsSetScalarVisibility $m; Render3D"
+	$men add check -label "Scalar Bar" \
+		-variable Model($m,displayScalarBar) \
+		-command "MainModelsToggleScalarBar $m; Render3D"
 	$men add command -label "Delete Model" -command "MainMrmlDeleteNode Model $m; Render3D"
 	$men add command -label "-- Close Menu --" -command "$men unpost"
 	bind $f.c$m <Button-3> "$men post %X %Y"
@@ -967,3 +970,76 @@ proc MainModelsRecallPresets {p} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC MainModelsRaiseScalarBar
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainModelsRaiseScalarBar { {m ""} } {
+
+    global viewWin Model
+    
+    if {$m == ""} {
+	set m $Model(activeID)
+    }
+
+    # if another model has the scalar bar, kill it
+    foreach sb $Model(idList) {
+	if {$sb != $m} {
+	    MainModelsRemoveScalarBar $sb
+	}
+    }
+
+    # make scalar bar
+    vtkScalarBarActor bar$m 
+    # save name in our array so can use info exists later
+    set Model($m,scalarBar) bar$m
+
+    # get lookup table
+    set lut [Model($m,mapper) GetLookupTable]
+
+    # set up scalar bar 
+    $Model($m,scalarBar) SetLookupTable $lut
+    $Model($m,scalarBar) SetMaximumNumberOfColors [$lut GetNumberOfColors]
+    set numlabels [expr [$lut GetNumberOfColors] + 1]
+    if {$numlabels > 10} {
+	set numlabels 10
+    }
+    $Model($m,scalarBar) SetNumberOfLabels $numlabels
+    
+    # add actor (bar) to scene
+    viewRen AddActor2D $Model($m,scalarBar)
+}
+
+
+proc MainModelsRemoveScalarBar { {m ""} } {
+
+    global viewWin Model
+
+    if {$m == ""} {
+	set m $Model(activeID)
+    }
+
+    # if there's a scalar bar, kill it.
+    if {[info exists Model($m,scalarBar)] == 1} {
+
+	# remove from vtk and tcl-lands!
+	viewRen RemoveActor $Model($m,scalarBar)
+	$Model($m,scalarBar) Delete
+	set Model($m,displayScalarBar) 0
+	unset Model($m,scalarBar)
+    }
+
+}
+
+proc MainModelsToggleScalarBar {m} {
+    
+    global Model
+
+    if {$Model($m,displayScalarBar) == 0} {
+	MainModelsRemoveScalarBar $m
+    } else {
+	MainModelsRaiseScalarBar $m
+    }    
+}
