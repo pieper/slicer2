@@ -23,7 +23,7 @@ th SetOutValue 2000
 th ThresholdBetween 1000 2000
 
 vtkImageCCA cca
-cca SetInput [thbeyond GetOutput]
+cca SetInput [th GetOutput]
 cca SetSeed 100 100 100
 cca SetOutputLabel 100
 cca SetBackground 155
