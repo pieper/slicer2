@@ -57,7 +57,7 @@ proc GuiInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo Gui \
-		{$Revision: 1.23 $} {$Date: 2001/02/19 17:53:20 $}]
+		{$Revision: 1.24 $} {$Date: 2001/04/04 21:13:16 $}]
 
 	if {$tcl_platform(platform) == "windows"} {
 		set Gui(pc) 1
@@ -399,7 +399,9 @@ proc CreatePopup {w title x y } {
 	toplevel $w -class Dialog -bg $Gui(inactiveWorkspace)
 	wm title $w $title
     wm iconname $w Dialog
-    wm transient $w .
+	if {$Gui(pc) == "0"} {
+		wm transient $w .
+	}
 	wm geometry $w +$x+$y
 	focus $w
 }

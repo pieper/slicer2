@@ -70,7 +70,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.31 $} {$Date: 2001/02/19 17:53:23 $}]
+		{$Revision: 1.32 $} {$Date: 2001/04/04 21:13:16 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""
@@ -409,7 +409,9 @@ proc MainModelsBuildGUI {} {
 	wm title $w "Models"
     wm iconname $w Dialog
     wm protocol $w WM_DELETE_WINDOW "wm withdraw $w"
-    wm transient $w .
+	if {$Gui(pc) == "0"} {
+		wm transient $w .
+	}
 	wm withdraw $w
 
 	# Close button

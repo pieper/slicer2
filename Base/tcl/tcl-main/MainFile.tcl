@@ -68,7 +68,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-		{$Revision: 1.24 $} {$Date: 2001/02/19 17:53:22 $}]
+		{$Revision: 1.25 $} {$Date: 2001/04/04 21:13:16 $}]
 
 	set File(filePrefix) data
 }
@@ -102,9 +102,11 @@ proc MainFileBuildOpenGUI {} {
 	set File(wOpen) $w
 	toplevel $w -class Dialog -bg $Gui(inactiveWorkspace)
 	wm title $w "Open File"
-    wm iconname $w Dialog
-    wm protocol $w WM_DELETE_WINDOW "wm withdraw $w"
-    wm transient $w .
+	wm iconname $w Dialog
+	wm protocol $w WM_DELETE_WINDOW "wm withdraw $w"
+	if {$Gui(pc) == "0"} {
+		wm transient $w .
+	}
 	wm withdraw $w
 
 	# Frames
@@ -169,7 +171,9 @@ proc MainFileBuildSaveAsGUI {} {
 	wm title $w "SaveAs File"
     wm iconname $w Dialog
     wm protocol $w WM_DELETE_WINDOW "wm withdraw $w"
-    wm transient $w .
+	if {$Gui(pc) == "0"} {
+		wm transient $w .
+	}
 	wm withdraw $w
 
 	# Frames

@@ -58,7 +58,7 @@ proc MainVolumesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.37 $} {$Date: 2001/04/02 20:19:59 $}]
+		{$Revision: 1.38 $} {$Date: 2001/04/04 21:13:17 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -436,7 +436,9 @@ proc MainVolumesBuildGUI {} {
 	wm title $w "Volumes"
 	wm iconname $w Dialog
 	wm protocol $w WM_DELETE_WINDOW "wm withdraw $w"
-	wm transient $w .
+	if {$Gui(pc) == "0"} {
+		wm transient $w .
+	}
 	wm withdraw $w
 	set f $w
 

@@ -64,7 +64,7 @@ proc LabelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.16 $} {$Date: 2001/02/19 17:53:37 $}]
+		{$Revision: 1.17 $} {$Date: 2001/04/04 21:13:44 $}]
 
 	# Props
 	set Label(nameBrowse) ""
@@ -150,7 +150,9 @@ proc LabelsBuildGUI {} {
 	wm title $w "Select a Color"
  	wm iconname $w Dialog
  	wm protocol $w WM_DELETE_WINDOW "wm withdraw $w"
- 	wm transient $w .
+	if {$Gui(pc) == "0"} {
+		wm transient $w .
+	}
 	wm withdraw $w
 
 	# Frames
