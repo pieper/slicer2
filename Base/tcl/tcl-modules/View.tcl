@@ -63,7 +63,7 @@ proc ViewInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.22 $} {$Date: 2002/01/26 23:34:33 $}]
+		{$Revision: 1.23 $} {$Date: 2002/02/26 16:07:20 $}]
 
 	set View(movie) 0
 	set View(movieDirectory) "/tmp"
@@ -223,11 +223,22 @@ called <I>movie.mpg</I>.
 	#-------------------------------------------
 	# View->Movie Frame
 	#-------------------------------------------
-	set f $fView.fMovie
 	
-    	eval {checkbutton $f.cMovie -text "Record Movie (3D View)" -variable View(movie) \
+
+
+
+
+        set f $fView.fMovie
+    	eval {checkbutton $f.cMovie -text "Save View" -variable View(movie) \
 		-width 22 -indicatoron 0 } $Gui(WCA)
+	TooltipAdd $f.cMovie "When this button is selected, you can save the 
+current View (with or without the slice windows) by 
+left-clicking in 3D View. If you leave this button selected, 
+a frame will be saved everytime the 3D View is rendered "
+	
 	eval {checkbutton $f.cMovieSlices -text "with slice windows (not ppm)" -variable View(movieSlices) -indicatoron 1 } $Gui(WCA)
+	TooltipAdd $f.cMovieSlices "When this button is selected, the frames saved will contain the 2D window slices"
+
 	eval {label $f.lFrame -text "Next frame #:"} $Gui(WLA)
 	eval {entry $f.eFrame -width 6 -textvariable View(movieFrame)} $Gui(WEA)
  
