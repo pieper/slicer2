@@ -83,9 +83,10 @@ proc VolBasicBuildGUI {parentFrame} {
     set f $parentFrame.fVolume
 
     #DevAddFileBrowse $f Volume firstFile "First Image File:" "VolumesSetFirst" "" ""  "Browse for the first Image file" 
-        DevAddFileBrowse $f Volume firstFile "First Image File:" "VolumesSetFirst" "" "\$Volume(DefaultDir)"  "Browse for the first Image file" 
+    # Open this file as an absolute, due to getting errors if opening a volume in a sub dir of the mrml dir
+    DevAddFileBrowse $f Volume firstFile "First Image File:" "VolumesSetFirst" "" "\$Volume(DefaultDir)" "Open" "Browse for the first Image file" "Browse to the first file in the volume" "Absolute"
 
-        bind $f.efile <Tab> "VolumesSetLast"
+    bind $f.efile <Tab> "VolumesSetLast"
 
     frame $f.fLast     -bg $Gui(activeWorkspace)
     frame $f.fHeaders  -bg $Gui(activeWorkspace)
