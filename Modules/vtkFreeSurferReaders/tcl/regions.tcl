@@ -756,11 +756,11 @@ proc QueryAtlas_mdemo { {demodata c:/pieper/bwh/data/MGH-Siemens15-SP.1-uw} } {
     set asegid [vtkFreeSurferReadersLoadVolume $demodata/mri/aseg/COR-.info 1]
     MainSlicesSetVolumeAll Fore $asegid
 
-    $this configure -talfile $demodata/mri/transforms/talairach.xfm
-    $this configure -arrow "$fstcldir/QueryA.html"
-    $this configure -arrowout "$fstcldir/QueryAout.html"
-    $this configure -umlsfile "$fstcldir/label2UMLS.txt"
-    $this configure -javapath [file normalize "$fstcldir/../talairach"]
+    r configure -talfile $demodata/mri/transforms/talairach.xfm
+    r configure -arrow "$fstcldir/QueryA.html"
+    r configure -arrowout "$fstcldir/QueryAout.html"
+    r configure -umlsfile "$fstcldir/label2UMLS.txt"
+    r configure -javapath [file normalize "$fstcldir/../talairach"]
 
     MainSlicesSetVisibilityAll 1
     RenderAll
