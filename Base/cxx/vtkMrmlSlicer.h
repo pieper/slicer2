@@ -476,6 +476,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   vtkImageReformat *GetBackReformat(int s) { return this->BackReformat[s]; }
   // << AT 11/02/01
 
+  //Hanifa
+  vtkImageReformat *GetForeReformat(int s) { return this->ForeReformat[s]; }
+
   // Description:
   // Update any part of this class that needs it.
   // Call this if you are using the First, Last filter pipeline
