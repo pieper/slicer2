@@ -216,19 +216,19 @@ proc EMSegmentAlgorithmStart { } {
           EMSegment(vtkEMSegment) SetPrintIntermediateDir $EMSegment(PrintIntermediateDir)
           EMSegment(vtkEMSegment) SetNumEMShapeIter  $EMSegment(EMShapeIter)  
 
-      # This is for debuging purposes so extra volumes can be loaded into the segmentation process 
-      if {$EMSegment(DebugVolume)} {
-          set index 1 
-          set foundindex 0
-          while {$foundindex > -1} {
-          set foundindex [lsearch -exact $EMSegment(VolumeNameList)  EMDEBUG${index}] 
-          if {$foundindex > -1} {
-              EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume([lindex $Volume(idList) $foundindex],vol) GetOutput]
-              incr NumInputImagesSet
-              incr index
+          # This is for debuging purposes so extra volumes can be loaded into the segmentation process 
+          if {$EMSegment(DebugVolume)} {
+              set index 1 
+              set foundindex 0
+              while {$foundindex > -1} {
+                  set foundindex [lsearch -exact $EMSegment(VolumeNameList)  EMDEBUG${index}] 
+                  if {$foundindex > -1} {
+                      EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume([lindex $Volume(idList) $foundindex],vol) GetOutput]
+                      incr NumInputImagesSet
+                      incr index
+                  }
+              }
           }
-          }
-      }
        } else {
           EMSegmentSetVtkClassSettingOld
        }
