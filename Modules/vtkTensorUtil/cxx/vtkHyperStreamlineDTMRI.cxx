@@ -10,7 +10,7 @@
 // the superclass had these classes in the vtkHyperStreamline.cxx file:
 #include "vtkHyperPointandArray.cxx"
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 // Construct object with initial starting position (0,0,0); integration step 
@@ -111,15 +111,16 @@ void vtkHyperStreamlineDTMRI::Execute()
   vtkPointData *pd=input->GetPointData();
   vtkDataArray *inScalars;
   vtkDataArray *inTensors;
-  float *tensor;
+  double *tensor;
   vtkHyperPoint *sNext, *sPtr;
   int i, j, k, ptId, subId, iv, ix, iy;
   vtkCell *cell;
-  float ev[3], xNext[3];
-  float d, step, dir, tol2, p[3];
-  float *w;
-  float dist2;
-  float closestPoint[3];
+  float ev[3];
+  double xNext[3];
+  double d, step, dir, tol2, p[3];
+  double *w;
+  double dist2;
+  double closestPoint[3];
   float *m[3], *v[3];
   float m0[3], m1[3], m2[3];
   float v0[3], v1[3], v2[3];
@@ -140,7 +141,7 @@ void vtkHyperStreamlineDTMRI::Execute()
     vtkErrorMacro(<<"No tensor data defined!");
     return;
     }
-  w = new float[input->GetMaxCellSize()];
+  w = new double[input->GetMaxCellSize()];
 
   inScalars = pd->GetScalars();
 
