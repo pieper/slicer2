@@ -190,24 +190,26 @@ proc tarup { {destdir "auto"} } {
     #
     # grab the shared libraries and put them in the vtk bin dir
     #
+    puts " -- copying shared development libraries"
     set sharedLibDir $destdir/Lib/$::env(BUILD)/VTK-build/bin
     switch $::tcl_platform(os) {
       "SunOS" {
-        set sharedLibs [list libgcc_s.so.1 libstdc++.so.3]
-        set sharedSearchPath $::env(LD_LIBRARY_PATH)
+          set sharedLibs [list libgcc_s.so.1 libstdc++.so.3]
+          set sharedSearchPath [split $::env(LD_LIBRARY_PATH) ":"]
       }
       "Linux" {
-        set sharedLibs [list ld-2.2.5.so libpthread-0.9.so libstdc++-3-libc6.2-2-2.10.0.so]
-        set sharedSearchPath $::env(LD_LIBRARY_PATH)
+#         set sharedLibs [list ld-2.2.5.so libpthread-0.9.so libstdc++-3-libc6.2-2-2.10.0.so]
+          set sharedLibs [list libstdc++-libc6.2-2.so.3]
+          set sharedSearchPath [split $::env(LD_LIBRARY_PATH) ":"]
       }
       "Darwin" {
-        set sharedLibs [list ]
-        set sharedSearchPath $::env(DYLD_LIBRARY_PATH)
+          set sharedLibs [list ]
+          set sharedSearchPath [split $::env(DYLD_LIBRARY_PATH) ":"]
       }
       default {
-        set sharedLibs [list msvci70d.dll msvci70.dll msvcp70d.dll msvcp70.dll msvcr70d.dll msvcr70.dll]
-        set sharedSearchPath [concat [split $::env(PATH) ";"] $::env(LD_LIBRARY_PATH)]
-        set sharedLibDir $destdir/Lib/$::env(BUILD)/VTK-build/bin/$::env(VTK_BUILD_TYPE)
+          set sharedLibs [list msvci70d.dll msvci70.dll msvcp70d.dll msvcp70.dll msvcr70d.dll msvcr70.dll]
+          set sharedSearchPath [concat [split $::env(PATH) ";"] $::env(LD_LIBRARY_PATH)]
+          set sharedLibDir $destdir/Lib/$::env(BUILD)/VTK-build/bin/$::env(VTK_BUILD_TYPE)
       }
     }
     foreach slib $sharedLibs { 
@@ -216,6 +218,7 @@ proc tarup { {destdir "auto"} } {
         if {![file exists $sharedLibDir/$slib]} {
             set slibFound 0
             foreach spath $sharedSearchPath { 
+                if {$::Module(verbose)} { puts "checking dir $spath" }
                 if {!$slibFound && [file exists $spath/$slib]} { 
                     if {$::Module(verbose)} { puts "found $slib in dir $spath, copying to $sharedLibDir" }
                     # copy it into vtk bin dir
@@ -226,7 +229,7 @@ proc tarup { {destdir "auto"} } {
             if {!$slibFound} {
                 puts "WARNING: $slib not found, tarup may be incomplete. Place it in one of these directories and rerun tarup: \n $sharedSearchPath"
             }
-        } else {
+        } else { 
             if {$::Module(verbose)} { puts "$slib is already in $sharedLibDir" } 
         }
     }
