@@ -37,7 +37,7 @@
 #   AGBuildExpertFrame
 #   AGEnter
 #   AGExit
-#   AGUpdateGUI
+#   AGUpdateMRML
 #   AGCount
 #   AGShowFile
 #   AGBindingCallback
@@ -88,8 +88,8 @@ proc AGInit {} {
     #   row2,tab = like row1 
     #
     set m AG
-    set Module($m,row1List) "Help Main Expert"
-    set Module($m,row1Name) "{Help} {Main} {Expert} "
+    set Module($m,row1List) "Help Main Transform Expert"
+    set Module($m,row1Name) "{Help} {Main} {Transform} {Expert} "
     set Module($m,row1,tab) Main
 
     # Define Procedures
@@ -129,7 +129,7 @@ proc AGInit {} {
     set Module($m,procGUI)   AGBuildGUI
     set Module($m,procEnter) AGEnter
     set Module($m,procExit)  AGExit
-    set Module($m,procMRML)  AGUpdateGUI
+    set Module($m,procMRML)  AGUpdateMRML
 
     # Define Dependencies
     #------------------------------------
@@ -147,7 +147,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2004/11/04 22:35:55 $}]
+        {$Revision: 1.4 $} {$Date: 2004/11/23 23:14:38 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -158,17 +158,15 @@ proc AGInit {} {
     #
     set AG(TestReadingWriting) 0   
     set AG(CountNewResults) 1
-    set AG(InputVolSource2)      $Volume(idNone)
-    set AG(InputVolTarget2)      $Volume(idNone)
+    set AG(InputVolSource2) $Volume(idNone)
+    set AG(InputVolTarget2) $Volume(idNone)
 
-    set AG(InputVolSource)      $Volume(idNone)
-    set AG(InputVolTarget)      $Volume(idNone)
-    set AG(InputVolMask)      $Volume(idNone)
-    set AG(ResultVol)     $Volume(idNone)
-    set AG(ResultVol2)     $Volume(idNone)
-    #Set AG(Initial_tfm)   $Transform(idNone)
-    
-    #set AG(Dimension)     "3"
+    set AG(InputVolSource)  $Volume(idNone)
+    set AG(InputVolTarget)  $Volume(idNone)
+    set AG(InputVolMask)    $Volume(idNone)
+    set AG(ResultVol)       -5
+    set AG(ResultVol2)      $Volume(idNone)
+    set AG(CoregVol)        $Volume(idNone)
 
     #General options
 
@@ -177,8 +175,6 @@ proc AGInit {} {
    
     set AG(Linear)    "1"
     set AG(Warp)      "1"
-    set AG(Initial_tfm)  "0"
-     #? or{}
     set AG(Verbose)  "2"
     set AG(Scale)    "-1"
     set AG(2D)        "0"
@@ -187,9 +183,14 @@ proc AGInit {} {
     set AG(Linear_group)  "2"
     set AG(Gcr_criterion) "1"
    
-
-
-
+    # Initial Transform options
+    set AG(Initial_tfm) "0"
+    set AG(Initial_lin)  "0"
+    set AG(Initial_grid) "0"
+    set AG(Initial_prev) "0"
+    set AG(Initial_lintxt) "Off"
+    set AG(Initial_gridtxt) "Off"
+    set AG(Initial_prevtxt) "Off"
 
     #Demons options
     set AG(Tensors)  "0"
@@ -199,7 +200,8 @@ proc AGInit {} {
     set AG(Level_min)  "-1"
     set AG(Level_max)  "-1"
     set AG(Epsilon)    "1e-3"
-    set AG(Stddev_min) [expr sqrt(-1./(2.*log(.5)))]
+    set AG(Stddev_min) "0.85"
+    # [expr sqrt(-1./(2.*log(.5)))] = 0.85
     set AG(Stddev_max) "1.25"
     set AG(SSD)    "1" 
 
@@ -236,7 +238,7 @@ proc AGInit {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC AGUpdateGUI
+# .PROC AGUpdateMRML
 # 
 # This procedure is called to update the buttons
 # due to such things as volumes or models being added or subtracted.
@@ -247,7 +249,7 @@ proc AGInit {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc AGUpdateGUI {} {
+proc AGUpdateMRML {} {
     global AG Volume
     
     DevUpdateNodeSelectButton Volume AG InputVolSource   InputVolSource   DevSelectNode
@@ -256,10 +258,19 @@ proc AGUpdateGUI {} {
     DevUpdateNodeSelectButton Volume AG InputVolSource2   InputVolSource2   DevSelectNode
     DevUpdateNodeSelectButton Volume AG InputVolTarget2   InputVolTarget2   DevSelectNode
  
-
     DevUpdateNodeSelectButton Volume AG ResultVol  ResultVol  DevSelectNode  0 1 1
-
     DevUpdateNodeSelectButton Volume AG ResultVol2  ResultVol2  DevSelectNode 0 1 1
+
+    if {[catch "Volume($AG(ResultVol),node) GetName"]==1} {
+      set AG(ResultVol) -5
+    }
+    if {[catch "Volume($AG(ResultVol2),node) GetName"]==1} {
+      set AG(ResultVol2) -5
+    }
+    DevSelectNode Volume $AG(ResultVol) AG ResultVol ResultVol
+    DevSelectNode Volume $AG(ResultVol2) AG ResultVol2 ResultVol2
+    
+    DevUpdateNodeSelectButton Volume AG CoregVol CoregVol DevSelectNode 
 }
 
 
@@ -312,7 +323,7 @@ proc AGBuildGUI {} {
 
     AGBuildMainFrame
 
-
+    AGBuildTransformFrame
 }
 
 #-------------------------------------------------------------------------------
@@ -343,7 +354,8 @@ proc AGBuildHelpFrame {} {
     <LI><B> Input Mask  :</B> 
     <P> 
 
-    If the Soruce channel 2 or Target channel 2 is empty, then only one channel is used for the registration. <P>
+    If the Source channel 2 or Target channel 2 is empty, then only one channel is used for the registration. <P>
+    If only an initial transform has to be applied to the data, select for source and target the same volume. <P>
 "
     regsub -all "\n" $help {} help
     MainHelpApplyTags AG $help
@@ -369,64 +381,220 @@ proc AGBuildMainFrame {} {
     #-------------------------------------------
     set fMain $Module(AG,fMain)
     set f $fMain
-  
-    frame $f.fIO               -bg $Gui(activeWorkspace) -relief groove -bd 3
-    #frame $f.fDimension        -bg $Gui(activeWorkspace)
-    #frame $f.fThreshold        -bg $Gui(activeWorkspace)
-    #frame $f.fIterations       -bg $Gui(activeWorkspace)
-    #frame $f.fNumberOfThreads  -bg $Gui(activeWorkspace)
-    #frame $f.fTruncNegValues   -bg $Gui(activeWorkspace)
-    frame $f.fRun              -bg $Gui(activeWorkspace)
 
-#  $f.fDimension  
-#  $f.fTruncNegValues 
-#     $f.fThreshold  \
-#      $f.fIterations \
-#     $f.fNumberOfThreads \
-#       
+    set f $fMain.fTitle
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
+    DevAddLabel $f.lnumber "Main screen"
+    $f.lnumber configure -font {helvetica 10 bold}
+    pack $f.lnumber -side top -padx $Gui(pad) -pady $Gui(pad) -anchor w
 
-    pack  $f.fIO \
-          $f.fRun \
+    set f $fMain  
+    set volnames {"Target1" "Target2" "Source1" "Source2" "Mask" "Result1" "Result2"}
+    foreach v $volnames {
+      frame $f.f$v -bg $Gui(activeWorkspace)  -bd 3
+    }
+
+
+    pack  $f.fTarget1 $f.fSource1 $f.fResult1 $f.fMask \
+          $f.fTarget2 $f.fSource2 $f.fResult2 \
       -side top -padx 0 -pady 1 -fill x
     
     #-------------------------------------------
     # Parameters->Input/Output Frame
     #-------------------------------------------
-    set f $fMain.fIO
+#    set f $fMain.fIO
     
     # Add menus that list models and volumes
-    DevAddSelectButton  AG $f InputVolTarget "Input Target Volume Channel 1" Grid
-    DevAddSelectButton  AG $f InputVolTarget2 "Input Target Volume Channel 2" Grid
-    DevAddSelectButton  AG $f InputVolSource "Input Source Volume Channel 1" Grid
-    DevAddSelectButton  AG $f InputVolSource2 "Input Source Volume Channel 2" Grid  
-    DevAddSelectButton  AG $f InputVolMask "Input Mask Volume" Grid
+    set f $fMain.fTarget1
+    DevAddSelectButton  AG $f InputVolTarget "Target Channel 1 " Pack \
+    "Select channel1 of the input target volume." 20
+    set f $fMain.fTarget2
+    DevAddSelectButton  AG $f InputVolTarget2 "Target Channel 2 " Pack \
+    "Select channel 2 of the input target volume (optional)." 20
+    set f $fMain.fSource1
+    DevAddSelectButton  AG $f InputVolSource "Source Channel 1" Pack \
+    "Select channel 1 of the input source volume." 20
+    set f $fMain.fSource2
+    DevAddSelectButton  AG $f InputVolSource2 "Source Channel 2" Pack \
+    "Select channel 2 of the input source volume (optional)." 20  
+    set f $fMain.fMask
+    DevAddSelectButton  AG $f InputVolMask "Mask                   " Pack \
+    "Select input mask volume (optional)." 20
+    set f $fMain.fResult1
+    DevAddSelectButton  AG $f ResultVol "Result Channel 1 " Pack \
+    "Select channel 1 of the result volume" 20
+    set f $fMain.fResult2
+    DevAddSelectButton  AG $f ResultVol2 "Result Channel 2 " Pack \
+    "Select channel 2 of the result volume (optional)." 20
+    
 
-    DevAddSelectButton  AG $f ResultVol "Result Volume Channel 1" Grid
-    DevAddSelectButton  AG $f ResultVol2 "Result Volume channel 2" Grid
+    set f $fMain.fMethod
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx $Gui(pad) -pady $Gui(pad) -fill x 
 
+    DevAddLabel $f.l "Method:"
+    pack $f.l -side left -padx $Gui(pad) -pady 0
 
+    eval {label $f.lInitial} $Gui(WLA)
+    eval {checkbutton $f.cInitialLabel \
+        -text  "Initial" -command AGTurnInitialOff -variable AG(Initial_tfm) \
+         -indicatoron 0 } $Gui(WCA)
+    pack $f.lInitial $f.cInitialLabel -side left 
+    TooltipAdd $f.cInitialLabel "Click to set initial transformation(s) off."
+
+    eval {label $f.lLinear} $Gui(WLA)
+    eval {checkbutton $f.cLinearLabel \
+        -text  "Linear" -variable AG(Linear) \
+         -indicatoron 0 } $Gui(WCA)
+    pack $f.lLinear $f.cLinearLabel -side left -padx 2
+    TooltipAdd $f.cLinearLabel "Perform a linear registration. Can be combined with non-linear."
+ 
+    eval {label $f.lNonLinear} $Gui(WLA)
+  
+    eval {checkbutton $f.cNonLinearLabel \
+        -text "Non-linear" -variable AG(Warp) \
+        -indicatoron 0 } $Gui(WCA)
+    pack $f.lInitial $f.lNonLinear $f.cNonLinearLabel -side left  
+    TooltipAdd $f.cNonLinearLabel "Perform a non-linear registration. Can be combined with linear."
 
     #-------------------------------------------
     # Parameters->Run Frame
     #-------------------------------------------
     set f $fMain.fRun
-    
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx 0 -pady $Gui(pad) -fill x
     DevAddButton $f.bRun "Run" "RunAG"
+    DevAddButton $f.bColor "Color comparison" "AGColorComparison"
+    DevAddButton $f.bTestBatch "Batch co-registration" "AGBatchProcessResampling"
+    pack $f.bRun  $f.bColor -pady $Gui(pad)
+    TooltipAdd $f.bRun "Run the registration process."
+    TooltipAdd $f.bColor "Create image with result channel 1 as magenta and target channel 1 as green channel."
+    #TooltipAdd $f.bTestBatch "Co-register all loaded volumes using the transformation just computed."
 
-    DevAddButton $f.bTestWriting "Test Write vtkImageData" "AGTestWriting"
-    
-    DevAddButton $f.bTestReading "Test Read vtkImageData" " AGTestReadvtkImageData"
-    DevAddButton $f.bTestBatch "Test batch transformation" "AGBatchProcessResampling"
+    set f $fMain.fCoregbutton
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx 0 -pady 2 -fill x
+    DevAddSelectButton  AG $f CoregVol "Volume for co-registration" Grid \
+    "Select volume in alignment with source volume to co-register to target." 20
 
-    #DevAddButton $f.bNormalize "Normalize" "NormalizeAG"
+    set f $fMain.fDoCoreg
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx 0 -pady 2 -fill x
+    DevAddButton $f.bCoregister "Co-register" "AGCoregister"
+    TooltipAdd $f.bCoregister "Run coregistration based on previous computed transformation."
+    pack $f.bCoregister -pady 0
+}
+# end AGBuildMainFrame
+
+#-------------------------------------------------------------------------------
+# .PROC AGBuildTransformFrame
+#
+#   Create the Transform frame
+# .END
+#-------------------------------------------------------------------------------
+proc AGBuildTransformFrame {} {
+    global Gui AG Module Volume Matrix
+
+    set fTransform $Module(AG,fTransform)
+  
+    set f $fTransform.fTitle
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
+    DevAddLabel $f.lnumber "Transforms"
+    $f.lnumber configure -font {helvetica 10 bold}
+    pack $f.lnumber -side top -padx $Gui(pad) -pady $Gui(pad) -anchor w
+
     
-    pack $f.bRun  $f.bTestBatch
-    #$f.bTestWriting  $f.bTestReading
-    #$f.bNormalize
+    #--------------------------------------------
+    # Transforms -> Initial Transforms
+    #--------------------------------------------
+    
+    set f $fTransform.fInitial
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx $Gui(pad) -pady 2 -fill x -anchor w
+    DevAddLabel $f.linittfms "Initial Transforms"
+    $f.linittfms configure -font {helvetica 9 bold}
+    pack $f.linittfms -side top -padx $Gui(pad) -pady 2 -anchor w
+
+    set f $fTransform.fInitialLinear
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx $Gui(pad) -pady 0 -anchor w
+
+    eval {label $f.lActive -text "Linear"} $Gui(WLA)
+    eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 15 \
+            -menu $f.mbActive.m} $Gui(WMBA)
+    eval {menu $f.mbActive.m} $Gui(WMA)
+    pack $f.lActive $f.mbActive -side left -padx $Gui(pad)
+    TooltipAdd $f.lActive "Select linear transformation matrix for initial transform. Use Alignments-module to display/edit linear matrix."
+
+    # Append widgets to list that gets refreshed during UpdateMRML
+    lappend Matrix(mbActiveList) $f.mbActive
+    lappend Matrix(mActiveList)  $f.mbActive.m
+
+    eval {checkbutton $f.cInitLin \
+        -textvariable AG(Initial_lintxt) -command "AGUpdateInitial lin" \
+    -variable AG(Initial_lin) -indicatoron 0 } $Gui(WCA) {-width 4}
+    pack $f.cInitLin -side left -padx 0 -pady 0
+    TooltipAdd $f.cInitLin "Set initial linear transform on/off."
+
+    set f $fTransform.fInitialGrid
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx $Gui(pad) -pady 2 
+    DevAddFileBrowse $f AG InitGridTfmName "Load VTK grid-transform" "" "vtk"
+    eval {label $f.lInitialGrid} $Gui(WLA)
+    TooltipAdd $f.lInitialGrid "Select 3 scalar component VTK-file for initial non-linear transform."
+    DevAddLabel $f.lSpace " "
+    pack $f.lSpace -side left -padx 40 -pady 0
+
+    eval {checkbutton $f.cInitGrid \
+        -textvariable AG(Initial_gridtxt) -command "AGUpdateInitial grid" \
+    -variable AG(Initial_grid) -indicatoron 0 } $Gui(WCA) {-width 4}
+    pack $f.cInitGrid -side left -padx 0 -pady 0
+    TooltipAdd $f.cInitGrid "Set initial grid transform on/off."
+
+    set f $fTransform.fInitialCalc
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx $Gui(pad) -pady $Gui(pad) -anchor w
+
+    DevAddLabel $f.lInitPrev "Previous"
+    pack $f.lInitPrev -side left -padx $Gui(pad) -padx $Gui(pad)
+    eval {checkbutton $f.cInitPrev \
+        -textvariable AG(Initial_prevtxt) -command "AGUpdateInitial prev" \
+    -variable AG(Initial_prev) -indicatoron 0 } $Gui(WCA) {-width 4}
+    pack $f.cInitPrev -side left -padx 0 -pady 0
+    TooltipAdd $f.cInitPrev "Set on/off to use previous calculated transform as initial transform."
+
+    #--------------------------------------------
+    # Transforms -> Save Transforms
+    #--------------------------------------------
+
+    set f $fTransform.fSaveTfm
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx $Gui(pad) -pady 2 -fill x -anchor w
+    DevAddLabel $f.lsavetfm "Save Transforms"
+    $f.lsavetfm configure -font {helvetica 9 bold}
+    pack $f.lsavetfm -side top -padx $Gui(pad) -pady 2 -anchor w
+
+
+    set f $fTransform.fCreateLin
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
+    DevAddButton $f.bCreateLin "Create lin.tfm. matrix" "AGCreateLinMat"
+    pack $f.bCreateLin  
+    TooltipAdd $f.bCreateLin "Save a just computed linear transform as a matrix in the main data view."
+    
+    set f $fTransform.fSaveGrid
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx $Gui(pad) -pady 0 
+    DevAddButton $f.bSaveGridTfm "Save VTK grid-transform" {AGSaveGridTransform}
+    pack $f.bSaveGridTfm -side top -padx $Gui(pad) -pady $Gui(pad)
+    TooltipAdd $f.bSaveGridTfm "Save just computed non-linear transform to file."
   
 
 }
-# end AGBuildMainFrame
+# end AGBuildTransformFrame
+
 
 
 #-------------------------------------------------------------------------------
@@ -439,7 +607,17 @@ proc AGBuildExpertFrame {} {
     global Gui AG Module
 
     set fExpert $Module(AG,fExpert)
-    set f $fExpert
+
+    set f $fExpert.fTitle
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
+    DevAddLabel $f.lnumber "Expert settings"
+    $f.lnumber configure -font {helvetica 10 bold}
+    pack $f.lnumber -side top -padx $Gui(pad) -pady $Gui(pad) -anchor w
+
+    set f $fExpert.fExp
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
      
     # Use option menu 
     #set  menuLRoptions [tk_optionMenu $f.linearRegistrationOptions AG(LinearRegistrationOption) {do not compute linear transformation} one two three] 
@@ -451,38 +629,38 @@ proc AGBuildExpertFrame {} {
 # constrain for linear registration.    
    eval {label $f.lLR -text "Linear registration"} $Gui(WLA)
     set AG(LRName) "affine group"
-    eval {menubutton $f.mbLR -text "$AG(LRName)" -relief raised -bd 2 -width 20 \
+    eval {menubutton $f.mbLR -text "$AG(LRName)" -relief raised -bd 2 -width 15 \
         -menu $f.mbLR.m} $Gui(WMBA)
     eval {menu $f.mbLR.m} $Gui(WMA)
     set AG(mbLR) $f.mbLR
     set m $AG(mbLR).m
-   foreach v "{do not compute linear transformation} {translation} {rigid group} {similarity group} {affine group}" {
+   foreach v "{translation} {rigid group} {similarity group} {affine group}" {
        $m add command -label $v -command "ModifyOption LinearRegistration {$v}"
    }
     TooltipAdd $f.mbLR "Choose how to restrict linear registration." 
     #pack $f.lLR $f.mbLR  -padx $Gui(pad) -side left -anchor w   
-   grid $f.lLR  $f.mbLR -pady 2 -padx $Gui(pad) -sticky e
+   grid $f.lLR  $f.mbLR -pady 2 -padx $Gui(pad) -sticky w
 
 
 # warp and force
     eval {label $f.lWarp -text "Warp"} $Gui(WLA)
-    set AG(WarpName) "Warp with force demons"
-    eval {menubutton $f.mbWarp -text "$AG(WarpName)" -relief raised -bd 2 -width 20 \
+    set AG(WarpName) "demons"
+    eval {menubutton $f.mbWarp -text "$AG(WarpName)" -relief raised -bd 2 -width 15 \
         -menu $f.mbWarp.m} $Gui(WMBA)
     eval {menu $f.mbWarp.m} $Gui(WMA)
     set AG(mbWarp) $f.mbWarp
     set m $AG(mbWarp).m
-   foreach v "{No warp} {Warp with force demons} {warp with force optical flow}" {
+   foreach v "{demons} {optical flow}" {
        $m add command -label $v -command "ModifyOption Warp {$v}"
    }
     TooltipAdd $f.mbWarp "Choose how to warp." 
     #pack $f.lWarp $f.mbWarp -after $f.lLR  -padx $Gui(pad) -side left -anchor w   
-    grid $f.lWarp $f.mbWarp   -pady 2 -padx $Gui(pad) -sticky e
+    grid $f.lWarp $f.mbWarp   -pady 2 -padx $Gui(pad) -sticky w
 
 # Intensity transformation
     eval {label $f.lIntensityTFM -text "Intensity Transform"} $Gui(WLA)
     set AG(IntensityTFMName) "mono functional"
-    eval {menubutton $f.mbIntensityTFM -text "$AG(IntensityTFMName)" -relief raised -bd 2 -width 20 \
+    eval {menubutton $f.mbIntensityTFM -text "$AG(IntensityTFMName)" -relief raised -bd 2 -width 15 \
         -menu $f.mbIntensityTFM.m} $Gui(WMBA)
     eval {menu $f.mbIntensityTFM.m} $Gui(WMA)
     set AG(mbIntensityTFM) $f.mbIntensityTFM
@@ -491,12 +669,12 @@ proc AGBuildExpertFrame {} {
        $m add command -label $v -command "ModifyOption IntensityTFM {$v}"
    }
     TooltipAdd $f.mbIntensityTFM "Choose intensity transform typehow."  
-    grid $f.lIntensityTFM $f.mbIntensityTFM   -pady 2 -padx $Gui(pad) -sticky e
+    grid $f.lIntensityTFM $f.mbIntensityTFM   -pady 2 -padx $Gui(pad) -sticky w
 
 # Criterion
     eval {label $f.lCriterion -text "Criterion"} $Gui(WLA)
     set AG(CriterionName) "GCR L1 norm"
-    eval {menubutton $f.mbCriterion -text "$AG(CriterionName)" -relief raised -bd 2 -width 20 \
+    eval {menubutton $f.mbCriterion -text "$AG(CriterionName)" -relief raised -bd 2 -width 15 \
         -menu $f.mbCriterion.m} $Gui(WMBA)
     eval {menu $f.mbCriterion.m} $Gui(WMA)
     set AG(mbCriterion) $f.mbCriterion
@@ -505,13 +683,46 @@ proc AGBuildExpertFrame {} {
        $m add command -label $v -command "ModifyOption Criterion {$v}"
    }
     TooltipAdd $f.mbCriterion "Choose the criterion." 
-    grid $f.lCriterion $f.mbCriterion   -pady 2 -padx $Gui(pad) -sticky e
+    grid $f.lCriterion $f.mbCriterion   -pady 2 -padx $Gui(pad) -sticky w
 
+
+
+# checkbox type options:  not use SSD, 2D registration, estimate bias, last 6 channels of data are tensors
+    eval {label $f.lUseSSD -text "SSD:"} $Gui(WLA)
+  
+    eval {checkbutton $f.cUseSSDLabel \
+        -text  "Use SSD" -variable AG(SSD) \
+        -width 15  -indicatoron 0 } $Gui(WCA)
+    grid $f.lUseSSD $f.cUseSSDLabel  -pady 2 -padx $Gui(pad) -sticky w
+    TooltipAdd $f.cUseSSDLabel "Press to set/unset using SSD to stop iterations."
+ 
+    eval {label $f.lEstimateBias -text "Bias:"} $Gui(WLA)
+  
+    eval {checkbutton $f.cEstimateBias \
+        -text  "Estimate Bias" -variable AG(Use_bias) \
+        -width 15  -indicatoron 0 } $Gui(WCA)
+    grid $f.lEstimateBias $f.cEstimateBias  -pady 2 -padx $Gui(pad) -sticky w
+    TooltipAdd $f.cEstimateBias "Press to set/unset to estimate bias with intensity transformation." 
+     eval {label $f.l2DRegistration -text "2D registration:"} $Gui(WLA)
+  
+    eval {checkbutton $f.c2DRegistration \
+        -text  "2D" -variable AG(2D) \
+        -width 15  -indicatoron 0 } $Gui(WCA)
+    grid $f.l2DRegistration  $f.c2DRegistration  -pady 2 -padx $Gui(pad) -sticky w
+    TooltipAdd $f.c2DRegistration "Press to set/unset to do 2D registration."
+
+    #eval {label $f.lTensor -text "Tensors:"} $Gui(WLA)
+  
+    #eval {checkbutton $f.cTensor \
+    #    -text  "last 6 channels are tensors" -variable AG(Tensors) \
+    #    -width 20  -indicatoron 0 } $Gui(WCA)
+    #grid $f.lTensor $f.cTensor  -pady 2 -padx $Gui(pad) -sticky e
+    #TooltipAdd $f.cTensor "Press to set/unset that last 6 channels are tensors."
 
 # Verbose level
     eval {label $f.lVerbose -text "Verbose"} $Gui(WLA)
     set AG(VerboseName) "1"
-    eval {menubutton $f.mbVerbose -text "$AG(VerboseName)" -relief raised -bd 2 -width 20 \
+    eval {menubutton $f.mbVerbose -text "$AG(VerboseName)" -relief raised -bd 2 -width 15 \
         -menu $f.mbVerbose.m} $Gui(WMBA)
     eval {menu $f.mbVerbose.m} $Gui(WMA)
     set AG(mbVerbose) $f.mbVerbose
@@ -520,102 +731,83 @@ proc AGBuildExpertFrame {} {
        $m add command -label $v -command "ModifyOption Verbose {$v}"
    }
     TooltipAdd $f.mbVerbose "Choose the Verbose." 
-    grid $f.lVerbose $f.mbVerbose   -pady 2 -padx $Gui(pad) -sticky e
+    grid $f.lVerbose $f.mbVerbose   -pady 2 -padx $Gui(pad) -sticky w
 
-# checkbox type options:  not use SSD, 2D registration, estimate bias, last 6 channels of data are tensors
-    eval {label $f.lUseSSD -text "SSD:"} $Gui(WLA)
-  
-    eval {checkbutton $f.cUseSSDLabel \
-        -text  "Use SSD" -variable AG(SSD) \
-        -width 20  -indicatoron 0 } $Gui(WCA)
-    grid $f.lUseSSD $f.cUseSSDLabel  -pady 2 -padx $Gui(pad) -sticky e
-    TooltipAdd $f.cUseSSDLabel "Press to set/unset using SSD to stop iterations."
- 
-    eval {label $f.lEstimateBias -text "Bias:"} $Gui(WLA)
-  
-    eval {checkbutton $f.cEstimateBias \
-        -text  "Estimate Bias" -variable AG(Use_bias) \
-        -width 20  -indicatoron 0 } $Gui(WCA)
-    grid $f.lEstimateBias $f.cEstimateBias  -pady 2 -padx $Gui(pad) -sticky e
-    TooltipAdd $f.cEstimateBias "Press to set/unset to estimate bias with intensity transformation." 
-     eval {label $f.l2DRegistration -text "2D registration:"} $Gui(WLA)
-  
-    eval {checkbutton $f.c2DRegistration \
-        -text  "2D" -variable AG(2D) \
-        -width 20  -indicatoron 0 } $Gui(WCA)
-    grid $f.l2DRegistration  $f.c2DRegistration  -pady 2 -padx $Gui(pad) -sticky e
-    TooltipAdd $f.c2DRegistration "Press to set/unset to do 2D registration."
-
-    eval {label $f.lTensor -text "Tensors:"} $Gui(WLA)
-  
-    eval {checkbutton $f.cTensor \
-        -text  "last 6 channels are tensors" -variable AG(Tensors) \
-        -width 20  -indicatoron 0 } $Gui(WCA)
-    grid $f.lTensor $f.cTensor  -pady 2 -padx $Gui(pad) -sticky e
-    TooltipAdd $f.cTensor "Press to set/unset that last 6 channels are tensors."
-   
 # entry type options
 
    eval {label $f.lScale -text "Scale factor:"} $Gui(WLA) 
-   eval {entry $f.eScale -justify right -width 20 -textvariable AG(Scale)} $Gui(WEA)
-   grid $f.lScale $f.eScale -pady 2 -padx $Gui(pad) -sticky e   
+   eval {entry $f.eScale -justify right -width 6 -textvariable AG(Scale)} $Gui(WEA)
+   grid $f.lScale $f.eScale -pady 2 -padx $Gui(pad) -sticky w   
    TooltipAdd $f.eScale  "Enter the scale factor to scale the intensities before registration."
  
-   eval {label $f.lIteration_min -text "Iteration min:"} $Gui(WLA) 
-   eval {entry $f.eIteration_min -justify right -width 20 -textvariable AG(Iteration_min)} $Gui(WEA)
-   grid $f.lIteration_min $f.eIteration_min -pady 2 -padx $Gui(pad) -sticky e   
-   TooltipAdd $f.eIteration_min  "Enter the number of minumum iterations at each level."
-     
-
-   eval {label $f.lIteration_max -text "Iteration max:"} $Gui(WLA) 
-   eval {entry $f.eIteration_max -justify right -width 20 -textvariable AG(Iteration_max)} $Gui(WEA)
-   grid $f.lIteration_max $f.eIteration_max -pady 2 -padx $Gui(pad) -sticky e   
-   TooltipAdd $f.eIteration_max  "Enter the number of maxmimum iterations at each level."
-    
    eval {label $f.lDegree -text "Degree:"} $Gui(WLA) 
-   eval {entry $f.eDegree -justify right -width 20 -textvariable AG(Degree)} $Gui(WEA)
-   grid $f.lDegree $f.eDegree -pady 2 -padx $Gui(pad) -sticky e   
+   eval {entry $f.eDegree -justify right -width 6 -textvariable AG(Degree)} $Gui(WEA)
+   grid $f.lDegree $f.eDegree -pady 2 -padx $Gui(pad) -sticky w   
    TooltipAdd $f.eDegree  "Enter the degree of polynomials."
 
    eval {label $f.lRatio -text "Ratio of points:"} $Gui(WLA) 
-   eval {entry $f.eRatio -justify right -width 20 -textvariable AG(Ratio)} $Gui(WEA)
-   grid $f.lRatio $f.eRatio -pady 2 -padx $Gui(pad) -sticky e   
+   eval {entry $f.eRatio -justify right -width 6 -textvariable AG(Ratio)} $Gui(WEA)
+   grid $f.lRatio $f.eRatio -pady 2 -padx $Gui(pad) -sticky w   
    TooltipAdd $f.eRatio  "Enter the ratio of points used for polynomial estimate."
 
 
-   eval {label $f.lLevel_min  -text "Min Level:"} $Gui(WLA) 
-   eval {entry $f.eLevel_min -justify right -width 20 -textvariable AG(Level_min)} $Gui(WEA)
-   grid $f.lLevel_min $f.eLevel_min -pady 2 -padx $Gui(pad) -sticky e   
-   TooltipAdd $f.eLevel_min  "Enter the minimum level in pyramid."
-
-   eval {label $f.lLevel_max -text "Max Level:"} $Gui(WLA) 
-   eval {entry $f.eLevel_max -justify right -width 20 -textvariable AG(Level_max)} $Gui(WEA)
-   grid $f.lLevel_max $f.eLevel_max -pady 2 -padx $Gui(pad) -sticky e   
-   TooltipAdd $f.eLevel_max  "Enter the maximum level in pyramid."
-
 
    eval {label $f.lNb_of_functions -text "Number of functions:"} $Gui(WLA) 
-   eval {entry $f.eNb_of_functions -justify right -width 20 -textvariable AG(Nb_of_functions)} $Gui(WEA)
-   grid $f.lNb_of_functions $f.eNb_of_functions -pady 2 -padx $Gui(pad) -sticky e   
+   eval {entry $f.eNb_of_functions -justify right -width 6 -textvariable AG(Nb_of_functions)} $Gui(WEA)
+   grid $f.lNb_of_functions $f.eNb_of_functions -pady 2 -padx $Gui(pad) -sticky w   
    TooltipAdd $f.eNb_of_functions  "Enter the number of intensity transformation functions."
 
 
 
    eval {label $f.lEpsilon -text "Epsilon:"} $Gui(WLA) 
-   eval {entry $f.eEpsilon -justify right -width 20 -textvariable AG(Epsilon)} $Gui(WEA)
-   grid $f.lEpsilon $f.eEpsilon -pady 2 -padx $Gui(pad) -sticky e   
+   eval {entry $f.eEpsilon -justify right -width 6 -textvariable AG(Epsilon)} $Gui(WEA)
+   grid $f.lEpsilon $f.eEpsilon -pady 2 -padx $Gui(pad) -sticky w  
    TooltipAdd $f.eEpsilon  "Enter the maximum SSD value between successive iterations ."
 
+   
+   set f $fExpert.fIter
+   frame $f -bg $Gui(activeWorkspace)
+   pack $f -side top -padx $Gui(pad) -pady 0 -fill x -anchor n
+
+   eval {label $f.lIteration_min -text "Iteration min-max:   "} $Gui(WLA) 
+   eval {entry $f.eIteration_min -justify right -width 6 -textvariable AG(Iteration_min)} $Gui(WEA)
+   pack $f.lIteration_min $f.eIteration_min -pady 0 -padx $Gui(pad) -side left    
+   TooltipAdd $f.eIteration_min  "Enter the number of minimum iterations at each level."
+     
+   #eval {label $f.lIteration_max -text "Iteration max:"} $Gui(WLA) 
+   eval {entry $f.eIteration_max -justify right -width 6 -textvariable AG(Iteration_max)} $Gui(WEA)
+   pack $f.eIteration_max -pady 0 -padx $Gui(pad) -side left   
+   TooltipAdd $f.eIteration_max  "Enter the number of maximum iterations at each level."
+    
+   set f $fExpert.fLevel
+   frame $f -bg $Gui(activeWorkspace)
+   pack $f -side top -padx $Gui(pad) -pady 0 -fill x -anchor w
+   
+   eval {label $f.lLevel_min  -text "Level min-max:        "} $Gui(WLA) 
+   eval {entry $f.eLevel_min -justify right -width 6 -textvariable AG(Level_min)} $Gui(WEA)
+   pack $f.lLevel_min $f.eLevel_min -pady 2 -padx $Gui(pad) -side left   
+   TooltipAdd $f.eLevel_min  "Enter the minimum level in pyramid. Level 0 is full resolution, \
+   level 1 is half resolution, etc."
+
+   #eval {label $f.lLevel_max -text "Max Level:"} $Gui(WLA) 
+   eval {entry $f.eLevel_max -justify right -width 6 -textvariable AG(Level_max)} $Gui(WEA)
+   pack $f.eLevel_max -pady 2 -padx $Gui(pad) -side left 
+   TooltipAdd $f.eLevel_max  "Enter the maximum level in pyramid. Level 0 is full resolution, \
+   level 1 is half resolution, etc. For volumes 256*256*z, level 3 is highest to choose (32*32*z)."
+
+   set f $fExpert.fStddev
+   frame $f -bg $Gui(activeWorkspace)
+   pack $f -side top -padx $Gui(pad) -pady 0 -fill x -anchor w
   
-   eval {label $f.lStddev_min -text "Min Stddev:"} $Gui(WLA) 
-   eval {entry $f.eStddev_min -justify right -width 20 -textvariable AG(Stddev_min)} $Gui(WEA)
-   grid $f.lStddev_min $f.eStddev_min -pady 2 -padx $Gui(pad) -sticky e   
+   eval {label $f.lStddev_min -text "Stddev. min-max:    "} $Gui(WLA) 
+   eval {entry $f.eStddev_min -justify right -width 6 -textvariable AG(Stddev_min)} $Gui(WEA)
+   pack $f.lStddev_min $f.eStddev_min -pady 2 -padx $Gui(pad) -side left 
    TooltipAdd $f.eStddev_min  "Enter the minimum standard deviation of displacement field smoothing kernel ."
  
 
-   eval {label $f.lStddev_max -text "Max Stddev:"} $Gui(WLA) 
-   eval {entry $f.eStddev_max -justify right -width 20 -textvariable AG(Stddev_max)} $Gui(WEA)
-   grid $f.lStddev_max $f.eStddev_max -pady 2 -padx $Gui(pad) -sticky e   
+   #eval {label $f.lStddev_max -text "Max Stddev:"} $Gui(WLA) 
+   eval {entry $f.eStddev_max -justify right -width 6 -textvariable AG(Stddev_max)} $Gui(WEA)
+   pack $f.eStddev_max -pady 2 -padx $Gui(pad) -side left   
    TooltipAdd $f.eStddev_max  "Enter the maximum standard deviation of displacement field smoothing kernel."
 
 
@@ -643,28 +835,20 @@ LinearRegistration  {
     $AG(mbLR) config -text $AG(LRName)
 
     switch $value {
-"do not compute linear transformation" { 
-                    puts "do not compute linear transformation"
-    set AG(Linear)    0 
-}
                 "translation" { 
-    set AG(Linear)    1 
     set AG(Linear_group) -1
                     puts "translation"
 }
 "rigid group" {
-    set AG(Linear) 1
     set AG(Linear_group) 0
                     puts "rigid group"
 
 }
 "similarity group" {
-    set AG(Linear) 1
     set AG(Linear_group) 1
     puts "similarity group"
 }
 "affine group" {
-    set AG(Linear) 1
     set AG(Linear_group) 2
     puts "affine group"
                     puts "AG(SSD) is $AG(SSD)"
@@ -673,7 +857,6 @@ LinearRegistration  {
 default {
     set AG(Linear) 1
     set AG(Linear_group) 2
-    puts "default"
 }
     }  
 }
@@ -682,15 +865,10 @@ Warp {
     set AG(WarpName)  $value
     $AG(mbWarp) config -text $AG(WarpName)
       switch $value {
-"No warp" {
-    set  AG(Warp) 0
-}
-"Warp with force demons" {
-    set AG(Warp)  1
+"demons" {
     set AG(Force) 1
 }
-"warp with force optical flow" {
-    set AG(Warp)  1
+"optical flow" {
     set AG(Force) 2
 }
 default {
@@ -933,7 +1111,7 @@ proc AGPrepareResultVolume {}  {
         set AG(ResultVol) $v2
         #VolumesUpdateMRML
         MainUpdateMRML
-        AGUpdateGUI
+        #AGUpdateGUI
         incr AG(CountNewResults)
 
     } else { 
@@ -1124,11 +1302,11 @@ proc  AGTransformScale { Source Target} {
 }
 
 
-proc  WriteHomogeneous {t ii fileid} {
-
-   
+proc  AGWriteHomogeneous {t ii fileid} {
+    global AG
+    
     puts " Start to save homogeneous Transform"
-    puts $fileid "Homogeneous Transform\n"
+    #puts $fileid "Homogeneous Transform\n"
 
     set str ""
     set m [DataAddTransform 1 0 0]
@@ -1139,50 +1317,86 @@ proc  WriteHomogeneous {t ii fileid} {
     catch "mat_copy Delete"
     vtkMatrix4x4 mat_copy
     mat_copy DeepCopy $mat
-    $trans Concatenate mat_copy
+
+    # mat_copy is vtk_to_vtk transform, we want world_to_world
+    catch "ModelRasToVtk Delete"
+    vtkMatrix4x4 ModelRasToVtk
+    set position [Volume($AG(InputVolTarget),node) GetPositionMatrix]
+    ModelRasToVtk Identity
+    set ii 0
+    for {set i 0} {$i < 4} {incr i} {
+        for {set j 0} {$j < 4} {incr j} {
+            # Put the element from the position string
+            ModelRasToVtk SetElement $i $j [lindex $position $ii]
+            incr ii
+        }
+    # Remove the translation elements
+    ModelRasToVtk SetElement $i 3 0
+    }
+    # add a 1 at the for  M(4,4)
+    ModelRasToVtk SetElement 3 3 1
+    catch "RasToVtk Delete"
+    vtkMatrix4x4 RasToVtk
+    RasToVtk DeepCopy ModelRasToVtk    
+    # Inverse Matrix RasToVtk
+    catch "InvRasToVtk Delete"
+    vtkMatrix4x4 InvRasToVtk
+    InvRasToVtk DeepCopy ModelRasToVtk
+    InvRasToVtk Invert
+    # wldtfm is the world_to_world transform
+    catch "wldtfm Delete"
+    vtkMatrix4x4 wldtfm
+    wldtfm Multiply4x4 mat_copy InvRasToVtk wldtfm
+    wldtfm Multiply4x4 RasToVtk wldtfm wldtfm
+    
+    catch "linear Delete"
+    vtkTransform linear
+    linear SetMatrix wldtfm
+    $trans Concatenate linear
+    linear Delete
    
     for {set  i  0}  {$i < 4} {incr i} {
     for {set  j  0}  {$j < 4} {incr j} {
-        set one_element [$mat GetElement $i $j]
+        set one_element [wldtfm GetElement $i $j]
     #    $matout SetElement $i $j $one_element
         set str "$str $one_element"
-            puts $fileid  "  $one_element "
+            if {$fileid!=-1} {puts $fileid  "  $one_element "}
     }
-    puts $fileid "\n"
+    if {$fileid!=-1} {puts $fileid "\n"}
     }
     # Add a transform to the slicer.
-  
-
-  
- 
     puts " m is $m"
     puts " str is ---$str"
-    
-   
-# SetMatrix $str
     puts " finish saving homogeneous Transform"
-
+    MainUpdateMRML
+    DevInfoWindow "Matrix $m generated."
 } 
 
 proc WriteGrid {t ii fileid} {      
+    # Matthan: removed fileid as argument after t ii
+    
     set g [$t GetDisplacementGrid]
     if { $g == 0}  return
 
-    puts  $fileid "Grid Transform\n" 
-    set inverse [$t GetInverseFlag]
-    puts $fileid   " $inverse \n"
-
-    set fname "transform.vtk"
-   
-    puts $fileid "$fname \n"
+    set fname [tk_getSaveFile -defaultextension ".vtk" -title "Save non-linear transform"]
+    if { $fname == "" } {
+    return 0
+    }
 
     AGWritevtkImageData $g  $fname
-    #vtkImageWriter Writer 
-    #Writer SetInput $g
-    #Writer SetFileDimensionality 3 
-    #Writer SetFileName "transform.vtk"
-    #Writer Write
-    #Writer Delete
+    return 1
+
+    # Matthan: commented lines below
+    
+    #puts  $fileid "Grid Transform\n" 
+    #set inverse [$t GetInverseFlag]
+    #puts $fileid   " $inverse \n"
+
+    #set fname "transform.vtk"
+   
+    #puts $fileid "$fname \n"
+
+    #AGWritevtkImageData $g  $fname
 }
 
 #-------------------------------------------------------------------------------
@@ -1310,7 +1524,13 @@ proc WriteTransform {gt flag it FileName} {
 #-------------------------------------------------------------------------------
 proc RunAG {} {
 
-  global AG Volume Gui
+  global AG Volume Gui Matrix
+
+  if {(!$AG(Initial_lin))&&(!$AG(Initial_grid))&&(!$AG(Initial_prev))} {
+    set AG(Initial_tfm) 0
+  } else {
+    set AG(Initial_tfm) 1
+  }
 
   set intesity_transform_object 0
 
@@ -1484,6 +1704,127 @@ proc RunAG {} {
   AGPreprocess Source Target $AG(InputVolSource)  $AG(InputVolTarget) 
 
 
+  # Initial transform stuff
+  if {[info exist AG(Transform)]} {
+      if {!($AG(Initial_prev))} {
+          catch "TransformAG Delete"
+          catch {$AG(Transform) Delete}
+          vtkGeneralTransform TransformAG
+      }
+  } else {
+      if {$AG(Initial_prev)} {
+        DevErrorWindow "Previous computed transform as initial transform requested, but not available."
+    return
+      }
+      catch "TransformAG Delete"
+      vtkGeneralTransform TransformAG
+  }
+  
+
+  if {$AG(Initial_tfm)} {      
+      puts "Initial Transform"
+      # A previous transf might exist, so set PreMultiply and add Grid and Linear,
+      # then set PostMultiply, so we have Linear->Grid->Previous_lin->Previous_grid
+      TransformAG PreMultiply
+      if {$AG(Initial_grid)} {
+          catch "wrp Delete"
+          vtkImageData wrp
+          catch "grd Delete"
+          vtkGridTransform grd
+
+          if {![AGReadvtkImageData wrp $AG(regInitGridTfmName)]} {
+        return
+      }
+      if {[wrp GetNumberOfScalarComponents]!=3} {
+        DevErrorWindow "Initial grid-transform file has [wrp GetNumberOfScalarComponents] components, must be 3."
+        return
+      }
+
+          set dims  [wrp GetDimensions]
+          set spacing [wrp GetSpacing]
+
+          # set the origin to be the center of the volume for inputing to warp.  
+          set spacing_x [lindex $spacing 0]
+          set spacing_y [lindex $spacing 1]
+          set spacing_z [lindex $spacing 2]
+          set dim_0     [lindex $dims 0]        
+          set dim_1     [lindex $dims 1]      
+          set dim_2     [lindex $dims 2]
+
+          set origin_0  [expr (1-$dim_0)*$spacing_x/2.0]
+          set origin_1  [expr (1-$dim_1)*$spacing_y/2.0] 
+          set origin_2  [expr (1-$dim_2)*$spacing_z/2.0] 
+
+          # Must set origin for Target before using the reslice for orientation normalization.        
+          wrp  SetOrigin  $origin_0 $origin_1 $origin_2
+          grd SetDisplacementGrid wrp
+          TransformAG Concatenate grd
+          grd Delete
+          wrp Delete
+      }
+      
+      if {$AG(Initial_lin)} {
+          catch "ModelRasToVtk Delete"
+          vtkMatrix4x4 ModelRasToVtk
+          set position [Volume($AG(InputVolTarget),node) GetPositionMatrix]
+          ModelRasToVtk Identity
+          set ii 0
+          for {set i 0} {$i < 4} {incr i} {
+              for {set j 0} {$j < 4} {incr j} {
+                  # Put the element from the position string
+                  ModelRasToVtk SetElement $i $j [lindex $position $ii]
+                  incr ii
+              }
+          # Remove the translation elements
+          ModelRasToVtk SetElement $i 3 0
+          }
+          # add a 1 at the for  M(4,4)
+          ModelRasToVtk SetElement 3 3 1
+          # Now we can build the Vtk1ToVtk2 matrix based on
+          # ModelRasToVtk and ras1toras2
+          # vtk1tovtk2 = inverse(rastovtk) ras1toras2 rastovtk
+          # RasToVtk
+          catch "RasToVtk Delete"
+          vtkMatrix4x4 RasToVtk
+          RasToVtk DeepCopy ModelRasToVtk    
+          # Inverse Matrix RasToVtk
+          catch "InvRasToVtk Delete"
+          vtkMatrix4x4 InvRasToVtk
+          InvRasToVtk DeepCopy ModelRasToVtk
+          InvRasToVtk Invert
+          # Ras1toRas2 given by the slicer MRML tree
+          catch "Ras1ToRas2 Delete"    
+          vtkMatrix4x4 Ras1ToRas2
+          Ras1ToRas2 DeepCopy [[Matrix($Matrix(activeID),node) GetTransform] GetMatrix]
+          # Now build Vtk1ToVtk2
+          catch "Vtk1ToVtk2 Delete"    
+          vtkMatrix4x4 Vtk1ToVtk2
+          Vtk1ToVtk2 Identity
+          Vtk1ToVtk2 Multiply4x4 Ras1ToRas2 RasToVtk  Vtk1ToVtk2
+          Vtk1ToVtk2 Multiply4x4 InvRasToVtk  Vtk1ToVtk2 Vtk1ToVtk2
+      catch "Linear Delete"
+      vtkTransform Linear
+      Linear SetMatrix Vtk1ToVtk2
+
+      TransformAG Concatenate Linear
+          ModelRasToVtk Delete
+          Ras1ToRas2 Delete
+          RasToVtk Delete
+          InvRasToVtk Delete
+          Vtk1ToVtk2 Delete
+      Linear Delete
+      }
+      TransformAG PostMultiply
+
+      set  AG(Inentisy_transform) 1
+  } else {
+      puts "No initial transform"
+      TransformAG PostMultiply 
+      set  AG(Inentisy_transform) 0
+  }
+
+
+
 
   #AG(TestReadingWriting)
   if {$AG(TestReadingWriting) == 1} {
@@ -1573,24 +1914,24 @@ proc RunAG {} {
 
   #vtkIntensityTransform IntensityTransform 
 
-  catch "TransformAG Delete"
-  catch {$AG(Transform) Delete}
+#  catch "TransformAG Delete"
+#  catch {$AG(Transform) Delete}
   
-  vtkGeneralTransform TransformAG
+#  vtkGeneralTransform TransformAG
 
  
-  if {$AG(Initial_tfm)} {      
-      vtkGeneralTransformReader Reader
-      Reader SetFileName $AG(Initial_tfm)
-      Set TransformAG [Reader GetGeneralTransform]
-      TransformAG PostMultiply 
-   # How to use this intensity tranform, since it will be overwritten by the AGIntensity transform.
-      Set IntensityTransform [Reader GetIntensityTransform]
-      set  AG(Inentisy_transform) 1
-  } else {
-      TransformAG PostMultiply 
-      set  AG(Inentisy_transform) 0
-  }
+#  if {$AG(Initial_tfm)} {      
+#      vtkGeneralTransformReader Reader
+#      Reader SetFileName $AG(Initial_tfm)
+#      Set TransformAG [Reader GetGeneralTransform]
+#      TransformAG PostMultiply 
+#   # How to use this intensity tranform, since it will be overwritten by the AGIntensity transform.
+#      Set IntensityTransform [Reader GetIntensityTransform]
+#      set  AG(Inentisy_transform) 1
+#  } else {
+#      TransformAG PostMultiply 
+#      set  AG(Inentisy_transform) 0
+#  }
 
 
   
@@ -1774,11 +2115,11 @@ proc RunAG {} {
 
   # Write  Transforms
 
-  if {$intesity_transform_object == 1} {
-      WriteTransform TransformAG 1 $AG(tfm) "Test_transform.txt"
-  } else {
-      WriteTransform TransformAG 0 0  "Test_transform.txt"
-  }
+  #if {$intesity_transform_object == 1} {
+  #    WriteTransform TransformAG 1 $AG(tfm) "Test_transform.txt"
+  #} else {
+  #    WriteTransform TransformAG 0 0  "Test_transform.txt"
+  #}
 
   # keep the transforms until the next round for registration.
   #if {$AG(Warp)} {
@@ -1800,7 +2141,7 @@ proc RunAG {} {
   }
 
   puts "RunAG 6"
-  
+  MainSlicesSetVolumeAll Back $AG(ResultVol)
 
 }
 
@@ -1834,6 +2175,32 @@ proc AGBatchProcessResampling  {  }  {
     }
 
 }
+
+#-------------------------------------------------------------------------------
+# .PROC AGCoregister
+#Transform one volume to a new volume based on the target volume and the
+# transform stored in AG(transform)
+# .END
+#-------------------------------------------------------------------------------
+proc AGCoregister {} {
+   global AG Volume Gui
+    if {$AG(CoregVol)==$Volume(idNone)} {
+      DevErrorWindow "Please select a volume for coregistration."
+      return
+    }
+    if {$AG(InputVolTarget)==$Volume(idNone)} {
+      DevErrorWindow "Please select the target volume used in the registration."
+      return
+    }
+    if {[info exist AG(Transform)]} {
+      AGTransformOneVolume $AG(CoregVol) $AG(InputVolTarget)
+    } else {
+      DevErrorWindow "Please run a registration first."
+    }
+    MainSlicesSetVolumeAll Back $AG(CoregVol)
+
+}
+
 #-------------------------------------------------------------------------------
 # .PROC AGTransformOneVolume
 #Transform one volume to a new volume based on the target volume and the
@@ -2170,7 +2537,7 @@ proc AGNormalize { SourceImage TargetImage NormalizedSource SourceScanOrder Targ
     vtkMatrix4x4 ijkmatrix
     vtkImageReslice reslice
    
-    reslice SetInterpolationModeToLinear
+    reslice SetInterpolationModeToCubic
   
     catch "xform Delete"
     catch "changeinfo Delete"
@@ -2706,3 +3073,190 @@ proc AGTestReadvtkImageData {}  {
       puts "Source, dimensions:$dim_arr"
 
 }
+
+proc AGUpdateInitial {meth} {
+    global Matrix AG
+    switch $meth {
+      "lin" {
+        if {$Matrix(activeID)!="" && $AG(Initial_lin)} {
+          set AG(Initial_lintxt) "On"
+          set AG(Initial_tfm) 1
+        } else {
+          set AG(Initial_lintxt) "Off"
+      set AG(Initial_lin) "0"
+        }
+      }
+      "grid" {
+        if {$AG(InitGridTfmName)!="" && $AG(Initial_grid)} {
+          set AG(Initial_gridtxt) "On"
+          set AG(Initial_tfm) 1
+        } else {
+          set AG(Initial_gridtxt) "Off"
+      set AG(Initial_grid) "0"
+        }
+      
+      }
+      "prev" {
+        if {[info exist AG(Transform)] && $AG(Initial_prev)} {
+          set AG(Initial_prevtxt) "On"
+          set AG(Initial_tfm) 1
+        } else {
+          set AG(Initial_prevtxt) "Off"
+      set AG(Initial_prev) "0"
+        }
+      
+      }
+      
+    }
+    
+    if {(!$AG(Initial_lin))&&(!$AG(Initial_grid))&&(!$AG(Initial_prev))} {
+      set AG(Initial_tfm) 0
+    }
+}
+
+proc AGTurnInitialOff {} {
+    global AG
+    set AG(Initial_tfm) 0
+    set AG(Initial_lin) 0
+    set AG(Initial_grid) 0
+    set AG(Initial_prev) 0
+    AGUpdateInitial "lin"
+    AGUpdateInitial "grid"
+    AGUpdateInitial "prev"
+}
+
+proc AGCreateLinMat {} {
+    global AG
+    if {![info exist AG(Transform)]} {
+        DevErrorWindow "No transformation available, matrix generation aborted."
+    return
+    }
+    set n [TransformAG GetNumberOfConcatenatedTransforms]
+    if {$AG(Debug) == 1} {
+        puts " There are $n concatenated transforms"
+    }
+    set done 0
+    for {set i [expr $n-1]}  {$i >= 0} {set i [expr $i-1]} {
+        set t [TransformAG GetConcatenatedTransform $i]
+        set int_H [$t IsA vtkHomogeneousTransform]
+        if { ($int_H != 0) && !$done} {
+            set done 1
+        #AGRegWriteHomogeneous creates the matrix
+        AGWriteHomogeneous $t $i -1 
+        }
+    }
+    if {!$done} {
+        DevErrorWindow "No linear transform computed."
+    return
+    }
+}
+
+proc AGSaveGridTransform {} {
+    global AG
+    if {![info exist AG(Transform)]} {
+        DevErrorWindow "No transformation available, grid-file not saved."
+    return
+    }
+    set n [TransformAG GetNumberOfConcatenatedTransforms]
+    if {$AG(Debug) == 1} {
+        puts " There are $n concatenated transforms"
+    }
+    set done 0
+    for {set i [expr $n-1]}  {$i >= 0} {set i [expr $i-1]} {
+        set t [TransformAG GetConcatenatedTransform $i]
+        set int_G [$t IsA vtkGridTransform]
+        if { ($int_G != 0) && !$done } {
+            set done 1
+        if {![AGWriteGrid $t $i 0]} {
+          DevErrorWindow "Error saving file."
+        }
+        }
+    }
+    if {!$done} {
+        DevErrorWindow "No non-linear transform computed."
+    return
+    }
+    
+}
+
+proc AGColorComparison {} {
+    global AG Volume Slice
+
+    if {$AG(InputVolTarget)==$Volume(idNone)} {
+      DevErrorWindow "Please select a target volume"
+      return
+    }
+    if {$AG(ResultVol)==-5} {
+      DevErrorWindow "Please select a result volume"
+      return
+    }
+
+    catch "app Delete"
+    vtkImageAppendComponents app
+    
+    # Create absolute value, just in case.
+    catch "abs Delete"
+    vtkImageMathematics abs
+    abs SetInput 0 [Volume($AG(ResultVol),vol) GetOutput]
+    abs SetOperationToAbsoluteValue
+    
+    catch "shift Delete"
+    vtkImageShiftScale shift    
+    shift SetInput [abs GetOutput]
+    shift SetOutputScalarTypeToUnsignedChar
+    abs Update
+    set r [[[[abs GetOutput] GetPointData] GetScalars] GetRange]
+    puts $r
+    set r [lindex $r 1]
+    puts $r
+    shift SetShift 0
+    shift SetScale [expr 255.0/$r]
+    shift Update
+    app SetInput 0 [shift GetOutput]
+    app SetInput 2 [shift GetOutput]
+    catch "abs Delete"
+    vtkImageMathematics abs
+    abs SetInput 0 [Volume($AG(InputVolTarget),vol) GetOutput]
+    abs SetOperationToAbsoluteValue
+    
+    catch "shift Delete"
+    vtkImageShiftScale shift    
+    shift SetInput [abs GetOutput]
+    shift SetOutputScalarTypeToUnsignedChar
+    abs Update
+    set r [[[[abs GetOutput] GetPointData] GetScalars] GetRange]
+    set r [lindex $r 1]
+    shift SetScale [expr 255.0/$r]
+    shift Update
+    app SetInput 1 [shift GetOutput]
+    
+    set dim0 [[app GetInput 0] GetDimensions]
+    set dim1 [[app GetInput 1] GetDimensions]
+    foreach d0 $dim0 d1 $dim1 {
+      if {$d0!=$d1} {
+        DevErrorWindow "Dimensionalities of result and target do not match. If you did a 2D-registration, set Scope back to 2D."
+        return
+      }
+    }
+    
+    app Update
+    
+    # Create a new volume based on the name of the source volume and the node descirption of the target volume
+    #set v1 $SourceVolume
+    #set v2name  [Volume($SourceVolume,node) GetName]
+    set v2 [DevCreateNewCopiedVolume $AG(ResultVol) ""  "Color Comparison" ]
+
+    Volume($v2,vol) SetImageData [app GetOutput]
+    #check Delete
+    MainVolumesUpdate $v2
+    Volume($v2,node) SetInterpolate 0
+    Volume($v2,node) SetScalarType [[shift GetOutput] GetScalarType]
+    abs Delete
+    shift Delete
+    app Delete
+    MainUpdateMRML    
+    MainSlicesSetVolumeAll Back $v2
+    MainSlicesSetVolumeAll Fore $Volume(idNone)
+    RenderAll
+}
+
