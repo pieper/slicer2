@@ -92,7 +92,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.28 $} {$Date: 2000/07/20 22:33:32 $}]
+	    {$Revision: 1.29 $} {$Date: 2000/07/24 21:39:31 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -357,9 +357,8 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 	set f $fSetup.fOriginal
 
 	frame $f.fMenu -bg $Gui(activeWorkspace)
-	frame $f.fHelp -bg $Gui(activeWorkspace)
 
-	pack $f.fHelp $f.fMenu -side top -pady $Gui(pad)
+	pack $f.fMenu -side top -pady $Gui(pad) -fill x
 
 	#-------------------------------------------
 	# Setup->Original->Menu
@@ -368,6 +367,7 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 
 	# Volume menu
 	eval {label $f.lOriginal -text "Original Volume:"} $Gui(WTA)
+	TooltipAdd $f.lOriginal "Choose the input grayscale volume for editing."
 
 	eval {menubutton $f.mbOriginal -text "None" -relief raised -bd 2 -width 18 \
 		-menu $f.mbOriginal.m} $Gui(WMBA)
@@ -380,29 +380,20 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 	set Editor(mOriginal)  $f.mbOriginal.m
 
 	#-------------------------------------------
-	# Setup->Original->Help
-	#-------------------------------------------
-	set f $fSetup.fOriginal.fHelp
-
-	# Help text
-	eval {label $f.lOriginal -text "Choose an input grayscale volume."} $Gui(WTA)
-	pack $f.lOriginal -padx $Gui(pad) -side left -anchor e
-
-	#-------------------------------------------
 	# Setup->Working
 	#-------------------------------------------
 	set f $fSetup.fWorking
 
 	frame $f.fMenu -bg $Gui(activeWorkspace)
-	frame $f.fHelp -bg $Gui(activeWorkspace)
 	frame $f.fName -bg $Gui(activeWorkspace)
 	frame $f.fPrefix -bg $Gui(activeWorkspace)
 	frame $f.fBtns   -bg $Gui(activeWorkspace)
 
-	pack $f.fHelp $f.fMenu -side top -pady $Gui(pad)
+	pack $f.fMenu -side top -pady $Gui(pad)
 	pack $f.fName -side top -pady $Gui(pad) -fill x
 	pack $f.fPrefix -side top -pady $Gui(pad) -fill x
 	pack $f.fBtns -side top -pady $Gui(pad)
+
 
 	#-------------------------------------------
 	# Setup->Working->Menu
@@ -411,6 +402,7 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 
 	# Volume menu
 	eval {label $f.lWorking -text "Working Volume:"} $Gui(WTA)
+	TooltipAdd $f.lWorking "Choose a labelmap to edit, or NEW for a new one."
 
 	eval {menubutton $f.mbWorking -text "NEW" -relief raised -bd 2 -width 18 \
 		-menu $f.mbWorking.m} $Gui(WMBA)
@@ -421,21 +413,14 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 	set Editor(mbWorking) $f.mbWorking
 	set Editor(mWorking)  $f.mbWorking.m
 
-	#-------------------------------------------
-	# Setup->Working->Help
-	#-------------------------------------------
-	set f $fSetup.fWorking.fHelp
-
-	# Help text
-	eval {label $f.lWorking -text "Choose a labelmap to edit."} $Gui(WTA)
-	pack $f.lWorking -padx $Gui(pad) -side left -anchor e
 
 	#-------------------------------------------
 	# Setup->Working->Prefix
 	#-------------------------------------------
 	set f $fSetup.fWorking.fPrefix
 
-	eval {label $f.l -text "File Prefix:"} $Gui(WLA)
+	eval {label $f.l -text "Filename Prefix:"} $Gui(WLA)
+	TooltipAdd $f.l "To save the Working Volume, enter the prefix here or just click Save."
 	eval {entry $f.e -textvariable Editor(prefixWorking)} $Gui(WEA)
 	pack $f.l -padx 3 -side left
 	pack $f.e -padx 3 -side left -expand 1 -fill x
@@ -446,6 +431,7 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 	set f $fSetup.fWorking.fName
 
 	eval {label $f.l -text "Descriptive Name:"} $Gui(WLA)
+	TooltipAdd $f.l "This name will be displayed on the Slicer menus."
 	eval {entry $f.e -textvariable Editor(nameWorking)} $Gui(WEA)
 	pack $f.l -padx 3 -side left
 	pack $f.e -padx 3 -side left -expand 1 -fill x
@@ -460,10 +446,13 @@ abreviation for the effect at the top of the <B>Details</B> tab.
 
 	eval {button $f.bWrite -text "Save" -width 5 \
 		-command "EditorWrite Working; RenderAll"} $Gui(WBA)
+	TooltipAdd $f.bWrite "Save the Working Volume."
 	eval {button $f.bClear -text "Clear to 0's" -width 12 \
 		-command "EditorClear Working; RenderAll"} $Gui(WBA)
+	TooltipAdd $f.bClear "Clear the Working Volume."
 	eval {button $f.bRead -text "Read" -width 5 \
 		-command "EditorRead Working; RenderAll"} $Gui(WBA)
+	TooltipAdd $f.bRead "Reread the Working Volume from disk."
 	pack $f.bWrite $f.bRead $f.bClear -side left -padx $Gui(pad)
 
 

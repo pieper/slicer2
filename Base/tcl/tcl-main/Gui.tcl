@@ -62,7 +62,7 @@ proc GuiInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo Gui \
-		{$Revision: 1.17 $} {$Date: 2000/02/28 17:56:06 $}]
+		{$Revision: 1.18 $} {$Date: 2000/07/24 21:39:30 $}]
 
 	if {$tcl_platform(platform) == "windows"} {
 		set Gui(pc) 1
@@ -102,6 +102,7 @@ proc GuiInit {} {
 	set Gui(red)         "200 150 150"
 	set Gui(green)       "150 200 150"
 	set Gui(yellow)      "220 220 100"
+	set Gui(lightYellow) "255 245 204"
 
 	set Gui(backdrop)          [MakeColor $Gui(mediumGray)]
 	set Gui(inactiveWorkspace) [MakeColor $Gui(lightGray)]
@@ -113,6 +114,7 @@ proc GuiInit {} {
 	set Gui(slice0)            [MakeColor $Gui(red)]
 	set Gui(slice1)            [MakeColor $Gui(yellow)]
 	set Gui(slice2)            [MakeColor $Gui(green)]
+	set Gui(toolTip)           [MakeColor $Gui(lightYellow)]
 
 	# ATTRIBUTES
 	set attr ""
@@ -193,6 +195,12 @@ proc GuiInit {} {
 		-highlightthickness 0 -orient horizontal -showvalue 0 -sliderlength 24 \
 		-bd $Gui(borderWidth) -relief flat}
 
+	# Workspace Tooltip Attributes (WTTA)
+	lappend attr WTTA 
+	set Gui(WTTA) { -font {helvetica 8}\
+		-bg $Gui(toolTip) -fg $Gui(textDark) \
+		-bd 2 -padx 2 -pady 2 -relief raised }
+
 	# Backdrop Label Attributes (BLA)
 	lappend attr BLA 
 	set Gui(BLA) { -font {helvetica 8}\
@@ -225,8 +233,7 @@ proc GuiInit {} {
 		-activebackground $Gui(activeButton) -troughcolor $Gui(normalButton) \
 		-highlightthickness 0 -bd $Gui(borderWidth) -relief flat}
 
-	# Version Info Fixed-Width Font
-	set Gui(VIF) {Courier-12}
+
 
 }
 

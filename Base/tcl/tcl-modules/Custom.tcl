@@ -134,7 +134,7 @@ proc CustomInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.14 $} {$Date: 2000/05/05 19:01:44 $}]
+		{$Revision: 1.15 $} {$Date: 2000/07/24 21:39:30 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -237,6 +237,9 @@ Description by tab:
         # Here's a button with text "Count" that calls "CustomCount" when
         # pressed.
         DevAddButton $f.bCount Count CustomCount 
+
+        # Tooltip example: Add a tooltip for the button
+        TooltipAdd $f.bCount "Press this button to increment the counter."
 
 	eval {entry $f.eCount -width 5 -textvariable Custom(count) } \
                 $Gui(WEA)
