@@ -104,7 +104,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.52 $} {$Date: 2001/05/12 12:52:49 $}]
+	    {$Revision: 1.53 $} {$Date: 2001/07/06 19:50:03 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -1193,6 +1193,9 @@ proc EditorB1 {x y} {
 	}
 	"EdIdentifyIslands" {
 	    EditorChangeInputLabel $x $y
+	}
+	"EdLabelVOI" {
+	    EdLabelVOIB1 $x $y
 	}
     }
 }
