@@ -33,7 +33,7 @@
 #   DevAddLabel LabelName Message Color
 #   DevAddEntry
 #   DevAddButton ButtonName Message Command Width
-#   DevAddSelectButton TabName Label Message Pack Tooltip width color
+#   DevAddSelectButton TabName f Label Message Pack Tooltip width color
 #   DevUpdateNodeSelectButton ArrayName type Label Name CommandSet None New LabelMap
 #   DevUpdateNodeSelectButton
 #   DevUpdateSelectButton ArrayName Label Name ChoiceList Command
@@ -195,12 +195,13 @@ proc DevAddButton { ButtonName Message Command {Width 0} } {
 #
 # .ARGS
 #  Array TabName  This is typically the name of the module.
-#  Str   Label    This is the name to label the button.
-#  Str  Message The message to put to the left of the Volume Select. Default \"Select Volume\"
-#  Str  "Pack" packs the buttons. \"Grid\" grids the buttons.
+#  Widget f       Frame the button should go on
+#  Str   Label    This is the name of the button widget (i.e. MySelectVolumeButton)
+#  Str  Message   The message label to put to the left of the Volume Select button. Default \"Select Volume\"
+#  Str  Pack          "Pack" packs the buttons. \"Grid\" grids the buttons.
 #  Str Tooltip    The tooltip to display over the button. Optional.
 #  str width      The width to make the button. Optional
-#  str color      Label color and attribs from Gui.tcl (BLA or WLA). Optional
+#  str color      Message label color and attribs from Gui.tcl (BLA or WLA). Optional
 # .END
 #-------------------------------------------------------------------------------
 proc DevAddSelectButton { TabName f aLabel message pack {tooltip ""} \
