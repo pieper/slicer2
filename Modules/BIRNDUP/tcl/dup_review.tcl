@@ -96,6 +96,11 @@ itcl::body dup_review::run {studydir} {
     # TODO - this is linux only
     exec $::env(SLICER_HOME)/slicer2-linux-x86 --agree_to_license $::PACKAGE_DIR_BIRNDUP/../../../tcl/gonogo.tcl $studydir
 
+    if { ![file exists $studydir/upload_list.txt] } {
+        # user cancelled
+        return
+    }
+
     package require fileutil
     set to_upload [::fileutil::cat $studydir/upload_list.txt]
     set to_defer [::fileutil::cat $studydir/defer_list.txt]
