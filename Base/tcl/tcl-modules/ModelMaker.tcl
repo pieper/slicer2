@@ -81,7 +81,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.39 $} {$Date: 2003/03/13 22:31:03 $}]
+        {$Revision: 1.40 $} {$Date: 2003/03/17 18:42:02 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -95,6 +95,8 @@ proc ModelMakerInit {} {
     # Edit
     set ModelMaker(edit,smooth) 20
     set ModelMaker(prefix) ""
+    ## Can be "Off" or "On"
+    set ModelMaker(SplitNormals) On
 
 }
 
@@ -190,7 +192,7 @@ Also save your MRML file by selecting <B>Save</B> from the <B>File</B> menu.
     set fCreate $Module(ModelMaker,fCreate)
     set f $fCreate
 
-    foreach frm " Volume Label Grid Filter Apply Results" {
+    foreach frm " Volume Label Grid Apply Results Advanced Filter" {
         frame $f.f$frm -bg $Gui(activeWorkspace)
         pack  $f.f$frm -side top -pady $Gui(pad)
     }
@@ -233,6 +235,35 @@ Also save your MRML file by selecting <B>Save</B> from the <B>File</B> menu.
     lappend Label(colorWidgetList) $f.eName
 
     #-------------------------------------------
+    # Create->Advanced frame
+    #-------------------------------------------
+    set f $fCreate.fAdvanced
+
+    foreach frame "Title Choice" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    }
+
+    set f $fCreate.fAdvanced.fTitle
+
+    eval {label $f.l -text "Advanced Options"} $Gui(WLA)
+    eval {label $f.l2 -justify left -text "\nSplitting Normals is useful for visualizing \nsharp features. However, it creates holes\n in surfaces which affects measurements."} $Gui(WLA)
+    pack $f.l $f.l2 -side top -pady 1
+
+    set f $fCreate.fAdvanced.fChoice
+    DevAddLabel $f.f "Split Normals:"
+    pack $f.f -side left -padx $Gui(pad) 
+
+    # frame $f.f -bg $Gui(activeWorkspace)
+    foreach p "On Off" {
+        eval {radiobutton $f.fr$p \
+                -text "$p" \
+                -variable ModelMaker(SplitNormals) -value $p -width 5 \
+                -indicatoron 0} $Gui(WCA)
+        pack $f.fr$p -side left -padx 0
+    }
+
+    #-------------------------------------------
     # Create->Grid frame
     #-------------------------------------------
     set f $fCreate.fGrid
@@ -262,7 +293,7 @@ Also save your MRML file by selecting <B>Save</B> from the <B>File</B> menu.
         eval {radiobutton $f.fBtns.rFilter$value -width $width \
             -text "$text" -value "$value" -variable ModelMaker(UseSinc) \
             -indicatoron 0} $Gui(WCA)
-        pack $f.fBtns.rFilter$value -side left -padx 4 -pady 2
+        pack $f.fBtns.rFilter$value -side left -pady 2
     }
 
     #-------------------------------------------
@@ -499,6 +530,7 @@ proc ModelMakerTransform {volume} {
     vtkPolyDataNormals $p
     $p SetInput [transformer GetOutput]
     $p SetFeatureAngle 60
+    $p Splitting$ModelMaker(SplitNormals)
     [$p GetOutput] ReleaseDataFlagOn
 
     set p stripper
@@ -749,6 +781,7 @@ proc ModelMakerSmooth {m iterations} {
     vtkPolyDataNormals $p
     $p SetInput [smoother GetOutput]
     $p SetFeatureAngle 60
+    $p Splitting$ModelMaker(SplitNormals)
     [$p GetOutput] ReleaseDataFlagOn
 
     set p stripper
@@ -999,6 +1032,7 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     vtkPolyDataNormals $p
     $p SetInput [transformer GetOutput]
     $p SetFeatureAngle 60
+    $p Splitting$ModelMaker(SplitNormals)
     set Gui(progressText) "Normals $name"
     $p SetStartMethod     MainStartProgress
     $p SetProgressMethod "MainShowProgress $p"
