@@ -347,7 +347,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.60 $} {$Date: 2001/07/20 17:31:59 $}]
+		{$Revision: 1.61 $} {$Date: 2001/07/24 00:57:42 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -571,6 +571,9 @@ proc MainBuildGUI {} {
 	set Module(scrollbar,visible) 0
 	eval {checkbutton $f.bDn -image $Module(scrollbar,image) -variable Module(scrollbar,visible) -width 10 -indicatoron 0 -command "MainSetScrollbarVisibility" -height 20} $Gui(WBA)
 	
+	# Tooltip example: Add a tooltip for the image checkbutton
+	TooltipAdd $f.bDn "Press this button to show a scrollbar for the panel below. \n The scrollbar automatically adjusts to the height of the panel. "
+
 	pack $f.bDn -side right -padx 20
 	
 	#-------------------------------------------
