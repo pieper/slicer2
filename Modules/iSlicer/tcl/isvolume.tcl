@@ -35,7 +35,6 @@ isvolume - a widget for looking at Slicer volumes
 option add *isvolume.background #000000 widgetDefault
 option add *isvolume.orientation Axial widgetDefault
 option add *isvolume.volume "None" widgetDefault
-option add *isvolume.refvolume "None" widgetDefault
 option add *isvolume.warpvolume "None" widgetDefault
 option add *isvolume.slice 128 widgetDefault
 option add *isvolume.interpolation linear widgetDefault
@@ -46,73 +45,78 @@ option add *isvolume.transform "" widgetDefault
 # The class definition - define if needed (not when re-sourcing)
 #
 if { [itcl::find class isvolume] == "" } {
-
+    
     itcl::class isvolume {
-      inherit iwidgets::Labeledwidget
+        inherit iwidgets::Labeledwidget
+        
+        constructor {args} {}
+        destructor {}
+        
+        #
+        # itk_options for widget options that may need to be
+        # inherited or composed as part of other widgets
+        # or become part of the option database
+        #
+        itk_option define -background background Background {}
+        itk_option define -orientation orientation Orientation {}
+        itk_option define -volume volume Volume "None"
+        itk_option define -warpvolume warpvolume Refvolume "None"
+        itk_option define -slice slice Slice 0
+        itk_option define -interpolation interpolation Interpolation {linear}
+        itk_option define -resolution resolution Resolution {256}
+        itk_option define -transform transform Transform {}
+        
+        # widgets for the control area
+        variable _controls
+        variable _slider
+        variable _orientmenu
+        variable _resmenu
+        variable _volmenu
+        
+        # vtk objects in the slice render
+        variable _name
+        variable _tkrw
+        variable _ren
+        variable _mapper
+        variable _actor
+        variable _None_ImageData
+        
+        # vtk objects for reslicing
+        variable _ijkmatrix
+        variable _reslice
+        variable _xform
+        variable _changeinfo
+        variable _spacing
+        variable _dimensions
+        
+        # internal state variables
+        variable _warpVolId 0
+        variable _VolIdMap
+        variable _volume_serial 0
+        
+        # methods
+        method expose {}   {}
+        method actor  {}   {return $_actor}
+        method mapper {}   {return $_mapper}
+        method reslice {}  {return $_reslice}
+        method ren    {}   {return $_ren}
+        method tkrw   {}   {return $_tkrw}
+        method controls {} {return $_controls}
+        method rw     {}   {return [$_tkrw GetRenderWindow]}
+        method spacing{}   {return $_spacing}
+        method dimensions{}   {return $_dimensions}
+        
+        # Note: use SetUpdateExtent to get full volume in the imagedata
+        method imagedata {} {return [$_reslice GetOutput]}
+        
+        method screensave { filename {imagetype "PNM"} } {} ;# TODO should be moved to superclass
+        method volmenu_update {} {}
+        method transform_update {} {}
+        method slicer_volume { {name ""} } {}
+        method set_spacing  {spacingI spacingJ spacingK} {}
+        method set_dimensions  {dimensionI dimensionJ dimensionK} {}
+        method scanorder{} {}
 
-      constructor {args} {}
-      destructor {}
-
-      #
-      # itk_options for widget options that may need to be
-      # inherited or composed as part of other widgets
-      # or become part of the option database
-      #
-      itk_option define -background background Background {}
-      itk_option define -orientation orientation Orientation {}
-      itk_option define -volume volume Volume "None"
-      itk_option define -refvolume refvolume Refvolume "None"
-      itk_option define -warpvolume warpvolume Refvolume "None"
-      itk_option define -slice slice Slice 0
-      itk_option define -interpolation interpolation Interpolation {linear}
-      itk_option define -resolution resolution Resolution {256}
-      itk_option define -transform transform Transform {}
-
-      # widgets for the control area
-      variable _controls
-      variable _slider
-      variable _orientmenu
-      variable _resmenu
-      variable _volmenu
-
-      # vtk objects in the slice render
-      variable _name
-      variable _tkrw
-      variable _ren
-      variable _mapper
-      variable _actor
-      variable _None_ImageData
-
-      # vtk objects for reslicing
-      variable _ijkmatrix
-      variable _reslice
-      variable _xform
-      variable _changeinfo
-
-      # internal state variables
-      variable _refVolId 0
-      variable _warpVolId 0
-      variable _VolIdMap
-      variable _volume_serial 0
-
-      # methods
-      method expose {}   {}
-      method actor  {}   {return $_actor}
-      method mapper {}   {return $_mapper}
-      method reslice {}  {return $_reslice}
-      method ren    {}   {return $_ren}
-      method tkrw   {}   {return $_tkrw}
-      method rw     {}   {return [$_tkrw GetRenderWindow]}
-
-      # Note: use SetUpdateExtent to get full volume in the imagedata
-      method imagedata {} {return [$_reslice GetOutput]}
-
-      method screensave { filename {imagetype "PNM"} } {} ;# TODO should be moved to superclass
-      method volmenu_update {} {}
-      method transform_update {} {}
-      method slicer_volume { {name ""} } {}
-      method refvolume_update {} {}
-      method order_to_orientation  { {order "LR"} } {}
     }
 }
 
@@ -206,6 +210,8 @@ itcl::body isvolume::constructor {args} {
     $esrc SetOutput ""
     $esrc Delete
     $_None_ImageData SetSpacing 2 2 2
+    set _spacing {2 2 2}
+    set _dimensions {128 128 128}
 
 
     vtkRenderer $_ren
@@ -326,31 +332,6 @@ itcl::configbody isvolume::volume {
 }
 
 #-------------------------------------------------------------------------------
-# OPTION: -refvolume
-#
-# DESCRIPTION: which slicer volume to use as a reference for metadata:
-# spacing dimensions and scan order
-# The argument can be the volume name or the volume Id. The volume
-# Id is strongly prefered because it is unique.
-#-------------------------------------------------------------------------------
-itcl::configbody isvolume::refvolume {
-    global Volume
-
-    set volname $itk_option(-refvolume)
-
-    if { $volname == "" } {
-        set volname "None"
-    }
-
-    set _refVolId $_VolIdMap($volname)
-
-    if { ![info exists _VolIdMap($_refVolId)] } {
-        set _refVolId 0
-        error "bad volume id $_refVolId for $volname"
-    }
-}
-
-#-------------------------------------------------------------------------------
 # OPTION: -warpvolume
 #
 # DESCRIPTION: which slicer volume to use as a reference for metadata:
@@ -396,10 +377,15 @@ itcl::configbody isvolume::orientation {
     $this configure -resolution $itk_option(-resolution)
 }
 
+# ------------------------------------------------------------------
 itcl::configbody isvolume::interpolation {
     switch $itk_option(-interpolation) {
+        "Linear" -
         "linear" { set mode Linear }
+        "Cubic" -
         "cubic" { set mode Cubic }
+        "Nearest Neighbor" -
+        "NearestNeighbor" -
         "nearest" -
         "nearestneighbor" { set mode NearestNeighbor }
         default {
@@ -410,14 +396,20 @@ itcl::configbody isvolume::interpolation {
     $this expose
 }
 
+# ------------------------------------------------------------------
 itcl::configbody isvolume::resolution {
 
     set opos [expr ([$this cget -slice] * 1.0) / [$_slider cget -to] ]
     set res $itk_option(-resolution)
     set spacing [expr $::View(fov) / (1.0 * $res)]
 
+    set _spacing {$spacing $spacing $spacing}
+
     $_reslice SetOutputSpacing $spacing $spacing $spacing 
     set ext [expr $res -1]
+
+    set _dimensions {$res $res $res}
+
     $_reslice SetOutputExtent 0 $ext 0 $ext 0 $ext
 
     $_slider configure -from 0
@@ -428,6 +420,7 @@ itcl::configbody isvolume::resolution {
     $this transform_update
 }
 
+# ------------------------------------------------------------------
 itcl::configbody isvolume::transform {
 
     $this transform_update
@@ -542,15 +535,23 @@ itcl::body isvolume::transform_update {} {
     # TODO - add other orientations here...
 
     # desired orenation
-    # NOTE: in the case if a refVolume present the orientation is taken from it
     catch "transposematrix Delete"
     vtkMatrix4x4 transposematrix
     switch $itk_option(-orientation) {
+        "IS" -
         "axial" -
         "Axial" {
             # nothing, this is the default
             transposematrix Identity
         }
+        "SI" {
+            transposematrix DeepCopy \
+                1  0  0  0 \
+                0  1  0  0 \
+                0  0 -1  0 \
+                0  0  0  1    
+        }
+        "RL" -
         "sagittal" -
         "Sagittal" {
             transposematrix DeepCopy \
@@ -559,12 +560,27 @@ itcl::body isvolume::transform_update {} {
                 0  1  0  0 \
                 0  0  0  1    
         }
+        "LR" {
+            transposematrix DeepCopy \
+                0  0 -1  0 \
+               -1  0  0  0 \
+                0  1  0  0 \
+                0  0  0  1    
+        }
+        "PA" -
         "coronal" -
         "Coronal" {
             transposematrix DeepCopy \
                 1  0  0  0 \
                 0  0  1  0 \
                 0  1  0  0 \
+                0  0  0  1    
+        }
+        "AP" {
+            transposematrix DeepCopy \
+                1  0  0  0 \
+                0  0  1  0 \
+                0 -1  0  0 \
                 0  0  0  1    
         }
         "AxiSlice" -
@@ -707,19 +723,6 @@ itcl::body isvolume::slicer_volume { {name ""} } {
     # - then set up the volume node parameters and make it visible in slicer
     #
 
-    # determine orientation
-    if {$_refVolId == 0} {
-        set order [::Volume($i,node) GetScanOrder]
-    } else {
-        set order [::Volume($_refVolId,node) GetScanOrder]
-    }
-
-    set orientation [$this order_to_orientation $order]
-
-    $this configure -orientation $orientation
-
-    $this refvolume_update 
-
     $_reslice Update
 
     vtkImageData $id
@@ -730,24 +733,12 @@ itcl::body isvolume::slicer_volume { {name ""} } {
     ::Volume($i,node) SetNumScalars 1
     ::Volume($i,node) SetScalarType [$id GetScalarType]
 
-    if {$_refVolId == 0} {
-        eval ::Volume($i,node) SetSpacing [$id GetSpacing]
-        
-        ::Volume($i,node) SetScanOrder RL
-        ::Volume($i,node) SetDimensions [lindex [$id GetDimensions] 0] [lindex [$id GetDimensions] 1]
-        ::Volume($i,node) SetImageRange 1 $itk_option(-resolution)
-        
-    } else {
-        eval ::Volume($i,node) SetSpacing [::Volume($_refVolId,node) GetSpacing]
-        
-        ::Volume($i,node) SetScanOrder [::Volume($_refVolId,node) GetScanOrder]
-
-        ::Volume($i,node) SetDimensions [lindex [::Volume($_refVolId,node) GetDimensions] 0] [lindex [::Volume($_refVolId,node) GetDimensions] 1]
-        eval ::Volume($i,node) SetImageRange [::Volume($_refVolId,node) GetImageRange]
-         
-    }
-
-    ### THIS MAY CHANGE ScanOrder ???
+    eval ::Volume($i,node) SetSpacing [$id GetSpacing]
+    
+    ::Volume($i,node) SetScanOrder $itk_option(-orientation)
+    ::Volume($i,node) SetDimensions [lindex [$id GetDimensions] 0] [lindex [$id GetDimensions] 1]
+    ::Volume($i,node) SetImageRange 1 [lindex $_dimensions 2]
+    
     ::Volume($i,node) ComputeRasToIjkFromScanOrder [::Volume($i,node) GetScanOrder]
     Volume($i,vol) SetImageData $id
     MainUpdateMRML
@@ -761,42 +752,28 @@ itcl::body isvolume::slicer_volume { {name ""} } {
 
 # ------------------------------------------------------------------
 
-itcl::body isvolume::refvolume_update {} {
-    if {$_refVolId != 0} {
-        set spacing [split [[Volume($_refVolId,vol) GetOutput] GetSpacing]] 
-        
-        $_reslice SetOutputSpacing [lindex $spacing 0] [lindex $spacing 1] [lindex $spacing 2]
-        
-        set dimension [split [[Volume($_refVolId,vol) GetOutput] GetDimensions]] 
-        
-        set extentx [expr round(abs([lindex $dimension 0]))]
-        set extenty [expr round(abs([lindex $dimension 1]))]
-        set extentz [expr round(abs([lindex $dimension 2]))]
-        $_reslice SetOutputExtent  0 [expr $extentx - 1]\
-                0 [expr $extenty - 1]\
-                0 [expr $extentz - 1] 
-        
-        $this transform_update
-    }
+itcl::body isvolume::set_spacing  {spacingI spacingJ spacingK} {
+    set _spacing [list $spacingI $spacingJ $spacingK]
+
+    $_reslice SetOutputSpacing $spacingI $spacingJ $spacingK
 }
 
 # ------------------------------------------------------------------
-itcl::body isvolume::order_to_orientation {{order "LR"}} {
-    set orientation "Sagital"
-    switch $order {
-        "LR" -
-        "RL" { set orientation "Sagittal" }
-        "IS" -
-        "SI" { set orientation "Axial" }
-        "PA" -
-        "AP" { set orientation "Coronal" }
-        #TODO - gantry tilt not supported
-        default {
-            error "unknown image scan order $order"
-        }
-    }
-    return $orientation
+itcl::body isvolume::set_dimensions  {dimensionI dimensionJ dimensionK} {
+    set _dimensions [list $dimensionI $dimensionJ $dimensionK]
+
+    set opos [expr ([$this cget -slice] * 1.0) / [$_slider cget -to] ]
+
+    $_reslice SetOutputExtent 0 [expr $dimensionI - 1]\
+        0 [expr $dimensionJ - 1]\
+        0 [expr $dimensionK - 1] 
+
+    $_slider configure -from 0
+    $_slider configure -to $dimensionK
+    $this configure -slice [expr round( $opos * $dimensionK)]
+    $_tkrw configure -width $dimensionI -height $dimensionJ
 }
+
 
 # ------------------------------------------------------------------
 
