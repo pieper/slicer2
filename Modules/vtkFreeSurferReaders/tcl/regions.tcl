@@ -149,9 +149,9 @@ itcl::body regions::constructor {args} {
     pack $cs.query -side left
     button $cs.smart -text "SMART Atlas" -command "exec $browser http://animal.ucsd.edu:8030/jnlp/atlas.jnlp"
     pack $cs.smart -side bottom
-    button $cs.connect -text "Swanson's Connectivity Tool (BAMS)" -command "exec $browser http://brancusi.usc.edu/bkms/about.html"
+    button $cs.connect -text "Swanson's Connectivity Tool (BAMS)" -command {exec $browser http://brancusi.usc.edu/bkms/about.html}
     pack $cs.connect -side left
-    button $cs.braininfo -text "Washington University's BrainInfo" -command "exec $browser http://braininfo.rprc.washington.edu/mainmenu.html"
+    button $cs.braininfo -text "Washington University's BrainInfo" -command {exec $browser http://braininfo.rprc.washington.edu/mainmenu.html}
     pack $cs.braininfo -side left
 
     #
@@ -582,11 +582,24 @@ itcl::body regions::talairach {} {
     puts "MNI Coord $mtal(1) $mtal(2) $mtal(3)"
     #open socket, send coordinate to Talairach Daemon query
     if {[catch {set sock [socket localhost 19000]}]} {
-         exec "$javapath/runtd.sh" &
-         }
+         # exec "$javapath/runtd.sh" &
+         set cwd [pwd]
+         cd $javapath
+         set cmd "java -classpath build/classes RegionsServer 19000 database.dat database.txt"
+         set ret [catch "exec $cmd &" res]
+         cd $cwd
+         puts $cmd
+    }
+    set count 0
     while {[catch {set sock [socket localhost 19000]}]} {
          after 500
+         incr count
+         puts -nonewline "." ; flush stdout
+         if { $count > 10 } {
+             puts "no response from talairach server"
+             return
          }
+    }
     #set sock [socket localhost 19000]
     puts $sock "$tal(1) $tal(2) $tal(3)          "
     flush $sock
@@ -624,18 +637,21 @@ itcl::body regions::demo {} {
     # - make scalars visible
 
 
-    $this configure -arrow $::PACKAGE_DIR_VTKFREESURFERREADERS/../../../tcl/QueryA.html
+    set fstcldir [file normalize $::PACKAGE_DIR_VTKFREESURFERREADERS/../../../tcl]
+
+    $this configure -arrow $fstcldir/QueryA.html
     $this configure -arrowout [$this cget -tmpdir]/QueryAout.html
 
     set mydata c:/pieper/bwh/data/MGH-Siemens15-SP.1-uw
-    #set slicer c:/???/slicer2/Modules/vtkFreeSurferReaders
+
     if { [file exists $mydata] } {
-        $this configure -annotfile $mydata/label/rh.aparc.annot 
+        vtkFreeSurferReadersLoadModel $mydata/surf/lh.pial
+        $this configure -annotfile $mydata/label/lh.aparc.annot 
         $this configure -talfile $mydata/mri/transforms/talairach.xfm
-        $this configure -arrow "$slicer/tcl/QueryA.html"
-        $this configure -arrowout "$slicer/tcl/QueryAout.html"
-        $this configure -umlsfile "$slicer/tcl/label2UMLS.txt"
-        $this configure -javapath "$slicer/talairach"
+        $this configure -arrow "$fstcldir/QueryA.html"
+        $this configure -arrowout "$fstcldir/QueryAout.html"
+        $this configure -umlsfile "$fstcldir/label2UMLS.txt"
+        $this configure -javapath [file normalize "$fstcldir/../talairach"]
         $this configure -model lh-pial
     } else {
         set ucsddata /home/ajoyner/docs/regions
