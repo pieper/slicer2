@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.60 $} {$Date: 2003/06/06 19:30:33 $}]
+    {$Revision: 1.60.2.1 $} {$Date: 2003/08/06 23:22:56 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -440,17 +440,26 @@ proc MainVolumesWrite {v prefix} {
     set Gui(progressText) "Writing [Volume($v,node) GetName]"
     puts "Writing '$fileFull' ..."
     Volume($v,vol) Write
+    puts " ... checking to see if need to rename volume with numbers from 1-n"
+    MainVolumesRenumber $v
     puts " ...done."
 
     # put MRML file in dir where volume was saved, name it after the volume
     set filename [file join [file dirname $fileFull] $name.xml]
 
     # Write MRML file
-    vtkMrmlTree tree
-    tree AddItem Volume($v,node)
-    tree Write $filename
-    tree RemoveAllItems
-    tree Delete
+    vtkMrmlTree volumeTree
+    volumeTree AddItem Volume($v,node)
+    volumeTree Write $filename
+    if {[volumeTree GetErrorCode] != 0} {
+        puts "ERROR: MainVolumesWrite: unable to write MRML file $filename"
+        DevErrorWindow "ERROR: MainVolumesWrite: unable to write MRML file $filename"
+        volumeTree RemoveAllItems
+        volumeTree Delete
+        return
+    }
+    volumeTree RemoveAllItems
+    volumeTree Delete
     puts "Saved MRML file: $filename"
 
     # Reset the pathnames to be relative to Mrml(dir)
@@ -847,15 +856,15 @@ proc MainVolumesSetActive {v} {
             foreach s $Slice(idList) {
                 if {$v == $Slice($s,backVolID)} {
                     MainSlicesConfigGui $s fOrient.mbBackVolume$s \
-                        "-text [Volume($v,node) GetName]"
+                        "-text \"[Volume($v,node) GetName]\""
                 }
                 if {$v == $Slice($s,foreVolID)} {
                     MainSlicesConfigGui $s fVolume.mbForeVolume$s \
-                        "-text [Volume($v,node) GetName]"
+                        "-text \"[Volume($v,node) GetName]\""
                 }
                 if {$v == $Slice($s,labelVolID)} {
                     MainSlicesConfigGui $s fVolume.mbLabelVolume$s \
-                        "-text [Volume($v,node) GetName]"
+                        "-text \"[Volume($v,node) GetName]\""
                 }
             }
 
@@ -1122,4 +1131,28 @@ proc MainVolumesSetGUIDefaults {} {
     set Volume(readHeaders) 1
     set Volume(labelMap) 0
     set Volume(lastNum) ""
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainVolumesRenumber
+# This procedure will rename the files that were written out during the Volume($vid,vol) Write call.
+# A change to vtk caused the image writer to start writing volume files at 0 instead of 1, but 
+# we require the files to be numbered according to the actual image range, instead of image range - 1
+# .ARGS
+# vid the id of the volume that's just been written, and needs to be renumbered
+# .END
+#-------------------------------------------------------------------------------
+
+proc MainVolumesRenumber {vid} {
+    global Volume
+
+    set imageRange [[Volume($vid,vol) GetOutput] GetWholeExtent]
+    set lo [lindex $imageRange 4]
+    set hi [lindex $imageRange 5]
+    
+    if {$::Module(verbose)} {
+        puts "MainVolumesRenumber: NOT YET renumbering volume $vid, with image range $lo $hi"
+        puts "to [expr $lo + 1] [expr $hi + 1]"
+        puts "\t image dimensions [[Volume($vid,vol) GetOutput] GetDimensions]"
+    }
 }
