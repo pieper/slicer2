@@ -214,6 +214,7 @@ proc CrossSectionEnter {} {
     #}
     foreach a $CrossSection(actors) {
         viewRen AddActor $a
+    CrossSectionSetPickable $a 1
     }
     set Csys(active) 1
     Render3D
