@@ -84,22 +84,23 @@ proc MainSlicesInit {} {
     lappend Module(procRecallPresets) MainSlicesRecallPresets
 
     # Preset Defaults
-    set Module(Slices,presets) "opacity='1.0' fade='0' \
+    set Module(Slices,presets) "opacity='1.0' fade='0' clipType='Union' \
 0,visibility='0' 0,backVolID='0' 0,foreVolID='0' 0,labelVolID='0' \
-0,orient='Axial' 0,offset='0' 0,zoom='1.0' 0,clipState='1'\
+0,orient='Axial' 0,offset='0' 0,zoom='1.0' 0,clipState='0'\
 1,visibility='0' 1,backVolID='0' 1,foreVolID='0' 1,labelVolID='0' \
-1,orient='Sagittal' 1,offset='0' 1,zoom='1.0' 1,clipState='1' \
+1,orient='Sagittal' 1,offset='0' 1,zoom='1.0' 1,clipState='0' \
 2,visibility='0' 2,backVolID='0' 2,foreVolID='0' 2,labelVolID='0' \
-2,orient='Coronal' 2,offset='0' 2,zoom='1.0' 2,clipState='1'"
+2,orient='Coronal' 2,offset='0' 2,zoom='1.0' 2,clipState='0'"
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.44 $} {$Date: 2002/10/02 13:15:06 $}]
+        {$Revision: 1.45 $} {$Date: 2002/11/15 23:20:26 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"
 
     set Slice(opacity) 0.5
+    set Slice(clipType) Intersection
     set Slice(visibilityAll) 0
     set Slice(activeID) 0 
     set Slice(0,controls) ""
@@ -131,7 +132,7 @@ proc MainSlicesInit {} {
         set Slice($s,offsetInPlane90) 0
         set Slice($s,offsetInPlaneNeg90) 0
         set Slice($s,offsetPerp) 0
-            set Slice($s,offsetUser) 0
+        set Slice($s,offsetUser) 0
         set Slice($s,offsetOrigSlice) Auto
         set Slice($s,offsetAxiSlice) Auto
         set Slice($s,offsetCorSlice) Auto
@@ -1315,6 +1316,25 @@ proc MainSlicesSetFadeAll {{value ""}} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC MainSlicesSetClipType
+# Set the type of clippint to apply to models
+# .ARGS
+# Union or Intersection
+# .END
+#-------------------------------------------------------------------------------
+proc MainSlicesSetClipType {{value ""}} {
+    global Slice
+    
+    if {$value == ""} {
+        set value $Slice(clipType)
+    } else {
+        set Slice(clipType) $value
+    }
+    Slice(clipPlanes) SetOperationTypeTo$Slice(clipType);
+    MainModelsRefreshClipping 
+}
+
+#-------------------------------------------------------------------------------
 # .PROC MainSlicesSave
 # Save a slice window into an image file.
 # Calls MainSlicesWrite.
@@ -1463,6 +1483,7 @@ proc MainSlicesStorePresets {p} {
     }
     set Preset(Slices,$p,opacity) $Slice(opacity)
     set Preset(Slices,$p,fade) $Slice(fade)
+    set Preset(Slices,$p,clipType) $Slice(clipType)
 }
 
 
@@ -1489,6 +1510,7 @@ proc MainSlicesRecallPresets {p} {
     }
     MainSlicesSetOpacityAll $Preset(Slices,$p,opacity)
     MainSlicesSetFadeAll $Preset(Slices,$p,fade)
+    MainSlicesSetClipType $Preset(Slices,$p,clipType)
 }
 
 #-------------------------------------------------------------------------------

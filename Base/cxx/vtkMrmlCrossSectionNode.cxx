@@ -49,6 +49,7 @@ vtkMrmlCrossSectionNode::vtkMrmlCrossSectionNode()
   this->BackVolRefID = NULL;
   this->ForeVolRefID = NULL;
   this->LabelVolRefID = NULL;
+  this->ClipType = NULL;
   
   // Numbers
   this->Position = 0;
@@ -57,7 +58,7 @@ vtkMrmlCrossSectionNode::vtkMrmlCrossSectionNode()
   this->RotatorY = 0;
   this->Zoom = 1.0;
   this->InModel = 0;
-  this->ClipState = 1;
+  this->ClipState = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -82,6 +83,11 @@ vtkMrmlCrossSectionNode::~vtkMrmlCrossSectionNode()
   {
     delete [] this->LabelVolRefID;
     this->LabelVolRefID = NULL;
+  }
+  if (this->ClipType)
+  {
+    delete [] this->ClipType;
+    this->ClipType = NULL;
   }
 }
 
@@ -116,6 +122,10 @@ void vtkMrmlCrossSectionNode::Write(ofstream& of, int nIndent)
   {
     of << " labelVolRefID='" << this->LabelVolRefID << "'";
   }
+  if (this->ClipType && strcmp(this->ClipType, ""))
+  {
+    of << " clipType='" << this->ClipType << "'";
+  }
 
   // Numbers
   if (this->InModel != 0)
@@ -138,9 +148,9 @@ void vtkMrmlCrossSectionNode::Write(ofstream& of, int nIndent)
   {
     of << " zoom='" << this->Zoom << "'";
   }
-  if (this->ClipState != 1)
+  if (this->ClipState != 0)
   {
-    of << " clipState='" << (this->ClipState ? "true":"false") << "'";
+    of << " clipState='" << this->ClipState << "'";
   }
   of << "></CrossSection>\n";
 }
@@ -158,6 +168,7 @@ void vtkMrmlCrossSectionNode::Copy(vtkMrmlNode *anode)
   this->SetBackVolRefID(node->BackVolRefID);
   this->SetForeVolRefID(node->ForeVolRefID);
   this->SetLabelVolRefID(node->LabelVolRefID);
+  this->SetClipType(node->ClipType);
   // Numbers
   this->SetInModel(node->InModel);
   this->SetSliceSlider(node->SliceSlider);
@@ -186,5 +197,7 @@ void vtkMrmlCrossSectionNode::PrintSelf(ostream& os, vtkIndent indent)
     (this->ForeVolRefID ? this->ForeVolRefID : "(none)") << "\n";
   os << indent << "LabelVolRefID: " <<
     (this->LabelVolRefID ? this->LabelVolRefID : "(none)") << "\n";
+  os << indent << "ClipType: " <<
+    (this->ClipType ? this->ClipType : "(none)") << "\n";
   os << indent << "ClipState: " << this->ClipState << "\n";
 }

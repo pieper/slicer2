@@ -109,8 +109,13 @@ public:
   vtkGetStringMacro(LabelVolRefID);
   
   // Description:
+  // Clip Type Union or Intersection
+  vtkSetStringMacro(ClipType);
+  vtkGetStringMacro(ClipType);
+
+  // Description:
   // Clipping state
-  vtkBooleanMacro(ClipState,int);
+  //vtkBooleanMacro(ClipState,int);
   vtkSetMacro(ClipState,int);
   vtkGetMacro(ClipState,int);
  
@@ -125,6 +130,7 @@ protected:
   char *BackVolRefID;
   char *ForeVolRefID;
   char *LabelVolRefID;
+  char *ClipType; // Union or Intersection
   
   // Numbers
   int Position;
@@ -135,6 +141,8 @@ protected:
   
   // Booleans
   int InModel;
+
+  // int flag - 0, 1, 2
   int ClipState;
 
 };

@@ -74,7 +74,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.51 $} {$Date: 2002/11/05 16:08:54 $}]
+        {$Revision: 1.52 $} {$Date: 2002/11/15 23:20:24 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -763,7 +763,7 @@ proc MainModelsSetActive {m} {
             $mb config -text [Model($m,node) GetName]
         }
         set Model(name)             [Model($m,node) GetName]
-                set Model(FileName)         [Model($m,node) GetFileName]
+        set Model(FileName)         [Model($m,node) GetFileName]
         set Model(prefix)           [file root [Model($m,node) GetFileName]]
         set Model(visibility)       [Model($m,node) GetVisibility]
         set Model(clipping)         [Model($m,node) GetClipping]

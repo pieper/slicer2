@@ -66,7 +66,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
     set m MainView
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.42 $} {$Date: 2002/11/13 23:15:34 $}]
+    {$Revision: 1.43 $} {$Date: 2002/11/15 23:20:26 $}]
 
     set View(viewerHeightNormal) 656
     set View(viewerWidth)  956 
@@ -294,8 +294,8 @@ proc MainViewBuildGUI {} {
     eval {menu $f.cm.m} $Gui(WMA)
     $f.cm.m add command -label "(none)"
     TooltipAdd $f.cm "Recall a previously saved view, right-click to save current view, shift-right-click to delete current view"
-    bind $f.cm <Button-3> "MainOptionsPresetSaveCreateDialog $f.cm"
-    bind $f.cm <Shift-Button-3> "MainOptionsPresetDeleteDialog $f.cm"
+    bind $f.cm <ButtonRelease-3> "MainOptionsPresetSaveCreateDialog $f.cm"
+    bind $f.cm <Shift-ButtonRelease-3> "MainOptionsPresetDeleteDialog $f.cm"
 
     #foreach p "1 2 3" {
     #    eval {button $f.c$p -text $p -width 2} $Gui(WBA)

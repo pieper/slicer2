@@ -78,7 +78,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.67 $} {$Date: 2002/11/05 17:37:38 $}]
+        {$Revision: 1.68 $} {$Date: 2002/11/15 23:20:24 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -96,9 +96,9 @@ proc MainMrmlInitIdLists {} {
     eval {global} $Mrml(nodeTypeList)
      
     foreach node $Mrml(nodeTypeList) {
-    set ${node}(nextID) 0
-    set ${node}(idList) ""
-    set ${node}(idListDelete) ""
+        set ${node}(nextID) 0
+        set ${node}(idList) ""
+        set ${node}(idListDelete) ""
     }
     # Volumes are a special case because the "None" always exists
     
@@ -193,7 +193,7 @@ proc MainMrmlClearList {} {
     eval {global} $Mrml(nodeTypeList)
     
     foreach node $Mrml(nodeTypeList) {
-    set ${node}(idListDelete) ""
+        set ${node}(idListDelete) ""
     }
 }
 
@@ -1138,13 +1138,8 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                             $n SetInModel 0
                         }
                     }
-                    "clipstate" {
-                        if {$val == "true"} {
-                            $n SetClipState 1
-                        } else {
-                            $n SetClipState 0
-                        }
-                    }
+                    "clipstate" { $n SetClipState $val}
+                    "cliptype" { $n SetClipType $val}
                     "zoom" {$n SetZoom $val}
                     "backvolrefid" {$n SetBackVolRefID $val}
                     "forevolrefid" {$n SetForeVolRefID $val}
@@ -1256,6 +1251,13 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                             $n SetSonsVisible 1
                         } else {
                             $n SetSonsVisible 0
+                        }
+                    }
+                    "clipping" {
+                        if {$val == "true"} {
+                            $n SetClipping 1
+                        } else {
+                            $n SetClipping 0
                         }
                     }
                 }

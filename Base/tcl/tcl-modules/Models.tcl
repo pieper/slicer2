@@ -66,7 +66,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.49 $} {$Date: 2002/10/07 23:38:47 $}]
+            {$Revision: 1.50 $} {$Date: 2002/11/15 23:20:26 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -696,7 +696,7 @@ foreach p "Union Intersection" {
     eval {radiobutton $f.r$p -width 10 \
             -text "$p" -value "$p" \
             -variable Slice(clipType) \
-            -command "Slice(clipPlanes) SetOperationTypeTo$p; Render3D"\
+            -command "MainSlicesSetClipType $p; Render3D"\
             -indicatoron 0 \
         } $Gui(WCA) 
     grid $f.r$p -padx 0 -pady 0

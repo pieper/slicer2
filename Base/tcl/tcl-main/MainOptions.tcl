@@ -63,9 +63,9 @@ proc MainOptionsInit {} {
     set Options(activeID) ""
     set Options(freeze) ""
 
-        # Set version info
-        lappend Module(versions) [ParseCVSInfo MainOptions \
-        {$Revision: 1.21 $} {$Date: 2002/03/27 15:44:53 $}]
+    # Set version info
+    lappend Module(versions) [ParseCVSInfo MainOptions \
+    {$Revision: 1.22 $} {$Date: 2002/11/15 23:20:25 $}]
 
     # Props
     set Options(program) "slicer"
@@ -74,8 +74,8 @@ proc MainOptionsInit {} {
 
     set Options(moduleList) "ordered='$Module(idList)'\nsuppressed='$Module(supList)'"
 
-        set Preset(userOptions) 0
-        set Preset(idList) "0 1 2 3"
+    set Preset(userOptions) 0
+    set Preset(idList) "0 1 2 3"
     foreach p $Preset(idList) {
         set Preset($p,state) Release
     }
@@ -314,7 +314,7 @@ proc MainOptionsParseDefaults {m} {
             $attr match key value attr] == 0} {
             set errmsg "Can't parse attributes:\n$attr"
             puts "$errmsg"
-        tk_messageBox -message "$errmsg"
+            tk_messageBox -message "$errmsg"
             return
         }
             
@@ -357,8 +357,9 @@ proc MainOptionsRetrievePresetValues {} {
             if {$currentScene == "default"} {
                 set currentScene "0"
             }
-            if {$currentScene != "0"} {
+            if {$currentScene != "0" && [lsearch $Scenes(nameList) $currentScene] == -1 } {
                 # don't add the default values to the scenes list
+                # but only if it doesn't yet exist in the list
                 lappend Scenes(nameList) $currentScene
                 lappend Preset(idList) $currentScene
             }
@@ -406,6 +407,7 @@ proc MainOptionsRetrievePresetValues {} {
             set Preset(Slices,$currentScene,$pos,foreVolID) [SharedVolumeLookup [$node GetForeVolRefID]]
             set Preset(Slices,$currentScene,$pos,labelVolID) [SharedVolumeLookup [$node GetLabelVolRefID]]
             set Preset(Slices,$currentScene,$pos,clipState) [$node GetClipState]
+            set Preset(Slices,$currentScene,clipType) [$node GetClipType]
         }
         if {([string compare -length 7 $node "Locator"] == 0) && ($currentScene != "")} {
             set Preset(Locator,$currentScene,diffuseColor) [$node GetDiffuseColor]
@@ -592,6 +594,7 @@ proc MainOptionsUnparsePresets {{presetNum ""}} {
                 $node SetForeVolRefID [Volume($Preset(Slices,$p,$pos,foreVolID),node) GetVolumeID]
                 $node SetLabelVolRefID [Volume($Preset(Slices,$p,$pos,labelVolID),node) GetVolumeID]
                 $node SetClipState $Preset(Slices,$p,$pos,clipState)
+                $node SetClipType $Preset(Slices,$p,clipType)
                 
                 set node [MainMrmlAddNode "Locator"]
                 $node SetDiffuseColor $Preset(Locator,$p,diffuseColor)
@@ -711,18 +714,18 @@ proc MainOptionsPresetCallback {p} {
     
     if {$Preset($p,state) == "Press"} {
     
-    # Change button to red
-    if {$p != $Preset(userOptions)} {
-        #$View(fPreset).c$p config -activebackground red
-    }
-    
-    # Set preset value to the current
-    MainOptionsStorePresets $p
+        # Change button to red
+        if {$p != $Preset(userOptions)} {
+            #$View(fPreset).c$p config -activebackground red
+        }
+        
+        # Set preset value to the current
+        MainOptionsStorePresets $p
     
     } else {
-    
-    # Set current to the preset value
-    MainOptionsRecallPresets $p
+        
+        # Set current to the preset value
+        MainOptionsRecallPresets $p
     }
 }
 
@@ -738,7 +741,7 @@ proc MainOptionsRecallPresets {p} {
 
     # Set current to the preset value
     foreach m $Module(procRecallPresets) {
-    $m $p
+        $m $p
     }
 }
 
@@ -753,7 +756,7 @@ proc MainOptionsStorePresets {p} {
     
     # Set preset value to the current
     foreach m $Module(procStorePresets) {
-    $m $p
+        $m $p
     }
 }
 
@@ -848,6 +851,27 @@ proc MainOptionsPresetDelete {name} {
     set Scenes(nameList) [lreplace $Scenes(nameList) $i $i]
     set i [lsearch $Preset(idList) $name]
     set Preset(idList) [lreplace $Preset(idList) $i $i]
+    $Gui(ViewMenuButton) configure -text "Select"
+    
+    # Refresh view menu
+    $Gui(ViewMenuButton).m delete 0 last
+    foreach scene $Scenes(nameList) {
+        $Gui(ViewMenuButton).m add command -label "$scene" -command "MainViewSelectView {$scene}"
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainOptionsPresetDeleteAll
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainOptionsPresetDeleteAll {} {
+    global Scenes Preset Gui
+    
+    # delete the view from the scenes and preset lists
+    set Scenes(nameList) ""
+    set Preset(idList) ""
     $Gui(ViewMenuButton) configure -text "Select"
     
     # Refresh view menu
