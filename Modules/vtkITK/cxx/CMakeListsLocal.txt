@@ -9,6 +9,8 @@ ENDIF(USE_ITK_FILE)
 
 SET( LOCAL_MODULE_SRCS
 vtkITKAntiAliasBinaryImageFilter.h
+vtkITKArchetypeImageSeriesReader.cxx
+vtkITKArchetypeImageSeriesReader.h
 vtkITKBilateralImageFilter.h
 vtkITKBSplineImageFilter.cxx
 vtkITKConfidenceConnectedImageFilter.cxx
@@ -64,5 +66,7 @@ ITKCommon
 ITKBasicFilters
 ITKNumerics
 ITKBasicFilters
+ITKIO
+ITKDICOMParser
 )
 
