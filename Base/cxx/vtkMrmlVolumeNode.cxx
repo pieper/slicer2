@@ -152,6 +152,27 @@ vtkMrmlVolumeNode::~vtkMrmlVolumeNode()
 }
 
 //----------------------------------------------------------------------------
+char* vtkMrmlVolumeNode::GetScalarTypeAsString()
+{
+  switch (this->ScalarType)
+  {
+  case VTK_VOID:           return "Void"; break;
+  case VTK_BIT:            return "Bit"; break;
+  case VTK_CHAR:           return "Char"; break;
+  case VTK_UNSIGNED_CHAR:  return "UnsignedChar"; break;
+  case VTK_SHORT:          return "Short"; break;
+  case VTK_UNSIGNED_SHORT: return "UnsignedShort"; break;
+  case VTK_INT:            return "Int"; break;
+  case VTK_UNSIGNED_INT:   return "UnsignedInt"; break;
+  case VTK_LONG:           return "Long"; break;
+  case VTK_UNSIGNED_LONG:  return "UnsignedLong"; break;
+  case VTK_FLOAT:          return "Float"; break;
+  case VTK_DOUBLE:         return "Double"; break;
+  }
+  return "Short";
+}
+
+//----------------------------------------------------------------------------
 void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
 {
   // Write all attributes not equal to their defaults
@@ -203,23 +224,11 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
   }
 
   // Numbers
-  of << " scalarType='";
-  switch (this->ScalarType)
+  char *scalarType = this->GetScalarTypeAsString();
+  if (strcmp(scalarType, "Short")) 
   {
-  case VTK_VOID:           of << "Void"; break;
-  case VTK_BIT:            of << "Bit"; break;
-  case VTK_CHAR:           of << "Char"; break;
-  case VTK_UNSIGNED_CHAR:  of << "UnsignedChar"; break;
-  case VTK_SHORT:          of << "Short"; break;
-  case VTK_UNSIGNED_SHORT: of << "UnsignedShort"; break;
-  case VTK_INT:            of << "Int"; break;
-  case VTK_UNSIGNED_INT:   of << "UnsignedInt"; break;
-  case VTK_LONG:           of << "Long"; break;
-  case VTK_UNSIGNED_LONG:  of << "UnsignedLong"; break;
-  case VTK_FLOAT:          of << "Float"; break;
-  case VTK_DOUBLE:         of << "Double"; break;
+    of << " scalarType='" << scalarType << "'";
   }
-  of << "'";
   if (this->NumScalars != 1)
   {
     of << " numScalars='" << this->NumScalars << "'";
