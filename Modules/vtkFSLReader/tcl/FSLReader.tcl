@@ -161,7 +161,7 @@ proc FSLReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2004/08/23 18:58:03 $}]
+        {$Revision: 1.3 $} {$Date: 2004/08/23 23:11:18 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -482,7 +482,6 @@ proc FSLReaderCreateModels {} {
                 while {$ii < $length && $count < $FSLReader(totalVolumes)} {
 
                     set val [expr {$doTask ? 1.0 : 0.0}] 
-                    puts $val
                     FSLReader(ev$i,model) SetComponent $count 0 $val 
                     incr count 
                     incr ii
