@@ -262,7 +262,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.84 $} {$Date: 2004/12/14 21:37:15 $}] 
+    {$Revision: 1.85 $} {$Date: 2005/01/03 20:03:28 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -5484,6 +5484,14 @@ proc EndoscopicEndZoom {widget ycoord} {
 
 proc EndoscopicPickFlatPoint {widget xcoord ycoord} {
     global Select Endoscopic Model Fiducials
+    
+     set model $Model(activeID)
+     if {$model != ""} {
+     set polyData3D $Model($model,polyData)
+     }
+     
+     set numP [$polyData3D GetNumberOfPoints]
+    
 puts "start pick: clock format [clock seconds]"
     set name $Endoscopic($widget,name)
     
@@ -5491,7 +5499,7 @@ puts "start pick: clock format [clock seconds]"
     TempCellPicker SetTolerance 0.001
     
     
-#get the target coordinates in the flat window and draw a vertical red target line
+#get the target coordinates in the flat window to draw a crosshair
     if {[SelectPick TempCellPicker $widget $xcoord $ycoord] != 0} {
     
     set fx [lindex $Select(xyz) 0]
@@ -5507,19 +5515,19 @@ puts "end pick : clock format [clock seconds]"
     set polyData $Endoscopic($name,polyData)
     
 #reduce point number by half
-    set numP [$polyData GetNumberOfPoints]
+#    set numP [$polyData GetNumberOfPoints]
 # puts "nump for the doubled model is: $numP"
-    set numP  [expr $numP/2] 
+#    set numP  [expr $numP/2] 
 # puts "nump for the single model is: $numP"    
 puts "start locate point: clock format [clock seconds]"     
     vtkPointLocator tempPointLocator
     tempPointLocator SetDataSet $polyData
 
-    set x [lindex $Select(xyz) 0]
-    set y [lindex $Select(xyz) 1]
-    set z [lindex $Select(xyz) 2]
+#    set x [lindex $Select(xyz) 0]
+#    set y [lindex $Select(xyz) 1]
+#    set z [lindex $Select(xyz) 2]
     
-    set pointId [tempPointLocator FindClosestPoint $x $y $z]
+    set pointId [tempPointLocator FindClosestPoint $fx $fy $fz]
 # puts "picked pointId from the double model is $pointId"
 puts "end locate point: clock format [clock seconds]"    
 # check if the pointId is larger than numP
@@ -6312,7 +6320,11 @@ proc EndoscopicSelectTarget {sT} {
     set fx [lindex $point(xyz) 0]
     set fy [lindex $point(xyz) 1]
     set fz [lindex $point(xyz) 2]
-    
+
+#test
+    set pointId [Point($pid,node) GetDescription]
+puts "the id of the verticie is $pointId"
+#test end        
     EndoscopicResetCameraDirection    
     EndoscopicUpdateVirtualEndoscope $Endoscopic(activeCam) [concat [Point($pid,node) GetFXYZ] [Point($pid,node) GetXYZ]]
    
