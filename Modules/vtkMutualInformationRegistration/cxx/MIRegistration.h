@@ -251,6 +251,9 @@ public:
   const ParametersType& GetTransformParameters()
     { return m_Registration->GetLastTransformParameters(); }
 
+  const ParametersType& GetInitialParameters()
+    { return m_InitialParameters; }
+
   /** Get computed affine transform. */
   AffineTransformPointer GetAffineTransform();
 
