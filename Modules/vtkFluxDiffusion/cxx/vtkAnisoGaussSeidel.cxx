@@ -37,8 +37,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkAnisoGaussSeidel.cxx,v $
   Language:  C++
-  Date:      $Date: 2003/12/18 20:08:50 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2004/02/11 23:35:24 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================*/
 
@@ -1780,6 +1780,7 @@ void vtkAnisoGaussSeidel::ExecuteData(vtkDataObject *out)
     char resname[100];
     float min,max;
     float* tmp2_ptr;
+    char progresstext[100];
 
     //    fprintf(stderr,"vtkAnisoGaussSeidel::Execute() \n");
 
@@ -1807,7 +1808,8 @@ void vtkAnisoGaussSeidel::ExecuteData(vtkDataObject *out)
 
   for(i=1; i<=NumberOfIterations; i++) {
 
-    //    printf("iteration %d \n",i);
+    sprintf(progresstext," Flux Diffusion %3d ",i);
+    this->SetProgressText(progresstext);
     im_tmp1->Modified();
     filter->SetInput(im_tmp1);
     // 1. compute the smoothed image
