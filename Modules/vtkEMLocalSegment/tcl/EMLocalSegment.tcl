@@ -135,6 +135,12 @@
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
+proc EMLocalSegmentInit {} {
+    ## hook for the Module code in Go.tcl that expects each module
+    # to have a proc named ${name}Init
+    EMSegmentInit
+}
+
 proc EMSegmentInit {} {
     global EMSegment Module Volume Model Mrml Color Slice Gui env
     # For later version where we can use local prios
@@ -236,7 +242,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.29 $} {$Date: 2004/04/13 21:11:33 $}]
+        {$Revision: 1.30 $} {$Date: 2004/07/06 16:00:21 $}]
 
     # Initialize module-level variables
     #------------------------------------
