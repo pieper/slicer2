@@ -17,9 +17,17 @@ set windows "Win32VC7"
 ## variables that are the same for all systems
 set SLICER_DATA_ROOT ""
 
-## set the SLICER_HOME directory to the one in which this script resides
-set SLICER_HOME [file dirname [info script]]
-puts "Set SLICER_HOME to $SLICER_HOME"
+
+if {[info exists env(SLICER_HOME)]} {
+    # already set by the launcher
+    set SLICER_HOME $env(SLICER_HOME)
+} else {
+    # if sourcing this into cmaker, SLICER_HOME may not be set
+    # set the SLICER_HOME directory to the one in which this script resides
+    set SLICER_HOME [file dirname [info script]]
+    catch {set SLICER_HOME [file normalize $SLICER_HOME]}
+}
+puts "SLICER_HOME is $SLICER_HOME"
 
 ## system dependent variables
 switch $tcl_platform(os) {
