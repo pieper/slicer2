@@ -1,5 +1,5 @@
 proc VolFreeSurferReadersInit {} {
-    global Gui VolFreeSurferReaders Volume Slice
+    global Gui VolFreeSurferReaders Volume Slice Module
 
     if {1} {puts "VolFreeSurferReadersInit"}
    
@@ -12,11 +12,16 @@ proc VolFreeSurferReadersInit {} {
     set Volume(readerModules,$e,procEnter) ${e}Enter
     set Volume(readerModules,$e,procExit) ${e}Exit
 
- #   set Volume(readerModules,$e,procVTK) VolFreeSurferReadersBuildVTK
-    # doesn't seem to be getting called, so do it explicitly
-#    VolFreeSurferReadersBuildVTK
+    # some local global variables
+    set Volume(VolFreeSurferReaders,FileType) Surface
+    set Volume(VolFreeSurferReaders,FileTypeList) {Surface Volume}
+    set Volume(VolFreeSurferReaders,FileTypeList,tooltips) {"File contains a surface" "File contains a volume"}
 
+    # for closing out a scene
+    set Volume(VolFreeSurferReaders,idList) ""
+    set Module($e,procMainFileCloseUpdate) VolFreeSurferReadersMainFileCloseUpdate
 }
+
 #-------------------------------------------------------------------------------
 proc VolFreeSurferReadersBuildGUI {parentFrame} {
     global Gui Volume Module
@@ -26,9 +31,9 @@ proc VolFreeSurferReadersBuildGUI {parentFrame} {
     set f $parentFrame
 
     frame $f.fVolume  -bg $Gui(activeWorkspace) -relief groove -bd 3
-
+    frame $f.fFileType -bg $Gui(activeWorkspace)
     frame $f.fApply   -bg $Gui(activeWorkspace)
-    pack $f.fVolume $f.fApply \
+    pack $f.fVolume $f.fFileType $f.fApply \
         -side top -fill x -pady $Gui(pad)
 
     #-------------------------------------------
@@ -37,7 +42,7 @@ proc VolFreeSurferReadersBuildGUI {parentFrame} {
 
     set f $parentFrame.fVolume
 
-    DevAddFileBrowse $f Volume "VolFreeSurferReaders,FileName" "FreeSurfer File:\n(COR-*)" "VolFreeSurferReadersSetFileName" "" "\$Volume(DefaultDir)"  "Browse for a FreeSurfer file" 
+    DevAddFileBrowse $f Volume "VolFreeSurferReaders,FileName" "FreeSurfer File:" "VolFreeSurferReadersSetFileName" "" "\$Volume(DefaultDir)"  "Browse for a FreeSurfer file" 
 
     frame $f.fDesc     -bg $Gui(activeWorkspace)
 
@@ -62,6 +67,23 @@ proc VolFreeSurferReadersBuildGUI {parentFrame} {
     pack $f.lDesc -side left -padx $Gui(pad)
     pack $f.eDesc -side left -padx $Gui(pad) -expand 1 -fill x
 
+    #-------------------------------------------
+    # f->FileType
+    #-------------------------------------------
+    set f $parentFrame.fFileType
+
+    DevAddLabel $f.l "File Type: "
+    pack $f.l -side left -padx $Gui(pad) -pady 0
+    #set gridList $f.l
+
+    foreach type $Volume(VolFreeSurferReaders,FileTypeList) tip $Volume(VolFreeSurferReaders,FileTypeList,tooltips) {
+        eval {radiobutton $f.rMode$type \
+                  -text "$type" -value "$type" \
+                  -variable Volume(VolFreeSurferReaders,FileType)\
+                  -indicatoron 0} $Gui(WCA) 
+        pack $f.rMode$type -side left -padx $Gui(pad) -pady 0
+        TooltipAdd  $f.rMode$type $tip
+    }   
 
 
     #-------------------------------------------
@@ -109,6 +131,18 @@ proc VolFreeSurferReadersApply {} {
         tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
         return
     }
+
+    ################
+    # This is a cheat, do the model building stuff here for surfaces and then return
+    if {[string equal $Volume(VolFreeSurferReaders,FileType) Surface]} {
+        # add a mrml node
+        set n [MainMrmlAddNode Model]
+        set i [$n GetID]
+
+        VolFreeSurferReadersBuildSurface $i
+        return
+    }
+
     # add a mrml node
     set n [MainMrmlAddNode Volume]
     set i [$n GetID]
@@ -119,28 +153,16 @@ proc VolFreeSurferReadersApply {} {
     # so that MRML can be read in with just a node and this will
     # work
     MainVolumesCreate $i
-
-    # read in the COR file
-    # Set up the reading
-    vtkCORReader Volume($i,vol,rw)
-    
-    # get the directory name from the filename
-    Volume($i,vol,rw) SetFilePrefix [file dirname $Volume(VolFreeSurferReaders,FileName)]
-    puts "VolFreeSurferReadersApply: set COR prefix to [Volume($i,vol,rw) GetFilePrefix]"
-
-
-    if  {0} {
-        # old curve file stuff
+  
+    if {[string equal $Volume(VolFreeSurferReaders,FileType) Volume]} {
+        # read in the COR file
         # Set up the reading
-        vtkFSSurfaceReader  Volume($i,vol,rw)
+        vtkCORReader Volume($i,vol,rw)
+    
         # get the directory name from the filename
-        Volume($i,vol,rw) SetFileName $Volume(VolFreeSurferReaders,FileName)
-        puts "VolFreeSurferReadersApply: set surface filename to [Volume($i,vol,rw) GetFileName]"
-
-        Volume(VolFreeSurferReaders,curvemapper) SetInput [Volume($i,vol,rw) GetOutput]
-
-        Volume(VolFreeSurferReaders,curveactor) SetVisibility 1
-    }
+        Volume($i,vol,rw) SetFilePrefix [file dirname $Volume(VolFreeSurferReaders,FileName)]
+        puts "VolFreeSurferReadersApply: set COR prefix to [Volume($i,vol,rw) GetFilePrefix]"
+    } 
 
     # set the name and description of the volume
     $n SetName $Volume(name)
@@ -185,29 +207,184 @@ proc VolFreeSurferReadersApply {} {
 
     # Update all fields that the user changed (not stuff that would 
     # need a file reread)
+}
+
+proc VolFreeSurferReadersBuildSurface {m} {
+    global viewRen Volume Module Model RemovedModels 
+
+    puts "\nVolFreeSurferReadersBuildSurface\n"
+    # set up the reader
+    vtkFSSurfaceReader Model($m,reader)
+    Model($m,reader) SetFileName $Volume(VolFreeSurferReaders,FileName)
+
+    # should be vtk model
+    foreach r $Module(Renderers) {
+        # Mapper
+        vtkPolyDataMapper Model($m,mapper,$r)
+    }
+
+    # Delete the src, leaving the data in Model($m,polyData)
+    # polyData will survive as long as it's the input to the mapper
+    #
+    Model($m,node) SetName $Volume(name)
+    Model($m,node) SetFileName $Volume(VolFreeSurferReaders,FileName)
+    set Model($m,polyData) [Model($m,reader) GetOutput]
+    $Model($m,polyData) Update
+
+    # always read in the thickness file
+    set thicknessFileName [file rootname $Volume(VolFreeSurferReaders,FileName)].thickness
+    if [file exists $thicknessFileName] {
+        DevWarningWindow "Reading in thickness file associated with this surface $thicknessFileName"
+        # need to delete these so that if close the scene and reopen a surface file, these wont' stlile exist
+        vtkFloatArray Model($m,floatArray)
+        vtkFSSurfaceScalarReader Model($m,ssr)
+        
+        Model($m,ssr) SetFileName $thicknessFileName
+        
+        # this doesn't work on solaris, can't cast float array to vtkdataobject
+        Model($m,ssr) SetOutput Model($m,floatArray)
+        
+        Model($m,ssr) ReadFSScalars
+        [$Model($m,polyData) GetPointData] SetScalars Model($m,floatArray)
+    } else {
+        DevWarningWindow "Thickness file does not exist: $thicknessFileName"
+    }
+
+    foreach r $Module(Renderers) {
+        Model($m,mapper,$r) SetInput $Model($m,polyData)
+   
+        if {0} {
+        # decimate
+        vtkDecimate Model($m,decimate,$r) 
+        Model($m,decimate,$r) SetInput $Model($m,polyData)
+        Model($m,decimate,$r) SetMaximumIterations 6
+        Model($m,decimate,$r)  SetMaximumSubIterations 0 
+        Model($m,decimate,$r) PreserveEdgesOn
+        Model($m,decimate,$r) SetMaximumError 1
+        Model($m,decimate,$r) SetTargetReduction 1
+        Model($m,decimate,$r) SetInitialError .0002
+        Model($m,decimate,$r) SetErrorIncrement .0002
+        [ Model($m,decimate,$r) GetOutput] ReleaseDataFlagOn
+        vtkSmoothPolyDataFilter smoother
+        smoother SetInput [Model($m,decimate,$r) GetOutput]
+        set p smoother
+        $p SetNumberOfIterations 2
+        $p SetRelaxationFactor 0.33
+        $p SetFeatureAngle 60
+        $p FeatureEdgeSmoothingOff
+        $p BoundarySmoothingOff
+        $p SetConvergence 0
+        [$p GetOutput] ReleaseDataFlagOn
+
+        set Model($m,polyData) [$p GetOutput]
+        Model($m,polyData) Update
+        foreach r $Module(Renderers) {
+            Model($m,mapper,$r) SetInput $Model($m,polyData)
+        }
+    }
+    }
+    Model($m,reader) SetOutput ""
+    Model($m,reader) Delete
+
+    # Clipper
+    vtkClipPolyData Model($m,clipper)
+    Model($m,clipper) SetClipFunction Slice(clipPlanes)
+    Model($m,clipper) SetValue 0.0
     
-    Volume($m,node) SetName $Volume(name)
-    Volume($m,node) SetDescription $Volume(desc)
-    eval Volume($m,node) SetSpacing $Volume(pixelWidth) $Volume(pixelHeight) \
-            [expr $Volume(sliceSpacing) + $Volume(sliceThickness)]
-    Volume($m,node) SetTilt $Volume(gantryDetectorTilt)
- 
-    # Update pipeline
-    MainVolumesUpdate $m
+    vtkMatrix4x4 Model($m,rasToWld)
+    
+    foreach r $Module(Renderers) {
 
-    # Update MRML: this reads in new volumes, among other things
-    MainUpdateMRML  
+        # Actor
+        vtkActor Model($m,actor,$r)
+        Model($m,actor,$r) SetMapper Model($m,mapper,$r)
+        
+        # Registration
+        Model($m,actor,$r) SetUserMatrix [Model($m,node) GetRasToWld]
+
+        # Property
+        set Model($m,prop,$r)  [Model($m,actor,$r) GetProperty]
+
+        # For now, the back face color is the same as the front
+        Model($m,actor,$r) SetBackfaceProperty $Model($m,prop,$r)
+    }
+    set Model($m,clipped) 0
+    set Model($m,displayScalarBar) 0
+
+
+    # init gui vars
+    set Model($m,visibility)       [Model($m,node) GetVisibility]
+    set Model($m,opacity)          [Model($m,node) GetOpacity]
+    set Model($m,scalarVisibility) [Model($m,node) GetScalarVisibility]
+    set Model($m,backfaceCulling)  [Model($m,node) GetBackfaceCulling]
+    set Model($m,clipping)         [Model($m,node) GetClipping]
+    # set expansion to 1 if variable doesn't exist
+    if {[info exists Model($m,expansion)] == 0} {
+        set Model($m,expansion)    1
+    }
+    # set RemovedModels to 0 if variable doesn't exist
+    if {[info exists RemovedModels($m)] == 0} {
+        set RemovedModels($m) 0
+    }
+
+    MainModelsSetColor $m
+    MainAddModelActor $m
+    set Model($m,dirty) 1
+    set Model($m,fly) 1
+
+    MainUpdateMRML
+    MainModelsSetActive $m
+
+    # old version, not treating the surface file like a model
+    if {0} {
+        # Read in a freesurfer surface file
+        # Set up the reading
+        vtkFSSurfaceReader  Volume($i,vol,rw)
+        # get the directory name from the filename
+        Volume($i,vol,rw) SetFileName $Volume(VolFreeSurferReaders,FileName)
+        puts "VolFreeSurferReadersApply: set surface $i filename to [Volume($i,vol,rw) GetFileName]"
+        
+        vtkPolyDataMapper Volume(VolFreeSurferReaders,$i,mapper)
+        Volume(VolFreeSurferReaders,$i,mapper) SetInput [Volume($i,vol,rw) GetOutput]
+        vtkActor Volume(VolFreeSurferReaders,$i,curveactor)
+        Volume(VolFreeSurferReaders,$i,curveactor) SetMapper Volume(VolFreeSurferReaders,$i,mapper)
+        viewRen AddActor Volume(VolFreeSurferReaders,$i,curveactor)
+        Volume(VolFreeSurferReaders,$i,curveactor) SetVisibility 1
+        
+        # triangle stripping stuff
+        if {0} {
+            vtkTriangleFilter Volume(VolFreeSurferReaders,$i,stripfilter)
+            Volume(VolFreeSurferReaders,$i,stripfilter) SetInput [Volume($i,vol,rw) GetOutput]
+            
+            vtkDecimate Volume(VolFreeSurferReaders,$i,decimate)
+            Volume(VolFreeSurferReaders,$i,decimate) SetInput [Volume(VolFreeSurferReaders,$i,stripfilter) GetOutput]
+            Volume(VolFreeSurferReaders,$i,decimate) SetTargetReduction 0.8
+            Volume(VolFreeSurferReaders,$i,decimate) SetMaximumIterations 6
+            Volume(VolFreeSurferReaders,$i,mapper) SetInput [ Volume(VolFreeSurferReaders,$i,decimate) GetOutput]
+        }
+    }
 }
 
-proc VolFreeSurferReadersBuildVTK {} {
-    global viewRen Volume 
-
-    puts "\nVolFreeSurferReadersBuildVTK\n"
-
-    vtkPolyDataMapper Volume(VolFreeSurferReaders,curvemapper)
-    # Volume(VolFreeSurferReaders,curvemapper) SetInput [Volume($i,vol,rw) GetOutput]
-    vtkActor Volume(VolFreeSurferReaders,curveactor)
-    Volume(VolFreeSurferReaders,curveactor) SetMapper Volume(VolFreeSurferReaders,curvemapper)
-    viewRen AddActor Volume(VolFreeSurferReaders,curveactor)
-    Volume(VolFreeSurferReaders,curveactor) SetVisibility 0
+proc VolFreeSurferReadersSetSurfaceVisibility {i vis} {
+    global Volume
+    # set the visibility of volume i to visibility vis
+    Volume(VolFreeSurferReaders,$i,curveactor) SetVisibility $vis
 }
+
+proc VolFreeSurferReadersMainFileCloseUpdate {} {
+    global Volume viewRen
+    # delete stuff that's been created
+    puts "VolFreeSurferReadersMainFileCloseUpdate"
+    foreach f $Volume(idList) {
+        puts "Checking volume $f"
+        if {[info exists Volume(VolFreeSurferReaders,$f,curveactor)] == 1} {
+            puts "Removing actor for free surfer reader id $f"
+            viewRen RemoveActor  Volume(VolFreeSurferReaders,$f,curveactor)
+            Volume(VolFreeSurferReaders,$f,curveactor) Delete
+            Volume(VolFreeSurferReaders,$f,mapper) Delete
+            Volume($i,vol,rw) Delete
+#            MainMrmlDeleteNode Volume $f
+        }
+    }
+}
+
