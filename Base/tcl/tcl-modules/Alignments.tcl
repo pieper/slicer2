@@ -129,7 +129,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.9 $} {$Date: 2002/09/09 15:23:21 $}]
+            {$Revision: 1.10 $} {$Date: 2002/09/30 12:13:20 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -3484,31 +3484,31 @@ proc AlignmentsSlicesOffsetUpdated {s} {
 
     if {$Matrix(activeSlicer) == "Slicer"} {
 
-    #configure the slider's entry box
-    AlignmentsSlicesSetOffset $s Slicer
+        #configure the slider's entry box
+        AlignmentsSlicesSetOffset $s Slicer
 
-    .tViewer.fMatMid.fMatMidSlice$s.fOffset.eOffset \
+        .tViewer.fMatMid.fMatMidSlice$s.fOffset.eOffset \
         configure -textvariable Slice($s,offset)
 
-    #configure the slider bar
-    AlignmentsSlicesSetOffsetInit $s $f Slicer
-    .tViewer.fMatMid.fMatMidSlice$s.fOffset.sOffset \
-        configure -variable Slice($s,offset)
+        #configure the slider bar
+        AlignmentsSlicesSetOffsetInit $s $f Slicer
+        .tViewer.fMatMid.fMatMidSlice$s.fOffset.sOffset \
+            configure -variable Slice($s,offset)
 
     } else {
-    #configure the slider's entry box
-    AlignmentsSlicesSetOffset $s MatSlicer
+        #configure the slider's entry box
+        AlignmentsSlicesSetOffset $s MatSlicer
 
-    .tViewer.fMatMid.fMatMidSlice$s.fOffset.eOffset \
+        .tViewer.fMatMid.fMatMidSlice$s.fOffset.eOffset \
         configure -textvariable Matrix($s,offset)
 
-    #configure the slider
-    AlignmentsSlicesSetOffsetInit $s $f MatSlicer
+        #configure the slider
+        AlignmentsSlicesSetOffsetInit $s $f MatSlicer
 
-    .tViewer.fMatMid.fMatMidSlice$s.fOffset.sOffset \
-        configure -variable Matrix($s,offset)
+        .tViewer.fMatMid.fMatMidSlice$s.fOffset.sOffset \
+            configure -variable Matrix($s,offset)
     }
-RenderBoth $s
+    RenderBoth $s
 }
 
 #-------------------------------------------------------------------------------

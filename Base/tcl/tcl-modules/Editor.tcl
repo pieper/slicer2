@@ -107,7 +107,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.61 $} {$Date: 2002/08/19 13:38:25 $}]
+        {$Revision: 1.62 $} {$Date: 2002/09/30 12:13:20 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -1140,16 +1140,16 @@ proc EditorMotion {x y} {
     global Ed Editor 
 
     switch $Editor(activeID) {
-    "EdLiveWire" {
-        EdLiveWireMotion $x $y
-        # log this event since it's used by the module
-        EditorIncrementAndLogEvent "motion"    
-    }
-    "EdPhaseWire" {
-        EdPhaseWireMotion $x $y
-        # log this event since it's used by the module
-        EditorIncrementAndLogEvent "motion"    
-    }
+        "EdLiveWire" {
+            EdLiveWireMotion $x $y
+            # log this event since it's used by the module
+            EditorIncrementAndLogEvent "motion"    
+        }
+        "EdPhaseWire" {
+            EdPhaseWireMotion $x $y
+            # log this event since it's used by the module
+            EditorIncrementAndLogEvent "motion"    
+        }
     }
     
 }
@@ -1228,7 +1228,7 @@ proc EditorB1 {x y} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EditorIdleProc {cmd} {
+proc EditorIdleProc { cmd {respawn 1} } {
     global Ed Editor Slice Interactor
 
     set s $Slice(activeID)
@@ -1246,11 +1246,12 @@ proc EditorIdleProc {cmd} {
                         "start" {
                             set Ed(EdDraw,lastIdlePointCount) 0
                             if {![info exists Ed(EdDraw,afterID)] || $Ed(EdDraw,afterID) == ""} {
-                                set Ed(EdDraw,afterID) [after idle "EditorIdleProc apply"]
+                                set Ed(EdDraw,afterID) [after idle "EditorIdleProc apply $respawn"]
                             }
                         }
                         "apply" {
                             set p __EditorIdleProc_Points
+                            catch "$p Delete"
                             vtkPoints $p
                             $p DeepCopy [Slicer DrawGetPoints]
                             set pts [$p GetNumberOfPoints]
@@ -1264,7 +1265,7 @@ proc EditorIdleProc {cmd} {
                                 }
                             }
                             $p Delete
-                            if {[info exists Ed(EdDraw,afterID)] && $Ed(EdDraw,afterID) != ""} {
+                            if {$respawn && [info exists Ed(EdDraw,afterID)] && $Ed(EdDraw,afterID) != ""} {
                                 set Ed(EdDraw,afterID) [after idle "EditorIdleProc apply"]
                             }
                         }
@@ -1345,6 +1346,7 @@ proc EditorB1Release {x y} {
                 }
                 "Draw" {
                     EditorIdleProc cancel
+                    EditorIdleProc start 0
                 }
             }
         }
@@ -1512,7 +1514,7 @@ proc EditorUpdateEffect {} {
     # Call the Enter procedure of the active effect
     set e $Editor(activeID)
     if {[info exists Ed($e,procEnter)] == 1} {
-    $Ed($e,procEnter)
+        $Ed($e,procEnter)
     }
 
 }
@@ -1527,7 +1529,7 @@ proc EditorSameExtents {dst src} {
     set dstExt [[Volume($dst,vol) GetOutput] GetExtent]
     set srcExt [[Volume($src,vol) GetOutput] GetExtent]
     if {$dstExt == $srcExt} {
-    return 1
+        return 1
     }
     return 0
 }
@@ -1663,7 +1665,7 @@ proc EditorResetDisplay {} {
     set s1 [Slicer GetOrientString 1]
     set s2 [Slicer GetOrientString 2]
     if {$s0 != "AxiSlice" || $s1 != "SagSlice" || $s2 != "CorSlice"} {
-    MainSlicesSetOrientAll Slices
+        MainSlicesSetOrientAll Slices
     }
 
     # Set slice volumes
@@ -1672,39 +1674,39 @@ proc EditorResetDisplay {} {
 
     # display label layer only if the user wants it shown
     if {$Editor(display,labelOn) == 1} {
-    set lab $w
+        set lab $w
     } else {
-    set lab $Volume(idNone)
+        set lab $Volume(idNone)
     }
 
     set ok 1
     foreach s $Slice(idList) {
-    set b [[[Slicer GetBackVolume  $s] GetMrmlNode] GetID]
-    set f [[[Slicer GetForeVolume  $s] GetMrmlNode] GetID]
-    set l [[[Slicer GetLabelVolume $s] GetMrmlNode] GetID]
-    if {$b != $o} {set ok 0}
-    if {$f != $w} {set ok 0}
-    if {$l != $lab} {set ok 0}
+        set b [[[Slicer GetBackVolume  $s] GetMrmlNode] GetID]
+        set f [[[Slicer GetForeVolume  $s] GetMrmlNode] GetID]
+        set l [[[Slicer GetLabelVolume $s] GetMrmlNode] GetID]
+        if {$b != $o} {set ok 0}
+        if {$f != $w} {set ok 0}
+        if {$l != $lab} {set ok 0}
     }
     if {$ok == 0} {
-    MainSlicesSetVolumeAll Back  $o
-    MainSlicesSetVolumeAll Fore  $w
-    MainSlicesSetVolumeAll Label $lab    
+        MainSlicesSetVolumeAll Back  $o
+        MainSlicesSetVolumeAll Fore  $w
+        MainSlicesSetVolumeAll Label $lab    
     }
 
     # Do these things only once
     if {$Editor(firstReset) == 0} {
-    set Editor(firstReset) 1
-    
-    # Slice opacity
-    MainSlicesSetOpacityAll 0.3
-    MainSlicesSetFadeAll 0
-    
-    # Cursor
-    MainAnnoSetHashesVisibility slices 0
-    
-    # Show all slices in 3D
-    MainSlicesSetVisibilityAll 1
+        set Editor(firstReset) 1
+        
+        # Slice opacity
+        MainSlicesSetOpacityAll 0.3
+        MainSlicesSetFadeAll 0
+        
+        # Cursor
+        MainAnnoSetHashesVisibility slices 0
+        
+        # Show all slices in 3D
+        MainSlicesSetVisibilityAll 1
     }
 }
 
@@ -2086,17 +2088,18 @@ proc EdIsNativeSlice {} {
     if {$inOrder == "RL"} {set inOrder LR}
     if {$inOrder == "AP"} {set inOrder PA}
     if {$inOrder == "SI"} {set inOrder IS}
+
     if {$outOrder != $inOrder} {
-    if {$inOrder == "LR"} {
-        set native SagSlice
-    }
-    if {$inOrder == "PA"} {
-        set native CorSlice
-    }
-    if {$inOrder == "IS"} {
-        set native AxiSlice
-    }
-    return $native
+        if {$inOrder == "LR"} {
+            set native SagSlice
+        }
+        if {$inOrder == "PA"} {
+            set native CorSlice
+        }
+        if {$inOrder == "IS"} {
+            set native AxiSlice
+        }
+        return $native
     }
     return ""
 }
@@ -2114,27 +2117,27 @@ proc EdSetupBeforeApplyEffect {v scope multi} {
     set w [EditorGetWorkingID]
     
     if {[EditorSameExtents $w $o] != 1} {
-    EditorCopyNode $w $o
-    MainVolumesCopyData $w $o On
-    # >> AT 12/20/01
-    # force the working volume to be of type short
-    set workvol [Volume($w,vol) GetOutput]
-    set worktype [$workvol GetScalarType]
-    # 4 is the ID of short in VTK
-    if {$worktype != "4"} {
-        $workvol SetScalarType 4
-        $workvol AllocateScalars
-    }
-    # << AT 12/20/01
+        EditorCopyNode $w $o
+        MainVolumesCopyData $w $o On
+        # >> AT 12/20/01
+        # force the working volume to be of type short
+        set workvol [Volume($w,vol) GetOutput]
+        set worktype [$workvol GetScalarType]
+        # 4 is the ID of short in VTK
+        if {$worktype != "4"} {
+            $workvol SetScalarType 4
+            $workvol AllocateScalars
+        }
+        # << AT 12/20/01
     }
     
     # Set the editor's input & output
     Ed(editor) SetInput [Volume($o,vol) GetOutput]
     if {$v == $w} {
-    Ed(editor) SetOutput [Volume($w,vol) GetOutput]
-    Ed(editor) UseInputOff
+        Ed(editor) SetOutput [Volume($w,vol) GetOutput]
+        Ed(editor) UseInputOff
     } else {
-    Ed(editor) UseInputOn
+        Ed(editor) UseInputOn
     }
     
     Ed(editor) SetDimensionTo$scope
@@ -2147,37 +2150,37 @@ proc EdSetupBeforeApplyEffect {v scope multi} {
     set slice  [Slicer GetOffset $s]
     
     if {[lsearch "AxiSlice CorSlice SagSlice" $orient] == -1} {
-    tk_messageBox -icon warning -title $Gui(title) -message \
-        "The orientation of the active slice\n\
-        must be one of: AxiSlice, CorSlice, SagSlice"
-    return
+        tk_messageBox -icon warning -title $Gui(title) -message \
+            "The orientation of the active slice\n\
+            must be one of: AxiSlice, CorSlice, SagSlice"
+        return
     }
     switch $orient {
-    "AxiSlice" {
-        set order IS
-    }
-    "SagSlice" {
-        set order LR
-    }
-    "CorSlice" {
-        set order PA
-    }
+        "AxiSlice" {
+            set order IS
+        }
+        "SagSlice" {
+            set order LR
+        }
+        "CorSlice" {
+            set order PA
+        }
     }
     
     # Does the user want the orien of the active slice or native slices?
     if {$scope == "Multi" && $multi == "Native"} {
-    set order [Volume($o,node) GetScanOrder]
+        set order [Volume($o,node) GetScanOrder]
     }
     switch $order {
-    "SI" {
-        set order IS
-    }
-    "RL" {
-        set order LR
-    }
-    "AP" {
-        set order PA
-    }
+        "SI" {
+            set order IS
+        }
+        "RL" {
+            set order LR
+        }
+        "AP" {
+            set order PA
+        }
     }
     
     Ed(editor) SetOutputSliceOrder $order

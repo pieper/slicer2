@@ -202,8 +202,12 @@ proc EdRemoveIslandsApply {} {
 
     # Only apply to native slices
     if {[set native [EdIsNativeSlice]] != ""} {
-        tk_messageBox -message "Please click on the slice with orient = $native."
-        return
+        # TODO - remove comment if this works
+        puts "Warning: check results - now allowed, but fromerly failed with:"
+        puts " Please click on the slice with orient = $native."
+        puts "-sp 2002-09-30"
+        #tk_messageBox -message "Please click on the slice with orient = $native."
+        #return
     }
 
     set Gui(progressText) "RemoveIslands in [Volume($v,node) GetName]"

@@ -276,6 +276,8 @@ proc EdDrawUpdate {type} {
 
     set e EdDraw
     
+    puts "got type $type"
+    puts "in mode $Ed($e,mode)"
     switch $type {
         NextMode {
             switch $Ed($e,mode) {
@@ -295,6 +297,19 @@ proc EdDrawUpdate {type} {
                 "Draw" {
                     Slicer DrawDeleteSelected
                     MainInteractorRender
+                }
+                "Select" {
+                    # nothing
+                }
+                "Move" {
+                    # nothing
+                }
+            }
+        }
+        "0" {
+            switch $Ed($e,mode) {
+                "Draw" {
+                    EditorIdleProc apply 0
                 }
                 "Select" {
                     # nothing
