@@ -115,8 +115,9 @@ proc DevFatalErrorWindow {{message "Fatal Error"}} {
 #  Example:  DevAddLabel $f.lmylabel \"Have a nice day\"
 #
 # .ARGS
-#  str LabelName Name of the button (i.e. $f.stuff.lmylabel)
+#  str LabelName  Name of the button (i.e. $f.stuff.lmylabel)
 #  str Message    The text on the label
+#  str Color      Label color and attribs from Gui.tcl (BLA or WLA). Optional
 # .END
 #-------------------------------------------------------------------------------
 
@@ -126,9 +127,9 @@ proc DevFatalErrorWindow {{message "Fatal Error"}} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc DevAddLabel { LabelName Message } {
-	global Gui
-    eval {label $LabelName -text $Message} $Gui(WLA)
+proc DevAddLabel { LabelName Message {Color WLA}} {
+    global Gui
+    eval {label $LabelName -text $Message} $Gui($Color)
 }
 
 #-------------------------------------------------------------------------------
@@ -183,11 +184,16 @@ proc DevAddButton { ButtonName Message Command {Width 0} } {
 #  Str   Label    This is the name to label the button.
 #  Str  Message The message to put to the left of the Volume Select. Default \"Select Volume\"
 #  Str  "Pack" packs the buttons. \"Grid\" grids the buttons.
+#  Str Tooltip    The tooltip to display over the button. Optional.
+#  str width      The width to make the button. Optional
+#  str color      Label color and attribs from Gui.tcl (BLA or WLA). Optional
 # .END
 #-------------------------------------------------------------------------------
-proc DevAddSelectButton { TabName f aLabel message pack } {
-	global Gui Module 
-        upvar 1 $TabName LocalArray
+proc DevAddSelectButton { TabName f aLabel message pack {tooltip ""} \
+	{width 13} {color WLA} } {
+
+    global Gui Module 
+    upvar 1 $TabName LocalArray
 
     # if the variable is not 1 procedure up, try 2 procedures up.
 
@@ -204,9 +210,10 @@ proc DevAddSelectButton { TabName f aLabel message pack } {
     set menubutton  "$f.mb$aLabel"
     set menu        "$f.mb$aLabel.m"
 
-    eval {label $Label -text $message} $Gui(WLA)
+    DevAddLabel $Label $message $color
+
     eval {menubutton $menubutton -text "None" \
-            -relief raised -bd 2 -width 13 -menu $menu } $Gui(WMBA)
+            -relief raised -bd 2 -width $width -menu $menu } $Gui(WMBA)
     eval {menu $menu} $Gui(WMA)
 
     if {$pack == "Pack"} {
@@ -214,6 +221,10 @@ proc DevAddSelectButton { TabName f aLabel message pack } {
     } else {
         grid $Label $menubutton -sticky e -padx $Gui(pad) -pady $Gui(pad)
         grid $menubutton -sticky w
+    }
+
+    if {$tooltip != ""} {
+	TooltipAdd $menubutton $tooltip
     }
 
     set LocalArray(mb$aLabel) $menubutton
@@ -502,10 +513,11 @@ proc DevCreateNewCopiedVolume { OrigId {Description ""} { VolName ""} } {
 # int MustPop  1 means that we will pop up a window even if \"filename\" exists. 
 # str DefaultExt The name of the extension for the type of file: Default \"\"
 # str DefaultDir The name of the default directory to choose from: Default is the directory Slicer was started from.
-# str Title      The title of the window to display
+# str Title      The title of the window to display.  Optional.
+# str Action     Whether to Open (file must exist) or Save.  Default is "Open".
 # .END
 #-------------------------------------------------------------------------------
-proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Title "Choose File"} } {
+proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Title "Choose File"} {Action "Open"}} {
 	global Mrml
 #        puts "filename: $filename"
 #        puts "DefaultExt $DefaultExt"
@@ -565,9 +577,15 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
         if { $filename == "" && $DefaultDir != "" } { set dir $DefaultDir }
         if { [file isdir $filename] } { set dir $filename }
 
-	set filename [tk_getOpenFile -title $Title \
-		-filetypes $typelist -initialdir "$dir" -initialfile $filename]
-
+	# if we are saving, the file doesn't have to exist yet.
+	if {$Action == "Save"} {
+	    set filename [tk_getSaveFile -title $Title \
+		    -filetypes $typelist -initialdir "$dir" -initialfile $filename]
+	} else {
+	    set filename [tk_getOpenFile -title $Title \
+		    -filetypes $typelist -initialdir "$dir" -initialfile $filename]
+	}
+	
 
        ############################################################
        ######  Return Nothing is nothing was selected
@@ -609,11 +627,13 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
 # str Command     A command to run when a file name is entered AND the file entered exists. 
 # str DefaultExt The name of the extension for the type of file. Optional
 # str DefaultDir The name of the default directory to choose from. Optional
+# str Action     Whether this is "Open" or "Save".  Optional
 # str Title      The title of the window to display. Optional
+# str Tooltip    The tooltip to display over the button. Optional
 # .END
 #-------------------------------------------------------------------------------
 
-    proc DevAddFileBrowse {Frame ArrayName VarFileName Message { Command ""} { DefaultExt "" } { DefaultDir "" } {Title ""} } {
+    proc DevAddFileBrowse {Frame ArrayName VarFileName Message { Command ""} { DefaultExt "" } { DefaultDir "" } {Action ""} {Title ""} {Tooltip ""} } {
 
 	global Gui $ArrayName Model
 
@@ -621,20 +641,26 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
         $f configure  -relief groove -bd 3 -bg $Gui(activeWorkspace)
 
 	frame $f.f -bg $Gui(activeWorkspace)
-	pack $f.f -side top -pady $Gui(pad)
+	pack $f.f -side top -padx $Gui(pad) -pady $Gui(pad)
 
         ## Need to make the string that will become the command.
-
-       set SetVarString  "set $ArrayName\($VarFileName\) \[ DevGetFile \"\$$ArrayName\($VarFileName\)\" 1  \"$DefaultExt\" \"$DefaultDir\" \"$Title\" \]; if \[file exists \$$ArrayName\($VarFileName\)\]  \{ $Command \}"
+	# this pops up file browser when the button is pressed.
+       set SetVarString  "set $ArrayName\($VarFileName\) \[ DevGetFile \"\$$ArrayName\($VarFileName\)\" 1  \"$DefaultExt\" \"$DefaultDir\" \"$Title\"  \"$Action\"\]; if \[file exists \$$ArrayName\($VarFileName\)\]  \{ $Command \}"
 
 #        puts $SetVarString
 
         DevAddLabel  $f.f.l $Message
         DevAddButton $f.f.b "Browse..." $SetVarString
 
-       set SetVarString  "set $ArrayName\($VarFileName\) \[ DevGetFile \"\$$ArrayName\($VarFileName\)\" 0  \"$DefaultExt\" \"$DefaultDir\" \"$Title\" \]; if \[file exists \$$ArrayName\($VarFileName\)\]  \{ $Command \}"
-
         pack $f.f.l $f.f.b -side left -padx $Gui(pad)
+	
+	# tooltip over the button.
+	if {$Tooltip != ""} {
+	    TooltipAdd $f.f.b $Tooltip
+	}
+
+	# this pops up file browser when return is hit.
+	set SetVarString  "set $ArrayName\($VarFileName\) \[ DevGetFile \"\$$ArrayName\($VarFileName\)\" 0  \"$DefaultExt\" \"$DefaultDir\" \"$Title\" \"$Action\" \]; if \[file exists \$$ArrayName\($VarFileName\)\]  \{ $Command \}"
 
     eval {entry $f.efile -textvariable "$ArrayName\($VarFileName\)" -width 50} $Gui(WEA)
         bind $f.efile <Return> $SetVarString
