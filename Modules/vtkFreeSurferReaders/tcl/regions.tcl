@@ -563,14 +563,14 @@ itcl::body regions::findptscalars {} {
  
     }
 
-    if { $_id != "" && [info commands vtkTextCard] != "" } {
+    if { $_id != "" && [info commands vtkCard] != "" } {
 
-        catch {[QA_sch GetTextCards] RemoveAllItems}
-        catch "QA_sch Delete"
-        vtkSortCommandHelper QA_sch 
-        QA_sch SetRenderer viewRen
+        catch {[QA_sorter GetCards] RemoveAllItems}
+        catch "QA_sorter Delete"
+        vtkSorter QA_sorter 
+        QA_sorter SetRenderer viewRen
 
-        foreach tc [vtkTextCard ListInstances] {
+        foreach tc [vtkCard ListInstances] {
             if { [string match tc* $tc] } {
                 $tc RemoveActors viewRen
                 $tc Delete
@@ -589,16 +589,16 @@ itcl::body regions::findptscalars {} {
             Point($id,node) SetName "."
             tt-$id CreateTextureText
             [[tt-$id GetFollower] GetProperty] SetColor 0 0 0
-            vtkTextCard tc-$id
-            [QA_sch GetTextCards] AddItem tc-$id
+            vtkCard tc-$id
+            [QA_sorter GetCards] AddItem tc-$id
             tc-$id SetMainText tt-$id
             tc-$id SetCamera [viewRen GetActiveCamera]
             tc-$id CreateLine 0 0 0
             tc-$id SetLinePoint1Local 0 0 0
             tc-$id SetScale 7 
-            tc-$id SetBoxEdgeColor 0 0 0
+            tc-$id SetBoxEdgeColor 1 0 0
             tc-$id SetOpacityBase 0.7
-            tc-$id SetBoxEdgeWidth 1.0
+            tc-$id SetBoxEdgeWidth 0.15
             eval tc-$id SetOffsetActorAndMarker Model($_id,actor,viewRen) [Point($id,node) GetXYZ] 0 0 -10
             tc-$id AddActors viewRen
         }

@@ -81,10 +81,13 @@ proc Render3D {{scale ""}} {
          }  
     }
 
+    # the Sorter makes sure that transparent objects are rendered
+    # back to front - works for vtkCard and vtkTextureText
+    # (used in Fiducials and QueryAtlas
     ## TODO - this should be made a module callback
-    if {[info command vtkSortCommandHelper] != ""} {
-        foreach sch [vtkSortCommandHelper ListInstances] {
-            $sch DepthSort
+    if {[info command vtkSorter] != ""} {
+        foreach sorter [vtkSorter ListInstances] {
+            $sorter DepthSort
         }
     }
 

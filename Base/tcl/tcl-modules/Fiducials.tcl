@@ -104,7 +104,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.51 $} {$Date: 2004/05/05 20:00:49 $}]
+        {$Revision: 1.52 $} {$Date: 2004/06/04 16:14:42 $}]
     
     # Initialize module-level variables
     
@@ -2327,3 +2327,54 @@ proc FiducialsGetActiveSelectedPointIdList {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC FiducialsToTextCards
+# Convert the Fiducials to Text Cards relative to a given model
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsToTextCards {modelid} {
+
+    if { $modelid != "" && [info commands vtkTextCard] != "" } {
+
+        catch {[Fiducials_sch GetTextCards] RemoveAllItems}
+        catch "Fiducials_sch Delete"
+        vtkSorter Fiducials_sorter 
+        Fiducials_sch SetRenderer viewRen
+
+        foreach tc [vtkTextCard ListInstances] {
+            if { [string match Fiducials-tc* $tc] } {
+                $tc RemoveActors viewRen
+                $tc Delete
+            }
+        }
+        foreach tt [vtkTextureText ListInstances] {
+            if { [string match Fiducials-tt* $tt] } {
+                $tt Delete
+            }
+        }
+
+        foreach id $::Point(idList) {
+            vtkTextureText Fiducials-tt-$id
+            Fiducials-tt-$id SetText [Point($id,node) GetName]
+            [Fiducials-tt-$id GetFontParameters] SetBlur 3
+            Point($id,node) SetName "."
+            [[Fiducials-tt-$id GetFollower] GetProperty] SetColor 0 0 0
+            vtkTextCard Fiducials-tc-$id
+            [Fiducials_sch GetTextCards] AddItem Fiducials-tc-$id
+            Fiducials-tc-$id SetMainText Fiducials-tt-$id
+            Fiducials-tc-$id SetCamera [viewRen GetActiveCamera]
+            Fiducials-tc-$id CreateLine 0 0 0
+            Fiducials-tc-$id SetLinePoint1Local 0 0 0
+            Fiducials-tc-$id SetScale 7 
+            Fiducials-tc-$id SetBoxEdgeColor 0 0 0
+            Fiducials-tc-$id SetOpacityBase 0.7
+            Fiducials-tc-$id SetBoxEdgeWidth 1.0
+            eval Fiducials-tc-$id SetOffsetActorAndMarker Model($modelid,actor,viewRen) [Point($id,node) GetXYZ] 0 0 -10
+            Fiducials-tc-$id AddActors viewRen
+        }
+
+    }
+
+    FiducialsUpdateMRML
+}
