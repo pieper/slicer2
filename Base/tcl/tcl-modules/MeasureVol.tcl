@@ -92,7 +92,7 @@ proc MeasureVolInit {} {
     # Set version info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.10 $} {$Date: 2001/02/19 17:53:30 $}]
+	    {$Revision: 1.11 $} {$Date: 2001/02/22 15:20:33 $}]
     
     # Initialize module-level variables
     #------------------------------------
@@ -428,7 +428,7 @@ proc MeasureVolVolume {} {
     # if the user has changed the full extent in the entry
     # boxes, clip and only measure part of the volume.
     vtkImageClip clip
-    clip SetInput [Volume($v,vol) GetImageData]
+    clip SetInput [Volume($v,vol) GetOutput]
     clip SetOutputWholeExtent  $MeasureVol(Extent1) \
 	    $MeasureVol(Extent2)  $MeasureVol(Extent3) \
 	    $MeasureVol(Extent4)  $MeasureVol(Extent5) \
@@ -438,7 +438,7 @@ proc MeasureVolVolume {} {
 
     # pipeline
     vtkImageMeasureVoxels measure
-    #measure SetInput [Volume($v,vol) GetImageData]
+    #measure SetInput [Volume($v,vol) GetOutput]
     measure SetInput [clip GetOutput]
     measure SetFileName $MeasureVol(fileName)
     measure Update
@@ -488,7 +488,7 @@ proc MeasureVolSelectVol {} {
 
     # set extent to that of the current volume.
     # this sets the entry boxes too.
-    scan [[Volume($v,vol) GetImageData] GetWholeExtent] \
+    scan [[Volume($v,vol) GetOutput] GetWholeExtent] \
 	    "%d %d %d %d %d %d" \
 	    MeasureVol(Extent1) MeasureVol(Extent2) MeasureVol(Extent3) \
 	    MeasureVol(Extent4) MeasureVol(Extent5) MeasureVol(Extent6)
