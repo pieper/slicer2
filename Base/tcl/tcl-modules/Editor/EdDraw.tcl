@@ -294,7 +294,9 @@ proc EdDrawUpdate {type} {
             switch $Ed($e,mode) {
                 "Draw" {
                     Slicer DrawDeleteSelected
-                    EditorInsertPoint update
+                    if {0} {
+                        EditorInsertPoint update
+                    }
                     MainInteractorRender
                 }
                 "Select" {
