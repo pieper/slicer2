@@ -159,7 +159,7 @@ static void vtkITKKLExecute(vtkITKKullbackLeiblerTransform *self,
   typename RegistratorType::Pointer KLRegistrator = RegistratorType::New();
 
 
-  KlRegistrator->Initialize(self,matrix);
+  KLRegistrator->Initialize(self,matrix);
 
   self->Print(std::cout);
 
@@ -194,15 +194,15 @@ static void vtkITKKLExecute(vtkITKKullbackLeiblerTransform *self,
     }
   ITKTrainingTransform->SetParameters(parameters);
 
-  KLRegistrator->SetTrainingTransform(ITKTrainingTransform);
-  KLRegistrator->SetTrainingFixedImage(VTKtoITKImage(self->GetTrainingTargetImage(),(T*)(NULL)));
-  KLRegistrator->SetTrainingMovingImage(VTKtoITKImage(self->GetTrainingSourceImage(),(T*)(NULL)));
+  //  KLRegistrator->SetTrainingTransform(ITKTrainingTransform);
+  KLRegistrator->SetTrainingFixedImage(VTKtoITKImage(self->GetTrainingTargetImage(),(RegistratorType::FixedImageType *)(NULL)));
+  KLRegistrator->SetTrainingMovingImage(VTKtoITKImage(self->GetTrainingSourceImage(),(RegistratorType::MovingImageType *)(NULL)));
 
   // take care of memory leak 
   //  KLRegistrator->GetTrainingFixedImage()
   //  KLRegistrator->GetTrainingMovingImage()->UnRegister();
 
-  typedef RegistratorType::SizeType SizeType;
+  typedef RegistratorType::HistogramSizeType SizeType;
 
   SizeType histSize;
   histSize[0] = self->GetHistSizeSource();

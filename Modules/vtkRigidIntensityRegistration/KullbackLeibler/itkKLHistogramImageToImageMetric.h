@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkKLHistogramImageToImageMetric.h,v $
   Language:  C++
-  Date:      $Date: 2003/12/09 18:43:02 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2003/12/12 22:21:29 $
+  Version:   $Revision: 1.4 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -17,7 +17,7 @@
 #ifndef __itkKLHistogramImageToImageMetric_h
 #define __itkKLHistogramImageToImageMetric_h
 
-#include "itkHistogramImageToImageMetric.h"
+#include "itkCompareHistogramImageToImageMetric.h"
 
 namespace itk
 {
@@ -42,12 +42,13 @@ namespace itk
       \ingroup RegistrationMetrics */
 template <class TFixedImage, class TMovingImage>
 class ITK_EXPORT KLHistogramImageToImageMetric :
-public HistogramImageToImageMetric<TFixedImage, TMovingImage>
+public CompareHistogramImageToImageMetric<TFixedImage, TMovingImage>
 {
  public:
   /** Standard class typedefs. */
   typedef KLHistogramImageToImageMetric Self;
-  typedef HistogramImageToImageMetric<TFixedImage, TMovingImage> Superclass;
+  typedef CompareHistogramImageToImageMetric<TFixedImage, TMovingImage> 
+    Superclass;
   typedef SmartPointer<Self>                                     Pointer;
   typedef SmartPointer<const Self>                               ConstPointer;
 
@@ -56,12 +57,14 @@ public HistogramImageToImageMetric<TFixedImage, TMovingImage>
 
   /** Run-time type information (and related methods). */
   itkTypeMacro(KLHistogramImageToImageMetric,
-    HistogramImageToImageMetric);
+    CompareHistogramImageToImageMetric);
 
   /** Types transferred from the base class */
   typedef typename Superclass::RealType                 RealType;
   typedef typename Superclass::TransformType            TransformType;
   typedef typename Superclass::TransformPointer         TransformPointer;
+  typedef typename Superclass::TransformConstPointer    TransformConstPointer;
+
   typedef typename Superclass::TransformParametersType
     TransformParametersType;
   typedef typename Superclass::TransformJacobianType    TransformJacobianType;
@@ -76,87 +79,24 @@ public HistogramImageToImageMetric<TFixedImage, TMovingImage>
     MovingImageConstPointer;
 
   typedef typename Superclass::HistogramType            HistogramType;
-  typedef typename HistogramType::FrequencyType         HistogramFrequencyType;
-  typedef typename HistogramType::Iterator              HistogramIteratorType;
-  typedef typename HistogramType::MeasurementVectorType
+  typedef typename Superclass::HistogramSizeType        HistogramSizeType;
+  typedef typename Superclass::MeasurementVectorType
     HistogramMeasurementVectorType;
+  typedef typename Superclass::HistogramFrequencyType  HistogramFrequencyType;
+  typedef typename Superclass::HistogramIteratorType   HistogramIteratorType;
+  typedef typename Superclass::HistogramPointerType    HistogramPointerType;
 
-  typedef typename HistogramType::Pointer               HistogramPointerType;
-  typedef typename TransformType::ConstPointer          TransformConstPointer;
-  typedef typename Superclass::Superclass::InterpolatorType InterpolatorType;
-  typedef typename Superclass::Superclass::InterpolatorPointer 
-    InterpolatorPointer;
-
-  /** Set the histogram to be used in the metric calculation */
-  itkSetMacro( TrainingHistogram, HistogramPointerType );
-
-  /** Get the histogram to be used in the metric calculation */
-  itkGetConstMacro( TrainingHistogram, HistogramPointerType );
-
-  /** Set the Training Fixed Image.  */
-  itkSetConstObjectMacro( TrainingFixedImage, FixedImageType );
-
-  /** Get the Training Fixed Image. */
-  itkGetConstObjectMacro( TrainingFixedImage, FixedImageType );
-
-  /** Set the Training Moving Image.  */
-  itkSetConstObjectMacro( TrainingMovingImage, MovingImageType );
-
-  /** Get the Training Moving Image. */
-  itkGetConstObjectMacro( TrainingMovingImage, MovingImageType );
-
-  /** Set the Training Transform. */
-  itkSetObjectMacro( TrainingTransform, TransformType );
-
-  /** Get a pointer to the Transform.  */
-  itkGetObjectMacro( TrainingTransform, TransformType );
-
-  /** Set the Interpolator. */
-  itkSetObjectMacro( TrainingInterpolator, InterpolatorType );
-
-  /** Get a pointer to the Interpolator.  */
-  itkGetObjectMacro( TrainingInterpolator, InterpolatorType );
-
-  /** Set the region over which the training histogram will be computed */
-  itkSetMacro( TrainingFixedImageRegion, FixedImageRegionType );
-
-  /** Get the region over which the training histogram will be computed */
-  itkGetConstMacro( TrainingFixedImageRegion, FixedImageRegionType );
-
-  /** Set epsilon, the histogram frequency to use if the frequency is 0 */
-  itkSetMacro( Epsilon, double );
-
-  /** Get epsilon, the histogram frequency to use if the frequency is 0 */
-  itkGetConstMacro( Epsilon, double );
-
-  /** Return the number of parameters required by the Transform */
-  unsigned int GetNumberOfParameters(void) const 
-  { return m_Transform->GetNumberOfParameters(); }
- 
-  /** Forms the histogram of the training images to prepare to evaluate the */
-  /** metric. Must set all parameters first */
-  void Initialize() throw (ExceptionObject);
+  typedef typename Superclass::InterpolatorType        InterpolatorType;
+  typedef typename Superclass::InterpolatorPointer     InterpolatorPointer;
 
 protected:
   /** Constructor is protected to ensure that \c New() function is used to
       create instances. */
-  KLHistogramImageToImageMetric();
-  virtual ~KLHistogramImageToImageMetric(){}
-  void PrintSelf(std::ostream& os, Indent indent) const;
-
-  /** Form the Histogram for the Training data */
-  void FormTrainingHistogram() throw (ExceptionObject);
+  KLHistogramImageToImageMetric(){};
+  virtual ~KLHistogramImageToImageMetric(){};
 
   /** Evaluates the mutual information from the histogram. */
-  virtual MeasureType EvaluateMeasure(HistogramType& histogram) const;
-
-  FixedImageConstPointer  m_TrainingFixedImage;
-  MovingImageConstPointer m_TrainingMovingImage;
-  TransformPointer        m_TrainingTransform;
-  InterpolatorPointer     m_TrainingInterpolator;
-  FixedImageRegionType    m_TrainingFixedImageRegion;
-  HistogramPointerType    m_TrainingHistogram;
-  double                  m_Epsilon;
+  MeasureType EvaluateMeasure(HistogramType& histogram) const;
 
 private:
   // Purposely not implemented.
