@@ -738,29 +738,36 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
       // (this could also be the last slice of a running total)
       if (!self->GetTrainingComputeRunningTotals())
 	{
-	  // then divide by total number of pixels
-	  for (int i=0;i<numFeatures;i++)
-	    {
-	      average[i] = average[i]/numPoints;
-	      cout << "avg: " << average[i] << " ";
-	      variance[i] = variance[i]/numPoints - (average[i])*(average[i]);
-	      cout << "var: " << variance[i] << " ";
-	    }			  
-	  cout << endl;
-
-	  // set the total number of points used to compute the averages
-	  self->SetNumberOfTrainingPoints(numPoints);
-
-	  // clear the running total
-	  self->SetRunningNumberOfTrainingPoints(0);
-	  
-	  // set this filter's settings to the trained ones.
-	  // Lauren do weight if train it later
-	  for (int f=0;f<numFeatures;f++)
-	    {
-	      self->SetParamForFeature(f,0,average[f]);
-	      self->SetParamForFeature(f,1,variance[f]);
-	    }
+	  // if we trained on any points
+	  if (numPoints > 0) {
+	    
+	    // then divide by total number of pixels
+	    for (int i=0;i<numFeatures;i++)
+	      {
+		average[i] = average[i]/numPoints;
+		cout << "avg: " << average[i] << " ";
+		variance[i] = variance[i]/numPoints - (average[i])*(average[i]);
+		cout << "var: " << variance[i] << " ";
+	      }			  
+	    cout << endl;
+	    
+	    // set the total number of points used to compute the averages
+	    self->SetNumberOfTrainingPoints(numPoints);
+	    
+	    // clear the running total
+	    self->SetRunningNumberOfTrainingPoints(0);
+	    
+	    // set this filter's settings to the trained ones.
+	    // Lauren do weight if train it later
+	    for (int f=0;f<numFeatures;f++)
+	      {
+		self->SetParamForFeature(f,0,average[f]);
+		self->SetParamForFeature(f,1,variance[f]);
+	      }
+	  }
+	  else {
+	    cout << "No contour points to train on!" << endl;
+	  }
 	}
     }
 
