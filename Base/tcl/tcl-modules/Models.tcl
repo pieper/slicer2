@@ -68,7 +68,7 @@ proc ModelsInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.28 $} {$Date: 2000/11/06 23:56:14 $}]
+		{$Revision: 1.29 $} {$Date: 2000/11/16 22:42:30 $}]
 
 	# Props
 	set Model(propertyType) Basic
@@ -166,8 +166,8 @@ than via the menu on the <B>Display</B> tab. You must click the
 <LI><B>Clip:</B> The slice planes can act as clipping planes to give
 you vision inside the model. Select whether each plane should not
 clip, or clip the portion of the model lying on the its positive or
-its negative side. Note that if two planes are clipping at the same
-time, only regions that would be clipped by both planes are clipped. <BR>
+its negative side. You may change the effect of clipping with multiple
+planes. <BR>
 
 Note that to clip a particular model, you must turn clipping on for that model.
 Do that in the Props:Advanced section.
@@ -484,7 +484,8 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 
 	frame $f.fHelp -bg $Gui(activeWorkspace)
 	frame $f.fGrid -bg $Gui(activeWorkspace)
-	pack $f.fHelp $f.fGrid -side top -pady $Gui(pad)
+	frame $f.fClipType -bg $Gui(activeWorkspace)
+	pack $f.fHelp $f.fGrid $f.fClipType -side top -pady $Gui(pad)
 
 	#-------------------------------------------
 	# fClip->Grid frame
@@ -520,6 +521,29 @@ Advanced page, and select 'Clipping'."} $Gui(WLA)
 		grid $f.l$s $f.f$s -pady $Gui(pad)
 	}
 
+	#-------------------------------------------
+	# fClip->ClipType frame
+	#-------------------------------------------
+	set f $fClip.fClipType
+
+	eval {label $f.l  -justify left -text \
+"Clipping can either be done as Intersection\n\
+or Union. Intersection clips all regions that\n\
+satisfy the constraints of all clipping planes.\n\
+Union clips all regions that satisfy the\n\
+constrains of at least one clipping plane.\n"} $Gui(WLA)
+
+	grid $f.l
+
+        foreach p "Union Intersection" {
+            eval {radiobutton $f.r$p -width 10 \
+                    -text "$p" -value "$p" \
+                    -variable Slice(clipType) \
+                   -command "Slice(clipPlanes) SetOperationTypeTo$p; Render3D"\
+                    -indicatoron 0 \
+                } $Gui(WCA) 
+        grid $f.r$p -padx 0 -pady 0
+    }
 
 	#-------------------------------------------
 	# Meter frame
@@ -539,7 +563,7 @@ Advanced page, and select 'Clipping'."} $Gui(WLA)
 
 	set text "Measure Performance"
         DevAddButton $f.bMeasure $text "ModelsMeter" \
-                [expr [string length $text] + 1] 
+                [expr [string length $text] + 1]
 	pack $f.bMeasure
 
 	#-------------------------------------------
