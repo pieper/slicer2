@@ -223,8 +223,8 @@ class VTK_EXPORT vtkMrmlSlicer : public vtkObject
   void SetFieldOfView(float x);
 
   // Cursor Annotation
-  int GetForePixel(int s, int x, int y);
-  int GetBackPixel(int s, int x, int y);
+  float GetForePixel(int s, int x, int y);
+  float GetBackPixel(int s, int x, int y);
 
   // Description:
   // Sets the opacity used to overlay this layer on the others

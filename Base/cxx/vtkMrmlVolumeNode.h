@@ -173,13 +173,13 @@ class VTK_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
 
   // Description:
   // The window value to use when autoWindowLevel is 'no'
-  vtkGetMacro(Window, int);
-  vtkSetMacro(Window, int);
+  vtkGetMacro(Window, float);
+  vtkSetMacro(Window, float);
 
   // Description:
   // The level value to use when autoWindowLevel is 'no'
-  vtkGetMacro(Level, int);
-  vtkSetMacro(Level, int);
+  vtkGetMacro(Level, float);
+  vtkSetMacro(Level, float);
 
   // Description:
   // Specifies whether to apply the threshold
@@ -329,8 +329,8 @@ protected:
   float Tilt;
   int ScalarType;
   int NumScalars;
-  int Window;
-  int Level;
+  float Window;
+  float Level;
   int UpperThreshold;
   int LowerThreshold;
 

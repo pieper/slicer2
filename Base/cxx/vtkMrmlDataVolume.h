@@ -94,11 +94,11 @@ public:
   
   // Description:
   // Set/Get window/level/threshold slider range
-  vtkGetMacro(RangeLow,  int);
-  vtkGetMacro(RangeHigh, int);
+  vtkGetMacro(RangeLow,  float);
+  vtkGetMacro(RangeHigh, float);
+  vtkSetMacro(RangeLow,  float);
+  vtkSetMacro(RangeHigh, float);
   vtkGetMacro(RangeAuto, int);
-  vtkSetMacro(RangeLow,  int);
-  vtkSetMacro(RangeHigh, int);
   vtkSetMacro(RangeAuto, int);
   vtkBooleanMacro(RangeAuto, int);
 
@@ -114,8 +114,8 @@ protected:
   void UpdateWindowLevelThreshold();
   void CheckImageData();
 
-  int RangeLow;
-  int RangeHigh;
+  float RangeLow;
+  float RangeHigh;
   int RangeAuto;
   float HistogramColor[3];
 

@@ -1665,7 +1665,7 @@ void vtkMrmlSlicer::DrawComputeIjkPoints()
 //----------------------------------------------------------------------------
 // Pixel Values
 //----------------------------------------------------------------------------
-int vtkMrmlSlicer::GetBackPixel(int s, int x, int y)
+float vtkMrmlSlicer::GetBackPixel(int s, int x, int y)
 {
   int ext[6];
   vtkImageData *data = this->BackReformat[s]->GetOutput();
@@ -1678,7 +1678,7 @@ int vtkMrmlSlicer::GetBackPixel(int s, int x, int y)
   return 0;
 }
 
-int vtkMrmlSlicer::GetForePixel(int s, int x, int y)
+float vtkMrmlSlicer::GetForePixel(int s, int x, int y)
 {
   int ext[6];
 
