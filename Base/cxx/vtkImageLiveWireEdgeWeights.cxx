@@ -56,18 +56,37 @@ float featureProperties::GaussianCost(float x)
   return(exp(-((x-mean)*(x-mean))/(2*var))/sqrt(6.28318*var));  
 }
 
+// 1/sqrt(2*pi)
+// #define LW_GAUSSIAN_FACTOR 0.39894228
+
 // inverse Gaussian: low cost for "good edges"
 inline float GaussianC(float x, float mean, float var)
 {
+  //float stdDev = sqrt(var);
+
+  // max value this Gaussian can take on, plus a little
+  //float max = LW_GAUSSIAN_FACTOR/stdDev;
+
+  //float max = (1/stdDev)*LW_GAUSSIAN_FACTOR + 0.01;
+
   // This is the time bottleneck of this filter.
   // So only bother to compute the gaussian if this is a 
   // "good feature" (with a value close to the mean).
   // Else return the max value of 1.
+//    float tmp = x-mean;
+//    if (tmp < var)
+//      return(1 - exp(-(tmp*tmp)/(2*var))/sqrt(6.28318*var));  
+//    else
+//      return 1;
+
+  // we need between 0 and 1 always, so:
+  // forget about the scale factor.  the feature weight does this.
+  // so just do the e^-((x-u)^2/2*sigma^2)
+
   float tmp = x-mean;
-  if (tmp < var)
-    return(1 - exp(-(tmp*tmp)/(2*var))/sqrt(6.28318*var));  
-  else
-    return 1;
+  //return(max * ( 1 - exp( -(tmp*tmp)/(2*var)) ));  
+  return(1 - exp( -(tmp*tmp)/(2*var) ));  
+
 }
 
 //------------------------------------------------------------------------------
@@ -266,9 +285,9 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
       //  | x |
       //  V  <-
       //
-      // then the right and down belong to the upper left corner
+      // then the right and down arrows belong to the upper left corner
       // and the other two to the lower right corner.
-      // so shifting output images will give the correct
+      // so shifting output images will give the correct:
       //
       //    ^
       //  <-|->
@@ -316,10 +335,10 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 				//      7 (out)
 	    t = 6; 
 	    u = 3;
-	    p = 4;
+	    p = 7;
 	    q = 4;
-	    v = 5;
-	    w = 2;
+	    v = 8;
+	    w = 5;
 	    break;
 	  }
 	case RIGHT_EDGE:
@@ -400,7 +419,10 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
       if (!self->GetRunningNumberOfTrainingPoints()) 
 	{
 	  memset(average,0,numFeatures*sizeof(float));
-	  memset(variance,0,numFeatures*sizeof(float));
+	  // don't allow 0 variance to be calculated.
+	  for (int i = 0; i<numFeatures; i++)
+	    variance[i] = 0.01;
+	  //memset(variance,0,numFeatures*sizeof(float));
 	}
 
       if (self->GetTrainingFileName())
@@ -418,6 +440,14 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 	  cout << "vtkImageLiveWireEdgeWeightsExecute: set the training filename" << endl;
 	}
     }
+
+  // compute normalization factor
+  float sumOfWeights = 0;
+  for (int i = 0; i < numFeatures; i++) 
+    {
+      sumOfWeights += self->GetWeightForFeature(i);
+    }
+  cout << "sum of weights: " << sumOfWeights << endl;
 
   float testMax = -1;
   float testMin = 256;
@@ -495,17 +525,26 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 
 		      features[3] = .333333*(*(ptr+n[p])+*(ptr+n[t])+*(ptr+n[v])-*(ptr+n[u])-*(ptr+n[q])-*(ptr+n[w]));
 
-		      // "in" corresponds to side of bel with higher intensity.
-		      if (features[3] > 0)
-			{
-			  features[0] = *(ptr+n[q]); // "in"
-			  features[1] = *(ptr+n[p]);
-			}
-		      else 
-			{
-			  features[0] = *(ptr+n[p]);
-			  features[1] = *(ptr+n[q]);
-			}
+
+		      features[0] = *(ptr+n[q]); // "in"
+		      features[1] = *(ptr+n[p]);
+
+		      // Lauren: if f3 > 0 actually the 'inside' pixel 
+		      // is darker.  so the below code is backwards:
+		      // switching is only good for consistency if we 
+		      // don't know the desired gradient, it seems...
+
+		      // "in" corresponds to side of bel with higher intensity//  .
+//  		      if (features[3] > 0)
+//  			{
+//  			  features[0] = *(ptr+n[q]); // "in"
+//  			  features[1] = *(ptr+n[p]);
+//  			}
+//  		      else 
+//  			{
+//  			  features[0] = *(ptr+n[p]);
+//  			  features[1] = *(ptr+n[q]);
+//  			}
 
 		      features[4] = .5*(*(ptr+n[p])+*(ptr+n[t])/2+*(ptr+n[v])/2
 					-*(ptr+n[u])-*(ptr+n[q])/2-*(ptr+n[w])/2);
@@ -600,8 +639,10 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 		      point[1] = outIdx1;
 		      point[2] = 0;
 		      
-		      // if this pixel was chosen by the user for training
-		      if (*inTPtr0 == 1){
+		      // if this (inside, or 'q') pixel is in the
+		      // segmented area, and its neighboring
+		      // outside, or 'p', pixel, is NOT.
+		      if (*(inTPtr0 + n[q]) == 1 && *(inTPtr0 + n[p]) == 0){
 			//cout << "point: " << point[0] << " " << point[1];
 			for (int i=0;i<numFeatures;i++)
 			  {
@@ -624,12 +665,17 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 		      //sum += (props->*Transform)(features[i]);
 		      //sum += callMemberFunction(props,props.Transform);
 
-		      float tmp = props->Weight*GaussianC(features[i],props->TransformParams[0],props->TransformParams[1]);
+		      float tmp2 = GaussianC(features[i],props->TransformParams[0],props->TransformParams[1]);
+		      if (tmp2 > 1)
+			cout << "feature " << i << " too large: " << tmp2 << endl;
+
+		      float tmp = props->Weight*tmp2;
 		      if (tmp < testMin) 
 			testMin = tmp;
 		      else
 			if (tmp > testMax)
 			  testMax = tmp;
+
 
 		      sum += tmp;
 		      
@@ -637,16 +683,15 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 		      //sum+= props->TransformParams[0];
 		    }
 
-		  // Lauren normalize using sum of weights, not num features!
-		  // each feature is between 0 and 1.  normalize sum to 1 
-		  // then multiply by max edge cost.
-		  *outPtr0 = (sum/numFeatures)*maxEdge;
-		  float tmp = (sum/numFeatures)*maxEdge;
+		  // each feature is between 0 and its Weight.  
+		  // normalize sum to 1 and multiply by max edge cost.
+		  *outPtr0 = (sum*maxEdge/sumOfWeights);
+		  float tmp = (sum*maxEdge/sumOfWeights);
 		  if (tmp < testMin2) 
 		    testMin2 = tmp;
-		  else
-		    if (tmp > testMax2)
-		      testMax2 = tmp;
+		  
+		  if (tmp > testMax2)
+		    testMax2 = tmp;
 		  
 
 		  if (*outPtr0 > maxEdge) 

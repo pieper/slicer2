@@ -130,6 +130,7 @@ public:
   // Set/Gets are for access from tcl
   // Lauren check bounds!!!!!!!!!!
   // Set a parameter used to compute this feature
+  // Note that a variance of 0 should NOT be used.
   void SetParamForFeature(int featureNum, int paramNum, float param) 
     {this->FeatureSettings[featureNum].TransformParams[paramNum] = param;};
   // Get total number of parameters used to compute this feature
