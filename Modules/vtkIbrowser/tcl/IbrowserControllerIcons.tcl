@@ -1286,15 +1286,16 @@ proc IbrowserCopyIntervalPopUp { win id x y } {
         pack $f.fMsg $f.fName $f.fButtons -side top -pady 4 -padx 4 
         
         set f $w.fMsg
-        eval {label $f.l -text "Name a copy of $::Ibrowser($id,name)."} 
-        $f.l config -font $::IbrowserController(UI,Medfont) -background #FFFFFF
+        eval {label $f.l -text "Name a copy of $::Ibrowser($id,name)." \
+                -font $::IbrowserController(UI,Medfont) -background #FFFFFF \
+                -foreground #000000 }
         pack $f.l -padx 5 -pady 5
 
         set f $w.fName
         set ::Ibrowser(thisName) $::Ibrowser($id,name)
         set ::Ibrowser(afterName) $::Ibrowser($id,name)-copy
         eval { label $f.l -text "new interval: " -background #FFFFFF \
-                   -font $::IbrowserController(UI,Medfont) }
+                -font $::IbrowserController(UI,Medfont) -foreground #000000 }
         eval { entry $f.e -width 20 -relief sunken -textvariable ::Ibrowser(afterName) }
         pack $f.l $f.e -side left -padx 4 -pady 4
 
@@ -1350,8 +1351,9 @@ proc IbrowserDeleteIntervalPopUp { win id x y } {
         pack $f.fMsg $f.fClose -side top -pady 4 -padx 4 
         
         set f $w.fMsg
-        eval {label $f.l -text "Delete interval $::Ibrowser($id,name) and its contents?"} 
-        $f.l config -font $::IbrowserController(UI,Medfont) -background #FFFFFF
+        eval {label $f.l -text "Delete interval $::Ibrowser($id,name) and its contents?" \
+                -font $::IbrowserController(UI,Medfont) -background #FFFFFF \
+                -foreground #000000 }
         pack $f.l -padx 5 -pady 5
 
         set ::Ibrowser(thisName) $::Ibrowser($id,name)
@@ -1402,8 +1404,9 @@ proc IbrowserOrderPopUp { win id x y } {
         pack $f.fMsg $f.fBtns $f.fClose -side top -pady 4 -padx 4 
         
         set f $w.fMsg
-        eval {label $f.l -text "move $::Ibrowser($id,name) after: "} 
-        $f.l config -font $::IbrowserController(UI,Medfont) -background #FFFFFF
+        eval {label $f.l -text "move $::Ibrowser($id,name) after: " \
+                -font $::IbrowserController(UI,Medfont) -background #FFFFFF \
+                -foreground #000000 }
         pack $f.l -padx 5 -pady 5 
 
         #--- menubutton with pulldown menu
@@ -1418,7 +1421,7 @@ proc IbrowserOrderPopUp { win id x y } {
 
         #--- menu and commands
         eval { menu $f.mbIvalOrder.m -background #FFFFFF \
-               }
+                -foreground #000000 }
         foreach ivalID $::Ibrowser(idList) {
             set name $::Ibrowser($ivalID,name)
             if { $name != $::Ibrowser($id,name) } {
@@ -1495,7 +1498,7 @@ proc IbrowserOpacityPopUp { win id x y } {
         pack $f.fMsg $f.fSlider $f.fButton -side top -pady 4 -padx 4 
         
         set f $w.fMsg
-        eval {label $f.label -text "$msg"} 
+        eval {label $f.label -text "$msg" -foreground #000000 } 
         $f.label config -font $::IbrowserController(UI,Smallfont) -font $::IbrowserController(UI,Medfont) \
             -background #FFFFFF
         pack $f.label -padx 5 -pady 4
