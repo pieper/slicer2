@@ -32,6 +32,7 @@ if { [itcl::find class dup_deidentify] == "" } {
         destructor {}
 
         method refresh {} {}
+        method runall {} {}
         method run {dir} {}
     }
 }
@@ -46,7 +47,7 @@ itcl::body dup_deidentify::constructor {args} {
     set cs [$this childsite]
 
     set f $cs.frame
-    pack [iwidgets::scrolledframe $f -hscrollmode dynamic -vscrollmode dynamic] -fill both -expand true 
+    pack [iwidgets::scrolledframe $f -hscrollmode dynamic -vscrollmode dynamic] -fill both -expand true -pady 15
     set _frame $f
 
     eval itk_initialize $args
@@ -62,12 +63,8 @@ itcl::body dup_deidentify::refresh {} {
         destroy $w
     }
 
-    set defacedir [$parent pref DEFACE_DIR]
-    set visits [glob -nocomplain $defacedir/Project_*/*/Visit_*/Study_*/Raw_Data]
-
-
     set b 0
-    foreach v $visits {
+    foreach v [$parent visits] {
         if { ![file exists $v/deidentify_operations] } {
             tk_messageBox -message "Warning: no deidentify_operations for $v"
             continue
@@ -77,22 +74,48 @@ itcl::body dup_deidentify::refresh {} {
         }
         set birnid [lindex [file split $v] end-3] 
         set bb $_frame.b$b 
-        pack [button $bb -text "Run $birnid" -command "$this run $v"]
+        pack [button $bb -text "Deidentify $birnid" -command "$this run $v"]
         TooltipAdd $bb "$v"
         incr b
     }
 
     if { $b == 0 } {
         pack [label $_frame.l -text "Nothing to deidentify"]
-        return
+    } else {
+        pack [button $_frame.bspace -text "" -relief flat ]
+        pack [button $_frame.ball -text "Deidentify All" -command "$this runall"]
     }
 }
+
+itcl::body dup_deidentify::runall {} {
+
+    foreach v [$parent visits] {
+        $this run $v
+    }
+}
+
 
 itcl::body dup_deidentify::run {dir} {
 
     set fp [open $dir/deidentify_operations "r"]
     set ops [read $fp]
     close $fp
+
+    ## fake
+
+    set series [glob $dir/*]
+    foreach s $series {
+        if { ![file isdirectory $s] } {
+            continue
+        }
+        file mkdir $s/Deface
+        file copy -force /tmp/face.mpg $s/Deface
+        file copy -force /tmp/slices-axial.mpg $s/Deface
+        file copy -force /tmp/slices-sagittal.mpg $s/Deface
+        file copy -force /tmp/slices-coronal.mpg $s/Deface
+    }
+    DevErrorWindow "Fake Deidentification"
+    ## end fake
 
     $parent log "starting deidentify of $dir"
     foreach op $ops {

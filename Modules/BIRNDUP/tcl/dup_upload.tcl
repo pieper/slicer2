@@ -10,8 +10,8 @@ dup_upload - the upload pane of the birndup interface
 
 # TODO : 
     * make an about_dialog
-    * the "view" method currently copies to temp dir - should fix the dicom
-    loader that accepts a list of filenames
+    * the "view" method currently copies to temp dir 
+      - should fix the slicer dicom loader to accept a list of filenames
 }
 #
 #########################################################
@@ -46,7 +46,7 @@ itcl::body dup_upload::constructor {args} {
     set cs [$this childsite]
 
     set f $cs.frame
-    pack [iwidgets::scrolledframe $f -hscrollmode dynamic -vscrollmode dynamic] -fill both -expand true 
+    pack [iwidgets::scrolledframe $f -hscrollmode dynamic -vscrollmode dynamic] -fill both -expand true -pady 15
     set _frame $f
 
     eval itk_initialize $args
@@ -91,7 +91,7 @@ itcl::body dup_upload::run {dir} {
 
     $parent log "starting upload of $dir"
 
-    tk_messageBox -message "Review of $dir" 
+    tk_messageBox -message "Upload of $dir" 
 
     $parent log "finished upload of $dir"
     close [open $dir/uploaded "w"]

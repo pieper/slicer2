@@ -209,14 +209,13 @@ itcl::body dup_sort::sort {} {
 
     set studypath $_defacedir/Project_$_study(project)/$_study(birnid)/Visit_$_study(visit)/Study_$_study(study)/Raw_Data
 
-    foreach id $_series(ids) {
-        set dir $studypath/$id
-        if { [glob -nocomplain $dir/*] != "" } {
-            if { [DevOKCancel "$studypath is not empty - okay to delete?"] != "ok" } {
-                return
-            } 
-        }
+    if { [glob -nocomplain $studypath] != "" } {
+        if { [DevOKCancel "$studypath is not empty - okay to delete?"] != "ok" } {
+            return
+        } 
+        file delete -force $studypath
     }
+
     foreach id $_series(ids) {
         set dir $studypath/$id
         file delete -force $dir
@@ -266,7 +265,7 @@ itcl::body dup_sort::sort {} {
     $parent log "sort operation complete for $sourcedir to $studypath"
 
     tk_messageBox -message "Directory sorted"
-    $parent refresh deidentify
+    $parent refresh 
 }
 
 itcl::body dup_sort::setdeident {id method} {

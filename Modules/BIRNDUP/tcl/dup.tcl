@@ -43,12 +43,13 @@ if { [itcl::find class dup] == "" } {
 
         method menus {} {}
         method about_dialog {} {}
-        method pref {KEY} {}
+        method pref { {KEY ""} } {}
         method prefs {} {}
+        method visits {} {}
         method log {message} {}
 
         method fill { {dir "choose"} } {}
-        method refresh { pane } {}
+        method refresh { {pane "all"} } {}
 
         method statusvar {} { return [itcl::scope _statusVar($this)] }
         method w {} {return $_w}
@@ -82,7 +83,7 @@ itcl::body dup::constructor {args} {
     pack [label $cs.logo -image $im -bg white] -fill x -anchor s
 
     $this menus
-    $this configure -title "BIRN Deidentification and Upload Pipeline"
+    $this configure -title "BIRN Deidentification and Upload Pipeline - Evaluation Use Only"
 
     eval itk_initialize $args
 
@@ -90,8 +91,9 @@ itcl::body dup::constructor {args} {
 
     foreach p {sort deidentify review upload} {
         [set _$p] configure -parent $this
-        [set _$p] refresh 
     }
+
+    after idle "$this refresh"
 }
 
 
@@ -137,7 +139,7 @@ itcl::body dup::fill { {dir "choose"} } {
     }
 }
 
-itcl::body dup::refresh {pane} {
+itcl::body dup::refresh { {pane "all"} } {
     switch $pane {
         "deidentify" {
             $_deidentify refresh
@@ -148,7 +150,18 @@ itcl::body dup::refresh {pane} {
         "upload" {
             $_upload refresh
         }
+        "all" {
+            $_deidentify refresh
+            $_review refresh
+            $_upload refresh
+        }
     }
+}
+
+itcl::body dup::visits {} {
+
+    set defacedir [$this pref DEFACE_DIR]
+    return [glob -nocomplain $defacedir/Project_*/*/Visit_*/Study_*/Raw_Data]
 }
 
 itcl::body dup::log { message } {
@@ -157,7 +170,10 @@ itcl::body dup::log { message } {
     close $fp
 }
 
-itcl::body dup::pref { KEY } {
+itcl::body dup::pref { {KEY ""} } {
+    if { $KEY == "" } {
+        return [parray _prefs]
+    }
     if { [info exists _prefs($KEY)] } {
         return $_prefs($KEY)
     } else {

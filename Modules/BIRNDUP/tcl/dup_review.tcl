@@ -46,7 +46,7 @@ itcl::body dup_review::constructor {args} {
     set cs [$this childsite]
 
     set f $cs.frame
-    pack [iwidgets::scrolledframe $f -hscrollmode dynamic -vscrollmode dynamic] -fill both -expand true 
+    pack [iwidgets::scrolledframe $f -hscrollmode dynamic -vscrollmode dynamic] -fill both -expand true -pady 15
     set _frame $f
 
     eval itk_initialize $args
@@ -91,7 +91,8 @@ itcl::body dup_review::run {dir} {
 
     $parent log "starting review of $dir"
 
-    tk_messageBox -message "Review of $dir" 
+    # TODO - this is linux only
+    exec $::env(SLICER_HOME)/slicer2-linux-x86 $::PACKAGE_DIR_BIRNDUP/../../../tcl/gonogo.tcl $dir
 
     $parent log "finished review of $dir"
     close [open $dir/ready_for_upload "w"]
