@@ -58,8 +58,9 @@ proc tarup { {destdir "auto"} } {
     set exe ""
     switch $::env(BUILD) {
         "solaris8" { set target solaris-sparc }
-        "Darwin" { set target darwin-ppc }
-        "redhat7.3" { set target linux-x86 }
+        "darwin-ppc" { set target darwin-ppc }
+        "redhat7.3" -
+        "linux-x86" { set target linux-x86 }
         "Win32VC7" { set target win32 ; set exe .exe}
     }
 
@@ -75,7 +76,7 @@ proc tarup { {destdir "auto"} } {
                 } else {
                     switch $::env(BUILD) {
                         "solaris8" { set destdir /tmp }
-                        "Darwin" - "redhat7.3" { set destdir /var/tmp }
+                        "darwin-ppc" - "redhat7.3" { set destdir /var/tmp }
                         "Win32VC7" { set destdir c:/Temp }
                     }
                 }
@@ -144,7 +145,7 @@ proc tarup { {destdir "auto"} } {
     switch $::env(BUILD) {
         "solaris8" -
         "redhat7.3" - 
-        "Darwin" {
+        "darwin-ppc" {
             file copy -force $::env(VTK_DIR)/Wrapping/Tcl/pkgIndex.tcl $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl
         }
         "Win32VC7" { 
@@ -166,7 +167,7 @@ proc tarup { {destdir "auto"} } {
             file copy $::env(VTK_DIR)/bin/vtk $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
             file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl/pkgIndex.tcl
         }
-        "Darwin" {
+        "darwin-ppc" {
             set libs [glob $::env(VTK_DIR)/bin/*.dylib]
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
@@ -200,7 +201,7 @@ proc tarup { {destdir "auto"} } {
                 exec strip $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin/$ll
             }
         }
-        "Darwin" {
+        "darwin-ppc" {
             set libs [glob -nocomplain $::env(ITK_BINARY_PATH)/bin/*.dylib]
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin
@@ -236,7 +237,7 @@ proc tarup { {destdir "auto"} } {
                 exec strip $destdir/Base/builds/$::env(BUILD)/bin/$ll
             }
         }
-        "Darwin" {
+        "darwin-ppc" {
             file mkdir $destdir/Base/builds/$::env(BUILD)/bin
             set libs [glob Base/builds/$::env(BUILD)/bin/*.dylib]
             foreach lib $libs {
@@ -298,7 +299,7 @@ proc tarup { {destdir "auto"} } {
                     exec strip $moddest/builds/$::env(BUILD)/bin/$ll
                 }
             }
-            "Darwin" {
+            "darwin-ppc" {
                 file mkdir $moddest/builds/$::env(BUILD)/bin
                 set libs [glob -nocomplain $moddir/builds/$::env(BUILD)/bin/*.dylib]
                 foreach lib $libs {
@@ -353,7 +354,7 @@ proc tarup { {destdir "auto"} } {
                 exec gzip -f $archroot.tar
             }
             "redhat7.3" - 
-            "Darwin" {
+            "darwin-ppc" {
                 puts " -- making $archroot.tar.gz"
                 exec tar cfz $archroot.tar.gz $archroot
             }
@@ -375,7 +376,7 @@ proc tarup { {destdir "auto"} } {
         switch $::env(BUILD) {
             "solaris8" -
             "redhat7.3" - 
-            "Darwin" {
+            "darwin-ppc" {
                 exec xterm -e scp $archroot.tar.gz $scpdestination
             }
             "Win32VC7" { 
