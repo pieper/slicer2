@@ -101,7 +101,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.93 $} {$Date: 2004/03/15 21:04:52 $}]
+            {$Revision: 1.94 $} {$Date: 2004/04/08 16:10:33 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -1312,9 +1312,12 @@ proc VolumesSetScanOrder {order} {
     set Volume(scanOrder) $order
 
     # set the button text to the matching order from the scanOrderMenu
-    $Volume(mbscanOrder) config -text [lindex $Volume(scanOrderMenu)\
+    #raul (04/08/04): scanOrder is also set up in VolTensor.tcl. VolHeader.tcl 
+    # and VolTensor have menubutton that share the same variables.
+    foreach mbscanOrder $Volume(mbscanOrder) {
+      $mbscanOrder config -text [lindex $Volume(scanOrderMenu)\
             [lsearch $Volume(scanOrderList) $order]]
-
+    }
 }
 
 #-------------------------------------------------------------------------------
