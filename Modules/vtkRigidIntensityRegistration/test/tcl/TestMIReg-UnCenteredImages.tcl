@@ -189,5 +189,3 @@ proc TestMutualInformationTransform { BaseFileName Numx Numy Numz SpaceX SpaceY 
 
     return $error
 }
-
-

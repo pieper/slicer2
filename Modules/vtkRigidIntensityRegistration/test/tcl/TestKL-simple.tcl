@@ -66,13 +66,22 @@ package require vtkRigidIntensityRegistration;# this pulls in the package
 
      __KL ResetMultiResolutionSettings 
     foreach iter  "1" {
-       __KL SetNextMaxNumberOfIterations $iter
+    __KL SetNextMaxNumberOfIterations $iter
     }
     foreach rate  "1e-4" {
-       __KL SetNextLearningRate  $rate
+    __KL SetNextLearningRate  $rate
     }
+
+    ## Not really needed for KL
+    #  __KL InitRandomSeed 8775070
   
     __KL Update
+    set results [__KL  GetMetricValue]
 
-
-
+    if {[expr abs($results+22.5418)] < 0.1} {
+      puts "SUCCESS"
+    }  else {
+     puts "ERROR. Should have gotten -22.5418, Got $results"
+     puts "There is no way to seed VTK noise source, so maybe this is due to that problem"
+     exit -1
+    }

@@ -115,6 +115,7 @@ proc TestMutualInformationTransform { BaseFileName1 BaseFileName2 Numx Numy Numz
       __reg SetSourceShrinkFactors 4 4 1
       __reg SetTargetShrinkFactors 4 4 1
       __reg SetNumberOfSamples 50
+      __reg InitRandomSeed 8775070
   
     __reg ResetMultiResolutionSettings 
     foreach iter  "2500 2500 2500 2500 2500" {

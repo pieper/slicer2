@@ -10,6 +10,7 @@ package require vtkRigidIntensityRegistration;# this pulls in the package
 
    if {$results != 0 } {
      puts "TEST FAILED"
+     exit -1
    } else {
      puts "SUCCESS"
    }
