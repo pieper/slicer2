@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        ModelMaker.tcl
-# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   ModelMakerInit
 #   ModelMakerUpdateMRML
@@ -46,6 +45,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerInit {} {
@@ -67,7 +68,7 @@ proc ModelMakerInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.21 $} {$Date: 2000/02/22 21:37:50 $}]
+		{$Revision: 1.22 $} {$Date: 2000/02/25 16:26:30 $}]
 
 	# Create
 	set ModelMaker(idVolume) $Volume(idNone)
@@ -85,6 +86,8 @@ proc ModelMakerInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerUpdateMRML
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerUpdateMRML {} {
@@ -110,6 +113,8 @@ proc ModelMakerUpdateMRML {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerBuildGUI
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerBuildGUI {} {
@@ -390,6 +395,8 @@ Also save your MRML file by selecting <B>Save</B> from the <B>File</B> menu.
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerTransform
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerTransform {volume} {
@@ -456,6 +463,8 @@ proc ModelMakerTransform {volume} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerWrite
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerWrite {} {
@@ -475,6 +484,8 @@ proc ModelMakerWrite {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerRead
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerRead {} {
@@ -499,6 +510,8 @@ proc ModelMakerRead {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerEnter
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerEnter {} {
@@ -509,6 +522,8 @@ proc ModelMakerEnter {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerSetVolume
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerSetVolume {v} {
@@ -528,6 +543,8 @@ proc ModelMakerSetVolume {v} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerCreate
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerCreate {} {
@@ -594,6 +611,8 @@ $ModelMaker(n,mcubes) polygons reduced to $ModelMaker(n,decimator)."
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerLabelCallback
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerLabelCallback {} {
@@ -606,6 +625,8 @@ proc ModelMakerLabelCallback {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerSmoothWrapper
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerSmoothWrapper {{m ""}} {
@@ -627,6 +648,8 @@ proc ModelMakerSmoothWrapper {{m ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerSmooth
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerSmooth {m iterations} {
@@ -681,6 +704,8 @@ proc ModelMakerSmooth {m iterations} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerReverseNormals
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerReverseNormals {{m ""}} {

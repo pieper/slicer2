@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        EdChangeLabel.tcl
-# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   EdChangeLabelInit
 #   EdChangeLabelBuildGUI
@@ -37,6 +36,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC EdChangeLabelInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdChangeLabelInit {} {
@@ -59,6 +60,8 @@ proc EdChangeLabelInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdChangeLabelBuildGUI
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdChangeLabelBuildGUI {} {
@@ -118,6 +121,8 @@ proc EdChangeLabelBuildGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdChangeLabelEnter
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdChangeLabelEnter {} {
@@ -128,6 +133,8 @@ proc EdChangeLabelEnter {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdChangeLabelApply
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdChangeLabelApply {} {

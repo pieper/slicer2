@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Colors.tcl
-# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   ColorsInit
 #   ColorsBuildGUI
@@ -69,7 +68,7 @@ proc ColorsInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.11 $} {$Date: 2000/02/22 21:37:47 $}]
+		{$Revision: 1.12 $} {$Date: 2000/02/25 16:26:28 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -252,6 +251,8 @@ proc ColorsUpdateMRML {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ColorsDisplayColors
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsDisplayColors {} {
@@ -271,6 +272,8 @@ proc ColorsDisplayColors {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ColorsSelectColor
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsSelectColor {{i ""}} {
@@ -291,6 +294,8 @@ proc ColorsSelectColor {{i ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC ColorsSetColor
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsSetColor {{value ""}} {

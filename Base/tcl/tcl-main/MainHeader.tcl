@@ -26,9 +26,8 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainHeader.tcl
-# DATE:        01/20/2000 09:40
-# LAST EDITOR: gering
 # PROCEDURES:  
+#   ReadHeaderTcl
 #   ReadHeader
 #   ParsePrintHeader
 #   ParseM3list
@@ -446,6 +445,8 @@ proc ParsePrintHeader {text aHeader} {
 
 #-------------------------------------------------------------------------------
 # .PROC ParseM3list
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ParseM3list {text aHeader} {
@@ -559,6 +560,8 @@ proc ParseM3list {text aHeader} {
 
 #-------------------------------------------------------------------------------
 # .PROC DumpHeader
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc DumpHeader {aHeader} {

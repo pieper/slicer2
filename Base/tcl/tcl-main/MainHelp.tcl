@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainHelp.tcl
-# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainHelpInit
 #   MainHelpBuildGUI
@@ -39,6 +38,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC MainHelpInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainHelpInit {} {
@@ -46,7 +47,7 @@ proc MainHelpInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-		{$Revision: 1.7 $} {$Date: 2000/02/22 17:56:07 $}]
+		{$Revision: 1.8 $} {$Date: 2000/02/25 16:26:23 $}]
 
 	set Help(tagNormal)   "-font {times 10}"
 	set Help(tagItalic)   "-font {times 10 italic}"
@@ -111,6 +112,8 @@ proc MainHelpBuildGUI {ModuleName} {
 
 #-------------------------------------------------------------------------------
 # .PROC HelpWidget
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc HelpWidget {f} {
@@ -127,6 +130,8 @@ proc HelpWidget {f} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainHelpApplyTags
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainHelpApplyTags {tab str} {
@@ -227,6 +232,8 @@ proc MainHelpApplyTags {tab str} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainHelpShow
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainHelpShow {w id} {
@@ -272,6 +279,8 @@ proc MainHelpShow {w id} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainHelpLink
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainHelpLink {w id linkTag} {

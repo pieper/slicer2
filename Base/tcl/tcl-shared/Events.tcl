@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Events.tcl
-# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   EventsInit
 #   pushHandler
@@ -50,6 +49,8 @@
 ######################################################################
 #-------------------------------------------------------------------------------
 # .PROC EventsInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EventsInit {} {
@@ -62,7 +63,7 @@ proc EventsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.4 $} {$Date: 2000/02/22 16:30:22 $}]
+		{$Revision: 1.5 $} {$Date: 2000/02/25 16:26:35 $}]
 
 	# Props
 	set EventManagerStack ""
@@ -71,6 +72,8 @@ proc EventsInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC pushHandler
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc pushHandler { widget event script } {
@@ -87,6 +90,8 @@ proc pushHandler { widget event script } {
 	
 #-------------------------------------------------------------------------------
 # .PROC popHandler
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc popHandler { widget event } {
@@ -103,6 +108,8 @@ proc popHandler { widget event } {
 
 #-------------------------------------------------------------------------------
 # .PROC pushEventManager
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc pushEventManager { mgr } {
@@ -122,6 +129,8 @@ proc pushEventManager { mgr } {
 
 #-------------------------------------------------------------------------------
 # .PROC popEventManager
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc popEventManager {} {

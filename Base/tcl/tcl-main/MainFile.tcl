@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainFile.tcl
-# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainFileBuildGUI
 #   MainFileBuildOpenGUI
@@ -65,13 +64,15 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-		{$Revision: 1.18 $} {$Date: 2000/02/22 17:56:07 $}]
+		{$Revision: 1.19 $} {$Date: 2000/02/25 16:26:22 $}]
 
 	set File(filePrefix) data
 }
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileBuildGUI
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileBuildGUI {} {
@@ -83,6 +84,8 @@ proc MainFileBuildGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileBuildOpenGUI
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileBuildOpenGUI {} {
@@ -146,6 +149,8 @@ proc MainFileBuildOpenGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileBuildSaveAsGUI
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileBuildSaveAsGUI {} {
@@ -209,6 +214,8 @@ proc MainFileBuildSaveAsGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileClose
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileClose {} {
@@ -221,6 +228,8 @@ proc MainFileClose {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileSaveAsPopup
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileSaveAsPopup {{callback ""} {x 100} {y 100}} {
@@ -271,6 +280,8 @@ proc MainFileSaveAs {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileSaveAsApply
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileSaveAsApply {} {
@@ -289,6 +300,8 @@ proc MainFileSaveAsApply {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileSave
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileSave {} {
@@ -362,6 +375,8 @@ puts "save options done"
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileOpenPopup
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileOpenPopup {{callback ""} {x 100} {y 100}} {
@@ -380,6 +395,8 @@ proc MainFileOpenPopup {{callback ""} {x 100} {y 100}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileOpen
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileOpen {} {
@@ -419,6 +436,8 @@ proc MainFileOpen {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileOpenApply
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileOpenApply {} {
@@ -449,6 +468,8 @@ proc MainFileOpenApply {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileSaveModel
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileSaveModel {m prefix} {
@@ -488,6 +509,8 @@ To save a model, it must already exist in the 3D Slicer."
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileOpenModel
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileOpenModel {m prefix} {
@@ -528,6 +551,8 @@ To read a model for the first time, click 'Add Model' on the Data panel."
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileSaveVolume
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileSaveVolume {v prefix} {
@@ -566,6 +591,8 @@ To save a volume, it must already exist in the 3D Slicer."
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileOpenVolume
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileOpenVolume {v prefix} {
@@ -605,6 +632,8 @@ To read a volume for the first time, click 'Add Volume' on the Data panel."
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileGetRelativePrefix
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileGetRelativePrefix {filename} {
@@ -660,6 +689,8 @@ proc MainFileFindUniqueName {root prefix ext} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileCreateDirectory
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileCreateDirectory {filename} {
@@ -679,6 +710,8 @@ proc MainFileCreateDirectory {filename} {
 
 #-------------------------------------------------------------------------------
 # .PROC CheckVolumeExists
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc CheckVolumeExists {filePrefix filePattern firstNum lastNum {verbose 0}} {

@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        View.tcl
-# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   ViewInit
 #   ViewBuildGUI
@@ -44,6 +43,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC ViewInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ViewInit {} {
@@ -63,11 +64,13 @@ proc ViewInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.9 $} {$Date: 2000/02/22 21:37:52 $}]
+		{$Revision: 1.10 $} {$Date: 2000/02/25 16:26:32 $}]
 }
 
 #-------------------------------------------------------------------------------
 # .PROC ViewBuildGUI
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ViewBuildGUI {} {

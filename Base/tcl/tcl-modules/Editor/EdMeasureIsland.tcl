@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        EdMeasureIsland.tcl
-# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   EdMeasureIslandInit
 #   EdMeasureIslandBuildGUI
@@ -36,6 +35,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC EdMeasureIslandInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdMeasureIslandInit {} {
@@ -63,6 +64,8 @@ proc EdMeasureIslandInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdMeasureIslandBuildGUI
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdMeasureIslandBuildGUI {} {
@@ -147,6 +150,8 @@ proc EdMeasureIslandBuildGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdMeasureIslandEnter
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdMeasureIslandEnter {} {
@@ -158,6 +163,8 @@ proc EdMeasureIslandEnter {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdMeasureIslandApply
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdMeasureIslandApply {} {

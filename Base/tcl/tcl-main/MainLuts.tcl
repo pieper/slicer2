@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainLuts.tcl
-# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainLutsInit
 #   MainLutsBuildVTK
@@ -35,6 +34,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC MainLutsInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainLutsInit {} {
@@ -45,7 +46,7 @@ proc MainLutsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainLuts \
-		{$Revision: 1.7 $} {$Date: 2000/02/22 16:30:09 $}]
+		{$Revision: 1.8 $} {$Date: 2000/02/25 16:26:23 $}]
 
 	# Create an ID for Labels
 	set Lut(idLabel) -1
@@ -79,6 +80,8 @@ proc MainLutsInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainLutsBuildVTK
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainLutsBuildVTK {} {

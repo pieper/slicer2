@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainVolumes.tcl
-# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainVolumesInit
 #   MainVolumesBuildVTK
@@ -49,6 +48,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesInit {} {
@@ -62,7 +63,7 @@ proc MainVolumesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.28 $} {$Date: 2000/02/22 17:56:09 $}]
+		{$Revision: 1.29 $} {$Date: 2000/02/25 16:26:26 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -84,6 +85,8 @@ proc MainVolumesInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesBuildVTK
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesBuildVTK {} {
@@ -119,6 +122,8 @@ proc MainVolumesBuildVTK {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesUpdateMRML
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesUpdateMRML {} {
@@ -180,6 +185,8 @@ proc MainVolumesUpdateMRML {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesCopyData
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesCopyData {dst src clear} {
@@ -277,6 +284,8 @@ proc MainVolumesRead {v} {
 }
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesWrite
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesWrite {v prefix} {
@@ -394,6 +403,8 @@ proc MainVolumesDelete {v} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesBuildGUI
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesBuildGUI {} {
@@ -541,6 +552,8 @@ proc MainVolumesBuildGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesPopupGo
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesPopupGo {Layer s X Y} {
@@ -558,6 +571,8 @@ proc MainVolumesPopupGo {Layer s X Y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesPopup
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesPopup {v X Y} {
@@ -575,6 +590,8 @@ proc MainVolumesPopup {v X Y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesUpdate
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesUpdate {v} {
@@ -617,6 +634,8 @@ proc MainVolumesUpdate {v} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesRender
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesRender {{scale ""}} {
@@ -640,6 +659,8 @@ proc MainVolumesRender {{scale ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesRenderActive
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesRenderActive {{scale ""}} {
@@ -659,6 +680,8 @@ proc MainVolumesRenderActive {{scale ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesSetActive
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesSetActive {v} {
@@ -766,6 +789,8 @@ proc MainVolumesSetActive {v} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesSetParam
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesSetParam {Param {value ""}} {
@@ -926,6 +951,8 @@ proc MainVolumesSetParam {Param {value ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesUpdateSliderRange
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesUpdateSliderRange {} {

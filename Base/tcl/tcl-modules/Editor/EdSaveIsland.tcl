@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        EdSaveIsland.tcl
-# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   EdSaveIslandInit
 #   EdSaveIslandBuildGUI
@@ -35,6 +34,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC EdSaveIslandInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdSaveIslandInit {} {
@@ -58,6 +59,8 @@ proc EdSaveIslandInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdSaveIslandBuildGUI
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdSaveIslandBuildGUI {} {
@@ -106,6 +109,8 @@ proc EdSaveIslandBuildGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdSaveIslandApply
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdSaveIslandApply {} {

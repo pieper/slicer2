@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainOptions.tcl
-# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainOptionsInit
 #   MainOptionsUpdateMRML
@@ -46,6 +45,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsInit {} {
@@ -63,7 +64,7 @@ proc MainOptionsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainOptions \
-		{$Revision: 1.10 $} {$Date: 2000/02/22 16:30:11 $}]
+		{$Revision: 1.11 $} {$Date: 2000/02/25 16:26:24 $}]
 
 	# Props
 	set Options(program) "slicer"
@@ -82,6 +83,8 @@ proc MainOptionsInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsUpdateMRML
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsUpdateMRML {} {
@@ -123,6 +126,8 @@ proc MainOptionsUpdateMRML {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsBuildVTK
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsBuildVTK {} {
@@ -183,6 +188,8 @@ proc MainOptionsDelete {t} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsSetActive
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsSetActive {t} {
@@ -224,6 +231,8 @@ proc MainOptionsSetActive {t} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsParsePresets
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsParsePresets {attr} {
@@ -239,6 +248,8 @@ proc MainOptionsParsePresets {attr} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsUseDefaultPresets
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsUseDefaultPresets {} {
@@ -385,6 +396,8 @@ proc MainOptionsUnparsePresets {{presetNum ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsPreset
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsPreset {p state} {
@@ -401,6 +414,8 @@ proc MainOptionsPreset {p state} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsPresetCallback
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsPresetCallback {p} {
@@ -426,6 +441,8 @@ proc MainOptionsPresetCallback {p} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsRecallPresets
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsRecallPresets {p} {
@@ -439,6 +456,8 @@ proc MainOptionsRecallPresets {p} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsStorePresets
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsStorePresets {p} {

@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        WidgetObject.tcl
-# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #==========================================================================auto=
 # These procs allow widgets to behave like objects with their own

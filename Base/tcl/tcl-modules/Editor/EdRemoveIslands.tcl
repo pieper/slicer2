@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        EdRemoveIslands.tcl
-# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   EdRemoveIslandsInit
 #   EdRemoveIslandsBuildGUI
@@ -37,6 +36,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC EdRemoveIslandsInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdRemoveIslandsInit {} {
@@ -63,6 +64,8 @@ proc EdRemoveIslandsInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdRemoveIslandsBuildGUI
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdRemoveIslandsBuildGUI {} {
@@ -146,6 +149,8 @@ proc EdRemoveIslandsBuildGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdRemoveIslandsEnter
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdRemoveIslandsEnter {} {
@@ -157,6 +162,8 @@ proc EdRemoveIslandsEnter {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdRemoveIslandsNoThreshold
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdRemoveIslandsNoThreshold {} {
@@ -168,6 +175,8 @@ proc EdRemoveIslandsNoThreshold {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdRemoveIslandsApply
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdRemoveIslandsApply {} {

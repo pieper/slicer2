@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainMatrices.tcl
-# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainMatricesInit
 #   MainMatricesUpdateMRML
@@ -38,6 +37,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC MainMatricesInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMatricesInit {} {
@@ -48,7 +49,7 @@ proc MainMatricesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMatrices \
-		{$Revision: 1.9 $} {$Date: 2000/02/22 16:30:10 $}]
+		{$Revision: 1.10 $} {$Date: 2000/02/25 16:26:23 $}]
 
 	# Append widgets to list that gets refreshed during UpdateMRML
 	set Matrix(mbActiveList) ""
@@ -72,6 +73,8 @@ proc MainMatricesInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMatricesUpdateMRML
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMatricesUpdateMRML {} {
@@ -113,6 +116,8 @@ proc MainMatricesUpdateMRML {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMatricesBuildVTK
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMatricesBuildVTK {} {
@@ -177,6 +182,8 @@ proc MainMatricesDelete {t} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMatricesSetActive
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMatricesSetActive {t} {

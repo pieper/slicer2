@@ -26,13 +26,14 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Parse.tcl
-# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainMrmlReadVersion2.0
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlReadVersion2.0
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlReadVersion2.0 {fileName {verbose 1}} {

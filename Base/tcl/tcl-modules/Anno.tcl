@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Anno.tcl
-# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   AnnoInit
 #   AnnoBuildGUI
@@ -35,6 +34,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC AnnoInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc AnnoInit {} {
@@ -54,7 +55,7 @@ proc AnnoInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.8 $} {$Date: 2000/02/22 21:37:47 $}]
+		{$Revision: 1.9 $} {$Date: 2000/02/25 16:26:27 $}]
 }
 
 #-------------------------------------------------------------------------------

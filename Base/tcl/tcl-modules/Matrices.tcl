@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Matrices.tcl
-# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   MatricesInit
 #   MatricesUpdateMRML
@@ -54,6 +53,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesInit {} {
@@ -74,7 +75,7 @@ proc MatricesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.14 $} {$Date: 2000/02/22 21:37:50 $}]
+		{$Revision: 1.15 $} {$Date: 2000/02/25 16:26:30 $}]
 
 	# Props
 	set Matrix(propertyType) Basic
@@ -99,6 +100,8 @@ proc MatricesInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesUpdateMRML
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesUpdateMRML {} {
@@ -141,6 +144,8 @@ proc MatricesUpdateMRML {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesBuildGUI
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesBuildGUI {} {
@@ -652,6 +657,8 @@ proc MatricesSetVolumeMatrix {type} {
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesIdentity
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesIdentity {} {
@@ -666,6 +673,8 @@ proc MatricesIdentity {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesInvert
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesInvert {} {
@@ -680,6 +689,8 @@ proc MatricesInvert {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesSetPropertyType
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesSetPropertyType {} {
@@ -690,6 +701,8 @@ proc MatricesSetPropertyType {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesPropsApply
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesPropsApply {} {
@@ -785,6 +798,8 @@ but '$n' is not a number."
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesPropsCancel
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesPropsCancel {} {
@@ -814,6 +829,8 @@ proc MatricesPropsCancel {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesManualTranslate
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesManualTranslate {param {value ""}} {
@@ -873,6 +890,8 @@ proc MatricesManualTranslate {param {value ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesManualTranslateDual
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesManualTranslateDual {param1 value1 param2 value2} {
@@ -961,6 +980,8 @@ proc MatricesManualTranslateDual {param1 value1 param2 value2} {
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesManualRotate
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesManualRotate {param {value ""} {mouse 0}} {
@@ -1052,6 +1073,8 @@ proc MatricesManualRotate {param {value ""} {mouse 0}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesSetRefVolume
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesSetRefVolume {{v ""}} {
@@ -1068,6 +1091,8 @@ proc MatricesSetRefVolume {{v ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesSetVolume
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesSetVolume {{v ""}} {
@@ -1088,6 +1113,8 @@ proc MatricesSetVolume {{v ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesWritePseudoMrmlVolume
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesWritePseudoMrmlVolume {fid v} {
@@ -1115,6 +1142,8 @@ proc MatricesWritePseudoMrmlVolume {fid v} {
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesAutoRun
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesAutoRun {} {
@@ -1203,6 +1232,8 @@ Automatic registration is presently available only on UNIX systems."
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesAutoCancel
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesAutoCancel {} {
@@ -1220,6 +1251,8 @@ proc MatricesAutoCancel {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesPoll
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesPoll {} {
@@ -1267,6 +1300,8 @@ proc MatricesPoll {} {
  
 #-------------------------------------------------------------------------------
 # .PROC MatricesAutoApply
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesAutoApply {} {
@@ -1328,6 +1363,8 @@ proc MatricesAutoApply {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesAutoUndo
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesAutoUndo {} {
@@ -1352,6 +1389,8 @@ proc MatricesAutoUndo {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesB1
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesB1 {x y} {
@@ -1396,6 +1435,8 @@ proc MatricesB1 {x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesB1Motion
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesB1Motion {x y} {
@@ -1483,6 +1524,8 @@ proc MatricesB1Motion {x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MatricesB1Release
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesB1Release {x y} {

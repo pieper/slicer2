@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        EdThreshold.tcl
-# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   EdThresholdInit
 #   EdThresholdBuildVTK
@@ -46,6 +45,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC EdThresholdInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdInit {} {
@@ -84,6 +85,8 @@ proc EdThresholdInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdThresholdBuildVTK
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdBuildVTK {} {
@@ -100,6 +103,8 @@ proc EdThresholdBuildVTK {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdThresholdBuildGUI
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdBuildGUI {} {
@@ -212,6 +217,8 @@ proc EdThresholdBuildGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdThresholdEnter
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdEnter {} {
@@ -227,6 +234,8 @@ proc EdThresholdEnter {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdThresholdExit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdExit {} {
@@ -241,6 +250,8 @@ proc EdThresholdExit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdThresholdUpdateSliderRange
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdUpdateSliderRange {} {
@@ -268,6 +279,8 @@ proc EdThresholdUpdateSliderRange {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdThresholdUpdateInteractive
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdUpdateInteractive {} {
@@ -300,6 +313,8 @@ proc EdThresholdUpdateInteractive {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdThresholdSetInput
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdSetInput {} {
@@ -312,6 +327,8 @@ proc EdThresholdSetInput {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdThresholdSetInteract
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdSetInteract {} {
@@ -324,6 +341,8 @@ proc EdThresholdSetInteract {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdThresholdUpdateInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdUpdateInit {widget {value ""}} {
@@ -333,6 +352,8 @@ proc EdThresholdUpdateInit {widget {value ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdThresholdUpdate
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdUpdate {{value ""}} {
@@ -363,6 +384,8 @@ proc EdThresholdUpdate {{value ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdThresholdRenderInteractive
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdRenderInteractive {} {
@@ -373,6 +396,8 @@ proc EdThresholdRenderInteractive {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdThresholdLabel
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdLabel {} {
@@ -384,6 +409,8 @@ proc EdThresholdLabel {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdThresholdApply
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdThresholdApply {} {

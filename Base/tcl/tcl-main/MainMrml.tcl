@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainMrml.tcl
-# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainMrmlInit
 #   MainMrmlInitIdLists
@@ -40,7 +39,7 @@
 #   MainMrmlDeleteNode
 #   MainMrmlDeleteAll
 #   MainMrmlSetFile
-#   MainMrmlRead
+#   MainMrmlRead mrmlFile
 #   MainMrmlReadVersion2.0
 #   MainMrmlBuildTreesVersion2.0
 #   MainMrmlReadVersion1.0
@@ -53,6 +52,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlInit {} {
@@ -72,7 +73,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-		{$Revision: 1.29 $} {$Date: 2000/02/24 17:11:19 $}]
+		{$Revision: 1.30 $} {$Date: 2000/02/25 16:26:24 $}]
 
 	set Mrml(filePrefix) data
 	set Mrml(colorsUnsaved) 0
@@ -80,6 +81,8 @@ proc MainMrmlInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlInitIdLists
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlInitIdLists {} {
@@ -99,6 +102,8 @@ proc MainMrmlInitIdLists {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlUpdateMRML
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlUpdateMRML {} {
@@ -112,6 +117,8 @@ proc MainMrmlUpdateMRML {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlDumpTree
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlDumpTree {type} {
@@ -128,6 +135,8 @@ proc MainMrmlDumpTree {type} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlPrint
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlPrint {tags} {
@@ -167,6 +176,8 @@ proc MainMrmlPrint {tags} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlClearList
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlClearList {} {
@@ -181,6 +192,8 @@ proc MainMrmlClearList {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlAddNode
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlAddNode {nodeType} {
@@ -219,6 +232,8 @@ proc MainMrmlAddNode {nodeType} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlUndoAddNode
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlUndoAddNode {nodeType n} {
@@ -274,6 +289,8 @@ proc MainMrmlDeleteNodeDuringUpdate {nodeType id} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlDeleteNode
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteNode {nodeType id} {
@@ -381,6 +398,8 @@ proc MainMrmlDeleteAll {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlSetFile
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlSetFile {filename} {
@@ -500,6 +519,8 @@ proc MainMrmlRead {mrmlFile} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlReadVersion2.0
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlReadVersion2.0 {fileName} {
@@ -607,6 +628,8 @@ proc MainMrmlReadVersion2.0 {fileName} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlBuildTreesVersion2.0
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlBuildTreesVersion2.0 {tags} {
@@ -820,6 +843,8 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlReadVersion1.0
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlReadVersion1.0 {fileName} {
@@ -843,6 +868,8 @@ proc MainMrmlReadVersion1.0 {fileName} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlBuildTreesVersion1.0
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlBuildTreesVersion1.0 {} {
@@ -988,6 +1015,8 @@ proc MainMrmlBuildTreesVersion1.0 {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlAddColors
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlAddColors {tags} {
@@ -1018,6 +1047,8 @@ proc MainMrmlAddColors {tags} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlCheckColors
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlCheckColors {} {
@@ -1096,6 +1127,8 @@ proc MainMrmlCheckColors {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlRelativity
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlRelativity {oldRoot} {
@@ -1128,6 +1161,8 @@ proc MainMrmlRelativity {oldRoot} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlWrite
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlWrite {filename} {

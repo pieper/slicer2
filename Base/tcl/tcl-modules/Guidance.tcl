@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Guidance.tcl
-# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   Distance3D
 #   GuidanceInit
@@ -44,6 +43,8 @@ lappend Module(idList) Guidance
 
 #-------------------------------------------------------------------------------
 # .PROC Distance3D
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc Distance3D {x1 y1 z1 x2 y2 z2} {
@@ -55,6 +56,8 @@ proc Distance3D {x1 y1 z1 x2 y2 z2} {
 
 #-------------------------------------------------------------------------------
 # .PROC GuidanceInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc GuidanceInit {} {
@@ -75,7 +78,7 @@ proc GuidanceInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.10 $} {$Date: 2000/02/22 21:37:49 $}]
+		{$Revision: 1.11 $} {$Date: 2000/02/25 16:26:29 $}]
 
 	# Target
 	set Target(idList) "0 1"
@@ -110,6 +113,8 @@ proc GuidanceInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC GuidanceBuildVTK
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc GuidanceBuildVTK {} {
@@ -130,6 +135,8 @@ proc GuidanceBuildVTK {} {
 
 #-------------------------------------------------------------------------------
 # .PROC GuidanceBuildGUI
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc GuidanceBuildGUI {} {
@@ -317,6 +324,8 @@ proc GuidanceSetTargetPosition {{value ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC GuidanceSetFocalPointToTarget
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc GuidanceSetFocalPointToTarget {} {
@@ -328,6 +337,8 @@ proc GuidanceSetFocalPointToTarget {} {
 
 #-------------------------------------------------------------------------------
 # .PROC GuidanceSetTargetVisibility
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc GuidanceSetTargetVisibility {} {
@@ -341,6 +352,8 @@ proc GuidanceSetTargetVisibility {} {
 
 #-------------------------------------------------------------------------------
 # .PROC GuidanceSetActiveTarget
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc GuidanceSetActiveTarget {{t ""}} {
@@ -367,6 +380,8 @@ proc GuidanceSetActiveTarget {{t ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC GuidanceViewTrajectory
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc GuidanceViewTrajectory {} {

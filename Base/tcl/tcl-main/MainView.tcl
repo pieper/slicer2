@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainView.tcl
-# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainViewInit
 #   MainViewBuildVTK
@@ -50,6 +49,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewInit {} {
@@ -66,7 +67,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
         set m MainView
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.15 $} {$Date: 2000/02/22 17:56:08 $}]
+		{$Revision: 1.16 $} {$Date: 2000/02/25 16:26:25 $}]
 
 	set View(viewerHeightNormal) 656
 	set View(viewerWidth)  956 
@@ -111,6 +112,8 @@ viewMode='Normal' viewBgColor='Blue'"
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewBuildVTK
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewBuildVTK {} {
@@ -148,6 +151,8 @@ proc MainViewBuildVTK {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewBuildGUI
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewBuildGUI {} {
@@ -310,6 +315,8 @@ proc MainViewBuildGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewSetBackgroundColor
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewSetBackgroundColor {{col ""}} {
@@ -341,6 +348,8 @@ proc MainViewSetBackgroundColor {{col ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewSetFov
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewSetFov {} {
@@ -357,6 +366,8 @@ proc MainViewSetFov {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewLightFollowCamera
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewLightFollowCamera {} {
@@ -448,6 +459,8 @@ proc MainViewNavReset {x y {cmd ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewRotate
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewRotate {dir {deg rotate}} {
@@ -474,6 +487,8 @@ proc MainViewRotate {dir {deg rotate}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewNavRotate
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewNavRotate {W x y {cmd ""}} {
@@ -505,6 +520,8 @@ proc MainViewNavRotate {W x y {cmd ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewSetStereo
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewSetStereo {} {
@@ -520,6 +537,8 @@ proc MainViewSetStereo {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewSpin
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewSpin {} {
@@ -534,6 +553,8 @@ proc MainViewSpin {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewSetWelcome
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewSetWelcome {win} {
@@ -568,6 +589,8 @@ proc MainViewSetWelcome {win} {
 		
 #-------------------------------------------------------------------------------
 # .PROC MainViewResetFocalPoint
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewResetFocalPoint {} {
@@ -578,6 +601,8 @@ proc MainViewResetFocalPoint {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewSetFocalPoint
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewSetFocalPoint {x y z} {
@@ -604,6 +629,8 @@ proc MainViewSetFocalPoint {x y z} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewSaveView
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewSaveView {} {
@@ -655,6 +682,8 @@ proc MainViewSaveViewPopup {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewWriteView
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewWriteView {filename} {
@@ -711,6 +740,8 @@ proc MainViewWriteView {filename} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewStorePresets
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewStorePresets {p} {

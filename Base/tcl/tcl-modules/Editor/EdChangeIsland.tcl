@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        EdChangeIsland.tcl
-# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   EdChangeIslandInit
 #   EdChangeIslandBuildGUI
@@ -37,6 +36,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC EdChangeIslandInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdChangeIslandInit {} {
@@ -62,6 +63,8 @@ proc EdChangeIslandInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdChangeIslandBuildGUI
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdChangeIslandBuildGUI {} {
@@ -127,6 +130,8 @@ proc EdChangeIslandBuildGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdChangeIslandEnter
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdChangeIslandEnter {} {
@@ -138,6 +143,8 @@ proc EdChangeIslandEnter {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdChangeIslandApply
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdChangeIslandApply {} {

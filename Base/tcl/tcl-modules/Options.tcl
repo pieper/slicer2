@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Options.tcl
-# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   OptionsInit
 #   OptionsUpdateMRML
@@ -43,6 +42,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC OptionsInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc OptionsInit {} {
@@ -63,7 +64,7 @@ proc OptionsInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.11 $} {$Date: 2000/02/22 21:37:51 $}]
+		{$Revision: 1.12 $} {$Date: 2000/02/25 16:26:31 $}]
 
 	# Initialize Globals
 	set Options(propertyType) Basic
@@ -78,6 +79,8 @@ proc OptionsInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC OptionsUpdateMRML
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc OptionsUpdateMRML {} {
@@ -86,6 +89,8 @@ proc OptionsUpdateMRML {} {
 
 #-------------------------------------------------------------------------------
 # .PROC OptionsBuildGUI
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc OptionsBuildGUI {} {
@@ -294,6 +299,8 @@ time it runs."} \
 
 #-------------------------------------------------------------------------------
 # .PROC OptionsSetPropertyType
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc OptionsSetPropertyType {} {
@@ -305,6 +312,8 @@ proc OptionsSetPropertyType {} {
 
 #-------------------------------------------------------------------------------
 # .PROC OptionsPropsApply
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc OptionsPropsApply {} {
@@ -382,6 +391,8 @@ proc OptionsPropsApply {} {
 
 #-------------------------------------------------------------------------------
 # .PROC OptionsModulesApply
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc OptionsModulesApply {} {
@@ -407,6 +418,8 @@ proc OptionsModulesApply {} {
 
 #-------------------------------------------------------------------------------
 # .PROC OptionsPropsCancel
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc OptionsPropsCancel {} {
@@ -430,6 +443,8 @@ proc OptionsPropsCancel {} {
 
 #-------------------------------------------------------------------------------
 # .PROC OptionsModulesAll
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc OptionsModulesAll {} {

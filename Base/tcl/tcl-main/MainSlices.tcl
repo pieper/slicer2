@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainSlices.tcl
-# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainSlicesInit
 #   MainSlicesBuildVTK
@@ -64,6 +63,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesInit {} {
@@ -86,7 +87,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-		{$Revision: 1.17 $} {$Date: 2000/02/22 17:56:08 $}]
+		{$Revision: 1.18 $} {$Date: 2000/02/25 16:26:25 $}]
 
 	# Initialize Variables
 	set Slice(idList) "0 1 2"
@@ -176,6 +177,8 @@ proc MainSlicesInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesBuildVTK
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesBuildVTK {} {
@@ -238,6 +241,8 @@ proc MainSlicesBuildVTK {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesBuildControlsForVolume
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesBuildControlsForVolume {f s layer text} {
@@ -261,6 +266,8 @@ proc MainSlicesBuildControlsForVolume {f s layer text} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesBuildControls
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesBuildControls {s F} {
@@ -361,6 +368,8 @@ proc MainSlicesBuildControls {s F} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesUpdateMRML
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesUpdateMRML {} {
@@ -417,6 +426,8 @@ proc MainSlicesUpdateMRML {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesVolumeParam
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesVolumeParam {s param value} {
@@ -464,6 +475,8 @@ proc MainSlicesSetClipState {s {state ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesRefreshClip
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesRefreshClip {s} {
@@ -495,6 +508,8 @@ proc MainSlicesRefreshClip {s} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSetFov
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetFov {} {
@@ -572,6 +587,8 @@ proc MainSlicesKeyPress {key} {
  
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSetActive
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetActive {{s ""}} {
@@ -674,6 +691,8 @@ proc MainSlicesSetVolume {Layer s v} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSetOffsetInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetOffsetInit {s widget {value ""}} {
@@ -686,6 +705,8 @@ proc MainSlicesSetOffsetInit {s widget {value ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSetOffset
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetOffset {s {value ""}} {
@@ -709,6 +730,8 @@ proc MainSlicesSetOffset {s {value ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSetSliderRange
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetSliderRange {s} {
@@ -725,6 +748,8 @@ proc MainSlicesSetSliderRange {s} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSetOrientAll
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetOrientAll {orient} {
@@ -798,6 +823,8 @@ proc MainSlicesSetOrientAll {orient} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSetOrient
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetOrient {s orient} {
@@ -867,6 +894,8 @@ proc MainSlicesSetOrient {s orient} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesResetZoomAll
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesResetZoomAll {} {
@@ -900,6 +929,8 @@ proc MainSlicesSetZoomAll {zoom} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesConfigGui
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesConfigGui {s gui config} {
@@ -981,6 +1012,8 @@ proc MainSlicesSetVisibility {s} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSetOpacityAll
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetOpacityAll {{value ""}} {
@@ -996,6 +1029,8 @@ proc MainSlicesSetOpacityAll {{value ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSetFadeAll
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetFadeAll {{value ""}} {
@@ -1011,6 +1046,8 @@ proc MainSlicesSetFadeAll {{value ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSave
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSave {} {
@@ -1030,6 +1067,8 @@ proc MainSlicesSave {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesSavePopup
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSavePopup {} {
@@ -1060,6 +1099,8 @@ proc MainSlicesSavePopup {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesWrite
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesWrite {filename} {
@@ -1124,6 +1165,8 @@ proc MainSlicesWrite {filename} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSlicesStorePresets
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesStorePresets {p} {

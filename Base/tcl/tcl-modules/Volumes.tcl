@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Volumes.tcl
-# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   VolumesInit
 #   VolumesBuildGUI
@@ -40,6 +39,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesInit {} {
@@ -70,7 +71,7 @@ proc VolumesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.28 $} {$Date: 2000/02/22 21:37:52 $}]
+		{$Revision: 1.29 $} {$Date: 2000/02/25 16:26:33 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -87,6 +88,8 @@ proc VolumesInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesBuildGUI
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesBuildGUI {} {
@@ -710,6 +713,8 @@ acquisition.
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesSetPropertyType
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesSetPropertyType {} {
@@ -875,6 +880,8 @@ proc VolumesPropsApply {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesPropsCancel
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesPropsCancel {} {
@@ -898,6 +905,8 @@ proc VolumesPropsCancel {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesSetFirst
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesSetFirst {} {
@@ -933,6 +942,8 @@ proc VolumesSetFirst {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesSetScanOrder
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesSetScanOrder {order} {
@@ -948,6 +959,8 @@ proc VolumesSetScanOrder {order} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesSetScalarType
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesSetScalarType {type} {
@@ -961,6 +974,8 @@ proc VolumesSetScalarType {type} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesSetLast
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesSetLast {} {

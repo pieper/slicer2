@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainViewer.tcl
-# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainViewerInit
 #   MainViewerBuildGUI
@@ -40,6 +39,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewerInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewerInit {} {
@@ -49,7 +50,7 @@ proc MainViewerInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainViewer \
-		{$Revision: 1.10 $} {$Date: 2000/02/22 17:56:09 $}]
+		{$Revision: 1.11 $} {$Date: 2000/02/25 16:26:26 $}]
 
         # Props
 	set Gui(midHeight) 1
@@ -57,6 +58,8 @@ proc MainViewerInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewerBuildGUI
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewerBuildGUI {} {
@@ -215,6 +218,8 @@ proc MainViewerBuildGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewerShowSliceControls
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewerShowSliceControls {s} {
@@ -225,6 +230,8 @@ proc MainViewerShowSliceControls {s} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewerHideSliceControls
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewerHideSliceControls {} {
@@ -237,6 +244,8 @@ proc MainViewerHideSliceControls {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewerUserResize
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewerUserResize {} {
@@ -264,6 +273,8 @@ proc MainViewerUserResize {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewerAnno
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewerAnno {s dim} {
@@ -282,6 +293,8 @@ proc MainViewerAnno {s dim} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewerSetMode
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewerSetMode {{mode ""}} {

@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainInteractor.tcl
-# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainInteractorInit
 #   MainInteractorBind
@@ -61,6 +60,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorInit {} {
@@ -75,6 +76,8 @@ proc MainInteractorInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorBind
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorBind {widget} {
@@ -156,6 +159,8 @@ proc MainInteractorXY {s x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorCursor
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorCursor {s xs ys x y} {
@@ -278,6 +283,8 @@ proc MainInteractorKeyPress {key widget x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorMotion
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorMotion {widget x y} {
@@ -295,6 +302,8 @@ proc MainInteractorMotion {widget x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorB1
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorB1 {widget x y} {
@@ -322,6 +331,8 @@ proc MainInteractorB1 {widget x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorShiftB1
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorShiftB1 {widget x y} {
@@ -336,6 +347,8 @@ proc MainInteractorShiftB1 {widget x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorB1Release
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorB1Release {widget x y} {
@@ -362,6 +375,8 @@ proc MainInteractorB1Release {widget x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorShiftB1Release
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorShiftB1Release {widget x y} {
@@ -379,6 +394,8 @@ proc MainInteractorShiftB1Release {widget x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorB1Motion
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorB1Motion {widget x y} {
@@ -410,6 +427,8 @@ proc MainInteractorB1Motion {widget x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorControlB1Motion
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorControlB1Motion {widget x y} {
@@ -442,6 +461,8 @@ proc MainInteractorControlB1Motion {widget x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorAltB1Motion
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorAltB1Motion {widget x y} {
@@ -474,6 +495,8 @@ proc MainInteractorAltB1Motion {widget x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorB2Motion
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorB2Motion {widget x y} {
@@ -501,6 +524,8 @@ proc MainInteractorB2Motion {widget x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorB3Motion
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorB3Motion {widget x y} {
@@ -531,6 +556,8 @@ proc MainInteractorB3Motion {widget x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorPan
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorPan {s x y xLast yLast} {
@@ -557,6 +584,8 @@ proc MainInteractorPan {s x y xLast yLast} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorZoom
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorZoom {s x y xLast yLast} {
@@ -581,6 +610,8 @@ proc MainInteractorZoom {s x y xLast yLast} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorWindowLevel
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorWindowLevel {s x y xLast yLast} {
@@ -608,6 +639,8 @@ proc MainInteractorWindowLevel {s x y xLast yLast} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorThreshold
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorThreshold {s x y xLast yLast} {
@@ -657,6 +690,8 @@ proc MainInteractorExpose {widget} {
  
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorRender
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorRender {} {
@@ -667,6 +702,8 @@ proc MainInteractorRender {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorEnter
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorEnter {widget x y} {
@@ -693,6 +730,8 @@ proc MainInteractorEnter {widget x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorExit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorExit {widget} {
@@ -720,6 +759,8 @@ proc MainInteractorExit {widget} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorStartMotion
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorStartMotion {widget x y} {
@@ -742,6 +783,8 @@ proc MainInteractorStartMotion {widget x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorEndMotion
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorEndMotion {widget x y} {
@@ -760,6 +803,8 @@ proc MainInteractorEndMotion {widget x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorReset
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorReset {widget x y} {
@@ -772,6 +817,8 @@ proc MainInteractorReset {widget x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC PixelsToMm
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc PixelsToMm {pix fov dim mag} {
@@ -783,6 +830,8 @@ proc PixelsToMm {pix fov dim mag} {
 
 #-------------------------------------------------------------------------------
 # .PROC Distance3D
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc Distance3D {x1 y1 z1 x2 y2 z2} {
@@ -794,6 +843,8 @@ proc Distance3D {x1 y1 z1 x2 y2 z2} {
 
 #-------------------------------------------------------------------------------
 # .PROC Angle2D
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc Angle2D {ax1 ay1 ax2 ay2 bx1 by1 bx2 by2} {

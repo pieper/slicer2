@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        EdIdentifyIslands.tcl
-# DATE:        02/22/2000 11:27
 # PROCEDURES:  
 #   EdIdentifyIslandsInit
 #   EdIdentifyIslandsBuildGUI
@@ -37,6 +36,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC EdIdentifyIslandsInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdIdentifyIslandsInit {} {
@@ -61,6 +62,8 @@ proc EdIdentifyIslandsInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdIdentifyIslandsBuildGUI
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdIdentifyIslandsBuildGUI {} {
@@ -134,6 +137,8 @@ proc EdIdentifyIslandsBuildGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdIdentifyIslandsEnter
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdIdentifyIslandsEnter {} {
@@ -145,6 +150,8 @@ proc EdIdentifyIslandsEnter {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdIdentifyIslandsNoThreshold
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdIdentifyIslandsNoThreshold {} {
@@ -156,6 +163,8 @@ proc EdIdentifyIslandsNoThreshold {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EdIdentifyIslandsApply
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EdIdentifyIslandsApply {} {

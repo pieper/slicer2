@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainAnno.tcl
-# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainAnnoInit
 #   MainAnnoBuildVTK
@@ -43,6 +42,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC MainAnnoInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainAnnoInit {} {
@@ -54,7 +55,7 @@ proc MainAnnoInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainAnno \
-		{$Revision: 1.7 $} {$Date: 2000/02/22 16:30:08 $}]
+		{$Revision: 1.8 $} {$Date: 2000/02/25 16:26:21 $}]
 
 	# Preset Defaults
 	set Module(Anno,presets) "box='1' axes='0' outline='0' letters='1' cross='1'\
@@ -101,6 +102,8 @@ hashes='1' mouse='1'"
 
 #-------------------------------------------------------------------------------
 # .PROC MainAnnoBuildVTK
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainAnnoBuildVTK {} {
@@ -174,6 +177,8 @@ proc MainAnnoBuildVTK {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainAnnoBuildGUI
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainAnnoBuildGUI {} {
@@ -267,6 +272,8 @@ proc MainAnnoBuildGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainAnnoUpdateFocalPoint
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainAnnoUpdateFocalPoint {{xFP ""} {yFP ""} {zFP ""}} {
@@ -306,6 +313,8 @@ proc MainAnnoUpdateFocalPoint {{xFP ""} {yFP ""} {zFP ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainAnnoSetFov
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainAnnoSetFov {} {
@@ -380,6 +389,8 @@ proc MainAnnoSetVisibility {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainAnnoSetCrossVisibility
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainAnnoSetCrossVisibility {win vis} {
@@ -390,6 +401,8 @@ proc MainAnnoSetCrossVisibility {win vis} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainAnnoSetHashesVisibility
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainAnnoSetHashesVisibility {win vis} {
@@ -414,6 +427,8 @@ proc MainAnnoSetColor {color} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainAnnoStorePresets
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainAnnoStorePresets {p} {

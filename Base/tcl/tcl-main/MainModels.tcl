@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainModels.tcl
-# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MainModelsInit
 #   MainModelsUpdateMRML
@@ -56,6 +55,8 @@
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsInit {} {
@@ -71,7 +72,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.20 $} {$Date: 2000/02/22 17:56:07 $}]
+		{$Revision: 1.21 $} {$Date: 2000/02/25 16:26:24 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""
@@ -96,6 +97,8 @@ proc MainModelsInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsUpdateMRML
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsUpdateMRML {} {
@@ -259,6 +262,8 @@ proc MainModelsCreate {m} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsRead
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsRead {m} {
@@ -319,6 +324,8 @@ proc MainModelsRead {m} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsInitGUIVariables
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsInitGUIVariables {m} {
@@ -425,6 +432,8 @@ proc MainModelsBuildGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsCreateGUI
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsCreateGUI {f m} {
@@ -483,6 +492,8 @@ proc MainModelsCreateGUI {f m} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsPopupCallback
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsPopupCallback {} {
@@ -498,6 +509,8 @@ proc MainModelsPopupCallback {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsDeleteGUI
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsDeleteGUI {f m} {
@@ -519,6 +532,8 @@ proc MainModelsDeleteGUI {f m} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsPopup
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsPopup {X Y} {
@@ -534,6 +549,8 @@ proc MainModelsPopup {X Y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsSetActive
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsSetActive {m} {
@@ -585,6 +602,8 @@ proc MainModelsSetActive {m} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsSetColor
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsSetColor {m {name ""}} {
@@ -614,6 +633,8 @@ proc MainModelsSetColor {m {name ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsSetVisibility
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsSetVisibility {model {value ""}} {
@@ -653,6 +674,8 @@ proc MainModelsSetVisibility {model {value ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsRefreshClipping
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsRefreshClipping {} {
@@ -666,6 +689,8 @@ proc MainModelsRefreshClipping {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsSetClipping
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsSetClipping {m {value ""}} {
@@ -719,6 +744,8 @@ proc MainModelsSetClipping {m {value ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsSetOpacityInit
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsSetOpacityInit {m widget {value ""}} {
@@ -728,6 +755,8 @@ proc MainModelsSetOpacityInit {m widget {value ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsSetOpacity
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsSetOpacity {m {value ""}} {
@@ -754,6 +783,8 @@ proc MainModelsSetOpacity {m {value ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsSetCulling
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsSetCulling {m {value ""}} {
@@ -774,6 +805,8 @@ proc MainModelsSetCulling {m {value ""}} {
  
 #-------------------------------------------------------------------------------
 # .PROC MainModelsSetScalarVisibility
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsSetScalarVisibility {m {value ""}} {
@@ -819,6 +852,8 @@ proc MainModelsRegisterModel {m rasToWld} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsWrite
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsWrite {m prefix} {
@@ -863,6 +898,8 @@ since the last time it was saved."
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsStorePresets
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsStorePresets {p} {

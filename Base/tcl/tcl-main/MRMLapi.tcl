@@ -26,7 +26,6 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MRMLapi.tcl
-# DATE:        02/22/2000 11:11
 # PROCEDURES:  
 #   MRMLInit
 #   MRMLReadDefaults
