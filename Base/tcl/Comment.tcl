@@ -98,6 +98,25 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 }
 
 #-------------------------------------------------------------------------------
+# .PROC ProcessFile
+# This procedure processes a file to call either CommentFile or CopyrightFile
+# depending on the file's type.
+# .ARGS
+# str file    the path of the file to parse, relative to slicer/program
+# .END
+#-------------------------------------------------------------------------------
+proc ProcessFile {file} {
+	set ext [file extension $file]
+	if {$ext == ".tcl"} { 
+		# Go to town
+		CommentFile $file
+	} else {
+		# Just add the copyright
+		CopyrightFile $file
+	}
+}
+
+#-------------------------------------------------------------------------------
 # .PROC CopyrightFile
 # .END
 #-------------------------------------------------------------------------------
@@ -204,14 +223,21 @@ proc Polish {data} {
 	# Fix procs with no comments
 	while {[regexp "\n\nproc (\[^ \]*) " $data match name] == 1} {
 		regsub "proc $name " $data \
-	  	  "$line\n# .PROC ${name}\n# .END\n$line\nproc $name " data
+	  	  "$line\n# .PROC ${name}\n# \n# .ARGS\n# .END\n$line\nproc $name " data
 	}
 
 	# Fix procs with just a procedure name
 	while {[regexp "$line\n# (\[^ \n\]*) *\n$line\nproc (\[^ \]*) " \
 		$data match cname name] == 1 && $cname == $name} {
 		regsub "$line\n# ${name} *\n$line\nproc $name " $data \
-		  "$line\n# .PROC ${name}\n# .END\n$line\nproc $name " data
+		  "$line\n# .PROC ${name}\n# \n# .ARGS\n# .END\n$line\nproc $name " data
+	}
+
+	# Fix procs with just the .PROC and .END
+	while {[regexp "$line\n# .PROC (\[^ \]*) *\n# .END\n$line\nproc (\[^ \]*) " \
+		$data match cname name] == 1 && $cname == $name} {
+		regsub "$line\n# .PROC ${name} *\n# .END\n$line\nproc $name " $data \
+		  "$line\n# .PROC ${name}\n# \n# .ARGS\n# .END\n$line\nproc $name " data
 	}
 
 	return $data
@@ -296,6 +322,4 @@ proc Comment {data} {
 		}
 		incr id
 	}
-
 }
-

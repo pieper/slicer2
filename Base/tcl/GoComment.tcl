@@ -1,8 +1,8 @@
 
 # Check if the user invoked this script incorrectly
-if {$argc != 0} {
-    puts "UNIX Usage: tclsh GoComment.tcl"
-    puts "Windows Usage: tclsh82.exe GoComment.tcl"
+if {$argc > 1} {
+    puts "UNIX Usage: tclsh GoComment.tcl [optional file]"
+    puts "Windows Usage: tclsh82.exe GoComment.tcl [optional file]"
 	exit
 }
 
@@ -17,22 +17,27 @@ if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
 # Read source files
 source [file join $prog Comment.tcl]
 
-# Run
-set dirs "tcl-main tcl-modules tcl-shared ../vtksrc"
-if {[file exists tcl-modules/Editor] == 1} {
-	set dirs "$dirs tcl-modules/Editor"
-}
-foreach dir $dirs {
-	foreach file "[glob -nocomplain $dir/*.tcl] \
-		[glob -nocomplain $dir/*.h] [glob -nocomplain $dir/*.cxx]" {
-		puts $file
-		set ext [file extension $file]
-		if {$ext == ".tcl"} { 
-			# Go to town
-			CommentFile $file
-		} else {
-			# Just add the copyright
-			CopyrightFile $file
+# Run on one file if requested, otherwise on ALL files
+set file [lindex $argv 0]
+if {$file != ""} {
+	puts $file
+	set filename [file join $prog $file]
+	ProcessFile $filename
+} else {
+	# Process all files
+	set dirs "tcl-main tcl-modules tcl-shared ../vtksrc"
+puts $dirs
+	if {[file exists [file join $prog \
+		[file join tcl-modules Editor]]] == 1} {
+		set dirs "$dirs tcl-modules/Editor"
+	}
+	foreach dir $dirs {
+		foreach file "[glob -nocomplain $prog/$dir/*.tcl] \
+			[glob -nocomplain $prog/$dir/*.h] \
+			[glob -nocomplain $dir/*.cxx]" {
+			puts $file
+			set filename [file join $prog $file]
+			ProcessFile $filename
 		}
 	}
 }
