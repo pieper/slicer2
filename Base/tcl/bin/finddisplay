@@ -1,6 +1,6 @@
 #!/bin/sh
 # \
-exec $SLICER_HOME/program/bin/tclsh $0 ${1+"$@"}
+exec $SLICER_HOME/program/tclsh $0 ${1+"$@"}
 
 set hostname ""
 if {[file exists /usr/bin/hostname]} {
