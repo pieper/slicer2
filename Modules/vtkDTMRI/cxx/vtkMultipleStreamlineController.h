@@ -145,6 +145,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   //vtkCollection *LookupTables;
   vtkCollection *Mappers;
   vtkCollection *Actors;
+  int NumberOfVisibleActors;
 
   vtkProperty *StreamlineProperty;
 

@@ -30,7 +30,6 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
 
 
   this->Streamlines = vtkCollection::New();
-  //this->LookupTables = vtkCollection::New();
   this->Mappers = vtkCollection::New();
   this->Actors = vtkCollection::New();
 
@@ -42,6 +41,8 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
   // make 0 dark blue, not red
   this->StreamlineLookupTable->SetHueRange(.6667, 0.0);
 
+  // the number of actors displayed in the scene
+  this->NumberOfVisibleActors=0;
 }
 
 //----------------------------------------------------------------------------
@@ -55,7 +56,6 @@ vtkMultipleStreamlineController::~vtkMultipleStreamlineController()
   this->InputROI->Delete();
   this->InputRenderers->Delete();
   this->Streamlines->Delete();
-  //this->LookupTables->Delete();
   this->Mappers->Delete();
   this->Actors->Delete();
   this->StreamlineLookupTable->Delete();
@@ -109,14 +109,11 @@ void vtkMultipleStreamlineController::ApplyUserSettingsToGraphicsObject(int inde
 
 // Make actors, mappers, and lookup tables as needed for streamlines
 // in the collection.
-// Corresponds to DTMRIAddStreamline in DTMRI.tcl.
 //----------------------------------------------------------------------------
 void vtkMultipleStreamlineController::CreateGraphicsObjects()
 {
-  // TO DO: see if all can use same LUT
   int numStreamlines, numActorsCreated;
   vtkHyperStreamline *currStreamline;
-  //vtkLookupTable *currLookupTable;
   vtkPolyDataMapper *currMapper;
   vtkActor *currActor;
   vtkTransform *currTransform;
@@ -145,8 +142,6 @@ void vtkMultipleStreamlineController::CreateGraphicsObjects()
         this->Streamlines->GetItemAsObject(numActorsCreated);
 
       // Now create the objects needed
-      //currLookupTable = vtkLookupTable::New();
-      //this->LookupTables->AddItem((vtkObject *)currLookupTable);
       currActor = vtkActor::New();
       this->Actors->AddItem((vtkObject *)currActor);
       currMapper = vtkPolyDataMapper::New();
@@ -157,7 +152,6 @@ void vtkMultipleStreamlineController::CreateGraphicsObjects()
 
       // Hook up the pipeline
       currMapper->SetInput(currStreamline->GetOutput());
-      //currMapper->SetLookupTable(currLookupTable);
       currMapper->SetLookupTable(this->StreamlineLookupTable);
       currMapper->UseLookupTableScalarRangeOn();
       currActor->SetMapper(currMapper);
@@ -193,20 +187,25 @@ void vtkMultipleStreamlineController::CreateGraphicsObjects()
 void vtkMultipleStreamlineController::AddStreamlinesToScene()
 {
   vtkActor *currActor;
+  int index;
 
   // make objects if needed
   this->CreateGraphicsObjects();
 
   // traverse actor collection and make all visible
-  this->Actors->InitTraversal();
-  currActor= (vtkActor *)this->Actors->GetNextItemAsObject();
-  while(currActor)
+  // only do the ones that are not visible now
+  // this code assumes any invisible ones are at the end of the
+  // list since they were just created.
+  index = this->NumberOfVisibleActors;
+  while (index < this->Actors->GetNumberOfItems())
     {
+      currActor = (vtkActor *) this->Actors->GetItemAsObject(index);
       currActor->VisibilityOn();
-      currActor= (vtkActor *)this->Actors->GetNextItemAsObject();      
-
+      index++;
     }
 
+  // the number of actors displayed in the scene
+  this->NumberOfVisibleActors=this->Actors->GetNumberOfItems();
 }
 
 
@@ -225,6 +224,8 @@ void vtkMultipleStreamlineController::RemoveStreamlinesFromScene()
       currActor= (vtkActor *)this->Actors->GetNextItemAsObject();      
     }
 
+  // the number of actors displayed in the scene
+  this->NumberOfVisibleActors=0;
 }
 
 //----------------------------------------------------------------------------
@@ -238,7 +239,7 @@ void vtkMultipleStreamlineController::DeleteAllStreamlines()
     {
       vtkDebugMacro( << "Deleting streamline " << i);
       // always delete the first streamline from the collections
-      // (they change size as we do this)
+      // (they change size as we do this, shrinking away)
       this->DeleteStreamline(0);
       i++;
     }
@@ -254,29 +255,30 @@ void vtkMultipleStreamlineController::DeleteStreamline(int index)
   vtkHyperStreamline *currStreamline;
   vtkActor *currActor;
 
-  cout << "actor " << index << endl;
+  vtkDebugMacro( << "Deleting actor " << index);
   currActor = (vtkActor *) this->Actors->GetItemAsObject(index);
   currActor->VisibilityOff();
+  this->NumberOfVisibleActors--;
   // Remove from the scene (from each renderer)
   // Just like MainRemoveActor in Main.tcl.
   this->InputRenderers->InitTraversal();
   currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
   while(currRenderer)
     {
-      cout << "rm actor from renderer " << currRenderer << endl;
+      vtkDebugMacro( << "rm actor from renderer " << currRenderer);
       currRenderer->RemoveActor(currActor);
       currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
     }
   this->Actors->RemoveItem(index);
   currActor->Delete();
   
-  cout << "stream" << endl;
+  vtkDebugMacro( << "Delete stream" );
   currStreamline = (vtkHyperStreamline *)
     this->Streamlines->GetItemAsObject(index);
   this->Streamlines->RemoveItem(index);
   currStreamline->Delete();
   
-  cout << "mapper" << endl;
+  vtkDebugMacro( << "Delete mapper" );
   currMapper = (vtkPolyDataMapper *) this->Mappers->GetItemAsObject(index);
   this->Mappers->RemoveItem(index);
   //currMapper->SetInput(NULL);
@@ -288,7 +290,7 @@ void vtkMultipleStreamlineController::DeleteStreamline(int index)
   //this->LookupTables->RemoveItem(index);
   //currLookupTable->Delete();
   
-  cout << "Done" << endl;
+  vtkDebugMacro( << "Done deleting streamline");
 
 }
 
@@ -297,7 +299,7 @@ void vtkMultipleStreamlineController::DeleteStreamline(vtkActor *pickedActor)
 {
   int index;
 
-  cout << "Picked actor (present?): " << pickedActor << endl;
+  vtkDebugMacro( << "Picked actor (present?): " << pickedActor);
   // find the actor on the collection and remove and delete all
   // corresponding objects. nonzero index means item was found.
   index = this->Actors->IsItemPresent(pickedActor);
