@@ -62,7 +62,7 @@ proc SaveInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.12 $} {$Date: 2003/02/18 22:40:48 $}]
+            {$Revision: 1.13 $} {$Date: 2003/03/13 15:38:01 $}]
 
     SaveInitTables
 
@@ -212,6 +212,10 @@ proc SaveImageToFile {directory filename imageType image} {
 
     set filename [SaveGetFilename $directory $filename $imageType]
     vtk${imageType}Writer saveWriter
+    if {"$imageType" == "JPEG"} {
+        # if progressive is on, solaris xv can't read the jpg file
+        saveWriter ProgressiveOff
+    }
     saveWriter SetInput $image
     saveWriter SetFileName $filename
     saveWriter Write
