@@ -91,8 +91,8 @@ if { [itcl::find class isregistration] == "" } {
         variable _task ""
         variable _targetvol ""
         variable _sourcevol ""
-    variable _p1 ""
-    variable _p2 ""
+        variable _p1 ""
+        variable _p2 ""
 
         # vtk instances
         variable _reg ""
@@ -103,10 +103,11 @@ if { [itcl::find class isregistration] == "" } {
         variable _sourcenorm ""
 
         method step {} {}
-        method stringmatrix { mat4x4 } {}
+        method StringMatrix { mat4x4 } {}
+    method StringToMatrix { mat4x4 str} {}
         method GetSimilarityMatrix { s2 mat s1 } {}
-    method getP1 {} {}
-    method getP2 {} {}
+        method getP1 {} {}
+        method getP2 {} {}
         method update_slicer_mat {} {}
         method set_init_mat {} {}
     }
@@ -443,7 +444,7 @@ itcl::body isregistration::update_slicer_mat {} {
 #   -0.247481 0.968893 0.000201605 -25.8306 
 #   -3.26387e-07 -0.000208161 1 0.0294268 
 #   0 0 0 1
-    puts [$this stringmatrix $mat]
+    puts [$this StringMatrix $mat]
 
 #
 # General Rot
@@ -492,13 +493,33 @@ itcl::body isregistration::update_slicer_mat {} {
 #    $mat SetElement 1 3 27.2486
 #    $mat SetElement 2 3 -31.8745
 
+
+# pieper data
+#1 -4.74651e-05 -5.65028e-05 14.999 5.99604e-05 0.968959 0.24722 21.9452 4.30146e-05 -0.24722 0.968959 27.2486 0 0 0 1
+#    $mat SetElement 0 0 1
+#    $mat SetElement 1 1 0.9689
+#    $mat SetElement 2 2 0.9689
+#    $mat SetElement 3 3  1
+#    $mat SetElement 1 2  0.2479
+#    $mat SetElement 2 1 -0.2479
+#    $mat SetElement 0 3 15
+#    $mat SetElement 1 3 27.2486
+#    $mat SetElement 2 3 -31.8745
+
+
+## Pieper data
+# 0.998666 -0.0111754 -0.0504106 -22.8 
+# 0.00955995 0.999436 -0.0321874 -11.1 
+# 0.0507421 0.0316625 0.99821 -4 
+# 0 0 0 1 
+
     puts "Starting slicer updated matrix"
     puts "The mat"
-    puts [$this stringmatrix $mat]
+    puts [$this StringMatrix $mat]
     puts "P1"
-    puts [$this stringmatrix [$this getP1]]
+    puts [$this StringMatrix [$this getP1]]
     puts "P2"
-    puts [$this stringmatrix [$this getP2]]
+    puts [$this StringMatrix [$this getP2]]
 
     set p2mat [$this getP2]
     $p2mat Invert
@@ -506,7 +527,7 @@ itcl::body isregistration::update_slicer_mat {} {
 
 #    $mat Multiply4x4 $mat [$this getP1] $mat
 #    puts "intermediate"
-#    puts [$this stringmatrix $mat]
+#    puts [$this StringMatrix $mat]
 
 #    set tmpnode ::tmpnode_$_name
 #    catch "$tmpnode Delete"
@@ -516,10 +537,10 @@ itcl::body isregistration::update_slicer_mat {} {
 #    $tmpmat Invert
 #    $mat Multiply4x4 $tmpmat $mat $mat
 
-    Matrix($t,node) SetMatrix [$this stringmatrix $mat]
+    Matrix($t,node) SetMatrix [$this StringMatrix $mat]
 
     if {$itk_option(-verbose)} {
-    set results_mat [$this stringmatrix [$_reg GetMatrix] ]
+    set results_mat [$this StringMatrix [$_reg GetMatrix] ]
         puts "resulting mat: $results_mat"
     set tmp_mat [Matrix($t,node) GetMatrix]
         puts "actually set $tmp_mat"
@@ -557,13 +578,13 @@ itcl::body isregistration::set_init_mat {} {
 
         $mat DeepCopy [[Matrix($t,node) GetTransform] GetMatrix]
     puts "Initting Matrix"
-    puts [$this stringmatrix $mat]
-    puts [$this stringmatrix [$this getP1]]
-    puts [$this stringmatrix [$this getP2]]
+    puts [$this StringMatrix $mat]
+    puts [$this StringMatrix [$this getP1]]
+    puts [$this StringMatrix [$this getP2]]
 
 #     $mat Multiply4x4 [$this getP2] $mat $mat
 #     puts "multiply 1"
-#     puts [$this stringmatrix $mat]
+#     puts [$this StringMatrix $mat]
 #
 #     ## solve the system of equations
 #     #set tmpnode ::tmpnode_$_name
@@ -583,6 +604,7 @@ itcl::body isregistration::set_init_mat {} {
 
     $_matrix DeepCopy $mat
     $mat Delete
+    puts [$_matrix Determinant]
 
 #     ### hacking to identity
 #     $_matrix Identity
@@ -606,9 +628,9 @@ itcl::body isregistration::set_init_mat {} {
         if {$itk_option(-verbose)} {
             set matstring [Matrix($t,node) GetMatrix]
             puts "input matrix $matstring"
-        set matstring [$this stringmatrix $_matrix ]
+        set matstring [$this StringMatrix $_matrix ]
         puts "transformed input matrix $matstring"
-#        set matstring [$this stringmatrix [$_reg GetMatrix ]]
+#        set matstring [$this StringMatrix [$_reg GetMatrix ]]
 #        puts "transformed input matrix $matstring"
         }
     
@@ -618,156 +640,6 @@ itcl::body isregistration::set_init_mat {} {
     puts "Not initting matrix"
     }
 }
-
-### This function takes care of the centering
-### and the y-axis flip
-### 
-### if mat is returned by itk, and alpha is returned by this matrix
-### then alpha mat alpha^-1 get the same result ITK standalone gets
-###
-### Note: need different alpha for each volume though...
-###
-### For (256,256,60) with (0.9375,0.9375,2.5) spacing:
-###
-### 1  0  0 -119.531
-### 0 -1  0 119.531
-### 0  0  1 -73.75
-### 0  0  0 1
-###
-#
-#proc GetTransScaleMatB {vnode matrix} {
-#
-#    $vnode GetPosition
-#
-#    set Space0 [lindex [$vnode GetSpacing] 0]
-#    set Space1 [lindex [$vnode GetSpacing] 1]
-#    set Space2 [lindex [$vnode GetSpacing] 2]
-#
-#    set num0 [lindex [$vnode GetDimensions] 0]
-#    set num1 [lindex [$vnode GetDimensions] 1]
-#    set num2 [expr [lindex [$vnode GetImageRange] 1] - \
-#            [lindex [$vnode GetImageRange] 0] + 1 ]
-#
-#    set half0 [ expr ($num0 - 1 ) * $Space0 * 0.5 ]
-#    set half1 [ expr ($num1 - 1 ) * $Space0 * 0.5 ]
-#    set half2 [ expr ($num2 - 1 ) * $Space0 * 0.5 ]
-#
-#
-#    SetModelMoveOriginMatrix $vnode $matrix
-#    $matrix Multiply4x4 $matrix [$vnode GetPosition] $matrix
-#
-#
-#    $matrix Identity
-#    $matrix SetElement 1 1 -1 
-#
-#    $matrix SetElement 0 3 [ expr ($num0 - 1 ) * $Space0 * 0.5 ]
-#    $matrix SetElement 1 3 [ expr ($num1 - 1 ) * $Space1 * 0.5 ]
-#    $matrix SetElement 2 3 [ expr ($num2 - 1 ) * $Space2 * 0.5 ]
-#}
-#
-#proc GetTransScaleMat {vnode matrix} {
-#
-#    set num0 [lindex [$vnode GetDimensions] 0]
-#    set num1 [lindex [$vnode GetDimensions] 1]
-#    set num2 [expr [lindex [$vnode GetImageRange] 1] - \
-#            [lindex [$vnode GetImageRange] 0] + 1 ]
-#
-#    $matrix Identity
-#    $matrix SetElement 0 3 [ expr ($num0 - 1 ) * $Space0 * -0.5 ]
-#    $matrix SetElement 1 3 [ expr ($num1 - 1 ) * $Space1 * -0.5 ]
-#    $matrix SetElement 2 3 [ expr ($num2 - 1 ) * $Space2 * -0.5 ]
-#    $matrix SetElement 0 0 $Space0
-#    $matrix SetElement 1 1 $Space1
-#    $matrix SetElement 2 2 $Space2
-#
-#    $matrix Identity
-#    $matrix SetElement 0 3 [ expr ($num0 - 1 ) * $Space0 * -0.5 ]
-#    $matrix SetElement 1 3 [ expr ($num1 - 1 ) * $Space1 * -0.5 ]
-#    $matrix SetElement 2 3 [ expr ($num2 - 1 ) * $Space2 * -0.5 ]
-#    $matrix SetElement 0 0 $Space0
-#    $matrix SetElement 1 1 $Space1 
-#    $matrix SetElement 2 2 $Space2
-#
-#}
-#
-#
-#proc GetTransMat {vnode matrix} {
-#    # Take care of reflection about y-axis
-#    $matrix Zero
-#    $matrix SetElement 0 0  1
-#    $matrix SetElement 1 1 -1
-#    $matrix SetElement 2 2  1
-#    $matrix SetElement 3 3  1
-#
-#    # Deal with Offsets
-#    set Space0 [lindex [$vnode GetSpacing] 0]
-#    set Space1 [lindex [$vnode GetSpacing] 1]
-#    set Space2 [lindex [$vnode GetSpacing] 2]
-#
-#    set num1 [lindex [$vnode GetDimensions] 1]
-#
-#    $matrix SetElement 0 3 [ expr $Space0 * 0.5 ]
-#    $matrix SetElement 1 3 [ expr $num1 * $Space1 - $Space1 * 0.5 ]
-#    $matrix SetElement 2 3 [ expr $Space2 * 0.5 ]
-#
-#    $matrix Multiply4x4 [$vnode GetPosition] $matrix $matrix
-#}
-#
-#proc GetModifyTransMat {vnode matrix} {
-#
-#    GetTransMat $vnode $matrix
-#    $matrix Invert
-#
-#    set Space0 [lindex [$vnode GetSpacing] 0]
-#    set num0   [lindex [$vnode GetDimensions] 0]
-#
-#    set tmpmat "modtmpmat__name"
-#    vtkMatrix4x4 $tmpmat
-#    $tmpmat Identity
-#    $tmpmat SetElement 0 0 -1
-#    $tmpmat SetElement 1 1 -1
-#    $tmpmat SetElement 2 2 -1
-#    $tmpmat SetElement 3 3 1
-#
-#    $tmpmat SetElement 0 3 [expr ($num0 - 1) * $Space0 * -0.5 ]
-#    $tmpmat Multiply4x4 $tmpmat $matrix $matrix
-#
-#    $tmpmat Delete
-#}
-#
-#proc GetAnotherAttempt {vnode matrix} {
-#
-#    $matrix DeepCopy [$vnode GetPosition]
-#    $matrix Invert
-#
-#    set flipy "modtmpmat__flipy"
-#    vtkMatrix4x4 $flipy
-#    $flipy Identity
-#    $flipy SetElement 0 0  1
-#    $flipy SetElement 1 1  -1
-#    $flipy SetElement 2 2  1
-#
-#    set num0 [lindex [$vnode GetDimensions] 0]
-#    set num1 [lindex [$vnode GetDimensions] 1]
-#    set num2 [expr [lindex [$vnode GetImageRange] 1] - \
-#            [lindex [$vnode GetImageRange] 0] + 1 ]
-#
-#    set Space0 [lindex [$vnode GetSpacing] 0]
-#    set Space1 [lindex [$vnode GetSpacing] 1]
-#    set Space2 [lindex [$vnode GetSpacing] 2]
-#
-#    # should be
-#    $flipy SetElement 0 3 [expr ($num0 -1 ) * $Space0 * -0.5 ]
-#    $flipy SetElement 1 3 [expr ($num1 -1 ) * $Space1 * -0.5 ]
-#    $flipy SetElement 2 3 [expr ($num2 -1 ) * $Space2 * -0.5 ]
-#    # but is
-#    $flipy SetElement 0 3 [expr ($num0 ) * $Space0 * -0.5 ]
-#    $flipy SetElement 1 3 [expr ($num1 ) * $Space1 * -0.5 ]
-#    $flipy SetElement 2 3 [expr ($num2 ) * $Space2 * -0.5 ]
-#    $flipy Multiply4x4 $flipy $matrix $matrix
-#
-#    $flipy Delete
-#}
 
 #-------------------------------------------------------------------------------
 # METHOD: GetSimilarityMatrix
@@ -801,27 +673,8 @@ itcl::body isregistration::getP1 {  } {
     vtkMatrix4x4 $_p1
 
     GetSlicerToItkMatrix Volume($Matrix(volume),node) $_p1
-    puts [$this stringmatrix $_p1]
+    puts [$this StringMatrix $_p1]
     return $_p1
-
-#    GetAnotherAttempt Volume($Matrix(volume),node) $_p1
-#
-#
-#
-#    $_p1 Identity
-#    return $_p1
-#
-#    $_p1 DeepCopy [Volume($Matrix(volume),node) GetRasToIjk]
-#     
-#    set tempmat ::matrixp1temp_$_name
-#    catch  "$tempmat Delete"
-#    vtkMatrix4x4 $tempmat
-#      GetTransScaleMat Volume($Matrix(volume),node) $tempmat
-#    set matstring [$this stringmatrix $tempmat]
-#    puts "TransScaleMat P1 $matstring"
-#
-#    $_p1 Multiply4x4 $tempmat $_p1 $_p1
-#    $tempmat Delete
 }
 
 
@@ -841,34 +694,19 @@ itcl::body isregistration::getP2 {  } {
     vtkMatrix4x4 $_p2
 
 
-    GetSlicerToItkMatrix Volume($Matrix(volume),node) $_p2
-    puts [$this stringmatrix $_p2]
+    GetSlicerToItkMatrix Volume($Matrix(refVolume),node) $_p2
+    puts [$this StringMatrix $_p2]
     return $_p2
-
-#    GetAnotherAttempt Volume($Matrix(refVolume),node) $_p2
-#    return $_p2
-#
-
-#    $_p2 DeepCopy [Volume($Matrix(refVolume),node) GetRasToIjk]
-#
-#    set tempmat ::matrixp2temp_$_name
-#    catch  "$tempmat Delete"
-#    vtkMatrix4x4 $tempmat
-#      GetTransScaleMat Volume($Matrix(volume),node) $tempmat
-#      $tempmat Print
-#    $_p2 Multiply4x4 $tempmat $_p2 $_p2
-#    $tempmat Delete
-#    return $_p2
 }
 
 
 #-------------------------------------------------------------------------------
-# METHOD: stringmatrix
+# METHOD: StringMatrix
 #
-# DESCRIPTION: return a  matrix as 16 floats
+# DESCRIPTION: return a matrix as 16 floats in a string
 #-------------------------------------------------------------------------------
 
-itcl::body isregistration::stringmatrix { mat4x4 } {
+itcl::body isregistration::StringMatrix { mat4x4 } {
 
     set mat ""
     for {set i 0} {$i < 4} {incr i} {
@@ -878,6 +716,23 @@ itcl::body isregistration::stringmatrix { mat4x4 } {
     }
     return [string trimleft $mat " "]
 }
+
+
+#-------------------------------------------------------------------------------
+# METHOD: StringToMatrix
+#
+# DESCRIPTION: fills in a matrix with a string
+#-------------------------------------------------------------------------------
+
+itcl::body isregistration::StringToMatrix { mat4x4 str} {
+
+    for {set i 0} {$i < 4} {incr i} {
+        for {set j 0} {$j < 4} {incr j} {
+            $mat4x4 SetElement $i $j [lindex $str [expr $i*4+$j]
+        }
+    }
+}
+
 
 
 proc isregistration_demo {} {
