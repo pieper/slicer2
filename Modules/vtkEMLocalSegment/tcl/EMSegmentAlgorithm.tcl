@@ -109,16 +109,19 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet} {
       # Setup PCA parameter
       if {$EMSegment(Cattrib,$i,PCAMeanData) !=  $Volume(idNone) } {
 
+     set NumEigenModes [llength $EMSegment(Cattrib,$i,PCAEigen)]
+
          vtkImagePCAApply EMSegment(Cattrib,$i,vtkImagePCAApply) 
-     set NumEigenValues [llength $EMSegment(Cattrib,$i,PCAEigen)]
-     EMSegment(Cattrib,$i,vtkImagePCAApply) SetNumberOfEigenValues $NumEigenValues
          EMSegment(Cattrib,$i,vtkImagePCAApply) SetMean [Volume($EMSegment(Cattrib,$i,PCAMeanData),vol) GetOutput]
          foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
-            EMSegment(Cattrib,$i,vtkImagePCAApply)  SetEigenValue [lindex $EigenList 0] [lindex $EigenList 1] 
         EMSegment(Cattrib,$i,vtkImagePCAApply)  SetEigenVectorIndex [lindex $EigenList 0]  [Volume([lindex $EigenList 2],vol) GetOutput] 
      }
-     EMSegment(Cattrib,$i,vtkImagePCAApply) Update
-     EMSegment(vtkEMSegment) SetPCAShapePtr EMSegment(Cattrib,$i,vtkImagePCAApply)
+     # Have to do it seperate otherwise EigenValues get deleted 
+         foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
+            EMSegment(Cattrib,$i,vtkImagePCAApply)  SetEigenValue [lindex $EigenList 0] [lindex $EigenList 1] 
+     }
+         EMSegment(Cattrib,$i,vtkImagePCAApply) Update
+         EMSegment(vtkEMSegment) SetPCAShapePtr EMSegment(Cattrib,$i,vtkImagePCAApply)
       }
     }
     EMSegment(vtkEMSegment) SetTissueProbability $EMSegment(Cattrib,$i,Prob)
