@@ -140,10 +140,15 @@ proc EMSegmentInit {} {
     # Normal     = 0
     # LocalPrior = 1
     # MultiDim   = 2
-    if {[info exists env(SLICER_LOCAL)] == 0 || $env(SLICER_LOCAL) == "" || $env(SLICER_LOCAL) != 1} {
+    if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
       set EMSegment(SegmentMode) 0
     } else {
-      set EMSegment(SegmentMode) 2
+    if {[file exist [file join $env(SLICER_HOME) Modules/EMLocalSegment]]} {
+        set EMSegment(SegmentMode) 2
+        package require vtkSlicerEMLocalSegment
+    } else {
+        set EMSegment(SegmentMode) 0
+    }
     } 
     # EMSegment(SegmentMode) == 0 <=> Set all Probabilty maps to none, EMSegment(SegmentMode) == 1
     # Soucre EMSegmentAlgorithm.tcl File in sudirectory
@@ -234,7 +239,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.10 $} {$Date: 2002/05/02 19:53:14 $}]
+        {$Revision: 1.11 $} {$Date: 2002/05/29 20:11:00 $}]
 
     # Initialize module-level variables
     #------------------------------------
