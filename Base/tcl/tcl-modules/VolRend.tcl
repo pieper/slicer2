@@ -70,7 +70,7 @@ proc VolRendInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.3 $} {$Date: 2001/07/06 19:50:54 $}]
+	    {$Revision: 1.4 $} {$Date: 2001/07/20 16:15:15 $}]
 
     set Module($m,row1List) "Help Settings Transfer"
     set Module($m,row1Name) "{Help} {Settings} {Transfer Functions}"
@@ -89,11 +89,13 @@ interpolationMethod='Nearest' renderMethod='composite' compositeMethod='classify
 mipMaxMethod='ScalarValue' isoValue='512' \
 opacityTransferFunction='0 0.0 399 0.0 400 0.0 1199 0.2 1200 0.8 4095 0.8 4096 0.0' \
 colorTransferFunction='0 0.0 0.0 0.0 399 0.0 0.0 0.0 400 0.1 0.1 0.1 1199 0.5 0.5 0.5 1200 0.8 0.8 0.8 4095 1.0 1.0 1.0' \
-gradientOpacityTransferFunction='0 0.0 30 0.0 150 1.0 4095 1.0'"
+gradientOpacityTransferFunction='0 0.0 30 0.0 150 1.0 4095 1.0' \
+renderType='raycast'"
 
     set Module($m,depend) ""
 
     set VolRend(idOriginal)  $Volume(idNone)
+    set VolRend(renderType) "raycast"
     set VolRend(sampleDistance) "1.0"
     set VolRend(transferFunctionSaveFileName) "$prog/cttrffunc.xml"
     set VolRend(transferFunctionReadFileName) "$prog/cttrffunc.xml"
@@ -170,7 +172,7 @@ Description by tabs:
     set fSettings $Module(VolRend,fSettings)
     set f $fSettings
 
-    foreach frame "Top SampleDist HideOnExit Interpolation RenderMethod Buttons" {
+    foreach frame "Top HideOnExit Interpolation RenderMethod Texture Buttons" {
 	frame $f.f$frame -bg $Gui(activeWorkspace)
 #	pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
 	pack $f.f$frame -side top -padx 0 -pady $Gui(pad)
@@ -185,18 +187,7 @@ Description by tabs:
     DevAddSelectButton VolRend $f Original "Ref Volume" Grid
 
     #-------------------------------------------
-    # Settings->SampleDist frame
-    #-------------------------------------------
-    set f $fSettings.fSampleDist
-
-    eval {label $f.lSampleDist -text "Sample Distance:"} $Gui(WLA)
-    eval {entry $f.eSampleDist -width 6 \
-	      -textvariable VolRend(sampleDistance)} $Gui(WEA)
-
-    pack $f.lSampleDist $f.eSampleDist -side left -fill x
-
-    #-------------------------------------------
-    # Settings->SampleDist frame
+    # Settings->HideOnExit frame
     #-------------------------------------------
     set f $fSettings.fHideOnExit
 
@@ -225,11 +216,41 @@ Description by tabs:
 
     $f config -relief groove -bd 3 
 
+    frame $f.fRenderType -bg $Gui(activeWorkspace)
+    pack $f.fRenderType -side top -padx 2 -pady 2
+
+    frame $f.fSampleDist -bg $Gui(activeWorkspace)
+    pack $f.fSampleDist -side top -padx 2 -pady 2
+
     frame $f.fTop -bg $Gui(backdrop)
     pack $f.fTop -side top -padx 2 -pady 2
 
     frame $f.fBottom -bg $Gui(activeWorkspace)
     pack $f.fBottom -side top -padx 2 -pady 2 -fill both -expand true
+
+    #-------------------------------------------
+    # Settings->RenderMethod->RenderType frame
+    #-------------------------------------------
+    set f $fSettings.fRenderMethod.fRenderType
+
+    set value "raycast"
+    set text "Ray Casting"
+    set width 25
+    eval {radiobutton $f.r$value -width $width -indicatoron 0\
+	      -text "$text" -value "$value" -variable VolRend(renderType) \
+	      -command ""} $Gui(WCA)
+    pack $f.r$value -side top
+
+    #-------------------------------------------
+    # Settings->RenderMethod->SampleDist frame
+    #-------------------------------------------
+    set f $fSettings.fRenderMethod.fSampleDist
+
+    eval {label $f.lSampleDist -text "Sample Distance:"} $Gui(WLA)
+    eval {entry $f.eSampleDist -width 6 \
+	      -textvariable VolRend(sampleDistance)} $Gui(WEA)
+
+    pack $f.lSampleDist $f.eSampleDist -side left -fill x
 
     #-------------------------------------------
     # Settings->RenderMethod->Top frame
@@ -297,6 +318,40 @@ Description by tabs:
 	      -textvariable VolRend(isoValue)} $Gui(WEA)
 
     pack $f.lIsoValue $f.eIsoValue -side left -fill x
+
+    #-------------------------------------------
+    # Settings->Texture frame
+    #-------------------------------------------
+    set f $fSettings.fTexture
+
+    $f config -relief groove -bd 3
+
+    frame $f.fRenderType -bg $Gui(activeWorkspace)
+    pack $f.fRenderType -side top -padx 2 -pady 2
+
+    frame $f.fParams -bg $Gui(activeWorkspace)
+    pack $f.fParams -side top -padx 2 -pady 2
+
+    #-------------------------------------------
+    # Settings->Texture->RenderType frame
+    #-------------------------------------------
+    set f $fSettings.fTexture.fRenderType
+
+    set value "texture"
+    set text "2D Texture Mapping"
+    set width 25
+    eval {radiobutton $f.r$value -width $width -indicatoron 0\
+	      -text "$text" -value "$value" -variable VolRend(renderType) \
+	      -command ""} $Gui(WCA)
+    pack $f.r$value -side top
+
+    #-------------------------------------------
+    # Settings->Texture->Params frame
+    #-------------------------------------------
+    set f $fSettings.fTexture.fParams
+
+    eval {label $f.lParams -text "No parameters to set." -width 34} $Gui(WLA)
+    pack $f.lParams -side top
 
     #-------------------------------------------
     # Settings->Buttons frame
@@ -407,13 +462,13 @@ proc VolRendBuildVTK {} {
     vtkVolumeRayCastMIPFunction VolRend(mipFunction)
     vtkVolumeRayCastIsosurfaceFunction VolRend(isosurfaceFunction)
 
-    vtkVolumeRayCastMapper VolRend(volumeMapper)
-    #vtkVolumeTextureMapper2D VolRend(volumeMapper)
+    vtkVolumeRayCastMapper VolRend(raycastvolumeMapper)
+    vtkVolumeTextureMapper2D VolRend(texturevolumeMapper)
 #    VolRend(volumeMapper) SetInput [reader GetOutput]
-    VolRend(volumeMapper) SetVolumeRayCastFunction VolRend(compositeFunction)
+    VolRend(raycastvolumeMapper) SetVolumeRayCastFunction VolRend(compositeFunction)
 
     vtkVolume VolRend(volume)
-    VolRend(volume) SetMapper VolRend(volumeMapper)
+#    VolRend(volume) SetMapper VolRend(volumeMapper)
     VolRend(volume) SetProperty VolRend(volumeProperty)
 
     vtkImageCast VolRend(imageCast)
@@ -475,50 +530,74 @@ proc VolRendRefresh {} {
 	}
     }
 
-    [VolRend(volume) GetProperty] SetInterpolationTypeTo$VolRend(interpolationMethod)
-    VolRend(volumeMapper) SetSampleDistance $VolRend(sampleDistance)
-
     VolRend(imageCast) SetInput [Volume($VolRend(idOriginal),vol) GetOutput]
     VolRend(imageCast) SetOutputScalarTypeToUnsignedShort
-    VolRend(volumeMapper) SetInput [VolRend(imageCast) GetOutput]
-    switch $VolRend(renderMethod) {
-	"composite" {
-	    if {$VolRend(compositeMethod) == "interpolate"} {
-		VolRend(compositeFunction) SetCompositeMethodToInterpolateFirst
-	    } else {
-		VolRend(compositeFunction) SetCompositeMethodToClassifyFirst
+
+#    VolRend(volume) SetMapper VolRend(${VolRend(renderType)}volumeMapper)
+
+    if {$VolRend(renderType) == "raycast"} {
+	VolRend(volume) SetMapper VolRend(raycastvolumeMapper)
+	[VolRend(volume) GetProperty] SetInterpolationTypeTo$VolRend(interpolationMethod)
+	VolRend(raycastvolumeMapper) SetSampleDistance $VolRend(sampleDistance)
+	VolRend(raycastvolumeMapper) SetInput [VolRend(imageCast) GetOutput]
+
+	switch $VolRend(renderMethod) {
+	    "composite" {
+		if {$VolRend(compositeMethod) == "interpolate"} {
+		    VolRend(compositeFunction) SetCompositeMethodToInterpolateFirst
+		} else {
+		    VolRend(compositeFunction) SetCompositeMethodToClassifyFirst
+		}
+		VolRend(raycastvolumeMapper) SetVolumeRayCastFunction VolRend(compositeFunction)
 	    }
-	    VolRend(volumeMapper) SetVolumeRayCastFunction VolRend(compositeFunction)
-	}
-	
-	"mip" {
-	    VolRend(mipFunction) SetMaximizeMethodTo$VolRend(mipMaxMethod)
-	    VolRend(volumeMapper) SetVolumeRayCastFunction VolRend(mipFunction)
+	    
+	    "mip" {
+		VolRend(mipFunction) SetMaximizeMethodTo$VolRend(mipMaxMethod)
+		VolRend(raycastvolumeMapper) SetVolumeRayCastFunction VolRend(mipFunction)
+	    }
+	    
+	    "isosurface" {
+		VolRend(isosurfaceFunction) SetIsoValue $VolRend(isoValue)
+		VolRend(raycastvolumeMapper) SetVolumeRayCastFunction VolRend(isosurfaceFunction)
+	    }
 	}
 
-	"isosurface" {
-	    VolRend(isosurfaceFunction) SetIsoValue $VolRend(isoValue)
-	    VolRend(volumeMapper) SetVolumeRayCastFunction VolRend(isosurfaceFunction)
+	if {[info commands t1] == ""} {
+	    vtkTransform t1
 	}
+	t1 Identity
+	t1 PreMultiply
+	t1 SetMatrix [Volume($VolRend(idOriginal),node) GetWldToIjk]
+	t1 Inverse
+	scan [Volume($VolRend(idOriginal),node) GetSpacing] "%g %g %g" res_x res_y res_z
+	t1 PostMultiply
+	t1 Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] [expr 1.0 / $res_z]
     }
 
-    if {[info commands t1] == ""} {
-	vtkTransform t1
+    if {$VolRend(renderType) == "texture"} {
+	VolRend(volume) SetMapper VolRend(texturevolumeMapper)
+	[VolRend(volume) GetProperty] SetInterpolationTypeTo$VolRend(interpolationMethod)
+#	VolRend(texturevolumeMapper) SetSampleDistance $VolRend(sampleDistance)
+	VolRend(texturevolumeMapper) SetInput [VolRend(imageCast) GetOutput]
+
+	if {[info commands t1] == ""} {
+	    vtkTransform t1
+	}
+	t1 Identity
+	t1 PreMultiply
+	t1 SetMatrix [Volume($VolRend(idOriginal),node) GetWldToIjk]
+	t1 Inverse
+	scan [Volume($VolRend(idOriginal),node) GetSpacing] "%g %g %g" res_x res_y res_z
+	t1 PreMultiply
+	t1 Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] [expr 1.0 / $res_z]
     }
-    t1 Identity
-    t1 PreMultiply
-    t1 SetMatrix [Volume($VolRend(idOriginal),node) GetWldToIjk]
-    t1 Inverse
-    scan [Volume($VolRend(idOriginal),node) GetSpacing] "%g %g %g" res_x res_y res_z
-    t1 PostMultiply
-    t1 Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] [expr 1.0 / $res_z]
 
     VolRend(volume) SetUserMatrix [t1 GetMatrix]
 
 #    VolRend(outline) SetInput [Volume($VolRend(idOriginal),vol) GetOutput]
 #    VolRend(outlineActor) SetUserMatrix [Volume($VolRend(idOriginal),node) GetPosition]
 
-    VolRend(volumeMapper) Update
+    VolRend(${VolRend(renderType)}volumeMapper) Update
     t1 Delete
     RenderAll
 }
@@ -807,6 +886,7 @@ proc VolRendStorePresets {p} {
     global Preset VolRend Volume
 
     set Preset(VolRend,$p,idOriginal) $VolRend(idOriginal)
+    set Preset(VolRend,$p,renderType) $VolRend(renderType)
     set Preset(VolRend,$p,sampleDistance) $VolRend(sampleDistance)
     set Preset(VolRend,$p,hideOnExit) $VolRend(hideOnExit)
     set Preset(VolRend,$p,interpolationMethod) $VolRend(interpolationMethod)
@@ -862,6 +942,7 @@ proc VolRendRecallPresets {p} {
     global Preset VolRend
     
     set VolRend(idOriginal) $Preset(VolRend,$p,idOriginal)
+    set VolRend(renderType) $Preset(VolRend,$p,renderType)
     set VolRend(sampleDistance) $Preset(VolRend,$p,sampleDistance)
     set VolRend(hideOnExit) $Preset(VolRend,$p,hideOnExit)
     set VolRend(interpolationMethod) $Preset(VolRend,$p,interpolationMethod)
