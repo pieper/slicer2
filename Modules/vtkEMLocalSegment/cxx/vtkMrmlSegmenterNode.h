@@ -117,16 +117,6 @@ public:
 
   // Description:
   // Get/Set for Segmenter
-  vtkSetMacro(PrintIntermediateResults, int);
-  vtkGetMacro(PrintIntermediateResults, int);
-
-  // Description:
-  // Get/Set for Segmenter
-  vtkSetMacro(PrintIntermediateSlice, int);
-  vtkGetMacro(PrintIntermediateSlice, int);
-
-  // Description:
-  // Get/Set for Segmenter
   vtkSetMacro(PrintIntermediateFrequency, int);
   vtkGetMacro(PrintIntermediateFrequency, int);
 
