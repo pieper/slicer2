@@ -37,8 +37,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkAnisoGaussSeidel.cxx,v $
   Language:  C++
-  Date:      $Date: 2004/02/20 00:55:26 $
-  Version:   $Revision: 1.10 $
+  Date:      $Date: 2005/02/08 21:51:23 $
+  Version:   $Revision: 1.10.2.1 $
 
 =========================================================================*/
 
@@ -1218,7 +1218,7 @@ float vtkAnisoGaussSeidel::Iterate3D()
 
 //----------------------------------------------------------------------
 float vtkAnisoGaussSeidel::Iterate3D( vtkImageData *inData,  int inExt[6],
-                      vtkImageData *outData, int outExt[6])
+                      vtkImageData *outData, int outExt[6], int threadId)
 {
 
   Local 
@@ -1318,7 +1318,7 @@ float vtkAnisoGaussSeidel::Iterate3D( vtkImageData *inData,  int inExt[6],
       progress         += target;
     }
       //      printf("progress %f \n", progress/total);
-      this->UpdateProgress( progress / total);
+      if (threadId == 0) this->UpdateProgress( progress / total);
       update_busy = 0;
     }
 
@@ -1913,7 +1913,7 @@ void vtkAnisoGaussSeidel::ThreadedExecute(vtkImageData *inData,
     //              &cycle, target, &count, total);
     break;
   case MODE_3D:
-    error = Iterate3D(inData, inExt, outData, outExt);
+    error = Iterate3D(inData, inExt, outData, outExt, id);
     break;
   }
 
