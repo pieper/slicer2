@@ -74,9 +74,8 @@ vtkImageLiveWireEdgeWeights \
 vtkImageBandedDistanceMap \
 vtkImageLiveWireScale \
 vtkImageWeightedSum \
-vtkDCMLister 
-
-
+vtkDCMLister \
+vtkResliceImage 
 
 
 #vtkSurfaceProps \
