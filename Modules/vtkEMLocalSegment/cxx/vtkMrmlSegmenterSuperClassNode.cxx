@@ -63,6 +63,11 @@ vtkMrmlSegmenterSuperClassNode::vtkMrmlSegmenterSuperClassNode() {
   this->Prob       = 0.0;
   this->LocalPriorWeight = 1.0;
   this->InputChannelWeights = NULL;
+
+  this->PrintFrequency      = 0;
+  this->PrintBias           = 0;
+  this->PrintLabelMap       = 0;
+  this->PrintWeights        = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -89,7 +94,12 @@ void vtkMrmlSegmenterSuperClassNode::Write(ofstream& of, int nIndent)
     of << " InputChannelWeights='" << this->InputChannelWeights << "'";
   }
   of << " LocalPriorWeight='" << this->LocalPriorWeight << "'";
-  
+
+  of << " PrintWeights='" << this->PrintWeights << "'";
+  of << " PrintBias='" << this->PrintBias << "'";
+  of << " PrintLabelMap='" << this->PrintLabelMap << "'";
+  of << " PrintFrequency='" << this->PrintFrequency << "'";
+
   of << ">\n";
 }
 
@@ -104,6 +114,11 @@ void vtkMrmlSegmenterSuperClassNode::Copy(vtkMrmlNode *anode)
   this->Prob = node->Prob;
   this->SetInputChannelWeights(node->InputChannelWeights);
   this->SetLocalPriorWeight(node->LocalPriorWeight);
+  this->PrintWeights   = node->PrintWeights;
+  this->PrintBias      = node->PrintBias;
+  this->PrintLabelMap  = node->PrintLabelMap;
+  this->PrintFrequency = node->PrintFrequency;
+
 }
 
 //----------------------------------------------------------------------------
@@ -118,6 +133,10 @@ void vtkMrmlSegmenterSuperClassNode::PrintSelf(ostream& os, vtkIndent indent)
 
   os << indent << "LocalPriorWeight: " << this->LocalPriorWeight << "\n";
 
+  os << indent << " PrintWeights:   " << this->PrintWeights << "\n";
+  os << indent << " PrintBias:      " << this->PrintBias << "\n";
+  os << indent << " PrintLabelMap:  " << this->PrintLabelMap << "\n";
+  os << indent << " PrintFrequency: " << this->PrintFrequency << "\n";
 }
 
 

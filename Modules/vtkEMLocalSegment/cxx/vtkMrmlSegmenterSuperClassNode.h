@@ -101,6 +101,22 @@ public:
   vtkSetStringMacro(InputChannelWeights);
   vtkGetStringMacro(InputChannelWeights);
 
+  // Description:
+  // Print out the result after how many steps  (-1 == just last result, 0 = No Printing, i> 0 => every i-th slice )
+  vtkGetMacro(PrintFrequency, int);
+  vtkSetMacro(PrintFrequency, int);
+
+  vtkGetMacro(PrintBias, int);
+  vtkSetMacro(PrintBias, int);
+
+  vtkGetMacro(PrintLabelMap, int);
+  vtkSetMacro(PrintLabelMap, int);  
+
+  // Description:
+  // Print out Weights (1 = Normal 2=as shorts normed to 1000)   
+  vtkGetMacro(PrintWeights, int);
+  vtkSetMacro(PrintWeights, int);
+
 protected:
   vtkMrmlSegmenterSuperClassNode();
   ~vtkMrmlSegmenterSuperClassNode();
@@ -112,6 +128,12 @@ protected:
   
   float  LocalPriorWeight;
   char   *InputChannelWeights;  
+  
+  int PrintWeights;
+  int PrintFrequency;
+  int PrintBias;
+  int PrintLabelMap;
+
 };
 
 #endif

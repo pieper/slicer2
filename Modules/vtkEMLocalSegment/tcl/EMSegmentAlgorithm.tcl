@@ -65,6 +65,8 @@ proc EMSegmentSetVtkGenericClassSetting {vtkGenericClass Sclass} {
   $vtkGenericClass SetProbDataWeight $EMSegment(Cattrib,$Sclass,LocalPriorWeight)
   $vtkGenericClass SetTissueProbability $EMSegment(Cattrib,$Sclass,Prob)
 
+  $vtkGenericClass SetPrintWeights $EMSegment(Cattrib,$Sclass,PrintWeights)
+
   for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
       if {[info exists EMSegment(Cattrib,$Sclass,InputChannelWeights,$y)]} {$vtkGenericClass SetInputChannelWeights $EMSegment(Cattrib,$Sclass,InputChannelWeights,$y) $y}
   }
@@ -84,7 +86,12 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass} {
   catch { EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) destroy}
   vtkImageEMSuperClass EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass)      
 
+  # Define SuperClass specific parameters
   EMSegmentSetVtkGenericClassSetting EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) $SuperClass
+
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintFrequency $EMSegment(Cattrib,$SuperClass,PrintFrequency)
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintBias      $EMSegment(Cattrib,$SuperClass,PrintBias)
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintLabelMap  $EMSegment(Cattrib,$SuperClass,PrintLabelMap)
 
   set ClassIndex 0
   foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
@@ -143,6 +150,11 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass} {
            EMSegment(Cattrib,$i,vtkImageEMClass) SetPCAMaxDist      $EMSegment(Cattrib,$i,PCAMaxDist)
            EMSegment(Cattrib,$i,vtkImageEMClass) SetPCADistVariance $EMSegment(Cattrib,$i,PCADistVariance)
       } 
+
+      EMSegment(Cattrib,$i,vtkImageEMClass) SetPrintQuality $EMSegment(Cattrib,$i,PrintQuality)
+      EMSegment(Cattrib,$i,vtkImageEMClass) SetPrintPCA $EMSegment(Cattrib,$i,PrintPCA)
+
+      # After everything is defined add CLASS to its SUPERCLASS
       EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) AddSubClass EMSegment(Cattrib,$i,vtkImageEMClass) $ClassIndex
     }
     incr ClassIndex
@@ -337,7 +349,7 @@ proc EMSegmentAlgorithmStart { } {
    # How many input images do you have
    EMSegment(vtkEMSegment) SetNumInputImages $EMSegment(NumInputChannel) 
    EMSegment(vtkEMSegment) SetNumberOfTrainingSamples $EMSegment(NumberOfTrainingSamples)
-   EMSegment(vtkEMSegment) SetBiasPrint $EMSegment(BiasPrint)
+   # EMSegment(vtkEMSegment) SetBiasPrint $EMSegment(BiasPrint)
 
    if {$EMSegment(SegmentMode) > 1} {
        if {[EMSegmentSetVtkSuperClassSetting 0]} { return 0 }
@@ -349,7 +361,7 @@ proc EMSegmentAlgorithmStart { } {
        incr NumInputImagesSet
        }
        # Transfer Bias Print out Information
-       EMSegment(vtkEMSegment) SetPrintIntermediateDir $EMSegment(PrintIntermediateDir)
+       EMSegment(vtkEMSegment) SetPrintDir $EMSegment(PrintDir)
        EMSegment(vtkEMSegment) SetNumEMShapeIter  $EMSegment(EMShapeIter)  
 
        # This is for debuging purposes so extra volumes can be loaded into the segmentation process 
@@ -365,8 +377,8 @@ proc EMSegmentAlgorithmStart { } {
            }
        }
        }
-       EMSegment(vtkEMSegment) SetPrintPCAParameters $EMSegment(PrintPCAParameters)
-       EMSegment(vtkEMSegment) SetPrintDICEResults   $EMSegment(PrintDICEResults)
+       # EMSegment(vtkEMSegment) SetPrintPCAParameters $EMSegment(PrintPCAParameters)
+       # EMSegment(vtkEMSegment) SetPrintDICEResults   $EMSegment(PrintDICEResults)
        EMSegment(vtkEMSegment) SetHeadClass          EMSegment(Cattrib,0,vtkImageEMSuperClass)
        # Does not work that way bc no input image is defined  
        # puts "--------------------"
@@ -390,9 +402,9 @@ proc EMSegmentAlgorithmStart { } {
    EMSegment(vtkEMSegment) SetSmoothingSigma  $EMSegment(SmSigma)      
 
   
-   EMSegment(vtkEMSegment) SetPrintIntermediateResults    $EMSegment(PrintIntermediateResults) 
-   EMSegment(vtkEMSegment) SetPrintIntermediateSlice      $EMSegment(PrintIntermediateSlice) 
-   EMSegment(vtkEMSegment) SetPrintIntermediateFrequency  $EMSegment(PrintIntermediateFrequency) 
+   # EMSegment(vtkEMSegment) SetPrintIntermediateResults    $EMSegment(PrintIntermediateResults) 
+   # EMSegment(vtkEMSegment) SetPrintIntermediateSlice      $EMSegment(PrintIntermediateSlice) 
+   # EMSegment(vtkEMSegment) SetPrintIntermediateFrequency  $EMSegment(PrintIntermediateFrequency) 
 
    return 1 
 }

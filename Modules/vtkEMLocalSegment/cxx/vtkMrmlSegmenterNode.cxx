@@ -69,18 +69,12 @@ vtkMrmlSegmenterNode::vtkMrmlSegmenterNode()
   this->Alpha              = 0.0;   
   this->SmWidth     = 1;
   this->SmSigma     = 1;
-  this->PrintIntermediateResults      = 0;
-  this->PrintIntermediateSlice    = 0;
-  this->PrintIntermediateFrequency = 0;
   this->StartSlice         = 0;
   this->EndSlice           = 0;
   this->DisplayProb     = 0;
   this->NumberOfTrainingSamples = 0;
   this->IntensityAvgClass = -1;
-  this->PrintIntermediateDir = NULL;
-  this->BiasPrint = 0;
-  this->PrintPCAParameters = 0;
-  this->PrintDICEResults   = 0;
+  this->PrintDir = NULL;
   for (int i=0; i < 3; i++) {
     this->SegmentationBoundaryMin[i] = 0; // Lower bound of the boundary box where the image gets segments.
     this->SegmentationBoundaryMax[i] = 0;// Upper bound of the boundary box where the image gets segments.
@@ -90,9 +84,9 @@ vtkMrmlSegmenterNode::vtkMrmlSegmenterNode()
 //----------------------------------------------------------------------------
 vtkMrmlSegmenterNode::~vtkMrmlSegmenterNode()
 {
-  if (this->PrintIntermediateDir) {
-    delete [] this->PrintIntermediateDir;
-    this->PrintIntermediateDir = NULL;
+  if (this->PrintDir) {
+    delete [] this->PrintDir;
+    this->PrintDir = NULL;
   }
 }
 
@@ -123,9 +117,6 @@ void vtkMrmlSegmenterNode::Write(ofstream& of, int nIndent)
   of << " Alpha ='"                      << this->Alpha << "'";
   of << " SmWidth ='"                    << this->SmWidth << "'";
   of << " SmSigma ='"                    << this->SmSigma << "'";
-  of << " PrintIntermediateResults ='"   << this->PrintIntermediateResults  << "'";
-  of << " PrintIntermediateSlice ='"     << this->PrintIntermediateSlice << "'";
-  of << " PrintIntermediateFrequency ='" << this->PrintIntermediateFrequency << "'";
   of << " SegmentationBoundaryMin ='" ;
   for (int i=0; i < 3; i++) of << this->SegmentationBoundaryMin[i]<< " " ; // Upper bound of the boundary box where the image gets segments.
   of << "'";
@@ -137,17 +128,15 @@ void vtkMrmlSegmenterNode::Write(ofstream& of, int nIndent)
   of << " DisplayProb  ='"               << this->DisplayProb  << "'";
   of << " NumberOfTrainingSamples ='"    << this->NumberOfTrainingSamples << "'";
   of << " IntensityAvgClass ='"          << this->IntensityAvgClass << "'";
-  of << " BiasPrint ='"                  << this->BiasPrint << "'";
-  of << " PrintPCAParameters ='"         << this->PrintPCAParameters << "'";
-  of << " PrintDICEResults ='"           << this->PrintDICEResults << "'";
 
-  if (this->PrintIntermediateDir && strcmp(this->PrintIntermediateDir, "")) of << " PrintIntermediateDir ='"           << this->PrintIntermediateDir << "'";
+  if (this->PrintDir && strcmp(this->PrintDir, "")) 
+  of << " PrintDir ='"                   << this->PrintDir << "'";
   of << ">\n";;
 }
 
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
-// Does NOT copy: ID, FilePrefix, Name and PrintIntermediateDir
+// Does NOT copy: ID, FilePrefix, Name and PrintDir
 void vtkMrmlSegmenterNode::Copy(vtkMrmlNode *anode)
 {
   vtkMrmlNode::MrmlNodeCopy(anode);
@@ -160,17 +149,11 @@ void vtkMrmlSegmenterNode::Copy(vtkMrmlNode *anode)
   this->Alpha                      = node->Alpha;   
   this->SmWidth                    = node->SmWidth;
   this->SmSigma                    = node->SmSigma;
-  this->PrintIntermediateResults   = node->PrintIntermediateResults;
-  this->PrintIntermediateSlice     = node->PrintIntermediateSlice;
-  this->PrintIntermediateFrequency = node->PrintIntermediateFrequency;
   this->StartSlice                 = node->StartSlice;
   this->EndSlice                   = node->EndSlice;
   this->DisplayProb                = node->DisplayProb;
   this->NumberOfTrainingSamples    = node->NumberOfTrainingSamples;
   this->IntensityAvgClass          = node->IntensityAvgClass;
-  this->BiasPrint                  = node->BiasPrint;
-  this->PrintPCAParameters         = node->PrintPCAParameters;
-  this->PrintDICEResults           = node->PrintDICEResults;
 
   memcpy(this->SegmentationBoundaryMin, node->SegmentationBoundaryMin, sizeof(int)*3);
   memcpy(this->SegmentationBoundaryMax, node->SegmentationBoundaryMax, sizeof(int)*3);
@@ -189,18 +172,12 @@ void vtkMrmlSegmenterNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Alpha: "                     << this->Alpha <<  "\n"; 
   os << indent << "SmWidth: "                   << this->SmWidth <<  "\n"; 
   os << indent << "SmSigma: "                   << this->SmSigma <<  "\n"; 
-  os << indent << "PrintIntermediateResults: "  << this->PrintIntermediateResults <<  "\n"; 
-  os << indent << "PrintIntermediateSlice: "    << this->PrintIntermediateSlice <<  "\n"; 
-  os << indent << "PrintIntermediateFrequency: "<< this->PrintIntermediateFrequency <<  "\n"; 
   os << indent << "StartSlice: "                << this->StartSlice  <<  "\n"; 
   os << indent << "EndSlice: "                  << this->EndSlice <<  "\n"; 
   os << indent << "DisplayProb: "               << this->DisplayProb <<  "\n"; 
   os << indent << "NumberOfTrainingSamples: "   << this->NumberOfTrainingSamples <<  "\n"; 
   os << indent << "IntensityAvgClass:"          << this->IntensityAvgClass << "\n";
-  os << indent << "BiasPrint:"                  << this->BiasPrint << "\n";
-  os << indent << "PrintPCAParameters:"         << this-> PrintPCAParameters << "\n";
-  os << indent << "PrintDICEResults:"           << this-> PrintDICEResults << "\n";
-  os << indent << "PrintIntermediateDir:"       << this->PrintIntermediateDir << "\n"; 
+  os << indent << "PrintDir:"                   << this->PrintDir << "\n"; 
   os << indent << "SegmentationBoundaryMin:    " ;
   for (int i=0; i < 3; i++) os << this->SegmentationBoundaryMin[i]<< " " ; // Upper bound of the boundary box where the image gets segments.
   os << "\n";

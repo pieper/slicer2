@@ -126,8 +126,8 @@ public:
 
   // Description:
   // Get/Set for SegmenterClass
-  vtkSetStringMacro(DICEFileName);
-  vtkGetStringMacro(DICEFileName);
+  vtkSetStringMacro(ReferenceStandardFileName);
+  vtkGetStringMacro(ReferenceStandardFileName);
 
   // Description:
   // Get/Set for SegmenterClass
@@ -163,6 +163,21 @@ public:
   vtkGetMacro(PCADistVariance,double);
   vtkSetMacro(PCADistVariance,double);
 
+  // Description:
+  // Print out Weights (1 = Normal 2=as shorts normed to 1000)   
+  vtkGetMacro(PrintWeights, int);
+  vtkSetMacro(PrintWeights, int);
+  
+  // Description:
+  // Currenly only the following values defined 
+  // 0 = Do not Print out any print quality 
+  // 1 = Do a DICE comparison
+  vtkSetMacro(PrintQuality,int);
+  vtkGetMacro(PrintQuality,int);
+  
+  vtkSetMacro(PrintPCA,int);
+  vtkGetMacro(PrintPCA,int);
+
 protected:
   vtkMrmlSegmenterClassNode();
   ~vtkMrmlSegmenterClassNode();
@@ -187,7 +202,11 @@ protected:
   double PCAScale[3];
   double PCAMaxDist;
   double PCADistVariance;
-  char   *DICEFileName;
+  char   *ReferenceStandardFileName;
+
+  int    PrintWeights;
+  int    PrintQuality;        // Prints out a quality measure of the current result ( 1=  Dice )
+  int    PrintPCA;            // Print out PCA Parameters at each step 
 };
 
 #endif

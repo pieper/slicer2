@@ -116,11 +116,6 @@ public:
   vtkGetMacro(SmSigma, int);
 
   // Description:
-  // Get/Set for Segmenter
-  vtkSetMacro(PrintIntermediateFrequency, int);
-  vtkGetMacro(PrintIntermediateFrequency, int);
-
-  // Description:
   // Get/Set for Segmenter - not part of new version anymore 
   vtkSetMacro(StartSlice, int);
   vtkGetMacro(StartSlice, int);
@@ -176,25 +171,8 @@ public:
   // Necessarry for EM to spid out intermediate results 
   // it will generate the necessary subdirectories from here 
   // e.g. weights 
-  vtkGetStringMacro(PrintIntermediateDir);
-  vtkSetStringMacro(PrintIntermediateDir);
-
-  // Description:
-  // Get/Set for Segmenter
-  vtkGetMacro(BiasPrint, int);
-  vtkSetMacro(BiasPrint, int);
-
-
-  // Description:
-  // Get/Set for Segmenter
-  vtkGetMacro(PrintPCAParameters, int);
-  vtkSetMacro(PrintPCAParameters, int);
-
- // Description:
-  // Get/Set for Segmenter
-  vtkGetMacro(PrintDICEResults, int);
-  vtkSetMacro(PrintDICEResults, int);
-
+  vtkGetStringMacro(PrintDir);
+  vtkSetStringMacro(PrintDir);
 
 protected:
   vtkMrmlSegmenterNode();
@@ -211,20 +189,14 @@ protected:
   double Alpha;
   int    SmWidth;
   int    SmSigma;
-  int    PrintIntermediateResults;
-  int    PrintIntermediateSlice;
-  int    PrintIntermediateFrequency;
   int    StartSlice;
   int    EndSlice;
   int    DisplayProb;
   int    NumberOfTrainingSamples;
   int    IntensityAvgClass;
-  char*  PrintIntermediateDir;
-  int    BiasPrint;
+  char*  PrintDir;
   int    SegmentationBoundaryMin[3];
   int    SegmentationBoundaryMax[3];
-  int    PrintPCAParameters;
-  int    PrintDICEResults;
 };
 
 #endif

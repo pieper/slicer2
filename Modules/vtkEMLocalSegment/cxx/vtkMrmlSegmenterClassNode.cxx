@@ -77,7 +77,11 @@ vtkMrmlSegmenterClassNode::vtkMrmlSegmenterClassNode()
   for (int i =0; i < 3; i++) PCAScale[i]= 1.0;
   this->PCAMaxDist       = 0.0;
   this->PCADistVariance  = 0.0; 
-  this->DICEFileName     = NULL; 
+  this->ReferenceStandardFileName     = NULL; 
+  
+  this->PrintWeights        = 0;
+  this->PrintQuality        = 0;
+  this->PrintPCA            = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -115,10 +119,10 @@ vtkMrmlSegmenterClassNode::~vtkMrmlSegmenterClassNode()
     this->PCAMeanName = NULL;
   }
 
-  if (this->DICEFileName)
+  if (this->ReferenceStandardFileName)
   {
-    delete [] this->DICEFileName;
-    this->DICEFileName = NULL;
+    delete [] this->ReferenceStandardFileName;
+    this->ReferenceStandardFileName = NULL;
   }
 
 
@@ -172,9 +176,9 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
     of << " PCAMeanName='" << this->PCAMeanName << "'";
   }
 
-  if (this->DICEFileName && strcmp(this->DICEFileName, "")) 
+  if (this->ReferenceStandardFileName && strcmp(this->ReferenceStandardFileName, "")) 
   {
-    of << " DICEFileName='" << this->DICEFileName << "'";
+    of << " ReferenceStandardFileName='" << this->ReferenceStandardFileName << "'";
   }
 
 
@@ -185,6 +189,9 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
   if  ((this->PCAScale[0] != 1) || (this->PCAScale[1] != 1) || (this->PCAScale[2] != 1)) of << " PCAScale='" << this->PCAScale[0] << " " << this->PCAScale[1] << " " << this->PCAScale[2] << "'";
   of << " PCAMaxDist='" << this->PCAMaxDist << "'";
   of << " PCADistVariance='" << this->PCADistVariance << "'";
+  of << " PrintWeights='" << this->PrintWeights << "'";
+  of << " PrintQuality='" << this->PrintQuality << "'";
+  of << " PrintPCA='" << this->PrintPCA << "'";
   of << ">\n";
 }
 
@@ -208,12 +215,16 @@ void vtkMrmlSegmenterClassNode::Copy(vtkMrmlNode *anode)
   this->SetLocalPriorWeight(node->LocalPriorWeight);
   this->SetPCAFileRange(node->PCAFileRange);
   this->SetPCAMeanName(node->PCAMeanName);
-  this->SetDICEFileName(node->DICEFileName);
+  this->SetReferenceStandardFileName(node->ReferenceStandardFileName);
   this->SetPCATranslation(node->PCATranslation);
   this->SetPCARotation(node->PCARotation);
   this->SetPCAScale(node->PCAScale);
   this->SetPCAMaxDist(node->PCAMaxDist);
   this->SetPCADistVariance(node->PCADistVariance);
+
+  this->SetPrintWeights(node->PrintWeights);
+  this->SetPrintQuality(node->PrintQuality);
+  this->SetPrintPCA(node->PrintPCA);
 }
 
 //----------------------------------------------------------------------------
@@ -241,12 +252,16 @@ void vtkMrmlSegmenterClassNode::PrintSelf(ostream& os, vtkIndent indent)
    os << indent << "InputChannelWeights: " << 
     (this->InputChannelWeights ? this->InputChannelWeights : "(none)") << "\n";
 
-   os << indent << "DICEFileName: " <<  (this->DICEFileName ? this->DICEFileName : "(none)") << "\n"; 
-   os << indent << "PCAMeanName: " <<  (this->PCAMeanName ? this->PCAMeanName : "(none)") << "\n"; 
-   os << indent << "PCAFileRange: " << this->PCAFileRange[0] << ", " << this->PCAFileRange[1] << "\n" ;
-   os << indent << "PCATranslation: " << this->PCATranslation[0] << ", " << this->PCATranslation[1] << ", " << this->PCATranslation[2] << "\n" ;
-   os << indent << "PCARotation: " << this->PCARotation[0] << ", " << this->PCARotation[1] << ", " << this->PCARotation[2] << "\n" ;
-   os << indent << "PCAScale: " << this->PCAScale[0] << ", " << this->PCAScale[1] << ", " << this->PCAScale[2] << "\n" ;
-   os << indent << "PCAMaxDist:'" << this->PCAMaxDist << "\n";
-   os << indent << "PCADistVariance:" << this->PCADistVariance << "\n";
+   os << indent << "ReferenceStandardFileName: " <<  (this->ReferenceStandardFileName ? this->ReferenceStandardFileName : "(none)") << "\n"; 
+   os << indent << "PCAMeanName:     " <<  (this->PCAMeanName ? this->PCAMeanName : "(none)") << "\n"; 
+   os << indent << "PCAFileRange:    " << this->PCAFileRange[0] << ", " << this->PCAFileRange[1] << "\n" ;
+   os << indent << "PCATranslation:  " << this->PCATranslation[0] << ", " << this->PCATranslation[1] << ", " << this->PCATranslation[2] << "\n" ;
+   os << indent << "PCARotation:     " << this->PCARotation[0] << ", " << this->PCARotation[1] << ", " << this->PCARotation[2] << "\n" ;
+   os << indent << "PCAScale:        " << this->PCAScale[0] << ", " << this->PCAScale[1] << ", " << this->PCAScale[2] << "\n" ;
+   os << indent << "PCAMaxDist:      " << this->PCAMaxDist << "\n";
+   os << indent << "PCADistVariance: " << this->PCADistVariance << "\n";
+
+   os << indent << " PrintWeights:   " << this->PrintWeights << "\n";
+   os << indent << " PrintQuality:   " << this->PrintQuality << "\n";
+   os << indent << " PrintPCA:       " << this->PrintPCA << "\n";
 }
