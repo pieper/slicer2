@@ -60,10 +60,15 @@ itcl::body dup::constructor {args} {
     set cs [$this childsite]
 
     pack [iwidgets::panedwindow $cs.panes -orient vertical] -fill both -expand true
-    $cs.panes add "sort"
-    $cs.panes add "deident"
-    $cs.panes add "review"
-    $cs.panes add "upload"
+
+    foreach p {sort deidentify review upload} {
+        $cs.panes add $p
+        set w [$cs.panes childsite $p]
+        set _$p $w.sort
+        label $w.l -text [string totitle $p] -bg white
+        pack $w.l -side top -fill x
+        pack [dup_$p [set _$p]] -fill both -expand true
+    }
 
     # put the app name and logo at the bottom
     set im [image create photo -file $::PACKAGE_DIR_BIRNDUP/../../../images/new-birn.ppm]
@@ -106,8 +111,6 @@ itcl::body dup::menus {} {
 }
 
 itcl::body dup::fill { {dir "choose"} } {
-    set cs [$this childsite]
-    set _sort [$cs.panes childsite "sort"].sort
     catch "destroy $_sort"
     pack [dup_sort $_sort] -fill both -expand true
     if { $dir == "choose" } {

@@ -16,6 +16,9 @@ if { [info commands BIRNDUPInit] == "" } {
         BIRNDUP.tcl
         dup.tcl
         dup_sort.tcl
+        dup_deidentify.tcl
+        dup_review.tcl
+        dup_upload.tcl
         }
         
     foreach f $files {
