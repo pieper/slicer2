@@ -68,7 +68,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-		{$Revision: 1.40 $} {$Date: 2001/07/06 19:48:41 $}]
+		{$Revision: 1.41 $} {$Date: 2001/07/19 09:48:13 $}]
 
 	set Mrml(filePrefix) data
 	set Mrml(colorsUnsaved) 0
@@ -87,6 +87,7 @@ proc MainMrmlInitIdLists {} {
 	global Fiducials EndFiducials Point
         global Path EndPath Landmark
 
+    #puts "in MainMrmlInitIdLists: Lauren developers should not have to edit this file"
 	foreach node "Color Model Volume Transform EndTransform Matrix \
 		TransferFunction WindowLevel TFPoint ColorLUT Options \
 		Fiducials EndFiducials Point Path EndPath Landmark" {
@@ -202,13 +203,9 @@ proc MainMrmlClearList {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlAddNode {nodeType} {
-	global Mrml Model Volume Color Transform EndTransform Matrix Options
-	global TransferFunction WindowLevel TFPoint ColorLUT 
-	global Fiducials EndFiducials Point 
-        global Path EndPath Landmark Array 
-    
 
-	upvar $nodeType Array
+	# the #0 puts the nodeType in global scope
+	upvar #0 $nodeType Array
 
 	set tree "dataTree"
 	if {$nodeType == "Color"} {
@@ -222,8 +219,8 @@ proc MainMrmlAddNode {nodeType} {
 
 	# Put the None volume at the end
 	if {$nodeType == "Volume"} {
-		set j [lsearch $Volume(idList) $Volume(idNone)]
-		set Volume(idList) "[lreplace $Volume(idList) $j $j] $Volume(idNone)"
+		set j [lsearch $Array(idList) $Array(idNone)]
+		set Array(idList) "[lreplace $Array(idList) $j $j] $Array(idNone)"
 	}
 
 	# Create vtkMrmlNode
@@ -250,13 +247,9 @@ proc MainMrmlAddNode {nodeType} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlInsertBeforeNode {nodeBefore nodeType} {
-	global Mrml Model Volume Color Transform EndTransform Matrix Options
-	global TransferFunction WindowLevel TFPoint ColorLUT 
-	global Fiducials EndFiducials Point 
-        global Path EndPath Landmark Array 
-    
 
-	upvar $nodeType Array
+	# the #0 puts the nodeType in global scope
+	upvar #0 $nodeType Array
 
 	set tree "dataTree"
 	if {$nodeType == "Color"} {
@@ -270,8 +263,8 @@ proc MainMrmlInsertBeforeNode {nodeBefore nodeType} {
 
 	# Put the None volume at the end
 	if {$nodeType == "Volume"} {
-		set j [lsearch $Volume(idList) $Volume(idNone)]
-		set Volume(idList) "[lreplace $Volume(idList) $j $j] $Volume(idNone)"
+		set j [lsearch $Array(idList) $Array(idNone)]
+		set Array(idList) "[lreplace $Array(idList) $j $j] $Array(idNone)"
 	}
 
 	# Create vtkMrmlNode
@@ -294,12 +287,9 @@ proc MainMrmlInsertBeforeNode {nodeBefore nodeType} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlUndoAddNode {nodeType n} {
-	global Mrml Model Volume Color Transform EndTransform Matrix Options
-	global TransferFunction WindowLevel TFPoint ColorLUT 
-	global Fiducials EndFiducials Point
-        global Path EndPath Landmark Array
 
-	upvar $nodeType Array
+	# the #0 puts the nodeType in global scope
+	upvar #0 $nodeType Array
 
 	set tree "dataTree"
 	if {$nodeType == "Color"} {
@@ -311,7 +301,7 @@ proc MainMrmlUndoAddNode {nodeType n} {
 	set i [lsearch $Array(idList) $id]
 	if {$i == -1} {return}
 	set Array(idList) [lreplace $Array(idList) $i $i]
-	set Volume(nextID) [expr $Volume(nextID) - 1]
+	set Array(nextID) [expr $Array(nextID) - 1]
 
 	# Remove node from tree, and delete it
 	Mrml($tree) RemoveItem $n
@@ -324,12 +314,9 @@ proc MainMrmlUndoAddNode {nodeType n} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteNodeDuringUpdate {nodeType id} {
-	global Mrml Model Volume Color Transform EndTransform Matrix
-	global TransferFunction WindowLevel TFPoint ColorLUT Options
-	global Fiducials EndFiducials Point
-        global Path EndPath Landmark
 
-	upvar $nodeType Array
+	# the #0 puts the nodeType in global scope
+	upvar #0 $nodeType Array
 
 	set tree "dataTree"
 	if {$nodeType == "Color"} {
@@ -355,12 +342,9 @@ proc MainMrmlDeleteNodeDuringUpdate {nodeType id} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteNode {nodeType id} {
-	global Mrml Model Volume Color Transform EndTransform Matrix Options
-	global TransferFunction WindowLevel TFPoint ColorLUT 
-	global Fiducials EndFiducials Point
-        global Path EndPath Landmark
 
-	upvar $nodeType Array
+	# the #0 puts the nodeType in global scope
+	upvar #0 $nodeType Array
 
 	set tree "dataTree"
 	if {$nodeType == "Color"} {
