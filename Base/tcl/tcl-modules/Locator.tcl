@@ -91,7 +91,7 @@ proc LocatorInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.18 $} {$Date: 2000/02/28 17:56:16 $}]
+		{$Revision: 1.19 $} {$Date: 2000/06/07 21:37:07 $}]
 
 	# Patient/Table position
 	set Locator(tblPosList)   "Front Side"
@@ -150,7 +150,7 @@ proc LocatorInit {} {
 	# SignaSP
 	set Locator(SignaSP,msPoll) 100
 	set Locator(SignaSP,port)   10000
-	set Locator(SignaSP,host)   mrtsw
+	set Locator(SignaSP,host)   mrtws
 	# Images
 	set Locator(Images,msPoll)   1000
 	set Locator(Images,prefix)   ""
@@ -1394,7 +1394,6 @@ proc LocatorConnect {{value ""}} {
 
 	# CONNECT
 	if {$Locator(connect) == "1"} {
-
 		switch $Locator(server) {
 
 		"File" {
@@ -1418,6 +1417,18 @@ The 3D Slicer may connect to a GE SignaSP scanner from a
 Sun UltraSPARC, but not a PC.\n\n\
 Set the server to 'Images' to process images on disk as
 if they were coming from a scanner in real time."
+				set Locator(connect) 0
+				return
+			}
+
+
+			# You have to actually connect, dumbo
+			set status [Locator(SignaSP,src) OpenConnection \
+			 $Locator(SignaSP,host) $Locator(SignaSP,port)]
+			if {$status == -1} {
+				tk_messageBox -icon error -type ok -title $Gui(title) -message "Type start_spl_server on the mrt workstation, rookie\n\
+host='$Locator(SignaSP,host)' port='$Locator(SignaSP,port)'"
+				set Locator(loop) 0
 				set Locator(connect) 0
 				return
 			}
@@ -1455,7 +1466,8 @@ if they were coming from a scanner in real time."
 		}
 
 		"SignaSP" {
-			# Nothing to do
+			Locator(SignaSP,src) CloseConnection
+			set Locator(loop) 0
 		}
 
 		"Images" {
@@ -1637,6 +1649,7 @@ proc LocatorLoopSignaSP {} {
 	set status [Locator(SignaSP,src) PollRealtime]
 	if {$status == -1} {
 		puts "ERROR: PollRealtime"
+		LocatorConnect 0
 		return
 	}
 	set newImage   [Locator(SignaSP,src) GetNewImage]
@@ -1668,7 +1681,7 @@ proc LocatorLoopSignaSP {} {
 		set Locator(ty) [$locMatrix GetElement 1 2]
 		set Locator(tz) [$locMatrix GetElement 2 2]
 
-		puts "NEW LOC: P=$Locator(px) $Locator(py) $Locator(pz)"
+#		puts "NEW LOC: P=$Locator(px) $Locator(py) $Locator(pz)"
 		LocatorUseLocatorMatrix
 	}
 
