@@ -42,6 +42,7 @@
 #   AlignmentsBuildVTK
 #   AlignmentsSetVolumeMatrix The
 #   AlignmentsIdentity
+#   AlignmentsSetReferenceCoordinates 
 #   AlignmentsInvert
 #   AlignmentsSetPropertyType
 #   AlignmentsPropsApply
@@ -144,7 +145,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.25 $} {$Date: 2003/08/01 22:40:03 $}]
+            {$Revision: 1.26 $} {$Date: 2003/08/22 21:44:32 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -161,6 +162,7 @@ proc AlignmentsInit {} {
     set Matrix(regRotLR) 0.00
     set Matrix(regRotIS) 0.00
     set Matrix(regRotPA) 0.00
+    set Matrix(refCoordinate) "Pre"
 
     #Event Bindings
     set Matrix(eventManager) ""
@@ -528,8 +530,9 @@ proc AlignmentsBuildGUI {} {
     frame $f.fRotate    -bg $Gui(activeWorkspace) -relief groove -bd 2
     frame $f.fBtns      -bg $Gui(activeWorkspace)
     frame $f.fMouse    -bg $Gui(activeWorkspace)
-    pack $f.fActive $f.fRender  $f.fTranslate $f.fRotate $f.fBtns $f.fMouse\
-            -side top -pady 4 -padx $Gui(pad) -fill x
+    frame $f.fGlobalLocal    -bg $Gui(activeWorkspace)
+    pack $f.fActive $f.fRender $f.fGlobalLocal $f.fTranslate $f.fRotate $f.fBtns \
+        $f.fMouse -side top -pady 2 -padx $Gui(pad) -fill x
 
     #-------------------------------------------
     # Manual->Btns frame
@@ -626,6 +629,30 @@ proc AlignmentsBuildGUI {} {
                 -variable Matrix(regRot${slider}) -resolution 0.1 -digits 5} $Gui(WSA)
 
         grid $f.l${slider} $f.e${slider} $f.s${slider} -pady 2
+    }
+
+    #-------------------------------------------
+    # Manual->Global/Local Frame
+    #-------------------------------------------
+    set f $fManual.fGlobalLocal
+
+    frame $f.fTitle -bg $Gui(activeWorkspace)
+    frame $f.fBtns -bg $Gui(activeWorkspace)
+    pack $f.fTitle $f.fBtns -side left -pady $Gui(pad) -padx 1
+
+    eval {label $f.fTitle.l -text "Move Reference: "} $Gui(WLA)
+    pack $f.fTitle.l
+
+    foreach text "Global Local" value "Post Pre" \
+            width "6 6" {
+        eval {radiobutton $f.fBtns.rSpeed$value -width $width \
+                -text "$text" -value $value -variable Matrix(refCoordinate) \
+                -command "AlignmentsSetReferenceCoordinates $value" \
+                -indicatoron 0} $Gui(WRA)
+        pack $f.fBtns.rSpeed$value -side left -padx 0 -pady 0
+        TooltipAdd  $f.fBtns.rSpeed$value  \
+                "Translations and Rotations sliders apply with respect to $text coordinates."
+
     }
 
     #-------------------------------------------
@@ -1242,6 +1269,32 @@ proc AlignmentsInvert {} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC AlignmentsSetReferenceCoordinates 
+#
+# Set transform to either premultiply or postmultiply
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+
+proc AlignmentsSetReferenceCoordinates { {prepost ""} } {
+    global Matrix
+
+    if { $prepost == "" } {
+        set prepost $Matrix(refCoordinate) 
+    } else {
+        set Matrix(refCoordinate) $prepost
+    }
+
+    if { $Matrix(activeID) != "" } {
+        set t $Matrix(activeID)
+        set tran [Matrix($t,node) GetTransform]
+        $tran ${prepost}Multiply
+    }
+}
+
+
+#-------------------------------------------------------------------------------
 # .PROC AlignmentsSetPropertyType
 #
 # Display the basic or advanced frame depending on user selection
@@ -1401,7 +1454,6 @@ proc AlignmentsManualTranslate {param {value ""}} {
 
     # Transfer values from GUI to active transform
     set tran [Matrix($t,node) GetTransform]
-    $tran PostMultiply
     set mat  [$tran GetMatrix]
 
     switch $param {
@@ -1437,6 +1489,7 @@ proc AlignmentsManualTranslate {param {value ""}} {
         MainUpdateMRML
         Render$Matrix(render)
     }
+
 }
 
 #-------------------------------------------------------------------------------
@@ -1469,7 +1522,6 @@ proc AlignmentsManualTranslateDual {param1 value1 param2 value2} {
 
     # Transfer values from GUI to active transform
     set tran [Matrix($t,node) GetTransform]
-    $tran PostMultiply
     set mat  [$tran GetMatrix]
 
     switch $param1 {
@@ -1621,7 +1673,6 @@ proc AlignmentsManualRotate {param {value ""} {mouse 0}} {
     # Now, concatenate the rotation with the stored transform
     set tran [Matrix($t,node) GetTransform]
     $tran SetMatrix Matrix(rotMatrix)
-    $tran PostMultiply
     switch $param {
         "regRotLR" {
             $tran RotateX $value
@@ -1809,6 +1860,11 @@ proc AlignmentsB1Motion {x y} {
             return
         }
 
+        # always move in global coordinates when dragging in the slice windows
+        set t $Matrix(activeID)
+        set tran [Matrix($t,node) GetTransform]
+        $tran PostMultiply
+
         # Translate
         if {$Matrix(mouse) == "Translate"} {
 
@@ -1880,6 +1936,7 @@ proc AlignmentsB1Motion {x y} {
                 }
             }
         }
+        AlignmentsSetReferenceCoordinates 
     }
 }
 

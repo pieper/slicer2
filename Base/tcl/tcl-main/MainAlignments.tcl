@@ -61,7 +61,7 @@ proc MainAlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainAlignments \
-            {$Revision: 1.3 $} {$Date: 2003/03/19 19:16:23 $}]
+            {$Revision: 1.4 $} {$Date: 2003/08/22 21:44:32 $}]
 
     # Append widgets to list that gets refreshed during UpdateMRML
     set Matrix(mbActiveList) ""
@@ -229,6 +229,7 @@ proc MainAlignmentsSetActive {t} {
     set Matrix(rotAxis) ""
     Matrix(rotMatrix) Identity
 
+
     if {$t == ""} {
         # Change button text
         foreach mb $Matrix(mbActiveList) {
@@ -262,7 +263,12 @@ proc MainAlignmentsSetActive {t} {
         set Matrix(regTranLR) [$mat GetElement 0 3]
         set Matrix(regTranPA) [$mat GetElement 1 3]
         set Matrix(regTranIS) [$mat GetElement 2 3]
+
     }
+
+    # there's no way to query the transform for the Pre/Post multiply
+    # status, so set the transform to the current mode
+    [Matrix($t,node) GetTransform] ${Matrix(refCoordinate)}Multiply
 
     # Update GUI
     foreach item "regRotLR regRotPA regRotIS" {
