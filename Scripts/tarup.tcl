@@ -121,9 +121,9 @@ proc tarup { {destdir "auto"} } {
     #   (this will include xml, widgets, table, soap, and many other handy things)
     #
     puts " -- copying tcl files"
-    file mkdir $destdir/Lib/$::env(BUILD)/tcl
-    file copy -force $::env(TCL_LIB_DIR) $destdir/Lib/$::env(BUILD)/tcl/lib
-    file copy -force $::env(TCL_BIN_DIR) $destdir/Lib/$::env(BUILD)/tcl/bin
+    file mkdir $destdir/Lib/$::env(BUILD)/tcl-build
+    file copy -force $::env(TCL_LIB_DIR) $destdir/Lib/$::env(BUILD)/tcl-build/lib
+    file copy -force $::env(TCL_BIN_DIR) $destdir/Lib/$::env(BUILD)/tcl-build/bin
 
 
     #
@@ -132,31 +132,31 @@ proc tarup { {destdir "auto"} } {
     #   version of pkgIndex.tcl that allows for relocatable packages
     #
     puts " -- copying vtk files"
-    file mkdir $destdir/Lib/$::env(BUILD)/vtk/VTK/Wrapping/Tcl
+    file mkdir $destdir/Lib/$::env(BUILD)/VTK/Wrapping/Tcl
     set vtkparts { vtk vtkbase vtkcommon vtkpatented vtkfiltering
             vtkrendering vtkgraphics vtkhybrid vtkimaging 
             vtkinteraction vtkio vtktesting }
     foreach vtkpart $vtkparts {
-        file copy -force $::env(VTK_SRC_DIR)/Wrapping/Tcl/$vtkpart $destdir/Lib/$::env(BUILD)/vtk/VTK/Wrapping/Tcl
+        file copy -force $::env(VTK_SRC_DIR)/Wrapping/Tcl/$vtkpart $destdir/Lib/$::env(BUILD)/VTK/Wrapping/Tcl
     }
 
 
 
-    file mkdir $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl
+    file mkdir $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl
     switch $::env(BUILD) {
         "solaris8" -
         "linux-x86" - 
         "redhat7.3" - 
         "darwin-ppc" {
-            file copy -force $::env(VTK_DIR)/Wrapping/Tcl/pkgIndex.tcl $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl
+            file copy -force $::env(VTK_DIR)/Wrapping/Tcl/pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl
         }
         "Win32VC7" { 
-            file mkdir $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl/Debug
-            file copy -force $::env(VTK_DIR)/Wrapping/Tcl/Debug/pkgIndex.tcl $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl/Debug
+            file mkdir $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/Debug
+            file copy -force $::env(VTK_DIR)/Wrapping/Tcl/Debug/pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/Debug
         }
     }
 
-    file mkdir $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
+    file mkdir $destdir/Lib/$::env(BUILD)/VTK-build/bin
     switch $::env(BUILD) {
         "solaris8" -
         "linux-x86" -

@@ -161,30 +161,30 @@ switch $tcl_platform(os) {
     "Linux" -
     "Darwin" {
         set isWindows 0
-        set tclTestFile $LIB/tcl-build/bin/tclsh8.4
-        set tkTestFile  $LIB/tcl-build/bin/wish8.4
-        set itclTestFile $LIB/tcl-build/lib/libitclstub3.2.so
-        set iwidgetsTestFile $LIB/tcl-build/lib/iwidgets4.0.1/iwidgets.tcl
-        set bltTestFile $LIB/tcl-build/bin/bltwish
-        set vtkTestFile $LIB/VTK-build/bin/vtk
-        set vtkTclLib ../tcl-build/lib/libtcl8.4.so 
-        set vtkTkLib ../tcl-build/lib/libtk8.4.so
-        set vtkTclsh ../tcl-build/bin/tclsh8.4
-        set itkTestFile $LIB/Insight-build/lib/vtk
+        set tclTestFile $TCL_BIN_DIR/tclsh8.4
+        set tkTestFile  $TCL_BIN_DIR/wish8.4
+        set itclTestFile $TCL_LIB_DIR/libitclstub3.2.so
+        set iwidgetsTestFile $TCL_LIB_DIR/iwidgets4.0.2/iwidgets.tcl
+        set bltTestFile $TCL_BIN_DIR/bltwish
+        set vtkTestFile $VTK_DIR/bin/vtk
+        set vtkTclLib $TCL_LIB_DIR/libtcl8.4.so 
+        set vtkTkLib $TCL_LIB_DIR/libtk8.4.so
+        set vtkTclsh $TCL_BIN_DIR/tclsh8.4
+        set itkTestFile $ITK_BINARY_PATH/lib/libITKCommon.so
     }
     default {
         # different windows machines return different values, assume if none of the above, windows
         set isWindows 1
-        set tclTestFile $LIB/tcl-build/bin/tclsh84.exe
-        set tkTestFile $LIB/tcl-build/bin/wish84.exe
-        set itclTestFile  $LIB/tcl-build/lib/itcl3.2/itcl32.dll
-        set iwidgetsTestFile $LIB/tcl-build/lib/iwidgets4.0.2/iwidgets.tcl
-        set bltTestFile $LIB/tcl-build/bin/bltwish.exe
-        set vtkTestFile $LIB/VTK-build/bin/vtk.exe
-        set vtkTclLib ../tcl-build/lib/tcl84.lib
-        set vtkTkLib ../tcl-build/lib/tk84.lib
-        set vtkTclsh ../tcl-build/bin/tclsh84.exe
-        set itkTestFile $LIB/Insight-build/bin/libITKCommon.dll
+        set tclTestFile $TCL_BIN_DIR/tclsh84.exe
+        set tkTestFile  $TCL_BIN_DIR/wish84.exe
+        set itclTestFile $TCL_LIB_DIR/itcl3.2/itcl32.dll
+        set iwidgetsTestFile $TCL_LIB_DIR/iwidgets4.0.2/iwidgets.tcl
+        set bltTestFile $TCL_BIN_DIR/bltwish.exe
+        set vtkTestFile $VTK_DIR/bin/vtk.exe
+        set vtkTclLib $TCL_LIB_DIR/tcl84.lib
+        set vtkTkLib $TCL_LIB_DIR/tk84.lib
+        set vtkTclsh $TCL_BIN_DIR/tclsh84.exe
+        set itkTestFile $ITK_BINARY_PATH/bin/libITKCommon.dll
     }
 }
 
@@ -195,20 +195,18 @@ switch $tcl_platform(os) {
 # set in slicer_vars
 # set CMAKE $LIB/cmake/CMake-build/bin/cmake
 if { ![file exists $CMAKE] } {
-    file mkdir $LIB/cmake
-    cd $LIB/cmake
+    file mkdir $CMAKE_PATH
+    cd $SLICER_LIB
 
     runcmd cvs -d :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login
     runcmd cvs -z3 -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $cmakeTag CMake
-
-    file mkdir $LIB/cmake/CMake-build
 
     if {$isWindows} {
         append winMsg "cd $LIB/cmake/CMake-build\n../CMake/bootstrap\nmake\n"
 
     } else {
-        cd $LIB/cmake/CMake-build
-        runcmd ../CMake/bootstrap
+        cd $CMAKE_PATH
+        runcmd $SLICER_LIB/CMake/bootstrap
         runcmd make
     }
 }
@@ -298,9 +296,8 @@ if { ![file exists $iwidgetsTestFile] } {
 if {![file exists $bltTestFile] } {
     cd $LIB/tcl
     
-    puts "blt password is empty, just hit return"
-    runcmd cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/blt login
-    runcmd cvs -z3 -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/blt co -r $bltTag blt
+    runcmd cvs -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt login
+    runcmd cvs -z3 -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt co -r $bltTag blt
 
     if {$isWindows} {
         append winMsg "cd $LIB/tcl/blt\n./configure --with-tcl=$LIB/tcl-build --with-tk=$LIB/tcl-build --prefix=$LIB/tcl-build\nmake\nmake install"
@@ -329,22 +326,22 @@ if { ![file exists $vtkTestFile] } {
     if {$isWindows} {
     append winMsg "cd $LIB/VTK-build\n$CMAKE -G$GENERATOR -DBUILD_SHARED_LIBS:BOOL=ON -DBUILD_TESTING:BOOL=OFF -DVTK_USE_CARBON:BOOL=OFF -DVTK_USE_X:BOOL=ON -DVTK_WRAP_TCL:BOOL=ON -DVTK_USE_HYBRID:BOOL=ON -DVTK_USE_PATENTED:BOOL=ON -DTCL_INCLUDE_PATH:PATH=../tcl-build/include -DTK_INCLUDE_PATH:PATH=../tcl-build/include -DTCL_LIBRARY:FILEPATH=$vtkTclLib -DTK_LIBRARY:FILEPATH=$vtkTkLib -DTCL_TCLSH:FILEPATH=$vtkTclsh ../VTK make -j4\n"
     } else {
-    runcmd $CMAKE \
-        -G$GENERATOR \
-        -DBUILD_SHARED_LIBS:BOOL=ON \
-        -DBUILD_TESTING:BOOL=OFF \
-        -DVTK_USE_CARBON:BOOL=OFF \
-        -DVTK_USE_X:BOOL=ON \
-        -DVTK_WRAP_TCL:BOOL=ON \
-        -DVTK_USE_HYBRID:BOOL=ON \
-        -DVTK_USE_PATENTED:BOOL=ON \
-        -DTCL_INCLUDE_PATH:PATH=../tcl-build/include \
-        -DTK_INCLUDE_PATH:PATH=../tcl-build/include \
-        -DTCL_LIBRARY:FILEPATH=$vtkTclLib \
-        -DTK_LIBRARY:FILEPATH=$vtkTkLib \
-        -DTCL_TCLSH:FILEPATH=$vtkTclsh \
-        ../VTK
-    runcmd make -j4
+        runcmd $CMAKE \
+            -G$GENERATOR \
+            -DBUILD_SHARED_LIBS:BOOL=ON \
+            -DBUILD_TESTING:BOOL=OFF \
+            -DVTK_USE_CARBON:BOOL=OFF \
+            -DVTK_USE_X:BOOL=ON \
+            -DVTK_WRAP_TCL:BOOL=ON \
+            -DVTK_USE_HYBRID:BOOL=ON \
+            -DVTK_USE_PATENTED:BOOL=ON \
+            -DTCL_INCLUDE_PATH:PATH=../tcl-build/include \
+            -DTK_INCLUDE_PATH:PATH=../tcl-build/include \
+            -DTCL_LIBRARY:FILEPATH=$vtkTclLib \
+            -DTK_LIBRARY:FILEPATH=$vtkTkLib \
+            -DTCL_TCLSH:FILEPATH=$vtkTclsh \
+            ../VTK
+        runcmd make -j4
     }
 
 }

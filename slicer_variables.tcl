@@ -34,20 +34,22 @@ puts "SLICER_HOME is $SLICER_HOME"
 switch $tcl_platform(os) {
     "SunOS" {
         set env(BUILD) $solaris
-        set VTK_DIR  $SLICER_HOME/Lib/$env(BUILD)/vtk/VTK-build-4.2.2
-        set VTK_SRC_DIR $SLICER_HOME/Lib/$env(BUILD)/vtk/VTK-4.2.2
-        set ITK_BINARY_PATH /projects/birn/itk/itk-1.2/itk-build
+        set ::SLICER_LIB $SLICER_HOME/Lib/$::env(BUILD)
+        set VTK_DIR  $::SLICER_LIB/VTK-build
+        set VTK_SRC_DIR $::SLICER_LIB/VTK
+        set ITK_BINARY_PATH $::SLICER_LIB/Insight-build
         # used for compilation
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$env(BUILD)/bin/vtkSlicerBase.so
         set VTKSLICERBASE_BUILD_TCL_LIB $SLICER_HOME/Base/builds/$env(BUILD)/bin/vtkSlicerBaseTCL.so
         set GENERATOR "Unix Makefiles"
         set COMPILER_PATH "/local/os/bin"
         set COMPILER "g++"
-        set CMAKE cmake
-        set MAKE "gmake -j15"
+        set CMAKE_PATH $::SLICER_LIB/CMake-build
+        set CMAKE $CMAKE_PATH/bin/cmake
+        set MAKE "gmake -j15" 
         # needed in launch.tcl
-        set TCL_BIN_DIR $SLICER_HOME/Lib/$env(BUILD)/ActiveTcl8.4.2.0-solaris-sparc/bin
-        set TCL_LIB_DIR $SLICER_HOME/Lib/$env(BUILD)/ActiveTcl8.4.2.0-solaris-sparc/lib
+        set TCL_BIN_DIR $::SLICER_LIB/tcl-build/bin
+        set TCL_LIB_DIR $::SLICER_LIB/tcl-build/lib
     }
     "Linux" {
         set env(BUILD) $linux
