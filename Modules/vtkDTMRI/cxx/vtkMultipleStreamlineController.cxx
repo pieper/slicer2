@@ -334,10 +334,12 @@ void vtkMultipleStreamlineController::DeleteStreamline(vtkActor *pickedActor)
 // Save only one streamline. Called from within functions that save 
 // many streamlines in a loop.
 // Current format is x1,y1,z1 x2,y2,z2 x3,y3,z3 \n
-void vtkMultipleStreamlineController::SaveStreamlineAsTextFile(ofstream &file,
+void vtkMultipleStreamlineController::SaveStreamlineAsTextFile(ofstream &filePoints,
+                                                               ofstream &fileAttribs,
                                                                vtkHyperStreamlinePoints *currStreamline)
 {
   vtkPoints *hs0, *hs1;
+  vtkFloatArray *attr0, *attr1;
   int ptidx, numPts;
   double point[3];
 
@@ -345,6 +347,8 @@ void vtkMultipleStreamlineController::SaveStreamlineAsTextFile(ofstream &file,
   //GetHyperStreamline0/1 and write their points.
   hs0=currStreamline->GetHyperStreamline0();
   hs1=currStreamline->GetHyperStreamline1();
+  attr0=currStreamline->GetFractionalAnisotropy0();
+  attr1=currStreamline->GetFractionalAnisotropy1();
   
   // Write the first one in reverse order since both lines
   // travel outward from the initial point.
@@ -355,8 +359,8 @@ void vtkMultipleStreamlineController::SaveStreamlineAsTextFile(ofstream &file,
   while (ptidx >= 0)
     {
       hs0->GetPoint(ptidx,point);
-      //file << point[0] << " " << point[1] << " " << point[2] << endl;
-      file << point[0] << "," << point[1] << "," << point[2] << " ";
+      filePoints << point[0] << "," << point[1] << "," << point[2] << " ";
+      fileAttribs << attr0->GetValue(ptidx) << ",";
       ptidx--;
     }
   numPts=hs1->GetNumberOfPoints();
@@ -364,11 +368,12 @@ void vtkMultipleStreamlineController::SaveStreamlineAsTextFile(ofstream &file,
   while (ptidx < numPts)
     {
       hs1->GetPoint(ptidx,point);
-      //file << point[0] << " " << point[1] << " " << point[2] << endl;
-      file << point[0] << "," << point[1] << "," << point[2] << " ";
+      filePoints << point[0] << "," << point[1] << "," << point[2] << " ";
+      fileAttribs << attr1->GetValue(ptidx) << ",";
       ptidx++;
     }
-  file << endl;
+  filePoints << endl;
+  fileAttribs << endl;
 }
 
 
@@ -376,7 +381,8 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsTextFiles(char *filename)
 { 
   std::stringstream fileNameStr;
   vtkHyperStreamlinePoints *currStreamline;
-  ofstream file;
+  ofstream filePoints;
+  ofstream fileAttribs;
   int idx;
 
   // traverse streamline collection
@@ -399,9 +405,10 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsTextFiles(char *filename)
     {
       cout << "stream " << currStreamline << endl;
       
+      fileNameStr.str("");
       fileNameStr << filename << '_' << idx << ".txt";
-      file.open(fileNameStr.str().c_str());
-      if (file.fail())
+      filePoints.open(fileNameStr.str().c_str());
+      if (filePoints.fail())
         {
           vtkErrorMacro("Write: Could not open file " << fileNameStr.str().c_str());
           cerr << "Write: Could not open file " << fileNameStr.str().c_str();
@@ -413,10 +420,27 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsTextFiles(char *filename)
           return;
         }
 
-      this->SaveStreamlineAsTextFile(file, currStreamline);
+      fileNameStr.str("");
+      fileNameStr << filename << '_' << idx << "feats.txt";
+      fileAttribs.open(fileNameStr.str().c_str());
+      if (fileAttribs.fail())
+        {
+          vtkErrorMacro("Write: Could not open file " << fileNameStr.str().c_str());
+          cerr << "Write: Could not open file " << fileNameStr.str().c_str();
+#if (VTK_MAJOR_VERSION <= 5)      
+          this->SetErrorCode(2);
+#else
+          this->SetErrorCode(vtkErrorCode::GetErrorCodeFromString("CannotOpenFileError"));
+#endif
+          return;
+        }
+
+      this->SaveStreamlineAsTextFile(filePoints, fileAttribs,
+                                     currStreamline);
       
-      // Close file
-      file.close();
+      // Close files
+      filePoints.close();
+      fileAttribs.close();
       
       // get next object in collection
       currStreamline= (vtkHyperStreamlinePoints *)
@@ -722,6 +746,9 @@ vtkHyperStreamline * vtkMultipleStreamlineController::CreateHyperStreamline()
           // MaxCurvature
           currHSP->SetMaxCurvature(this->VtkHyperStreamlinePointsSettings->GetMaxCurvature());
 
+          // MinFractionalAnisotropy
+          currHSP->SetMinFractionalAnisotropy(this->VtkHyperStreamlinePointsSettings->GetMinFractionalAnisotropy());
+
           // IntegrationDirection (set in this class, default both ways)
           currHSP->SetIntegrationDirection(this->IntegrationDirection);
 
@@ -953,7 +980,7 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROI()
 // and then Delete it.  This is a way to seed in the whole brain
 // without running out of memory. Nothing is displayed in the renderers.
 //----------------------------------------------------------------------------
-void vtkMultipleStreamlineController::SeedAndSaveStreamlinesFromROI(char *filename)
+void vtkMultipleStreamlineController::SeedAndSaveStreamlinesFromROI(char *pointsFilename, char *modelFilename)
 {
   int idxX, idxY, idxZ;
   int maxX, maxY, maxZ;
@@ -970,7 +997,7 @@ void vtkMultipleStreamlineController::SeedAndSaveStreamlinesFromROI(char *filena
   vtkPolyDataWriter *writer;
   std::stringstream fileNameStr;
   int idx;
-  ofstream file;
+  ofstream filePoints, fileAttribs;
 
   // test we have input
   if (this->InputROI == NULL)
@@ -1022,11 +1049,30 @@ void vtkMultipleStreamlineController::SeedAndSaveStreamlinesFromROI(char *filena
 
 
   // Save all points to the same text file.
-  fileNameStr << filename << ".3dpts";
+  fileNameStr << pointsFilename << ".3dpts";
 
   // Open file
-  file.open(fileNameStr.str().c_str());
-  if (file.fail())
+  filePoints.open(fileNameStr.str().c_str());
+  if (filePoints.fail())
+    {
+      vtkErrorMacro("Write: Could not open file " 
+                    << fileNameStr.str().c_str());
+      cerr << "Write: Could not open file " << fileNameStr.str().c_str();
+#if (VTK_MAJOR_VERSION <= 5)      
+      this->SetErrorCode(2);
+#else
+      this->SetErrorCode(vtkErrorCode::GetErrorCodeFromString("CannotOpenFileError"));
+#endif
+      return;
+    }                   
+
+  // Save all features (FA) to the same text file.
+  fileNameStr.str("");
+  fileNameStr << pointsFilename << ".3dfeats";
+
+  // Open file
+  fileAttribs.open(fileNameStr.str().c_str());
+  if (fileAttribs.fail())
     {
       vtkErrorMacro("Write: Could not open file " 
                     << fileNameStr.str().c_str());
@@ -1105,14 +1151,14 @@ void vtkMultipleStreamlineController::SeedAndSaveStreamlinesFromROI(char *filena
 
                       // clear the buffer (set to empty string)
                       fileNameStr.str("");
-                      fileNameStr << filename << '_' << idx << ".vtk";
+                      fileNameStr << modelFilename << '_' << idx << ".vtk";
                       writer->SetFileName(fileNameStr.str().c_str());
                       writer->Write();
 
                       // Save the center points to disk
                       if (newStreamline->IsA("vtkHyperStreamlinePoints"))
                         {
-                          this->SaveStreamlineAsTextFile(file,(vtkHyperStreamlinePoints *) newStreamline);
+                          this->SaveStreamlineAsTextFile(filePoints,fileAttribs,(vtkHyperStreamlinePoints *) newStreamline);
                         }
 
                       // Delete objects
@@ -1134,7 +1180,8 @@ void vtkMultipleStreamlineController::SeedAndSaveStreamlinesFromROI(char *filena
   writer->Delete();
 
   // Close text file
-  file.close();
+  filePoints.close();
+  fileAttribs.close();
 
 }
 

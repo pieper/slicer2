@@ -49,7 +49,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // and then Delete it.  This is a way to seed in the whole brain
   // without running out of memory. Nothing is displayed in the renderers.
   // Both the models and the lines of points (text files) are saved.
-  void SeedAndSaveStreamlinesFromROI(char *filename);
+  void SeedAndSaveStreamlinesFromROI(char *pointsFilename, char *modelFilename);
 
   // Description
   // Start a streamline from the input point.
@@ -217,7 +217,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   void DeleteStreamline(int index);
   int PointWithinTensorData(double *point, double *pointw);
   vtkHyperStreamline *CreateHyperStreamline();
-  void SaveStreamlineAsTextFile(ofstream &file,
+  void SaveStreamlineAsTextFile(ofstream &filePoints,ofstream &fileAttribs,
                                 vtkHyperStreamlinePoints *currStreamline);
 
   vtkTransform *ROIToWorld;

@@ -126,7 +126,6 @@ proc DTMRIInit {} {
 
     # Source all appropriate tcl files here. 
     source "$env(SLICER_HOME)/Modules/vtkDTMRI/tcl/notebook.tcl"
-
      
     # Module Summary Info
     #------------------------------------
@@ -136,9 +135,9 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.56 $} {$Date: 2005/01/16 23:37:49 $}]
+                  {$Revision: 1.57 $} {$Date: 2005/01/23 02:52:46 $}]
 
-     # Define Tabs
+    # Define Tabs
     #------------------------------------
     set Module($m,row1List) "Help Input Convert Display ROI"
     set Module($m,row1Name) "{Help} {Input} {Convert} {Disp} {ROI}"
@@ -330,7 +329,7 @@ proc DTMRIInit {} {
     # type of tract coloring
     set DTMRI(mode,tractColor) SolidColor;
     set DTMRI(mode,tractColorList) {SolidColor MultiColor}
-    set DTMRI(mode,tractColorList,tooltip) {Color streamlines with a solid color OR MultiColor by scalars from the data (diffusion magnitude).}
+    set DTMRI(mode,tractColorList,tooltip) "Color tracts with a solid color \nOR MultiColor by scalars from the menu below."
 
 
     # How to handle display of colors: like W/L but scalar range
@@ -397,7 +396,7 @@ proc DTMRIInit {} {
                                "Magnitude of the correction bias added for tractography" ]
     set DTMRI(stream,variableList) [list \
                     MaximumPropagationDistance IntegrationStepLength \
-                    StepLength Radius  NumberOfSides MaxCurvature]
+                    StepLength Radius  NumberOfSides MaxCurvature MinFractionalAnisotropy]
     set DTMRI(stream,precisevariableList) [list \
                            MaximumPropagationDistance MinimumPropagationDistance TerminalEigenvalue \
                            IntegrationStepLength \
@@ -405,7 +404,7 @@ proc DTMRIInit {} {
                            MaxStep MinStep MaxError MaxAngle LengthOfMaxAngle]
     set DTMRI(stream,variableList,text) [list \
                          "Max Length" "Step Size" \
-                         "Smoothness (along)" "Radius"  "Smoothness (around)" "Curvature Threshold"]
+                         "Smoothness (along)" "Radius"  "Smoothness (around)" "Curvature Threshold" "FA Threshold"]
     set DTMRI(stream,precisevariableList,text) [list \
                             "Max Length" "Min Length" "Terminal Eigenvalue"\
                             "Step Size" \
@@ -417,7 +416,8 @@ proc DTMRIInit {} {
                          "StepLength: Length of each displayed tube segment" \
                          "Radius: Initial radius (thickness) of displayed tube" \
                          "NumberOfSides: Number of sides of displayed tube" \
-                         "Curvature Threshold: Max curvature allowed in tracking"]
+                         "Curvature Threshold: Max curvature allowed in tracking"\
+                         "FA Threshold: If FA falls below this value, tracking stops"]
     
     set DTMRI(stream,precisevariableList,tooltips) [list \
                             "MaximumPropagationDistance: Tractography will stop after this distance" \
@@ -469,7 +469,9 @@ proc DTMRIInit {} {
     # sides of tube
     #set DTMRI(stream,NumberOfSides)  4
     set DTMRI(stream,NumberOfSides)  6
-    set DTMRI(stream,MaxCurvature) 1.3
+    #set DTMRI(stream,MaxCurvature) 1.3
+    set DTMRI(stream,MaxCurvature) 1.15
+    set DTMRI(stream,MinFractionalAnisotropy) 0.07
 
     #------------------------------------
     # Variables for auto streamline display
@@ -1484,7 +1486,7 @@ especially Diffusion DTMRI MRI.
     # menu to select a volume: will set Volume(activeID)
     set name ColorByVolume
     DevAddSelectButton  Volume $f $name "Color by Volume:" Pack \
-    "First select Color by MultiColor, then select the volume to use to color the tracts. For example to color by FA, create the FA volume using the <More...> tab in this module, then the <Scalars> tab.  Then select that volume from this list." \
+    "First select Color by MultiColor, \nthen select the volume to use \nto color the tracts. \nFor example to color by FA, \ncreate the FA volume using the \n<More...> tab in this module, \nthen the <Scalars> tab.  \nThen select that volume from this list." \
     13
     
     # Append these menus and buttons to lists 
@@ -4195,6 +4197,7 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
 
     # make sure the settings are current
     DTMRIUpdateTractColor
+    DTMRIUpdateStreamlineSettings
     
     # set up the input segmented volume
     DTMRI(vtk,streamlineControl) SetInputROI [Volume($v,vol) GetOutput] 
@@ -4255,6 +4258,18 @@ proc DTMRISeedAndSaveStreamlinesFromSegmentation {{verbose 1}} {
         return
     }
 
+
+    # make a subdirectory for them, named the same as the files                            
+    set name [file root [file tail $filename]]
+    set dir [file dirname $filename]
+    set newdir [file join $dir tract_files_$name]
+    file mkdir $newdir
+    set filename [file join $newdir $name]
+    # make a subdirectory for the vtk models                                               
+    set newdir2 [file join $newdir vtk_model_files]
+    file mkdir $newdir2
+    set filename2 [file join $newdir2 $name]
+
     # ask for user confirmation first
     if {$verbose == "1"} {
         set name [Volume($v,node) GetName]
@@ -4263,6 +4278,10 @@ proc DTMRISeedAndSaveStreamlinesFromSegmentation {{verbose 1}} {
             return
         }
     }
+
+    # make sure the settings are current for the models we save to disk              
+    #DTMRIUpdateTractColor                                                          
+    DTMRIUpdateStreamlineSettings
 
     # set up the input segmented volume
     DTMRI(vtk,streamlineControl) SetInputROI [Volume($v,vol) GetOutput] 
@@ -4279,7 +4298,8 @@ proc DTMRISeedAndSaveStreamlinesFromSegmentation {{verbose 1}} {
 
     # create all streamlines
     puts "Starting to seed streamlines. Files will be $filename*.*"
-    DTMRI(vtk,streamlineControl) SeedAndSaveStreamlinesFromROI $filename
+    DTMRI(vtk,streamlineControl) SeedAndSaveStreamlinesFromROI \
+        $filename  $filename2
 
     # let user know something happened
     if {$verbose == "1"} {
