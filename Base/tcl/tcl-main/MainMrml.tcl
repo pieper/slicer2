@@ -69,7 +69,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-		{$Revision: 1.44 $} {$Date: 2001/11/30 20:31:45 $}]
+		{$Revision: 1.45 $} {$Date: 2001/12/10 21:31:02 $}]
 
 	set Mrml(filePrefix) data
 	set Mrml(colorsUnsaved) 0
@@ -1044,7 +1044,9 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 		    					$n SetFade 0
 		    				}
 		    			}
-		    			"opacity" [$n SetOpacity $val]
+		    			"opacity" {
+					    $n SetOpacity $val
+					}
 		    		}
 		    	}
 		}
