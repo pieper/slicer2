@@ -125,7 +125,7 @@ void vtkInteractiveTensorGlyph::Execute()
 
   if (this->GetSource() == NULL)
     {
-    vtkErrorMacro("No source.");
+    vtkWarningMacro("No source.");
     return;
     }
 
@@ -224,13 +224,13 @@ void vtkInteractiveTensorGlyph::Execute()
   if (this->MaskGlyphsWithScalars)
     {
       if (inMask)
-	{
-	  doMasking = 1;
-	}
+    {
+      doMasking = 1;
+    }
       else 
-	{
-	  vtkErrorMacro("User has not set input mask, but has requested MaskGlyphsWithScalars");
-	}
+    {
+      vtkErrorMacro("User has not set input mask, but has requested MaskGlyphsWithScalars");
+    }
     }
 
   // figure out if we are transforming output point locations
@@ -252,13 +252,13 @@ void vtkInteractiveTensorGlyph::Execute()
     {
       
       if ( ! (inPtId % 10000) ) 
-	{
-	  this->UpdateProgress ((float)inPtId/numPts);
-	  if (this->GetAbortExecute())
-	    {
-	      break;
-	    }
-	}
+    {
+      this->UpdateProgress ((float)inPtId/numPts);
+      if (this->GetAbortExecute())
+        {
+          break;
+        }
+    }
 
       //ptIncr = inPtId * numSourcePts;
 
@@ -280,223 +280,223 @@ void vtkInteractiveTensorGlyph::Execute()
       // display nothing at the end, since we expect that our data has
       // non-negative eigenvalues.)
       if ((doMasking && inMask->GetTuple1(inPtId)) || (!this->MaskGlyphsWithScalars && trace > 0)) 
-	{
-	  // copy topology
-	  for (cellId=0; cellId < numSourceCells; cellId++)
-	    {
-	      cell = this->GetSource()->GetCell(cellId);
-	      cellPts = cell->GetPointIds();
-	      npts = cellPts->GetNumberOfIds();
-	      for (i=0; i < npts; i++)
-		{
-		  //pts[i] = cellPts->GetId(i) + ptIncr;
-		  pts[i] = cellPts->GetId(i) + ptOffset;
-		}
-	      output->InsertNextCell(cell->GetCellType(),npts,pts);
-	    }
+    {
+      // copy topology
+      for (cellId=0; cellId < numSourceCells; cellId++)
+        {
+          cell = this->GetSource()->GetCell(cellId);
+          cellPts = cell->GetPointIds();
+          npts = cellPts->GetNumberOfIds();
+          for (i=0; i < npts; i++)
+        {
+          //pts[i] = cellPts->GetId(i) + ptIncr;
+          pts[i] = cellPts->GetId(i) + ptOffset;
+        }
+          output->InsertNextCell(cell->GetCellType(),npts,pts);
+        }
 
-	  // translate Source to Input point
-	  x = input->GetPoint(inPtId);
-	  // If we have a user-specified matrix determining the points
-	  float x2[3];
-	  if (this->VolumePositionMatrix)
-	    {
-	      userVolumeTransform->TransformPoint(x,x2);
-	      // point x to x2 now
-	      x = x2;
-	    }  
-	  trans->Translate(x[0], x[1], x[2]);
+      // translate Source to Input point
+      x = input->GetPoint(inPtId);
+      // If we have a user-specified matrix determining the points
+      float x2[3];
+      if (this->VolumePositionMatrix)
+        {
+          userVolumeTransform->TransformPoint(x,x2);
+          // point x to x2 now
+          x = x2;
+        }  
+      trans->Translate(x[0], x[1], x[2]);
 
-	  // compute orientation vectors and scale factors from tensor
-	  if ( this->ExtractEigenvalues ) // extract appropriate eigenfunctions
-	    {
-	      for (j=0; j<3; j++)
-		{
-		  for (i=0; i<3; i++)
-		    {
-		      // transpose
-		      //m[i][j] = tensor[i+3*j];
-		      m[i][j] = tensor[j][i];
-		    }
-		}
-	      vtkMath::Jacobi(m, w, v);
+      // compute orientation vectors and scale factors from tensor
+      if ( this->ExtractEigenvalues ) // extract appropriate eigenfunctions
+        {
+          for (j=0; j<3; j++)
+        {
+          for (i=0; i<3; i++)
+            {
+              // transpose
+              //m[i][j] = tensor[i+3*j];
+              m[i][j] = tensor[j][i];
+            }
+        }
+          vtkMath::Jacobi(m, w, v);
 
-	      //copy eigenvectors
-	      xv[0] = v[0][0]; xv[1] = v[1][0]; xv[2] = v[2][0];
-	      yv[0] = v[0][1]; yv[1] = v[1][1]; yv[2] = v[2][1];
-	      zv[0] = v[0][2]; zv[1] = v[1][2]; zv[2] = v[2][2];
-	    }
-	  else //use tensor columns as eigenvectors
-	    {
-	      for (i=0; i<3; i++)
-		{
-		  //xv[i] = tensor[i];
-		  //yv[i] = tensor[i+3];
-		  //zv[i] = tensor[i+6];
-		  xv[i] = tensor[0][i];
-		  yv[i] = tensor[1][i];
-		  zv[i] = tensor[2][i];
-		}
-	      w[0] = vtkMath::Normalize(xv);
-	      w[1] = vtkMath::Normalize(yv);
-	      w[2] = vtkMath::Normalize(zv);
-	    }
+          //copy eigenvectors
+          xv[0] = v[0][0]; xv[1] = v[1][0]; xv[2] = v[2][0];
+          yv[0] = v[0][1]; yv[1] = v[1][1]; yv[2] = v[2][1];
+          zv[0] = v[0][2]; zv[1] = v[1][2]; zv[2] = v[2][2];
+        }
+      else //use tensor columns as eigenvectors
+        {
+          for (i=0; i<3; i++)
+        {
+          //xv[i] = tensor[i];
+          //yv[i] = tensor[i+3];
+          //zv[i] = tensor[i+6];
+          xv[i] = tensor[0][i];
+          yv[i] = tensor[1][i];
+          zv[i] = tensor[2][i];
+        }
+          w[0] = vtkMath::Normalize(xv);
+          w[1] = vtkMath::Normalize(yv);
+          w[2] = vtkMath::Normalize(zv);
+        }
 
-	  // output scalars before modifying the value of 
-	  // the eigenvalues (scaling, etc)
-	  if ( inScalars && this->ColorGlyphs ) 
-	    {
-	      // Copy point data from source
-	      s = inScalars->GetTuple1(inPtId);
-	    }
-	  else 
-	    {
-	      // create scalar data from computed features
-	      float trace = w[0]+w[1]+w[2];
+      // output scalars before modifying the value of 
+      // the eigenvalues (scaling, etc)
+      if ( inScalars && this->ColorGlyphs ) 
+        {
+          // Copy point data from source
+          s = inScalars->GetTuple1(inPtId);
+        }
+      else 
+        {
+          // create scalar data from computed features
+          float trace = w[0]+w[1]+w[2];
 
-	      // avoid division by 0
-	      float eps = 1;
-	      if (trace == 0) 
-		trace = eps;
-	      float norm;
+          // avoid division by 0
+          float eps = 1;
+          if (trace == 0) 
+        trace = eps;
+          float norm;
 
-	      // regularization to compensate for small eigenvalues
-	      float r = 0.001;
-	      trace += r;
+          // regularization to compensate for small eigenvalues
+          float r = 0.001;
+          trace += r;
 
-	      switch (this->ScalarMeasure) 
-		{
-		case VTK_LINEAR_MEASURE:
-		  s = (w[0] - w[1])/trace;
-		  break;
-		case VTK_PLANAR_MEASURE:
-		  s = 2*(w[1] - w[2])/trace;
-		  break;
-		case VTK_SPHERICAL_MEASURE:
-		  s = 3*w[2]/trace;
-		  break;
-		case VTK_MAX_EIGENVAL_MEASURE:
-		  s = w[0];
-		  break;
-		case VTK_MIDDLE_EIGENVAL_MEASURE:
-		  s = w[1];
-		  break;
-		case VTK_MIN_EIGENVAL_MEASURE:
-		  s = w[2]; 
-		  break;
-		case VTK_EIGENVAL_DIFFERENCE_MAX_MID_MEASURE:
-		  s = w[0] - w[2]; 
-		  break;
-		case VTK_DIRECTION_MEASURE:
-		  // vary color only with x and y, since unit vector
-		  // these two determine z component.
-		  // use max evector for direction
-		  s = fabs(xv[0])/(fabs(yv[0]) + eps);
-		  break;
-		case VTK_RELATIVE_ANISOTROPY_MEASURE:
-		  // 1/sqrt(2) is the constant used here
-		  s = (0.70710678)*(sqrt((w[0]-w[1])*(w[0]-w[1]) + 
-					 (w[2]-w[1])*(w[2]-w[1]) +
-					 (w[2]-w[0])*(w[2]-w[0])))/trace;
-		  break;
-		case VTK_FRACTIONAL_ANISOTROPY_MEASURE:
-		  norm = sqrt(w[0]*w[0]+ w[1]*w[1] +  w[2]*w[2]);
-		  if (norm == 0) 
-		    norm = eps;
-		  s = (0.70710678)*(sqrt((w[0]-w[1])*(w[0]-w[1]) + 
-					 (w[2]-w[1])*(w[2]-w[1]) +
-					 (w[2]-w[0])*(w[2]-w[0])))/norm;
+          switch (this->ScalarMeasure) 
+        {
+        case VTK_LINEAR_MEASURE:
+          s = (w[0] - w[1])/trace;
+          break;
+        case VTK_PLANAR_MEASURE:
+          s = 2*(w[1] - w[2])/trace;
+          break;
+        case VTK_SPHERICAL_MEASURE:
+          s = 3*w[2]/trace;
+          break;
+        case VTK_MAX_EIGENVAL_MEASURE:
+          s = w[0];
+          break;
+        case VTK_MIDDLE_EIGENVAL_MEASURE:
+          s = w[1];
+          break;
+        case VTK_MIN_EIGENVAL_MEASURE:
+          s = w[2]; 
+          break;
+        case VTK_EIGENVAL_DIFFERENCE_MAX_MID_MEASURE:
+          s = w[0] - w[2]; 
+          break;
+        case VTK_DIRECTION_MEASURE:
+          // vary color only with x and y, since unit vector
+          // these two determine z component.
+          // use max evector for direction
+          s = fabs(xv[0])/(fabs(yv[0]) + eps);
+          break;
+        case VTK_RELATIVE_ANISOTROPY_MEASURE:
+          // 1/sqrt(2) is the constant used here
+          s = (0.70710678)*(sqrt((w[0]-w[1])*(w[0]-w[1]) + 
+                     (w[2]-w[1])*(w[2]-w[1]) +
+                     (w[2]-w[0])*(w[2]-w[0])))/trace;
+          break;
+        case VTK_FRACTIONAL_ANISOTROPY_MEASURE:
+          norm = sqrt(w[0]*w[0]+ w[1]*w[1] +  w[2]*w[2]);
+          if (norm == 0) 
+            norm = eps;
+          s = (0.70710678)*(sqrt((w[0]-w[1])*(w[0]-w[1]) + 
+                     (w[2]-w[1])*(w[2]-w[1]) +
+                     (w[2]-w[0])*(w[2]-w[0])))/norm;
 
-		  break;
-		default:
-		  s = 0;
-		  break;
-		}
-	    }	      
+          break;
+        default:
+          s = 0;
+          break;
+        }
+        }          
 
-	  for (i=0; i < numSourcePts; i++) 
-	    {
-	      //newScalars->InsertScalar(ptIncr+i, s);
-	      newScalars->InsertNextTuple1(s);
-	    }	    
+      for (i=0; i < numSourcePts; i++) 
+        {
+          //newScalars->InsertScalar(ptIncr+i, s);
+          newScalars->InsertNextTuple1(s);
+        }        
 
-	  // compute scale factors
-	  w[0] *= this->ScaleFactor;
-	  w[1] *= this->ScaleFactor;
-	  w[2] *= this->ScaleFactor;
+      // compute scale factors
+      w[0] *= this->ScaleFactor;
+      w[1] *= this->ScaleFactor;
+      w[2] *= this->ScaleFactor;
     
-	  if ( this->ClampScaling )
-	    {
-	      for (maxScale=0.0, i=0; i<3; i++)
-		{
-		  if ( maxScale < fabs(w[i]) )
-		    {
-		      maxScale = fabs(w[i]);
-		    }
-		}
-	      if ( maxScale > this->MaxScaleFactor )
-		{
-		  maxScale = this->MaxScaleFactor / maxScale;
-		  for (i=0; i<3; i++)
-		    {
-		      w[i] *= maxScale; //preserve overall shape of glyph
-		    }
-		}
-	    }
+      if ( this->ClampScaling )
+        {
+          for (maxScale=0.0, i=0; i<3; i++)
+        {
+          if ( maxScale < fabs(w[i]) )
+            {
+              maxScale = fabs(w[i]);
+            }
+        }
+          if ( maxScale > this->MaxScaleFactor )
+        {
+          maxScale = this->MaxScaleFactor / maxScale;
+          for (i=0; i<3; i++)
+            {
+              w[i] *= maxScale; //preserve overall shape of glyph
+            }
+        }
+        }
 
-	  // If we have a user-specified matrix rotating the tensor
-	   if (this->TensorRotationMatrix)
-	     {
-	       trans->Concatenate(this->TensorRotationMatrix);
-	     }
+      // If we have a user-specified matrix rotating the tensor
+       if (this->TensorRotationMatrix)
+         {
+           trans->Concatenate(this->TensorRotationMatrix);
+         }
 
 
-	  // normalized eigenvectors rotate object
-	  // odonnell: test -y for display 
-	  int yFlipFlag = 1;
-	  matrix->Element[0][0] = xv[0];
-	  matrix->Element[0][1] = yFlipFlag*yv[0];
-	  matrix->Element[0][2] = zv[0];
-	  matrix->Element[1][0] = xv[1];
-	  matrix->Element[1][1] = yFlipFlag*yv[1];
-	  matrix->Element[1][2] = zv[1];
-	  matrix->Element[2][0] = xv[2];
-	  matrix->Element[2][1] = yFlipFlag*yv[2];
-	  matrix->Element[2][2] = zv[2];
-	  trans->Concatenate(matrix);
+      // normalized eigenvectors rotate object
+      // odonnell: test -y for display 
+      int yFlipFlag = 1;
+      matrix->Element[0][0] = xv[0];
+      matrix->Element[0][1] = yFlipFlag*yv[0];
+      matrix->Element[0][2] = zv[0];
+      matrix->Element[1][0] = xv[1];
+      matrix->Element[1][1] = yFlipFlag*yv[1];
+      matrix->Element[1][2] = zv[1];
+      matrix->Element[2][0] = xv[2];
+      matrix->Element[2][1] = yFlipFlag*yv[2];
+      matrix->Element[2][2] = zv[2];
+      trans->Concatenate(matrix);
 
-	  // make sure scale is okay (non-zero) and scale data
-	  for (maxScale=0.0, i=0; i<3; i++)
-	    {
-	      if ( w[i] > maxScale )
-		{
-		  maxScale = w[i];
-		}
-	    }
-	  if ( maxScale == 0.0 )
-	    {
-	      maxScale = 1.0;
-	    }
-	  for (i=0; i<3; i++)
-	    {
-	      if ( w[i] == 0.0 )
-		{
-		  w[i] = maxScale * 1.0e-06;
-		}
-	    }
-	  trans->Scale(w[0], w[1], w[2]);
+      // make sure scale is okay (non-zero) and scale data
+      for (maxScale=0.0, i=0; i<3; i++)
+        {
+          if ( w[i] > maxScale )
+        {
+          maxScale = w[i];
+        }
+        }
+      if ( maxScale == 0.0 )
+        {
+          maxScale = 1.0;
+        }
+      for (i=0; i<3; i++)
+        {
+          if ( w[i] == 0.0 )
+        {
+          w[i] = maxScale * 1.0e-06;
+        }
+        }
+      trans->Scale(w[0], w[1], w[2]);
 
-	  // multiply points (and normals if available) by resulting matrix
-	  // this also appends them to the output "new" data
-	  trans->TransformPoints(sourcePts,newPts);
-	  if ( newNormals )
-	    {
-	      trans->TransformNormals(sourceNormals,newNormals);
-	    }
+      // multiply points (and normals if available) by resulting matrix
+      // this also appends them to the output "new" data
+      trans->TransformPoints(sourcePts,newPts);
+      if ( newNormals )
+        {
+          trans->TransformNormals(sourceNormals,newNormals);
+        }
 
-	  ptOffset += numSourcePts;
+      ptOffset += numSourcePts;
 
-	}  // end if mask is 1 OR trace is ok
+    }  // end if mask is 1 OR trace is ok
     }
 
   vtkDebugMacro(<<"Generated " << numPts <<" tensor glyphs");
