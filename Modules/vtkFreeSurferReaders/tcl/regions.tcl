@@ -44,6 +44,7 @@ if { [itcl::find class regions] == "" } {
         method query {} {}
         method findptscalars {} {}
         method talairach {} {}
+        method refresh {args} {}
         method demo {} {}
     }
 }
@@ -67,14 +68,7 @@ itcl::body regions::constructor {args} {
 
     set _modelmenu [iwidgets::Optionmenu $cs.model]
     $_modelmenu configure -labeltext "Model:" -command "$this configure -model \[$_modelmenu get\]"
-    foreach i $Model(idList) {
-        set name [Model($i,node) GetName]
-        $_modelmenu insert end $name
-        if { $model == "" } {
-            set model $name
-            set _id $i
-        }
-    }
+    refresh model
     pack $_modelmenu -expand true -fill x
 
     frame $cs.annot
@@ -548,6 +542,25 @@ itcl::body regions::talairach {} {
     close $infile
     set outfile [open "/home/ajoyner/TDpoints.txt" w+]
     seek $outfile 0 start
+}
+
+itcl::body regions::refresh {args} {
+
+    switch [lindex $args 0] {
+        "model" {
+            $_modelmenu delete 0 end
+            foreach i $::Model(idList) {
+                set name [Model($i,node) GetName]
+                $_modelmenu insert end $name
+                if { $model == "" } {
+                    set model $name
+                    set _id $i
+                }
+            }
+        }
+        "fiducials" {
+        }
+    }
 }
 
 itcl::body regions::demo {} {
