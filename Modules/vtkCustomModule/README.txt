@@ -1,8 +1,14 @@
+vtkCustomModule -- a system for creating new VTK Modules
+
+Michael Halle and Steve Pieper 
+mhalle@bwh.harvard.edu, pieper@bwh.harvard.edu
+Neuroimage Analysis Center/BIRN (an NCRR National Resource Center)
+Surgical Planning Lab, Brigham and Women's Hospital
+
 Quick notes for creating your own custom VTK module.
 Michael Halle -- 2002/05/17
-Updated Steve Pieper 2002-05-29
+Updated Steve Pieper -- 2002-05-29
 Michael Halle -- 2001/01/17
-
 
 * Go into the slicer2 Modules directory ; for example:
 
