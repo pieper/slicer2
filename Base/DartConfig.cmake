@@ -7,6 +7,7 @@ SET (DROP_SITE "ftp.spl.harvard.edu")
 SET (DROP_LOCATION "/incoming")
 SET (DROP_SITE_USER "slicerdart")
 SET (DROP_SITE_PASSWORD "slicerdart")
+SET (DROP_SITE_MODE "active")
 SET (TRIGGER_SITE 
        "http://splweb.bwh.harvard.edu:8000/cgi-bin/Submit-slicer-TestingResults.pl")
 
