@@ -185,6 +185,7 @@ if { $CLEANFLAG } {
     }
 }
 
+set failed ""
 foreach target $TARGETS {
 
     puts "\n----\nprocessing $target..."
@@ -226,11 +227,22 @@ foreach target $TARGETS {
             puts "running: devenv $sln /build debug"
 
             # no output from devenv so just go ahead and run it with no loop
-            exec devenv $sln /build debug
+            set ret [catch "exec devenv $sln /build debug" res]
+
+            puts $res
+            
+            if { $ret } {
+                lappend failed [file tail $target]
+            }
         }
     }
 }
 
+if { [llength $failed] } {
+    puts "\nBuild failed for: $failed"
+} else {
+    puts "\nBuild complete"
+}
 
 exit 0
 
