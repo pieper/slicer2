@@ -105,7 +105,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.12 $} {$Date: 2005/03/21 22:35:16 $}]
+        {$Revision: 1.13 $} {$Date: 2005/03/28 22:29:51 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -191,6 +191,13 @@ proc TransformVolumeExit {} {
     #   previous ones.
     #
     #popEventManager
+
+    if {[info exists TransformVolume(OutputIsv)]} {
+        destroy $TransformVolume(OutputIsv)
+    }
+    if {[info exists TransformVolume(isv)]} {
+        destroy $TransformVolume(isv)
+    }
 }
 
 
@@ -495,35 +502,38 @@ proc TransformVolumeRun {} {
     # get displacement volume
     set vDisp $TransformVolume(DispVolume)
     
-    catch "destroy .isv"
-
-    isvolume .isv
+    if {![info exists TransformVolume(OutputIsv)]} {
+        catch "destroy .isv"
+        isvolume .isv
+        set  TransformVolume(OutputIsv) .isv
+    } 
+    set isv $TransformVolume(OutputIsv)
     
-    .isv volmenu_update
+    $isv volmenu_update
 
     foreach v $TransformVolume(VolIDs) {
         
         puts " TransformVolume : transforming volume [Volume($v,node) GetName]"
         
-        .isv configure -volume [Volume($v,node) GetName]
+        $isv configure -volume [Volume($v,node) GetName]
         
-        .isv configure -orientation $TransformVolume(OutputOrientation)
+        $isv configure -orientation $TransformVolume(OutputOrientation)
 
         if {[Volume($v,node) GetInterpolate] != 0} {
-            .isv configure -interpolation $TransformVolume(InterpolationMode)
+            $isv configure -interpolation $TransformVolume(InterpolationMode)
         } else {
-            .isv configure -interpolation "NearestNeighbor"
+            $isv configure -interpolation "NearestNeighbor"
         }
 
-        .isv set_spacing $TransformVolume(OutputSpacingLR) \
+        $isv set_spacing $TransformVolume(OutputSpacingLR) \
             $TransformVolume(OutputSpacingPA) \
             $TransformVolume(OutputSpacingIS)
-        .isv set_dimensions $TransformVolume(OutputDimensionLR) \
+        $isv set_dimensions $TransformVolume(OutputDimensionLR) \
             $TransformVolume(OutputDimensionPA) \
             $TransformVolume(OutputDimensionIS)
         
         if {$vDisp != "" && $vDisp != $Volume(idNone)} {
-            .isv configure -warpvolume [Volume($vDisp,node) GetName]
+            $isv configure -warpvolume [Volume($vDisp,node) GetName]
         }
         
         # create result name
@@ -547,7 +557,7 @@ proc TransformVolumeRun {} {
         }
 
         # get the volume
-        .isv slicer_volume $resVolName
+        $isv slicer_volume $resVolName
         
     }
 
