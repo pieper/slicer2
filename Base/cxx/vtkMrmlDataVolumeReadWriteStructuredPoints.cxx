@@ -86,7 +86,6 @@ int vtkMrmlDataVolumeReadWriteStructuredPoints::Read(vtkMrmlVolumeNode *node,
   reader->DebugOn();
   reader->SetFileName(this->FileName);
   reader->Update();
-
   // perhaps we should tell the reader this info,
   // but the default may be worse than the reader's default.
   //node->GetLittleEndian();  
@@ -102,7 +101,10 @@ int vtkMrmlDataVolumeReadWriteStructuredPoints::Read(vtkMrmlVolumeNode *node,
   node->SetDimensions(ext[1]-ext[0]+1,ext[3]-ext[2]+1);
   node->SetSpacing(sp->GetSpacing());
   node->SetScalarType(sp->GetScalarType());
-  node->SetNumScalars(sp->GetPointData()->GetScalars()->GetNumberOfComponents());
+  if (sp->GetPointData()->GetScalars())
+    node->SetNumScalars(sp->GetPointData()->GetScalars()->GetNumberOfComponents());
+  else
+    node->SetNumScalars(0);
   // Set up things in the node that may have required user input.
   // These things should be set in the node from the GUI 
   // before reading in the volume, since this info is not in a 
@@ -111,7 +113,6 @@ int vtkMrmlDataVolumeReadWriteStructuredPoints::Read(vtkMrmlVolumeNode *node,
   //node->SetTilt();   // was set from GUI
   // this should be set in the node from GUI input before reading file
   node->ComputeRasToIjkFromScanOrder(node->GetScanOrder());
-
   // return success
   return 1;
 }
@@ -127,6 +128,7 @@ int vtkMrmlDataVolumeReadWriteStructuredPoints::Write(vtkMrmlVolumeNode *node,
   writer->SetInput(input);
   writer->Update();
 
+  writer->Delete();
   // return success
   return 1;
 }
