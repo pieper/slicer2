@@ -84,7 +84,9 @@ raisesplash
 
 
 source $prog/tkcon.tcl
+wm geometry .tkcon +10-50
 tkcon attach main
+
 package require vtkSlicerBase
 
 # turn of warnings about old function use
