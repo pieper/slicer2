@@ -132,9 +132,11 @@ proc DTMRIInit {} {
     #------------------------------------
     set Module($m,overview) "Diffusion DTMRI MRI visualization and more..."
     set Module($m,author) "Lauren O'Donnell"
+    set Module($m,category) "Visualisation"
+
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.49 $} {$Date: 2004/11/17 00:48:38 $}]
+                  {$Revision: 1.49.2.1 $} {$Date: 2004/11/30 20:53:06 $}]
 
      # Define Tabs
     #------------------------------------
