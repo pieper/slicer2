@@ -194,10 +194,9 @@ if { ![file exists $CMAKE] } {
     file mkdir $CMAKE_PATH
     cd $SLICER_LIB
 
-    runcmd cvs -d :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login
-    runcmd cvs -z3 -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $cmakeTag CMake
 
     if {$isWindows} {
+        puts stderr "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --"
         puts stderr "-- genlib.tcl cannot generate the cmake binaries for windows --"
         puts stderr "1) Get a copy of cmake 2.0.1 from www.cmake.org."
         puts stderr "2) Set the CMAKE_PATH in slicer_variables.tcl."
@@ -211,9 +210,13 @@ if { ![file exists $CMAKE] } {
         puts stderr "6) copy blt2.4 to TCL_LIB_DIR"
         puts stderr ""
         puts stderr "With these pieces in place, genlib can build VTK and ITK"
+        puts stderr "-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --"
         exit
 
     } else {
+        runcmd cvs -d :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login
+        runcmd cvs -z3 -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $cmakeTag CMake
+
         cd $CMAKE_PATH
         runcmd $SLICER_LIB/CMake/bootstrap
         runcmd make
