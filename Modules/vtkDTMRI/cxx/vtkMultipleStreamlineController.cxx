@@ -250,6 +250,7 @@ void vtkMultipleStreamlineController::DeleteAllStreamlines()
   
 }
 
+// Delete one streamline and all of its associated objects.
 //----------------------------------------------------------------------------
 void vtkMultipleStreamlineController::DeleteStreamline(int index)
 {
@@ -285,19 +286,14 @@ void vtkMultipleStreamlineController::DeleteStreamline(int index)
   vtkDebugMacro( << "Delete mapper" );
   currMapper = (vtkPolyDataMapper *) this->Mappers->GetItemAsObject(index);
   this->Mappers->RemoveItem(index);
-  //currMapper->SetInput(NULL);
-  //currMapper->SetLookupTable(NULL);
   currMapper->Delete();
-  
-  //cout << "lut" << endl;
-  //currLookupTable = (vtkLookupTable *) this->LookupTables->GetItemAsObject(index);
-  //this->LookupTables->RemoveItem(index);
-  //currLookupTable->Delete();
   
   vtkDebugMacro( << "Done deleting streamline");
 
 }
 
+// This is the delete called from the user interface where the
+// actor has been picked with the mouse.
 //----------------------------------------------------------------------------
 void vtkMultipleStreamlineController::DeleteStreamline(vtkActor *pickedActor)
 {
@@ -318,6 +314,7 @@ void vtkMultipleStreamlineController::DeleteStreamline(vtkActor *pickedActor)
     }
 }
 
+// Test whether the given point is in bounds (inside the input data)
 //----------------------------------------------------------------------------
 int vtkMultipleStreamlineController::PointWithinTensorData(double *point, double *pointw)
 {
@@ -346,10 +343,10 @@ int vtkMultipleStreamlineController::PointWithinTensorData(double *point, double
   return(inbounds);
 }
 
-// Here we create the type of streamline requested by the user.
-// Elsewhere in this class, all are treated as vtkHyperStreamlines.
+// Here we create the type of streamline class requested by the user.
+// Elsewhere in this class, all are treated as vtkHyperStreamline *.
 // We copy settings from the example object that the user has access
-// to.  
+// to.
 // (It would be nicer if we required the hyperstreamline classes to 
 // implement a copy function.)
 //----------------------------------------------------------------------------
@@ -379,7 +376,7 @@ vtkHyperStreamline * vtkMultipleStreamlineController::CreateHyperStreamline()
         {
           // create object
           currHSP=vtkHyperStreamlinePoints::New();
-          //currHSP->DebugOn();
+
           // Now copy user's settings into this object:
           // MaximumPropagationDistance 
           currHSP->SetMaximumPropagationDistance(this->VtkHyperStreamlinePointsSettings->GetMaximumPropagationDistance());
@@ -410,9 +407,6 @@ vtkHyperStreamline * vtkMultipleStreamlineController::CreateHyperStreamline()
 
           // create object
           currPHSP=vtkPreciseHyperStreamlinePoints::New();
-
-          
-          //currPHSP->DebugOn();
 
           // Now copy user's settings into this object:
           // Method
@@ -494,10 +488,7 @@ void vtkMultipleStreamlineController::SeedStreamlineFromPoint(double x,
     return;
 
   // Now create a streamline and put it on the collection.
-  //newStreamline=vtkHyperStreamline::New();
-  //newStreamline=vtkHyperStreamlinePoints::New();
   newStreamline=this->CreateHyperStreamline();
-  //newStreamline->DebugOn();
   this->Streamlines->AddItem((vtkObject *)newStreamline);
   
   // Set its input information.
@@ -573,11 +564,7 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROI()
                   if (this->PointWithinTensorData(point,point2))
                     {
                       // Now create a streamline and put it on the collection.
-                      //newStreamline=vtkHyperStreamlineDTMRI::New();
-                      //newStreamline=vtkHyperStreamlinePoints::New();
                       newStreamline=this->CreateHyperStreamline();
-                      //newStreamline=vtkHyperStreamline::New();
-                      //newStreamline->DebugOn();
                       this->Streamlines->AddItem((vtkObject *)newStreamline);
                       
                       // Set its input information.
