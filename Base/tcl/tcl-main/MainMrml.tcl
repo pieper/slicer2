@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.89 $} {$Date: 2003/07/22 20:39:49 $}]
+        {$Revision: 1.90 $} {$Date: 2003/07/25 19:09:19 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -2011,6 +2011,7 @@ proc MainMrmlWriteProceed {filename} {
         tree Write $filename
         if {[tree GetErrorCode] != 0} {
             puts "ERROR: MainMrmlWriteProceed: unable to write mrml file with colours: $filename"
+            DevErrorWindow "ERROR: MainMrmlWriteProceed: unable to write mrml file with colours: $filename"
         }
         tree RemoveAllItems
         tree Delete
@@ -2018,6 +2019,7 @@ proc MainMrmlWriteProceed {filename} {
         Mrml(dataTree) Write $filename
         if {[Mrml(dataTree) GetErrorCode] != 0} {
             puts "ERROR: MainMrmlWriteProceed: unable to write mrml data file $filename"
+            DevErrorWindow "ERROR: MainMrmlWriteProceed: unable to write mrml data file $filename"
         }
     }
     # Colors don't need saving now
