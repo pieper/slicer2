@@ -390,7 +390,8 @@ proc MainModelGroupsSetExpansion {frame widget mg {nochange 0}} {
     }
 
     Render3D
-    ModelsConfigScrolledGUI
+    ModelsConfigScrolledGUI $Model(canvasScrolledGUI) \
+                $Model(fScrolledGUI)
 }
 
 

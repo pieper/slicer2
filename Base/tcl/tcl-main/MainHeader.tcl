@@ -366,7 +366,7 @@ proc ReadHeader {image run utility tk} {
     # Run a header reading utility
     if {$run == 1} {
         if {[file exists $utility] == 0 } {
-            puts "ReadHeader: print_header program not found."
+            puts "ReadHeader: print_header ($utility) program not found."
             return ""
         }
         if {[catch {set hdr [exec $utility $image]} errmsg] == 1} {
@@ -627,7 +627,10 @@ proc GetHeaderInfo {img1 num2 node tk} {
         return "Cannot open '$img2'."
     } 
         
-    if {$tcl_platform(os) == "Linux"} {
+    # note the Zero in the line below - don't follow the
+    # ReadHeaderTcl path, since it doesn't seem to work right
+    # and we now have a linux version of print_header...
+    if { 0 && $tcl_platform(os) == "Linux"} {
         
         if { [ReadHeaderTcl $img1 1 Header1] != 1} {
             DevErrorWindow "Error reading header in linux. Can only read Genesis Headers."
