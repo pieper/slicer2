@@ -104,7 +104,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.50 $} {$Date: 2004/04/13 21:00:05 $}]
+        {$Revision: 1.51 $} {$Date: 2004/05/05 20:00:49 $}]
     
     # Initialize module-level variables
     
@@ -2108,12 +2108,13 @@ proc FiducialsAddActiveListFrame {frame scrollHeight scrollWidth {defaultNames "
     eval {label $f.xyzLabel -textvariable Fiducials(activeXYZ) } $Gui(WLA) 
 
     eval {button $f.xyzEditButton -text "Edit..." -command FiducialsInteractActiveStart} $Gui(WBA) 
+    eval {button $f.xyzEditButtonSlices -text "Edit w/Slices..." -command "FiducialsInteractActiveStart Slices"} $Gui(WBA) 
 
     eval {entry $f.descriptionEntry -width 25 -textvariable Fiducials(activeDescription) } $Gui(WEA)
     bind $f.descriptionEntry <Return> {FiducialsDescriptionActiveUpdated}
 
     lappend Fiducials(scrollActiveList) $scroll
-    pack $f.list $f.nameEntry $f.xyzLabel $f.xyzEditButton $f.descriptionEntry -side top
+    pack $f.list $f.nameEntry $f.xyzLabel $f.xyzEditButton $f.xyzEditButtonSlices $f.descriptionEntry -side top
 
     # if there any default names specified, add them to the list
     foreach d $defaultNames {
@@ -2151,13 +2152,15 @@ proc FiducialsInteractActiveCB {args} {
     FiducialsUpdateMRML
 
     # update slice location
-    for {set slice 0} {$slice < 3} {incr slice} {
-        switch [$::Interactor(activeSlicer) GetOrientString $slice] {
-            "Axial" { MainSlicesSetOffset $slice $z}
-            "Sagittal" { MainSlicesSetOffset $slice $x}
-            "Coronal" { MainSlicesSetOffset $slice $y}
+    if { $Fiducials(csys,SlicesMode) == "Slices" } {
+        for {set slice 0} {$slice < 3} {incr slice} {
+            switch [$::Interactor(activeSlicer) GetOrientString $slice] {
+                "Axial" { MainSlicesSetOffset $slice $z}
+                "Sagittal" { MainSlicesSetOffset $slice $x}
+                "Coronal" { MainSlicesSetOffset $slice $y}
+            }
+            RenderSlice $slice
         }
-        RenderSlice $slice
     }
 
     # move callback in case any module wants to know that Fiducials have been updated 
@@ -2179,12 +2182,13 @@ proc FiducialsInteractActiveCB {args} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc FiducialsInteractActiveStart {} {
+proc FiducialsInteractActiveStart { {mode "NoSlices"} } {
     global Fiducials Csys
 
     if { $Fiducials(activePointID) == "None" } {
         return
     }
+    set Fiducials(csys,SlicesMode) $mode
 
     #
     # reset the interactors first then create the pipeline
@@ -2192,7 +2196,8 @@ proc FiducialsInteractActiveStart {} {
     FiducialsInteractActiveEnd
 
     if { [info command Fiducials(csys,actor)] == "" } { 
-        CsysCreate Fiducials csys -1 -1 -1
+        #CsysCreate Fiducials csys -1 -1 -1
+        CsysCreate Fiducials csys 150 1 5
         set ::Module(Fiducials,procXformMotion) FiducialsInteractActiveCB 
     }
     Fiducials(csys,actor) SetOrientation 0 0 0
