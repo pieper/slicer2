@@ -220,8 +220,6 @@ The 3D Slicer will exit so the problem can be corrected."
 	#-------------------------------------------
 	# Load MRML data
 	#-------------------------------------------	
-# This line causes an X error on tumor, so temporarily comment it out (Lauren)
-#	update
 	MainMrmlRead $mrmlFile
 	MainUpdateMRML
 
@@ -310,7 +308,7 @@ proc MainInit {} {
 	set Module(procRecallPresets) ""
 	set m Main
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.28 $} {$Date: 2000/02/20 15:17:36 $}]
+		{$Revision: 1.29 $} {$Date: 2000/02/21 20:51:06 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
