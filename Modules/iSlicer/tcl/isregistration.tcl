@@ -283,6 +283,10 @@ itcl::configbody isregistration::vtk_itk_reg {
     $itk_option(-vtk_itk_reg) $_reg
     $_reg Initialize $_matrix
 
+    # need to explicitly call update with vtk 4.4 -- TODO figure out why...
+    [$_targetnorm GetOutput] Update
+    [$_sourcenorm GetOutput] Update
+
     $_reg SetTargetImage [$_targetnorm GetOutput]
     $_reg SetSourceImage [$_sourcenorm GetOutput]
 }
