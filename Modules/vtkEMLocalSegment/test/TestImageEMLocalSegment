@@ -1,28 +1,27 @@
 #! /bin/csh -f
 # Test Function for vtkImageEMLocalSegment - all environment variables are automatically set 
-rm TestImageEMLocalSegmentTestResult.*
-
-# Check if we have to source environment 
 if (${?OS} == 0) then
     setenv OS $OSTYPE
 endif
 
-if ((${?VTK_EXE} == 0) && ($OS !=  Windows_NT)) then
-  echo "sourcing setEnvironment .... "  
-  source ../scripts/setEnvironment
-endif
+setenv SLICER_HOME /projects/medvis/kpohl/slicer_with_samson
 
-if (${?LD_LIBRARY_SLICER} != 0) then
-    setenv LD_LIBRARY_PATH $LD_LIBRARY_SLICER
-endif
-if (${?TCLLIBPATH_SLICER} != 0) then
-   setenv TCLLIBPATH "$TCLLIBPATH_SLICER"
-endif
-if (${?VTK_EXE} != 0) then
-  ${VTK_EXE} TestImageEMPrivateSegment.tcl $*
-else
-  echo "Error: Before running this command execute the following command once:"
-  echo "source ../scripts/setEnvironment" 
-endif
+if ($OS == Linux) then   
+    setenv VTK_EXE $SLICER_HOME/slicer2-linux-x86
+endif 
 
+if ($OS == solaris) then   
+   setenv VTK_EXE $SLICER_HOME/slicer2-solaris-sparc
+endif 
 
+if ($OS == Windows_NT) then   
+   setenv VTK_EXE $SLICER_HOME/slicer2-win32.exe
+endif 
+
+# This is just necessary to run comparison script - 
+# so you can still run the test without having the variable underneath defined 
+# Just compare the the result of the script with TestImageEMLocalSegmentResult.*
+# setenv SCRIPT_HOME c:/cygwin/home/ai3/kpohl/slicer_devel/slicer2_lmi/EMLocalSegment
+setenv SCRIPT_HOME ${SLICER_HOME}/Modules/vtkEMPrivateSegment
+ 
+${VTK_EXE} TestImageEMLocalSegment.tcl $*
