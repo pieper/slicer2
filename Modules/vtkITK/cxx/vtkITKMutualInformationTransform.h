@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: vtkITKMutualInformationTransform.h,v $
   Language:  C++
-  Date:      $Date: 2003/04/14 19:44:07 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2003/05/28 20:15:28 $
+  Version:   $Revision: 1.5 $
 
   Copyright (c) 2002 Insight Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -78,6 +78,11 @@ public:
   vtkGetMacro(TranslateScale, double);
 
   // Description:
+  // Get the value of the last metric calculation
+  vtkSetMacro(MetricValue, double);
+  vtkGetMacro(MetricValue, double);
+
+  // Description:
   // Invert the transformation.  This is done by switching the
   // source and target images.
   void Inverse();
@@ -119,6 +124,8 @@ protected:
   
   int NumberOfIterations;
   int NumberOfSamples;
+
+  double MetricValue;
   
 private:
   vtkITKMutualInformationTransform(const vtkITKMutualInformationTransform&);  // Not implemented.

@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: vtkITKMutualInformationTransform.cxx,v $
   Language:  C++
-  Date:      $Date: 2003/04/14 19:44:07 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2003/05/28 20:15:27 $
+  Version:   $Revision: 1.5 $
 
   Copyright (c) 2002 Insight Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -54,7 +54,7 @@
 #include "itkNumericTraits.h"
 #include "vnl/vnl_math.h"
 
-vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.4 $");
+vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.5 $");
 vtkStandardNewMacro(vtkITKMutualInformationTransform);
 
 //----------------------------------------------------------------------------
@@ -68,6 +68,7 @@ vtkITKMutualInformationTransform::vtkITKMutualInformationTransform()
   this->TranslateScale = 64;
   this->NumberOfIterations = 500;  
   this->NumberOfSamples = 50;
+  this->MetricValue = 0;
   this->Matrix->Identity();
 }
 
@@ -95,6 +96,7 @@ void vtkITKMutualInformationTransform::PrintSelf(ostream& os, vtkIndent indent)
   os << "TranslateScale: " << this->TranslateScale  << endl;
   os << "NumberOfSamples: " << this->NumberOfSamples  << endl;
   os << "NumberOfIterations: " << this->NumberOfIterations  << endl;
+  os << "MetricValue: " << this->MetricValue  << endl;
 
   os << "SourceImage: " << this->SourceImage << "\n";
   if(this->SourceImage) 
@@ -222,6 +224,9 @@ static void vtkITKMutualInformationExecute(vtkITKMutualInformationTransform *sel
   // Get the results
   typename RegistrationType::ParametersType solution = 
     registration->GetLastTransformParameters();
+
+  self->SetMetricValue(metric->GetValue(solution));
+  //self->SetMetricValue(optimizer->GetValue());
 
   vnl_quaternion<double> quat(solution[0],solution[1],solution[2],solution[3]);
   vnl_matrix_fixed<double,3,3> mat = quat.rotation_matrix();
