@@ -135,10 +135,25 @@
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentInit {} {
-    global EMSegment Module Volume Model Mrml Color Slice Gui
-    # Possibilites 0 - 2
+    global EMSegment Module Volume Model Mrml Color Slice Gui env
+    # For later version where we can use local prios
+    # Normal     = 0
+    # LocalPrior = 1
+    # MultiDim   = 2
+    if {[info exists env(SLICER_USE_LOCAL_ONLY_CODE)] == 0 || $env(SLICER_USE_LOCAL_ONLY_CODE) == "" || $env(SLICER_USE_LOCAL_ONLY_CODE) != 1} {
     set EMSegment(SegmentMode) 0
+    } else {
+    set EMSegment(SegmentMode) 2
+    } 
     # EMSegment(SegmentMode) == 0 <=> Set all Probabilty maps to none, EMSegment(SegmentMode) == 1
+
+    # Soucre EMSegmentAlgorithm.tcl File in sudirectory
+    set found [FindNames tcl-modules/EMSegment]
+    if {[lsearch $found EMSegmentAlgorithm] > -1} {
+    set AlgoFile [GetFullPath EMSegmentAlgorithm tcl tcl-modules/EMSegment]
+    source $AlgoFile
+    }
+
     # Define Tabs
     #------------------------------------
     # Description:
@@ -220,7 +235,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2002/04/23 23:13:42 $}]
+        {$Revision: 1.7 $} {$Date: 2002/05/01 13:35:23 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -241,11 +256,7 @@ proc EMSegmentInit {} {
     set EMSegment(SegmenterClassNodeList) ""
     set EMSegment(SegmenterCIMNodeList) ""
 
-    # For later version where we can use local prios
-    # Normal     = 0
-    # LocalPrior = 1
-    # MultiDim   = 2
-    set EMSegment(Debug) 0
+    set EMSegment(Debug) 1
 
     # This is important for multiple Input images
     set EMSegment(AllVolList,ActiveID) -1
@@ -1394,6 +1405,7 @@ proc EMSegmentUpdateMRML {} {
         set EMSegment(SegmenterGraphNodeList) ""
         set EMSegment(SegmenterInputNodeList) ""
         set EMSegment(SegmenterClassNodeList) ""
+    set EMSegment(SegmenterCIMNodeList) ""
         EMSegmentDeleteFromSelList $EMSegment(SelVolList,VolumeList)
         # --------------------------------------------------
         # 3.) Update variables 
@@ -1461,10 +1473,10 @@ proc EMSegmentUpdateMRML {} {
         set LocalPriorRange  [SegmenterClass($pid,node) GetLocalPriorRange]
         set EMSegment(Cattrib,$NumClasses,ProbabilityData) ""
         foreach VolID $Volume(idList) VolAttr $VolumeList {
-        if {([lindex $VolAttr 0] == $LocalPriorName) && ([lindex $VolAttr 1] == $LocalPriorRange) && ([lindex $VolAttr 2] == $LocalPriorPrefix) } {
-            set EMSegment(Cattrib,$NumClasses,ProbabilityData) $VolID
-            break;
-        }
+            if {([lindex $VolAttr 0] == $LocalPriorName) && ([lindex $VolAttr 1] == $LocalPriorRange) && ([lindex $VolAttr 2] == $LocalPriorPrefix) } {
+               set EMSegment(Cattrib,$NumClasses,ProbabilityData) $VolID
+               break;
+            }
         }
         if {$EMSegment(Cattrib,$NumClasses,ProbabilityData) == ""} {
         set EMSegment(Cattrib,$NumClasses,ProbabilityData) $Volume(idNone) 
@@ -1493,11 +1505,11 @@ proc EMSegmentUpdateMRML {} {
         set CIMMatrix [SegmenterCIM($pid,node) GetCIMMatrix]
         for {set y 1} { $y<= $EMSegment(NumClasses)} {incr y} {
             for {set x 1} { $x<= $EMSegment(NumClasses)} {incr x} {
-            set EMSegment(CIMMatrix,$x,$y,$dir) [lindex $CIMMatrix $i]
-            incr i
+              set EMSegment(CIMMatrix,$x,$y,$dir) [lindex $CIMMatrix $i]
+              incr i
             }
             incr i
-        }
+          }
         }
     } elseif {$ClassName == "vtkMrmlEndSegmenterNode" } {
         # if there is no EndSegmenterNode yet and we are reaading one, and set
@@ -1698,22 +1710,18 @@ proc EMSegmentSaveSetting {FileFlag} {
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentStartEM { } {
-   global EMSegment Volume Mrml Module Segmenter
-   set clist {}
-
-   # Update Values
+   global EMSegment Volume Mrml
+   # ----------------------------------------------
+   # 1. Update Values
+   # ----------------------------------------------
    EMSegmentCalculateClassMeanCovariance
    EMSegmentCalcProb
-
-   # Check if volume(activeID) exist  
-   if {[llength $EMSegment(SelVolList,VolumeList)] == 0} {
+   # ----------------------------------------------
+   # 2. Check Values and Update MRML Tree
+   # ----------------------------------------------
+   if {$EMSegment(NumInputChannel)  == 0} {
        DevErrorWindow "Please load a volume before starting the segmentation algorithm!"
        return
-   }
-
-   if {[llength $clist] > 0}  {
-      DevErrorWindow "Please define class(es) $clist before starting segmentation!" 
-      return
    }
    
    if {$EMSegment(StartSlice) < 1 } {
@@ -1727,137 +1735,52 @@ proc EMSegmentStartEM { } {
    # Update MRML Tree
    EMSegmentSaveSetting 0
 
-   #----------------------------------------------------------------------------
-   # Transfering Specific information for each Module
-   #----------------------------------------------------------------------------
-   if {$EMSegment(SegmentMode) > 0} {
-       # EMLocal3DSegmentation: Multiple Input Images
-       vtkImageEMLocal3DSegmenter EMStart 
-       # How many input images do you have
-       EMStart SetNumInputImages $EMSegment(NumInputChannel) 
-       EMStart SetNumClasses $EMSegment(NumClasses)  
-       for {set i 1} { $i<= $EMSegment(NumClasses)} {incr i} {
-       EMStart SetTissueProbability $EMSegment(Cattrib,$i,Prob) $i
-       } 
-       EMStart SetNumberOfTrainingSamples $EMSegment(NumberOfTrainingSamples)
-       # Transefer probability map
-       set NumInputImagesSet 0
-       set i 0
-       while {$i< $EMSegment(NumClasses)} {
-       incr i
-       if {$EMSegment(Cattrib,$i,ProbabilityData) != $Volume(idNone)} {
-           EMStart SetUseLocalPrior 1 $i
-           EMStart SetInputIndex $NumInputImagesSet [Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) GetOutput]
-           incr NumInputImagesSet
-       } else {
-          EMStart SetUseLocalPrior 0 $i 
-       }
-       }
-       # Transfer image information
-       foreach v $EMSegment(SelVolList,VolumeList) {       
-       EMStart SetInputIndex $NumInputImagesSet [Volume($v,vol) GetOutput]
-       incr NumInputImagesSet
-       }
-   } else {
-       # EM Specific Information
-       vtkImageEMSegmenter EMStart    
-       EMStart SetNumClasses      $EMSegment(NumClasses)  
-
-       EMStart SetImgTestNo       $EMSegment(ImgTestNo)
-       EMStart SetImgTestDivision $EMSegment(ImgTestDivision)
-       EMStart SetImgTestPixel    $EMSegment(ImgTestPixel)
-       for {set i 1} { $i<= $EMSegment(NumClasses)} {incr i} {
-       EMStart SetProbability  $EMSegment(Cattrib,$i,Prob) $i
-       }
-       # Transfer image information
-       EMStart SetInput [Volume([lindex $EMSegment(SelVolList,VolumeList) 0],vol) GetOutput]
-   }
-
-   #----------------------------------------------------------------------------
-   # Transfering General Information
-   #----------------------------------------------------------------------------
-   EMStart SetNumIter         $EMSegment(EMiteration)  
-   EMStart SetNumRegIter      $EMSegment(MFAiteration) 
-   EMStart SetAlpha           $EMSegment(Alpha) 
-
-   EMStart SetSmoothingWidth  $EMSegment(SmWidth)    
-   EMStart SetSmoothingSigma  $EMSegment(SmSigma)      
-
-   EMStart SetStartSlice      $EMSegment(StartSlice)
-   EMStart SetEndSlice        $EMSegment(EndSlice)
-
-   EMStart SetPrintIntermediateResults  $EMSegment(PrintIntermediateResults) 
-   EMStart SetPrintIntermediateSlice  $EMSegment(PrintIntermediateSlice) 
-   EMStart SetPrintIntermediateFrequency  $EMSegment(PrintIntermediateFrequency) 
-
-   for {set i 1} { $i<= $EMSegment(NumClasses)} {incr i} {
-       set yindex 1
-       for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
-       if {$EMSegment(SegmentMode)} {
-           EMStart SetLogMu $EMSegment(Cattrib,$i,LogMean,$y) $i $yindex
-           for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} {
-           EMStart SetLogCovariance $EMSegment(Cattrib,$i,LogCovariance,$y,$x) $i $yindex [expr $x+1]
-           }
-           incr yindex
-       } else {
-           EMStart SetMu $EMSegment(Cattrib,$i,LogMean,$y) $i
-           EMStart SetSigma $EMSegment(Cattrib,$i,LogCovariance,$y,$y) $i 
-       }
-       }
-       EMStart SetLabel   $EMSegment(Cattrib,$i,Label) $i 
-       # Reads in the value for each class individually
-       for {set j 1} { $j<= $EMSegment(NumClasses)} {incr j} {
-       for {set k 0} { $k< 6} {incr k} {
-           EMStart SetMarkovMatrix $EMSegment(CIMMatrix,$i,$j,[lindex $EMSegment(CIMList) $k]) [expr $k+1] $j $i
-           # Input for SetCIMMatrix : value z y x
-           #if {$EMSegment(CIMMatrix,$i,$j,[lindex $EMSegment(CIMList) $k]) > 0} {
-           #   EMStart SetMarkovMatrix [expr log($EMSegment(CIMMatrix,$i,$j,[lindex $EMSegment(CIMList) $k]))] [expr $k+1] $j $i
-           #} else { EMStart SetMarkovMatrix [expr log(0.00001)] [expr $k+1] $j $i
-           #}
-       }
-       }
-   }
-   # Create a new Volume - Got this from VolumMath.tcl
+   # ----------------------------------------------
+   # 3. Call Algorithm
+   # ----------------------------------------------
+   set NumInputImagesSet [EMSegmentAlgorithmStart] 
+   # ----------------------------------------------
+   # 4. Write Back Results 
+   # ----------------------------------------------
    set result [DevCreateNewCopiedVolume [lindex $EMSegment(SelVolList,VolumeList) 0] "" "EMSegResult" ]
    set node [Volume($result,vol) GetMrmlNode]
    $node SetLabelMap 1
    Mrml(dataTree) RemoveItem $node 
    set nodeBefore [Volume([lindex $EMSegment(SelVolList,VolumeList) 0],vol) GetMrmlNode]
    Mrml(dataTree) InsertAfterItem $nodeBefore $node
-
    # Display Result in label mode 
    Volume($result,vol) UseLabelIndirectLUTOn
    Volume($result,vol) Update
    Volume($result,node) SetLUTName -1
    Volume($result,node) SetInterpolate 0
    # Volume($result,node) SetScalarTypeToUnsignedShort
-
-   # Update MRML
-   MainUpdateMRML
    
    #  Write Solution to new Volume  -> Here the thread is called
-   Volume($result,vol) SetImageData [EMStart GetOutput]
-   set Data [EMStart GetOutput]
+   Volume($result,vol) SetImageData [EMSegment(vtkEMSegment) GetOutput]
+   EMSegment(vtkEMSegment) Update
+   # Update MRML
+   MainUpdateMRML
    
    # This is necessary so that the data is updated correctly.
    # If the programmers forgets to call it, it looks like nothing
    # happened
    MainVolumesUpdate $result
-
+   # ----------------------------------------------
+   # 5. Clean up mess 
+   # ----------------------------------------------
    # This is done so the vtk instance won't be called again when saving the model
-   EMStart Update
    if {$EMSegment(SegmentMode) > 0} {
        while {$NumInputImagesSet > 0} {
        incr NumInputImagesSet -1
-       EMStart SetInputIndex $NumInputImagesSet "" 
+       EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet "" 
        }
    } else {
-       EMStart SetInput ""
+       EMSegment(vtkEMSegment) SetInput ""
    } 
-   Volume($result,vol) SetImageData [EMStart GetOutput]
-   EMStart SetOutput ""
+   Volume($result,vol) SetImageData [EMSegment(vtkEMSegment) GetOutput]
+   EMSegment(vtkEMSegment) SetOutput ""
    # Delete instance
-   EMStart Delete
+   EMSegment(vtkEMSegment) Delete
 }
 
 #-------------------------------------------------------------------------------
@@ -5018,7 +4941,7 @@ proc EMSegmentCreateMeanCovarianceRowsColumns {OldNumInputCh NewNumInputCh} {
     }
 
     for {set x $OldNumInputCh} {$x < $NewNumInputCh} {incr x} {
-    eval {entry  $fem.e$x -textvariable EMSegment(Cattrib,$Sclass,LogMean,$x) -width 5 -state disabled -font {helvetica 8} -bg $Gui(activeWorkspace) \
+    eval {entry  $fem.e$x -textvariable EMSegment(Cattrib,$Sclass,LogMean,$x) -width 6 -state disabled -font {helvetica 8} -bg $Gui(activeWorkspace) \
         -fg $VorderGrund -bd 0 -relief flat -highlightthickness 0 } 
     pack $fem.e$x -side left  -padx 1 -pady 1
     eval {entry  $fcllog.e$x -textvariable EMSegment(Cattrib,$Sclass,LogMean,$x) -width 5} $Gui(WEA)
@@ -5220,14 +5143,14 @@ proc EMSegmentDebug { } {
     if {$EMSegment(SegmentMode) < 2} {
     set EMSegment(FileCIM) mrf/simon/brainCase3_7c1.mrf  
     } else {
-    set EMSegment(FileCIM) mrf/simon/brainCase3_5_c2-notlocal.mrf
+    # set EMSegment(FileCIM) mrf/simon/brainCase3_5_c2-notlocal.mrf
     # set EMSegment(FileCIM) mrf/simon/brainCase3_7_stg_c2_nonr-V2.mrf
     # set EMSegment(FileCIM) mrf/simon/brainCase19_6_stg_c2.mrf
     # set EMSegment(FileCIM) mrf/simon/brainCase3_7_am_c2.mrf
     # set EMSegment(FileCIM) mrf/simon/brainCase3_9_am_para_c2.mrf
     # set EMSegment(FileCIM) mrf/simon/brainCase3_7_hip_c2.mrf
     # set EMSegment(FileCIM) mrf/simon/brainCase3_9c2.mrf
-    # set EMSegment(FileCIM) mrf/simon/brainCase3_13c2.mrf
+    set EMSegment(FileCIM) mrf/simon/brainCase3_13c2.mrf
     # set EMSegment(FileCIM) mrf/simon/brainCase50_6_stg_c2-V2final.mrf
         # set EMSegment(FileCIM) mrf/simon/brainCase3_9c2.mrf
     }
