@@ -753,7 +753,7 @@ proc FindDICOM2 { StartDir AddDir Pattern } {
     parser Delete
     
     if { $::DICOMabort != "true" && $::DICOMrecurse == "true" } {
-        foreach file [glob -nocomplain *] {
+        foreach file [lsort -dictionary [glob -nocomplain *]] {
             if [file isdirectory $file] {
                 FindDICOM2 [file join $StartDir $AddDir] $file $Pattern
             }
