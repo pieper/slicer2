@@ -458,12 +458,13 @@ itcl::body isvolume::volmenu_update {} {
         set name [Volume($id,node) GetName]
         set _VolIdMap($name)  $id
         set _VolIdMap($id)    $id
+        set _VolIdMap(${name}__$id)  $id 
     }
 
     $_volmenu delete 0 end
     foreach id $::Volume(idList) {
         set name [Volume($id,node) GetName]
-        $_volmenu insert end  $name
+        $_volmenu insert end  ${name}__$id
     }
     $_volmenu select 0
 }
