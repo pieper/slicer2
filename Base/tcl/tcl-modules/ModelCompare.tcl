@@ -133,7 +133,7 @@ proc ModelCompareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2002/07/02 22:46:16 $}]
+        {$Revision: 1.3 $} {$Date: 2002/07/11 13:07:01 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -547,6 +547,8 @@ proc ModelCompareUpdateGUI {} {
     foreach m $Model(idListDelete) {
         set gui [expr $gui + [ModelCompareDeleteModelGUI \
                   $ModelCompare(fScrolledGUI1) $m]]
+        set gui [expr $gui + [ModelCompareDeleteModelGUI \
+                  $ModelCompare(fScrolledGUI2) $m]]
     }
 
     # Tell the scrollbar to update if the gui height changed
