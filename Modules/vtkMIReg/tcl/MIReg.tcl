@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-# .PROC MIRegInit
+# .PROC MutualInfoRegInit
 #  The "Init" procedure is called automatically by the slicer.  
 #  It puts information about the module into a global array called Module, 
 #  and it also initializes module-level variables.
@@ -7,9 +7,9 @@
 # .END
 #-------------------------------------------------------------------------------
 proc MIRegInit {} {
-    global MIReg Module Volume Model
+    global MutualInfoReg Module Volume Model
 
-    set m MIReg
+    set m MutualInfoReg
 
     # Module Summary Info
     #------------------------------------
@@ -57,7 +57,7 @@ proc MIRegInit {} {
     #   procedures are optional.  If they exist, then their name (which
     #   can be anything) is registered with a line like this:
     #
-    #   set Module($m,procVTK) MIRegBuildVTK
+    #   set Module($m,procVTK) MutualInfoRegBuildVTK
     #
     #   All the options are:
 
@@ -78,10 +78,10 @@ proc MIRegInit {} {
     #   string in your init function, of the form: 
     #   set Module($m,presets) "key1='val1' key2='val2' ..."
 
-#    set Module($m,procGUI) MIRegBuildGUI
-#    set Module($m,procVTK) MIRegBuildVTK
-#    set Module($m,procEnter) MIRegEnter
-#    set Module($m,procExit) MIRegExit
+#    set Module($m,procGUI) MutualInfoRegBuildGUI
+#    set Module($m,procVTK) MutualInfoRegBuildVTK
+#    set Module($m,procEnter) MutualInfoRegEnter
+#    set Module($m,procExit) MutualInfoRegExit
 
     # Define Dependencies
     #------------------------------------
@@ -101,7 +101,7 @@ proc MIRegInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2003/08/12 14:25:06 $}]
+        {$Revision: 1.4 $} {$Date: 2003/08/27 17:23:27 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -110,28 +110,32 @@ proc MIRegInit {} {
     #   This is a handy method for organizing the global variables that
     #   the procedures in this module and others need to access.
     #
-    set MIReg(count) 0
-    set MIReg(Volume1) $Volume(idNone)
-    set MIReg(Model1)  $Model(idNone)
-    set MIReg(FileName)  ""
+    set MutualInfoReg(count) 0
+    set MutualInfoReg(Volume1) $Volume(idNone)
+    set MutualInfoReg(Model1)  $Model(idNone)
+    set MutualInfoReg(FileName)  ""
 
-    global Matrix MIReg
+    global Matrix MutualInfoReg
     set Matrix(autoFast) mi-fast.txt
     set Matrix(autoSlow) mi-slow.txt
-    set MIReg(autoSpeed)  Fast
+    set MutualInfoReg(autoSpeed)  Fast
     set Matrix(allowAutoUndo) 0
 
-    set MIReg(Resolution)       128
-    set MIReg(UpdateIterations) 5
-    set MIReg(NumberOfSamples) 50
-    set MIReg(LearningRate)    .01
-    set MIReg(TranslateScale)  64
-    # do not know for these a good default value yet
-    set MIReg(SourceStandardDeviation) 1 
-    set MIReg(TargetStandardDeviation) 1
-     }
+    set MutualInfoReg(Resolution)       128
+    set MutualInfoReg(UpdateIterations) 5
+    set MutualInfoReg(NumberOfSamples)  50
+    set MutualInfoReg(LearningRate)    .0001
+    set MutualInfoReg(TranslateScale)   1
+    # If Wells, Viola, Atsumi, etal, 
+    # used 2 and 4. Wells claims exact number not critical (personal communication)
+    # They scaled data 0...256.
+    # We scale data -1 to 1.
+    # 2/256*2 = 0.015
+    set MutualInfoReg(SourceStandardDeviation) 0.15
+    set MutualInfoReg(TargetStandardDeviation) 0.15
+}
 #-------------------------------------------------------------------------------
-# .PROC MIRegBuildSubGui
+# .PROC MutualInfoRegBuildSubGui
 #
 # Build the sub-gui under $f whatever frame is calling this one
 #
@@ -141,8 +145,8 @@ proc MIRegInit {} {
 # frame framename
 # .END
 #-------------------------------------------------------------------------------
-proc MIRegBuildSubGui {f} {
-    global Gui Matrix MIReg
+proc MutualInfoRegBuildSubGui {f} {
+    global Gui Matrix MutualInfoReg
 
     set framename $f
 
@@ -177,10 +181,10 @@ proc MIRegBuildSubGui {f} {
 
     foreach level "Normal Advanced" {
         eval {radiobutton $f.r$level \
-            -text "$level" -command "MIRegSetLevel" \
-            -variable MIReg(Level) -value $level -width 10 \
+            -text "$level" -command "MutualInfoRegSetLevel" \
+            -variable MutualInfoReg(Level) -value $level -width 10 \
             -indicatoron 0} $Gui(WRA)
-        set MIReg(r${level}) $f.r$level
+        set MutualInfoReg(r${level}) $f.r$level
         pack $f.r$level -side left -padx 0 
     }
 
@@ -195,9 +199,9 @@ proc MIRegBuildSubGui {f} {
     foreach type "Normal Advanced" {
         frame $f.f${type} -bg $Gui(activeWorkspace)
         place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
-        set MIReg(f${type}) $f.f${type}
+        set MutualInfoReg(f${type}) $f.f${type}
     }
-    raise $MIReg(fNormal)
+    raise $MutualInfoReg(fNormal)
 
     set fnormal   $framename.fLevel.fNormal
     set fadvanced $framename.fLevel.fAdvanced
@@ -237,7 +241,7 @@ proc MIRegBuildSubGui {f} {
     foreach text "Fast Slow" value "Fast Slow" \
         width "6 6" {
         eval {radiobutton $f.fBtns.rSpeed$value -width $width \
-            -text "$text" -value "$value" -variable MIReg(autoSpeed) \
+            -text "$text" -value "$value" -variable MutualInfoReg(autoSpeed) \
             -indicatoron 0} $Gui(WCA)
         pack $f.fBtns.rSpeed$value -side left -padx 4 -pady 2
     }
@@ -249,11 +253,11 @@ proc MIRegBuildSubGui {f} {
 
     foreach str "Run Cancel Undo" {
         eval {button $f.b$str -text "$str" -width [expr [string length $str]+1] \
-            -command "MIRegAuto$str"} $Gui(WBA)
-        set MIReg(b$str) $f.b$str
+            -command "MutualInfoRegAuto$str"} $Gui(WBA)
+        set MutualInfoReg(b$str) $f.b$str
     }
     pack $f.bRun $f.bUndo -side left -padx $Gui(pad) -pady $Gui(pad)
-    set MIReg(bUndo) $f.bUndo
+    set MutualInfoReg(bUndo) $f.bUndo
     $f.bUndo configure -state disabled
 
     #-------------------------------------------
@@ -262,46 +266,68 @@ proc MIRegBuildSubGui {f} {
 
     set f $fadvanced
 
+    frame $f.fParam    -bg $Gui(activeWorkspace)
+    frame $f.fRun      -bg $Gui(activeWorkspace)
+
+    pack $f.fParam $f.fRun -pady $Gui(pad) 
+
+### Variables for Gering implementation
+#                   {SampleSize} \
+#                   {SigmaUU} \
+#                   {SigmaVV} \
+#                   {SigmaV} \
+#                   {Pmin} \
+### Variables for Gering implementation
+#                   {SampleSize}  \
+#                   {SigmaUU} \
+#                   {SigmaVV} \
+#                   {SigmaV}  \
+#                   {Pmin}  \
+
     foreach param { \
-                   {UpdateIterations}  \
+                   {UpdateIterations} \
                    {LearningRate} \
                    {SourceStandardDeviation} \
                    {TargetStandardDeviation} \
                    {NumberOfSamples} \
                    {TranslateScale} \
-                   {SampleSize} \
-                   {SigmaUU} \
-                   {SigmaVV} \
-                   {SigmaV} \
-                   {Pmin} \
                    } name \
-                  {
-                   {Pmin}  \
+                  { \
                    {Update Iterations} \
                    {Learning Rate} \
                    {Source Standard Deviation} \
                    {Target Standard Deviation} \
                    {Number Of Samples} \
                    {Translate Scale} \
-                   {SampleSize}  \
-                   {SigmaUU} \
-                   {SigmaVV} \
-                   {SigmaV}  \
                    } {
-        set f $fadvanced
+        set f $fadvanced.fParam
         frame $f.f$param   -bg $Gui(activeWorkspace)
         pack $f.f$param -side top -fill x -pady 2
         
         set f $f.f$param
         eval {label $f.l$param -text "$name:"} $Gui(WLA)
-        eval {entry $f.e$param -width 5 -textvariable MIReg($param)} $Gui(WEA)
+        eval {entry $f.e$param -width 7 -textvariable MutualInfoReg($param)} $Gui(WEA)
         pack $f.l$param -side left -padx $Gui(pad) -fill x -anchor w
         pack $f.e$param -side left -padx $Gui(pad) -expand 1
     }
+
+    #-------------------------------------------
+    # Level->Advanced->Run frame
+    #-------------------------------------------
+    set f $fadvanced.fRun
+
+    foreach str "Run Cancel Undo" {
+        eval {button $f.b$str -text "$str" -width [expr [string length $str]+1] \
+            -command "MutualInfoRegAuto$str"} $Gui(WBA)
+        set MutualInfoReg(b$str) $f.b$str
+    }
+    pack $f.bRun $f.bUndo -side left -padx $Gui(pad) -pady $Gui(pad)
+    set MutualInfoReg(bUndo) $f.bUndo
+    $f.bUndo configure -state disabled
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MIRegSetLevel
+# .PROC MutualInfoRegSetLevel
 #
 # Set the registration mechanism depending on which button the user selected in
 # the Auto tab.
@@ -309,25 +335,25 @@ proc MIRegBuildSubGui {f} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MIRegSetLevel {} {
-    global MIReg
+proc MutualInfoRegSetLevel {} {
+    global MutualInfoReg
 
-    set level $MIReg(Level)
-    raise $MIReg(f${level})
-    focus $MIReg(f${level})
+    set level $MutualInfoReg(Level)
+    raise $MutualInfoReg(f${level})
+    focus $MutualInfoReg(f${level})
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC MIRegEnter
+# .PROC MutualInfoRegEnter
 # Called when this module is entered by the user.  Pushes the event manager
 # for this module. 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 
-proc MIRegEnter {} {
-    global MIReg
+proc MutualInfoRegEnter {} {
+    global MutualInfoReg
     
     # Push event manager
     #------------------------------------
@@ -337,22 +363,22 @@ proc MIRegEnter {} {
     #   The pushEventManager routine saves the previous bindings on 
     #   a stack and binds our new ones.
     #   (See slicer/program/tcl-shared/Events.tcl for more details.)
-    pushEventManager $MIReg(eventManager)
+    pushEventManager $MutualInfoReg(eventManager)
 
     # clear the text box and put instructions there
-    $MIReg(textBox) delete 1.0 end
-    $MIReg(textBox) insert end "Shift-Click anywhere!\n"
+    $MutualInfoReg(textBox) delete 1.0 end
+    $MutualInfoReg(textBox) insert end "Shift-Click anywhere!\n"
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC MIRegExit
+# .PROC MutualInfoRegExit
 # Called when this module is exited by the user.  Pops the event manager
 # for this module.  
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MIRegExit {} {
+proc MutualInfoRegExit {} {
 
     # Pop event manager
     #------------------------------------
@@ -369,22 +395,56 @@ proc MIRegExit {} {
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
-# .PROC MIRegAutoRun
+# .PROC MutualInfoRegAutoRun
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MIRegAutoRun {} {
+proc MutualInfoRegAutoRun {} {
+    global Matrix Volume
+
+    ###
+    ### Check for Errors
+    ###
+    if {$Matrix(volume) == $Volume(idNone)} {
+        DevWarningWindow "The Volume to Move is None! Please choose one."
+        return 0
+    }
+
+    if {$Matrix(refVolume) == $Volume(idNone)} {
+        DevWarningWindow "The Reference Volume is None! Please choose one."
+        return 0
+    }
+
+    #
+    # Store which transform we're editing
+    # If the user has not selected a tranform, then create a new one by default
+    # and append it to the volume to register (ie. "Volume to Move")
+    #
+    set Matrix(tAuto) $Matrix(activeID)
+    if {$Matrix(activeID) == ""} {
+        set v $Matrix(volume)
+        DataAddTransform append Volume($v,node) Volume($v,node)
+        MainUpdateMRML
+    }
+
+    # sourceId = ID of volume to register (source, moving)
+    # targetId = ID of reference volume   (target, stationary)
+    # matrixId = ID of the transform to change
+    set sourceId $Matrix(volume)
+    set targetId $Matrix(refVolume)
+    set matrixId $Matrix(activeID)
+
+#    MutualInfoRegAutoRun_Vtk  
     if { [info command vtkITKMutualInformationTransform] == "" } {
-        MIRegAutoRun_Vtk 
+
     } else {
-        MIRegAutoRun_Itk 
+        MutualInfoRegAutoRun_Itk $sourceId $targetId $matrixId
     }
 }
 
-
 #-------------------------------------------------------------------------------
-# .PROC MIRegAutoRun_Itk
+# .PROC MutualInfoRegAutoRun_Itk
 #
 # use the vtkITK interface to the ITK MI registration routines
 # - builds a new user interface panel to control the process
@@ -393,22 +453,8 @@ proc MIRegAutoRun {} {
 # .END
 #-------------------------------------------------------------------------------
 
-proc MIRegAutoRun_Itk {} {
-    global Path env Gui Matrix Volume MIReg
-
-    # v = ID of volume to register (moving)
-    # r = ID of reference volume
-    set v $Matrix(volume)
-    set r $Matrix(refVolume)
-
-    # Store which transform we're editing
-    # If the user has not selected a tranform, then create a new one by default
-    # and append it to the volume to register (ie. "Volume to Move")
-    set t $Matrix(activeID)
-    set Matrix(tAuto) $t
-    if {$t == ""} {
-        DataAddTransform append Volume($v,node) Volume($v,node)
-    }
+proc MutualInfoRegAutoRun_Itk {sourceId targetId matrixId} {
+    global Path env Gui Matrix Volume MutualInfoReg
 
     # TODO make islicer a package
     source $env(SLICER_HOME)/Modules/iSlicer/tcl/isregistration.tcl
@@ -417,37 +463,36 @@ proc MIRegAutoRun_Itk {} {
     toplevel .mi
 
     isregistration .mi.reg \
-        -transform $t \
-        -moving [Volume($v,node) GetName] \
-        -reference [Volume($r,node) GetName] \
-        -resolution      $MIReg(Resolution)     \
-        -iterations      $MIReg(UpdateIterations)     \
-        -samples         $MIReg(NumberOfSamples)      \
-        -learningrate    $MIReg(LearningRate)         \
-        -translatescale  $MIReg(TranslateScale)       
-
-#                         $MIReg(SourceStandardDeviation) \
-#                         $MIReg(TargetStandardDeviation) \
+        -transform       $matrixId                           \
+        -source          [Volume($sourceId,node) GetName]    \
+        -target          [Volume($targetId,node) GetName]    \
+        -resolution      $MutualInfoReg(Resolution)          \
+        -iterations      $MutualInfoReg(UpdateIterations)    \
+        -samples         $MutualInfoReg(NumberOfSamples)     \
+        -learningrate    $MutualInfoReg(LearningRate)        \
+        -translatescale  $MutualInfoReg(TranslateScale)      \
+        -source_standarddev    $MutualInfoReg(SourceStandardDeviation)  \
+        -target_standarddev    $MutualInfoReg(TargetStandardDeviation)  
 
     pack .mi.reg -fill both -expand true
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC MIRegAutoUndo
+# .PROC MutualInfoRegAutoUndo
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MIRegAutoUndo {} {
-    global Matrix MIReg
+proc MutualInfoRegAutoUndo {} {
+    global Matrix MutualInfoReg
 
     set t $Matrix(tAuto)
     set tran [Matrix($t,node) GetTransform]
     $tran Pop
 
     # Disallow undo
-    $MIReg(bUndo) configure -state disabled
+    $MutualInfoReg(bUndo) configure -state disabled
 
     # Update MRML
     MainUpdateMRML
@@ -456,7 +501,7 @@ proc MIRegAutoUndo {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC MIRegAutoRun_Vtk
+# .PROC MutualInfoRegAutoRun_Vtk
 #
 #
 # These are the tools written by Dave Gering (and implemented by Hanifa Dostmohamed)
@@ -466,8 +511,8 @@ proc MIRegAutoUndo {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MIRegAutoRun_Vtk {} {
-    global Path env Gui Matrix Volume MIReg
+proc MutualInfoRegAutoRun_Vtk {} {
+    global Path env Gui Matrix Volume MutualInfoReg
 
     # v = ID of volume to register
     # r = ID of reference volume
@@ -478,10 +523,12 @@ proc MIRegAutoRun_Vtk {} {
     # If the user has not selected a tranform, then create a new one by default
     # and append it to the volume to register (ie. "Volume to Move")
     set t $Matrix(activeID)
-    set Matrix(tAuto) $t
-    if {$t == ""} {
-        DataAddTransform append Volume($v,node) Volume($v,node)
-    }
+
+    catch "refTrans Delete"
+    catch "subTrans Delete"
+    catch "initMatrix Delete"
+    catch "initPose Delete"
+    catch "reg Delete"
 
     vtkRasToIjkTransform refTrans
     eval refTrans SetExtent  [[Volume($r,vol) GetOutput] GetExtent]
@@ -557,7 +604,7 @@ proc MIRegAutoRun_Vtk {} {
           if {$res != $resDisplay} {
             puts "Current Pose at res=$res is: [$currentPose Print]"
             set resDisplay $res
-            MIRegCopyRegImages $res $r $v
+            MutualInfoRegCopyRegImages $res $r $v
           }
         }
 
@@ -582,14 +629,14 @@ proc MIRegAutoRun_Vtk {} {
 
 #
 #-------------------------------------------------------------------------------
-# .PROC MIRegCopyRegImages
+# .PROC MutualInfoRegCopyRegImages
 #
 # Stuff for Dave Gering implementation
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MIRegCopyRegImages {res r v} {
+proc MutualInfoRegCopyRegImages {res r v} {
   global Volume
 
   #
