@@ -509,7 +509,7 @@ proc EdPhaseWireBuildVTK {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdPhaseWireBuildGUI {} {
-    global Ed Gui Label Volume
+    global Ed Gui Label Volume Help
 
     #-------------------------------------------
     # Frame Hierarchy:
@@ -548,6 +548,16 @@ proc EdPhaseWireBuildGUI {} {
     #-------------------------------------------
     set f $Ed(EdPhaseWire,frame).fTabbedFrame.fHelp
 
+    frame $f.fWidget -bg $Gui(activeWorkspace)
+    pack $f.fWidget -side top -padx 2 -fill both -expand true
+    
+    set Ed(EdPhaseWire,helpWidget) [HelpWidget $f.fWidget]
+
+    set help "For interactive image segmentation, just click on the desired border and as you move the mouse, the program will draw a contour for you.\n\nTo freeze the contour segment, click again.\n\n  More clicks are useful in difficult regions, fewer clicks should be needed where the boundary is clear.\n\nHit the Apply button when you are satisfied with the segmentation (don't worry, the moving tail will not be drawn into the image)."
+
+    eval $Ed(EdPhaseWire,helpWidget) tag configure normal   $Help(tagNormal)
+    
+    $Ed(EdPhaseWire,helpWidget) insert insert "$help" normal
 
     #-------------------------------------------
     # TabbedFrame->Basic frame
@@ -631,6 +641,9 @@ proc EdPhaseWireBuildGUI {} {
     eval {menubutton $menubutton -text  $Ed(EdPhaseWire,omega,name) \
             -relief raised -bd 2 -menu $menu} $Gui(WMBA)
     eval {menu $menu} $Gui(WMA)
+
+    TooltipAdd $menubutton \
+	    "Choose the size of the structure you are segmenting."
 
     foreach id $Ed(EdPhaseWire,omega,idList) name $Ed(EdPhaseWire,omega,nameList) {
 	$menu add command -label $name -command "EdPhaseWireSetOmega $id"
