@@ -104,7 +104,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.51 $} {$Date: 2001/04/27 15:35:03 $}]
+	    {$Revision: 1.52 $} {$Date: 2001/05/12 12:52:49 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -1129,7 +1129,12 @@ proc EditorMotion {x y} {
     switch $Editor(activeID) {
 	"EdLiveWire" {
 	    EdLiveWireMotion $x $y
-	    # only log this if it's used
+	    # log this event since it's used by the module
+	    EditorIncrementAndLogEvent "motion"    
+	}
+	"EdPhaseWire" {
+	    EdPhaseWireMotion $x $y
+	    # log this event since it's used by the module
 	    EditorIncrementAndLogEvent "motion"    
 	}
     }
@@ -1167,6 +1172,9 @@ proc EditorB1 {x y} {
 	}
 	"EdLiveWire" {
 	    EdLiveWireB1 $x $y
+	}
+	"EdPhaseWire" {
+	    EdPhaseWireB1 $x $y
 	}
 	"EdChangeIsland" {
 	    EditorChangeInputLabel $x $y
@@ -1228,9 +1236,6 @@ proc EditorB1Motion {x y} {
 		    Slicer DrawMove $x $y
 		}
 	    }
-	}
-	"EdLiveWire" {
-	    EdLiveWireB1Motion $x $y
 	}
     }
     
