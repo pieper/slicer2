@@ -55,6 +55,7 @@ vtkMrmlTetraMeshNode::vtkMrmlTetraMeshNode()
   // Defaults are don't display anything
   this->DisplaySurfaces = 0;
     this->SurfacesUseCellData = 1; // default, use cell data
+    this->SurfacesSmoothNormals = 0; // default, don't smooth normals
   this->DisplayEdges    = 0;
   this->DisplayNodes    = 0;
     this->NodeScaling     = 9.5;
@@ -65,8 +66,6 @@ vtkMrmlTetraMeshNode::vtkMrmlTetraMeshNode()
   this->DisplayVectors  = 0;
     this->VectorScaling   = 9.5;
     this->VectorSkip      = 2;
-
-    
 }
 
 //----------------------------------------------------------------------------
@@ -131,9 +130,13 @@ void vtkMrmlTetraMeshNode::Write(ofstream& of, int nIndent)
   {
     of << " DisplaySurfaces='" << (this->DisplaySurfaces ? y : n) << "'";
   }
-  if (this->SurfacesUseCellData != 0)
+  if (this->SurfacesUseCellData != 1)
   {
     of << " SurfacesUseCellData'" << (this->SurfacesUseCellData ? y : n)<< "'";
+  }
+  if (this->SurfacesSmoothNormals != 0)
+  {
+   of << " SurfacesSmoothNormals'" << (this->SurfacesSmoothNormals ? y : n)<< "'";
   }
   if (this->DisplayEdges != 0)
   {
@@ -193,6 +196,7 @@ void vtkMrmlTetraMeshNode::Copy(vtkMrmlNode *anode)
 
   this->DisplaySurfaces = node->DisplaySurfaces;
     this->SurfacesUseCellData = node->SurfacesUseCellData;
+    this->SurfacesSmoothNormals = node->SurfacesSmoothNormals;
   this->DisplayEdges    = node->DisplayEdges;
   this->DisplayNodes    = node->DisplayNodes;
     this->NodeScaling     = node->NodeScaling;
@@ -221,6 +225,7 @@ void vtkMrmlTetraMeshNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Opacity: " << this->Opacity << "\n";
   os << indent << "DisplaySurfaces: " << this->DisplaySurfaces << "\n";
   os << indent << "  SurfacesUseCellData: "<< this->SurfacesUseCellData<<"\n";
+  os << indent << "  SurfacesSmoothNormals: "<< this->SurfacesSmoothNormals<<"\n";
   os << indent << "DisplayEdges: " << this->DisplayEdges << "\n";
   os << indent << "DisplayNodes: " << this->DisplayNodes << "\n";
   os << indent << "  NodeScaling: " << this->NodeScaling << "\n";

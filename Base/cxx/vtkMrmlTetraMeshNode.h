@@ -110,6 +110,11 @@ class VTK_EXPORT vtkMrmlTetraMeshNode : public vtkMrmlNode
   vtkSetMacro(SurfacesUseCellData, unsigned short);
   vtkGetMacro(SurfacesUseCellData, unsigned short);
 
+  // Description
+  // Surfaces Smooth Normals to look good? Or, don't bother?
+  vtkSetMacro(SurfacesSmoothNormals, unsigned short);
+  vtkGetMacro(SurfacesSmoothNormals, unsigned short);
+
   // Description:
   // Parameters to display
   vtkSetMacro(NodeScaling, float);
@@ -147,6 +152,7 @@ protected:
   // Numbers
   unsigned short DisplaySurfaces;
   unsigned short   SurfacesUseCellData;
+  unsigned short   SurfacesSmoothNormals;
   unsigned short DisplayEdges;
   unsigned short DisplayNodes;
   float            NodeScaling;
