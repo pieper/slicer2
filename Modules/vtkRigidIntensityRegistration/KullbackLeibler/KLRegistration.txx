@@ -52,7 +52,7 @@ KLRegistration<TFixedImage,TMovingImage>::KLRegistration()
 
   // Default number of bins
   unsigned int nBins = 32;
-  SizeType histSize;
+  HistogramSizeType histSize;
   histSize[0] = nBins;
   histSize[1] = nBins;
   m_Metric->UsePaddingValue(false);
@@ -76,7 +76,6 @@ KLRegistration<TFixedImage,TMovingImage>::~KLRegistration()
 {
 }
 
-
 //----------------------------------------------------------------------------
 
 template < typename TFixedImage, typename TMovingImage  >
@@ -97,7 +96,7 @@ void KLRegistration<TFixedImage,TMovingImage>
 
 template < typename TFixedImage, typename TMovingImage  >
 void KLRegistration<TFixedImage,TMovingImage>
-::SetMetricParam(std::ostream& os, Indent indent) const
+::SetMetricParam()
 {
   m_Optimizer->MinimizeOn();
 }
