@@ -84,7 +84,7 @@ proc ColorsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.25 $} {$Date: 2004/03/16 00:59:04 $}]
+        {$Revision: 1.26 $} {$Date: 2004/03/18 20:28:07 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -291,6 +291,7 @@ proc ColorsLoadApply {} {
     MainMrmlDeleteColors
     MainMrmlAddColorsFromFile $Color(fileName)
     # TODO: update the gui's Edit Colors panel now, and the Select a Color canvas
+    MainColorsUpdateMRML
     RenderAll
 }
 #-------------------------------------------------------------------------------
