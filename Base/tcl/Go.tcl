@@ -264,7 +264,7 @@ proc SplashShow { {delayms 7000} } {
     set splashim [image create photo -file [file join $Path(program) gui/welcome.ppm]]
     label .splash.l -image $splashim
     place .splash.l -relx 0.5 -rely 0.35 -anchor center
-    label .splash.t1 -text "Slicer is not an FDA approved medical device \nand is for Research Use Only." -bg white -fg red -font $splashfontb
+    label .splash.t1 -text "Slicer is NOT an FDA approved medical device \nand is for Research Use Only." -bg white -fg red -font $splashfontb
     label .splash.t2 -text "See www.slicer.org for license details." -bg white -fg red -font $splashfont
     place .splash.t1 -relx 0.5 -rely 0.70 -anchor center
     place .splash.t2 -relx 0.5 -rely 0.80 -anchor center
@@ -590,7 +590,7 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.68 2003/10/04 15:09:29 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.69 2003/10/28 19:04:25 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
