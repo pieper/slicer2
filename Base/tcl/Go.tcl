@@ -44,7 +44,7 @@ if {$argc > 1} {
 }
 
 # verbose
-set verbose 1
+set verbose 0
 
 # Determine Slicer's home directory where the program is installed
 # If the SLICER_HOME environment is not defined, then use the 
@@ -222,13 +222,17 @@ foreach name $suppressed {
 }
 
 # Source the modules
+set foundOrdered ""
 foreach name $ordered {
 	set path [GetFullPath $name tcl tcl-modules]
 	if {$path != ""} {
 		if {$verbose == 1} {puts "source $path"}
 		source $path
-	}
+		lappend foundOrdered $name
+	} 
 }
+# Ordered list only contains modules that exist
+set ordered $foundOrdered
 
 # Source shared stuff either locally or globally
 set shared [FindNames tcl-shared]
@@ -255,9 +259,7 @@ set Module(idList)     $ordered
 set Module(mainList)   $main
 set Module(sharedList) $shared
 set Module(supList)    $suppressed
-set Module(allList)    $found
-#set Module(supList)    ""
-#set Module(allList)    $ordered
+set Module(allList)    [concat $ordered $suppressed]
 
 if {$verbose == 1} {
 	puts "ordered=$ordered"
