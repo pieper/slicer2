@@ -45,7 +45,8 @@ proc tarup { {destdir "auto"} } {
                 set destdir [file normalize $::env(TMP)]
             } else {
                 switch $::env(BUILD) {
-                    "solaris8" - "Darwin" - "redhat7.3" { set destdir /var/tmp }
+                    "solaris8" { set destdir /tmp }
+                    "Darwin" - "redhat7.3" { set destdir /var/tmp }
                     "Win32VC7" { set destdir c:/Temp }
                 }
             }
