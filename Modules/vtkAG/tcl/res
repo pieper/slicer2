@@ -1,0 +1,44 @@
+150c150
+<         {$Revision: 1.1 $} {$Date: 2003/10/01 21:19:51 $}]
+---
+>         {$Revision: 1.1 $} {$Date: 2003/10/01 21:19:51 $}]
+1015c1015,1017
+<     catch "$AG(tfm) Delete"
+---
+>     #catch "$AG(tfm) Delete"
+>     catch {$AG(tfm) Delete}
+>     catch "tfm Delete"
+1018a1021
+> 	 
+1577,1578c1580,1581
+<   catch "$AG(Transform) Delete"
+<   
+---
+>   #catch "$AG(Transform) Delete"
+>   catch {$AG(Transform) Delete}
+1586d1588
+<       TransformAG PostMultiply 
+1610,1611c1612
+<       GCR PostMultiply      
+< 
+---
+>      
+1614c1615
+<       GCR SetInput  __dummy_transform  
+---
+>       #GCR SetInput  __dummy_transform 
+1621d1621
+<    
+1623,1632c1623
+<       #set AffineMatrix [[[GCR GetGeneralTransform] GetConcatenatedTransform 1] GetMatrix] 
+< 
+<       #catch "mat_copy Delete"    
+<       #vtkMatrix4x4 mat_copy
+<       #mat_copy DeepCopy $AffineMatrix
+<      
+<       #GCR Identity   
+<       #GCR Concatenate mat_copy
+<       #TransformAG Concatenate GCR
+<       TransformAG Concatenate [[GCR GetGeneralTransform] GetConcatenatedTransform 1]
+---
+>       TransformAG Concatenate GCR

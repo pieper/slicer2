@@ -1,0 +1,60 @@
+ 
+    if {$AG(Intensity_tfm)=="mono-functional"} then {
+      vtkLTSPolynomialIT tfm
+      tfm SetDegree $AG(Degree)
+      tfm SetRatio $AG(Ratio)  
+      tfm SetNumberOfFunctions $AG(Nb_of_functions)
+      if { $AG(Use_bias) == 1 } {
+         tfm UseBiasOn
+      }
+      set AG(tfm) tfm
+      return 0
+    } else {
+      if {$AG(Intensity_tfm) == "piecewise-median"} {
+         vtkPWMedianIT tfm
+         if {([llength $AG(Nb_of_pieces)] == 0) && ($AG(Boundaries) == 0)} { 
+            $Source  Update
+            set low_high [$Source  GetScalarRange]
+            set low [lindex $low_high 0]
+            set high [lindex $low_high 1]
+            for {set index 0} {$index < $AG(Nb_of_functions)} {incr index} {
+            lappend AG(Nb_of_pieces) [expr $high-$low+1]
+         }
+         
+         for {set index2 $low+1} {$index2 < $hight+1} {incr index2} {
+            lappend AG(Boundaries) $index2
+         }
+      }
+   
+      set nf $AG(Nb_of_functions)
+      set np $AG(Nb_of_pieces)
+      set bounds $AG(Boundaries)
+      if {( [llength $np] == 0) || ( [llength $np] != $nf)} {
+      #raise Exception
+          puts "length of number of pieces doesn\'t match number of functions"
+          return 1
+      }
+       
+      tfm SetNumberOfFunctions $nf
+      for {set  f  0}  {$f < $nf} {incr f} {
+          tfm SetNumberOfPieces {$f [lindex $np $f]}
+          set i 0
+          for {set p 0} {$p <  [lindex $np $f]-1} {incr p}{
+            tfm SetBoundary {$f $p [lindex $bounds $i]}
+            incr i
+          }
+      }  
+      set AG(tfm) tfm
+      return 0
+    }  else if { AG(Intensity_tfm) == "none" } {
+         #set tfm None
+         return 1
+       } else {
+           puts "unknown intensity tfm type: $AG(Intensity_tfm)"
+           #raise exception
+           #set tfm None
+           return 1
+       }
+    }
+    
+   #return tfm
