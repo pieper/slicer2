@@ -110,10 +110,10 @@ if { $env(BUILD) == "Darwin" && [catch {
 # VTK source and binary dirs and tcl dirs should be in the Lib directory
 #
 if { ![info exists env(VTK_SRC_DIR)] || $env(VTK_SRC_DIR) == "" } {
-    set env(VTK_SRC_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK
+    set env(VTK_SRC_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK-4.2.2
 }
 if { ![info exists env(VTK_BIN_DIR)] || $env(VTK_BIN_DIR) == "" } {
-    set env(VTK_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK-build
+    set env(VTK_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK-4.2.2-build
 }
 if { ![info exists env(ITK_BIN_DIR)] || $env(ITK_BIN_DIR) == "" } {
     set env(ITK_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/itk/ITK-build
@@ -285,7 +285,15 @@ proc file_event {fp} {
 # change from tcl escape to shell escape for command line arguments 
 # that contain spaces -- note that shell notation only works for a single
 # level of nesting
-regsub -all "{|}" $argv "\\\"" argv
+# - first escape the spaces in each of the arguments
+# - then remove the curly braces
+set newargv ""
+foreach a $argv {
+    regsub -all " " $a "\\\ " a
+    lappend newargv $a
+}
+set argv $newargv
+regsub -all "{|}" $argv "" argv
 
 switch $env(BUILD) {
     "solaris8" -
