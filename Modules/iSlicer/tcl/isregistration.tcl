@@ -370,7 +370,7 @@ itcl::body isregistration::step {} {
 
     if {$itk_option(-auto_repeat) == 0} {
          isprogress .regprogress \
-          -title "Rigid Registration" -geometry 300x100  \
+          -title "Rigid Registration" -geometry 300x100+100+100  \
           -cancel_text "Stop Registration" \
           -progress_text "Registering" \
           -abort_command "$_reg SetAbort 1" \
