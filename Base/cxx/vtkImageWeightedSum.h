@@ -57,6 +57,7 @@ class VTK_SLICER_BASE_EXPORT vtkImageWeightedSum : public vtkImageMultipleInputF
   void CheckWeights();
 
   protected:
+
   vtkImageWeightedSum();
   ~vtkImageWeightedSum();
   
@@ -65,7 +66,6 @@ class VTK_SLICER_BASE_EXPORT vtkImageWeightedSum : public vtkImageMultipleInputF
   void NormalizeWeights();
 
   void ExecuteInformation(vtkImageData **inputs, vtkImageData *output); 
-
   void ThreadedExecute(vtkImageData **inDatas, vtkImageData *outData, 
                int extent[6], int id);
 };
