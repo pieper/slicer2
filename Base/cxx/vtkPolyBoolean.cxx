@@ -25,15 +25,6 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define kcyDebug(x) \
 { cout << x << endl; }
 
-#define vtkDebugMacro(x) \
-{ if (1==1) \
-    { char *vtkmsgbuff; \
-      ostrstream vtkmsg; \
-      vtkmsg << "Debug: In " __FILE__ ", line " << __LINE__ << "\n" << this->GetClassName() << " (" << this << "): " x  << "\n\n" << ends; \
-      vtkmsgbuff = vtkmsg.str(); \
-      vtkOutputWindowDisplayText(vtkmsgbuff);\
-      vtkmsg.rdbuf()->freeze(0);}}
-
 #include <math.h>
 #include "vtkPolyBoolean.h"
 #include "vtkLine.h"
@@ -1408,7 +1399,7 @@ void vtkPolyBoolean::FormLoops()
   {
   int AorB, ii, jj, flagBit, startPnt, nextPnt, bPnt, direction;
   int numEdges, loopCount, abortTri;
-  char *abortReasons[5] = { "OK", "Dead End", "Rho-walk",
+  const char *abortReasons[5] = { "OK", "Dead End", "Rho-walk",
                             "Fell off triangle", "Endless Loop" };
   vtkPiercePoint *thisPP, *nextPP, *linkPP;
   vtkBoolTri *thisTri, *otherTri;
