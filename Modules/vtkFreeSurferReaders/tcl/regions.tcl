@@ -41,9 +41,8 @@ if { [itcl::find class regions] == "" } {
 
         variable _labels
         variable _mtx
-        variable _ptscalars ""
         variable _ptlabels ""
-        variable xyz ""
+        variable _xyz ""
         constructor {args} {}
         destructor {}
 
@@ -312,32 +311,34 @@ itcl::body regions::query {} {
             }
         }
     }
-    switch $wlabel {
-           "Brodmann" {
-           #Create Pubmed query
-           if { $Brodmannlab != "" } {
-              set BrodSwitch [split $Brodmannlab]
-              set area [lindex $BrodSwitch 2]
-              if { $site == "pubmed" } {   
-                  set terms "\"BA $area\" NOT (barium OR (ba AND \"2+\")) OR (Brodmann AND $area)"
-              } elseif { $site == "arrowsmith" } {
-                  set terms "&quot BA $area &quot NOT (barium OR (ba AND &quot 2+ &quot)) OR (Brodmann AND $area)"
-              } elseif { $site == "jneurosci" } {
-                  set terms "\"BA $area\" OR (Brodmann AND $area)"
-              } else { 
-                  set terms $Brodmannlab
-                }
-              }
-            }
-            
-           "Talairach" {
-              set terms $talgyrlab 
-           }
 
-           "Freesurferlab" {
-              set terms $fsurferlab
-           }
+    switch $wlabel {
+       "Brodmann" {
+            #Create Pubmed query
+            if { $Brodmannlab != "" } {
+                set BrodSwitch [split $Brodmannlab]
+                set area [lindex $BrodSwitch 2]
+                if { $site == "pubmed" } {   
+                    set terms "\"BA $area\" NOT (barium OR (ba AND \"2+\")) OR (Brodmann AND $area)"
+                } elseif { $site == "arrowsmith" } {
+                    set terms "&quot BA $area &quot NOT (barium OR (ba AND &quot 2+ &quot)) OR (Brodmann AND $area)"
+                } elseif { $site == "jneurosci" } {
+                    set terms "\"BA $area\" OR (Brodmann AND $area)"
+                } else { 
+                    set terms $Brodmannlab
+                }
+            }
+        }
+            
+        "Talairach" {
+            set terms $talgyrlab 
+        }
+
+        "Freesurferlab" {
+            set terms $fsurferlab
+        }
     }
+
     regsub -all "{" $terms "" terms
     regsub -all "}" $terms "" terms
         
@@ -386,7 +387,7 @@ itcl::body regions::query {} {
             catch "exec \"$browser\" http://www.jneurosci.org/cgi/search?volume=&firstpage=&sendit=Search&author1=&author2=&titleabstract=&fulltext=$terms &"
         }
         "mediator" {
-            tk_messageBox -title "Slicer" -message "Mediator interface not yet implemented." -type ok -icon error
+            tk_messageBox -title "Slicer" -message "Mediator not yet implemented." -type ok -icon error
         }
     }
 }
@@ -412,47 +413,58 @@ itcl::body regions::findptscalars {} {
 
     $_labellistbox delete 0 end
     set _ptlabels ""
-    set _ptscalars ""
+
     foreach id $Point(idList) {
-        set xyz [Point($id,node) GetXYZ]
-        set minpt 0
-        set mapper [$Point($id,actor) GetMapper]
-        if { [$mapper GetInput] != $Model($_id,polyData) } {
-                puts "Point $id wasn't picked on $model"
-        }
-        set pts [$Model($_id,polyData) GetPoints]
-        set cell [$Model($_id,polyData) GetCell $Point($id,cellId)]
-        set npts [$cell GetNumberOfPoints]
-        set pxyz [$pts GetPoint [$cell GetPointId 0]]
-        set mindist [eval regions::dist 100000 $xyz $pxyz]
-        for {set n 0} {$n < $npts} {incr n} {
-            set pxyz [$pts GetPoint [$cell GetPointId $n]]
-            set dist [eval regions::dist $mindist $xyz $pxyz]
-            if { $dist < $mindist } {
-                set mindist $dist
-                set minpt [$cell GetPointId $n]
+
+        set _xyz [Point($id,node) GetXYZ]
+        set ptinfo "pt $id"
+
+        # if there's a surface registered, do the lookup on that
+        if { $_id != "" } {
+            set minpt 0
+            set mapper [$Point($id,actor) GetMapper]
+            if { [$mapper GetInput] != $Model($_id,polyData) } {
+                    puts "Point $id wasn't picked on $model"
+            }
+            set pts [$Model($_id,polyData) GetPoints]
+            set cell [$Model($_id,polyData) GetCell $Point($id,cellId)]
+            set npts [$cell GetNumberOfPoints]
+            set pxyz [$pts GetPoint [$cell GetPointId 0]]
+            set mindist [eval regions::dist 100000 $_xyz $pxyz]
+            for {set n 0} {$n < $npts} {incr n} {
+                set pxyz [$pts GetPoint [$cell GetPointId $n]]
+                set dist [eval regions::dist $mindist $_xyz $pxyz]
+                if { $dist < $mindist } {
+                    set mindist $dist
+                    set minpt [$cell GetPointId $n]
+                }
+            }
+            set scalars [[$Model($_id,polyData) GetPointData] GetScalars]
+            set scalars [[$Model($_id,polyData) GetPointData] GetArray "labels"] 
+            if { $scalars == "" } {
+                DevErrorWindow "No labels loaded for Model [Model(0,node) GetName)]"
+                return
+            }
+            set s [$scalars GetValue $minpt]
+            lappend _ptlabels $_labels($s)
+            set fsurferlab $_labels($s)
+            set umlslabel0 $fsurferlab
+            $this umls
+            if { $mindist > 2} {
+                set ptinfo "Not on Surface Model" 
+            } elseif { $umlsid == "" } {
+                set ptinfo " - $fsurferlab ($s)"
+            } else {
+                set ptinfo " - $fsurferlab ($s) - UMLS ID $umlsid"
             }
         }
-        set scalars [[$Model($_id,polyData) GetPointData] GetScalars]
-        set scalars [[$Model($_id,polyData) GetPointData] GetArray "labels"] 
-        if { $scalars == "" } {
-            DevErrorWindow "No labels loaded for Model [Model(0,node) GetName)]"
-            return
+
+        if { [Point($id,node) GetDescription] != "" } {
+            regsub -all -- "_" [Point($id,node) GetDescription] " " lab
+            set ptinfo "$ptinfo - $lab"
+            lappend _ptlabels $lab
         }
-        set s [$scalars GetValue $minpt]
-        lappend _ptscalars $s
-        lappend _ptlabels $_labels($s)
-        set fsurferlab $_labels($s)
-        set umlslabel0 $fsurferlab
-        $this umls
-        set ptinfo ""
-        if { $mindist > 2} {
-            set ptinfo "pt $id Not on Surface Model" 
-        } elseif { $umlsid == "" } {
-            set ptinfo "pt $id $fsurferlab ($s)"
-        } else {
-            set ptinfo "pt $id $fsurferlab ($s) - UMLS ID $umlsid"
-        }
+
         $_labellistbox insert end $ptinfo
         # put the label on two lines for the fiducial
         regsub -all -- "-" $ptinfo "\n        " ptinfo
@@ -472,6 +484,7 @@ itcl::body regions::findptscalars {} {
             $_labellistbox insert end "pt $id $Brodmannlab - $range mm"
         } 
     }
+
     FiducialsUpdateMRML
 }
 
@@ -503,7 +516,7 @@ itcl::body regions::talairach {} {
         return
     }
     #get coordinate from Slicer
-    scan $xyz "%f %f %f" x0 y0 z0
+    scan $_xyz "%f %f %f" x0 y0 z0
         
     #Set Tournoux Talairach -> MNI Talairach conversion matrices
     set tf1(1,1) .9900;set tf1(1,2) 0;set tf1(1,3) 0;set tf1(2,1) 0;set tf1(2,2) .9688;set tf1(2,3) .046
@@ -755,6 +768,10 @@ proc QueryAtlas_mdemo { {demodata c:/pieper/bwh/data/MGH-Siemens15-SP.1-uw} } {
     vtkFreeSurferReadersLoadVolume $demodata/mri/orig/COR-.info
     set asegid [vtkFreeSurferReadersLoadVolume $demodata/mri/aseg/COR-.info 1]
     MainSlicesSetVolumeAll Fore $asegid
+
+    set ::Color(fileName) $fstcldir/ColorsFreesurfer.xml
+    ColorsLoadApply
+    MainColorsUpdateMRML
 
     r configure -talfile $demodata/mri/transforms/talairach.xfm
     r configure -arrow "$fstcldir/QueryA.html"
