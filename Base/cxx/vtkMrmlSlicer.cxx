@@ -446,6 +446,106 @@ void vtkMrmlSlicer::PrintSelf(ostream& os, vtkIndent indent)
 }
 
 //----------------------------------------------------------------------------
+void vtkMrmlSlicer::DeepCopy(vtkMrmlSlicer *src)
+{
+
+  //  vtkMrmlSlicer *src = vtkMrmlSlicer::SafeDownCast(dataObject);
+  
+  // in case we were not passed a slicer object
+  if ( src != NULL) 
+    {
+      this->ZoomCenter0[0] = src->ZoomCenter0[0];
+      this->ZoomCenter0[1] = src->ZoomCenter0[1];
+      this->ZoomCenter1[0] = src->ZoomCenter1[0];
+      this->ZoomCenter1[1] = src->ZoomCenter1[1];
+      this->ZoomCenter2[0] = src->ZoomCenter2[0];
+      this->ZoomCenter2[1] = src->ZoomCenter2[1];
+
+      //This updates the FOV for the reformatters
+      this->SetFieldOfView(src->FieldOfView);
+
+      this->LabelIndirectLUT = src->LabelIndirectLUT;
+      // these deep copies are not implemented
+      //this->PolyDraw->DeepCopy(src->PolyDraw);
+      //this->ReformatIJK->DeepCopy(src->ReformatIJK);
+      this->DrawIjkPoints->DeepCopy(src->DrawIjkPoints);
+
+      for (int s=0; s<NUM_SLICES; s++)
+    {
+      this->ReformatMatrix[s]->DeepCopy(src->ReformatMatrix[s]);
+      
+      // Lower Pipeline
+      
+      // Volumes
+      this->SetBackVolume(s, src->GetBackVolume(s));
+      this->SetForeVolume(s, src->GetForeVolume(s));
+      this->SetLabelVolume(s, src->GetLabelVolume(s));
+      
+      // Reformatters: set matrices to new ones
+      this->BackReformat[s]->SetReformatMatrix(this->ReformatMatrix[s]);
+      this->ForeReformat[s]->SetReformatMatrix(this->ReformatMatrix[s]);
+      this->LabelReformat[s]->SetReformatMatrix(this->ReformatMatrix[s]);
+
+      // the newer reformatters>> AT 11/09/01
+      this->BackReformat3DView[s]->SetReformatMatrix(this->ReformatMatrix[s]);
+      this->ForeReformat3DView[s]->SetReformatMatrix(this->ReformatMatrix[s]);
+      this->LabelReformat3DView[s]->SetReformatMatrix(this->ReformatMatrix[s]);
+      // << AT 11/09/01
+
+      // Overlays
+      this->ForeOpacity = src->ForeOpacity;
+      this->Overlay[s]->SetOpacity(1, this->ForeOpacity);
+      this->Overlay3DView[s]->SetOpacity(1, this->ForeOpacity);
+
+      // Upper Pipeline
+    
+      // Offset and Orient
+      this->Driver[s] = src->Driver[s];
+      this->SetOrient(s, src->Orient[s]);
+      
+      // Filter: don't worry about this now
+      //this->FirstFilter[s] = NULL;
+      //this->LastFilter[s] = NULL;
+    }
+      
+      //this->BackFilter = 0;
+      //this->ForeFilter = 0;
+      //this->FilterActive = 0;
+      //this->FilterOverlay = 0;
+
+      // Matrix
+      this->DirN[0] = src->DirN[0];
+      this->DirN[1] = src->DirN[1];
+      this->DirN[2] = src->DirN[2];
+      this->DirT[0] = src->DirT[0];
+      this->DirT[1] = src->DirT[1];
+      this->DirT[2] = src->DirT[2];
+      this->DirP[0] = src->DirP[0];
+      this->DirP[1]  =src->DirP[1];
+      this->DirP[2] = src->DirP[2];
+      this->CamN[0] = src->CamN[0];
+      this->CamN[1] = src->CamN[1];
+      this->CamN[2] = src->CamN[2];
+      this->CamT[0] = src->CamT[0];
+      this->CamT[1] = src->CamT[1];
+      this->CamT[2] = src->CamT[2];
+      this->CamP[0] = src->CamP[0];
+      this->CamP[1] = src->CamP[1];
+      this->CamP[2] = src->CamP[2];
+      
+      
+      // ignore user-defined matrix for now
+      //this->NewOrientP[ss][2] = 0;
+      
+      this->BuildLowerTime.Modified();
+      this->BuildUpperTime.Modified();
+      
+      // Active slice has polygon drawing (return with GetActiveOutput)
+      this->SetActiveSlice(src->ActiveSlice);
+    }
+}
+      
+//----------------------------------------------------------------------------
 void vtkMrmlSlicer::SetNoneVolume(vtkMrmlDataVolume *vol)
 {
   int s;
