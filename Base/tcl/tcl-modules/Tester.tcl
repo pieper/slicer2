@@ -138,7 +138,7 @@ proc TesterInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.3 $} {$Date: 2000/11/07 20:54:29 $}]
+		{$Revision: 1.4 $} {$Date: 2000/11/07 22:54:43 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -474,6 +474,7 @@ proc TesterReadNewModule {Filename} {
     }
 
 
+
     # m is the name of the module
     set m [file rootname [file tail $Filename]]
 
@@ -496,6 +497,7 @@ proc TesterReadNewModule {Filename} {
     }
 
     lappend Module(idList) $m
+    lappend Module(allList) $m
     set Module($m,more) 1
 
     set moreMenu $Module(mbMore).m
