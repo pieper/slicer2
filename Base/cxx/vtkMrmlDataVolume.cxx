@@ -218,7 +218,7 @@ vtkImageData* vtkMrmlDataVolume::GetOutput()
 //----------------------------------------------------------------------------
 void vtkMrmlDataVolume::UpdateWindowLevelThreshold()
 {
-  int window, level, upper, lower;
+  float window, level, upper, lower;
 
   vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) this->MrmlNode;
 
@@ -444,7 +444,7 @@ int vtkMrmlDataVolume::Read()
   // Update W/L
   this->Update();
 
-  // Write now how no way to deal with failure
+  // Right now how no way to deal with failure
   return 1;
 }
 
@@ -460,6 +460,17 @@ int vtkMrmlDataVolume::Write()
   // Start progress reporting
   this->InvokeEvent(vtkCommand::StartEvent,NULL);
 
+  // Make the z extent equal the desired range of image numbers
+  // so that the writer will start on the right image number (.001 not .000)
+  int tmpExt[6], saveExt[6], range[2];
+  this->ImageData->GetExtent(saveExt);
+  this->ImageData->GetExtent(tmpExt);
+  node->GetImageRange(range);
+  tmpExt[4] = range[0];
+  tmpExt[5] = range[1];
+  this->ImageData->SetExtent(tmpExt);
+
+  // Set up the image writer
   vtkImageWriter *writer = vtkImageWriter::New();
   writer->SetFilePattern(node->GetFilePattern());
   writer->SetFilePrefix(node->GetFullPrefix());
@@ -476,10 +487,13 @@ int vtkMrmlDataVolume::Write()
   writer->SetInput(NULL);
   writer->Delete();
 
+  // Reset the original extent of the data
+  this->ImageData->SetExtent(saveExt);
+
   // End progress reporting
   this->InvokeEvent(vtkCommand::EndEvent,NULL);
 
-  // Write now how no way to deal with failure
+  // Right now how no way to deal with failure
   return 1;
 }
 
@@ -492,3 +506,4 @@ void vtkMrmlDataVolume::SetHistogramWidth(int w)
   ext[1] = w-1;
   this->Resize->SetOutputWholeExtent(ext);
 }
+
