@@ -67,7 +67,7 @@ class VTK_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGeneral
   // -----------------------------------------------------
   static vtkImageEMLocalSegmenter *New();
   vtkTypeMacro(vtkImageEMLocalSegmenter,vtkObject);
-  void PrintSelf(ostream& os);
+  void PrintSelf(ostream& os, vtkIndent indent);
  
   // -----------------------------------------------------
   // Setting Algorithm 

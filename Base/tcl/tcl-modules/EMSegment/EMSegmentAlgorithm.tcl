@@ -119,7 +119,61 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet } {
    return $NumInputImagesSet
 }
 
+proc EMSegmentSetVtkClassSettingOld {} {
+  global EMSegment Volume
 
+  EMSegment(vtkEMSegment) SetNumClasses [llength $EMSegment(Cattrib,0,ClassList)]
+  set NumInputImagesSet 0
+  # Set Class info
+  set xindex 1
+  foreach i $EMSegment(Cattrib,0,ClassList) { 
+    EMSegment(vtkEMSegment) SetLabel   $EMSegment(Cattrib,$i,Label) $xindex
+ 
+    # Probability paramters
+    EMSegment(vtkEMSegment) SetTissueProbability $EMSegment(Cattrib,$i,Prob) $xindex
+    if {$EMSegment(Cattrib,$i,ProbabilityData) != $Volume(idNone)} {
+       EMSegment(vtkEMSegment) SetProbDataLocal 1 $xindex
+       EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) GetOutput]
+       incr NumInputImagesSet
+    } else {
+       EMSegment(vtkEMSegment) SetProbDataLocal 0 $xindex 
+    }
+
+    # Intensity Paramters
+    set yindex 1
+    for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
+    EMSegment(vtkEMSegment) SetLogMu $EMSegment(Cattrib,$i,LogMean,$y) $xindex $yindex
+    for {set z 0} {$z < $EMSegment(NumInputChannel)} {incr z} {
+        EMSegment(vtkEMSegment) SetLogCovariance $EMSegment(Cattrib,$i,LogCovariance,$y,$z) $xindex $yindex [expr $z +1]
+    }
+        incr yindex
+    }
+
+    # MRF Parameters
+    set yindex 1
+    foreach j $EMSegment(Cattrib,0,ClassList) { 
+       for {set k 0} { $k< 6} {incr k} {
+          EMSegment(vtkEMSegment) SetMarkovMatrix $EMSegment(Cattrib,0,CIMMatrix,$i,$j,[lindex $EMSegment(CIMList) $k]) [expr $k+1] $yindex $xindex
+       }
+       incr yindex
+    }
+    incr xindex
+  }
+  # Transfer image information
+  foreach v $EMSegment(SelVolList,VolumeList) {       
+      EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume($v,vol) GetOutput]
+      incr NumInputImagesSet
+  }
+  # Transfere Intensity correction filter stuff
+  set index 1
+  EMSegment(vtkEMSegment) SetIntensityAvgClass $EMSegment(IntensityAvgClass)
+  foreach v $EMSegment(SelVolList,VolumeList) {       
+     EMSegment(vtkEMSegment) SetIntensityAvgValuePreDef $EMSegment(IntensityAvgValue,$v) $index
+     incr index
+  } 
+  # Transfer Bias Print out Information
+  if {$EMSegment(BiasPrint)} {EMSegment(vtkEMSegment) SetBiasRootFileName $EMSegment(BiasRootFileName)}
+}
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentAlgorithmStart
 # Sets up the segmentation algorithm
@@ -135,58 +189,37 @@ proc EMSegmentAlgorithmStart { } {
        # How many input images do you have
        EMSegment(vtkEMSegment) SetNumInputImages $EMSegment(NumInputChannel) 
        EMSegment(vtkEMSegment) SetNumberOfTrainingSamples $EMSegment(NumberOfTrainingSamples)
- 
-
-       set NumInputImagesSet [EMSegmentSetVtkSuperClassSetting 0 0]
- 
-       # Transfer image information
-       foreach v $EMSegment(SelVolList,VolumeList) {       
-          EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume($v,vol) GetOutput]
-          incr NumInputImagesSet
-       }
-       # Transfer Bias Print out Information
        EMSegment(vtkEMSegment) SetBiasPrint $EMSegment(BiasPrint)
-       EMSegment(vtkEMSegment) SetPrintIntermediateDir $EMSegment(PrintIntermediateDir)
-       EMSegment(vtkEMSegment) SetNumEMShapeIter  $EMSegment(EMShapeIter)  
 
-   }
-
-   # This is just here for memory -> that's how the structure was before introducing hirachy
-   if {$EMSegment(SegmentMode) < 0} {
-       # EMLocalSegmentation: Multiple Input Images
-       vtkImageEMLocalSegmenter EMStart 
-       # How many input images do you have
-       EMStart SetNumInputImages $EMSegment(NumInputChannel)  
-       EMStart SetNumberOfTrainingSamples $EMSegment(NumberOfTrainingSamples)
-
-       # Transefer probability map
-       set i 0
-       while {$i< $EMSegment(NumClasses)} {
-          incr i
-          # Kilian Changed here from standard
-          if {$EMSegment(Cattrib,$i,ProbabilityData) != 0} {
-             EMStart SetProbDataLocal 1 $i
-             EMStart SetInputIndex $NumInputImagesSet [Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) GetOutput]
-             incr NumInputImagesSet
-          } else {
-            EMStart SetProbDataLocal 0 $i 
+       if {$EMSegment(SegmentMode) > 1} {
+          set NumInputImagesSet [EMSegmentSetVtkSuperClassSetting 0 0]
+ 
+          # Transfer image information
+          foreach v $EMSegment(SelVolList,VolumeList) {       
+            EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume($v,vol) GetOutput]
+            incr NumInputImagesSet
           }
+          # Transfer Bias Print out Information
+          EMSegment(vtkEMSegment) SetPrintIntermediateDir $EMSegment(PrintIntermediateDir)
+          EMSegment(vtkEMSegment) SetNumEMShapeIter  $EMSegment(EMShapeIter)  
+
+      # This is for debuging purposes so extra volumes can be loaded into the segmentation process 
+      if {$EMSegment(DebugVolume)} {
+          set index 1 
+          set foundindex 0
+          while {$foundindex > -1} {
+          set foundindex [lsearch -exact $EMSegment(VolumeNameList)  EMDEBUG${index}] 
+          if {$foundindex > -1} {
+              EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume([lindex $Volume(idList) $foundindex],vol) GetOutput]
+              incr NumInputImagesSet
+              incr index
+          }
+          }
+      }
+       } else {
+          EMSegmentSetVtkClassSettingOld
        }
-       # Transfer image information
-       foreach v $EMSegment(SelVolList,VolumeList) {
-         EMStart SetInputIndex $NumInputImagesSet [Volume($v,vol) GetOutput]
-         incr NumInputImagesSet
-       }
-       set index 1
-       EMStart SetIntensityAvgClass $EMSegment(IntensityAvgClass)
-       foreach v $EMSegment(SelVolList,VolumeList) {       
-         EMStart SetIntensityAvgValuePreDef $EMSegment(IntensityAvgValue,$v) $index
-         incr index
-       } 
-       # Transfer Bias Print out Information
-       EMStart SetBiasPrint 0
-   }
-   if {$EMSegment(SegmentMode) == 0}  {
+   } else {
        # EM Specific Information - Simple EM Algorithm
        vtkImageEMSegmenter EMSegment(vtkEMSegment)    
        EMSegment(vtkEMSegment) SetNumClasses     [llength $EMSegment(Cattrib,0,ClassList)]
@@ -197,19 +230,19 @@ proc EMSegmentAlgorithmStart { } {
        EMSegment(vtkEMSegment) SetInput [Volume([lindex $EMSegment(SelVolList,VolumeList) 0],vol) GetOutput]
        set xindex 1 
        foreach i $EMSegment(Cattrib,0,ClassList) {
-       EMSegment(vtkEMSegment) SetProbability  $EMSegment(Cattrib,$i,Prob)              $xindex
-       EMSegment(vtkEMSegment) SetMu           $EMSegment(Cattrib,$i,LogMean,0)         $xindex
-       EMSegment(vtkEMSegment) SetSigma        $EMSegment(Cattrib,$i,LogCovariance,0,0) $xindex 
-       EMSegment(vtkEMSegment) SetLabel        $EMSegment(Cattrib,$i,Label)             $xindex
-       # Reads in the value for each class individually
-       set yindex 1
-       foreach j $EMSegment(Cattrib,0,ClassList) { 
-           for {set k 0} { $k< 6} {incr k} {
-           EMSegment(vtkEMSegment) SetMarkovMatrix $EMSegment(Cattrib,0,CIMMatrix,$i,$j,[lindex $EMSegment(CIMList) $k]) [expr $k+1] $yindex $xindex
-           }
-           incr yindex
-       }
-       incr xindex
+          EMSegment(vtkEMSegment) SetProbability  $EMSegment(Cattrib,$i,Prob)              $xindex
+          EMSegment(vtkEMSegment) SetMu           $EMSegment(Cattrib,$i,LogMean,0)         $xindex
+          EMSegment(vtkEMSegment) SetSigma        $EMSegment(Cattrib,$i,LogCovariance,0,0) $xindex 
+          EMSegment(vtkEMSegment) SetLabel        $EMSegment(Cattrib,$i,Label)             $xindex
+          # Reads in the value for each class individually
+          set yindex 1
+          foreach j $EMSegment(Cattrib,0,ClassList) { 
+             for {set k 0} { $k< 6} {incr k} {
+               EMSegment(vtkEMSegment) SetMarkovMatrix $EMSegment(Cattrib,0,CIMMatrix,$i,$j,[lindex $EMSegment(CIMList) $k]) [expr $k+1] $yindex $xindex
+             }
+             incr yindex
+          }
+          incr xindex
        }
    }
 
@@ -229,20 +262,6 @@ proc EMSegmentAlgorithmStart { } {
    EMSegment(vtkEMSegment) SetPrintIntermediateResults  $EMSegment(PrintIntermediateResults) 
    EMSegment(vtkEMSegment) SetPrintIntermediateSlice  $EMSegment(PrintIntermediateSlice) 
    EMSegment(vtkEMSegment) SetPrintIntermediateFrequency  $EMSegment(PrintIntermediateFrequency) 
-
-   # This is for debuging purposes so extra volumes can be loaded into the segmentation process 
-   if {$EMSegment(DebugVolume)} {
-       set index 1 
-       set foundindex 0
-       while {$foundindex > -1} {
-      set foundindex [lsearch -exact $EMSegment(VolumeNameList)  EMDEBUG${index}] 
-       if {$foundindex > -1} {
-           EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet [Volume([lindex $Volume(idList) $foundindex],vol) GetOutput]
-           incr NumInputImagesSet
-           incr index
-       }
-       }
-   }
 
    return $NumInputImagesSet
 }

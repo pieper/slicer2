@@ -80,8 +80,65 @@ vtkImageEMLocalSegmenter::~vtkImageEMLocalSegmenter(){
 }
 
 //----------------------------------------------------------------------------
-void vtkImageEMLocalSegmenter::PrintSelf(ostream& os)
-{
+void vtkImageEMLocalSegmenter::PrintSelf(ostream& os, vtkIndent indent) {
+  int x,y,i;
+  // vtkIndent indent;
+  os << indent << "NumIter:                    " << this->NumIter << "\n";
+  os << indent << "NumRegIter:                 " << this->NumRegIter << "\n";
+  os << indent << "Alpha:                      " << this->Alpha << "\n";
+  os << indent << "SmoothingWidth:             " << this->SmoothingWidth << "\n";
+  os << indent << "SmoothingSigma:             " << this->SmoothingSigma << "\n";
+  os << indent << "StartSlice:                 " << this->StartSlice << "\n";
+  os << indent << "EndSlice:                   " << this->EndSlice << "\n";
+  os << indent << "PrintIntermediateResults:   " << this->PrintIntermediateResults<< "\n";
+  os << indent << "PrintIntermediateSlice:     " << this->PrintIntermediateSlice << "\n";
+  os << indent << "PrintIntermediateFrequency: " << this->PrintIntermediateFrequency << "\n";
+  os << indent << "NumClasses:                 " << this->NumClasses << endl;
+  os << indent << "NumInputImages:             " << this->NumInputImages << "\n";
+  os << indent << "BiasPrint:                  " << this->BiasPrint << "\n";
+  if (this->BiasPrint) {
+    os << indent << "BiasRootFileName:           "; 
+    if (BiasRootFileName) os << this->BiasRootFileName;
+    else os << "(none)";
+    os << "\n";
+  }
+  os << indent << "ImageMaxX:                  " << this->ImageMaxX << "\n";
+  os << indent << "ImageMaxY:                  " << this->ImageMaxY << "\n";
+  os << indent << "ImageMaxZ:                  " << this->ImageMaxZ << "\n";
+  os << indent << "ImageProd:                  " << this->ImageProd << "\n";
+  os << indent << "NumberOfTrainingSamples:    " << this->NumberOfTrainingSamples << "\n";
+  os << indent << "IntensityAvgClass:          " ;
+  if (this->IntensityAvgClass > -1) {
+    os << this->Label[this->IntensityAvgClass] << "\n";
+    os << indent << "IntensityAvgValuePreDef:    ";
+    for (i = 0; i< this->NumInputImages;i++) os << this->IntensityAvgValuePreDef[i] << " ";
+    os  << "\n";
+    os << indent << "IntensityAvgValueCurrent:   ";
+    for (i = 0; i< this->NumInputImages;i++) os << this->IntensityAvgValueCurrent[i] << " ";
+    os  << "\n";
+  }  else  os << "(none)\n";
+
+  for (i = 0; i < this->NumClasses; i++) {
+    os << indent << "------------------------------------------ CLASS ----------------------------------------------" << endl;
+    os << indent << "Label:              " << this->Label[i] << endl;
+    os << indent << "Tissue Probability: " << this->TissueProbability[i] <<endl;
+    os << indent << "ProbDataLocal:      " << this->ProbDataLocal[i] << endl;
+    if (this->ProbDataLocal[i]) {
+      os << indent << "   ProbDataPtr:  " << this->ProbDataPtr[i] << endl;
+      os << indent << "   ProbDataIncY: " << this->ProbDataIncY[i] << endl;
+      os << indent << "   ProbDataIncZ: " << this->ProbDataIncZ[i] << endl;
+    }
+    os << indent << "LogMu:              ";
+    for (x= 0 ; x < this->NumInputImages; x ++) os << this->LogMu[i][x] << " ";
+    os<< endl;
+
+    os << indent << "LogCovariance:      ";
+    for (y= 0 ; y < this->NumInputImages; y ++) {
+      for (x= 0; x < this->NumInputImages; x++)  os << this->LogCovariance[i][y][x] << " " ;
+      if ( y < (this->NumInputImages-1)) os<< "| ";
+    }
+    os<< endl;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -1012,7 +1069,9 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,T **ProbData
     cout << "This Computer has " << vtkThreadNumCpus(void)  << " Processors" << endl;
   #endif
   cout << "vtkImageEMLocalAlgorithm: Initialize Variables" << endl;
-
+  // Kilian - Debug
+  vtkIndent indent;
+  self->PrintSelf(cout, indent);
   // Read variables Class Definition
 
   int ImageProd             = self->GetImageProd();
@@ -1167,7 +1226,8 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,T **ProbData
     // the MF part is added
    if ((iter == 1) || (Alpha == 0)) { 
       cout << "vtkImageEMLocalAlgorithm: "<< iter << ". Estep " << endl;
-      for (z = 0; z < ImageMaxZ ; z++) { 
+      for (z = 0; z < ImageMaxZ ; z++) {
+        cout << z << endl; 
     for (y = 0; y < ImageMaxY ; y++) {
       for (x = 0; x < ImageMaxX ; x++) {
         normRow = 0;
