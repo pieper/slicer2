@@ -439,41 +439,29 @@ proc EdLiveWireBuildGUI {} {
     #-------------------------------------------
     set f $Ed(EdLiveWire,frame).fTabbedFrame.fAdvanced.fSettings
     set f $f.fApply
-    eval {button $f.bApply -text "Apply Settings" \
-	    -command "EdLiveWireAdvancedApply"} $Gui(WBA) {-width 20}
-    pack $f.bApply
+    eval {button $f.bApply -text "Apply" \
+	    -command "EdLiveWireAdvancedApply"} $Gui(WBA) {-width 7}
+    TooltipAdd $f.bApply \
+	    "Apply settings so they can be used for LiveWire segmentation."
+    eval {button $f.bRead -text "Read" \
+	    -command "EdLiveWireReadFeatureParams"} $Gui(WBA) {-width 7}
+    TooltipAdd $f.bRead \
+	    "Read LiveWire settings from the file you have selected."
+    eval {button $f.bWrite -text "Write" \
+	    -command "EdLiveWireWriteFeatureParams"} $Gui(WBA) {-width 7}
+    TooltipAdd $f.bWrite \
+	    "WriteLiveWire settings to the file you have selected."
+    pack $f.bApply $f.bRead $f.bWrite -side left
 
     #-------------------------------------------
     # TabbedFrame->Advanced->TrainingFile frame
     #-------------------------------------------
-    set f $Ed(EdLiveWire,frame).fTabbedFrame.fAdvanced
-    frame $f.fRead   -bg $Gui(activeWorkspace)
-    pack $f.fRead -side top -pady $Gui(pad) -fill x
-
-    set f $f.fTrainingFile
+    set f $Ed(EdLiveWire,frame).fTabbedFrame.fAdvanced.fTrainingFile
 
     DevAddFileBrowse $f Ed "EdLiveWire,trainingInputFileName" \
-	    "Input File:" [] "txt" [] "Open"\
+	    "Settings File:" [] "txt" [] "Open"\
 	    "Open LiveWire Settings File" \
 	    "Choose LiveWire settings for the structure you are segmenting."
-
-    #-------------------------------------------
-    # TabbedFrame->Advanced->TrainingFile->Read frame
-    #-------------------------------------------
-    set f $Ed(EdLiveWire,frame).fTabbedFrame.fAdvanced.fRead
-
-    eval {button $f.bRead -text "Read Settings" \
-	    -command "EdLiveWireReadFeatureParams"} $Gui(WBA) {-width 15}
-    TooltipAdd $f.bRead \
-	    "Read LiveWire settings from the file you have selected."
-
-    eval {button $f.bWrite -text "Write Settings" \
-	    -command "EdLiveWireWriteFeatureParams"} $Gui(WBA) {-width 15}
-    TooltipAdd $f.bWrite \
-	    "WriteLiveWire settings to the file you have selected."
-    pack $f.bRead $f.bWrite -side left
-
-
 
 }
 
@@ -1470,7 +1458,7 @@ proc EdLiveWireGetContourSlice {offset} {
     Ed(EdLiveWire,imageThreshold) SetOutValue 0
     Ed(EdLiveWire,imageThreshold) SetInput [realReformat GetOutput]
     Ed(EdLiveWire,imageThreshold) ThresholdBetween $lab $lab
-
+    
     # result:
     set Ed(EdLiveWire,contourSlice) [Ed(EdLiveWire,imageThreshold) GetOutput]
 
@@ -1575,12 +1563,11 @@ proc EdLiveWireTrain {} {
 		#Ed(EdLiveWire,viewer$s) SetColorWindow 8
 		#Ed(EdLiveWire,viewer$s) SetColorLevel 3
 		#Ed(EdLiveWire,viewer$s) SetInput $Ed(EdLiveWire,contourSlice)
-		
+
 		$filt SetTrainingPointsImage $Ed(EdLiveWire,contourSlice)
 		
 		# Lauren for now set the 2nd input to this too!
 		$filt SetPreviousContourImage $Ed(EdLiveWire,contourSlice)
-
 		$filt Update		
 	    }
 	    "RangeOfSlices" {
