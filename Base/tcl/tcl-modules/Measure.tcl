@@ -105,7 +105,7 @@ proc MeasureInit {} {
     
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.18 $} {$Date: 2003/06/03 20:59:23 $}]
+        {$Revision: 1.18.2.1 $} {$Date: 2003/08/06 23:11:12 $}]
     
     # Initialize module-level variables
     #    set Measure(Model1) $Model(idNone)
@@ -222,7 +222,7 @@ The measurement tools can be used to calculate the:
           'Measure' drop down list box.  
           Note that only the distance 
           between the first two fiducials 
-          selected will be reported if
+          selected on the active list will be reported if
           more than one fiducial has been
           selected.
 
@@ -234,7 +234,7 @@ The measurement tools can be used to calculate the:
           the 'Measure' drop down list
           box.  Note that only the angle
           between the first three
-          fiducials selected will be
+          fiducials selected on the active list will be
           reported if more than one
           fiducial has been selected.
           Also, note that the angle
@@ -637,10 +637,16 @@ proc MeasurePosition {} {
 proc MeasureDistance {} {
 ##    global Point
 
-    set list [FiducialsGetAllSelectedPointIdList]
+    # set list [FiducialsGetAllSelectedPointIdList]
+    # get the selected points from the ACTIVE list
+    set list [FiducialsGetActiveSelectedPointIdList]
     set idA [lindex $list 0]
     set idB [lindex $list 1]
-
+    if {$idA == "" || $idB == ""} {
+        set msg "Warning: the active list ($::Fiducials(activeList)) does not have two points selected to measure the distance between."
+        MeasureOutput $msg
+        return
+    }
 ##    set idA [lindex $Point(selected) 0]
 ##    set idB [lindex $Point(selected) 1]
     #    MeasureTmpPoints SetNumberOfPoints 2
@@ -672,11 +678,18 @@ proc MeasureDistance {} {
 proc MeasureAngle {} {
     global Point
     
-    set list [FiducialsGetAllSelectedPointIdList]
+    # set list [FiducialsGetAllSelectedPointIdList]
+    # get the selected points from the ACTIVE list
+    set list [FiducialsGetActiveSelectedPointIdList]
     set idA [lindex $list 0]
     set idB [lindex $list 1]
     set idC [lindex $list 2]
     set npts [llength $list]
+    if {$idA == "" || $idB == "" || $idC == ""} {
+        set msg "Warning: the active list ($::Fiducials(activeList)) does not have three points selected to measure the angle between."
+        MeasureOutput $msg
+        return
+    }
     ##    set idA [lindex $Point(selected) 0]
     ##    set idB [lindex $Point(selected) 1]
     ##    set idC [lindex $Point(selected) 2]

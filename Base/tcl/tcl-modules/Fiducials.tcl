@@ -101,7 +101,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.40 $} {$Date: 2003/06/06 19:55:20 $}]
+        {$Revision: 1.40.2.1 $} {$Date: 2003/08/06 23:11:12 $}]
     
     # Initialize module-level variables
     
@@ -2168,5 +2168,17 @@ proc FiducialsGetAllSelectedPointIdList {} {
     return $list
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC FiducialsGetActiveSelectedPointIdList
+# Return the Id List of all of the selected points in the Active list.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsGetActiveSelectedPointIdList {} {
+    global Fiducials
+
+    return [FiducialsGetSelectedPointIdListFromName $Fiducials(activeList)]
+}
 
 
