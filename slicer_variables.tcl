@@ -124,7 +124,7 @@ switch $tcl_platform(os) {
         ## for Visual Studio 7.1:
         #set ::GENERATOR "Visual Studio 7 .NET 2003" 
         #set ::MAKE "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET 2003/Common7/IDE/devenv.exe"
-        #set ::MAKE "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET 2003/Common7/Vc7/bin"
+        #set ::COMPILER_PATH "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET 2003/Common7/Vc7/bin"
 
         set ::COMPILER "cl"
 
