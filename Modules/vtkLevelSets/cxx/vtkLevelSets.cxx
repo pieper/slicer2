@@ -3199,13 +3199,16 @@ void vtkLevelSets::PreComputeDataAttachment()
       if (gradnorm>EPSILON) {
     i0x /= gradnorm;
     i0y /= gradnorm;
-
+    
     DAx = (ipmx*i0x+i0xy*i0y);
     DAy = (i0xy*i0x+ipmy*i0y);
-
+    
     norm =  DAx*DAx+DAy*DAy;
     if (norm>maxnorm) maxnorm = norm;
-    }
+      }
+      else {
+    i0x=i0y=DAx=DAy=norm=0;
+      }
 
       break;
     case 3:
@@ -3236,6 +3239,11 @@ void vtkLevelSets::PreComputeDataAttachment()
     norm =  DAx*DAx+DAy*DAy+DAz*DAz;
     if (norm>maxnorm) maxnorm = norm;
       }
+      else {
+    i0x=i0y=i0z=0;
+    DAx=DAy=DAz=norm=0;
+      }
+      
 
       break;
     }
@@ -3245,7 +3253,7 @@ void vtkLevelSets::PreComputeDataAttachment()
     switch (advection_scheme) {
     case ADVECTION_UPWIND_VECTORS: 
     case ADVECTION_CENTRAL_VECTORS:
-      if (gradnorm==0) 
+      if (gradnorm<=EPSILON) 
     data_attach_x[p] = 0; 
     data_attach_y[p] = 0;
         if (Dimension==3) data_attach_z[p] = 0;
@@ -3257,7 +3265,7 @@ void vtkLevelSets::PreComputeDataAttachment()
     }
       break;
     case ADVECTION_MORPHO:
-      if (gradnorm==0) 
+      if (gradnorm<=EPSILON) 
     secdergrad[p] = normgrad[p] = 0;
       else 
     {
@@ -3496,10 +3504,13 @@ void vtkLevelSets::NormalizeSecDerGrad()
      max_normgrad,threshold,max_normgrad/histosize);
 
   for(p=0;p<this->imsize;p++) {
-    secdergrad[p] *= 1-exp(-normgrad[p]*normgrad[p]/threshold/threshold);  
-      if (!((secdergrad[p]>-1E5)&&(secdergrad[p]<1E5))) {
+    if (normgrad[p]>EPSILON)
+      secdergrad[p] *= 1-exp(-normgrad[p]*normgrad[p]/threshold/threshold);  
+    else
+      secdergrad[p]=0;
+    if (!((secdergrad[p]>-1E5)&&(secdergrad[p]<1E5))) {
     fprintf(stderr,"NormalizeSecDerGrad() \t secdergrad[%d] = %f \n",p,secdergrad[p]);
-      }
+    }
 
   }
 
