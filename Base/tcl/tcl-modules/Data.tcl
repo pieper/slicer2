@@ -65,6 +65,8 @@ proc DataInit {} {
 	# Define Procedures
 	set Module($m,procGUI) DataBuildGUI
 	set Module($m,procMRML) DataUpdateMRML
+	set Module($m,procEnter) DataEnter
+	set Module($m,procExit) DataExit
 
 	set Data(index) ""
 	set Data(clipboard) ""
@@ -192,11 +194,18 @@ Models are fun. Do you like models, Ron?
 	set Data(fNodeList) [ScrolledListbox $f.list 0 0 -selectmode extended]
 	bind $Data(fNodeList) <Button-3>  {DataPostRightMenu %X %Y}
 	bind $Data(fNodeList) <Double-1>  {DataEditNode}
-	bind all <Control-e> {DataEditNode}
-	bind all <Control-x> {DataCutNode}
+
+	# initialize key-bindings (and hide class Listbox Control button ops)
+	set Data(eventMgr) [subst { \
+		Listbox,<Control-Button-1>  {} \
+		Listbox,<Control-B1-Motion>  {} \
+		all,<Control-e> {DataEditNode} \
+		all,<Control-x> {DataCutNode} \
+		all,<Control-v> {DataPasteNode} \
+		all,<Control-d> {DataDeleteNode} }]
+
 #	bind all <Control-c> {DataCopyNode}
-	bind all <Control-v> {DataPasteNode}
-	bind all <Control-d> {DataDeleteNode}
+
 	pack $f.list -side top -expand 1 -fill both
 
 	# Menu for right mouse button
@@ -420,9 +429,13 @@ proc DataCutNode {} {
     # Get the index of selected node(s)
     set selection [$Data(fNodeList) curselection]
     if {$selection == ""} {return}
-    
+ 
+    # If partial Transform nodes were in selection, find the rest of the nodes
+    set remove [DataAppendTransformContents $selection [$Data(fNodeList) index end]]
+
+    if {$remove == ""} {return}
     # Identify node(s)
-    foreach node $selection {
+    foreach node $remove {
 	lappend nodes [Mrml(dataTree) GetNthItem $node]
     }
 
@@ -543,7 +556,6 @@ proc DataEditNode {} {
 
 	# Get the selected node
 	set selection [$Data(fNodeList) curselection]
-	if {$selection == ""} {return}
 
 	# Edit only one node
 	if {[llength $selection] != 1} {
@@ -627,7 +639,7 @@ proc DataAddMatrix {} {
 #-------------------------------------------------------------------------------
 proc DataAddTransform {} {
     global Transform Matrix EndTransform Data
-    
+
     # Add Transform, Matrix, EndTransform
 
     # Lauren fix this (vtk function to paste before since 1st sel can be 1st node)
@@ -687,8 +699,9 @@ proc DataAddTransform {} {
     } else {
 	Mrml(dataTree) InsertAfterItem $lastSel $n
     }
-    
+
     MainUpdateMRML
+
 }
 
 
@@ -709,4 +722,116 @@ proc DataAddVolume {} {
 	}
 }
 
+# Returns the number of open transforms in the selected area
+proc DataCountTransforms {selection {start ""} {end ""}} {
+    global Mrml
+    
+    set T "0"
+    foreach line $selection {
+	set node [Mrml(dataTree) GetNthItem $line]
+	set class [$node GetClassName]
+	switch $class {
+	    vtkMrmlTransformNode {
+		incr T
+	    }
+	    vtkMrmlEndTransformNode {
+		incr T -1
+	    } 
+	}
+    }
+    return $T
+}
 
+# If partial Transform nodes were in selection, find the rest of the node.
+# If unmatched End Transform nodes were selected, don't delete them (so the 
+# Transforms before them won't lose their Ends)
+proc DataAppendTransformContents {selection lastItem} {
+    global Mrml
+
+    set T [DataCountTransforms $selection]
+    set removeList ""
+	set saveList ""
+    set removeNum $T
+
+    # Return if the selection contains only matching T-ET pairs
+    if {$T == 0} {
+	return $selection
+    }
+
+    # If there are unmatched End Transform tags, don't remove them
+    if {$T < 0} {
+	set line [lindex $selection 0]
+	set lastSel [lindex $selection end]
+	set count 0
+	while {$line <= $lastSel} {
+	    set node [Mrml(dataTree) GetNthItem $line]
+	    set class [$node GetClassName]
+	    switch $class {
+		vtkMrmlTransformNode {
+		    incr T
+		}		
+		vtkMrmlEndTransformNode {
+		    # if we are still looking for ETs to save, save it
+		    if {$T < 0 && \
+			    [expr [llength $saveList] + $removeNum] < 0} {
+			# save this one
+			lappend saveList $count
+		    }
+		    incr T -1
+		}
+	    }
+	    # Get the next line
+	    incr line
+	    incr count
+	}
+#	puts "save items: $saveList"
+	#Remove items we are saving from the selection
+	foreach item $saveList {
+	    set selection [lreplace $selection $item $item]
+	}
+	return $selection
+    } 
+    
+    # If open Transforms are selected (T>0), find the rest of their contents.
+    set line [lindex $selection end]
+    incr line
+    while {$T > 0 && $line < $lastItem} {
+	set node [Mrml(dataTree) GetNthItem $line]
+	set class [$node GetClassName]
+	switch $class {
+	    vtkMrmlTransformNode {
+		incr T
+	    }
+	    vtkMrmlMatrixNode {
+		if {$T <= $removeNum} {
+		    # remove this one
+		    lappend removeList $line
+		}
+	    }
+	    vtkMrmlEndTransformNode {
+		if {$T <= $removeNum} {
+		    # remove this one
+		    lappend removeList $line
+		}
+		incr T -1
+	    }
+	}
+	# Get the next line
+	incr line
+    }
+#    puts "remove items: $removeList"
+    return [concat $selection $removeList]
+}
+
+proc DataEnter {} { 
+    global Data
+
+    array set mgr $Data(eventMgr)
+    pushEventManager mgr
+
+}
+
+proc DataExit {} {
+
+    popEventManager
+}
