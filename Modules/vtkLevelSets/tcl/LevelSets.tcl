@@ -154,7 +154,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2003/04/30 15:05:47 $}]
+        {$Revision: 1.4 $} {$Date: 2003/04/30 16:22:13 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1278,6 +1278,7 @@ proc RunLevelSetsBegin {} {
 
   MainVolumesUpdate $res
 
+  RenderAll
   
 
   vtk_th   Delete
@@ -1351,6 +1352,8 @@ proc ReRunLevelSets {} {
   MainVolumesRender
 
   MainVolumesUpdate $res
+
+  RenderAll
 
   vtk_th   Delete
 
