@@ -27,7 +27,7 @@ exec tclsh "$0" "$@"
 #
 
 # set up the versions to check out
-set cmakeTag "CMake-2-0-1"
+set cmakeTag "CMake-2-0-5"
 set vtkTag "Slicer-2-4"
 set itkTag "Slicer-2-4"
 set tclTag "core-8-4-6"
