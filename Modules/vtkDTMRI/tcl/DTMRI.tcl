@@ -123,7 +123,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.33 $} {$Date: 2004/10/27 00:35:58 $}]
+                  {$Revision: 1.34 $} {$Date: 2004/10/27 22:01:42 $}]
 
      # Define Tabs
     #------------------------------------
@@ -131,8 +131,8 @@ proc DTMRIInit {} {
     set Module($m,row1Name) "{Help} {Input} {Convert} {Disp} {ROI}"
     set Module($m,row1,tab) Input
     # Use these lines to add a second row of tabs
-    set Module($m,row2List) "Scalars Advanced Devel Save"
-    set Module($m,row2Name) "{Scalars} {Advanced} {Devel} {Save}"
+    set Module($m,row2List) "Scalars Advanced Save"
+    set Module($m,row2Name) "{Scalars} {Advanced} {Save}"
     set Module($m,row2,tab) Scalars
     
 
@@ -735,7 +735,6 @@ proc DTMRIBuildGUI {} {
     # Props
     # Advanced
     # Diffuse
-    # Devel
     #-------------------------------------------
 
     #puts "Lauren in DTMRIBuildGUI, fix the frame hierarchy comment"
@@ -852,7 +851,7 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     #-------------------------------------------
     set f $fInput.fTitle.fWellcome
     
-    DevAddLabel $f.lWellcome "Wellcome to DTMRI Module"
+    DevAddLabel $f.lWellcome "Welcome to the DTMRI Module"
     $f.lWellcome configure -fg White -font {helvetica 10 bold}  -bg $Gui(backdrop) -bd 0 -relief groove
     pack $f.lWellcome -side top -padx $Gui(pad) -pady $Gui(pad)
 
@@ -2558,44 +2557,6 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     # Here's a button with text "Apply" that calls "AdvancedApply"
     DevAddButton $fAdvanced.fMiddle.bApply Apply DTMRIAdvancedApply
     pack $fAdvanced.fMiddle.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
-
-
-####################################################################################
-####################################################################################
-####################################################################################
-
-
-    #-------------------------------------------
-    # Devel frame
-    #-------------------------------------------
-    set fDevel $Module(DTMRI,fDevel)
-    set f $fDevel
-    
-    foreach frame "Top Middle Bottom" {
-        frame $f.f$frame -bg $Gui(activeWorkspace)
-        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-    }
-
-    #-------------------------------------------
-    # Devel->Top frame
-    #-------------------------------------------
-    set f $fDevel.fTop
-    # menu to select a volume: will set Volume(activeID)
-    DevAddSelectButton  Volume $f Active "Input Volume:" Grid \
-    "Input Volume: heat distribution." 13 BLA
-
-    # Append these menus and buttons to lists 
-    # that get refreshed during UpdateMRML
-    lappend Volume(mbActiveList) $f.mbActive
-    lappend Volume(mActiveList) $f.mbActive.m
-
-    #-------------------------------------------
-    # Devel->Middle frame
-    #-------------------------------------------
-    set f $fDevel.fMiddle
-
-    DevAddButton $f.bRun "Run Diffusion" {DTMRIDoDiffusion}
-    pack $f.bRun -side top -padx $Gui(pad) -pady $Gui(pad)
 
 
 ####################################################################################
@@ -5573,19 +5534,6 @@ proc DTMRIBuildVTK {} {
     DTMRI(vtk,streamln,mapper) SetLookupTable DTMRI(vtk,streamln,lut)
     DTMRIAddObjectProperty $object ImmediateModeRendering \
     1 bool {Immediate Mode Rendering}    
-
-
-
-    #---------------------------------------------------------------
-    # Pipeline for diffusion simulations
-    #---------------------------------------------------------------
-    set object diffusion    
-    DTMRIMakeVTKObject vtkImageTensorDiffusion $object
-    DTMRIAddObjectProperty $object NumberOfIterations 1 \
-    int {Number of Iterations}
-    DTMRIAddObjectProperty $object S 1 \
-    float {Diffusion Speed}
-
 
     # Apply all settings from tcl variables that were
     # created above using calls to DTMRIAddObjectProperty

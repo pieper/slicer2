@@ -12,12 +12,9 @@
 
 # note: - SET replaced SOURCE_FILES for cmake 1.6
 SET(LOCAL_MODULE_SRCS
-vtkImageTensorDiffusion.cxx
-vtkLSDIreconTensor.cxx
 vtkImageDiffusionTensor.cxx
-vtkImageTensorDiffusion2D.cxx
 vtkImageExtractSlices.cxx
-vtkTensorRegularization.cxx
+vtkLSDIreconTensor.cxx
 )
 
 ## classes that one does not want tcl wrapped
