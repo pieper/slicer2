@@ -143,6 +143,12 @@ public:
   vtkGetMacro(PrintRegistrationSimularityMeasure, int);
   vtkSetMacro(PrintRegistrationSimularityMeasure, int);
   
+  // Description:
+  // If the class specific registration is activated by the superclass should this structure be optimizaed or ignored !
+  // By default it is ignored (set to 0)
+  vtkGetMacro(RegistrationClassSpecificRegistrationFlag,int); 
+  vtkSetMacro(RegistrationClassSpecificRegistrationFlag,int); 
+  vtkBooleanMacro(RegistrationClassSpecificRegistrationFlag,int); 
 
 protected:
   vtkMrmlSegmenterGenericClassNode();
@@ -163,6 +169,8 @@ protected:
   double RegistrationRotation[3];
   double RegistrationScale[3];
   double RegistrationCovariance[9];
+  int RegistrationClassSpecificRegistrationFlag; 
+
 };
 
 #endif

@@ -84,8 +84,9 @@ proc EMSegmentSetVtkGenericClassSetting {vtkGenericClass Sclass} {
     eval $vtkGenericClass SetRegistrationRotation    $EMSegment(Cattrib,$Sclass,RegistrationRotation)
     eval $vtkGenericClass SetRegistrationScale       $EMSegment(Cattrib,$Sclass,RegistrationScale)
     eval $vtkGenericClass SetRegistrationCovariance  $EMSegment(Cattrib,$Sclass,RegistrationCovariance)   
-    eval $vtkGenericClass SetPrintRegistrationParameters  $EMSegment(Cattrib,$Sclass,PrintRegistrationParameters)   
-    eval $vtkGenericClass SetPrintRegistrationSimularityMeasure  $EMSegment(Cattrib,$Sclass,PrintRegistrationSimularityMeasure) 
+    eval $vtkGenericClass SetPrintRegistrationParameters                $EMSegment(Cattrib,$Sclass,PrintRegistrationParameters)   
+    eval $vtkGenericClass SetPrintRegistrationSimularityMeasure         $EMSegment(Cattrib,$Sclass,PrintRegistrationSimularityMeasure) 
+    eval $vtkGenericClass SetRegistrationClassSpecificRegistrationFlag  $EMSegment(Cattrib,$Sclass,RegistrationClassSpecificRegistrationFlag) 
   }
 
 

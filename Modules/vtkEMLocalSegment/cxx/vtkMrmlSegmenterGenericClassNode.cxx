@@ -75,6 +75,8 @@ vtkMrmlSegmenterGenericClassNode::vtkMrmlSegmenterGenericClassNode() {
   for (i = 0; i < 3; i++) RegistrationScale[i]= 1.0;
   for (i = 0; i < 6; i++) this->RegistrationCovariance[i] = 1.0;
   this->RegistrationCovariance[6] = this->RegistrationCovariance[7] = this->RegistrationCovariance[8] = 0.1;
+
+  this->RegistrationClassSpecificRegistrationFlag = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -122,6 +124,7 @@ void vtkMrmlSegmenterGenericClassNode::Write(ofstream& of, int nIndent)
   of << " RegistrationCovariance='";
   for(int i=0; i < 9; i++)  of << this->RegistrationCovariance[i] << " ";
   of << "'"; 
+  if (this->RegistrationClassSpecificRegistrationFlag) of << " RegistrationClassSpecificRegistrationFlag='" << this->RegistrationClassSpecificRegistrationFlag << "'";
 }
 
 //----------------------------------------------------------------------------
@@ -139,6 +142,7 @@ void vtkMrmlSegmenterGenericClassNode::Copy(vtkMrmlNode *anode)
   this->PrintWeights                  = node->PrintWeights;
   this->PrintRegistrationParameters   = node->PrintRegistrationParameters;
   this->PrintRegistrationSimularityMeasure         = node->PrintRegistrationSimularityMeasure;
+  this->RegistrationClassSpecificRegistrationFlag = node->RegistrationClassSpecificRegistrationFlag;
 
   memcpy(this->RegistrationTranslation,node->RegistrationTranslation,3*sizeof(double));
   memcpy(this->RegistrationRotation, node->RegistrationRotation,3*sizeof(double));
@@ -166,6 +170,7 @@ void vtkMrmlSegmenterGenericClassNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "RegistrationCovariance:             " ;
   for (int i = 0 ; i < 9 ; i++)  os << RegistrationCovariance[i] << " "; 
   os << "\n" ;
+  os << indent << "RegistrationClassSpecificRegistrationFlag: " << this->RegistrationClassSpecificRegistrationFlag << "\n" ;
 }
 
 
