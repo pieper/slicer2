@@ -42,7 +42,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2005/01/06 22:16:58 $}]
+        {$Revision: 1.5 $} {$Date: 2005/01/17 01:16:19 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -54,7 +54,8 @@ proc EMAtlasBrainClassifierInit {} {
     set EMAtlasBrainClassifier(Save,XMLFile) 1
 
     set EMAtlasBrainClassifier(WorkingDirectory) "$env(SLICER_HOME)/EMSeg"    
-    set EMAtlasBrainClassifier(AtlasDir)         "$env(SLICER_HOME)/Modules/vtkEMAtlasBrainClassifier/atlas"   
+    set EMAtlasBrainClassifier(DefaultAtlasDir)  "$env(SLICER_HOME)/Modules/vtkEMAtlasBrainClassifier/atlas"   
+    set EMAtlasBrainClassifier(AtlasDir)         $EMAtlasBrainClassifier(DefaultAtlasDir)  
     set EMAtlasBrainClassifier(XMLTemplate)      "$env(SLICER_HOME)/Modules/vtkEMAtlasBrainClassifier/template5_c2.xml"     
 
     set EMAtlasBrainClassifier(Normalize,SPGR) "90"
@@ -71,6 +72,8 @@ proc EMAtlasBrainClassifierInit {} {
 
 }
 
+#-------------------------------------------------------------------------------
+# Build Gui
 proc EMAtlasBrainClassifierBuildGUI {} {
     global Gui EMAtlasBrainClassifier Module Volume 
     
@@ -523,7 +526,7 @@ proc EMAtlasBrainClassifierResetEMSegment { } {
 }
 
 proc EMAtlasBrainClassifierDeleteAllVolumeNodesButSPGRAndT2W { } {
-   global  EMAtlasBrainClassifier Volume Mrml
+   global  EMAtlasBrainClassifier Volume Mrml 
 
    foreach id $Volume(idList) {
         if {($id != $Volume(idNone)) && ($id != $EMAtlasBrainClassifier(Volume,SPGR)) && ($id != $EMAtlasBrainClassifier(Volume,T2W)) } {
@@ -543,7 +546,7 @@ proc EMAtlasBrainClassifierDeleteAllVolumeNodesButSPGRAndT2W { } {
 }
 
 proc EMAtlasBrainClassifierStartSegmentation { } {
-    global EMAtlasBrainClassifier Volume EMSegment Mrml
+    global EMAtlasBrainClassifier Volume EMSegment Mrml tcl_platform
 
     # ---------------------------------------------------------------
     # Initialize values 
@@ -602,8 +605,8 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     # a. Define which atlases to register 
     set XMLTemplateText [EMAtlasBrainClassifierReadXMLFile $EMAtlasBrainClassifier(XMLTemplate)]
     if {$XMLTemplateText == "" } {
-    DevErrorWindow "Could not read template file $EMAtlasBrainClassifier(XMLTemplate) or it was empty!" 
-    return
+      DevErrorWindow "Could not read template file $EMAtlasBrainClassifier(XMLTemplate) or it was empty!" 
+      return
     }
 
     set NextLineIndex [EMAtlasBrainClassifierGrepLine "$XMLTemplateText" "<SegmenterClass"] 
@@ -630,54 +633,113 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
   
     # b. Register Atlases 
     if {$RegisterAtlasDirList != "" } {
+       # Check if we load the module for the first time 
+      
+       if {$EMAtlasBrainClassifier(AtlasDir) == $EMAtlasBrainClassifier(DefaultAtlasDir)} {
+       set UploadNeeded 0 
+       foreach atlas "spgr $RegisterAtlasDirList" {
+           if {[file exists [file join $EMAtlasBrainClassifier(AtlasDir) $atlas I.001]] == 0} {
+           set UploadNeeded 1
+           break
+           }
+       }
+       if {$UploadNeeded} {
+           set text "The first time this module is used the Atlas data has to be dowloaded"
+               set text "$text\nThis might take a while, so if you do not want to continue at "
+           set text "$text\nthis point just press 'cancel'. \n"
+               set text "$text\nIf you want to continue and you have PROBLEMS downloading the data please do the following:"
+               set text "$text\nDowload the data from http://na-mic.org/Wiki/index.php/Slicer:Data_EMAtlas"
+               set text "$text\nto [file dirname $EMAtlasBrainClassifier(AtlasDir)]"
+               set text "$text\nand uncompress the file."       
+         
+           if {[DevOKCancel "$text" ] == "ok"} {
+           DownloadInit
+           if {$tcl_platform(os) == "Linux"} { 
+               set urlAddress blub.tar.gz
+               set outputFile "[file dirname $EMAtlasBrainClassifier(AtlasDir)]/atlas.tar.gz"
+           } else {
+               set urlAddress "http://na-mic.org/Wiki/images/5/57/VtkEMAtlasBrainClassifier_AtlasDefault.zip"
+               # Debugging 
+               # set urlAddress http://na-mic.org/Wiki/images/f/fa/Blubber.zip 
+               set outputFile "[file dirname $EMAtlasBrainClassifier(AtlasDir)]/atlas.zip"
+           }
 
-    set TemplateIDInput $EMAtlasBrainClassifier(Volume,NormalizedSPGR)
-    puts "=========== Register atlas spgr with patient ============ "
-    # Load Atlas SPGR 
-    set VolIDSource      [EMAtlasBrainClassifierLoadAtlasVolume spgr  AtlasSPGR]
-    if {$VolIDSource == "" } {return}
-    set EMAtlasBrainClassifier(Volume,AtlasSPGR) $VolIDSource
-    # Target file is the normalized SPGR
-    set VolIDTarget $EMAtlasBrainClassifier(Volume,NormalizedSPGR)
-    if {$VolIDTarget == "" } {return}
+           catch {exec rm -f $outputFile}
+           catch {exec rm -rf $EMAtlasBrainClassifier(AtlasDir)}
 
-    EMAtlasBrainClassifierRegistration $VolIDTarget $VolIDSource
-    # Define Registration output volume 
-    set VolIDOutput [DevCreateNewCopiedVolume $TemplateIDInput "" "RegisteredSPGR"]
-    # Resample the Atlas SPGR
-    EMAtlasBrainClassifierResample  $VolIDTarget $VolIDSource $VolIDOutput
-  
-    # Clean up 
-    if {$EMAtlasBrainClassifier(Save,Atlas)} {
-        set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/spgr/I"
-        Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
-        Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
-        EMAtlasBrainClassifierVolumeWriter $VolIDOutput
-    }
-    MainMrmlDeleteNode Volume $VolIDSource 
-    MainUpdateMRML
-    RenderAll
+           if {[DownloadFile "$urlAddress" "$outputFile"]} {
+               puts "Finished"
+               if {$tcl_platform(os) == "Linux"} { 
+               set OKFlag [catch {exec gunzip $outputFile; tar xf [file rootname $outputFile]} errormsg]
+               set RMFile [file rootname $outputFile]
+               } else {
+               set OKFlag [catch {exec unzip -o -qq $outputFile}  errormsg] 
+               set RMFile $outputFile
+               } 
+               if {$OKFlag == 1} {
+             DevErrorWindow "Could not uncompress $outputFile because of the following error message:\n$errormsg\nPlease manually uncompress the file."
+             return
+               } 
+               DevInfoWindow "Atlas installation completed !" 
+               catch {rm $RMFile} 
+           } else {
+               return
+           }           
+           } else {
+           return 
+           }
+       }
+       } 
 
-    # b.2 Resample atlas 
-    foreach Dir "$RegisterAtlasDirList" Name "$RegisterAtlasNameList" {
-        puts "=========== Resample Atlas $Name  ============ "
-        # Load In the New Atlases
-        set VolIDInput [EMAtlasBrainClassifierLoadAtlasVolume $Dir Atlas$Name]
-        # Define Registration output volumes
-        set VolIDOutput [DevCreateNewCopiedVolume $TemplateIDInput "" "$Name"]
-        set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I"
-        Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
-        Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
+       set TemplateIDInput $EMAtlasBrainClassifier(Volume,NormalizedSPGR)
+       puts "=========== Register atlas spgr with patient ============ "
 
-        # Resample the Atlas
-        EMAtlasBrainClassifierResample  $VolIDTarget $VolIDInput $VolIDOutput  
-        # Clean up 
+       # Load Atlas SPGR 
+       set VolIDSource      [EMAtlasBrainClassifierLoadAtlasVolume spgr  AtlasSPGR]
+       if {$VolIDSource == "" } {return}
+       set EMAtlasBrainClassifier(Volume,AtlasSPGR) $VolIDSource
 
-        if {$EMAtlasBrainClassifier(Save,Atlas)} {EMAtlasBrainClassifierVolumeWriter $VolIDOutput}
-        MainMrmlDeleteNode Volume $VolIDInput 
-        MainUpdateMRML
-        RenderAll
-    }
+       # Target file is the normalized SPGR
+       set VolIDTarget $EMAtlasBrainClassifier(Volume,NormalizedSPGR)
+       if {$VolIDTarget == "" } {return}
+       
+       EMAtlasBrainClassifierRegistration $VolIDTarget $VolIDSource
+       # Define Registration output volume 
+       set VolIDOutput [DevCreateNewCopiedVolume $TemplateIDInput "" "RegisteredSPGR"]
+       # Resample the Atlas SPGR
+       EMAtlasBrainClassifierResample  $VolIDTarget $VolIDSource $VolIDOutput
+       
+       # Clean up 
+       if {$EMAtlasBrainClassifier(Save,Atlas)} {
+           set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/spgr/I"
+           Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
+           Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
+           EMAtlasBrainClassifierVolumeWriter $VolIDOutput
+       }
+       MainMrmlDeleteNode Volume $VolIDSource 
+       MainUpdateMRML
+       RenderAll
+       
+       # b.2 Resample atlas 
+       foreach Dir "$RegisterAtlasDirList" Name "$RegisterAtlasNameList" {
+           puts "=========== Resample Atlas $Name  ============ "
+           # Load In the New Atlases
+           set VolIDInput [EMAtlasBrainClassifierLoadAtlasVolume $Dir Atlas$Name]
+           # Define Registration output volumes
+           set VolIDOutput [DevCreateNewCopiedVolume $TemplateIDInput "" "$Name"]
+           set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I"
+           Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
+           Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
+       
+           # Resample the Atlas
+           EMAtlasBrainClassifierResample  $VolIDTarget $VolIDInput $VolIDOutput  
+           # Clean up 
+       
+           if {$EMAtlasBrainClassifier(Save,Atlas)} {EMAtlasBrainClassifierVolumeWriter $VolIDOutput}
+           MainMrmlDeleteNode Volume $VolIDInput 
+           MainUpdateMRML
+           RenderAll
+       }
     }
 
     # ---------------------------------------------------------------------- 
@@ -764,41 +826,41 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource} {
     # Do it!
     GCR Update     
     TransformEMAtlasBrainClassifier Concatenate [[GCR GetGeneralTransform] GetConcatenatedTransform 1]
-    
 
-    ###### Warp #######
-    catch "warp Delete"
-    vtkImageWarp warp
+    # puts "For debigging only linear registration"     
+    if {1} {
+      ###### Warp #######
+      catch "warp Delete"
+      vtkImageWarp warp
+      
+      # Set i/o
+      warp SetSource Source
+      warp SetTarget Target 
+      
+      # Set the parameters
+      warp SetVerbose 2
+      [warp GetGeneralTransform] SetInput TransformEMAtlasBrainClassifier
+      ## do tensor registration?
+      warp SetResliceTensors 0 
+      ## 1=demon, 2=optical flow 
+      warp SetForceType 1          
+      warp SetMinimumIterations  0 
+      warp SetMaximumIterations  50
+      ## What does it mean?
+      warp SetMinimumLevel -1  
+      warp SetMaximumLevel -1  
+      ## Use SSD? 1 or 0 
+      warp SetUseSSD 1
+      warp SetSSDEpsilon  1e-3    
+      warp SetMinimumStandardDeviation 0.85 
+      warp SetMaximumStandardDeviation 1.25     
 
-    # Set i/o
-    warp SetSource Source
-    warp SetTarget Target 
-
-    # Set the parameters
-    warp SetVerbose 2
-    [warp GetGeneralTransform] SetInput TransformEMAtlasBrainClassifier
-    ## do tensor registration?
-    warp SetResliceTensors 0 
-    ## 1=demon, 2=optical flow 
-    warp SetForceType 1          
-    warp SetMinimumIterations  0 
-    warp SetMaximumIterations  50
-    ## What does it mean?
-    warp SetMinimumLevel -1  
-    warp SetMaximumLevel -1  
-    ## Use SSD? 1 or 0 
-    warp SetUseSSD 1
-    warp SetSSDEpsilon  1e-3    
-    warp SetMinimumStandardDeviation 0.85 
-    warp SetMaximumStandardDeviation 1.25     
-
-    # Do it!
-    warp Update
-    TransformEMAtlasBrainClassifier Concatenate warp
-
-
-    # save the transform
-    set EMAtlasBrainClassifier(Transform) TransformEMAtlasBrainClassifier
+      # Do it!
+      warp Update
+      TransformEMAtlasBrainClassifier Concatenate warp
+    }
+  # save the transform
+  set EMAtlasBrainClassifier(Transform) TransformEMAtlasBrainClassifier
 }
 
 
