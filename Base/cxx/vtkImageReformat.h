@@ -68,6 +68,20 @@ public:
 	float YStep[3];
 	float XStep[3];
 	float Origin[3];
+  
+  // >> AT 11/07/01
+  vtkGetVector2Macro(OriginShift, float);
+  vtkSetVector2Macro(OriginShift, float);
+
+  vtkGetMacro(Zoom, float);
+  vtkSetMacro(Zoom, float);
+
+  vtkGetMacro(PanScale, float);
+  vtkSetMacro(PanScale, float);
+
+  vtkGetObjectMacro(OriginShiftMtx, vtkMatrix4x4);
+  vtkSetObjectMacro(OriginShiftMtx, vtkMatrix4x4);
+  // << AT 11/07/01
 
   vtkGetMacro(RunTime, int);
   vtkSetMacro(RunTime, int);
@@ -77,6 +91,13 @@ protected:
 	~vtkImageReformat();
 	vtkImageReformat(const vtkImageReformat&) {};
 	void operator=(const vtkImageReformat&) {};
+
+  // >> AT 11/07/01
+  float OriginShift[2];
+  float Zoom;
+  float PanScale;
+  vtkMatrix4x4 *OriginShiftMtx;
+  // << AT 11/07/01
 
 	int RunTime;
 	float IjkPoint[3];

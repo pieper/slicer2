@@ -62,6 +62,13 @@ vtkImageReformat::vtkImageReformat()
 		this->WldPoint[i] = 0;
 		this->IjkPoint[i] = 0;
 	}
+
+  // >> AT 11/07/01
+  this->OriginShift[0] = this->OriginShift[1] = 0.0;
+  this->Zoom = 1.0;
+  this->PanScale = this->FieldOfView / (this->Resolution * this->Zoom);
+  this->OriginShiftMtx = vtkMatrix4x4::New();
+  // << AT 11/07/01
 }
 
 //----------------------------------------------------------------------------
@@ -77,6 +84,10 @@ vtkImageReformat::~vtkImageReformat()
   {
     this->WldToIjkMatrix->UnRegister(this);
   }
+
+  // >> AT 11/07/01
+  this->OriginShiftMtx->Delete();
+  // << AT 11/07/01
 }
 
 void vtkImageReformat::PrintSelf(ostream& os, vtkIndent indent)
@@ -93,6 +104,13 @@ void vtkImageReformat::PrintSelf(ostream& os, vtkIndent indent)
 	os << indent << "Origin[1]:   " << this->Origin[1] << "\n";
 	os << indent << "Origin[2]:   " << this->Origin[2] << "\n";
 	os << indent << "RunTime:     " << this->RunTime << "\n";
+
+	// >> AT 11/07/01
+	os << indent << "OriginShift[0]:" << this->OriginShift[0] << "\n";
+	os << indent << "OriginShift[1]:" << this->OriginShift[1] << "\n";	
+	os << indent << "Zoom: " << this->Zoom << "\n";
+	os << indent << "PanScale:" << this->PanScale << "\n";
+	// << AT 11/07/01
 
 	os << indent << "IjkPoint[0]: " << this->IjkPoint[0] << "\n";
 	os << indent << "IjkPoint[1]: " << this->IjkPoint[1] << "\n";
@@ -283,7 +301,12 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
 
 	// Scale mx, my by FOV/RESOLUTION
   res = self->GetResolution();
-	scale = self->GetFieldOfView() / res;
+  if(self->GetZoom() < 0.0001)
+    self->SetZoom(0.0001);
+	scale = self->GetFieldOfView() / (res * self->GetZoom());
+
+	//self->PanScale = self->GetFieldOfView() / (res * self->Zoom);
+	self->SetPanScale(scale);
 
 	mx[0] = mat->Element[0][0] * scale;
 	mx[1] = mat->Element[1][0] * scale;
@@ -303,10 +326,29 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
 	// the sum of the x-dir, y-dir vectors.
 	// The length is half the OUTPUT image size.
 
-	origin[0] = mc[0] - (mx[0] + my[0]) * res / 2.0;
+	//float originshiftX, originshiftY, originshiftZ;
+	float originshift1[4], originshift2[4];
+	//originshift1[0] = self->OriginShift[0];
+	//originshift1[1] = self->OriginShift[1];
+	vtkMatrix4x4 *originshiftmtx = self->GetOriginShiftMtx();
+	originshiftmtx->DeepCopy(mat);
+	originshiftmtx->Element[0][3] = 0.0;
+	originshiftmtx->Element[1][3] = 0.0;
+	originshiftmtx->Element[2][3] = 0.0;
+	self->GetOriginShift(originshift1);
+	originshift1[2] = 0.0;
+	originshift1[3] = 1.0;
+	originshiftmtx->MultiplyPoint(originshift1, originshift2);
+
+	origin[0] = originshift2[0] + mc[0] - (mx[0] + my[0]) * res / 2.0;
+	origin[1] = originshift2[1] + mc[1] - (mx[1] + my[1]) * res / 2.0;
+	origin[2] = originshift2[2] + mc[2] - (mx[2] + my[2]) * res / 2.0;
+	origin[3] = 1.0;
+
+	/*origin[0] = mc[0] - (mx[0] + my[0]) * res / 2.0;
 	origin[1] = mc[1] - (mx[1] + my[1]) * res / 2.0;
 	origin[2] = mc[2] - (mx[2] + my[2]) * res / 2.0;
-	origin[3] = 1.0;
+	origin[3] = 1.0;*/
 
 	// Advance to the origin of this output extent (used for threading)
 	// x
@@ -616,9 +658,15 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
 	//
 
 	// Scale mx, my by FOV/RESOLUTION
-  res = self->GetResolution();
-	scale = self->GetFieldOfView() / res;
-
+	res = self->GetResolution();
+	if(self->GetZoom() < 0.0001)
+	  self->SetZoom(0.0001);
+	scale = self->GetFieldOfView() / (res * self->GetZoom());
+	//	scale = self->GetFieldOfView() / res;
+	
+	//self->PanScale = self->GetFieldOfView() / (res * self->Zoom);
+	self->SetPanScale(scale);
+	
 	mx[0] = mat->Element[0][0] * scale;
 	mx[1] = mat->Element[1][0] * scale;
 	mx[2] = mat->Element[2][0] * scale;
@@ -637,10 +685,26 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
 	// the sum of the x-dir, y-dir vectors.
 	// The length is half the OUTPUT image size.
 
-	origin[0] = mc[0] - (mx[0] + my[0]) * res / 2.0;
+	float originshift1[4], originshift2[4];
+	vtkMatrix4x4 *originshiftmtx = self->GetOriginShiftMtx();
+	originshiftmtx->DeepCopy(mat);
+	originshiftmtx->Element[0][3] = 0.0;
+	originshiftmtx->Element[1][3] = 0.0;
+	originshiftmtx->Element[2][3] = 0.0;
+	self->GetOriginShift(originshift1);
+	originshift1[2] = 0.0;
+	originshift1[3] = 1.0;
+	originshiftmtx->MultiplyPoint(originshift1, originshift2);
+
+	origin[0] = originshift2[0] + mc[0] - (mx[0] + my[0]) * res / 2.0;
+	origin[1] = originshift2[1] + mc[1] - (mx[1] + my[1]) * res / 2.0;
+	origin[2] = originshift2[2] + mc[2] - (mx[2] + my[2]) * res / 2.0;
+	origin[3] = 1.0;
+
+	/*origin[0] = mc[0] - (mx[0] + my[0]) * res / 2.0;
 	origin[1] = mc[1] - (mx[1] + my[1]) * res / 2.0;
 	origin[2] = mc[2] - (mx[2] + my[2]) * res / 2.0;
-	origin[3] = 1.0;
+	origin[3] = 1.0;*/
 
 	// Advance to the origin of this output extent (used for threading)
 	// x

@@ -93,8 +93,13 @@ class VTK_EXPORT vtkMrmlSlicer : public vtkObject
   // Description:
   // Overlay is merged fore, back, and label images, for display
   // in slice window s (where s is 0, 1, or 2)
+
+  // >> AT 11/09/01
+  //vtkImageData *GetOutput(int s) {
+  //  this->Update(); return this->Overlay[s]->GetOutput();};
   vtkImageData *GetOutput(int s) {
-    this->Update(); return this->Overlay[s]->GetOutput();};
+    this->Update(); return this->Overlay3DView[s]->GetOutput();}
+  // << AT 11/09/01
 
   // Description:
   // Cursor is the moving cross-hair for over slice s
@@ -125,6 +130,12 @@ class VTK_EXPORT vtkMrmlSlicer : public vtkObject
   void SetZoom(int s, float mag);
   void SetZoom(float mag);
   float GetZoom(int s) {return this->Zoom[s]->GetMagnification();};
+  // >> AT 11/07/01
+  void SetZoomNew(int s, float mag);
+  void SetZoomNew(float mag);
+  float GetZoomNew(int s) {return this->BackReformat[s]->GetZoom();}
+  void SetOriginShift(int s, float sx, float sy);
+  // << AT 11/07/11
 
   // Description:
   // Zoom center
@@ -449,6 +460,10 @@ class VTK_EXPORT vtkMrmlSlicer : public vtkObject
   vtkImageDrawROI *GetImageDrawROI() { return this->PolyDraw; }
   //<< AT 01/17/01 01/19/01 02/19/01
 
+  // << AT 11/02/01
+  vtkImageReformat *GetBackReformat(int s) { return this->BackReformat[s]; }
+  // << AT 11/02/01
+
   // Description:
   // Update any part of this class that needs it.
   // Call this if you are using the First, Last filter pipeline
@@ -504,11 +519,23 @@ protected:
   vtkImageMapToColors  *ForeMapper[NUM_SLICES];
   vtkImageMapToColors  *LabelMapper[NUM_SLICES];
   vtkImageOverlay      *Overlay[NUM_SLICES];
+  // >> AT 11/09/01
+  vtkImageReformat     *BackReformat3DView[NUM_SLICES];
+  vtkImageReformat     *ForeReformat3DView[NUM_SLICES];
+  vtkImageReformat     *LabelReformat3DView[NUM_SLICES];
+  vtkImageMapToColors  *BackMapper3DView[NUM_SLICES];
+  vtkImageMapToColors  *ForeMapper3DView[NUM_SLICES];
+  vtkImageMapToColors  *LabelMapper3DView[NUM_SLICES];
+  vtkImageOverlay      *Overlay3DView[NUM_SLICES];
+  // << AT 11/09/01
   vtkMrmlDataVolume        *BackVolume[NUM_SLICES];
   vtkMrmlDataVolume        *ForeVolume[NUM_SLICES];
   vtkMrmlDataVolume        *LabelVolume[NUM_SLICES];
   vtkMatrix4x4         *ReformatMatrix[NUM_SLICES];
   vtkImageLabelOutline *LabelOutline[NUM_SLICES];
+  // >> AT 11/09/01
+  vtkImageLabelOutline *LabelOutline3DView[NUM_SLICES];
+  // << AT 11/09/01
   vtkImageCrossHair2D  *Cursor[NUM_SLICES];
   vtkImageZoom2D       *Zoom[NUM_SLICES];
   vtkImageDouble2D     *Double[NUM_SLICES];

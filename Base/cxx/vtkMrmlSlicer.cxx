@@ -112,7 +112,19 @@ vtkMrmlSlicer::vtkMrmlSlicer()
 
     this->LabelReformat[s] = vtkImageReformat::New();
     this->LabelReformat[s]->SetReformatMatrix(this->ReformatMatrix[s]);
-	  this->LabelReformat[s]->InterpolateOff();
+    this->LabelReformat[s]->InterpolateOff();
+
+    // >> AT 11/09/01
+    this->BackReformat3DView[s]  = vtkImageReformat::New();
+    this->BackReformat3DView[s]->SetReformatMatrix(this->ReformatMatrix[s]);
+
+    this->ForeReformat3DView[s]  = vtkImageReformat::New();
+    this->ForeReformat3DView[s]->SetReformatMatrix(this->ReformatMatrix[s]);
+
+    this->LabelReformat3DView[s] = vtkImageReformat::New();
+    this->LabelReformat3DView[s]->SetReformatMatrix(this->ReformatMatrix[s]);
+    this->LabelReformat3DView[s]->InterpolateOff();
+    // << AT 11/09/01
 
     // Mappers
     this->BackMapper[s]  = vtkImageMapToColors::New();
@@ -122,8 +134,20 @@ vtkMrmlSlicer::vtkMrmlSlicer()
     this->LabelMapper[s] = vtkImageMapToColors::New();
     this->LabelMapper[s]->SetOutputFormatToRGBA();
 
+    // >> AT 11/09/01
+    this->BackMapper3DView[s]  = vtkImageMapToColors::New();
+    this->BackMapper3DView[s]->SetOutputFormatToRGBA();
+    this->ForeMapper3DView[s]  = vtkImageMapToColors::New();
+    this->ForeMapper3DView[s]->SetOutputFormatToRGBA();
+    this->LabelMapper3DView[s] = vtkImageMapToColors::New();
+    this->LabelMapper3DView[s]->SetOutputFormatToRGBA();
+    // << AT 11/09/01
+
     // Label outline
     this->LabelOutline[s] = vtkImageLabelOutline::New();
+    // >> AT 11/09/01
+    this->LabelOutline3DView[s] = vtkImageLabelOutline::New();
+    // << AT 11/09/01
 
     // Overlays
     this->ForeOpacity = 0.5;
@@ -135,6 +159,14 @@ vtkMrmlSlicer::vtkMrmlSlicer()
     this->Overlay[s]->SetInput(1, this->NoneVolume->GetOutput());
     this->Overlay[s]->SetInput(2, this->NoneVolume->GetOutput());
     this->Overlay[s]->SetOpacity(1, this->ForeOpacity);
+
+    // >> AT 11/09/01
+    this->Overlay3DView[s] = vtkImageOverlay::New();
+    this->Overlay3DView[s]->SetInput(0, this->NoneVolume->GetOutput());
+    this->Overlay3DView[s]->SetInput(1, this->NoneVolume->GetOutput());
+    this->Overlay3DView[s]->SetInput(2, this->NoneVolume->GetOutput());
+    this->Overlay3DView[s]->SetOpacity(1, this->ForeOpacity);
+    // << AT 11/09/01
 
     // Upper Pipeline
     
@@ -215,10 +247,13 @@ vtkMrmlSlicer::vtkMrmlSlicer()
   this->BuildLowerTime.Modified();
   this->BuildUpperTime.Modified();
 
-  // >> AT 3/26/01
-  // Use the original approach by default.
-  this->DrawDoubleApproach = 0;
-  // << AT 3/26/01
+  // >> AT 3/26/01 11/07/01
+  //// Use the original approach by default.
+  //this->DrawDoubleApproach = 0;
+
+  // Should be this one from now (11/07/01)
+  this->DrawDoubleApproach = 1;
+  // << AT 3/26/01 11/07/01
 
   // reformatting additions
   this->VolumesToReformat = vtkCollection::New();
@@ -248,6 +283,18 @@ vtkMrmlSlicer::~vtkMrmlSlicer()
     this->BackMapper[s]->Delete();
     this->ForeMapper[s]->Delete();
     this->LabelMapper[s]->Delete();
+
+    // >> AT 11/09/01
+    this->BackReformat3DView[s]->Delete();
+    this->ForeReformat3DView[s]->Delete();
+    this->LabelReformat3DView[s]->Delete();
+    this->Overlay3DView[s]->Delete();
+    this->BackMapper3DView[s]->Delete();
+    this->ForeMapper3DView[s]->Delete();
+    this->LabelMapper3DView[s]->Delete();
+    this->LabelOutline3DView[s]->Delete();
+    // << AT 11/09/01
+
 	  this->ReformatMatrix[s]->Delete();
 	  this->LabelOutline[s]->Delete();
 	  this->Cursor[s]->Delete();
@@ -696,11 +743,20 @@ void vtkMrmlSlicer::BuildUpper(int s)
   this->BackReformat[s]->SetInterpolate(node->GetInterpolate());
   this->BackReformat[s]->SetWldToIjkMatrix(node->GetWldToIjk());
 
+  // >> AT 11/09/01
+  this->BackReformat3DView[s]->SetInput(v->GetOutput());
+  this->BackReformat3DView[s]->SetInterpolate(node->GetInterpolate());
+  this->BackReformat3DView[s]->SetWldToIjkMatrix(node->GetWldToIjk());
+  // << AT 11/09/01
+
   // If data has more than one scalar component, then don't use the mapper,
   if (v->GetOutput()->GetNumberOfScalarComponents() > 1)
   {
     // Overlay
     this->Overlay[s]->SetInput(0, this->BackReformat[s]->GetOutput());
+    // >> AT 11/09/01
+    this->Overlay3DView[s]->SetInput(0, this->BackReformat3DView[s]->GetOutput());
+    // << AT 11/09/01
   }
   else 
   {
@@ -709,6 +765,12 @@ void vtkMrmlSlicer::BuildUpper(int s)
     this->BackMapper[s]->SetLookupTable(v->GetIndirectLUT());
     // Overlay
     this->Overlay[s]->SetInput(0, this->BackMapper[s]->GetOutput());
+
+    // >> AT 11/09/01
+    this->BackMapper3DView[s]->SetInput(this->BackReformat3DView[s]->GetOutput());
+    this->BackMapper3DView[s]->SetLookupTable(v->GetIndirectLUT());
+    this->Overlay3DView[s]->SetInput(0, this->BackMapper3DView[s]->GetOutput());
+    // << AT 11/09/01
   }  
 
 
@@ -721,7 +783,10 @@ void vtkMrmlSlicer::BuildUpper(int s)
   // If the None volume, then turn the Fore input off
   if (v == this->NoneVolume) 
   {
-	  this->Overlay[s]->SetInput(1, NULL);
+    this->Overlay[s]->SetInput(1, NULL);
+    // >> AT 11/09/01
+    this->Overlay3DView[s]->SetInput(1, NULL);
+    // << AT 11/09/01
   } 
   else 
   {
@@ -730,11 +795,20 @@ void vtkMrmlSlicer::BuildUpper(int s)
     this->ForeReformat[s]->SetInterpolate(node->GetInterpolate());
     this->ForeReformat[s]->SetWldToIjkMatrix(node->GetWldToIjk());
 
+    // >> AT 11/09/01
+    this->ForeReformat3DView[s]->SetInput(v->GetOutput());
+    this->ForeReformat3DView[s]->SetInterpolate(node->GetInterpolate());
+    this->ForeReformat3DView[s]->SetWldToIjkMatrix(node->GetWldToIjk());
+    // << AT 11/09/01
+
     // If data has more than one scalar component, then don't use the mapper,
     if (v->GetOutput()->GetNumberOfScalarComponents() > 1)
     {
       // Overlay
       this->Overlay[s]->SetInput(0, this->ForeReformat[s]->GetOutput());
+      // >> AT 11/09/01
+      this->Overlay3DView[s]->SetInput(0, this->ForeReformat3DView[s]->GetOutput());
+      // << AT 11/09/01
     }
     else 
     {
@@ -772,6 +846,12 @@ void vtkMrmlSlicer::BuildUpper(int s)
       this->ForeMapper[s]->SetLookupTable(v->GetIndirectLUT());
       // Overlay
       this->Overlay[s]->SetInput(1, this->ForeMapper[s]->GetOutput());
+
+      // >> AT 11/09/01
+      this->ForeMapper3DView[s]->SetInput(this->ForeReformat3DView[s]->GetOutput());
+      this->ForeMapper3DView[s]->SetLookupTable(v->GetIndirectLUT());
+      this->Overlay3DView[s]->SetInput(1, this->ForeMapper3DView[s]->GetOutput());
+      // << AT 11/09/01
     } 
   }
 
@@ -786,6 +866,9 @@ void vtkMrmlSlicer::BuildUpper(int s)
   if (v == this->NoneVolume) 
   {
     this->Overlay[s]->SetInput(2, NULL);
+    // >> AT 11/09/01
+    this->Overlay3DView[s]->SetInput(2, NULL);
+    // << AT 11/09/01
   }
   else
   {
@@ -820,6 +903,17 @@ void vtkMrmlSlicer::BuildUpper(int s)
       this->LabelMapper[s]->SetInput(this->LabelOutline[s]->GetOutput());
       this->Overlay[s]->SetInput(2, this->LabelMapper[s]->GetOutput());
     }
+
+    // >> AT 11/09/01
+    this->LabelReformat3DView[s]->SetInput(v->GetOutput());
+    this->LabelReformat3DView[s]->InterpolateOff(); // never interpolate label
+    this->LabelReformat3DView[s]->SetWldToIjkMatrix(node->GetWldToIjk());
+    // We don't care about filters in 3D View
+    this->LabelOutline3DView[s]->SetInput(this->LabelReformat3DView[s]->GetOutput());
+    this->LabelMapper3DView[s]->SetInput(this->LabelOutline3DView[s]->GetOutput());
+    //    this->Overlay3DView[s]->SetInput(2, this->LabelMapper3DView[s]->GetOutput());
+    this->Overlay3DView[s]->SetInput(2, this->LabelMapper3DView[s]->GetOutput());
+    // << AT 11/09/01
   }
 
   // The IJK reformatting depends on the volumes
@@ -882,7 +976,7 @@ void vtkMrmlSlicer::BuildLower(int s)
 	    break;
     case 2:
       this->PolyDraw->SetInput(this->Overlay[s]->GetOutput());
-      this->Zoom[s]->SetInput(this->PolyDraw->GetOutput());
+            this->Zoom[s]->SetInput(this->PolyDraw->GetOutput());
       this->Cursor[s]->SetInput(this->Zoom[s]->GetOutput());
       break;
     case 3:
@@ -892,7 +986,7 @@ void vtkMrmlSlicer::BuildLower(int s)
   	  break;
     case 4:
       this->PolyDraw->SetInput(this->Overlay[s]->GetOutput());
-  	  this->Zoom[s]->SetInput(this->PolyDraw->GetOutput());
+      this->Zoom[s]->SetInput(this->PolyDraw->GetOutput());
       this->Double[s]->SetInput(this->Zoom[s]->GetOutput());
       this->Cursor[s]->SetInput(this->Double[s]->GetOutput());
       break;
@@ -914,7 +1008,7 @@ void vtkMrmlSlicer::BuildLower(int s)
       this->Cursor[s]->SetInput(this->Double[s]->GetOutput());
   	  break;
     case 4:
-  	  this->Zoom[s]->SetInput(this->Overlay[s]->GetOutput());
+      this->Zoom[s]->SetInput(this->Overlay[s]->GetOutput());
       this->Double[s]->SetInput(this->Zoom[s]->GetOutput());
       this->Cursor[s]->SetInput(this->Double[s]->GetOutput());
       break;
@@ -1304,6 +1398,12 @@ void vtkMrmlSlicer::SetOffset(int s, float userOffset)
   this->ForeReformat[s]->Modified();
   this->LabelReformat[s]->Modified();
 
+  // >> AT 11/09/01
+  this->BackReformat3DView[s]->Modified();
+  this->ForeReformat3DView[s]->Modified();
+  this->LabelReformat3DView[s]->Modified();
+  // << AT 11/09/01
+
   // Use reformat matrix for other arbitrary volumes we may be reformatting
   this->VolumeReformattersModified();
 }
@@ -1447,6 +1547,12 @@ void vtkMrmlSlicer::ComputeReformatMatrix(int s)
   this->BackReformat[s]->Modified();
   this->ForeReformat[s]->Modified();
   this->LabelReformat[s]->Modified();
+
+  // >> AT 11/09/01
+  this->BackReformat[s]->Modified();
+  this->ForeReformat[s]->Modified();
+  this->LabelReformat[s]->Modified();
+  // << AT 11/09/01
 }
 
 
@@ -1752,6 +1858,11 @@ void vtkMrmlSlicer::SetFieldOfView(float fov)
     this->BackReformat[s]->SetFieldOfView(fov);
     this->ForeReformat[s]->SetFieldOfView(fov);
     this->LabelReformat[s]->SetFieldOfView(fov);
+    // >> AT 11/09/01
+    this->BackReformat3DView[s]->SetFieldOfView(fov);
+    this->ForeReformat3DView[s]->SetFieldOfView(fov);
+    this->LabelReformat3DView[s]->SetFieldOfView(fov);
+    // << AT 11/09/01
   }
 
   // arbitrary volume reformatting
@@ -1774,6 +1885,33 @@ void vtkMrmlSlicer::SetZoom(int s, float mag)
   this->Zoom[s]->SetMagnification(mag);
   this->BuildLowerTime.Modified();
 }
+
+// >> AT 11/07/01
+void vtkMrmlSlicer::SetZoomNew(float mag)
+{
+  for (int s=0; s<NUM_SLICES; s++)
+  {
+	  this->SetZoomNew(s, mag);
+  }
+}
+
+void vtkMrmlSlicer::SetZoomNew(int s, float mag)
+{
+  this->BackReformat[s]->SetZoom(mag);
+  this->ForeReformat[s]->SetZoom(mag);
+  this->LabelReformat[s]->SetZoom(mag);
+  this->BuildLowerTime.Modified();
+}
+
+void vtkMrmlSlicer::SetOriginShift(int s, float sx, float sy)
+{
+  this->BackReformat[s]->SetOriginShift(sx, sy);
+  this->ForeReformat[s]->SetOriginShift(sx, sy);
+  this->LabelReformat[s]->SetOriginShift(sx, sy);
+
+  this->BuildLowerTime.Modified();
+}
+// << AT 11/07/01
 
 void vtkMrmlSlicer::SetZoomCenter(int s, float x, float y)
 {
@@ -1821,6 +1959,9 @@ void vtkMrmlSlicer::SetLabelIndirectLUT(vtkIndirectLookupTable *lut)
   for (int s=0; s<NUM_SLICES; s++)
   {
     this->LabelMapper[s]->SetLookupTable(this->LabelIndirectLUT);
+    // >> AT 11/09/01
+    this->LabelMapper3DView[s]->SetLookupTable(this->LabelIndirectLUT);
+    // << AT 11/09/01
   }
   this->BuildUpperTime.Modified();
 }
@@ -1832,7 +1973,10 @@ void vtkMrmlSlicer::SetForeOpacity(float opacity)
 {
   for (int s=0; s<NUM_SLICES; s++)
   {
-	  this->Overlay[s]->SetOpacity(1, opacity);
+    this->Overlay[s]->SetOpacity(1, opacity);
+    // >> AT 11/09/01
+    this->Overlay3DView[s]->SetOpacity(1, opacity);
+    // << AT 11/09/01
   }
 }
 
@@ -1844,6 +1988,9 @@ void vtkMrmlSlicer::SetForeFade(int fade)
   for (int s=0; s<NUM_SLICES; s++)
   {
 	  this->Overlay[s]->SetFade(1, fade);
+    // >> AT 11/09/01
+	  this->Overlay3DView[s]->SetFade(1, fade);
+    // << AT 11/09/01
   }
 }
 
