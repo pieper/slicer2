@@ -2,7 +2,8 @@
 # launch.tcl
 #
 # This script is called by the platform-specific executables at the top level
-# of the slicer tree (e.g. slicer2-win32.exe).
+# of the slicer tree (e.g. slicer2-win32.exe).  See Scripts/launcher for details
+# on how and why the platform-specific executables are built.
 #
 # - what platform you're on so correct libs are loaded
 # - what modules are present so they can be loaded
