@@ -72,7 +72,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.40 $} {$Date: 2001/11/13 22:45:33 $}]
+		{$Revision: 1.41 $} {$Date: 2001/11/13 23:26:05 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""
@@ -93,6 +93,7 @@ proc MainModelsInit {} {
 	set Model(scalarLo) 0
 	set Model(scalarHi) 100
 	set Model(desc) ""
+        set Model(activeRenderer) viewRen
 }
 
 #-------------------------------------------------------------------------------
@@ -167,16 +168,24 @@ proc MainModelsUpdateMRML {} {
 
 	# Refresh Actor and GUI (in case color changed)
 	#--------------------------------------------------------
+	
 	foreach m $Model(idList) {
+	    
+	    # save the current active renderer
+	    set activeRenderer $Model(activeRenderer)
+	    foreach rend $Module(Renderers) {
+		set Model(activeRenderer) $rend
 		MainModelsSetClipping $m
 		MainModelsSetColor $m
 		MainModelsSetCulling $m
 		MainModelsSetVisibility $m
 		MainModelsSetScalarVisibility $m
 		MainModelsSetOpacity $m
-	    foreach r $Module(Renderers) {
-		eval Model($m,mapper,$r) SetScalarRange [Model($m,node) GetScalarRange]
+		
+		eval Model($m,mapper,$rend) SetScalarRange [Model($m,node) GetScalarRange]
 	    }
+	    set Model(activeRenderer) $activeRenderer
+	    
 		# Color slider and colored checkbuttons
 		set c $Model($m,colorID)
 		if {$c != ""} {
@@ -820,9 +829,9 @@ proc MainModelsSetVisibility {model {value ""}} {
 	foreach m $Model(idList) {
 	    set Model($m,visibility) 0
 	    Model($m,node)  SetVisibility 0
-	    foreach r $Module(Renderers) {
-		Model($m,actor,$r) SetVisibility [Model($m,node) GetVisibility] 
-	    }
+	    # set the visibility for the chosen screen
+	    Model($m,actor,$Model(activeRenderer)) SetVisibility [Model($m,node) GetVisibility] 
+
 	}
 	foreach mg $ModelGroup(idList) {
 		set ModelGroup($mg,visibility) 0
@@ -832,9 +841,8 @@ proc MainModelsSetVisibility {model {value ""}} {
 	foreach m $Model(idList) {
 	    set Model($m,visibility) 1
 	    Model($m,node)  SetVisibility 1
-	    foreach r $Module(Renderers) { 
-		Model($m,actor,$r) SetVisibility [Model($m,node) GetVisibility] 
-	    }
+	    Model($m,actor,$Model(activeRenderer)) SetVisibility [Model($m,node) GetVisibility] 
+
 	}
 	foreach mg $ModelGroup(idList) {
 		set ModelGroup($mg,visibility) 1
@@ -851,9 +859,9 @@ proc MainModelsSetVisibility {model {value ""}} {
 	    set Model($m,visibility) $value
 	}
 	Model($m,node)  SetVisibility $Model($m,visibility)
-        foreach r $Module(Renderers) {
-	    Model($m,actor,$r) SetVisibility [Model($m,node) GetVisibility] 
-	}
+
+        Model($m,actor,$Model(activeRenderer)) SetVisibility [Model($m,node) GetVisibility] 
+	
 	# If this is the active model, update GUI
 	if {$m == $Model(activeID)} {
 	    set Model(visibility) [Model($m,node) GetVisibility]
@@ -970,7 +978,9 @@ proc MainModelsSetOpacity {m {value ""}} {
 	    }
 	}
 	Model($m,node) SetOpacity $Model($m,opacity)
-	$Model($m,prop,viewRen) SetOpacity [Model($m,node) GetOpacity]
+	#set the opacity in the screen chosen by the user
+	$Model($m,prop,$Model(activeRenderer)) SetOpacity [Model($m,node) GetOpacity]
+	
 	
 	# If this is the active model, update GUI
 	if {$m == $Model(activeID)} {
@@ -993,10 +1003,10 @@ proc MainModelsSetCulling {m {value ""}} {
 	}
 	Model($m,node) SetBackfaceCulling $Model($m,backfaceCulling)
 	
-	foreach r $Module(Renderers) {
-	    $Model($m,prop,$r) SetBackfaceCulling \
-		    [Model($m,node) GetBackfaceCulling]
-	}
+	
+	#set the backface culling in the screen chosen by the user
+	$Model($m,prop,$Model(activeRenderer)) SetBackfaceCulling \
+		[Model($m,node) GetBackfaceCulling]
 	
 	# If this is the active model, update GUI
 	if {$m == $Model(activeID)} {
@@ -1018,10 +1028,10 @@ proc MainModelsSetScalarVisibility {m {value ""}} {
 		set Model($m,scalarVisibility) $value
 	}
 	Model($m,node) SetScalarVisibility $Model($m,scalarVisibility)
-	foreach r $Module(Renderers) {
-	    Model($m,mapper,$r) SetScalarVisibility \
-		    [Model($m,node) GetScalarVisibility]
-	}
+
+	Model($m,mapper,$Model(activeRenderer)) SetScalarVisibility \
+		[Model($m,node) GetScalarVisibility]
+	
 	# If this is the active model, update GUI
 	if {$m == $Model(activeID)} {
 			set Model(scalarVisibility) [Model($m,node) GetScalarVisibility]
@@ -1236,3 +1246,31 @@ proc MainModelsToggleScalarBar {m} {
 	MainModelsRaiseScalarBar $m
     }    
 }
+
+#-------------------------------------------------------------------------------
+# .PROC MainModelsChangeRenderer
+# This is called when the user chooses in which screen (renderer) s/he wants 
+# to change the attributes of the models
+# 
+# str r the name of the renderer
+# .END
+#-------------------------------------------------------------------------------
+proc MainModelsSetRenderer {r} {
+    
+    global Model
+    
+    set Model(activeRenderer) $r
+    # change the opacity sliders
+    foreach m $Model(idList) {
+	set opacity [$Model($m,prop,$Model(activeRenderer)) GetOpacity]
+	MainModelsSetOpacity $m $opacity
+	set scalarvisibility [Model($m,mapper,$Model(activeRenderer)) GetScalarVisibility] 
+	MainModelsSetScalarVisibility $m $scalarvisibility
+	set backfaceculling [$Model($m,prop,$Model(activeRenderer)) GetBackfaceCulling]
+	MainModelsSetCulling $m $backfaceculling
+	set visibility  [Model($m,actor,$Model(activeRenderer)) GetVisibility]
+	MainModelsSetVisibility $m $visibility
+    }
+}
+
+

@@ -63,7 +63,7 @@ proc ModelsInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.36 $} {$Date: 2001/11/13 22:45:33 $}]
+		{$Revision: 1.37 $} {$Date: 2001/11/13 23:26:05 $}]
 
 	# Props
 	set Model(propertyType) Basic
@@ -229,9 +229,10 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 
 	frame $f.fTitle -bg $Gui(activeWorkspace)
 	frame $f.fAll -bg $Gui(activeWorkspace)
-	frame $f.fGrid -bg $Gui(activeWorkspace)
+	frame $f.fRend -bg $Gui(activeWorkspace)
+        frame $f.fGrid -bg $Gui(activeWorkspace)
 	frame $f.fScroll -bg $Gui(activeWorkspace)
-	pack $f.fTitle $f.fAll -side top -pady $Gui(pad)
+	pack $f.fTitle $f.fAll $f.fRend -side top -pady $Gui(pad)
 	pack $f.fGrid $f.fScroll -side top -pady 1
 
 	#-------------------------------------------
@@ -242,6 +243,22 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 	eval {label $f.lTitle -justify left -text \
 		"Click the right mouse button on\nthe name of a model for options."} $Gui(WLA)
 	pack $f.lTitle
+        
+        #-------------------------------------------
+	# fDisplay->Rend frame
+	#-------------------------------------------
+ 
+	set f $fDisplay.fRend
+
+        eval {label $f.label -text "Choose a screen:"} $Gui(WLA)
+        eval {menubutton $f.fMenuB -text "viewRen" -menu $f.fMenuB.menu} $Gui(WMBA)
+        TooltipAdd $f.fMenuB "Choose in which screen you want to change the options of a model"
+        eval {menu $f.fMenuB.menu} $Gui(WMA)
+           foreach rend $Module(Renderers) {
+	       $f.fMenuB.menu add command -label $rend -command "$f.fMenuB configure -text $rend; MainModelsSetRenderer $rend"
+	   }
+       
+	   pack $f.label $f.fMenuB  -side left -padx $Gui(pad) -pady 0
 
 	#-------------------------------------------
 	# fDisplay->All frame
