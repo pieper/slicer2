@@ -81,15 +81,15 @@ proc LocatorInit {} {
 
     # Set Default Presets
     set Module(Locator,presets) "0,driver='User' 1,driver='User' 2,driver='User'\
- visibility='0' transverseVisibility='1' normalLen='100' transverseLen='25'\
- radius='3.0' diffuseColor='0.9 0.9 0.1'"
+    visibility='0' transverseVisibility='1' normalLen='100' transverseLen='25'\
+     radius='3.0' diffuseColor='0.9 0.9 0.1'"
 
     # Define Dependencies
     set Module($m,depend) ""
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.26 $} {$Date: 2002/03/18 20:52:39 $}]
+        {$Revision: 1.27 $} {$Date: 2002/03/18 22:16:01 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
