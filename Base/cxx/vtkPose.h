@@ -64,6 +64,8 @@ public:
   void ConvertToMatrix4x4(vtkMatrix4x4 *m);
   void ConvertFromMatrix4x4(vtkMatrix4x4 *m);
 
+  void Print(const char *x);
+  void Dump();
 protected:
   // Constructors/Destructor
   vtkPose();
@@ -72,5 +74,4 @@ protected:
   vtkVector3 *Translation;
   vtkQuaternion *Rotation;
 };
-
 #endif
