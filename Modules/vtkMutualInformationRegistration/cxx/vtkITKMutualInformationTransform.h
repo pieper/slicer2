@@ -61,6 +61,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMutualInformationRegistrationConfigure.h"
 
 class vtkImageData;
+#include "vtkDoubleArray.h"
+#include "vtkUnsignedIntArray.h"
 
 class VTK_MUTUALINFORMATIONREGISTRATION_EXPORT vtkITKMutualInformationTransform : public vtkLinearTransform
 {
@@ -80,21 +82,11 @@ public:
   vtkGetObjectMacro(TargetImage, vtkImageData);
 
   // Description:
-  // Set the learning rate for the algorithm.
-  vtkSetMacro(LearningRate, double);
-  vtkGetMacro(LearningRate, double);
-
-  // Description:
   // Set the standard deviations of the parzen window density estimators.
   vtkSetMacro(SourceStandardDeviation, double);
   vtkGetMacro(SourceStandardDeviation, double);
   vtkSetMacro(TargetStandardDeviation, double);
   vtkGetMacro(TargetStandardDeviation, double);
-
-  // Description:
-  // Set the number of iterations
-  vtkSetMacro(NumberOfIterations, int);
-  vtkGetMacro(NumberOfIterations, int);
 
   // Description:
   // Set the number of sample points for density estimation
@@ -105,6 +97,40 @@ public:
   // Set the translation scale factor.
   vtkSetMacro(TranslateScale, double);
   vtkGetMacro(TranslateScale, double);
+
+  // Description:
+  // Set the shrink factors for pyramid schemes.
+  // Default is 1 1 1 
+  void SetSourceShrinkFactors(unsigned int i, 
+                              unsigned int j, unsigned int k);
+  void SetTargetShrinkFactors(unsigned int i, 
+                              unsigned int j, unsigned int k);
+  unsigned int GetSourceShrinkFactors(const int &dir)
+    { return SourceShrink[dir]; }
+  unsigned int GetTargetShrinkFactors(const int &dir)
+    { return TargetShrink[dir]; }
+
+  // Description:
+  // Set the learning rate for the algorithm.
+  // Generally between 0 and 1, most often 1e-4 or below
+  // Must set the same number of Learning Rates as Iterations
+  void SetNextLearningRate(const double rate);
+
+  // Description:
+  // Set the max number of iterations at each level
+  // Generally less than 5000, 2500 is OK.
+  // Must set the same number of Learning Rates as Iterations
+  void SetNextMaxNumberOfIterations(const int num);
+
+  // Description
+  // The Max Number of Iterations at each multi-resolution level.
+  vtkSetObjectMacro(MaxNumberOfIterations,vtkUnsignedIntArray);
+  vtkGetObjectMacro(MaxNumberOfIterations,vtkUnsignedIntArray);
+
+  // Description
+  // The Learning Rates at each multi-resolution level.
+  vtkSetObjectMacro(LearningRate,vtkDoubleArray);
+  vtkGetObjectMacro(LearningRate,vtkDoubleArray);
 
   // Description:
   // Get the value of the last metric calculation
@@ -146,19 +172,22 @@ protected:
 
   vtkImageData *SourceImage;
   vtkImageData *TargetImage;
- 
-  double LearningRate;
+
   double SourceStandardDeviation;
   double TargetStandardDeviation;
   double TranslateScale;
-  
-  int NumberOfIterations;
   int NumberOfSamples;
 
   double MetricValue;
+
+  unsigned int SourceShrink[3];
+  unsigned int TargetShrink[3];
+
+  vtkUnsignedIntArray  *MaxNumberOfIterations;
+  vtkDoubleArray       *LearningRate;
   
 private:
-  vtkITKMutualInformationTransform(const vtkITKMutualInformationTransform&); // Not implemented.
+  vtkITKMutualInformationTransform(const vtkITKMutualInformationTransform&);  // Not implemented.
   void operator=(const vtkITKMutualInformationTransform&);  // Not implemented.
 };
   
