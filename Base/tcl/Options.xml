@@ -15,10 +15,9 @@ ordered='Data
 	Anno 
 	Slices 
 	Colors
-	Twin
-	EMSegment
-	Custom'
-suppressed=''
+	TwinDisplay
+	EMSegment'
+suppressed='Custom'
 
 </Options>
 </MRML>
