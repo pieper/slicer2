@@ -88,7 +88,7 @@ proc SaveInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.15 $} {$Date: 2003/03/19 19:16:39 $}]
+            {$Revision: 1.16 $} {$Date: 2004/11/01 23:54:50 $}]
 
     SaveInitTables
 
@@ -655,7 +655,6 @@ proc Save3DImage {} {
                       $filebase $Save(imageFileType)]
 
     $Gui(fViewer) config -cursor watch
-    puts -nonewline "Save3DImage: writing $filename..."    
     if { [SaveModeIsSingleView] || [SaveModeIsMovie] } {
 
         if { $Save(imageIncludeSlices) == 0} {
@@ -754,7 +753,7 @@ proc Save3DImage {} {
         stereoImage_right Delete
     }
 
-    puts "done."
+    after idle "puts \"Saved $filename.\""
     $Gui(fViewer) config -cursor {}
     SaveIncrementFrameCounter
 }
