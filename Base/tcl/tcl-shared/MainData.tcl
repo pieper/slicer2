@@ -136,10 +136,10 @@ proc MainDataUpdateMRML {ModuleArray} {
 	    set Array($d,fly) 0
 	    
 	    # Read
-	    if {[MainDataRead Tensor $d] < 0} {
+	    if {[MainDataRead $ModuleArray $d] < 0} {
 		# Let the user know about the error
 		# Lauren general filename we can print from node/data object?
-		tk_messageBox -message "Could not read [$Array($d,data) GetTitle]"
+		tk_messageBox -message "Could not read [$Array($d,node) GetTitle]"
 		# Remove the objects we have created
 		MainMrmlDeleteNodeDuringUpdate $ModuleArray $d
 	    }
@@ -304,6 +304,8 @@ proc MainDataRead {ModuleArray d} {
     $data Read
     $data Update
     puts "...finished reading [$node GetTitle]"
+
+    set Gui(progressText) ""
 
     # Lauren: models did pipeline stuff here
     # Now we either do pipeline junk here,
