@@ -30,8 +30,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFastCellPicker.h,v $
   Language:  C++
-  Date:      $Date: 2001/01/24 17:15:30 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2001/02/03 01:21:37 $
+  Version:   $Revision: 1.4 $
 
 
 Copyright (c) 1993-1998 Ken Martin, Will Schroeder, Bill Lorensen.
@@ -78,6 +78,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkFastCellPicker_h
 #define __vtkFastCellPicker_h
 
+#include "vtkVersion.h"
 #include "vtkPicker.h"
 #include "vtkOBBTree.h"
 
@@ -107,8 +108,13 @@ protected:
   int SubId; // picked cell subId
   float PCoords[3]; // picked cell parametric coordinates
 
+#if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2)
+  virtual float IntersectWithLine(float p1[3], float p2[3], float tol, 
+				  vtkAssemblyPath *assem, vtkActor *a, vtkMapper *m);
+#else
   virtual float IntersectWithLine(float p1[3], float p2[3], float tol, 
 				  vtkActor *assem, vtkActor *a, vtkMapper *m);
+#endif
   void Initialize();
   vtkCollection *OBBTrees;
 };

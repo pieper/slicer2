@@ -126,6 +126,13 @@ public:
   void InitDirect();
 
   // Description:
+  // Map one value through the lookup table and return the color as
+  // an RGB array of floats between 0 and 1.
+  float *GetColor(float x) { 
+    return vtkScalarsToColors::GetColor(x); }
+  void GetColor(float x, float rgb[3]);
+
+  // Description:
   // Specifically set a certain input scalar value to map to a
   // certain index into the LookupTable
   void MapDirect(float scalar, int index);

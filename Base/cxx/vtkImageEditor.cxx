@@ -29,6 +29,10 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <ctype.h>
 #include <string.h>
 #include <time.h>
+#include "vtkVersion.h"
+#if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2)
+#include "vtkCommand.h"
+#endif
 #include "vtkImageEditor.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageCanvasSource2D.h"
@@ -326,11 +330,14 @@ void vtkImageEditor::Apply()
   }    
  
   // Start progress reporting
+#if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2)
+    this->InvokeEvent(vtkCommand::StartEvent,NULL);
+#else
   if (this->StartMethod)
   {
     (*this->StartMethod)(this->StartMethodArg);
   }
-  
+#endif  
   // Start measuring the total time that "Apply" takes.
   tStartTotal = clock();
   
@@ -755,10 +762,14 @@ void vtkImageEditor::Apply()
     {
       vtkDebugMacro(<<"UndoOutput=NULL because called Apply twice too fast!");
       this->TotalTime = 0;
+#if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2)
+    this->InvokeEvent(vtkCommand::EndEvent,NULL);
+#else
       if (this->EndMethod)
       {
         (*this->EndMethod)(this->EndMethodArg);
       } 
+#endif
       return;
     }
 
@@ -789,10 +800,14 @@ void vtkImageEditor::Apply()
   this->TotalTime = (float)(clock() - tStartTotal) / CLOCKS_PER_SEC;
 
   // End progress reporting
+#if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2)
+    this->InvokeEvent(vtkCommand::EndEvent,NULL);
+#else
   if (this->EndMethod)
   {
     (*this->EndMethod)(this->EndMethodArg);
   } 
+#endif
 }
 
 //----------------------------------------------------------------------------

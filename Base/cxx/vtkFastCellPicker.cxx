@@ -30,8 +30,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFastCellPicker.cxx,v $
   Language:  C++
-  Date:      $Date: 2001/01/24 17:15:30 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2001/02/03 01:21:37 $
+  Version:   $Revision: 1.4 $
 
 
 Copyright (c) 1993-1998 Ken Martin, Will Schroeder, Bill Lorensen.
@@ -78,9 +78,15 @@ vtkFastCellPicker::vtkFastCellPicker()
   this->OBBTrees = vtkCollection::New();
 }
 
+#if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2)
+float vtkFastCellPicker::IntersectWithLine(float p1[3], float p2[3], float tol, 
+				      vtkAssemblyPath *assem, vtkActor *a, 
+				      vtkMapper *m)
+#else
 float vtkFastCellPicker::IntersectWithLine(float p1[3], float p2[3], float tol, 
 				      vtkActor *assem, vtkActor *a, 
 				      vtkMapper *m)
+#endif
 {
   int numCells, ii, nOBBTrees;
   int i, minCellId, minSubId;

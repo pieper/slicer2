@@ -375,6 +375,16 @@ void vtkIndirectLookupTable::Build()
   this->BuildTime.Modified();
 }
   
+// get the color for a scalar value
+void vtkIndirectLookupTable::GetColor(float v, float rgb[3])
+{
+  unsigned char *rgb8 = this->MapValue(v);
+
+  rgb[0] = rgb8[0]/255.0;
+  rgb[1] = rgb8[1]/255.0;
+  rgb[2] = rgb8[2]/255.0;
+}
+
 // Given a scalar value v, return an RGBA color value from LookupTable
 unsigned char *vtkIndirectLookupTable::MapValue(float v)
 {

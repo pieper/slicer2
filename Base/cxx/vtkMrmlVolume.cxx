@@ -26,6 +26,10 @@ PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 #include <stdio.h>
+#include "vtkVersion.h"
+#if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2)
+#include "vtkCommand.h"
+#endif
 #include "vtkMrmlVolume.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageReader.h"
@@ -419,11 +423,14 @@ void vtkMrmlVolume::Read()
   node = this->MrmlNode;
 
   // Start progress reporting
+#if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2)
+    this->InvokeEvent(vtkCommand::StartEvent,NULL);
+#else
   if (this->StartMethod)
   {
     (*this->StartMethod)(this->StartMethodArg);
   }
-  
+#endif  
   range = node->GetImageRange();
   dim = node->GetDimensions();
   ext[0] = 0;
@@ -494,11 +501,14 @@ void vtkMrmlVolume::Read()
   reader->Delete();
 
   // End progress reporting
+#if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2)
+    this->InvokeEvent(vtkCommand::EndEvent,NULL);
+#else
   if (this->EndMethod)
   {
     (*this->EndMethod)(this->EndMethodArg);
   } 
-
+#endif
   // Update W/L
   this->Update();
 }
@@ -513,10 +523,14 @@ void vtkMrmlVolume::Write()
   node = this->MrmlNode;
   
   // Start progress reporting
+#if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2)
+    this->InvokeEvent(vtkCommand::StartEvent,NULL);
+#else
   if (this->StartMethod)
   {
     (*this->StartMethod)(this->StartMethodArg);
   }
+#endif
   
   vtkImageWriter *writer = vtkImageWriter::New();
   writer->SetFilePattern(node->GetFilePattern());
@@ -535,10 +549,14 @@ void vtkMrmlVolume::Write()
   writer->Delete();
 
   // End progress reporting
+#if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2)
+    this->InvokeEvent(vtkCommand::EndEvent,NULL);
+#else
   if (this->EndMethod)
   {
     (*this->EndMethod)(this->EndMethodArg);
   } 
+#endif
 }
 
 //----------------------------------------------------------------------------
