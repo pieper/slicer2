@@ -59,7 +59,7 @@ proc EventsInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.10 $} {$Date: 2001/02/19 17:53:36 $}]
+	    {$Revision: 1.11 $} {$Date: 2001/04/02 18:23:22 $}]
     
     # Props
     set Events(managerStack) ""
@@ -132,12 +132,12 @@ proc pushEventManager { manager } {
 #    }
 
     foreach entry $manager {
-	set widget [lindex $entry 0]
+	set widget [subst [lindex $entry 0]]
 	set event [lindex $entry 1]
 	set command [lindex $entry 2]	
 	pushHandler $widget $event $command
     }
-    set Events(managerStack) [concat manager $Events(managerStack)]
+    set Events(managerStack) [concat $manager $Events(managerStack)]
 }
 
 #-------------------------------------------------------------------------------
