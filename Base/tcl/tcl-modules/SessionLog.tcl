@@ -35,16 +35,14 @@
 
 #-------------------------------------------------------------------------------
 #  Description
-#  This module is an example for developers.  It shows how to add a module 
-#  to the Slicer.  To find it when you run the Slicer, click on More->SessionLog.
+#  This module outputs a record of a segmentation session.
+#  This will be used to compare efficiency of segmentation methods.
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
 #  Variables
-#  These are (some of) the variables defined by this module.
+#  These are the variables defined by this module.
 # 
-#  int SessionLog(count) counts the button presses for the demo 
-#  list SessionLog(eventManager)  list of event bindings used by this module
 #  widget SessionLog(textBox)  the text box widget
 #-------------------------------------------------------------------------------
 
@@ -119,6 +117,7 @@ proc SessionLogInit {} {
     set Module($m,procGUI) SessionLogBuildGUI
     set Module($m,procEnter) SessionLogEnter
     set Module($m,procExit) SessionLogExit
+    set Module($m,procSessionLog) SessionLogLog
 
     # Define Dependencies
     #------------------------------------
@@ -136,7 +135,7 @@ proc SessionLogInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.1 $} {$Date: 2001/02/22 15:22:09 $}]
+	    {$Revision: 1.2 $} {$Date: 2001/02/27 21:21:22 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -250,9 +249,10 @@ proc SessionLogBuildGUI {} {
     set f $fStart.fMiddle
     
     # file browse box
-    DevAddFileBrowse $f SessionLog FileName "Log File:" [] \
-	    ".txt" [] "Open" "Select Log File" \
-	    "Choose the log file for segmentation of this grayscale volume."
+    DevAddFileBrowse $f SessionLog fileName "Log File:" [] \
+	    "txt" [] "Save" "Select Log File" \
+	    "Choose the log file for this grayscale volume."\
+	    "Absolute"
 
     #-------------------------------------------
     # Start->Bottom frame
@@ -260,11 +260,32 @@ proc SessionLogBuildGUI {} {
     set f $fStart.fBottom
     
     # make frames inside the Bottom frame for nice layout
-    foreach frame "" {
+    foreach frame "CountDemo" {
 	frame $f.f$frame -bg $Gui(activeWorkspace) 
 	pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
 
+    #-------------------------------------------
+    # Start->Bottom->CountDemo frame
+    #-------------------------------------------
+    set f $fStart.fBottom.fCountDemo
+
+    DevAddLabel $f.lStart "You clicked 0 times."
+    pack $f.lStart -side top -padx $Gui(pad) -fill x
+    set SessionLog(lStart) $f.lStart
+    
+    # Here's a button with text "Count" that calls "SessionLogCount" when
+    # pressed.
+    DevAddButton $f.bCount Count SessionLogCount 
+    
+    # Tooltip example: Add a tooltip for the button
+    TooltipAdd $f.bCount "Press this button to increment the counter."
+
+    # entry box
+    eval {entry $f.eCount -width 5 -textvariable SessionLog(count) } $Gui(WEA)
+    
+    pack $f.bCount $f.eCount -side left -padx $Gui(pad) -pady $Gui(pad)
+    
     #-------------------------------------------
     # Log frame
     #-------------------------------------------
@@ -352,7 +373,7 @@ proc SessionLogShowLog {} {
     foreach m $Module(idList) {
 	if {[info exists Module($m,procSessionLog)] == 1} {
 	    puts "LOG: $m"
-	    $Module($m,procSessionLog)
+	    puts [$Module($m,procSessionLog)]
 	}
     }
 }
@@ -364,7 +385,7 @@ proc SessionLogShowLog {} {
 # .END
 #-------------------------------------------------------------------------------
 proc SessionLogWriteLog {} {
-    global Module
+    global Module SessionLog
 
     # append everything modules decided to record.
     set out [open $SessionLog(fileName) a]
@@ -378,15 +399,20 @@ proc SessionLogWriteLog {} {
     # Lauren fix
     # set date
     set date "00/00/00 at 17 pm!!!"
-    puts $out $data
+    puts $out $date
 
-    foreach module $Module(idList) {
-	if {[info exists $Module(procSessionLog)]} {
-	    set info [$Module(procSessionLog)]
-	    # dump to file
+
+    foreach m $Module(idList) {
+	if {[info exists Module($m,procSessionLog)] == 1} {
+	    puts "LOGGING: $m"
+	    set info [$Module($m,procSessionLog)]
+	    puts $out "Module $m:"
 	    puts $out $info
 	}
     }
+
+    close $out
+    
 }
 
 #-------------------------------------------------------------------------------
@@ -402,6 +428,20 @@ proc SessionLogReadLog {} {
     set in [open $SessionLog(fileName)]
     $SessionLog(textBox) insert end [read $in]
     close $in
+}
+
+proc SessionLogLog {} {
+    global SessionLog
+
+    # log something from this module
+    return $SessionLog(count)
+}
+
+proc SessionLogCount {} {
+    global SessionLog
+    
+    incr SessionLog(count)
+    $SessionLog(lStart) config -text "You clicked the button $SessionLog(count) times"
 }
 
 #-------------------------------------------------------------------------------
@@ -440,3 +480,4 @@ proc SessionLogInitRandomFortune {} {
 }
 
 }
+
