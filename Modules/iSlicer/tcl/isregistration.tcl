@@ -63,6 +63,8 @@ if { [itcl::find class isregistration] == "" } {
         # inherited or composed as part of other widgets
         # or become part of the option database
         #
+        
+        
         itk_option define -target target Target {}
         itk_option define -source source Source {}
         itk_option define -transform transform Transform {}
@@ -77,6 +79,7 @@ if { [itcl::find class isregistration] == "" } {
 
         itk_option define -translatescale translatescale Translatescale 64
         itk_option define -verbose verbose Verbose 1
+        itk_option define -update_procedure updateprocedure UpdateProcedure ""
 
         variable _name ""
     # is this the first time we are iterating
@@ -85,6 +88,9 @@ if { [itcl::find class isregistration] == "" } {
     # the m_time of matrix being altered
     # keep track so we can see if it was changed
         variable _mat_m_time  -1
+
+        ### procedure to call if there are problems.
+        variable _updateprocedure ""
 
         # widgets
         variable _controls ""
@@ -104,13 +110,13 @@ if { [itcl::find class isregistration] == "" } {
 
         method step {} {}
         method StringMatrix { mat4x4 } {}
-    method StringToMatrix { mat4x4 str} {}
+        method StringToMatrix { mat4x4 str} {}
         method GetSimilarityMatrix { s2 mat s1 } {}
         method getP1 {} {}
         method getP2 {} {}
         method update_slicer_mat {} {}
         method set_init_mat {} {}
-        method start {} {$_task on  }
+        method start {} {$_task on;}
         method stop  {} {$_task off }
     }
 }
@@ -147,7 +153,8 @@ itcl::body isregistration::constructor {args} {
 
     set cs [$_controls childsite]
     set _task $cs.task
-    istask $_task -taskcommand "$this step" -labeltext "Registration: " -taskdelay 100
+    istask $_task -taskcommand "$this step" -labeltext "Registration: " \
+      -taskdelay 100
     pack $_task
 
     set _resmenu $cs.resmenu
@@ -324,6 +331,8 @@ itcl::configbody isregistration::resolution {
 itcl::body isregistration::step {} {
     global Matrix
 
+    ## update any parameters
+    $itk_option(-update_procedure);
 
 #     puts "0 [Volume(0,vol) GetOutput]"
 #     puts "1 [Volume(1,vol) GetOutput]"
@@ -521,6 +530,7 @@ itcl::body isregistration::update_slicer_mat {} {
 # 0.0507421 0.0316625 0.99821 -4 
 # 0 0 0 1 
 
+
     puts "Starting slicer updated matrix"
     puts "The mat"
     puts [$this StringMatrix $mat]
@@ -528,6 +538,7 @@ itcl::body isregistration::update_slicer_mat {} {
     puts [$this StringMatrix [$this getP1]]
     puts "P2"
     puts [$this StringMatrix [$this getP2]]
+
 
     set p2mat [$this getP2]
     $p2mat Invert
