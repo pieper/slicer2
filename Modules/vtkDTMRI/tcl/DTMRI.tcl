@@ -130,10 +130,15 @@ proc DTMRIInit {} {
     # Load tensor registration module.
     source "$env(SLICER_HOME)/Modules/vtkDTMRI/tcl/DTMRITensorRegistration.tcl"
     DTMRIRegInit
-    
+
     #Load ODF
     source "$env(SLICER_HOME)/Modules/vtkDTMRI/tcl/DTMRIODF.tcl"
     DTMRIODFInit
+
+    # Load tract clustering module
+    source "$env(SLICER_HOME)/Modules/vtkDTMRI/tcl/DTMRITractCluster.tcl"
+    DTMRITractClusterInit
+    
      
     # Module Summary Info
     #------------------------------------
@@ -143,7 +148,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.60 $} {$Date: 2005/03/02 00:20:02 $}]
+                  {$Revision: 1.61 $} {$Date: 2005/03/03 19:22:34 $}]
 
     # Define Tabs
     #------------------------------------
@@ -151,8 +156,9 @@ proc DTMRIInit {} {
     set Module($m,row1Name) "{Help} {Input} {Convert} {Disp} {ROI}"
     set Module($m,row1,tab) Input
     # Use these lines to add a second row of tabs
-    set Module($m,row2List) "Scalars Advanced Regist Save ODF"
-    set Module($m,row2Name) "{Scalars} {Advanced} {Regist} {Save} {ODF}"
+    set Module($m,row2List) "Scalars Advanced Regist TC Save ODF"
+    set Module($m,row2Name) "{Scalars} {Adv} {Reg} {TC} {Save} {ODF}"
+
     set Module($m,row2,tab) Scalars
     
 
@@ -485,6 +491,8 @@ proc DTMRIInit {} {
     #set DTMRI(stream,MaxCurvature) 1.3
     set DTMRI(stream,MaxCurvature) 1.15
     set DTMRI(stream,MinFractionalAnisotropy) 0.07
+
+    set DTMRI(activeStreamlineID) ""
 
     #------------------------------------
     # Variables for auto streamline display
@@ -2447,6 +2455,12 @@ especially Diffusion DTMRI MRI.
 
      DTMRIBuildRegistFrame
 
+     #-------------------------------------------
+     # Cluster frame
+     #-------------------------------------------
+
+     DTMRITractClusterBuildClusterFrame
+
 
 ######################################################################################
 ######################################################################################
@@ -3428,10 +3442,14 @@ proc DTMRICreateBindings {} {
     EvDeclareEventHandler DTMRI3DStreamlineEvents <KeyPress-s> \
     { if { [SelectPick DTMRI(vtk,picker) %W %x %y] != 0 } \
           { eval DTMRISelectStartHyperStreamline $Select(xyz);Render3D } }
-
+    # this deletes a stream when the d key is hit
     EvDeclareEventHandler DTMRI3DStreamlineEvents <KeyPress-d> \
     { if { [SelectPick DTMRI(vtk,picker) %W %x %y] != 0 } \
           { eval DTMRISelectRemoveHyperStreamline $Select(xyz);Render3D } }
+    # this chooses a streamline when c is hit
+    EvDeclareEventHandler DTMRI3DStreamlineEvents <KeyPress-c> \
+    { if { [SelectPick DTMRI(vtk,picker) %W %x %y] != 0 } \
+          { eval DTMRISelectChooseHyperStreamline $Select(xyz);Render3D } }
 
     # This contains all the regular events from tkInteractor.tcl, 
     # which will happen after ours.  For some reason we don't need 
@@ -3878,6 +3896,20 @@ proc DTMRISelectRemoveHyperStreamline {x y z} {
     set actor [DTMRI(vtk,picker) GetActor]
 
     DTMRI(vtk,streamlineControl) DeleteStreamline $actor
+}
+
+
+proc DTMRISelectChooseHyperStreamline {x y z} {
+    global DTMRI
+    global Select
+
+    puts "Select Picker  (x,y,z):  $x $y $z"
+
+    # see which actor was picked
+    set actor [DTMRI(vtk,picker) GetActor]
+
+    set DTMRI(activeStreamlineID) \
+        [DTMRI(vtk,streamlineControl) GetStreamlineIndexFromActor $actor]
 }
 
 #-------------------------------------------------------------------------------
