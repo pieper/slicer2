@@ -41,7 +41,7 @@ public:
   // Query routines
   double *GetElements() {return this->Element;};
   double GetElement(int y);
-//void PrintSelf();
+  void PrintSelf();
 
   // Assignment routines
   void Copy(vtkVector3 *v);
