@@ -98,6 +98,10 @@ public:
   vtkSetMacro(RunTime, int);
   vtkGetMacro(RunTime, int);
 
+  // Should be protected, but public for debugging
+  void Reset();
+  int Initialize();
+
 protected:
   // Constructor/Destructor
   vtkImageMIReg();
@@ -132,8 +136,6 @@ protected:
   int UpdateIterations;
 
   // Pipeline
-  void Reset();
-  int Initialize();
   void Execute();
   void Cleanup();
 
