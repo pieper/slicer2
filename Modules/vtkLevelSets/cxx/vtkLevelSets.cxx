@@ -1934,7 +1934,6 @@ void vtkLevelSets::Evolve2D()
     balloonterm = balloon_coeff*((float*)balloon_image->GetScalarPointer())[p];
       else 
     balloonterm = balloon_coeff* this->ExpansionMap(im[p]);
-      }
     }
 
     if (balloonterm>0) {
@@ -2528,7 +2527,6 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
     balloonterm = balloon_coeff*((float*)balloon_image->GetScalarPointer())[p];
       else 
     balloonterm = balloon_coeff* this->ExpansionMap(im[p]);
-      }
     }
 
     // bug fixed, replaced balloon_coeff by balloonterm:
@@ -2690,30 +2688,14 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
         // Scalar product
         norm_vel = sqrt(Vx*Vx+Vy*Vy+Vz*Vz);
         if (norm_vel>1E-2) {
+          vel = 0;
           // Always expansion (erosion in our case) ...
-          Gx = 0;
-          if (D_x>=0) Gx = D_x;
-          if ((Dx<0)&&(-Dx>Gx)) Gx = Dx;
-          Gy = 0;
-          if (D_y>=0) Gy = D_y;
-          if ((Dy<0)&&(-Dy>Gy)) Gy = Dy;
-          Gz = 0;
-          if (D_z>=0) Gz = D_z;
-          if ((Dz<0)&&(-Dz>Gz)) Gz = Dz;
-          Gnorm = sqrt(Gx*Gx+Gy*Gy+Gz*Gz);
+      if (Vx>0) vel += Vx*D_x;  else   vel += Vx*Dx;
+      if (Vy>0) vel += Vy*D_y;  else   vel += Vy*Dy;
+      if (Vz>0) vel += Vz*D_z;  else   vel += Vz*Dz;
 
-          if (Gnorm>1E-2)
-            sp = (Vx*Gx+Vy*Gy+Vz*Gz)/Gnorm/norm_vel;
-          else
-            sp = 0;
+          if (vel<0) vel=0;
 
-          sp = fabs(sp);
-          vel = Gnorm*sp*(1-exp(-1*(norm_vel*norm_vel)/100/100));
-
-          if (!((vel>-100)&&(vel<100))) {
-            fprintf(stderr,"(%d,%d,%d); vel=%f; sp=%f; G=(%f,%f,%f) \n",
-                i,j,k,vel,sp,Gx,Gy,Gz);
-          }
           vel *= coeff_velocity;
         }
         else
