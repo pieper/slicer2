@@ -296,6 +296,9 @@ proc MainInit {} {
 	set Module(procGUI)  ""
 	set Module(procVTK)  ""
 	set Module(procMRML) ""
+        set m Main
+        lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.14 $} {$Date: 2000/02/07 03:35:55 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -441,6 +444,8 @@ proc MainBuildGUI {} {
 		"MainMenu Help Documentation"
 	$Gui(mHelp) add command -label "Copyright..." -command \
 		"MainMenu Help Copyright"
+	$Gui(mHelp) add command -label "Version Info..." -command \
+		"MainMenu Help Version"
 	
 	#-------------------------------------------
 	# Main->Module Frame
@@ -997,7 +1002,7 @@ proc MainEndProgress {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMenu {menu cmd} {
-    global Gui
+    global Gui Module
 
     set x 50
     set y 50
@@ -1062,6 +1067,10 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS."
 For the latest documentation, visit:
 
 http://www.slicer.org"
+		}
+		"Version" {
+		    set msg [FormatCVSInfo $Module(versions)]
+		    MsgPopup Version $x $y $msg {Module Version Info} $Gui(VIF)
 		}
 	    }
 	}
@@ -1167,3 +1176,27 @@ proc Cross {aArray bArray cArray} {
 	set a(z) [expr $b(x)*$c(y) - $c(x)*$b(y)]
 }
 
+# Remove $ and spaces from CVS version info
+proc ParseCVSInfo {module args} {
+    set l $module 
+    foreach a $args {
+	lappend l [string trim $a {$ \t}]
+    }
+    return $l
+}
+
+proc FormatCVSInfo {versions} {
+    set s [format "%-20s%-20s%-20s\n" "Module Name" "Revision" "Date"]
+    for {set i 0} {$i < 60} {incr i} {
+	set s ${s}_
+    }
+    set s "${s}\n"
+    foreach v $versions {
+	set s [format "%s%-20s" $s "[lindex $v 0]:"]
+	foreach item [lrange $v 1 end] {
+	    set s [format "%s%-20s" $s [lrange $item 1 end]]
+	}
+	set s "${s}\n"
+    }
+    return $s
+}

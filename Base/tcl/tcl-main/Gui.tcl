@@ -225,9 +225,8 @@ proc GuiInit {} {
 		-activebackground $Gui(activeButton) -troughcolor $Gui(normalButton) \
 		-highlightthickness 0 -bd $Gui(borderWidth) -relief flat}
 
-
-
-
+	# Version Info Fixed-Width Font
+	set Gui(VIF) {Courier-12}
 
 }
 
@@ -297,8 +296,8 @@ proc MailWidget {f} {
 # .PROC MsgPopup
 # .END
 #-------------------------------------------------------------------------------
-proc MsgPopup {win x y msg {title ""}} {
-	YesNoPopup $win $x $y $msg "" "" left $title 
+proc MsgPopup {win x y msg {title ""} {font ""}} {
+	YesNoPopup $win $x $y $msg "" "" left $title $font
 }
 
 #-------------------------------------------------------------------------------
@@ -306,7 +305,7 @@ proc MsgPopup {win x y msg {title ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc YesNoPopup {win x y msg {yesCmd ""} {noCmd ""} \
-	{justify center} {title ""}} {
+	{justify center} {title ""} {font ""}} {
 	global Gui
 
 	set w .w$win
@@ -324,6 +323,10 @@ proc YesNoPopup {win x y msg {yesCmd ""} {noCmd ""} \
 	
 	set f $w.fMsg
 	set c {label $f.l -justify $justify -text "$msg" $Gui(WLA)}; eval [subst $c]
+	if {$font != ""} { 
+	    $f.l config -font $font
+	}
+
 	pack $f.l -padx 5 -pady 5 
 
 	set f $w.fBtns
