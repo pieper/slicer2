@@ -101,7 +101,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38 $} {$Date: 2003/06/02 23:27:52 $}]
+        {$Revision: 1.39 $} {$Date: 2003/06/06 19:32:53 $}]
     
     # Initialize module-level variables
     
@@ -167,11 +167,13 @@ proc FiducialsDisplayDescriptionActive {} {
     if { $listExists=="" } { return }
 
     if {[lsearch $Fiducials($Fiducials(activeListID),selectedPointIdList) $Fiducials(activePointID)] != -1} { 
-        set Fiducials(activeName) [Point($Fiducials(activePointID),node) GetName]
+        if { [info command Point($Fiducials(activePointID),node)] != "" } {
+            set Fiducials(activeName) [Point($Fiducials(activePointID),node) GetName]
 
-        foreach {x y z} [Point($Fiducials(activePointID),node) GetXYZ] { break }
-        set Fiducials(activeXYZ) [format "(%.2f, %.2f, %.2f)" $x $y $z]
-        set Fiducials(activeDescription) [Point($Fiducials(activePointID),node) GetDescription]
+            foreach {x y z} [Point($Fiducials(activePointID),node) GetXYZ] { break }
+            set Fiducials(activeXYZ) [format "(%.2f, %.2f, %.2f)" $x $y $z]
+            set Fiducials(activeDescription) [Point($Fiducials(activePointID),node) GetDescription]
+        }
     }
 }
 
@@ -214,6 +216,7 @@ proc FiducialsEnter {} {
 proc FiducialsExit {} {
     global Events
     
+    FiducialsInteractActiveEnd
     Render3D
 }
 
@@ -719,7 +722,7 @@ proc FiducialsVTKUpdatePoints {fid symbolSize textSize} {
             if {[lsearch $Fiducials($fid,oldSelectedPointIdList) $pid] != -1} { 
 
                 set Fiducials(activeListID)  $fid
-                set Fiducials(activePointID) $pid
+                #set Fiducials(activePointID) $pid
 
 
                 # color the point
@@ -866,8 +869,6 @@ proc FiducialsUpdateMRML {} {
             set Fiducials($fid,textScale) $textSize
             set visibility [$item GetVisibility]
             set Fiducials($fid,visibility) $visibility
-
-    puts "$name $textSize $symbolSize"
 
             FiducialsVTKCreateFiducialsList $fid $type $symbolSize $textSize $visibility
         }
@@ -1730,6 +1731,9 @@ proc FiducialsSelectionFromScroll {menu scroll focusOnActiveFiducial} {
             RenderAll
         }
 
+        # turn off editing in case we had been editing the previously selected fiducial
+        FiducialsInteractActiveEnd
+
     }
 }
 
@@ -1751,8 +1755,8 @@ proc FiducialsUpdateSelectionForActor {fid} {
         # if the point is selected
         if {[lsearch $Fiducials($fid,selectedPointIdList) $pid] != -1} { 
         
-    set Fiducials(activeListID)  $fid
-    set Fiducials(activePointID) $pid
+            set Fiducials(activeListID)  $fid
+            set Fiducials(activePointID) $pid
 
 
             # color the point to show it is selected
@@ -1939,11 +1943,13 @@ proc FiducialsAddActiveListFrame {frame scrollHeight scrollWidth {defaultNames "
     
     eval {label $f.xyzLabel -textvariable Fiducials(activeXYZ) } $Gui(WLA) 
 
+    eval {button $f.xyzEditButton -text "Edit..." -command FiducialsInteractActiveStart} $Gui(WBA) 
+
     eval {entry $f.descriptionEntry -width 25 -textvariable Fiducials(activeDescription) } $Gui(WEA)
     bind $f.descriptionEntry <Return> {FiducialsDescriptionActiveUpdated}
 
     lappend Fiducials(scrollActiveList) $scroll
-    pack $f.list $f.nameEntry $f.xyzLabel $f.descriptionEntry -side top
+    pack $f.list $f.nameEntry $f.xyzLabel $f.xyzEditButton $f.descriptionEntry -side top
 
     # if there any default names specified, add them to the list
     foreach d $defaultNames {
@@ -1951,8 +1957,123 @@ proc FiducialsAddActiveListFrame {frame scrollHeight scrollWidth {defaultNames "
             -command "FiducialsSetActiveList $d $frame.fmenu.mbActive $scroll"
         lappend Fiducials(defaultNames) $d
     }
-
 } 
+
+#-------------------------------------------------------------------------------
+# .PROC FiducialsInteractActiveCB
+#  Handle interaction events from the PointWidget
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsInteractActiveCB {} {
+    global Fiducials
+
+
+    if { $Fiducials(activePointID) == "None" } {
+        return
+    }
+
+    # special flag to keep slicer view controls from activating - TODO: generalize
+    set ::FiducialEventHandled 1
+
+    # turn off rendering until all updates and callbacks are done
+    set $::View(render_on) 0
+
+    set xyz [__fid_pw GetPosition]
+
+    # update fiducial
+    eval Point($Fiducials(activePointID),node) SetXYZ $xyz
+    FiducialsUpdateMRML
+
+    # update slice location
+    for {set slice 0} {$slice < 3} {incr slice} {
+        switch [$::Interactor(activeSlicer) GetOrientString $slice] {
+            "Axial" { MainSlicesSetOffset $slice [lindex $xyz 2]}
+            "Sagittal" { MainSlicesSetOffset $slice [lindex $xyz 0]}
+            "Coronal" { MainSlicesSetOffset $slice [lindex $xyz 1]}
+        }
+        RenderSlice $slice
+    }
+
+    # move callback in case any module wants to know that Fiducials have been updated 
+    foreach m $::Module(idList) {
+        if {[info exists ::Module($m,fiducialsMoveCallback)] == 1} {
+            if {$::Module(verbose) == 1} {puts "Fiducials Move Callback: $m"}
+            $::Module($m,fiducialsMoveCallback)  
+        }
+    }
+
+    set $::View(render_on) 1
+    Render3D
+}
+
+#-------------------------------------------------------------------------------
+# .PROC FiducialsInteractActiveStart
+#  Use a vtkPointWidget to set the fiducial location
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsInteractActiveStart {} {
+    global Fiducials
+
+    if { $Fiducials(activePointID) == "None" } {
+        return
+    }
+
+    #
+    # reset the interactors first then create the pipeline
+    #
+    FiducialsInteractActiveEnd
+
+    if { [info commands __fid_iren] == "" } {
+        # TODO - it looks like this cannot be created and detroyed or vtk will crash
+        vtkRenderWindowInteractor __fid_iren
+        __fid_iren SetRenderWindow [.tViewer.fViewWin GetRenderWindow]
+    }
+
+    vtkInteractorStyle __fid_istyle 
+    __fid_iren SetInteractorStyle __fid_istyle
+
+    vtkOutlineSource __fid_source
+    set halffov [expr $::View(fov) / 2.0]
+    __fid_source SetBounds -$halffov $halffov -$halffov $halffov -$halffov $halffov 
+
+    vtkPointWidget __fid_pw
+    __fid_pw SetInteractor __fid_iren
+    __fid_pw SetInput [__fid_source GetOutput]
+    __fid_pw PlaceWidget
+    __fid_pw AddObserver InteractionEvent FiducialsInteractActiveCB
+    eval __fid_pw SetPosition [Point($Fiducials(activePointID),node) GetXYZ]
+    __fid_pw On
+
+    Render3D
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC FiducialsInteractActiveEnd
+#  Kill out the current interactive session
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsInteractActiveEnd {} {
+    global Fiducials
+
+    # need to reset these inputs or something in the 
+    # widget pipeline crashes on delete
+    catch {__fid_iren SetInteractorStyle ""}
+    # catch {__fid_iren SetRenderWindow ""} ;# TODO - see bug above
+    catch {__fid_pw Off}
+    catch {__fid_pw SetInteractor ""}
+    catch {__fid_pw SetInput ""}
+
+    # catch "__fid_iren Delete" ;# TODO - see bug above
+    catch "__fid_istyle Delete"
+    catch "__fid_source Delete"
+    catch "__fid_pw Delete"
+
+    Render3D
+}
 
 
 
