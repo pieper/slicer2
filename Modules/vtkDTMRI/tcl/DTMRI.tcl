@@ -77,6 +77,7 @@
 #   ConvertVolumeToTensors
 #   DTMRIWriteStructuredPoints
 #   DTMRISaveStreamlinesAsIJKPoints subdir name verbose
+#   DTMRISaveStreamlinesAsPolyLines subdir name verbose
 #   DTMRISaveStreamlinesAsModel
 #   DTMRIGetPointsFromSegmentationInIJKofDTMRIVolume verbose
 #   DTMRIGetScaledIjkCoordinatesFromWorldCoordinates x y z
@@ -104,7 +105,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.10 $} {$Date: 2004/05/13 21:58:11 $}]
+            {$Revision: 1.11 $} {$Date: 2004/05/17 20:02:05 $}]
 
     # Define Tabs
     #------------------------------------
@@ -1089,7 +1090,7 @@ especially Diffusion DTMRI MRI.
     # Display->VisMethods->VisParams->SaveTracts->Entries frame
     #-------------------------------------------
     set f $fParams.fSaveTracts.fEntries
-    foreach frame "Info Apply" {
+    foreach frame "Info1 Apply1 Info2 Apply2" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
     }
@@ -1097,18 +1098,34 @@ especially Diffusion DTMRI MRI.
     #-------------------------------------------
     # Display->VisMethods->VisParams->SaveTracts->Entries->Info frame
     #-------------------------------------------
-    set f $fParams.fSaveTracts.fEntries.fInfo
-    DevAddLabel $f.l "Save currently visible\ntracts as a model."
+    set f $fParams.fSaveTracts.fEntries.fInfo1
+    DevAddLabel $f.l "Save currently visible tracts as a model."
     pack $f.l -side top -padx $Gui(pad) -pady $Gui(pad)
 
     #-------------------------------------------
     # Display->VisMethods->VisParams->SaveTracts->Entries->Apply frame
     #-------------------------------------------
-    set f $fParams.fSaveTracts.fEntries.fApply
-    DevAddButton $f.bApply "Save tracts in model tracts.vtk" \
+    set f $fParams.fSaveTracts.fEntries.fApply1
+    DevAddButton $f.bApply "Save tracts in model file" \
         {puts "Saving streamlines"; DTMRISaveStreamlinesAsModel "" tracts}
     pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
     TooltipAdd  $f.bApply "Save visible tracts to vtk file.  Must be re-added to mrml tree."
+
+    #-------------------------------------------
+    # Display->VisMethods->VisParams->SaveTracts->Entries->Info frame
+    #-------------------------------------------
+    set f $fParams.fSaveTracts.fEntries.fInfo2
+    DevAddLabel $f.l "Save currently visible tracts as a polyline.\n Useful for further processing on tracts.\nONLY DEVELOPERS"
+    pack $f.l -side top -padx $Gui(pad) -pady $Gui(pad)
+
+    #-------------------------------------------
+    # Display->VisMethods->VisParams->SaveTracts->Entries->Apply frame
+    #-------------------------------------------
+    set f $fParams.fSaveTracts.fEntries.fApply2
+    DevAddButton $f.bApply "Save tracts in vtk file" \
+        {puts "Saving streamlines"; DTMRISaveStreamlinesAsPolyLines "" tracts}
+    pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
+    TooltipAdd  $f.bApply "Save visible tracts to vtk file as a set of polylines."
 
     #-------------------------------------------
     # Display->VisUpdate frame
@@ -4542,6 +4559,11 @@ proc DTMRIWriteStructuredPoints {filename} {
 
     set t $Tensor(activeID)
 
+    set filename [tk_getSaveFile -defaultextension ".vtk" -title "Save tensor as vtkstructurepoints"]
+    if { $filename == "" } {
+       return
+    }
+
     vtkStructuredPointsWriter writer
     writer SetInput [Tensor($t,data) GetOutput]
     writer SetFileName $filename
@@ -4605,6 +4627,106 @@ proc DTMRISaveStreamlinesAsIJKPoints {subdir name {verbose "1"}} {
     # let user know something happened
     if {$verbose == "1"} {
     set msg "Wrote streamlines as files, last file was $filename"
+    tk_messageBox -message $msg
+    }
+
+
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC DTMRISaveStreamlinesAsPolyLines
+# Save all points from the streamline paths as polyline in a vtkfile
+# .ARGS
+# path subdir subdirectory to save the models in
+# string name the filename prefix of each model
+# int verbose default is 1 
+# .END
+#-------------------------------------------------------------------------------
+proc DTMRISaveStreamlinesAsPolyLines {subdir name {verbose "1"}} {
+    global DTMRI
+
+    set thelist $DTMRI(vtk,streamline,idList)
+    set thePoints ""
+    set filename "NONE"
+    
+    set filename [tk_getSaveFile -defaultextension ".vtk" -title "Save Streamlines as polyline"]
+    if { $filename == "" } {
+       return
+    }
+    
+    
+    #Write streamlines to a vtkPolyData file with lines
+    
+    #1. Count total number of points
+    set numpts 0
+    foreach id $thelist {
+        set streamln streamln,$id
+        
+        foreach dir {0 1} {
+         set numpts [expr $numpts + [[DTMRI(vtk,$streamln) GetHyperStreamline$dir] GetNumberOfPoints]]
+        }
+    }
+    
+    #2. Fill point data and cell data
+    vtkPolyData p
+    vtkCellArray c
+    vtkPoints pt
+    
+    pt SetNumberOfPoints $numpts
+    
+    #global id for cell
+    set idcell 0
+    #global id for points
+    set idp 0
+    foreach id $thelist {
+       set streamln streamln,$id
+       
+       foreach dir {0 1} {
+         set cellnumpts [[DTMRI(vtk,$streamln) GetHyperStreamline$dir] GetNumberOfPoints]
+         c InsertNextCell $cellnumpts
+         #Get transformation matrix: IJK -> RAS
+         set matrix [DTMRI(vtk,$streamln,actor) GetUserMatrix]
+         
+         for {set i 0} {$i < $cellnumpts} {incr i} {
+           set ijkpoint [[DTMRI(vtk,$streamln) GetHyperStreamline$dir] GetPoint $i]
+           set raspoint [$matrix MultiplyPoint [lindex $ijkpoint 0] [lindex $ijkpoint 1] [lindex $ijkpoint 2] 1]
+           #If we want to save points in ijk
+           #eval "pt SetPoint $idp" [[DTMRI(vtk,$streamln) GetHyperStreamline$dir] GetPoint $i]
+           
+           #If we want to save points in ras
+           pt SetPoint $idp [lindex $raspoint 0] [lindex $raspoint 1] [lindex $raspoint 2]
+           
+           c InsertCellPoint $idp
+           incr idp
+         
+         }   
+        incr idcell
+       }
+   }
+   
+   #3. Build polydata
+   p SetLines c
+   p SetPoints pt
+   p Update
+   
+   
+   #4. Write PolyData
+   vtkPolyDataWriter w
+   w SetFileName [file join $subdir $filename]  
+   w SetInput p
+   w SetFileTypeToASCII
+   w Write 
+
+   #5. Delete Objects
+   w Delete
+   p Delete
+   c Delete
+   pt Delete
+
+    # let user know something happened
+    if {$verbose == "1"} {
+    set msg "Wrote streamlines as vtk files, last file was $filename"
     tk_messageBox -message $msg
     }
 
