@@ -26,9 +26,11 @@ PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 #include "vtkImageMeasureVoxels.h"
+#include "vtkImageAccumulateDiscrete.h"
 #include <math.h>
 #include <stdlib.h>
 #include "vtkObjectFactory.h"
+#include <iomanip>
 
 //------------------------------------------------------------------------------
 vtkImageMeasureVoxels* vtkImageMeasureVoxels::New()
@@ -77,17 +79,27 @@ static void vtkImageMeasureVoxelsExecute(vtkImageMeasureVoxels *self,
 {
   int idxR, idxY, idxZ;
   int maxY, maxZ;
-  int inIncX, inIncY, inIncZ;
-  int outIncX, outIncY, outIncZ;
+  int IncX, IncY, IncZ;
   int rowLength;
+  int extent[6];
+  int label;
   unsigned long count = 0;
   unsigned long target;
-  int outExt[6];
-  float origin[3];
+  float origin[3], dimension[3], voxelVolume, volume;
   ofstream file;
   char *filename;
 
-  // Open file
+  // set outData same as input (we only care about the histogram)
+  outData->CopyAndCastFrom(inData, inData->GetWholeExtent());
+
+  // compute the histogram.
+  vtkImageAccumulateDiscrete *accum = vtkImageAccumulateDiscrete::New();
+  accum->SetInput(inData);
+  accum->Update();
+  vtkImageData *histogram;
+  histogram = accum->GetOutput();
+
+  // Open file for writing volume measurements
   filename = self->GetFileName();
   if (filename==NULL)
     {
@@ -102,22 +114,28 @@ static void vtkImageMeasureVoxelsExecute(vtkImageMeasureVoxels *self,
     }  
 
   // find the region to loop over
-  outData->GetExtent(outExt);
-  rowLength = (outExt[1] - outExt[0]+1)*inData->GetNumberOfScalarComponents();
-  maxY = outExt[3] - outExt[2]; 
-  maxZ = outExt[5] - outExt[4];
+  histogram->GetExtent(extent);
+  rowLength = (extent[1] - extent[0]+1)*inData->GetNumberOfScalarComponents();
+  maxY = extent[3] - extent[2]; 
+  maxZ = extent[5] - extent[4];
   target = (unsigned long)((maxZ+1)*(maxY+1)/50.0);
   target++;
   
   // Get increments to march through data 
-  inData->GetContinuousIncrements(outExt, inIncX, inIncY, inIncZ);
-  outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
+  histogram->GetContinuousIncrements(extent, IncX, IncY, IncZ);
+  int* histPtr = (int *)histogram->GetScalarPointerForExtent(extent);
 
   // amount input histogram is shifted by
-  inData->GetOrigin(origin);
+  histogram->GetOrigin(origin);
   printf("origin: %f %f %f\n", origin[0], origin[1], origin[2]);
 
-  // Loop through ouput pixels
+  // Get voxel dimensions (in mm)
+  inData->GetSpacing(dimension);
+  // Convert to voxel volume (in mL)
+  voxelVolume = dimension[0]*dimension[1]*dimension[2]/1000;
+  printf("dimensions: %f %f %f, vol: %f \n", dimension[0], dimension[1], dimension[2], voxelVolume);
+
+  // Loop through histogram pixels (really histogram is 1D, only X matters.)
   for (idxZ = 0; idxZ <= maxZ; idxZ++)
     {
     for (idxY = 0; !self->AbortExecute && idxY <= maxY; idxY++)
@@ -130,21 +148,34 @@ static void vtkImageMeasureVoxelsExecute(vtkImageMeasureVoxels *self,
 	for (idxR = 0; idxR < rowLength; idxR++)
 	  {
 	    // Pixel operation	    
-	    if (*inPtr > 0)
+	    if (*histPtr > 0)
 	      {
-		//printf ("%f: %d\n", idxR+origin[0], *inPtr);
-		file << idxR+origin[0] << " : " << *inPtr << "\n";
+		label = idxR+(int)origin[0];
+		volume = *histPtr * voxelVolume;
+		//cout << setprecision(3);
+		// round to 3 decimal places
+		//volume = (floor(volume*1000 + 0.5))/1000;
+		char vol2[30];
+		// round to 3 decimal places
+		sprintf(vol2, "%.3f", volume);
+		cout << setw(5) << label;
+		cout << setiosflags(ios::right);
+		int width = 15 - (label>=10) - (label>=100);
+		cout << setw(15)  << vol2 << '\n';
+	
+		file << setw(5) << label;
+		file << setiosflags(ios::right);
+		//		int width = 15 - (label>=10) - (label>=100);
+		file << setw(15)  << vol2 << '\n';
+
+	
+		//		file << label << '\t' << volume << '\n';
 	      }
-	    // just copy the image to output.
-	    *outPtr = (T)(*inPtr);
-	    outPtr++;
-	    inPtr++;
+	    histPtr++;
 	  }
-	outPtr += outIncY;
-	inPtr += inIncY;
+	histPtr += IncY;
       }
-    outPtr += outIncZ;
-    inPtr += inIncZ;
+    histPtr += IncZ;
     }
 
   file.close();
@@ -168,29 +199,48 @@ void vtkImageMeasureVoxels::Execute(vtkImageData *inData,
   inPtr  = inData->GetScalarPointer();
   outPtr = (int *)outData->GetScalarPointer();
 
-  // this filter expects that input is type int.
-  if (inData->GetScalarType() != VTK_INT)
-  {
-    vtkErrorMacro(<< "Execute: input ScalarType " << outData->GetScalarType()
-		  << " must be int\n");
-    return;
-  }
-
-  // this filter expects that input is along x axis only
-  inData->GetExtent(extent);
-  if (extent[2] != extent[3] || extent[4] != extent[5])
-  {
-    vtkErrorMacro(<< "Execute: input must be 1D but extent was " 
-    << extent[0] << " " << extent[1] << " " << extent[2] << " " 
-    << extent[3] << " " << extent[4] << " " << extent[5] << ".\n ");
-    return;
-  }
   
   switch (inData->GetScalarType())
   {
+    case VTK_CHAR:
+      vtkImageMeasureVoxelsExecute(this, 
+			  inData, (char *)(inPtr), outData, outPtr);
+      break;
+    case VTK_UNSIGNED_CHAR:
+      vtkImageMeasureVoxelsExecute(this, 
+			  inData, (unsigned char *)(inPtr), outData, outPtr);
+      break;
+    case VTK_SHORT:
+      vtkImageMeasureVoxelsExecute(this, 
+			  inData, (short *)(inPtr), outData, outPtr);
+      break;
+    case VTK_UNSIGNED_SHORT:
+      vtkImageMeasureVoxelsExecute(this, 
+			  inData, (unsigned short *)(inPtr), outData, outPtr);
+      break;
     case VTK_INT:
       vtkImageMeasureVoxelsExecute(this, 
 			  inData, (int *)(inPtr), outData, outPtr);
+      break;
+    case VTK_UNSIGNED_INT:
+      vtkImageMeasureVoxelsExecute(this, 
+			  inData, (unsigned int *)(inPtr), outData, outPtr);
+      break;
+    case VTK_LONG:
+      vtkImageMeasureVoxelsExecute(this, 
+			  inData, (long *)(inPtr), outData, outPtr);
+      break;
+    case VTK_UNSIGNED_LONG:
+      vtkImageMeasureVoxelsExecute(this, 
+			  inData, (unsigned long *)(inPtr), outData, outPtr);
+      break;
+    case VTK_FLOAT:
+      vtkImageMeasureVoxelsExecute(this, 
+			  inData, (float *)(inPtr), outData, outPtr);
+      break;
+    case VTK_DOUBLE:
+      vtkImageMeasureVoxelsExecute(this, 
+			  inData, (double *)(inPtr), outData, outPtr);
       break;
     default:
       vtkErrorMacro(<< "Execute: Unsupported ScalarType");
