@@ -30,7 +30,7 @@
 #   MainSlicesInit
 #   MainSlicesBuildVTK
 #   MainSlicesBuildControlsForVolume
-#   MainSlicesBuildControls
+#   MainSlicesBuildControls s F
 #   MainSlicesUpdateMRML
 #   MainSlicesVolumeParam
 #   MainSlicesSetClipState
@@ -87,7 +87,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-		{$Revision: 1.20 $} {$Date: 2000/03/02 01:39:56 $}]
+		{$Revision: 1.21 $} {$Date: 2000/07/26 19:14:13 $}]
 
 	# Initialize Variables
 	set Slice(idList) "0 1 2"

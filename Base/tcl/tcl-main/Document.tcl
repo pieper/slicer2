@@ -29,6 +29,7 @@
 # PROCEDURES:  
 #   ReadInput
 #   HtmlHead
+#   BlueGrayLine
 #   HtmlFoot
 #   DocumentProc
 #   DocumentFile
@@ -86,6 +87,12 @@ proc HtmlHead {fid title {styleFile "../../style.css"} \
 [BlueGrayLine]"
 }
 
+#-------------------------------------------------------------------------------
+# .PROC BlueGrayLine
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc BlueGrayLine {} {
 	return "
 <!-------------------------- Blue/Gray line ------------------------------>
