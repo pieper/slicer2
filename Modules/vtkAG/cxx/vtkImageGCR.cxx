@@ -79,8 +79,8 @@ void vtkImageGCR::free_matrix(float** m,int nrl,int nrh,int ncl,int nch)
 #define SHFT(a,b,c,d) (a)=(b);(b)=(c);(c)=(d);
 
 float vtkImageGCR::brent(float ax,float bx,float cx,
-			 float (vtkImageGCR::*f)(float),
-			 float tol,float* xmin)
+             float (vtkImageGCR::*f)(float),
+             float tol,float* xmin)
 {
   int iter;
   float a,b,d=0,etemp,fu,fv,fw,fx,p,q,r,tol1,tol2,u,v,w,x,xm;
@@ -110,14 +110,14 @@ float vtkImageGCR::brent(float ax,float bx,float cx,
       etemp=e;
       e=d;
       if (fabs(p) >= fabs(0.5*q*etemp) || p <= q*(a-x) || p >= q*(b-x))
-	d=CGOLD*(e=(x >= xm ? a-x : b-x));
+    d=CGOLD*(e=(x >= xm ? a-x : b-x));
       else
-	{
-	d=p/q;
-	u=x+d;
-	if (u-a < tol2 || b-u < tol2)
-	  d=SIGN(tol1,xm-x);
-	}
+    {
+    d=p/q;
+    u=x+d;
+    if (u-a < tol2 || b-u < tol2)
+      d=SIGN(tol1,xm-x);
+    }
       }
     else
       {
@@ -135,17 +135,17 @@ float vtkImageGCR::brent(float ax,float bx,float cx,
       {
       if (u < x) a=u; else b=u;
       if (fu <= fw || w == x)
-	{
-	v=w;
-	w=u;
-	fv=fw;
-	fw=fu;
-	}
+    {
+    v=w;
+    w=u;
+    fv=fw;
+    fw=fu;
+    }
       else if (fu <= fv || v == x || v == w)
-	{
-	v=u;
-	fv=fu;
-	}
+    {
+    v=u;
+    fv=fu;
+    }
       }
     }
   vtkErrorMacro("Too many iterations in BRENT");
@@ -200,19 +200,19 @@ void vtkImageGCR::mnbrak(float* ax,float* bx,float* cx,float* fa,float* fb,float
       {
       fu=(this->*func)(u);
       if (fu < *fc)
-	{
-	*ax=(*bx);
-	*bx=u;
-	*fa=(*fb);
-	*fb=fu;
-	return;
-	}
+    {
+    *ax=(*bx);
+    *bx=u;
+    *fa=(*fb);
+    *fb=fu;
+    return;
+    }
       else if (fu > *fb)
-	{
-	*cx=u;
-	*fc=fu;
-	return;
-	}
+    {
+    *cx=u;
+    *fc=fu;
+    return;
+    }
       u=(*cx)+GOLD*(*cx-*bx);
       fu=(this->*func)(u);
       }
@@ -220,10 +220,10 @@ void vtkImageGCR::mnbrak(float* ax,float* bx,float* cx,float* fa,float* fb,float
       {
       fu=(this->*func)(u);
       if (fu < *fc)
-	{
-	SHFT(*bx,*cx,u,*cx+GOLD*(*cx-*bx))
-	  SHFT(*fb,*fc,fu,(this->*func)(u))
-	  }
+    {
+    SHFT(*bx,*cx,u,*cx+GOLD*(*cx-*bx))
+      SHFT(*fb,*fc,fu,(this->*func)(u))
+      }
       }
     else if ((u-ulim)*(ulim-*cx) >= 0.0)
       {
@@ -250,7 +250,7 @@ void vtkImageGCR::mnbrak(float* ax,float* bx,float* cx,float* fa,float* fb,float
 #define TOL 10e-2
 
 void vtkImageGCR::linmin(float* p,float* xi,int n,float* fret,
-			 float (vtkImageGCR::*func)(float*))
+             float (vtkImageGCR::*func)(float*))
 {
   int j;
   float xx,xmin,fx,fb,fa,bx,ax;
@@ -285,8 +285,8 @@ void vtkImageGCR::linmin(float* p,float* xi,int n,float* fret,
 static float sqrarg;
 #define SQR(a) (sqrarg=(a),sqrarg*sqrarg)
 void vtkImageGCR::powell(float* p,float** xi,int n,
-			 float ftol,int* iter,
-			 float* fret,float (vtkImageGCR::*func)(float*))
+             float ftol,int* iter,
+             float* fret,float (vtkImageGCR::*func)(float*))
 {
   int i,ibig,j;
   float t,fptt,fp,del;
@@ -308,10 +308,10 @@ void vtkImageGCR::powell(float* p,float** xi,int n,
       fptt=(*fret);
       linmin(p,xit,n,fret,func);
       if (fabs(fptt-(*fret)) > del)
-	{
-	del=fabs(fptt-(*fret));
-	ibig=i;
-	}
+    {
+    del=fabs(fptt-(*fret));
+    ibig=i;
+    }
       }
     if (2.0*fabs(fp-(*fret)) <= ftol*(fabs(fp)+fabs(*fret)))
       {
@@ -336,10 +336,10 @@ void vtkImageGCR::powell(float* p,float** xi,int n,
       {
       t=2.0*(fp-2.0*(*fret)+fptt)*SQR(fp-(*fret)-del)-del*SQR(fp-fptt);
       if (t < 0.0)
-	{
-	linmin(p,xit,n,fret,func);
-	for (j=1;j<=n;j++) xi[j][ibig]=xit[j];
-	}
+    {
+    linmin(p,xit,n,fret,func);
+    for (j=1;j<=n;j++) xi[j][ibig]=xit[j];
+    }
       }
     }
 }
@@ -410,11 +410,11 @@ vtkImageGCR::~vtkImageGCR()
 }
 
 void vtkImageGCR::ComputeWithTrilinearInterpolation(float* point,
-						    unsigned char* tptr,
-						    unsigned char* sptr,
-						    int* ext,
-						    int* inc,
-						    float jh[256][256])
+                            unsigned char* tptr,
+                            unsigned char* sptr,
+                            int* ext,
+                            int* inc,
+                            float jh[256][256])
 {
   unsigned char q;
   if(this->TrilinearInterpolation(point,sptr,ext,inc,q))
@@ -424,17 +424,17 @@ void vtkImageGCR::ComputeWithTrilinearInterpolation(float* point,
 } 
 
 void vtkImageGCR::ComputeWithPVInterpolation(float* point,
-					     unsigned char* tptr,
-					     unsigned char* sptr,
-					     int* ext,
-					     int* inc,
-					     float jh[256][256])
+                         unsigned char* tptr,
+                         unsigned char* sptr,
+                         int* ext,
+                         int* inc,
+                         float jh[256][256])
 {
   unsigned char p[8];
   float w[8];
   if(this->TrilinearWeights(point,sptr,ext,inc,
-			    (unsigned char (*)[2][2])p,
-			    (float (*)[2][2])w))
+                (unsigned char (*)[2][2])p,
+                (float (*)[2][2])w))
     {
     unsigned char v = *tptr;
     unsigned char pp;
@@ -454,12 +454,12 @@ float vtkImageGCR::ComputeL1(float jh[256][256])
   int i,j;
 
   for(//int 
-	  i=0;i<256;++i)
+      i=0;i<256;++i)
     {
     med[i]=0;
     float n=0;
     for(//int 
-		j=0;j<256;++j)
+        j=0;j<256;++j)
       {
       n+=jh[i][j];
       }
@@ -472,30 +472,30 @@ float vtkImageGCR::ComputeL1(float jh[256][256])
 //       avg=true;
 //       }
 // Modified By Liu for(int j=0;j<256;++j)
-	for(j=0;j<256;++j)
+    for(j=0;j<256;++j)
       {
       n2+=jh[i][j];
       if(n2>=mid)
-	{
-// 	// annoying case when median is between two classes.
-// 	// compute average value of the two classes.
-// 	if(avg && n2=mid)
-// 	  {
-// 	  for(int k=j;k<256;++k)
-// 	    {
-// 	    if(jh[i][k]!=0)
-// 	      {
-// 	      med[i]=(j+k)/2.0;
-// 	      break;
-// 	      }
-// 	    }
-// 	  }
-// 	else
-// 	  {
-	med[i]=j;
-	//	  }
-	break;
-	}
+    {
+//     // annoying case when median is between two classes.
+//     // compute average value of the two classes.
+//     if(avg && n2=mid)
+//       {
+//       for(int k=j;k<256;++k)
+//         {
+//         if(jh[i][k]!=0)
+//           {
+//           med[i]=(j+k)/2.0;
+//           break;
+//           }
+//         }
+//       }
+//     else
+//       {
+    med[i]=j;
+    //      }
+    break;
+    }
       }
     }
   float medi=0;
@@ -507,10 +507,10 @@ float vtkImageGCR::ComputeL1(float jh[256][256])
 //     avg=true;
 //     }
   for(//int 
-	  j=0;j<256;++j)
+      j=0;j<256;++j)
     {
     for(//int 
-		i=0;i<256;++i)
+        i=0;i<256;++i)
       {
       n2+=jh[i][j];
       }
@@ -529,7 +529,7 @@ float vtkImageGCR::ComputeL1(float jh[256][256])
   for( i=0;i<256;++i)
       {
     for(//int 
-		j=0;j<256;++j)
+        j=0;j<256;++j)
       {
       S += jh[i][j] * abs(j-med[i]);
       S0 += jh[i][j] * abs(j-medi);
@@ -566,13 +566,13 @@ float vtkImageGCR::ComputeL2(float jh[256][256])
   int i,j;
   
   for(//int 
-	  i=0;i<256;++i)
+      i=0;i<256;++i)
     {
     stats[i][0]=0;
     stats[i][1]=0;
     stats[i][2]=0;
     for(//int 
-		j=0;j<256;++j)
+        j=0;j<256;++j)
       {
       double v=jh[i][j];
       double vv=v*j;
@@ -731,13 +731,13 @@ float vtkImageGCR::ComputeMI(float jh[256][256])
 float vtkImageGCR::Compute()
 {
   vtkDebugMacro(<< "Target: " << this->WorkTarget << " Source: "
-		<< this->WorkSource << " Mask: " << this->WorkMask);
+        << this->WorkSource << " Mask: " << this->WorkMask);
 
   int* tExt = this->WorkTarget->GetExtent();
   int* sExt = this->WorkSource->GetExtent();
   vtkDebugMacro(<< "Extent: " << tExt[0] << " " << tExt[1] << " "
-		<< tExt[2] << " " << tExt[3] << " "
-		<< tExt[4] << " " << tExt[5]);
+        << tExt[2] << " " << tExt[3] << " "
+        << tExt[4] << " " << tExt[5]);
   
   float* tOrigin = this->WorkTarget->GetOrigin();
   float* tSpacing = this->WorkTarget->GetSpacing();
@@ -783,30 +783,30 @@ float vtkImageGCR::Compute()
     for(int y=tExt[2];y<=tExt[3];++y)
       {
       for(int x=tExt[0];x<=tExt[1];++x)
-	{
-	if(!mptr || *mptr)
-	  {
-	  point[0] = x*tSpacing[0] + tOrigin[0];
-	  point[1] = y*tSpacing[1] + tOrigin[1];
-	  point[2] = z*tSpacing[2] + tOrigin[2];
-	  trans->InternalTransformPoint(point,point);
-	  point[0] = (point[0] - sOrigin[0])*sInvSpacing[0];
-	  point[1] = (point[1] - sOrigin[1])*sInvSpacing[1];
-	  point[2] = (point[2] - sOrigin[2])*sInvSpacing[2];
+    {
+    if(!mptr || *mptr)
+      {
+      point[0] = x*tSpacing[0] + tOrigin[0];
+      point[1] = y*tSpacing[1] + tOrigin[1];
+      point[2] = z*tSpacing[2] + tOrigin[2];
+      trans->InternalTransformPoint(point,point);
+      point[0] = (point[0] - sOrigin[0])*sInvSpacing[0];
+      point[1] = (point[1] - sOrigin[1])*sInvSpacing[1];
+      point[2] = (point[2] - sOrigin[2])*sInvSpacing[2];
 
-	  (this->*InterpolationFunction)(point,tptr,sptr,sExt,sInc,jh);
-	  }
-	++tptr;
-	if(mptr)
-	  {
-	  ++mptr;
-	  }
-	}
+      (this->*InterpolationFunction)(point,tptr,sptr,sExt,sInc,jh);
+      }
+    ++tptr;
+    if(mptr)
+      {
+      ++mptr;
+      }
+    }
       tptr += tincY;
       if(mptr)
-	{
-	mptr += mincY;
-	}
+    {
+    mptr += mincY;
+    }
       }
     tptr += tincZ;
     if(mptr)
@@ -848,14 +848,14 @@ void vtkImageGCR::SetInterpolation(int i)
     switch(this->Interpolation)
       {
       case 0:
-	this->InterpolationFunction=&vtkImageGCR::ComputeWithTrilinearInterpolation;
-	break;
+    this->InterpolationFunction=&vtkImageGCR::ComputeWithTrilinearInterpolation;
+    break;
       case 1:
-	this->InterpolationFunction=&vtkImageGCR::ComputeWithPVInterpolation;
-	break;
+    this->InterpolationFunction=&vtkImageGCR::ComputeWithPVInterpolation;
+    break;
       default:
-	vtkErrorMacro("SetInterpolation: unknown type of interprolation: " << i);
-	return;
+    vtkErrorMacro("SetInterpolation: unknown type of interprolation: " << i);
+    return;
       }
     this->Modified();
     }
@@ -932,11 +932,16 @@ void vtkImageGCR::InternalUpdate()
       xi[i][j]=xi[j][i]=0;
       }
     }
-//Modified by Liu.  For PC, maybe it should  make old_options wiht type long 
-  //ios::fmtflags old_options=cout.flags(ios::showpos|ios::fixed|
-//				       ios::showpoint|ios::internal);
- ios_base::fmtflags old_options=cout.flags(ios::showpos|ios::fixed|
-				       ios::showpoint|ios::internal);
+
+#ifdef _WIN32
+  ios_base::fmtflags old_options=cout.flags(ios::showpos|ios::fixed|
+                       ios::showpoint|ios::internal);
+#else                        
+  //Modified by Liu.  For PC, maybe it should  make old_options wiht type long 
+  ios::fmtflags old_options=cout.flags(ios::showpos|ios::fixed|
+                       ios::showpoint|ios::internal);
+#endif
+
 
   // first, let deal with the special cases
   if(this->GetTransformDomain()==-1)
@@ -952,7 +957,7 @@ void vtkImageGCR::InternalUpdate()
       cout << "Translation registration" << endl;
       }
     this->powell(p,xi,3,ftol,&iter,&fret,
-		 &vtkImageGCR::MinimizeWithTranslationTransform);
+         &vtkImageGCR::MinimizeWithTranslationTransform);
     this->Matrix->DeepCopy(this->WorkTransform->GetMatrix());
     if(this->Verbose)
       {
@@ -974,7 +979,7 @@ void vtkImageGCR::InternalUpdate()
       cout << "Rigid registration" << endl;
       }
     this->powell(p,xi,6,ftol,&iter,&fret,
-		 &vtkImageGCR::MinimizeWithRigidTransform);
+         &vtkImageGCR::MinimizeWithRigidTransform);
     if(this->GetTransformDomain()==0)
       {
       this->Matrix->DeepCopy(this->WorkTransform->GetMatrix());
@@ -997,7 +1002,7 @@ void vtkImageGCR::InternalUpdate()
       cout << "Similarity registration" << endl;
       }
     this->powell(p,xi,7,ftol,&iter,&fret,
-		 &vtkImageGCR::MinimizeWithSimilarityTransform);
+         &vtkImageGCR::MinimizeWithSimilarityTransform);
     if(this->GetTransformDomain()==1)
       {
       this->Matrix->DeepCopy(this->WorkTransform->GetMatrix());
@@ -1023,7 +1028,7 @@ void vtkImageGCR::InternalUpdate()
       cout << "Affine registration" << endl;
       }
     this->powell(p,xi,12,ftol,&iter,&fret,
-		 &vtkImageGCR::MinimizeWithAffineTransform);
+         &vtkImageGCR::MinimizeWithAffineTransform);
     if(this->GetTransformDomain()==2)
       {
       this->Matrix->DeepCopy(this->WorkTransform->GetMatrix());
@@ -1042,9 +1047,9 @@ void vtkImageGCR::InternalUpdate()
 }
 
 bool vtkImageGCR::TrilinearWeights(float *point,unsigned char* inPtr,
-				   int inExt[6], int inInc[3],
-				   unsigned char p[2][2][2],
-				   float w[2][2][2])
+                   int inExt[6], int inInc[3],
+                   unsigned char p[2][2][2],
+                   float w[2][2][2])
 {
   float fx,fy,fz;
   int floorX = int(vtkImageGCRFloor(point[0],fx));
@@ -1106,9 +1111,9 @@ bool vtkImageGCR::TrilinearWeights(float *point,unsigned char* inPtr,
 }
 
 bool vtkImageGCR::TrilinearInterpolation(float *point,
-					 unsigned char *inPtr,
-					 int inExt[6], int inInc[3],
-					 unsigned char& q)
+                     unsigned char *inPtr,
+                     int inExt[6], int inInc[3],
+                     unsigned char& q)
 {
   unsigned char p[2][2][2];
   float w[2][2][2];
@@ -1118,14 +1123,14 @@ bool vtkImageGCR::TrilinearInterpolation(float *point,
     }
    
   q = static_cast<unsigned char>(w[0][0][0]*p[0][0][0] +
-				 w[0][0][1]*p[0][0][1] +
-				 w[0][1][0]*p[0][1][0] +
-				 w[0][1][1]*p[0][1][1] +
-				 w[1][0][0]*p[1][0][0] +
-				 w[1][0][1]*p[1][0][1] +
-				 w[1][1][0]*p[1][1][0] +
-				 w[1][1][1]*p[1][1][1] +
-				 0.5);
+                 w[0][0][1]*p[0][0][1] +
+                 w[0][1][0]*p[0][1][0] +
+                 w[0][1][1]*p[0][1][1] +
+                 w[1][0][0]*p[1][0][0] +
+                 w[1][0][1]*p[1][0][1] +
+                 w[1][1][0]*p[1][1][0] +
+                 w[1][1][1]*p[1][1][1] +
+                 0.5);
   return true;
 }
 
@@ -1139,15 +1144,15 @@ float vtkImageGCR::MinimizeWithTranslationTransform(float* p){
   vtkImageGCRP2Translation(p,this->WorkTransform);
   if(this->Verbose >= 2)
     {
-	  // Modified by Liu
+      // Modified by Liu
 
     //cout <<"  1:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[1]
-	// <<" 2:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[2]
-	// <<" 3:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[3];
-		cout.width(8);
-		cout.precision(4);
-		cout.fill('0');
-		cout << "  1:" <<p[1] << " 2:"<<p[2]<<" 3:"<<p[3];
+    // <<" 2:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[2]
+    // <<" 3:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[3];
+        cout.width(8);
+        cout.precision(4);
+        cout.fill('0');
+        cout << "  1:" <<p[1] << " 2:"<<p[2]<<" 3:"<<p[3];
 
 
 
@@ -1166,22 +1171,22 @@ float vtkImageGCR::MinimizeWithRigidTransform(float* p){
   vtkImageGCRP2Rigid(p,this->WorkTransform);
   if(this->Verbose >= 2)
     {
-	  //Modified by Liu.
-	    cout.width(8);
-		cout.precision(4);
-		cout.fill('0');
+      //Modified by Liu.
+        cout.width(8);
+        cout.precision(4);
+        cout.fill('0');
 //    cout <<"  1:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[1]
-//	 <<" 2:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[2]
-//	 <<" 3:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[3]
-//	 <<" 4:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[4]
-//	 <<" 5:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[5]
-//	 <<" 6:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[6];
+//     <<" 2:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[2]
+//     <<" 3:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[3]
+//     <<" 4:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[4]
+//     <<" 5:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[5]
+//     <<" 6:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[6];
 cout <<"  1:"<<p[1]
-	 <<" 2:"<<p[2]
-	 <<" 3:"<<p[3]
-	 <<" 4:"<<p[4]
-	 <<" 5:"<<p[5]
-	 <<" 6:"<<p[6];
+     <<" 2:"<<p[2]
+     <<" 3:"<<p[3]
+     <<" 4:"<<p[4]
+     <<" 5:"<<p[5]
+     <<" 6:"<<p[6];
 
 
     }
@@ -1197,26 +1202,26 @@ float vtkImageGCR::MinimizeWithSimilarityTransform(float* p){
   vtkImageGCRP2Similarity(p,this->WorkTransform);
   if(this->Verbose >= 2)
     {
-	 //Modified by Liu.
-	  
-	    cout.width(8);
-		cout.precision(4);
-		cout.fill('0');
+     //Modified by Liu.
+      
+        cout.width(8);
+        cout.precision(4);
+        cout.fill('0');
 
     //cout <<"  1:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[1]
-	// <<" 2:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[2]
-	// <<" 3:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[3]
-	// <<" 4:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[4]
-	// <<" 5:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[5]
-	// <<" 6:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[6]
-	 //<<" 7:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[7];
+    // <<" 2:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[2]
+    // <<" 3:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[3]
+    // <<" 4:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[4]
+    // <<" 5:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[5]
+    // <<" 6:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[6]
+     //<<" 7:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[7];
 cout <<"  1:"<<p[1]
-	 <<" 2:"<<p[2]
-	 <<" 3:"<<p[3]
-	 <<" 4:"<<p[4]
-	 <<" 5:"<<p[5]
-	 <<" 6:"<<p[6]
-	 <<" 7:"<<p[7];
+     <<" 2:"<<p[2]
+     <<" 3:"<<p[3]
+     <<" 4:"<<p[4]
+     <<" 5:"<<p[5]
+     <<" 6:"<<p[6]
+     <<" 7:"<<p[7];
 
     }
   return this->Compute();
@@ -1233,38 +1238,38 @@ float vtkImageGCR::MinimizeWithAffineTransform(float* p){
   if(this->Verbose >= 2)
     {
 
-	  // Modified by Liu
+      // Modified by Liu
    
-	 	cout.width(8);
-		cout.precision(4);
-		cout.fill('0');
+         cout.width(8);
+        cout.precision(4);
+        cout.fill('0');
 //cout <<"  1:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[1]
-//	 <<" 2:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[2]
-//	 <<" 3:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[3]
-//	 <<" 4:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[4]
-//	 <<" 5:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[5]
-//	 <<" 6:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[6]
-//	 <<" 7:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[7]
-//	 <<" 8:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[8]
-//	 <<" 9:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[9]
-//	 <<" 10:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[10]
-//	 <<" 11:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[11]
-//	 <<" 12:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[12];
+//     <<" 2:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[2]
+//     <<" 3:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[3]
+//     <<" 4:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[4]
+//     <<" 5:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[5]
+//     <<" 6:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[6]
+//     <<" 7:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[7]
+//     <<" 8:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[8]
+//     <<" 9:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[9]
+//     <<" 10:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[10]
+//     <<" 11:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[11]
+//     <<" 12:"<<setw(8)<<setprecision(4)<<setfill('0')<<p[12];
     
-	 
+     
 
     cout <<"  1:"<<p[1]
-	 <<" 2:"<<p[2]
-	 <<" 3:"<<p[3]
-	 <<" 4:"<<p[4]
-	 <<" 5:"<<p[5]
-	 <<" 6:"<<p[6]
-	 <<" 7:"<<p[7]
-	 <<" 8:"<<p[8]
-	 <<" 9:"<<p[9]
-	 <<" 10:"<<p[10]
-	 <<" 11:"<<p[11]
-	 <<" 12:"<<p[12];
+     <<" 2:"<<p[2]
+     <<" 3:"<<p[3]
+     <<" 4:"<<p[4]
+     <<" 5:"<<p[5]
+     <<" 6:"<<p[6]
+     <<" 7:"<<p[7]
+     <<" 8:"<<p[8]
+     <<" 9:"<<p[9]
+     <<" 10:"<<p[10]
+     <<" 11:"<<p[11]
+     <<" 12:"<<p[12];
     }
   return this->Compute();
 }
