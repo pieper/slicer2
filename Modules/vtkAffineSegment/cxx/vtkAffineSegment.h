@@ -65,7 +65,7 @@ typedef std::vector<float> VecFloat;
 
 class VTK_AFFINESEGMENT_EXPORT vtkAffineSegment : public vtkImageToImageFilter
 {
- private:
+ public:
   bool somethingReallyWrong;
 
   double powerSpeed;
@@ -281,7 +281,7 @@ class VTK_AFFINESEGMENT_EXPORT vtkAffineSegment : public vtkImageToImageFilter
                                   int outExt[6], int id);
 
   
-
+/*
  friend static void vtkAffineSegmentInflation(vtkAffineSegment *self,
                      vtkImageData *inData, short *inPtr,
                      vtkImageData *outData, short *outPtr, 
@@ -290,7 +290,7 @@ class VTK_AFFINESEGMENT_EXPORT vtkAffineSegment : public vtkImageToImageFilter
  friend static void vtkAffineSegmentContract(vtkAffineSegment *self,
                      vtkImageData *inData, short *inPtr,
                      vtkImageData *outData, short *outPtr, 
-                     int outExt[6], int id);
+                     int outExt[6], int id);*/
 };
 
 #endif
