@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.76 $} {$Date: 2003/04/11 22:48:20 $}]
+        {$Revision: 1.77 $} {$Date: 2003/05/14 22:26:52 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -1821,11 +1821,12 @@ proc MainMrmlRelativity {oldRoot} {
                 [file join $oldRoot [$node GetFilePrefix]]]
             
             # Kilian 02/03 I do not know what old root is good for but I will just leave it here
-        if {$oldRoot == $Mrml(dir)} { $node SetFullPrefix [file join $Mrml(dir) [$node GetFilePrefix]]
-        } else { 
+            if {$oldRoot == $Mrml(dir)} { 
+                $node SetFullPrefix [file join $Mrml(dir) [$node GetFilePrefix]]
+            } else { 
               $node SetFullPrefix [file join $Mrml(dir) \
-                  [file join $oldRoot [$node GetFilePrefix]]]
-        }
+                      [file join $oldRoot [$node GetFilePrefix]]]
+            }
             # >> AT 7/6/01, sp 2002-08-20
 
             set num [$node GetNumberOfDICOMFiles]
@@ -1863,6 +1864,10 @@ proc MainMrmlRelativity {oldRoot} {
 proc MainMrmlWrite {filename} {
     global Mrml
 
+    if { ![file writable $filename] } {
+        DevErrorWindow "Can't write to $filename"
+        return
+    }
     # Store the new root and filePrefix
     set oldRoot $Mrml(dir)
     MainMrmlSetFile $filename
