@@ -82,9 +82,12 @@ proc MorphometricsHipJointMeasurementInit {} {
     # create the workflow
     WorkflowInitWorkflow MorphometricsHipJoint $Morphometrics(workflowFrame)
 
+    # step : the user has to specify the volume of the femur
+    MorphometricsCreateVolumeChooserStep MorphometricsHipJoint {Femur} MorphometricsHipJointSetVolume
+
     # step : the user has to specify which model is the femur and which is the pelvis
     MorphometricsCreateModelChooserStep MorphometricsHipJoint {Femur Pelvis} MorphometricsHipJointSetModels
-
+    
     # step : the user can set the shaft axis manually
     MorphometricsCreateAxisPlacementStep MorphometricsHipJoint [Femur GetShaftAxis] "Shaft axis" "shaft axis"
     
@@ -99,6 +102,19 @@ proc MorphometricsHipJointMeasurementInit {} {
 
     # step : display the results
     WorkflowAddStep MorphometricsHipJoint MorphometricsHipJointResultEnter MorphometricsHipJointResultExit  MorphometricsHipJointResultUserInterface "Results"
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MorphometricsHipJointSetVolume
+# sets the volume representing the femur according to user choices.
+# Required function for MorphometricsCreateVolumeChooserStep.
+# .ARGS
+# list idList list of user choices for volume of the femur
+# .END
+#-------------------------------------------------------------------------------
+proc MorphometricsHipJointSetVolume {idList} {
+    global Volume
+    #Femur SetFemurVolume $Model([lindex $idList 0],polyData)
 }
 
 
