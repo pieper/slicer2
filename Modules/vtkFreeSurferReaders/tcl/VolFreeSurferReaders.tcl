@@ -1,7 +1,42 @@
+#=auto==========================================================================
+# (c) Copyright 2002 Massachusetts Institute of Technology
+#
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for any purpose, 
+# provided that the above copyright notice and the following three paragraphs 
+# appear on all copies of this software.  Use of this software constitutes 
+# acceptance of these terms and conditions.
+#
+# IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, 
+# INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE 
+# AND ITS DOCUMENTATION, EVEN IF MIT HAS BEEN ADVISED OF THE POSSIBILITY OF 
+# SUCH DAMAGE.
+#
+# MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING, 
+# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR 
+# A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+#
+# THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE 
+# MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. 
+#
+#===============================================================================
+# FILE:        VolFreeSurferReaders.tcl
+# PROCEDURES:  
+#   VolFreeSurferReadersBuildGUI
+#   VolFreeSurferReadersEnter
+#   VolFreeSurferReadersExit
+#   VolFreeSurferReadersSetFileName
+#   VolFreeSurferReadersApply
+#   VolFreeSurferReadersBuildSurface
+#   VolFreeSurferReadersSetSurfaceVisibility
+#   VolFreeSurferReadersMainFileCloseUpdate
+#   VolFreeSurferReadersAddColors
+#==========================================================================auto=
+
 proc VolFreeSurferReadersInit {} {
     global Gui VolFreeSurferReaders Volume Slice Module
 
-    if {1} {puts "VolFreeSurferReadersInit"}
+    if {$Module(verbose) == 1} {puts "VolFreeSurferReadersInit starting"}
    
     set e VolFreeSurferReaders
 
@@ -11,6 +46,7 @@ proc VolFreeSurferReadersInit {} {
     set Volume(readerModules,$e,procGUI) ${e}BuildGUI
     set Volume(readerModules,$e,procEnter) ${e}Enter
     set Volume(readerModules,$e,procExit) ${e}Exit
+#    set Volume(readerModules,$e,procColor) ${e}AddColors
 
     # some local global variables
     set Volume(VolFreeSurferReaders,FileType) Surface
@@ -19,14 +55,24 @@ proc VolFreeSurferReadersInit {} {
 
     # for closing out a scene
     set Volume(VolFreeSurferReaders,idList) ""
-    set Module($e,procMainFileCloseUpdate) VolFreeSurferReadersMainFileCloseUpdate
+    set Module($e,procMainFileCloseUpdateEntered) VolFreeSurferReadersMainFileCloseUpdate
+
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC VolFreeSurferReadersBuildGUI
+# Builds the GUI for the free surfer readers, as a submodule of the Volumes module
+# .ARGS
+# parentFrame the frame in which to build this Module's GUI
+# .END
 #-------------------------------------------------------------------------------
 proc VolFreeSurferReadersBuildGUI {parentFrame} {
     global Gui Volume Module
 
-    if {$Module(verbose) == 1} {puts  "VolFreeSurferReadersBuildGUI"}
+    if {$Module(verbose) == 1} {
+        puts  "VolFreeSurferReadersBuildGUI"
+    }
 
     set f $parentFrame
 
@@ -42,12 +88,15 @@ proc VolFreeSurferReadersBuildGUI {parentFrame} {
 
     set f $parentFrame.fVolume
 
-    DevAddFileBrowse $f Volume "VolFreeSurferReaders,FileName" "FreeSurfer File:" "VolFreeSurferReadersSetFileName" "" "\$Volume(DefaultDir)"  "Browse for a FreeSurfer file" 
+    DevAddFileBrowse $f Volume "VolFreeSurferReaders,FileName" "FreeSurfer File:" "VolFreeSurferReadersSetFileName" "" "\$Volume(DefaultDir)"  "Browse for a FreeSurfer file (.info or a surface)" 
+
+    frame $f.fLabelMap -bg $Gui(activeWorkspace)
 
     frame $f.fDesc     -bg $Gui(activeWorkspace)
 
     frame $f.fName -bg $Gui(activeWorkspace)
 
+    pack $f.fLabelMap -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fDesc -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fName -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
@@ -66,6 +115,29 @@ proc VolFreeSurferReadersBuildGUI {parentFrame} {
     eval {entry $f.eDesc -textvariable Volume(desc)} $Gui(WEA)
     pack $f.lDesc -side left -padx $Gui(pad)
     pack $f.eDesc -side left -padx $Gui(pad) -expand 1 -fill x
+
+    # LabelMap
+    set f $parentFrame.fVolume.fLabelMap
+
+    frame $f.fTitle -bg $Gui(activeWorkspace)
+    frame $f.fBtns -bg $Gui(activeWorkspace)
+    pack $f.fTitle $f.fBtns -side left -pady 5
+
+    DevAddLabel $f.fTitle.l "Image Data:"
+    pack $f.fTitle.l -side left -padx $Gui(pad) -pady 0
+
+    foreach text "{Grayscale} {Label Map}" \
+        value "0 1" \
+        width "9 9 " {
+        eval {radiobutton $f.fBtns.rMode$value -width $width \
+            -text "$text" -value "$value" -variable Volume(labelMap) \
+            -indicatoron 0 } $Gui(WCA)
+        pack $f.fBtns.rMode$value -side left -padx 0 -pady 0
+    }
+
+    if {$Module(verbose) == 1} {
+        puts "Done packing the label map stuff"
+    }
 
     #-------------------------------------------
     # f->FileType
@@ -96,25 +168,52 @@ proc VolFreeSurferReadersBuildGUI {parentFrame} {
     grid $f.bApply $f.bCancel -padx $Gui(pad)
 
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC VolFreeSurferReadersEnter
+# Does nothing yet
+# .ARGS
+# .END
 #-------------------------------------------------------------------------------
 proc VolFreeSurferReadersEnter {} {
     global Module
     if {$Module(verbose) == 1} {puts "proc VolFreeSurferReaders ENTER"}
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC VolFreeSurferReadersExit
+# Does nothing yet.
+# .ARGS
+# .END
 #-------------------------------------------------------------------------------
 proc VolFreeSurferReadersExit {} {
     global Module
     if {$Module(verbose) == 1} {puts "proc VolFreeSurferReaders EXIT"}
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC VolFreeSurferReadersSetFileName
+# The filename is set elsehwere, in variable Volume(VolFreeSurferReaders,FileName)
+# .ARGS
+# .END
 #-------------------------------------------------------------------------------
 proc VolFreeSurferReadersSetFileName {} {
-    global Volume
+    global Volume Module
 
-    puts "FreeSurferReaders filename: $Volume(VolFreeSurferReaders,FileName)"
+    if {$Module(verbose) == 1} {
+        puts "FreeSurferReaders filename: $Volume(VolFreeSurferReaders,FileName)"
+    }
 
 }
+
+#-------------------------------------------------------------------------------
+# .PROC VolFreeSurferReadersApply
+# Check the file type variable and build the appropriate model or volume
+# .ARGS
+# .END
 #-------------------------------------------------------------------------------
 proc VolFreeSurferReadersApply {} {
     global Module Volume
@@ -152,39 +251,84 @@ proc VolFreeSurferReadersApply {} {
     # this should be fixed - the node should handle this somehow
     # so that MRML can be read in with just a node and this will
     # work
-    MainVolumesCreate $i
+    # puts "VolFreeSurferReadersApply: NOT calling MainVolumes create on $i"
+    # MainVolumesCreate $i
   
     if {[string equal $Volume(VolFreeSurferReaders,FileType) Volume]} {
         # read in the COR file
         # Set up the reading
+        if {[info command Volume($i,vol,rw)] != ""} {
+            # have to delete it first, needs to be cleaned up
+            DevErrorWindow "Problem: reader for this new volume number $i already exists, deleting it"
+            Volume($i,vol,rw) Delete
+        }
         vtkCORReader Volume($i,vol,rw)
     
         # get the directory name from the filename
         Volume($i,vol,rw) SetFilePrefix [file dirname $Volume(VolFreeSurferReaders,FileName)]
-        puts "VolFreeSurferReadersApply: set COR prefix to [Volume($i,vol,rw) GetFilePrefix]"
+        if {$Module(verbose) == 1} {
+            puts "VolFreeSurferReadersApply: set COR prefix to [Volume($i,vol,rw) GetFilePrefix]\nCalling Update on volume $i"
+        }
+        Volume($i,vol,rw) Update
     } 
 
     # set the name and description of the volume
     $n SetName $Volume(name)
     $n SetDescription $Volume(desc)
     
+   
+    # set the volume properties: read the header first: sets the Volume array values we need
+    VolFreeSurferReadersCORHeaderRead $Volume(VolFreeSurferReaders,FileName)
+    Volume($i,node) SetName $Volume(name)
+    Volume($i,node) SetDescription $Volume(desc)
+    Volume($i,node) SetLabelMap $Volume(labelMap)
+    eval Volume($i,node) SetSpacing $Volume(pixelWidth) $Volume(pixelHeight) \
+            [expr $Volume(sliceSpacing) + $Volume(sliceThickness)]
+    Volume($i,node) SetTilt $Volume(gantryDetectorTilt)
+
+    Volume($i,node) SetFilePattern $Volume(filePattern) 
+    Volume($i,node) SetScanOrder $Volume(scanOrder)
+    Volume($i,node) SetNumScalars $Volume(numScalars)
+    Volume($i,node) SetLittleEndian $Volume(littleEndian)
+    # this is the file prefix that will be used to build the image file names, needs to go up to COR
+    Volume($i,node) SetFilePrefix [string trimright [file rootname $Volume(VolFreeSurferReaders,FileName)] "-"]
+# [Volume($i,vol,rw) GetFilePrefix]
+    Volume($i,node) SetImageRange [lindex $Volume(imageRange) 0] [lindex $Volume(imageRange) 1]
+    Volume($i,node) SetScalarTypeToUnsignedChar
+    Volume($i,node) SetDimensions [lindex $Volume(dimensions) 0] [lindex $Volume(dimensions) 1]
+    Volume($i,node) ComputeRasToIjkFromScanOrder $Volume(scanOrder)
+
+    # so can read in the volume
+    if {$Module(verbose) == 1} {
+        puts "VolFreeSurferReaders: setting full prefix for volume node $i"
+    }
+    Volume($i,node) SetFullPrefix [string trimright [file rootname $Volume(VolFreeSurferReaders,FileName)] "-"]
+
+    if {$Module(verbose) == 1} {
+        puts "VolFreeSurferReaders: set up volume node for $i:"
+        Volume($i,node) Print
+        set badval [[Volume($i,node) GetPosition] GetElement 1 3]
+        puts "VolFreeSurferReaders: volume $i position 1 3: $badval"
+    
+        puts "VolFreeSurferReaders: calling MainUpdateMRML"
+    }
     # Reads in the volume via the Execute procedure
     MainUpdateMRML
     # If failed, then it's no longer in the idList
     if {[lsearch $Volume(idList) $i] == -1} {
         puts "VolFreeSurferReaders: failed to read in the volume $i, $Volume(VolFreeSurferReaders,FileName)"
+        DevErrorWindow "VolFreeSurferReaders: failed to read in the volume $i, $Volume(VolFreeSurferReaders,FileName)"
         return
+    }
+    if {$Module(verbose) == 1} {
+        puts "VolFreeSurferReaders: after mainupdatemrml volume node  $i:"
+        Volume($i,node) Print
+        set badval [[Volume($i,node) GetPosition] GetElement 1 3]
+        puts "VolFreeSurferReaders: volume $i position 1 3: $badval"
     }
     # allow use of other module GUIs
     set Volume(freeze) 0
-    
-    # set the volume properties
-    set Volume(pixelWidth) 1
-    set Volume(pixelHeight) 1
-    set Volume(sliceSpacing) 1 
-    set Volume(sliceThickness) 1
-    set Volume(gantryDetectorTilt) 0
-
+ 
     puts "New FreeSurfer Volume:"
     [Volume($i,vol) GetOutput] Print
 
@@ -201,18 +345,29 @@ proc VolFreeSurferReadersApply {} {
     set View(fov) $fov
     MainViewSetFov
 
-    # display the new volume in the background of all slices
-    MainSlicesSetVolumeAll Back $i
+    # display the new volume in the background of all slices if not a label map
+    if {[Volume($i,node) GetLabelMap] == 1} {
+        MainSlicesSetVolumeAll Label $i
+    } else {
+        MainSlicesSetVolumeAll Back $i
+    }
 
-
-    # Update all fields that the user changed (not stuff that would 
-    # need a file reread)
+    # Update all fields that the user changed (not stuff that would need a file reread)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolFreeSurferReadersBuildSurface
+# Builds a model, a surface from a Freesurfer file.
+# .ARGS
+# m the model id
+# .END
+#-------------------------------------------------------------------------------
 proc VolFreeSurferReadersBuildSurface {m} {
     global viewRen Volume Module Model RemovedModels 
 
-    puts "\nVolFreeSurferReadersBuildSurface\n"
+    if {$Module(verbose) == 1} { 
+        puts "\nVolFreeSurferReadersBuildSurface\n"
+    }
     # set up the reader
     vtkFSSurfaceReader Model($m,reader)
     Model($m,reader) SetFileName $Volume(VolFreeSurferReaders,FileName)
@@ -221,6 +376,7 @@ proc VolFreeSurferReadersBuildSurface {m} {
     foreach r $Module(Renderers) {
         # Mapper
         vtkPolyDataMapper Model($m,mapper,$r)
+#Model($m,mapper,$r) SetInput [Model($m,reader) GetOutput]
     }
 
     # Delete the src, leaving the data in Model($m,polyData)
@@ -235,7 +391,7 @@ proc VolFreeSurferReadersBuildSurface {m} {
     set thicknessFileName [file rootname $Volume(VolFreeSurferReaders,FileName)].thickness
     if [file exists $thicknessFileName] {
         DevWarningWindow "Reading in thickness file associated with this surface $thicknessFileName"
-        # need to delete these so that if close the scene and reopen a surface file, these wont' stlile exist
+        # need to delete these so that if close the scene and reopen a surface file, these won't still exist
         vtkFloatArray Model($m,floatArray)
         vtkFSSurfaceScalarReader Model($m,ssr)
         
@@ -365,26 +521,173 @@ proc VolFreeSurferReadersBuildSurface {m} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolFreeSurferReadersSetSurfaceVisibility
+# Set the model's visibility flag.
+# .ARGS
+# i the model id
+# vis the boolean flag determining this model's visibility
+# .END
+#-------------------------------------------------------------------------------
 proc VolFreeSurferReadersSetSurfaceVisibility {i vis} {
     global Volume
     # set the visibility of volume i to visibility vis
     Volume(VolFreeSurferReaders,$i,curveactor) SetVisibility $vis
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolFreeSurferReadersMainFileCloseUpdate
+# Called to clean up anything created in this sub module. Deletes Volumes read in, along with their actors.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc VolFreeSurferReadersMainFileCloseUpdate {} {
-    global Volume viewRen
+    global Volume viewRen Module
     # delete stuff that's been created
-    puts "VolFreeSurferReadersMainFileCloseUpdate"
+    if {$Module(verbose) == 1} {
+        puts "VolFreeSurferReadersMainFileCloseUpdate"
+    }
     foreach f $Volume(idList) {
-        puts "Checking volume $f"
+        #if {$Module(verbose) == 1} {}
+            puts "VolFreeSurferReadersMainFileCloseUpdate: Checking volume $f"
+        
         if {[info exists Volume(VolFreeSurferReaders,$f,curveactor)] == 1} {
-            puts "Removing actor for free surfer reader id $f"
+            if {$Module(verbose) == 1} {
+                puts "Removing surface actor for free surfer reader id $f"
+            }
             viewRen RemoveActor  Volume(VolFreeSurferReaders,$f,curveactor)
             Volume(VolFreeSurferReaders,$f,curveactor) Delete
             Volume(VolFreeSurferReaders,$f,mapper) Delete
-            Volume($i,vol,rw) Delete
+            Volume($f,vol,rw) Delete
 #            MainMrmlDeleteNode Volume $f
+        }
+        if {[info exists Volume($f,vol,rw)] == 1} {
+            if {$Module(verbose) == 1} {
+                puts "Removing volume reader for volume id $f"
+            }
+            Volume($f,vol,rw) Delete
         }
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolFreeSurferReadersAddColors
+# Reads in the freesurfer colour file, ColorsFreesurfer.xml, and appends the color tags to the input argument, returning them all. TODO: check for duplicate colour tags and give a warning. 
+# .ARGS
+# tags the already set tags, append to this variable.
+# .END
+#-------------------------------------------------------------------------------
+proc VolFreeSurferReadersAddColors {tags} {
+    global env Module
+    # read, and append default freesurfer colors.
+    # Return a new list of tags, possibly including default colors.
+    # TODO: check for conflicts in color names
+
+    # Set up the file name of the free surfer modules' colour xml file, 
+    # it's in the Module's tcl directory. Try setting it from the slicer home
+    # environment variable first, otherwise, assume search  is starting from slicer home
+    if {[info exists env(SLICER_HOME)] == 1} {
+        set fileName [file join $env(SLICER_HOME) Modules vtkFreeSurferReaders tcl ColorsFreesurfer.xml]
+    } else {
+        set fileName [file join Modules vtkFreeSurferReaders tcl ColorsFreesurfer.xml]
+    }
+    if {$Module(verbose) == 1} {
+        puts "Trying to read Freesurfer colours from \"$fileName\""
+    }
+    set tagsFSColors [MainMrmlReadVersion2.x $fileName]
+    if {$tagsFSColors == 0} {
+        set msg "Unable to read file default MRML Freesurfer color file '$fileName'"
+        puts $msg
+        tk_messageBox -message $msg
+        return "$tags"
+    }
+
+    return "$tags $tagsFSColors"
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolFreeSurferReadersCORHeaderRead
+# Reads in the freesurfer coronal volume's header file.
+# .ARGS
+# file the full path to the COR-.info file
+# .END
+#-------------------------------------------------------------------------------
+proc VolFreeSurferReadersCORHeaderRead {filename} {
+    global Volume CORInfo
+
+    # Check that a file name string has been passed in
+    if {[string equal filename ""]} {
+        DevErrorWindow "VolFreeSurferReadersCORHeaderRead: empty file name"
+        return 1
+    }
+    
+    # Open the file for reading
+    if {[catch {set fid [open $filename]} errMsg]} {
+        puts "Error opening COR header file $filename for reading"
+        return 1
+    }
+
+    # Read and parse the file into name/value pairs
+    set fldPat {([a-zA-Z_]+[0-9]*)}
+    set numberPat {([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?}
+    set i 0
+    set fld ""
+    while { ![eof $fid] } {
+        # Read a line from the file and analyse it.
+        gets $fid line 
+        # puts "Line $i: $line"
+        set i [expr $i + 1]
+        # get the field name
+        if { [regexp $fldPat $line fld]} {
+            set CORInfo($fld) {}
+            # puts "Found field $fld"
+        
+            # get the values, first test for three floats
+            if { [regexp "$numberPat +$numberPat +$numberPat" $line val]} {
+                set CORInfo($fld) $val
+            } else {
+                # one float
+                if { [regexp "$numberPat" $line val]} {
+                    set CORInfo($fld) $val
+                } else {
+                    puts "Unable to match line $line"
+                }
+            }
+        } else {
+            # only print warning if not an empty line
+            if {![regexp {()|( +)} $line]} {
+                puts "WARNING: no field name found at the beginning of line: $line"
+            }
+        }
+
+    }
+    close $fid
+
+    # set the global vars
+#    set Volume(activeID) 
+    set Volume(isDICOM) 0
+    if {[info exists Volume(name)] == 0} { set Volume(name) "COR"}
+    set Volume(lastNum) $CORInfo(imnr1)
+    set Volume(width) $CORInfo(x)
+    set Volume(height) $CORInfo(y)
+    # distances are in m in the COR info file, we need mm
+    set Volume(pixelWidth) [expr 1000.0 * $CORInfo(psiz)]
+    set Volume(pixelHeight) [expr 1000.0 * $CORInfo(psiz)]
+    set Volume(sliceThickness) [expr 1000.0 * $CORInfo(thick)]
+    # use the x dimension to calculate spacing from the field of view
+    # set Volume(sliceSpacing) [expr 1000.0 * [expr $CORInfo(fov) /  $Volume(width)]]
+    # don't use the slice spacing to anything but 0 for cor files
+    set Volume(sliceSpacing) 0
+    set Volume(gantryDetectorTilt) 0
+    set Volume(numScalars) 1
+    set Volume(littleEndian) 1
+    # scan order is Coronal  Anterior Posterior
+    set Volume(scanOrder) {AP}
+    set Volume(scalarType) {UnsignedChar}
+    set Volume(readHeaders) 0
+    set Volume(filePattern) {%s-%03d}
+    set Volume(dimensions) {256 256}
+    set Volume(imageRange) {1 256}
+    # puts "VolFreeSurferReadersCORHeaderRead: set slice spacing to $Volume(sliceSpacing), slice thickness to $Volume(sliceThickness)"
+    return 0
+}
