@@ -62,7 +62,7 @@ proc GuiInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo Gui \
-		{$Revision: 1.19 $} {$Date: 2000/07/28 17:31:41 $}]
+		{$Revision: 1.20 $} {$Date: 2000/07/28 18:44:46 $}]
 
 	if {$tcl_platform(platform) == "windows"} {
 		set Gui(pc) 1
@@ -111,6 +111,7 @@ proc GuiInit {} {
 	set Gui(activeButton)      [MakeColor $Gui(brightCream)]
 	set Gui(textDark)          [MakeColor $Gui(black)]
 	set Gui(textLight)         [MakeColor $Gui(white)]
+	set Gui(textDisabled)      [MakeColor $Gui(mediumGray)]
 	set Gui(slice0)            [MakeColor $Gui(red)]
 	set Gui(slice1)            [MakeColor $Gui(yellow)]
 	set Gui(slice2)            [MakeColor $Gui(green)]
@@ -169,6 +170,13 @@ proc GuiInit {} {
 	lappend attr WEA 
 	set Gui(WEA) { -font {helvetica 8}\
 		-bg $Gui(normalButton) -fg $Gui(textDark) \
+		-highlightthickness 0 \
+		-bd $Gui(borderWidth) -relief sunken}
+
+	# Workspace Entry Disabled Attributes (WEDA)
+	lappend attr WEDA 
+	set Gui(WEDA) { -font {helvetica 8}\
+		-bg $Gui(normalButton) -fg $Gui(textDisabled) \
 		-highlightthickness 0 \
 		-bd $Gui(borderWidth) -relief sunken}
 

@@ -92,7 +92,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.30 $} {$Date: 2000/07/28 17:50:31 $}]
+	    {$Revision: 1.31 $} {$Date: 2000/07/28 18:44:46 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -1043,7 +1043,7 @@ proc EditorSetOriginal {v} {
 # .END
 #-------------------------------------------------------------------------------
 proc EditorSetWorking {v} {
-	global Editor Volume
+	global Editor Volume Gui
 
 	if {$v == [EditorGetOriginalID]} {
 		tk_messageBox -message "The Original and Working volumes must differ."
@@ -1058,16 +1058,16 @@ proc EditorSetWorking {v} {
 	# Change button text, show name and file prefix
 	# Disable name field if not NEW volume
 	if {$v == "NEW"} {
-		$Editor(mbWorking) config -text $v
-		set Editor(prefixWorking) ""
-		set Editor(nameWorking) Working
-		$Editor(eNameWorking) configure -state normal
+	    $Editor(mbWorking) config -text $v
+	    set Editor(prefixWorking) ""
+	    set Editor(nameWorking) Working
+	    eval {$Editor(eNameWorking) configure -state normal}  $Gui(WEA)
 	} else {
-		$Editor(mbWorking) config -text [Volume($v,node) GetName]
-		set Editor(prefixWorking) [MainFileGetRelativePrefix \
-			[Volume($v,node) GetFilePrefix]]
-		set Editor(nameWorking) [Volume($v,node) GetName]
-		$Editor(eNameWorking) configure -state disabled
+	    $Editor(mbWorking) config -text [Volume($v,node) GetName]
+	    set Editor(prefixWorking) [MainFileGetRelativePrefix \
+		    [Volume($v,node) GetFilePrefix]]
+	    set Editor(nameWorking) [Volume($v,node) GetName]
+	    eval {$Editor(eNameWorking) configure -state disabled} $Gui(WEDA)
 	}
 
 	# Refresh the effect, if it's an interactive one
