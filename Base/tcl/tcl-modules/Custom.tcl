@@ -138,7 +138,7 @@ proc CustomInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.18 $} {$Date: 2000/08/08 15:36:29 $}]
+		{$Revision: 1.19 $} {$Date: 2000/10/02 19:58:49 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -154,6 +154,24 @@ proc CustomInit {} {
 	set Custom(eventManager)  ""
 }
 
+
+# NAMING CONVENTION:
+#-------------------------------------------------------------------------------
+#
+# Use the following starting letters for names:
+# t  = toplevel
+# f  = frame
+# mb = menubutton
+# m  = menu
+# b  = button
+# l  = label
+# s  = slider
+# i  = image
+# c  = checkbox
+# r  = radiobutton
+# e  = entry
+#
+#-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
 # .PROC CustomBuildGUI
@@ -261,7 +279,7 @@ Description by tab:
 	eval {entry $f.eCount -width 5 -textvariable Custom(count) } \
                 $Gui(WEA)
 
-	pack $f.bCount $f.bCount $f.eCount -side left -padx $Gui(pad) -pady $Gui(pad)
+	pack $f.bCount $f.eCount -side left -padx $Gui(pad) -pady $Gui(pad)
 }
 
 #-------------------------------------------------------------------------------
