@@ -36,7 +36,7 @@
 #   MainVolumesUpdate
 #   MainVolumesRender
 #   MainVolumesRenderActive
-#   MainVolumesSetActive
+#   MainVolumesSetActive v
 #   MainVolumesSetParam
 #   MainVolumesUpdateSliderRange
 #==========================================================================auto=
@@ -58,7 +58,7 @@ proc MainVolumesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.40 $} {$Date: 2001/05/13 21:07:42 $}]
+		{$Revision: 1.41 $} {$Date: 2001/06/12 18:43:39 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -701,6 +701,7 @@ proc MainVolumesRenderActive {{scale ""}} {
 # .PROC MainVolumesSetActive
 # 
 # .ARGS
+# int v The id of the volume to set active 
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesSetActive {v} {

@@ -29,6 +29,7 @@
 #   TetraMeshUpdateGUI
 #   TetraMeshFileNameEntered
 #   TetraMeshGetData
+#   SetModelMoveOriginMatrix n matrix
 #   TetraMeshGetTransform
 #   TetraMeshProcessEdges
 #   TetraMeshProcessEdges2
@@ -144,7 +145,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.16 $} {$Date: 2001/06/07 18:43:13 $}]
+		{$Revision: 1.17 $} {$Date: 2001/06/12 18:43:40 $}]
 
 	# Initialize module-level variables
 	#------------------------------------

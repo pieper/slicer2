@@ -27,7 +27,12 @@
 #   VolumeMathBuildGUI
 #   VolumeMathEnter
 #   VolumeMathExit
-#   VolumeMathDoMath
+#   VolumeMathSetMathType
+#   VolumeMathPrepareResultVolume
+#   VolumeMathPrepareResult
+#   VolumeMathDoSubtract
+#   VolumeMathDoSubtract
+#   VolumeMathDoResample
 #   VolumeMathCount
 #==========================================================================auto=
 #-------------------------------------------------------------------------------
@@ -59,8 +64,8 @@ proc VolumeMathInit {} {
 	#   row2,tab = like row1 
 	#
 	set m VolumeMath
-        set Module($m,row1List) "Help Math Resample Distance"
-        set Module($m,row1Name) "{Help} {Math} {Resample} {Distance}"
+        set Module($m,row1List) "Help Math Distance"
+        set Module($m,row1Name) "{Help} {Math} {Distance}"
 	set Module($m,row1,tab) Math
 
 	# Define Procedures
@@ -115,7 +120,7 @@ proc VolumeMathInit {} {
 	#   appropriate info when the module is checked in.
 	#   
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.8 $} {$Date: 2001/06/06 15:37:30 $}]
+		{$Revision: 1.9 $} {$Date: 2001/06/12 18:43:40 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -185,6 +190,7 @@ proc VolumeMathBuildGUI {} {
 	#-------------------------------------------
 	# fHelp
         # fMath
+        #       fSelectMath
 	#	fGrid
 	#	    mbVolume1
 	#	    mbVolume2
@@ -235,13 +241,33 @@ Also, this module only does subtraction.
 	set fMath $Module(VolumeMath,fMath)
 	set f $fMath
 
+	frame $f.fSelectMath  -bg $Gui(backdrop) -relief sunken -bd 2
 	frame $f.fGrid -bg $Gui(activeWorkspace)
 	frame $f.fPack -bg $Gui(activeWorkspace)
-	pack $f.fGrid $f.fPack -side top -padx 0 -pady $Gui(pad)
+	pack $f.fSelectMath $f.fGrid $f.fPack -side top -padx 0 -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Math->SelectMath
+	#-------------------------------------------
+	set f $fMath.fSelectMath
+
+        eval {label $f.l -text "Type:"} $Gui(BLA)
+	frame $f.f -bg $Gui(backdrop)
+	foreach p "Subtract Resample" {
+            eval {radiobutton $f.f.r$p \
+			-text "$p" -command "VolumeMathSetMathType" \
+			-variable VolumeMath(MathType) -value $p -width 10 \
+			-indicatoron 0} $Gui(WCA)
+		pack $f.f.r$p -side left -pady 0
+	}
+	pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
+
+        set VolumeMath(MathType) Subtract
 
 	#-------------------------------------------
 	# Math->Grid frame
 	#-------------------------------------------
+
 	set f $fMath.fGrid
 
         DevAddSelectButton VolumeMath $f Volume2 "Volume2:"   Grid
@@ -258,35 +284,35 @@ Also, this module only does subtraction.
 
 	pack $f.bRun
 
-	#-------------------------------------------
-	# Resample frame
-	#-------------------------------------------
-
-	set fMath $Module(VolumeMath,fResample)
-	set f $fMath
-
-	frame $f.fGrid -bg $Gui(activeWorkspace)
-	frame $f.fPack -bg $Gui(activeWorkspace)
-	pack $f.fGrid $f.fPack -side top -padx 0 -pady $Gui(pad)
-
-	#-------------------------------------------
-	# Resample->Grid frame
-	#-------------------------------------------
-	set f $fMath.fGrid
-
-        DevAddSelectButton VolumeMath $f Volume2 "Resample" Grid
-        DevAddSelectButton VolumeMath $f Volume1 "in the coordinates of" Grid
-        DevAddSelectButton VolumeMath $f Volume3 "and put the results in" Grid
-
-	#-------------------------------------------
-	# Resample->Pack frame
-	#-------------------------------------------
-
-	set f $fMath.fPack
-
-        DevAddButton $f.bRun "Run" "VolumeMathDoResample" 
-
-	pack $f.bRun
+#        #-------------------------------------------
+#        # Resample frame
+#        #-------------------------------------------
+#
+#        set fResamp $Module(VolumeMath,fResample)
+#        set f $fResamp
+#
+#        frame $f.fGrid -bg $Gui(activeWorkspace)
+#        frame $f.fPack -bg $Gui(activeWorkspace)
+#        pack $f.fGrid $f.fPack -side top -padx 0 -pady $Gui(pad)
+#
+#        #-------------------------------------------
+#        # Resample->Grid frame
+#        #-------------------------------------------
+#        set f $fResamp.fGrid
+#
+#        DevAddSelectButton VolumeMath $f Volume2 "Resample" Grid
+#        DevAddSelectButton VolumeMath $f Volume1 "in the coordinates of" Grid
+#        DevAddSelectButton VolumeMath $f Volume3 "and put the results in" Grid
+#
+#        #-------------------------------------------
+#        # Resample->Pack frame
+#        #-------------------------------------------
+#
+#        set f $fResamp.fPack
+#
+#        DevAddButton $f.bRun "Run" "VolumeMathDoResample" 
+#
+#        pack $f.bRun
 
 	#-------------------------------------------
 	# Distance Frame
@@ -444,6 +470,33 @@ proc VolumeMathExit {} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC VolumeMathSetMathType
+#   Set the type of Math to be Done
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathSetMathType {}  {
+
+    global Module VolumeMath
+	set fMath $Module(VolumeMath,fMath)
+	set f $fMath.fGrid
+
+    set a $f.lVolume2 
+    set b $f.lVolume1 
+    set c $f.lVolume3 
+
+
+    if {$VolumeMath(MathType) == "Subtract" } {
+        $a configure -text "Volume2:"
+        $b configure -text "- Volume1:"
+        $c configure -text "= Volume3:"
+    } elseif {$VolumeMath(MathType) == "Resample" } {
+        $a configure -text "Resample"
+        $b configure -text "in the coordinates of"
+        $c configure -text "and put the results in"
+    }
+}
+
+#-------------------------------------------------------------------------------
 # .PROC VolumeMathPrepareResultVolume
 #   Check for Errors in the setup
 #   returns 1 if there are errors, 0 otherwise
@@ -475,6 +528,8 @@ proc VolumeMathPrepareResultVolume {}  {
         Volume($v3,node) Copy Volume($v2,node)
     }
 
+    set VolumeMath(Volume3) $v3
+
     return 0
 }
 
@@ -495,14 +550,35 @@ proc VolumeMathCheckErrors {} {
     return 0
 }
 
-
 #-------------------------------------------------------------------------------
-# .PROC VolumeMathDoMath
+# .PROC VolumeMathDoSubtract
 #   Actually do the VolumeMath
 #
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeMathDoMath {} {
+	global VolumeMath Volume
+
+
+    if { $VolumeMath(MathType) == "Subtract" } {VolumeMathDoSubtract}
+    if { $VolumeMath(MathType) == "Resample" } {VolumeMathDoResample}
+
+
+
+    # This is necessary so that the data is updated correctly.
+    # If the programmers forgets to call it, it looks like nothing
+    # happened.
+    set v3 $VolumeMath(Volume3)
+    MainVolumesUpdate $v3
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathDoSubtract
+#   Actually do the VolumeMath
+#
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathDoSubtract {} {
 	global VolumeMath Volume
 
         # Check to make sure no volume is none
@@ -513,9 +589,10 @@ proc VolumeMathDoMath {} {
     if {[VolumeMathPrepareResultVolume] == 1} {
         return
     }
-	set v3 $VolumeMath(Volume3)
-	set v2 $VolumeMath(Volume2)
-	set v1 $VolumeMath(Volume1)
+
+    set v3 $VolumeMath(Volume3)
+    set v2 $VolumeMath(Volume2)
+    set v1 $VolumeMath(Volume1)
 
     # Set up the VolumeMath Subtract
 
@@ -528,6 +605,7 @@ proc VolumeMathDoMath {} {
     # Taken from MainVolumesCopyData
 
     Volume($v3,vol) SetImageData [SubMath GetOutput]
+    MainVolumesUpdate $v3
 
     SubMath Delete
 }
@@ -554,27 +632,45 @@ proc VolumeMathDoResample {} {
     set v2 $VolumeMath(Volume2)
     set v1 $VolumeMath(Volume1)
 
+    puts "$v3 $v2 $v1"
+
     # Set up the VolumeMath Resampling
 
-    # Want ScaledIJK1^-1 * ScaledIJK2 
-    set mat2 [Volume($v2,node) GetPosition]
-    set mat1 [Volume($v1,node) GetPosition]
+    # You would think we would want 
+    # ScaledIJKtoRAS2^-1 * ScaledIJKtoRAS1 
+    # But in fact, if there is a transformation matrix affecting
+    # the two volumes, it shows up in the RasToWld matrix.
+    # so that we want
+    # (RasToWld2*ScaledIJKToWld2)^-1 (RasToWld1*ScaledIJKToWld1)
+
+    # Get ScaledIJKs
+    set sIJK2 [Volume($v2,node) GetPosition]
+    set sIJK1 [Volume($v1,node) GetPosition]
+    # Get RasToWlds
+    set RasWld2 [Volume($v2,node) GetRasToWld]
+    set RasWld1 [Volume($v1,node) GetRasToWld]
 
     vtkMatrix4x4 Amatrix
-    Amatrix DeepCopy $mat1
+    Amatrix Multiply4x4 $RasWld2 $sIJK2 Amatrix
     Amatrix Invert
-    Amatrix Multiply4x4 Amatrix $mat2 Amatrix
+    Amatrix Multiply4x4 Amatrix $RasWld1 Amatrix
+    Amatrix Multiply4x4 Amatrix $sIJK1   Amatrix
 
+    Amatrix Print
     # Resampling
-    
+
     vtkResliceImage Reslice
-     Reslice SetInput            [Volume($v1,vol) GetOutput]
-     Reslice SetOutputImageParam [Volume($v2,vol) GetOutput]
+     Reslice SetInput            [Volume($v2,vol) GetOutput]
+     Reslice SetOutputImageParam [Volume($v1,vol) GetOutput]
      Reslice SetTransformOutputToInput Amatrix
      Reslice Update
-    
-    Volume($v3,vol) SetImageData [Reslice GetOutput]
 
+    [Reslice GetOutput] Print
+    Volume($v3,vol) SetImageData [Reslice GetOutput]
+    [Volume($v3,vol) GetImageData] Print
+    puts "$v3 $v2 $v1"
+
+    MainVolumesUpdate $v3
     Amatrix Delete
     Reslice Delete
 }

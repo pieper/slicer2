@@ -22,12 +22,12 @@
 #===============================================================================
 # FILE:        MainHeader.tcl
 # PROCEDURES:  
-#   ReadHeaderTcl 
+#   ReadHeaderTcl  filname stdout aHeader
 #   ReadHeader
 #   ParsePrintHeader
 #   ParseM3list
 #   DumpHeader
-#   GetHeaderInfo
+#   GetHeaderInfo img1 num2 node tk
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
