@@ -129,7 +129,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.10 $} {$Date: 2002/09/30 12:13:20 $}]
+            {$Revision: 1.11 $} {$Date: 2002/11/05 17:36:34 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -1988,85 +1988,85 @@ proc AlignmentsB1Motion {x y} {
     #If Fiducial selection has been entered then do not allow the user to be able to
     #set the matrix by dragging the mouse over the 2D screens
     if {$Matrix(FidAlignEntered) != 1} {
-    # This only works on orthogonal slices
-    set s $Slice(activeID)
-    set orient [Slicer GetOrientString $s]
-    if {[lsearch "Axial Sagittal Coronal" $orient] == -1} {
-        return
-    }
+        # This only works on orthogonal slices
+        set s $Slice(activeID)
+        set orient [Slicer GetOrientString $s]
+        if {[lsearch "Axial Sagittal Coronal" $orient] == -1} {
+            return
+        }
 
-    # Translate
-    if {$Matrix(mouse) == "Translate"} {
+        # Translate
+        if {$Matrix(mouse) == "Translate"} {
 
-        set xPixels [expr $x - $Matrix(xHome)]
-        set yPixels [expr $y - $Matrix(yHome)]
-        set xMm [PixelsToMm $xPixels $View(fov) 256 $Slice($s,zoom)]
-        set yMm [PixelsToMm $yPixels $View(fov) 256 $Slice($s,zoom)]
+            set xPixels [expr $x - $Matrix(xHome)]
+            set yPixels [expr $y - $Matrix(yHome)]
+            set xMm [PixelsToMm $xPixels $View(fov) 256 $Slice($s,zoom)]
+            set yMm [PixelsToMm $yPixels $View(fov) 256 $Slice($s,zoom)]
 
-        Anno($s,r1,source) SetPoint2 $x $y 0
+            Anno($s,r1,source) SetPoint2 $x $y 0
 
-        switch $orient {
-            Axial {
-                # X:R->L, Y:P->A
-                set xMm [expr -$xMm]
-                set text "LR: $xMm, PA: $yMm mm"
-                Anno($s,msg,mapper)  SetInput $text
-                AlignmentsManualTranslateDual \
-                        regTranLR [expr $xMm + $Matrix(prevTranLR)] \
-                        regTranPA [expr $yMm + $Matrix(prevTranPA)]
+            switch $orient {
+                Axial {
+                    # X:R->L, Y:P->A
+                    set xMm [expr -$xMm]
+                    set text "LR: $xMm, PA: $yMm mm"
+                    Anno($s,msg,mapper)  SetInput $text
+                    AlignmentsManualTranslateDual \
+                            regTranLR [expr $xMm + $Matrix(prevTranLR)] \
+                            regTranPA [expr $yMm + $Matrix(prevTranPA)]
+                }
+                Sagittal {
+                    # X:A->P, Y:I->S
+                    set xMm [expr -$xMm]
+                    set text "PA: $xMm, IS: $yMm mm"
+                    Anno($s,msg,mapper)  SetInput $text
+                    AlignmentsManualTranslateDual \
+                            regTranPA [expr $xMm + $Matrix(prevTranPA)] \
+                            regTranIS [expr $yMm + $Matrix(prevTranIS)]
+                }
+                Coronal {
+                    # X:R->L, Y:I->S
+                    set xMm [expr -$xMm]
+                    set text "LR: $xMm, IS: $yMm mm"
+                    Anno($s,msg,mapper)  SetInput $text
+                    AlignmentsManualTranslateDual \
+                            regTranLR [expr $xMm + $Matrix(prevTranLR)] \
+                            regTranIS [expr $yMm + $Matrix(prevTranIS)]
+                }
             }
-            Sagittal {
-                # X:A->P, Y:I->S
-                set xMm [expr -$xMm]
-                set text "PA: $xMm, IS: $yMm mm"
-                Anno($s,msg,mapper)  SetInput $text
-                AlignmentsManualTranslateDual \
-                        regTranPA [expr $xMm + $Matrix(prevTranPA)] \
-                        regTranIS [expr $yMm + $Matrix(prevTranIS)]
-            }
-            Coronal {
-                # X:R->L, Y:I->S
-                set xMm [expr -$xMm]
-                set text "LR: $xMm, IS: $yMm mm"
-                Anno($s,msg,mapper)  SetInput $text
-                AlignmentsManualTranslateDual \
-                        regTranLR [expr $xMm + $Matrix(prevTranLR)] \
-                        regTranIS [expr $yMm + $Matrix(prevTranIS)]
+        }
+
+        # Rotate
+        if {$Matrix(mouse) == "Rotate"} {
+
+            set degrees [Angle2D 128 128 $Matrix(xHome) $Matrix(yHome) \
+                    128 128 $x $y]
+            set degrees [expr int($degrees)]
+            Anno($s,r2,source) SetPoint2 $x $y 0
+
+            switch $orient {
+                Axial {
+                    # IS-axis
+                    set text "IS-axis: $degrees deg"
+                    Anno($s,msg,mapper)  SetInput $text
+                    AlignmentsManualRotate regRotIS $degrees 1
+                }
+                Sagittal {
+                    # LR-axis
+                    set text "LR-axis: $degrees deg"
+                    Anno($s,msg,mapper)  SetInput $text
+                    AlignmentsManualRotate regRotLR $degrees 1
+                }
+                Coronal {
+                    # PA-axis
+                    set degrees [expr -$degrees]
+                    set text "PA-axis: $degrees deg"
+                    Anno($s,msg,mapper)  SetInput $text
+                    AlignmentsManualRotate regRotPA $degrees 1
+                }
             }
         }
     }
-
-    # Rotate
-    if {$Matrix(mouse) == "Rotate"} {
-
-        set degrees [Angle2D 128 128 $Matrix(xHome) $Matrix(yHome) \
-                128 128 $x $y]
-        set degrees [expr int($degrees)]
-        Anno($s,r2,source) SetPoint2 $x $y 0
-
-        switch $orient {
-            Axial {
-                # IS-axis
-                set text "IS-axis: $degrees deg"
-                Anno($s,msg,mapper)  SetInput $text
-                AlignmentsManualRotate regRotIS $degrees 1
-            }
-            Sagittal {
-                # LR-axis
-                set text "LR-axis: $degrees deg"
-                Anno($s,msg,mapper)  SetInput $text
-                AlignmentsManualRotate regRotLR $degrees 1
-            }
-            Coronal {
-                # PA-axis
-                set degrees [expr -$degrees]
-                set text "PA-axis: $degrees deg"
-                Anno($s,msg,mapper)  SetInput $text
-                AlignmentsManualRotate regRotPA $degrees 1
-            }
-        }
-    }
-}
 }
 
 #-------------------------------------------------------------------------------
