@@ -67,6 +67,12 @@ proc MainInteractorInit {} {
     set Interactor(xLast)  0
     set Interactor(ysLast) 0
     set Interactor(xsLast) 0
+
+    #Added the following variable and set it to be Slicer so 
+    #that "Slicer" is not hardcoded into each procedure making 
+    #it easier to allow window interactions in the same manner 
+    #if ever another vtkMrmlSlicer object is added.
+    set Interactor(activeSlicer) Slicer
 }
 
 #-------------------------------------------------------------------------------
@@ -126,7 +132,7 @@ proc MainInteractorBind {widget} {
 
     # Added for Fiducials
     if {[IsModule Fiducials] == 1 || [IsModule Alignments] == 1} {
-     bind $widget <KeyPress-p> {
+    bind $widget <KeyPress-p> {
          if { [SelectPick2D %W %x %y] != 0 } \
              { eval FiducialsCreatePointFromWorldXYZ "default" $Select(xyz) ; MainUpdateMRML; Render3D}
      }
@@ -154,8 +160,8 @@ proc MainInteractorXY {s x y} {
     set ys $y
 
     # Convert Screen coordinates to Reformatted image coordinates
-    Slicer SetScreenPoint $s $x $y
-    scan [Slicer GetReformatPoint] "%d %d" x y
+    $Interactor(activeSlicer) SetScreenPoint $s $x $y
+    scan [$Interactor(activeSlicer) GetReformatPoint] "%d %d" x y
 
     return "$xs $ys $x $y"
 }
@@ -170,13 +176,13 @@ proc MainInteractorCursor {s xs ys x y} {
     global Anno View Interactor
 
     # pixel value
-    set forePix [Slicer GetForePixel $s $x $y]
-    set backPix [Slicer GetBackPixel $s $x $y]
+    set forePix [$Interactor(activeSlicer) GetForePixel $s $x $y]
+    set backPix [$Interactor(activeSlicer) GetBackPixel $s $x $y]
 
     # Get RAS and IJK coordinates
-    Slicer SetReformatPoint $s $x $y
-    scan [Slicer GetWldPoint] "%g %g %g" xRas yRas zRas 
-    scan [Slicer GetIjkPoint] "%g %g %g" xIjk yIjk zIjk
+    $Interactor(activeSlicer) SetReformatPoint $s $x $y
+    scan [$Interactor(activeSlicer) GetWldPoint] "%g %g %g" xRas yRas zRas 
+    scan [$Interactor(activeSlicer) GetIjkPoint] "%g %g %g" xIjk yIjk zIjk
 
     # Write Annotation
     if {$Anno(mouse) == 1} {
@@ -222,7 +228,7 @@ proc MainInteractorCursor {s xs ys x y} {
     }
 
     # Move cursor
-    Slicer SetCursorPosition $s $xs $ys
+    $Interactor(activeSlicer) SetCursorPosition $s $xs $ys
     
     # Show close-up image
     if {$View(createMagWin) == "Yes" && $View(closeupVisibility) == "On"} {
@@ -542,10 +548,18 @@ proc MainInteractorB2Motion {widget x y} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorB3Motion {widget x y} {
-    global Interactor
+    global Interactor Module
 
     set s $Interactor(s)
     scan [MainInteractorXY $s $x $y] "%d %d %d %d" xs ys x y 
+  
+    #This should be replaced with Mike Halle's binding mechanism
+    switch $Module(activeID) {  
+        "Alignments" {
+            AlignmentsB3Motion $x $y
+            return
+        }
+    }
 
     # Zoom using screen coordinates so that the same number
     # of screen pixels covered (not % of image) produces the
@@ -597,15 +611,15 @@ proc MainInteractorB3Motion {widget x y} {
 
 # New version by Attila Tanacs 11/07/01
 proc MainInteractorPan {s x y xLast yLast} {
-    global View
+    global View Interactor
 
     set dx [expr $xLast - $x]
     set dy [expr $yLast - $y]
-    set os [[Slicer GetBackReformat $s] GetOriginShift]
+    set os [[$Interactor(activeSlicer) GetBackReformat $s] GetOriginShift]
     scan $os "%g %g" cx cy
     
-    set z [[Slicer GetBackReformat $s] GetZoom]
-    set ps [[Slicer GetBackReformat $s] GetPanScale]
+    set z [[$Interactor(activeSlicer) GetBackReformat $s] GetZoom]
+    set ps [[$Interactor(activeSlicer) GetBackReformat $s] GetPanScale]
 
 #    if {[Slicer GetZoomAutoCenter $s] == 1} {
 #        Slicer SetZoomAutoCenter $s 0
@@ -615,8 +629,8 @@ proc MainInteractorPan {s x y xLast yLast} {
     set cx [expr $cx + $dx * $ps]
     set cy [expr $cy + $dy * $ps]
 
-    Slicer SetOriginShift $s $cx $cy
-    Slicer Update
+    $Interactor(activeSlicer) SetOriginShift $s $cx $cy
+    $Interactor(activeSlicer) Update
     RenderAll
 }
 
@@ -648,13 +662,13 @@ proc MainInteractorPan {s x y xLast yLast} {
 
 # New version by Attila Tanacs 11/07/01
 proc MainInteractorZoom {s x y xLast yLast} {
-    global View
+    global View Interactor
     
     set dy [expr $yLast - $y]
     
     # log base b of x = log(x) / log(b)
     set b      1.02
-    set zPrev [[Slicer GetBackReformat $s] GetZoom]
+    set zPrev [[$Interactor(activeSlicer) GetBackReformat $s] GetZoom]
     set dyPrev [expr log($zPrev) / log($b)]
 
     set zoom [expr pow($b, ($dy + $dyPrev))]
@@ -682,12 +696,12 @@ proc MainInteractorZoom {s x y xLast yLast} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorWindowLevel {s x y xLast yLast} {
-    global View Volume
+    global View Volume Interactor
 
     set dx [expr $xLast - $x]
     set dy [expr $yLast - $y]
 
-    set v [[[Slicer GetBackVolume $s] GetMrmlNode] GetID]
+    set v [[[$Interactor(activeSlicer) GetBackVolume $s] GetMrmlNode] GetID]
     MainVolumesSetActive $v
 
     set window [Volume($v,node) GetWindow]
@@ -711,12 +725,12 @@ proc MainInteractorWindowLevel {s x y xLast yLast} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorThreshold {s x y xLast yLast} {
-    global View Volume
+    global View Volume Interactor
 
     set dx [expr $xLast - $x]
     set dy [expr $yLast - $y]
 
-    set v [[[Slicer GetBackVolume $s] GetMrmlNode] GetID]
+    set v [[[$Interactor(activeSlicer) GetBackVolume $s] GetMrmlNode] GetID]
     MainVolumesSetActive $v
 
     set lower [Volume($v,node) GetLowerThreshold]
@@ -802,12 +816,12 @@ proc MainInteractorEnter {widget x y} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorExit {widget} {
-    global Interactor Anno
+    global Interactor Anno 
 
     set s $Interactor(s)
     
     # Center cursor
-    Slicer SetCursorPosition $s \
+    $Interactor(activeSlicer) SetCursorPosition $s \
         [expr int($Interactor(xCenter))] [expr int($Interactor(yCenter))]
 
     # Turn off cursor anno
