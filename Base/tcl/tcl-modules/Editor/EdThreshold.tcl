@@ -90,7 +90,7 @@ proc EdThresholdBuildVTK {} {
     global Ed Label Slice
 
     foreach s $Slice(idList) {
-        vtkImageThresholdBeyond Ed(EdThreshold,thresh$s)
+        vtkImageThreshold Ed(EdThreshold,thresh$s)
         Ed(EdThreshold,thresh$s) SetReplaceIn  $Ed(EdThreshold,replaceIn)
         Ed(EdThreshold,thresh$s) SetReplaceOut $Ed(EdThreshold,replaceOut)
         Ed(EdThreshold,thresh$s) SetInValue    0
