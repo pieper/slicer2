@@ -64,16 +64,8 @@ public:
   vtkImageLiveWireEdgeWeights *GetEdgeFilter(int i){return this->EdgeFilters[i];};
 
   // Description:
-  // Array of edge filters.
+  // Returns output of one of the edge-producing filters.
   vtkImageData *GetEdgeImage(int filter);
-
-  // Description:
-  // User input to filters that create edges, to control importance 
-  // of different factors in calculation of edges.
-  // val must be >= 0.
-  void SetDifference(float val);
-  void SetInsidePixel(float val);
-  void SetOutsidePixel(float val);
 
 protected:
   vtkImageLiveWireTester();

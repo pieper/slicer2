@@ -91,21 +91,6 @@ public:
   vtkGetMacro(EdgeDirection, int);
   vtkSetMacro(EdgeDirection, int);
 
-  // Description:
-  // 
-  vtkGetMacro(Difference, float);
-  vtkSetMacro(Difference, float);
-
-  // Description:
-  // 
-  vtkGetMacro(InsidePixel, float);
-  vtkSetMacro(InsidePixel, float);
-
-  // Description:
-  // 
-  vtkGetMacro(OutsidePixel, float);
-  vtkSetMacro(OutsidePixel, float);
-
   // Description: 
   // Set/Get the filename where the feature values will be written
   // Used for feature training experiments
@@ -118,7 +103,7 @@ public:
   //vtkSetMacro(NumberOfFeatures, int);
 
   // Description:
-  // Size of neighborhood to compute features in
+  // Width of neighborhood to compute features in
   vtkGetMacro(Neighborhood, int);
   //vtkSetMacro(Neighborhood, int);
 
@@ -164,6 +149,10 @@ public:
   vtkSetStringMacro(TrainingFileName);
   vtkGetStringMacro(TrainingFileName);
 
+  // Description: 
+  // Write feature means and variances to the training file
+  void WriteTrainedFeatureSettings();
+
   // Description:
   // internal access from Execute: don't call this
   vtkSetMacro(RunningNumberOfTrainingPoints, int);
@@ -187,10 +176,7 @@ protected:
 
   int MaxEdgeWeight;
 
-  // User settings that affect edge weight calculation
-  float Difference;
-  float InsidePixel;
-  float OutsidePixel; 
+  // What type of edges to compute (controls orientation of filter kernel)
   int EdgeDirection;
 
   // Total number of features to compute

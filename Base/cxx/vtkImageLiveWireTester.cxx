@@ -90,45 +90,6 @@ vtkImageLiveWireTester::~vtkImageLiveWireTester()
 
 //----------------------------------------------------------------------------
 // Description:
-// Set multiplier used to weight importance of pixel difference in edge
-// weight computation.
-void vtkImageLiveWireTester::SetDifference(float val)
-{
-  for (int i = 0; i < this->NumberOfEdgeFilters; i++)
-    {
-      this->EdgeFilters[i]->SetDifference(val);
-    }
-}
-
-//----------------------------------------------------------------------------
-// Description:
-// Set multiplier used to weight importance of pixel difference in edge
-// weight computation.
-void vtkImageLiveWireTester::SetInsidePixel(float val)
-{
-
-  for (int i = 0; i < this->NumberOfEdgeFilters; i++)
-    {
-      this->EdgeFilters[i]->SetInsidePixel(val);
-    }
-}
-
-//----------------------------------------------------------------------------
-// Description:
-// Set multiplier used to weight importance of pixel difference in edge
-// weight computation.
-void vtkImageLiveWireTester::SetOutsidePixel(float val)
-{
-
-  for (int i = 0; i < this->NumberOfEdgeFilters; i++)
-    {
-      this->EdgeFilters[i]->SetOutsidePixel(val);
-    }
-}
-
-
-//----------------------------------------------------------------------------
-// Description:
 // return output of edge filter
 vtkImageData *vtkImageLiveWireTester::GetEdgeImage(int filter)
 {
@@ -175,6 +136,7 @@ static void vtkImageLiveWireTesterExecute(vtkImageLiveWireTester *self,
       edgeFilters[i]->SetOriginalImage(inData);
       // Lauren this sets precision.
       //edgeFilters[i]->SetMaxEdgeWeight();
+      // Lauren this does not always Update when needed but this is too much:
       edgeFilters[i]->Update();
     }
 

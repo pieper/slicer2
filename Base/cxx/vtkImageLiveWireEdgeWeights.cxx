@@ -52,35 +52,24 @@ float featureProperties::GaussianCost(float x)
   return(exp(-((x-mean)*(x-mean))/(2*var))/sqrt(6.28318*var));  
 }
 
-// 1/sqrt(2*pi)
-// #define LW_GAUSSIAN_FACTOR 0.39894228
-
-// inverse Gaussian: low cost for "good edges"
+// inverse "Gaussian": low cost for good edges
 inline float GaussianC(float x, float mean, float var)
 {
-  //float stdDev = sqrt(var);
-
-  // max value this Gaussian can take on, plus a little
-  //float max = LW_GAUSSIAN_FACTOR/stdDev;
-
-  //float max = (1/stdDev)*LW_GAUSSIAN_FACTOR + 0.01;
-
   // This is the time bottleneck of this filter.
   // So only bother to compute the gaussian if this is a 
   // "good feature" (with a value close to the mean).
   // Else return the max value of 1.
-//    float tmp = x-mean;
-//    if (tmp < var)
-//      return(1 - exp(-(tmp*tmp)/(2*var))/sqrt(6.28318*var));  
-//    else
-//      return 1;
+  //    float tmp = x-mean;
+  //    if (tmp < var)
+  //      return(1 - exp(-(tmp*tmp)/(2*var))/sqrt(6.28318*var));  
+  //    else
+  //      return 1;
 
   // we need between 0 and 1 always, so:
   // forget about the scale factor.  the feature weight does this.
   // so just do the e^-((x-u)^2/2*sigma^2)
 
   float tmp = x-mean;
-  //return(max * ( 1 - exp( -(tmp*tmp)/(2*var)) ));  
   return(1 - exp( -(tmp*tmp)/(2*var) ));  
 
 }
@@ -113,21 +102,11 @@ vtkImageLiveWireEdgeWeights::vtkImageLiveWireEdgeWeights()
   this->MaxEdgeWeight = 255;
   this->EdgeDirection = DOWN_EDGE;
 
-//    this->Difference = 0.25;
-//    this->InsidePixel = 0.1;
-//    this->OutsidePixel = 0.1;
-
   this->NumberOfFeatures = 6;
 
   this->FeatureSettings = new featureProperties[this->NumberOfFeatures];
 
-  // Lauren ?
-  // Really, 3D kernel might make more sense!  
-  // but would need 3D input and need to reformat output...
-  // for now ignore mask, maybe change class inheritance later
-
-  //this->SetKernelSize(5,5,1);
-  //this->SetKernelSize(3,3,1);
+  // Lauren try 3D kernel someday (need 3D input)
   this->Neighborhood = 3; // 3x3 neighborhood
 
   this->TrainingMode = 0;
@@ -165,6 +144,35 @@ vtkImageLiveWireEdgeWeights::~vtkImageLiveWireEdgeWeights()
     {
       delete [] this->TrainingVariances;
     }
+}
+
+//----------------------------------------------------------------------------
+// Description:
+// Dump training settings to a file
+void vtkImageLiveWireEdgeWeights::WriteTrainedFeatureSettings()
+{
+  ofstream file;
+
+  if (this->GetTrainingFileName())
+    {
+      file.open(this->GetTrainingFileName());
+      if (file.fail())
+	{
+	  vtkErrorMacro("Could not open file %" << this->GetTrainingFileName());
+	  return;
+	}  
+    }
+
+  // output the features
+  
+  for (int i=0; i < this->NumberOfFeatures; i++)
+    {
+      file << this->GetWeightForFeature(i) << ' ' 
+	   << this->TrainingAverages[i]    << ' '  
+	   << this->TrainingVariances[i]   << endl;
+    }
+  
+  file.close();
 }
 
 
@@ -207,25 +215,9 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
   clock_t tStart, tEnd, tDiff;
   tStart = clock();
   
+  // how many features to compute per voxel
   int numFeatures = self->GetNumberOfFeatures();
   
-#ifdef LIVEWIRE_TRAINING_EXPERIMENT
-  ofstream file;
-  char *filename;
-  filename = self->GetFileName();
-  if (filename==NULL)
-    {
-      printf("Execute: Set the filename first");
-      return;
-    }
-  file.open(filename);
-  if (file.fail())
-    {
-    printf("Execute: Could not open file %", filename);
-    return;
-    }  
-#endif
-
   // Get information to march through data
   inDatas[0]->GetIncrements(inInc0, inInc1, inInc2); 
   self->GetInput()->GetWholeExtent(inImageMin0, inImageMax0, inImageMin1,
@@ -236,9 +228,8 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
   outMin1 = outExt[2];   outMax1 = outExt[3];
   outMin2 = outExt[4];   outMax2 = outExt[5];
 
-  // Lauren do this like regular filter?  (change inheritance?)
   // Neighborhood around current voxel
-  // Lauren this is hard-coded for Neighborhood == 3 now:
+  //----- Lauren this is hard-coded for Neighborhood == 3 now: -----
   hoodMin0 = - 1;
   hoodMin1 = - 1;
   hoodMin2 = 0;
@@ -401,49 +392,23 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
   // temporary storage of features computed at a voxel
   float *features = new float[numFeatures];
 
-  // Lauren fix this (SLOW!!!!!!!!!!!)
-  // temporary storage of neighbors for calculations
-  // Lauren this is hard-coded for Neighborhood == 3 now:
-  //float n[self->GetKernelSize()[0]*self->GetKernelSize()[1]*self->GetKernelSize()[2]];  
-  //float n[9];
-
-  // test
-  vtkImageData *test = self->GetOriginalImage();
-  //  inPtrs[0] = (T *)test->GetScalarPointerForExtent(test->GetExtent());
-
+  // storage of training data
   float *average = self->GetTrainingAverages();      
   float *variance = self->GetTrainingVariances();      
   int numberOfTrainingPoints = 0;
-  ofstream file;
 
+  // if we are computing training data
   if (self->GetTrainingMode()) 
     {
       // if we are not computing features over multiple slices
       if (!self->GetRunningNumberOfTrainingPoints()) 
 	{
 	  memset(average,0,numFeatures*sizeof(float));
-	  // don't allow 0 variance to be calculated.
+	  // don't allow 0 variance to be calculated (will break Gaussian).
 	  for (int i = 0; i<numFeatures; i++)
 	    variance[i] = 0.01;
-	  //memset(variance,0,numFeatures*sizeof(float));
-	}
-
-      if (self->GetTrainingFileName())
-	{
-	  file.open(self->GetTrainingFileName());
-	  if (file.fail())
-	    {
-	      printf("Execute: Could not open file %", self->GetTrainingFileName());
-	      return;
-	    }  
-	}
-      else
-	{
-	  // don't return, just print a message
-	  cout << "vtkImageLiveWireEdgeWeightsExecute: set the training filename" << endl;
 	}
     }
-
   // compute normalization factor
   float sumOfWeights = 0;
   for (int i = 0; i < numFeatures; i++) 
@@ -485,9 +450,6 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 	      //cout << "(" << outIdx0 << "," << outIdx1 <<"," << outIdx2 <<")" << endl;
 
 	      // ---- Neighborhood Operations ---- //
-
-	      // Default output equal to max edge value
-	      *outPtr0 = maxEdge;
 
 	      // make sure *entire* kernel is within boundaries.
 	      // Note this means that a 3-D kernel won't 
@@ -620,18 +582,6 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 
 		  // Lauren 3D kernel someday!!!!!!
 
-#ifdef LIVEWIRE_TRAINING_EXPERIMENT		      
-		  // Don't do this for an entire dataset!
-		  // Output them to a file. 
-		  for (int i=0;i<numFeatures;i++)
-		    {
-		      file << features[i] << ' ';
-		    }
-		  file << endl;
-#endif
-		      
-		  // Lauren fix this!
-
 		  // If we are in training mode, need to compute
 		  // average values of each feature over certain
 		  // points in the image
@@ -649,6 +599,7 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 			//cout << "point: " << point[0] << " " << point[1];
 			for (int i=0;i<numFeatures;i++)
 			  {
+			    // train at this spot
 			    average[i] += features[i];
 			    variance[i] += (features[i])*(features[i]);
 			  }		
@@ -702,19 +653,13 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 		      cout << "ERROR in vtkImageLWEdgeWeights: edge cost too high " << *outPtr0 << endl;
 		    }
 		      
-		}
+		}  // end neighborhood operations
 	      else
 		{
-#ifdef LIVEWIRE_TRAINING_EXPERIMENT		      
-		  // Output something to file if pix out of bounds
-		  // (won't matter unless segmenting region right at edge of img)
-		  for (int i=0;i<numFeatures;i++)
-		    {
-		      file << 0 << ' ';
-		    }
-		  file << endl;
-#endif
+		  // handle boundaries: default output equal to max edge value
+		  *outPtr0 = maxEdge;
 		}
+
 	      // ---- End Neighborhood Operations ---- //
 		  
 	      inPtr0 += inInc0;
@@ -739,10 +684,6 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
       delete [] features;
     }
 
-#ifdef LIVEWIRE_TRAINING_EXPERIMENT
-  file.close();
-#endif
-  
   if (self->GetTrainingMode()) 
     {
       // increment the running number of points
@@ -766,23 +707,22 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
 	    }			  
 	  cout << endl;
 
-	  // if we are writing to a file
-	  if (self->GetTrainingFileName())
-	    {
-	      // output the features
-	      for (int i=0;i<numFeatures;i++)
-		{
-		  file << self->GetWeightForFeature(i) << ' ' 
-		       << average[i] << ' '  << variance[i] << endl;
-		}
-	      file.close();
-	    }
-
 	  // set the total number of points used to compute the averages
 	  self->SetNumberOfTrainingPoints(numPoints);
 
 	  // clear the running total
 	  self->SetRunningNumberOfTrainingPoints(0);
+	  
+	  // output to a file
+	  self->WriteTrainedFeatureSettings();
+
+	  // set this filter's settings to the trained ones.
+	  // Lauren do weight if train it later
+	  for (int f=0;f<numFeatures;f++)
+	    {
+	      self->SetParamForFeature(f,0,average[f]);
+	      self->SetParamForFeature(f,1,variance[f]);
+	    }
 	}
     }
 
