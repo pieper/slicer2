@@ -258,6 +258,23 @@ itcl::configbody is3d::colorscheme {
             #$_colxfer AddRGBPoint     10.0 1.0 1.0 1.0
             #$_colxfer AddRGBPoint     128.0 1.0 1.0 1.0
         }
+        "noisygray" {
+            $_opaxfer RemoveAllPoints
+            $_opaxfer AddPoint  0   0.0
+            $_opaxfer AddPoint  160   0.0
+            $_opaxfer AddPoint  170   0.8
+            $_opaxfer AddPoint  180   1.0
+
+            $_colxfer RemoveAllPoints
+            $_colxfer AddRGBPoint      0.0  0.0 0.0 0.0
+            $_colxfer AddRGBPoint      4.0  0.5 0.5 0.5
+            $_colxfer AddRGBPoint     20.0  1.0 1.0 1.0
+
+            $_gradxfer RemoveAllPoints
+            $_gradxfer AddPoint  0   0.0
+            $_gradxfer AddPoint  10   0.5
+            $_gradxfer AddPoint  30   1.0
+        }
         "default" {
             $_opaxfer RemoveAllPoints
             $_opaxfer AddPoint  20   0.0
@@ -319,6 +336,7 @@ itcl::configbody is3d::isvolume {
     $_volprop SetScalarOpacity $_opaxfer
     $_volprop SetGradientOpacity $_gradxfer
     $_volprop ShadeOn
+    $_volprop SetInterpolationTypeToLinear
 
     # The mapper / ray cast function know how to render the data
     vtkVolumeRayCastCompositeFunction  $_compfunc
@@ -436,7 +454,7 @@ proc is3d_demo {} {
     pack [is3d .is3ddemo.is3d -isvolume .is3ddemo.isv] -fill both -expand true
 }
 
-proc is3d_demo_movie { filename {steps 10} } {
+proc is3d_demo_movie { filebase {steps 10} } {
 
     raise .is3ddemo
 
@@ -449,7 +467,7 @@ proc is3d_demo_movie { filename {steps 10} } {
         .is3ddemo.is3d expose
         update
         #.is3ddemo.is3d screensave [format c:/tmp/is%04d.ppm $f]
-        .is3ddemo.is3d screensave [format c:/tmp/is%04d.png $f] PNG
+        .is3ddemo.is3d screensave [format ${filebase}%04d.png $f] PNG
         incr f
     }
 
