@@ -50,10 +50,13 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ==============================================================================*/
 
+
+#include "GeneralLinearModel.h"
 #include "vtkActivationVolumeGenerator.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageData.h"
 #include "vtkPointData.h"
+#include "vtkCommand.h"
 
 #include <stdio.h>
 
@@ -108,7 +111,11 @@ void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *inputs, vtkImageD
         vtkErrorMacro( << "No input image data in this filter.");
         return;
     }
- 
+
+    // for progress update
+    unsigned long count = 0;
+    unsigned long target;
+
     // Sets up properties for output vtkImageData
     int imgDim[3];  
     this->GetInput(0)->GetDimensions(imgDim);
@@ -123,6 +130,9 @@ void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *inputs, vtkImageD
     vtkFloatArray *tc = vtkFloatArray::New();
     tc->SetNumberOfTuples(this->NumberOfInputs);
     tc->SetNumberOfComponents(1);
+
+    target = (unsigned long)(imgDim[0]*imgDim[1]*imgDim[2] / 50.0);
+    target++;
 
     float t = 0.0;
     int indx = 0;
@@ -156,10 +166,17 @@ void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *inputs, vtkImageD
                 }
 
                 scalarsInOutput->SetComponent(indx++, 0, t);
+
+                if (!(count%target))
+                {
+                    UpdateProgress(count / 2 / (50.0*target));
+                }
+                count++;
             }
         } 
     }
 
+    GeneralLinearModel::Free();
     tc->Delete();
 
     // Scales the scalar values in the activation volume between 0 - 100
@@ -174,5 +191,11 @@ void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *inputs, vtkImageD
         value = scalarsInOutput->GetComponent(i, 0); 
         newValue = 100 * (value - range[0]) / (range[1] - range[0]);
         scalarsInOutput->SetComponent(i, 0, newValue);
+
+        if (!(count%target))
+        {
+            UpdateProgress(count / 2 / (50.0*target));
+        }
+        count++;
     }
 }
