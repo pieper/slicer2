@@ -42,7 +42,7 @@ ren1 AddVolume VolRend(volume)
 ren1 SetBackground 1 1 1
 renWin SetSize 600 600
 renWin Render
-
+    
 proc TkCheckAbort {} {
   set foo [renWin GetEventPending]
   if {$foo != 0} {renWin SetAbortRender 1}
