@@ -41,7 +41,12 @@
 proc MainLutsInit {} {
 	global Module Lut
 
+	# Define Procedures
 	lappend Module(procVTK) MainLutsBuildVTK
+
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo MainLuts \
+		{$Revision: 1.6 $} {$Date: 2000/02/22 03:50:40 $}]
 
 	# Create an ID for Labels
 	set Lut(idLabel) -1

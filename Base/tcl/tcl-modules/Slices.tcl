@@ -44,6 +44,14 @@ proc SlicesInit {} {
 	# Define Procedures
 	set Module($m,procGUI) SlicesBuildGUI
 
+	# Define Dependencies
+	set Module($m,depend) ""
+
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.7 $} {$Date: 2000/02/22 03:50:47 $}]
+
+	# Props
 	set Slice(prefix) slice
 	set Slice(ext) .tif
 }

@@ -71,6 +71,13 @@ proc GuidanceInit {} {
 	set Module($m,procGUI) GuidanceBuildGUI
 	set Module($m,procVTK) GuidanceBuildVTK
 
+	# Define Dependencies
+	set Module($m,depend) ""
+
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.7 $} {$Date: 2000/02/22 03:50:45 $}]
+
 	# Target
 	set Target(idList) "0 1"
 

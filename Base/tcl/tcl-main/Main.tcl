@@ -326,9 +326,10 @@ proc MainInit {} {
 	set Module(procMRML) ""
 	set Module(procStorePresets) ""
 	set Module(procRecallPresets) ""
-	set m Main
-	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.30 $} {$Date: 2000/02/21 22:37:04 $}]
+
+        # Set version info
+	lappend Module(versions) [ParseCVSInfo Main \
+		{$Revision: 1.31 $} {$Date: 2000/02/22 03:50:39 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------

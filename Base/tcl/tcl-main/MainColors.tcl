@@ -46,6 +46,10 @@
 proc MainColorsInit {} {
 	global Color Gui
 
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo MainColors \
+		{$Revision: 1.9 $} {$Date: 2000/02/22 03:50:39 $}]
+
 	set Color(activeID) ""
 	set Color(name) ""
 	set Color(label) ""

@@ -88,6 +88,10 @@ proc EditorInit {} {
 	# Define Dependencies
 	set Module($m,depend) "Labels"
 
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.19 $} {$Date: 2000/02/22 03:50:44 $}]
+
 	# Initialize globals
 	set Editor(idOriginal)  $Volume(idNone)
 	set Editor(idWorking)   NEW

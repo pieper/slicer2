@@ -70,10 +70,13 @@
 proc MainSlicesInit {} {
 	global Slice Module
 
+	# Define Procedures
 	lappend Module(procVTK)  MainSlicesBuildVTK
 	lappend Module(procMRML) MainSlicesUpdateMRML
 	lappend Module(procStorePresets) MainSlicesStorePresets
 	lappend Module(procRecallPresets) MainSlicesRecallPresets
+
+	# Preset Defaults
 	set Module(Slices,presets) "opacity='1.0' fade='0' \
 0,visibility='0' 0,backVolID='0' 0,foreVolID='0' 0,labelVolID='0' \
 0,orient='Axial' 0,offset='0' 0,zoom='1.0' 0,clipState='1'\
@@ -82,6 +85,11 @@ proc MainSlicesInit {} {
 2,visibility='0' 2,backVolID='0' 2,foreVolID='0' 2,labelVolID='0' \
 2,orient='Coronal' 2,offset='0' 2,zoom='1.0' 2,clipState='1'"
 
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo MainSlices \
+		{$Revision: 1.15 $} {$Date: 2000/02/22 03:50:42 $}]
+
+	# Initialize Variables
 	set Slice(idList) "0 1 2"
 
 	set Slice(opacity) 0.5

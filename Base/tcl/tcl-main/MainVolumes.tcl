@@ -55,12 +55,15 @@
 proc MainVolumesInit {} {
 	global Module Volume
 
+	# Define Procedures
 	lappend Module(procGUI)  MainVolumesBuildGUI
 	lappend Module(procVTK)  MainVolumesBuildVTK
         
         set m MainVolumes
+
+        # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.25 $} {$Date: 2000/02/20 15:17:38 $}]
+		{$Revision: 1.26 $} {$Date: 2000/02/22 03:50:43 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 

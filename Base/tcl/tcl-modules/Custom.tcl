@@ -90,8 +90,33 @@ proc CustomInit {} {
 	#               its button on the main menu
 	#   procExit  = Called when the user leaves this module by clicking
 	#               another modules button
-	#
+	#   procStorePresets  = Called when the user holds down one of the Presets
+	#               buttons.
+	#   procRecallPresets  = Called when the user clicks one of the Presets buttons
+	#               
+	#   Note: if you use presets, make sure to give a preset defaults
+	#   string in your init function, of the form: 
+	#   set Module($m,presets) "key1='val1' key2='val2' ..."
+	#   
 	set Module($m,procGUI) CustomBuildGUI
+
+	# Define Dependencies
+	#------------------------------------
+	# Description:
+	#   Record any other modules that this one depends on.  This is used 
+	#   to check that all necessary modules are loaded when Slicer runs.
+	#   
+	set Module($m,depend) ""
+
+        # Set version info
+	#------------------------------------
+	# Description:
+	#   Record the version number for display under Help->Version Info.
+	#   The strings with the $ symbol tell CVS to automatically insert the
+	#   appropriate info when the module is checked in.
+	#   
+        lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.6 $} {$Date: 2000/02/22 03:50:44 $}]
 
 	# Initialize module-level variables
 	#------------------------------------

@@ -70,6 +70,13 @@ proc MatricesInit {} {
 	set Module($m,procGUI)   MatricesBuildGUI
 	set Module($m,procMRML)  MatricesUpdateMRML
 
+	# Define Dependencies
+	set Module($m,depend) ""
+
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.11 $} {$Date: 2000/02/22 03:50:45 $}]
+
 	# Props
 	set Matrix(propertyType) Basic
 	set Matrix(volumeMatrix) None

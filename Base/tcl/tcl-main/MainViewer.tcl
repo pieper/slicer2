@@ -48,6 +48,11 @@ proc MainViewerInit {} {
 
 	# Don't register the BuildGUI routine, because it gets called specifically
 
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo MainViewer \
+		{$Revision: 1.8 $} {$Date: 2000/02/22 03:50:42 $}]
+
+        # Props
 	set Gui(midHeight) 1
 }
 

@@ -62,11 +62,11 @@ proc OptionsInit {} {
 	# Define Dependencies
 	set Module($m,depend) ""
 
-        # Set version info
+        # Set Version Info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.7 $} {$Date: 2000/02/20 03:54:47 $}]
+		{$Revision: 1.8 $} {$Date: 2000/02/22 03:50:46 $}]
 
-	# Props
+	# Initialize Globals
 	set Options(propertyType) Basic
 
 	foreach m $Module(idList) {

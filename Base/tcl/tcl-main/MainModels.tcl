@@ -65,9 +65,14 @@ proc MainModelsInit {} {
 	# This proc is called specifically
 	# lappend Module(procGUI)  MainModelsBuildGUI
 
+	# Define Procedures
 	lappend Module(procStorePresets) MainModelsStorePresets
 	lappend Module(procRecallPresets) MainModelsRecallPresets
 	set Module(Models,presets) ""
+
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo MainModels \
+		{$Revision: 1.18 $} {$Date: 2000/02/22 03:50:41 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""

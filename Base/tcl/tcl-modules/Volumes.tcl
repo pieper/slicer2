@@ -66,6 +66,13 @@ proc VolumesInit {} {
 #		set Volume(histogram) Off
 #	}
 
+	# Define Dependencies
+	set Module($m,depend) ""
+
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.25 $} {$Date: 2000/02/22 03:50:48 $}]
+
 	# Props
 	set Volume(propertyType) Basic
 	# text for menus displayed on Volumes->Props->Header GUI

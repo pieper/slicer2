@@ -49,8 +49,15 @@
 proc MainAnnoInit {} {
 	global Module Anno Gui
 
+	# Define Procedures
 	lappend Module(procStorePresets) MainAnnoStorePresets
 	lappend Module(procRecallPresets) MainAnnoRecallPresets
+
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo MainAnno \
+		{$Revision: 1.6 $} {$Date: 2000/02/22 03:50:39 $}]
+
+	# Preset Defaults
 	set Module(Anno,presets) "box='1' axes='0' outline='0' letters='1' cross='1'\
 hashes='1' mouse='1'"
 

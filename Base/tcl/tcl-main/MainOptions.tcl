@@ -49,6 +49,7 @@
 proc MainOptionsInit {} {
 	global Module Options Preset
 
+	# Define Procedures
 	lappend Module(procVTK)  MainOptionsBuildVTK
 
 	# Append widgets to list that gets refreshed during UpdateMRML
@@ -57,6 +58,10 @@ proc MainOptionsInit {} {
 
 	set Options(activeID) ""
 	set Options(freeze) ""
+
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo MainOptions \
+		{$Revision: 1.9 $} {$Date: 2000/02/22 03:50:42 $}]
 
 	# Props
 	set Options(program) "slicer"

@@ -65,6 +65,9 @@ proc ModelsInit {} {
 	# Define Dependencies
 	set Module($m,depend) "Labels"
 
+        # Set Version Info
+        lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.15 $} {$Date: 2000/02/22 03:50:46 $}]
 	# Props
 	set Model(propertyType) Basic
 

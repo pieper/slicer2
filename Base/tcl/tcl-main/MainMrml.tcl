@@ -69,6 +69,10 @@ proc MainMrmlInit {} {
 	}
 	MRMLReadDefaults $fileName
 
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo MainMrml \
+		{$Revision: 1.27 $} {$Date: 2000/02/22 03:50:41 $}]
+
 	set Mrml(filePrefix) data
 	set Mrml(colorsUnsaved) 0
 }

@@ -58,9 +58,20 @@
 proc LabelsInit {} {
 	global Module Label 
 
+	set m Labels
+
+	# Define Procedures
 	lappend Module(procGUI)  LabelsBuildGUI
 	lappend Module(procMRML) LabelsUpdateMRML
 
+	# Define Dependencies
+	set Module($m,depend) ""
+
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.11 $} {$Date: 2000/02/22 03:50:49 $}]
+
+	# Props
 	set Label(nameBrowse) ""
 	set Label(activeID) ""
 	set Label(label) ""

@@ -56,6 +56,13 @@ proc TwinInit {} {
 	set Twin(width) 400
 	set Twin(height) 300
 	set Twin(screen) 0
+
+	# Define Dependencies
+	set Module($m,depend) ""
+
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.3 $} {$Date: 2000/02/22 03:50:47 $}]
 }
 
 proc TwinBuildVTK {} {

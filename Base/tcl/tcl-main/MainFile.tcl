@@ -60,7 +60,12 @@ proc MainFileInit {} {
 		set Path(printHeader) [file join $Path(program) [file join bin print_header]]
 	}
 
+	# Define Procedures
 	lappend Module(procGUI) MainFileBuildGUI
+
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo MainFile \
+		{$Revision: 1.16 $} {$Date: 2000/02/22 03:50:40 $}]
 
 	set File(filePrefix) data
 }

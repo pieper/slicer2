@@ -54,10 +54,21 @@
 # .END
 #-------------------------------------------------------------------------------
 proc EventsInit {} {
-	global EventManagerStack
+	global EventManagerStack Module
 
+	set m Events
+
+	# Define Dependencies
+	set Module($m,depend) ""
+
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.3 $} {$Date: 2000/02/22 03:50:48 $}]
+
+	# Props
 	set EventManagerStack ""
-	}
+
+}
 
 #-------------------------------------------------------------------------------
 # .PROC pushHandler

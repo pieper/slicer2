@@ -44,7 +44,12 @@
 proc MainMatricesInit {} {
 	global Module Matrix
 
+	# Define Procedures
 	lappend Module(procVTK)  MainMatricesBuildVTK
+
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo MainMatrices \
+		{$Revision: 1.8 $} {$Date: 2000/02/22 03:50:41 $}]
 
 	# Append widgets to list that gets refreshed during UpdateMRML
 	set Matrix(mbActiveList) ""

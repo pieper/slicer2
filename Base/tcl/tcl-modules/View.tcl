@@ -58,6 +58,13 @@ proc ViewInit {} {
 
 	# Define Procedures
 	set Module($m,procGUI) ViewBuildGUI
+
+	# Define Dependencies
+	set Module($m,depend) ""
+
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.6 $} {$Date: 2000/02/22 03:50:48 $}]
 }
 
 #-------------------------------------------------------------------------------

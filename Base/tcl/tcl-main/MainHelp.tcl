@@ -45,6 +45,10 @@
 proc MainHelpInit {} {
 	global Help Module
 
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo MainFile \
+		{$Revision: 1.5 $} {$Date: 2000/02/22 03:50:40 $}]
+
 	set Help(tagNormal)   "-font {times 10}"
 	set Help(tagItalic)   "-font {times 10 italic}"
 	set Help(tagBold)     "-font {times 10 bold}"

@@ -64,6 +64,13 @@ proc ColorsInit {} {
 	# Define Procedures
 	set Module($m,procGUI)  ColorsBuildGUI
 	set Module($m,procMRML) ColorsUpdateMRML
+
+	# Define Dependencies
+	set Module($m,depend) ""
+
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.8 $} {$Date: 2000/02/22 03:50:43 $}]
 }
 
 #-------------------------------------------------------------------------------

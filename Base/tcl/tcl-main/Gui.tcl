@@ -62,6 +62,10 @@
 proc GuiInit {} {
 	global Gui Path tcl_platform
 
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo Gui \
+		{$Revision: 1.13 $} {$Date: 2000/02/22 03:50:38 $}]
+
 	if {$tcl_platform(platform) == "windows"} {
 		set Gui(pc) 1
 	} else {

@@ -71,6 +71,10 @@ proc RealtimeInit {} {
 	# Define Dependencies
 	set Module($m,depend) "Locator"
 
+        # Set version info
+        lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.8 $} {$Date: 2000/02/22 03:50:47 $}]
+
 	# Initialize globals
 	set Realtime(idRealtime)     $Volume(idNone)
 	set Realtime(idBaseline)     NEW
