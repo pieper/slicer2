@@ -75,8 +75,6 @@
 proc FluxDiffusionInit {} {
     global FluxDiffusion Module Volume 
     
-    puts "FluxDiffusionInit begin"
-
     # Define Tabs
     #------------------------------------
     # Description:
@@ -156,7 +154,7 @@ proc FluxDiffusionInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2003/05/15 15:54:22 $}]
+        {$Revision: 1.6 $} {$Date: 2003/05/30 14:40:22 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -187,9 +185,6 @@ proc FluxDiffusionInit {} {
         {all <Shift-1> {FluxDiffusionBindingCallback Shift-1 %W %X %Y %x %y %t}} \
         {all <Shift-2> {FluxDiffusionBindingCallback Shift-2 %W %X %Y %x %y %t}} \
         {all <Shift-3> {FluxDiffusionBindingCallback Shift-3 %W %X %Y %x %y %t}} }
-    
-    puts "FluxDiffusionInit end"
-
 }
 
 

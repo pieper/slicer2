@@ -228,8 +228,6 @@ proc EdPhaseWireSetOmega {omega} {
     # config menu on GUI
     $Ed(EdPhaseWire,omega,menubutton) config -text $Ed($e,omega,name)
 
-    puts "read in filter kernels from $fullpath"
-
     return 0
 
 }

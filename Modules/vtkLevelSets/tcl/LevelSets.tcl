@@ -79,8 +79,6 @@
 proc LevelSetsInit {} {
     global LevelSets Module Volume 
     
-    puts "LevelSetsInit begin"
-
     # Define Tabs
     #------------------------------------
     # Description:
@@ -160,7 +158,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.9 $} {$Date: 2003/05/29 03:41:50 $}]
+        {$Revision: 1.10 $} {$Date: 2003/05/30 14:40:53 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -231,8 +229,6 @@ proc LevelSetsInit {} {
 #        {all <Shift-2> {LevelSetsBindingCallback Shift-2 %W %X %Y %x %y %t}} \
 #        {all <Shift-3> {LevelSetsBindingCallback Shift-3 %W %X %Y %x %y %t}} 
     
-    puts "LevelSetsInit end"
-
 }
 
 
