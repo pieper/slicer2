@@ -72,6 +72,8 @@ proc ColorsInit {} {
 
     # Module Summary Info
     set Module($m,overview) "Add new colors, view color lookup table."
+    set Module($m,author) "Core"
+    set Module($m,category) [lindex $Module(categories) 0]
 
     # Define Procedures
     set Module($m,procGUI)  ColorsBuildGUI
@@ -82,7 +84,7 @@ proc ColorsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.23 $} {$Date: 2003/03/19 19:16:30 $}]
+        {$Revision: 1.24 $} {$Date: 2004/03/15 20:48:26 $}]
 }
 
 #-------------------------------------------------------------------------------
