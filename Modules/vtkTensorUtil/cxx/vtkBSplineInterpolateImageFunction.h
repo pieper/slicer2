@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkBSplineInterpolateImageFunction.h,v $
   Language:  C++
-  Date:      $Date: 2004/07/29 20:28:57 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2004/07/29 23:03:30 $
+  Version:   $Revision: 1.3 $
 */
 // .NAME vtkBSplineInterpolateImageFunction - BSpline interpolation of a image dataset of points
 // .SECTION Description
@@ -60,21 +60,21 @@ private:
   void operator=(const vtkBSplineInterpolateImageFunction&);  // Not implemented.
 
   /** Determines the weights for interpolation of the value x */
-  void SetInterpolationWeights( float *x, const long EvaluateIndex[][ImageDimension], double weights[][ImageDimension],unsigned int splineOrder ) const;
+  void SetInterpolationWeights( float *x, long *EvaluateIndex[ImageDimension], double *weights[ImageDimension],unsigned int splineOrder ) const;
 
   /** Determines the weights for the derivative portion of the value x */
-  void SetDerivativeWeights( float *x, const long EvaluateIndex[][ImageDimension], double weights[][ImageDimension], unsigned int splineOrder ) const;
+  void SetDerivativeWeights( float *x, long *EvaluateIndex[ImageDimension], double *weights[ImageDimension], unsigned int splineOrder ) const;
 
   /** Precomputation for converting the 1D index of the interpolation neighborhood 
     * to an N-dimensional index. */
   void GeneratePointsToIndex();
 
   /** Determines the indicies to use give the splines region of support */
-  void DetermineRegionOfSupport( long evaluateIndex[][ImageDimension], float x[], unsigned int splineOrder ) const;
+  void DetermineRegionOfSupport( long *evaluateIndex[ImageDimension], float x[], unsigned int splineOrder ) const;
 
   /** Set the indicies in evaluateIndex at the boundaries based on mirror 
     * boundary conditions. */
-  void ApplyMirrorBoundaryConditions(long evaluateIndex[][ImageDimension], unsigned int splineOrder) const;
+  void ApplyMirrorBoundaryConditions(long *evaluateIndex[ImageDimension], unsigned int splineOrder) const;
 
 
   unsigned int             m_MaxNumberInterpolationPoints; // number of neighborhood points used for interpolation

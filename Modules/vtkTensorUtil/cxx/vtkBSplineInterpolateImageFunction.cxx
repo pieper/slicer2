@@ -1,9 +1,9 @@
 #include "vtkBSplineInterpolateImageFunction.h"
 
-vtkCxxRevisionMacro(vtkBSplineInterpolateImageFunction, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkBSplineInterpolateImageFunction, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkBSplineInterpolateImageFunction);
 
-void vtkBSplineInterpolateImageFunction::SetInterpolationWeights( float *x, const long EvaluateIndex[][ImageDimension], double weights[][ImageDimension], unsigned int splineOrder ) const
+void vtkBSplineInterpolateImageFunction::SetInterpolationWeights( float *x, long * EvaluateIndex[ImageDimension], double * weights[ImageDimension], unsigned int splineOrder ) const
 {
   // For speed improvements we could make each case a separate function and use
   // function pointers to reference the correct weight order.
@@ -15,75 +15,75 @@ void vtkBSplineInterpolateImageFunction::SetInterpolationWeights( float *x, cons
     case 3:
       for (unsigned int n = 0; n < ImageDimension; n++)
         {
-        w = x[n] - (double) EvaluateIndex[1][n];
-        weights[3][n] = (1.0 / 6.0) * w * w * w;
-        weights[0][n] = (1.0 / 6.0) + 0.5 * w * (w - 1.0) - weights[3][n];
-        weights[2][n] = w + weights[0][n] - 2.0 * weights[3][n];
-        weights[1][n] = 1.0 - weights[0][n] - weights[2][n] - weights[3][n];
+        w = x[n] - (double) EvaluateIndex[n][1];
+        weights[n][3] = (1.0 / 6.0) * w * w * w;
+        weights[n][0] = (1.0 / 6.0) + 0.5 * w * (w - 1.0) - weights[n][3];
+        weights[n][2] = w + weights[n][0] - 2.0 * weights[n][3];
+        weights[n][1] = 1.0 - weights[n][0] - weights[n][2] - weights[n][3];
         }
       break;
     case 0:
       for (unsigned int n = 0; n < ImageDimension; n++)
         {
-        weights[0][n] = 1; // implements nearest neighbor
+        weights[n][0] = 1; // implements nearest neighbor
         }
       break;
     case 1:
       for (unsigned int n = 0; n < ImageDimension; n++)
         {
-        w = x[n] - (double) EvaluateIndex[0][n];
-        weights[1][n] = w;
-        weights[0][n] = 1.0 - w;
+        w = x[n] - (double) EvaluateIndex[n][0];
+        weights[n][1] = w;
+        weights[n][0] = 1.0 - w;
         }
       break;
     case 2:
       for (unsigned int n = 0; n < ImageDimension; n++)
         {
         /* x */
-        w = x[n] - (double)EvaluateIndex[1][n];
-        weights[1][n] = 0.75 - w * w;
-        weights[2][n] = 0.5 * (w - weights[1][n] + 1.0);
-        weights[0][n] = 1.0 - weights[1][n] - weights[2][n];
+        w = x[n] - (double)EvaluateIndex[n][1];
+        weights[n][1] = 0.75 - w * w;
+        weights[n][2] = 0.5 * (w - weights[n][1] + 1.0);
+        weights[n][0] = 1.0 - weights[n][1] - weights[n][2];
         }
       break;
     case 4:
       for (unsigned int n = 0; n < ImageDimension; n++)
         {
         /* x */
-        w = x[n] - (double)EvaluateIndex[2][n];
+        w = x[n] - (double)EvaluateIndex[n][2];
         w2 = w * w;
         t = (1.0 / 6.0) * w2;
-        weights[0][n] = 0.5 - w;
-        weights[0][n] *= weights[0][n];
-        weights[0][n] *= (1.0 / 24.0) * weights[0][n];
+        weights[n][0] = 0.5 - w;
+        weights[n][0] *= weights[n][0];
+        weights[n][0] *= (1.0 / 24.0) * weights[n][0];
         t0 = w * (t - 11.0 / 24.0);
         t1 = 19.0 / 96.0 + w2 * (0.25 - t);
-        weights[1][n] = t1 + t0;
-        weights[3][n] = t1 - t0;
-        weights[4][n] = weights[0][n] + t0 + 0.5 * w;
-        weights[2][n] = 1.0 - weights[0][n] - weights[1][n] - weights[3][n] - weights[4][n];
+        weights[n][1] = t1 + t0;
+        weights[n][3] = t1 - t0;
+        weights[n][4] = weights[n][0] + t0 + 0.5 * w;
+        weights[n][2] = 1.0 - weights[n][0] - weights[n][1] - weights[n][3] - weights[n][4];
         }
       break;
     case 5:
       for (unsigned int n = 0; n < ImageDimension; n++)
         {
         /* x */
-        w = x[n] - (double)EvaluateIndex[2][n];
+        w = x[n] - (double)EvaluateIndex[n][2];
         w2 = w * w;
-        weights[5][n] = (1.0 / 120.0) * w * w2 * w2;
+        weights[n][5] = (1.0 / 120.0) * w * w2 * w2;
         w2 -= w;
         w4 = w2 * w2;
         w -= 0.5;
         t = w2 * (w2 - 3.0);
-        weights[0][n] = (1.0 / 24.0) * (1.0 / 5.0 + w2 + w4) - weights[5][n];
+        weights[n][0] = (1.0 / 24.0) * (1.0 / 5.0 + w2 + w4) - weights[n][5];
         t0 = (1.0 / 24.0) * (w2 * (w2 - 5.0) + 46.0 / 5.0);
         t1 = (-1.0 / 12.0) * w * (t + 4.0);
-        weights[2][n] = t0 + t1;
-        weights[3][n] = t0 - t1;
+        weights[n][2] = t0 + t1;
+        weights[n][3] = t0 - t1;
         t0 = (1.0 / 16.0) * (9.0 / 5.0 - t);
         t1 = (1.0 / 24.0) * w * (w4 - w2 - 5.0);
-        weights[1][n] = t0 + t1;
-        weights[4][n] = t0 - t1;
+        weights[n][1] = t0 + t1;
+        weights[n][4] = t0 - t1;
         }
       break;
     default:
@@ -94,7 +94,7 @@ void vtkBSplineInterpolateImageFunction::SetInterpolationWeights( float *x, cons
     
 }
 
-void vtkBSplineInterpolateImageFunction::SetDerivativeWeights( float *x, const long EvaluateIndex[][ImageDimension], double weights[][ImageDimension], unsigned int splineOrder ) const
+void vtkBSplineInterpolateImageFunction::SetDerivativeWeights( float *x, long *EvaluateIndex[ImageDimension], double *weights[ImageDimension], unsigned int splineOrder ) const
 {
   // For speed improvements we could make each case a separate function and use
   // function pointers to reference the correct weight order.
@@ -112,64 +112,64 @@ void vtkBSplineInterpolateImageFunction::SetDerivativeWeights( float *x, const l
       // Why would we want to do this?
       for (unsigned int n = 0; n < ImageDimension; n++)
         {
-      weights[0][n] = 0.0;
+      weights[n][0] = 0.0;
         }
       break;
     case 0:
       for (unsigned int n = 0; n < ImageDimension; n++)
         {
-      weights[0][n] = -1.0;
-      weights[1][n] =  1.0;
+      weights[n][0] = -1.0;
+      weights[n][1] =  1.0;
         }
       break;
     case 1:
       for (unsigned int n = 0; n < ImageDimension; n++)
         {
-      w = x[n] + 0.5 - (double)EvaluateIndex[1][n];
+      w = x[n] + 0.5 - (double)EvaluateIndex[n][1];
       // w2 = w;
       w1 = 1.0 - w;
 
-      weights[0][n] = 0.0 - w1;
-      weights[1][n] = w1 - w;
-      weights[2][n] = w; 
+      weights[n][0] = 0.0 - w1;
+      weights[n][1] = w1 - w;
+      weights[n][2] = w; 
         }
       break;
     case 2:
       
       for (unsigned int n = 0; n < ImageDimension; n++)
         {
-      w = x[n] + .5 - (double)EvaluateIndex[2][n];
+      w = x[n] + .5 - (double)EvaluateIndex[n][2];
       w2 = 0.75 - w * w;
       w3 = 0.5 * (w - w2 + 1.0);
       w1 = 1.0 - w2 - w3;
 
-      weights[0][n] = 0.0 - w1;
-      weights[1][n] = w1 - w2;
-      weights[2][n] = w2 - w3;
-      weights[3][n] = w3; 
+      weights[n][0] = 0.0 - w1;
+      weights[n][1] = w1 - w2;
+      weights[n][2] = w2 - w3;
+      weights[n][3] = w3; 
         }
       break;
     case 3:
       
       for (unsigned int n = 0; n < ImageDimension; n++)
         {
-      w = x[n] + 0.5 - (double)EvaluateIndex[2][n];
+      w = x[n] + 0.5 - (double)EvaluateIndex[n][2];
       w4 = (1.0 / 6.0) * w * w * w;
       w1 = (1.0 / 6.0) + 0.5 * w * (w - 1.0) - w4;
       w3 = w + w1 - 2.0 * w4;
       w2 = 1.0 - w1 - w3 - w4;
 
-      weights[0][n] = 0.0 - w1;
-      weights[1][n] = w1 - w2;
-      weights[2][n] = w2 - w3;
-      weights[3][n] = w3 - w4;
-      weights[4][n] = w4;
+      weights[n][0] = 0.0 - w1;
+      weights[n][1] = w1 - w2;
+      weights[n][2] = w2 - w3;
+      weights[n][3] = w3 - w4;
+      weights[n][4] = w4;
         }
       break;
     case 4:
       for (unsigned int n = 0; n < ImageDimension; n++)
         {
-      w = x[n] + .5 - (double)EvaluateIndex[3][n];
+      w = x[n] + .5 - (double)EvaluateIndex[n][3];
       t2 = w * w;
       t = (1.0 / 6.0) * t2;
       w1 = 0.5 - w;
@@ -182,12 +182,12 @@ void vtkBSplineInterpolateImageFunction::SetDerivativeWeights( float *x, const l
       w5 = w1 + t0 + 0.5 * w;
       w3 = 1.0 - w1 - w2 - w4 - w5;
 
-      weights[0][n] = 0.0 - w1;
-      weights[1][n] = w1 - w2;
-      weights[2][n] = w2 - w3;
-      weights[3][n] = w3 - w4;
-      weights[4][n] = w4 - w5;
-      weights[5][n] = w5;
+      weights[n][0] = 0.0 - w1;
+      weights[n][1] = w1 - w2;
+      weights[n][2] = w2 - w3;
+      weights[n][3] = w3 - w4;
+      weights[n][4] = w4 - w5;
+      weights[n][5] = w5;
         }
       break;
       
@@ -222,7 +222,7 @@ void vtkBSplineInterpolateImageFunction::GeneratePointsToIndex()
     }
 }
 
-void vtkBSplineInterpolateImageFunction::DetermineRegionOfSupport( long evaluateIndex[][ImageDimension], float x[], unsigned int splineOrder ) const
+void vtkBSplineInterpolateImageFunction::DetermineRegionOfSupport( long *evaluateIndex[ImageDimension], float x[], unsigned int splineOrder ) const
 { 
   long indx;
 
@@ -234,7 +234,7 @@ void vtkBSplineInterpolateImageFunction::DetermineRegionOfSupport( long evaluate
       indx = (long)floor(x[n]) - splineOrder / 2;
       for (unsigned int k = 0; k <= splineOrder; k++)
         {
-          evaluateIndex[k][n] = indx++;
+          evaluateIndex[n][k] = indx++;
         }
     }
       else                       // Use this index calculation for even splineOrder
@@ -242,13 +242,13 @@ void vtkBSplineInterpolateImageFunction::DetermineRegionOfSupport( long evaluate
       indx = (long)floor(x[n] + 0.5) - splineOrder / 2;
       for (unsigned int k = 0; k <= splineOrder; k++)
         {
-          evaluateIndex[k][n] = indx++;
+          evaluateIndex[n][k] = indx++;
         }
     }
     }
 }
 
-void vtkBSplineInterpolateImageFunction::ApplyMirrorBoundaryConditions(long evaluateIndex[][ImageDimension], unsigned int splineOrder) const
+void vtkBSplineInterpolateImageFunction::ApplyMirrorBoundaryConditions(long *evaluateIndex[ImageDimension], unsigned int splineOrder) const
 {
   for (unsigned int n = 0; n < ImageDimension; n++)
     {
@@ -260,7 +260,7 @@ void vtkBSplineInterpolateImageFunction::ApplyMirrorBoundaryConditions(long eval
     {
       for (unsigned int k = 0; k <= splineOrder; k++)
         {
-          evaluateIndex[k][n] = 0;
+          evaluateIndex[n][k] = 0;
         }
     }
       else
@@ -268,11 +268,11 @@ void vtkBSplineInterpolateImageFunction::ApplyMirrorBoundaryConditions(long eval
       for (unsigned int k = 0; k <= splineOrder; k++)
         {
           // btw - Think about this couldn't this be replaced with a more elagent modulus method?
-          evaluateIndex[k][n] = (evaluateIndex[k][n] < 0L) ? (-evaluateIndex[k][n] - dataLength2 * ((-evaluateIndex[k][n]) / dataLength2))
-        : (evaluateIndex[k][n] - dataLength2 * (evaluateIndex[k][n] / dataLength2));
-          if ((long) m_DataLength[n] <= evaluateIndex[k][n])
+          evaluateIndex[n][k] = (evaluateIndex[n][k] < 0L) ? (-evaluateIndex[n][k] - dataLength2 * ((-evaluateIndex[n][k]) / dataLength2))
+        : (evaluateIndex[n][k] - dataLength2 * (evaluateIndex[n][k] / dataLength2));
+          if ((long) m_DataLength[n] <= evaluateIndex[n][k])
         {
-          evaluateIndex[k][n] = dataLength2 - evaluateIndex[k][n];
+          evaluateIndex[n][k] = dataLength2 - evaluateIndex[n][k];
         }
         }
     }  
@@ -286,9 +286,15 @@ void vtkBSplineInterpolateImageFunction::PrintSelf(ostream& os, vtkIndent indent
 
 float vtkBSplineInterpolateImageFunction::EvaluateFunction( float *x )
 {
-  long EvaluateIndex[m_SplineOrder + 1][ImageDimension];
+  //  long EvaluateIndex[m_SplineOrder + 1][ImageDimension];
+  //  double weights[m_SplineOrder + 1][ImageDimension];
+  long * EvaluateIndex[ImageDimension];
+  double * weights[ImageDimension];
   float index[ImageDimension];
-  for ( int i = 0 ; i < ImageDimension ; i++ ) {
+  int i;
+  for ( i = 0 ; i < ImageDimension ; i++ ) {
+    EvaluateIndex[i] = new long[m_SplineOrder + 1];
+    weights[i] = new double[m_SplineOrder + 1];
     index[i] = (x[i] - Origin[i])/Spacing[i];
     if ( index[i] < ((float)Extent[2*i]) || index[i] > ((float)Extent[2*i+1]) ) {
       return 0.0;
@@ -298,7 +304,6 @@ float vtkBSplineInterpolateImageFunction::EvaluateFunction( float *x )
   this->DetermineRegionOfSupport(EvaluateIndex, index, m_SplineOrder); 
   
   // Determine weights
-  double weights[m_SplineOrder + 1][ImageDimension];
   SetInterpolationWeights( index, EvaluateIndex, weights, m_SplineOrder );
 
   // Modify EvaluateIndex at the boundaries using mirror boundary conditions
@@ -316,23 +321,35 @@ float vtkBSplineInterpolateImageFunction::EvaluateFunction( float *x )
     double w = 1.0;
     for (unsigned int n = 0; n < ImageDimension; n++ )
       {
-      w *= weights[ m_PointsToIndex[n][p] ][n];
-      coefficientIndex[n] = EvaluateIndex[m_PointsToIndex[n][p]][n];  // Build up ND index for coefficients.
+      w *= weights[n][ m_PointsToIndex[n][p] ];
+      coefficientIndex[n] = EvaluateIndex[n][m_PointsToIndex[n][p]];  // Build up ND index for coefficients.
       }
       // Convert our step p to the appropriate point in ND space in the
       // m_Coefficients cube.
       interpolated += w * m_Coefficients->GetScalarComponentAsFloat(coefficientIndex[0],coefficientIndex[1],coefficientIndex[2],0);
     }
-    
+  for ( i = 0 ; i < ImageDimension ; i++ ) {
+    delete [] EvaluateIndex[i];
+    delete [] weights[i];
+  }
   return(interpolated);
     
 }
 
 void vtkBSplineInterpolateImageFunction::EvaluateGradient(float *x, float *derivativeValue )
 {
-  long EvaluateIndex[m_SplineOrder + 1][ImageDimension];
+  //  long EvaluateIndex[m_SplineOrder + 1][ImageDimension];
+  //  double weights[m_SplineOrder + 1][ImageDimension];
+  //  double weightsDerivative [m_SplineOrder + 1][ImageDimension];
   float index[3];
-  for ( int i = 0 ; i < ImageDimension ; i++ ) {
+  long * EvaluateIndex[ImageDimension];
+  double * weights[ImageDimension];
+  double * weightsDerivative[ImageDimension];
+  int i;
+  for ( i = 0 ; i < ImageDimension ; i++ ) {
+    EvaluateIndex[i] = new long[m_SplineOrder + 1];
+    weights[i] = new double[m_SplineOrder + 1];
+    weightsDerivative[i]= new double[m_SplineOrder + 1];
     index[i] = (x[i] - Origin[i])/Spacing[i];
     if ( index[i] < Extent[2*i] || index[i] > Extent[2*i+1] )
       return;
@@ -342,10 +359,8 @@ void vtkBSplineInterpolateImageFunction::EvaluateGradient(float *x, float *deriv
   this->DetermineRegionOfSupport(EvaluateIndex, index, m_SplineOrder);
 
   // Determine weights
-  double weights[m_SplineOrder + 1][ImageDimension];
   SetInterpolationWeights( index, EvaluateIndex, weights, m_SplineOrder );
 
-  double weightsDerivative [m_SplineOrder + 1][ImageDimension];
   SetDerivativeWeights( index, EvaluateIndex, weightsDerivative, ( m_SplineOrder ) );
 
   // Modify EvaluateIndex at the boundaries using mirror boundary conditions
@@ -363,21 +378,26 @@ void vtkBSplineInterpolateImageFunction::EvaluateGradient(float *x, float *deriv
       for (unsigned int n1 = 0; n1 < ImageDimension; n1++)
         {
         //coefficientIndex[n1] = EvaluateIndex[n1][sp];
-        coefficientIndex[n1] = EvaluateIndex[m_PointsToIndex[n1][p]][n1];
+        coefficientIndex[n1] = EvaluateIndex[n1][m_PointsToIndex[n1][p]];
 
         if (n1 == n)
           {
           //w *= weights[n][ m_PointsToIndex[p][n] ];
-          tempValue *= weightsDerivative[ m_PointsToIndex[n1][p] ][n1];
+          tempValue *= weightsDerivative[n1][ m_PointsToIndex[n1][p] ];
           }
         else
           {
-          tempValue *= weights[ m_PointsToIndex[n1][p] ][n1];
+          tempValue *= weights[n1][ m_PointsToIndex[n1][p] ];
           }
         }
       derivativeValue[n] += m_Coefficients->GetScalarComponentAsFloat(coefficientIndex[0],coefficientIndex[1],coefficientIndex[2],0) * tempValue ;
       }
     }
+  for ( i = 0 ; i < ImageDimension ; i++ ) {
+    delete [] EvaluateIndex[i];
+    delete [] weights[i];
+    delete [] weightsDerivative[i];
+  }
 }
 
 void vtkBSplineInterpolateImageFunction::SetInput(vtkImageData* dataset) {
