@@ -187,36 +187,38 @@ When satisfied with the segmentation use other editing modules on the labelmap (
 proc EdFastMarchingUserExpand {zero userExpand} {
     global EdFastMarching
 
-    set e EdFastMarching
+    if {$EdFastMarching(fastMarchingInitialized) != 0} {
+        set e EdFastMarching
 
-    set Ed($e,scope)  3D 
-    set Ed($e,input)  Original
-    set Ed($e,interact) Active   
+        set Ed($e,scope)  3D 
+        set Ed($e,input)  Original
+        set Ed($e,interact) Active   
 
-    set v [EditorGetInputID $Ed($e,input)]
+        set v [EditorGetInputID $Ed($e,input)]
 
-    EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
-    Ed(editor)  UseInputOn
-      
-    EdFastMarching(FastMarching) show [expr $userExpand/100.0]
-    
-    Ed(editor)  SetInput ""
-    Ed(editor)  UseInputOff
+        EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
+        Ed(editor)  UseInputOn
+          
+        EdFastMarching(FastMarching) show [expr $userExpand/100.0]
 
-    EdUpdateAfterApplyEffect $v
+        Ed(editor)  SetInput ""
+        Ed(editor)  UseInputOff
+
+        EdUpdateAfterApplyEffect $v
+    }
 }
 
 proc EdFastMarchingExpand {} {
     global EdFastMarching
 
     if {[ValidateInt $EdFastMarching(nExpand)] == 0} {
-    tk_messageBox -message "Expansion is not an integer !"
-    return
+        tk_messageBox -message "Expansion is not an integer !"
+        return
     } 
   
     if { $EdFastMarching(nExpand) <= 0 } {
-    tk_messageBox -message "Expansion is not positive !"
-    return
+        tk_messageBox -message "Expansion is not positive !"
+        return
     }   
 
     EdFastMarching(FastMarching) setNPointsEvolution $EdFastMarching(nExpand)
