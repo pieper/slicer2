@@ -42,7 +42,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2004/12/16 07:09:46 $}]
+        {$Revision: 1.2 $} {$Date: 2004/12/16 19:24:00 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -633,7 +633,7 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     set VolIDOutput [DevCreateNewCopiedVolume $TemplateIDInput "" "RegisteredSPGR"]
 
     # Sylvain register spgr of atlas to patient
-    # Input Volume ID:  VolIDInput 
+    # Input Volume ID:  VolIDInput ,  EMAtlasBrainClassifier(Volume,NormalizedSPGR) or EMAtlasBrainClassifier(Volume,SPGR) 
     # Output Volume ID: VolIDOutput
   
         puts  "Dummy function so we see it works for right now "
