@@ -141,12 +141,11 @@ proc EMSegmentInit {} {
     # LocalPrior = 1
     # MultiDim   = 2
     if {[info exists env(SLICER_USE_LOCAL_ONLY_CODE)] == 0 || $env(SLICER_USE_LOCAL_ONLY_CODE) == "" || $env(SLICER_USE_LOCAL_ONLY_CODE) != 1} {
-    set EMSegment(SegmentMode) 0
+      set EMSegment(SegmentMode) 0
     } else {
-    set EMSegment(SegmentMode) 2
+      set EMSegment(SegmentMode) 2
     } 
     # EMSegment(SegmentMode) == 0 <=> Set all Probabilty maps to none, EMSegment(SegmentMode) == 1
-
     # Soucre EMSegmentAlgorithm.tcl File in sudirectory
     set found [FindNames tcl-modules/EMSegment]
     if {[lsearch $found EMSegmentAlgorithm] > -1} {
@@ -235,7 +234,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2002/05/01 13:35:23 $}]
+        {$Revision: 1.8 $} {$Date: 2002/05/01 14:32:03 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -256,7 +255,7 @@ proc EMSegmentInit {} {
     set EMSegment(SegmenterClassNodeList) ""
     set EMSegment(SegmenterCIMNodeList) ""
 
-    set EMSegment(Debug) 1
+    set EMSegment(Debug) 0
 
     # This is important for multiple Input images
     set EMSegment(AllVolList,ActiveID) -1
@@ -523,9 +522,9 @@ Description of the tabs:
     #-------------------------------------------
     set f $fEM.fStep1
     if {$EMSegment(SegmentMode) < 2} {
-    DevAddLabel $f.l "Step 1: Select Volume to be segmented"
+       DevAddLabel $f.l "Step 1: Select Volume to segment"
     } else {
-    DevAddLabel $f.l "Step 1: Select Volumes to be segmented"
+       DevAddLabel $f.l "Step 1: Select Volumes to semgent"
     }
     pack $f.l -side top -padx $Gui(pad) -pady $Gui(pad)
     
@@ -565,7 +564,7 @@ Description of the tabs:
     # EM->Step2 frame: Set EM Parameters
     #-------------------------------------------
     set f $fEM.fStep2
-    DevAddLabel $f.l "Step 2: Define Segmentation Settings"
+    DevAddLabel $f.l "Step 2: Define Settings"
     pack $f.l -side top -padx $Gui(pad) -pady $Gui(pad)
     frame $f.fCol1 -bg $Gui(activeWorkspace)
     frame $f.fCol2 -bg $Gui(activeWorkspace)
@@ -609,7 +608,7 @@ Description of the tabs:
     frame $f.fDefine -bg $Gui(activeWorkspace) -relief sunken -bd 2 
     frame $f.fProb   -bg $Gui(activeWorkspace) -relief sunken -bd 2 
 
-    pack $f.fClass -side top -padx $Gui(pad) -pady $Gui(pad)
+    pack $f.fClass -side top -padx $Gui(pad) 
     pack $f.fDefine $f.fProb -side top -padx 2 -pady 2 -fill x
 
 
@@ -660,12 +659,12 @@ Description of the tabs:
     DevAddLabel $f.fDefine.fMean.ltxt "Class Mean:"
     frame $f.fDefine.fMean.fvar -bg $Gui(activeWorkspace)
     set EMSegment(EM-fMeanVar) $f.fDefine.fMean.fvar
-    pack  $f.fDefine.fMean.ltxt $f.fDefine.fMean.fvar -side left -padx $Gui(pad) -pady 1    
+    pack  $f.fDefine.fMean.ltxt $f.fDefine.fMean.fvar -side left -padx $Gui(pad) -pady 0    
     # The text in fram fvar will be added at a later point in time 
 
-    DevAddLabel $f.fDefine.lexpltxt "Sample by using Ctrl-Shift-Click on picture"
+    DevAddLabel $f.fDefine.lexpltxt "Use Ctrl-left mouse but. to sample"
     set EMSegment(EM-lexpltxt) $f.fDefine.lexpltxt
-    pack $f.fDefine.lexpltxt -side top -padx $Gui(pad) -pady 2
+    pack $f.fDefine.lexpltxt -side top -padx $Gui(pad) -pady 1
 
     EMSegmentProbWindow $f.fProb EM $Sclass
 
@@ -981,7 +980,7 @@ Description of the tabs:
     foreach p $EMSegment(CIMList) {
             eval {radiobutton $f.fNeighbour.fSelection.f$row.r$p \
             -text "$p" -command "EMSegmentChangeCIMMatrix $p" \
-            -variable EMSegment(CIMType) -value $p -width 7 \
+            -variable EMSegment(CIMType) -value $p -width 6 \
             -indicatoron 0} $Gui(WCA)
         pack $f.fNeighbour.fSelection.f$row.r$p -side left -pady 0
             if { $p == "Up" } {incr row};
@@ -1231,12 +1230,11 @@ Description of the tabs:
 #-------------------------------------------------------------------------------
 proc EMSegmentProbWindow {f Panel Sclass} {
     global EMSegment Gui
-    if {$Panel == "EM"} {
-    set lProbText "Probability:"
-    set Xoff 2
-    set Yoff 2
-    } else {
     set lProbText "Prob.:"
+    if {$Panel == "EM"} {
+    set Xoff 2
+    set Yoff 1
+    } else {
     set Xoff 0
     set Yoff 0
     }
@@ -1405,7 +1403,7 @@ proc EMSegmentUpdateMRML {} {
         set EMSegment(SegmenterGraphNodeList) ""
         set EMSegment(SegmenterInputNodeList) ""
         set EMSegment(SegmenterClassNodeList) ""
-    set EMSegment(SegmenterCIMNodeList) ""
+        set EMSegment(SegmenterCIMNodeList) ""
         EMSegmentDeleteFromSelList $EMSegment(SelVolList,VolumeList)
         # --------------------------------------------------
         # 3.) Update variables 
@@ -1735,6 +1733,52 @@ proc EMSegmentStartEM { } {
    # Update MRML Tree
    EMSegmentSaveSetting 0
 
+   #----------------------------------------------------------------------------
+   # Transfering Specific information for each Module
+   #----------------------------------------------------------------------------
+   if {$EMSegment(SegmentMode) > 0} {
+       # EMLocalSegmentation: Multiple Input Images
+       vtkImageEMLocalSegmenter EMStart 
+       # How many input images do you have
+       EMStart SetNumInputImages $EMSegment(NumInputChannel) 
+       EMStart SetNumClasses $EMSegment(NumClasses)  
+       for {set i 1} { $i<= $EMSegment(NumClasses)} {incr i} {
+       EMStart SetTissueProbability $EMSegment(Cattrib,$i,Prob) $i
+       } 
+       EMStart SetNumberOfTrainingSamples $EMSegment(NumberOfTrainingSamples)
+       # Transefer probability map
+       set NumInputImagesSet 0
+       set i 0
+       while {$i< $EMSegment(NumClasses)} {
+       incr i
+       if {$EMSegment(Cattrib,$i,ProbabilityData) != $Volume(idNone)} {
+           EMStart SetUseLocalPrior 1 $i
+           EMStart SetInputIndex $NumInputImagesSet [Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) GetOutput]
+           incr NumInputImagesSet
+       } else {
+          EMStart SetUseLocalPrior 0 $i 
+       }
+       }
+       # Transfer image information
+       foreach v $EMSegment(SelVolList,VolumeList) {       
+       EMStart SetInputIndex $NumInputImagesSet [Volume($v,vol) GetOutput]
+       incr NumInputImagesSet
+       }
+   } else {
+       # EM Specific Information - Simple EM Algorithm
+       vtkImageEMSegmenter EMStart    
+       EMStart SetNumClasses      $EMSegment(NumClasses)  
+
+       EMStart SetImgTestNo       $EMSegment(ImgTestNo)
+       EMStart SetImgTestDivision $EMSegment(ImgTestDivision)
+       EMStart SetImgTestPixel    $EMSegment(ImgTestPixel)
+       for {set i 1} { $i<= $EMSegment(NumClasses)} {incr i} {
+       EMStart SetProbability  $EMSegment(Cattrib,$i,Prob) $i
+       }
+       # Transfer image information
+       EMStart SetInput [Volume([lindex $EMSegment(SelVolList,VolumeList) 0],vol) GetOutput]
+   }
+
    # ----------------------------------------------
    # 3. Call Algorithm
    # ----------------------------------------------
@@ -1910,30 +1954,30 @@ proc EMSegmentDisplayClassDefinition {} {
 proc EMSegmentUseSamples {change} {
     global EMSegment Gui
     if {$EMSegment(UseSamples) == 1} {
-    TooltipAdd $EMSegment(Cl-cSample) "Press button to manually enter Mean and Covariance."
-    for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} { 
-        $EMSegment(Cl-fLogMeanVar).e$y configure -state disabled
-        $EMSegment(EM-fMeanVar).e$y configure -fg $Gui(textDark)
-        for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} { 
-        $EMSegment(Cl-fLogCovVar).fLine$y.e$x configure -state disabled
-        }
-    }
-    $EMSegment(Cl-mbEraseSample) configure -state normal
-    $EMSegment(EM-lSampvar)      configure -fg $Gui(textDark)
-    $EMSegment(EM-lexpltxt)      configure -fg $Gui(textDark)
-    if {$change == 1} {EMSegmentCalculateClassMeanCovariance}
+        TooltipAdd $EMSegment(Cl-cSample) "Press button to manually enter Mean and Covariance."
+        for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} { 
+           $EMSegment(Cl-fLogMeanVar).e$y configure -state disabled
+           $EMSegment(EM-fMeanVar).e$y configure -fg $Gui(textDark)
+           for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} { 
+             $EMSegment(Cl-fLogCovVar).fLine$y.e$x configure -state disabled
+           }
+        }  
+        $EMSegment(Cl-mbEraseSample) configure -state normal
+        $EMSegment(EM-lSampvar)      configure -fg $Gui(textDark)
+        $EMSegment(EM-lexpltxt)      configure -fg $Gui(textDark)
+        if {$change == 1} {EMSegmentCalculateClassMeanCovariance}
     } else {
-    TooltipAdd $EMSegment(Cl-cSample) "Press button to use samples for the calucation of Mean and Covariance"
-    for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {  
-        $EMSegment(Cl-fLogMeanVar).e$y configure -state normal
-        $EMSegment(EM-fMeanVar).e$y configure -fg $Gui(textDisabled)
-        for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} {  
-        $EMSegment(Cl-fLogCovVar).fLine$y.e$x configure -state normal
-        }
-    }
-    $EMSegment(Cl-mbEraseSample) configure -state disabled
-    $EMSegment(EM-lSampvar)      configure -fg $Gui(textDisabled)
-    $EMSegment(EM-lexpltxt)      configure -fg $Gui(textDisabled)
+       TooltipAdd $EMSegment(Cl-cSample) "Press button to use samples for the calucation of Mean and Covariance"
+       for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {  
+          $EMSegment(Cl-fLogMeanVar).e$y configure -state normal
+          $EMSegment(EM-fMeanVar).e$y configure -fg $Gui(textDisabled)
+          for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} {  
+             $EMSegment(Cl-fLogCovVar).fLine$y.e$x configure -state normal
+          }
+       }
+       $EMSegment(Cl-mbEraseSample) configure -state disabled
+       $EMSegment(EM-lSampvar)      configure -fg $Gui(textDisabled)
+       $EMSegment(EM-lexpltxt)      configure -fg $Gui(textDisabled)
     }
 }
 
@@ -1948,6 +1992,10 @@ proc EMSegmentChangeClass {i} {
     global EMSegment
 
     EMSegmentCalculateClassMeanCovariance
+    if {$EMSegment(UseSamples) == 1} {
+        set EMSegment(UseSamples) 0
+        EMSegmentUseSamples 1   
+    } 
     set EMSegment(Cattrib,$EMSegment(Class),ProbabilityData) $EMSegment(ProbVolumeSelect)
 
     # Delete old Sample entries of the new class
@@ -1979,12 +2027,12 @@ proc EMSegmentChangeClass {i} {
 
     # Define new Sample list 
     if { $EMSegment(NumInputChannel) } {
-    set v [lindex $EMSegment(SelVolList,VolumeList) 0] 
-    set index 1
-    foreach line $EMSegment(Cattrib,$Sclass,$v,Sample) {
-        $EMSegment(Cl-mEraseSample) add command -label "[format "%3d %3d %3d" [lindex $line 0] [lindex $line 1] [lindex $line 2]]" -command "EMSegmentEraseSample $index"
-        incr index
-    }
+       set v [lindex $EMSegment(SelVolList,VolumeList) 0] 
+       set index 1
+       foreach line $EMSegment(Cattrib,$Sclass,$v,Sample) {
+           $EMSegment(Cl-mEraseSample) add command -label "[format "%3d %3d %3d" [lindex $line 0] [lindex $line 1] [lindex $line 2]]" -command "EMSegmentEraseSample $index"
+           incr index
+       }
     }
     # Display new class
     EMSegmentDisplayClassDefinition
@@ -5147,6 +5195,7 @@ proc EMSegmentDebug { } {
     # set EMSegment(FileCIM) mrf/simon/brainCase3_7_stg_c2_nonr-V2.mrf
     # set EMSegment(FileCIM) mrf/simon/brainCase19_6_stg_c2.mrf
     # set EMSegment(FileCIM) mrf/simon/brainCase3_7_am_c2.mrf
+    set EMSegment(FileCIM) mrf/simon/brainCase3_7_stg_c2v3.mrf
     # set EMSegment(FileCIM) mrf/simon/brainCase3_9_am_para_c2.mrf
     # set EMSegment(FileCIM) mrf/simon/brainCase3_7_hip_c2.mrf
     # set EMSegment(FileCIM) mrf/simon/brainCase3_9c2.mrf
