@@ -66,12 +66,13 @@ vtkDCMParser \
 vtkMrmlPathNode \
 vtkMrmlEndPathNode \
 vtkMrmlLandmarkNode \
-vtkImageMeasureVoxels 
+vtkImageMeasureVoxels \
+vtkImageNeighborhoodFilter 
 
 #vtkImageSimpleEdge \
 #vtkImageLiveWire \
 #vtkImageLiveWireTester \
-#vtkImageNeighborhoodFilter \
+
 #vtkImageLiveWireEdgeWeights
 
 #vtkSurfaceProps \
