@@ -8,15 +8,15 @@ some difficulty.
 <h4>System Requirements</h4>
 <ul>
 <li><b>Memory</b>:  Minimum: 128 MB.
-<li><b>Disk Space</b>: tbd MB to download the installer, which expands to about tbd MB. The tutorial data set requires 37 MB.
+<li><b>Disk Space</b>: 35 MB to download the installer, which expands to about 140 MB. The tutorial data set requires 37 MB.
 <li><b>Processor Speed</b>: Has run successfully on a 450-MHz machine; a faster processor speed is recommended.
 </ul>
 
 
 <h3>Installation Steps</h3>
 
-Replace <code>slicer</code> in the following instructions with the correct version, 
-for example, <code>slicer-1.3.0</code>.
+Replace <code>slicer</code> in the following instructions with the correct version, operating system designation, and date, 
+for example, <code>slicer2.4-solaris-sparc-2005-01-11</code>.
 
 
 <ol>
@@ -31,36 +31,23 @@ click <a href='index.html#1'>here</a>.)
 
 <br>&nbsp;<li>
 At a shell prompt, type the following commands to uncompress the file and create a 
-<code>slicer</code> directory:
+<code>slicer2</code> directory:
 <pre></pre>
 <p class=code>gunzip slicer.tar.gz<br>
 tar xf slicer.tar</p>
 
 <br>&nbsp;<li>
-Edit the <code>slicer</code> file to set the <code>SLICER_HOME</code> environment variable
-to point to the directory where the <code>slicer</code> directory is installed.
+The <code>slicer2/slicer_variables.tcl</code> file automatically sets up the <code>SLICER_HOME</code> environment variable
+to point to the directory where the <code>slicer2</code> directory is installed.
 
 <br>&nbsp;<li>
-Move the <code>slicer</code> file to a directory that is in every user's <code>PATH</code>
-environment variable. For example, this may be <code>/user/local/bin</code>.
-
-<br>&nbsp;<li>
-Repeat steps 3 and 4 with the following scripts from the <code>slicer</code> directory:
-<ul>
-<li><code>mrmlize</code>
-<li><code>printmrml</code>
-</ul>
-If you will be contributing to the development of Slicer, then also
-repeat steps 3 and 4 with these scripts:
-<ul>
-<li><code>comment</code>
-<li><code>document</code>
-</ul>
+Move the <code>slicer2</code> directory into a shared system directory that every user can access. Create a symbolic link from a directory that is in every user's <code>PATH</code>
+environment variable to <code>slicer2/slicer2-solaris-sparc</code>. For example, this may be <code>/user/local/bin</code>.
 
 <br>&nbsp;<li>
 Launch Slicer by typing the following command at a shell prompt:
 <pre></pre>
-<p class=code>slicer</p>
+<p class=code>slicer2-solaris-sparc</p>
 </ol>
 
 <!---------------------------------- FAQ ------------------------------------->
@@ -72,7 +59,7 @@ Launch Slicer by typing the following command at a shell prompt:
 <tr>
 <td class=box0>
     <div class=q>How can I load an existing data set?</div>
-    <div class=a>At the shell prompt, type <b>slicer</b> followed by the name of your MRML file.</div>
+    <div class=a>At the shell prompt, type <b>slicer2-solaris-sparc</b> followed by the name of your MRML file.</div>
 </td>
 </tr>
 <tr>
