@@ -165,121 +165,6 @@ vtkFloatingPointType vtkConvexHullInexact::DistanceFromConvexHull(vtkFloatingPoi
   return result;
 }
 
-// computing the set of extremal points by intersecting all combinations of halfspaces
-// since the halfspaces (ConvexHull[i][0],ConvexHull[i][1]) and (ConvexHull[i][0],ConvexHull[i][2])
-// are parallel, we don't have to test them.
-void vtkConvexHullInexact::UpdateExtremalPoints()
-{
-  // reset the index-counting array
-  for(int i=0;i<2*NumberNormals;i++)
-    PolygonPointCounter[i] = 0;
-
-  vtkPoints* result = vtkPoints::New();
-  double** IntersectionProblem = (double**)malloc(Dimension*sizeof(double*));
-  for(int i = 0;i<Dimension;i++)
-    IntersectionProblem[i] = (double*)malloc(Dimension*sizeof(double));
-
-  double* LoadVector = (double*)malloc(Dimension*sizeof(double));
-  vtkFloatingPointType* Solution = (vtkFloatingPointType*)malloc(Dimension*sizeof(vtkFloatingPointType));
-  for(int i=0;i<2*NumberNormals;i++)
-    {
-      vtkFloatingPointType* normal_i = ConvexHull[i/2][0];
-      vtkFloatingPointType p_i = vtkMath::Dot(normal_i,ConvexHull[i/2][1 + (i%2)]);
-      for(int j=i+1;j<2*NumberNormals;j++)
-    {
-      if(i/2 == j/2) continue;
-      vtkFloatingPointType* normal_j = ConvexHull[j/2][0];
-      vtkFloatingPointType p_j = vtkMath::Dot(normal_j,ConvexHull[j/2][1 + (j%2)]);
-      for(int k=j+1;k<2*NumberNormals;k++)
-        {
-          if(j/2 == k/2) continue;
-          vtkFloatingPointType* normal_k = ConvexHull[k/2][0];
-          vtkFloatingPointType p_k = vtkMath::Dot(normal_k,ConvexHull[k/2][1 + (k%2)]);
-          IntersectionProblem[0][0]=normal_i[0];
-          IntersectionProblem[0][1]=normal_i[1];
-          IntersectionProblem[0][2]=normal_i[2];
-
-          IntersectionProblem[1][0]=normal_j[0];
-          IntersectionProblem[1][1]=normal_j[1];
-          IntersectionProblem[1][2]=normal_j[2];
-
-          IntersectionProblem[2][0]=normal_k[0];
-          IntersectionProblem[2][1]=normal_k[1];
-          IntersectionProblem[2][2]=normal_k[2];
-          
-          LoadVector[0] = p_i;
-          LoadVector[1] = p_j;
-          LoadVector[2] = p_k;
-
-          if(vtkMath::SolveLinearSystem(IntersectionProblem,LoadVector,3)!=0 )
-        {
-          Solution[0] = (vtkFloatingPointType) LoadVector[0];
-          Solution[1] = (vtkFloatingPointType) LoadVector[1];
-          Solution[2] = (vtkFloatingPointType) LoadVector[2];
-          if(Inside(Solution)) // == is part of the convex hull
-            {
-              // assert that it is not already inside
-              bool AlreadyInserted = false;
-              for(vtkIdType q= 0;q<result->GetNumberOfPoints();q++)
-            {
-              if(vtkMath::Distance2BetweenPoints(result->GetPoint(q),Solution)<1)
-                {
-                  AlreadyInserted= true;
-                  InsertPolygonPoint(i,q);
-                  InsertPolygonPoint(j,q);
-                  InsertPolygonPoint(k,q);
-                }
-            }
-              if(!AlreadyInserted)
-            {
-              vtkIdType id = result->InsertNextPoint(Solution[0],Solution[1],Solution[2]);
-              InsertPolygonPoint(i,id);
-              InsertPolygonPoint(j,id);
-              InsertPolygonPoint(k,id);
-            }
-            }
-        }
-        }
-    }
-    }
-
-  free(LoadVector);
-  free(Solution);
-  for(int i =0;i<Dimension;i++)
-    free(IntersectionProblem[i]);
-  free(IntersectionProblem);
-  
-  if(Extremals!=NULL)
-    Extremals->Delete();
-  Extremals = result;
-}
-
-// brute force approach: insert every possible triangle. A more sophisticated approach
-// would be to use something like angle sorting used in Grahams Scan in order to come
-// up with a clockwise sorting of the points. At the moment that approach looks like 
-// an overkill.
-void vtkConvexHullInexact::Polygonize(vtkPolyData* output)
-{
-  output->SetPoints(Extremals);
-  vtkCellArray* cells = vtkCellArray::New();
-  for(int i=0;i<2*NumberNormals;i++)
-    {
-      if(PolygonPointCounter[i]<3) 
-    continue;
-      for(int k=0;k<PolygonPointCounter[i];k++)
-    for(int m=k+1;m<PolygonPointCounter[i];m++)
-      for(int n=m+1;n<PolygonPointCounter[i];n++)
-        {
-          cells->InsertNextCell(3);
-          cells->InsertCellPoint(PolygonPoints[i][k]);
-          cells->InsertCellPoint(PolygonPoints[i][m]);
-          cells->InsertCellPoint(PolygonPoints[i][n]);
-        }
-    }
-  output->SetPolys(cells);
-}
-
-
 void vtkConvexHullInexact::UpdateConvexHull(vtkPoints* v)
 {
   if(v->GetNumberOfPoints()==0) return;
@@ -322,15 +207,21 @@ void vtkConvexHullInexact::UpdateConvexHull(vtkPoints* v)
     }
 }
 
-
 void vtkConvexHullInexact::Execute()
 {
   vtkPolyData *input = (vtkPolyData *)this->Inputs[0];
   vtkPolyData *output = this->GetOutput();
-  
+
   UpdateConvexHull(input->GetPoints());
-  UpdateExtremalPoints();
-  Polygonize(output);
+
+  GeometricRepresentation->SetInput(GetInput());
+  GeometricRepresentation->Update();
+
+  output->SetPoints(GeometricRepresentation->GetOutput()->GetPoints());
+  output->SetStrips(((vtkPolyData*)GeometricRepresentation->GetOutput())->GetStrips());
+  output->SetLines(((vtkPolyData*)GeometricRepresentation->GetOutput())->GetLines());
+  output->SetVerts(((vtkPolyData*)GeometricRepresentation->GetOutput())->GetVerts());
+  output->SetPolys(((vtkPolyData*)GeometricRepresentation->GetOutput())->GetPolys());
 }
 
 
@@ -360,19 +251,16 @@ void vtkConvexHullInexact::PrintSelf()
 vtkConvexHullInexact::vtkConvexHullInexact()
 {
   ConvexHull = NULL;
-  Extremals = NULL;
-  PolygonPoints = NULL;
-  PolygonPointCounter = NULL;
   Dimension = 3;
   NumberNormals=-1;
   Granularity= -1;
+
+  GeometricRepresentation = vtkHull::New();
   SetGranularity(2);
 }
 
 vtkConvexHullInexact::~vtkConvexHullInexact()
 {
-  if(Extremals != NULL)
-    Extremals->Delete();
   if(ConvexHull!=NULL)
     {
       for(int i = 0;i<NumberNormals;i++)
@@ -384,15 +272,7 @@ vtkConvexHullInexact::~vtkConvexHullInexact()
       free(ConvexHull);
     }
 
-  if(PolygonPointCounter!=NULL)
-    free(PolygonPointCounter);
-
-  if(PolygonPoints!=NULL)
-    {
-      for(int i=0;i< 2*NumberNormals;i++)
-    free(PolygonPoints[i]);
-      free(PolygonPoints);
-    }
+  GeometricRepresentation->Delete();
 }
 
 vtkConvexHullInexact::vtkConvexHullInexact(vtkConvexHullInexact&)
@@ -448,6 +328,8 @@ void vtkConvexHullInexact::SetGranularity(int newGranularity)
 
   Granularity = newGranularity;
 
+  GeometricRepresentation->RemoveAllPlanes();
+
   // free the current memory
   if(ConvexHull!=NULL)
     {
@@ -460,25 +342,8 @@ void vtkConvexHullInexact::SetGranularity(int newGranularity)
       free(ConvexHull);
     }
 
-  if(PolygonPointCounter!=NULL)
-    free(PolygonPointCounter);
-
-  if(PolygonPoints!=NULL)
-    {
-      for(int i=0;i< 2*NumberNormals;i++)
-    free(PolygonPoints[i]);
-      free(PolygonPoints);
-    }
-
   // compute new count of normals
   NumberNormals = ((int)pow(2*Granularity +1,Dimension) - (int)pow(2*Granularity -1, Dimension)) / 2;
-
-  // allocate new memory
-  PolygonPointCounter = (int*)malloc(NumberNormals*2*sizeof(int));
-  PolygonPoints = (vtkIdType**)malloc(NumberNormals*2*sizeof(vtkIdType*));
-  for(int i =0;i< NumberNormals*2;i++)
-    PolygonPoints[i] = (vtkIdType*)malloc(NumberNormals*sizeof(vtkIdType));
-
 
   ConvexHull = (vtkFloatingPointType***) malloc(NumberNormals*sizeof(vtkFloatingPointType**));
   for(int i =0;i<NumberNormals;i++)
@@ -504,7 +369,8 @@ void vtkConvexHullInexact::SetGranularity(int newGranularity)
       NextNormal(n);
       if(LexPositive(n) && AtLeastOneNeighbourDistEntry(n))
     {
-      
+      GeometricRepresentation->AddPlane(n[0],n[1],n[2]);
+      GeometricRepresentation->AddPlane(-n[0],-n[1],-n[2]);
       for(int j=0;j< Dimension;j++)
         ConvexHull[i][0][j] = n[j];
       vtkMath::Normalize(ConvexHull[i][0]);
@@ -513,15 +379,6 @@ void vtkConvexHullInexact::SetGranularity(int newGranularity)
     }
   
   free(n);
-
+  
   Modified();
-}
-
-void vtkConvexHullInexact::InsertPolygonPoint(int i,vtkIdType idPoint)
-{
-  // ensure that we don't insert a point twice
-  for(int j=0;j<PolygonPointCounter[i];j++)
-    if(PolygonPoints[i][j]==idPoint)
-      return;
-  PolygonPoints[i][PolygonPointCounter[i]++] = idPoint;
 }

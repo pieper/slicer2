@@ -38,6 +38,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <vtkPolyDataToPolyDataFilter.h>
 #include <vtkPoints.h>
 #include <vtkSetGet.h>
+#include <vtkHull.h>
 //---------------------------------------------------------
 // Author: Axel Krauth
 //
@@ -92,15 +93,9 @@ class VTK_MORPHOMETRICS_EXPORT vtkConvexHullInexact : public vtkPolyDataToPolyDa
   // the _real_ internal representation of the convex hull.
   // its size is 3*((2*Granularity +1)^Dimension - (2*Granularity-1)^Dimension)
   vtkFloatingPointType*** ConvexHull;
-  
-  // Extremal points of the convex hull. Their convex combination is the convex hull
-  vtkPoints* Extremals;
 
   //  Compute ConvexHull for the given set of points
   void UpdateConvexHull(vtkPoints*);
-
-  // Derive the sets of extremal points from ConvexHull
-  void UpdateExtremalPoints(void);
 
   // Convenience function. Returns true iff
   // at least one entry of n equals Granularity or -Granularity
@@ -115,20 +110,8 @@ class VTK_MORPHOMETRICS_EXPORT vtkConvexHullInexact : public vtkPolyDataToPolyDa
   // and LexPositive
   void NextNormal(vtkFloatingPointType* n);
 
-  // Update the argument polydata to be a visualization
-  // of the convex hull
-  void Polygonize(vtkPolyData*);
-
-
-  // Convenience function for inserting a point into
-  // PolygonPoints
-  void InsertPolygonPoint(int i,vtkIdType idPoint);
-
-  // Array for bookkeeping which extremal points form a polygon
-  vtkIdType** PolygonPoints;
-
-  // Indexarray for PolygonPoints
-  int* PolygonPointCounter;
+  // Visualization of convex hull
+  vtkHull* GeometricRepresentation;
 };
 
 #endif
