@@ -19,17 +19,17 @@ viewer SetColorLevel 360
 #make interface
 source [file join [file dirname [info script]] WindowLevelInterface.tcl]
 
-puts [stats GetQuartile1]
-puts [stats GetMedian   ]
-puts [stats GetQuartile3]
-puts [stats GetQuintile1]
-puts [stats GetQuintile2]
-puts [stats GetQuintile3]
-puts [stats GetQuintile4]
-puts [stats GetAverage  ]
-puts [stats GetStdev    ]
-puts [stats GetMax      ]
-puts [stats GetMin      ]
+#puts [stats GetQuartile1]
+#puts [stats GetMedian   ]
+#puts [stats GetQuartile3]
+#puts [stats GetQuintile1]
+#puts [stats GetQuintile2]
+#puts [stats GetQuintile3]
+#puts [stats GetQuintile4]
+#puts [stats GetAverage  ]
+#puts [stats GetStdev    ]
+#puts [stats GetMax      ]
+#puts [stats GetMin      ]
 
 
 if {[stats GetQuartile1] != 96  } {error "Didn't get right answer:Quartile1" }
