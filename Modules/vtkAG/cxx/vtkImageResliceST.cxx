@@ -893,7 +893,7 @@ static void vtkImageResliceSTExecute(vtkImageResliceST *self,
                      int outExt[6], int id)
 {
 
-  int numscalars, outvoxzero;
+  int numscalars; //, outvoxzero;
   int idX, idY, idZ;
   int outIncX, outIncY, outIncZ;
   int inExt[6], inInc[3];
@@ -967,7 +967,7 @@ static void vtkImageResliceSTExecute(vtkImageResliceST *self,
   float *tTemp;
   float s; float c;
   float Pn2[3];
-  float test[6];
+//  float test[6];
   // Loop through output pixels
   for (idZ = outExt[4]; idZ <= outExt[5]; idZ++)
     {

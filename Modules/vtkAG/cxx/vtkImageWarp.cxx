@@ -272,7 +272,7 @@ static void vtkImageWarpSSDExecute2(vtkImageData* t,T1* tptr,
     mptr=(unsigned char*)(m->GetScalarPointerForExtent(ext));
     }
 
-  int weight[5];
+//  int weight[5];
   int comp=t->GetNumberOfScalarComponents();
   
   double ssd=0;
