@@ -5,12 +5,13 @@ First, obtain the VTK (Visualization Toolkit) source code.  It can be downloaded
 <a href="http://www.kitware.com/vtk.html" target="Resource Window">Kitware</a>.
 
 <p> The code that Slicer adds to VTK is found in the directory slicer/vtksrc.  
-In order to compile this code with VTK, copy all files from this directory to 
+In order to compile this code with VTK, copy all files from this directory into 
 the vtk/local directory. (This is the directory provided by Kitware for local development.)
 
 <p> Configure and make VTK.  
 (<a href="http://dev.scriptics.com/software/tcltk/" target="Resource Window">Tcl and Tk</a>
 should already be installed on your machine before you do this.)
-Run configure with the options  
---with-tcl --with-tkwidget --with-patented --with-local --with-shared (plus any others you want to add).
+Run configure with the following options, plus any others you want to add.
+<pre><p class=code>./configure --with-tcl --with-tkwidget --with-patented --with-local --with-shared</p></pre>
 Additional information can be found in the README.html file in the vtk directory.
+(Note that after you build vtk, the executable can be found in the vtk/tcl directory.)
