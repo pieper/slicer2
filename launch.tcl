@@ -310,7 +310,7 @@ proc file_event {fp} {
         set END 1
     } else {
         gets $fp line
-        catch "puts stderr $line"
+        catch "puts $line"
     }
 }
 
