@@ -177,8 +177,8 @@ vtkMrmlVolumeNode::~vtkMrmlVolumeNode()
   }
   if (this->FullPrefix)
   {
-    delete [] this->FilePrefix;
-    this->FilePrefix = NULL;
+    delete [] this->FullPrefix;
+    this->FullPrefix = NULL;
   }
   if (this->ScanOrder)
   {
@@ -236,8 +236,7 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
   if(this->GetNumberOfDICOMFiles() == 0)
   {
       sprintf(CheckVolumeFile,this->FilePattern,this->FullPrefix,this->ImageRange[0]);
-      cerr << "vtkMrmlVolumeNode: checking for existence of first volume file: " << CheckVolumeFile
-           << "\n\tfile prefix = " << this->FilePrefix << "\n\tfull prefix = " << this->FullPrefix << endl;
+      vtkDebugMacro(<< "vtkMrmlVolumeNode: checking for existence of first volume file:\n " << CheckVolumeFile << "\n\tfile prefix = " << this->FilePrefix << "\n\tfull prefix = " << this->FullPrefix << endl);
       
       FILE *file = fopen(CheckVolumeFile,"r"); 
       if ( file == NULL) {
@@ -250,7 +249,7 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
   else
   {
       sprintf(CheckVolumeFile,this->GetDICOMFileName(0));
-      cerr <<  "vtkMrmlVolumeNode: NOT checking for existence of first DICOM volume file: " << CheckVolumeFile << endl;
+      vtkDebugMacro(<<  "vtkMrmlVolumeNode:\n NOT checking for existence of first DICOM volume file:\n" << CheckVolumeFile);
   }
   vtkIndent i1(nIndent);
   of << i1 << "<Volume";
@@ -342,7 +341,10 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
   {
     of << " colorLUT='" << this->LUTName << "'";
   }
-
+  if (this->FullPrefix && strcmp(this->FullPrefix, "")) 
+  {
+    of << " fullPrefix='" << this->FullPrefix << "'";
+  }
   // Numbers
   char *scalarType = this->GetScalarTypeAsString();
   if (strcmp(scalarType, "Short")) 
@@ -630,6 +632,9 @@ void vtkMrmlVolumeNode::PrintSelf(ostream& os, vtkIndent indent)
     (this->ScanOrder ? this->ScanOrder : "(none)") << "\n";
   os << indent << "LUTName: " <<
     (this->LUTName ? this->LUTName : "(none)") << "\n";
+  os << indent << "FullPrefix: " <<
+    (this->FullPrefix ? this->FullPrefix : "(none)") << "\n";
+
 
   os << indent << "LabelMap:          " << this->LabelMap << "\n";
   os << indent << "LittleEndian:      " << this->LittleEndian << "\n";
