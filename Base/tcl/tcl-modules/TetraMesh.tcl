@@ -85,6 +85,10 @@ proc TetraMeshInit {} {
         set Module($m,row1Name) "{Help} {Surfaces} {Edges} {View}"
 	set Module($m,row1,tab) Surface
 
+	set Module($m,row2List) "SField VField"
+        set Module($m,row2Name) "{Scalar Field} {Vector Field}"
+	set Module($m,row2,tab) SField
+
 	# Define Procedures
 	#------------------------------------
 	# Description:
@@ -138,7 +142,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.9 $} {$Date: 2001/02/19 17:53:32 $}]
+		{$Revision: 1.10 $} {$Date: 2001/03/04 04:04:12 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -155,6 +159,8 @@ proc TetraMeshInit {} {
         set TetraMesh(DefaultDir) ""
             ## Tube Radius of edges
         set TetraMesh(TetraTubeRadius) 0.01
+        set TetraMesh(ArrowScale) 9.5
+        set TetraMesh(ArrowSkip) 2
 }
 
 
@@ -185,6 +191,16 @@ proc TetraMeshBuildGUI {} {
         #   Bottom
         # Edges
 	#   Top
+	#   Alignment
+        #   Bottom
+        # View
+        #   Top
+        #   Bottom
+        # SField 
+        # Vfield
+	#   Top
+        #   Scale
+        #   Skip
 	#   Alignment
         #   Bottom
 	#-------------------------------------------
@@ -397,6 +413,146 @@ constrains of at least one clipping plane.\n"} $Gui(WLA)
                 } $Gui(WCA) 
         grid $f.r$p -padx 0 -pady 0
     }
+
+
+	#-------------------------------------------
+	# SField frame
+	#-------------------------------------------
+	set fSField $Module(TetraMesh,fSField)
+	set f $fSField
+
+	foreach frame "Top Middle Alignment Bottom" {
+		frame $f.f$frame -bg $Gui(activeWorkspace)
+		pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+	}
+
+	#-------------------------------------------
+	# SField->Top frame
+	#-------------------------------------------
+	set f $fSField.fTop
+
+	frame $f.f -bg $Gui(activeWorkspace)
+	pack $f.f -side top -pady $Gui(pad)
+
+        DevAddFileBrowse $f.f TetraMesh FileName "Tetrahedral Mesh:" "TetraMeshFileNameEntered" "vtk"\
+                "\$TetraMesh(DefaultDir)" "Browse for a Tetrahedral Mesh"
+
+	set f $fSField.fTop.fBaseName
+
+	frame $f  -bg $Gui(activeWorkspace) 
+        pack $f -side top -padx 0 -pady $Gui(pad) -fill x
+
+        DevAddLabel  $f.l "Model Base Name"
+	eval {entry $f.eModelName -textvariable TetraMesh(modelbasename) -width 50} $Gui(WEA)
+        
+        pack $f.l $f.eModelName -side left -padx $Gui(pad)
+
+	#-------------------------------------------
+	# SField->Alignment frame
+	#-------------------------------------------
+	set f $fSField.fAlignment
+
+        DevAddSelectButton TetraMesh $f AlignmentVolume "Alignment Volume(Optional)" Pack
+
+        lappend Volume(mbActiveList) $f.mbAlignmentVolume
+        lappend Volume(mActiveList)  $f.mbAlignmentVolume.m
+
+	#-------------------------------------------
+	# SField->Bottom frame
+	#-------------------------------------------
+	set f $fSField.fBottom
+
+#	eval {label $f.lSField -text "You clicked 0 times."} $Gui(WLA)
+#        pack $f.lSField -side top -padx $Gui(pad) -fill x
+#	set TetraMesh(lSField) $f.lSField
+
+        DevAddButton $f.bGo Process TetraMeshProcessSurface
+
+        # Tooltip example: Add a tooltip for the button
+        TooltipAdd $f.bGo "Press this button to start Processing the Mesh into its Scalar Fields"
+
+	pack $f.bGo  -side top -padx $Gui(pad) -pady $Gui(pad)
+
+
+	#-------------------------------------------
+	# VField frame
+	#-------------------------------------------
+	set fVField $Module(TetraMesh,fVField)
+	set f $fVField
+
+	foreach frame "Top Middle Scale Skip Alignment Bottom" {
+		frame $f.f$frame -bg $Gui(activeWorkspace)
+		pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+	}
+
+	#-------------------------------------------
+	# VField->Top frame
+	#-------------------------------------------
+	set f $fVField.fTop
+
+	frame $f.f -bg $Gui(activeWorkspace)
+	pack $f.f -side top -pady $Gui(pad)
+
+        DevAddFileBrowse $f.f TetraMesh FileName "Tetrahedral Mesh:" "TetraMeshFileNameEntered" "vtk"\
+                "\$TetraMesh(DefaultDir)" "Browse for a Tetrahedral Mesh"
+
+	set f $fVField.fTop.fBaseName
+
+	frame $f  -bg $Gui(activeWorkspace) 
+        pack $f -side top -padx 0 -pady $Gui(pad) -fill x
+
+        DevAddLabel  $f.l "Model Base Name"
+	eval {entry $f.eModelName -textvariable TetraMesh(modelbasename) -width 50} $Gui(WEA)
+
+       pack $f.l $f.eModelName -side left -padx $Gui(pad)
+
+
+	#-------------------------------------------
+	# VField->Scale
+	#-------------------------------------------
+        set f $fVField.fScale
+
+        DevAddLabel  $f.lArrowScale "Arrow Scaling"
+	eval {entry $f.eArrowScale -textvariable TetraMesh(ArrowScale) -width 5} $Gui(WEA)
+
+        pack $f.lArrowScale $f.eArrowScale -side left -padx $Gui(pad)
+
+	#-------------------------------------------
+	# VField->Skip
+	#-------------------------------------------
+
+        set f $fVField.fSkip
+
+        DevAddLabel  $f.lArrowSkip "Keep Every Nth Arrow:"
+	eval {entry $f.eArrowSkip -textvariable TetraMesh(ArrowSkip) -width 5} $Gui(WEA)
+
+        pack $f.lArrowSkip $f.eArrowSkip -side left -padx $Gui(pad)
+
+	#-------------------------------------------
+	# VField->Alignment frame
+	#-------------------------------------------
+	set f $fVField.fAlignment
+
+        DevAddSelectButton TetraMesh $f AlignmentVolume "Alignment Volume(Optional)" Pack
+
+        lappend Volume(mbActiveList) $f.mbAlignmentVolume
+        lappend Volume(mActiveList)  $f.mbAlignmentVolume.m
+
+	#-------------------------------------------
+	# VField->Bottom frame
+	#-------------------------------------------
+	set f $fVField.fBottom
+
+#	eval {label $f.lVField -text "You clicked 0 times."} $Gui(WLA)
+#        pack $f.lVField -side top -padx $Gui(pad) -fill x
+#	set TetraMesh(lVField) $f.lVField
+
+        DevAddButton $f.bGo Process TetraMeshProcessVField
+
+        # Tooltip example: Add a tooltip for the button
+        TooltipAdd $f.bGo "Press this button to start Processing the Mesh into its Vector Fields"
+
+	pack $f.bGo  -side top -padx $Gui(pad) -pady $Gui(pad)
 }
 
 #-------------------------------------------------------------------------------
@@ -480,31 +636,53 @@ proc TetraMeshFileNameEntered {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC TetraMeshCheckErrors
+# .PROC TetraMeshGetData
 #
 # This Routine Checks that information has been entered properly 
 # when the Process button has been pressed.
+# Returns 0 if the data has not been entered properly
+# If the data has been entered properly, reads in the TetraMesh
+# into TetraReader.
 # .END
 #-------------------------------------------------------------------------------
-proc TetraMeshCheckErrors {} {
-	global TetraMesh
+proc TetraMeshGetData {} {
+	global TetraMesh Model Volume
 
-#    puts "$TetraMesh(FileName) $TetraMesh(modelbasename)"
     set fileName "$TetraMesh(FileName)"
     set modelbasename "$TetraMesh(modelbasename)"
 
+######################################################################
+#### Check for problems in the input
+######################################################################
+
     if {$fileName == ""} { 
         DevWarningWindow "You need to select a Tetrahedral Mesh!"
-        return 
+        return 0
     }
     if {![file exists $fileName]} { 
         DevWarningWindow "$fileName does not exist!"
-        return 
+        return 0
     }
     if {$modelbasename == ""} { 
         DevWarningWindow "You need to select the Model Name!"
-        return 
+        return 0
     }
+
+######################################################################
+#### Read the tetrahedral mesh
+######################################################################
+
+vtkUnstructuredGridReader TetraReader
+  TetraReader SetFileName $fileName
+  TetraReader Update
+#  TetraReader SetStartMethod     MainStartProgress
+#  TetraReader SetProgressMethod "MainShowProgress reader"
+#  TetraReader SetEndMethod       MainEndProgress
+
+set CurrentTetraMesh [TetraReader GetOutput]
+$CurrentTetraMesh Update
+
+    return 1
 }
 #-------------------------------------------------------------------------------
 # .PROC TetraMeshProcessEdges
@@ -516,29 +694,18 @@ proc TetraMeshCheckErrors {} {
 proc TetraMeshProcessEdges {} {
 	global TetraMesh Model Volume
 
-#    puts "$TetraMesh(FileName) $TetraMesh(modelbasename)"
-    set fileName "$TetraMesh(FileName)"
+######################################################################
+#### Get the input mesh
+######################################################################
+
+    if {![TetraMeshGetData]} {
+      return;
+    }
+
     set modelbasename "$TetraMesh(modelbasename)"
 
-######################################################################
-#### Check for problems in the input
-######################################################################
-
-    TetraMeshCheckErrors
-
-######################################################################
-#### Read the tetrahedral mesh
-######################################################################
-
-vtkUnstructuredGridReader tetra_reader
-  tetra_reader SetFileName $fileName
-  tetra_reader Update
-#  tetra_reader SetStartMethod     MainStartProgress
-#  tetra_reader SetProgressMethod "MainShowProgress reader"
-#  tetra_reader SetEndMethod       MainEndProgress
-
-set CurrentTetraMesh [tetra_reader GetOutput]
-$CurrentTetraMesh Update
+    set CurrentTetraMesh [TetraReader GetOutput]
+    $CurrentTetraMesh Update
 
 ######################################################################
 #### Get the range of the data, not exactly thread safe. See vtkDataSet.h
@@ -563,7 +730,7 @@ set HIGHSCALAR $highscalar
   #############################################################
 
   vtkExtractEdges TetraEdges
-    TetraEdges SetInput [tetra_reader GetOutput]
+    TetraEdges SetInput [TetraReader GetOutput]
 
 #  #############################################################
 #  #### Convert to Tubes
@@ -641,7 +808,7 @@ set HIGHSCALAR $highscalar
 
   TheTransform Delete
   TransformPolyData Delete
-  tetra_reader Delete
+  TetraReader Delete
   TetraEdges Delete
 #  TetraTubes Delete
 
@@ -666,29 +833,18 @@ set TetraMesh(modelbasename) ""
 proc TetraMeshProcessEdges2 {} {
 	global TetraMesh Model Volume
 
-#    puts "$TetraMesh(FileName) $TetraMesh(modelbasename)"
-    set fileName "$TetraMesh(FileName)"
+######################################################################
+#### Get the input mesh
+######################################################################
+
+    if {![TetraMeshGetData]} {
+      return;
+    }
+
     set modelbasename "$TetraMesh(modelbasename)"
 
-######################################################################
-#### Check for problems in the input
-######################################################################
-
-    TetraMeshCheckErrors
-
-######################################################################
-#### Read the tetrahedral mesh
-######################################################################
-
-vtkUnstructuredGridReader tetra_reader
-  tetra_reader SetFileName $fileName
-  tetra_reader Update
-#  tetra_reader SetStartMethod     MainStartProgress
-#  tetra_reader SetProgressMethod "MainShowProgress reader"
-#  tetra_reader SetEndMethod       MainEndProgress
-
-set CurrentTetraMesh [tetra_reader GetOutput]
-$CurrentTetraMesh Update
+    set CurrentTetraMesh [TetraReader GetOutput]
+    $CurrentTetraMesh Update
 
 ######################################################################
 #### Get the range of the data, not exactly thread safe. See vtkDataSet.h
@@ -846,7 +1002,7 @@ TheTransform Delete
 TransformPolyData Delete
 Thresh Delete
 TetraEdges Delete
-tetra_reader Delete
+TetraReader Delete
 
 
 ## This code is obsolete. Though, it is an excellent example of how
@@ -890,38 +1046,132 @@ set TetraMesh(modelbasename) ""
 }   
 
 #-------------------------------------------------------------------------------
-# .PROC TetraMeshProcessSurface
+# .PROC TetraMeshProcessVField
 #
 # This Routine Reads in the TetraMesh and produces
-# a Model for each scalar in the TetraMesh.
+# a Model for the vector field in the point data
 # .END
 #-------------------------------------------------------------------------------
+proc TetraMeshProcessVField {} {
+	global TetraMesh Model Volume
+
+######################################################################
+#### Get the data
+######################################################################
+
+    if {![TetraMeshGetData]} {
+      return;
+    }
+
+    set modelbasename "$TetraMesh(modelbasename)"
+
+    set CurrentTetraMesh [TetraReader GetOutput]
+    $CurrentTetraMesh Update
+
+######################################################################
+#### Get the range of the data, not exactly thread safe. See vtkDataSet.h
+#### But, since we are not concurrently modifying the dataset, we should
+#### be OK.
+######################################################################
+
+set range [$CurrentTetraMesh GetScalarRange]
+set lowscalar [ lindex $range 0 ] 
+set highscalar [ lindex $range 1 ] 
+
+  ## need to hold on to full range of scalars
+  ## so that each model gets a different color
+set LOWSCALAR $lowscalar
+set HIGHSCALAR $highscalar
+set TetraMeshFractionOn $TetraMesh(ArrowSkip)
+set TetraMeshArrowScale $TetraMesh(ArrowScale)
+
+#######################################################################
+#### Setup the pipeline: Cones -> PointMaskSelection -> Glyph data
+#######################################################################
+
+vtkConeSource Cone
+  Cone SetResolution 2
+  Cone SetHeight 1
+  Cone SetRadius 0.15
+vtkMaskPoints PointSelection
+    PointSelection SetInput $CurrentTetraMesh
+    PointSelection SetOnRatio $TetraMeshFractionOn
+    PointSelection RandomModeOff
+vtkGlyph3D VectorGlyph
+  VectorGlyph SetInput [PointSelection GetOutput]
+  VectorGlyph SetSource [Cone GetOutput]
+  VectorGlyph SetScaleFactor $TetraMeshArrowScale
+
+  ######################################################################
+  #### Now, determine the transform
+  #### If a volume has been selected, use that volumes ScaledIJK to RAS
+  #### Otherwise, just use the identity.
+  ######################################################################
+
+vtkTransform TheTransform
+
+if {$TetraMesh(AlignmentVolume) != "" && \
+        $TetraMesh(AlignmentVolume) != $Volume(idNone) } {
+    
+ TheTransform Concatenate [Volume($TetraMesh(AlignmentVolume),node) GetPosition]
+} else {
+    TheTransform Identity
+}
+
+vtkTransformPolyDataFilter TransformPolyData
+  TransformPolyData SetInput [VectorGlyph GetOutput]
+  TransformPolyData SetTransform TheTransform
+
+TransformPolyData Update
+
+set m [ TetraMeshCreateModel ${modelbasename}Vector 0 10 \
+          $TetraMesh(AlignmentVolume) ]
+
+#set m [ TetraMeshCreateModel ${modelbasename}Vector $LOWSCALAR $HIGHSCALAR \
+#          $TetraMesh(AlignmentVolume) ]
+
+  ### Need to copy the output of the pipeline so that the results
+  ### Don't get over-written later. Also, when we delete the inputs,
+  ### We don't want the outputs deleted. These lines should prevent this.
+  vtkPolyData ModelPolyData$m
+  set Model($m,polyData) ModelPolyData$m
+  $Model($m,polyData) CopyStructure [TransformPolyData GetOutput]
+  [ $Model($m,polyData) GetPointData] PassData [[TransformPolyData GetOutput] GetPointData]
+  [ $Model($m,polyData) GetCellData] PassData [[TransformPolyData GetOutput] GetCellData]
+
+  Model($m,mapper) SetInput $Model($m,polyData)
+
+#TransformMesh Delete
+
+TheTransform Delete
+TransformPolyData Delete
+TetraReader Delete
+Cone Delete
+PointSelection Delete
+VectorGlyph Delete
+
+MainModelsUpdateMRML 
+MainUpdateMRML
+Render3D
+
+set TetraMesh(modelbasename) ""
+}
+
 proc TetraMeshProcessSurface {} {
 	global TetraMesh Model Volume
 
-#    puts "$TetraMesh(FileName) $TetraMesh(modelbasename)"
-    set fileName "$TetraMesh(FileName)"
+######################################################################
+#### Get the data
+######################################################################
+
+    if {![TetraMeshGetData]} {
+      return;
+    }
+
     set modelbasename "$TetraMesh(modelbasename)"
 
-######################################################################
-#### Check for problems in the input
-######################################################################
-
-    TetraMeshCheckErrors
-
-######################################################################
-#### Read the tetrahedral mesh
-######################################################################
-
-vtkUnstructuredGridReader tetra_reader
-  tetra_reader SetFileName $fileName
-  tetra_reader Update
-#  tetra_reader SetStartMethod     MainStartProgress
-#  tetra_reader SetProgressMethod "MainShowProgress reader"
-#  tetra_reader SetEndMethod       MainEndProgress
-
-set CurrentTetraMesh [tetra_reader GetOutput]
-$CurrentTetraMesh Update
+    set CurrentTetraMesh [TetraReader GetOutput]
+    $CurrentTetraMesh Update
 
 ######################################################################
 #### Get the range of the data, not exactly thread safe. See vtkDataSet.h
@@ -1079,7 +1329,7 @@ TheTransform Delete
 TransformPolyData Delete
 Thresh Delete
 gf Delete
-tetra_reader Delete
+TetraReader Delete
 
 
 ## This code is obsolete. Though, it is an excellent example of how
@@ -1122,6 +1372,7 @@ Render3D
 
 set TetraMesh(modelbasename) ""
 }   
+
 
 #-------------------------------------------------------------------------------
 # .PROC TetraMeshCreateModel
