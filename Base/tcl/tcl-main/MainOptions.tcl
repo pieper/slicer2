@@ -80,7 +80,7 @@ proc MainOptionsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainOptions \
-    {$Revision: 1.25.6.1 $} {$Date: 2005/01/07 20:11:00 $}]
+    {$Revision: 1.25.6.2 $} {$Date: 2005/01/11 18:09:45 $}]
 
     # Props
     set Options(program) "slicer"
@@ -97,7 +97,7 @@ proc MainOptionsInit {} {
     
     set Scenes(oldMRML) 0
     set Scenes(nameList) ""
-    
+    set Scenes(currentScene) "default"
 }
 
 #-------------------------------------------------------------------------------
