@@ -58,7 +58,7 @@ proc IbrowserControllerLaunch {{toplevelName .controllerGUI} } {
 
     #--- setup the Ibrowser
     #---------------
-    set ::IbrowserController(UI,MinWinWid) 768
+    set ::IbrowserController(UI,MinWinWid) $::View(viewerWidth)
     set ::IbrowserController(UI,MinWinHit) 375
     wm title $root "Ibrowser controller"
     wm geometry $root +244+753

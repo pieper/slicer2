@@ -498,10 +498,10 @@ proc IbrowserMakeVscrollCanvas {c c2 args } {
 
     set sb $::IbrowserController(Geom,Ival,scrollBuf)
     scrollbar $c.yscroll -orient vertical -width $sb -highlightthickness 0 \
-        -borderwidth 1 -command [list $c.canvas yview]
+        -borderwidth 0 -elementborderwidth 1 -command [list $c.canvas yview]
 
     #set ::IbrowserController(ScrollWidth) [ c.yscroll cget -width ]
-    grid $c.canvas $c.yscroll -sticky news
+    grid $c.canvas $c.yscroll -sticky news 
     grid columnconfigure $c 0 -weight 1
     grid rowconfigure $c 0 -weight 1
     return $c.canvas
@@ -527,15 +527,13 @@ proc IbrowserMakeGangedHscrollCanvas { c c2 args } {
               -xscrollcommand [list $c.xscroll set ] } $args
 
     set sb $::IbrowserController(Geom,Ival,scrollBuf)
-    #label $c.lspacer1 -bg white -width $::IbrowserController(ScrollWidth) 
-    #label $c.lspacer2 -bg white -width $::IbrowserController(ScrollWidth)
 
     label $c.lspacer1 -bg white -width 2
     label $c.lspacer2 -bg white -width 2
 
-    scrollbar $c.xscroll -orient horizontal -borderwidth 1 -highlightthickness 0 \
+    scrollbar $c.xscroll -orient horizontal -borderwidth 0 -elementborderwidth 1 -highlightthickness 0 \
       -command [ list IbrowserBindXview [ list $c.canvas $c2.canvas ] ]
-    grid $c.canvas $c.lspacer1 -sticky news
+    grid $c.canvas $c.lspacer1 -sticky news 
     grid $c.xscroll $c.lspacer2 -sticky ew 
 
     grid rowconfigure $c 0 -weight 1
