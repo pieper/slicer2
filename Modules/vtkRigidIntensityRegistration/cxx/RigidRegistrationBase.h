@@ -229,6 +229,11 @@ public:
   // Initialize the Registration using a matrix
   void InitializeRegistration(vtkMatrix4x4 *matrix);
 
+  //Description:
+  //Initalize everything possible from the vtkITKRigidRegistrationTransformBase
+  void Initialize(vtkITKRigidRegistrationTransformBase *self,
+          vtkMatrix4x4 *matrix);
+
   // ----------------------------------------------------------------------
   // Run the Registration
   // ----------------------------------------------------------------------

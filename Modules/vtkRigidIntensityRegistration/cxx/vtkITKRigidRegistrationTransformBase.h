@@ -184,6 +184,7 @@ public:
   // to take care of determinant -1 transforms
   // Internally, we therefore want to deal with the PossiblyFlippingTargetImage
   // Not the the TargetImage
+  // Do not call this unless you know what you are doing.
   vtkImageData *GetPossiblyFlippedTargetImage();
 
 // BTX

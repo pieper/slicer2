@@ -115,6 +115,102 @@ RigidRegistrationBase<TFixedImage,TMovingImage,TMetricType>::~RigidRegistrationB
   m_Optimizer->RemoveObserver(m_OptimizeObserverTag);
 }
 
+//----------------------------------------------------------------------------
+
+#include "itkVTKImageImport.h"
+#include "vtkITKUtility.h"
+#include "vtkUnsignedIntArray.h"
+#include "vtkDoubleArray.h"
+#include "vtkITKRigidRegistrationTransformBase.h"
+#include "vnl/vnl_math.h"
+
+  // some memory leaks here...
+template <class itkImageType>
+itkImageType *VTKtoITKImage(vtkImageData *VtkImage, itkImageType *)
+{
+  typedef itk::VTKImageImport<itkImageType>  ImageImportType;
+
+  vtkImageExport *ImageExporter = vtkImageExport::New();
+    ImageExporter->SetInput(VtkImage);
+  ImageImportType::Pointer ItkImporter = ImageImportType::New();
+  ConnectPipelines(ImageExporter, ItkImporter);
+  ItkImporter->Update();
+  ItkImporter->GetOutput()->Register();
+  return ItkImporter->GetOutput();
+}
+
+//----------------------------------------------------------------------------
+
+template <typename TFixedImage, typename TMovingImage, typename TMetricType>
+void RigidRegistrationBase<TFixedImage,TMovingImage,TMetricType>::Initialize
+(vtkITKRigidRegistrationTransformBase *self, vtkMatrix4x4 *matrix)
+{
+  // ----------------------------------------
+  // Sources to ITK Registration
+  // ----------------------------------------
+
+  // Create the Registrator
+
+  this->SetMovingImage(VTKtoITKImage(self->GetSourceImage(),(MovingImageType *)NULL));
+  this->GetMovingImage()->UnRegister();
+
+  this->SetFixedImage(VTKtoITKImage(
+                               self->GetPossiblyFlippedTargetImage(),
+                   (FixedImageType *)NULL));    
+  this->GetFixedImage()->UnRegister();
+
+  // ----------------------------------------
+  // Do the Registratioon Configuration
+  // ----------------------------------------
+
+  // Initialize
+  this->InitializeRegistration(matrix);
+
+ // Setup the optimizer
+
+  this->SetTranslationScale(1.0/vnl_math_sqr(self->GetTranslateScale()));
+//  // This is the scale on translation
+//  for (int j=4; j<7; j++)
+//    {
+//    scales[j] = MIReg_TranslationScale;
+//    // This was chosen by Steve. I'm not sure why.
+//    scales[j] = 1.0/vnl_math_sqr(self->GetTranslateScale());
+//    }
+
+  //
+  // This is the multi-resolution information
+  // Number of iterations and learning rate at each level
+  //
+
+  DoubleArray      LearnRates(self->GetLearningRate()->GetNumberOfTuples());
+  UnsignedIntArray NumIterations(self->GetLearningRate()->GetNumberOfTuples());
+
+  for(int i=0;i<self->GetLearningRate()->GetNumberOfTuples();i++)
+    {
+      LearnRates[i]    = self->GetLearningRate()->GetValue(i);
+      NumIterations[i] = self->GetMaxNumberOfIterations()->GetValue(i);
+    }
+  this->SetNumberOfLevels(self->GetLearningRate()
+                                       ->GetNumberOfTuples());
+  this->SetLearningRates(LearnRates);
+  this->SetNumberOfIterations(NumIterations);
+
+  //
+  // This is the shrink factors for each dimension
+  // 
+
+  ShrinkFactorsArray SourceShrink;
+  SourceShrink[0] = self->GetSourceShrinkFactors(0);
+  SourceShrink[1] = self->GetSourceShrinkFactors(1);
+  SourceShrink[2] = self->GetSourceShrinkFactors(2);
+  this->SetMovingImageShrinkFactors(SourceShrink);
+
+  ShrinkFactorsArray TargetShrink;
+  TargetShrink[0] = self->GetTargetShrinkFactors(0);
+  TargetShrink[1] = self->GetTargetShrinkFactors(1);
+  TargetShrink[2] = self->GetTargetShrinkFactors(2);
+  this->SetFixedImageShrinkFactors(TargetShrink);
+}
 
 //----------------------------------------------------------------------------
 
@@ -330,7 +426,6 @@ RigidRegistrationBase<TFixedImage,TMovingImage,TMetricType>::GetAffineTransform(
 }
 
 //----------------------------------------------------------------------
-
 
 template <typename TFixedImage, typename TMovingImage, typename TMetricType>
 void RigidRegistrationBase<TFixedImage,TMovingImage,TMetricType>::StartNewLevel()
