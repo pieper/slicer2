@@ -136,10 +136,13 @@ proc MorphometricsDeveloperMeasurementInit {} {
     MorphometricsExampleCylindertpdf SetTransform MorphometricsExampleCylindertpdt
     MorphometricsExampleCylindertpdf SetInput [MorphometricsExampleCylinder GetOutput]
 
-    MorphometricsCreateCylinderPlacementStep MorphometricsDeveloper MorphometricsExampleCylinder MorphometricsExampleCylindertpdf "Place example cylinder" "The name of the vtk-object is 'MorphometricsExampleCylinder'. Place it using the csys  and examine how 'MorphometricsExampleCylinder' is updated. A cylinder is a good way of representong lines."
+    MorphometricsCreateCylinderPlacementStep MorphometricsDeveloper MorphometricsExampleCylinder MorphometricsExampleCylindertpdf "Place example cylinder" "The name of the vtk-object is 'MorphometricsExampleCylinder'. Place it using the csys  and examine how 'MorphometricsExampleCylinder' is updated."
 
+    vtkAxisSource MorphometricsExampleAxis
+    MorphometricsExampleAxis SetCenter -10 -20 30
+    MorphometricsExampleAxis SetDirection -1 2 -3
 
-
+    MorphometricsCreateAxisPlacementStep MorphometricsDeveloper MorphometricsExampleAxis "Place example axis" "The name of the vtk-object is 'MorphometricsExampleAxis'. Place it using the csys  and examine how 'MorphometricsExampleAxis' is updated after you left this step."
 }
 
 
