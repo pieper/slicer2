@@ -15,9 +15,11 @@ SET( LOCAL_MODULE_SRCS
 
 SET ( LOCAL_NO_WRAP_SRC
   MultiResMIRegistration.cxx
+  TestKL-simple.cxx
 )
 
-ADD_EXECUTABLE(Test1 ${LOCAL_NO_WRAP_SRC})
+ADD_EXECUTABLE(TestMI1 MultiResMIRegistration.cxx)
+ADD_EXECUTABLE(TestKL-simple TestKL-simple.cxx)
 
 #### if you code depends on SlicerBase, uncomment the 
 #### INCLUDE_DIRECTORIES and LINK_LIBRARIES
