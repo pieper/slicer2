@@ -150,7 +150,7 @@ void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *inputs, vtkImageD
     tc->Delete();
 
     // Scales the scalar values in the activation volume between 0 - 100
-    float range[2];
+    vtkFloatingPointType range[2];
     float value;
     float newValue;
     output->GetScalarRange(range);

@@ -25,10 +25,11 @@ IF (WIN32)
 ELSE (WIN32)
      LINK_DIRECTORIES(
         /local/os/lib
+        /usr/local/lib
         )
      INCLUDE_DIRECTORIES(
-        /local/os/include
-        /local/os/include/gsl
+        /usr/local/include
+        /usr/local/include/gsl
         )
 ENDIF (WIN32)
 
