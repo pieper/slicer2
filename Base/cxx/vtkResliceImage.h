@@ -1,13 +1,9 @@
 // .NAME vtkDeformImage - Deforms an image according to a tetrahedral mesh
 // .SECTION Description
-// This filter takes in a volume, and resamples it in the coordinates of
-// the next volume. A transform that takes the coordinates (mm) in the image
-// whose coordinates we will use into the input image coordinates (mm) is 
-// possible.
-//
-// Please note that this program (by Samson Timoner) is also in his
-// personal CVS tree. If you make changes, please let him know.
-//
+// This filter takes in an image, an input mesh, a final mesh
+// and 1 transforms. The input mesh and output mesh is assumed to be in the 
+// input volumes meters coordinate system. The transform takes the output mesh
+// into the second volumes' meter coordinate system
 
 #ifndef __vtkDeformImage_h
 #define __vtkDeformImage_h
@@ -53,8 +49,6 @@ public:
 
   // Helper Functions:
   //
-
-  //BTX
   static void FindInputIJK(float OtherIJK[4],
                            vtkMatrix4x4 *IJKtoIJK,
                            int i, int j, int k);
@@ -83,6 +77,7 @@ protected:
   void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,
 		       int outExt[6], int id);
-  //ETX
+
+
 };
 #endif /* DeformImage_h */
