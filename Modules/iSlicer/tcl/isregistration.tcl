@@ -36,13 +36,13 @@ option add *isregistration.source            "" widgetDefault
 option add *isregistration.transform         "" widgetDefault
 option add *isregistration.resolution       128 widgetDefault
 option add *isregistration.iterations         5 widgetDefault
-option add *isregistration.samples           50 widgetDefault
 option add *isregistration.learningrate     .01 widgetDefault
 option add *isregistration.translatescale    64 widgetDefault
-option add *isregistration.target_standarddev 1 widgetDefault
-option add *isregistration.source_standarddev 1 widgetDefault
 option add *isregistration.target_shrink {1 1 1} widgetDefault
 option add *isregistration.source_shrink {1 1 1} widgetDefault
+option add *isregistration.vtk_itk_reg   "vtkITKMutualInformationTransform" \
+                                                 widgetDefault
+option add *isregistration.set_metric_option  "" widgetDefault
 
 ## for debugging
 option add *isregistration.verbose         1 widgetDefault
@@ -63,17 +63,13 @@ if { [itcl::find class isregistration] == "" } {
         # inherited or composed as part of other widgets
         # or become part of the option database
         #
-        
-        
+
         itk_option define -target target Target {0}
         itk_option define -source source Source {0}
         itk_option define -transform transform Transform {}
         itk_option define -resolution resolution Resolution 128
-        itk_option define -samples samples Samples 50
         itk_option define -iterations iterations Iterations 5
         itk_option define -learningrate learningrate Learningrate .01
-        itk_option define -target_standarddev target_stardarddev Target_standarddev 1
-        itk_option define -source_standarddev source_stardarddev Source_standarddev 1
         itk_option define -target_shrink target_shrink Target_shrink {1 1 1}
         itk_option define -source_shrink source_shrink Source_shrink {1 1 1}
 
@@ -83,6 +79,14 @@ if { [itcl::find class isregistration] == "" } {
         itk_option define -update_procedure updateprocedure UpdateProcedure ""
         itk_option define -stop_procedure stopprocedure StopProcedure ""
         itk_option define -auto_repeat auto_repeat Auto_repeat 1
+
+    itk_option define -vtk_itk_reg vtk_itk_reg  Vtk_Itk_Reg vtkITKMutualInformationTransform 
+
+    itk_option define -set_metric_option set_metric_option Set_metric_option 1
+        itk_option define -samples samples Samples 50
+        itk_option define -target_standarddev target_stardarddev Target_standarddev 1
+        itk_option define -source_standarddev source_stardarddev Source_standarddev 1
+    
 
         variable _name ""
     # is this the first time we are iterating
@@ -106,10 +110,10 @@ if { [itcl::find class isregistration] == "" } {
         # vtk instances
         variable _reg ""
         variable _matrix ""
-    variable _targetchangeinfo ""
+        variable _targetchangeinfo ""
         variable _targetcast ""
         variable _targetnorm ""
-    variable _sourcechangeinfo ""
+        variable _sourcechangeinfo ""
         variable _sourcecast ""
         variable _sourcenorm ""
 
@@ -238,18 +242,6 @@ itcl::body isregistration::constructor {args} {
     vtkITKNormalizeImageFilter $_sourcenorm
     $_sourcenorm SetInput [$_sourcecast GetOutput]
 
-    #######
-    ## Create the MI Registration instance
-    #######
-     ### The name is something like ::reg__mi_reg Print
-    set _reg ::reg_$_name
-    catch "$_reg Delete"
-    vtkITKMutualInformationTransform $_reg
-    $_reg Initialize $_matrix
-
-    $_reg SetTargetImage [$_targetnorm GetOutput]
-    $_reg SetSourceImage [$_sourcenorm GetOutput]
-
     eval itk_initialize $args
 }
 
@@ -261,6 +253,33 @@ itcl::body isregistration::destructor {} {
         catch "_sourcecast Delete"
         catch "_sourcenorm Delete"
 }
+
+#-------------------------------------------------------------------------------
+# OPTION: -vtk_itk_reg
+#
+# DESCRIPTION: the registration type: i.e. vtkITKMutualInformationTransform
+# - name of a slicer volume
+#-------------------------------------------------------------------------------
+itcl::configbody isregistration::vtk_itk_reg {
+
+    #######
+    ## Create the Registration instance 
+    #######
+
+    if {$itk_option(-vtk_itk_reg) == ""} {
+        return
+    }
+
+    ### The name is something like ::reg__mi_reg Print
+    set _reg ::reg_$_name
+    catch "$_reg Delete"
+    $itk_option(-vtk_itk_reg) $_reg
+    $_reg Initialize $_matrix
+
+    $_reg SetTargetImage [$_targetnorm GetOutput]
+    $_reg SetSourceImage [$_sourcenorm GetOutput]
+}
+
 
 #-------------------------------------------------------------------------------
 # OPTION: -target
@@ -334,7 +353,7 @@ itcl::body isregistration::step {} {
     global Matrix
 
     ## update any parameters
-    $itk_option(-update_procedure);
+    $itk_option(-update_procedure) $this
 
     #######
     ## set the default values
@@ -342,8 +361,7 @@ itcl::body isregistration::step {} {
 
     $_reg SetTranslateScale $itk_option(-translatescale)
 
-    $_reg SetSourceStandardDeviation $itk_option(-source_standarddev)
-    $_reg SetTargetStandardDeviation $itk_option(-target_standarddev)
+    $itk_option(-set_metric_option) $_reg;
 
     set i [lindex $itk_option(-source_shrink) 0 ]
     set j [lindex $itk_option(-source_shrink) 1 ]
@@ -356,8 +374,6 @@ itcl::body isregistration::step {} {
     set k [lindex $itk_option(-target_shrink) 2 ]
     puts "$i $j $k $itk_option(-target_shrink)"
     $_reg SetTargetShrinkFactors $i $j $k
-
-    $_reg SetNumberOfSamples $itk_option(-samples)
 
     ## Reset for MultiResSettings
     $_reg ResetMultiResolutionSettings
@@ -722,7 +738,7 @@ itcl::body isregistration::getP1 {  } {
     catch  "$_p1 Delete"
     vtkMatrix4x4 $_p1
 
-    GetSlicerToItkMatrix Volume($itk_option(-source),node) $_p1
+    GetSlicerRASToItkMatrix Volume($itk_option(-source),node) $_p1
     puts [$this StringMatrix $_p1]
     return $_p1
 }
@@ -740,7 +756,7 @@ itcl::body isregistration::getP2 {  } {
     catch  "$_p2 Delete"
     vtkMatrix4x4 $_p2
 
-    GetSlicerToItkMatrix Volume($itk_option(-target),node) $_p2
+    GetSlicerRASToItkMatrix Volume($itk_option(-target),node) $_p2
     puts [$this StringMatrix $_p2]
     return $_p2
 }
