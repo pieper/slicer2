@@ -37,8 +37,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkAnisoGaussSeidel.h,v $
   Language:  C++
-  Date:      $Date: 2003/12/18 20:08:51 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2005/02/08 20:26:51 $
+  Version:   $Revision: 1.7 $
   Author:    Karl Krissian
 
 =========================================================================*/
@@ -135,7 +135,7 @@ public:
   float Iterate3D();
 
   float Iterate3D( vtkImageData *tmpData, int tmpExt[6],
-           vtkImageData *resData, int resExt[6]);
+           vtkImageData *resData, int resExt[6], int threadId);
 
   float Iterate();
 
