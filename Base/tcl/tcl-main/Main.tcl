@@ -175,7 +175,7 @@ proc MainBoot {{mrmlFile ""}} {
                 if {[lsearch "$Module(idList) $Module(sharedList)" $d] == -1} {
                     tk_messageBox -message "\
 The '$m' module depends on the '$d' module, which is not present.\n\
-The 3D Slicer will exit so the problem can be corrected."
+Slicer will exit so the problem can be corrected."
                     exit
                 }
             }
@@ -455,7 +455,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.109 $} {$Date: 2004/06/11 17:43:49 $}]
+        {$Revision: 1.110 $} {$Date: 2004/06/11 20:57:03 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
