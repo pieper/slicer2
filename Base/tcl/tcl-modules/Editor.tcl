@@ -109,7 +109,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.65 $} {$Date: 2002/11/22 00:17:59 $}]
+        {$Revision: 1.66 $} {$Date: 2002/11/22 13:20:03 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -1181,9 +1181,12 @@ proc EditorB1 {x y} {
             #
             switch $Ed(EdDraw,mode) {
                 "Draw" {
-                    #Slicer DrawInsertPoint $x $y
-                    EditorInsertPoint $x $y
-                    #EditorIdleProc start
+                    if {1} {
+                        Slicer DrawInsertPoint $x $y
+                    } else {
+                        EditorInsertPoint $x $y
+                        #EditorIdleProc start
+                    }
                 }
                 "Select" {
                     Slicer DrawStartSelectBox $x $y
@@ -1350,8 +1353,17 @@ proc EditorB1Motion {x y} {
             #
             switch $Ed(EdDraw,mode) {
                 "Draw" {
-                    #Slicer DrawInsertPoint $x $y
-                    EditorInsertPoint $x $y
+                    if {1} {
+                        # this way just inserts the point normally
+                        Slicer DrawInsertPoint $x $y
+                    } else {
+                        # this way applies to show the rasterized labelmap
+                        # and stores the points to support delete
+                        # (this way isn't fully debugged)
+                        EditorInsertPoint $x $y
+                    }
+
+
                     # Lauren this would be better:
                     
                     # DAVE: allow drawing on non-native slices someday
