@@ -33,7 +33,7 @@
 #   TetraMeshExit
 #   TetraMeshUpdateGUI
 #   TetraMeshFileNameEntered
-#   TetraMeshProcess
+#   TetraMeshProcessSurface
 #   TetraMeshCreateModel
 #==========================================================================auto=
 
@@ -83,9 +83,9 @@ proc TetraMeshInit {} {
 	#   row2,tab = like row1 
 	#
 	set m TetraMesh
-	set Module($m,row1List) "Help Props"
-	set Module($m,row1Name) "{Help} {Props}"
-	set Module($m,row1,tab) Props
+	set Module($m,row1List) "Help Surface Edges"
+        set Module($m,row1Name) "{Help} {Extract Surfaces} {Extract Edges}"
+	set Module($m,row1,tab) Surface
 
 	# Define Procedures
 	#------------------------------------
@@ -140,7 +140,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.4 $} {$Date: 2000/08/28 18:36:36 $}]
+		{$Revision: 1.5 $} {$Date: 2000/11/07 23:30:03 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -155,6 +155,8 @@ proc TetraMeshInit {} {
 	set TetraMesh(eventManager)  ""
 	set TetraMesh(AlignmentVolume) $Volume(idNone)
         set TetraMesh(DefaultDir) ""
+            ## Tube Radius of edges
+        set TetraMesh(TetraTubeRadius) 0.01
 }
 
 
@@ -179,7 +181,11 @@ proc TetraMeshBuildGUI {} {
 	# Frame Hierarchy:
 	#-------------------------------------------
 	# Help
-	# Props
+	# Surface
+	#   Top
+	#   Alignment
+        #   Bottom
+        # Edges
 	#   Top
 	#   Alignment
         #   Bottom
@@ -193,17 +199,30 @@ proc TetraMeshBuildGUI {} {
 	# Refer to the documentation for details on the syntax.
 	#
 	set help "
-The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is assumed to have integer scalars.  1 model is produced for each scalar.
+The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is converted into a model in one of two ways. 
+
+<UL>
+<LI><B>Extract Surfaces:</B> The mesh is assumed to have integer scalars. One model is produced as the surface of the mesh for each scalar. Each model is a different color.
+
+<LI><B>Extract Edges:</B> The mesh is processed and a model is produced consisting of the lines that connect each node. The lines are color coded according to the scalar value of the mesh. The colors should match those of the surfaces extracted. The mesh need not have integer scalar values.
+
+<LI><B>Useful Comment:</B> Often, the edges of the mesh produce such a dense set of lines that it is difficult to determine useful information. When this occurs, I reccomend making two slicer parallel to each other and clip so that only the region in between the two slices is displayed. By doing this, you can create a thin region of lines that you can visually interpret.
+
+<LI><B>Known Problems:</B> In order to clip the resulting models, you must turn clipping off and on in the <B>Models</B> module. It is not clear if this is a general slicer error or an error in this module.
+
+<LI><B>Advanced Users:</B> The input file need not be a tetrahedral mesh, any vtk unstructured points will do. 
+
+</LI>
 "
 	regsub -all "\n" $help {} help
 	MainHelpApplyTags TetraMesh $help
 	MainHelpBuildGUI TetraMesh
 
 	#-------------------------------------------
-	# Props frame
+	# Surface frame
 	#-------------------------------------------
-	set fProps $Module(TetraMesh,fProps)
-	set f $fProps
+	set fSurface $Module(TetraMesh,fSurface)
+	set f $fSurface
 
 	foreach frame "Top Middle Alignment Bottom" {
 		frame $f.f$frame -bg $Gui(activeWorkspace)
@@ -211,9 +230,9 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is a
 	}
 
 	#-------------------------------------------
-	# Props->Top frame
+	# Surface->Top frame
 	#-------------------------------------------
-	set f $fProps.fTop
+	set f $fSurface.fTop
 
 	frame $f.f -bg $Gui(activeWorkspace)
 	pack $f.f -side top -pady $Gui(pad)
@@ -221,7 +240,7 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is a
         DevAddFileBrowse $f.f TetraMesh FileName "Tetrahedral Mesh:" "TetraMeshFileNameEntered" "vtk"\
                 "\$TetraMesh(DefaultDir)" "Browse for a Tetrahedral Mesh"
 
-	set f $fProps.fTop.fBaseName
+	set f $fSurface.fTop.fBaseName
 
 	frame $f  -bg $Gui(activeWorkspace) 
         pack $f -side top -padx 0 -pady $Gui(pad) -fill x
@@ -232,27 +251,83 @@ The TetraMesh module allows a user to read in a Tetrahedral Mesh.  The Mesh is a
         pack $f.l $f.eModelName -side left -padx $Gui(pad)
 
 	#-------------------------------------------
-	# Props->Alignment frame
+	# Surface->Alignment frame
 	#-------------------------------------------
-	set f $fProps.fAlignment
+	set f $fSurface.fAlignment
 
         DevAddSelectButton TetraMesh $f AlignmentVolume "Alignment Volume(Optional)" Pack
 
 	#-------------------------------------------
-	# Props->Bottom frame
+	# Surface->Bottom frame
 	#-------------------------------------------
-	set f $fProps.fBottom
+	set f $fSurface.fBottom
 
-	eval {label $f.lProps -text "You clicked 0 times."} $Gui(WLA)
-        pack $f.lProps -side top -padx $Gui(pad) -fill x
-	set TetraMesh(lProps) $f.lProps
+#	eval {label $f.lSurface -text "You clicked 0 times."} $Gui(WLA)
+#        pack $f.lSurface -side top -padx $Gui(pad) -fill x
+#	set TetraMesh(lSurface) $f.lSurface
 
-        DevAddButton $f.bGo Process TetraMeshProcess
+        DevAddButton $f.bGo Process TetraMeshProcessSurface
 
         # Tooltip example: Add a tooltip for the button
-        TooltipAdd $f.bGo "Press this button to start Processing the Mesh into Models"
+        TooltipAdd $f.bGo "Press this button to start Processing the Mesh into its Surfaces"
 
 	pack $f.bGo  -side top -padx $Gui(pad) -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Edges frame
+	#-------------------------------------------
+	set fEdges $Module(TetraMesh,fEdges)
+	set f $fEdges
+
+	foreach frame "Top Middle Alignment Bottom" {
+		frame $f.f$frame -bg $Gui(activeWorkspace)
+		pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+	}
+
+	#-------------------------------------------
+	# Edges->Top frame
+	#-------------------------------------------
+	set f $fEdges.fTop
+
+	frame $f.f -bg $Gui(activeWorkspace)
+	pack $f.f -side top -pady $Gui(pad)
+
+        DevAddFileBrowse $f.f TetraMesh FileName "Tetrahedral Mesh:" "TetraMeshFileNameEntered" "vtk"\
+                "\$TetraMesh(DefaultDir)" "Browse for a Tetrahedral Mesh"
+
+	set f $fEdges.fTop.fBaseName
+
+	frame $f  -bg $Gui(activeWorkspace) 
+        pack $f -side top -padx 0 -pady $Gui(pad) -fill x
+
+        DevAddLabel  $f.l "Model Name"
+	eval {entry $f.eModelName -textvariable TetraMesh(modelbasename) -width 50} $Gui(WEA)
+        
+        pack $f.l $f.eModelName -side left -padx $Gui(pad)
+
+	#-------------------------------------------
+	# Edges->Alignment frame
+	#-------------------------------------------
+	set f $fEdges.fAlignment
+
+        DevAddSelectButton TetraMesh $f AlignmentVolume "Alignment Volume(Optional)" Pack
+
+	#-------------------------------------------
+	# Edges->Bottom frame
+	#-------------------------------------------
+	set f $fEdges.fBottom
+
+#	eval {label $f.lEdges -text "You clicked 0 times."} $Gui(WLA)
+#        pack $f.lEdges -side top -padx $Gui(pad) -fill x
+#	set TetraMesh(lEdges) $f.lEdges
+
+        DevAddButton $f.bGo Process TetraMeshProcessEdges
+
+        # Tooltip example: Add a tooltip for the button
+        TooltipAdd $f.bGo "Press this button to start Processing the Mesh into its Edges"
+
+	pack $f.bGo  -side top -padx $Gui(pad) -pady $Gui(pad)
+
 }
 
 #-------------------------------------------------------------------------------
@@ -335,23 +410,18 @@ proc TetraMeshFileNameEntered {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC TetraMeshProcess
+# .PROC TetraMeshCheckErrors
 #
-# This Routine Reads in the TetraMesh and produces
-# a Model for each scalar in the TetraMesh.
+# This Routine Checks that information has been entered properly 
+# when the Process button has been pressed.
 # .END
 #-------------------------------------------------------------------------------
-proc TetraMeshProcess {} {
-	global TetraMesh Model Volume
+proc TetraMeshCheckErrors {} {
+	global TetraMesh
 
 #    puts "$TetraMesh(FileName) $TetraMesh(modelbasename)"
     set fileName "$TetraMesh(FileName)"
     set modelbasename "$TetraMesh(modelbasename)"
-
-######################################################################
-#### Check for problems in the input
-######################################################################
-
 
     if {$fileName == ""} { 
         DevWarningWindow "You need to select a Tetrahedral Mesh!"
@@ -365,6 +435,177 @@ proc TetraMeshProcess {} {
         DevWarningWindow "You need to select the Model Name!"
         return 
     }
+}
+#-------------------------------------------------------------------------------
+# .PROC TetraMeshProcessEdges
+#
+# This Routine Reads in the TetraMesh and produces
+# a Model for the edges in the mesh
+# .END
+#-------------------------------------------------------------------------------
+proc TetraMeshProcessEdges {} {
+	global TetraMesh Model Volume
+
+#    puts "$TetraMesh(FileName) $TetraMesh(modelbasename)"
+    set fileName "$TetraMesh(FileName)"
+    set modelbasename "$TetraMesh(modelbasename)"
+
+######################################################################
+#### Check for problems in the input
+######################################################################
+
+    TetraMeshCheckErrors
+
+######################################################################
+#### Read the tetrahedral mesh
+######################################################################
+
+vtkUnstructuredGridReader tetra_reader
+  tetra_reader SetFileName $fileName
+  tetra_reader Update
+#  tetra_reader SetStartMethod     MainStartProgress
+#  tetra_reader SetProgressMethod "MainShowProgress reader"
+#  tetra_reader SetEndMethod       MainEndProgress
+
+set CurrentTetraMesh [tetra_reader GetOutput]
+$CurrentTetraMesh Update
+
+######################################################################
+#### Get the range of the data, not exactly thread safe. See vtkDataSet.h
+#### But, since we are not concurrently modifying the dataset, we should
+#### be OK.
+######################################################################
+
+set range [$CurrentTetraMesh GetScalarRange]
+set lowscalar [ lindex $range 0 ] 
+set highscalar [ lindex $range 1 ] 
+  ## need to hold on to full range of scalars
+  ## so that each model gets a different color
+set LOWSCALAR $lowscalar
+set HIGHSCALAR $highscalar
+
+#######################################################################
+#### Setup the pipeline: Get edges, convert to PolyData, Transform
+#######################################################################
+
+  #############################################################
+  #### Get Edges
+  #############################################################
+
+  vtkExtractEdges TetraEdges
+    TetraEdges SetInput [tetra_reader GetOutput]
+
+#  #############################################################
+#  #### Convert to Tubes
+#  #############################################################
+#
+#
+#  Converting to Tubes used too much memory and it lost color
+#  And, all I really wanted was lines.
+#
+#   vtkTubeFilter TetraTubes
+#     TetraTubes SetInput [TetraEdges GetOutput]
+#     TetraTubes SetRadius $TetraMesh(TetraTubeRadius)
+#
+  #############################################################
+  #### Set Lookup Table??? Not yet...
+  #############################################################
+
+  ######################################################################
+  #### Now, determine the transform
+  #### If a volume has been selected, use that volumes ScaledIJK to RAS
+  #### Otherwise, just use the identity.
+  ######################################################################
+
+  vtkTransform TheTransform
+
+  if {$TetraMesh(AlignmentVolume) != "" && \
+          $TetraMesh(AlignmentVolume) != $Volume(idNone) } {
+    
+     TheTransform Concatenate [Volume($TetraMesh(AlignmentVolume),node) GetPosition]
+     } else {
+       TheTransform Identity
+   }
+
+  vtkTransformPolyDataFilter TransformPolyData
+    TransformPolyData SetInput [TetraEdges GetOutput]
+    TransformPolyData SetTransform TheTransform
+  TransformPolyData Update
+
+  ######################################################################
+  #### Now, create the model
+  ######################################################################
+
+  ### Create the new Model
+  set m [ TetraMeshCreateModel $modelbasename $LOWSCALAR $HIGHSCALAR \
+          $TetraMesh(AlignmentVolume) ]
+
+  #############################################################
+  #### Copy the output
+  #############################################################
+
+  ### Need to copy the output of the pipeline so that the results
+  ### Don't get over-written later. Also, when we delete the inputs,
+  ### We don't want the outputs deleted. These lines should prevent this.
+  vtkPolyData TetraEdgePolyData$m
+  set Model($m,polyData) TetraEdgePolyData$m
+  $Model($m,polyData) CopyStructure [TransformPolyData GetOutput]
+  [ $Model($m,polyData) GetPointData] PassData [[TransformPolyData GetOutput] GetPointData]
+  [ $Model($m,polyData) GetCellData] PassData [[TransformPolyData GetOutput] GetCellData]
+
+  #############################################################
+  #### Set Up the Mapper
+  #############################################################
+
+  ### The next line would replace the last bunch if we didn't care about
+  ### deleting the inputs causing the results to be deleted.
+  #  set Model($m,polyData) [gf GetOutput]
+  #  $Model($m,polyData) Update
+  #  puts [ $Model($m,polyData) GetNumberOfPolys]
+  Model($m,mapper) SetInput $Model($m,polyData)
+   puts [ $Model($m,polyData) GetNumberOfPolys]
+
+  #############################################################
+  #### Clean Up
+  #############################################################
+
+  TheTransform Delete
+  TransformPolyData Delete
+  tetra_reader Delete
+  TetraEdges Delete
+#  TetraTubes Delete
+
+######################################################################
+#### Update and Redraw
+######################################################################
+
+MainModelsUpdateMRML 
+MainUpdateMRML
+Render3D
+
+set TetraMesh(modelbasename) ""
+}      
+
+
+#-------------------------------------------------------------------------------
+# .PROC TetraMeshProcessSurface
+#
+# This Routine Reads in the TetraMesh and produces
+# a Model for each scalar in the TetraMesh.
+# .END
+#-------------------------------------------------------------------------------
+proc TetraMeshProcessSurface {} {
+	global TetraMesh Model Volume
+
+#    puts "$TetraMesh(FileName) $TetraMesh(modelbasename)"
+    set fileName "$TetraMesh(FileName)"
+    set modelbasename "$TetraMesh(modelbasename)"
+
+######################################################################
+#### Check for problems in the input
+######################################################################
+
+    TetraMeshCheckErrors
 
 ######################################################################
 #### Read the tetrahedral mesh
