@@ -515,6 +515,10 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
     // Description:
     // return the name of the compiler
     char *GetCompilerName();
+
+    // Description:
+    // return the vtk version
+    char *GetVTKVersion();
     
 protected:
   vtkMrmlSlicer();

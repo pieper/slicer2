@@ -42,6 +42,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkObjectFactory.h"
 #include "vtkImageCanvasSource2D.h"
 #include "vtkPointData.h"
+#include "vtkVersion.h"
 
 //-----  This hack needed to compile using gcc3 on OSX until new stdc++.dylib
 #ifdef __APPLE_CC__
@@ -2582,4 +2583,11 @@ char * vtkMrmlSlicer::GetCompilerName()
 #endif
     
     return "UKNOWN";
+}
+//----------------------------------------------------------------------------
+// Description:
+// Returns the version number of the vtk library this has been compiled with
+char * vtkMrmlSlicer::GetVTKVersion()
+{
+    return VTK_VERSION;
 }
