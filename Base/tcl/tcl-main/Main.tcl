@@ -309,7 +309,7 @@ proc MainInit {} {
 	set Module(procRecallPresets) ""
 	set m Main
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.18 $} {$Date: 2000/02/13 21:19:10 $}]
+		{$Revision: 1.19 $} {$Date: 2000/02/13 22:20:58 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -447,7 +447,7 @@ proc MainBuildGUI {} {
 	$Gui(mFile) add separator
 	$Gui(mFile) add command -label "Close" -command \
 		"MainMenu File Close"
-	$Gui(mFile) add command -label "Exit" -command MainExitProgram
+	$Gui(mFile) add command -label "Exit" -command MainExitQuery
 
 	$Gui(mView) add command -label "Normal" -command \
 		"MainMenu View Normal"
@@ -1111,11 +1111,43 @@ http://www.slicer.org"
 # .END
 #-------------------------------------------------------------------------------
 proc MainExitQuery { } {
-	global Gui
+	global Gui Volume Model
 
-	set x 0
-	set y [expr [winfo rooty $Gui(bExit)] - 60]
-	YesNoPopup Exit $x $y "Do you want to exit?" MainSaveMRMLQuery 
+	# See if any models or volumes are unsaved
+	set volumes ""
+	foreach v $Volume(idList) {
+		if {$Volume($v,dirty) == 1} {
+			set volumes "$volumes [Volume($v,node) GetName]"
+		}
+	}
+	set models ""
+	foreach v $Model(idList) {
+		if {$Model($v,dirty) == 1} {
+			set models "$models [Model($v,node) GetName]"
+		}
+	}
+
+	if {[llength "$models $volumes"] == 0} {
+		MainExitProgram
+	}
+
+	if {$volumes != ""} {
+		set msg "\
+The image data for the following volumes are unsaved:\n\
+$volumes\n\n"
+	}
+	if {$models != ""} {
+		set msg "\
+The polygon data for the following surface models are unsaved:\n\
+$models\n\n"
+	}
+	set msg "${msg}Exit anyway?" 
+
+#	set x 0
+#	set y [expr [winfo rooty $Gui(bExit)] - 60]
+	set x 20
+	set y 20
+	YesNoPopup Exit $x $y $msg MainExitProgram 
 }
 
 #-------------------------------------------------------------------------------
@@ -1123,6 +1155,7 @@ proc MainExitQuery { } {
 #
 #
 # Save the Mrml File?
+# THIS IS CURRENTLY NOT USED
 # .END
 #-------------------------------------------------------------------------------
 proc MainSaveMRMLQuery { } {

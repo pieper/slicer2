@@ -56,7 +56,7 @@ proc MainVolumesInit {} {
         
         set m MainVolumes
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.20 $} {$Date: 2000/02/13 21:19:12 $}]
+		{$Revision: 1.21 $} {$Date: 2000/02/13 22:20:58 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -105,6 +105,8 @@ proc MainVolumesBuildVTK {} {
 
 	# Have the slicer use this NoneVolume instead of its own creation
 	Slicer SetNoneVolume Volume($v,vol)
+
+	set Volume(0,dirty) 0
 }
 
 #-------------------------------------------------------------------------------
