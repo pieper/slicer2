@@ -1,7 +1,39 @@
 #! /bin/csh -f
 
+###############################################################
+# Run this script to automatically generate the slicer website
+# (with tcl code documentation!).
+#
+# Then open slicer/program/doc/index.html to SEE the website.
+# 
+# All auto* files in the slicer/doc subdirectories will be
+# combined into one index.html file for that subdirectory,
+# with the appropriate website formatting.
+#
+# Also, all tcl files in your SLICER_HOME/program directory will
+# be parsed to create the info pages under the Developer's Guide
+# in the website.  The quality of the documentation depends on 
+# the comment program having been run recently.  
+# This is the script slicer/comment.
+#
+# ######  To edit the website: ########
+# 1.Look in the slicer/program/doc/devl for formatting examples,
+# also visible under Developer's Guide in the website.
+# 2. Edit appropriate file and run this script.
+#
+# ######  To add a new file to the website: ########
+# 1. Add an autoXX.html file to a subdirectory of slicer/doc.
+# (auto* files will be combined in alphabetical order into index.html)
+# 2. Edit slicer/doc/index.html to add your new section to the 
+# javascript table of contents.
+# 3. Run this script.
+#
+###############################################################
+
+
+
 if (${?SLICER_HOME} == 0) then
-    setenv SLICER_HOME /export/bigsur/slicer
+    setenv SLICER_HOME /d/bigweekly/lauren/slicer-1.1.0
 endif
 
 if (${?LD_LIBRARY_PATH} == 0) then

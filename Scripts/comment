@@ -1,7 +1,14 @@
 #! /bin/csh -f
 
+###############################################################
+# Run this script to automatically comment tcl files.
+# Then fill in the comment headers.
+# See slicer/program/Custom.tcl for an example of how to 
+# fill in the headers.  
+###############################################################
+
 if (${?SLICER_HOME} == 0) then
-    setenv SLICER_HOME /export/bigsur/slicer
+    setenv SLICER_HOME /local/pkg/slicer-1.1.0
 endif
 
 if (${?LD_LIBRARY_PATH} == 0) then
