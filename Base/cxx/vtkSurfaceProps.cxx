@@ -83,7 +83,7 @@ void vtkSurfaceProps::Execute()
   vtkIdType *ptIds;
   int numCells, jj, kk, type;
   vtkIdType numPts, cellId, pId, qId, rId;
-  vtkFloatingPointType *p, *q, *r, xp[3], edge0[3], edge1[3], edge2[3], *center;
+  vtkFloatingPointType p[3], q[3], r[3], xp[3], edge0[3], edge1[3], edge2[3], *center;
   double tri_area, cell_area, tot_area, tri_vol, tot_vol, tot_vol2;
 
   vtkDebugMacro(<< "Calculating Surface Properties." );
@@ -118,9 +118,9 @@ void vtkSurfaceProps::Execute()
       CELLTRIANGLES( ptIds, type, jj, pId, qId, rId );
       if ( pId < 0 )
         continue;
-      p = input->GetPoint( pId );
-      q = input->GetPoint( qId );
-      r = input->GetPoint( rId );
+      input->GetPoint( pId, p );
+      input->GetPoint( qId, q );
+      input->GetPoint( rId, r );
       // p, q, and r are the oriented triangle points.
       for ( kk=0; kk<3; kk++ )
         {
