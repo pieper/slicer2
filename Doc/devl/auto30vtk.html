@@ -37,7 +37,7 @@ Obtain the VTK (Visualization Toolkit) source code (pre-compiled binaries won't 
 We are currently developing with <a
 href="http://public.kitware.com/VTK/files/release/4.2/">vtk4.2</a>
 (release version). As new versions are released, we tend to update from the cvs repository, so your best bet will be to <a href="http://www.vtk.org/get-software.php#cvs">get the VTK source from the CVS repository</a>.<br>
-Place the source in slicer2/Lib/[osname]/vtk/VTK-[version] and built it using cmake  and place the resulting binaries into slicer2/Lib/[osname]/VTK-build.<br>
+Place the source in slicer2/Lib/[osname]/vtk/VTK-[version] and build it using cmake  and place the resulting binaries into slicer2/Lib/[osname]/VTK-build.<br>
 When building VTK using ccmake on unix, or CMakeSetup.exe on Windows, make sure that you configure it with tcl, tkwidget, patented, local, shared, hybrid. Make sure WRAP_TCL and VTK_USE_HYBRID  are set to ON. You will need to point it to the version of TCL that you downloaded. Consult the VTK documentation in the root source code directory.
 <li>ITK<br>
 If you wish to use the vtkITK module (if you don't want to use it, you can delete the Modules/vtkITK directory), you need to obtain ITK (Insight Toolkit). It can be downloaded <a href="http://www.itk.org/HTML/Download.php">here</a>.
