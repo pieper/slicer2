@@ -189,7 +189,7 @@ proc VolFreeSurferReadersBuildGUI {parentFrame} {
 
     set f $parentFrame.fModel
 
-    DevAddFileBrowse $f Volume "VolFreeSurferReaders,ModelFileName" "Model File:" "VolFreeSurferReadersSetModelFileName" "orig" "\$Volume(DefaultDir)"  "Browse for a FreeSurfer surface file (orig ${Volume(VolFreeSurferReaders,surfaces)})"
+    DevAddFileBrowse $f Volume "VolFreeSurferReaders,ModelFileName" "Model File:" "VolFreeSurferReadersSetModelFileName" "orig" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer surface file (orig ${Volume(VolFreeSurferReaders,surfaces)})"
     frame $f.fName -bg $Gui(activeWorkspace)
     frame $f.fSurface -bg $Gui(activeWorkspace)
     frame $f.fScalar -bg $Gui(activeWorkspace)
@@ -202,7 +202,7 @@ proc VolFreeSurferReadersBuildGUI {parentFrame} {
     pack $f.fScalar -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
     pack $f.fAnnotation -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
     pack $f.fAnnotColor -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
-    DevAddFileBrowse $f.fAnnotColor Volume "VolFreeSurferReaders,colorTableFilename" "Annotation Color file:" "VolFreeSurferReadersSetAnnotColorFileName" "txt" "\$Volume(DefaultDir)"  "Browse for a FreeSurfer annotation colour table file (txt)"
+    DevAddFileBrowse $f.fAnnotColor Volume "VolFreeSurferReaders,colorTableFilename" "Annotation Color file:" "VolFreeSurferReadersSetAnnotColorFileName" "txt" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer annotation colour table file (txt)"
 
     pack $f.fApply -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
 
