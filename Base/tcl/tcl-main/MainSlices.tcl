@@ -87,7 +87,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-		{$Revision: 1.22 $} {$Date: 2000/09/14 21:34:54 $}]
+		{$Revision: 1.23 $} {$Date: 2000/11/16 22:45:09 $}]
 
 	# Initialize Variables
 	set Slice(idList) "0 1 2"
@@ -146,7 +146,10 @@ proc MainSlicesInit {} {
 # Slice(xScrAnno)               : 
 # Slice(yAnno)                  : 
 # Slice(yScrAnno)               : 
-# Slice(clipPlanes)             : instance of vtkImplicitBoolean 
+# Slice(clipPlanes)             : instance of vtkImplicitBoolean, used to
+#                                 determine clip regions
+# Slice(clipType)               : "Intersection" or "Union", deals with the
+#                                 way to deal with clipping from many slices
 #
 #  id is a number in Slice(idList)
 #                               
@@ -187,6 +190,8 @@ proc MainSlicesBuildVTK {} {
 	# Clipping
 	vtkImplicitBoolean Slice(clipPlanes)
 		Slice(clipPlanes) SetOperationTypeToIntersection
+
+        set Slice(clipType) "Intersection"
 
 	foreach s $Slice(idList) {
 		vtkPlane Slice($s,clipPlane)
