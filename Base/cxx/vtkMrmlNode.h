@@ -30,8 +30,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkMrmlNode_h
 #define __vtkMrmlNode_h
 
-#include <iostream.h>
-#include <fstream.h>
+//#include <iostream.h>
+//#include <fstream.h>
 #include "vtkObject.h"
 #include "vtkMatrix4x4.h"
 

@@ -26,7 +26,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <math.h>
 #include <stdlib.h>
 #include "vtkObjectFactory.h"
-#include <iomanip.h>
+
+//#include <iomanip.h>
 
 //------------------------------------------------------------------------------
 vtkImageMeasureVoxels* vtkImageMeasureVoxels::New()
@@ -151,10 +152,20 @@ static void vtkImageMeasureVoxelsExecute(vtkImageMeasureVoxels *self,
 		// round to 3 decimal places
 		char vol2[30];
 		sprintf(vol2, "%.3f", volume);
-		file << setw(5) << label;
-		file << setiosflags(ios::right);
-		//int width = 15 - (label>=10) - (label>=100);
-		file << setw(15)  << vol2 << '\n';
+		
+		// >> Modified by Attila Tanacs 7/27/01
+		// Instead of manipulators, member functions are used.
+		//file << setw(5) << label;
+		file.width(5);
+		file << label;
+		//file << setiosflags(ios::right);
+		file.setf(ios::right);
+		//file.setiosflags(ios::right);
+		////int width = 15 - (label>=10) - (label>=100);
+		//file << setw(15)  << vol2 << '\n';
+		file.width(5);
+		file << vol2 << "\n";
+		// << End of modifications 7/27/01
 	      }
 	    histPtr++;
 	  }

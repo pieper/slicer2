@@ -39,9 +39,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkMrmlData_h
 #define __vtkMrmlData_h
 
-#include <fstream.h>
+//#include <fstream.h>
 #include <stdlib.h>
-#include <iostream.h>
+//#include <iostream.h>
 
 #include "vtkProcessObject.h"
 #include "vtkIndirectLookupTable.h"
@@ -81,7 +81,8 @@ class VTK_EXPORT vtkMrmlData : public vtkProcessObject {
   // All subclasses MUST call vtkMRMLData::Update and vtkMRMLData::GetMTime
   virtual void Update();
   virtual unsigned long int GetMTime();
-  virtual vtkObject* GetOutput();
+//  virtual vtkObject* GetOutput();
+  vtkDataObject *GetOutput();
 
   //
   // Read/Write filters

@@ -35,9 +35,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkMrmlSlicer_h
 #define __vtkMrmlSlicer_h
 
-#include <fstream.h>
+//#include <fstream.h>
 #include <stdlib.h>
-#include <iostream.h>
+//#include <iostream.h>
 
 #include "vtkCamera.h"
 #include "vtkImageReformatIJK.h"

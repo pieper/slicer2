@@ -36,8 +36,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef DCMPARSE_H
 #define DCMPARSE_H
 
-#include <iostream.h>
-#include <fstream.h>
+//#include <iostream.h>
+//#include <fstream.h>
 #include <stdio.h>
 #include "vtkObject.h"
 //#include "vtkDCMDataElement.h"

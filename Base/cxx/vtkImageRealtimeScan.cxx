@@ -24,7 +24,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> // memcpy
-#include <iostream.h>
+//#include <iostream.h>
 #include <string.h>
 #include <fcntl.h>
 #ifndef _WIN32

@@ -28,8 +28,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkMrmlPathNode_h
 #define __vtkMrmlPathNode_h
 
-#include <iostream.h>
-#include <fstream.h>
+//#include <iostream.h>
+//#include <fstream.h>
 #include "vtkMrmlNode.h"
 
 class VTK_EXPORT vtkMrmlPathNode : public vtkMrmlNode

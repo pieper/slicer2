@@ -35,8 +35,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkMrmlColorNode_h
 #define __vtkMrmlColorNode_h
 
-#include <iostream.h>
-#include <fstream.h>
+//#include <iostream.h>
+//#include <fstream.h>
 #include "vtkMrmlNode.h"
 
 class VTK_EXPORT vtkMrmlColorNode : public vtkMrmlNode

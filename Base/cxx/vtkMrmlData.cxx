@@ -138,7 +138,7 @@ int vtkMrmlData::Read() {
   vtkErrorMacro("The Programmer Did not Specify \"Read\" for this type of vtkMrmlData");
   return 0;
 };
-vtkObject *vtkMrmlData::GetOutput() {
+vtkDataObject *vtkMrmlData::GetOutput() {
   vtkErrorMacro("The Programmer Did not Specify \"GetOutput\" for this type of vtkMrmlData");
   return NULL;
 };

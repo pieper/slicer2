@@ -36,8 +36,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef DCMLISTER_H
 #define DCMLISTER_H
 
-#include <iostream.h>
-#include <fstream.h>
+//#include <iostream.h>
+//#include <fstream.h>
 #include <stdio.h>
 #include "vtkObject.h"
 #include "vtkDCMParser.h"

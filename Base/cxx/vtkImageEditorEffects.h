@@ -32,9 +32,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageEditorEffects_h
 #define __vtkImageEditorEffects_h
 
-#include <fstream.h>
+//#include <fstream.h>
 #include <stdlib.h>
-#include <iostream.h>
+//#include <iostream.h>
 
 #include "vtkImageEditor.h"
 #include "vtkPoints.h"

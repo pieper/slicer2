@@ -33,9 +33,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkMrmlVolume_h
 #define __vtkMrmlVolume_h
 
-#include <fstream.h>
+//#include <fstream.h>
 #include <stdlib.h>
-#include <iostream.h>
+//#include <iostream.h>
 
 #include "vtkMrmlVolumeNode.h"
 #include "vtkImageAccumulateDiscrete.h"

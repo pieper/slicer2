@@ -38,8 +38,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageEditor_h
 #define __vtkImageEditor_h
 
-#include <iostream.h>
-#include <fstream.h>
+//#include <iostream.h>
+//#include <fstream.h>
 #include "vtkProcessObject.h"
 #include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"

@@ -31,8 +31,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageDICOMReader_h
 #define __vtkImageDICOMReader_h
 
-#include <iostream.h>
-#include <fstream.h>
+//#include <iostream.h>
+//#include <fstream.h>
 #include "vtkImageSource.h"
 #include "vtkTransform.h"
 
