@@ -9,6 +9,8 @@
 #include "vtkMrmlModelNode.h"
 #include "vtkErrorCode.h"
 
+#include <string>
+
 
 //------------------------------------------------------------------------------
 vtkMultipleStreamlineController* vtkMultipleStreamlineController::New()
@@ -373,6 +375,8 @@ void vtkMultipleStreamlineController::SaveStreamlineAsTextFile(ofstream &file,
 void vtkMultipleStreamlineController::SaveStreamlinesAsTextFiles(char *filename)
 { 
   char fileName[101];
+  std::string fileNameStr;
+  std::string idxStr;
   vtkHyperStreamlinePoints *currStreamline;
   ofstream file;
   int idx;
@@ -397,10 +401,10 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsTextFiles(char *filename)
     {
       cout << "stream " << currStreamline << endl;
       
-      snprintf(fileName,100,"%s_%d.txt",filename,idx);
-
-      // Open file
-      file.open(fileName);
+      //snprintf(fileName,100,"%s_%d.txt",filename,idx);
+      idxStr = idx + ".txt";
+      fileNameStr = filename + '_' + idxStr;
+      file.open(fileNameStr.c_str());
       if (file.fail())
         {
           vtkErrorMacro("Write: Could not open file " << fileName);
@@ -458,7 +462,9 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
   int lastColor;
   int currColor, newColor, idx;
   vtkFloatingPointType rgb[3];
-  char fileName[101];
+  //  char fileName[101];
+  std::string fileNameStr;
+  std::string idxStr;
   vtkMrmlTree *tree;
   vtkMrmlModelNode *currNode;
   vtkMrmlColorNode *currColorNode;
@@ -564,8 +570,10 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
       cout << idx << endl;
       writer->SetInput(currAppender->GetOutput());
       writer->SetFileType(2);
-      snprintf(fileName,100,"%s_%d.vtk",filename,idx);
-      writer->SetFileName(fileName);
+      //snprintf(fileName,100,"%s_%d.vtk",filename,idx);
+      idxStr = idx + ".txt";
+      fileNameStr = filename + '_' + idxStr;
+      writer->SetFileName(fileNameStr.c_str());
       writer->Write();
       
       // Delete it (but it survives until the collection it's on is deleted).
@@ -573,11 +581,12 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
 
       // Also write a MRML file: add to MRML tree
       currNode=vtkMrmlModelNode::New();
-      currNode->SetFullFileName(fileName);
-      currNode->SetFileName(fileName);
+      currNode->SetFullFileName(fileNameStr.c_str());
+      currNode->SetFileName(fileNameStr.c_str());
       // use the name argument to name the model
-      snprintf(fileName,100,"%s_%d",name,idx);
-      currNode->SetName(fileName);
+      //snprintf(fileName,100,"%s_%d",name,idx);
+      fileNameStr = name + '_' + idxStr;
+      currNode->SetName(fileNameStr.c_str());
       currNode->SetDescription("Model of a DTMRI tract");
       if (this->ScalarVisibility) currNode->ScalarVisibilityOn();
       currNode->ClippingOn();
@@ -624,8 +633,10 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
     }
   
   // Write the MRML file
-  snprintf(fileName,100,"%s.xml",filename);
-  tree->Write(fileName);
+  //  snprintf(fileName,100,"%s.xml",filename);
+  fileNameStr = filename;
+  fileNameStr += ".xml";
+  tree->Write((char *)fileNameStr.c_str());
 
   cout << "DELETING" << endl;
 
@@ -962,7 +973,9 @@ void vtkMultipleStreamlineController::SeedAndSaveStreamlinesFromROI(char *filena
   vtkTransform *transform;
   vtkTransformPolyDataFilter *transformer;
   vtkPolyDataWriter *writer;
-  char fileName[101];
+  //char fileName[101];
+  std::string fileNameStr;
+  std::string idxStr;
   int idx;
   ofstream file;
 
@@ -1016,14 +1029,16 @@ void vtkMultipleStreamlineController::SeedAndSaveStreamlinesFromROI(char *filena
 
 
   // Save all points to the same text file.
-  snprintf(fileName,100,"%s.3dpts",filename);
+  //snprintf(fileName,100,"%s.3dpts",filename);
+  fileNameStr = filename;
+  fileNameStr += ".3dpts";
   // Open file
-  file.open(fileName);
+  file.open(fileNameStr.c_str());
   if (file.fail())
     {
       vtkErrorMacro("Write: Could not open file " 
-                    << fileName);
-      cerr << "Write: Could not open file " << fileName;
+                    << fileNameStr.c_str());
+      cerr << "Write: Could not open file " << fileNameStr.c_str();
 #if (VTK_MAJOR_VERSION <= 5)      
       this->SetErrorCode(2);
 #else
@@ -1095,8 +1110,10 @@ void vtkMultipleStreamlineController::SeedAndSaveStreamlinesFromROI(char *filena
                       // Save the model to disk
                       writer->SetInput(transformer->GetOutput());
                       writer->SetFileType(2);
-                      snprintf(fileName,100,"%s_%d.vtk",filename,idx);
-                      writer->SetFileName(fileName);
+                      //snprintf(fileName,100,"%s_%d.vtk",filename,idx);
+                      idxStr = idx + ".vtk";
+                      fileNameStr = filename + '_' + idxStr;
+                      writer->SetFileName(fileNameStr.c_str());
                       writer->Write();
 
                       // Save the center points to disk
