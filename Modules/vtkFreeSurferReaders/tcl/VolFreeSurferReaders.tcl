@@ -206,7 +206,9 @@ proc VolFreeSurferReadersSetFileName {} {
     if {$Module(verbose) == 1} {
         puts "FreeSurferReaders filename: $Volume(VolFreeSurferReaders,FileName)"
     }
-
+    set Volume(name) [file tail $Volume(VolFreeSurferReaders,FileName)]
+    # replace . with -
+    regsub -all {[.]} $Volume(name) {-} Volume(name)
 }
 
 #-------------------------------------------------------------------------------
@@ -327,7 +329,7 @@ proc VolFreeSurferReadersApply {} {
         puts "VolFreeSurferReaders: volume $i position 1 3: $badval"
     }
     # allow use of other module GUIs
-    set Volume(freeze) 0
+    set Volumes(freeze) 0
  
     puts "New FreeSurfer Volume:"
     [Volume($i,vol) GetOutput] Print
@@ -372,6 +374,13 @@ proc VolFreeSurferReadersBuildSurface {m} {
     vtkFSSurfaceReader Model($m,reader)
     Model($m,reader) SetFileName $Volume(VolFreeSurferReaders,FileName)
 
+    vtkPolyDataNormals Model($m,normals)
+    Model($m,normals) SetSplitting 0
+    Model($m,normals) SetInput [Model($m,reader) GetOutput]
+
+    vtkStripper Model($m,stripper)
+    Model($m,stripper) SetInput [Model($m,normals) GetOutput]
+
     # should be vtk model
     foreach r $Module(Renderers) {
         # Mapper
@@ -384,13 +393,13 @@ proc VolFreeSurferReadersBuildSurface {m} {
     #
     Model($m,node) SetName $Volume(name)
     Model($m,node) SetFileName $Volume(VolFreeSurferReaders,FileName)
-    set Model($m,polyData) [Model($m,reader) GetOutput]
+    set Model($m,polyData) [Model($m,normals) GetOutput]
     $Model($m,polyData) Update
 
     # always read in the thickness file
     set thicknessFileName [file rootname $Volume(VolFreeSurferReaders,FileName)].thickness
     if [file exists $thicknessFileName] {
-        DevWarningWindow "Reading in thickness file associated with this surface $thicknessFileName"
+        DevInfoWindow "Reading in thickness file associated with this surface $thicknessFileName"
         # need to delete these so that if close the scene and reopen a surface file, these won't still exist
         vtkFloatArray Model($m,floatArray)
         vtkFSSurfaceScalarReader Model($m,ssr)
@@ -410,37 +419,41 @@ proc VolFreeSurferReadersBuildSurface {m} {
         Model($m,mapper,$r) SetInput $Model($m,polyData)
    
         if {0} {
-        # decimate
-        vtkDecimate Model($m,decimate,$r) 
-        Model($m,decimate,$r) SetInput $Model($m,polyData)
-        Model($m,decimate,$r) SetMaximumIterations 6
-        Model($m,decimate,$r)  SetMaximumSubIterations 0 
-        Model($m,decimate,$r) PreserveEdgesOn
-        Model($m,decimate,$r) SetMaximumError 1
-        Model($m,decimate,$r) SetTargetReduction 1
-        Model($m,decimate,$r) SetInitialError .0002
-        Model($m,decimate,$r) SetErrorIncrement .0002
-        [ Model($m,decimate,$r) GetOutput] ReleaseDataFlagOn
-        vtkSmoothPolyDataFilter smoother
-        smoother SetInput [Model($m,decimate,$r) GetOutput]
-        set p smoother
-        $p SetNumberOfIterations 2
-        $p SetRelaxationFactor 0.33
-        $p SetFeatureAngle 60
-        $p FeatureEdgeSmoothingOff
-        $p BoundarySmoothingOff
-        $p SetConvergence 0
-        [$p GetOutput] ReleaseDataFlagOn
+            # decimate
+            vtkDecimate Model($m,decimate,$r) 
+            Model($m,decimate,$r) SetInput $Model($m,polyData)
+            Model($m,decimate,$r) SetMaximumIterations 6
+            Model($m,decimate,$r)  SetMaximumSubIterations 0 
+            Model($m,decimate,$r) PreserveEdgesOn
+            Model($m,decimate,$r) SetMaximumError 1
+            Model($m,decimate,$r) SetTargetReduction 1
+            Model($m,decimate,$r) SetInitialError .0002
+            Model($m,decimate,$r) SetErrorIncrement .0002
+            [ Model($m,decimate,$r) GetOutput] ReleaseDataFlagOn
+            vtkSmoothPolyDataFilter smoother
+            smoother SetInput [Model($m,decimate,$r) GetOutput]
+            set p smoother
+            $p SetNumberOfIterations 2
+            $p SetRelaxationFactor 0.33
+            $p SetFeatureAngle 60
+            $p FeatureEdgeSmoothingOff
+            $p BoundarySmoothingOff
+            $p SetConvergence 0
+            [$p GetOutput] ReleaseDataFlagOn
 
-        set Model($m,polyData) [$p GetOutput]
-        Model($m,polyData) Update
-        foreach r $Module(Renderers) {
-            Model($m,mapper,$r) SetInput $Model($m,polyData)
+            set Model($m,polyData) [$p GetOutput]
+            Model($m,polyData) Update
+            foreach r $Module(Renderers) {
+                Model($m,mapper,$r) SetInput $Model($m,polyData)
+            }
         }
-    }
     }
     Model($m,reader) SetOutput ""
     Model($m,reader) Delete
+    Model($m,normals) SetOutput ""
+    Model($m,normals) Delete
+    Model($m,stripper) SetOutput ""
+    Model($m,stripper) Delete
 
     # Clipper
     vtkClipPolyData Model($m,clipper)
@@ -454,7 +467,6 @@ proc VolFreeSurferReadersBuildSurface {m} {
         # Actor
         vtkActor Model($m,actor,$r)
         Model($m,actor,$r) SetMapper Model($m,mapper,$r)
-        
         # Registration
         Model($m,actor,$r) SetUserMatrix [Model($m,node) GetRasToWld]
 
@@ -466,7 +478,6 @@ proc VolFreeSurferReadersBuildSurface {m} {
     }
     set Model($m,clipped) 0
     set Model($m,displayScalarBar) 0
-
 
     # init gui vars
     set Model($m,visibility)       [Model($m,node) GetVisibility]
