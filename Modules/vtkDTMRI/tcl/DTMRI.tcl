@@ -126,16 +126,15 @@ proc DTMRIInit {} {
 
     # Source all appropriate tcl files here. 
     source "$env(SLICER_HOME)/Modules/vtkDTMRI/tcl/notebook.tcl"
-    # Load tensor registration module.
-    source "$env(SLICER_HOME)/Modules/vtkDTMRI/tcl/DTMRITensorRegistration.tcl"
-    DTMRIRegInit 
+
+     
     # Module Summary Info
     #------------------------------------
     set Module($m,overview) "Diffusion DTMRI MRI visualization and more..."
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.51 $} {$Date: 2005/01/09 23:44:50 $}]
+                  {$Revision: 1.52 $} {$Date: 2005/01/12 17:24:16 $}]
 
      # Define Tabs
     #------------------------------------
@@ -143,8 +142,8 @@ proc DTMRIInit {} {
     set Module($m,row1Name) "{Help} {Input} {Convert} {Disp} {ROI}"
     set Module($m,row1,tab) Input
     # Use these lines to add a second row of tabs
-    set Module($m,row2List) "Scalars Advanced Regist Save"
-    set Module($m,row2Name) "{Scalars} {Advanced} {Regist} {Save}"
+    set Module($m,row2List) "Scalars Advanced Save"
+    set Module($m,row2Name) "{Scalars} {Advanced} {Save}"
     set Module($m,row2,tab) Scalars
     
 
@@ -227,17 +226,21 @@ proc DTMRIInit {} {
         _default SelectDiffusionGradient $i
         lappend DTMRI(convert,gradients) [_default GetSelectedDiffusionGradient]
     }
+    _default Delete
     # puts $DTMRI(convert,gradients)
     set DTMRI(convert,firstGradientImage) 1
     set DTMRI(convert,lastGradientImage) 6
     set DTMRI(convert,firstNoGradientImage) 7
     set DTMRI(convert,lastNoGradientImage) 7
 
-    _default Delete
+    #Specific variables for Mosaic format (This should be extracted from Dicom header)
+    set DTMRI(convert,mosaicTiles) 8
+    set DTMRI(convert,mosaicSlices) 60
+    
     #This variable is used by Create-Pattern button and indicates weather it has to hide or show the create pattern frame. On status 0 --> show. On status 1 --> hide.
     set DTMRI(convert,show) 0
 
-
+    set DTMRI(convert,makeDWIasVolume) 0
     #------------------------------------
     # Visualization-related variables
     #------------------------------------
@@ -462,11 +465,6 @@ proc DTMRIInit {} {
     set DTMRI(mode,autoTractsLabel,tooltip) "A tract will be seeded in each voxel of the ROI which is colored with this label."
 
     #------------------------------------
-    # Init the tensor registration
-    #------------------------------------
-    DTMRIRegInit
-
-    #------------------------------------
     # Variables for preprocessing
     #------------------------------------
 
@@ -561,7 +559,7 @@ proc DTMRIInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIUpdateMRML {} {
-    global Tensor DTMRI
+    global Tensor
 
     set t $Tensor(activeID)
     
@@ -575,28 +573,6 @@ proc DTMRIUpdateMRML {} {
         DTMRI(vtk,streamlineControl) SetWorldToTensorScaledIJK transform
         transform Delete 
     }
-
-    # Do MRML update for Tensor Registration tab. Necessary because
-    # multiple lists are used.
-    if {([catch "package require vtkAG"]==0)&&([info exist DTMRI(reg,AG)])} {
-      # This is needed to handle deletion of tensors.
-      if {[catch "Tensor($DTMRI(InputTensorSource),node) GetName"]==1} {
-    set DTMRI(InputTensorSource) $Tensor(idNone)
-        $DTMRI(mbInputTensorSource) config -text None
-      }
-      if {[catch "Tensor($DTMRI(InputTensorTarget),node) GetName"]==1} {
-    set DTMRI(InputTensorTarget) $Tensor(idNone)
-        $DTMRI(mbInputTensorTarget) config -text None
-      }
-      if {[catch "Tensor($DTMRI(ResultTensor),node) GetName"]==1} {
-    set DTMRI(ResultTensor) -5
-      }
-      DevUpdateNodeSelectButton Tensor DTMRI InputTensorSource   InputTensorSource   DevSelectNode
-      DevUpdateNodeSelectButton Tensor DTMRI InputTensorTarget   InputTensorTarget   DevSelectNode 0 0 0 DTMRIReg2DUpdate
-      DevUpdateNodeSelectButton Tensor DTMRI ResultTensor  ResultTensor  DevSelectNode  0 1 0
-      DevSelectNode Tensor $DTMRI(ResultTensor) DTMRI ResultTensor ResultTensor
-      DevUpdateNodeSelectButton Volume DTMRI InputCoregVol InputCoregVol DevSelectNode
-    }
 }
 
 #-------------------------------------------------------------------------------
@@ -607,7 +583,7 @@ proc DTMRIUpdateMRML {} {
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIEnter {} {
-    global DTMRI Slice View 
+    global DTMRI Slice View
     
     # set global flag to avoid possible render loop
     set View(resetCameraClippingRange) 0
@@ -1972,15 +1948,6 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     TooltipAdd  $f.eOutput $DTMRI(mode,maskLabel,tooltip)
     TooltipAdd  $f.eName $DTMRI(mode,maskLabel,tooltip)
 
-
-#######################################################################################
-#######################################################################################
-#######################################################################################
-    #-------------------------------------------
-    # Regist frame
-    #-------------------------------------------
-    
-    DTMRIBuildRegistFrame
 
 #######################################################################################
 #######################################################################################
@@ -4313,7 +4280,7 @@ proc DTMRIUpdate {} {
 
         # calculate trace or whatever we are thresholding by
         $math SetInput 0 [Tensor($t,data) GetOutput]
-    $math SetInput 1 [Tensor($t,data) GetOutput]
+        $math SetInput 1 [Tensor($t,data) GetOutput]
         $math SetOperationTo$DTMRI(mode,threshold)
 
         # threshold to make a mask of the area of interest
@@ -4659,15 +4626,14 @@ proc DTMRIDoMath {{operation ""}} {
     set rangexx [[[$input GetPointData] GetTensors] GetRange 0]
     set rangeyy [[[$input GetPointData] GetTensors] GetRange 4]
     set rangezz [[[$input GetPointData] GetTensors] GetRange 8]
-    
+    puts "Ranges are: $rangexx $rangeyy $rangezz"
     set maxTrace [expr [lindex $rangexx 1] + [lindex $rangeyy 1] + [lindex $rangezz 1]]
-    
     puts "Running oper: $operation"
     puts "Max Trace: $maxTrace"
     
     switch -regexp -- $operation {
     {^(Trace|Determinant|D11|D22|D33|MaxEigenvalue|MiddleEigenvalue|MinEigenvalue)$} {
-        set DTMRI(scalars,scaleFactor) [expr 1000 / $maxTrace]
+        set DTMRI(scalars,scaleFactor) [expr 1000.0 / $maxTrace]
     }
     {^(RelativeAnisotropy|FractionalAnisotropy|LinearMeasure|PlanarMeasure|SphericalMeasure|ColorByOrientation)$} {
         set DTMRI(scalars,scaleFactor) 1000
@@ -4677,7 +4643,6 @@ proc DTMRIDoMath {{operation ""}} {
     puts "DTMR: scale factor $DTMRI(scalars,scaleFactor)"
 
     # create vtk object to do the operation
-    catch "math Delete"
     vtkTensorMathematics math
     math SetScaleFactor $DTMRI(scalars,scaleFactor)
     math SetInput 0 $input
@@ -4696,9 +4661,9 @@ proc DTMRIDoMath {{operation ""}} {
     # tell the node what type of data so MRML file will be okay
     Volume($v,node) SetScalarType [[math GetOutput] GetScalarType]
 
-    math SetInput 0 ""
+
+    math SetInput 0 ""    
     math SetInput 1 ""
-    
     # this is to disconnect the pipeline
     # this object hangs around, so try this trick from Editor.tcl:
     math SetOutput ""
@@ -5184,6 +5149,7 @@ proc ConvertVolumeToTensors {} {
 
     # DTMRI creation filter
     vtkImageDiffusionTensor DTMRI
+    DTMRI SetInputScaleFactor 100
 
     if {[info exists DTMRI(selectedpattern)]} {
         
@@ -5209,9 +5175,6 @@ proc ConvertVolumeToTensors {} {
 # define if the conversion is volume interleaved or slice interleaved depending on the pattern
 
 
-
-
-
     # setup - these are now globals linked with GUI
     #set slicePeriod 8
     #set offsetsGradient "0 1 2 3 4 5"
@@ -5225,7 +5188,8 @@ proc ConvertVolumeToTensors {} {
         # 0-based offsets, so subtract 1
         lappend offsetsGradient [expr $i -1]
         incr count
-    } 
+    }
+    puts $offsetsGradient
     set numberOfGradientImages $count
     set count 0
     for {set i $DTMRI(convert,firstNoGradientImage)} \
@@ -5235,6 +5199,7 @@ proc ConvertVolumeToTensors {} {
         lappend offsetsNoGradient [expr $i -1]
         incr count
     }
+    puts $offsetsNoGradient
     set numberOfNoGradientImages $count
 
     set slicePeriod \
@@ -5258,6 +5223,9 @@ proc ConvertVolumeToTensors {} {
     vtkTransform trans    
     puts "If not phase-freq flipped, swapping x and y in gradient directions"
     set swap [Volume($v,node) GetFrequencyPhaseSwap]
+    set scanorder [Volume($v,node) GetScanOrder]
+    
+      
     if {$swap == 0} {    
     # Gunnar Farneback, April 6, 2004
     #
@@ -5275,7 +5243,7 @@ proc ConvertVolumeToTensors {} {
     # So far IS and PA have been experimentally verified.
     # SI is hypothesized to be the same as IS.
     # AP is hypothesized to be the same as PA.
-    set scanorder [Volume($v,node) GetScanOrder]
+
     puts $scanorder
     switch $scanorder {
         "SI" -
@@ -5315,6 +5283,17 @@ proc ConvertVolumeToTensors {} {
     puts "Creating DTMRIs with -y for vtk compliance"
     trans Scale 1 -1 1
     }
+
+    #Hardcode specific parameters for MOSAIC. Experimental.
+    if {$DTMRI(convert,order) == "MOSAIC"} {
+      DTMRI SetInputScaleFactor 1
+      DTMRI SetAlpha 50
+      set scanorder "IS"
+      trans Identity
+      trans Scale 1 1 -1
+      DTMRI(vtk,glyphs) SetScaleFactor 2000
+    }
+    
     DTMRI SetTransform trans
     trans Delete
 
@@ -5328,6 +5307,29 @@ proc ConvertVolumeToTensors {} {
        DTMRI Delete
        return
    }
+
+  if {$DTMRI(convert,order) == "MOSAIC"} {
+    #Build list of DICOM files
+    set numFiles [Volume($v,node) GetNumberOfDICOMFiles]
+    for {set k 0} {$k < $numFiles} {incr k} {
+      lappend filesList [Volume($v,node) GetDICOMFileName $k]
+    }
+    set sortList [lsort -dictionary $filesList]
+    
+    set numElements [expr $numberOfNoGradientImages + $numberOfGradientImages]
+    
+    for {set k 0} {$k < $numElements} {incr k} {
+      lappend mosaicIndx [lsearch -dictionary $filesList [lindex $sortList $k ]]
+    }
+    
+    puts "$numberOfNoGradientImages"
+    puts "$numberOfNoGradientImages"
+    puts "Num Elements: $numElements"
+    puts "Mosaic Indx: $mosaicIndx"
+    
+    
+  }
+
         
 
     # produce input vols for DTMRI creation
@@ -5339,6 +5341,12 @@ proc ConvertVolumeToTensors {} {
         extract$slice SetModeTo$DTMRI(convert,order)
         extract$slice SetSliceOffset $slice
         extract$slice SetSlicePeriod $slicePeriod
+        
+        if {$DTMRI(convert,order) == "MOSAIC"} {
+          extract$slice SetSliceOffset [lindex $mosaicIndx $slice]   
+          extract$slice SetMosaicTiles $DTMRI(convert,mosaicTiles)
+          extract$slice SetMosaicSlices $DTMRI(convert,mosaicSlices)
+        }
 
         #puts "----------- slice $slice update --------"    
         extract$slice Update
@@ -5352,45 +5360,52 @@ proc ConvertVolumeToTensors {} {
         # put the filter output into a slicer volume
         # Lauren this should be optional
         # make a MRMLVolume for this output
-        set name [Volume($v,node) GetName]
-        set description "$slice gradient volume derived from volume $name"
-        set name gradient${slice}_$name
-        set id [DevCreateNewCopiedVolume $v $description $name]
-        # save id in case we recalculate the DTMRIs
-        lappend DTMRI(recalculate,gradientVolumes) $id
-        puts "created volume $id"
-        Volume($id,vol) SetImageData [extract$slice GetOutput]
-        # fix the image range in the node (less slices than the original)
-        set extent [[Volume($id,vol) GetOutput] GetExtent]
-        set range "[expr [lindex $extent 4] +1] [expr [lindex $extent 5] +1]"
-        eval {Volume($id,node) SetImageRange} $range
-        # recompute the matrices using this offset to center vol in the cube
-        # for some reason this uses the wrong node spacing!
-        # Lauren test 
-        eval {Volume($id,node) SetSpacing} [Volume($id,node) GetSpacing]
+        if {[expr $slice % 5] == 0 && $DTMRI(convert,makeDWIasVolume)==1} {
+          set name [Volume($v,node) GetName]
+          set description "$slice gradient volume derived from volume $name"
+          set name gradient${slice}_$name
+          if {$DTMRI(convert,order) == "MOSAIC"} {
+            set id [DTMRICreateNewVolume [extract$slice GetOutput] $name $description $scanorder]
+          } else {
+            set id [DevCreateNewCopiedVolume $v $description $name]
+            Volume($id,vol) SetImageData [extract$slice GetOutput]
+          }
+        
+          # save id in case we recalculate the DTMRIs
+          lappend DTMRI(recalculate,gradientVolumes) $id
+          puts "created volume $id"
+          # fix the image range in the node (less slices than the original)
+          set extent [[Volume($id,vol) GetOutput] GetExtent]
+          set range "[expr [lindex $extent 4] +1] [expr [lindex $extent 5] +1]"
+          eval {Volume($id,node) SetImageRange} $range
+          # recompute the matrices using this offset to center vol in the cube
+          # for some reason this uses the wrong node spacing!
+          # Lauren test 
+          eval {Volume($id,node) SetSpacing} [Volume($id,node) GetSpacing]
 
-        set order [Volume($id,node) GetScanOrder]
-        puts "-------computing ras to ijk from scan order----"
-        Volume($id,node) ComputeRasToIjkFromScanOrder $order
+          set order [Volume($id,node) GetScanOrder]
+          puts "-------computing ras to ijk from scan order----"
+          Volume($id,node) ComputeRasToIjkFromScanOrder $order
 
+          # update slicer internals
+          MainVolumesUpdate $id
 
-        # update slicer internals
-        MainVolumesUpdate $id
-
-        # Registration
-        # put the new volume inside the same transform as the Original volume
-        # by inserting it right after that volume in the mrml file
-        set nitems [Mrml(dataTree) GetNumberOfItems]
-        for {set widx 0} {$widx < $nitems} {incr widx} {
+          # Registration
+          # put the new volume inside the same transform as the Original volume
+          # by inserting it right after that volume in the mrml file
+          set nitems [Mrml(dataTree) GetNumberOfItems]
+          for {set widx 0} {$widx < $nitems} {incr widx} {
             if { [Mrml(dataTree) GetNthItem $widx] == "Volume($id,node)" } {
                 break
             }
-        }
-        if { $widx < $nitems } {
+          }
+          if { $widx < $nitems } {
             Mrml(dataTree) RemoveItem $widx
             Mrml(dataTree) InsertAfterItem Volume($v,node) Volume($id,node)
             MainUpdateMRML
-        }
+         }
+        
+       }
         
     }
     # save ids in case we recalculate the DTMRIs
@@ -5402,6 +5417,12 @@ proc ConvertVolumeToTensors {} {
         extract$slice SetSliceOffset $slice
         extract$slice SetSlicePeriod $slicePeriod
         
+        if {$DTMRI(convert,order) == "MOSAIC"} {
+          puts "[lindex $mosaicIndx $slice]"
+          eval "extract$slice SetSliceOffset" [lindex $mosaicIndx $slice]     
+          extract$slice SetMosaicTiles $DTMRI(convert,mosaicTiles)
+          extract$slice SetMosaicSlices $DTMRI(convert,mosaicSlices)
+        }
         #puts "----------- slice $slice update --------"    
         extract$slice Update
 
@@ -5409,70 +5430,198 @@ proc ConvertVolumeToTensors {} {
         # put the filter output into a slicer volume
         # Lauren this should be optional
         # make a MRMLVolume for this output
-        set name [Volume($v,node) GetName]
-        set name noGradient${slice}_$name
-        set description "$slice no gradient volume derived from volume $name"
-        set id [DevCreateNewCopiedVolume $v $description $name]
-        # save id in case we recalculate the DTMRIs
-        lappend DTMRI(recalculate,noGradientVolumes) $id
-        puts "created volume $id"
-        Volume($id,vol) SetImageData [extract$slice GetOutput]
-        # fix the image range in the node (less slices than the original)
-        set extent [[Volume($id,vol) GetOutput] GetExtent]
-        set range "[expr [lindex $extent 4] +1] [expr [lindex $extent 5] +1]"
-        eval {Volume($id,node) SetImageRange} $range
-        # recompute the matrices using this offset to center vol in the cube
-        set order [Volume($id,node) GetScanOrder]
-        Volume($id,node) ComputeRasToIjkFromScanOrder $order
+        if {[expr $slice % 2] == 0 && $DTMRI(convert,makeDWIasVolume)==1} {
+          set name [Volume($v,node) GetName]
+          set name noGradient${slice}_$name
+          set description "$slice no gradient volume derived from volume $name"
+          if {$DTMRI(convert,order) == "MOSAIC"} {
+            set id [DTMRICreateNewVolume [extract$slice GetOutput] $name $description $scanorder]
+          } else {
+            set id [DevCreateNewCopiedVolume $v $description $name]
+            Volume($id,vol) SetImageData [extract$slice GetOutput]
+          }
+        
+          # save id in case we recalculate the DTMRIs
+          lappend DTMRI(recalculate,noGradientVolumes) $id
+          puts "created volume $id"
+          # fix the image range in the node (less slices than the original)
+          set extent [[Volume($id,vol) GetOutput] GetExtent]
+          set range "[expr [lindex $extent 4] +1] [expr [lindex $extent 5] +1]"
+          eval {Volume($id,node) SetImageRange} $range
+          # recompute the matrices using this offset to center vol in the cube
+          set order [Volume($id,node) GetScanOrder]
+          Volume($id,node) ComputeRasToIjkFromScanOrder $order
 
-        # update slicer internals
-        MainVolumesUpdate $id
+          # update slicer internals
+          MainVolumesUpdate $id
 
-
-        # Registration
-        # put the new volume inside the same transform as the Original volume
-        # by inserting it right after that volume in the mrml file
-        set nitems [Mrml(dataTree) GetNumberOfItems]
-        for {set widx 0} {$widx < $nitems} {incr widx} {
+          # Registration
+          # put the new volume inside the same transform as the Original volume
+          # by inserting it right after that volume in the mrml file
+          set nitems [Mrml(dataTree) GetNumberOfItems]
+          for {set widx 0} {$widx < $nitems} {incr widx} {
             if { [Mrml(dataTree) GetNthItem $widx] == "Volume($id,node)" } {
                 break
             }
-        }
-        if { $widx < $nitems } {
+          }
+          if { $widx < $nitems } {
             Mrml(dataTree) RemoveItem $widx
             Mrml(dataTree) InsertAfterItem Volume($v,node) Volume($id,node)
             MainUpdateMRML
+          }
+
+          # display this volume so the user knows something happened
+          MainSlicesSetVolumeAll Back $id
         }
-
-
-        # display this volume so the user knows something happened
-        MainSlicesSetVolumeAll Back $id
     }
 
     # average the two slices of no gradient 
     # NOTE THIS WILL NOT WORK WITH MORE THAN 2
-    if {$numberOfNoGradientImages == 2} {
-    vtkImageMathematics math
-    math SetOperationToAdd
-    set slice1 [lindex $offsetsNoGradient 0]
-    set slice2 [lindex $offsetsNoGradient 1]
-    math SetInput 0 [extract$slice1 GetOutput]
-    math SetInput 1 [extract$slice2 GetOutput]
+    if {$numberOfNoGradientImages > 1} {
+      vtkImageMathematics math
+      math SetOperationToAdd
 
-    vtkImageMathematics math2
-    math2 SetOperationToMultiplyByK
-    math2 SetConstantK 0.5
-    math2 SetInput 0 [math GetOutput]
-    
-    # set the no diffusion input
-    #DTMRI SetNoDiffusionImage [extract6 GetOutput]
-    DTMRI SetNoDiffusionImage [math2 GetOutput]
+      vtkImageData slicebase 
+      slicebase DeepCopy [extract[lindex $offsetsNoGradient 0] GetOutput]
+      
+      for {set k 1} {$k < $numberOfNoGradientImages} {incr k} {
+        set slicechange [extract[lindex $offsetsNoGradient $k] GetOutput]
+        math SetInput 0 slicebase
+        math SetInput 1 $slicechange
+        math Update
+        slicebase DeepCopy [math GetOutput]
+      }
+      slicebase Delete
+      vtkImageMathematics math2
+      math2 SetOperationToMultiplyByK
+      math2 SetConstantK [expr 1.0 / $numberOfNoGradientImages]
+      math2 SetInput 0 [math GetOutput]
+      math2 Update
+      
+      # set the no diffusion input
+      #DTMRI SetNoDiffusionImage [extract6 GetOutput]
+      DTMRI SetNoDiffusionImage [math2 GetOutput]
+      set baseline [math2 GetOutput]
+            
+      
     } else {
-    set slice [lindex $offsetsNoGradient 0]
-    DTMRI SetNoDiffusionImage [extract$slice GetOutput]
-    }    
+      set slice [lindex $offsetsNoGradient 0]
+      DTMRI SetNoDiffusionImage [extract$slice GetOutput]
+      set baseline [extract$slice GetOutput]
+    }
     
+    #Make a MRML node with BaseLine
+     set name [Volume($v,node) GetName]
+     set description "Baseline from volume $name"
+     set name ${name}_Baseline
+     if {$DTMRI(convert,order) == "MOSAIC"} {
+        set id [DTMRICreateNewVolume $baseline $name $description $scanorder]
+     } else {
+        set id [DevCreateNewCopiedVolume $v $description $name]
+        Volume($id,vol) SetImageData $baseline
+     }
+        
+     puts "created volume $id"
+     # fix the image range in the node (less slices than the original)
+     set extent [[Volume($id,vol) GetOutput] GetExtent]
+     set range "[expr [lindex $extent 4] +1] [expr [lindex $extent 5] +1]"
+     eval {Volume($id,node) SetImageRange} $range
+     # recompute the matrices using this offset to center vol in the cube
+     # for some reason this uses the wrong node spacing!
+     # Lauren test 
+      eval {Volume($id,node) SetSpacing} [Volume($id,node) GetSpacing]
+      set order [Volume($id,node) GetScanOrder]
+      puts "-------computing ras to ijk from scan order----"
+      Volume($id,node) ComputeRasToIjkFromScanOrder $order
+
+      # update slicer internals
+      MainVolumesUpdate $id
+
+      # Registration
+      # put the new volume inside the same transform as the Original volume
+      # by inserting it right after that volume in the mrml file
+      set nitems [Mrml(dataTree) GetNumberOfItems]
+       for {set widx 0} {$widx < $nitems} {incr widx} {
+         if { [Mrml(dataTree) GetNthItem $widx] == "Volume($id,node)" } {
+             break
+         }
+       }
+       if { $widx < $nitems } {
+         Mrml(dataTree) RemoveItem $widx
+         Mrml(dataTree) InsertAfterItem Volume($v,node) Volume($id,node)
+         MainUpdateMRML
+      }
+
+
+    # average gradient images for display and checking mechanism. 
+    # NOTE THIS WILL NOT WORK WITH MORE THAN 2
+      vtkImageMathematics math_g
+      math_g SetOperationToAdd
+
+      vtkImageData slicebase
+      slicebase DeepCopy [extract[lindex $offsetsGradient 0] GetOutput]
+      for {set k 1} {$k < $numberOfGradientImages} {incr k} {
+        set slicechange [extract[lindex $offsetsGradient $k] GetOutput]
+        math_g SetInput 0 slicebase
+        math_g SetInput 1 $slicechange
+        math_g Update
+        slicebase DeepCopy [math_g GetOutput]
+      }
+      slicebase Delete
+      vtkImageMathematics math2_g
+      math2_g SetOperationToMultiplyByK
+      math2_g SetConstantK [expr 1.0 / $numberOfGradientImages]
+      math2_g SetInput 0 [math_g GetOutput]
+      math2_g Update
+      
+      set baseline [math2_g GetOutput]
+ 
+    #Make a MRML node with BaseLine
+     set name [Volume($v,node) GetName]
+     set description "Average gradient from volume $name"
+     set name ${name}_AvGradient
+     if {$DTMRI(convert,order) == "MOSAIC"} {
+        set id [DTMRICreateNewVolume $baseline $name $description $scanorder]
+     } else {
+        set id [DevCreateNewCopiedVolume $v $description $name]
+        Volume($id,vol) SetImageData $baseline
+     }
+        
+     puts "created volume $id"
+     # fix the image range in the node (less slices than the original)
+     set extent [[Volume($id,vol) GetOutput] GetExtent]
+     set range "[expr [lindex $extent 4] +1] [expr [lindex $extent 5] +1]"
+     eval {Volume($id,node) SetImageRange} $range
+     # recompute the matrices using this offset to center vol in the cube
+     # for some reason this uses the wrong node spacing!
+     # Lauren test 
+      eval {Volume($id,node) SetSpacing} [Volume($id,node) GetSpacing]
+      set order [Volume($id,node) GetScanOrder]
+      puts "-------computing ras to ijk from scan order----"
+      Volume($id,node) ComputeRasToIjkFromScanOrder $order
+
+      # update slicer internals
+      MainVolumesUpdate $id
+
+      # Registration
+      # put the new volume inside the same transform as the Original volume
+      # by inserting it right after that volume in the mrml file
+      set nitems [Mrml(dataTree) GetNumberOfItems]
+       for {set widx 0} {$widx < $nitems} {incr widx} {
+         if { [Mrml(dataTree) GetNthItem $widx] == "Volume($id,node)" } {
+             break
+         }
+       }
+       if { $widx < $nitems } {
+         Mrml(dataTree) RemoveItem $widx
+         Mrml(dataTree) InsertAfterItem Volume($v,node) Volume($id,node)
+         MainUpdateMRML
+      }
+
+
+
     puts "3----------- DTMRI update --------"
+    DTMRI DebugOn
     DTMRI Update
     puts "----------- after DTMRI update --------"
 
@@ -5482,9 +5631,10 @@ proc ConvertVolumeToTensors {} {
     # this should be done like the above
     # Create the node (vtkMrmlVolumeNode class)
     set newvol [MainMrmlAddNode Volume Tensor]
-    $newvol Copy Volume($v,node)
+    #Take the baseline as node to copy
+    $newvol Copy Volume($id,node)
     $newvol SetDescription "DTMRI volume"
-    $newvol SetName [Volume($v,node) GetName]
+    $newvol SetName "[Volume($v,node) GetName]_Tensor"
     set n [$newvol GetID]
 
     puts "SPACING [$newvol GetSpacing] DIMS [$newvol GetDimensions] MAT [$newvol GetRasToIjkMatrix]"
@@ -5542,12 +5692,17 @@ proc ConvertVolumeToTensors {} {
         extract$slice Delete
     }
 
-    if {$numberOfNoGradientImages == 2} {
+    if {$numberOfNoGradientImages > 1} {
     math SetOutput ""
     math2 SetOutput ""
     math Delete
     math2 Delete
     }
+    
+    math_g SetOutput ""
+    math2_g SetOutput ""
+    math_g Delete
+    math2_g Delete
     
     DTMRI SetOutput ""
     DTMRI Delete
@@ -5555,6 +5710,48 @@ proc ConvertVolumeToTensors {} {
     # display the new volume in the slices
     RenderSlices
 }
+
+
+proc DTMRICreateNewVolume {volume name desc scanOrder} {
+  global Volume View
+  
+  set n [MainMrmlAddNode Volume]
+  set id [$n GetID]
+  MainVolumesCreate $id
+  $n SetScanOrder $scanOrder     
+  $n SetName $name
+  $n SetDescription $desc
+  set dim [$volume GetDimensions]
+  eval "$n SetDimensions" [lindex $dim 0] [lindex $dim 1]
+  eval "$n SetSpacing" [$volume GetSpacing]
+  set extent [$volume GetExtent]
+  set range "[expr [lindex $extent 4] +1] [expr [lindex $extent 5] +1]"
+  eval {$n SetImageRange} $range
+  $n ComputeRasToIjkFromScanOrder $scanOrder
+  
+  # get the pixel size, etc. from the data and set it in the node
+  #[Volume($id,vol) GetOutput] DeepCopy $volume
+  Volume($id,vol) SetImageData $volume
+  MainUpdateMRML
+  MainVolumesSetActive $id
+  
+  
+  set fov 0
+  for {set i 0} {$i < 2} {incr i} {
+    set dim     [lindex [Volume($id,node) GetDimensions] $i]
+    set spacing [lindex [Volume($id,node) GetSpacing] $i]
+    set newfov     [expr $dim * $spacing]
+    if { $newfov > $fov } {
+       set fov $newfov
+     }
+  }
+  set View(fov) $fov
+  MainViewSetFov
+  
+  return $id
+
+}
+
 
 
 ################################################################
