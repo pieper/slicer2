@@ -188,8 +188,8 @@ proc GetFullPath {name ext {dir "" } {verbose 1}} {
 # 3.) Remove names from the list that are in the "suppressed" list.
 #
 
-# Source parse.tcl to read the XML
-set path [GetFullPath parse tcl]
+# Source Parse.tcl to read the XML
+set path [GetFullPath Parse tcl]
 source $path
 
 # Look for an Options.xml file locally and then centrally
