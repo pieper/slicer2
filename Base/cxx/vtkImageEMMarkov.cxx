@@ -24,6 +24,11 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageEMMarkov.h"
 #include "vtkObjectFactory.h"
 
+static inline double EMMarkovGauss(int x,double m,double s) { 
+  if (s > 0) return (1 / (sqrt(2*3.14159265358979)*s)*exp(-(x-m)*(x-m)/(2*pow(s,2))));
+  return (m == x ? 1e20:0);
+} 
+
 //------------------------------------------------------------------------------
 vtkImageEMMarkov* vtkImageEMMarkov::New()
 {
@@ -53,7 +58,11 @@ vtkImageEMMarkov::vtkImageEMMarkov()
   this->ImgTestNo = -1;       // Segment an image test picture (-1 => No, > 0 =>certain Test pictures)
   this->ImgTestDivision = -1; // Number of divisions/colors of the picture
   this->ImgTestPixel = -1;    // Pixel lenght on one diviosn (pixel == -1 => max pixel length for devision)
+  this->Mu = NULL;this->Sigma = NULL;this->ClassProbability = NULL;this->MarkovMatrix = NULL;
+}
 
+vtkImageEMMarkov::~vtkImageEMMarkov(){
+  this->DeleteVariables();
 }
 
 //----------------------------------------------------------------------------
@@ -110,8 +119,12 @@ static void vtkImageEMMarkovExecute(vtkImageEMMarkov *self,vtkImageData *in1Data
   outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
 
   // The Slices of the images 
-  vtkImageEMMatrix3D Volume(StartEndSlice,maxY,rowLength);    
- 
+  double ***Volume = new double**[StartEndSlice];
+  for (idxZ = 0; idxZ < StartEndSlice; idxZ++) {
+    Volume[idxZ]  = new double*[maxY];
+    for (idxY = 0; idxY < maxY; idxY++)
+      Volume[idxZ][idxY] = new double[rowLength];
+  }
   // Loop through input pixels 
 
   // 1.) Read thorugh beginning slides we do not want to read through for input and output
@@ -127,16 +140,13 @@ static void vtkImageEMMarkovExecute(vtkImageEMMarkov *self,vtkImageData *in1Data
   }
 
   // 2.) Read thorugh the slides that should be segmented 
-  StartEndSlice ++;
-  maxY ++;
-  rowLength ++;
   int Max =  ((int)*in1Ptr);
   int Min = ((int)*in1Ptr);
 
   if (self->get_ImgTestNo() < 1) {
-    for (idxZ = 1; idxZ < StartEndSlice ; idxZ++) {
-      for (idxY = 1; idxY < maxY; idxY++) {
-	for (idxR = 1; idxR < rowLength; idxR++) {
+    for (idxZ = 0; idxZ < StartEndSlice ; idxZ++) {
+      for (idxY = 0; idxY < maxY; idxY++) {
+	for (idxR = 0; idxR < rowLength; idxR++) {
 	  // Copied from  vtkMrmlSlicer::GetBackPixel
 	  // in1data->GetWholeExtent(ext);
 	  // in1Data->GetPointData()->GetScalars()->GetScalar(y*(ext[1]-ext[0]+1)+x);
@@ -152,26 +162,12 @@ static void vtkImageEMMarkovExecute(vtkImageEMMarkov *self,vtkImageData *in1Data
       in1Ptr += inIncZ;
     }
   } else {
-    Volume.setMatrix3DTest(self->get_ImgTestNo(),self->get_ImgTestDivision(),self->get_ImgTestPixel());
+    self->setMatrix3DTest(Volume,StartEndSlice,maxY,rowLength,self->get_ImgTestNo(),self->get_ImgTestDivision(),self->get_ImgTestPixel());
     Max = 255;
     Min = 0;
   }
   // 3.) Run Algorith to find out Matrix
-  // Debugging 
-  self->TrainMarkovMatrix(Volume,Min,Max);
-
-// 4.) Write result in outPtr
-  //  for (idxZ = 1; idxZ < 7; idxZ++) {
-  //   for (idxY = 1; idxY <= self->get_NumClasses(); idxY++) {
-   //    for (idxR = 1; idxR <= self->get_NumClasses(); idxR++) {
-  //	*outPtr = (T) (self->MarkovMatrix[idxZ][idxY][idxR]);
-  //	outPtr++;
-  //  }
-  //  outPtr++;
-  //  outPtr += outIncY;
-  //}
-  //   outPtr += outIncZ;
-  // }
+  self->TrainMarkovMatrix(Volume, maxY, rowLength, Min, Max);
 }
 
 //----------------------------------------------------------------------------
@@ -256,34 +252,61 @@ void vtkImageEMMarkov::GetComponentExtent(int extent[6])
 
 void vtkImageEMMarkov::SetNumClasses(int NumberOfClasses)
 {
+  int z,y,x;
+  if (this->NumClasses == NumberOfClasses) return;
+  this->DeleteVariables();
+
+  if (NumberOfClasses > 0 ) {
+
+    // Create new space for variables
+    this->Mu                = new double[NumberOfClasses];
+    this->Sigma             = new double[NumberOfClasses];
+    this->ClassProbability  = new double[NumberOfClasses];
+    this->MarkovMatrix = new double**[6];
+    for (z=0; z < 6; z++) {
+      this->MarkovMatrix[z] = new double*[NumberOfClasses];
+      for (y=0;y < NumberOfClasses; y ++) 
+	this->MarkovMatrix[z][y] = new double[NumberOfClasses];
+    }
+  
+    // this->SetComponentExtent(0,NumberOfClasses - 1, 0, NumberOfClasses - 1, 0,5);
+
+    // Set all initial values to -1 and 0
+    for (x= 0; x < NumberOfClasses; x++) {
+      *this->Mu++                = -1;
+      *this->Sigma++             = -1;
+      *this->ClassProbability++  = -1;
+      for (z=0; z < 6; z++) {
+	for (y=0;y < NumberOfClasses; y ++) this->MarkovMatrix[z][y][x] = 0.0;
+      }
+    }
+    this->Mu -= NumberOfClasses; this->Sigma  -= NumberOfClasses;this->ClassProbability  -= NumberOfClasses;
+  } else {
+    this->Mu = NULL;this->Sigma = NULL;this->ClassProbability = NULL;this->MarkovMatrix = NULL;
+  }
   this->NumClasses = NumberOfClasses;
-  // Delete Old instances if they existed
-  this->Mu.Resize(this->NumClasses,-1.0);
-  this->Sigma.Resize(this->NumClasses,-1.0); 
-  this->ClassProbability.Resize(this->NumClasses,0.0);
-  this->MarkovMatrix.Resize(6,this->NumClasses,this->NumClasses,0.0);  
-  // this->SetComponentExtent(0,NumberOfClasses - 1, 0, NumberOfClasses - 1, 0,5);
 }
+
 //---------------------------------------------------------------------
 // Checks of all paramters are declared  
 // 1  = eveything correct
-// -1 = Dimension of Volume not correct
+// -1 = Number of Classes not defined correctly
 // -2 = Not all Mu defined correctly
 // -3 = Not all Sigma defined correctly
-// -4 = Number of Classes not defined correctly
+// -10 = Minimum Brightness value below 0 !
 
-int vtkImageEMMarkov::checkValues(vtkImageEMMatrix3D Volume)
+int vtkImageEMMarkov::checkValues(int ImageMin)
 { 
   int i=0;
-  if (Volume.get_dim(1) != (this->EndSlice - this->StartSlice + 1)) {
-    vtkErrorMacro(<< "vtkImageEMMarkov:checkValues:  Volume does not have the right dimension !");
+  if (this->NumClasses < 1 ) {
+    vtkErrorMacro(<< "vtkImageEMMarkov:checkValues:  Number of classes smaller 1 !");
     this->Error = -1;
     return -1;
   }
-  if (this->NumClasses < 1 ) {
-    vtkErrorMacro(<< "vtkImageEMMarkov:checkValues:  Number of classes smaller 1 !");
+  if (ImageMin < 0 ) {
+     vtkErrorMacro(<< "vtkImageEMMarkov:checkValues:  Minimum Brightness Value cannot be smaller than 0 !");
     this->Error = -10;
-    return -4;
+    return -10;
   }
   while (i < this->NumClasses) {
     i++;
@@ -298,6 +321,7 @@ int vtkImageEMMarkov::checkValues(vtkImageEMMatrix3D Volume)
       return -3;
     }
   }
+  
   return 1;
 }
 
@@ -311,7 +335,7 @@ double vtkImageEMMarkov::GetProbability(int index) {
     this->Error = -6;
     return -6;
   }
-  return this->ClassProbability[index];
+  return this->ClassProbability[index-1];
 }
 
 double vtkImageEMMarkov::GetMarkovMatrix(int x, int y, int z) {
@@ -322,7 +346,7 @@ double vtkImageEMMarkov::GetMarkovMatrix(int x, int y, int z) {
     this->Error = -11;
     return -11;
   }
-  return this->MarkovMatrix[z][y][x];
+  return this->MarkovMatrix[z-1][y-1][x-1];
 }
 void vtkImageEMMarkov::SetMu(double mu, int index){
   if ((index<1) || (index > this->NumClasses) ||
@@ -331,7 +355,7 @@ void vtkImageEMMarkov::SetMu(double mu, int index){
     this->Error = -7;
     return;
   }
-  this->Mu[index] = mu;
+  this->Mu[index-1] = mu;
 }
 
 void vtkImageEMMarkov::SetSigma(double sigma, int index){
@@ -340,67 +364,71 @@ void vtkImageEMMarkov::SetSigma(double sigma, int index){
     this->Error = -8;
     return;
   }
-  this->Sigma[index] = sigma;
+  this->Sigma[index-1] = sigma;
 }
 
 //----------------------------------------------------------------------------
 // Given the input volumes it derives a Markov Matrix
 
-void vtkImageEMMarkov::TrainMarkovMatrix(vtkImageEMMatrix3D Image,int ImageMin, int ImageMax) {
+void vtkImageEMMarkov::TrainMarkovMatrix(double ***Image,int Ydim, int Xdim,int ImageMin, int ImageMax) {
 
   // Check consistency of all veluyes and start with output 
-  if (this->checkValues(Image) < 1) return;
+  if (this->checkValues(ImageMin) < 1) return;
   // Nothing to do
   if (this->NumClasses == 0 ) return;
  
   int z,x,y;
   int NumSlices = this->EndSlice - this->StartSlice +1;
-  int NumSlicesPlus = NumSlices +1;
-  int NumClassesPlus = this->NumClasses+1;
-  int Xdim = Image.get_dim(3);
-  int Ydim = Image.get_dim(2);
-  int Xmax = Xdim + 1;
-  int Ymax = Ydim + 1;
   double NormMarkov;
 
-  this->MarkovMatrix.setMatrix3D(0);
+  for (z = 0 ; z < 6; z++)
+      this->setMatrix(this->MarkovMatrix[z],this->NumClasses,this->NumClasses, 0.0);
 
   // Lookup Table for the most likely Class given a certain Image value 
-  vtkImageEMVector MaxImageClassProb(ImageMax+1,0.0);
+  ImageMax ++;
+  double *MaxImageClassProb = new double[ImageMax],*MaxImageClassProbPtr = MaxImageClassProb ;
+  for (x = 0; x < ImageMax; x++) (*MaxImageClassProb++) = 0.0;
+  MaxImageClassProb = MaxImageClassProbPtr;
+
   this->CalculateMaxClassProb(MaxImageClassProb,ImageMin,ImageMax);
   
   // Class Assignment for every Pixel
-  vtkImageEMMatrix3D ClassAssignment(NumSlices,Ydim,Xdim);
-  for (z=1; z < NumSlicesPlus; z++) {
-    for (y=1; y < Ymax; y++) {
-      for (x=1; x < Xmax; x++) {
-	ClassAssignment[z][y][x] = MaxImageClassProb[(int)Image[z][y][x]+1];
+  double *** ClassAssignment = new double**[NumSlices];
+  for (z = 0; z < NumSlices ; z++) {
+    ClassAssignment[z] = new double *[Ydim];
+    for (y=0; y < Ydim ; y++) ClassAssignment[z][y] = new double[Xdim];
+  }
+
+  for (z=0; z < NumSlices; z++) {
+    for (y=0; y < Ydim; y++) {
+      for (x=0; x < Xdim; x++) {
+	ClassAssignment[z][y][x] = MaxImageClassProb[(int)Image[z][y][x]];
       }
     }
   }
 
   // Define Markov Matrix and stationary Prior for classes
-  for (z=1; z < NumSlicesPlus; z++) {
-    for (y=1; y < Ymax; y++) {
-      for (x=1; x < Xmax; x++) {
+  for (z=0; z < NumSlices; z++) {
+    for (y=0; y < Ydim; y++) {
+      for (x=0; x < Xdim; x++) {
 	// This way the matrix is defined correctly : Y-Dim = Current Pixel, X-Dim = Neighbouring Pixel 
         // Relationship between pixel and neighbour to the west
-	if (x > 1) this->MarkovMatrix[1][(int)ClassAssignment[z][y][x]][(int)ClassAssignment[z][y][x-1]] += 1;
+	if (x > 0) this->MarkovMatrix[0][(int)ClassAssignment[z][y][x]][(int)ClassAssignment[z][y][x-1]] += 1;
         // Relationship between pixel and neighbour to the east
-	if (x < Xdim) {
-	  this->MarkovMatrix[4][(int)ClassAssignment[z][y][x]][(int)ClassAssignment[z][y][x+1]] += 1;
+	if (x < (Xdim-1)) {
+	  this->MarkovMatrix[3][(int)ClassAssignment[z][y][x]][(int)ClassAssignment[z][y][x+1]] += 1;
 	}
         // Picture is displayed upside down on the screen -> y= 1 -> down, y = Ymax-> up
         // Relationship between pixel and neighbour to the South
-	if (y > 1) this->MarkovMatrix[5][int(ClassAssignment[z][y][x])][int(ClassAssignment[z][y-1][x])] += 1;
+	if (y > 0) this->MarkovMatrix[4][int(ClassAssignment[z][y][x])][int(ClassAssignment[z][y-1][x])] += 1;
         // Relationship between pixel and neighbour to the North
-	if (y < Ydim) {
-	  this->MarkovMatrix[2][int(ClassAssignment[z][y][x])][int(ClassAssignment[z][y+1][x])] += 1;
+	if (y < (Ydim-1)) {
+	  this->MarkovMatrix[1][int(ClassAssignment[z][y][x])][int(ClassAssignment[z][y+1][x])] += 1;
 	}
         // Relationship between pixel and pixel of the previous slice
-	if (z > 1) this->MarkovMatrix[6][(int)ClassAssignment[z][y][x]][(int)ClassAssignment[z-1][y][x]] += 1;
+	if (z > 0) this->MarkovMatrix[5][(int)ClassAssignment[z][y][x]][(int)ClassAssignment[z-1][y][x]] += 1;
         // Relationship between pixel and pixel of the next slice
-	if (z < NumSlices) this->MarkovMatrix[3][(int)ClassAssignment[z][y][x]][(int)ClassAssignment[z+1][y][x]] += 1;
+	if (z < (NumSlices-1)) this->MarkovMatrix[2][(int)ClassAssignment[z][y][x]][(int)ClassAssignment[z+1][y][x]] += 1;
 	// Define class probablities/stationary priors
 	this->ClassProbability[(int)ClassAssignment[z][y][x]] += 1;
       }
@@ -408,228 +436,67 @@ void vtkImageEMMarkov::TrainMarkovMatrix(vtkImageEMMatrix3D Image,int ImageMin, 
   } 
   // Rows have to be normalized to 1 !
   // Normalize and round up MarkovMatrix and stationary prios
-  for (y=1; y < NumClassesPlus; y++) {
+  for (y=0; y < this->NumClasses; y++) {
     this->ClassProbability[y] /= Ydim*Xdim*NumSlices;
-    for (z=1; z < 7; z++) {
+    for (z=0; z < 6; z++) {
       NormMarkov = 0.0;
 
-      for (x=1; x < NumClassesPlus; x++) 
+      for (x=0; x < this->NumClasses; x++) 
 	NormMarkov +=  this->MarkovMatrix[z][y][x];
        
       if (NormMarkov > 0.0) { 
-	for (x=1; x < NumClassesPlus; x++) 
+	for (x=0; x < this->NumClasses; x++) 
 	  this->MarkovMatrix[z][y][x] = int(this->MarkovMatrix[z][y][x]/NormMarkov*1000+0.5)/1000.0;
       } else 
 	  this->MarkovMatrix[z][y][y] =  1.0;
     }
   }
+
+  delete[] MaxImageClassProb;
+
+  for (z = 0; z < NumSlices ; z++) {
+    for (y=0; y < Ydim ; y++) delete[] ClassAssignment[z][y];
+    delete[] ClassAssignment[z];
+  }
+  delete[] ClassAssignment;
 }
-      // Calculates the maximum likely class for each image value
-void vtkImageEMMarkov::CalculateMaxClassProb(vtkImageEMVector & MaxClass, int &ImageMin,int &ImageMax) {
+
+// Calculates the maximum likely class for each image value
+void vtkImageEMMarkov::CalculateMaxClassProb(double *MaxClass, int &ImageMin,int &ImageMax) {
   int i,c; 
-  int iMax =ImageMax + 1;
-  int cMax = this->NumClasses + 1;
   double prob;
-  for (i = ImageMin; i < iMax; i++) {
-    prob = Gauss(i,this->Mu[1],this->Sigma[1]);
-    MaxClass[i+1] = 1;
-    for (c = 2; c < cMax; c++) {
-      if (prob < this->Gauss(i,this->Mu[c],this->Sigma[c])) {
-	prob = this->Gauss(i,this->Mu[c],this->Sigma[c]);
-	MaxClass[i+1] = c;
+  for (i = ImageMin; i < ImageMax; i++) {
+    prob = EMMarkovGauss(i,this->Mu[0],this->Sigma[0]);
+    MaxClass[i] = 0;
+    for (c = 1; c < this->NumClasses; c++) {
+      if (prob < EMMarkovGauss(i,this->Mu[c],this->Sigma[c])) {
+	prob = EMMarkovGauss(i,this->Mu[c],this->Sigma[c]);
+	MaxClass[i] = c;
       } 
     }
   }
 } 
 
-double vtkImageEMMarkov::Gauss(int x,double m,double s) { 
-  if (s > 0) return (1 / (sqrt(2*3.14159265358979)*s)*exp(-(x-m)*(x-m)/(2*pow(s,2))));
-  return (m == x ? 1e20:0);
-} 
+//----------------------------------------
+// Special Vector and Matrix functions
 
-//------------------------------------------------------------------------------
-// ---------------------------------------------------------   
-// Class: vtkImageEMMatrix3D
-// ---------------------------------------------------------  
-void vtkImageEMMatrix3D::allocate(int z, int y, int x){
-  this->dimz = z;
-  if (z > 0) { 
-    this->mat3D = new vtkImageEMMatrix[this->dimz];
-    if (!this->mat3D) {
-      cout << "Did not get any Memory" << endl;
-      exit(1);
+void vtkImageEMMarkov::DeleteVariables() {
+  int z,y;
+  if (this->NumClasses > 0 ){
+    delete[] this->Mu; 
+    delete[] this->Sigma;
+    delete[] this->ClassProbability;
+
+    for (z=0; z < 6; z++){ 
+      for (y=0; y < this->NumClasses; y++)
+	delete[] this->MarkovMatrix[z][y];
+      delete[] this->MarkovMatrix[z];
     }
+    delete[] this->MarkovMatrix;
 
-    if (y > 0)
-      for (int i=0; i < this->dimz; i++) this->mat3D[i].Resize(y,x);
-
-    this->mat3D --; // So we start with 1 and not with 0!
-  }
-  else this->mat3D = NULL;
-}
-
-void vtkImageEMMatrix3D::allocate(int z, int y, int x, double val){
-  this->dimz = z;
-  if (z > 0) { 
-    this->mat3D = new vtkImageEMMatrix[this->dimz];
-    if (!this->mat3D) {
-      cout << "Did not get any Memory" << endl;
-      exit(1);
-    }
-
-    if (y > 0)
-      for (int i=0; i < this->dimz; i++) this->mat3D[i].Resize(y,x,val);
-
-    this->mat3D --; // So we start with 1 and not with 0!
-  }
-  else this->mat3D = NULL;
-}
-
-void vtkImageEMMatrix3D::deallocate (){
-  if (this->dimz > 0) {
-    //int size = this->dimz+1;
-    //for (int i = 1; i < size;i++)
-    //  delete (*this->mat3D)[i];
-    this->dimz = 0;
-    this->mat3D ++; 
-    delete[] this->mat3D;
-    this->mat3D = NULL;
-  }
-}
-
-vtkImageEMMatrix3D::vtkImageEMMatrix3D(const vtkImageEMMatrix3D & in){  
-  this->allocate(in.dimz,0,0);
-  int size = this->dimz +1;
-  for (int i=1; i < size; i++){
-    this->mat3D[i] = in.mat3D[i];
-  }
-}
-
-vtkImageEMMatrix& vtkImageEMMatrix3D::operator [] (int z) {return this->mat3D[z];}
-const vtkImageEMMatrix& vtkImageEMMatrix3D::operator [] (int i) const { return this->mat3D[i]; }
-
-void vtkImageEMMatrix3D::Resize(int z,int y, int x) {
-  if (z == this->dimz) {
-    if (z== 0) return ;
-    if ((y == this->get_dim(2)) && (x == this->get_dim(3))) return;
-  }
-  this->deallocate();
-  this->allocate(z,y,x);
-}
-
-void vtkImageEMMatrix3D::Resize(int z,int y, int x, double val) {
-  if (z == this->dimz) {
-    if (z== 0) return ;
-    if ((y == this->get_dim(2)) && (x == this->get_dim(3))) {
-      for (int i=1; i <= z; i++) this->mat3D[i].setMatrix(val);
-      return;
-    }
+    this->Mu = NULL;this->Sigma = NULL;this->ClassProbability = NULL;this->MarkovMatrix = NULL;
   } 
-  this->deallocate();
-  this->allocate(z,y,x,val);
 }
-int vtkImageEMMatrix3D::get_dim(int dim) {
-  if ((dim == 3) || (dim==2)) {
-    if (dimz == 0) return 0;
-    else return this->mat3D[1].get_dim(dim-1);
-  }
-  if (dim == 1) return this->dimz;
-  return -1; 
-}
-
-void vtkImageEMMatrix3D::PrintMatrix3D(int zMax,int yMax,int xMax) {
-  int Max = (zMax > -1 ? (zMax > this->dimz ? this->dimz : zMax) : this->dimz)  + 1;
-  for (int z = 1; z < Max; z++)
-    this->mat3D[z].PrintMatrix(yMax,xMax);
-}
-
-void vtkImageEMMatrix3D::setMatrix3D(double val){
-  int size = this->dimz+1;
-  for (int i =1 ; i < size; i++) 
-    this->mat3D[i].setMatrix(val);
-}
- 
-void vtkImageEMMatrix3D::Reshape(vtkImageEMVector v) {
-  int dimY= this->get_dim(2),dimX= this->get_dim(3),dimZ= this->get_dim(1);
-  int i,j,k, index;
-  if (v.get_len() != (dimY*dimX*dimZ))
-    vtkImageEMError::vtkImageEMError("vtkImageEMMatrix3D:Reshape dimension of input vector and 3D Matrix do not match!");
-  for (k=1; k<= dimZ; k++) {
-    index = (k-1)*dimY*dimX;
-    for (i=1; i <= dimX; i++) {
-      for (j=1; j <= dimY; j++) {
-        this->mat3D[k][j][i] = v[index+j];
-      }
-      index +=dimY;
-    }
-  }
-}
-
-//  Smoothes  3D-Matrix
-// w(k) = sum(u(j)*v(k+1-j))
-// returns Matrix of size r_m
-void vtkImageEMMatrix3D::smoothConv(vtkImageEMVector v) {
-  int i, iMax = this->get_dim(1) + 1;
-  vtkImageEMMatrix3D resultY(this->get_dim(1),this->get_dim(2),this->get_dim(3)), 
-                     resultX(this->get_dim(1),this->get_dim(2),this->get_dim(3));            
-  // First: convolut in Y Direction 
-  for (i = 1; i < iMax; i++){
-    resultY.mat3D[i].conv(this->mat3D[i],v); 
-  }
-  // Second: convolut in X Direction 
-  for (i = 1; i < iMax; i++){
-    resultX.mat3D[i].convT(resultY[i],v); 
-  }
-  // Third: in Z direction
-  this->conv(resultX,v);
-}
-
-// Convolution and polynomial multiplication . 
-// This is assuming u and 'this' have the same dimension
-void vtkImageEMMatrix3D::conv(vtkImageEMMatrix3D U,vtkImageEMVector v) {
-  if ((this->get_dim(1) != U.get_dim(1))||
-      (this->get_dim(2) != U.get_dim(2)) || 
-      (this->get_dim(3) != U.get_dim(3))) 
-         vtkImageEMError::vtkImageEMError("vtkImageEMMatrix3D:conv : Dimensions of 3D Matrixs do not match");
-   
-  int UDimX = U.get_dim(3)+1,
-      UDimY = U.get_dim(2)+1,
-      UDimZ = U.get_dim(1),
-      vLen = v.get_len();
-  int stump = vLen /2;
-  int k,j,jMin,jMax,x,y;
-  int kMax = UDimZ + stump +1;
-  for (k = stump + 1; k <  kMax; k++) {
-    this->mat3D[k-stump].SetEqual(0);
-    jMin = (1 > k + 1 - vLen ? 1 : k + 1 - vLen ); //  max(1,k+1-vLen):
-    jMax = (k < UDimZ ? k : UDimZ)+1;              //  min(k,uLen) 
-
-    // this->mat3D[k-stump] += U[j]*v[k+1-j];
-    for (j=jMin; j < jMax; j++) {
-      for (y = 1; y < UDimY; y++) {
-	for (x = 1; x < UDimX; x++) {
-	  this->mat3D[k-stump][y][x] += U[j][y][x]*v[k+1-j];
-	}
-      }
-    }
-  }  
-}
-
-// Writes 3D Matrix to file in Matlab format if name is specified otherwise just 
-// writes the values in the file
-void vtkImageEMMatrix3D::WriteMatrix3DToFile (FILE *f,char *name) const
-{
-  int zMax = this->dimz +1;
-  char mname[40];
-  for (int z = 1; z < zMax; z++ ) {
-    if (name != NULL) { 
-      sprintf(mname,"%s(:,:,%d)",name,z);
-      this->mat3D[z].WriteMatrixToFile(f,mname); 
-    } else {this->mat3D[z].WriteMatrixToFile(f,NULL); }
-
-  }
-}
-
 
 // Setting up Test Matrix to test 
 // test = 1 => Creates horizontal stripped matrix with image values from 0 to 255 
@@ -639,505 +506,60 @@ void vtkImageEMMatrix3D::WriteMatrix3DToFile (FILE *f,char *name) const
 //            if pixel == -1 => the number of divisions of the picture
 // pixel = pixel length of one divison
 
-void vtkImageEMMatrix3D::setMatrix3DTest(int test,int division,int pixel){
-  int Zsize = this->dimz+1;
+void vtkImageEMMarkov::setMatrix3DTest(double ***mat3D,int maxZ, int maxY, int maxX, int test,int division,int pixel){
   int z;
   if (division < 2) {
-    this->setMatrix3D(0);
+    for (z = 0 ; z <maxZ; z++)
+      this->setMatrix(mat3D[z],maxY,maxX, 0.0);
     return;
   }
-  for (z =1 ; z < Zsize; z++) 
-    this->mat3D[z].setMatrixTest(test,division,pixel,z);
+  for (z =0 ; z < maxZ; z++) 
+    this->setMatrixTest(mat3D[z],maxY, maxX, test,division,pixel,z+1);
 }
-
-// ---------------------------------------------------------   
-// Class: vtkImageEMMatrix
-// ---------------------------------------------------------   
-
-void vtkImageEMMatrix::allocate(int y,int x){
-  this->dimy = y; 
-  if (y > 0) {
-    this->mat = new vtkImageEMVector[this->dimy];
-    if (!this->mat) {
-      cout << "Did not get any Memory" << endl;
-      exit(1);
-    }
-
-    if (x > 0) {
-      for (int i=0; i <this->dimy; i++) this->mat[i].Resize(x);
-    }
-    this->mat --; // So we start with 1 and not with 0!
-  } else {
-    this->mat = NULL;
-  }
-}
-void vtkImageEMMatrix::allocate(int y,int x,double val){
-  this->dimy = y; 
-  if (y > 0) {
-    this->mat = new vtkImageEMVector[this->dimy];
-    if (!this->mat) {
-      cout << "Did not get any Memory" << endl;
-      exit(1);
-    }
-    if (x > 0) {
-      for (int i=0; i <this->dimy; i++) this->mat[i].Resize(x,val);
-    }
-    this->mat --; // So we start with 1 and not with 0!
-
-  } else {
-    this->mat = NULL;
-  }
-}
-
-void vtkImageEMMatrix::deallocate(){
-  if (this->dimy > 0) {
-    this->mat ++;
-    delete[] this->mat;
-    this->mat = NULL;
-    this->dimy = 0;
-  }
-}
-
-vtkImageEMMatrix::vtkImageEMMatrix(const vtkImageEMMatrix & in){  
-  this->allocate(in.dimy,0);
-  int size = this->dimy +1;
-  for (int i=1; i < size; i++){
-    this->mat[i] = in.mat[i];
-  }
-}
-  
-vtkImageEMVector& vtkImageEMMatrix::operator [] (int y) {return this->mat[y];}
-const vtkImageEMVector& vtkImageEMMatrix::operator [] (int i) const { return this->mat[i]; }
-
-vtkImageEMMatrix& vtkImageEMMatrix::operator = (const vtkImageEMMatrix& Equal) {
-  if (Equal.mat == this->mat) return *this;
-  if (Equal.dimy < 1) {
-    this->Resize(0,0);
-    return *this;    
-  }
-   
-  this->Resize(Equal.dimy,Equal.mat[1].get_len()); 
-   
-  int x,y, yMax = this->get_dim(1)+1, xMax = this->get_dim(2)+1;
-  for (y = 1; y < yMax; y++) {
-    for (x = 1; x < xMax; x++) {
-      this->mat[y][x] = Equal[y][x];
-    }
-  }
-  return *this;    
-}
-
-int vtkImageEMMatrix::get_dim(int dim) {
-  if (dim == 1) return dimy;
-  else  
-    if (dim == 2) {
-      if (this->mat !=NULL) return this->mat[1].get_len();
-      else return 0;
-    }
-  return -1; 
-}
-
-void vtkImageEMMatrix::setMatrix(double val){
-  int size =  this->dimy+1;
-  for (int i=1; i < size; i++)
-      this->mat[i].setVector(val);
-}
-
-void vtkImageEMMatrix::Resize(int y, int x, double val) {
-  if (y == this->dimy) {
-    if (y == 0) return ;
-    if (x == this->get_dim(2)) {
-      for (int i=1; i <= y; i++) this->mat[i].setVector(val);
-      return;
-    }
-  }
-  this->deallocate(); 
-  this->allocate(y,x,val);
-}
-
-void vtkImageEMMatrix::Resize(int y, int x) {
-  if (y == this->dimy) {
-    if (y== 0) return ;
-    if (x == this->get_dim(2)) return;
-  }
-  this->deallocate();
-  this->allocate(y,x);
-}
-
-void vtkImageEMMatrix::PrintMatrix(int yMax,int xMax) {
-  int Max = (yMax > -1 ? (yMax > this->dimy ? this->dimy : yMax) : this->dimy)  + 1;
-  for (int y = 1; y < Max; y++)
-    this->mat[y].PrintVector(xMax);
-
-  cout << endl;
-}
-  
-// Sets column 'col' of this->mat to vector v
-void vtkImageEMMatrix::ColMatrix(vtkImageEMVector v, int col) {
-  if ((this->dimy != v.get_len()) ||
-      (this->get_dim(2) < col)) 
-         vtkImageEMError::vtkImageEMError("vtkImageEMMatrix:ColMatrix: Dimensions of input do not match matrix  !");
-  int iMax = this->dimy+1;
-  for (int i=1; i < iMax; i++) this->mat[i][col] = v[i];
-} 
-
-void vtkImageEMMatrix::Transpose(vtkImageEMMatrix Trans) {
-  if ((this->get_dim(2) != Trans.get_dim(1))||
-      (this->get_dim(1) != Trans.get_dim(2))) 
-         vtkImageEMError::vtkImageEMError("vtkImageEMMatrix:Transpose: Dimensions of input do not match matrix  !");
-
-  int x,y, yMax = this->get_dim(1)+1, xMax = this->get_dim(2)+1;
-  for (y = 1; y < yMax; y++) {
-    for (x = 1; x < xMax; x++) {
-      this->mat[y][x] = Trans[x][y];
-    }
-  } 
-}
-
-void vtkImageEMMatrix::SetEqual(double value) {
-  int x,y, yMax = this->get_dim(1)+1, xMax = this->get_dim(2)+1;
-  for (y = 1; y < yMax; y++) {
-    for (x = 1; x < xMax; x++) {
-      this->mat[y][x] = value;
-    }
-  }    
-}
-
-// Convolution and polynomial multiplication . 
-// This is assuming u and 'this' have the same dimension
-// Convolution and polynomial multiplication . 
-// This is assuming u and 'this' have the same dimension
-
-void vtkImageEMMatrix::conv(vtkImageEMMatrix U, vtkImageEMVector v) {
-  int iMax = U.get_dim(2)+1,
-      i;
-  vtkImageEMMatrix Utrans(U.get_dim(2),U.get_dim(1));
-  Utrans.Transpose(U); // => Utrans[i] represents the i column of U;    
-  vtkImageEMVector result(U.get_dim(1));       
-
-  for (i = 1; i < iMax; i++) {
-     result.conv(Utrans[i],v);  // Use the i-th Rows of Utrans;
-     this->ColMatrix(result,i); // Write result to this->mat as i-th column
-  }
-} 
-
-// Same just v is a row vector instead of column one
-// We use the following equation :
-// conv(U,v) = conv(U',v')' => conv(U,v') = conv(U',v)';
-void vtkImageEMMatrix::convT(vtkImageEMMatrix U, vtkImageEMVector v) {
-  int iMax = U.get_dim(1)+1,
-      i;
-
-  // Use the i-th Rows of U = ith Column of U';
-  // write it to the i-th Row of 'this' => Transpose again
-  for (i = 1; i < iMax; i++) {
-     this->mat[i].conv(U[i],v);  
-  }
-} 
-
-// Opens up a new file and writes down result in the file
-void vtkImageEMMatrix::WriteMatrixToFile (char *filename,char *varname) const {
-  int appendFlag = 0;
-  FILE *f = (strcmp(filename,"-"))?fopen(filename,((appendFlag)?"a":"w")):stdout;
-  if ( f == NULL ) {
-    cerr << "Could not open file " << filename << "\n";
-    return;
-  }
-  this->WriteMatrixToFile(f,varname);
-  fflush(f);
-  fclose(f);
-}
-
-// Writes Matrix to file in Matlab format if name is specified otherwise just 
-// writes the values in the file
-
-void vtkImageEMMatrix::WriteMatrixToFile (FILE *f,char *name) const
-{
-  int yMax = this->dimy +1;
-  if (name != NULL) fprintf(f,"%s = [", name);
-  for (int y = 1; y < yMax; y++ ) {
-    this->mat[y].WriteVectorToFile(f,NULL); 
-    if (y < this->dimy) fprintf(f,";\n");
-  }
-  if (name != NULL) fprintf(f,"];\n");
-  fprintf(f,"\n");
-}
-
-
-
-// Setting up Test Matrix to test 
-// test = 1 => Creates horizontal stripped matrix with image values from 0 to 255 
-// test = 2 => Creates squared matrix with image values from 0 to 255 
-// test = 3 => Creates vertical stripped matrix with image values from 0 to 255 
-// division = the number of colors that the pixture should be devided in 
-//            if pixel == -1 => the number of divisions of the picture
-// pixel = pixel length of one divison
-
-void vtkImageEMMatrix::setMatrixTest(int test,int division, int pixel, int offset){
-  int Ysize = this->dimy+1;
+void vtkImageEMMarkov::setMatrixTest(double **mat, int maxY, int maxX, int test,int division, int pixel, int offset){
   int y;
-  double YScale;
+  double YScale = 0;
   if (division < 2) {
-      this->setMatrix(0);
+      this->setMatrix(mat,maxY,maxX,0.0);
       return;
   }
 
   if (pixel > 0) YScale = double(pixel);
-  else YScale = this->dimy / double(division);
+  else YScale = maxY / double(division);
 
   int xoffset= offset % division; 
   int offsetadd = (division >2 ? 2:1);
-  for (y=1; y < Ysize; y++) {
+  maxY++;
+  for (y=1; y < maxY; y++) {
     if ((test < 3) && (int(fmod(y,YScale)) == 1) && (int(fmod(y-1,YScale)) == 0)) xoffset = (xoffset + offsetadd) % division;
-    this->mat[y].setVectorTest(test,division,pixel,xoffset);
+    this->setVectorTest(mat[y-1],maxX,test,division,pixel,xoffset);
   }
 }
 
-// ---------------------------------------------------------   
-// Class: vtkImageEMVector
-// ---------------------------------------------------------   
-
-void vtkImageEMVector::allocate(int dim){
-  this->len = dim;
-  if (dim > 0) {
-    this->vec = new double[this->len];
-    if (!this->vec) {
-      cout << "Did not get any Memory" << endl;
-      exit(1);
-    }
-    this->vec --; // So we start with 1 and not with 0!   
-  } else {
-    this->vec = NULL;
+void vtkImageEMMarkov::setMatrix(double **mat, int maxY, int maxX, double val){
+  int y,x;
+  for (y = 0; y < maxY; y++){ 
+    for (x = 0; x < maxX; x++) mat[y][x] = val;
   }
 }
 
-void vtkImageEMVector::allocate(int dim,double val){
-  this->len = dim;
-  if (dim > 0) {
-    this->vec = new double[this->len];
-    if (!this->vec) {
-      cout << "Did not get any Memory" << endl;
-      exit(1);
-    }
-
-    for (int i= 0; i < this->len; i++)
-      this->vec[i] = val;
-
-    this->vec --; // So we start with 1 and not with 0!   
-  } else {
-    this->vec = NULL;
-  }
-}
-
-vtkImageEMVector::vtkImageEMVector(const vtkImageEMVector & in){  
-  this->allocate(in.len);
-  for (int i=1; i <= this->len; i++){
-    this->vec[i] = in.vec[i];
-  }
-}
-
-void vtkImageEMVector::deallocate() {
-    if (this->len > 0 ){
-      this->vec ++; 
-      delete[] this->vec; 
-      this->len = 0;
-      this->vec = NULL;
-    } 
-}
-
-vtkImageEMVector& vtkImageEMVector::operator = ( const vtkImageEMVector& v) { 
-   if ( this->vec == v.vec) return *this;
-   this->Resize(v.len);
-   int size = v.len+1;  
-   for ( int i = 1; i < size; i++ )
-     this->vec[i] = v.vec[i];
-   return *this;
-}
-
-void vtkImageEMVector::setVector(double val){
-  int size = this->get_len()+1;
-  for (int i=1; i < size; i++){
-    this->vec[i] = val;
-  }
-}
-
-void vtkImageEMVector::setVector(vtkImageEMMatrix v,int start, int end, int column) {
-  int iMax = end - start +1;
-  if ((start < 0) || (end > v.get_dim(1)) || (iMax > this->len)) return;
-  iMax ++;
-  start --;
-  for (int i = 1; i < iMax; i++)
-    this->vec[i] = v[start+i][column];
-}
-
-void vtkImageEMVector::Resize(int dim) {
-  if (dim != this->len) {
-    this->deallocate();
-    this->allocate(dim);
-  }
-}
- 
-void vtkImageEMVector::Resize(int dim, double val) {
-  if (dim != this->len) {
-    this->deallocate();
-    this->allocate(dim,val);
-  } else {
-    for (int i= 1; i <= dim; i++)
-      this->vec[i] = val;
-  }
-}
-
-// void vtkImageEMVector::Resize(const vtkImageEMVector & input) {
-//  if (this->len != input.len) {
-//    this->deallocate();
-//    this->allocate(input.len);
-//  }
-//  for (int i= 1; i <= input.len; i++)
-//    this->vec[i] = input.vec[i];
-// } 
-
-
-void vtkImageEMVector::Reshape(vtkImageEMMatrix3D im) {
-  int dimY= im.get_dim(2),dimX= im.get_dim(3),dimZ= im.get_dim(1);
-  int i,j,k, index;
-  if (len != (dimY*dimX*dimZ)) 
-     vtkImageEMError::vtkImageEMError("vtkImageEMVector::Reshape: Dimension of input does not match vector!");
-
-  for (k=1; k<= dimZ; k++) {
-    index = (k-1)*dimY*dimX;
-    for (i=1; i <= dimX; i++) {
-      for (j=1; j <= dimY; j++) {
-         this->vec[index+j] = im[k][j][i];
-      }
-      index +=dimY;
-    }
-  }
-}
-
-void vtkImageEMVector::Reshape(vtkImageEMMatrix im) {
-  int dimY= im.get_dim(1), dimYPlus = dimY+1,
-      dimX= im.get_dim(2), dimXPlus = dimX+1;
-  int i,j, index = 0;
-  if (len != (dimY*dimX)) 
-     vtkImageEMError::vtkImageEMError("vtkImageEMVector::Reshape: Dimension of input does not match vector!");
-
-  for (i=1; i < dimXPlus; i++) {
-    for (j=1; j < dimYPlus; j++) {
-         this->vec[index+j] = im[j][i];
-    }
-    index +=dimY;
-  }
-}
-
-
-void vtkImageEMVector::PrintVector(int xMax) {
-  int Max = (xMax > -1 ? (xMax > this->len ? this->len : xMax) : this->len) + 1;
-  for (int i = 1; i < Max; i++)
-    cout << this->vec[i] << " ";
-  cout << endl;
-}
-
-// Sets 'this equal to  Column 'col' of Matrix im  
-void vtkImageEMVector::MatrixCol(vtkImageEMMatrix im, int col) {
-  if ((this->len != im.get_dim(1)) ||
-      (im.get_dim(2) < col)) 
-     vtkImageEMError::vtkImageEMError("vtkImageEMVector::MatrixCol: Dimension of input does not match vector!");
-  int iMax = this->len+1;
-  for (int i=1; i < iMax; i++) this->vec[i] = im[i][col];
-}  
-
-void vtkImageEMVector::MatrixRow(vtkImageEMMatrix im, int row) {
-  if (this->len != im.get_dim(2))
-      vtkImageEMError::vtkImageEMError("vtkImageEMVector::MatrixRow: Dimension of input does not match vector!");
-
-  int iMax = this->len+1;
-  for (int i=1; i < iMax; i++) this->vec[i] = im[row][i];
-}
-// Convolution and polynomial multiplication . 
-// This is assuming u and 'this' have the same dimensio
-void vtkImageEMVector::conv(vtkImageEMVector u,vtkImageEMVector v){
-  int uLen = u.get_len(), vLen = v.get_len();
-  int stump = vLen /2;
-  int k,j,jMin,jMax;
-  int kMax = this->len + stump +1;
-  for (k = stump + 1; k <  kMax; k++) {
-    this->vec[k-stump] = 0;
-    jMin = (1 > k + 1 - vLen ? 1 : k + 1 - vLen ); //  max(1,k+1-vLen):
-    jMax = (k < uLen ? k : uLen)+1;                  //min(k,uLen) 
-    for (j=jMin; j < jMax; j++)
-      this->vec[k-stump] += u[j]*v[k+1-j];
-  }  
-}
-
-// Opens up a new file and writes down result in the file
-void vtkImageEMVector::WriteVectorToFile (char *filename,char *varname) const {
-  int appendFlag = 0;
-  FILE *f = (strcmp(filename,"-"))?fopen(filename,((appendFlag)?"a":"w")):stdout;
-  if ( f == NULL ) {
-    cerr << "Could not open file " << filename << "\n";
-    return;
-  }
-  this->WriteVectorToFile(f,varname);
-  fflush(f);
-  fclose(f);
-}
-
-// Writes Vector to file in Matlab format if name is specified otherwise just 
-// writes the values in the file
-void vtkImageEMVector::WriteVectorToFile (FILE *f,char *name) const
-{
-  int xMax = this->len +1;
-  if (name != NULL) fprintf(f,"%s = [", name);
-  for (int x = 1; x < xMax; x++ )
-      fprintf(f,"%10.6f ", this->vec[x]);
-  if (name != NULL) fprintf(f,"];\n");
-}
-  
-void vtkImageEMVector::setVectorTest(int test,int division,int pixel, int offset){
-  int Xsize = this->len+1;
+void vtkImageEMMarkov::setVectorTest(double *vec, int maxX,int test,int division,int pixel, int offset){
   int x;
   int ImgColor = 0;
   if (division < 2) {
-    this->setVector(0);
+    for (x = 0; x < maxX; x++) vec[x] = 0;
     return;
   }
   double ImgScale = 255/double(division-1);
   double XScale ;
 
   if (pixel > 0) XScale = double(pixel);
-  else XScale = double(this->len) /double(division);
+  else XScale = double(maxX) /double(division);
 
   if (test < 2) ImgColor = int(ImgScale*(offset%division));
-  for (x =1 ; x < Xsize; x++) {
+  maxX++;
+  for (x =1 ; x < maxX; x++) {
     if (test> 1) ImgColor = int(ImgScale*((int((x-1)/XScale)+offset)%division));
-    this->vec[x] = ImgColor;
+    vec[x-1] = ImgColor;
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

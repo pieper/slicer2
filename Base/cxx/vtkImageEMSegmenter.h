@@ -26,7 +26,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageEMSegmenter_h
 #define __vtkImageEMSegmenter_h
 
-#include "vtkImageEMMarkov.h"
+#include <math.h>
+#include <cmath>
+#include "vtkImageToImageFilter.h"
 
 class VTK_EXPORT vtkImageEMSegmenter : public vtkImageToImageFilter
 {
@@ -36,16 +38,14 @@ class VTK_EXPORT vtkImageEMSegmenter : public vtkImageToImageFilter
   vtkTypeMacro(vtkImageEMSegmenter,vtkObject);
   void PrintSelf(ostream& os);
 
-//BTX
   // Description:
   // Segmentats the Image using the EM-MF Algorithm   
-  template <class T> void vtkImageEMAlgorithm(T *in1Ptr, T *outPtr,int imgX,int imgY, int  NumSlices, int inIncY, int inIncZ, int outIncY, int outIncZ );
-  // void vtkImageEMAlgorithm(T *in1Ptr, T *outPtr,int imgX,int imgY, int  NumSlices, int inIncY, int inIncZ, int outIncY, int outIncZ );
-//ETX
+  void vtkImageEMAlgorithm(double *InputOutputVector,int imgX,int imgY, int  NumSlices, int ImageMax);
  
   // Description:
   // Changing NumClasses re-defines also all the arrays which depon the number of classes e.g. prob
   void SetNumClasses(int NumberOfClasses);
+
   vtkGetMacro(NumClasses, int);
 
   vtkSetMacro(NumIter, int);
@@ -128,20 +128,80 @@ class VTK_EXPORT vtkImageEMSegmenter : public vtkImageToImageFilter
   // ImgTestPixel = pixel length of one divison
   int get_ImgTestPixel () {return this->ImgTestPixel;}
 
-  // Description:
-  // Tests the convolution function
-  void TestConv();  // Test Convolution function : Works !
+  void TestConv();
 
 protected:
-
   vtkImageEMSegmenter();
   vtkImageEMSegmenter(const vtkImageEMSegmenter&) {};
-  ~vtkImageEMSegmenter(){};
+  ~vtkImageEMSegmenter();
+  void DeleteVariables();
+
   void operator=(const vtkImageEMSegmenter&) {};
-  
   void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,int outExt[6], int id);
- 
+
+  // Description:
+  // Opens up a new file and writes down result in the file
+  void WriteVectorToFile (char *filename, char *varname,double *vec, int xMax) const;
+
+  // Description:
+  // Writes Vector to file in Matlab format if name is specified otherwise just 
+  // writes the values in the file
+  void WriteVectorToFile (FILE *f,char *name, double *vec, int xMax) const;
+
+  // Description:
+  // Opens up a new file and writes down result in the file
+  void WriteMatrixToFile (char *filename,char *varname, double **mat, int imgY, int imgX) const;
+
+  // Description:
+  // Writes Matrix to file in Matlab format if name is specified otherwise just 
+  // writes the values in the file
+  void WriteMatrixToFile (FILE *f,char *name,double **mat, int imgY, int imgX) const;
+
+  // Description
+  //  Smoothes  3D-Matrix
+  // w(k) = sum(u(j)*v(k+1-j))
+  // returns Matrix of size r_m
+  void smoothConv(double ***mat3D, int mat3DZlen, int mat3DYlen, int mat3DXlen, double v[],int vLen);
+
+  // Description:
+  // Convolution and polynomial multiplication . 
+  // This is assuming u and 'this' have the same dimension
+  void convMatrix3D(double*** mat3D, double*** U,int mat3DZlen, int mat3DYlen, int mat3DXlen, double v[],int vLen);
+
+  // Description:
+  // Convolution and polynomial multiplication . 
+  // This is assuming u and 'this' have the same dimension
+  // Convolution and polynomial multiplication . 
+  // This is assuming u and 'this' have the same dimension
+  void convMatrix(double** mat, double** U, int matYlen, int matXlen, double v[], int vLen);
+
+  // Description:
+  // Same just v is a row vector instead of column one
+  // We use the following equation :
+  // conv(U,v) = conv(U',v')' => conv(U,v') = conv(U',v)';
+  void convMatrixT(double** mat, double** U, int matYlen, int matXlen, double v[], int vLen);
+
+  // Description:
+  // Convolution and polynomial multiplication . 
+  // This is assuming u and 'this' have the same dimensio
+  void convVector(double vec[], double u[], int uLen, double v[], int vLen);
+
+  void PrintMatrix(double **mat, int yMax,int xMax);
+
+  // Description:
+  // Before EM Algorithm is started it checks of all values are set correctly
+  int checkValues(); 
+
+  // Description:
+  // Defines the Label map of a given image
+  void DeterminLabelMap(double *LabelMap, double **w_m, int imgX,int imgY, int  NumSlices, int imgXY);
+
+  // Description:
+  // Print out intermediate result of the algorithm in a matlab file
+  // The file is called  EMSegmResult<iteration>.m
+  void PrintMatlabGraphResults(int iter,int slice,int FullProgram,int imgXY, int imgY, int imgX, double **w_m,double *b_m);
+
   int NumClasses;      // Number of Classes
   int NumIter;         // Number of EM-iterations
   int NumRegIter;      // Number of iteration in E- Step to regularize weights 
@@ -149,7 +209,7 @@ protected:
 
   int SmoothingWidth;  // Width for Gausian to regularize weights   
   int SmoothingSigma;  // Sigma paramter for regularizing Gaussian
-
+ 
   int StartSlice;      // First Slide to be segmented
   int EndSlice;        // Last Slide to be segmented 
 
@@ -161,31 +221,12 @@ protected:
   int PrintIntermediateSlice;      //  Print out the result of which slide 
   int PrintIntermediateFrequency;   //  Print out the result after how many steps 
 
-  // Do not Tcl the following lines 
-//BTX
-  vtkImageEMVector Mu, Sigma;   // Intensity distribution of the classes
-  vtkImageEMVector Prob;        // Prior Probability of the classes
-  vtkImageEMVector Label;       // Prior Probability of the classes
-  vtkImageEMMatrix3D MrfParams; // Markov Model Parameters: Matrix3D mrfparams(this->NumClasses,this->NumClasses,4);
+  double *Mu;                   // Intensity distribution of the classes
+  double *Sigma;                // Intensity distribution of the classes
+  double *Prob;                 // Prior Probability of the classes
+  double *Label;                // Prior Probability of the classes
 
-  // Description:
-  //Caluclates the Gaussian with mean m, sigma s and input x 
-  inline double Gauss(double x,double m,double s); 
-
-  // Description:
-  // Before EM Algorithm is started it checks of all values are set correctly
-  int checkValues(vtkImageEMMatrix3D Volume); 
-
-  // Description:
-  // Print out intermediate result of the algorithm in a matlab file
-  // The file is called  EMSegmResult<iteration>.m
-  template <class T>  void PrintMatlabGraphResults(int iter,int slice,int FullProgram,int imgXY, int imgY, int imgX,T *outPtr,int outIncY, int outIncZ, vtkImageEMMatrix w_m,vtkImageEMMatrix3D b_m);
-
-  // Description:
-  // Defines the Label map of a given image
-  template <class T> void DeterminLabelMap(T *outPtr, vtkImageEMMatrix w_m, int imgX,int imgY, int  NumSlices, int imgXY,  int NumClassPlus, int outIncY, int outIncZ);
-
-//ETX
+  double ***MrfParams;         // Markov Model Parameters: Matrix3D mrfparams(this->NumClasses,this->NumClasses,4);
 };
 #endif
 
