@@ -158,7 +158,7 @@ proc FluxDiffusionInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.10 $} {$Date: 2004/04/13 21:12:35 $}]
+        {$Revision: 1.11 $} {$Date: 2004/08/11 14:40:35 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -602,6 +602,14 @@ proc FluxDiffusionEnter {} {
     #   (See slicer/program/tcl-shared/Events.tcl for more details.)
     pushEventManager $FluxDiffusion(eventManager)
 
+    #Change welcome logo if it exits under ./image
+    set modulepath $::PACKAGE_DIR_VTKFLUXDIFFUSION/../../../images
+    if {[file exist [ExpandPath [file join \
+                     $modulepath "welcome.ppm"]]]} {
+        image create photo iWelcome \
+        -file [ExpandPath [file join $modulepath "welcome.ppm"]]
+    }
+
     # clear the text box and put instructions there
 #    $FluxDiffusion(textBox) delete 1.0 end
 #    $FluxDiffusion(textBox) insert end "Shift-Click anywhere!\n"
@@ -625,6 +633,11 @@ proc FluxDiffusionExit {} {
     #   previous ones.
     #
     popEventManager
+    
+    #Restore standar slicer logo
+    image create photo iWelcome \
+        -file [ExpandPath [file join gui "welcome.ppm"]]
+
 }
 
 
