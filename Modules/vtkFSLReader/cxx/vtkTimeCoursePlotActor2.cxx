@@ -124,6 +124,10 @@ void vtkTimeCoursePlotActor2::SetPlot(vtkFloatArray *timeCourse, vtkFloatArray *
         tc->SetComponent(i, 0, tmp);
     }
 
+    tc->GetRange(range2, 0);
+    float max = (range2[1] > range1[1] ? range2[1] : range1[1]);
+    float min = (range2[0] > range1[0] ? range1[0] : range2[0]);
+
     // Creates data set for model 
     vtkDataSet* stimDataSet = CreateDataSet(tc, xPoints);
  
@@ -150,7 +154,7 @@ void vtkTimeCoursePlotActor2::SetPlot(vtkFloatArray *timeCourse, vtkFloatArray *
     this->GetLegendBoxActor()->SetEntryString(0, "Signal");
     this->GetLegendBoxActor()->SetEntryString(1, "Model");
     this->LegendOn();
-    this->SetYRange(range1[0], range1[1]);
+    this->SetYRange(min, max);
     this->SetNumberOfXLabels(13);
 }
 
