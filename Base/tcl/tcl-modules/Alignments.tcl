@@ -129,7 +129,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.8 $} {$Date: 2002/08/23 22:00:15 $}]
+            {$Revision: 1.9 $} {$Date: 2002/09/09 15:23:21 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -1740,31 +1740,13 @@ proc AlignmentsAutoRun {} {
     set v $Matrix(volume)
     set r $Matrix(refVolume)
 
-    # Check that the volumes exist
-    scan [Volume($v,node) GetImageRange] "%d %d" lo hi
-    if {[CheckVolumeExists [Volume($v,node) GetFullPrefix] \
-            [Volume($v,node) GetFilePattern] $lo $hi] != ""} {
-        set str "The [Volume($v,node) GetName] volume cannot be found on disk."
-        puts $str
-        tk_messageBox -message $str
-        return
-    }
-    scan [Volume($r,node) GetImageRange] "%d %d" lo hi
-    if {[CheckVolumeExists [Volume($r,node) GetFullPrefix] \
-            [Volume($r,node) GetFilePattern] $lo $hi] != ""} {
-        set str "The [Volume($r,node) GetName] volume cannot be found on disk."
-        puts $str
-        tk_messageBox -message $str
-        return
-    }
-
     # Store which transform we're editing
     # If the user has not selected a tranform, then create a new one by default
     # and append it to the volume to register (ie. "Volume to Move")
     set t $Matrix(activeID)
     set Matrix(tAuto) $t
     if {$t == ""} {
- DataAddTransform append Volume($v,node) Volume($v,node)
+        DataAddTransform append Volume($v,node) Volume($v,node)
     }
 
     vtkRasToIjkTransform refTrans
