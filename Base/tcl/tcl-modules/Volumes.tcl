@@ -64,7 +64,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesInit {} {
-	global Volumes Volume Module Gui Path
+	global Volumes Volume Module Gui Path prog
 
 	# Define Tabs
 	set m Volumes
@@ -86,6 +86,20 @@ proc VolumesInit {} {
 	set Volumes(DICOMPreviewWidth) 64
 	set Volumes(DICOMPreviewHeight) 64
 	set Volumes(DICOMPreviewHighestValue) 2048
+
+    set Volumes(DICOMCheckVolumeList) {}
+    set Volumes(DICOMCheckPositionList) {}
+    set Volumes(DICOMCheckActiveList) {}
+    set Volumes(DICOMCheckActivePositionList) {}
+    set Volumes(DICOMCheckSliceDistanceList) {}
+
+    set Volumes(DICOMCheckImageLabelIdx) 0
+    set Volumes(DICOMCheckLastPosition) 0
+    set Volumes(DICOMCheckSliceDistance) 0
+
+    set dir [file join [file join $prog tcl-modules] Volumes]
+    set Volumes(DICOMDataDictFile) $dir/datadict.txt
+
     # End
 
 	# For now, never display histograms to avoid bug in histWin Render
@@ -103,7 +117,7 @@ proc VolumesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-                {$Revision: 1.43 $} {$Date: 2001/03/26 19:51:36 $}]
+                {$Revision: 1.44 $} {$Date: 2001/04/04 21:52:54 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -1627,10 +1641,13 @@ proc DICOMListSelect { parent values } {
 	      -variable Volumes(FileNameSortParam) -value "decr" -width 12 \
 	      -indicatoron 0} $Gui(WCA)
     eval {button $f2.bPreviewAll -text "Preview" -command "DICOMPreviewAllButton"} $Gui(WBA)
+    eval {button $f2.bListHeaders -text "List Headers" -command "DICOMListHeadersButton"} $Gui(WBA)
+    eval {button $f2.bCheck -text "Check" -command "DICOMCheckFiles"} $Gui(WBA)
 
     #frame $parent.f4 -bg $Gui(activeWorkspace)
     set Volumes(ImageTextbox) [ScrolledText $parent.f4]
-    $Volumes(ImageTextbox) configure -height 8 -width 10 -font {helvetica 7}
+    #$Volumes(ImageTextbox) configure -height 8 -width 10 -font {helvetica 7}
+    $Volumes(ImageTextbox) configure -height 8 -width 10
 
     frame $parent.f4.fSettings -bg $Gui(activeWorkspace) -relief sunken -bd 2
     set f $parent.f4.fSettings
@@ -1659,8 +1676,6 @@ proc DICOMListSelect { parent values } {
 	      -textvariable Volumes(DICOMPreviewHighestValue)} $Gui(WEA)
     pack $f.f3.lHighest $f.f3.eHighest -side left -padx 5 -pady 2
 
-#...
-    
     eval {button $parent.f4.fSettings.bPreviewAll -text "Preview" -command "DICOMPreviewAllButton"} $Gui(WBA)
 
     # << AT 3/22/01
@@ -1671,7 +1686,7 @@ proc DICOMListSelect { parent values } {
     pack $parent.f3.close $parent.f3.cancel -padx 10 -pady 10 -side left
     # >> AT 3/22/01
     pack $parent.f2.fileNames.fIncrDecr
-    pack $parent.f2.fileNames.fIncrDecr.rIncr $parent.f2.fileNames.fIncrDecr.rDecr $parent.f2.fileNames.fIncrDecr.bPreviewAll -side left -pady 2 -padx 0
+    pack $parent.f2.fileNames.fIncrDecr.rIncr $parent.f2.fileNames.fIncrDecr.rDecr $parent.f2.fileNames.fIncrDecr.bPreviewAll $parent.f2.fileNames.fIncrDecr.bListHeaders $parent.f2.fileNames.fIncrDecr.bCheck -side left -pady 2 -padx 0
     # << AT 3/22/01
     #pack $parent.f3 -fill both -expand true
     pack $parent.f4 -fill both -expand true
@@ -1680,11 +1695,13 @@ proc DICOMListSelect { parent values } {
 
     place $parent.f4.fSettings -relx 0.8 -rely 0.0 -anchor ne
     pack $parent.f4.fSettings.bPreviewAll -padx 2 -pady 2
-    #bind $parent.f4 <Enter> "raise $parent.f4.fSettings"
-    #bind $parent.f4 <Leave> "lower $parent.f4.fSettings $Volumes(ImageTextbox)"
-    bind $Volumes(ImageTextbox) <Enter> "raise $parent.f4.fSettings"
-    bind $Volumes(ImageTextbox) <Leave> "lower $parent.f4.fSettings $Volumes(ImageTextbox)"
-    bind $parent.f4.fSettings <Enter> "raise $parent.f4.fSettings"
+#     #bind $parent.f4 <Enter> "raise $parent.f4.fSettings"
+#     #bind $parent.f4 <Leave> "lower $parent.f4.fSettings $Volumes(ImageTextbox)"
+#     bind $Volumes(ImageTextbox) <Enter> "raise $parent.f4.fSettings"
+#     bind $Volumes(ImageTextbox) <Leave> "lower $parent.f4.fSettings $Volumes(ImageTextbox)"
+#     bind $parent.f4.fSettings <Enter> "raise $parent.f4.fSettings"
+#     bind $parent.f4.fSettings <Leave> "lower $parent.f4.fSettings $Volumes(ImageTextbox)"
+    bind $parent.f2.fileNames.fIncrDecr.bPreviewAll <Enter> "raise $parent.f4.fSettings"
     bind $parent.f4.fSettings <Leave> "lower $parent.f4.fSettings $Volumes(ImageTextbox)"
 
     bind $iDsNames <ButtonRelease-1> [list ClickListIDsNames %W $studyUIDs $seriesUIDs $fileNames]
@@ -2084,17 +2101,24 @@ proc DICOMPredictScanOrder { file1 file2 } {
 	puts stderr "Can't open file $file1\n"
 	parser Delete
 	return
-    } else {
-	if { [parser FindElement 0x0020 0x0032] == "1" } {
-	    set NextBlock [lindex [split [parser ReadElement]] 4]
-	    set x1 [parser ReadFloatAsciiNumeric $NextBlock]
-	    set y1 [parser ReadFloatAsciiNumeric $NextBlock]
-	    set z1 [parser ReadFloatAsciiNumeric $NextBlock]
-	} else  {
-	    parser Delete
-	    return
-	}
     }
+
+    if { [parser FindElement 0x0020 0x0032] == "1" } {
+	set NextBlock [lindex [split [parser ReadElement]] 4]
+	set x1 [parser ReadFloatAsciiNumeric $NextBlock]
+	set y1 [parser ReadFloatAsciiNumeric $NextBlock]
+	set z1 [parser ReadFloatAsciiNumeric $NextBlock]
+    } else  {
+	parser Delete
+	return
+    }
+
+    set SlicePosition1 ""
+    if [expr [parser FindElement 0x0020 0x1041] == "1"] {
+	set NextBlock [lindex [split [parser ReadElement]] 4]
+	set SlicePosition1 [parser ReadFloatAsciiNumeric $NextBlock]
+    }
+
     parser CloseFile
 
     set found [parser OpenFile $file2]
@@ -2102,19 +2126,27 @@ proc DICOMPredictScanOrder { file1 file2 } {
 	puts stderr "Can't open file $file2\n"
 	parser Delete
 	return
-    } else {
-	if { [parser FindElement 0x0020 0x0032] == "1" } {
-	    set NextBlock [lindex [split [parser ReadElement]] 4]
-	    set x2 [parser ReadFloatAsciiNumeric $NextBlock]
-	    set y2 [parser ReadFloatAsciiNumeric $NextBlock]
-	    set z2 [parser ReadFloatAsciiNumeric $NextBlock]
-	} else  {
-	    parser Delete
-	    return
-	}
+    }
+
+    if { [parser FindElement 0x0020 0x0032] == "1" } {
+	set NextBlock [lindex [split [parser ReadElement]] 4]
+	set x2 [parser ReadFloatAsciiNumeric $NextBlock]
+	set y2 [parser ReadFloatAsciiNumeric $NextBlock]
+	set z2 [parser ReadFloatAsciiNumeric $NextBlock]
+    } else  {
+	parser Delete
+	return
+    }
+
+    set SlicePosition2 ""
+    if [expr [parser FindElement 0x0020 0x1041] == "1"] {
+	set NextBlock [lindex [split [parser ReadElement]] 4]
+	set SlicePosition2 [parser ReadFloatAsciiNumeric $NextBlock]
     }
 
     #set Volume(filePattern) [format "%.2f %.2f %.2f" $x1 $y1 $z1]
+
+    # Predict scan order
 
     set dx [expr $x2 - $x1]
     set dy [expr $y2 - $y1]
@@ -2156,6 +2188,22 @@ proc DICOMPredictScanOrder { file1 file2 } {
 	}
     }
 
+    # Calculate Slice Distance
+
+    if {($SlicePosition1 != "") && ($SlicePosition2 != "")} {
+	set diff [expr abs($SlicePosition2 - $SlicePosition1)]
+    } else {
+	set diff [expr sqrt($dx * $dx + $dy * $dy + $dz *$dz)]
+    }
+
+    if {$diff != $Volume(sliceThickness)} {
+	set answer [tk_messageBox -message "Slice thickness is $Volume(sliceThickness) in the header, but $diff when calculated from Slice Positions.\nWould you like to use the calculated one ($diff)?" \
+			-type yesno -icon question -title "Slice thickness question."]
+	if {$answer == "yes"} {
+	    set Volume(sliceThickness) $diff
+	}
+    }
+
     parser CloseFile
     parser Delete
 }
@@ -2178,16 +2226,76 @@ proc DICOMPreviewAllButton {} {
 	set img [image create photo -width $Volumes(DICOMPreviewWidth) -height $Volumes(DICOMPreviewHeight) -palette 256]
 	DICOMPreviewFile [lindex $DICOMFileNameList $i] $img
 	label $Volumes(ImageTextbox).l$i -image $img
+	#label $Volumes(ImageTextbox).l$i -image $img -background green
 	$Volumes(ImageTextbox) window create insert -window $Volumes(ImageTextbox).l$i
 	#$Volumes(ImageTextbox) insert insert " "
 	update idletasks
     }
 }
 
+proc DICOMListHeadersButton {} {
+    global Volumes DICOMFileNameList
+
+    $Volumes(ImageTextbox) delete 1.0 end
+
+    vtkDCMLister Volumes(lister)
+    Volumes(lister) ReadList $Volumes(DICOMDataDictFile)
+    Volumes(lister) SetListAll 0
+
+    for {set i 0} {$i < [llength $DICOMFileNameList]} {incr i} {
+	set img [image create photo -width $Volumes(DICOMPreviewWidth) -height $Volumes(DICOMPreviewHeight) -palette 256]
+	set filename [lindex $DICOMFileNameList $i]
+	DICOMPreviewFile $filename $img
+	label $Volumes(ImageTextbox).l$i -image $img
+	$Volumes(ImageTextbox) window create insert -window $Volumes(ImageTextbox).l$i
+	$Volumes(ImageTextbox) insert insert " $filename\n"
+	DICOMListHeader $filename
+	$Volumes(ImageTextbox) insert insert "\n"
+	update idletasks
+#	break
+    }
+
+    Volumes(lister) Delete
+}
+
+proc DICOMListHeader {filename} {
+    global Volumes
+
+    #vtkDCMLister lister
+    set ret [Volumes(lister) OpenFile $filename]
+    if {$ret == "0"} {
+	return
+    }
+    
+    Volumes(lister) ReadList $Volumes(DICOMDataDictFile)
+    Volumes(lister) SetListAll 0
+
+    while {[Volumes(lister) IsStatusOK] == "1"} {
+	set ret [Volumes(lister) ReadElement]
+	if {[Volumes(lister) IsStatusOK] == "0"} {
+	    break
+	}
+	set group [lindex $ret 1]
+	set element [lindex $ret 2]
+	set length [lindex $ret 3]
+	set vr [lindex $ret 0]
+	set msg [Volumes(lister) callback $group $element $length $vr]
+	if {$msg != "Empty."} {
+	    $Volumes(ImageTextbox) insert insert $msg
+	    #$Volumes(ImageTextbox) insert insert "\n"
+	    $Volumes(ImageTextbox) see end
+	    update idletasks
+	}
+    }
+
+    Volumes(lister) CloseFile
+}
+
 proc DICOMPreviewFile {file img} {
     global Volumes Volume
 
-    vtkDCMParser parser
+    #vtkDCMParser parser
+    vtkDCMLister parser
 
     set found [parser OpenFile $file]
     if {$found == "0"} {
@@ -2231,6 +2339,199 @@ proc DICOMPreviewFile {file img} {
 
     parser CloseFile
     parser Delete
+}
+
+proc DICOMCheckFiles {} {
+    global Volumes Volume DICOMFileNameList
+
+    set t $Volumes(ImageTextbox)
+    $t delete 1.0 end
+
+    if {[llength $DICOMFileNameList] < 2} {
+	$t insert insert "Not a volume - can't check.\n"
+	return
+    }
+
+    set file1 [lindex $DICOMFileNameList 0]
+    set file2 [lindex $DICOMFileNameList 1]
+    set ret [DICOMCheckVolumeInit $file1 $file2]
+    if {$ret == "1"} {
+	set max [llength $DICOMFileNameList]
+	for {set i 1} {$i < $max} {incr i} {
+	    set file [lindex $DICOMFileNameList $i]
+	    set msg "Checking $file\n"
+	    $t insert insert $msg
+	    $t see end
+	    update idletasks
+	    DICOMCheckFile $file $i
+	}
+    }
+    lappend Volumes(DICOMCheckVolumeList) $Volumes(DICOMCheckActiveList)
+    lappend Volumes(DICOMCheckPositionList) $Volumes(DICOMCheckActivePositionList)
+    lappend Volumes(DICOMCheckSliceDistanceList) $Volumes(DICOMCheckSliceDistance)
+
+    $t insert insert "Volume checking finished.\n"
+
+    $t insert insert $Volumes(DICOMCheckVolumeList)
+    $t insert insert "\n"
+    $t insert insert $Volumes(DICOMCheckPositionList)
+    $t insert insert "\n"
+    $t insert insert $Volumes(DICOMCheckSliceDistanceList)
+    $t insert insert "\n"
+
+    set len [llength $Volumes(DICOMCheckSliceDistanceList)]
+    if {$len == "1"} {
+	$t insert insert "The volume seems to be OK.\n"
+	$t see end
+	return
+    }
+
+    set msg "$len fragments detected.\n"
+    $t insert insert $msg
+
+    set Volumes(DICOMCheckImageLabelIdx) 0
+    for {set i 0} {$i < $len} {incr i} {
+	set dist [lindex $Volumes(DICOMCheckSliceDistanceList) $i]
+	set activeList [lindex $Volumes(DICOMCheckVolumeList) $i]
+	set activeLength [llength $activeList]
+	set activePositionList [lindex $Volumes(DICOMCheckPositionList) $i]
+	$t insert insert "Fragment \#[expr $i + 1], $activeLength slices, slice distance is $dist:\n"
+	$t insert insert "Positions: "
+	$t insert insert $activePositionList
+	$t insert insert "\n"
+	for {set j 0} {$j < $activeLength} {incr j} {
+	    set idx [lindex $activeList $j]
+	    set file [lindex $DICOMFileNameList $idx]
+	    set img [image create photo -width $Volumes(DICOMPreviewWidth) -height $Volumes(DICOMPreviewHeight) -palette 256]
+	    DICOMPreviewFile $file $img
+	    set labelIdx $Volumes(DICOMCheckImageLabelIdx)
+	    label $Volumes(ImageTextbox).l$Volumes(DICOMCheckImageLabelIdx) -image $img
+	    $Volumes(ImageTextbox) window create insert -window $Volumes(ImageTextbox).l$Volumes(DICOMCheckImageLabelIdx)
+	    incr Volumes(DICOMCheckImageLabelIdx)
+	    #$Volumes(ImageTextbox) insert insert " "
+	}
+	$t insert insert "\n"
+	$t see end
+	update idletasks
+    }
+    $t insert insert "Fragment selection will be added soon.\n"
+    $t see end
+}
+
+proc DICOMCheckVolumeInit {file1 file2} {
+    global Volumes Volume
+
+    vtkDCMParser parser
+    set t $Volumes(ImageTextbox)
+
+    set Volumes(DICOMCheckVolumeList) {}
+    set Volumes(DICOMCheckPositionList) {}
+    set Volumes(DICOMCheckActiveList) {}
+    set Volumes(DICOMCheckActivePositionList) {}
+    set Volumes(DICOMCheckSliceDistanceList) {}
+
+    set found [parser OpenFile $file1]
+    if {$found == "0"} {
+	$t insert insert "Can't open file $file1\n"
+	parser Delete
+	return 0
+    }
+
+    set SlicePosition1 ""
+    if [expr [parser FindElement 0x0020 0x1041] == "1"] {
+	set NextBlock [lindex [split [parser ReadElement]] 4]
+	set SlicePosition1 [parser ReadFloatAsciiNumeric $NextBlock]
+    } 
+    if { $SlicePosition1 == "" } {
+	$t insert insert "Image Position (0020,1041) not found in file $file1.\n"
+	parser Delete
+	return 0
+    }
+    
+    $t insert insert "Detected slice position in $file1: $SlicePosition1\n"
+
+    parser CloseFile
+
+    set found [parser OpenFile $file2]
+    if {$found == "0"} {
+	$t insert insert "Can't open file $file2\n"
+	parser Delete
+	return 0
+    }
+
+    set SlicePosition2 ""
+    if [expr [parser FindElement 0x0020 0x1041] == "1"] {
+	set NextBlock [lindex [split [parser ReadElement]] 4]
+	set SlicePosition2 [parser ReadFloatAsciiNumeric $NextBlock]
+    } 
+    if { $SlicePosition2 == "" } {
+	$t insert insert "Image Position (0020,1041) not found in file $file2.\n"
+	parser Delete
+	return 0
+    }
+    
+    $t insert insert "Detected slice position in $file2: $SlicePosition2\n"
+
+    set Volumes(DICOMCheckLastPosition) $SlicePosition1
+    set Volumes(DICOMCheckSliceDistance) [expr $SlicePosition2 - $SlicePosition1]
+    $t insert insert "Detected slice distance: $Volumes(DICOMCheckSliceDistance)\n"
+
+    lappend Volumes(DICOMCheckActiveList) 0
+    lappend Volumes(DICOMCheckActivePositionList) $SlicePosition1
+
+    parser CloseFile
+    parser Delete
+    return 1
+}
+
+proc DICOMCheckFile {file idx} {
+    global Volumes Volume
+
+    vtkDCMParser parser
+    set t $Volumes(ImageTextbox)
+
+    set found [parser OpenFile $file]
+    if {$found == "0"} {
+	$t insert insert "Can't open file $file\n"
+	parser Delete
+	return 0
+    }
+
+    set SlicePosition ""
+    if [expr [parser FindElement 0x0020 0x1041] == "1"] {
+	set NextBlock [lindex [split [parser ReadElement]] 4]
+	set SlicePosition [parser ReadFloatAsciiNumeric $NextBlock]
+    } 
+    if { $SlicePosition == "" } {
+	$t insert insert "Image Position (0020,1041) not found in file $file. Skipping.\n"
+	parser Delete
+	return 0
+    }
+    
+    $t insert insert "Detected slice position in $file: $SlicePosition\n"
+    set dist [expr $SlicePosition - $Volumes(DICOMCheckLastPosition)]
+    set diff [expr abs($dist - $Volumes(DICOMCheckSliceDistance))]
+    if {$diff < 0.1} {
+	lappend Volumes(DICOMCheckActiveList) $idx
+	lappend Volumes(DICOMCheckActivePositionList) $SlicePosition
+    } else {
+	lappend Volumes(DICOMCheckVolumeList) $Volumes(DICOMCheckActiveList)
+	lappend Volumes(DICOMCheckPositionList) $Volumes(DICOMCheckActivePositionList)
+	lappend Volumes(DICOMCheckSliceDistanceList) $Volumes(DICOMCheckSliceDistance)
+	set Volumes(DICOMCheckActiveList) [list [expr $idx - 1] $idx]
+	set Volumes(DICOMCheckActivePositionList) {}
+	lappend Volumes(DICOMCheckActivePositionList) $Volumes(DICOMCheckLastPosition)
+	lappend Volumes(DICOMCheckActivePositionList) $SlicePosition
+	$t insert insert "Slice Position discrepancy. New distance: $dist\n"
+	set Volumes(DICOMCheckSliceDistance) $dist
+    }
+
+    set Volumes(DICOMCheckLastPosition) $SlicePosition
+
+    parser CloseFile
+    parser Delete
+
+    return 1
 }
 
 #-------------------------------------------------------------------------------
