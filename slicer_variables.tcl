@@ -61,6 +61,8 @@ set ::CMAKE_PATH $::SLICER_LIB/CMake-build
 set ::GSL_LIB_DIR $::SLICER_LIB/gsl/lib
 set ::GSL_INC_DIR $::SLICER_LIB/gsl/include
 set ::GSL_SRC_DIR $::SLICER_LIB/gsl-build/gsl
+set ::SOV_BINARY_DIR " "
+#set ::SOV_BINARY_DIR $::SLICER_LIB/SOViewer-build
 
 ## system dependent variables
 
@@ -111,10 +113,16 @@ switch $tcl_platform(os) {
         set ::VTKSLICERBASE_BUILD_TCL_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/$::VTK_BUILD_TYPE/vtkSlicerBaseTCL.lib
 
         set ::CMAKE $::CMAKE_PATH/bin/cmake.exe
-
+        set MSVC6 0
         #
         ## match this to the version of the compiler you have:
         #
+        
+        ## for Visual Studio 6:
+        #set ::GENERATOR "Visual Studio 6" 
+        #set ::MAKE "msdev"
+        #set ::COMPILER_PATH ""
+        #set MSVC6 1
 
         ## for Visual Studio 7:
         set ::GENERATOR "Visual Studio 7" 
