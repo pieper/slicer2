@@ -25,11 +25,32 @@
 #   AnatomyInit
 #   AnatomyBuildGUI
 #   AnatomyEnter
-#   AnatomyExit
-#   AnatomyUpdateGUI
-#   AnatomyCount
-#   AnatomyShowFile
-#   AnatomyBindingCallback
+#   AnatomyGenerate
+#   AnatomyInitalizeViewList
+#   AnatomyAddView
+#   AnatomyAddCustomView
+#   AnatomyAddCustomViewOk
+#   AnatomyDeleteView
+#   AnatomyDeleteView
+#   AnatomyWriteHTML
+#   AnatomyFindViewDims
+#   AnatomyWriteHierarchyTemplate
+#   AnatomyWriteHR
+#   AnatomySaveViews
+#   AnatomyGenIntensityImages
+#   AnatomyGenDepthImages
+#   AnatomyGenPartInt
+#   AnatomyGenPartDepth
+#   AnatomySetCameraPosition
+#   AnatomyInitCamera
+#   AnatomyFindBounds
+#   AnatomySaveColors
+#   AnatomyGetModelActors
+#   AnatomyGenerateLabelMaps
+#   AnatomyShrinkWindow
+#   AnatomyRestoreWindow
+#   AnatomySelectVolume
+#   AnatomySelectLabelMap
 #==========================================================================auto=
 
 
@@ -121,7 +142,7 @@ proc AnatomyInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.2 $} {$Date: 2001/11/23 19:16:56 $}]
+	    {$Revision: 1.3 $} {$Date: 2001/12/21 00:00:01 $}]
 
     # Initialize module-level variables
     #------------------------------------

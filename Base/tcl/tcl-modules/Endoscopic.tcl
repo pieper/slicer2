@@ -1,3 +1,112 @@
+#=auto==========================================================================
+# (c) Copyright 2001 Massachusetts Institute of Technology
+#
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for any purpose, 
+# provided that the above copyright notice and the following three paragraphs 
+# appear on all copies of this software.  Use of this software constitutes 
+# acceptance of these terms and conditions.
+#
+# IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, 
+# INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE 
+# AND ITS DOCUMENTATION, EVEN IF MIT HAS BEEN ADVISED OF THE POSSIBILITY OF 
+# SUCH DAMAGE.
+#
+# MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING, 
+# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR 
+# A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+#
+# THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE 
+# MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. 
+#
+#===============================================================================
+# FILE:        Endoscopic.tcl
+# PROCEDURES:  
+#   EndoscopicEnter
+#   EndoscopicExit
+#   EndoscopicUpdateEndoscopicViewVisibility
+#   EndoscopicUpdateMainViewVisibility
+#   EndoscopicAddEndoscopicView
+#   EndoscopicAddMainView
+#   EndoscopicAddEndoscopicViewRemoveMainView
+#   EndoscopicRemoveEndoscopicView
+#   EndoscopicRemoveMainView
+#   EndoscopicAddMainViewRemoveEndoscopicView
+#   EndoscopicInit
+#   EndoscopicBuildVTK
+#   EndoscopicGyroParams
+#   EndoscopicCreateCamera
+#   EndoscopicCreateCamera
+#   EndoscopicCameraParams (optional),
+#   EndoscopicCameraParams
+#   EndoscopicCreateFocalPoint
+#   EndoscopicCreateLandmarks
+#   EndoscopicCreatePath
+#   EndoscopicCreateVector
+#   EndoscopicCreateVector
+#   EndoscopicVectorParams
+#   EndoscopicUpdateVisibility name (optional)
+#   EndoscopicSetPickable name 0
+#   EndoscopicUpdateSize name
+#   EndoscopicBuildGUI
+#   EndoscopicCreateLabelAndSlider
+#   EndoscopicCreateCheckButton
+#   EndoscopicCreateAdvancedGUI
+#   EndoscopicSetActive
+#   EndoscopicPopupCallback
+#   EndoscopicSelectActor
+#   EndoscopicVectorSelected
+#   EndoscopicLandmarkSelected
+#   EndoscopicTranslateCamera
+#   EndoscopicRotateCamera
+#   EndoscopicSetWorldPosition
+#   EndoscopicSetCameraPosition
+#   EndoscopicResetCameraPosition
+#   EndoscopicResetCameraDirection
+#   EndoscopicSetGyroOrientation
+#   EndoscopicSetCameraDirection
+#   EndoscopicSetFocalAndCameraPosition
+#   EndoscopicUpdateCamera
+#   EndoscopicLightFollowEndoCamera
+#   EndoscopicSetCameraZoom
+#   EndoscopicSetCameraViewAngle
+#   EndoscopicSetCameraAxis
+#   EndoscopicCameraMotionFromUser
+#   EndoscopicSetCollision
+#   EndoscopicMoveGyroToLandmark
+#   EndoscopicUpdateVectors
+#   EndoscopicAddLandmarkNoDirectionSpecified
+#   EndoscopicAddLandmarkDirectionSpecified
+#   EndoscopicUpdateLandmark
+#   EndoscopicDeleteLandmark
+#   EndoscopicBuildInterpolatedPath
+#   EndoscopicDeletePath
+#   EndoscopicResetPathVariables
+#   EndoscopicComputeRandomPath
+#   EndoscopicShowPath
+#   EndoscopicViewPath
+#   EndoscopicStopPath
+#   EndoscopicResetStopPath
+#   EndoscopicResetPath
+#   EndoscopicSetPathFrame
+#   EndoscopicSetFlyDirection
+#   EndoscopicSetSpeed
+#   EndoscopicCheckDriver
+#   EndoscopicSetSlicePosition
+#   EndoscopicSetSliceDriver
+#   EndoscopicAddToEndOfMRMLTree id cx cy cz fx fy fz
+#   EndoscopicUpdateInMRMLTree id cx cy cz fx fy fz
+#   EndoscopicUpdateMRML
+#   EndoscopicDistanceBetweenTwoPoints
+#   EndoscopicUpdateSelectionLandmarkList
+#   EndoscopicSetModelsVisibilityInside
+#   EndoscopicSetSlicesVisibility
+#   EndoscopicImplicitVolumeFromModel
+#   EndoscopicShowContour
+#   EndoscopicVolumeFromModel
+#   EndoscopicReadColonData
+#   EndoscopicReadPathData
+#==========================================================================auto=
 
     
 #-------------------------------------------------------------------------------
@@ -630,6 +739,12 @@ proc EndoscopicCreateGyro { axislen axisrad conelen } {
     
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicGyroParams
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicGyroParams { {axislen -1} {axisrad -1} {conelen -1} } {
     global Endoscopic
     
@@ -667,6 +782,12 @@ proc EndoscopicGyroParams { {axislen -1} {axisrad -1} {conelen -1} } {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicCreateCamera
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicCreateCamera {} {
     global Endoscopic
     
@@ -769,6 +890,12 @@ proc EndoscopicCreateCamera {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicCameraParams
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicCameraParams {{size -1}} {
     global Endoscopic
     
@@ -947,6 +1074,12 @@ proc EndoscopicCreatePath {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicCreateVector
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicCreateVector {} {
 
     global Endoscopic
@@ -996,6 +1129,12 @@ proc EndoscopicCreateVector {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicVectorParams
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicVectorParams { {axislen -1} {axisrad -1} {conelen -1} } {
     global Endoscopic
     if { $axislen == -1 } { set axislen 10 }
@@ -2079,6 +2218,12 @@ proc EndoscopicPopupCallback {} {
 #############################################################################
 
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicSelectActor
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicSelectActor {} {
 
     global Endoscopic 
@@ -2124,6 +2269,12 @@ proc EndoscopicSelectActor {} {
     
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicVectorSelected
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicVectorSelected {id} {
 
     global Endoscopic
@@ -2137,6 +2288,12 @@ proc EndoscopicVectorSelected {id} {
     Render3D
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicLandmarkSelected
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicLandmarkSelected {{id ""}} {
 
     global Endoscopic
@@ -2165,6 +2322,12 @@ proc EndoscopicLandmarkSelected {{id ""}} {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicTranslateCamera
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicTranslateCamera {widget x y} {
     global CurrentCamera 
     global RendererFound
@@ -2189,6 +2352,12 @@ proc EndoscopicTranslateCamera {widget x y} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicRotateCamera
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicRotateCamera {widget x y} {
     global CurrentCamera 
     global LastX 
@@ -2468,6 +2637,12 @@ proc EndoscopicResetCameraDirection {} {
     Endoscopic(gyro,actor) SetOrientation 0 0 0
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicSetGyroOrientation
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicSetGyroOrientation {} {
     global Endoscopic
     if {$Endoscopic(cam,axis) == "relative"} {
@@ -3026,6 +3201,12 @@ proc EndoscopicSetCollision {value} {
 #    EndoscopicSetCameraPosition
 #}
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicMoveGyroToLandmark
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicMoveGyroToLandmark {id} {
     
     global Endoscopic 
@@ -3075,6 +3256,12 @@ proc EndoscopicMoveGyroToLandmark {id} {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicUpdateVectors
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicUpdateVectors {} {
     	
     global Endoscopic
@@ -3524,6 +3711,12 @@ proc EndoscopicDeletePath {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicResetPathVariables
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicResetPathVariables {} {
     global Endoscopic View
 	
@@ -4034,11 +4227,23 @@ proc EndoscopicUpdateMRML {} {
 #
 ############################################################################
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicDistanceBetweenTwoPoints
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicDistanceBetweenTwoPoints {p1x p1y p1z p2x p2y p2z} {
 
     return [expr sqrt((($p2x - $p1x) * ($p2x - $p1x)) + (($p2y - $p1y) * ($p2y - $p1y)) + (($p2z - $p1z) * ($p2z - $p1z)))]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicUpdateSelectionLandmarkList
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicUpdateSelectionLandmarkList {id} {
     
     global Endoscopic
@@ -4104,6 +4309,12 @@ proc EndoscopicSetSlicesVisibility {} {
 #
 ############################################################################
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicImplicitVolumeFromModel
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicImplicitVolumeFromModel {} {
     global Model Endoscopic
     # get the bounds of the polydata of the active model
@@ -4144,6 +4355,12 @@ proc EndoscopicImplicitVolumeFromModel {} {
     
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicShowContour
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicShowContour {} {
     
     global Endoscopic
@@ -4164,6 +4381,12 @@ proc EndoscopicShowContour {} {
     
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicVolumeFromModel
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicVolumeFromModel {} {
     global Model Endoscopic
     
@@ -4235,6 +4458,12 @@ proc EndoscopicVolumeFromModel {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicReadColonData
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicReadColonData {} {
     global Endoscopic
 
@@ -4267,6 +4496,12 @@ proc EndoscopicReadColonData {} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicReadPathData
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicReadPathData {} {
     global Endoscopic
     
