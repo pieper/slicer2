@@ -149,7 +149,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.15 $} {$Date: 2005/02/25 20:13:48 $}]
+        {$Revision: 1.16 $} {$Date: 2005/03/01 17:54:02 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -200,7 +200,7 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
    
     frame $parent.fReaderConfig -bg $Gui(activeWorkspace) -relief groove -bd 3
     frame $parent.fVolumeNav -bg $Gui(activeWorkspace) 
-    pack $parent.fReaderConfig $parent.fVolumeNav -side top -pady $Gui(pad)
+    pack $parent.fReaderConfig $parent.fVolumeNav -side top -pady 3 
 
     #-------------------------------------------
     # Reader configuration 
@@ -215,7 +215,7 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
 
     set f $parent.fReaderConfig.fLabel
     DevAddLabel $f.lLabel "Configure the multi-volume reader:"
-    pack $f.lLabel -side top -pady 6 
+    pack $f.lLabel -side top -pady 2 
 
     set f $parent.fReaderConfig.fFile
     # set MultiVolumeReader(fileTypes) {bxh .dcm .hdr}
