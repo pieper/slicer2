@@ -50,7 +50,6 @@ vtkMrmlNode::vtkMrmlNode()
   this->ID = 0;
   this->Description = NULL;
   this->Options = NULL;
-  this->Ignore = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -75,7 +74,6 @@ void vtkMrmlNode::Copy(vtkMrmlNode *node)
   // Copy everything except: ID
   this->SetDescription(node->Description);
   this->SetOptions(node->Options);
-  this->SetIgnore(node->Ignore);
 }
 
 //----------------------------------------------------------------------------
@@ -90,8 +88,6 @@ void vtkMrmlNode::PrintSelf(ostream& os, vtkIndent indent)
 
   os << indent << "Options:     " <<
     (this->Options ? this->Options : "(none)") << "\n";
-
-  os << indent << "Ignore:      " << this->Ignore << "\n";
 }
 
 //----------------------------------------------------------------------------

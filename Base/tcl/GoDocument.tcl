@@ -1,8 +1,8 @@
 
 # Check if the user invoked this script incorrectly
-if {$argc != 0} {
-    puts "UNIX Usage: tclsh GoDocument.tcl"
-    puts "Windows Usage: tclsh82.exe GoDocument.tcl"
+if {$argc > 1} {
+    puts "UNIX Usage: tclsh GoDocument.tcl [doc | tcl]"
+    puts "Windows Usage: tclsh82.exe GoDocument.tcl [doc | tcl]"
 	exit
 }
 
@@ -18,6 +18,9 @@ if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
 source [file join [file join $prog tcl-main] Comment.tcl]
 source [file join [file join $prog tcl-main] Document.tcl]
 
-#Run
-DocumentAll $prog
+# Run
+if {$argv == ""} {
+	set argv "doc tcl"
+}
+DocumentAll $prog $argv
 exit

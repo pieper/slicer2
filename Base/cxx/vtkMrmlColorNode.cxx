@@ -52,7 +52,6 @@ vtkMrmlColorNode::vtkMrmlColorNode()
   this->ID = 0;
   this->Description = NULL;
   this->Options = NULL;
-  this->Ignore = 0;
 
   // Strings
   this->Name = NULL;
@@ -124,10 +123,6 @@ void vtkMrmlColorNode::Write(ofstream& of, int nIndent)
   if (this->Power != 1)
   {
     of << " power='" << this->Power << "'";
-  }
-  if (this->Ignore != 0)
-  {
-    of << " ignore='" << this->Ignore << "'";
   }
 
   // Arrays

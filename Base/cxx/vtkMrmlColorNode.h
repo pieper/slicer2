@@ -1,5 +1,5 @@
 /*=auto=========================================================================
-Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
+Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
  
 Direct all questions on this copyright to slicer@ai.mit.edu.
 The following terms apply to all files associated with the software unless
@@ -25,9 +25,16 @@ PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
 'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
-// .NAME vtkMrmlColorNode - 
+// .NAME vtkMrmlColorNode - MRML node for representing colors.
 // .SECTION Description
-// 
+// Color nodes define colors by describing not only the actual color 
+// value, but also its name and a list of label values.  One attribute of 
+// model nodes is the name of its color.  When the 3D Slicer displays 
+// label maps, it colors each voxel by looking up the color associated 
+// with that label value. Thus, when label maps are displayed on 
+// reformatted slices, their colors automatically match the corresponding 
+// surface models in the 3D view.
+ 
 
 #ifndef __vtkMrmlColorNode_h
 #define __vtkMrmlColorNode_h
@@ -52,7 +59,7 @@ public:
   void Write(ofstream& of, int indent);
 
   // Description:
-  // Copy the nodes attributes to this object
+  // Copy the nodes attributes to this object to a MRML file in XML format
   void Copy(vtkMrmlColorNode *node);
 
   //--------------------------------------------------------------------------
@@ -60,29 +67,9 @@ public:
   //--------------------------------------------------------------------------
 
   // Description:
-  // Get/Set for Name
+  // Name displayed on the user interface
   vtkGetStringMacro(Name);
   vtkSetStringMacro(Name);
-
-  // Description:
-  // Get/Set for Labels
-  vtkGetStringMacro(Labels);
-  vtkSetStringMacro(Labels);
-
-  // Description:
-  // Get/Set for Ambient
-  vtkGetMacro(Ambient, float);
-  vtkSetMacro(Ambient, float);
-
-  // Description:
-  // Get/Set for Diffuse
-  vtkGetMacro(Diffuse, float);
-  vtkSetMacro(Diffuse, float);
-
-  // Description:
-  // Get/Set for Specular
-  vtkGetMacro(Specular, float);
-  vtkSetMacro(Specular, float);
 
   // Description:
   // Get/Set for DiffuseColor
@@ -90,9 +77,29 @@ public:
   vtkSetVector3Macro(DiffuseColor, float);
 
   // Description:
-  // Get/Set for Power
+  // Factor of the affect of ambient light from 0 to 1
+  vtkGetMacro(Ambient, float);
+  vtkSetMacro(Ambient, float);
+
+  // Description:
+  // Factor of the affect of diffuse reflection from 0 to 1
+  vtkGetMacro(Diffuse, float);
+  vtkSetMacro(Diffuse, float);
+
+  // Description:
+  // Factor of the affect of specular reflection from 0 to 1
+  vtkGetMacro(Specular, float);
+  vtkSetMacro(Specular, float);
+
+  // Description:
+  // Specular power in the range of 1 to 100
   vtkGetMacro(Power, int);
   vtkSetMacro(Power, int);
+
+  // Description:
+  // List of label values associated with this color
+  vtkGetStringMacro(Labels);
+  vtkSetStringMacro(Labels);
 
 protected:
   vtkMrmlColorNode();
@@ -100,16 +107,18 @@ protected:
   vtkMrmlColorNode(const vtkMrmlColorNode&) {};
   void operator=(const vtkMrmlColorNode&) {};
 
+  // Strings
   char *Name;
   char *Labels;
 
+  // Numbers
   float Ambient;
   float Diffuse;
   float Specular;
-
-  float DiffuseColor[3];
-
   int Power;
+
+  // Arrays
+  float DiffuseColor[3];
 };
 
 #endif

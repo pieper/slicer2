@@ -1,0 +1,65 @@
+<title>Install on Solaris</title>
+
+<h3>Compatibility</h3>
+The 3D Slicer is compatible with Solaris 2.6 (sometimes called Solaris 5.6) and OpenGL 1.2.
+We do not formally support Soloris 2.5 but other users have been able to make it work after
+some difficulty.
+
+<h3>Installation Steps</h3>
+<ol>
+<li>
+Downloaded the <b>slicer.tar.gz</b> file to your computer. FTP instructions were emailed to
+you upon receipt of your signed Software License Agreement. If you have not done this yet,
+click <a href='index.html#1'>here</a>.
+
+<br>&nbsp;<li>
+At a shell prompt, type the following to uncompress it and create a <code>slicer</code> directory:
+<pre><p class=code>gunzip slicer.tar.gz
+tar xf slicer.tar</p></pre>
+
+<br>&nbsp;<li>
+Edit the <code>slicer2k</code> file to set the <code>SLICER_HOME</code> environment variable 
+to be the directory where the <code>slicer</code> directory is installed.
+
+<br>&nbsp;<li>
+Move the <code>slicer2k</code> file to a directory that is in every user's <code>PATH</code>
+environment variable. For example, this may be <code>/user/local/bin</code>.
+
+<br>&nbsp;<li>
+Repeat the last 2 steps with the following scripts from the <code>slicer</code> directory:
+<ul>
+<li>mrmlize
+<li>printmrml
+</ul>
+If you will be contributing to the development of the 3D Slicer, then also 
+repeat the last 2 steps with these scripts:
+<ul>
+<li>comment
+<li>document
+</ul>
+
+<br>&nbsp;<li>
+Launch the slicer by typing the following at a shell prompt:
+<pre><p class=code>slicer2k</p></pre>
+</ol>
+
+<!---------------------------------- FAQ ------------------------------------->
+<p>
+<table cellpadding=3 cellspacing=3 border=0 align=center>
+<tr>
+<th class=box>Frequently Asked Questions</th>
+</tr>
+<tr>
+<td class=box0>
+	<div class=q>How can I load an existing data set?</div>
+	<div class=a>At the shell prompt, type <b>slicer2k</b> followed by the name of your MRML file.</div>
+</td>
+</tr>
+<tr>
+<td class=box1>
+	<div class=q>Was King Louis XIV a good decorator?</div>
+	<div class=a>He transformed a mere hunting lodge into the dazzling royal 
+	residence that is Versailles.</div>
+</td>
+</tr>
+</table>

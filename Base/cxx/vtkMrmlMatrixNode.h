@@ -1,5 +1,5 @@
 /*=auto=========================================================================
-Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
+Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
  
 Direct all questions on this copyright to slicer@ai.mit.edu.
 The following terms apply to all files associated with the software unless
@@ -25,9 +25,13 @@ PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
 'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
-// .NAME vtkMrmlMatrixNode - Writes images to files.
+// .NAME vtkMrmlMatrixNode - MRML node to represent transformation matrices.
 // .SECTION Description
-// 
+// The output of a rigid-body registration is a rotation and translation 
+// expressed mathematically as a transformation matrix.  These transforms 
+// can be inserted into MRML files as Matrix nodes.  Each matrix 
+// affects volumes and models that appear below it in the MRML file.  
+// Multiple matrices can be concatenated together. 
 
 #ifndef __vtkMrmlMatrixNode_h
 #define __vtkMrmlMatrixNode_h
@@ -46,15 +50,17 @@ public:
   void PrintSelf(ostream& os, vtkIndent indent);
   
   // Description:
-  // Write the node's attributes
+  // Write the node's attributes to a MRML file in XML format
   void Write(ofstream& of, int indent);
 
   // Description:
-  //
+  // Name displayed on the user interface
   vtkSetStringMacro(Name);
   vtkGetStringMacro(Name);
 
   // Description:
+  // 16 numbers that form a 4x4 matrix. The matrix is multiplied by a 
+  // point (M*P) to compute the transformed point
   void SetMatrix(char *str) {
     this->SetMatrixToString(this->Transform->GetMatrixPointer(), str);};
   char *GetMatrix() { 
@@ -100,7 +106,6 @@ protected:
 
   char *Name;
   vtkTransform *Transform;
-
 };
 
 #endif

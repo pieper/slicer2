@@ -1,5 +1,5 @@
 /*=auto=========================================================================
-Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
+Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
  
 Direct all questions on this copyright to slicer@ai.mit.edu.
 The following terms apply to all files associated with the software unless
@@ -25,9 +25,11 @@ PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
 'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
-// .NAME vtkMrmlTransformNode - Writes images to files.
+// .NAME vtkMrmlTransformNode - MRML node for representing a transform.
 // .SECTION Description
-// 
+// A Transform is not a node with attributes, but a construct for 
+// building MRML files.  A Transform encapsulates the Matrix nodes inside it 
+// such that they are invisible to nodes outside the Transform.  
 
 #ifndef __vtkMrmlTransformNode_h
 #define __vtkMrmlTransformNode_h
@@ -50,7 +52,7 @@ public:
   //--------------------------------------------------------------------------
 
   // Description:
-  // Write the node's attributes
+  // Write the node's attributes to a MRML file in XML format
   void Write(ofstream& of, int indent);
 
   // Description:

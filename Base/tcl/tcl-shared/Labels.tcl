@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
+# Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
 #  
 # Direct all questions regarding this copyright to slicer@ai.mit.edu.
 # The following terms apply to all files associated with the software unless
@@ -69,7 +69,7 @@ proc LabelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.13 $} {$Date: 2000/02/25 16:26:36 $}]
+		{$Revision: 1.14 $} {$Date: 2000/02/28 17:56:22 $}]
 
 	# Props
 	set Label(nameBrowse) ""

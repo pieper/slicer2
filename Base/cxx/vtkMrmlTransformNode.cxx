@@ -52,8 +52,6 @@ vtkMrmlTransformNode::vtkMrmlTransformNode()
   this->ID = 0;
   this->Description = NULL;
   this->Options = NULL;
-  this->Ignore = 0;
-
 }
 
 //----------------------------------------------------------------------------

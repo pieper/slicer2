@@ -52,7 +52,6 @@ vtkMrmlMatrixNode::vtkMrmlMatrixNode()
   this->ID = 0;
   this->Description = NULL;
   this->Options = NULL;
-  this->Ignore = 0;
 
   this->Name = NULL;
   this->Transform = vtkTransform::New();

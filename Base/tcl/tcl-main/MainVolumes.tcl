@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
+# Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
 #  
 # Direct all questions regarding this copyright to slicer@ai.mit.edu.
 # The following terms apply to all files associated with the software unless
@@ -63,7 +63,7 @@ proc MainVolumesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.29 $} {$Date: 2000/02/25 16:26:26 $}]
+		{$Revision: 1.30 $} {$Date: 2000/02/28 17:56:13 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 

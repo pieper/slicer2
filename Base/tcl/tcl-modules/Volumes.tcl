@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
+# Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
 #  
 # Direct all questions regarding this copyright to slicer@ai.mit.edu.
 # The following terms apply to all files associated with the software unless
@@ -71,7 +71,7 @@ proc VolumesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.29 $} {$Date: 2000/02/25 16:26:33 $}]
+		{$Revision: 1.30 $} {$Date: 2000/02/28 17:56:19 $}]
 
 	# Props
 	set Volume(propertyType) Basic

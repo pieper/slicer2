@@ -1,0 +1,16 @@
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE AUTO SYSTEM "../auto.dtd">
+<auto>
+<title>Introduction</title>
+
+<teaser>The 3D Slicer is a software tool for:</br>
+</teaser>
+
+<summary>
+<ul>
+<li>Guiding biopsies and craniotomies in the operating room</li>
+<li>Offering diagnostic visualization and surgical planning in the clinic</li>
+<li>Facilitating research into brain shift and volumetric studies in the lab</li>
+</ul>
+</summary>
+</auto>

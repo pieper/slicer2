@@ -1,0 +1,74 @@
+<html>
+<head>
+<title>3D Slicer</title>
+<link rel=stylesheet type='text/css' href='style.css'>
+
+<script language="JavaScript1.1">
+<!--
+function toggleFolder(i) {
+	parent.tocToggleFolder(i)
+	history.go(0)
+}
+//-->
+</script>
+</head>
+<body bgcolor=white>
+
+
+<script language="JavaScript1.1">
+<!--
+var line, i, t, level, show=10, page=""
+
+for (t = 0; t < parent.tocGetLength(); t++) {
+
+	level = parent.tocGetLevel(t)
+	if (level <= show) {
+		
+		// If this is a closed folder, then show no more than this level
+		if (parent.tocIsFolder(t)) {
+			if (parent.tocGetOpen(t))
+				show = 12
+			else
+				show = level
+		}
+		
+		// Indent once for each level
+		line = ""
+		for (i = 0; i < parent.tocGetLevel(t); i++) {
+			line += "<img src=\"" + "images/onepixel.gif" + "\" border=0 width=10 heigth=1>"
+		}
+
+		// Show the folder, or page icon
+		if (parent.tocIsFolder(t)) {
+			// This is a folder
+			line += "<a href=\"javascript:toggleFolder(" + t + ")\" "
+			line += "onMouseOver=\"window.status=\'" + parent.tocGetStatus(t) + "\';return true\""
+			line += "onMouseOut=\"window.status=\'';return true\""
+			line += "><img src=\"" + parent.tocGetIcon(t) + "\" border=0></a>"
+		} else {
+			// This is a page
+			line += "<img src=\"" + parent.tocGetIcon(t) + "\" border=0>"
+		}
+
+		// Show the name of the item.
+		if (parent.tocIsFolder(t)) {
+			// Folder names are also links to open/close the folder
+			line += "&nbsp<a class='folder' href=\"javascript:toggleFolder(" + t + ")\" "
+			line += "onMouseOver=\"window.status=\'" + parent.tocGetStatus(t) + "\';return true\""
+			line += "onMouseOut=\"window.status=\'';return true\">"
+			line += parent.tocGetName(t) + "</a><br>"
+		} else {
+			// Page names are links to their html
+			line += "&nbsp<a class='topic' href=\"" + parent.tocGetUrl(t) + "\" target=\"content\""
+			line += "onMouseOver\"window.status=\'" + parent.tocGetName(t) + "\';return true;\">"
+			line += parent.tocGetName(t) + "</a><br>"
+		}
+
+		page += line
+	}
+}
+document.write(page);
+//-->
+</script>
+</body>
+</html>

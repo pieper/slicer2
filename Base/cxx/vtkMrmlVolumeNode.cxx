@@ -52,7 +52,6 @@ vtkMrmlVolumeNode::vtkMrmlVolumeNode()
   this->ID = 0;
   this->Description = NULL;
   this->Options = NULL;
-  this->Ignore = 0;
 
   // vtkMrmlVolumeNode's attributes
 
@@ -293,10 +292,6 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
   if (this->UpperThreshold != VTK_SHORT_MAX)
   {
     of << " upperThreshold='" << this->UpperThreshold << "'";
-  }
-  if (this->Ignore != 0)
-  {
-    of << " ignore='" << (this->Ignore ? "yes" : "no") << "'";
   }
 
   // Arrays

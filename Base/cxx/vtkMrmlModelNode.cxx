@@ -52,13 +52,11 @@ vtkMrmlModelNode::vtkMrmlModelNode()
   this->ID = 0;
   this->Description = NULL;
   this->Options = NULL;
-  this->Ignore = 0;
 
   // Strings
   this->Name = NULL;
   this->FileName = NULL;
   this->Color = NULL;
-  this->RasToIjkMatrix = NULL;
   this->FullFileName = NULL;
 
   // Numbers
@@ -100,11 +98,6 @@ vtkMrmlModelNode::~vtkMrmlModelNode()
     delete [] this->Color;
     this->Color = NULL;
   }
-  if (this->RasToIjkMatrix)
-  {
-    delete [] this->RasToIjkMatrix;
-    this->RasToIjkMatrix = NULL;
-  }
 }
 
 //----------------------------------------------------------------------------
@@ -128,10 +121,6 @@ void vtkMrmlModelNode::Write(ofstream& of, int nIndent)
   if (this->Color && strcmp(this->Color, "")) 
   {
     of << " color='" << this->Color << "'";
-  }
-  if (this->RasToIjkMatrix && strcmp(this->RasToIjkMatrix, "")) 
-  {
-    of << " rasToIjkMatrix='" << this->RasToIjkMatrix << "'";
   }
   if (this->Description && strcmp(this->Description, "")) 
   {
@@ -159,10 +148,6 @@ void vtkMrmlModelNode::Write(ofstream& of, int nIndent)
   {
     of << " scalarVisibility='" << (this->ScalarVisibility ? "yes" : "no") << "'";
   }
-  if (this->Ignore != 0)
-  {
-    of << " ignore='" << (this->Ignore ? "yes" : "no") << "'";
-  }
 
   // Arrays
   if (this->ScalarRange[0] != 0 || this->ScalarRange[1] != 100)
@@ -185,7 +170,6 @@ void vtkMrmlModelNode::Copy(vtkMrmlModelNode *node)
   this->SetFileName(node->FileName);
   this->SetFullFileName(node->FullFileName);
   this->SetColor(node->Color);
-  this->SetRasToIjkMatrix(node->RasToIjkMatrix);
 
   // Vectors
   this->SetScalarRange(node->ScalarRange);
@@ -223,8 +207,6 @@ void vtkMrmlModelNode::PrintSelf(ostream& os, vtkIndent indent)
     (this->FullFileName ? this->FullFileName : "(none)") << "\n";
   os << indent << "Color: " <<
     (this->Color ? this->Color : "(none)") << "\n";
-  os << indent << "RasToIjkMatrix: " <<
-    (this->RasToIjkMatrix ? this->RasToIjkMatrix : "(none)") << "\n";
 
   os << indent << "Opacity:           " << this->Opacity << "\n";
   os << indent << "Visibility:        " << this->Visibility << "\n";

@@ -1,0 +1,53 @@
+<title>VTK Implementation</title>
+<p>
+We have implemented MRML as a set of <a href='http://www.kitware.com/vtk.html'>VTK</a>
+classes.  There is a vtkMrmlNode class which is the superclass of specific types
+of nodes, such as vtkMrmlVolumeNode.  There is a vtkMrmlTree class, derived from
+vtkCollection, to be a collection of MRML nodes.  This tree class contains member
+functions for traversing the tree, adding and deleting nodes, and writing the
+entire scene as a MRML file.  This is achieved by calling the Write() member function
+of each node. There should also be a Read() function, but we currently have the
+parsing implemented in TCL since that's so easy.
+<p>
+Here is an example of creating and writing a MRML tree:
+
+<!----------------------------- Code Block --------------------------------->
+<pre><p class=code>#Construct MRML nodes after parsing the file
+vtkMrmlVolumeNode skin
+&nbsp;&nbsp;&nbsp;skin SetName Skin
+&nbsp;&nbsp;&nbsp;skin SetPrefix models/Skin.vtk
+&nbsp;&nbsp;&nbsp;skin SetOpacity 0.7
+&nbsp;&nbsp;&nbsp;skin SetColor Tan
+
+vtkMrmlColorNode tan
+&nbsp;&nbsp;&nbsp;tan SetName Tan
+&nbsp;&nbsp;&nbsp;tan SetDiffuseColor 1.0 0.8 0.7
+
+# Construct tree
+vtkMrmlTree tree
+&nbsp;&nbsp;&nbsp;tree AddNode model
+&nbsp;&nbsp;&nbsp;tree AddNode tan
+
+# Traverse tree
+tree InitTraversal
+set node [tree GetNextItem]
+while {$node != ""} {
+&nbsp;&nbsp;&nbsp;puts "name='[$node GetName]'"
+&nbsp;&nbsp;&nbsp;set node [tree GetNextItem]
+}
+
+# Write MRML file
+tree Write "scene.xml"</p></pre>
+
+<p>
+To assist developers who would like to use MRML, we offer our TCL parser and 
+VTK classes.  These files have the standard copyright issued with all source code
+for the <i>3D Slicer</i>, but we can grant permission to violate this copyright
+for the MRML toolkit if you email us at <a href='mailto:slicer@ai.mit.edu'>
+slicer@ai.mit.edu</a>.
+
+<h3>Download MRML Toolkit</h3>
+<ul>
+<li><b>MRML Parser: </b>&nbsp;<a href='Parse.tcl'>Parse.tcl</a>
+<li><b>VTK Classes: </b>&nbsp;<a href='vtkMrml.zip'>vtkMrml.zip</a>
+</ul>

@@ -1,5 +1,5 @@
 /*=auto=========================================================================
-Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
+Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
  
 Direct all questions on this copyright to slicer@ai.mit.edu.
 The following terms apply to all files associated with the software unless
@@ -25,9 +25,11 @@ PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
 'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
-// .NAME vtkMrmlNode - Writes images to files.
+// .NAME vtkMrmlNode - Superclass for all specific types of MRML nodes.
 // .SECTION Description
-// vtkMrmlNode writes images to files with any data type. The data type of
+// This node excapsulates the functionality common to all types of MRML nodes.
+// This includes member variables for ID, Description, and Options,
+// as well as member functions to Copy() and Write().
 
 #ifndef __vtkMrmlNode_h
 #define __vtkMrmlNode_h
@@ -44,8 +46,8 @@ public:
   vtkTypeMacro(vtkMrmlNode,vtkObject);
   void PrintSelf(ostream& os, vtkIndent indent);
   
-  // Copy the node's parameters to this object
-  // except: ID
+  // Copy the node's parameters to this object.
+  // But don't copy: ID
   void Copy(vtkMrmlNode *node);
   
   // Description:
@@ -55,26 +57,28 @@ public:
   vtkGetMacro(ID, int);
 
   // Description:
-  // Orientation of slices to edit
+  // Text description
   vtkSetStringMacro(Description);
   vtkGetStringMacro(Description);
 
   // Description:
-  // Orientation of slices to edit
+  // Optional attributes not defined in the MRML standard,
+  // but recognized by various browsers
   vtkSetStringMacro(Options);
   vtkGetStringMacro(Options);
 
   // Description:
-  // Set/Get Ignore value of this node
-  vtkGetMacro(Ignore, int);
-  vtkSetMacro(Ignore, int);
-  vtkBooleanMacro(Ignore, int);
-
+  // Utility functions for converting between vtkMatrix4x4 and
+  // a string of 16 numbers in row-major order.
   void SetMatrixToString(vtkMatrix4x4 *m, char *s);
   char* GetMatrixToString(vtkMatrix4x4 *m);
 
+  // Description:
+  // Write this node's information to a MRML file in XML format.
+  // Only write attributes that differ from the default values,
+  // which are set in the node's constructor.
+  // This is a virtual function that all subclasses must overload.
   virtual void Write(ofstream& of, int indent) {};
-
 
 protected:
 
@@ -86,7 +90,6 @@ protected:
   int ID;
   char *Description;
   char *Options;
-  int Ignore;
 };
 
 #endif

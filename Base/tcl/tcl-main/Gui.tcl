@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
+# Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
 #  
 # Direct all questions regarding this copyright to slicer@ai.mit.edu.
 # The following terms apply to all files associated with the software unless
@@ -62,7 +62,7 @@ proc GuiInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo Gui \
-		{$Revision: 1.16 $} {$Date: 2000/02/25 16:26:20 $}]
+		{$Revision: 1.17 $} {$Date: 2000/02/28 17:56:06 $}]
 
 	if {$tcl_platform(platform) == "windows"} {
 		set Gui(pc) 1

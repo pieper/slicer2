@@ -1,5 +1,5 @@
 /*=auto=========================================================================
-Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
+Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
  
 Direct all questions on this copyright to slicer@ai.mit.edu.
 The following terms apply to all files associated with the software unless
@@ -25,9 +25,9 @@ PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
 'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
-// .NAME vtkMrmlEndTransformNode - Writes images to files.
+// .NAME vtkMrmlEndTransformNode - represents the end of a vtkMrmlTransformNode.
 // .SECTION Description
-// 
+// Just a place holder in a vtkMrmlTree
 
 #ifndef __vtkMrmlEndTransformNode_h
 #define __vtkMrmlEndTransformNode_h
@@ -50,7 +50,7 @@ public:
   //--------------------------------------------------------------------------
 
   // Description:
-  // Write the node's attributes
+  // Write the node's attributes to a MRML file in XML format
   void Write(ofstream& of, int indent);
 
   // Description:

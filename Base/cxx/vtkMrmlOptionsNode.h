@@ -1,5 +1,5 @@
 /*=auto=========================================================================
-Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
+Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
  
 Direct all questions on this copyright to slicer@ai.mit.edu.
 The following terms apply to all files associated with the software unless
@@ -25,9 +25,12 @@ PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
 'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
-// .NAME vtkMrmlOptionsNode - 
+// .NAME vtkMrmlOptionsNode - MRML node for storing browser-specific data.
 // .SECTION Description
-// 
+// Option nodes allow browser-specific information to be stored in
+// a MRML file.  For example, the 3D Slicer uses Option nodes to store
+// the user's 3D viewpoint information since there currently is no
+// View node in MRML2.0.
 
 #ifndef __vtkMrmlOptionsNode_h
 #define __vtkMrmlOptionsNode_h
@@ -60,19 +63,19 @@ public:
   //--------------------------------------------------------------------------
 
   // Description:
-  // Get/Set for Options string
-  vtkGetStringMacro(Options);
-  vtkSetStringMacro(Options);
-
-  // Description:
-  // Get/Set for Program
+  // Name of the program that should recognize these options.
   vtkGetStringMacro(Program);
   vtkSetStringMacro(Program);
 
   // Description:
-  // Get/Set for Contents
+  // Short description of the contents of this node. ie: 'presets'
   vtkGetStringMacro(Contents);
   vtkSetStringMacro(Contents);
+
+  // Description:
+  // List of options expressed in this form: key1='value1' key2='value2'
+  vtkGetStringMacro(Options);
+  vtkSetStringMacro(Options);
 
 protected:
   vtkMrmlOptionsNode();

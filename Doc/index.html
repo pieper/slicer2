@@ -1,0 +1,206 @@
+<HTML>
+<HEAD>
+<TITLE>3D Slicer</TITLE>
+<script language="JavaScript1.1">
+<!--
+var i=0
+var toc = new Array();
+toc[i++] = new tocCreate(1, "Welcome", "welcome.html");
+
+toc[i++] = new tocCreate(1, "Introduction", "");
+toc[i++] = new tocCreate(2, "Overview", "intro/index.html");
+toc[i++] = new tocCreate(2, "Acknowledgements", "intro/index.html#2");
+
+toc[i++] = new tocCreate(1, "Get the Software", "");
+toc[i++] = new tocCreate(2, "Download", "download/index.html");
+toc[i++] = new tocCreate(2, "Install on Solaris", "download/index.html#2a");
+toc[i++] = new tocCreate(2, "Install on Windows", "download/index.html#2b");
+
+toc[i++] = new tocCreate(1, "MRMLaid", "");
+toc[i++] = new tocCreate(2, "Table of Contents", "mrml/index.html");
+toc[i++] = new tocCreate(2, "Motivations", "mrml/index.html#1");
+toc[i++] = new tocCreate(2, "XML Syntax", "mrml/index.html#2");
+toc[i++] = new tocCreate(2, "Design", "");
+toc[i++] = new tocCreate(3, "Design", "mrml/index.html#3");
+toc[i++] = new tocCreate(3, "Basic Nodes", "mrml/index.html#3a");
+toc[i++] = new tocCreate(3, "Hierarchy", "mrml/index.html#3b");
+toc[i++] = new tocCreate(3, "Current Details", "mrml/index.html#3c");
+toc[i++] = new tocCreate(3, "Proposed Details", "mrml/index.html#3d");
+toc[i++] = new tocCreate(3, "Current DTD", "mrml/mrml20.dtd");
+toc[i++] = new tocCreate(3, "Proposed DTD", "mrml/mrml21.dtd");
+toc[i++] = new tocCreate(2, "Implementation", "mrml/index.html#4");
+toc[i++] = new tocCreate(2, "MRML Sample", "mrml/tutorial.xml");
+
+toc[i++] = new tocCreate(1, "Tutorial", "");
+toc[i++] = new tocCreate(2, "Table of Contents", "tutorial/index.html");
+toc[i++] = new tocCreate(2, "Quick Tour", "tutorial/index.html#1");
+toc[i++] = new tocCreate(2, "Loading Volumes", "");
+toc[i++] = new tocCreate(3, "Loading Volumes", "tutorial/index.html#2");
+toc[i++] = new tocCreate(3, "With Headers", "tutorial/index.html#2a");
+toc[i++] = new tocCreate(3, "Without Headers", "tutorial/index.html#2b");
+toc[i++] = new tocCreate(2, "Loading Models", "");
+toc[i++] = new tocCreate(3, "Loading Models", "tutorial/index.html#3");
+toc[i++] = new tocCreate(2, "Viewing Volumes", "");
+toc[i++] = new tocCreate(3, "Viewing Volumes", "tutorial/index.html#4");
+toc[i++] = new tocCreate(3, "Slices", "tutorial/index.html#4a");
+toc[i++] = new tocCreate(3, "Color", "tutorial/index.html#4b");
+toc[i++] = new tocCreate(3, "Image Fusion", "tutorial/index.html#4c");
+toc[i++] = new tocCreate(2, "Viewing Models", "");
+toc[i++] = new tocCreate(3, "Viewing Models", "tutorial/index.html#5");
+toc[i++] = new tocCreate(3, "Opacity", "tutorial/index.html#5a");
+toc[i++] = new tocCreate(3, "Color", "tutorial/index.html#5b");
+toc[i++] = new tocCreate(3, "Clipping", "tutorial/index.html#5c");
+toc[i++] = new tocCreate(2, "Saving the Scene", "");
+toc[i++] = new tocCreate(3, "Saving the Scene", "tutorial/index.html#6");
+toc[i++] = new tocCreate(3, "Save MRML", "tutorial/index.html#6a");
+toc[i++] = new tocCreate(3, "Save Images", "tutorial/index.html#6b");
+toc[i++] = new tocCreate(3, "Save Options", "tutorial/index.html#6c");
+
+toc[i++] = new tocCreate(1, "User's Guide", "");
+toc[i++] = new tocCreate(2, "Table of Contents", "users/index.html");
+toc[i++] = new tocCreate(2, "Registration", "users/index.html#1");
+toc[i++] = new tocCreate(2, "Making Models", "users/index.html#2");
+
+toc[i++] = new tocCreate(2, "Segmentation", "");
+toc[i++] = new tocCreate(3, "Table of Contents", "seg/index.html");
+toc[i++] = new tocCreate(3, "Overview", "seg/index.html#1");
+
+toc[i++] = new tocCreate(1, "Developer's Guide", "");
+toc[i++] = new tocCreate(2, "Table of Contents", "devl/index.html");
+toc[i++] = new tocCreate(2, "File Organization", "devl/index.html#1");
+toc[i++] = new tocCreate(2, "Add a Module", "devl/index.html#2");
+toc[i++] = new tocCreate(2, "Build VTK", "devl/index.html#3");
+toc[i++] = new tocCreate(2, "Add Editor Effect", "devl/index.html#4");
+toc[i++] = new tocCreate(2, "Doc. Template", "template/index.html");
+toc[i++] = new tocCreate(2, "Tcl Source Code", "tcl/index.html");
+
+toc[i++] = new tocCreate(1, "Publications", "");
+toc[i++] = new tocCreate(2, "Engineering", "pubs/index.html");
+toc[i++] = new tocCreate(2, "Applications", "pubs/index.html#1");
+
+// Create a toc (item for a table of contents)
+//   level:  depth in the folder heirarchy
+//   open:   true if the folder is open
+//   name:   link text
+//   url:    link url
+function tocCreate(level,name,url) {
+	this.level = level
+	this.name = name
+	this.url = url
+	this.open = false
+	this.path = false
+	return this
+}
+
+
+// icons
+var iconOpen = "images/open.gif"
+var iconClosed = "images/closed.gif"
+var iconLeaf = "images/bluebullet.gif"
+
+function tocGetStatus(i) {
+	if (tocIsFolder(i)) {
+		if (toc[i].open) {
+			return "Click to close folder"
+		} else {
+			return "Click to open folder"
+		}
+	} else {
+		return "leaf"
+	}
+}
+
+function tocGetIcon(i) {
+	if (tocIsFolder(i)) {
+		if (toc[i].open) {
+			return iconOpen
+		} else {
+			return iconClosed
+		}
+	} else {
+		return iconLeaf
+	}
+}
+
+function tocGetLength() {
+	return toc.length
+}
+function tocGetLevel(i) {
+	return toc[i].level
+}
+function tocGetUrl(i) {
+	return toc[i].url
+}
+function tocGetName(i) {
+	return toc[i].name
+}
+function tocIsFolder(i) {
+	if (toc[i].url == "") {
+		return true
+	} else {
+		return false
+	}
+}
+function tocGetOpen(i) {
+	return toc[i].open
+}
+
+function tocToggleFolder(i) {
+
+	if (tocIsFolder(i)) {		
+		// Toggle the current folder
+		if (toc[i].open)
+			toc[i].open = false
+		else
+			toc[i].open = true
+	}
+
+	// Reset the path flags
+	var j=0
+	while (j < toc.length) {
+		toc[j].path = false
+		j++
+	}
+
+	// Mark the folders along the path to this folder
+	j=i-1
+	var lvl=toc[i].level
+	toc[i].path = true
+	while (j >= 0) {
+		if (tocIsFolder(j)) {
+			if (toc[j].level < lvl) {
+				lvl = toc[j].level
+				toc[j].path = true
+				// Are we done?
+				if (lvl == 1) {
+					j = -1
+				}
+			}
+		}
+		j=j-1
+	}
+
+	// Close all folders not along the path
+	j=0
+	while (j < toc.length) {
+		if (toc[j].path == false) {
+			toc[j].open = false
+		}
+		j++
+	}
+}
+
+//-->
+</script>
+</HEAD>
+
+<FRAMESET COLS="200,*" BORDER="0" FRAMEBORDER="NO" FRAMESPACING="0">
+
+	<NOFRAMES>
+	<H1>This page must be viewed with a browser that supports frames</H1>
+	</NOFRAMES>
+
+	<FRAME NAME="toc" SRC="toc.html">
+	<FRAME NAME="content" SRC="welcome.html">
+</FRAMESET>
+</HTML>

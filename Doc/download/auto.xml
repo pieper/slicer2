@@ -1,0 +1,16 @@
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE AUTO SYSTEM "../auto.dtd">
+<auto>
+<title>Get the Software</title>
+
+<teaser>
+How to download and 
+<br>install the 3D Slicer</br>
+</teaser>
+
+<summary>
+The 3D Slicer is freely available and provided as open source software
+for non-commercial purposes.  Its design is fully modular to encourage
+researchers to extend its functionality.
+</summary>
+</auto>

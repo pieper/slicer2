@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
+# Copyright (c) 2000 Surgical Planning Lab, Brigham and Women's Hospital
 #  
 # Direct all questions regarding this copyright to slicer@ai.mit.edu.
 # The following terms apply to all files associated with the software unless
@@ -91,7 +91,7 @@ proc LocatorInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.17 $} {$Date: 2000/02/25 16:26:29 $}]
+		{$Revision: 1.18 $} {$Date: 2000/02/28 17:56:16 $}]
 
 	# Patient/Table position
 	set Locator(tblPosList)   "Front Side"

@@ -1,0 +1,9 @@
+<title>Making Models</title>
+
+The output of the segmentation process is a set of label maps, where pixels 
+take on values corresponding to tissue type.  The bounding surfaces of the 
+label maps are extracted and represented as a collection of triangles using 
+marching cubes.  Decimation reduces the number of triangles to a quantity 
+that can be more quickly rendered with little observable loss in detail.  
+For example, a typical brain surface is reduced 
+from approximately 500,000 triangles to 150,000.
