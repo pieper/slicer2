@@ -156,6 +156,10 @@ proc LevelSetsInit {} {
     #   
     set Module($m,depend) "Fiducials"
 
+    set Module($m,overview) "Active Contour evolution for segmentation of 2D and 3D images."
+    set Module($m,author) "Karl Krissian, SPL, karl@bwh.harvard.edu"
+    set Module($m,category) [lindex $Module(categories) 1]
+
     # Set version info
     #------------------------------------
     # Description:
@@ -164,7 +168,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.23 $} {$Date: 2004/02/12 16:46:58 $}]
+        {$Revision: 1.24 $} {$Date: 2004/03/15 21:14:39 $}]
 
     # Initialize module-level variables
     #------------------------------------
