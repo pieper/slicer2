@@ -51,7 +51,7 @@ proc EdFastMarchingInit {} {
     set Ed($e,input)  Original
     set Ed($e,interact) Active
 
-    set EdFastMarching(nExpand) 10000
+    set EdFastMarching(nExpand) 10
     set EdFastMarching(userExpand) 0
 
     set EdFastMarching(majorVersionTCL) 3
@@ -168,9 +168,11 @@ When satisfied with the segmentation use other editing modules on the labelmap (
     # Output label
     eval {button $f.bExpand -text "EXPAND" \
           -command "EdFastMarchingExpand"} $Gui(WBA)
-    eval {entry $f.eExpand -width 12 -textvariable EdFastMarching(nExpand)} $Gui(WEA)
+    eval {entry $f.eExpand -width 6 -textvariable EdFastMarching(nExpand)} $Gui(WEA)
 
-    grid $f.bExpand $f.eExpand -padx 2 -pady $Gui(pad)
+    eval {label $f.lTextUnit -text "mL"} $Gui(WLA)
+
+    grid $f.bExpand $f.eExpand $f.lTextUnit -padx 2 -pady $Gui(pad)
 
     set f $Ed(EdFastMarching,frame).fTabbedFrame.fBasic.fUserExpand
 
@@ -230,10 +232,10 @@ proc EdFastMarchingUserExpand {zero userExpand} {
 }
 
 proc EdFastMarchingExpand {} {
-    global EdFastMarching
+    global Ed EdFastMarching
 
-    if {[ValidateInt $EdFastMarching(nExpand)] == 0} {
-        tk_messageBox -message "Expansion is not an integer !"
+    if {[ValidateFloat $EdFastMarching(nExpand)] == 0} {
+        tk_messageBox -message "Expansion is not a valid number !"
         return
     } 
   
@@ -242,7 +244,18 @@ proc EdFastMarchingExpand {} {
         return
     }      
 
-    EdFastMarching(FastMarching) setNPointsEvolution $EdFastMarching(nExpand)
+    set e EdFastMarching
+    set v [EditorGetInputID $Ed($e,input)]
+     
+    scan [Volume($v,node) GetSpacing] "%f %f %f" dx dy dz
+    set voxelvolume [expr $dx * $dy * $dz]
+    set conversion 1000
+      
+    set EdFastMarching(voxelamount) [expr $EdFastMarching(nExpand) / $voxelvolume]
+    set EdFastMarching(voxelnumber) [expr round($EdFastMarching(voxelamount)) * $conversion]
+
+    EdFastMarching(FastMarching) setNPointsEvolution $EdFastMarching(voxelnumber)
+
     EdFastMarchingSegment
 
     set EdFastMarching(userExpand) 100
