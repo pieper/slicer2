@@ -116,7 +116,6 @@ proc DevAddButton { ButtonName Message Command {Width 0} } {
 	global Gui
     if {$Width == 0 } {
         set Width [string length $Message]
-puts "length is: $Width"
     }
     eval  {button $ButtonName -text $Message -width $Width \
             -command $Command } $Gui(WBA)
