@@ -58,7 +58,7 @@ proc VolTensorInit {} {
     #---------------------------------------------
     set Volume(tensors,pfSwap) 0
     set Volume(tensors,DTIdata) 0  
-    set Volume(VolTensor,FileType) Scalar6
+    set Volume(VolTensor,FileType) Tensor9
     set Volume(VolTensor,FileTypeList) {Tensor9 Scalar6}
     set Volume(VolTensor,FileTypeList,tooltips) {"File contains TENSORS field with 9 components" "File contains SCALARS field with 6 components"}
     set Volume(VolTensor,YAxis) vtk
@@ -85,8 +85,9 @@ proc VolTensorBuildGUI {parentFrame} {
     frame $f.fVolume  -bg $Gui(activeWorkspace) -relief groove -bd 3
     frame $f.fFileType   -bg $Gui(activeWorkspace)
     frame $f.fYAxis   -bg $Gui(activeWorkspace)
+    frame $f.fScanOrder -bg $Gui(activeWorkspace)
     frame $f.fApply   -bg $Gui(activeWorkspace)
-    pack $f.fVolume $f.fFileType $f.fYAxis $f.fApply \
+    pack $f.fVolume $f.fFileType $f.fYAxis $f.fScanOrder $f.fApply \
         -side top -fill x -pady $Gui(pad)
 
     #-------------------------------------------
@@ -136,6 +137,27 @@ proc VolTensorBuildGUI {parentFrame} {
 
     #eval {grid} $gridList {-padx} $Gui(pad)
 
+   #--------------------------------------------
+   # f->ScanOrder
+   #--------------------------------------------
+   set f $parentFrame.fScanOrder
+   
+   eval {label $f.lscanOrder -text "Scan Order:"} $Gui(WLA)
+   eval {menubutton $f.mbscanOrder -relief raised -bd 2 \
+        -text [lindex $Volume(scanOrderMenu)\
+        [lsearch $Volume(scanOrderList) $Volume(scanOrder)]] \
+        -width 10 -menu $f.mbscanOrder.menu} $Gui(WMBA)
+    set Volume(mbscanOrder) $f.mbscanOrder
+    eval {menu $f.mbscanOrder.menu} $Gui(WMA)
+
+   set m $f.mbscanOrder.menu
+   foreach label $Volume(scanOrderMenu) value $Volume(scanOrderList) {
+        $m add command -label $label -command "VolumesSetScanOrder $value"
+   }
+    pack $f.lscanOrder -side left -padx $Gui(pad) -fill x -anchor w
+    pack $f.mbscanOrder -side left -padx $Gui(pad) -expand 1 -fill x 
+
+
     #-------------------------------------------
     # f->Apply
     #-------------------------------------------
@@ -159,12 +181,22 @@ proc VolTensorSetFileName {} {
 }
 
 proc VolTensorApply {} {
-    global Volume
+    global Volume Module
     
     
     set m $Volume(activeID)
-    if {$m == ""} {return}
+    if {$m == ""} {
+       DevErrorWindow "VolTensorApply: no active volume"
+       return
+    }
     
+     # first file
+    if {[file exists $Volume(VolTensor,FileName)] == 0} {
+        tk_messageBox -message "The vtk file must exist."
+        return
+    }
+    
+    set Volume(name) [lindex [file split $Volume(VolTensor,FileName)] end]
     
     # if the volume is NEW we may read it in...
     if {$m == "NEW"} {
@@ -182,6 +214,7 @@ proc VolTensorApply {} {
         # so that MRML can be read in with just a node and this will
         # work)
         MainVolumesCreate $i
+        $n SetScanOrder $Volume(scanOrder)       
 
         # set up structured points reading using sub-node 
         # NOTE: we should do it by setting this up 
@@ -200,7 +233,7 @@ proc VolTensorApply {} {
         # necessary to have tensors in the expected location in 3D
         # for hyperstreamlines to work
         #puts "setting origin to 0 0 0"
-        [Volume($i,vol) GetOutput] SetOrigin 0 0 0
+        #[Volume($i,vol) GetOutput] SetOrigin 0 0 0
 
         ### this stuff is from the no-header GUI, but use it here too
         ### NOTE: should let users know this happens somehow
@@ -209,21 +242,20 @@ proc VolTensorApply {} {
         $n SetLabelMap $Volume(labelMap)
         # get the pixel size, etc. from the data and set it in the node
         
-
         MainUpdateMRML
         # If failed, then it's no longer in the idList
         if {[lsearch $Volume(idList) $i] == -1} {
             return
         }
-        # allow use of other module GUIs
-        set Volume(freeze) 0
-
+ 
 
         puts "[Volume($i,vol) GetOutput] Print"
         # use this as a structured points file (normal volume)
         # set active volume on all menus
         MainVolumesSetActive $i
         
+        # allow use of other module GUIs
+        #set Volume(freeze) 0
 
         #######
 
@@ -240,8 +272,57 @@ proc VolTensorApply {} {
 
         # turn the volume into a tensor volume now
         VolTensorCreateTensors $i
+        
+        # check if we have normal scalars and keep this. 
+        set scalars [[[Volume($i,vol) GetOutput] GetPointData] GetScalars]
+        if { [$scalars GetNumberOfComponents] == 1 } {
+          
+           set newvol [MainMrmlAddNode Volume]
+           set v [$newvol GetID]
+
+           $newvol Copy Volume($i,node)
+           $newvol SetDescription "tensor volume"
+           $newvol SetName "[Volume($i,node) GetName] - Scalar"
+           MainVolumesCreate $v
+           $newvol SetScanOrder $Volume(scanOrder)
+           #Turn off Copy Tensors
+           [[Volume($i,vol) GetOutput] GetPointData] CopyTensorsOff
+           #[[Volume($v,vol) GetOutput] GetPointData] CopyTensorsOff
+           [Volume($v,vol) GetOutput] DeepCopy [Volume($i,vol) GetOutput]
+           
+           [[Volume($v,vol) GetOutput] GetPointData] SetTensors ""
+                      
+           # If failed, then it's no longer in the idList
+           if {[lsearch $Volume(idList) $v] == -1} {
+              puts "node doesn't exist, should unfreeze and fix volumes.tcl too"
+           } else {
+           # Activate the new data object
+            MainVolumesSetActive $v
+           }
+    
+        }
+        
+        #Delete Reader node and vtkMrmlReadWrite
+        MainMrmlDeleteNode Volume $i
+        Volume($i,vol,rw) Delete
+        
+        MainUpdateMRML
+        
+        # allow use of other module GUIs
+        set Volume(freeze) 0
+        
+        # If tabs are frozen, then 
+        if {$Module(freezer) != ""} {
+        set cmd "Tab $Module(freezer)"
+        set Module(freezer) ""
+        eval $cmd
+       }
+ 
     }
+
+
 }
+
 
 proc VolTensorCreateTensors {v} {
     global Volume
@@ -268,13 +349,14 @@ proc VolTensorMake9ComponentTensorVolIntoTensors {v} {
     set newvol [MainMrmlAddNode Volume Tensor]
     $newvol Copy Volume($v,node)
     $newvol SetDescription "tensor volume"
-    $newvol SetName [Volume($v,node) GetName]
+    $newvol SetName "[Volume($v,node) GetName] - Tensor"
     set n [$newvol GetID]
     MainDataCreate Tensor $n Volume
 
     # put the image data into the object for slicer use
     Tensor($n,data) SetImageData [Volume($v,vol) GetOutput]
 
+    
     # test by printing to terminal
     puts [[Tensor($n,data) GetOutput] Print]
 
@@ -305,7 +387,7 @@ proc VolTensorMake6ComponentScalarVolIntoTensors {v} {
     set newvol [MainMrmlAddNode Volume Tensor]
     $newvol Copy Volume($v,node)
     $newvol SetDescription "tensor volume"
-    $newvol SetName [Volume($v,node) GetName]
+    $newvol SetName "[Volume($v,node) GetName] - Tensor"
     set n [$newvol GetID]
     MainDataCreate Tensor $n Volume
 
@@ -354,30 +436,47 @@ proc VolTensorMake6ComponentScalarVolIntoTensors {v} {
         # [Txx Txy Txz Txy Tyy Tyz Txz Tyz Tzz]
         # [0   1   2   1   3   4   2   4   5] (indices into input scalars)
         set ind {0   1   2   1   3   4   2   4   5}
-        for {set i 0} {$i < 9} {incr i} {
+        for {set i 0} {$i < 6} {incr i} {
             # grab ith component
             vtkImageExtractComponents ex$i
             ex$i SetInput [Volume($v,vol) GetOutput]
-            ex$i SetComponents [lindex $i $ind]
-            cout " [lindex $i $ind]"        
+            ex$i SetComponents $i
+            #cout " [lindex $i $ind]"        
         }
         
         # try multiplying the T*y and Ty* by -1
         # you can use vtkImageMathematics filters
-
-
-        # then using many append components filters, 
-        # put together the 9 tensor components
-        puts "THIS IS NOT IMPLEMENTED YET"
-        return
-
-        # set input to aa to be the output of the last filter above
-        # for use in the rest of the code
-        # aa SetInput [ap2 GetOutput]
-
-        # Delete all temporary vtk objects      
-
-        # DAN, end of this part 
+        #[-Txy -Tyz]
+        vtkImageMathematics minusex1
+        minusex1 SetOperationToMultiplyByK
+        minusex1 SetConstantK -1
+        minusex1 SetInput 0 [ex1 GetOutput]
+        
+        vtkImageMathematics minusex4
+        minusex4 SetOperationToMultiplyByK
+        minusex4 SetConstantK -1
+        minusex4 SetInput 0 [ex4 GetOutput]
+        
+        vtkImageAppendComponents ap1
+        ap1 AddInput [ex0 GetOutput]
+        ap1 AddInput [minusex1 GetOutput]
+        ap1 AddInput [ex2 GetOutput]
+        ap1 AddInput [minusex1 GetOutput]
+        ap1 AddInput [ex3 GetOutput]
+        ap1 AddInput [minusex4 GetOutput]
+        ap1 AddInput [ex2 GetOutput]
+        ap1 AddInput [minusex4 GetOutput]
+        ap1 AddInput [ex5 GetOutput]
+        
+        aa SetInput [ap1 GetOutput]
+        aa Update
+        
+        for {set i 0} {$i < 6} {incr i} {
+            ex$i Delete
+        }
+        minusex1 Delete
+        minusex4 Delete
+        ap1 Delete
     }
     
     # aa contains output of chosen pipeline above
