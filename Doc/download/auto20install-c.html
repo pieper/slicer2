@@ -1,12 +1,82 @@
 <title>Install at BWH</title>
 
 <h3>Installation in the Open MR</h3>
+
+<h4>Accounts</h4>
 <p>
-good luck
+Install everything as the "surg" user, and always run slicer as the "surg" user.
+
+<h4>Install Instructions</h4>
+<p>
+Unzip packages to create the following directory structure inside a main directory named "slicer":
+<ul>
+<li><b>pkg</b> -- contains all packages downloaded for installation
+<br>&nbsp;<li><b>slicer-1.2.2</b> -- most recent version of slicer
+<br>&nbsp;<li><b>go</b> -- old version of slicer that was stable on monk during Arya's tenure
+<br>&nbsp;<li><b>bin</b> -- executable scripts for all slicer versions
+</ul>
+
+<p>
+Perform the following:
 <ol>
-<li>
-Do this
-<br>&nbsp;<li> 
-do that
+<li>Edit "slicer-1.2.2/program/slicer" to set the SLICER_HOME environment variable.
+<br>&nbsp;<li>Copy the "slicer" file to the "bin" directory mentioned above. 
+<br>&nbsp;<li>Add the above "bin" directory to the "PATH" environment variable in surg's "~/.tcshrc" file.
 </ol>
+
+<h4>Edit Tcl Files to Change Defaults in New Slicer</h4>
+<p>
+<table cellpadding=3 cellspacing=3 border=0 align=center>
+<tr>
+<th class=box>Tcl File Edits</th>
+</tr>
+<tr>
+<td class=box0>
+  <div class=q>tcl-modules/Locator.tcl</div>
+  <div class=a>Add "LocatorSetActive SignaSP" at the end of the LocatorBuildGUI procedure.</div>
+</td>
+</tr>
+<tr>
+<td class=box1>
+</td>
+  <div class=q>tcl-modules/Twin.tcl</div>
+  <div class=a>Add "set Twin(screen) 1" after the current line: "set Twin(screen) 0".
+  Add any other lines as desired to change the size and position of the window.</div>
+</tr>
+<tr>
+<td class=box0>
+</td>
+  <div class=q>tcl-main/MainView.tcl</div>
+  <div class=a>Edit "viewBgColor" in "MainViewInit" to be "Black" instead of "Blue"</div>
+</tr>
+</table>
+
+<h4>Edit Init Files to Change Defaults in Old Slicer</h4>
+<p>
+Edit the file "go/program/slicer.init" so that the "View" variables are as follows:
+<pre><p class=code>View (
+        boreDisplay Image
+        boreScreen 1
+        boreRender 0
+        boreWidth 570
+        boreHeight 426
+        borePosition 25 0
+</p></pre>
+
+<h4>Start the "SPL Server" on the Imaging Workstation</h4>
+On the GE imaging workstation (machine name: mrtws), log in as mrtmstr
+which takes you to the directory /home/mrtmstr.
+Type: 
+<pre><p class=code>./spl_server</p></pre>
+
+<h4>Running the New Slicer</h4>
+<p>
+At the command prompt, type "slicer".
+Go to the "Twin" module and press "On".
+Go to the "Locator" module and press "Connect".
+
+<h4>Running the Old Slicer</h4>
+<p>
+At the command prompt, type "go".
+Go to the "Realtime" module, and press "Bore" and "Connect".
 
