@@ -149,7 +149,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.12 $} {$Date: 2005/01/07 17:17:59 $}]
+        {$Revision: 1.13 $} {$Date: 2005/01/21 15:25:42 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -205,7 +205,7 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
 
     # The Volume frame
     set f $parent.fVols
-    DevAddLabel $f.lNote "Configure the reader:"
+    DevAddLabel $f.lNote "Configure the multi-volume reader:"
     frame $f.fConfig -bg $Gui(activeWorkspace) -relief groove -bd 2 
     pack $f.lNote -side top -pady 6 
     pack $f.fConfig -side top
@@ -279,14 +279,6 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
     # The Navigate frame
     set f $parent.fNav
 
-    DevAddButton $f.bSet "Set Window/Level/Thresholds" \
-        "MultiVolumeReaderSetWindowLevelThresholds" 30
-    # put a tooltip over the button 
-    TooltipAdd $f.bSet \
-        "Set window, level and low/high threshold\n\
-        for the first volume. Hit this button to set\n\
-        the same values for the entire sequence."
- 
     DevAddLabel $f.lVolNo "Vol Index:"
     eval {scale $f.sSlider \
         -orient horizontal \
@@ -302,7 +294,6 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
         "Slide this scale to navigate multi-volume sequence."
  
     #The "sticky" option aligns items to the left (west) side
-    grid $f.bSet -row 0 -column 0 -columnspan 2 -padx 5 -pady 3 -sticky w
     grid $f.lVolNo -row 1 -column 0 -padx 1 -pady 1 -sticky w
     grid $f.sSlider -row 1 -column 1 -padx 1 -pady 1 -sticky w
 }
@@ -553,6 +544,8 @@ proc MultiVolumeReaderLoadAnalyze {} {
     set MultiVolumeReader(noOfVolumes) [llength $AnalyzeCache(MRMLid)] 
     set MultiVolumeReader(volumeExtent) $AnalyzeCache(volumeExtent) 
 
+    MainUpdateMRML
+
     # show the first volume by default
     MainSlicesSetVolumeAll Back $MultiVolumeReader(firstMRMLid)
     RenderAll
@@ -580,6 +573,12 @@ proc MultiVolumeReaderLoadBXH {} {
     set MultiVolumeReader(lastMRMLid) [lindex $VolBXH(MRMLid) end] 
     set MultiVolumeReader(noOfVolumes) [llength $VolBXH(MRMLid)] 
     set MultiVolumeReader(volumeExtent) $VolBXH(volumeExtent) 
+
+    MainUpdateMRML
+
+    # show the first volume by default
+    MainSlicesSetVolumeAll Back $MultiVolumeReader(firstMRMLid)
+    RenderAll
 
     return 0
 }
@@ -611,6 +610,8 @@ proc MultiVolumeReaderLoadDICOM {} {
     set MultiVolumeReader(lastMRMLid) [lindex $DICOMHelper(MRMLid) end] 
     set MultiVolumeReader(noOfVolumes) [llength $DICOMHelper(MRMLid)] 
     set MultiVolumeReader(volumeExtent) $DICOMHelper(volumeExtent) 
+
+    MainUpdateMRML
 
     # show the first volume by default
     MainSlicesSetVolumeAll Back $MultiVolumeReader(firstMRMLid)
