@@ -25,16 +25,29 @@
 #               /vtk
 #                   /VTK - vtk source (or just Wrapping for distribution)
 #                   /VTK-build - vtk build tree (or just stripped libs in bin for distribution)
+#               /itk
+#                   /ITK-build - itk in bin for distribution
 #           /redhat7.3
 #               /tcl - all tcl libs
 #               /vtk
 #                   /VTK - vtk source (or just Wrapping for distribution)
 #                   /VTK-build - vtk build tree (or just stripped libs in bin for distribution)
+#               /itk
+#                   /ITK-build - itk in bin for distribution
 #           /Win32VC7
 #               /tcl - all tcl libs
 #               /vtk
 #                   /VTK - vtk source (or just Wrapping for distribution)
+#                   /VTK-build - vtk build tree (or just stripped libs in bin/debug for distribution)
+#               /itk
+#                   /ITK-build - itk in bin for distribution
+#           /Darwin
+#               /tcl - all tcl libs
+#               /vtk
+#                   /VTK - vtk source (or just Wrapping for distribution)
 #                   /VTK-build - vtk build tree (or just stripped libs in bin for distribution)
+#               /itk
+#                   /ITK-build - itk in bin for distribution
 #
 
 
@@ -102,6 +115,9 @@ if { ![info exists env(VTK_SRC_DIR)] || $env(VTK_SRC_DIR) == "" } {
 if { ![info exists env(VTK_BIN_DIR)] || $env(VTK_BIN_DIR) == "" } {
     set env(VTK_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/vtk/VTK-build
 }
+if { ![info exists env(ITK_BIN_DIR)] || $env(ITK_BIN_DIR) == "" } {
+    set env(ITK_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/itk/ITK-build
+}
 if { ![info exists env(TCL_BIN_DIR)] || $env(TCL_BIN_DIR) == "" } {
     set env(TCL_BIN_DIR) ${env(SLICER_HOME)}/Lib/${env(BUILD)}/tcl/bin
 }
@@ -118,18 +134,21 @@ switch $env(BUILD) {
     "redhat7.3" {
         # add vtk, slicer, and tcl bins
         set env(LD_LIBRARY_PATH) $env(VTK_BIN_DIR)/bin:$env(LD_LIBRARY_PATH)
+        set env(LD_LIBRARY_PATH) $env(ITK_BIN_DIR)/bin:$env(LD_LIBRARY_PATH)
         set env(LD_LIBRARY_PATH) $env(SLICER_HOME)/Base/builds/$env(BUILD)/bin:$env(LD_LIBRARY_PATH)
         set env(LD_LIBRARY_PATH) $env(TCL_LIB_DIR):$env(LD_LIBRARY_PATH)
     }
     "Darwin" {
         # add vtk, slicer, and tcl bins
         set env(DYLD_LIBRARY_PATH) $env(VTK_BIN_DIR)/bin:$env(DYLD_LIBRARY_PATH)
+        set env(DYLD_LIBRARY_PATH) $env(ITK_BIN_DIR)/bin:$env(DYLD_LIBRARY_PATH)
         set env(DYLD_LIBRARY_PATH) $env(SLICER_HOME)/Base/builds/$env(BUILD)/bin:$env(DYLD_LIBRARY_PATH)
         set env(DYLD_LIBRARY_PATH) $env(TCL_LIB_DIR):$env(DYLD_LIBRARY_PATH)
     }
     "Win32VC7" {
         # add vtk, slicer, and tcl bins
         set env(Path) $env(VTK_BIN_DIR)/bin/debug\;$env(Path)
+        set env(Path) $env(ITK_BIN_DIR)/bin/debug\;$env(Path)
         set env(Path) $env(SLICER_HOME)/Base/builds/$env(BUILD)/bin/debug\;$env(Path)
         set env(Path) $env(TCL_BIN_DIR)\;$env(Path)
     }
