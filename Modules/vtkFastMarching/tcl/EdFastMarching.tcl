@@ -101,6 +101,9 @@ proc EdFastMarchingBuildGUI {} {
     set help "DISCLAIMER: this module is for development only!
 Eric Pichon <eric@ece.gatech.edu>
 
+Online tutorial available at:
+http://users.ece.gatech.edu/~eric/research/slicer
+
 3D segmentation using Partial Differential Equations.
 
 To segment a volume :
@@ -389,7 +392,7 @@ proc EdFastMarchingSegment {} {
 
     if { [EdFastMarching(FastMarching) addSeed $cr $ca $cs]==0 } {
         FiducialsDeletePoint $EdFastMarching(fidFiducialList) $s
-        tk_messageBox -message "Seed $l is outside of the volume.\nIt has therefore been removed."
+        tk_messageBox -message "Seed $s is outside of the volume.\nIt has therefore been removed."
     }
 
     }
