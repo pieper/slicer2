@@ -57,7 +57,9 @@ Be SURE you are in your new directory when you run this!
 * Edit CMakeListsLocal.txt to include the names of your source files.  Be sure
    not to include suffixes.  If you have abstract classes, put them
    in the source files area as well as the abstract files area.  The
-   file also includes directions for adding link libraries.
+   file also includes directions for adding link libraries, and paths for 
+   include files and libraries. See http://www.cmake.org/HTML/Index.html 
+   for more information.
 
 * Make a directory called tcl (e.g. /home/pieper/slicer2/Modules/vtkTest/tcl)
 and put your tcl code in it.
