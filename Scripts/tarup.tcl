@@ -62,6 +62,7 @@ proc tarup { {destdir "auto"} } {
         "redhat7.3" -
         "linux-x86" { set target linux-x86 }
         "Win32VC7" { set target win32 ; set exe .exe}
+        default {error "unknown build target $::env(BUILD)"}
     }
 
     set create_archive "true"
@@ -76,7 +77,7 @@ proc tarup { {destdir "auto"} } {
                 } else {
                     switch $::env(BUILD) {
                         "solaris8" { set destdir /tmp }
-                        "darwin-ppc" - "redhat7.3" { set destdir /var/tmp }
+                        "Darwin" - "darwin-ppc" - "linux-x86' - "redhat7.3" { set destdir /var/tmp }
                         "Win32VC7" { set destdir c:/Temp }
                     }
                 }
@@ -144,6 +145,7 @@ proc tarup { {destdir "auto"} } {
     file mkdir $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl
     switch $::env(BUILD) {
         "solaris8" -
+        "linux-x86" - 
         "redhat7.3" - 
         "darwin-ppc" {
             file copy -force $::env(VTK_DIR)/Wrapping/Tcl/pkgIndex.tcl $destdir/Lib/$::env(BUILD)/vtk/VTK-build/Wrapping/Tcl
@@ -157,6 +159,7 @@ proc tarup { {destdir "auto"} } {
     file mkdir $destdir/Lib/$::env(BUILD)/vtk/VTK-build/bin
     switch $::env(BUILD) {
         "solaris8" -
+        "linux-x86" -
         "redhat7.3" { 
             set libs [glob $::env(VTK_DIR)/bin/*.so*]
             foreach lib $libs {
@@ -193,6 +196,7 @@ proc tarup { {destdir "auto"} } {
 
     switch $::env(BUILD) {
         "solaris8" -
+        "linux-x86" -
         "redhat7.3" { 
             set libs [glob -nocomplain $::env(ITK_BINARY_PATH)/bin/*.so]
             foreach lib $libs {
@@ -228,6 +232,7 @@ proc tarup { {destdir "auto"} } {
     file copy Base/Wrapping/Tcl/vtkSlicerBase/vtkSlicerBase.tcl $destdir/Base/Wrapping/Tcl/vtkSlicerBase
     switch $::env(BUILD) {
         "solaris8" -
+        "linux-x86" -
         "redhat7.3" { 
             file mkdir $destdir/Base/builds/$::env(BUILD)/bin
             set libs [glob Base/builds/$::env(BUILD)/bin/*.so]
@@ -290,6 +295,7 @@ proc tarup { {destdir "auto"} } {
         file copy $moddir/Wrapping/Tcl/$mod/$mod.tcl $moddest/Wrapping/Tcl/$mod
         switch $::env(BUILD) {
             "solaris8" -
+            "linux-x86" -
             "redhat7.3" { 
                 file mkdir $moddest/builds/$::env(BUILD)/bin
                 set libs [glob -nocomplain $moddir/builds/$::env(BUILD)/bin/*.so]
@@ -354,6 +360,8 @@ proc tarup { {destdir "auto"} } {
                 exec gzip -f $archroot.tar
             }
             "redhat7.3" - 
+            "linux-x86" -
+            "Darwin" -
             "darwin-ppc" {
                 puts " -- making $archroot.tar.gz"
                 exec tar cfz $archroot.tar.gz $archroot
@@ -375,6 +383,7 @@ proc tarup { {destdir "auto"} } {
         puts " -- upload to $scpdestination"
         switch $::env(BUILD) {
             "solaris8" -
+            "linux-x86" -
             "redhat7.3" - 
             "darwin-ppc" {
                 exec xterm -e scp $archroot.tar.gz $scpdestination
