@@ -343,7 +343,11 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   int arrows[4] = {UP, DOWN, LEFT, RIGHT};
   // to access edge images (not perfectly aligned)
   int offset[4][2] = {{-1,-1},{0,0},{-1,-1},{0,0}};
-
+  // to color in the correct pixel relative to the edge
+  // Lauren bugs on boundary?
+  int color[4][2] = {{0,1},{-1,0},{-1,1},{0,0}};
+  //int color[4][2] = {{0,0},{0,0},{0,0},{0,0}};
+  
   vtkImageData *upEdge, *downEdge, *leftEdge, *rightEdge;
   upEdge = self->GetUpEdges();
   downEdge = self->GetDownEdges();
@@ -441,7 +445,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 		}
 	      else
 		{
-		  // handle border condition
+		  // handle boundary
 		  tempCC = currentCC + self->GetMaxEdgeCost();
 		}
 
@@ -482,10 +486,19 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   // ***********************lauren fix to use Get fcn.******************************
   self->ContourPoints->Delete();
   self->ContourPoints = vtkPoints::New();
+  vtkPoints *testPoints = vtkPoints::New();
 
+  // current spot on path of arrows
   int traceX = end[0];
   int traceY = end[1];
-  
+
+  // current pixel to color in output image
+  // (not same as trace since trace is along pixel edges
+  // and outlines the area to color)
+  // coloring assumes clockwise segmentation.
+  int colorX, colorY;
+
+  // Lauren this needs to be color!
   self->ContourPoints->InsertNextPoint(traceX,traceY,0);
 
   while (traceX!=start[0] || traceY!=start[1])
@@ -512,10 +525,8 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 	      {
 		cout << "UP: ";
 	      }
-	    //outPtr = (T*)outData->GetScalarPointerForExtent(extent[0],extent[1],
-	    //					    extent[2],extent[3],
-	    //					    extent[4],extent[5]);
-	    
+	    colorX = traceX + color[UP][0];
+	    colorY = traceY + color[UP][1];
 	    break;
 	  }
 	case DOWN:
@@ -526,6 +537,8 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 	      {
 		cout << "DOWN: ";
 	      }
+	    colorX = traceX + color[DOWN][0];
+	    colorY = traceY + color[DOWN][1];
 	    break;
 	  }
 	case LEFT:
@@ -536,6 +549,8 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 	      {
 		cout << "LEFT: ";
 	      }
+	    colorX = traceX + color[LEFT][0];
+	    colorY = traceY + color[LEFT][1];
 	    break;
 	  }
 	case RIGHT:
@@ -546,6 +561,8 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 	      {
 		cout << "RIGHT: ";
 	      }
+	    colorX = traceX + color[RIGHT][0];
+	    colorY = traceY + color[RIGHT][1];
 	    break;
 	  }
 	default:
@@ -556,7 +573,10 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 
 	}
 
-      self->ContourPoints->InsertNextPoint(traceX,traceY,0);
+      //self->ContourPoints->InsertNextPoint(traceX,traceY,0);
+      //cout << "(" << traceX << "," << traceY << ")" << "   (" << colorX << "," << colorY << ")" << endl;
+      self->ContourPoints->InsertNextPoint(colorX,colorY,0);
+      testPoints->InsertNextPoint(traceX,traceY,0);
 
     } // end while
 
@@ -590,6 +610,18 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
       outPtr[(int)point[0] + ((int)point[1])*sizeX] = outLabel;
     }
   //cout << "done drawing!" << endl;  
+
+
+  // ------------- test --------------
+  numPoints = testPoints->GetNumberOfPoints();
+  for (int i=0; i<numPoints; i++)
+    {
+      //cout << ".";
+      point = testPoints->GetPoint(i);
+      //cout << (int)point[0] + ((int)point[1])*sizeX << endl;
+      outPtr[(int)point[0] + ((int)point[1])*sizeX] += 5;
+    }
+  // ------------- test --------------
 
   // test points
   cout << "num points C++ " << self->ContourPoints->GetNumberOfPoints() << endl;
@@ -628,6 +660,9 @@ void vtkImageLiveWire::Execute(vtkImageData **inData,
 	return;
       }
     }
+
+  // Lauren check this
+  // 2D input is required
 
   void *inPtr[2], *outPtr;
 
