@@ -47,21 +47,16 @@ vtkImageZoom2D \
 vtkIndirectLookupTable \
 vtkMrmlSlicer \
 vtkMrmlVolume \
+vtkMrmlMatrixNode \
 vtkMrmlNode \
 vtkMrmlVolumeNode \
 vtkMrmlModelNode \
-vtkXDisplayWindow \
 vtkMrmlEndTransformNode \
 vtkMrmlColorNode \
 vtkMrmlOptionsNode \
 vtkMrmlTree \
 vtkMrmlTransformNode \
-
-#vtkMrmlColorLutNode \
-#vtkMrmlRotateNode \
-#vtkMrmlScaleNode \
-
-#vtkMrmlTranslateNode \
+vtkXDisplayWindow \
 
 #------------------------------------------------------------------------------
 # Autoconfig defines that can be overridden in user.make
