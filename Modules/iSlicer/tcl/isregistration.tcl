@@ -125,6 +125,7 @@ if { [itcl::find class isregistration] == "" } {
         method getP2 {} {}
         method update_slicer_mat {} {}
         method set_init_mat {} {}
+    method get_last_metric_value {} {}
         method start {} {$_task on;}
         method stop  {} {$_task off }
     }
@@ -771,6 +772,16 @@ itcl::body isregistration::StringToMatrix { mat4x4 str} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# METHOD: get_last_metric_value
+#
+# DESCRIPTION: Gets the last metric value
+#-------------------------------------------------------------------------------
+
+itcl::body isregistration::get_last_metric_value { } {
+
+ return [$_reg GetMetricValue]
+}
 
 #-------------------------------------------------------------------------------
 # A demo thing written by Steve Pieper
