@@ -27,7 +27,6 @@ proc eval_movies { {dir /tmp} {steps 120} {skip 1} } {
         file mkdir $dir
     }
 
-    return
 
     eval_3d_movie $dir $steps
     eval_slice_movie $dir axial $skip
