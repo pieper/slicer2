@@ -816,11 +816,14 @@ static void vtkImageDICOMReaderUpdate2(vtkImageDICOMReader *self, vtkImageData *
       // read the row.
       if ( ! self->GetFile()->read((char *)buf, streamRead))
     {
+    vtkGenericWarningMacro("File operation failed");
+#if 0 // causes problem with newer vtk (4.2)
     vtkGenericWarningMacro("File operation failed. row = " << idx1
                    << ", Read = " << streamRead
                    << ", Skip0 = " << streamSkip0
                    << ", Skip1 = " << streamSkip1
                    << ", FilePos = " << self->GetFile()->tellg());
+#endif
     return;
     }
 
