@@ -36,6 +36,7 @@
 wm withdraw .
 update
 
+
 #######################
 # version number control for slicer
 #
@@ -65,6 +66,16 @@ set SLICER(version) "$SLICER(major_version).$SLICER(minor_version)$SLICER(revisi
 
 #
 #######################
+
+
+# 
+# set standard font scaling independent of screen size (since some UI elements
+# have hard-coded sizes, this should even out differences among platforms)
+# This overrides a dots-per-inch calculation done by Tk at startup
+#
+tk scaling 1.25
+
+
 
 #
 # simple command line argument parsing
@@ -561,7 +572,7 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "VTK: ${vtkVersion} TCL: ${tcl_patchLevel} TK: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo) ${compilerName}: $compilerVersion ${libVersions} CVS: [ParseCVSInfo " " {$Id: Go.tcl,v 1.54 2003/05/18 15:28:41 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo) ${compilerName}: $compilerVersion ${libVersions} CVS: [ParseCVSInfo " " {$Id: Go.tcl,v 1.55 2003/05/21 18:36:20 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
