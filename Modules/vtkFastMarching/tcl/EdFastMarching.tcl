@@ -297,7 +297,7 @@ proc EdFastMarchingEnter {} {
 
     EdUpdateAfterApplyEffect $v
     }    
-
+    FiducialsSetActiveList "FastMarching-seeds"
 }
 
 
