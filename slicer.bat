@@ -4,8 +4,11 @@
 :: startup batch file for Slicer2 on Windows
 ::
 
+:: - note: SLICER_HOME should always be set if you use the toplevel
+:: executable slicer2-win32.exe but you can set a value here if 
+:: you want to start directly with slicer.bat
 IF EXIST %SLICER_HOME% GOTO startup
-SET SLICER_HOME=c:\pieper\bwh\slicer2\porting\slicer2
+SET SLICER_HOME=c:\pieper\bwh\slicer2\latest\slicer2
 :startup
 
 :: locations:
@@ -23,6 +26,8 @@ set Path=%SLICER_HOME%\Base\builds\Win32VC7\bin\debug;%Path%
 set Path=%VTK_BIN_DIR%;%Path%
 :: then tcl and tk
 set Path=%TCL_BIN_DIR%;%Path%
+:: then custom modules
+set Path=%SLICER_HOME%\Modules\vtkFastMarching\builds\Win32VC7\bin\debug;%Path%
 
 
 set ITCL_LIBRARY=c:\pieper\bwh\slicer\Tcl-8.3\lib\itcl3.2
