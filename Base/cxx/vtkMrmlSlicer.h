@@ -216,6 +216,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
 
   int GetDouble(int s) {return this->DoubleSliceSize[s];};
 
+  //Deep Copy Method
+  void DeepCopy(vtkMrmlSlicer *src);
+
   // Description:
   // The cursor is the crosshair that moves with the mouse over the slices
   void SetShowCursor(int vis);
@@ -478,6 +481,10 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
 
   //Hanifa
   vtkImageReformat *GetForeReformat(int s) { return this->ForeReformat[s]; }
+
+  vtkImageReformat *GetBackReformat3DView(int s) {return this->BackReformat3DView[s];}
+
+  vtkImageReformat *GetForeReformat3DView(int s) {return this->ForeReformat3DView[s];}
 
   // Description:
   // Update any part of this class that needs it.
