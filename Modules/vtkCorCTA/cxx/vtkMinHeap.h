@@ -10,8 +10,7 @@
 #define _MINHEAP_HPP
 
 
-//#include "style.hpp"
-#include <iostream.h>
+//#include <iostream.h>
 #include <stdio.h>
 
 // Template ??
@@ -83,11 +82,13 @@ public:
 
   void ChangeValue(int n, const T& elt);
 
+/*
 #if !(defined(_sgi_)) 
   friend ostream& operator << <>(ostream&, const vtkMinHeap<T>& p);
 #else
   friend ostream& operator << (ostream&, const vtkMinHeap<T>& p);
 #endif
+*/
 
 };
 
@@ -273,6 +274,8 @@ template<class T> void vtkMinHeap<T>::ChangeValue( int pos, const T& elt)
 } // UpDateValue()
 
 
+
+/* this operator is used only for debugging
 //--------------------------------------------------
 template<class T>
 ostream& operator << (ostream& os, const vtkMinHeap<T>& p)
@@ -302,7 +305,7 @@ ostream& operator << (ostream& os, const vtkMinHeap<T>& p)
   return os;
 
 } // operator << ( , const vtkMinHeap<T>&)
-
+*/
 
 
 #endif

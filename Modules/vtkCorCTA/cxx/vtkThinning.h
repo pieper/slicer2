@@ -84,7 +84,7 @@ public:
     return (p1.value > p2.value);
   }
 
-  friend ostream& operator << (ostream&, const TrialPoint& p);
+/*  friend ostream& operator << (ostream&, const TrialPoint& p); */
 
 }; // TrialPoint
 //ETX
