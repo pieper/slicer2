@@ -146,7 +146,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.16 $} {$Date: 2003/06/02 19:47:50 $}]
+            {$Revision: 1.17 $} {$Date: 2003/06/06 19:32:11 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -1754,6 +1754,14 @@ proc AlignmentsSetVolume {{v ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc AlignmentsAutoRun {} {
+    if { [info command vtkITKMutualInformationTransform] == "" } {
+        AlignmentsAutoRun_vtk 
+    } else {
+        AlignmentsAutoRun_itk 
+    }
+}
+
+proc AlignmentsAutoRun_vtk {} {
     global Path env Gui Matrix Volume
 
     # v = ID of volume to register
@@ -1864,6 +1872,41 @@ proc AlignmentsAutoRun {} {
    #Return the user back to the pick alignment mode tab
    set Matrix(regMode) ""
    raise $Matrix(fAlignBegin)
+}
+
+#
+# use the vtkITK interface to the ITK MI registration routines
+# - builds a new user interface panel to control the process
+#
+proc AlignmentsAutoRun_itk {} {
+    global Path env Gui Matrix Volume
+
+    # v = ID of volume to register (moving)
+    # r = ID of reference volume
+    set v $Matrix(volume)
+    set r $Matrix(refVolume)
+
+    # Store which transform we're editing
+    # If the user has not selected a tranform, then create a new one by default
+    # and append it to the volume to register (ie. "Volume to Move")
+    set t $Matrix(activeID)
+    set Matrix(tAuto) $t
+    if {$t == ""} {
+        DataAddTransform append Volume($v,node) Volume($v,node)
+    }
+
+    # TODO make islicer a package
+    source $env(SLICER_HOME)/Modules/iSlicer/tcl/isregistration.tcl
+
+    catch "destroy .mi"
+    toplevel .mi
+
+    isregistration .mi.reg \
+        -transform $t \
+        -moving [Volume($v,node) GetName] \
+        -reference [Volume($r,node) GetName]
+
+    pack .mi.reg -fill both -expand true
 }
 
 #-------------------------------------------------------------------------------
