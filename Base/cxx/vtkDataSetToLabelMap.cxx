@@ -2,9 +2,11 @@
 //#include <stdio.h>
 
 #include "vtkDataSetToLabelMap.h"
-#include "vtkObjectFactory.h"
-//#include "vtkTriangleFilter.h"
 #include "vtkIntArray.h"
+#include "vtkObjectFactory.h"
+#include "vtkCell.h"
+#include "vtkPointData.h"
+#include "vtkPoints.h"
 
 
 

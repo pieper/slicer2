@@ -26,6 +26,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMrmlSlicer.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageCanvasSource2D.h"
+#include "vtkPointData.h"
 
 //------------------------------------------------------------------------------
 vtkMrmlSlicer* vtkMrmlSlicer::New()

@@ -23,6 +23,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 #include "vtkMrmlDataVolumeReadWriteStructuredPoints.h"
 #include "vtkObjectFactory.h"
+#include "vtkPointData.h"
 #include "vtkStructuredPointsReader.h"
 #include "vtkStructuredPointsWriter.h"
 

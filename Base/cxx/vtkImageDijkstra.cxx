@@ -1,10 +1,10 @@
 #include "vtkImageDijkstra.h"
 #include <math.h>
 #include <stdlib.h>
+#include "vtkIntArray.h"
 #include "vtkObjectFactory.h"
-#include "vtkIntArray.h"
+#include "vtkPointData.h"
 #include "vtkPriorityQueue.h"
-#include "vtkIntArray.h"
 #include "vtkVersion.h"
 
 

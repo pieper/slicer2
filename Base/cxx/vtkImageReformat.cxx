@@ -22,8 +22,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
 #include "vtkImageReformat.h"
-#include "vtkTransform.h"
 #include "vtkObjectFactory.h"
+#include "vtkPointData.h"
+#include "vtkTransform.h"
 #include <time.h>
 #include <math.h>
 

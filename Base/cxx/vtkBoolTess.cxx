@@ -93,7 +93,6 @@ int vtkBoolTess::Triangulate( int **tris )
   float *thisPnt;
   float (*points)[3] = this->Points;
   extern vtkBoolTess *tess;
-  vtkBoolTessVtx *thisVtx;
 
   nContours = this->NumContours;
   ptIds = this->Contours;
@@ -503,7 +502,7 @@ if ( this->NumTriangles > this->PrevNumInputEdges*3 )
 void vtkBoolTess::AddNewEdges( vtkBoolTessEdge *prevEdge,
                                vtkBoolTessEdge *nextEdge )
   {
-  int newIdx, numNew;
+  int numNew;
   vtkBoolTessEdge *newEdges[2];
 
   this->NumNewEdges += 2;

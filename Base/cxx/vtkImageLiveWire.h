@@ -41,7 +41,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageData.h"
 #include "vtkImageMultipleInputFilter.h"
 #include "vtkSlicer.h"
-
+#include "vtkPoints.h"
 
 //----------------------------------------------------------------------------
 // helper classes used in computation
