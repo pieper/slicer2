@@ -148,7 +148,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.64 $} {$Date: 2005/03/25 23:30:33 $}]
+                  {$Revision: 1.65 $} {$Date: 2005/03/28 22:46:12 $}]
 
     # Define Tabs
     #------------------------------------
@@ -5748,7 +5748,6 @@ proc ConvertVolumeToTensors {} {
     puts "If not phase-freq flipped, swapping x and y in gradient directions"
     set swap [Volume($v,node) GetFrequencyPhaseSwap]
     set scanorder [Volume($v,node) GetScanOrder]
-    set swap 1
       
     if {$swap == 0} {    
         # Gunnar Farneback, April 6, 2004
