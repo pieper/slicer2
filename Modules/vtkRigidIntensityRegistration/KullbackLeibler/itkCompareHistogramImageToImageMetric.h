@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkCompareHistogramImageToImageMetric.h,v $
   Language:  C++
-  Date:      $Date: 2003/12/24 02:14:36 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2003/12/31 23:49:08 $
+  Version:   $Revision: 1.4 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -94,11 +94,11 @@ public HistogramImageToImageMetric<TFixedImage, TMovingImage>
   typedef typename HistogramType::Iterator              HistogramIteratorType;
   typedef typename HistogramType::Pointer               HistogramPointerType;
 
-  typedef typename Superclass::Superclass::InterpolatorType InterpolatorType;
-  typedef typename Superclass::Superclass::InterpolatorPointer 
+  typedef typename Superclass::InterpolatorType InterpolatorType;
+  typedef typename Superclass::InterpolatorPointer 
     InterpolatorPointer;
 
-  typedef typename Superclass::Superclass::FixedImageRegionType 
+  typedef typename Superclass::FixedImageRegionType 
     FixedImageRegionType;
 
   /** Set the histogram to be used in the metric calculation */
