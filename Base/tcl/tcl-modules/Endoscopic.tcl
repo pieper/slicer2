@@ -233,7 +233,9 @@ proc EndoscopicInit {} {
     set Endoscopic(cam,driver) 0
     set Endoscopic(cam,PathNode) ""
     set Endoscopic(cam,EndPathNode) ""
-
+    set Endoscopic(sliderx) ""
+    set Endoscopic(slidery) ""
+    set Endoscopic(sliderz) ""
     set Endoscopic(Box,name) "Camera Box"
     set Endoscopic(Box,color) "1 .4 .5" 
 
@@ -274,7 +276,7 @@ proc EndoscopicInit {} {
     set Endoscopic(fPath,size) .45 
     set Endoscopic(fPath,visibility) 1    
     set Endoscopic(fPath,color) ".2 .6 .8"
-    set Endoscopic(fPath,sizeStr) .5 
+    set Endoscopic(fPath,sizeStr) .45 
 
     set Endoscopic(fLand,name) "Focal Landmarks"
     set Endoscopic(fLand,size) 1 
@@ -929,7 +931,8 @@ If you need help, go to the Help tab"
 	foreach slider $posAxi Ltext $LposTexts Rtext $RposTexts orient "horizontal horizontal vertical" {
 
 	    EndoscopicCreateLabelAndSlider $f l$slider 0 "$Ltext" $slider $orient -180 180 110 Endoscopic(cam,${slider}Str) "EndoscopicSetCameraPosition $slider" 5 0
-
+	    set Endoscopic(slider$slider) $f.s$slider
+	    set Endoscopic(label$slider) $f.l$slider
 	}
 
 
@@ -1535,7 +1538,21 @@ proc EndoscopicSetCameraPosition {{value ""}} {
 	Endoscopic(fp,actor) SetPosition $Endoscopic(fp,x) $Endoscopic(fp,y) $Endoscopic(fp,z)
 	EndoscopicUpdateCamera
 
-}
+
+    #*******************************************************************
+    #
+    # STEP 3: if the user decided to have the camera drive the slice, 
+    #         then do it!
+    #
+    #*******************************************************************
+
+	if { $Endoscopic(fp,driver) == 1 } {
+	    EndoscopicSetSlicePosition fp 
+	} elseif { $Endoscopic(cam,driver) == 1 } {
+	    EndoscopicSetSlicePosition cam 
+	}
+	
+    }
 
 
 #-------------------------------------------------------------------------------
@@ -1579,18 +1596,19 @@ proc EndoscopicResetCameraDirection {} {
 proc EndoscopicSetCameraDirection {{value ""}} {
 	global Endoscopic View Model
 
-	if {[ValidateFloat $Endoscopic(cam,rxStr)] == 0} {
-		tk_messageBox -message "LR is not a floating point number."
-		return
-	}
-	if {[ValidateFloat $Endoscopic(cam,ryStr)] == 0} {
-		tk_messageBox -message "PA $Endoscopic(cam,ryStr) is not a floating point number."
-		return
-	}
-	if {[ValidateFloat $Endoscopic(cam,rzStr)] == 0} {
-		tk_messageBox -message "IS is not a floating point number."
-		return
-	}
+    # this gives a weird message when the floating point number is something like 6.3769e-06 is not a floating point number
+	#if {[ValidateFloat $Endoscopic(cam,rxStr)] == 0} {
+	#	tk_messageBox -message "LR is not a floating point number."
+	#	return
+	#}
+	#if {[ValidateFloat $Endoscopic(cam,ryStr)] == 0} {
+	#	tk_messageBox -message "PA $Endoscopic(cam,ryStr) is not a floating point number."
+	#	return
+	#}
+	#if {[ValidateFloat $Endoscopic(cam,rzStr)] == 0} {
+	#	tk_messageBox -message "IS is not a floating point number."
+	#	return
+	#}
 
 
 	
@@ -2424,8 +2442,33 @@ proc EndoscopicSetCameraAxis {{axis ""}} {
     if {$axis != ""} {
 	if {$axis == "absolute" || $axis == "relative"} {
 	    set Endoscopic(cam,axis) $axis
+	    
 	    # Change button text
 	    $Endoscopic(axis) config -text $axis
+
+	    # if we are going from relative to absolute, 
+	    # update the actual camera position for the slider
+	    
+	   
+	    set l [$Endoscopic(cam,actor) GetPosition]
+	    set Endoscopic(cam,x) [expr [lindex $l 0]]
+	    set Endoscopic(cam,y) [expr [lindex $l 1]]
+	    set Endoscopic(cam,z) [expr [lindex $l 2]]
+	    
+	    $Endoscopic(sliderx) set $Endoscopic(cam,x)
+	    $Endoscopic(slidery) set $Endoscopic(cam,y)
+	    $Endoscopic(sliderz) set $Endoscopic(cam,z)
+	    
+	    if {$axis == "relative"} {
+		$Endoscopic(labelx) configure -text "Left/Right"
+		$Endoscopic(labely) configure -text "Forw/Back"
+		$Endoscopic(labelz) configure -text "Up/Down"		
+	    }
+	    if {$axis == "absolute"} {
+		$Endoscopic(labelx) configure -text "L<->R "
+		$Endoscopic(labely) configure -text "P<->A "
+		$Endoscopic(labelz) configure -text "I<->S "
+	    }
 	} else {
 	    return
 	}   
