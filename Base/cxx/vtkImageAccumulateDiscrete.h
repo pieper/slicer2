@@ -50,6 +50,7 @@ protected:
   void operator=(const vtkImageAccumulateDiscrete&) {};
 
   void ExecuteInformation(vtkImageData *input, vtkImageData *output);
+  void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
   void ExecuteData(vtkDataObject *);
 
