@@ -581,7 +581,7 @@ proc GraphAddCurveRegion {varName path data color type ignore} {
 # string varDataCurve Name of the variable that the curve/region will be saved under
 # array  mean         Depending if it is a 1D graph or 2D Graph 1 or 2 values have to be defined
 # array  covariance   Depending if it is a 1D graph or 2D Graph 1 or 4 values have to be 
-#                     defined (order "a(1,1) a(1,2) a(2,1) a(2,2)")
+#                     defined order "a(1,1) a(1,2) a(2,1) a(2,2)"
 # double probability  Global Probability of the curve (you can just set it to 1.0)
 # int    fct          Should the log gausian be calculated (2) or just the normal one (1)  
 # int    dimension    Dimension of the curve (1D or 2D)
