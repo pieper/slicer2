@@ -59,7 +59,7 @@ vtkImageData* vtkMeanPValue::GetMean1()
     }
 
   vtkDebugMacro(<< this->GetClassName() << " (" << this << "): returning Target of "
-		<< this->Inputs[0]);
+        << this->Inputs[0]);
   return (vtkImageData *)(this->Inputs[0]);
 }
 
@@ -71,7 +71,7 @@ vtkImageData* vtkMeanPValue::GetSigma1()
     }
   
   vtkDebugMacro(<< this->GetClassName() << " (" << this << "): returning Source of "
-		<< this->Inputs[1]);
+        << this->Inputs[1]);
   return (vtkImageData *)(this->Inputs[1]);
 }
 
@@ -83,7 +83,7 @@ vtkImageData* vtkMeanPValue::GetMean2()
     }
 
   vtkDebugMacro(<< this->GetClassName() << " (" << this << "): returning Target of "
-		<< this->Inputs[2]);
+        << this->Inputs[2]);
   return (vtkImageData *)(this->Inputs[2]);
 }
 
@@ -95,7 +95,7 @@ vtkImageData* vtkMeanPValue::GetSigma2()
     }
   
   vtkDebugMacro(<< this->GetClassName() << " (" << this << "): returning Source of "
-		<< this->Inputs[3]);
+        << this->Inputs[3]);
   return (vtkImageData *)(this->Inputs[3]);
 }
 
@@ -138,7 +138,7 @@ static void vtkMeanPValueExecute(vtkMeanPValue *self,
     for(int y = outExt[2]; !self->AbortExecute && y <= outExt[3]; ++y)
       {
       for(int x = outExt[0]; x <= outExt[1] ; ++x)
-	{
+    {
         V[0]=*in1Ptr++ - *in3Ptr++;
         V[1]=*in1Ptr++ - *in3Ptr++;
         V[2]=*in1Ptr++ - *in3Ptr++;
@@ -179,13 +179,13 @@ static void vtkMeanPValueExecute(vtkMeanPValue *self,
         // 1 - (1 - BetaI(b/2.,a/2.,b/(b+a*F)))
         double val=(N1+N2-p-1)/(N1+N2-p-1+p*F);
 
-		//Modified by Liu
-		#ifdef WIN32
+        //Modified by Liu
+        #ifdef WIN32
     if(_isnan(val))
 #else
         if(isnan(val))
 #endif          
-		{
+        {
             *outPtr++=0;
           }
         else
@@ -197,7 +197,7 @@ static void vtkMeanPValueExecute(vtkMeanPValue *self,
           *outPtr++=gsl_sf_beta_inc((N1+N2-p-1)/2.,p/2.,val);
 //           printf("%f %f %f %f %f %f\n",T2,F,(N1+N2-p-1)/2.,p/2.,val,*(outPtr-1));
           }
-	}
+    }
       outPtr += outIncY;
       in1Ptr += in1IncY;
       in2Ptr += in2IncY;
@@ -220,8 +220,8 @@ static void vtkMeanPValueExecute(vtkMeanPValue *self,
 }
 
 void vtkMeanPValue::ThreadedExecute(vtkImageData **inData, 
-					vtkImageData *outData,
-					int outExt[6], int id)
+                    vtkImageData *outData,
+                    int outExt[6], int id)
 {
   float *inPtr1=0;
   float *inPtr2=0;

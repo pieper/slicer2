@@ -47,9 +47,9 @@ static float addDist(float a,ppd const& c)
 // There should be at least a ref to my paper
 // Modified by Liu
 //static void polynomialFit(vector<ppd> const& c,float* F,int degree,
-//			  float ratio=1.0)
+//              float ratio=1.0)
 static void polynomialFit(std::vector<ppd> const& c,float* F,int degree,
-			  float ratio=1.0)
+              float ratio=1.0)
 {
   long numberOfPoints = long(c.size()*ratio);
   //double vals[2*degree+1];
@@ -138,13 +138,13 @@ static void polynomialFit(std::vector<ppd> const& c,float* F,int degree,
     // Modified by Liu
 
   if (vals != NULL) 
-	  delete[] vals;
+      delete[] vals;
   if (f != NULL)
-	  delete[] f;
+      delete[] f;
 }
 //Modified by Liu
 //static void polynomialFitNoBias(vector<ppd> const& c,float* F,int degree,
-//				float ratio=1.0)
+//                float ratio=1.0)
 
 static void polynomialFitNoBias(std::vector<ppd> const& c,float* F,int degree,
  float ratio=1.0)
@@ -163,8 +163,8 @@ static void polynomialFitNoBias(std::vector<ppd> const& c,float* F,int degree,
 
   if ( degree > 0)
   {
-	  vals = new double[2*degree];
-	  f = new double[degree];
+      vals = new double[2*degree];
+      f = new double[degree];
   }
 
 
@@ -246,9 +246,9 @@ static void polynomialFitNoBias(std::vector<ppd> const& c,float* F,int degree,
 
     //Modified by Liu
   if (vals != NULL)
-	  delete[] vals;
+      delete[] vals;
   if ( f != NULL)
-	  delete[] f;
+      delete[] f;
 
 }
 
@@ -261,7 +261,7 @@ vtkLTSPolynomialIT* vtkLTSPolynomialIT::New()
     return (vtkLTSPolynomialIT*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  return new vtkLTSPolynomialIT;
+  //  return new vtkLTSPolynomialIT;
 }
 
 vtkLTSPolynomialIT::vtkLTSPolynomialIT()
@@ -283,10 +283,10 @@ void vtkLTSPolynomialIT::PrintSelf(::ostream& os, vtkIndent indent)
 
 template <class T1,class T2>
 static void vtkLTSPolynomialITExecute(vtkLTSPolynomialIT *self,
-				      vtkImageData *in1Data, T1 *in1Ptr,
-				      vtkImageData *in2Data, T2 *in2Ptr,
-				      vtkImageData *in3Data, unsigned char *in3Ptr,
-				      float* f)
+                      vtkImageData *in1Data, T1 *in1Ptr,
+                      vtkImageData *in2Data, T2 *in2Ptr,
+                      vtkImageData *in3Data, unsigned char *in3Ptr,
+                      float* f)
 {
   float sratio = self->GetRatio();
   int degree = self->GetDegree();
@@ -324,39 +324,39 @@ static void vtkLTSPolynomialITExecute(vtkLTSPolynomialIT *self,
   //Modified by Liu
 
   for (//int 
-	  idxZ = outExt[4]; idxZ <= outExt[5]; idxZ++)
+      idxZ = outExt[4]; idxZ <= outExt[5]; idxZ++)
     {
     for (//
-		int idxY = outExt[2]; idxY <= outExt[3]; idxY++)
+        int idxY = outExt[2]; idxY <= outExt[3]; idxY++)
       {
       for (//int 
-		  idxX = outExt[0]; idxX <= outExt[1] ; idxX++)
-	{
-	if(!ptr3 || *ptr3==255)
-	  {
-	  if( max1 < *ptr1 )
-	    {
-	    max1=*ptr1;
-	    }
-	  if( max2 < *ptr2 )
-	    {
-	    max2=*ptr2;
-	    }
-	  }
-	
-	ptr1+=incC;
-	ptr2+=incC;
-	if(ptr3)
-	  {
-	  ++ptr3;
-	  }
-	}
+          idxX = outExt[0]; idxX <= outExt[1] ; idxX++)
+    {
+    if(!ptr3 || *ptr3==255)
+      {
+      if( max1 < *ptr1 )
+        {
+        max1=*ptr1;
+        }
+      if( max2 < *ptr2 )
+        {
+        max2=*ptr2;
+        }
+      }
+    
+    ptr1+=incC;
+    ptr2+=incC;
+    if(ptr3)
+      {
+      ++ptr3;
+      }
+    }
       ptr1 += in1IncY;
       ptr2 += in2IncY;
       if(ptr3)
-	{
-	ptr3 += in3IncY;
-	}
+    {
+    ptr3 += in3IncY;
+    }
       }
     ptr1 += in1IncZ;
     ptr2 += in2IncZ;
@@ -391,36 +391,36 @@ static void vtkLTSPolynomialITExecute(vtkLTSPolynomialIT *self,
   ptr2=in2Ptr;
   ptr3=in3Ptr;
   for (//int 
-	  idxZ = outExt[4]; idxZ <= outExt[5]; idxZ++)
+      idxZ = outExt[4]; idxZ <= outExt[5]; idxZ++)
     {
     for (//int 
-		idxY = outExt[2]; idxY <= outExt[3]; idxY++)
+        idxY = outExt[2]; idxY <= outExt[3]; idxY++)
       {
       for (//int 
-		  idxX = outExt[0]; idxX <= outExt[1] ; idxX++)
-	{
-	if(!ptr3 || *ptr3==255)
-	  {
-	  i->x = *ptr2/max2;
-	  i->y = *ptr1/max1;
-	  i->updateDist(f,degree);
+          idxX = outExt[0]; idxX <= outExt[1] ; idxX++)
+    {
+    if(!ptr3 || *ptr3==255)
+      {
+      i->x = *ptr2/max2;
+      i->y = *ptr1/max1;
+      i->updateDist(f,degree);
 
-	  ++i;
-	  }
-	
-	ptr1+=incC;
-	ptr2+=incC;
-	if(ptr3)
-	  {
-	  ++ptr3;
-	  }
-	}
+      ++i;
+      }
+    
+    ptr1+=incC;
+    ptr2+=incC;
+    if(ptr3)
+      {
+      ++ptr3;
+      }
+    }
       ptr1 += in1IncY;
       ptr2 += in2IncY;
       if(ptr3)
-	{
-	ptr3+= in3IncY;
-	}
+    {
+    ptr3+= in3IncY;
+    }
       }
     ptr1 += in1IncZ;
     ptr2 += in2IncZ;
@@ -454,14 +454,14 @@ static void vtkLTSPolynomialITExecute(vtkLTSPolynomialIT *self,
     
     // errors in polynomial fit when iterating
     float oldError = accumulate(c.begin(),c.begin()+numberOfPoints,0.0,
-				addDist)/numberOfPoints;
+                addDist)/numberOfPoints;
     
     for(vector<ppd>::iterator i=c.begin();i!=c.end();++i)
       {
       i->updateDist(f,degree);
       }
     float newError=accumulate(c.begin(),c.begin()+numberOfPoints,0.0,
-			      addDist)/numberOfPoints;
+                  addDist)/numberOfPoints;
     
     int count=0;
     // compute LTS
@@ -471,29 +471,29 @@ static void vtkLTSPolynomialITExecute(vtkLTSPolynomialIT *self,
       // probably already screwed anyway. let's hope we never get
       // there.
       if(count > 100)
-	{
-	break;
-	}
+    {
+    break;
+    }
       oldError=newError;
       nth_element(c.begin(),c.begin()+numberOfPoints,c.end());
       
       // fit polynomial
       if(self->GetUseBias())
-	{
-	polynomialFit(c,f,degree,sratio);
-	}
+    {
+    polynomialFit(c,f,degree,sratio);
+    }
       else
-	{
-	polynomialFitNoBias(c,f,degree,sratio);
-	}
+    {
+    polynomialFitNoBias(c,f,degree,sratio);
+    }
       
       // update according to f
       for(vector<ppd>::iterator i=c.begin();i!=c.end();++i)
-	{
-	i->updateDist(f,degree);
-	}
+    {
+    i->updateDist(f,degree);
+    }
       newError=accumulate(c.begin(),c.begin()+numberOfPoints,0.0,
-			  addDist)/numberOfPoints;
+              addDist)/numberOfPoints;
       
       count++;
       }
@@ -539,18 +539,18 @@ static void vtkLTSPolynomialITExecute(vtkLTSPolynomialIT *self,
 
 template <class T1,class T2>
 static void vtkLTSPolynomialITExecute2(vtkLTSPolynomialIT *self,
-				      vtkImageData *in1Data, T1 *in1Ptr,
-				      vtkImageData *in2Data, T2 *in2Ptr,
-				      vtkImageData *in3Data, unsigned char *in3Ptr,
-				      float** Alphas)
+                      vtkImageData *in1Data, T1 *in1Ptr,
+                      vtkImageData *in2Data, T2 *in2Ptr,
+                      vtkImageData *in3Data, unsigned char *in3Ptr,
+                      float** Alphas)
 {
   for(int c=0; c < self->GetNumberOfFunctions(); ++c)
     {
     vtkLTSPolynomialITExecute(self,
-			      in1Data,in1Ptr++,
-			      in2Data,in2Ptr++,
-			      in3Data,in3Ptr,
-			      Alphas[c]);
+                  in1Data,in1Ptr++,
+                  in2Data,in2Ptr++,
+                  in3Data,in3Ptr,
+                  Alphas[c]);
     }
 }
 
@@ -564,10 +564,10 @@ static void vtkLTSPolynomialITExecute1(vtkLTSPolynomialIT *self,
   switch (in2Data->GetScalarType())
     {
     vtkTemplateMacro8(vtkLTSPolynomialITExecute2,
-		      self,in1Data, in1Ptr, 
-		      in2Data, (VTK_TT *)(in2Ptr),
-		      in3Data, in3Ptr,
-		      Alphas);
+              self,in1Data, in1Ptr, 
+              in2Data, (VTK_TT *)(in2Ptr),
+              in3Data, in3Ptr,
+              Alphas);
     default:
       vtkGenericWarningMacro(<< "Execute: Unknown ScalarType");
       return;
@@ -605,8 +605,8 @@ void vtkLTSPolynomialIT::InternalUpdate()
   if (this->Mask && this->Mask->GetScalarType() != VTK_UNSIGNED_CHAR)
     {
     vtkErrorMacro(<< "Execute: Mask ScalarType, "
-		  <<  this->Target->GetScalarType()
-		  << ", must be VTK_UNSIGNED_CHAR ");
+          <<  this->Target->GetScalarType()
+          << ", must be VTK_UNSIGNED_CHAR ");
     return;
     }
   
@@ -614,17 +614,17 @@ void vtkLTSPolynomialIT::InternalUpdate()
       this->Source->GetNumberOfScalarComponents())
     {
     vtkErrorMacro(<< "Execute: Target NumberOfScalarComponents, "
-		  << this->Target->GetNumberOfScalarComponents()
-		  << ", must be equal to Source NumberOfScalarComponents, "
-		  << this->Source->GetNumberOfScalarComponents());
+          << this->Target->GetNumberOfScalarComponents()
+          << ", must be equal to Source NumberOfScalarComponents, "
+          << this->Source->GetNumberOfScalarComponents());
     return;
     }
   
   if (this->Mask && this->Mask->GetNumberOfScalarComponents() != 1)
     {
     vtkErrorMacro(<< "Execute: Mask NumberOfScalarComponents, "
-		  << this->Target->GetNumberOfScalarComponents()
-		  << ", must be 1");
+          << this->Target->GetNumberOfScalarComponents()
+          << ", must be 1");
     return;
     }
     
@@ -632,19 +632,19 @@ void vtkLTSPolynomialIT::InternalUpdate()
      this->Target->GetNumberOfScalarComponents())
     {
     vtkErrorMacro(<< "Execute: Target NumberOfScalarComponents, "
-		  << this->Target->GetNumberOfScalarComponents()
-		  << ", must smaller or equal to number of functions, "
-		  << this->GetNumberOfFunctions());
+          << this->Target->GetNumberOfScalarComponents()
+          << ", must smaller or equal to number of functions, "
+          << this->GetNumberOfFunctions());
     return;
     }
 
   switch (this->Target->GetScalarType())
     {
     vtkTemplateMacro8(vtkLTSPolynomialITExecute1,
-		      this,this->Target, (VTK_TT *)(inPtr1), 
-		      this->Source, inPtr2,
-		      this->Mask, inPtr3,
-		      this->Alphas);
+              this,this->Target, (VTK_TT *)(inPtr1), 
+              this->Source, inPtr2,
+              this->Mask, inPtr3,
+              this->Alphas);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;

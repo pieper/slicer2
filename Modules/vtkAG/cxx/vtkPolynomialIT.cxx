@@ -12,7 +12,7 @@ vtkPolynomialIT* vtkPolynomialIT::New()
     return (vtkPolynomialIT*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  return new vtkPolynomialIT;
+//   return new vtkPolynomialIT;
 }
 
 vtkPolynomialIT::vtkPolynomialIT()

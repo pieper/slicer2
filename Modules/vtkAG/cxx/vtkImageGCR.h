@@ -74,10 +74,10 @@ protected:
   float MinimizeWithAffineTransform(float* p);
   
   bool TrilinearInterpolation(float *point,unsigned char *inPtr,
-			      int inExt[6], int inInc[3],unsigned char& q);
+                  int inExt[6], int inInc[3],unsigned char& q);
   bool TrilinearWeights(float *point,unsigned char *inPtr,int inExt[6],
-			int inInc[3], unsigned char p[2][2][2],
-			float w[2][2][2]);
+            int inInc[3], unsigned char p[2][2][2],
+            float w[2][2][2]);
       
   vtkImageData* Target;
   vtkImageData* Source;
@@ -95,11 +95,11 @@ protected:
 
 private:
   void ComputeWithTrilinearInterpolation(float* point,unsigned char* tptr,
-					 unsigned char* sptr,int* ext,
-					 int* inc,float jh[256][256]);
+                     unsigned char* sptr,int* ext,
+                     int* inc,float jh[256][256]);
   void ComputeWithPVInterpolation(float* point,unsigned char* tptr,
-				  unsigned char* sptr,int* ext,int* inc,
-				  float jh[256][256]);
+                  unsigned char* sptr,int* ext,int* inc,
+                  float jh[256][256]);
   
   //BTX
   void (vtkImageGCR::* InterpolationFunction)
@@ -111,16 +111,16 @@ private:
   // from NR
   //BTX
   float brent(float ax,float bx,float cx,
-	      float (vtkImageGCR::*f)(float),
-	      float tol,float* xmin);
+          float (vtkImageGCR::*f)(float),
+          float tol,float* xmin);
   float f1dim(float x);
   void mnbrak(float* ax,float* bx,float* cx,float* fa,float* fb,float* fc,
-	      float (vtkImageGCR::*func)(float));
+          float (vtkImageGCR::*func)(float));
   void linmin(float* p,float* xi,int n,float* fret,
-	      float (vtkImageGCR::*func)(float*));
+          float (vtkImageGCR::*func)(float*));
   void powell(float* p,float** xi,int n,
-	      float ftol,int* iter,
-	      float* fret,float (vtkImageGCR::*func)(float*));
+          float ftol,int* iter,
+          float* fret,float (vtkImageGCR::*func)(float*));
 
   float* vector(int nl,int nh);
   float** matrix(int nrl,int nrh,int ncl,int nch);

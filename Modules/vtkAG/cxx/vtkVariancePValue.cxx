@@ -60,7 +60,7 @@ vtkImageData* vtkVariancePValue::GetSigma1()
     }
   
   vtkDebugMacro(<< this->GetClassName() << " (" << this << "): returning Source of "
-		<< this->Inputs[0]);
+        << this->Inputs[0]);
   return (vtkImageData *)(this->Inputs[0]);
 }
 
@@ -72,7 +72,7 @@ vtkImageData* vtkVariancePValue::GetSigma2()
     }
   
   vtkDebugMacro(<< this->GetClassName() << " (" << this << "): returning Source of "
-		<< this->Inputs[1]);
+        << this->Inputs[1]);
   return (vtkImageData *)(this->Inputs[1]);
 }
 
@@ -140,8 +140,8 @@ static void vtkVariancePValueExecute(vtkVariancePValue *self,
       {
       for( x = outExt[0]; x <= outExt[1] ; ++x)
 
-	  
-	  {
+      
+      {
         A1[0][0]=         N1 * *in1Ptr++;
         A1[0][1]=A1[1][0]=N1 * *in1Ptr++;
         A1[0][2]=A1[2][0]=N1 * *in1Ptr++;
@@ -170,9 +170,9 @@ static void vtkVariancePValueExecute(vtkVariancePValue *self,
 //         A2[1][2]=A2[2][1]=N2 * 0;
 //         A2[2][2]=         N2 * 1.1;
 
-		// Modified by Liu
+        // Modified by Liu
         //for(int i=0;i<3;++i)
-		for( i=0;i<3;++i)
+        for( i=0;i<3;++i)
           {
           A[i][0]=A1[i][0]+A2[i][0];
           A[i][1]=A1[i][1]+A2[i][1];
@@ -201,10 +201,10 @@ static void vtkVariancePValueExecute(vtkVariancePValue *self,
 //         printf("\n");
 
         dA=1;
-		// Modified by Liu
+        // Modified by Liu
         //for(int i=0;i<3;++i)
         for(i=0;i<3;++i)  
-		{
+        {
           if(w[i]<0)
             {
             dA=0;
@@ -260,7 +260,7 @@ static void vtkVariancePValueExecute(vtkVariancePValue *self,
 //           printf("v1 %lg \n",V1);
 //Modified by Liu
 #ifdef WIN32
-		  if (_isnan(V1))
+          if (_isnan(V1))
 #else
 
           if(isnan(V1))
@@ -286,14 +286,14 @@ static void vtkVariancePValueExecute(vtkVariancePValue *self,
             *outPtr=0;
             }
           else if(V1==0)
-	    {
+        {
 //             printf("%lg\n",V1);
 //             printf("%lg %lg %lg\n",vtkMath::Determinant3x3(A1),n1/2.,pow(vtkMath::Determinant3x3(A1),n1/2.));
 //             printf("%lg %lg %lg\n",vtkMath::Determinant3x3(A2),n2/2.,pow(vtkMath::Determinant3x3(A2),n2/2.));
 //             printf("%lg %lg %lg\n",dA,n/2.,pow(dA,n/2.));
 //             exit(0);
             *outPtr=0;
-	    }
+        }
           else
             {
             //l1s=V1*pow(n,p*n/2.)/(pow(n1,p*n1/2.)*pow(n2,p*n2/2.));
@@ -311,7 +311,7 @@ static void vtkVariancePValueExecute(vtkVariancePValue *self,
 //             exit(0);
             }
           
-	  outPtr++;
+      outPtr++;
           }
         else
           {
@@ -319,7 +319,7 @@ static void vtkVariancePValueExecute(vtkVariancePValue *self,
 //           exit(0);
           *outPtr++=0;
           }
-	}
+    }
       outPtr += outIncY;
       in1Ptr += in1IncY;
       in2Ptr += in2IncY;
@@ -332,8 +332,8 @@ static void vtkVariancePValueExecute(vtkVariancePValue *self,
 }
 
 void vtkVariancePValue::ThreadedExecute(vtkImageData **inData, 
-					vtkImageData *outData,
-					int outExt[6], int id)
+                    vtkImageData *outData,
+                    int outExt[6], int id)
 {
   float *inPtr1;
   float *inPtr2;

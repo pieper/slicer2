@@ -12,7 +12,7 @@ vtkPWConstantIT* vtkPWConstantIT::New()
     return (vtkPWConstantIT*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  return new vtkPWConstantIT;
+  //  return new vtkPWConstantIT;
 }
 
 vtkPWConstantIT::vtkPWConstantIT()
@@ -151,7 +151,7 @@ void vtkPWConstantIT::BuildFunctions()
 void vtkPWConstantIT::PrintSelf(ostream& os, vtkIndent indent)
 {
   //Modified by Liu
-	int i;
+    int i;
 
   vtkIntensityTransform::PrintSelf(os, indent);
   os << indent << "NumberOfPieces: " << this->NumberOfPieces << " = ";
@@ -168,10 +168,10 @@ void vtkPWConstantIT::PrintSelf(ostream& os, vtkIndent indent)
   for( i=0;i<this->NumFuncs;++i)
     {
     os << indent << "Boundaries[" << i << "]: " << this->Boundaries[i] << " = ";
-	// Modified by Liu
-	int j;
+    // Modified by Liu
+    int j;
     //for(int j=0;j<this->NumberOfPieces[i]-1;++j)
-	for( j=0;j<this->NumberOfPieces[i]-1;++j)
+    for( j=0;j<this->NumberOfPieces[i]-1;++j)
       {
       os << indent << this->Boundaries[i][j] << " ";
       }
@@ -179,8 +179,8 @@ void vtkPWConstantIT::PrintSelf(ostream& os, vtkIndent indent)
 
     os << indent << "Values[" << i << "]: " << this->Values[i]<<" = ";
     //Modified by Liu
-	//for(int j=0;j<this->NumberOfPieces[i];++j)
-	for( j=0;j<this->NumberOfPieces[i];++j)
+    //for(int j=0;j<this->NumberOfPieces[i];++j)
+    for( j=0;j<this->NumberOfPieces[i];++j)
       {
       os << indent << this->Values[i][j] << " ";
       }
@@ -197,9 +197,9 @@ int vtkPWConstantIT::FunctionValues(float* x,float* f)
     for(j=0;j<this->NumberOfPieces[i]-1;++j)
       {
       if(xx<this->Boundaries[i][j])
-	{
-	break;
-	}
+    {
+    break;
+    }
       }
     *f++=this->Values[i][j];
     }

@@ -28,10 +28,10 @@ void vtkINRWriter::WriteFileHeader(ofstream *file, vtkImageData *cache)
   
   int* dims=cache->GetDimensions();
   *file << "#INRIMAGE-4#{" << endl
-	<< "XDIM=" << dims[0] << endl
-	<< "YDIM=" << dims[1] << endl
-	<< "ZDIM=" << dims[2] << endl
-	<< "VDIM=" << cache->GetNumberOfScalarComponents() << endl;
+    << "XDIM=" << dims[0] << endl
+    << "YDIM=" << dims[1] << endl
+    << "ZDIM=" << dims[2] << endl
+    << "VDIM=" << cache->GetNumberOfScalarComponents() << endl;
   
   switch(cache->GetScalarType())
     {
@@ -92,10 +92,10 @@ void vtkINRWriter::WriteFileHeader(ofstream *file, vtkImageData *cache)
 
   if(this->WritePixelSizes)
     {
-    float* spa = cache->GetSpacing();
+    vtkFloatingPointType* spa = cache->GetSpacing();
     *file << "VX=" << spa[0] << endl
-	  << "VY=" << spa[1] << endl
-	  << "VZ=" << spa[2] << endl;
+      << "VY=" << spa[1] << endl
+      << "VZ=" << spa[2] << endl;
     }
   
   int fill=252-file->tellp();

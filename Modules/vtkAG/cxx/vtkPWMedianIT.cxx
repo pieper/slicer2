@@ -28,7 +28,7 @@ vtkPWMedianIT* vtkPWMedianIT::New()
     return (vtkPWMedianIT*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  return new vtkPWMedianIT;
+  //  return new vtkPWMedianIT;
 }
 
 vtkPWMedianIT::vtkPWMedianIT()
@@ -46,13 +46,13 @@ void vtkPWMedianIT::PrintSelf(ostream& os, vtkIndent indent)
 
 template <class T>
 static void vtkPWMedianITExecute(vtkPWMedianIT *self,
-				 vtkImageData *in1Data,
-				 vtkImageData *in2Data,
-				 vtkImageData *in3Data, T *in3Ptr,
-				 int comp)
+                 vtkImageData *in1Data,
+                 vtkImageData *in2Data,
+                 vtkImageData *in3Data, T *in3Ptr,
+                 int comp)
 {
-  float* range1=in1Data->GetScalarRange();
-  float* range2=in2Data->GetScalarRange();
+  vtkFloatingPointType* range1=in1Data->GetScalarRange();
+  vtkFloatingPointType* range2=in2Data->GetScalarRange();
   int maxj=int(range1[1]-range1[0]+0.5);
   int maxi=int(range2[1]-range2[0]+0.5);
     
@@ -74,7 +74,7 @@ static void vtkPWMedianITExecute(vtkPWMedianIT *self,
   if(self->GetNumberOfPieces(comp)<=1)
     {
     vtkGenericWarningMacro(<<"Defining only one piece doesn't make sense."
-			   " It is set to 0.");
+               " It is set to 0.");
     }
   else
     {
@@ -84,25 +84,25 @@ static void vtkPWMedianITExecute(vtkPWMedianIT *self,
       {
       // set high bound
       if(f==self->GetNumberOfPieces(comp)-1)
-	{
-	// if last piece, to more than max intensity (exclusive bounds)
-	high=maxi+1;
-	}
+    {
+    // if last piece, to more than max intensity (exclusive bounds)
+    high=maxi+1;
+    }
       else
-	{
-	high=int((self->GetBoundary(comp,f)-range2[0]+0.5)/1.0);
-	}
+    {
+    high=int((self->GetBoundary(comp,f)-range2[0]+0.5)/1.0);
+    }
       
       int diff=high-low;
       int* ptr1=ptr+low;
       
       int sum=0;
       
-	  // Modified by Liu
-	  //int partial[maxj];
-	  int* partial = NULL;
-	  if ( maxj > 0) 
-		  partial = new int[maxj];
+      // Modified by Liu
+      //int partial[maxj];
+      int* partial = NULL;
+      if ( maxj > 0) 
+          partial = new int[maxj];
 
 
 
@@ -111,16 +111,16 @@ static void vtkPWMedianITExecute(vtkPWMedianIT *self,
       // compute sum and partial sums
       int ext=maxi-diff+1;
       for(int j=0;j<maxj;++j)
-	{
-	int sum2=0;
-	for(int i=low;i<high;++i)
-	  {
-	  sum2+=*ptr1++;
-	  }
-	sum+=sum2;
-	partial[j]=sum;
-	ptr1+=ext;
-	}
+    {
+    int sum2=0;
+    for(int i=low;i<high;++i)
+      {
+      sum2+=*ptr1++;
+      }
+    sum+=sum2;
+    partial[j]=sum;
+    ptr1+=ext;
+    }
       
       // find median
       int median=std::find_if(partial,partial+maxj,
@@ -128,10 +128,10 @@ static void vtkPWMedianITExecute(vtkPWMedianIT *self,
       self->SetValue(comp,f,median);
       
       low=high;
-	  // Modified by Liu
-	  //int partial[maxj];
-	  if ( partial != NULL)
-		  delete[] partial ;
+      // Modified by Liu
+      //int partial[maxj];
+      if ( partial != NULL)
+          delete[] partial ;
 
       }
     }
@@ -142,9 +142,9 @@ static void vtkPWMedianITExecute(vtkPWMedianIT *self,
 
 template <class T>
 static void vtkPWMedianITExecute(vtkPWMedianIT *self,
-				 vtkImageData *in1Data,
-				 vtkImageData *in2Data,
-				 vtkImageData *in3Data, T *in3Ptr)
+                 vtkImageData *in1Data,
+                 vtkImageData *in2Data,
+                 vtkImageData *in3Data, T *in3Ptr)
 {
   vtkImageExtractComponents* c1=vtkImageExtractComponents::New();
   vtkImageExtractComponents* c2=vtkImageExtractComponents::New();
@@ -190,9 +190,9 @@ void vtkPWMedianIT::InternalUpdate()
   if (this->Target->GetScalarType() != Source->GetScalarType())
     {
     vtkErrorMacro(<< "Execute: Target ScalarType, "
-		  <<  this->Target->GetScalarType()
-		  << ", must match Source ScalarType "
-		  << Source->GetScalarType());
+          <<  this->Target->GetScalarType()
+          << ", must match Source ScalarType "
+          << Source->GetScalarType());
     return;
     }
       
@@ -200,9 +200,9 @@ void vtkPWMedianIT::InternalUpdate()
       this->Source->GetNumberOfScalarComponents())
     {
     vtkErrorMacro(<< "Execute: Target NumberOfScalarComponents, "
-		  << this->Target->GetNumberOfScalarComponents()
-		  << ", must be equal to Source NumberOfScalarComponents, "
-		  << this->Source->GetNumberOfScalarComponents());
+          << this->Target->GetNumberOfScalarComponents()
+          << ", must be equal to Source NumberOfScalarComponents, "
+          << this->Source->GetNumberOfScalarComponents());
     return;
     }
     
@@ -210,17 +210,17 @@ void vtkPWMedianIT::InternalUpdate()
      this->Target->GetNumberOfScalarComponents())
     {
     vtkErrorMacro(<< "Execute: Target NumberOfScalarComponents, "
-		  << this->Target->GetNumberOfScalarComponents()
-		  << ", must smaller or equal to number of functions, "
-		  << this->GetNumberOfFunctions());
+          << this->Target->GetNumberOfScalarComponents()
+          << ", must smaller or equal to number of functions, "
+          << this->GetNumberOfFunctions());
     return;
     }
 
   switch (this->Target->GetScalarType())
     {
     vtkTemplateMacro5(vtkPWMedianITExecute,
-		      this,this->Target, this->Source,
-		      this->Mask, (VTK_TT *)(inPtr3));
+              this,this->Target, this->Source,
+              this->Mask, (VTK_TT *)(inPtr3));
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;

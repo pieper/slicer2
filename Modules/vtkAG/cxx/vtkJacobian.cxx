@@ -35,13 +35,13 @@ void vtkJacobian::PrintSelf(ostream& os, vtkIndent indent)
 
 template <class T>
 static void vtkJacobianExecute(vtkJacobian *self,
-			       vtkImageData *inData, T *inPtr,
-			       vtkImageData *outData, float *outPtr,
-			       int outExt[6], int id)
+                   vtkImageData *inData, T *inPtr,
+                   vtkImageData *outData, float *outPtr,
+                   int outExt[6], int id)
 {
   int inIncX, inIncY, inIncZ;
   int outIncX, outIncY, outIncZ;
-  float* spa=outData->GetSpacing();
+  vtkFloatingPointType* spa=outData->GetSpacing();
 
   // Get increments to march through data 
   inData->GetContinuousIncrements(outExt, inIncX, inIncY, inIncZ);
@@ -59,26 +59,26 @@ static void vtkJacobianExecute(vtkJacobian *self,
       int yp = y == outExt[2] ? 0 : -inIncs[1];
       int ya = y == outExt[3] ? 0 : inIncs[1];
       for(int x = outExt[0]; x <= outExt[1] ; ++x)
-	{
-	float A[3][3];
-	
-	// Pixel operation
-	// Get gradient
-	int xp = x == outExt[0] ? 0 : -inIncs[0];
-	int xa = x == outExt[1] ? 0 : inIncs[0];
+    {
+    float A[3][3];
+    
+    // Pixel operation
+    // Get gradient
+    int xp = x == outExt[0] ? 0 : -inIncs[0];
+    int xa = x == outExt[1] ? 0 : inIncs[0];
 
-	for(int c = 0; c < 3; ++c)
-	  {
-	  A[c][0] = (float(inPtr[xa]) - float(inPtr[xp])) / (2*spa[0]);
-	  A[c][1] = (float(inPtr[ya]) - float(inPtr[yp])) / (2*spa[1]);
-	  A[c][2] = (float(inPtr[za]) - float(inPtr[zp])) / (2*spa[2]);
-	  A[c][c] += 1;
-	  ++inPtr;
-	  }
-	*outPtr=vtkMath::Determinant3x3(A);
-	
-	++outPtr;
-	}
+    for(int c = 0; c < 3; ++c)
+      {
+      A[c][0] = (float(inPtr[xa]) - float(inPtr[xp])) / (2*spa[0]);
+      A[c][1] = (float(inPtr[ya]) - float(inPtr[yp])) / (2*spa[1]);
+      A[c][2] = (float(inPtr[za]) - float(inPtr[zp])) / (2*spa[2]);
+      A[c][c] += 1;
+      ++inPtr;
+      }
+    *outPtr=vtkMath::Determinant3x3(A);
+    
+    ++outPtr;
+    }
       outPtr += outIncY;
       inPtr += inIncY;
       }
@@ -88,7 +88,7 @@ static void vtkJacobianExecute(vtkJacobian *self,
 }
 
 void vtkJacobian::ThreadedExecute(vtkImageData *inData, vtkImageData *outData,
-				  int extent[6], int id)
+                  int extent[6], int id)
 {
   vtkDebugMacro(<< "ExecuteData: inData = " << inData 
   << ", outData = " << outData);

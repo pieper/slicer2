@@ -39,7 +39,7 @@ vtkDeformTensors::~vtkDeformTensors()
 //----------------------------------------------------------------------------
 // The output extent is the intersection.
 void vtkDeformTensors::ExecuteInformation(vtkImageData **inDatas, 
-					   vtkImageData *outData)
+                       vtkImageData *outData)
 {
   vtkDebugMacro("ExecuteInformation");
   vtkImageMultipleInputFilter::ExecuteInformation(inDatas,outData);
@@ -53,7 +53,7 @@ vtkImageData* vtkDeformTensors::GetTensors()
     }
 
   vtkDebugMacro(<< this->GetClassName() << " (" << this << "): returning input of "
-		<< this->Inputs[0]);
+        << this->Inputs[0]);
   return (vtkImageData *)(this->Inputs[0]);
 }
 
@@ -65,15 +65,15 @@ vtkImageData* vtkDeformTensors::GetDisplacements()
     }
   
   vtkDebugMacro(<< this->GetClassName() << " (" << this << "): returning input of "
-		<< this->Inputs[1]);
+        << this->Inputs[1]);
   return (vtkImageData *)(this->Inputs[1]);
 }
 
 static void vtkDeformTensorsExecute(vtkDeformTensors *self,
-				     vtkImageData *in1Data, float *in1Ptr,
-				     vtkImageData *in2Data, float *in2Ptr,
-				     vtkImageData *outData, float *outPtr,
-				     int outExt[6])
+                     vtkImageData *in1Data, float *in1Ptr,
+                     vtkImageData *in2Data, float *in2Ptr,
+                     vtkImageData *outData, float *outPtr,
+                     int outExt[6])
 {
 //   Write(in1Data,"/tmp/1.vtk");
 //   Write(in2Data,"/tmp/2.vtk");
@@ -89,7 +89,7 @@ static void vtkDeformTensorsExecute(vtkDeformTensors *self,
 
   int* in2Incs = in2Data->GetIncrements(); 
 
-  float* spa=in2Data->GetSpacing();
+  vtkFloatingPointType* spa=in2Data->GetSpacing();
   float F[3][3];
   float Ft[3][3];
   float A[3][3];
@@ -106,9 +106,9 @@ static void vtkDeformTensorsExecute(vtkDeformTensors *self,
       int yp = y == outExt[2] ? 0 : -in2Incs[1];
       int ya = y == outExt[3] ? 0 : in2Incs[1];
       for(int x = outExt[0]; x <= outExt[1] ; ++x)
-	{
-	int xp = x == outExt[0] ? 0 : -in2Incs[0];
-	int xa = x == outExt[1] ? 0 : in2Incs[0];
+    {
+    int xp = x == outExt[0] ? 0 : -in2Incs[0];
+    int xa = x == outExt[1] ? 0 : in2Incs[0];
 
         // Pixel operation
         // Get tensor
@@ -119,15 +119,15 @@ static void vtkDeformTensorsExecute(vtkDeformTensors *self,
         A[2][1]=A[1][2]=*in1Ptr++;
         A[2][2]=A[2][2]=*in1Ptr++;
         
-	// Get Jacobian
-	for(int c = 0; c < 3; ++c)
-	  {
-	  F[c][0] = (float(in2Ptr[xa]) - float(in2Ptr[xp])) / (2*spa[0]);
-	  F[c][1] = (float(in2Ptr[ya]) - float(in2Ptr[yp])) / (2*spa[1]);
-	  F[c][2] = (float(in2Ptr[za]) - float(in2Ptr[zp])) / (2*spa[2]);
-	  F[c][c] += 1;
-	  ++in2Ptr;
-	  }
+    // Get Jacobian
+    for(int c = 0; c < 3; ++c)
+      {
+      F[c][0] = (float(in2Ptr[xa]) - float(in2Ptr[xp])) / (2*spa[0]);
+      F[c][1] = (float(in2Ptr[ya]) - float(in2Ptr[yp])) / (2*spa[1]);
+      F[c][2] = (float(in2Ptr[za]) - float(in2Ptr[zp])) / (2*spa[2]);
+      F[c][c] += 1;
+      ++in2Ptr;
+      }
 
         if(self->GetMode()==VTK_DEFORMTENSOR_SCALE)
           {
@@ -149,16 +149,16 @@ static void vtkDeformTensorsExecute(vtkDeformTensors *self,
           }
 
         vtkMath::Transpose3x3(F,Ft);
-	vtkMath::Multiply3x3(Ft,A,A);
-	vtkMath::Multiply3x3(A,F,A);
+    vtkMath::Multiply3x3(Ft,A,A);
+    vtkMath::Multiply3x3(A,F,A);
         
-	*outPtr++=A[0][0];
-	*outPtr++=A[0][1];
-	*outPtr++=A[0][2];
-	*outPtr++=A[1][1];
-	*outPtr++=A[1][2];
-	*outPtr++=A[2][2];
-	}
+    *outPtr++=A[0][0];
+    *outPtr++=A[0][1];
+    *outPtr++=A[0][2];
+    *outPtr++=A[1][1];
+    *outPtr++=A[1][2];
+    *outPtr++=A[2][2];
+    }
       outPtr += outIncY;
       in1Ptr += in1IncY;
       in2Ptr += in2IncY;
@@ -172,8 +172,8 @@ static void vtkDeformTensorsExecute(vtkDeformTensors *self,
 }
 
 void vtkDeformTensors::ThreadedExecute(vtkImageData **inData, 
-					vtkImageData *outData,
-					int outExt[6], int id)
+                    vtkImageData *outData,
+                    int outExt[6], int id)
 {
   void *inPtr1;
   void *inPtr2;

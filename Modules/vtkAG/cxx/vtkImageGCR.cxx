@@ -739,10 +739,10 @@ float vtkImageGCR::Compute()
         << tExt[2] << " " << tExt[3] << " "
         << tExt[4] << " " << tExt[5]);
   
-  float* tOrigin = this->WorkTarget->GetOrigin();
-  float* tSpacing = this->WorkTarget->GetSpacing();
-  float* sOrigin = this->WorkSource->GetOrigin();
-  float* sSpacing = this->WorkSource->GetSpacing();
+  vtkFloatingPointType* tOrigin = this->WorkTarget->GetOrigin();
+  vtkFloatingPointType* tSpacing = this->WorkTarget->GetSpacing();
+  vtkFloatingPointType* sOrigin = this->WorkSource->GetOrigin();
+  vtkFloatingPointType* sSpacing = this->WorkSource->GetSpacing();
   float sInvSpacing[3];
   sInvSpacing[0] = 1.0f/sSpacing[0];
   sInvSpacing[1] = 1.0f/sSpacing[1];

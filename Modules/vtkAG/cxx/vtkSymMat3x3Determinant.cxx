@@ -29,16 +29,16 @@ void vtkSymMat3x3Determinant::PrintSelf(ostream& os, vtkIndent indent)
 }
 
 void vtkSymMat3x3Determinant::ExecuteInformation(vtkImageData *inData,
-						 vtkImageData *outData)
+                         vtkImageData *outData)
 {
   outData->SetNumberOfScalarComponents(1);
 }
 
 template <class T>
 void vtkSymMat3x3DeterminantExecute(vtkSymMat3x3Determinant *self,
-				 vtkImageData *inData, T *inPtr,
-				 vtkImageData *outData, T *outPtr,
-				 int extent[6], int id)
+                 vtkImageData *inData, T *inPtr,
+                 vtkImageData *outData, T *outPtr,
+                 int extent[6], int id)
 {
   int inIncX, inIncY, inIncZ;
   int outIncX, outIncY, outIncZ;
@@ -51,18 +51,18 @@ void vtkSymMat3x3DeterminantExecute(vtkSymMat3x3Determinant *self,
     for (int idxY = extent[2]; !self->AbortExecute && idxY <= extent[3]; ++idxY)
       {
       for (int idxX = extent[0]; idxX <= extent[1] ; ++idxX)
-	{
-	v1=*inPtr++;
-	v2=*inPtr++;
-	v3=*inPtr++;
-	v4=*inPtr++;
-	v5=*inPtr++;
-	v6=*inPtr++;
-	
-	*outPtr++=T(vtkMath::Determinant3x3(v1,v2,v3,
-					    v2,v4,v5,
-					    v3,v5,v6));
-	}
+    {
+    v1=*inPtr++;
+    v2=*inPtr++;
+    v3=*inPtr++;
+    v4=*inPtr++;
+    v5=*inPtr++;
+    v6=*inPtr++;
+    
+    *outPtr++=T(vtkMath::Determinant3x3(v1,v2,v3,
+                        v2,v4,v5,
+                        v3,v5,v6));
+    }
       inPtr += inIncY;
       outPtr += outIncY;
       }
@@ -121,9 +121,9 @@ void vtkSymMat3x3Determinant::ThreadedExecute(vtkImageData *inData,
   switch (inData->GetScalarType())
     {
     vtkTemplateMacro7(vtkSymMat3x3DeterminantExecute,this,
-		      inData, (VTK_TT *)(inPtr), 
-		      outData, (VTK_TT *)(outPtr),
-		      extent,id);
+              inData, (VTK_TT *)(inPtr), 
+              outData, (VTK_TT *)(outPtr),
+              extent,id);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;

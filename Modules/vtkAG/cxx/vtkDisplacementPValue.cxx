@@ -55,7 +55,7 @@ vtkImageData* vtkDisplacementPValue::GetMean()
     }
 
   vtkDebugMacro(<< this->GetClassName() << " (" << this << "): returning Target of "
-		<< this->Inputs[0]);
+        << this->Inputs[0]);
   return (vtkImageData *)(this->Inputs[0]);
 }
 
@@ -67,7 +67,7 @@ vtkImageData* vtkDisplacementPValue::GetSigma()
     }
   
   vtkDebugMacro(<< this->GetClassName() << " (" << this << "): returning Source of "
-		<< this->Inputs[1]);
+        << this->Inputs[1]);
   return (vtkImageData *)(this->Inputs[1]);
 }
 
@@ -79,7 +79,7 @@ vtkImageData* vtkDisplacementPValue::GetDisplacement()
     }
   
   vtkDebugMacro(<< this->GetClassName() << " (" << this << "): returning Mask of "
-		<< this->Inputs[2]);
+        << this->Inputs[2]);
   return (vtkImageData *)(this->Inputs[2]);
 }
 
@@ -114,7 +114,7 @@ static void vtkDisplacementPValueExecute(vtkDisplacementPValue *self,
     for(int y = outExt[2]; !self->AbortExecute && y <= outExt[3]; ++y)
       {
       for(int x = outExt[0]; x <= outExt[1] ; ++x)
-	{
+    {
         V[0]=*in1Ptr++ - *in3Ptr++;
         V[1]=*in1Ptr++ - *in3Ptr++;
         V[2]=*in1Ptr++ - *in3Ptr++;
@@ -137,7 +137,7 @@ static void vtkDisplacementPValueExecute(vtkDisplacementPValue *self,
         // which is equivalent to
         // betai((N-3)/2.,3/2.,(N-3)/(N-3+3*F))
         *outPtr++=gsl_sf_beta_inc((N-3)/2.,3/2.,(N-3)/(N-3+3*F));
-	}
+    }
       outPtr += outIncY;
       in1Ptr += in1IncY;
       in2Ptr += in2IncY;
@@ -152,8 +152,8 @@ static void vtkDisplacementPValueExecute(vtkDisplacementPValue *self,
 }
 
 void vtkDisplacementPValue::ThreadedExecute(vtkImageData **inData, 
-					vtkImageData *outData,
-					int outExt[6], int id)
+                    vtkImageData *outData,
+                    int outExt[6], int id)
 {
   float *inPtr1;
   float *inPtr2;

@@ -57,7 +57,7 @@ vtkImageData* vtkDistributionPValue::GetMean1()
     }
 
   vtkDebugMacro(<< this->GetClassName() << " (" << this << "): returning Target of "
-		<< this->Inputs[0]);
+        << this->Inputs[0]);
   return (vtkImageData *)(this->Inputs[0]);
 }
 
@@ -69,7 +69,7 @@ vtkImageData* vtkDistributionPValue::GetSigma1()
     }
   
   vtkDebugMacro(<< this->GetClassName() << " (" << this << "): returning Source of "
-		<< this->Inputs[1]);
+        << this->Inputs[1]);
   return (vtkImageData *)(this->Inputs[1]);
 }
 
@@ -81,7 +81,7 @@ vtkImageData* vtkDistributionPValue::GetMean2()
     }
 
   vtkDebugMacro(<< this->GetClassName() << " (" << this << "): returning Target of "
-		<< this->Inputs[2]);
+        << this->Inputs[2]);
   return (vtkImageData *)(this->Inputs[2]);
 }
 
@@ -93,7 +93,7 @@ vtkImageData* vtkDistributionPValue::GetSigma2()
     }
   
   vtkDebugMacro(<< this->GetClassName() << " (" << this << "): returning Source of "
-		<< this->Inputs[3]);
+        << this->Inputs[3]);
   return (vtkImageData *)(this->Inputs[3]);
 }
 
@@ -179,7 +179,7 @@ static void vtkDistributionPValueExecute(vtkDistributionPValue *self,
     for(int y = outExt[2]; !self->AbortExecute && y <= outExt[3]; ++y)
       {
       for(int x = outExt[0]; x <= outExt[1] ; ++x)
-	{
+    {
         printf("\r%d %d %d      ",z,y,x);
         fflush(stdout);
         
@@ -241,7 +241,7 @@ static void vtkDistributionPValueExecute(vtkDistributionPValue *self,
           l=1;
           }
         *outPtr++=l;
-	}
+    }
       outPtr += outIncY;
       in1Ptr += in1IncY;
       in2Ptr += in2IncY;
@@ -258,8 +258,8 @@ static void vtkDistributionPValueExecute(vtkDistributionPValue *self,
 }
 
 void vtkDistributionPValue::ThreadedExecute(vtkImageData **inData, 
-					vtkImageData *outData,
-					int outExt[6], int id)
+                    vtkImageData *outData,
+                    int outExt[6], int id)
 {
   float *inPtr1;
   float *inPtr2;

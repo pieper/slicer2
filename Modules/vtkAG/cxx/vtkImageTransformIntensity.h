@@ -28,7 +28,7 @@ protected:
   vtkImageTransformIntensity(const vtkImageTransformIntensity&) {}
   void operator=(const vtkImageTransformIntensity&) {}
   void ThreadedExecute(vtkImageData *inDatas, vtkImageData *outData,
-		       int extent[6], int id);
+               int extent[6], int id);
       
 private:
   vtkIntensityTransform* IntensityTransform;

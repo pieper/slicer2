@@ -108,24 +108,24 @@ void vtkINRReader::ExecuteInformation()
     else if(strncmp(line,"TYPE=",5)==0)
       {
       if(strncmp(line+5,"unsigned fixed",14)==0)
-	{
-	sign = 1;
-	fixed = 1;
-	}
+    {
+    sign = 1;
+    fixed = 1;
+    }
       else if(strncmp(line+5,"signed fixed",12)==0)
-	{
-	sign = -1;
-	fixed = 1;
-	}
+    {
+    sign = -1;
+    fixed = 1;
+    }
       else if(strncmp(line+5,"float",5)==0)
-	{
-	fixed = 0;
-	}
+    {
+    fixed = 0;
+    }
       else
-	{
-	vtkErrorMacro(<<"Unsupported TYPE in " << this->InternalFileName);
-	return;
-	}
+    {
+    vtkErrorMacro(<<"Unsupported TYPE in " << this->InternalFileName);
+    return;
+    }
       }
     else if(strncmp(line,"PIXSIZE=",8)==0)
       {
@@ -137,18 +137,18 @@ void vtkINRReader::ExecuteInformation()
     else if(strncmp(line,"CPU=",4)==0)
       {
       if(strncmp(line+4,"sun",3)==0)
-	{
-	this->SetDataByteOrderToBigEndian();
-	}
+    {
+    this->SetDataByteOrderToBigEndian();
+    }
       else if(strncmp(line+4,"decm",4)==0)
-	{
-	this->SetDataByteOrderToLittleEndian();
-	}
+    {
+    this->SetDataByteOrderToLittleEndian();
+    }
       else
-	{
-	vtkErrorMacro(<<"Unsupported CPU in " << this->InternalFileName);
-	return;
-	}
+    {
+    vtkErrorMacro(<<"Unsupported CPU in " << this->InternalFileName);
+    return;
+    }
       }
     else
       {
@@ -165,11 +165,11 @@ void vtkINRReader::ExecuteInformation()
       this->DataVOI[4] || this->DataVOI[5])
     { 
     if ((this->DataVOI[0] < 0) ||
-	(this->DataVOI[1] >= xsize) ||
-	(this->DataVOI[2] < 0) ||
-	(this->DataVOI[3] >= ysize) ||
-	(this->DataVOI[4] < 0) ||
-	(this->DataVOI[5] >= zsize))
+    (this->DataVOI[1] >= xsize) ||
+    (this->DataVOI[2] < 0) ||
+    (this->DataVOI[3] >= ysize) ||
+    (this->DataVOI[4] < 0) ||
+    (this->DataVOI[5] >= zsize))
       {
       vtkWarningMacro("The requested VOI is larger than the file's (" << this->InternalFileName << ") extent ");
       this->DataVOI[0] = 0;
@@ -194,70 +194,70 @@ void vtkINRReader::ExecuteInformation()
     {
     case 0:
       switch(size)
-	{
-	case 32:
-	  this->SetDataScalarTypeToFloat();
-	  break;
-	case 64:
-	  this->SetDataScalarTypeToDouble();
-	  break;
-	default:
-	  vtkErrorMacro(<<"Unsupported pixsize " << size << " in " << this->InternalFileName);
-	  return;
-	}
+    {
+    case 32:
+      this->SetDataScalarTypeToFloat();
+      break;
+    case 64:
+      this->SetDataScalarTypeToDouble();
+      break;
+    default:
+      vtkErrorMacro(<<"Unsupported pixsize " << size << " in " << this->InternalFileName);
+      return;
+    }
       break;
     case 1:
       switch(sign)
-	{
-	case -1:
-	  switch(size)
-	    {
-	    case 8:
-	      this->SetDataScalarType(2);
-	      break;
-	    case 16:
-	      this->SetDataScalarType(4);
-	      break;
-	    case 32:
-	      this->SetDataScalarType(6);
-	      break;
-	    case 64:
-	      this->SetDataScalarType(8);
-	      break;
-	    default:
-	      vtkErrorMacro(<<"Unsupported pixsize " << size << " in " << this->InternalFileName);
-	      return;
-	    }
-	  break;
-	case 1:
-	  switch(size)
-	    {
-	    case 8:
-	      this->SetDataScalarType(3);
-	      break;
-	    case 16:
-	      this->SetDataScalarType(5);
-	      break;
-	    case 32:
-	      this->SetDataScalarType(7);
-	      break;
-	    case 64:
-	      this->SetDataScalarType(9);
-	      break;
-	    default:
-	      vtkErrorMacro(<<"Unsupported pixsize " << size << " in " << this->InternalFileName);
-	      return;
-	    }
-	  break;
-	default:
-	  vtkErrorMacro(<<"Unsupported sign " << sign << " in " << this->InternalFileName);
-	  return;
-	}
+    {
+    case -1:
+      switch(size)
+        {
+        case 8:
+          this->SetDataScalarType(2);
+          break;
+        case 16:
+          this->SetDataScalarType(4);
+          break;
+        case 32:
+          this->SetDataScalarType(6);
+          break;
+        case 64:
+          this->SetDataScalarType(8);
+          break;
+        default:
+          vtkErrorMacro(<<"Unsupported pixsize " << size << " in " << this->InternalFileName);
+          return;
+        }
+      break;
+    case 1:
+      switch(size)
+        {
+        case 8:
+          this->SetDataScalarType(3);
+          break;
+        case 16:
+          this->SetDataScalarType(5);
+          break;
+        case 32:
+          this->SetDataScalarType(7);
+          break;
+        case 64:
+          this->SetDataScalarType(9);
+          break;
+        default:
+          vtkErrorMacro(<<"Unsupported pixsize " << size << " in " << this->InternalFileName);
+          return;
+        }
+      break;
+    default:
+      vtkErrorMacro(<<"Unsupported sign " << sign << " in " << this->InternalFileName);
+      return;
+    }
     }     
 
   this->SetDataOrigin((-xsize+1)/2.*vx,
-		      (-ysize+1)/2.*vy,
-		      (-zsize+1)/2.*vz);
+              (-ysize+1)/2.*vy,
+              (-zsize+1)/2.*vz);
   this->SetDataSpacing(vx,vy,vz);
   this->SetFileDimensionality(3);
   this->vtkImageReader::ExecuteInformation();

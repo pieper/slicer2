@@ -48,9 +48,9 @@ void vtkImageTransformIntensity::PrintSelf(ostream& os, vtkIndent indent)
 
 template <class T>
 void vtkImageTransformIntensityExecute(vtkImageTransformIntensity *self,
-				       vtkImageData *inData, T *inPtr,
-				       vtkImageData *outData, T *outPtr,
-				       int outExt[6], int id)
+                       vtkImageData *inData, T *inPtr,
+                       vtkImageData *outData, T *outPtr,
+                       int outExt[6], int id)
 {
   vtkIntensityTransform* f = self->GetIntensityTransform();
   if(f)
@@ -64,9 +64,9 @@ void vtkImageTransformIntensityExecute(vtkImageTransformIntensity *self,
 
   int n=inData->GetNumberOfScalarComponents();
   // float buf[n];  Modified by Liu
-  float* buf = NULL;
+  vtkFloatingPointType* buf = NULL;
   if (n > 0) 
-	  buf = new float[n];
+      buf = new vtkFloatingPointType[n];
 
 
   for (int idxZ = outExt[4]; idxZ <= outExt[5]; ++idxZ)
@@ -74,32 +74,32 @@ void vtkImageTransformIntensityExecute(vtkImageTransformIntensity *self,
     for (int idxY = outExt[2]; idxY <= outExt[3]; ++idxY)
       {
       for (int idxX = outExt[0]; idxX <= outExt[1] ; ++idxX)
-	{
-	if(f)
-	  {
-	  float* buff=buf;
-	  T* end=inPtr+n;
-	  while(inPtr!=end)
-	    {
-	    *buff++=float(*inPtr++);
-	    }
-	  f->FunctionValues(buf,buf);
-	  buff=buf;
-	  end=outPtr+n;
-	  while(outPtr!=end)
-	    {
-	    *outPtr++=T(*buff++);
-	    }
-	  }
-	else
-	  {
-	  T* end=outPtr+n;
-	  while(outPtr!=end)
-	    {
-	    *outPtr++=T(*inPtr++);
-	    }
-	  }
-	}
+    {
+    if(f)
+      {
+      vtkFloatingPointType* buff=buf;
+      T* end=inPtr+n;
+      while(inPtr!=end)
+        {
+        *buff++=vtkFloatingPointType(*inPtr++);
+        }
+      f->FunctionValues(buf,buf);
+      buff=buf;
+      end=outPtr+n;
+      while(outPtr!=end)
+        {
+        *outPtr++=T(*buff++);
+        }
+      }
+    else
+      {
+      T* end=outPtr+n;
+      while(outPtr!=end)
+        {
+        *outPtr++=T(*inPtr++);
+        }
+      }
+    }
       inPtr += inIncY;
       outPtr += outIncY;
       }
@@ -109,13 +109,13 @@ void vtkImageTransformIntensityExecute(vtkImageTransformIntensity *self,
 
   // Modified by Liu
   if (buf != NULL)
-	  delete[] buf;
+      delete[] buf;
 
 }
 
 void vtkImageTransformIntensity::ThreadedExecute(vtkImageData *inData,
-						 vtkImageData *outData,
-						 int extent[6], int id)
+                         vtkImageData *outData,
+                         int extent[6], int id)
 {
   void *inPtr;
   void *outPtr;
@@ -172,9 +172,9 @@ void vtkImageTransformIntensity::ThreadedExecute(vtkImageData *inData,
   switch (inData->GetScalarType())
     {
     vtkTemplateMacro7(vtkImageTransformIntensityExecute,
-		      this,inData, (VTK_TT *)(inPtr), 
-		      outData, (VTK_TT *)(outPtr),
-		      extent,id);
+              this,inData, (VTK_TT *)(inPtr), 
+              outData, (VTK_TT *)(outPtr),
+              extent,id);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;

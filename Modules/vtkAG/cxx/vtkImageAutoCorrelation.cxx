@@ -28,16 +28,16 @@ void vtkImageAutoCorrelation::PrintSelf(ostream& os, vtkIndent indent)
 }
 
 void vtkImageAutoCorrelation::ExecuteInformation(vtkImageData *inData,
-						 vtkImageData *outData)
+                         vtkImageData *outData)
 {
   outData->SetNumberOfScalarComponents(6);
 }
 
 template <class T>
 void vtkImageAutoCorrelationExecute(vtkImageAutoCorrelation *self,
-				    vtkImageData *inData, T *inPtr,
-				    vtkImageData *outData, T *outPtr,
-				    int extent[6], int id)
+                    vtkImageData *inData, T *inPtr,
+                    vtkImageData *outData, T *outPtr,
+                    int extent[6], int id)
 {
   int inIncX, inIncY, inIncZ;
   int outIncX, outIncY, outIncZ;
@@ -50,18 +50,18 @@ void vtkImageAutoCorrelationExecute(vtkImageAutoCorrelation *self,
     for (int idxY = extent[2]; !self->AbortExecute && idxY <= extent[3]; ++idxY)
       {
       for (int idxX = extent[0]; idxX <= extent[1] ; ++idxX)
-	{
-	x=*inPtr++;
-	y=*inPtr++;
-	z=*inPtr++;
-	
-	*outPtr++=x*x;
-	*outPtr++=x*y;
-	*outPtr++=x*z;
-	*outPtr++=y*y;
-	*outPtr++=y*z;
-	*outPtr++=z*z;
-	}
+    {
+    x=*inPtr++;
+    y=*inPtr++;
+    z=*inPtr++;
+    
+    *outPtr++=x*x;
+    *outPtr++=x*y;
+    *outPtr++=x*z;
+    *outPtr++=y*y;
+    *outPtr++=y*z;
+    *outPtr++=z*z;
+    }
       inPtr += inIncY;
       outPtr += outIncY;
       }
@@ -71,8 +71,8 @@ void vtkImageAutoCorrelationExecute(vtkImageAutoCorrelation *self,
 }
 
 void vtkImageAutoCorrelation::ThreadedExecute(vtkImageData *inData,
-					      vtkImageData *outData,
-					      int extent[6], int id)
+                          vtkImageData *outData,
+                          int extent[6], int id)
 {
   vtkDebugMacro(<< "ThreadedExecute: inData = " << inData 
   << ", outData = " << outData);
@@ -120,9 +120,9 @@ void vtkImageAutoCorrelation::ThreadedExecute(vtkImageData *inData,
   switch (inData->GetScalarType())
     {
     vtkTemplateMacro7(vtkImageAutoCorrelationExecute,this,
-		      inData, (VTK_TT *)(inPtr), 
-		      outData, (VTK_TT *)(outPtr),
-		      extent,id);
+              inData, (VTK_TT *)(inPtr), 
+              outData, (VTK_TT *)(outPtr),
+              extent,id);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;

@@ -26,7 +26,7 @@ vtkImageWarpForce::~vtkImageWarpForce()
 //----------------------------------------------------------------------------
 // The output extent is the intersection.
 void vtkImageWarpForce::ExecuteInformation(vtkImageData **inDatas, 
-					   vtkImageData *outData)
+                       vtkImageData *outData)
 {
   vtkDebugMacro("ExecuteInformation");
   vtkImageMultipleInputFilter::ExecuteInformation(inDatas,outData);
@@ -43,7 +43,7 @@ vtkImageData* vtkImageWarpForce::GetTarget()
     }
 
   vtkDebugMacro(<< this->GetClassName() << " (" << this << "): returning Target of "
-		<< this->Inputs[0]);
+        << this->Inputs[0]);
   return (vtkImageData *)(this->Inputs[0]);
 }
 
@@ -55,7 +55,7 @@ vtkImageData* vtkImageWarpForce::GetSource()
     }
   
   vtkDebugMacro(<< this->GetClassName() << " (" << this << "): returning Source of "
-		<< this->Inputs[1]);
+        << this->Inputs[1]);
   return (vtkImageData *)(this->Inputs[1]);
 }
 
@@ -67,7 +67,7 @@ vtkImageData* vtkImageWarpForce::GetDisplacement()
     }
   
   vtkDebugMacro(<< this->GetClassName() << " (" << this << "): returning Displacement of "
-		<< this->Inputs[2]);
+        << this->Inputs[2]);
   return (vtkImageData *)(this->Inputs[2]);
 }
 
@@ -79,7 +79,7 @@ vtkImageData* vtkImageWarpForce::GetMask()
     }
   
   vtkDebugMacro(<< this->GetClassName() << " (" << this << "): returning Mask of "
-		<< this->Inputs[3]);
+        << this->Inputs[3]);
   return (vtkImageData *)(this->Inputs[3]);
 }
 

@@ -100,16 +100,16 @@ void vtkGridToLinearTransform::InternalUpdate()
     for(int z=ext[4];z<=ext[5];++z)
       {
       for(int y=ext[2];y<=ext[3];++y)
-	{
-	for(int x=ext[0];x<=ext[1];++x)
-	  {
-	  if(*tmp++)
-	    {
-	    ++maxsize;
-	    }
-	  }
-	tmp += mincY;
-	}
+    {
+    for(int x=ext[0];x<=ext[1];++x)
+      {
+      if(*tmp++)
+        {
+        ++maxsize;
+        }
+      }
+    tmp += mincY;
+    }
       tmp += mincZ;
       }
     }
@@ -127,8 +127,8 @@ void vtkGridToLinearTransform::InternalUpdate()
   target->SetNumberOfPoints(maxsize);
   source->SetNumberOfPoints(maxsize);
 
-  float* spa=disp->GetSpacing();
-  float* ori=disp->GetOrigin();
+  vtkFloatingPointType* spa=disp->GetSpacing();
+  vtkFloatingPointType* ori=disp->GetOrigin();
   float scale=grid->GetDisplacementScale();
   float shift=grid->GetDisplacementShift();
   int p=0;
@@ -137,38 +137,38 @@ void vtkGridToLinearTransform::InternalUpdate()
     for(int y=ext[2];y<=ext[3];++y)
       {
       for(int x=ext[0];x<=ext[1];++x)
-	{
-	if(!mptr || *mptr)
-	  {
-	  float xx=x*spa[0]+ori[0];
-	  float yy=y*spa[1]+ori[1];
-	  float zz=z*spa[2]+ori[2];
-	  
-	  target->SetPoint(p,xx,yy,zz);
-	  
-	  float dx=*gptr++ * scale + shift;
-	  float dy=*gptr++ * scale + shift;
-	  float dz=*gptr++ * scale + shift;
+    {
+    if(!mptr || *mptr)
+      {
+      float xx=x*spa[0]+ori[0];
+      float yy=y*spa[1]+ori[1];
+      float zz=z*spa[2]+ori[2];
+      
+      target->SetPoint(p,xx,yy,zz);
+      
+      float dx=*gptr++ * scale + shift;
+      float dy=*gptr++ * scale + shift;
+      float dz=*gptr++ * scale + shift;
 
-	  source->SetPoint(p,xx+dx,yy+dy,zz+dz);
-	  //	  printf("%d %d %d -> %f %f %f\n",x,y,z,x+dx,y+dy,z+dz);
-	  ++p;
-	  }
-	else
-	  {
-	  gptr+=3;
-	  }
+      source->SetPoint(p,xx+dx,yy+dy,zz+dz);
+      //      printf("%d %d %d -> %f %f %f\n",x,y,z,x+dx,y+dy,z+dz);
+      ++p;
+      }
+    else
+      {
+      gptr+=3;
+      }
 
-	if(mptr)
-	  {
-	  ++mptr;
-	  }
-	}
+    if(mptr)
+      {
+      ++mptr;
+      }
+    }
       gptr += gincY;
       if(mptr)
-	{
-	mptr += mincY;
-	}
+    {
+    mptr += mincY;
+    }
       }
     gptr += gincZ;
     if(mptr)

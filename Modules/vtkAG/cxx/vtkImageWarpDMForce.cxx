@@ -48,7 +48,7 @@ static void vtkImageWarpDMForceExecute2(vtkImageWarpDMForce *self,
   int in2IncX, in2IncY, in2IncZ;
   int in3IncX, in3IncY, in3IncZ;
   int outIncX, outIncY, outIncZ;
-  float* spa=outData->GetSpacing();
+  vtkFloatingPointType* spa=outData->GetSpacing();
 
   // Get increments to march through data 
   in1Data->GetContinuousIncrements(outExt, in1IncX, in1IncY, in1IncZ);
@@ -75,27 +75,27 @@ static void vtkImageWarpDMForceExecute2(vtkImageWarpDMForce *self,
       int yp = y == outExt[2] ? 0 : -in2Incs[1];
       int ya = y == outExt[3] ? 0 : in2Incs[1];
       for(int x = outExt[0]; x <= outExt[1] ; ++x)
-	{
+    {
         int xp = x == outExt[0] ? 0 : -in2Incs[0];
         int xa = x == outExt[1] ? 0 : in2Incs[0];
 
         *outPtr = 0;
-	*(outPtr+1) = 0;
-	*(outPtr+2) = 0;
+    *(outPtr+1) = 0;
+    *(outPtr+2) = 0;
 
-	for(int c=0;c<comp;++c)
-	  {
-	  // Pixel operation
-	  // Get gradient
-	  float dx = (float(in2Ptr[xa]) - float(in2Ptr[xp])) / spax;
-	  float dy = (float(in2Ptr[ya]) - float(in2Ptr[yp])) / spay;
-	  float dz = (float(in2Ptr[za]) - float(in2Ptr[zp])) / spaz;
-	  
-	  // |Grad(S)|^2
-	  float norm2=dx*dx+dy*dy+dz*dz;
-	  
-	  if(norm2>0)
-	    {
+    for(int c=0;c<comp;++c)
+      {
+      // Pixel operation
+      // Get gradient
+      float dx = (float(in2Ptr[xa]) - float(in2Ptr[xp])) / spax;
+      float dy = (float(in2Ptr[ya]) - float(in2Ptr[yp])) / spay;
+      float dz = (float(in2Ptr[za]) - float(in2Ptr[zp])) / spaz;
+      
+      // |Grad(S)|^2
+      float norm2=dx*dx+dy*dy+dz*dz;
+      
+      if(norm2>0)
+        {
             // (T-S)
             float diff = float(*in1Ptr) - float(*in2Ptr);
             
@@ -113,35 +113,35 @@ static void vtkImageWarpDMForceExecute2(vtkImageWarpDMForce *self,
             outPtr[1] += dy * scale;
             outPtr[2] += dz * scale;
             }
-	  ++in1Ptr;
-	  ++in2Ptr;
-	  }
+      ++in1Ptr;
+      ++in2Ptr;
+      }
 
-	float scale=1./comp;
-	if(in3Ptr)
-	  {
-	  scale *= *in3Ptr/255.0;
-	  }
-	
-	*outPtr++*=scale;
-	*outPtr++*=scale;
-	*outPtr++*=scale;
+    float scale=1./comp;
+    if(in3Ptr)
+      {
+      scale *= *in3Ptr/255.0;
+      }
+    
+    *outPtr++*=scale;
+    *outPtr++*=scale;
+    *outPtr++*=scale;
         
 //         *outPtr++=*(in1Ptr-1);
 //         *outPtr++=0;
 //         *outPtr++=0;
-	if(in3Ptr)
-	  {
-	  ++in3Ptr;
-	  }
-	}
+    if(in3Ptr)
+      {
+      ++in3Ptr;
+      }
+    }
       outPtr += outIncY;
       in1Ptr += in1IncY;
       in2Ptr += in2IncY;
       if(in3Ptr)
-	{
-	in3Ptr += in3IncY;
-	}
+    {
+    in3Ptr += in3IncY;
+    }
       }
     outPtr += outIncZ;
     in1Ptr += in1IncZ;
@@ -178,8 +178,8 @@ static void vtkImageWarpDMForceExecute1(vtkImageWarpDMForce *self,
 }
 
 void vtkImageWarpDMForce::ThreadedExecute(vtkImageData **inData, 
-					vtkImageData *outData,
-					int outExt[6], int id)
+                    vtkImageData *outData,
+                    int outExt[6], int id)
 {
   void *inPtr1;
   void *inPtr2;
@@ -260,10 +260,10 @@ void vtkImageWarpDMForce::ThreadedExecute(vtkImageData **inData,
   switch (inData[0]->GetScalarType())
     {
     vtkTemplateMacro10(vtkImageWarpDMForceExecute1,
-		       this,inData[0], (VTK_TT *)(inPtr1), 
-		       inData[1],inPtr2, 
-		       inData3, inPtr3, 
-		       outData, static_cast<float*>(outPtr), outExt);
+               this,inData[0], (VTK_TT *)(inPtr1), 
+               inData[1],inPtr2, 
+               inData3, inPtr3, 
+               outData, static_cast<float*>(outPtr), outExt);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;

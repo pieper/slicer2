@@ -24,7 +24,7 @@ protected:
   vtkJacobian(const vtkJacobian&) {}
   void operator=(const vtkJacobian&) {}
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,
-		       int extent[6], int id);
+               int extent[6], int id);
 
   void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
 };

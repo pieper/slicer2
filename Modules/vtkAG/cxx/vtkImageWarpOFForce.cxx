@@ -36,11 +36,11 @@ vtkImageWarpOFForce::~vtkImageWarpOFForce()
 
 template <class T1,class T2>
 static void vtkImageWarpOFForceExecute2(vtkImageWarpOFForce *self,
-					vtkImageData *in1Data, T1 *in1Ptr,
-					vtkImageData *in2Data, T2 *in2Ptr,
-					vtkImageData** inData,
-					vtkImageData *outData, float *outPtr,
-					int outExt[6])
+                    vtkImageData *in1Data, T1 *in1Ptr,
+                    vtkImageData *in2Data, T2 *in2Ptr,
+                    vtkImageData** inData,
+                    vtkImageData *outData, float *outPtr,
+                    int outExt[6])
 {
   //   Write(in1Data,"/tmp/1.vtk");
   //   Write(in2Data,"/tmp/2.vtk");
@@ -61,7 +61,7 @@ static void vtkImageWarpOFForceExecute2(vtkImageWarpOFForce *self,
   int in3IncX, in3IncY, in3IncZ;
   int in4IncX, in4IncY, in4IncZ;
   int outIncX, outIncY, outIncZ;
-  float* spa=outData->GetSpacing();
+  vtkFloatingPointType* spa=outData->GetSpacing();
 
   // Get increments to march through data 
   in1Data->GetContinuousIncrements(outExt, in1IncX, in1IncY, in1IncZ);
@@ -86,27 +86,27 @@ static void vtkImageWarpOFForceExecute2(vtkImageWarpOFForce *self,
       int yp = y == outExt[2] ? 0 : -in2Incs[1];
       int ya = y == outExt[3] ? 0 : in2Incs[1];
       for(int x = outExt[0]; x <= outExt[1] ; ++x)
-	{
+    {
         int xp = x == outExt[0] ? 0 : -in2Incs[0];
         int xa = x == outExt[1] ? 0 : in2Incs[0];
 
         *outPtr = 0;
-	*(outPtr+1) = 0;
-	*(outPtr+2) = 0;
+    *(outPtr+1) = 0;
+    *(outPtr+2) = 0;
 
-	for(int c=0;c<comp;++c)
-	  {
-	  // Pixel operation
-	  // Get gradient
-	  float dx = (float(in2Ptr[xa]) - float(in2Ptr[xp])) / (2*spa[0]);
-	  float dy = (float(in2Ptr[ya]) - float(in2Ptr[yp])) / (2*spa[1]);
-	  float dz = (float(in2Ptr[za]) - float(in2Ptr[zp])) / (2*spa[2]);
-	  
-	  // |Grad(S)|^2
-	  float norm2=dx*dx+dy*dy+dz*dz;
-	  
-	  if(norm2>0)
-	    {
+    for(int c=0;c<comp;++c)
+      {
+      // Pixel operation
+      // Get gradient
+      float dx = (float(in2Ptr[xa]) - float(in2Ptr[xp])) / (2*spa[0]);
+      float dy = (float(in2Ptr[ya]) - float(in2Ptr[yp])) / (2*spa[1]);
+      float dz = (float(in2Ptr[za]) - float(in2Ptr[zp])) / (2*spa[2]);
+      
+      // |Grad(S)|^2
+      float norm2=dx*dx+dy*dy+dz*dz;
+      
+      if(norm2>0)
+        {
             // It
             float It = float(*in2Ptr) - float(*in1Ptr);
 
@@ -128,34 +128,34 @@ static void vtkImageWarpOFForceExecute2(vtkImageWarpOFForce *self,
             outPtr[1] -= dy * scale;
             outPtr[2] -= dz * scale;
             }
-	  ++in1Ptr;
-	  ++in2Ptr;
+      ++in1Ptr;
+      ++in2Ptr;
           in3Ptr+=3;
-	  }
+      }
 
-	float scale=1./comp;
-	if(in4Ptr)
-	  {
-	  scale *= *in4Ptr/255.0;
-	  }
-	
-	*outPtr++*=scale;
-	*outPtr++*=scale;
-	*outPtr++*=scale;
+    float scale=1./comp;
+    if(in4Ptr)
+      {
+      scale *= *in4Ptr/255.0;
+      }
+    
+    *outPtr++*=scale;
+    *outPtr++*=scale;
+    *outPtr++*=scale;
 
-	if(in4Ptr)
-	  {
-	  ++in4Ptr;
-	  }
-	}
+    if(in4Ptr)
+      {
+      ++in4Ptr;
+      }
+    }
       outPtr += outIncY;
       in1Ptr += in1IncY;
       in2Ptr += in2IncY;
       in3Ptr += in3IncY;
       if(in4Ptr)
-	{
-	in4Ptr += in4IncY;
-	}
+    {
+    in4Ptr += in4IncY;
+    }
       }
     outPtr += outIncZ;
     in1Ptr += in1IncZ;
@@ -181,11 +181,11 @@ static void vtkImageWarpOFForceExecute1(vtkImageWarpOFForce *self,
   switch (in2Data->GetScalarType())
     {
     vtkTemplateMacro9(vtkImageWarpOFForceExecute2,
-		      self,in1Data, in1Ptr, 
-		      in2Data, (VTK_TT *)(in2Ptr),
-		      inData,
-		      outData,outPtr,
-		      outExt);
+              self,in1Data, in1Ptr, 
+              in2Data, (VTK_TT *)(in2Ptr),
+              inData,
+              outData,outPtr,
+              outExt);
     default:
       vtkGenericWarningMacro(<< "Execute: Unknown ScalarType");
       return;
@@ -193,8 +193,8 @@ static void vtkImageWarpOFForceExecute1(vtkImageWarpOFForce *self,
 }
 
 void vtkImageWarpOFForce::ThreadedExecute(vtkImageData **inData, 
-					vtkImageData *outData,
-					int outExt[6], int id)
+                    vtkImageData *outData,
+                    int outExt[6], int id)
 {
   void *inPtr1;
   void *inPtr2;
@@ -255,17 +255,17 @@ void vtkImageWarpOFForce::ThreadedExecute(vtkImageData **inData,
   if (inData[2]->GetScalarType() != VTK_FLOAT)
     {
     vtkErrorMacro(<< "Execute: input3 ScalarType, "
-		  << inData[2]->GetScalarType()
-		  << ", must be "
-		  << VTK_FLOAT);
+          << inData[2]->GetScalarType()
+          << ", must be "
+          << VTK_FLOAT);
     return;
     }
   
   if (inData[2]->GetNumberOfScalarComponents() != 3)
     {
     vtkErrorMacro(<< "Execute: input3 NumberOfScalarComponents, "
-		  << inData[0]->GetNumberOfScalarComponents()
-		  << ", must be equal to 3");
+          << inData[0]->GetNumberOfScalarComponents()
+          << ", must be equal to 3");
     return;
     }
 
@@ -273,9 +273,9 @@ void vtkImageWarpOFForce::ThreadedExecute(vtkImageData **inData,
   if (inData4 && (inData4->GetScalarType() != VTK_UNSIGNED_CHAR))
     {
     vtkErrorMacro(<< "Execute: mask ScalarType, "
-		  << inData4->GetScalarType()
-		  << ", must be "
-		  << VTK_UNSIGNED_CHAR);
+          << inData4->GetScalarType()
+          << ", must be "
+          << VTK_UNSIGNED_CHAR);
     return;
     }
   
@@ -283,9 +283,9 @@ void vtkImageWarpOFForce::ThreadedExecute(vtkImageData **inData,
   if (outData->GetScalarType() != VTK_FLOAT)
     {
     vtkErrorMacro(<< "Execute: output ScalarType, "
-		  << outData->GetScalarType()
-		  << ", must be "
-		  << VTK_FLOAT);
+          << outData->GetScalarType()
+          << ", must be "
+          << VTK_FLOAT);
     return;
     }
   
@@ -293,18 +293,18 @@ void vtkImageWarpOFForce::ThreadedExecute(vtkImageData **inData,
   if (outData->GetNumberOfScalarComponents() != 3)
     {
     vtkErrorMacro(<< "Execute: output NumberOfScalarComponents, "
-		  << outData->GetNumberOfScalarComponents()
-		  << ", must be 3");
+          << outData->GetNumberOfScalarComponents()
+          << ", must be 3");
     return;
     }
     
   switch (inData[0]->GetScalarType())
     {
     vtkTemplateMacro9(vtkImageWarpOFForceExecute1,
-		      this,inData[0], (VTK_TT *)(inPtr1), 
-		      inData[1],inPtr2, 
-		      inData,
-		      outData, static_cast<float*>(outPtr), outExt);
+              this,inData[0], (VTK_TT *)(inPtr1), 
+              inData[1],inPtr2, 
+              inData,
+              outData, static_cast<float*>(outPtr), outExt);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;

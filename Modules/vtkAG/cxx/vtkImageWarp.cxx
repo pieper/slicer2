@@ -190,7 +190,7 @@ void vtkImageWarp::CreatePyramid()
   vtkImageData* def=this->Displacements[this->Targets.size()-1];
   int* dims=def->GetDimensions();
   memset(def->GetScalarPointer(),0,dims[0]*dims[1]*dims[2]*
-	 def->GetNumberOfScalarComponents()*def->GetScalarSize());
+     def->GetNumberOfScalarComponents()*def->GetScalarSize());
 }
 
 void vtkImageWarp::FreePyramid()
@@ -277,25 +277,25 @@ static void vtkImageWarpSSDExecute2(vtkImageData* t,T1* tptr,
     for(int y=ext[2];y<=ext[3];++y)
       {
       for(int x=ext[0];x<=ext[1];++x)
-	{
-	float v=0;
-	for(int c=0;c<comp;++c)
-	  {
-	  v += pow(float(*tptr) - float(*sptr),2);
-	  ++tptr;
-	  ++sptr;
-	  }
-	if(mptr)
-	  {
-	  v*=*mptr/255.;
-	  }
-	ssd+=v;
+    {
+    float v=0;
+    for(int c=0;c<comp;++c)
+      {
+      v += pow(float(*tptr) - float(*sptr),2);
+      ++tptr;
+      ++sptr;
+      }
+    if(mptr)
+      {
+      v*=*mptr/255.;
+      }
+    ssd+=v;
 
-	if(mptr)
-	  {
-	  ++mptr;
-	  }
-	}
+    if(mptr)
+      {
+      ++mptr;
+      }
+    }
       }
     }
   int* dims=t->GetDimensions();
@@ -370,9 +370,9 @@ double vtkImageWarp::SSD(vtkImageData* t,vtkImageData* s,vtkImageData* m)
 //     for(int y=ext[2];y<=ext[3];++y)
 //       {
 //       for(int x=ext[0];x<=ext[1];++x)
-// 	{
-// 	if(!mptr || *mptr)
-// 	  {
+//     {
+//     if(!mptr || *mptr)
+//       {
 //           for(int c=0;c<3;++c)
 //             {
 //             diff=fabs(*tptr-*sptr);
@@ -384,16 +384,16 @@ double vtkImageWarp::SSD(vtkImageData* t,vtkImageData* s,vtkImageData* m)
 //             ++sptr;
 //             }
 //           }
-// 	else
-// 	  {
-// 	  tptr+=3;
-// 	  sptr+=3;
-// 	  }
-// 	if(mptr)
-// 	  {
-// 	  ++mptr;
-// 	  }
-// 	}
+//     else
+//       {
+//       tptr+=3;
+//       sptr+=3;
+//       }
+//     if(mptr)
+//       {
+//       ++mptr;
+//       }
+//     }
 //       }
 //     }
 //   return max;
@@ -460,27 +460,27 @@ void vtkImageWarp::InternalUpdate()
   for(int l=this->Displacements.size()-1;l>-1;--l)
     {
       cout << "Level: " << l
-	   << "MinimumLevel " <<this->MinimumLevel 
-	   << "." << endl;
+       << "MinimumLevel " <<this->MinimumLevel 
+       << "." << endl;
       cout.flush();
 
     if(l>=this->MinimumLevel)
       {
       int* dims = this->Targets[l]->GetDimensions();
       if(this->Verbose)
-	{
-	cout << "Level: " << l
-	     << ". Size: " << dims[0] << " " << dims[1] << " " << dims[2]
-	     << ". Max iter: " << (l+1)*this->MaximumIterations
-	     << ". Std dev: " << StdDev
-	     << "." << endl;
-	}
+    {
+    cout << "Level: " << l
+         << ". Size: " << dims[0] << " " << dims[1] << " " << dims[2]
+         << ". Max iter: " << (l+1)*this->MaximumIterations
+         << ". Std dev: " << StdDev
+         << "." << endl;
+    }
 
       vtkImageData* mask=0;
       if(this->Masks.size()!=0)
-	{
-	mask=this->Masks[l];
-	}
+    {
+    mask=this->Masks[l];
+    }
 
       // Build the registration pipeline at level l
       // Set Transform to current displacement grid.
@@ -489,13 +489,13 @@ void vtkImageWarp::InternalUpdate()
       // pipeline objects
       vtkImageReslice* reslice = 0;
       if(!this->ResliceTensors)
-	{
-	reslice = vtkImageReslice::New();
-	}
+    {
+    reslice = vtkImageReslice::New();
+    }
       else
-	{
-	reslice = vtkImageResliceST::New();
-	}
+    {
+    reslice = vtkImageResliceST::New();
+    }
       vtkImageTransformIntensity* transint = vtkImageTransformIntensity::New();
       vtkImageGaussianSmooth* tsmooth = vtkImageGaussianSmooth::New();
       vtkImageGaussianSmooth* ssmooth = vtkImageGaussianSmooth::New();
@@ -527,11 +527,11 @@ void vtkImageWarp::InternalUpdate()
       // find intensity correction
       // initialize intensity transformation
       if(this->IntensityTransform)
-	{
-	this->IntensityTransform->SetTarget(this->Targets[l]);
-	this->IntensityTransform->SetSource(reslice->GetOutput());
-	this->IntensityTransform->SetMask(mask);
-	}
+    {
+    this->IntensityTransform->SetTarget(this->Targets[l]);
+    this->IntensityTransform->SetSource(reslice->GetOutput());
+    this->IntensityTransform->SetMask(mask);
+    }
       
       // correct source intensities
       transint->SetInput(reslice->GetOutput());
@@ -572,8 +572,8 @@ void vtkImageWarp::InternalUpdate()
       double lastssd=10000000000.0;
       double ssd=0;
       for(int i=0;i<(l+1)*this->MaximumIterations;++i)
-	{
-	if(this->UseSSD)
+    {
+    if(this->UseSSD)
           {
 //           cout << "begin" << endl;
 //           reslice->Update();
@@ -585,9 +585,9 @@ void vtkImageWarp::InternalUpdate()
           ssd=this->SSD(this->Targets[l],transint->GetOutput(),mask);
 //           cout << "ssd" << endl;
           }
-	if(this->Verbose)
-	  {
-	  cout << "\r  Iteration " << i << ":";
+    if(this->Verbose)
+      {
+      cout << "\r  Iteration " << i << ":";
           if(this->UseSSD)
             { 
             cout << " SSD=" << ssd
@@ -595,17 +595,17 @@ void vtkImageWarp::InternalUpdate()
                  << " Epsilon=" << lastssd*ssde
                  << "          ";
             }
-	  cout.flush();
-	  }
+      cout.flush();
+      }
 
-	if(this->UseSSD &&
-	   //	   ((lastssd-ssd)<(lastssd*ssde)) &&
-	   ((lastssd-ssd)<=(lastssd*ssde)) &&
-	   (i>=this->MinimumIterations))
-	  {
-	  break;
-	  }
-	lastssd = ssd;
+    if(this->UseSSD &&
+       //       ((lastssd-ssd)<(lastssd*ssde)) &&
+       ((lastssd-ssd)<=(lastssd*ssde)) &&
+       (i>=this->MinimumIterations))
+      {
+      break;
+      }
+    lastssd = ssd;
 
 //         tsmooth->Update();
 //         Write(tsmooth->GetOutput(),"/tmp/ts.vtk");
@@ -624,34 +624,34 @@ void vtkImageWarp::InternalUpdate()
 //         cout << "smooth" << endl;
 
 //         if(i==15) exit(0);
- 	smooth->Update();
- 	this->Displacements[l]->DeepCopy(smooth->GetOutput());
+     smooth->Update();
+     this->Displacements[l]->DeepCopy(smooth->GetOutput());
 //         cout << "copy" << endl;
 //         Write(this->Displacements[l],"/tmp/d.vtk");
 //        if(i==0) exit(0);
 
-// 	double diff=this->MaxDispDiff(smooth->GetOutput(),
+//     double diff=this->MaxDispDiff(smooth->GetOutput(),
 //                                       this->Displacements[l],mask);
-// 	if(this->Verbose)
-// 	  {
-// 	  cout << "\r  Iteration " << i << ": "
+//     if(this->Verbose)
+//       {
+//       cout << "\r  Iteration " << i << ": "
 //                << "MaxDiff=" << diff ;
 //           cout.flush();
-// 	  }
+//       }
 //         this->MaxDiff=0.05;
 //         if(diff <= this->MaxDiff)
 //           {
 //           break;
 //           }
 //         this->Displacements[l]->DeepCopy(smooth->GetOutput());
-	}
+    }
 
 //       cout << "over" << endl;
       
       if(this->Verbose)
-	{
-	cout << endl;
-	}
+    {
+    cout << endl;
+    }
 
       reslice->Delete();
       transint->Delete();
@@ -668,9 +668,9 @@ void vtkImageWarp::InternalUpdate()
       {
       StdDev-=0.25;
       if(StdDev<MinStdDev)
-	{
-	StdDev=MinStdDev;
-	}
+    {
+    StdDev=MinStdDev;
+    }
       l=1;
       }
     else
@@ -684,8 +684,8 @@ void vtkImageWarp::InternalUpdate()
   // forward transform.
     if(this->Verbose)
       {  cout << "start invert displacement " ;
-	  cout.flush();
-	}
+      cout.flush();
+    }
   
   this->SetDisplacementGrid(this->Displacements[0]);
   this->Inverse();
@@ -695,8 +695,8 @@ void vtkImageWarp::InternalUpdate()
   this->vtkGridTransform::InternalUpdate();
  if(this->Verbose)
    {  cout << "Finish free pyramid and internal update for vtkGridTransform "; 
-	   cout.flush();
-	}
+       cout.flush();
+    }
 }
 
 void vtkImageWarp::PrintSelf(::ostream& os, vtkIndent indent)

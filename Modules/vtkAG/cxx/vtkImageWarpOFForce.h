@@ -24,6 +24,6 @@ protected:
   vtkImageWarpOFForce(const vtkImageWarpOFForce&);
   void operator=(const vtkImageWarpOFForce&);
   void ThreadedExecute(vtkImageData **inDatas, vtkImageData *outData,
-		       int extent[6], int id);
+               int extent[6], int id);
 };
 #endif

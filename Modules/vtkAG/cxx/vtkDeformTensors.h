@@ -48,7 +48,7 @@ protected:
   void operator=(const vtkDeformTensors&);
   void ExecuteInformation(vtkImageData **inDatas, vtkImageData *outData);
   void ThreadedExecute(vtkImageData **inDatas, vtkImageData *outData,
-		       int extent[6], int id);
+               int extent[6], int id);
 
   int Mode;
 };

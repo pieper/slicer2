@@ -36,7 +36,7 @@ void vtkImageHistogramNormalization::ExecuteData(vtkDataObject* out)
 
    
   double typeMax = outData->GetScalarTypeMax();
-  float minmax[2];
+  vtkFloatingPointType minmax[2];
 
   inData->GetScalarRange(minmax);
   vtkDebugMacro("Min: " << minmax[0] << " Max: " << minmax[1]);

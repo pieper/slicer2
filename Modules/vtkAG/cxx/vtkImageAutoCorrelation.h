@@ -25,7 +25,7 @@ protected:
   void operator=(const vtkImageAutoCorrelation&) {}
   void ExecuteInformation(vtkImageData *inData,vtkImageData *outData);
   void ThreadedExecute(vtkImageData *inDatas, vtkImageData *outData,
-		       int extent[6], int id);
+               int extent[6], int id);
 };
 #endif
 

@@ -44,7 +44,7 @@ protected:
   void operator=(const vtkVariancePValue&);
   void ExecuteInformation(vtkImageData **inDatas, vtkImageData *outData);
   void ThreadedExecute(vtkImageData **inDatas, vtkImageData *outData,
-		       int extent[6], int id);
+               int extent[6], int id);
 
   int NumberOfSamples1;
   int NumberOfSamples2;

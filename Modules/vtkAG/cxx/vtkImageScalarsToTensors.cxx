@@ -44,9 +44,9 @@ void vtkImageScalarsToTensors::ExecuteData(vtkDataObject *out)
 
 template <class T>
 static void vtkImageScalarsToTensorsExecute(vtkImageScalarsToTensors *self,
-					    vtkImageData *inData, T *inPtr,
-					    vtkImageData *outData, T *outPtr,
-					    int extent[6], int id)
+                        vtkImageData *inData, T *inPtr,
+                        vtkImageData *outData, T *outPtr,
+                        int extent[6], int id)
 {
   int inIncX, inIncY, inIncZ;
   int outIncY, outIncZ;
@@ -61,16 +61,16 @@ static void vtkImageScalarsToTensorsExecute(vtkImageScalarsToTensors *self,
     for (int idxY = extent[2]; idxY <= extent[3]; ++idxY)
       {
       for (int idxX = extent[0]; idxX <= extent[1] ; ++idxX)
-	{
-	outPtr[0]=*inPtr++;
-	outPtr[1]=outPtr[3]=*inPtr++;
-	outPtr[2]=outPtr[6]=*inPtr++;
-	outPtr[4]=*inPtr++;
-	outPtr[5]=outPtr[7]=*inPtr++;
-	outPtr[8]=*inPtr++;
+    {
+    outPtr[0]=*inPtr++;
+    outPtr[1]=outPtr[3]=*inPtr++;
+    outPtr[2]=outPtr[6]=*inPtr++;
+    outPtr[4]=*inPtr++;
+    outPtr[5]=outPtr[7]=*inPtr++;
+    outPtr[8]=*inPtr++;
 
-	outPtr+=9;
-	}
+    outPtr+=9;
+    }
       inPtr += inIncY;
       outPtr += outIncY;
       }
@@ -80,8 +80,8 @@ static void vtkImageScalarsToTensorsExecute(vtkImageScalarsToTensors *self,
 }
 
 void vtkImageScalarsToTensors::ThreadedExecute(vtkImageData *inData,
-					       vtkImageData *outData,
-					       int extent[6], int id)
+                           vtkImageData *outData,
+                           int extent[6], int id)
 {
   vtkDebugMacro(<< "ThreadedExecute: inData = " << inData 
   << ", outData = " << outData);
@@ -115,9 +115,9 @@ void vtkImageScalarsToTensors::ThreadedExecute(vtkImageData *inData,
   switch (inData->GetScalarType())
     {
     vtkTemplateMacro7(vtkImageScalarsToTensorsExecute,this,
-		      inData, (VTK_TT *)(inPtr), 
-		      outData, (VTK_TT *)(outPtr),
-		      extent,id);
+              inData, (VTK_TT *)(inPtr), 
+              outData, (VTK_TT *)(outPtr),
+              extent,id);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
       return;
