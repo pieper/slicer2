@@ -16,6 +16,7 @@ IF (WIN32)
         vtkFileOps.cxx
         vtkImageEMLocalSegmenter.cxx
         vtkImageEMGeneral.cxx
+        vtkImageEMMarkov.cxx
     )
     SET_SOURCE_FILES_PROPERTIES ( vtkThread.cxx ABSTRACT )
 ELSE (WIN32)
