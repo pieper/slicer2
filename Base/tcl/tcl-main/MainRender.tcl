@@ -49,15 +49,21 @@ proc Render3D {{scale ""}} {
     # Apply the fog parameters to all the renderers of viewWin
     FogApply $viewWin
 
+    
     set rens [$viewWin GetRenderers]
     set rencount [$rens GetNumberOfItems] 
     for {set r 0} {$r < $rencount} {incr r} {
         set ren [$rens GetItemAsObject $r]
-        
-        # wrap this in global flag to avoid possible render loop
-        if {$View(resetCameraClippingRange) == 1} {
-            $ren ResetCameraClippingRange    
-        }
+    # don't reset clipping planes for the endoscopic
+    # screen, otherwise it does not look good when
+    # the endoscope is inside a model
+    if {$ren != "endoscopicScreen"} {
+         # wrap this in global flag to avoid possible render loop
+             if {$View(resetCameraClippingRange) == 1} {
+                 $ren ResetCameraClippingRange    
+             }
+
+    }  
     }
 
     $viewWin Render
