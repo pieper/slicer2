@@ -99,7 +99,7 @@ proc SessionLogInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.7 $} {$Date: 2001/04/09 20:35:39 $}]
+	    {$Revision: 1.8 $} {$Date: 2001/04/09 20:59:17 $}]
 
     # Initialize module-level variables
     set SessionLog(fileName)  ""
@@ -118,6 +118,26 @@ proc SessionLogInit {} {
 
     # call init functions
     #SessionLogInitRandomFortune
+
+    # for now, automatically log everyone (use SessionLogShouldWeLog
+    # to selectively log users).
+    # if we know who this user is
+    if {[info exists env(LOGNAME)] == 1} {
+
+	# if the logging directory exists
+	if {[file isdirectory $SessionLog(defaultDir)]} {
+
+	    puts "Automatically logging user $env(LOGNAME).  Thanks!"
+	    set SessionLog(autoLogging) 1
+	    SessionLogStartLogging
+	    SessionLogSetFilenameAutomatically
+	}
+    }
+}
+
+
+proc SessionLogShouldWeLog {} {
+    global SessionLog env
 
     # figure out if we should automatically log this user.
     # (this info should be in Options.xml but then people could save their
@@ -150,10 +170,14 @@ proc SessionLogInit {} {
 		    puts "Automatically logging user $user.  Thanks!"
 		    SessionLogStartLogging
 		    SessionLogSetFilenameAutomatically
+
+		    return 1
 		}
 	    }
 	}
     }
+
+    return 0
 }
 
 #-------------------------------------------------------------------------------
