@@ -69,7 +69,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.38 $} {$Date: 2002/07/29 22:11:33 $}]
+        {$Revision: 1.39 $} {$Date: 2002/08/21 14:08:49 $}]
 
     set File(filePrefix) data
 }
@@ -238,7 +238,7 @@ proc MainFileClose {} {
     foreach m $Module(idList) {
         if {[info exists Module($m,procMainFileCloseUpdateEntered)] == 1} {
             if {$Module(verbose) == 1} {puts "procMainFileCloseUpdateEntered: $m"}
-            $Module($m,procMainFileCloseUpdated)
+            $Module($m,procMainFileCloseUpdateEntered)
         }
     }
 
@@ -678,6 +678,42 @@ proc MainFileGetRelativePrefix {filename} {
     } else {
         return $absPrefix
     }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainFileGetRelativeDirPrefix
+# Get the dir prefix relative to Mrml(dir), where the Mrml file was last
+# saved.  If there is no way to make a relative path, returns the 
+# absolute path.
+# 
+# This was added to fix dicom files in dirs that have . extensions 
+# that were getting truncated by the routine above.
+# Also, the regexp doesn't work on windows - sp 2002-08-20
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainFileGetRelativeDirPrefix {dir} {
+    global Mrml Gui
+    
+    # Returns the prefix (no extension) of filename relative to Mrml(dir)
+    set root $Mrml(dir)
+    set rootlist [file split $root]
+    set dirlist [file split $dir]
+    if {$Gui(pc) == "1"} {
+        set dirlist [lreplace $dirlist 0 0 [string tolower [lindex $dirlist 0]]]
+        set rootlist [lreplace $rootlist 0 0 [string tolower [lindex $rootlist 0]]]
+    }
+
+    set prefixlist ""
+    foreach d $dirlist r $rootlist {
+        if {$d == $r} {
+            lappend prefixlist $d
+            set dirlist [lrange $dirlist 1 end]
+        } else {
+            break
+        }
+    }
+    return "[eval file join $prefixlist] [eval file join $dirlist]"
 }
 
 #-------------------------------------------------------------------------------

@@ -78,7 +78,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.61 $} {$Date: 2002/08/19 16:31:29 $}]
+        {$Revision: 1.62 $} {$Date: 2002/08/21 14:08:50 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -1617,18 +1617,19 @@ proc MainMrmlRelativity {oldRoot} {
             $node SetFullPrefix [file join $Mrml(dir) \
                 [file join $oldRoot [$node GetFilePrefix]]]
             
-            # >> AT 7/6/01
+            # >> AT 7/6/01, sp 2002-08-20
 
             set num [$node GetNumberOfDICOMFiles]
             for {set i 0} {$i < $num} {incr i} {
                 set filename [$node GetDICOMFileName $i]
-                set dir [file dirname $filename]
-                set name [file tail $filename]
-                set reldir [MainFileGetRelativePrefix $dir]
-                $node SetDICOMFileName $i [file join $reldir $name]
+                #set dir [file dirname $filename]
+                #set name [file tail $filename]
+                #set reldir [MainFileGetRelativePrefix $dir]
+                set relname [lindex [MainFileGetRelativeDirPrefix $filename] 1]
+                $node SetDICOMFileName $i $relname
             }
 
-            # << AT 7/6/01
+            # << AT 7/6/01, sp 2002-08-20
 
         } elseif {$class == "vtkMrmlModelNode"} {
 
