@@ -4167,7 +4167,7 @@ proc EndoscopicUpdateMRML {} {
 	    set lid [$item GetID]
 	    set i [Landmark($lid,node) GetPathPosition]
 	    set l [Landmark($lid,node) GetXYZ]
-	    puts "in updateMrml	set Endoscopic(cLand,$i,x) [lindex $l 0]"
+	    #puts "in updateMrml	set Endoscopic(cLand,$i,x) [lindex $l 0]"
 	    set Endoscopic(cLand,$i,x) [lindex $l 0]
 	    set Endoscopic(cLand,$i,y) [lindex $l 1]
 	    set Endoscopic(cLand,$i,z) [lindex $l 2]
