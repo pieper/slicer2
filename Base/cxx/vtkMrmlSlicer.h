@@ -366,6 +366,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
 
   // Points
   void SetReformatPoint(int s, int x, int y);
+  void SetReformatPoint(vtkMrmlDataVolume *vol, vtkImageReformat *ref, int s, int x, int y);
   vtkGetVectorMacro(WldPoint, vtkFloatingPointType, 3);
   vtkGetVectorMacro(IjkPoint, vtkFloatingPointType, 3);
   void SetScreenPoint(int s, int x, int y);

@@ -678,6 +678,7 @@ vtkMrmlDataVolume* vtkMrmlSlicer::GetIJKVolume(int s)
   {
     return this->ForeVolume[s];
   }
+ 
   if (this->LabelVolume[s] != this->NoneVolume)
   {
     return this->LabelVolume[s];
@@ -1840,9 +1841,16 @@ void vtkMrmlSlicer::SetScreenPoint(int s, int x, int y)
 // Point
 //----------------------------------------------------------------------------
 void vtkMrmlSlicer::SetReformatPoint(int s, int x, int y)
-{
+{ 
   vtkMrmlDataVolume *vol = this->GetIJKVolume(s);
   vtkImageReformat *ref = this->GetIJKReformat(s);
+  SetReformatPoint(vol, ref, s, x, y);
+}
+
+void vtkMrmlSlicer::SetReformatPoint(vtkMrmlDataVolume *vol, 
+                                     vtkImageReformat *ref,  
+                                     int s, int x, int y)
+{
   vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) vol->GetMrmlNode();
   // Convert (s,x,y) to (i,j,k), (r,a,s), and (x,y,z).
   // (s,x,y) = slice, x,y coordinate on slice
