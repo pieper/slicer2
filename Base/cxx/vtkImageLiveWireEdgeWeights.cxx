@@ -202,19 +202,19 @@ void vtkImageLiveWireEdgeWeights::AppendFeatureSettings(ofstream& of)
 // Output training settings to a file (already opened)
 void vtkImageLiveWireEdgeWeights::GetFeatureSettingsString(char *settings)
 {
-  char set[10];
+  char set[40];
   int count = 0;
 
   // append the features
   for (int i=0; i < this->NumberOfFeatures; i++)
     {
-      snprintf(set, 10, "%9f.4", this->GetWeightForFeature(i));
+      sprintf(set, "%9f.4", this->GetWeightForFeature(i));
       strcat(settings, set);
 
-      snprintf(set, 10, "%9f.4", this->GetParamForFeature(i,0));
+      sprintf(set, "%9f.4", this->GetParamForFeature(i,0));
       strcat(settings, set);
 
-      snprintf(set, 10, "%9f.4", this->GetParamForFeature(i,1));
+      sprintf(set, "%9f.4", this->GetParamForFeature(i,1));
       strcat(settings, set);
     }
 }
