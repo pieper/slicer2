@@ -102,6 +102,16 @@ public:
   vtkGetMacro(PrintEMWeightsConvergence, int);
   vtkSetMacro(PrintEMWeightsConvergence, int);
 
+ // Description:
+  // Prints out the number of voxels changed from last to this MFA iteration
+  vtkGetMacro(PrintMFALabelMapConvergence, int);  
+  vtkSetMacro(PrintMFALabelMapConvergence, int);  
+
+  // Description:
+  // Prints out the difference in percent 
+  vtkGetMacro(PrintMFAWeightsConvergence, int);
+  vtkSetMacro(PrintMFAWeightsConvergence, int);
+
   // Description:  
   // After which criteria should be stopped   
   // 0 = fixed iterations 
@@ -119,15 +129,6 @@ public:
   vtkGetMacro(StopEMMaxIter,int); 
   vtkSetMacro(StopEMMaxIter,int); 
 
- // Description:
-  // Prints out the number of voxels changed from last to this MFA iteration
-  vtkGetMacro(PrintMFALabelMapConvergence, int);  
-  vtkSetMacro(PrintMFALabelMapConvergence, int);  
-
-  // Description:
-  // Prints out the difference in percent 
-  vtkGetMacro(PrintMFAWeightsConvergence, int);
-  vtkSetMacro(PrintMFAWeightsConvergence, int);
 
   // Description:  
   // After which criteria should be stopped   
@@ -145,6 +146,12 @@ public:
 
   vtkGetMacro(StopMFAMaxIter,int); 
   vtkSetMacro(StopMFAMaxIter,int); 
+
+  // Description:
+  // You can stop the bias calculation after a certain number of iterations
+  // By default it is set to -1 which means it never stops
+  vtkGetMacro(StopBiasCalculation,int); 
+  vtkSetMacro(StopBiasCalculation,int); 
 
   // Description:
   // Activation of Registration within EM algorithm of atlas to image space 
@@ -188,6 +195,7 @@ protected:
   int StopMFAType;       
   float StopMFAValue;    
   int StopMFAMaxIter;
+int StopBiasCalculation;
 
   int    RegistrationType; 
   int GenerateBackgroundProbability;

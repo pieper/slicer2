@@ -112,7 +112,9 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintMFAWeightsConvergence   $EMSegment(Cattrib,$SuperClass,PrintMFAWeightsConvergence)
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopMFAType                  $EMSegment(Cattrib,$SuperClass,StopMFAType)
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopMFAValue                 $EMSegment(Cattrib,$SuperClass,StopMFAValue)
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopBiasCalculation          $EMSegment(Cattrib,$SuperClass,StopBiasCalculation)
 
+  
   # Current Legacy - I have to fix gui
   if {$EMSegment(Cattrib,$SuperClass,StopMFAMaxIter) == 0} {set EMSegment(Cattrib,$SuperClass,StopMFAMaxIter) $EMSegment(Cattrib,0,StopMFAMaxIter) }
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopMFAMaxIter               $EMSegment(Cattrib,$SuperClass,StopMFAMaxIter)

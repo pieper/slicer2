@@ -73,10 +73,11 @@ vtkMrmlSegmenterSuperClassNode::vtkMrmlSegmenterSuperClassNode() {
 
   this->PrintMFALabelMapConvergence  = 0;
   this->PrintMFAWeightsConvergence = 0;
-  this->StopMFAType  = 0;
-  this->StopMFAValue = 0.0; 
-  this->StopMFAMaxIter = 0; 
-  this->RegistrationType = 0;
+  this->StopMFAType         = 0;
+  this->StopMFAValue        = 0.0; 
+  this->StopMFAMaxIter      = 0; 
+  this->StopBiasCalculation = -1;
+  this->RegistrationType    = 0;
   this->GenerateBackgroundProbability = 0;
 }
 
@@ -111,6 +112,7 @@ void vtkMrmlSegmenterSuperClassNode::Write(ofstream& of, int nIndent)
   of << " StopMFAType='" << this->StopMFAType  <<  "'";
   of << " StopMFAValue='" << this->StopMFAValue <<  "'";
   of << " StopMFAMaxIter='" << this->StopMFAMaxIter <<  "'";
+  of << " StopStopBiasCalculation='" << this->StopBiasCalculation <<  "'";
   of << " GenerateBackgroundProbability='" << this->GenerateBackgroundProbability <<  "'";
 
   of << ">\n";
@@ -142,7 +144,8 @@ void vtkMrmlSegmenterSuperClassNode::Copy(vtkMrmlNode *anode)
   this->PrintMFAWeightsConvergence    = node->PrintMFAWeightsConvergence;
   this->StopMFAType           = node->StopMFAType;
   this->StopMFAValue          = node->StopMFAValue; 
-  this->StopMFAMaxIter  = node->StopMFAMaxIter; 
+  this->StopMFAMaxIter        = node->StopMFAMaxIter; 
+  this->StopBiasCalculation   = node->StopBiasCalculation;
 
   this->RegistrationType              = node->RegistrationType;
   this->GenerateBackgroundProbability = node->GenerateBackgroundProbability;
@@ -171,7 +174,9 @@ void vtkMrmlSegmenterSuperClassNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "PrintMFAWeightsConvergence:    " << this->PrintMFAWeightsConvergence << "\n";
   os << indent << "StopMFAType:           " << this->StopMFAType  << "\n";
   os << indent << "StopMFAValue:          " << this->StopMFAValue << "\n";
-  os << indent << "StopMFAMaxIter:  " << this->StopMFAMaxIter << "\n";
+  os << indent << "StopMFAMaxIter:        " << this->StopMFAMaxIter << "\n";
+  os << indent << "StopBiasCalculation:   " << this->StopBiasCalculation << "\n";
+
   os << indent << "GenerateBackgroundProbability: " << this->GenerateBackgroundProbability << "\n";
 }
 
