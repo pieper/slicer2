@@ -141,11 +141,12 @@ proc AlignmentsInit {} {
     set Module($m,fiducialsStartCallback) AlignmentsFiducialsUpdated
 
     # Define Dependencies
-    #set Module($m,depend) "MIReg"
+    ## No Dependency, simply uses MutualInfoReg if available
+    #set Module($m,depend) "MutualInfoReg"
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.26 $} {$Date: 2003/08/22 21:44:32 $}]
+            {$Revision: 1.27 $} {$Date: 2003/08/27 17:24:18 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -1108,17 +1109,17 @@ proc AlignmentsBuildGUI {} {
     set f $fAuto.fBot.fMI
 
     ##
-    ## If the MIReg Module exists, use it
+    ## If the MutualInfoReg Module exists, use it
     ##
     ## Otherwise, don't use it.
 
     set ret [catch "package require vtkMIReg" res]
 
     if { $ret } {
-        DevAddLabel $f.lbadnews "I'm sorry but the MIReg Module\n is not loaded so that Mutual\n Information Registration is not available."
+        DevAddLabel $f.lbadnews "I'm sorry but the MutualInfoReg Module\n is not loaded so that Mutual\n Information Registration is not available."
         pack $f.lbadnews -pady $Gui(pad)
     } else {
-        MIRegBuildSubGui $f
+        MutualInfoRegBuildSubGui $f
     }
 
 
