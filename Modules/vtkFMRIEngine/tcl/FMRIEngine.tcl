@@ -38,6 +38,8 @@
 # PROCEDURES:  
 #   FMRIEngineInit
 #   FMRIEngineBuildGUI
+#   FMRIEngineViewGNULicense
+#   FMRIEngineCloseGPLWindow
 #   FMRIEngineBuildUIForDetectors the
 #   FMRIEngineSetDetector the
 #   FMRIEngineBuildUIForParadigm the
@@ -184,7 +186,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.34 $} {$Date: 2004/11/22 22:56:29 $}]
+        {$Revision: 1.35 $} {$Date: 2004/11/23 20:35:01 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -311,6 +313,7 @@ proc FMRIEngineBuildGUI {} {
 
     set helpWidget $FMRIEngine(helpWidget) 
     $helpWidget configure -height 22
+    set FMRIEngine(helpFont) [$helpWidget cget -font]
 
     set fHelp $Module(FMRIEngine,fHelp)
     set f $fHelp
@@ -453,33 +456,35 @@ proc FMRIEngineViewGNULicense {} {
     if {[info exists FMRIEngine(GPLToplevel)] == 0 } {
         set w .tcren
         toplevel $w
-        wm title $w "Gnu Public License" 
-        wm minsize $w 350 500 
-        wm maxsize $w 350 500 
+        wm title $w "Gnu General Public License" 
+        wm minsize $w 570 500 
+        wm maxsize $w 570 500 
         wm geometry $w "+285+100" 
         wm protocol $w WM_DELETE_WINDOW "FMRIEngineCloseGPLWindow" 
         set FMRIEngine(GPLToplevel) $w
 
-        frame $w.fWidget -width 350 -height 500 -bg $Gui(activeWorkspace)
-        # frame $w.fButton -bg $Gui(activeWorkspace)
-        pack $w.fWidget -side top -padx 2 -fill both -expand true
+        frame $w.fWidget
+        frame $w.fButton
+        pack $w.fWidget $w.fButton -side top -padx 2 -fill both 
 
         set f $w.fWidget
-        text $f.t -height 10 -wrap word \
-            -yscrollcommand "$f.sy set" -cursor arrow -insertontime 0
+        text $f.t -height 33 -wrap word \
+            -yscrollcommand "$f.sy set" -font {Times 10}
         scrollbar $f.sy -orient vert -command "$f.t yview"
+        set bg [$f.t cget -bg]
         pack $f.sy -side right -fill y
         pack $f.t -side left -fill both -expand true
- 
-#        DevAddButton $w.fButton.bDone "Done" "FMRIEngineCloseGPLWindow" 10 
-#        pack $w.fButton.bDone -side top 
 
         # Reads the data file
         set gplText [file join $env(SLICER_HOME) Modules vtkFMRIEngine gpl.txt]
         set fp [open $gplText r]
         set data [read $fp]
-
+        regsub -all "\f" $data {} data 
         $f.t insert 1.0 $data 
+
+        set f $w.fButton
+        button $f.bDone -text "Done" -command "FMRIEngineCloseGPLWindow" -width 8 
+        pack $f.bDone -side top -pady $Gui(pad) 
     }
 }
 
