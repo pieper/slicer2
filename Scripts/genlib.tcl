@@ -344,6 +344,7 @@ if { ![file exists $vtkTestFile] } {
 
     runcmd $CMAKE \
         -G$GENERATOR \
+    -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
         -DBUILD_SHARED_LIBS:BOOL=ON \
         -DBUILD_TESTING:BOOL=OFF \
         -DVTK_USE_CARBON:BOOL=OFF \
