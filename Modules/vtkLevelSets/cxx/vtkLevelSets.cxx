@@ -1154,7 +1154,6 @@ unsigned char vtkLevelSets::CheckConvergence( )
 {
      int   p;;
      int   cnt1,cnt2,total;
-     int   cntlow=0;
      float converged_check1;
      float converged_check2;
      float converged_check;
@@ -1727,7 +1726,7 @@ void vtkLevelSets::Evolve2D()
     float Dpmy=0;
     float dxy2;
     float meancurv=0;
-    float discriminant=0, dxsq=0,dysq=0;
+    float dxsq=0,dysq=0;
     float imcomp=0,costerm,ut;
     float curvterm;
     float balloonterm;

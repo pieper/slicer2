@@ -35,8 +35,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkImagePropagateDist.h,v $
   Language:  C++
-  Date:      $Date: 2003/04/28 18:13:24 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2004/08/16 21:52:19 $
+  Version:   $Revision: 1.2 $
   Author:    Karl Krissian
 
 =========================================================================*/
@@ -206,7 +206,7 @@ protected:
   float mindist;
 
   int tx,ty,tz,txy;
-  unsigned long imsize;
+  long imsize;
 
   // We copy input data in float format
   vtkImageData *inputImage;

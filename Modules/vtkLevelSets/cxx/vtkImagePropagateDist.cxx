@@ -131,7 +131,6 @@ void vtkImagePropagateDist::InitParam( vtkImageData* input, vtkImageData* output
 //                   ---------
 {
   int type;
-  int i;
 
 
   inputImage = input;
@@ -232,13 +231,12 @@ void vtkImagePropagateDist::PropagateDanielsson2D( )
 
     // 0: know values in the front
     // 1: value to compute in the front  
-    register short     dx0,dy0;
     register short     dx,dy;
     register int       n[8];
     register int       nx[8];
     register int       ny[8];
     register int       l;
-    register int       tp,px,py;
+    register int       tp;
     register int       p,k,pn,size;
 
     int                x0,y0,x1,y1;
@@ -253,10 +251,8 @@ void vtkImagePropagateDist::PropagateDanielsson2D( )
     register float step_dist;
 
     int       iteration;
-    char      name[100];
     float     val_min_pos,val_max_pos;
     float     val_min_neg,val_max_neg;
-    float     val_min;
     register float     val;
     register float     val0;
 
@@ -681,19 +677,16 @@ void vtkImagePropagateDist::PropagateDanielsson3D( )
 
     // 0: know values in the front
     // 1: value to compute in the front  
-    register short     dx0,dy0,dz0;
     register short     dx,dy,dz;
     register int       n[26];
     register int       nx[26];
     register int       ny[26];
     register int       nz[26];
     register int       l;
-    register int       tp,px,py,pz;
-    register int       p,k,pn,size;
-    register float     ps;
+    register int       tp;
+    register int       p,k,pn;
 
     int                x0,y0,z0,x1,y1,z1,p0;
-    int                xpn0,ypn0,zpn0,tpn;
     int                dxp,dyp,dzp;
     int                dxpn,dypn,dzpn;
     int                i,j;
@@ -704,10 +697,8 @@ void vtkImagePropagateDist::PropagateDanielsson3D( )
     register float step_dist;
 
     int       iteration;
-    char      name[100];
     float     val_min_pos,val_max_pos;
     float     val_min_neg,val_max_neg;
-    float     val_min;
     register float     val;
     register float     val0;
 
@@ -1250,7 +1241,7 @@ void vtkImagePropagateDist::SaveProjection( int num)
   float* ptrY;
   float* ptrZ;
   char name[255];
-  int  i,j,k,track;
+  int  i,track;
   int  x,y,z,p;
   int  x0,y0,z0,p0;
   
@@ -1349,7 +1340,7 @@ void vtkImagePropagateDist::SaveState( int num)
   vtkImageData* copyImage = vtkImageData::New();
   unsigned char* ptr;
   char name[255];
-  int  i,j;
+  int  i;
   
   copyImage->SetScalarType( VTK_UNSIGNED_CHAR);
   copyImage->SetNumberOfScalarComponents(1);
@@ -1394,7 +1385,7 @@ void vtkImagePropagateDist::SaveSkeleton( int num)
   vtkImageData* copyImage = vtkImageData::New();
   unsigned char* ptr;
   char name[255];
-  int  i,j;
+  int  i;
   
   
   copyImage->SetScalarType( VTK_UNSIGNED_CHAR);

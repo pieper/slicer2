@@ -147,7 +147,6 @@ void vtkImagePropagateDist2::InitParam( vtkImageData* input, vtkImageData* outpu
 //                   ---------
 {
   int type;
-  int i;
 
 
   inputImage = input;
@@ -252,14 +251,14 @@ void vtkImagePropagateDist2::IsoSurfDist2D( )
 {
 
   register int          x,y,p;
-  register int          i,j,k,n;
+  register int          n;
   register int          sign, neigh_sign;
   register float        val,val0,val1,diff;
   register float        val0_new,val1_new;
   register int          displace[2];  
   register float        Grad[2];
   register float        vs[3];
-  register float        norm;
+  register float        norm=0;
   unsigned char         grad_computed;
   register float*       inPtr;
   register float*       outPtr;
@@ -329,7 +328,7 @@ void vtkImagePropagateDist2::IsoSurfDist2D( )
         *outPtr = val0_new;
             p = x+y*tx;
         if (list_elts[p].GetTrack()==-1) {
-          list0[list0_size++] = p;
+          list0[IncList0()] = p;
         }
         list_elts[p].Init(val0_new*Grad[0]/norm,
                   val0_new*Grad[1]/norm,
@@ -342,7 +341,7 @@ void vtkImagePropagateDist2::IsoSurfDist2D( )
       if (fabs(val1_new)<fabs(*outPtr)) {
         *outPtr  = val1_new;
             p = x+y*tx+displace[n];
-        if (list_elts[p].GetTrack()==-1) list0[list0_size++] = p;
+        if (list_elts[p].GetTrack()==-1) list0[IncList0()] = p;
         list_elts[p].Init(val1_new*Grad[0]/norm,
                   val1_new*Grad[1]/norm,
                   0,
@@ -370,16 +369,14 @@ void vtkImagePropagateDist2::IsoSurfDist3D( )
 {
 
   register int          x,y,z,p;
-  register int          i,j,k,n;
+  register int          n;
   register int          sign, neigh_sign;
   register float        val,val0,val1,diff;
   register float        val0_new,val1_new;
   register int          displace[3];  
   register float        Grad[3];
   register float        vs[3];
-  register float        alpha_0;
-  register float        alpha_1;
-  register float        norm;
+  register float        norm=0;
   unsigned char         grad_computed;
   register float*       inPtr;
   register float*       inPtr1;
@@ -455,7 +452,7 @@ void vtkImagePropagateDist2::IsoSurfDist3D( )
       if (fabs(val0_new)<fabs(*outPtr)) {
         *outPtr = val0_new;
             p = x+y*tx+z*txy;
-        if (list_elts[p].GetTrack()==-1) list0[list0_size++] = p;
+        if (list_elts[p].GetTrack()==-1) list0[IncList0()] = p;
         list_elts[p].Init(val0_new*Grad[0]/norm,
                   val0_new*Grad[1]/norm,
                   val0_new*Grad[2]/norm,
@@ -467,7 +464,7 @@ void vtkImagePropagateDist2::IsoSurfDist3D( )
       if (fabs(val1_new)<fabs(*outPtr)) {
         *outPtr  = val1_new;
             p = x+y*tx+z*txy+displace[n];
-        if (list_elts[p].GetTrack()==-1) list0[list0_size++] = p;
+        if (list_elts[p].GetTrack()==-1) list0[IncList0()] = p;
         list_elts[p].Init(val1_new*Grad[0]/norm,
                   val1_new*Grad[1]/norm,
                   val1_new*Grad[2]/norm,
@@ -495,18 +492,16 @@ void vtkImagePropagateDist2::IsoSurfDist3D( )
 void vtkImagePropagateDist2::IsoSurfDist3D_band( int first_band, int last_band)
 {
 
-  register int          x,y,z,p;
+  register int          x=0,y=0,z=0,p;
   register int          nbp; // narrow band position
-  register int          i,j,k,n;
+  register int          i,n;
   register int          sign, neigh_sign;
   register float        val,val0,val1,diff;
   register float        val0_new,val1_new;
   register int          displace[3];  
   register float        Grad[3];
   register float        vs[3];
-  register float        alpha_0;
-  register float        alpha_1;
-  register float        norm;
+  register float        norm=0;
   unsigned char         grad_computed;
   register float*       inPtr0;
   register float*       outPtr0;
@@ -588,7 +583,7 @@ void vtkImagePropagateDist2::IsoSurfDist3D_band( int first_band, int last_band)
         *outPtr = val0_new;
         p = nbp;
         if (list_elts[p].GetTrack()==-1) 
-          list0[list0_size++] = p;
+          list0[IncList0()] = p;
         list_elts[nbp].Init(val0_new*Grad[0]/norm,
                   val0_new*Grad[1]/norm,
                   val0_new*Grad[2]/norm,
@@ -600,7 +595,7 @@ void vtkImagePropagateDist2::IsoSurfDist3D_band( int first_band, int last_band)
       if (fabs(val1_new)<fabs(*outPtr)) {
         *outPtr  = val1_new;
             p = nbp+displace[n];
-        if (list_elts[p].GetTrack()==-1) list0[list0_size++] = p;
+        if (list_elts[p].GetTrack()==-1) list0[IncList0()] = p;
         list_elts[p].Init(val1_new*Grad[0]/norm,
                   val1_new*Grad[1]/norm,
                   val1_new*Grad[2]/norm,
@@ -627,7 +622,7 @@ void vtkImagePropagateDist2::IsoSurfDistInit( )
 
   register float*   inPtr;
   register float*   outPtr;
-  register int      i,p;
+  register int      i;
 
   inPtr  = (float*) inputImage ->GetScalarPointer();
   outPtr = (float*) outputImage->GetScalarPointer();
@@ -669,36 +664,29 @@ void vtkImagePropagateDist2::PropagateDanielsson2D( )
 
     // 0: know values in the front
     // 1: value to compute in the front  
-    register float     dx0,dy0;
     register float     dx,dy;
     register int       n[8];
     register int       nx[8];
     register int       ny[8];
     register int       l;
-    register int       tp,px,py;
-    register int       p,k,pn,size;
+    register int       tp;
+    register int       p,k,pn;
 
     int                x0,y0,x1,y1;
-    int                xpn0,ypn0,tpn;
     float                dxp,dyp;
     float                dxpn,dypn;
     int                i,j;
     register float known_dist_pos;
     register float known_dist_neg;
-    register float next_dist_pos;
-    register float next_dist_neg;
+    register float next_dist_pos=0;
+    register float next_dist_neg=0;
     register float step_dist;
 
     int       iteration;
-    char      name[100];
     float     val_min_pos,val_max_pos;
     float     val_min_neg,val_max_neg;
-    float     val_min;
     register float     val;
     register float     val0;
-
-    int posupdated;
-    int negupdated;
 
     PD_element2 pt0;
     float* buf;
@@ -771,7 +759,7 @@ void vtkImagePropagateDist2::PropagateDanielsson2D( )
     // Put the remaining trial points in the list
     for(k=0;k<list_remaining_trial_size;k++) {
       p = list_remaining_trial[k];
-      list1[list1_size++]=p;
+      list1[IncList1()]=p;
       list_elts[p].SetState(POINT_TRIAL_INLIST);
     }
     list_remaining_trial_size = 0;
@@ -818,7 +806,7 @@ void vtkImagePropagateDist2::PropagateDanielsson2D( )
       case POINT_NOT_PARSED:
             neighbor.SetState(POINT_TRIAL);
       case POINT_TRIAL:
-        list1[list1_size++]=pn;
+        list1[IncList1()]=pn;
             neighbor.SetState(POINT_TRIAL_INLIST);
       case POINT_TRIAL_INLIST:
         // Update here the values of the trial points
@@ -907,7 +895,7 @@ void vtkImagePropagateDist2::PropagateDanielsson2D( )
       // update the list of known points in the front
       if (((buf[p]>0)&&(buf[p]<=known_dist_pos)&&(known_dist_pos<maxdist))||
           ((buf[p]<0)&&(buf[p]>=known_dist_neg)&&(known_dist_neg>mindist))) {
-    list0[list0_size++] = p;
+    list0[IncList0()] = p;
     list_elts[p].SetState( POINT_SET_FRONT);
     //    if (fabs(buf[p])<val_min)
     //      val_min = fabs(buf[p]);
@@ -916,7 +904,7 @@ void vtkImagePropagateDist2::PropagateDanielsson2D( )
     if (((buf[p]>0)&&(known_dist_pos<maxdist))||
         ((buf[p]<0)&&(known_dist_neg>mindist)))
       {
-        list_remaining_trial[list_remaining_trial_size++] = p;
+        list_remaining_trial[IncListRemainingTrial()] = p;
         list_elts[p].SetState( POINT_TRIAL);
       }
     }
@@ -999,17 +987,19 @@ void vtkImagePropagateDist2::InitLists()
 
   //------ Allocate the information
 
-  list_maxsize = 500000;
+  list0_maxsize = 500000;
+  list1_maxsize = 500000;
+  list_remaining_trial_maxsize = 500000;
 
   // list of points in the front
-  if (list0==NULL)  list0 = new int[list_maxsize]; 
+  if (list0==NULL)  list0 = new int[list0_maxsize]; 
 
   // list of trial points
-  if (list1==NULL)  list1 = new int[list_maxsize]; 
+  if (list1==NULL)  list1 = new int[list1_maxsize]; 
 
   // list of trial points
   if (list_remaining_trial==NULL)  
-    list_remaining_trial = new int[list_maxsize]; 
+    list_remaining_trial = new int[list_remaining_trial_maxsize]; 
 
   // Use a lot of memory: to be improved ...
   if (list_elts==NULL)  
@@ -1027,6 +1017,73 @@ void vtkImagePropagateDist2::InitLists()
   list_remaining_trial_size = 0;
 
 } // InitLists()
+
+
+
+//----------------------------------------------------------------------
+int vtkImagePropagateDist2::IncList0()
+//
+{
+  int   n = list0_size++;
+
+  if (n>=list0_maxsize) {
+    // resize the list
+    int* newlist;
+
+    list0_maxsize += 500000;
+    newlist = new int[list0_maxsize];
+    // use memcpy
+    memcpy(newlist,list0,4*(list0_size-1));
+    delete [] list0;
+    list0 = newlist;
+  }
+
+  return n;
+}
+
+
+//----------------------------------------------------------------------
+int vtkImagePropagateDist2::IncList1()
+//
+{
+  int   n = list1_size++;
+
+  if (n>=list1_maxsize) {
+    // resize the list
+    int* newlist;
+
+    list1_maxsize += 500000;
+    newlist = new int[list1_maxsize];
+    // use memcpy
+    memcpy(newlist,list1,4*(list1_size-1));
+    delete [] list1;
+    list1 = newlist;
+  }
+
+  return n;
+}
+
+
+//----------------------------------------------------------------------
+int vtkImagePropagateDist2::IncListRemainingTrial()
+//
+{
+  int   n = list_remaining_trial_size++;
+
+  if (n>=list_remaining_trial_maxsize) {
+    // resize the list
+    int* newlist;
+
+    list_remaining_trial_maxsize += 500000;
+    newlist = new int[list_remaining_trial_maxsize];
+    // use memcpy
+    memcpy(newlist,list_remaining_trial,4*(list_remaining_trial_size-1));
+    delete [] list_remaining_trial;
+    list_remaining_trial = newlist;
+  }
+
+  return n;
+}
 
 
 //----------------------------------------------------------------------
@@ -1065,19 +1122,16 @@ void vtkImagePropagateDist2::PropagateDanielsson3D( )
 
     // 0: know values in the front
     // 1: value to compute in the front  
-    register float     dx0,dy0,dz0;
     register float     dx,dy,dz;
     register int       n[26];
     register int       nx[26];
     register int       ny[26];
     register int       nz[26];
     register int       l;
-    register int       tp,px,py,pz;
-    register int       p,k,pn,size;
-    register float     ps;
+    register int       tp;
+    register int       p,k,pn;
 
     int                x0,y0,z0,x1,y1,z1,p0;
-    int                xpn0,ypn0,zpn0,tpn;
     float                dxp,dyp,dzp;
     float                dxpn,dypn,dzpn;
     int                i,j;
@@ -1088,15 +1142,10 @@ void vtkImagePropagateDist2::PropagateDanielsson3D( )
     register float step_dist;
 
     int       iteration;
-    char      name[100];
     float     val_min_pos,val_max_pos;
     float     val_min_neg,val_max_neg;
-    float     val_min;
     register float     val;
     register float     val0;
-
-    int posupdated;
-    int negupdated;
 
     PD_element2 pt0;
     float* buf;
@@ -1138,8 +1187,8 @@ void vtkImagePropagateDist2::PropagateDanielsson3D( )
 
   // Already done ...
   //  for(k=0;k<list0_size;k++) list_elts[list0[k]].SetState(POINT_SET_FRONT);
-  known_dist_pos = 0;
-  known_dist_neg = 0;
+  next_dist_pos = known_dist_pos = 0;
+  next_dist_neg = known_dist_neg = 0;
 
   SaveDistance(      distmap_count);
   SaveState(         distmap_count);
@@ -1165,7 +1214,7 @@ void vtkImagePropagateDist2::PropagateDanielsson3D( )
     // Put the remaining trial points in the list
     for(k=0;k<list_remaining_trial_size;k++) {
       p = list_remaining_trial[k];
-      list1[list1_size++]=p;
+      list1[IncList1()]=p;
       list_elts[p].SetState(POINT_TRIAL_INLIST);
     }
     list_remaining_trial_size = 0;
@@ -1218,7 +1267,7 @@ void vtkImagePropagateDist2::PropagateDanielsson3D( )
       case POINT_NOT_PARSED:
         neighbor.SetState(POINT_TRIAL);
       case POINT_TRIAL:
-        list1[list1_size++]=pn;
+        list1[IncList1()]=pn;
             neighbor.SetState(POINT_TRIAL_INLIST);
       case POINT_TRIAL_INLIST:
         dx = pt0.X()+nx[l];
@@ -1230,7 +1279,7 @@ void vtkImagePropagateDist2::PropagateDanielsson3D( )
           val =  sqrt(dx*dx+dy*dy+dz*dz);
           if (val<*bufn) {
         if (val<known_dist_pos) {
-          printf("val<known_dist_pos; val0=%f val=%f (dx,dy,dz)=(%d,%d,%d)\n",val0, val,dx,dy,dz);
+          printf("val<known_dist_pos; val0=%f val=%f (dx,dy,dz)=(%f,%f,%f)\n",val0, val,dx,dy,dz);
           printf("point (%3d,%3d,%3d) \n",x1,y1,z1);
         }
         *bufn = val;
@@ -1243,7 +1292,7 @@ void vtkImagePropagateDist2::PropagateDanielsson3D( )
           val =  - sqrt(dx*dx+dy*dy+dz*dz);
           if (val>*bufn) {
         if (val>known_dist_neg) {
-          printf("val>known_dist_neg; val0=%f val=%f (dx,dy,dz)=(%d,%d,%d)\n",val0,val,dx,dy,dz);
+          printf("val>known_dist_neg; val0=%f val=%f (dx,dy,dz)=(%f,%f,%f)\n",val0,val,dx,dy,dz);
           printf("point (%3d,%3d,%3d) \n",x1,y1,z1);
         }
         *bufn = val;
@@ -1307,18 +1356,18 @@ void vtkImagePropagateDist2::PropagateDanielsson3D( )
       // update the list of known points in the front
       if (((buf[p]>0)&&(buf[p]<=known_dist_pos)&&(known_dist_pos<maxdist))||
           ((buf[p]<0)&&(buf[p]>=known_dist_neg)&&(known_dist_neg>mindist))) {
-    list0[list0_size++] = p;
-    list_elts[p].SetState( POINT_SET_FRONT);
-    //if (fabs(buf[p])<val_min)
-    //  val_min = fabs(buf[p]);
+        list0[IncList0()] = p;
+        list_elts[p].SetState( POINT_SET_FRONT);
+        //if (fabs(buf[p])<val_min)
+        //  val_min = fabs(buf[p]);
       }
       else 
-    if (((buf[p]>0)&&(known_dist_pos<maxdist))||
-        ((buf[p]<0)&&(known_dist_neg>mindist)))
-    {
-      list_remaining_trial[list_remaining_trial_size++] = p;
-      list_elts[p].SetState( POINT_TRIAL);
-    }
+        if (((buf[p]>0)&&(known_dist_pos<maxdist))||
+           ((buf[p]<0)&&(known_dist_neg>mindist)))
+        {
+          list_remaining_trial[IncListRemainingTrial()] = p;
+          list_elts[p].SetState( POINT_TRIAL);
+      }
     }
 
     SaveDistance(      distmap_count);
@@ -1536,9 +1585,7 @@ void vtkImagePropagateDist2::SaveProjection( int num)
   float* ptrY;
   float* ptrZ;
   char name[255];
-  int  i,j,k,track;
-  int  x,y,z,p;
-  int  x0,y0,z0,p0;
+  int  i;
   
   
   copyImageX->SetScalarType( VTK_FLOAT);
@@ -1611,6 +1658,7 @@ void vtkImagePropagateDist2::SaveProjection( int num)
 //----------------------------------------------------------------------
 void vtkImagePropagateDist2::SaveState( int num)
 {
+  int i;
 
   if (!save_intermediate_images) return;  
 
@@ -1618,7 +1666,6 @@ void vtkImagePropagateDist2::SaveState( int num)
   vtkImageData* copyImage = vtkImageData::New();
   unsigned char* ptr;
   char name[255];
-  int  i,j;
   
   copyImage->SetScalarType( VTK_UNSIGNED_CHAR);
   copyImage->SetNumberOfScalarComponents(1);
@@ -1663,7 +1710,7 @@ void vtkImagePropagateDist2::SaveSkeleton( int num)
   vtkImageData* copyImage = vtkImageData::New();
   unsigned char* ptr;
   char name[255];
-  int  i,j;
+  int  i;
   
   
   copyImage->SetScalarType( VTK_UNSIGNED_CHAR);
@@ -1756,8 +1803,7 @@ void vtkImagePropagateDist2::GetSkeleton( vtkImageData* skeleton)
 {
 
   float* ptr;
-  char name[255];
-  int  i,j;
+  int  i;
   float n;
   
   
