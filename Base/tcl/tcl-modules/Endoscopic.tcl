@@ -259,7 +259,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.69 $} {$Date: 2004/10/12 18:19:44 $}] 
+    {$Revision: 1.70 $} {$Date: 2004/10/15 17:07:30 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -5667,47 +5667,21 @@ proc EndoscopicLoadTargets { }  {
          EndoscopicSelectTarget $Endoscopic(selectedTarget)
          set Endoscopic(totalTargets) $num
      
-          if {$Endoscopic(FlatWindows) != ""} {
+                if {$Endoscopic(FlatWindows) != ""} {
 
-              # Fix later: as of now I am assuming the user are working with the first flat model
-              # if the user want to work with several flat models at the same time, they either has to be really careful or
-              # insert some checking mechanism to prevent them from adding or selecting targets in the wrong flat window.    
-              set name [lindex $Endoscopic(FlatWindows) 0]
+# Fix later: as of now I am assuming the user are working with the first flat model
+# if the user want to work with several flat models at the same time, they either has to be really careful or
+# insert some checking mechanism to prevent them from adding or selecting targets in the wrong flat window.    
+                 set name [lindex $Endoscopic(FlatWindows) 0]
     
-              set widget .t$name.fView.flatRenderWidget$name
+                 set widget .t$name.fView.flatRenderWidget$name
+                 EndoscopicUpdateTargetsInFlatWindow $widget
    
-              set pointId [Point($pid,node) GetDescription]
-    
-              set polyData $Endoscopic($name,polyData)
-              set point(xyz) [$polyData GetPoint $pointId]
-
-              set camx [lindex $point(xyz) 0]
-
-              set position [$Endoscopic($name,camera) GetPosition]
-  
-              set Endoscopic(flatColon,xCamDist) $camx
-              set Endoscopic(flatColon,yCamDist) [lindex $position 1]
-              set Endoscopic(flatColon,zCamDist) [lindex $position 2]
-   
-              $Endoscopic($name,camera) SetFocalPoint $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) 0
-              $Endoscopic($name,camera) SetPosition $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zCamDist)
-  
-              $Endoscopic(flatScale,panlr) set $Endoscopic(flatColon,xCamDist)
-              $Endoscopic(flatScale,panud) set $Endoscopic(flatColon,yCamDist)
-              $Endoscopic(flatScale,camZoom) set $Endoscopic(flatColon,zCamDist)
- 
-              [$widget GetRenderWindow] Render
-
-              } else {
-
-              return
-              }
-
-
-         } else {
-         return
-         }
-    }
+                 } else {
+                 return
+                 }
+       }
+      }
 
 }
 
