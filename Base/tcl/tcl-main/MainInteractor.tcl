@@ -868,9 +868,15 @@ proc MainInteractorExpose {widget} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorRender {} {
-    global Interactor View
+    global Interactor View Slice
 
-    RenderSlice $Interactor(s)
+    set s $Interactor(s)
+
+    RenderSlice $s
+
+    if { $Slice($s,visibility) } {
+        Render3D
+    }
 }
 
 #-------------------------------------------------------------------------------
