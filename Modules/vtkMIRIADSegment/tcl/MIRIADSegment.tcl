@@ -154,7 +154,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2003/10/03 16:47:16 $}]
+        {$Revision: 1.3 $} {$Date: 2003/10/05 22:48:38 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -300,6 +300,73 @@ proc MIRIADSegmentEnter {} {
 proc MIRIADSegmentExit {} {
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC MIRIADSegmentProcessStudy
+# Read the dicom data and the atlas for a subject, runs the segmentation and saves results
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRIADSegmentProcessStudy { {BIRNID "000397921927"} {visit 001} } {
+
+    set ::MIRIADSegment(version) 1
+
+    MainFileClose 
+    set root /home/pieper/data/duke-data/neil/MIRIAD/subjects/${BIRNID}
+    set subj $root/Visit_$visit/Study_0001/
+
+    MIRIADSegmentLoadDukeStudy $subj/RawData/001.ser
+    MIRIADSegmentLoadLONIWarpedAtlas $subj/DerivedData/LONI/mri/atlases/bwh_prob/air_252p
+
+    MIRIADSegmentSetEMParameters
+    MIRIADSegmentRunEM
+
+    MIRIADSegmentSaveResults $subj
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MIRIADSegmentSaveResults
+# Save the EM results
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRIADSegmentSaveResults { subj } {
+
+    set SEGid [MIRIADSegmentGetVolumeByName "EMSegResult1"]
+    set resultdir $subj/DerivedData/SPL/EM-$::MIRIADSegment(version)
+    file mkdir $resultdir
+    MainVolumesWrite $SEGid $resultdir/EMSegResult
+
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MIRIADSegmentLoadDukeStudy 
+# Reads the bwh probability atlas
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRIADSegmentLoadDukeStudy { {dir "choose"} } {
+
+    if { $dir == "choose"} {
+        set initialdir /home/pieper/data/duke-data/neil/MIRIAD/subjects/000397921927/Visit_001/Study_0001/RawData/001.ser
+        set dir [tk_chooseDirectory -initialdir $initialdir]
+        if { $dir == "" } {
+            return
+        }
+    }
+
+    MIRIADSegmentDeleteVolumeByName "T2"
+    MIRIADSegmentDeleteVolumeByName "PD"
+
+    set T2id [DICOMLoadStudy $dir *\[02468\].dcm]
+    set PDid [DICOMLoadStudy $dir *\[13579\].dcm]
+
+    Volume($T2id,node) SetName "T2"
+    Volume($PDid,node) SetName "PD"
+
+    MainUpdateMRML
+}
+
 #-------------------------------------------------------------------------------
 # .PROC MIRIADSegmentLoadAtlas 
 # Reads the bwh probability atlas
@@ -353,6 +420,269 @@ proc MIRIADSegmentLoadBWHAtlas { {dir "choose"} } {
     RenderAll
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MIRIADSegmentLoadLONIWarpedAtlas 
+# Reads the bwh probability atlas as warped by LONI
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRIADSegmentLoadLONIWarpedAtlas { {dir "choose"} } {
+
+    if { $dir == "choose"} {
+        set initialdir /home/pieper/data/duke-data/neil/MIRIAD/subjects/000397921927/Visit_001/Study_0001/DerivedData/LONI/mri/atlases/bwh_prob/air_252p
+        set dir [tk_chooseDirectory -initialdir $initialdir]
+        if { $dir == "" } {
+            return
+        }
+    }
+    set all_vols {
+        sumbackground.hdr sumcsf.hdr sumforeground.hdr 
+        sumgraymatter_amygdala.hdr sumgraymatter_hippocampus.hdr 
+        sumgraymatter_parrahipp_normed.hdr sumgraymatter_stg_normed.hdr 
+        sumgraymatter_substr.hdr sumgreymatter_all.hdr sumgreymatter.hdr 
+        sumlamygdala.hdr sumlamygdala_normed.hdr sumlAnterInsulaCortex.hdr 
+        sumlhippocampus.hdr sumlhippocampus_normed.hdr sumlInferiorTG.hdr 
+        sumlMiddleTG.hdr sumlparrahipp.hdr sumlparrahipp_normed.hdr 
+        sumlPostInsulaCortex.hdr sumlstg.hdr sumlstg_normed.hdr 
+        sumlTempLobe.hdr sumlThalamus.hdr sumramygdala.hdr 
+        sumramygdala_normed.hdr sumrAnterInsulaCortex.hdr 
+        sumrhippocampus.hdr sumrhippocampus_normed.hdr 
+        sumrInferiorTG.hdr sumrMiddleTG.hdr sumrparrahipp.hdr 
+        sumrparrahipp_normed.hdr sumrPostInsulaCortex.hdr sumrstg.hdr 
+        sumrstg_normed.hdr sumrTempLobe.hdr sumrThalamus.hdr 
+        sumwhitematter.hdr
+    }
+    set four_vols {
+        sumbackground.hdr sumcsf.hdr 
+        sumwhitematter.hdr sumgreymatter.hdr 
+    }
+        
+    foreach vol $four_vols {
+        set name atlas-[file root $vol]
+        MIRIADSegmentDeleteVolumeByName $name
+        MainVolumesSetActive "NEW"
+        set ::Volume(VolAnalyze,FileName) $dir/$vol
+        set ::Volume(name) $name
+        set i [VolAnalyzeApply]
+        MIRIADSegmentNormalizeImage $i 82
+    }
+    RenderAll
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MIRIADSegmentSetEMParameters
+# Define the parameters for the segmentation
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRIADSegmentSetEMParameters {} {
+
+    set ::EMSegment(SegmentMode) 1
+    set ::EMSegment(DebugVolume) 1
+
+    $::EMSegment(fAllVolList) selection clear 0 end
+    for {set i 0} {$i < [$::EMSegment(fAllVolList) size]} {incr i} {
+        if { [$::EMSegment(fAllVolList) get $i] == "PD" } {
+            $::EMSegment(fAllVolList) selection set $i
+            set ::EMSegment(AllVolList,ActiveID) $i
+            EMSegmentTransfereVolume All
+            break
+        }
+    }
+    $::EMSegment(fAllVolList) selection clear 0 end
+    for {set i 0} {$i < [$::EMSegment(fAllVolList) size]} {incr i} {
+        if { [$::EMSegment(fAllVolList) get $i] == "T2" } {
+            $::EMSegment(fAllVolList) selection set $i
+            set ::EMSegment(AllVolList,ActiveID) $i
+            EMSegmentTransfereVolume All
+            break
+        }
+    }
+
+    set ::EMSegment(EMiteration) 20
+    set ::EMSegment(MFAiteration) 10
+
+    set ::EMSegment(StartSlice) 1
+    set ::EMSegment(EndSlice) 59
+
+    set ::EMSegment(NumClassesNew) 4
+    EMSegmentCreateDeleteClasses 1 1
+
+    set ::EMSegment(Cattrib,1,Prob) .05
+    set ::EMSegment(Cattrib,2,Prob) .20
+    set ::EMSegment(Cattrib,3,Prob) .50
+    set ::EMSegment(Cattrib,4,Prob) .25
+    EMSegmentSumGlobalUpdate
+
+    set classes "1 2 3 4" 
+    set probvols "atlas-sumbackground atlas-sumwhitematter atlas-sumcsf atlas-sumgreymatter"
+    set logmeans {
+        {0.5711 0.4534} {6.3364 5.0624} {4.5678 4.2802} {6.3836 5.1253}
+    }
+    set logcovs {
+        {2.915 1.9455 1.9455 1.9985} 
+        {0.0049 -0.0019 -0.0019 0.0711} 
+        {7.6805 5.0207 5.0207 7.3293} 
+        {0.0026 0.004 0.004 0.0562}
+    }
+    foreach class $classes probvol $probvols lmean $logmeans lcov $logcovs {
+        EMSegmentChangeClass $class
+        set ::EMSegment(ProbVolumeSelect) [MIRIADSegmentGetVolumeByName $probvol]       
+        EMSegmentProbVolumeSelectNode \
+            Volume [MIRIADSegmentGetVolumeByName $probvol] \
+            EMSegment EM-ProbVolumeSelect ProbVolumeSelect
+
+        set index 0
+        for {set y 0} {$y < $::EMSegment(NumInputChannel)} {incr y} {
+            set ::EMSegment(Cattrib,$class,LogMean,$y) [lindex $lmean $y]
+            for {set x 0} {$x < $::EMSegment(NumInputChannel)} {incr x} {
+                set ::EMSegment(Cattrib,$class,LogCovariance,$y,$x)  [lindex $lcov $index]
+                incr index
+            }
+        }
+    }
+}
+
+
+if {0} {
+    #
+    # some left over stuff - just for reference
+    #
+    set logmeans {
+        "0.571072875212 0.453423712788 " 
+        "6.33643656174 5.06243056865 " 
+        "4.56782393077 4.28015667061 " 
+        "6.50700533879 5.52666528996 " 
+    }
+    set logcovs {
+        "2.91504731506 1.94549455788 1.94549455788 1.99850648931"
+        "0.00493500976813 -0.00186271455602 -0.00186271455602 0.0711103673701 "
+        "7.68049171392 5.02067293354 5.02067293354 7.32928998269 "
+        "0.289870642343 0.281761623486 0.281761623486 0.506977903929 "
+    }
+    set ::EMSegment(Cattrib,1,Prob) .05
+    set ::EMSegment(Cattrib,2,Prob) .25
+    set ::EMSegment(Cattrib,3,Prob) .60
+    set ::EMSegment(Cattrib,4,Prob) .10
+    
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MIRIADSegmentRunEM
+# Run the EM algorithm on the loaded data
+# - mimic user actions
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRIADSegmentRunEM {} {
+
+    set ::EMSegment(StartSlice) 28
+    set ::EMSegment(EndSlice) 32
+
+    set ::EMSegment(Cattrib,1,Prob) .25
+    set ::EMSegment(Cattrib,2,Prob) .25
+    set ::EMSegment(Cattrib,3,Prob) .25
+    set ::EMSegment(Cattrib,4,Prob) .25
+    EMSegmentSumGlobalUpdate
+
+    EMSegmentExecute "EM" "Run"
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MIRIADSegmentSamplesFromSegmentation
+# Use a segmentation volume to define the samples for the EM starting point
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRIADSegmentSamplesFromSegmentation {class SEGid label} {
+
+    set T2id [MIRIADSegmentGetVolumeByName "T2"]
+    set PDid [MIRIADSegmentGetVolumeByName "PD"]
+    set T2image [Volume($T2id,vol) GetOutput]
+    set PDimage [Volume($PDid,vol) GetOutput]
+    set SEGimage [Volume($SEGid,vol) GetOutput]
+
+    set ::EMSegment(Cattrib,$class,$T2id,Sample) ""
+    set ::EMSegment(Cattrib,$class,$PDid,Sample) ""
+
+    set dims [[Volume($T2id,vol) GetOutput] GetDimensions]
+    set xsize [lindex $dims 0]
+    set ysize [lindex $dims 1]
+    set zsize [lindex $dims 2]
+
+    for {set z 0} {$z < $zsize} {incr z} {
+        set z 30
+        for {set y 0} {$y < $ysize} {incr y} {
+            set y 128
+            for {set x 0} {$x < $xsize} {incr x} {
+                if { $label == [$SEGimage GetScalarComponentAsFloat $x $y $z 0] } {
+                    set sample [$T2image GetScalarComponentAsFloat $x $y $z 0]
+                    lappend ::EMSegment(Cattrib,$class,$T2id,Sample) [list $x $y $z $sample]
+                    set sample [$PDimage GetScalarComponentAsFloat $x $y $z 0]
+                    lappend ::EMSegment(Cattrib,$class,$PDid,Sample) [list $x $y $z $sample]
+                }
+            }
+            return
+        }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MIRIADSegmentClassPDFFromSegmentation
+# Recalculate class Mean and Covariance from segmentations
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRIADSegmentClassPDFFromSegmentation {} {
+
+
+    MIRIADSegmentSamplesFromSegmentation  1 [MIRIADSegmentGetVolumeByName WorkingB] 1
+    MIRIADSegmentSamplesFromSegmentation  2 [MIRIADSegmentGetVolumeByName WorkingW] 2
+    MIRIADSegmentSamplesFromSegmentation  3 [MIRIADSegmentGetVolumeByName WorkingC] 3
+    MIRIADSegmentSamplesFromSegmentation  4 [MIRIADSegmentGetVolumeByName WorkingG] 4
+
+
+    set ::EMSegment(UseSamples) 1
+    EMSegmentCalculateClassMeanCovariance 
+    set ::EMSegment(UseSamples) 0
+
+    set classes "1 2 3 4" 
+    set logmeans ""
+    set logcovs ""
+    foreach class $classes {
+        set lmean ""
+        set lcov ""
+        for {set y 0} {$y < $::EMSegment(NumInputChannel)} {incr y} {
+            lappend lmean $::EMSegment(Cattrib,$class,LogMean,$y) 
+            for {set x 0} {$x < $::EMSegment(NumInputChannel)} {incr x} {
+                lappend lcov $::EMSegment(Cattrib,$class,LogCovariance,$y,$x)
+            }
+        }
+        lappend logmeans $lmean
+        lappend logcovs $lcov
+    }
+    puts "set logmeans $logmeans"
+    puts "set logcovs $logcovs"
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC MIRIADSegmentGetVolumeByName 
+# clean up volumes before reloading them
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRIADSegmentGetVolumeByName {name} {
+
+    set nvols [Mrml(dataTree) GetNumberOfVolumes]
+    for {set vv 0} {$vv < $nvols} {incr vv} {
+        set n [Mrml(dataTree) GetNthVolume $vv]
+        if { $name == [$n GetName] } {
+            return [DataGetIdFromNode $n]
+        }
+    }
+    return -1
+}
 
 #-------------------------------------------------------------------------------
 # .PROC MIRIADSegmentDeleteVolumeByName 
@@ -374,23 +704,50 @@ proc MIRIADSegmentDeleteVolumeByName {name} {
     }
 }
 
+
 #-------------------------------------------------------------------------------
-# .PROC MIRIADSegmentLoadDukeStudy 
-# Reads the bwh probability atlas
+# .PROC MIRIADSegmentNormalizeImage 
+# Rescale the image data to the correct atlas range
+# (assumes that the max value actually occurs in the image somewhere)
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MIRIADSegmentLoadDukeStudy { {dir "choose"} } {
+proc MIRIADSegmentNormalizeImage {volid MaxValue} { 
+    catch "Accu Delete"
+    catch "NormImg Delete"
+    vtkImageAccumulate Accu
+    Accu SetInput [Volume($volid,vol) GetOutput]
+    Accu Update
+    set MaxImage [lindex [Accu GetMax] 0]
+    puts "Normalize [Volume($volid,node) GetName]: max Volume Value = $MaxImage, max Predefined Value = $MaxValue"  
+    if {$MaxImage ==  $MaxValue} {
+        return
+    }
 
-    MIRIADSegmentDeleteVolumeByName "T2"
-    MIRIADSegmentDeleteVolumeByName "PD"
+    # 1. Normailze Image
+    vtkImageMathematics NormImg
+    NormImg SetInput1 [Volume($volid,vol) GetOutput]
+    NormImg SetOperationToMultiplyByK
+    set value [expr $MaxValue / double($MaxImage)]
+    # 1. find out last digit
+    set i 0
+    while {[expr (double(int($value / pow(10.0,$i)))) > 0] } {
+        incr i
+    }
+    # 2. Add to value 
+    # - have to do it otherwise rounding error produce value MaxValue -1
+    set i [expr -1*($::tcl_precision - $i)]
+    while {[expr $value*$MaxImage] <=  $MaxValue} {
+        set value [expr $value + pow(10.0,$i)]
+    }
+    NormImg SetConstantK $value
+    NormImg SetInput1 [Volume($volid,vol) GetOutput]
+    NormImg Update  
+    set imdata [[NormImg GetOutput] NewInstance]
+    $imdata DeepCopy [NormImg GetOutput]
+    Volume($volid,vol) SetImageData $imdata
 
-    set T2id [DICOMLoadStudy $dir *\[02468\].dcm]
-    set PDid [DICOMLoadStudy $dir *\[13579\].dcm]
-
-    Volume($T2id,node) SetName "T2"
-    Volume($PDid,node) SetName "PD"
-
-    MainUpdateMRML
+    NormImg Delete
+    Accu Delete
 }
 
