@@ -62,16 +62,17 @@ proc XformAxisStart { module actor widget axis x y } {
     foreach id $Selected(Model) {
     Model($id,actor,viewRen) GetMatrix ${module}($actor,inverse)
     ${module}($actor,inverse) Invert
-    ####        ${module}($actor,actXform) PostMultiply
+    ###
+    ${module}($actor,actXform) PostMultiply
     ${module}($actor,actXform) SetMatrix ${module}($actor,matrix)
     ${module}($actor,actXform) Concatenate ${module}($actor,inverse)
-    ${module}($actor,actXform) SetPoint 0 0 0 1
-    eval Model($id,actor,viewRen) SetOrigin [${module}($actor,actXform) GetPoint]
+    ${module}($actor,actXform) TransformPoint 0 0 0
+    eval Model($id,actor,viewRen) SetOrigin [${module}($actor,actXform) GetPosition]
     }
-#    DebugMsg [concat "Starting axis-based transformation with axis " $axis ]
+
+    #    DebugMsg [concat "Starting axis-based transformation with axis " $axis ]
     set Xform(xform) [vtkTransform Xform(xform)]
-    Xform(xform) Identity
-    Xform(xform) PostMultiply
+    Xform(xform) Identity Xform(xform) PostMultiply
 }
 
 

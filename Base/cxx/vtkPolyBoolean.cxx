@@ -201,7 +201,10 @@ void vtkPolyBoolean::SetPolyDataB( vtkPolyData *polyDataB )
   if ( this->PolyDataB != polyDataB )
     {
     this->DeleteTriDirectory( 1 );
-    vtkDebugMacro(<<" setting PolyDataB to " << (void *)polyDataB);
+    //    vtkDebugMacro(<<" setting PolyDataB to " << (void *)polyDataB);
+    cout <<" setting PolyDataB to " << (void *)polyDataB;
+    fflush(NULL);
+
     if (this->PolyDataB) {this->PolyDataB->UnRegister(this);}
     this->PolyDataB = polyDataB;
     if (this->PolyDataB) {this->PolyDataB->Register(this);}
@@ -465,6 +468,9 @@ void vtkPolyBoolean::Execute()
   // Intersect OBBs and process intersecting leaf nodes.
   // Intersect leaf node pairs to generate list of cellId pairs
   // Intersect cellId pairs to generate list of new edges.
+  
+//  inputA->BuildLinks();
+//  inputB->BuildLinks();
   edgeCount = this->OBBTreeA->IntersectWithOBBTree( this->OBBTreeB, XformBtoA,
                                                     this->ProcessTwoNodes,
                                                     (void *)this );
@@ -1770,7 +1776,7 @@ void vtkPolyBoolean::AddCellTriangles( int cellId, int *ptIds, int type,
   thisTriDirectory = this->TriDirectory[AorB];
   if ( thisTriDirectory[cellId] == NULL )
     { // Then this cell hasn't been processed yet - do it now.
-    for ( ii=0; ii<numPts-2; ii++ )
+        for ( ii=0; ii<numPts-2; ii++ )
       {
       newTri = new vtkBoolTri;
       newTri->CellId = cellId;

@@ -99,7 +99,7 @@ proc MeasureInit {} {
     
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.12 $} {$Date: 2002/09/04 14:02:36 $}]
+        {$Revision: 1.13 $} {$Date: 2002/11/06 22:02:44 $}]
     
     # Initialize module-level variables
     #    set Measure(Model1) $Model(idNone)
@@ -181,100 +181,9 @@ proc MeasureBuildGUI {} {
     #-----------------------------------------
     
     set help "
-<B> Introduction to Measurement Tools </B>
-The measurement tools can be used to calculate the: 
-   <LI> position of a fiducial in world 
-          coordinates
-   <LI> distance between two fiducials
-   <LI> angle formed by three fiducials
-   <LI> surface area of a model
-   <LI> volume of a model
-   <LI> volume of interesection of two 
-          models
-
-   Fiducials can be added, grouped, edited, and deleted in the 'Fiducials' module (found by clicking on the 'More:' button above).  Models can be added and deleted in the 'Models' module (found at the top of this window).
-
-<B>Using Measurement Tools </B>
-   Below you will find a description of how to use the measurement tools found in this module.  Please recognize that these tools have not been validated.
-
-   All of the Measurement Tools share a similar interface.  There are two sorts of objects the Measurement Tools work with: Fiducials and Models.  The user must first select one or more of these objects, as is appropriate, and then make the desired measurement by selecting from the list of tools found under the 'Measure' drop down list box found at the top of this pane (just under the 'Help' and 'Measure' tabs).  For example, to determine the coordinates of a fiducial, the user would first select the appropriate fiducial, and then select 'Position' from the 'Measure' drop down list box.  The coordinates will be reported in the text area just beneath the 'Measure' drop down button.  The user can click on 'Clear Output' to clear the text area at any time.
-
-<LI> <B>position of a fiducial in world
-          coordinates</B>
-          Select one or more fiducials using 
-          the Fiducials interface or by 
-          pointing to the fiducials and 
-          pressing the 'q' key.  Then select 
-          'Position' from the 'Measure' drop 
-          down list box.
-
-<LI> <B>distance between two fiducials</B>
-          Select two fiducials using the 
-          Fiducials interface or by pointing 
-          to the fiducials using the 'q' key.  
-          Then select 'Distance' from the 
-          'Measure' drop down list box.  
-          Note that only the distance 
-          between the first two fiducials 
-          selected will be reported if
-          more than one fiducial has been
-          selected.
-
-<LI> <B>angle formed by three fiducials</B>
-          Select three fiducials using the 
-          Fiducials interface or by pointing
-          to the fiducials using the 'q'
-          key.  Then select 'Angle' from
-          the 'Measure' drop down list
-          box.  Note that only the angle
-          between the first three
-          fiducials selected will be
-          reported if more than one
-          fiducial has been selected.
-          Also, note that the angle
-          measured is the angle between
-          the vector formed by the
-          first and second selected points
-          and the vector formed by the
-          second and third selected points.
-
-<LI> <B>surface area of a model</B>
-          Select a model from the 'Models:'
-          drop down list box located below
-          the text area and 'Clear Output'
-          button on the 'Measure' tab. 
-          The model will change color and
-          will be denoted as selected in
-          the drop down list box.  Then
-          select 'Surface' from the
-          Measure' drop down list box.
-
-<LI> <B>volume of a model</B>
-          Select a model from the 'Models:'
-          drop down list box located below
-          the text area and 'Clear Output'
-          button on the 'Measure' tab. 
-          The model will change color and
-          will be denoted as selected in
-          the drop down list box.  Then
-          select 'Volume' from the
-          Measure' drop down list box.
-
-<LI> <B>volume of interesection of two
-          models</B>
-          Select two models from the
-          Models:' drop down list box
-          located below the
-          text area and 'Clear Output'
-          button on the 'Measure' tab.
-          The models will change color
-          and will be denoted as
-          selected in the drop down
-          list box.  Then select
-          Intersection' from the
-          Measure' drop down list box.
+    These measuring tools can be used to calculate Surface Area, Volume, and Cross Sectional Area.
     
-NOTE: None of the slicer measurement tools have been validated...the results may be (wildly) inaccurate.  The functionality is still under development.  Use at your own risk."
+NOTE: None of the slicer measurement tools have been validated...the results may be (wildly) inaccurate.  The functionality is still under development.  Use at your own risk."  
     MainHelpApplyTags Measure $help
     MainHelpBuildGUI Measure
     
@@ -350,11 +259,10 @@ proc TopFrameBuildGUI {} {
 
     set Measure(Csys,visible) 0
     # Add Csys visibility button
-##    set c { checkbutton $f.cCsys -text "Csys" -variable Measure(Csys,visible) \
-##        -width 6 -indicatoron 0 -command "MeasureSetCsysVisibility" $Gui(WCA) }
-
-##    eval [subst $c]
-##    pack $f.cCsys -side bottom -pady $Gui(pad) -in $f
+    set c { checkbutton $f.cCsys -text "Csys" -variable Measure(Csys,visible) \
+        -width 6 -indicatoron 0 -command "MeasureSetCsysVisibility" $Gui(WCA) }
+    eval [subst $c]
+    pack $f.cCsys -side bottom -pady $Gui(pad) -in $f
 
 }
 
@@ -439,9 +347,9 @@ proc UpdateModelSelector {fRoot} {
     for {set i 0} {$i < $numModels} {incr i} {
     set currModel [Mrml(dataTree) GetNthModel $i]
     set currID    [string trimleft [$currModel GetModelID] M]
-
+    
     set r  [lindex $Module(Renderers) 0]
-
+    
     if { [info exists Model($currID,selected)] == 0 } {
         set Model($currID,selected) 0        
     }
