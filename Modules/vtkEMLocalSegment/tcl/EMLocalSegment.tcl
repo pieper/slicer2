@@ -177,6 +177,7 @@ proc EMSegmentInit {} {
     set Module($m,row1,tab) EM
     set Module($m,overview) "Automatic segmentation based on the EM Algorithm"
     set Module($m,author)   "Kilian Pohl, MIT AI Lab"
+    set Module($m,category) [lindex $Module(categories) 2]
 
     # Define Procedures
     #------------------------------------
@@ -235,7 +236,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27 $} {$Date: 2004/03/01 01:02:10 $}]
+        {$Revision: 1.28 $} {$Date: 2004/03/15 21:10:21 $}]
 
     # Initialize module-level variables
     #------------------------------------
