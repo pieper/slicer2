@@ -155,7 +155,7 @@ proc LDMMViewerInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2003/09/05 17:06:52 $}]
+        {$Revision: 1.4 $} {$Date: 2003/09/08 13:28:11 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -166,6 +166,7 @@ proc LDMMViewerInit {} {
     #
     set LDMMViewer(dir)  ""
     set LDMMViewer(time)  0
+    set LDMMViewer(increment)  1 ;# for StepFrame in play mode
 
 }
 
@@ -278,6 +279,11 @@ proc LDMMViewerBuildGUI {} {
             -command LDMMViewerSetTime } \
             $::Gui(WSA) {-sliderlength 22}
     set ::LDMMViewer(timescale) $f.time
+
+    if { ![catch "package require iSlicer"] } {
+        istask $f.play -taskcommand LDMMViewerStepFrame
+        pack $f.play
+    }
 
     DevAddButton $f.movie "Movie" LDMMViewerMovie 
     pack $f.label $f.time $f.movie
@@ -485,6 +491,32 @@ proc LDMMViewerHideVectors {} {
 }
 
 
+
+#-------------------------------------------------------------------------------
+# .PROC LDMMViewerStepFrame
+#
+#  adjust the frame according to current increment and handle boundaries
+# .END
+#-------------------------------------------------------------------------------
+proc LDMMViewerStepFrame { } {
+
+    set first 0
+    set last 9
+    set inc $::LDMMViewer(increment) 
+    set t $::LDMMViewer(time) 
+
+    set t [expr $t + $inc]
+
+    if {$t > $last} {
+        set t $last
+        set ::LDMMViewer(increment) -1
+    } 
+    if {$t < $first} {
+        set t $first 
+        set ::LDMMViewer(increment) 1
+    } 
+    LDMMViewerSetTime $t
+}
 
 
 
