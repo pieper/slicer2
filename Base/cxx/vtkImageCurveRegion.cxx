@@ -152,6 +152,9 @@ inline float GeneralGauss(float term,float InvSigma) {
 // Normal Gauss Function for Multiple Input 
 // ----------------------------------------
 inline float GeneralGauss(float *x,float *mu,float **inv_cov, float inv_sqrt_det_cov,int n) {
+#ifdef _WIN32
+    return 0;
+#else
   float x_m[n];
   float term1, 
         term  = 0.0;
@@ -165,6 +168,7 @@ inline float GeneralGauss(float *x,float *mu,float **inv_cov, float inv_sqrt_det
     term += term1*x_m[i];
   }
   return (pow(EMSEGMENT_ONE_OVER_ROOT_2_PI,n)*inv_sqrt_det_cov * exp(-0.5 *term));
+#endif
 }
 
 inline int InvertMatrix(float **mat, float **inv_mat,int dim) {

@@ -26,6 +26,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkImageCurveRegion_h
 #include "vtkImageData.h"
 #include "vtkImageSource.h"
+#include "vtkSlicer.h"
+
 
 // Copied from vtkImageGeneral.h
 // Abuse the type system.
@@ -44,7 +46,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define EMSEGMENT_ONE_OVER_ROOT_2_PI sqrt(EMSEGMENT_ONE_OVER_2_PI)
 #define EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 ((float) -.72134752)
 
-class VTK_IMAGING_EXPORT vtkImageCurveRegion : public vtkImageSource  {
+class VTK_SLICER_BASE_EXPORT vtkImageCurveRegion : public vtkImageSource  {
 public:
   static vtkImageCurveRegion *New();
   vtkTypeMacro(vtkImageCurveRegion,vtkImageSource);

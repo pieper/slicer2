@@ -667,6 +667,9 @@ void vtkImageGraph::Draw2DGraph(vtkImageData *data, int NumRegion, float* CurveR
   int                 outIncX, outIncY, outIncZ;
   unsigned char       *outPtr;
 
+#ifdef _WIN32
+  return;
+#else
   GraphEntryList *ListPtr    = &(this->GraphList); 
 
   outExt = data->GetExtent();
@@ -704,6 +707,7 @@ void vtkImageGraph::Draw2DGraph(vtkImageData *data, int NumRegion, float* CurveR
   }
   for (idxR =0; idxR < NumRegion; idxR++) delete[] RegionColor[idxR];
   delete[] RegionPtr;
+#endif
 }
 
 //----------------------------------------------------------------------------
@@ -756,6 +760,9 @@ void vtkImageGraph::CalculateGraphMinGraphMax (float* CurveRegionMin, float* Cur
 }
 //----------------------------------------------------------------------------
 void vtkImageGraph::DrawBackground(unsigned char *outPtr, int outIncY) {
+#ifdef _WIN32
+  return;
+#else
   float          val,BackUnits; 
   int            idxX, idxY;
   int            SIZE_OF_CHAR    = 3*sizeof(unsigned char);
@@ -778,6 +785,7 @@ void vtkImageGraph::DrawBackground(unsigned char *outPtr, int outIncY) {
     memcpy(outPtr, BackXAxis,SIZE_OF_XLENGTH);
     outPtr += NumXScalar;
   }
+#endif
 }
 
 //----------------------------------------------------------------------------

@@ -27,13 +27,14 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageSource.h"
 #include "vtkImageData.h"
 #include "vtkIndirectLookupTable.h"
+#include "vtkSlicer.h"
 
 // From vtkImagePlot
 #define SET_PIXEL(x,y,color){ ptr  =&outPtr[y*NumXScalar+x*3]; memcpy(ptr,color,3);}
 
 
 //BTX
-class GraphList {
+class VTK_SLICER_BASE_EXPORT GraphList {
 public:
    float* GetColor() {return this->Color;}
    void SetColor (float value[3]) {memcpy(this->Color,value,sizeof(float)*3);}
@@ -56,7 +57,7 @@ public:
 // Type of curve:
 //  0 = curve representing contious data (e.g. /) 
 //  1 = curve representing discrete data (e.g. _|) 
-class GraphEntryList : public GraphList{
+class VTK_SLICER_BASE_EXPORT GraphEntryList : public GraphList{
 public:
    vtkImageData* GetGraphEntry() {return this->GraphEntry;} 
    void SetGraphEntry(vtkImageData* value) {this->GraphEntry = value;} 
@@ -84,7 +85,7 @@ protected:
 }; 
 
 //ETX
-class VTK_EXPORT vtkImageGraph : public vtkImageSource  {
+class VTK_SLICER_BASE_EXPORT vtkImageGraph : public vtkImageSource  {
 public:
   static vtkImageGraph *New();
   vtkTypeMacro(vtkImageGraph,vtkImageSource);

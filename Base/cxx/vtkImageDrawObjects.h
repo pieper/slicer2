@@ -26,13 +26,14 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkImageDrawObjects_h
 #include "vtkImageToImageFilter.h"
 #include "vtkImageGraph.h"
+#include "vtkSlicer.h"
 
 //BTX
 
 // Description:
 // Type of Objects:
 //  0 = a line 
-class ObjectList : public GraphList {
+class VTK_SLICER_BASE_EXPORT ObjectList : public GraphList {
 public:
    ObjectList* GetNext() {return this->Next;} 
    int AddObject(int pos[4],float col[3],int type, int thick);  
@@ -55,10 +56,10 @@ protected:
 }; 
 
 //ETX
-class VTK_EXPORT vtkImageDrawObjects : public vtkImageToImageFilter  {
+class VTK_SLICER_BASE_EXPORT vtkImageDrawObjects : public vtkImageToImageFilter  {
 public:
   static vtkImageDrawObjects *New();
-  vtkTypeMacro(vtkImageDrawObjects,vtkImageSource);
+  vtkTypeMacro(vtkImageDrawObjects,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
