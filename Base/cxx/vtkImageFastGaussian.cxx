@@ -173,6 +173,53 @@ static void vtkImageFastGaussianExecute(vtkImageFastGaussian *self,
   delete [] cache;
 }
 
+
+// This templated execute method handles any type input, but the output
+// is always floats.
+template <class TT>
+static void vtkImageFastGaussianCopyData(vtkImageFastGaussian *self,
+                         vtkImageData *inData, TT *inPtr,
+                         vtkImageData *outData, int outExt[6], TT *outPtr )
+{
+  int inInc0, inInc1, inInc2;
+  TT *inPtr0, *inPtr1, *inPtr2;
+
+  int outMin0, outMax0, outMin1, outMax1, outMin2, outMax2;
+  int outInc0, outInc1, outInc2;
+  TT *outPtr0, *outPtr1, *outPtr2;
+  
+  int idx0, idx1, idx2;
+  
+  // Reorder axes
+  self->PermuteExtent(outExt, outMin0,outMax0,outMin1,outMax1,outMin2,outMax2);
+  self->PermuteIncrements(inData->GetIncrements(), inInc0, inInc1, inInc2);
+  self->PermuteIncrements(outData->GetIncrements(), outInc0, outInc1, outInc2);
+  
+  inPtr2 = inPtr;
+  outPtr2 = outPtr;
+  for (idx2 = outMin2; idx2 <= outMax2; ++idx2)
+    {
+    inPtr1 = inPtr2;
+    outPtr1 = outPtr2;
+    for (idx1 = outMin1; idx1 <= outMax1; ++idx1)
+      {
+      inPtr0 = inPtr1;
+      outPtr0 = outPtr1;
+
+      for (idx0 = outMin0; idx0 <= outMax0; ++idx0)
+        {
+        *outPtr0 = *inPtr0 ;
+        inPtr0 += inInc0;
+        outPtr0 += outInc0;
+        }
+      inPtr1 += inInc1;
+      outPtr1 += outInc1;
+      }
+    inPtr2 += inInc2;
+    outPtr2 += outInc2;
+    }
+}
+
 //----------------------------------------------------------------------------
 // This method is passed input and output Datas, and executes the EuclideanDistance
 // algorithm to fill the output from the input.
@@ -203,7 +250,14 @@ void vtkImageFastGaussian::IterativeExecuteData(vtkImageData *inData,
   //   data is at a different memory location at each iteration.
   if( inData != outData )
   {
-     outData->DeepCopy(inData);
+    // DAVE BUG Reason for crash!
+    //outData->DeepCopy(inData);
+
+    switch (inData->GetScalarType())
+    {    
+    vtkTemplateMacro6(vtkImageFastGaussianCopyData, this, 
+      inData, (VTK_TT *)(inPtr), outData, outExt, (VTK_TT *)(outPtr));
+    }
   }
   
   // Execute the algorithms 
