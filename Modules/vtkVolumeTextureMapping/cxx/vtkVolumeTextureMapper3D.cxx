@@ -68,10 +68,10 @@ void vtkVolumeTextureMapper3D_TextureOrganization( T *data_ptr,
       
       for ( i = 0; i < size[a0]; i++ )
       {
-    //copy information from (rgbaArray + (*dptr)*4) with the length 4 to tptr
-    memcpy( tptr, rgbaArray + (*dptr)*4, 4 );
-    tptr += 4;
-    dptr += inc;
+        //copy information from (rgbaArray + (*dptr)*4) with the length 4 to tptr
+        memcpy( tptr, rgbaArray + (*dptr)*4, 4 );
+        tptr += 4;
+        dptr += inc;
       }
     }
     
@@ -127,19 +127,22 @@ void vtkVolumeTextureMapper3D::RescaleData(unsigned char* texture,  int size[3],
 
   //rescale to wanted power of two and call CreateSubImage in vtkOpenGLVolumeTextureMapper3D
   int texPtr = 0;
-  for (int y = 0; y < size[1]; y++)
+  int y = 0;
+  int x = 0;
+  for (y = 0; y < size[1]; y++)
   {
-    for (int x = 0; x < size[0]; x++) 
+    for (x = 0; x < size[0]; x++) 
     {
       tempData[x][y][0] = (int)texture[texPtr];
       histArray[volume][tempData[x][y][0]]++;
       if ((histArray[volume][tempData[x][y][0]] > histMax[volume]) && (tempData[x][y][0] != 0))
       {
-    histMax[volume] = histArray[volume][tempData[x][y][0]];
+        histMax[volume] = histArray[volume][tempData[x][y][0]];
       }
       texPtr=texPtr+4;    
     }
   }
+
   if ((scaleFactor[0] == 1) && (scaleFactor[1] == 1))
   {
     texPtr = 0;
@@ -147,14 +150,14 @@ void vtkVolumeTextureMapper3D::RescaleData(unsigned char* texture,  int size[3],
     {
       for (int x = 0; x < dim[0]; x++) 
       {
-    texture[texPtr] = (unsigned char) tempData[x][y][0];
-    texPtr++;
+        texture[texPtr] = (unsigned char) tempData[x][y][0];
+        texPtr++;
       }
     }
     this->CreateSubImages(texture, size, spacing);
-  }
-  else
+  } else
   {
+
     double tempValue = 0;
     int tx = 0;
     int ty = 0;
@@ -162,40 +165,35 @@ void vtkVolumeTextureMapper3D::RescaleData(unsigned char* texture,  int size[3],
     if ((scaleFactor[0] < 0) && (scaleFactor[1] <0))
     {
       texPtr= 0;
-      for (int y = 0; y < size[1]; y++) 
+      int y = 0;
+      for (y = 0; y < size[1]; y++) 
       {
-    if (y < (size[1]+scaleFactor[1]))
-    {    
-      for (int scaleY=0; scaleY < -scaleFactor[1]; scaleY++)
-      {
-        for (int x = 0; x < size[0]; x++)
-        {
-          if (x < (size[0]+scaleFactor[0]))
+        if (y < (size[1]+scaleFactor[1]))
+        {    
+          for (int scaleY=0; scaleY < -scaleFactor[1]; scaleY++)
           {
-        for (int scaleX=0; scaleX < -scaleFactor[0]; scaleX++)
-        {
-          tx = scaleX/(-scaleFactor[0]-1);
-          ty = scaleY/(-scaleFactor[1]-1);
-          //interpolation
-          tempValue = (1-tx)*(1-ty)*(vtkFloatingPointType)tempData[x][y][0]+tx
-                     *(1-ty)*(vtkFloatingPointType)tempData[x+1][y][0]+ty*(1-tx)
-                     *(vtkFloatingPointType)tempData[x][y+1][0]+tx*ty* (vtkFloatingPointType)tempData[x+1][y+1][0];    
-          texture[texPtr] = (unsigned char)(ceil(tempValue));
-          texPtr++;
-        }
+            for (int scaleX=0; scaleX < -scaleFactor[0]; scaleX++)
+            {
+              tx = scaleX/(-scaleFactor[0]-1);
+              ty = scaleY/(-scaleFactor[1]-1);
+              //interpolation
+              tempValue = (1-tx)*(1-ty)*(vtkFloatingPointType)tempData[x][y][0]+tx
+                         *(1-ty)*(vtkFloatingPointType)tempData[x+1][y][0]+ty*(1-tx)
+                         *(vtkFloatingPointType)tempData[x][y+1][0]+tx*ty* (vtkFloatingPointType)tempData[x+1][y+1][0];    
+              texture[texPtr] = (unsigned char)(ceil(tempValue));
+              texPtr++;
+            }
           }                        
-          else //high  x-values
-          {   
-        for (int scaleX=0; scaleX < -scaleFactor[0]; scaleX++)
-        {
-          texture[texPtr]=(unsigned char)(tempData[x][y][0]);    
-          texPtr++;
-        }
-          }
+        } else //high  x-values
+        {   
+            for (int scaleX=0; scaleX < -scaleFactor[0]; scaleX++)
+            {
+              texture[texPtr]=(unsigned char)(tempData[x][y][0]);    
+              texPtr++;
+            }
         }
       }
-    }
-    else //high y-values
+    } else //high y-values
     {
       for (int scaleY=0; scaleY < -scaleFactor[1]; scaleY++)
       {
@@ -203,44 +201,42 @@ void vtkVolumeTextureMapper3D::RescaleData(unsigned char* texture,  int size[3],
         {
           for (int scaleX=0; scaleX < -scaleFactor[0]; scaleX++)
           {
-        texture[texPtr]=(unsigned char)(tempData[x][y][0]);
-        texPtr++;
+            texture[texPtr]=(unsigned char)(tempData[x][y][0]);
+            texPtr++;
           }
         }
-      }
-    }
       }
     }
     //decrease the volume
     if ((scaleFactor[0]>= 0) && (scaleFactor[1]>=0))
     {  
       texPtr= 0;
-      tempValue = 0;
+      double tempValue = 0;
       for (int y = 0; y < size[1]; y+=scaleFactor[1]) 
       {
-    for (int x = 0; x < size[0]; x+=scaleFactor[0])
-    {
-      for (int scaleY=0; scaleY < scaleFactor[1]; scaleY++)
-      {
-        for (int scaleX=0; scaleX < scaleFactor[0]; scaleX++)
+        for (int x = 0; x < size[0]; x+=scaleFactor[0])
         {
-          tempValue = tempValue+tempData[x+scaleX][y+scaleY][0];
-        }
-      }
-      texture[texPtr] = (unsigned char)(ceil(tempValue/(scaleFactor[0]*scaleFactor[1])));
-      texPtr++;
-      tempValue = 0;
-    }        
+          for (int scaleY=0; scaleY < scaleFactor[1]; scaleY++)
+          {
+            for (int scaleX=0; scaleX < scaleFactor[0]; scaleX++)
+            {
+              tempValue = tempValue+tempData[x+scaleX][y+scaleY][0];
+            }
+          }
+          texture[texPtr] = (unsigned char)(ceil(tempValue/(scaleFactor[0]*scaleFactor[1])));
+          texPtr++;
+          tempValue = 0;
+        }        
       }
     }
-    //call CreateSubImages in vtkOpenGLVolumeTextureMapping with the rescaled texture
-    this->CreateSubImages(texture, size, spacing);
-    texPtr =0;
   }
+  //call CreateSubImages in vtkOpenGLVolumeTextureMapping with the rescaled texture
+  this->CreateSubImages(texture, size, spacing);
+  texPtr =0;
 }
 
 
-vtkCxxRevisionMacro(vtkVolumeTextureMapper3D, "$Revision: 1.3 $");
+vtkCxxRevisionMacro(vtkVolumeTextureMapper3D, "$Revision: 1.4 $");
 
 //----------------------------------------------------------------------------
 // Needed when we don't use the vtkStandardNewMacro.
@@ -357,7 +353,7 @@ void vtkVolumeTextureMapper3D::InitializeRender( vtkRenderer *ren,
                                                  vtkVolume *vol,
                                                  int majorDirection )
 {
-  double spacing[3];
+  vtkFloatingPointType spacing[3];
   boxSize = 128;
   this->InternalSkipFactor = 1;
   this->GetInput()->GetSpacing(spacing);
@@ -377,9 +373,13 @@ void vtkVolumeTextureMapper3D::DefaultValues()
 {
   for (int i = 0; i < 3; i++)
     {
-      dimension[i][0] = 256;
-      dimension[i][1] = 256;
-      dimension[i][2] = 256;    
+      //dimension[i][0] = 256;
+      //dimension[i][1] = 256;
+      //dimension[i][2] = 256;    
+
+      dimension[i][0] = 128;
+      dimension[i][1] = 128;
+      dimension[i][2] = 128;    
     }    
 }
 
