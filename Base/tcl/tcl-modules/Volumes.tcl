@@ -764,7 +764,6 @@ proc VolumesPropsApply {} {
 		set n Volume($i,node)
 		$n SetID               $i
 
-
 		# Manual headers
 		if {$Volume(readHeaders) == "0"} {
 		    # These get set down below, but we need them before MainUpdateMRML
@@ -831,8 +830,13 @@ proc VolumesPropsApply {} {
 	eval Volume($m,node) SetSpacing $Volume(pixelSize) $Volume(pixelSize) \
 		[expr $Volume(sliceSpacing) + $Volume(sliceThickness)]
 	Volume($m,node) SetTilt $Volume(gantryDetectorTilt)
-	Volume($m,node) ComputeRasToIjkFromScanOrder $Volume(scanOrder)
 
+	# This line can't be allowed to overwrite a RasToIjk matrix made
+	# from headers when the volume is first created.
+	#
+	if {$Volume(readHeaders) == "0"} {
+		Volume($m,node) ComputeRasToIjkFromScanOrder $Volume(scanOrder)
+	}
 
 	# If tabs are frozen, then 
 	if {$Module(freezer) != ""} {

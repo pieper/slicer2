@@ -112,6 +112,16 @@ proc LabelsUpdateMRML {} {
 
 	LabelsDisplayColors
 	LabelsDisplayLabels
+
+	# Set Label(labelNew) to the next available label
+	set highest 1
+	foreach c $Color(idList) {
+		set high [lindex [lsort -decreasing -integer [Color($c,node) GetLabels]] 0]
+		if {$high > $highest} {
+			set highest $high
+		}	
+	}
+	set Label(labelNew) $highest
 }
 
 #-------------------------------------------------------------------------------
@@ -603,6 +613,7 @@ proc LabelsFindLabel {} {
 	set c [MainColorsGetColorFromLabel $Label(label)]
 	if {$c == ""} {
 		# Update GUI
+		set Label(activeID) ""
 		set Label(name)    ""
 		set Label(diffuse) "0 0 0"
 		LabelsColorWidgets
@@ -610,9 +621,11 @@ proc LabelsFindLabel {} {
 	}
 	set i [lsearch [Color($c,node) GetLabels] $Label(label)]	
 
-	LabelsSelectColor 0 0 $c
-	if {$i != -1} {
-		LabelsSelectLabel $i
+	if {$Label(activeID) != $c} {
+		LabelsSelectColor 0 0 $c
+		if {$i != -1} {
+			LabelsSelectLabel $i
+		}
 	}
 }
 

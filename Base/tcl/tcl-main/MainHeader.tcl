@@ -46,18 +46,16 @@ proc ReadHeader {image run utility tk} {
 	# Run a header reading utility
 	if {$run == 1} {
 		if {[catch {set hdr [exec $utility $image]} errmsg] == 1} {
-		    # errmsg contains the appropriate result so return it 
-			return $errmsg
-#			puts $errmsg
-#			if {$tk == 1} {
-#				tk_messageBox -icon error -message $errmsg
+			puts $errmsg
+			if {$tk == 1} {
+				tk_messageBox -icon error -message $errmsg
 			}
-#			return ""
+			return ""
 		}
 	} else {
 		set fid [open $utility]
 		set hdr [read $fid]
-	        close $fid
+	       close $fid
 	}
 	return $hdr
 }
@@ -80,6 +78,7 @@ proc ParsePrintHeader {text aHeader} {
 	# fKey = the key in the file (text)
 	# aKey = the key in the Header array
 
+	set errmsg ""
 	foreach  \
 		fKey "x_resolution y_resolution pixel_xsize pixel_ysize thick space \
 		byte_order bytes_per_pixel \
@@ -95,7 +94,7 @@ proc ParsePrintHeader {text aHeader} {
 		if {[regexp "$fKey \*= \*\(\[\^ \]\*\)\n" $text match item] == 1} {
 			set Header($aKey) $item
 		} else {
-			puts "Can't find $fKey"
+			set errmsg "$errmsg $fKey"
 		}
 	}
 
@@ -106,6 +105,11 @@ proc ParsePrintHeader {text aHeader} {
 	set Header(numScalars) 1
 	set Header(sliceTilt) 0
 	set Header(order) ""
+
+	if {$errmsg != ""} {
+		set errmsg "Error reading header. Can't find:\n$errmsg"
+	}
+	return $errmsg
 }
 
 #-------------------------------------------------------------------------------
@@ -273,8 +277,14 @@ proc GetHeaderInfo {img1 num2 node tk} {
 	set hdr2 [ReadHeader $img2 1 $Path(printHeader) $tk]
 
 	# Parse headers
-	ParsePrintHeader $hdr1 Header1
-	ParsePrintHeader $hdr2 Header2
+	set errmsg [ParsePrintHeader $hdr1 Header1]
+	if {$errmsg != ""} {
+		return $errmsg
+	}
+	set errmsg [ParsePrintHeader $hdr2 Header2]
+	if {$errmsg != ""} {
+		return $errmsg
+	}
 
 	# Set the volume node's attributes using header info
 	$node SetFilePrefix $prefix

@@ -56,7 +56,7 @@ proc MainVolumesInit {} {
         
         set m MainVolumes
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.17 $} {$Date: 2000/02/09 16:37:08 $}]
+		{$Revision: 1.18 $} {$Date: 2000/02/11 19:12:30 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 

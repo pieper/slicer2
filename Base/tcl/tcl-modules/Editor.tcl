@@ -72,9 +72,9 @@ proc EditorInit {} {
 
 	# Define Tabs
 	set m Editor
-	set Module($m,row1List) "Help Effects Details Output"
-	set Module($m,row1Name) "Help Effects Details Output"
-	set Module($m,row1,tab) Effects
+	set Module($m,row1List) "Help Volumes Effects Details"
+	set Module($m,row1Name) "{Help} {Volumes} {Effects} {Details}"
+	set Module($m,row1,tab) Volumes
 
 	# Define Procedures
 	set Module($m,procGUI)   EditorBuildGUI
@@ -95,6 +95,8 @@ proc EditorInit {} {
 	set Editor(firstReset)  0
 	set Editor(prefixComposite) ""
 	set Editor(prefixWorking) ""
+	set Editor(fgName) Working
+	set Editor(bgName) Composite
 
 	# Look for Editor effects and form an array, Ed, for them.
 	# Each effect has a *.tcl file in the tcl-modules/Editor directory.
@@ -276,32 +278,32 @@ Models are fun. Do you like models, Ron?
 	MainHelpApplyTags Editor $help
 	MainHelpBuildGUI Editor
 
+
 	############################################################################
-	#                                 Effects
+	#                                 Volumes
 	############################################################################
 
 	#-------------------------------------------
-	# Effects frame
+	# Volumes frame
 	#-------------------------------------------
-	set fEffects $Module(Editor,fEffects)
-	set f $fEffects
+	set fVolumes $Module(Editor,fVolumes)
+	set f $fVolumes
 
-	frame $f.fEffects   -bg $Gui(activeWorkspace) -relief groove -bd 2
 	frame $f.fOriginal  -bg $Gui(activeWorkspace)
-	frame $f.fWorking   -bg $Gui(activeWorkspace)
-	frame $f.fComposite -bg $Gui(activeWorkspace)
-	frame $f.fActive    -bg $Gui(activeWorkspace)
-	frame $f.fTime      -bg $Gui(activeWorkspace)
-	pack $f.fEffects $f.fOriginal $f.fWorking $f.fComposite $f.fActive $f.fTime \
+	frame $f.fWorking   -bg $Gui(activeWorkspace) -relief groove -bd 3
+	frame $f.fComposite -bg $Gui(activeWorkspace) -relief groove -bd 3
+	frame $f.fMerge     -bg $Gui(activeWorkspace) -relief groove -bd 3
+
+	pack $f.fOriginal $f.fWorking $f.fComposite $f.fMerge \
 		-side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
 	#-------------------------------------------
-	# Effects->Original
+	# Volumes->Original
 	#-------------------------------------------
-	set f $fEffects.fOriginal
+	set f $fVolumes.fOriginal
 
 	# Volume menu
-	set c {label $f.lOriginal -text "Original Volume:" $Gui(WLA)}; eval [subst $c]
+	set c {label $f.lOriginal -text "Original Volume:" $Gui(WTA)}; eval [subst $c]
 
 	set c {menubutton $f.mbOriginal -text "None" -relief raised -bd 2 -width 18 \
 		-menu $f.mbOriginal.m $Gui(WMBA)}; eval [subst $c]
@@ -313,13 +315,26 @@ Models are fun. Do you like models, Ron?
 	set Editor(mbOriginal) $f.mbOriginal
 	set Editor(mOriginal)  $f.mbOriginal.m
 
+
 	#-------------------------------------------
-	# Effects->Working
+	# Volumes->Working
 	#-------------------------------------------
-	set f $fEffects.fWorking
+	set f $fVolumes.fWorking
+
+	frame $f.fMenu -bg $Gui(activeWorkspace)
+	frame $f.fPrefix -bg $Gui(activeWorkspace)
+	frame $f.fBtns   -bg $Gui(activeWorkspace)
+	pack $f.fMenu -side top -pady $Gui(pad)
+	pack $f.fPrefix -side top -pady $Gui(pad) -fill x
+	pack $f.fBtns -side top -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Volumes->Working->Menu
+	#-------------------------------------------
+	set f $fVolumes.fWorking.fMenu
 
 	# Volume menu
-	set c {label $f.lWorking -text "Working Volume:" $Gui(WLA)}; eval [subst $c]
+	set c {label $f.lWorking -text "Working Volume:" $Gui(WTA)}; eval [subst $c]
 
 	set c {menubutton $f.mbWorking -text "NEW" -relief raised -bd 2 -width 18 \
 		-menu $f.mbWorking.m $Gui(WMBA)}; eval [subst $c]
@@ -331,12 +346,49 @@ Models are fun. Do you like models, Ron?
 	set Editor(mWorking)  $f.mbWorking.m
 
 	#-------------------------------------------
-	# Effects->Composite
+	# Volumes->Working->Prefix
 	#-------------------------------------------
-	set f $fEffects.fComposite
+	set f $fVolumes.fWorking.fPrefix
+
+	set c {entry $f.e \
+		-textvariable Editor(prefixWorking) $Gui(WEA)}; eval [subst $c]
+	eval {button $f.b -text "Browse" -width 6 \
+		-command "EditorSetPrefix Working"} $Gui(WBA)
+	pack $f.b $f.e -padx 3 -side left -expand 1 -fill x
+
+	#-------------------------------------------
+	# Volumes->Working->Btns
+	#-------------------------------------------
+	set f $fVolumes.fWorking.fBtns
+
+	set c {button $f.bWrite -text "Write" -width 6 \
+		-command "EditorWriteOutput Working; RenderAll" $Gui(WBA)}; eval [subst $c]
+	set c {button $f.bClear -text "Clear to 0's" -width 12 \
+		-command "EditorClearOutput Working; RenderAll" $Gui(WBA)}; eval [subst $c]
+	set c {button $f.bRead -text "Read" -width 5 \
+		-command "EditorReadOutput Working; RenderAll" $Gui(WBA)}; eval [subst $c]
+	pack $f.bWrite $f.bRead $f.bClear -side left -padx $Gui(pad)
+
+
+	#-------------------------------------------
+	# Volumes->Composite
+	#-------------------------------------------
+	set f $fVolumes.fComposite
+
+	frame $f.fMenu   -bg $Gui(activeWorkspace)
+	frame $f.fPrefix -bg $Gui(activeWorkspace)
+	frame $f.fBtns   -bg $Gui(activeWorkspace)
+	pack $f.fMenu -side top -pady $Gui(pad)
+	pack $f.fPrefix -side top -pady $Gui(pad) -fill x
+	pack $f.fBtns -side top -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Volumes->Composite->Menu
+	#-------------------------------------------
+	set f $fVolumes.fComposite.fMenu
 
 	# Volume menu
-	set c {label $f.lComposite -text "Composite Volume:" $Gui(WLA)}; eval [subst $c]
+	set c {label $f.lComposite -text "Composite Volume:" $Gui(WTA)}; eval [subst $c]
 
 	set c {menubutton $f.mbComposite -text "NEW" -relief raised -bd 2 -width 18 \
 		-menu $f.mbComposite.m $Gui(WMBA)}; eval [subst $c]
@@ -346,6 +398,87 @@ Models are fun. Do you like models, Ron?
 	# Save widgets for changing
 	set Editor(mbComposite) $f.mbComposite
 	set Editor(mComposite)  $f.mbComposite.m
+
+	#-------------------------------------------
+	# Volumes->Composite->Prefix
+	#-------------------------------------------
+	set f $fVolumes.fComposite.fPrefix
+
+	eval {button $f.b -text "Browse" -width 6 \
+		-command "EditorSetPrefix Composite"} $Gui(WBA)
+	set c {entry $f.e \
+		-textvariable Editor(prefixComposite) $Gui(WEA)}; eval [subst $c]
+	pack $f.b $f.e -padx 3 -side left -expand 1 -fill x
+
+	#-------------------------------------------
+	# Volumes->Composite->Btns
+	#-------------------------------------------
+	set f $fVolumes.fComposite.fBtns
+
+	set c {button $f.bWrite -text "Write" -width 6 \
+		-command "EditorWriteOutput Composite; RenderAll" $Gui(WBA)}; eval [subst $c]
+	set c {button $f.bClear -text "Clear to 0's" -width 12 \
+		-command "EditorClearOutput Composite; RenderAll" $Gui(WBA)}; eval [subst $c]
+	set c {button $f.bRead -text "Read" -width 5 \
+		-command "EditorReadOutput Composite; RenderAll" $Gui(WBA)}; eval [subst $c]
+	pack $f.bWrite $f.bRead $f.bClear -side left -padx $Gui(pad)
+
+
+	#-------------------------------------------
+	# Volumes->Merge
+	#-------------------------------------------
+	set f $fVolumes.fMerge
+
+	set c {label $f.lTitle -text "Combine 2 Label Maps" $Gui(WTA)}
+		eval [subst $c]
+	frame $f.f  -bg $Gui(activeWorkspace)
+	set c {button $f.b -text "Merge" -width 6 \
+		-command "EditorMerge merge 0; RenderAll" $Gui(WBA)}; 
+		eval [subst $c]
+	pack $f.lTitle $f.f $f.b -pady $Gui(pad) -side top
+
+	set f $fVolumes.fMerge.f
+
+	set c {label $f.l1 -text "Write" $Gui(WLA)}; eval [subst $c]
+
+	set c {menubutton $f.mbFore -text "$Editor(fgName)" -relief raised -bd 2 -width 9 \
+		-menu $f.mbFore.m $Gui(WMBA)}; eval [subst $c]
+	set c {menu $f.mbFore.m $Gui(WMA)}; eval [subst $c]
+	set Editor(mbFore) $f.mbFore
+	set m $Editor(mbFore).m
+	foreach v "Working Composite Original" {
+		$m add command -label $v -command "EditorMerge Fore $v"
+	}
+
+	set c {label $f.l2 -text "over" $Gui(WLA)}; eval [subst $c]
+
+	set c {menubutton $f.mbBack -text "$Editor(bgName)" -relief raised -bd 2 -width 9 \
+		-menu $f.mbBack.m $Gui(WMBA)}; eval [subst $c]
+	set c {menu $f.mbBack.m $Gui(WMA)}; eval [subst $c]
+	set Editor(mbBack) $f.mbBack
+	set m $Editor(mbBack).m
+	foreach v "Working Composite" {
+		$m add command -label $v -command "EditorMerge Back $v"
+	}
+
+	pack $f.l1 $f.mbFore $f.l2 $f.mbBack -padx $Gui(pad) -side left -anchor w
+
+
+	############################################################################
+	#                                 Effects
+	############################################################################
+
+	#-------------------------------------------
+	# Effects frame
+	#-------------------------------------------
+	set fEffects $Module(Editor,fEffects)
+	set f $fEffects
+
+	frame $f.fEffects   -bg $Gui(activeWorkspace) -relief groove -bd 2
+	frame $f.fActive    -bg $Gui(activeWorkspace)
+	frame $f.fTime      -bg $Gui(activeWorkspace)
+	pack $f.fEffects $f.fActive $f.fTime \
+		-side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
 	#-------------------------------------------
 	# Effects->Active frame
@@ -529,119 +662,6 @@ Models are fun. Do you like models, Ron?
 	
 	EditorSetEffect EdNone
 
-
-	############################################################################
-	#                                 Output
-	############################################################################
-
-	#-------------------------------------------
-	# Output frame
-	#-------------------------------------------
-	set fOutput $Module(Editor,fOutput)
-	set f $fOutput
-
-	frame $f.fWorking   -bg $Gui(activeWorkspace) -relief groove -bd 3
-	frame $f.fComposite -bg $Gui(activeWorkspace) -relief groove -bd 3
-	frame $f.fMerge     -bg $Gui(activeWorkspace) -relief groove -bd 3
-
-	pack $f.fWorking $f.fComposite $f.fMerge \
-		-side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-
-	#-------------------------------------------
-	# Output->Working
-	#-------------------------------------------
-	set f $fOutput.fWorking
-
-	frame $f.f -bg $Gui(activeWorkspace)
-	frame $f.fPrefix -bg $Gui(activeWorkspace)
-	frame $f.fBtns   -bg $Gui(activeWorkspace)
-	pack $f.f -side top -pady $Gui(pad)
-	pack $f.fPrefix -side top -pady $Gui(pad) -fill x
-	pack $f.fBtns -side top -pady $Gui(pad)
-
-	set c {label $f.f.l -text "Working Volume" $Gui(WTA)}
-		eval [subst $c]
-	eval {button $f.f.b -text "Browse..." -width 10 \
-		-command "EditorSetPrefix Working"} $Gui(WBA)
-	pack $f.f.l $f.f.b -side left -padx $Gui(pad)
-
-	#-------------------------------------------
-	# Output->Working->Prefix
-	#-------------------------------------------
-	set f $fOutput.fWorking.fPrefix
-
-	set c {entry $f.e \
-		-textvariable Editor(prefixWorking) $Gui(WEA)}; eval [subst $c]
-	pack $f.e -padx $Gui(pad) -side left -expand 1 -fill x
-
-	#-------------------------------------------
-	# Output->Working->Btns
-	#-------------------------------------------
-	set f $fOutput.fWorking.fBtns
-
-	set c {button $f.bWrite -text "Write" -width 6 \
-		-command "EditorWriteOutput Working; RenderAll" $Gui(WBA)}; eval [subst $c]
-	set c {button $f.bClear -text "Clear" -width 6 \
-		-command "EditorClearOutput Working; RenderAll" $Gui(WBA)}; eval [subst $c]
-	pack $f.bWrite $f.bClear -side left -padx $Gui(pad)
-
-	#-------------------------------------------
-	# Output->Composite
-	#-------------------------------------------
-	set f $fOutput.fComposite
-
-	frame $f.f -bg $Gui(activeWorkspace)
-	frame $f.fPrefix -bg $Gui(activeWorkspace)
-	frame $f.fBtns   -bg $Gui(activeWorkspace)
-	pack $f.f -side top -pady $Gui(pad)
-	pack $f.fPrefix -side top -pady $Gui(pad) -fill x
-	pack $f.fBtns -side top -pady $Gui(pad)
-
-	set c {label $f.f.l -text "Composite Volume" $Gui(WTA)}
-		eval [subst $c]
-	eval {button $f.f.b -text "Browse..." -width 10 \
-		-command "EditorSetPrefix Composite"} $Gui(WBA)
-	pack $f.f.l $f.f.b -side left -padx $Gui(pad)
-
-	#-------------------------------------------
-	# Output->Composite->Prefix
-	#-------------------------------------------
-	set f $fOutput.fComposite.fPrefix
-
-	set c {entry $f.e \
-		-textvariable Editor(prefixComposite) $Gui(WEA)}; eval [subst $c]
-	pack $f.e -padx $Gui(pad) -side left -expand 1 -fill x
-
-	#-------------------------------------------
-	# Output->Composite->Btns
-	#-------------------------------------------
-	set f $fOutput.fComposite.fBtns
-
-	set c {button $f.bWrite -text "Write" -width 6 \
-		-command "EditorWriteOutput Composite; RenderAll" $Gui(WBA)}; eval [subst $c]
-	set c {button $f.bClear -text "Clear" -width 6 \
-		-command "EditorClearOutput Composite; RenderAll" $Gui(WBA)}; eval [subst $c]
-	pack $f.bWrite $f.bClear -side left -padx $Gui(pad)
-
-	#-------------------------------------------
-	# Output->Merge
-	#-------------------------------------------
-	set f $fOutput.fMerge
-
-	set c {label $f.lTitle -text "Merge with the Composite." $Gui(WTA)}
-		eval [subst $c]
-	set c {button $f.bMergeWorking -text "Write Working over Composite" \
-		-width 29 -command "EditorMerge Working 1; RenderAll" $Gui(WBA)}
-		eval [subst $c]
-	set c {button $f.bMergeComposite -text "Write Composite over Working" \
-		-width 29 -command "EditorMerge Working 0; RenderAll" $Gui(WBA)}
-		eval [subst $c]
-	set c {button $f.bMergeOriginal -text "Write Original over Composite" \
-		-width 29 -command "EditorMerge Original 1; RenderAll" $Gui(WBA)}
-		eval [subst $c]
-	pack $f.lTitle $f.bMergeWorking $f.bMergeComposite $f.bMergeOriginal \
-		-side top -padx $Gui(pad) -pady $Gui(pad)
-
 }
 
 #-------------------------------------------------------------------------------
@@ -679,8 +699,14 @@ proc EditorSetPrefix {data} {
 proc EditorEnter {} {
 	global Editor Volume Slice
 
+	# If the Original is None, then select what's being displayed,
+	# otherwise the first volume in the mrml tree.
+	
 	if {[EditorGetOriginalID] == $Volume(idNone)} {
 		set v [[[Slicer GetBackVolume $Slice(activeID)] GetMrmlNode] GetID]
+		if {$v == $Volume(idNone)} {
+			set v [lindex $Volume(idList) 0]
+		}
 		if {$v != $Volume(idNone)} {
 			EditorSetOriginal $v
 		}
@@ -1111,6 +1137,7 @@ proc EditorSetEffect {e} {
 	# Reset Display
 	if {$e != "EdNone"} {
 		EditorResetDisplay
+		RenderAll
 	}
 
 	# Describe effect atop the "Details" frame
@@ -1454,6 +1481,22 @@ proc EdUpdateAfterApplyEffect {v {render All}} {
 
 
 #-------------------------------------------------------------------------------
+# .PROC EditorReadOutput
+#
+# Clear either the Working or Composite data to all zeros.
+# .END
+#-------------------------------------------------------------------------------
+proc EditorReadOutput {data} {
+	global Volume Editor Slice
+
+	switch $data {
+		Composite {set v $Editor(idComposite)}
+		Working   {set v $Editor(idWorking)}
+	}
+
+}
+
+#-------------------------------------------------------------------------------
 # .PROC EditorClearOutput
 #
 # Clear either the Working or Composite data to all zeros.
@@ -1501,23 +1544,38 @@ proc EditorClearOutput {data} {
 # .PROC EditorMerge
 # .END
 #-------------------------------------------------------------------------------
-proc EditorMerge {data overwriteComposite} {
-	global Ed Volume Gui Lut Slice
+proc EditorMerge {op arg} {
+	global Ed Volume Gui Lut Slice Editor
 
-	switch $data {
-		Original {set v [EditorGetOriginalID]}
-		Working  {set v [EditorGetWorkingID]}
+	if {$op == "Fore"} {
+		set Editor(fgName) $arg
+		$Editor(mbFore) config -text $Editor(fgName)
+		return
+	} elseif {$op == "Back"} {
+		set Editor(bgName) $arg
+		$Editor(mbBack) config -text $Editor(bgName)
+		return
 	}
-	set c [EditorGetCompositeID]
-
+	
 	# bg = back (overwritten), fg = foreground (merged in)
 
-	if {$overwriteComposite == 1} {
-		set bg $c
-		set fg $v
-	} else {
-		set bg $v
-		set fg $c
+	switch $Editor(fgName) {
+		Original  {set fg [EditorGetOriginalID]}
+		Working   {set fg [EditorGetWorkingID]}
+		Composite {set fg [EditorGetCompositeID]}
+		default   {tk_messageBox -message "\
+Merge the Original, Working, or Composite, not '$fgName'"; return}
+	}
+	switch $Editor(bgName) {
+		Working   {set bg [EditorGetWorkingID]}
+		Composite {set bg [EditorGetCompositeID]}
+		default   {tk_messageBox -message "\
+Merge with the Working or Composite, not '$bgName'"; return}
+	}
+
+	# Do nothing if fg=bg
+	if {$fg == $bg} {
+		return
 	}
 
 	# Disable Undo if we're overwriting working
