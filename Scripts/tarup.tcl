@@ -91,30 +91,16 @@ proc tarup { {destdir "auto"} } {
 
     #
     # grab the tcl libraries and binaries
+    # - take the entire bin and lib dirs, which leaves out demos and doc 
+    #   if tcl came from the ActiveTcl distribution.
+    # - this is big, but worth having so people can build better apps
+    #   (this will include xml, widgets, table, soap, and many other handy things)
     #
     puts " -- copying tcl files"
-    file mkdir $destdir/Lib/$::env(BUILD)/tcl/lib
-    file copy -force $::env(TCL_LIB_DIR)/tcl8.4 $destdir/Lib/$::env(BUILD)/tcl/lib
-    file copy -force $::env(TCL_LIB_DIR)/tk8.4 $destdir/Lib/$::env(BUILD)/tcl/lib
+    file mkdir $destdir/Lib/$::env(BUILD)/tcl
+    file copy -force $::env(TCL_LIB_DIR) $destdir/Lib/$::env(BUILD)/tcl/lib
+    file copy -force $::env(TCL_BIN_DIR) $destdir/Lib/$::env(BUILD)/tcl/bin
 
-    file mkdir $destdir/Lib/$::env(BUILD)/tcl/bin
-    switch $::env(BUILD) {
-        "solaris8" -
-        "redhat7.3" { 
-            file copy -force $::env(TCL_LIB_DIR)/libtcl8.4.so $destdir/Lib/$::env(BUILD)/tcl/lib
-            file copy -force $::env(TCL_LIB_DIR)/libtk8.4.so $destdir/Lib/$::env(BUILD)/tcl/lib
-        }
-        "Darwin" {
-            file copy -force $::env(TCL_LIB_DIR)/libtcl8.4.dylib $destdir/Lib/$::env(BUILD)/tcl/lib
-            file copy -force $::env(TCL_LIB_DIR)/libtk8.4.dylib $destdir/Lib/$::env(BUILD)/tcl/lib
-        }
-        "Win32VC7" { 
-            file copy -force $::env(TCL_BIN_DIR)/tcl84.dll $destdir/Lib/$::env(BUILD)/tcl/bin
-            file copy -force $::env(TCL_BIN_DIR)/tclpip84.dll $destdir/Lib/$::env(BUILD)/tcl/bin
-            file copy -force $::env(TCL_BIN_DIR)/tk84.dll $destdir/Lib/$::env(BUILD)/tcl/bin
-            file copy -force $::env(TCL_BIN_DIR)/wish84.exe $destdir/Lib/$::env(BUILD)/tcl/bin
-        }
-    }
 
     #
     # grab the vtk libraries and binaries
@@ -185,7 +171,7 @@ proc tarup { {destdir "auto"} } {
     switch $::env(BUILD) {
         "solaris8" -
         "redhat7.3" { 
-            set libs [glob $::env(ITK_BIN_DIR)/bin/*.so]
+            set libs [glob -nocomplain $::env(ITK_BIN_DIR)/bin/*.so]
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin
                 set ll [file tail $lib]
@@ -193,14 +179,14 @@ proc tarup { {destdir "auto"} } {
             }
         }
         "Darwin" {
-            set libs [glob $::env(ITK_BIN_DIR)/bin/*.dylib]
+            set libs [glob -nocomplain $::env(ITK_BIN_DIR)/bin/*.dylib]
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin
             }
         }
         "Win32VC7" { 
             file mkdir $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin/debug
-            set libs [glob $::env(ITK_BIN_DIR)/bin/debug/*.dll]
+            set libs [glob -nocomplain $::env(ITK_BIN_DIR)/bin/debug/*.dll]
             foreach lib $libs {
                 file copy $lib $destdir/Lib/$::env(BUILD)/itk/ITK-build/bin/debug
             }
