@@ -78,6 +78,7 @@ if { [itcl::find class is3d] == "" } {
       # volume rendering vtk objects
       variable _cast
       variable _opaxfer
+      variable _gradxfer
       variable _colxfer
       variable _volprop
       variable _compfunc
@@ -158,7 +159,7 @@ itcl::body is3d::destructor {} {
     destroy $_tkrw 
     catch "$_ren Delete"
     catch "$_cast Delete"
-    catch "$_opaxfer Delete"
+    catch "$_gradxfer Delete"
     catch "$_colxfer Delete"
     catch "$_volprop Delete"
     catch "$_compfunc Delete"
@@ -226,19 +227,36 @@ itcl::configbody is3d::colorscheme {
 
     switch $itk_option(-colorscheme) {
         "gray" {
+            # Halazar's suggestions:
             $_opaxfer RemoveAllPoints
             $_opaxfer AddPoint  0   0.0
-            $_opaxfer AddPoint  20   0.0
+            $_opaxfer AddPoint  10   0.0
+            $_opaxfer AddPoint  20   0.8
+            $_opaxfer AddPoint  40   1.0
+
+            $_colxfer RemoveAllPoints
+            $_colxfer AddRGBPoint      0.0  0.0 0.0 0.0
+            $_colxfer AddRGBPoint      4.0  0.5 0.5 0.5
+            $_colxfer AddRGBPoint     20.0  1.0 1.0 1.0
+
+            $_gradxfer RemoveAllPoints
+            $_gradxfer AddPoint  0   0.0
+            $_gradxfer AddPoint  10   0.5
+            $_gradxfer AddPoint  30   1.0
+
+            #$_opaxfer RemoveAllPoints
+            #$_opaxfer AddPoint  0   0.0
+            #$_opaxfer AddPoint  20   0.0
             #$_opaxfer AddPoint  20   0.5
             #$_opaxfer AddPoint  65   0.8
             #$_opaxfer AddPoint  100   0.9
-            $_opaxfer AddPoint  30   1.0
+            #$_opaxfer AddPoint  30   1.0
 
-            $_colxfer RemoveAllPoints
-            $_colxfer AddRGBPoint      0.0 0.0 0.0 0.0
+            #$_colxfer RemoveAllPoints
+            #$_colxfer AddRGBPoint      0.0 0.0 0.0 0.0
             #$_colxfer AddRGBPoint     10.0 0.5 0.5 0.5
-            $_colxfer AddRGBPoint     10.0 1.0 1.0 1.0
-            $_colxfer AddRGBPoint     128.0 1.0 1.0 1.0
+            #$_colxfer AddRGBPoint     10.0 1.0 1.0 1.0
+            #$_colxfer AddRGBPoint     128.0 1.0 1.0 1.0
         }
         "default" {
             $_opaxfer RemoveAllPoints
@@ -251,6 +269,11 @@ itcl::configbody is3d::colorscheme {
             $_colxfer AddRGBPoint    128.0 0.0 0.0 1.0
             $_colxfer AddRGBPoint    192.0 0.0 1.0 0.0
             $_colxfer AddRGBPoint    255.0 0.0 0.2 0.0
+
+            $_gradxfer RemoveAllPoints
+            $_gradxfer AddPoint  0   0.0
+            $_gradxfer AddPoint  10   0.5
+            $_gradxfer AddPoint  30   1.0
         }
     }
 }
@@ -259,6 +282,7 @@ itcl::configbody is3d::isvolume {
 
     set _cast ::cast_$_name
     set _opaxfer ::opaxfer_$_name
+    set _gradxfer ::gradxfer_$_name
     set _colxfer ::colxfer_$_name
     set _volprop ::volprop_$_name
     set _compfunc ::compfunc_$_name
@@ -266,6 +290,7 @@ itcl::configbody is3d::isvolume {
     set _vol ::vol_$_name
     catch "$_cast Delete"
     catch "$_opaxfer Delete"
+    catch "$_gradxfer Delete"
     catch "$_colxfer Delete"
     catch "$_volprop Delete"
     catch "$_compfunc Delete"
@@ -280,6 +305,9 @@ itcl::configbody is3d::isvolume {
     # Create transfer mapping scalar value to opacity
     vtkPiecewiseFunction $_opaxfer
 
+    # Create transfer mapping gradient to opacity
+    vtkPiecewiseFunction $_gradxfer
+
     # Create transfer mapping scalar value to color
     vtkColorTransferFunction $_colxfer
 
@@ -289,13 +317,15 @@ itcl::configbody is3d::isvolume {
     vtkVolumeProperty $_volprop
     $_volprop SetColor $_colxfer
     $_volprop SetScalarOpacity $_opaxfer
+    $_volprop SetGradientOpacity $_gradxfer
     $_volprop ShadeOn
 
     # The mapper / ray cast function know how to render the data
     vtkVolumeRayCastCompositeFunction  $_compfunc
-    if {0} {
+    if {1} {
         vtkVolumeRayCastMapper $_volmapper
         $_volmapper SetVolumeRayCastFunction $_compfunc
+        $_volmapper SetSampleDistance 0.5
     } else {
         vtkVolumeTextureMapper2D $_volmapper
     }
@@ -400,7 +430,7 @@ proc is3d_demo {} {
     wm geometry .is3ddemo +30+50
 
     pack [isvolume .is3ddemo.isv] -fill both -expand true
-    .is3ddemo.isv configure -resolution 256 -volume BWH
+    .is3ddemo.isv configure -resolution 256 
     .is3ddemo.isv configure -orientation axial
     .is3ddemo.isv configure -orientation coronal
     pack [is3d .is3ddemo.is3d -isvolume .is3ddemo.isv] -fill both -expand true
@@ -418,9 +448,12 @@ proc is3d_demo_movie { filename {steps 10} } {
         .is3ddemo.is3d configure -longitude $l
         .is3ddemo.is3d expose
         update
-        .is3ddemo.is3d screensave [format c:/tmp/is%04d.ppm $f]
+        #.is3ddemo.is3d screensave [format c:/tmp/is%04d.ppm $f]
+        .is3ddemo.is3d screensave [format c:/tmp/is%04d.png $f] PNG
         incr f
     }
+
+    return
 
     puts ""
     puts "encoding..."
