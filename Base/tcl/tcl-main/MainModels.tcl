@@ -88,7 +88,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.60 $} {$Date: 2003/06/03 22:24:00 $}]
+        {$Revision: 1.61 $} {$Date: 2004/09/17 13:42:42 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -368,9 +368,9 @@ proc MainModelsRead {m} {
 
 
     # Progress Reporting
-    reader SetStartMethod     MainStartProgress
-    reader SetProgressMethod "MainShowProgress reader"
-    reader SetEndMethod       MainEndProgress
+    reader AddObserver StartEvent     MainStartProgress
+    reader AddObserver ProgressEvent "MainShowProgress reader"
+    reader AddObserver EndEvent       MainEndProgress
 
     # Read it in now
     set Gui(progressText) "Reading $name"
@@ -1127,9 +1127,9 @@ since the last time it was saved.\n\nSave anyway?" -type okcancel]
     writer SetFileName [Model($m,node) GetFullFileName]
     set Gui(progressText) "Writing [Model($m,node) GetName]"
     puts "Writing model: '[Model($m,node) GetFullFileName]'"
-    writer SetStartMethod     MainStartProgress
-    writer SetProgressMethod "MainShowProgress writer"
-    writer SetEndMethod       MainEndProgress
+    writer AddObserver StartEvent     MainStartProgress
+    writer AddObserver ProgressEvent "MainShowProgress writer"
+    writer AddObserver EndEvent       MainEndProgress
     writer Write
 
     writer SetInput ""

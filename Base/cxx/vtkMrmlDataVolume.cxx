@@ -81,6 +81,13 @@ vtkMrmlDataVolume::vtkMrmlDataVolume()
   this->HistogramColor[1] = 0;
   this->HistogramColor[2] = 0;
 
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION > 2)
+  // Setup a callback for the internal writer to report progress.
+  this->ProgressObserver = vtkCallbackCommand::New();
+  this->ProgressObserver->SetCallback(&vtkMrmlData::ProgressCallbackFunction);
+  this->ProgressObserver->SetClientData(this);
+#endif
+
   // NOTE: ImageData has a reference count of 2 because it is the ImageData
   // of this and the Input of this->Accumulate.
   // If we call SetImageData [something else] then the reference count drops

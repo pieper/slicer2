@@ -200,6 +200,20 @@ void vtkMrmlData::Update()
   this->CheckLabelIndirectLUT();
 }
 
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION > 2)
+//----------------------------------------------------------------------------
+void vtkMrmlData::ProgressCallbackFunction(vtkObject* caller,
+                                              unsigned long,
+                                              void* clientdata, void*)
+{
+  vtkMrmlData *self = (vtkMrmlData *)(clientdata);
+  vtkProcessObject *obj = self->GetProcessObject();
+  if (obj)
+  {
+    self->UpdateProgress(obj->GetProgress());
+  }
+}
+#else
 //----------------------------------------------------------------------------
 void vtkMrmlData::vtkMrmlDataProgress(void *MrmlData)
 {
@@ -210,6 +224,7 @@ void vtkMrmlData::vtkMrmlDataProgress(void *MrmlData)
     self->UpdateProgress(obj->GetProgress());
   }
 }
+#endif
 
 //----------------------------------------------------------------------------
 vtkIndirectLookupTable* vtkMrmlData::GetIndirectLUT()
