@@ -86,7 +86,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.49 $} {$Date: 2003/05/28 22:55:18 $}]
+        {$Revision: 1.50 $} {$Date: 2003/05/29 23:50:43 $}]
 
     set File(filePrefix) data
 }
@@ -933,6 +933,9 @@ proc CheckVolumeExists {filePrefix filePattern firstNum lastNum  {verbose 0} } {
 proc CheckFileExists {filename {verbose 1}} {
     global Gui
     set mrmlFilename ""
+    if {$::Module(verbose)} {
+        puts "CheckFileExists: filename = $filename, verbose = $verbose"
+    }
     if {[file exists $filename] == 0} {
         if {[file pathtype $filename] == "relative"} {
             # try prepending the mrml dir to it
@@ -940,11 +943,13 @@ proc CheckFileExists {filename {verbose 1}} {
             if {[file exists $mrmlFilename] == 0} {
                 if {$verbose == 1} {
                     tk_messageBox -icon info -type ok -title $Gui(title) -message \
-                        "CheckFileExists: File '$filename' does not exist, and nor does $mrmlFilename]."
+                        "CheckFileExists: File '$filename' does not exist, and nor does $mrmlFilename."
                     puts "CheckFileExists: File '$filename' does not exist, and nor does $mrmlFilename."
                 }
                 return 0
             }
+        } else {
+            return 0
         }
     }
     if {[file isdirectory $filename] == 1} {
@@ -963,6 +968,8 @@ proc CheckFileExists {filename {verbose 1}} {
                 }
                 return 0
             }
+        } else {
+            return 0
         }
     }
     return 1
@@ -985,6 +992,9 @@ proc CheckFileExists {filename {verbose 1}} {
 #-------------------------------------------------------------------------------
 proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
 
+    if {$::Module(verbose)} {
+        puts "MainFileParseImageFile: file = \"$ImageFile\""
+    }
     # skip empty filenames - these come, for example, in dicom files
     if {$ImageFile == ""} {
         if {$::Module(verbose)} {
@@ -1059,6 +1069,9 @@ proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
 # 
 #-------------------------------------------------------------------------------
 proc MainFileFindImageNumber {which firstFile} {
+    if {$::Module(verbose)} {
+        puts "MainFileFindImageNumber: working on $firstFile"
+    }
     set parsing [MainFileParseImageFile $firstFile]
 
     set pattern    [lindex $parsing 0]
@@ -1083,8 +1096,14 @@ proc MainFileFindImageNumber {which firstFile} {
     set lastNum $firstNum
     set done 0
     set num $firstNum
+    if {$::Module(verbose)} {
+            puts "MainFileFindImageNumber: pattern = $pattern, prefix = $filePrefix, num = $num, postfix = $filePostfix"
+    }
     while {$done == 0} {
         set fileName [format $pattern $filePrefix $num $filePostfix]
+        if {$::Module(verbose) && ($num > 120)} {
+            puts "MainFileFindImageNumber: checking for last number, current \# = $num, file = $fileName"
+        }
         if {[CheckFileExists $fileName 0] == 0} {
             set done 1
             set lastNum [expr $num - 1]
