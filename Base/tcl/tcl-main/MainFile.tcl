@@ -86,7 +86,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.52 $} {$Date: 2003/06/03 22:24:48 $}]
+        {$Revision: 1.52.2.1 $} {$Date: 2003/08/01 20:59:34 $}]
 
     set File(filePrefix) data
 }
@@ -409,6 +409,10 @@ proc MainFileSaveOptions {} {
     # Write Options.xml
     set filename Options.xml
     tree Write $filename
+    if {[tree GetErrorCode] != 0} {
+        puts "ERROR: MainFileSaveOptions: unable to write Options file $filename"
+        DevErrorWindow "ERROR: MainFileSaveOptions: unable to write Options file $filename"
+    }
 
     # Clean up.
     tree RemoveAllItems
@@ -416,7 +420,7 @@ proc MainFileSaveOptions {} {
     pre Delete
     mod Delete
     if {$Module(verbose) == 1} {
-        puts "save options done"
+        puts "Save options done"
     }
 }
 
@@ -1005,9 +1009,28 @@ proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
     
     # two possibilities: a file name that has the numbers after a separator character, or before, with a constant extention
     set ftail [file tail $ImageFile]
-    if {[regexp {^[a-zA-Z]+} $ftail] == 1} {
+    set fdir [file dirname $ImageFile]
+    set fext [file extension $ftail]
+    # update: instead of using a regexp to see if the file name starts with letters, 
+    # check to see if the file name is constant and therefore the extension is changing.
+    # this tests to see if anything else in the directory has the same extension as the first file, 
+    # if nothing else does (glob only returns the file name we're checking against), then it is 
+    # assumed that the file starts with a constant part
+    if {$::Module(verbose)} {
+        puts "MainFileParseImageFile: ftail = $ftail\n\tfdir = $fdir\n\tfext = \"$fext\""
+    }
+    # this will fail if there's another volume in the directory with the same 
+    # extension: second test = ftail is in the list, and any other elements
+    # have a different rootname. First test that there *is* an extension.
+    set filesWithSameExtension [glob -directory $fdir -tails *$fext]
+    if {$::Module(verbose)} {
+        puts "files with same extension = $filesWithSameExtension"
+    }
+    if {$fext != "" && ($filesWithSameExtension == $ftail || ([lsearch $filesWithSameExtension $ftail] != -1 && [lsearch $filesWithSameExtension [file rootname $ImageFile]\*] == -1))} {
         # the file starts with letters
-
+        if {$::Module(verbose)} {
+            puts "File starts with letters"
+        }
         ##  Parse the file into its prefix, number, and perhaps stuff afterwards
         
         ##   Note: find the last consecutive string of digits
@@ -1048,6 +1071,17 @@ proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
         puts "Trying to parse as a dicom file"
         set filePrefix [file dirname $ImageFile]/
         set num [file rootname [file tail $ImageFile]]
+        # check to see if we really have a number here
+        if {[regexp {(^.*[a-zA-Z]+)([0-9]*)} $num match moreLetters realNum] == 1} {
+            if {$::Module(verbose)} {
+                puts "MainFileParseImageFile: WARNING there were letters in my number: $num\n\tResetting prefix to $filePrefix, num to $realNum"
+            }
+            # append the letters to the prefix
+            set filePrefix $filePrefix${moreLetters}
+            # set the number to be just the number part (assumes letters then number)
+            set num $realNum
+            
+        }
         set ZerolessNum [string trimleft $num "0"]
         if {$ZerolessNum == ""} {set ZerolessNum 0}
         set filePostfix ""
