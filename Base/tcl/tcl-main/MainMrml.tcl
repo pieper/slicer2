@@ -72,7 +72,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-		{$Revision: 1.32 $} {$Date: 2000/03/01 02:21:01 $}]
+		{$Revision: 1.33 $} {$Date: 2000/03/01 16:26:31 $}]
 
 	set Mrml(filePrefix) data
 	set Mrml(colorsUnsaved) 0
@@ -874,28 +874,8 @@ proc MainMrmlBuildTreesVersion1.0 {} {
 
 			# Don't interpolate label maps
 			if {[MRMLGetValue $node labelMap] == 1} {
-				$n SetInterpolate [MRMLGetValue $node interpolate]
+				$n SetInterpolate 0
 			}
-
-			# Options NOT CURRENTLY SUPPORTED
-#			set program [lindex [MRMLGetValue $node options] 0]
-#			set options [lrange [MRMLGetValue $node options] 1 end]
-#			if {$program == "slicer"} {
-#				# Parse options in format: key1 value1 key2 value2 ...
-#				# Verify that options exist in the list of defaults.
-#				foreach {key value} $options {
-#					set $key $value
-#				}
-#			}
-#			$n SetLUTName        [MRMLGetValue $node lutID]
-#			$n SetUpperThreshold [MRMLGetValue $node showAbove]
-#			$n SetLowerThreshold [MRMLGetValue $node showBelow]
-#			$n SetInterpolate    [MRMLGetValue $node interpolate]
-#			if {[MRMLGetValue $node autoThreshold] == 1} {
-#				$n AutoThresholdOn
-#			} else {
-#				$n AutoThresholdOff
-#			}
 		}
 		}
 	}
