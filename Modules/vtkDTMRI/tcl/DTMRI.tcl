@@ -123,7 +123,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.26 $} {$Date: 2004/08/17 20:33:23 $}]
+                  {$Revision: 1.27 $} {$Date: 2004/09/01 16:26:29 $}]
 
      # Define Tabs
     #------------------------------------
@@ -356,7 +356,7 @@ proc DTMRIInit {} {
     set DTMRI(stream,MethodOrderList,tooltip) {"Order of the tractography"}
 
     # type of tracting method
-    set DTMRI(stream,tractingMethod) BSpline
+    set DTMRI(stream,tractingMethod) NoSpline
     set DTMRI(stream,tractingMethodList) {NoSpline BSpline }
     set DTMRI(stream,tractingMethodList,tooltip) {"Method for interpolating signal"}
 
