@@ -1,12 +1,6 @@
 # Test script for vtkImageFrameSource.
-
-# load vtk on PCs
-catch {load vtktcl}
-
-# user interface command widget (VTK Interactor)
-if { [catch {set VTK_TCL $env(VTK_TCL)}] != 0} { set VTK_TCL "../../examplesTcl" }
-if { [catch {set VTK_DATA $env(VTK_DATA)}] != 0} { set VTK_DATA "../../../vtkdata" }
-source $VTK_TCL/vtkInt.tcl
+package require vtk
+package require vtkSlicerBase
 
 # make the original window
 vtkRenderer ren
@@ -40,8 +34,7 @@ vtkImageFrameSource frameSource
 frameSource SetRenderWindow renWin
 
 # make the "copy" window
-vtkXDisplayWindow copyDisplayWindow
-vtkImager copyRen
+vtkRenderer copyRen
 
 vtkImageMapper copyMapper
 copyMapper SetColorWindow 255
@@ -54,11 +47,12 @@ copyActor SetMapper copyMapper
 copyRen AddActor2D copyActor
 
 # render into a 2D image window
-set copyWin [copyDisplayWindow GetImageWindow 0]
-$copyWin AddImager copyRen
+vtkRenderWindow copyWin
+
+copyWin AddRenderer copyRen
 
 # move the second window over a little
-$copyWin SetPosition 300 300
+copyWin SetPosition 300 300
 
 # Render the original window so that the second one
 # will not come up black the first time.
@@ -69,7 +63,7 @@ renWin Render
 frameSource Modified
 frameSource Update
 #copyMapper Modified  (this line has no effect)
-$copyWin Render
+copyWin Render
 
 # On Solaris, the above frameSource Update is necessary,
 # else the first render will black out the image and 
