@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKGradientAnisotropicDiffusionImageFilter.h,v $
   Language:  C++
-  Date:      $Date: 2003/04/14 19:44:07 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2003/05/18 17:58:30 $
+  Version:   $Revision: 1.3 $
 */
 // .NAME vtkITKGradientAnisotropicDiffusionImageFilter - Wrapper class around itk::GradientAnisotropicDiffusionImageFilterImageFilter
 // .SECTION Description
@@ -37,12 +37,20 @@ class VTK_EXPORT vtkITKGradientAnisotropicDiffusionImageFilter : public vtkITKIm
 
   unsigned int GetNumberOfIterations ()
   {
-    DelegateITKOutputMacro(GetNumberOfIterations) ;
+#if (ITK_VERSION_MAJOR == 1 && ITK_VERSION_MINOR == 2 && ITK_VERSION_PATCH == 0)
+    DelegateITKOutputMacro ( GetIterations );
+#else
+    DelegateITKOutputMacro ( GetNumberOfIterations );
+#endif
   };
 
-  void SetNumberOfIterations ( unsigned int value )
+  void SetNumberOfIterations( unsigned int value )
   {
+#if (ITK_VERSION_MAJOR == 1 && ITK_VERSION_MINOR == 2 && ITK_VERSION_PATCH == 0)
+    DelegateITKInputMacro ( SetIterations, value );
+#else
     DelegateITKInputMacro ( SetNumberOfIterations, value );
+#endif
   };
 
   void SetTimeStep ( double value )
@@ -69,7 +77,7 @@ private:
   void operator=(const vtkITKGradientAnisotropicDiffusionImageFilter&);  // Not implemented.
 };
 
-vtkCxxRevisionMacro(vtkITKGradientAnisotropicDiffusionImageFilter, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkITKGradientAnisotropicDiffusionImageFilter, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkITKGradientAnisotropicDiffusionImageFilter);
 
 #endif
