@@ -154,7 +154,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2003/10/05 22:48:38 $}]
+        {$Revision: 1.4 $} {$Date: 2003/10/05 23:27:24 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -502,9 +502,6 @@ proc MIRIADSegmentSetEMParameters {} {
     set ::EMSegment(EMiteration) 20
     set ::EMSegment(MFAiteration) 10
 
-    set ::EMSegment(StartSlice) 1
-    set ::EMSegment(EndSlice) 59
-
     set ::EMSegment(NumClassesNew) 4
     EMSegmentCreateDeleteClasses 1 1
 
@@ -576,8 +573,8 @@ if {0} {
 #-------------------------------------------------------------------------------
 proc MIRIADSegmentRunEM {} {
 
-    set ::EMSegment(StartSlice) 28
-    set ::EMSegment(EndSlice) 32
+    #set ::EMSegment(StartSlice) 28
+    #set ::EMSegment(EndSlice) 32
 
     set ::EMSegment(Cattrib,1,Prob) .25
     set ::EMSegment(Cattrib,2,Prob) .25
