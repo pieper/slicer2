@@ -30,17 +30,18 @@
 #   DevWarningWindow message
 #   DevErrorWindow message
 #   DevFatalErrorWindow message
-#   DevAddLabel LabelName Message
+#   DevAddLabel LabelName Message Color
 #   DevAddLabel
+#   DevAddEntry
 #   DevAddButton ButtonName Message Command Width
-#   DevAddSelectButton TabName Label Message Pack
+#   DevAddSelectButton TabName Label Message Pack Tooltip width color
 #   DevUpdateNodeSelectButton ArrayName type Label Name CommandSet None New LabelMap
 #   DevUpdateNodeSelectButton
 #   DevUpdateSelectButton ArrayName Label Name ChoiceList Command
 #   DevSelectNode type id ArrayName ModelLabel ModelName
 #   DevCreateNewCopiedVolume VolumeId Description VolName
-#   DevGetFile filename MustPop DefaultExt DefaultDir Title
-#   DevAddFileBrowse Frame ArrayName VarFileName Message Command DefaultExt DefaultDir Title
+#   DevGetFile filename MustPop DefaultExt DefaultDir Title Action
+#   DevAddFileBrowse Frame ArrayName VarFileName Message Command DefaultExt DefaultDir Action Title Tooltip
 #==========================================================================auto=
 # This file exists specifically for user to help fast development
 # of Slicer modules
@@ -132,6 +133,20 @@ proc DevAddLabel { LabelName Message {Color WLA}} {
     eval {label $LabelName -text $Message} $Gui($Color)
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC DevAddEntry
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc DevAddEntry { ArrayName Variable EntryName {Width 10}} {
+    global Gui $ArrayName
+
+    eval {entry $EntryName -textvariable "$ArrayName\($Variable\)" \
+	    -width $Width } $Gui(WEA)
+}
+
 #-------------------------------------------------------------------------------
 # .PROC DevAddButton
 #
@@ -153,7 +168,7 @@ proc DevAddLabel { LabelName Message {Color WLA}} {
 proc DevAddButton { ButtonName Message Command {Width 0} } {
 	global Gui
     if {$Width == 0 } {
-        set Width [string length $Message]
+        set Width [expr [string length $Message] +2]
     }
     eval  {button $ButtonName -text $Message -width $Width \
             -command $Command } $Gui(WBA)
@@ -190,7 +205,7 @@ proc DevAddButton { ButtonName Message Command {Width 0} } {
 # .END
 #-------------------------------------------------------------------------------
 proc DevAddSelectButton { TabName f aLabel message pack {tooltip ""} \
-	{width 13} {color WLA} } {
+	{width 13} {color WLA}} {
 
     global Gui Module 
     upvar 1 $TabName LocalArray
@@ -213,7 +228,7 @@ proc DevAddSelectButton { TabName f aLabel message pack {tooltip ""} \
     DevAddLabel $Label $message $color
 
     eval {menubutton $menubutton -text "None" \
-            -relief raised -bd 2 -width $width -menu $menu } $Gui(WMBA)
+            -relief raised -bd 2 -width $width -menu $menu} $Gui(WMBA)
     eval {menu $menu} $Gui(WMA)
 
     if {$pack == "Pack"} {
@@ -226,8 +241,9 @@ proc DevAddSelectButton { TabName f aLabel message pack {tooltip ""} \
     if {$tooltip != ""} {
 	TooltipAdd $menubutton $tooltip
     }
-
+    
     set LocalArray(mb$aLabel) $menubutton
+    set LocalArray(m$aLabel) $menu
 
     # Note: for the automatic updating, we can use
     # lappend Model(mbActiveList) $f.mb$ModelLabel
@@ -399,7 +415,7 @@ proc DevUpdateSelectButton { ArrayName Label Name ChoiceList {Command ""} } {
 # str type \"Volume\" or \"Model\"
 # int id the id of the selected volume
 # Array ArrayName The name of the array whose variables will be changed.
-# str ModelLabel The name of the menubutton, without the \"mb\".
+# str ModelLabel The name of the menubutton, without the \"mb\"
 # str ModelName  The name of the variable to set.
 # .END
 #-------------------------------------------------------------------------------
@@ -514,7 +530,7 @@ proc DevCreateNewCopiedVolume { OrigId {Description ""} { VolName ""} } {
 # str DefaultExt The name of the extension for the type of file: Default \"\"
 # str DefaultDir The name of the default directory to choose from: Default is the directory Slicer was started from.
 # str Title      The title of the window to display.  Optional.
-# str Action     Whether to Open (file must exist) or Save.  Default is "Open".
+# str Action     Whether to Open (file must exist) or Save.  Default is \"Open\".
 # .END
 #-------------------------------------------------------------------------------
 proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Title "Choose File"} {Action "Open"}} {
@@ -627,7 +643,7 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
 # str Command     A command to run when a file name is entered AND the file entered exists. 
 # str DefaultExt The name of the extension for the type of file. Optional
 # str DefaultDir The name of the default directory to choose from. Optional
-# str Action     Whether this is "Open" or "Save".  Optional
+# str Action     Whether this is \"Open\" or \"Save\".  Optional
 # str Title      The title of the window to display. Optional
 # str Tooltip    The tooltip to display over the button. Optional
 # .END
