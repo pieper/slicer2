@@ -262,7 +262,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.91 $} {$Date: 2005/01/24 21:35:06 $}] 
+    {$Revision: 1.92 $} {$Date: 2005/01/27 17:44:18 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -555,7 +555,7 @@ proc EndoscopicCreateRenderer {renName} {
     vtkLight View($cam,light2)
     
     vtkLightKit View(light3)
-    View(light3) SetKeyLightIntensity 0.001
+    View(light3) SetKeyLightIntensity 0.7
     View(light3) SetKeyToFillRatio 1.5
     View(light3) SetKeyToHeadRatio 1.75
     View(light3) SetKeyToBackRatio 3.75
@@ -563,8 +563,10 @@ proc EndoscopicCreateRenderer {renName} {
     #puts "renderer $renName, light obj View($View($camName,cam),light"
     #View($View($camName,cam),light) SetLightTypeToCameraLight
     #View($View($camName,cam),light2) SetLightTypeToSceneLight
-    $renName AddLight View($cam,light)
-    $renName AddLight View($cam,light2)
+#test
+   # $renName AddLight View($cam,light)
+   # $renName AddLight View($cam,light2)
+#test end    
     View(light3) AddLightsToRenderer $renName
     # initial settings. 
     # These parameters are then set in EndoscopicUpdateVirtualEndoscope
