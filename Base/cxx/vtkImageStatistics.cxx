@@ -83,7 +83,7 @@ void vtkImageStatistics::ExecuteInformation(vtkImageData *input,
   memset(ext, 0, 6*sizeof(int));
   ext[1] = numelement;
 
-  float origin[3], spacing[3];
+  vtkFloatingPointType origin[3], spacing[3];
   spacing[0] = spacing[1] = spacing[2] = 1;
   origin[0]  = origin[1] = origin[2] = 0;
 

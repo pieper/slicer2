@@ -51,6 +51,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
+
 class VTK_SLICER_BASE_EXPORT vtkImageAccumulateDiscrete : public vtkImageToImageFilter
 {
 public:

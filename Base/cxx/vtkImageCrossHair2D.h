@@ -47,6 +47,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageInPlaceFilter.h"
 #include "vtkSlicer.h"
 
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
+
 class VTK_SLICER_BASE_EXPORT vtkImageCrossHair2D : public vtkImageInPlaceFilter
 {
 public:
@@ -56,8 +60,8 @@ public:
 
   // Description:
   // Set/Get the RGB CursorColor
-    vtkSetVector3Macro(CursorColor, float);
-    vtkGetVectorMacro(CursorColor, float, 3);
+    vtkSetVector3Macro(CursorColor, vtkFloatingPointType);
+    vtkGetVectorMacro(CursorColor, vtkFloatingPointType, 3);
 
   // Description:
   // Get/Set the Number of Hash marks on the Cross Hair
@@ -77,20 +81,20 @@ public:
 
   // Description:
   // Get/Set the Spacing between Hash Marks in mm.
-    vtkGetMacro(HashGap, float);
-    vtkSetMacro(HashGap, float);
+    vtkGetMacro(HashGap, vtkFloatingPointType);
+    vtkSetMacro(HashGap, vtkFloatingPointType);
 
   // Description:
   // Get/Set the Length of a hash mark in mm.
-    vtkGetMacro(HashLength, float);
-    vtkSetMacro(HashLength, float);
+    vtkGetMacro(HashLength, vtkFloatingPointType);
+    vtkSetMacro(HashLength, vtkFloatingPointType);
 
   // Description:
   // Get/Set the Magnification
   // NOTE: This should not be used.  Instead, specify the magnification
   // implicitly in the spacing.
-    vtkGetMacro(Magnification, float);
-    vtkSetMacro(Magnification, float);
+    vtkGetMacro(Magnification, vtkFloatingPointType);
+    vtkSetMacro(Magnification, vtkFloatingPointType);
 
   // Description:
   // Set whether or not the cursor should be shown
@@ -123,10 +127,10 @@ protected:
     int NumHashes;
     int IntersectCross;
     int Cursor[2];
-    float CursorColor[3];
-    float Magnification;
-    float HashGap;
-    float HashLength;
+    vtkFloatingPointType CursorColor[3];
+    vtkFloatingPointType Magnification;
+    vtkFloatingPointType HashGap;
+    vtkFloatingPointType HashLength;
     int BullsEye;
     int BullsEyeWidth;
 

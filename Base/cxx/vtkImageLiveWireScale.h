@@ -62,6 +62,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkPoints.h"
 #include "vtkSlicer.h"
 
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
+
 class VTK_SLICER_BASE_EXPORT vtkImageLiveWireScale : public vtkImageToImageFilter
 {
   public:
@@ -99,20 +103,20 @@ class VTK_SLICER_BASE_EXPORT vtkImageLiveWireScale : public vtkImageToImageFilte
     this->TransformationFunctionNumber = INVERSE_LINEAR_RAMP;    
     this->UseTransformationFunction = 1;
   };
-  void SetUpperCutoff(float num) {
+  void SetUpperCutoff(vtkFloatingPointType num) {
     this->UpperCutoff = num;    
     this->UseUpperCutoff = 1;
     this->Modified();
   };
-  void SetLowerCutoff(float num) {
+  void SetLowerCutoff(vtkFloatingPointType num) {
     this->LowerCutoff = num;    
     this->UseLowerCutoff = 1;
     this->Modified();
   };
   // just here for access from Execute.
-  float TransformationFunction(float intensity, float max, float min);
-  float TableLookup(float intensity, float max, float min);
-  float GaussianLookup(float intensity, float max, float min);
+  vtkFloatingPointType TransformationFunction(vtkFloatingPointType intensity, vtkFloatingPointType max, vtkFloatingPointType min);
+  vtkFloatingPointType TableLookup(vtkFloatingPointType intensity, vtkFloatingPointType max, vtkFloatingPointType min);
+  vtkFloatingPointType GaussianLookup(vtkFloatingPointType intensity, vtkFloatingPointType max, vtkFloatingPointType min);
   //vtkPriorityQueue * GetLookupTable(){return this->LookupTable;};
   vtkFloatArray * GetLookupTable(){return this->LookupTable;};
   vtkPoints * GetLookupPoints(){return this->LookupPoints;};
@@ -137,8 +141,8 @@ class VTK_SLICER_BASE_EXPORT vtkImageLiveWireScale : public vtkImageToImageFilte
   void operator=(const vtkImageLiveWireScale&) {};
   
   int ScaleFactor;
-  float UpperCutoff;
-  float LowerCutoff;
+  vtkFloatingPointType UpperCutoff;
+  vtkFloatingPointType LowerCutoff;
   int UseUpperCutoff;
   int UseLowerCutoff;
 

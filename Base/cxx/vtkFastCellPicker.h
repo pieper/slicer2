@@ -58,6 +58,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkOBBTree.h"
 #include "vtkSlicer.h"
 
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
+
 class VTK_SLICER_BASE_EXPORT vtkFastCellPicker : public vtkPicker
 {
 public:
@@ -77,18 +81,18 @@ public:
   // Description:
   // Get the parametric coordinates of the picked cell. Only valid if 
   // pick was made.
-  vtkGetVectorMacro(PCoords,float,3);
+  vtkGetVectorMacro(PCoords,vtkFloatingPointType,3);
 
 protected:
   int CellId; // picked cell
   int SubId; // picked cell subId
-  float PCoords[3]; // picked cell parametric coordinates
+  vtkFloatingPointType PCoords[3]; // picked cell parametric coordinates
 
-#if ( (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2) || VTK_MAJOR_VERSION == 4 )
-  virtual float IntersectWithLine(float p1[3], float p2[3], float tol, 
+#if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2) || (VTK_MAJOR_VERSION == 4)
+  virtual vtkFloatingPointType IntersectWithLine(vtkFloatingPointType p1[3], vtkFloatingPointType p2[3], vtkFloatingPointType tol, 
                   vtkAssemblyPath *assem, vtkActor *a, vtkMapper *m);
 #else
-  virtual float IntersectWithLine(float p1[3], float p2[3], float tol, 
+  virtual vtkFloatingPointType IntersectWithLine(vtkFloatingPointType p1[3], vtkFloatingPointType p2[3], vtkFloatingPointType tol, 
                   vtkActor *assem, vtkActor *a, vtkMapper *m);
 #endif
   void Initialize();

@@ -75,26 +75,26 @@ vtkImagePlot::vtkImagePlot()
 //----------------------------------------------------------------------------
 int vtkImagePlot::MapBinToScalar(int bin)
 {
-  float delta, v;
+  vtkFloatingPointType delta, v;
   int outExt[6];
 
   this->GetOutput()->GetWholeExtent(outExt);
-  delta = (float)(this->DataDomain[1]-this->DataDomain[0]) / 
-    (float)(outExt[1]-outExt[0]);
-  v = (float)this->DataDomain[0] + delta * bin;
+  delta = (vtkFloatingPointType)(this->DataDomain[1]-this->DataDomain[0]) / 
+    (vtkFloatingPointType)(outExt[1]-outExt[0]);
+  v = (vtkFloatingPointType)this->DataDomain[0] + delta * bin;
   return (int)v;
 }
 
 //----------------------------------------------------------------------------
 int vtkImagePlot::MapScalarToBin(int v)
 {
-  float delta, bin;
+  vtkFloatingPointType delta, bin;
   int outExt[6];
 
   this->GetOutput()->GetWholeExtent(outExt);
-  delta = (float)(this->DataDomain[1]-this->DataDomain[0]) / 
-    (float)(outExt[1]-outExt[0]);
-  bin = (float)(v - this->DataDomain[0]) / delta;
+  delta = (vtkFloatingPointType)(this->DataDomain[1]-this->DataDomain[0]) / 
+    (vtkFloatingPointType)(outExt[1]-outExt[0]);
+  bin = (vtkFloatingPointType)(v - this->DataDomain[0]) / delta;
   return (int)bin;
 }
 
@@ -167,7 +167,7 @@ void vtkImagePlot::ExecuteInformation(vtkImageData *inData,
                       vtkImageData *outData)
 {
   int extent[6];
-  float spacing[3], origin[3];
+  vtkFloatingPointType spacing[3], origin[3];
   
   inData->GetWholeExtent(extent);
   inData->GetSpacing(spacing);
@@ -358,7 +358,7 @@ static void DrawThickLine(int xx1, int yy1, int xx2, int yy2,
 }
 
 //----------------------------------------------------------------------------
-static void ConvertColor(float *f, unsigned char *c)
+static void ConvertColor(vtkFloatingPointType *f, unsigned char *c)
 {
     c[0] = (int)(f[0] * 255.0);
     c[1] = (int)(f[1] * 255.0);
@@ -378,7 +378,7 @@ static  void vtkImagePlotExecute(vtkImagePlot *self, vtkImageData *inData,  T *i
   int nx, ny, nc, nxnc;
   int y1, y2, r=self->GetThickness();
   int range[2], domain[2];
-  float delta;
+  vtkFloatingPointType delta;
   vtkScalarsToColors *lookupTable = self->GetLookupTable();
   unsigned char *rgba;
   unsigned char *ptr;
@@ -403,11 +403,11 @@ static  void vtkImagePlotExecute(vtkImagePlot *self, vtkImageData *inData,  T *i
 
   // Color scale
   // Loop through ouput pixels
-  delta = (float)(domain[1]-domain[0]) / (float)(maxX);
-  float v;
+  delta = (vtkFloatingPointType)(domain[1]-domain[0]) / (vtkFloatingPointType)(maxX);
+  vtkFloatingPointType v;
   for (idxX = 0; idxX <= maxX; idxX++) 
   {
-    v = (float)domain[0] + delta * idxX;
+    v = (vtkFloatingPointType)domain[0] + delta * idxX;
     rgba = lookupTable->MapValue(v);
 
     for (idxY = 0; idxY <= maxY; idxY++)
@@ -417,12 +417,12 @@ static  void vtkImagePlotExecute(vtkImagePlot *self, vtkImageData *inData,  T *i
   }
 
   // Plot lines
-  delta = (float)(ny) / (float)(range[1]-range[0]+1);
+  delta = (vtkFloatingPointType)(ny) / (vtkFloatingPointType)(range[1]-range[0]+1);
 
   for (idxX = 0; idxX <= maxX; idxX++) 
   {
-    y1 = (int)(range[0] + delta * (float)inPtr[0]);
-    y2 = (int)(range[0] + delta * (float)inPtr[1]);
+    y1 = (int)(range[0] + delta * (vtkFloatingPointType)inPtr[0]);
+    y2 = (int)(range[0] + delta * (vtkFloatingPointType)inPtr[1]);
 
     // Clip at boundary
     if (y1 < r)

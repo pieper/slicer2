@@ -37,6 +37,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 #include <stdio.h>
 #include "vtkCommand.h"
+#include "vtkCallbackCommand.h"
 #include "vtkMrmlDataTetraMesh.h"
 #include "vtkMrmlTetraMeshNode.h"
 #include "vtkObjectFactory.h"
@@ -45,13 +46,13 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <time.h>
 
 //------------------------------------------------------------------------------
-vtkMrmlDataTetraMesh* vtkMrmlDataTetraMesh::New()
+  vtkMrmlDataTetraMesh* vtkMrmlDataTetraMesh::New()
 {
   // First try to create the object from the vtkObjectFactory
   vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMrmlDataTetraMesh");
   if(ret)
   {
-    return (vtkMrmlDataTetraMesh*)ret;
+  return (vtkMrmlDataTetraMesh*)ret;
   }
   // If the factory was unable to create the object, then create it here.
   return new vtkMrmlDataTetraMesh;
@@ -62,6 +63,7 @@ vtkMrmlDataTetraMesh::vtkMrmlDataTetraMesh()
 {
   // Allocate VTK objects
   this->TheMesh = NULL;
+
 }
 
 //----------------------------------------------------------------------------
@@ -69,9 +71,9 @@ vtkMrmlDataTetraMesh::~vtkMrmlDataTetraMesh()
 {
   // Delete if self-created or if no one else is using it
   if (this->TheMesh != NULL) 
-  {
+    {
     this->TheMesh->UnRegister(this);
-  }
+    }
 
 }
 
@@ -82,9 +84,9 @@ void vtkMrmlDataTetraMesh::PrintSelf(ostream& os, vtkIndent indent)
 
   os << indent << "Volume Mesh: " << this->TheMesh << "\n";
   if (this->TheMesh)
-  {
+    {
     this->TheMesh->PrintSelf(os,indent.GetNextIndent());
-  }
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -97,10 +99,10 @@ unsigned long int vtkMrmlDataTetraMesh::GetMTime()
  
   // The Mesh
   if (this->TheMesh)
-  {
+    {
     t = this->TheMesh->GetMTime(); 
     result = (t > result) ? t : result;
-  }
+    }
 
   return result;
 }
@@ -115,11 +117,11 @@ void vtkMrmlDataTetraMesh::CheckMrmlNode()
   // between whether we created the object, or someone else did!
 
   if (this->MrmlNode == NULL)
-  {
+    {
     this->MrmlNode = (vtkMrmlNode*) vtkMrmlTetraMeshNode::New();
     this->MrmlNode->Register(this);
     this->MrmlNode->Delete();
-  }
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -183,7 +185,13 @@ int vtkMrmlDataTetraMesh::Write()
   writer->SetInput(this->TheMesh);
   
   // Progress callback
-  writer->SetProgressMethod(vtkMrmlData::vtkMrmlDataProgress, (void *)this);
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >2)
+  writer->AddObserver (vtkCommand::ProgressEvent,
+                       this->ProgressObserver);
+#else
+  writer->SetProgressMethod(vtkMrmlData::vtkMrmlDataProgress,
+                            (void *)this);
+#endif
   // The progress callback function needs a handle to the writer 
   this->ProcessObject = writer;
  

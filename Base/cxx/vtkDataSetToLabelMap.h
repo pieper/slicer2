@@ -60,6 +60,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageLogic.h"
 #include "vtkSlicer.h"
 
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
+
 class VTK_SLICER_BASE_EXPORT vtkDataSetToLabelMap : public vtkDataSetToStructuredPointsFilter
 {
 
@@ -84,16 +88,16 @@ void ComputeOutputParameters();
 // Description:
 // Set the i-j-k dimensions on which to sample the distance function.
  
-void SetOutputSpacing(float i, float j, float k);
+void SetOutputSpacing(vtkFloatingPointType i, vtkFloatingPointType j, vtkFloatingPointType k);
 
   // Description:
   // Set the i-j-k dimensions on which to sample the distance function.
 
-void SetOutputSpacing(float dim[3]);
+void SetOutputSpacing(vtkFloatingPointType dim[3]);
 
 vtkGetVectorMacro(OutputDimensions,int,3);
-vtkGetVectorMacro(OutputSpacing,float,3);
-vtkGetVectorMacro(OutputOrigin,float,3);
+vtkGetVectorMacro(OutputSpacing,vtkFloatingPointType,3);
+vtkGetVectorMacro(OutputOrigin,vtkFloatingPointType,3);
 
  vtkSetMacro(UseBoundaryVoxels,int);
  vtkGetMacro(UseBoundaryVoxels,int);
@@ -120,14 +124,14 @@ protected:
 
   
   void Execute();
-  int IsPointInside(float s, float t);
-  float ComputeStep(float spacing[3],float vertex0[3],float vertex1[3]);
-  void EvaluatePoint(float vo[3], float v1[3], float v2[3], float s, float t,float result[3]);
+  int IsPointInside(vtkFloatingPointType s, vtkFloatingPointType t);
+  vtkFloatingPointType ComputeStep(vtkFloatingPointType spacing[3],vtkFloatingPointType vertex0[3],vtkFloatingPointType vertex1[3]);
+  void EvaluatePoint(vtkFloatingPointType vo[3], vtkFloatingPointType v1[3], vtkFloatingPointType v2[3], vtkFloatingPointType s, vtkFloatingPointType t,vtkFloatingPointType result[3]);
   void BoundaryFill(int i, int j, int k, vtkShortArray *scalars);
   
-  float OutputOrigin[3];
+  vtkFloatingPointType OutputOrigin[3];
   int OutputDimensions[3];
-  float OutputSpacing[3];
+  vtkFloatingPointType OutputSpacing[3];
 
   vtkShortArray *InOutScalars;
   vtkShortArray *BoundaryScalars;

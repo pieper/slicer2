@@ -327,10 +327,18 @@ vtkMrmlSlicer::vtkMrmlSlicer()
   this->VolumesToReformat = vtkCollection::New();
   this->VolumeReformatters = vtkVoidArray::New();
   this->MaxNumberOfVolumesToReformat = 20;
+#if (VTK_MAJOR_VERSION <= 4 && VTK_MINOR_VERSION <= 2)
   this->VolumeReformatters->SetNumberOfValues(this->MaxNumberOfVolumesToReformat);
+#else
+  this->VolumeReformatters->SetNumberOfPointers(this->MaxNumberOfVolumesToReformat);
+#endif
   for (int i = 0; i < this->MaxNumberOfVolumesToReformat; i++)
     {
+#if (VTK_MAJOR_VERSION <= 4 && VTK_MINOR_VERSION <= 2)
       this->VolumeReformatters->SetValue(i,NULL);
+#else
+      this->VolumeReformatters->SetVoidPointer(i,NULL);
+#endif
     }
 
   // Active slice has polygon drawing (return with GetActiveOutput)
@@ -1123,7 +1131,7 @@ void vtkMrmlSlicer::BuildLower(int s)
   // 3.) Overlay --> PolyDraw --> Double --> Cursor
   // 4.) Overlay --> PolyDraw --> Zoom   --> Double --> Cursor
       
-  float ctr[2];
+  vtkFloatingPointType ctr[2];
   this->Zoom[s]->GetCenter(ctr);
   if (this->Zoom[s]->GetMagnification() != 1.0 || 
     this->Zoom[s]->GetAutoCenter() == 0 ||
@@ -1197,7 +1205,7 @@ void vtkMrmlSlicer::BuildLower(int s)
 void vtkMrmlSlicer::ComputeOffsetRange()
 {
   int s, orient;
-  float fov = this->FieldOfView / 2.0;
+  vtkFloatingPointType fov = this->FieldOfView / 2.0;
 
   for (s=0; s<NUM_SLICES; s++)
   {
@@ -1228,7 +1236,7 @@ void vtkMrmlSlicer::SetOffsetRange(int s, int orient, int min, int max, int *mod
 void vtkMrmlSlicer::ComputeOffsetRangeIJK(int s)
 {
   int xMax, yMax, zMax, xMin, yMin, zMin, xAvg, yAvg, zAvg, *ext;
-  float fov = this->FieldOfView / 2.0;
+  vtkFloatingPointType fov = this->FieldOfView / 2.0;
   int orient = this->GetOrient(s);
   int modified = 0;
   vtkMrmlDataVolume *vol = this->GetIJKVolume(s);
@@ -1303,7 +1311,7 @@ void vtkMrmlSlicer::ComputeOffsetRangeIJK(int s)
   }
 }
 
-void vtkMrmlSlicer::InitOffset(int s, char *str, float offset)
+void vtkMrmlSlicer::InitOffset(int s, char *str, vtkFloatingPointType offset)
 {
   int orient = (int) ConvertStringToOrient(str);
   this->Offset[s][orient] = offset;
@@ -1455,7 +1463,7 @@ char* vtkMrmlSlicer::ConvertOrientToString(int orient)
 
 
 void vtkMrmlSlicer::ComputeReformatMatrixIJK(int s, 
-    float offset, vtkMatrix4x4 *ref)
+    vtkFloatingPointType offset, vtkMatrix4x4 *ref)
 {
   char orderString[3];
   vtkMrmlDataVolume *vol = this->GetIJKVolume(s);
@@ -1495,9 +1503,9 @@ void vtkMrmlSlicer::ComputeReformatMatrixIJK(int s,
   ijk->ComputeReformatMatrix(ref);
 }
 
-float vtkMrmlSlicer::GetOffsetForComputation(int s)
+vtkFloatingPointType vtkMrmlSlicer::GetOffsetForComputation(int s)
 {
-  float uOff, cOff;
+  vtkFloatingPointType uOff, cOff;
   
   uOff = this->GetOffset(s);
 
@@ -1565,11 +1573,11 @@ float vtkMrmlSlicer::GetOffsetForComputation(int s)
   return cOff;
 }
 
-void vtkMrmlSlicer::SetOffset(int s, float userOffset)
+void vtkMrmlSlicer::SetOffset(int s, vtkFloatingPointType userOffset)
 {
   double Uz[3], *P;
   vtkMatrix4x4 *ref = this->ReformatMatrix[s];
-  float offset;
+  vtkFloatingPointType offset;
 
   this->Offset[s][this->Orient[s]] = userOffset;
   offset = this->GetOffsetForComputation(s);
@@ -1605,7 +1613,7 @@ void vtkMrmlSlicer::ComputeReformatMatrix(int s)
   double Ux[3], Uy[3], Uz[3], *P, *T, *N;
   int i;
   vtkMatrix4x4 *ref = this->ReformatMatrix[s];
-  float offset = this->GetOffsetForComputation(s);
+  vtkFloatingPointType offset = this->GetOffsetForComputation(s);
   
   P = this->GetP(s);
   N = this->GetN(s);
@@ -1812,7 +1820,7 @@ void vtkMrmlSlicer::SetScreenPoint(int s, int x, int y)
   }
 
   // Convert from zoom space to reformat space
-  float ctr[2];
+  vtkFloatingPointType ctr[2];
   this->Zoom[s]->GetCenter(ctr);
   if (this->Zoom[s]->GetMagnification() != 1.0 || 
     this->Zoom[s]->GetAutoCenter() == 0 ||
@@ -1838,8 +1846,8 @@ void vtkMrmlSlicer::SetReformatPoint(int s, int x, int y)
   vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) vol->GetMrmlNode();
   // Convert (s,x,y) to (i,j,k), (r,a,s), and (x,y,z).
   // (s,x,y) = slice, x,y coordinate on slice
-  // (r,a,s) = this->WldPoint = mm float
-  // (i,j,k) = this->IjkPoint = 0-based float
+  // (r,a,s) = this->WldPoint = mm vtkFloatingPointType
+  // (i,j,k) = this->IjkPoint = 0-based vtkFloatingPointType
   // (x,y,z) = this->Seed     = extent-based int (x = extent[0]+i)
 
   // First convert to ras, then ijk, then xyz
@@ -1898,7 +1906,7 @@ void vtkMrmlSlicer::SetReformatPoint(int s, int x, int y)
 //----------------------------------------------------------------------------
 void vtkMrmlSlicer::DrawComputeIjkPoints()
 {
-  float *rasPt;
+  vtkFloatingPointType *rasPt;
   int ijkPt[3], i, n, x=0, y=0;
   int s = this->GetActiveSlice();
   vtkPoints *ijk = this->DrawIjkPoints;
@@ -1914,8 +1922,8 @@ void vtkMrmlSlicer::DrawComputeIjkPoints()
 
     if (i == 0 || ijkPt[0] != x || ijkPt[1] != y)
     {
-      ijk->InsertNextPoint((float)(ijkPt[0]), (float)(ijkPt[1]),
-        (float)(ijkPt[2]));
+      ijk->InsertNextPoint((vtkFloatingPointType)(ijkPt[0]), (vtkFloatingPointType)(ijkPt[1]),
+        (vtkFloatingPointType)(ijkPt[2]));
     } 
     x = ijkPt[0];
     y = ijkPt[1];
@@ -1925,7 +1933,7 @@ void vtkMrmlSlicer::DrawComputeIjkPoints()
 //----------------------------------------------------------------------------
 // Pixel Values
 //----------------------------------------------------------------------------
-float vtkMrmlSlicer::GetBackPixel(int s, int x, int y)
+vtkFloatingPointType vtkMrmlSlicer::GetBackPixel(int s, int x, int y)
 {
   int ext[6];
   vtkImageData *data = this->BackReformat[s]->GetOutput();
@@ -1940,7 +1948,7 @@ float vtkMrmlSlicer::GetBackPixel(int s, int x, int y)
   return 0;
 }
 
-float vtkMrmlSlicer::GetForePixel(int s, int x, int y)
+vtkFloatingPointType vtkMrmlSlicer::GetForePixel(int s, int x, int y)
 {
   int ext[6];
 
@@ -1985,7 +1993,7 @@ void vtkMrmlSlicer::SetCursorIntersect(int flag)
 }
 
 // DAVE need to call with SetAnnoColor
-void vtkMrmlSlicer::SetCursorColor(float red, float green, float blue) 
+void vtkMrmlSlicer::SetCursorColor(vtkFloatingPointType red, vtkFloatingPointType green, vtkFloatingPointType blue) 
 {
   for (int s=0; s<NUM_SLICES; s++)
   {
@@ -2051,8 +2059,8 @@ void vtkMrmlSlicer::ComputeNTPFromCamera(vtkCamera *camera)
 // this function is used to set the reformat matrix directly for ALL the slices
 // It is called from Locator.tcl to set the reformat matrix to be the same than// the locator matrix
  
-void vtkMrmlSlicer::SetDirectNTP(float nx, float ny, float nz,
-  float tx, float ty, float tz, float px, float py, float pz)
+void vtkMrmlSlicer::SetDirectNTP(vtkFloatingPointType nx, vtkFloatingPointType ny, vtkFloatingPointType nz,
+  vtkFloatingPointType tx, vtkFloatingPointType ty, vtkFloatingPointType tz, vtkFloatingPointType px, vtkFloatingPointType py, vtkFloatingPointType pz)
 {
   this->DirN[0] = nx;
   this->DirN[1] = ny;
@@ -2077,8 +2085,8 @@ void vtkMrmlSlicer::SetDirectNTP(float nx, float ny, float nz,
 // 
 // See the function ComputeReformatMatrix for more detail
 
-void vtkMrmlSlicer::SetNewOrientNTP(int s, float nx, float ny, float nz,
-  float tx, float ty, float tz, float px, float py, float pz)
+void vtkMrmlSlicer::SetNewOrientNTP(int s, vtkFloatingPointType nx, vtkFloatingPointType ny, vtkFloatingPointType nz,
+  vtkFloatingPointType tx, vtkFloatingPointType ty, vtkFloatingPointType tz, vtkFloatingPointType px, vtkFloatingPointType py, vtkFloatingPointType pz)
 {
   this->NewOrientN[s][0] = nx;
   this->NewOrientN[s][1] = ny;
@@ -2096,7 +2104,7 @@ void vtkMrmlSlicer::SetNewOrientNTP(int s, float nx, float ny, float nz,
 
 // this function is called to update the reformat matrix for the REFORMAT_AXIAL, REFORMAT_CORONAL, REFORMAT_SAGITTAL orientations
 
-void vtkMrmlSlicer::SetReformatNTP(char *orientation, float nx, float ny, float nz, float tx, float ty, float tz, float px, float py, float pz)
+void vtkMrmlSlicer::SetReformatNTP(char *orientation, vtkFloatingPointType nx, vtkFloatingPointType ny, vtkFloatingPointType nz, vtkFloatingPointType tx, vtkFloatingPointType ty, vtkFloatingPointType tz, vtkFloatingPointType px, vtkFloatingPointType py, vtkFloatingPointType pz)
 {
 
   double Ux[3],Uy[3],Uz[3];
@@ -2247,7 +2255,7 @@ double *vtkMrmlSlicer::GetN(int s)
 }
 
 // DAVE: Update the GUI after calling this
-void vtkMrmlSlicer::SetFieldOfView(float fov)
+void vtkMrmlSlicer::SetFieldOfView(vtkFloatingPointType fov)
 {
   this->FieldOfView = fov;
 
@@ -2272,7 +2280,7 @@ void vtkMrmlSlicer::SetFieldOfView(float fov)
 //----------------------------------------------------------------------------
 // Zoom
 //----------------------------------------------------------------------------
-void vtkMrmlSlicer::SetZoom(float mag)
+void vtkMrmlSlicer::SetZoom(vtkFloatingPointType mag)
 {
   for (int s=0; s<NUM_SLICES; s++)
   {
@@ -2280,14 +2288,14 @@ void vtkMrmlSlicer::SetZoom(float mag)
   }
 }
 
-void vtkMrmlSlicer::SetZoom(int s, float mag)
+void vtkMrmlSlicer::SetZoom(int s, vtkFloatingPointType mag)
 {
   this->Zoom[s]->SetMagnification(mag);
   this->BuildLowerTime.Modified();
 }
 
 // >> AT 11/07/01
-void vtkMrmlSlicer::SetZoomNew(float mag)
+void vtkMrmlSlicer::SetZoomNew(vtkFloatingPointType mag)
 {
   for (int s=0; s<NUM_SLICES; s++)
   {
@@ -2295,7 +2303,7 @@ void vtkMrmlSlicer::SetZoomNew(float mag)
   }
 }
 
-void vtkMrmlSlicer::SetZoomNew(int s, float mag)
+void vtkMrmlSlicer::SetZoomNew(int s, vtkFloatingPointType mag)
 {
   this->BackReformat[s]->SetZoom(mag);
   this->ForeReformat[s]->SetZoom(mag);
@@ -2303,7 +2311,7 @@ void vtkMrmlSlicer::SetZoomNew(int s, float mag)
   this->BuildLowerTime.Modified();
 }
 
-void vtkMrmlSlicer::SetOriginShift(int s, float sx, float sy)
+void vtkMrmlSlicer::SetOriginShift(int s, vtkFloatingPointType sx, vtkFloatingPointType sy)
 {
   this->BackReformat[s]->SetOriginShift(sx, sy);
   this->ForeReformat[s]->SetOriginShift(sx, sy);
@@ -2313,7 +2321,7 @@ void vtkMrmlSlicer::SetOriginShift(int s, float sx, float sy)
 }
 // << AT 11/07/01
 
-void vtkMrmlSlicer::SetZoomCenter(int s, float x, float y)
+void vtkMrmlSlicer::SetZoomCenter(int s, vtkFloatingPointType x, vtkFloatingPointType y)
 {
   this->Zoom[s]->SetCenter(x, y);
   this->BuildLowerTime.Modified();
@@ -2369,7 +2377,7 @@ void vtkMrmlSlicer::SetLabelIndirectLUT(vtkIndirectLookupTable *lut)
 //----------------------------------------------------------------------------
 // Fore Opacity
 //----------------------------------------------------------------------------
-void vtkMrmlSlicer::SetForeOpacity(float opacity)
+void vtkMrmlSlicer::SetForeOpacity(vtkFloatingPointType opacity)
 {
   for (int s=0; s<NUM_SLICES; s++)
   {
@@ -2461,8 +2469,11 @@ void vtkMrmlSlicer::AddVolumeToReformat(vtkMrmlDataVolume *v)
 
   // bookkeeping: the index of the reformatter and volume will be the same:
   // add to list of reformatters
+#if (VTK_MAJOR_VERSION <= 4 && VTK_MINOR_VERSION <= 2)
   this->VolumeReformatters->InsertValue(index, reformat);
-
+#else
+  this->VolumeReformatters->InsertVoidPointer(index, reformat);
+#endif
   // for now only allow reformatting along with the active slice
   reformat->SetReformatMatrix(this->ReformatMatrix[this->GetActiveSlice()]);
   reformat->Modified();
@@ -2483,13 +2494,22 @@ void vtkMrmlSlicer::RemoveAllVolumesToReformat()
   // delete all reformatters
   for (int i = 0; i < this->MaxNumberOfVolumesToReformat; i++)
     {
-      vtkImageReformat *reformat = 
-    (vtkImageReformat *) this->VolumeReformatters->GetValue(i);
-      if (reformat != NULL) 
+#if (VTK_MAJOR_VERSION <= 4 && VTK_MINOR_VERSION <= 2)
+      vtkImageReformat *ref = 
+    (vtkImageReformat *)this->VolumeReformatters->GetValue(i);
+#else
+      vtkImageReformat *ref = 
+    (vtkImageReformat *)this->VolumeReformatters->GetVoidPointer(i);
+#endif
+      if (ref != NULL) 
     {
       // kill it 
-      reformat->Delete();
+      ref->Delete();
+#if (VTK_MAJOR_VERSION <= 4 && VTK_MINOR_VERSION <= 2)
       this->VolumeReformatters->SetValue(i,NULL);
+#else
+      this->VolumeReformatters->SetVoidPointer(i,NULL);
+#endif      
     }
     }
 }
@@ -2503,9 +2523,14 @@ vtkImageReformat *vtkMrmlSlicer::GetVolumeReformatter(vtkMrmlDataVolume *v)
   if (index) 
     {
       // get pointer to reformatter
-      vtkImageReformat *reformat;
-      reformat = (vtkImageReformat *) this->VolumeReformatters->GetValue(index);
-      return reformat;
+#if (VTK_MAJOR_VERSION <= 4 && VTK_MINOR_VERSION <= 2)
+      vtkImageReformat *ref = 
+    (vtkImageReformat *)this->VolumeReformatters->GetValue(index);
+#else
+      vtkImageReformat *ref = 
+    (vtkImageReformat *)this->VolumeReformatters->GetVoidPointer(index);
+#endif
+      return ref;
     }
   else
     {
@@ -2522,12 +2547,20 @@ vtkImageReformat *vtkMrmlSlicer::GetVolumeReformatter(vtkMrmlDataVolume *v)
 // three slices in the slicer's slice windows).
 void vtkMrmlSlicer::VolumeReformattersModified()
 {
+#if (VTK_MAJOR_VERSION <= 4 && VTK_MINOR_VERSION <= 2)
   int max = this->VolumeReformatters->GetNumberOfTuples();
-
+#else
+  int max = this->VolumeReformatters->GetNumberOfPointers();
+#endif
   for (int i = 0; i < max; i++)
     {
+#if (VTK_MAJOR_VERSION <= 4 && VTK_MINOR_VERSION <= 2)
       vtkImageReformat *ref = 
     (vtkImageReformat *)this->VolumeReformatters->GetValue(i);
+#else
+      vtkImageReformat *ref = 
+    (vtkImageReformat *)this->VolumeReformatters->GetVoidPointer(i);
+#endif
       if (ref != NULL)
     {
       // for now only allow reformatting along with the active slice
@@ -2537,14 +2570,23 @@ void vtkMrmlSlicer::VolumeReformattersModified()
     }
 }
 
-void vtkMrmlSlicer::VolumeReformattersSetFieldOfView(float fov)
+void vtkMrmlSlicer::VolumeReformattersSetFieldOfView(vtkFloatingPointType fov)
 {
+#if (VTK_MAJOR_VERSION <= 4 && VTK_MINOR_VERSION <= 2)
   int max = this->VolumeReformatters->GetNumberOfTuples();
+#else
+  int max = this->VolumeReformatters->GetNumberOfPointers();
+#endif
 
   for (int i = 0; i < max; i++)
     {
+#if (VTK_MAJOR_VERSION <= 4 && VTK_MINOR_VERSION <= 2)
       vtkImageReformat *ref = 
     (vtkImageReformat *)this->VolumeReformatters->GetValue(i);
+#else
+      vtkImageReformat *ref = 
+    (vtkImageReformat *)this->VolumeReformatters->GetVoidPointer(i);
+#endif
       if (ref != NULL)
     {
       ref->SetFieldOfView(fov);

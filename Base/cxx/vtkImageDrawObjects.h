@@ -42,6 +42,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageGraph.h"
 #include "vtkSlicer.h"
 
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
+
 //BTX
 
 // Description:
@@ -50,7 +54,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 class VTK_SLICER_BASE_EXPORT ObjectList : public GraphList {
 public:
    ObjectList* GetNext() {return this->Next;} 
-   int AddObject(int pos[4],float col[3],int type, int thick);  
+   int AddObject(int pos[4],vtkFloatingPointType col[3],int type, int thick);  
    int DeleteObject(int delID);
 
    void SetPosition(int pos[4]) {memcpy(this->Position,pos,4*sizeof(int));}
@@ -78,7 +82,7 @@ public:
 
   // Description:
   // Add an object to the graph. It returns the ID of the data entry back
-  int AddObject(int Xpos0, int Ypos0,int Xpos1, int Ypos1, float color0, float color1,float color2,int type, int thick);
+  int AddObject(int Xpos0, int Ypos0,int Xpos1, int Ypos1, vtkFloatingPointType color0, vtkFloatingPointType color1,vtkFloatingPointType color2,int type, int thick);
 
   // Description:
   // Deletes an object from the list -> if successfull returns 1 - otherwise 0; 
@@ -86,8 +90,8 @@ public:
 
   // Description: 
   // Set the color of an object 
-  void SetObjectColor(int id, float color0, float color1,float color2);
-  float* GetObjectColor(int id);
+  void SetObjectColor(int id, vtkFloatingPointType color0, vtkFloatingPointType color1,vtkFloatingPointType color2);
+  vtkFloatingPointType* GetObjectColor(int id);
 
   // Description: 
   // Set/Get the position of an object 

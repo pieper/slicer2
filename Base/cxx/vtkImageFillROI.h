@@ -58,6 +58,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <string.h>
 #include "vtkSlicer.h"
 
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
+
 #define SHAPE_POLYGON 1
 #define SHAPE_LINES   2
 #define SHAPE_POINTS  3
@@ -69,8 +73,8 @@ public:
   vtkTypeMacro(vtkImageFillROI,vtkImageInPlaceFilter);
     void PrintSelf(ostream& os, vtkIndent indent);
 
-    vtkSetMacro(Value, float);
-    vtkGetMacro(Value, float);
+    vtkSetMacro(Value, vtkFloatingPointType);
+    vtkGetMacro(Value, vtkFloatingPointType);
 
     void SetShapeToPolygon() {this->shape = SHAPE_POLYGON;};
     void SetShapeToLines() {this->shape = SHAPE_LINES;};
@@ -100,7 +104,7 @@ protected:
     void operator=(const vtkImageFillROI&) {};
 
     vtkPoints *Points;
-    float Value;
+    vtkFloatingPointType Value;
     int Radius;
     int shape;
 

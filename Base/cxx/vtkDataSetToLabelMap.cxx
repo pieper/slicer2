@@ -121,9 +121,9 @@ void vtkDataSetToLabelMap::Execute()
   vtkStructuredPoints *output=this->GetOutput();
   int cellNum;
   int numPts, numCells;
-  float insidePoint[3];
-  float *v0,*v1,*v2;
-  float stepT,stepS;
+  vtkFloatingPointType insidePoint[3];
+  vtkFloatingPointType *v0,*v1,*v2;
+  vtkFloatingPointType stepT,stepS;
   int i,j,k;
   int jkFactor;
   int idx;
@@ -190,9 +190,9 @@ void vtkDataSetToLabelMap::Execute()
       stepS = this->ComputeStep(this->GetOutputSpacing(),v1,v0);
       //printf("stepT is %f, stepS is %f",stepT,stepS);
       
-      for(float t = 0; t <= 1; t = t+stepT)
+      for(vtkFloatingPointType t = 0; t <= 1; t = t+stepT)
       {
-        for(float s = 0; s <= 1; s = s+stepS)
+        for(vtkFloatingPointType s = 0; s <= 1; s = s+stepS)
         {
           
           if(this->IsPointInside(s,t))
@@ -334,13 +334,13 @@ void vtkDataSetToLabelMap::BoundaryFill(int i, int j, int k, vtkShortArray *scal
 // Compute the parametric step to scan the triangles
 // the step defines the max number of voxels that are traversed by
 // this edge from vertex0 -> vertex1
-float vtkDataSetToLabelMap::ComputeStep(float spacing[3],float vertex0[3],float vertex1[3])
+vtkFloatingPointType vtkDataSetToLabelMap::ComputeStep(vtkFloatingPointType spacing[3],vtkFloatingPointType vertex0[3],vtkFloatingPointType vertex1[3])
 {
-  float tmpx = vertex1[0] - vertex0[0];
-  float tmpy = vertex1[1] - vertex0[1];
-  float tmpz = vertex1[2] - vertex0[2];
+  vtkFloatingPointType tmpx = vertex1[0] - vertex0[0];
+  vtkFloatingPointType tmpy = vertex1[1] - vertex0[1];
+  vtkFloatingPointType tmpz = vertex1[2] - vertex0[2];
     
-  float distance = sqrt(tmpx*tmpx+tmpy*tmpy+tmpz*tmpz);
+  vtkFloatingPointType distance = sqrt(tmpx*tmpx+tmpy*tmpy+tmpz*tmpz);
 
   // how many voxels (based in the edge distance, the smallest distance to 
   // traverse a voxel) could fit in that edge?
@@ -353,7 +353,7 @@ float vtkDataSetToLabelMap::ComputeStep(float spacing[3],float vertex0[3],float 
   // so if (step > 1) <=> (n < 1) just cast it down to 1
   // if the step is 1/x where x is not an integer, take the ceiling of x
   
-  float n = ceil(distance / (spacing[0] * .5));
+  vtkFloatingPointType n = ceil(distance / (spacing[0] * .5));
   if (n < 1)
     n = 1;
   
@@ -362,7 +362,7 @@ float vtkDataSetToLabelMap::ComputeStep(float spacing[3],float vertex0[3],float 
 
 //EvaluatePoint
 
-void vtkDataSetToLabelMap::EvaluatePoint(float v0[3], float v1[3], float v2[3], float s, float t, float result[3])
+void vtkDataSetToLabelMap::EvaluatePoint(vtkFloatingPointType v0[3], vtkFloatingPointType v1[3], vtkFloatingPointType v2[3], vtkFloatingPointType s, vtkFloatingPointType t, vtkFloatingPointType result[3])
 {
   
   result[0] = v0[0]+ s*(v1[0]-v0[0]) + t*(v2[0]-v0[0]);
@@ -372,7 +372,7 @@ void vtkDataSetToLabelMap::EvaluatePoint(float v0[3], float v1[3], float v2[3], 
 }
 
 //IsPointInside
-int vtkDataSetToLabelMap::IsPointInside(float s, float t) {
+int vtkDataSetToLabelMap::IsPointInside(vtkFloatingPointType s, vtkFloatingPointType t) {
   if (s >= 0 && t >=0 && (s+t)<= 1) return 1;
   else return 0;
 }
@@ -390,7 +390,7 @@ int vtkDataSetToLabelMap::IsPointInside(float s, float t) {
 
 void vtkDataSetToLabelMap::ComputeOutputParameters()
 {
-  float *bounds;
+  vtkFloatingPointType *bounds;
   
   // compute model bounds 
   // get the bounding box of the input
@@ -411,9 +411,9 @@ void vtkDataSetToLabelMap::ComputeOutputParameters()
 }
 
 // Set the size of the voxels
-void vtkDataSetToLabelMap::SetOutputSpacing(float i, float j, float k)
+void vtkDataSetToLabelMap::SetOutputSpacing(vtkFloatingPointType i, vtkFloatingPointType j, vtkFloatingPointType k)
 {
-  float dim[3];
+  vtkFloatingPointType dim[3];
 
   dim[0] = i;
   dim[1] = j;
@@ -422,7 +422,7 @@ void vtkDataSetToLabelMap::SetOutputSpacing(float i, float j, float k)
   this->SetOutputSpacing(dim);
 }
 
-void vtkDataSetToLabelMap::SetOutputSpacing(float dim[3])
+void vtkDataSetToLabelMap::SetOutputSpacing(vtkFloatingPointType dim[3])
 {
   int dataDim, i;
 
@@ -464,7 +464,7 @@ void vtkDataSetToLabelMap::Write(char *fname)
 {
   FILE *fp;
   int i, j, k;
-  float* spacing;
+  vtkFloatingPointType* spacing;
 
 
   int idx;

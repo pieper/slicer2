@@ -57,6 +57,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkSlicer.h"
 #include "vtkPoints.h"
 
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
+
 //----------------------------------------------------------------------------
 // helper classes used in computation
 //----------------------------------------------------------------------------
@@ -138,7 +142,7 @@ class circularQueue {
 
  private:
   int GetBucket(int cost);
-  int FindMinBucket(float cost);
+  int FindMinBucket(vtkFloatingPointType cost);
 
   linkedList *A;
   listElement *Circle;

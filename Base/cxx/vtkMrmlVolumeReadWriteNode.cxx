@@ -105,7 +105,6 @@ void vtkMrmlVolumeReadWriteNode::Copy(vtkMrmlNode *anode)
 //----------------------------------------------------------------------------
 void vtkMrmlVolumeReadWriteNode::PrintSelf(ostream& os, vtkIndent indent)
 {
-  int idx;
   
   vtkMrmlNode::PrintSelf(os,indent);
 

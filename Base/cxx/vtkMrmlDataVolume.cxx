@@ -37,6 +37,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 #include <stdio.h>
 #include "vtkCommand.h"
+#include "vtkCallbackCommand.h"
 #include "vtkMrmlDataVolume.h"
 #include "vtkMrmlVolumeNode.h"
 #include "vtkObjectFactory.h"
@@ -250,7 +251,7 @@ vtkImageData* vtkMrmlDataVolume::GetOutput()
 //----------------------------------------------------------------------------
 void vtkMrmlDataVolume::UpdateWindowLevelThreshold()
 {
-  float window, level, upper, lower;
+  vtkFloatingPointType window, level, upper, lower;
 
   vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) this->MrmlNode;
 
@@ -451,7 +452,13 @@ vtkImageSource *vtkMrmlDataVolume::ReaderHelper()
 
   // Progress callback
   this->ProcessObject = reader;
-  reader->SetProgressMethod(vtkMrmlData::vtkMrmlDataProgress, (void *)this);
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >2)
+  reader->AddObserver (vtkCommand::ProgressEvent,
+                       this->ProgressObserver);
+#else
+  reader->SetProgressMethod(vtkMrmlData::vtkMrmlDataProgress,
+                            (void *)this);
+#endif
  
   // Read it
   reader->Update();
@@ -538,7 +545,13 @@ int vtkMrmlDataVolume::Write()
       writer->SetInput(this->ImageData);
       
       // Progress callback
-      writer->SetProgressMethod(vtkMrmlData::vtkMrmlDataProgress, (void *)this);
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >2)
+      writer->AddObserver (vtkCommand::ProgressEvent,
+                           this->ProgressObserver);
+#else
+      writer->SetProgressMethod(vtkMrmlData::vtkMrmlDataProgress,
+                                (void *)this);
+#endif
       // The progress callback function needs a handle to the writer 
       this->ProcessObject = writer;
      

@@ -64,7 +64,7 @@ vtkImageDouble2D::vtkImageDouble2D()
 void vtkImageDouble2D::ExecuteInformation(vtkImageData *inData,
     vtkImageData *outData)
 {
-    float *spacing, outSpacing[3];
+    vtkFloatingPointType *spacing, outSpacing[3];
     int idx, *inExt, outExt[6], mag[3];
 
     inExt = inData->GetWholeExtent();
@@ -82,7 +82,7 @@ void vtkImageDouble2D::ExecuteInformation(vtkImageData *inData,
             (inExt[idx*2+1] - inExt[idx*2] + 1) * mag[idx] - 1;
     
         // Change the data spacing
-        outSpacing[idx] = spacing[idx] / (float)mag[idx];
+        outSpacing[idx] = spacing[idx] / (vtkFloatingPointType)mag[idx];
     }
   
     outData->SetWholeExtent(outExt);

@@ -49,6 +49,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkScalarsToColors.h"
 #include "vtkSlicer.h"
 
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
+
 class VTK_SLICER_BASE_EXPORT vtkImagePlot : public vtkImageToImageFilter
 {
 public:
@@ -78,8 +82,8 @@ public:
 
   // Description:
   // Color of the curve to draw. (?)
-  vtkSetVector3Macro(Color, float);
-  vtkGetVector3Macro(Color, float);
+  vtkSetVector3Macro(Color, vtkFloatingPointType);
+  vtkGetVector3Macro(Color, vtkFloatingPointType);
 
   // Description:
   // 
@@ -103,7 +107,7 @@ protected:
 
   vtkScalarsToColors *LookupTable;
   
-  float Color[3];
+  vtkFloatingPointType Color[3];
 
   int Thickness;
   int Height;

@@ -146,7 +146,7 @@ void vtkImageResize::ExecuteInformation(vtkImageData *inData,
                       vtkImageData *outData)
 {
   int idx, extent[6];
-  float spacing[3], origin[3];
+  vtkFloatingPointType spacing[3], origin[3];
   
   inData->GetWholeExtent(extent);
   inData->GetSpacing(spacing);
@@ -211,12 +211,12 @@ static void vtkImageResizeExecute1D(vtkImageResize *self,
 {
   int idxX, maxX, inMaxX;
   int outIncX, outIncY, outIncZ;
-  float scale, step[1], origin[1];
-  float x;
+  vtkFloatingPointType scale, step[1], origin[1];
+  vtkFloatingPointType x;
   long idx, nx, nx2, xi;
-  float magX;
+  vtkFloatingPointType magX;
   // interpolation
-    float x0, x1;
+    vtkFloatingPointType x0, x1;
     // multiple components
   int idxC, numComps, scalarSize, inRowLength;
   // whole input extent
@@ -268,7 +268,7 @@ static void vtkImageResizeExecute1D(vtkImageResize *self,
   // coordinates to obtain source pixels.
 
   // mag = output/input
-  magX = (float)(maxX+1) / (float)(inMaxX+1);
+  magX = (vtkFloatingPointType)(maxX+1) / (vtkFloatingPointType)(inMaxX+1);
 
   // step vector is the inverse magnification
   magX = (magX == 0.0) ? 1.0 : magX;
@@ -282,7 +282,7 @@ static void vtkImageResizeExecute1D(vtkImageResize *self,
   // Advance to the origin of this output extent (used for threading)
   // x
   // DAVE THREAD 
-  // scale = (float)(outExt[0]-inExt[0])/(float)(inExt[1]-inExt[0]+1);
+  // scale = (vtkFloatingPointType)(outExt[0]-inExt[0])/(vtkFloatingPointType)(inExt[1]-inExt[0]+1);
   scale = 0.0;
   origin[0] = origin[0] + scale*nx*step[0];
 
@@ -342,13 +342,13 @@ static void vtkImageResizeExecute2D(vtkImageResize *self,
 {
   int idxX, idxY, maxX, maxY, inMaxX, inMaxY;
   int outIncX, outIncY, outIncZ;
-  //float scale=0;
-  float step[2], origin[2], xRewind;
-  float x, y;
+  //vtkFloatingPointType scale=0;
+  vtkFloatingPointType step[2], origin[2], xRewind;
+  vtkFloatingPointType x, y;
   long idx, nx, ny, nx2, ny2, xi, yi;
-  float magX, magY;
+  vtkFloatingPointType magX, magY;
   // interpolation
-    float x0, y0, x1, y1, dx0, dx1;
+    vtkFloatingPointType x0, y0, x1, y1, dx0, dx1;
     // multiple components
     int nxc, idxC, numComps, scalarSize;
   // whole input extent
@@ -375,8 +375,8 @@ static void vtkImageResizeExecute2D(vtkImageResize *self,
   // coordinates to obtain source pixels.
 
   // mag = output/input
-  magX = (float)(maxX+1) / (float)(inMaxX+1);
-  magY = (float)(maxY+1) / (float)(inMaxY+1);
+  magX = (vtkFloatingPointType)(maxX+1) / (vtkFloatingPointType)(inMaxX+1);
+  magY = (vtkFloatingPointType)(maxY+1) / (vtkFloatingPointType)(inMaxY+1);
 
   // step vector is the inverse magnification
   magX = (magX == 0.0) ? 1.0 : magX;
@@ -393,10 +393,10 @@ static void vtkImageResizeExecute2D(vtkImageResize *self,
   // Advance to the origin of this output extent (used for threading)
   // x
   //DAVE THREAD
-//  scale = (float)(outExt[0]-wExt[0])/(float)(wExt[1]-wExt[0]+1);
+//  scale = (vtkFloatingPointType)(outExt[0]-wExt[0])/(vtkFloatingPointType)(wExt[1]-wExt[0]+1);
 //  origin[0] = origin[0] + scale*nx*step[0];
   // y
-//  scale = (float)(outExt[2]-wExt[2])/(float)(wExt[3]-wExt[2]+1);    
+//  scale = (vtkFloatingPointType)(outExt[2]-wExt[2])/(vtkFloatingPointType)(wExt[3]-wExt[2]+1);    
 //  origin[1] = origin[1] + scale*ny*step[1];
 
   // Initialize output coords x, y to origin

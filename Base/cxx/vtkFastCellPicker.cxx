@@ -49,11 +49,11 @@ vtkFastCellPicker::vtkFastCellPicker()
 }
 
 #if ( (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2) || VTK_MAJOR_VERSION == 4 )
-float vtkFastCellPicker::IntersectWithLine(float p1[3], float p2[3], float tol, 
+vtkFloatingPointType vtkFastCellPicker::IntersectWithLine(vtkFloatingPointType p1[3], vtkFloatingPointType p2[3], vtkFloatingPointType tol, 
                       vtkAssemblyPath *assem, vtkActor *a, 
                       vtkMapper *m)
 #else
-float vtkFastCellPicker::IntersectWithLine(float p1[3], float p2[3], float tol, 
+vtkFloatingPointType vtkFastCellPicker::IntersectWithLine(vtkFloatingPointType p1[3], vtkFloatingPointType p2[3], vtkFloatingPointType tol, 
                       vtkActor *assem, vtkActor *a, 
                       vtkMapper *m)
 #endif
@@ -61,7 +61,7 @@ float vtkFastCellPicker::IntersectWithLine(float p1[3], float p2[3], float tol,
   int numCells, ii, nOBBTrees;
   int i, minSubId;
   vtkIdType minCellId;
-  float x[3], t, pcoords[3];
+  vtkFloatingPointType x[3], t, pcoords[3];
   //vtkCell *cell;
   vtkDataSet *input=m->GetInput();
   vtkOBBTree *pOBBTree, *thisOBBTree;

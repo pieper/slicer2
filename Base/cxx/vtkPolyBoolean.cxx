@@ -658,7 +658,7 @@ int vtkPolyBoolean::ProcessTwoNodes( vtkOBBNode *nodeA,
   vtkIdType *ptIds;
   static vtkIdList *cellIdsA = vtkIdList::New();
   static vtkIdList *cellIdsB = vtkIdList::New();
-  float *p[3];
+  vtkFloatingPointType *p[3];
 
   cellIdsA->Allocate(CELLS_PER_BUCKET+10);
   cellIdsB->Allocate(CELLS_PER_BUCKET+10);
@@ -797,11 +797,11 @@ int vtkPolyBoolean::IntersectBoolTriPair( vtkBoolTri *triA, vtkBoolTri *triB )
   vtkPiercePoint *thisPP, *nextPP, *intPPs[2][2], *startPP, *endPP, **prevPPP;
   vtkPiercePoint tmpPPs[2][2];
   vtkPoints *points;
-  float xprod[3], offsets[2][3], *p0, *p1, param, offset0, offset1, deltaX;
+  vtkFloatingPointType xprod[3], offsets[2][3], *p0, *p1, param, offset0, offset1, deltaX;
   int PPEdgeIndices[2][2];
-  float ang_eps = this->AngleResolution*3.14159/180,
+  vtkFloatingPointType ang_eps = this->AngleResolution*3.14159/180,
         dist_eps = this->DistanceResolution;
-  float dist_eps2; // the square of dist_eps, if needed.
+  vtkFloatingPointType dist_eps2; // the square of dist_eps, if needed.
 
   this->TriangleCount++;
   vtkMath::Cross( triA->Normal, triB->Normal, xprod );
@@ -1654,7 +1654,7 @@ void vtkPolyBoolean::AddNewPolygons( vtkBoolTri *thisTri )
   vtkIdType *tris, outerLoop[3];
   vtkBoolTess *tess = this->Tess;
   int flagBit, addOuterLoop = 0;
-  float *p0, *p1, xprod[3], areavec[3];
+  vtkFloatingPointType *p0, *p1, xprod[3], areavec[3];
 
   // Generate new triangles from the loops on this triangle.
   thisLoop = thisTri->NewLoops;
@@ -1756,7 +1756,7 @@ void vtkPolyBoolean::AddCellTriangles( vtkIdType cellId, vtkIdType *ptIds,
   int invertB = 0;
   vtkPoints *points;
   vtkPolyData *dataset;
-  float *p, *q, *r, v0[3], v1[3], *norm;
+  vtkFloatingPointType *p, *q, *r, v0[3], v1[3], *norm;
   vtkIdList *cellNeighbors = vtkIdList::New();
   vtkBoolTriEdge *thisEdge;
 
@@ -2008,12 +2008,6 @@ vtkNewBoolEdges::vtkNewBoolEdges()
   this->GrowSize = 100;
   this->Count = 0;
   this->ArraySize = 0;
-  }
-
-vtkNewBoolEdges::~vtkNewBoolEdges()
-  {
-  if ( this->Array )
-    delete [] this->Array;
   }
 
 void vtkNewBoolEdges::AddNewEdge( vtkBoolTriEdge *thisEdge )

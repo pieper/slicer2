@@ -64,6 +64,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageData.h"
 #include "vtkSlicer.h"
 
+class vtkCallbackCommand;
+
 //----------------------------------------------------------------------------
 class VTK_SLICER_BASE_EXPORT vtkMrmlData : public vtkProcessObject {
   public:
@@ -175,6 +177,13 @@ protected:
   int NeedToWrite;
   vtkProcessObject *ProcessObject;
   
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION > 2)
+  // Callback registered with the ProgressObserver.
+  static void ProgressCallbackFunction(vtkObject*, unsigned long, void*,
+                                       void*);
+  // The observer to report progress from the internal writer.
+  vtkCallbackCommand* ProgressObserver;  
+#endif  
 };
 
 #endif

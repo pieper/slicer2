@@ -125,8 +125,8 @@ void vtkIndirectLookupTable::SetMapRange(long min, long max)
 {
   this->MapRange[0] = VTK_SHORT_MIN;
   this->MapRange[1] = VTK_SHORT_MAX;
-  this->Range[0] = (float)this->MapRange[0];
-  this->Range[1] = (float)this->MapRange[1];
+  this->Range[0] = (vtkFloatingPointType)this->MapRange[0];
+  this->Range[1] = (vtkFloatingPointType)this->MapRange[1];
   this->MapOffset = -VTK_SHORT_MIN;
 
   // Allocate arrays
@@ -150,7 +150,7 @@ void vtkIndirectLookupTable::InitDirect()
 }
 
 //------------------------------------------------------------------------------
-void vtkIndirectLookupTable::MapDirect(float scalar, int index)
+void vtkIndirectLookupTable::MapDirect(vtkFloatingPointType scalar, int index)
 {
   unsigned short *map = this->DirectMap->GetPointer(0);
 
@@ -393,7 +393,7 @@ void vtkIndirectLookupTable::Build()
 }
 
 // get the color for a scalar value
-void vtkIndirectLookupTable::GetColor(float v, float rgb[3])
+void vtkIndirectLookupTable::GetColor(vtkFloatingPointType v, vtkFloatingPointType rgb[3])
 {
   unsigned char *rgb8 = this->MapValue(v);
 
@@ -403,7 +403,7 @@ void vtkIndirectLookupTable::GetColor(float v, float rgb[3])
 }
 
 // Given a scalar value v, return an RGBA color value from LookupTable
-unsigned char *vtkIndirectLookupTable::MapValue(float v)
+unsigned char *vtkIndirectLookupTable::MapValue(vtkFloatingPointType v)
 {
   unsigned short *map = this->Map->GetPointer(0);
   unsigned char *lut = this->LookupTable->GetPointer(0);
@@ -429,7 +429,7 @@ static void vtkIndirectLookupTableMapData(vtkIndirectLookupTable *self,
   T *input, unsigned char *output, int length, int incr)
 {
   int i;
-  float *range = self->GetRange();
+  vtkFloatingPointType *range = self->GetRange();
   long offset = self->GetMapOffset();
   unsigned char *lut = self->GetLookupTable()->GetPointer(0);
   unsigned short *map = self->GetMap()->GetPointer(0);

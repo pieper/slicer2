@@ -285,7 +285,6 @@ double vtkDCMParser::ReadFD()
 
 void vtkDCMParser::ReadText(char *str, unsigned int Length)
 {
-  unsigned int id;
   
   if(this->file_in)
     {
@@ -302,7 +301,6 @@ char *vtkDCMParser::ReadText(unsigned int Length)
 {
   //char str[Length + 1];
   static char str[1024];
-  unsigned int id;
   unsigned int length = (Length >= 1024) ? 1024 : Length;
   
   if(this->file_in)

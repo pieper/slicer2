@@ -52,6 +52,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkTransform.h"
 #include "vtkSlicer.h"
 
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
+
 #define VTK_FILE_BYTE_ORDER_BIG_ENDIAN 0
 #define VTK_FILE_BYTE_ORDER_LITTLE_ENDIAN 1
 
@@ -123,13 +127,13 @@ public:
   
   // Description:
   // Set/Get the spacing of the data in the file.
-  vtkSetVector3Macro(DataSpacing,float);
-  vtkGetVector3Macro(DataSpacing,float);
+  vtkSetVector3Macro(DataSpacing,vtkFloatingPointType);
+  vtkGetVector3Macro(DataSpacing,vtkFloatingPointType);
   
   // Description:
   // Set/Get the origin of the data (location of first pixel in the file).
-  vtkSetVector3Macro(DataOrigin,float);
-  vtkGetVector3Macro(DataOrigin,float);
+  vtkSetVector3Macro(DataOrigin,vtkFloatingPointType);
+  vtkGetVector3Macro(DataOrigin,vtkFloatingPointType);
 
   // Description:
   // Get the size of the header computed by this object.
@@ -236,16 +240,16 @@ protected:
   int Initialized;
   vtkTransform *Transform;
 
-  void ComputeTransformedSpacing (float Spacing[3]);
-  void ComputeTransformedOrigin (float origin[3]);
+  void ComputeTransformedSpacing (vtkFloatingPointType Spacing[3]);
+  void ComputeTransformedOrigin (vtkFloatingPointType origin[3]);
   void ComputeTransformedExtent(int inExtent[6],
                 int outExtent[6]);
   void ComputeTransformedIncrements(int inIncr[3],
                     int outIncr[3]);
 
   int DataDimensions[3];
-  float DataSpacing[3];
-  float DataOrigin[3];
+  vtkFloatingPointType DataSpacing[3];
+  vtkFloatingPointType DataOrigin[3];
   int DataVOI[6];
   
   int DICOMFiles;

@@ -56,6 +56,9 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkSlicer.h"
 #include "vtkMrmlVolumeReadWriteNode.h"
 
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
 
 // found this the hard way: this had been a 'magic number' that allowed
 // the user to run off the end of the array with no error checking -- tsk tsk.
@@ -145,8 +148,8 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
 
   // Description:
   // Three numbers for the dimensions of each voxel, in millimeters
-  vtkGetVector3Macro(Spacing, float);
-  vtkSetVector3Macro(Spacing, float);
+  vtkGetVector3Macro(Spacing, vtkFloatingPointType);
+  vtkSetVector3Macro(Spacing, vtkFloatingPointType);
   
   // Description:
   // The type of data in the file. One of: Char, UnsignedChar, Short, 
@@ -191,8 +194,8 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
 
   // Description:
   // The gantry tilt, in degrees, for CT slices
-  vtkGetMacro(Tilt, float);
-  vtkSetMacro(Tilt, float);
+  vtkGetMacro(Tilt, vtkFloatingPointType);
+  vtkSetMacro(Tilt, vtkFloatingPointType);
 
 
   //--------------------------------------------------------------------------
@@ -220,13 +223,13 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
 
   // Description:
   // The window value to use when autoWindowLevel is 'no'
-  vtkGetMacro(Window, float);
-  vtkSetMacro(Window, float);
+  vtkGetMacro(Window, vtkFloatingPointType);
+  vtkSetMacro(Window, vtkFloatingPointType);
 
   // Description:
   // The level value to use when autoWindowLevel is 'no'
-  vtkGetMacro(Level, float);
-  vtkSetMacro(Level, float);
+  vtkGetMacro(Level, vtkFloatingPointType);
+  vtkSetMacro(Level, vtkFloatingPointType);
 
   // Description:
   // Specifies whether to apply the threshold
@@ -283,16 +286,16 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
 
   // Description:
   // Compute the rasToIjkMatrix from the corner points of the volume.
-  int ComputeRasToIjkFromCorners(float *fc, float *ftl, float *ftr, 
-    float *fbr, float *lc, float *ltl);
+  int ComputeRasToIjkFromCorners(vtkFloatingPointType *fc, vtkFloatingPointType *ftl, vtkFloatingPointType *ftr, 
+    vtkFloatingPointType *fbr, vtkFloatingPointType *lc, vtkFloatingPointType *ltl);
   int ComputeRasToIjkFromCorners(
-    float fcR,  float fcA,  float fcS,
-    float ftlR, float ftlA, float ftlS, 
-    float ftrR, float ftrA, float ftrS, 
-    float fbrR, float fbrA, float fbrS, 
-    float lcR,  float lcA,  float lcS, 
-    float ltlR, float ltlA, float ltlS) {
-    float fc[3], ftl[3], ftr[3], fbr[3], lc[3], ltl[3];
+    vtkFloatingPointType fcR,  vtkFloatingPointType fcA,  vtkFloatingPointType fcS,
+    vtkFloatingPointType ftlR, vtkFloatingPointType ftlA, vtkFloatingPointType ftlS, 
+    vtkFloatingPointType ftrR, vtkFloatingPointType ftrA, vtkFloatingPointType ftrS, 
+    vtkFloatingPointType fbrR, vtkFloatingPointType fbrA, vtkFloatingPointType fbrS, 
+    vtkFloatingPointType lcR,  vtkFloatingPointType lcA,  vtkFloatingPointType lcS, 
+    vtkFloatingPointType ltlR, vtkFloatingPointType ltlA, vtkFloatingPointType ltlS) {
+    vtkFloatingPointType fc[3], ftl[3], ftr[3], fbr[3], lc[3], ltl[3];
     fc[0]=fcR; fc[1]=fcA; fc[2]=fcS;
     ftl[0]=ftlR; ftl[1]=ftlA; ftl[2]=ftlS;
     ftr[0]=ftrR; ftr[1]=ftrA; ftr[2]=ftrS;
@@ -395,11 +398,11 @@ protected:
   char *ScanOrder;
 
   // Numbers
-  float Tilt;
+  vtkFloatingPointType Tilt;
   int ScalarType;
   int NumScalars;
-  float Window;
-  float Level;
+  vtkFloatingPointType Window;
+  vtkFloatingPointType Level;
   int UpperThreshold;
   int LowerThreshold;
 
@@ -407,7 +410,7 @@ protected:
   int FrequencyPhaseSwap;
 
   // Arrays
-  float Spacing[3];
+  vtkFloatingPointType Spacing[3];
   int ImageRange[2];
   int Dimensions[2];
 

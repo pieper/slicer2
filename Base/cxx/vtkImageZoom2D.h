@@ -47,6 +47,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
+
 class VTK_SLICER_BASE_EXPORT vtkImageZoom2D : public vtkImageToImageFilter
 {
 public:
@@ -56,8 +60,8 @@ public:
 
   // Description:
   // Get/Set the Magnification
-    vtkSetMacro(Magnification, float);
-    vtkGetMacro(Magnification, float);
+    vtkSetMacro(Magnification, vtkFloatingPointType);
+    vtkGetMacro(Magnification, vtkFloatingPointType);
 
   // Description:
   // If AutoCenter is turned on,
@@ -76,20 +80,20 @@ public:
 
   // Description:
   // Set Center of the region on which we zoom in.
-    vtkSetVector2Macro(Center, float);
-    vtkGetVector2Macro(Center, float);
+    vtkSetVector2Macro(Center, vtkFloatingPointType);
+    vtkGetVector2Macro(Center, vtkFloatingPointType);
 
   // Description:
   // Set to be 1/magnification in each direction.
   // NEVER USE THIS.
-    vtkSetVector2Macro(Step, float);
-    vtkGetVector2Macro(Step, float);
+    vtkSetVector2Macro(Step, vtkFloatingPointType);
+    vtkGetVector2Macro(Step, vtkFloatingPointType);
 
   // Description:
   // Set/Get Upper Left hand corner of zoom window.
   // NEVER USE THIS.
-    vtkSetVector2Macro(Origin, float);
-    vtkGetVector2Macro(Origin, float);
+    vtkSetVector2Macro(Origin, vtkFloatingPointType);
+    vtkGetVector2Macro(Origin, vtkFloatingPointType);
 
 protected:
     vtkImageZoom2D();
@@ -98,13 +102,13 @@ protected:
     void operator=(const vtkImageZoom2D&) {};
 
   // Length of 1 Pixel in Zoom Window in the Original Image
-  float Step[2];
+  vtkFloatingPointType Step[2];
   // Upper Left hand corner of Zoom Window
-    float Origin[2];
+    vtkFloatingPointType Origin[2];
 
-    float Magnification;
+    vtkFloatingPointType Magnification;
   int AutoCenter;
-  float Center[2];
+  vtkFloatingPointType Center[2];
     int OrigPoint[2];
     int ZoomPoint[2];
 

@@ -42,6 +42,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkVersion.h"
 #if ( (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2) || VTK_MAJOR_VERSION == 4 )
 #include "vtkCommand.h"
+#include "vtkCallbackCommand.h"
 #endif
 #include "vtkImageEditor.h"
 #include "vtkObjectFactory.h"
@@ -96,11 +97,21 @@ vtkImageEditor::vtkImageEditor()
   this->Indices = NULL;
   this->Output  = NULL;
   this->UndoOutput = NULL;
+
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION > 2)
+  // Setup a callback for the internal writer to report progress.
+  this->ProgressObserver = vtkCallbackCommand::New();
+  this->ProgressObserver->SetCallback(&vtkImageEditor::ProgressCallbackFunction);
+  this->ProgressObserver->SetClientData(this);
+#endif
 }
 
 //----------------------------------------------------------------------------
 vtkImageEditor::~vtkImageEditor()
 {
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION > 2)
+  this->ProgressObserver->Delete();
+#endif
   // We must delete any objects we created
   if (this->InputSliceOrder)
   {
@@ -251,6 +262,20 @@ char* vtkImageEditor::GetDimensionString()
   }
 }
 
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION > 2)
+//----------------------------------------------------------------------------
+void vtkImageEditor::ProgressCallbackFunction(vtkObject* caller,
+                                              unsigned long,
+                                              void* clientdata, void*)
+{
+  vtkImageEditor *self = (vtkImageEditor *)(clientdata);
+  vtkImageToImageFilter *filter = self->GetFirstFilter();
+  if (filter)
+  {
+    self->UpdateProgress(filter->GetProgress());
+  }
+}
+#else
 //----------------------------------------------------------------------------
 void vtkImageEditorProgress(void *arg)
 {
@@ -264,7 +289,7 @@ void vtkImageEditorProgress(void *arg)
     self->UpdateProgress(filter->GetProgress());
   }
 }
-
+#endif
 
 //----------------------------------------------------------------------------
 void vtkImageEditor::SetInput(vtkImageData *input)
@@ -334,10 +359,15 @@ void vtkImageEditor::Apply()
   // Attach the Progress callback to the first filter, unless Multi-slice.
   // Multi-slice progress is computed after each slice. 
   if (this->Dimension != EDITOR_DIM_MULTI)
-  {
-    this->FirstFilter->SetProgressMethod(
-      vtkImageEditorProgress, (void *)this);
-  }    
+    {
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >2)
+    this->FirstFilter->AddObserver (vtkCommand::ProgressEvent,
+                                    this->ProgressObserver);
+#else
+    this->FirstFilter->SetProgressMethod(vtkImageEditorProgress,
+                                         (void *)this);
+#endif
+    }    
  
   // Start progress reporting
 #if ( (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2) || VTK_MAJOR_VERSION == 4 )

@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Samson Timoner TetraMesh Library
   Module:    $RCSfile: vtkResliceImage.h,v $
   Language:  C++
-  Date:      $Date: 2003/03/19 19:16:21 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2004/09/16 17:18:59 $
+  Version:   $Revision: 1.13 $
   
 Copyright (c) 2001 Samson Timoner
 
@@ -72,6 +72,10 @@ class vtkUnstructuredGrid;
 #include "vtkMatrix4x4.h"
 #include "vtkSlicer.h"
 
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
+
 class VTK_SLICER_BASE_EXPORT vtkResliceImage : public vtkImageToImageFilter
 {
 public:
@@ -101,22 +105,22 @@ public:
   // Description:
   // Set the background scalar to use if there is no 
   // information in the first image in the area specified.
-  vtkSetMacro(Background,float);
-  vtkGetMacro(Background,float);
+  vtkSetMacro(Background,vtkFloatingPointType);
+  vtkGetMacro(Background,vtkFloatingPointType);
 
   // Helper Functions:
   //
 
   //BTX
-  static void FindInputIJK(float OtherIJK[4],
+  static void FindInputIJK(vtkFloatingPointType OtherIJK[4],
                            vtkMatrix4x4 *IJKtoIJK,
                            int i, int j, int k);
 
-  static vtkMatrix4x4 *GetIJKtoIJKMatrix(float Spacing2[3],
-                                         float Origin2[3],
+  static vtkMatrix4x4 *GetIJKtoIJKMatrix(vtkFloatingPointType Spacing2[3],
+                                         vtkFloatingPointType Origin2[3],
                                          vtkMatrix4x4 *MM2toMM1,
-                                         float Spacing1[3],
-                                         float Origin1[3]);
+                                         vtkFloatingPointType Spacing1[3],
+                                         vtkFloatingPointType Origin1[3]);
 protected:
 
   vtkResliceImage();
@@ -126,10 +130,10 @@ protected:
 
   vtkMatrix4x4     *TransformOutputToInput;
   vtkMatrix4x4     *IJKtoIJK;
-  float OutSpacing[3];
-  float OutOrigin[3];
+  vtkFloatingPointType OutSpacing[3];
+  vtkFloatingPointType OutOrigin[3];
   int OutExtent[6];
-  float Background;
+  vtkFloatingPointType Background;
 
   void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);

@@ -164,7 +164,7 @@ void vtkImageReformat::PrintSelf(ostream& os, vtkIndent indent)
 void vtkImageReformat::ExecuteInformation(vtkImageData *inData, vtkImageData *outData)
 {
     int ext[6];
-    float pix;
+    vtkFloatingPointType pix;
 
     // Set output to 2D, size specified by user
     ext[1] = this->Resolution - 1;
@@ -191,13 +191,13 @@ void vtkImageReformat::ComputeInputUpdateExtent(int inExt[6], int outExt[6])
 //----------------------------------------------------------------------------
 void vtkImageReformat::SetPoint(int x, int y)
 {
-    float ras[4], ijk[4];
+    vtkFloatingPointType ras[4], ijk[4];
     int i;
 
     for (i=0; i<3; i++) 
     {
-        this->WldPoint[i] = this->Origin[i] + this->XStep[i]*(float)x + 
-            this->YStep[i]*(float)y;
+        this->WldPoint[i] = this->Origin[i] + this->XStep[i]*(vtkFloatingPointType)x + 
+            this->YStep[i]*(vtkFloatingPointType)y;
     }
 
     for (i=0; i<3; i++) 
@@ -249,10 +249,10 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
 {
     int res, i, idx, nxy, idxX, idxY, maxY, maxX;
     int inIncX, inIncY, inIncZ, outIncX, outIncY, outIncZ;
-    float begin[4], origin[4], mx[4], my[4], mc[4], zero[4]={0.0,0.0,0.0,1.0};
-    float originIJK[4], mxIJK[4], myIJK[4], zeroIJK[4];
-    float xStep[3], yStep[3], xRewind[3];
-    float x, y, z, scale;
+    vtkFloatingPointType begin[4], origin[4], mx[4], my[4], mc[4], zero[4]={0.0,0.0,0.0,1.0};
+    vtkFloatingPointType originIJK[4], mxIJK[4], myIJK[4], zeroIJK[4];
+    vtkFloatingPointType xStep[3], yStep[3], xRewind[3];
+    vtkFloatingPointType x, y, z, scale;
     int nx, ny, nz, nx2, ny2, nz2, nz1, xi, yi, zi;
     T *ptr, *outPtr;
     vtkMatrix4x4 *mat = self->GetReformatMatrix();
@@ -345,8 +345,8 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
     // the sum of the x-dir, y-dir vectors.
     // The length is half the OUTPUT image size.
 
-    //float originshiftX, originshiftY, originshiftZ;
-    float originshift1[4], originshift2[4];
+    //vtkFloatingPointType originshiftX, originshiftY, originshiftZ;
+    vtkFloatingPointType originshift1[4], originshift2[4];
     //originshift1[0] = self->OriginShift[0];
     //originshift1[1] = self->OriginShift[1];
     vtkMatrix4x4 *originshiftmtx = self->GetOriginShiftMtx();
@@ -372,13 +372,13 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
 
     // Advance to the origin of this output extent (used for threading)
     // x
-    scale = (float)(outExt[0]-wExt[0]);
+    scale = (vtkFloatingPointType)(outExt[0]-wExt[0]);
     begin[0] = origin[0] + scale*mx[0];
     begin[1] = origin[1] + scale*mx[1];
     begin[2] = origin[2] + scale*mx[2];
     begin[3] = 1.0;
     // y
-    scale = (float)(outExt[2]-wExt[2]);    
+    scale = (vtkFloatingPointType)(outExt[2]-wExt[2]);    
     begin[0] = begin[0] + scale*my[0];
     begin[1] = begin[1] + scale*my[1];
     begin[2] = begin[2] + scale*my[2];
@@ -605,11 +605,11 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
 {
     int res, i, idx, nxy, idxX, idxY, maxY, maxX;
     int inIncX, inIncY, inIncZ, outIncX, outIncY, outIncZ;
-    float begin[4], origin[4], mx[4], my[4], mc[4], zero[4]={0.0,0.0,0.0,1.0};
-    float originIJK[4], mxIJK[4], myIJK[4], zeroIJK[4];
-    float xStep[3], yStep[3], xRewind[3];
-    float x, y, z, scale;
-    float x0, y0, z0, x1, y1, z1, dx0, dx1, dxy0, dxy1;
+    vtkFloatingPointType begin[4], origin[4], mx[4], my[4], mc[4], zero[4]={0.0,0.0,0.0,1.0};
+    vtkFloatingPointType originIJK[4], mxIJK[4], myIJK[4], zeroIJK[4];
+    vtkFloatingPointType xStep[3], yStep[3], xRewind[3];
+    vtkFloatingPointType x, y, z, scale;
+    vtkFloatingPointType x0, y0, z0, x1, y1, z1, dx0, dx1, dxy0, dxy1;
     int nx, ny, nz, nx2, ny2, nz2, nz1, xi, yi, zi;
     T *ptr, *outPtr;
     vtkMatrix4x4 *mat = self->GetReformatMatrix();
@@ -708,7 +708,7 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
     // the sum of the x-dir, y-dir vectors.
     // The length is half the OUTPUT image size.
 
-    float originshift1[4], originshift2[4];
+    vtkFloatingPointType originshift1[4], originshift2[4];
     vtkMatrix4x4 *originshiftmtx = self->GetOriginShiftMtx();
     //Raul: These operations are not thread safe. Move to Execute
     //originshiftmtx->DeepCopy(mat);
@@ -732,13 +732,13 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
 
     // Advance to the origin of this output extent (used for threading)
     // x
-    scale = (float)(outExt[0]-wExt[0]);
+    scale = (vtkFloatingPointType)(outExt[0]-wExt[0]);
     begin[0] = origin[0] + scale*mx[0];
     begin[1] = origin[1] + scale*mx[1];
     begin[2] = origin[2] + scale*mx[2];
     begin[3] = 1.0;
     // y
-    scale = (float)(outExt[2]-wExt[2]);    
+    scale = (vtkFloatingPointType)(outExt[2]-wExt[2]);    
     begin[0] = begin[0] + scale*my[0];
     begin[1] = begin[1] + scale*my[1];
     begin[2] = begin[2] + scale*my[2];
@@ -965,11 +965,11 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
 {
     int res, i, idx, nxy, idxX, idxY, maxY, maxX;
     int inIncX, inIncY, inIncZ, outIncX, outIncY, outIncZ;
-    float begin[4], origin[4], mx[4], my[4], mc[4], zero[4]={0.0,0.0,0.0,1.0};
-    float originIJK[4], mxIJK[4], myIJK[4], zeroIJK[4];
-    float xStep[3], yStep[3], xRewind[3];
-    float x, y, z, scale;
-    float x0, y0, z0, x1, y1, z1, dx0, dx1, dxy0, dxy1;
+    vtkFloatingPointType begin[4], origin[4], mx[4], my[4], mc[4], zero[4]={0.0,0.0,0.0,1.0};
+    vtkFloatingPointType originIJK[4], mxIJK[4], myIJK[4], zeroIJK[4];
+    vtkFloatingPointType xStep[3], yStep[3], xRewind[3];
+    vtkFloatingPointType x, y, z, scale;
+    vtkFloatingPointType x0, y0, z0, x1, y1, z1, dx0, dx1, dxy0, dxy1;
     int nx, ny, nz, nx2, ny2, nz2, nz1, xi, yi, zi;
     T *outPtr;
     vtkMatrix4x4 *mat = self->GetReformatMatrix();
@@ -982,7 +982,7 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
     int numCompsI, numCompsJ;
     int outTensorIdx, j;
     vtkDataArray *inTensorData, *outTensorData;
-    float outT[3][3];
+    vtkFloatingPointType outT[3][3];
 
     // execution time 
     if (id == 0)
@@ -1002,7 +1002,7 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
 
     // Set the origin explicitly so structured points tensors 
     // will align with image data
-    float pix = self->GetFieldOfView() / self->GetResolution();
+    vtkFloatingPointType pix = self->GetFieldOfView() / self->GetResolution();
     outData->SetOrigin(-wExt[1]*pix/2, -wExt[3]*pix/2, 0);
 
     // If there are no scalars in the input, clear the output scalars
@@ -1107,13 +1107,13 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
 
     // Advance to the origin of this output extent (used for threading)
     // x
-    scale = (float)(outExt[0]-wExt[0]);
+    scale = (vtkFloatingPointType)(outExt[0]-wExt[0]);
     begin[0] = origin[0] + scale*mx[0];
     begin[1] = origin[1] + scale*mx[1];
     begin[2] = origin[2] + scale*mx[2];
     begin[3] = 1.0;
     // y
-    scale = (float)(outExt[2]-wExt[2]);   
+    scale = (vtkFloatingPointType)(outExt[2]-wExt[2]);   
     begin[0] = begin[0] + scale*my[0];
     begin[1] = begin[1] + scale*my[1];
     begin[2] = begin[2] + scale*my[2];
@@ -1222,11 +1222,11 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
                     //-TENSOR- vtkTensor *tensor3 = inTensorData->GetTuple(idx3);
                     //-TENSOR- vtkTensor *tensor4 = inTensorData->GetTuple(idx4);
 
-                    float inT1[3][3], inT2[3][3], inT3[3][3], inT4[3][3];
-                    inTensorData->GetTuple(idx1,(float *)inT1);
-                    inTensorData->GetTuple(idx2,(float *)inT2);
-                    inTensorData->GetTuple(idx3,(float *)inT3);
-                    inTensorData->GetTuple(idx4,(float *)inT4);
+                    vtkFloatingPointType inT1[3][3], inT2[3][3], inT3[3][3], inT4[3][3];
+                    inTensorData->GetTuple(idx1,(vtkFloatingPointType *)inT1);
+                    inTensorData->GetTuple(idx2,(vtkFloatingPointType *)inT2);
+                    inTensorData->GetTuple(idx3,(vtkFloatingPointType *)inT3);
+                    inTensorData->GetTuple(idx4,(vtkFloatingPointType *)inT4);
 
                     // find output location
                     //-TENSOR- vtkTensor *tensor = outTensorData->GetTuple(outTensorIdx);
@@ -1293,16 +1293,16 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
                     //-TENSOR- vtkTensor *tensor7 = inTensorData->GetTuple(idx7);
                     //-TENSOR- vtkTensor *tensor8 = inTensorData->GetTuple(idx8);
 
-                    float inT1[3][3], inT2[3][3], inT3[3][3], inT4[3][3];
-                    float inT5[3][3], inT6[3][3], inT7[3][3], inT8[3][3];
-                    inTensorData->GetTuple(idx1,(float *)inT1);
-                    inTensorData->GetTuple(idx2,(float *)inT2);
-                    inTensorData->GetTuple(idx3,(float *)inT3);
-                    inTensorData->GetTuple(idx4,(float *)inT4);
-                    inTensorData->GetTuple(idx5,(float *)inT5);
-                    inTensorData->GetTuple(idx6,(float *)inT6);
-                    inTensorData->GetTuple(idx7,(float *)inT7);
-                    inTensorData->GetTuple(idx8,(float *)inT8);
+                    vtkFloatingPointType inT1[3][3], inT2[3][3], inT3[3][3], inT4[3][3];
+                    vtkFloatingPointType inT5[3][3], inT6[3][3], inT7[3][3], inT8[3][3];
+                    inTensorData->GetTuple(idx1,(vtkFloatingPointType *)inT1);
+                    inTensorData->GetTuple(idx2,(vtkFloatingPointType *)inT2);
+                    inTensorData->GetTuple(idx3,(vtkFloatingPointType *)inT3);
+                    inTensorData->GetTuple(idx4,(vtkFloatingPointType *)inT4);
+                    inTensorData->GetTuple(idx5,(vtkFloatingPointType *)inT5);
+                    inTensorData->GetTuple(idx6,(vtkFloatingPointType *)inT6);
+                    inTensorData->GetTuple(idx7,(vtkFloatingPointType *)inT7);
+                    inTensorData->GetTuple(idx8,(vtkFloatingPointType *)inT8);
 
                     // find output location
                     //-TENSOR- vtkTensor *tensor = outTensorData->GetTuple(outTensorIdx);
@@ -1355,7 +1355,7 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
                 } // else
 
                 // copy outT to output
-                outTensorData->SetTuple(outTensorIdx,(float *)outT);
+                outTensorData->SetTuple(outTensorIdx,(vtkFloatingPointType *)outT);
                 // test
                 // outTensorData->SetTuple9(outTensorIdx,
                 //                                     outT[0][0],
@@ -1424,7 +1424,7 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
                             outT[i][j] = 0;
                         }
                     }
-                    outTensorData->SetTuple(outTensorIdx,(float *)outT);
+                    outTensorData->SetTuple(outTensorIdx,(vtkFloatingPointType *)outT);
                 }
                 else {
                     // Compute 'idx', the index into the input volume
@@ -1595,7 +1595,7 @@ void vtkImageReformat::ThreadedExecute(vtkImageData *inData,
                     outData, outExt, wExt, id);
             break;
         case VTK_FLOAT:
-            vtkImageReformatExecute(this, inData, inExt, (float *)(inPtr), 
+            vtkImageReformatExecute(this, inData, inExt, (float*)(inPtr), 
                     outData, outExt, wExt, id);
             break;
         case VTK_LONG:

@@ -114,8 +114,8 @@ void vtkImageLiveWireScale::EnlargeOutputUpdateExtents(vtkDataObject *vtkNotUsed
 }
 
 //----------------------------------------------------------------------------
-float vtkImageLiveWireScale::TransformationFunction(float intensity, float max,
-                          float min) 
+vtkFloatingPointType vtkImageLiveWireScale::TransformationFunction(vtkFloatingPointType intensity, vtkFloatingPointType max,
+                          vtkFloatingPointType min) 
 {
   if (this->UseUpperCutoff)
     {
@@ -142,9 +142,9 @@ float vtkImageLiveWireScale::TransformationFunction(float intensity, float max,
     }
 
   // try to spread the data out in the output range
-  float range = max-min;
-  float x = intensity - min;
-  float x_frac = x/range;
+  vtkFloatingPointType range = max-min;
+  vtkFloatingPointType x = intensity - min;
+  vtkFloatingPointType x_frac = x/range;
 
   switch (this->TransformationFunctionNumber)
     {
@@ -167,15 +167,15 @@ float vtkImageLiveWireScale::TransformationFunction(float intensity, float max,
 
 }
 
-float vtkImageLiveWireScale::TableLookup(float intensity, float max,
-                       float min) 
+vtkFloatingPointType vtkImageLiveWireScale::TableLookup(vtkFloatingPointType intensity, vtkFloatingPointType max,
+                       vtkFloatingPointType min) 
 {
 
   // this assumes the table is already built.
   
   // get number of pix w/ this intensity in histogram
   int bin = (int)intensity - this->MinimumBin;
-  float numpix = LookupTable->GetValue(bin);  
+  vtkFloatingPointType numpix = LookupTable->GetValue(bin);  
   // get max number of pixels in any bin
   int binMax = this->MaxPointsInLookupTableBin;
 
@@ -190,8 +190,8 @@ float vtkImageLiveWireScale::TableLookup(float intensity, float max,
 template <class T>
 static void vtkImageLiveWireScaleBuildLookupTable(vtkImageLiveWireScale *self,
                         vtkImageData *inData, 
-                        T *inPtr, float max,
-                        float min) 
+                        T *inPtr, vtkFloatingPointType max,
+                        vtkFloatingPointType min) 
 {
 
   if (self->GetLookupPoints() == NULL) {
@@ -226,7 +226,7 @@ static void vtkImageLiveWireScaleBuildLookupTable(vtkImageLiveWireScale *self,
   self->SetMinimumBin(minBin);
   self->SetMaximumBin(maxBin);
 
-  float maxPixInBin = 0;
+  vtkFloatingPointType maxPixInBin = 0;
 
   LookupTable->SetNumberOfValues(numBins);
   int i;
@@ -240,7 +240,7 @@ static void vtkImageLiveWireScaleBuildLookupTable(vtkImageLiveWireScale *self,
     {
       // for each point, grab its intensity value and 
       // build a histogram to use as the LUT
-      float * point = LookupPoints->GetPoint(i);
+      vtkFloatingPointType * point = LookupPoints->GetPoint(i);
       // get intensity at that point.
       T *pix = (T*)inData->GetScalarPointer((int)point[0],
                         (int)point[1],
@@ -249,7 +249,7 @@ static void vtkImageLiveWireScaleBuildLookupTable(vtkImageLiveWireScale *self,
       int bin = intensity - minBin;
       
       // get previous bin count
-      float numpix = LookupTable->GetValue(bin);
+      vtkFloatingPointType numpix = LookupTable->GetValue(bin);
 
       // if max pixel count in any bin so far
       if (numpix > maxPixInBin)
@@ -269,7 +269,7 @@ static void vtkImageLiveWireScaleBuildLookupTable(vtkImageLiveWireScale *self,
 
   // now smooth the histogram
   // need to keep track of max pix
-  float maxPixInSmoothedBin = 0;
+  vtkFloatingPointType maxPixInSmoothedBin = 0;
   vtkFloatArray *tempBins = vtkFloatArray::New();
   tempBins->SetNumberOfValues(numBins);
   for (i=0; i<numBins; i++)
@@ -278,11 +278,11 @@ static void vtkImageLiveWireScaleBuildLookupTable(vtkImageLiveWireScale *self,
     }
   
   int offsets[6] = {-3,-2,-1,1,2,3};
-  float fractions[6] = {0.2,0.3,0.5,0.5,0.3,0.2};
+  vtkFloatingPointType fractions[6] = {0.2,0.3,0.5,0.5,0.3,0.2};
   // loop through entire histogram
   for (i = 0; i < numBins; i++) 
     {
-      float numpix = LookupTable->GetValue(i);
+      vtkFloatingPointType numpix = LookupTable->GetValue(i);
 
       for (int j = 0; j < 6; j++)
     {
@@ -291,7 +291,7 @@ static void vtkImageLiveWireScaleBuildLookupTable(vtkImageLiveWireScale *self,
       if (bin >= 0 && bin < numBins)
         {
           // add fraction of central bin to this one
-          float count = tempBins->GetValue(bin);
+          vtkFloatingPointType count = tempBins->GetValue(bin);
           count += numpix*fractions[j];
           tempBins->SetValue(bin,count);
 
@@ -304,7 +304,7 @@ static void vtkImageLiveWireScaleBuildLookupTable(vtkImageLiveWireScale *self,
   // now need to add these "extra fractions" onto the real bins
   for (i=0; i<numBins; i++)
     {
-      float newval = LookupTable->GetValue(i) + tempBins->GetValue(i);
+      vtkFloatingPointType newval = LookupTable->GetValue(i) + tempBins->GetValue(i);
 //        cout << i << ": " << LookupTable->GetValue(i) <<
 //         " tB: " << tempBins->GetValue(i) << endl;;
       LookupTable->SetValue(i,newval);
@@ -330,11 +330,11 @@ static void vtkImageLiveWireScaleBuildLookupTable(vtkImageLiveWireScale *self,
 
 }
 
-float vtkImageLiveWireScale::GaussianLookup(float intensity, float max,
-                      float min) 
+vtkFloatingPointType vtkImageLiveWireScale::GaussianLookup(vtkFloatingPointType intensity, vtkFloatingPointType max,
+                      vtkFloatingPointType min) 
 {
   // "inverted" Gaussian: closer to avg gives lower cost
-  float tmp = intensity - this->MeanForGaussianModel;
+  vtkFloatingPointType tmp = intensity - this->MeanForGaussianModel;
 
   return(this->ScaleFactor*(1 - exp( -(tmp*tmp)/(2*this->VarianceForGaussianModel) ))); 
   
@@ -342,8 +342,8 @@ float vtkImageLiveWireScale::GaussianLookup(float intensity, float max,
 template <class T>
 static void vtkImageLiveWireScaleBuildGaussianModel(vtkImageLiveWireScale *self,
                         vtkImageData *inData, 
-                        T *inPtr, float max,
-                        float min) 
+                        T *inPtr, vtkFloatingPointType max,
+                        vtkFloatingPointType min) 
 {
 
   if (self->GetLookupPoints() == NULL) {
@@ -367,23 +367,23 @@ static void vtkImageLiveWireScaleBuildGaussianModel(vtkImageLiveWireScale *self,
   }
 
   // note: may only want to use some of the points later.
-  float sum = 0;
-  float var = 0;
+  vtkFloatingPointType sum = 0;
+  vtkFloatingPointType var = 0;
   for (int i = 0; i < numberOfPoints; i++) 
     {
       // for each point, grab its intensity value and 
       // find the average
-      float * point = LookupPoints->GetPoint(i);
+      vtkFloatingPointType * point = LookupPoints->GetPoint(i);
       // get intensity at that point.
       T *pix = (T*)inData->GetScalarPointer((int)point[0],
                         (int)point[1],
                         0);
-      float intensity = (float)*pix;
+      vtkFloatingPointType intensity = (vtkFloatingPointType)*pix;
       sum += intensity;
       var += intensity*intensity;
     }
-  float average = sum/numberOfPoints;
-  float variance = var/numberOfPoints - average*average;
+  vtkFloatingPointType average = sum/numberOfPoints;
+  vtkFloatingPointType variance = var/numberOfPoints - average*average;
   self->SetMeanForGaussianModel(average);
   self->SetVarianceForGaussianModel(variance);
   //cout << "built G model" << endl;
@@ -395,7 +395,7 @@ static void vtkImageLiveWireScaleBuildGaussianModel(vtkImageLiveWireScale *self,
 template <class T>
 static void vtkImageLiveWireScaleExecute(vtkImageLiveWireScale *self,
                       vtkImageData *inData, T *inPtr,
-                      vtkImageData *outData, float *outPtr)
+                      vtkImageData *outData, vtkFloatingPointType *outPtr)
 {
   int outExt[6];
   unsigned long count = 0;
@@ -405,7 +405,7 @@ static void vtkImageLiveWireScaleExecute(vtkImageLiveWireScale *self,
   int inInc0, inInc1, inInc2;
   int outInc0, outInc1, outInc2;
   T *inPtr0, *inPtr1, *inPtr2;
-  float *outPtr0, *outPtr1, *outPtr2;
+  vtkFloatingPointType *outPtr0, *outPtr1, *outPtr2;
   int inImageMin0, inImageMin1, inImageMin2;
   int inImageMax0, inImageMax1, inImageMax2;
   clock_t tStart, tEnd, tDiff;
@@ -706,13 +706,13 @@ void vtkImageLiveWireScale::ThreadedExecute(vtkImageData *inData,
   //Execute(vtkImageData *inData,     vtkImageData *outData)
 {
   void *inPtr = inData->GetScalarPointerForExtent(outExt);
-  float *outPtr = (float *)outData->GetScalarPointerForExtent(outExt);
+  vtkFloatingPointType *outPtr = (vtkFloatingPointType *)outData->GetScalarPointerForExtent(outExt);
   //void *inPtr;
-  //float *outPtr;
+  //vtkFloatingPointType *outPtr;
   //inPtr  = inData->GetScalarPointer();
 
   //cout << "type: " << outData->GetScalarType() << endl;
-  //outPtr = (float *)outData->GetScalarPointer();
+  //outPtr = (vtkFloatingPointType *)outData->GetScalarPointer();
 
   switch (inData->GetScalarType())
   {

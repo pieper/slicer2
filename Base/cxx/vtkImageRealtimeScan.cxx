@@ -399,7 +399,7 @@ int vtkImageRealtimeScan::PollRealtime()
 {
     long len, n, nbytes;
     static char buf[200];
-    float matrix[16];
+    vtkFloatingPointType matrix[16];
     int i,j;
     
 #ifndef _WIN32
@@ -449,12 +449,12 @@ int vtkImageRealtimeScan::PollRealtime()
 //----------------------------------------------------------------------------
 void vtkImageRealtimeScan::ExecuteInformation()
 {
-    float spacing[3];
+    vtkFloatingPointType spacing[3];
     short dim[3];
     int i, j, ext[6];
     long n, nbytes;
     static char buf[200];
-    float matrix[16];
+    vtkFloatingPointType matrix[16];
     
     // Request header info
     if (!Test && sockfd >= 0) {

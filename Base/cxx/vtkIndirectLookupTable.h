@@ -64,6 +64,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkUnsignedShortArray.h"
 #include "vtkSlicer.h"
 
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
+
 class VTK_SLICER_BASE_EXPORT vtkIndirectLookupTable : public vtkScalarsToColors
 {
 public:
@@ -79,31 +83,31 @@ public:
   // Description:
   // Set the Window for the lookuptable. Window is the width of the
   // lookuptable ramp.
-  vtkSetClampMacro(Window,float,1.0,65536.0);
-  vtkGetMacro(Window,float);
+  vtkSetClampMacro(Window,vtkFloatingPointType,1.0,65536.0);
+  vtkGetMacro(Window,vtkFloatingPointType);
 
   // Description:
   // Set the Level for the lookuptable. Level is the center of the ramp of
   // the lookuptable.  ramp.
-  vtkSetMacro(Level,float);
-  vtkGetMacro(Level,float);
+  vtkSetMacro(Level,vtkFloatingPointType);
+  vtkGetMacro(Level,vtkFloatingPointType);
 
   // Description:
   // Set/get the threshold
   vtkBooleanMacro(ApplyThreshold, int);
   vtkSetMacro(ApplyThreshold,int);
   vtkGetMacro(ApplyThreshold,int);
-  vtkSetMacro(LowerThreshold,float);
-  vtkGetMacro(LowerThreshold,float);
-  vtkSetMacro(UpperThreshold,float);
-  vtkGetMacro(UpperThreshold,float);
+  vtkSetMacro(LowerThreshold,vtkFloatingPointType);
+  vtkGetMacro(LowerThreshold,vtkFloatingPointType);
+  vtkSetMacro(UpperThreshold,vtkFloatingPointType);
+  vtkGetMacro(UpperThreshold,vtkFloatingPointType);
 
   // Description:
   // Sets/Gets the range of scalars which will be mapped.
-  float *GetRange() {return &this->Range[0];};
-  void SetRange(float min, float max) {
+  vtkFloatingPointType *GetRange() {return &this->Range[0];};
+  void SetRange(vtkFloatingPointType min, vtkFloatingPointType max) {
     this->SetMapRange((long)min, (long)max);};
-  void SetRange(float rng[2]) {
+  void SetRange(vtkFloatingPointType rng[2]) {
     this->SetRange(rng[0],rng[1]);};
   vtkGetMacro(MapOffset,long);
 
@@ -139,22 +143,22 @@ public:
 #if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2)
   // Description:
   // Map one value through the lookup table and return the color as
-  // an RGB array of floats between 0 and 1.
-  float *GetColor(float x) { 
+  // an RGB array of vtkFloatingPointTypes between 0 and 1.
+  vtkFloatingPointType *GetColor(vtkFloatingPointType x) { 
     return vtkScalarsToColors::GetColor(x); }
 #endif
 
-  void GetColor(float x, float rgb[3]);
+  void GetColor(vtkFloatingPointType x, vtkFloatingPointType rgb[3]);
 
 
   // Description:
   // Specifically set a certain input scalar value to map to a
   // certain index into the LookupTable
-  void MapDirect(float scalar, int index);
+  void MapDirect(vtkFloatingPointType scalar, int index);
 
   // Description:
   // Indirectly Map one value through the LookupTable
-  virtual unsigned char *MapValue(float v);
+  virtual unsigned char *MapValue(vtkFloatingPointType v);
 
   // Description:
   // indirectly map a set of scalars through the LookupTable
@@ -172,15 +176,15 @@ protected:
   vtkIndirectLookupTable(const vtkIndirectLookupTable&) {};
   void operator=(const vtkIndirectLookupTable&) {};
 
-  float Range[2];
+  vtkFloatingPointType Range[2];
   long MapRange[2];
   long MapOffset;
   void SetMapRange(long min, long max);
 
-  float Window;
-  float Level;
-  float UpperThreshold;
-  float LowerThreshold;
+  vtkFloatingPointType Window;
+  vtkFloatingPointType Level;
+  vtkFloatingPointType UpperThreshold;
+  vtkFloatingPointType LowerThreshold;
   int ApplyThreshold;
 
   short inHiPrev;

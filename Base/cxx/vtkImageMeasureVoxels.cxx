@@ -87,7 +87,7 @@ static void vtkImageMeasureVoxelsExecute(vtkImageMeasureVoxels *self,
   int label;
   unsigned long count = 0;
   unsigned long target;
-  float origin[3], dimension[3];
+  vtkFloatingPointType origin[3], dimension[3];
   double  voxelVolume, volume;
   ofstream file;
   char *filename;

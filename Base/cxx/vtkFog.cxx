@@ -99,7 +99,12 @@ void vtkFog::Render(vtkRenderer *ren)
       //  fprintf(stderr,"glEnable(GL_FOG)");
       glEnable(GL_FOG);
       glFogi(  GL_FOG_MODE,  GL_LINEAR);
-      glFogfv( GL_FOG_COLOR, (ren->GetBackground()));
+      float bg[3];
+      for (int i = 0; i < 3; i++)
+        {
+        bg[i] = ren->GetBackground()[i];
+        }
+      glFogfv( GL_FOG_COLOR, bg);
                //      glFogf(  GL_FOG_DENSITY, _density);
       glHint(  GL_FOG_HINT,    GL_DONT_CARE);
       glFogf(  GL_FOG_START,   FogStart);

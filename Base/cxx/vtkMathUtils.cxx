@@ -53,9 +53,9 @@ int vtkMathUtils::PrincipalMomentsAndAxes( vtkPoints *Points,
                                            vtkDataArray *Vectors)
   {
   int numPts, id, ii, jj, status;
-  float *covar[3], cov0[3], cov1[3], cov2[3], tmp,
+  vtkFloatingPointType *covar[3], cov0[3], cov1[3], cov2[3], tmp,
         mean[3], *p, pw[3], weight, totalWeight;
-  float *eigenVecs[3], eV0[3], eV1[3], eV2[3], eigenVals[3];
+  vtkFloatingPointType *eigenVecs[3], eV0[3], eV1[3], eV2[3], eigenVals[3];
 
   mean[0] = mean[1] = mean[2] = 0.0;
   weight = 1.0;
@@ -139,14 +139,14 @@ int vtkMathUtils::AlignPoints( vtkPoints *Data, vtkPoints *Ref,
                            vtkMatrix4x4 *Xform )
   {
   int nPts, ii, jj, status;
-  float *p, *p1;
-  float cmData[3] = { 0.0, 0.0, 0.0 },
+  vtkFloatingPointType *p, *p1;
+  vtkFloatingPointType cmData[3] = { 0.0, 0.0, 0.0 },
          cmRef[3] = { 0.0, 0.0, 0.0 },
          H[3][3] = { 0.0, 0.0, 0.0,
                      0.0, 0.0, 0.0,
                      0.0, 0.0, 0.0 };
-  float (*q1)[3], (*q)[3];
-  float sing[3], U[3][3], V[3][3], translate[3];
+  vtkFloatingPointType (*q1)[3], (*q)[3];
+  vtkFloatingPointType sing[3], U[3][3], V[3][3], translate[3];
   vtkTransform *tmpXform = vtkTransform::New();
 
   nPts = Data->GetNumberOfPoints();
@@ -156,8 +156,8 @@ int vtkMathUtils::AlignPoints( vtkPoints *Data, vtkPoints *Ref,
     return( -1 );
     }
 
-  q = new float [nPts][3];
-  q1 = new float [nPts][3];
+  q = new vtkFloatingPointType [nPts][3];
+  q1 = new vtkFloatingPointType [nPts][3];
   for ( ii=0; ii<nPts; ii++ )
     {
     p = Data->GetPoint( ii );
@@ -219,17 +219,17 @@ int vtkMathUtils::AlignPoints( vtkPoints *Data, vtkPoints *Ref,
 
 #ifdef VTK_LINK_TO_EXTERNAL_SVD
 extern "C" { // SVD from Numerical Recipes in C
-void svdcmp( float **a, int m, int n, float w[], float **v );
+void svdcmp( vtkFloatingPointType **a, int m, int n, vtkFloatingPointType w[], vtkFloatingPointType **v );
 }
 #endif
 
 // 
 // Singular value decomposition: A = U*diag(W)*Vt
 //
-void vtkMathUtils::SVD3x3( float A[][3], float U[][3], float W[], float V[][3] )
+void vtkMathUtils::SVD3x3( vtkFloatingPointType A[][3], vtkFloatingPointType U[][3], vtkFloatingPointType W[], vtkFloatingPointType V[][3] )
   {
   int ii, jj;
-  float *U1[3], *V1[3], *W1;
+  vtkFloatingPointType *U1[3], *V1[3], *W1;
 
   // Convert the input into format compatible with foolish 1-based arrays
   // used in Numerical Recipes in C. (sneaky pointer arithmetic)
@@ -253,7 +253,7 @@ void vtkMathUtils::SVD3x3( float A[][3], float U[][3], float W[], float V[][3] )
 #endif
   }
 
-void vtkMathUtils::Outer3(float x[3], float y[3], float A[3][3])
+void vtkMathUtils::Outer3(vtkFloatingPointType x[3], vtkFloatingPointType y[3], vtkFloatingPointType A[3][3])
 {
   for (int i=0; i < 3; i++)
     {
@@ -264,7 +264,7 @@ void vtkMathUtils::Outer3(float x[3], float y[3], float A[3][3])
     }
 }
 
-void vtkMathUtils::Outer2(float x[2], float y[2], float A[2][2])
+void vtkMathUtils::Outer2(vtkFloatingPointType x[2], vtkFloatingPointType y[2], vtkFloatingPointType A[2][2])
 {
   for (int i=0; i < 2; i++)
     {

@@ -56,10 +56,10 @@ ObjectList::~ObjectList() {
 } 
 
 //------------------------------------------------------------------------------
-int ObjectList::AddObject(int pos[4], float col[3],int type, int thick) {
+int ObjectList::AddObject(int pos[4], vtkFloatingPointType col[3],int type, int thick) {
   // First entry
   if (this->ID == -1) {
-    memcpy(this->Color,col,sizeof(float)*3);
+    memcpy(this->Color,col,sizeof(vtkFloatingPointType)*3);
     this->ID             = 0;
     this->Type           = type;
     this->Thickness      = thick;
@@ -72,7 +72,7 @@ int ObjectList::AddObject(int pos[4], float col[3],int type, int thick) {
   ListPtr->Next = new ObjectList;
   ListPtr->Next->ID = ListPtr->ID + 1;
   ListPtr = ListPtr->Next;
-  memcpy(ListPtr->Color,col,sizeof(float)*3);
+  memcpy(ListPtr->Color,col,sizeof(vtkFloatingPointType)*3);
   memcpy(ListPtr->Position,pos,sizeof(int)*4);
   ListPtr->Type      = type;  
   ListPtr->Thickness = thick;
@@ -94,13 +94,13 @@ int ObjectList::DeleteObject(int delID) {
     if (ListPtr->Next == NULL) {
       // No more entries
       ListPtr->ID = -1;     
-      memset(ListPtr->Color,0,sizeof(float)*3);
+      memset(ListPtr->Color,0,sizeof(vtkFloatingPointType)*3);
       memset(ListPtr->Position,0,sizeof(int)*4);
       ListPtr->Type = 0;  
     } else {
       // Copy the second entry on the first position
       ListPtr->ID                     =  ListPtr->Next->ID;
-      memcpy(ListPtr->Color,ListPtr->Next->Color,sizeof(float)*3);
+      memcpy(ListPtr->Color,ListPtr->Next->Color,sizeof(vtkFloatingPointType)*3);
       memcpy(ListPtr->Position,ListPtr->Next->Position,sizeof(int)*4);
       ListPtr->Type                   =  ListPtr->Next->Type;  
       PrevListPtr   =  ListPtr->Next;
@@ -142,8 +142,8 @@ vtkImageDrawObjects* vtkImageDrawObjects::New()
 }
 
 //-----------------------------------------------------------------------------
-int vtkImageDrawObjects::AddObject(int Xpos0, int Ypos0,int Xpos1, int Ypos1, float color0, float color1,float color2,int type, int radius){
-  float color[3];
+int vtkImageDrawObjects::AddObject(int Xpos0, int Ypos0,int Xpos1, int Ypos1, vtkFloatingPointType color0, vtkFloatingPointType color1,vtkFloatingPointType color2,int type, int radius){
+  vtkFloatingPointType color[3];
   int pos[4];
   this->Modified();  
   color[0] = color0; color[1] = color1; color[2] = color2;
@@ -160,14 +160,14 @@ int vtkImageDrawObjects::DeleteObject(int id) {
 }
 
 //-----------------------------------------------------------------------------
-void vtkImageDrawObjects::SetObjectColor(int id, float color0, float color1, float color2) {
-  float color[3];
+void vtkImageDrawObjects::SetObjectColor(int id, vtkFloatingPointType color0, vtkFloatingPointType color1, vtkFloatingPointType color2) {
+  vtkFloatingPointType color[3];
   ObjectList *result = this->List.GetObject(id);
   if (result == NULL) {
     vtkErrorMacro("SetObjectColor: Object could not be updated, bc it is not part of ObjectList!");
     return;
   }
-  memcpy(color,result->GetColor(),3*sizeof(float)); 
+  memcpy(color,result->GetColor(),3*sizeof(vtkFloatingPointType)); 
   if ((color[0] != color0) || (color[1] != color1) || (color[2] != color2)) {
     color[0] = color0; color[1] = color1; color[2] = color2;
     result->SetColor(color);
@@ -176,7 +176,7 @@ void vtkImageDrawObjects::SetObjectColor(int id, float color0, float color1, flo
 }
 
 //-----------------------------------------------------------------------------
-float* vtkImageDrawObjects::GetObjectColor(int id) {
+vtkFloatingPointType* vtkImageDrawObjects::GetObjectColor(int id) {
   ObjectList *result = this->List.GetObject(id);
   if (result == NULL) {
     vtkErrorMacro("GetObjectColor: Object could not retrieve color, bc it is not part of ObjetcList!");

@@ -91,10 +91,10 @@ static void vtkImageBimodalAnalysisExecute(vtkImageBimodalAnalysis *self,
   int noise = 1, width = 5;
   float fwidth = 1.0 / 5.0;
   T tmp, minSignal, maxSignal;
-  float sum, wsum;
+  vtkFloatingPointType sum, wsum;
   int ct = (self->GetModality() == VTK_BIMODAL_MODALITY_CT) ? 1 : 0;
   int centroid, noiseCentroid, trough, window, threshold, min, max;
-  float origin[3], spacing[3];
+  vtkFloatingPointType origin[3], spacing[3];
  
   // Process x dimension only
   outData->GetExtent(min0, max0, min1, max1, min2, max2);
@@ -175,8 +175,8 @@ static void vtkImageBimodalAnalysisExecute(vtkImageBimodalAnalysis *self,
   for (x=min; x <= trough; x++)
   {
     tmp = inPtr[x];
-    wsum += (float)x*tmp;
-    sum  += (float)  tmp;
+    wsum += (vtkFloatingPointType)x*tmp;
+    sum  += (vtkFloatingPointType)  tmp;
   }
   if (sum)
   {
@@ -202,8 +202,8 @@ static void vtkImageBimodalAnalysisExecute(vtkImageBimodalAnalysis *self,
     {
       minSignal = tmp;
     }
-    wsum += (float)x*tmp;
-    sum  += (float)  tmp;
+    wsum += (vtkFloatingPointType)x*tmp;
+    sum  += (vtkFloatingPointType)  tmp;
   }
   if (sum)
   {

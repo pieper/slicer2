@@ -52,6 +52,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkTensor.h"
 #include "vtkSlicer.h"
 
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
+
 class VTK_SLICER_BASE_EXPORT vtkImageReformat : public vtkImageToImageFilter
 {
   public:
@@ -76,36 +80,36 @@ class VTK_SLICER_BASE_EXPORT vtkImageReformat : public vtkImageToImageFilter
     vtkSetMacro(Resolution, int);
     
     //Description: plane in world space
-    vtkGetMacro(FieldOfView, float);
-    vtkSetMacro(FieldOfView, float);
+    vtkGetMacro(FieldOfView, vtkFloatingPointType);
+    vtkSetMacro(FieldOfView, vtkFloatingPointType);
     
     void SetPoint(int x, int y);
-    vtkGetVector3Macro(WldPoint, float);
-    vtkGetVector3Macro(IjkPoint, float);
+    vtkGetVector3Macro(WldPoint, vtkFloatingPointType);
+    vtkGetVector3Macro(IjkPoint, vtkFloatingPointType);
 
-    float YStep[3];
-    float XStep[3];
-    float Origin[3];
+    vtkFloatingPointType YStep[3];
+    vtkFloatingPointType XStep[3];
+    vtkFloatingPointType Origin[3];
   
   // >> AT 11/07/01
 
   // Description
   // XY vector from center of image to center of panned image
   // comes from GUI (MainInteractorPan)
-  vtkGetVector2Macro(OriginShift, float);
-  vtkSetVector2Macro(OriginShift, float);
+  vtkGetVector2Macro(OriginShift, vtkFloatingPointType);
+  vtkSetVector2Macro(OriginShift, vtkFloatingPointType);
 
   // Description
   // Zoom factor coming from GUI (MainInteractorZoom)
-  vtkGetMacro(Zoom, float);
-  vtkSetMacro(Zoom, float);
+  vtkGetMacro(Zoom, vtkFloatingPointType);
+  vtkSetMacro(Zoom, vtkFloatingPointType);
 
   // Description
   // Pixel size of the reformatted image in mm
-  vtkGetMacro(PanScale, float);
+  vtkGetMacro(PanScale, vtkFloatingPointType);
   // Description
   // For internal class use only
-  vtkSetMacro(PanScale, float);
+  vtkSetMacro(PanScale, vtkFloatingPointType);
 
   // Description
   vtkGetObjectMacro(OriginShiftMtx, vtkMatrix4x4);
@@ -127,17 +131,17 @@ protected:
     void operator=(const vtkImageReformat&) {};
 
   // >> AT 11/07/01
-  float OriginShift[2];
-  float Zoom;
-  float PanScale;
+  vtkFloatingPointType OriginShift[2];
+  vtkFloatingPointType Zoom;
+  vtkFloatingPointType PanScale;
   vtkMatrix4x4 *OriginShiftMtx;
   // << AT 11/07/01
 
     int RunTime;
-    float IjkPoint[3];
-    float WldPoint[3];
+    vtkFloatingPointType IjkPoint[3];
+    vtkFloatingPointType WldPoint[3];
     int Resolution;
-    float FieldOfView;
+    vtkFloatingPointType FieldOfView;
     int Interpolate;
     vtkMatrix4x4* ReformatMatrix;
     vtkMatrix4x4* WldToIjkMatrix;

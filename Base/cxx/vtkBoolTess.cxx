@@ -79,9 +79,9 @@ void vtkBoolTess::Reset()
   this->NumContours = this->NumInputEdges = 0;
   }
 
-void vtkBoolTess::SetPoints( float *points )
+void vtkBoolTess::SetPoints( vtkFloatingPointType *points )
   {
-  this->Points = (float (*)[3])points;
+  this->Points = (vtkFloatingPointType (*)[3])points;
   }
 
 int vtkBoolTess::AddContour( vtkIdType nPts, vtkIdType *ptIds )
@@ -104,8 +104,8 @@ int vtkBoolTess::Triangulate( vtkIdType **tris )
   int edgeIndex, prevIndex;
   double bbox[2][3], normal[3];
   int ptId0, ptId1;
-  float *thisPnt;
-  float (*points)[3] = this->Points;
+  vtkFloatingPointType *thisPnt;
+  vtkFloatingPointType (*points)[3] = this->Points;
   extern vtkBoolTess *tess;
 
   nContours = this->NumContours;

@@ -43,6 +43,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkCellTriMacro.h"
 #include "vtkSlicer.h"
 
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
+
 class VTK_SLICER_BASE_EXPORT vtkSurfaceProps : public vtkProcessObject
 {
   public:
@@ -54,21 +58,21 @@ class VTK_SLICER_BASE_EXPORT vtkSurfaceProps : public vtkProcessObject
   void SetInput(vtkPolyData *input);
   vtkPolyData *GetInput();
   
-  vtkGetMacro(SurfaceArea,float);
-  vtkGetMacro(MinCellArea,float);
-  vtkGetMacro(MaxCellArea,float);
-  vtkGetMacro(Volume,float);
-  vtkGetMacro(VolumeError,float);
-  vtkGetMacro(Test,float);
+  vtkGetMacro(SurfaceArea,vtkFloatingPointType);
+  vtkGetMacro(MinCellArea,vtkFloatingPointType);
+  vtkGetMacro(MaxCellArea,vtkFloatingPointType);
+  vtkGetMacro(Volume,vtkFloatingPointType);
+  vtkGetMacro(VolumeError,vtkFloatingPointType);
+  vtkGetMacro(Test,vtkFloatingPointType);
 
 protected:
   void Execute();
-  float SurfaceArea;
-  float MinCellArea;
-  float MaxCellArea;
-  float Volume;
-  float VolumeError;
-  float Test;
+  vtkFloatingPointType SurfaceArea;
+  vtkFloatingPointType MinCellArea;
+  vtkFloatingPointType MaxCellArea;
+  vtkFloatingPointType Volume;
+  vtkFloatingPointType VolumeError;
+  vtkFloatingPointType Test;
 };
 
 #endif

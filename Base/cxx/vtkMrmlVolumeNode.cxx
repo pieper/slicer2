@@ -99,7 +99,7 @@ vtkMrmlVolumeNode::vtkMrmlVolumeNode()
   // Arrays
   memset(this->ImageRange,0,2*sizeof(int));
   memset(this->Dimensions,0,2*sizeof(int));
-  memset(this->Spacing,0,3*sizeof(float));
+  memset(this->Spacing,0,3*sizeof(vtkFloatingPointType));
 
   // ScanOrder can never be NULL
   this->ScanOrder = new char[3];
@@ -273,15 +273,8 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
       sprintf(CheckVolumeFile,this->FilePattern,this->FullPrefix,this->ImageRange[0]);
       vtkDebugMacro(<< "vtkMrmlVolumeNode: checking for existence of first volume file:\n " << CheckVolumeFile << "\n\tfile prefix = " << this->FilePrefix << "\n\tfull prefix = " << this->FullPrefix << endl);
       
-      if ( CheckVolumeFile == "" || !strcmp (CheckVolumeFile, "r") ) 
-      {
-          cerr << "No filename information for " << this->Name << endl;
-          return;
-      }
-
       FILE *file = fopen(CheckVolumeFile,"r"); 
-      if ( file == NULL) 
-      {
+      if ( file == NULL) {
           cerr << "Could not open \"" << CheckVolumeFile << "\"! "<< endl;
           cerr << "Volume node will not be saved. Might not have read access to the file !" << endl;
           return;
@@ -745,7 +738,7 @@ void vtkMrmlVolumeNode::PrintSelf(ostream& os, vtkIndent indent)
 void vtkMrmlVolumeNode::ComputeRasToIjkFromScanOrder(char *order)
 {
   int nx, ny, nz;
-  float crn[4][4],*ftl,*ftr,*fbr,*ltl,ctr[3];
+  vtkFloatingPointType crn[4][4],*ftl,*ftr,*fbr,*ltl,ctr[3];
   int i,j;
 
   // All we do here is figure out the corners and call 
@@ -778,9 +771,9 @@ void vtkMrmlVolumeNode::ComputeRasToIjkFromScanOrder(char *order)
   }
 
   // Spacing
-  ftr[0]=fbr[0]=((float)nx)*this->Spacing[0];
-  fbr[1]=((float)ny)*this->Spacing[1];
-  ltl[2]=((float)(nz-1))*this->Spacing[2];  // tricky, it's not (nz-0)
+  ftr[0]=fbr[0]=((vtkFloatingPointType)nx)*this->Spacing[0];
+  fbr[1]=((vtkFloatingPointType)ny)*this->Spacing[1];
+  ltl[2]=((vtkFloatingPointType)(nz-1))*this->Spacing[2];  // tricky, it's not (nz-0)
 
   // Gantry tilt shifts the y coordinate of ltl
   ltl[1]=-ltl[2]*tan(this->Tilt * 3.1415927410125732421875f / 180.0f);
@@ -870,8 +863,8 @@ void vtkMrmlVolumeNode::ComputeRasToIjkFromScanOrder(char *order)
 
 //----------------------------------------------------------------------------
 int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
-  float *fc, float *ftl, float *ftr, float *fbr,
-  float *lc, float *ltl)
+  vtkFloatingPointType *fc, vtkFloatingPointType *ftl, vtkFloatingPointType *ftr, vtkFloatingPointType *fbr,
+  vtkFloatingPointType *lc, vtkFloatingPointType *ltl)
 {
   // Note: fc and lc are not used.
 
@@ -881,7 +874,7 @@ int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
   // Ijk, which has in its columns the IJK coordinates of those same four
   // corners.  We then solve for RasToIjk in the equation RasToIjk*Ras=Ijk.
 
-  float ScanDir[3],XDir[3],YDir[3],Corners[3][4],tmp,offset;
+  vtkFloatingPointType ScanDir[3],XDir[3],YDir[3],Corners[3][4],tmp,offset;
   int i,j,nx,ny,nz;
   vtkMatrix4x4 *Ijk_ = vtkMatrix4x4::New();
   vtkMatrix4x4 *Vtk_; // Just a pointer, no Delete() required.
@@ -1004,19 +997,19 @@ int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
   Ijk_->SetElement(2,0,0.5-offset);  // Not 0.0
   Ijk_->SetElement(3,0,1.0);  
   // ftr in Ijk coordinates
-  Ijk_->SetElement(0,1,(float)nx-offset);  
+  Ijk_->SetElement(0,1,(vtkFloatingPointType)nx-offset);  
   Ijk_->SetElement(1,1,0.0-offset);  
   Ijk_->SetElement(2,1,0.5-offset);  // Not 0.0
   Ijk_->SetElement(3,1,1.0);  
   // fbr in Ijk coordinates
-  Ijk_->SetElement(0,2,(float)nx-offset);  
-  Ijk_->SetElement(1,2,(float)ny-offset);  
+  Ijk_->SetElement(0,2,(vtkFloatingPointType)nx-offset);  
+  Ijk_->SetElement(1,2,(vtkFloatingPointType)ny-offset);  
   Ijk_->SetElement(2,2,0.5-offset);  // Not 0.0
   Ijk_->SetElement(3,2,1.0);  
   // ltl in Ijk coordinates
   Ijk_->SetElement(0,3,0.0-offset);  
   Ijk_->SetElement(1,3,0.0-offset);  
-  Ijk_->SetElement(2,3,(float)(nz-1)+0.5-offset); // Not nz-1
+  Ijk_->SetElement(2,3,(vtkFloatingPointType)(nz-1)+0.5-offset); // Not nz-1
   Ijk_->SetElement(3,3,1.0);  
 
   // Pack Ras matrix with "Corner Points"
@@ -1034,10 +1027,10 @@ int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
   // Vtk coordinates differ from Ijk in the direction
   // of the j axis, i.e. Vtk=(i,ny-1-j,k)
   Vtk_=Ijk_;  // Vtk was not created with New()
-  Vtk_->SetElement(1,0,(float)ny-offset);  // ftl
-  Vtk_->SetElement(1,1,(float)ny-offset);  // ftr
+  Vtk_->SetElement(1,0,(vtkFloatingPointType)ny-offset);  // ftl
+  Vtk_->SetElement(1,1,(vtkFloatingPointType)ny-offset);  // ftr
   Vtk_->SetElement(1,2,0.0-offset);        // fbr
-  Vtk_->SetElement(1,3,(float)ny-offset);  // ltl
+  Vtk_->SetElement(1,3,(vtkFloatingPointType)ny-offset);  // ltl
   
   // Solve RasToVtk*Ras=Vtk for RasToVtk.
   SolveABeqCforA(RasToVtk_,Ras_,Vtk_);  

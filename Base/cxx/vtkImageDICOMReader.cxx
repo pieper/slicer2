@@ -489,9 +489,9 @@ void vtkImageDICOMReader::ExecuteInformation()
 {
   vtkImageData *output = this->GetOutput();
   unsigned long mem;
-  float spacing[3];
+  vtkFloatingPointType spacing[3];
   int extent[6];
-  float origin[3];
+  vtkFloatingPointType origin[3];
 
     
   // set the extent, if the VOI has not been set then default to
@@ -1011,16 +1011,16 @@ void vtkImageDICOMReader::SetDataScalarType(int type)
 }
 
 
-void vtkImageDICOMReader::ComputeTransformedSpacing (float Spacing[3])
+void vtkImageDICOMReader::ComputeTransformedSpacing (vtkFloatingPointType Spacing[3])
 {
   if (!this->Transform)
     {
-    memcpy (Spacing, this->DataSpacing, 3 * sizeof (float));
+    memcpy (Spacing, this->DataSpacing, 3 * sizeof (vtkFloatingPointType));
     }
   else
     {
-    float transformedSpacing[4];
-    memcpy (transformedSpacing, this->DataSpacing, 3 * sizeof (float));
+    vtkFloatingPointType transformedSpacing[4];
+    memcpy (transformedSpacing, this->DataSpacing, 3 * sizeof (vtkFloatingPointType));
     // this is zero to prevent translations !!!
     transformedSpacing[3] = 0.0;
     this->Transform->MultiplyPoint (transformedSpacing, transformedSpacing);
@@ -1036,24 +1036,24 @@ void vtkImageDICOMReader::ComputeTransformedSpacing (float Spacing[3])
 // if the spacing is negative we need to tranlate the origin
 // basically O' = O + spacing*(dim-1) for any axis that would
 // have a negative spaing
-void vtkImageDICOMReader::ComputeTransformedOrigin (float origin[3])
+void vtkImageDICOMReader::ComputeTransformedOrigin (vtkFloatingPointType origin[3])
 {
   if (!this->Transform)
     {
-    memcpy (origin, this->DataOrigin, 3 * sizeof (float));
+    memcpy (origin, this->DataOrigin, 3 * sizeof (vtkFloatingPointType));
     }
   else
     {
-    float transformedOrigin[4];
-    float transformedSpacing[4];
+    vtkFloatingPointType transformedOrigin[4];
+    vtkFloatingPointType transformedSpacing[4];
     int transformedExtent[6];
     
-    memcpy (transformedSpacing, this->DataSpacing, 3 * sizeof (float));
+    memcpy (transformedSpacing, this->DataSpacing, 3 * sizeof (vtkFloatingPointType));
     // this is zero to prevent translations !!!
     transformedSpacing[3] = 0.0;
     this->Transform->MultiplyPoint (transformedSpacing, transformedSpacing);
 
-    memcpy (transformedOrigin, this->DataOrigin, 3 * sizeof (float));
+    memcpy (transformedOrigin, this->DataOrigin, 3 * sizeof (vtkFloatingPointType));
     transformedOrigin[3] = 1.0;
     this->Transform->MultiplyPoint (transformedOrigin, transformedOrigin);
 
@@ -1078,7 +1078,7 @@ void vtkImageDICOMReader::ComputeTransformedOrigin (float origin[3])
 void vtkImageDICOMReader::ComputeTransformedExtent(int inExtent[6],
                           int outExtent[6])
 {
-  float transformedExtent[4];
+  vtkFloatingPointType transformedExtent[4];
   int temp;
   int idx;
   int dataExtent[6];
@@ -1162,7 +1162,7 @@ void vtkImageDICOMReader::ComputeTransformedExtent(int inExtent[6],
 void vtkImageDICOMReader::ComputeInverseTransformedExtent(int inExtent[6],
                              int outExtent[6])
 {
-  float transformedExtent[4];
+  vtkFloatingPointType transformedExtent[4];
   int temp;
   int idx;
   
@@ -1260,7 +1260,7 @@ void vtkImageDICOMReader::ComputeInverseTransformedExtent(int inExtent[6],
 void vtkImageDICOMReader::ComputeTransformedIncrements(int inIncr[3],
                           int outIncr[3])
 {
-  float transformedIncr[4];
+  vtkFloatingPointType transformedIncr[4];
   
   if (!this->Transform)
     {
@@ -1286,7 +1286,7 @@ void vtkImageDICOMReader::ComputeTransformedIncrements(int inIncr[3],
 void vtkImageDICOMReader::ComputeInverseTransformedIncrements(int inIncr[3],
                              int outIncr[3])
 {
-  float transformedIncr[4];
+  vtkFloatingPointType transformedIncr[4];
   
   if (!this->Transform)
     {

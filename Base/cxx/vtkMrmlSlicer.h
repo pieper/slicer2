@@ -76,6 +76,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkSlicer.h"
 #define NUM_SLICES 3
 
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
+
 // Orient
 
 #define MRML_SLICER_ORIENT_AXIAL        0
@@ -148,23 +152,23 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
 
   // Description:
   // Zoom factor
-  void SetZoom(int s, float mag);
-  void SetZoom(float mag);
-  float GetZoom(int s) {return this->Zoom[s]->GetMagnification();};
+  void SetZoom(int s, vtkFloatingPointType mag);
+  void SetZoom(vtkFloatingPointType mag);
+  vtkFloatingPointType GetZoom(int s) {return this->Zoom[s]->GetMagnification();};
   // >> AT 11/07/01
-  void SetZoomNew(int s, float mag);
-  void SetZoomNew(float mag);
-  float GetZoomNew(int s) {return this->BackReformat[s]->GetZoom();}
-  void SetOriginShift(int s, float sx, float sy);
+  void SetZoomNew(int s, vtkFloatingPointType mag);
+  void SetZoomNew(vtkFloatingPointType mag);
+  vtkFloatingPointType GetZoomNew(int s) {return this->BackReformat[s]->GetZoom();}
+  void SetOriginShift(int s, vtkFloatingPointType sx, vtkFloatingPointType sy);
   // << AT 11/07/11
 
   // Description:
   // Zoom center
-  void SetZoomCenter(int s, float x, float y);
+  void SetZoomCenter(int s, vtkFloatingPointType x, vtkFloatingPointType y);
   void GetZoomCenter();
-  vtkGetVector2Macro(ZoomCenter0, float);
-  vtkGetVector2Macro(ZoomCenter1, float);
-  vtkGetVector2Macro(ZoomCenter2, float);
+  vtkGetVector2Macro(ZoomCenter0, vtkFloatingPointType);
+  vtkGetVector2Macro(ZoomCenter1, vtkFloatingPointType);
+  vtkGetVector2Macro(ZoomCenter2, vtkFloatingPointType);
 
   // Description:
   // Zoom auto center
@@ -254,7 +258,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   // The cursor is the crosshair that moves with the mouse over the slices
   void SetShowCursor(int vis);
   void SetNumHashes(int hashes);
-  void SetCursorColor(float red, float green, float blue);
+  void SetCursorColor(vtkFloatingPointType red, vtkFloatingPointType green, vtkFloatingPointType blue);
   void SetCursorPosition(int s, int x, int y) {
     this->Cursor[s]->SetCursor(x, y);};
     // turn on or off the cross hair intersection - if off there's a gap
@@ -266,17 +270,17 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
 
   // Description:
   // Field of view for slices.  Also used for reformatting...
-  vtkGetMacro(FieldOfView, float);
-  void SetFieldOfView(float x);
+  vtkGetMacro(FieldOfView, vtkFloatingPointType);
+  void SetFieldOfView(vtkFloatingPointType x);
 
   // Cursor Annotation
-  float GetForePixel(int s, int x, int y);
-  float GetBackPixel(int s, int x, int y);
+  vtkFloatingPointType GetForePixel(int s, int x, int y);
+  vtkFloatingPointType GetBackPixel(int s, int x, int y);
 
   // Description:
   // Sets the opacity used to overlay this layer on the others
-  void SetForeOpacity(float opacity);
-  vtkGetMacro(ForeOpacity, float);
+  void SetForeOpacity(vtkFloatingPointType opacity);
+  vtkGetMacro(ForeOpacity, vtkFloatingPointType);
 
   // Description:
   // Sets whether to fade out the background even when the 
@@ -331,22 +335,22 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
 
   // Description:
   // Slice Offset
-  float GetOffsetRangeLow(int s) {
+  vtkFloatingPointType GetOffsetRangeLow(int s) {
     return this->OffsetRange[s][this->Orient[s]][0];};
-  float GetOffsetRangeHigh(int s) {
+  vtkFloatingPointType GetOffsetRangeHigh(int s) {
     return this->OffsetRange[s][this->Orient[s]][1];};
-  void SetOffset(int s, float offset);
-  void InitOffset(int s, char *str, float offset);
-  float GetOffset(int s) {return this->Offset[s][this->Orient[s]];};
-  float GetOffset(int s, char *str) {return 
+  void SetOffset(int s, vtkFloatingPointType offset);
+  void InitOffset(int s, char *str, vtkFloatingPointType offset);
+  vtkFloatingPointType GetOffset(int s) {return this->Offset[s][this->Orient[s]];};
+  vtkFloatingPointType GetOffset(int s, char *str) {return 
       this->Offset[s][ConvertStringToOrient(str)];};
 
   // Description:
   // Matrix
   vtkMatrix4x4 *GetReformatMatrix(int s) {return this->ReformatMatrix[s];};
   void ComputeNTPFromCamera(vtkCamera *camera);
-  void SetDirectNTP(float nx, float ny, float nz,
-    float tx, float ty, float tz, float px, float py, float pz);
+  void SetDirectNTP(vtkFloatingPointType nx, vtkFloatingPointType ny, vtkFloatingPointType nz,
+    vtkFloatingPointType tx, vtkFloatingPointType ty, vtkFloatingPointType tz, vtkFloatingPointType px, vtkFloatingPointType py, vtkFloatingPointType pz);
   void SetDriver(int s, int d) {this->Driver[s] = d; this->Modified();};
   int GetDriver(int s) {return this->Driver[s];};
   double *GetP(int s);
@@ -355,15 +359,15 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   vtkGetVector3Macro(DirP, double);
   vtkGetVector3Macro(CamP, double);
   // user defined matrix
-  void SetNewOrientNTP(int s, float nx, float ny, float nz,
-    float tx, float ty, float tz, float px, float py, float pz);
+  void SetNewOrientNTP(int s, vtkFloatingPointType nx, vtkFloatingPointType ny, vtkFloatingPointType nz,
+    vtkFloatingPointType tx, vtkFloatingPointType ty, vtkFloatingPointType tz, vtkFloatingPointType px, vtkFloatingPointType py, vtkFloatingPointType pz);
   // reformat matrix
-  void SetReformatNTP(char *orientation, float nx, float ny, float nz, float tx, float ty, float tz, float px, float py, float pz);
+  void SetReformatNTP(char *orientation, vtkFloatingPointType nx, vtkFloatingPointType ny, vtkFloatingPointType nz, vtkFloatingPointType tx, vtkFloatingPointType ty, vtkFloatingPointType tz, vtkFloatingPointType px, vtkFloatingPointType py, vtkFloatingPointType pz);
 
   // Points
   void SetReformatPoint(int s, int x, int y);
-  vtkGetVectorMacro(WldPoint, float, 3);
-  vtkGetVectorMacro(IjkPoint, float, 3);
+  vtkGetVectorMacro(WldPoint, vtkFloatingPointType, 3);
+  vtkGetVectorMacro(IjkPoint, vtkFloatingPointType, 3);
   void SetScreenPoint(int s, int x, int y);
   vtkGetVectorMacro(ReformatPoint, int, 2);
   vtkGetVectorMacro(Seed, int, 3);
@@ -451,7 +455,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   // Mainly Drawing is interaction with the vtkImageDrawROI object
   // PolyDraw.
   //
-  void DrawSetColor(float r, float g, float b) {
+  void DrawSetColor(vtkFloatingPointType r, vtkFloatingPointType g, vtkFloatingPointType b) {
       this->PolyDraw->SetPointColor(r, g, b);
       this->PolyDraw->SetLineColor(r, g, b);};
   void DrawSelectAll() {
@@ -495,7 +499,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   void DrawSetShapeToPoints() {this->PolyDraw->SetShapeToPoints();};
   char* GetShapeString() {return this->PolyDraw->GetShapeString();};
   //>> AT 01/17/01 01/19/01 02/19/01
-  void DrawSetSelectedPointColor(float r, float g, float b)
+  void DrawSetSelectedPointColor(vtkFloatingPointType r, vtkFloatingPointType g, vtkFloatingPointType b)
     {
       this->PolyDraw->SetSelectedPointColor(r, g, b);
     }
@@ -503,9 +507,20 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   void DrawSetShapeToBoxes() { this->PolyDraw->SetShapeToBoxes(); }
   void DrawSelectPoint(int x, int y) { this->PolyDraw->SelectPoint(x, y); }
   void DrawDeselectPoint(int x, int y) { this->PolyDraw->DeselectPoint(x, y); }
-  //void DrawSetStartMethod(void (*f)(void *)) { this->PolyDraw->SetStartMethod(f, NULL); };
-  void DrawSetStartMethod(void (*f)(void *), void *arg) { this->PolyDraw->SetStartMethod(f, arg); }
-  void DrawSetStartMethodArgDelete(void (*f)(void *)) { this->PolyDraw->SetStartMethodArgDelete(f); }
+
+  void DrawSetStartMethod(void (*f)(void *), void *arg)
+    {
+#if !(VTK_MAJOR_VERSION ==4 && VTK_MINOR_VERSION > 2)
+      this->PolyDraw->SetStartMethod(f, arg);
+#endif
+    }
+  void DrawSetStartMethodArgDelete(void (*f)(void *))
+    {
+#if !(VTK_MAJOR_VERSION ==4 && VTK_MINOR_VERSION > 2)
+      this->PolyDraw->SetStartMethodArgDelete(f);
+#endif
+    }
+
   // Necessary for calculating the ROI windowsize
   // TO DO: Add check for s
   int GetBackReformatResolution(int s) { return this->BackReformat[s]->GetResolution();}
@@ -559,14 +574,14 @@ protected:
   int ConvertStringToOrient(char *str);
   char* ConvertOrientToString(int orient);
   void ComputeReformatMatrix(int s);
-  void ComputeReformatMatrixIJK(int s, float offset, vtkMatrix4x4 *ref);
-  float GetOffsetForComputation(int s);
+  void ComputeReformatMatrixIJK(int s, vtkFloatingPointType offset, vtkMatrix4x4 *ref);
+  vtkFloatingPointType GetOffsetForComputation(int s);
   void SetOffsetRange(int s, int orient, int min, int max, int *modified);
 
   int ActiveSlice;
   int DoubleSliceSize[NUM_SLICES];
-  float FieldOfView;
-  float ForeOpacity;
+  vtkFloatingPointType FieldOfView;
+  vtkFloatingPointType ForeOpacity;
   int ForeFade;
 
   double CamN[3];
@@ -586,9 +601,9 @@ protected:
   double ReformatCoronalT[3];
   
   int Driver[NUM_SLICES];
-  float OffsetRange[NUM_SLICES][MRML_SLICER_NUM_ORIENT][2];
+  vtkFloatingPointType OffsetRange[NUM_SLICES][MRML_SLICER_NUM_ORIENT][2];
   int Orient[NUM_SLICES];
-  float Offset[NUM_SLICES][MRML_SLICER_NUM_ORIENT];
+  vtkFloatingPointType Offset[NUM_SLICES][MRML_SLICER_NUM_ORIENT];
 
   vtkImageReformat     *BackReformat[NUM_SLICES];
   vtkImageReformat     *ForeReformat[NUM_SLICES];
@@ -633,13 +648,13 @@ protected:
   int FilterOverlay;
 
   // DAVE need a better way
-  float ZoomCenter0[2];
-  float ZoomCenter1[2];
-  float ZoomCenter2[2];
+  vtkFloatingPointType ZoomCenter0[2];
+  vtkFloatingPointType ZoomCenter1[2];
+  vtkFloatingPointType ZoomCenter2[2];
 
   // Point
-  float WldPoint[3];
-  float IjkPoint[3];
+  vtkFloatingPointType WldPoint[3];
+  vtkFloatingPointType IjkPoint[3];
   int ReformatPoint[2];
   int Seed[3];
   int Seed2D[3];
@@ -665,7 +680,7 @@ protected:
   int MaxNumberOfVolumesToReformat;
   // Description:
   // set field of view in al reformatters when slicer's FOV updates
-  void VolumeReformattersSetFieldOfView(float fov);
+  void VolumeReformattersSetFieldOfView(vtkFloatingPointType fov);
 
     
 };

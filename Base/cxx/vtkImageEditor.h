@@ -68,6 +68,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define EDITOR_DIM_MULTI  2
 #define EDITOR_DIM_3D     3
 
+class vtkCallbackCommand;
+
 class VTK_SLICER_BASE_EXPORT vtkImageEditor : public vtkProcessObject
 {
 public:
@@ -210,6 +212,7 @@ protected:
   int UseInput;             // flag to indicate whether to use the input
   int Clip;                 // flag to indicate whether to clip
   int ClipExtent[6];        // the extent to clip to when clipping
+
   float RunTime;            // measure of effect processing time in seconds
   float TotalTime;          // measure of effect and overhead in seconds
 
@@ -218,6 +221,14 @@ protected:
 
   vtkImageData *Region;     // the output if we undo a Single slice effect
   vtkIntArray *Indices;     // the indices for how Region was extracted 
+
+#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION > 2)
+  // Callback registered with the ProgressObserver.
+  static void ProgressCallbackFunction(vtkObject*, unsigned long, void*,
+                                       void*);
+  // The observer to report progress from the internal writer.
+  vtkCallbackCommand* ProgressObserver;  
+#endif  
 };
 
 #endif

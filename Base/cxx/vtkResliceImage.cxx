@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Samson Timoner TetraMesh Library
   Module:    $RCSfile: vtkResliceImage.cxx,v $
   Language:  C++
-  Date:      $Date: 2003/03/19 19:16:21 $
-  Version:   $Revision: 1.10 $
+  Date:      $Date: 2004/09/16 17:18:59 $
+  Version:   $Revision: 1.11 $
   
 Copyright (c) 2001 Samson Timoner
 
@@ -95,11 +95,11 @@ void vtkResliceImage::SetOutputImageParam(vtkImageData *VolumeToCopyParam)
   VolumeToCopyParam->GetWholeExtent(this->OutExtent);
 }
 //----------------------------------------------------------------------------
-vtkMatrix4x4 *vtkResliceImage::GetIJKtoIJKMatrix(float Spacing2[3],
-                                                 float Origin2[3],
+vtkMatrix4x4 *vtkResliceImage::GetIJKtoIJKMatrix(vtkFloatingPointType Spacing2[3],
+                                                 vtkFloatingPointType Origin2[3],
                                                  vtkMatrix4x4 *MM2toMM1,
-                                                 float Spacing1[3],
-                                                 float Origin1[3])
+                                                 vtkFloatingPointType Spacing1[3],
+                                                 vtkFloatingPointType Origin1[3])
 {
   // The IJK to MM matrix for Coordinate System 2
   vtkMatrix4x4 *XformIJKtoMM = vtkMatrix4x4::New();
@@ -146,14 +146,14 @@ vtkMatrix4x4 *vtkResliceImage::GetIJKtoIJKMatrix(float Spacing2[3],
   return Xform2to1;
 }
 //----------------------------------------------------------------------------
-inline void vtkResliceImage::FindInputIJK(float OtherIJK[4],
+inline void vtkResliceImage::FindInputIJK(vtkFloatingPointType OtherIJK[4],
                                           vtkMatrix4x4 *IJKtoIJK,
                                           int i, int j, int k)
 {
-  float inpoint[4];
-  inpoint[0] = (float) i; 
-  inpoint[1] = (float) j; 
-  inpoint[2] = (float) k;
+  vtkFloatingPointType inpoint[4];
+  inpoint[0] = (vtkFloatingPointType) i; 
+  inpoint[1] = (vtkFloatingPointType) j; 
+  inpoint[2] = (vtkFloatingPointType) k;
   inpoint[3] = 1;
   IJKtoIJK->MultiplyPoint(inpoint,OtherIJK);
 //  IJKtoIJK->Print(cout);
@@ -182,10 +182,10 @@ void vtkResliceImage::ComputeInputUpdateExtent(int InExt[6],
                                                int OutExt[6])
 {
 
-  float InSpace[3];   this->GetInput() ->GetSpacing(InSpace);
-  float OutSpace[3];  this->GetOutput()->GetSpacing(OutSpace);
-  float InOrigin[3];  this->GetInput() ->GetOrigin(InOrigin);
-  float OutOrigin_[3]; this->GetOutput()->GetOrigin(OutOrigin_);
+  vtkFloatingPointType InSpace[3];   this->GetInput() ->GetSpacing(InSpace);
+  vtkFloatingPointType OutSpace[3];  this->GetOutput()->GetSpacing(OutSpace);
+  vtkFloatingPointType InOrigin[3];  this->GetInput() ->GetOrigin(InOrigin);
+  vtkFloatingPointType OutOrigin_[3]; this->GetOutput()->GetOrigin(OutOrigin_);
 
   vtkMatrix4x4 *IJKtoIJK_ = 
     vtkResliceImage::GetIJKtoIJKMatrix(OutSpace,OutOrigin_,
@@ -199,16 +199,16 @@ void vtkResliceImage::ComputeInputUpdateExtent(int InExt[6],
   InExt[0] = InExt[2] = InExt[4] = VTK_INT_MAX;
   InExt[1] = InExt[3] = InExt[5] = VTK_INT_MIN;
 
-  float point[4],result[4];
+  vtkFloatingPointType point[4],result[4];
   point[3] = 1;
 
   for(int i=0;i<2;i++)
     for(int j=0;j<2;j++)
       for(int k=0;k<2;k++)
         {
-          point[0]=(float)OutExt[0+i];
-          point[1]=(float)OutExt[2+j];
-          point[2]=(float)OutExt[4+k];
+          point[0]=(vtkFloatingPointType)OutExt[0+i];
+          point[1]=(vtkFloatingPointType)OutExt[2+j];
+          point[2]=(vtkFloatingPointType)OutExt[4+k];
           IJKtoIJK_->MultiplyPoint(point,result);
           if (floor(result[0]) < InExt[0]) InExt[0] = (int)floor(result[0]);
           if (floor(result[1]) < InExt[2]) InExt[2] = (int)floor(result[1]);
@@ -259,17 +259,17 @@ void vtkResliceImageExecute(vtkResliceImage *self, int id,
 //  cout << OutExt[0] << ' ' << OutExt[1] << ' ' << OutExt[2] << ' '
 //       << OutExt[3] << ' ' << OutExt[4] << ' ' << OutExt[5] << '\n';
 
-  float InSpace[3];   inData->GetSpacing(InSpace);
-  float OutSpace[3]; outData->GetSpacing(OutSpace);
-  float InOrigin[3];  inData->GetOrigin(InOrigin);
-  float OutOrigin[3]; outData->GetOrigin(OutOrigin);
+  vtkFloatingPointType InSpace[3];   inData->GetSpacing(InSpace);
+  vtkFloatingPointType OutSpace[3]; outData->GetSpacing(OutSpace);
+  vtkFloatingPointType InOrigin[3];  inData->GetOrigin(InOrigin);
+  vtkFloatingPointType OutOrigin[3]; outData->GetOrigin(OutOrigin);
 
   vtkMatrix4x4 *IJKtoIJK = 
     vtkResliceImage::GetIJKtoIJKMatrix(OutSpace,OutOrigin,
                                        self->GetTransformOutputToInput(),
                                        InSpace,InOrigin);
 
-  //  float InputIJK[4];
+  //  vtkFloatingPointType InputIJK[4];
   T *outVol1,*outVol2;
   T *InVol, *OutVol;
   OutVol = outVol2 = outVol1 = outPtr;
@@ -285,8 +285,8 @@ void vtkResliceImageExecute(vtkResliceImage *self, int id,
   // Rather than doing lots of matrix multiplies, simply pick off
   // the results of the matrix to a bunch of basis vectors and add
   //
-  float InijkX[4],InijkY[4],InijkZ[4]; // the position vectors
-  float ijkIncrementX[3],ijkIncrementY[3],ijkIncrementZ[3];
+  vtkFloatingPointType InijkX[4],InijkY[4],InijkZ[4]; // the position vectors
+  vtkFloatingPointType ijkIncrementX[3],ijkIncrementY[3],ijkIncrementZ[3];
   vtkResliceImage::FindInputIJK(InijkX,IJKtoIJK,OutExt[0],OutExt[2],OutExt[4]);
   for(int p=0;p<3;p++)
     {
@@ -313,11 +313,11 @@ void vtkResliceImageExecute(vtkResliceImage *self, int id,
                   (InijkX[2] >= InExt[4])&&(InijkX[2] <= InExt[5]))
                 {
                   int x0 = (int) floor(InijkX[0]);
-                  float x = InijkX[0] - x0;
+                  vtkFloatingPointType x = InijkX[0] - x0;
                   int y0 = (int) floor(InijkX[1]);
-                  float y = InijkX[1] - y0;
+                  vtkFloatingPointType y = InijkX[1] - y0;
                   int z0 = (int) floor(InijkX[2]);
-                  float z = InijkX[2] - z0;
+                  vtkFloatingPointType z = InijkX[2] - z0;
                   
                   InVol = inPtr + (x0-InExt[0])*inIncX
                     +(y0-InExt[2])*inIncY

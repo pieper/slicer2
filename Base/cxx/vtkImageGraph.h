@@ -43,6 +43,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkIndirectLookupTable.h"
 #include "vtkSlicer.h"
 
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
+
 // From vtkImagePlot
 #define SET_PIXEL(x,y,color){ ptr  =&outPtr[y*NumXScalar+x*3]; memcpy(ptr,color,3);}
 
@@ -50,8 +54,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 //BTX
 class VTK_SLICER_BASE_EXPORT GraphList {
 public:
-   float* GetColor() {return this->Color;}
-   void SetColor (float value[3]) {memcpy(this->Color,value,sizeof(float)*3);}
+   vtkFloatingPointType* GetColor() {return this->Color;}
+   void SetColor (vtkFloatingPointType value[3]) {memcpy(this->Color,value,sizeof(vtkFloatingPointType)*3);}
 
    void SetType(int val) {this->Type = val; }
    int GetType() {return this->Type; }
@@ -61,7 +65,7 @@ public:
   ~GraphList() {this->ID = -1;} 
    GraphList();
 
-   float Color[3];
+   vtkFloatingPointType Color[3];
    int ID;
    int Type;
 }; 
@@ -81,7 +85,7 @@ public:
    void SetIgnoreGraphMinGraphMax(bool flag) {this->IgnoreGraphMinGraphMax = flag;} 
    bool GetIgnoreGraphMinGraphMax() {return this->IgnoreGraphMinGraphMax;}
 
-   int AddEntry(vtkImageData* plot, float col[3],int type, bool ignore);  
+   int AddEntry(vtkImageData* plot, vtkFloatingPointType col[3],int type, bool ignore);  
    int DeleteEntry(int delID);
 
    GraphEntryList* MatchGraphEntry(vtkImageData* value);
@@ -120,8 +124,8 @@ public:
 
   // Description:
   // Global extrema over all the curves/regions 
-  vtkGetMacro(GraphMax, float);
-  vtkGetMacro(GraphMin, float);
+  vtkGetMacro(GraphMax, vtkFloatingPointType);
+  vtkGetMacro(GraphMin, vtkFloatingPointType);
 
   // Description:
   // Define the value range of the background (i.e. LookupTable)
@@ -146,13 +150,13 @@ public:
 
   // Description: 
   // Set the color of a curve 
-  void SetColor(vtkImageData *plot, float color0, float color1,float color2);
-  float* GetColor(vtkImageData *plot);
+  void SetColor(vtkImageData *plot, vtkFloatingPointType color0, vtkFloatingPointType color1,vtkFloatingPointType color2);
+  vtkFloatingPointType* GetColor(vtkImageData *plot);
 
   GraphEntryList* GetGraphList() { return &this->GraphList;}
   // Description:
   // Add a curve or region to the graph. It returns the ID of the data entry back
-  int AddCurveRegion(vtkImageData *plot,float color0,float color1,float color2, int type, int ignore);
+  int AddCurveRegion(vtkImageData *plot,vtkFloatingPointType color0,vtkFloatingPointType color1,vtkFloatingPointType color2, int type, int ignore);
 
   // Description:
   // Delete a curve/region from the list -> if successfull returns 1 - otherwise 0; 
@@ -166,11 +170,11 @@ public:
   // Creates a Lookup Table - if you want to change the color of the IndirectLookupTable
   // you first have to delete the old LookupTable and than recreate it with this function
   // and assign it again to the IndirectLookupTable
-  vtkLookupTable* CreateLookupTable(float SatMin, float SatMax, float ValMin, float ValMax, float HueMin, float HueMax); 
+  vtkLookupTable* CreateLookupTable(vtkFloatingPointType SatMin, vtkFloatingPointType SatMax, vtkFloatingPointType ValMin, vtkFloatingPointType ValMax, vtkFloatingPointType HueMin, vtkFloatingPointType HueMax); 
 
   // Description:
   // Change the color of the Indirect Table 
-  void ChangeColorOfIndirectLookupTable(vtkIndirectLookupTable* Table, float SatMin, float SatMax, float ValMin, float ValMax, float HueMin, float HueMax);
+  void ChangeColorOfIndirectLookupTable(vtkIndirectLookupTable* Table, vtkFloatingPointType SatMin, vtkFloatingPointType SatMax, vtkFloatingPointType ValMin, vtkFloatingPointType ValMax, vtkFloatingPointType HueMin, vtkFloatingPointType HueMax);
 
   unsigned long GetMTime();
 protected:
@@ -181,8 +185,8 @@ protected:
   virtual void ExecuteData(vtkDataObject *data);
 
   void Draw1DGraph(vtkImageData *data);
-  void Draw2DGraph(vtkImageData *data,int NumRegion, float* CurveRegionMin, float* CurveRegionMax);
-  void CalculateGraphMinGraphMax (float* CurveRegionMin, float* CurveRegionMax);
+  void Draw2DGraph(vtkImageData *data,int NumRegion, vtkFloatingPointType* CurveRegionMin, vtkFloatingPointType* CurveRegionMax);
+  void CalculateGraphMinGraphMax (vtkFloatingPointType* CurveRegionMin, vtkFloatingPointType* CurveRegionMax);
   void DrawBackground(unsigned char *outPtr, int outIncY);
 
   int Dimension;
@@ -191,8 +195,8 @@ protected:
   int Xlength;
   int Ylength;
 
-  float GraphMin;
-  float GraphMax;
+  vtkFloatingPointType GraphMin;
+  vtkFloatingPointType GraphMax;
 
   GraphEntryList GraphList;
  
@@ -205,7 +209,7 @@ private:
 
 //----------------------------------------------------------------------------
 // from vtkImagePlot
-inline void ConvertColor(float *f, unsigned char *c)
+inline void ConvertColor(vtkFloatingPointType *f, unsigned char *c)
 {
     c[0] = (int)(f[0] * 255.0);
     c[1] = (int)(f[1] * 255.0);
@@ -227,11 +231,11 @@ inline void DrawThickPoint (int Xpos, int Ypos, unsigned char color[3], unsigned
 //----------------------------------------------------------------------------
 inline void DrawContinousLine(int xx1, int yy1, int xx2, int yy2, unsigned char color[3],
                               unsigned char *outPtr, int NumXScalar, int radius) {
-  float slope; 
+  vtkFloatingPointType slope; 
   int Yold = yy1, Ynew, x,y;
 
   if (xx2 != xx1)  {
-    slope = float(yy2 - yy1)/float(xx2 - xx1);
+    slope = vtkFloatingPointType(yy2 - yy1)/vtkFloatingPointType(xx2 - xx1);
     DrawThickPoint(xx1, yy1, color, outPtr, NumXScalar, radius);
     for(x=xx1+1; x <=  xx2; x++) { 
       Ynew = (int) slope*(x - xx1) + yy1; 

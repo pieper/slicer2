@@ -278,7 +278,7 @@ void vtkImageDijkstra::RunDijkstra(vtkDataArray *scalars,int startv, int endv)
       //printf("visiting node %i \n",u);
       // u is now in s since the shortest path to u is determined
       // remove from the front set >1
-      float u_weight;
+      vtkFloatingPointType u_weight;
 #if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION == 0)      
       u = PQ->Pop(u_weight,0);
 #else

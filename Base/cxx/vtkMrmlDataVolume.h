@@ -62,6 +62,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkSlicer.h"
 #include "vtkMrmlDataVolumeReadWrite.h"
 
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
+
 class vtkImageDICOMReader;
 class vtkImageReader;
 
@@ -109,7 +113,7 @@ public:
   // Set Histogram attributes
   void SetHistogramHeight(int h) {this->HistPlot->SetHeight(h);};
   void SetHistogramWidth(int w);
-  vtkSetVector3Macro(HistogramColor, float);
+  vtkSetVector3Macro(HistogramColor, vtkFloatingPointType);
 
   // Description:
   // Get Histogram plot (an image)
@@ -124,10 +128,10 @@ public:
   
   // Description:
   // Set/Get window/level/threshold slider range
-  vtkGetMacro(RangeLow,  float);
-  vtkGetMacro(RangeHigh, float);
-  vtkSetMacro(RangeLow,  float);
-  vtkSetMacro(RangeHigh, float);
+  vtkGetMacro(RangeLow,  vtkFloatingPointType);
+  vtkGetMacro(RangeHigh, vtkFloatingPointType);
+  vtkSetMacro(RangeLow,  vtkFloatingPointType);
+  vtkSetMacro(RangeHigh, vtkFloatingPointType);
   vtkGetMacro(RangeAuto, int);
   vtkSetMacro(RangeAuto, int);
   vtkBooleanMacro(RangeAuto, int);
@@ -144,10 +148,10 @@ protected:
   void UpdateWindowLevelThreshold();
   void CheckImageData();
 
-  float RangeLow;
-  float RangeHigh;
+  vtkFloatingPointType RangeLow;
+  vtkFloatingPointType RangeHigh;
   int RangeAuto;
-  float HistogramColor[3];
+  vtkFloatingPointType HistogramColor[3];
 
   vtkImageData *ImageData;
   vtkImageAccumulateDiscrete *Accumulate;

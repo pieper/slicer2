@@ -39,8 +39,11 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkBoolTess_h
 
 #include "vtkObject.h"
-
 #include "vtkSlicer.h"
+
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
 
 //
 //BTX - begin tcl exclude
@@ -81,7 +84,7 @@ public:
 
   /*  inline */ static vtkBoolTess *New() {return (new vtkBoolTess);}
   /*  inline */ void Delete() { delete this; }
-  void SetPoints( float *points );
+  void SetPoints( vtkFloatingPointType *points );
   int AddContour( vtkIdType nPts, vtkIdType *ptIds );
   void Reset();
   int Triangulate( vtkIdType **tris );
@@ -96,7 +99,7 @@ protected:
   vtkIdType *Contours[VTK_BOOL_MAX_CONTOURS];
   
   //BTX - begin tcl exclude
-  float (*Points)[3];
+  vtkFloatingPointType (*Points)[3];
   //ETX - end tcl exclude
 
   // this data is used for the algorithm

@@ -43,6 +43,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMatrix4x4.h"
 #include "vtkSlicer.h"
 
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
+
 class VTK_SLICER_BASE_EXPORT vtkMathUtils : public vtkObject
 {
   public:
@@ -53,15 +57,15 @@ class VTK_SLICER_BASE_EXPORT vtkMathUtils : public vtkObject
                                       vtkDataArray *Values, vtkDataArray *Vectors );
   static int AlignPoints( vtkPoints *Data, vtkPoints *Ref,
                           vtkMatrix4x4 *Xform );
-  static void SVD3x3( float A[][3], float U[][3], float W[], float V[][3] );
+  static void SVD3x3( vtkFloatingPointType A[][3], vtkFloatingPointType U[][3], vtkFloatingPointType W[], vtkFloatingPointType V[][3] );
   
   // Description:
   // Outer product of two 3-vectors.
-  static void Outer3(float x[3], float y[3], float A[3][3]);
+  static void Outer3(vtkFloatingPointType x[3], vtkFloatingPointType y[3], vtkFloatingPointType A[3][3]);
 
   // Description:
   // Outer product of two 2-vectors.
-  static void Outer2(float x[2], float y[2], float A[2][2]);
+  static void Outer2(vtkFloatingPointType x[2], vtkFloatingPointType y[2], vtkFloatingPointType A[2][2]);
 
   // Description:
   // General matrix multiplication.  You must allocate

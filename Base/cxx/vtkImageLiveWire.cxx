@@ -147,7 +147,7 @@ void vtkImageLiveWire::ClearContourTail()
 // cleared.
 void vtkImageLiveWire::ClearLastContourSegment() 
 {
-  float *point;
+  vtkFloatingPointType *point;
   int done = 0;
   int i;
   vtkPoints *tempPixels = vtkPoints::New();
@@ -549,7 +549,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 
   // sqrt two factor: diagonal edges cost more.
 #define SQRT_TWO 1.4142
-  float factor[8] = {1,1,1,1,SQRT_TWO,SQRT_TWO,SQRT_TWO,SQRT_TWO};
+  vtkFloatingPointType factor[8] = {1,1,1,1,SQRT_TWO,SQRT_TWO,SQRT_TWO,SQRT_TWO};
 
   // offset to access edge images 
   int offset[8][2] = {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}};
@@ -755,7 +755,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   // fix (reverse) the order of the pixels list.
   int numPoints = tempPixels->GetNumberOfPoints();
   newPixels->SetNumberOfPoints(numPoints);
-  float *point;
+  vtkFloatingPointType *point;
   int count = 0;
 
   // the 1 at the end when setting the point means this was an endpoint
@@ -1166,7 +1166,7 @@ int circularQueue::GetBucket(int cost)
   return div(cost,this->C+1).rem;
 }
 
-int circularQueue::FindMinBucket(float cost)
+int circularQueue::FindMinBucket(vtkFloatingPointType cost)
 {
   int bucket = this->GetBucket(cost);
   int count = 0;

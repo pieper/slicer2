@@ -83,7 +83,7 @@ void vtkSurfaceProps::Execute()
   vtkIdType *ptIds;
   int numCells, jj, kk, type;
   vtkIdType numPts, cellId, pId, qId, rId;
-  float *p, *q, *r, xp[3], edge0[3], edge1[3], edge2[3], *center;
+  vtkFloatingPointType *p, *q, *r, xp[3], edge0[3], edge1[3], edge2[3], *center;
   double tri_area, cell_area, tot_area, tri_vol, tot_vol, tot_vol2;
 
   vtkDebugMacro(<< "Calculating Surface Properties." );

@@ -81,7 +81,7 @@ vtkImageCrossHair2D::vtkImageCrossHair2D()
 
 //----------------------------------------------------------------------------
 
-static void ConvertColor(float *f, unsigned char *c)
+static void ConvertColor(vtkFloatingPointType *f, unsigned char *c)
 {
     c[0] = (int)(f[0] * 255.0);
     c[1] = (int)(f[1] * 255.0);
@@ -223,32 +223,32 @@ static void DrawLine(int x1, int y1, int x2, int y2, unsigned char color[3],
 
 void vtkImageCrossHair2D::DrawCursor(vtkImageData *outData, int outExt[6])
 {
-    unsigned char color[3];
-    unsigned char *outPtr = (unsigned char *) \
-        outData->GetScalarPointerForExtent(outExt);
-    int x, y, nx, ny, nx1, ny1, nxnc, nc, numHash, h, d, eye, e;
-    int xMin, xMax, yMin, yMax;
+  unsigned char color[3];
+  unsigned char *outPtr = (unsigned char *) \
+    outData->GetScalarPointerForExtent(outExt);
+  int x, y, nx, ny, nx1, ny1, nxnc, nc, numHash, h, d, eye, e;
+  int xMin, xMax, yMin, yMax;
   int gapx, gapy,lenx,leny,lenx2,leny2;
-    float mmLen,  mmGap, mag;
-  float mmSpacing[3];
+  vtkFloatingPointType mmLen,  mmGap, mag;
+  vtkFloatingPointType mmSpacing[3];
     
   // Get Extent and Number of compenents(nc)
-    xMin = outExt[0];
-    xMax = outExt[1];
-    yMin = outExt[2];
-    yMax = outExt[3];
-    nx = outExt[1] - outExt[0] + 1;
-    ny = outExt[3] - outExt[2] + 1;
-    nc = outData->GetNumberOfScalarComponents();
-    nxnc = nx*nc;
-    nx1 = nx-1;
-    ny1 = ny-1;
+  xMin = outExt[0];
+  xMax = outExt[1];
+  yMin = outExt[2];
+  yMax = outExt[3];
+  nx = outExt[1] - outExt[0] + 1;
+  ny = outExt[3] - outExt[2] + 1;
+  nc = outData->GetNumberOfScalarComponents();
+  nxnc = nx*nc;
+  nx1 = nx-1;
+  ny1 = ny-1;
 
   // Hash Mark number and length.
-    numHash = this->NumHashes;
-    mag = this->Magnification;
-    mmLen = this->HashLength;
-    mmGap = this->HashGap;
+  numHash = this->NumHashes;
+  mag = this->Magnification;
+  mmLen = this->HashLength;
+  mmGap = this->HashGap;
 
   // Covert Color from rgb in the rang 0..1 to 0..255
     ConvertColor(this->CursorColor, color);

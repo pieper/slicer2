@@ -105,7 +105,6 @@ void vtkMrmlVolumeReadWriteStructuredPointsNode::Copy(vtkMrmlNode *anode)
 //----------------------------------------------------------------------------
 void vtkMrmlVolumeReadWriteStructuredPointsNode::PrintSelf(ostream& os, vtkIndent indent)
 {
-  int idx;
   
   vtkMrmlNode::PrintSelf(os,indent);
 

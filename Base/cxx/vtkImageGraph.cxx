@@ -43,7 +43,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 //------------------------------------------------------------------------------
 GraphList::GraphList() {
-  memset(this->Color,0,sizeof(float)*3); 
+  memset(this->Color,0,sizeof(vtkFloatingPointType)*3); 
   this->ID             = -1;
   this->Type           = 0;
 }
@@ -64,11 +64,11 @@ GraphEntryList::~GraphEntryList() {
 } 
 
 //------------------------------------------------------------------------------
-int GraphEntryList::AddEntry(vtkImageData* plot, float col[3],int type, bool ignore) {
+int GraphEntryList::AddEntry(vtkImageData* plot, vtkFloatingPointType col[3],int type, bool ignore) {
   // First entry
   if (this->ID == -1) {
     this->GraphEntry = plot;
-    memcpy(this->Color,col,sizeof(float)*3);
+    memcpy(this->Color,col,sizeof(vtkFloatingPointType)*3);
     this->ID             = 0;
     this->Type           = type;
     this->IgnoreGraphMinGraphMax = ignore;
@@ -83,11 +83,11 @@ int GraphEntryList::AddEntry(vtkImageData* plot, float col[3],int type, bool ign
     ListPtr->Next->ID = ListPtr->ID + 1;
     ListPtr = ListPtr->Next;
     ListPtr->GraphEntry = plot;
-    memcpy(ListPtr->Color,col,sizeof(float)*3);
+    memcpy(ListPtr->Color,col,sizeof(vtkFloatingPointType)*3);
     ListPtr->Type = type;  
     ListPtr->IgnoreGraphMinGraphMax = ignore;
   } else {
-    memcpy(ListPtr->Color,col,3*sizeof(float));
+    memcpy(ListPtr->Color,col,3*sizeof(vtkFloatingPointType));
     ListPtr->Type = type;
     ListPtr->IgnoreGraphMinGraphMax = ignore;
   }
@@ -110,13 +110,13 @@ int GraphEntryList::DeleteEntry(int delID) {
       // No more entries
       ListPtr->ID = -1;     
       ListPtr->GraphEntry = NULL;
-      memset(ListPtr->Color,0,sizeof(float)*3);
+      memset(ListPtr->Color,0,sizeof(vtkFloatingPointType)*3);
       ListPtr->Type = 0;  
     } else {
       // Copy the second entry on the first position
       ListPtr->ID                     =  ListPtr->Next->ID;
       ListPtr->GraphEntry             =  ListPtr->Next->GraphEntry;
-      memcpy(ListPtr->Color,ListPtr->Next->Color,sizeof(float)*3);
+      memcpy(ListPtr->Color,ListPtr->Next->Color,sizeof(vtkFloatingPointType)*3);
       ListPtr->Type                   =  ListPtr->Next->Type;  
       ListPtr->IgnoreGraphMinGraphMax =  ListPtr->Next->IgnoreGraphMinGraphMax;
       PrevListPtr   =  ListPtr->Next;
@@ -203,8 +203,8 @@ unsigned long vtkImageGraph::GetMTime() {
 }
 
 //-----------------------------------------------------------------------------
-int vtkImageGraph::AddCurveRegion(vtkImageData *plot,float color0,float color1,float color2, int type, int ignore) {
-  float color[3];
+int vtkImageGraph::AddCurveRegion(vtkImageData *plot,vtkFloatingPointType color0,vtkFloatingPointType color1,vtkFloatingPointType color2, int type, int ignore) {
+  vtkFloatingPointType color[3];
   GraphEntryList* result;
   result = this->GraphList.MatchGraphEntry(plot);
   // Plot does not exist in graph => Add it to it 
@@ -214,7 +214,7 @@ int vtkImageGraph::AddCurveRegion(vtkImageData *plot,float color0,float color1,f
     return GraphList.AddEntry(plot,color,type, bool(ignore));  
   }
   // Plot exists in graph => Check if we have to update values 
-  memcpy(color,result->GetColor(),3*sizeof(float)); 
+  memcpy(color,result->GetColor(),3*sizeof(vtkFloatingPointType)); 
   if ((color[0] != color0) || (color[1] != color1) || (color[2] != color2)) {
     color[0] = color0; color[1] = color1; color[2] = color2;
     result->SetColor(color);
@@ -264,8 +264,8 @@ int vtkImageGraph::GetIgnoreGraphMinGraphMax(vtkImageData *plot) {
 }
 
 //-----------------------------------------------------------------------------
-void vtkImageGraph::SetColor(vtkImageData *plot, float color0, float color1, float color2) {
-  float color[3];
+void vtkImageGraph::SetColor(vtkImageData *plot, vtkFloatingPointType color0, vtkFloatingPointType color1, vtkFloatingPointType color2) {
+  vtkFloatingPointType color[3];
   GraphEntryList* result = this->GraphList.MatchGraphEntry(plot);
   // Plot does not exist in graph => Add it to it 
   if (result == NULL) {
@@ -273,7 +273,7 @@ void vtkImageGraph::SetColor(vtkImageData *plot, float color0, float color1, flo
     return;
   }
   // Plot exists in graph => Check if we have to update values 
-  memcpy(color,result->GetColor(),3*sizeof(float)); 
+  memcpy(color,result->GetColor(),3*sizeof(vtkFloatingPointType)); 
   if ((color[0] != color0) || (color[1] != color1) || (color[2] != color2)) {
     color[0] = color0; color[1] = color1; color[2] = color2;
     result->SetColor(color);
@@ -282,7 +282,7 @@ void vtkImageGraph::SetColor(vtkImageData *plot, float color0, float color1, flo
 }
 
 //-----------------------------------------------------------------------------
-float* vtkImageGraph::GetColor(vtkImageData *plot) {
+vtkFloatingPointType* vtkImageGraph::GetColor(vtkImageData *plot) {
   GraphEntryList* result = this->GraphList.MatchGraphEntry(plot);
   if (result == NULL) {
     vtkErrorMacro("GetColor: Curve/region could not be updated, bc it is not part of graph!");
@@ -308,8 +308,8 @@ vtkIndirectLookupTable* vtkImageGraph::CreateUniformIndirectLookupTable() {
 //----------------------------------------------------------------------------
 // Everytime you want to change the color of the graph you have tp destroy the old lookup table in the indirectlookuptable and assign a new 
 // one . Update does not work properly here 
-vtkLookupTable* vtkImageGraph::CreateLookupTable(float SatMin, float SatMax, float ValMin, float ValMax, float HueMin, float HueMax) {
-  float blub[2];
+vtkLookupTable* vtkImageGraph::CreateLookupTable(vtkFloatingPointType SatMin, vtkFloatingPointType SatMax, vtkFloatingPointType ValMin, vtkFloatingPointType ValMax, vtkFloatingPointType HueMin, vtkFloatingPointType HueMax) {
+  vtkFloatingPointType blub[2];
   vtkLookupTable* Look = vtkLookupTable::New();
   blub[0] = SatMin;
   blub[1] = SatMax;
@@ -326,7 +326,7 @@ vtkLookupTable* vtkImageGraph::CreateLookupTable(float SatMin, float SatMax, flo
 }
 
 //----------------------------------------------------------------------------
-void vtkImageGraph::ChangeColorOfIndirectLookupTable(vtkIndirectLookupTable* Table, float SatMin, float SatMax, float ValMin, float ValMax, float HueMin, float HueMax) {
+void vtkImageGraph::ChangeColorOfIndirectLookupTable(vtkIndirectLookupTable* Table, vtkFloatingPointType SatMin, vtkFloatingPointType SatMax, vtkFloatingPointType ValMin, vtkFloatingPointType ValMax, vtkFloatingPointType HueMin, vtkFloatingPointType HueMax) {
   Table->GetLookupTable()->Delete();
   Table->SetLookupTable(this->CreateLookupTable(SatMin, SatMax, ValMin, ValMax, HueMin, HueMax));
   Table->Build();
@@ -346,18 +346,18 @@ void vtkImageGraph::ExecuteInformation()
 }
 //----------------------------------------------------------------------------
 template <class Tin> 
-static void vtkImageGraphGetMinMax(Tin *Ptr, int ext[6], int incY, int incZ, float &Min, float &Max) {
+static void vtkImageGraphGetMinMax(Tin *Ptr, int ext[6], int incY, int incZ, vtkFloatingPointType &Min, vtkFloatingPointType &Max) {
   int x,y,z;
   int maxZ = ext[5] - ext[4] + 1;
   int maxY = ext[3] - ext[2] + 1;
   int maxX = ext[1] - ext[0] + 1;
 
-  Min = Max = (float) *Ptr;
+  Min = Max = (vtkFloatingPointType) *Ptr;
   for (z = 0; z < maxZ; z++) {
     for (y = 0; y < maxY; y++) {
       for (x = 0; x < maxX; x++) {
-    if (Max < float(*Ptr)) Max = (float) *Ptr;
-    else if (Min > float(*Ptr)) Min = (float) *Ptr;
+    if (Max < vtkFloatingPointType(*Ptr)) Max = (vtkFloatingPointType) *Ptr;
+    else if (Min > vtkFloatingPointType(*Ptr)) Min = (vtkFloatingPointType) *Ptr;
     Ptr++;
       }
       Ptr += incY;
@@ -545,8 +545,8 @@ static void DrawDiscreteLine(int xx1, int yy1, int xx2, int yy2, unsigned char c
 //----------------------------------------------------------------------------
 // Draw Curve 
 template <class Tin> 
-static void vtkImageGraphDrawCurve(vtkImageGraph *self,Tin *CurvePtr,int outIncY,unsigned char color[3],int type, float GraphMin, float GraphMax, unsigned char *outPtr) {
-  float         ForUnits;
+static void vtkImageGraphDrawCurve(vtkImageGraph *self,Tin *CurvePtr,int outIncY,unsigned char color[3],int type, vtkFloatingPointType GraphMin, vtkFloatingPointType GraphMax, unsigned char *outPtr) {
+  vtkFloatingPointType         ForUnits;
   int           Xlength         = self->GetXlength();
   int           Ylength         = self->GetYlength();
   int           CurveThickness  = self->GetCurveThickness();
@@ -554,12 +554,12 @@ static void vtkImageGraphDrawCurve(vtkImageGraph *self,Tin *CurvePtr,int outIncY
   int           NumXScalar      = Xlength*3 +outIncY;
 
   if (GraphMin == GraphMax) ForUnits = 1.0;
-  else ForUnits = (float)(Ylength - 1) / (GraphMax - GraphMin);
+  else ForUnits = (vtkFloatingPointType)(Ylength - 1) / (GraphMax - GraphMin);
   Yborder = Ylength - CurveThickness - 1;
   Xborder = Xlength - CurveThickness - 1;
   for (idxX = 0; idxX < Xlength; idxX++) {
-    y1 = (int)(ForUnits * (float)(CurvePtr[0] - GraphMin));
-    y2 = (int)(ForUnits * (float)(CurvePtr[1] - GraphMin));
+    y1 = (int)(ForUnits * (vtkFloatingPointType)(CurvePtr[0] - GraphMin));
+    y2 = (int)(ForUnits * (vtkFloatingPointType)(CurvePtr[1] - GraphMin));
     // Clip at boundary
     if (y1 < CurveThickness) { y1 = CurveThickness;
     } else if (y1 > Yborder) y1 = Yborder; 
@@ -577,15 +577,15 @@ static void vtkImageGraphDrawCurve(vtkImageGraph *self,Tin *CurvePtr,int outIncY
 //----------------------------------------------------------------------------
 // Draw Region 
 template <class Tin> 
-static void vtkImageGraphDrawRegion(vtkImageGraph *self,Tin **RegionPtr,int *RegionIncY, unsigned char **RegionColor, float* CurveRegionMin, float* CurveRegionMax, int NumRegion, unsigned char *outPtr, int outIncY) {
+static void vtkImageGraphDrawRegion(vtkImageGraph *self,Tin **RegionPtr,int *RegionIncY, unsigned char **RegionColor, vtkFloatingPointType* CurveRegionMin, vtkFloatingPointType* CurveRegionMax, int NumRegion, unsigned char *outPtr, int outIncY) {
   
   int            idxX, idxY, idxR, Index,idxC;
   int            Xlength        = self->GetXlength();
   int            Ylength        = self->GetYlength();
-  float          Max;
-  float          ColorRatio;
+  vtkFloatingPointType          Max;
+  vtkFloatingPointType          ColorRatio;
   unsigned char  FinalColor[3];
-  float          *RegionDif= new float[NumRegion]; 
+  vtkFloatingPointType          *RegionDif= new vtkFloatingPointType[NumRegion]; 
   GraphEntryList *ListPtr        = self->GetGraphList();
 
   for (idxR = 0; idxR < NumRegion; idxR++) {
@@ -627,7 +627,7 @@ void vtkImageGraph::Draw1DGraph(vtkImageData *data) {
   unsigned char       color[3];
   int                 *outExt;
   int                 outIncX, outIncY, outIncZ;
-  float               minY, maxY;
+  vtkFloatingPointType               minY, maxY;
 
   // Get increments to march through data 
   outExt = data->GetExtent();
@@ -678,7 +678,7 @@ void vtkImageGraph::Draw1DGraph(vtkImageData *data) {
 }
 
 //---------------------------------------------------------------------------- 
-void vtkImageGraph::Draw2DGraph(vtkImageData *data, int NumRegion, float* CurveRegionMin, float* CurveRegionMax) {
+void vtkImageGraph::Draw2DGraph(vtkImageData *data, int NumRegion, vtkFloatingPointType* CurveRegionMin, vtkFloatingPointType* CurveRegionMax) {
   int                 *outExt;
   int                 outIncX, outIncY, outIncZ;
   unsigned char       *outPtr;
@@ -726,7 +726,7 @@ void vtkImageGraph::Draw2DGraph(vtkImageData *data, int NumRegion, float* CurveR
 
 //----------------------------------------------------------------------------
 // CurveRegionMin , CurveRegionMax are arrays defining the minimum maximum for every Curve or Region
-void vtkImageGraph::CalculateGraphMinGraphMax (float* CurveRegionMin, float* CurveRegionMax) {
+void vtkImageGraph::CalculateGraphMinGraphMax (vtkFloatingPointType* CurveRegionMin, vtkFloatingPointType* CurveRegionMax) {
   GraphEntryList      *ListPtr = &(this->GraphList);
   vtkImageData        *TempCurve = ListPtr->GetGraphEntry();
   int                 TempIncX, TempIncY, TempIncZ, *TempExt;
@@ -774,7 +774,7 @@ void vtkImageGraph::CalculateGraphMinGraphMax (float* CurveRegionMin, float* Cur
 }
 //----------------------------------------------------------------------------
 void vtkImageGraph::DrawBackground(unsigned char *outPtr, int outIncY) {
-  float          val,BackUnits; 
+  vtkFloatingPointType          val,BackUnits; 
   int            idxX, idxY;
   int            SIZE_OF_CHAR    = 3*sizeof(unsigned char);
   int            SIZE_OF_XLENGTH = this->Xlength*3 *sizeof(unsigned char);
@@ -783,12 +783,12 @@ void vtkImageGraph::DrawBackground(unsigned char *outPtr, int outIncY) {
   unsigned char  *BackXAxisPtr = BackXAxis;
   
   if (this->Xlength > 1) {
-    BackUnits = (float)(this->DataBackRange[1] - this->DataBackRange[0]) / (float)(this->Xlength - 1.0);
+    BackUnits = (vtkFloatingPointType)(this->DataBackRange[1] - this->DataBackRange[0]) / (vtkFloatingPointType)(this->Xlength - 1.0);
   } else {
     BackUnits = 0.0;
   }
   for (idxX = 0; idxX < this->Xlength; idxX++)  {
-    val = (float) this->DataBackRange[0] + BackUnits * idxX;
+    val = (vtkFloatingPointType) this->DataBackRange[0] + BackUnits * idxX;
     memcpy(BackXAxisPtr, this->LookupTable->MapValue(val),SIZE_OF_CHAR);    
     BackXAxisPtr += 3;
   }
@@ -811,7 +811,7 @@ void vtkImageGraph::ExecuteData(vtkDataObject *output) {
   GraphEntryList      *ListPtr;
   vtkImageData        *TempCurve;
   int                 ScalarType;
-  float               *CurveRegionMin,*CurveRegionMax;
+  vtkFloatingPointType               *CurveRegionMin,*CurveRegionMax;
   int                 NumRegion;
 
   if (data->GetScalarType() != VTK_UNSIGNED_CHAR) {
@@ -841,8 +841,8 @@ void vtkImageGraph::ExecuteData(vtkDataObject *output) {
 
   if (TempCurve != NULL) {
     NumRegion++;
-    CurveRegionMin = new float[NumRegion];
-    CurveRegionMax = new float[NumRegion];
+    CurveRegionMin = new vtkFloatingPointType[NumRegion];
+    CurveRegionMax = new vtkFloatingPointType[NumRegion];
     
     ScalarType = TempCurve->GetScalarType();
     while (ListPtr != NULL) {

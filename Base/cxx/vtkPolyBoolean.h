@@ -54,6 +54,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkBoolTess.h"
 #include "vtkSlicer.h"
 
+#ifndef vtkFloatingPointType
+#define vtkFloatingPointType float
+#endif
+
 // Defines for Operation
 #define BOOL_A_MINUS_B 0
 #define BOOL_A_OR_B 1
@@ -97,10 +101,10 @@ public:
 
   int NewId;
   void MergePP( vtkPiercePoint *otherPP );
-  float Param; // parameter on edge
-  float Xparam; // parameter on intersection
+  vtkFloatingPointType Param; // parameter on edge
+  vtkFloatingPointType Xparam; // parameter on intersection
   int SnapIdx; // Index of equivalent input data point, or -1 if new.
-  float Point[3]; // 3d position of PP
+  vtkFloatingPointType Point[3]; // 3d position of PP
   vtkBoolTriEdge *Edge; // piercing edge;
   vtkBoolTri *Triangle;
   vtkPiercePoint *Next; // pointer to next PP on this edge
@@ -113,7 +117,13 @@ public:
 class vtkNewBoolEdges { //; prevent man page generation
 public:
   vtkNewBoolEdges();
-  ~vtkNewBoolEdges();
+  ~vtkNewBoolEdges()
+    {
+    if ( this->Array )
+      {
+      delete [] this->Array;
+      }
+    };
 
   void AddNewEdge( vtkBoolTriEdge *thisEdge );
   void Reset();
@@ -143,8 +153,8 @@ public:
   ~vtkBoolTri();
 
   int AorB;             // 0=from PolyDataA, 1=from PolyDataB.
-  float Normal[3];      // triangle Normal
-  float Offset;         // plane offset of this triangle ( Normal*p0 )
+  vtkFloatingPointType Normal[3];      // triangle Normal
+  vtkFloatingPointType Offset;         // plane offset of this triangle ( Normal*p0 )
   vtkBoolTriEdge *Edges[3]; // pointers to the three edges
   vtkBoolTri *Next;     // next triangle in the triangulation of this cell
   int CellId;           // id of the parent cell
@@ -165,13 +175,13 @@ public:
 
   // Description:
   // Set the distance resolution. Default is 1.0E-6;
-  vtkSetMacro(DistanceResolution,float);
-  vtkGetMacro(DistanceResolution,float);
+  vtkSetMacro(DistanceResolution,vtkFloatingPointType);
+  vtkGetMacro(DistanceResolution,vtkFloatingPointType);
 
   // Description:
   // Set the angle resolution. Default is .003 degrees.
-  vtkSetMacro(AngleResolution,float);
-  vtkGetMacro(AngleResolution,float);
+  vtkSetMacro(AngleResolution,vtkFloatingPointType);
+  vtkGetMacro(AngleResolution,vtkFloatingPointType);
 
   void SPLTestIntersection();
   
@@ -232,8 +242,8 @@ protected:
   int TestCount;
   vtkMatrix4x4 *XformA;
   vtkMatrix4x4 *XformB;
-  float DistanceResolution;
-  float AngleResolution;
+  vtkFloatingPointType DistanceResolution;
+  vtkFloatingPointType AngleResolution;
   vtkNewBoolEdges NewEdges;
   vtkPoints *NewPoints;
   vtkCellArray *NewPolys;

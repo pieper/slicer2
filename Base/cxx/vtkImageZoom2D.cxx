@@ -76,7 +76,7 @@ void vtkImageZoom2D::ExecuteInformation(vtkImageData *inData,
                        vtkImageData *outData)
 {
   int i;
-  float *spacing, outSpacing[3];
+  vtkFloatingPointType *spacing, outSpacing[3];
 
   // Change output spacing
   if (this->Magnification == 0.0) 
@@ -98,8 +98,8 @@ void vtkImageZoom2D::SetZoomPoint(int x, int y)
 {
   this->ZoomPoint[0] = x;
   this->ZoomPoint[1] = y;
-  this->OrigPoint[0] = (int)(this->Origin[0] + this->Step[0]*(float)x + 0.49);
-  this->OrigPoint[1] = (int)(this->Origin[1] + this->Step[1]*(float)y + 0.49);
+  this->OrigPoint[0] = (int)(this->Origin[0] + this->Step[0]*(vtkFloatingPointType)x + 0.49);
+  this->OrigPoint[1] = (int)(this->Origin[1] + this->Step[1]*(vtkFloatingPointType)y + 0.49);
 }
 
 #define NBITS1            16
@@ -121,8 +121,8 @@ static void vtkImageZoom2DExecute(vtkImageZoom2D *self,
 {
   int i, idxX, idxY, maxX, maxY, inRowLength, inMaxX, inMaxY;
   int outIncX, outIncY, outIncZ, numComps;
-  float scale, step[2], origin[2], center[2], xRewind, invMag;
-  float x, y;
+  vtkFloatingPointType scale, step[2], origin[2], center[2], xRewind, invMag;
+  vtkFloatingPointType x, y;
   long idx, nx, ny, nx2, ny2, xi, yi;
 
   // find whole size of output for boundary checking
@@ -174,9 +174,9 @@ static void vtkImageZoom2DExecute(vtkImageZoom2D *self,
 
   // Advance to the origin of this output extent (used for threading)
   // x
-  scale = (float)(outExt[0]-wExt[0])/(float)(wExt[1]-wExt[0]+1);
+  scale = (vtkFloatingPointType)(outExt[0]-wExt[0])/(vtkFloatingPointType)(wExt[1]-wExt[0]+1);
   origin[0] = origin[0] + scale*nx*step[0];
-  scale = (float)(outExt[2]-wExt[2])/(float)(wExt[3]-wExt[2]+1);    
+  scale = (vtkFloatingPointType)(outExt[2]-wExt[2])/(vtkFloatingPointType)(wExt[3]-wExt[2]+1);    
   origin[1] = origin[1] + scale*ny*step[1];
 
   // Initialize zoom coords x, y to origin
@@ -190,7 +190,7 @@ static void vtkImageZoom2DExecute(vtkImageZoom2D *self,
   {
     int fround, fx, fy, fxStep, fyStep, fxRewind;
    
-    // Convert float to fast
+    // Convert vtkFloatingPointType to fast
     fx = FLOAT_TO_FAST1(x);
     fy = FLOAT_TO_FAST1(y);
     fxStep = FLOAT_TO_FAST1(step[0]);
