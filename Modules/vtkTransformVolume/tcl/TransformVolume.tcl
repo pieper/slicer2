@@ -105,7 +105,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.11 $} {$Date: 2005/03/21 22:20:12 $}]
+        {$Revision: 1.12 $} {$Date: 2005/03/21 22:35:16 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -429,23 +429,47 @@ proc TransformVolumeBuildGUI {} {
     pack $f -side top -padx 0 -pady $Gui(pad) -fill x
   
     set f $fResample.fSetExtent
-    DevAddButton $f.bIsoExtentI " Auto LR "  TransformVolumeAutoDimensionLR
-    DevAddButton $f.bIsoExtentJ " Auto PA "  TransformVolumeAutoDimensionPA
-    DevAddButton $f.bIsoExtentK " Auto IS "  TransformVolumeAutoDimensionIS
-    pack $f.bIsoExtentI  $f.bIsoExtentJ $f.bIsoExtentK -side left -padx $Gui(pad)
+    iwidgets::pushbutton  $f.bIsoExtentI \
+        -text "Auto LR" \
+        -background "#e2cdba" -foreground "#000000" \
+        -font {helvetica 8} \
+        -height 32 \
+        -width 70 \
+        -command TransformVolumeAutoDimensionLR
 
+    set f $fResample.fSetExtent
+    iwidgets::pushbutton  $f.bIsoExtentJ \
+        -text "Auto PA" \
+        -background "#e2cdba" -foreground "#000000" \
+        -font {helvetica 8} \
+        -height 32 \
+        -width 70 \
+        -command TransformVolumeAutoDimensionPA
+
+    set f $fResample.fSetExtent
+    iwidgets::pushbutton  $f.bIsoExtentK \
+        -text "Auto IS" \
+        -background "#e2cdba" -foreground "#000000" \
+        -font {helvetica 8} \
+        -height 32 \
+        -width 70 \
+        -command TransformVolumeAutoDimensionIS
+
+    pack $f.bIsoExtentI  $f.bIsoExtentJ $f.bIsoExtentK -side left -padx $Gui(pad)
     lappend TransformVolume(resampleConrols) $f.bIsoExtentI  $f.bIsoExtentJ $f.bIsoExtentK
 
     # Resample->Auto Extent
-    set f $fResample.fAutoDimension
-    frame $f -bg $Gui(activeWorkspace)
-    pack $f -side top -padx 0 -pady $Gui(pad) -fill x
-  
-    set f $fResample.fAutoDimension
-    DevAddButton $f.bAutoDimension "Auto Dimension"  TransformVolumeAutoDimension
-    pack $f.bAutoDimension -side left -padx $Gui(pad) -pady $Gui(pad)
-    
+    set f $fResample  
+    iwidgets::pushbutton  $f.bAutoDimension \
+        -text "Auto Dimension" \
+        -background "#e2cdba" -foreground "#000000" \
+        -font {helvetica 8} \
+        -height 32 \
+        -command TransformVolumeAutoDimension
+
+    pack $f.bAutoDimension -side top -padx $Gui(pad) -pady $Gui(pad)
     lappend TransformVolume(resampleConrols) $f.bAutoDimension 
+
 
     catch "destroy $fResample.isv"
 
