@@ -183,6 +183,16 @@ if { $WM != "" } {
     set wmpid [exec $WM &]
 }
 
+proc file_event {fp} {
+    global END
+    if {[eof $fp]} {
+        catch "close $fp"
+        set END 1
+    } else {
+        gets $fp line
+        puts $line
+    }
+}
 
 # if there was a command line arg, run the program and then exit
 if { $argc > 0 } {
@@ -190,8 +200,16 @@ if { $argc > 0 } {
     foreach arg $argv {
         lappend cmd $arg
     }
-    set ret [catch "exec $cmd" res]
-    puts $res
+    set fp [open "| csh -c \"$cmd \" |& cat" r]
+
+    fileevent $fp readable "file_event $fp"
+
+    set END 0
+    while { ![catch "pid $fp"] && ![eof $fp] } {
+        vwait END
+    }
+
+
     if { $WM != "" } {
         exec kill $wmpid
     }
