@@ -186,10 +186,12 @@ proc MainDataUpdateMRML {ModuleArray} {
         }
     }
     } else {
-        puts "Developer: you have not put menus on ModuleArray(mActiveList),\
+        if {$::Module(verbose)} {
+            puts "Developer: you have not put menus on ModuleArray(mActiveList),\
             which is a convenience for updating menus listing all \
             $ModuleArray objects.  See MainData.tcl, proc MainDataUpdateMRML \
             for information on how to stop this message from appearing."
+        }
     }
 
     # In case we changed the name of the active data object
