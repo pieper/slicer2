@@ -21,6 +21,7 @@ vtkInteractiveTensorGlyph.cxx
 vtkTensorMask.cxx
 vtkTensorMathematics.cxx
 vtkVectorToOuterProductDualBasis.cxx
+vtkHyperStreamlineDTMRI.cxx
 )
 
 ## classes that one does not want tcl wrapped

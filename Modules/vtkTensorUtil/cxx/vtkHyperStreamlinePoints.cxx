@@ -3,7 +3,7 @@
 // is there any problem with including a cxx file?
 // this is done for class vtkHyperPoint which is defined here
 // otherwise we cannot access the points calculated by superclass
-#include "vtkHyperStreamline.cxx"
+//#include "vtkHyperStreamline.cxx"
 
 //------------------------------------------------------------------------------
 vtkHyperStreamlinePoints* vtkHyperStreamlinePoints::New()
@@ -44,7 +44,8 @@ void vtkHyperStreamlinePoints::Execute()
   vtkDebugMacro(<<"Calling superclass execute");
   
   // default superclass behavior
-  vtkHyperStreamline::Execute();
+  //vtkHyperStreamline::Execute();
+  vtkHyperStreamlineDTMRI::Execute();
 
   vtkDebugMacro(<<"Grabbing superclass output points.");
 

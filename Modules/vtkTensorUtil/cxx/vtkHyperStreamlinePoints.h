@@ -2,10 +2,11 @@
 #define __vtkHyperStreamlinePoints_h
 
 #include "vtkTensorUtilConfigure.h"
-#include "vtkHyperStreamline.h"
+#include "vtkHyperStreamlineDTMRI.h"
 #include "vtkPoints.h"
 
-class VTK_TENSORUTIL_EXPORT vtkHyperStreamlinePoints : public vtkHyperStreamline
+//class VTK_TENSORUTIL_EXPORT vtkHyperStreamlinePoints : public vtkHyperStreamline
+class VTK_TENSORUTIL_EXPORT vtkHyperStreamlinePoints : public vtkHyperStreamlineDTMRI
 {
 public:
   static vtkHyperStreamlinePoints *New();
