@@ -166,21 +166,25 @@ switch $tcl_platform(os) {
         set isSolaris 1
         set isWindows 0
         set isDarwin 0
+        set isLinux 0
     }
     "Linux" { 
         set isSolaris 0
         set isWindows 0
         set isDarwin 0
+        set isLinux 1
     }
     "Darwin" { 
         set isSolaris 0
         set isWindows 0
         set isDarwin 1
+        set isLinux 0
     }
     default { 
         set isSolaris 0
         set isWindows 1
         set isDarwin 0
+        set isLinux 0
     }
 }
 
