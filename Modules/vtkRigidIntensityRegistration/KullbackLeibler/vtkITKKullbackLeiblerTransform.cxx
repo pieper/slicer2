@@ -158,10 +158,7 @@ static void vtkITKKLExecute(vtkITKKullbackLeiblerTransform *self,
   typedef itk::KLRegistration<OutputImageType,OutputImageType> RegistratorType;
   typename RegistratorType::Pointer KLRegistrator = RegistratorType::New();
 
-
   KLRegistrator->Initialize(self,matrix);
-
-  self->Print(std::cout);
 
   // ---------------------------------------
   // Set Up the KL Metric
@@ -218,6 +215,9 @@ static void vtkITKKLExecute(vtkITKKullbackLeiblerTransform *self,
   //
   // Start registration
   //
+
+  self->Print(std::cout);
+
   try { KLRegistrator->Execute(); }
   catch( itk::ExceptionObject & err )
     {
