@@ -51,7 +51,7 @@ proc SaveInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.4 $} {$Date: 2002/10/28 14:45:02 $}]
+            {$Revision: 1.5 $} {$Date: 2003/01/20 16:32:17 $}]
 
     SaveInitTables
 }
@@ -104,6 +104,7 @@ proc SaveInitTables {} {
 #-------------------------------------------------------------------------------
 
 proc SaveWindowToFile {directory filename imageType {window ""}} {
+    global viewWin
     if {"$window" == ""} {
         set window $viewWin
     }
@@ -112,6 +113,33 @@ proc SaveWindowToFile {directory filename imageType {window ""}} {
     saveFilter SetInput $window
     SaveImageToFile $directory $filename $imageType [saveFilter GetOutput]
     saveFilter Delete
+}
+
+proc SaveRendererToFile {directory filename imageType {mag 1} {renderer ""}} {
+    global viewWin
+    if {"$renderer" == ""} {
+        set renderer viewRen
+    }
+
+    set renwin [$renderer GetRenderWindow]
+
+    if {$mag == 1} {
+        # one-to-one magnification, simplify
+        SaveWindowToFile $directory $filename $imageType $renwin
+    } else {
+        # render image in pieces using vtkRenderLargeImage
+        vtkRenderLargeImage saveLargeImage
+        saveLargeImage SetMagnification $mag
+        saveLargeImage SetInput $renderer
+
+        # save to file
+        SaveImageToFile $directory $filename $imageType \
+            [saveLargeImage GetOutput]
+        saveLargeImage Delete
+
+        # re-render scene in normal mode
+        $renwin Render
+    }
 }
 
 
@@ -131,8 +159,15 @@ proc SaveWindowToFile {directory filename imageType {window ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc SaveImageToFile {directory filename imageType image} {
-    set filename [SaveGetFilePath $directory $filename $imageType]
+    if {$imageType == ""} {
+        set newImageType [SaveGetImageType $filename]
+        if {"$newImageType" == ""} {
+            error "unknown type for image $imageType"
+        }
+        set imageType $newImageType
+    }
 
+    set filename [SaveGetFilePath $directory $filename $imageType]
     vtk${imageType}Writer saveWriter
     saveWriter SetInput $image
     saveWriter SetFileName $filename
