@@ -119,6 +119,9 @@ proc EdPhaseWireInit {} {
     # current omega
     set Ed(EdPhaseWire,omega,id) PiOverThree
     set Ed(EdPhaseWire,omega,name) "pi/3"
+
+    # whether to w/l before computing phase
+    set Ed($e,useWindowLevel) 1
 }
 
 #-------------------------------------------------------------------------------
@@ -267,11 +270,23 @@ proc EdPhaseWireBuildVTK {} {
     #-------------------------------------------
     # Lauren this is in vtk3.2 only!
     vtkImageMapToWindowLevelColors Ed($e,phase,windowLevel)
+    Ed($e,phase,windowLevel) SetOutputFormatToRGB 
+
+    # get only the first component 
+    # (r=g=b == grayscale window/leveled value we want)
+    # Lauren: note that this copies data and for 
+    # speed one simple window level filter would be better
+    #-------------------------------------------
+    vtkImageExtractComponents Ed($e,phase,wlComp)
+    Ed($e,phase,wlComp) SetComponents 1
+    Ed($e,phase,wlComp) SetInput [Ed($e,phase,windowLevel) GetOutput]
 
     # fft of original image.
     #-------------------------------------------
     vtkImageFFT Ed($e,phase,fftSlice)
-    Ed($e,phase,fftSlice) SetInput [Ed($e,phase,windowLevel) GetOutput]
+    # input is either from window/level pipeline above or directly
+    # from reformatted slice from slicer object
+    #Ed($e,phase,fftSlice) SetInput [Ed($e,phase,wlComp)  GetOutput]
 
 
     
@@ -673,9 +688,12 @@ proc EdPhaseWireBuildGUI {} {
     frame $f.fPhase   -bg $Gui(activeWorkspace)
     pack $f.fPhase -side top  -pady $Gui(pad) -fill x
 
+    frame $f.fWL   -bg $Gui(activeWorkspace)
+    pack $f.fWL -side top  -pady $Gui(pad) -fill x
+
 
     #-------------------------------------------
-    # TabbedFrame-> Frame
+    # TabbedFrame->Advanced->Settings->Slider Frame
     #-------------------------------------------
     set f $Ed(EdPhaseWire,frame).fTabbedFrame.fAdvanced.fSettings.fSlider
 
@@ -765,6 +783,18 @@ proc EdPhaseWireBuildGUI {} {
     eval {entry $f.eCL -width 6 -textvariable Ed(EdPhaseWire,certLowerCutoff)} $Gui(WEA)
     pack $f.lPW $f.ePW $f.lCW $f.eCW  $f.lGW $f.eGW $f.lCL $f.eCL $f.lCU $f.eCU -side left
 
+    #-------------------------------------------
+    # TabbedFrame->Advanced->Settings->WL Frame
+    #-------------------------------------------
+    set f $Ed(EdPhaseWire,frame).fTabbedFrame.fAdvanced.fSettings.fWL
+
+    eval {checkbutton $f.cWindowLevel \
+	    -text "Window Level Image Before Phase Comp." \
+	    -variable Ed(EdPhaseWire,useWindowLevel) \
+	    -indicatoron 0 -command "EdPhaseUseWindowLevel"} $Gui(WCA)
+    pack $f.cWindowLevel -side left -padx 2 
+    TooltipAdd $f.cWindowLevel "Toggle window leveling of data before phase computation"
+
 }
 
 #-------------------------------------------------------------------------------
@@ -774,25 +804,39 @@ proc EdPhaseWireBuildGUI {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdPhaseUseWindowLevel {} {
-    global Lut Ed
+    global Lut Ed Slice
 
     set e EdPhaseWire
 
-    # get original volume and its current w/l
-    #-------------------------------------------
-    set v [EditorGetOriginalID]
-    set window [Volume($v,node) GetWindow]
-    set level  [Volume($v,node) GetLevel]
-
-    # imitate this display in our pipeline
-    #-------------------------------------------
-    Ed($e,phase,windowLevel) SetWindow $window
-    Ed($e,phase,windowLevel) SetLevel $level
-    # get the lookup table we are using already for this volume
-    Ed($e,phase,windowLevel) SetLookupTable Lut([Volume($v,node) GetLUTName],lut)
-    
-    puts "win: $window lev: $level"
-
+    if $Ed($e,useWindowLevel) {
+	puts "USING WL"
+	# get original volume and its current w/l
+	#-------------------------------------------
+	set v [EditorGetOriginalID]
+	set window [Volume($v,node) GetWindow]
+	set level  [Volume($v,node) GetLevel]
+	
+	# imitate this display in our pipeline
+	#-------------------------------------------
+	Ed($e,phase,windowLevel) SetWindow $window
+	Ed($e,phase,windowLevel) SetLevel $level
+	# get the lookup table we are using already for this volume
+	Ed($e,phase,windowLevel) SetLookupTable Lut([Volume($v,node) GetLUTName],lut)
+	
+	# set up pipeline
+	#-------------------------------------------
+	foreach s $Slice(idList) {
+	    Ed($e,phase,fftSlice) SetInput [Ed($e,phase,wlComp)  GetOutput]
+	    Slicer SetFirstFilter $s Ed($e,phase,windowLevel)
+	}
+	puts "win: $window lev: $level"
+	
+    } else {
+	puts "NO WL"
+	foreach s $Slice(idList) {
+	    Slicer SetFirstFilter $s Ed($e,phase,fftSlice) 
+	}
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -1614,8 +1658,12 @@ proc EdPhaseWireUsePhasePipeline {} {
 	# get input grayscale images from Slicer object
 	# (grab reformatted image to compute its phase)
 	#-------------------------------------------    
-	Slicer SetFirstFilter $s Ed($e,phase,windowLevel)
-	#Slicer SetFirstFilter $s Ed($e,phase,fftSlice) 
+	if $Ed($e,useWindowLevel) {
+	    Ed($e,phase,fftSlice) SetInput [Ed($e,phase,wlComp)  GetOutput]
+	    Slicer SetFirstFilter $s Ed($e,phase,windowLevel)
+	} else {
+	    Slicer SetFirstFilter $s Ed($e,phase,fftSlice) 
+	}
 	#Slicer SetFirstFilter $s Ed($e,gradMag$s)
 	
 
@@ -1643,7 +1691,9 @@ proc EdPhaseWireUsePhasePipeline {} {
     } 
     
     # get current w/l and use in our pipeline
-    EdPhaseUseWindowLevel
+    if {$Ed($e,useWindowLevel) == "1"} {
+	EdPhaseUseWindowLevel
+    }
 
     # update slicer
     Slicer ReformatModified
