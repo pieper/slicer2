@@ -59,7 +59,7 @@ public:
   vtkGetStringMacro(VolumeRefID);
 
   // Description:
-  // ID of the referenced volume
+  // Color look up table
   vtkSetStringMacro(ColorLUT);
   vtkGetStringMacro(ColorLUT);
 
