@@ -151,7 +151,7 @@ proc TesterInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.17 $} {$Date: 2003/09/19 18:25:41 $}]
+        {$Revision: 1.18 $} {$Date: 2003/10/24 06:08:27 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -368,7 +368,6 @@ proc TesterExit {} {
 #-------------------------------------------------------------------------------
 proc TesterSourceModule {type Module} {
    global Tester
-
     if {$Module == ""} return
     if {$type == ""} return
 
@@ -376,18 +375,21 @@ proc TesterSourceModule {type Module} {
 
     if {$type == "Main"} { 
         set path [GetFullPath $Module tcl tcl-main] 
-    set Tester(MainFileName) $Module
+        set Tester(MainFileName) $Module
     }
     if {$type == "Shared"} { 
         set path [GetFullPath $Module tcl tcl-shared]
-    set Tester(SharedFileName) $Module
+        set Tester(SharedFileName) $Module
     }
 
     if {$type == "Module"} { 
-    set path [GetFullPath $Module tcl tcl-modules]
-    set Tester(ModuleFileName) $Module
+      set path [GetFullPath $Module tcl tcl-modules 0]
+      # New structure
+      if {$path == ""} {
+         set path [GetFullPath $Module tcl ../../Modules/vtk${Module}/tcl 0]
+      }
+      set Tester(ModuleFileName) $Module
     }
-
 #    puts "b$path"
 #    puts "b$Tester(ModuleFileName)"
 
@@ -397,14 +399,16 @@ proc TesterSourceModule {type Module} {
         source $path 
     } else {
         DevWarningWindow "Didn't find that module!"
-    $Tester(lSource) config -text ""
-        Return
+        $Tester(lSource) config -text ""
+        return
     }
 
     ## Rebuild Gui on Modules
 
     if {$type == "Module"} { 
-    MainRebuildModuleGui $Module
+        # Kilian: Had to do it bc my file is call EMLocalSegment and the name of the module is EMSegment 
+        if {$Module == "EMLocalSegment"} {set Module EMSegment }
+        MainRebuildModuleGui $Module
         # Other Stuff that is Useful
         MainUpdateMRML
         # set Module(btn) Tester
@@ -414,7 +418,7 @@ proc TesterSourceModule {type Module} {
 
     ## Send message that we update Stuff.
     if {$Module != "Tester"} {
-    $Tester(lSource) config -text "Updated $Module."
+       $Tester(lSource) config -text "Updated $Module."
     }
 }
 
