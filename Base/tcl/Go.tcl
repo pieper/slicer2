@@ -377,6 +377,13 @@ if { $::SLICER(old-voxel-shift) == "true" } {
     _dummy_node Delete
 }
 
+## TODO - this is needed to avoid long model loading times on the mac
+# it may go away with future updates to mac osx opengl display lists
+catch "pdm_dummy Delete"
+vtkPolyDataMapper pdm_dummy
+pdm_dummy GlobalImmediateModeRenderingOn
+pdm_dummy Delete
+
 
 # this is required by the widget interactors
 package require vtkinteraction
@@ -678,7 +685,7 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.79 2004/09/21 02:08:37 pohl Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.80 2004/11/17 15:37:52 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
