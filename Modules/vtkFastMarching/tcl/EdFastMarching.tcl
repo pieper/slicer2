@@ -497,7 +497,7 @@ proc EdFastMarchingLabel {} {
     global Ed Label EdFastMarching
 
     LabelsFindLabel
-    if $Label(label)!=$EdFastMarching(label) {
+    if {$Label(label) != $EdFastMarching(label)} {
         if {$EdFastMarching(fastMarchingInitialized) == 1} {
 
             set EdFastMarching(label) $Label(label)
