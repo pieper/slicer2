@@ -419,7 +419,7 @@ proc MainMrmlReadVersion2.0 {fileName} {
 	while {$mrml != ""} {
 
 		# Find next tag
-		if {[regexp {^<([^ >]*)([^>]*)>} $mrml match tag attr] == 0} {
+		if {[regexp {^<([^ >]*)([^>]*)>([^<]*)} $mrml match tag attr stuffing] == 0} {
 				set errmsg "Invalid MRML file. Can't parse tags:\n$mrml"
 			puts "$errmsg"
 			tk_messageBox -message "$errmsg"
@@ -441,7 +441,7 @@ proc MainMrmlReadVersion2.0 {fileName} {
 		}
 
 		# Append to List of tags1
-		lappend tags1 "$tag $attr"
+		lappend tags1 "$tag $attr $stuffing"
 
 		# Strip leading white space
 		regsub "^\[\n\t \]*" $mrml "" mrml
@@ -890,7 +890,23 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 
 			Mrml(dataTree) AddItem $n
 		}
+
+		"Options" {
+		    puts "MainMrml Build Trees 2: Options found"
+
+		    foreach a $attr {
+			set key [lindex $a 0]
+			set val [lreplace $a 0 0]
+			puts "key $key value $val"
+			set Options($key) $val
+			switch $key {
+			    "viewMode"     {MainViewerSetMode $val}
+			    "viewBgColor"  {MainViewSetBackgroundColor $val}
+			}
+		    }
 		}
+
+	    }
 	}
 }
 
