@@ -133,7 +133,7 @@ proc TesterInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.8 $} {$Date: 2001/09/05 22:01:14 $}]
+		{$Revision: 1.9 $} {$Date: 2001/09/05 23:15:44 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -386,7 +386,12 @@ proc TesterSourceModule {type Module} {
     ## Rebuild Gui on Modules
 
     if {$type == "Module"} { 
-	TesterRebuildModuleGui $Module
+	MainRebuildModuleGui $Module
+        # Other Stuff that is Useful
+        MainUpdateMRML
+        # set Module(btn) Tester
+        # $Module(rMore) config -text $m
+        Tab $Module
     }
 
     ## Send message that we update Stuff.
@@ -394,50 +399,6 @@ proc TesterSourceModule {type Module} {
 	$Tester(lSource) config -text "Updated $Module."
     }
 }
-
-#-------------------------------------------------------------------------------
-# .PROC TesterRebuildModuleGui
-# 
-# Erase the old Gui and rebuild a new one.
-#
-# .ARGS
-# str ModuleName The name of the module
-# .END
-#-------------------------------------------------------------------------------
-proc TesterRebuildModuleGui {ModuleName} {
-    global Module Gui
-
-    if {[info exists Module($ModuleName,row1List)] == 1} {
-        foreach frame $Module($ModuleName,row1List) {
-            set f $Module($ModuleName,f$frame)
-            catch {destroy $f}
-        }
-    }
-
-    if {[info exists Module($ModuleName,row1List)] == 1} {
-        foreach frame $Module($ModuleName,row2List) {
-            set f $Module($ModuleName,f$frame)
-            catch {destroy $f}
-        }
-    }
-
-    set m $ModuleName
-    set fWork .tMain.fControls.fWorkspace
-    set f .tMain.fControls.fTabs
-
-    catch {destroy $f.f${m}row1}
-    catch {destroy $f.f${m}row2}
-    MainBuildModuleTabs $ModuleName
-    $Module($ModuleName,procGUI)
-    
-    # Other Stuff that is Useful
-    MainUpdateMRML
-
-#    $Module(Tester,procEnter)
-#    set Module(btn) Tester
-     Tab $ModuleName
-}
-
 
 #-------------------------------------------------------------------------------
 # .PROC TesterReadNewModule
@@ -462,7 +423,6 @@ proc TesterReadNewModule {Filename} {
     if {[file extension $Filename] != ".tcl"} {
         DevWarningWindow "Module names must end in .tcl"
         puts [file extension $Filename]
-        puts yo
         return
     }
 
