@@ -1393,17 +1393,6 @@ void vtkMrmlSlicer::SetOffset(int s, float userOffset)
     ref->SetElement(3, 3, 1.0);
   }
 
-  // Use ReformatMatix in reformatters
-  this->BackReformat[s]->Modified();
-  this->ForeReformat[s]->Modified();
-  this->LabelReformat[s]->Modified();
-
-  // >> AT 11/09/01
-  this->BackReformat3DView[s]->Modified();
-  this->ForeReformat3DView[s]->Modified();
-  this->LabelReformat3DView[s]->Modified();
-  // << AT 11/09/01
-
   // Use reformat matrix for other arbitrary volumes we may be reformatting
   this->VolumeReformattersModified();
 }
@@ -1543,16 +1532,6 @@ void vtkMrmlSlicer::ComputeReformatMatrix(int s)
 
   }//else
 
-  // Use ReformatMatrix in reformatters
-  this->BackReformat[s]->Modified();
-  this->ForeReformat[s]->Modified();
-  this->LabelReformat[s]->Modified();
-
-  // >> AT 11/09/01
-  this->BackReformat[s]->Modified();
-  this->ForeReformat[s]->Modified();
-  this->LabelReformat[s]->Modified();
-  // << AT 11/09/01
 }
 
 

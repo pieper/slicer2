@@ -36,7 +36,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 class VTK_EXPORT vtkImageReformat : public vtkImageToImageFilter
 {
-public:
+  public:
 	static vtkImageReformat *New();
   vtkTypeMacro(vtkImageReformat,vtkImageToImageFilter);
 	void PrintSelf(ostream& os, vtkIndent indent);
@@ -96,7 +96,12 @@ public:
 
   vtkGetMacro(RunTime, int);
   vtkSetMacro(RunTime, int);
-	
+
+  // Description:
+  // When determining the modified time of the filter, 
+  // this checks the modified time of the matrices.
+  unsigned long int GetMTime();
+
 protected:
 	vtkImageReformat();
 	~vtkImageReformat();
