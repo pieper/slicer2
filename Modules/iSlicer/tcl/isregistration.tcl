@@ -399,7 +399,7 @@ itcl::body isregistration::step {} {
 
     set t $itk_option(-transform)
 
-     $this set_init_mat
+    $this set_init_mat
 
     $_reg Modified
     $_reg Update
@@ -612,16 +612,9 @@ itcl::body isregistration::set_init_mat {} {
        puts [$this StringMatrix [$this getP2]]
     }
 
-
-#    ## invert mat before
-#    ## normal p1,p2
-#    $mat DeepCopy [[Matrix($t,node) GetTransform] GetMatrix]
-#    set p1mat [$this getP1]
-#    $p1mat Invert
-#    $this GetSimilarityMatrix [$this getP2] $mat $p1mat
-#    $mat Invert
-
-## (p2 mat p1^-1)^-1 = p1 mat^-1 p2^-1
+## p1 mat^-1 p2^-1. We need to invert the mat because
+## it is a RasToWld matrix and we need WldToRas
+## Note (p2 mat p1^-1)^-1 = p1 mat^-1 p2^-1
 ## So, both of these are identical.
 
     if {0} {
@@ -630,7 +623,7 @@ itcl::body isregistration::set_init_mat {} {
     $mat DeepCopy [[Matrix($t,node) GetTransform] GetMatrix]
     set p1mat [$this getP2]
     $p1mat Invert
-     $mat Invert
+    $mat Invert
     $this GetSimilarityMatrix [$this getP1] $mat $p1mat
     puts "switch, before--"
     puts [$this StringMatrix $mat]
@@ -673,23 +666,6 @@ itcl::body isregistration::set_init_mat {} {
         puts "Determinant"
         puts [$_matrix Determinant]
     }
-
-#     ### hacking to identity
-#     $_matrix Identity
-
-#     puts "major hack"
-#     $_matrix Identity
-#
-#    $_matrix Zero
-#    $_matrix SetElement 0 0 0.9689
-#    $_matrix SetElement 1 1 0.9689
-#    $_matrix SetElement 2 2 1
-#    $_matrix SetElement 3 3 1
-#    $_matrix SetElement 0 1  0.2474
-#    $_matrix SetElement 1 0 -0.2474
-#    $_matrix SetElement 0 3 -18.28
-#    $_matrix SetElement 1 3 -25.872
-
 
     $_reg Initialize $_matrix
     
