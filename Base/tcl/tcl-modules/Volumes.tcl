@@ -85,7 +85,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.74 $} {$Date: 2002/11/25 16:15:15 $}]
+            {$Revision: 1.75 $} {$Date: 2003/01/27 18:27:52 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -989,14 +989,14 @@ proc VolumesPropsApply {} {
     # if the volume is NEW we may read it in...
     if {$m == "NEW"} {
 
-    # add a MRML node for this volume (so that in UpdateMRML we can read it in according to the path, etc. in the node)
+        # add a MRML node for this volume (so that in UpdateMRML we can read it in according to the path, etc. in the node)
         set n [MainMrmlAddNode Volume]
         set i [$n GetID]
            
         # Added by Attila Tanacs 10/11/2000 1/4/02
 
         $n DeleteDICOMFileNames
-    $n DeleteDICOMMultiFrameOffsets
+        $n DeleteDICOMMultiFrameOffsets
         for  {set j 0} {$j < [llength $Volume(dICOMFileList)]} {incr j} {
             $n AddDICOMFileName [$Volume(dICOMFileListbox) get $j]
         }
@@ -1004,19 +1004,19 @@ proc VolumesPropsApply {} {
         if { $Volume(isDICOM) } {
             #$Volume(dICOMFileListbox) insert 0 [$n GetNumberOfDICOMFiles];
             set firstNum 1
-        if {$Volume(DICOMMultiFrameFile) == "0"} {
-        set Volume(lastNum) [llength $Volume(dICOMFileList)]
-        } else {
-        set Volume(lastNum) $Volume(DICOMMultiFrameFile)
-        for {set j 0} {$j < $Volume(lastNum)} {incr j} {
-            $n AddDICOMMultiFrameOffset [lindex $Volume(DICOMSliceOffsets) $j]
-        }
-        }
+            if {$Volume(DICOMMultiFrameFile) == "0"} {
+                set Volume(lastNum) [llength $Volume(dICOMFileList)]
+            } else {
+                set Volume(lastNum) $Volume(DICOMMultiFrameFile)
+                for {set j 0} {$j < $Volume(lastNum)} {incr j} {
+                    $n AddDICOMMultiFrameOffset [lindex $Volume(DICOMSliceOffsets) $j]
+                }
+            }
         }        
 
         # End of Part added by Attila Tanacs
 
-    # Fill in header information for reading the volume
+        # Fill in header information for reading the volume
         # Manual headers
         if {$Volume(readHeaders) == "0"} {
             # These setting are set down below, 
@@ -1041,23 +1041,23 @@ proc VolumesPropsApply {} {
             return
         }
 
-    # allow use of other module GUIs
+        # allow use of other module GUIs
         set Volume(freeze) 0
 
-    # set active volume on all menus
+        # set active volume on all menus
         MainVolumesSetActive $i
 
-    # save the ID for later in this proc
+        # save the ID for later in this proc
         set m $i
 
-    # if we are successful set the FOV for correct display of this volume
-    set dim     [lindex [Volume($i,node) GetDimensions] 0]
-    set spacing [lindex [Volume($i,node) GetSpacing] 0]
-    set fov     [expr $dim*$spacing]
-    set View(fov) $fov
-    MainViewSetFov
+        # if we are successful set the FOV for correct display of this volume
+        set dim     [lindex [Volume($i,node) GetDimensions] 0]
+        set spacing [lindex [Volume($i,node) GetSpacing] 0]
+        set fov     [expr $dim*$spacing]
+        set View(fov) $fov
+        MainViewSetFov
 
-    # display the new volume in the background of all slices
+        # display the new volume in the background of all slices
         MainSlicesSetVolumeAll Back $i
     } else {
         # End   if the Volume is NEW
