@@ -82,7 +82,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.22 $} {$Date: 2002/09/06 14:29:15 $}]
+        {$Revision: 1.23 $} {$Date: 2002/09/06 14:54:27 $}]
     
     # Initialize module-level variables
     
@@ -716,7 +716,7 @@ proc FiducialsSetScale { id {val ""}} {
 #-------------------------------------------------------------------------------
 proc FiducialsUpdateMRML {} {
     global Fiducials Mrml Module Models Model Landmark Path EndPath
-    
+
 
     # start callback in case any module wants to know that Fiducials are 
     # about to be updated
@@ -865,9 +865,13 @@ proc FiducialsUpdateMRML {} {
 Render3D
  
  ##################################################
+# UPDATE ACTIVE LISTS
 # Check to see if the active list still exists
 # and tell other modules what list is active
 ##################################################
+
+# if the list is in the listOfNames, then the active list before the
+# UpdateMRML still exists, and it stays active
 
 if { [lsearch $Fiducials(listOfNames) $Fiducials(activeList) ] > -1 } {
     set name $Fiducials(activeList)
@@ -881,6 +885,10 @@ if { [lsearch $Fiducials(listOfNames) $Fiducials(activeList) ] > -1 } {
     }
     }
    
+} else {
+# if the list that was active before the UpdateMRML does not exist anymore, 
+# then make the active list the "NONE" list
+    FiducialsSetActiveList "NONE"
 }
 
 ##################################################
@@ -971,6 +979,7 @@ Please save the scene and use that new file instead to not get this message agai
         $Module($m,fiducialsEndUpdateMRMLCallback)  
     }
     }
+
 }
 
 
