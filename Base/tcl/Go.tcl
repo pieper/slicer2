@@ -89,10 +89,16 @@ raisesplash
 #
 # set statup options - convert backslashes from windows
 # version of SLICER_HOME var into to regular slashes
+# (won't matter for unix version)
 #
 regsub -all {\\} $env(SLICER_HOME) / slicer_home
 regsub -all {\\} $env(VTK_SRC_DIR) / vtk_src_dir
-set auto_path "$slicer_home/Base/tcl $slicer_home/Base/Wrapping/Tcl/vtkSlicerBase $vtk_src_dir/Wrapping/Tcl $auto_path"
+lappend auto_path $slicer_home/Base/tcl 
+lappend auto_path $slicer_home/Base/Wrapping/Tcl/vtkSlicerBase
+lappend auto_path $vtk_src_dir/Wrapping/Tcl
+
+# Set path to search for plug-in modules
+lappend auto_path $slicer_home/Modules/vtkFastMarching/Wrapping/Tcl/vtkFastMarching
 
 package require vtkSlicerBase
 catch "package require vtkFastMarching"
