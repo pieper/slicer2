@@ -51,15 +51,24 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // The anteversion and inclination are dependend on a hip coordinate
 // system since without they would be dependend how the image was acquired.
 //
-// The coordinate system has one degree of freedom, the frontal axis.
-// The sagittal axis is constant (0,1,0) and the longitudinal axis
-// is orthogonal to both axis. This approach is due to the way the inclination
-// angle is computed by physicians. On a x-ray they connect the two caudal border
-// points of the hip to a line and compute the angle with the acetabular plane (which
-// is a line on a x-ray). The line connecting the two caudal border points is the 
-// frontal axis in the coordinate system. Whereas that can be transferred to 3D I found
-// no way to specify how much the hip is tilted, so I set it to (0,1,0).
+// The user has three options for coordinate systems within anteversion and
+// inclination are computed:
+//  - the global coordinate system (== world coordinate system)
+//  - the object coordinate system ( determined by the principal axes). This
+//    is the only csys which yields the same results under translation and
+//    rotation of the same hip.
+//  - a symmetry adapted coordinate system. This is what an physician uses on an x-ray:
+//    connect two symmetric points on the hip and compute the inclination
+//    based on that line. the x-axis of this csys is the symmetry axis of
+//    the hip. Basically this corrects rotation along the y-axis in the way
+//    a physician corrects it. Use this one. 
 //
+//
+// One thing is clearly missing: A way to compute the z-axis (== body axis)
+// solely based on the hip. That would allow to define a csys which is on the
+// one hand acceptable for a physician and on the other hand rotational and
+// translational invariant.
+
 class VTK_MORPHOMETRICS_EXPORT vtkPelvisMetric : public vtkObject
 {
  public:
@@ -73,21 +82,26 @@ class VTK_MORPHOMETRICS_EXPORT vtkPelvisMetric : public vtkObject
 
   void SetPelvis(vtkPolyData*);
   vtkGetObjectMacro(Pelvis,vtkPolyData);
+  vtkGetObjectMacro(WorldToObject,vtkTransform);
 
  // center of gravity of the member Pelvis
   vtkGetVector3Macro(Center,float);
 
   vtkGetObjectMacro(AcetabularPlane,vtkPlaneSource);
 
-  vtkGetObjectMacro(FrontalAxis,vtkAxisSource);
-
-  vtkGetObjectMacro(SagittalAxis,vtkAxisSource);
-
-  vtkGetObjectMacro(LongitudinalAxis,vtkAxisSource);
-
   // Update the members so that they fulfill some properties as well as 
   // computes the derived values.
   void Normalize();
+
+ // the following three functions set the coordinate system in which the inclination and the anteversion are
+ // computed. The ObjectCsys is the only one which computes the same results if the pelvis is rotated. But 
+ // the coordinate system is not necessarily the same a physician uses. WorldCsys does not adjustment, while
+ // the SymmetryAdaptedWorldCsys adjusts is x-axis (in vtk this is from left to right from a patient POV) to
+ // be the symmetry axis. This adjustment is done by a physician by connecting two symmetric points of the 
+ // pelvis in a x-ray. 
+  void WorldCsys(void);
+  void ObjectCsys(void);
+  void SymmetryAdaptedWorldCsys(void);
 
  protected:
   vtkPelvisMetric();
@@ -106,23 +120,18 @@ class VTK_MORPHOMETRICS_EXPORT vtkPelvisMetric : public vtkObject
  // center of gravity of Pelvis
   float* Center;
 
-  //the three axis vectors are orthogonal to each other
-  vtkAxisSource* FrontalAxis;
-
-  // always set to (0,1,0)
-  vtkAxisSource* SagittalAxis;
-
-  // Crossproduct of FrontalAxis and SagittalAxis
-  vtkAxisSource* LongitudinalAxis;
-
   float InclinationAngle;
   float AnteversionAngle;
 
   // recompute the angles
   void UpdateAngles();
- 
-  // ensure that all three Axis are orthogonal to each other
-  void OrthogonalizeAxes();
+  float Angle(float* Direction,float* n);
+
+  void NormalizeXAxis(float* n);
+
+  // transformation matrix from world coordinates to current object coordinate system
+  vtkTransform* WorldToObject;
+
 };
 
 #endif

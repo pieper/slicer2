@@ -1,5 +1,5 @@
 /*=auto=========================================================================
-                                                                                
+                     [[Pelvis GetWorldToObject] GetMatrix] Print
 (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
                                                                                 
 This software ("3D Slicer") is provided by The Brigham and Women's
@@ -35,6 +35,9 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkPelvisMetric.h"
 #include <vtkObjectFactory.h>
 #include <vtkMath.h>
+#include "vtkPrincipalAxes.h"
+#include <vtkTransform.h>
+#include <vtkMatrix4x4.h>
 
 vtkPelvisMetric* vtkPelvisMetric::New()
 {
@@ -80,18 +83,22 @@ vtkPelvisMetric::vtkPelvisMetric()
   Center[1] = 0;
   Center[2] = 0;
 
-  FrontalAxis  = vtkAxisSource::New();
-  FrontalAxis->SetDirection(1,0,0);
+  //FrontalAxis  = vtkAxisSource::New();
+  //FrontalAxis->SetDirection(1,0,0);
 
-  SagittalAxis  = vtkAxisSource::New();
-  SagittalAxis->SetDirection(0,1,0);
+  //SagittalAxis  = vtkAxisSource::New();
+  //SagittalAxis->SetDirection(0,1,0);
 
-  LongitudinalAxis  = vtkAxisSource::New();
-  LongitudinalAxis->SetDirection(0,0,1);
+  //LongitudinalAxis  = vtkAxisSource::New();
+  //LongitudinalAxis->SetDirection(0,0,1);
 
   InclinationAngle = 45;
   AnteversionAngle = 45;
+
+  WorldToObject = vtkTransform::New();
+
   Normalize();
+
 }
 
 void vtkPelvisMetric::SetPelvis(vtkPolyData* newPelvis)
@@ -119,14 +126,14 @@ void vtkPelvisMetric::SetPelvis(vtkPolyData* newPelvis)
   Center[0] = Center[0] / Pelvis->GetNumberOfPoints();
   Center[1] = Center[1] / Pelvis->GetNumberOfPoints();
   Center[2] = Center[2] / Pelvis->GetNumberOfPoints();
-  
+
+  WorldCsys();
+
   Modified();
 }
 
 void vtkPelvisMetric::Normalize()
 {
-  OrthogonalizeAxes();
-
   // ensure that the different direction vector look in certain directions.
   // those are invariants needed for computing the angles.
 
@@ -142,62 +149,69 @@ void vtkPelvisMetric::Normalize()
       AcetabularPlane->SetNormal(normal);
     }
   
-
+  // OBS! this invariant is also enforced in NormalizeXAxis
   // center of actabular plane in FrontalAxis halfspace
-  p_acetabulum = vtkMath::Dot(AcetabularPlane->GetCenter(),FrontalAxis->GetDirection());
-  p_center = vtkMath::Dot(Center,FrontalAxis->GetDirection());
+  float* frontalAxisDirection = WorldToObject->TransformFloatNormal(1,0,0);
+  p_acetabulum = vtkMath::Dot(AcetabularPlane->GetCenter(),frontalAxisDirection);
+  p_center = vtkMath::Dot(Center,frontalAxisDirection);
   if(p_acetabulum<p_center)
     {
-      float* dir= FrontalAxis->GetDirection();
-      FrontalAxis->SetDirection(-dir[0],-dir[1],-dir[2]);
+      vtkMatrix4x4* m = WorldToObject->GetMatrix();
+      for(int i=0;i<3;i++)
+    m->SetElement(i,0,-1*m->GetElement(i,0));
     }
+
 
   UpdateAngles();
   Modified();
 }
 
-void vtkPelvisMetric::OrthogonalizeAxes()
+// also done for the WorldToObject transformation in Normalize();
+void vtkPelvisMetric::NormalizeXAxis(float* n)
 {
-  float* FrontalAxisDirection = FrontalAxis->GetDirection();
-
-  // make FrontalAxis orthogonal to the Sagittal axis
-  float frontalSagittalP = vtkMath::Dot(FrontalAxis->GetDirection(),SagittalAxis->GetDirection());
-  FrontalAxis->SetDirection(FrontalAxisDirection[0] - frontalSagittalP*SagittalAxis->GetDirection()[0],
-                FrontalAxisDirection[1] - frontalSagittalP*SagittalAxis->GetDirection()[1],
-                FrontalAxisDirection[2] - frontalSagittalP*SagittalAxis->GetDirection()[2]);
-
-  // ensure the longitudinal axis is orthogonal to both axes
-  float* longitudinalDirection = (float*)malloc(3*sizeof(float));
-  vtkMath::Cross(FrontalAxis->GetDirection(),SagittalAxis->GetDirection(),longitudinalDirection);
-
-  LongitudinalAxis->SetDirection(longitudinalDirection);
-
-  free(longitudinalDirection);
+  float p_acetabulum = vtkMath::Dot(AcetabularPlane->GetCenter(),n);
+  float p_center = vtkMath::Dot(Center,n);
+  if(p_acetabulum<p_center)
+    {
+      for(int i=0;i<3;i++)
+    n[i] *= -1;
+    }
 }
+
+float vtkPelvisMetric::Angle(float* n,float* Direction)
+{
+  float angle = acos(vtkMath::Dot(Direction,n) / vtkMath::Norm(n));
+  return angle*vtkMath::RadiansToDegrees();
+}
+
 
 void vtkPelvisMetric::UpdateAngles()
 {
-  float* normalProjected = (float*) malloc(3*sizeof(float));
-  for(int i=0;i<3;i++)
-    normalProjected[i] = AcetabularPlane->GetNormal()[i];
+  float* normal_in_obj = WorldToObject->TransformFloatNormal(AcetabularPlane->GetNormal());
+  float* reference_n = (float*) malloc(3*sizeof(float));
+
+  for(int i = 0;i<3;i++)
+    reference_n[i] = 0;
+  reference_n[0] = 1;
+
+  // Inclination : project normal_in_obj onto x-z-Plane
+  normal_in_obj[1]= 0;
+
+  vtkMath::Normalize(normal_in_obj);
+
+  InclinationAngle = 90 - Angle(reference_n,normal_in_obj);
+
+  // Clean up of inclination computation
+  normal_in_obj = WorldToObject->TransformFloatNormal(AcetabularPlane->GetNormal());
+
+  // Anteversion
+  normal_in_obj[2]= 0;
+
+  vtkMath::Normalize(normal_in_obj);
+
+  AnteversionAngle = Angle(reference_n,normal_in_obj);
   
-  float normalP = vtkMath::Dot(normalProjected,SagittalAxis->GetDirection());
-  for(int i=0;i<3;i++)
-    normalProjected[i] = normalProjected[i] - normalP*SagittalAxis->GetDirection()[i];
-  
-  InclinationAngle = 90 - FrontalAxis->Angle(normalProjected);
-  
-  
-  for(int i=0;i<3;i++)
-    normalProjected[i] = AcetabularPlane->GetNormal()[i];
-  
-  normalP = vtkMath::Dot(normalProjected,LongitudinalAxis->GetDirection());
-  for(int i=0;i<3;i++)
-    normalProjected[i] = normalProjected[i] - normalP*LongitudinalAxis->GetDirection()[i];
-  
-  AnteversionAngle = FrontalAxis->Angle(normalProjected);
-  
-  free(normalProjected);
+  free(reference_n);
 }
 
 vtkPelvisMetric::~vtkPelvisMetric()
@@ -206,7 +220,110 @@ vtkPelvisMetric::~vtkPelvisMetric()
 
   free(Center);
 
-  FrontalAxis->Delete();
-  SagittalAxis->Delete();
-  LongitudinalAxis->Delete();
+  WorldToObject->Delete();
+}
+
+
+void vtkPelvisMetric::WorldCsys(void)
+{
+  WorldToObject->Identity();
+  WorldToObject->Translate(-Center[0],-Center[1],-Center[2]);
+  Normalize();
+}
+
+void vtkPelvisMetric::ObjectCsys(void)
+{
+  WorldToObject->Identity();
+
+  vtkPrincipalAxes* vPA = vtkPrincipalAxes::New();
+  vPA->SetInput(Pelvis);
+  vPA->Update();
+
+  vtkMatrix4x4* obj = WorldToObject->GetMatrix();
+
+  for(int j=0;j<3;j++)
+    {
+      obj->SetElement(0,j,vPA->GetXAxis()[j]);
+      obj->SetElement(1,j,vPA->GetYAxis()[j]);
+      obj->SetElement(2,j,vPA->GetZAxis()[j]);
+    }
+  
+  WorldToObject->PostMultiply();
+  WorldToObject->Translate(-Center[0],-Center[1],-Center[2]);
+  Normalize();
+}
+
+void vtkPelvisMetric::SymmetryAdaptedWorldCsys(void)
+{
+  WorldToObject->Identity();
+
+  vtkPrincipalAxes* vPA = vtkPrincipalAxes::New();
+  vPA->SetInput(Pelvis);
+  vPA->Update();
+
+  vtkMatrix4x4* obj = WorldToObject->GetMatrix();
+
+  // write the symmetry axis - the one with the smallest angle to (1,0,0) - into the first column 
+  float* axis = (float*)malloc(3*sizeof(float));
+
+  axis[0] = 1;
+  axis[1] = 0;
+  axis[2] = 0;
+  NormalizeXAxis(axis);
+
+  float* candidate = vPA->GetXAxis();
+  NormalizeXAxis(candidate);
+  for(int i =0;i<3;i++)
+    obj->SetElement(i,0,candidate[i]);
+
+  float distance = vtkMath::Distance2BetweenPoints(candidate,axis);
+
+  candidate = vPA->GetYAxis();
+  NormalizeXAxis(candidate);
+  if(vtkMath::Distance2BetweenPoints(candidate,axis) < distance)
+    {
+      distance = vtkMath::Distance2BetweenPoints(candidate,axis);
+      for(int i =0;i<3;i++)
+    obj->SetElement(i,0,candidate[i]);
+    } 
+
+  candidate = vPA->GetZAxis();
+  NormalizeXAxis(candidate);
+  if(vtkMath::Distance2BetweenPoints(candidate,axis) < distance)
+    {
+      distance = vtkMath::Distance2BetweenPoints(candidate,axis);
+      for(int i =0;i<3;i++)
+    obj->SetElement(i,0,candidate[i]);
+    } 
+
+  // projection of (0,1,0) onto the plane orthogonal to the symmetry axis
+  for(int i =0;i<3;i++)
+    candidate[i] = obj->GetElement(i,0);
+
+  axis[0] = 0;
+  axis[1] = 1;
+  axis[2] = 0;
+
+  float p = vtkMath::Dot(candidate,axis);
+  for(int i = 0;i < 3;i++)
+    axis[i] = axis[i] - p*candidate[i];
+  vtkMath::Normalize(axis);
+
+  for(int i = 0;i < 3;i++)
+    obj->SetElement(i,1,axis[i]);
+
+  // the last vector is automatically the crossproduct of the first two.
+  float* third = (float*)malloc(3*sizeof(float));
+  vtkMath::Cross(candidate,axis,third);
+
+  for(int i = 0;i < 3;i++)
+    obj->SetElement(i,2,third[i]);
+
+  free(axis);
+  free(third);
+
+  WorldToObject->PostMultiply();
+  WorldToObject->Translate(-Center[0],-Center[1],-Center[2]);
+  Normalize();
+              
 }
