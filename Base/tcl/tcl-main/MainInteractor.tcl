@@ -288,10 +288,18 @@ proc MainInteractorKeyPress {key widget x y} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorMotion {widget x y} {
-	global Interactor
+	global Interactor Module
 
 	set s $Interactor(s)
 	scan [MainInteractorXY $s $x $y] "%d %d %d %d" xs ys x y 
+
+
+	# added for LiveWire
+	switch $Module(activeID) {
+	"Editor" {
+		EditorMotion $x $y
+	}
+	}
 
 	# Cursor
 	MainInteractorCursor $s $xs $ys $x $y

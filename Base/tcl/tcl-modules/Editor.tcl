@@ -34,6 +34,7 @@
 #   EditorEnter
 #   EditorExit
 #   EditorMakeModel
+#   EditorMotion
 #   EditorB1
 #   EditorB1Motion
 #   EditorB1Release
@@ -99,7 +100,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.41 $} {$Date: 2001/01/11 18:48:41 $}]
+	    {$Revision: 1.42 $} {$Date: 2001/01/24 16:57:11 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -550,10 +551,10 @@ proc EditorBuildGUI {} {
     TooltipAdd $f.e "Nickname your NEW volume."
     pack $f.l -padx 3 -side left
     pack $f.e -padx 3 -side left -expand 1 -fill x
-    
+
     # Save widget for disabling name field if not NEW volume
     set Editor(eNameComposite) $f.e
-
+    
     #-------------------------------------------
     # Volumes->TabbedFrame->Merge->Merge
     #-------------------------------------------
@@ -1048,6 +1049,25 @@ proc EditorMakeModel {} {
 #                             Event Bindings
 ################################################################################
 
+#-------------------------------------------------------------------------------
+# .PROC EditorMotion
+# Effect-specific response to mouse motion. 
+# Currently only used for LiveWire.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EditorMotion {x y} {
+    global Ed Editor Slice Interactor
+
+    set s $Slice(activeID)
+    
+    switch $Editor(activeID) {
+	"EdLiveWire" {
+	    EdLiveWireMotion $x $y $s
+	}
+    }
+    
+}
 
 #-------------------------------------------------------------------------------
 # .PROC EditorB1
@@ -1056,7 +1076,9 @@ proc EditorMakeModel {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EditorB1 {x y} {
-    global Ed Editor
+    global Ed Editor Slice
+
+    set s $Slice(activeID)
     
     switch $Editor(activeID) {
 	"EdDraw" {
@@ -1076,11 +1098,14 @@ proc EditorB1 {x y} {
 		}
 	    }
 	}
+	"EdLiveWire" {
+	    EdLiveWireB1 $x $y $s
+	}
 	"EdChangeIsland" {
 	    EditorChangeInputLabel $x $y
 	}
 	"EdMeasureIsland" {
-	EditorChangeInputLabel $x $y
+	    EditorChangeInputLabel $x $y
 	}
 	"EdSaveIsland" {
 	    EditorChangeInputLabel $x $y
@@ -1119,6 +1144,8 @@ proc EditorB1Motion {x y} {
 	    switch $Ed(EdDraw,mode) {
 		"Draw" {
 		    Slicer DrawInsertPoint $x $y
+		    
+		    # Lauren this would be better:
 		    
 		    # DAVE: allow drawing on non-native slices someday
 		    #			Slicer SetReformatPoint $s $x $y
@@ -1727,27 +1754,32 @@ proc EdBuildScopeGUI {f var {not ""}} {
 	Single {
 	    set modes "Multi 3D"
 	    set names "{Multi Slice} {3D}"
+	    set tips "{Apply effect to each slice} {Apply effect in 3D}"
 	}
 	Multi {
 	    set modes "Single 3D"
 	    set names "{1 Slice} {3D}"
+	    set tips "{Apply effect to one slice only} {Apply effect in 3D}"
 	}
 	3D {
 	    set modes "Single Multi"
 	    set names "{1 Slice} {Multi Slice}"
+	    set tips "{Apply effect to one slice only} {Apply effect to each slice}"
 	}
 	default {
 	    set modes "Single Multi 3D"
 	    set names "{1 Slice} {Multi Slice} {3D}"
+	    set tips "{Apply effect to one slice only} {Apply effect to each slice} {Apply effect in 3D}"
 	}
     }
     eval {label $f.l -text "Scope:"} $Gui(WLA)
     frame $f.f -bg $Gui(activeWorkspace)
-    foreach mode $modes name $names {
+    foreach mode $modes name $names tip $tips {
 	eval {radiobutton $f.f.r$mode -width [expr [string length $name]+1]\
 		-text "$name" -variable $var -value $mode \
 		-indicatoron 0} $Gui(WCA)
 	pack $f.f.r$mode -side left -padx 0 -pady 0
+	TooltipAdd $f.f.r$mode $tip
     }
     pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
 }
@@ -1782,11 +1814,15 @@ proc EdBuildInputGUI {f var {options ""}} {
     
     eval {label $f.l -text "Input Volume:"} $Gui(WLA)
     frame $f.f -bg $Gui(activeWorkspace)
-    foreach input "Original Working" {
+    set tips "{Apply effect to Original volume} \
+	    {Apply effect to Working labelmap}"
+
+    foreach input "Original Working" tip $tips {
 	eval {radiobutton $f.f.r$input \
 		-text "$input" -variable $var -value $input -width 8 \
 		-indicatoron 0} $options $Gui(WCA)
 	pack $f.f.r$input -side left -padx 0
+	TooltipAdd $f.f.r$input $tip
     }
     pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
 }
@@ -1802,14 +1838,18 @@ proc EdBuildInteractGUI {f var {options ""}} {
     
     set modes "Active Slices All"
     set names "{1 Slice} {3 Slices} {3D}"
+    set tips "{Render (re-draw) one slice when you change settings} \
+	    {Render (re-draw) all three slices when you change settings} \
+	    {Render (re-draw) all slices and 3D window when you change settings}"
     
     eval {label $f.l -text "Interact:"} $Gui(WLA)
     frame $f.f -bg $Gui(activeWorkspace)
-    foreach mode $modes name $names {
+    foreach mode $modes name $names tip $tips {
 	eval {radiobutton $f.f.r$mode -width [expr [string length $name]+1]\
 		-text "$name" -variable $var -value $mode \
 		-indicatoron 0} $options $Gui(WCA)
-		pack $f.f.r$mode -side left -padx 0 -pady 0
+	pack $f.f.r$mode -side left -padx 0 -pady 0
+	TooltipAdd $f.f.r$mode $tip
     }
     pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
 }
@@ -1825,14 +1865,18 @@ proc EdBuildRenderGUI {f var {options ""}} {
     
     set modes "Active Slices All"
     set names "{1 Slice} {3 Slices} {3D}"
-    
+    set tips "{Render (re-draw) one slice when you apply} \
+	    {Render (re-draw) all three slices when you apply} \
+	    {Render (re-draw) all slices and 3D window when you apply}"
+
     eval {label $f.l -text "Render:"} $Gui(WLA)
     frame $f.f -bg $Gui(activeWorkspace)
-    foreach mode $modes name $names {
+    foreach mode $modes name $names tip $tips {
 	eval {radiobutton $f.f.r$mode -width [expr [string length $name]+1]\
 		-text "$name" -variable $var -value $mode \
 		-indicatoron 0} $options $Gui(WCA)
 	pack $f.f.r$mode -side left -padx 0 -pady 0
+	TooltipAdd $f.f.r$mode $tip
     }
     pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
 }
