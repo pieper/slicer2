@@ -101,7 +101,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.100 $} {$Date: 2004/11/09 18:46:43 $}]
+            {$Revision: 1.101 $} {$Date: 2004/11/09 18:51:27 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -710,6 +710,8 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     eval {label $fExport.l -text "Export Analyze Format\nWarning: there is a pixel shift\nbug in the output"} $Gui(WLA)
     pack  $fExport.l -side top -padx $Gui(pad)    
     pack $f.fCORFile  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+    eval {label $fExport.ll -text "Export COR Format\nWarning: only 1mm 256 cubed\n8 bit images supported"} $Gui(WLA)
+    pack  $fExport.ll -side top -padx $Gui(pad)    
 
     #-------------------------------------------
     # Export->Active frame
@@ -2043,7 +2045,7 @@ proc VolumesCORExport {} {
     for {set i 255} {$i >= 0} {incr i -1} {
         set ii [format %03d $i]
         set newii [format %03d [expr 1 + $i]]
-        file rename $Volumes(prefixCORSave)/COR-$ii $Volumes(prefixCORSave)/COR-$newii  
+        file rename -force $Volumes(prefixCORSave)/COR-$ii $Volumes(prefixCORSave)/COR-$newii  
     }
 
     set Volumes(prefixCORSave) $Volumes(prefixCORSave)/COR-.info
