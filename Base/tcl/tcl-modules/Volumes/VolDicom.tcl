@@ -281,6 +281,7 @@ proc DICOMLoadStudy { dir {Pattern "*"} } {
                     set seriestag [file tail $d]
                 }
                 regsub -all " " $seriestag "_" seriestag
+                regsub -all "." $seriestag "_" seriestag
                 set ::Volume(name) $seriestag-$::Volume(name)
                 lappend return_ids [VolumesPropsApply]
             }
