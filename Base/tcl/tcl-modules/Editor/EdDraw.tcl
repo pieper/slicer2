@@ -58,7 +58,7 @@ proc EdDrawInit {} {
 	set Ed($e,input) Working
 
 	set Ed($e,mode)   Draw
-	set Ed($e,radius) 1
+	set Ed($e,radius) 0
 	set Ed($e,shape)  Polygon
 	set Ed($e,render) Active
 }
@@ -110,11 +110,11 @@ proc EdDrawBuildGUI {} {
 
 	# Output label
 	set c {button $f.bOutput -text "Output:" \
-		-command "ShowLabels" $Gui(WBA)}; eval [subst $c]
+		-command "ShowLabels EdDrawLabel" $Gui(WBA)}; eval [subst $c]
 	set c {entry $f.eOutput -width 6 \
 		-textvariable Label(label) $Gui(WEA)}; eval [subst $c]
-	bind $f.eOutput <Return>   "LabelsFindLabel"
-	bind $f.eOutput <FocusOut> "LabelsFindLabel"
+	bind $f.eOutput <Return>   "EdDrawLabel"
+	bind $f.eOutput <FocusOut> "EdDrawLabel"
 	set c {entry $f.eName -width 14 \
 		-textvariable Label(name) $Gui(WEA) \
 		-bg $Gui(activeWorkspace) -state disabled}; eval [subst $c]
@@ -201,6 +201,19 @@ proc EdDrawExit {} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC EdDrawLabel
+# .END
+#-------------------------------------------------------------------------------
+proc EdDrawLabel {} {
+	global Label
+
+	LabelsFindLabel
+
+	set color [Color($Label(activeID),node) GetDiffuseColor]
+	eval Slicer DrawSetColor $color
+}
+
+#-------------------------------------------------------------------------------
 # .PROC EdDrawUpdate
 # .END
 #-------------------------------------------------------------------------------
@@ -275,17 +288,21 @@ proc EdDrawApply {} {
 	# Only draw on native slices
 	set outOrder [Ed(editor) GetOutputSliceOrder]
 	set inOrder  [Ed(editor) GetInputSliceOrder]
+	# Output order is one of IS, LR, PA
+	if {$inOrder == "RL"} {set inOrder LR}
+	if {$inOrder == "AP"} {set inOrder PA}
+	if {$inOrder == "SI"} {set inOrder IS}
 	if {$outOrder != $inOrder} {
-		if {$inOrder == "LR" || $inOrder == "RL"} {
-			set native Sagittal
+		if {$inOrder == "LR"} {
+			set native SagSlice
 		}
-		if {$inOrder == "AP" || $inOrder == "PA"} {
-			set native Coronal
+		if {$inOrder == "PA"} {
+			set native CorSlice
 		}
-		if {$inOrder == "IS" || $inOrder == "SI"} {
-			set native Axial
+		if {$inOrder == "IS"} {
+			set native AxiSlice
 		}
-		tk_messageBox -message "Please draw on the $native slice instead."
+		tk_messageBox -message "Please draw on the slice with orient = $native."
 		return
 	}
 

@@ -160,7 +160,7 @@ proc EdThresholdBuildGUI {} {
 
 	# Output label
 	set c {button $f.bOutput -text "Output:" \
-		-command "ShowLabels" $Gui(WBA)}; eval [subst $c]
+		-command "ShowLabels EdThresholdLabel" $Gui(WBA)}; eval [subst $c]
 	set c {entry $f.eOutput -width 6 \
 		-textvariable Label(label) $Gui(WEA)}; eval [subst $c]
 	bind $f.eOutput <Return>   "EdThresholdLabel"
@@ -416,7 +416,11 @@ proc EdThresholdApply {} {
 	Ed(editor)     UseInputOff
 
 	EdUpdateAfterApplyEffect $v
-	# Reset sliders
-	EdThresholdSetInput
+
+	# Reset sliders if the input was working, because that means
+	# it changed.
+	if {$v == [EditorGetWorkingID]} {
+		EdThresholdSetInput
+	}
 }
 
