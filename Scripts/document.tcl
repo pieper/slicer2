@@ -45,6 +45,9 @@ proc Usage { {msg ""} } {
     set msg "$msg\n  \[options\] is one of the following:"
     set msg "$msg\n   --help : prints this message and exits"
     set msg "$msg\n   --no-doxy : does not generate the doxygen pages"
+    set msg "$msg\n   --no-mods : skip doing the documentation for the modules"
+    set msg "$msg\n   --mod : just do the documentation for the module specified next, suppresses the other modules"
+    set msg "$msg\n   --verbose : print out extra debugging info"
     puts stderr $msg
 }
 
@@ -53,6 +56,9 @@ set argc [llength $argv]
 
 set DOCUMENT(dodoxy) 1
 set strippedargs ""
+set ::doModsFlag 1
+set ::isModFlag 0
+set ::verbose 0
 
 for {set i 0} {$i < $argc} {incr i} {
     set a [lindex $argv $i]
@@ -64,6 +70,15 @@ for {set i 0} {$i < $argc} {incr i} {
         "-h" {
             Usage
             exit 1
+        }
+        "--no-mods" {
+            set ::doModsFlag 0
+        }
+        "--mod" {
+            set ::isModFlag 1
+        }
+        "--verbose" {
+            set ::verbose 1
         }
         "-*" {
             Usage "unknown option $a\n"
@@ -88,7 +103,78 @@ if {$DOCUMENT(dodoxy) == 1} {
 
     set ::env(SLICER_DOC) [file join $::SLICER_HOME Doc]
     set ::env(SLICER_HOME) $::SLICER_HOME
-    puts "\nProducing the VTK documentation, based on SLICER_HOME = ${SLICER_HOME}, SLICER_DOC = $::env(SLICER_DOC)"
+    puts "\nProducing the Base/cxx VTK documentation, based on:\n\tSLICER_HOME = ${SLICER_HOME}\n\tSLICER_DOC = $::env(SLICER_DOC)"
     catch "eval exec \"doxygen $::SLICER_HOME/Base/cxx/Doxyfile\"" res
     puts $res
+
+    set modulePaths ""
+    set moddir [file join $::SLICER_HOME Modules]
+    set modsToLink ""
+
+    if {$::isModFlag} {
+        set modname [lindex $argv 0]
+        if {$modname != ""} {
+            # set up this module's path
+            set modulePaths [file join $moddir $modname]
+            if {$::verbose} { puts "isModFlag is true, modname = $modname" }
+        }
+    } else {
+        # otherwise do all the modules
+        if {$::doModsFlag} {
+            if {$::verbose} { 
+                puts "\nisModFlag $isModFlag, doModsFlag $::doModsFlag. Getting modulepaths in $moddir."
+            }
+            set modulePaths [glob -nocomplain $moddir/*]
+        }
+    }
+    if {$::verbose} {
+        puts "modulePaths = $modulePaths"
+    }
+
+    # now iterate through the module paths
+    foreach modpath $modulePaths {
+        set doxyfile [file join $modpath cxx Doxyfile]
+        if {[file exist $doxyfile]} {
+            # the doxyfile uses the modname env var to get the source and output dirs
+            set ::env(MODNAME) [file tail $modpath]
+
+            if {$::verbose} { puts "Found Doxyfile $doxyfile, with modname set to $::env(MODNAME)" } 
+                
+            set moddocdir [file join $::env(SLICER_DOC) vtk Modules $::env(MODNAME)]
+            # create the output dir, as doxygen will barf if it's not there
+            if {[catch {file mkdir $moddocdir} errmsg] == 1} {
+                puts "Error creating dir $moddocdir:\n$errmsg"
+            } else {
+                puts "\nProducing the VTK documentation for module $::env(MODNAME)"
+                catch "eval exec \"doxygen $doxyfile\"" res
+                puts $res
+                lappend modsToLink $::env(MODNAME) 
+            }
+        } else { 
+            if {$::verbose} {
+                # it's not really an error, could have non cxx modules
+                puts "Doxyfile not found: $doxyfile"
+            }
+        }
+    }
+    # if we made any module pages, link them in from a top level html file
+    if {$modsToLink != ""} {
+        set htmlString "<TITLE>Doxygen Documentation for Modules</TITLE><H1>Doxygen Documentation for Modules</H1>"
+        append htmlString "<ul>"
+        foreach mod $modsToLink {
+            append htmlString "<li><a href=\"${mod}/html/index.html\">${mod}</a>"
+        }
+        append htmlString "</ul>"
+        if {$::verbose} { puts $htmlString }
+        set htmlFname [file join $::env(SLICER_DOC) vtk Modules index.html]
+        if {[catch {set fid [open $htmlFname "w"]} errmsg] == 1} {
+            puts "Error writing file $htmlFname: $errmsg"
+            puts "Here's your file contents:\n$htmlString"
+        } else {
+            puts $fid $htmlString
+            close $fid
+            puts "Wrote modules index file in $htmlFname"
+        }
+    }
 }
+
