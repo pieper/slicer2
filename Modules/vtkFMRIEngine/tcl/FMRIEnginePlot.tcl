@@ -47,9 +47,6 @@
 #   FMRIEngineGetVoxelFromSelection y)
 #   FMRIEngineCheckSelectionAgainstVolumeLimits the
 #==========================================================================auto=
-
-package require BLT
-
 #-------------------------------------------------------------------------------
 # .PROC FMRIEnginePopUpPlot
 # This routine pops up a plot of a selected voxel's response over
@@ -62,6 +59,12 @@ package require BLT
 #-------------------------------------------------------------------------------
 proc FMRIEnginePopUpPlot {x y} {
     global FMRIEngine
+
+    # error if no private segment
+    if { [catch "package require BLT"] } {
+        DevErrorWindow "Must have the BLT package"
+        return
+    }
 
     if {! $FMRIEngine(trackMotion)} {
         return
@@ -131,12 +134,7 @@ proc FMRIEnginePopUpPlot {x y} {
         blt::graph $w.graph -plotbackground white 
         pack $w.graph 
         $w.graph legend configure -position bottom -relief raised \
-        -font fixed -fg black 
-        if {$FMRIEngine(tcPlottingOption) == "Short"} {
-            $w.graph axis configure x -title "Combined Condition/Baseline Volume Number" 
-        } else {
-            $w.graph axis configure x -title "Volume Number" 
-        }
+            -font fixed -fg black 
         $w.graph axis configure y -title "Intensity"
         # $w.graph grid on
         # $w.graph grid configure -color black
@@ -145,6 +143,13 @@ proc FMRIEnginePopUpPlot {x y} {
 
         set FMRIEngine(timeCourseToplevel) $w
         set FMRIEngine(timeCourseGraph) $w.graph
+    }
+
+    if {$FMRIEngine(tcPlottingOption) == "Short"} {
+        $FMRIEngine(timeCourseGraph) axis configure x \
+            -title "Combined Condition/Baseline Volume Number" 
+    } else {
+        $FMRIEngine(timeCourseGraph) axis configure x -title "Volume Number" 
     }
 
     FMRIEngineDrawPlot$FMRIEngine(tcPlottingOption) $i $j $k 
