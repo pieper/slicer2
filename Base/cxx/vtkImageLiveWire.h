@@ -33,7 +33,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkImageLiveWire_h
 #define __vtkImageLiveWire_h
 
-#include "vtkImageTwoInputFilter.h"
+#include "vtkImageMultipleInputFilter.h"
 #include "vtkImageDrawROI.h"
 
 // avoid tcl wrapping ("begin Tcl exclude")
@@ -189,12 +189,22 @@ class circularQueue {
 	if (el->Next == NULL)
 	  {
 	    cout <<"ERROR in vtkImageLiveWire.  el->Next is NULL.\n "<< endl;
+	    return;
 	  }
 	el->Next->Prev = el->Prev;
 	el->Prev->Next = el->Next;
 	
 	// clear el's pointers
 	el->Prev = el->Next = NULL;
+	}
+      else
+	{
+	  if (this->Verbose)
+	    {
+	      cout <<"Q_REMOVE: el->Prev is NULL, el (" << el->Coord[0] << "," 
+		   << el->Coord[1] << ") not in Q.\n "<< endl;
+	      return;
+	    }
 	}
       
       if (this->Verbose)
@@ -221,7 +231,9 @@ class circularQueue {
 	}
       if (this->Verbose)
 	{
-	  cout << "Q_GET b: " << bucket << endl;
+	  int x = this->Circle[bucket].Prev->Coord[0];
+	  int y = this->Circle[bucket].Prev->Coord[1];
+	  cout << "Q_GET b: " << bucket << ", point: ("<< x << "," << y << ")" << endl;	  
 	}
       return this->Circle[bucket].Prev;
     }
@@ -242,22 +254,22 @@ class circularQueue {
       int bucket = this->GetBucket(cost);
       int count = 0;
 
-      while (this->Circle[bucket].Next == &this->Circle[bucket] && count < this->C+1)
+      while (this->Circle[bucket].Next == &this->Circle[bucket] && count <= this->C)
 	{
 	  // search around the Q for the next vertex
 	  cost++;
 	  bucket = this->GetBucket(cost);
-	  // have we looped all the way around?
 	  count++;
 	}
 
+      // have we looped all the way around?
       if (count > this->C) 
 	{
 	  cout << "ERROR in vtkImageLiveWire.  Empty Q." << endl;
 	}
       if (this->Circle[bucket].Prev == &this->Circle[bucket])
 	{
-	  cout <<"ERROR in vtkImageLiveWire.  Prev not linked right." << endl;
+	  cout <<"ERROR in vtkImageLiveWire.  Prev not linked to bucket." << endl;
 	}
 
       return bucket;
@@ -272,26 +284,42 @@ class circularQueue {
 // start Tcl wrapping again (cryptic acronym for End Tcl Exclude)
 //ETX
 
-class VTK_EXPORT vtkImageLiveWire : public vtkImageTwoInputFilter
+class VTK_EXPORT vtkImageLiveWire : public vtkImageMultipleInputFilter
 {
 public:
   static vtkImageLiveWire *New();
-  vtkTypeMacro(vtkImageLiveWire,vtkImageTwoInputFilter);
+  vtkTypeMacro(vtkImageLiveWire,vtkImageMultipleInputFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
-  // Top edges, direction from L to R
-  void SetTopEdges(vtkImageData *image) {this->SetInput1(image);}
-  vtkImageData *GetTopEdges() {return this->GetInput1();}
+  // Image data all these edges were created from
+  void SetOriginalImage(vtkImageData *image) {this->SetInput(0,image);}
+  vtkImageData *GetOriginalImage() {return this->GetInput(0);}
 
   // Description:
-  // Right edges, direction downward
-  void SetRightEdges(vtkImageData *image) {this->SetInput2(image);}
-  vtkImageData *GetRightEdges() {return this->GetInput2();}
+  // Top edges, direction from L to R  (corresponds to Dir RIGHT)
+  void SetTopEdges(vtkImageData *image) {this->SetInput(1,image);}
+  vtkImageData *GetTopEdges() {return this->GetInput(1);}
+
+  // Description:
+  // Right edges, direction downward (corresponds to Dir DOWN)
+  void SetRightEdges(vtkImageData *image) {this->SetInput(2,image);}
+  vtkImageData *GetRightEdges() {return this->GetInput(2);}
+
+  // Description:
+  // Bottom edges, direction from R to L (corresponds to Dir LEFT)
+  void SetBottomEdges(vtkImageData *image) {this->SetInput(3,image);}
+  vtkImageData *GetBottomEdges() {return this->GetInput(3);}
+
+  // Description:
+  // Left edges, direction upward (corresponds to Dir UP)
+  void SetLeftEdges(vtkImageData *image) {this->SetInput(4,image);}
+  vtkImageData *GetLeftEdges() {return this->GetInput(4);}
 
   // Description:
   // Starting point of shortest path (mouse click #1)
-  vtkSetVector2Macro(StartPoint, int);
+  void SetStartPoint(int x, int y);
+  void SetStartPoint(int *point){this->SetStartPoint(point[0],point[1]);};
   vtkGetVector2Macro(StartPoint, int);
 
   // Description:
@@ -308,15 +336,28 @@ public:
   // For testing.  
   vtkSetMacro(Verbose, int);
   vtkGetMacro(Verbose, int);
+
+  // Description:
+  // Cumulative cost of current path.
+  // Don't set this; it's here for access from vtkImageLiveWireExecute
+  vtkSetMacro(CurrentCC, int);
+  vtkGetMacro(CurrentCC, int);
+
+  // Description:
+  // Current point of "longest shortest" path found so far.
+  // Don't set this; it's here for access from vtkImageLiveWireExecute
+  vtkSetVector2Macro(CurrentPoint, int);
+  vtkGetVector2Macro(CurrentPoint, int);
   
   // Description:
-  // This filter represents contour points
-  // it outputs an image containing them ??
+  // Points on the shortest path ("contour")
+  // The output image has these highlighted.
   vtkGetObjectMacro(ContourPoints, vtkPoints);
 
   // ---- Data structures for internal use in path computation -- //
   // Description:
-  // 
+  // Circular queue, composed of buckets that hold vertices of each path cost.
+  // The vertices are stored in a doubly linked list for each bucket.
   circularQueue *Q;
 
   //BTX
@@ -343,26 +384,41 @@ public:
   //ETX
   // ---- End of data structures for internal use in path computation -- //
 
-  // Lauren how should this work with the Editor??
+  // Description:
+  // Points on the contour...  (maybe this is B?)
+  // Lauren why was there no get/set before??  (fix)
+  //vtkGetObjectMacro(ContourPoints, vtkPoints);
   vtkPoints *ContourPoints;
 
+  // Description:
+  // This is public since it is called from the non-class function 
+  // vtkImageLiveWireExecute...  Don't call this.
+  void AllocatePathInformation(int numRows, int numCols);
 
 protected:
   vtkImageLiveWire();
-  ~vtkImageLiveWire() {};
+  ~vtkImageLiveWire();
   vtkImageLiveWire(const vtkImageLiveWire&) {};
   void operator=(const vtkImageLiveWire&) {};
 
   int StartPoint[2];
   int EndPoint[2];
-  
+  int PrevEndPoint[2];
+
+  int CurrentCC;
+  int *CurrentPoint;
+
   int MaxEdgeCost;
+
   int Verbose;
+
+
+  void DeallocatePathInformation();
 
   void ExecuteInformation(vtkImageData **inputs, vtkImageData *output); 
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6],
 				int whichInput);
-  void ExecuteInformation(){this->vtkImageTwoInputFilter::ExecuteInformation();};
+  void ExecuteInformation(){this->vtkImageMultipleInputFilter::ExecuteInformation();};
   virtual void Execute(vtkImageData **inDatas, vtkImageData *outData);  
 
 };

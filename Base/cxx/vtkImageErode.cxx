@@ -220,6 +220,8 @@ static void vtkImageErodeExecute(vtkImageErode *self,
 	hoodMax1 = hoodMin1 + kernelSize[1] - 1;
 	hoodMax2 = hoodMin2 + kernelSize[2] - 1;
 
+	// Lauren this is a bug! (increments are wrong.)
+	// just make this class inherit from the new vtkImageNeighborhoodFilter
 	// Setup mask info
 	maskPtr = (unsigned char *)(self->GetMaskPointer());
 	maskInc0 = kernelSize[0];
@@ -265,6 +267,7 @@ static void vtkImageErodeExecute(vtkImageErode *self,
 		{
 			// Loop through neighborhood pixels (kernel radius=1)
 			// Note: input pointer marches out of bounds.
+		  // Lauren This next line is hard-coded 3x3x3 mask size.  
 			hoodPtr2 = inPtr0 - inInc0 - inInc1 - inInc2;
 			maskPtr2 = maskPtr;
 			for (hoodIdx2 = hoodMin2; hoodIdx2 <= hoodMax2; ++hoodIdx2)
