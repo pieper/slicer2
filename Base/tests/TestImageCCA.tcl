@@ -1,5 +1,5 @@
-catch {load vtktcl}
-source vtkImageInclude.tcl
+package require vtk
+package require vtkSlicerBase
 
 # Image pipeline
 
@@ -10,13 +10,13 @@ reader SetDataExtent 0 255 0 255 1 93
 reader SetFilePrefix "../../../vtkdata/fullHead/headsq"
 reader SetDataMask 0x7fff
 
-vtkImageThresholdBeyond thbeyond
-thbeyond SetInput [reader GetOutput]
-thbeyond SetReplaceIn 1
-thbeyond SetReplaceOut 1 
-thbeyond SetInValue 1000 
-thbeyond SetOutValue 2000 
-thbeyond ThresholdBetween 1000 2000
+vtkImageThreshold th
+th SetInput [reader GetOutput]
+th SetReplaceIn 1
+th SetReplaceOut 1 
+th SetInValue 1000 
+th SetOutValue 2000 
+th ThresholdBetween 1000 2000
 
 vtkImageCCA cca
 cca SetInput [thbeyond GetOutput]

@@ -10,12 +10,11 @@ reader SetDataExtent 0 255 0 255 1 93
 reader SetFilePrefix "../../../vtkdata/fullHead/headsq"
 reader SetDataMask 0x7fff
 
-vtkImageThresholdFast thfast
+vtkImageThreshold thfast
 thfast SetInput [reader GetOutput]
 thfast SetReplaceIn 1
 thfast SetReplaceOut 1
-thfast SetUpperThreshold 2000
-thfast SetLowerThreshold 1000
+thfast ThresholdBetween 1000 2000
 thfast SetOutValue 0
 thfast SetInValue 1000
 
