@@ -88,7 +88,7 @@ proc FMRIEnginePopUpPlot {x y} {
 
         vtkTimeCoursePlotActor tcPlot
         tcPlot SetVoxelIndex $i $j $k
-        tcPlot SetPlot [$FMRIEngine(actvolgen) GetTimeCourse $i $j $k] \
+        tcPlot SetPlot [FMRIEngine(actvolgen) GetTimeCourse $i $j $k] \
         $FMRIEngine(stimulus) 
 
         vtkRenderer render
@@ -111,7 +111,7 @@ proc FMRIEnginePopUpPlot {x y} {
     }
 
     $FMRIEngine(tcPlot) SetVoxelIndex $i $j $k
-    $FMRIEngine(tcPlot) SetPlot [$FMRIEngine(actvolgen) GetTimeCourse $i $j $k] \
+    $FMRIEngine(tcPlot) SetPlot [FMRIEngine(actvolgen) GetTimeCourse $i $j $k] \
         $FMRIEngine(stimulus) 
     #Update the graph for the new data
     $FMRIEngine(renWin) Render 
@@ -185,7 +185,7 @@ proc FMRIEngineGetVoxelFromSelection {x y} {
     if {$s == ""} {
         DevErrorWindow "No slice was picked."
         return
-     }
+    }
     set xs $x
     set ys $y
 
