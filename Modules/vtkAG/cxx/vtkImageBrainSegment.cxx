@@ -49,7 +49,7 @@ int vtkImageBrainSegment::Average(vtkImageData* img,int thesh)
       {
       for(int x=ext[0];x<=ext[1];++x)
     {
-    double v=img->GetScalarComponentAsDouble(x,y,z,0);
+    float v=img->GetScalarComponentAsFloat(x,y,z,0);
     if(v>=thesh)
       {
       s+=v;
