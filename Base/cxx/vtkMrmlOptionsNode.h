@@ -48,6 +48,10 @@ public:
   //--------------------------------------------------------------------------
 
   // Description:
+  // Write the node's attributes
+  void Write(ofstream& of, int indent);
+
+  // Description:
   // Copy the nodes attributes to this object
   void Copy(vtkMrmlOptionsNode *node);
 
@@ -60,13 +64,31 @@ public:
   vtkGetStringMacro(Options);
   vtkSetStringMacro(Options);
 
+  // Description:
+  // Get/Set for Program
+  vtkGetStringMacro(Program);
+  vtkSetStringMacro(Program);
+
+  // Description:
+  // Get/Set for Contents
+  vtkGetStringMacro(Contents);
+  vtkSetStringMacro(Contents);
+
 protected:
   vtkMrmlOptionsNode();
   ~vtkMrmlOptionsNode();
   vtkMrmlOptionsNode(const vtkMrmlOptionsNode&) {};
   void operator=(const vtkMrmlOptionsNode&) {};
 
+  // Description:
+  // Contains information for use by specified program
   char *Options;
+  // Description:
+  // Name of program that uses these options (i.e. Slicer)
+  char *Program;
+  // Description:
+  // Type of Options stored in this node (i.e. user preferences)
+  char *Contents;
 };
 
 #endif

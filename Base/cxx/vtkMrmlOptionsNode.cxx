@@ -47,19 +47,59 @@ vtkMrmlOptionsNode* vtkMrmlOptionsNode::New()
 //----------------------------------------------------------------------------
 vtkMrmlOptionsNode::vtkMrmlOptionsNode()
 {
-  vtkMrmlNode::vtkMrmlNode();
-
+  // Strings
+  this->Program = NULL;
+  this->Contents = NULL;
   this->Options = NULL;
 }
 
 //----------------------------------------------------------------------------
 vtkMrmlOptionsNode::~vtkMrmlOptionsNode()
 {
+  if (this->Program)
+  {
+    delete [] this->Program;
+    this->Program = NULL;
+  }
+  if (this->Contents)
+  {
+    delete [] this->Contents;
+    this->Contents = NULL;
+  }
   if (this->Options)
   {
     delete [] this->Options;
     this->Options = NULL;
   }
+}
+
+//----------------------------------------------------------------------------
+void vtkMrmlOptionsNode::Write(ofstream& of, int nIndent)
+{
+  vtkIndent i1(nIndent);
+
+  // Write all attributes not equal to their defaults
+  
+  of << i1 << "<Options";
+  
+  // Strings
+  if (this->Program && strcmp(this->Program, "")) 
+  {
+    of << " program='" << this->Program << "'";
+  }
+  if (this->Contents && strcmp(this->Contents, "")) 
+  {
+    of << " contents='" << this->Contents << "'";
+  }
+
+  of << ">\n";
+
+  if (this->Options && strcmp(this->Options, "")) 
+  {
+    of << this->Options;
+  }
+
+  of << "</Options>\n";
 }
 
 //----------------------------------------------------------------------------
