@@ -433,17 +433,24 @@ proc ParsePrintHeader {text aHeader} {
             set errmsg "$errmsg $fKey"
         }
     }
-
-    set Header(zSpacing) [expr $Header(sliceThick) + $Header(sliceSpace)]
-
-    # Not in print_header
-    set Header(scalarType) Short
-    set Header(numScalars) 1
-    set Header(sliceTilt) 0
-    set Header(order) ""
-
     if {$errmsg != ""} {
         set errmsg "Error reading header. Can't find:\n$errmsg"
+        return $errmsg
+    }
+
+    catch { set Header(zSpacing) [expr $Header(sliceThick) + $Header(sliceSpace)] } errmsg1
+
+    # Not in print_header
+    catch { set Header(scalarType) Short } errmsg2
+    catch { set Header(numScalars) 1 } errmsg3
+    catch { set Header(sliceTilt) 0 } errmsg4
+    catch { set Header(order) "" } errmsg5
+
+
+    set errmsg ""
+    lappend errmsg $errmsg1 $errmsg2 $errmsg3 $errmsg4 $errmsg5
+    if {$errmsg != ""} {
+        set errmsg "Error reading header, missing a field:\n$errmsg"
     }
     return $errmsg
 }
@@ -633,45 +640,47 @@ proc GetHeaderInfo {img1 num2 node tk} {
         return "Cannot open '$img2'."
     }
         
-        if {$tcl_platform(os) == "Linux"} {
-
-            if { [ReadHeaderTcl $img1 1 Header1] != 1} {
-                DevErrorWindow "Error reading header in linux. Can only read Genesis Headers."
-                return -1
-            }
-            if { [ReadHeaderTcl $img2 0 Header2] != 1} {
-                DevErrorWindow "Error reading header in linux. Can only read Genesis Headers."
-                return -1
-            }
-
-            ## numbers not in the header right now...
-            ## we can get gantry tilt...
-            set Header1(scalarType) Short
-            set Header1(numScalars) 1
-            set Header1(sliceTilt) 0
-            set Header1(order) ""
-
-        } else {
-    # Read headers
-    set hdr1 [ReadHeader $img1 1 $Path(printHeader) $tk]
-    set hdr2 [ReadHeader $img2 1 $Path(printHeader) $tk]
-
-    # exit if failed to read
-    if {$hdr1 == ""} {
-        return "-1"
-    }
-
-    # Parse headers
-    set errmsg [ParsePrintHeader $hdr1 Header1]
-    if {$errmsg != ""} {
-        return $errmsg
-    }
-    set errmsg [ParsePrintHeader $hdr2 Header2]
-    if {$errmsg != ""} {
-        return $errmsg
-    }
+    if {$tcl_platform(os) == "Linux"} {
+        
+        if { [ReadHeaderTcl $img1 1 Header1] != 1} {
+            DevErrorWindow "Error reading header in linux. Can only read Genesis Headers."
+            return -1
         }
-
+        if { [ReadHeaderTcl $img2 0 Header2] != 1} {
+            DevErrorWindow "Error reading header in linux. Can only read Genesis Headers."
+            return -1
+        }
+        
+        ## numbers not in the header right now...
+        ## we can get gantry tilt...
+        set Header1(scalarType) Short
+        set Header1(numScalars) 1
+        set Header1(sliceTilt) 0
+        set Header1(order) ""
+        
+    } else {
+        # Read headers
+        set hdr1 [ReadHeader $img1 1 $Path(printHeader) $tk]
+        set hdr2 [ReadHeader $img2 1 $Path(printHeader) $tk]
+        
+        # exit if failed to read
+        if {$hdr1 == ""} {
+            return "-1"
+        }
+        
+        # Parse headers
+        set errmsg [ParsePrintHeader $hdr1 Header1]
+        puts "ParsePrintHeader 1 errors = $errmsg"
+        if {$errmsg != ""} {
+            return $errmsg
+        }
+        set errmsg [ParsePrintHeader $hdr2 Header2]
+        puts "ParsePrintHeader 2 errors = $errmsg"
+        if {$errmsg != ""} {
+            return $errmsg
+        }
+    }
+    
     # Set the volume node's attributes using header info
     $node SetFilePrefix $prefix
     $node SetFullPrefix [file join $Mrml(dir) [$node GetFilePrefix]]
