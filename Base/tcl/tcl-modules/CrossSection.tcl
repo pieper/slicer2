@@ -300,7 +300,7 @@ proc CrossSectionInit {} {
     set Module($m,depend) ""
 
     set Module($m,author) "Sylvain Bouix, SPL, sylvain@bwh.harvard.edu"
-    set Module($m,overview) "Used to measure vessel cross sections"
+    set Module($m,overview) "Used to measure structure cross sections"
     set Module($m,category) "Visualisation"
 
     # Define Procedures
@@ -1086,7 +1086,13 @@ proc CrossSectionBuildGUI {} {
     #-------------------------------------------
     # Help frame
     #-------------------------------------------
-    set help "This module is used to measure vessel cross sections.
+    set help "This module is used to measure cross sections of structures such as vessels. 
+<BR>This module adds a "cutter" (a very thin vtk cylinder) at the
+camera location on the endoscopy path. You then place the cutter at
+the location you want the measurement made, resize it so it does not
+go through several sections of the object under study and use the
+Measure module to get the volume of the intersection between the
+cutter and the model of the object.
 <P>
 Description by tabs:
     <LI><B>Display</B>
