@@ -53,6 +53,7 @@ void vtkImageExtractSlices::ExecuteInformation(vtkImageData *input,
 {
   int *inExt, outExt[6], totalInSlices;
 
+  vtkDebugMacro("in Execute Information");
   if (input == NULL)
     {
       vtkErrorMacro("No input");
@@ -60,8 +61,9 @@ void vtkImageExtractSlices::ExecuteInformation(vtkImageData *input,
     }
 
   inExt = input->GetWholeExtent();
-  memcpy (outExt, inExt, 6 * sizeof (int));
+  memcpy(outExt, inExt, 6 * sizeof (int));
 
+  vtkDebugMacro("Before assigning info");
   // change output extent to reflect the 
   // total number of slices we will output,
   // given the entire input dataset
@@ -87,18 +89,21 @@ void vtkImageExtractSlices::ExecuteInformation(vtkImageData *input,
     outExt[0] = 0;
     totalInSlices = (inExt[1] - inExt[0] + 1);
     if(fmod(totalInSlices,this->MosaicTiles)!=0) {
-     vtkErrorMacro("Too few or Too many tiles per slice.");
+     vtkErrorMacro("Too few or too many tiles per slice.");
      return;
     }
     outExt[1] = outExt[0] + totalInSlices/this->MosaicTiles - 1;
+    vtkDebugMacro("outExt1: "<<outExt[1]);
  
    outExt[2] = 0;
     totalInSlices = (inExt[3] - inExt[2] + 1);
     if(fmod(totalInSlices,this->MosaicTiles)!=0) {
-     vtkErrorMacro("Too few or Too many tiles per slice.");
+     vtkErrorMacro("Too few or too many tiles per slice.");
      return;
     }
     outExt[3] = outExt[2] + totalInSlices/this->MosaicTiles - 1;
+    vtkDebugMacro("outExt3: "<<outExt[1]);
+
     outExt[4] = 0;
     outExt[5] = this->MosaicSlices-1;
     output->SetWholeExtent(outExt);
@@ -238,7 +243,7 @@ static void vtkImageExtractSlicesExecute2(vtkImageExtractSlices *self,
 
   // information for extracting the slices
   period = self->GetSlicePeriod();
-  offset = self->GetSliceOffset();
+  offset = self->GetSliceOffset(); //z-slice
   tiles = self->GetMosaicTiles();
 
   // find the region to loop over: loop over entire output
@@ -246,36 +251,38 @@ static void vtkImageExtractSlicesExecute2(vtkImageExtractSlices *self,
   maxY = outExt[3] - outExt[2]; 
   maxZ = outExt[5] - outExt[4]; 
 
+  int *outWholeExt = outData->GetWholeExtent();
+  dimX = outWholeExt[1] - outWholeExt[0] + 1;
+  dimY = outWholeExt[3] - outWholeExt[2] + 1;
   
+
   target = (unsigned long)(outData->GetNumberOfScalarComponents()*
                (maxZ+1)*(maxY+1)/50.0);
   target++;
 
   // Get increments to march through image data 
-  inData->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
+ 
+  inExt[4] = offset;
+  inExt[5] = offset;
+  //inData->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
+  //Compute increments in an special way
+  inIncY= dimX * (tiles-1);
   outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
-  dimX = maxX + 1;
-  dimY = maxY + 1;
-  dimZ = maxZ + 1;
 
+  T* initPtr = (T *)inData->GetScalarPointerForExtent(inExt);
+  int nc;
+  int nr;
+  //Loop throughout output data
   for (idxZ = 0; idxZ <= maxZ; idxZ++)
     {
-       // compute icrements to march through input data
-       inExt[0] = idxoutX*dimX;
-       inExt[1] = (idxoutX + 1)*dimX;
-       inExt[2] = idxoutY * dimY;
-       inExt[3] = (idxoutY + 1)* dimY;
-       inExt[4] = offset;
-       inExt[5] = offset;
-       inData->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
-       inPtr = (T *)inData->GetScalarPointerForExtent(inExt);
-       
-       idxoutX++;
-       if (fmod(idxoutX,tiles) == 0) 
-        {
-         idxoutX=0;
-         idxoutY++;
-        }
+      //Initialize pointer to input data for each output slice
+      nc = int (fmod(outExt[4]+idxZ,tiles));
+      nr = int (floor((tiles*tiles-1-outExt[4]-idxZ)/tiles));
+
+      inIncZ = nc * dimX + nr * dimX*tiles* dimY;
+      inPtr = initPtr+ inIncZ +outExt[0] + inIncY*outExt[2];
+      
+     //cout<<"idxZ: "<<idxZ<<"  nc: "<<nc<<"  nr: "<<nr<<"  inIncZ:"<<inIncZ<<endl;
 
      for (idxY = 0; !self->AbortExecute && idxY <= maxY; idxY++)
         {
@@ -297,7 +304,6 @@ static void vtkImageExtractSlicesExecute2(vtkImageExtractSlices *self,
           outPtr += outIncY;
           inPtr += inIncY;
          }
-   
       outPtr += outIncZ;
     }
 }
