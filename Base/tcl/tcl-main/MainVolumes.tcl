@@ -53,6 +53,9 @@ proc MainVolumesInit {} {
 
 	lappend Module(procGUI)  MainVolumesBuildGUI
 	lappend Module(procVTK)  MainVolumesBuildVTK
+        
+        set m MainVolumes
+        lappend Module(versions) [list $m {$Revision: 1.15 $} {$Date: 2000/02/07 02:23:07 $}]
 
 	set Volume(numBuiltIn) 1
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
