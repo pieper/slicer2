@@ -50,8 +50,8 @@ proc ColorsInit {} {
 
     # Define Tabs
     set m Colors
-    set Module($m,row1List) "Help Colors"
-    set Module($m,row1Name) "Help {Edit Colors}"
+    set Module($m,row1List) "Help Colors Load"
+    set Module($m,row1Name) "Help {Edit Colors} {Load Colors}"
     set Module($m,row1,tab) Colors
 
     # Module Summary Info
@@ -66,7 +66,7 @@ proc ColorsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.20 $} {$Date: 2002/03/21 23:05:24 $}]
+        {$Revision: 1.21 $} {$Date: 2002/10/24 22:40:25 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -103,6 +103,9 @@ Your changes will not take effect until you click the <B>Apply</B> button.
 <P>
 The colors are saved in the MRML file when you select the <B>Save</B> option
 from the <B>File</B> menu if they differ from the default colors.
+<P>
+The Load Colors tab will allow you to open up mrml files with color nodes 
+and use the new ones as your default colors.
 "
     regsub -all "\n" $help { } help
     MainHelpApplyTags Colors $help
@@ -215,8 +218,51 @@ from the <B>File</B> menu if they differ from the default colors.
     eval {button $f.bApply -text "Update" -width 7 \
         -command "ColorsApply; RenderAll"} $Gui(WBA)
     pack $f.bApply -side top -pady $Gui(pad) 
+
+
+
+    #-------------------------------------------
+    # Load frame
+    #-------------------------------------------
+    set fLoad $Module(Colors,fLoad)
+    set f $fLoad
+
+    frame $f.fTop -bg $Gui(activeWorkspace)
+    frame $f.fBot -bg $Gui(activeWorkspace)
+    pack $f.fTop $f.fBot -side top -padx $Gui(pad) -fill x
+
+    #-------------------------------------------
+    # Load->Top
+    #-------------------------------------------
+    set f $fLoad.fTop
+    DevAddFileBrowse $f Color fileName "MRML color file:" "ColorsSetFileName" "xml" "" "Open" "Open a Color MRML file"
+    eval {button $f.bLoad -text "Load" -width 7 \
+              -command "ColorsLoadApply"} $Gui(WBA)
+    pack $f.bLoad -side top -pady $Gui(pad) 
+
+    #-------------------------------------------
+    # Load->Bot
+    #-------------------------------------------
+
+    set f $fLoad.fBot
+    eval {label $f.lWarning -text "Warning: Still experimental,\nNOT fully functional"} $Gui(WLA)
+    pack $f.lWarning -side top -pady $Gui(pad)
+                                                                                            
 }
 
+proc ColorsSetFileName {}  {
+    global Color
+    puts "Color filename = $Color(fileName)"
+}
+
+proc ColorsLoadApply {} {
+    global Color
+    puts "ColorsLoadApply: experimental load of a new xml file with colour nodes"
+    MainMrmlDeleteColors
+    MainMrmlAddColorsFromFile $Color(fileName)
+    # TODO: update the gui's Edit Colors panel now, and the Select a Color canvas
+    RenderAll
+}
 #-------------------------------------------------------------------------------
 # .PROC ColorsApply
 #
