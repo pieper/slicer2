@@ -79,7 +79,7 @@ intervals. <P> The Controller also has a set of <B> animation controls </B>, whi
 enable (from left to right) single frame stepping; zoom in and out (not yet working); goto first volume; play 
 backward; stop; record (not yet working); pause; play forward; goto last volume; continuous animation loop; 
 and continous animation ping-pong (both of which are stopped with the stop button). 
-The controller also has a scrolled message box for system messages.<P> "
+The controller also has a scrolled message box in which system messages are displayed.<P> "
     
     regsub -all "\n" $help {} help
     MainHelpApplyTags Ibrowser $help
