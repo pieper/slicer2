@@ -1,4 +1,4 @@
-#! /bin/csh -fvx
+#! /bin/csh -f
 
 ### Set the directory in which your slicer is installed
 if (${?SLICER_HOME} == 0) then
@@ -21,7 +21,7 @@ if (${?TCLLIBPATH} == 0) then
     setenv TCLLIBPATH " "
 endif
 
-setenv TCLLIBPATH "Base/Wrapping/Tcl/vtkSlicerBase /usr/local/src/vtk4/VTK/Wrapping/Tcl ${TCLLIBPATH}"
+setenv TCLLIBPATH "${SLICER_HOME}/Base/Wrapping/Tcl/vtkSlicerBase /usr/local/src/vtk4/VTK/Wrapping/Tcl ${TCLLIBPATH}"
 
 setenv SLICER_LOCAL 0
 
