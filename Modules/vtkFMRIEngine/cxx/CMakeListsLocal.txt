@@ -45,7 +45,6 @@ SET(LOCAL_MODULE_SRCS
 vtkMultiInputsSimpleImageToImageFilter.cxx
 vtkActivationVolumeGenerator.cxx
 vtkActivationDetector.cxx
-vtkTimeCoursePlotActor.cxx
 vtkCDF.cxx
 )
 
