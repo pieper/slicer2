@@ -65,7 +65,8 @@ vtkImageDICOMReader \
 vtkDCMParser \
 vtkMrmlPathNode \
 vtkMrmlEndPathNode \
-vtkMrmlLandmarkNode 
+vtkMrmlLandmarkNode \
+vtkImageMeasureVoxels
 
 #vtkImageSimpleEdge \
 #vtkImageLiveWire

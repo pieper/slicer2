@@ -30,7 +30,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <math.h>
 #include <stdlib.h>
 #include "vtkObjectFactory.h"
-#include <iomanip>
+#include <iomanip.h>
 
 //------------------------------------------------------------------------------
 vtkImageMeasureVoxels* vtkImageMeasureVoxels::New()
