@@ -481,10 +481,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
 
   //Hanifa
   vtkImageReformat *GetForeReformat(int s) { return this->ForeReformat[s]; }
-
   vtkImageReformat *GetBackReformat3DView(int s) {return this->BackReformat3DView[s];}
-
   vtkImageReformat *GetForeReformat3DView(int s) {return this->ForeReformat3DView[s];}
+  vtkImageReformat *GetLabelReformat3DView(int s) {return this->LabelReformat3DView[s];}
 
   // Description:
   // Update any part of this class that needs it.
