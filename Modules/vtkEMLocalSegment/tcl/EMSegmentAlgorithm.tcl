@@ -405,6 +405,10 @@ proc EMSegmentSuperClassChildren {SuperClass} {
 proc EMSegmentTrainCIMField {} {
     global EMSegment Volume
     # Transferring Information
+    if {[info command vtkImageEMMarkov] == ""} {
+        DevErrorWindow "vtkImageEMMarkov not included in this build, cannot train the CIM field."
+        return
+    }
     foreach i $EMSegment(GlobalSuperClassList) {
        vtkImageEMMarkov EMCIM    
        # EM Specific Information
@@ -440,7 +444,7 @@ proc EMSegmentTrainCIMField {} {
            foreach y $EMSegment(Cattrib,$i,ClassList) {
            for {set z 0} {$z < 6} {incr z} {
                # Error made in x,y coordinates in EMSegment - I checked everything - it workes in XML and CIM Display in correct order - so do not worry - it is just a little bit strange - but strange things happen
-               set temp [$data GetScalarComponentAsFloat $yindex $xindex  $z 0]
+               set temp [$data $::getScalarComponentAs $yindex $xindex  $z 0]
                set EMSegment(Cattrib,$i,CIMMatrix,$x,$y,[lindex $EMSegment(CIMList) $z]) [expr round($temp*100000)/100000.0]        
            }
            incr yindex

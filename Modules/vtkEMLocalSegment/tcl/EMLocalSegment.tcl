@@ -258,7 +258,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.47 $} {$Date: 2004/11/10 00:17:16 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.47.2.1 $} {$Date: 2004/12/02 23:47:14 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -4238,7 +4238,7 @@ proc EMSegmentReadGreyValue {x y flag} {
       if {[expr (($Xmin > $xIjk) || ($Xmax < $xIjk) || ($Ymin > $yIjk) || ($Ymax < $yIjk) || ($Zmin > $zIjk) || ($Zmax < $zIjk))]} {
         set pixel 0
       } else {
-        set pixel [$ImageData GetScalarComponentAsFloat $xIjk $yIjk $zIjk 0]
+        set pixel [$ImageData $::getScalarComponentAs $xIjk $yIjk $zIjk 0]
       }
       if {$flag} {
       lappend result "$x $y $zIjk $pixel" 
@@ -5425,7 +5425,7 @@ proc EMSegmentMakeModels { } {
 
    set data [histo GetOutput]
    for {set i 0} {$i <= $bins} {incr i} {
-       set val [$data GetScalarComponentAsFloat $i 0 0 0]
+       set val [$data $::getScalarComponent $i 0 0 0]
        set Label(label)  [expr $i + $min]  
        if {$val >0 &&  $Label(label) != 0} {
           
