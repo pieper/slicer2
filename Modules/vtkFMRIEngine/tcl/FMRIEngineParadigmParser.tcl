@@ -59,12 +59,13 @@ proc FMRIEngineParseParadigm {} {
     # if FMRIEngine(paradigm) exists, unset it
     if {[info exists FMRIEngine(paradigm)]} { 
         unset FMRIEngine(paradigm)
+        FMRIEngine(paradigmArray) Delete 
     }
 
     # Reads the data file
     set fp [open $FMRIEngine(paradigmFileName) r]
     set data [read $fp]
-    set lines [split $data "\n"]
+    set lines [split [string trim $data] "\n"]
 
     # Values of parameters in paradigm.txt are saved in list FMRIEngine(paradigm).
     # Here is the index order:
@@ -74,9 +75,17 @@ proc FMRIEngineParseParadigm {} {
     # 3 --- Volumes Per Conditions (5)
     # 4 --- Volumes At Start (5)
     # 5 --- Starts With (0)
+    vtkFloatArray FMRIEngine(paradigmArray)     
+    FMRIEngine(paradigmArray) SetNumberOfTuples 6 
+    FMRIEngine(paradigmArray) SetNumberOfComponents 1
+    set count 0
     foreach line $lines {
         set pair [split $line ":"]
-        lappend FMRIEngine(paradigm) [string trim [lindex $pair 1]]
+        set val [string trim [lindex $pair 1]]
+        lappend FMRIEngine(paradigm) $val 
+        FMRIEngine(paradigmArray) SetComponent $count 0 $val 
+
+        incr count
     }
     close $fp
 
@@ -221,14 +230,13 @@ proc FMRIEngineCreateStimulusArray {} {
 
     # if the stimulus array exists, remove it
     if {[info exists FMRIEngine(stimulus)]} {
-        $FMRIEngine(stimulus) Delete
+        FMRIEngine(stimulus) Delete
     }
 
     set totalVolumes [lindex $FMRIEngine(paradigm) 0]
-    vtkFloatArray stimulus     
-    stimulus SetNumberOfTuples $totalVolumes 
-    stimulus SetNumberOfComponents 1
-    set FMRIEngine(stimulus) stimulus
+    vtkFloatArray FMRIEngine(stimulus)     
+    FMRIEngine(stimulus) SetNumberOfTuples $totalVolumes 
+    FMRIEngine(stimulus) SetNumberOfComponents 1
 
     set count 0
     set doTask [lindex $FMRIEngine(paradigm) 5]
@@ -242,7 +250,7 @@ proc FMRIEngineCreateStimulusArray {} {
 
         set i 0
         while {$i < $length && $count < $totalVolumes} {
-            stimulus SetComponent $count 0 [expr {$doTask ? 1.0 : 0.0}] 
+            FMRIEngine(stimulus) SetComponent $count 0 [expr {$doTask ? 1.0 : 0.0}] 
             incr count 
             incr i
         }
