@@ -259,7 +259,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.64 $} {$Date: 2004/06/23 21:00:13 $}] 
+    {$Revision: 1.65 $} {$Date: 2004/08/17 20:07:52 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -369,6 +369,10 @@ proc EndoscopicInit {} {
     set Endoscopic(flatColon,yCamDist) 5.0
 #   trace add variable Endoscopic(flatColon,yCamDist) write EndoscopicTempProc
     set Endoscopic(flatColon,zCamDist) 5.0
+    
+    # lights
+    set Endoscopic(flatColon,LightElev) 0
+    set Endoscopic(flatColon,LightAzi) 0
     
     # number of targets
     set Endoscopic(totalTargets) 0
@@ -4885,6 +4889,7 @@ proc EndoscopicAddFlatView {} {
     wm geometry .t$name -0-0
     wm protocol .t$name WM_DELETE_WINDOW "EndoscopicRemoveFlatView $name"
     wm withdraw .
+ 
    
     # create a vtkTkRenderWidget to draw the flattened image into
     vtkTkRenderWidget $f.flatRenderWidget$name -width 600 -height $View(viewerHeightNormal)
@@ -4931,12 +4936,32 @@ proc EndoscopicAddFlatView {} {
     pack $udlbl $Endoscopic(flatScale,panud) -side top -pady 4 -expand yes
     pack  $updatebut -side bottom -pady 2 -expand yes -fill y
     
-      
+    # light frame: change the light positions, elevation and azimuth
+    set lfrm [frame .t$name.controls.lfrm]
+    
+    set elefrm [frame .t$name.controls.lfrm.elefrm]
+    set elelbl [label $elefrm.lbl -text "-90<- Elevation ->90" -font {helvetica 10}]
+
+    set Endoscopic(flatScale,elevation) [scale $elefrm.elevation -from -90 -to 90 -res 5.0 -orient horizontal  -variable Endoscopic(flatColon,LightElev) ]
+    pack $elelbl -side top
+    pack $Endoscopic(flatScale,elevation) -side top
+    
+ 
+    set azifrm [frame .t$name.controls.lfrm.azifrm]        
+    set azilbl [label $azifrm.lbl -text "-90<- Azimuth ->90" -font {helvetica 10}]
+    set Endoscopic(flatScale,azimuth) [scale $azifrm.azimuth -from -90 -to 90 -res 5.0 -orient horizontal  -variable Endoscopic(flatColon,LightAzi)]
+    pack $azilbl -side top
+    pack $Endoscopic(flatScale,azimuth) -side top
+
+    pack $elefrm -side top -pady 4 -expand yes
+    pack $azifrm -side top -pady 4 -expand yes
+    
+    # pack control frames
     pack .t$name.controls.xfrm -side left  -padx 1 -anchor n -expand yes
-    pack .t$name.controls.yfrm -side right -padx 1 -anchor n -expand yes
+    pack .t$name.controls.yfrm -side left -padx 1 -anchor n -expand yes
+    pack .t$name.controls.lfrm -side right -padx 1 -anchor n -expand yes
     
-#   Add Later:  pack .t$name.controls.projfrm -side right -padx 4 -expand yes
-    
+    # pack render widget and controls    
     pack $f.flatRenderWidget$name -side left -padx 3 -pady 3 -fill both -expand t
     pack $f -fill both -expand t
     pack .t$name.controls -pady 4 -fill both -expand t
@@ -4986,12 +5011,17 @@ proc EndoscopicAddFlatView {} {
     set Endoscopic($name,polyData) [TempPolyReader GetOutput]
     $Endoscopic($name,polyData) UpdateData
       
-    # create a vtkActor for the flatcolon
+    # create a vtkActor for the flatcolon, and set its properties
     vtkActor Endoscopic($name,FlatColonActor)
    [Endoscopic($name,FlatColonActor) GetProperty] SetInterpolationToPhong
-   [Endoscopic($name,FlatColonActor) GetProperty] SetDiffuse 1.5
+   [Endoscopic($name,FlatColonActor) GetProperty] SetColor 1.0 0.8 0.7
+   [Endoscopic($name,FlatColonActor) GetProperty] SetAmbient 0.5
+   [Endoscopic($name,FlatColonActor) GetProperty] SetDiffuse 0.4 
+   [Endoscopic($name,FlatColonActor) GetProperty] SetSpecular 0.5
+   [Endoscopic($name,FlatColonActor) GetProperty] SetSpecularPower 80
+   
    [Endoscopic($name,FlatColonActor) GetProperty] BackfaceCullingOff
-# Fix later: Need to play witht the settings for best visual effect: Endoscopic($name,FlatColonActor) SetProperty property
+    
     Endoscopic($name,FlatColonActor) SetMapper TempMapper
     Endoscopic($name,renderer) AddActor Endoscopic($name,FlatColonActor)
     
@@ -5051,7 +5081,7 @@ proc EndoscopicAddFlatView {} {
     
      # lightKit
      vtkLightKit Endoscopic($name,lightKit)
-     Endoscopic($name,lightKit) SetKeyLightWarmth 0.7
+     Endoscopic($name,lightKit) SetKeyLightWarmth 0.5
      Endoscopic($name,lightKit) SetHeadlightWarmth 0.5
      Endoscopic($name,lightKit) SetKeyLightIntensity 0.5
      Endoscopic($name,lightKit) SetKeyLightAngle 30 -30
@@ -5060,15 +5090,22 @@ proc EndoscopicAddFlatView {} {
      
      #light
      vtkLight Endoscopic($name,light)
-     Endoscopic($name,light) SetIntensity 0.1
+     Endoscopic($name,light) SetIntensity 0.5
      Endoscopic($name,light) SetPosition [expr $Endoscopic(flatColon,xCamDist)-10] $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zCamDist)
      Endoscopic($name,light) SetFocalPoint $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zMin)
+     Endoscopic($name,light) SetDirectionAngle 0 0
      Endoscopic($name,renderer) AddLight Endoscopic($name,light)
+     
+     # add command for changing the light's elevation and azimuth
+     set Endoscopic(flatColon,LightElev) 0
+     set Endoscopic(flatColon,LightAzi) 0
+     $Endoscopic(flatScale,elevation) config -command "EndoscopicFlatLightElevationAzimuth $f.flatRenderWidget$name"
+     $Endoscopic(flatScale,azimuth) config -command "EndoscopicFlatLightElevationAzimuth $f.flatRenderWidget$name"
   
     # initialize and reinitialize
     set Endoscopic($name,lineCount) 0
     #set Endoscopic(FlatSelect) ""
-    set Endoscopic(name) ""
+    
 
     #Render
     [$f.flatRenderWidget$name GetRenderWindow] Render    
@@ -5134,7 +5171,7 @@ proc EndoscopicRemoveFlatView {{name ""}} {
 
     }
     set Endoscopic(FlatSelect) ""
-    
+    set Endoscopic(name) ""
  # de-activate bindings for the flat window   
     EndoscopicPopFlatBindings
 }
@@ -5991,6 +6028,16 @@ proc EndoscopicUpdateTargetsInFlatWindow {widget} {
          }
 }
 
+proc EndoscopicFlatLightElevationAzimuth {widget {Endoscopic(flatColon,LightElev)"" Endoscopic(flatColon,LightAzi)""}} {
+     global Endoscopic
+     
+     set name $Endoscopic($widget,name)
+     
+     Endoscopic($name,light) SetDirectionAngle $Endoscopic(flatColon,LightElev) $Endoscopic(flatColon,LightAzi)
+     
+     [$widget GetRenderWindow] Render
+
+}
 
 #------------------------------------------------------------------------------------------
 # .PROC EndoscopicMoveCameraX
