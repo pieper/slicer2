@@ -204,6 +204,18 @@ class VTK_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
   vtkSetMacro(LowerThreshold, int);
 
   // Description:
+  // MR Diffusion Tensor Images may be saved on disk with 
+  // the frequency encode direction non-standard.  For supine
+  // scans in the slicer, set this to 1 for in-plane 
+  // rotation/axis swaps which will put the images into standard
+  // ax/sag/cor orientations.  This is currently a boolean variable
+  // here and not written to MRML; its effects are seen in the 
+  // RasToIjk matrix.  In future this boolean, or a better description
+  // of the transformation, may be put into the MRML format.
+  vtkGetMacro(FrequencyPhaseSwap, int);
+  vtkSetMacro(FrequencyPhaseSwap, int);
+
+  // Description:
   // Set/Get interpolate reformated slices
   vtkGetMacro(Interpolate, int);
   vtkSetMacro(Interpolate, int);
@@ -304,15 +316,12 @@ class VTK_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
   void DeleteDICOMMultiFrameOffsets();
   int *GetDICOMMultiFrameOffsetPointer() {return DICOMMultiFrameOffsetList;}
   // End
-
+  
 protected:
   vtkMrmlVolumeNode();
   ~vtkMrmlVolumeNode();
   vtkMrmlVolumeNode(const vtkMrmlVolumeNode&) {};
   void operator=(const vtkMrmlVolumeNode&) {};
-
-  void ComputeRasToIjk(vtkMatrix4x4 *matRotate, 
-    float ox, float oy, float oz);
 
   // Strings
   char *VolumeID;
@@ -333,6 +342,9 @@ protected:
   float Level;
   int UpperThreshold;
   int LowerThreshold;
+
+  // odonnell.  Fixes for diffusion tensor image data
+  int FrequencyPhaseSwap;
 
   // Arrays
   float Spacing[3];
