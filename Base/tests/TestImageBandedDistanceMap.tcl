@@ -14,7 +14,7 @@ vtkImageMagnify mag
   mag SetInput [reader GetOutput]
   mag SetMagnificationFactors 4 4 1
 
-vtkImageThresholdBeyond thresh
+vtkImageThreshold thresh
 thresh SetReplaceIn 1
 thresh SetReplaceOut 1
 # output 1's for the label we want

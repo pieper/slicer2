@@ -1,12 +1,11 @@
 TestAllMrml
 TestCopy
-TestImageBandedDistanceMap
+TestImageBandedDistanceMap  NO ?????   vtkImageBandedDistanceMap
 TestImageDrawROI
 TestImageEMMarkov
 TestImageEMSegment
-TestImageEditor
+TestImageEditor         NO   ?????       vtkImageEditor
 TestImageFrameSource
-TestImageLabelOutline
 TestImageLiveWire
 TestImageLiveWireEdgeWeights
 TestImageLiveWireScale
@@ -16,6 +15,7 @@ TestImageDouble2D       OK good_test    vtkImageDouble2D
 TestCrossHair2D         OK pretty_good  vtkImageCrossHair
 TestImageFIllROI        OK bad_test     vtkImageFillROI
 TestImageCloseUp2D      OK   good_test   vtkImageCloseUp2D
+TestImageLabelOutline   OK   goot_test   vtkImageLabelOutline
 TestImageMeasureVoxels  OK   good_test   vtkImageMeasureVoxels
 TestImageOverlay        OK   bad_test    vtkImageOverlay
 TestImageReformat       OK   not_sure     vtkImageReformat

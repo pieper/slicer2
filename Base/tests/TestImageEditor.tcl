@@ -26,7 +26,7 @@ vtkImageEditor edit
   edit SetDimensionTo3D
 #  edit SetDimensionToSingle
   edit SetSlice 22 
-  edit SetOrderString SI
+  edit SetInputSliceOrder SI
   edit SetFirstFilter th
   edit SetLastFilter th
   edit Apply
