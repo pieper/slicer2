@@ -74,8 +74,8 @@ vtkImageLiveWireEdgeWeights \
 vtkImageBandedDistanceMap \
 vtkImageLiveWireScale \
 vtkImageWeightedSum \
-vtkDCMLister \
-vtkImageConvolve
+vtkDCMLister 
+
 
 
 
