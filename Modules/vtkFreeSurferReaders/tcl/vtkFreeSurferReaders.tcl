@@ -57,6 +57,7 @@ proc vtkFreeSurferReadersInit {} {
     set vtkFreeSurferReaders(scalars) "thickness curv sulc area"
     set vtkFreeSurferReaders(surfaces) "inflated pial smoothwm sphere"
     set vtkFreeSurferReaders(annots) "aparc cma_aparc" 
+    set vtkFreeSurferReaders(castToShort) 1
 
     # the default colour table file name
     set vtkFreeSurferReaders(colorTableFilename) [ExpandPath [file join $::PACKAGE_DIR_VTKFREESURFERREADERS ".." ".." ".." tcl "Simple_surface_labels2002.txt"]]
@@ -164,7 +165,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2004/10/07 21:03:27 $}]
+        {$Revision: 1.5 $} {$Date: 2004/11/11 21:02:16 $}]
 
 }
 
@@ -225,11 +226,13 @@ proc vtkFreeSurferReadersBuildGUI {} {
     DevAddFileBrowse $f  vtkFreeSurferReaders "VolumeFileName" "FreeSurfer File:" "vtkFreeSurferReadersSetVolumeFileName" "" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer volume file (.info, .mgh, .bfloat, .bshort)" 
 
     frame $f.fLabelMap -bg $Gui(activeWorkspace)
+    frame $f.fCast  -bg $Gui(activeWorkspace)
     frame $f.fDesc     -bg $Gui(activeWorkspace)
     frame $f.fName -bg $Gui(activeWorkspace)
     frame $f.fApply  -bg $Gui(activeWorkspace)
 
     pack $f.fLabelMap -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    pack $f.fCast -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fDesc -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fName -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fApply -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
@@ -261,6 +264,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
 
     frame $f.fTitle -bg $Gui(activeWorkspace)
     frame $f.fBtns -bg $Gui(activeWorkspace)
+
     pack $f.fTitle $f.fBtns -side left -pady 5
 
     DevAddLabel $f.fTitle.l "Image Data:"
@@ -274,11 +278,21 @@ proc vtkFreeSurferReadersBuildGUI {} {
             -indicatoron 0 } $Gui(WCA)
         pack $f.fBtns.rMode$value -side left -padx 0 -pady 0
     }
-
-
     if {$Module(verbose) == 1} {
         puts "Done packing the label map stuff"
     }
+
+    #------------
+    # Volume->Cast 
+    #------------
+    set f $fVolumes.fVolume.fCast
+    eval {checkbutton $f.cCastToShort \
+        -text "Cast to short" -variable vtkFreeSurferReaders(castToShort) -width 13 \
+        -indicatoron 0 -command "vtkFreeSurferReadersSetCast"} $Gui(WCA)
+    TooltipAdd $f.cCastToShort "Cast this volume to short when reading it in. This allows use of the editing tools."
+    pack $f.cCastToShort -side top -padx 0
+
+
 
     #------------
     # Volume->Apply 
@@ -511,7 +525,7 @@ proc vtkFreeSurferReadersSetAnnotColorFileName {} {
 proc vtkFreeSurferReadersApply {} {
     global vtkFreeSurferReaders Module Volume
 
-    # switch on the file name, it canb be:
+    # switch on the file name, it can be:
     # a COR file (*.info that defines the volume) 
     # an mgh file (*.mgh, volume in one file)
     # a bfloat file (*.bfloat)
@@ -653,11 +667,30 @@ proc vtkFreeSurferReadersCORApply {} {
     set View(fov) $fov
     MainViewSetFov
 
+    set iCast -1
+    if {$vtkFreeSurferReaders(castToShort)} {
+        if {$::Module(verbose)} {
+            puts "vtkFreeSurferReadersCORApply: Casting volume to short."
+        }
+        set iCast [vtkFreeSurferReadersCast $i Short]
+        if {$iCast != -1} {
+            DevInfoWindow "Cast input volume to Short, use ${Volume(name)}-Short for editing."
+        }
+    } 
+
     # display the new volume in the background of all slices if not a label map
-    if {[Volume($i,node) GetLabelMap] == 1} {
-        MainSlicesSetVolumeAll Label $i
+    if {$iCast == -1} {
+        if {[Volume($i,node) GetLabelMap] == 1} {
+            MainSlicesSetVolumeAll Label $i
+        } else {
+            MainSlicesSetVolumeAll Back $i
+        }
     } else {
-        MainSlicesSetVolumeAll Back $i
+        if {[Volume($iCast,node) GetLabelMap] == 1} {
+            MainSlicesSetVolumeAll Label $iCast
+        } else {
+            MainSlicesSetVolumeAll Back $iCast
+        }
     }
 
     # Update all fields that the user changed (not stuff that would need a file reread)
@@ -2266,4 +2299,75 @@ proc vtkFreeSurferReadersReadBfloat {v} {
 
 #    Volume($v,vol) SetImageData [bfloatreader GetOutput]
     bfloatreader Delete
+}
+
+#-------------------------------------------------------------------------------
+# .PROC 
+# vtkFreeSurferReadersSetCast
+# Prints out confirmation of the castToShort flag
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersSetCast {} {
+    global vtkFreeSurferReaders
+    if {$::Module(verbose)} {
+        puts "cast to short = $vtkFreeSurferReaders(castToShort)"
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC 
+# vtkFreeSurferReadersCast
+# Casts the given input volume v to toType. Returns new volume id on success, -1 on failure.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersCast {v {toType "Short"}} {
+    global vtkFreeSurferReaders Volume
+
+    if {$v == $Volume(idNone)} {
+        DevErrorWindow "vtkFreeSurferReadersCast: You cannot cast Volume \"None\""
+        return -1
+    }
+    set typeList {Float Double Int UnsignedInt Long UnsignedLong Short UnsignedShort Char UnsignedChar}
+    if {[lsearch $typeList $toType] == -1} {
+        DevErrorWindow "vtkFreeSurferReadersCast: ERROR: casting only is valid to these types:\n$typeList"
+        return -1
+    }
+
+    if {$::Module(verbose)} { 
+        puts "vtkFreeSurferReadersCast: casting volume $v to $toType"
+    }
+   
+    # prepare the new volume
+    set name [Volume($v,node) GetName]-$toType
+    set vCast [DevCreateNewCopiedVolume $v "" $name]
+
+    # this seems to not get done in the prior call
+    Volume($vCast,node) SetLabelMap [Volume($v,node) GetLabelMap]
+
+    set node [Volume($vCast,vol) GetMrmlNode]
+    Mrml(dataTree) RemoveItem $node
+    set nodeBefore [Volume($v,vol) GetMrmlNode]
+    Mrml(dataTree) InsertAfterItem $nodeBefore $node
+    MainUpdateMRML
+
+    # do the cast
+    catch "vtkFreeSurferReadersCaster Delete"
+    vtkImageCast vtkFreeSurferReadersCaster
+    vtkFreeSurferReadersCaster SetInput [Volume($v,vol) GetOutput]
+    vtkFreeSurferReadersCaster SetOutputScalarTypeTo$toType
+
+    vtkFreeSurferReadersCaster ClampOverflowOn
+    vtkFreeSurferReadersCaster Update
+
+    # Start copying in the output data.
+    # Taken from VolumeMathDoCast
+    Volume($vCast,vol) SetImageData [vtkFreeSurferReadersCaster GetOutput]
+    Volume($vCast,node) SetScalarTypeTo$toType
+    MainVolumesUpdate $vCast
+
+    vtkFreeSurferReadersCaster Delete
+
+    return $vCast
 }
