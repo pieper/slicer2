@@ -132,12 +132,12 @@ public:
   int GetNumberOfParamsForFeature(int f) 
     {return this->FeatureSettings[f].NumberOfParams;};
   // Get value of a parameter
-  float GetParamForFeature(int f, int p)
-    {return this->FeatureSettings[f].TransformParams[p];};
+  float GetParamForFeature(int f, int p_)
+    {return this->FeatureSettings[f].TransformParams[p_];};
   float GetWeightForFeature(int f)
     {return this->FeatureSettings[f].Weight;};
-  void SetWeightForFeature(int f, float w)
-    {this->FeatureSettings[f].Weight = w;
+  void SetWeightForFeature(int f, float w_)
+    {this->FeatureSettings[f].Weight = w_;
     this->Modified();};
 
   // Description:

@@ -327,16 +327,16 @@ void vtkImageLiveWireEdgeWeights::SetEdgeDirection(int dir)
 
 }
 
-void vtkImageLiveWireEdgeWeights::GetKernelIndices(int &t, int &u, 
-						   int &p, int &q, 
-						   int &v, int &w)
+void vtkImageLiveWireEdgeWeights::GetKernelIndices(int &t_, int &u_, 
+						   int &p_, int &q_, 
+						   int &v_, int &w_)
 {
-  t = this->t;
-  u = this->u;
-  p = this->p;
-  q = this->q;
-  v = this->v;
-  w = this->w;
+  t_ = this->t;
+  u_ = this->u;
+  p_ = this->p;
+  q_ = this->q;
+  v_ = this->v;
+  w_ = this->w;
 
 }
 //----------------------------------------------------------------------------
