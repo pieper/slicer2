@@ -125,7 +125,7 @@ void vtkInteractiveTensorGlyph::Execute()
 
   if (this->GetSource() == NULL)
     {
-    vtkWarningMacro("No source.");
+    vtkDebugMacro("No source.");
     return;
     }
 
