@@ -105,7 +105,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.10 $} {$Date: 2005/03/21 19:36:41 $}]
+        {$Revision: 1.11 $} {$Date: 2005/03/21 22:20:12 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -294,9 +294,9 @@ proc TransformVolumeBuildGUI {} {
     iwidgets::entryfield $f.ePrefix -labeltext "Result Prefix:" -labelpos w \
         -background "#e2cdba" -foreground "#000000" \
         -labelfont {helvetica 8} \
+        -textvariable TransformVolume(ResultPrefix) \
         -command TransformVolumeResultPrefix
 
-    $f.ePrefix insert 0  $TransformVolume(ResultPrefix)
     set TransformVolume(resultPrefix) $f.ePrefix
 
     # Transform button
@@ -304,6 +304,7 @@ proc TransformVolumeBuildGUI {} {
         -text "Do Transform" \
         -background "#e2cdba" -foreground "#000000" \
         -font {helvetica 8} \
+        -height 32 \
         -command TransformVolumeRun
 
     set TransformVolume(brun) $f.brun
@@ -349,24 +350,42 @@ proc TransformVolumeBuildGUI {} {
     set f $fResample.fOutputSpacing
     eval {label $f.lOutputSpacing -text "New Spacing"} $Gui(WLA)
     pack $f.lOutputSpacing -side top -padx $Gui(pad) -pady $Gui(pad)
-    eval {label $f.lOutputSpacingLR -text "LR:"} $Gui(WLA)
-    eval {entry $f.eOutputSpacingLR -width 6 -textvariable TransformVolume(OutputSpacingLR) } $Gui(WEA)
-    eval {label $f.lOutputSpacingPA -text "PA:"} $Gui(WLA)
-    eval {entry $f.eOutputSpacingPA -width 6 -textvariable TransformVolume(OutputSpacingPA) } $Gui(WEA)
-    eval {label $f.lOutputSpacingIS -text "IS:"} $Gui(WLA)
-    eval {entry $f.eOutputSpacingIS -width 6 -textvariable TransformVolume(OutputSpacingIS) } $Gui(WEA)
-    pack $f.lOutputSpacingLR $f.eOutputSpacingLR $f.lOutputSpacingPA $f.eOutputSpacingPA $f.lOutputSpacingIS $f.eOutputSpacingIS -side left -padx $Gui(pad) -pady $Gui(pad)
+
+    iwidgets::entryfield $f.eOutputSpacingLR -labeltext "LR:" -labelpos w \
+        -width 6 \
+        -background "#e2cdba" -foreground "#000000" \
+        -labelfont {helvetica 8} \
+        -textvariable TransformVolume(OutputSpacingLR) \
+        -command TransformVolumeOutputSpacingLR
+
+    iwidgets::entryfield $f.eOutputSpacingPA -labeltext "PA:" -labelpos w \
+        -width 6 \
+        -background "#e2cdba" -foreground "#000000" \
+        -labelfont {helvetica 8} \
+        -textvariable TransformVolume(OutputSpacingPA) \
+        -command TransformVolumeOutputSpacingPA
+
+    iwidgets::entryfield $f.eOutputSpacingIS -labeltext "IS:" -labelpos w \
+        -width 6 \
+        -background "#e2cdba" -foreground "#000000" \
+        -labelfont {helvetica 8} \
+        -textvariable TransformVolume(OutputSpacingIS) \
+        -command TransformVolumeOutputSpacingIS
+
+    pack $f.eOutputSpacingLR $f.eOutputSpacingPA $f.eOutputSpacingIS -side left -padx $Gui(pad) -pady $Gui(pad)
     
     lappend TransformVolume(resampleConrols) $f.eOutputSpacingLR $f.eOutputSpacingPA $f.eOutputSpacingIS
 
     # Resample->Auto Spacing
-    set f $fResample.fAutoSpacing
-    frame $f -bg $Gui(activeWorkspace)
-    pack $f -side top -padx 0 -pady $Gui(pad) -fill x
+    set f $fResample  
+    iwidgets::pushbutton  $f.bAutoSpacing \
+        -text "Original Spacing" \
+        -background "#e2cdba" -foreground "#000000" \
+        -font {helvetica 8} \
+        -height 32 \
+        -command TransformVolumeAutoSpacing
 
-    set f $fResample.fAutoSpacing
-    DevAddButton $f.bAutoSpacing "Original Spacing"  TransformVolumeAutoSpacing
-    pack $f.bAutoSpacing -side left -padx $Gui(pad) -pady $Gui(pad)
+    pack $f.bAutoSpacing -side top -padx $Gui(pad) -pady $Gui(pad)
 
     lappend TransformVolume(resampleConrols) $f.bAutoSpacing
 
@@ -378,14 +397,30 @@ proc TransformVolumeBuildGUI {} {
     set f $fResample.fOutputDimension
     eval {label $f.lOutputDimension -text "New Dimensions"} $Gui(WLA)
     pack $f.lOutputDimension -side top -padx $Gui(pad) -pady $Gui(pad)
-    eval {label $f.lOutputDimensionLR -text "LR:"} $Gui(WLA)
-    eval {entry $f.eOutputDimensionLR -width 6 -textvariable TransformVolume(OutputDimensionLR) } $Gui(WEA)
-    eval {label $f.lOutputDimensionPA -text "PA:"} $Gui(WLA)
-    eval {entry $f.eOutputDimensionPA -width 6 -textvariable TransformVolume(OutputDimensionPA) } $Gui(WEA)
-    eval {label $f.lOutputDimensionIS -text "IS:"} $Gui(WLA)
-    eval {entry $f.eOutputDimensionIS -width 6 -textvariable TransformVolume(OutputDimensionIS) } $Gui(WEA)
-    pack $f.lOutputDimensionLR $f.eOutputDimensionLR $f.lOutputDimensionPA $f.eOutputDimensionPA $f.lOutputDimensionIS $f.eOutputDimensionIS -side left -padx $Gui(pad) -pady $Gui(pad)
-   
+
+    iwidgets::entryfield $f.eOutputDimensionLR -labeltext "LR:" -labelpos w \
+        -width 6 \
+        -background "#e2cdba" -foreground "#000000" \
+        -labelfont {helvetica 8} \
+        -textvariable TransformVolume(OutputDimensionLR) \
+        -command TransformVolumeOutputDimensionLR
+
+    iwidgets::entryfield $f.eOutputDimensionPA -labeltext "PA:" -labelpos w \
+        -width 6 \
+        -background "#e2cdba" -foreground "#000000" \
+        -labelfont {helvetica 8} \
+        -textvariable TransformVolume(OutputDimensionPA) \
+        -command TransformVolumeOutputDimensionPA
+
+    iwidgets::entryfield $f.eOutputDimensionIS -labeltext "IS:" -labelpos w \
+        -width 6 \
+        -background "#e2cdba" -foreground "#000000" \
+        -labelfont {helvetica 8} \
+        -textvariable TransformVolume(OutputDimensionIS) \
+        -command TransformVolumeOutputDimensionIS
+
+    pack $f.eOutputDimensionLR $f.eOutputDimensionPA $f.eOutputDimensionIS -side left -padx $Gui(pad) -pady $Gui(pad)
+    
     lappend TransformVolume(resampleConrols) $f.eOutputDimensionLR $f.eOutputDimensionPA $f.eOutputDimensionIS
 
     # Resample->Set Extent
@@ -555,54 +590,70 @@ proc TransformVolumeVolumeExists {name} {
 }
 
 #-----------------------------
-proc TransformVolumeTransform {} {
+proc TransformVolumeTransform {{id ""}} {
     global TransformVolume
-
-    set TransformVolume(VolIDs) [TransformVolumeGetVolumes [$TransformVolume(transform) selectedID]]
-
+    
+    if {$id != ""} {
+        set TransformVolume(VolIDs) [TransformVolumeGetVolumes $id]
+    } else {
+        set TransformVolume(VolIDs) [TransformVolumeGetVolumes [$TransformVolume(transform) selectedID]]
+    }
     TransformVolumeUpdateResample
     TransformVolumeUpdatePreview
 }
 
 #-----------------------------
-proc TransformVolumeDispVolume {} {
+proc TransformVolumeDispVolume {{id ""}} {
     global TransformVolume
-
-    set TransformVolume(DispVolume) [$TransformVolume(displacementVol) selectedID]
-
+    
+    if {$id != ""} {
+        set TransformVolume(DispVolume) $id
+    } else {
+        set TransformVolume(DispVolume) [$TransformVolume(displacementVol) selectedID]
+    }
     TransformVolumeUpdatePreview
 }
 
 #-----------------------------
-proc TransformVolumeRefVolume {} {
+proc TransformVolumeRefVolume {{id ""}} {
     global TransformVolume
-
-    set TransformVolume(RefVolume) [$TransformVolume(referenceVol) selectedID]
-
+    
+    if {$id != ""} {
+        set TransformVolume(RefVolume) $id
+    } else {
+        set TransformVolume(RefVolume) [$TransformVolume(referenceVol) selectedID]
+    }
+    
     TransformVolumeUpdateResample
     TransformVolumeUpdatePreview
 }
 
 #-----------------------------
-proc TransformVolumeOrientation {} {
+proc TransformVolumeOrientation {{orient ""}} {
     global TransformVolume
-
-    set TransformVolume(OutputOrientation) [$TransformVolume(orientation) get]
+    
+    if {$orient != "" } {
+        set TransformVolume(OutputOrientation) $orient
+    } else {
+        set TransformVolume(OutputOrientation) [$TransformVolume(orientation) get]
+    }
+    
     TransformVolumeUpdatePreview
 }
 
 #-----------------------------
-proc TransformVolumeResampleMode {} {
+proc TransformVolumeResampleMode {{mode ""}} {
     global TransformVolume
-
-    set resampling [$TransformVolume(resampleMode) get]
-
-    set TransformVolume(ResamplingMode) [lsearch $TransformVolume(ResamplingModes) $resampling]
-
-    $TransformVolume(resampleMode) select $resampling
-
-    # gray out menus configure -state disabled
-
+    
+    if {$mode != "" } {
+        set TransformVolume(ResamplingMode) $mode
+    } else {
+        set mode [$TransformVolume(resampleMode) get]
+        set TransformVolume(ResamplingMode) [lsearch $TransformVolume(ResamplingModes) $mode]
+    }
+    
+    $TransformVolume(resampleMode) select $mode
+    
     switch $TransformVolume(ResamplingMode) {
         "0" {
             foreach c $TransformVolume(resampleConrols) {
@@ -629,26 +680,17 @@ proc TransformVolumeResampleMode {} {
 }
 
 #-----------------------------
-proc TransformVolumeInterpolationMode {} {
-    global TransformVolume
-
-    set resampling [$TransformVolume(resampleMode) get]
-
-    set TransformVolume(InterpolationMode) [$TransformVolume(interpolationMode) get]
-}
-
-#-----------------------------
 proc TransformVolumeUpdateResample {} {
     global TransformVolume Volume
-
+    
     # set reference volume
     set vRef $TransformVolume(RefVolume)
-
+    
     # get volumes to transform under a transform node
     set volIDs $TransformVolume(VolIDs)
-        
+    
     set v $Volume(idNone)
-
+    
     if {$TransformVolume(ResamplingMode) == 0} {
         # use source as reference
         if {[llength $volIDs] != 0} {
@@ -781,7 +823,7 @@ proc TransformVolumeAutoSpacing {} {
         if {$::Module(verbose)} {  puts "LR PA IS $point" }
         set TransformVolume(OutputSpacingLR) [expr abs([lindex $point 0])]
         set TransformVolume(OutputSpacingPA) [expr abs([lindex $point 1])]
-        set TransformVolume(OutputSpacingLRS) [expr abs([lindex $point 2])]
+        set TransformVolume(OutputSpacingIS) [expr abs([lindex $point 2])]
         ModelRasToVtk Delete
     }
 }
@@ -918,6 +960,19 @@ proc TransformVolumeAutoDimension {} {
     TransformVolumeUpdatePreview
 }
 
+
+
+#-----------------------------
+proc TransformVolumeInterpolationMode {{mode ""}} {
+    global TransformVolume
+
+    if {$mode != ""} {
+        set TransformVolume(InterpolationMode) $mode
+    } else {
+        set TransformVolume(InterpolationMode) [$TransformVolume(interpolationMode) get]
+    }
+}
+
 #-------------------------------------------------------------------------------
 # .PROC TransformVolumeAutoDimensionLR
 #
@@ -972,9 +1027,102 @@ proc TransformVolumeAutoDimensionIS {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc TransformVolumeResultPrefix {} {
+proc TransformVolumeResultPrefix {{prefix ""}} {
     global TransformVolume
-
-    set TransformVolume(ResultPrefix) [$TransformVolume(resultPrefix) get]
+    if {$prefix != ""} {
+        set TransformVolume(ResultPrefix) $prefix
+    } else {
+        set TransformVolume(ResultPrefix) [$TransformVolume(resultPrefix) get]
+    }
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeOutputSpacingLR
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TransformVolumeOutputSpacingLR {{spacing ""} } {
+    global TransformVolume
+    
+    if {$spacing != ""} {
+        set TransformVolume(OutputSpacingLR) $spacing
+    }
+    
+}
+
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeOutputSpacingPA
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TransformVolumeOutputSpacingPA {{spacing ""}} {
+    global TransformVolume
+    
+    if {$spacing != ""} {
+        set TransformVolume(OutputSpacingPA) $spacing
+    }
+    
+}
+
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeOutputSpacingIS
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TransformVolumeOutputSpacingIS {{spacing ""} } {
+    global TransformVolume
+
+    if {$spacing != ""} {
+        set TransformVolume(OutputSpacingIS) $spacing
+    }
+    
+}
+
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeOutputDimensionLR
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TransformVolumeOutputDimensionLR {{dimension ""} } {
+    global TransformVolume
+    
+    if {$dimension != ""} {
+        set TransformVolume(OutputDimensionLR) $dimension
+    }
+    
+}
+
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeOutputDimensionPA
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TransformVolumeOutputDimensionPA {{dimension ""}} {
+    global TransformVolume
+    
+    if {$dimension != ""} {
+        set TransformVolume(OutputDimensionPA) $dimension
+    }
+    
+}
+
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeOutputDimensionIS
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TransformVolumeOutputDimensionIS {{dimension ""} } {
+    global TransformVolume
+
+    if {$dimension != ""} {
+        set TransformVolume(OutputDimensionIS) $dimension
+    }
+    
+}
