@@ -123,9 +123,14 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass NumInputImagesSet} {
             EMSegment(Cattrib,$i,vtkImagePCAApply)  SetEigenValue [lindex $EigenList 0] [lindex $EigenList 1] 
          }
          EMSegment(Cattrib,$i,vtkImagePCAApply) Update
-         EMSegment(vtkEMSegment) SetPCAShapePtr EMSegment(Cattrib,$i,vtkImagePCAApply)
-         eval EMSegment(vtkEMSegment) SetPCAScale $EMSegment(Cattrib,$i,PCAScale)
-      }
+         EMSegment(vtkEMSegment) SetPCAShapePtr     EMSegment(Cattrib,$i,vtkImagePCAApply)
+         eval EMSegment(vtkEMSegment) SetPCAScale   $EMSegment(Cattrib,$i,PCAScale)
+     EMSegment(vtkEMSegment) SetPCAMaxDist      $EMSegment(Cattrib,$i,PCAMaxDist)
+     EMSegment(vtkEMSegment) SetPCADistVariance $EMSegment(Cattrib,$i,PCADistVariance)
+         # Not Necessary: just if you do not want ot use all eignevectors  then set it 
+         # puts "NumberOfEigenModes [llength  $EMSegment(Cattrib,$i,PCAEigen)] "
+     #  EMSegment(vtkEMSegment) SetPCANumberOfEigenModes [llength  $EMSegment(Cattrib,$i,PCAEigen)] 
+      } 
     }
     EMSegment(vtkEMSegment) SetTissueProbability $EMSegment(Cattrib,$i,Prob)
     for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {

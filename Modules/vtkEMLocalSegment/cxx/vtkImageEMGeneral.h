@@ -48,6 +48,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkDataTimeDef.h"
 #include "vtkFileOps.h" 
 
+
+
 // ------------------------------------
 // Definitions for gauss calculations
 // ------------------------------------
@@ -202,22 +204,22 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMGeneral : public vtkImageMultipleInput
 
   // Description :
   // 3xfaster Gauss Function written by Sandy
-  static double FastGauss(double inverse_sigma, double x);
-  static double FastGaussTest(double inverse_sigma, double x);
+  static double FastGauss(const double inverse_sigma, const double x);
+  static double FastGaussTest(const double inverse_sigma, const double x);
   // Description:
   // Special feature necessary bc we use weighted input images thus a matix of realDim 2 can be virtualDim 1
   // e.g. 1 0 | 0 0
-  static float FastGauss2(double inverse_sqrt_det_covariance, float *x ,double *mu,  double **inv_cov, int virtualDim );
+  static float FastGauss2(const double inverse_sqrt_det_covariance, const float *x ,const double *mu, double **inv_cov, const int virtualDim );
 
   // Description :
   // Same as FastGauss - just for multi dimensional input ->  x = (vec - mu) * InvCov *(vec - mu)
-  static float FastGaussMulti(double inverse_sqrt_det_covariance, float x,int dim);
+  static float FastGaussMulti(const double inverse_sqrt_det_covariance, const float x,const int dim);
 
   // Description :
   // Same as FastGauss - just for multi dimensional input 
   // Special feature necessary bc we use weighted input images thus a matix of realDim 2 can be virtualDim 1
   // e.g. 1 0 | 0 0
-  static float FastGaussMulti(double inverse_sqrt_det_covariance, float* x,double *mu, double **inv_cov, int realDim, int virtualDim);
+  static float FastGaussMulti(const double inverse_sqrt_det_covariance, const float* x,const double *mu, double **inv_cov, const int realDim, const int virtualDim);
 
   // Description :
   // Fastes Gauss Function (jep I wrote it) - just look in a predifend lookup table 
@@ -234,6 +236,7 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMGeneral : public vtkImageMultipleInput
   // Value defines the vooxel with those label to be measured
   // Returns  Dice sim measure
   static float CalcSimularityMeasure (vtkImageData *Image1, vtkImageData *Image2,float val, int PrintRes);
+
 protected:
   vtkImageEMGeneral() {};
   vtkImageEMGeneral(const vtkImageEMGeneral&) {};
@@ -313,9 +316,132 @@ protected:
   static void CalculateLogMeanandLogCovariance(double *mu, double *Sigma, double *LogMu, double *LogVariance,double *LogTestSequence, int NumberOfClasses, int SequenceMax); 
  
   void TestMatrixFunctions(int MatrixDim,int iter);
+
 //Kilian
 //ETX
 };
+
+//BTX 
+// ---------------------------------------------------------------------------------------------
+//  -*- Mode: C++;  -*-
+//  File: qgauss.hh
+//  Author: Sandy Wells (sw@ai.mit.edu)
+//  Copyright (C) MIT Artificial Intelligence Laboratory, 1995
+// *------------------------------------------------------------------
+// * FUNCTION:
+// *
+// * Implements an approximation to the Gaussian function.
+// * It is based on a piecewise-linear approximation
+// * to the 2**x function for negative arguments using integer arithmetic and
+// * bit fiddling.  
+// * origins: May 14, 1995, sw.  
+// *
+// * On an alpha qgauss is about 3 times faster than vanilla gaussian.
+// * The error seems to be a six percent ripple.
+// *
+// * HISTORY:
+// * Last edited: Nov  3 15:26 1995 (sw)
+// * Created: Wed Jun  7 02:03:35 1995 (sw)
+// *------------------------------------------------------------------
+
+// A piecewise linear approximation to 2**x for negative arugments
+// Provides exact results when the argument is a power of two,
+// and some other times as well.
+// The strategy is rougly as follows:
+//    coerce the single float argument to unsigned int
+//    extract the exponent as a signed integer
+//    construct the mantissa, including the phantom high bit, and negate it
+//    construct the result bit pattern by leftshifting the signed mantissa
+//      this is done for both cases of the exponent sign
+//      and check for potenital underflow
+
+// Does no conditional branching on alpha or sparc :Jun  7, 1995
+
+inline float vtkImageEMGeneral_qnexp2(float const x)
+{
+    unsigned result_bits;
+    unsigned bits = COERCE(x, unsigned int);
+    int exponent = ((EMSEGMENT_EXPMASK & bits) >> EMSEGMENT_MANTSIZE) - (EMSEGMENT_EXPBIAS);
+    int neg_mant =   - (int)((EMSEGMENT_MENTMASK & bits) | EMSEGMENT_PHANTOM_BIT);
+
+    unsigned r1 = (neg_mant << exponent);
+    unsigned r2 = (neg_mant >> (- exponent));
+
+    result_bits = (exponent < 0) ? r2 : r1;
+    result_bits = (exponent > 5) ? EMSEGMENT_SHIFTED_BIAS_COMP  : result_bits;
+    
+    result_bits += EMSEGMENT_SHIFTED_BIAS;
+
+#ifdef DEBUG
+    {
+    float result;
+    result = COERCE(result_bits, float);
+    fprintf(stderr, "x %g, b %x, e %d, m %x, R %g =?",
+           x,     bits, exponent,  neg_mant, pow(2.0, x));
+    fflush(stderr);
+    fprintf(stderr, " %g\n", result);
+    }
+#endif
+    return(COERCE(result_bits, float));
+}
+
+// An approximation to the Gaussian function.
+// The error seems to be a six percent ripple.
+inline double vtkImageEMGeneral::FastGauss(const double inverse_sigma, const double x)
+{
+    float tmp = float(inverse_sigma * x);
+    return (double) EMSEGMENT_ONE_OVER_ROOT_2_PI * inverse_sigma 
+    * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * tmp * tmp);
+}
+
+// An approximation to the Gaussian function.
+// The error seems to be a six percent ripple.
+inline double vtkImageEMGeneral::FastGaussTest(const double inverse_sigma, const double x)
+{
+    float tmp = float(inverse_sigma * x);
+#ifndef _WIN32
+    cerr << "Result " << tmp << " " << inverse_sigma * x << " " << vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * tmp * tmp) << endl ;
+#endif
+    return (double) EMSEGMENT_ONE_OVER_ROOT_2_PI * inverse_sigma 
+    * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * tmp * tmp);
+}
+
+ // Same as FastGauss - just for 2 Dimensional multi dimensional input 
+ // Special feature necessary bc we use weighted input images thus a matix of realDim 2 can be virtualDim 1
+ // e.g. 1 0 | 0 0
+inline float vtkImageEMGeneral::FastGauss2(const double inverse_sqrt_det_covariance, const float *x ,const double *mu,  double **inv_cov, const int virtualDim) {
+  float term1 = x[0] - float(mu[0]),
+        term2 = x[1] - float(mu[1]);
+  // Kilian: can be done faster: term1*(inv_cov[0][0]*term1 + 2.0*inv_cov[0][1]*term2) + term2*term2*inv_cov[1][1];
+  term2 = term1*(float(inv_cov[0][0])*term1 + float(inv_cov[0][1])*term2) + term2*(float(inv_cov[1][0])*term1 + float(inv_cov[1][1])*term2);
+  if (virtualDim > 1) return EMSEGMENT_ONE_OVER_2_PI * float(inverse_sqrt_det_covariance)  * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * term2);
+  return EMSEGMENT_ONE_OVER_ROOT_2_PI * float(inverse_sqrt_det_covariance)  * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * term2);
+}
+
+// Same as FastGauss - just for multi dimensional input ->  x = (vec - mu) * InvCov *(vec - mu) 
+inline float vtkImageEMGeneral::FastGaussMulti(const double inverse_sqrt_det_covariance, const float x,const int dim) {
+  return pow(EMSEGMENT_ONE_OVER_ROOT_2_PI,dim) * inverse_sqrt_det_covariance * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * x);
+}
+
+ // Special feature necessary bc we use weighted input images thus a matix of realDim 2 can be virtualDim 1
+ // e.g. 1 0 | 0 0
+inline float vtkImageEMGeneral::FastGaussMulti(const double inverse_sqrt_det_covariance, const float* x,const double *mu, double **inv_cov, const int realDim, const int virtualDim) {
+  if (realDim <2) return (float) vtkImageEMGeneral::FastGauss(inverse_sqrt_det_covariance,x[0]- float(mu[0]));
+  if (realDim <3) return vtkImageEMGeneral::FastGauss2(inverse_sqrt_det_covariance, x ,mu,inv_cov, virtualDim);
+  float *x_m = new float[realDim];
+  float term = 0;
+  int i,j; 
+  for (i=0; i < realDim; i++) x_m[i] = x[i] - float(mu[i]);
+  for (i=0; i < realDim; i++) {
+    for (j=0; j < realDim; j++) term += (float(inv_cov[i][j])*x_m[j]);
+    term *= x_m[i];
+  }
+  delete []x_m;
+  return vtkImageEMGeneral::FastGaussMulti(inverse_sqrt_det_covariance, term,virtualDim);        
+}
+
+
+//ETX
 
 #endif
 

@@ -149,6 +149,15 @@ public:
   vtkGetVector3Macro(PCAScale, double);
   vtkSetVector3Macro(PCAScale, double);
 
+  // Description:
+  // Maximum distance inside the object 
+  vtkGetMacro(PCAMaxDist,double);
+  vtkSetMacro(PCAMaxDist,double);
+  // Description:
+  // Variance to maximum distance in the signed label map  
+  vtkGetMacro(PCADistVariance,double);
+  vtkSetMacro(PCADistVariance,double);
+
 protected:
   vtkMrmlSegmenterClassNode();
   ~vtkMrmlSegmenterClassNode();
@@ -171,6 +180,8 @@ protected:
   double PCATranslation[3];
   double PCARotation[3];
   double PCAScale[3];
+  double PCAMaxDist;
+  double PCADistVariance;
 };
 
 #endif

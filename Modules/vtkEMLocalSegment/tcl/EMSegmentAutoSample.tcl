@@ -20,7 +20,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. 
 #
 #===============================================================================
-# FILE:        EMSegmentAlgorithm.tcl
+# FILE:        EMSegmentAutoSample.tcl
 # PROCEDURES:  
 #   EMSegmentSetVtkSuperClassSetting
 #   EMSegmentAlgorithmStart

@@ -75,7 +75,8 @@ vtkMrmlSegmenterClassNode::vtkMrmlSegmenterClassNode()
   memset(this->PCATranslation,0,3*sizeof(double));
   memset(this->PCARotation,0,3*sizeof(double));
   for (int i =0; i < 3; i++) PCAScale[i]= 1.0;
-   
+  this->PCAMaxDist       = 0.0;
+  this->PCADistVariance  = 0.0; 
 }
 
 //----------------------------------------------------------------------------
@@ -166,7 +167,8 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
   if  (this->PCATranslation[0] || this->PCATranslation[1] || this->PCATranslation[2]) of << " PCATranslation='" << this->PCATranslation[0] << " " << this->PCATranslation[1] << " " << this->PCATranslation[2] << "'";
   if  (this->PCARotation[0] || this->PCARotation[1] || this->PCARotation[2]) of << " PCARotation='" << this->PCARotation[0] << " " << this->PCARotation[1] << " " << this->PCARotation[2] << "'";
   if  ((this->PCAScale[0] != 1) || (this->PCAScale[1] != 1) || (this->PCAScale[2] != 1)) of << " PCAScale='" << this->PCAScale[0] << " " << this->PCAScale[1] << " " << this->PCAScale[2] << "'";
-
+  of << " PCAMaxDist='" << this->PCAMaxDist << "'";
+  of << " PCADistVariance='" << this->PCADistVariance << "'";
   of << ">\n";
 }
 
@@ -193,6 +195,8 @@ void vtkMrmlSegmenterClassNode::Copy(vtkMrmlNode *anode)
   this->SetPCATranslation(node->PCATranslation);
   this->SetPCARotation(node->PCARotation);
   this->SetPCAScale(node->PCAScale);
+  this->SetPCAMaxDist(node->PCAMaxDist);
+  this->SetPCADistVariance(node->PCADistVariance);
 }
 
 //----------------------------------------------------------------------------
@@ -225,6 +229,8 @@ void vtkMrmlSegmenterClassNode::PrintSelf(ostream& os, vtkIndent indent)
    os << indent << "PCATranslation: " << this->PCATranslation[0] << ", " << this->PCATranslation[1] << ", " << this->PCATranslation[2] << "\n" ;
    os << indent << "PCARotation: " << this->PCARotation[0] << ", " << this->PCARotation[1] << ", " << this->PCARotation[2] << "\n" ;
    os << indent << "PCAScale: " << this->PCAScale[0] << ", " << this->PCAScale[1] << ", " << this->PCAScale[2] << "\n" ;
+   os << indent << "PCAMaxDist:'" << this->PCAMaxDist << "\n";
+   os << indent << "PCADistVariance:" << this->PCADistVariance << "\n";
 }
 
 
