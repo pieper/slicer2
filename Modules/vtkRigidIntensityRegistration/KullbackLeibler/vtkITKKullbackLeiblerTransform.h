@@ -111,8 +111,10 @@ public:
   // Description:
   // Set the size of the histogram for the metric
   // Default is 32 by 32
-  vtkSetMacro(HistSize, int);
-  vtkGetMacro(HistSize, int);
+  vtkSetMacro(HistSizeSource, int);
+  vtkGetMacro(HistSizeSource, int);
+  vtkSetMacro(HistSizeTarget, int);
+  vtkGetMacro(HistSizeTarget, int);
 
   // Description:
   // Set the standard deviations of the parzen window density estimators.
@@ -237,7 +239,8 @@ protected:
   vtkImageData *GivenSourceImage;
   vtkImageData *GivenTargetImage;
   vtkMatrix4x4 *GivenTransform;
-  int HistSize;
+  int HistSizeSource;
+  int HistSizeTarget;
   void *GivenHistogram;
 
   int FlipTargetZAxis;     // 1 if flipped z-axis on target

@@ -74,7 +74,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "KLRegistration.h"
 
-vtkCxxRevisionMacro(vtkITKKullbackLeiblerTransform, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkITKKullbackLeiblerTransform, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkITKKullbackLeiblerTransform);
 
 //----------------------------------------------------------------------------
@@ -90,7 +90,8 @@ vtkITKKullbackLeiblerTransform::vtkITKKullbackLeiblerTransform()
   this->MetricValue = 0;
   this->Matrix->Identity();
 
-  this->HistSize = 32;
+  this->HistSizeSource = 32;
+  this->HistSizeTarget = 32;
   this->GivenHistogram = NULL; // No Histogram until calculated
 
   // the last iteration finished with no error
@@ -299,8 +300,8 @@ static void vtkITKKLExecute(vtkITKKullbackLeiblerTransform *self,
   typedef RegistratorType::SizeType SizeType;
 
   SizeType histSize;
-  histSize[0] = self->GetHistSize();
-  histSize[1] = self->GetHistSize();
+  histSize[0] = self->GetHistSizeSource();
+  histSize[1] = self->GetHistSizeTarget();
   KLRegistrator->SetHistogramSize(histSize);
 
   // ----------------------------------------
