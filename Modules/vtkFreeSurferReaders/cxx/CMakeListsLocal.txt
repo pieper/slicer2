@@ -8,6 +8,7 @@
 SOURCE_FILES (LOCAL_MODULE_SRCS
 vtkFSIO
 vtkCORReader
+vtkMGHReader
 vtkFSSurfaceReader
 vtkFSSurfaceScalarReader
 )
