@@ -65,7 +65,7 @@ proc ModelsInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.41 $} {$Date: 2002/01/26 23:34:32 $}]
+		{$Revision: 1.42 $} {$Date: 2002/02/26 01:54:32 $}]
 
 	# Props
 	set Model(propertyType) Basic
@@ -465,7 +465,9 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 		 -variable Model(clipping) -indicatoron 1 \
 		-command "ModelsPropsApplyButNotToNew; Render3D"} $Gui(WCA)
 
-	pack $f.l $f.c -side left -padx $Gui(pad)
+        DevAddButton $f.bSmooth "Smooth Normals" "ModelsSmoothNormals; Render3D" 13
+
+	pack $f.l $f.c $f.bSmooth -side left -padx $Gui(pad)
 
 	#-------------------------------------------
 	# Props->Bot->Advanced->Culling frame
@@ -888,6 +890,40 @@ proc ModelsPropsCancel {} {
 		set Module(freezer) ""
 		eval $cmd
 	}
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ModelsSmoothNormals
+# 
+#  Smooth the normals of the models if they haven't been smoothed already.
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ModelsSmoothNormals {} {
+   global Model Module
+
+    set m $Model(activeID)
+
+    if {[info exists Model($m,Smoothed)] == 0} {
+        set Model($m,Smoothed) 1
+        vtkPolyDataNormals ModelNormals
+        ModelNormals SetInput $Model($m,polyData)
+        ModelNormals SetFeatureAngle 60
+        [ModelNormals GetOutput] ReleaseDataFlagOn
+        ModelNormals Update
+
+        set Model($m,polyData) [ModelNormals GetOutput]
+
+        foreach r $Module(Renderers) {
+            Model($m,mapper,$r) SetInput $Model($m,polyData)
+        }
+
+        foreach p "ModelNormals" {
+#            $p SetInput ""
+            $p Delete
+        }
+    }
 }
 
 #-------------------------------------------------------------------------------
