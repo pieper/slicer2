@@ -185,7 +185,7 @@
 
 proc GetSlicerWldToItkMatrix {vnode matrix} {
  
-    GetSlicerRASToItkStandAloneMatrix $vnode $matrix
+    GetSlicerRASToItkMatrix $vnode $matrix
 
     vtkMatrix4x4 WldToRAS_
       WldToRAS_ DeepCopy [$vnode GetRasToWld]
