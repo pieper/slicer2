@@ -82,7 +82,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.55 $} {$Date: 2003/09/23 22:34:56 $}]
+            {$Revision: 1.56 $} {$Date: 2003/10/03 17:42:00 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -527,7 +527,6 @@ proc ModelsBuildGUI {} {
     #-------------------------------------------
     set f $fProps.fBot.fFreeSurfer.fApply
 
-#    DevAddButton $f.bApply "Apply" "ModelsFreeSurferPropsApply; Render3D" 8
     DevAddButton $f.bApply "Apply" "ModelsPropsApply; Render3D" 8
     DevAddButton $f.bCancel "Cancel" "ModelsPropsCancel" 8
     grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
@@ -1151,79 +1150,7 @@ proc commify {num {sep ,}} {
 proc ModelsFreeSurferPropsApply {} {
     global Model Label Module Mrml
 
-    # Validate name
-    if {$Model(name) == ""} {
-        DevWarningWindow "Please enter a name that will allow you to distinguish this model."
-        return
-    }
-    if {[ValidateName $Model(name)] == 0} {
-        DevWarningWindow "The name can consist of letters, digits, dashes, or underscores"
-        return
-    }
 
-    # Validate scalar range
-    if {[ValidateFloat $Model(scalarLo)] == 0} {
-        DevWarningWindow "The scalar range must be numbers"
-        return
-    }
-    if {[ValidateFloat $Model(scalarHi)] == 0} {
-        DevWarningWindow "The scalar range must be numbers"
-        return
-    }
-
-    set m $Model(activeID)
-    if {$m == ""} {
-        DevWarningWindow "ModelsFreeSurferPropsApply: Model active ID is empty string"
-        return
-    }
-
-    if {$m == "NEW"} {
-        # Ensure FileName not blank
-        if {$Model(FileName) == ""} {
-            DevWarningWindow "Please enter a model file name."
-            return
-        }
-        set n [MainMrmlAddNode Model]
-        set i [$n GetID]
-        $n SetModelID M$i
-        $n SetOpacity          1.0
-        $n SetVisibility       1
-        $n SetClipping         0
-
-        # These get set down below, but we need them before MainUpdateMRML
-        $n SetName $Model(name)
-        $n SetFileName "$Model(FileName)"
-        $n SetFullFileName [file join $Mrml(dir) [$n GetFileName]]
-        $n SetColor $Label(name)
-
-        MainUpdateMRML
-
-        # If failed, then it's no longer in the idList
-        if {[lsearch $Model(idList) $i] == -1} {
-            return
-        }
-        set Model(freeze) 0
-        set m $i
-    }
-
-    Model($m,node) SetName $Model(name)
-    Model($m,node) SetFileName "$Model(FileName)"
-    Model($m,node) SetFullFileName [file join $Mrml(dir) [Model($m,node) GetFileName]]
-    Model($m,node) SetDescription $Model(desc)
-    MainModelsSetClipping $m $Model(clipping)
-    MainModelsSetVisibility $m $Model(visibility)
-    MainModelsSetOpacity $m $Model(opacity)
-    MainModelsSetCulling $m $Model(culling)
-    MainModelsSetScalarVisibility $m $Model(scalarVisibility)
-    MainModelsSetScalarRange $m $Model(scalarLo) $Model(scalarHi)
-    MainModelsSetColor $m $Label(name)
-
-    # If tabs are frozen, then return to the "freezer"
-    if {$Module(freezer) != ""} {
-        set cmd "Tab $Module(freezer)"
-        set Module(freezer) ""
-        eval $cmd
-    }
-    
-    MainUpdateMRML
+    DevInfoWindow "ModelsFreeSurferPropsApply: Calling VolFreeSurferReadersModelApply instead..."
+    VolFreeSurferReadersModelApply
 }
