@@ -68,6 +68,8 @@ proc vtkFreeSurferReadersInit {} {
     # set up the mapping between the surface labels and umls ids
     vtkFreeSurferReadersSetUMLSMapping
 
+    lappend Module($m,fiducialsPointCreatedCallback) FreeSurferReadersFiducialsPointCreatedCallback
+
     # Module Summary Info
     #------------------------------------
     # Description:
@@ -156,7 +158,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2004/02/29 18:34:40 $}]
+        {$Revision: 1.3 $} {$Date: 2004/03/11 19:56:34 $}]
 
 }
 
@@ -598,6 +600,7 @@ proc vtkFreeSurferReadersApply {} {
     }
 
     # Update all fields that the user changed (not stuff that would need a file reread)
+    return $i
 }
 
 #-------------------------------------------------------------------------------
@@ -1432,7 +1435,7 @@ proc vtkFreeSurferReadersModelApply {} {
         set Module(freezer) ""
         eval $cmd
     }
-    return
+    return $i
 }
 
 proc vtkFreeSurferReadersModelCancel {} {
@@ -1481,7 +1484,7 @@ proc vtkFreeSurferReadersLoadVolume { filename {labelMap 0} {name ""} } {
     if { $name != "" } {
         set ::Volume(name) $name
     }
-    vtkFreeSurferReadersApply
+    return [vtkFreeSurferReadersApply]
 }
 
 proc vtkFreeSurferReadersLoadModel { filename {name ""} } {
@@ -1491,5 +1494,25 @@ proc vtkFreeSurferReadersLoadModel { filename {name ""} } {
     if { $name != "" } {
         set ::Volume(name) $name
     }
-    vtkFreeSurferReadersModelApply
+    return [vtkFreeSurferReadersModelApply]
 }
+
+#-------------------------------------------------------------------------------
+# .PROC FreeSurferReadersFiducialsPointCreatedCallback
+# This procedures is a callback procedule called when a Fiducial Point is
+# created - use this to update the query atlas window
+# .ARGS 
+# .END
+#-------------------------------------------------------------------------------
+proc FreeSurferReadersFiducialsPointCreatedCallback {type fid pid} {
+
+    if { [catch "package require Itcl"] } {
+        return
+    }
+
+    foreach r [itcl::find objects -class regions] {
+        $r findptscalars
+    }
+
+}
+
