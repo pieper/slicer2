@@ -6,26 +6,22 @@ package require vtkinteraction
 
 load ../builds/bin/libvtkFreeSurferReadersTCL.so
 
-foreach hemi {lh rh} {
+# This loads the surface file.
+set mris [vtkFSSurfaceReader _mris]
+$mris SetFileName "/home/kteich/subjects/anders/surf/nicole.orig"
 
-    # This loads the surface file.
-    set mris($hemi) [vtkFSSurfaceReader _mris-$hemi]
-    $mris($hemi) SetFileName "/home/kteich/subjects/anders/surf/${hemi}.white"
+# Add a normals object to computer normals from the output of the
+# surface.
+set normals [vtkPolyDataNormals _normals]
+$normals SetInput [$mris GetOutput]
 
-    # Add a normals object to computer normals from the output of the
-    # surface.
-    set normals($hemi) [vtkPolyDataNormals _normals-$hemi]
-    $normals($hemi) SetInput [$mris($hemi) GetOutput]
-    
-    set mapper($hemi) [vtkPolyDataMapper _mapper-$hemi]
-    $mapper($hemi) SetInput [$normals($hemi) GetOutput]
-    
-    set actor($hemi) [vtkActor _actor-$hemi]
-    $actor($hemi) SetMapper $mapper($hemi)
+set mapper [vtkPolyDataMapper _mapper]
+$mapper SetInput [$normals GetOutput]
 
-    [$actor($hemi) GetProperty] SetColor 1 .9 .9
-}
+set actor [vtkActor _actor]
+$actor SetMapper $mapper
 
+[$actor GetProperty] SetColor 1 .9 .9
 
 set renderer [vtkRenderer _renderer]
 
@@ -35,9 +31,7 @@ $renderWindow AddRenderer $renderer
 set interactor [vtkRenderWindowInteractor _interactor]
 $interactor SetRenderWindow $renderWindow
 
-foreach hemi {lh rh} {
-    $renderer AddActor $actor($hemi)
-}
+$renderer AddActor $actor
 $renderer SetBackground 0 0 0
 
 $interactor Initialize
