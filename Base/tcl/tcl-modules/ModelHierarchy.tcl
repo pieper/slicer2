@@ -157,7 +157,7 @@ proc ModelHierarchyInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.14 $} {$Date: 2004/04/13 21:00:08 $}]
+        {$Revision: 1.15 $} {$Date: 2004/04/23 14:53:23 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -169,6 +169,7 @@ proc ModelHierarchyInit {} {
 
     set ModelHierarchy(selectedModels) ""
     set ModelHierarchy(selectedGroups) ""
+    set ModelHierarchy(moduleActive) 0
 }
 
 
@@ -419,6 +420,8 @@ proc ModelHierarchyEnter {} {
         $fb.bDelete config -state disabled
         $fb.bCreateGroup config -state disabled
     }
+
+    set ModelHierarchy(moduleActive) 1
 }
 
 
@@ -445,6 +448,8 @@ proc ModelHierarchyExit {{param 1}} {
         MainModelsDestroyGUI
         ModelsUpdateMRML
     }
+    
+    set ModelHierarchy(moduleActive) 0
 }
 
 
@@ -495,7 +500,7 @@ proc ModelHierarchyDeleteNode {nodeType id} {
 # .END
 #-------------------------------------------------------------------------------
 proc ModelHierarchyCreate {} {
-    global Model ModelRef Hierarchy EndHierarchy
+    global Model ModelRef Hierarchy EndHierarchy ModelHierarchy
     
     if {[llength $Model(idList)] == 0} {
         DevErrorWindow "Cannot create a hierarchy without any models."
@@ -520,7 +525,9 @@ proc ModelHierarchyCreate {} {
     
     MainMrmlAddNode "EndHierarchy"
     
-    ModelHierarchyRedrawFrame
+    if {$ModelHierarchy(moduleActive)==1} {
+        ModelHierarchyRedrawFrame
+    }
 }
 
 
@@ -546,7 +553,7 @@ proc ModelHierarchyDeleteAsk {widget} {
 # .END
 #-------------------------------------------------------------------------------
 proc ModelHierarchyDelete {} {
-    global ModelRef Hierarchy EndHierarchy ModelGroup EndModelGroup
+    global ModelRef Hierarchy EndHierarchy ModelGroup EndModelGroup ModelHierarchy
     global Mrml(dataTree)
     
     MainModelsDestroyGUI
@@ -574,7 +581,9 @@ proc ModelHierarchyDelete {} {
         set node [Mrml(dataTree) GetNextItem]
     }
     
-    ModelHierarchyRedrawFrame
+    if {$ModelHierarchy(moduleActive)==1} {
+        ModelHierarchyRedrawFrame
+    }
     MainUpdateMRML
 }
 
@@ -619,7 +628,7 @@ proc ModelHierarchyCreateGroup {widget} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc ModelHierarchyCreateGroupOk {} {
+proc ModelHierarchyCreateGroupOk {{name ""}} {
     global Mrml ModelGroup Color ModelHierarchy
     
     
@@ -643,14 +652,21 @@ proc ModelHierarchyCreateGroupOk {} {
     set ModelGroup($newID,expansion) [$node GetExpansion]
     $node SetColor [Color(0,node) GetName]
     set ModelGroup($newID,colorID) 0
-    $node SetName [.askforname.e1 get]
+    if {$name==""} {
+        $node SetName [.askforname.e1 get]
+    } else {
+        $node SetName $name
+    }
     
     MainMrmlInsertBeforeNode $tmpnode "EndModelGroup"
 
-    destroy .askforname
-    ModelHierarchyRedrawFrame
+    if {($name=="") && ($ModelHierarchy(moduleActive)==1)} {
+    # only update GUI if called from ModelHierarchyCreateGroup without a name parameter
+        destroy .askforname
+        ModelHierarchyRedrawFrame
 
-    $ModelHierarchy(ModelCanvas) yview moveto 1.0
+        $ModelHierarchy(ModelCanvas) yview moveto 1.0
+    }
 }
 
 
@@ -661,7 +677,7 @@ proc ModelHierarchyCreateGroupOk {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ModelHierarchyDeleteModelGroup {modelgroup} {
-    global Mrml ModelGroup EndModelGroup Model
+    global Mrml ModelGroup EndModelGroup Model ModelHierarchy
     
     Mrml(dataTree) InitTraversal
     set node [Mrml(dataTree) GetNextItem]
@@ -690,7 +706,10 @@ proc ModelHierarchyDeleteModelGroup {modelgroup} {
         }
         set node [Mrml(dataTree) GetNextItem]
     }
-    ModelHierarchyRedrawFrame
+    
+    if {$ModelHierarchy(moduleActive)==1} {
+        ModelHierarchyRedrawFrame
+    }
 }
 
 
@@ -704,7 +723,7 @@ proc ModelHierarchyDeleteModelGroup {modelgroup} {
 # .END
 #-------------------------------------------------------------------------------
 proc ModelHierarchyMoveModel {id targetGroup src_modelgroup {trg_modelgroup 1}} {
-    global Mrml ModelRef Model ModelGroup EndModelGroup Color
+    global Mrml ModelRef Model ModelGroup EndModelGroup Color ModelHierarchy
     
     # destroy the whole models gui before doing any changes, because model id's
     # and model group id's won't remain the same and MainModelsDestroyGUI depends
@@ -768,7 +787,9 @@ proc ModelHierarchyMoveModel {id targetGroup src_modelgroup {trg_modelgroup 1}} 
             set node [Mrml(dataTree) GetNextItem]
         }
         
-        ModelHierarchyRedrawFrame
+        if {$ModelHierarchy(moduleActive)==1} {
+            ModelHierarchyRedrawFrame
+    }
     } else {
         # move a complete model group
         
@@ -909,7 +930,9 @@ proc ModelHierarchyMoveModel {id targetGroup src_modelgroup {trg_modelgroup 1}} 
             set node [tempTree GetNextItem]
         }
         
-        ModelHierarchyRedrawFrame
+        if {$ModelHierarchy(moduleActive)==1} {
+            ModelHierarchyRedrawFrame
+    }
         #MainUpdateMRML
         
         tempTree RemoveAllItems
