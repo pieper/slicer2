@@ -374,7 +374,6 @@ void vtkMultipleStreamlineController::SaveStreamlineAsTextFile(ofstream &file,
 
 void vtkMultipleStreamlineController::SaveStreamlinesAsTextFiles(char *filename)
 { 
-  char fileName[101];
   std::string fileNameStr;
   std::string idxStr;
   vtkHyperStreamlinePoints *currStreamline;
@@ -401,14 +400,13 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsTextFiles(char *filename)
     {
       cout << "stream " << currStreamline << endl;
       
-      //snprintf(fileName,100,"%s_%d.txt",filename,idx);
       idxStr = idx + ".txt";
       fileNameStr = filename + '_' + idxStr;
       file.open(fileNameStr.c_str());
       if (file.fail())
         {
-          vtkErrorMacro("Write: Could not open file " << fileName);
-          cerr << "Write: Could not open file " << fileName;
+          vtkErrorMacro("Write: Could not open file " << fileNameStr.c_str());
+          cerr << "Write: Could not open file " << fileNameStr.c_str();
 #if (VTK_MAJOR_VERSION <= 5)      
           this->SetErrorCode(2);
 #else
@@ -457,12 +455,12 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
   vtkPolyDataWriter *writer;
   vtkTransformPolyDataFilter *currTransformer;
   vtkTransform *currTransform;
-  float R[1000], G[1000], B[1000];
+  double R[1000], G[1000], B[1000];
   int arraySize=1000;
   int lastColor;
   int currColor, newColor, idx;
-  vtkFloatingPointType rgb[3];
-  //  char fileName[101];
+  vtkFloatingPointType rgb_vtk_float[3];
+  double rgb[3];
   std::string fileNameStr;
   std::string idxStr;
   vtkMrmlTree *tree;
@@ -570,8 +568,7 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
       cout << idx << endl;
       writer->SetInput(currAppender->GetOutput());
       writer->SetFileType(2);
-      //snprintf(fileName,100,"%s_%d.vtk",filename,idx);
-      idxStr = idx + ".txt";
+      idxStr = idx + ".vtk";
       fileNameStr = filename + '_' + idxStr;
       writer->SetFileName(fileNameStr.c_str());
       writer->Write();
@@ -584,7 +581,6 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
       currNode->SetFullFileName(fileNameStr.c_str());
       currNode->SetFileName(fileNameStr.c_str());
       // use the name argument to name the model
-      //snprintf(fileName,100,"%s_%d",name,idx);
       fileNameStr = name + '_' + idxStr;
       currNode->SetName(fileNameStr.c_str());
       currNode->SetDescription("Model of a DTMRI tract");
@@ -598,10 +594,10 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
           currColorNode = (vtkMrmlColorNode *) colorTree->GetNextItemAsObject();
           while (currColorNode)
             {
-              currColorNode->GetDiffuseColor(rgb);
-              if (rgb[0]==R[idx] &&
-                  rgb[1]==G[idx] &&
-                  rgb[2]==B[idx])              
+              currColorNode->GetDiffuseColor(rgb_vtk_float);
+              if (rgb_vtk_float[0]==R[idx] &&
+                  rgb_vtk_float[1]==G[idx] &&
+                  rgb_vtk_float[2]==B[idx])              
                 {
                   currNode->SetColor(currColorNode->GetName());
                   break;
@@ -633,7 +629,6 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
     }
   
   // Write the MRML file
-  //  snprintf(fileName,100,"%s.xml",filename);
   fileNameStr = filename;
   fileNameStr += ".xml";
   tree->Write((char *)fileNameStr.c_str());
@@ -974,7 +969,6 @@ void vtkMultipleStreamlineController::SeedAndSaveStreamlinesFromROI(char *filena
   vtkTransform *transform;
   vtkTransformPolyDataFilter *transformer;
   vtkPolyDataWriter *writer;
-  //char fileName[101];
   std::string fileNameStr;
   std::string idxStr;
   int idx;
