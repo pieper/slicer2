@@ -1,15 +1,18 @@
 <title>CVS access</title>
 
 
-<p> For anonymous CVS access, in order to check out the Slicer 2 code and documentation, set the environment variable <code>CVSROOT</code>:</p>
+<p> You can obtain anonymous read only access to the CVS repository as follows:</p>
 
 <p class=code>
-setenv CVSROOT :pserver:anonymous@cvs.spl.harvard.edu:/projects/cvs/slicer<br>
-cvs login<br>
-cvs co slicer2 </p>
+cvs -d :pserver:anonymous@cvs.spl.harvard.edu:/projects/cvs/slicer login</p>
 
-<p>
-The password for anonymous login is bwhspl.</p>
+<p> Respond with the password <code>bwhspl</code>.</p>
+
+Follow this command by checking out the Slicer 2 code and documentation:</p>
+
+<p class=code>
+cvs -d :pserver:anonymous@cvs.spl.harvard.edu:/projects/cvs/slicer co slicer2 </p>
+
 <p>
 To request write access to the repository, please email <a href='mailto:slicer@ai.mit.edu'>slicer@ai.mit.edu</a>.<br>
 Please be aware, that according to the software license that applies
