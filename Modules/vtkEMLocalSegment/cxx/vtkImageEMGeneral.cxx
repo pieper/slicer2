@@ -75,11 +75,11 @@ void vtkImageEMGeneral::PrintMatrix3D(double ***mat, int zMax,int yMax,int xMax)
 
 void vtkImageEMGeneral::SquareMatrix(double **Input,double **Output,int dim) {
   int i,j,k;
-  for (int i = 0 ; i < dim ; i++) {
+  for (i = 0 ; i < dim ; i++) {
     memset(Output[i],0,sizeof(double)*dim);
-    for (int j = 0 ; j < dim ; j++) {
-      for (int k = 0 ; k < dim ; k++)
-    Output[i][j] += Input[k][j]*Input[i][k];
+    for (j = 0 ; j < dim ; j++) {
+      for (k = 0 ; k < dim ; k++)
+        Output[i][j] += Input[k][j]*Input[i][k];
     }
   }
 }
