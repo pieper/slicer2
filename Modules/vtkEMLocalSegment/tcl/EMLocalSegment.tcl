@@ -151,6 +151,7 @@ proc EMSegmentInit {} {
 
     # Source EMSegmentAlgorithm.tcl File 
     source $::PACKAGE_DIR_VTKEMLocalSegment/../../../tcl/EMSegmentAlgorithm.tcl
+    source $::PACKAGE_DIR_VTKEMLocalSegment/../../../tcl/EMSegmentAutoSample.tcl
 
     # Define Tabs
     #------------------------------------
@@ -233,7 +234,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.13 $} {$Date: 2003/10/30 20:31:26 $}]
+        {$Revision: 1.14 $} {$Date: 2003/10/31 03:50:16 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -851,6 +852,7 @@ Description of the tabs:
       place $ftab.f$tab -in $ftab -relheight 1.0 -relwidth 1.0
     }
     raise $ftab.f$EMSegment(Cattrib,$Sclass,IsSuperClass)
+
     set EMSegment(Cl-fClass) $ftab
 
     #--------------------------------------------
@@ -905,9 +907,7 @@ Description of the tabs:
     set f $EMSegment(Cl-fClass).f0.frest
 
     frame $f.fBox1 -bg $Gui(activeWorkspace)
-    frame $f.fInputChannelWeights -bg $Gui(activeWorkspace)
-    pack $f.fBox1 $f.fInputChannelWeights -side top -padx 0 -pady 1 -fill x
-
+    pack $f.fBox1 -side top -padx 0 -pady 0 -fill x 
     frame $f.fBox1.fLeft -bg $Gui(activeWorkspace)
     pack $f.fBox1.fLeft -side left -padx 2 -pady 2
     frame $f.fBox1.fColor -bg $Gui(activeWorkspace)
@@ -915,9 +915,7 @@ Description of the tabs:
 
     frame $f.fBox1.fLeft.fProb -bg $Gui(activeWorkspace) 
     frame $f.fBox1.fLeft.fShape -bg $Gui(activeWorkspace)
-    frame $f.fBox1.fLeft.fPriorWeight -bg $Gui(activeWorkspace)
-
-    pack $f.fBox1.fLeft.fProb $f.fBox1.fLeft.fShape $f.fBox1.fLeft.fPriorWeight -side top -padx 0 -pady 1 -fill x
+    pack $f.fBox1.fLeft.fProb $f.fBox1.fLeft.fShape -side top -padx 0 -pady 1 -fill x
 
     eval {label $f.fBox1.fLeft.fProb.lText -text "Prob.:"} $Gui(WLA)
     EMSegmentAddGlobalProbEntry $f.fBox1.fLeft.fProb $Sclass 1
@@ -930,20 +928,10 @@ Description of the tabs:
     eval {entry $f.fBox1.fLeft.fShape.eShape -width 4 -textvariable EMSegment(Cattrib,$Sclass,ShapeParameter) } $Gui(WEA)
     set EMSegment(Cl-eShapeParameter)  $f.fBox1.fLeft.fShape.eShape
 
-    DevAddLabel $f.fBox1.fLeft.fPriorWeight.lWeight "Prob Data Weight: "
-    eval {entry $f.fBox1.fLeft.fPriorWeight.eWeight -width 4 -textvariable EMSegment(Cattrib,$Sclass,LocalPriorWeight) } $Gui(WEA)
-    set EMSegment(Cl-ePriorWeight) $f.fBox1.fLeft.fPriorWeight.eWeight
-
-    DevAddLabel $f.fInputChannelWeights.lWeights "Input Channel Weights:"
-    set EMSegment(Cl-fInputChannelWeights) $f.fInputChannelWeights
-
+    EMSegmentBuildWeightPannel $f $Sclass 0
     if {$EMSegment(SegmentMode) == 2} {     
       pack $f.fBox1.fLeft.fShape.lShape $f.fBox1.fLeft.fShape.eShape -side left
-      pack $f.fBox1.fLeft.fPriorWeight.lWeight $f.fBox1.fLeft.fPriorWeight.eWeight -side left
-      pack $f.fInputChannelWeights.lWeights  -side left
     }
-
-    EMSegmentCreate_Mean_Covariance_InputChannelWeights_RowsColumns 0  $EMSegment(NumInputChannel)
 
     #Define Color
     DevAddLabel $f.fBox1.fColor.lColorLabel "Color/Label:"
@@ -961,6 +949,8 @@ Description of the tabs:
 
     frame $f.fbody -bg $Gui(activeWorkspace) -relief sunken -bd 2 
     pack $f.fbody -side top -pady 2 -fill x 
+    frame $f.fRest -bg $Gui(activeWorkspace) -relief sunken -bd 2 
+    pack $f.fRest -side top -pady 2 -fill x 
 
     set f $f.fbody
     frame $f.fLeft -bg $Gui(activeWorkspace)
@@ -984,11 +974,15 @@ Description of the tabs:
 
     pack $f.fLeft.lName $f.fLeft.lProb $f.fLeft.lNumClasses -side top -pady 5 -padx $Gui(pad) -anchor w 
     pack $f.fRight.eName $f.fRight.eGlobalProb $f.fRight.eNumClasses -side top -pady 3 -side top -anchor w
-    
+   
+    EMSegmentBuildWeightPannel  $EMSegment(Cl-fClass).f1.fRest $Sclass 1
+
     EMSegmentCreateGraphDisplayButton $EMSegment(Cl-fClass).f1
     EMSegmentCreateClassOverviewButton $EMSegment(Cl-fClass).f1 
     pack $EMSegment(Cl-fClass).f1.bGeneral -side top -pady $Gui(pad) 
     EMSegmentCreateGraphWindow  
+    EMSegmentCreate_Mean_Covariance_InputChannelWeights_RowsColumns 0  $EMSegment(NumInputChannel)
+
     #-------------------------------------------
     # CIM frame:
     #-------------------------------------------
@@ -1911,6 +1905,26 @@ proc EMSegmentClassNavigation {direction} {
     }
     }
 }
+
+proc EMSegmentBuildWeightPannel {f Sclass Tab} {
+    global Gui EMSegment
+    frame $f.fPriorWeight -bg $Gui(activeWorkspace)
+    frame $f.fInputChannelWeights -bg $Gui(activeWorkspace)
+    pack $f.fPriorWeight $f.fInputChannelWeights -side top -padx 2 -pady 2 -fill x
+
+    DevAddLabel $f.fPriorWeight.lWeight "Prob Data Weight: "
+    eval {entry $f.fPriorWeight.eWeight -width 4 -textvariable EMSegment(Cattrib,$Sclass,LocalPriorWeight) } $Gui(WEA)
+    set EMSegment(Cl-f${Tab}-ePriorWeight) $f.fPriorWeight.eWeight
+
+    DevAddLabel $f.fInputChannelWeights.lWeights "Input Channel Weights:"
+    set EMSegment(Cl-f${Tab}-fInputChannelWeights) $f.fInputChannelWeights
+
+    if {$EMSegment(SegmentMode) == 2} {     
+      pack $f.fPriorWeight.lWeight $f.fPriorWeight.eWeight -side left
+      pack $f.fInputChannelWeights.lWeights  -side left
+    }
+}
+
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentSaveSetting 
 # Updates the MRML Tree and saves the setting to a file  
@@ -2851,18 +2865,52 @@ proc EMSegmentAutoSamples { } {
     } else {
         set Sclass $EMSegment(Class)
         if {$EMSegment(Cattrib,$Sclass,ProbabilityData) == $Volume(idNone)} {
-           DevErrorWindow "For the Auto Sampling Function the probability map has to be assigned to the class first !" 
+           DevErrorWindow "Before using Auto Sampling Function the probability map has to be assigned to the class first !" 
            return
         }
-        
+        if {$EMSegment(SelVolList,VolumeList) == ""} {
+        DevErrorWindow "Befor using Auto Sampling Function at least one input channel has to be defined !"
+        return
+    }
+        set VolType [Volume([lindex $EMSegment(SelVolList,VolumeList) 0],node) GetScalarType]
+        set InputVolumeList ""
+    foreach volID $EMSegment(SelVolList,VolumeList) {
+        if {$VolType != [Volume($volID,node) GetScalarType]} {
+        DevErrorWindow "For the Auto Sampling Function all input channels have to be of the same Scalar Type !"
+        return
+        }
+            lappend  InputVolumeList Volume($volID,vol)
+    }
         if {$EMSegment(UseSamples)} {
            set EMSegment(UseSamples) 0 
            EMSegmentUseSamples 0
         }
         $EMSegment(EM-bAutoSample) configure -relief sunken
         set EMSegment(AutoSamples) 1
-         DevErrorWindow "Currently Auto Sampling Function does not work !" 
-    } 
+        # Calculate Gauss Curve 
+
+        set ScalarType [lindex "Blub Blub Char UnsignedChar Short UnsignedShort Int UnsignedInt Long UnsignedLong Float Double" $VolType] 
+        EMSegmentGaussCurveCalculation 0.95 1 "$InputVolumeList" \
+        Volume($EMSegment(Cattrib,$Sclass,ProbabilityData),vol) $ScalarType
+        # Update Class information 
+        for {set y 0} {$y <  $EMSegment(NumInputChannel)} {incr y} {
+       set EMSegment(Cattrib,$Sclass,LogMean,$y) $EMSegment(GaussCurveCalc,Mean,[expr $y +1]) 
+          for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} {
+         set EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x) $EMSegment(GaussCurveCalc,Covariance,[expr $y+1],[expr $x+1]) 
+          }
+    }
+        # -----------------------------------------
+    # Print results
+        # -----------------------------------------
+    puts "Check for Class $Sclass" 
+        puts "LogGauss   : $EMSegment(GaussCurveCalc,LogGaussFlag)"
+    puts "CutOffProb : $EMSegment(GaussCurveCalc,CutOffAbsolut) (Absolut) - $EMSegment(GaussCurveCalc,CutOffPercent) % (Percent)"
+        puts "MaxProb    : $EMSegment(GaussCurveCalc,MaxProb)"
+    puts "Samples    : $EMSegment(GaussCurveCalc,Sum)"
+    puts -nonewline "GreyExtrima: "
+    for {set y 1} {$y <= $EMSegment(NumInputChannel)} {incr y} {puts -nonewline "($EMSegment(GaussCurveCalc,GreyMin,$y), $EMSegment(GaussCurveCalc,GreyMax,$y)) "}
+    puts " "
+    }
     EMSegmentSetSampleText
 }
 #-------------------------------------------------------------------------------
@@ -2971,7 +3019,8 @@ proc EMSegmentChangeClass {Sclass} {
     # Change Variable the Entry field is assigned width
     for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} { 
       $EMSegment(Cl-fLogMeanVar).e$y config -textvariable  EMSegment(Cattrib,$Sclass,LogMean,$y) 
-      $EMSegment(Cl-fInputChannelWeights).e$y config -textvariable EMSegment(Cattrib,$Sclass,InputChannelWeights,$y) 
+      $EMSegment(Cl-f0-fInputChannelWeights).e$y config -textvariable EMSegment(Cattrib,$Sclass,InputChannelWeights,$y) 
+      $EMSegment(Cl-f1-fInputChannelWeights).e$y config -textvariable EMSegment(Cattrib,$Sclass,InputChannelWeights,$y) 
       for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} { 
         $EMSegment(Cl-fLogCovVar).fLine$y.e$x config -textvariable  EMSegment(Cattrib,$Sclass,LogCovariance,$y,$x)
       }
@@ -2999,7 +3048,8 @@ proc EMSegmentChangeClass {Sclass} {
  
     foreach prob $EMSegment(eGlobalProb) { $prob config  -textvariable EMSegment(Cattrib,$Sclass,Prob)}
     $EMSegment(Cl-eShapeParameter) config  -textvariable EMSegment(Cattrib,$Sclass,ShapeParameter)
-    $EMSegment(Cl-ePriorWeight) config -textvariable EMSegment(Cattrib,$Sclass,LocalPriorWeight)
+    $EMSegment(Cl-f0-ePriorWeight) config -textvariable EMSegment(Cattrib,$Sclass,LocalPriorWeight)
+    $EMSegment(Cl-f1-ePriorWeight) config -textvariable EMSegment(Cattrib,$Sclass,LocalPriorWeight)
 
     foreach col $EMSegment(bColorLabel) {
     $col config -bg $EMSegment(Cattrib,$Sclass,ColorCode) -text $EMSegment(Cattrib,$Sclass,Label)\
@@ -3532,6 +3582,7 @@ proc EMSegmentSetMaxInputChannelDef {NewMaxInputChannelDef} {
        for {set ind $EMSegment(MaxInputChannelDef)} {$ind < $NewMaxInputChannelDef} {incr ind} { 
           foreach c $List {
             set EMSegment(Cattrib,$c,LogMean,$ind) -1
+            set EMSegment(Cattrib,$c,InputChannelWeights,$ind) 1.0
             for {set j 0} {$j < $NewMaxInputChannelDef} {incr j} {
               set EMSegment(Cattrib,$c,LogCovariance,$j,$ind) 0.0
               set EMSegment(Cattrib,$c,LogCovariance,$ind,$j) 0.0
@@ -4258,7 +4309,8 @@ proc EMSegmentDeleteFromSelList {args} {
     set DestroyStart  [expr $EMSegment(NumInputChannel) - [llength $List]] 
     for {set dest $DestroyStart} {$dest < $EMSegment(NumInputChannel)} {incr dest} {
        destroy $EMSegment(Cl-fLogMeanVar).e$dest
-       destroy $EMSegment(Cl-fInputChannelWeights).e$dest
+       destroy $EMSegment(Cl-f0-fInputChannelWeights).e$dest
+       destroy $EMSegment(Cl-f1-fInputChannelWeights).e$dest
        destroy $EMSegment(Cl-fLogCovVar).fLine$dest
        for {set y 0} {$y < $DestroyStart} {incr y} {
           destroy $EMSegment(Cl-fLogCovVar).fLine$y.e$dest
@@ -4341,15 +4393,18 @@ proc EMSegmentCreate_Mean_Covariance_InputChannelWeights_RowsColumns {OldNumInpu
     }
 
     set fClLogMean $EMSegment(Cl-fLogMeanVar)
-    set fClInputChannel $EMSegment(Cl-fInputChannelWeights)
+    set fClf0InputChannel $EMSegment(Cl-f0-fInputChannelWeights)
+    set fClf1InputChannel $EMSegment(Cl-f1-fInputChannelWeights)
     set Sclass $EMSegment(Class)
     for {set x $OldNumInputCh} {$x < $NewNumInputCh} {incr x} {
         eval {entry  $fClLogMean.e$x -textvariable EMSegment(Cattrib,$Sclass,LogMean,$x) -width 5} $Gui(WEA)
-        eval {entry  $fClInputChannel.e$x -textvariable EMSegment(Cattrib,$Sclass,InputChannelWeights,$x) -width 5} $Gui(WEA)
+        eval {entry  $fClf0InputChannel.e$x -textvariable EMSegment(Cattrib,$Sclass,InputChannelWeights,$x) -width 5} $Gui(WEA)
+        eval {entry  $fClf1InputChannel.e$x -textvariable EMSegment(Cattrib,$Sclass,InputChannelWeights,$x) -width 5} $Gui(WEA)
         pack $fClLogMean.e$x -side left  -padx 1 -pady 1
         if {$EMSegment(SegmentMode) == 2} {
-        pack $fClInputChannel.e$x -side left  -padx 1 -pady 1
-    } 
+            pack $fClf0InputChannel.e$x -side left  -padx 1 -pady 1
+            pack $fClf1InputChannel.e$x -side left  -padx 1 -pady 1
+        } 
     }
 
     set flog $EMSegment(Cl-fLogCovVar)
