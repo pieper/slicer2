@@ -69,7 +69,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-		{$Revision: 1.43 $} {$Date: 2001/11/13 20:44:53 $}]
+		{$Revision: 1.44 $} {$Date: 2001/11/30 20:31:45 $}]
 
 	set Mrml(filePrefix) data
 	set Mrml(colorsUnsaved) 0
@@ -940,17 +940,18 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 			foreach a $attr {
 				set key [lindex $a 0]
 				set val [lreplace $a 0 0]
-				switch [string tolower $key] {
+			        switch [string tolower $key] {
+				
 				"desc"             {$n SetDescription  $val}
 				"name"             {$n SetName         $val}
-				"pathPosition"    {eval $n SetPathPosition  $val}
 				"xyz"              {eval $n SetXYZ     $val}
 				"focalxyz"              {eval $n SetFXYZ     $val}
-
+				"pathposition"    {$n SetPathPosition  $val}
 
 			    }
 			}
 		    }
+
 		"Hierarchy" {
 			set n [MainMrmlAddNode Hierarchy]
 			foreach a $attr {
