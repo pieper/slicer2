@@ -156,7 +156,7 @@ proc LDMMViewerInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.10 $} {$Date: 2004/07/24 20:34:18 $}]
+        {$Revision: 1.11 $} {$Date: 2004/07/24 20:50:57 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -408,7 +408,14 @@ proc LDMMViewerLoadVolumes { } {
         set ::LDMMViewer(lastindex) $t
         incr t
     }
-    set ::View(fov) 50
+
+    # set FOV with a small boundary around the image data
+    set max 0
+    foreach "lo hi" [[Volume($::LDMMViewer(0,id),vol) GetOutput] GetBounds] {
+        set b [expr $hi - $lo]
+        if { $b > $max } { set max $b }
+    }
+    set ::View(fov) [expr 1.05 * $max]
     MainViewSetFov
 }
 
@@ -471,7 +478,7 @@ proc LDMMViewerShowVectors {} {
     LDMMg3d SetInput [LDMMevoi GetOutput]
     LDMMg3d SetColorModeToColorByVector
     LDMMg3d SetScaleModeToScaleByVector
-    LDMMg3d SetScaleFactor 0.5
+    LDMMg3d SetScaleFactor 2
 
     vtkMatrix4x4 LDMMmatrix
     LDMMmatrix DeepCopy 1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1
