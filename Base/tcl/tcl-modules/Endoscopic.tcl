@@ -262,7 +262,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.81.2.2 $} {$Date: 2005/01/03 20:07:08 $}] 
+    {$Revision: 1.81.2.3 $} {$Date: 2005/01/04 19:40:11 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -4897,7 +4897,7 @@ proc EndoscopicAddFlatView {} {
     # add the new window to the list of open windows
     lappend Endoscopic(FlatWindows) $name
     
-    package require vtkinteraction
+    # package require vtkinteraction
     
     # create new toplevel for the flattened image
     toplevel .t$name -visual best
@@ -4908,10 +4908,12 @@ proc EndoscopicAddFlatView {} {
  
     # view frame
     frame .t$name.fView
-    set f .t$name.fView
+    set f .t$name.fView    
 
     # create a vtkTkRenderWidget to draw the flattened image into
-    vtkTkRenderWidget $f.flatRenderWidget$name -width 600 -height $View(viewerHeightNormal)
+    vtkRenderWindow Endoscopic(flatColon,renWin,$name)
+    set Endoscopic(flatColon,renWidget,$name) [vtkTkRenderWidget $f.flatRenderWidget$name -width 600 -height $View(viewerHeightNormal) -rw Endoscopic(flatColon,renWin,$name)]
+    
     set Endoscopic($f.flatRenderWidget$name,name) $name
     
     # control frames
@@ -5075,7 +5077,8 @@ proc EndoscopicAddFlatView {} {
     # add a vtkRenderer to the vtkRenderWindow   
     vtkRenderer Endoscopic($name,renderer)
     Endoscopic($name,renderer) SetBackground 0.5 0.5 0.5
-    [$f.flatRenderWidget$name GetRenderWindow] AddRenderer Endoscopic($name,renderer)
+    Endoscopic(flatColon,renWin,$name) AddRenderer Endoscopic($name,renderer)
+    
     lappend $Endoscopic(FlatRenderers) Endoscopic($name,renderer)
     
     #activate interactor
@@ -5087,7 +5090,7 @@ proc EndoscopicAddFlatView {} {
      EndoscopicCreateFlatBindings $f.flatRenderWidget$name
      
     # create lookup table for mapping scalars representing the curvature analysis
-     EndoscopicBuildFlatColonLookupTable
+     EndoscopicBuildFlatColonLookupTable $name
     
     # Update targets (Fiducials) that were saved in the MRML Tree
  #   $updatebut config -command "EndoscopicUpdateTargetsInFlatWindow $f.flatRenderWidget$name"
@@ -5168,7 +5171,7 @@ proc EndoscopicAddFlatView {} {
     $Endoscopic(flatScale,camZoom) set $Endoscopic(flatColon,zCamDist)
     
     set Endoscopic($name,camera) [Endoscopic($name,renderer) GetActiveCamera]
-    $Endoscopic($name,camera) SetClippingRange 0.01 200
+    $Endoscopic($name,camera) SetClippingRange 0.01 2000
     $Endoscopic($name,camera) SetFocalPoint $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zMin)
     $Endoscopic($name,camera) SetPosition $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zCamDist)
     $Endoscopic($name,camera) SetViewAngle 90
@@ -5209,7 +5212,8 @@ proc EndoscopicAddFlatView {} {
     set Endoscopic(flatColon,speed) 0.2
 
     #Render
-    [$f.flatRenderWidget$name GetRenderWindow] Render    
+    #[$f.flatRenderWidget$name GetRenderWindow] Render  
+    Endoscopic(flatColon,renWin,$name) Render
 
     TempPolyReader Delete
 #    TempMapper Delete
@@ -5229,14 +5233,14 @@ proc EndoscopicRemoveFlatView {{name ""}} {
 # if clicked 'Quit' button
     if {$name != ""} {
     
-# destroy all parts of the flat view
-    destroy .t$name
+    set f .t$name.fView
     
-    Endoscopic($name,renderer) Delete
+# destroy all parts of the flat view
+#puts "window close $name"    
     Endoscopic($name,FlatColonActor) Delete
     Endoscopic($name,FlatColonMapper) Delete
     
-    Endoscopic(flatColon,lookupTable) Delete
+    Endoscopic(flatColon,lookupTable,$name) Delete
     
     # actor for flattened image
     Endoscopic($name,outlineActor) Delete
@@ -5252,26 +5256,35 @@ proc EndoscopicRemoveFlatView {{name ""}} {
     set index [lsearch -exact $Endoscopic(FlatWindows) $name]
     set Endoscopic(FlatWindows) [lreplace $Endoscopic(FlatWindows) $index $index]
     set Endoscopic(FlatRenderers) [lreplace $Endoscopic(FlatRenderers) $index $index]
+   
+    Endoscopic($name,renderer) Delete
+    Endoscopic(flatColon,renWin,$name) Delete
+   # Endoscopic(flatColon,renWidget,$name) Delete
+   
+    
+    destroy .t$name
 
      } else {
   
-# if ending all
+#        if ending all
 
-    foreach frame $Endoscopic(FlatWindows) {
+        foreach frame $Endoscopic(FlatWindows) {
         destroy .t$frame
-    
-     Endoscopic($frame,renderer) Delete
-     Endoscopic($frame,FlatColonActor) Delete
-     Endoscopic($frame,outlineActor) Delete
-     Endoscopic($frame,lightKit) Delete
-     Endoscopic($frame,light) Delete
+puts "frame close $frame"      
+        Endoscopic($frame,renderer) Delete
+        Endoscopic($frame,FlatColonActor) Delete
+        Endoscopic($frame,outlineActor) Delete
+        Endoscopic($frame,lightKit) Delete
+        Endoscopic($frame,light) Delete
         }
     
-    set index [lsearch -exact $Endoscopic(FlatWindows) $name]
-    set Endoscopic(FlatWindows) [lreplace $Endoscopic(FlatWindows) $index $index]
-    set Endoscopic(FlatRenderers) [lreplace $Endoscopic(FlatRenderers) $index $index]
+     set index [lsearch -exact $Endoscopic(FlatWindows) $name]
+     set Endoscopic(FlatWindows) [lreplace $Endoscopic(FlatWindows) $index $index]
+     set Endoscopic(FlatRenderers) [lreplace $Endoscopic(FlatRenderers) $index $index]
 
     }
+   
+   
     set Endoscopic(FlatSelect) ""
     set Endoscopic(flatColon,name) ""
     
@@ -5335,14 +5348,14 @@ proc EndoscopicPopFlatBindings {} {
 }
 
 
-proc EndoscopicBuildFlatColonLookupTable {} {
+proc EndoscopicBuildFlatColonLookupTable {{name ""}} {
     global Endoscopic
      
      
-     vtkLookupTable Endoscopic(flatColon,lookupTable)
+     vtkLookupTable Endoscopic(flatColon,lookupTable,$name)
      #actual values are from 0 to 255
-     Endoscopic(flatColon,lookupTable) SetNumberOfColors 256
-     Endoscopic(flatColon,lookupTable) Build
+     Endoscopic(flatColon,lookupTable,$name) SetNumberOfColors 256
+     Endoscopic(flatColon,lookupTable,$name) Build
      
      set colon 64
      set polyp 64
@@ -5351,7 +5364,7 @@ proc EndoscopicBuildFlatColonLookupTable {} {
           
      # for the first 64 slots in the table, set the color to be the same as the colon (skin rgb: 1.0 0.8 0.7)
      for {set i 0} {$i < $colon} {incr i} {
-        eval Endoscopic(flatColon,lookupTable) SetTableValue $i 1.0 0.8 0.7 1
+        eval Endoscopic(flatColon,lookupTable,$name) SetTableValue $i 1.0 0.8 0.7 1
      }
      
      # for the next 128 slots in the table, set the color to be in transition from skin to green
@@ -5366,12 +5379,12 @@ proc EndoscopicBuildFlatColonLookupTable {} {
      set green [expr 0.8 + [expr [expr $i - $transL] * $greenIncr]]
      set blue [expr 0.7 - [expr [expr $i - $transL] * $blueDecr]]
      
-     eval Endoscopic(flatColon,lookupTable) SetTableValue $i $red $green $blue 0.9
-      }
+     eval Endoscopic(flatColon,lookupTable,$name) SetTableValue $i $red $green $blue 0.9
+     }
       
      # for the last 64 slots in the table, set the color to be green (rgb: 0 1 0)
       for {set i $transH} {$i < 256} {incr i} {
-        eval Endoscopic(flatColon,lookupTable) SetTableValue $i 0.0 1.0 0.0 1
+        eval Endoscopic(flatColon,lookupTable,$name) SetTableValue $i 0.0 1.0 0.0 1
       }
 
 }
@@ -5567,8 +5580,8 @@ puts  "start draw in flatwindow: clock format [clock seconds]"
 # make top verticle line of the cursor
     vtkLineSource aLineT
     
-    aLineT SetPoint1 $x [expr $y - 5]  [expr $z + 0.01]
-    aLineT SetPoint2 $x [expr $y - 2]  [expr $z + 0.01]
+    aLineT SetPoint1 $x [expr $y - 20]  [expr $z + 0.01]
+    aLineT SetPoint2 $x [expr $y - 10]  [expr $z + 0.01]
 
     aLineT SetResolution 20
     vtkPolyDataMapper aLineTMapper
@@ -5590,8 +5603,8 @@ puts  "start draw in flatwindow: clock format [clock seconds]"
     set count $Endoscopic($name,lineCount)
     vtkLineSource aLineB
 
-    aLineB SetPoint1 $x [expr $y + 2]  [expr $z + 0.01]
-    aLineB SetPoint2 $x [expr $y + 5]  [expr $z + 0.01]  
+    aLineB SetPoint1 $x [expr $y + 10]  [expr $z + 0.01]
+    aLineB SetPoint2 $x [expr $y + 20]  [expr $z + 0.01]  
 
     aLineB SetResolution 20
     vtkPolyDataMapper aLineBMapper
@@ -5613,8 +5626,8 @@ puts  "start draw in flatwindow: clock format [clock seconds]"
     set count $Endoscopic($name,lineCount)
     vtkLineSource aLineL
 
-    aLineL SetPoint1 [expr $x - 5] $y [expr $z + 0.01]
-    aLineL SetPoint2 [expr $x - 2] $y [expr $z + 0.01]  
+    aLineL SetPoint1 [expr $x - 20] $y [expr $z + 0.01]
+    aLineL SetPoint2 [expr $x - 10] $y [expr $z + 0.01]  
 
     aLineL SetResolution 20
     vtkPolyDataMapper aLineLMapper
@@ -5636,8 +5649,8 @@ puts  "start draw in flatwindow: clock format [clock seconds]"
     set count $Endoscopic($name,lineCount)
     vtkLineSource aLineR
 
-    aLineR SetPoint1 [expr $x + 2] $y [expr $z + 0.01]
-    aLineR SetPoint2 [expr $x + 5] $y [expr $z + 0.01]  
+    aLineR SetPoint1 [expr $x + 10] $y [expr $z + 0.01]
+    aLineR SetPoint2 [expr $x + 20] $y [expr $z + 0.01]  
 
     aLineR SetResolution 20
     vtkPolyDataMapper aLineRMapper
@@ -5884,7 +5897,7 @@ tempPointLocator Delete
 #  When a user selects a location on the 3D model, the 2D slices sychronises.
 #-----------------------------------------------------------------------------------------
 
-proc EndoscopicAddTargetFromWorldCoordinates {sx sy sz cellId} {
+proc EndoscopicAddTargetFromWorldCoordinates {sx sy sz} {
      global Endoscopic Point Fiducials Select Model View Slice Volume Volumes
 
 #  If no path selected, do nothing.
@@ -5897,10 +5910,10 @@ proc EndoscopicAddTargetFromWorldCoordinates {sx sy sz cellId} {
            
      if {[info exists Select(actor)] != 0} {
         set actor $Select(actor)
-        set cellId $cellId
+        #set cellId $cellId
     } else {
         set actor ""
-        set cellId ""
+        #set cellId ""
     }
 
      set Select(xyz) [list $sx $sy $sz]
@@ -6456,7 +6469,15 @@ proc EndoscopicSelectPreviousTarget {} {
 #----------------------------------------------------------------------------
 proc EndoscopicUpdateTargetsInFlatWindow {widget} {
 
-    global Endoscopic Fiducials Point
+    global Endoscopic Fiducials Point Model
+    
+     set model $Model(activeID)
+     if {$model != ""} {
+     set polyData3D $Model($model,polyData)
+     }
+     
+     set numP3D [$polyData3D GetNumberOfPoints]
+    
 
     set name $Endoscopic($widget,name)
 
@@ -6495,7 +6516,9 @@ proc EndoscopicUpdateTargetsInFlatWindow {widget} {
                     for {set i 0} {$i < $numP} {incr i} {
                          set pid [lindex $list $i]
                          set pointId [Point($pid,node) GetDescription]
-       
+    #    puts "p was $pointId"     
+             set pointId [expr $pointId + $numP3D]
+        #       puts "p is $pointId"
                          set polyData $Endoscopic($name,polyData)
                          set point(xyz) [$polyData GetPoint $pointId]
 
@@ -6728,7 +6751,7 @@ proc EndoscopicSetFlatColonScalarVisibility {widget} {
      [Endoscopic($name,FlatColonActor) GetProperty] SetAmbient 0.15
      
      Endoscopic($name,FlatColonMapper) ScalarVisibilityOn
-     Endoscopic($name,FlatColonMapper) SetLookupTable Endoscopic(flatColon,lookupTable)
+     Endoscopic($name,FlatColonMapper) SetLookupTable Endoscopic(flatColon,lookupTable,$name)
      Endoscopic($name,FlatColonMapper) SetScalarRange $Endoscopic(flatColon,scalarLow) $Endoscopic(flatColon,scalarHigh)
      }
      
@@ -6749,7 +6772,7 @@ proc EndoscopicSetFlatColonScalarRange {widget} {
      [Endoscopic($name,FlatColonActor) GetProperty] SetAmbient 0.15
      
      Endoscopic($name,FlatColonMapper) ScalarVisibilityOn
-     Endoscopic($name,FlatColonMapper) SetLookupTable Endoscopic(flatColon,lookupTable)
+     Endoscopic($name,FlatColonMapper) SetLookupTable Endoscopic(flatColon,lookupTable,$name)
      Endoscopic($name,FlatColonMapper) SetScalarRange $Endoscopic(flatColon,scalarLow) $Endoscopic(flatColon,scalarHigh)
      
      } 
