@@ -158,7 +158,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.10 $} {$Date: 2003/05/30 14:40:53 $}]
+        {$Revision: 1.11 $} {$Date: 2003/07/08 19:08:01 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1138,17 +1138,22 @@ proc LevelSetsUpdateResults {} {
 
   # Set the Greyscale result
   Volume($res,vol) SetImageData LevelSets(output)
+  Volume($res,node) SetScalarTypeToFloat
 
   # Set the LabelMap result
   vtkImageThreshold vtk_th
   vtk_th SetInput  LevelSets(output)
-  vtk_th ThresholdBetween 0 100000
+  vtk_th ThresholdByUpper 0 
   vtk_th ReplaceInOn
   vtk_th ReplaceOutOn
   vtk_th SetInValue 0
   vtk_th SetOutValue 10
-  vtk_th SetOutputScalarTypeToUnsignedChar
-  Volume($lm,vol) SetImageData [vtk_th GetOutput]
+  vtk_th SetOutputScalarTypeToUnsignedShort
+  Volume($lm,vol)  SetImageData [vtk_th GetOutput]
+  Volume($lm,node) SetScalarTypeToUnsignedShort
+
+  # set interpolation OFF
+  Volume($lm,node) InterpolateOff
   foreach s $Slice(idList) {
     set Slice($s,labelVolID) $lm
     set Slice($s,foreVolID)  0
@@ -1184,6 +1189,7 @@ proc LevelSetsUpdateParams {} {
   LevelSets(curv) SetNumIters            $LevelSets(NumIters)
   LevelSets(curv) SetAdvectionCoeff      $LevelSets(AttachCoeff)
   LevelSets(curv) Setcoeff_curvature     $LevelSets(CurvCoeff)
+  LevelSets(curv) Setballoon_coeff       $LevelSets(BalloonCoeff)
   LevelSets(curv) SetDoMean              $LevelSets(DoMean)
   LevelSets(curv) SetStepDt              $LevelSets(StepDt)
   LevelSets(curv) SetEvolveThreads       $LevelSets(NumberOfThreads)
@@ -1303,7 +1309,6 @@ proc RunLevelSetsBegin {} {
   puts "SD intensity ="
   puts $LevelSets(SDIntensity)
   LevelSets(curv) SetGaussian                 0 $LevelSets(MeanIntensity) $LevelSets(SDIntensity)
-  LevelSets(curv) Setballoon_coeff            $LevelSets(BalloonCoeff)
   LevelSets(curv) SetProbabilityThreshold     $LevelSets(ProbabilityThreshold)
   LevelSets(curv) SetProbabilityHighThreshold $LevelSets(ProbabilityHighThreshold)
 
