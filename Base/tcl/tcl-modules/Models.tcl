@@ -68,7 +68,7 @@ proc ModelsInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.27 $} {$Date: 2000/08/28 18:26:52 $}]
+		{$Revision: 1.28 $} {$Date: 2000/11/06 23:56:14 $}]
 
 	# Props
 	set Model(propertyType) Basic
@@ -459,9 +459,9 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 	set f $fProps.fBot.fAdvanced.fDesc
 
 	DevAddLabel $f.l "Optional Description:"
-	bind $f.l <Return> "ModelsPropsApplyButNotToNew"
-	bind $f.l <FocusOut> "ModelsPropsApplyButNotToNew"
 	eval {entry $f.e -textvariable Model(desc)} $Gui(WEA)
+	bind $f.e <Return> "ModelsPropsApplyButNotToNew"
+	bind $f.e <FocusOut> "ModelsPropsApplyButNotToNew"
 	pack $f.l -side top -padx $Gui(pad) -fill x -anchor w
 	pack $f.e -side top -padx $Gui(pad) -expand 1 -fill x
 
