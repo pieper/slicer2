@@ -92,13 +92,16 @@ public:
     // prints out to standard out
     void PrintStdout();
 
+    int ReadHeader(char *filename, int flag);
+
 protected:
     vtkGDFReader();
     ~vtkGDFReader();
 
     void Execute();
     void ExecuteInformation();
-    
+
+
     // title of the graph
     char *Title;
 

@@ -57,6 +57,14 @@ void vtkGDFReader::Read()
     vtkDebugMacro(<< "Read");
 }
 
+int vtkGDFReader::ReadHeader(char *filename, int flag)
+{
+  int newID = 0;
+  vtkDebugMacro(<< "ReadHeader with filename " << filename << " and flag " << flag << "\n");
+
+  return newID;
+}
+
 void vtkGDFReader::OffsetSlope()
 {
     vtkDebugMacro(<< "OffsetSlope");
@@ -108,26 +116,96 @@ vtkFloatingPointType vtkGDFReader::GetNthSubjectMeasurement(int n)
 
 void vtkGDFReader::PrintSelf(ostream& os, vtkIndent indent)
 {
-    os << indent << "Title: " << this->Title << endl;
-    os << indent << "Measurement name: " << this->MeasurementName << endl;
-    os << indent << "Subject name: " << this->SubjectName << endl;
-    os << indent << "Data file name: " << this->DataFileName << endl;
+    if (this->Title != NULL)
+    {
+      os << indent << "Title: " << this->Title << endl;
+    } 
+    else 
+    {
+      os << indent << "Title:" << endl;
+    }
+    if (this->MeasurementName != NULL)
+    {
+      os << indent << "Measurement name: " << this->MeasurementName << endl;
+    }
+    else 
+    {
+      os << indent << "Measurement name:" << endl;
+    }
+    if (this->SubjectName != NULL)
+    {
+      os << indent << "Subject name: " << this->SubjectName << endl;
+    } 
+    else 
+    {
+      os << indent << "Subject name:" << endl;
+    }
+    if (this->DataFileName != NULL)
+      {
+        os << indent << "Data file name: " << this->DataFileName << endl;
+      } 
+    else 
+    {
+      os << indent << "Data file name:" << endl;
+    }
     os << indent << "Number of classes: " << this->NumClasses << endl;
     os << indent << "Number of variables: " << this->NumVariables << endl;
-    os << indent << "Default variable: " << this->DefaultVariable << endl;
+    if (this->DefaultVariable != NULL)
+      {
+        os << indent << "Default variable: " << this->DefaultVariable << endl;
+      } 
+    else 
+    {
+      os << indent << "Default variable:" << endl;
+    }
     os << indent << "Default variable index: " << this->DefaultVariableIndex << endl;
     os << indent << "Number of subjects: " << this->NumberOfSubjects << endl;
 }
 
 void vtkGDFReader::PrintStdout()
 {
+  if (this->Title != NULL)
+    {
     cout << "Title: " << this->Title << endl;
+    }
+  else
+    {
+      cout << "Title:" << endl;
+    }
+  if (this->MeasurementName != NULL)
+    {
     cout << "Measurement name: " << this->MeasurementName << endl;
-    cout << "Subject name: " << this->SubjectName << endl;
+    }
+  else
+    {
+      cout << "Measurement name:" << endl;
+    }
+  if (this->SubjectName != NULL)
+    {
+      cout << "Subject name: " << this->SubjectName << endl;
+    }
+  else
+    {
+      cout << "Subject name:" << endl;
+    }
+    if (this->DataFileName != NULL)
+      {
     cout << "Data file name: " << this->DataFileName << endl;
+      }
+  else
+    {
+      cout << "Data file name:" << endl;
+    }
     cout << "Number of classes: " << this->NumClasses << endl;
     cout << "Number of variables: " << this->NumVariables << endl;
-    cout << "Default variable: " << this->DefaultVariable << endl;
+    if (this->DefaultVariable != NULL)
+    {
+      cout << "Default variable: " << this->DefaultVariable << endl;
+    }
+  else
+    {
+      cout << "Default variable:" << endl;
+    }
     cout << "Default variable index: " << this->DefaultVariableIndex << endl;
     cout << "Number of subjects: " << this->NumberOfSubjects << endl;
 }
