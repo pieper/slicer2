@@ -164,7 +164,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.21 $} {$Date: 2003/12/12 21:53:51 $}]
+        {$Revision: 1.22 $} {$Date: 2004/01/27 17:30:31 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -251,9 +251,9 @@ proc LevelSetsInit {} {
     set LevelSets(DisplayFreq)                "10"
   
     # get the default number of threads
-    vtkMultiThreader vLevelSet
-    set LevelSets(NumberOfThreads)            [vLevelSet GetGlobalDefaultNumberOfThreads]
-    vLevelSet Delete
+    vtkMultiThreader LevelSets(vtk,v)
+    set LevelSets(NumberOfThreads)            [LevelSets(vtk,v) GetGlobalDefaultNumberOfThreads]
+    LevelSets(vtk,v) Delete
 
     set LevelSets(Processing)                 "OFF"
 
