@@ -27,8 +27,6 @@
 #   CustomCsysBuildGUI
 #   CustomCsysEnter
 #   CustomCsysExit
-#   CustomCsysCreateBindings
-#   CustomCsysDoSomethingCool
 #==========================================================================auto=
 
 
@@ -51,7 +49,7 @@ proc CustomCsysInit {} {
     set Module($m,author) "Delphine, Nain, SlicerHaker, delfin@mit.edu"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2002/05/21 05:07:19 $}]
+        {$Revision: 1.3 $} {$Date: 2002/06/17 20:10:34 $}]
 
     # Define Tabs
     #------------------------------------

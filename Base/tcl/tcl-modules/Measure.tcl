@@ -1,3 +1,55 @@
+#=auto==========================================================================
+# (c) Copyright 2002 Massachusetts Institute of Technology
+#
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for any purpose, 
+# provided that the above copyright notice and the following three paragraphs 
+# appear on all copies of this software.  Use of this software constitutes 
+# acceptance of these terms and conditions.
+#
+# IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, 
+# INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE 
+# AND ITS DOCUMENTATION, EVEN IF MIT HAS BEEN ADVISED OF THE POSSIBILITY OF 
+# SUCH DAMAGE.
+#
+# MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING, 
+# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR 
+# A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+#
+# THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE 
+# MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. 
+#
+#===============================================================================
+# FILE:        Measure.tcl
+# PROCEDURES:  
+#   MeasureInit
+#   Test
+#   MeasureBuildGUI
+#   TopFrameBuildGUI
+#   MeasureSetCsysVisibility
+#   MiddleFrameBuildGUI
+#   MeasureRefreshGUI
+#   MeasureBuildVTK
+#   MeasureEnter
+#   MeasureExit
+#   MeasurePosition
+#   MeasureDistance
+#   MeasureAngle
+#   MeasureSurface
+#   MeasureIntersection
+#   get_distance
+#   get_angle
+#   MeasureXSection
+#   MeasureXSection1
+#   addGlyphPoint
+#   delGlyphPoint
+#   selGlyphPoint
+#   MeasureSetModelsPickable
+#   MeasureSetCsysPickable
+#   MeasureSetGlyphsPickable
+#   MeasureSetAllPickable
+#   MeasureCsysMotion
+#==========================================================================auto=
 # Measure.tcl
 # 10/16/98 Peter C. Everett peverett@bwh.harvard.edu: Created
 # 12/19/01 Krishna C. Yeshwant kcy@bwh.harvard.edu: Edited
@@ -17,6 +69,12 @@
 # MeasureInit
 #------------
 
+#-------------------------------------------------------------------------------
+# .PROC MeasureInit
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MeasureInit {} {
     global Measure Module Model
     # Point
@@ -41,7 +99,7 @@ proc MeasureInit {} {
     
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2002/05/21 05:07:18 $}]
+        {$Revision: 1.8 $} {$Date: 2002/06/17 20:10:34 $}]
     
     # Initialize module-level variables
     #    set Measure(Model1) $Model(idNone)
@@ -60,6 +118,12 @@ proc MeasureInit {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC Test
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc Test {event W X Y x y t } {
     #    puts "Button 1 pressed"
 }
@@ -71,6 +135,12 @@ proc Test {event W X Y x y t } {
 # MeasureBuildGUI
 #----------------
 
+#-------------------------------------------------------------------------------
+# .PROC MeasureBuildGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MeasureBuildGUI {} {
     global Gui Measure Module 
     # Point Csys MeasureEventMgr
@@ -144,6 +214,12 @@ proc MeasureBuildGUI {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC TopFrameBuildGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TopFrameBuildGUI {} {
     global Module Gui Measure
     
@@ -188,6 +264,12 @@ proc TopFrameBuildGUI {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC MeasureSetCsysVisibility
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MeasureSetCsysVisibility {} { 
     global Measure
     
@@ -197,6 +279,12 @@ proc MeasureSetCsysVisibility {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC MiddleFrameBuildGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MiddleFrameBuildGUI {} {
     global Module
 
@@ -323,6 +411,12 @@ proc SelectModel { fRoot id } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC MeasureRefreshGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MeasureRefreshGUI {} {
     global Module
     
@@ -331,6 +425,12 @@ proc MeasureRefreshGUI {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC MeasureBuildVTK
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MeasureBuildVTK {} {
     global Measure Csys
    
@@ -358,6 +458,12 @@ proc MeasureBuildVTK {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC MeasureEnter
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MeasureEnter {} {
     global Measure
 
@@ -365,6 +471,12 @@ proc MeasureEnter {} {
     MeasureRefreshGUI
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MeasureExit
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MeasureExit {} {
 #    DebugMsg "Exiting Measure Tab"
     popEventManager
@@ -377,7 +489,10 @@ proc MeasureExit {} {
 
 
 #-------------------------------------------------------------------------------
-# MeasurePosition
+# .PROC MeasurePosition
+# 
+# .ARGS
+# .END
 #-------------------------------------------------------------------------------
 proc MeasurePosition {} {
     global Point
@@ -397,7 +512,10 @@ proc MeasurePosition {} {
 
 
 #-------------------------------------------------------------------------------
-# MeasureDistance
+# .PROC MeasureDistance
+# 
+# .ARGS
+# .END
 #-------------------------------------------------------------------------------
 proc MeasureDistance {} {
     global Point
@@ -421,7 +539,10 @@ proc MeasureDistance {} {
 }
 
 #-------------------------------------------------------------------------------
-# MeasureAngle
+# .PROC MeasureAngle
+# 
+# .ARGS
+# .END
 #-------------------------------------------------------------------------------
 proc MeasureAngle {} {
     global Point
@@ -504,7 +625,10 @@ proc MeasureVolume {} {
 
 
 #-------------------------------------------------------------------------------
-# MeasureSurface
+# .PROC MeasureSurface
+# 
+# .ARGS
+# .END
 #-------------------------------------------------------------------------------
 proc MeasureSurface {} {
     global Model Selected
@@ -526,6 +650,12 @@ proc MeasureSurface {} {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC MeasureIntersection
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MeasureIntersection { } {
     # create large single triangle model
     # select single triangle model
@@ -613,6 +743,12 @@ proc MeasureOutput { msg } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC get_distance
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc get_distance { a_id b_id } {
     global Point
     
@@ -629,6 +765,12 @@ proc get_distance { a_id b_id } {
     return $dist
 }
 
+#-------------------------------------------------------------------------------
+# .PROC get_angle
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc get_angle { a_id b_id c_id } {
     global Point
     
@@ -662,6 +804,12 @@ proc get_angle { a_id b_id c_id } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC MeasureXSection
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MeasureXSection { } {
     # create large single triangle model
     # select single triangle model
@@ -710,6 +858,12 @@ proc MeasureXSection { } {
 # select the model to measure
 # measure intersection of cross section tool and selected model
 
+#-------------------------------------------------------------------------------
+# .PROC MeasureXSection1
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MeasureXSection1 { } {
     global Selected Measure Model
     
@@ -750,6 +904,12 @@ proc MeasureXSection1 { } {
 # if the Csys is picked allows movement of Csys
 # otherwise does nothing
 
+#-------------------------------------------------------------------------------
+# .PROC addGlyphPoint
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc addGlyphPoint { widget x y } {
     global viewRen Point Model Module Measure
     
@@ -786,6 +946,12 @@ proc addGlyphPoint { widget x y } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC delGlyphPoint
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc delGlyphPoint { widget x y } {
     global Point
     
@@ -805,6 +971,12 @@ proc delGlyphPoint { widget x y } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC selGlyphPoint
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc selGlyphPoint { widget x y } {
     global viewRen Point
     
@@ -843,7 +1015,10 @@ proc selGlyphPoint { widget x y } {
 
 
 #-------------------------------------------------------------------------------
-# MeasureSetModelsPickable
+# .PROC MeasureSetModelsPickable
+# 
+# .ARGS
+# .END
 #-------------------------------------------------------------------------------
 proc MeasureSetModelsPickable { pickable } {
     global Model Slice Module
@@ -863,6 +1038,12 @@ proc MeasureSetModelsPickable { pickable } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC MeasureSetCsysPickable
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MeasureSetCsysPickable { pickable } {
     #    DebugMsg "MeasureSetCsysPickable"
     foreach foo {Measure(Csys,Xactor) Measure(Csys,Yactor) Measure(Csys,Zactor)} {
@@ -873,7 +1054,10 @@ proc MeasureSetCsysPickable { pickable } {
 
 
 #-------------------------------------------------------------------------------
-# MeasureSetGlyphsPickable
+# .PROC MeasureSetGlyphsPickable
+# 
+# .ARGS
+# .END
 #-------------------------------------------------------------------------------
 proc MeasureSetGlyphsPickable { pickable } {
     global Point
@@ -882,6 +1066,12 @@ proc MeasureSetGlyphsPickable { pickable } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC MeasureSetAllPickable
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MeasureSetAllPickable { pickable } {
     #    DebugMsg MeasureSetAllPickable
     foreach foo [vtkActor ListInstances] {
@@ -900,6 +1090,12 @@ proc MeasureSetAllPickable { pickable } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC MeasureCsysMotion
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MeasureCsysMotion {actor angle dotprod unitX unitY unitZ} {
 
     global Csys Measure Selected Model
