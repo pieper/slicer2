@@ -56,7 +56,6 @@ vtkImageErode::vtkImageErode()
 	this->Background = 0;
 	this->Foreground = 1;
 	this->HandleBoundaries = 1;
-	this->SetKernelSize(3,3,3);
 	this->SetNeighborTo4();
 }
 
@@ -165,7 +164,9 @@ static void vtkImageErodeExecute(vtkImageErode *self,
 			// Loop through neighborhood pixels (kernel radius=1)
 			// Note: input pointer marches out of bounds.
 		  // Lauren This next line is hard-coded 3x3x3 mask size.  
-			hoodPtr2 = inPtr0 - inInc0 - inInc1 - inInc2;
+		  //hoodPtr2 = inPtr0 - inInc0 - inInc1 - inInc2;
+			hoodPtr2 = inPtr0 + inInc0*hoodMin0 + inInc1*hoodMin1 
+			  + inInc2*hoodMin2;
 			maskPtr2 = maskPtr;
 			for (hoodIdx2 = hoodMin2; hoodIdx2 <= hoodMax2; ++hoodIdx2)
 			{

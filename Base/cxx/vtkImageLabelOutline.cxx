@@ -53,7 +53,6 @@ vtkImageLabelOutline::vtkImageLabelOutline()
 	this->SetOutline(1);
 	this->Background = 0;
 	this->HandleBoundaries = 1;
-	this->SetKernelSize(3,3,3);
 	this->SetNeighborTo8();
 	
 }
@@ -154,7 +153,9 @@ static void vtkImageLabelOutlineExecute(vtkImageLabelOutline *self,
 		{
 			// Loop through neighborhood pixels (kernel radius=1)
 			// Note: input pointer marches out of bounds.
-			hoodPtr2 = inPtr0 - inInc0 - inInc1 - inInc2;
+		  //hoodPtr2 = inPtr0 - inInc0 - inInc1 - inInc2;
+			hoodPtr2 = inPtr0 + inInc0*hoodMin0 + inInc1*hoodMin1 
+			  + inInc2*hoodMin2;
 			maskPtr2 = maskPtr;
 			for (hoodIdx2 = hoodMin2; hoodIdx2 <= hoodMax2; ++hoodIdx2)
 			{
