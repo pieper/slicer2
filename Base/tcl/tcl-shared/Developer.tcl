@@ -750,7 +750,7 @@ proc DevAddFileBrowse {Frame ArrayName VarFileName Message { Command ""} { Defau
     global Gui $ArrayName Model
     
     if {$::Module(verbose)} {
-        puts "\nDevAddFileBrowse:\n\t frame $Frame \n\t arrayname $ArrayName \n\t varfilename $VarFileName \n\t  message $Message \n\t command $Command \n\t defaultext $DefaultExt\n\t defaultdir $DefaultDir \n\t action $Action \n\t title $Title \n\t tooltip $Tooltip \n\t pathtype $PathType"
+        # puts "\nDevAddFileBrowse:\n\t frame $Frame \n\t arrayname $ArrayName \n\t varfilename $VarFileName \n\t  message $Message \n\t command $Command \n\t defaultext $DefaultExt\n\t defaultdir $DefaultDir \n\t action $Action \n\t title $Title \n\t tooltip $Tooltip \n\t pathtype $PathType"
     }
     if {$Action != "" && $Action != "Open" && $Action != "Save"} {
         DevErrorWindow "DevAddFileBrowse: Action should be Open or Save, \"$Action\" is not valid\nFrame: $Frame"
