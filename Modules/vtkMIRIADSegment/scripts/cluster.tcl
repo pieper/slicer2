@@ -7,6 +7,7 @@ proc echo {args} {puts "$args"}
 
 proc init { {job_limit 200} } {
 
+    puts "init for host $::env(HOSTNAME)"
     switch $::env(HOSTNAME) { 
         "C226.2532.sc03.org" {
             set ::ids [exec ls -1 /home/pieper/data/MIRIAD/Project_0002]
@@ -20,21 +21,38 @@ proc init { {job_limit 200} } {
             set rows {2 16}
             set ::archive  "/home/pieper/data/MIRIAD/Project_0002"
         }
-        "rockstar.rocksclusters.org" {
+        "old_rockstar" {
             set ::ids [exec ssh gpop.bwh.harvard.edu \
                 ls -1 /nas/nas0/pieper/data/MIRIAD/Project_0002]
             set racks {0 3}
             set rows {0 31}
+            set bad_computes {compute-0-12 compute-1-1 compute-1-2 compute-1-12 compute-2-12 compute-2-16 compute-2-17 compute-2-18 compute-2-19 compute-2-20 compute-2-21 compute-2-24}
             set ::archive  "gpop.bwh.harvard.edu:/nas/nas0/pieper/data/MIRIAD/Project_0002"
 
+        }
+        "rocks11.sdsc.edu" -
+        "rockstar.rocksclusters.org" {
+            set racks {0 3}
+            set rows {0 31}
+            set bad_computes {compute-0-12 compute-1-1 compute-1-2 compute-1-12 compute-2-12 compute-2-16 compute-2-17 compute-2-18 compute-2-19 compute-2-20 compute-2-21 compute-2-24}
+
+            set ::ids [exec ls -1 /home/pieper/data/MIRIAD/Project_0002]
+            set ::archive  "/home/pieper/data/MIRIAD/Project_0002"
+
+        }
+        default {
+            error "unknown host $::env(HOSTNAME)"
         }
     }
 
     set ::computes(all) ""
     for {set rack [lindex $racks 0]} {$rack <= [lindex $racks 1]} {incr rack} {
         for {set row [lindex $rows 0]} {$row <= [lindex $rows 1]} {incr row} {
-            lappend ::computes(all) compute-$rack-$row
-            lappend ::free_computes compute-$rack-$row
+            set c compute-$rack-$row
+            if { [lsearch $c $bad_computes] != -1 } { 
+                lappend ::computes(all) compute-$rack-$row
+                lappend ::free_computes compute-$rack-$row
+            }
         }
     }
 
