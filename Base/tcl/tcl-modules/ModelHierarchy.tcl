@@ -24,20 +24,20 @@
 # PROCEDURES:  
 #   ModelHierarchyInit
 #   ModelHierarchyBuildGUI
+#   ModelHierarchyRootEntry frame
 #   ModelHierarchyEnter
 #   ModelHierarchyExit
-#   ModelHierarchyUpdateGUI
-#   ModelHierarchyDeleteNode
 #   ModelHierarchyRedrawFrame
+#   ModelHierarchyDeleteNode
 #   ModelHierarchyCreate
-#   ModelHierarchyRemoveAsk
-#   ModelHierarchyRemove
+#   ModelHierarchyDeleteAsk
+#   ModelHierarchyDelete
 #   ModelHierarchyCreateGroup
 #   ModelHierarchyCreateGroupOk
-#   ModelHierarchyMoveModelDialog
-#   ModelHierarchyMoveModelDialogOk
-#   ModelHierarchyMoveModel
-#   ModelHierarchyDrag
+#   ModelHierarchyDeleteModelGroup
+#   ModelHierarchyMoveModel id name is
+#   ModelHierarchyDrag drag-and-drop guess
+#   ModelHierarchyAddModel ID
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -136,7 +136,7 @@ proc ModelHierarchyInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.6 $} {$Date: 2001/12/11 18:11:56 $}]
+	    {$Revision: 1.7 $} {$Date: 2001/12/26 15:36:56 $}]
 
     # Initialize module-level variables
     #------------------------------------
