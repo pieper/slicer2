@@ -293,7 +293,7 @@ proc EdDrawUpdate {type} {
         Delete {
             switch $Ed($e,mode) {
                 "Draw" {
-                    Slicer DrawDeleteAll
+                    Slicer DrawDeleteSelected
                     MainInteractorRender
                 }
                 "Select" {
