@@ -101,9 +101,14 @@ proc CreateAndBindTkEvents { widget } {
     EvDeclareEventHandler tkRegularEvents <Expose> {Expose %W}
 
   # jeanette 
-  #  EvDeclareEventHandler tkMouseClickEvents <Double-Any-ButtonPress> { if { [SelectPick Endoscopic(picker) %W %x %y] != 0 } \
-    { eval EndoscopicAddLandmarkFromWorldCoordinates $Select(xyz)}}   
-
+    
+    if { [IsModule Endoscopic] == 1 } {
+    EvDeclareEventHandler tkRegularEvents <KeyPress-t> { if { [SelectPick Endoscopic(picker) %W %x %y] != 0 } \
+    { eval EndoscopicAddTargetFromWorldCoordinates $Select(xyz)}}
+    }
+     
+  # end
+  
     if {[IsModule Fiducials] == 1 ||[IsModule Alignments] == 1} {
         EvDeclareEventHandler tkRegularEvents <KeyPress-p> { 
             if { [SelectPick Fiducials(picker) %W %x %y] != 0 } \
