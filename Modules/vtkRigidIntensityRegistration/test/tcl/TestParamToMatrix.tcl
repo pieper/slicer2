@@ -1,4 +1,4 @@
-package require vtkMutualInformationRegistration;# this pulls in the package
+package require vtkRigidIntensityRegistration;# this pulls in the package
 
   vtkTransform TestTrans
      TestTrans RotateWXYZ 12 1 0.33 0.8

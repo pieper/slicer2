@@ -1,4 +1,4 @@
-package require vtkMutualInformationRegistration;# this pulls in the package
+package require vtkRigidIntensityRegistration;# this pulls in the package
 
 set standalone 0
 

@@ -1,4 +1,4 @@
-package require vtkMutualInformationRegistration;# this pulls in the package
+package require vtkRigidIntensityRegistration;# this pulls in the package
 
 #if {[llength $argv ] != 7} {
 #  puts "Tests vtkMutualInformationRegistration"
