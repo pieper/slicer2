@@ -79,4 +79,5 @@ int main(int argc, char *argv[])
 //    }
   
     KL->Update();
+    std::cout << "Metric: " << KL->GetMetricValue() << std::endl;
 }
