@@ -1929,13 +1929,13 @@ void vtkLevelSets::Evolve2D()
     //--------------------------------------------------
 
     balloonterm = 0.0;
-    if (balloon_coeff != 0) {
-      balloonterm = balloon_coeff;
-      balloonterm *= this->ExpansionMap(im[p]);
+    if (fabs(balloon_coeff)>1E-10) {
+      if (balloon_image != NULL) 
+    balloonterm = balloon_coeff*((float*)balloon_image->GetScalarPointer())[p];
+      else 
+    balloonterm = balloon_coeff* this->ExpansionMap(im[p]);
+      }
     }
-    else
-    if (balloon_image != NULL) 
-      balloonterm = ((float*)balloon_image->GetScalarPointer())[p];
 
     if (balloonterm>0) {
       Gx = Gy = 0;
@@ -2523,12 +2523,13 @@ void vtkLevelSets::Evolve3D( int first_band, int last_band)
 
     balloonterm = 0.0;
     if (fabs(balloon_coeff)>1E-10) {
-      balloonterm = balloon_coeff;
-      balloonterm *= this->ExpansionMap(im[p]);
+
+      if (balloon_image != NULL) 
+    balloonterm = balloon_coeff*((float*)balloon_image->GetScalarPointer())[p];
+      else 
+    balloonterm = balloon_coeff* this->ExpansionMap(im[p]);
+      }
     }
-    else
-     if (balloon_image != NULL) 
-      balloonterm = ((float*)balloon_image->GetScalarPointer())[p];
 
     // bug fixed, replaced balloon_coeff by balloonterm:
     //  in case of an balloon_image, the balloon_coeff is 0 ...
