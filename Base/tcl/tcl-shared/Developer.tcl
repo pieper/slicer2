@@ -51,7 +51,7 @@
 # MainVolumesCopyData               Copy the image part of a volume.
 # MainModelsDelete  idnum           Delete a model
 # MainVolumesDelete idnum           Delete a volume
-#
+# YesNoPopup                        in tcl-main/Gui.tcl.
 #
 #-------------------------------------------------------------------------------
 # .PROC DevWarningWindow
@@ -357,7 +357,11 @@ proc DevSelect { type id ArrayName ModelLabel ModelName} {
     }
 	if {$id == ""} {
             $LocalArray(mb$ModelLabel) config -text "None"
-	} else {
+	} elseif {$id == -5} {
+            set LocalArray($ModelName) $id
+            $LocalArray(mb$ModelLabel) config -text \
+                    "Create New"
+        } else {
            set LocalArray($ModelName) $id
             $LocalArray(mb$ModelLabel) config -text \
                     "[${type}($id,node) GetName]"
@@ -389,7 +393,7 @@ proc DevCreateNewCopiedVolume { OrigId {Description ""} { VolName ""} } {
     # Does NOT copy: ID, FilePrefix, Name
     # This copy does not include the data. (Lauren is that right?)
 
-    $newvol Copy Volume($OrigId,vol)
+    $newvol Copy Volume($OrigId,node)
 
 #    # Let's say you want to create a new Volume and only copy the minimum amount of
 #    # stuff. As far as I can tell, this is how to do it. Just get rid of the "Copy"
@@ -426,6 +430,7 @@ proc DevCreateNewCopiedVolume { OrigId {Description ""} { VolName ""} } {
     }
 
     # Create the volume
+    set n [$newvol GetID]
     MainVolumesCreate $n
 #    Volume($n,vol) UseLabelIndirectLUTOn
 
@@ -433,5 +438,5 @@ proc DevCreateNewCopiedVolume { OrigId {Description ""} { VolName ""} } {
     # Volume List has changed.
     MainUpdateMRML
 
-    return [$newvol GetID]
+    return $n
 }
