@@ -186,7 +186,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.36 $} {$Date: 2004/11/23 20:54:11 $}]
+        {$Revision: 1.37 $} {$Date: 2004/12/07 21:13:40 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -851,7 +851,7 @@ proc FMRIEngineBuildUIForLoad {parent} {
         return
     }
 
-    MultiVolumeReaderBuildGUI $f
+    MultiVolumeReaderBuildGUI $f 1
 }
 
 
