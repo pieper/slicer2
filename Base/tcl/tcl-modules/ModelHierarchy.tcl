@@ -136,7 +136,7 @@ proc ModelHierarchyInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.1 $} {$Date: 2001/11/13 20:44:53 $}]
+	    {$Revision: 1.2 $} {$Date: 2001/11/14 20:27:31 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -307,7 +307,10 @@ proc ModelHierarchyEnter {} {
 				ModelHierarchyCreateRootEntry $f
 			}
 			incr HierarchyLevel
-			eval {label $f.lg[$node GetID] -text "Group: [$node GetName]"} $Gui(WLA)
+			label $f.lg[$node GetID] -fg red\
+				-text "Group: [$node GetName]" -font {helvetica 9}\
+                		-bg $Gui(activeWorkspace)\
+                		-bd 0 -padx 1 -pady 1 -relief flat 
 			bindtags $f.lg[$node GetID] [list DragDrop $f.lg[$node GetID] Label . all]
 			
 			eval {label $f.l1g_[$node GetID] -text "" -width [expr $HierarchyLevel*2]} $Gui(WLA)
@@ -465,7 +468,13 @@ proc ModelHierarchyCreate {} {
 	# add all existing models to hierarchy
 	foreach m $Model(idList) {
 		set newModelRefNode [MainMrmlAddNode "ModelRef"]
-		$newModelRefNode SetmodelRefID [Model($m,node) GetModelID]
+		if {[Model($m,node) GetModelID] != ""} {
+			$newModelRefNode SetmodelRefID [Model($m,node) GetModelID]
+		} else {
+			# no model IDs yet, so create them
+			$newModelRefNode SetmodelRefID "M$m"
+			Model($m,node) SetModelID "M$m"
+		}
 	}
 	
 	MainMrmlAddNode "EndHierarchy"
