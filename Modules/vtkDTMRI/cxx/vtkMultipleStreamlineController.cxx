@@ -6,6 +6,7 @@
 #include "vtkAppendPolyData.h"
 #include "vtkPolyDataWriter.h"
 #include "vtkTransformPolyDataFilter.h"
+#include "vtkMrmlModelNode.h"
 
 //------------------------------------------------------------------------------
 vtkMultipleStreamlineController* vtkMultipleStreamlineController::New()
@@ -317,10 +318,17 @@ void vtkMultipleStreamlineController::DeleteStreamline(vtkActor *pickedActor)
     }
 }
 
+void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
+                                                                char *name)
+{
+  this->SaveStreamlinesAsPolyData(filename, name, NULL);
+}
 
 // NOTE: Limit currently is 1000 models (1000 different input colors is max).
 //----------------------------------------------------------------------------
-void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename)
+void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
+                                                                char *name,
+                                                                vtkMrmlTree *colorTree)
 {
   vtkHyperStreamline *currStreamline;
   vtkActor *currActor;
@@ -335,20 +343,27 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename)
   int currColor, newColor, idx;
   float rgb[3];
   char fileName[101];
-
-  collectionOfModels = vtkCollection::New();
-  writer = vtkPolyDataWriter::New();
+  vtkMrmlTree *tree;
+  vtkMrmlModelNode *currNode;
+  vtkMrmlColorNode *currColorNode;
 
   // traverse streamline collection, grouping streamlines into models by color
   this->Streamlines->InitTraversal();
   this->Actors->InitTraversal();
   currStreamline= (vtkHyperStreamline *)this->Streamlines->GetNextItemAsObject();
   currActor= (vtkActor *)this->Actors->GetNextItemAsObject();
-  currActor->GetProperty()->GetColor(rgb);
 
-  // init with the first one:
-  // add an appender to the collection of models.
+  if (currActor == NULL)
+    {
+      cout <<"vtkMultipleStreamlineController has no streamlines yet." << endl;
+      return;
+    }
+
+
+  // init things with the first streamline.
+  currActor->GetProperty()->GetColor(rgb);
   currAppender = vtkAppendPolyData::New();
+  collectionOfModels = vtkCollection::New();
   collectionOfModels->AddItem((vtkObject *)currAppender);
   lastColor=0;
   R[0]=rgb[0];
@@ -356,7 +371,7 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename)
   B[0]=rgb[2];
 
   cout << "Traverse STREAMLINES" << endl;
-  while(currStreamline)
+  while(currStreamline && currActor)
     {
       cout << "stream " << currStreamline << endl;
       currColor=0;
@@ -422,6 +437,8 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename)
 
   // traverse appender collection (collectionOfModels) and write each to disk
   cout << "Traverse APPENDERS" << endl;
+  writer = vtkPolyDataWriter::New();
+  tree = vtkMrmlTree::New();
   collectionOfModels->InitTraversal();
   currAppender = (vtkAppendPolyData *) 
     collectionOfModels->GetNextItemAsObject();
@@ -438,16 +455,68 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename)
       // Delete it (but it survives until the collection it's on is deleted).
       currAppender->Delete();
 
+      // Also write a MRML file: add to MRML tree
+      currNode=vtkMrmlModelNode::New();
+      currNode->SetFullFileName(fileName);
+      currNode->SetFileName(fileName);
+      // use the name argument to name the model
+      snprintf(fileName,100,"%s_%d",name,idx);
+      currNode->SetName(fileName);
+      currNode->SetDescription("Model of a DTMRI tract");
+      if (this->ScalarVisibility) currNode->ScalarVisibilityOn();
+      currNode->ClippingOn();
+      currNode->SetScalarRange(this->StreamlineLookupTable->GetTableRange());
+      // If we have a color tree as input find the name of the color
+      if (colorTree)
+        {
+          colorTree->InitTraversal();
+          currColorNode = (vtkMrmlColorNode *) colorTree->GetNextItemAsObject();
+          while (currColorNode)
+            {
+              currColorNode->GetDiffuseColor(rgb);
+              if (rgb[0]==R[idx] &&
+                  rgb[1]==G[idx] &&
+                  rgb[2]==B[idx])              
+                {
+                  currNode->SetColor(currColorNode->GetName());
+                  break;
+                }
+              currColorNode = (vtkMrmlColorNode *) 
+                colorTree->GetNextItemAsObject();
+            }
+        }
+
+      // add it to the MRML file
+      tree->AddItem(currNode);
+
       currAppender = (vtkAppendPolyData *) 
         collectionOfModels->GetNextItemAsObject();
       idx++;
     } 
+
+  // If we had color inputs put them at the end of the MRML file
+  if (colorTree)
+    {
+      colorTree->InitTraversal();
+      currColorNode = (vtkMrmlColorNode *) colorTree->GetNextItemAsObject();      
+      while (currColorNode)
+        {
+          tree->AddItem(currColorNode);
+          currColorNode = (vtkMrmlColorNode *) 
+            colorTree->GetNextItemAsObject();
+        }
+    }
+  
+  // Write the MRML file
+  snprintf(fileName,100,"%s.xml",filename);
+  tree->Write(fileName);
 
   cout << "DELETING" << endl;
 
   // Delete all objects we created
   collectionOfModels->Delete();
   writer->Delete();
+  tree->Delete();
 
 }
 

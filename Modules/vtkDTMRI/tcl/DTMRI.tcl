@@ -134,7 +134,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.43 $} {$Date: 2004/11/16 00:29:30 $}]
+                  {$Revision: 1.44 $} {$Date: 2004/11/16 03:21:48 $}]
 
      # Define Tabs
     #------------------------------------
@@ -5657,6 +5657,13 @@ proc DTMRISaveStreamlinesAsPolyLines {subdir name {verbose "1"}} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRISaveStreamlinesAsModel
+# Save all streamlines as a vtk model(s).
+# Each color is written as a separate model.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRISaveStreamlinesAsModel {} {
     
     set filename [tk_getSaveFile  -title "Save Tracts: Choose Initial Filename"]
@@ -5664,7 +5671,11 @@ proc DTMRISaveStreamlinesAsModel {} {
         return
     }
     
-    DTMRI(vtk,streamlineControl) SaveStreamlinesAsPolyData $filename
+    set modelname [file root [file tail $filename]]
+
+    # save the models as well as a MRML file with their colors
+    DTMRI(vtk,streamlineControl) SaveStreamlinesAsPolyData \
+        $filename $modelname Mrml(colorTree)
 }
 
 

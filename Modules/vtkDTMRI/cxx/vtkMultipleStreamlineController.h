@@ -25,6 +25,8 @@
 #include "vtkActor.h"
 #include "vtkProperty.h"
 #include "vtkLookupTable.h"
+#include "vtkMrmlTree.h"
+
 
 #define USE_VTK_HYPERSTREAMLINE 0
 #define USE_VTK_HYPERSTREAMLINE_POINTS 1
@@ -68,7 +70,21 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // Description
   // Save streamlines as vtkPolyData models.
   // Streamlines are grouped into model files based on their color.
-  void SaveStreamlinesAsPolyData(char *filename);
+  // Files are saved as filename_0.vtk, filename_1.vtk, etc.
+  // A MRML file is saved as filename.xml.
+  // The MRML model names are name_0, name_1, etc.
+  void SaveStreamlinesAsPolyData(char *filename, char *name);
+
+  // Description
+  // Save streamlines as vtkPolyData models.
+  // Streamlines are grouped into model files based on their color.
+  // Files are saved as filename_0.vtk, filename_1.vtk, etc.
+  // A MRML file is saved as filename.xml.
+  // The MRML model names are name_0, name_1, etc.  
+  // The optional colorTree argument lets us find and save in MRML
+  // the text names of the colors of each streamline.
+  void SaveStreamlinesAsPolyData(char *filename, char *name, 
+                                 vtkMrmlTree *colorTree);
   
   // Description
   // Input tensor field in which to seed streamlines
