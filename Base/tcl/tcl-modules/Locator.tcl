@@ -121,7 +121,7 @@ proc LocatorInit {} {
 	set Locator(prefixRealtime) ""
 	
 	# Servers
-	set Locator(serverList) "SignaSP File Images"
+	set Locator(serverList) "File SignaSP Images"
 	set Locator(server) [lindex $Locator(serverList) 0]
 	set Locator(connect) 0
 	set Locator(pause) 0
@@ -132,18 +132,18 @@ proc LocatorInit {} {
 	# Server specific stuff:
 	# File
 	set Locator(File,msPoll) 100
-	set Locator(File,prefix) ""
-	set Locator(File,fid) ""
+	set Locator(File,prefix) loc
+	set Locator(File,fid)    ""
 	# SignaSP
 	set Locator(SignaSP,msPoll) 100
-	set Locator(SignaSP,port) 10000
-	set Locator(SignaSP,host) mrtsw
+	set Locator(SignaSP,port)   10000
+	set Locator(SignaSP,host)   mrtsw
 	# Images
-	set Locator(Images,msPoll) 1000
-	set Locator(Images,prefix) ""
+	set Locator(Images,msPoll)   1000
+	set Locator(Images,prefix)   ""
 	set Locator(Images,firstNum) 1
-	set Locator(Images,lastNum) 1
-	set Locator(Images,skip) 0
+	set Locator(Images,lastNum)  1
+	set Locator(Images,skip)     0
 
 }
 
