@@ -51,6 +51,19 @@ public:
   // for access from tcl, just dumps to stdout for now
   void PrintPseudoInverse();
 
+   // Description:
+   // Singular value decomposition of a mxn matrix.
+  // SVD is given by: A = U W V^T;
+  // The input arguments are: mxn matrix a, m  and n.
+  // The outpur arguments are: w diagonal of matrix W, v matrix and
+  // U replaces a on output.
+  static int SVD(float **a, int m,int n, float *w, float **v);
+  static int SVD(double **a, int m,int n, double *w, double **v);
+
+  // Description:
+  // PseudoInverse of a mxn matrix.
+  static int PseudoInverse(double **A, double **AI, int m, int n);
+
 protected:
   vtkVectorToOuterProductDualBasis();
   ~vtkVectorToOuterProductDualBasis();
