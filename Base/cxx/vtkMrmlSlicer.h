@@ -141,27 +141,58 @@ class VTK_EXPORT vtkMrmlSlicer : public vtkObject
   // Double slice size outputs 512x512 images for larger display
   // (instead of 256x256)
 
-  // >> AT 02/16/01
+  // >> AT 02/16/01 3/26/01
   //void SetDouble(int s, int yes) {
   //  this->DoubleSliceSize[s] = yes; this->BuildLowerTime.Modified();};
+  // Should be moved to vtkMrmlSlicer.cxx
   void SetDouble(int s, int yes) {
-    this->DoubleSliceSize[s] = 0;
-    if(yes == 1)
+    if(this->DrawDoubleApproach == 0)
       {
-	this->BackReformat[s]->SetResolution(512);
-	this->ForeReformat[s]->SetResolution(512);
-	this->LabelReformat[s]->SetResolution(512);
-      }
-    else
-      {
+	this->DoubleSliceSize[s] = yes;
 	this->BackReformat[s]->SetResolution(256);
 	this->ForeReformat[s]->SetResolution(256);
 	this->LabelReformat[s]->SetResolution(256);
       }
+    else
+      {
+	this->DoubleSliceSize[s] = 0;
+	if(yes == 1)
+	  {
+	    this->BackReformat[s]->SetResolution(512);
+	    this->ForeReformat[s]->SetResolution(512);
+	    this->LabelReformat[s]->SetResolution(512);
+	  }
+	else
+	  {
+	    this->BackReformat[s]->SetResolution(256);
+	    this->ForeReformat[s]->SetResolution(256);
+	    this->LabelReformat[s]->SetResolution(256);
+	  }
+      }
  
-    this->BuildLowerTime.Modified();};
+    this->BuildLowerTime.Modified();
+  }
 
-  // << AT 02/16/01
+  int GetDrawDoubleApproach() {return this->DrawDoubleApproach;}
+  // Should be moved to vtkMrmlSlicer.cxx
+  void SetDrawDoubleApproach(int approach)
+  {
+    this->DrawDoubleApproach = approach;
+    for (int s=0; s<NUM_SLICES; s++)
+    {
+      if((this->DoubleSliceSize[s] == 1) || (this->BackReformat[s]->GetResolution() == 512))
+      {
+	SetDouble(s, 1);
+      }
+      else
+      {
+	SetDouble(s, 0);
+      }
+    }
+    this->Update();
+  }
+
+  // << AT 02/16/01 3/26/01
 
   int GetDouble(int s) {return this->DoubleSliceSize[s];};
 
@@ -487,6 +518,10 @@ protected:
   vtkPoints *DrawIjkPoints;
   int DrawX;
   int DrawY;
+
+  // >> AT 3/26/01
+  int DrawDoubleApproach;
+  // << AT 3/26/01
 
   vtkTimeStamp UpdateTime;
   vtkTimeStamp BuildLowerTime;

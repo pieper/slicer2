@@ -218,6 +218,11 @@ vtkMrmlSlicer::vtkMrmlSlicer()
   this->BuildLowerTime.Modified();
   this->BuildUpperTime.Modified();
 
+  // >> AT 3/26/01
+  // Use the original approach by default.
+  this->DrawDoubleApproach = 0;
+  // << AT 3/26/01
+
   this->Update();
 }
 
