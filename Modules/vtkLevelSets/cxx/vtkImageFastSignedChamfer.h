@@ -35,8 +35,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkImageFastSignedChamfer.h,v $
   Language:  C++
-  Date:      $Date: 2003/04/28 18:13:23 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2004/08/23 13:22:32 $
+  Version:   $Revision: 1.2 $
   Author:    Karl Krissian
 
 =========================================================================*/
@@ -53,6 +53,7 @@
 
 #include <vtkLevelSetsConfigure.h>
 #include "vtkImageToImageFilter.h"
+#include "vtkFloatArray.h"
 
 class VTK_LEVELSETS_EXPORT vtkImageFastSignedChamfer : public vtkImageToImageFilter
 {
@@ -120,7 +121,8 @@ protected:
 
   // allows to use an array for the output image without allocation
   // and not to copy any input image to this output: faster ...
-  float* input_output_array;
+  float*           input_output_array;
+  vtkFloatArray*   local_floatarray;
 
   // Limits for each line in X direction
   int** min_x;

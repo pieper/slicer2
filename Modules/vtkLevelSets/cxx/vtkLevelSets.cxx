@@ -2961,23 +2961,25 @@ void vtkLevelSets::InitEvolution()
   //
   // Set the Advection Parameters
   //
-  switch (advection_scheme) {
-  case ADVECTION_UPWIND_VECTORS:
-  case ADVECTION_CENTRAL_VECTORS:
-    this->data_attach_x = new float[imsize];
-    this->data_attach_y = new float[imsize];
-    ADDMEMORY("vtkLevelSets::InitEvolution() data_attach_{x,y}",2*sizeof(float)*imsize);
-    if (Dimension==3) {
-      this->data_attach_z = new float[imsize];
-      ADDMEMORY("vtkLevelSets::InitEvolution() data_attach_z",sizeof(float)*imsize);
+  //..  if (fabs(AdvectionCoeff)>1E-10) { 
+    switch (advection_scheme) {
+    case ADVECTION_UPWIND_VECTORS:
+    case ADVECTION_CENTRAL_VECTORS:
+      this->data_attach_x = new float[imsize];
+      this->data_attach_y = new float[imsize];
+      ADDMEMORY("vtkLevelSets::InitEvolution() data_attach_{x,y}",2*sizeof(float)*imsize);
+      if (Dimension==3) {
+        this->data_attach_z = new float[imsize];
+        ADDMEMORY("vtkLevelSets::InitEvolution() data_attach_z",sizeof(float)*imsize);
+      }
+      break;
+    case ADVECTION_MORPHO:
+      this->secdergrad    = new float[imsize];
+      this->normgrad      = new float[imsize];
+      ADDMEMORY("vtkLevelSets::InitEvolution() ADVECTION_MORPHO secdergrad",2*sizeof(float)*imsize);
+      break;
     }
-    break;
-  case ADVECTION_MORPHO:
-    this->secdergrad    = new float[imsize];
-    this->normgrad      = new float[imsize];
-    ADDMEMORY("vtkLevelSets::InitEvolution() ADVECTION_MORPHO secdergrad",2*sizeof(float)*imsize);
-    break;
-  }
+    //  }
 
   sqxspacing   = 1.0/vx/vx;
   sqyspacing   = 1.0/vy/vy;
@@ -2994,7 +2996,9 @@ void vtkLevelSets::InitEvolution()
 
   if (GB_debug) fprintf(stderr,"PreComputeDataAttachment() \n");
 
-  PreComputeDataAttachment();
+  //  if (fabs(AdvectionCoeff)>1E-10) 
+   PreComputeDataAttachment();
+
   if (DMmethod == 0) {
     this->MakeBand();
     //

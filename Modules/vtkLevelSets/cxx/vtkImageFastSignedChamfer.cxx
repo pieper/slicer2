@@ -98,6 +98,7 @@ vtkImageFastSignedChamfer::vtkImageFastSignedChamfer()
   inputImage_allocated = 0;
 
   input_output_array    = NULL;
+  local_floatarray      = NULL;
 
   min_x = NULL;
   max_x = NULL;
@@ -117,6 +118,10 @@ vtkImageFastSignedChamfer::~vtkImageFastSignedChamfer()
     inputImage=NULL;
   }
 
+  if (local_floatarray != NULL) {
+    local_floatarray->Delete();
+  } 
+
 } // ~vtkImageFastSignedChamfer()
 
 
@@ -126,7 +131,6 @@ void vtkImageFastSignedChamfer::InitParam( vtkImageData* input, vtkImageData* ou
 //                   ---------
 {
   int type;
-  int i;
 
 
   inputImage = input;
@@ -178,9 +182,9 @@ void vtkImageFastSignedChamfer::InitParam( vtkImageData* input, vtkImageData* ou
     outputImage->SetNumberOfScalarComponents(1);
 
     if (input_output_array != NULL) {
-      vtkFloatArray* da = vtkFloatArray::New();
-      da->SetArray(input_output_array,imsize,1);
-      outputImage->GetPointData()->SetScalars(da);
+      local_floatarray = vtkFloatArray::New();
+      local_floatarray->SetArray(input_output_array,imsize,1);
+      outputImage->GetPointData()->SetScalars(local_floatarray);
     } 
     else {
       outputImage->AllocateScalars();
@@ -233,18 +237,17 @@ void vtkImageFastSignedChamfer::ExecuteData(vtkDataObject *outData)
 void vtkImageFastSignedChamfer::FastSignedChamfer2D( )
 {
 
-  register int     x,y,z,i,n;
-  register int     j,k;
+  register int     x,y,i,n;
+  register int     j;
   int              i1,i2;
   register int     neighbor[4];
   register int     neighbor1[2];
   register int     neighbor2[2];
-  register float   min,val;
+  register float   min,val=0;
   register float*  buf;
   register float*  buf1;
   register float*  buf2;
-  register int     imin,imax,jmin,jmax,kmin,kmax;
-  register int     x1,y1,z1;
+  register int     imin,imax,jmin,jmax;
 
   i = 0;
   i1 = i2 = 0;
@@ -404,7 +407,7 @@ void vtkImageFastSignedChamfer::FastSignedChamfer3DOld( )
   register int    neighbor1[3];
   register int    neighbor2[6];
   register int    neighbor3[4];
-  register float  min,val;
+  register float  min,val=0;
   register float* buf;
   register float* buf1;
   register float* buf2;
@@ -668,11 +671,11 @@ void vtkImageFastSignedChamfer::FastSignedChamfer3DOld( )
 void vtkImageFastSignedChamfer::FastSignedChamfer3D( )
 {
 
-  register int    x,y,z,i,n;
+  register int    x,y,z;
   register int    n10,n11,n12;
   register int    n20,n21,n22,n23,n24,n25;
   register int    n30,n31,n32,n33;
-  register float  min,val;
+  register float  val;
   register float* buf0;
   register float* bufy;
   register float* buf;
@@ -928,13 +931,12 @@ void vtkImageFastSignedChamfer::FastSignedChamfer3DBorders( )
 
   register int    x,y,z,i,n;
   register int    j,k;
-  register float  min,val;
+  register float  min,val=0;
   register float* buf;
   register float* buf1;
   register float* buf2;
   register float* buf3;
   register int    imin,imax,jmin,jmax,kmin,kmax;
-  register int    xmin,xmax;
 
   fprintf(stderr,"FastSignedChamfer3DBorders() \n");
 
