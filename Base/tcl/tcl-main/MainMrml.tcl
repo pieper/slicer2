@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.78 $} {$Date: 2003/05/14 22:33:04 $}]
+        {$Revision: 1.79 $} {$Date: 2003/05/26 22:47:04 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -992,6 +992,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
          "visibility"        {eval $n SetVisibility $val}
          "symbolSize"         {eval $n SetSymbolSize    $val}
          "textSize"         {eval $n SetTextSize    $val}
+         "color"            {eval $n SetColor     $val}
          }
         }
     }
@@ -1004,7 +1005,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                 set key [lindex $a 0]
                 set val [lreplace $a 0 0]
                 switch [string tolower $key] {
-                "desc"             {$n SetDescription  $val}
+                "description"             {$n SetDescription  $val}
                 "name"             {$n SetName         $val}
         "index"            {eval $n SetIndex        $val}
         "xyz"              {eval $n SetXYZ     $val}

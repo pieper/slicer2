@@ -86,6 +86,11 @@ public:
   vtkSetMacro(TextSize,float);
   vtkGetMacro(TextSize,float);
 
+  // Description:
+  // Get/Set for Glyph and Text color
+  vtkSetVector3Macro(Color,float);
+  vtkGetVectorMacro(Color,float,3);
+
   vtkSetStringMacro(Type);
   vtkGetStringMacro(Type);
 
@@ -104,6 +109,7 @@ protected:
 float SymbolSize;
 float TextSize;
 int Visibility;
+float Color[3];
 char  *Type;
 
 };

@@ -63,9 +63,9 @@ vtkMrmlFiducialsNode::vtkMrmlFiducialsNode()
   this->SymbolSize = 6.0;
   this->TextSize = 4.5;
   this->Visibility = 1.0;
+  this->Color[0]=0.4; this->Color[1]=1.0; this->Color[2]=1.0;
   this->Type = NULL;
   this->SetType("default");
-
 }
 
 //----------------------------------------------------------------------------
@@ -99,6 +99,8 @@ void vtkMrmlFiducialsNode::Write(ofstream& of, int nIndent)
      of << " symbol size='" << this->SymbolSize << "'";
      of << " text size='" << this->TextSize << "'";
      of << " visibility='" << this->Visibility << "'";
+     of << " color='" << this->Color[0] << " " << this->Color[1] << " " <<
+                    this->Color[2] << "'";
   
    of << ">\n";
 }

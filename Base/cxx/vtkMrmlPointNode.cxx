@@ -91,7 +91,7 @@ void vtkMrmlPointNode::Write(ofstream& of, int nIndent)
   }
 
   // Point
-  of << "index='" << this->Index << "'";
+  of << " index='" << this->Index << "'";
   of << " xyz='" << this->XYZ[0] << " " << this->XYZ[1] << " " <<
                     this->XYZ[2] << "'";
   of << " focalxyz='" << this->FXYZ[0] << " " << this->FXYZ[1] << " " <<

@@ -101,7 +101,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.33 $} {$Date: 2003/05/01 17:53:50 $}]
+        {$Revision: 1.34 $} {$Date: 2003/05/26 22:47:05 $}]
     
     # Initialize module-level variables
     
@@ -112,7 +112,13 @@ proc FiducialsInit {} {
     set Fiducials(textScale) 4.5
     set Fiducials(textSlant) .333
     set Fiducials(textPush) 10
-    set Fiducials(textColor) "0.4 1.0 1.0"
+
+    set Fiducials(activeListID)  None
+    set Fiducials(activePointID) None
+    set Fiducials(activeName) "(no point selected)"
+    set Fiducials(activeXYZ) ""
+    set Fiducials(activeDescription) ""
+
     set Fiducials(textSelColor) "1.0 0.5 0.5"
     
     # Append widgets to list that gets refreshed during UpdateMRML
@@ -151,6 +157,38 @@ If you want to create a new list, go to the Fiducials module.
 <BR> <LI><B> To select/unselect a Fiducial </B>: point to the Fiducial that you want to select/unselect with the mouse and press 'q' on the keyboard. You can also select/unselect Fiducials points in the scrolled textbox.
 <BR> <LI> <B> To delete a Fiducial </B>: point to the Fiducial that you want to delete with the mouse and press 'd' on the keyboard. "
 
+}
+
+
+proc FiducialsDisplayDescriptionActive {} {
+    global Fiducials Point
+
+    set listExists [array names Fiducials $Fiducials(activeListID),pointIdList]
+    if { $listExists=="" } { return }
+
+    if {[lsearch $Fiducials($Fiducials(activeListID),selectedPointIdList) $Fiducials(activePointID)] != -1} { 
+        set Fiducials(activeName) [Point($Fiducials(activePointID),node) GetName]
+
+        foreach {x y z} [Point($Fiducials(activePointID),node) GetXYZ] { break }
+        set Fiducials(activeXYZ) [format "(%.2f, %.2f, %.2f)" $x $y $z]
+        set Fiducials(activeDescription) [Point($Fiducials(activePointID),node) GetDescription]
+    }
+}
+
+proc FiducialsDescriptionActiveUpdated {} {
+    global Fiducials Point
+
+    set listExists [array names Fiducials $Fiducials(activeListID),pointIdList]
+    if { $listExists=="" } { return }
+
+    if {[lsearch $Fiducials($Fiducials(activeListID),selectedPointIdList) $Fiducials(activePointID)] != -1} { 
+
+        Point($Fiducials(activePointID),node) SetName $Fiducials(activeName)
+        Point($Fiducials(activePointID),node) SetDescription $Fiducials(activeDescription)
+
+        set Fiducials($Fiducials(activeListID),selectedPointIdList) ""
+        FiducialsUpdateMRML
+    }
 }
 
 
@@ -294,8 +332,7 @@ proc FiducialsBuildGUI {} {
     #-------------------------------------------
     set f $fEdit.fMiddle
 
-    FiducialsAddActiveListFrame $f 15 25 
-    
+    FiducialsAddActiveListFrame $f 10 25 
 }
     
 
@@ -403,7 +440,6 @@ proc FiducialsDeleteGUI {f m} {
 proc FiducialsConfigScrolledGUI {canvasScrolledGUI fScrolledGUI} {
     global Fiducials
 
-
     set f      $fScrolledGUI
     set canvas $canvasScrolledGUI
     set m [lindex $Fiducials(idList) 0]
@@ -419,6 +455,7 @@ proc FiducialsConfigScrolledGUI {canvasScrolledGUI fScrolledGUI} {
         foreach m $Fiducials(idList) {
             incr numLines
         }
+
         # Find the height of a line
         set incr [expr {[winfo reqheight $lastButton] + 2*$pady}]
         # Find the total height that should scroll
@@ -559,7 +596,7 @@ proc FiducialsVTKCreateFiducialsList { id type {scale ""} {textScale ""} {visibi
     
     
     vtkTransformPolyDataFilter Fiducials($id,XformFilter)
-    if {$type == "endoscopic"} {
+    if { ($type == "endoscopic") || ($type == "sphereSymbol") } {
         Fiducials($id,XformFilter) SetInput [Fiducials(sphereSource) GetOutput]
     } else {
         Fiducials($id,XformFilter) SetInput Fiducials(symbolPD)
@@ -577,9 +614,15 @@ proc FiducialsVTKCreateFiducialsList { id type {scale ""} {textScale ""} {visibi
     
     vtkPolyDataMapper Fiducials($id,mapper)
     Fiducials($id,mapper) SetInput [Fiducials($id,glyphs) GetOutput]
-    [Fiducials($id,mapper) GetLookupTable] SetSaturationRange .65 .65
-    [Fiducials($id,mapper) GetLookupTable] SetHueRange .5 0
     
+    [Fiducials($id,mapper) GetLookupTable] SetNumberOfTableValues 2
+
+    foreach {r1 g1 b1} [Fiducials($id,node) GetColor] { break }
+    foreach {r2 g2 b2} $Fiducials(textSelColor) { break }
+
+    [Fiducials($id,mapper) GetLookupTable] SetTableValue 0 $r1 $g1 $b1 1.0
+    [Fiducials($id,mapper) GetLookupTable] SetTableValue 1 $r2 $g2 $b2 1.0
+
     vtkMatrix4x4 Fiducials($id,xform)
     Mrml(dataTree) ComputeNodeTransform Fiducials($id,node) \
         Fiducials($id,xform)
@@ -626,8 +669,8 @@ proc FiducialsVTKCreatePoint { fid pid visibility} {
         Point($pid,follower,$r) SetScale $Fiducials($fid,textScale)
 
         Point($pid,follower,$r) SetPickable 0
-        eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textColor)
-        
+             eval [Point($pid,follower,$r) GetProperty] SetColor [Fiducials($fid,node) GetColor]
+
         $r AddActor Point($pid,follower,$r)
         Point($pid,follower,$r) SetVisibility $visibility
     }
@@ -670,11 +713,16 @@ proc FiducialsVTKUpdatePoints {fid symbolSize textSize} {
         foreach pid $Fiducials($fid,pointIdList) {
             # see if that point was previously selected
             if {[lsearch $Fiducials($fid,oldSelectedPointIdList) $pid] != -1} { 
+
+    set Fiducials(activeListID)  $fid
+    set Fiducials(activePointID) $pid
+
+
                 # color the point
                 Fiducials($fid,scalars) SetTuple1 [FiducialsScalarIdFromPointId $fid $pid] 1
                 # color the text
                 foreach r $Fiducials(renList) {
-                    eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textSelColor)
+                              eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textSelColor)
                 }
                 # add it to the current list of selected items
                 lappend Fiducials($fid,selectedPointIdList) $pid
@@ -682,6 +730,8 @@ proc FiducialsVTKUpdatePoints {fid symbolSize textSize} {
         }
     }
     
+    FiducialsDisplayDescriptionActive
+
     Fiducials($fid,pointsPD) Modified
 
 }
@@ -834,7 +884,7 @@ proc FiducialsUpdateMRML {} {
             lappend Fiducials($fid,pointIdList) $pid
             #set its index based on its position in the list
             Point($pid,node) SetIndex [lsearch $Fiducials($fid,pointIdList) $pid]
-            Point($pid,node) SetName [concat $Fiducials($fid,name) [Point($pid,node) GetIndex]]
+
             FiducialsVTKCreatePoint $fid $pid $visibility
             set Fiducials($fid,pointsExist) 1
         }
@@ -985,7 +1035,9 @@ proc FiducialsUpdateMRML {} {
         if {[lsearch $Fiducials(listOfNames) $name] != -1} {
             # rewrite the list of points
             foreach pid $Fiducials($Fiducials($name,fid),pointIdList) {
-                $scroll insert end "[Point($pid,node) GetName] : [Point($pid,node) GetXYZ]"
+
+                $scroll insert end "[Point($pid,node) GetName]"
+
                 # if it is selected, tell the scroll
                 if {[lsearch $Fiducials($Fiducials($name,fid),selectedPointIdList) $pid] != -1} {
                     set index [lsearch $Fiducials($fid,pointIdList) $pid]
@@ -1491,7 +1543,7 @@ proc FiducialsSetActiveList {name {menu ""} {scroll ""}} {
             foreach s $Fiducials(scrollActiveList) {
                 $s delete 0 end
                 foreach pid [FiducialsGetPointIdListFromName $name] {
-                    $s insert end "[Point($pid,node) GetName] : [Point($pid,node) GetXYZ]"
+                    $s insert end "[Point($pid,node) GetName]"
                 }
             }
         } else {
@@ -1499,7 +1551,7 @@ proc FiducialsSetActiveList {name {menu ""} {scroll ""}} {
             $scroll delete 0 end
             
             foreach pid [FiducialsGetPointIdListFromName $name] {
-                $scroll insert end "[Point($pid,node) GetName] : [Point($pid,node) GetXYZ]"
+                $scroll insert end "[Point($pid,node) GetName]"
                 if {[info exists Fiducials($name,fid)] == 1} {
                     set fid $Fiducials($name,fid)
                     # if it is selected, tell the scroll
@@ -1640,7 +1692,7 @@ proc FiducialsSelectionFromPicker {actor cellId} {
 #       int cellId ID of the selected cell in the actor
 # .END
 #-------------------------------------------------------------------------------
-proc FiducialsSelectionFromScroll {menu scroll} {
+proc FiducialsSelectionFromScroll {menu scroll focusOnActiveFiducial} {
     global Fiducials Module
 
     
@@ -1671,9 +1723,17 @@ proc FiducialsSelectionFromScroll {menu scroll} {
                 }
             }
         }
-        
+
         # now update the actors
         FiducialsUpdateSelectionForActor $fid
+        
+        if { $focusOnActiveFiducial=="yes" } {
+
+            foreach {x y z} [Point($Fiducials(activePointID),node) GetXYZ] { break }
+            MainViewSetFocalPoint $x $y $z
+            RenderAll
+        }
+
     }
 }
 
@@ -1695,6 +1755,10 @@ proc FiducialsUpdateSelectionForActor {fid} {
         # if the point is selected
         if {[lsearch $Fiducials($fid,selectedPointIdList) $pid] != -1} { 
         
+    set Fiducials(activeListID)  $fid
+    set Fiducials(activePointID) $pid
+
+
             # color the point to show it is selected
             Fiducials($fid,scalars) SetTuple1 [FiducialsScalarIdFromPointId $fid $pid] 1
             # color the text
@@ -1707,11 +1771,13 @@ proc FiducialsUpdateSelectionForActor {fid} {
             Fiducials($fid,scalars) SetTuple1 [FiducialsScalarIdFromPointId $fid $pid] 0
             # uncolor the text
             foreach r $Fiducials(renList) {
-                eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textColor)
+                          eval [Point($pid,follower,$r) GetProperty] SetColor [Fiducials($fid,node) GetColor]
             }
         }
     }
     
+    FiducialsDisplayDescriptionActive
+
     Fiducials($fid,pointsPD) Modified
     Render3D
 }
@@ -1869,11 +1935,19 @@ proc FiducialsAddActiveListFrame {frame scrollHeight scrollWidth {defaultNames "
     # Create and Append widgets to list that gets refreshed during UpdateMRML
     set scroll [ScrolledListbox $f.list 1 1 -height $scrollHeight -width $scrollWidth -selectforeground red -selectmode multiple]
     
-    bind $scroll <ButtonRelease-1> "FiducialsSelectionFromScroll $frame.fmenu.mbActive $scroll" 
+    bind $scroll <Control-ButtonRelease-1> "FiducialsSelectionFromScroll $frame.fmenu.mbActive $scroll yes" 
+    bind $scroll <ButtonRelease-1> "FiducialsSelectionFromScroll $frame.fmenu.mbActive $scroll no" 
+
+    eval {entry $f.nameEntry -width 25 -textvariable Fiducials(activeName) } $Gui(WEA)
+    bind $f.nameEntry <Return> {FiducialsDescriptionActiveUpdated}
     
+    eval {label $f.xyzLabel -textvariable Fiducials(activeXYZ) } $Gui(WLA) 
+
+    eval {entry $f.descriptionEntry -width 25 -textvariable Fiducials(activeDescription) } $Gui(WEA)
+    bind $f.descriptionEntry <Return> {FiducialsDescriptionActiveUpdated}
 
     lappend Fiducials(scrollActiveList) $scroll
-    pack $f.list -side top
+    pack $f.list $f.nameEntry $f.xyzLabel $f.descriptionEntry -side top
 
     # if there any default names specified, add them to the list
     foreach d $defaultNames {
