@@ -92,7 +92,7 @@
 #   DTMRIDisplayNewData        -------->    Once converted de New Data, load it and display it automatically
 #   ShowPatternFrame           -------->    Show and hide Create-Pattern frame
 #   DTMRIDisplayScrollBar      -------->    Show Scrollbar when resizing a frame
-#   DTMRICreatePatternSlice    -------->    Create a new tensor convertion pattern for slice interleaved data. This procedure writes the information of the new patterns in $env(HOME). To declare a permanent pattern so that Slicer is able to load it, you have to write in the file "patterns.txt" located in vtkDTMRI subdirectory.
+#   DTMRICreatePatternSlice    -------->    Create a new tensor convertion pattern for slice interleaved data. This procedure writes the information of the new patterns in $env(HOME). To declare a permanent pattern so that Slicer is able to load it, you have to write in the file"patterns.txt" located in vtkDTMRI subdirectory.
 #   DTMRICreatePatternVolume   -------->    Create a new tensor convertion pattern for volume interleaved data. This procedure writes the information of the new patterns in $env(HOME). To declare a permanent pattern so that Slicer is able to load it, you have to write in the file "patterns.txt" located in vtkDTMRI subdirectory.
 #   DTMRILoadPattern           -------->    Looks for files with pattern information and adds them to the menubutton in the Create Pattern Frame.
 #   DTMRIUpdateTipsPattern
@@ -123,7 +123,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.20 $} {$Date: 2004/08/12 17:55:37 $}]
+                  {$Revision: 1.21 $} {$Date: 2004/08/12 21:02:22 $}]
 
      # Define Tabs
     #------------------------------------
@@ -201,6 +201,8 @@ proc DTMRIInit {} {
     set DTMRI(name,lastNoGradienImage) ""
     set DTMRI(name,gradients) ""
     set DTMRI(name,lebihan) ""
+    #This variable specifies the order of the gradients disposal (slice interleaved or volume interleaved)
+    set DTMRI(name,order) ""
 
 
     #------------------------------------
@@ -2759,7 +2761,7 @@ proc DTMRISetPropertyType {} {
 #-------------------------------------------------------------------------------
 
 proc RunLSDIrecon {} {
-    global DTMRI Volume  Mrml Module
+    global DTMRI Volume  Mrml Module PACKAGE_DIR_VTKDTMRI
     
     set v $Volume(activeID)
     if {$v == "" || $v == $Volume(idNone)} {
@@ -2776,7 +2778,7 @@ proc RunLSDIrecon {} {
     #puts $Volume(DefaultDir)
 
     puts "Copying LSDIrecon_par to Volume Data directory..."
-    catch {exec cp $Mrml(dir)/Modules/vtkDTMRI/LSDIrecon_par $Volume(DefaultDir)} writingerror
+    catch {exec cp $PACKAGE_DIR_VTKDTMRI/../../../LSDIrecon_par $Volume(DefaultDir)} writingerror
     if {$writingerror != ""} {
          puts $writingerror
          set a [lindex $writingerror 0]
@@ -2858,65 +2860,72 @@ proc RunLSDIrecon {} {
 #-------------------------------------------------------------------------------
 
     proc DTMRICreatePatternSlice {} {
-    global Module Gui Volume DTMRI Mrml env
+        global Module Gui Volume DTMRI Mrml env
 
-    set DTMRI(patternpar) ""
+        set DTMRI(patternpar) ""
 
-    # check if name field is filled in
-    if {$DTMRI(name,name) != ""} {
+        # check if name field is filled in
+        if {$DTMRI(name,name) != ""} {
 
-    # check if all fields are filled in
-    foreach par {numberOfGradients firstGradientImage lastGradientImage firstNoGradientImage lastNoGradientImage lebihan gradients} {
+            # check if all fields are filled in
+            foreach par {numberOfGradients firstGradientImage lastGradientImage firstNoGradientImage lastNoGradientImage lebihan gradients} {
        
-        if {$DTMRI(name,$par) != ""} {
-            # put information of the entries of create pattern frame in a list in order to write this information in a file
-            lappend DTMRI(patternpar) $DTMRI(name,$par)
-    } else {
-        puts "You must fill in $par entry"
-        break
-    }
+                if {$DTMRI(name,$par) != ""} {
 
-    }
-        lappend DTMRI(patternpar) "Slice"
-    } else {
+                    # put information of the entries of create pattern frame in a list in order to write this information in a file
+                    lappend DTMRI(patternpar) $DTMRI(name,$par)
 
-      puts "You must fill in name entry"
-    }
+                } else {
 
-#    if { [file exists $env(HOME)/Patterns] != 0 } then {
+                    puts "You must fill in $par entry"
+                    break
+
+                }
+
+            }
+
+            lappend DTMRI(patternpar) "Slice"
+
+        } else {
+
+            puts "You must fill in name entry"
+
+        }
 
 
-     if {[file exists $env(HOME)/PatternsData/] != 1} then {
-    file mkdir $env(HOME)/PatternsData/
-     }
+
+        if {[file exists $env(HOME)/PatternsData/] != 1} then {
+
+            file mkdir $env(HOME)/PatternsData/
+
+        }
+
+        if {$DTMRI(name,name) != ""} {
     
-        if {[file exists $env(HOME)/PatternsData/$DTMRI(name,name)] != 0} then {
-        puts "You are modifying an existing file"
-    }
-    
+            if {[file exists $env(HOME)/PatternsData/$DTMRI(name,name)] != 0} then {
 
-#    puts $DTMRI(patternpar)
-        set filelist [open $env(HOME)/PatternsData/$DTMRI(name,name) {RDWR CREAT}]
-    puts  $filelist "# This line is the label that tells the code that this is a pattern file"
-    puts  $filelist "vtkDTMRIprotocol"
-    puts  $filelist "\n "
-        puts  $filelist "# Enter a new pattern in the following order\n"
-    #seek $filelist -0 end
-    puts  $filelist "# Name NoOfGradients FirstGradient LastGradient FirstBaseLine LastBaseLine Lebihan GradientDirections\n"
-     #seek $filelist -0 end
-    puts  $filelist "\n "
-     #seek $filelist -0 end
-           puts $filelist $DTMRI(patternpar)    
-    close $filelist
+                puts "You are modifying an existing file"
+
+            }
+    
+            set filelist [open $env(HOME)/PatternsData/$DTMRI(name,name) {RDWR CREAT}]
+            puts  $filelist "# This line is the label that tells the code that this is a pattern file"
+            puts  $filelist "vtkDTMRIprotocol"
+            puts  $filelist "\n "
+            puts  $filelist "# Enter a new pattern in the following order\n"
+            #seek $filelist -0 end
+            puts  $filelist "# Name NoOfGradients FirstGradient LastGradient FirstBaseLine LastBaseLine Lebihan GradientDirections\n"
+            #seek $filelist -0 end
+            puts  $filelist "\n "
+            #seek $filelist -0 end
+            puts $filelist $DTMRI(patternpar)    
+            close $filelist
         
+            DTMRILoadPattern
 
-
-#    }
+        }
  
-    DTMRILoadPattern
-
-    } 
-
+    }
 
 
 #-------------------------------------------------------------------------------
@@ -2926,64 +2935,73 @@ proc RunLSDIrecon {} {
 #-------------------------------------------------------------------------------
 
     proc DTMRICreatePatternVolume {} {
-    global Module Gui Volume DTMRI Mrml env
+      global Module Gui Volume DTMRI Mrml env
 
-    set DTMRI(patternpar) ""
+      set DTMRI(patternpar) ""
 
-    # check if name field is filled in
-    if {$DTMRI(name,name) != ""} {
+      # check if name field is filled in
+      if {$DTMRI(name,name) != ""} {
 
-    # check if all fields are filled in
-    foreach par {numberOfGradients firstGradientImage lastGradientImage firstNoGradientImage lastNoGradientImage lebihan gradients} {
+        # check if all fields are filled in
+        foreach par {numberOfGradients firstGradientImage lastGradientImage firstNoGradientImage lastNoGradientImage lebihan gradients} {
        
-        if {$DTMRI(name,$par) != ""} {
-            # put information of the entries of create pattern frame in a list in order to write this information in a file
-            lappend DTMRI(patternpar) $DTMRI(name,$par)
+          if {$DTMRI(name,$par) != ""} {
+
+              # put information of the entries of create pattern frame in a list in order to write this information in a file
+              lappend DTMRI(patternpar) $DTMRI(name,$par)
+              lappend DTMRI(patternpar) "Volume"
+
+          } else {
+
+              puts "You must fill in $par entry"
+              break
+
+          }
+
+        }
+
         lappend DTMRI(patternpar) "Volume"
-    } else {
-        puts "You must fill in $par entry"
-        break
-    }
-    }
-        lappend DTMRI(patternpar) "Volume"
-    } else {
 
-      puts "You must fill in name entry"
-    }
+      } else {
 
-#    if { [file exists $env(HOME)/Patterns] != 0 } then {
+        puts "You must fill in name entry"
+
+      }
 
 
-     if {[file exists $env(HOME)/PatternsData/] != 1} then {
-    file mkdir $env(HOME)/PatternsData/
-     }
+
+
+      if {[file exists $env(HOME)/PatternsData/] != 1} then {
+
+          file mkdir $env(HOME)/PatternsData/
+
+      }
     
-        if {[file exists $env(HOME)/PatternsData/$DTMRI(name,name)] != 0} then {
-        puts "You are modifying an existing file"
-    }
-    
+      if {$DTMRI(name,name) != ""} {
 
-#    puts $DTMRI(patternpar)
-        set filelist [open $env(HOME)/PatternsData/$DTMRI(name,name) {RDWR CREAT}]
-    puts  $filelist "# This line is the label that tells the code that this is a pattern file"
-    puts  $filelist "vtkDTMRIprotocol"
-    puts  $filelist "\n "
-        puts  $filelist "# Enter a new pattern in the following order\n"
-    #seek $filelist -0 end
-    puts  $filelist "# Name NoOfGradients FirstGradient LastGradient FirstBaseLine LastBaseLine Lebihan GradientDirections\n"
-     #seek $filelist -0 end
-    puts  $filelist "\n "
-     #seek $filelist -0 end
-           puts $filelist $DTMRI(patternpar)    
-    close $filelist
-        
+          if {[file exists $env(HOME)/PatternsData/$DTMRI(name,name)] != 0} then {
 
+              puts "You are modifying an existing file"
 
-#    }
- 
-    DTMRILoadPattern
+          }
 
-    } 
+          set filelist [open $env(HOME)/PatternsData/$DTMRI(name,name) {RDWR CREAT}]
+          puts  $filelist "# This line is the label that tells the code that this is a pattern file"
+          puts  $filelist "vtkDTMRIprotocol"
+          puts  $filelist "\n "
+          puts  $filelist "# Enter a new pattern in the following order\n"
+          #seek $filelist -0 end
+          puts  $filelist "# Name NoOfGradients FirstGradient LastGradient FirstBaseLine LastBaseLine Lebihan GradientDirections\n"
+          #seek $filelist -0 end
+          puts  $filelist "\n "
+          #seek $filelist -0 end
+          puts $filelist $DTMRI(patternpar)    
+          close $filelist
+
+          DTMRILoadPattern
+
+      }
+   } 
 
 
 
@@ -3001,23 +3019,23 @@ proc RunLSDIrecon {} {
    # if DTMRI(patternames) already exists, initialize it and its information
    
    if {[info exists DTMRI(patternnames)]} {
-         set DTMRI(patternnames) ""
             foreach a $DTMRI(patternnames) {
                set DTMRI($a,parameters) ""
             }
-        }
+         set DTMRI(patternnames) ""
+        } else {set DTMRI(patternnames) ""}
    if {[info exists DTMRI(patternnamesdef)]} {
-        set DTMRI(patternnamesdef) ""
             foreach a $DTMRI(patternnamesdef) {
                set DTMRI($a,parameters) ""
             }
+        set DTMRI(patternnamesdef) ""
         }
 
     if {[info exists DTMRI(localpatternnames)]} {
-             set DTMRI(localpatternnames) ""
             foreach a $DTMRI(localpatternnames) {
                set DTMRI($a,parameters) ""
             }
+             set DTMRI(localpatternnames) ""
         }
    
     # look for a file containing pattern information, if it exists, put this information in variable lists
@@ -3026,22 +3044,28 @@ proc RunLSDIrecon {} {
 
         set DTMRI(patternnamesdef) [exec ls $PACKAGE_DIR_VTKDTMRI/../../../data/]
 
-    # check if the file contains pattern information
-    foreach pattern $DTMRI(patternnamesdef) {
-    set DTMRI(ispatternfile) 0
+      # check if the file contains pattern information
+      foreach pattern $DTMRI(patternnamesdef) {
+        set DTMRI(ispatternfile) 0
+       
+       if { [file isfile $PACKAGE_DIR_VTKDTMRI/../../../data/$pattern] != 0 } {
+
         catch [set filelist [open $PACKAGE_DIR_VTKDTMRI/../../../data/$pattern {RDONLY}]]
         while {[eof $filelist] != 1} {
 
             set line [gets $filelist]
-        if {[lindex $line 0] == "vtkDTMRIprotocol"} {
-        set DTMRI(ispatternfile) 1
+            if {[lindex $line 0] == "vtkDTMRIprotocol"} {
+                set DTMRI(ispatternfile) 1
+            }
+        }
 
-        }
-    }
-    if {$DTMRI(ispatternfile) == 1} {
-        lappend DTMRI(patternnames) $pattern
-    }    
-        }
+       }
+
+            if {$DTMRI(ispatternfile) == 1} {
+                lappend DTMRI(patternnames) $pattern
+            }    
+       }
+
 
         #set path [open $PACKAGE_DIR_VTKDTMRI/../../../data/ {RDONLY}]
     
@@ -3053,7 +3077,7 @@ proc RunLSDIrecon {} {
         while {[eof $filelist] != 1} {
 
             set line [gets $filelist]
-        if {[lindex $line 0] != "vtkDTMRIprotocol"} {
+          if {[lindex $line 0] != "vtkDTMRIprotocol"} {
             if {[lindex $line 0] != ""} {
             if {[lindex $line 0] != "#"} {
 #               set name [lindex $line 0]
@@ -3065,14 +3089,15 @@ proc RunLSDIrecon {} {
             }
             }
             }
-    }
         }
+    }
 
-     } else {
-     set DTMRI(patternnames) ""
-     } 
+   } else {
+       set DTMRI(patternnames) ""
+   } 
 
-     if { [file exists $env(HOME)/PatternsData/] != 0 } then {
+     
+   if { [file exists $env(HOME)/PatternsData/] != 0 } then {
 
         set DTMRI(localpatternnamesdef) [exec ls $env(HOME)/PatternsData/]
     set DTMRI(localpatternnames) ""
@@ -3080,6 +3105,9 @@ proc RunLSDIrecon {} {
     # check if the file contains pattern information
     foreach pattern $DTMRI(localpatternnamesdef) {
     set DTMRI(ispatternfile) 0    
+       
+       if { [file isfile $env(HOME)/PatternsData/$pattern] != 0 } {
+
         catch [set filelist [open $env(HOME)/PatternsData/$pattern {RDONLY}]]
         while {[eof $filelist] != 1} {
 
@@ -3087,7 +3115,10 @@ proc RunLSDIrecon {} {
         if {[lindex $line 0] == "vtkDTMRIprotocol"} {
         set DTMRI(ispatternfile) 1
         }
-    }
+        }
+
+       }
+
     if {$DTMRI(ispatternfile) == 1} {
         lappend DTMRI(localpatternnames) $pattern
     }    
