@@ -99,7 +99,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.81 $} {$Date: 2003/06/26 20:30:55 $}]
+            {$Revision: 1.82 $} {$Date: 2003/07/17 16:37:47 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -827,6 +827,9 @@ proc VolumesManualSetPropertyType {n} {
 #    $n SetFilePattern $Volume(filePattern)
     $n SetFilePattern [lindex $parsing 0]
 
+    if {$::Module(verbose)} {
+        puts "VolumesManualSetPropertyType: setting full prefix from mrml dir ($Mrml(dir)) and file prefix ([$n GetFilePrefix]) to [file join $Mrml(dir) [$n GetFilePrefix]]"
+    }
     $n SetFullPrefix [file join $Mrml(dir) [$n GetFilePrefix]]
     if { !$Volume(isDICOM) } {
         set firstNum [MainFileFindImageNumber First [file join $Mrml(dir) $Volume(firstFile)]]
@@ -1196,13 +1199,15 @@ proc VolumesPropsCancel {} {
 proc VolumesSetFirst {} {
     global Volume Mrml
 
+    if {$::Module(verbose)} {
+        puts "VolumesSetFirst: firstFile = $Volume(firstFile), Mrml(dir) = $Mrml(dir),\n calling  MainFileFindImageNumber Last with [file join $Mrml(dir) $Volume(firstFile)]"
+    }
     # check to see if user cancelled and set filename to empty string
-    if {[file root $Volume(firstFile)] == [file tail $Volume(firstFile)]} {
+    if {$Volume(firstFile) == {} || $Volume(firstFile) == ""} {
         puts "VolumesSetFirst: firstFile not set"
         return
     }
     set Volume(name)  [file root [file tail $Volume(firstFile)]]
-
     set Volume(DefaultDir) [file dirname [file join $Mrml(dir) $Volume(firstFile)]]
     # lastNum is an image number
     set Volume(lastNum)  [MainFileFindImageNumber Last \
