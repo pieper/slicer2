@@ -25,7 +25,13 @@
 #   EdLabelVOIInit
 #   EdLabelVOIBuildGUI
 #   EdLabelVOIEnter
+#   EdLabelVOIStartMethod
+#   EdLabelVOIExit
 #   EdLabelVOIApply
+#   EdLabelVOIB1
+#   EdLabelVOIUpdateVOIBox
+#   EdLabelVOIRoundFloat float
+#   EdLabelVOIGetActiveSlice
 #==========================================================================auto=
 
 
@@ -232,6 +238,12 @@ proc EdLabelVOIApply {} {
 	EdUpdateAfterApplyEffect $v
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdLabelVOIB1
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdLabelVOIB1 {x y} {
     global Ed
 
@@ -248,6 +260,12 @@ proc EdLabelVOIB1 {x y} {
     EdLabelVOIUpdateVOIBox 1
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdLabelVOIUpdateVOIBox
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdLabelVOIUpdateVOIBox {render} {
     global Ed
 
