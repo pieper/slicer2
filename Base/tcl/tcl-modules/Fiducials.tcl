@@ -101,7 +101,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.36 $} {$Date: 2003/05/29 17:40:36 $}]
+        {$Revision: 1.37 $} {$Date: 2003/06/02 22:02:11 $}]
     
     # Initialize module-level variables
     
@@ -718,15 +718,15 @@ proc FiducialsVTKUpdatePoints {fid symbolSize textSize} {
             # see if that point was previously selected
             if {[lsearch $Fiducials($fid,oldSelectedPointIdList) $pid] != -1} { 
 
-    set Fiducials(activeListID)  $fid
-    set Fiducials(activePointID) $pid
+                set Fiducials(activeListID)  $fid
+                set Fiducials(activePointID) $pid
 
 
                 # color the point
                 Fiducials($fid,scalars) SetTuple1 [FiducialsScalarIdFromPointId $fid $pid] 1
                 # color the text
                 foreach r $Fiducials(renList) {
-                              eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textSelColor)
+                    eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textSelColor)
                 }
                 # add it to the current list of selected items
                 lappend Fiducials($fid,selectedPointIdList) $pid
@@ -755,16 +755,6 @@ proc FiducialsSetTxtScale { id {val ""} } {
         set val $Fiducials($id,textScale)
     }
 
-    if {0} {
-        # changed to setting follower (actor) scale to avoid
-        # clipping problems - sp 2002-12-15
-        Point($id,textXform) Identity
-        Point($id,textXform) Translate 0 0 $Fiducials(textPush)
-        [Point($id,textXform) GetMatrix] SetElement 0 1 .333
-        Point($id,textXform) Scale $val $val 1
-        Point($id,textXform) Update
-    }
-
     foreach pid $Fiducials($id,pointIdList) {
         foreach r $Fiducials(renList) {
             Point($pid,follower,$r) SetScale $val
@@ -785,14 +775,15 @@ proc FiducialsSetScale { id {val ""}} {
     global Fiducials
     
     if { $val == ""} {
-    set val $Fiducials($id,scale)
+        set val $Fiducials($id,scale)
     }
     
-    set s $Fiducials(scale)
-    Fiducials($id,symbolXform) Identity
-    Fiducials($id,symbolXform) Scale $val $val $val
-    Fiducials($id,symbolXform) Modified
-    Fiducials($id,XformFilter) Update
+    # not needed in new Fiducials -sp 2003-05-30
+    #set s $Fiducials(scale)
+    #Fiducials($id,symbolXform) Identity
+    #Fiducials($id,symbolXform) Scale $val $val $val
+    #Fiducials($id,symbolXform) Modified
+    #Fiducials($id,XformFilter) Update
     Fiducials($id,node) SetSymbolSize $val
     Render3D
 }
