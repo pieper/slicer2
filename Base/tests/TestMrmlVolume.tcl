@@ -14,13 +14,21 @@ node SetFilePattern "%s.%d"
 node SetImageRange 1 93
 node SetDimensions 256 256
 
-vtkMrmlVolume vol
+scan [node GetImageRange] "%d %d" lo hi
+puts "lo $lo hi $hi"
+puts "Pattern"
+puts [node GetFilePattern ]
+puts "Prefix"
+puts [node GetFilePrefix  ]
+
+vtkMrmlDataVolume vol
 vol SetMrmlNode node
+vol Update
 puts [node GetFilePrefix]
 vol Read
 
 vtkImageViewer viewer
-viewer SetInput [vol GetImageData]
+viewer SetInput [vol GetOutput]
 viewer SetZSlice 0 
 viewer SetColorWindow 2000
 viewer SetColorLevel 1000

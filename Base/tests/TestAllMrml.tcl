@@ -3,8 +3,8 @@ package require vtkSlicerBase
 
 # This file tests creation of a MRML tree containing all node types
 
-# Please add all nodes to the list
-set nodeTypeList "vtkMrmlVolumeNode vtkMrmlTransformNode"
+# Please add all nodes to the list (not vtkMrmlNode)
+set nodeTypeList "vtkMrmlColorNode vtkMrmlCrossSectionNode vtkMrmlEndFiducialsNode vtkMrmlEndHierarchyNode vtkMrmlEndModelGroupNode vtkMrmlEndPathNode vtkMrmlEndScenesNode vtkMrmlEndTransformNode vtkMrmlEndVolumeStateNode vtkMrmlFiducialsNode vtkMrmlHierarchyNode vtkMrmlLandmarkNode vtkMrmlLocatorNode vtkMrmlMatrixNode vtkMrmlModelGroupNode vtkMrmlModelNode vtkMrmlModelRefNode vtkMrmlModelStateNode vtkMrmlOptionsNode vtkMrmlPathNode vtkMrmlPointNode vtkMrmlSceneOptionsNode vtkMrmlScenesNode vtkMrmlTetraMeshNode vtkMrmlTransformNode vtkMrmlVolumeNode vtkMrmlVolumeStateNode vtkMrmlWindowLevelNode"
 
 # Create a tree with all nodes
 vtkMrmlTree tree
@@ -13,7 +13,7 @@ foreach node $nodeTypeList {
 
     # unique name
     set name example$node
-
+    puts $node
     # Create the node
     $node $name
 
@@ -31,6 +31,7 @@ set filename "test.xml"
 tree Write $filename
 puts "MRML file saved as $filename"
 exit
+
 
 
 
