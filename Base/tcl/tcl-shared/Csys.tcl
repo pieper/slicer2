@@ -41,8 +41,6 @@ proc CsysResize { module actor size } {
 proc CsysCreate { module actor axislen axisrad conelen  } {
     global Csys ${module}
 
-    puts "$module"
-
     vtkCylinderSource ${module}($actor,AxisCyl)
     vtkConeSource ${module}($actor,AxisCone)
     vtkTransform ${module}($actor,CylXform)

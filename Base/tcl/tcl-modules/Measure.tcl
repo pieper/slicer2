@@ -39,7 +39,7 @@ proc MeasureInit {} {
     
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2002/04/03 06:06:37 $}]
+        {$Revision: 1.4 $} {$Date: 2002/04/03 06:29:59 $}]
     
     # Initialize module-level variables
     #    set Measure(Model1) $Model(idNone)
@@ -176,7 +176,7 @@ proc TopFrameBuildGUI {} {
     
     pack $f.clear -side top -pady $Gui(pad) -in $f
 
-    set Measure(Csys,visible) 1
+    set Measure(Csys,visible) 0
     # Add Csys visibility button
     set c { checkbutton $f.cCsys -text "Csys" -variable Measure(Csys,visible) \
         -width 6 -indicatoron 0 -command "MeasureSetCsysVisibility" $Gui(WCA) }

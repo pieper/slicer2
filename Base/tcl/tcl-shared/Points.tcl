@@ -25,7 +25,7 @@ proc PointsInit {} {
 #    set Point(vtkScalars) [vtkScalars Point(vtkScalars)]
 
     set Module(Points,procVTK) PointsBuildVTK
-    puts "Loading Points code"
+    #puts "Loading Points code"
     
     }
 
@@ -42,7 +42,7 @@ proc PointsRefreshGUI {} {
 proc PointsBuildVTK {} {
     global viewRen Point
 
-    puts "PointsBuildVTK begin"
+    #puts "PointsBuildVTK begin"
 
     set Point(glyphPoints) [vtkPoints glyphPoints]
       glyphPoints SetNumberOfPoints 6
@@ -118,7 +118,7 @@ proc PointsBuildVTK {} {
 
     viewRen AddActor $Point(actor)
 
-    puts "PointsBuildVTK end"
+    #puts "PointsBuildVTK end"
     }
 
 #-------------------------------------------------------------------------------

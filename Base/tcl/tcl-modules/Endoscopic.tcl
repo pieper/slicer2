@@ -1929,8 +1929,7 @@ proc EndoscopicPopupCallback {} {
 
 proc EndoscopicUseGyro {} {
     global Endoscopic
-    puts "$Endoscopic(gyro,use)"
-    if { $Endoscopic(gyro,use) == 1} {
+        if { $Endoscopic(gyro,use) == 1} {
     foreach XX "X Y Z" {
         [Endoscopic(gyro,${XX}actor) GetProperty] SetOpacity 1
     }
@@ -2022,7 +2021,7 @@ proc EndoscopicSelectActor {widget x y} {
     } else {
         # if nothing is picked, then interact with the virtual camera, as usual
     # activate the tk motion bindings
-    puts "in else"
+    
     EvActivateBindingSet EndoscopicTkMotion
     StartMotion $widget $x $y
     }
@@ -2203,7 +2202,7 @@ proc EndoscopicSetCameraPosition {{value ""}} {
     Cross LR IO Up 
     Normalize LR
     
-    puts "up $Up(x) $Up(y) $Up(z)"
+
     
     # if we want to go along the camera's own axis (Relative mode)
     # Endoscopic(cam,XXStr) is set by the slider
@@ -2219,8 +2218,6 @@ proc EndoscopicSetCameraPosition {{value ""}} {
     set stepY [expr $Endoscopic(cam,yStr,old) - $Endoscopic(cam,yStr)]
     set stepZ [expr $Endoscopic(cam,zStr,old) - $Endoscopic(cam,zStr)]
     
-    puts "step $stepX $stepY $stepZ"
-    puts "[$cam_mat GetElement 0 3] [$cam_mat GetElement 1 3] [$cam_mat GetElement 2 3]"
     set Endoscopic(cam,x) [expr [$cam_mat GetElement 0 3] + \
         $stepX*$LR(x) + $stepY * $IO(x) + $stepZ * $Up(x)] 
     set Endoscopic(cam,y) [expr  [$cam_mat GetElement 1 3] + \
@@ -2228,7 +2225,6 @@ proc EndoscopicSetCameraPosition {{value ""}} {
     set Endoscopic(cam,z) [expr  [$cam_mat GetElement 2 3] + \
         $stepX * $LR(z) +  $stepY * $IO(z) +  $stepZ * $Up(z)] 
     
-    puts "$Endoscopic(cam,x) $Endoscopic(cam,y) $Endoscopic(cam,z)"
     } elseif { $Endoscopic(cam,axis) == "absolute" } {
     set Endoscopic(cam,x) $Endoscopic(cam,xStr)
     set Endoscopic(cam,y) $Endoscopic(cam,yStr)
