@@ -108,7 +108,7 @@
 #   EndoscopicSetSliceDriver
 #   EndoscopicFiducialsPointSelectedCallback
 #   EndoscopicFiducialsPointCreatedCallback
-#   EndoscopicUpdateMRML
+#   lappe
 #   EndoscopicStartCallbackFiducialUpdateMRML
 #   EndoscopicStartCallbackFiducialsUpdateMRML
 #   EndoscopicEndCallbackFiducialUpdateMRML
@@ -125,9 +125,11 @@
 #   EndoscopicUpdateMainViewVisibility
 #   EndoscopicAddEndoscopicView
 #   EndoscopicAddMainView
+#   EndoscopicAddFlatView
 #   EndoscopicAddEndoscopicViewRemoveMainView
 #   EndoscopicRemoveEndoscopicView
 #   EndoscopicRemoveMainView
+#   EndoscopicRemoveFlatView
 #   EndoscopicAddMainViewRemoveEndoscopicView
 #==========================================================================auto=
 
@@ -202,6 +204,10 @@ proc EndoscopicExit {} {
         Render3D
         EndoscopicRemoveEndoscopicView
     }
+    
+    if {$Endoscopic(flatview,hideOnExit) == 1} {
+    EndoscopicRemoveFlatView
+    }
     EndoscopicPopBindings
 }
 
@@ -246,11 +252,12 @@ proc EndoscopicInit {} {
 
     set Module($m,depend) ""
     
-    # module summary
-    set Module($m,overview) "Position an endoscopic camera in the scene and view through the camera's lens in the second window."
-    set Module($m,author) "Delphine Nain, MIT, delfin@ai.mit.edu"
+     # module summary
+    set Module($m,overview) "Position an endoscopic camera in the scene and view through the camera's lens in the second window.
+                Provides correspondence between 3D Views, 2D Slices, and flattened colon View"
+    set Module($m,author) "Delphine Nain, MIT, delfin@ai.mit.edu; Jeanette Meng SPL meng@bwh.harvard.edu"
     set Module($m,category) [lindex $Module(categories) 1]
-
+    
     # Define Procedures
     #------------------------------------
     
@@ -312,6 +319,57 @@ proc EndoscopicInit {} {
     set Endoscopic(selectedFiducialPoint) ""
     set Endoscopic(selectedFiducialList) ""
     
+    
+            # jeanette Initialize flat-view variables
+#--------------------------------------------------------------------------------    
+
+    
+    # names of the views/models selected
+    set Endoscopic(ModelSelect) $Model(idNone)
+    set Endoscopic(FlatSelect) ""
+    
+    #camera in the flat view
+    set Endoscopic(FlatRenderWindow) ""
+    set Endoscopic(FlatRenderers) ""
+    
+    set Endoscopic(FlatPolyData) ""
+    
+    set Endoscopic(FlatWindows) ""
+    
+    set Endoscopic(default,lineCount) 0
+    
+    # flat viewer
+    set Endoscopic(RemoveEndo) 0
+    
+    set Flat(mbActiveList) ""
+    set Flat(mActiveList) ""
+    
+    set Endoscopic(targetList,name) ""
+    set Endoscopic(targetList,points) ""
+    
+    # bounding box parameters for the flat colon
+    set Endoscopic(flatColon,xMin) 0.0
+    set Endoscopic(flatColon,xMax) 0.0
+    set Endoscopic(flatColon,yMin) 0.0 
+    set Endoscopic(flatColon,yMax) 0.0
+    set Endoscopic(flatColon,zMin) 0.0
+    set Endoscopic(flatColon,zMax) 0.0
+    
+    set Endoscopic(flatColon,zOpt) 0.0
+    set Endoscopic(flatColon,yMid) 0.0
+    
+    set Endoscopic(flatColon,xCamDist) 0.0
+    set Endoscopic(flatColon,yCamDist) 5.0
+#   trace add variable Endoscopic(flatColon,yCamDist) write EndoscopicTempProc
+    set Endoscopic(flatColon,zCamDist) 5.0
+    
+    # number of targets
+    set Endoscopic(totalTargets) 0
+    set Endoscopic(selectedTarget) 0
+        
+#--------------------------------------------------------------------------------    
+
+
     set Endoscopic(Cameras) ""
     # path planning
     set Endoscopic(source,exists) 0
@@ -447,6 +505,8 @@ proc EndoscopicInit {} {
     set Endoscopic(mainview,visibility) 1
     set Endoscopic(endoview,visibility) 1
     set Endoscopic(endoview,hideOnExit) 0
+    # jeanette
+    set Endoscopic(flatview,hideOnExit) 0
     set Endoscopic(viewOn) 0
 }
 
@@ -513,7 +573,7 @@ proc EndoscopicBuildVTK {} {
     
 
     vtkCellPicker Endoscopic(picker)
-    Endoscopic(picker) SetTolerance 0.001
+    Endoscopic(picker) SetTolerance 0.0001
     vtkMath Endoscopic(path,vtkmath)
     
     # create the 3D mouse
@@ -1055,6 +1115,7 @@ proc EndoscopicPushBindings {} {
     EvActivateBindingSet Slice0Events
     EvActivateBindingSet Slice1Events
     EvActivateBindingSet Slice2Events
+    
 }
 
 #-------------------------------------------------------------------------------
@@ -1064,21 +1125,28 @@ proc EndoscopicPushBindings {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicCreateBindings {} {
-    global Gui Ev 
+    global Gui Ev Endoscopic Select
     
     # Creates events sets we'll  need for this module
     # create the event manager for the ability to move the gyro
-   
-    EvDeclareEventHandler Endoscopic(Events) <Double-Any-ButtonPress> { if { [SelectPick Endoscopic(picker) %W %x %y] != 0 } { eval EndoscopicSetWorldPosition $Select(xyz);Render3D }}   
     
-    # endoscopic events for slice windows (in addition to already existing events)
-
-    EvDeclareEventHandler EndoKeySlicesEvents <KeyPress-c> { if { [SelectPick2D %W %x %y] != 0 } { eval EndoscopicSetWorldPosition $Select(xyz);Render3D }} 
+# The following binding for double click is currently activated in TkInteractor.tcl
+#     EvDeclareEventHandler 3DEvents <Double-Any-ButtonPress> { if { [SelectPick Endoscopic(picker) %W %x %y] != 0 } \
+    { eval EndoscopicAddLandmarkFromWorldCoordinates $Select(xyz);Render3D }}
     
-    EvAddWidgetToBindingSet Slice0Events $Gui(fSl0Win) {EndoKeySlicesEvents}
-    EvAddWidgetToBindingSet Slice1Events $Gui(fSl1Win) {EndoKeySlicesEvents}
-    EvAddWidgetToBindingSet Slice2Events $Gui(fSl2Win) {EndoKeySlicesEvents}
+# endoscopic events for slice windows (in addition to already existing events)
 
+    EvDeclareEventHandler EndoKeySlicesEvents <KeyPress-c> { if {[SelectPick2D %W %x %y] != 0} \
+    {eval EndoscopicSetWorldPosition [lindex $Select(xyz) 0] [lindex $Select(xyz) 1] [lindex $Select(xyz) 2]} }
+    
+    EvDeclareEventHandler EndoMouseSliceEvents <Double-Any-ButtonPress> { if { [SelectPick2D %W %x %y] != 0 } \
+     { eval EndoscopicAddLandmarkFromSlices $Select(xyz)} }
+
+    
+    EvAddWidgetToBindingSet Slice0Events $Gui(fSl0Win) {{EndoKeySlicesEvents} {EndoMouseSliceEvents}}
+    EvAddWidgetToBindingSet Slice1Events $Gui(fSl1Win) {{EndoKeySlicesEvents} {EndoMouseSliceEvents}}
+    EvAddWidgetToBindingSet Slice2Events $Gui(fSl2Win) {{EndoKeySlicesEvents} {EndoMouseSliceEvents}}
+    
 }
 
 
@@ -1090,7 +1158,7 @@ proc EndoscopicCreateBindings {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicBuildGUI {} {
-    global Gui Module Model View Advanced Endoscopic Path PathPlanning
+    global Gui Module Model View Advanced Endoscopic Path PathPlanning Label Mrml Fiducials
     
     
     set LposTexts "{L<->R} {P<->A} {I<->S}"
@@ -1104,6 +1172,10 @@ proc EndoscopicBuildGUI {} {
     $Gui(mView) add separator
     $Gui(mView) add command -label "Add Endoscopic View" -command "EndoscopicAddEndoscopicView; Render3D"
     $Gui(mView) add command -label "Remove Endoscopic View" -command "EndoscopicRemoveEndoscopicView; Render3D"
+    
+  #jeanette: add Flatwindow label to the view menu in the main Gui
+  #  $Gui(mView) add command -label "Add Flat Colon View" -command "MainMenu File Import"
+  #  $Gui(mView) add command -label "Remove Flat Colon View" -command "EndoscopicRemoveFlatView"
 
     # A frame has already been constructed automatically for each tab.
     # A frame named "Stuff" can be referenced as follows:
@@ -1143,7 +1215,7 @@ proc EndoscopicBuildGUI {} {
     <P>Tab content descriptions:<BR>
     <UL>
     <LI><B>Display</B> 
-    <BR> This Tab permits you to set display parameters.
+    <BR> This Tab permits you to set display parameters. It also allows you to open a separate window to view the flattened colon (if you plan to navigate along the flattened colon)
     <BR> 
     <UL>
     <LI><B>Camera</B> 
@@ -1155,17 +1227,22 @@ proc EndoscopicBuildGUI {} {
     <BR>- you can also move the camera by moving the mouse/pressing mouse buttons in the endoscopic view, just like you control the main view.
     <P>
     <BR><B>To create a path</B>:
-    <BR><B>To add a landmark</B>:
+    <BR><B>Automatically:</B>
+    <BR> -If you have a closed 3D model, you can create a path automatically by clicking the button <I>AutoExtractCenterLine</I>. A begin and end point will be automatically selected, and a path generated in between.
+    <BR><B>Manually</B>:
     <BR> You have 2 options: you can pick a landmark position on a 2D slice or in the 3D world:
     <BR> * <B>IN 3D</B>
     <BR>- Position the camera where desired
-    <BR>- Click the button <I>Add</I>: this will add a landmark (a sphere) at the current camera position and another landmark at<BR> the current focal point position 
+    <BR>- Click the button <I>AddLandmark</I>: this will add a landmark (a sphere) at the current camera position and another landmark at<BR> the current focal point position 
     <BR>- Two paths will automatically be created: one that links all the camera landmarks and another one that links all the focal point landmarks
     <BR> * <B>IN 2D</B>
     <BR> - You need to have greyscale images loaded along with the model, otherwise this option won't work
     <BR> - position the mouse in the slice window of your choice until the cross hair is on top of the region where you want to add a landmark
     <BR> - press the <B>c</B> key
     <BR> - by default, both a camera and focal point landmark will be added at this position
+    <BR><B>To constrain the camera on the path</B>:
+    <BR> -After a path or centerline is created, you can manually insert visible fiducials on the model while constrain the camera along the path.
+    <BR> -You can double click any mouse button on the 3D model, in the 2D slices, or on the flat colon. The endoscope will jump to the closet point along the path and aim at the selected location. Press <I>InsertTarget</I> to insert a visible fiducial point on the 3D model.
     <BR><B>To select a landmark</B>:
     <BR> - Click on the landmark position in the scrollable text area, the line will be highlighted in red and the camera will jump to that landmark in the 3D view.
     <BR> - or Point the mouse at a landmark in the 3D view and press 'p'.
@@ -1188,6 +1265,8 @@ proc EndoscopicBuildGUI {} {
     <BR>- <I>Fly-Through</I>: moves the camera along the path and orient its focal point along the focal point path
     <BR><I>- Reset</I>: stops the motion of the camera and repositions it at the beginning of the path
     <BR><I>- Stop</I>: stops the motion of the camera
+    <BR><B>FastForward or Backward</B>:
+    <BR> -If you have a series of targets along the path that you would look at, you can click the FastForward or Backward button to jump between the targets.
     <BR><B>Command sliders</B>:
     <BR><I>- Frame</I>: positions the camera on any part of the path
     <BR><I>- Speed</I>: controls the speed of the camera's motion along the path (the number corresponds to the number of frames to skip)
@@ -1223,7 +1302,10 @@ proc EndoscopicBuildGUI {} {
     frame $f.fMain -bg $Gui(activeWorkspace) -relief groove -bd 2 
     frame $f.fEndo -bg $Gui(activeWorkspace) -relief groove -bd 2 
     frame $f.fTitle2 -bg $Gui(activeWorkspace)
-    pack $f.fTitle $f.fBtns $f.fMain $f.fEndo $f.fTitle2 -side top -pady 5 -fill x
+    frame $f.fFlat -bg $Gui(activeWorkspace) 
+    # -relief groove -bd 2
+    pack $f.fTitle $f.fBtns $f.fMain $f.fEndo $f.fTitle2 $f.fFlat \
+    -side top -pady 2 -fill x
     
     
     eval {label $f.fTitle.lTitle -text "
@@ -1244,8 +1326,8 @@ proc EndoscopicBuildGUI {} {
     grid $f.fBtns.lW $f.fBtns.eWidth $f.fMBtns -padx $Gui(pad)
 
     set f $fDisplay.fMain
-    eval {label $f.fexpl -text "Main View parameter:"} $Gui(WLA)
-    eval {checkbutton $f.cMainView -variable Endoscopic(mainview,visibility) -text "Show Main View" -command "EndoscopicUpdateMainViewVisibility" -indicatoron 0} $Gui(WCA)    
+    eval {label $f.fexpl -text "Main (Global) View parameter:"} $Gui(WLA)
+    eval {checkbutton $f.cMainView -variable Endoscopic(mainview,visibility) -text "Show Main (Global) View" -command "EndoscopicUpdateMainViewVisibility" -indicatoron 0} $Gui(WCA)    
 
     pack $f.fexpl $f.cMainView -pady 2
     
@@ -1255,23 +1337,52 @@ proc EndoscopicBuildGUI {} {
     
     eval {checkbutton $f.cEndoView -variable Endoscopic(endoview,visibility) -text "Show Endoscopic View" -command "EndoscopicUpdateEndoscopicViewVisibility" -indicatoron 0} $Gui(WCA)    
     
-    
     eval {checkbutton $f.cslices -variable Endoscopic(SlicesVisibility) -text "Show 2D Slices" -command "EndoscopicSetSlicesVisibility" -indicatoron 0} $Gui(WCA)
+    
+    eval {checkbutton $f.cExitEndoView -variable Endoscopic(endoview,hideOnExit) -text "Hide Endoscopic View on Exit" -indicatoron 0} $Gui(WCA)
+    
     pack $f.fexpl -side top -pady 2
     pack $f.cEndoView  -side top -padx $Gui(pad) -pady 0
     pack $f.cslices -side top -pady 5
+    pack $f.cExitEndoView -side top -padx $Gui(pad) -pady 7
 
+ # Fix later: Ask user if they like the parameters and then proceed to either Camera or Path
+    # The following 5 lines appears un-finished by Delphine;
     set f $fDisplay
-
-    eval {checkbutton $f.cExitEndoView -variable Endoscopic(endoview,hideOnExit) -text "Hide Endoscopic View on Exit" -indicatoron 0} $Gui(WCA)   
-
     set text "
     To start, go to the Camera tab 
     If you need help, go to the Help tab"
-
-    
     eval {label $f.fTitle2.lTitle -text $text} $Gui(WLA)
-    pack $f.cExitEndoView -side top -padx $Gui(pad) -pady 7
+        
+    
+    set f $fDisplay.fFlat
+    
+    eval {label $f.fexpl -text "Flat View parameters:"} $Gui(WLA)
+    
+  # Fix later: Need some checking mechanism 
+      # (1) to see if the flat file comes with the xml
+    # (2) to make sure the flat file matches the right model
+
+  
+    eval {label $f.fSelectLabel -text "Select a Flattened Colon File (.vtk), click -Apply-"} $Gui(WLA)
+    pack $f.fexpl $f.fSelectLabel -pady 2
+    
+    set f $fDisplay.fFlat 
+    DevAddFileBrowse $f Endoscopic FlatSelect "" "EndoscopicSetFlatFileName" "vtk"
+    
+    set f $fDisplay.fFlat
+    DevAddButton $f.bChoose "Apply" "EndoscopicAddFlatView"
+    DevAddButton $f.bCancel "Cancel" "EndoscopicCancelFlatFile"
+    pack $f.bChoose -side left -padx 30
+    pack $f.bCancel -side right -padx 30
+    
+    set f $fDisplay
+    eval {checkbutton $f.cExitFlatView -variable Endoscopic(flatview,hideOnExit) -text "Hide Flat View on Exit" -indicatoron 0} $Gui(WCA)
+    pack $f.cExitFlatView -side bottom -pady 2
+    # eval {checkbutton $f.cFlatView -variable Endoscopic(flatview,visibility) -text "Show Flat View" -command "EndoscopicUpdateFlatViewVisibility" -indicatoron 0} $Gui(WCA)    
+    
+    
+    
     
     #-------------------------------------------
     # Camera frame
@@ -1444,96 +1555,124 @@ Rotate the axis by pressing the right mouse button and moving the mouse."
     #-------------------------------------------
     set f $Endoscopic(tabbedFrame).fManual
 
-    frame $f.fTitle   -bg $Gui(activeWorkspace) 
+    frame $f.fTitle   -bg $Gui(activeWorkspace)
     frame $f.fStep1   -bg $Gui(activeWorkspace) -relief groove -bd 2
     frame $f.fStep2   -bg $Gui(activeWorkspace) -relief groove -bd 2
     frame $f.fStep3   -bg $Gui(activeWorkspace) -relief groove -bd 2
     frame $f.fStep4   -bg $Gui(activeWorkspace) -relief groove -bd 2
-    pack $f.fTitle $f.fStep1 $f.fStep2 $f.fStep3 $f.fStep4  -side top -pady 2 
+    frame $f.fStep5   -bg $Gui(activeWorkspace) -relief groove -bd 2
+    pack $f.fTitle $f.fStep1 $f.fStep2 $f.fStep3 $f.fStep4 $f.fStep5 -side top -pady 2 
     
     set f $Endoscopic(tabbedFrame).fManual.fTitle
-    eval {label $f.lTitle -text "Manual Path Creation"} $Gui(WTA)
-    eval {button $f.fbhow -text " ? "} $Gui(WBA)
-    TooltipAdd $f.fbhow "
-    A path is a smooth connection between landmarks defined by the user. 
-During a fly-through, the endoscope slides on the path, as if it was a rail.
-    The rest of this panel guides you through the process of creating and 
-    updating landmarks."
+    eval {label $f.lTitle -text "Add Landmarks"} $Gui(WTA)
+    eval {button $f.fbhow -text "How?"} $Gui(WBA)
+    TooltipAdd $f.fbhow "If you would like to restrict the endoscope on a Centerline, goto the 'Automatic' tab and create one.
+    Landmarks are fiducials (points of interest), where you would like to investigate while travelling along the Centerline or
+    along any other independent path. You can add fiducials from the 3D view, 2D-axial views down below, or from the flattened colon."
     pack $f.lTitle $f.fbhow -side left -padx $Gui(pad) -pady 0 
 
-    
+
     set f $Endoscopic(tabbedFrame).fManual.fStep1
+    frame $f.fRow1 -bg $Gui(activeWorkspace)
+    frame $f.fRow2  -bg $Gui(activeWorkspace)
+    pack  $f.fRow1 $f.fRow2 -side top -pady 2
 
-    frame $f.fStep1-1   -bg $Gui(activeWorkspace) 
-        frame $f.fStep1-2   -bg $Gui(activeWorkspace) 
-        frame $f.fStep1-3   -bg $Gui(activeWorkspace) 
-    pack  $f.fStep1-1 $f.fStep1-2 $f.fStep1-3  -side top -pady 2 
+    set f $Endoscopic(tabbedFrame).fManual.fStep1.fRow1
+    eval {label $f.lActive1 -text "Step 1. "} $Gui(WTA)
+    eval {label $f.lActive2 -text "Choose an Active 3D Model: "} $Gui(WLA)
+    pack $f.lActive1 $f.lActive2 -side left
+    
+    set f $Endoscopic(tabbedFrame).fManual.fStep1.fRow2
+    eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
+        -menu $f.mbActive.m} $Gui(WMBA)
+    eval {menu $f.mbActive.m} $Gui(WMA)
+    pack $f.mbActive -side top
+    # Append widgets to list that gets refreshed during UpdateMRML
+    lappend Model(mbActiveList) $f.mbActive
+    lappend Model(mActiveList)  $f.mbActive.m
+    
+    
+    set f $Endoscopic(tabbedFrame).fManual.fStep2
+    frame $f.fStep2-1   -bg $Gui(activeWorkspace) 
+    frame $f.fStep2-2   -bg $Gui(activeWorkspace)
+    frame $f.fStep2-3   -bg $Gui(activeWorkspace)
+    pack  $f.fStep2-1 $f.fStep2-2 $f.fStep2-3 -side top
 
-
-    set f $Endoscopic(tabbedFrame).fManual.fStep1.fStep1-1
-        eval {label $f.lTitle -text "Step 1:  "} $Gui(WTA)
-    pack $f.lTitle
-
-
-    set f $Endoscopic(tabbedFrame).fManual.fStep1.fStep1-2
-    eval {label $f.lInfo1 -text "Select a Path:  "} $Gui(WLA)
+    set f $Endoscopic(tabbedFrame).fManual.fStep2.fStep2-1
+    eval {label $f.lTitle -text "Step 2:"} $Gui(WTA)
+    eval {label $f.lInfo1 -text "Select a Path:"} $Gui(WLA)
+    pack $f.lTitle $f.lInfo1 -side left -padx 1
+    
+    set f $Endoscopic(tabbedFrame).fManual.fStep2.fStep2-2
     # menu to select an active path
     eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
         -menu $f.mbActive.m} $Gui(WMBA)
     eval {menu $f.mbActive.m} $Gui(WMA)
     lappend Endoscopic(mbPathList) $f.mbActive
     lappend Endoscopic(mPathList) $f.mbActive.m
-    pack $f.lInfo1 $f.mbActive -side left -padx 2
-
-
-
-    set f $Endoscopic(tabbedFrame).fManual.fStep1.fStep1-3
-        eval {label $f.lCreateList -text "create a new Path:  "} $Gui(WLA)
+    TooltipAdd $f.mbActive "If you would like to automatically create a Centerline, go to the 'Automatic' tab"
+    pack $f.mbActive -side top
+    
+    #Independent Path are basicaly a series of fiducials that are connected. 
+    set f $Endoscopic(tabbedFrame).fManual.fStep2.fStep2-3
+    eval {label $f.lCreateList -text "New Path:"} $Gui(WLA)
     eval {entry $f.eCreateList -width 15 -textvariable Fiducials(newListName) } $Gui(WEA)
-bind $f.eCreateList <Return> {EndoscopicCreateAndActivatePath $Fiducials(newListName)}
-
+    
+    bind $f.eCreateList <Return> {EndoscopicCreateAndActivatePath $Fiducials(newListName)}  
     pack $f.lCreateList $f.eCreateList -side left -padx $Gui(pad) -pady $Gui(pad)
     
-    set f $Endoscopic(tabbedFrame).fManual.fStep2
-    eval {label $f.lTitle -text "Step 2: Create Landmarks "} $Gui(WTA)
-    eval {label $f.lTitle2 -text "Place the endoscope and then press:"} $Gui(WLA)
-    pack $f.lTitle $f.lTitle2   -side top -pady 2
-
-
-    frame $f.1   -bg $Gui(activeWorkspace) 
-    frame $f.2   -bg $Gui(activeWorkspace) 
-    pack $f.1 $f.2 -side top 
-
-    set f $f.1
-    eval {button $f.bAdd -text "Add Landmark" \
-        -command "EndoscopicAddLandmarkDirectionSpecified; MainUpdateMRML; Render3D"} $Gui(WBA)
-    TooltipAdd $f.bAdd "place the endoscope in the desired position and 
-orientation and click the 'Add' button. A little sphere is 
-created at the position of the camera and a vector shows 
-the direction of view."
-     eval {label $f.l -text "(at the end of path)"} $Gui(WLA)
-     pack $f.bAdd $f.l -side left 
-
-    set f $Endoscopic(tabbedFrame).fManual.fStep2.2
-    eval {button $f.bAdd -text "Insert Landmark" \
-        -command "EndoscopicInsertLandmarkDirectionSpecified; MainUpdateMRML; Render3D"} $Gui(WBA)
-    TooltipAdd $f.bAdd "Select a Landmark in the 3D screen by pointing at it with the mouse and press 'q'.
-Place the endoscope in the desired position and 
-orientation and click the 'Insert' button. A new point on the path is inserted after the selected point."
-     eval {label $f.l -text "(after selected landmark)"} $Gui(WLA)
-     pack $f.bAdd $f.l -side left 
-
+    
     set f $Endoscopic(tabbedFrame).fManual.fStep3
-    eval {label $f.lTitle -text "Step 3: Edit Landmarks "} $Gui(WTA)
-    pack $f.lTitle -side top -padx $Gui(pad) -pady $Gui(pad)
+ # Fix later: Need some checking mechanism 
+ # (1) to see if the flat file comes with the xml
+ # (2) to make sure the flat file matches the right model
+#    set f $Endoscopic(tabbedFrame).fManual.fStep3
+    eval {label $f.fstep -text "Step 3:"} $Gui(WTA)
+    eval {label $f.fSelectLabel -text "If you would like to add landmarks from
+    the Flattened Colon, go to 'Display'"} $Gui(WLA)
+    pack $f.fstep $f.fSelectLabel -side left
+ 
+#Begin Insert Landmark   
+    set f $Endoscopic(tabbedFrame).fManual.fStep4
+    frame $f.fStep4-1   -bg $Gui(activeWorkspace) 
+    frame $f.fStep4-2   -bg $Gui(activeWorkspace)
+    frame $f.fStep4-3   -bg $Gui(activeWorkspace)
+    frame $f.fStep4-4   -bg $Gui(activeWorkspace)
+    pack  $f.fStep4-1 $f.fStep4-2 $f.fStep4-3 $f.fStep4-4 -side top
+    
+    set f $Endoscopic(tabbedFrame).fManual.fStep4.fStep4-1
+    eval {label $f.lTitle -text "Step 4: Add/Delete Landmarks "} $Gui(WTA)
+    pack $f.lTitle  -side top
 
+    set f $Endoscopic(tabbedFrame).fManual.fStep4.fStep4-2
+    eval {button $f.bHow -text "?"} $Gui(WBA)
+    eval {button $f.bAdd -text "Create Landmark" \
+        -command "EndoscopicAddLandmarkDirectionSpecified; MainUpdateMRML; Render3D"} $Gui(WBA)
+    TooltipAdd $f.bHow "Move and aim the endoscope to any location in space, when you click 'Create Landmark',
+    a small spherecal landmark will appear at the location of the endoscope. Repeat the above procedure and create
+    a series of landmarks, which will all be connected with a path" 
+    pack $f.bAdd $f.bHow -side left -padx $Gui(pad) -pady $Gui(pad)
+        
+    set f $Endoscopic(tabbedFrame).fManual.fStep4.fStep4-3
+    eval {button $f.bHow -text "?"} $Gui(WBA)
+    eval {button $f.bInsert -text "Insert Targets" \
+        -command "EndoscopicInsertTargets; Render3D;"} $Gui(WBA)
+    TooltipAdd $f.bHow "Use this button to insert visible targets when you would like to restrict the camera on the path:
+    Double click on the active model, the camera will jump to the closest point on the path and look at the selected model,
+    and make a fiducial point on the surface of the model
+    This procedure is particularly useful when you already created a path, such as the Centerline in the colon, and would like to
+    inspect the colon from inside, along the Centerline"
+    pack $f.bInsert $f.bHow -side left -padx $Gui(pad) -pady $Gui(pad)
+    
+# End Insert Landmark
+
+    set f $Endoscopic(tabbedFrame).fManual.fStep4.fStep4-4
     eval {button $f.bHow -text " ? "} $Gui(WBA)
     eval {button $f.bMove -text "Update" -width 7 \
         -command "EndoscopicUpdateLandmark; Render3D"} $Gui(WBA)
     TooltipAdd $f.bHow "Select a Landmark in the 3D screen by pointing at it with the mouse and press 'q'. 
     The endoscope jumps to that landmark and positions itself along 
-    the vector of view. 
-    Re-orient or move the endoscope as needed. 
+    the vector of view. Re-orient or move the endoscope as needed. 
     Click the 'Update' button to apply the new information to that landmark."
     pack  $f.bMove $f.bHow -side left -padx $Gui(pad) -pady $Gui(pad)
 
@@ -1547,11 +1686,10 @@ To Delete a landmark:
 by selecting it in the scrolltext and right-click to get a menu. "
     pack  $f.bDel $f.bHowdel -side left -padx $Gui(pad) -pady $Gui(pad)
 
-    set f $Endoscopic(tabbedFrame).fManual.fStep4
-    eval {label $f.lTitle -text "Step 4: Fly-Through "} $Gui(WTA)
-
+    set f $Endoscopic(tabbedFrame).fManual.fStep5
+    eval {label $f.lTitle -text "Step 5:"} $Gui(WTA)
     eval {button $f.bpop -text "Show Fly Through Panel" -command "EndoscopicShowFlyThroughPopUp"} $Gui(WBA)
-    pack $f.lTitle $f.bpop -side top -padx $Gui(pad) -pady $Gui(pad) 
+    pack $f.lTitle $f.bpop -side left -padx 2 -pady 1
 
 
     #-------------------------------------------
@@ -1560,88 +1698,104 @@ by selecting it in the scrolltext and right-click to get a menu. "
     set f $Endoscopic(tabbedFrame).fAutomatic
     frame $f.fTitle   -bg $Gui(activeWorkspace) 
     frame $f.fStep1   -bg $Gui(activeWorkspace) -relief groove -bd 2
-    frame $f.fStep2   -bg $Gui(activeWorkspace) -relief groove -bd 2
+    frame $f.fStep21   -bg $Gui(activeWorkspace) -relief groove -bd 2
+    frame $f.fStep22   -bg $Gui(activeWorkspace) -relief groove -bd 2
     frame $f.fStep3   -bg $Gui(activeWorkspace) -relief groove -bd 2
-    frame $f.fStep4   -bg $Gui(activeWorkspace) -relief groove -bd 2
-    pack $f.fTitle $f.fStep1 $f.fStep2 $f.fStep3 $f.fStep4  -side top -pady 2     
+    pack $f.fTitle $f.fStep1 $f.fStep21 $f.fStep22 $f.fStep3 -side top -pady 2     
 
     set f $Endoscopic(tabbedFrame).fAutomatic.fTitle
     eval {label $f.lTitle -text "Automatic Path Creation"} $Gui(WTA)
-    eval {button $f.fbhow -text " ? "} $Gui(WBA)
-    TooltipAdd $f.fbhow "You can create an endoscopic path automatically
-by specifying two points on a model and running the automatic centerline
-extraction algorithm (for more info, see references on www.slicer.org)"
+    eval {button $f.fbhow -text " How? "} $Gui(WBA)
+    TooltipAdd $f.fbhow "Always choose a model first (Step I). There are 2 options to generate a centerline 
+    Option I. Just by clicking the 'AutoExtractCenterLine' button, 2 random start and end point
+    as well as the centerline will be generated for you. 
+    Option II. Manually create or select the fiducial points to be your beginning and ending points, 
+    and then click the 'Extract Centerline' button. If you need information on how to create and select fiducials,
+    scroll to the bottom of this page, or go to the Fiducial Module.
+    Generally, following the steps should take you through this process 
+    (for more info, see references on www.slicer.org)."
     pack $f.lTitle $f.fbhow -side left -padx $Gui(pad) -pady 0 
 
 
 
     set f $Endoscopic(tabbedFrame).fAutomatic.fStep1
-frame $f.fRow1 -bg $Gui(activeWorkspace) 
-frame $f.fRow2  -bg $Gui(activeWorkspace)
-pack  $f.fRow1 $f.fRow2 -side top -pady 2
+    frame $f.fRow1 -bg $Gui(activeWorkspace) 
+    frame $f.fRow2  -bg $Gui(activeWorkspace)
+    pack  $f.fRow1 $f.fRow2 -side top -pady 2
 
-set f $Endoscopic(tabbedFrame).fAutomatic.fStep1.fRow1
-eval {label $f.lActive1 -text "Step 1. "} $Gui(WTA)
-eval {label $f.lActive2 -text "Choose an Active Model: "} $Gui(WLA)
-pack $f.lActive1 $f.lActive2 -side left
-
-set f $Endoscopic(tabbedFrame).fAutomatic.fStep1.fRow2
+    set f $Endoscopic(tabbedFrame).fAutomatic.fStep1.fRow1
+    eval {label $f.lActive1 -text "Step I. "} $Gui(WTA)
+    eval {label $f.lActive2 -text "Choose an Active 3D Model: "} $Gui(WLA)
+    pack $f.lActive1 $f.lActive2 -side left
+    set f $Endoscopic(tabbedFrame).fAutomatic.fStep1.fRow2
     eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
         -menu $f.mbActive.m} $Gui(WMBA)
     eval {menu $f.mbActive.m} $Gui(WMA)
-pack $f.mbActive -side top
-
+    pack $f.mbActive -side top
     # Append widgets to list that gets refreshed during UpdateMRML
     lappend Model(mbActiveList) $f.mbActive
     lappend Model(mActiveList)  $f.mbActive.m
+    
+    set f $Endoscopic(tabbedFrame).fAutomatic.fStep21
+    frame $f.fRow1 -bg $Gui(activeWorkspace) 
+    frame $f.fRow2  -bg $Gui(activeWorkspace)
+    pack  $f.fRow1 $f.fRow2 -side top -pady 2
 
-set f $Endoscopic(tabbedFrame).fAutomatic.fStep2
-frame $f.fExplain   -bg $Gui(activeWorkspace) 
-frame $f.fSource  -bg $Gui(activeWorkspace)
-frame $f.fSink  -bg $Gui(activeWorkspace)
-pack  $f.fExplain $f.fSource $f.fSink -side top -pady 2 
+    set f $Endoscopic(tabbedFrame).fAutomatic.fStep21.fRow1
+    eval {label $f.lActive -text "Step II - Option 1"} $Gui(WTA)
+    pack $f.lActive -side top
+    set f $Endoscopic(tabbedFrame).fAutomatic.fStep21.fRow2
+    eval {button $f.ssauto -text "AutoExtractCenterLine" -command "EndoscopicAutoSelectSourceSink; PathPlanningExtractCenterline"} $Gui(WBA)
+    pack $f.ssauto -side top
+    
+    set f $Endoscopic(tabbedFrame).fAutomatic.fStep22
+    frame $f.fRow1 -bg $Gui(activeWorkspace) 
+    frame $f.fRow2  -bg $Gui(activeWorkspace)
+    frame $f.fRow3 -bg $Gui(activeWorkspace) 
+    frame $f.fRow4  -bg $Gui(activeWorkspace)
+    frame $f.fRow5 -bg $Gui(activeWorkspace) 
+    frame $f.fRow6  -bg $Gui(activeWorkspace)
+    pack  $f.fRow1 $f.fRow2 $f.fRow3 $f.fRow4 $f.fRow5 $f.fRow6 -side top -pady 2
 
-set f $Endoscopic(tabbedFrame).fAutomatic.fStep2.fExplain
-eval {label $f.lTitle -text "Step 2. "} $Gui(WTA)
-eval {label $f.lTitle2 -text "Select a start point 
-by pointing on the model 
-and press the 'p' key. 
-Repeat for the end point."} $Gui(WLA)
-   
-    pack $f.lTitle $f.lTitle2 -side left -padx 0 -pady 0 
-
-
-    set f $Endoscopic(tabbedFrame).fAutomatic.fStep2.fSource
+    set f $Endoscopic(tabbedFrame).fAutomatic.fStep22.fRow1
+    eval {label $f.lTitle -text "Step II - Option 2."} $Gui(WTA)
+    pack $f.lTitle -side top
+    set f $Endoscopic(tabbedFrame).fAutomatic.fStep22.fRow2
+    eval {label $f.lTitle -text "(A): Create 2 Fiducials and go to (C) "} $Gui(WLA)
+    pack $f.lTitle -side top
+    set f $Endoscopic(tabbedFrame).fAutomatic.fStep22.fRow3
+    eval {label $f.lTitle -text "or (B): To use existing Fiducials, 
+    press the 'Select fiducial' button,
+    then select the start point.
+    Repeat for the end point,
+    then go to (C)."} $Gui(WLA)
+    pack $f.lTitle -side top 
+    set f $Endoscopic(tabbedFrame).fAutomatic.fStep22.fRow4
     eval {label $f.lsource -text "start point: "} $Gui(WLA)
     eval {label $f.lsource2 -text " None "} $Gui(WLA)
-    eval {checkbutton $f.lsourceSel -text "Select another point" -variable Endoscopic(sourceButton,on) -indicatoron 0 } $Gui(WBA)
-TooltipAdd $f.lsourceSel "You can select an existing fiducial by pressing this
-button and then selecting the fiducial by pointing at it 
-and pressing the 'q' key." 
-
+    eval {checkbutton $f.lsourceSel -text "Select fiducial" -variable Endoscopic(sourceButton,on) -indicatoron 0 } $Gui(WBA)
+    TooltipAdd $f.lsourceSel "You can select an existing fiducial by pressing this
+    button and then selecting the fiducial by pointing at it 
+    and pressing the 'q' key."
     set Endoscopic(sourceLabel) $f.lsource2
     pack $f.lsource $f.lsource2 $f.lsourceSel -side left 
-
-    set f $Endoscopic(tabbedFrame).fAutomatic.fStep2.fSink
+    set f $Endoscopic(tabbedFrame).fAutomatic.fStep22.fRow5
     eval {label $f.lsink -text "end point: "} $Gui(WLA)
     eval {label $f.lsink2 -text " None "} $Gui(WLA)
-    eval {checkbutton $f.lsinkSel -text "Select another point" -variable Endoscopic(sinkButton,on) -indicatoron 0 } $Gui(WBA)
-TooltipAdd  $f.lsinkSel "You can select an existing fiducial by pressing this
-button and then selecting the fiducial by pointing at it 
-and pressing the 'q' key." 
-
+    eval {checkbutton $f.lsinkSel -text "Select fiducial" -variable Endoscopic(sinkButton,on) -indicatoron 0 } $Gui(WBA)
+    TooltipAdd  $f.lsinkSel "You can select an existing fiducial by pressing this
+    button and then selecting the fiducial by pointing at it 
+    and pressing the 'q' key."
     set Endoscopic(sinkLabel) $f.lsink2
     pack $f.lsink $f.lsink2 $f.lsinkSel -side left 
-
-
-    set f $Endoscopic(tabbedFrame).fAutomatic.fStep3
-eval {label $f.lTitle -text "Step 3. "} $Gui(WTA)
+    set f $Endoscopic(tabbedFrame).fAutomatic.fStep22.fRow6
+    eval {label $f.lTitle -text "(C):"} $Gui(WLA)
     DevAddButton $f.bauto "Extract Centerline" PathPlanningExtractCenterline
     pack $f.lTitle $f.bauto -side left -padx 2
 
 
-    set f $Endoscopic(tabbedFrame).fAutomatic.fStep4
-eval {label $f.lTitle -text "Step 4. "} $Gui(WTA)
+    set f $Endoscopic(tabbedFrame).fAutomatic.fStep3
+    eval {label $f.lTitle -text "Step III. "} $Gui(WTA)
     eval {button $f.bpop -text "Show Fly Through Panel" -command "EndoscopicShowFlyThroughPopUp"} $Gui(WBA)
     pack $f.lTitle $f.bpop -side left -padx 2
 
@@ -1940,11 +2094,12 @@ proc EndoscopicBuildFlyThroughGUI {} {
     frame $f.fSelect     -bg $Gui(activeWorkspace) -relief groove -bd 2
     frame $f.fFly     -bg $Gui(activeWorkspace) -relief groove -bd 2
     frame $f.fStep     -bg $Gui(activeWorkspace) -relief groove -bd 2
+    frame $f.fJump     -bg $Gui(activeWorkspace) -relief groove -bd 2
     frame $f.fSpeed     -bg $Gui(activeWorkspace) -relief groove -bd 2
     frame $f.fInterp     -bg $Gui(activeWorkspace) -relief groove -bd 2
     frame $f.fSli     -bg $Gui(activeWorkspace) -relief groove -bd 2
     
-    pack  $f.fSelect $f.fFly $f.fStep $f.fSpeed $f.fInterp $f.fSli \
+    pack  $f.fSelect $f.fFly $f.fJump $f.fStep $f.fSpeed $f.fInterp $f.fSli \
         -side top -padx $Gui(pad) -pady $Gui(pad)
 
     #-------------------------------------------
@@ -1984,7 +2139,25 @@ proc EndoscopicBuildFlyThroughGUI {} {
 
     grid $f.fPath $f.fReset $f.fStop -padx $Gui(pad) -pady $Gui(pad)
     #grid $f.rForward $f.rBackward -padx $Gui(pad) -pady $Gui(pad)
+ 
+    #-------------------------------------------
+    # Path->Top->Jump frame
+    #-------------------------------------------
+    set f $w.fTop.fJump
     
+    eval {label $f.ljump -text "Targets"} $Gui(WLA)
+
+    eval {entry $f.ejump \
+        -textvariable Endoscopic(selectedTarget) -width 4} $Gui(WEA) {-bg $Endoscopic(path,sColor)}
+    bind $f.ejump <Return> "EndoscopicSelectTarget"
+    
+    eval {button $f.fjump -text " >>> " -width 6  -command "EndoscopicSelectNextTarget"} $Gui(WMBA)
+    
+    eval {button $f.bjump -text " <<< " -width 6  -command "EndoscopicSelectPreviousTarget"} $Gui(WMBA)
+    
+    pack $f.bjump $f.ljump $f.ejump $f.fjump -side left -padx $Gui(pad) -pady $Gui(pad)
+
+                           
     #-------------------------------------------
     # Path->Top->Step frame
     #-------------------------------------------
@@ -2445,6 +2618,8 @@ proc EndoscopicSetWorldPosition {x y z} {
     set Endoscopic(cam,yStr,old) $y
     set Endoscopic(cam,zStr,old) $z
     Endoscopic(gyro,actor) SetPosition $x $y $z
+    
+    Render3D
 }
 
 
@@ -3127,13 +3302,6 @@ proc EndoscopicGetAvailableListName {model} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicAddLandmarkNoDirectionSpecified
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc EndoscopicAddLandmarkNoDirectionSpecified {x y z {list ""}} {
     global Endoscopic Point Fiducials
     
@@ -3246,7 +3414,6 @@ proc EndoscopicInsertLandmarkNoDirectionSpecified {afterPid x y z {list ""}} {
 
 
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicAddLandmarkDirectionSpecified
 #
@@ -3268,17 +3435,17 @@ proc EndoscopicAddLandmarkDirectionSpecified {{coords ""} {list ""}} {
         if { $Endoscopic(path,activeId) == "None" } {
             set numList $Endoscopic(path,nextAvailableId)
             set list Path${numList}_
-            EndoscopicCreateAndActivatePath $list
-            incr Endoscopic(path,nextAvailableId)
+        EndoscopicCreateAndActivatePath $list
+        incr Endoscopic(path,nextAvailableId)
         } else {
-            set id $Endoscopic(path,activeId)
-            set list $Endoscopic($id,path,name)
-        }
+        set id $Endoscopic(path,activeId)
+        set list $Endoscopic($id,path,name)
+    }
     } else {
-        if {[info exists Fiducials($list,fid)] == 0} {    
-            # if the list doesn't exist, create it
-            EndoscopicCreateAndActivatePath $list
-        }
+    if {[info exists Fiducials($list,fid)] == 0} {    
+        # if the list doesn't exist, create it
+        EndoscopicCreateAndActivatePath $list
+    }
     }
     # make that list active
     FiducialsSetActiveList $list
@@ -3313,7 +3480,7 @@ proc EndoscopicAddLandmarkDirectionSpecified {{coords ""} {list ""}} {
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicInsertLandmarkDirectionSpecified
 #
-# This procedure is called when we want to add a landmark at position after the currently selected landmark and 
+# This procedure is called when we want to insert a landmark at position after the currently selected landmark and 
 # we know that the direction of view to save along with the landmark is the
 # current view direction of the endoscope
 # 
@@ -3322,7 +3489,7 @@ proc EndoscopicAddLandmarkDirectionSpecified {{coords ""} {list ""}} {
 #-------------------------------------------------------------------------------
 proc EndoscopicInsertLandmarkDirectionSpecified {{coords ""} {list ""}} {
 
-    global Endoscopic Point Fiducials 
+     global Endoscopic Point Fiducials 
     
     # get the ids of the selected fiducial
     set afterPid $Endoscopic(selectedFiducialPoint) 
@@ -3366,6 +3533,7 @@ proc EndoscopicInsertLandmarkDirectionSpecified {{coords ""} {list ""}} {
   }
 }
 
+
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicUpdateLandmark
 #
@@ -3385,9 +3553,9 @@ proc EndoscopicUpdateLandmark {} {
     # update the selected pid
     set pid $Endoscopic(selectedFiducialPoint) 
     if {$pid != ""} {
-        Point($pid,node) SetXYZ [$cam_mat GetElement 0 3] [$cam_mat GetElement 1 3] [$cam_mat GetElement 2 3]
-        Point($pid,node) SetFXYZ [$fp_mat GetElement 0 3] [$fp_mat GetElement 1 3] [$fp_mat GetElement 2 3]
-        MainUpdateMRML
+    Point($pid,node) SetXYZ [$cam_mat GetElement 0 3] [$cam_mat GetElement 1 3] [$cam_mat GetElement 2 3]
+    Point($pid,node) SetFXYZ [$fp_mat GetElement 0 3] [$fp_mat GetElement 1 3] [$fp_mat GetElement 2 3]
+    MainUpdateMRML
     }
 }
 
@@ -3753,14 +3921,15 @@ proc EndoscopicSetSpeed {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicCheckDriver
-# This procedure is called once the position of the endoscope is updated. It checks to see if there is a driver for the slices and calls EndoscopicReformatSlices with the right argument to update the position of the slices.
+# This procedure is called once the position of the endoscope is updated. It checks to see if there is a driver \
+for the slices and calls EndoscopicReformatSlices with the right argument to update the position of the slices.
 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicCheckDriver {vcam} {
 
-global Endoscopic View
+global Endoscopic View Slice MainAnno Anno Module
 
 
     if { $Endoscopic(fp,driver) == 1 } {
@@ -3784,6 +3953,12 @@ global Endoscopic View
             set y [expr [lindex $selPt 1]]
             set z [expr [lindex $selPt 2]]
             EndoscopicReformatSlices $vcam $x $y $z
+        
+        set Anno(cross) 1
+            set Anno(crossIntersect) 1
+        
+        MainAnnoSetVisibility
+        MainAnnoUpdateFocalPoint $x $y $z
         }
     }
 }
@@ -3852,7 +4027,7 @@ proc EndoscopicSetSliceDriver {name} {
         
         MainSlicesSetOrientAll "Orthogonal"
         EndoscopicCheckDriver $Endoscopic(activeCam)
-        Render3D
+        RenderSlices
     }    
 }
 
@@ -3872,7 +4047,7 @@ proc EndoscopicSetSliceDriver {name} {
 #-------------------------------------------------------------------------------
 proc EndoscopicFiducialsPointSelectedCallback {fid pid} {
     
-    global Endoscopic Fiducials Select Module Model
+    global Endoscopic Fiducials Select Module Model Point
 
     set Endoscopic(selectedFiducialPoint) $pid
     set Endoscopic(selectedFiducialList) $fid
@@ -3916,7 +4091,11 @@ proc EndoscopicFiducialsPointSelectedCallback {fid pid} {
     if {[Fiducials($fid,node) GetType] == "endoscopic" } {
         EndoscopicResetCameraDirection    
         EndoscopicUpdateVirtualEndoscope $Endoscopic(activeCam) [concat [Point($pid,node) GetXYZ] [Point($pid,node) GetFXYZ]]
-    } else {
+
+#set test [Point($pid,node) GetFXYZ]
+#puts $test
+
+        } else {
      # look at the point instead
      EndoscopicResetCameraDirection    
      EndoscopicUpdateVirtualEndoscope $Endoscopic(activeCam) [concat [Point($pid,node) GetFXYZ] [Point($pid,node) GetXYZ]]
@@ -4156,13 +4335,28 @@ proc EndoscopicCreateAndActivatePath {name} {
 # we update the path menus only if the active list in an endoscopic
 # one
 proc EndoscopicFiducialsActivatedListCallback {type name id} {
-    global Endoscopic
+    global Endoscopic Fiducials
 
     # if an endoscopic list is activated, tell all the menus in the 
     # endoscopic displays
     if {$type == "endoscopic" } {
     
         set Endoscopic(path,activeId) $id
+    
+#jeanette: check to see if the path comes with a targetlist
+    set targetlistname $Endoscopic($id,path,name)
+    append targetlistname -targets
+    
+    if {[lsearch $Fiducials(listOfNames) $targetlistname] != -1} {
+        
+    set targetlist [FiducialsGetPointIdListFromName $targetlistname]
+    set num [llength $targetlist]
+
+    set Endoscopic(selectedTarget) 1
+    set Endoscopic(totalTargets) $num
+
+    }
+#---------------------------------------------------------------------------    
         
         # change the text on menu buttons
         foreach mb $Endoscopic(mbPathList) {
@@ -4193,10 +4387,27 @@ proc EndoscopicFiducialsActivatedListCallback {type name id} {
 #-------------------------------------------------------------------------------
 proc EndoscopicSelectActivePath {id} {
     
-    global Endoscopic
+    global Endoscopic Fiducials
     set Endoscopic(path,activeId) $id
     # make that list active
     FiducialsSetActiveList $Endoscopic($id,path,name)
+    
+#jeanette: check to see if the path comes with a targetlist
+    set targetlistname $Endoscopic($id,path,name)
+    append targetlistname -targets
+    
+    if {[lsearch $Fiducials(listOfNames) $targetlistname] != -1} {
+        
+    set targetlist [FiducialsGetPointIdListFromName $targetlistname]
+    set num [llength $targetlist]
+
+    set Endoscopic(selectedTarget) 1
+    set Endoscopic(totalTargets) $num
+
+    }
+
+#---------------------------------------------------------------------------    
+
     # change the text on menu buttons
     foreach mb $Endoscopic(mbPathList) {
         $mb config -text $Endoscopic($id,path,name) 
@@ -4336,6 +4547,7 @@ proc EndoscopicUpdateMainViewVisibility {} {
     Render3D
     # for the rest do nothing
 }
+
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicAddEndoscopicView
@@ -4520,3 +4732,992 @@ proc EndoscopicAddMainViewRemoveEndoscopicView {} {
 
 
 #}
+
+
+# Jeanette
+#--------------------------------------------------------------------------
+# Procedures related to the Flat View of the Colon
+
+proc EndoscopicSetFlatFileName {} {
+    global Endoscopic
+
+# do nothing if the user cancelled in the browser box
+   if {$Endoscopic(FlatSelect) == ""} {
+   set Endoscopic(name) ""
+   set Endoscopic(FlatSelect) ""
+
+   return
+   }
+
+# name the flattened view based on the entered file name.
+    set Endoscopic(name) [file root [file tail $Endoscopic(FlatSelect)]]
+}
+
+proc EndoscopicCancelFlatFile {} {
+   global Endoscopic
+
+   set Endoscopic(FlatSelect) ""
+   set Endoscopic(name) ""
+    
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicUpdateFlatViewVisibility
+# Makes the flat view appear or disappear based on the variable Endoscopic(flatview,visibility)
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+
+
+proc EndoscopicAddFlatView {} {
+    global Gui Mrml Models Endoscopic Fiducials View viewWin MainViewer Slice Module
+
+    # deny if user clicks choose when the selection box is empty
+    if {$Endoscopic(FlatSelect) == ""} {
+    DevWarningWindow "Please select a file to display."
+    return
+    }
+
+    set name $Endoscopic(name)
+
+    # deny if user tries to display an already displayed file
+    if {[lsearch -exact $Endoscopic(FlatWindows) $name] != -1} {
+    DevWarningWindow "Please select a file that is not already displayed."
+    return
+    }
+    
+    # add the new window to the list of open windows
+    lappend Endoscopic(FlatWindows) $name
+    # create new toplevel for the flattened image
+    toplevel .t$name -visual best
+    frame .t$name.fView
+    set f .t$name.fView
+    wm title .t$name $name
+    wm geometry .t$name -0+0
+    wm protocol .t$name WM_DELETE_WINDOW "EndoscopicRemoveFlatView $name"
+    wm withdraw .
+   
+    # create a vtkTkRenderWidget to draw the flattened image into
+    vtkTkRenderWidget $f.flatRenderWidget$name -width 220 -height $View(viewerHeightNormal)
+    set Endoscopic($f.flatRenderWidget$name,name) $name
+    
+    # control frame
+    frame .t$name.controls
+   
+    # x frame: Pan Left<->Right, zoom in, zoom out, reset view port, quit
+    set xfrm [frame .t$name.controls.xfrm]
+    
+    set lrfrm [frame .t$name.controls.xfrm.lrfrm]
+    set lrlbl [label $lrfrm.lbl -text "Left<-->Right" -font {helvetica 10} ]
+  #Fix later: the scale needs to be normalized based on the size of the colon.
+    set Endoscopic(flatScale,panlr) [scale $lrfrm.leftright -from 0 -to 250 -res 0.5 -orient horizontal  -variable Endoscopic(flatColon,xCamDist) ]
+    pack $lrlbl -side top
+    pack $Endoscopic(flatScale,panlr) -side top
+    
+ 
+    set zoomfrm [frame .t$name.controls.xfrm.zoomfrm]        
+    set camZoomlbl [label $zoomfrm.lbl -text "In<-->Out" -font {helvetica 10}]
+    set Endoscopic(flatScale,camZoom) [scale $zoomfrm.camZoom -from 0 -to 100 -res 0.5 -orient horizontal  -variable Endoscopic(flatColon,zCamDist)]
+    pack $camZoomlbl -side top
+    pack $Endoscopic(flatScale,camZoom) -side top
+    
+    
+    set resetfrm [frame $xfrm.resetfrm]
+    set resetbut [button $resetfrm.resetbut -text "Reset" -font {helvetica 10 bold} \
+    -command "EndoscopicResetFlatCameraDist $f.flatRenderWidget$name"]
+    set quitbut [button $resetfrm.quitbut -text "Quit" -font {helvetica 10 bold} \
+    -command "EndoscopicRemoveFlatView $name"]
+    pack $resetbut -side left -padx 2 -expand yes -fill x
+    pack $quitbut -side right -padx 2 -expand yes -fill x
+    
+    pack $lrfrm -side top -pady 4 -expand yes
+    pack $zoomfrm -side top -pady 4 -expand yes
+    pack $resetfrm -side bottom -expand yes
+    
+    # y frame: move the camera in the y direction
+    set yfrm [frame .t$name.controls.yfrm]
+    set udlbl [label $yfrm.lbl -text "Up/Down" -font {helvetica 10} ]
+    set Endoscopic(flatScale,panud) [scale $yfrm.updown -from -10 -to 10 -res 0.5 -orient vertical -variable Endoscopic(flatColon,yCamDist)]
+    set updatebut [button $yfrm.updatebut -text "Update Targets" -font {helvetica 10 bold}]
+    pack $udlbl $Endoscopic(flatScale,panud) -side top -pady 4 -expand yes
+    pack  $updatebut -side bottom -pady 2 -expand yes -fill y
+    
+      
+    pack .t$name.controls.xfrm -side left  -padx 1 -anchor n -expand yes
+    pack .t$name.controls.yfrm -side right -padx 1 -anchor n -expand yes
+ #   pack .t$name.controls.projfrm -side right -padx 4 -expand yes
+    
+    pack $f.flatRenderWidget$name -side left -padx 3 -pady 3 -fill both -expand t
+    pack $f -fill both -expand t
+    pack .t$name.controls -pady 4 -fill both -expand t
+
+   
+    # add a vtkRenderer to the vtkRenderWindow
+    
+    vtkRenderer Endoscopic($name,renderer)
+    Endoscopic($name,renderer) SetBackground 0.5 0.5 0.5
+    [$f.flatRenderWidget$name GetRenderWindow] AddRenderer Endoscopic($name,renderer)
+    lappend $Endoscopic(FlatRenderers) Endoscopic($name,renderer)
+
+# set and activate event bindings for widget
+    EndoscopicCreateFlatBindings $f.flatRenderWidget$name
+    
+    $updatebut config -command "EndoscopicUpdateTargetsInFlatWindow $f.flatRenderWidget$name"
+
+    # create a vtkPolyDataReader
+    vtkPolyDataReader TempPolyReader
+    
+    TempPolyReader SetFileName $Endoscopic(FlatSelect)
+
+    # create a vtkPolyDataMapper
+    vtkPolyDataMapper TempMapper
+    TempMapper SetInput [TempPolyReader GetOutput]
+    TempMapper ScalarVisibilityOff
+    
+    # save the polydata where we can find it later
+    set Endoscopic($name,polyData) [TempPolyReader GetOutput]
+    $Endoscopic($name,polyData) UpdateData
+      
+    # create a vtkActor for the flatcolon
+    vtkActor Endoscopic($name,FlatColonActor)
+    Endoscopic($name,FlatColonActor) SetMapper TempMapper
+    Endoscopic($name,renderer) AddActor Endoscopic($name,FlatColonActor)
+    
+    #create Outline
+    vtkOutlineFilter colonOutline
+      colonOutline SetInput [TempPolyReader GetOutput]
+    vtkPolyDataMapper outlineMapper
+      outlineMapper SetInput [colonOutline GetOutput]
+    vtkActor Endoscopic($name,outlineActor)
+      Endoscopic($name,outlineActor) SetMapper outlineMapper
+      [Endoscopic($name,outlineActor) GetProperty] SetColor 0 0 0
+    Endoscopic($name,renderer) AddActor Endoscopic($name,outlineActor)
+    
+    set size [Endoscopic($name,renderer) GetSize]
+        
+    set outline [$Endoscopic($name,polyData) GetBounds]
+    set Endoscopic(flatColon,xMin) [lindex $outline 0]
+    set Endoscopic(flatColon,xMax) [lindex $outline 1]
+    set Endoscopic(flatColon,yMin) [lindex $outline 2]
+    set Endoscopic(flatColon,yMax) [lindex $outline 3]
+    set Endoscopic(flatColon,zMin) [lindex $outline 4]
+    set Endoscopic(flatColon,zMax) [lindex $outline 5]
+
+# normalize the initial camera position   
+    set y [expr $Endoscopic(flatColon,yMax) - $Endoscopic(flatColon,yMin)]
+    set y [expr abs($y)]
+    set Endoscopic(flatColon,zOpt) [expr [expr 5*$y]/8]
+    
+    set Endoscopic(flatColon,yMid) [expr [expr $Endoscopic(flatColon,yMin) + $Endoscopic(flatColon,yMax)]/2]
+
+# re-config the scale according to the size of the flat colon        
+    $Endoscopic(flatScale,panlr) config -to [expr ceil($Endoscopic(flatColon,xMax))]
+    $Endoscopic(flatScale,panud) config -from [expr [expr ceil($Endoscopic(flatColon,yMin))]-2] -to [expr [expr ceil($Endoscopic(flatColon,yMax))]+2]
+    $Endoscopic(flatScale,camZoom) config -from 0 -to [expr [expr ceil($Endoscopic(flatColon,zOpt))] + 40]
+
+# set initial camera position   
+    set Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,xMin)
+    $Endoscopic(flatScale,panlr) set $Endoscopic(flatColon,xCamDist)
+    
+    set Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,yMid)
+    $Endoscopic(flatScale,panud) set $Endoscopic(flatColon,yCamDist)
+    
+    set Endoscopic(flatColon,zCamDist) $Endoscopic(flatColon,zOpt)    
+    $Endoscopic(flatScale,camZoom) set $Endoscopic(flatColon,zCamDist)
+    
+    set Endoscopic($name,camera) [Endoscopic($name,renderer) GetActiveCamera]
+    $Endoscopic($name,camera) SetClippingRange 0.01 200
+    $Endoscopic($name,camera) SetFocalPoint $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zMin)
+    $Endoscopic($name,camera) SetPosition $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zCamDist)
+    $Endoscopic($name,camera) SetViewAngle 90
+      # $Navigator($name,camera) Zoom 1
+  
+    # add command for the x-progress scale to move the colon in x direction  
+    $Endoscopic(flatScale,panlr) config -command "EndoscopicMoveCameraX $f.flatRenderWidget$name"
+    $Endoscopic(flatScale,panud) config -command "EndoscopicMoveCameraY $f.flatRenderWidget$name" 
+    $Endoscopic(flatScale,camZoom) config -command "EndoscopicMoveCameraZ $f.flatRenderWidget$name"
+    
+      # lightKit
+     vtkLightKit Endoscopic($name,lightKit)
+     Endoscopic($name,lightKit) SetKeyLightWarmth 0.7
+     Endoscopic($name,lightKit) SetHeadlightWarmth 0.5
+     Endoscopic($name,lightKit) SetKeyLightIntensity 0.8
+     Endoscopic($name,lightKit) SetKeyLightAngle 0 0
+     Endoscopic($name,lightKit) SetKeyToFillRatio 5
+     Endoscopic($name,lightKit) AddLightsToRenderer Endoscopic($name,renderer)
+
+  
+    # initialize and reinitialize
+    set Endoscopic($name,lineCount) 0
+ #   set Endoscopic(FlatSelect) ""
+    set Endoscopic(name) ""
+
+    #Render
+    [$f.flatRenderWidget$name GetRenderWindow] Render    
+
+    TempPolyReader Delete
+    TempMapper Delete
+    colonOutline Delete
+    outlineMapper Delete
+
+}
+
+proc EndoscopicRemoveFlatView {{name ""}} {
+    global Module Endoscopic View
+
+# if clicked 'Quit' button
+    if {$name != ""} {
+    
+# destroy all parts of the flat view
+    destroy .t$name
+    
+    Endoscopic($name,renderer) Delete
+    Endoscopic($name,FlatColonActor) Delete    ;
+    # actor for flattened image
+    Endoscopic($name,outlineActor) Delete
+    Endoscopic($name,lightKit) Delete
+    
+    for {set linecount 0} {$linecount < $Endoscopic($name,lineCount)} {incr linecount} {
+       Endoscopic($name,aLineActor,$linecount) Delete
+    }
+    set $Endoscopic($name,lineCount) 0
+    
+    set index [lsearch -exact $Endoscopic(FlatWindows) $name]
+    set Endoscopic(FlatWindows) [lreplace $Endoscopic(FlatWindows) $index $index]
+    set Endoscopic(FlatRenderers) [lreplace $Endoscopic(FlatRenderers) $index $index]
+
+     } else {
+  
+# if ending all
+
+    foreach frame $Endoscopic(FlatWindows) {
+        destroy .t$frame
+    
+     Endoscopic($frame,renderer) Delete
+     Endoscopic($frame,FlatColonActor) Delete
+     Endoscopic($frame,outlineActor) Delete
+     Endoscopic($frame,lightKit) Delete
+  
+        }
+    
+    set index [lsearch -exact $Endoscopic(FlatWindows) $name]
+    set Endoscopic(FlatWindows) [lreplace $Endoscopic(FlatWindows) $index $index]
+    set Endoscopic(FlatRenderers) [lreplace $Endoscopic(FlatRenderers) $index $index]
+
+    }
+    set Endoscopic(FlatSelect) ""
+    
+ # de-activate bindings for the flat window   
+    EndoscopicPopFlatBindings
+}
+
+
+# create and activate the binding sets for the flat windows
+proc EndoscopicCreateFlatBindings {widget} {
+    global Endoscopic Ev
+#puts $widget
+
+ # the following 2 lines are for testing the bindings the old fashioned way.
+ #    bind $widget <ButtonRelease-1> {puts Button}
+ #    bind $widget <KeyPress-c> {EndoscopicPickFlatPoint %W %x %y}
+
+    EvDeclareEventHandler FlatWindowEvents <Double-Any-ButtonPress> {EndoscopicPickFlatPoint %W %x %y; \
+    EndoscopicAddLandmarkFromFlatColon $Select(cellId)}
+
+    EvAddWidgetToBindingSet bindFlatWindowEvents $widget {FlatWindowEvents}
+
+    EvActivateBindingSet bindFlatWindowEvents
+
+}
+
+proc EndoscopicPopFlatBindings {} {
+    global Ev Csys Endoscopic
+   
+    EvDeactivateBindingSet bindFlatWindowEvents
+}
+
+proc EndoscopicPickFlatPoint {widget xcoord ycoord} {
+    global Select Endoscopic Model Fiducials
+
+    set name $Endoscopic($widget,name)
+    
+   vtkCellPicker TempCellPicker
+   TempCellPicker SetTolerance 0.0001
+
+    if {[SelectPick TempCellPicker $widget $xcoord $ycoord]} {
+    
+    set fx [lindex $Select(xyz) 0]
+    
+    EndoscopicAddLandmarkInFlatWindow $widget $fx
+    
+     }
+    
+    TempCellPicker Delete
+}
+
+proc EndoscopicAddLandmarkInFlatWindow {widget x} {
+
+    global Select Endoscopic
+
+    set name $Endoscopic($widget,name)
+    set count $Endoscopic($name,lineCount)
+    set renderer [[[$widget GetRenderWindow] GetRenderers] GetItemAsObject 0]
+
+# set position [[$renderer GetActiveCamera] GetPosition]
+
+    vtkLineSource aLine
+
+     aLine SetPoint1 $x [expr $Endoscopic(flatColon,yMin) - 1] -1.0
+     aLine SetPoint2 $x [expr $Endoscopic(flatColon,yMax) + 1] -1.0      
+
+     aLine SetResolution 20
+     vtkPolyDataMapper aLineMapper
+     aLineMapper SetInput [aLine GetOutput]
+
+     vtkActor Endoscopic($name,aLineActor,$count)
+     Endoscopic($name,aLineActor,$count) SetMapper aLineMapper 
+    [Endoscopic($name,aLineActor,$count) GetProperty] SetColor 1 0 0    
+    
+    $renderer AddActor Endoscopic($name,aLineActor,$count)
+
+    [$widget GetRenderWindow] Render
+    
+    set Endoscopic($name,lineCount) [expr $Endoscopic($name,lineCount) + 1]
+#puts "#ofLines: $Endoscopic($name,lineCount)"    
+    aLine Delete
+    aLineMapper Delete
+
+}
+
+
+
+proc EndoscopicAddLandmarkFromFlatColon {ScellId} {
+
+    global Endoscopic Point Fiducials Select Model View Path Slice
+
+# get the active actor   
+       set model $Model(activeID)
+       if {$model != ""} {
+
+       set polyData $Model($model,polyData)
+       set cell [$polyData GetCell $ScellId]
+       set points [$cell GetPoints]
+       set Select(xyz) [$points GetPoint 1]
+
+#    set Select(actor) Model($model,actor,$viewRen)
+#    set actor $Select(actor)
+#    set cellId $ScellId
+
+       }
+
+#  active list (should be the default path just created from the automatic tab)
+    set fid $Fiducials($Fiducials(activeList),fid)
+    set listName $Fiducials(activeList)
+# puts $listName
+    FiducialsGetPointIdListFromName $listName
+    set list $Fiducials($fid,pointIdList)
+    set numP [llength $list]
+#puts "number of points: $numP"
+    set numP [expr $numP - 1]
+
+# compute the distance between the selected point and each point on the path.
+    for {set i 0} {$i <= $numP} {incr i} {
+    set pid [lindex $list $i]
+    set pidCoord [FiducialsGetPointCoordinates $pid]
+    set dist 0
+      for {set ii 0} {$ii<3} {incr ii} {
+      set diff [expr [lindex $Select(xyz) $ii] - [lindex $pidCoord $ii]]
+      set diff [expr $diff * $diff]
+      set dist [expr $dist + $diff]
+      }
+    set dist [expr sqrt( $dist )]
+    lappend distlist $dist    
+    }
+
+# findout the pid of the point that has the shortest dist to the selected point
+    set oldlist $distlist
+    set newlist [lsort -real -increasing $oldlist]
+    set mindist [lindex $newlist 0]
+#puts $mindist
+
+    set minDistIndex [lsearch -exact $oldlist $mindist]
+    set closestPid [lindex $list $minDistIndex]
+#puts "closest pid: $closestPid"
+
+# change the FXYZ of the closestPid to the coordinates of Select(xyz) obtained from the cellId of the picked point.
+    set fx [lindex $Select(xyz) 0]
+    set fy [lindex $Select(xyz) 1]
+    set fz [lindex $Select(xyz) 2]
+
+    Point($closestPid,node) SetFXYZ $fx $fy $fz
+    Point($closestPid,node) SetDescription $ScellId
+
+#puts $Point($closestPid,node)
+
+    EndoscopicFiducialsPointSelectedCallback $fid $closestPid
+ 
+    set driver Intersection
+    EndoscopicSetSliceDriver $driver
+    RenderSlices
+
+    MainUpdateMRML
+    Render3D
+}
+
+proc EndoscopicAddLandmarkFromSlices {x y z} {
+
+    global Endoscopic Point Fiducials Select Model View Slice
+
+     set model $Model(activeID)
+     if {$model != ""} {
+     set polyData $Model($model,polyData)
+     }
+   
+    set Select(xyz) [list $x $y $z]
+
+    vtkPointLocator tempPointLocator
+    tempPointLocator SetDataSet $polyData
+
+    set pointid [tempPointLocator FindClosestPoint $x $y $z]
+
+    vtkIdList cellList
+    $polyData GetPointCells $pointid cellList
+# for now: choose the 1st cell in that list
+    set Select(cellId) [cellList GetId 0]
+#puts "cellId: $Select(cellId)"
+
+#  active list (should be the default path just created from the automatic tab)
+    set fid $Fiducials($Fiducials(activeList),fid)
+    set listName $Fiducials(activeList)
+    
+    FiducialsGetPointIdListFromName $listName
+
+    set list $Fiducials($fid,pointIdList)
+    set numP [llength $list]
+    set numP [expr $numP - 1]
+
+# compute the distance between the selected point and each point on the path.
+    for {set i 0} {$i <= $numP} {incr i} {
+    set pid [lindex $list $i]
+    set pidCoord [FiducialsGetPointCoordinates $pid]
+    set dist 0
+      for {set ii 0} {$ii<3} {incr ii} {
+      set diff [expr [lindex $Select(xyz) $ii] - [lindex $pidCoord $ii]]
+      set diff [expr $diff * $diff]
+      set dist [expr $dist + $diff]
+      }
+    set dist [expr sqrt( $dist )]
+    lappend distlist $dist    
+    }
+
+# findout the pid of the point that has the shortest dist to the selected point
+    set oldlist $distlist
+    set newlist [lsort -real -increasing $oldlist]
+    set mindist [lindex $newlist 0]
+
+    set minDistIndex [lsearch -exact $oldlist $mindist]
+    set closestPid [lindex $list $minDistIndex]
+#puts "closest pid: $closestPid"
+    
+# change the FXYZ of the closestPid to the coordinates of Select(xyz) obtained from the picked point.
+    set fx [lindex $Select(xyz) 0]
+    set fy [lindex $Select(xyz) 1]
+    set fz [lindex $Select(xyz) 2]
+
+    Point($closestPid,node) SetFXYZ $fx $fy $fz
+    Point($closestPid,node) SetDescription $Select(cellId)
+
+#puts $Point($closestPid,node)
+
+    EndoscopicFiducialsPointSelectedCallback $fid $closestPid
+
+    set driver Intersection
+    EndoscopicSetSliceDriver $driver
+    RenderSlices
+
+
+    MainUpdateMRML
+    Render3D
+    
+tempPointLocator Delete
+cellList Delete
+}
+
+proc EndoscopicAddLandmarkFromWorldCoordinates {sx sy sz cellId} {
+     global Endoscopic Point Fiducials Select Model View Slice
+ 
+      set Select(xyz) [list $sx $sy $sz]
+      set Select(cellId) $cellId
+#puts "cellid: $cellId" 
+
+#  active list (should be the default path just created from the automatic tab)
+      set fid $Fiducials($Fiducials(activeList),fid)
+      set listName $Fiducials(activeList)
+
+      FiducialsGetPointIdListFromName $listName
+
+      set list $Fiducials($fid,pointIdList)
+      set numP [llength $list]
+      set numP [expr $numP - 1]
+
+# compute the distance between the selected point and each point on the path.
+     for {set i 0} {$i <= $numP} {incr i} {
+        set pid [lindex $list $i]
+        set pidCoord [FiducialsGetPointCoordinates $pid]
+        set dist 0
+        for {set ii 0} {$ii<3} {incr ii} {
+        set diff [expr [lindex $Select(xyz) $ii] - [lindex $pidCoord $ii]]
+        set diff [expr $diff * $diff]
+        set dist [expr $dist + $diff]
+     }
+    set dist [expr sqrt( $dist )]
+    lappend distlist $dist    
+    }
+
+# findout the pid of the point that has the shortest dist to the selected point
+    set oldlist $distlist
+    set newlist [lsort -real -increasing $oldlist]
+    set mindist [lindex $newlist 0]
+
+    set minDistIndex [lsearch -exact $oldlist $mindist]
+    set closestPid [lindex $list $minDistIndex]
+#puts "closest pid: $closestPid"
+
+# change the FXYZ of the closestPid to the coordinates of Select(xyz) obtained from the picked point.
+    set fx [lindex $Select(xyz) 0]
+    set fy [lindex $Select(xyz) 1]
+    set fz [lindex $Select(xyz) 2]
+
+    Point($closestPid,node) SetFXYZ $fx $fy $fz
+    Point($closestPid,node) SetDescription $cellId
+
+#puts $Point($closestPid,node)
+
+    EndoscopicFiducialsPointSelectedCallback $fid $closestPid
+
+    set driver Intersection
+    EndoscopicSetSliceDriver $driver
+    RenderSlices
+
+
+    MainUpdateMRML
+    Render3D
+}
+
+proc EndoscopicInsertTargets {} {
+
+    global Endoscopic Point Fiducials Module
+   
+# get the ids of the selected fiducial
+    set pid $Endoscopic(selectedFiducialPoint) 
+    set fid $Endoscopic(selectedFiducialList)
+   
+# save its XYZ FXYZ (Note: Camera fp_actor location is not always the same as the FXYZ of the Point)
+    set savedFXYZ [Point($pid,node) GetFXYZ] 
+    set savedXYZ [Point($pid,node) GetXYZ]
+    # could also use Select(cellId), but if the user accidentally clicked at several locations, it might get confusing
+    set cellId [Point($pid,node) GetDescription]
+   
+# append the listname with "-targets"
+    set listname $Fiducials($fid,name)
+    append listname -targets
+
+# check if that name exists, if not, create new list
+    if {[lsearch $Fiducials(listOfNames) $listname] == -1} {
+
+    set targetfid [[MainMrmlAddNode Fiducials] GetID]
+
+    Fiducials($targetfid,node) SetType "default"
+    Fiducials($targetfid,node) SetName $listname
+    Fiducials($targetfid,node) SetTextSize 0.0
+    Fiducials($targetfid,node) SetSymbolSize 2.0
+                                
+    MainMrmlAddNode EndFiducials
+    MainUpdateMRML
+    } else {
+
+    set targetfid $Fiducials($listname,fid)
+    }
+
+
+########## GET THE COORDINATES ################
+     set cam_mat [Endoscopic(cam,actor) GetMatrix]   
+     set fp_mat [Endoscopic(fp,actor) GetMatrix]
+   
+     set x [$cam_mat GetElement 0 3]
+     set y [$cam_mat GetElement 1 3]
+     set z [$cam_mat GetElement 2 3]
+     set fx [lindex $savedFXYZ 0]
+     set fy [lindex $savedFXYZ 1]
+     set fz [lindex $savedFXYZ 2]
+
+########## Make the Fiducial Point ###################
+
+    set index [llength $Fiducials($targetfid,pointIdList)]
+  
+    set targetpid [[MainMrmlInsertBeforeNode EndFiducials($targetfid,node) Point] GetID]
+   
+    Point($targetpid,node) SetXYZ $fx $fy $fz
+    Point($targetpid,node) SetFXYZ $x $y $z
+    Point($targetpid,node) SetIndex $index
+   
+    set index [expr $index + 1]
+    Point($targetpid,node) SetName [concat $Fiducials($targetfid,name) $index]
+    Point($targetpid,node) SetDescription $cellId
+
+MainUpdateMRML
+
+########## Get Number of Targets ################
+
+    set Endoscopic(totalTargets) [llength $Fiducials($targetfid,pointIdList)]
+    set Endoscopic(selectedTarget) $index
+   
+}
+
+proc EndoscopicUpdateTargetsInFlatWindow {widget} {
+
+    global Endoscopic Fiducials Point
+
+    set name $Endoscopic($widget,name)
+
+# delete all the lines that's already in the flat window
+    for {set linecount 0} {$linecount < $Endoscopic($name,lineCount)} {incr linecount} {
+    set renderer [[[$widget GetRenderWindow] GetRenderers] GetItemAsObject 0]
+    $renderer RemoveActor Endoscopic($name,aLineActor,$linecount)
+    Endoscopic($name,aLineActor,$linecount) Delete
+    }
+    set Endoscopic($name,lineCount) 0
+
+    [$widget GetRenderWindow] Render
+
+#get the active path name, and find the corresponding target list
+    set fid $Fiducials($Fiducials(activeList),fid)
+    set listname $Fiducials($fid,name)
+    append listname -targets
+#puts "activelistname : $listname"
+
+
+# if there is no list, then the user have not inserted any targets
+# else get the cellid from the target pid, and make the line in the flat window.
+# note to myself: the cellId is stored by Point($pid,node) SetDescription when the target was inserted
+
+    if {[lsearch $Fiducials(listOfNames) $listname] == -1} {
+    tk_messageBox -message "You have not inserted any target along this path"
+    } else {
+
+    set targetfid $Fiducials($listname,fid)
+    set list $Fiducials($targetfid,pointIdList)
+    set numP [llength $list]
+
+    for {set i 0} {$i < $numP} {incr i} {
+    set pid [lindex $list $i]
+    set cellId [Point($pid,node) GetDescription]
+
+    set polyData $Endoscopic($name,polyData)
+    set cell [$polyData GetCell $cellId]
+    set points [$cell GetPoints]
+    set point1 [$points GetPoint 0]
+    set point2 [$points GetPoint 1]
+    set point3 [$points GetPoint 2]
+
+    set x [expr [expr [expr [lindex $point1 0]+[lindex $point2 0]]+[lindex $point2 0]]/3]
+
+    set count $Endoscopic($name,lineCount)
+    set renderer [[[$widget GetRenderWindow] GetRenderers] GetItemAsObject 0]
+
+    vtkLineSource aLine
+
+    aLine SetPoint1 $x [expr $Endoscopic(flatColon,yMin) - 1] -1.0
+    aLine SetPoint2 $x [expr $Endoscopic(flatColon,yMax) + 1] -1.0      
+
+    aLine SetResolution 20
+    vtkPolyDataMapper aLineMapper
+    aLineMapper SetInput [aLine GetOutput]
+
+    vtkActor Endoscopic($name,aLineActor,$count)
+    Endoscopic($name,aLineActor,$count) SetMapper aLineMapper 
+    [Endoscopic($name,aLineActor,$count) GetProperty] SetColor 1 0 0    
+
+    $renderer AddActor Endoscopic($name,aLineActor,$count)
+
+    [$widget GetRenderWindow] Render
+
+    set Endoscopic($name,lineCount) [expr $Endoscopic($name,lineCount) + 1]
+#puts "#ofLines: $Endoscopic($name,lineCount)"    
+    aLine Delete
+    aLineMapper Delete
+    }
+  }
+
+}
+
+
+proc EndoscopicAutoSelectSourceSink {{list ""}} {
+    global Point Fiducials Select Endoscopic Model PathPlanning
+
+   set model $Model(activeID)
+   if {$model != ""} {
+  
+# the reason to use Select(actor) is because the Fiducial call back below checks for it in the begining.\
+    the actor info is then passed on to orient the direction of the camera.
+    set Select(actor) Model($model,actor,viewRen)
+#puts $Select(actor)
+  
+    set polyData $Model($model,polyData)
+
+    set cellNum [$polyData GetNumberOfCells]
+# puts   $cellNum
+    set randId  [expr round( [expr [expr rand()]*1000])]
+    set minId $randId
+    set maxId [expr [expr $cellNum -1] - $randId] 
+# puts $minId
+# puts $maxId
+
+    set Select(cellId) $minId
+# puts $Select(cellId)
+
+    set cell [$polyData GetCell $minId]
+    set points [$cell GetPoints]
+    set point2 [$points GetPoint 1]
+
+    set x [lindex $point2 0]
+    set y [lindex $point2 1]
+    set z [lindex $point2 2]
+
+    set pid [FiducialsCreatePointFromWorldXYZ "default" $x $y $z $list]
+    if { $pid != "" } {
+    set fid $Fiducials($Fiducials(activeList),fid)
+
+    Fiducials($fid,node) SetTextSize 0.0
+    Fiducials($fid,node) SetSymbolSize 1.0
+
+    PathPlanningSetSource $fid $pid
+    }
+# puts $pid    
+
+    MainUpdateMRML
+    Render3D
+
+    set Select(cellId) $maxId
+# puts $Select(cellId)
+
+    set cell [$polyData GetCell $maxId]
+    set points [$cell GetPoints]
+    set point2 [$points GetPoint 1]
+
+    set x [lindex $point2 0]
+    set y [lindex $point2 1]
+    set z [lindex $point2 2]
+
+    set pid [FiducialsCreatePointFromWorldXYZ "default" $x $y $z $list]
+   if { $pid != "" } {
+    set fid $Fiducials($Fiducials(activeList),fid)
+    PathPlanningSetSink $fid $pid
+    }
+# puts $pid    
+
+   MainUpdateMRML
+   Render3D
+
+}
+}
+
+
+
+proc EndoscopicSelectTarget {} {
+
+    global Fiducials Endoscopic Point
+
+# select target in 3D
+    if {$Endoscopic(path,activeId) == "None"} {
+
+    return
+    }
+
+    set index $Endoscopic(selectedTarget)
+
+    set id $Endoscopic(path,activeId)
+    set listname $Endoscopic($id,path,name)
+    append listname -targets
+    set list [FiducialsGetPointIdListFromName $listname]
+
+    set index [expr $index - 1]
+    set pid [lindex $list $index]
+    
+    EndoscopicResetCameraDirection    
+    EndoscopicUpdateVirtualEndoscope $Endoscopic(activeCam) [concat [Point($pid,node) GetFXYZ] [Point($pid,node) GetXYZ]]
+   
+    EndoscopicUpdateActorFromVirtualEndoscope $Endoscopic(activeCam)
+    Render3D
+
+# select target in flat window
+    if {$Endoscopic(FlatWindows) != ""} {
+
+# Fix later: as of now I am assuming the user are working with the first flat model
+# if the user want to work with several flat models at the same time, they either has to be really careful or
+# insert some checking mechanism to prevent them from adding or selecting targets in the wrong flat window.    
+    set name [lindex $Endoscopic(FlatWindows) 0]
+    
+    set widget .t$name.fView.flatRenderWidget$name
+   
+    set cellId [Point($pid,node) GetDescription]
+
+    set polyData $Endoscopic($name,polyData)
+    set cell [$polyData GetCell $cellId]
+    set points [$cell GetPoints]
+    set point1 [$points GetPoint 0]
+    set point2 [$points GetPoint 1]
+    set point3 [$points GetPoint 2]
+
+    set camx [expr [expr [expr [lindex $point1 0]+[lindex $point2 0]]+[lindex $point2 0]]/3]
+
+    set position [$Endoscopic($name,camera) GetPosition]
+  
+    set Endoscopic(flatColon,xCamDist) $camx
+    set Endoscopic(flatColon,yCamDist) [lindex $position 1]
+    set Endoscopic(flatColon,zCamDist) [lindex $position 2]
+   
+    $Endoscopic($name,camera) SetFocalPoint $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) 0
+    $Endoscopic($name,camera) SetPosition $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zCamDist)
+  
+    $Endoscopic(flatScale,panlr) set $Endoscopic(flatColon,xCamDist)
+    $Endoscopic(flatScale,panud) set $Endoscopic(flatColon,yCamDist)
+    $Endoscopic(flatScale,camZoom) set $Endoscopic(flatColon,zCamDist)
+ 
+    [$widget GetRenderWindow] Render
+
+    } else {
+
+    return
+    }
+    
+} 
+
+proc EndoscopicSelectNextTarget {} {
+
+    global Endoscopic
+
+    if {$Endoscopic(path,activeId) == "None"} {
+
+    return
+    }
+
+
+    if {$Endoscopic(selectedTarget) < $Endoscopic(totalTargets)} {
+
+    set Endoscopic(selectedTarget) [expr $Endoscopic(selectedTarget) + 1]
+
+    EndoscopicSelectTarget
+
+    } else {
+#   tk_messageBox -message "No More Targets"
+    return
+    }
+
+}  
+
+proc EndoscopicSelectPreviousTarget {} {
+
+    global Endoscopic
+    
+    if {$Endoscopic(path,activeId) == "None"} {
+
+    return
+    }
+
+
+    if {$Endoscopic(selectedTarget) > 1} {
+
+    set Endoscopic(selectedTarget) [expr $Endoscopic(selectedTarget) - 1]
+
+    EndoscopicSelectTarget
+    
+    } else {
+    return
+#    tk_messageBox -message "No More Targets"
+    }
+
+}  
+
+
+
+proc EndoscopicMoveCameraX {widget {Endoscopic(flatColon,xCamDist)""}} {
+    global Endoscopic
+ 
+  set name $Endoscopic($widget,name)
+ 
+  set position [$Endoscopic($name,camera) GetPosition]
+  
+  set Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,xCamDist)
+  set Endoscopic(flatColon,yCamDist) [lindex $position 1]
+  set Endoscopic(flatColon,zCamDist) [lindex $position 2]
+  
+     $Endoscopic($name,camera) SetFocalPoint $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) 0
+     $Endoscopic($name,camera) SetPosition $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zCamDist)
+ 
+   [$widget GetRenderWindow] Render
+}
+
+#-------------------------------------------------------------------------
+proc EndoscopicMoveCameraY {widget {Endoscopic(flatColon,yCamDist)""}} {
+   global Endoscopic
+ 
+  set name $Endoscopic($widget,name)
+
+  set position [$Endoscopic($name,camera) GetPosition]
+  
+  set Endoscopic(flatColon,xCamDist) [lindex $position 0]
+  set Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,yCamDist)
+  set Endoscopic(flatColon,zCamDist) [lindex $position 2]
+  
+  $Endoscopic($name,camera) SetFocalPoint $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) 0
+  $Endoscopic($name,camera) SetPosition $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zCamDist)
+
+  [$widget GetRenderWindow] Render
+}
+
+#-------------------------------------------------------------------------
+proc EndoscopicMoveCameraZ {widget {Endoscopic(flatColon,zCamDist)""}} {
+    global Endoscopic
+ 
+  set name $Endoscopic($widget,name)
+  set position [$Endoscopic($name,camera) GetPosition]
+
+  set Endoscopic(flatColon,xCamDist) [lindex $position 0]
+  set Endoscopic(flatColon,yCamDist) [lindex $position 1]
+  set Endoscopic(flatColon,zCamDist) $Endoscopic(flatColon,zCamDist)
+
+  $Endoscopic($name,camera) SetFocalPoint $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) 0
+  $Endoscopic($name,camera) SetPosition $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zCamDist)
+
+  [$widget GetRenderWindow] Render
+}
+
+proc EndoscopicResetFlatCameraDist {widget} {
+    global Endoscopic
+
+   set name $Endoscopic($widget,name)
+   set position [$Endoscopic($name,camera) GetPosition]
+  
+   set Endoscopic(flatColon,xCamDist) [lindex $position 0]
+   set Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,yMid)
+   set Endoscopic(flatColon,zCamDist) $Endoscopic(flatColon,zOpt)
+   
+  $Endoscopic($name,camera) SetFocalPoint $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) 0
+  $Endoscopic($name,camera) SetPosition $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zCamDist)
+  
+  $Endoscopic(flatScale,panlr) set $Endoscopic(flatColon,xCamDist)
+  $Endoscopic(flatScale,panud) set $Endoscopic(flatColon,yCamDist)
+  $Endoscopic(flatScale,camZoom) set $Endoscopic(flatColon,zCamDist)
+          
+  [$widget GetRenderWindow] Render
+  
+    
+}
+
+# this is just a sample proc for debugging
+proc EndoscopicTempProc {args} {
+global Endoscopic
+
+puts "ycamdist: $Endoscopic(flatColon,yCamDist)"
+}
