@@ -138,7 +138,7 @@ proc TesterInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.2 $} {$Date: 2000/08/09 21:13:09 $}]
+		{$Revision: 1.3 $} {$Date: 2000/11/07 20:54:29 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -148,6 +148,7 @@ proc TesterInit {} {
 	#   the procedures in this module and others need to access.
 	#
         set Tester(SourceFileName) ""
+        set Tester(NewModuleFileName) ""
 	set Tester(ModuleFileName) ""
 	set Tester(MainFileName)   ""
 	set Tester(SharedFileName) ""
@@ -159,6 +160,8 @@ proc TesterInit {} {
 
         set Tester(Count) 0
 	set Tester(eventManager)  ""
+        set Tester(verbose) 1
+
 }
 
 
@@ -189,6 +192,7 @@ proc TesterBuildGUI {} {
         #   Main
         #   Module
         #   Shared
+        #   NewModule
         #   Bottom
         # Watch
         #-------------------------------------------
@@ -201,12 +205,14 @@ proc TesterBuildGUI {} {
         # Refer to the documentation for details on the syntax.
         #
         set help " The Tester module is for developers only.  It 
- allows the developer to re-source code as changes are made to it,
- without restarting the slicer. 
+ allows the developer to source code by specifying a file name or to source modules as changes are made to them.
 <BR><BR>
 For modules, GUI's are re-made so
 that one can easily tweak a user-interface and until the results look
 nice. 
+<BR><BR>
+ Writing a new module? The Tester now has
+the ability to setup new modules so that you need not restart the slicer.
 <BR><BR>
  A good thing to add would be a \"Watch\" that allows the developer to watch the values of selected variables. But, I haven't done it yet.<p>
 
@@ -222,7 +228,7 @@ up. To fix this, simply exit and enter the Tester. "
         set fSource $Module(Tester,fSource)
         set f $fSource
 
-        foreach frame "Browse Main Module Shared Bottom" {
+        foreach frame "Browse Main Module Shared NewModule Bottom" {
                 frame $f.f$frame -bg $Gui(activeWorkspace)
                 pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
         }
@@ -232,7 +238,6 @@ up. To fix this, simply exit and enter the Tester. "
         #-------------------------------------------
         set f $fSource.fBrowse
 
-
         DevAddFileBrowse $f Tester SourceFileName "File to Source:" "source \$Tester\(SourceFileName\)" "tcl" ""  "Browse for a new module" 
 
         #-------------------------------------------
@@ -241,6 +246,7 @@ up. To fix this, simply exit and enter the Tester. "
         set f $fSource.fMain
         DevAddLabel $f.lSource "Or, Source an existing Module:"
         pack $f.lSource -side top -padx $Gui(pad) -fill x -pady $Gui(pad)
+
         DevAddSelectButton Tester $f MainModules  "Main" Pack
 
         set f $fSource.fModule
@@ -251,6 +257,28 @@ up. To fix this, simply exit and enter the Tester. "
 
         DevAddSelectButton Tester $f SharedModules  "Shared" Pack
 
+        DevAddButton $fSource.fMain.bMain Reload \
+                {TesterSourceModule Main $Tester(MainFileName)}
+        DevAddButton $fSource.fModule.bModule Reload \
+                {TesterSourceModule Module $Tester(ModuleFileName)}
+        DevAddButton $fSource.fShared.bShared Reload \
+                {TesterSourceModule Shared $Tester(SharedFileName)}
+
+        pack $fSource.fMain.bMain -side right -padx $Gui(pad)
+        pack $fSource.fModule.bModule -side right -padx $Gui(pad)
+        pack $fSource.fShared.bShared -side right -padx $Gui(pad)
+
+        #-------------------------------------------
+        # Source->NewModule frame
+        #-------------------------------------------
+
+        set f $fSource.fNewModule
+
+        DevAddLabel $f.lSource "Or, Read in a New Module:"
+        pack $f.lSource -side top -padx $Gui(pad) -fill x -pady $Gui(pad)
+
+        DevAddFileBrowse $f Tester NewModuleFileName "New Module to Source:" "TesterReadNewModule \$Tester\(NewModuleFileName\)" "tcl" ""  "Browse for a new module"
+
         #-------------------------------------------
         # Source->Bottom frame
         #-------------------------------------------
@@ -260,7 +288,7 @@ up. To fix this, simply exit and enter the Tester. "
         pack $f.lSource -side top -padx $Gui(pad) -fill x
         set Tester(lSource) $f.lSource
 
-#        pack $f.bCount $f.bCount $f.eCount -side left -padx $Gui(pad) -pady $Gui(pad)
+
 
 }
 
@@ -329,18 +357,22 @@ proc TesterSourceModule {type Module} {
    global Tester
 
     if {$Module == ""} return
+    if {$type == ""} return
 
     ## Expand the path name of each type differently
 
     if {$type == "Main"} { 
         set path [GetFullPath $Module tcl tcl-main] 
+	set Tester(MainFileName) $Module
     }
     if {$type == "Shared"} { 
         set path [GetFullPath $Module tcl tcl-shared] 
+	set Tester(SharedFileName) $Module
     }
 
     if {$type == "Module"} { 
 	set path [GetFullPath $Module tcl tcl-modules]
+	set Tester(ModuleFileName) $Module
     }
 
     ## Source the file
@@ -411,4 +443,72 @@ proc TesterRebuildGui {ModuleName} {
 
 #    $Module(Tester,procEnter)
 #    Tab Tester row1 Source
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC TesterReadNewModule
+#
+# This is very "clugy" in that it repeats code in MainBuildGUI.
+# If changes are made to MainBuildGUI, this will not work.
+#
+# This module assumes the "More:" button is in use.
+# 
+# .ARGS
+#   str Filename the filename of the module
+# .END
+#-------------------------------------------------------------------------------
+proc TesterReadNewModule {Filename} {
+    global Module
+
+    if {$Module(more) != 1} {
+        DevWarningWindow "There is no \"More:\" button! Can't add module."
+        return
+    }
+
+    if {[file extension $Filename] != ".tcl"} {
+        DevWarningWindow "Module names must end in .tcl"
+        puts [file extension $Filename]
+        puts yo
+        return
+    }
+
+
+    # m is the name of the module
+    set m [file rootname [file tail $Filename]]
+
+    set Module($m,more) 0
+    set Module($m,row1List) ""
+    set Module($m,row1Name) ""
+    set Module($m,row1,tab) ""
+    set Module($m,row2List) ""
+    set Module($m,row2Name) ""
+    set Module($m,row2,tab) ""
+    set Module($m,row) row1
+
+    source $Filename
+
+    if {[info command ${m}Init] != ""} {
+        if {$Module(verbose) == 1} {
+            puts "INIT: ${m}Init"
+        }
+        ${m}Init
+    }
+
+    lappend Module(idList) $m
+    set Module($m,more) 1
+
+    set moreMenu $Module(mbMore).m
+    $moreMenu add command -label $m \
+            -command "set Module(btn) More; Tab $m; \
+            $Module(rMore) config -text $m"
+
+    MainBuildModuleTabs $m
+
+    if {[info exists Module($m,procGUI)] == 1} {
+        if {$Module(verbose) == 1} {
+            puts "GUI: $Module($m,procGUI)"
+        }
+        $Module($m,procGUI)
+    }
 }
