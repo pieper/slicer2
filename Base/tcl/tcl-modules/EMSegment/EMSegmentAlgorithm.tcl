@@ -185,7 +185,8 @@ proc EMSegmentAlgorithmStart { } {
    set NumInputImagesSet 0
    if {$EMSegment(SegmentMode) > 0} {
        # EMLocalSegmentation: Multiple Input Images
-       vtkImageEMLocalSegmenter EMSegment(vtkEMSegment) 
+       if {$EMSegment(SegmentMode) == 1} {vtkImageEMLocalSegmenter EMSegment(vtkEMSegment) 
+       } else {vtkImageEMPrivateSegmenter EMSegment(vtkEMSegment) }
        # How many input images do you have
        EMSegment(vtkEMSegment) SetNumInputImages $EMSegment(NumInputChannel) 
        EMSegment(vtkEMSegment) SetNumberOfTrainingSamples $EMSegment(NumberOfTrainingSamples)

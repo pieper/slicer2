@@ -133,12 +133,12 @@ proc EMSegmentInit {} {
         if {[file exist [file join $env(SLICER_HOME) ../slicer2_lmi/EMLocalSegment/builds]]} {
           puts "Load Local EM-Version"
           set EMSegment(SegmentMode) 2
-          package require vtkSlicerEMLocalSegment
+          # package require vtkEMLocalSegment
         } else {
            if {[file exist [file join $env(SLICER_HOME) Modules/vtkEMLocalSegment/builds/$env(BUILD)/bin]]} {
              set EMSegment(SegmentMode) 1
              # puts "Load Public Version 2.0"
-             package require vtkEMLocalSegment
+             # package require vtkEMLocalSegment
            } else {
              set EMSegment(SegmentMode) 0
              # puts "Load Public Version 1.0"
@@ -234,7 +234,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.26 $} {$Date: 2003/05/29 16:42:10 $}]
+        {$Revision: 1.27 $} {$Date: 2003/07/02 18:23:56 $}]
 
     # Initialize module-level variables
     #------------------------------------
