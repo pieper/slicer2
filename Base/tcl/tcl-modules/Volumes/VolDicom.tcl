@@ -1474,7 +1474,7 @@ proc DICOMReadHeaderValues { filename } {
               set seriesdesc [parser ReadText $len]
           }
           regsub -all {[^a-zA-Z0-9]} $seriesdesc "_" Volume(seriesDesc)
-          puts "got seriesdesc $::Volume(seriesDesc)"
+        if {$::Module(verbose)} { puts "got seriesdesc $::Volume(seriesDesc)"} 
 
         
         if { [parser FindElement 0x0028 0x0010] == "1" } {

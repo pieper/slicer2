@@ -86,7 +86,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.58 $} {$Date: 2004/10/07 21:14:59 $}]
+        {$Revision: 1.58.2.1 $} {$Date: 2004/12/03 18:51:05 $}]
 
     set File(filePrefix) data
 }
@@ -1093,7 +1093,9 @@ proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
         }
     } else {
         # assume that the number part is first, then a constant extenion
-        puts "Trying to parse as a dicom file"
+        if {$::Module(verbose)} {
+            puts "Trying to parse as a dicom file"
+        }
         set filePrefix [file dirname $ImageFile]/
         set num [file rootname [file tail $ImageFile]]
         # check to see if we really have a number here
