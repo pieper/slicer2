@@ -133,7 +133,7 @@ void  vtkFileOps::WriteDoubleToUShortToGEFile(char* FileName, double* vec,int XS
 // Functions to write Short Data to an MRI File
 // ---------------------------------------------------------
 /* Copyright (c) Simon Warfield simonw@bwh.harvard.edu */
-/* $Id: vtkFileOps.cxx,v 1.4 2003/08/26 16:20:16 pohl Exp $ */
+/* $Id: vtkFileOps.cxx,v 1.5 2004/10/28 22:40:31 pohl Exp $ */
 int vtkFileOps::uncompressedFileName(char *fname, char **newFileName)
 {
 #ifndef _WIN32
@@ -254,17 +254,15 @@ char* vtkFileOps::pathComponent(char *fname)
  */
 int vtkFileOps::makeDirectoryIfNeeded(char *fname)
 {
-#ifndef _WIN32
   struct stat statBuf;
   int retval = -1;
   int status = 0;
   // Kilian : change again
-  char *path = this->pathComponent(fname);
+  char *path = vtkFileOps::pathComponent(fname);
   if (fname == NULL) {
     /* It isn't possible to make a directory for a NULL file name */
     return -1;
   }
-
   if (path == NULL) {
     /* The filename is going into the current directory, which is always OK */
     return 0;
@@ -273,11 +271,15 @@ int vtkFileOps::makeDirectoryIfNeeded(char *fname)
   if (stat(path, &statBuf) != 0) {
     /* fprintf(stdout,"stat failed - '%s' doesn't exist so need to make it\n",
     path); */
-    if (this->makeDirectoryIfNeeded(path) != 0) {
+    if (vtkFileOps::makeDirectoryIfNeeded(path) != 0) {
       free(path);
       return -1; /* Some horrible failure */
     }
+#ifdef _WIN32    
+    status = CreateDirectory(path,NULL);  
+#else
     status = mkdir(path,0777);
+#endif
     if ( (status != 0) && (errno != EEXIST) ) {
         /* We don't want to treat EEXIST as a real error */
         fprintf(stderr,"mkdir failed with code %d and errno %d for path: %s\n",
@@ -288,8 +290,6 @@ int vtkFileOps::makeDirectoryIfNeeded(char *fname)
   retval = stat(path, &statBuf);
   free(path);
   return retval;
-#endif
-  return 0;
 }
 
 short vtkFileOps::convertShortFromGE(short ge)
@@ -330,7 +330,8 @@ void vtkFileOps::ensureGEByteOrderForShort(short *data, int np)
 
 int vtkFileOps::WriteMRIfile(char *fname, unsigned char *header, int headersize, short *data, int npixels)
 {
-    fprintf (stderr, "KILIAN Fix me\n");
+    fprintf (stdout, "vtkFileOps::WriteMRIfile: ERROR:KILIAN Fix me\n");
+    exit(1);
 #ifndef _WIN32
   FILE *fp = NULL;
 

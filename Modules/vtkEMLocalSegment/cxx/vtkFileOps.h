@@ -48,7 +48,8 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkFileOps { //; prevent man page generation
   // -------------------------------
   // Write MRI Functions from fileops.c
   // -------------------------------
-  int makeDirectoryIfNeeded(char *fname);
+  static int makeDirectoryIfNeeded(char *fname);
+  static char* pathComponent(char *fname);
 
 protected:
   void WriteVectorMatlabFile (FILE *f,char *name, double *vec, int xMax) const;
@@ -57,7 +58,6 @@ protected:
   void ensureGEByteOrderForShort(short *data, int np);
   int IsMSBFirstForShort(void);
   short convertShortFromGE(short ge);
-  char* pathComponent(char *fname);
   int fileIsCompressed(char *fname, char **newFileName);
   int uncompressedFileName(char *fname, char **newFileName);
 };
@@ -114,18 +114,19 @@ static void WriteToFlippedGEFile(char *filename,T *vec, int XSize, int YSize, in
 
 // Opens up a new file and writes down result in the file
 template <class T> 
-static void WriteToGEFile(char *filename,T *vec, int size) {
+static int WriteToGEFile(char *filename,T *vec, int size) {
   int appendFlag = 0;
   // If you enter - as name => prints it on the screen
   FILE *f = (strcmp(filename,"-")) ? fopen(filename,((appendFlag)?"ab":"wb")):stdout;
   if ( f == NULL ) {
     cerr << "Could not open file " << filename << "\n";
-    return;
+    return 0;
   }
   // Cannot individually do fwrite for each element - > makes a double out of it 
   fwrite(vec, sizeof(T), size, f);
   fflush(f);
   fclose(f);
+  return 1;
 }
 //ETX
 #endif
