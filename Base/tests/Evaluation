@@ -1,18 +1,18 @@
 TestAllMrml
 TestCopy
 TestImageBandedDistanceMap
-TestImageDouble2D
 TestImageDrawROI
 TestImageEMMarkov
 TestImageEMSegment
 TestImageEditor
-TestImageErode
 TestImageFrameSource
 TestImageLabelOutline
 TestImageLiveWire
 TestImageLiveWireEdgeWeights
 TestImageLiveWireScale
 TestImageLiveWireTester
+TestImageErode          OK goot_test    vtkImageErode
+TestImageDouble2D       OK good_test    vtkImageDouble2D
 TestCrossHair2D         OK pretty_good  vtkImageCrossHair
 TestImageFIllROI        OK bad_test     vtkImageFillROI
 TestImageCloseUp2D      OK   good_test   vtkImageCloseUp2D

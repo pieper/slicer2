@@ -23,15 +23,22 @@ thfast SetOutValue 0
 thfast SetInValue 1000
 
 vtkImageErode erode
-erode SetInput [thfast GetOutput]
-erode SetBackground 1000
-erode SetForeground 0
+ erode SetInput [thfast GetOutput]
+ erode SetBackground 1000
+ erode SetForeground 0
+
+vtkImageMathematics sub
+ sub SetOperationToSubtract
+ sub SetInput 0 [erode GetOutput]
+ sub SetInput 1 [thfast GetOutput]
 
 vtkImageViewer viewer
-viewer SetInput [erode GetOutput]
+viewer SetInput [sub GetOutput]
 viewer SetZSlice 22
 viewer SetColorWindow 2000
 viewer SetColorLevel 1000
+
+puts "We should consider using the vtk4 ImageErode filter ..."
 
 #make interface
 source [file join [file dirname [info script]] WindowLevelInterface.tcl]
