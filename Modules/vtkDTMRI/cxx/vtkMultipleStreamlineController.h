@@ -1,6 +1,14 @@
 // .NAME vtkImageDiffusionTensor - 
 // .SECTION Description
-// Creates a vtkCollection of vtkHyperStreamlines.
+// Creates and manages a vtkCollection of vtkHyperStreamlines.
+//
+// Individual streamlines can be started at a point, or 
+// many can be started inside a region of interest.
+// Subclasses of vtkHyperStreamline may be created instead
+// of the default vtkHyperStreamline class.
+// This class also creates collections of mappers and actors
+// for the streamlines, and can control their visibility in the scene.
+//
 
 #ifndef __vtkMultipleStreamlineController_h
 #define __vtkMultipleStreamlineController_h
@@ -90,7 +98,6 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // List of the output vtkHyperStreamlines (or subclasses)
   vtkGetObjectMacro(Streamlines, vtkCollection);
   vtkGetObjectMacro(Actors, vtkCollection);
-  //vtkGetObjectMacro(LookupTables, vtkCollection);
   vtkGetObjectMacro(Mappers, vtkCollection);
 
   // Description
@@ -185,7 +192,6 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   int InputROIValue;
 
   vtkCollection *Streamlines;
-  //vtkCollection *LookupTables;
   vtkCollection *Mappers;
   vtkCollection *Actors;
   int NumberOfVisibleActors;
@@ -197,21 +203,17 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
 
   int TypeOfHyperStreamline;
 
+  // Here we have a representative accessible object 
+  // of each type, so that the user can modify it.
+  // We copy its settings to each new created streamline.
   vtkHyperStreamline *VtkHyperStreamlineSettings;
   vtkHyperStreamlinePoints *VtkHyperStreamlinePointsSettings;
   vtkPreciseHyperStreamlinePoints *VtkPreciseHyperStreamlinePointsSettings;
 
-  // Add Parameters of standard streamlines
-  //MaximumPropagationDistance IntegrationStepLength 
-  //StepLength Radius  NumberOfSides IntegrationDirection
+  // Since only integrating both directions makes sense in the application,
+  // this is the default of this class. This prevents the objects above
+  // from changing the integration direction.
   int IntegrationDirection;
-
-  // Add parameters of precise streamlines
-
-  // Or perhaps add a representative accessible object 
-  // of each type, that the user can
-  // modify, then copy it to each new created streamline.
-
 };
 
 #endif
