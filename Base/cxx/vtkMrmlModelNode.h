@@ -107,8 +107,8 @@ public:
 
   // Description:
   // Range of scalar values to render rather than the single color designated by colorName
-  vtkSetVector2Macro(ScalarRange, int);
-  vtkGetVector2Macro(ScalarRange, int);
+  vtkSetVector2Macro(ScalarRange, float);
+  vtkGetVector2Macro(ScalarRange, float);
 
   // Description:
   // Perform registration by setting the matrix that transforms this model
@@ -139,7 +139,7 @@ protected:
   int ScalarVisibility;
 
   // Arrays
-  int ScalarRange[2];
+  float ScalarRange[2];
 
   vtkMatrix4x4 *RasToWld;
 };
