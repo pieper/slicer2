@@ -281,6 +281,8 @@ update
 puts "Loading Base..."
 package require vtkSlicerBase ;# this pulls in all of slicer
 
+package require vtkinteraction
+
 foreach m $env(SLICER_MODULES_TO_REQUIRE) {
     puts "Loading Module $m..."
     if { [catch {package require $m} errVal] } {
@@ -553,10 +555,9 @@ if {$verbose == 1} {
 }
 
 # Bootup
-global View
-set View(render_on) 1
+set ::View(render_on) 0
 MainBoot [lindex $argv 0]
-set View(render_on) 0
+set ::View(render_on) 1
 
 ### print out the versioning info
 if { $SLICER(versionInfo) != "" } {
@@ -565,7 +566,7 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.59 2003/05/30 21:47:31 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.60 2003/06/09 01:27:20 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
