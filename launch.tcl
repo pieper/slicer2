@@ -364,7 +364,7 @@ if {$env(BUILD) == $solaris ||
         # put slicer in the background on windows so it won't be "Not Responding" in
         # task manager
         regsub -all "{|}" $argv "" argv
-        set fp [open "| $env(TCL_BIN_DIR)/wish84.exe $mainscript $argv" r]
+        set fp [open "| \"$env(TCL_BIN_DIR)/wish84.exe\" $mainscript $argv" r]
     } else {
         puts stderr "Run: Unknown build: $env(BUILD)"
         exit
