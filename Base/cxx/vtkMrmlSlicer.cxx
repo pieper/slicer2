@@ -716,6 +716,7 @@ void vtkMrmlSlicer::BuildUpper(int s)
   /////////////////////////////////////////////////////
   
   v = this->ForeVolume[s];
+  node = (vtkMrmlVolumeNode*) v->GetMrmlNode();
 
   // If the None volume, then turn the Fore input off
   if (v == this->NoneVolume) 
@@ -779,6 +780,7 @@ void vtkMrmlSlicer::BuildUpper(int s)
   /////////////////////////////////////////////////////
     
   v = this->LabelVolume[s];
+  node = (vtkMrmlVolumeNode*) v->GetMrmlNode();
 
   // If the None volume, then turn the Label input off
   if (v == this->NoneVolume) 
