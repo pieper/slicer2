@@ -193,7 +193,7 @@ proc ::tkcon::Init {args} {
         alias clear dir dump echo idebug lremove
         tkcon_puts tkcon_gets observe observe_var unalias which what
     }
-    RCS        {RCS: @(#) $Id: tkcon.tcl,v 1.2 2002/08/19 16:07:37 pieper Exp $}
+    RCS        {RCS: @(#) $Id: tkcon.tcl,v 1.3 2002/11/15 01:13:08 pieper Exp $}
     HEADURL        {http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/tkcon/tkcon/tkcon.tcl?rev=HEAD}
     docs        "http://tkcon.sourceforge.net/"
     email        {jeff@hobbs.org}
@@ -547,6 +547,7 @@ proc ::tkcon::InitUI {title} {
     wm protocol $root WM_DELETE_WINDOW exit
     }
     set PRIV(base) $w
+    wm geometry $w +10-50
 
     ## Text Console
     set PRIV(console) [set con $w.text]
