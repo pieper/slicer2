@@ -30,6 +30,8 @@ ELSE (WIN32)
      INCLUDE_DIRECTORIES(
         /usr/local/include
         /usr/local/include/gsl
+	/local/os/include
+	/local/os/include/gsl
         )
 ENDIF (WIN32)
 
