@@ -55,6 +55,9 @@
 proc MainViewInit {} {
     global Module View Gui Path Preset Volume
 
+    # set global flag (used to avoid possible render loop)
+    set View(resetCameraClippingRange) 1
+
     lappend Module(procStorePresets) MainViewStorePresets
     lappend Module(procRecallPresets) MainViewRecallPresets
     set Module(View,presets) "viewUp='0 0 1' position='0 750 0' \
@@ -66,7 +69,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
     set m MainView
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.43 $} {$Date: 2002/11/15 23:20:26 $}]
+    {$Revision: 1.44 $} {$Date: 2003/01/21 23:55:15 $}]
 
     set View(viewerHeightNormal) 656
     set View(viewerWidth)  956 

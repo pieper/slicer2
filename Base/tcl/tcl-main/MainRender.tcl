@@ -42,6 +42,7 @@
 proc Render3D {{scale ""}} {
     global Video viewWin Twin twinWin View Slice
 
+    # don't render when starting/stopping the program
     if { $View(render_on) == 1 } {
         return
     }
@@ -52,7 +53,11 @@ proc Render3D {{scale ""}} {
     set rencount [$rens GetNumberOfItems] 
     for {set r 0} {$r < $rencount} {incr r} {
         set ren [$rens GetItemAsObject $r]
-        $ren ResetCameraClippingRange    
+        
+        # wrap this in global flag to avoid possible render loop
+        if {$View(resetCameraClippingRange) == 1} {
+            $ren ResetCameraClippingRange    
+        }
     }
 
     $viewWin Render
