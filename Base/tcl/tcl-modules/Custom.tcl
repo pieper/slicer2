@@ -60,98 +60,104 @@
 # .END
 #-------------------------------------------------------------------------------
 proc CustomInit {} {
-	global Custom Module Volume Model
+    global Custom Module Volume Model
+    
+    # Define Tabs
+    #------------------------------------
+    # Description:
+    #   Each module is given a button on the Slicer's main menu.
+    #   When that button is pressed a row of tabs appear, and there is a panel
+    #   on the user interface for each tab.  If all the tabs do not fit on one
+    #   row, then the last tab is automatically created to say "More", and 
+    #   clicking it reveals a second row of tabs.
+    #
+    #   Define your tabs here as shown below.  The options are:
+    #   
+    #   row1List = list of ID's for tabs. (ID's must be unique single words)
+    #   row1Name = list of Names for tabs. (Names appear on the user interface
+    #              and can be non-unique with multiple words.)
+    #   row1,tab = ID of initial tab
+    #   row2List = an optional second row of tabs if the first row is too small
+    #   row2Name = like row1
+    #   row2,tab = like row1 
+    #
+    set m Custom
+    set Module($m,row1List) "Help Stuff"
+    set Module($m,row1Name) "{Help} {Tons o' Stuff}"
+    set Module($m,row1,tab) Stuff
 
-	# Define Tabs
-	#------------------------------------
-	# Description:
-	#   Each module is given a button on the Slicer's main menu.
-	#   When that button is pressed a row of tabs appear, and there is a panel
-	#   on the user interface for each tab.  If all the tabs do not fit on one
-	#   row, then the last tab is automatically created to say "More", and 
-	#   clicking it reveals a second row of tabs.
-	#
-	#   Define your tabs here as shown below.  The options are:
-	#   
-	#   row1List = list of ID's for tabs. (ID's must be unique single words)
-	#   row1Name = list of Names for tabs. (Names appear on the user interface
-	#              and can be non-unique with multiple words.)
-	#   row1,tab = ID of initial tab
-	#   row2List = an optional second row of tabs if the first row is too small
-	#   row2Name = like row1
-	#   row2,tab = like row1 
-	#
-	set m Custom
-	set Module($m,row1List) "Help Stuff"
-	set Module($m,row1Name) "{Help} {Tons o' Stuff}"
-	set Module($m,row1,tab) Stuff
+    # Define Procedures
+    #------------------------------------
+    # Description:
+    #   The Slicer sources all *.tcl files, and then it calls the Init
+    #   functions of each module, followed by the VTK functions, and finally
+    #   the GUI functions. A MRML function is called whenever the MRML tree
+    #   changes due to the creation/deletion of nodes.
+    #   
+    #   While the Init procedure is required for each module, the other 
+    #   procedures are optional.  If they exist, then their name (which
+    #   can be anything) is registered with a line like this:
+    #
+    #   set Module($m,procVTK) CustomBuildVTK
+    #
+    #   All the options are:
+    #
+    #   procGUI   = Build the graphical user interface
+    #   procVTK   = Construct VTK objects
+    #   procMRML  = Update after the MRML tree changes due to the creation
+    #               of deletion of nodes.
+    #   procEnter = Called when the user enters this module by clicking
+    #               its button on the main menu
+    #   procExit  = Called when the user leaves this module by clicking
+    #               another modules button
+    #   procStorePresets  = Called when the user holds down one of the Presets
+    #               buttons.
+    #   procRecallPresets  = Called when the user clicks one of the Presets buttons
+    #               
+    #   Note: if you use presets, make sure to give a preset defaults
+    #   string in your init function, of the form: 
+    #   set Module($m,presets) "key1='val1' key2='val2' ..."
+    #   
+    set Module($m,procGUI) CustomBuildGUI
+    set Module($m,procEnter) CustomEnter
+    set Module($m,procExit) CustomExit
 
-	# Define Procedures
-	#------------------------------------
-	# Description:
-	#   The Slicer sources all *.tcl files, and then it calls the Init
-	#   functions of each module, followed by the VTK functions, and finally
-	#   the GUI functions. A MRML function is called whenever the MRML tree
-	#   changes due to the creation/deletion of nodes.
-	#   
-	#   While the Init procedure is required for each module, the other 
-	#   procedures are optional.  If they exist, then their name (which
-	#   can be anything) is registered with a line like this:
-	#
-	#   set Module($m,procVTK) CustomBuildVTK
-	#
-	#   All the options are:
-	#
-	#   procGUI   = Build the graphical user interface
-	#   procVTK   = Construct VTK objects
-	#   procMRML  = Update after the MRML tree changes due to the creation
-	#               of deletion of nodes.
-	#   procEnter = Called when the user enters this module by clicking
-	#               its button on the main menu
-	#   procExit  = Called when the user leaves this module by clicking
-	#               another modules button
-	#   procStorePresets  = Called when the user holds down one of the Presets
-	#               buttons.
-	#   procRecallPresets  = Called when the user clicks one of the Presets buttons
-	#               
-	#   Note: if you use presets, make sure to give a preset defaults
-	#   string in your init function, of the form: 
-	#   set Module($m,presets) "key1='val1' key2='val2' ..."
-	#   
-	set Module($m,procGUI) CustomBuildGUI
-	set Module($m,procEnter) CustomEnter
-	set Module($m,procExit) CustomExit
+    # Define Dependencies
+    #------------------------------------
+    # Description:
+    #   Record any other modules that this one depends on.  This is used 
+    #   to check that all necessary modules are loaded when Slicer runs.
+    #   
+    set Module($m,depend) ""
 
-	# Define Dependencies
-	#------------------------------------
-	# Description:
-	#   Record any other modules that this one depends on.  This is used 
-	#   to check that all necessary modules are loaded when Slicer runs.
-	#   
-	set Module($m,depend) ""
+    # Set version info
+    #------------------------------------
+    # Description:
+    #   Record the version number for display under Help->Version Info.
+    #   The strings with the $ symbol tell CVS to automatically insert the
+    #   appropriate revision number and date when the module is checked in.
+    #   
+    lappend Module(versions) [ParseCVSInfo $m \
+	    {$Revision: 1.20 $} {$Date: 2000/11/09 01:04:02 $}]
 
-        # Set version info
-	#------------------------------------
-	# Description:
-	#   Record the version number for display under Help->Version Info.
-	#   The strings with the $ symbol tell CVS to automatically insert the
-	#   appropriate revision number and date when the module is checked in.
-	#   
-	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.19 $} {$Date: 2000/10/02 19:58:49 $}]
+    # Initialize module-level variables
+    #------------------------------------
+    # Description:
+    #   Keep a global array with the same name as the module.
+    #   This is a handy method for organizing the global variables that
+    #   the procedures in this module and others need to access.
+    #
+    set Custom(count) 0
+    set Custom(Volume1) $Volume(idNone)
+    set Custom(Model1)  $Model(idNone)
+    set Custom(FileName)  ""
 
-	# Initialize module-level variables
-	#------------------------------------
-	# Description:
-	#   Keep a global array with the same name as the module.
-	#   This is a handy method for organizing the global variables that
-	#   the procedures in this module and others need to access.
-	#
-	set Custom(count) 0
-	set Custom(Volume1) $Volume(idNone)
-	set Custom(Model1)  $Model(idNone)
-        set Custom(FileName)  ""
-	set Custom(eventManager)  ""
+    # Event bindings! (see CustomEnter, CustomExit, tcl-shared/Events.tcl)
+    set Custom(eventManager)  { \
+	    {all <Shift-1> {CustomBindingCallback Shift-1 %W %X %Y %x %y %t}} \
+	    {all <Shift-2> {CustomBindingCallback Shift-2 %W %X %Y %x %y %t}} \
+	    {all <Shift-3> {CustomBindingCallback Shift-3 %W %X %Y %x %y %t}} }
+    
 }
 
 
@@ -180,106 +186,142 @@ proc CustomInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc CustomBuildGUI {} {
-	global Gui Custom Module Volume Model
-
-	# A frame has already been constructed automatically for each tab.
-	# A frame named "Stuff" can be referenced as follows:
-	#   
-	#     $Module(<Module name>,f<Tab name>)
-	#
-	# ie: $Module(Custom,fStuff)
-
-	# This is a useful comment block that makes reading this easy for all:
-	#-------------------------------------------
+    global Gui Custom Module Volume Model
+    
+    # A frame has already been constructed automatically for each tab.
+    # A frame named "Stuff" can be referenced as follows:
+    #   
+    #     $Module(<Module name>,f<Tab name>)
+    #
+    # ie: $Module(Custom,fStuff)
+    
+    # This is a useful comment block that makes reading this easy for all:
+    #-------------------------------------------
 	# Frame Hierarchy:
-	#-------------------------------------------
-	# Help
-	# Stuff
-	#   Top
-        #   Middle
-	#   Bottom
-	#-------------------------------------------
+    #-------------------------------------------
+    # Help
+    # Stuff
+    #   Top
+    #   Middle
+    #   Bottom
+    #     FileLabel
+    #     CountDemo
+    # Bindings
+    #   TextBox
+    #-------------------------------------------
+    
+    #-------------------------------------------
+    # Help frame
+    #-------------------------------------------
+    
+    # Write the "help" in the form of psuedo-html.  
+    # Refer to the documentation for details on the syntax.
+    #
+    set help "
+    The Custom module is an example for developers.  It shows how to add a module 
+    to the Slicer.  The source code is in slicer/program/tcl-modules/Custom.tcl.
+    <P>
+    Description by tab:
+    <BR>
+    <UL>
+    <LI><B>Tons o' Stuff:</B> This tab is a demo for developers.
+    "
+    regsub -all "\n" $help {} help
+    MainHelpApplyTags Custom $help
+    MainHelpBuildGUI Custom
+    
+    #-------------------------------------------
+    # Stuff frame
+    #-------------------------------------------
+    set fStuff $Module(Custom,fStuff)
+    set f $fStuff
+    
+    foreach frame "Top Middle Bottom" {
+	frame $f.f$frame -bg $Gui(activeWorkspace)
+	pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    }
+    
+    #-------------------------------------------
+    # Stuff->Top frame
+    #-------------------------------------------
+    set f $fStuff.fTop
+    
+    #       grid $f.lStuff -padx $Gui(pad) -pady $Gui(pad)
+    #       grid $menubutton -sticky w
+    
+    # Add menus that list models and volumes
+    DevAddSelectButton  Custom $f Volume1 "Ref Volume" Grid
+    DevAddSelectButton  Custom $f Model1  "Ref Model"  Grid
+    
+    # Append these menus and buttons to lists 
+    # that get refreshed during UpdateMRML
+    lappend Volume(mbActiveList) $f.mbVolume1
+    lappend Volume(mActiveList) $f.mbVolume1.m
+    lappend Model(mbActiveList) $f.mbModel1
+    lappend Model(mActiveList) $f.mbModel1.m
+    
+    #-------------------------------------------
+    # Stuff->Middle frame
+    #-------------------------------------------
+    set f $fStuff.fMiddle
+    
+    # file browse box
+    DevAddFileBrowse $f Custom FileName "File" CustomShowFile
 
-	#-------------------------------------------
-	# Help frame
-	#-------------------------------------------
+    # confirm user's existence
+    DevAddLabel $f.lfile "You entered: <no filename yet>"
+    pack $f.lfile -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    set Custom(lfile) $f.lfile
 
-	# Write the "help" in the form of psuedo-html.  
-	# Refer to the documentation for details on the syntax.
-	#
-	set help "
-The Custom module is an example for developers.  It shows how to add a module 
-to the Slicer.  The source code is in slicer/program/tcl-modules/Custom.tcl.
-<P>
-Description by tab:
-<BR>
-<UL>
-<LI><B>Tons o' Stuff:</B> This tab is a demo for developers.
-"
-	regsub -all "\n" $help {} help
-	MainHelpApplyTags Custom $help
-	MainHelpBuildGUI Custom
+    #-------------------------------------------
+    # Stuff->Bottom frame
+    #-------------------------------------------
+    set f $fStuff.fBottom
+    
+    # make frames inside the Bottom frame for nice layout
+    foreach frame "CountDemo TextBox" {
+	frame $f.f$frame -bg $Gui(activeWorkspace) 
+	pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    }
 
-	#-------------------------------------------
-	# Stuff frame
-	#-------------------------------------------
-	set fStuff $Module(Custom,fStuff)
-	set f $fStuff
+    $f.fTextBox config -relief groove -bd 3 
 
-	foreach frame "Top Middle Bottom" {
-		frame $f.f$frame -bg $Gui(activeWorkspace)
-		pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-	}
+    #-------------------------------------------
+    # Stuff->Bottom->CountDemo frame
+    #-------------------------------------------
+    set f $fStuff.fBottom.fCountDemo
 
-	#-------------------------------------------
-	# Stuff->Top frame
-	#-------------------------------------------
-	set f $fStuff.fTop
-        
-#       grid $f.lStuff -padx $Gui(pad) -pady $Gui(pad)
-#       grid $menubutton -sticky w
+    DevAddLabel $f.lStuff "You clicked 0 times."
+    pack $f.lStuff -side top -padx $Gui(pad) -fill x
+    set Custom(lStuff) $f.lStuff
+    
+    # Here's a button with text "Count" that calls "CustomCount" when
+    # pressed.
+    DevAddButton $f.bCount Count CustomCount 
+    
+    # Tooltip example: Add a tooltip for the button
+    TooltipAdd $f.bCount "Press this button to increment the counter."
 
-        # Add menus that list models and volumes
-        DevAddSelectButton  Custom $f Volume1 "Ref Volume" Grid
-        DevAddSelectButton  Custom $f Model1  "Ref Model"  Grid
+    # entry box
+    eval {entry $f.eCount -width 5 -textvariable Custom(count) } $Gui(WEA)
+    
+    pack $f.bCount $f.eCount -side left -padx $Gui(pad) -pady $Gui(pad)
+    
 
-	# Append these menus and buttons to lists that get refreshed during UpdateMRML
-	lappend Volume(mbActiveList) $f.mbVolume1
-	lappend Volume(mActiveList) $f.mbVolume1.m
-	lappend Model(mbActiveList) $f.mbModel1
-	lappend Model(mActiveList) $f.mbModel1.m
+    #-------------------------------------------
+    # Stuff->Bottom->TextBox frame
+    #-------------------------------------------
+    set f $fStuff.fBottom.fTextBox
 
-	#-------------------------------------------
-	# Stuff->Middle frame
-	#-------------------------------------------
-	set f $fStuff.fMiddle
-
-        DevAddFileBrowse $f Custom FileName "File" CustomShowFile
-
-	#-------------------------------------------
-	# Stuff->Bottom frame
-	#-------------------------------------------
-	set f $fStuff.fBottom
-
-	DevAddLabel $f.lfile "You clicked 0 times."
-        pack $f.lfile -side top -padx $Gui(pad) -fill x
-	set Custom(lfile) $f.lfile
-
-	DevAddLabel $f.lStuff "You clicked 0 times."
-        pack $f.lStuff -side top -padx $Gui(pad) -fill x
-	set Custom(lStuff) $f.lStuff
-
-        # Here's a button with text "Count" that calls "CustomCount" when
-        # pressed.
-        DevAddButton $f.bCount Count CustomCount 
-
-        # Tooltip example: Add a tooltip for the button
-        TooltipAdd $f.bCount "Press this button to increment the counter."
-
-	eval {entry $f.eCount -width 5 -textvariable Custom(count) } \
-                $Gui(WEA)
-
-	pack $f.bCount $f.eCount -side left -padx $Gui(pad) -pady $Gui(pad)
+    # this is a convenience proc from tcl-shared/Developer.tcl
+    DevAddLabel $f.lBind "Bindings Demo"
+    pack $f.lBind -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+    
+    # here's the text box widget from tcl-shared/Widgets.tcl
+    set Custom(textBox) [ScrolledText $f.tText]
+    pack $f.tText -side top -pady $Gui(pad) -padx $Gui(pad) \
+	    -fill x -expand true
+    
 }
 
 #-------------------------------------------------------------------------------
@@ -301,6 +343,11 @@ proc CustomEnter {} {
     #   a stack and binds our new ones.
     #   (See slicer/program/tcl-shared/Events.tcl for more details.)
     pushEventManager $Custom(eventManager)
+
+    # clear the text box and put instructions there
+    $Custom(textBox) delete 1.0 end
+    $Custom(textBox) insert end "Shift-Click anywhere!\n"
+
 }
 
 #-------------------------------------------------------------------------------
@@ -336,10 +383,10 @@ proc CustomExit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc CustomUpdateGUI {} {
-	global Custom Volume
-
-   DevUpdateNodeSelectButton Volume Custom Volume1 Volume1 DevSelectNode
-   DevUpdateNodeSelectButton Model  Custom Model1  Model1  DevSelectNode
+    global Custom Volume
+    
+    DevUpdateNodeSelectButton Volume Custom Volume1 Volume1 DevSelectNode
+    DevUpdateNodeSelectButton Model  Custom Model1  Model1  DevSelectNode
 }
 
 
@@ -352,10 +399,10 @@ proc CustomUpdateGUI {} {
 # .END
 #-------------------------------------------------------------------------------
 proc CustomCount {} {
-	global Custom
-
-	incr Custom(count)
-	$Custom(lStuff) config -text "You clicked the button $Custom(count) times"
+    global Custom
+    
+    incr Custom(count)
+    $Custom(lStuff) config -text "You clicked the button $Custom(count) times"
 }
 
 
@@ -368,6 +415,26 @@ proc CustomCount {} {
 #-------------------------------------------------------------------------------
 proc CustomShowFile {} {
     global Custom
-
+    
     $Custom(lfile) config -text "You entered: $Custom(FileName)"
+}
+
+
+#{all <Shift-2> {CustomBindingCallback Shift-2 %W %X %Y %x %y %t}} }
+proc CustomBindingCallback { event W X Y x y t } {
+    global Custom
+
+    set insertText "$event at: $X $Y\n"
+    
+    switch $event {
+	"Shift-2" {
+	    set insertText "Don't poke the Slicer!\n"
+	}
+	"Shift-3" {
+	    set insertText "Ouch!\n"
+	}
+
+    }
+    $Custom(textBox) insert end $insertText
+
 }
