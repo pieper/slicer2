@@ -393,7 +393,16 @@ itcl::configbody isvolume::orientation {
 }
 
 itcl::configbody isvolume::interpolation {
-    $_reslice SetInterpolationModeTo[string totitle $itk_option(-interpolation)]
+    switch $itk_option(-interpolation) {
+        "linear" { set mode Linear }
+        "cubic" { set mode Cubic }
+        "nearest" -
+        "nearestneighbor" { set mode NearestNeighbor }
+        default {
+            error "must be nearest, linear, or cubic"
+        }
+    }
+    $_reslice SetInterpolationModeTo$mode
     $this expose
 }
 
