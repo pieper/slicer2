@@ -211,11 +211,9 @@ proc VolAnalyzeSetFileName {} {
 # .PROC VolAnalyzeApply
 # Check the file type variable and build the appropriate model or volume
 # .ARGS
-# volPropList a list of properties to be set for the new volume. If it is empty,
-# use the default values.
 # .END
 #-------------------------------------------------------------------------------
-proc VolAnalyzeApply {{volPropList ""}} {
+proc VolAnalyzeApply {{EPIReconOrder ""}} {
     global Module Volume
 
     if {$Module(verbose) == 1} {
@@ -287,12 +285,16 @@ proc VolAnalyzeApply {{volPropList ""}} {
     set Volume(dimensions) "[lindex $dims 0] [lindex $dims 1]"
     set Volume(imageRange) "1 [lindex $dims 2]"
 
-    set so [expr {$volPropList == "" ? {IS} : [lindex $volPropList 0]}]
-    set le [expr {$volPropList == "" ? 1 : [lindex $volPropList 1]}]
-    set sp [expr {$volPropList == "" ? 0 : [lindex $volPropList 2]}]
-    set Volume(scanOrder) $so 
-    set Volume(littleEndian) $le 
-    set Volume(sliceSpacing) $sp 
+    set Volume(scanOrder) IS
+    set Volume(littleEndian) 1
+    set Volume(sliceSpacing) 0 
+
+    if { $EPIReconOrder == "" } {
+        set fileType Analyze$Volume(VolAnalyze,FileType) 
+    } else {
+        set fileType AnalyzeEPIRecon$EPIReconOrder
+        set Volume(scanOrder) $EPIReconOrder
+    }
 
     # set the name and description of the volume
     $n SetName $Volume(name)
@@ -310,7 +312,8 @@ proc VolAnalyzeApply {{volPropList ""}} {
     Volume($i,node) SetScanOrder $Volume(scanOrder)
     Volume($i,node) SetNumScalars $Volume(numScalars)
     Volume($i,node) SetLittleEndian $Volume(littleEndian)
-    Volume($i,node) SetFileType Analyze$Volume(VolAnalyze,FileType) 
+    Volume($i,node) SetFileType $fileType
+
     Volume($i,node) SetFilePrefix [Volume($i,vol,rw) GetFileName] ;# NB: just one file, not a pattern
     Volume($i,node) SetFullPrefix [Volume($i,vol,rw) GetFileName] ;# needed in the range check
     Volume($i,node) SetImageRange [lindex $Volume(imageRange) 0] [lindex $Volume(imageRange) 1]
@@ -344,7 +347,7 @@ proc VolAnalyzeApply {{volPropList ""}} {
     set Volume(freeze) 0
 
     # Unfreeze
-    if {$volPropList == "" && $Module(freezer) != ""} {
+    if {$Module(freezer) != ""} {
         set cmd "Tab $Module(freezer)"
         set Module(freezer) ""
         eval $cmd

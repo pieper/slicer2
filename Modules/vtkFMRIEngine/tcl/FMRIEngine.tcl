@@ -162,7 +162,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2004/06/14 18:52:00 $}]
+        {$Revision: 1.8 $} {$Date: 2004/06/17 18:59:04 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -597,7 +597,7 @@ proc FMRIEngineLoadAnalyzeVolumes {} {
         append load $volName
         set FMRIEngine(name) $load
 
-        set id [VolAnalyzeApply]
+        set id [VolAnalyzeApply "PA"]
         set FMRIEngine($t,id) $id
 
 
@@ -691,8 +691,10 @@ proc FMRIEngineComputeActivationVolume {} {
     $n SetName "Activation"
     $n SetDescription "Activation"
 
+    
+
     eval Volume($i,node) SetSpacing [$id GetSpacing]
-    Volume($i,node) SetScanOrder IS
+    Volume($i,node) SetScanOrder [Volume($FMRIEngine(1,id),node) GetScanOrder]
     Volume($i,node) SetNumScalars [$id GetNumberOfScalarComponents]
     set ext [$id GetWholeExtent]
     Volume($i,node) SetImageRange [expr 1 + [lindex $ext 4]] [expr 1 + [lindex $ext 5]]
