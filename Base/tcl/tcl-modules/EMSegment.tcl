@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2002 Massachusetts Institute of Technology
+# (c) Copyright 2003 Massachusetts Institute of Technology
 #
 # Permission is hereby granted, without payment, to copy, modify, display 
 # and distribute this software and its documentation, if any, for any purpose, 
@@ -44,66 +44,29 @@
 #   EMSegmentFindClassAndTestfromIntClass
 #   EMSegmentChangeClass
 #   EMSegmentChangeIntensityClass 
-#   EMSegmentUpdateClassButton 
+#   EMSegmentUpdateClasses 
+#   EMSegmentPlotCurveRegion
 #   EMSegmentCalculateClassMeanCovariance
 #   EMSegmentCalcProb
-#   EMSegmentWriteTextBox  
 #   EMSegmentEraseSample  
-#   EMSegmentReadTextBox  
-#   EMSegmentScrolledText  
-#   EMSegmentScrolledHorizontal  
 #   EMSegmentCreateDeleteClasses  
 #   EMSegmentSetMaxInputChannelDef
 #   EMSegmentReadGreyValue
 #   EMSegmentDefineSample
-#   EMSegmentDisplaySampleLogValues 
-#   EMSegmentDisplaySampleLine 
-#   EMSegmentMoveRedSampleLine
-#   EMSegmentDisplaySampleCross
-#   EMSegmentEnterSample 
-#   EMSegmentCreateRedLine 
-#   EMSegmentCreateRedCross 
+#   EMSegmentEnterDisplaySample 
 #   EMSegmentLeaveSample 
 #   EMSegmentChangeVolumeGraph
 #   EMSegmentCreateGraphButton
 #   EMSegmentMultipleDrawDeleteCurveRegion
 #   EMSegmentDeleteGraphButton
 #   EMSegmentDrawDeleteCurveRegion
-#   EMSegmentCalculateClassCurveRegion 
-#   EMSegmentGlobalGuassianInside 
-#   EMSegmentFindLineMaximum 
-#   EMSegmentFind2LineMaximum 
-#   EMSegmentCheckClassCurve
-#   EMSegmentGraphGridCalculate 
-#   EMSegmentDefineCalculationBorder 
-#   EMSegmentCalculateClassGaussianDistribution
-#   EMSegmentCalculateClassGaussian2DDistribution
-#   EMSegmentSetRegionsToZero 
-#   EMSegmentSetGaussRegionToZero 
-#   EMSegmentDrawClassCurveRegion
-#   EMSegmentDrawSingleCurve
-#   EMSegmentDrawClassRegion
-#   EMSegmentDrawRegion
-#   EMSegmentCalulateGraphXleUXscnXscpXpos 
-#   EMSegmentCalulateGraphYscnYscp
-#   EMSegmentCreateXLabels 
-#   EMSegmentCreateYLabels 
-#   EMSegmentRedrawGraph 
-#   EMSegmentRescaleGraphMulti 
-#   EMSegmentRescaleGraph
-#   EMSegmentRescaleXAxis
-#   EMSegmentCreateGraphPixels 
-#   EMSegmentRescaleYAxis
 #   EMSegmentExecuteCIM 
 #   EMSegmentCreateCIMRowsColumns
 #   EMSegmentSetCIMMatrix
 #   EMSegmentChangeCIMMatrix
 #   EMSegmentSuperClassChildren 
 #   EMSegmentTrainCIMField
-#   EMSegmentDisplayHorizontal 
 #   EMSegmentEndSlice 
-#   EMSegmentLoadVolume 
-#   EMSegmentCalculateMoment
 #   EMSegmentAssignInput
 #   EMSegmentSelectfromVolumeList
 #   EMSegmentChangeVolumeSegmented 
@@ -111,14 +74,18 @@
 #   EMSegmentUpdateVolumeList
 #   EMSegmentDeleteFromSelList
 #   EMSegmentCreateMeanCovarianceRowsColumns 
-#   EMSegmentCreateLogGrayValueDisplay
 #   EMSegmentCreateGraphDisplayButton
 #   EMSegmentShowGraphWindow
 #   EMSegmentCreateGraphWindow
-#   EMSegmentCreateGraph
 #   EMSegmentCreateHistogramButton
-#   EMSegmentCalcGaussian2DExtrem
-#   EMSegmentDebug
+#   EMSegmentGraphXAxisUpdate path Xmin Xmax Xsca 
+#   EMSegmentGraphYAxisUpdate path Ymin Ymax Ysca 
+#   EMSegmentCreateDisplayRedLine 
+#   EMSegmentCreateDisplayRedCross 
+#   EMSegmentReadTextBox  
+#   EMSegmentScrolledHorizontal  
+#   EMSegmentScrolledText  
+#   EMSegmentWriteTextBox  
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -158,8 +125,8 @@ proc EMSegmentInit {} {
     # Soucre EMSegmentAlgorithm.tcl File in sudirectory
     set found [FindNames tcl-modules/EMSegment]
     if {[lsearch $found EMSegmentAlgorithm] > -1} {
-    set AlgoFile [GetFullPath EMSegmentAlgorithm tcl tcl-modules/EMSegment]
-    source $AlgoFile
+      set AlgoFile [GetFullPath EMSegmentAlgorithm tcl tcl-modules/EMSegment]
+      source $AlgoFile
     }
 
     # Define Tabs
@@ -243,7 +210,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.17 $} {$Date: 2002/12/10 18:27:52 $}]
+        {$Revision: 1.18 $} {$Date: 2003/02/01 03:32:03 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -308,6 +275,7 @@ proc EMSegmentInit {} {
     set EMSegment(Cattrib,0,ColorCode) $Gui(activeWorkspace)
     set EMSegment(Cattrib,0,Label) $EMSegment(Cattrib,0,Name)
     set EMSegment(Cattrib,0,Node) ""
+
     foreach dir  $EMSegment(CIMList) { 
     set EMSegment(Cattrib,0,CIMMatrix,$dir,Node) ""
     }
@@ -335,6 +303,8 @@ proc EMSegmentInit {} {
     set EMSegment(PrintIntermediateSlice)       [vtkEMInit GetPrintIntermediateSlice] 
     set EMSegment(PrintIntermediateFrequency)   [vtkEMInit GetPrintIntermediateFrequency] 
 
+    set EMSegment(RunRemoteFlag) 0
+    set EMSegment(RunRemoteServer) ""
     vtkEMInit Delete
 
     # Special EMSegment(SegmentMode) == 1 Variables
@@ -353,7 +323,7 @@ proc EMSegmentInit {} {
 
     # Bias Field will not be printed
     set EMSegment(BiasPrint) 0
-    set EMSegment(BiasRootFileName) ""
+    set EMSegment(PrintIntermediateDir) "."
 
     # This is not a good way of doing it but Color($i,node) is not set up when runnning through this
     # Originally :
@@ -377,38 +347,14 @@ proc EMSegmentInit {} {
     # 2 = display two 1-D Graph
     # 3 = display two 1-D Graph and one 2-D Graph (in the middle) => 3rd graph is 2D Graph 
     if {$EMSegment(SegmentMode) > 1} {
-      set EMSegment(NumGraph) 2
+      set EMSegment(NumGraph) 3
     } else {
       set EMSegment(NumGraph) 1
     }
-   
-    EMSegmentCreateDeleteClasses 1 1
-    
-    # Define for Class 0 for Histogram
-    for {set i 0} { $i < $EMSegment(NumGraph)} {incr i} {
-       set EMSegment(Cattrib,0,Graph,$i) 0
-       # Represents Volume ID choosen for paramters
-       set EMSegment(Cattrib,0,Label,$i) ""
-       set EMSegment(Cattrib,0,ColorGraphCode) #ffff00
-       # This is the VolumeID of the volume last clalculated historgram
-       set EMSegment(Graph,0,VolumeID,$i) -1  
-       set EMSegment(Graph,0,XMin,$i)     -1
-       set EMSegment(Graph,0,XMax,$i)     -1
-       set EMSegment(Graph,0,YMin,$i)     -1
-       set EMSegment(Graph,0,YMax,$i)     -1    
-    }
-    # Define Graph for "Class" panel
-    # Define Border between canvas and coord system on the rigth and left /up and down
-    set EMSegment(Graph,XboL) 25
-    set EMSegment(Graph,XboR) 5
-    set EMSegment(Graph,YboU) 5
-    set EMSegment(Graph,YboD) 12
-    # Length / 2 of scalling lines 
-    set EMSegment(Graph,Xscl) 2
-    set EMSegment(Graph,Yscl) 2
-    # Difference bettween Text and Scalling line on Axis 
-    set EMSegment(Graph,Xsct) 5
-    set EMSegment(Graph,Ysct) 12
+
+    # Define Histogram 
+    set EMSegment(Cattrib,0,ColorGraphCode) #ffb2b2 
+
     # How many Graph buttons should be in one row 
     set EMSegment(Graph,ButtonNum) 10
     # Should Probablilites be displayed in graph or not
@@ -420,46 +366,45 @@ proc EMSegmentInit {} {
     } else {
       set SingleGraphLength [expr int(350.0/(($EMSegment(NumGraph)-1)*2.0))] 
     }
+
     # Define Number Scalling in value difference
     for {set i 0} { $i < $EMSegment(NumGraph)} {incr i} {
-      # Define length of Canvas system
-      set EMSegment(Graph,Cxle,$i) 400
-      set EMSegment(Graph,Cyle,$i) $SingleGraphLength 
-      if {$i>1} {
-        incr EMSegment(Graph,Cyle,$i) $EMSegment(Graph,Cyle,$i) 
-      } 
-  
-      # Define coord system len in pixels   
-      set EMSegment(Graph,Xlen,$i) [expr $EMSegment(Graph,Cxle,$i) - $EMSegment(Graph,XboL) - $EMSegment(Graph,XboR)]
-      set EMSegment(Graph,Ylen,$i) [expr $EMSegment(Graph,Cyle,$i) - $EMSegment(Graph,YboU) - $EMSegment(Graph,YboD)]
+      # Kilian : Have to update it differently bc no control over it anymore 
 
-      set EMSegment(Graph,Xsca,$i) 50
-      set EMSegment(Graph,XscaNew,$i) $EMSegment(Graph,Xsca,$i)
+      set EMSegment(Graph,$i,Xsca) 50
       # Min - Max values
-      set EMSegment(Graph,Xmin,$i) 10
-      set EMSegment(Graph,XminNew,$i) $EMSegment(Graph,Xmin,$i) 
-      set EMSegment(Graph,Xmax,$i) 255
-      set EMSegment(Graph,XmaxNew,$i) $EMSegment(Graph,Xmax,$i)
+      set EMSegment(Graph,$i,Xmin) 10
+      set EMSegment(Graph,$i,Xmax) 260
+
       if {$i < 2} {
-        set EMSegment(Graph,Ysca,$i) 0.5
-        set EMSegment(Graph,Ymin,$i) 0.0
-        set EMSegment(Graph,Ymax,$i) 1.0
+        set EMSegment(Graph,$i,Ysca) 0.5
+        set EMSegment(Graph,$i,Ymin) 0.0
+        set EMSegment(Graph,$i,Ymax) 1.0
+    set EMSegment(Graph,$i,Yfor) "%0.2f"
+        set EMSegment(Graph,$i,Dimension) 1
       } else {
-        set EMSegment(Graph,Ysca,$i) $EMSegment(Graph,Xsca,$i)
-        set EMSegment(Graph,Ymin,$i) $EMSegment(Graph,Xmin,$i)
-        set EMSegment(Graph,Ymax,$i) $EMSegment(Graph,Xmax,$i)
+        set EMSegment(Graph,$i,Ysca) $EMSegment(Graph,$i,Xsca)
+        set EMSegment(Graph,$i,Ymin) $EMSegment(Graph,$i,Xmin)
+        set EMSegment(Graph,$i,Ymax) $EMSegment(Graph,$i,Xmax)
+      set EMSegment(Graph,$i,Yfor) "%3.0f"
+        set EMSegment(Graph,$i,Dimension) 2
         # The Minimum Display value that should be displayed in the graph
         # Leave it away right now set EMSegment(Graph,MinDisplayValue,$i) 0.000000001  
       }
-      # calulate EMSegment(Graph,XleU), EMSegment(Graph,Xscn,$index), EMSegment(Graph,Xscp,$index) and EMSegment(Graph,Xpos)
-      EMSegmentCalulateGraphXleUXscnXscpXpos $i
-      # calulate EMSegment(Graph,Yscn) and EMSegment(Graph,Yscp) 
-      EMSegmentCalulateGraphYscnYscp $i
-    }
-    # Set Global Window Position
-    set EMSegment(Graph,WindowX) 900
-    set EMSegment(Graph,WindowY) 5  
 
+      # Define coord system len in pixels   
+      set EMSegment(Graph,$i,Xlen) 370 
+      set EMSegment(Graph,$i,Ylen) [expr $EMSegment(Graph,$i,Dimension)*$SingleGraphLength - 17] 
+      # What Volume is set for the graph 
+      for {set j 0} {$j < $EMSegment(Graph,$i,Dimension)} { incr j} {
+      set EMSegment(Graph,$i,VolumeID,$j) -1
+      set EMSegment(Graph,$i,LineID,$j) -1
+      }
+    }
+
+    # Create Classes 
+    EMSegmentCreateDeleteClasses 1 1
+    
     # Event bindings! (see EMSegmentEnter, EMSegmentExit, tcl-shared/Events.tcl)
     set EMSegment(eventManager) {}
     # Not necessarily the most beautiful method but it works for right now
@@ -500,6 +445,8 @@ proc EMSegmentInit {} {
 #-------------------------------------------------------------------------------
 proc EMSegmentBuildGUI {} {
     global Gui EMSegment Module Volume Model
+    # This has to be done here otherwise reboot does not work correctly
+    set EMSegment(DisplaySampleFlag) 0
 
     # A frame has already been constructed automatically for each tab.
     # A frame named "Stuff" can be referenced as follows:
@@ -562,6 +509,7 @@ Description of the tabs:
     # EM->Step1 frame: Volume Selection
     #-------------------------------------------
     set f $fEM.fStep1
+
     if {$EMSegment(SegmentMode) < 2} {
        DevAddLabel $f.l "Step 1: Select Volume to segment"
     } else {
@@ -1153,7 +1101,7 @@ Description of the tabs:
     foreach value "1 0" text "On Off" width "4 4" {
        eval {radiobutton $f.fSect1.fCol2.fUseProb.r$value -width $width -indicatoron 0\
                -text "$text" -value "$value" -variable EMSegment(Graph,DisplayProbNew) -command { \
-               if {$EMSegment(Graph,DisplayProbNew) != $EMSegment(Graph,DisplayProb)} { set EMSegment(Graph,DisplayProb) $EMSegment(Graph,DisplayProbNew); EMSegmentRedrawGraph } }   
+               if {$EMSegment(Graph,DisplayProbNew) != $EMSegment(Graph,DisplayProb)} { set EMSegment(Graph,DisplayProb) $EMSegment(Graph,DisplayProbNew); EMSegmentUpdateClasses 0 } }   
             } $Gui(WCA)
     }
     TooltipAdd $f.fSect1.fCol2.fUseProb "Use class propability to caluclate curves in graph"
@@ -1186,12 +1134,24 @@ Description of the tabs:
         -background $EMSegment(Cattrib,$i,ColorCode) -activebackground $EMSegment(Cattrib,$i,ColorCode)
     } 
 
+    DevAddLabel $f.fSect1.fCol1.lRunRemote "Run Remotely:"
+    frame  $f.fSect1.fCol2.fRunRemote -bg $Gui(activeWorkspace)
+    eval {entry $f.fSect1.fCol2.fRunRemote.eServer -width 6 -textvariable EMSegment(RunRemoteServer) } $Gui(WEA)
+    set EMSegment(AL-eServer) $f.fSect1.fCol2.fRunRemote.eServer
+    foreach value "1 0" text "On Off" width "4 4" {
+       eval {radiobutton $f.fSect1.fCol2.fRunRemote.r$value -width $width -indicatoron 0\
+               -text "$text" -value "$value" -variable EMSegment(RunRemoteFlag) -command { 
+                   if {$EMSegment(RunRemoteFlag)} {$EMSegment(AL-eServer) configure -state normal
+                   } else {$EMSegment(AL-eServer) configure -state disabled} 
+           }
+       } $Gui(WCA)
+    }
+
+    TooltipAdd $f.fSect1.fCol2.fRunRemote "You can run the segmentation remotly on another machin - enter machine name in the blank field"
+
     DevAddButton $f.bSaveSetting "Save Setting" "EMSegmentSaveSetting 1"
     pack $f.bSaveSetting -side top -padx $Gui(pad) -pady 0
 
-
-    DevAddLabel $f.fSect1.fCol1.lEmpty1 ""
-    DevAddLabel $f.fSect1.fCol2.lEmpty1 ""
 
     DevAddLabel $f.fSect1.fCol1.lEmpty2 ""
     DevAddLabel $f.fSect1.fCol2.lEmpty2 ""
@@ -1210,6 +1170,10 @@ Description of the tabs:
 
     DevAddLabel $f.fSect1.fCol1.lEmpty7 ""
     DevAddLabel $f.fSect1.fCol2.lEmpty7 ""
+
+    DevAddLabel $f.fSect1.fCol1.lEmpty8 ""
+    DevAddLabel $f.fSect1.fCol2.lEmpty8 ""
+
    
     # Pack 2. Block
     pack $f.fSect1.fCol1.lEMI $f.fSect1.fCol1.lMRFI $f.fSect1.fCol1.lAlpha -side top -padx $Gui(pad) -pady 2 -anchor w 
@@ -1246,6 +1210,14 @@ Description of the tabs:
 
       pack $f.fSect1.fCol1.lIntensityClass -side top -padx $Gui(pad) -pady 2 -anchor w 
       pack $f.fSect1.fCol2.mbIntensityClass -side top -anchor w
+    }
+
+    if {$EMSegment(SegmentMode)} {
+      pack $f.fSect1.fCol1.lEmpty8 $f.fSect1.fCol2.lEmpty8 -side top -padx $Gui(pad) -pady 1 -anchor w 
+
+      pack $f.fSect1.fCol1.lRunRemote  -side top -padx $Gui(pad) -pady 2 -anchor w 
+      pack $f.fSect1.fCol2.fRunRemote -side top -anchor w
+      pack $f.fSect1.fCol2.fRunRemote.r1  $f.fSect1.fCol2.fRunRemote.r0 $f.fSect1.fCol2.fRunRemote.eServer -side left -fill x
     }
     # Special Function Calls
     # Depending on the Situation we want to en- or disable certain fields
@@ -1356,28 +1328,20 @@ proc EMSegmentShowFile {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentBindingCallback { event x y} {
-    # W = window where mouse was over !
     global EMSegment
-
-    # Find out intensity at pixel and update class
-    # EMSegmentReadGreyValue $X $Y
     switch -exact $event {
-    "Display" { set SampleList [EMSegmentReadGreyValue $x $y]
-                EMSegmentDisplaySampleLogValues $SampleList
-                set ValList [EMSegmentDisplaySampleLine $SampleList]
-                if {$EMSegment(NumGraph) > 2} {EMSegmentDisplaySampleCross $ValList}
-                  }
     "Sample"  { if {$EMSegment(UseSamples) == 0} {
                   DevErrorWindow "Before taking samples, the 'Use Sample' button in the Class tab has to be checked !"
                   return
                 }
-            EMSegmentDefineSample [EMSegmentReadGreyValue $x $y]
+                EMSegmentDefineSample [EMSegmentReadGreyValue $x $y 1]
                 # Update Just Mean and Sigma Values
                 EMSegmentCalculateClassMeanCovariance
                 EMSegmentDisplayClassDefinition
-                  }
-    "Enter"   { EMSegmentEnterSample $x $y}
-        "Leave"   { EMSegmentLeaveSample}
+              }
+    "Enter"   { EMSegmentEnterDisplaySample $x $y}
+    "Display" { EMSegmentEnterDisplaySample $x $y}
+    "Leave"   { EMSegmentLeaveSample}
     }
 }
 
@@ -1477,7 +1441,7 @@ proc EMSegmentUpdateMRML {} {
         set EMSegment(StartSlice)                 [Segmenter($pid,node) GetStartSlice]
         set EMSegment(EndSlice)                   [Segmenter($pid,node) GetEndSlice]                 
         set EMSegment(Graph,DisplayProbNew)       [Segmenter($pid,node) GetDisplayProb]                 
-        if {$EMSegment(Graph,DisplayProbNew) != $EMSegment(Graph,DisplayProb)} { set EMSegment(Graph,DisplayProb) $EMSegment(Graph,DisplayProbNew); EMSegmentRedrawGraph }    
+        if {$EMSegment(Graph,DisplayProbNew) != $EMSegment(Graph,DisplayProb)} { set EMSegment(Graph,DisplayProb) $EMSegment(Graph,DisplayProbNew); EMSegmentUpdateClasses 0 }    
         set EMSegment(NumberOfTrainingSamples)    [Segmenter($pid,node) GetNumberOfTrainingSamples]
         set IntensityAvgClass                     [Segmenter($pid,node) GetIntensityAvgClass]    
         EMSegmentChangeClass 0
@@ -1490,10 +1454,7 @@ proc EMSegmentUpdateMRML {} {
         if {($NumberOfGraphs < $EMSegment(NumGraph)) && ($NumberOfGraphs < 2)} {
           lappend EMSegment(SegmenterGraphNodeList)  $item 
           set pid [$item GetID]
-          set EMSegment(Graph,XminNew,$NumberOfGraphs) [SegmenterGraph($pid,node) GetXmin]
-          set EMSegment(Graph,XmaxNew,$NumberOfGraphs) [SegmenterGraph($pid,node) GetXmax]
-          set EMSegment(Graph,XscaNew,$NumberOfGraphs) [SegmenterGraph($pid,node) GetXsca]
-          EMSegmentRescaleGraphMulti $NumberOfGraphs
+      GraphRescaleAxis EMSegment $EMSegment(Graph,$NumberOfGraphs,path) [SegmenterGraph($pid,node) GetXmin] [SegmenterGraph($pid,node) GetXmax] [SegmenterGraph($pid,node) GetXsca] 0
           incr NumberOfGraphs
         }
     } elseif {$ClassName == "vtkMrmlSegmenterInputNode" } {
@@ -1717,12 +1678,11 @@ proc EMSegmentMRMLDeleteCreateNodesListEntries {Type New} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentSaveSetting {FileFlag} {
-    global EMSegment Volume
+proc EMSegmentSaveSetting {FileFlag {FileName -1}} {
+    global EMSegment Volume Mrml
     # -------------------------------------------------------------------
     # 1.) Segmenter 
     # -------------------------------------------------------------------
-    
     #Do we already have an instance or not
     if { $EMSegment(SegmenterNode) == ""} { 
        set EMSegment(SegmenterNode) [MainMrmlAddNode Segmenter]
@@ -1754,11 +1714,12 @@ proc EMSegmentSaveSetting {FileFlag} {
     EMSegmentMRMLDeleteCreateNodesListEntries Graph [expr $EMSegment(NumGraph) > 1 ? 2 : 1]
     # Update Values
     set i 0
+    # Kilian Change this here
     foreach id $EMSegment(SegmenterGraphNodeList) { 
        set pid [$id GetID]
-       SegmenterGraph($pid,node) SetXmin  $EMSegment(Graph,Xmin,$i)
-       SegmenterGraph($pid,node) SetXmax  $EMSegment(Graph,Xmax,$i)
-       SegmenterGraph($pid,node) SetXsca  $EMSegment(Graph,Xsca,$i)
+       SegmenterGraph($pid,node) SetXmin  $EMSegment(Graph,$i,Xmin)
+       SegmenterGraph($pid,node) SetXmax  $EMSegment(Graph,$i,Xmax)
+       SegmenterGraph($pid,node) SetXsca  $EMSegment(Graph,$i,Xsca)
        incr i
     } 
     # -------------------------------------------------------------------
@@ -1780,7 +1741,11 @@ proc EMSegmentSaveSetting {FileFlag} {
    set EMSegment(Cattrib,$EMSegment(Class),ProbabilityData) $EMSegment(ProbVolumeSelect)
    EMSegmentSaveSettingSuperClass 0 $id
      
-   if {$FileFlag} {MainMenu File SaveAs}
+   # We can directly save as a file
+   if {$FileFlag} {
+       if {$FileName == -1} {MainMenu File SaveAs
+   } else {MainMrmlWrite $FileName}
+   }       
 }
 
 #-------------------------------------------------------------------------------
@@ -1897,7 +1862,7 @@ proc EMSegmentChangeSuperClassName {Active} {
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentStartEM { } {
-   global EMSegment Volume Mrml
+   global EMSegment Volume Mrml env tcl_platform
    # ----------------------------------------------
    # 1. Update Values
    # ----------------------------------------------
@@ -1922,31 +1887,51 @@ proc EMSegmentStartEM { } {
    # ----------------------------------------------
    # 3. Call Algorithm
    # ----------------------------------------------
-
-   set NumInputImagesSet [EMSegmentAlgorithmStart] 
+   if {$EMSegment(RunRemoteFlag)} {
+      # 1.) Save the file
+      EMSegmentSaveSetting 1 [file join $env(SLICER_HOME) TempBlubber.xml]
+      # 2.) Run the command
+      puts "============================================================================"
+      puts "Runing segmentation on  $EMSegment(RunRemoteServer) "
+      # exec ssh $EMSegment(RunRemoteServer) "cd [file join $env(SLICER_HOME) Modules/EMLocalSegment/scripts/]; ./segmentSubject [file join $env(SLICER_HOME) TempBlubber.xml] 0 >> [file join $env(SLICER_HOME) EMSegment.log]"
+      exec ssh $EMSegment(RunRemoteServer) "cd [file join $env(SLICER_HOME) Modules/EMLocalSegment/scripts/]; ./segmentSubject [file join $env(SLICER_HOME) TempBlubber.xml] 0"
+      puts "Returning to Slicer"
+      puts "============================================================================"      
+      bell
+      bell
+      bell
+   } else {
+     set NumInputImagesSet [EMSegmentAlgorithmStart] 
+   }  
    # ----------------------------------------------
    # 4. Write Back Results 
    # ----------------------------------------------
-   set result [DevCreateNewCopiedVolume [lindex $EMSegment(SelVolList,VolumeList) 0] "" "EMSegResult" ]
+   set VolIndex [lindex $EMSegment(SelVolList,VolumeList) 0]
+   set result [DevCreateNewCopiedVolume $VolIndex "" "EMSegResult" ]
    set node [Volume($result,vol) GetMrmlNode]
    $node SetLabelMap 1
    Mrml(dataTree) RemoveItem $node 
-   set nodeBefore [Volume([lindex $EMSegment(SelVolList,VolumeList) 0],vol) GetMrmlNode]
+   set nodeBefore [Volume($VolIndex,vol) GetMrmlNode]
    Mrml(dataTree) InsertAfterItem $nodeBefore $node
    # Display Result in label mode 
    Volume($result,vol) UseLabelIndirectLUTOn
    Volume($result,vol) Update
    Volume($result,node) SetLUTName -1
    Volume($result,node) SetInterpolate 0
-   # Volume($result,node) SetScalarTypeToUnsignedShort
    #  Write Solution to new Volume  -> Here the thread is called
-   Volume($result,vol) SetImageData [EMSegment(vtkEMSegment) GetOutput]
-   EMSegment(vtkEMSegment) Update
-  
-   # ----------------------------------------------
-   # 5. Recover Values 
-   # ----------------------------------------------
-   if {$EMSegment(SegmentMode) > 0} {
+   if {$EMSegment(RunRemoteFlag)} {
+     Volume($result,node) SetFilePrefix [file join $Mrml(dir) EMResult]
+     Volume($result,node) SetFullPrefix [file join $Mrml(dir) EMResult]
+     if {$tcl_platform(byteOrder) == "littleEndian"} { Volume($result,node) SetLittleEndian 1
+     } else { Volume($result,node) SetLittleEndian 0}    
+     MainVolumesRead $result
+   } else {
+     Volume($result,vol) SetImageData [EMSegment(vtkEMSegment) GetOutput]
+     EMSegment(vtkEMSegment) Update
+     # ----------------------------------------------
+     # 5. Recover Values 
+     # ----------------------------------------------
+     if {$EMSegment(SegmentMode) > 0} {
        set index 0
        foreach v $EMSegment(SelVolList,VolumeList) {
          if {$EMSegment(IntensityAvgValue,$v) < 0} {
@@ -1954,11 +1939,11 @@ proc EMSegmentStartEM { } {
          }
        incr index
        }
+     }
+
+     # Update MRML Tree
+     EMSegmentSaveSetting 0
    }
-
-   # Update MRML Tree
-   EMSegmentSaveSetting 0
-
 
    # Update MRML
    MainUpdateMRML
@@ -1971,19 +1956,23 @@ proc EMSegmentStartEM { } {
    # ----------------------------------------------
    # 6. Clean up mess 
    # ----------------------------------------------
-   # This is done so the vtk instance won't be called again when saving the model
-   if {$EMSegment(SegmentMode) > 0} {
+   if {$EMSegment(RunRemoteFlag)} {
+       exec rm [file join $env(SLICER_HOME) TempBlubber.xml]
+   } else {
+     # This is done so the vtk instance won't be called again when saving the model
+     if {$EMSegment(SegmentMode) > 0} {
        while {$NumInputImagesSet > 0} {
        incr NumInputImagesSet -1
        EMSegment(vtkEMSegment) SetInputIndex $NumInputImagesSet "" 
        }
-   } else {
+     } else {
        EMSegment(vtkEMSegment) SetInput ""
-   } 
-   Volume($result,vol) SetImageData [EMSegment(vtkEMSegment) GetOutput]
-   EMSegment(vtkEMSegment) SetOutput ""
-   # Delete instance
-   EMSegment(vtkEMSegment) Delete
+     } 
+     Volume($result,vol) SetImageData [EMSegment(vtkEMSegment) GetOutput]
+     EMSegment(vtkEMSegment) SetOutput ""
+     # Delete instance
+     EMSegment(vtkEMSegment) Delete
+   }
 }
 
 #-------------------------------------------------------------------------------
@@ -2025,10 +2014,14 @@ proc EMSegmentClickLabel {{Sclass ""} {ActiveGui ""} {label ""} {colorcode ""} }
        }
     }
     # Color Graph new 
+    if {$EMSegment(Cattrib,$Sclass,IsSuperClass) == 0} {
+    set RGB [GraphHexToRGB [string range $EMSegment(Cattrib,$Sclass,ColorCode) 1 6]]
     for {set i 0} { $i < $EMSegment(NumGraph)} {incr i} {
-       if {$EMSegment(Cattrib,$Sclass,Graph,$i) } {
-          $EMSegment(Cl-caGraph$i) itemconfigure  Graph$Sclass -fill $EMSegment(Cattrib,$Sclass,ColorCode)
-       }
+        if {$EMSegment(Graph,$i,ID,$Sclass) > -1 } {
+        EMSegment(Graph,$EMSegment(Graph,$i,path),vtkImageGraph) SetColor [EMSegment(Graph,$i,Data,$Sclass) GetOutput] [lindex $RGB 0] [lindex $RGB 1] [lindex $RGB 2]
+        GraphRender EMSegment $EMSegment(Graph,$i,path)
+        }
+    }
     }
 
     $EMSegment(EM-mbClasses).m entryconfigure $Sclass -background $EMSegment(Cattrib,$Sclass,ColorCode) \
@@ -2419,29 +2412,70 @@ proc EMSegmentChangeIntensityClass {Sclass reset} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC  EMSegmentUpdateClassButton 
-# Calculates  the mean and Sigma
+# .PROC  EMSegmentUpdateClasses 
+# Updates the class vlaues and plots the new curves 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentUpdateClassButton { } {
+proc EMSegmentUpdateClasses {flag} {
     global EMSegment
-    set Sclass $EMSegment(Class)
-    set Change [EMSegmentCalculateClassMeanCovariance]
+    EMSegmentCalculateClassMeanCovariance
+    EMSegmentCalcProb
+    # Kilian - Just one 1D right now 
     for {set i 0} { $i < $EMSegment(NumGraph)} {incr i} {
-    if {$EMSegment(Cattrib,$Sclass,Graph,$i)} {
-        set Change [EMSegmentCalculateClassCurveRegion $Sclass $i]
-        if {$Change == -1} {return}
+    if {($EMSegment(Graph,$i,VolumeID,0)  == -1) && ($flag)} {
+        DevErrorWindow "Please select a volume at the yellow graph button before triing to plot a histogram!"
+        return -1
+        } else {
+        EMSegmentPlotCurveRegion $i
     }
     }
-    set ChangeProb [EMSegmentCalcProb]
-    for {set i 0} { $i < $EMSegment(NumGraph)} {incr i} {
-    if {[expr ($Change == 1) && ($ChangeProb == 0) && $EMSegment(Cattrib,$Sclass,Graph,$i)]} {
-        EMSegmentDrawClassCurveRegion $Sclass $i
-    }
-    }    
 }
+#-------------------------------------------------------------------------------
+# .PROC  EMSegmentPlotCurveRegion
+# Plot the curves of a graph
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMSegmentPlotCurveRegion {numGraph} {
+    global EMSegment
+    # Update History Plot
+    if {$EMSegment(Graph,$numGraph,Dimension) == 1} { 
+    set NumIndex [lsearch -exact $EMSegment(SelVolList,VolumeList) $EMSegment(Graph,$numGraph,VolumeID,0)]
+    if {$NumIndex > -1} {
+        EMSegment(Graph,$numGraph,Data,0)Accu SetInput [Volume($EMSegment(Graph,$numGraph,VolumeID,0),vol) GetOutput]
+        EMSegment(Graph,$numGraph,Data,0)Accu Update
+        EMSegment(Graph,$numGraph,Data,0)Res Update
+    }
 
+    # Update Classes
+    foreach j $EMSegment(GlobalClassList) {
+        if {$NumIndex > -1} {
+        EMSegment(Graph,$numGraph,Data,$j) SetMean        $EMSegment(Cattrib,$j,LogMean,$NumIndex)  0
+            EMSegment(Graph,$numGraph,Data,$j) SetCovariance  $EMSegment(Cattrib,$j,LogCovariance,$NumIndex,$NumIndex) 0 0
+        }
+        EMSegment(Graph,$numGraph,Data,$j) SetProbability [expr ($EMSegment(Graph,DisplayProb) > 0 ?  $EMSegment(Cattrib,$j,Prob) : 1.0)]
+        EMSegment(Graph,$numGraph,Data,$j) Update
+    }
+    } else {
+    set NumIndex(0) [lsearch -exact $EMSegment(SelVolList,VolumeList) $EMSegment(Graph,$numGraph,VolumeID,0)]
+    set NumIndex(1) [lsearch -exact $EMSegment(SelVolList,VolumeList) $EMSegment(Graph,$numGraph,VolumeID,1)]
+    # Update Classes
+    foreach j $EMSegment(GlobalClassList) {
+        if {($NumIndex(0) > -1) && ($NumIndex(1) > -1)} {
+        for {set y 0 } { $y < 2} {incr y} {
+            EMSegment(Graph,$numGraph,Data,$j) SetMean        $EMSegment(Cattrib,$j,LogMean,$NumIndex($y))  $y
+            for {set x 0 } {$x < 2} {incr x} {
+            EMSegment(Graph,$numGraph,Data,$j) SetCovariance  $EMSegment(Cattrib,$j,LogCovariance,$NumIndex($y),$NumIndex($x)) $y $x 
+            }
+        }
+        } 
+        EMSegment(Graph,$numGraph,Data,$j) SetProbability [expr ($EMSegment(Graph,DisplayProb) > 0 ?  $EMSegment(Cattrib,$j,Prob) : 1.0)]
+        EMSegment(Graph,$numGraph,Data,$j) Update
+    }
+    }
+    GraphRender EMSegment $EMSegment(Graph,$numGraph,path)
+}
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentCalculateClassMeanCovariance
 # Calculates  the mean and Sigma 
@@ -2548,49 +2582,15 @@ proc EMSegmentCalcProb {} {
        set NormProb [expr $NormProb + $EMSegment(Cattrib,$i,Prob)]
     }  
     # Round it up or down otherwise it recalculates everything every time this function is called  
-    if {($NormProb == 0.0) || ($NormProb == 1.0)} {return 0} 
+    if {($NormProb == 0.0) || ($NormProb == 1.0)} {return} 
+
     set OldNorm $NormProb
     foreach i $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) { 
-    set EMSegment(Cattrib,$i,Prob) [expr round($EMSegment(Cattrib,$i,Prob) / $NormProb * 100) / 100.0]
-    set OldNorm [expr $OldNorm - $EMSegment(Cattrib,$i,Prob)]
+      set EMSegment(Cattrib,$i,Prob) [expr round($EMSegment(Cattrib,$i,Prob) / $NormProb * 100) / 100.0]
+      set OldNorm [expr $OldNorm - $EMSegment(Cattrib,$i,Prob)]
     }  
-    #Redraw Graph
-    if [expr ($OldNorm != 0.0) && $EMSegment(Graph,DisplayProb)] {
-    EMSegmentRedrawGraph
-    return 1
-    }
-    return 0 
 }
 
-#-------------------------------------------------------------------------------
-# .PROC  EMSegmentWriteTextBox  
-# Writes values to the Sample Text Box Field  
-# EMSegment(Cattrib,$Sclass,Sample)
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentWriteTextBox {} {
-   global EMSegment
-   set Sclass $EMSegment(Class)
-   set i 1
- 
-   # Display Sample Text Box 
-   if {$EMSegment(UseSamples) == 0} {$EMSegment(Cl-textBox) configure -state normal}
-
-   $EMSegment(Cl-textBox) delete 1.0 end
-   if {$EMSegment(NumInputChannel)} {
-       set x [lindex $EMSegment(SelVolList,VolumeList) 0]       
-       foreach Sline $EMSegment(Cattrib,$Sclass,$x,Sample) {
-       if {$EMSegment(SegmentMode) < 2 } { 
-           $EMSegment(Cl-textBox) insert end "$Sline \n" 
-       } else {
-           $EMSegment(Cl-textBox) insert end "[lrange $Sline 0 2]  \n" 
-       }
-       }
-   }
-   if {$EMSegment(UseSamples) == 0} {$EMSegment(Cl-textBox) configure -state disabled}
-}
 #-------------------------------------------------------------------------------
 # .PROC  EMSegmentEraseSample  
 # Erases Sample i form the board 
@@ -2613,100 +2613,6 @@ proc EMSegmentEraseSample {i} {
     $EMSegment(Cl-mEraseSample) entryconfigure $index -command "EMSegmentEraseSample $index"
     }
     EMSegmentCalculateClassMeanCovariance 
-}
-#-------------------------------------------------------------------------------
-# .PROC  EMSegmentReadTextBox  
-# Reades Values out of the Sample Text Box Field and saves it in 
-# EMSegment(Cattrib,$Sclass,Sample)
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentReadTextBox {} {
-   global EMSegment
-   set Sclass $EMSegment(Class)
-   set i 1
-   set ErrorFlag 0
-   set ReadSample {}
-   set ReadLine [$EMSegment(Cl-textBox) get $i.0 $i.end]
-   if {$EMSegment(NumInputChannel) == 0} { return }
-   while { $ReadLine != {} && $ErrorFlag == 0}  { 
-       set ReadX [lindex $ReadLine 0]
-       set ReadY [lindex $ReadLine 1]
-       if { $EMSegment(SegmentMode) < 2 } { 
-       set ReadBrightness [lindex $ReadLine 2]
-       if {$ReadBrightness > -1} {
-           lappend ReadSample "$ReadX $ReadY $ReadBrightness"
-       } else {
-           set ErrorFlag 1 
-           DevErrorWindow "Sample $i not correctly defined !"
-           return
-       }
-       } else {
-      lappend ReadSample "$ReadX $ReadY"
-       } 
-       incr i
-       set ReadLine [$EMSegment(Cl-textBox) get $i.0 $i.end]
-   }
-   if {$ErrorFlag == 0} {
-       set vol [lindex $EMSegment(SelVolList,VolumeList) 0]
-       if { $EMSegment(SegmentMode) < 2 } { 
-       set EMSegment(Cattrib,$Sclass,$vol,Sample) $ReadSample
-       } else {
-       set index 0
-       foreach elem $EMSegment(Cattrib,$Sclass,$vol,Sample)  {
-           if {[lsearch -exact $ReadSample $elem] == -1} {
-           foreach v $EMSegment(SelVolList,VolumeList) {
-               set EMSegment(Cattrib,$Sclass,$v,Sample) [lreplace $EMSegment(Cattrib,$Sclass,$v,Sample) $index $index]
-           }
-           } else {
-           incr index
-           }
-       }
-       }
-   }
-}    
-
-#-------------------------------------------------------------------------------
-# .PROC  EMSegmentScrolledText  
-# Creates a Text box with only a Y Scroll Bar
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentScrolledText {f} {
-    global Gui
-    frame $f -bg $Gui(activeWorkspace)
-    eval {text $f.text \
-        -yscrollcommand [list $f.yscroll set] -bg} $Gui(normalButton)
-    eval {scrollbar $f.yscroll -orient vertical \
-        -command [list $f.text yview]} $Gui(WSBA)
-    grid $f.text $f.yscroll -sticky news
-    grid rowconfigure $f 0 -weight 1
-    grid columnconfigure $f 0 -weight 1
-    $f.text configure -height 6 -width 12
-    return $f.text
-}
-
-#-------------------------------------------------------------------------------
-# .PROC  EMSegmentScrolledHorizontal  
-# Creates a Text box with only a X Scroll Bar
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentScrolledHorizontal {f} {
-    global Gui
-    frame $f -bg $Gui(activeWorkspace)
-    eval {text $f.text \
-        -xscrollcommand [list $f.xscroll set] -bg} $Gui(normalButton)
-    eval {scrollbar $f.xscroll -orient horizontal \
-        -command [list $f.text yview]} $Gui(WSBA)
-    grid $f.text $f.xscroll -sticky news
-    grid rowconfigure $f 0 -weight 1
-    grid columnconfigure $f 0 -weight 1
-    $f.text configure -height 6 -width 12
-    return $f.text
 }
 
 #-------------------------------------------------------------------------------
@@ -2734,39 +2640,38 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
        foreach i $DeleteList { 
           # It is a super class => destroy also all sub classes
           if {$EMSegment(Cattrib,$i,IsSuperClass)} {
-        set SuperClass $EMSegment(SuperClass)
-            set NumClassesNew $EMSegment(NumClassesNew)
-        set EMSegment(SuperClass) $i
-        set EMSegment(NumClassesNew) 0
-        EMSegmentCreateDeleteClasses 0 $DeleteNode
-            set EMSegment(SuperClass) $SuperClass 
-            set EMSegment(NumClassesNew) $NumClassesNew
+          set SuperClass $EMSegment(SuperClass)
+          set NumClassesNew $EMSegment(NumClassesNew)
+          set EMSegment(SuperClass) $i
+          set EMSegment(NumClassesNew) 0
+          EMSegmentCreateDeleteClasses 0 $DeleteNode
+          set EMSegment(SuperClass) $SuperClass 
+          set EMSegment(NumClassesNew) $NumClassesNew
          
             # Delete from menu list 
-        set index 0
-        foreach j $EMSegment(GlobalClassList) {
-           if {$j > $i} {break}
-           incr index
-            } 
-            set SCindex [lsearch -exact $EMSegment(GlobalSuperClassList) $i]   
-        incr index $SCindex
-
-        $EMSegment(Cl-mbClasses).m delete $index $index
-        $EMSegment(EM-mbClasses).m delete $index $index
-
+          set index 0
+          foreach j $EMSegment(GlobalClassList) {
+          if {$j > $i} {break}
+          incr index
+          } 
+          set SCindex [lsearch -exact $EMSegment(GlobalSuperClassList) $i]   
+          incr index $SCindex
+          
+          $EMSegment(Cl-mbClasses).m delete $index $index
+          $EMSegment(EM-mbClasses).m delete $index $index
+          
             # Remove from Global list
-        set EMSegment(GlobalSuperClassList) [lreplace $EMSegment(GlobalSuperClassList) $SCindex $SCindex]  
+          set EMSegment(GlobalSuperClassList) [lreplace $EMSegment(GlobalSuperClassList) $SCindex $SCindex]  
          
 
             # Delete Node from Graph and unset 
-        if {$EMSegment(Cattrib,$i,Node) != "" && $DeleteNode} { 
-        puts "Delete SuperNode $i - [$EMSegment(Cattrib,$i,Node) GetID]"
-               MainMrmlDeleteNode SegmenterSuperClass [$EMSegment(Cattrib,$i,Node) GetID]
-               foreach dir $EMSegment(CIMList) {
-                  if {$EMSegment(Cattrib,$i,CIMMatrix,$dir,Node) != ""}  {MainMrmlDeleteNode SegmenterCIM [$EMSegment(Cattrib,$i,CIMMatrix,$dir,Node) GetID]}
-           } 
-           if {$EMSegment(Cattrib,$i,EndNode) != ""} { MainMrmlDeleteNode EndSegmenterSuperClass [$EMSegment(Cattrib,$i,EndNode) GetID] }
-        }
+          if {$EMSegment(Cattrib,$i,Node) != "" && $DeleteNode} { 
+          MainMrmlDeleteNode SegmenterSuperClass [$EMSegment(Cattrib,$i,Node) GetID]
+          foreach dir $EMSegment(CIMList) {
+              if {$EMSegment(Cattrib,$i,CIMMatrix,$dir,Node) != ""}  {MainMrmlDeleteNode SegmenterCIM [$EMSegment(Cattrib,$i,CIMMatrix,$dir,Node) GetID]}
+          } 
+          if {$EMSegment(Cattrib,$i,EndNode) != ""} { MainMrmlDeleteNode EndSegmenterSuperClass [$EMSegment(Cattrib,$i,EndNode) GetID] }
+          }
       } else {
             # ----------------------------------------------------
             # Delete normal class
@@ -2774,89 +2679,76 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
             # Delete the Graph Button before deleting it out of the Global List
             EMSegmentDeleteGraphButton $i
             # Delete from menu list 
-        set index 0
-         foreach j $EMSegment(GlobalSuperClassList) {
-         if {$j > $i} {break}
-         incr index
+            set index 0
+            foreach j $EMSegment(GlobalSuperClassList) {
+              if {$j > $i} {break}
+              incr index
             } 
             set Cindex [lsearch -exact $EMSegment(GlobalClassList) $i]  
-        incr index $Cindex
+            incr index $Cindex
             
-        $EMSegment(Cl-mbClasses).m delete $index $index
-        $EMSegment(EM-mbClasses).m delete $index $index
-        $EMSegment(DE-mbIntClass).m delete $Cindex $Cindex 
+            $EMSegment(Cl-mbClasses).m delete $index $index
+            $EMSegment(EM-mbClasses).m delete $index $index
+            $EMSegment(DE-mbIntClass).m delete $Cindex $Cindex 
        
             # Remove from Global list
-        set EMSegment(GlobalClassList) [lreplace $EMSegment(GlobalClassList) $Cindex $Cindex]  
+            set EMSegment(GlobalClassList) [lreplace $EMSegment(GlobalClassList) $Cindex $Cindex]  
 
-        # Delete Node from Graph 
-        if {($EMSegment(Cattrib,$i,Node) != "") && $DeleteNode} { MainMrmlDeleteNode SegmenterClass [$EMSegment(Cattrib,$i,Node) GetID] }
-      }
-
-          # Unset variables - CIM Variable is unset a little bit later
-      unset EMSegment(Cattrib,$i,Node)     
-          unset EMSegment(Cattrib,$i,EndNode)
-          unset EMSegment(Cattrib,$i,IsSuperClass)
-
-          if  {$EMSegment(Cattrib,$i,Label) ==  $EMSegment(IntensityAvgClass)} {
-             EMSegmentChangeIntensityClass -1 1
-          }
-      # Delete Additonal CIM Fields
-      # Free the variables 
-      if {$ChangeGui} { 
-            destroy $f.fLineL.l$i
-            destroy $f.fLine$i
-      }
-
-          foreach k $EMSegment(CIMList) {
-             unset EMSegment(Cattrib,$i,CIMMatrix,$k,Node)
-             foreach j $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) {
-                unset EMSegment(Cattrib,$EMSegment(SuperClass),CIMMatrix,$i,$j,$k) 
+            # Delete Node from Graph 
+            if {($EMSegment(Cattrib,$i,Node) != "") && $DeleteNode} { MainMrmlDeleteNode SegmenterClass [$EMSegment(Cattrib,$i,Node) GetID] }
+    }
+    
+    # Unset variables - CIM Variable is unset a little bit later
+    unset EMSegment(Cattrib,$i,Node)     
+    unset EMSegment(Cattrib,$i,EndNode)
+    unset EMSegment(Cattrib,$i,IsSuperClass)
+     
+    if  {$EMSegment(Cattrib,$i,Label) ==  $EMSegment(IntensityAvgClass)} {
+        EMSegmentChangeIntensityClass -1 1
+    }
+    # Delete Additonal CIM Fields
+    # Free the variables 
+    if {$ChangeGui} { 
+        destroy $f.fLineL.l$i
+        destroy $f.fLine$i
+    }
+     
+    foreach k $EMSegment(CIMList) {
+        unset EMSegment(Cattrib,$i,CIMMatrix,$k,Node)
+        foreach j $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) {
+        unset EMSegment(Cattrib,$EMSegment(SuperClass),CIMMatrix,$i,$j,$k) 
         if {[lsearch $DeleteList $j] < 0} {
-          if {$ChangeGui} {destroy $f.fLine$j.eCol$i}
-                  unset EMSegment(Cattrib,$EMSegment(SuperClass),CIMMatrix,$j,$i,$k)
+            if {$ChangeGui} {destroy $f.fLine$j.eCol$i}
+            unset EMSegment(Cattrib,$EMSegment(SuperClass),CIMMatrix,$j,$i,$k)
         } 
-         }
+        }
+    }
+    # Class Definition
+    unset EMSegment(Cattrib,$i,ColorCode) EMSegment(Cattrib,$i,Label)  
+    unset EMSegment(Cattrib,$i,Prob) EMSegment(Cattrib,$i,ProbabilityData)
+    
+    for {set y 0} {$y <  $EMSegment(MaxInputChannelDef)} {incr y} {
+        unset  EMSegment(Cattrib,$i,LogMean,$y)
+        for {set x 0} {$x <  $EMSegment(MaxInputChannelDef)} {incr x} { 
+        unset EMSegment(Cattrib,$i,LogCovariance,$y,$x) 
+        }
+    }
+    # Sample List
+    foreach v $EMSegment(SelVolList,VolumeList) {
+        unset EMSegment(Cattrib,$i,$v,Sample) 
+    }
       }
-          # Class Definition
-          unset EMSegment(Cattrib,$i,ColorCode) EMSegment(Cattrib,$i,Label)  
-          unset EMSegment(Cattrib,$i,Prob) EMSegment(Cattrib,$i,ProbabilityData)
-
-          for {set y 0} {$y <  $EMSegment(MaxInputChannelDef)} {incr y} {
-             unset  EMSegment(Cattrib,$i,LogMean,$y)
-             for {set x 0} {$x <  $EMSegment(MaxInputChannelDef)} {incr x} { 
-               unset EMSegment(Cattrib,$i,LogCovariance,$y,$x) 
-             }
-      }
-          # Sample List
-      foreach v $EMSegment(SelVolList,VolumeList) {
-          unset EMSegment(Cattrib,$i,$v,Sample) 
-          }
-      # Graph 
-      for {set j 0} { $j < $EMSegment(NumGraph)} {incr j} {
-         unset EMSegment(Cattrib,$i,Graph,$j)
-             # Define Class Specific Graph Parameters
-             if {$j > 1} {
-                unset EMSegment(Graph,$i,InvLogCov,1,1,$j) EMSegment(Graph,$i,InvLogCov,1,2,$j) EMSegment(Graph,$i,InvLogCov,2,2,$j) 
-                unset EMSegment(Graph,$i,LogMean,1,$j) EMSegment(Graph,$i,LogMean,2,$j) EMSegment(Graph,$i,XcaL,$j) EMSegment(Graph,$i,YcaL,$j) 
-             } else {
-                unset EMSegment(Graph,$i,LogCov,$j) EMSegment(Graph,$i,LogMean,$j) 
-             }
-             unset EMSegment(Graph,$i,XMin,$j) EMSegment(Graph,$i,XMax,$j) EMSegment(Graph,$i,YMin,$j) EMSegment(Graph,$i,YMax,$j) 
-      }
-         
-       }
-       # Destory elements from list
-       set EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) [lrange $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) 0 [expr $EMSegment(NumClassesNew) -1]] 
-       # Reconfigure width and height of canvas
-       if {$ChangeGui} {EMSegmentSetCIMMatrix} 
-
-       # Update Values of new Class
-       # Recaluclate Probabilites
-       EMSegmentCalcProb
-       # Have to change this to first class of child or other!
-       if {$ChangeGui && ($EMSegment(SuperClass) !=  $EMSegment(Class))} {EMSegmentChangeClass [lindex $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) 0]}
-       return
+      # Destory elements from list
+      set EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) [lrange $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) 0 [expr $EMSegment(NumClassesNew) -1]] 
+      # Reconfigure width and height of canvas
+      if {$ChangeGui} {EMSegmentSetCIMMatrix} 
+    
+      # Update Values of new Class
+      # Recaluclate Probabilites
+      EMSegmentCalcProb
+      # Have to change this to first class of child or other!
+      if {$ChangeGui && ($EMSegment(SuperClass) !=  $EMSegment(Class))} {EMSegmentChangeClass [lindex $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) 0]}
+      return
     } 
 
     # ---------------------------------------------------------------------------------
@@ -2912,27 +2804,6 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
 
       # Special EMSegment(SegmentMode) == 1 Variables     
       set EMSegment(Cattrib,$i,ProbabilityData) $Volume(idNone)
-
-      for {set j 0} { $j < $EMSegment(NumGraph)} {incr j} {
-         set EMSegment(Cattrib,$i,Graph,$j) 0
-         # Define Class Specific Graph Parameters
-         if {$j > 1} {
-            set EMSegment(Graph,$i,InvLogCov,1,1,$j) -1.0
-            set EMSegment(Graph,$i,InvLogCov,1,2,$j) -1.0
-            set EMSegment(Graph,$i,InvLogCov,2,2,$j) -1.0
-            set EMSegment(Graph,$i,LogMean,1,$j)  -1.0
-            set EMSegment(Graph,$i,LogMean,2,$j)  -1.0
-            set EMSegment(Graph,$i,XcaL,$j) -1
-            set EMSegment(Graph,$i,YcaL,$j) -1
-         } else {
-            set EMSegment(Graph,$i,LogCov,$j) -1 
-            set EMSegment(Graph,$i,LogMean,$j)  -1
-         }
-         set EMSegment(Graph,$i,XMin,$j)  -1
-         set EMSegment(Graph,$i,XMax,$j)  -1
-         set EMSegment(Graph,$i,YMin,$j)  -1
-         set EMSegment(Graph,$i,YMax,$j)  -1
-      }
     }
     # Define CIM Field as Matrix M(Class1,Class2,Relation of Pixels)
     # where the "Relation of the Pixels" can be set as Pixel with "left", 
@@ -2973,10 +2844,6 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode} {
     $EMSegment(DE-mbIntClass).m add command -label "$EMSegment(Cattrib,$i,Label)" -command "EMSegmentChangeIntensityClass $i 1" \
         -background $EMSegment(Cattrib,$i,ColorCode) -activebackground $EMSegment(Cattrib,$i,ColorCode)
 
-        # Create Graph button
-        for {set j 0} {$j < $EMSegment(NumGraph)} {incr j} {
-           set EMSegment(Cattrib,$i,Graph,$j) 0
-        } 
         EMSegmentCreateGraphButton $i $EMSegment(Cattrib,$i,Label) $EMSegment(Cattrib,$i,ColorCode)
     }
     if {$ChangeGui} {EMSegmentCreateCIMRowsColumns $Cstart $Cfinish}
@@ -3010,14 +2877,13 @@ proc EMSegmentSetMaxInputChannelDef {NewMaxInputChannelDef} {
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentReadGreyValue
 # When mouse is clicked, find out location and pixel gray value.
+# if flag is set it also gives coordinates 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentReadGreyValue {x y} {
+proc EMSegmentReadGreyValue {x y flag} {
     global EMSegment Interactor
-    if {$EMSegment(NumInputChannel) == 0 } {
-    return
-    }     
+    if {$EMSegment(NumInputChannel) == 0 } {return}     
     # Look in which window we are (0 1 or 2)
     set s $Interactor(s)
 
@@ -3043,14 +2909,18 @@ proc EMSegmentReadGreyValue {x y} {
     # Extended for Multi Channel Segmentation
     set result {}
     foreach v $EMSegment(SelVolList,VolumeList) {
-    set ImageData [Volume($v,vol) GetOutput]
-    scan [$ImageData GetExtent]  "%d %d %d %d %d %d" Xmin Xmax Ymin Ymax Zmin Zmax
-    if {[expr (($Xmin > $xIjk) || ($Xmax < $xIjk) || ($Ymin > $yIjk) || ($Ymax < $yIjk) || ($Zmin > $zIjk) || ($Zmax < $zIjk))]} {
+      set ImageData [Volume($v,vol) GetOutput]
+      scan [$ImageData GetExtent]  "%d %d %d %d %d %d" Xmin Xmax Ymin Ymax Zmin Zmax
+      if {[expr (($Xmin > $xIjk) || ($Xmax < $xIjk) || ($Ymin > $yIjk) || ($Ymax < $yIjk) || ($Zmin > $zIjk) || ($Zmax < $zIjk))]} {
         set pixel 0
-    } else {
+      } else {
         set pixel [$ImageData GetScalarComponentAsFloat $xIjk $yIjk $zIjk 0]
-    }
-    lappend result "$x $y $zIjk $pixel" 
+      }
+      if {$flag} {
+      lappend result "$x $y $zIjk $pixel" 
+      } else {
+      lappend result $pixel 
+      }
     }
     return $result
 }
@@ -3081,147 +2951,32 @@ proc EMSegmentDefineSample {SampleList} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC EMSegmentDisplaySampleLogValues 
-# Displays the currrent log gray value of the image in the graph 
+# .PROC EMSegmentEnterDisplaySample 
+# Sets up everything when the mouse enters the graph with the image to be sampled
+# or if DisplayFlag is set it just adjus values/lines/cross to the current position 
+# of the mouse 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentDisplaySampleLogValues {SampleList} {
-    global EMSegment
-    if {$EMSegment(NumGraph) < 3} { 
-    for {set i 0} { $i < $EMSegment(NumGraph)} {incr i} {
-        set volume $EMSegment(Cattrib,0,Label,$i)
-        if {$volume != ""} {
-        set sample [lindex $SampleList [lsearch -exact $EMSegment(SelVolList,VolumeList) $volume]]
-        $EMSegment(Cl-caGraph$i) itemconfigure GrayT0 -text  [format "%01.4f" [expr log([lindex $sample 3]+1)]]
-        }
-    }
-    } else {
-    for {set i 0} { $i < 2} {incr i} {
-        set volume $EMSegment(Cattrib,0,Label,$i)
-        if {$volume != ""} {
-        set sample [lindex $SampleList [lsearch -exact $EMSegment(SelVolList,VolumeList) $volume]]
-        $EMSegment(Cl-caGraph$i) itemconfigure GrayT0  -text  [format "%01.4f" [expr log([lindex $sample 3]+1)]]
-        $EMSegment(Cl-caGraph2) itemconfigure GrayT$i -text  [format "%01.4f" [expr log([lindex $sample 3]+1)]]
-        }
-    }
-    }
-}
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentDisplaySampleLine 
-# Displays the currrent log gray value as a red line in the graph 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentDisplaySampleLine {SampleList} {
-    global EMSegment
-    set resultval [EMSegmentMoveRedSampleLine $SampleList 0]
+proc EMSegmentEnterDisplaySample {x y} {
+    global EMSegment Gui
+    if {$EMSegment(DisplaySampleFlag) || ([wm state $Gui(wEMSegment)] == "withdrawn") || ($EMSegment(Graph,0,VolumeID,0) < 0)} {return}
+    set EMSegment(DisplaySampleFlag) 1
+    set SampleList [EMSegmentReadGreyValue $x $y 0]
+    set Value(0) [lindex $SampleList [lsearch -exact $EMSegment(SelVolList,VolumeList) $EMSegment(Graph,0,VolumeID,0)]] 
+    EMSegmentCreateDisplayRedLine 0 $Value(0)
     if {$EMSegment(NumGraph) > 1} {
-    lappend resultval [EMSegmentMoveRedSampleLine $SampleList 1]        
+    if {$EMSegment(Graph,1,VolumeID,0) <  0 } { 
+       set EMSegment(DisplaySampleFlag) 0
+       return 
     }
-    return $resultval
+    set Value(1) [lindex $SampleList [lsearch -exact $EMSegment(SelVolList,VolumeList) $EMSegment(Graph,1,VolumeID,0)]] 
+    EMSegmentCreateDisplayRedLine 1 $Value(1)
+    if {$EMSegment(NumGraph) > 2} { EMSegmentCreateDisplayRedCross 2 $Value(0) $Value(1) }
+    }
+    set EMSegment(DisplaySampleFlag) 0
 }
 
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentMoveRedSampleLine
-# Displays the currrent log gray value as a red line in the graph 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentMoveRedSampleLine {SampleList i} {
-    global EMSegment
-    set index $EMSegment(Cattrib,0,Label,$i) 
-    if {$index != "" } {
-    set val [expr [lindex [lindex $SampleList [lsearch -exact $EMSegment(SelVolList,VolumeList) $index]] 3] - $EMSegment(Graph,Xmin,$i)]
-    if {[expr ($val < ($EMSegment(Graph,Xmax,$i) - $EMSegment(Graph,Xmin,$i) + 1)) && ($val > -1)] } { 
-        set xpos $EMSegment(Graph,Xpos,$val,$i)
-        $EMSegment(Cl-caGraph$i) coords GrayLine $xpos  [expr $EMSegment(Graph,Ylen,$i) + $EMSegment(Graph,YboU)] $xpos $EMSegment(Graph,YboU)
-        return $val
-    } 
-    } 
-    return "-"
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentDisplaySampleCross
-# Displays the currrent log gray value as a cross in the 2D-graph 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentDisplaySampleCross {ValList} {
-    global EMSegment
-    set Xval [lindex $ValList 0]
-    set Yval [lindex $ValList 1]
-    if {$Xval == "-"} {return}
-    set xpos $EMSegment(Graph,Xpos,$Xval,2)
-    if {$Yval == "-"} {return}
-    set ypos $EMSegment(Graph,Ypos,$Yval,2)
-    $EMSegment(Cl-caGraph2) coords GrayYCross $xpos [expr $ypos-2]  $xpos [expr $ypos+3]  
-    $EMSegment(Cl-caGraph2) coords GrayXCross [expr $xpos-2] $ypos [expr $xpos+3] $ypos 
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentEnterSample 
-# Sets up everything when the moouse enters the graph with the image to be sampled
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentEnterSample {x y} {
-    global EMSegment
-    set SampleList [EMSegmentReadGreyValue $x $y]
-    EMSegmentDisplaySampleLogValues $SampleList
-    set ValList [EMSegmentCreateRedLine $SampleList 0]
-    if {$EMSegment(NumGraph) > 1} {
-    lappend ValList [EMSegmentCreateRedLine $SampleList 1]
-    if {$EMSegment(NumGraph) > 2} {
-        EMSegmentCreateRedCross $ValList
-    }
-    }
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentCreateRedLine 
-# Creates a red line on the graph
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentCreateRedLine {SampleList num} {
-    global EMSegment
-    set index $EMSegment(Cattrib,0,Label,$num) 
-    if {$index != "" } {
-    set val [expr [lindex [lindex $SampleList [lsearch -exact $EMSegment(SelVolList,VolumeList) $index]] 3] - $EMSegment(Graph,Xmin,$num)]
-    if {$val < 0} {
-        set val 0
-    } else {
-        set MaxVal [expr $EMSegment(Graph,Xmax,$num) - $EMSegment(Graph,Xmin,$num)]
-        if {$val > $MaxVal} {
-        set val $MaxVal
-        }
-    }
-    set xpos $EMSegment(Graph,Xpos,$val,$num) 
-    $EMSegment(Cl-caGraph$num) create line $xpos [expr $EMSegment(Graph,Ylen,$num) + $EMSegment(Graph,YboU)] $xpos $EMSegment(Graph,YboU) -width 1  -tag GrayLine -fill red
-    return $val
-    }
-    return "-"
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentCreateRedCross 
-# Creates a red cross on the 2D graph
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentCreateRedCross {ValList} {
-    global EMSegment
-    set Xval [lindex $ValList 0]
-    set Yval [lindex $ValList 0]
-    if {$Xval == "-"} {return}
-    set xpos $EMSegment(Graph,Xpos,$Xval,2)
-    if {$Yval == "-"} {return}
-    set ypos $EMSegment(Graph,Ypos,$Yval,2)
-    $EMSegment(Cl-caGraph2) create line $xpos [expr $ypos-2]  $xpos [expr $ypos+3] -width 1 -tag GrayYCross -fill red
-    $EMSegment(Cl-caGraph2) create line [expr $xpos-2] $ypos [expr $xpos+3] $ypos  -width 1 -tag GrayXCross -fill red
-}
 
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentLeaveSample 
@@ -3230,17 +2985,20 @@ proc EMSegmentCreateRedCross {ValList} {
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentLeaveSample { } {
-    global EMSegment
+    global EMSegment Gui
+    if {[wm state $Gui(wEMSegment)] == "withdrawn"} {return} 
     for {set i 0} { $i < $EMSegment(NumGraph)} {incr i} {
-    $EMSegment(Cl-caGraph$i) itemconfigure GrayT0 -text ""
-    if {$i > 1} {
-        $EMSegment(Cl-caGraph$i) itemconfigure GrayT1 -text ""
-        $EMSegment(Cl-caGraph$i) delete GrayXCross
-        $EMSegment(Cl-caGraph$i) delete GrayYCross
-    } else {
-        $EMSegment(Cl-caGraph$i) delete GrayLine
+    if {$EMSegment(Graph,$i,LineID,0) > -1} {
+        GraphDeleteLine EMSegment $EMSegment(Graph,$i,path) $EMSegment(Graph,$i,LineID,0)
+        GraphDeleteValueDisplay EMSegment $EMSegment(Graph,$i,path)
+        set EMSegment(Graph,$i,LineID,0) -1
+        if {$i > 1} {
+        GraphDeleteLine EMSegment $EMSegment(Graph,$i,path) $EMSegment(Graph,$i,LineID,1)
+        set EMSegment(Graph,$i,LineID,1) -1
+        }
+        GraphRender EMSegment $EMSegment(Graph,$i,path)
     }
-    }    
+    }
 } 
 
 #-------------------------------------------------------------------------------
@@ -3249,27 +3007,21 @@ proc EMSegmentLeaveSample { } {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentChangeVolumeGraph {VolumeID index} {
+proc EMSegmentChangeVolumeGraph {VolumeID numGraph} {
     global EMSegment
     set VolName [Volume($VolumeID,node) GetName]
-    set EMSegment(Cattrib,0,Label,$index) $VolumeID
-    if {$EMSegment(SegmentMode)} {
-    set List "0 $EMSegment(GlobalClassList)"
-    $EMSegment(Cl-mbGraphHistogram$index) configure -text $VolName
-    } else {
-       set List 0
-       $EMSegment(Cl-bGraphHistogram$index) configure -text $VolName
+    set EMSegment(Graph,$numGraph,VolumeID,0) $VolumeID
+    if {$EMSegment(NumGraph) == 3} {
+    set EMSegment(Graph,2,VolumeID,$numGraph) $VolumeID
     }
-
-    foreach i $List {
-      if {$EMSegment(Cattrib,$i,Graph,$index) } {
-        if {[EMSegmentCalculateClassCurveRegion $i $index] < 0} {return}
-        EMSegmentDrawClassCurveRegion $i $index
-        # Kilian: I know it does not work correctly when changing graphs and classes are selected - just unselect themand do it then !
-    # if {$EMSegment(NumGraph) > 2} {
-        #   EMSegmentDrawClassCurveRegion $i 2
-        # }
+    if {$EMSegment(SegmentMode)} {
+      EMSegmentPlotCurveRegion $numGraph
+      if {$EMSegment(NumGraph) == 3} {
+    EMSegmentPlotCurveRegion 2
       }
+      $EMSegment(Cl-mbGraphHistogram$numGraph) configure -text $VolName
+    } else {
+       $EMSegment(Cl-bGraphHistogram$numGraph) configure -text $VolName
     }
 }
 
@@ -3281,15 +3033,12 @@ proc EMSegmentChangeVolumeGraph {VolumeID index} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentCreateGraphButton {Sclass Label Color {Above 0}} {
+proc EMSegmentCreateGraphButton {Sclass Label Color {Above 0} {UpdateGraph 1}} {
     global EMSegment Gui
 
     set index [lsearch $EMSegment(GlobalClassList) $Sclass]
-    if {$index < 0 } {
-       set TooltipText "Press button to display histogram of current active volume" 
-    } else {
-       set TooltipText "Press button to display Gaussian of $Sclass class  (Label: $Label)" 
-    }
+    set TooltipText "Press button to display Gaussian of $Sclass class  (Label: $Label)" 
+
     if {($index < $EMSegment(Graph,ButtonNum) ) || $Above} {
        set f $EMSegment(Cl-fGraphButtons).bGraphButton$Sclass
     } else {
@@ -3299,11 +3048,36 @@ proc EMSegmentCreateGraphButton {Sclass Label Color {Above 0}} {
     $f configure -bg $Color -activebackground $Color
     pack $f -side left -padx $Gui(pad)
     TooltipAdd $f $TooltipText
+    if {$UpdateGraph} {
     for {set i 0} { $i < $EMSegment(NumGraph)} {incr i} {
-      if {$EMSegment(Cattrib,$Sclass,Graph,$i) == 1} {
-        set EMSegment(Cattrib,$Sclass,Graph,$i) 0
-        if {[EMSegmentDrawDeleteCurveRegion $Sclass $i] < 1} {return}
-       }
+        # Generate setup for each curve 
+        set EMSegment(Graph,$i,ID,$Sclass) -1
+        set mean ""
+        set cov ""
+        set SetFlag 1
+        for {set y 0 } { $y < $EMSegment(Graph,$i,Dimension) } {incr y} {
+        set NumIndex($y) [lsearch -exact $EMSegment(SelVolList,VolumeList) $EMSegment(Graph,$i,VolumeID,$y)]
+        if {$NumIndex($y) < 0} { set SetFlag 0} 
+        }
+      
+        for {set y 0 } { $y < $EMSegment(Graph,$i,Dimension) } {incr y} {
+        if {$SetFlag} {
+            lappend mean $EMSegment(Cattrib,$Sclass,LogMean,$NumIndex($y))
+        } else {
+            lappend mean 0.0
+        }
+        for {set x 0 } { $x < $EMSegment(Graph,$i,Dimension) } {incr x} {
+           if {$SetFlag} {
+            lappend cov $EMSegment(Cattrib,$Sclass,LogCovariance,$NumIndex($y),$NumIndex($x)) 
+            } else {
+            if {$y == $x} {lappend cov 1.0
+                } else { lappend cov 0.0}
+            }
+        }
+        }
+        set Prob [expr ($EMSegment(Graph,DisplayProb) > 0 ?  $EMSegment(Cattrib,$Sclass,Prob) : 1.0)]
+        GraphCreateGaussianCurveRegion EMSegment(Graph,$i,Data,$Sclass) $mean $cov $Prob 2 $EMSegment(Graph,$i,Dimension) $EMSegment(Graph,$i,Xmin) $EMSegment(Graph,$i,Xmax) $EMSegment(Graph,$i,Xlen) $EMSegment(Graph,$i,Ymin) $EMSegment(Graph,$i,Ymax) $EMSegment(Graph,$i,Ylen) 
+    }
     }
 }
 
@@ -3323,7 +3097,7 @@ proc EMSegmentMultipleDrawDeleteCurveRegion {Sclass} {
  
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentDeleteGraphButton
-# Delete Grpah Button and curve for Class <Sclass> 
+# Delete Graph Button and curve for Class <Sclass> 
 # in the graph
 # .ARGS
 # .END
@@ -3338,19 +3112,21 @@ proc EMSegmentDeleteGraphButton {Sclass} {
        # Move up a line 
        if {$NextClass != ""} {
          destroy $EMSegment(Cl-fGraphButtonsBelow).bGraphButton$NextClass
-         EMSegmentCreateGraphButton $NextClass $EMSegment(Cattrib,$NextClass,Label)  $EMSegment(Cattrib,$NextClass,ColorCode) 1
+         EMSegmentCreateGraphButton $NextClass $EMSegment(Cattrib,$NextClass,Label)  $EMSegment(Cattrib,$NextClass,ColorCode) 1 0
        }
     } else {
        destroy $EMSegment(Cl-fGraphButtonsBelow).bGraphButton$Sclass 
     }
-    # Delete Line 
+    # Delete curve instance !
     for {set i 0} { $i < $EMSegment(NumGraph)} {incr i} {
-       if {$EMSegment(Cattrib,$Sclass,Graph,$i) == 1} {
-             $EMSegment(Cl-caGraph$i) delete Graph$Sclass
+       if {$EMSegment(Graph,$i,ID,$Sclass) > -1} {
+       GraphRemoveCurve EMSegment $EMSegment(Graph,$i,path) $EMSegment(Graph,$i,ID,$Sclass)
        }
+       unset EMSegment(Graph,$i,ID,$Sclass)
+       EMSegment(Graph,$i,Data,$Sclass) Delete
     }
 
- }
+}
 
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentDrawDeleteCurveRegion
@@ -3363,66 +3139,33 @@ proc EMSegmentDrawDeleteCurveRegion {Sclass NumGraph} {
     global EMSegment Volume
     set ClassIndex [lsearch -exact $EMSegment(GlobalClassList) $Sclass]
 
-    if {$EMSegment(Cattrib,$Sclass,Graph,$NumGraph) == 1} {
-         set EMSegment(Cattrib,$Sclass,Graph,$NumGraph) 0
-         # Delete Line and raise button
-         if {$Sclass > 0} {
-            $EMSegment(Cl-caGraph$NumGraph) delete Graph$Sclass
-            if {$NumGraph > 1} {
-            set NumActiveRegion 0
-            set List "0 $EMSegment(GlobalClassList)"
-        foreach i $List {
-              if {$EMSegment(Cattrib,$i,Graph,$NumGraph) == 1 } {
-                set NumActiveRegion 1 
-            break
-              }
-            }
-            if {$NumActiveRegion > 0} {
-              EMSegmentDrawRegion $Sclass $NumGraph 2  
-            } else {
-              # Reset Values
-              set Xmin $EMSegment(Graph,Xmin,0)
-              set Xmax [expr $EMSegment(Graph,Xmax,0)+1]
-              set Ymin $EMSegment(Graph,Xmin,1)
-              set Ymax [expr $EMSegment(Graph,Xmax,1)+1]
-
-              for {set x $Xmin} {$x < $Xmax} {incr x} {
-                for {set y $Ymin} {$y < $Ymax} {incr y} {
-                  set EMSegment(Graph,MAP,$NumGraph,$x,$y) 0
-                }
-              }
-           }
-        }
-        if {$ClassIndex < $EMSegment(Graph,ButtonNum)} {
-          $EMSegment(Cl-fGraphButtons).bGraphButton$Sclass configure -relief raised
-        } else {
-          $EMSegment(Cl-fGraphButtonsBelow).bGraphButton$Sclass configure -relief raised
-        }
-     } else {
-        $EMSegment(Cl-caGraph$NumGraph) delete Graph$Sclass
-        if  {$EMSegment(SegmentMode) > 1} {
-          # $EMSegment(Cl-bGraphHistogram$NumGraph) configure -text $VolName
-          $EMSegment(Cl-mbGraphHistogram$NumGraph) configure -relief raised
-        } else {
-          $EMSegment(Cl-bGraphHistogram$NumGraph) configure -relief raised
-        }
-     }
-     EMSegmentRescaleGraph $EMSegment(Graph,Xmin,$NumGraph) $EMSegment(Graph,Xmax,$NumGraph) $EMSegment(Graph,Xsca,$NumGraph) $NumGraph 0
-  } else {
+    if {$EMSegment(Graph,$NumGraph,ID,$Sclass) > -1} {
+       GraphRemoveCurve EMSegment $EMSegment(Graph,$NumGraph,path) $EMSegment(Graph,$NumGraph,ID,$Sclass)
+       set EMSegment(Graph,$NumGraph,ID,$Sclass) -1
+       # Delete Line and raise button
+       if {$Sclass > 0} {
+       # Lower Button  
+       if {$ClassIndex < $EMSegment(Graph,ButtonNum)} { $EMSegment(Cl-fGraphButtons).bGraphButton$Sclass configure -relief raised
+       } else { $EMSegment(Cl-fGraphButtonsBelow).bGraphButton$Sclass configure -relief raised }
+       } else {
+       if  {$EMSegment(SegmentMode) > 1} {$EMSegment(Cl-mbGraphHistogram$NumGraph) configure -relief raised
+       } else {$EMSegment(Cl-bGraphHistogram$NumGraph) configure -relief raised }
+       }
+    } else {
     # Draw Graph and lower button
-    set result 0
-    if {$Sclass > 0} {
+      set result 0
+      if {$Sclass > 0} {
+        # Check Setting
         if {$EMSegment(NumInputChannel) == 0} {
             DevErrorWindow "Before triing to plot a graph please do the following :\n 1.) Define volume(s) to be segmented \n 2.) Define which volume's parameters to plot by selecting one at the yellow graph button"
             return -1
         } 
         if {$NumGraph < 2} {
-           set index $EMSegment(Cattrib,0,Label,$NumGraph)
-           if { $index == "" } {
+           if { $EMSegment(Graph,$NumGraph,VolumeID,0) == -1 } {
               DevErrorWindow "Please define which volume's parameters to plot for graph [expr $NumGraph+1] by selecting one at the yellow graph button"
               return -1
            }
-           set index [lsearch -exact $EMSegment(SelVolList,VolumeList) $EMSegment(Cattrib,0,Label,$NumGraph)]
+           set index [lsearch -exact $EMSegment(SelVolList,VolumeList) $EMSegment(Graph,$NumGraph,VolumeID,0)]
            if {($EMSegment(Cattrib,$Sclass,LogMean,$index) < 0) || ($EMSegment(Cattrib,$Sclass,LogCovariance,$index,$index) < 0)} { 
               DevErrorWindow "Before graph can be plotted Mean and Covariance have to be defined for Volume [Volume($index,node) GetName]!"
               return -1
@@ -3433,1240 +3176,24 @@ proc EMSegmentDrawDeleteCurveRegion {Sclass NumGraph} {
           set result [EMSegmentCalculateClassMeanCovariance]
         }
       } 
-      if {[EMSegmentCalculateClassCurveRegion $Sclass $NumGraph]  < 0} {return -1}
-      set EMSegment(Cattrib,$Sclass,Graph,$NumGraph) 1
-      set result [EMSegmentCalcProb]
-      if {$result == 0} {EMSegmentDrawClassCurveRegion $Sclass $NumGraph}
-      if {$Sclass > 0} {
-        if {$ClassIndex < $EMSegment(Graph,ButtonNum)} { 
-           $EMSegment(Cl-fGraphButtons).bGraphButton$Sclass configure -relief sunken
-        } else {
-           $EMSegment(Cl-fGraphButtonsBelow).bGraphButton$Sclass configure -relief sunken
-        }
+      # Draw Curve
+      EMSegmentCalcProb
+      set flag [expr ($Sclass > 0 ? 0 : 1)]
+      if {$Sclass} {
+      set EMSegment(Graph,$NumGraph,ID,$Sclass) [GraphAddCurveRegion EMSegment $EMSegment(Graph,$NumGraph,path) EMSegment(Graph,$NumGraph,Data,$Sclass) [GraphHexToRGB [string range $EMSegment(Cattrib,$Sclass,ColorCode) 1 6]] $flag $flag]
       } else {
-        if  {$EMSegment(SegmentMode) > 1} {
-           $EMSegment(Cl-mbGraphHistogram$NumGraph) configure -relief raised
-        } else {
-          $EMSegment(Cl-bGraphHistogram$NumGraph) configure -relief sunken 
-        }
+      set EMSegment(Graph,$NumGraph,ID,$Sclass) [GraphAddCurveRegion EMSegment $EMSegment(Graph,$NumGraph,path) EMSegment(Graph,$NumGraph,Data,$Sclass)Res [GraphHexToRGB [string range $EMSegment(Cattrib,$Sclass,ColorGraphCode) 1 6]] $flag $flag]
       }
-    }
-    return 1
-}
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentCalculateClassCurveRegion 
-# Calculates the gaussian distribution of class Sclass for the 1D Graph and 2D 
-# YFlag is only important for 2D Case
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentCalculateClassCurveRegion {Sclass graphnum} {
-    global EMSegment Volume
-
-    if {$graphnum < 2} {
-      # --------------------------------------------------
-      # 1D Case: Calculate Curves 
-      # --------------------------------------------------
-  
-      # 1.) Check Values 
-      if {$EMSegment(Cattrib,0,Label,$graphnum)  == "" } {
-        DevErrorWindow "Please select a volume at the yellow graph button before triing to plot a histogram!"
-        return -1
-       }   
-       if {$Sclass} {   
-         # Stores the Flag asssignemnt for the 2D Graph
-         set NumIndex [lsearch -exact $EMSegment(SelVolList,VolumeList) $EMSegment(Cattrib,0,Label,$graphnum)]
-         set AxisFlag [expr ($EMSegment(Graph,$Sclass,LogCov,$graphnum) == $EMSegment(Cattrib,$Sclass,LogCovariance,$NumIndex,$NumIndex)) && \
-                       ($EMSegment(Graph,$Sclass,LogMean,$graphnum)  == $EMSegment(Cattrib,$Sclass,LogMean,$NumIndex))]
-       } else {
-         set AxisFlag  0
-       }   
-    
-      if {[expr ($EMSegment(Graph,$Sclass,XMin,$graphnum) == $EMSegment(Graph,Xmin,$graphnum)) && \
-        ($EMSegment(Graph,$Sclass,XMax,$graphnum) == $EMSegment(Graph,Xmax,$graphnum))]} {
-           if {$Sclass > 0} {
-             if {$AxisFlag} {return 0}
-           } else {
-            # Histogram has been already calculated for this Volume
-             if { $EMSegment(Graph,$Sclass,VolumeID,$graphnum) == $EMSegment(Cattrib,0,Label,$graphnum)} {
-               return 0
-             }
-          }
-      }
-      # 2.) Calculate Curve
-      if  {$Sclass == 0} {
-        
-        set EMSegment(Graph,$Sclass,XMin,$graphnum)  $EMSegment(Graph,Xmin,$graphnum)
-        set EMSegment(Graph,$Sclass,XMax,$graphnum)  $EMSegment(Graph,Xmax,$graphnum)
-        set EMSegment(Graph,$Sclass,YMax,$graphnum) 0  
-    
-        # --------------------------------------------------
-        # Curve to be calculated is the Histogram
-        # --------------------------------------------------
-        set EMSegment(Graph,$Sclass,VolumeID,$graphnum)  $EMSegment(Cattrib,0,Label,$graphnum)
-        
-        vtkImageAccumulate histogram
-        # --------------------------------------------------
-        # Define Settings for Histogram
-        # --------------------------------------------------
-        histogram SetInput [Volume($EMSegment(Cattrib,0,Label,$graphnum),vol) GetOutput]
-        
-        set data [histogram GetInput]
-        $data Update
-        
-        set inputRange [[[$data GetPointData] GetScalars] GetRange]
-        set origin [lindex $inputRange 0]
-        set numBins [lindex $inputRange 1]
-        
-        # set spacing [expr 1.0 * ([lindex $inputRange 1] - $origin) / $numBins]
-        # histogram SetComponentSpacing $spacing 1.0 1.0
-        histogram SetComponentExtent 0 $numBins 0 0 0 0
-        histogram SetComponentOrigin $origin 0.0 0.0
-        histogram SetComponentSpacing 1.0 1.0 1.0
-        
-        # --------------------------------------------------
-        # Actually get Histogram
-        # --------------------------------------------------
-        set data [histogram GetOutput]
-        $data Update
-        
-        set histSum 0 
-        # Xrange of Histogram
-        set XhistRangeMin [lindex $inputRange 0]
-        set XhistRangeMax $numBins 
-        # Yrange of Histogram
-        # set histRange [[[$data GetPointData] GetScalars] GetRange]
-         
-        # --------------------------------------------------
-        # Read values from Histogram 
-        # --------------------------------------------------
-        if {$EMSegment(Graph,Xmin,$graphnum) > $XhistRangeMin} {
-          set XLower $EMSegment(Graph,Xmin,$graphnum) 
-        } else {
-           set XLower $XhistRangeMin 
-           for {set i $EMSegment(Graph,Xmin,$graphnum)} { $i < $XhistRangeMin} {incr i} {
-              set EMSegment(Graph,$Sclass,$i,$graphnum) 0
-           }
-        }
-        
-        if {$EMSegment(Graph,Xmax,$graphnum) > $XhistRangeMax} {
-          set XUpper $XhistRangeMax
-          for {set i [expr $XhistRangeMax + 1]} { $i <= $EMSegment(Graph,Xmax,$graphnum)} {incr i} {
-            set EMSegment(Graph,$Sclass,$i,$graphnum) 0
-          }
-        } else {
-          set XUpper $EMSegment(Graph,Xmax,$graphnum)
-        }
-        
-        incr XUpper
-        for {set idx $XLower} {$idx < $XUpper} { incr idx} {
-          set EMSegment(Graph,$Sclass,$idx,$graphnum) [$data GetScalarComponentAsFloat $idx 0 0 0]
-        if {$EMSegment(Graph,$Sclass,$idx,$graphnum) > $EMSegment(Graph,$Sclass,YMax,$graphnum) } {
-            set EMSegment(Graph,$Sclass,YMax,$graphnum) [expr double($EMSegment(Graph,$Sclass,$idx,$graphnum))]
-        }
-        }
-        if {$EMSegment(Graph,Ymax,$graphnum) == 0 } {
-        set EMSegment(Graph,Ymax,$graphnum) 1.0
-        }
-        for {set idx $XLower} {$idx < $XUpper} { incr idx} {
-        set EMSegment(Graph,$Sclass,$idx,$graphnum) [expr  $EMSegment(Graph,$Sclass,$idx,$graphnum) * $EMSegment(Graph,Ymax,$graphnum) / double($EMSegment(Graph,$Sclass,YMax,$graphnum))]
-        }
-        set EMSegment(Graph,$Sclass,YMax,$graphnum) $EMSegment(Graph,Ymax,$graphnum)
-        histogram Delete
-        return 1
-      }
-      # --------------------------------------------------
-      # Curve to be calculated is a Gaussian distribution 
-      # --------------------------------------------------
-      # Gaus Value at the origin of the Coordinate system
-      set EMSegment(Graph,$Sclass,LogCov,$graphnum)   $EMSegment(Cattrib,$Sclass,LogCovariance,$NumIndex,$NumIndex) 
-      set EMSegment(Graph,$Sclass,LogMean,$graphnum)  $EMSegment(Cattrib,$Sclass,LogMean,$NumIndex)
-    
-      set border [EMSegmentDefineCalculationBorder $EMSegment(Graph,Xmin,$graphnum) $EMSegment(Graph,Xmax,$graphnum) $EMSegment(Graph,$Sclass,XMin,$graphnum) \
-        $EMSegment(Graph,$Sclass,XMax,$graphnum) $AxisFlag]
-
-      if {[lindex $border 2] > -1} {
-        if {[lindex $border 0] > -1} {EMSegmentCalculateClassGaussianDistribution $Sclass $graphnum [lindex $border 0] [lindex $border 1] }
-        EMSegmentCalculateClassGaussianDistribution $Sclass $graphnum [lindex $border 2] [lindex $border 3] 
-      }
-    
-      set EMSegment(Graph,$Sclass,XMin,$graphnum)  $EMSegment(Graph,Xmin,$graphnum)
-      set EMSegment(Graph,$Sclass,XMax,$graphnum)  $EMSegment(Graph,Xmax,$graphnum)
-      # Define Maximum value of current curve
-      if [expr $EMSegment(Graph,$Sclass,LogMean,$graphnum) >= log($EMSegment(Graph,Xmin,$graphnum)+1)]  {
-        if [expr $EMSegment(Graph,$Sclass,LogMean,$graphnum) <= log($EMSegment(Graph,Xmax,$graphnum)+1)]  {
-        # 1. Case: Globale Maximum is inside the interval
-        set index [expr round(exp($EMSegment(Graph,$Sclass,LogMean,$graphnum)) - 1.0)]
-        set EMSegment(Graph,$Sclass,YMax,$graphnum) $EMSegment(Graph,$Sclass,$index,$graphnum)
-        } else {
-        # 2. Case: Globale Maximum is to the right of the interval
-        set EMSegment(Graph,$Sclass,YMax,$graphnum) $EMSegment(Graph,$Sclass,$EMSegment(Graph,Xmax,$graphnum),$graphnum)
-        }
-      }  else {
-        # 3. Case: Globale Maximum is to the left of the interval
-        set EMSegment(Graph,$Sclass,YMax,$graphnum) $EMSegment(Graph,$Sclass,$EMSegment(Graph,Xmin,$graphnum),$graphnum)
-      }
-      # Update Graph Values 
-      # Caluclation Error Sigma to small
-      if {$EMSegment(Graph,$Sclass,YMax,$graphnum) == 0} {set EMSegment(Graph,$Sclass,YMax,$graphnum) 0.1} 
-      return 1
-    } 
-    # --------------------------------------------------
-    # 2D Case: Calculate Region 
-    # --------------------------------------------------
-
-    # --------------------------------------------------
-    #     1.)  Check Values 
-    # --------------------------------------------------
-    if  {$Sclass == 0} {return 1}
-    # a.) Find out XIndex and YIndex = the Volumes currently selected by the yellow buttons 
-    if {($EMSegment(Cattrib,0,Label,0)  == "") || ($EMSegment(Cattrib,0,Label,1) == "") } {
-      DevErrorWindow "Please select a volume at the yellow graph button before triing to plot a histogram!"
-      return -1
-    }
-    if {$EMSegment(Cattrib,0,Label,0) == $EMSegment(Cattrib,0,Label,1)} {
-    # Do not calculate anything
-    return 1
-    }
-    set VolXIndex [lsearch -exact $EMSegment(SelVolList,VolumeList) $EMSegment(Cattrib,0,Label,0)]
-    set VolYIndex [lsearch -exact $EMSegment(SelVolList,VolumeList) $EMSegment(Cattrib,0,Label,1)]
-    # b.) Calculate Determinant of the Log Covariance Matrix and the Inverse Covariance 
-    set pi 3.141592653
-    set DetLogCov  [expr $EMSegment(Cattrib,$Sclass,LogCovariance,$VolXIndex,$VolXIndex)*$EMSegment(Cattrib,$Sclass,LogCovariance,$VolYIndex,$VolYIndex) -\
-        $EMSegment(Cattrib,$Sclass,LogCovariance,$VolXIndex,$VolYIndex)*$EMSegment(Cattrib,$Sclass,LogCovariance,$VolYIndex,$VolXIndex) ]
-    if {$DetLogCov < 0.0000001} {
-    DevErrorWindow "Covariance Matrix of class $EMSegment(Cattrib,$Sclass,Label) is not positiv definit!"
-    return -2
-    }
-    set InvLogCov(1,1) [expr $EMSegment(Cattrib,$Sclass,LogCovariance,$VolYIndex,$VolYIndex) / $DetLogCov]
-    set InvLogCov(1,2) [expr $EMSegment(Cattrib,$Sclass,LogCovariance,$VolXIndex,$VolYIndex) / $DetLogCov]
-    set InvLogCov(2,2) [expr $EMSegment(Cattrib,$Sclass,LogCovariance,$VolXIndex,$VolXIndex) / $DetLogCov]
-
-    # c.) Find out if anything chnaged in the class definition => If so, the whole graph has to be recalculated
-    set AxisFlag [expr ($EMSegment(Graph,$Sclass,LogMean,1,$graphnum) == $EMSegment(Cattrib,$Sclass,LogMean,$VolXIndex)) && ($EMSegment(Graph,$Sclass,LogMean,2,$graphnum) == $EMSegment(Cattrib,$Sclass,LogMean,$VolYIndex)) &&  ($EMSegment(Graph,$Sclass,InvLogCov,1,1,$graphnum) == $InvLogCov(1,1)) && ($EMSegment(Graph,$Sclass,InvLogCov,1,2,$graphnum) == $InvLogCov(1,2)) && ($EMSegment(Graph,$Sclass,InvLogCov,2,2,$graphnum) == $InvLogCov(2,2)) && ($EMSegment(Graph,$Sclass,XcaL,$graphnum) == $EMSegment(Graph,XcaL,$graphnum)) && ($EMSegment(Graph,$Sclass,YcaL,$graphnum) == $EMSegment(Graph,YcaL,$graphnum))] 
-
-    # d.) Check on range 
-    if {$AxisFlag} {
-    if {[expr ($EMSegment(Graph,$Sclass,XMin,$graphnum) == $EMSegment(Graph,Xmin,$graphnum)) && ($EMSegment(Graph,$Sclass,XMax,$graphnum) == $EMSegment(Graph,Xmax,$graphnum))]} {return 0}
-    }
-
-    # --------------------------------------------------
-    #     2.)  Define Values 
-    # --------------------------------------------------
-    set EMSegment(Graph,$Sclass,LogMean,1,$graphnum) $EMSegment(Cattrib,$Sclass,LogMean,$VolXIndex) 
-    set EMSegment(Graph,$Sclass,LogMean,2,$graphnum) $EMSegment(Cattrib,$Sclass,LogMean,$VolYIndex)
-    set EMSegment(Graph,$Sclass,InvLogCov,1,1,$graphnum) $InvLogCov(1,1) 
-    set EMSegment(Graph,$Sclass,InvLogCov,1,2,$graphnum) $InvLogCov(1,2) 
-    set EMSegment(Graph,$Sclass,InvLogCov,2,2,$graphnum) $InvLogCov(2,2) 
-    set Norm [expr 0.5/($pi*sqrt($DetLogCov))]
-
-    # Find out if we have to recalculate the curve
-    # Calculate Zero - Borders
-    # Leave Zero away figures do not look good
-    # set SqrtDetLogCov [expr sqrt($DetLogCov)]
-    # set XZero [EMSegmentCalcGaussian2DExtrem $graphnum $Sclass $SqrtDetLogCov $pi 0]
-    set XZeroMin 1.0 
-    set XZeroMax 1.0 
-    # set YZero [EMSegmentCalcGaussian2DExtrem $graphnum $Sclass $SqrtDetLogCov $pi 1]
-    set YZeroMin 1.0 
-    set YZeroMax 1.0 
-
-
-    set Xborder [EMSegmentDefineCalculationBorder $EMSegment(Graph,Xmin,$graphnum) $EMSegment(Graph,Xmax,$graphnum) $EMSegment(Graph,$Sclass,XMin,$graphnum) \
-        $EMSegment(Graph,$Sclass,XMax,$graphnum) $AxisFlag]
-    
-
-    # --------------------------------------------------
-    #     3.) Calculate Region
-    # --------------------------------------------------
-    #  |B|                A-D => Regions have to be calculated 
-    # A|X|C               X   => Already predefined 
-    #  |D|
-    set XCalcUpperMiddle [lindex $Xborder 2] 
-    if {$XCalcUpperMiddle > -1} {
-    # If it is true we have to calculate C for sure
-    set XCalcMin [lindex $Xborder 0]
-    set XCalcUpperMiddle [lindex $Xborder 2] 
-    if  {$XCalcMin > -1} {
-        # Calculate A 
-        set XCalcLowerMiddle [lindex $Xborder 1] 
-        EMSegmentCalculateClassGaussian2DDistribution $graphnum $Sclass $Norm $XCalcMin $EMSegment(Graph,Ymin,$graphnum) $XCalcLowerMiddle $EMSegment(Graph,Ymax,$graphnum)
-        set Xmin $XCalcLowerMiddle
-        set Xmax $XCalcUpperMiddle
-    } else {
-        # Nothing has to be calculated in terms of the Y direction
-        set Xmin -1
-        set Xmax -1
-    }
-    EMSegmentCalculateClassGaussian2DDistribution $graphnum $Sclass $Norm $XCalcUpperMiddle $EMSegment(Graph,Ymin,$graphnum) [lindex $Xborder 3]  $EMSegment(Graph,Ymax,$graphnum)
-    } else {
-    set Xmin $EMSegment(Graph,Xmin,$graphnum)
-    set Xmax $EMSegment(Graph,Ymin,$graphnum)
-    }
  
-    if {$Xmin > -1} {
-    set Yborder [EMSegmentDefineCalculationBorder $EMSegment(Graph,Ymin,$graphnum) $EMSegment(Graph,Ymax,$graphnum) $EMSegment(Graph,$Sclass,YMin,$graphnum) \
-        $EMSegment(Graph,$Sclass,YMax,$graphnum) $AxisFlag]
-
-    set YCalcUpperMiddle [lindex $Yborder 2]
-    if {$YCalcUpperMiddle > -1} {
-        # If it is true we have to calculate B for sure
-        set YCalcMin [lindex $Yborder 0]
-        if  {$YCalcMin > -1} {
-        # Calculate B 
-        EMSegmentCalculateClassGaussian2DDistribution $graphnum $Sclass $Norm $Xmin $YCalcMin $Xmax [lindex $Yborder 1] 
-        }  
-        EMSegmentCalculateClassGaussian2DDistribution $graphnum $Sclass $Norm $Xmin $YCalcUpperMiddle $Xmax [lindex $Yborder 3] 
-    }
-    } 
-
-    # If you want ot have it without all the border stuff this is the way to calculated - should be slower
-    # EMSegmentCalculateClassGaussian2DDistribution $graphnum $Sclass $Norm $EMSegment(Graph,Xmin,0) $EMSegment(Graph,Xmin,1) [expr $EMSegment(Graph,Xmax,0) + 1] [expr $EMSegment(Graph,Xmax,1) + 1]  
-
-    set EMSegment(Graph,$Sclass,XMin,$graphnum)  $EMSegment(Graph,Xmin,$graphnum)
-    set EMSegment(Graph,$Sclass,XMax,$graphnum)  $EMSegment(Graph,Xmax,$graphnum)
-    set EMSegment(Graph,$Sclass,XcaL,$graphnum)  $EMSegment(Graph,XcaL,$graphnum)
-    set EMSegment(Graph,$Sclass,YMin,$graphnum)  $EMSegment(Graph,Ymin,$graphnum)
-    set EMSegment(Graph,$Sclass,YMax,$graphnum)  $EMSegment(Graph,Ymax,$graphnum)
-    set EMSegment(Graph,$Sclass,YcaL,$graphnum)  $EMSegment(Graph,YcaL,$graphnum)
-   
-    # --------------------------------------------------
-    #     4.) Calculate Maximum
-    # --------------------------------------------------
-    # Define Maximum value of current curve
-    # Find out if Mean is inside the X/Y Axis retirctions or outside
-    # set XExtIndex [EMSegmentGlobalGuassianInside $Sclass 0]
-    # set YExtIndex [EMSegmentGlobalGuassianInside $Sclass 0]
-
-    # Calculate Maqximum
-    #if {$XExtIndex != ""} {
-    # Set Closed Grid
-    #    if {$YExtIndex != ""} {
-        # Case: Globale Maximum is outside both intervals 
-    #        set EMSegment(Graph,$Sclass,ZMax,$graphnum) [EMSegmentFind2LineMaximum $Sclass $graphnum $EMSegment(Graph,$XExtIndex,0) $EMSegment(Graph,$XExtIndex,1)] 
-    #    } else {
-            # Case: Globale Maximum is only outside the x interval
-    #        set EMSegment(Graph,$Sclass,YZMax,$graphnum) [EMSegmentFindLineMaximum $graphnum $Sclass $EMSegment(Graph,$XExtIndex,0) 1] 
-    #    }
-    #} elseif {$YExtIndex != ""} {
-    # Case: Globale Maximum is only outside the y interval     
-    #    set EMSegment(Graph,$Sclass,YZMax,$graphnum) [EMSegmentFindLineMaximum $graphnum $Sclass $EMSegment(Graph,$YExtIndex,1) 0] 
-    # } else {
-    # Case: Globale Maximum is inside the interval
-    #    set Xindex [expr round(exp($EMSegment(Graph,$Sclass,LogMean,0)) - 1.0)]
-    #    set XindexGrid [EMSegmentGraphGridCalculate $graphnum $Xindex 0]
-    #    set Yindex [expr round(exp($EMSegment(Graph,$Sclass,LogMean,1)) - 1.0)]
-    #    set YindexGrid [EMSegmentGraphGridCalculate $graphnum $Yindex 1]
-    #    set EMSegment(Graph,$Sclass,ZMax,$graphnum) $EMSegment(Graph,$Sclass,$graphnum,$XindexGrid,$YindexGrid)
-    # }
-
-    # Update Graph Values 
-    # Caluclation Error Sigma to small
-    # if {$EMSegment(Graph,$Sclass,YMax,$graphnum) == 0} {set EMSegment(Graph,$Sclass,YMax,$graphnum) 0.1} 
-    return 1
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentGlobalGuassianInside 
-# Find out if Mean value is inside or outside the axis => We can find out about 
-# global Maximum
-# Return Value  
-# 0 => Mean is inside the interval of the *-Axis
-# 1 => Mean is to the left/below the interval of the *-Axis
-# 2 => Mean is to the right/above the interval of the *-Axis
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentGlobalGuassianInside {Sclass Axis} {
-    global EMSegment
-    if [expr $EMSegment(Graph,$Sclass,LogMean,$Axis) < log($EMSegment(Graph,Xmin,$Axis)+1)]  {return "Xmin"} 
-    if [expr $EMSegment(Graph,$Sclass,LogMean,$Axis) > log($EMSegment(Graph,Xmax,$Axis)+1)]  {return "Xmax"}
-    return ""
-}
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentFindLineMaximum 
-# Find the Maximum Along the Line (x/y = SetValue):
-# Axis :
-# 0 = along X-Axis => Y Value is fixed 
-# 1 = along Y-Axis => X Value is fixed
-# Returns the value where the gaussian distribution takes the maximum value 
-# alonge the axis 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentFindLineMaximum {GraphNum Sclass SetVal Axis} {
-    global EMSegment
-    # a = fixed value , b = set value
-    set SetVal [EMSegmentGraphGridCalculate $GraphNum $SetVal $Axis] 
-    set a [expr 1 + $Axis] 
-    set b [expr 2 - $Axis] 
-    # val is the log value 
-    set val [expr $EMSegment(Graph,$Sclass,LogMean,$a,$GraphNum) - $EMSegment(Graph,$Sclass,InvLogCov,1,2,$GraphNum) / $EMSegment(Graph,$Sclass,InvLogCov,$a,$a,$GraphNum) * (log($SetVal+1) \
-        - $EMSegment(Graph,$Sclass,LogMean,$b,$GraphNum))]
-    # Now we recover the int grey value
-    set val [expr round(exp($val) - 1.0)]
-    if {$val < $EMSegment(Graph,Xmin,$Axis)} {set val $EMSegment(Graph,Xmin,$Axis)
-    } elseif { $val > $EMSegment(Graph,Xmax,$Axis)} {set val $EMSegment(Graph,Xmax,$Axis) }
-    # Now calculate the column it is closest to 
-    set val [EMSegmentGraphGridCalculate $GraphNum $val $Axis]
-    if {$Axis} {
-    return $EMSegment(Graph,$Sclass,$GraphNum,$SetVal,$val) 
-    } 
-    return $EMSegment(Graph,$Sclass,$GraphNum,$val,$SetVal) 
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentFind2LineMaximum 
-# Find the Maximum Along a fixed X and Y Axis and return result
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentFind2LineMaximum {Sclass GraphNum XFix YFix} {
-    global EMSegment
-    # Now we have to check to cases -> along the X and Y axis
-    # 1.) Check along the X Axis
-    set XVal [EMSegmentFindLineMaximum $GraphNum $Sclass $YFix 0] 
-    # 2.) Check along the Y Axis 
-    set YVal [EMSegmentFindLineMaximum $GraphNum $Sclass $XFix 1] 
-    if {$XVal > $YVal} {
-    return $XVal 
-    } 
-    return $YVal 
-}
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentCheckClassCurve
-# Check values of graph defintion before calculating class curve
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentCheckClassCurve {graphnum Sclass IndexGraphNum AxisFlag} {
-    global EMSegment
-    
-    if {[expr ($EMSegment(Graph,$Sclass,XMin,$graphnum) == $EMSegment(Graph,Xmin,$graphnum)) && \
-        ($EMSegment(Graph,$Sclass,XMax,$graphnum) == $EMSegment(Graph,Xmax,$graphnum))]} {
-    if {$Sclass > 0} {
-        if {$AxisFlag} {return 0}
-    } else {
-        # Histogram has been already calculated for this Volume
-        if { $EMSegment(Graph,$Sclass,VolumeID,$graphnum) == $index} {
-        return 0
-        }
-    }
-    } 
-    return $index
-}
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentGraphGridCalculate 
-# Calculates the closest row or column to a point  
-# Axis  = 0 => X Axis , 1 => Y Axis
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentGraphGridCalculate {GraphNum Value Axis } {
-    global EMSegment
-    if {$Axis} {
-    set UnitLength $EMSegment(Graph,YcaL,$GraphNum)
-    } else {
-    set UnitLength $EMSegment(Graph,XcaL,$GraphNum)
-    }
-    # Do Not Change it to $EMSegment(Graph,Xmin,$GraphNum) otherwise we have problems when calculating the region !!! Value is not set yet !!
-    set grid [expr $UnitLength * round(double($Value - $EMSegment(Graph,Xmin,$Axis)) / double($UnitLength)) + $EMSegment(Graph,Xmin,$Axis)]
-    if {$grid > $EMSegment(Graph,Xmax,$Axis)} {
-        return [expr $UnitLength * int(double($EMSegment(Graph,Xmax,$Axis) - $EMSegment(Graph,Xmin,$Axis)) / double($UnitLength)) + $EMSegment(Graph,Xmin,$Axis)]
-    } elseif {$grid < $EMSegment(Graph,Xmin,$Axis)} {return $EMSegment(Graph,Xmin,$Axis)}
-    return $grid
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentDefineCalculationBorder 
-# Defines the borders where Curve has to be recalcalculated. There are three 
-# scenarios :
-# 1.Case: BorLowerLeft == BorUpperLeft == BorLowerRight == BorUpperRight == -1 
-#         => Nothing to calculate
-# 2.Case: BorLowerLeft == BorUpperLeft == -1 
-#         => Only Calculate in [BorLowerRight,BorUpperRight] 
-# 3.Case: BorLowerLeft != -1 != BorUpperLeft  
-#         => Calculate in [BorLowerLeft,BorUpperLeft], [BorLowerRight,BorUpperRight] 
-#
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc  EMSegmentDefineCalculationBorder {MinNew MaxNew MinOld MaxOld flag} {
-    # Depending on how the x-axis has been changed we do not recalculate everything
-    # Default - everything has to be recalculated
-    set BorLowerLeft -1
-    set BorUpperLeft -1
-    set BorLowerRight $MinNew 
-    set BorUpperRight $MaxNew 
-    # puts "EMSegmentDefineCalculationBorder $MinNew $MaxNew $MinOld $MaxOld $flag"
-    if $flag {
-    # Just the Axis are changed
-    # Find out if they have joint areas that do not have to be recalculated 
-    if {$MinOld <= $MinNew} {
-        if {$MaxOld > $MinNew} {
-        if {$MaxOld >= $MaxNew} {
-            # 1. Case: We do not have to calculate anything because new definition is an inclusion of the old
-            set BorLowerRight -1 
-            set BorUpperRight -1
-        } else {
-            # 2. Case: The curve got longer - we have to calculate an upper area
-            set BorLowerRight $MaxOld 
-        }
-        } 
-    } elseif {$MinOld < $MaxNew} {
-        if {$MaxOld <= $MaxNew} {
-        # 3. Case: Have to calculate upper and lower area
-        set BorLowerLeft  $MinNew 
-        set BorUpperLeft  $MinOld
-        set BorLowerRight $MaxOld 
-        } else {
-        # 2.Case: We only have to calculate upper area
-        set BorLowerRight $MinNew 
-        set BorUpperRight $MinOld 
-        }     
-    } 
-    }
-    # puts "EMSegmentDefineCalculationBorder leave $BorLowerLeft $BorUpperLeft $BorLowerRight $BorUpperRight" 
-    return "$BorLowerLeft $BorUpperLeft $BorLowerRight $BorUpperRight" 
-}
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentCalculateClassGaussianDistribution
-# Calucates the gaussian distribution 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentCalculateClassGaussianDistribution {Sclass graphnum Min Max } {
-    global EMSegment
-    set pi 3.141592653
-    if {$EMSegment(Graph,$Sclass,LogCov,$graphnum) == 0} {
-    for {set i $Min} {$i < $Max} { incr i} {
-        set EMSegment(Graph,$Sclass,$i,$graphnum) 0.0 
-    }
-    set mean [expr int(exp($EMSegment(Graph,$Sclass,LogMean,$graphnum))) - 1]
-    if {($Min <= $mean) && ($Max >= $mean)} {
-        set EMSegment(Graph,$Sclass,$mean,$graphnum) 1.0
-    }
-    return
-    }
-    set norm [expr sqrt(0.5/($pi*$EMSegment(Graph,$Sclass,LogCov,$graphnum)))]
-    incr Max
-    for {set i $Min} {$i < $Max} { incr i} {
-    set term [expr log($i+1.0)-$EMSegment(Graph,$Sclass,LogMean,$graphnum)]
-    set EMSegment(Graph,$Sclass,$i,$graphnum) [expr $norm*exp(-0.5*$term*$term/$EMSegment(Graph,$Sclass,LogCov,$graphnum))]
-    }
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentCalculateClassGaussian2DDistribution
-# Calucates the gaussian distribution 
-# XZeroMin YZeroMin XZeroMax YZeroMax are the inner borders for which rectangular 
-# Zero has to be calculated => x < XZeroMin or x > XZeroMax => f(x,y) = 0 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentCalculateClassGaussian2DDistribution {graphnum Sclass Norm XMin YMin XMax YMax} {
-    global EMSegment 
-    # puts "EMSegmentCalculateClassGaussian2DDistribution $graphnum $Sclass $Norm $XMin $YMin $XMax $YMax"
-    # Already fill region with Zero
-    # set Border [EMSegmentSetRegionToZero $graphnum $Sclass $XMin $YMin $XMax $YMax $XZeroMin $YZeroMin $XZeroMax $YZeroMax]
-    # set XMin [lindex $Border 0]
-    # if {$XMin < 0 } { return}
-
-    # Define New Borders to calculate Gauss Values
-    set XMin [EMSegmentGraphGridCalculate $graphnum $XMin 0]
-    set YMin [EMSegmentGraphGridCalculate $graphnum $YMin 1]
-    incr XMax 
-    incr YMax 
-
-    set Xterm [expr log($XMin+1.0) - $EMSegment(Graph,$Sclass,LogMean,1,$graphnum)]
-    for {set y $YMin} {$y < $YMax} {incr y $EMSegment(Graph,YcaL,$graphnum)} {
-    set Yterm($y) [expr log($y+1.0) - $EMSegment(Graph,$Sclass,LogMean,2,$graphnum)]
-    set YLogCov($y) [expr $Yterm($y)*$Yterm($y)*$EMSegment(Graph,$Sclass,InvLogCov,2,2,$graphnum)]
-    set term [expr $Xterm*($EMSegment(Graph,$Sclass,InvLogCov,1,1,$graphnum)*$Xterm + 2.0*$EMSegment(Graph,$Sclass,InvLogCov,1,2,$graphnum)*$Yterm($y)) + $YLogCov($y)]
-    # Be carful different between 1D and 2D Case 
-    set EMSegment(Graph,$Sclass,$graphnum,$XMin,$y) [expr $Norm*exp(-0.5*$term)]
-    }
-    incr XMin $EMSegment(Graph,XcaL,$graphnum)
-    for {set x $XMin} {$x < $XMax} {incr x $EMSegment(Graph,XcaL,$graphnum)} {
-    set Xterm [expr log($x+1.0) - $EMSegment(Graph,$Sclass,LogMean,1,$graphnum)]
-    for {set y $YMin} {$y < $YMax} {incr y $EMSegment(Graph,YcaL,$graphnum)} {
-        set term [expr $Xterm*($EMSegment(Graph,$Sclass,InvLogCov,1,1,$graphnum)*$Xterm + 2.0*$EMSegment(Graph,$Sclass,InvLogCov,1,2,$graphnum)*$Yterm($y)) + $YLogCov($y)]
-        # Be carful different between 1D and 2D Case 
-        set EMSegment(Graph,$Sclass,$graphnum,$x,$y) [expr $Norm*exp(-0.5*$term)]
-    }
-    }
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentSetRegionsToZero 
-# Sets the defined Regions to Zero and returns new calculation intervals
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentSetRegionToZero {GraphNum Sclass XCalcMin YCalcMin XCalcMax YCalcMax XZeroMin YZeroMin XZeroMax YZeroMax} {
-    global EMSegment
-    if {$XCalcMin < $XZeroMin} {
-    if {$XCalcMax < $XZeroMin} {
-        # Nothing has to be calculated
-        EMSegmentSetGaussRegionToZero $GraphNum $Sclass $XCalcMin $YCalcMin $XCalcMax $YCalcMax
-        return "-1 -1 -1 -1"
-    } 
-    set Xmin $XZeroMin
-    EMSegmentSetGaussRegionToZero $GraphNum $Sclass $XCalcMin $YCalcMin [expr $XZeroMin - 1] $YCalcMax 
-    } else {
-    set Xmin $XCalcMin
-    }
-    if {$XCalcMax > $XZeroMax} {
-    if {$XCalcMin > $XZeroMax} {
-        # Nothing has to be calculated
-        EMSegmentSetGaussRegionToZero $GraphNum $Sclass $XMin $YCalcMin $XCalcMax $YCalcMax 
-        return "-1 -1 -1 -1"
-    } 
-    set Xmax $XZeroMax
-    EMSegmentSetGaussRegionToZero $GraphNum $Sclass [expr $XZeroMax +1] $YCalcMin $XCalcMax $YCalcMax
-    } else {
-    set Xmax $XCalcMax
-    }
-
-    if {$YCalcMin < $YZeroMin} {
-    if {$YCalcMax < $YZeroMin} {
-        # Nothing has to be calculated
-        EMSegmentSetGaussRegionToZero $GraphNum $Sclass $Xmin $YCalcMin $Xmax $YCalcMax
-        return "-1 -1 -1 -1"
-    } 
-    set Ymin $YZeroMin
-    EMSegmentSetGaussRegionToZero $GraphNum $Sclass $Xmin $YCalcMin $Xmax [expr $YZeroMin -1]
-    } else {
-    set Ymin $YCalcMin
-    }
-
-    if {$YCalcMax > $YZeroMax} {
-    if {$YCalcMin > $YZeroMax} {
-        # Nothing has to be calculated
-        EMSegmentSetGaussRegionToZero $GraphNum $Sclass $Xmin $YCalcMin $Xmax $YCalcMax
-        return "-1 -1 -1 -1"
-    } 
-    set Ymax $YZeroMax
-    EMSegmentSetGaussRegionToZero $GraphNum $Sclass $Xmin [expr $YZeroMax +1] $Xmax $YCalcMax
-    } else {
-    set Ymax $YCalcMax
-    }
-    return "$Xmin $Ymin $Xmax $Ymax"
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentSetGaussRegionToZero 
-# Sets the defined gauss Region to Zero 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentSetGaussRegionToZero {graphnum Sclass XMin YMin XMax YMax} {
-    global EMSegment
-    set XMin [EMSegmentGraphGridCalculate $graphnum $XMin 0]
-    incr XMax 
-    set YMin [EMSegmentGraphGridCalculate $graphnum $YMin 1]
-    incr YMax 
-    for {set x $XMin} {$x < $XMax} {incr x $EMSegment(Graph,XcaL,$graphnum)} {
-    for {set y $YMin} {$y < $YMax} {incr y $EMSegment(Graph,YcaL,$graphnum)} {
-        # Be carful different between 1D and 2D Case 
-        set EMSegment(Graph,$Sclass,$graphnum,$x,$y) 0.0
-    }
-    }
-}
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentDrawClassCurveRegion
-# Calucates the Class Curve/Region, rescales (if needed) and draws it in the graph. 
-# Remember Sclass == 0 is the Histogram of current 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentDrawClassCurveRegion {Sclass index} {
-    global EMSegment
-    set EMSegment(Cattrib,$Sclass,Graph,$index) 1
-    if {$index < 2} {
-      if {[EMSegmentRescaleGraph $EMSegment(Graph,Xmin,$index) $EMSegment(Graph,Xmax,$index) $EMSegment(Graph,Xsca,$index) $index 0] == 0 } {
-         # Curve has not been painted yet 
-         EMSegmentDrawSingleCurve $Sclass $index
+      if {$Sclass > 0} {
+        if {$ClassIndex < $EMSegment(Graph,ButtonNum)} { $EMSegment(Cl-fGraphButtons).bGraphButton$Sclass configure -relief sunken
+        } else { $EMSegment(Cl-fGraphButtonsBelow).bGraphButton$Sclass configure -relief sunken }
+      } else {
+        if  {$EMSegment(SegmentMode) > 1} {$EMSegment(Cl-mbGraphHistogram$NumGraph) configure -relief raised
+        } else {$EMSegment(Cl-bGraphHistogram$NumGraph) configure -relief sunken }
       }
-    } else {
-      EMSegmentDrawRegion $Sclass $index 1
-    }
-}  
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentDrawSingleCurve
-# Draws a single curve in the 1D-graph. Remember Sclass == 0 is the Histogram of current 
-# active Volume 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentDrawSingleCurve {Sclass index} {
-   global EMSegment
-   # Delete old line 
-   if {$EMSegment(Cattrib,$Sclass,Graph,$index) == 1} {
-       $EMSegment(Cl-caGraph$index) delete Graph$Sclass
-   } else {
-      set EMSegment(Cattrib,$Sclass,Graph,$index) 1
-   }
-   if {[expr $EMSegment(Graph,DisplayProb) && ($Sclass > 0)] } {
-       set prob $EMSegment(Cattrib,$Sclass,Prob)
-   } else {
-       set prob 1
-   }
-   
-   # Histogrma has to be differently displayed
-   if {$Sclass} {
-     set ColorCode $EMSegment(Cattrib,$Sclass,ColorCode)
-   } else {
-     set ColorCode $EMSegment(Cattrib,0,ColorGraphCode)
-   }
-
-   # Draw the Line
-   set Xmin $EMSegment(Graph,Xmin,$index)
-   set Xlength [expr $EMSegment(Graph,Xmax,$index) - $EMSegment(Graph,Xmin,$index) + 1]
-   # Graph does not display those values anymore because of side scaling 
-   if {$EMSegment(Graph,Ymax,$index) >  0.001} {
-       if {$Sclass > 0} {
-       set YposLast [expr int((1.0 - $prob * $EMSegment(Graph,$Sclass,$Xmin,$index)/double($EMSegment(Graph,Ymax,$index))) * \
-           $EMSegment(Graph,Ylen,$index) + $EMSegment(Graph,YboU))]
-       } else {
-       set YposLast [expr int((1.0 - $EMSegment(Graph,0,$Xmin,$index) / double ($EMSegment(Graph,0,YMax,$index))) * \
-           $EMSegment(Graph,Ylen,$index) + $EMSegment(Graph,YboU))]
-       }
-       for {set i 1 } {$i < $Xlength} {incr i } {
-       if {$Sclass > 0} {
-           set Ypos [expr int((1.0 - $prob*$EMSegment(Graph,$Sclass,[expr $i+$Xmin],$index)/double($EMSegment(Graph,Ymax,$index))) * \
-                 $EMSegment(Graph,Ylen,$index) + $EMSegment(Graph,YboU))]
-           } else {
-           set Ypos [expr int((1.0 - $EMSegment(Graph,0,[expr $i+$Xmin],$index) / double ($EMSegment(Graph,0,YMax,$index))) * \
-                 $EMSegment(Graph,Ylen,$index) + $EMSegment(Graph,YboU))]
-       }
-       $EMSegment(Cl-caGraph$index) create line  $EMSegment(Graph,Xpos,[expr $i-1],$index) $YposLast $EMSegment(Graph,Xpos,$i,$index) $Ypos \
-               -width 1 -fill $ColorCode -tag Graph$Sclass
-           set YposLast $Ypos
-       }
-   } else {
-       set Ypos [expr int($EMSegment(Graph,Ylen,$index) + $EMSegment(Graph,YboU))]
-       for {set i 1 } {$i < $Xlength} {incr i } {
-       for {set j 0} { $j < $EMSegment(NumGraph)} {incr j} {
-           $EMSegment(Cl-caGraph$j) create line  $EMSegment(Graph,Xpos,[expr $i-1],$index) $Ypos $EMSegment(Graph,Xpos,$i,$index) $Ypos \
-               -width 1 -fill $ColorCode -tag Graph$Sclass
-       }
-       }
-   }
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentDrawClassRegion
-# Draws a single region in the 2D-Graph. 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentDrawClassRegion {GraphNum Class XStart XEnd Y} {
-    global EMSegment
-    set YCoords $EMSegment(Graph,Ypos,[expr $Y - $EMSegment(Graph,Xmin,1)],$GraphNum) 
-    $EMSegment(Cl-caGraph$GraphNum) create line $EMSegment(Graph,Xpos,[expr $XStart-$EMSegment(Graph,Xmin,0)],$GraphNum) $YCoords \
-        $EMSegment(Graph,Xpos,[expr $XEnd-$EMSegment(Graph,Xmin,0)],$GraphNum) $YCoords  -width $EMSegment(Graph,YcaW,$GraphNum) \
-        -tag Graph$Class -fill $EMSegment(Cattrib,$Class,ColorCode)
-}
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentDrawRegion
-# Draws a single region in the 2D-Graph. 
-# Status :
-# 1 => just one single Region gets added, 
-# 2 => just recalculate area with Sclass (when it gets deleted from the map)
-# 3 => Redraw the whole part
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentDrawRegion {Sclass GraphNum Status} {
-   global EMSegment
-   #  puts "EMSegmentDrawRegion $Sclass $GraphNum $Status"
-   # Remeber: We cannot display the histogram in 2D currently 
-   if {$Sclass < 1} {return}
-   if {$EMSegment(Cattrib,0,Label,1)  == $EMSegment(Cattrib,0,Label,0) } {return}
- 
-   if {$Status < 2} {set EMSegment(Cattrib,$Sclass,Graph,$GraphNum) 1}
-   # Find out which Classes are active 
-   set ActiveList ""
-   set ProbList ""
-   set WholeProbList(0) 0
-   set ProbMin 1.0 
-   foreach i $EMSegment(GlobalClassList) {
-       if {$EMSegment(Cattrib,$i,Graph,$GraphNum) == 1 } {
-           lappend ActiveList $i
-           if {$EMSegment(Graph,DisplayProb) } {  
-              lappend ProbList $EMSegment(Cattrib,$i,Prob) 
-              if {$ProbMin > $EMSegment(Cattrib,$i,Prob) } {
-                set ProbMin $EMSegment(Cattrib,$i,Prob)
-              }
-           } else {
-              lappend ProbList 1.0 
-           }
-       }
-       if {$EMSegment(Graph,DisplayProb) } {  
-           set WholeProbList($i) $EMSegment(Cattrib,$i,Prob) 
-       } else {
-           set WholeProbList($i) 1.0 
-       }
-   }
-   # Delete old Setting
-   # Right Now redraw the whole graph 
-   if {[llength $ActiveList] == 0} {return}
-   if {$Status != 2} {
-       foreach elem $ActiveList {
-          $EMSegment(Cl-caGraph$GraphNum) delete Graph$elem
-       }
-   }
-   set InitElem [lindex $ActiveList 0]
-   set ActiveList [lrange $ActiveList 1 end]
-   set InitProb [lindex $ProbList 0]
-   set ProbList [lrange $ProbList 1 end]
-
-   # Do we use Probability for our calculation or not 
-   if {$EMSegment(Graph,DisplayProb)  } {
-       set ClassProb $EMSegment(Cattrib,$Sclass,Prob)
-   } else {
-       set ClassProb 1.0
-   }
-   # Recalculate MAP and draw the point
-   set Xmin $EMSegment(Graph,Xmin,$GraphNum)
-   set Xmax [expr $EMSegment(Graph,Xmax,$GraphNum)+1]
-
-   set Ymin $EMSegment(Graph,Ymin,$GraphNum)
-   set Ymax [expr $EMSegment(Graph,Ymax,$GraphNum)+1]
-
-   # ShortCut if Active Lenght is 0 no comparison needed
-   set oldMAPClass $Sclass
-   # set CutOff  [expr $EMSegment(Graph,MinDisplayValue,$GraphNum)*$ProbMin]
-  
-    for {set y $Ymin} {$y < $Ymax} {incr y $EMSegment(Graph,YcaL,$GraphNum)} {
-       set lastMaxClass -1
-       for {set x $Xmin} {$x < $Xmax} {incr x $EMSegment(Graph,XcaL,$GraphNum)} {
-       # Find out if current class is bigger than older once - also lock through and through out old tissue class values 
-       if {$Status < 3} { set oldMAPClass $EMSegment(Graph,MAP,$GraphNum,$x,$y)}    
-       # Remember: For Status = 3 $oldMAPClass == $Sclass always !
-       if {$oldMAPClass == $Sclass} {
-           # we have to recalculate everything for this point and display
-           set EMSegment(Graph,MAP,$GraphNum,$x,$y) $InitElem
-           set MaxValue [expr $EMSegment(Graph,$InitElem,$GraphNum,$x,$y)*$InitProb]
-           foreach elem $ActiveList prob $ProbList {
-               if [expr $MaxValue < ($EMSegment(Graph,$elem,$GraphNum,$x,$y)*$prob)] {
-                  set EMSegment(Graph,MAP,$GraphNum,$x,$y) $elem
-                  set MaxValue [expr $EMSegment(Graph,$elem,$GraphNum,$x,$y)*$prob]
-               }
-           }
-        } else {
-           if { $Status < 2} { 
-           # Just compare it with the maximum
-           if {$oldMAPClass > -1} {
-               set prob $WholeProbList($oldMAPClass)
-               set MaxValue [expr $EMSegment(Graph,$oldMAPClass,$GraphNum,$x,$y) * $prob]
-               set NewValue [expr $EMSegment(Graph,$Sclass,$GraphNum,$x,$y) * $ClassProb]
-               if {$MaxValue < $NewValue} {
-                 set EMSegment(Graph,MAP,$GraphNum,$x,$y) $Sclass
-                 # set MaxValue $NewValue
-               }
-           } else { 
-               #  set MaxValue [expr $EMSegment(Graph,$Sclass,$GraphNum,$x,$y)*$ClassProb]
-               set EMSegment(Graph,MAP,$GraphNum,$x,$y) $Sclass
-           }
-           } else {
-           # Must be Status 2 because Status 3 never gets her
-           if {$lastMaxClass > -1} {
-               # Have to draw line because this pixel doe not belong anymore to the class that has to be deleted 
-               EMSegmentDrawClassRegion $GraphNum $lastMaxClass $XStartCoordMax $x $y  
-               set lastMaxClass -1
-           } 
-           # set MaxValue 1.0
-           }
-       }
-       #if {$MaxValue < $CutOff} {
-       #    set EMSegment(Graph,MAP,$GraphNum,$x,$y) -1
-       # }
-       if {$lastMaxClass != $EMSegment(Graph,MAP,$GraphNum,$x,$y) } {
-           # Finish with the last line 
-           # Have to change to real position calculation 
-           if {$lastMaxClass > -1} {
-           EMSegmentDrawClassRegion $GraphNum $lastMaxClass $XStartCoordMax $x $y
-           }
-           # Have to start a new line 
-           set XStartCoordMax $x
-           if {$Status !=2} {
-           set lastMaxClass $EMSegment(Graph,MAP,$GraphNum,$x,$y) 
-           } elseif {$oldMAPClass == $Sclass} { 
-           set lastMaxClass $EMSegment(Graph,MAP,$GraphNum,$x,$y) 
-           }   
-       }
-       }
-       if {$lastMaxClass > -1} {EMSegmentDrawClassRegion $GraphNum $lastMaxClass $XStartCoordMax [expr $Xmax-1] $y}
-   }
-   $EMSegment(Cl-caGraph$GraphNum) raise GrayT0
-   $EMSegment(Cl-caGraph$GraphNum) raise GrayT1
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentCalulateGraphXleUXscnXscpXpos 
-# It will calulate EMSegment(Graph,XleU), EMSegment(Graph,Xscn,$index), 
-# EMSegment(Graph,Xscp) and EMSegment(Graph,Xpos)
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentCalulateGraphXleUXscnXscpXpos {index} {
-    global EMSegment
-    # Define Length one unit in pixels
-    set EMSegment(Graph,XleU,$index) [expr $EMSegment(Graph,Xlen,$index) / double($EMSegment(Graph,Xmax,$index) - $EMSegment(Graph,Xmin,$index))]
-    if {$index > 1} {
-    if {$EMSegment(Graph,XleU,$index) < 1.0} {
-        # Define the drawing surface, i.e. how many lines are left out to be calculated for 2 Dim Graph  
-        set EMSegment(Graph,XcaL,$index) [expr int(1.0 / $EMSegment(Graph,XleU,$index))]
-    } else {
-        # Define the drawing surface, i.e. how many lines are left out to be calculated for 2 Dim Graph  
-        set EMSegment(Graph,XcaL,$index) 1
-    }
-    }
-    # Number of scalling lines 
-    set EMSegment(Graph,Xscn,$index) [expr int(($EMSegment(Graph,Xmax,$index) - $EMSegment(Graph,Xmin,$index))/double($EMSegment(Graph,Xsca,$index)))]
-    # Distance between scalling lines 
-    set EMSegment(Graph,Xscp,$index) [expr $EMSegment(Graph,Xlen,$index)*$EMSegment(Graph,Xsca,$index) / double($EMSegment(Graph,Xmax,$index) - $EMSegment(Graph,Xmin,$index))] 
-
-    # Xscaling per point does not change, so I just have to caluclate it once ! Makes it a little bit speedier
-    # Start with point 1 not origin ! 
-    set Xlength [expr $EMSegment(Graph,Xmax,$index) - $EMSegment(Graph,Xmin,$index) + 1]
-    for {set i 0 } {$i < $Xlength} {incr i } {
-         set EMSegment(Graph,Xpos,$i,$index) [expr $EMSegment(Graph,XboL) + int($i*$EMSegment(Graph,XleU,$index))]
-    }
-    # if {$index > 1} {puts "EMSegmentCalulateGraphXleUXscnXscpXpos $EMSegment(Graph,XleU,$index) $EMSegment(Graph,XcaL,$index) $EMSegment(Graph,Xscn,$index) $EMSegment(Graph,Xscp,$index)"}
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentCalulateGraphYscnYscp
-# It will calulate EMSegment(Graph,Yscn) and EMSegment(Graph,Xscn,Yscp) 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentCalulateGraphYscnYscp {index} {
-    global EMSegment
-    # Number of scalling lines
-    set EMSegment(Graph,Yscn,$index) [expr int(double($EMSegment(Graph,Ymax,$index) - $EMSegment(Graph,Ymin,$index)) / double($EMSegment(Graph,Ysca,$index)))]
-    # Distance between scalling lines 
-    set EMSegment(Graph,Yscp,$index) [expr $EMSegment(Graph,Ylen,$index)*$EMSegment(Graph,Ysca,$index) / double($EMSegment(Graph,Ymax,$index) - $EMSegment(Graph,Ymin,$index))] 
-
-    # This is for 2D Histogram
-    if {$index > 1} {
-    # Define Length one unit in pixels
-    set EMSegment(Graph,YleU,$index) [expr $EMSegment(Graph,Ylen,$index) / double($EMSegment(Graph,Ymax,$index) - $EMSegment(Graph,Ymin,$index))]
-    if {$EMSegment(Graph,YleU,$index) < 1.0} {
-        # Define the drawing surface, i.e. how many lines are left out to be calculated for 2 Dim Graph  
-        set EMSegment(Graph,YcaL,$index) [expr int(1.0 / $EMSegment(Graph,YleU,$index))]
-        # Width of the line painted 
-        set EMSegment(Graph,YcaW,$index) 1
-    } else {
-        # Define the drawing surface, i.e. how many lines are left out to be calculated for 2 Dim Graph  
-        set EMSegment(Graph,YcaL,$index) 1
-        # Width of the line painted 
-        set EMSegment(Graph,YcaW,$index) [expr int($EMSegment(Graph,YleU,$index)+0.999999999999999)]
-    }
-    # Xscaling per point does not change, so I just have to caluclate it once ! Makes it a little bit speedier
-    # Start with point 1 not origin ! 
-    set Ylength [expr $EMSegment(Graph,Ymax,$index) - $EMSegment(Graph,Ymin,$index) + 1]
-    set ZeroY [expr $EMSegment(Graph,Cyle,$index) - $EMSegment(Graph,YboD)]
-    
-    # To push it pu we calcualte -2
-    for {set i 0 } {$i < $Ylength} {incr i } {
-        set EMSegment(Graph,Ypos,$i,$index) [expr $ZeroY - int($i*$EMSegment(Graph,YleU,$index)) - 1]
-    }
-    }
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentCreateXLabels 
-# Creates the Lables for the Graph's X-Axis
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentCreateXLabels {index} {
-    global EMSegment Gui
-    # Lables of X Coordinate Axis
-    for {set i 0} { $i <= $EMSegment(Graph,Xscn,$index)} {incr i} {
-        $EMSegment(Cl-caGraph$index) create line [expr $EMSegment(Graph,XboL) + int($i*$EMSegment(Graph,Xscp,$index))]\
-            [expr $EMSegment(Graph,Ylen,$index) + $EMSegment(Graph,YboU) + $EMSegment(Graph,Xscl)]\
-            [expr $EMSegment(Graph,XboL) + int($i*$EMSegment(Graph,Xscp,$index))]\
-            [expr $EMSegment(Graph,Ylen,$index) + $EMSegment(Graph,YboU) - $EMSegment(Graph,Xscl)]\
-            -width 1 -tag GreyL$i
-        $EMSegment(Cl-caGraph$index) create text [expr $EMSegment(Graph,XboL) + int($i*$EMSegment(Graph,Xscp,$index))]\
-            [expr $EMSegment(Graph,Ylen,$index) + $EMSegment(Graph,YboU)+$EMSegment(Graph,Xscl) + $EMSegment(Graph,Xsct)]\
-            -text [expr ($i * $EMSegment(Graph,Xsca,$index)) + $EMSegment(Graph,Xmin,$index)]\
-            -tag GreyT$i -font {Helvetica 6} -fill $Gui(textDark)
-    } 
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentCreateYLabels 
-# Creates the Lables for the Graph's Y-Axis
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentCreateYLabels {index} {
-    global EMSegment Gui
-    # Scalers of Y Coordinate Axis
-    for {set i 0} { $i <= $EMSegment(Graph,Yscn,$index)} {incr i} {
-    $EMSegment(Cl-caGraph$index) create line [expr $EMSegment(Graph,XboL) - $EMSegment(Graph,Yscl)] \
-        [expr $EMSegment(Graph,Ylen,$index) + $EMSegment(Graph,YboU) - int($i * $EMSegment(Graph,Yscp,$index) ) ] \
-        [expr $EMSegment(Graph,XboL) + $EMSegment(Graph,Yscl)] \
-        [expr $EMSegment(Graph,Ylen,$index) + $EMSegment(Graph,YboU) - int($i * $EMSegment(Graph,Yscp,$index) ) ] \
-        -width 1 -tag ProbL$i
-
-    if {$index < 2} {set TEXT [expr int($i*$EMSegment(Graph,Ysca,$index)*1000.0)/1000.0 + $EMSegment(Graph,Ymin,$index)] 
-        } else { set TEXT [expr $i*$EMSegment(Graph,Ysca,$index) + $EMSegment(Graph,Ymin,$index)] }
-
-    $EMSegment(Cl-caGraph$index) create text [expr $EMSegment(Graph,XboL) - $EMSegment(Graph,Yscl) - $EMSegment(Graph,Ysct)] \
-        [expr $EMSegment(Graph,Ylen,$index) + $EMSegment(Graph,YboU) - int($i*$EMSegment(Graph,Yscp,$index))] \
-        -text $TEXT -tag ProbT$i -font {Helvetica 6} -fill $Gui(textDark)  
-    }
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentRedrawGraph 
-# Recalcluates and redraws the whole graph
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentRedrawGraph { } {
-    global EMSegment
-    foreach i "0 $EMSegment(GlobalSuperClassList)" {    
-        for {set j 0} { $j < $EMSegment(NumGraph)} {incr j} {
-            if { $EMSegment(Cattrib,$i,Graph,$j) == 1 } {
-               if {[EMSegmentCalculateClassCurveRegion $i $j] == -1} {return}
-               # This just makes sure the gaph is gone be rescaled for sure !!
-               if {$j < 2} {set EMSegment(Graph,Ymax,$j) [expr $EMSegment(Graph,$i,YMax,$j) -1] }
-            }
-        }
-    }
-    for {set j 0} { $j < $EMSegment(NumGraph)} {incr j} {
-       EMSegmentRescaleGraph $EMSegment(Graph,Xmin,$j) $EMSegment(Graph,Xmax,$j) $EMSegment(Graph,Xsca,$j) $j 0 
-    }
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentRescaleGraphMulti 
-# Calls EMSegmentRescaleGraph for multi graph version
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentRescaleGraphMulti {index} {
-    global EMSegment
-    EMSegmentRescaleGraph $EMSegment(Graph,XminNew,$index) $EMSegment(Graph,XmaxNew,$index) $EMSegment(Graph,XscaNew,$index) $index 0
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentRescaleGraph
-# It will rescale the Graph if necessary
-# Setting axis to :
-# 0 = X Axis
-# 1 = Y Axis
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentRescaleGraph {Min Max Sca index axis} {
-    global EMSegment
-    if {$axis < 1} {
-        # if XRange changes we have to control if Y- Axis also has to be changed
-        set GraphRescale [EMSegmentRescaleXAxis $Min $Max $Sca $index]
-        # Check if we have to rescale graph in y-direction
-        if {$index < 2} {
-            set Ymax -1
-        foreach i "0 $EMSegment(GlobalClassList)" {
-                if {$EMSegment(Cattrib,$i,Graph,$index) == 1} {
-                    if {$EMSegment(Graph,DisplayProb)} {
-                       set ClassMax [expr $EMSegment(Cattrib,$i,Prob)*$EMSegment(Graph,$i,YMax,$index)]
-                    } else { 
-                       set ClassMax $EMSegment(Graph,$i,YMax,$index)
-                    }
-                    if {$ClassMax > $Ymax } {
-                       set Ymax $ClassMax
-                    }
-                }
-            }
-            if {$Ymax > -1} { 
-               if {$Ymax != $EMSegment(Graph,Ymax,$index)} {
-                    set GraphRescale 1
-                    set Ysca [expr ($Ymax - $EMSegment(Graph,Ymin,$index)) /double($EMSegment(Graph,Yscn,$index))]
-                    EMSegmentRescaleGraph $EMSegment(Graph,Ymin,$index) $Ymax $Ysca $index 1
-               }
-            } else {
-               if {[expr ($EMSegment(Cattrib,0,Graph,$index) == 1) && ($EMSegment(Graph,Ymax,$index) != 1.0)]} {
-                    set GraphRescale 1
-                    set Ymax 1.0
-                    set Ysca [expr ($Ymax - $EMSegment(Graph,Ymin,$index)) /double($EMSegment(Graph,Yscn,$index))]
-                    EMSegmentRescaleGraph $EMSegment(Graph,Ymin,$index) $Ymax $Ysca $index 1
-               }
-            }
-       }
-    } else {
-       set GraphRescale [EMSegmentRescaleYAxis $Min $Max $Sca $index]
-    }
-    if {$GraphRescale == 1 } {
-        # Redraw Curves
-        if {$index < 2} {
-            foreach i "0 $EMSegment(GlobalClassList)" {
-                if { $EMSegment(Cattrib,$i,Graph,$index) == 1 } {
-                   EMSegmentDrawSingleCurve $i $index
-                }
-            }
-        } else {
-            EMSegmentDrawRegion $EMSegment(Class) $index 3
-        }
-        return 1
-    }
-    return 0
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentRescaleXAxis
-# It will rescale the Graph for the changes in the X-Axis 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentRescaleXAxis {Xmin Xmax Xsca index} {
-    global EMSegment
-    set GraphRescale 0
-    # puts "EMSegmentRescaleXAxis $Xmin $Xmax $Xsca $index" 
-    if {[expr ($Xmin !=  $EMSegment(Graph,Xmin,$index)) || \
-              ($Xmax !=  $EMSegment(Graph,Xmax,$index)) || \
-              ($Xsca !=  $EMSegment(Graph,Xsca,$index))]} {
-      
-        if [expr ($Xmin !=  $EMSegment(Graph,Xmin,$index)) || ($Xmax !=  $EMSegment(Graph,Xmax,$index))] {
-            set GraphRescale 1
-            if {$index > 1} {
-                # Initiate / delete Extra pixels in graph
-                set XoldMin  $EMSegment(Graph,Xmin,$index) 
-                set XoldMax  $EMSegment(Graph,Xmax,$index)
-                set yMin $EMSegment(Graph,Ymin,$index) 
-                set yMax [expr $EMSegment(Graph,Ymax,$index)+1] 
-                if {$Xmin < $XoldMin} {
-                    EMSegmentCreateGraphPixels $index $Xmin $yMin $XoldMin $yMax
-                }
-                if {$Xmax > $XoldMax} {
-                    EMSegmentCreateGraphPixels $index $XoldMax $yMin $Xmax $yMax
-                }
-             }
-        }
-        # Rescale X-Axis if necessary
-        set EMSegment(Graph,Xmin,$index) $Xmin
-        set EMSegment(Graph,Xmax,$index) $Xmax
-        set EMSegment(Graph,Xsca,$index) $Xsca
-
-        # Delete Labeling of X-Axis
-        for {set i 0} { $i <= $EMSegment(Graph,Xscn,$index)} {incr i} {
-            $EMSegment(Cl-caGraph$index) delete GreyL$i
-            $EMSegment(Cl-caGraph$index) delete GreyT$i
-        }
-
-        # calulate EMSegment(Graph,XleU), EMSegment(Graph,Xscn,$index) and EMSegment(Graph,Xscp,$index) 
-        EMSegmentCalulateGraphXleUXscnXscpXpos $index
-        # Relabel X-Axis
-        EMSegmentCreateXLabels $index
-
-        # Update 2D Graph
-        if {[expr ($EMSegment(NumGraph) > 2) && ($index < 2)] } {
-             EMSegmentRescaleGraph $Xmin $Xmax $Xsca 2 $index
-        }
-        # Recalculate Curves
-        if {$GraphRescale} {
-            # If GraphRescale == 0 than only Xsca changed which changes the tabs but not the curve
-            foreach i "0 $EMSegment(GlobalClassList)" {
-                 if { $EMSegment(Cattrib,$i,Graph,$index) == 1 } {
-                      if {[EMSegmentCalculateClassCurveRegion $i $index] == -1} {return}
-                 }
-            }
-         }
-    }
-    # puts "EMSegmentRescaleXAxis GraphRescale $GraphRescale"
-    return $GraphRescale
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentCreateGraphPixels 
-# It creates graph pixels as given 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentCreateGraphPixels {NumGraph xMin yMin xMax yMax} {
-    global EMSegment
-    incr xMax
-    incr yMax
-    for {set x $xMin} {$x < $xMax} {incr x} {
-         for {set y $yMin} {$y < $yMax} {incr y} {
-            set EMSegment(Graph,MAP,$NumGraph,$x,$y) 0
-            set EMSegment(Graph,0,$NumGraph,$x,$y) 0.0
-         }
-    } 
-}  
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentRescaleYAxis
-# It will rescale the Graph for the changes in the Y-Axis 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentRescaleYAxis {Ymin Ymax Ysca index} {
-    global EMSegment
-    set GraphRescale 0
-    # puts "Enter EMSegmentRescaleYAxis $Ymin $Ymax $Ysca $index"
-    if {[expr ($Ymin !=  $EMSegment(Graph,Ymin,$index)) || \
-              ($Ymax !=  $EMSegment(Graph,Ymax,$index)) || \
-              ($Ysca !=  $EMSegment(Graph,Ysca,$index))]} {
-         if [expr ($Ymin !=  $EMSegment(Graph,Ymin,$index)) || ($Ymax !=  $EMSegment(Graph,Ymax,$index))] {
-             set GraphRescale 1
-             if {$index > 1} {
-                 # Initiate / delete Extra pixels in graph
-                 set YoldMin  $EMSegment(Graph,Ymin,$index) 
-                 set YoldMax  $EMSegment(Graph,Ymax,$index)
-                 set xMin $EMSegment(Graph,Xmin,$index) 
-                 set xMax [expr $EMSegment(Graph,Xmax,$index)+1] 
-                 if {$Ymin < $YoldMin} {
-                     EMSegmentCreateGraphPixels $index $xMin $Ymin $xMax $YoldMin
-                 }
-                 if {$Ymax > $YoldMax} {
-                     EMSegmentCreateGraphPixels $index $xMin $YoldMax $xMax $Ymax
-                 }
-             }
-        }
-        # Rescale Y-Axis if necessary
-        set EMSegment(Graph,Ymin,$index) $Ymin
-        set EMSegment(Graph,Ymax,$index) $Ymax
-        set EMSegment(Graph,Ysca,$index) $Ysca
-
-        # Delete Labeling of Y-Axis
-        for {set i 0} { $i <= $EMSegment(Graph,Yscn,$index)} {incr i} {
-            $EMSegment(Cl-caGraph$index) delete ProbL$i
-            $EMSegment(Cl-caGraph$index) delete ProbT$i
-        }
-        if {[expr ($EMSegment(Graph,Ymax,$index) - $EMSegment(Graph,Ymin,$index)) > 0.001]} {    
-            if {$index < 2} {
-                # Due to calculation error this value can be changed even though we do not want to
-                set oldYscn $EMSegment(Graph,Yscn,$index)
-                EMSegmentCalulateGraphYscnYscp $index  
-                set EMSegment(Graph,Yscn,$index) $oldYscn
-            } else {
-                EMSegmentCalulateGraphYscnYscp $index  
-            }
-        } else {
-            set EMSegment(Graph,Yscp,$index) $EMSegment(Graph,Ylen,$index)
-        }
-        # Relabel Y-Axis
-        EMSegmentCreateYLabels $index
-        # Recalculate Curves for 2D Graph
-        if [expr ($index > 1) && $GraphRescale] {
-       foreach i "0 $EMSegment(GlobalClassList)" {
-                if { $EMSegment(Cattrib,$i,Graph,$index) == 1 } {
-                    if {[EMSegmentCalculateClassCurveRegion $i $index] == -1} {return}
-                }
-           }
-        }
-    }
-    return $GraphRescale
+  }
+  return 1
 }
 
 #-------------------------------------------------------------------------------
@@ -4867,21 +3394,6 @@ proc EMSegmentTrainCIMField {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC EMSegmentDisplayHorizontal 
-# Displays Text horizontal -> Does not look very good so I do not use it  
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentDisplayHorizontal { Frame Text Length } {
-   global Gui
-   set TextLength [string length $Text]
-   for {set i 0} {$i < $Length} {incr i} {
-       if {$i <= $TextLength} { eval {label $Frame.l$i -text [string index $Text $i]} $Gui(WLA)
-       } else { eval {label $Frame.l$i -text " "} $Gui(WLA)}
-       pack $Frame.l$i -side top -padx 0 -pady 0
-   }
-}
-#-------------------------------------------------------------------------------
 # .PROC EMSegmentEndSlice 
 # Calculates the last slice of the current selected Volume 
 # .ARGS
@@ -4905,79 +3417,6 @@ proc EMSegmentEndSlice {flag {VolID -1}} {
        return $result
     }
 }
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentLoadVolume 
-# Loads a volume into slicer 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentLoadVolume {DefaultDir StartFile End Name LittleEndian PixelWidth PixelHeight SliceThickness} {
-    global Data Volume Module EMSegment
-    # Data.tcl DataAddVolume
-    # Setup entries
-    set Volume(propertyType) VolHeader
-    MainVolumesSetActive NEW
-    set Volume(freeze) 1
-
-    # set Module(freezer) "EMSegment row1 EM"
-
-    # User Entries    
-    set Volume(DefaultDir)   $DefaultDir 
-    set Volume(firstFile)    $StartFile 
-    set Volume(name)         $Name 
-    set Volume(littleEndian) $LittleEndian
-
-    #Default entries
-    set Volume(readHeaders) 0
-    set Volume(labelMap) 0            
-    # set Volume(lastNum) [expr ($First + $EMSegment(EndSlice) - 1)] 
-    set Volume(lastNum) $End
-    set Volume(isDICOM) 0
-    set Volume(height) 256
-    set Volume(width) 256
-    # set Volume(pixelSize) 0.9375
-    set Volume(pixelWidth) $PixelWidth 
-    set Volume(pixelHeight) $PixelHeight
-    set Volume(sliceThickness) $SliceThickness 
-    set Volume(sliceSpacing) 0.0
-    set Volume(gantryDetectorTilt) 0
-    set Volume(numScalars) 1
-    set Volume(tensors,pfSwap) 0
-    
-    VolumesPropsApply 
-    RenderAll
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentCalculateMoment
-# Calculates the moment of the acitve image
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentCalculateMoment {} {
-    global EMSegment Volume
-
-    # Transferring Information
-    vtkImageMoments Moments    
-    # Transfer image information
-    Moments SetInput [Volume($Volume(activeID),vol) GetOutput]
-
-    #set data [Moments GetInput]
-    #$data Update
-
-    set data [Moments GetOutput]
-    $data Update
-
-    for {set x 0} {$x < 3 } {incr x} {
-        for {set y 0} {$y < 3 } {incr y} {
-           puts -nonewline "[$data GetScalarComponentAsFloat $x $y 0 0] "        
-        }
-    }
-   
-    # Delete instance
-    Delete Moments
-}
-
 
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentAssignInput
@@ -5228,14 +3667,17 @@ proc EMSegmentDeleteFromSelList {args} {
         $EMSegment(Cl-mGraphHistogram0) delete $index
         if {$EMSegment(NumGraph) > 1} {$EMSegment(Cl-mGraphHistogram1) delete $index}
            for {set i 0} { $i < $EMSegment(NumGraph)} {incr i} {
-           if {$EMSegment(Cattrib,0,Label,$i) == $v } {
-              set EMSegment(Cattrib,0,Label,$i) ""
+           if {$EMSegment(Graph,$i,VolumeID,0) == $v } {
+              set EMSegment(Graph,$i,VolumeID,0) -1
+          if {$EMSegment(NumGraph) == 3} {
+          set EMSegment(Graph,2,VolumeID,$i) -1
+          } 
               $EMSegment(Cl-mbGraphHistogram$i) config -text ""
-              if {$EMSegment(Cattrib,0,Graph,$i) == 1} {
+              if {$EMSegment(Graph,$i,ID,0) > -1} {
                 EMSegmentDrawDeleteCurveRegion 0 $i
               }
           foreach j $ClassList { 
-                if {$EMSegment(Cattrib,$j,Graph,$i) == 1} {
+                if {$EMSegment(Graph,$i,ID,$j) > -1} {
                   EMSegmentMultipleDrawDeleteCurveRegion $j
                 }
               }
@@ -5243,9 +3685,12 @@ proc EMSegmentDeleteFromSelList {args} {
         }
     } else {
         for {set i 0} { $i < $EMSegment(NumGraph)} {incr i} {
-            set EMSegment(Cattrib,0,Label,$i) ""
+            set EMSegment(Graph,$i,VolumeID,0) -1
+        if {$EMSegment(NumGraph) == 2} {
+        set EMSegment(Graph,2,VolumeID,$i) -1
+        }
             $EMSegment(Cl-bGraphHistogram$i) config -text ""
-            if {$EMSegment(Cattrib,0,Graph,$i) == 1} {
+            if {$EMSegment(Cattrib,$i,ID,0) > -1} {
                EMSegmentDrawDeleteCurveRegion 0 $i
             }
         }
@@ -5301,23 +3746,7 @@ proc EMSegmentCreateMeanCovarianceRowsColumns {OldNumInputCh NewNumInputCh} {
     }
     }
 }
-#-------------------------------------------------------------------------------
-# .PROC  EMSegmentCreateLogGrayValueDisplay
-# Creates the entry field in the upper right corner of each graph displaying the 
-# current log gray value of the image 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentCreateLogGrayValueDisplay {pos List index} {
-    global EMSegment Gui
-    set ca $EMSegment(Cl-caGraph$index)
-    set xpos [expr $EMSegment(Graph,Cxle,$index) - $EMSegment(Graph,XboR) - 18]
-    $ca create text $xpos [expr $EMSegment(Graph,YboU) + $pos*7 + 2] -text "" -tag GrayT0 -font {Helvetica 6} -fill $Gui(textDark)      
-    if {$index > 1} {
-    incr pos
-    $ca create text $xpos [expr $EMSegment(Graph,YboU) + $pos*7 + 2] -text "" -tag GrayT1 -font {Helvetica 6} -fill $Gui(textDark)
-    }      
-}
+
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentCreateGraphDisplayButton
 # Creates the graph display button on the Class Tab
@@ -5326,7 +3755,8 @@ proc EMSegmentCreateLogGrayValueDisplay {pos List index} {
 #-------------------------------------------------------------------------------
 proc EMSegmentCreateGraphDisplayButton {f} {
     global Gui
-    DevAddButton $f.bGraphWindow "Class Distribution" EMSegmentShowGraphWindow 
+    DevAddButton $f.bGraphWindow "Class Distribution" "" 
+    bind $f.bGraphWindow <ButtonPress-1>  " EMSegmentShowGraphWindow %X %Y"
     TooltipAdd $f.bGraphWindow "Press this button to open up a window displaying graphically the class distribution."
     pack $f.bGraphWindow -side top -padx $Gui(pad)  -pady $Gui(pad)
 }
@@ -5337,7 +3767,7 @@ proc EMSegmentCreateGraphDisplayButton {f} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentShowGraphWindow {{x -1} {y -1}} {
+proc EMSegmentShowGraphWindow {{x 0} {y 0}} {
     global EMSegment Gui
 
     # Recreate popup if user killed it
@@ -5345,10 +3775,10 @@ proc EMSegmentShowGraphWindow {{x -1} {y -1}} {
         EMSegmentCreateGraphWindow
     }
 
-    if {$x > -1} {set EMSegment(Graph,WindowX) $x}
-    if {$y > -1} {set EMSegment(Graph,WindowY) $y} 
+    # Update Classes so they are up to date 
+    EMSegmentUpdateClasses 0 
     # LabelsUnHideLabels
-    ShowPopup $Gui(wEMSegment) $EMSegment(Graph,WindowX) $EMSegment(Graph,WindowY)
+    ShowPopup $Gui(wEMSegment) $x $y
 }
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentCreateGraphWindow
@@ -5356,13 +3786,16 @@ proc EMSegmentShowGraphWindow {{x -1} {y -1}} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentCreateGraphWindow {} {
+proc EMSegmentCreateGraphWindow { } {
     global EMSegment Gui
-
+ 
     set w .wEMSegmenterGraph
     set Gui(wEMSegment) $w
 
     if {[winfo exists $Gui(wEMSegment)]} {
+       for {set i 0} {$i < $EMSegment(NumGraph)} {incr i} {
+       GraphDelete EMSegment $EMSegment(Graph,$i,path) 
+       }
        destroy  $Gui(wEMSegment) 
     }
     #-------------------------------------------
@@ -5383,7 +3816,7 @@ proc EMSegmentCreateGraphWindow {} {
     
     # wm positionfrom $w user
 
-    eval {label $f.lTitle -text "Display Class Disribution" } $Gui(WTA)
+    eval {label $f.lTitle -text "Display Class Distribution" } $Gui(WTA)
     pack $f.lTitle -side top -padx 4 -pady 4
 
     frame $f.fGraphButtons -bg $Gui(activeWorkspace)
@@ -5394,18 +3827,23 @@ proc EMSegmentCreateGraphWindow {} {
     #Define Menu button
     EMSegmentCreateHistogramButton $f.fGraphButtons 0
 
+    set ValueList " "
     if {$EMSegment(NumGraph) < 2} {
       set GraphList {0}
     } elseif {$EMSegment(NumGraph) < 3} {
       set GraphList {0 1}
     } else {
       set GraphList {0 2 1}
+      lappend ValueList " "
     } 
 
     foreach i $GraphList {
        frame $f.fgraph$i -bg $Gui(activeWorkspace) 
        pack $f.fgraph$i -side top -padx 0 -pady 0 -fill x
-       EMSegmentCreateGraph $f.fgraph$i $i
+       GraphCreate EMSegment $f.fgraph$i $EMSegment(Graph,$i,Xlen) $EMSegment(Graph,$i,Ylen) "" "0 0" 0 $EMSegment(Graph,$i,Dimension) 1 "" $EMSegment(Graph,$i,Xmin) $EMSegment(Graph,$i,Xmax) $EMSegment(Graph,$i,Xsca) "%d" $EMSegment(Graph,$i,Ymin) $EMSegment(Graph,$i,Ymax) $EMSegment(Graph,$i,Ysca) $EMSegment(Graph,$i,Yfor) 1
+       GraphChangeBackgroundColor EMSegment $f.fgraph$i 0.0 0.8 0.0
+       GraphCreateDisplayValues EMSegment $f.fgraph$i "$ValueList" 0 0
+       set EMSegment(Graph,$i,path) $f.fgraph$i
     }
 
     frame $f.fGraphButtonsBelow -bg $Gui(activeWorkspace)
@@ -5429,96 +3867,10 @@ proc EMSegmentCreateGraphWindow {} {
 
     eval {button $f.fLastLine.fButtons.bCancel -text "Cancel" -width 8 -command "wm withdraw $w"} $Gui(WBA)
     DevAddLabel $f.fLastLine.fButtons.lEmpty2 "      "
-    eval {button $f.fLastLine.fButtons.bUpdate -text "Update" -width 8 -command "EMSegmentUpdateClassButton"} $Gui(WBA)
+    eval {button $f.fLastLine.fButtons.bUpdate -text "Update" -width 8 -command "EMSegmentUpdateClasses 1"} $Gui(WBA)
     TooltipAdd $f.fLastLine.fButtons.bUpdate "Press this button to update class values and graph."
 
- pack  $f.fLastLine.fButtons.bCancel $f.fLastLine.fButtons.lEmpty2 $f.fLastLine.fButtons.bUpdate -side left  -side left -padx 0  -pady 0
-    if {$EMSegment(NumGraph) > 1} {
-      set Border 2
-    } else {
-      set Border 1 
-    }
-    for {set i 0} { $i < $Border} {incr i} { 
-      frame $f.fLastLine.fGraph.f$i -bg $Gui(activeWorkspace)  -relief raised -bd 2 
-      pack  $f.fLastLine.fGraph.f$i -side left -padx 2 -pady 0 
-
-      DevAddLabel $f.fLastLine.fGraph.f$i.lGraph$i "Graph [expr $i+1]"
-      DevAddLabel $f.fLastLine.fGraph.f$i.lXMin$i "Min:"
-      eval {entry $f.fLastLine.fGraph.f$i.eXMin$i -width 4 -textvariable EMSegment(Graph,XminNew,$i) } $Gui(WEA)
-      TooltipAdd $f.fLastLine.fGraph.f$i.eXMin$i "Minimum X value represented in Graph [expr $i+1]" 
-      bind $f.fLastLine.fGraph.f$i.eXMin$i <Return> "EMSegmentRescaleGraphMulti $i" 
-      bind $f.fLastLine.fGraph.f$i.eXMin$i <Tab>    "EMSegmentRescaleGraphMulti $i" 
-      bind $f.fLastLine.fGraph.f$i.eXMin$i <Leave>  "EMSegmentRescaleGraphMulti $i" 
-
-      DevAddLabel $f.fLastLine.fGraph.f$i.lXMax$i "Max:"
-      eval {entry $f.fLastLine.fGraph.f$i.eXMax$i -width 4 -textvariable EMSegment(Graph,XmaxNew,$i) } $Gui(WEA)
-      TooltipAdd $f.fLastLine.fGraph.f$i.eXMax$i "Maximum X value represented in Graph [expr $i+1]" 
-      bind $f.fLastLine.fGraph.f$i.eXMax$i <Return> "EMSegmentRescaleGraphMulti $i" 
-      bind $f.fLastLine.fGraph.f$i.eXMax$i <Tab>    "EMSegmentRescaleGraphMulti $i" 
-      bind $f.fLastLine.fGraph.f$i.eXMax$i <Leave>  "EMSegmentRescaleGraphMulti $i" 
-
-      DevAddLabel $f.fLastLine.fGraph.f$i.lXSca$i "Scal:"
-      eval {entry $f.fLastLine.fGraph.f$i.eXSca$i -width 4 -textvariable EMSegment(Graph,XscaNew,$i) } $Gui(WEA)
-      TooltipAdd $f.fLastLine.fGraph.f$i.eXSca$i "Value difference between two tabs on the X-axis" 
-      bind $f.fLastLine.fGraph.f$i.eXSca$i <Return> "EMSegmentRescaleGraphMulti $i" 
-      bind $f.fLastLine.fGraph.f$i.eXSca$i <Tab>    "EMSegmentRescaleGraphMulti $i" 
-      bind $f.fLastLine.fGraph.f$i.eXSca$i <Leave>  "EMSegmentRescaleGraphMulti $i" 
-      pack $f.fLastLine.fGraph.f$i.lGraph$i -side top -padx 0 -pady 0 
-      pack $f.fLastLine.fGraph.f$i.lXMin$i $f.fLastLine.fGraph.f$i.eXMin$i $f.fLastLine.fGraph.f$i.lXMax$i  $f.fLastLine.fGraph.f$i.eXMax$i $f.fLastLine.fGraph.f$i.lXSca$i $f.fLastLine.fGraph.f$i.eXSca$i -side left -padx 1  -pady 1 -anchor w 
-    }
-
-    frame $f.fLastLine.fGraph.fWindow -bg $Gui(activeWorkspace) -relief raised -bd 2 
-    pack  $f.fLastLine.fGraph.fWindow -side left -padx 2 -pady 0 
-
-    DevAddLabel $f.fLastLine.fGraph.fWindow.lWindow "Widnow"
-    eval {label $f.fLastLine.fGraph.fWindow.lWindowX -text "X:"} $Gui(WLA) 
-    eval {entry $f.fLastLine.fGraph.fWindow.eWindowX -width 3 -textvariable EMSegment(Graph,WindowX) } $Gui(WEA)
-    TooltipAdd  $f.fLastLine.fGraph.fWindow.eWindowX "Set where window should be placed in X direction"
-    bind $f.fLastLine.fGraph.fWindow.eWindowX <Return> "EMSegmentShowGraphWindow"
-    bind $f.fLastLine.fGraph.fWindow.eWindowX <Tab>    "EMSegmentShowGraphWindow"
-    bind $f.fLastLine.fGraph.fWindow.eWindowX <Leave>  "EMSegmentShowGraphWindow"
-
-    eval {label $f.fLastLine.fGraph.fWindow.lWindowY -text "Y:"} $Gui(WLA)
-    eval {entry $f.fLastLine.fGraph.fWindow.eWindowY -width 3 -textvariable EMSegment(Graph,WindowY) } $Gui(WEA)
-    TooltipAdd  $f.fLastLine.fGraph.fWindow.eWindowY "Set where window should be placed in Y direction"
-    bind $f.fLastLine.fGraph.fWindow.eWindowY <Return> "EMSegmentShowGraphWindow"
-    bind $f.fLastLine.fGraph.fWindow.eWindowY <Tab>    "EMSegmentShowGraphWindow"
-    bind $f.fLastLine.fGraph.fWindow.eWindowY <Leave>  "EMSegmentShowGraphWindow"
-
-    pack $f.fLastLine.fGraph.fWindow.lWindow -side top -padx 0 -pady 0 
-    pack $f.fLastLine.fGraph.fWindow.lWindowX $f.fLastLine.fGraph.fWindow.eWindowX $f.fLastLine.fGraph.fWindow.lWindowY $f.fLastLine.fGraph.fWindow.eWindowY -side left  -side left -padx 0  -pady 0
-}
-#-------------------------------------------------------------------------------
-# .PROC EMSegmentCreateGraph
-# Creates a graph with x and y axis
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentCreateGraph {f index} {
-    global EMSegment Gui
-
-    canvas $f.caGraph -width $EMSegment(Graph,Cxle,$index) -height $EMSegment(Graph,Cyle,$index)      
-    set ca $f.caGraph
-    set EMSegment(Cl-caGraph$index) $ca
-    pack $ca -side top  -padx $Gui(pad)  -pady 1
-
-    # Coordinate Axis
-    $ca create line $EMSegment(Graph,XboL) [expr $EMSegment(Graph,Ylen,$index) + $EMSegment(Graph,YboU)] \
-                                       [expr $EMSegment(Graph,Xlen,$index) + $EMSegment(Graph,XboL)] \
-                       [expr $EMSegment(Graph,Ylen,$index) + $EMSegment(Graph,YboU)] \
-                       -width 1 -tag Grayvalue 
-    $ca create line $EMSegment(Graph,XboL) [expr $EMSegment(Graph,Ylen,$index) + $EMSegment(Graph,YboU)] \
-        $EMSegment(Graph,XboL) $EMSegment(Graph,YboU) -width 1 -tag Probaility 
-
-    # Scalers of X and Y Coordinate Axis
-    EMSegmentCreateXLabels $index
-    EMSegmentCreateYLabels $index
-    # Define Log Gray Value Box 
-    EMSegmentCreateLogGrayValueDisplay 0 $EMSegment(SelVolList,VolumeList) $index
-    #Initialize value for 2D Graph
-    if {$index > 1} {
-    EMSegmentCreateGraphPixels $index $EMSegment(Graph,Xmin,$index) $EMSegment(Graph,Ymin,$index) $EMSegment(Graph,Xmax,$index) $EMSegment(Graph,Ymax,$index)
-    }
+    pack  $f.fLastLine.fButtons.bCancel $f.fLastLine.fButtons.lEmpty2 $f.fLastLine.fButtons.bUpdate -side left  -side left -padx 0  -pady 0
 }
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentCreateHistogramButton
@@ -5527,13 +3879,18 @@ proc EMSegmentCreateGraph {f index} {
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentCreateHistogramButton {f index} {
-    global Gui EMSegment
+    global Gui EMSegment Volume
 
-    if {$EMSegment(Cattrib,0,Label,$index) == "" } {
+    if {$EMSegment(Graph,$index,VolumeID,0) == -1 } {
        set MenuText ""
+       set volume [Volume($Volume(idNone),vol) GetOutput]
     } else {
-       set MenuText [Volume($EMSegment(Cattrib,0,Label,$index),node) GetName]
+       set MenuText [Volume($EMSegment(Graph,$index,VolumeID,0),node) GetName]
+       set volume [Volume($EMSegment(Graph,$index,VolumeID,0),vol) GetOutput]
     }
+    # Kilian - have to change this does not work this way anymore 
+    GraphCreateHistogramCurve EMSegment(Graph,$index,Data,0) $volume $EMSegment(Graph,$index,Xmin) $EMSegment(Graph,$index,Xmax) $EMSegment(Graph,$index,Xlen)
+    set EMSegment(Graph,$index,ID,0) -1
 
     if  {$EMSegment(SegmentMode) > 1} {
       set EMSegment(Cl-mbGraphHistogram$index) $f.mbHistogram
@@ -5567,100 +3924,274 @@ proc EMSegmentCreateHistogramButton {f index} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC EMSegmentCalcGaussian2DExtrem
-# Calcualtes the maximum and minimum X Value for a given value 
-# Axis :
-# 0 = X - Axis
-# 1 = Y - Axis
+# .PROC EMSegmentGraphXAxisUpdate path Xmin Xmax Xsca 
+# Called from Graph when X axis is update 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentCalcGaussian2DExtrem {GraphNum Sclass SqrtDetLogCov PI Axis} {
+proc EMSegmentGraphXAxisUpdate {path Xmin Xmax Xsca} {
+    puts "EMSegmentGraphXAxisUpdate $path $Xmin $Xmax $Xsca"
     global EMSegment
-    set LogValue [expr -2.0*log(2.0*$PI*$SqrtDetLogCov*$EMSegment(Graph,MinDisplayValue,$GraphNum))] 
-    set c12  $EMSegment(Graph,$Sclass,InvLogCov,1,2,$GraphNum) 
-    set a [expr 1+$Axis]
-    set b [expr 2-$Axis]
-    set c11 $EMSegment(Graph,$Sclass,InvLogCov,$a,$a,$GraphNum) 
-    set c22 $EMSegment(Graph,$Sclass,InvLogCov,$b,$b,$GraphNum)  
-    set xmu $EMSegment(Graph,$Sclass,LogMean,$a,$GraphNum)
-    set ymu $EMSegment(Graph,$Sclass,LogMean,$b,$GraphNum)
-    # Calculte y+mu paramter 
-    set c12sqr [expr $c12*$c12]
-    set Norm [expr $c11*$c22  - $c12sqr]
-    # This is the value of y including the mean
-    set ySqrt [expr sqrt($c12sqr*$LogValue /($Norm*$c22))]
-    for {set i 1} { $i <3} {incr i} {
-    set blub1 [expr sqrt($LogValue*$c11 - $ySqrt*$ySqrt*$Norm)]
-    set blub2  [expr pow(-1,$i)*$ySqrt*$c12] 
-    set xMax($i)  [expr ($blub2 + $blub1)/$c11]
-    set xMin($i)  [expr ($blub2 - $blub1)/$c11]
+    set NumGraph 0  
+    while { ($NumGraph < $EMSegment(NumGraph)) && ($EMSegment(Graph,$NumGraph,path) != $path)   } {incr NumGraph}
+    if {$NumGraph == $EMSegment(NumGraph)} { 
+    puts "EMSegmentGraphXAxisUpdate:Error: Could not find graph with path $path" 
+    return
     }
-    if {$xMax(2) > $xMax(1)} {set xMax(1) $xMax(2)}
-    if {$xMin(2) > $xMin(1)} {set xMin(1) $xMin(2)}
-    # Transform from Log Values to Gray Values 
-    set Xmin [expr exp($xMin(1) + $xmu) - 1]
-    set Xmax [expr exp($xMax(1) + $xmu) - 1]
-    return "[EMSegmentGraphGridCalculate $GraphNum $Xmin $Axis] [EMSegmentGraphGridCalculate $GraphNum $Xmax $Axis]"
+    # Could be done nicer but works right now
+    set EMSegment(Graph,$NumGraph,Xmin) $Xmin
+    set EMSegment(Graph,$NumGraph,Xmax) $Xmax
+    set EMSegment(Graph,$NumGraph,Xsca) $Xsca
+    if {$NumGraph < 2} {
+    # Update Histogram
+    set dist [expr $Xmax - $Xmin]
+    EMSegment(Graph,$NumGraph,Data,0)Accu SetComponentOrigin $Xmin 0.0 0.0 
+    EMSegment(Graph,$NumGraph,Data,0)Accu SetComponentExtent 0 [expr int($dist - 1)] 0 0 0 0
+    EMSegment(Graph,$NumGraph,Data,0)Accu Update
+
+    # If only the scalling changed we do not have to go through all the fuss
+    if  {[ expr int($dist * [EMSegment(Graph,$NumGraph,Data,0)Res GetAxisMagnificationFactor 0])]  != $EMSegment(Graph,$path,Xlen)} {
+        set XInvUnit $EMSegment(Graph,$path,XInvUnit) 
+        EMSegment(Graph,$NumGraph,Data,0)Res  SetAxisMagnificationFactor 0 $XInvUnit
+        EMSegment(Graph,$NumGraph,Data,0)Res  Update
+
+        set extent [[EMSegment(Graph,$NumGraph,Data,0)Res GetOutput] GetExtent]
+        while {[expr [lindex $extent 1] - [lindex $extent 0] + 1] <  $EMSegment(Graph,$path,Xlen) } {
+        set XInvUnit [expr $XInvUnit * 1.001]
+        EMSegment(Graph,$NumGraph,Data,0)Res SetAxisMagnificationFactor 0 $XInvUnit
+        EMSegment(Graph,$NumGraph,Data,0)Res Update 
+        set extent [[EMSegment(Graph,$NumGraph,Data,0)Res GetOutput] GetExtent]
+        }
+    } else {
+        EMSegment(Graph,$NumGraph,Data,0)Res  Update
+    }
+    }
+    # Update Classes
+    foreach i $EMSegment(GlobalClassList) {
+    EMSegment(Graph,$NumGraph,Data,$i) SetXmin $Xmin
+    EMSegment(Graph,$NumGraph,Data,$i) SetXmax $Xmax
+    EMSegment(Graph,$NumGraph,Data,$i) Update
+    }
+    
+    if {$EMSegment(NumGraph) > 2} {
+    if {$NumGraph == 2} {
+        if {($EMSegment(Graph,0,Xmin) != $EMSegment(Graph,2,Xmin)) ||  ($EMSegment(Graph,0,Xmax) != $EMSegment(Graph,2,Xmax)) ||  ($EMSegment(Graph,0,Xsca) != $EMSegment(Graph,2,Xsca))} {
+        GraphRescaleAxis EMSegment $EMSegment(Graph,0,path) $Xmin $Xmax $Xsca 0
+        }
+    } else { 
+ if {($EMSegment(Graph,$NumGraph,Xmin) != $EMSegment(Graph,2,Xmin)) ||  ($EMSegment(Graph,$NumGraph,Xmax) != $EMSegment(Graph,2,Xmax)) ||  ($EMSegment(Graph,$NumGraph,Xsca) != $EMSegment(Graph,2,Xsca))} {
+        GraphRescaleAxis EMSegment $EMSegment(Graph,2,path) $Xmin $Xmax $Xsca $NumGraph
+          }
+        }
+    }
 }
 
+
+
 #-------------------------------------------------------------------------------
-# .PROC EMSegmentDebug
-# For debugging purposes 
+# .PROC EMSegmentGraphYAxisUpdate path Ymin Ymax Ysca 
+# Called from Graph when Y axis is update 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentDebug { } {
-    global EMSegment Anno
-
-    # Set EM Paramters
-    set EMSegment(EMiteration)  1
-    set EMSegment(MFAiteration) 1 
-    set EMSegment(StartSlice)   1
-    set EMSegment(Alpha)     0.9
-    #set EMSegment(SmWidth)  23
-    set EMSegment(SmWidth)  21
-    #set EMSegment(SmSigma)  5
-    set EMSegment(SmSigma)  9
-    set EMSegment(Graph,XminNew,1) 100 
-    set EMSegment(Graph,XmaxNew,1)  600
-    set EMSegment(Graph,XscaNew,1) 50
-    if {$EMSegment(NumGraph) > 1} {EMSegmentRescaleGraph 100 600 50 1 0}
-    set EMSegment(PrintIntermediateResults) 0
-    set EMSegment(Graph,DisplayProbNew) 1
-    if {$EMSegment(Graph,DisplayProbNew) != $EMSegment(Graph,DisplayProb)} {set EMSegment(Graph,DisplayProb) $EMSegment(Graph,DisplayProbNew); EMSegmentRedrawGraph}   
-
-    # No Cross is shown in display
-    set Anno(cross) 0
-    MainAnnoSetVisibility; 
-    RenderSlices
-
-    # set First 60
-    # set EMSegment(FileCIM) brainWar13.mrf
-    # set EMSegment(EndSlice)   25
-    #set First 70
-    #set EMSegment(FileCIM) case3War9.mrf
-    #set EMSegment(EndSlice) 10
-    # set EMSegment(FileCIM) brainWar5c2Log.mrf
-    if {$EMSegment(SegmentMode) < 2} {
-    set EMSegment(FileCIM) mrf/simon/brainCase3_7c1.mrf  
-    } else {
-    # set EMSegment(FileCIM) mrf/simon/brainCase3_5_c2-notlocal.mrf
-    # set EMSegment(FileCIM) mrf/simon/brainCase3_7_stg_c2_nonr-V2.mrf
-    # set EMSegment(FileCIM) mrf/simon/brainCase19_6_stg_c2.mrf
-    # set EMSegment(FileCIM) mrf/simon/brainCase3_7_am_c2.mrf
-    set EMSegment(FileCIM) mrf/simon/brainCase3_7_stg_c2v3.mrf
-    # set EMSegment(FileCIM) mrf/simon/brainCase3_9_am_para_c2.mrf
-    # set EMSegment(FileCIM) mrf/simon/brainCase3_7_hip_c2.mrf
-    # set EMSegment(FileCIM) mrf/simon/brainCase3_9c2.mrf
-    set EMSegment(FileCIM) mrf/simon/brainCase3_13c2.mrf
-    # set EMSegment(FileCIM) mrf/simon/brainCase50_6_stg_c2-V2final.mrf
-        # set EMSegment(FileCIM) mrf/simon/brainCase3_9c2.mrf
+proc EMSegmentGraphYAxisUpdate {path Ymin Ymax Ysca} {
+    global EMSegment
+    set NumGraph 0  
+    while { ($NumGraph < $EMSegment(NumGraph)) && ($EMSegment(Graph,$NumGraph,path) != $path)   } {incr NumGraph}
+    if {$NumGraph == $EMSegment(NumGraph)} { 
+    puts "EMSegmentGraphYAxisUpdate:Error: Could not find graph with path $path" 
+    return
     }
-    # Read in Class Values
-    # If you get an error message here graph could not read the volume 
-    EMSegmentChangeVolumeGraph 1 0  
-    if {$EMSegment(NumGraph) > 1} {EMSegmentChangeVolumeGraph 2 1}
-    EMSegmentStartEM
+    if {$EMSegment(Graph,$NumGraph,Dimension) != 2 } {return }
+
+    # Could be done nicer but works right now
+    set EMSegment(Graph,$NumGraph,Ymin) $Ymin
+    set EMSegment(Graph,$NumGraph,Ymax) $Ymax
+    set EMSegment(Graph,$NumGraph,Ysca) $Ysca
+    
+    # Update Classes
+    foreach i $EMSegment(GlobalClassList) {
+    EMSegment(Graph,$NumGraph,Data,$i) SetYmin $Ymin
+    EMSegment(Graph,$NumGraph,Data,$i) SetYmax $Ymax
+    EMSegment(Graph,$NumGraph,Data,$i) Update
+    }
+    if {($EMSegment(Graph,1,Xmin) != $EMSegment(Graph,2,Ymin)) ||  ($EMSegment(Graph,1,Xmax) != $EMSegment(Graph,1,Ymax)) ||  ($EMSegment(Graph,1,Xsca) != $EMSegment(Graph,2,Ysca))} {
+        GraphRescaleAxis EMSegment $EMSegment(Graph,1,path) $Ymin $Ymax $Ysca 0
+    }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentCreateDisplayRedLine 
+# Creates or displays a red line on the graph 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMSegmentCreateDisplayRedLine {NumGraph Value} {
+    global EMSegment
+    set path $EMSegment(Graph,$NumGraph,path)
+    if {$EMSegment(Graph,$NumGraph,LineID,0) < 0} {
+    set EMSegment(Graph,$NumGraph,LineID,0) [GraphCreateLine EMSegment $path "1 0 0" 0]
+    GraphCreateDisplayValues EMSegment $path $Value 0 1
+    } else {
+    GraphCreateDisplayValues EMSegment $path $Value 1 1
+    }
+    set Xcoord [GraphTransformValueInCoordinate  EMSegment $path $Value 0]
+    GraphSetLineCoordinates EMSegment $path $EMSegment(Graph,$NumGraph,LineID,0) "$Xcoord 0 $Xcoord $EMSegment(Graph,$NumGraph,Ylen)"
+    GraphRender EMSegment $path
+    # Value should be displayed
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentCreateDisplayRedCross 
+# Creates or displays a cross line on the graph 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMSegmentCreateDisplayRedCross {NumGraph Xvalue Yvalue} {
+    global EMSegment
+    set path $EMSegment(Graph,$NumGraph,path)
+    if {$EMSegment(Graph,$NumGraph,LineID,0) < 0} {
+    set EMSegment(Graph,$NumGraph,LineID,0) [GraphCreateLine EMSegment $path "1 0 0" 0]
+    set EMSegment(Graph,$NumGraph,LineID,1) [GraphCreateLine EMSegment $path "1 0 0" 0]
+    GraphCreateDisplayValues EMSegment $path "$Xvalue $Yvalue" 0 1
+    } else {
+    GraphCreateDisplayValues EMSegment $path "$Xvalue $Yvalue" 1 1
+    }
+
+    set Xcoord [GraphTransformValueInCoordinate EMSegment $path $Xvalue 0]
+    set Ycoord [GraphTransformValueInCoordinate EMSegment $path $Yvalue 1]
+    GraphSetLineCoordinates EMSegment $path $EMSegment(Graph,$NumGraph,LineID,0) "$Xcoord [expr $Ycoord-2] $Xcoord [expr $Ycoord+3]"
+    GraphSetLineCoordinates EMSegment $path $EMSegment(Graph,$NumGraph,LineID,1) "[expr $Xcoord -2] $Ycoord [expr $Xcoord+3] $Ycoord"
+    GraphRender EMSegment $path
+    # Value should be displayed
+    # GraphCreateDisplayValues EMSegment $EMSegment(Graph,0,path) $ValueList 1 1
+}
+# ------------------------------------------------------------------------------
+# TextBox Sample Procedures - not used anymore
+
+#-------------------------------------------------------------------------------
+# .PROC  EMSegmentReadTextBox  
+# Reades Values out of the Sample Text Box Field and saves it in 
+# EMSegment(Cattrib,$Sclass,Sample)
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMSegmentReadTextBox {} {
+   global EMSegment
+   set Sclass $EMSegment(Class)
+   set i 1
+   set ErrorFlag 0
+   set ReadSample {}
+   set ReadLine [$EMSegment(Cl-textBox) get $i.0 $i.end]
+   if {$EMSegment(NumInputChannel) == 0} { return }
+   while { $ReadLine != {} && $ErrorFlag == 0}  { 
+       set ReadX [lindex $ReadLine 0]
+       set ReadY [lindex $ReadLine 1]
+       if { $EMSegment(SegmentMode) < 2 } { 
+       set ReadBrightness [lindex $ReadLine 2]
+       if {$ReadBrightness > -1} {
+           lappend ReadSample "$ReadX $ReadY $ReadBrightness"
+       } else {
+           set ErrorFlag 1 
+           DevErrorWindow "Sample $i not correctly defined !"
+           return
+       }
+       } else {
+      lappend ReadSample "$ReadX $ReadY"
+       } 
+       incr i
+       set ReadLine [$EMSegment(Cl-textBox) get $i.0 $i.end]
+   }
+   if {$ErrorFlag == 0} {
+       set vol [lindex $EMSegment(SelVolList,VolumeList) 0]
+       if { $EMSegment(SegmentMode) < 2 } { 
+       set EMSegment(Cattrib,$Sclass,$vol,Sample) $ReadSample
+       } else {
+       set index 0
+       foreach elem $EMSegment(Cattrib,$Sclass,$vol,Sample)  {
+           if {[lsearch -exact $ReadSample $elem] == -1} {
+           foreach v $EMSegment(SelVolList,VolumeList) {
+               set EMSegment(Cattrib,$Sclass,$v,Sample) [lreplace $EMSegment(Cattrib,$Sclass,$v,Sample) $index $index]
+           }
+           } else {
+           incr index
+           }
+       }
+       }
+   }
+}    
+
+
+#-------------------------------------------------------------------------------
+# .PROC  EMSegmentScrolledHorizontal  
+# Creates a Text box with only a X Scroll Bar
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMSegmentScrolledHorizontal {f} {
+    global Gui
+    frame $f -bg $Gui(activeWorkspace)
+    eval {text $f.text \
+        -xscrollcommand [list $f.xscroll set] -bg} $Gui(normalButton)
+    eval {scrollbar $f.xscroll -orient horizontal \
+        -command [list $f.text yview]} $Gui(WSBA)
+    grid $f.text $f.xscroll -sticky news
+    grid rowconfigure $f 0 -weight 1
+    grid columnconfigure $f 0 -weight 1
+    $f.text configure -height 6 -width 12
+    return $f.text
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC  EMSegmentScrolledText  
+# Creates a Text box with only a Y Scroll Bar
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMSegmentScrolledText {f} {
+    global Gui
+    frame $f -bg $Gui(activeWorkspace)
+    eval {text $f.text \
+        -yscrollcommand [list $f.yscroll set] -bg} $Gui(normalButton)
+    eval {scrollbar $f.yscroll -orient vertical \
+        -command [list $f.text yview]} $Gui(WSBA)
+    grid $f.text $f.yscroll -sticky news
+    grid rowconfigure $f 0 -weight 1
+    grid columnconfigure $f 0 -weight 1
+    $f.text configure -height 6 -width 12
+    return $f.text
+}
+
+#-------------------------------------------------------------------------------
+# .PROC  EMSegmentWriteTextBox  
+# Writes values to the Sample Text Box Field  
+# EMSegment(Cattrib,$Sclass,Sample)
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMSegmentWriteTextBox {} {
+   global EMSegment
+   set Sclass $EMSegment(Class)
+   set i 1
+ 
+   # Display Sample Text Box 
+   if {$EMSegment(UseSamples) == 0} {$EMSegment(Cl-textBox) configure -state normal}
+
+   $EMSegment(Cl-textBox) delete 1.0 end
+   if {$EMSegment(NumInputChannel)} {
+       set x [lindex $EMSegment(SelVolList,VolumeList) 0]       
+       foreach Sline $EMSegment(Cattrib,$Sclass,$x,Sample) {
+       if {$EMSegment(SegmentMode) < 2 } { 
+           $EMSegment(Cl-textBox) insert end "$Sline \n" 
+       } else {
+           $EMSegment(Cl-textBox) insert end "[lrange $Sline 0 2]  \n" 
+       }
+       }
+   }
+   if {$EMSegment(UseSamples) == 0} {$EMSegment(Cl-textBox) configure -state disabled}
+}
