@@ -819,24 +819,37 @@ void vtkImageLiveWireEdgeWeights::ThreadedExecute(vtkImageData **inDatas,
   // if we are training, we want one thread to handle everything.
   // else we want each thread to do part of the image.
 
-  if (this->TrainingMode)
-    {
-      // thread 0 does it all, so return if id > 0
-      if (id > 0)
-	return;
+//    if (this->TrainingMode)
+//      {
+//        // thread 0 does it all, so return if id > 0
+//        if (id > 0)
+//  	return;
       
-      // set extents to be the whole size of the output 
-      // (same as input size)
-      outData->GetWholeExtent(outExt);
-      memcpy(inExt, outExt, 6*sizeof(int));      
+//        // set extents to be the whole size of the output 
+//        // (same as input size)
+//        outData->GetWholeExtent(outExt);
+//        memcpy(inExt, outExt, 6*sizeof(int));      
 
-    }
-  else
-    {
-      // input extent is same as output extent 
-      // (each thread gets its own chunk)
-      memcpy(inExt, outExt, 6*sizeof(int));
-    }
+//      }
+//    else
+//      {
+//        // input extent is same as output extent 
+//        // (each thread gets its own chunk)
+//        memcpy(inExt, outExt, 6*sizeof(int));
+//      }
+
+
+  // TEMPORARY FIX: make the 0th thread do everything.
+  // 
+  // thread 0 does it all, so return if id > 0
+  if (id > 0)
+    return;
+  
+  // set extents to be the whole size of the output 
+  // (same as input size)
+  outData->GetWholeExtent(outExt);
+  memcpy(inExt, outExt, 6*sizeof(int));  
+  // END TEMPORARY FIX
 
   //for (int i = 0; i < 6; i++)
   //printf("id: %d ext %d: %d\n", id, i, inExt[i]);
