@@ -58,14 +58,10 @@ set ::TCL_BIN_DIR $::SLICER_LIB/tcl-build/bin
 set ::TCL_LIB_DIR $::SLICER_LIB/tcl-build/lib
 set ::TCL_INCLUDE_DIR $::SLICER_LIB/tcl-build/include
 set ::CMAKE_PATH $::SLICER_LIB/CMake-build
-#set ::GSL_LIB_DIR $::SLICER_LIB/gsl/lib
-#set ::GSL_INC_DIR $::SLICER_LIB/gsl/include
-#set ::GSL_SRC_DIR $::SLICER_LIB/gsl-build/gsl
 set ::GSL_LIB_DIR $::SLICER_LIB/gsl/lib
 set ::GSL_INC_DIR $::SLICER_LIB/gsl/include
 set ::GSL_SRC_DIR $::SLICER_LIB/gsl-build/gsl-mirror/gsl
 set ::SOV_BINARY_DIR " "
-#set ::SOV_BINARY_DIR $::SLICER_LIB/SOViewer-build
 
 
 ## system dependent variables
@@ -78,7 +74,7 @@ switch $tcl_platform(os) {
         set ::COMPILER_PATH "/local/os/bin"
         set ::COMPILER "g++"
         set ::CMAKE $::CMAKE_PATH/bin/cmake
-        #set ::MAKE "gmake -j15"
+        # set ::MAKE "gmake -j15"
         set ::MAKE "gmake"
     }
     "Linux" {
