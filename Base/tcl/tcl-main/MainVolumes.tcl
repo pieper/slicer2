@@ -58,7 +58,7 @@ proc MainVolumesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.42 $} {$Date: 2001/06/14 17:08:48 $}]
+		{$Revision: 1.43 $} {$Date: 2001/06/19 17:09:04 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -133,8 +133,11 @@ proc MainVolumesUpdateMRML {} {
 			set Volume($v,fly) 0
 
 			if {[MainVolumesRead $v] < 0} {
-				# Failed, so axe it
-				MainMrmlDeleteNodeDuringUpdate Volume $v
+			    # Let the user know about the error
+			    tk_messageBox -message "Could not read volume [Volume($v,node) GetFullPrefix]."
+			    # Failed, so axe it
+			    MainMrmlDeleteNodeDuringUpdate Volume $v
+			    
 			}
 		}
 	}  
