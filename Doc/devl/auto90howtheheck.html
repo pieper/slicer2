@@ -11,9 +11,9 @@ cvs update -d
 echo "Updating slicer2-web"
 cd /projects/birn/slicer2/slicer2-web
 cvs update -d
-echo "Calling slicer2-web/Scripts/document"
+echo "Calling slicer2-web/Scripts/document.tcl"
 cd Scripts
-./document
+./document.tcl
 
 The call to cvs update in /projects/birn/slicer2/slicerweb is to ensure 
 that all needed directories have been created before the documentation 
