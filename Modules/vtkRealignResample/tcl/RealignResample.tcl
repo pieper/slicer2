@@ -24,7 +24,7 @@ proc RealignResampleInit {} {
     set Module($m,depend) "Morphometrics"
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2004/08/18 22:30:37 $}]
+        {$Revision: 1.4 $} {$Date: 2004/08/20 16:16:13 $}]
 
     set Matrix(volume) $Volume(idNone)
     set Matrix(RealignResampleVolumeName2) None
@@ -270,7 +270,7 @@ proc RealignResampleBuildGUI {} {
     foreach label {"NearestNeighbor" "Linear" "Cubic"} text {"Nearest Neighbor" "Linear" "Cubic"} {
         eval {radiobutton $f.rb$label -text $text -variable RealignResample(InterpolationMode) -value $label} $Gui(WLA)
     }
-    set RealignResample(InterpolationMode) NearestNeighbor
+    set RealignResample(InterpolationMode) Cubic
     pack $f.lInterpolationMode -side top -padx $Gui(pad) -pady $Gui(pad)
     pack $f.rbNearestNeighbor $f.rbLinear $f.rbCubic -side left -anchor w -padx 1 -pady $Gui(pad)
 
@@ -339,6 +339,7 @@ proc RealignResampleSetVolume2 {{v ""}} {
     } else {
         set Matrix(volume) $v
     }
+    catch "ModelRasToVtk Delete"
     vtkMatrix4x4 ModelRasToVtk
     set position [Volume($Matrix(volume),node) GetPositionMatrix]
     puts "$position"
@@ -373,9 +374,9 @@ proc RealignResampleSetVolume2 {{v ""}} {
     set extent [split [[Volume($Matrix(volume),vol) GetOutput] GetWholeExtent]]     
     puts $extent
     set dimension  [ModelRasToVtk MultiplyPoint [lindex $extent 1] [lindex $extent 3] [lindex $extent 5] 1 ]
-    set RealignResample(OutputExtentLR) [expr abs([lindex $dimension 0]) + 1]
-    set RealignResample(OutputExtentPA) [expr abs([lindex $dimension 1]) + 1]
-    set RealignResample(OutputExtentIS) [expr abs([lindex $dimension 2]) + 1]
+    set RealignResample(OutputExtentLR) [expr round(abs([lindex $dimension 0])) + 1]
+    set RealignResample(OutputExtentPA) [expr round(abs([lindex $dimension 1])) + 1]
+    set RealignResample(OutputExtentIS) [expr round(abs([lindex $dimension 2])) + 1]
     
     ModelRasToVtk Delete
     set RealignResample(NewVolume) "[Volume($v,node) GetName]_realign"
@@ -397,6 +398,8 @@ proc RealignResampleSetVolume2 {{v ""}} {
 #-------------------------------------------------------------------------------
 proc AutoSpacing {} {
     global Matrix Volume RealignResample
+
+    catch "ModelRasToVtk Delete"
     vtkMatrix4x4 ModelRasToVtk
     set position [Volume($Matrix(volume),node) GetPositionMatrix]
     puts "$position"
@@ -442,6 +445,7 @@ proc AutoExtent {} {
     #Set default values
     # Make a RAS to VTK matrix for realign resample
     # based on the position matrix
+    catch "ModelRasToVtk Delete"
     vtkMatrix4x4 ModelRasToVtk
     set position [Volume($Matrix(volume),node) GetPositionMatrix]
 
@@ -463,24 +467,30 @@ proc AutoExtent {} {
     # ModelRasToVtk and ras1toras2
     # vtk1tovtk2 = inverse(rastovtk) ras1toras2 rastovtk
     # RasToVtk
+    catch "RasToVtk Delete"
     vtkMatrix4x4 RasToVtk
     RasToVtk DeepCopy ModelRasToVtk    
     # Inverse Matrix RasToVtk
+    catch "InvRasToVtk Delete"
     vtkMatrix4x4 InvRasToVtk
     InvRasToVtk DeepCopy ModelRasToVtk
     InvRasToVtk Invert
     # Ras1toRas2 given by the slicer MRML tree
+    catch "Ras1ToRas2 Delete"    
     vtkMatrix4x4 Ras1ToRas2
     Ras1ToRas2 DeepCopy [[Matrix($Matrix(activeID),node) GetTransform] GetMatrix]
     # Now build Vtk1ToVtk2
+    catch "Vtk1ToVtk2 Delete"    
     vtkMatrix4x4 Vtk1ToVtk2
     Vtk1ToVtk2 Identity
     Vtk1ToVtk2 Multiply4x4 Ras1ToRas2 RasToVtk  Vtk1ToVtk2
     Vtk1ToVtk2 Multiply4x4 InvRasToVtk  Vtk1ToVtk2 Vtk1ToVtk2
     
     # Get the origin, spacing and extent of the input volume
+    catch "InVolume Delete"
     vtkImageData InVolume
     InVolume DeepCopy [Volume($Matrix(volume),vol) GetOutput]
+    catch "ici Delete"    
     vtkImageChangeInformation ici
     ici CenterImageOn
     ici SetInput InVolume
@@ -528,9 +538,9 @@ proc AutoExtent {} {
     }
     # Go back in RAS space 
     set outExtRAS [RasToVtk MultiplyPoint $outExt(0) $outExt(1) $outExt(2) 1]
-    set RealignResample(OutputExtentLR) [expr 1 + abs([lindex $outExtRAS 0])]
-    set RealignResample(OutputExtentPA) [expr 1 + abs([lindex $outExtRAS 1])]
-    set RealignResample(OutputExtentIS) [expr 1 + abs([lindex $outExtRAS 2])]
+    set RealignResample(OutputExtentLR) [expr 1 + round(abs([lindex $outExtRAS 0]))]
+    set RealignResample(OutputExtentPA) [expr 1 + round(abs([lindex $outExtRAS 1]))]
+    set RealignResample(OutputExtentIS) [expr 1 + round(abs([lindex $outExtRAS 2]))]
                
     InVolume Delete
     ici Delete
@@ -641,13 +651,14 @@ proc RealignCalculate {} {
     global RealignResample Module Matrix Volume Fiducials Point
     puts $RealignResample(MidlineList)
     puts $RealignResample(ACPCList)
+    catch "trans Delete"
     vtkTransform trans
     trans Identity
     trans PostMultiply
     if {$RealignResample(MidlineList) != "None" } {
     puts "Doing Midline..."
     set fids $Fiducials($Fiducials($RealignResample(MidlineList),fid),pointIdList) 
-    
+    catch "math Delete"
     vtkMath math
     set x 0
     foreach fid $fids {
@@ -655,9 +666,11 @@ proc RealignCalculate {} {
         puts "Point $x: $list($x)"
         incr x
     }
-    
+    catch "polydata Delete"
     vtkPolyData polydata
+    catch "output Delete"
     vtkPolyData output
+    catch "points Delete"
     vtkPoints points
     puts "Total Number of Points: $x"
     points SetNumberOfPoints $x
@@ -666,6 +679,7 @@ proc RealignCalculate {} {
     }
     polydata SetPoints points
     puts "Calling vtkPrincipleAxes"
+    catch "pa Delete"
     vtkPrincipalAxes pa
     puts "Making vtkPoints"
     puts "Set Input to PrincipleAxes"
@@ -677,7 +691,7 @@ proc RealignCalculate {} {
     set ny [lindex $normal 1 ]
     set nz [lindex $normal 2 ]
     puts "$nx $ny $nz"
-
+    
     set Max $nx
     if {[expr $ny*$ny] > [expr $Max*$Max]} {
         set Max $ny
@@ -689,14 +703,15 @@ proc RealignCalculate {} {
     if {$Max < 0} {
         set sign -1
     }
-
+    
     # Prepares the rotation matrix
+    catch "mat Delete"
     vtkMatrix4x4 mat
     mat Identity
     set i 0
     foreach point [pa GetZAxis] {
-         mat SetElement $i 0 [expr $sign * $point]
-         incr i
+        mat SetElement $i 0 [expr $sign * $point]
+        incr i
     }    
     set oneAndAlpha [expr 1 + [mat GetElement 0 0]]    
     mat SetElement 0 1 [expr -1 * [mat GetElement 1 0]]    
@@ -708,7 +723,8 @@ proc RealignCalculate {} {
     # Check the sign of the determinant    
     set det [mat Determinant]
     puts "Determinant $det"
-
+    
+    catch "matInverse Delete"
     vtkMatrix4x4 matInverse
     matInverse DeepCopy mat
     matInverse Invert
@@ -761,6 +777,7 @@ proc Resample {} {
     Mrml(dataTree) AddItem $node
     
     # Create a new vtkImageData
+    catch "Target Delete"
     vtkImageData Target
     Target DeepCopy [Volume($Matrix(volume),vol) GetOutput]
     Volume($newvol,vol) SetImageData Target
@@ -770,6 +787,7 @@ proc Resample {} {
 
     # Make a RAS to VTK matrix for realign resample
     # based on the position matrix
+    catch "ModelRasToVtk Delete"
     vtkMatrix4x4 ModelRasToVtk
     set position [Volume($Matrix(volume),node) GetPositionMatrix]
     ModelRasToVtk Identity
@@ -798,16 +816,20 @@ proc Resample {} {
     # ModelRasToVtk and ras1toras2
     # vtk1tovtk2 = inverse(rastovtk) ras1toras2 rastovtk
     # RasToVtk
+    catch "RasToVtk Delete"
     vtkMatrix4x4 RasToVtk
     RasToVtk DeepCopy ModelRasToVtk    
     # Inverse Matrix RasToVtk
+    catch "InvRasToVtk Delete"
     vtkMatrix4x4 InvRasToVtk
     InvRasToVtk DeepCopy ModelRasToVtk
     InvRasToVtk Invert
     # Ras1toRas2 given by the slicer MRML tree
+    catch "Ras1ToRas2 Delete"
     vtkMatrix4x4 Ras1ToRas2
     Ras1ToRas2 DeepCopy [[Matrix($Matrix(activeID),node) GetTransform] GetMatrix]
     # Now build Vtk1ToVtk2
+    catch "Vtk1ToVtk2 Delete"
     vtkMatrix4x4 Vtk1ToVtk2
     Vtk1ToVtk2 Identity
     Vtk1ToVtk2 Multiply4x4 Ras1ToRas2 RasToVtk  Vtk1ToVtk2
@@ -816,13 +838,16 @@ proc Resample {} {
     # Setting up for vtkImageReslice
     # Invert the matrix (because we resample the grid not the object)
     Vtk1ToVtk2 Invert
+    catch "trans Delete"
     vtkTransform trans
     trans SetMatrix Vtk1ToVtk2 
     # Center the input image
+    catch "ici Delete"
     vtkImageChangeInformation ici
     ici CenterImageOn
     ici SetInput Target
     # Set the input of the vtkImageReslice
+    catch "reslice Delete"
     vtkImageReslice reslice
     reslice SetInput [ici GetOutput]
     reslice SetResliceTransform trans
@@ -837,9 +862,9 @@ proc Resample {} {
     puts "Extent: 0 $RealignResample(OutputExtentLR) 0 $RealignResample(OutputExtentPA) 0 $RealignResample(OutputExtentIS)"
     set dimension [InvRasToVtk MultiplyPoint $RealignResample(OutputExtentLR) $RealignResample(OutputExtentPA) $RealignResample(OutputExtentIS) 1]
     puts "Extent: $dimension"
-    set extentx [expr abs([lindex $dimension 0])]
-    set extenty [expr abs([lindex $dimension 1])]
-    set extentz [expr abs([lindex $dimension 2])]
+    set extentx [expr round(abs([lindex $dimension 0]))]
+    set extenty [expr round(abs([lindex $dimension 1]))]
+    set extentz [expr round(abs([lindex $dimension 2]))]
     reslice SetOutputExtent  0 [expr $extentx - 1]\
                          0 [expr $extenty - 1]\
                          0 [expr $extentz - 1] 
