@@ -109,7 +109,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.64 $} {$Date: 2002/11/15 15:37:01 $}]
+        {$Revision: 1.65 $} {$Date: 2002/11/22 00:17:59 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -1152,6 +1152,9 @@ proc EditorMotion {x y} {
             # log this event since it's used by the module
             EditorIncrementAndLogEvent "motion"    
         }
+        "EdPaint" {
+            EdPaintMotion $x $y
+        }
     }
     
 }
@@ -1187,6 +1190,9 @@ proc EditorB1 {x y} {
                 }
             }
         }
+        "EdPaint" {
+            EdPaintB1 $x $y
+        }
         "EdLiveWire" {
             EdLiveWireB1 $x $y
         }
@@ -1215,10 +1221,10 @@ proc EditorB1 {x y} {
             EdLabelVOIB1 $x $y
         }
         default {
-        # the default case handles editor effects loaded as modules
-        # - in the future we may need a way to register custom
-        #   actions
-            EditorChangeInputLabel $x $y    
+            # the default case handles editor effects loaded as modules
+            # - in the future we may need a way to register custom
+            #   actions
+
         }
     }
 }
@@ -1361,6 +1367,9 @@ proc EditorB1Motion {x y} {
                 }
             }
         }
+        "EdPaint" {
+            EdPaintB1Motion $x $y
+        }
     }
 }
 
@@ -1388,6 +1397,9 @@ proc EditorB1Release {x y} {
                     #EditorIdleProc start 0
                 }
             }
+        }
+        "EdPaint" {
+            EdPaintB1Release $x $y
         }
     }
 }
