@@ -336,7 +336,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.56 $} {$Date: 2001/03/23 20:20:33 $}]
+		{$Revision: 1.57 $} {$Date: 2001/04/04 02:38:21 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -891,7 +891,9 @@ proc MainRemoveModelActor { m } {
 
 #-------------------------------------------------------------------------------
 # .PROC MainSetup
-# 
+# Set many settings to their initial values.
+# Called when a scene (mrml file) is opened or closed, and when the
+# program starts.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -945,9 +947,6 @@ proc MainSetup {} {
 
 	# Active option
 	MainOptionsSetActive [lindex $Options(idList) 0]
-
-	# Presets
-	MainOptionsPresetCallback 0
 }
 
 #-------------------------------------------------------------------------------
