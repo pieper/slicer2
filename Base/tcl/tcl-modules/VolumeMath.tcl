@@ -62,6 +62,7 @@
 #   VolumeMathDoAnd
 #   VolumeMathDoMultiply
 #   VolumeMathDoMask
+#   VolumeMathDoCast
 #==========================================================================auto=
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathInit
@@ -158,7 +159,7 @@ proc VolumeMathInit {} {
     #   appropriate info when the module is checked in.
     #   
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.34 $} {$Date: 2003/08/11 16:34:21 $}]
+        {$Revision: 1.35 $} {$Date: 2003/12/07 20:02:51 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -195,6 +196,9 @@ proc VolumeMathInit {} {
     set VolumeMath(interpolationMode) Linear
     #A check to see if the popup box is open
     set VolumeMath(resampMenuOpen) 0
+
+    # sp 2003-12-07
+    set ::VolumeMath(castType) Char
 }
 
 #-------------------------------------------------------------------------------
@@ -362,10 +366,11 @@ files. Sometimes it doesn't work.
     frame $f.fResampButton -bg $Gui(activeWorkspace)
     #sp - 2003-08-11
     frame $f.fMaskLabel -bg $Gui(activeWorkspace)
+    frame $f.fCastType -bg $Gui(activeWorkspace)
     frame $f.fPack -bg $Gui(activeWorkspace)
 
   
-    pack $f.fSelectMath $f.fGrid $f.fResampButton $f.fMaskLabel $f.fPack  -side top -padx 0 -pady $Gui(pad)
+    pack $f.fSelectMath $f.fGrid $f.fResampButton $f.fMaskLabel $f.fCastType $f.fPack  -side top -padx 0 -pady $Gui(pad)
 
     #-------------------------------------------
     # Math->SelectMath
@@ -378,7 +383,8 @@ files. Sometimes it doesn't work.
     frame $f.f.1 -bg $Gui(inactiveWorkspace)
     frame $f.f.2 -bg $Gui(inactiveWorkspace)
     frame $f.f.3 -bg $Gui(inactiveWorkspace)
-    pack $f.f.1 $f.f.2 $f.f.3 -side top -fill x -anchor w
+    frame $f.f.4 -bg $Gui(inactiveWorkspace)
+    pack $f.f.1 $f.f.2 $f.f.3 $f.f.4 -side top -fill x -anchor w
 
     #
     # NOTE: As you want more functions, don't forget
@@ -386,13 +392,13 @@ files. Sometimes it doesn't work.
     #
 
     set row 1
-    foreach p "Subtract Add Resample Abs DistMap Hausdorff Multiply Statistics Mask" {
+    foreach p "Subtract Add Resample Abs DistMap Hausdorff Multiply Statistics Mask Cast" {
         eval {radiobutton $f.f.$row.r$p \
             -text "$p" -command "VolumeMathSetMathType" \
             -variable VolumeMath(MathType) -value $p -width 10 \
             -indicatoron 0} $Gui(WCA)
         pack $f.f.$row.r$p -side left -pady 0
-        if { $p == "Resample" || $p == "Hausdorff" } {incr row};
+        if { $p == "Resample" || $p == "Hausdorff" || $p == "Mask" } {incr row};
     }
 
     pack $f.f -side left -padx $Gui(pad) -fill x -anchor w
@@ -452,6 +458,34 @@ files. Sometimes it doesn't work.
     #Save the path to the widget so that it can be accessed later
     set VolumeMath(maskLabelFrame) $f
     pack forget $VolumeMath(maskLabelFrame)
+
+    #sp - 2003-12-07
+    #-------------------------------------------
+    # Math->Cast Type
+    #-------------------------------------------
+    set f $fMath.fCastType
+
+    set castLabel       "$f.lCast"
+    set menubutton  "$f.mbCast"
+    set menu        "$f.mbCast.m"
+
+    DevAddLabel $castLabel "Output Type" WLA
+    eval {menubutton $menubutton -text "Char" \
+            -relief raised -bd 2 -width 12 -menu $menu} $::Gui(WMBA)
+    eval {menu $menu} $::Gui(WMA)
+
+    set types "Char UnsignedChar Short UnsignedShort Int UnsignedInt Long UnsignedLong Float Double"
+    foreach type $types {
+        $menu add command -label $type \
+           -command "set ::VolumeMath(castType) $type; $menubutton configure -text $type"
+    }
+
+    grid $castLabel -sticky e -padx $::Gui(pad) -pady $::Gui(pad)
+    grid $menubutton -sticky e -padx $::Gui(pad) -pady $::Gui(pad)
+    TooltipAdd $menubutton "Pick the Output Data Type for the Volume"
+    
+    set VolumeMath(castTypeFrame) $f
+    pack forget $VolumeMath(castTypeFrame)
 
 #        #-------------------------------------------
 #        # Resample frame
@@ -978,9 +1012,11 @@ proc VolumeMathSetMathType {} {
     if {$VolumeMath(MathType) != "Resample"} {
         pack forget $VolumeMath(ResampParamButton)
     }
-
     if {$VolumeMath(MathType) != "Mask"} {
         pack forget $VolumeMath(maskLabelFrame)
+    }
+    if {$VolumeMath(MathType) != "Cast"} {
+        pack forget $VolumeMath(castTypeFrame)
     }
     
     if {$VolumeMath(MathType) == "Subtract" } {
@@ -1022,6 +1058,11 @@ proc VolumeMathSetMathType {} {
         $c configure -text "Masked Output:"
         VolumeMathSetMaskLabel
         pack $VolumeMath(maskLabelFrame)
+    } elseif {$VolumeMath(MathType) == "Cast" } {
+        $a configure -text "Volume to Cast:"
+        $b configure -text "(not used)"
+        $c configure -text "Cast Output:"
+        pack $VolumeMath(castTypeFrame)
     }
 }
 
@@ -1084,7 +1125,7 @@ proc VolumeMathPrepareResultVolume {{logic "0"}}  {
         set v3 [DevCreateNewCopiedVolume $v2 "" $name]
         set node [Volume($v3,vol) GetMrmlNode]
         Mrml(dataTree) RemoveItem $node 
-        set nodeBefore [Volume($v1,vol) GetMrmlNode]
+        set nodeBefore [Volume($v2,vol) GetMrmlNode]
         Mrml(dataTree) InsertAfterItem $nodeBefore $node
         MainUpdateMRML
     } else {
@@ -1143,6 +1184,7 @@ proc VolumeMathDoMath {} {
     if { $VolumeMath(MathType) == "Statistics"} {VolumeMathDoStatistics}
     if { $VolumeMath(MathType) == "Multiply"} {VolumeMathDoMultiply}
     if { $VolumeMath(MathType) == "Mask"} {VolumeMathDoMask}
+    if { $VolumeMath(MathType) == "Cast"} {VolumeMathDoCast}
 
     # This is necessary so that the data is updated correctly.
     # If the programmers forgets to call it, it looks like nothing
@@ -1669,6 +1711,45 @@ proc VolumeMathDoMask {} {
     mathThresh Delete
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathDoCast
+#   Actually do the VolumeMath Cast
+#  - makes a new volume where the data type is set to new type
+#
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathDoCast {} {
+    global VolumeMath Volume
+
+    # Check to make sure no volume is none
+
+    if { $VolumeMath(Volume2) == $Volume(idNone) } {
+        DevErrorWindow "You cannot cast Volume \"None\""
+        return 1
+    }
+
+    if {[VolumeMathPrepareResultVolume] == 1} {
+        return
+    }
+
+    set v3 $VolumeMath(Volume3)
+    set v2 $VolumeMath(Volume2)
+
+    catch "CastMath Delete"
+    vtkImageCast CastMath
+    CastMath SetInput [Volume($v2,vol) GetOutput]
+    CastMath SetOutputScalarTypeTo$::VolumeMath(castType)
+    CastMath Update
+
+    # Start copying in the output data.
+    # Taken from MainVolumesCopyData
+
+    Volume($v3,vol) SetImageData [CastMath GetOutput]
+    MainVolumesUpdate $v3
+    Volume($v3,node) SetScalarTypeTo$::VolumeMath(castType)
+
+    CastMath Delete
+}
 ################# Procedures from Logic Tab #################
 
 #-------------------------------------------------------------------------------
