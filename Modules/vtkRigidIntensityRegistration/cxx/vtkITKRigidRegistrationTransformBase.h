@@ -62,6 +62,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // Thanks to Samson Timoner who wrote this class.
 // Thanks to Steve Pieper who wrote the initial version of the class.
 
+#include "vtkProcessObject.h"
 #include "vtkLinearTransform.h"
 #include "vtkRigidIntensityRegistrationConfigure.h"
 #include "vtkDoubleArray.h"
@@ -150,11 +151,16 @@ class VTK_RIGIDINTENSITYREGISTRATION_EXPORT vtkITKRigidRegistrationTransformBase
   vtkSetObjectMacro(LearningRate,vtkDoubleArray);
   vtkGetObjectMacro(LearningRate,vtkDoubleArray);
 
-  // Description:
+  // Descripation:
   // Get the value of the last metric calculation
   // (Set is for internal use only).
   vtkSetMacro(MetricValue, double);
   vtkGetMacro(MetricValue, double);
+
+  // Descripation:
+  // Set Abort to be 1/0 to abort/keep going the process going
+  vtkSetMacro(Abort, int);
+  vtkGetMacro(Abort, int);
 
   // Description:
   // Initialize the transformation to a Matrix
@@ -163,6 +169,14 @@ class VTK_RIGIDINTENSITYREGISTRATION_EXPORT vtkITKRigidRegistrationTransformBase
   // Description:
   // Get the resulting found matrix
   vtkMatrix4x4 *GetOutputMatrix();
+
+  // Description:
+  // The call back function for updating progress
+  static int DataCallback(void *RigidReg, int NumLevel, int NumIter);
+
+  // Description:
+  // For internal use
+  vtkGetObjectMacro(ProcessObject, vtkProcessObject);
 
   // Description:
   // Get the MTime.
@@ -230,9 +244,12 @@ protected:
   unsigned int TargetShrink[3];
 
   int Error;
+  int Abort;
 
   vtkUnsignedIntArray  *MaxNumberOfIterations;
   vtkDoubleArray       *LearningRate;
+
+  vtkProcessObject  *ProcessObject;
 
 private:
   vtkITKRigidRegistrationTransformBase(const vtkITKRigidRegistrationTransformBase&);  // Not implemented.
@@ -243,8 +260,6 @@ private:
   vtkMatrix4x4 *GetMatrix()
     { return this->vtkLinearTransform::GetMatrix(); }
 };
-
-void vtkITKRigidRegistrationConditionCallback(void *self, int NumLevel, int NumIter);
 
 
 // ETX
