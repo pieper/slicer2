@@ -105,7 +105,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2005/03/20 00:12:10 $}]
+        {$Revision: 1.8 $} {$Date: 2005/03/20 00:25:24 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -600,21 +600,18 @@ proc TransformVolumeResampleMode {} {
             foreach c $TransformVolume(resampleConrols) {
                 $c configure -state disabled
             }
-            $TransformVolume(referenceVol) select "None"
             $TransformVolume(referenceVol) configure -state disabled
         }
         "1" {
             foreach c $TransformVolume(resampleConrols) {
                 $c configure -state disabled
             }
-            $TransformVolume(referenceVol) select 0
             $TransformVolume(referenceVol) configure -state normal
         }
         "2" {
             foreach c $TransformVolume(resampleConrols) {
                 $c configure -state normal
             }
-            $TransformVolume(referenceVol) select "None"
             $TransformVolume(referenceVol) configure -state disabled
         }
     }
@@ -645,8 +642,9 @@ proc TransformVolumeUpdateResample {} {
             set v $vRef
         }
     }
+    puts "TransformVolumeUpdateResample v = $v"
 
-    if {$v != $Volume(idNone)} {
+    if {$v != $Volume(idNone) && $v != ""} {
         set spacing [split [[Volume($v,vol) GetOutput] GetSpacing]] 
 
         set TransformVolume(OutputSpacingLR) [lindex $spacing 0] 
