@@ -191,8 +191,14 @@ public:
   /** Set the fixed image. */
   itkSetObjectMacro( FixedImage, FixedImageType );
 
+  /** Set the fixed image. */
+  itkGetObjectMacro( FixedImage, FixedImageType );
+
   /** Set the moving image. */
   itkSetObjectMacro( MovingImage, MovingImageType );
+
+  /** Set the moving image. */
+  itkGetObjectMacro( MovingImage, MovingImageType );
 
   /** Set the number of resolution levels. */
   itkSetClampMacro( NumberOfLevels, unsigned short, 1,

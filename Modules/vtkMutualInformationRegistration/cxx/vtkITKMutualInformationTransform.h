@@ -70,14 +70,12 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // Thanks to Steve Pieper who wrote the initial version of the class.
 
 #include "vtkLinearTransform.h"
-
 #include "vtkMutualInformationRegistrationConfigure.h"
-
-class vtkImageData;
+#include "vtkDoubleArray.h"
+#include "vtkImageData.h"
+#include "vtkUnsignedIntArray.h"
 class vtkMatrix4x4;
 class vtkImageFlip;
-#include "vtkDoubleArray.h"
-#include "vtkUnsignedIntArray.h"
 
 class VTK_MUTUALINFORMATIONREGISTRATION_EXPORT vtkITKMutualInformationTransform : public vtkLinearTransform
 {
@@ -89,11 +87,12 @@ public:
 
   // Description:
   // Specify the source and target images. The two images must have
-  // the same scalar type.
-  // Otherwise, the images can differ in scaling, resolution, etc.
-  void SetSourceImage(vtkImageData *source);
-  void SetTargetImage(vtkImageData *target);
+  // the same scalar type. Otherwise, the images can differ in scaling, 
+  // resolution, etc.
+  vtkSetObjectMacro(SourceImage, vtkImageData);
   vtkGetObjectMacro(SourceImage, vtkImageData);
+
+  vtkSetObjectMacro(TargetImage, vtkImageData);
   vtkGetObjectMacro(TargetImage, vtkImageData);
 
   // Description:
@@ -167,7 +166,8 @@ public:
 
   // Description:
   // Invert the transformation.  This is done by switching the
-  // source and target images.
+  // source and target images. This is does not work because the
+  // transform is not touched.
   void Inverse();
 
   // Description:

@@ -50,56 +50,14 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "itkVTKImageImport.h"
 #include "vtkITKUtility.h"
 
-// All the MI Registration Stuff
-#include "MIRegistration.h"
 #include "itkExceptionObject.h"
 
 // itk classes
-// Some of this may be necessary, but I doubt it.
-#include "itkImage.h"
-#include "itkImageRegionIterator.h"
-#include "itkQuaternionRigidTransform.h"
-#include "itkQuaternionRigidTransformGradientDescentOptimizer.h"
-#include "itkMutualInformationImageToImageMetric.h"
-#include "itkLinearInterpolateImageFunction.h"
-#include "itkImageRegistrationMethod.h"
-#include "itkNumericTraits.h"
+// All the MI Registration Stuff
+#include "MIRegistration.h"
 #include "vnl/vnl_math.h"
 
-#include "MIRegistration.txx"
-#include "itkObject.h"
-#include "itkMultiResolutionImageRegistrationMethod.h"
-#include "itkAffineTransform.h"
-
-#include "itkQuaternionRigidTransform.h"
-#include "itkMutualInformationImageToImageMetric.h"
-#include "itkLinearInterpolateImageFunction.h"
-#include "itkQuaternionRigidTransformGradientDescentOptimizer.h"
-#include "itkRecursiveMultiResolutionPyramidImageFilter.h"
-
-#include "itkArray.h"
-
-
-// turn itk exceptions into vtk errors
-#undef itkExceptionMacro  
-#define itkExceptionMacro(x) \
-  { \
-  ::itk::OStringStream message; \
-  message << "itk::ERROR: " << this->GetNameOfClass() \
-          << "(" << this << "): " x; \
-  std::cerr << message.str().c_str() << std::endl; \
-  }
-
-#undef itkGenericExceptionMacro  
-#define itkGenericExceptionMacro(x) \
-  { \
-  ::itk::OStringStream message; \
-  message << "itk::ERROR: " x; \
-  std::cerr << message.str().c_str() << std::endl; \
-  }
-
-
-vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.10 $");
+vtkCxxRevisionMacro(vtkITKMutualInformationTransform, "$Revision: 1.11 $");
 vtkStandardNewMacro(vtkITKMutualInformationTransform);
 
 //----------------------------------------------------------------------------
@@ -205,6 +163,24 @@ void vtkITKMutualInformationTransform::PrintSelf(ostream& os, vtkIndent indent)
 
 //----------------------------------------------------------------------------
 
+  // some memory leaks here...
+template <class T>
+itk::Image<T,3> *VTKtoITKImage(vtkImageData *VtkImage,T*)
+{
+  typedef itk::Image<T,3>                       OutputImageType;
+  typedef itk::VTKImageImport<OutputImageType>  ImageImportType;
+
+  vtkImageExport *ImageExporter = vtkImageExport::New();
+    ImageExporter->SetInput(VtkImage);
+  ImageImportType::Pointer ItkImporter = ImageImportType::New();
+  ConnectPipelines(ImageExporter, ItkImporter);
+  ItkImporter->Update();
+  ItkImporter->GetOutput()->Register();
+  return ItkImporter->GetOutput();
+}
+
+//----------------------------------------------------------------------------
+
 // This templated function executes the filter for any type of data.
 // But, actually we use only float...
 template <class T>
@@ -216,50 +192,33 @@ static void vtkITKMutualInformationExecute(vtkITKMutualInformationTransform *sel
 {
   // Declare the input and output types
   typedef itk::Image<T,3>                       OutputImageType;
-  typedef itk::VTKImageImport<OutputImageType>  ImageImportType;
 
   // ----------------------------------------
   // Sources to ITK MIRegistration
   // ----------------------------------------
 
-  // Source Image that is moving
-  vtkImageExport *movingVtkExporter = vtkImageExport::New();
-    movingVtkExporter->SetInput(source);
+  // Create the Registrator
+  typedef itk::MIRegistration<OutputImageType,OutputImageType> RegistratorType;
+  typename RegistratorType::Pointer MIRegistrator = RegistratorType::New();
 
-  // Source Image that is moving into ITK
-  ImageImportType::Pointer movingItkImporter = ImageImportType::New();
-  ConnectPipelines(movingVtkExporter, movingItkImporter);
-
-  // Target Image that is not moving
-  vtkImageExport *fixedVtkExporter = vtkImageExport::New();
+  MIRegistrator->SetMovingImage(VTKtoITKImage(source,(T*)(NULL)));
+  MIRegistrator->GetMovingImage()->UnRegister();
 
   if (!self->GetFlipTargetZAxis())
     {
-      fixedVtkExporter->SetInput(target);
+      MIRegistrator->SetFixedImage(VTKtoITKImage(target,(T*)(NULL)));
     }
   else 
     {
       std::cout << "Z-Flipping Target Input" << std::endl;
       self->GetImageFlip()->SetInput(target);
       self->GetImageFlip()->Update();
-      fixedVtkExporter->SetInput(self->GetImageFlip()->GetOutput());
+      MIRegistrator->
+    SetFixedImage(VTKtoITKImage(self->GetImageFlip()->GetOutput(),(T*)(NULL)));
     }
+  MIRegistrator->GetFixedImage()->UnRegister();
 
-   self->Print(std::cout);
-
-  // Target Image that is not moving into ITK
-  ImageImportType::Pointer fixedItkImporter = ImageImportType::New();
-  ConnectPipelines(fixedVtkExporter, fixedItkImporter);
-
-  fixedItkImporter->Update();
-  movingItkImporter->Update();
-
-  // Create the Registrator
-  typedef itk::MIRegistration<OutputImageType,OutputImageType> RegistratorType;
-  typename RegistratorType::Pointer MIRegistrator = RegistratorType::New();
-
-  MIRegistrator->SetFixedImage(fixedItkImporter->GetOutput());
-  MIRegistrator->SetMovingImage(movingItkImporter->GetOutput());
+  self->Print(std::cout);
 
   // ----------------------------------------
   // Do the Registratioon Configuration
@@ -280,6 +239,7 @@ static void vtkITKMutualInformationExecute(vtkITKMutualInformationTransform *sel
 //    }
 
   // Set metric related parameters
+
   MIRegistrator->SetMovingImageStandardDeviation(self->GetSourceStandardDeviation());
   MIRegistrator->SetFixedImageStandardDeviation(self->GetTargetStandardDeviation());
   MIRegistrator->SetNumberOfSpatialSamples(self->GetNumberOfSamples());
@@ -451,52 +411,6 @@ unsigned long vtkITKMutualInformationTransform::GetMTime()
     }
   return result;
 }
-//------------------------------------------------------------------------
-void vtkITKMutualInformationTransform::SetSourceImage(vtkImageData *source)
-{
-  if (this->SourceImage == source)
-    {
-    return;
-    }
-
-  if (this->SourceImage)
-    {
-    this->SourceImage->Delete();
-    }
-
-  source->Register(this);
-  this->SourceImage = source;
-
-  this->Modified();
-}
-
-//------------------------------------------------------------------------
-void vtkITKMutualInformationTransform::SetTargetImage(vtkImageData *target)
-{
-  if (this->TargetImage == target)
-    {
-    return;
-    }
-
-  if (this->TargetImage)
-    {
-    this->TargetImage->Delete();
-    }
-
-  target->Register(this);
-  this->TargetImage = target;
-  this->Modified();
-}
-
-//----------------------------------------------------------------------------
-void vtkITKMutualInformationTransform::Inverse()
-{
-  vtkImageData *tmp1 = this->SourceImage;
-  vtkImageData *tmp2 = this->TargetImage;
-  this->TargetImage = tmp1;
-  this->SourceImage = tmp2;
-  this->Modified();
-}
 
 //----------------------------------------------------------------------------
 vtkAbstractTransform *vtkITKMutualInformationTransform::MakeTransform()
@@ -594,4 +508,15 @@ int vtkITKMutualInformationTransform::TestMatrixInitialize(vtkMatrix4x4 *aMat)
       }
   }
   return MIRegistrator->TestParamToMatrix();
+}
+
+//----------------------------------------------------------------------------
+
+void vtkITKMutualInformationTransform::Inverse()
+{
+  vtkImageData *tmp1 = this->SourceImage;
+  vtkImageData *tmp2 = this->TargetImage;
+  this->TargetImage = tmp1;
+  this->SourceImage = tmp2;
+  this->Modified();
 }
