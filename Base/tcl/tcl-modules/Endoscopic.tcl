@@ -1,3 +1,107 @@
+#=auto==========================================================================
+# (c) Copyright 2002 Massachusetts Institute of Technology
+#
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for any purpose, 
+# provided that the above copyright notice and the following three paragraphs 
+# appear on all copies of this software.  Use of this software constitutes 
+# acceptance of these terms and conditions.
+#
+# IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, 
+# INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE 
+# AND ITS DOCUMENTATION, EVEN IF MIT HAS BEEN ADVISED OF THE POSSIBILITY OF 
+# SUCH DAMAGE.
+#
+# MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING, 
+# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR 
+# A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+#
+# THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE 
+# MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. 
+#
+#===============================================================================
+# FILE:        Endoscopic.tcl
+# PROCEDURES:  
+#   EndoscopicEnter
+#   EndoscopicExit
+#   EndoscopicUpdateEndoscopicViewVisibility
+#   EndoscopicUpdateMainViewVisibility
+#   EndoscopicAddEndoscopicView
+#   EndoscopicAddMainView
+#   EndoscopicAddEndoscopicViewRemoveMainView
+#   EndoscopicRemoveEndoscopicView
+#   EndoscopicRemoveMainView
+#   EndoscopicAddMainViewRemoveEndoscopicView
+#   EndoscopicInit
+#   EndoscopicBuildVTK
+#   EndoscopicCreateCamera
+#   EndoscopicCameraParams
+#   EndoscopicCreateFocalPoint
+#   EndoscopicCreateLandmarks
+#   EndoscopicCreatePath
+#   EndoscopicCreateVector
+#   EndoscopicVectorParams
+#   EndoscopicUpdateVisibility name (optional)
+#   EndoscopicSetPickable name 0
+#   EndoscopicUpdateSize name
+#   EndoscopicPopBindings
+#   EndoscopicPushBindings
+#   EndoscopicCreateBindings
+#   EndoscopicBuildGUI
+#   EndoscopicCreateLabelAndSlider
+#   EndoscopicCreateCheckButton
+#   EndoscopicCreateAdvancedGUI
+#   EndoscopicSetActive
+#   EndoscopicPopupCallback
+#   EndoscopicUseGyro
+#   EndoscopicSelectActor
+#   EndoscopicVectorSelected
+#   EndoscopicLandmarkSelected
+#   EndoscopicGyroMotion
+#   EndoscopicSetGyroOrientation
+#   EndoscopicSetWorldPosition
+#   EndoscopicSetWorldOrientation
+#   EndoscopicSetCameraPosition
+#   EndoscopicResetCameraPosition
+#   EndoscopicSetCameraDirection
+#   EndoscopicResetCameraDirection
+#   EndoscopicUpdateActorFromVirtualEndoscope
+#   EndoscopicUpdateVirtualEndoscope
+#   EndoscopicLightFollowEndoCamera
+#   EndoscopicSetCameraZoom
+#   EndoscopicSetCameraViewAngle
+#   EndoscopicSetCameraAxis
+#   EndoscopicCameraMotionFromUser
+#   EndoscopicSetCollision
+#   EndoscopicMoveGyroToLandmark
+#   EndoscopicUpdateVectors
+#   EndoscopicAddLandmarkNoDirectionSpecified
+#   EndoscopicAddLandmarkDirectionSpecified
+#   EndoscopicUpdateLandmark
+#   EndoscopicDeleteLandmark
+#   EndoscopicBuildInterpolatedPath
+#   EndoscopicDeletePath
+#   EndoscopicResetPathVariables
+#   EndoscopicComputeRandomPath
+#   EndoscopicShowPath
+#   EndoscopicViewPath
+#   EndoscopicStopPath
+#   EndoscopicResetStopPath
+#   EndoscopicResetPath
+#   EndoscopicSetPathFrame
+#   EndoscopicSetFlyDirection
+#   EndoscopicSetSpeed
+#   EndoscopicCheckDriver
+#   EndoscopicReformatSlices
+#   EndoscopicSetSliceDriver
+#   EndoscopicAddToEndOfMRMLTree id cx cy cz fx fy fz
+#   EndoscopicUpdateInMRMLTree id cx cy cz fx fy fz
+#   EndoscopicUpdateMRML
+#   EndoscopicDistanceBetweenTwoPoints
+#   EndoscopicUpdateSelectionLandmarkList
+#   EndoscopicSetModelsVisibilityInside
+#   EndoscopicSetSlicesVisibility
+#==========================================================================auto=
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicEnter
@@ -1037,64 +1141,58 @@ proc EndoscopicSetSize {a} {
 #
 ##############################################################################
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicPopBindings
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicPopBindings {} {
     global Ev
-    EvDeactivateBindingSet EndoscopicEvents
+    CsysPopBindings Endoscopic
     EvDeactivateBindingSet Slice0Events
     EvDeactivateBindingSet Slice1Events
     EvDeactivateBindingSet Slice2Events
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicPushBindings
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicPushBindings {} {
     global Ev
     # push onto the event stack a new event manager that deals with
     # events when the Endoscopic module is active
-    EvActivateBindingSet EndoscopicEvents
+    CsysPushBindings Endoscopic
     EvActivateBindingSet Slice0Events
     EvActivateBindingSet Slice1Events
     EvActivateBindingSet Slice2Events
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicCreateBindings
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicCreateBindings {} {
-    global Gui Ev
+    global Gui Ev Csys
     
     # Creates events sets we'll  need for this module
+    # create the event manager for the ability to move the gyro
+   
+    EvDeclareEventHandler Endoscopic(Events) <KeyPress-c> { if { [SelectPick Endoscopic(picker) %W %x %y] != 0 } { eval EndoscopicSetWorldPosition $Select(xyz);Render3D }}   
     
-    # Main events set: EndoMouseEvents
-    # The entry point is the mouse click/mouse release that selects/unselects
-    # => Based on whether an actor is selected or not, we either interact 
-    # regularly with the screen (virtual camera moves) or we have a 
-    # selected an actor. If the selected actor is the gyro, then the 
-    # mouse motion moves that gyro axis. If the selected actor is a 
-    # landmark or a vector, then the landmark or vector is selected 
-    # and the endoscope moves there.
-
-    # sub events set: EndoscopicTkMotion
-
-    EvDeclareEventHandler EndoMouseEvents <Any-ButtonPress> {EndoscopicSelectActor %W %x %y}
-    
-    EvDeclareEventHandler EndoMouseEvents <Any-ButtonRelease> {EndoscopicUnselectActor %W %x %y}
-
-    # create the event manager for the ability to add landmarks with
-    # the key-press e on 2D slices
-    EvDeclareEventHandler EndoKeySlicesEvents <KeyPress-l> { if { [SelectPick2D %W %x %y] != 0 } { eval EndoscopicAddLandmarkNoDirectionSpecified $Select(xyz); EndoscopicBuildInterpolatedPath; Render3D }}
-    
-    EvDeclareEventHandler EndoKeySlicesEvents <KeyPress-c> { if { [SelectPick2D %W %x %y] != 0 } { eval EndoscopicSetWorldPosition $Select(xyz);EndoscopicBuildInterpolatedPath;Render3D }} 
-    
-    EvDeclareEventHandler EndoKeyMainViewEvents <KeyPress-l> { if { [SelectPick Endoscopic(picker) %W %x %y] != 0 } { eval EndoscopicAddLandmarkNoDirectionSpecified $Select(xyz); EndoscopicBuildInterpolatedPath; Render3D }}
-    
-    EvDeclareEventHandler EndoKeyMainViewEvents <KeyPress-c> { if { [SelectPick Endoscopic(picker) %W %x %y] != 0 } { eval EndoscopicSetWorldPosition $Select(xyz);EndoscopicBuildInterpolatedPath;Render3D }}   
-
-    # endoscopic events for 3d view
-    EvAddWidgetToBindingSet EndoscopicEvents $Gui(fViewWin) {{EndoMouseEvents} {EndoKeyMainViewEvents} {tkRegularEvents}}
-
     # endoscopic events for slice windows (in addition to already existing events)
+
+    EvDeclareEventHandler EndoKeySlicesEvents <KeyPress-c> { if { [SelectPick2D %W %x %y] != 0 } { eval EndoscopicSetWorldPosition $Select(xyz);Render3D }} 
+    
     EvAddWidgetToBindingSet Slice0Events $Gui(fSl0Win) {EndoKeySlicesEvents}
     EvAddWidgetToBindingSet Slice1Events $Gui(fSl1Win) {EndoKeySlicesEvents}
     EvAddWidgetToBindingSet Slice2Events $Gui(fSl2Win) {EndoKeySlicesEvents}
 
-    # other events set we'll need:
-    EvAddWidgetToBindingSet EndoscopicTkMotion $Gui(fViewWin) {{tkMotionEvents} {tkRegularEvents} {EndoMouseEvents} {EndoKeyMainViewEvents}}
 }
 
 
@@ -1927,6 +2025,12 @@ proc EndoscopicPopupCallback {} {
 #
 #############################################################################
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicUseGyro
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicUseGyro {} {
     global Endoscopic
         if { $Endoscopic(gyro,use) == 1} {
@@ -2077,6 +2181,12 @@ proc EndoscopicLandmarkSelected {{id ""}} {
 #
 #############################################################################
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicGyroMotion
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicGyroMotion {actor} {
     
     global Endoscopic
