@@ -189,7 +189,7 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fList.fList
 
-	set Data(fNodeList) [ScrolledListbox $f.list 0 0]
+	set Data(fNodeList) [ScrolledListbox $f.list 0 0 -selectmode extended]
 	bind $Data(fNodeList) <Button-3>  {DataPostRightMenu %X %Y}
 	bind $Data(fNodeList) <Double-1>  {DataEditNode}
 	bind all <Control-e> {DataEditNode}
@@ -370,20 +370,22 @@ proc DataGetIdFromNode {node} {
 # .PROC DataClipboardCopy
 # .END
 #-------------------------------------------------------------------------------
-proc DataClipboardCopy {node} {
+proc DataClipboardCopy {nodes} {
 	global Data Mrml Volume Model Transform EndTransform Matrix Color
 	
-	# If the clipboard already has a node, delete it
+	# If the clipboard already has a node(s), delete it
 	if {$Data(clipboard) != ""} {
-		set nodeType [DataGetTypeFromNode $Data(clipboard)]
-		set id [DataGetIdFromNode $Data(clipboard)]
+	    foreach node $Data(clipboard) {
+		set nodeType [DataGetTypeFromNode $node]
+		set id [DataGetIdFromNode $node]
 		# For the next line to work, Volume, Model, etc need to
 		# be on the "global" line of this procedure
 		MainMrmlDeleteNode $nodeType $id
+	    }
 	}
 
-	# Copy the node to the clipboard
-	set Data(clipboard) $node
+	# Copy the node(s) to the clipboard
+	set Data(clipboard) $nodes
 	
 	# Enable paste
 	$Data(rightMenu) entryconfigure $Data(rightMenu,Paste) -state normal
@@ -396,11 +398,11 @@ proc DataClipboardCopy {node} {
 proc DataClipboardPaste {} {
 	global Data Mrml
 	
-	set newNode $Data(clipboard)
+	set newNodes $Data(clipboard)
 	set Data(clipboard) ""
 	$Data(rightMenu) entryconfigure $Data(rightMenu,Paste) -state disabled
 
-	return $newNode
+	return $newNodes
 }
 
 #-------------------------------------------------------------------------------
@@ -408,23 +410,26 @@ proc DataClipboardPaste {} {
 # .END
 #-------------------------------------------------------------------------------
 proc DataCutNode {} {
-	global Data Mrml
+    global Data Mrml
+    
+    # Get the index of selected node(s)
+    set selection [$Data(fNodeList) curselection]
+    if {$selection == ""} {return}
+    
+    # Identify node(s)
+    foreach node $selection {
+	lappend nodes [Mrml(dataTree) GetNthItem $node]
+    }
 
-	# Get the selected node
-	set n [$Data(fNodeList) curselection]
-	if {$n == ""} {return}
-	set node [Mrml(dataTree) GetNthItem $n]
-
-	# Identify nodeType
-	set node [Mrml(dataTree) GetNthItem $n]
-
-	# Copy to clipboard
-	DataClipboardCopy $node
-
-	# Remove from MRML tree
-	Mrml(dataTree) RemoveItem $node
-
-	MainUpdateMRML
+    # Remove node(s) from the MRML tree
+    foreach node $nodes {
+	Mrml(dataTree) RemoveItem $node 
+    }
+	
+    # Copy to clipboard
+    DataClipboardCopy $nodes
+    
+    MainUpdateMRML
 }
 
 #-------------------------------------------------------------------------------
@@ -434,17 +439,23 @@ proc DataCutNode {} {
 proc DataDeleteNode {} {
 	global Data Mrml Volume Model Transform EndTransform Matrix Color
 
-	# Get the selected node
-	set n [$Data(fNodeList) curselection]
-	if {$n == ""} {return}
-	set node [Mrml(dataTree) GetNthItem $n]
+	# Get the index of selected node(s)
+	set selection [$Data(fNodeList) curselection]
+	if {$selection == ""} {return}
 
-	# Delete
-	set nodeType [DataGetTypeFromNode $node]
-	set id [DataGetIdFromNode $node]
-	# For the next line to work, Volume, Model, etc need to
-	# be on the "global" line of this procedure
-	MainMrmlDeleteNode $nodeType $id
+	# Identify nodes(s)
+	foreach node $selection {
+	    lappend nodes [Mrml(dataTree) GetNthItem $node]
+	}
+
+	foreach node $nodes {
+	    # Delete
+	    set nodeType [DataGetTypeFromNode $node]
+	    set id [DataGetIdFromNode $node]
+	    # For the next line to work, Volume, Model, etc need to
+	    # be on the "global" line of this procedure
+	    MainMrmlDeleteNode $nodeType $id
+	}
 
 	RenderAll
 }
@@ -456,13 +467,17 @@ proc DataDeleteNode {} {
 proc DataCopyNode {} {
 	global Data Mrml
 
-	# Get the selected node
-	set n [$Data(fNodeList) curselection]
-	if {$n == ""} {return}
-	set node [Mrml(dataTree) GetNthItem $n]
+	# Get the index of selected node(s)
+	set selection [$Data(fNodeList) curselection]
+	if {$selection == ""} {return}
 
+	# Identify node(s)
+	foreach node $selection {
+	    lappend nodes [Mrml(dataTree) GetNthItem $node]
+	}
 	# Copy to clipboard
-	DataClipboardCopy $node
+	DataClipboardCopy $nodes
+
 }
 
 #-------------------------------------------------------------------------------
@@ -477,27 +492,39 @@ proc DataPasteNode {} {
 		return
 	}
 
-	# Get the selected node
-	set n [$Data(fNodeList) curselection]
-
 	# Empty list is a special case
 	if {[$Data(fNodeList) index end] == 0} {
-		Mrml(dataTree) AddItem [DataClipboardPaste]
-		MainUpdateMRML
+	    foreach node [DataClipboardPaste] {	
+		Mrml(dataTree) AddItem $node 
+	    }
+	    MainUpdateMRML
+	    return
+	}
+
+	# Get the index of selected node(s)
+	set selection [$Data(fNodeList) curselection]
+
+	if {$selection == ""} {
+	    tk_messageBox -message "First select an item to paste after."
 		return
 	}
 	
-	if {$n == ""} {
-		tk_messageBox -message "First select an item to paste after."
-		return
-	}
-	set node [Mrml(dataTree) GetNthItem $n]
+	# Find the last selected node to paste after
+	set last [expr [llength $selection] - 1]
+	set lastSel [Mrml(dataTree) GetNthItem [lindex $selection $last]]
 
+	
 	# Paste from clipboard
-	set newNode [DataClipboardPaste]
+	set newNodes [DataClipboardPaste]
+	
+	# Figure out which item each node should be pasted after
+	set prevNodes "$lastSel [lrange $newNodes 0 [expr \
+		[llength $newNodes] - 2]]"
 
-	# Insert into MRML tree after the selected node
-	Mrml(dataTree) InsertAfterItem $node $newNode
+	# Insert into MRML tree after the last selected node
+	foreach node $newNodes prev $prevNodes {
+	    Mrml(dataTree) InsertAfterItem $prev $node
+	}
 
 	MainUpdateMRML
 }
@@ -510,9 +537,16 @@ proc DataEditNode {} {
 	global Data Mrml Model
 
 	# Get the selected node
-	set n [$Data(fNodeList) curselection]
-	if {$n == ""} {return}
-	set node [Mrml(dataTree) GetNthItem $n]
+	set selection [$Data(fNodeList) curselection]
+	if {$selection == ""} {return}
+
+	# Edit only one node
+	if {[llength $selection] != 1} {
+	    tk_messageBox -message "Please select only one node to edit."
+	    return
+	}
+
+	set node [Mrml(dataTree) GetNthItem $selection]
 
 	set class [$node GetClassName]
 	switch $class {
@@ -580,40 +614,69 @@ proc DataAddMatrix {} {
 # .END
 #-------------------------------------------------------------------------------
 proc DataAddTransform {} {
-	global Transform Matrix EndTransform
+    global Transform Matrix EndTransform Data
+    
+    # Add Transform, Matrix, EndTransform
 
-	# Add Transform, Matrix, EndTransform
-	
-	# Transform
-	set i $Transform(nextID)
-	incr Transform(nextID)
-	lappend Transform(idList) $i
-	vtkMrmlTransformNode Transform($i,node)
-	set n Transform($i,node)
-	$n SetID $i
+    # Lauren fix this (vtk function to paste before since 1st sel can be 1st node)
+    
+    # Transform encloses selected nodes: find them
+    set selection [$Data(fNodeList) curselection]
+    
+    # Empty list or no selection: put Transform at end	
+    if {[$Data(fNodeList) index end] == 0 || $selection == "" || [lindex $selection 0] == 0} {
+	set append 1
+    } else {
+	set append 0
+	# Paste before first selected node: fix if it is the first node
+	set firstSel [Mrml(dataTree) GetNthItem [expr [lindex $selection 0] - 1]]
+	set last [expr [llength $selection] - 1]
+	set lastSel [Mrml(dataTree) GetNthItem [lindex $selection $last]]
+	puts "$firstSel $lastSel"
+    }
+    
+    
+    # Transform
+    set i $Transform(nextID)
+    incr Transform(nextID)
+    lappend Transform(idList) $i
+    vtkMrmlTransformNode Transform($i,node)
+    set n Transform($i,node)
+    $n SetID $i
+    if {$append == 1} {
 	Mrml(dataTree) AddItem $n
+    } else {
+	Mrml(dataTree) InsertAfterItem $firstSel $n
+    }
+# for now: later, use InsertBefore for matrix and don't need to save transform
+    set t $n
 
-	# Matrix
-	set i $Matrix(nextID)
-	incr Matrix(nextID)
-	lappend Matrix(idList) $i
-	vtkMrmlMatrixNode Matrix($i,node)
-	set n Matrix($i,node)
-	$n SetID $i
-	$n SetName manual
+    # Matrix
+    set i $Matrix(nextID)
+    incr Matrix(nextID)
+    lappend Matrix(idList) $i
+    vtkMrmlMatrixNode Matrix($i,node)
+    set n Matrix($i,node)
+    $n SetID $i
+    $n SetName manual
+# for now: later, use InsertBefore.
+    Mrml(dataTree) InsertAfterItem $t $n
+    MainMatricesSetActive $i
+
+    # EndTransform
+    set i $EndTransform(nextID)
+    incr EndTransform(nextID)
+    lappend EndTransform(idList) $i
+    vtkMrmlEndTransformNode EndTransform($i,node)
+    set n EndTransform($i,node)
+    $n SetID $i
+    if {$append == 1} {
 	Mrml(dataTree) AddItem $n
-	MainMatricesSetActive $i
-
-	# EndTransform
-	set i $EndTransform(nextID)
-	incr EndTransform(nextID)
-	lappend EndTransform(idList) $i
-	vtkMrmlEndTransformNode EndTransform($i,node)
-	set n EndTransform($i,node)
-	$n SetID $i
-	Mrml(dataTree) AddItem $n
-
-	MainUpdateMRML
+    } else {
+	Mrml(dataTree) InsertAfterItem $lastSel $n
+    }
+    
+    MainUpdateMRML
 }
 
 
