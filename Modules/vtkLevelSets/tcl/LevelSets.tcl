@@ -160,7 +160,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.15 $} {$Date: 2003/08/11 19:33:55 $}]
+        {$Revision: 1.16 $} {$Date: 2003/08/11 20:08:40 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -875,15 +875,15 @@ proc LevelSetsBuildMainFrame {} {
 
     $f.bRun configure -image \
           [image create bitmap \
-           -file [ExpandPath [file join $::PACKAGE_DIR_VTKLevelSets/../../../images/play.xbm] \
+           -file [ExpandPath [file join $::PACKAGE_DIR_VTKLevelSets/../../../images/play.xbm]]] \
            -width 20 
     $f.bPause configure -image \
           [image create bitmap \
-           -file [ExpandPath [file join $::PACKAGE_DIR_VTKLevelSets/../../../images/tpause.xbm] \
+           -file [ExpandPath [file join $::PACKAGE_DIR_VTKLevelSets/../../../images/tpause.xbm]]] \
            -width 20
     $f.bEnd configure -image \
            [image create bitmap \
-           -file [ExpandPath [file join $::PACKAGE_DIR_VTKLevelSets/../../../images/stop.xbm] \
+        -file [ExpandPath [file join $::PACKAGE_DIR_VTKLevelSets/../../../images/stop.xbm]]] \
            -width 20
 
     TooltipAdd $f.bRun     " Start/Continue the current evolution "
