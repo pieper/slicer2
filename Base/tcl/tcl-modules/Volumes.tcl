@@ -28,6 +28,7 @@
 # FILE:        Volumes.tcl
 # PROCEDURES:  
 #   VolumesInit
+#   VolumesBuildVTK
 #   VolumesBuildGUI
 #   VolumesSetPropertyType
 #   VolumesPropsCancel
@@ -83,6 +84,7 @@ proc VolumesInit {} {
     # Added by Attila Tanacs 10/18/2000
 	set Module($m,procEnter) VolumesEnter
 	set Module($m,procExit) VolumesExit
+    set Module($m,procVTK) VolumesBuildVTK
         set Volume(DICOMStartDir) "e:/tanacs/medpic/"
 
     # End
@@ -102,7 +104,7 @@ proc VolumesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-                {$Revision: 1.39 $} {$Date: 2000/11/07 01:55:04 $}]
+                {$Revision: 1.40 $} {$Date: 2000/11/07 16:56:30 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -117,6 +119,16 @@ proc VolumesInit {} {
 	MainVolumesSetGUIDefaults
 
         set Volume(DefaultDir) ""
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolumesBuildVTK
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc VolumesBuildVTK {} {
+
 }
 
 #-------------------------------------------------------------------------------
@@ -549,10 +561,10 @@ acquisition.
 	#-------------------------------------------
 
 	# Entry fields (the loop makes a frame for each variable)
-	foreach param "filePattern resolution \
+	foreach param "filePattern width height \
 		pixelSize sliceThickness sliceSpacing" \
 		name "{File Pattern} \
-		{Resolution (width in pixels)} {Pixel Size (mm)} \
+		{Width in pixels} {Height in pixels} {Pixel Size (mm)} \
 		{Slice Thickness} {Slice Spacing}" {
 
 	    set f $fProps.fBot.fHeader.fEntry
@@ -833,8 +845,12 @@ proc VolumesPropsApply {} {
 	}
     }
 	# resolution
-	if {[ValidateInt $Volume(resolution)] == 0} {
-		tk_messageBox -message "The resolution must be an integer."
+	if {[ValidateInt $Volume(width)] == 0} {
+		tk_messageBox -message "The width must be an integer."
+		return
+	}
+	if {[ValidateInt $Volume(height)] == 0} {
+		tk_messageBox -message "The height must be an integer."
 		return
 	}
 	# pixel size
@@ -907,7 +923,7 @@ proc VolumesPropsApply {} {
 			set firstNum [MainFileFindImageNumber First [file join $Mrml(dir) $Volume(firstFile)]]
 			}
 			$n SetImageRange $firstNum $Volume(lastNum)
-			$n SetDimensions $Volume(resolution) $Volume(resolution)
+			$n SetDimensions $Volume(width) $Volume(height)
 			eval $n SetSpacing $Volume(pixelSize) $Volume(pixelSize) \
 				[expr $Volume(sliceSpacing) + $Volume(sliceThickness)]
 			$n SetScalarTypeTo$Volume(scalarType)
@@ -1508,6 +1524,7 @@ proc ClickListSeriesUIDs { idsnames study series filenames } {
 #-------------------------------------------------------------------------------
 proc DICOMListSelectClose { parent filelist } {
     global DICOMFileNameList
+    global Pressed
     
     set DICOMFileNameList {}
     set indices [$filelist curselection]
@@ -1515,6 +1532,7 @@ proc DICOMListSelectClose { parent filelist } {
         lappend DICOMFileNameList [$filelist get $idx]
     }
     
+    set Pressed OK
     destroy $parent
 }
 
@@ -1530,6 +1548,7 @@ proc DICOMListSelect { parent values } {
     global DICOMListSelectSeriesUID
     global DICOMListSelectFiles
     global Gui
+    global Pressed
 
     set DICOMListSelectFiles ""
 
@@ -1540,23 +1559,30 @@ proc DICOMListSelect { parent values } {
     frame $parent.f2 -bg $Gui(activeWorkspace)
     frame $parent.f3 -bg $Gui(activeWorkspace)
     set iDsNames [DICOMScrolledListbox $parent.f1.iDsNames 0 1 DICOMListSelectPatientName "Patient <ID><Name>" -width 50 -height 5]
+    TooltipAdd $iDsNames "Select a patient"
     set studyUIDs [DICOMScrolledListbox $parent.f1.studyUIDs 0 1 DICOMListSelectStudyUID "Study UID" -width 50 -height 5]
+    TooltipAdd $studyUIDs "Select a study of the selected patient"
     set seriesUIDs [DICOMScrolledListbox $parent.f2.seriesUIDs 0 1 DICOMListSelectSeriesUID "Series UID" -width 50 -height 5]
+    TooltipAdd $seriesUIDs "Select a series of the selected study"
     set fileNames [DICOMScrolledListbox $parent.f2.fileNames 0 1 DICOMListSelectFiles "Files" -width 50 -height 5 -selectmode extended]
     #set fileNames [DICOMScrolledListbox $parent.f2.fileNames 0 1 -width 60 -height 5 -selectmode multiple]
+    TooltipAdd $fileNames "Select files of the selected series"
     
     #button $parent.f3.close -text "Close" -command "destroy $parent"
-    eval {button $parent.f3.close -text "Close" -command [list DICOMListSelectClose $parent $fileNames]} $Gui(WBA)
+    eval {button $parent.f3.close -text "OK" -command [list DICOMListSelectClose $parent $fileNames]} $Gui(WBA)
+    eval {button $parent.f3.cancel -text "Cancel" -command "set Pressed Cancel; destroy $parent"} $Gui(WBA)
     
     pack $parent.f1.iDsNames $parent.f1.studyUIDs -side left -expand true -fill both
     pack $parent.f2.seriesUIDs $parent.f2.fileNames -side left -expand true -fill both
     pack $parent.f1 -fill both -expand true
     pack $parent.f2 -fill both -expand true
-    pack $parent.f3.close -pady 10
-    pack $parent.f3 -fill both -expand true
+    pack $parent.f3.close $parent.f3.cancel -padx 10 -pady 10 -side left
+    #pack $parent.f3 -fill both -expand true
+    pack $parent.f3
     #pack $parent
     
     bind $iDsNames <ButtonRelease-1> [list ClickListIDsNames %W $studyUIDs $seriesUIDs $fileNames]
+    #bind $iDsNames <Double-1> [list ClickListIDsNames %W $studyUIDs $seriesUIDs $fileNames]
     bind $studyUIDs <ButtonRelease-1> [list ClickListStudyUIDs $iDsNames %W $seriesUIDs $fileNames]
     bind $seriesUIDs <ButtonRelease-1> [list ClickListSeriesUIDs $iDsNames $studyUIDs %W $fileNames]
     
@@ -1625,12 +1651,12 @@ proc ClickDirList { dirlist } {
 proc DICOMHelp { parent msg {textparams {}}} {
     global Gui
 
-    toplevel $parent
+    toplevel $parent -bg $Gui(activeWorkspace)
     wm title $parent "DICOM Help"
     #wm minsize $parent 600 300
 
-    frame $parent.f
-    frame $parent.b
+    frame $parent.f -bg $Gui(activeWorkspace)
+    frame $parent.b -bg $Gui(activeWorkspace)
     pack $parent.f $parent.b -side top -fill both -expand true
     set t [eval {text $parent.f.t -setgrid true -wrap word -yscrollcommand "$parent.f.sy set"} $textparams]
     scrollbar $parent.f.sy -orient vert -command "$parent.f.t yview"
@@ -1684,6 +1710,7 @@ proc DICOMSelectDir { top } {
     set f3 [frame $top.f3 -bg $Gui(activeWorkspace)]
     
     set dirlist [ScrolledListbox $f2.dirlist 1  1 -width 30 -height 15]
+    TooltipAdd $dirlist "Select start directory for search"
     
     eval { button $f1.changeto -text "Change To:" -command  [list ChangeDir $dirlist]} $Gui(WBA)
     eval { entry $f1.dirname -textvariable DICOMStartDir } $Gui(WEA)
@@ -1694,7 +1721,7 @@ proc DICOMSelectDir { top } {
 
     pack $f1.changeto $f1.dirname -side left -padx 10 -pady 10
     pack $f2.dirlist -fill both -expand true
-    pack $f3.ok $f3.cancel $f3.help -side left -padx 10 -pady 10
+    pack $f3.ok $f3.cancel $f3.help -side left -padx 10 -pady 10 -anchor center
     pack $f1
     pack $f2 -fill both -expand true
     pack $f3
@@ -1714,7 +1741,8 @@ proc DICOMSelectDir { top } {
     #    }
     #}
     
-    bind $dirlist <ButtonRelease-1> [list ClickDirList %W]
+#    bind $dirlist <ButtonRelease-1> [list ClickDirList %W]
+    bind $dirlist <Double-1> [list ClickDirList %W]
     bind $f1.dirname <KeyRelease-Return> [list $f1.changeto invoke]
     
     #cd $pwd
@@ -1757,20 +1785,22 @@ proc DICOMSelectMain { fileNameListbox } {
         grab .list
         tkwait window .list
         
-        #puts $DICOMFileNameList
-        $fileNameListbox delete 0 end
-        foreach name $DICOMFileNameList {
-            $fileNameListbox insert end $name
-        }
-        set Volume(dICOMFileList) $DICOMFileNameList
-
-	# use the second and the third
-	set file1 [lindex $DICOMFileNameList 1]
-	set file2 [lindex $DICOMFileNameList 2]
-	DICOMReadHeaderValues [lindex $DICOMFileNameList 0]
-	DICOMPredictScanOrder $file1 $file2
-
-	set Volume(DICOMStartDir) $DICOMStartDir
+	if { $Pressed == "OK" } {
+	    #puts $DICOMFileNameList
+	    $fileNameListbox delete 0 end
+	    foreach name $DICOMFileNameList {
+		$fileNameListbox insert end $name
+	    }
+	    set Volume(dICOMFileList) $DICOMFileNameList
+	    
+	    # use the second and the third
+	    set file1 [lindex $DICOMFileNameList 1]
+	    set file2 [lindex $DICOMFileNameList 2]
+	    DICOMReadHeaderValues [lindex $DICOMFileNameList 0]
+	    DICOMPredictScanOrder $file1 $file2
+	    
+	    set Volume(DICOMStartDir) $DICOMStartDir
+	}
     }
     
     cd $pwd
@@ -1832,9 +1862,17 @@ proc DICOMReadHeaderValues { filename } {
 	if { [parser FindElement 0x0028 0x0010] == "1" } {
 	    #set Length [lindex [split [parser ReadElement]] 3]
 	    parser ReadElement
-	    set Volume(resolution) [parser ReadUINT16]
+	    set Volume(height) [parser ReadUINT16]
 	} else  {
-	    set Volume(resolution) "unknown"
+	    set Volume(height) "unknown"
+	}
+
+	if { [parser FindElement 0x0028 0x0011] == "1" } {
+	    #set Length [lindex [split [parser ReadElement]] 3]
+	    parser ReadElement
+	    set Volume(width) [parser ReadUINT16]
+	} else  {
+	    set Volume(width) "unknown"
 	}
 
 	if { [parser FindElement 0x0028 0x0030] == "1" } {
