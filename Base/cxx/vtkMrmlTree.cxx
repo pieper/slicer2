@@ -67,7 +67,11 @@ void vtkMrmlTree::Write(char *filename)
   {
     vtkErrorMacro("Write: Could not open file " << filename);
     cerr << "Write: Could not open file " << filename;
+#if (VTK_MAJOR_VERSION <= 5)      
+    this->SetErrorCode(2);
+#else
     this->SetErrorCode(vtkErrorCode::GetErrorCodeFromString("CannotOpenFileError"));
+#endif
     return;
   }
   
@@ -100,7 +104,11 @@ void vtkMrmlTree::Write(char *filename)
 
   // Close file
   file.close();
-  this->SetErrorCode(vtkErrorCode::GetErrorCodeFromString("NoError"));
+#if (VTK_MAJOR_VERSION <= 5)      
+    this->SetErrorCode(0);
+#else
+    this->SetErrorCode(vtkErrorCode::GetErrorCodeFromString("NoError"));
+#endif
 }
 
 //------------------------------------------------------------------------------
