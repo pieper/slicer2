@@ -148,7 +148,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.62 $} {$Date: 2005/03/21 23:31:40 $}]
+                  {$Revision: 1.63 $} {$Date: 2005/03/23 16:26:50 $}]
 
     # Define Tabs
     #------------------------------------
@@ -4386,6 +4386,67 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
     DTMRI(vtk,streamlineControl) AddStreamlinesToScene
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRISeedStreamlinesEvenlyInMask
+# Seeds streamlines at all points in a segmentation.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc DTMRISeedStreamlinesEvenlyInMask {{verbose 1}} {
+    global DTMRI Label Tensor Volume
+
+    set t $Tensor(activeID)
+    set v $Volume(activeID)
+
+    # make sure they are using a segmentation (labelmap)
+    if {[Volume($v,node) GetLabelMap] != 1} {
+        set name [Volume($v,node) GetName]
+        set msg "The volume $name is not a label map (segmented ROI). Continue anyway?"
+        if {[tk_messageBox -type yesno -message $msg] == "no"} {
+            return
+        }
+
+    }
+
+    # ask for user confirmation first
+    if {$verbose == "1"} {
+        set name [Volume($v,node) GetName]
+        set msg "About to seed streamlines in all labelled voxels of volume $name.  This may take a while, so make sure the Tracts settings are what you want first. Go ahead?"
+        if {[tk_messageBox -type yesno -message $msg] == "no"} {
+            return
+        }
+    }
+
+    # set mode to On (the Display Tracts button will go On)
+    set DTMRI(mode,visualizationType,tractsOn) On
+
+    # make sure the settings are current
+    DTMRIUpdateTractColor
+    DTMRIUpdateStreamlineSettings
+    
+    # set up the input segmented volume
+    DTMRI(vtk,streamlineControl) SetInputROI [Volume($v,vol) GetOutput] 
+    DTMRI(vtk,streamlineControl) SetInputROIValue $Label(label)
+
+    # Get positioning information from the MRML node
+    # world space (what you see in the viewer) to ijk (array) space
+    vtkTransform transform
+    transform SetMatrix [Volume($v,node) GetWldToIjk]
+    # now it's ijk to world
+    transform Inverse
+    DTMRI(vtk,streamlineControl) SetROIToWorld transform
+    transform Delete
+
+    # create all streamlines
+    puts "Original number of tracts: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
+    DTMRI(vtk,streamlineControl) SeedStreamlinesEvenlyInROI 
+    puts "New number of tracts will be: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
+    puts "Creating and displaying new tracts..."
+
+    # actually display streamlines 
+    # (this is the slow part since it causes pipeline execution)
+    DTMRI(vtk,streamlineControl) AddStreamlinesToScene
+}
 
 
 #-------------------------------------------------------------------------------

@@ -63,6 +63,17 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // without running out of memory. Nothing is displayed in the renderers.
   // Both the models and the lines of points (text files) are saved.
   void SeedAndSaveStreamlinesFromROI(char *pointsFilename, char *modelFilename);
+  // Description
+  // Seed streamlines with a certain density within the ROI.
+  // The ROI here is a mask, of the white matter for example, and the output
+  // is a collection of streamlines that are approximately evenly spaced
+  // in the mask.  During seeding in the mask, each streamline's path is 
+  // marked ("colored in") in a volume with the same dimensions as the mask.
+  // If the next voxel to seed already has been traversed by a user-specified
+  // number of streamlines, seeding does not take place there.  The point
+  // is to limit the number of streamlines while providing reasonably
+  // complete coverage of anatomy.
+  void SeedStreamlinesEvenlyInROI();
 
   // Description
   // Start a streamline from the input point.
