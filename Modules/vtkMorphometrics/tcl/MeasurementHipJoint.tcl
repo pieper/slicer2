@@ -290,10 +290,7 @@ proc MorphometricsHipJointDisplayInit {} {
     vtkPredicateFilter vPF1
     vtkDistancePredicate vDP1
 
-    AcetabularPlaneFitInit
-}
-
-proc AcetabularPlaneFitInit {} {
+    # vtkObjects needed for computing the acetabular plane
     vtkAxisSource coneAxis
     vtkPredicateFilter coneHip
     vtkPredicateFilter borderJoint
@@ -303,6 +300,7 @@ proc AcetabularPlaneFitInit {} {
     vtkAndPredicate andHipJoint
     vtkConvexHullInexact roiHip
     vtkDistancePredicate nearConvexHullHipJoint
+
 }
 
 proc PelvisPrecompute {} {
