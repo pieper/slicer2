@@ -45,6 +45,8 @@ option add *is3d.scalegain "1." widgetDefault
 option add *is3d.pangain "1." widgetDefault
 option add *is3d.linked3d "" widgetDefault
 option add *is3d.linkedexpose "" widgetDefault
+option add *is3d.savefmt "" widgetDefault
+option add *is3d.saveindex 0 widgetDefault
 
 #
 # The class definition - define if needed (not when re-sourcing)
@@ -76,6 +78,8 @@ if { [itcl::find class is3d] == "" } {
       itk_option define -pangain pangain Pangain {1}
       itk_option define -linked3d linked3d Linked3d {}
       itk_option define -linkedexpose linkedexpose Linkedexpose {}
+      itk_option define -savefmt savefmt Savefmt {}
+      itk_option define -saveindex saveindex Saveindex {}
 
       # widgets for the control area
       variable _controls
@@ -122,7 +126,7 @@ if { [itcl::find class is3d] == "" } {
       method camera {} {return [$_ren GetActiveCamera]}
       method controls {} { return $_controls } 
       method longlatdist { {long 0} {lat 0} {dist 0} } {}
-      method screensave { filename {imagetype "PNM"}} {} ;# TODO should be moved to superclass
+      method screensave { filename {imagetype ""}} {} ;# TODO should be moved to superclass
     }
 }
 
@@ -434,6 +438,12 @@ itcl::body is3d::render {} {
 
     $_tkrw Render
     set _render_pending 0
+
+    if { $itk_option(-savefmt) != "" } {
+        set filename [format $itk_option(-savefmt) $itk_option(-saveindex)]
+        $this screensave $filename
+        $this configure -saveindex [expr 1 + $itk_option(-saveindex)]
+    }
 }
 
 itcl::body is3d::winresize {} {
@@ -633,8 +643,13 @@ itcl::body is3d::longlatdist { {long 0} {lat 0} {dist 0} } {
 
 }
 
-itcl::body is3d::screensave { filename {imagetype "PNM"} } {
+itcl::body is3d::screensave { filename {imagetype ""} } {
 # TODO should be moved to superclass
+
+    if { $imagetype == "" } {
+        set imagetype [string toupper [file extension $filename]]
+        set imagetype [string range $imagetype 1 end] ;# remove . from ext
+    }
 
     set wif ::wif_$_name
     set imgw ::imgw_$_name
