@@ -105,7 +105,7 @@ proc SubVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6.2.1 $} {$Date: 2004/11/24 21:15:35 $}]
+        {$Revision: 1.6.2.2 $} {$Date: 2004/11/24 21:17:04 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -460,12 +460,12 @@ set z2 [expr round([lindex $SubVolume(Ext3D,Ijk) 5])]
   op Delete
 
 
-    if {$Module(verbose) == 1} {
+    if {$::Module(verbose) == 1} {
         puts [[Volume($newvol,vol) GetOutput] GetExtent]
     }
   #Reseting the Extent so goes from 0.
   [Volume($newvol,vol) GetOutput] SetExtent 0 [expr $x2-$x1] 0 [expr $y2-$y1] 0 [expr $z2-$z1]
-    if {$Module(verbose) == 1} {
+    if {$::Module(verbose) == 1} {
         puts [[Volume($newvol,vol) GetOutput] GetExtent]
     }
 
@@ -486,7 +486,7 @@ set z2 [expr round([lindex $SubVolume(Ext3D,Ijk) 5])]
 
   # Set the RasToWld matrix
   # Ras2ToWld = Ras2ToIjk2 x Ijk2ToIjk1 x Ijk1ToRas1 x Ras1ToWld
-    if {$Module(verbose) == 1} {
+    if {$::Module(verbose) == 1} {
         puts "Set the RasToWld matrix\n"
     }
   set ras1wld1 [Volume($volID,node)   GetRasToWld]
@@ -692,7 +692,7 @@ proc SubVolumeGetInitParams {} {
     set IJKtoRASmax [SubVolume(tmpMatrix) MultiplyPoint [lindex $Ext 1] [lindex $Ext 3] [lindex $Ext 5] 1] 
     
 
-    if {$Module(verbose) == 1} {
+    if {$::Module(verbose) == 1} {
         puts $IJKtoRASmin
 
         puts $IJKtoRASmax
@@ -710,7 +710,7 @@ proc SubVolumeGetInitParams {} {
         }      
    }
    
-    if {$Module(verbose) == 1} {
+    if {$::Module(verbose) == 1} {
         puts $RASmin
         puts $RASmax 
     }
@@ -812,7 +812,7 @@ proc SubVolumeUpdate3DScales { notUsed } {
    
   set SubVolume(Ext3D,Ijk) "[lindex $IJKmin 0] [lindex $IJKmax 0] [lindex $IJKmin 1] [lindex $IJKmax 1] [lindex $IJKmin 2] [lindex $IJKmax 2]"
 
-    if {$Module(verbose) == 1} {
+    if {$::Module(verbose) == 1} {
         puts $SubVolume(Ext3D,Ijk)
     }
   
