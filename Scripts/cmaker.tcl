@@ -59,9 +59,9 @@ switch $tcl_platform(os) {
         # that if it doesn't match above it must be windows
         # (VC7 is Visual C++ 7.0, also known as the .NET version)
 
-        set SLICER_HOME c:/pieper/bwh/slicer2/latest/slicer2
-        set VTK_BINARY_PATH c:/downloads/vtk/latest/Win32VC7
-        set ITK_BINARY_PATH ""
+        set SLICER_HOME c:/pieper/bwh/slicer2/slicer2.1/slicer2
+        set VTK_BINARY_PATH c:/downloads/vtk/VTK-4.2.2-build
+        set ITK_BINARY_PATH "c:/downloads/itk/InsightToolkit-1.2.0-build"
         set BUILD Win32VC7
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/debug/vtkSlicerBase.lib
         set GENERATOR "Visual Studio 7" 
