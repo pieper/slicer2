@@ -130,6 +130,10 @@ proc DTMRIInit {} {
     # Load tensor registration module.
     source "$env(SLICER_HOME)/Modules/vtkDTMRI/tcl/DTMRITensorRegistration.tcl"
     DTMRIRegInit
+    
+    #Load ODF
+    source "$env(SLICER_HOME)/Modules/vtkDTMRI/tcl/DTMRIODF.tcl"
+    DTMRIODFInit
      
     # Module Summary Info
     #------------------------------------
@@ -139,7 +143,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.59 $} {$Date: 2005/02/07 20:09:44 $}]
+                  {$Revision: 1.60 $} {$Date: 2005/03/02 00:20:02 $}]
 
     # Define Tabs
     #------------------------------------
@@ -147,8 +151,8 @@ proc DTMRIInit {} {
     set Module($m,row1Name) "{Help} {Input} {Convert} {Disp} {ROI}"
     set Module($m,row1,tab) Input
     # Use these lines to add a second row of tabs
-    set Module($m,row2List) "Scalars Advanced Regist Save"
-    set Module($m,row2Name) "{Scalars} {Advanced} {Regist} {Save}"
+    set Module($m,row2List) "Scalars Advanced Regist Save ODF"
+    set Module($m,row2Name) "{Scalars} {Advanced} {Regist} {Save} {ODF}"
     set Module($m,row2,tab) Scalars
     
 
@@ -311,8 +315,13 @@ proc DTMRIInit {} {
 
     # type of glyph to display (default to lines since fastest)
     set DTMRI(mode,glyphType) Lines
-    set DTMRI(mode,glyphTypeList) {Axes Lines Ellipsoids Boxes}
+    set DTMRI(mode,glyphTypeList) {Axes Lines Ellipsoids Boxes Superquadric}
     set DTMRI(mode,glyphTypeList,tooltips) {{Display DTMRIs as 3 axes aligned with eigenvectors and scaled by eigenvalues.} {Display DTMRIs as lines aligned with one eigenvector and scaled by its eigenvalue.} {Display DTMRIs as ellipses aligned with eigenvectors and scaled by eigenvalues.} {Display DTMRIs as scaled oriented cubes.}}
+    
+    #name of glyph object
+    foreach plane "0 1 2" {
+      set DTMRI(mode,glyphsObject$plane) DTMRI(vtk,glyphs$plane)
+    }
 
     # type of eigenvector to draw glyph lines for
     set DTMRI(mode,glyphEigenvector) Max
@@ -617,6 +626,8 @@ proc DTMRIUpdateMRML {} {
        DevSelectNode Tensor $DTMRI(ResultTensor) DTMRI ResultTensor ResultTensor
        DevUpdateNodeSelectButton Volume DTMRI InputCoregVol InputCoregVol DevSelectNode
      }
+     
+     DevUpdateNodeSelectButton Volume DTMRI InputODF InputODF DevSelectNode
        
 }
 
@@ -2614,6 +2625,15 @@ especially Diffusion DTMRI MRI.
     TooltipAdd $f.bApply "Save text file(s) with the tract paths.\n This does not save vtk models."
 
     pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad) 
+
+
+   ##########
+   # ODF Frame
+   ##########
+   DTMRIBuildODFFrame
+
+
+
 }
 
 
@@ -3737,34 +3757,34 @@ proc DTMRIUpdateGlyphColor {} {
     foreach plane {0 1 2} {
     switch $mode {
         "Linear" {
-            DTMRI(vtk,glyphs$plane) ColorGlyphsWithLinearMeasure
+            $DTMRI(mode,glyphsObject$plane) ColorGlyphsWithLinearMeasure
         }
         "Planar" {
-            DTMRI(vtk,glyphs$plane) ColorGlyphsWithPlanarMeasure
+            $DTMRI(mode,glyphsObject$plane) ColorGlyphsWithPlanarMeasure
         }
         "Spherical" {
-            DTMRI(vtk,glyphs$plane) ColorGlyphsWithSphericalMeasure
+            $DTMRI(mode,glyphsObject$plane) ColorGlyphsWithSphericalMeasure
         }
         "Max" {
-            DTMRI(vtk,glyphs$plane) ColorGlyphsWithMaxEigenvalue
+            $DTMRI(mode,glyphsObject$plane) ColorGlyphsWithMaxEigenvalue
         }
         "Middle" {
-            DTMRI(vtk,glyphs$plane) ColorGlyphsWithMiddleEigenvalue
+            $DTMRI(mode,glyphsObject$plane) ColorGlyphsWithMiddleEigenvalue
         }
         "Min" {
-            DTMRI(vtk,glyphs$plane) ColorGlyphsWithMinEigenvalue
+            $DTMRI(mode,glyphsObject$plane) ColorGlyphsWithMinEigenvalue
         }
         "MaxMinusMiddle" {
-            DTMRI(vtk,glyphs$plane) ColorGlyphsWithMaxMinusMidEigenvalue
+            $DTMRI(mode,glyphsObject$plane) ColorGlyphsWithMaxMinusMidEigenvalue
         }
         "RA" {
-            DTMRI(vtk,glyphs$plane) ColorGlyphsWithRelativeAnisotropy
+            $DTMRI(mode,glyphsObject$plane) ColorGlyphsWithRelativeAnisotropy
         }
         "FA" {
-            DTMRI(vtk,glyphs$plane) ColorGlyphsWithFractionalAnisotropy
+            $DTMRI(mode,glyphsObject$plane) ColorGlyphsWithFractionalAnisotropy
         }
         "Direction" {
-            DTMRI(vtk,glyphs$plane) ColorGlyphsWithDirection
+            $DTMRI(mode,glyphsObject$plane) ColorGlyphsWithDirection
         }
         
     }
@@ -4351,7 +4371,6 @@ proc DTMRISeedAndSaveStreamlinesFromSegmentation {{verbose 1}} {
     }
 }
 
-
 ################################################################
 #  MAIN visualization procedure: pipeline control is here
 ################################################################
@@ -4451,6 +4470,32 @@ proc DTMRIUpdate {} {
     set mode $DTMRI(mode,visualizationType,glyphsOn)
     puts "Setting glyph mode $mode for DTMRI $t"
     
+    foreach plane "0 1 2" {
+      if {$DTMRI(mode,glyphType) == "Superquadric"} {
+         set DTMRI(mode,glyphsObject$plane) DTMRI(vtk,glyphsSQ$plane)
+      } else {
+         set DTMRI(mode,glyphsObject$plane) DTMRI(vtk,glyphs$plane)     
+      }
+    }
+      
+    #if {$DTMRI(mode,glyphType) == "Superquadric"} {
+   # 
+    #  if{ [DTMRI(vtk,glyphs0) GetClassName] != "vtkSuperquadricTensorGlyph"} {
+     #    foreach plane "0 1 2" {
+    #    DTMRI(vtk,glyphs$plane) Delete
+       #     vtkSuperquadricTensorGlyph DTMRI(vtk,glyphs$plane)
+#     }
+ #      }
+             
+#     } else {
+#      if{ [DTMRI(vtk,glyphs0) GetClassName] != "vtkInteractiveTensorGlyph"} {
+#        foreach plane "0 1 2" {
+#        DTMRI(vtk,glyphs$plane) Delete
+#            vtkInteractiveTensorGlyph DTMRI(vtk,glyphs$plane)
+#     }
+#       }
+#     }     
+        
     switch $mode {
         "On" {
             puts "glyphs! $DTMRI(mode,glyphType)"
@@ -4469,7 +4514,7 @@ proc DTMRIUpdate {} {
         #t2 Delete
         DTMRICalculateIJKtoRASRotationMatrix DTMRI(vtk,glyphs,trans) $t
         foreach plane {0 1 2} {
-      DTMRI(vtk,glyphs$plane) SetTensorRotationMatrix [DTMRI(vtk,glyphs,trans) GetMatrix]
+          $DTMRI(mode,glyphsObject$plane) SetTensorRotationMatrix [DTMRI(vtk,glyphs,trans) GetMatrix]
         }
             if {$slice != "None"} {
               foreach plane $slice {
@@ -4506,9 +4551,9 @@ proc DTMRIUpdate {} {
                 # matrix.  We can't just move the actor in space
                 # since this will rotate the DTMRIs, so this is wrong:
                 # DTMRI(vtk,glyphs,actor) SetUserMatrix $m
-                DTMRI(vtk,glyphs$plane) SetVolumePositionMatrix $m
+                $DTMRI(mode,glyphsObject$plane) SetVolumePositionMatrix $m
         
-        DTMRI(vtk,glyphs$plane) SetInput $visSource
+                $DTMRI(mode,glyphsObject$plane) SetInput $visSource
           }    
 
             } else {
@@ -4524,10 +4569,10 @@ proc DTMRIUpdate {} {
                 # matrix.  We can't just move the actor in space
                 # since this will rotate the DTMRIs, so this is wrong:
                 #DTMRI(vtk,glyphs,actor) SetUserMatrix [t1 GetMatrix]
-                DTMRI(vtk,glyphs0) SetVolumePositionMatrix [t1 GetMatrix]
+                $DTMRI(mode,glyphsObject0) SetVolumePositionMatrix [t1 GetMatrix]
                 t1 Delete
         
-        DTMRI(vtk,glyphs0) SetInput $visSource
+                $DTMRI(mode,glyphsObject0) SetInput $visSource
             }
 
 
@@ -4542,12 +4587,12 @@ proc DTMRIUpdate {} {
           set numInputs [llength $slice]
           DTMRI(vtk,glyphs,append) SetNumberOfInputs $numInputs
               foreach plane $slice {
-            DTMRI(vtk,glyphs,append) SetInputByNumber [expr $plane%$numInputs] [DTMRI(vtk,glyphs$plane) GetOutput]
+            DTMRI(vtk,glyphs,append) SetInputByNumber [expr $plane%$numInputs] [$DTMRI(mode,glyphsObject$plane) GetOutput]
           }
         } else {
           set numInputs 1
           DTMRI(vtk,glyphs,append) SetNumberOfInputs $numInputs
-          DTMRI(vtk,glyphs,append) SetInputByNumber 0 [DTMRI(vtk,glyphs0) GetOutput]
+          DTMRI(vtk,glyphs,append) SetInputByNumber 0 [$DTMRI(mode,glyphsObject0) GetOutput]
         }    
               
             # for lines don't use normals filter before mapper
@@ -4559,7 +4604,7 @@ proc DTMRIUpdate {} {
       foreach plane "0 1 2" {  
             switch $DTMRI(mode,glyphType) {
                 "Axes" {
-                    DTMRI(vtk,glyphs$plane) SetSource \
+                    $DTMRI(mode,glyphsObject$plane) SetSource \
             [DTMRI(vtk,glyphs,axes) GetOutput]
 
                     # this is too slow, but might make nice pictures
@@ -4567,12 +4612,12 @@ proc DTMRIUpdate {} {
 
                 }
                 "Lines" {
-                    DTMRI(vtk,glyphs$plane) SetSource \
+                    $DTMRI(mode,glyphsObject$plane) SetSource \
             [DTMRI(vtk,glyphs,line) GetOutput]
 
                 }
                 "Ellipsoids" {
-                    DTMRI(vtk,glyphs$plane) SetSource \
+                    $DTMRI(mode,glyphsObject$plane) SetSource \
             [DTMRI(vtk,glyphs,sphere) GetOutput]
 
                     # this normal filter improves display but is slow.
@@ -4580,13 +4625,20 @@ proc DTMRIUpdate {} {
                         [DTMRI(vtk,glyphs,normals) GetOutput]
                 }
                 "Boxes" {
-                    DTMRI(vtk,glyphs$plane) SetSource \
+                    $DTMRI(mode,glyphsObject$plane) SetSource \
             [DTMRI(vtk,glyphs,box) GetOutput]
 
                     # this normal filter improves display but is slow.
                     DTMRI(vtk,glyphs,mapper) SetInput \
                         [DTMRI(vtk,glyphs,normals) GetOutput]
                 }
+        
+           "Superquadric" {
+                $DTMRI(mode,glyphsObject$plane) SetSource \
+                 [DTMRI(vtk,glyphs,line) GetOutput]
+                DTMRI(vtk,glyphs,mapper) SetInput \
+                        [DTMRI(vtk,glyphs,normals) GetOutput] 
+        }    
             }
          }
 
@@ -5129,19 +5181,35 @@ proc DTMRIBuildVTK {} {
     set object glyphs,box
     DTMRIMakeVTKObject vtkCubeSource  $object
 
-    # objects for placement of glyphs in dataset
+    # objects for placement of Standard glyphs in dataset
     #------------------------------------
     set object glyphs
     foreach plane "0 1 2" {
     #DTMRIMakeVTKObject vtkDTMRIGlyph $object
     DTMRIMakeVTKObject vtkInteractiveTensorGlyph $object$plane
-    DTMRI(vtk,glyphs$plane) SetInput ""
+    DTMRI(vtk,$object$plane) SetInput ""
     #DTMRI(vtk,glyphs$plane) SetSource [DTMRI(vtk,glyphs,axes) GetOutput]
     #DTMRI(vtk,glyphs$plane) SetSource [DTMRI(vtk,glyphs,sphere) GetOutput]
     #DTMRIAddObjectProperty $object ScaleFactor 1 float {Scale Factor}
     DTMRIAddObjectProperty $object$plane ScaleFactor 1000 float {Scale Factor}
     DTMRIAddObjectProperty $object$plane ClampScaling 0 bool {Clamp Scaling}
     DTMRIAddObjectProperty $object$plane ExtractEigenvalues 1 bool {Extract Eigenvalues}
+    DTMRI(vtk,$object$plane) AddObserver StartEvent MainStartProgress
+    DTMRI(vtk,$object$plane) AddObserver ProgressEvent "MainShowProgress DTMRI(vtk,$object$plane)"
+    DTMRI(vtk,$object$plane) AddObserver EndEvent MainEndProgress
+    }
+    
+    # objects for placement of Superquadric glyphs in dataset
+    #------------------------------------    
+    set object glyphsSQ
+    foreach plane "0 1 2" {
+    DTMRIMakeVTKObject vtkSuperquadricTensorGlyph $object$plane
+    DTMRI(vtk,$object$plane) SetInput ""
+    DTMRIAddObjectProperty $object$plane ScaleFactor 1000 float {Scale Factor}
+    DTMRIAddObjectProperty $object$plane ClampScaling 0 bool {Clamp Scaling}
+    DTMRIAddObjectProperty $object$plane Gamma 1 float {Gamma}
+    DTMRIAddObjectProperty $object$plane ThetaResolution 12 int {ThetaResolution}
+    DTMRIAddObjectProperty $object$plane PhiResolution 12 int {PhiResolution}
     DTMRI(vtk,$object$plane) AddObserver StartEvent MainStartProgress
     DTMRI(vtk,$object$plane) AddObserver ProgressEvent "MainShowProgress DTMRI(vtk,$object$plane)"
     DTMRI(vtk,$object$plane) AddObserver EndEvent MainEndProgress
@@ -5271,13 +5339,15 @@ proc DTMRIBuildVTK {} {
     DTMRI(vtk,rk2) SetFunctionSet DTMRI(vtk,itf)
     
     set DTMRI(vtk,ivps) DTMRI(vtk,rk4)
-    
 
 
     # Apply all settings from tcl variables that were
     # created above using calls to DTMRIAddObjectProperty
     #------------------------------------
     DTMRIApplyVisualizationParameters
+
+
+    DTMRIBuildVTKODF
 
 }
 
@@ -5446,7 +5516,7 @@ proc ConvertVolumeToTensors {} {
       trans Identity
       trans Scale 1 1 -1
       foreach plane {0 1 2} {
-        DTMRI(vtk,glyphs$plane) SetScaleFactor 2000
+        $DTMRI(mode,glyphsObject$plane) SetScaleFactor 2000
       }
     }
     
@@ -5777,7 +5847,7 @@ proc ConvertVolumeToTensors {} {
 
 
     puts "3----------- DTMRI update --------"
-    DTMRI DebugOn
+    #DTMRI DebugOn
     DTMRI Update
     puts "----------- after DTMRI update --------"
 
