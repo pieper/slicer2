@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkCORReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2002/11/04 20:36:39 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2002/12/06 17:31:28 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================*/
 #include "vtkCORReader.h"
@@ -129,10 +129,10 @@ vtkDataArray *vtkCORReader::ReadVolumeData()
   scalars->Allocate(numPts);
   elementSize = sizeof( unsigned char );
 
-  // For each slice we need....
+  // For each slice we need.... (note that we go in reverse order)
   numReadTotal = 0;
   numPtsPerSlice = this->DataDimensions[0] * this->DataDimensions[1];
-  for(slice = 1; slice <= 256; slice++) {
+  for(slice = 256; slice >= 1; slice--) {
 
     // Build the file name for this slice.
     sprintf (sliceFileName, "%s/COR-%.3d", this->FilePrefix, slice);
