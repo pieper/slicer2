@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.66 $} {$Date: 2003/12/21 19:06:05 $}]
+    {$Revision: 1.67 $} {$Date: 2004/01/26 13:45:29 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -303,51 +303,60 @@ proc MainVolumesRead {v} {
         puts "MainVolumesRead: node $v number of dicom files = $num\nPrinting node $v:"
         Volume($v,node) Print
     }
+    if {$num != 0} {
+        Volume($v,node) SetFileType "DICOM"
+    }
     
-    if {$num == 0} {
-        # if not DICOM, do the good old check
-        if {[CheckVolumeExists [Volume($v,node) GetFullPrefix] \
-                 [Volume($v,node) GetFilePattern] $lo $hi] != ""} {
-            DevErrorWindow "Non DICOM volume does not exist. Checked pattern [Volume($v,node) GetFilePattern] and prefix [Volume($v,node) GetFullPrefix] for lo = $lo and hi = $hi"
-            return -1
+    switch -glob [Volume($v,node) GetFileType] {
+        "DICOM" {
+            for {set i 0} {$i < $num} {incr i} {
+                if {[CheckFileExists "[Volume($v,node) GetDICOMFileName $i]" 0] == "0"} {
+                    DevErrorWindow "DICOM volume file [Volume($v,node) GetDICOMFileName $i] does not exist, file number $i, v=$v"
+                    return -1
+                }
+            }
         }
-    } else {
-        # DICOM requires another approach
-        for {set i 0} {$i < $num} {incr i} {
-            if {[CheckFileExists "[Volume($v,node) GetDICOMFileName $i]" 0] == "0"} {
-                DevErrorWindow "DICOM volume file [Volume($v,node) GetDICOMFileName $i] does not exist, file number $i, v=$v"
+        "Analyze*" {
+        }
+        default {
+            if {[CheckVolumeExists [Volume($v,node) GetFullPrefix] \
+                     [Volume($v,node) GetFilePattern] $lo $hi] != ""} {
+                DevErrorWindow "Non DICOM volume does not exist. Checked pattern [Volume($v,node) GetFilePattern] and prefix [Volume($v,node) GetFullPrefix] for lo = $lo and hi = $hi"
                 return -1
             }
         }
     }
 
-    # End
-
     set Gui(progressText) "Reading [Volume($v,node) GetName]"
 
     puts "Reading volume: [Volume($v,node) GetName]..."
     
-    if { [info exists Volume($v,type)] && $Volume($v,type) == "Analyze" } {
-        if { [info commands vtkCISGAnalyzeReader] == "" } {
-            DevErrorWindow "No Analyze Reader available."
-            return -1
-        }
-        catch "anreader Delete"
-        vtkCISGAnalyzeReader anreader
+    switch -glob [Volume($v,node) GetFileType] {
+        "Analyze*" {
+            if { [info commands vtkCISGAnalyzeReader] == "" } {
+                DevErrorWindow "No Analyze Reader available."
+                return -1
+            }
+            catch "anreader Delete"
+            vtkCISGAnalyzeReader anreader
 
-        switch $::Volume(VolAnalyze,FileType) {
-            "Radiological" {
-                anreader SetFlippingSequence "0"
+            switch -glob [Volume($v,node) GetFileType] {
+                "*Radiological" {
+                    anreader SetFlippingSequence "0"
+                }
+                "*Neurological" {
+                }
+                default {
+                }
             }
-            "Neurological" {
-            }
+            anreader SetFileName [Volume($v,node) GetFullPrefix]
+            anreader Update
+            Volume($v,vol) SetImageData [anreader GetOutput]
+            anreader Delete
         }
-        anreader SetFileName [Volume($v,node) GetFullPrefix]
-        anreader Update
-        Volume($v,vol) SetImageData [anreader GetOutput]
-        anreader Delete
-    } else {
-        Volume($v,vol) Read
+        default {
+            Volume($v,vol) Read
+        }
     }
 
     Volume($v,vol) Update
@@ -358,6 +367,7 @@ proc MainVolumesRead {v} {
 
     return 1
 }
+
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesWrite
 # Writes out a volume created in the Slicer and an accompanying mrml file
