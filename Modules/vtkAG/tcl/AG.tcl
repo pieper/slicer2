@@ -148,7 +148,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2005/01/10 21:50:23 $}]
+        {$Revision: 1.8 $} {$Date: 2005/03/04 20:51:01 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -328,6 +328,21 @@ proc AGBuildGUI {} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC AGStartCNIWebPage 
+#
+#   Start Browser and go to CNI Web
+# .END
+#-------------------------------------------------------------------------------
+proc AGStartCNIWebPage {} {
+
+MainHelpLaunchBrowserURL http://cni.bwh.harvard.edu/
+
+} 
+
+
+# end AGStartCNIWebPage
+
+#-------------------------------------------------------------------------------
 # .PROC AGBuildHelpFrame
 #
 #   Create the Help frame
@@ -335,6 +350,7 @@ proc AGBuildGUI {} {
 #-------------------------------------------------------------------------------
 proc AGBuildHelpFrame {} {
 
+    global Gui AG Module Volume
 
     #-------------------------------------------
     # Help frame
@@ -361,6 +377,15 @@ proc AGBuildHelpFrame {} {
     regsub -all "\n" $help {} help
     MainHelpApplyTags AG $help
     MainHelpBuildGUI  AG
+
+    set fHelp $Module(AG,fHelp)
+    set f $fHelp
+    set f $f.fBtns
+
+    eval {button $f.bCNIWeb -text "cni.bwh.harvard.edu" -width 25 \
+        -command AGStartCNIWebPage } $Gui(WBA)
+    
+    pack  $f.bCNIWeb -side left -padx $Gui(pad)
 
 }
 # end AGBuildHelpFrame
@@ -973,6 +998,16 @@ proc AGEnter {} {
 #    $AG(textBox) delete 1.0 end
 #    $AG(textBox) insert end "Shift-Click anywhere!\n"
 
+    Render3D
+
+    #Update LMI logo
+    set modulepath $::PACKAGE_DIR_VTKAG/../../../images
+    if {[file exist [ExpandPath [file join \
+                     $modulepath "cnilogo.ppm"]]]} {
+        image create photo iWelcome \
+        -file [ExpandPath [file join $modulepath "cnilogo.ppm"]]
+    }
+
 }
 
 #-------------------------------------------------------------------------------
@@ -992,6 +1027,9 @@ proc AGExit {} {
     #   previous ones.
     #
     popEventManager
+  #Restore standar slicer logo
+   image create photo iWelcome \
+        -file [ExpandPath [file join gui "welcome.ppm"]]
 }
 
 
@@ -1240,6 +1278,7 @@ proc  AGTransformScale { Source Target} {
    div Update
   # [Volume($AG(InputVolTarget),vol) GetOutput] DeepCopy [div GetOutput]
   $Target  DeepCopy [div GetOutput]  
+  $Target  SetUpdateExtentToWholeExtent
  # or Volume($AG(InputVolTarget),vol) SetImageData [div GetOutput] , but maybe they share the same copy of data.
 
    div Delete
@@ -1253,6 +1292,8 @@ proc  AGTransformScale { Source Target} {
    div2 Update
    #[Volume($AG(InputVolSource),vol) GetOutput] DeepCopy [div2 GetOutput]
    $Source  DeepCopy [div2 GetOutput]
+   $Source   SetUpdateExtentToWholeExtent
+
    div2 Delete
    return 1
 }
@@ -1794,6 +1835,8 @@ proc RunAG {} {
   }
   AGPreprocess Source Target $AG(InputVolSource)  $AG(InputVolTarget) 
 
+  Source SetUpdateExtentToWholeExtent
+  Target SetUpdateExtentToWholeExtent
 
   #AG(TestReadingWriting)
   if {$AG(TestReadingWriting) == 1} {
@@ -2218,7 +2261,10 @@ proc AGTransformOneVolume {SourceVolume TargetVolume} {
       }
     }
     AGPreprocess Source Target $SourceVolume  $TargetVolume
-    
+      
+    Source SetUpdateExtentToWholeExtent
+    Target SetUpdateExtentToWholeExtent
+ 
     AGResample Source Target Resampled
 
     Volume($v2,vol) SetImageData  Resampled
@@ -2280,6 +2326,8 @@ proc AGPreprocess {Source Target SourceVol TargetVol} {
   #return
 
   $Source DeepCopy NormalizedSource
+
+  $Source SetUpdateExtentToWholeExtent
 
   NormalizedSource Delete
 
@@ -2489,8 +2537,10 @@ proc AGResample {Source Target Resampled} {
   
           
   Cast Delete
-  
+
   $Resampled DeepCopy [Reslicer GetOutput]
+
+  $Resampled SetUpdateExtentToWholeExtent
 
   #if { ($AG(InputVolSource2) == $Volume(idNone)) || ($AG(InputVolTarget2) == $Volume(idNone)) }  {     
   #   Reslicer UnRegisterAllOutputs
@@ -2750,7 +2800,8 @@ proc AGNormalize { SourceImage TargetImage NormalizedSource SourceScanOrder Targ
 
     $NormalizedSource DeepCopy  [reslice GetOutput]
   
-   
+    $NormalizedSource SetUpdateExtentToWholeExtent
+  
     if {$AG(Debug) == 1} {
 
     set scalar_range [[reslice GetOutput] GetScalarRange]
