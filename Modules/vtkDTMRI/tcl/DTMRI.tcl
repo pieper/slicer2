@@ -110,7 +110,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.15 $} {$Date: 2004/07/27 18:36:22 $}]
+            {$Revision: 1.16 $} {$Date: 2004/07/27 18:44:43 $}]
 
     # Define Tabs
     #------------------------------------
@@ -809,7 +809,7 @@ especially Diffusion DTMRI MRI.
     pack $f.fVisMode -side top -padx 0 -pady 0 -fill x
 
     # note the height is necessary to place frames inside later
-    frame $f.fVisParams -bg $Gui(activeWorkspace) -height 338
+    frame $f.fVisParams -bg $Gui(activeWorkspace) -height 500
     pack $f.fVisParams -side top -padx 0 -pady $Gui(pad) -fill both -expand true
     $f.fVisMode config -relief sunken -bd 2
     #$f.fVisParams config -relief groove -bd 3
