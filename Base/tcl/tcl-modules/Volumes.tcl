@@ -99,7 +99,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.79 $} {$Date: 2003/06/09 16:25:56 $}]
+            {$Revision: 1.79.2.1 $} {$Date: 2003/07/21 22:24:58 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -1009,7 +1009,7 @@ proc VolumesPropsApply {} {
 
         # add a MRML node for this volume (so that in UpdateMRML we can read it in according to the path, etc. in the node)
         set n [MainMrmlAddNode Volume]
-        set i [$n GetID]
+        set newID [$n GetID]
            
         # Added by Attila Tanacs 10/11/2000 1/4/02
 
@@ -1055,7 +1055,7 @@ proc VolumesPropsApply {} {
 
         MainUpdateMRML
         # If failed, then it's no longer in the idList
-        if {[lsearch $Volume(idList) $i] == -1} {
+        if {[lsearch $Volume(idList) $newID] == -1} {
             return
         }
 
@@ -1063,20 +1063,39 @@ proc VolumesPropsApply {} {
         set Volume(freeze) 0
 
         # set active volume on all menus
-        MainVolumesSetActive $i
+        MainVolumesSetActive $newID
 
         # save the ID for later in this proc
-        set m $i
+        set m $newID
 
         # if we are successful set the FOV for correct display of this volume
-        set dim     [lindex [Volume($i,node) GetDimensions] 0]
-        set spacing [lindex [Volume($i,node) GetSpacing] 0]
-        set fov     [expr $dim*$spacing]
+        # (check all dimensions and pix max - special cases for z for dicom, 
+        # but since GE files haven't been parsed yet, no way to know their 
+        # z extent yet.  TODO: fix GE z extent parsing)
+        set fov 0
+        for {set i 0} {$i < 2} {incr i} {
+            set dim     [lindex [Volume($newID,node) GetDimensions] $i]
+            set spacing [lindex [Volume($newID,node) GetSpacing] $i]
+            set newfov     [expr $dim * $spacing]
+            if { $newfov > $fov } {
+                set fov $newfov
+            }
+        }
+        set dim [llength $Volume(dICOMFileList)]
+        if { $dim == 0 } {
+            # do nothing for non-dicom because size isn't known yet
+        } else {
+            set spacing [lindex [Volume($newID,node) GetSpacing] 2]
+            set newfov [expr $dim * $spacing]
+            if { $newfov > $fov } {
+                set fov $newfov
+            }
+        }
         set View(fov) $fov
         MainViewSetFov
 
         # display the new volume in the background of all slices
-        MainSlicesSetVolumeAll Back $i
+        MainSlicesSetVolumeAll Back $newID
     } else {
         # End   if the Volume is NEW
         ## Maybe we would like to do a reread of the file?
@@ -1178,7 +1197,7 @@ proc VolumesSetFirst {} {
     global Volume Mrml
 
     # check to see if user cancelled and set filename to empty string
-    if {[file root $Volume(firstFile)] == [file tail $Volume(firstFile)]} {
+    if {$Volume(firstFile) == {} || $Volume(firstFile) == ""} {
         puts "VolumesSetFirst: firstFile not set"
         return
     }
