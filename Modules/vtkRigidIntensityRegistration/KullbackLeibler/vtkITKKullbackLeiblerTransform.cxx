@@ -135,8 +135,14 @@ void vtkITKKullbackLeiblerTransform::PrintSelf(ostream& os, vtkIndent indent)
     {
     this->TrainingTargetImage->PrintSelf(os,indent.GetNextIndent());
     }
-
-  // fill in stuff
+  os << "TrainingTransform: " << this->TrainingTransform << endl;
+  if(this->TrainingTransform)
+    {
+    this->TrainingTransform->PrintSelf(os,indent.GetNextIndent());
+    }
+  os << "HistSizeSource: " << this->HistSizeSource << endl;
+  os << "HistSizeTarget: " << this->HistSizeTarget << endl;
+  os << "HistEpsilon: "    << this->HistEpsilon    << endl;
 }
 
 //----------------------------------------------------------------------------
