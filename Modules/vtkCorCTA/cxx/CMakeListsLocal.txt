@@ -12,8 +12,8 @@
 
 # note: - SET replaced SOURCE_FILES for cmake 1.6
 SET(LOCAL_MODULE_SRCS
-vtkThinning
-vtkSkeleton2Lines
+vtkThinning.cxx
+vtkSkeleton2Lines.cxx
 )
 
 
@@ -28,7 +28,7 @@ vtkSkeleton2Lines
 
 # You can add additional include paths here
 INCLUDE_DIRECTORIES(
-${VTKCORCTA_SOURCE_DIR}/include
+${VTKCORCTA_SOURCE_DIR}
 )
 
 #### if you code depends on SlicerBase, uncomment the 
