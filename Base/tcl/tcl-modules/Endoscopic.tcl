@@ -2888,9 +2888,9 @@ proc EndoscopicUpdateVectors {} {
     set fpY [lindex $fp 1]
     set fpZ [lindex $fp 2]
     
-    Endoscopic(vector,vectors) InsertVector $i [expr $fpX - $cpX] [expr $fpY - $cpY] [expr $fpZ - $cpZ]
+    Endoscopic(vector,vectors) InsertTuple3 $i [expr $fpX - $cpX] [expr $fpY - $cpY] [expr $fpZ - $cpZ]
     
-    Endoscopic(vector,scalars) InsertScalar $i .5 
+    Endoscopic(vector,scalars) InsertTuple1 $i .5 
     Endoscopic(vector,polyData) Modified
     }    
 }
@@ -2971,7 +2971,7 @@ proc EndoscopicAddLandmarkNoDirectionSpecified {x y z} {
     Endoscopic(${m}Land,aSplineY) AddPoint $i $Endoscopic(${m}Land,$i,y)
     Endoscopic(${m}Land,aSplineZ) AddPoint $i $Endoscopic(${m}Land,$i,z)
     Endoscopic(${m}Land,keyPoints) InsertPoint $i $Endoscopic(${m}Land,$i,x) $Endoscopic(${m}Land,$i,y) $Endoscopic(${m}Land,$i,z)
-    Endoscopic(${m}Land,scalars) InsertScalar $i 0.2
+    Endoscopic(${m}Land,scalars) InsertTuple1 $i 0.2
     }
 }
 
@@ -3021,7 +3021,7 @@ proc EndoscopicAddLandmarkDirectionSpecified {} {
     Endoscopic(${m}Land,aSplineY) AddPoint $i $Endoscopic(${m}Land,$i,y)
     Endoscopic(${m}Land,aSplineZ) AddPoint $i $Endoscopic(${m}Land,$i,z)
     Endoscopic(${m}Land,keyPoints) InsertPoint $i $Endoscopic(${m}Land,$i,x) $Endoscopic(${m}Land,$i,y) $Endoscopic(${m}Land,$i,z)
-    Endoscopic(${m}Land,scalars) InsertScalar $i 0.2
+    Endoscopic(${m}Land,scalars) InsertTuple1 $i 0.2
     }
 }
 
@@ -3148,7 +3148,7 @@ proc EndoscopicDeleteLandmark {} {
             Endoscopic(${m}Land,aSplineY) AddPoint $i $Endoscopic(${m}Land,$i,y)
             Endoscopic(${m}Land,aSplineZ) AddPoint $i $Endoscopic(${m}Land,$i,z)
             Endoscopic(${m}Land,keyPoints) InsertPoint $i $Endoscopic(${m}Land,$i,x) $Endoscopic(${m}Land,$i,y) $Endoscopic(${m}Land,$i,z)
-            Endoscopic(${m}Land,scalars) InsertScalar $i 0.2
+            Endoscopic(${m}Land,scalars) InsertTuple1 $i 0.2
         } 
         
         }
@@ -3802,7 +3802,7 @@ proc EndoscopicUpdateMRML {} {
         Endoscopic(${m}Land,aSplineY) AddPoint $i $Endoscopic(${m}Land,$i,y)
         Endoscopic(${m}Land,aSplineZ) AddPoint $i $Endoscopic(${m}Land,$i,z)
         Endoscopic(${m}Land,keyPoints) InsertPoint $i $Endoscopic(${m}Land,$i,x) $Endoscopic(${m}Land,$i,y) $Endoscopic(${m}Land,$i,z)
-        Endoscopic(${m}Land,scalars) InsertScalar $i 0.2
+        Endoscopic(${m}Land,scalars) InsertTuple1 $i 0.2
         }
         
         # FIXME find a more elegant solution ??
