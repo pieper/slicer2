@@ -359,7 +359,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.82 $} {$Date: 2002/08/26 14:26:04 $}]
+        {$Revision: 1.83 $} {$Date: 2002/09/04 21:51:46 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -440,6 +440,7 @@ proc MainBuildGUI {} {
     wm title     $f $Gui(title) 
     wm resizable $f  0 0
     wm geometry  $f +0+0
+    wm protocol $f WM_DELETE_WINDOW "MainExitQuery"
 
     # Status bar dimensions
 
@@ -1691,8 +1692,10 @@ proc MainExitProgram { } {
         catch "$rw Delete"
     }
     foreach w [info commands .*] {
-        if {[winfo class $w] == "vtkTkRenderWidget"} {
-            catch "destroy $w"
+        if { ![catch "winfo class $w"] } {
+            if {[winfo class $w] == "vtkTkRenderWidget"} {
+                catch "destroy $w"
+            }
         }
     }
 

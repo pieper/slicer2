@@ -48,7 +48,7 @@ proc MainViewerInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainViewer \
-    {$Revision: 1.30 $} {$Date: 2002/08/26 15:07:06 $}]
+    {$Revision: 1.31 $} {$Date: 2002/09/04 21:51:47 $}]
 
     # Props
     set Gui(midHeight) 1
@@ -76,7 +76,7 @@ proc MainViewerBuildGUI {} {
 
 
     toplevel     .tViewer -visual {truecolor 24} -bg $Gui(backdrop)
-
+    wm protocol .tViewer WM_DELETE_WINDOW "MainExitQuery"
     wm title     .tViewer "Viewer"
     # sum heights of 3d window, slice, and middle button frame
     set h [expr $View(viewerHeightNormal) + 256 + $Gui(midHeight)]
@@ -410,10 +410,10 @@ proc MainViewerSetMode {{mode ""} {verbose ""}} {
     switch $View(mode) {
         "Normal" {
             pack $f.fSlice0 $f.fSlice1 $f.fSlice2  -in $Gui(fBot) -side left
-            pack $f.fViewWin -in $Gui(fTop) -side left -expand 1 -fill both
             pack $Gui(fTop) -side top
             pack $Gui(fMid) -side top -expand 1 -fill x
             pack $Gui(fBot) -side top
+            pack $f.fViewWin -in $Gui(fTop) -side left -expand 1 -fill both
 
             set w [expr $View(viewerHeightNormal) + $Gui(midHeight) + 256]
             wm geometry .tViewer $View(viewerWidth)x$w
@@ -540,5 +540,7 @@ proc MainViewerSetMode {{mode ""} {verbose ""}} {
             $Module($m,procViewerUpdate)
         }
     }
+
+    raise $Gui(fViewWin)
 }
 
