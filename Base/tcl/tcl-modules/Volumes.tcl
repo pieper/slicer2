@@ -101,7 +101,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.101 $} {$Date: 2004/11/09 18:51:27 $}]
+            {$Revision: 1.102 $} {$Date: 2004/11/11 22:50:17 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -2008,7 +2008,7 @@ proc VolumesAnalyzeExport {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesCORExport
-# - export to Analyze Format 
+# - export to COR Format 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -2032,6 +2032,44 @@ proc VolumesCORExport {} {
     if { ![file isdirectory $Volumes(prefixCORSave)] } {
         set Volumes(prefixCORSave) [file dirname $Volumes(prefixCORSave)]
     }
+
+    # check if need to cast to UnsignedChar
+    if {[Volume($v,node) GetScalarTypeAsString] != "UnsignedChar"} { 
+        if {$::Module(verbose)} {
+            DevInfoWindow "VolumesCORExport: converting volume $v to unsigned char before saving"
+        }
+        # make a new volume
+        set name [Volume($v,node) GetName]-UC
+        set vCast [DevCreateNewCopiedVolume $v "" $name]
+
+        DevInfoWindow "VolumesCORExport: casting active volume to unsigned char before saving, creating $name"
+
+        set node [Volume($vCast,vol) GetMrmlNode]
+        Mrml(dataTree) RemoveItem $node
+        set nodeBefore [Volume($v,vol) GetMrmlNode]
+        Mrml(dataTree) InsertAfterItem $nodeBefore $node
+        MainUpdateMRML
+
+        # cast it
+        catch "VolumesCORExportCast Delete"
+        vtkImageCast VolumesCORExportCast
+        VolumesCORExportCast SetInput [Volume($v,vol) GetOutput]
+        VolumesCORExportCast SetOutputScalarTypeToUnsignedChar
+        VolumesCORExportCast ClampOverflowOn
+        VolumesCORExportCast Update
+
+        # Start copying in the output data.
+        # Taken from VolumeMathDoCast
+        Volume($vCast,vol) SetImageData [VolumesCORExportCast GetOutput]
+        Volume($vCast,node) SetScalarTypeToUnsignedChar
+        MainVolumesUpdate $vCast
+
+        VolumesCORExportCast Delete
+        
+        # now use this new volume's id for writing out
+        set v $vCast
+    }
+
 
     catch "export_iwriter Delete"
     vtkImageWriter export_iwriter 
