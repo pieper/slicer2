@@ -297,8 +297,10 @@ proc DICOMLoadStudy { dir {Pattern "*"} } {
                 } else {
                     set seriestag [file tail $d]
                 }
+                if { [info exists ::Volume(seriesNum)] } {
+                    set seriestag "$::Volume(seriesNum)_$seriestag"
+                } 
                 regsub -all " " $seriestag "_" seriestag
-                #regsub -all "." $seriestag "_" seriestag
                 set ::Volume(name) $seriestag-$::Volume(name)
                 lappend return_ids [VolumesPropsApply]
             }
@@ -1472,15 +1474,21 @@ proc DICOMReadHeaderValues { filename } {
         parser Delete
         return
     } else {
-          # sp 2003-07-09 - capture the series description to name volume
-          set seriesdesc ""
-          if { [parser FindElement 0x0008 0x103e] == "1" } {
-              #set len [parser ReadElementLength]
-              set len [lindex [split [parser ReadElement]] 3]
-              set seriesdesc [parser ReadText $len]
-          }
-          regsub -all {[^a-zA-Z0-9]} $seriesdesc "_" Volume(seriesDesc)
+        # sp 2003-07-09 - capture the series description to name volume
+        set seriesdesc ""
+        if { [parser FindElement 0x0008 0x103e] == "1" } {
+            set len [lindex [split [parser ReadElement]] 3]
+            set seriesdesc [parser ReadText $len]
+        }
+        regsub -all {[^a-zA-Z0-9]} $seriesdesc "_" Volume(seriesDesc)
         if {$::Module(verbose)} { puts "got seriesdesc $::Volume(seriesDesc)"} 
+
+        # sp 2005-03-16 - capture the series number also for the volume name
+        if { [parser FindElement 0x0020 0x0011] == "1" } {
+            set len [lindex [split [parser ReadElement]] 3]
+            set ::Volume(seriesNum) [parser ReadText $len]
+        }
+        if {$::Module(verbose)} { puts "got seriesnum $::Volume(seriesNum)"} 
 
         if { [parser FindElement 0x0010 0x0010] == "1" } {
             set Length [lindex [split [parser ReadElement]] 3]
@@ -1493,8 +1501,6 @@ proc DICOMReadHeaderValues { filename } {
         }
         #regsub -all {\ |\t|\n} $PatientName "_" Volume(name)
         regsub -all {[^a-zA-Z0-9]} $PatientName "_" Volume(name)
-
-
         
         if { [parser FindElement 0x0028 0x0010] == "1" } {
             #set Length [lindex [split [parser ReadElement]] 3]
