@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.88 $} {$Date: 2003/06/06 19:29:14 $}]
+        {$Revision: 1.88.2.1 $} {$Date: 2003/08/06 23:20:41 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -2009,10 +2009,18 @@ proc MainMrmlWriteProceed {filename} {
 
         # TODO: check that nodes can actually be written, files exist
         tree Write $filename
+        if {[tree GetErrorCode] != 0} {
+            puts "ERROR: MainMrmlWriteProceed: unable to write mrml file with colours: $filename"
+            DevErrorWindow "ERROR: MainMrmlWriteProceed: unable to write mrml file with colours: $filename"
+        }
         tree RemoveAllItems
         tree Delete
     } else {
         Mrml(dataTree) Write $filename
+        if {[Mrml(dataTree) GetErrorCode] != 0} {
+            puts "ERROR: MainMrmlWriteProceed: unable to write mrml data file $filename"
+            DevErrorWindow "ERROR: MainMrmlWriteProceed: unable to write mrml data file $filename"
+        }
     }
     # Colors don't need saving now
     set Mrml(colorsUnsaved) 0
@@ -2050,7 +2058,7 @@ proc MainMrmlCheckVolumes {filename} {
                }
                # if it's a relative file name, prepend the mrml dir
                if {[file pathtype $fname] == "relative"} {
-                   set fname2 ${Mrml(dir)}/${fname}
+                   set fname2 ${Mrml(dir)}[file separator]${fname}
                    if {$::Module(verbose)} {
                        puts "MainMrmlCheckVolumes: filename is relative $fname.\n\t Prepended mrml dir to filename: $fname2.\n\tSetting dicom filename to normalised name [file normalize $fname2]"
                    }
@@ -2097,7 +2105,7 @@ proc MainMrmlAbsolutivity {} {
              
             set oldPrefix [$node GetFullPrefix]
             if {[file pathtype $oldPrefix] == "relative"} {
-                set fname ${Mrml(dir)}/${oldPrefix}
+                set fname ${Mrml(dir)}[file separator]${oldPrefix}
                 if {$::Module(verbose)} { 
                     puts "MainMrmlAbsolutivity: non dicom file \n\trelative old prefix $oldPrefix\n\tnew one wrt mrml dir $fname\n\tnormalized = [file normalize $fname]"
                 }
@@ -2118,7 +2126,7 @@ proc MainMrmlAbsolutivity {} {
                     puts "MainMrmlAbsolutivity: got dicom filename $filename"
                 }
                 if {[file pathtype $filename] == "relative"} {
-                    set absname ${Mrml(dir)}/${filename}
+                    set absname ${Mrml(dir)}[file separator]${filename}
                     if {$::Module(verbose)} {
                         puts "MainMrmlAbsolutivity: dicom file \n\trelative old filename $filename\n\tnew one wrt mrml dir $absname\n\tnormalized = [file normalize $absname]"
                     }
