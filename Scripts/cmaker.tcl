@@ -87,6 +87,23 @@ switch $tcl_platform(os) {
         set VTK_ARG3 "-DVTK_WRAP_HINTS:FILEPATH=$VTK_SRC_DIR/Wrapping/hints"
     }
 }
+
+# get executable name for each platform to pass to ctest
+switch $tcl_platform(os) {
+    "SunOS" {
+        set SLICER_EXECUTABLE "-DSLICER_EXECUTABLE:STRING=$SLICER_HOME/slicer2-solaris-sparc"
+    }
+    "Darwin" {
+        set SLICER_EXECUTABLE "-DSLICER_EXECUTABLE:STRING=$SLICER_HOME/slicer2-darwin-ppc"
+    }
+    "Linux" {
+        set SLICER_EXECUTABLE "-DSLICER_EXECUTABLE:STRING=$SLICER_HOME/slicer2-linux-x86"
+    }
+    default { 
+        set SLICER_EXECUTABLE "-DSLICER_EXECUTABLE:STRING=$SLICER_HOME/slicer2-win32.exe"
+    }
+}
+
 # make sure to generate shared libraries
 set VTK_ARG6 "-DBUILD_SHARED_LIBS:BOOL=ON"
 
@@ -279,7 +296,7 @@ foreach target $TARGETS {
             $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 \
             $VTK_ARG6 $VTK_ARG7 $VTK_ARG8 $VTK_ARG9 $VTK_ARG_VERBOSE $VTK_ARG_DEBUG $VTK_ARG_ENDIAN \
             $VTK_ARG_CONFIGURATIONS \
-            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4 $SLICER_ARG5 $SLICER_ARG6 $SLICER_ARG7 $SLICER_ARG8] 
+            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4 $SLICER_ARG5 $SLICER_ARG6 $SLICER_ARG7 $SLICER_ARG8 $SLICER_EXECUTABLE] 
 
         if {[file exists [file join $target cmaker_local.tcl]]} {
             # Define SLICER_MODULE_ARG in cmaker_local.tcl
