@@ -259,7 +259,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.61 $} {$Date: 2004/06/21 17:24:24 $}] 
+    {$Revision: 1.62 $} {$Date: 2004/06/22 17:33:06 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -5132,7 +5132,7 @@ proc EndoscopicCreateFlatBindings {widget} {
  #    bind $widget <KeyPress-c> {EndoscopicPickFlatPoint %W %x %y}
 
     EvDeclareEventHandler FlatWindowEvents <Double-Any-ButtonPress> {EndoscopicPickFlatPoint %W %x %y; \
-    EndoscopicAddTargetFromFlatColon $Select(cellId)}
+    EndoscopicAddTargetFromFlatColon $Select(cellId); EndoscopicCreateTargets }
 
     EvAddWidgetToBindingSet bindFlatWindowEvents $widget {FlatWindowEvents}
 
@@ -5203,6 +5203,13 @@ proc EndoscopicAddTargetFromFlatColon {ScellId} {
 
     global Endoscopic Point Fiducials Select Model View Path Slice
     
+#  If no path selected, do nothing.
+
+    if {$Endoscopic(path,activeId) == "None"} {
+
+    return
+    }    
+    
         set cellId $ScellId
 
 # get the active actor   
@@ -5269,13 +5276,26 @@ proc EndoscopicAddTargetFromFlatColon {ScellId} {
     EndoscopicSetSliceDriver $driver
     RenderSlices
 
-
     Render3D
+    
+# reset the driver to user
+    set driver User
+    EndoscopicSetSliceDriver $driver
+    
 }
 
 proc EndoscopicAddTargetFromSlices {x y z} {
 
     global Endoscopic Point Fiducials Select Model View Slice
+    
+#  If no path selected, do nothing.
+
+    if {$Endoscopic(path,activeId) == "None"} {
+
+    return
+    }
+
+
     
     if {[info exists Select(actor)] != 0} {
         set actor $Select(actor)
@@ -5355,6 +5375,11 @@ proc EndoscopicAddTargetFromSlices {x y z} {
     
 tempPointLocator Delete
 cellList Delete
+
+# reset the driver to user
+    set driver User
+    EndoscopicSetSliceDriver $driver
+
 }
 
 proc EndoscopicAddTargetFromWorldCoordinates {sx sy sz} {
@@ -5428,6 +5453,11 @@ proc EndoscopicAddTargetFromWorldCoordinates {sx sy sz} {
 
 
     Render3D
+
+# reset the driver to user
+    set driver User
+    EndoscopicSetSliceDriver $driver
+  
 }
 
 proc EndoscopicLoadTargets { }  {
@@ -5574,7 +5604,7 @@ proc EndoscopicUpdateActiveTarget {} {
 proc EndoscopicDeleteActiveTarget {} {
     global Fiducials Endoscopic Point
     
-     if {$Endoscopic(path,activeId) == "None"} {
+    if {$Endoscopic(path,activeId) == "None"} {
 
     return
     }
@@ -5647,6 +5677,15 @@ proc EndoscopicSelectTarget {} {
    
     EndoscopicUpdateActorFromVirtualEndoscope $Endoscopic(activeCam)
     Render3D
+    
+    set driver Intersection
+    EndoscopicSetSliceDriver $driver
+    RenderSlices
+
+# reset the driver to user
+    set driver User
+    EndoscopicSetSliceDriver $driver
+
 
 # select target in flat window
     if {$Endoscopic(FlatWindows) != ""} {
