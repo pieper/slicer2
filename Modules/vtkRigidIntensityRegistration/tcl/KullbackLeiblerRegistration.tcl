@@ -105,7 +105,7 @@ proc KullbackLeiblerRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.10 $} {$Date: 2004/11/08 18:14:30 $}]
+        {$Revision: 1.10.2.1 $} {$Date: 2004/12/31 19:43:48 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -734,7 +734,9 @@ proc KullbackLeiblerRegistrationAutoRun {} {
         -set_metric_option KullbackLeiblerRegistrationSetMetricOption   \
         -vtk_itk_reg       vtkITKKullbackLeiblerTransform
 
-    puts "to see the pop-up window, type: pack .kl.reg -fill both -expand true"
+    if {$::Module(verbose)} {
+        puts "to see the pop-up window, type: pack .kl.reg -fill both -expand true"
+    }
   #  pack .kl.reg -fill both -expand true
     $KullbackLeiblerRegistration(b1Run) configure -command \
                                       "KullbackLeiblerRegistrationStop"
