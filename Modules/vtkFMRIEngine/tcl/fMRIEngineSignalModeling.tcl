@@ -46,7 +46,7 @@
 #   fMRIEngineSelectLowpassForSignalModeling
 #   fMRIEngineDeleteEV
 #   fMRIEngineShowEVToEdit
-#   fMRIEngineAddRegressors
+#   fMRIEngineCombineRuns
 #   fMRIEngineEstimate
 #==========================================================================auto=
 
@@ -471,7 +471,7 @@ proc fMRIEngineAddOrEditEV {} {
 
     set ev "$con:$wform:$conv:$deriv:$hpass:$lpass:$effes"
     if {[info exists fMRIEngine($ev,ev)]} {
-        DevErrorWindow "The following EV has been added: \n$ev"
+        DevErrorWindow "This EV already exists: \n$ev"
         return
     }
 
@@ -501,7 +501,6 @@ proc fMRIEngineAddOrEditEV {} {
         set title [string range $con [expr $i2+1] end] 
         set title [string trim $title]
     }
-
 
     set fMRIEngine($ev,ev)               $ev
     set fMRIEngine($ev,run)              $run
@@ -549,6 +548,8 @@ proc fMRIEngineDeleteEV {{index -1}} {
         }
 
         $fMRIEngine(evsListBox) delete $curs 
+    } else {
+        DevErrorWindow "Select an EV to delete."
     }
 }
 
@@ -576,17 +577,19 @@ proc fMRIEngineShowEVToEdit {} {
             set fMRIEngine(checkbuttonTempDerivative) $fMRIEngine($ev,derivative,ev)
             set fMRIEngine(checkbuttonGlobalEffects)  $fMRIEngine($ev,globaleffects,ev) 
         }
+    } else {
+        DevErrorWindow "Select an EV to edit." 
     }
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC fMRIEngineAddRegressors
+# .PROC fMRIEngineCombineRuns
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineAddRegressors {} {
+proc fMRIEngineCombineRuns {} {
     global MultiVolumeReader fMRIEngine fMRIModelView 
 
     if {[info commands fMRIEngine(regressors)] != ""} {
@@ -642,7 +645,7 @@ proc fMRIEngineEstimate {} {
         return 
     }
 
-    fMRIEngineAddRegressors
+    fMRIEngineCombineRuns
 
     # always uses a new instance of vtkActivationEstimator 
     if {[info commands fMRIEngine(actEstimator)] != ""} {
