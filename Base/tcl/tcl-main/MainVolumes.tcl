@@ -58,7 +58,7 @@ proc MainVolumesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.49 $} {$Date: 2002/03/21 23:05:23 $}]
+        {$Revision: 1.50 $} {$Date: 2002/05/24 22:50:52 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -131,10 +131,10 @@ proc MainVolumesUpdateMRML {} {
             # Mark it as not being created on the fly 
             # since it was added from the Data module or read in from MRML
             set Volume($v,fly) 0
-
-            if {[MainVolumesRead $v] < 0} {
+            set retval [MainVolumesRead $v]
+            if {$retval < 0} {
                 # Let the user know about the error
-                tk_messageBox -message "Could not read volume [Volume($v,node) GetFullPrefix]."
+                tk_messageBox -message "Could not read volume [Volume($v,node) GetFullPrefix] - return value $retval."
                 # Failed, so axe it
                 MainMrmlDeleteNodeDuringUpdate Volume $v
                 
@@ -272,18 +272,20 @@ proc MainVolumesRead {v} {
 
     set num [Volume($v,node) GetNumberOfDICOMFiles]
     if {$num == 0} {
-    # if not DICOM, do the good old check
-    if {[CheckVolumeExists [Volume($v,node) GetFullPrefix] \
-         [Volume($v,node) GetFilePattern] $lo $hi] != ""} {
-        return -1
-    }
-    } else {
-    # DICOM requires another approach
-    for {set i 0} {$i < $num} {incr i} {
-        if {[CheckFileExists [Volume($v,node) GetDICOMFileName $i] 0] == "0"} {
-        return -1
+        # if not DICOM, do the good old check
+        if {[CheckVolumeExists [Volume($v,node) GetFullPrefix] \
+                 [Volume($v,node) GetFilePattern] $lo $hi] != ""} {
+            DevErrorWindow "Non DICOM volume does not exist. Checked pattern [Volume($v,node) GetFilePattern] and prefix [Volume($v,node) GetFullPrefix] for lo = $lo and hi = $hi"
+            return -1
         }
-    }
+    } else {
+        # DICOM requires another approach
+        for {set i 0} {$i < $num} {incr i} {
+            if {[CheckFileExists [Volume($v,node) GetDICOMFileName $i] 0] == "0"} {
+                DevErrorWindow "DICOM volume file [Volume($v,node) GetDICOMFileName $i] does not exist, file number $i"
+                return -1
+            }
+        }
     }
 
     # End
