@@ -113,7 +113,7 @@ void vtkVolumeTextureMapper3D_TextureOrganization( T *data_ptr,
   delete [] texture;
 }
 
-vtkCxxRevisionMacro(vtkVolumeTextureMapper3D, "$Revision: 1.6 $");
+vtkCxxRevisionMacro(vtkVolumeTextureMapper3D, "$Revision: 1.7 $");
 
 //----------------------------------------------------------------------------
 // Needed when we don't use the vtkStandardNewMacro.
@@ -1077,7 +1077,7 @@ void vtkVolumeTextureMapper3D::SetColorTable(vtkLookupTable *lookupTable, int vo
 void vtkVolumeTextureMapper3D::GetColorTable(int colorTable[256][4], int volume)
 {
  
-  double colors[4];
+  vtkFloatingPointType colors[4];
   double alphaValue[256];
   int least1, least2;
   double diff1, diff2, quote;
