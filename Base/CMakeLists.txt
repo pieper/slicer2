@@ -70,6 +70,7 @@ IF (VTKSLICER_CAN_BUILD)
 
 ENDIF (VTKSLICER_CAN_BUILD)
 
+# include a test for endianness (used to be done by default)
 INCLUDE (${CMAKE_ROOT}/Modules/TestBigEndian.cmake)
 TEST_BIG_ENDIAN(CMAKE_WORDS_BIGENDIAN)
 
