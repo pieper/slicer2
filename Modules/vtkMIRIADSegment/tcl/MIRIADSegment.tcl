@@ -151,7 +151,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.14 $} {$Date: 2004/02/09 16:08:01 $}]
+        {$Revision: 1.15 $} {$Date: 2004/02/09 20:48:05 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -794,7 +794,7 @@ proc MIRIADSegmentSetEMParameters {} {
 
     set ::EMSegment(EMiteration) 5
     set ::EMSegment(MFAiteration) 2
-
+    
     #
     # set the global parameters
     #
@@ -809,6 +809,7 @@ proc MIRIADSegmentSetEMParameters {} {
     #                 |-> (TODO add normal and lesions)
 
     # Define SUPERCLASS Head with three subclasses
+    EMSegmentChangeClass 0
     set ::EMSegment(NumClassesNew) 3
     EMSegmentCreateDeleteClasses 1 1
     # class Air 
@@ -817,17 +818,22 @@ proc MIRIADSegmentSetEMParameters {} {
     set ::EMSegment(Cattrib,2,Prob) .20
     # -------------------------------
     # SUPERCLASS: BRAIN
-    # a) Define SuperClass parameters
-    EMSegmentChangeClass 3                    ;# Set Active Class 
-    EMSegmentTransfereClassType 0 1           ;# Transfer ClassType to Superclass
-    set ::EMSegment(Cattrib,$Sclass,Name) BRAIN 
+    # a.) Define general parameter
+    set ::EMSegment(Cattrib,3,Name) BRAIN 
     set ::EMSegment(Cattrib,3,Prob) .50
     EMSegmentSumGlobalUpdate                  ;# Update SuperClass before it is set to BRAIN
-    # b) Create subclasses 
+
+    # b.) Define SuperClass parameters
+    EMSegmentChangeClass 3                    ;# Set Active Class 
+    set EMSegment(Cattrib,3,IsSuperClass) 1
+    puts "Hello1"
+    EMSegmentTransfereClassType 0 1           ;# Transfer ClassType to Superclass
+   puts "Hello2"
+    # c.) Create subclasses 
     set ::EMSegment(NumClassesNew) 3      
     EMSegmentCreateDeleteClasses 0 1          ;# 1. Parameter = ChangeGui; 
                                               ;# 2. Parameter =  DeleteNode  
-    # c) Define CIM if necessary
+    # d.) Define CIM if necessary
     # foreach Name $EMSegment(CIMList) {
     #    set EMSegment(Cattrib,3,CIMMatrix,$i,$y,$Name) 0.0
     # }
