@@ -5,37 +5,25 @@
 #
 # - sp 2002-04-19
 # - updated based on slicer developer feedback with
-# help form MH.  2002-05-02
+# help from MH.  2002-05-02
 # 
-#
-
-
-#
-# Set the project name.
 #
 
 PROJECT (VTKSLICER)
 
-#
-# Assume everything is set up correctly for build.
-#
 # If some requirements are not met, set it to 0.
 # In that case, the build won't be done.
 #
-
-SET (VTKSLICER_CAN_BUILD 1)
-
-#
-# Load CMake commands that you probably should not modify.
-#
-
-INCLUDE (${VTKSLICER_SOURCE_DIR}/CMakeOptions.cmake)
+OPTION(VTKSLICER_CAN_BUILD "Build slicer: turn off for dashboard manager" ON)
 
 #
 # If everything is OK, then go into the sub directories and build.
 #
 
 IF (VTKSLICER_CAN_BUILD)
+
+# MH+KH - moved this line into the "CAN_BUILD" IF so that dashboard work
+INCLUDE (${VTKSLICER_SOURCE_DIR}/CMakeOptions.cmake)
 
   #
   # Here is where you can list the sub-directories holding your local 
@@ -68,11 +56,11 @@ IF (VTKSLICER_CAN_BUILD)
 
   INCLUDE_DIRECTORIES(${VTKSLICER_BINARY_DIR})
 
-ENDIF (VTKSLICER_CAN_BUILD)
-
 # include a test for endianness (used to be done by default)
 INCLUDE (${CMAKE_ROOT}/Modules/TestBigEndian.cmake)
 TEST_BIG_ENDIAN(CMAKE_WORDS_BIGENDIAN)
+
+ENDIF (VTKSLICER_CAN_BUILD)
 
 # Include the standard Dart testing module
 INCLUDE (${CMAKE_ROOT}/Modules/Dart.cmake)
