@@ -75,6 +75,11 @@ proc LocatorInit {} {
 	set Locator(pz) 100
 	LocatorFormat
 
+	lappend Module(procStorePresets) LocatorStorePresets
+	lappend Module(procRecallPresets) LocatorRecallPresets
+	set Module(Locator,presets) "0,driver='User' 1,driver='User' 2,driver='User'\
+ visibility='0'"
+
 	set Locator(visibility) 0
 	set Locator(transverseVisibility) 1
 	set Locator(normalLen) 100
@@ -87,6 +92,9 @@ proc LocatorInit {} {
 	set Locator(normalOffset) 0
 	set Locator(transverseOffset) 0
 	set Locator(crossOffset) 0
+	set Locator(0,driver) User
+	set Locator(1,driver) User
+	set Locator(2,driver) User
 
 	set Locator(connect) 0
 	set Locator(pause) 0
@@ -95,10 +103,6 @@ proc LocatorInit {} {
 	set Locator(server) File
 	set Locator(file) loc.txt
 	set Locator(fid) ""
-
-	set Locator(0,driver) User
-	set Locator(1,driver) User
-	set Locator(2,driver) User
 }
 
 #-------------------------------------------------------------------------------
@@ -895,3 +899,21 @@ proc LocatorLoopFile {} {
 }
 
 
+proc LocatorStorePresets {p} {
+	global Preset Locator Slice
+
+	foreach s $Slice(idList) {
+		set Preset(Locator,$p,$s,driver) $Locator($s,driver)
+	}
+	set Preset(Locator,$p,visibility) $Locator(visibility)
+}
+	    
+proc LocatorRecallPresets {p} {
+	global Preset Locator Slice
+
+	foreach s $Slice(idList) {
+		LocatorSetDriver $s $Preset(Locator,$p,$s,driver)
+	}
+	set Locator(visibility) $Preset(Locator,$p,visibility)
+	LocatorSetVisibility
+}

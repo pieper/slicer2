@@ -295,6 +295,23 @@ proc MainFileSave {} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC MainFileSaveWithOptions
+# .END
+#-------------------------------------------------------------------------------
+proc MainFileSaveWithOptions {} {
+	global Mrml
+
+	MainOptionsUnparsePresets
+
+	# Call SaveAs if the filename is blank
+	if {$Mrml(filePrefix) == ""} {
+		MainFileSaveAsPopup "" 50 50
+	}
+
+	MainFileSaveAsApply
+}
+
+#-------------------------------------------------------------------------------
 # .PROC MainFileOpenPopup
 # .END
 #-------------------------------------------------------------------------------
@@ -480,7 +497,6 @@ proc CheckVolumeExists {filePrefix filePattern firstNum lastNum {verbose 0}} {
 	set num $firstNum
 	while {$num <= $lastNum} {
 		set filename [format $filePattern $filePrefix $num]
-		puts $filename
 		if {[CheckFileExists $filename $verbose] == 0} {
 			if {$filename == ""} {
 				# Return the word, filename just to indicate error

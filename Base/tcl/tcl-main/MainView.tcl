@@ -35,8 +35,6 @@
 #   MainViewSetBackgroundColor
 #   MainViewSetFov
 #   MainViewLightFollowCamera
-#   MainMainViewPresetCallback
-#   MainViewPreset
 #   MainViewNavReset
 #   MainViewRotate
 #   MainViewNavRotate
@@ -57,6 +55,12 @@
 proc MainViewInit {} {
 	global Module View Gui Path Preset Volume
 
+	lappend Module(procStorePresets) MainViewStorePresets
+	lappend Module(procRecallPresets) MainViewRecallPresets
+	set Module(View,presets) "viewUp='0 0 1' position='0 750 0' \
+focalPoint='0 0 0' clippingRange='1 2001' \
+viewMode='Normal' viewBgColor='Blue'"
+
 	# The MainViewBuildGUI proc is called specifically
 	lappend Module(procVTK)  MainViewBuildVTK
 
@@ -74,9 +78,7 @@ proc MainViewInit {} {
 	set View(viewerWidth)  700 
 	set View(viewerHeight) 700 
 	set View(toolbarPosition) Top
-	set View(bgColorR) .7
-	set View(bgColorG) .7
-	set View(bgColorB) .9
+	set View(bgColor) ".7 .7 .9"
 	set View(bgName) Blue
 	set View(fov) 220.0
 	set View(spin) 0
@@ -97,135 +99,10 @@ proc MainViewInit {} {
 	# Init
 	set View(rotateDegrees) 15
 	set View(baselineClippingRange) "1 2001"
-	set View(viewUp)         "0 0 1"
-	set View(position)       "0 750 0"
-	set View(focalPoint)     "0 0 0"
-	set View(clippingRange)  "1 2001"
-
 	set View(magWin) Welcome
 	set View(inWin) none
 	set View(viewPrefix) view
 	set View(ext) .tif
-
-	# Preset View
-	set Preset(1,viewUp)        "-0.5 0.866 0"
-	set Preset(1,position)      "624 360 0"
-	set Preset(1,focalPoint)    "0 0 0"
-	set Preset(1,clippingRange) "1 2001"
-	set Preset(2,viewUp)        "0.5 0.866 0"
-	set Preset(2,position)      "-624 360 0"
-	set Preset(2,focalPoint)    "0 0 0"
-	set Preset(2,clippingRange) "1 2001"
-	set Preset(3,viewUp)        "-0.224 -0.129 0.959"
-	set Preset(3,position)      "602 348 186"
-	set Preset(3,focalPoint)    "0 0 0"
-	set Preset(3,clippingRange) "1 2001"
-
-	# Preset Slice
-	set Preset(1,opacity)      1.0
-	set Preset(1,0,visibility) 0
-	set Preset(1,0,backVolID)  0
-	set Preset(1,0,foreVolID)  0
-	set Preset(1,0,labelVolID) 0
-	set Preset(1,0,orient)     Axial
-	set Preset(1,0,offset)     0
-	set Preset(1,0,zoom)       1.0
-	set Preset(1,1,visibility) 0
-	set Preset(1,1,backVolID)  0
-	set Preset(1,1,foreVolID)  0
-	set Preset(1,1,labelVolID) 0
-	set Preset(1,1,orient)     Sagittal
-	set Preset(1,1,offset)     0
-	set Preset(1,1,zoom)       1.0
-	set Preset(1,2,visibility) 0
-	set Preset(1,2,backVolID)  0
-	set Preset(1,2,foreVolID)  0
-	set Preset(1,2,labelVolID) 0
-	set Preset(1,2,orient)     Coronal
-	set Preset(1,2,offset)     0
-	set Preset(1,2,zoom)       1.0
-
-	set Preset(2,opacity)      1.0
-	set Preset(2,0,visibility) 0
-	set Preset(2,0,backVolID)  0
-	set Preset(2,0,foreVolID)  0
-	set Preset(2,0,labelVolID) 0
-	set Preset(2,0,orient)     Axial
-	set Preset(2,0,offset)     0
-	set Preset(2,0,zoom)       1.0
-	set Preset(2,1,visibility) 0
-	set Preset(2,1,backVolID)  0
-	set Preset(2,1,foreVolID)  0
-	set Preset(2,1,labelVolID) 0
-	set Preset(2,1,orient)     Sagittal
-	set Preset(2,1,offset)     0
-	set Preset(2,1,zoom)       1.0
-	set Preset(2,2,visibility) 0
-	set Preset(2,2,backVolID)  0
-	set Preset(2,2,foreVolID)  0
-	set Preset(2,2,labelVolID) 0
-	set Preset(2,2,orient)     Coronal
-	set Preset(2,2,offset)     0
-	set Preset(2,2,zoom)       1.0
-
-	set Preset(3,opacity)      1.0
-	set Preset(3,0,backVolID)  0
-	set Preset(3,0,foreVolID)  0
-	set Preset(3,0,labelVolID) 0
-	set Preset(3,0,visibility) 0
-	set Preset(3,0,orient)     Axial
-	set Preset(3,0,offset)     0
-	set Preset(3,0,zoom)       1.0
-	set Preset(3,1,visibility) 0
-	set Preset(3,1,backVolID)  0
-	set Preset(3,1,foreVolID)  0
-	set Preset(3,1,labelVolID) 0
-	set Preset(3,1,orient)     Sagittal
-	set Preset(3,1,offset)     0
-	set Preset(3,1,zoom)       1.0
-	set Preset(3,2,visibility) 0
-	set Preset(3,2,backVolID)  0
-	set Preset(3,2,foreVolID)  0
-	set Preset(3,2,labelVolID) 0
-	set Preset(3,2,orient)     Coronal
-	set Preset(3,2,offset)     0
-	set Preset(3,2,zoom)       1.0
-
-	# Preset Locator
-	set Preset(1,locator,visibility) 0
-	set Preset(1,0,driver)       User
-	set Preset(1,1,driver)       User
-	set Preset(1,2,driver)       User
-
-	set Preset(2,locator,visibility) 0
-	set Preset(2,0,driver)       User
-	set Preset(2,1,driver)       User
-	set Preset(2,2,driver)       User
-
-	set Preset(3,locator,visibility) 0
-	set Preset(3,0,driver)       User
-	set Preset(3,1,driver)       User
-	set Preset(3,2,driver)       User
-
-	# Preset Anno
-	foreach item "box axes outline letters cross hashes mouse" {
-		set Preset(1,anno,$item) 1
-		set Preset(2,anno,$item) 1
-		set Preset(3,anno,$item) 1
-	}
-	if {$Gui(pc) == 1} {
-		set Preset(1,anno,box) 0
-		set Preset(1,anno,axes) 0
-		set Preset(1,anno,outline) 0
-		set Preset(2,anno,box) 0
-		set Preset(2,anno,axes) 0
-		set Preset(2,anno,outline) 0
-		set Preset(3,anno,box) 0
-		set Preset(3,anno,axes) 0
-		set Preset(3,anno,outline) 0
-	}
-
-	set Preset(filename)       cav.txt
 }
 
 #-------------------------------------------------------------------------------
@@ -236,8 +113,7 @@ proc MainViewBuildVTK {} {
 	global View Slice
 
 	# Set background color
-	eval viewRen SetBackground \
-		$View(bgColorR) $View(bgColorG) $View(bgColorB)
+	eval viewRen SetBackground $View(bgColor)
 
 	# Closeup magnification of the slice with the cursor over it
 	#--------------------------------------------
@@ -337,8 +213,8 @@ proc MainViewBuildGUI {} {
     foreach p "1 2 3" {
 		set c "button $f.c$p -text $p -width 2 $Gui(WBA)"
 			eval [subst $c]
-		bind $f.c$p <ButtonPress>   "MainViewPreset $p Press"
-		bind $f.c$p <ButtonRelease> "MainViewPreset $p Release"
+		bind $f.c$p <ButtonPress>   "MainOptionsPreset $p Press"
+		bind $f.c$p <ButtonRelease> "MainOptionsPreset $p Release"
 		pack $f.c$p -side top -pady 2 
 	}
 
@@ -455,18 +331,13 @@ proc MainViewSetBackgroundColor {{col ""}} {
 	
     switch $View(bgName) {
 	"Blue" {
-	    set View(bgColorR) .7
-	    set View(bgColorG) .7
-	    set View(bgColorB) .9
+	    set View(bgColor) ".7 .7 .9"
 	}
 	"Black" {
-	    set View(bgColorR) 0
-	    set View(bgColorG) 0
-	    set View(bgColorB) 0
+	    set View(bgColor) "0 0 0"
 	}
     }
-    eval viewRen SetBackground \
-	    $View(bgColorR) $View(bgColorG) $View(bgColorB)
+    eval viewRen SetBackground $View(bgColor)
 }
 
 #-------------------------------------------------------------------------------
@@ -499,150 +370,6 @@ proc MainViewLightFollowCamera {} {
 	if {$currentLight != ""} {
 		eval $currentLight SetPosition   [$View(viewCam) GetPosition]
 		eval $currentLight SetFocalPoint [$View(viewCam) GetFocalPoint]
-	}
-}
-
-#-------------------------------------------------------------------------------
-# .PROC MainMainViewPresetCallback
-# .END
-#-------------------------------------------------------------------------------
-proc MainMainViewPresetCallback {p} {
-	global View Target Gui Preset Slice Locator Anno Model
-
-	if {$Preset($p,state) == "Press"} {
-		$View(fPreset).c$p config -activebackground red
-
-		# Set preset value to the current
-		
-		# View
-		set Preset($p,position)      [$View(viewCam) GetPosition]
-		set Preset($p,viewUp)        [$View(viewCam) GetViewUp]
-		set Preset($p,focalPoint)    [$View(viewCam) GetFocalPoint]
-		set Preset($p,clippingRange) [$View(viewCam) GetClippingRange]
-
-		# Slice
-		foreach s $Slice(idList) {
-			set Preset($p,$s,visibility) $Slice($s,visibility)
-			set Preset($p,$s,orient)     $Slice($s,orient)
-			set Preset($p,$s,offset)     $Slice($s,offset)
-			set Preset($p,$s,zoom)       $Slice($s,zoom)
-			set Preset($p,$s,backVolID)  $Slice($s,backVolID)
-			set Preset($p,$s,foreVolID)  $Slice($s,foreVolID)
-			set Preset($p,$s,labelVolID) $Slice($s,labelVolID)
-		}
-		set Preset($p,opacity) $Slice(opacity)
-
-		# Locator
-		if {[IsModule Locator] == 1} {
-			foreach s $Slice(idList) {
-				set Preset($p,$s,driver) $Locator($s,driver)
-			}
-			set Preset($p,locator,visibility) $Locator(visibility)
-		}
-
-		# Anno
-		foreach item "box axes outline letters cross hashes mouse" {
-			set Preset($p,anno,$item) $Anno($item)
-		}		    
-
-		# Models
-		foreach m $Model(idList) {
-			set Preset($p,$m,visibility) $Model($m,visibility)
-puts "visibility saved as: $Preset($p,$m,visibility)"
-			set Preset($p,$m,opacity)    $Model($m,opacity)
-puts "opacity saved as: $Preset($p,$m,opacity)"
-		}		    
-
-	} else {
-		# Set current to the preset value
-		
-		# View
-		eval $View(viewCam) SetPosition      $Preset($p,position)
-		eval $View(viewCam) SetViewUp        $Preset($p,viewUp)
-		eval $View(viewCam) SetFocalPoint    $Preset($p,focalPoint)
-		eval $View(viewCam) SetClippingRange $Preset($p,clippingRange)
-		$View(viewCam) ComputeViewPlaneNormal
-		$View(viewCam) OrthogonalizeViewUp
-		MainViewLightFollowCamera
-		
-		# Slice
-		foreach s $Slice(idList) {
-			set Slice($s,visibility) $Preset($p,$s,visibility)
-			MainSlicesSetVisibility $s
-			MainSlicesSetVolume Back $s $Preset($p,$s,backVolID)
-			MainSlicesSetVolume Fore $s $Preset($p,$s,foreVolID)
-			MainSlicesSetVolume Label $s $Preset($p,$s,labelVolID)
-			MainSlicesSetOrient $s $Preset($p,$s,orient)
-			MainSlicesSetOffset	$s $Preset($p,$s,offset)
-			MainSlicesSetZoom $s $Preset($p,$s,zoom)
-		}
-		MainSlicesSetOpacityAll $Preset($p,opacity)
-
-		# Locator
-		if {[IsModule Locator] == 1} {
-			foreach s $Slice(idList) {
-				LocatorSetDriver $s $Preset($p,$s,driver)
-			}
-			set Locator(visibility) $Preset($p,locator,visibility)
-			LocatorSetVisibility	
-		}
-
-		# Anno
-		foreach item "box axes outline letters cross hashes mouse" {
-			set Anno($item) $Preset($p,anno,$item)
-		}
-		MainAnnoSetVisibility
-
-		# Models
-		foreach m $Model(idList) {
-		    if {[info exists Preset($p,$m,visibility)] == 1} {
-			MainModelsSetVisibility $m $Preset($p,$m,visibility)
-		    }
-		    if {[info exists Preset($p,$m,opacity)] == 1} {
-			MainModelsSetOpacity $m $Preset($p,$m,opacity)
-		    }
-		}		    
-
-	}
-}
-
-proc MainViewSavePresets {} {
-	global Preset
-	
-	set fid [open $Preset(filename) w]
-	foreach item [lsort [array names Preset]] {
-		puts $fid "$item $Preset($item)"
-	}
-	close $fid
-}
-
-proc MainViewLoadPresets {} {
-	global Preset
-	
-	set fid [open $Preset(filename) r]
-	gets $fid line
-	while {[eof $fid] == 0} {
-		set key [lindex $line 0]
-		set val [lreplace $line 0 0]
-		set Preset($key) $val
-		gets $fid line
-	}
-	close $fid
-}
-
-#-------------------------------------------------------------------------------
-# .PROC MainViewPreset
-# .END
-#-------------------------------------------------------------------------------
-proc MainViewPreset {p state} {
-	global View Gui Preset
-
-	if {$state == "Press"} {
-		set Preset($p,state) $state
-		after 250 "MainMainViewPresetCallback $p; RenderAll"
-	} else {
-		set Preset($p,state) $state
-		$View(fPreset).c$p config -activebackground $Gui(activeButton) 
 	}
 }
 
@@ -988,3 +715,27 @@ proc MainViewWriteView {filename} {
 	set View(ext) [file extension $filename]
 }
 
+proc MainViewStorePresets {p} {
+	global Preset View
+
+	set Preset(View,$p,position)      [$View(viewCam) GetPosition]
+	set Preset(View,$p,viewUp)        [$View(viewCam) GetViewUp]
+	set Preset(View,$p,focalPoint)    [$View(viewCam) GetFocalPoint]
+	set Preset(View,$p,clippingRange) [$View(viewCam) GetClippingRange]
+	set Preset(View,$p,viewMode)      $View(mode)
+	set Preset(View,$p,viewBgColor)   $View(bgName)
+}
+	    
+proc MainViewRecallPresets {p} {
+	global Preset View
+
+	eval $View(viewCam) SetPosition      $Preset(View,$p,position)
+	eval $View(viewCam) SetViewUp        $Preset(View,$p,viewUp)
+	eval $View(viewCam) SetFocalPoint    $Preset(View,$p,focalPoint)
+	eval $View(viewCam) SetClippingRange $Preset(View,$p,clippingRange)
+	$View(viewCam) ComputeViewPlaneNormal
+	$View(viewCam) OrthogonalizeViewUp
+	MainViewLightFollowCamera
+	MainViewerSetMode $Preset(View,$p,viewMode)
+	MainViewSetBackgroundColor $Preset(View,$p,viewBgColor)
+}

@@ -64,6 +64,10 @@ proc MainModelsInit {} {
 	# This proc is called specifically
 	# lappend Module(procGUI)  MainModelsBuildGUI
 
+	lappend Module(procStorePresets) MainModelsStorePresets
+	lappend Module(procRecallPresets) MainModelsRecallPresets
+	set Module(Models,presets) ""
+
 	set Model(idNone) -1
 	set Model(activeID) ""
 	set Model(freeze) ""
@@ -628,6 +632,10 @@ proc MainModelsSetVisibility {model {value ""}} {
 	} else {
 		if {$model == ""} {return}
 		set m $model
+		# Check if model exists
+		if {[lsearch $Model(idList) $m] == -1} {
+			return
+		}
 		if {$value != ""} {
 			set Model($m,visibility) $value
 		}
@@ -698,10 +706,14 @@ proc MainModelsSetClip {m} {
 proc MainModelsSetOpacity {m {value ""}} {
 	global Model
 
-        if {$value != ""} {
-	    if {[ValidateFloat $value] == 1 && $value >= 0.0 \
-		    && $value <= 1.0} {
-		set Model($m,opacity) $value
+	# Check if model exists
+	if {[lsearch $Model(idList) $m] == -1} {
+		return
+	}
+	if {$value != ""} {
+		if {[ValidateFloat $value] == 1 && $value >= 0.0 \
+		  && $value <= 1.0} {
+			set Model($m,opacity) $value
 	    }
 	}
 	Model($m,node) SetOpacity $Model($m,opacity)
@@ -816,4 +828,32 @@ proc MainModelsWrite {m prefix} {
 
 	set Model($m,dirty) 0
 }
+
+proc MainModelsStorePresets {p} {
+	global Preset Model
+
+	foreach m $Model(idList) {
+		set Preset(Models,$p,$m,visibility) $Model($m,visibility)
+		set Preset(Models,$p,$m,opacity)    $Model($m,opacity)
+	}
+}
+	    
+proc MainModelsRecallPresets {p} {
+	global Preset Model
+
+	foreach m $Model(idList) {
+		if {[info exists Preset(Models,$p,$m,visibility)] == 1} {
+			MainModelsSetVisibility $m $Preset(Models,$p,$m,visibility)
+		}
+		if {[info exists Preset(Models,$p,$m,opacity)] == 1} {
+			MainModelsSetOpacity $m $Preset(Models,$p,$m,opacity)
+		}
+	}	
+}
+
+
+
+
+
+		
 

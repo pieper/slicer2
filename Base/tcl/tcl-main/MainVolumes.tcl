@@ -56,9 +56,8 @@ proc MainVolumesInit {} {
         
         set m MainVolumes
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.16 $} {$Date: 2000/02/07 03:35:56 $}]
+		{$Revision: 1.17 $} {$Date: 2000/02/09 16:37:08 $}]
 
-	set Volume(numBuiltIn) 1
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
 	set Volume(histWidth) 140
@@ -87,7 +86,6 @@ proc MainVolumesBuildVTK {} {
 	# Make the None Volume
 	set v $Volume(idNone)
 
-	lappend Volume(idList) $v
 	vtkMrmlVolumeNode Volume($v,node)
 	set n Volume($v,node)
 	$n SetID $v
@@ -140,12 +138,9 @@ proc MainVolumesUpdateMRML {} {
 		Volume($v,vol) SetLabelIndirectLUT Lut($Lut(idLabel),indirectLUT)
 	}
 
-	# Form the menus with the built-in volumes at the bottom.
-	# (Move the built-in from the front of the list to the end)
+	# Form the menus
 	#--------------------------------------------------------
-	set Volume(idListForMenu) \
-		"[lreplace $Volume(idList) 0 [expr $Volume(numBuiltIn) - 1]] \
-		$Volume(idNone)"
+	set Volume(idListForMenu) $Volume(idList)
 
 	# Active Volume menu
 	foreach m $Volume(mActiveList) {
@@ -541,18 +536,23 @@ proc MainVolumesSetActive {{v ""}} {
 			$mb config -text [Volume($v,node) GetName]
 		}
 
-		
+		# Slider range 
+		# WARNING: This obviously must be set before window/level
+		set Volume(rangeLow)    [Volume($v,vol) GetRangeLow]
+		set Volume(rangeHigh)   [Volume($v,vol) GetRangeHigh]
+		set Volume(rangeAuto)   [Volume($v,vol) GetRangeAuto]
+		MainVolumesUpdateSliderRange
+
 		# Update GUI
 		foreach item "Window Level AutoWindowLevel UpperThreshold LowerThreshold \
 			AutoThreshold Interpolate" {
 			set Volume([Uncap $item]) [Volume($v,node) Get$item]
 		}
 
-
 		if {[IsModule Volumes] == 1} {
+
 			# LUT menu
-			$Volume(mbLUT) config -text \
-				$Lut([Volume($v,node) GetLUTName],name)
+			$Volume(mbLUT) config -text $Lut([Volume($v,node) GetLUTName],name)
 
 			if {$Volume(histogram) == "On"} {
 				histMapper SetInput [Volume($v,vol) GetHistogramPlot]
@@ -604,12 +604,6 @@ proc MainVolumesSetActive {{v ""}} {
 			# display default for readHeaders
 			set Volume(readHeaders) 1
 		}
-
-		# Slider range (obviously must be set before window/level)
-		set Volume(rangeLow)    [Volume($v,vol) GetRangeLow]
-		set Volume(rangeHigh)   [Volume($v,vol) GetRangeHigh]
-		set Volume(rangeAuto)   [Volume($v,vol) GetRangeAuto]
-		MainVolumesUpdateSliderRange
 	}
 }
 

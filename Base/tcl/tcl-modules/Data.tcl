@@ -290,7 +290,8 @@ proc DataDisplayTree {{index end}} {
 				set line "EndTransform"
 			}
 			vtkMrmlOptionsNode {
-				set line "Options"
+				set name [$node GetContents]
+				set line "Options: $name"
 			}
 		}
 		
@@ -574,6 +575,13 @@ proc DataEditNode {} {
 		MainMatricesSetActive $id
 		if {[IsModule Matrices] == 1} {
 			Tab Matrices row1 Manual
+		}
+	}
+	"vtkMrmlOptionsNode" {
+		set id [DataGetIdFromNode $node]
+		MainOptionsSetActive $id
+		if {[IsModule Options] == 1} {
+			Tab Options row1 Props
 		}
 	}
 	}

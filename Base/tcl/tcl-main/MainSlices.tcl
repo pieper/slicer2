@@ -67,6 +67,15 @@ proc MainSlicesInit {} {
 
 	lappend Module(procVTK)  MainSlicesBuildVTK
 	lappend Module(procMRML) MainSlicesUpdateMRML
+	lappend Module(procStorePresets) MainSlicesStorePresets
+	lappend Module(procRecallPresets) MainSlicesRecallPresets
+	set Module(Slices,presets) "opacity='1.0' \
+0,visibility='0' 0,backVolID='0' 0,foreVolID='0' 0,labelVolID='0' \
+0,orient='Axial' 0,offset='0' 0,zoom='1.0' \
+1,visibility='0' 1,backVolID='0' 1,foreVolID='0' 1,labelVolID='0' \
+1,orient='Sagittal' 1,offset='0' 1,zoom='1.0' \
+2,visibility='0' 2,backVolID='0' 2,foreVolID='0' 2,labelVolID='0' \
+2,orient='Coronal' 2,offset='0' 2,zoom='1.0'"
 
 	set Slice(idList) "0 1 2"
 
@@ -583,6 +592,11 @@ proc MainSlicesSetActive {{s ""}} {
 proc MainSlicesSetVolumeAll {Layer v} {
 	global Slice Volume
 
+	# Check if volume exists and use the None if not
+	if {[lsearch $Volume(idList) $v] == -1} {
+		set v $Volume(idNone)
+	}
+	
 	# Fields in the Slice array are uncapitalized
 	set layer [Uncap $Layer]
 
@@ -615,6 +629,11 @@ proc MainSlicesSetVolumeAll {Layer v} {
 proc MainSlicesSetVolume {Layer s v} {
 	global Slice Volume Model Lut
 
+	# Check if volume exists and use the None if not
+	if {[lsearch $Volume(idList) $v] == -1} {
+		set v $Volume(idNone)
+	}
+	
 	# Fields in the Slice array are uncapitalized
 	set layer [Uncap $Layer]
 	
@@ -967,3 +986,33 @@ proc MainSlicesSetOpacityAll {{value ""}} {
 	Slicer SetForeOpacity $value
 }
 
+proc MainSlicesStorePresets {p} {
+	global Preset Slice
+
+	foreach s $Slice(idList) {
+		set Preset(Slices,$p,$s,visibility) $Slice($s,visibility)
+		set Preset(Slices,$p,$s,orient)     $Slice($s,orient)
+		set Preset(Slices,$p,$s,offset)     $Slice($s,offset)
+		set Preset(Slices,$p,$s,zoom)       $Slice($s,zoom)
+		set Preset(Slices,$p,$s,backVolID)  $Slice($s,backVolID)
+		set Preset(Slices,$p,$s,foreVolID)  $Slice($s,foreVolID)
+		set Preset(Slices,$p,$s,labelVolID) $Slice($s,labelVolID)
+	}
+	set Preset(Slices,$p,opacity) $Slice(opacity)
+}
+	    
+proc MainSlicesRecallPresets {p} {
+	global Preset Slice
+
+	foreach s $Slice(idList) {
+		set Slice($s,visibility) $Preset(Slices,$p,$s,visibility)
+		MainSlicesSetVisibility $s
+		MainSlicesSetVolume Back $s $Preset(Slices,$p,$s,backVolID)
+		MainSlicesSetVolume Fore $s $Preset(Slices,$p,$s,foreVolID)
+		MainSlicesSetVolume Label $s $Preset(Slices,$p,$s,labelVolID)
+		MainSlicesSetOrient $s $Preset(Slices,$p,$s,orient)
+		MainSlicesSetOffset	$s $Preset(Slices,$p,$s,offset)
+		MainSlicesSetZoom $s $Preset(Slices,$p,$s,zoom)
+	}
+	MainSlicesSetOpacityAll $Preset(Slices,$p,opacity)
+}

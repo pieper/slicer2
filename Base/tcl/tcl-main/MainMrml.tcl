@@ -52,16 +52,8 @@
 #-------------------------------------------------------------------------------
 proc MainMrmlInit {} {
 	global Mrml
-	global Model Volume Color Transform EndTransform Matrix
-	global TransferFunction WindowLevel TFPoint ColorLUT Options
 
-	foreach node "Color Model Volume Transform EndTransform Matrix \
-		TransferFunction WindowLevel TFPoint ColorLUT Options" {
-		set ${node}(nextID) 0
-		set ${node}(idList) ""
-		set ${node}(idListDelete) ""
-	}
-	set Volume(nextID) 1
+	MainMrmlInitIdLists 
 
 	# Read MRML defaults file for version 1.0
 	set fileName [ExpandPath "Defaults.mrml"]
@@ -77,6 +69,20 @@ proc MainMrmlInit {} {
 	set Mrml(colorsUnsaved) 0
 }
 
+proc MainMrmlInitIdLists {} {
+	global Mrml
+	global Model Volume Color Transform EndTransform Matrix
+	global TransferFunction WindowLevel TFPoint ColorLUT Option
+
+	foreach node "Color Model Volume Transform EndTransform Matrix \
+		TransferFunction WindowLevel TFPoint ColorLUT Option" {
+		set ${node}(nextID) 0
+		set ${node}(idList) ""
+		set ${node}(idListDelete) ""
+	}
+	set Volume(idList) 0
+	set Volume(nextID) 1
+}
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlUpdateMRML
@@ -113,10 +119,10 @@ proc MainMrmlDumpTree {type} {
 #-------------------------------------------------------------------------------
 proc MainMrmlClearList {} {
 	global Model Volume Color Transform EndTransform Matrix
-	global TransferFunction WindowLevel TFPoint ColorLUT Options
+	global TransferFunction WindowLevel TFPoint ColorLUT Option
 
 	foreach node "Color Model Volume Transform EndTransform Matrix \
-		TransferFunction WindowLevel TFPoint ColorLUT Options" {
+		TransferFunction WindowLevel TFPoint ColorLUT Option" {
 		set ${node}(idListDelete) ""
 	}
 }
@@ -127,7 +133,7 @@ proc MainMrmlClearList {} {
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteNodeDuringUpdate {nodeType id} {
 	global Mrml Model Volume Color Transform EndTransform Matrix
-	global TransferFunction WindowLevel TFPoint ColorLUT Options
+	global TransferFunction WindowLevel TFPoint ColorLUT Option
 
 	upvar $nodeType Array
 
@@ -153,7 +159,7 @@ proc MainMrmlDeleteNodeDuringUpdate {nodeType id} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteNode {nodeType id} {
-	global Mrml Model Volume Color Transform EndTransform Matrix Options
+	global Mrml Model Volume Color Transform EndTransform Matrix Option
 	global TransferFunction WindowLevel TFPoint ColorLUT 
 
 	upvar $nodeType Array
@@ -186,7 +192,7 @@ proc MainMrmlDeleteNode {nodeType id} {
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteAll {} {
 	global Mrml Model Volume Color Transform EndTransform Matrix
-	global TransferFunction WindowLevel TFPoint ColorLUT Options
+	global TransferFunction WindowLevel TFPoint ColorLUT Option
 
 	# Volumes are a special case because the "None" always exists
 	foreach id $Volume(idList) {
@@ -207,7 +213,7 @@ proc MainMrmlDeleteAll {} {
 
 	# dataTree
 	foreach node "Model Transform EndTransform Matrix \
-		TransferFunction WindowLevel TFPoint ColorLUT Options" {
+		TransferFunction WindowLevel TFPoint ColorLUT Option" {
 		upvar 0 $node Array
 
 		foreach id $Array(idList) {
@@ -248,6 +254,8 @@ proc MainMrmlDeleteAll {} {
 	MainUpdateMRML
 
 	MainMrmlClearList
+
+	MainMrmlInitIdLists
 }
 
 #-------------------------------------------------------------------------------
@@ -276,7 +284,7 @@ proc MainMrmlSetFile {filename} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlRead {mrmlFile} {
-	global Path Mrml
+	global Path Mrml Volume
 
 	# Open the file 'mrmlFile' to determine which MRML version it is,
 	# and then call the appropriate routine to handle it.
@@ -356,6 +364,11 @@ proc MainMrmlRead {mrmlFile} {
 		set tags [MainMrmlAddColors $tags]
 
 		MainMrmlBuildTreesVersion2.0 $tags
+	}
+
+	# Put the None volume at the end
+	if {[lindex $Volume(idList) 0] == $Volume(idNone)} {
+		set Volume(idList) "[lreplace $Volume(idList) 0 0] $Volume(idNone)"
 	}
 }
 
@@ -442,7 +455,7 @@ proc MainMrmlReadVersion2.0 {fileName} {
 		}
 
 		# Append to List of tags1
-		lappend tags1 "$tag $attr $stuffing"
+		lappend tags1 "$tag {$attr} {$stuffing}"
 
 		# Strip leading white space
 		regsub "^\[\n\t \]*" $mrml "" mrml
@@ -452,12 +465,16 @@ proc MainMrmlReadVersion2.0 {fileName} {
 	set tags2 ""
 	foreach pair $tags1 {
 		set tag [lindex $pair 0]
-		set attr [lreplace $pair 0 0]
+		set attr [lindex $pair 1]
+		set stuffing [lindex $pair 2]
+
+		# Add the options (the "stuffing" from inside the start and end tags)
+		set attrList ""
+		lappend attrList "options $stuffing"
 
 		# Strip leading white space
-		regsub "^\[\n\t \]*" $attr "" attr
+		regsub "^\[\n\t \]*" "$attr $stuffing" "" attr
 
-		set attrList ""
 		set ignore 0
 		while {$attr != ""} {
 		
@@ -477,9 +494,6 @@ proc MainMrmlReadVersion2.0 {fileName} {
 			# Strip leading white space
 			regsub "^\[\n\t \]*" $attr "" attr
 		}
-
-		# Add the options (the "stuffing" from inside the start and end tags)
-		lappend attrList "options $stuffing"
 
 		# Add this tag if we're not ignoring it
 		if {$ignore == 0} {
@@ -713,7 +727,7 @@ proc MainMrmlBuildTreesVersion1.0 {} {
 proc MainMrmlBuildTreesVersion2.0 {tags} {
 	global Mrml
 	global Model Volume Color Transform EndTransform Matrix
-	global TransferFunction WindowLevel TFPoint ColorLUT Options
+	global TransferFunction WindowLevel TFPoint ColorLUT Option
 	
 	foreach pair $tags {
 		set tag  [lindex $pair 0]
@@ -898,28 +912,29 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 		}
 
 		"Options" {
-		    puts "MainMrml Build Trees 2: Options found"
-		    set i $Options(nextID)
-		    incr Options(nextID)
-		    lappend Options(idList) $i
-		    vtkMrmlOptionsNode Options($i,node)
-		    set n Options($i,node)
+		    set i $Option(nextID)
+		    incr Option(nextID)
+		    lappend Option(idList) $i
+		    vtkMrmlOptionsNode Option($i,node)
+		    set n Option($i,node)
 		    $n SetID           $i
 
 		    foreach a $attr {
-			set key [lindex $a 0]
-			set val [lreplace $a 0 0]
-			puts "key $key value $val"
-			set Options($key) $val
-			switch $key {
-			    "viewMode"     {MainViewerSetMode $val}
-			    "viewBgColor"  {MainViewSetBackgroundColor $val}
-			    "options"      {$n SetOptions $val}
-			    "program"      {$n SetProgram $val}
-			    "contents"     {$n SetContents $val}
-			}
+				set key [lindex $a 0]
+				set val [lreplace $a 0 0]
+				set Option($key) $val
+				switch $key {
+					"options"      {$n SetOptions $val}
+					"program"      {$n SetProgram $val}
+					"contents"     {$n SetContents $val}
+				}
 		    }
 		    Mrml(dataTree) AddItem $n
+
+			# If these are presets, then do preset stuff on stuffing, not attr
+			if {[$n GetContents] == "presets"} {
+				MainOptionsParsePresets $attr
+			}
 		}
 
 	    }

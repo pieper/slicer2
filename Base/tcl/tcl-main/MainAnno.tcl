@@ -48,30 +48,28 @@
 proc MainAnnoInit {} {
 	global Module Anno Gui
 
-	set Anno(color) "1 1 0.5"
+	lappend Module(procStorePresets) MainAnnoStorePresets
+	lappend Module(procRecallPresets) MainAnnoRecallPresets
+	set Module(Anno,presets) "box='1' axes='0' outline='0' letters='1' cross='1'\
+hashes='1' mouse='1'"
+
 	set Anno(box) 1
-	set Anno(axes) 1
-	set Anno(outline) 1 
+	set Anno(axes) 0
+	set Anno(outline) 0
 	set Anno(letters) 1
 	set Anno(cross) 1
 	set Anno(hashes) 1
+	set Anno(mouse) 1
+
+	set Anno(color) "1 1 0.5"
 	set Anno(mmHashGap) 5
 	set Anno(mmHashDist) 10
 	set Anno(numHashes) 5
 	set Anno(boxFollowFocalPoint) 1
 	set Anno(axesFollowFocalPoint) 0
 	set Anno(letterSize) 0.05
-
-	# Lines don't get occluded on pc
-	if {$Gui(pc) == 1} {
-		set Anno(box) 0
-		set Anno(axes) 0
-		set Anno(outline) 0 
-	}
-
 	set Anno(cursorMode) RAS
 	set Anno(cursorModePrev) RAS
-	set Anno(mouse) 1
 
 	if {$Gui(smallFont) == 0} {
 		set Anno(fontSize) 16
@@ -405,5 +403,22 @@ proc MainAnnoSetColor {color} {
 	global Slice
 
 	eval Slicer SetCursorColor $color
+}
+
+proc MainAnnoStorePresets {p} {
+	global Preset Anno
+
+	foreach key $Preset(Anno,keys) {
+		set Preset(Anno,$p,$key) $Anno($key)
+	}
+}
+	    
+proc MainAnnoRecallPresets {p} {
+	global Preset Anno
+
+	foreach key $Preset(Anno,keys) {
+		set Anno($key) $Preset(Anno,$p,$key)
+	}
+	MainAnnoSetVisibility
 }
 

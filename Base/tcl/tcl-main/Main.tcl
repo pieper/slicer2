@@ -155,6 +155,15 @@ The 3D Slicer will exit so the problem can be corrected."
 	}
 
 	#-------------------------------------------
+	# Record default presets
+	#-------------------------------------------
+	foreach m $Module(idList) {
+		if {[info exists Module($m,presets)] == 1} {
+			MainOptionsParseDefaults $m
+		}
+	}
+
+	#-------------------------------------------
 	# Build VTK Graphics and Imaging Pipelines
 	#-------------------------------------------
 	MainBuildVTK
@@ -296,9 +305,11 @@ proc MainInit {} {
 	set Module(procGUI)  ""
 	set Module(procVTK)  ""
 	set Module(procMRML) ""
-        set m Main
-        lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.15 $} {$Date: 2000/02/07 15:43:31 $}]
+	set Module(procStorePresets) ""
+	set Module(procRecallPresets) ""
+	set m Main
+	lappend Module(versions) [ParseCVSInfo $m \
+		{$Revision: 1.16 $} {$Date: 2000/02/09 16:37:05 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -422,6 +433,8 @@ proc MainBuildGUI {} {
 		"MainMenu File Save"
 	$Gui(mFile) add command -label "Save As..." -command \
 		"MainMenu File SaveAs"
+	$Gui(mFile) add command -label "Save with Options" -command \
+		"MainMenu File SaveWithOptions"
 	$Gui(mFile) add separator
 	$Gui(mFile) add command -label "Save 3D View" -command \
 		"MainMenu File Save3D"
@@ -736,27 +749,20 @@ proc MainUpdateMRML {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSetup {} {
-	global Module Gui Volume Slice View Model Color Matrix
+	global Module Gui Volume Slice View Model Color Matrix Option
 
-	# idList is: -2 -1 0 1
-	set len [llength $Volume(idList)]
-	if {$len > $Volume(numBuiltIn)} {
-
-		# Set active volume
-		set v [lindex $Volume(idList) $Volume(numBuiltIn)]
-		
-		# Set FOV
-		set dim     [lindex [Volume($v,node) GetDimensions] 0]
-		set spacing [lindex [Volume($v,node) GetSpacing] 0]
-		set fov     [expr $dim*$spacing]
-		set View(fov) $fov
-		MainViewSetFov
-	} else {
-		set v 0
-	}
+	# Set active volume
+	set v [lindex $Volume(idList) 0]
 	MainVolumesSetActive $v
+		
+	# Set FOV
+	set dim     [lindex [Volume($v,node) GetDimensions] 0]
+	set spacing [lindex [Volume($v,node) GetSpacing] 0]
+	set fov     [expr $dim*$spacing]
+	set View(fov) $fov
+	MainViewSetFov
 
-	# If no volume set in the slices' background, set the active one
+	# If no volume set in all slices' background, set the active one
 	set doit 1 
 	foreach s $Slice(idList) {
 		if {$Slice($s,backVolID) != 0} { 
@@ -786,6 +792,12 @@ proc MainSetup {} {
 
 	# Active color
 	MainColorsSetActive [lindex $Color(idList) 0]
+
+	# Active option
+	MainOptionsSetActive [lindex $Option(idList) 0]
+
+	# Presets
+	MainOptionsPresetCallback 0
 }
 
 #-------------------------------------------------------------------------------
@@ -1018,6 +1030,9 @@ proc MainMenu {menu cmd} {
 		}
 		"SaveAs" {
 		    MainFileSaveAsPopup "" 50 50
+		}
+		"SaveWithOptions" {
+		    MainFileSaveWithOptions
 		}
 		"Save3D" {
 		    MainViewSaveView
