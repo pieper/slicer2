@@ -67,7 +67,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.37 $} {$Date: 2003/01/17 13:12:11 $}]
+        {$Revision: 1.38 $} {$Date: 2003/01/21 15:16:03 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -76,6 +76,7 @@ proc ModelMakerInit {} {
     set ModelMaker(decimate) 1
     set ModelMaker(marching) 0
     set ModelMaker(label2) 0
+    set ModelMaker(UseSinc) 1
 
     # Edit
     set ModelMaker(edit,smooth) 20
@@ -148,6 +149,10 @@ a surface will be created that bounds all voxels with value equal to
 <B>Label</B>. Use the <B>Edit</B> tab to apply additional smoothing,
 or change the model's position.  The new model will not be written to 
 hard disk until you save it using the <B>Save</B> tab.
+<B>Filter Type</B> controls the type of smoothing done after the model is
+built.  <B>Sinc</B> with 20 smoothing steps is the default as of January 2003; the 
+smoothing in earlier version of Slicer used <B>Laplacian</B> with 5 smoothing
+steps.
 <BR><LI><B>Edit:</B><BR> Select the model you wish to edit as <B>Active Model</B>
 and then apply one of the effects listed. To transform the polygon points
 by a transform, select a <B>Matrix</B> that already exists.  If you need to
@@ -171,7 +176,7 @@ Also save your MRML file by selecting <B>Save</B> from the <B>File</B> menu.
     set fCreate $Module(ModelMaker,fCreate)
     set f $fCreate
 
-    foreach frm " Volume Label Grid Apply Results" {
+    foreach frm " Volume Label Grid Filter Apply Results" {
         frame $f.f$frm -bg $Gui(activeWorkspace)
         pack  $f.f$frm -side top -pady $Gui(pad)
     }
@@ -224,6 +229,26 @@ Also save your MRML file by selecting <B>Save</B> from the <B>File</B> menu.
             -textvariable ModelMaker([Uncap $Param])} $Gui(WEA)
         grid $f.l$Param $f.e$Param  -padx $Gui(pad) -pady $Gui(pad) -sticky e
         grid $f.e$Param -sticky w
+    }
+
+    #-------------------------------------------
+    # Create->Filter frame
+    #-------------------------------------------
+    set f $fCreate.fFilter
+
+    frame $f.fTitle -bg $Gui(activeWorkspace)
+    frame $f.fBtns -bg $Gui(activeWorkspace)
+    pack $f.fTitle $f.fBtns -side left -padx 5
+
+    eval {label $f.fTitle.lFilter -text "Filter Type:"} $Gui(WLA)
+    pack $f.fTitle.lFilter
+
+    foreach text "Sinc Laplacian" value "1 0" \
+        width "6 8" {
+        eval {radiobutton $f.fBtns.rFilter$value -width $width \
+            -text "$text" -value "$value" -variable ModelMaker(UseSinc) \
+            -indicatoron 0} $Gui(WCA)
+        pack $f.fBtns.rFilter$value -side left -padx 4 -pady 2
     }
 
     #-------------------------------------------
@@ -295,6 +320,7 @@ Also save your MRML file by selecting <B>Save</B> from the <B>File</B> menu.
         -padx $Gui(pad) -pady $Gui(pad) -sticky e
     grid $ff.e$Param -sticky w
 
+
     set Param Reverse
     set ff $f.fReverse
     eval {label $ff.l$Param -text "Reverse Normals:"} $Gui(WLA)
@@ -302,6 +328,28 @@ Also save your MRML file by selecting <B>Save</B> from the <B>File</B> menu.
         -command "ModelMakerReverseNormals; Render3D"} $Gui(WBA)
     grid $ff.l$Param $ff.b$Param \
         -padx $Gui(pad) -pady $Gui(pad) -sticky e
+
+        #-------------------------------------------
+        # Edit->Grid->Filter frame  (added inside the Smooth frame)
+        #-------------------------------------------
+    set f $fEdit.fGrid.fSmooth.fFilter
+    frame $f -bg $Gui(activeWorkspace)
+    grid $f -columnspan 3
+
+    frame $f.fTitle -bg $Gui(activeWorkspace)
+    frame $f.fBtns -bg $Gui(activeWorkspace)
+    pack $f.fTitle $f.fBtns -side left -padx 5
+
+    eval {label $f.fTitle.lFilter -text "Filter Type:"} $Gui(WLA)
+    pack $f.fTitle.lFilter
+
+    foreach text "Sinc Laplacian" value "1 0" \
+        width "6 8" {
+        eval {radiobutton $f.fBtns.rFilter$value -width $width \
+            -text "$text" -value "$value" -variable ModelMaker(UseSinc) \
+            -indicatoron 0} $Gui(WCA)
+        pack $f.fBtns.rFilter$value -side left -padx 4 -pady 2
+    }
 
     #-------------------------------------------
     # Edit->Position frame
@@ -539,7 +587,6 @@ proc ModelMakerSetVolume {v} {
     LabelsFindLabel
     ModelMakerLabelCallback
     set ModelMaker(label2) [Volume($v,vol) GetRangeLow]
-    set ModelMaker(UseSinc) 1
 }
 
 #-------------------------------------------------------------------------------
@@ -663,6 +710,7 @@ proc ModelMakerSmooth {m iterations} {
         vtkWindowedSincPolyDataFilter $p
         $p SetPassBand .1
     } else {
+        # Laplacian
         vtkSmoothPolyDataFilter $p
     # This next line massively rounds corners
         $p SetRelaxationFactor .33
