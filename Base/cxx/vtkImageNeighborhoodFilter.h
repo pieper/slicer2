@@ -50,13 +50,13 @@ public:
 
   // Description:
   // Use 4 or 8 neighbor connectivity in neighborhood around pixel
-  // (This is 2-D connectivity though the kernel is 3D... from erode.)
+  // This is in 3D
   void SetNeighborTo8();
   void SetNeighborTo4();
 
   // Description: 
   // Get the neighborhood size
-  // leftover from erode.
+  // (for erode class)
   vtkGetMacro(Neighbor, int);
 
   // Description: 

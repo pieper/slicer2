@@ -51,7 +51,6 @@ vtkImageNeighborhoodFilter::vtkImageNeighborhoodFilter()
   
   this->Mask = NULL;
   this->HandleBoundaries = 1;
-  this->SetKernelSize(3,3,3);
   this->SetNeighborTo4();
 }
 
@@ -105,13 +104,14 @@ void vtkImageNeighborhoodFilter::SetKernelSize(int size0, int size1, int size2)
 				    this->KernelSize[1]*this->KernelSize[2]];      
       this->Modified();
     }
+  //cout << "kernel middle: " <<KernelMiddle[0]<<" "<<KernelMiddle[1]<<" "<<KernelMiddle[2]<<endl;
 }
 
 
 //----------------------------------------------------------------------------
 void vtkImageNeighborhoodFilter::SetNeighborTo4()
 {
-  int x, y, z;
+  this->SetKernelSize(3,3,3);
 	
   this->Neighbor = 4;
 
@@ -119,14 +119,16 @@ void vtkImageNeighborhoodFilter::SetNeighborTo4()
   memset(this->Mask, 0, this->KernelSize[0]*this->KernelSize[1]*
 	 this->KernelSize[2]);
 
-  // set
-  z = 0;
-  for (y=-1; y <= 1; y++)
-    for (x=-1; x <= 1; x++)
+  // set 4 neighbors in center slice
+  int z = 0;
+  for (int y=-1; y <= 1; y++)
+    for (int x=-1; x <= 1; x++)
       if (x*y == 0)
 	Mask[(1+z)*9+(1+y)*3+(1+x)] = 1;
 
+  // unset center (current) pixel
   Mask[1*9+1*3+1] = 0;
+  // set center pix in slice before/after (3D 4-connectivity)
   Mask[0*9+1*3+1] = 1;
   Mask[2*9+1*3+1] = 1;
 
@@ -136,14 +138,15 @@ void vtkImageNeighborhoodFilter::SetNeighborTo4()
 //----------------------------------------------------------------------------
 void vtkImageNeighborhoodFilter::SetNeighborTo8()
 {
-  int x, y, z;
-	
+  this->SetKernelSize(3,3,3);
+
   this->Neighbor = 8;
 
   // set
   memset(this->Mask, 1, this->KernelSize[0]*this->KernelSize[1]*
 	 this->KernelSize[2]);
 
+  // only unset current (center) pixel
   Mask[1*9+1*3+1] = 0;
 
   this->Modified();
@@ -157,13 +160,10 @@ void vtkImageNeighborhoodFilter::SetNeighborhoodToLine(int length,
   int x, y, z;
 
   //this->SetKernelSize(length, 1, 1);
-  // Lauren can easily incorporate information from 
+  // Lauren can incorporate information from 
   // previous, next slice also using larger kernel..
-  // also could make 'distance map' by blurring prev image
-  // (labelmap!!) and use this ...  but perhaps then 
-  // edge filter should be multiple input!! ??
-  // OR all edge filters could produce quantities that could
-  // be added, and then another filter could add them and do 1/the #s ??
+  // also could make 'distance map' 
+  // so edge filter should be multiple input!! ??
   this->SetKernelSize(3, 3, 1);
   // Lauren test!
   //this->SetKernelSize(3, 3, 3);
@@ -181,7 +181,7 @@ void vtkImageNeighborhoodFilter::SetNeighborhoodToLine(int length,
   // directions: 0 1 2 3 == locations top bottom right left 
   // == dirs right left down up
 
-  // Lauren this is all ugly and fix it!
+  // Lauren fix this!
   // 0 1 2
   // 3 4 5
   // 6 7 8
@@ -195,8 +195,8 @@ void vtkImageNeighborhoodFilter::SetNeighborhoodToLine(int length,
     }
 
 
-  cout << "MASK: " << this->KernelSize[0]*this->KernelSize[1]*this->KernelSize[2]*sizeof(unsigned char) <<
-    " " << sizeof(unsigned char) << " " << this->Mask[0] << " " << this->Mask[1] << endl;
+  //cout << "MASK: " << this->KernelSize[0]*this->KernelSize[1]*this->KernelSize[2]*sizeof(unsigned char) <<
+  //    " " << sizeof(unsigned char) << " " << this->Mask[0] << " " << this->Mask[1] << endl;
   this->Modified();
 }
 
@@ -233,10 +233,10 @@ void vtkImageNeighborhoodFilter::GetRelativeHoodExtent(int &hoodMin0,
   hoodMax1 = hoodMin1 + this->KernelSize[1] - 1;
   hoodMax2 = hoodMin2 + this->KernelSize[2] - 1;
 
-  cout << "mins: " << hoodMin0 << " " << hoodMin1 
-       << " " << hoodMin2 << endl;
-  cout << "max: " << hoodMax0 << " " << hoodMax1 
-       << " " << hoodMax2 << endl;
+//    cout << "mins: " << hoodMin0 << " " << hoodMin1 
+//         << " " << hoodMin2 << endl;
+//    cout << "max: " << hoodMax0 << " " << hoodMax1 
+//         << " " << hoodMax2 << endl;
 }
 
 
