@@ -16,6 +16,14 @@ IF (WIN32)
         vtkFileOps.cxx
 	vtkImageEMGeneral.cxx
         vtkImageEMLocalSegmenter.cxx
+	vtkMrmlEndSegmenterNode.cxx 
+	vtkMrmlSegmenterClassNode.cxx 
+	vtkMrmlSegmenterInputNode.cxx  
+        vtkMrmlSegmenterCIMNode.cxx 
+	vtkMrmlSegmenterGraphNode.cxx 
+	vtkMrmlSegmenterNode.cxx 
+        vtkMrmlSegmenterSuperClassNode.cxx 
+	vtkMrmlEndSegmenterSuperClassNode.cxx
     )
     SET_SOURCE_FILES_PROPERTIES ( vtkThread.cxx ABSTRACT )
 ELSE (WIN32)
@@ -25,6 +33,9 @@ ELSE (WIN32)
         vtkThread.cxx
         vtkImageEMGeneral.cxx
         vtkImageEMLocalSegmenter.cxx
+	vtkMrmlEndSegmenterNode.cxx vtkMrmlSegmenterClassNode.cxx vtkMrmlSegmenterInputNode.cxx  
+        vtkMrmlSegmenterCIMNode.cxx vtkMrmlSegmenterGraphNode.cxx vtkMrmlSegmenterNode.cxx 
+        vtkMrmlSegmenterSuperClassNode.cxx vtkMrmlEndSegmenterSuperClassNode.cxx
     )
 ENDIF (WIN32)
 

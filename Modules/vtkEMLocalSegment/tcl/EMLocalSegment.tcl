@@ -217,6 +217,8 @@ proc EMSegmentInit {} {
     set Module($m,procEnter) EMSegmentEnter
     set Module($m,procExit)  EMSegmentExit
     set Module($m,procMRML)  EMSegmentUpdateMRML
+    set Module($m,procMRMLLoad)  EMSegmentLoadMRML
+    MainMrmlUpdateIdLists "Segmenter EndSegmenter SegmenterGraph SegmenterInput SegmenterSuperClass EndSegmenterSuperClass SegmenterClass SegmenterCIM"
 
     # Define Dependencies
     #------------------------------------
@@ -234,7 +236,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.16 $} {$Date: 2003/11/26 16:53:23 $}]
+        {$Revision: 1.17 $} {$Date: 2003/12/17 18:56:15 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1512,6 +1514,131 @@ proc EMSegmentBindingCallback { event x y} {
     "Leave"   { EMSegmentLeaveSample}
     }
 }
+
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentLoadMRML
+#
+# Whenever the MRML Tree is loaded this function is called to update all 
+# EMLocalSegmenter related information
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMSegmentLoadMRML {tag attr} {
+  global Mrml
+  switch $tag {
+    "Segmenter" {
+            set n [MainMrmlAddNode Segmenter]
+            foreach a $attr {
+                set key [lindex $a 0]
+                set val [lreplace $a 0 0]
+                switch [string tolower $key] {
+                    "numclasses" {$n SetNumClasses $val}
+                    "maxinputchanneldef" {$n SetMaxInputChannelDef $val}
+                    "emshapeiter"        {$n SetEMShapeIter $val}
+                    "emiteration"        {$n SetEMiteration $val}
+                    "mfaiteration"       {$n SetMFAiteration $val}
+                    "alpha"              {$n SetAlpha $val}
+                    "smwidth"            {$n SetSmWidth $val}
+                    "smsigma"            {$n SetSmSigma $val}
+                    "printintermediateresults" {$n SetPrintIntermediateResults $val}
+                    "printintermediateslice" {$n SetPrintIntermediateSlice $val}
+                    "printintermediatefrequency" {$n SetPrintIntermediateFrequency $val}
+                    "printintermediatedir" {$n SetPrintIntermediateDir $val}
+                    "biasprint" {$n SetBiasPrint $val}
+                    "startslice" {$printintermediatefrequencyn SetStartSlice $val}
+                    "endslice" {$n SetEndSlice $val}
+                    "displayprob" {$n SetDisplayProb $val}
+                    "numberoftrainingsamples" {$n SetNumberOfTrainingSamples $val}
+                    "intensityavgclass"  {$n SetIntensityAvgClass  $val}
+                    "segmentationboundarymin" {eval $n SetSegmentationBoundaryMin $val}
+                    "segmentationboundarymax" {eval $n SetSegmentationBoundaryMax $val}
+         }
+        }
+    }
+    "EndSegmenter" {
+            set n [MainMrmlAddNode EndSegmenter]
+    }
+    "SegmenterGraph" {
+            set n [MainMrmlAddNode SegmenterGraph]
+            foreach a $attr {
+                set key [lindex $a 0]
+                set val [lreplace $a 0 0]
+                switch [string tolower $key] {
+                    "name" {$n SetName $val}
+                    "xmin" {$n SetXmin $val}
+                    "xmax" {$n SetXmax $val}
+                    "xsca" {$n SetXsca $val}
+                }
+        }
+    } 
+    "SegmenterInput" {
+            set n [MainMrmlAddNode SegmenterInput]
+            foreach a $attr {
+                set key [lindex $a 0]
+                set val [lreplace $a 0 0]
+                switch [string tolower $key] {
+                    "name"        {$n SetName $val}
+                    "fileprefix"  {$n SetFilePrefix $val}
+                    "filename"    {$n SetFileName $val}
+                    "imagerange"  {eval $n SetImageRange  $val}
+                    "intensityavgvaluepredef"  {$n SetIntensityAvgValuePreDef $val}
+                }
+            }
+    }
+    "SegmenterSuperClass" {
+            set n [MainMrmlAddNode SegmenterSuperClass]
+            foreach a $attr {
+                set key [lindex $a 0]
+                set val [lreplace $a 0 0]
+                switch [string tolower $key] {
+                    "numclasses"          {$n SetNumClasses $val}
+                    "name"                {$n SetName $val}
+                    "prob"                {$n SetProb $val}
+                    "localpriorweight"    {$n SetLocalPriorWeight $val}
+                    "inputchannelweights" {$n SetInputChannelWeights $val}
+                }
+            }
+    }
+    "EndSegmenterSuperClass" {
+            set n [MainMrmlAddNode EndSegmenterSuperClass]
+    }
+    "SegmenterClass" {
+            set n [MainMrmlAddNode SegmenterClass]
+            foreach a $attr {
+                set key [lindex $a 0]
+                set val [lreplace $a 0 0]
+                switch [string tolower $key] {
+                    "name"                 {$n SetName $val}
+                    "localpriorprefix"     {$n SetLocalPriorPrefix $val}
+                    "localpriorname"       {$n SetLocalPriorName $val}
+                    "localpriorrange"      {eval $n SetLocalPriorRange  $val}
+                    "logmean"              {$n SetLogMean $val}
+                    "logcovariance"        {$n SetLogCovariance $val}
+                    "label"                {$n SetLabel $val}
+                    "prob"                 {$n SetProb $val}
+                    "shapeparameter"       {$n SetShapeParameter $val}
+                    "weightconfidencename" {$n SetWeightConfidenceName $val}
+                    "localpriorweight"     {$n SetLocalPriorWeight $val}
+                    "inputchannelweights"  {$n SetInputChannelWeights $val}
+                }
+            }
+        }
+    "SegmenterCIM" {
+            set n [MainMrmlAddNode SegmenterCIM]
+            foreach a $attr {
+                set key [lindex $a 0]
+                set val [lreplace $a 0 0]
+                switch [string tolower $key] {
+                    "name"       {$n SetName $val}
+                    "cimmatrix"  {$n SetCIMMatrix $val}
+                }
+        }
+    }
+  }
+}
+
+
+
 
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentUpdateMRML
