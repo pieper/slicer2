@@ -99,7 +99,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.39 $} {$Date: 2000/11/20 03:39:32 $}]
+	    {$Revision: 1.40 $} {$Date: 2000/11/20 05:04:24 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -329,17 +329,35 @@ proc EditorBuildGUI {} {
     <P>
     Description by Tab:
     <UL>
-    <LI><B>Volumes:</B> Set the <B>Original Volume</B> to the volume you wish
-    to construct the labelmap from, and then click the <B>Effects</B> tab to 
-    begin editing.
+    <LI><B>Volumes Tab:</B> 
+
+    <BR><BR><B>  o  Setup:</B> Set the <B>Original Grayscale</B> to the volume you wish
+    to construct the labelmap from, and then click the <B>Start Editing</B>
+    button.     
+    <BR><B> TIP:</B> Also fill in the <B>Descriptive Name</B> box.  This
+    name will be the default filename later when you save the labelmap.
     <BR><B>TIP:</B> If you started editing earlier, and now wish to continue where
     you left off, then select the <B>Working Volume</B> from before.
-    <LI><B>Effects:</B> Editing is performed by applying a series of effects
+    
+    <BR><BR><B>  o  Merge:</B> Combine two labelmaps, one over the other. 
+    The <B>Composite</B> labelmap is a handy volume to combine others into.
+    
+    <BR><BR><B>  o  Undo:</B> Remove all the editing you have done in a labelmap,
+    either by clearing it or re-reading it from a file.
+    <BR><B> TIP:</B> To undo a smaller amount of editing, use the <B>Undo</B> 
+    button under the <B>Editor->Effects</B> tab.
+    
+    <BR><BR><B>  o  Save:</B> Save a labelmap, and also a MRML file with the same
+    name as the labelmap.  This MRML file contains the <B>header information</B> 
+    from the original scan.
+
+    <BR><LI><B>Effects Tab:</B> Editing is performed by applying a series of effects
     to the data.  Effects can be applied to the entire volume, each slice one at
-    a time, or to just one slice. 
-    <BR><LI><B>Details:</B> This tab contains the detailed parameters for each
+    a time, or to just one slice.  Set this by changing the <B>Scope</B> of the effect.
+
+    <BR><LI><B>Details Tab:</B> This tab contains the detailed parameters for each
     effect. 
-    <BR><B>TIP:</B> When changing from one effect to another, you can avoid the
+    <BR><B> TIP:</B> When changing from one effect to another, you can avoid the
     extra work of clicking the <B>Effects</B> tab by clicking on the 2-letter
     abreviation for the effect at the top of the <B>Details</B> tab.
     </UL>
@@ -697,8 +715,8 @@ proc EditorBuildGUI {} {
     set f $fVolumes.fTabbedFrame.fFile.fVol.fMenu
     
     # Volume menu
-    DevAddSelectButton  Editor $f VolumeSelect "Volume:" Pack \
-	    "Volume to save." 16
+    DevAddSelectButton  Editor $f VolumeSelect "Volume to save:" Pack \
+	    "Volume to save." 14
 
     # bind menubutton to update stuff when volume changes.
     bind $Editor(mVolumeSelect) <ButtonRelease-1> \
@@ -2048,6 +2066,15 @@ proc EditorWriteVolume {} {
     
     # Prefix changed, so update the Volumes->Props tab
     MainVolumesSetActive $v
+
+    # if we just saved Working or Composite, keep track for re-reading
+    if {$v == $Editor(idWorking)} {
+	set Editor(prefixWorking) $Editor(prefixSave)
+    } else {
+	if {$v == $Editor(idComposite)} {
+	    set Editor(prefixComposite) $Editor(prefixSave)
+	}
+    }
 }
 
 #-------------------------------------------------------------------------------
