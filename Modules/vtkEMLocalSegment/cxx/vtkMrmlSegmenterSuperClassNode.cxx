@@ -76,8 +76,8 @@ vtkMrmlSegmenterSuperClassNode::vtkMrmlSegmenterSuperClassNode() {
   this->BoundaryStopMFAType  = 0;
   this->BoundaryStopMFAValue = 0.0; 
   this->BoundaryStopMFAMaxIterations = 0; 
-
   this->RegistrationType = 0;
+  this->GenerateBackgroundProbability = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -111,6 +111,7 @@ void vtkMrmlSegmenterSuperClassNode::Write(ofstream& of, int nIndent)
   of << " BoundaryStopMFAType='" << this->BoundaryStopMFAType  <<  "'";
   of << " BoundaryStopMFAValue='" << this->BoundaryStopMFAValue <<  "'";
   of << " BoundaryStopMFAMaxIterations='" << this->BoundaryStopMFAMaxIterations <<  "'";
+  of << " GenerateBackgroundProbability='" << this->GenerateBackgroundProbability <<  "'";
 
   of << ">\n";
 
@@ -131,45 +132,47 @@ void vtkMrmlSegmenterSuperClassNode::Copy(vtkMrmlNode *anode)
   this->PrintLabelMap  = node->PrintLabelMap;
   this->PrintFrequency = node->PrintFrequency;
 
-  this->PrintEMLabelMapConvergence  = node->PrintEMLabelMapConvergence;
-  this->PrintEMWeightsConvergence   = node->PrintEMWeightsConvergence;
-  this->BoundaryStopEMType          = node->BoundaryStopEMType;
-  this->BoundaryStopEMValue         = node->BoundaryStopEMValue; 
-  this->BoundaryStopEMMaxIterations = node->BoundaryStopEMMaxIterations; 
+  this->PrintEMLabelMapConvergence    = node->PrintEMLabelMapConvergence;
+  this->PrintEMWeightsConvergence     = node->PrintEMWeightsConvergence;
+  this->BoundaryStopEMType            = node->BoundaryStopEMType;
+  this->BoundaryStopEMValue           = node->BoundaryStopEMValue; 
+  this->BoundaryStopEMMaxIterations   = node->BoundaryStopEMMaxIterations; 
 
-  this->PrintMFALabelMapConvergence  = node->PrintMFALabelMapConvergence;
-  this->PrintMFAWeightsConvergence   = node->PrintMFAWeightsConvergence;
-  this->BoundaryStopMFAType          = node->BoundaryStopMFAType;
-  this->BoundaryStopMFAValue         = node->BoundaryStopMFAValue; 
-  this->BoundaryStopMFAMaxIterations = node->BoundaryStopMFAMaxIterations; 
+  this->PrintMFALabelMapConvergence   = node->PrintMFALabelMapConvergence;
+  this->PrintMFAWeightsConvergence    = node->PrintMFAWeightsConvergence;
+  this->BoundaryStopMFAType           = node->BoundaryStopMFAType;
+  this->BoundaryStopMFAValue          = node->BoundaryStopMFAValue; 
+  this->BoundaryStopMFAMaxIterations  = node->BoundaryStopMFAMaxIterations; 
 
-  this->RegistrationType = node->RegistrationType;
+  this->RegistrationType              = node->RegistrationType;
+  this->GenerateBackgroundProbability = node->GenerateBackgroundProbability;
 }
 
 //----------------------------------------------------------------------------
 void vtkMrmlSegmenterSuperClassNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkMrmlNode::PrintSelf(os,indent);
-  os << indent << "Name: " << (this->Name ? this->Name : "(none)") << "\n";
-  os << indent << "NumClasses: "                << this->NumClasses      <<  "\n"; 
+  os << indent << "Name:                          " << (this->Name ? this->Name : "(none)") << "\n";
+  os << indent << "NumClasses:                    "  << this->NumClasses      <<  "\n"; 
   this->vtkMrmlSegmenterGenericClassNode::PrintSelf(os, indent);
-  os << indent << "RegistrationType:             " << this->RegistrationType<< "\n" ;
+  os << indent << "RegistrationType:              " << this->RegistrationType<< "\n" ;
 
-  os << indent << "PrintBias:      " << this->PrintBias << "\n";
-  os << indent << "PrintLabelMap:  " << this->PrintLabelMap << "\n";
-  os << indent << "PrintFrequency: " << this->PrintFrequency << "\n";
+  os << indent << "PrintBias:                     " << this->PrintBias << "\n";
+  os << indent << "PrintLabelMap:                 " << this->PrintLabelMap << "\n";
+  os << indent << "PrintFrequency:                " << this->PrintFrequency << "\n";
 
-  os << indent << "PrintEMLabelMapConvergence:   " << this->PrintEMLabelMapConvergence << "\n";
-  os << indent << "PrintEMWeightsConvergence:    " << this->PrintEMWeightsConvergence << "\n";
-  os << indent << "BoundaryStopEMType:           " << this->BoundaryStopEMType  << "\n";
-  os << indent << "BoundaryStopEMValue:          " << this->BoundaryStopEMValue << "\n";
-  os << indent << "BoundaryStopEMMaxIterations:  " << this->BoundaryStopEMMaxIterations << "\n";
+  os << indent << "PrintEMLabelMapConvergence:    " << this->PrintEMLabelMapConvergence << "\n";
+  os << indent << "PrintEMWeightsConvergence:     " << this->PrintEMWeightsConvergence << "\n";
+  os << indent << "BoundaryStopEMType:            " << this->BoundaryStopEMType  << "\n";
+  os << indent << "BoundaryStopEMValue:           " << this->BoundaryStopEMValue << "\n";
+  os << indent << "BoundaryStopEMMaxIterations:   " << this->BoundaryStopEMMaxIterations << "\n";
 
-  os << indent << "PrintMFALabelMapConvergence:  " << this->PrintMFALabelMapConvergence << "\n";
-  os << indent << "PrintMFAWeightsConvergence:   " << this->PrintMFAWeightsConvergence << "\n";
-  os << indent << "BoundaryStopMFAType:          " << this->BoundaryStopMFAType  << "\n";
-  os << indent << "BoundaryStopMFAValue:         " << this->BoundaryStopMFAValue << "\n";
-  os << indent << "BoundaryStopMFAMaxIterations: " << this->BoundaryStopMFAMaxIterations << "\n";
+  os << indent << "PrintMFALabelMapConvergence:   " << this->PrintMFALabelMapConvergence << "\n";
+  os << indent << "PrintMFAWeightsConvergence:    " << this->PrintMFAWeightsConvergence << "\n";
+  os << indent << "BoundaryStopMFAType:           " << this->BoundaryStopMFAType  << "\n";
+  os << indent << "BoundaryStopMFAValue:          " << this->BoundaryStopMFAValue << "\n";
+  os << indent << "BoundaryStopMFAMaxIterations:  " << this->BoundaryStopMFAMaxIterations << "\n";
+  os << indent << "GenerateBackgroundProbability: " << this->GenerateBackgroundProbability << "\n";
 }
 
 

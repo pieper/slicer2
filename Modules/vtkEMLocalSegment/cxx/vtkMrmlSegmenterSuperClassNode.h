@@ -147,9 +147,16 @@ public:
   vtkSetMacro(BoundaryStopMFAMaxIterations,int); 
 
   // Description:
-  // Scale from patient case to atlas space   
+  // Activation of Registration within EM algorithm of atlas to image space 
   vtkGetMacro(RegistrationType, int);
   vtkSetMacro(RegistrationType, int);
+
+  // Description:
+  // If the flag is defined the spatial distribution of the first class will be automatically generated. 
+  // In specifics the spatial distribution at voxel x is defined as 
+  // spd(x) = NumberOfTrainingSamples - sum_{all other srructures dependent on the supercals} spd_struct(x) 
+  vtkGetMacro(GenerateBackgroundProbability,int);      
+  vtkSetMacro(GenerateBackgroundProbability,int);      
 
 protected:
   vtkMrmlSegmenterSuperClassNode();
@@ -183,6 +190,7 @@ protected:
   int BoundaryStopMFAMaxIterations;
 
   int    RegistrationType; 
+  int GenerateBackgroundProbability;
 
 };
 

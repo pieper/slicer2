@@ -74,7 +74,7 @@ proc EMSegmentSetVtkGenericClassSetting {vtkGenericClass Sclass} {
     eval $vtkGenericClass SetRegistrationScale       $EMSegment(Cattrib,$Sclass,RegistrationScale)
     eval $vtkGenericClass SetRegistrationCovariance  $EMSegment(Cattrib,$Sclass,RegistrationCovariance)   
     eval $vtkGenericClass SetPrintRegistrationParameters  $EMSegment(Cattrib,$Sclass,PrintRegistrationParameters)   
-    eval $vtkGenericClass SetPrintRegistrationSimularityMeasure  $EMSegment(Cattrib,$Sclass,PrintRegistrationSimularityMeasure)   
+    eval $vtkGenericClass SetPrintRegistrationSimularityMeasure  $EMSegment(Cattrib,$Sclass,PrintRegistrationSimularityMeasure) 
   }
 }
 
@@ -112,7 +112,10 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetBoundaryStopMFAValue         $EMSegment(Cattrib,$SuperClass,BoundaryStopMFAValue)
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetBoundaryStopMFAMaxIterations $EMSegment(Cattrib,$SuperClass,BoundaryStopMFAMaxIterations)
 
-  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetRegistrationType             $EMSegment(Cattrib,$SuperClass,RegistrationType)
+  if {$EMSegment(SegmentMode)} {
+      EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetRegistrationType              $EMSegment(Cattrib,$SuperClass,RegistrationType)
+      EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetGenerateBackgroundProbability $EMSegment(Cattrib,$SuperClass,GenerateBackgroundProbability)
+  }
 
   set ClassIndex 0
   foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
@@ -368,6 +371,8 @@ proc EMSegmentAlgorithmStart { } {
    if {$EMSegment(SegmentMode)}  {
        # New Private Variables 
        EMSegment(vtkEMSegment) SetRegistrationInterpolationType  $EMSegment(RegistrationInterpolationType)      
+       EMSegment(vtkEMSegment) SetRegistrationMAPAlgorithmToPowell 
+
    }  
    # EMSegment(vtkEMSegment) SetPrintIntermediateResults    $EMSegment(PrintIntermediateResults) 
    # EMSegment(vtkEMSegment) SetPrintIntermediateSlice      $EMSegment(PrintIntermediateSlice) 
