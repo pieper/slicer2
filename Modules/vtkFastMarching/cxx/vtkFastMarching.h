@@ -22,7 +22,7 @@
 ///////////////////////////////////////////////////////////////////////
 
 // pretty big
-#define INF 1.0e+10 
+#define INF 1.0e+20 
 
 // outside margin
 #define BAND_OUT 1
@@ -139,6 +139,8 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
   void collectInfoAll( void );
   
   float speed(int index );
+
+  bool minHeapIsSorted( void );
  public:
 
   static vtkFastMarching *New();
@@ -180,10 +182,10 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
  protected:
   void ExecuteData(vtkDataObject *);
 
- friend void vtkFastMarchingExecute(vtkFastMarching *self,
-                    vtkImageData *inData, short *inPtr,
-                    vtkImageData *outData, short *outPtr, 
-                    int outExt[6]);
+  friend void vtkFastMarchingExecute(vtkFastMarching *self,
+                     vtkImageData *inData, short *inPtr,
+                     vtkImageData *outData, short *outPtr, 
+                     int outExt[6]);
 };
 
 #endif

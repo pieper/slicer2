@@ -52,15 +52,29 @@ float vtkFastMarching::speed( int index )
 
   getMedianInhomo( index, I, H );
 
-  if( (I<0) || (I>depth) || (H<0) || (H>depth) )
+  /*
+    if( (I<0) || (I>depth) || (H<0) || (H>depth) )
     {
-      vtkErrorMacro( "Error in vtkFastMarching::speed(index)!" << endl
-             << "index=" << index << " I=" << I << " H=" << H 
-             << " depth=" << depth << endl );
+    vtkErrorMacro( "Error in vtkFastMarching::speed(index)!" << endl
+    << "index=" << index << " I=" << I << " H=" << H 
+    << " depth=" << depth << endl );
     }
+  */
+  float s;
 
-  return (float)min(pdfIntensityIn->value(I)/pdfIntensityAll->value(I),
-         pdfInhomoIn->value(H)/pdfInhomoAll->value(H));
+
+  s = (float)pdfIntensityIn->value(I)/pdfIntensityAll->value(I)*pdfInhomoIn->value(H)/pdfInhomoAll->value(H) ;
+  
+  /*
+    s = (float)min(pdfIntensityIn->value(I)/pdfIntensityAll->value(I),pdfInhomoIn->value(H)/pdfInhomoAll->value(H)) ;
+  */
+  return s*s;
+
+  /*
+    return (float)min(pdfIntensityIn->value(I)/pdfIntensityAll->value(I),
+    pdfInhomoIn->value(H)/pdfInhomoAll->value(H));
+
+  */
 }
 
 void vtkFastMarching::setSeed( int index )
@@ -287,6 +301,15 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
       self->setSeed( index );
     }
   
+  if(!self->minHeapIsSorted())
+    {
+      /* don't seem to be able to do that outside of the class due to def of macro
+     vtkErrorMacro( "Error in vtkFastMarchingExecute: minHeap was not sorted bwfore entering main loop" << endl );
+      */
+
+      std::cerr << "Error in vtkFastMarchingExecute: minHeap was not sorted bwfore entering main loop" << endl;
+    }
+
   for(n=0;n<self->nPointsEvolution;n++)
     {
       if( n % (self->nPointsEvolution/GRANULARITY_PROGRESS) == 0 )
@@ -300,6 +323,15 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
       break;
     }
     }
+
+  if(!self->minHeapIsSorted())
+    {
+      /* don't seem to be able to do that outside of the class due to def of macro
+     vtkErrorMacro( "Error in vtkFastMarchingExecute: minHeap was not sorted after leaving main loop" << endl );
+      */
+      std::cerr <<  "Error in vtkFastMarchingExecute: minHeap was not sorted after leaving main loop" << endl;
+    }
+      
 }
 
 void vtkFastMarching::show(float r)
@@ -410,6 +442,23 @@ void vtkFastMarching::insert(const FMleaf leaf) {
   upTree( (int)(tree.size()-1) );
 }
 
+bool vtkFastMarching::minHeapIsSorted( void )
+{
+  int N=tree.size();
+  for(int k=(N-1);k>=1;k--)
+    if( node[tree[k].nodeIndex].T<node[ (int)(tree[(k-1)/2].nodeIndex) ].T )
+      {
+    /*
+      cerr << "minHeapIsSorted is false! : size=" << tree.size() << "at leafIndex=" << k 
+      << " node[tree[k].nodeIndex].T=" << node[tree[k].nodeIndex].T
+      << "<node[ (int)(tree[(k-1)/2].nodeIndex) ].T=" << node[ (int)(tree[(k-1)/2].nodeIndex) ].T
+      << endl;
+    */
+    return false;
+      }
+  return true;
+}
+
 void vtkFastMarching::downTree(int index) {
   /*
    * This routine sweeps downward from leaf 'index',
@@ -442,6 +491,7 @@ void vtkFastMarching::downTree(int index) {
        * right child is the MinChild.
        */
       if (RightChild < (int)tree.size()) {
+    
     if (node[tree[LeftChild].nodeIndex].T>
         node[tree[RightChild].nodeIndex].T) 
       MinChild = RightChild;
@@ -461,18 +511,18 @@ void vtkFastMarching::downTree(int index) {
       // make sure pointers remain correct
       node[ tree[MinChild].nodeIndex ].leafIndex = MinChild;
       node[ tree[index].nodeIndex ].leafIndex = index;
-
+      
       index = MinChild;
+     
+      LeftChild = 2 * index + 1;
+      RightChild =  LeftChild + 1;
     }
       else
     /*
      * If the current leaf has a lower value than its
      * MinChild, the job is done, force a stop.
      */
-    index = (int) tree.size();
-     
-      LeftChild = 2 * index + 1;
-      RightChild = 2 * index + 2;
+    break;
     } 
 }
 
@@ -506,19 +556,24 @@ void vtkFastMarching::upTree(int index) {
       else
     // then there is nothing left to do
     // force stop
-    index=0;
+    break;
     }
+
 }
 
 FMleaf vtkFastMarching::removeSmallest( void ) {
 
   FMleaf f;
-  f=*(tree.begin());
+  f=tree[0];
 
   /*
    * Now move the bottom, rightmost, leaf to the root.
    */
   tree[0]=tree[ tree.size()-1 ];
+
+  // make sure pointers remain correct
+  node[ tree[0].nodeIndex ].leafIndex = 0;
+
   tree.pop_back();
 
   // trickle the element down until everything 
@@ -612,7 +667,7 @@ void vtkFastMarching::setOutData(short* data)
 
 vtkFastMarching::~vtkFastMarching()
 {
-  /* all the delete below are done by unInit() */
+  /* all the delete are done by unInit() */
 }
 
 inline int vtkFastMarching::shiftNeighbor(int n)
@@ -627,33 +682,51 @@ float vtkFastMarching::step( void )
 {
   int indexN;
   int n;
-
+  
   FMleaf min;
 
   /* find point in fmsTRIAL with smallest T, remove it from fmsTRIAL and put
      it in fmsKNOWN */
 
   if( emptyTree() )
-    return INF;
-
+    {
+      
+      vtkErrorMacro( "vtkFastMarching::step empty tree!" << endl );
+      return INF;
+    }
   min=removeSmallest();
+  
+  if( node[min.nodeIndex].T>=INF )
+    {
+      vtkErrorMacro( " node[min.nodeIndex].T>=INF " << endl );
+      
+      /*
+    for(int k=0;k<tree.size();k++)
+    {
+    cout << node[tree[k].nodeIndex].T << endl;
+    }
+      */
 
-  if( node[min.nodeIndex].T==INF )
-    // this would happen if the only points left were artificially put back
-    // by the user paying with the slider
-    // we do not want to consider those before the expansion has naturally 
-    // reachjed them.
-    return INF;
+      // this would happen if the only points left were artificially put back
+      // by the user playing with the slider
+      // we do not want to consider those before the expansion has naturally 
+      // reachjed them.
+      return INF;
+    }
+  float EPS=(float)1e-2;
 
-  float EPS=(float)1e-1;
-
-  while( speed(min.nodeIndex)<EPS )
+  /* eric: I'm not sure it makes sense to force a freeze. Seems better to define a
+     tougher speed...
+     so let's just ignore that part
+  */
+  // while( speed(min.nodeIndex)<EPS )
+  while(false)
     {
       if( emptyTree() )
     {
       return INF;
     }
-
+      
       min=removeSmallest(); 
             
       node[min.nodeIndex].status=fmsKNOWN;
@@ -692,12 +765,22 @@ float vtkFastMarching::step( void )
       f.nodeIndex=indexN;
 
       insert( f );
+
       node[indexN].status=fmsTRIAL;
     }
       else if( node[indexN].status==fmsTRIAL )
     {
+      float t1,  t2;
+      t1 = node[indexN].T;
+
       node[indexN].T=computeT(indexN);
-      upTree( node[indexN].leafIndex );
+
+      t2 = node[indexN].T;
+
+      if( t2<t1 )
+        upTree( node[indexN].leafIndex );
+      else
+        downTree( node[indexN].leafIndex );
     }
     }
 
@@ -711,11 +794,18 @@ float vtkFastMarching::computeT(int index )
   A = 0.0;
   B = 0.0;
 
-
   float s=speed(index);
 
-  if( s==0.0 )
-    s=(float)1.0/INF;
+  /*
+    we don't want anything really small here as it might give us very large T
+    and we don't want something not defined (Inf) or larger than our own INF
+    ( because at low level the algo relies on Tij < INF to say that Tij is defined
+    cf   if ((Dxm>0.0) || (Dxp<0.0)) ))
+ 
+    this should be cool with a volume of dimension less than 1e6, (volumes are typically 256~=1e2 to 1e3)
+  */
+  if(s<1.0/(INF/1e6))
+    s=1.0/(INF/1e6);
 
   C = -dx*dx/( s*s ); 
 

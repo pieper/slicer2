@@ -22,6 +22,11 @@ FMpdf::~FMpdf()
   delete [] bins;
 }
 
+bool FMpdf::willUseGaussian( void )
+{
+  return N<50*sqrt(getSigma2());
+}
+
 double FMpdf::value( double k )
 {
   if( !( (k>=0) && (k<=realizationMax) ) )
@@ -35,7 +40,7 @@ double FMpdf::value( double k )
 
   // if we have enough points then use the histogram
   // (i.e. N>50*sigma)
-  if( N*N>2500*getSigma2() )
+  if( !willUseGaussian() )
     return valueHisto( (int)k );
 
   // otherwise we make a gaussian assumption
@@ -71,7 +76,7 @@ void FMpdf::addRealization( double k )
   N++;
 
   if( (k>=0) && (k<=realizationMax) )
-      bins[(int)k]++;
+    bins[(int)k]++;
 
   needUpdateMoments=true;
 }

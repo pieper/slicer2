@@ -11,10 +11,10 @@
 
 /*
 
-  This class is used by vtkFastMarching to estimate the probability density function
-  of Intensity and Inhomogeneity
+This class is used by vtkFastMarching to estimate the probability density function
+of Intensity and Inhomogeneity
 
- */
+*/
 
 class FMpdf : public vtkObject
 {
@@ -47,6 +47,8 @@ class FMpdf : public vtkObject
 
   FMpdf( int realizationMax );
   ~FMpdf();
+
+  bool willUseGaussian( void );
 
   double value( double k );
   void addRealization( double k );
