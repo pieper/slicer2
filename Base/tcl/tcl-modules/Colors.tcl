@@ -84,7 +84,7 @@ proc ColorsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.24 $} {$Date: 2004/03/15 20:48:26 $}]
+        {$Revision: 1.25 $} {$Date: 2004/03/16 00:59:04 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -400,10 +400,10 @@ proc ColorsAddColor {} {
         $Color(ambient) $Color(diffuse) $Color(specular) $Color(power)]
     
     if {$c != ""} {
-    # make sure new color is selected on GUI
-    MainColorsSetActive $c
+        # make sure new color is selected on GUI
+        MainColorsSetActive $c
 
-    MainUpdateMRML
+        MainUpdateMRML
     }
 }
 
