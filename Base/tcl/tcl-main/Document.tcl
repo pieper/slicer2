@@ -428,9 +428,7 @@ $Contents($index,html)
 				puts $fid \
 "<!-- top -->
 <p><a href='#top'><small>top</small></a>
-<table border=0 cellspacing=0 width=100%><tr><td bgcolor=#e5e5e5 height=4>
-</td></tr><tr><td bgcolor=#333399 height=4></td></tr></table>
-"
+[BlueGrayLine]"
 			}
 		}
 	}
