@@ -105,7 +105,7 @@ proc SubVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2004/08/11 14:40:03 $}]
+        {$Revision: 1.6.2.1 $} {$Date: 2004/11/24 21:15:35 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -460,10 +460,14 @@ set z2 [expr round([lindex $SubVolume(Ext3D,Ijk) 5])]
   op Delete
 
 
-  puts [[Volume($newvol,vol) GetOutput] GetExtent]
+    if {$Module(verbose) == 1} {
+        puts [[Volume($newvol,vol) GetOutput] GetExtent]
+    }
   #Reseting the Extent so goes from 0.
   [Volume($newvol,vol) GetOutput] SetExtent 0 [expr $x2-$x1] 0 [expr $y2-$y1] 0 [expr $z2-$z1]
-  puts [[Volume($newvol,vol) GetOutput] GetExtent]
+    if {$Module(verbose) == 1} {
+        puts [[Volume($newvol,vol) GetOutput] GetExtent]
+    }
 
   # Set  new dimensions
   set dim [Volume($volID,node) GetDimensions]
@@ -482,7 +486,9 @@ set z2 [expr round([lindex $SubVolume(Ext3D,Ijk) 5])]
 
   # Set the RasToWld matrix
   # Ras2ToWld = Ras2ToIjk2 x Ijk2ToIjk1 x Ijk1ToRas1 x Ras1ToWld
-  puts "Set the RasToWld matrix\n"
+    if {$Module(verbose) == 1} {
+        puts "Set the RasToWld matrix\n"
+    }
   set ras1wld1 [Volume($volID,node)   GetRasToWld]
 
   # It's weird ... : I need to call SetRasToWld in order to update RasToIjk !!!
@@ -685,10 +691,13 @@ proc SubVolumeGetInitParams {} {
     set IJKtoRASmin [SubVolume(tmpMatrix) MultiplyPoint [lindex $Ext 0] [lindex $Ext 2] [lindex $Ext 4] 1]
     set IJKtoRASmax [SubVolume(tmpMatrix) MultiplyPoint [lindex $Ext 1] [lindex $Ext 3] [lindex $Ext 5] 1] 
     
-    puts $IJKtoRASmin
-    
-    puts $IJKtoRASmax
-    
+
+    if {$Module(verbose) == 1} {
+        puts $IJKtoRASmin
+
+        puts $IJKtoRASmax
+    }
+            
     
     #Resort values
     foreach e "0 1 2" {
@@ -701,9 +710,11 @@ proc SubVolumeGetInitParams {} {
         }      
    }
    
-   puts $RASmin
-   puts $RASmax 
-    
+    if {$Module(verbose) == 1} {
+        puts $RASmin
+        puts $RASmax 
+    }
+
     set fExtract $Module(SubVolume,fExtract)
     
     if {$volID == $SubVolume(Ext3D,volId)} {
@@ -800,7 +811,10 @@ proc SubVolumeUpdate3DScales { notUsed } {
    }
    
   set SubVolume(Ext3D,Ijk) "[lindex $IJKmin 0] [lindex $IJKmax 0] [lindex $IJKmin 1] [lindex $IJKmax 1] [lindex $IJKmin 2] [lindex $IJKmax 2]"
-  puts $SubVolume(Ext3D,Ijk)
+
+    if {$Module(verbose) == 1} {
+        puts $SubVolume(Ext3D,Ijk)
+    }
   
     if { [info command SubVolume(Ext3D,CubeActor)] == "" } {
         return
