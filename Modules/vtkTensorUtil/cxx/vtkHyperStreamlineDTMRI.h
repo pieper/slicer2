@@ -32,10 +32,9 @@
 #define __vtkHyperStreamlineDTMRI_h
 
 #include "vtkTensorUtilConfigure.h"
-//#include "vtkDTMRIConfigure.h"
 #include "vtkHyperStreamline.h"
 #include "vtkHyperPointandArray.h"
-
+#include "vtkFloatArray.h"
 
 //class VTK_DTMRI_EXPORT vtkHyperStreamlineDTMRI : public vtkHyperStreamline 
 class VTK_TENSORUTIL_EXPORT vtkHyperStreamlineDTMRI : public vtkHyperStreamline 
@@ -55,6 +54,14 @@ public:
   // If degree curvature becomes larger than this number, tracking stops.
   vtkGetMacro(MaxCurvature,vtkFloatingPointType);
   vtkSetMacro(MaxCurvature,vtkFloatingPointType);
+  // If FA becomes smaller than this number, tracking stops.       
+  vtkGetMacro(MinFractionalAnisotropy,vtkFloatingPointType);
+  vtkSetMacro(MinFractionalAnisotropy,vtkFloatingPointType);
+
+  // Description:                                                             
+  // FA at points along the line (wherever the tensor was interpolated)    
+  vtkGetObjectMacro(FractionalAnisotropy0,vtkFloatArray);
+  vtkGetObjectMacro(FractionalAnisotropy1,vtkFloatArray);
 
 protected:
   vtkHyperStreamlineDTMRI();
@@ -65,6 +72,11 @@ protected:
   //void BuildTube();
 
   vtkFloatingPointType MaxCurvature;
+  vtkFloatingPointType MinFractionalAnisotropy;
+
+  vtkFloatArray *FractionalAnisotropy[2];
+  vtkFloatArray *FractionalAnisotropy0;
+  vtkFloatArray *FractionalAnisotropy1;
 
 private:
   vtkHyperStreamlineDTMRI(const vtkHyperStreamlineDTMRI&);  // Not implemented.

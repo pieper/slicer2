@@ -13,7 +13,7 @@
 #include "vtkHyperPointandArray.cxx"
 #endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.8 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.9 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 // Construct object with initial starting position (0,0,0); integration step 
@@ -40,6 +40,13 @@ vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()
   this->Radius = 0.5;
   this->LogScaling = 0;
   this->IntegrationEigenvector = VTK_INTEGRATE_MAJOR_EIGENVECTOR;
+
+  this->FractionalAnisotropy0 = vtkFloatArray::New();
+  this->FractionalAnisotropy1 = vtkFloatArray::New();
+  this->FractionalAnisotropy[0] = this->FractionalAnisotropy0;
+  this->FractionalAnisotropy[1] = this->FractionalAnisotropy1;
+
+  this->MinFractionalAnisotropy=0.07;
 
 }
 
@@ -135,6 +142,9 @@ void vtkHyperStreamlineDTMRI::Execute()
   // set up working matrices
   v[0] = v0; v[1] = v1; v[2] = v2; 
   m[0] = m0; m[1] = m1; m[2] = m2; 
+  float meanEV, fa;
+  float sqrt3halves=sqrt((float)3/2);
+  int keepIntegrating;
   
   vtkDebugMacro(<<"Generating hyperstreamline(s)");
   this->NumberOfStreamers = 0;
@@ -235,6 +245,14 @@ void vtkHyperStreamlineDTMRI::Execute()
     vtkMath::Jacobi(m, sPtr->W, sPtr->V);
     FixVectors(NULL, sPtr->V, iv, ix, iy);
 
+    // compute invariants                                                               
+    meanEV=(ev[0]+ev[1]+ev[2])/3;
+    this->FractionalAnisotropy[0]->InsertNextValue(sqrt3halves*sqrt(((ev[0]-meanEV)*(ev[0]-meanEV)+(ev[1]-meanEV)*(ev[1]-meanEV)+(ev[2]-meanEV)*(ev[2]-meanEV))/(ev[0]*ev[0]+ev[1]*ev[1]+ev[2]*ev[2])));
+    if ( this->IntegrationDirection == VTK_INTEGRATE_BOTH_DIRECTIONS )
+      {
+        this->FractionalAnisotropy[1]->InsertNextValue(sqrt3halves*sqrt(((ev[0]-meanEV)*(ev[0]-meanEV)+(ev[1]-meanEV)*(ev[1]-meanEV)+(ev[2]-meanEV)*(ev[2]-meanEV))/(ev[0]*ev[0]+ev[1]*ev[1]+ev[2]*ev[2])));
+      }
+
     if ( inScalars ) 
       {
       inScalars->GetTuples(cell->PointIds, cellScalars);
@@ -278,17 +296,16 @@ void vtkHyperStreamlineDTMRI::Execute()
     if ( inScalars ) {inScalars->GetTuples(cell->PointIds, cellScalars);}
 
 
-    // This is the only modification from the superclass Execute.
-    // Test here for the angle between the last two tangent vectors.
-    // Stop if high.
-    int integrationAngleGood =1;
+    // This is the flag for integration to continue if FA, curvature
+    // are within limits
+    keepIntegrating=1;
     // init index for curvature calculation 
     pointCount=0;
       
     //integrate until distance has been exceeded
     while ( sPtr->CellId >= 0 && fabs(sPtr->W[0]) > this->TerminalEigenvalue &&
             sPtr->D < this->MaximumPropagationDistance &&
-            integrationAngleGood)
+            keepIntegrating)
       {
         // Test curvature
         if ( pointCount > 2 )
@@ -297,7 +314,7 @@ void vtkHyperStreamlineDTMRI::Execute()
            // v2=p3-p2;  % vector from point 2 to point 3
             // v1=p2-p1;  % vector from point 1 to point 2
             // u2=v2/norm(v2);  % unit vector in the direction of v2
-            // u1=v1/norm(v1);  % unit vector in the direciton of v1
+            // u1=v1/norm(v1);  % unit vector in the direction of v1
             
             // kn is curvature times the unit normal vector
             // it's the change in the unit normal over half the distance 
@@ -340,7 +357,7 @@ void vtkHyperStreamlineDTMRI::Execute()
 
             if (K > this->MaxCurvature) 
               {
-                integrationAngleGood=0;
+                keepIntegrating=0;
               }
           }
         else 
@@ -441,6 +458,16 @@ void vtkHyperStreamlineDTMRI::Execute()
 
         vtkMath::Jacobi(m, sNext->W, sNext->V);
         FixVectors(sPtr->V, sNext->V, iv, ix, iy);
+
+        // compute invariants at final position                                         
+        meanEV=(ev[0]+ev[1]+ev[2])/3;
+        fa=sqrt3halves*sqrt(((ev[0]-meanEV)*(ev[0]-meanEV)+(ev[1]-meanEV)*(ev[1]-meanEV)+(ev[2]-meanEV)*(ev[2]-meanEV))/(ev[0]*ev[0]+ev[1]*ev[1]+ev[2]*ev[2]));
+        this->FractionalAnisotropy[ptId]->InsertNextValue(fa);
+
+        // test FA cutoff   
+        if (fa < this->MinFractionalAnisotropy) {
+          keepIntegrating=0;
+        }
 
         if ( inScalars )
           {
