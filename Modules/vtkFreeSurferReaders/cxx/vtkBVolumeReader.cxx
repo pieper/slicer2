@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkBVolumeReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2003/08/26 12:23:57 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2004/10/07 21:01:39 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================*/
 #include <sys/types.h>
@@ -72,12 +72,19 @@ vtkBVolumeReader::~vtkBVolumeReader()
 
 void vtkBVolumeReader::ExecuteInformation()
 {
+    vtkDebugMacro(<<"#\n#\n#\n#\n#\n#\n#\n#\n#\n#\nExecuteInformation (all this does is re-reading the volume header)\n");
+    
   vtkImageData *output = this->GetOutput();
   
   // Read the header.
-  this->ReadVolumeHeader();
+  if (this->ReadVolumeHeader() == 0)
+  {
+      vtkErrorMacro(<<"ExecuteInformation: error reading volume header, returning.\n");
+      return;
+  }
 
-
+  vtkDebugMacro(<<"ExecuteInformation: read header, data dimensions[2] = " << this->DataDimensions[2]);
+  
   // Set some data in the output.
   output->SetWholeExtent(0, this->DataDimensions[0]-1,
              0, this->DataDimensions[1]-1,
@@ -91,10 +98,16 @@ void vtkBVolumeReader::ExecuteInformation()
     
 void vtkBVolumeReader::Execute()
 {
+    vtkDebugMacro(<<"Execute\n");
+    
   vtkImageData *output = this->GetOutput();
 
   // Read the header.
-  this->ReadVolumeHeader();
+  if (this->ReadVolumeHeader() == 0)
+  {
+      vtkErrorMacro(<<"Execute: error reading volume header, returning.\n");
+      return;
+  }
 
 
   // Set some data in the output.
@@ -131,6 +144,8 @@ vtkMatrix4x4 *vtkBVolumeReader::GetRegistrationMatrix()
   float m[4][4];
   int i;
   int j;
+  
+  vtkDebugMacro(<<"GetRegistrationMatrix\n");
 
   if( NULL == this->RegistrationFileName ) {
     vtkErrorMacro(<< "Registration file name not specified.");
@@ -143,17 +158,17 @@ vtkMatrix4x4 *vtkBVolumeReader::GetRegistrationMatrix()
     // Make sure the file is readable
     error = stat( this->RegistrationFileName, &fileInfo );
     if( !error ) {
-    if( !S_ISREG( fileInfo.st_mode ) ) {
-      vtkErrorMacro(<< "Registration file " << this->RegistrationFileName 
-            << " isn't valid.");
-      return NULL;
-    }
+        if( !S_ISREG( fileInfo.st_mode ) ) {
+            vtkErrorMacro(<< "Registration file " << this->RegistrationFileName 
+                          << " isn't valid.");
+            return NULL;
+        }
     }
     
     // Open the file.
     fp = fopen( this->RegistrationFileName, "r" );
     if( NULL == fp ) {
-      vtkErrorMacro(<< "Coudn't open file " << this->RegistrationFileName );
+      vtkErrorMacro(<< "Couldn't open registration file " << this->RegistrationFileName );
       return NULL;
     }
     
@@ -203,8 +218,14 @@ vtkDataArray *vtkBVolumeReader::ReadVolumeData()
   int i;
   float f;
 
+    vtkDebugMacro(<<"ReadVolumeData\n");
+
   // Read header first.
-  this->ReadVolumeHeader();
+    if (this->ReadVolumeHeader() == 0)
+    {
+        vtkErrorMacro(<<"ReadVolumeData: error reading volume header.\n");
+        return NULL;
+    }
 
   // Check the prefix.
   if( NULL == this->Stem || 
@@ -243,7 +264,7 @@ vtkDataArray *vtkBVolumeReader::ReadVolumeData()
     elementSize = sizeof( float );
     break;
   default:
-    vtkErrorMacro(<< "Volume type not supported.");
+      vtkErrorMacro(<< "Volume type not supported:" << this->ScalarType);
     return NULL;
   }
   if ( NULL == scalars ) {
@@ -273,7 +294,7 @@ vtkDataArray *vtkBVolumeReader::ReadVolumeData()
 
     // Read in a time point. We need to do this element by element so
     // we can do byte swapping.
-    vtkDebugMacro(<< "Reading volume data" );
+    vtkDebugMacro(<< "Reading volume data, slice " << sliceNumber << ", from file " << sliceFileName);
     // Skip the time points we don't want.
     fseek( fp, this->CurTimePoint * numPts, SEEK_SET );
 
@@ -301,7 +322,7 @@ vtkDataArray *vtkBVolumeReader::ReadVolumeData()
       *float_destData++ = f;
       break;
     default:
-      vtkErrorMacro(<< "Volume type not supported.");
+        vtkErrorMacro(<< "Volume type not supported:" << this->ScalarType);
       return NULL;
     }
     numReadSlice += numRead;
@@ -332,7 +353,8 @@ vtkDataArray *vtkBVolumeReader::ReadVolumeData()
   return scalars;
 }
 
-void vtkBVolumeReader::ReadVolumeHeader()
+// need to test return values. 0 == success, 1 == failure
+int vtkBVolumeReader::ReadVolumeHeader()
 {
   FILE *fp;
   int numTimePoints;
@@ -351,13 +373,15 @@ void vtkBVolumeReader::ReadVolumeHeader()
   int error;
   struct stat fileInfo;
 
+      vtkDebugMacro(<<"ReadVolumeHeader\n");
+
   // If we don't have a stem, file the stem from the file prefix or
   // name we have. If we still don't have one after that, return.
   if( NULL == this->Stem ) { 
     FindStemFromFilePrefixOrFileName();
     if( NULL == this->Stem ) {
       vtkErrorMacro(<< "Couldn't parse file name to find stem." );
-      return;
+      return 0;
     }
   }
 
@@ -366,7 +390,7 @@ void vtkBVolumeReader::ReadVolumeHeader()
   GuessTypeFromStem();
   if( VTK_VOID == this->ScalarType ) {
     vtkErrorMacro(<< "Couldn't guess scalar type." );
-    return;
+    return 0;
   }
   switch( this->ScalarType ) {
   case VTK_FLOAT:
@@ -376,8 +400,8 @@ void vtkBVolumeReader::ReadVolumeHeader()
     SetSliceFileNameExtension( "bshort" );
     break;
   default:
-    vtkErrorMacro(<< "Unrecognized scalar type." );
-    return;
+      vtkErrorMacro(<< "Unrecognized scalar type: " << this->ScalarType);
+    return 0;
     break;
   }
 
@@ -385,70 +409,71 @@ void vtkBVolumeReader::ReadVolumeHeader()
   // Look for a .bhdr file. If we get one, get information from
   // it. Otherwise just use defaults.
   sprintf( headerFileName, "%s.bhdr", this->Stem );
+  vtkDebugMacro(<<"ReadVolumeHeader: headerFileName = " << headerFileName);
   fp = fopen( headerFileName, "r" );
   if( NULL != fp ) {
 
     while( !feof(fp) ){
 
-      // Get a line. Strip newline and skip initial spaces.
-      fgets( input, 1024, fp );
-      if( input[strlen(input)-1] == '\n' ) {
-    input[strlen(input)-1] = '\0';
-      }
-      line = input;
-      while( isspace( (int)(*line) ) ) {
-    line++;
-      }
-
-      // Parse the lines in the file. From here we'll get our x, y,
-      // and z dimensions, the number of time points, the z spacing,
-      // some other meta data, and information needed to calculate our
-      // RASMatrix.
-      if( strlen(line) > 0 ) {
-    if(strncmp(line, "cols: ", 6) == 0)
-      sscanf(line, "%*s %d", &this->DataDimensions[0]);
-    else if(strncmp(line, "rows: ", 6) == 0)
-      sscanf(line, "%*s %d", &this->DataDimensions[1]);
-    else if(strncmp(line, "nslices: ", 9) == 0)
-      sscanf(line, "%*s %d", &this->DataDimensions[2]);
-    else if(strncmp(line, "n_time_points: ", 15) == 0)
-      sscanf(line, "%*s %d", &this->NumTimePoints);
-    else if(strncmp(line, "slice_thick: ", 13) == 0)
-      sscanf(line, "%*s %f", &this->DataSpacing[2]);
-    else if(strncmp(line, "image_te: ", 10) == 0)
-      sscanf(line, "%*s %f", &this->TE);
-    else if(strncmp(line, "image_tr: ", 10) == 0)
-      sscanf(line, "%*s %f", &this->TR);
-    else if(strncmp(line, "image_ti: ", 10) == 0)
-      sscanf(line, "%*s %f", &this->TI);
-    else if(strncmp(line, "flip_angle: ", 10) == 0)
-      sscanf(line, "%*s %lf", &this->FlipAngle);
-    else if(strncmp(line, "top_left_r: ", 12) == 0)
-      sscanf(line, "%*s %g", &tlr);
-    else if(strncmp(line, "top_left_a: ", 12) == 0)
-      sscanf(line, "%*s %g", &tla);
-    else if(strncmp(line, "top_left_s: ", 12) == 0)
-      sscanf(line, "%*s %g", &tls);
-    else if(strncmp(line, "top_right_r: ", 13) == 0)
-      sscanf(line, "%*s %g", &trr);
-    else if(strncmp(line, "top_right_a: ", 13) == 0)
-      sscanf(line, "%*s %g", &tra);
-    else if(strncmp(line, "top_right_s: ", 13) == 0)
-      sscanf(line, "%*s %g", &trs);
-    else if(strncmp(line, "bottom_right_r: ", 16) == 0)
-      sscanf(line, "%*s %g", &brr);
-    else if(strncmp(line, "bottom_right_a: ", 16) == 0)
-      sscanf(line, "%*s %g", &bra);
-    else if(strncmp(line, "bottom_right_s: ", 16) == 0)
-      sscanf(line, "%*s %g", &brs);
-    else if(strncmp(line, "normal_r: ", 10) == 0)
-      sscanf(line, "%*s %g", &this->RASMatrix[6]);
-    else if(strncmp(line, "normal_a: ", 10) == 0)
-      sscanf(line, "%*s %g", &this->RASMatrix[7]);
-    else if(strncmp(line, "normal_s: ", 10) == 0)
-      sscanf(line, "%*s %g", &this->RASMatrix[8]);
-      }
-    } 
+        // Get a line. Strip newline and skip initial spaces.
+        fgets( input, 1024, fp );
+        if( input[strlen(input)-1] == '\n' ) {
+            input[strlen(input)-1] = '\0';
+        }
+        line = input;
+        while( isspace( (int)(*line) ) ) {
+            line++;
+        }
+        
+        // Parse the lines in the file. From here we'll get our x, y,
+        // and z dimensions, the number of time points, the z spacing,
+        // some other meta data, and information needed to calculate our
+        // RASMatrix.
+        if( strlen(line) > 0 ) {
+            if(strncmp(line, "cols: ", 6) == 0)
+                sscanf(line, "%*s %d", &this->DataDimensions[0]);
+            else if(strncmp(line, "rows: ", 6) == 0)
+                sscanf(line, "%*s %d", &this->DataDimensions[1]);
+            else if(strncmp(line, "nslices: ", 9) == 0)
+                sscanf(line, "%*s %d", &this->DataDimensions[2]);
+            else if(strncmp(line, "n_time_points: ", 15) == 0)
+                sscanf(line, "%*s %d", &this->NumTimePoints);
+            else if(strncmp(line, "slice_thick: ", 13) == 0)
+                sscanf(line, "%*s %f", &this->DataSpacing[2]);
+            else if(strncmp(line, "image_te: ", 10) == 0)
+                sscanf(line, "%*s %f", &this->TE);
+            else if(strncmp(line, "image_tr: ", 10) == 0)
+                sscanf(line, "%*s %f", &this->TR);
+            else if(strncmp(line, "image_ti: ", 10) == 0)
+                sscanf(line, "%*s %f", &this->TI);
+            else if(strncmp(line, "flip_angle: ", 10) == 0)
+                sscanf(line, "%*s %lf", &this->FlipAngle);
+            else if(strncmp(line, "top_left_r: ", 12) == 0)
+                sscanf(line, "%*s %g", &tlr);
+            else if(strncmp(line, "top_left_a: ", 12) == 0)
+                sscanf(line, "%*s %g", &tla);
+            else if(strncmp(line, "top_left_s: ", 12) == 0)
+                sscanf(line, "%*s %g", &tls);
+            else if(strncmp(line, "top_right_r: ", 13) == 0)
+                sscanf(line, "%*s %g", &trr);
+            else if(strncmp(line, "top_right_a: ", 13) == 0)
+                sscanf(line, "%*s %g", &tra);
+            else if(strncmp(line, "top_right_s: ", 13) == 0)
+                sscanf(line, "%*s %g", &trs);
+            else if(strncmp(line, "bottom_right_r: ", 16) == 0)
+                sscanf(line, "%*s %g", &brr);
+            else if(strncmp(line, "bottom_right_a: ", 16) == 0)
+                sscanf(line, "%*s %g", &bra);
+            else if(strncmp(line, "bottom_right_s: ", 16) == 0)
+                sscanf(line, "%*s %g", &brs);
+            else if(strncmp(line, "normal_r: ", 10) == 0)
+                sscanf(line, "%*s %g", &this->RASMatrix[6]);
+            else if(strncmp(line, "normal_a: ", 10) == 0)
+                sscanf(line, "%*s %g", &this->RASMatrix[7]);
+            else if(strncmp(line, "normal_s: ", 10) == 0)
+                sscanf(line, "%*s %g", &this->RASMatrix[8]);
+        }
+    }
     fclose( fp );
 
     // Use the RASMatrix information to calculate the x and y spacing.
@@ -475,54 +500,61 @@ void vtkBVolumeReader::ReadVolumeHeader()
     sprintf( headerFileName, "%s_000.hdr", this->Stem );
     fp = fopen( headerFileName, "r" );
     if( NULL == fp ) {
-      vtkErrorMacro(<< "Couldn't open header for slice 000." );
-      return;
+        vtkErrorMacro(<< "Couldn't open header for slice 000:" << headerFileName );
+        return 0;
     }
     fscanf(fp, "%*d %*d %d %*d", &this->NumTimePoints);
     fclose(fp);
 
   } else {
-    // No .bhdr file, so we'll get our info from the number of slice
-    // files and a .hdr file from one of the slices.
-  
-    // Try to open the header for slice 0. Read in the x dimension, y
-    // dimension, and number of time points.
-    sprintf( headerFileName, "%s_000.hdr", this->Stem );
-    fp = fopen( headerFileName, "r" );
-    if( NULL == fp ) {
-      vtkErrorMacro(<< "Couldn't open header for slice 000." );
-      return;
-    }
-    fscanf(fp, "%d %d %d %*d", &this->DataDimensions[0],
-       &this->DataDimensions[1], &this->NumTimePoints);
-    fclose(fp);
+      // No .bhdr file, so we'll get our info from the number of slice
+      // files and a .hdr file from one of the slices.
+      
+      // Try to open the header for slice 0. Read in the x dimension, y
+      // dimension, and number of time points.
 
-    // Look for all the slice files. Start at slice 000 and try to
-    // open each one. Find as many as we can. This will be our z
-    // dimension.
-    numSlices = 0;
-    sliceNumber = 0;
-    while( found ) {
-      found = 0;
-      sprintf( fileName, "%s_%03d.%s", 
-           this->Stem, sliceNumber, this->SliceFileNameExtension );
-      error = stat( fileName, &fileInfo );
-      if( !error ) {
-    if( S_ISREG( fileInfo.st_mode ) ) {
-      found = 1;
-      numSlices++;
-      sliceNumber++;
-    }
+      sprintf( headerFileName, "%s_000.hdr", this->Stem );
+      vtkDebugMacro(<<"\nReadVolumeHeader: no bhdr file, looking for slice hdr files, trying " << headerFileName << " first\n");
+      fp = fopen( headerFileName, "r" );
+      if( NULL == fp ) {
+          vtkErrorMacro(<< "\nReadVolumeHeader: Couldn't open header for slice 000: " << headerFileName );
+          return 0;
       }
-    }
-    this->DataDimensions[2] = numSlices;
-
-    // We don't have any spacing information, so assign defaults.
-    this->DataSpacing[0] = 1.0;
-    this->DataSpacing[1] = 1.0;
-    this->DataSpacing[2] = 1.0;
+      fscanf(fp, "%d %d %d %*d", &this->DataDimensions[0],
+             &this->DataDimensions[1], &this->NumTimePoints);
+      fclose(fp);
+      
+      // Look for all the slice files. Start at slice 000 and try to
+      // open each one. Find as many as we can. This will be our z
+      // dimension.
+      numSlices = 0;
+      sliceNumber = 0;
+      while( found ) {
+          found = 0;
+          sprintf( fileName, "%s_%03d.%s", 
+                   this->Stem, sliceNumber, this->SliceFileNameExtension );
+          error = stat( fileName, &fileInfo );
+          if( !error ) {
+              if( S_ISREG( fileInfo.st_mode ) ) {
+                  found = 1;
+                  numSlices++;
+                  sliceNumber++;
+              }
+          }
+          else
+          {
+              vtkDebugMacro(<<"\nReadVolumeHeader: error in stating file " << fileName);
+          }
+      }
+      this->DataDimensions[2] = numSlices;
+      vtkDebugMacro(<<"\n*\n*\n*\n*\n*\n*\n*\n*\nReadVolumeHeader: got numSlices = " << numSlices << ", using it as DataDimensions[2]\n");
+      
+      // We don't have any spacing information, so assign defaults.
+      this->DataSpacing[0] = 1.0;
+      this->DataSpacing[1] = 1.0;
+      this->DataSpacing[2] = 1.0;
   }
-
+  return 1;
 }
 
 void vtkBVolumeReader::FindStemFromFilePrefixOrFileName() {
@@ -536,6 +568,8 @@ void vtkBVolumeReader::FindStemFromFilePrefixOrFileName() {
   char directory[1024];
   char stem[1024];
 
+  vtkDebugMacro(<<"FindStemFromFilePrefixOrFileName\n");
+  
   // We want to get the this->Stem, which is the 'stem' of the file
   // name. We'll look in FilePrefix and FileName. Is FilePrefix is set
   // and is a valid stem, great, use that. If we don't have a
@@ -649,6 +683,8 @@ void vtkBVolumeReader::GuessTypeFromStem() {
   struct stat fileInfo;
   int error;
 
+    vtkDebugMacro(<<"GuessTypeFromStem\n");
+
   //  Options for FileName (where xxx is a number):
   //  stem_xxx.bshort  or  stem_xxx.bfloat
   //  stem_xxx
@@ -742,13 +778,20 @@ void vtkBVolumeReader::GuessTypeFromStem() {
     }
   }
 
-  vtkErrorMacro(<< "Couldn't find stem.");
+  vtkErrorMacro(<< "Couldn't find stem:" << stem);
   this->ScalarType = VTK_VOID;
 }
 
 void vtkBVolumeReader::PrintSelf(ostream& os, vtkIndent indent)
 {
+       vtkDebugMacro(<<"PrintSelf\n");
+
   vtkVolumeReader::PrintSelf( os, indent );
+
+  os << indent << "File Name: " << this->FileName << endl;
+  os << indent << "Registration File Name: " << this->RegistrationFileName << endl;
+  os << indent << "Slice File Name Extension: " << this->SliceFileNameExtension << endl;
+  os << indent << "Stem: " << this->Stem << endl;
 
   os << indent << "Data Dimensions: (" << this->DataDimensions[0] << ", "
      << this->DataDimensions[1] << ", " << this->DataDimensions[2] << ")\n";
@@ -757,4 +800,10 @@ void vtkBVolumeReader::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Scalar type: " << this->ScalarType << endl;
   os << indent << "Number of time points: " << this->NumTimePoints << endl;
   os << indent << "Current time point: " << this->CurTimePoint << endl;
+
+  os << indent << "RAS Matrix: " << this->RASMatrix << endl;
+  os << indent << "Registration Matrix: " << endl;
+  this->RegistrationMatrix->PrintSelf(os, indent);
+
+  os << indent << "Meta data: TE " << this->TE << ", TR " << this->TR << ", TI " << this->TI << ", Flip angle " << this->FlipAngle << endl;
 }

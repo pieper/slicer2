@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkBVolumeReader.h,v $
   Language:  C++
-  Date:      $Date: 2003/08/19 22:44:18 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2004/10/07 21:01:39 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================*/
 // .NAME vtkBVolumeReader - read an MGH (.mgh) volume file from Freesurfer tools
@@ -67,6 +67,9 @@ public:
     
   vtkMatrix4x4* GetRegistrationMatrix ();
 
+    vtkGetMacro(ScalarType,int);
+//    vtkGetVectorMacro(DataSpacing,int,3);
+    
 protected:
   vtkBVolumeReader();
   ~vtkBVolumeReader();
@@ -86,6 +89,7 @@ protected:
   
   // Dimensions of the volume.
   int DataDimensions[3];
+    // int DataSpacing[3];
 
   // Scalar type of the data.
   int ScalarType;
@@ -119,7 +123,7 @@ protected:
 
   // Description:
   // Reads the MGH file and gets header information from it.
-  void ReadVolumeHeader();
+  int ReadVolumeHeader();
 
   void FindStemFromFilePrefixOrFileName();
   void GuessTypeFromStem();
