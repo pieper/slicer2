@@ -32,7 +32,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 int vtkImageDICOMReader::GetDICOMHeaderSize(int idx)
 {
-  int size = -1;
+  int size = 0; 
   DCMDataElementStruct des;
 
   this->ComputeInternalFileName(idx);
@@ -47,7 +47,7 @@ int vtkImageDICOMReader::GetDICOMHeaderSize(int idx)
   }
   
   if(parser->FindElement(0x7fe0, 0x0010))
-  {
+  { 
     parser->ReadElement(&des);
     size = parser->GetFilePosition();
   }
@@ -55,6 +55,9 @@ int vtkImageDICOMReader::GetDICOMHeaderSize(int idx)
   parser->CloseFile();
   parser->Delete();
   
+  // if dicom image tag exists, image offsets are
+  // relative to it.  Otherwise, offsets allow
+  // for packed volumes.
   if(this->DICOMMultiFrameOffsets > 0)
   {
     size += DICOMMultiFrameOffsetList[idx - 1];
