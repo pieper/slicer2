@@ -163,21 +163,22 @@ void BuildEdgeList(int nPts, int *xPts, int *yPts, Edge *edges[])
 	}
 }
 
-// ny MUST be no greater than 512
 template <class T>
 static void vtkImageFillROIDrawPolygon(int nx, int ny, int nPts, int *xPts, int *yPts, 
 	short value, T *outPtr)
 {
 	int	i, scan, done;
-	Edge *edges[512], *active, *p, *q, *del;
+	Edge *active, *p, *q, *del;
 	int x, x1, x2;
 	T *ptr;
 
-	// Build a list of edges for each pixel in y direction
-	if (ny > 512) return;
+	// Build a list of edges for each pixel in y direction.
+	// The max possible number of edges is then the 
+	// height of the image, so allocate this many edge pointers.
+	Edge **edges = new Edge*[ny];
 
 	for (i=0; i<ny; i++)
-		edges[i] = new Edge;
+	  edges[i] = new Edge;
 
 	BuildEdgeList(nPts, xPts, yPts, edges);
 	active = new Edge;
@@ -277,6 +278,9 @@ static void vtkImageFillROIDrawPolygon(int nx, int ny, int nPts, int *xPts, int 
 	for (i=0; i<ny; i++)
 		delete edges[i];
 	delete active;
+
+	// Free array of edge pointers.
+	delete [] edges;
 }
 
 template <class T>
