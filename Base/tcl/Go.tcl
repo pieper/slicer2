@@ -75,7 +75,7 @@ proc usage {} {
 }
 
 #
-# verbose mode for debugging
+# simple arg parsing - can't yet handle args with parameters
 #
 set verbose 0
 set strippedargs ""
@@ -169,11 +169,11 @@ lappend auto_path $slicer_home/Base/tcl
 lappend auto_path $slicer_home/Base/Wrapping/Tcl/vtkSlicerBase
 lappend auto_path $vtk_src_dir/Wrapping/Tcl
 
-package require vtkSlicerBase
+package require vtkSlicerBase ;# this pulls in all of slicer
 
 # Set path to search for plug-in modules, and require them
-set modulePath ${slicer_home}/Modules
-set modulePaths [glob ${modulePath}/vtk*]
+set modulePath $slicer_home/Modules
+set modulePaths [glob $modulePath/vtk*]
 
 # do two separate loops to solve interdependency problems between modules, add all modules to the autopath first so that any package requiring another module can find it if they are not loaded in the right order
 foreach dir $modulePaths {
