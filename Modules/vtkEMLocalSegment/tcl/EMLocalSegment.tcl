@@ -245,7 +245,7 @@ proc EMSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.37 $} {$Date: 2004/08/08 15:58:47 $}]
+        {$Revision: 1.38 $} {$Date: 2004/09/03 21:46:22 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1633,7 +1633,6 @@ proc EMSegmentLoadMRML {tag attr} {
 #-------------------------------------------------------------------------------
 proc EMSegmentUpdateMRML {} {
     global Mrml EMSegment Volume Gui env
-    # puts "---------------------- Start EMSegmentUpdateMRML ---------------"
     # Current Desing of Node structure : (order is important !) 
     # Segmenter
     # -> SegmenterInput
@@ -1813,7 +1812,7 @@ proc EMSegmentUpdateMRML {} {
              EMSegmentChangeSuperClassName 0 -1
 
           }
-      
+          
           set EMSegment(Cattrib,$NumClass,LocalPriorWeight)    [SegmenterSuperClass($pid,node) GetLocalPriorWeight]
           set InputChannelWeights [SegmenterSuperClass($pid,node) GetInputChannelWeights]
           for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
@@ -1870,9 +1869,9 @@ proc EMSegmentUpdateMRML {} {
 
         EMSegmentClickLabel $NumClass [expr !$EMSegment(SuperClass)] [SegmenterClass($pid,node) GetLabel] 
 
-    set EMSegment(Cattrib,$NumClass,PrintWeights)    [SegmenterClass($pid,node) GetPrintWeights]
-    set EMSegment(Cattrib,$NumClass,PrintPCA)        [SegmenterClass($pid,node) GetPrintPCA]
-    set EMSegment(Cattrib,$NumClass,PrintQuality)    [SegmenterClass($pid,node) GetPrintQuality]
+        set EMSegment(Cattrib,$NumClass,PrintWeights)    [SegmenterClass($pid,node) GetPrintWeights]
+        set EMSegment(Cattrib,$NumClass,PrintPCA)        [SegmenterClass($pid,node) GetPrintPCA]
+        set EMSegment(Cattrib,$NumClass,PrintQuality)    [SegmenterClass($pid,node) GetPrintQuality]
         # Is defined later 
         set EMSegment(Cattrib,$NumClass,ReferenceStandardData) $Volume(idNone)
         
@@ -1900,7 +1899,8 @@ proc EMSegmentUpdateMRML {} {
 
         foreach VolID $Volume(idList) VolAttr $VolumeList {
             if {([lindex $VolAttr 0] == $LocalPriorName) && ([lindex $VolAttr 1] == $LocalPriorRange) &&  ($LocalPriorName != "")} {
-               if {([lindex $VolAttr 2] == $LocalPriorPrefix) || ([lindex $VolAttr 3] == $LocalPriorPrefix)} {set EMSegment(Cattrib,$NumClass,ProbabilityData) $VolID
+               if {([lindex $VolAttr 2] == $LocalPriorPrefix) || ([lindex $VolAttr 3] == $LocalPriorPrefix)} {
+           set EMSegment(Cattrib,$NumClass,ProbabilityData) $VolID
                }
             }
             if {([lindex $VolAttr 0] == $PCAMeanName) && ($PCAMeanName != "") && ([lindex $VolAttr 1] == $EMSegment(Cattrib,$NumClass,PCAFileRange)) } { set EMSegment(Cattrib,$NumClass,PCAMeanData) $VolID }
@@ -2035,18 +2035,26 @@ proc EMSegmentProbVolumeSelectNode { type id ArrayName ModelLabel ModelName} {
         set EMSegment(ProbVolumeSelect,${ActiveClass}) $EMSegment(ProbVolumeSelect)
     } 
 
-    if {$id == ""} {
+    if {$id == "" } {
       set Text "None"
       set EMSegment(Cattrib,$ActiveClass,ProbabilityData) $Volume(idNone)
       set EMSegment(Cattrib,$ActiveClass,LocalPriorWeight) 0.0
     } else {
-        set EMSegment(Cattrib,$ActiveClass,ProbabilityData) $id
-        if {$EMSegment(Cattrib,$ActiveClass,LocalPriorWeight) == 0.0} {set EMSegment(Cattrib,$ActiveClass,LocalPriorWeight) 1.0}
-        if {$id == -5} {
-            set Text "Create New"
-        } else { 
-            if {[catch {${type}($id,node) GetName} Text]} {set Text ""}
+    if {$EMSegment(Cattrib,$ActiveClass,ProbabilityData) != $id} { 
+        if {$id == $Volume(idNone)} {
+        if {$EMSegment(Cattrib,$ActiveClass,LocalPriorWeight) > 0.0} {set EMSegment(Cattrib,$ActiveClass,LocalPriorWeight) 0.0} 
+        } else {
+        if {$EMSegment(Cattrib,$ActiveClass,LocalPriorWeight) == 0.0} {
+            set EMSegment(Cattrib,$ActiveClass,LocalPriorWeight) 1.0
         }
+        }
+        set EMSegment(Cattrib,$ActiveClass,ProbabilityData) $id
+    }
+    if {$id == -5} {
+        set Text "Create New"
+    } else { 
+        if {[catch {${type}($id,node) GetName} Text]} {set Text ""}
+    }
     }
 
     # Change Button Volumes
@@ -2337,10 +2345,10 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
           SegmenterSuperClass($pid,node) SetNumClasses          [llength $EMSegment(Cattrib,$i,ClassList)]
           SegmenterSuperClass($pid,node) SetLocalPriorWeight    $EMSegment(Cattrib,$i,LocalPriorWeight)  
 
-      SegmenterSuperClass($pid,node) SetPrintWeights        $EMSegment(Cattrib,$i,PrintWeights)  
-      SegmenterSuperClass($pid,node) SetPrintFrequency      $EMSegment(Cattrib,$i,PrintFrequency)  
-      SegmenterSuperClass($pid,node) SetPrintBias           $EMSegment(Cattrib,$i,PrintBias)  
-      SegmenterSuperClass($pid,node) SetPrintLabelMap       $EMSegment(Cattrib,$i,PrintLabelMap)  
+          SegmenterSuperClass($pid,node) SetPrintWeights        $EMSegment(Cattrib,$i,PrintWeights)  
+          SegmenterSuperClass($pid,node) SetPrintFrequency      $EMSegment(Cattrib,$i,PrintFrequency)  
+          SegmenterSuperClass($pid,node) SetPrintBias           $EMSegment(Cattrib,$i,PrintBias)  
+          SegmenterSuperClass($pid,node) SetPrintLabelMap       $EMSegment(Cattrib,$i,PrintLabelMap)  
 
           set InputChannelWeights ""
           for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
@@ -2570,10 +2578,8 @@ proc EMSegmentStartEM { {save_mode "save"} } {
      set EMSegment(VolumeNameList) ""
      foreach v $Volume(idList) {lappend EMSegment(VolumeNameList)  [Volume($v,node) GetName]}
      set NumInputImagesSet [EMSegmentAlgorithmStart] 
-     EMSegment(vtkEMSegment) Update 
-     #  puts "[EMSegment(vtkEMSegment) Print]"
-
-      if {[EMSegment(vtkEMSegment) GetErrorFlag]} {
+     EMSegment(vtkEMSegment) Update
+     if {[EMSegment(vtkEMSegment) GetErrorFlag]} {
          set ErrorFlag 1
          DevErrorWindow "Error Report: \n[EMSegment(vtkEMSegment) GetErrorMessages]Fix errors before resegmenting !"
          RenderAll
@@ -2586,8 +2592,9 @@ proc EMSegmentStartEM { {save_mode "save"} } {
          puts "================================================"
     }
 
-  } 
-   # ----------------------------------------------
+  }
+   
+  # ----------------------------------------------
    # 4. Write Back Results - or print our error messages
    # ----------------------------------------------
    if {$ErrorFlag} {
@@ -2599,12 +2606,14 @@ proc EMSegmentStartEM { {save_mode "save"} } {
        $EMSegment(MA-lRun) configure -text "Segmentation compledted sucessfull"
        }
        incr EMSegment(SegmentIndex)
+
        set result [DevCreateNewCopiedVolume $VolIndex "" "EMSegResult$EMSegment(SegmentIndex)" ]
        set node [Volume($result,vol) GetMrmlNode]
        $node SetLabelMap 1
        Mrml(dataTree) RemoveItem $node 
        set nodeBefore [Volume($VolIndex,vol) GetMrmlNode]
        Mrml(dataTree) InsertAfterItem $nodeBefore $node
+
        # Display Result in label mode 
        Volume($result,vol) UseLabelIndirectLUTOn
        Volume($result,vol) Update
@@ -2885,7 +2894,7 @@ proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
      set Color $Gui(activeWorkspace)
 
      # Make sure infromation from below is by default used 
-     set EMSegment(Cattrib,$Sclass,LocalPriorWeight)  1.0  
+     set EMSegment(Cattrib,$Sclass,LocalPriorWeight)  0.0  
      for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
          set EMSegment(Cattrib,$Sclass,InputChannelWeights,$y) 1.0
      }

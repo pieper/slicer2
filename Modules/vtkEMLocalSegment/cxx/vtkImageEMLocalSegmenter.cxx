@@ -569,8 +569,11 @@ int vtkImageEMLocalSegmenter::GetDimensionX() {
   if (!this->HeadClass) {
     vtkEMAddErrorMessage("No Head Class defined");
     return -1;
+  }   
+  if (this->HeadClass->GetDataDim()[0]) {
+    return this->HeadClass->GetDataDim()[0];
   } 
-  return this->HeadClass->GetDataDim()[0];
+  return (this->HeadClass->GetSegmentationBoundaryMax()[0] - this->HeadClass->GetSegmentationBoundaryMin()[0] +1);
 }
 
 int vtkImageEMLocalSegmenter::GetDimensionY() {
@@ -578,7 +581,10 @@ int vtkImageEMLocalSegmenter::GetDimensionY() {
     vtkEMAddErrorMessage("No Head Class defined");
     return -1;
   } 
-  return this->HeadClass->GetDataDim()[1];
+  if (this->HeadClass->GetDataDim()[1]) {
+    return this->HeadClass->GetDataDim()[1];
+  }
+  return (this->HeadClass->GetSegmentationBoundaryMax()[1] - this->HeadClass->GetSegmentationBoundaryMin()[1] +1);
 }
 
 int vtkImageEMLocalSegmenter::GetDimensionZ() {
@@ -586,7 +592,10 @@ int vtkImageEMLocalSegmenter::GetDimensionZ() {
     vtkEMAddErrorMessage("No Head Class defined");
     return -1;
   } 
-  return this->HeadClass->GetDataDim()[2];
+  if (this->HeadClass->GetDataDim()[2]) {
+    return this->HeadClass->GetDataDim()[2];
+  } 
+  return (this->HeadClass->GetSegmentationBoundaryMax()[2] - this->HeadClass->GetSegmentationBoundaryMin()[2] +1);
 }
 
 //------------------------------------------------------------------------------

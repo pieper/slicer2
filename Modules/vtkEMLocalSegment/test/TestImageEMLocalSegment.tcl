@@ -503,10 +503,12 @@ proc LoadFile {fileName Mode} {
                                  }
                                 }
         }
-            set DataDim3 [lindex $DataDimension 2]
-            set DataDimension [lreplace $DataDimension 2 2 [expr $DataSpacing +$DataDim3]]  
-            eval Volume($num,vol) SetDataSpacing $DataDimension
           }
+          set DataDim3 [lindex $DataDimension 2]
+          set DataDimension [lreplace $DataDimension 2 2 [expr $DataSpacing +$DataDim3]]  
+          eval Volume($num,vol) SetDataSpacing $DataDimension
+          Volume($num,vol) Update
+
           puts "===================== Volume $Volume($num,Name) defined ====================="
           if {$EMSegment(debug)} {puts "[Volume($num,vol) Print]"}    
         }

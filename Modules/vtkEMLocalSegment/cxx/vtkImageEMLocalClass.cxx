@@ -57,6 +57,9 @@ vtkImageEMLocalClass::vtkImageEMLocalClass() {
 
   // Printing functions 
   this->PrintQuality        = 0;
+
+  // Important to set it - otherwise set to 1 by default  
+  this->vtkProcessObject::SetNumberOfInputs(0); 
 }
 
 

@@ -99,7 +99,6 @@ vtkImageEMGenericClass::vtkImageEMGenericClass()
     this->SetInput(0,UpdateBlubber);
 
     this->PrintWeights        = 0;
-
  }
 
 //----------------------------------------------------------------------------
