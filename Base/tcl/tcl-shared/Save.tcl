@@ -48,10 +48,10 @@ proc SaveWindowToFile {directory filename imageType {window ""}} {
         set window $viewWin
     }
 
-    vtkWindowToImageFilter filter
-    filter SetInput $window
-    SaveImageToFile $directory $filename $imageType [filter GetOutput]
-    filter Delete
+    vtkWindowToImageFilter saveFilter
+    saveFilter SetInput $window
+    saveImageToFile $directory $filename $imageType [saveFilter GetOutput]
+    saveFilter Delete
 }
 
 
@@ -74,11 +74,11 @@ proc SaveImageToFile {directory filename imageType image} {
 
     set filename [SaveGetFilePath $directory $filename $imageType]
 
-    vtk${imageType}Writer writer
-    writer SetInput $image
-    writer SetFileName $filename
-    writer Write
-    writer Delete
+    vtk${imageType}Writer saveWriter
+    saveWriter SetInput $image
+    saveWriter SetFileName $filename
+    saveWriter Write
+    saveWriter Delete
 }
 
 
