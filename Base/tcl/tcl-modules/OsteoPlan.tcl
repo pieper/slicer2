@@ -28,12 +28,12 @@ proc OsteoPlanInit {} {
 
     set Module($m,overview) "Provides model cutting tools"
     set Module($m,author) "Krishna Yeshwant, SPL, kcy@bwh.harvard.edu"
-    set Module($m,category) [lindex $Module(categories) 1]
+    set Module($m,category) "Application"
 
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2004/03/15 21:04:50 $}]
+        {$Revision: 1.8 $} {$Date: 2004/04/13 21:00:09 $}]
 
     # Initialize module-level variables
     set Osteo(pointlabels) 1

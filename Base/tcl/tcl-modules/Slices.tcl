@@ -54,7 +54,7 @@ proc SlicesInit {} {
     # Module Summary Info
     set Module($m,overview) "Display of the 3 slices."
     set Module($m,author) "Core"
-    set Module($m,category) [lindex $Module(categories) 0]
+    set Module($m,category) "Visualisation"
 
     # Define Procedures
     set Module($m,procGUI) SlicesBuildGUI
@@ -65,7 +65,7 @@ proc SlicesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.22 $} {$Date: 2004/03/15 21:04:51 $}]
+        {$Revision: 1.23 $} {$Date: 2004/04/13 21:00:10 $}]
 
     # Props
     set Slice(prefix) slice

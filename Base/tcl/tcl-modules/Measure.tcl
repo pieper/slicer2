@@ -102,14 +102,14 @@ proc MeasureInit {} {
     
     set Module($m,overview) "Use measurement tools to calculate positions, distances, angles for fiducials,\n\t\tand surface and volume of models, plus intersection volumes for models."
     set Module($m,author) "Krishna Yeshwant, SPL, kcy@bwh.harvard.edu"
-    set Module($m,category) [lindex $Module(categories) 1]
+    set Module($m,category) "Measurement"
 
     # Define Dependencies
     set Module($m,depend) ""
     
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.21 $} {$Date: 2004/03/15 21:04:48 $}]
+        {$Revision: 1.22 $} {$Date: 2004/04/13 21:00:06 $}]
     
     # Initialize module-level variables
     #    set Measure(Model1) $Model(idNone)

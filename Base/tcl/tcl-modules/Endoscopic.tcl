@@ -252,14 +252,14 @@ proc EndoscopicInit {} {
 
     set Module($m,depend) ""
     
-     # module summary
+    # module summary
     set Module($m,overview) "Position an endoscopic camera in the scene and view through the camera's lens in the second window.
                 Provides correspondence between 3D Views, 2D Slices, and flattened colon View"
     set Module($m,author) "Delphine Nain, MIT, delfin@ai.mit.edu; Jeanette Meng SPL meng@bwh.harvard.edu"
-    set Module($m,category) [lindex $Module(categories) 1]
+    set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.57 $} {$Date: 2004/04/07 21:02:12 $}]
+    {$Revision: 1.58 $} {$Date: 2004/04/13 21:00:05 $}]
     
     # Define Procedures
     #------------------------------------

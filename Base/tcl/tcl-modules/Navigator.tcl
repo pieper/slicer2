@@ -136,7 +136,7 @@ proc NavigatorInit {} {
     #------------------------------------
     set Module($m,overview) "Point correspondences between 3D model, endoscopic view, and flattened image."
     set Module($m,author) "Mary Lederer, SPL, surreal@bwh.harvard.edu"
-    set Module($m,category) [lindex $Module(categories) 1]
+    set Module($m,category) "Application"
 
     # Define Procedures
     #------------------------------------
@@ -191,7 +191,7 @@ proc NavigatorInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2004/03/15 21:04:50 $}]
+        {$Revision: 1.5 $} {$Date: 2004/04/13 21:00:08 $}]
 
 
 

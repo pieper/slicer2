@@ -73,7 +73,8 @@ proc ModelsInit {} {
     # Module Summary Info
     set Module($m,overview) "3D surface models."
     set Module($m,author) "Core"
-    set Module($m,category) [lindex $Module(categories) 0]
+    # could be put in IO
+    set Module($m,category) "Visualisation"
 
     # Define Procedures
     set Module($m,procGUI) ModelsBuildGUI
@@ -84,7 +85,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.59 $} {$Date: 2004/03/15 21:04:50 $}]
+            {$Revision: 1.60 $} {$Date: 2004/04/13 21:00:08 $}]
 
     # Props
     set Model(propertyType) Basic

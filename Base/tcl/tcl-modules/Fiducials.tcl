@@ -98,13 +98,13 @@ proc FiducialsInit {} {
 
     set Module($m,overview) "Create and manage fiducial points, in 2D and 3D"
     set Module($m,author) "Delphine, Nain, SlicerHaker, delfin@mit.edu"
-    set Module($m,category) [lindex $Module(categories) 0]
+    set Module($m,category) "Registration"
 
     # Set Dependencies
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.49 $} {$Date: 2004/04/09 20:06:58 $}]
+        {$Revision: 1.50 $} {$Date: 2004/04/13 21:00:05 $}]
     
     # Initialize module-level variables
     

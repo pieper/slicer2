@@ -74,7 +74,7 @@ proc RealtimeInit {} {
     # Module Summary Info
     set Module($m,overview) "Get realtime volumes from the scanner."
     set Module($m,author) "Core"
-    set Module($m,category) [lindex $Module(categories) 0]
+    set Module($m,category) "Application"
 
     # Define Procedures
     set Module($m,procGUI)   RealtimeBuildGUI
@@ -87,7 +87,7 @@ proc RealtimeInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.21 $} {$Date: 2004/03/15 21:04:50 $}]
+        {$Revision: 1.22 $} {$Date: 2004/04/13 21:00:09 $}]
 
     # Initialize globals
     set Realtime(idRealtime)     $Volume(idNone)

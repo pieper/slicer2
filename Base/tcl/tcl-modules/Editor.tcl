@@ -109,7 +109,7 @@ proc EditorInit {} {
     # Module Summary Info
     set Module($m,overview) "Segmentation: manual, semi-automatic, and morphological."
     set Module($m,author) "Core"
-    set Module($m,category) [lindex $Module(categories) 0]
+    set Module($m,category) "Segmentation"
 
     # Define Procedures
     set Module($m,procGUI)   EditorBuildGUI
@@ -125,7 +125,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.72 $} {$Date: 2004/03/15 21:04:46 $}]
+        {$Revision: 1.73 $} {$Date: 2004/04/13 21:00:05 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)

@@ -84,7 +84,7 @@ proc VolumesInit {} {
     # Module Summary Info
     set Module($m,overview) "Load/display 3d volumes (grayscale or label) in the slicer."
     set Module($m,author) "Core"
-    set Module($m,category) [lindex $Module(categories) 0]
+    set Module($m,category) "IO"
 
     # Define Procedures
     set Module($m,procGUI)  VolumesBuildGUI
@@ -101,7 +101,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.94 $} {$Date: 2004/04/08 16:10:33 $}]
+            {$Revision: 1.95 $} {$Date: 2004/04/13 21:00:11 $}]
 
     # Props
     set Volume(propertyType) VolBasic

@@ -87,7 +87,7 @@ proc LocatorInit {} {
     # Module Summary Info
     set Module($m,overview) "Surgical guidance in the MRT (tracked locator)."
     set Module($m,author) "Core"
-    set Module($m,category) [lindex $Module(categories) 0]
+    set Module($m,category) "Application"
 
     # Define Procedures
     set Module($m,procGUI)   LocatorBuildGUI
@@ -106,7 +106,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.34 $} {$Date: 2004/03/15 21:04:48 $}]
+        {$Revision: 1.35 $} {$Date: 2004/04/13 21:00:06 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"

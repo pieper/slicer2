@@ -76,7 +76,7 @@ proc ViewInit {} {
     # Module Summary Info
     set Module($m,overview) "Settings for 3D View, stereo, make movies."
     set Module($m,author) "Core"
-    set Module($m,category) [lindex $Module(categories) 0]
+    set Module($m,category) "Visualisation"
 
     # Define Procedures
     set Module($m,procGUI) ViewBuildGUI
@@ -87,7 +87,7 @@ proc ViewInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.39 $} {$Date: 2004/03/15 21:04:52 $}]
+        {$Revision: 1.40 $} {$Date: 2004/04/13 21:00:11 $}]
 }
 
 #-------------------------------------------------------------------------------

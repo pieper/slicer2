@@ -105,7 +105,7 @@ proc VolumeMathInit {} {
     #   and under Help->Module Credits
     set Module($m,overview) "Math on volumes: addition, etc."
     set Module($m,author) "Samson Timoner, MIT AI Lab, samson@bwh.harvard.edu"
-    set Module($m,category) [lindex $Module(categories) 1]
+    set Module($m,category) "Measurement"
 
     # Define Procedures
     #------------------------------------
@@ -160,7 +160,7 @@ proc VolumeMathInit {} {
     #   appropriate info when the module is checked in.
     #   
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.36 $} {$Date: 2004/03/15 21:04:52 $}]
+        {$Revision: 1.37 $} {$Date: 2004/04/13 21:00:11 $}]
 
     # Initialize module-level variables
     #------------------------------------

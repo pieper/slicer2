@@ -99,7 +99,7 @@ proc SessionLogInit {} {
 
     # Module Summary Info
     set Module($m,overview) "Logging of Editor sessions."
-    set Module($m,category)  [lindex $Module(categories) 0]
+    set Module($m,category)  "Segmentation"
     set Module($m,author) "Core"
 
     # Register procedures that will be called 
@@ -119,7 +119,7 @@ proc SessionLogInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.17 $} {$Date: 2004/03/15 21:04:50 $}]
+        {$Revision: 1.18 $} {$Date: 2004/04/13 21:00:10 $}]
 
     # Initialize module-level variables
     set SessionLog(fileName)  ""

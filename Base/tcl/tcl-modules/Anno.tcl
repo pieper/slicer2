@@ -59,7 +59,7 @@ proc AnnoInit {} {
     # Module Summary Info
     set Module($m,overview) "Show/hide/change slice window text and 3d box."
     set Module($m,author) "Dave Gering, MIT, gering@ai.mit.edu"
-    set Module($m,category) [lindex $Module(categories) 0]
+    set Module($m,category) "Settings"
 
     # Define Procedures
     set Module($m,procGUI) AnnoBuildGUI
@@ -69,7 +69,7 @@ proc AnnoInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.21 $} {$Date: 2004/03/15 20:48:09 $}]
+        {$Revision: 1.22 $} {$Date: 2004/04/13 21:00:02 $}]
 }
 
 #-------------------------------------------------------------------------------

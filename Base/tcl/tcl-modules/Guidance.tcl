@@ -80,7 +80,7 @@ proc GuidanceInit {} {
     #------------------------------------
     set Module($m,overview) "Surgical planning: slice reformatting along trajectories."
     set Module($m,author) "David Gering, MIT AI Lab"
-    set Module($m,category) [lindex $Module(categories) 0]
+    set Module($m,category) "Application"
 
     # Define Procedures
     set Module($m,procGUI) GuidanceBuildGUI
@@ -91,7 +91,7 @@ proc GuidanceInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.20 $} {$Date: 2004/03/15 21:04:47 $}]
+        {$Revision: 1.21 $} {$Date: 2004/04/13 21:00:06 $}]
 
     # Target
     set Target(idList) "0 1"

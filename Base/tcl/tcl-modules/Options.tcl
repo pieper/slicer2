@@ -71,12 +71,12 @@ proc OptionsInit {} {
     # Define Dependencies
     set Module($m,depend) ""
     set Module($m,author) "Core"
-    set Module($m,category) [lindex $Module(categories) 0]
+    set Module($m,category) "Settings"
     set Module($m,overview) "Select the Modules to load next time you start Slicer"
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.21 $} {$Date: 2004/03/15 21:04:50 $}]
+        {$Revision: 1.22 $} {$Date: 2004/04/13 21:00:09 $}]
 
     # Module Summary Info
     set Module($m,overview) "Save User Preferences to Options.xml file."
