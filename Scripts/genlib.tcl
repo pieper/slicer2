@@ -141,18 +141,25 @@ if { [file exists $localvarsfile] } {
     exit 1
 }
 
-#initialize Windows and Darwin platform variables
+#initialize platform variables
 switch $tcl_platform(os) {
-    "SunOS" -
+    "SunOS" {
+        set isSolaris 1
+        set isWindows 0
+        set isDarwin 0
+    }
     "Linux" { 
+        set isSolaris 0
         set isWindows 0
         set isDarwin 0
     }
     "Darwin" { 
+        set isSolaris 0
         set isWindows 0
         set isDarwin 1
     }
     default { 
+        set isSolaris 0
         set isWindows 1
         set isDarwin 0
     }
@@ -240,7 +247,12 @@ if { ![file exists $CMAKE] } {
         runcmd cvs -z3 -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $cmakeTag CMake
 
         cd $CMAKE_PATH
-        runcmd $SLICER_LIB/CMake/bootstrap
+        if { $isSolaris } {
+            # make sure to pick up curses.h in /local/os/include
+            runcmd $SLICER_LIB/CMake/bootstrap --init=$SLICER_HOME/Scripts/spl.cmake.init
+        } else {
+            runcmd $SLICER_LIB/CMake/bootstrap
+        } 
         eval runcmd $::MAKE
     }
 }
@@ -401,12 +413,14 @@ if { ![file exists $gslTestFile] } {
 
     cd $SLICER_LIB/gsl-build
 
-    runcmd cvs -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl login         
-    runcmd cvs -z3 -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl co -r $gslTag gsl
+    runcmd cvs -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
+    runcmd cvs -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co gsl-mirror
+    #    runcmd cvs -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl login
+    #    runcmd cvs -z3 -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl co -r $gslTag gsl
 
     if { !$isWindows } {
         # can't do Windows
-        cd $SLICER_LIB/gsl-build/gsl
+        cd $SLICER_LIB/gsl-build/gsl-mirror
 
         if { $isDarwin } {
             # equivalent of autogen.sh for Darwin (libtoolize => glibtoolize)    
@@ -415,7 +429,16 @@ if { ![file exists $gslTestFile] } {
             runcmd automake --add-missing --gnu
             runcmd autoconf
         } else {
-            runcmd ./autogen.sh
+            # equivalent of autogen.sh with hack to make autoconf run on Solaris
+            runcmd libtoolize --automake
+            runcmd aclocal
+            runcmd automake --add-missing --gnu
+            if { $isSolaris } {
+                catch "runcmd autoconf -I ."
+                runcmd autoconf -I .
+            } else {
+                runcmd autoconf -I .
+            }
         }   
         runcmd ./configure --prefix=$SLICER_LIB/gsl
         runcmd touch doc/version-ref.texi
