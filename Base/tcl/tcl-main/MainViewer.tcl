@@ -62,7 +62,7 @@ proc MainViewerInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainViewer \
-    {$Revision: 1.34 $} {$Date: 2004/02/03 20:52:24 $}]
+    {$Revision: 1.34.4.1 $} {$Date: 2005/03/18 21:20:39 $}]
 
     # Props
     set Gui(midHeight) 1
@@ -416,9 +416,11 @@ proc MainViewerSetMode {{mode ""} {verbose ""}} {
     # set View(mode) if called with an argument
     if {$mode != ""} {
         if {$mode == "Normal" || $mode == "Quad256"  || $mode == "Quad512" \
-            || $mode == "3D" || $mode == "Single512"} {
+            || $mode == "3D" || $mode == "Single512"
+            || $mode == "Single512COR" || $mode == "Single512SAG"} {
             set View(mode) $mode
         } else {
+            if {$::Module(verbose)} { puts "MainViewerSetMode: invalid mode $mode" }
             return
         }   
     }
@@ -527,6 +529,50 @@ proc MainViewerSetMode {{mode ""} {verbose ""}} {
             }
             MainViewerAnno 0 512
         }
+        "Single512COR" {
+            pack $Gui(fTop) $Gui(fBot) -side top -anchor w
+            pack $f.fSlice2 $f.fViewWin -in $Gui(fTop) -side left -anchor n
+            pack $f.fSlice0 $f.fSlice1  -in $Gui(fBot) -side left -anchor w
+
+            wm geometry .tViewer 768x768
+            $Gui(fViewWin) config -width 256 -height 256
+            $Gui(fSl2Win)  config -width 512 -height 512
+            $Gui(fSl1Win)  config -width 256 -height 256
+            $Gui(fSl0Win)  config -width 256 -height 256
+
+            # Delphine
+            MainViewerAddViewsSeparation 256 256
+
+
+            # Show the control thumbnails on top of the slice images
+            foreach s $Slice(idList) {
+                raise $Gui(fSlice$s).fThumb
+                MainViewerAnno $s 256
+            }
+            MainViewerAnno 2 512
+        }
+        "Single512SAG" {
+            pack $Gui(fTop) $Gui(fBot) -side top -anchor w
+            pack $f.fSlice1 $f.fViewWin -in $Gui(fTop) -side left -anchor n
+            pack $f.fSlice0 $f.fSlice2  -in $Gui(fBot) -side left -anchor w
+
+            wm geometry .tViewer 768x768
+            $Gui(fViewWin) config -width 256 -height 256
+            $Gui(fSl1Win)  config -width 512 -height 512
+            $Gui(fSl0Win)  config -width 256 -height 256
+            $Gui(fSl2Win)  config -width 256 -height 256
+
+            # Delphine
+            MainViewerAddViewsSeparation 256 256
+
+
+            # Show the control thumbnails on top of the slice images
+            foreach s $Slice(idList) {
+                raise $Gui(fSlice$s).fThumb
+                MainViewerAnno $s 256
+            }
+            MainViewerAnno 1 512
+        }
     }
     # Double the slice size in 512 mode
 
@@ -546,6 +592,22 @@ proc MainViewerSetMode {{mode ""} {verbose ""}} {
             Slicer SetCursorPosition $s 128 128
         }
         set s 0
+        Slicer SetDouble $s 1
+        Slicer SetCursorPosition $s 256 256
+    } elseif {$View(mode) == "Single512COR"} {
+        foreach s $Slice(idList) {
+            Slicer SetDouble $s 0
+            Slicer SetCursorPosition $s 128 128
+        }
+        set s 2
+        Slicer SetDouble $s 1
+        Slicer SetCursorPosition $s 256 256
+    } elseif {$View(mode) == "Single512SAG"} {
+        foreach s $Slice(idList) {
+            Slicer SetDouble $s 0
+            Slicer SetCursorPosition $s 128 128
+        }
+        set s 1
         Slicer SetDouble $s 1
         Slicer SetCursorPosition $s 256 256
     }
