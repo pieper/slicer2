@@ -32,15 +32,32 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 class VTK_EXPORT vtkMathUtils : public vtkObject
 {
-public:
+  public:
   static vtkMathUtils *New() {return new vtkMathUtils;};
   const char *GetClassName() {return "vtkMathUtils";};
-
+  
   static int PrincipalMomentsAndAxes( vtkPoints *Points, vtkScalars *Weights,
                                       vtkScalars *Values, vtkVectors *Vectors );
   static int AlignPoints( vtkPoints *Data, vtkPoints *Ref,
                           vtkMatrix4x4 *Xform );
   static void SVD3x3( float A[][3], float U[][3], float W[], float V[][3] );
+  
+  // Description:
+  // Outer product of two 3-vectors.
+  static void Outer3(float x[3], float y[3], float A[3][3]);
+
+  // Description:
+  // Outer product of two 2-vectors.
+  static void Outer2(float x[2], float y[2], float A[2][2]);
+
+  // Description:
+  // General matrix multiplication.  You must allocate
+  // output storage.
+  static void MatrixMultiply(double **A, double **B, double **C, int rowA, 
+			     int colA, int rowB, int colB);
+  // Description:
+  // Dump matrix contents to cout
+  static void PrintMatrix(double **A, int rowA, int colA);
 };
 
 #endif

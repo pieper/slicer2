@@ -203,9 +203,11 @@ int vtkMathUtils::AlignPoints( vtkPoints *Data, vtkPoints *Ref,
   return( 0 );
   }
 
+#ifdef VTK_LINK_TO_EXTERNAL_SVD
 extern "C" { // SVD from Numerical Recipes in C
 void svdcmp( float **a, int m, int n, float w[], float **v );
 }
+#endif
 
 // 
 // Singular value decomposition: A = U*diag(W)*Vt
@@ -229,5 +231,79 @@ void vtkMathUtils::SVD3x3( float A[][3], float U[][3], float W[], float V[][3] )
     }
   W1 = &W[0] - 1;
 
+#ifdef VTK_LINK_TO_EXTERNAL_SVD
   svdcmp( &U1[0]-1, 3, 3, W1, &V1[0]-1 );
+#else
+  cout << "look for and define VTK_LINK_TO_EXTERNAL_SVD in vtkMathUtils"
+       << endl;
+#endif
   }
+
+void vtkMathUtils::Outer3(float x[3], float y[3], float A[3][3])
+{
+  for (int i=0; i < 3; i++)
+    {
+      for (int j=0; j < 3; j++)
+	{
+	  A[i][j] = x[i]*y[j];
+	}
+    }
+}
+
+void vtkMathUtils::Outer2(float x[2], float y[2], float A[2][2])
+{
+  for (int i=0; i < 2; i++)
+    {
+      for (int j=0; j < 2; j++)
+	{
+	  A[i][j] = x[i]*y[j];
+	}
+    }
+}
+
+static void vtkMathUtils::MatrixMultiply(double **A, double **B, double **C, int rowA, 
+			   int colA, int rowB, int colB)
+{
+  // we need colA == rowB 
+  if (colA != rowB)
+    {
+      vtkGenericWarningMacro("Number of columns of A must match number of rows of B, you know.");
+    }
+  
+  // output matrix is rowA*colB
+
+  // output row 
+  for (int i=0; i < rowA; i++)
+    {
+      // output col
+      for (int j=0; j < colB; j++)
+	{
+	  C[i][j] = 0;
+	  //cout << C[i][j] << " ";
+	  // sum for this point
+	  for (int k=0; k < colA; k++)
+	    {
+	      C[i][j] += A[i][k]*B[k][j];
+	      //cout << A[i][k]*B[k][j] << " ";
+	    }
+	  //cout << "=" << C[i][j] << " ";
+	  //cout << endl;	  
+	}
+    }
+}
+
+static void vtkMathUtils::PrintMatrix(double **A, int rowA, int colA)
+{
+  int j,k;
+
+  for (j = 0; j < rowA; j++)
+    {
+      for (k = 0; k < colA; k++)
+	{
+	  cout << A[j][k] << " ";
+	}
+      cout << endl;
+    }
+
+}
+
