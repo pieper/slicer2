@@ -75,7 +75,7 @@ proc MatricesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.16 $} {$Date: 2000/02/28 17:56:17 $}]
+		{$Revision: 1.17 $} {$Date: 2000/03/06 00:08:05 $}]
 
 	# Props
 	set Matrix(propertyType) Basic
@@ -1148,7 +1148,7 @@ proc MatricesWritePseudoMrmlVolume {fid v} {
 #-------------------------------------------------------------------------------
 proc MatricesAutoRun {} {
 	global Path env Gui Matrix Volume
-
+	
 	# No-can-do on PCs
 	if {$Gui(pc) == 1} {
 		tk_messageBox -message "\
@@ -1201,7 +1201,7 @@ Automatic registration is presently available only on UNIX systems."
 	close $fid
 
 	# Command to run MI
-	set argBin     "[file join $Path(prog) mi-bin]"
+	set argBin     "[file join $Path(program) mi-bin]"
 	set argProgram "[file join $argBin mi]" 
 	set argInput   "[file join $env(PWD) $filename]"
 	set argTmp     "$Path(tmpDir)"
@@ -1305,7 +1305,7 @@ proc MatricesPoll {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MatricesAutoApply {} {
-    global Volume Matrix Gui
+    global Volume Matrix Mrml
 
 	set v $Matrix(volume)
 	if {$v == $Volume(idNone)} {return}
@@ -1313,11 +1313,12 @@ proc MatricesAutoApply {} {
 	# Read transform from mrml file created by MI
 	set filename $Matrix(autoOutput)
 	set dag [MRMLRead $filename]
+
 	if {$dag == "-1"} {
 		tk_messageBox -icon error -message "Failed to read '$filename'"
 		return
 	}
-	set dag [MRMLExpandUrls $dag $Gui(root)]
+	set dag [MRMLExpandUrls $dag $Mrml(dir)]
 	set dag [MRMLComputeRelationships $dag]
 
 	set n [MRMLCountTypeOfNode $dag Transform]
@@ -1331,7 +1332,7 @@ proc MatricesAutoApply {} {
 	set node [MRMLGetNode $dag $i] 
 	set str  [MRMLGetValue $node matrix]
 
-	tk_messageBox -message "str=$str"
+	tk_messageBox -message "Automatic Registration Matrix:$str"
 
 	# Convert str to matrix
 	vtkMatrix4x4 mat
@@ -1349,8 +1350,9 @@ proc MatricesAutoApply {} {
 	mat Delete
 
 	# Change name
-	if {[Matrix($t,node) GetName] == "manual"} {
-		Matrix($t,node) SetName auto
+	set name [Matrix($t,node) GetName]
+	if {[regexp {^manual(.*)} $name match id] == 1} {
+	    Matrix($t,node) SetName auto$id
 	}
 
 	# Allow undo
