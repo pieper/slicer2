@@ -15,7 +15,10 @@ if { [info commands isvolume] == "" } {
     set files {
         collapsablewidget.itk ismodel.tcl isvolume.tcl isframes.tcl
         is3d.tcl isregistration.tcl evaluation-movies.tcl isbutton.tcl 
-        istask.tcl isrange.tcl spinfloat.tcl }
+        istask.tcl isrange.tcl spinfloat.tcl 
+        ismvolumeselector.tcl isvolumeoption.tcl 
+        ismatrixoption.tcl istransformoption.tcl
+    }
         
     foreach f $files {
         source $PACKAGE_DIR_ISLICER/../../../tcl/$f
