@@ -67,7 +67,7 @@ proc ModelMakerInit {} {
 
         # Set Version Info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.18 $} {$Date: 2000/02/22 16:30:17 $}]
+		{$Revision: 1.19 $} {$Date: 2000/02/22 16:46:21 $}]
 
 	# Create
 	set ModelMaker(idVolume) $Volume(idNone)
@@ -258,7 +258,8 @@ Models are fun. Do you like models, Ron?
 	eval {label $f.lTitle -text "Apply an Effect"} $Gui(WTA)
 	frame $f.fSmooth  -bg $Gui(activeWorkspace)
 	frame $f.fReverse -bg $Gui(activeWorkspace)
-	pack $f.lTitle $f.fSmooth $f.fReverse -side top -pady $Gui(pad)
+	# BUG: Reverse doesn't seem to be working yet, so I've stripped it.
+	pack $f.lTitle $f.fSmooth -side top -pady $Gui(pad)
 
 	set Param Smooth
 	set ff $f.fSmooth
