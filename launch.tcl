@@ -67,7 +67,7 @@ if {$::env(SLICER_CUSTOM_CONFIG) != "true"} {
 }
 # The environment variables that we need to have set for slicer 
 # to start up properly
-set envVars {VTK_DIR VTK_SRC_DIR ITK_BINARY_PATH TCL_BIN_DIR TCL_LIB_DIR}
+set envVars {VTK_DIR VTK_SRC_DIR ITK_BINARY_PATH TCL_BIN_DIR TCL_LIB_DIR GSL_LIB_DIR}
 # Make up a list of the environment variables that haven't been set already,
 # that we need to set
 set envVarsToSet {}
@@ -143,21 +143,24 @@ foreach v $envVars {
 # 
 if {$::env(BUILD) == $solaris || 
     $::env(BUILD) == $linux} {
-        # add vtk, slicer, and tcl bins
+        # add vtk, gsl, slicer, and tcl bins
         set ::env(LD_LIBRARY_PATH) $::env(VTK_DIR)/bin:$::env(LD_LIBRARY_PATH)
         set ::env(LD_LIBRARY_PATH) $::env(ITK_BINARY_PATH)/bin:$::env(LD_LIBRARY_PATH)
+        set ::env(LD_LIBRARY_PATH) $::env(GSL_LIB_DIR):$::env(LD_LIBRARY_PATH)
         set ::env(LD_LIBRARY_PATH) $::env(SLICER_HOME)/Base/builds/$::env(BUILD)/bin:$::env(LD_LIBRARY_PATH)
         set ::env(LD_LIBRARY_PATH) $::env(TCL_LIB_DIR):$::env(LD_LIBRARY_PATH)
     } elseif {$::env(BUILD) ==  $darwin} { 
-        # add vtk, slicer, and tcl bins
+        # add vtk, gsl, slicer, and tcl bins
         set ::env(DYLD_LIBRARY_PATH) $::env(VTK_DIR)/bin:$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(ITK_BINARY_PATH)/bin:$::env(DYLD_LIBRARY_PATH)
+        set ::env(DYLD_LIBRARY_PATH) $::env(GSL_LIB_DIR):$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(SLICER_HOME)/Base/builds/$::env(BUILD)/bin:$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(TCL_LIB_DIR):$::env(DYLD_LIBRARY_PATH)
     } elseif {$::env(BUILD) == $windows} {
-        # add vtk, slicer, and tcl bins
+        # add vtk, gsl, slicer, and tcl bins
         set ::env(Path) $::env(VTK_DIR)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
         set ::env(Path) $::env(ITK_BINARY_PATH)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
+        set ::env(Path) $::env(GSL_LIB_DIR)\;$::env(Path)
         set ::env(Path) $::env(SLICER_HOME)/Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
         set ::env(Path) $::env(TCL_BIN_DIR)\;$::env(Path)
     } else {
@@ -325,27 +328,33 @@ foreach a $argv {
 set argv $newargv
 
 if {$::env(BUILD) == $solaris || 
-    $::env(BUILD) == $darwin ||
-    $::env(BUILD) == $linux} {
+    $::env(BUILD) == $darwin} {
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix
         # - don't put process in background so that jdemo can track its status
         regsub -all "{|}" $argv "\\\"" argv
         set fp [open "| csh -c \"$::env(VTK_DIR)/bin/vtk $mainscript $argv \" |& cat" r]
+    } elseif {$::env(BUILD) == $linux} {
+        regsub -all "{|}" $argv "\\\"" argv
+        update
+        catch "eval exec \"$::env(VTK_DIR)/bin/vtk $mainscript $argv\"" res
+        puts $res
     } elseif {$::env(BUILD) == $windows} {
         # put slicer in the background on windows so it won't be "Not Responding" in
         # task manager
         regsub -all "{|}" $argv "" argv
-        set fp [open "| \"$::env(TCL_BIN_DIR)/wish84.exe\" $mainscript $argv" r]
+        set fp [open "| \"$::env(TCL_BIN_DIR)/wish84.exe\" \"$mainscript\" $argv" r]
     } else {
         puts stderr "Run: Unknown build: $::env(BUILD)"
         exit
     }
 
-fileevent $fp readable "file_event $fp"
-
-set END 0
-while { ![catch "pid $fp"] && ![eof $fp] } {
-    vwait END
+if {[info exists fp]} {
+    fileevent $fp readable "file_event $fp"
+    
+    set END 0
+    while { ![catch "pid $fp"] && ![eof $fp] } {
+        vwait END
+    }
 }
 
 exit
