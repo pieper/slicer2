@@ -84,7 +84,7 @@ proc VolAnalyzeBuildGUI {parentFrame} {
 
     set f $parentFrame.fVolume
 
-    DevAddFileBrowse $f Volume "VolAnalyze,FileName" "Analyze File:" "VolAnalyzeSetFileName" "hdr" "\$Volume(DefaultDir)" "Open" "Browse for a Analyze file (.hdr that has matching .img)" 
+    DevAddFileBrowse $f Volume "VolAnalyze,FileName" "Analyze File:" "VolAnalyzeSetFileName" "hdr" "\$Volume(DefaultDir)" "Open" "Browse for a Analyze file (.hdr that has matching .img)" "Absolute"
 
     frame $f.fLabelMap -bg $Gui(activeWorkspace)
 
@@ -240,16 +240,19 @@ proc VolAnalyzeApply {} {
         } else {
             # compressed version exists, uncompress and make it the one to read
             set compressed 1
-            set ret [catch "
-                file copy $root.hdr /tmp/$tail.hdr
-                file copy $root.img.gz /tmp/$tail.img.gz
-                exec gunzip /tmp/$tail.img.gz" res]
+            set ret [catch {
+                package require fileutil
+                set tmp [::fileutil::tempdir]
+                file copy $root.hdr $tmp/$tail.hdr
+                file copy $root.img.gz $tmp/$tail.img.gz
+                exec gzip -d $tmp/$tail.img.gz} res]
             if { $ret } {
                 DevErrorWindow $res
                 return
             }
             set Volume(VolAnalyze,FileNameSave) $Volume(VolAnalyze,FileName) 
-            set Volume(VolAnalyze,FileName) /tmp/$tail.hdr
+            set Volume(VolAnalyze,FileName) $tmp/$tail.hdr
+            ## note: the tmp files get deleted at the bottom of this proc
         }
     }
 
@@ -322,6 +325,7 @@ proc VolAnalyzeApply {} {
     Volume($i,node) SetScanOrder $Volume(scanOrder)
     Volume($i,node) SetNumScalars $Volume(numScalars)
     Volume($i,node) SetLittleEndian $Volume(littleEndian)
+    Volume($i,node) SetFileType Analyze$Volume(VolAnalyze,FileType) 
     Volume($i,node) SetFilePrefix [Volume($i,vol,rw) GetFileName] ;# NB: just one file, not a pattern
     Volume($i,node) SetFullPrefix [Volume($i,vol,rw) GetFileName] ;# needed in the range check
     Volume($i,node) SetImageRange [lindex $Volume(imageRange) 0] [lindex $Volume(imageRange) 1]
@@ -384,8 +388,8 @@ proc VolAnalyzeApply {} {
     # Update all fields that the user changed (not stuff that would need a file reread)
 
     if { $compressed } {
-        file delete /tmp/$tail.hdr
-        file delete /tmp/$tail.img
+        file delete $tmp/$tail.hdr
+        file delete $tmp/$tail.img
         set Volume(VolAnalyze,FileName) $Volume(VolAnalyze,FileNameSave) 
     }
 
