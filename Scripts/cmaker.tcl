@@ -22,12 +22,19 @@ exec tclsh "$0" "$@"
 # and get the build working from there.
 #
 
+# set up variables for the OS Builds, to facilitate the move to solaris9
+# can be solaris8 or solaris9
+set solaris "solaris9"
+set linux "redhat7.3"
+set darwin "Darwin"
+set windows "Win32VC7"
+
 switch $tcl_platform(os) {
     "SunOS" {
-        set SLICER_HOME /projects/birn/slicer2/slicer2-2003-09-17
-        set VTK_DIR /projects/birn/slicer2/Lib/solaris8/vtk/VTK-build-2003-09-18
+        set SLICER_HOME /projects/birn/slicer2/slicer2-2003-12-12-solaris9
+        set VTK_DIR /projects/birn/slicer2/Lib/solaris9/vtk/VTK-build-4.2
         set ITK_BINARY_PATH /projects/birn/itk/itk-1.2/itk-build
-        set BUILD solaris8
+        set BUILD $solaris
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
         set GENERATOR "Unix Makefiles"
         set COMPILER "g++"
@@ -37,7 +44,7 @@ switch $tcl_platform(os) {
     "Linux" {
         set SLICER_HOME /home/nicole/slicer2
         set ITK_BINARY_PATH /home/pieper/downloads/itk/itk-build
-        set BUILD redhat7.3
+        set BUILD $linux
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
         set GENERATOR "Unix Makefiles" 
         set COMPILER "g++"
@@ -48,7 +55,7 @@ switch $tcl_platform(os) {
         set SLICER_HOME /Users/pieper/slicer2/latest/slicer2
         set ITK_BINARY_PATH /Users/pieper/downloads/itk/itk-build
         set VTK_SRC_PATH /Users/pieper/downloads/vtk/vtk4.2/VTK-4.2.1
-        set BUILD Darwin
+        set BUILD $darwin
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.dylib
         set GENERATOR "Unix Makefiles" 
         set COMPILER "c++"
@@ -60,7 +67,7 @@ switch $tcl_platform(os) {
         # that if it doesn't match above it must be windows
         # (VC7 is Visual C++ 7.0, also known as the .NET version)
 
-        set BUILD Win32VC7
+        set BUILD $windows
         set SLICER_HOME c:/pieper/bwh/slicer2/latest/slicer2
         set VTK_DIR c:/downloads/vtk/build
         #set VTK_DIR $SLICER_HOME/Lib/$BUILD/vtk/VTK-4.2.2-build
