@@ -108,7 +108,12 @@ in the if statement in Wrapping/Tcl/vtk[ModuleName]/vtk[ModuleName].tcl
 Where vtk[ModuleName].tcl is the entry point for any tcl code associated
 with your module.
 
-* You're ready to build; cd to the builds directory and make a new
+* You're ready to build; you can use Scripts/cmaker.tcl to automatically 
+configure and make your module.
+
+== Steps to build manually (without cmaker.tcl):
+
+* cd to the builds directory and make a new
 directory of the same name as the Slicer build you want to link with.
 For example:
     cd builds /* now you're in /home/halazar/slicer2/Modules/vtkTest/builds */
