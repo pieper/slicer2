@@ -2,6 +2,7 @@
 set __comment__ {
 
     tarup.tcl
+    sp - 2003-05
 
     source this file into a running slicer2.1 to make a distribution 
     copy of slicer in a new directory based on the currently loaded Modules.
@@ -16,6 +17,8 @@ set __comment__ {
     - copies the slicerbase libs and wrapping files
     - copies each of the modules libs and wrapping files
     - removes CVS dirs that have been copied by accident
+    - makes a .tar.gz or a .zip of the resulting distribution
+    - TODO: uploads to a web site for distribution
 
     It does all this while taking into account platform differences in naming schemes
     and directory layouts.
@@ -26,9 +29,29 @@ proc tarup { {destdir "auto"} } {
     set cwd [pwd]
     cd $::env(SLICER_HOME)
 
+    set exe ""
+    switch $::env(BUILD) {
+        "solaris8" { set target solaris-sparc }
+        "Darwin" { set target darwin-ppc }
+        "redhat7.3" { set target linux-x86 }
+        "Win32VC7" { set target win32 ; set exe .exe}
+    }
+
     if { $destdir == "auto" } {
-        # eventually make automatic dirname with date (once I decide where it should go)
-        error "please select destination directory"
+        if { [info exists ::env(TMPDIR)] } {
+            set destdir [file normalize $::env(TMPDIR)]
+        } else {
+            if { [info exists ::env(TMP)] } {
+                set destdir [file normalize $::env(TMP)]
+            } else {
+                switch $::env(BUILD) {
+                    "solaris8" - "Darwin" - "redhat7.3" { set destdir /var/tmp }
+                    "Win32VC7" { set destdir c:/Temp }
+                }
+            }
+        }
+        set date [clock format [clock seconds] -format %Y-%m-%d]
+        set destdir $destdir/slicer$::SLICER(version)-$target-$date
     }
 
     puts "Creating distribution in $destdir..."
@@ -44,13 +67,7 @@ proc tarup { {destdir "auto"} } {
     # grab the top-level files - the launch executable and script
     #
     puts " -- copying launcher files"
-    switch $::env(BUILD) {
-        "solaris8" { set launcher slicer2-solaris-sparc }
-        "Darwin" { set launcher slicer2-darwin-ppc }
-        "redhat7.3" { set launcher slicer2-linux-x86 }
-        "Win32VC7" { set launcher slicer2-win32.exe }
-    }
-    file copy $launcher $destdir
+    file copy slicer2-$target$exe $destdir
     file copy launch.tcl $destdir
 
     #
@@ -233,6 +250,38 @@ proc tarup { {destdir "auto"} } {
 
     foreach cvsdir [rglob $destdir CVS] {
         file delete -force $cvsdir
+    }
+
+    #
+    # make an archive of the new directory at the same level
+    # with the destination
+    #
+    cd $destdir/..
+    set archroot [file tail $destdir]
+    switch $::env(BUILD) {
+        "solaris8" {
+            exec gtar cvfz $archroot.tar.gz $archroot
+        }
+        "redhat7.3" - 
+        "Darwin" {
+            exec tar cvfz $archroot.tar.gz $archroot
+        }
+        "Win32VC7" { 
+            puts " -- making $archroot.zip"
+            exec zip -r $archroot.zip $archroot
+        }
+    }
+
+    puts " -- upload to birn rack"
+    switch $::env(BUILD) {
+        "solaris8" -
+        "redhat7.3" - 
+        "Darwin" {
+            exec xterm -e "scp $archroot.tar.gz pieper@gpop:slicer-dist" 
+        }
+        "Win32VC7" { 
+            exec rxvt -e scp $archroot.zip pieper@gpop:slicer-dist
+        }
     }
 
     cd $cwd
