@@ -338,7 +338,8 @@ void vtkMrmlVolumeNode::SetScanOrder(char *s)
     return;
   }
   if (!strcmp(s,"SI") || !strcmp(s,"IS") || !strcmp(s,"LR") || 
-      !strcmp(s,"RL") || !strcmp(s,"AP") || !strcmp(s,"PA")) 
+      !strcmp(s,"RL") || !strcmp(s,"AP") || !strcmp(s,"PA") ||
+      !strcmp(s,"ER")) 
   { 
     if (this->ScanOrder)
     {
@@ -350,7 +351,7 @@ void vtkMrmlVolumeNode::SetScanOrder(char *s)
   }
   else
   {
-    vtkErrorMacro(<< "SetScanOrder: must be SI,IS,LR,RL,AP,or PA");
+    vtkErrorMacro(<< "SetScanOrder: must be SI,IS,LR,RL,AP,PA,or ER");
   }
 }
 
