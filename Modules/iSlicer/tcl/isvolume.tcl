@@ -202,6 +202,7 @@ itcl::body isvolume::constructor {args} {
     $_ren AddActor2D $_actor
 
     # for reslicing
+
     set _ijkmatrix ::ijkmatrix_$_name
     set _reslice ::reslice_$_name
     set _xform ::xform_$_name
@@ -217,6 +218,8 @@ itcl::body isvolume::constructor {args} {
     vtkTransform $_xform
     vtkImageChangeInformation $_changeinfo
     $_changeinfo CenterImageOn
+
+    puts $_reslice
 
 
     #
@@ -283,6 +286,9 @@ itcl::configbody isvolume::volume {
         error "bad volume id"
     }
     set id $_volidmap($itk_option(-volume))
+    puts "option $itk_option(-volume)"
+    puts "id $id"
+    puts "name [Volume($id,node) GetName]"
 
     if { $itk_option(-volume) == "" || $itk_option(-volume) == "None" } {
         $_changeinfo SetInput $_None_ImageData 
@@ -291,6 +297,8 @@ itcl::configbody isvolume::volume {
     }
 
     $_reslice SetInput [$_changeinfo GetOutput]
+    puts "after [$_changeinfo GetInput]"
+    puts $_changeinfo
 
     $_mapper SetColorWindow [Volume($id,node) GetWindow]
     $_mapper SetColorLevel [Volume($id,node) GetLevel]
