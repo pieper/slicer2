@@ -18,7 +18,7 @@
 #include <ctime>
 
 
-vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.4 $");
+vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.5 $");
 vtkStandardNewMacro(vtkNormalizedCuts);
 
 
@@ -28,6 +28,7 @@ vtkNormalizedCuts::vtkNormalizedCuts()
 
   this->NumberOfClusters = 2;
   this->NumberOfEigenvectors = this->InternalNumberOfEigenvectors;
+  this->EmbeddingNormalization = ROW_SUM;
 
   this->NormalizedWeightMatrixImage = NULL;
   this->EigenvectorsImage = NULL;
@@ -193,12 +194,39 @@ void vtkNormalizedCuts::ComputeClusters()
       // place entries for this tract into an itk vector
       // skip first eigenvector.
       // TEST put formula here
+
+      double length = 0;
       while (idx2 < this->InternalNumberOfEigenvectors)
     {
       // this was wrong.
       //ev[idx2]=(eigensystem.V[idx1][idx2+1])/rowWeightSum[idx1];
+        
+      if (this->EmbeddingNormalization == LENGTH_ONE)
+    {
+      ev[idx2]=(eigensystem.V[idx1][eigensystem.V.cols()-idx2-1]);
+      length += ev[idx2]*ev[idx2];
+    }
+      else 
+    {
       ev[idx2]=(eigensystem.V[idx1][eigensystem.V.cols()-idx2-1])/rowWeightSum[idx1];
+    }
+
       idx2++;
+    }
+      
+      // If the embedding normalization is by length, normalize now
+      if (this->EmbeddingNormalization == LENGTH_ONE)
+    {
+      length = sqrt(length);
+      if (length == 0)
+        {
+          vtkErrorMacro("0-length embedding vector %d" << idx1);
+          length = 1;
+        }
+      for (idx2 = 0; idx2 < this->InternalNumberOfEigenvectors; idx2++)
+        {
+          ev[idx2]=ev[idx2]/length;
+        }
     }
 
       // put the embedding vector for this tract onto the sample list

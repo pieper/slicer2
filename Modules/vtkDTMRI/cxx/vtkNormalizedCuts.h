@@ -96,6 +96,16 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
   vtkGetObjectMacro(NormalizedWeightMatrixImage, vtkImageData);
   vtkGetObjectMacro(EigenvectorsImage, vtkImageData);
 
+  void SetEmbeddingNormalizationToRowSum()
+    {
+      this->SetEmbeddingNormalization(ROW_SUM);
+    };
+  void SetEmbeddingNormalizationToLengthOne()
+    {
+      this->SetEmbeddingNormalization(LENGTH_ONE);
+    };
+  vtkGetMacro(EmbeddingNormalization,int);
+
  protected:
   vtkNormalizedCuts();
   ~vtkNormalizedCuts() {};
@@ -107,6 +117,11 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
 
   int NumberOfClusters;
   int NumberOfEigenvectors;
+  int EmbeddingNormalization;
+  //BTX
+  enum EmbeddingNormalizationType { ROW_SUM, LENGTH_ONE } ;
+  //ETX
+  vtkSetMacro(EmbeddingNormalization,int);
 
   vtkImageData *NormalizedWeightMatrixImage;
   vtkImageData *EigenvectorsImage;
