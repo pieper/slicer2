@@ -1,14 +1,18 @@
-catch {load vtktcl}
-source vtkImageInclude.tcl
+package require vtk
+package require vtkSlicerBase
 
 # Image pipeline
 
 vtkImageReader reader
 reader ReleaseDataFlagOff
 reader SetDataByteOrderToLittleEndian
-reader SetDataExtent 0 255 0 255 1 93
-reader SetFilePrefix "../../../vtkdata/fullHead/headsq"
+reader SetDataExtent 0 63 0 63 1 93
+reader SetFilePrefix ${VTK_DATA_ROOT}/Data/headsq/quarter
 reader SetDataMask 0x7fff
+
+vtkImageMagnify mag
+  mag SetInput [reader GetOutput]
+  mag SetMagnificationFactors 4 4 1
 
 set nBins 200
 
@@ -16,7 +20,7 @@ vtkLookupTable lut1
   lut1 Build
 
 vtkImageAccumulateDiscrete accum
-  accum SetInput [reader GetOutput]
+  accum SetInput [mag GetOutput]
   accum Update
  
 vtkImageBimodalAnalysis bi
@@ -66,7 +70,7 @@ viewer SetColorWindow 2000
 viewer SetColorLevel 1000
 
 #make interface
-source WindowLevelInterface.tcl
+source [file join [file dirname [info script]] WindowLevelInterface.tcl]
 
 
 
