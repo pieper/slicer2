@@ -27,7 +27,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageConnectivity.h"
 #include "vtkImageLabelChange.h"
 #include "vtkImageFillROI.h"
-#include "vtkImageThresholdBeyond.h"
+#include "vtkImageThreshold.h"
 #include "vtkImageCopy.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageLabelVOI.h"
@@ -62,12 +62,12 @@ vtkImageEditorEffects::~vtkImageEditorEffects()
 void vtkImageEditorEffects::Threshold(float min, float max, 
   float in, float out, int replaceIn, int replaceOut)
 {
-  vtkImageThresholdBeyond *thresh = vtkImageThresholdBeyond::New();
+  vtkImageThreshold *thresh = vtkImageThreshold::New();
+  thresh->ThresholdBetween(min, max);
   thresh->SetReplaceIn(replaceIn);
   thresh->SetReplaceOut(replaceOut);
   thresh->SetInValue(in);
   thresh->SetOutValue(out);
-  thresh->ThresholdBetween(min, max);
 
   this->Apply(thresh, thresh);
 

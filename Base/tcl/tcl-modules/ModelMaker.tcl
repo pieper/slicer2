@@ -67,7 +67,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.34 $} {$Date: 2002/03/21 23:05:26 $}]
+        {$Revision: 1.35 $} {$Date: 2002/05/09 16:17:52 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -800,7 +800,7 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     # But do this only for label maps
 # BUG crashes:    $p ThresholdBetween $Label(label) $ModelMaker(label2)
     set p thresh
-    vtkImageThresholdBeyond $p
+    vtkImageThreshold $p
     $p SetInput [Volume($v,vol) GetOutput]
     $p SetReplaceIn 1
     $p SetReplaceOut 1
