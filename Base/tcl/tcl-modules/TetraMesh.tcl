@@ -144,7 +144,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.15 $} {$Date: 2001/06/07 07:33:08 $}]
+		{$Revision: 1.16 $} {$Date: 2001/06/07 18:43:13 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -704,8 +704,9 @@ $CurrentTetraMesh Update
 #
 # by Samson Timoner
 #
-#  Use of the position matrix causes models to have an origin at one corner
-#  of a volume. Unfortunately, it is not the corner I want!
+#  Use of the position matrix causes models to have an origin in the 
+#  center of a volume. I want it in the corner, in the middle of a voxel
+#  with the coordinate system used in my code:
 #
 #  The coordinate system used in my code is pretty standard:
 #  slices are in row-major order.
@@ -737,13 +738,39 @@ $CurrentTetraMesh Update
 #
 # The only thing that needs to be determined in the translation
 # The y position become the negative x-position
-# We therefore need to grab the y-translation*2
-# Once to undo what was done,once to move it in the correct direction.
+# We therefore need to grab the y-translation*2 that is found in the
+# position matrix.  Once to undo what was done,
+# once to move it in the correct direction.
 # This is 2*PositionMatrix[1][3].
 #
-# Problems: Things may change slightly for gantrytilt, but I don't think
-# so. Also, I'm not sure if I'm taking into account the extent of the
-# first and last voxel properly.
+# DAVE GERING WROTE:
+# For medical reasons, an object that fills a 240 mm
+# Field of View better be 240 mm long, or we all get sued. The
+# PositionMatrix (scaledIJK->RAS) positions the origin exactly in the
+# middle of this field. That would like between voxels in a volume
+# with an even number of voxels across its width, and mid-voxel if
+# odd. 
+# END
+#
+# I want the origin (0,0,0) to be the middle of a voxel, not the
+# corner of a voxel! Thus since my points are already in existance,
+# all I must do is shift all the points by 0.5 voxel.
+#
+# 0 -1 0 2*PositionMatrix[1][3]  
+# 1  0 0 0 
+# 0  0 1 0                       + Translation(Spacex/2,Spacey/2,Spacez/2) 
+# 0  0 1 1
+#
+#
+#
+# 0 -1 0 2*PositionMatrix[1][3] + Spacex/2
+# 1  0 0 Space_y/2 
+# 0  0 1 Space_z/2
+# 0  0 1 1
+#
+#
+# Problems: Things may change slightly for gantry tilt, but I don't think
+# so. The position matrix should take care of that.
 #
 # .ARGS
 #  vtkMrmlVolumeNode n the vtkMrmlVolumeNode
@@ -761,17 +788,23 @@ proc SetModelMoveOriginMatrix {n matrix} {
     $matrix SetElement 3 3  1
 
     # Deal with Offsets
-    $matrix SetElement 1 3 0
+    set Space0 [lindex [$n GetSpacing] 0]
+    set Space1 [lindex [$n GetSpacing] 1]
+    set Space2 [lindex [$n GetSpacing] 2]
 
-    ## To get this offset
-    ## The y position become the negative x-position
-    ## We therefore need to grab the y-translation*2
-    ## Once to undo what was done,once to move it in the correct direction.
-    ## This is 2*PositionMatrix[1][3]
-    set xtrans [ [$n GetPosition] GetElement 1 3 ]
-    set xtrans [expr 2* $xtrans]
+    $matrix SetElement 1 3 [ expr $Space1 * 0.5 ]
+    $matrix SetElement 2 3 [ expr $Space2 * 0.5 ]
+
+    set xtrans [expr 2 * [ [$n GetPosition] GetElement 1 3 ] ]
     puts $xtrans
+    set xtrans [expr $xtrans + $Space0 * 0.5 ]
     $matrix SetElement 0 3 $xtrans
+
+    puts [$matrix GetElement 0 3]
+    puts [$matrix GetElement 1 3]
+    puts [$matrix GetElement 2 3]
+    puts [$matrix GetElement 3 3]
+
 }
 
 #-------------------------------------------------------------------------------
@@ -1199,17 +1232,17 @@ set TetraMeshArrowScale $TetraMesh(ArrowScale)
 #### Setup the pipeline: Cones -> PointMaskSelection -> Glyph data
 #######################################################################
 
-vtkConeSource Cone
-  Cone SetResolution 2
-  Cone SetHeight 1
-  Cone SetRadius 0.15
+vtkConeSource TetraCone
+  TetraCone SetResolution 2
+  TetraCone SetHeight 1
+  TetraCone SetRadius 0.15
 vtkMaskPoints PointSelection
     PointSelection SetInput $CurrentTetraMesh
     PointSelection SetOnRatio $TetraMeshFractionOn
     PointSelection RandomModeOff
 vtkGlyph3D VectorGlyph
   VectorGlyph SetInput [PointSelection GetOutput]
-  VectorGlyph SetSource [Cone GetOutput]
+  VectorGlyph SetSource [TetraCone GetOutput]
   VectorGlyph SetScaleFactor $TetraMeshArrowScale
 
   ######################################################################
@@ -1253,7 +1286,7 @@ foreach r $Module(Renderers) {
 TheTransform Delete
 TransformPolyData Delete
 TetraReader Delete
-Cone Delete
+TetraCone Delete
 PointSelection Delete
 VectorGlyph Delete
 
