@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.67 $} {$Date: 2004/01/26 13:45:29 $}]
+    {$Revision: 1.68 $} {$Date: 2004/01/27 18:26:46 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -317,6 +317,10 @@ proc MainVolumesRead {v} {
             }
         }
         "Analyze*" {
+            if { ! [ file exists [Volume($v,node) GetFullPrefix] ] } {
+                DevErrorWindow "Analyze volume does not exist: [Volume($v,node) GetFullPrefix]"
+                return -1
+            }
         }
         default {
             if {[CheckVolumeExists [Volume($v,node) GetFullPrefix] \
@@ -349,10 +353,17 @@ proc MainVolumesRead {v} {
                 default {
                 }
             }
-            anreader SetFileName [Volume($v,node) GetFullPrefix]
+
+
+            set compressed [VolAnalyzeHandleCompressed [Volume($v,node) GetFullPrefix] retfilename]
+
+            anreader SetFileName [file root $retfilename].hdr
             anreader Update
             Volume($v,vol) SetImageData [anreader GetOutput]
             anreader Delete
+            if { $compressed } {
+                VolAnalyzeCleanupCompressed [Volume($v,node) GetFullPrefix] 
+            }
         }
         default {
             Volume($v,vol) Read

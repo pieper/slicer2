@@ -230,31 +230,11 @@ proc VolAnalyzeApply {} {
     #
     # if this is a compressed image file, uncompress to tmp dir and read from there
     #
-    set compressed 0
-    set root [file root $Volume(VolAnalyze,FileName)]
-    set tail [file tail $root]
-    if { ! [file exists $root.img] } {
-        if { ! [file exists $root.img.gz] } {
-            DevErrorWindow "Can't find $root.img or $root.img.gz"
-            return
-        } else {
-            # compressed version exists, uncompress and make it the one to read
-            set compressed 1
-            set ret [catch {
-                set tmp [VolAnalyzetempdir]
-                file copy $root.hdr $tmp/$tail.hdr
-                file copy $root.img.gz $tmp/$tail.img.gz
-                exec gzip -d $tmp/$tail.img.gz} res]
-            if { $ret } {
-                DevErrorWindow $res
-                return
-            }
-            set Volume(VolAnalyze,FileNameSave) $Volume(VolAnalyze,FileName) 
-            set Volume(VolAnalyze,FileName) $tmp/$tail.hdr
-            ## note: the tmp files get deleted at the bottom of this proc
-        }
+    set compressed [VolAnalyzeHandleCompressed $Volume(VolAnalyze,FileName) retfilename]
+    if { $compressed } {
+        set Volume(VolAnalyze,FileNameSave) $Volume(VolAnalyze,FileName)  
+        set Volume(VolAnalyze,FileName) [file root $retfilename].hdr
     }
-
 
     # add a mrml node
     set n [MainMrmlAddNode Volume]
@@ -367,9 +347,6 @@ proc VolAnalyzeApply {} {
     # set active volume on all menus
     MainVolumesSetActive $i
 
-    # save the id for later use
-    set m $i
-
     # if we are successful set the FOV for correct display of this volume
     set dim     [lindex [Volume($i,node) GetDimensions] 0]
     set spacing [lindex [Volume($i,node) GetSpacing] 0]
@@ -384,17 +361,54 @@ proc VolAnalyzeApply {} {
         MainSlicesSetVolumeAll Back $i
     }
 
-    # Update all fields that the user changed (not stuff that would need a file reread)
-
     if { $compressed } {
-        file delete $tmp/$tail.hdr
-        file delete $tmp/$tail.img
+        VolAnalyzeCleanupCompressed $Volume(VolAnalyze,FileNameSave)
         set Volume(VolAnalyze,FileName) $Volume(VolAnalyze,FileNameSave) 
+        Volume($i,node) SetFilePrefix $Volume(VolAnalyze,FileNameSave)
+        Volume($i,node) SetFullPrefix $Volume(VolAnalyze,FileNameSave)
     }
 
     return $i
 }
 
+proc VolAnalyzeHandleCompressed {filename rfilename} {
+
+    upvar $rfilename retfilename
+    set retfilename $filename
+    set compressed 0
+    set root [file root $filename]
+    set tail [file tail $root]
+    if { ! [file exists $root.img] } {
+        if { ! [file exists $root.img.gz] } {
+            DevErrorWindow "Can't find $root.img or $root.img.gz"
+            return -1
+        } else {
+            # compressed version exists, uncompress and make it the one to read
+            set compressed 1
+            set ret [catch {
+                set tmp [VolAnalyzetempdir]
+                file copy -force $root.hdr $tmp/$tail.hdr
+                file copy -force $root.img.gz $tmp/$tail.img.gz
+                exec gzip -df $tmp/$tail.img.gz} res]
+            if { $ret } {
+                DevErrorWindow $res
+                return -1
+            }
+            ## note: the tmp files get deleted by the next proc
+            set retfilename $tmp/$tail.img
+        }
+    }
+    return $compressed
+}
+
+proc VolAnalyzeCleanupCompressed { filename } {
+
+    set tmp [VolAnalyzetempdir]
+    set root [file root $filename]
+    set tail [file tail $root]
+    file delete $tmp/$tail.hdr
+    file delete $tmp/$tail.img
+}
 
 #-------------------------------------------------------------------------------
 # .PROC VolAnalyzeMainFileCloseUpdate
