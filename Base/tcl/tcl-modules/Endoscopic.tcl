@@ -3558,9 +3558,8 @@ proc EndoscopicFiducialsPointSelectedCallback {fid pid} {
     if {[Fiducials($fid,node) GetType] == "endoscopic" } {
         EndoscopicResetCameraDirection    
         EndoscopicUpdateVirtualEndoscope $Endoscopic(activeCam) [concat [Point($pid,node) GetXYZ] [Point($pid,node) GetFXYZ]]
-    } 
-     else {
-     look at the point instead
+    } else {
+     # look at the point instead
      EndoscopicResetCameraDirection    
      EndoscopicUpdateVirtualEndoscope $Endoscopic(activeCam) [concat [Point($pid,node) GetFXYZ] [Point($pid,node) GetXYZ]]
     }
