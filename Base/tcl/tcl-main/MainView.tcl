@@ -80,7 +80,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
     set m MainView
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.48 $} {$Date: 2004/03/01 15:48:06 $}]
+    {$Revision: 1.49 $} {$Date: 2004/07/22 15:55:07 $}]
 
     set View(viewerHeightNormal) 656
     set View(viewerWidth)  956 
@@ -450,6 +450,9 @@ proc MainViewSetBackgroundColor {{col ""}} {
 proc MainViewSetFov {} {
     global View Gui Slice
 
+    if {$::Module(verbose)} {
+        puts "MainViewSetFov View(fov) = $View(fov)"
+    }
     Slicer SetFieldOfView $View(fov)
     MainViewNavReset 55 42 click
     MainViewNavReset 0 0 leave
