@@ -200,8 +200,10 @@ proc MainInteractorCursor {s xs ys x y} {
 			}
 		}
 		if {[info command Anno($s,curBack,mapper)] != ""} {
-			Anno($s,curBack,mapper) SetInput [format "Bg %d" $backPix]
-			Anno($s,curFore,mapper) SetInput [format "Fg %d" $forePix]
+			Anno($s,curBack,mapper) SetInput \
+				[format "Bg $Anno(pixelDispFormat)" $backPix]
+			Anno($s,curFore,mapper) SetInput \
+				[format "Fg $Anno(pixelDispFormat)" $forePix]
 		}
 	} else {
 		foreach name "$Anno(mouseList)" {

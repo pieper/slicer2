@@ -50,7 +50,7 @@ proc MainAnnoInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainAnno \
-		{$Revision: 1.13 $} {$Date: 2001/04/02 20:20:28 $}]
+		{$Revision: 1.14 $} {$Date: 2002/01/26 21:45:23 $}]
 
 	# Preset Defaults
 	set Module(Anno,presets) "box='1' axes='0' outline='0' letters='1' cross='1'\
@@ -73,6 +73,8 @@ hashes='1' mouse='1'"
 	set Anno(letterSize) 0.05
 	set Anno(cursorMode) RAS
 	set Anno(cursorModePrev) RAS
+	# default display of floating point pixel values
+	set Anno(pixelDispFormat) %.f
 
 	if {$Gui(smallFont) == 0} {
 		set Anno(fontSize) 16

@@ -50,7 +50,7 @@ proc AnnoInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.12 $} {$Date: 2001/02/19 17:53:27 $}]
+		{$Revision: 1.13 $} {$Date: 2002/01/26 21:45:23 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -148,8 +148,9 @@ Note that there is 3D annotation and 2D annotation for the slice windows.
 
 	# Frames
 	frame $f.fCoords -bg $Gui(activeWorkspace)
+	frame $f.fPrecision -bg $Gui(activeWorkspace)
 	frame $f.fFollow -bg $Gui(activeWorkspace)
-	pack $f.fCoords $f.fFollow -side top -pady $Gui(pad)
+	pack $f.fCoords $f.fPrecision $f.fFollow -side top -pady $Gui(pad)
 
 	#-------------------------------------------
 	# Mode->Coords frame
@@ -163,6 +164,22 @@ Note that there is 3D annotation and 2D annotation for the slice windows.
 			-text "$mode" -variable Anno(cursorMode) -value $mode \
 			-indicatoron 0} $Gui(WCA)
 		pack $f.f.r$mode -side left -padx 0 -pady 0
+	}
+	pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
+
+	#-------------------------------------------
+	# Mode->Precision frame
+	#-------------------------------------------
+	set f $fMode.fPrecision
+
+	eval {label $f.l -text "Pixel Display:"} $Gui(WLA)
+	frame $f.f -bg $Gui(activeWorkspace)
+	foreach button "int flt full" mode "%.f %6.2f %f" text "1 1.00 full" {
+		eval {radiobutton $f.f.r$button -width 4 \
+			-text "$text" -variable Anno(pixelDispFormat) \
+			-value $mode \
+			-indicatoron 0} $Gui(WCA)
+		pack $f.f.r$button -side left -padx 0 -pady 0
 	}
 	pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
 
