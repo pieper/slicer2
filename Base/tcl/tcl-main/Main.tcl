@@ -455,7 +455,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.107 $} {$Date: 2004/04/13 20:48:51 $}]
+        {$Revision: 1.108 $} {$Date: 2004/04/14 18:17:36 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -2083,8 +2083,15 @@ proc MainBuildCategoryIDLists {} {
 proc MainBuildCategoryMenu {} {
     global Module Gui
 
-    # remove any current entries
-    $Gui(mModules) delete 0 end
+    if {[info exists Gui(mModules)] == 0} {
+        # build the menu
+        eval {menu .menubar.mModules} $Gui(SMA)
+        set Gui(mModules) .menubar.mModules
+        .menubar add cascade -label Modules -menu .menubar.mModules
+    } else {
+        # remove any current entries
+        $Gui(mModules) delete 0 end
+    } 
 
     foreach category $Module(categories) {
         if {[info exists Module(idList,$category)]} {
