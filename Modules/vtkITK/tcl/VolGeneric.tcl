@@ -38,7 +38,7 @@ proc VolGenericInit {} {
     set e VolGeneric
 
     set Volume(readerModules,$e,name) "Generic Readers"
-    set Volume(readerModules,$e,tooltip) "This tab lets you read in Generic volumes"
+    set Volume(readerModules,$e,tooltip) "This tab lets you read in Generic volumes using the ITK I/O Factory methods"
 
     set Volume(readerModules,$e,procGUI) ${e}BuildGUI
     set Volume(readerModules,$e,procEnter) ${e}Enter
