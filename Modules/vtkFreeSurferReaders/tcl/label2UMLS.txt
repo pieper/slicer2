@@ -113,3 +113,54 @@
 112,Subthalamic Nucleus,C0152355
 113,Putamen,C0034169
 114,Hypothalamus,C0020663
+115,Posterior Cingulate,C0175191
+116,Anterior Cingulate,C0175190
+117,Subcallosal Gyrus,C0175231
+118,Transverse Temporal Gyrus,C0228238
+119,Uncus,C0228252
+120,Rectal Gyrus,C0152300
+121,Fusiform Gyrus,C0152313
+122,Inferior Occipital Gyrus,C0228231
+123,Inferior Temporal Gyrus,C0021640
+124,Insula,C0021640
+125,Parahippocampal Gyrus,C0228249
+126,Lingual Gyrus,C0152308
+127,Middle Occipital Gyrus,C1110642
+128,Orbital Gyrus,C0152301
+129,Middle Temporal Gyrus,C0152310
+130,Superior Temporal Gyrus,C0152309
+131,Superior Occipital Gyrus,C0228230
+132,Precentral Gyrus,C0152299
+133,Inferior Frontal Gyrus,C0152298
+134,Cuneus,C0152307
+135,Angular Gyrus,C0152305
+136,Supramarginal Gyrus,C0228214
+137,Cingulate Gyrus,C0018427
+138,Inferior Parietal Lobule,C0152304
+139,Precuneus,C0152306
+140,Superior Parietal Lobule,C0152303
+141,Middle Frontal Gyrus,C0152297
+142,Paracentral Lobule,C0228203
+143,Postcentral Gyrus,C0152302
+144,Precentral Gyrus,C0152299
+145,Superior Frontal Gyrus,C0152296
+146,Medial Frontal Gyrus,C0458310
+147,Uvula of Vermis,C0546037
+148,Pyramis of Vermis,C0228488
+149,Tuber of Vermis,C0228487
+150,Cerebellar Tonsil,C0152386
+151,Inferior Semi-Lunar Lobule,C0175476
+152,Fastigium,C0262232
+153,Nodule,C0028259
+154,Uvula,C0042173
+155,Pyramis,C0228488
+156,Tuber,C0228487
+157,Declive,C0228484
+158,Culmen,C0152384
+159,Lentiform Nucleus,C0162342
+160,Claustrum,C0008910
+161,Thalamus,C0039729
+162,Caudate,C0458335
+163,Lateral Ventricle,C0152279
+164,Fourth Ventricle,C0149556
+165,Third Ventricle,C0149555
