@@ -140,11 +140,11 @@ proc AlignmentsInit {} {
     set Module($m,fiducialsStartCallback) AlignmentsFiducialsUpdated
 
     # Define Dependencies
-    set Module($m,depend) "MIReg"
+    #set Module($m,depend) "MIReg"
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.21 $} {$Date: 2003/07/16 13:36:47 $}]
+            {$Revision: 1.22 $} {$Date: 2003/07/16 14:06:17 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -1085,18 +1085,15 @@ proc AlignmentsBuildGUI {} {
     ##
     ## Otherwise, don't use it.
 
-    ### bad hack, 
-    ### What I really want is MIReg to load first, if it is loadable.
-    global env
+    set ret [catch "package require vtkMIReg" res]
 
-    catch {source $env(SLICER_HOME)/Modules/vtkMIReg/tcl/MIReg.tcl}
-
-    if {[info commands MIRegBuildSubGui] == ""} {
+    if { $ret } {
         DevAddLabel $f.lbadnews "I'm sorry but the MIReg Module\n is not loaded so that Mutual\n Information Registration is not available."
         pack $f.lbadnews -pady $Gui(pad)
     } else {
         MIRegBuildSubGui $f
     }
+
 
     #-------------------------------------------
     # Minimized Slice Controls used to switch
