@@ -211,9 +211,11 @@ proc VolAnalyzeSetFileName {} {
 # .PROC VolAnalyzeApply
 # Check the file type variable and build the appropriate model or volume
 # .ARGS
+# volPropList a list of properties to be set for the new volume. If it is empty,
+# use the default values.
 # .END
 #-------------------------------------------------------------------------------
-proc VolAnalyzeApply {} {
+proc VolAnalyzeApply {{volPropList ""}} {
     global Module Volume
 
     if {$Module(verbose) == 1} {
@@ -277,16 +279,20 @@ proc VolAnalyzeApply {} {
     set Volume(pixelHeight) [lindex $spc 1]
     set Volume(sliceThickness) [lindex $spc 2]
 
-    set Volume(sliceSpacing) 0
     set Volume(gantryDetectorTilt) 0
     set Volume(numScalars) 1
-    set Volume(littleEndian) 1
-    set Volume(scanOrder) {IS}
     set Volume(scalarType) [$imdata GetScalarTypeAsString]
     set Volume(readHeaders) 0
     set Volume(filePattern) %s
     set Volume(dimensions) "[lindex $dims 0] [lindex $dims 1]"
     set Volume(imageRange) "1 [lindex $dims 2]"
+
+    set so [expr {$volPropList == "" ? {IS} : [lindex $volPropList 0]}]
+    set le [expr {$volPropList == "" ? 1 : [lindex $volPropList 1]}]
+    set sp [expr {$volPropList == "" ? 0 : [lindex $volPropList 2]}]
+    set Volume(scanOrder) $so 
+    set Volume(littleEndian) $le 
+    set Volume(sliceSpacing) $sp 
 
     # set the name and description of the volume
     $n SetName $Volume(name)
@@ -338,12 +344,12 @@ proc VolAnalyzeApply {} {
     set Volume(freeze) 0
 
     # Unfreeze
-    if {$Module(freezer) != ""} {
+    if {$volPropList == "" && $Module(freezer) != ""} {
         set cmd "Tab $Module(freezer)"
         set Module(freezer) ""
         eval $cmd
     }
- 
+
     # set active volume on all menus
     MainVolumesSetActive $i
 
