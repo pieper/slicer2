@@ -62,7 +62,7 @@ proc GuiInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo Gui \
-		{$Revision: 1.18 $} {$Date: 2000/07/24 21:39:30 $}]
+		{$Revision: 1.19 $} {$Date: 2000/07/28 17:31:41 $}]
 
 	if {$tcl_platform(platform) == "windows"} {
 		set Gui(pc) 1
@@ -102,7 +102,7 @@ proc GuiInit {} {
 	set Gui(red)         "200 150 150"
 	set Gui(green)       "150 200 150"
 	set Gui(yellow)      "220 220 100"
-	set Gui(lightYellow) "255 245 204"
+	set Gui(lightYellow) "250 250 200"
 
 	set Gui(backdrop)          [MakeColor $Gui(mediumGray)]
 	set Gui(inactiveWorkspace) [MakeColor $Gui(lightGray)]
