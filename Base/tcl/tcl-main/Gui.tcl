@@ -76,38 +76,24 @@ proc GuiInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo Gui \
-    {$Revision: 1.46 $} {$Date: 2003/03/19 19:16:23 $}]
+    {$Revision: 1.47 $} {$Date: 2003/05/21 19:45:34 $}]
 
 
     # enable tooltips by default.  This should check user preferences somehow.
     TooltipEnable
 
-        # Are we running under Windows?
-    if {$tcl_platform(platform) == "windows"} {
-        set Gui(pc) 1
-    } else {
-        set Gui(pc) 0
-    }
-        # Are we running under Linux?
-    if {$tcl_platform(os) == "Linux"} {
-        set Gui(linux) 1
-    } else {
-        set Gui(linux) 0
-    }
+    # Are we running under Windows?
+    set Gui(pc) [string match $tcl_platform(platform) "windows"]
+    set Gui(linux) [string match $tcl_platform(platform) "Linux"]
     # Else we assume we're under Solaris
 
-    # handle font sizes across machines:
-    set Gui(smallFont) 0
-    set Gui(largeFont) 0
-    if {$Gui(pc) == 1} {
-        # small font for Windows display
-        set Gui(smallFont) 1
-    } else {
-        # make font smaller for Linux display
-        if {$Gui(linux) == 1} {
-        set Gui(smallFont) 1
-        }
-    }
+    # 
+    # set standard font scaling independent of screen size (since some UI elements
+    # have hard-coded sizes, this should even out differences among platforms)
+    # This overrides a dots-per-inch calculation done by Tk at startup
+    #
+    tk scaling 1.25
+    set Gui(smallFont) 1
 
     if {$Gui(pc) == 0} {
         set Gui(xViewer) 254
@@ -276,18 +262,6 @@ proc GuiInit {} {
     # System Menu Attributes (SMA)
     lappend attr SMA 
     set Gui(SMA) { -tearoff 0}
-
-    # Change font to large 
-    if {$Gui(smallFont) == 0} {
-        if {$Gui(largeFont) == 1} {
-        set newfont {helvetica 12 bold} 
-        } else {
-        set newfont {helvetica 10 bold} 
-        }
-        foreach a $attr {
-        regsub {helvetica 8} $Gui($a) $newfont Gui($a)
-        } 
-    }
 
     # Workspace Scrollbar Attributes (WSBA)
     lappend attr WSBA 
@@ -646,23 +620,13 @@ proc ScrolledListbox {f xAlways yAlways {args ""}} {
                 [list grid $f.yscroll -row 0 -column 1 -sticky ns]]
     }
 
-    if {$Gui(smallFont) == 1} {
-        eval {$f.list configure \
-            -font {helvetica 7 bold} \
-            -bg $Gui(normalButton) -fg $Gui(textDark) \
-            -selectbackground $Gui(activeButton) \
-            -selectforeground $Gui(textDark) \
-            -highlightthickness 0 -bd $Gui(borderWidth) \
-            -relief sunken -selectborderwidth $Gui(borderWidth)}
-    } else {
-        eval {$f.list configure \
-            -font {helvetica 8 bold} \
-            -bg $Gui(normalButton) -fg $Gui(textDark) \
-            -selectbackground $Gui(activeButton) \
-            -selectforeground $Gui(textDark) \
-            -highlightthickness 0 -bd $Gui(borderWidth) \
-            -relief sunken -selectborderwidth $Gui(borderWidth)}
-    }
+    eval {$f.list configure \
+        -font {helvetica 7 bold} \
+        -bg $Gui(normalButton) -fg $Gui(textDark) \
+        -selectbackground $Gui(activeButton) \
+        -selectforeground $Gui(textDark) \
+        -highlightthickness 0 -bd $Gui(borderWidth) \
+        -relief sunken -selectborderwidth $Gui(borderWidth)}
 
     if {$args != ""} {
         eval {$f.list configure} $args
