@@ -101,7 +101,13 @@ vtkImageEMSegmenter \
 vtkBoolTess \
 vtkPolyBoolean \
 vtkSurfaceProps \
-vtkFog
+vtkFog \
+vtkMrmlSegmenterNode \
+vtkMrmlEndSegmenterNode \
+vtkMrmlSegmenterGraphNode \
+vtkMrmlSegmenterInputNode \
+vtkMrmlSegmenterClassNode \
+vtkMrmlSegmenterCIMNode 
 
 #vtkMathUtils \
 
