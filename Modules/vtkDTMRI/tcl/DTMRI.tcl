@@ -123,7 +123,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.28 $} {$Date: 2004/09/13 17:24:09 $}]
+                  {$Revision: 1.29 $} {$Date: 2004/09/15 20:37:28 $}]
 
      # Define Tabs
     #------------------------------------
@@ -2833,11 +2833,17 @@ proc RunLSDIrecon {} {
     # Running LSDI script 
     #
 
-    puts "Creating new volume data (D.###)..."
+    if {[file exists $DTMRI(LSDIpydir)] == 1 &&
+        [file executable $DTMRI(pythonintdir)] == 1} {
+        puts "Creating new volume data (D.###)..."
 
-    catch {exec $DTMRI(pythonintdir) $DTMRI(LSDIpydir)} convertingerror
-    
+        catch {exec $DTMRI(pythonintdir) $DTMRI(LSDIpydir)} convertingerror
+    } else {
+        DevInfoWindow "Error: Cannot find $DTMRI(LSDIpydir)\nor execute $DTMRI(pythonintdir)\nUnable to create new volume data"
+        return
     }
+    }
+
 
 #-------------------------------------------------------------------------------
 # .PROC ShowPatternFrame
