@@ -30,7 +30,6 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageMIReg.h"
 #include "vtkImageFastGaussian.h"
 #include "vtkImageShrink3D.h"
-#include "vtkMrmlVolumeNode.h"
 #include "qgauss.h"
 
 //----------------------------------------------------------------------------
@@ -58,21 +57,20 @@ vtkImageMIReg::vtkImageMIReg()
   // Inputs
   this->Reference = NULL;
   this->Subject = NULL;
-  this->RefNode = NULL;
-  this->SubNode = NULL;
+  this->RefTrans = NULL;
+  this->SubTrans = NULL;
   this->InitialPose = NULL;
   
   // Output
-  this->FinalPose = vtkMatrix4x4::New();
-  this->CurrentPose = vtkMatrix4x4::New();
+  this->FinalPose = vtkPose::New();
+  this->CurrentPose = vtkPose::New();
 
   // Workspace
   for (i=0; i < 4; i++) {
     this->Refs[i] = NULL;
     this->Subs[i] = NULL;
-    this->RefIjkToRas[i] = vtkMatrix4x4::New();
-    this->RefRasToIjk[i] = vtkMatrix4x4::New();
-    this->SubRasToIjk[i] = vtkMatrix4x4::New();
+    this->RefRasToIjk[i] = vtkRasToIjkTransform::New();
+    this->SubRasToIjk[i] = vtkRasToIjkTransform::New();
   }
 
   // Params
@@ -120,20 +118,16 @@ vtkImageMIReg::~vtkImageMIReg()
   if (this->Subject != NULL) {
     this->Subject->UnRegister(this);
   }
-  if (this->RefNode != NULL) {
-    this->RefNode->UnRegister(this);
+  if (this->RefTrans != NULL) {
+    this->RefTrans->UnRegister(this);
   }
-  if (this->SubNode != NULL) {
-    this->SubNode->UnRegister(this);
+  if (this->SubTrans != NULL) {
+    this->SubTrans->UnRegister(this);
   }
 
   // Transforms
   for (i=0; i<4; i++)
   {
-    if (this->RefIjkToRas[i]) {
-      this->RefIjkToRas[i]->Delete();
-      this->RefIjkToRas[i] = NULL;
-    }
     if (this->RefRasToIjk[i]) {
       this->RefRasToIjk[i]->Delete();
       this->RefRasToIjk[i] = NULL;
@@ -230,12 +224,16 @@ void vtkImageMIReg::Update()
 //----------------------------------------------------------------------------
 int vtkImageMIReg::Initialize()
 {
-  int i, *ext;
+  int i;
   vtkImageFastGaussian *smooth;
   vtkImageShrink3D *down;
-  vtkMrmlVolumeNode *node = vtkMrmlVolumeNode::New();
-  vtkMatrix4x4 *identity = vtkMatrix4x4::New();
-  float *spacing = this->Subject->GetSpacing();
+  float slThick, *spacing = this->Subject->GetSpacing();
+  vtkVector3 *ftl = vtkVector3::New();
+  vtkVector3 *ftr = vtkVector3::New();
+  vtkVector3 *fbr = vtkVector3::New();
+  vtkVector3 *ltl = vtkVector3::New();
+  vtkVector3 *kDir = vtkVector3::New();
+  vtkVector3 *kStep = vtkVector3::New();
 
   //
   // Validate inputs
@@ -256,12 +254,12 @@ int vtkImageMIReg::Initialize()
     vtkErrorMacro(<<"Subject must have 1 component."); 
     return -1;
   }
-  if (this->RefNode == NULL) {
-    vtkErrorMacro(<<"No Reference node."); 
+  if (this->RefTrans == NULL) {
+    vtkErrorMacro(<<"No Reference RasToIjkTransform."); 
     return -1;
   }
-  if (this->SubNode == NULL) {
-    vtkErrorMacro(<<"No Subject node."); 
+  if (this->SubTrans == NULL) {
+    vtkErrorMacro(<<"No Subject RasToIjkTransform."); 
     return -1;
   }
   if (!spacing[0] || !spacing[1] || !spacing[2]) {
@@ -269,10 +267,9 @@ int vtkImageMIReg::Initialize()
     return -1;
   }
 
-  // If no matrices, allocate them
+  // If no poses, allocate them
   if (!this->InitialPose) {
-    vtkMatrix4x4 *initPose = vtkMatrix4x4::New();
-    initPose->Identity();
+    vtkPose *initPose = vtkPose::New();
     this->SetInitialPose(initPose);
   }
 
@@ -281,10 +278,8 @@ int vtkImageMIReg::Initialize()
   this->Refs[3]->Register((vtkObject*)NULL);
   this->Subs[3] = this->Subject;
   this->Subs[3]->Register((vtkObject*)NULL);
-  this->RefRasToIjk[3]->DeepCopy(this->RefNode->GetRasToIjk());
-  this->RefIjkToRas[3]->DeepCopy(this->RefRasToIjk[3]);
-  this->RefIjkToRas[3]->Invert();
-  this->SubRasToIjk[3]->DeepCopy(this->SubNode->GetRasToIjk());
+  this->RefRasToIjk[3]->Copy(this->RefTrans);
+  this->SubRasToIjk[3]->Copy(this->SubTrans);
 
   //
   // Downsample images to create various resolutions
@@ -323,16 +318,31 @@ int vtkImageMIReg::Initialize()
       down->Delete();
 
       // Compute Ijk-To-Ras matrices for downsampled image
-      ext = Refs[i]->GetExtent();
-      node->SetImageRange(ext[4], ext[5]);
-      node->SetDimensions(ext[1]-ext[0]+1, ext[3]-ext[2]+1);
+      //
+      // Corner points same in X,Y because the points are at voxel corners. 
+      // But Z must move 1/2 orig voxel inward because points are at voxel centers
+      // Approach: move the original corner points in the K direction.
+      //
+      // kDir = ltl - ftl
+      // kStep = kDir * slThick * Factor/2 - 1/2
+      // ftl += kStep
+      // ftr += kStep
+      // fbr += kStep
+      // ltl -= kStep
       spacing = this->Refs[i]->GetSpacing();
-      node->SetSpacing(spacing);
-      node->ComputeRasToIjkFromScanOrder(this->RefNode->GetScanOrder());
-      node->SetRasToWld(identity);
-      this->RefRasToIjk[i]->DeepCopy(node->GetRasToIjk());
-      this->RefIjkToRas[i]->DeepCopy(this->RefRasToIjk[i]);
-      this->RefIjkToRas[i]->Invert();
+      slThick = spacing[2];
+      this->RefRasToIjk[i+1]->GetCorners(ftl, ftr, fbr, ltl);
+      kDir->Subtract(ltl, ftl);
+      kDir->Normalize();
+      kStep->Copy(kDir);
+      kStep->Multiply(slThick * -0.5);
+      ftl->Add(kStep);
+      ftr->Add(kStep);
+      fbr->Add(kStep);
+      ltl->Subtract(kStep);
+      this->RefRasToIjk[i]->SetExtent(this->Refs[i]->GetExtent());
+      this->RefRasToIjk[i]->SetSpacing(spacing);
+      this->RefRasToIjk[i]->SetCorners(ftl, ftr, fbr, ltl);
 
       //
       // Subject image
@@ -364,24 +374,34 @@ int vtkImageMIReg::Initialize()
       down->Delete();
 
       // Compute Ras-to-Ijk matrices for downsampled image
-      ext = Subs[i]->GetExtent();
-      node->SetImageRange(ext[4], ext[5]);
-      node->SetDimensions(ext[1]-ext[0]+1, ext[3]-ext[2]+1);
-      node->SetSpacing(this->Subs[i]->GetSpacing());
-      node->ComputeRasToIjkFromScanOrder(this->SubNode->GetScanOrder());
-      node->SetRasToWld(identity);
-      this->SubRasToIjk[i]->DeepCopy(node->GetRasToIjk());
+      spacing = this->Subs[i]->GetSpacing();
+      slThick = spacing[2];
+      this->SubRasToIjk[i+1]->GetCorners(ftl, ftr, fbr, ltl);
+      kDir->Subtract(ltl, ftl);
+      kDir->Normalize();
+      kStep->Copy(kDir);
+      kStep->Multiply(slThick * -0.5);
+      ftl->Add(kStep);
+      ftr->Add(kStep);
+      fbr->Add(kStep);
+      ltl->Subtract(kStep);
+      this->SubRasToIjk[i]->SetExtent(this->Subs[i]->GetExtent());
+      this->SubRasToIjk[i]->SetSpacing(spacing);
+      this->SubRasToIjk[i]->SetCorners(ftl, ftr, fbr, ltl);
     }
   }
 
   // Initialize Pose
-  this->CurrentPose->DeepCopy(this->InitialPose);
+  this->CurrentPose->Copy(this->InitialPose);
 
-  identity->Delete();
-  node->Delete();
+  ftl->Delete();
+  ftr->Delete();
+  fbr->Delete();
+  ltl->Delete();
+  kDir->Delete();
+  kStep->Delete();
   return 0;
 }
-
 
 //----------------------------------------------------------------------------
 // Cleanup
@@ -406,58 +426,27 @@ void vtkImageMIReg::Cleanup()
 // Draw a random integer data coordinate from an image.
 // Express as 0-based IJK, not extent-based.
 //----------------------------------------------------------------------------
-static void RandomIjkCoordinate(double *B, vtkImageData *data)
+static void RandomIjkCoordinate(vtkVector3 *B, vtkImageData *data)
 {
   int *ext = data->GetExtent();
   
-  B[0] = (int)(vtkMath::Random() * (float)(ext[1]-ext[0]+1)); 
-  B[1] = (int)(vtkMath::Random() * (float)(ext[3]-ext[2]+1)); 
-  B[2] = (int)(vtkMath::Random() * (float)(ext[5]-ext[4]+1)); 
-  B[4] = 1;
+  B->SetElement(0, (int)(vtkMath::Random() * (float)(ext[1]-ext[0]+1))); 
+  B->SetElement(1, (int)(vtkMath::Random() * (float)(ext[3]-ext[2]+1))); 
+  B->SetElement(2, (int)(vtkMath::Random() * (float)(ext[5]-ext[4]+1))); 
 }
 
-//----------------------------------------------------------------------------
-// IjkToRasGradient
-//
-// sl = Slice order
-//----------------------------------------------------------------------------
-static void IjkToRasGradient(double *ras, double *ijk, char  *sl)
-{
-  // Apply slice orientation
-  if (!strcmp(sl, "SI") || !strcmp(sl, "IS"))
-  {
-    // Axial: (r,a,s) = (-x,-y,z)
-    ras[0] = -ijk[0];
-    ras[1] = -ijk[1];
-    ras[2] =  ijk[2];
-  }
-  else if (!strcmp(sl, "LR") || !strcmp(sl, "RL"))
-  {
-    // Saggital: (r,a,s) = (z,-x,-y)
-    ras[0] =  ijk[2]; // Send  z to x
-    ras[1] = -ijk[0]; // Send -x to y
-    ras[2] = -ijk[1]; // Send -y to z
-  }
-  else
-  {
-    // Coronal: (r,a,s) = (-x,z,-y)
-    ras[0] = -ijk[0]; // Send -x to x
-    ras[1] =  ijk[2]; // Send  z to y
-    ras[2] = -ijk[1]; // Send -y to z
-  }
-}
-  
 //----------------------------------------------------------------------------
 // ImageGradientInterpolation (templated)
 //----------------------------------------------------------------------------
 template <class T>
 static void ImageGradientInterpolation(vtkImageData *data, 
-  vtkMatrix4x4 *rasToIjk, double *grad, double *ras, T *inPtr, double *value)
+  vtkRasToIjkTransform *rasToIjk, vtkVector3 *grad, vtkVector3 *ras, 
+  T *inPtr, double *value)
 {
-  double ijk[3];
-    double x, y, z, x0, y0, z0, x1, y1, z1, dx0, dx1, dxy0, dxy1;
+  vtkVector3* ijk = vtkVector3::New();
+  double x, y, z, x0, y0, z0, x1, y1, z1, dx0, dx1, dxy0, dxy1;
   int xi, yi, zi, nx, ny, nz, nxy, idx;
-    double v000, v001, v010, v011, v100, v101, v110, v111;
+  double v000, v001, v010, v011, v100, v101, v110, v111;
   float sx, sy, sz, *spacing = data->GetSpacing();
   T *ptr;
   int *ext = data->GetExtent();
@@ -472,10 +461,10 @@ static void ImageGradientInterpolation(vtkImageData *data,
   sz = 1.0 / (double)spacing[2];
 
   // Convert from RAS space (mm) to IJK space (indices)
-  rasToIjk->MultiplyPoint(ras, ijk);
-  x = ijk[0];
-  y = ijk[1];
-  z = ijk[2];
+  rasToIjk->RasToIjkTransformVector3(ras, ijk);
+  x = ijk->GetElement(0);
+  y = ijk->GetElement(1);
+  z = ijk->GetElement(2);
 
   // Compute integer parts of volume coordinates
   xi = (int)x;
@@ -484,12 +473,12 @@ static void ImageGradientInterpolation(vtkImageData *data,
 
   // Test if coordinates are outside volume
   if ((xi < 0   ) || (yi < 0   ) || (zi < 0   ) ||
-            (xi > nx-2) || (yi > ny-2) || (zi > nz-1))
+      (xi > nx-2) || (yi > ny-2) || (zi > nz-1))
   {
     // Out of bounds
-    memset(grad, 0, sizeof(double));
-        *value = 0;
-    }
+    grad->Zero();
+    *value = 0;
+  }
   // Handle the case of being on the last slice
   else if (zi == nz-1)
   {
@@ -513,9 +502,9 @@ static void ImageGradientInterpolation(vtkImageData *data,
     *value = y0*dx0 + y1*dx1;
     
     // Gradient
-    grad[0] = ((v100 - v000) + (v110 - v010)) * sx * 0.5;
-      grad[1] = ((v010 - v000) + (v110 - v100)) * sy * 0.5;
-    grad[2] = 0;
+    grad->SetElement(0, ((v100 - v000) + (v110 - v010)) * sx * 0.5);
+    grad->SetElement(1, ((v010 - v000) + (v110 - v100)) * sy * 0.5);
+    grad->SetElement(2, 0);
   }
   else 
   {
@@ -554,10 +543,11 @@ static void ImageGradientInterpolation(vtkImageData *data,
     *value = z0*dxy0 + z1*dxy1;
 
     // Gradient
-    grad[0] = ((v100-v000)+(v110-v010)+(v101-v001)+(v111-v011))*sx*0.25;
-      grad[1] = ((v010-v000)+(v110-v100)+(v101-v001)+(v111-v011))*sy*0.25;
-      grad[2] = ((v001-v000)+(v101-v100)+(v011-v010)+(v111-v110))*sz*0.25;
+    grad->SetElement(0, ((v100-v000)+(v110-v010)+(v101-v001)+(v111-v011))*sx*0.25);
+    grad->SetElement(1, ((v010-v000)+(v110-v100)+(v101-v001)+(v111-v011))*sy*0.25);
+    grad->SetElement(2, ((v001-v000)+(v101-v100)+(v011-v010)+(v111-v110))*sz*0.25);
   }
+  ijk->Delete();
 }
 
 //----------------------------------------------------------------------------
@@ -567,13 +557,13 @@ static void ImageGradientInterpolation(vtkImageData *data,
 // in an image (data) with an RasToIjk matrix.
 // Returns the interpolated value at that point.
 //----------------------------------------------------------------------------
-double vtkImageMIReg::GetGradientAndInterpolation(double *rasGrad, 
-  vtkImageData *data, vtkMatrix4x4 *rasToIjk, double *ras, char *sliceOrder)
+double vtkImageMIReg::GetGradientAndInterpolation(vtkVector3 *rasGrad, 
+    vtkImageData *data, vtkRasToIjkTransform *rasToIjk, vtkVector3 *ras)
 {
   float *spacing = data->GetSpacing();
   void *inPtr = data->GetScalarPointer();
   double value=0;
-  double ijkGrad[3];
+  vtkVector3 *ijkGrad = vtkVector3::New();
   
   switch (data->GetScalarType()) {
     vtkTemplateMacro6(ImageGradientInterpolation, data, rasToIjk, ijkGrad, ras, 
@@ -583,8 +573,9 @@ double vtkImageMIReg::GetGradientAndInterpolation(double *rasGrad,
     }
 
   // Convert from IJK-gradient to RAS-gradient by permutation
-  IjkToRasGradient(rasGrad, ijkGrad, sliceOrder);
+  rasToIjk->IjkToRasGradient(rasGrad, ijkGrad);
 
+  ijkGrad->Delete();
   return value;
 }
 
@@ -600,35 +591,47 @@ double vtkImageMIReg::GetGradientAndInterpolation(double *rasGrad,
 void vtkImageMIReg::Execute() 
 {
   int i, j, i3, j3, res, SS = this->SampleSize, numIter=0;
-    float inv_sigma_uu   = 1.0f / this->SigmaUU;
-    float inv_sigma_vv   = 1.0f / this->SigmaVV;
-    float inv_sigma_v    = 1.0f / this->SigmaV;
-    float inv_sigma_v_2  = inv_sigma_v * inv_sigma_v;
-    float inv_sigma_vv_2 = inv_sigma_vv * inv_sigma_vv;
+  float inv_sigma_uu   = 1.0f / this->SigmaUU;
+  float inv_sigma_vv   = 1.0f / this->SigmaVV;
+  float inv_sigma_v    = 1.0f / this->SigmaV;
+  float inv_sigma_v_2  = inv_sigma_v * inv_sigma_v;
+  float inv_sigma_vv_2 = inv_sigma_vv * inv_sigma_vv;
   float pMin = this->PMin;
   float sum, denom, inv_denom;
   double left_part, lambda_d, lambda_r;
   vtkImageData *ref, *subj;
-  double dIdd[3], dIdr[3], d[3], r[3], q[4];
-  vtkMatrix4x4* refIjkToRas;
-  vtkMatrix4x4* subRasToIjk;
-  double r1[3][3], r2[3][3], tr[3][3], orth[3][3], td[3];
-  int y, x;
-  char *subSliceOrder = this->SubNode->GetScanOrder();
+  vtkRasToIjkTransform* refRasToIjk;
+  vtkRasToIjkTransform* subRasToIjk;
+  vtkVector3 *dIdd, *dIdr, *d, *r;
+  vtkQuaternion *q;
+  vtkPose *delta;
+  double *b, *didd, *didr;
+
+  dIdd  = vtkVector3::New();
+  dIdr  = vtkVector3::New();
+  d     = vtkVector3::New();
+  r     = vtkVector3::New();
+  q     = vtkQuaternion::New();
+  delta = vtkPose::New();
 
   //
   // Allocate workspace
   //
-  double    B[4];                   // Sample coordinates of ref (ijk)
-  double    X[4];                   // Sample coordinates of ref (xyz)
-  double    Tx[4];                  // Transformed sample coordinates
-  double*   dVdd = new double[SS*3];
-  double*   dVdr = new double[SS*3]; 
+  vtkVector3*     B = vtkVector3::New();                   // Sample coordinates of ref (ijk)
+  vtkVector3*     X = vtkVector3::New();                   // Sample coordinates of ref (xyz)
+  vtkVector3*    Tx = vtkVector3::New();                // Transformed sample coordinates
+  vtkVector3** dVdd = new vtkVector3*[SS];
+  vtkVector3** dVdr = new vtkVector3*[SS];
+  double*   dvdd = new double[SS*3];
+  double*   dvdr = new double[SS*3];
   float*    U    = new float[SS];   // Sample data
   float*    V    = new float[SS];    
   float**   W_uv = new float*[SS]; 
   float**   W_v  = new float*[SS]; 
-  for (i=0; i < SS; i++) {
+  for (i=0; i < SS; i++) 
+  {
+    dVdd[i] = vtkVector3::New();
+    dVdr[i] = vtkVector3::New();
     W_uv[i] = new float[SS];
     W_v[i]  = new float[SS];
   }
@@ -643,7 +646,7 @@ void vtkImageMIReg::Execute()
     lambda_r    = this->LambdaRotation[res];
     ref         = this->Refs[res];
     subj        = this->Subs[res];
-    refIjkToRas = this->RefIjkToRas[res];
+    refRasToIjk = this->RefRasToIjk[res];
     subRasToIjk = this->SubRasToIjk[res];
 
     // Iterate
@@ -651,33 +654,31 @@ void vtkImageMIReg::Execute()
         numIter < this->UpdateIterations; 
         numIter++, this->CurIteration[res]++) 
     {
-      for (int g=0; g<1000000; g++);
-      /* NEED TO FIX BUG IN GetGradientAndInterpolation()
         //
         // Do some O(n) stuff..
         //
         for (i=0; i < SS; i++) 
       {
-          // Choose coordinates of samples at random. Expresses as voxel indices (ijk).
+        // Choose coordinates of samples at random. Expresses as voxel indices (ijk).
         RandomIjkCoordinate(B, ref);
 
           // Lookup scalar values of Reference at sample coordinates
-          U[i] = ref->GetScalarComponentAsFloat(B[0], B[1], B[2], 0);
+        b = B->GetElements();
+          U[i] = ref->GetScalarComponentAsFloat(b[0], b[1], b[2], 0);
 
           // Express coordinates in millimeter space (xyz).
-        refIjkToRas->MultiplyPoint(B, X);
+        refRasToIjk->IjkToRasTransformVector3(B, X);
 
           // Transform the sample coordinates by the current pose
-          this->CurrentPose->MultiplyPoint(X, Tx);
+          this->CurrentPose->Transform(Tx, X);
 
           // Lookup scalar values of Subject at transformed sample coordinates
-          // Lookup gradient of Subject at transformed sample coordinates
-          V[i] = (float)GetGradientAndInterpolation(
-          &dVdd[i*3], subj, subRasToIjk, Tx, subSliceOrder);
+          // Lookup gradient of Subject at transformed sample coordinates.
+          V[i] = (float)GetGradientAndInterpolation(dVdd[i], subj, subRasToIjk, Tx);
 
           // Pre-calculate the differential rotation increments
         //   dVdr = Tx x dVdd
-          vtkMath::Cross(Tx, &dVdd[i*3], &dVdr[i*3]);
+          dVdr[i]->Cross(Tx, dVdd[i]);
         }
 
       //
@@ -723,8 +724,16 @@ void vtkImageMIReg::Execute()
       }
 
         // Finally, calculate the transformation update.  First zero it,
-        memset(dIdd, 0, 3*sizeof(double));
-        memset(dIdr, 0, 3*sizeof(double));
+        dIdd->Zero();
+        dIdr->Zero();
+
+      // The double-sum is where all the time is spent, so speed it up:
+      didd = dIdd->GetElements();
+      didr = dIdr->GetElements();
+      for (i=0; i < SS; i++) {
+        memcpy(&dvdd[i*3], dVdd[i]->GetElements(), 3*sizeof(double));
+        memcpy(&dvdr[i*3], dVdr[i]->GetElements(), 3*sizeof(double));
+      }
 
       // Next, accumulate the double sum:
       for (i=0; i < SS; i++) {
@@ -740,91 +749,51 @@ void vtkImageMIReg::Execute()
 
             i3 = i*3;
             j3 = j*3;
-            dIdd[0] += (dVdd[i3+0] - dVdd[j3+0]) * left_part;
-            dIdd[1] += (dVdd[i3+1] - dVdd[j3+1]) * left_part;
-            dIdd[2] += (dVdd[i3+2] - dVdd[j3+2]) * left_part;
+            didd[0] += (dvdd[i3+0] - dvdd[j3+0]) * left_part;
+            didd[1] += (dvdd[i3+1] - dvdd[j3+1]) * left_part;
+            didd[2] += (dvdd[i3+2] - dvdd[j3+2]) * left_part;
 
-            dIdr[0] += (dVdr[i3+0] - dVdr[j3+0]) * left_part;
-            dIdr[1] += (dVdr[i3+1] - dVdr[j3+1]) * left_part;
-            dIdr[2] += (dVdr[i3+2] - dVdr[j3+2]) * left_part;
+            didr[0] += (dvdr[i3+0] - dvdr[j3+0]) * left_part;
+            didr[1] += (dvdr[i3+1] - dvdr[j3+1]) * left_part;
+            didr[2] += (dvdr[i3+2] - dvdr[j3+2]) * left_part;
             }
         }
       }
 
         // Then normalize it,
-        dIdd[0] *= (1.0f / SS);
-        dIdd[1] *= (1.0f / SS);
-        dIdd[2] *= (1.0f / SS);
-
-        dIdr[0] *= (1.0f / SS);
-        dIdr[1] *= (1.0f / SS);
-        dIdr[2] *= (1.0f / SS);
+        dIdd->Multiply(1.0f / SS);
+        dIdr->Multiply(1.0f / SS);
 
         //
       // Update the transform...
       //
 
         //  Calculate the small rotation and translation
-      d[0] = dIdd[0] * lambda_d;
-      d[1] = dIdd[1] * lambda_d;
-      d[2] = dIdd[2] * lambda_d;
-        
-      r[0] = dIdr[0] * lambda_r;
-      r[1] = dIdr[1] * lambda_r;
-      r[2] = dIdr[2] * lambda_r;
+      d->Copy(dIdd);
+      d->Multiply(lambda_d);
+        r->Copy(dIdr);
+      r->Multiply(lambda_r);
     
-        // Convert the small rotation, r, to a quaternion, q, 
+        // Convert the small rotation to a quaternion
       // using small-angle linear approximation
-      r[0] *= 0.5;
-      r[1] *= 0.5;
-      r[2] *= 0.5;
-
-      q[0] = 1.0;
-      q[1] = r[0];
-      q[2] = r[1]; 
-      q[3] = r[2];
-
-              // Compute the update for the big translation
+      r->Multiply(0.5);
+        q->Set(1.0, r);  
+    
+        // Compute the update for the big translation
         // and compound the small and large rotation quaternions
-        // insuring that it doesn't drift from being a valid rotation.
-      // delta = the small change in pose, 
-      //   where pose is a quaternion q and displacement vector d.
-      //
-      // Set the pose to be the concatenation of poses: perform Current first, then delta.
-      //
-      // Concatenate rotations by multiplication, translations by addition:
-      //
-      // d = concat(r1*d2, d1) = r1*d2 + d1
-      // r = concat(r1   , r2) = r2 * r1
-      //
-      vtkMath::QuaternionToMatrix3x3(q, r2);
-
-      for (y=0; y<3; y++)
-        for (x=0; x<3; x++)
-          r1[y][x] = this->CurrentPose->GetElement(y,x);
-
-      vtkMath::Multiply3x3(r2, r1, tr);
-      vtkMath::Orthogonalize3x3(tr, orth);
-
-      for (y=0; y<3; y++)
-        for (x=0; x<3; x++)
-          this->CurrentPose->SetElement(y,x,orth[y][x]);
-
-      vtkMath::Multiply3x3(r1, d, td);
-
-      this->CurrentPose->SetElement(0,3,this->CurrentPose->GetElement(0,3) + td[0]);
-      this->CurrentPose->SetElement(1,3,this->CurrentPose->GetElement(1,3) + td[1]);
-      this->CurrentPose->SetElement(2,3,this->CurrentPose->GetElement(2,3) + td[2]);
-      */
+        // insuring that it doesn't drift from being a valid rotation
+      delta->Set(q, d);
+      this->CurrentPose->Concat(delta);
+      this->CurrentPose->Normalize();
     }
   }
-     
+
   // Are we there yet? (for good)
   if (this->CurIteration[3] >= this->NumIterations[3]) 
   {
     this->InProgress = 0;
 
-    this->FinalPose->DeepCopy(this->CurrentPose);
+    this->FinalPose->Copy(this->CurrentPose);
   }
 
   //
@@ -833,11 +802,24 @@ void vtkImageMIReg::Execute()
   for (i=0; i < SS; i++) {
     delete [] W_uv[i];
     delete [] W_v[i];
+    dVdd[i]->Delete();
+    dVdr[i]->Delete();
   }
+  dIdd->Delete();
+  dIdr->Delete();
+  d->Delete();
+  r->Delete();
+  q->Delete();
+  delta->Delete();
+  B->Delete();
+  X->Delete();
+  Tx->Delete();
   delete [] U;
   delete [] V;    
   delete [] dVdd;
   delete [] dVdr; 
+  delete [] dvdd;
+  delete [] dvdr;
   delete [] W_uv; 
   delete [] W_v; 
 }
@@ -853,7 +835,7 @@ int vtkImageMIReg::GetResolution()
   if (!this->InProgress) return -1;
   
   int i;
-  for (i=0; i<3; i++) {
+  for (int i=0; i<3; i++) {
     if (this->CurIteration[i] < this->NumIterations[i])
       break;
   }
@@ -907,4 +889,5 @@ void vtkImageMIReg::PrintSelf(ostream& os, vtkIndent indent)
     this->CurrentPose->PrintSelf(os,indent.GetNextIndent());
   }
 }
+
 
