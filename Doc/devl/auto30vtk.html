@@ -32,7 +32,7 @@ You will need to point ccmake to either the installed or the built versions of v
 <br>
 Make sure WRAP_TCL is set to ON. 
 <br>
-Once you're happy with your settings, you will need to type c to configure (repeate until all fields are filled in) and then g to generate make files.<br>
+Once you're happy with your settings, you will need to type c to configure (repeat until all fields are filled in) and then g to generate make files.<br>
 ccmake writes a file called CMakeCache.txt. If you have errors using
 ccmake or compiling you may wish to edit that file directly, and
 then simply run "cmake", which will read the file.  However, it is
@@ -46,7 +46,8 @@ Generate an all in one executable for your OS by running slicer2/Scripts/launche
 <p>
 <b>4. Running Tests of the slicer code</b><br>
 You need to have downloaded VTK4 data.<br>
-Set the following environment variables appropriately: 
+Set the following environment variables appropriately, as they are set automatically in the slicer2
+launching script, but we are by-passing that for the test: 
 <pre><p class=code>
  setenv SLICER_HOME /path_to_slicer2/slicer2<br>
  setenv TCL_LIBRARY /path_to_lib/tcl8.3<br>
@@ -88,17 +89,3 @@ To run slicer using your newly-built vtk, read the slicer script and
 place the vtk executable and library files in the expected locations.
 Or edit the slicer script so that it will find your files.
 
-<h3>Matching Versions of VTK and Slicer</h3>
-<p>
-The current CVS version of slicer2 works with <a href="http://public.kitware.com/VTK/files/release/4.0/">VTK 4.0</a>.<br>
-
-The 1.3.* versions of Slicer that can be obtained through the ftp site work with <a href="http://public.kitware.com/VTK/files/release/3.2/">VTK 3.2</a>. This version was built from the source code tagged with release-1_2_3-02_25_2002.<br>
-the 1.2.2 version on the ftp site works with VTK 3.1, which Kitware no longer distributes.
-<p>
-If you are working in the SPL at Brigham and Women's, there are a few compiled versions on the Solaris system to which you have access:
-<ul>
-<li>slicer-old is ancient, holds the original code by Dave Gering, Peter Everett
-<li>slicer-stable is a stable version of slicer, it runs with VTK 3.1
-<li>slicer is for general use/beta testing, it runs with VTK 3.2
-<li>slicer-nightly is for alpha testing new modules, Jan/02 includes EM Segmentation, new image reformat code (breaks PhaseWire), it currently runs with VTK3.2
-</ul>
