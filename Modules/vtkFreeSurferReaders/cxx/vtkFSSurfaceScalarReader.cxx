@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceScalarReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2002/10/07 23:33:38 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2002/10/07 23:58:17 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================*/
 #include "vtkFSSurfaceScalarReader.h"
@@ -48,6 +48,11 @@ void vtkFSSurfaceScalarReader::ReadFSScalars()
   float *scalars;
   vtkFloatArray *output = this->GetOutput();
 
+  if (output == NULL)
+  {
+      cerr << "ERROR vtkFSSurfaceScalarReader ReadFSScalars() : output is null" << endl;
+      return;
+  }
   cerr << "vtkFSSurfaceScalarReader Execute() " << endl;
 
   if (!this->FileName) {
