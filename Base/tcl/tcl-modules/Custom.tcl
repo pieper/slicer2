@@ -115,7 +115,7 @@ proc CustomInit {} {
 	#   appropriate info when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.12 $} {$Date: 2000/03/01 22:38:25 $}]
+		{$Revision: 1.13 $} {$Date: 2000/04/17 22:33:19 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -137,7 +137,7 @@ proc CustomInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc CustomBuildGUI {} {
-	global Gui Custom Module
+	global Gui Custom Module Volume Model
 
 	# A frame has already been constructed automatically for each tab.
 	# A frame named "Stuff" can be referenced as follows:
@@ -189,9 +189,15 @@ Models are fun. Do you like models, Ron?
 #         grid $f.lStuff -padx $Gui(pad) -pady $Gui(pad)
 #        grid $menubutton -sticky w
 
-        
+        # Add menus that list models and volumes
         DevAddSelectButton  Custom $f Volume1 "Ref Volume" Grid
         DevAddSelectButton  Custom $f Model1  "Ref Model"  Grid
+
+	# Append these menus and buttons to lists that get refreshed during UpdateMRML
+	lappend Volume(mbActiveList) $f.mbVolume1
+	lappend Volume(mActiveList) $f.mbVolume1.m
+	lappend Model(mbActiveList) $f.mbModel1
+	lappend Model(mActiveList) $f.mbModel1.m
 
 	#-------------------------------------------
 	# Stuff->Bottom frame
@@ -217,7 +223,10 @@ Models are fun. Do you like models, Ron?
 # 
 # This procedure is called to update the buttons
 # due to such things as volumes or models being added or subtracted.
-#
+# (Note: to do this, this proc must be this module's procMRML.  Right now,
+# these buttons are being updated automatically since they have been added
+# to lists updated in VolumesUpdateMRML and ModelsUpdateMRML.  So this procedure
+# is not currently used.)
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
