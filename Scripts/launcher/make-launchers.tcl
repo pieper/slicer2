@@ -26,8 +26,5 @@ exec tclkit starkit${starkitRelease}/sdx.kit wrap slicer2 -runtime starkit${star
 file rename -force slicer2 ../../slicer2-solaris-sparc
 
 puts "making win32..."
-# exec  tclkit starkit${starkitRelease}/sdx.kit wrap slicer2.exe -runtime starkit${starkitRelease}/tclkit-win32.exe
-# file rename -force slicer2.exe ../../slicer2-win32.exe
-puts "NOTE: the windows starpack method doesn't pass arguments correctly with version 200209, please update, but until then:"
-puts "Use \"freewrap.exe slicer2-win32.tcl\" to create the launcher"
-puts "and copy it up to the top level (must be done on windows)."
+exec  tclkit starkit${starkitRelease}/sdx.kit wrap slicer2.exe -runtime starkit${starkitRelease}/tclkit-win32.exe
+file rename -force slicer2.exe ../../slicer2-win32.exe
