@@ -464,15 +464,15 @@ proc PathPlanningExtractCenterline {} {
                     set next_coord [[PathPlanning(dist) GetOutput] GetPoint $next_node]
                     
                     while { $next_node != -1} {
-                    EndoscopicAddLandmarkDirectionSpecified "[lindex $coord 0] [lindex $coord 1] [lindex $coord 2] [lindex $next_coord 0] [lindex $next_coord 1] [lindex $next_coord 2]" $list 
-                    
-                    set node $next_node
-                    set coord $next_coord
-                    # sampling for smoothing
-                    for {set j 0} {$j < 5} {incr j} {
-                        set next_node [PathPlanning(dijkstra) GetNextPathNode]
-                    }
-                    set next_coord [[PathPlanning(dist) GetOutput] GetPoint $next_node]
+                        EndoscopicAddLandmarkDirectionSpecified "[lindex $coord 0] [lindex $coord 1] [lindex $coord 2] [lindex $next_coord 0] [lindex $next_coord 1] [lindex $next_coord 2]" $list 
+                        
+                        set node $next_node
+                        set coord $next_coord
+                        # sampling for smoothing
+                        for {set j 0} {$j < 5} {incr j} {
+                            set next_node [PathPlanning(dijkstra) GetNextPathNode]
+                        }
+                        set next_coord [[PathPlanning(dist) GetOutput] GetPoint $next_node]
                     }
                     # add the last point 
                     EndoscopicAddLandmarkNoDirectionSpecified [lindex $coord 0] [lindex $coord 1] [lindex $coord 2] $list 
