@@ -161,7 +161,17 @@ for {set i 0} {$i < $argc} {incr i} {
             if { $i == $argc } {
                 Usage "missing argument for $a\n"
             } else {
-                set SLICER(exec) [lindex $argv $i]
+                while { $i < $argc } {
+                    set term [lindex $argv $i]
+                    if { [string match "--*" $term] } {
+                        break
+                    } else {
+                        set SLICER(exec) "$SLICER(exec) $term"
+                        incr i
+                    } 
+                }
+                # allow a ., to mean ; in argument to facilitate scripting
+                regsub -all ".," $SLICER(exec) ";" SLICER(exec)
             }
         }
         "--all-info" {
@@ -590,7 +600,7 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.69 2003/10/28 19:04:25 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.70 2003/11/14 19:08:21 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
