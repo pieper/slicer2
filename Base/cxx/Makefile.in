@@ -93,12 +93,12 @@ vtkImageEuclideanDistanceTransformation  \
 vtkImageStatistics \
 vtkImageLabelVOI \
 vtkImageEMMarkov \
-vtkImageEMSegmenter 
+vtkImageEMSegmenter \
+vtkSurfaceProps \
+vtkBoolTess \
+vtkPolyBoolean
 
-#vtkSurfaceProps \
 #vtkMathUtils \
-#vtkBoolTess \
-#vtkPolyBoolean
 #vtkImageLiveWire \
 #vtkImageLiveWireTester \
 #vtkImageLiveWireEdgeWeights \

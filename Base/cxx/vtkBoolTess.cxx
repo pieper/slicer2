@@ -23,7 +23,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 #include <math.h>
 #include <stdlib.h>
-#include <iostream.h>
+//#include <iostream.h>
+#include <stdio.h>
+#include "vtkWin32Header.h"
 #include "vtkBoolTess.h"
 
 #define SIGN(x) (x>0?1:(x<0?-1:0))
@@ -537,7 +539,7 @@ double vtkBoolTess::ProjTriangleArea( int ptId0, int ptId1, int ptId2 )
   return( area*this->Orient );
   }
 
-int vtkBoolTess::SortCompare( void *arg1, void *arg2 )
+int vtkBoolTess::SortCompare(const void *arg1, const void *arg2 )
   {
   vtkBoolTessVtx *vtx1, *vtx2;
   int sortAxis, yAxis;

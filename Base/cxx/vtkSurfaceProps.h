@@ -30,20 +30,21 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 class VTK_EXPORT vtkSurfaceProps : public vtkProcessObject
 {
-public:
+  public:
   vtkSurfaceProps();
   static vtkSurfaceProps *New() {return new vtkSurfaceProps;};
   const char *GetClassName() {return "vtkSurfaceProps";};
-
+  
   void Update();
   void SetInput(vtkPolyData *input);
   vtkPolyData *GetInput();
-
+  
   vtkGetMacro(SurfaceArea,float);
   vtkGetMacro(MinCellArea,float);
   vtkGetMacro(MaxCellArea,float);
   vtkGetMacro(Volume,float);
   vtkGetMacro(VolumeError,float);
+  vtkGetMacro(Test,float);
 
 protected:
   void Execute();
@@ -52,6 +53,7 @@ protected:
   float MaxCellArea;
   float Volume;
   float VolumeError;
+  float Test;
 };
 
 #endif

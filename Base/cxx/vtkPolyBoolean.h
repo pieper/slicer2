@@ -50,6 +50,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define BOOL_CELL_CUT 2
 #define BOOL_CELL_NOT_IN_RESULT 3
 
+
 //
 // Special classes to support boolean intersections.
 //
@@ -153,6 +154,8 @@ public:
   vtkSetMacro(AngleResolution,float);
   vtkGetMacro(AngleResolution,float);
 
+  void SPLTestIntersection();
+  
   // Description:
   // Set the boolean operation. Default is A-B.
   void SetOperation( int operation );
@@ -160,7 +163,7 @@ public:
   
   // Description:
   // Override the SetInput functino from vtkPolyDataFilter
-  void SetInput( vtkPolyData *input );
+  //  void SetInput2( vtkPolyData *input );
 
   // Description:
   // Specify the second polydata source for the operation
@@ -177,13 +180,16 @@ public:
   vtkGetMacro(IntersectionCount,int);
   vtkGetMacro(TriangleCount,int);
   vtkGetMacro(NodeCount,int);
+  
+  vtkGetMacro(TestCount,int);
+
 
   unsigned long int GetMTime();
 
   // Description:
   // Override the default Update method since this filter has multiple
   // inputs.
-  void Update();
+  void UpdateCutter();
 
 protected:
   void Execute();
@@ -202,6 +208,7 @@ protected:
   int IntersectionCount; // Number of intersecting triangle pairs
   int TriangleCount; // Number of triangle pairs intersected
   int NodeCount; // Number of intersecting OBBTree node pairs
+  int TestCount;
   vtkMatrix4x4 *XformA;
   vtkMatrix4x4 *XformB;
   float DistanceResolution;
@@ -240,6 +247,9 @@ private:
   int IdOffsetNew;
   vtkBoolTess *Tess;
   int TriDirectorySize[2];
+  
+  // time when Execute method was last called
+  vtkTimeStamp ExecuteTime;
 };
 
 #endif

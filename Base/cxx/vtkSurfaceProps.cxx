@@ -30,6 +30,18 @@ vtkSurfaceProps::vtkSurfaceProps()
   {
   }
 
+
+void vtkSurfaceProps::Update()
+{
+  this->SurfaceArea = 0.0;
+  this->MinCellArea = VTK_LARGE_FLOAT;
+  this->MaxCellArea = 0.0;
+  this->Volume = 0.0;
+  this->VolumeError = 0.0;
+  this->Execute();
+
+}
+
 // Description:
 // Specifies the input data...
 void vtkSurfaceProps::SetInput(vtkPolyData *input)
