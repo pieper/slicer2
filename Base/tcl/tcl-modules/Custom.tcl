@@ -137,7 +137,7 @@ proc CustomInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.16 $} {$Date: 2000/07/26 19:07:57 $}]
+		{$Revision: 1.17 $} {$Date: 2000/07/31 19:56:55 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -233,7 +233,7 @@ Description by tab:
 	#-------------------------------------------
 	set f $fStuff.fBottom
 
-	eval {label $f.lStuff -text "You clicked 0 times."} $Gui(WLA)
+	DevAddLabel $f.lStuff "You clicked 0 times."
         pack $f.lStuff -side top -padx $Gui(pad) -fill x
 	set Custom(lStuff) $f.lStuff
 

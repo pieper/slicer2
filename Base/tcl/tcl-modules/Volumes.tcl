@@ -71,7 +71,7 @@ proc VolumesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.31 $} {$Date: 2000/07/28 17:49:11 $}]
+		{$Revision: 1.32 $} {$Date: 2000/07/31 19:56:56 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -160,7 +160,7 @@ acquisition.
 	#-------------------------------------------
 	set f $fDisplay.fActive
 
-	eval {label $f.lActive -text "Active Volume: "} $Gui(BLA)
+        eval {label $f.lActive -text "Active Volume: "} $Gui(BLA)
 	eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
 		-menu $f.mbActive.m} $Gui(WMBA)
 	eval {menu $f.mbActive.m} $Gui(WMA)
@@ -185,7 +185,7 @@ acquisition.
 	#-------------------------------------------
 	set f $fDisplay.fWinLvl.fAuto
 
-	eval {label $f.lAuto -text "Window/Level:"} $Gui(WLA)
+	DevAddLabel $f.lAuto "Window/Level:"
 	frame $f.fAuto -bg $Gui(activeWorkspace)
 	pack $f.lAuto $f.fAuto -side left -padx $Gui(pad)  -pady $Gui(pad) -fill x
 
@@ -202,7 +202,7 @@ acquisition.
 	set f $fDisplay.fWinLvl.fSliders
 
 	foreach slider "Window Level" text "Win Lev" {
-		eval {label $f.l${slider} -text "$text:"} $Gui(WLA)
+		DevAddLabel $f.l${slider} "$text:"
 		eval {entry $f.e${slider} -width 6 \
 			-textvariable Volume([Uncap ${slider}])} $Gui(WEA)
 		bind $f.e${slider} <Return>   \
@@ -236,7 +236,7 @@ acquisition.
 	#-------------------------------------------
 	set f $fDisplay.fThresh.fAuto
 
-	eval {label $f.lAuto -text "Threshold: "} $Gui(WLA)
+	DevAddLabel $f.lAuto "Threshold: "
 	frame $f.fAuto -bg $Gui(activeWorkspace)
 	pack $f.lAuto $f.fAuto -side left -pady $Gui(pad) -fill x
 
@@ -258,7 +258,7 @@ acquisition.
 	set f $fDisplay.fThresh.fSliders
 
 	foreach slider "Lower Upper" text "Lo Hi" {
-		eval {label $f.l${slider} -text "$text:"} $Gui(WLA)
+		DevAddLabel $f.l${slider} "$text:"
 		eval {entry $f.e${slider} -width 6 \
 			-textvariable Volume([Uncap ${slider}]Threshold)} $Gui(WEA)
 			bind $f.e${slider} <Return>   \
@@ -291,7 +291,7 @@ acquisition.
 	#-------------------------------------------
 	set f $fDisplay.fHistogram.fLut
 
-	eval {label $f.lLUT -text "Palette:"} $Gui(WLA)
+	DevAddLabel $f.lLUT "Palette:"
 	eval {menubutton $f.mbLUT \
 		-text "$Lut([lindex $Lut(idList) 0],name)" \
 			-relief raised -bd 2 -width 9 \
@@ -325,7 +325,7 @@ acquisition.
 	#-------------------------------------------
 	set f $fDisplay.fInterpolate
 
-	eval {label $f.lInterpolate -text "Interpolation:"} $Gui(WLA)
+	DevAddLabel $f.lInterpolate "Interpolation:"
 	pack $f.lInterpolate -pady $Gui(pad) -padx $Gui(pad) -side left -fill x
 
 	foreach value "1 0" text "On Off" width "4 4" {
@@ -372,7 +372,7 @@ acquisition.
 	#-------------------------------------------
 	set f $fProps.fTop.fActive
 
-	eval {label $f.lActive -text "Active Volume: "} $Gui(BLA)
+        eval {label $f.lActive -text "Active Volume: "} $Gui(BLA)
 	eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
 		-menu $f.mbActive.m} $Gui(WMBA)
 	eval {menu $f.mbActive.m} $Gui(WMA)
@@ -387,7 +387,7 @@ acquisition.
 	#-------------------------------------------
 	set f $fProps.fTop.fType
 
-	eval {label $f.l -text "Properties:"} $Gui(BLA)
+        eval {label $f.l -text "Properties:"} $Gui(BLA)
 	frame $f.f -bg $Gui(backdrop)
 	foreach p "Basic Header" {
 		eval {radiobutton $f.f.r$p \
@@ -427,9 +427,8 @@ acquisition.
 	# Instr
 	set f $fProps.fBot.fBasic.fVolume.fInstr
 
-	eval {label $f.l -text "First Image File:"} $Gui(WLA)
-	eval {button $f.bFind -text "Browse..." -width 9 \
-		-command "VolumesSetFirst"} $Gui(WBA)
+	DevAddLabel $f.l "First Image File:"
+        DevAddButton $f.bFind "Browse..." "VolumesSetFirst"
 	pack $f.l $f.bFind -side left -padx $Gui(pad) 
 
 	# First
@@ -443,7 +442,7 @@ acquisition.
 	# Last
 	set f $fProps.fBot.fBasic.fVolume.fLast
 
-	eval {label $f.lLast -text "Number of Last Image:"} $Gui(WLA)
+	DevAddLabel $f.lLast "Number of Last Image:"
 	eval {entry $f.eLast -textvariable Volume(lastNum)} $Gui(WEA)
 	pack $f.lLast -side left -padx $Gui(pad)
 	pack $f.eLast -side left -padx $Gui(pad) -expand 1 -fill x
@@ -455,7 +454,7 @@ acquisition.
 	frame $f.fBtns -bg $Gui(activeWorkspace)
    	pack $f.fTitle $f.fBtns -side left -pady 5
 
-	eval {label $f.fTitle.l -text "Image Headers:"} $Gui(WLA)
+	DevAddLabel $f.fTitle.l "Image Headers:"
 	pack $f.fTitle.l -side left -padx $Gui(pad) -pady 0
 
 	foreach text "Auto Manual" \
@@ -474,7 +473,7 @@ acquisition.
 	frame $f.fBtns -bg $Gui(activeWorkspace)
    	pack $f.fTitle $f.fBtns -side left -pady 5
 
-	eval {label $f.fTitle.l -text "Image Data:"} $Gui(WLA)
+	DevAddLabel $f.fTitle.l "Image Data:"
 	pack $f.fTitle.l -side left -padx $Gui(pad) -pady 0
 
 	foreach text "{Grayscale} {Label Map}" \
@@ -509,12 +508,9 @@ acquisition.
 	#-------------------------------------------
 	set f $fProps.fBot.fBasic.fApply
 
-	eval {button $f.bApply -text "Apply" \
-		-command "VolumesPropsApply; RenderAll"} $Gui(WBA) {-width 8}
-	eval {button $f.bCancel -text "Cancel" \
-		-command "VolumesPropsCancel"} $Gui(WBA) {-width 8}
+        DevAddButton $f.bApply "Apply" "VolumesPropsApply; RenderAll" 8
+        DevAddButton $f.bCancel "Cancel" "VolumesPropsCancel" 8
 	grid $f.bApply $f.bCancel -padx $Gui(pad)
-
 
 	#-------------------------------------------
 	# Props->Bot->Header frame
@@ -628,12 +624,9 @@ acquisition.
 	#-------------------------------------------
 	set f $fProps.fBot.fHeader.fApply
 
-	eval {button $f.bApply -text "Apply" \
-		-command "VolumesPropsApply; RenderAll"} $Gui(WBA) {-width 8}
-	eval {button $f.bCancel -text "Cancel" \
-		-command "VolumesPropsCancel"} $Gui(WBA) {-width 8}
+        DevAddButton $f.bApply "Apply" "VolumesPropsApply; RenderAll" 8
+        DevAddButton $f.bCancel "Cancel" "VolumesPropsCancel" 8
 	grid $f.bApply $f.bCancel -padx $Gui(pad)
-
 
 	#-------------------------------------------
 	# Other frame
