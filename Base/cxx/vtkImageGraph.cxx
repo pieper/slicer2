@@ -570,7 +570,7 @@ static void vtkImageGraphDrawRegion(vtkImageGraph *self,Tin **RegionPtr,int *Reg
   float          Max;
   float          ColorRatio;
   unsigned char  FinalColor[3];
-  float          RegionDif[NumRegion]; 
+  float          *RegionDif= new float[NumRegion]; 
   GraphEntryList *ListPtr        = self->GetGraphList();
 
   for (idxR = 0; idxR < NumRegion; idxR++) {
@@ -600,6 +600,7 @@ static void vtkImageGraphDrawRegion(vtkImageGraph *self,Tin **RegionPtr,int *Reg
     for (idxR = 0; idxR < NumRegion; idxR++) RegionPtr[idxR] += RegionIncY[idxR];
     outPtr += outIncY;
   }
+  delete[] RegionDif; 
 }
 
 //----------------------------------------------------------------------------

@@ -155,7 +155,7 @@ inline float GeneralGauss(float *x,float *mu,float **inv_cov, float inv_sqrt_det
 #ifdef _WIN32
     return 0;
 #else
-  float x_m[n];
+  float *x_m = new float[n];
   float term1, 
         term  = 0.0;
 
@@ -167,6 +167,7 @@ inline float GeneralGauss(float *x,float *mu,float **inv_cov, float inv_sqrt_det
     for (j=0; j < n; j++) term1 += (inv_cov[i][j]*x_m[j]);
     term += term1*x_m[i];
   }
+  delete[] x_m;
   return (pow(EMSEGMENT_ONE_OVER_ROOT_2_PI,n)*inv_sqrt_det_cov * exp(-0.5 *term));
 #endif
 }
@@ -252,10 +253,11 @@ void vtkImageCurveRegion::ExecuteInformation()
     int MaxLength = 100;
     int index = 0; 
     bool flag = false;
-    char line[MaxLength];
+    char *line = new char[MaxLength];
     if (feof(f) || fgets(line, MaxLength, f ) == NULL) {
       cout << "vtkImageCurveRegion::ExecuteInformation: Error : File was empty !" << endl;
       fclose(f);
+      delete[] line;
       return;
     }
     Extent[1] = Extent[3] = 0;
@@ -279,6 +281,7 @@ void vtkImageCurveRegion::ExecuteInformation()
       fgets(line, MaxLength, f);
     }
     fclose(f);
+    delete[] line;
   } else {
     float dist;
     ScalarComp = 1;
