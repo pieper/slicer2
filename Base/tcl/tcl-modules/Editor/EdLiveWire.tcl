@@ -1023,7 +1023,13 @@ proc EdLiveWireStopPipeline {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdLiveWireEnter {} {
-    global Ed Label Slice
+    global Ed Label Slice Editor
+
+    # we are drawing in the label layer, so it had
+    # better be visible
+    if {$Editor(display,labelOn) == 0} {
+	MainSlicesSetVolumeAll Label [EditorGetWorkingID]
+    }
 
     # all 4 edge filters need to execute
     #set Ed(EdLiveWire,numEdgeFiltersReady) 0

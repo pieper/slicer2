@@ -104,7 +104,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.49 $} {$Date: 2001/04/03 23:57:39 $}]
+	    {$Revision: 1.50 $} {$Date: 2001/04/09 22:12:10 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -121,6 +121,10 @@ proc EditorInit {} {
     set Editor(nameWorking) Working
     set Editor(nameComposite) Composite
     set Editor(eventManager)  {  }
+
+    # add display settings for editor here: 
+    # whether to keep the label layer visible at all times
+    set Editor(display,labelOn) 1
 
     # Look for Editor effects and form an array, Ed, for them.
     # Each effect has a *.tcl file in the tcl-modules/Editor directory.
@@ -345,6 +349,8 @@ proc EditorBuildGUI {} {
     #   Working
     #   Active
     #   Time
+    #   Display
+    #   Model 
     # Details
     #-------------------------------------------
 
@@ -793,7 +799,8 @@ proc EditorBuildGUI {} {
     frame $f.fActive    -bg $Gui(activeWorkspace)
     frame $f.fTime      -bg $Gui(activeWorkspace)
     frame $f.fModel    -bg $Gui(activeWorkspace)
-    pack $f.fEffects $f.fActive $f.fTime $f.fModel \
+    frame $f.fDisplay    -bg $Gui(activeWorkspace)
+    pack $f.fEffects $f.fActive $f.fTime $f.fDisplay $f.fModel \
 	    -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     
     #-------------------------------------------
@@ -827,6 +834,21 @@ proc EditorBuildGUI {} {
     set Editor(lTotalTime) $f.lTotalTime
     
     #-------------------------------------------
+    # Effects->Display frame
+    #-------------------------------------------
+    set f $fEffects.fDisplay
+
+    # put things that affect the way editor displays volumes here
+    eval {label $f.lDisplay -text "Display Settings:"} $Gui(WLA)
+    pack $f.lDisplay -side left -pady $Gui(pad) -padx $Gui(pad)
+    
+    eval {checkbutton $f.cEditorDisplayLabel \
+		-text  "Outline Labelmap" -variable Editor(display,labelOn) \
+		-width 21 -indicatoron 0 -command "EditorResetDisplay"} $Gui(WCA)
+    pack $f.cEditorDisplayLabel -side right -pady $Gui(pad) -padx $Gui(pad)
+    TooltipAdd $f.cEditorDisplayLabel "Press to show the label layer (the outline around your labelmap)."
+
+    #-------------------------------------------
     # Effects->Model frame
     #-------------------------------------------
     set f $fEffects.fModel
@@ -835,7 +857,7 @@ proc EditorBuildGUI {} {
 	eval {button $f.b -text "Make Model" -command "EditorMakeModel"} $Gui(WBA)
 	pack $f.b
     }
-    
+
     #-------------------------------------------
     # Effects->Effects
     #-------------------------------------------
@@ -1543,7 +1565,7 @@ proc EditorGetCompositeID {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EditorResetDisplay {} {
-    global Slice Editor
+    global Slice Editor Volume
     
     # Set slice orientations (unless already done)
     set s0 [Slicer GetOrientString 0]
@@ -1556,6 +1578,14 @@ proc EditorResetDisplay {} {
     # Set slice volumes
     set o [EditorGetOriginalID]
     set w [EditorGetWorkingID]
+
+    # display label layer only if the user wants it shown
+    if {$Editor(display,labelOn) == 1} {
+	set lab $w
+    } else {
+	set lab $Volume(idNone)
+    }
+
     set ok 1
     foreach s $Slice(idList) {
 	set b [[[Slicer GetBackVolume  $s] GetMrmlNode] GetID]
@@ -1563,12 +1593,12 @@ proc EditorResetDisplay {} {
 	set l [[[Slicer GetLabelVolume $s] GetMrmlNode] GetID]
 	if {$b != $o} {set ok 0}
 	if {$f != $w} {set ok 0}
-	if {$l != $w} {set ok 0}
+	if {$l != $lab} {set ok 0}
     }
     if {$ok == 0} {
 	MainSlicesSetVolumeAll Back  $o
 	MainSlicesSetVolumeAll Fore  $w
-	MainSlicesSetVolumeAll Label $w
+	MainSlicesSetVolumeAll Label $lab	
     }
 
     # Do these things only once
