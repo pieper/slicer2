@@ -58,7 +58,7 @@ proc GuiInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo Gui \
-		{$Revision: 1.27 $} {$Date: 2001/05/12 15:50:41 $}]
+		{$Revision: 1.28 $} {$Date: 2001/06/03 13:49:51 $}]
 
         # Are we running under Windows?
 	if {$tcl_platform(platform) == "windows"} {
@@ -351,7 +351,16 @@ proc MsgPopup {win x y msg {title ""} {font ""}} {
 #-------------------------------------------------------------------------------
 # .PROC YesNoPopup
 # 
+# This pops up a Yes/No window.
+# The user is allowed to focus on other windows
+# before answering 
+#
 # .ARGS
+# str win Window Name, almost irrelevant.
+# int x positions on the screen
+# int y positions on the screen
+# str yesCmd the command to perform if yes is chosen
+# str yesCmd the command to perform if no is chosen
 # .END
 #-------------------------------------------------------------------------------
 proc YesNoPopup {win x y msg {yesCmd ""} {noCmd ""} \
@@ -390,7 +399,6 @@ proc YesNoPopup {win x y msg {yesCmd ""} {noCmd ""} \
 			-command "destroy $w; $noCmd"} $Gui(WBA)
 		pack $f.bYes $f.bNo -side left -padx $Gui(pad)
 	}
-
 }
 
 #-------------------------------------------------------------------------------
