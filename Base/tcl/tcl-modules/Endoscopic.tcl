@@ -194,7 +194,7 @@ proc EndoscopicInit {} {
 	#   The strings with the $ symbol tell CVS to automatically insert the
 	#   appropriate revision number and date when the module is checked in.
 	#  	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.4 $} {$Date: 2001/02/14 23:11:33 $}]
+		{$Revision: 1.5 $} {$Date: 2001/02/14 23:53:18 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -699,6 +699,12 @@ proc EndoscopicBuildGUI {} {
 <BR><I>- Speed</I>: controls the speed of the camera's motion along the path 
 <BR><B>To drive the slices</B>:
 <BR> Select which driver you want: User, Camera or Focal Point.
+<BR><B> Random Path </B>
+<BR><I>- Compute Path</I>: creates a new random path at every click
+<BR><I>- Delete Path</I>: deletes the random path (or any path previously created)
+<BR>
+<BR> The functionality of creating/deleting a random path is there for you to play around with difference fly-through options without having to create a path. If you feel like having a bit of fun, click on <I> Show Path </I> and then set the <I> RollerCoaster</I> option before doing a fly-through. <B>Enjoy the ride! </B>
+
 <P>
 <LI><B>Advanced</B>
 <BR>This Tab allows you to change color and size parameters for the camera, focal point, landmarks and path
@@ -747,7 +753,7 @@ a better Endoscopic view:"} $Gui(WLA)
 	grid $f.fBtns.lW $f.fBtns.eWidth $f.fMBtns -padx $Gui(pad)
 
 	set text "
-Now go to start, go to the Camera tab 
+To start, go to the Camera tab 
 If you need help, go to the Help tab"
 
 	eval {label $f.fTitle2.lTitle -text $text} $Gui(WLA)
@@ -1023,8 +1029,8 @@ If you need help, go to the Help tab"
 	}       
 	$f.rForward select
 
-	grid $f.fPath $f.fReset -padx $Gui(pad) -pady $Gui(pad)
-	grid $f.fStop $f.rForward $f.rBackward -padx $Gui(pad) -pady $Gui(pad)
+	grid $f.fPath $f.fReset $f.fStop -padx $Gui(pad) -pady $Gui(pad)
+	grid $f.rForward $f.rBackward -padx $Gui(pad) -pady $Gui(pad)
 	
 	#-------------------------------------------
 	# Path->Top->Step frame
@@ -1142,17 +1148,23 @@ If you need help, go to the Help tab"
 	set f $fPath.fBot.fVis
 
 	# Compute path
+		eval {label $f.lTitle -text "You can create a Random Path to \n play with Fly-Thru options:"} $Gui(WTA)
+		grid $f.lTitle -padx 1 -pady 1 -columnspan 2
 
 	eval {button $f.cRandPath \
-		-text "Compute Random path" -width 20 -command "EndoscopicComputeRandomPath; Render3D"} $Gui(WBA) {-bg $Path(rColor)}           
+		-text "Compute path" -width 14 -command "EndoscopicComputeRandomPath; Render3D"} $Gui(WBA) {-bg $Path(rColor)}           
 
 	eval {button $f.dRandPath \
-		-text "Delete Random path" -width 20 -command "EndoscopicDeletePath; Render3D"} $Gui(WBA) {-bg $Path(rColor)}           
+		-text "Delete path" -width 14 -command "EndoscopicDeletePath; Render3D"} $Gui(WBA) {-bg $Path(rColor)}           
 	
-	eval {checkbutton $f.cPath \
-		-text "RollerCoaster" -variable Path(rollerCoaster) -width 18 -indicatoron 0 -command "Render3D"} $Gui(WBA) {-bg $Path(rColor)}             
-	pack $f.cRandPath $f.dRandPath $f.cPath -padx $Gui(pad) -pady $Gui(pad)
-    }	
+	eval {checkbutton $f.rPath \
+		-text "RollerCoaster" -variable Path(rollerCoaster) -width 12 -indicatoron 0 -command "Render3D"} $Gui(WBA) {-bg $Path(rColor)}             
+	
+	eval {checkbutton $f.sPath \
+		-text "Show Path" -variable Path(showPath) -width 12 -indicatoron 0 -command "EndoscopicShowPath; Render3D"} $Gui(WBA) {-bg $Path(rColor)}             
+	grid $f.cRandPath $f.dRandPath -padx 0 -pady $Gui(pad)
+	grid $f.rPath $f.sPath -padx 0 -pady $Gui(pad)
+    }
 	
     
 #-------------------------------------------------------------------------------
@@ -1817,8 +1829,8 @@ proc EndoscopicAddLandmark {} {
 	    Model(${m}Land,inputPoints) Reset
 	    viewRen AddActor Model(${m}Land,actor)
 	    viewRen AddActor Model(${m}Path,actor)
-	    endRen RemoveActor Model(${m}Land,actor)
-	    endRen RemoveActor Model(${m}Path,actor)
+	    #endRen RemoveActor Model(${m}Land,actor)
+	    #endRen RemoveActor Model(${m}Path,actor)
 	}
 	
 	set i [expr $numberOfInputPoints - 1]
@@ -1828,7 +1840,10 @@ proc EndoscopicAddLandmark {} {
 	Model(${m}Land,inputPoints) InsertPoint $i $Model(${m}Land,$i,x) $Model(${m}Land,$i,y) $Model(${m}Land,$i,z)
 	set Path(landmarkExists) 1
 	
-	EndoscopicComputePath $m
+	if { $Path(numLandmarks) > 1 } {
+	    puts "compute path"
+	    EndoscopicComputePath $m
+	}
     }
 }
 
@@ -1922,15 +1937,15 @@ proc EndoscopicComputePath {{m ""}} {
     if {$m == "c"} {
 	$Path(stepScale) config -to [expr $numberOfOutputPoints - 1]
     }
-    
-    if { $numberOfInputPoints > 1 } {
 
+    if {$numberOfInputPoints > 1 } {
 	for {set i 0} {$i< $numberOfOutputPoints} {incr i 1} {
+	    #change t
 	    set t [expr ( $numberOfInputPoints - 1.0 ) / ( $numberOfOutputPoints - 1) * $i]
 	    Model(${m}Land,points) InsertPoint $i [Model(${m}Land,aSplineX) Evaluate $t] [Model(${m}Land,aSplineY) Evaluate $t] [Model(${m}Land,aSplineZ) Evaluate $t]
 	}
 	set Path(exists) 1
-	    
+	
 	Model(${m}Path,lines) InsertNextCell $numberOfOutputPoints
 	
 	for {set i 0} {$i< $numberOfOutputPoints} {incr i 1} {
@@ -1976,6 +1991,7 @@ proc EndoscopicDeletePath {} {
 	
 	$Path(fLandmarkList) delete 0 end
 	set Path(exists) 0
+	set Path(showPath) 0
 	set Path(landmarkExists) 0
 	set Path(random) 0
     }
@@ -1996,6 +2012,7 @@ proc EndoscopicComputeRandomPath {} {
     if { $Path(exists) == 1} {
 	EndoscopicDeletePath
     }
+	
     for {set i 0} {$i<20} {incr i 1} {
 	set x  [expr [Path(math) Random -1 1] * 100]
 	set y  [expr [Path(math) Random -1 1] * 100]
@@ -2017,6 +2034,71 @@ proc EndoscopicComputeRandomPath {} {
     EndoscopicCreateNewPath
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicCreateNewPath
+#
+# 
+# 
+# .END
+#-------------------------------------------------------------------------------
+proc EndoscopicCreateNewPath {} {
+    
+    global Endoscopic Model View Path View Fiducials EndFiducials Point
+    
+    if { $Path(numLandmarks) < 0} {
+	puts "we have a problem!!! numLandmarks < 0"
+    }
+    
+    set numberOfInputPoints $Path(numLandmarks)
+    
+    foreach m {c f} {
+	Model(${m}Land,aSplineX) RemoveAllPoints
+	Model(${m}Land,aSplineY) RemoveAllPoints
+	Model(${m}Land,aSplineZ) RemoveAllPoints
+	Model(${m}Land,inputPoints) Reset
+	viewRen AddActor Model(${m}Land,actor)
+	viewRen AddActor Model(${m}Path,actor)
+			
+	for {set i 0} {$i<$numberOfInputPoints} {incr i 1} {
+	    Model(${m}Land,aSplineX) AddPoint $i $Model(${m}Land,$i,x)
+	    Model(${m}Land,aSplineY) AddPoint $i $Model(${m}Land,$i,y)
+	    Model(${m}Land,aSplineZ) AddPoint $i $Model(${m}Land,$i,z)
+	    Model(${m}Land,inputPoints) InsertPoint $i $Model(${m}Land,$i,x) $Model(${m}Land,$i,y) $Model(${m}Land,$i,z)
+	}
+	set Path(landmarkExists) 1
+	
+	EndoscopicComputePath $m
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicShowPath
+# 
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+
+proc EndoscopicShowPath {} {
+    global Path Model
+
+    if {$Path(exists) == 1} {
+	if {$Path(showPath) == 1} {
+	    foreach m {c f} {
+		endRen AddActor Model(${m}Land,actor)
+		endRen AddActor Model(${m}Path,actor)
+	    }
+	} else {
+	    foreach m {c f} {
+		endRen RemoveActor Model(${m}Land,actor)
+		endRen RemoveActor Model(${m}Path,actor)
+	    }
+	}
+    }
+
+}
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicViewPath
@@ -2120,6 +2202,7 @@ proc EndoscopicSetPathFrame {} {
 	    set l [Model(cLand,points) GetPoint $Path(i)] 
 	    set l2 [Model(${which}Land,points) GetPoint [expr $Path(i) + $var ]]
 	    EndoscopicSetFocalAndCameraPosition [lindex $l 0] [lindex $l 1] [lindex $l 2] [lindex $l2 0] [lindex $l2 1] [lindex $l2 2]	    
+
 	} elseif { $Path(flyDirection) == "Backward" } {
 	    set Path(i) $Path(stepStr)
 	    set l [Model(cLand,points) GetPoint $Path(i)]
@@ -2404,7 +2487,6 @@ proc EndoscopicUpdateMRML {} {
     if {$Path(vtkNodeRead) == 0} {
 	 	set Path(numLandmarks) 0
 
-	puts "in delete path"
 
 	# get rid of path actors
 	foreach m {c f} {
@@ -2423,6 +2505,7 @@ proc EndoscopicUpdateMRML {} {
 	
 	# reset the path variables
 	set Path(exists) 0
+	set Path(showPath) 0
 	set Path(landmarkExists) 0
 	set Path(random) 0
     } else {
@@ -2431,47 +2514,3 @@ proc EndoscopicUpdateMRML {} {
 	EndoscopicCreateNewPath	
     }
 }
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicCreateNewPath
-#
-# 
-# 
-# .END
-#-------------------------------------------------------------------------------
-proc EndoscopicCreateNewPath {} {
-    
-    global Endoscopic Model View Path View Fiducials EndFiducials Point
-    
-    if { $Path(numLandmarks) < 0} {
-	puts "we have a problem!!! numLandmarks < 0"
-    }
-    
-    set numberOfInputPoints $Path(numLandmarks)
-    
-    foreach m {c f} {
-	Model(${m}Land,aSplineX) RemoveAllPoints
-	Model(${m}Land,aSplineY) RemoveAllPoints
-	Model(${m}Land,aSplineZ) RemoveAllPoints
-	Model(${m}Land,inputPoints) Reset
-	viewRen AddActor Model(${m}Land,actor)
-	viewRen AddActor Model(${m}Path,actor)
-	endRen RemoveActor Model(${m}Land,actor)
-	endRen RemoveActor Model(${m}Path,actor)
-	
-	
-	for {set i 0} {$i<$numberOfInputPoints} {incr i 1} {
-	    Model(${m}Land,aSplineX) AddPoint $i $Model(${m}Land,$i,x)
-	    Model(${m}Land,aSplineY) AddPoint $i $Model(${m}Land,$i,y)
-	    Model(${m}Land,aSplineZ) AddPoint $i $Model(${m}Land,$i,z)
-	    Model(${m}Land,inputPoints) InsertPoint $i $Model(${m}Land,$i,x) $Model(${m}Land,$i,y) $Model(${m}Land,$i,z)
-	}
-	set Path(landmarkExists) 1
-	
-	EndoscopicComputePath $m
-    }
-}
-
-
-
-

@@ -76,7 +76,7 @@ proc DataInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.30 $} {$Date: 2001/02/14 23:11:33 $}]
+		{$Revision: 1.31 $} {$Date: 2001/02/14 23:53:17 $}]
 
 	set Data(index) ""
 	set Data(clipboard) ""
@@ -333,7 +333,7 @@ proc DataDisplayTree {{index end}} {
 			}
 			vtkMrmlLandmarkNode {
 			    set name [$node GetName]
-			    set line "Landmark: camera XYZ = [$node GetXYZ], focalPoint XYZ =[$node GetFXYZ], position = [$node GetPathPosition], id = [$node GetID]"
+			    set line "Landmark: camera XYZ = [$node GetXYZ], focalPoint XYZ =[$node GetFXYZ], position = [$node GetPathPosition]"
 			}
 			default {
 				set name [$node GetName]
