@@ -156,7 +156,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2003/10/03 22:15:55 $}]
+        {$Revision: 1.2 $} {$Date: 2004/02/29 18:34:40 $}]
 
 }
 
@@ -294,7 +294,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
     set fModel $Module(vtkFreeSurferReaders,fModels)
     set f $fModel
 
-    DevAddFileBrowse $f  vtkFreeSurferReaders "ModelFileName" "Model File:" "vtkFreeSurferReadersSetModelFileName" "orig" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer surface file (orig ${vtkFreeSurferReaders(surfaces)})"
+    DevAddFileBrowse $f  vtkFreeSurferReaders "ModelFileName" "Model File:" "vtkFreeSurferReadersSetModelFileName" "" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer surface file (orig ${vtkFreeSurferReaders(surfaces)})"
     frame $f.fName -bg $Gui(activeWorkspace)
     frame $f.fSurface -bg $Gui(activeWorkspace)
     frame $f.fScalar -bg $Gui(activeWorkspace)
@@ -438,7 +438,8 @@ proc vtkFreeSurferReadersSetVolumeFileName {} {
     if {$Module(verbose) == 1} {
         puts "FreeSurferReaders filename: $vtkFreeSurferReaders(VolumeFileName)"
     }
-    set Volume(name) [file tail $vtkFreeSurferReaders(VolumeFileName)]
+    # make the volume name be the name of the directory rather than COR-.info
+    set Volume(name) [file tail [file dirname $vtkFreeSurferReaders(VolumeFileName)]]
     # replace . with -
     regsub -all {[.]} $Volume(name) {-} Volume(name)
 }
@@ -459,6 +460,7 @@ proc vtkFreeSurferReadersSetModelFileName {} {
     set Model(name) [file tail $vtkFreeSurferReaders(ModelFileName)]
     # replace . with -
     regsub -all {[.]} $Model(name) {-} Model(name)
+    set vtkFreeSurferReaders(ModelName) $Model(name)
 }
 
 proc vtkFreeSurferReadersSetAnnotColorFileName {} {
@@ -707,7 +709,7 @@ proc vtkFreeSurferReadersBuildSurface {m} {
         if {[lsearch $vtkFreeSurferReaders(assocFiles) $s] != -1} {
             set scalarFileName [file rootname $vtkFreeSurferReaders(ModelFileName)].$s
             if [file exists $scalarFileName] {
-                DevInfoWindow "Model $m: Reading in $s file associated with this surface: $scalarFileName"
+                puts "Model $m: Reading in $s file associated with this surface: $scalarFileName"
                 # need to delete these so that if close the scene and reopen a surface file, these won't still exist
                 if {$::Module(verbose)} {
                     puts "Deleting Model($m,floatArray$s)..."
@@ -1432,6 +1434,7 @@ proc vtkFreeSurferReadersModelApply {} {
     }
     return
 }
+
 proc vtkFreeSurferReadersModelCancel {} {
     global vtkFreeSurferReaders Module Model Volume
     # model this after VolumePropsCancel - ModelPropsCancel?
@@ -1462,4 +1465,31 @@ proc vtkFreeSurferReadersSetLoad {param} {
     if {$::Module(verbose)} {
         puts "vtkFreeSurferReadersSetLoad: new: loading: $vtkFreeSurferReaders(assocFiles)"
     }
+}
+
+####################
+# Scriptable load functions -- tied into command line arguments
+# example: 
+# ./slicer2-win32.exe --load-freesurfer-model c:/pieper/bwh/data/MGH-Siemens15-SP.1-uw/surf/lh.pial --load-freesurfer-volume c:/pieper/bwh/data/MGH-Siemens15-SP.1-uw/mri/orig/COR-.info --load-freesurfer-label-volume c:/pieper/bwh/data/MGH-Siemens15-SP.1-uw/mri/aseg/COR-.info &
+####################
+
+proc vtkFreeSurferReadersLoadVolume { filename {labelMap 0} {name ""} } {
+
+    set ::Volume(labelMap) $labelMap
+    set ::vtkFreeSurferReaders(VolumeFileName) $filename
+    vtkFreeSurferReadersSetVolumeFileName 
+    if { $name != "" } {
+        set ::Volume(name) $name
+    }
+    vtkFreeSurferReadersApply
+}
+
+proc vtkFreeSurferReadersLoadModel { filename {name ""} } {
+
+    set ::vtkFreeSurferReaders(ModelFileName) $filename
+    vtkFreeSurferReadersSetModelFileName
+    if { $name != "" } {
+        set ::Volume(name) $name
+    }
+    vtkFreeSurferReadersModelApply
 }
