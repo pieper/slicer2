@@ -66,7 +66,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.50 $} {$Date: 2002/11/15 23:20:26 $}]
+            {$Revision: 1.51 $} {$Date: 2002/12/30 20:35:03 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -1073,7 +1073,7 @@ proc ModelsMeter {} {
             set total [expr $total + $n]
         }
         set msgLeft "$msgLeft\n[Model($m,node) GetName]"
-        set msgRight "$msgRight\n$n"
+        set msgRight "$msgRight\n[commify $n]"
     }
 
 
@@ -1086,9 +1086,9 @@ proc ModelsMeter {} {
     }
 
     set msgTop "\
-            Total visible polygons: $total\n\
+            Total visible polygons: [commify $total]\n\
             Render time: [format "%.3f" [expr $t/1000000.0]]\n\
-            Polygons/sec rendered: [format "%.0f" $rate]"
+            Polygons/sec rendered: [commify [format "%.0f" $rate]]"
 
     $Model(meter,msgTop) config -text $msgTop
     $Model(meter,msgLeft) config -text $msgLeft
@@ -1099,6 +1099,24 @@ proc ModelsMeter {} {
         ModelsMeter
     }
 }
+
+#
+# - utility routine borrowed from http://aspn.activestate.com/ASPN/Cookbook/Tcl/Recipe/146220
+#
+# commify --
+#   puts commas into a decimal number
+# Arguments:
+#   num  number in acceptable decimal format
+#   sep  separator char (defaults to English format ",")
+# Returns:
+#   number with commas in the appropriate place
+#
+
+proc commify {num {sep ,}} {
+    while {[regsub {^([-+]?\d+)(\d\d\d)} $num "\\1$sep\\2" num]} {}
+    return $num
+}
+
 #-------------------------------------------------------------------------------
 # .PROC ModelsFreeSurferPropsApply
 # 
