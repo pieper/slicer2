@@ -123,7 +123,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.32 $} {$Date: 2004/10/26 23:03:19 $}]
+                  {$Revision: 1.33 $} {$Date: 2004/10/27 00:35:58 $}]
 
      # Define Tabs
     #------------------------------------
@@ -242,8 +242,8 @@ proc DTMRIInit {} {
    set DTMRI(mode,visualizationRemoveTypeList) {On Off}
    set DTMRI(mode,visualizationRemoveTypeValue) {1 0}
    set DTMRI(mode,visualizationRemoveTypeList,tooltips) [list \
-       "Remove Glyphs and Streamlns when leaving the module." \
-       "Keep Glyphs and Streamlns when leaving the module." \
+       "Remove Glyphs and Streamlines when leaving the module." \
+       "Keep Glyphs and Streamlines when leaving the module." \
        ]
 
 
@@ -4443,6 +4443,14 @@ proc DTMRIConfigureStreamline {streamline operation parameter} {
         }
         "ScalarVisibility" {
             DTMRI(vtk,$streamline,mapper) SetScalarVisibility $parameter  
+
+            # By default make them brighter than slicer default colors
+            # slicer's colors have ambient 0, diffuse 1, and specular 0
+            set prop [DTMRI(vtk,$streamline,actor) GetProperty] 
+            $prop SetAmbient       0.5
+            $prop SetDiffuse       0.1
+            $prop SetSpecular      0.2
+
         }
     }
 
