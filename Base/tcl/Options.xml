@@ -20,7 +20,8 @@ ordered='Data
 suppressed='Custom
         CustomCsys
 	OsteoPlan
-        Anatomy'
+        Anatomy
+	CrossSection'
 
 </Options>
 </MRML>
