@@ -1713,11 +1713,14 @@ proc DICOMPredictScanOrder { file1 file2 } {
     }
 
     if {$Volume(sliceThickness) != "unknown"} {
-        if {[expr abs($thickness - $Volume(sliceThickness))] > 0.05} {
+        # don't ever use a calculated thickness of zero, but if there's a 
+        # significant difference between expected and actual, give a choice
+        if { $thickness > 0 && 
+                [expr abs($thickness - $Volume(sliceThickness))] > 0.05} {
             set answer [tk_messageBox -message "Slice thickness is $Volume(sliceThickness) in the header, but $thickness when calculated from Slice Positions.\nWould you like to use the calculated one ($thickness)?" \
                     -type yesno -icon question -title "Slice thickness question."]
             if {$answer == "yes"} {
-            set Volume(sliceThickness) $thickness
+                set Volume(sliceThickness) $thickness
             }
         }
     }
