@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkMGHReader.h,v $
   Language:  C++
-  Date:      $Date: 2003/02/19 23:55:50 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/04/14 20:08:49 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================*/
 // .NAME vtkMGHReader - read an MGH (.mgh) volume file from Freesurfer tools
@@ -19,6 +19,7 @@
 #include <vtkFreeSurferReadersConfigure.h>
 #include <stdio.h>
 #include "vtkImageData.h"
+#include "vtkPointData.h"
 #include "vtkVolumeReader.h"
 #include "vtkTransform.h"
 

@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceReader.h,v $
   Language:  C++
-  Date:      $Date: 2002/10/07 21:08:47 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2003/04/14 20:08:49 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================*/
 // .NAME vtkFSSurfaceReader - read a surface file from Freesurfer tools
@@ -17,6 +17,7 @@
 
 #include <vtkFreeSurferReadersConfigure.h>
 #include "vtkDataReader.h"
+#include "vtkCellArray.h"
 #include "vtkPolyData.h"
 
 // Prints debugging info.

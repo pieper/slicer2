@@ -37,8 +37,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkAnisoGaussSeidel.h,v $
   Language:  C++
-  Date:      $Date: 2003/02/13 19:31:38 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2003/04/14 20:08:49 $
+  Version:   $Revision: 1.4 $
   Author:    Karl Krissian
 
 =========================================================================*/
@@ -61,6 +61,7 @@
 
 #include "vtkImageToImageFilter.h"
 #include "vtkImageData.h"
+#include "vtkPointData.h"
 #include "vtkImageGaussianSmooth.h"
 
 #define DER_DISCR 1

@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkCORReader.h,v $
   Language:  C++
-  Date:      $Date: 2003/02/19 23:54:40 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2003/04/14 20:08:49 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================*/
 // .NAME vtkFSCORReader - read COR file volume from Freesurfer tools
@@ -19,6 +19,7 @@
 #include <vtkFreeSurferReadersConfigure.h>
 #include <stdio.h>
 #include "vtkImageData.h"
+#include "vtkPointData.h"
 #include "vtkVolumeReader.h"
 #include "vtkTransform.h"
 
