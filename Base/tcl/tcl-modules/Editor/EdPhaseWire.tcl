@@ -293,6 +293,8 @@ proc EdPhaseWireBuildVTK {} {
     # input is either from window/level pipeline above or directly
     # from reformatted slice from slicer object
     #Ed($e,phase,fftSlice) SetInput [Ed($e,phase,wlComp)  GetOutput]
+    vtkImageData Ed($e,phase,dummyinput)
+    Ed($e,phase,fftSlice) SetInput Ed($e,phase,dummyinput)
 
 
     
