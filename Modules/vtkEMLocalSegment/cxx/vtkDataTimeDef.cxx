@@ -220,7 +220,7 @@ inline void EMVolume::ConvZ(EMVolume &src,float *v,int vLen) {
 
 // No unecessary memrory -> faster
 inline void EMVolume::ConvZ(float *v, int vLen) {
-  int z,i,MaxXYZ;
+  int z,i;
 
   // Use the i-th Rows of U = ith Column of U';
   // write it to the i-th Row of 'this' => Transpose again
@@ -228,21 +228,19 @@ inline void EMVolume::ConvZ(float *v, int vLen) {
          * result  = new float[this->MaxZ];
   float  * DataStart = this->Data;
 
-  MaxXYZ = this->MaxXY*this->MaxZ;
-
   for (i = 0; i < this->MaxXY; i++) {
     for (z = 0; z < this->MaxZ; z++) {
       vec[z] = *this->Data;
       this->Data += this->MaxXY;
     }
-    this->Data -= MaxXYZ;
+    this->Data -= this->MaxXYZ;
     convVector(result,vec,this->MaxZ,v,vLen); 
 
     for (z=0; z < this->MaxZ; z++) {
       *this->Data = result[z];
       this->Data += this->MaxXY;
     }
-    this->Data -= (MaxXYZ-1);
+    this->Data -= (this->MaxXYZ-1);
   }
   this->Data = DataStart;
 
@@ -332,7 +330,7 @@ int EMVolume::ConvolutionFilter_workpile(float *input, float *filter, int M1, in
   #define MAXCONVOLUTIONWORKERTHREADS 32
   int numthreads = 0;
   workpile_t workpile;
-  int npixels = this->MaxXY*this->MaxZ;
+  int npixels = this->MaxXYZ;
   int jobsize;
 
   convolution_filter_work job[MAXCONVOLUTIONWORKERTHREADS];

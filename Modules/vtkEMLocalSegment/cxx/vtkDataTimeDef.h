@@ -153,7 +153,7 @@ inline void convVector(float vec[], float u[], int uLen, float v[], int vLen){
 class VTK_EMLOCALSEGMENT_EXPORT EMVolume {
 public:
   //static EMVolume *New() {return (new vtkDataTimeDef);}
-  EMVolume(){this->Data  = NULL;this->MaxX  = 0;this->MaxY  = 0;this->MaxZ  = 0;this->MaxXY = 0;}
+  EMVolume(){this->Data  = NULL;this->MaxX = this->MaxY = this->MaxZ = this->MaxXY = this->MaxXYZ = 0;}
   EMVolume(int initZ,int initY, int initX) {this->allocate(initZ,initY, initX);}
   ~EMVolume() {this->deallocate();}
 
@@ -179,8 +179,7 @@ public:
         cerr << "Error:EMVolume & operator = : Dimesion of target was not equal to source" << endl;
 #endif
     }
-    int mul = this->MaxXY*this->MaxZ;
-    for (int i = 0; i < mul; i++ ) this->Data[i] = trg.Data[i];
+    for (int i = 0; i < this->MaxXYZ; i++ ) this->Data[i] = trg.Data[i];
     return *this;
   }
   // Kilian : Just to be compatible with older version
@@ -200,22 +199,24 @@ public:
   void Print(char name[]);
   void Test(int Vdim);
   void SetValue(float val) {
-    int Max = this->MaxXY*this->MaxZ;
-    if (val) {for (int i = 0; i < Max; i++ ) this->Data[i] = val;}
-    else { memset(this->Data, 0,sizeof(float)*Max);}
+    if (val) {for (int i = 0; i < this->MaxXYZ; i++ ) this->Data[i] = val;}
+    else { memset(this->Data, 0,sizeof(float)*this->MaxXYZ);}
   }
+  float* GetData() {return this->Data;}
+ 
 protected :
   float *Data;
-  int MaxX, MaxY, MaxZ, MaxXY;
+  int MaxX, MaxY, MaxZ, MaxXY, MaxXYZ;
 
   void allocate (int initZ,int initY, int initX) {
     this->MaxX  = initX;this->MaxY  = initY;this->MaxZ  = initZ;
-    this->MaxXY = initX*initY;this->Data = new float[this->MaxXY*this->MaxZ];
+    this->MaxXY = initX*initY; this->MaxXYZ = this->MaxXY*this->MaxZ;
+    this->Data = new float[this->MaxXYZ];
   } 
 
   void deallocate () {
     if (this->Data) delete[] this->Data;
-    this->Data  = NULL;this->MaxX  = 0;this->MaxY  = 0;this->MaxZ  = 0;this->MaxXY = 0;
+    this->Data  = NULL;this->MaxX = this->MaxY = this->MaxZ  =  this->MaxXY = this->MaxXYZ = 0;
   }
 
 
@@ -224,7 +225,7 @@ protected :
 // ----------------------------------------------------------------------------------------------
 // Definitions for 5D float array EMTriVolume (lower triangle)
 // ----------------------------------------------------------------------------------------------/ 
-// It is a 5 dimensional Volume where m[y][x][][[][] y>= x is only defined 
+// It is a 5 dimensional Volume where m[t1][t2][z][y][x] t1>= t2 is only defined 
 // Lower Traingular matrix - or a symmetric matrix where you only save the lower triangle
 class VTK_EMLOCALSEGMENT_EXPORT EMTriVolume {
 protected :
