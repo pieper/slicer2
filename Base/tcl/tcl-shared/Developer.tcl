@@ -45,14 +45,19 @@
 #   DevWarningWindow message        A pop-up Warning Window
 #   DevErrorWindow message          A pop-up Error   Window
 #   DevFatalErrorWindow message     A pop-up Error Window and Exit
+#   DevAddLabel LabelName message   Add a label to the GUI
 #   DevAddButton ButtonName         Add a button to the GUI that calls a command.
 #   DevAddSelectButton              Add a volume or model select button
 #   DevSelect                       Called upon selection from a SelectButton.
 #   DevCreateNewCopiedVolume        Create a New Volume, Copying an existing one's param
+#proc DevGetFile                     Looks for a file, makes a pop-up window if necessary
 # MainVolumesCopyData               Copy the image part of a volume.
 # MainModelsDelete  idnum           Delete a model
 # MainVolumesDelete idnum           Delete a volume
 # YesNoPopup                        in tcl-main/Gui.tcl.
+#
+# Useful Variables
+# $Mrml(dir)  The directory from which the slicer was run.
 #
 #-------------------------------------------------------------------------------
 # .PROC DevWarningWindow
@@ -94,6 +99,22 @@ proc DevFatalErrorWindow {{message "Fatal Error"}} {
    MainExitProgram
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DevAddLabel
+#
+#  Creates a label
+#  Example:  DevAddLabel $f.lmylabel \"Have a nice day\"
+#
+# .ARGS
+#  str LabelName Name of the button (i.e. $f.stuff.lmylabel)
+#  str Message    The text on the label
+# .END
+#-------------------------------------------------------------------------------
+
+proc DevAddLabel { LabelName Message } {
+	global Gui
+    eval {label $LabelName -text $Message} $Gui(WLA)
+}
 
 #-------------------------------------------------------------------------------
 # .PROC DevAddButton
@@ -447,3 +468,92 @@ proc DevCreateNewCopiedVolume { OrigId {Description ""} { VolName ""} } {
 
     return $n
 }
+
+#-------------------------------------------------------------------------------
+# .PROC DevGetFile
+# 
+# If a filename exists, simply returns it.
+# Otherwise pops up a window to find a filename.
+# Default directory to start searching is the one Slicer was called from
+#
+# .ARGS
+# str filename The name of the file entered so far
+# str DefaultExt The name of the extension for the type of file: Default \"\"
+# str DefaultDir The name of the default directory to choose from: Default is the directory Slicer was started from.
+# str Title      The title of the window to display
+# .END
+#-------------------------------------------------------------------------------
+proc DevGetFile { filename { DefaultExt "" } { DefaultDir "" } {Title "Choose File"} } {
+	global Mrml
+puts "got here"
+	# Default Directory Choice
+	if {$DefaultDir == ""} {
+            set DefaultDir $Mrml(dir);
+	}
+
+       ############################################################
+       ######  Check if the filename exists
+       ######  Check with/without DefaulExt, and with or without
+       ######  Default dir.
+       ######  Do this only if the filename is not "" and is not a dir.
+       ############################################################
+
+        if {$filename != "" && ![file isdir $filename] } {
+            if [file exists $filename]  {
+                return [MainFileGetRelativePrefix $filename][file \
+                        extension $filename]
+            }
+            if [file exists "$filename.$DefaultExt"] {
+                return [MainFileGetRelativePrefix $filename].$DefaultExt
+            }
+            set filename [file join $DefaultDir $filename]
+            if [file exists $filename]  {
+                return [MainFileGetRelativePrefix $filename][file \
+                        extension $filename]
+            }
+            if [file exists "$filename.$DefaultExt"] {
+                return [MainFileGetRelativePrefix $filename].$DefaultExt
+            }
+        }
+
+       ############################################################
+       ######  Didn't find it, now set up filter for files
+       ######  If an extension is provided, use it.
+       ############################################################
+
+        if { $DefaultExt != ""} {
+            set typelist \
+                    " \{\"$DefaultExt Files\" \{\*.$DefaultExt\}\} \{\"All Files\" \{\*\}\}"
+#            set typelist [ eval $typelist ]
+        } else {
+            set typelist {
+		{"All Files" {*}}
+            }
+        }
+
+       ############################################################
+       ######  Browse for the file
+       ############################################################
+
+        set dir [file dirname $filename]
+        if { $filename == "" && $DefaultDir != "" } { set dir $DefaultDir }
+        if { [file isdir $filename] } { set dir $filename }
+
+	set filename [tk_getOpenFile -title $Title \
+		-filetypes $typelist -initialdir "$dir" -initialfile $filename]
+
+
+       ############################################################
+       ######  Return Nothing is nothing was selected
+       ######  Return the file relative to the current path otherwise
+       ############################################################
+
+	# Return nothing if the user cancelled
+	if {$filename == ""} {return "" }
+
+
+	# Store first image file as a relative filename to the root 
+	# Return the relative Directory Path
+	return [MainFileGetRelativePrefix $filename][file \
+		extension $filename]
+    }   
