@@ -79,8 +79,10 @@ proc VolumesInit {} {
 	set Module($m,procEnter) VolumesEnter
 	set Module($m,procExit) VolumesExit
         set Module($m,procVTK) VolumesBuildVTK
-        set Volume(DICOMStartDir) "c:/tanacs/medpic/"
+        #set Volumes(DICOMStartDir) "c:/tanacs/medpic/"
+        set Volumes(DICOMStartDir) $prog
 	set Volumes(FileNameSortParam) "incr"
+	set Volumes(prevIncrDecrState) "incr"
 	set Volumes(previewCount) 0
 
 	set Volumes(DICOMPreviewWidth) 64
@@ -100,6 +102,14 @@ proc VolumesInit {} {
     set dir [file join [file join $prog tcl-modules] Volumes]
     set Volumes(DICOMDataDictFile) $dir/datadict.txt
 
+    set Volumes(eventManager) {}
+
+    lappend Module(procStorePresets) VolumesStorePresets
+    lappend Module(procRecallPresets) VolumesRecallPresets
+    set Module(Volumes,presets) "DICOMStartDir='$prog' FileNameSortParam='incr' \
+DICOMPreviewWidth='64' DICOMPreviewHeight='64' DICOMPreviewHighestValue='2048' \
+DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
+
     # End
 
 	# For now, never display histograms to avoid bug in histWin Render
@@ -117,7 +127,7 @@ proc VolumesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-                {$Revision: 1.44 $} {$Date: 2001/04/04 21:52:54 $}]
+                {$Revision: 1.45 $} {$Date: 2001/04/16 20:32:15 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -1127,32 +1137,89 @@ proc AddListUnique { list arg } {
     }
 }
 
-#-------------------------------------------------------------------------------
-# .PROC DICOMIncrDecrButton
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc DICOMIncrDecrButton {filenames} {
-    global Volumes
-    global DICOMListSelectPatientName
-    global DICOMListSelectStudyUID
-    global DICOMListSelectSeriesUID
-    global DICOMFileNameArray DICOMFileNameList
+proc DICOMFileNameTextBoxVisibleButton {t idx value} {
+    global DICOMFileNameSelected
 
-    if {$Volumes(FileNameSortParam) == "incr"} {
-	set idx [lsort -increasing [array name DICOMFileNameArray]]
+    #tk_messageBox -message "ButtonPress $idx"
+    set DICOMFileNameSelected [lreplace $DICOMFileNameSelected $idx $idx $value]
+    DICOMFillFileNameTextbox $t
+    #$t see $idx.0
+}
+
+proc DICOMPreviewImageClick {w idx} {
+    global Volumes DICOMFileNameSelected
+
+    set v [lindex $DICOMFileNameSelected $idx]
+    if {$v == "0"} {
+	$w configure -background green
+	DICOMFileNameTextBoxVisibleButton $Volumes(DICOMFileNameTextbox) $idx "1"
     } else {
-	set idx [lsort -decreasing [array name DICOMFileNameArray]]
+	$w configure -background red
+	DICOMFileNameTextBoxVisibleButton $Volumes(DICOMFileNameTextbox) $idx "0"
     }
-    set DICOMFileNameList {}
-    foreach i $idx {
-        lappend DICOMFileNameList $DICOMFileNameArray($i)
+}
+
+proc DICOMFillFileNameTextbox {t} {
+    global DICOMFileNameList DICOMFileNameSelected
+
+    $t configure -state normal
+    set yviewfr [lindex [$t yview] 0]
+    $t delete 1.0 end
+
+    $t insert insert " "
+    $t insert insert "  Select All  " selectall
+    $t insert insert "  "
+    $t insert insert "  Deselect All  " deselectall
+    $t insert insert "\n"
+    $t tag add menu 1.0 1.end
+
+    $t tag config selectall -background gray -relief groove -borderwidth 2 -font {helvetica 10 bold}
+    $t tag bind selectall <ButtonRelease-1> "DICOMImageTextboxSelectAll"
+    $t tag config deselectall -background gray -relief groove -borderwidth 2 -font {helvetica 10 bold}
+    $t tag bind deselectall <ButtonRelease-1> "DICOMImageTextboxDeselectAll"
+    $t tag config menu -justify center
+        
+    set num [llength $DICOMFileNameList]
+    for {set idx 0} {$idx < $num} {incr idx} {
+	set firstpos [$t index insert]
+	$t insert insert "\#[expr $idx + 1] "
+	if {[lindex $DICOMFileNameSelected $idx] == "1"} {
+	    $t insert insert " S " vis$idx
+	    $t tag config vis$idx -background green -relief groove -borderwidth 2
+	    #$t tag bind vis$idx <Button-1> "DICOMFileNameTextBoxVisibleButton $t $idx 0"
+	    set value 0
+	} else {
+	    $t insert insert " N " vis$idx
+	    $t tag config vis$idx -background red -relief groove -borderwidth 2
+	    #$t tag bind vis$idx <Button-1> "DICOMFileNameTextBoxVisibleButton $t $idx 1"
+	    set value 1
+	}
+	$t insert insert " "
+	$t insert insert [lindex $DICOMFileNameList $idx]
+	$t insert insert "\n"
+	$t tag add line$idx $firstpos [$t index insert]
+	$t tag bind line$idx <Button-1> "DICOMFileNameTextBoxVisibleButton $t $idx $value"
     }
-    #CreateFileNameList $DICOMListSelectPatientName $DICOMListSelectStudyUID $DICOMListSelectSeriesUID
-    $filenames delete 0 end
-    eval {$filenames insert end} $DICOMFileNameList
-    $filenames selection set 0 end
+    $t yview moveto $yviewfr
+    $t configure -state disabled
+}
+
+proc DICOMIncrDecrButton {filenames} {
+    global Volumes DICOMFileNameList DICOMFileNameSelected
+
+    if {$Volumes(prevIncrDecrState) != $Volumes(FileNameSortParam)} {
+	set temp1 {}
+	set temp2 {}
+	set num [llength $DICOMFileNameList]
+	for {set i [expr $num - 1]} {$i >= 0} {incr i -1} {
+	    lappend temp1 [lindex $DICOMFileNameList $i]
+	    lappend temp2 [lindex $DICOMFileNameSelected $i]
+	}
+	set DICOMFileNameList $temp1
+	set DICOMFileNameSelected $temp2
+	DICOMFillFileNameTextbox $filenames
+	set Volumes(prevIncrDecrState) $Volumes(FileNameSortParam)
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -1189,6 +1256,86 @@ proc DICOMScrolledListbox {f xAlways yAlways variable {labeltext "labeltext"} {a
 
 	} else {
 		listbox $f.list -selectmode single \
+			-xscrollcommand [list ScrollSet $f.xscroll \
+				[list grid $f.xscroll -row 1 -column 0 -sticky we]] \
+			-yscrollcommand [list ScrollSet $f.yscroll \
+				[list grid $f.yscroll -row 0 -column 1 -sticky ns]]
+	}
+
+	if {$Gui(smallFont) == 1} {
+		eval {$f.list configure \
+			-font {helvetica 7 bold} \
+			-bg $Gui(normalButton) -fg $Gui(textDark) \
+			-selectbackground $Gui(activeButton) \
+			-selectforeground $Gui(textDark) \
+			-highlightthickness 0 -bd $Gui(borderWidth) \
+			-relief sunken -selectborderwidth $Gui(borderWidth)}
+	} else {
+		eval {$f.list configure \
+			-font {helvetica 8 bold} \
+			-bg $Gui(normalButton) -fg $Gui(textDark) \
+			-selectbackground $Gui(activeButton) \
+			-selectforeground $Gui(textDark) \
+			-highlightthickness 0 -bd $Gui(borderWidth) \
+			-relief sunken -selectborderwidth $Gui(borderWidth)}
+	}
+
+	if {$args != ""} {
+		eval {$f.list configure} $args
+	}
+
+	scrollbar $f.xscroll -orient horizontal \
+		-command [list $f.list xview] \
+		-bg $Gui(activeWorkspace) \
+		-activebackground $Gui(activeButton) -troughcolor $Gui(normalButton) \
+		-highlightthickness 0 -bd $Gui(borderWidth)
+	scrollbar $f.yscroll -orient vertical \
+		-command [list $f.list yview] \
+		-bg $Gui(activeWorkspace) \
+		-activebackground $Gui(activeButton) -troughcolor $Gui(normalButton) \
+		-highlightthickness 0 -bd $Gui(borderWidth)
+
+	grid $f.list $f.yscroll -sticky news
+	grid $f.xscroll -sticky news
+	grid rowconfigure $f 0 -weight 1
+	grid columnconfigure $f 0 -weight 1
+
+    pack $fmain.head $fmain.selected -anchor nw -pady 5
+    pack $fmain.f -fill both -expand true
+    pack $fmain -fill both -expand true 
+
+	return $fmain.f.list
+}
+
+proc DICOMScrolledTextbox {f xAlways yAlways variable {labeltext "labeltext"} {args ""}} {
+	global Gui
+	
+    set fmain $f
+    frame $fmain -bg $Gui(activeWorkspace)
+    eval { label $fmain.head -text $labeltext } $Gui(WLA)
+    eval { label $fmain.selected -textvariable $variable } $Gui(WLA)
+
+    frame $fmain.f -bg $Gui(activeWorkspace)
+    set f $fmain.f
+	if {$xAlways == 1 && $yAlways == 1} { 
+		text $f.list \
+			-xscrollcommand "$f.xscroll set" \
+			-yscrollcommand "$f.yscroll set"
+	
+	} elseif {$xAlways == 1 && $yAlways == 0} { 
+		text $f.list \
+			-xscrollcommand "$f.xscroll set" \
+			-yscrollcommand [list ScrollSet $f.yscroll \
+				[list grid $f.yscroll -row 0 -column 1 -sticky ns]]
+
+	} elseif {$xAlways == 0 && $yAlways == 1} { 
+		text $f.list \
+			-xscrollcommand [list ScrollSet $f.xscroll \
+				[list grid $f.xscroll -row 1 -column 0 -sticky we]] \
+			-yscrollcommand "$f.yscroll set"
+
+	} else {
+		text $f.list \
 			-xscrollcommand [list ScrollSet $f.xscroll \
 				[list grid $f.xscroll -row 1 -column 0 -sticky we]] \
 			-yscrollcommand [list ScrollSet $f.yscroll \
@@ -1373,7 +1520,7 @@ proc FindDICOM { StartDir Pattern } {
     global DICOMStudyInstanceUIDList
     global DICOMSeriesInstanceUIDList
     global DICOMFileNameArray
-    global DICOMFileNameList
+    global DICOMFileNameList DICOMFileNameSelected
     
     if [array exists DICOMFiles] {
         unset DICOMFiles
@@ -1388,6 +1535,7 @@ proc FindDICOM { StartDir Pattern } {
     set DICOMStudyList {}
     set DICOMSeriesList {}
     set DICOMFileNameList {}
+    set DICOMFileNameSelected {}
     
     if [catch {cd $StartDir} err] {
         puts stderr $err
@@ -1455,7 +1603,7 @@ proc CreateFileNameList { PatientIDName StudyUID SeriesUID} {
     global DICOMPatientNames
     global DICOMPatientIDsNames
     global DICOMFileNameArray
-    global DICOMFileNameList
+    global DICOMFileNameList DICOMFileNameSelected
     
     catch {unset DICOMFileNameArray}
     set count 0
@@ -1480,8 +1628,10 @@ proc CreateFileNameList { PatientIDName StudyUID SeriesUID} {
 	set idx [lsort -decreasing [array name DICOMFileNameArray]]
     }
     set DICOMFileNameList {}
+    set DICOMFileNameSelected {}
     foreach i $idx {
         lappend DICOMFileNameList $DICOMFileNameArray($i)
+	lappend DICOMFileNameSelected "1"
     }
 }
 
@@ -1505,7 +1655,8 @@ proc ClickListIDsNames { idsnames study series filenames } {
     $study delete 0 end
     eval {$study insert end} $DICOMStudyList
     $series delete 0 end
-    $filenames delete 0 end
+    #$filenames delete 0 end
+    $filenames delete 1.0 end
     set DICOMListSelectStudyUID "none selected"
     set DICOMListSelectSeriesUID "none selected"
 }
@@ -1531,7 +1682,8 @@ proc ClickListStudyUIDs { idsnames study series filenames } {
     CreateSeriesList $name $studyid
     $series delete 0 end
     eval {$series insert end} $DICOMSeriesList
-    $filenames delete 0 end
+    #$filenames delete 0 end
+    $filenames delete 1.0 end
     set DICOMListSelectSeriesUID "none selected"
 }
 
@@ -1561,9 +1713,7 @@ proc ClickListSeriesUIDs { idsnames study series filenames } {
     set seriesid [lindex $DICOMSeriesList $seriesididx]
     set DICOMListSelectSeriesUID $seriesid
     CreateFileNameList $name $studyid $seriesid
-    $filenames delete 0 end
-    eval {$filenames insert end} $DICOMFileNameList
-    $filenames selection set 0 end
+    DICOMFillFileNameTextbox $filenames
 }
 
 #-------------------------------------------------------------------------------
@@ -1573,14 +1723,17 @@ proc ClickListSeriesUIDs { idsnames study series filenames } {
 # .END
 #-------------------------------------------------------------------------------
 proc DICOMListSelectClose { parent filelist } {
-    global DICOMFileNameList
+    global DICOMFileNameList DICOMFileNameSelected
     global Pressed
     
-    set DICOMFileNameList {}
-    set indices [$filelist curselection]
-    foreach idx $indices {
-        lappend DICOMFileNameList [$filelist get $idx]
-    }
+#     set list2 $DICOMFileNameList
+#     set DICOMFileNameList {}
+#     set num [llength $DICOMFileNameSelected]
+#     for {set i 0} {$i < $num} {incr i} {
+# 	if {[lindex $DICOMFileNameSelected $i] == "1"} {
+# 	    lappend DICOMFileNameList [lindex $list2 $i]
+# 	}
+#     }
     
     set Pressed OK
     destroy $parent
@@ -1609,28 +1762,33 @@ proc DICOMListSelect { parent values } {
     toplevel $parent -bg $Gui(activeWorkspace)
     wm title $parent "List of DICOM studies"
     wm minsize $parent 640 480
+
     frame $parent.f1 -bg $Gui(activeWorkspace)
     frame $parent.f2 -bg $Gui(activeWorkspace)
     frame $parent.f3 -bg $Gui(activeWorkspace)
+    pack $parent.f1 $parent.f2 -fill x
+    pack $parent.f3
+
     set iDsNames [DICOMScrolledListbox $parent.f1.iDsNames 0 1 DICOMListSelectPatientName "Patient <ID><Name>" -width 50 -height 5]
     TooltipAdd $iDsNames "Select a patient"
     set studyUIDs [DICOMScrolledListbox $parent.f1.studyUIDs 0 1 DICOMListSelectStudyUID "Study UID" -width 50 -height 5]
     TooltipAdd $studyUIDs "Select a study of the selected patient"
+    pack $parent.f1.iDsNames $parent.f1.studyUIDs -side left -expand true -fill both
+
     set seriesUIDs [DICOMScrolledListbox $parent.f2.seriesUIDs 0 1 DICOMListSelectSeriesUID "Series UID" -width 50 -height 5]
     TooltipAdd $seriesUIDs "Select a series of the selected study"
-    set fileNames [DICOMScrolledListbox $parent.f2.fileNames 0 1 DICOMListSelectFiles "Files" -width 50 -height 5 -selectmode extended]
-    #set fileNames [DICOMScrolledListbox $parent.f2.fileNames 0 1 -width 60 -height 5 -selectmode multiple]
+    set fileNames [DICOMScrolledTextbox $parent.f2.fileNames 0 1 DICOMListSelectFiles "Files" -width 50 -height 5 -wrap none -cursor hand1 -state disabled]
+    set Volumes(DICOMFileNameTextbox) $fileNames
     TooltipAdd $fileNames "Select files of the selected series"
-    
-    #button $parent.f3.close -text "Close" -command "destroy $parent"
+    pack $parent.f2.seriesUIDs $parent.f2.fileNames -side left -expand true -fill both
+
     eval {button $parent.f3.close -text "OK" -command [list DICOMListSelectClose $parent $fileNames]} $Gui(WBA)
     eval {button $parent.f3.cancel -text "Cancel" -command "set Pressed Cancel; destroy $parent"} $Gui(WBA)
-    
-    #set Volumes(previewImg) [image create photo -palette 255 -height 64 -width 64]
-    #eval {button $parent.f3.bPreview -image $Volumes(previewImg) -command "DICOMPreviewButton"} $Gui(WBA)
+    pack $parent.f3.close $parent.f3.cancel -padx 10 -pady 10 -side left
 
-    # >> AT 3/22/01
     frame $parent.f2.fileNames.fIncrDecr -bg $Gui(activeWorkspace)
+    pack $parent.f2.fileNames.fIncrDecr
+
     set f2 $parent.f2.fileNames.fIncrDecr
     eval {radiobutton $f2.rIncr \
 	      -text "Increasing" -command "DICOMIncrDecrButton $fileNames" \
@@ -1644,17 +1802,21 @@ proc DICOMListSelect { parent values } {
     eval {button $f2.bListHeaders -text "List Headers" -command "DICOMListHeadersButton"} $Gui(WBA)
     eval {button $f2.bCheck -text "Check" -command "DICOMCheckFiles"} $Gui(WBA)
 
-    #frame $parent.f4 -bg $Gui(activeWorkspace)
-    set Volumes(ImageTextbox) [ScrolledText $parent.f4]
-    #$Volumes(ImageTextbox) configure -height 8 -width 10 -font {helvetica 7}
-    $Volumes(ImageTextbox) configure -height 8 -width 10
+    pack $parent.f2.fileNames.fIncrDecr.rIncr $parent.f2.fileNames.fIncrDecr.rDecr $parent.f2.fileNames.fIncrDecr.bPreviewAll $parent.f2.fileNames.fIncrDecr.bListHeaders $parent.f2.fileNames.fIncrDecr.bCheck -side left -pady 2 -padx 0
 
+    # ImageTextbox frame
+    set Volumes(ImageTextbox) [ScrolledText $parent.f4]
+    $Volumes(ImageTextbox) configure -height 8 -width 10
+    pack $parent.f4 -fill both -expand true
+
+    # DICOM Preview Settings Frame
     frame $parent.f4.fSettings -bg $Gui(activeWorkspace) -relief sunken -bd 2
+    place $parent.f4.fSettings -relx 0.8 -rely 0.0 -anchor ne
     set f $parent.f4.fSettings
+    set Volumes(DICOMPreviewSettingsFrame) $f
 
     frame $f.f1 -bg $Gui(activeWorkspace)
     pack $f.f1
-    #DevAddLabel $f.f1.lWidth "Preview Width:"
     eval {label $f.f1.lWidth -text "Preview Width:" -width 15} $Gui(WLA)
     eval {entry $f.f1.ePreviewWidth -width 6 \
 	      -textvariable Volumes(DICOMPreviewWidth)} $Gui(WEA)
@@ -1662,7 +1824,6 @@ proc DICOMListSelect { parent values } {
 
     frame $f.f2 -bg $Gui(activeWorkspace)
     pack $f.f2
-    #DevAddLabel $f.f2.lHeight "Preview Height:"
     eval {label $f.f2.lHeight -text "Preview Height:" -width 15} $Gui(WLA)
     eval {entry $f.f2.ePreviewHeight -width 6 \
 	      -textvariable Volumes(DICOMPreviewHeight)} $Gui(WEA)
@@ -1670,44 +1831,35 @@ proc DICOMListSelect { parent values } {
 
     frame $f.f3 -bg $Gui(activeWorkspace)
     pack $f.f3
-    #DevAddLabel $f.f2.lHeight "Preview Height:"
     eval {label $f.f3.lHighest -text "Highest Value:" -width 15} $Gui(WLA)
     eval {entry $f.f3.eHighest -width 6 \
 	      -textvariable Volumes(DICOMPreviewHighestValue)} $Gui(WEA)
     pack $f.f3.lHighest $f.f3.eHighest -side left -padx 5 -pady 2
 
     eval {button $parent.f4.fSettings.bPreviewAll -text "Preview" -command "DICOMPreviewAllButton"} $Gui(WBA)
-
-    # << AT 3/22/01
-    pack $parent.f1.iDsNames $parent.f1.studyUIDs -side left -expand true -fill both
-    pack $parent.f2.seriesUIDs $parent.f2.fileNames -side left -expand true -fill both
-    pack $parent.f1 -fill x
-    pack $parent.f2 -fill x
-    pack $parent.f3.close $parent.f3.cancel -padx 10 -pady 10 -side left
-    # >> AT 3/22/01
-    pack $parent.f2.fileNames.fIncrDecr
-    pack $parent.f2.fileNames.fIncrDecr.rIncr $parent.f2.fileNames.fIncrDecr.rDecr $parent.f2.fileNames.fIncrDecr.bPreviewAll $parent.f2.fileNames.fIncrDecr.bListHeaders $parent.f2.fileNames.fIncrDecr.bCheck -side left -pady 2 -padx 0
-    # << AT 3/22/01
-    #pack $parent.f3 -fill both -expand true
-    pack $parent.f4 -fill both -expand true
-    pack $parent.f3
-    #pack $parent
-
-    place $parent.f4.fSettings -relx 0.8 -rely 0.0 -anchor ne
     pack $parent.f4.fSettings.bPreviewAll -padx 2 -pady 2
-#     #bind $parent.f4 <Enter> "raise $parent.f4.fSettings"
-#     #bind $parent.f4 <Leave> "lower $parent.f4.fSettings $Volumes(ImageTextbox)"
-#     bind $Volumes(ImageTextbox) <Enter> "raise $parent.f4.fSettings"
-#     bind $Volumes(ImageTextbox) <Leave> "lower $parent.f4.fSettings $Volumes(ImageTextbox)"
-#     bind $parent.f4.fSettings <Enter> "raise $parent.f4.fSettings"
-#     bind $parent.f4.fSettings <Leave> "lower $parent.f4.fSettings $Volumes(ImageTextbox)"
-    bind $parent.f2.fileNames.fIncrDecr.bPreviewAll <Enter> "raise $parent.f4.fSettings"
-    bind $parent.f4.fSettings <Leave> "lower $parent.f4.fSettings $Volumes(ImageTextbox)"
+
+    # DICOMDataDict
+    frame $parent.f4.fDataDict -bg $Gui(activeWorkspace) -relief sunken -bd 2
+    place $parent.f4.fDataDict -relx 0.9 -rely 0.0 -anchor ne
+    set f $parent.f4.fDataDict
+    set Volumes(DICOMDataDictSettingsFrame) $f
+    DevAddFileBrowse $f Volumes DICOMDataDictFile "DICOM Data Dictionary File" ""
+
+    # >> Bindings
+
+    bind $parent.f2.fileNames.fIncrDecr.bPreviewAll <Enter> "DICOMShowPreviewSettings"
+    bind $parent.f4.fSettings <Leave> "DICOMHidePreviewSettings"
+
+    bind $parent.f2.fileNames.fIncrDecr.bListHeaders <Enter> "DICOMShowDataDictSettings"
+    bind $parent.f4.fDataDict <Leave> "DICOMHideDataDictSettings"
 
     bind $iDsNames <ButtonRelease-1> [list ClickListIDsNames %W $studyUIDs $seriesUIDs $fileNames]
     #bind $iDsNames <Double-1> [list ClickListIDsNames %W $studyUIDs $seriesUIDs $fileNames]
     bind $studyUIDs <ButtonRelease-1> [list ClickListStudyUIDs $iDsNames %W $seriesUIDs $fileNames]
     bind $seriesUIDs <ButtonRelease-1> [list ClickListSeriesUIDs $iDsNames $studyUIDs %W $fileNames]
+
+    # << Bindings
     
     foreach x $values {
         $iDsNames insert end $x
@@ -1719,6 +1871,8 @@ proc DICOMListSelect { parent values } {
     ClickListStudyUIDs $iDsNames $studyUIDs $seriesUIDs $fileNames
     $seriesUIDs selection set 0
     ClickListSeriesUIDs $iDsNames $studyUIDs $seriesUIDs $fileNames
+
+    DICOMHideAllSettings
 }
 
 #
@@ -1745,7 +1899,6 @@ proc ChangeDir { dirlist } {
         } else  {
             $dirlist insert end $match
         }
-        
     }
 }
 
@@ -1881,17 +2034,17 @@ proc DICOMSelectMain { fileNameListbox } {
     global DICOMStartDir
     global Pressed
     global DICOMPatientIDsNames
-    global DICOMFileNameList
-    global Volume
+    global DICOMFileNameList DICOMFileNameSelected
+    global Volume Volumes
     
     if {$Volume(activeID) != "NEW"} {
 	return
     }
 
     set pwd [pwd]
-    #set DICOMStartDir "e:/tanacs/medpic/"
-    set DICOMStartDir $Volume(DICOMStartDir)
+    set DICOMStartDir $Volumes(DICOMStartDir)
     set DICOMFileNameList {}
+    set DICOMFileNameSelected {}
     set Volume(dICOMFileList) {}
     DICOMSelectDir .select
     
@@ -1911,18 +2064,25 @@ proc DICOMSelectMain { fileNameListbox } {
 	if { $Pressed == "OK" } {
 	    #puts $DICOMFileNameList
 	    $fileNameListbox delete 0 end
-	    foreach name $DICOMFileNameList {
-		$fileNameListbox insert end $name
+	    set Volume(dICOMFileList) {}
+	    foreach name $DICOMFileNameList selected $DICOMFileNameSelected {
+		if {$selected == "1"} {
+		    $fileNameListbox insert end $name
+		    lappend Volume(dICOMFileList) $name
+		}
 	    }
-	    set Volume(dICOMFileList) $DICOMFileNameList
+	    #set Volume(dICOMFileList) $DICOMFileNameList
 	    
 	    # use the second and the third
-	    set file1 [lindex $DICOMFileNameList 1]
-	    set file2 [lindex $DICOMFileNameList 2]
-	    DICOMReadHeaderValues [lindex $DICOMFileNameList 0]
+# 	    set file1 [lindex $DICOMFileNameList 1]
+# 	    set file2 [lindex $DICOMFileNameList 2]
+# 	    DICOMReadHeaderValues [lindex $DICOMFileNameList 0]
+ 	    set file1 [lindex $Volume(dICOMFileList) 1]
+ 	    set file2 [lindex $Volume(dICOMFileList) 2]
+ 	    DICOMReadHeaderValues [lindex $Volume(dICOMFileList) 0]
 	    DICOMPredictScanOrder $file1 $file2
 	    
-	    set Volume(DICOMStartDir) $DICOMStartDir
+	    set Volumes(DICOMStartDir) $DICOMStartDir
 	}
     }
     
@@ -2208,24 +2368,21 @@ proc DICOMPredictScanOrder { file1 file2 } {
     parser Delete
 }
 
-# proc DICOMPreviewButton {} {
-#     global Volumes DICOMFileNameList
-
-#     if {$Volumes(previewCount) >= [llength $DICOMFileNameList]} {
-# 	set Volumes(previewCount) 0
-#     }
-#     DICOMPreviewFile [lindex $DICOMFileNameList $Volumes(previewCount)] $Volumes(previewImg)
-#     incr Volumes(previewCount)
-# }
-
 proc DICOMPreviewAllButton {} {
-    global Volumes DICOMFileNameList
+    global Volumes DICOMFileNameList DICOMFileNameSelected
 
+    DICOMHideAllSettings
     $Volumes(ImageTextbox) delete 1.0 end
     for {set i 0} {$i < [llength $DICOMFileNameList]} {incr i} {
 	set img [image create photo -width $Volumes(DICOMPreviewWidth) -height $Volumes(DICOMPreviewHeight) -palette 256]
 	DICOMPreviewFile [lindex $DICOMFileNameList $i] $img
-	label $Volumes(ImageTextbox).l$i -image $img
+	if {[lindex $DICOMFileNameSelected $i] == "1"} {
+	    set color green
+	} else {
+	    set color red
+	}
+	label $Volumes(ImageTextbox).l$i -image $img -background $color -cursor hand1
+	bind $Volumes(ImageTextbox).l$i <ButtonRelease-1> "DICOMPreviewImageClick $Volumes(ImageTextbox).l$i $i"
 	#label $Volumes(ImageTextbox).l$i -image $img -background green
 	$Volumes(ImageTextbox) window create insert -window $Volumes(ImageTextbox).l$i
 	#$Volumes(ImageTextbox) insert insert " "
@@ -2234,8 +2391,9 @@ proc DICOMPreviewAllButton {} {
 }
 
 proc DICOMListHeadersButton {} {
-    global Volumes DICOMFileNameList
+    global Volumes DICOMFileNameList DICOMFileNameSelected
 
+    DICOMHideAllSettings
     $Volumes(ImageTextbox) delete 1.0 end
 
     vtkDCMLister Volumes(lister)
@@ -2243,6 +2401,10 @@ proc DICOMListHeadersButton {} {
     Volumes(lister) SetListAll 0
 
     for {set i 0} {$i < [llength $DICOMFileNameList]} {incr i} {
+	if {[lindex $DICOMFileNameSelected $i] == "0"} {
+	    continue
+	}
+
 	set img [image create photo -width $Volumes(DICOMPreviewWidth) -height $Volumes(DICOMPreviewHeight) -palette 256]
 	set filename [lindex $DICOMFileNameList $i]
 	DICOMPreviewFile $filename $img
@@ -2261,7 +2423,6 @@ proc DICOMListHeadersButton {} {
 proc DICOMListHeader {filename} {
     global Volumes
 
-    #vtkDCMLister lister
     set ret [Volumes(lister) OpenFile $filename]
     if {$ret == "0"} {
 	return
@@ -2294,7 +2455,6 @@ proc DICOMListHeader {filename} {
 proc DICOMPreviewFile {file img} {
     global Volumes Volume
 
-    #vtkDCMParser parser
     vtkDCMLister parser
 
     set found [parser OpenFile $file]
@@ -2342,28 +2502,44 @@ proc DICOMPreviewFile {file img} {
 }
 
 proc DICOMCheckFiles {} {
-    global Volumes Volume DICOMFileNameList
+    global Volumes Volume DICOMFileNameList DICOMFileNameSelected
 
     set t $Volumes(ImageTextbox)
     $t delete 1.0 end
 
-    if {[llength $DICOMFileNameList] < 2} {
+    set num 0
+    foreach selected $DICOMFileNameSelected {
+	# It is assumed that the possible values of selected
+	# are 0 and 1 only.
+	incr num $selected
+    }
+    if {$num < 2} {
 	$t insert insert "Not a volume - can't check.\n"
 	return
     }
 
-    set file1 [lindex $DICOMFileNameList 0]
-    set file2 [lindex $DICOMFileNameList 1]
-    set ret [DICOMCheckVolumeInit $file1 $file2]
+    set num [llength $DICOMFileNameSelected]
+    set localDICOMFileNameList {}
+    set localIndex {}
+    for {set i 0} {$i < $num} {incr i} {
+	if {[lindex $DICOMFileNameSelected $i] == "1"} {
+	    lappend localDICOMFileNameList [lindex $DICOMFileNameList $i]
+	    lappend localIndex $i
+	}
+    }
+
+    set file1 [lindex $localDICOMFileNameList 0]
+    set file2 [lindex $localDICOMFileNameList 1]
+    set ret [DICOMCheckVolumeInit $file1 $file2 [lindex $localIndex 0]]
     if {$ret == "1"} {
-	set max [llength $DICOMFileNameList]
+	set max [llength $localDICOMFileNameList]
 	for {set i 1} {$i < $max} {incr i} {
-	    set file [lindex $DICOMFileNameList $i]
+	    set file [lindex $localDICOMFileNameList $i]
 	    set msg "Checking $file\n"
 	    $t insert insert $msg
 	    $t see end
 	    update idletasks
-	    DICOMCheckFile $file $i
+	    DICOMCheckFile $file [lindex $localIndex $i] [lindex $localIndex [expr $i - 1]]
 	}
     }
     lappend Volumes(DICOMCheckVolumeList) $Volumes(DICOMCheckActiveList)
@@ -2381,8 +2557,10 @@ proc DICOMCheckFiles {} {
 
     set len [llength $Volumes(DICOMCheckSliceDistanceList)]
     if {$len == "1"} {
-	$t insert insert "The volume seems to be OK.\n"
-	$t see end
+	if {[llength [lindex $Volumes(DICOMCheckVolumeList) 0]] > 0} {
+	    $t insert insert "The volume seems to be OK.\n"
+	    $t see end
+	}
 	return
     }
 
@@ -2391,6 +2569,7 @@ proc DICOMCheckFiles {} {
 
     set Volumes(DICOMCheckImageLabelIdx) 0
     for {set i 0} {$i < $len} {incr i} {
+	set firstpos [$t index insert]
 	set dist [lindex $Volumes(DICOMCheckSliceDistanceList) $i]
 	set activeList [lindex $Volumes(DICOMCheckVolumeList) $i]
 	set activeLength [llength $activeList]
@@ -2399,26 +2578,32 @@ proc DICOMCheckFiles {} {
 	$t insert insert "Positions: "
 	$t insert insert $activePositionList
 	$t insert insert "\n"
+
 	for {set j 0} {$j < $activeLength} {incr j} {
 	    set idx [lindex $activeList $j]
 	    set file [lindex $DICOMFileNameList $idx]
 	    set img [image create photo -width $Volumes(DICOMPreviewWidth) -height $Volumes(DICOMPreviewHeight) -palette 256]
 	    DICOMPreviewFile $file $img
 	    set labelIdx $Volumes(DICOMCheckImageLabelIdx)
-	    label $Volumes(ImageTextbox).l$Volumes(DICOMCheckImageLabelIdx) -image $img
+	    label $Volumes(ImageTextbox).l$Volumes(DICOMCheckImageLabelIdx) -image $img -cursor hand1
+	    bind $Volumes(ImageTextbox).l$Volumes(DICOMCheckImageLabelIdx) <ButtonRelease-1> "DICOMSelectFragment $i"
+	    bind $Volumes(ImageTextbox).l$Volumes(DICOMCheckImageLabelIdx) <Enter> "DICOMImageTextboxFragmentEnter %W fragm${i}"
+	    bind  $Volumes(ImageTextbox).l$Volumes(DICOMCheckImageLabelIdx) <Leave> "DICOMImageTextboxFragmentLeave %W fragm${i}"
 	    $Volumes(ImageTextbox) window create insert -window $Volumes(ImageTextbox).l$Volumes(DICOMCheckImageLabelIdx)
 	    incr Volumes(DICOMCheckImageLabelIdx)
-	    #$Volumes(ImageTextbox) insert insert " "
 	}
-	$t insert insert "\n"
+	$t insert insert "\n\n"
+	$t tag add fragm${i} $firstpos [$t index insert]
+	$t tag bind fragm${i} <ButtonRelease-1> "DICOMSelectFragment $i"
+	$t tag bind fragm${i} <Enter> "DICOMImageTextboxFragmentEnter %W fragm${i}"
+	$t tag bind fragm${i} <Leave> "DICOMImageTextboxFragmentLeave %W fragm${i}"
+
 	$t see end
 	update idletasks
     }
-    $t insert insert "Fragment selection will be added soon.\n"
-    $t see end
 }
 
-proc DICOMCheckVolumeInit {file1 file2} {
+proc DICOMCheckVolumeInit {file1 file2 file1idx} {
     global Volumes Volume
 
     vtkDCMParser parser
@@ -2476,7 +2661,7 @@ proc DICOMCheckVolumeInit {file1 file2} {
     set Volumes(DICOMCheckSliceDistance) [expr $SlicePosition2 - $SlicePosition1]
     $t insert insert "Detected slice distance: $Volumes(DICOMCheckSliceDistance)\n"
 
-    lappend Volumes(DICOMCheckActiveList) 0
+    lappend Volumes(DICOMCheckActiveList) $file1idx
     lappend Volumes(DICOMCheckActivePositionList) $SlicePosition1
 
     parser CloseFile
@@ -2484,7 +2669,7 @@ proc DICOMCheckVolumeInit {file1 file2} {
     return 1
 }
 
-proc DICOMCheckFile {file idx} {
+proc DICOMCheckFile {file idx previdx} {
     global Volumes Volume
 
     vtkDCMParser parser
@@ -2518,7 +2703,7 @@ proc DICOMCheckFile {file idx} {
 	lappend Volumes(DICOMCheckVolumeList) $Volumes(DICOMCheckActiveList)
 	lappend Volumes(DICOMCheckPositionList) $Volumes(DICOMCheckActivePositionList)
 	lappend Volumes(DICOMCheckSliceDistanceList) $Volumes(DICOMCheckSliceDistance)
-	set Volumes(DICOMCheckActiveList) [list [expr $idx - 1] $idx]
+	set Volumes(DICOMCheckActiveList) [list $previdx $idx]
 	set Volumes(DICOMCheckActivePositionList) {}
 	lappend Volumes(DICOMCheckActivePositionList) $Volumes(DICOMCheckLastPosition)
 	lappend Volumes(DICOMCheckActivePositionList) $SlicePosition
@@ -2534,6 +2719,116 @@ proc DICOMCheckFile {file idx} {
     return 1
 }
 
+proc DICOMShowPreviewSettings {} {
+    global Volumes
+
+    raise $Volumes(DICOMPreviewSettingsFrame)
+    DICOMHideDataDictSettings
+}
+
+proc DICOMHidePreviewSettings {} {
+    global Volumes
+
+    lower $Volumes(DICOMPreviewSettingsFrame) $Volumes(ImageTextbox)
+}
+
+proc DICOMShowDataDictSettings {} {
+    global Volumes
+
+    raise $Volumes(DICOMDataDictSettingsFrame)
+    DICOMHidePreviewSettings
+}
+
+proc DICOMHideDataDictSettings {} {
+    global Volumes
+
+    lower $Volumes(DICOMDataDictSettingsFrame) $Volumes(ImageTextbox)
+}
+
+proc DICOMHideAllSettings {} {
+    global Volumes
+
+    DICOMHidePreviewSettings
+    DICOMHideDataDictSettings
+}
+
+proc DICOMSelectFragment {fragment} {
+    global Volumes DICOMFileNameList DICOMFileNameSelected
+
+    set activeList [lindex $Volumes(DICOMCheckVolumeList) $fragment]
+    set activeLength [llength $activeList]
+    set activePositionList [lindex $Volumes(DICOMCheckPositionList) $fragment]
+
+    set DICOMFileNameSelected {}
+    set num [llength $DICOMFileNameList]
+    for {set j 0} {$j < $num} {incr j} {
+	lappend DICOMFileNameSelected "0"
+    }
+
+    for {set j 0} {$j < $activeLength} {incr j} {
+	set idx [lindex $activeList $j]
+	set DICOMFileNameSelected [lreplace $DICOMFileNameSelected $idx $idx "1"]
+    }
+    $Volumes(DICOMFileNameTextbox) see [lindex $activeList 0].0
+    DICOMFillFileNameTextbox $Volumes(DICOMFileNameTextbox)
+}
+
+#-------------------------------------------------------------------------------
+# .PROC DICOMImageTextboxFragmentEnter
+#   Changes the cursor over the PointTextbox to a cross
+#   and stores the old one.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc DICOMImageTextboxFragmentEnter {w tag} {
+    global Volumes
+
+    set f2 $Volumes(ImageTextbox)
+    #set Volumes(ImageTextboxOldCursor) [$f2 cget -cursor]
+    set Volumes(ImageTextboxOldCursor) [$w cget -cursor]
+    #$f2 configure -cursor pencil
+    $w configure -cursor hand1
+    $f2 tag configure $tag -background #43ce80 -relief raised -borderwidth 1
+}
+
+#-------------------------------------------------------------------------------
+# .PROC DICOMImageTextboxFragmentLeave
+#   Changes back the original cursor after leaving
+#   the PointTextbox.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc DICOMImageTextboxFragmentLeave {w tag} {
+    global Volumes
+
+    set f2 $Volumes(ImageTextbox)
+    #$f2 configure -cursor $Volumes(ImageTextboxOldCursor)
+    $w configure -cursor $Volumes(ImageTextboxOldCursor)
+    $f2 tag configure $tag -background {} -relief flat
+}
+
+proc DICOMImageTextboxSelectAll {} {
+    global Volumes DICOMFileNameSelected
+
+    set num [llength $DICOMFileNameSelected]
+    set DICOMFileNameSelected {}
+    for {set i 0} {$i < $num} {incr i} {
+	lappend DICOMFileNameSelected "1"
+    }
+    DICOMFillFileNameTextbox $Volumes(DICOMFileNameTextbox)    
+}
+
+proc DICOMImageTextboxDeselectAll {} {
+    global Volumes DICOMFileNameSelected
+
+    set num [llength $DICOMFileNameSelected]
+    set DICOMFileNameSelected {}
+    for {set i 0} {$i < $num} {incr i} {
+	lappend DICOMFileNameSelected "0"
+    }
+    DICOMFillFileNameTextbox $Volumes(DICOMFileNameTextbox)    
+}
+
 #-------------------------------------------------------------------------------
 # .PROC VolumesEnter
 # 
@@ -2541,6 +2836,10 @@ proc DICOMCheckFile {file idx} {
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesEnter {} {
+    global Volumes
+
+    pushEventManager $Volumes(eventManager)
+
     DataExit
     bind Listbox <Control-Button-1> {tkListboxBeginToggle %W [%W index @%x,%y]}
     #tk_messageBox -type ok -message "VolumesEnter" -title "Title" -icon  info
@@ -2553,5 +2852,34 @@ proc VolumesEnter {} {
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesExit {} {
+    global Volumes
+
+    popEventManager
     #tk_messageBox -type ok -message "VolumesExit" -title "Title" -icon  info
 }
+
+# >> Presets
+
+proc VolumesStorePresets {p} {
+    global Preset Volumes
+
+    set Preset(Volumes,$p,DICOMStartDir) $Volumes(DICOMStartDir)
+    set Preset(Volumes,$p,FileNameSortParam) $Volumes(FileNameSortParam)
+    set Preset(Volumes,$p,DICOMPreviewWidth) $Volumes(DICOMPreviewWidth)
+    set Preset(Volumes,$p,DICOMPreviewHeight) $Volumes(DICOMPreviewHeight)
+    set Preset(Volumes,$p,DICOMPreviewHighestValue) $Volumes(DICOMPreviewHighestValue)
+    set Preset(Volumes,$p,DICOMDataDictFile) $Volumes(DICOMDataDictFile)
+}
+
+proc VolumesRecallPresets {p} {
+    global Preset Volumes
+
+    set Volumes(DICOMStartDir) $Preset(Volumes,$p,DICOMStartDir)
+    set Volumes(FileNameSortParam) $Preset(Volumes,$p,FileNameSortParam)
+    set Volumes(DICOMPreviewWidth) $Preset(Volumes,$p,DICOMPreviewWidth)
+    set Volumes(DICOMPreviewHeight) $Preset(Volumes,$p,DICOMPreviewHeight)
+    set Volumes(DICOMPreviewHighestValue) $Preset(Volumes,$p,DICOMPreviewHighestValue)
+    set Volumes(DICOMDataDictFile) $Preset(Volumes,$p,DICOMDataDictFile)
+}
+
+# << Presets
