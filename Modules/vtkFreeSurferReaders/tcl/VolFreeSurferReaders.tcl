@@ -57,6 +57,8 @@ proc VolFreeSurferReadersInit {} {
     set Volume(VolFreeSurferReaders,idList) ""
     set Module($e,procMainFileCloseUpdateEntered) VolFreeSurferReadersMainFileCloseUpdate
 
+    # set up the mapping between the surface labels and umls ids
+    VolFreeSurferReadersSetUMLSMapping
 }
 
 
@@ -723,4 +725,172 @@ proc VolFreeSurferReadersCORHeaderRead {filename} {
     set Volume(imageRange) {1 256}
     # puts "VolFreeSurferReadersCORHeaderRead: set slice spacing to $Volume(sliceSpacing), slice thickness to $Volume(sliceThickness)"
     return 0
+}
+
+# generated via /home/nicole/bin/readumls.sh
+proc VolFreeSurferReadersSetUMLSMapping {} {
+    # set up Freesurfer surface labels to UMLS mapping
+    global VolFreeSurferReadersSurface
+    set VolFreeSurferReadersSurface(0,surfacelabel) Unknown
+    set VolFreeSurferReadersSurface(0,umls) Unknown
+    set VolFreeSurferReadersSurface(1,surfacelabel) Corpus_callosum
+    set VolFreeSurferReadersSurface(1,umls) C0010090
+    set VolFreeSurferReadersSurface(2,surfacelabel) G_and_S_Insula_ONLY_AVERAGE
+    set VolFreeSurferReadersSurface(3,surfacelabel) G_cingulate-Isthmus
+    set VolFreeSurferReadersSurface(3,umls) C0175192
+    set VolFreeSurferReadersSurface(4,surfacelabel) G_cingulate-Main_part
+    set VolFreeSurferReadersSurface(4,umls) C0018427
+    set VolFreeSurferReadersSurface(5,surfacelabel) G_cuneus
+    set VolFreeSurferReadersSurface(5,umls) C0152307
+    set VolFreeSurferReadersSurface(6,surfacelabel) G_frontal_inf-Opercular_part
+    set VolFreeSurferReadersSurface(6,umls) C0262296
+    set VolFreeSurferReadersSurface(7,surfacelabel) G_frontal_inf-Orbital_part
+    set VolFreeSurferReadersSurface(7,umls) C0262300
+    set VolFreeSurferReadersSurface(8,surfacelabel) G_frontal_inf-Triangular_part
+    set VolFreeSurferReadersSurface(8,umls) C0262350
+    set VolFreeSurferReadersSurface(9,surfacelabel) G_frontal_middle
+    set VolFreeSurferReadersSurface(9,umls) C0152297
+    set VolFreeSurferReadersSurface(10,surfacelabel) G_frontal_superior
+    set VolFreeSurferReadersSurface(10,umls) C0152296
+    set VolFreeSurferReadersSurface(11,surfacelabel) G_frontomarginal
+    set VolFreeSurferReadersSurface(12,surfacelabel) G_insular_long
+    set VolFreeSurferReadersSurface(12,umls) C0228261
+    set VolFreeSurferReadersSurface(13,surfacelabel) G_insular_short
+    set VolFreeSurferReadersSurface(13,umls) C0262329
+    set VolFreeSurferReadersSurface(14,surfacelabel) G_occipital_inferior
+    set VolFreeSurferReadersSurface(14,umls) C0228231
+    set VolFreeSurferReadersSurface(15,surfacelabel) G_occipital_middle
+    set VolFreeSurferReadersSurface(15,umls) C0228220
+    set VolFreeSurferReadersSurface(16,surfacelabel) G_occipital_superior
+    set VolFreeSurferReadersSurface(16,umls) C0228230
+    set VolFreeSurferReadersSurface(17,surfacelabel) G_occipit-temp_lat-Or_fusiform
+    set VolFreeSurferReadersSurface(17,umls) C0228243
+    set VolFreeSurferReadersSurface(18,surfacelabel) G_occipit-temp_med-Lingual_part
+    set VolFreeSurferReadersSurface(18,umls) C0228244
+    set VolFreeSurferReadersSurface(19,surfacelabel) G_occipit-temp_med-Parahippocampal_part
+    set VolFreeSurferReadersSurface(19,umls) C0228249
+    set VolFreeSurferReadersSurface(20,surfacelabel) G_orbital
+    set VolFreeSurferReadersSurface(20,umls) C0152301
+    set VolFreeSurferReadersSurface(21,surfacelabel) G_paracentral
+    set VolFreeSurferReadersSurface(21,umls) C0228203
+    set VolFreeSurferReadersSurface(22,surfacelabel) G_parietal_inferior-Angular_part
+    set VolFreeSurferReadersSurface(22,umls) C0152305
+    set VolFreeSurferReadersSurface(23,surfacelabel) G_parietal_inferior-Supramarginal_part
+    set VolFreeSurferReadersSurface(23,umls) C0458319
+    set VolFreeSurferReadersSurface(24,surfacelabel) G_parietal_superior
+    set VolFreeSurferReadersSurface(24,umls) C0152303
+    set VolFreeSurferReadersSurface(25,surfacelabel) G_postcentral
+    set VolFreeSurferReadersSurface(25,umls) C0152302
+    set VolFreeSurferReadersSurface(26,surfacelabel) G_precentral
+    set VolFreeSurferReadersSurface(26,umls) C0152299
+    set VolFreeSurferReadersSurface(27,surfacelabel) G_precuneus
+    set VolFreeSurferReadersSurface(27,umls) C0152306
+    set VolFreeSurferReadersSurface(28,surfacelabel) G_rectus
+    set VolFreeSurferReadersSurface(28,umls) C0152300
+    set VolFreeSurferReadersSurface(29,surfacelabel) G_subcallosal
+    set VolFreeSurferReadersSurface(29,umls) C0175231
+    set VolFreeSurferReadersSurface(30,surfacelabel) G_subcentral
+    set VolFreeSurferReadersSurface(31,surfacelabel) G_temp_sup-G_temp_transv_and_interm_S
+    set VolFreeSurferReadersSurface(31,umls) C0152309
+    set VolFreeSurferReadersSurface(32,surfacelabel) G_temp_sup-Lateral_aspect
+    set VolFreeSurferReadersSurface(32,umls) C0152309
+    set VolFreeSurferReadersSurface(33,surfacelabel) G_temp_sup-Planum_polare
+    set VolFreeSurferReadersSurface(33,umls) C0152309
+    set VolFreeSurferReadersSurface(34,surfacelabel) G_temp_sup-Planum_tempolale
+    set VolFreeSurferReadersSurface(34,umls) C0152309
+    set VolFreeSurferReadersSurface(35,surfacelabel) G_temporal_inferior
+    set VolFreeSurferReadersSurface(35,umls) C0152311
+    set VolFreeSurferReadersSurface(36,surfacelabel) G_temporal_middle
+    set VolFreeSurferReadersSurface(36,umls) C0152310
+    set VolFreeSurferReadersSurface(37,surfacelabel) G_transverse_frontopolar
+    set VolFreeSurferReadersSurface(38,surfacelabel) Lat_Fissure-ant_sgt-ramus_horizontal
+    set VolFreeSurferReadersSurface(38,umls) C0262190
+    set VolFreeSurferReadersSurface(39,surfacelabel) Lat_Fissure-ant_sgt-ramus_vertical
+    set VolFreeSurferReadersSurface(39,umls) C0262186
+    set VolFreeSurferReadersSurface(40,surfacelabel) Lat_Fissure-post_sgt
+    set VolFreeSurferReadersSurface(40,umls) C0262310
+    set VolFreeSurferReadersSurface(41,surfacelabel) Medial_wall
+    set VolFreeSurferReadersSurface(42,surfacelabel) Pole_occipital
+    set VolFreeSurferReadersSurface(42,umls) C0228217
+    set VolFreeSurferReadersSurface(43,surfacelabel) Pole_temporal
+    set VolFreeSurferReadersSurface(43,umls) C0149552
+    set VolFreeSurferReadersSurface(44,surfacelabel) S_calcarine
+    set VolFreeSurferReadersSurface(44,umls) C0228224
+    set VolFreeSurferReadersSurface(45,surfacelabel) S_central
+    set VolFreeSurferReadersSurface(45,umls) C0228188
+    set VolFreeSurferReadersSurface(46,surfacelabel) S_central_insula
+    set VolFreeSurferReadersSurface(46,umls) C0228260
+    set VolFreeSurferReadersSurface(47,surfacelabel) S_cingulate-Main_part
+    set VolFreeSurferReadersSurface(47,umls) C0228189
+    set VolFreeSurferReadersSurface(48,surfacelabel) S_cingulate-Marginalis_part
+    set VolFreeSurferReadersSurface(48,umls) C0259792
+    set VolFreeSurferReadersSurface(49,surfacelabel) S_circular_insula_anterior
+    set VolFreeSurferReadersSurface(49,umls) C0228258
+    set VolFreeSurferReadersSurface(50,surfacelabel) S_circular_insula_inferior
+    set VolFreeSurferReadersSurface(50,umls) C0228258
+    set VolFreeSurferReadersSurface(51,surfacelabel) S_circular_insula_superior
+    set VolFreeSurferReadersSurface(51,umls) C0228258
+    set VolFreeSurferReadersSurface(52,surfacelabel) S_collateral_transverse_ant
+    set VolFreeSurferReadersSurface(52,umls) C0228226
+    set VolFreeSurferReadersSurface(53,surfacelabel) S_collateral_transverse_post
+    set VolFreeSurferReadersSurface(53,umls) C0228226
+    set VolFreeSurferReadersSurface(54,surfacelabel) S_frontal_inferior
+    set VolFreeSurferReadersSurface(54,umls) C0262251
+    set VolFreeSurferReadersSurface(55,surfacelabel) S_frontal_middle
+    set VolFreeSurferReadersSurface(55,umls) C0228199
+    set VolFreeSurferReadersSurface(56,surfacelabel) S_frontal_superior
+    set VolFreeSurferReadersSurface(56,umls) C0228198
+    set VolFreeSurferReadersSurface(57,surfacelabel) S_frontomarginal
+    set VolFreeSurferReadersSurface(57,umls) C0262269
+    set VolFreeSurferReadersSurface(58,surfacelabel) S_intermedius_primus-Jensen
+    set VolFreeSurferReadersSurface(59,surfacelabel) S_intracingulate
+    set VolFreeSurferReadersSurface(59,umls) C0262263
+    set VolFreeSurferReadersSurface(60,surfacelabel) S_intraparietal-and_Parietal_transverse
+    set VolFreeSurferReadersSurface(60,umls) C0228213
+    set VolFreeSurferReadersSurface(61,surfacelabel) S_occipital_anterior
+    set VolFreeSurferReadersSurface(61,umls) C0262194
+    set VolFreeSurferReadersSurface(62,surfacelabel) S_occipital_inferior
+    set VolFreeSurferReadersSurface(62,umls) C0262253
+    set VolFreeSurferReadersSurface(63,surfacelabel) S_occipital_middle_and_Lunatus
+    set VolFreeSurferReadersSurface(63,umls) C0262278
+    set VolFreeSurferReadersSurface(64,surfacelabel) S_occipital_superior_and_transversalis
+    set VolFreeSurferReadersSurface(64,umls) C0262348
+    set VolFreeSurferReadersSurface(65,surfacelabel) S_occipito-temporal_lateral
+    set VolFreeSurferReadersSurface(65,umls) C0228245
+    set VolFreeSurferReadersSurface(66,surfacelabel) S_occipito-temporal_medial_and_S_Lingual
+    set VolFreeSurferReadersSurface(66,umls) C0447427
+    set VolFreeSurferReadersSurface(67,surfacelabel) S_orbital_lateral
+    set VolFreeSurferReadersSurface(67,umls) C0228229
+    set VolFreeSurferReadersSurface(68,surfacelabel) S_orbital_medial-Or_olfactory
+    set VolFreeSurferReadersSurface(68,umls) C0262286
+    set VolFreeSurferReadersSurface(69,surfacelabel) S_orbital-H_shapped
+    set VolFreeSurferReadersSurface(69,umls) C0228206
+    set VolFreeSurferReadersSurface(70,surfacelabel) S_paracentral
+    set VolFreeSurferReadersSurface(70,umls) C0228204
+    set VolFreeSurferReadersSurface(71,surfacelabel) S_parieto_occipital
+    set VolFreeSurferReadersSurface(71,umls) C0228191
+    set VolFreeSurferReadersSurface(72,surfacelabel) S_pericallosal
+    set VolFreeSurferReadersSurface(73,surfacelabel) S_postcentral
+    set VolFreeSurferReadersSurface(73,umls) C0228212
+    set VolFreeSurferReadersSurface(74,surfacelabel) S_precentral-Inferior-part
+    set VolFreeSurferReadersSurface(74,umls) C0262257
+    set VolFreeSurferReadersSurface(75,surfacelabel) S_precentral-Superior-part
+    set VolFreeSurferReadersSurface(75,umls) C0262338
+    set VolFreeSurferReadersSurface(76,surfacelabel) S_subcentral_ant
+    set VolFreeSurferReadersSurface(76,umls) C0262197
+    set VolFreeSurferReadersSurface(77,surfacelabel) S_subcentral_post
+    set VolFreeSurferReadersSurface(77,umls) C0262318
+    set VolFreeSurferReadersSurface(78,surfacelabel) S_suborbital
+    set VolFreeSurferReadersSurface(79,surfacelabel) S_subparietal
+    set VolFreeSurferReadersSurface(79,umls) C0228216
+    set VolFreeSurferReadersSurface(80,surfacelabel) S_supracingulate
+    set VolFreeSurferReadersSurface(81,surfacelabel) S_temporal_inferior
+    set VolFreeSurferReadersSurface(81,umls) C0228242
+    set VolFreeSurferReadersSurface(82,surfacelabel) S_temporal_superior
+    set VolFreeSurferReadersSurface(82,umls) C0228237
+    set VolFreeSurferReadersSurface(83,surfacelabel) S_temporal_transverse
+    set VolFreeSurferReadersSurface(83,umls) C0228239
+    set VolFreeSurferReadersSurface(84,surfacelabel) S_transverse_frontopolar
+
+    return
 }
