@@ -696,7 +696,6 @@ void vtkFastMarching::init(int dimX, int dimY, int dimZ, int depth, double dx, d
   invDz2 = 1.0/(dz*dz);
 
   nNeighbors=26; // 6 or 26
-  dx=1.0;
 
   nEvolutions=-1;
 
