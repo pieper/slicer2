@@ -51,7 +51,7 @@ proc SaveInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.6 $} {$Date: 2003/01/20 16:46:14 $}]
+            {$Revision: 1.7 $} {$Date: 2003/01/20 17:03:32 $}]
 
     SaveInitTables
 }
@@ -80,11 +80,12 @@ proc SaveInitTables {} {
     upvar \#0 SaveImageTypeToExtensionMap ext
 
     set ext(BMP)  "bmp"
-    set ext(JPEG) "jpg"
+    set ext(JPEG) {"jpg" "jpeg"}
     set ext(PNG)  "png"
-    set ext(PNM)  "pnm"
-    set ext(PostScript) "ps"
-    set ext(TIFF) "tif"
+    set ext(PNM)  {"pnm"}
+    set ext(PostScript) {"ps" "eps" "prn"}
+    set ext(TIFF) {"tif" "tiff"}
+
 }
 #-------------------------------------------------------------------------------
 # .PROC SaveWindowToFile
@@ -203,7 +204,7 @@ proc SaveGetFilePath {directory filename {imageType ""}} {
     } else {
         #explicit image type, add extension (if different)
         set imageType [SaveGetImageType $imageType]
-        set ext $SaveImageTypeToExtensionMap($imageType)
+        set ext [lindex $SaveImageTypeToExtensionMap($imageType) 0]
         set curExt [string tolower [string range [file extension $filename] 1 end]]
         if {"$ext" != "$curExt"} {
             set filename [format "%s.%s" $filename $ext]
@@ -230,7 +231,7 @@ proc SaveGetFilePath {directory filename {imageType ""}} {
 proc SaveGetExtensionForImageType {imageType} {
     global SaveExtensionToImageTypeMap
     if {[info exists SaveImageTypeToExtensionMap($imageType)]} {
-        return $SaveImageTypeToExtensionMap($imageType)
+        return [lindex $SaveImageTypeToExtensionMap($imageType) 0]
     }
     return ""
 }
@@ -294,6 +295,15 @@ proc SaveGetSupportedImageTypes {} {
 # .END
 #-------------------------------------------------------------------------------
 proc SaveGetSupportedExtensions {} {
+    global SaveExtensionToImageTypeMap SaveImageTypeToExtensionMap
+
+    foreach i [array names SaveImageTypeToExtensionMap] {
+        lappend e [lindex $SaveImageTypeToExtensionMap($i) 0]
+    }
+    return $e
+}
+
+proc SaveGetAllSupportedExtensions {} {
     global SaveExtensionToImageTypeMap
     return [lsort [array names SaveExtensionToImageTypeMap]]
 }
