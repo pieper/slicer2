@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.85 $} {$Date: 2003/06/03 19:03:00 $}]
+        {$Revision: 1.86 $} {$Date: 2003/06/03 21:57:55 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -739,7 +739,9 @@ proc MainMrmlImport {filename} {
         }
         eval lappend outtags $tag $outattr
     }
-    puts "MainMrmlImport: outtags = $outtags"
+    if {$::Module(verbose)} {
+        puts "MainMrmlImport: outtags = $outtags"
+    }
     MainMrmlBuildTreesVersion2.0 [list $outtags]
     MainUpdateMRML
 }
@@ -856,7 +858,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
             # Compute full path name relative to the MRML file
             $n SetFullFileName [file join $Mrml(dir) [$n GetFileName]]
             if {$::Module(verbose)} { 
-                puts "MainMrmlBuildTreesVersion2.0: Model FullFileName set to [$n GetFullFileName]"
+                puts "MainMrmlBuildTreesVersion2.0: Model FullFileName set to [$n GetFullFileName], from mrml dir ($Mrml(dir)) and file name ([$n GetFileName])"
             }
             # Generate model ID if necessary
            if {[$n GetModelID] == ""} {
@@ -948,7 +950,9 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                         }
                         if {[file exists $DICOMName] == 0} {
                             set DICOMName [file join [$n GetFilePrefix] $file]
-                            puts "MainMrmlBuildTreesVersion2.0: Reset dicomname to $DICOMName, because first try didn't exist: [file join $Mrml(dir) $file]"
+                            if {$::Module(verbose) } {
+                                puts "MainMrmlBuildTreesVersion2.0: Reset dicomname to $DICOMName, because first try didn't exist: [file join $Mrml(dir) $file]"
+                            }
                         }
                         $n AddDICOMFileName $DICOMName
                     }
@@ -1893,22 +1897,27 @@ proc MainMrmlRelativity {oldRoot} {
             # Do I need to set the Full Prefix as well???? No.
 #            $node SetFilePrefix [MainFileGetRelativePrefix [file join $oldRoot [$node GetFilePrefix]]]
             if {$Module(verbose) == 1} {
-                puts "MainMrml.tcl MainMrmlRelativity: set file prefix to [$node GetFilePrefix]"
+                puts "MainMrml.tcl MainMrmlRelativity: set file prefix to [$node GetFilePrefix] (full prefix is now [$node GetFullPrefix])"
             }
             # Kilian 02/03 I do not know what old root is good for but I will just leave it here
 
-            if {$oldRoot == $Mrml(dir)} { 
-                $node SetFullPrefix [file join $Mrml(dir) [$node GetFilePrefix]]
-            } else { 
+            # leave the full prefix alone, it's an absolute path
+            if {0} {
+                if {$oldRoot == $Mrml(dir)} { 
+                    $node SetFullPrefix [file join $Mrml(dir) [$node GetFilePrefix]]
+                } else { 
               $node SetFullPrefix [file join $Mrml(dir) \
-                      [file join $oldRoot [$node GetFilePrefix]]]
+                                       [file join $oldRoot [$node GetFilePrefix]]]
+                }
             }
             # >> AT 7/6/01, sp 2002-08-20
 
             set num [$node GetNumberOfDICOMFiles]
             for {set i 0} {$i < $num} {incr i} {
                 set filename [$node GetDICOMFileName $i]
-                puts "MainMrmlRelativity: got dicom filename $filename"
+                if {$::Module(verbose)} {
+                    puts "MainMrmlRelativity: got dicom filename $filename"
+                }
                 #set dir [file dirname $filename]
                 #set name [file tail $filename]
                 #set reldir [MainFileGetRelativePrefix $dir]
@@ -1923,12 +1932,11 @@ proc MainMrmlRelativity {oldRoot} {
             } elseif {$class == "vtkMrmlModelNode"} {
 
             set ext [file extension [$node GetFileName]]
-            if {1} {
-                $node SetFileName [MainFileGetRelativePrefix \
+            $node SetFileName [MainFileGetRelativePrefix \
+                                   [file join $oldRoot [$node GetFileName]]]$ext
+            $node SetFullFileName [file join $Mrml(dir) \
                                        [file join $oldRoot [$node GetFileName]]]$ext
-                $node SetFullFileName [file join $Mrml(dir) \
-                                           [file join $oldRoot [$node GetFileName]]]$ext
-            }
+            
             # use the new version with real relative paths - doesn't work 
             # $node SetFileName [MainFileGetRelativePrefixNew [$node GetFileName]]
         }
@@ -1951,6 +1959,9 @@ proc MainMrmlWrite {filename} {
     }
     # Store the new root and filePrefix
     # NA - try not resetting it here, MainMrmlRelativity needs to know where it was opened originally in order to calculate the paths to the volumes when save it in a new place.
+    if {$::Module(verbose)} {
+        puts "MainMrmlWrite: setting oldRoot to mrml dir ($Mrml(dir)) and mrml dir to $filename.\nThen calling MainMrmlRelativity and then MainMrmlCheckVolumes."
+    }
     set oldRoot $Mrml(dir)
     # maybe we shouldn't set the filename yet...
     MainMrmlSetFile $filename
@@ -1973,7 +1984,9 @@ proc MainMrmlWriteProceed {filename} {
 
     # If colors have changed since last save, then save colors too
     if {$Mrml(colorsUnsaved) == 1} {
-        puts SaveColors
+        if {$::Module(verbose)} {
+            puts SaveColors
+        }
 
         # Combine trees
         vtkMrmlTree tree
@@ -2013,7 +2026,7 @@ proc MainMrmlWriteProceed {filename} {
 proc MainMrmlCheckVolumes {filename} {
    global Mrml
 
-    puts "Starting MainMrmlCheckVolumes with filename $filename"
+    if {$::Module(verbose)} { puts "Starting MainMrmlCheckVolumes with filename $filename" }
    Mrml(dataTree) InitTraversal
    set node [Mrml(dataTree) GetNextItem]
    set volumelist ""
@@ -2022,22 +2035,26 @@ proc MainMrmlCheckVolumes {filename} {
        if {($class == "vtkMrmlVolumeNode")} {
            if {[$node GetNumberOfDICOMFiles] == 0} {
                # test the first non dicom volume file
+               if {$::Module(verbose)} {
+                   puts "MainMrmlCheckVolumes: non dicom file:\n\tfile pattern  [$node GetFilePattern] \n\tfull prefix [$node GetFullPrefix]\n\t file prefix [$node GetFilePrefix]"
+               }
                set fname [format [$node GetFilePattern] [$node GetFullPrefix] [lindex [$node GetImageRange] 0]]
-               puts "MainMrmlCheckVolumes: non dicom file, set this node's file name to $fname"
+               if {$::Module(verbose)} {
+                   puts "MainMrmlCheckVolumes: non dicom file, set this node's file name to $fname"
+               }
            } else {
-               puts "MainMrmlCheckVolumes: printing node:"
-               $node Print
-               puts "MainMrmlCheckVolumes: done printing node"
                # test the first dicom volume file
                set fname [$node GetDICOMFileName 0]
-               puts "MainMrmlCheckVolumes: dicom file, first name is $fname"
+               if {$::Module(verbose)} {
+                   puts "MainMrmlCheckVolumes: dicom file, first name is $fname"
+               }
                # if it's a relative file name, prepend the mrml dir
                if {[file pathtype $fname] == "relative"} {
-                   puts "MainMrmlCheckVolumes: filename is relative $fname"
-                   set fname2 ${Mrml(dir)}/${fname}
-                   puts "MainMrmlCheckVolumes: prepended mrml dir to filename: $fname2"
+                   set fname2 ${Mrml(dir)}[file separator]${fname}
+                   if {$::Module(verbose)} {
+                       puts "MainMrmlCheckVolumes: filename is relative $fname.\n\t Prepended mrml dir to filename: $fname2.\n\tSetting dicom filename to normalised name [file normalize $fname2]"
+                   }
                    set fname [file normalize $fname2]
-                   puts "MainMrmlCheckVolumes: Set dicom filename to normalised name = $fname"
                }
            }
            if {([file exist $fname] == 0)} {
@@ -2080,19 +2097,29 @@ proc MainMrmlAbsolutivity {} {
              
             set oldPrefix [$node GetFullPrefix]
             if {[file pathtype $oldPrefix] == "relative"} {
-                set fname ${Mrml(dir)}/${oldPrefix}
-                if { $::verbose } {
+                set fname ${Mrml(dir)}[file separator]${oldPrefix}
+                if {$::Module(verbose)} { 
                     puts "MainMrmlAbsolutivity: non dicom file \n\trelative old prefix $oldPrefix\n\tnew one wrt mrml dir $fname\n\tnormalized = [file normalize $fname]"
                 }
                 $node SetFilePrefix [file normalize $fname]
+            } else {
+                # just normalize it if there are ..'s in the middle of the path
+                if {[string first ".." $oldPrefix] != -1} {
+                    if {$::Module(verbose)} {
+                        puts "MainMrmlAbsolutivity: non dicome file \n\t old prefix with ..'s: $oldPrefix\n\t new one normalized = [file normalize $oldPrefix]"
+                    }
+                    $node SetFilePrefix [file normalize $oldPrefix]
+                }
             }
             set num [$node GetNumberOfDICOMFiles]
             for {set i 0} {$i < $num} {incr i} {
                 set filename [$node GetDICOMFileName $i]
-                puts "MainMrmlAbsolutivity: got dicom filename $filename"
+                if {$::Module(verbose)} {
+                    puts "MainMrmlAbsolutivity: got dicom filename $filename"
+                }
                 if {[file pathtype $filename] == "relative"} {
-                    set absname ${Mrml(dir)}/${filename}
-                    if { $::verbose } {
+                    set absname ${Mrml(dir)}[file separator]${filename}
+                    if {$::Module(verbose)} {
                         puts "MainMrmlAbsolutivity: dicom file \n\trelative old filename $filename\n\tnew one wrt mrml dir $absname\n\tnormalized = [file normalize $absname]"
                     }
                     $node SetDICOMFileName $i $absname
