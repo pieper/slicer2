@@ -16,6 +16,8 @@ vtkImageMagnify mag
 
 # this script tests vtkImageReformatIJK.tcl
 
+### Lousy Test! Doesn't test complicated matrix stuff
+
 vtkImageReformatIJK ref
 ref SetInput [reader GetOutput]
 ref SetInputOrderString SI
