@@ -726,16 +726,21 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 		}
 
 		"Options" {
-			set n [MainMrmlAddNode Options]
-		        foreach a $attr {
+			foreach a $attr {
 				set key [lindex $a 0]
 				set val [lreplace $a 0 0]
-				set Options($key) $val
 				switch $key {
-					"options"      {$n SetOptions $val}
-					"program"      {$n SetProgram $val}
-					"contents"     {$n SetContents $val}
+					"options"      {set options $val}
+					"program"      {set program $val}
+					"contents"     {set contents $val}
 				}
+			}
+			# I don't want any of gimpy's stinkin' modules in my tree!
+			if {$contents != "modules"} {
+				set n [MainMrmlAddNode Options]
+				$n SetOptions $options
+				$n SetProgram $program
+				$n SetContents $contents
 			}
 
 			# Check that this is a slicer options node.
@@ -746,8 +751,6 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 			# If these are presets, then do preset stuff on stuffing, not attr
 			if {[$n GetContents] == "presets"} {
 			    MainOptionsParsePresets $attr
-			    # Set current values to preset 0 (user preferences)
-			    MainOptionsRecallPresets $Preset(userOptions)
 			}
 		}
 

@@ -67,7 +67,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
         set m MainView
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.12 $} {$Date: 2000/02/16 14:17:02 $}]
+		{$Revision: 1.13 $} {$Date: 2000/02/21 22:37:05 $}]
 
 	set View(viewerHeightNormal) 656
 	set View(viewerWidth)  956 
@@ -573,11 +573,6 @@ proc MainViewResetFocalPoint {} {
 	global View Slice
 				
 	MainViewSetFocalPoint 0 0 0
-
-	# Zoom
-	foreach s $Slice(idList) {
-#		Slicer SetZoomCenter $s -1 -1
-	}
 }
 
 #-------------------------------------------------------------------------------
@@ -733,11 +728,9 @@ proc MainViewRecallPresets {p} {
 
 	eval $View(viewCam) SetPosition      $Preset(View,$p,position)
 	eval $View(viewCam) SetViewUp        $Preset(View,$p,viewUp)
-	eval $View(viewCam) SetFocalPoint    $Preset(View,$p,focalPoint)
 	eval $View(viewCam) SetClippingRange $Preset(View,$p,clippingRange)
-	$View(viewCam) ComputeViewPlaneNormal
-	$View(viewCam) OrthogonalizeViewUp
-	MainViewLightFollowCamera
+
+	eval MainViewSetFocalPoint $Preset(View,$p,focalPoint)
 	MainViewerSetMode $Preset(View,$p,viewMode)
 	MainViewSetBackgroundColor $Preset(View,$p,viewBgColor)
 }

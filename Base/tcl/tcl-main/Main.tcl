@@ -218,12 +218,6 @@ The 3D Slicer will exit so the problem can be corrected."
 	}
 	
 	#-------------------------------------------
-	# Load MRML data
-	#-------------------------------------------	
-	MainMrmlRead $mrmlFile
-	MainUpdateMRML
-
-	#-------------------------------------------
 	# Read user options from Options.xml
 	#-------------------------------------------
 	set fileName [ExpandPath "Options.xml"]
@@ -231,9 +225,35 @@ The 3D Slicer will exit so the problem can be corrected."
 	    puts "Reading $fileName"
 	    set tags [MainMrmlReadVersion2.0 $fileName]
 	    if {$tags != "0"} {
-		MainMrmlBuildTreesVersion2.0 $tags
+			# Apply the presets immediately rather than 
+			# putting them on the tree.
+			foreach pair $tags {
+				set tag  [lindex $pair 0]
+				set attr [lreplace $pair 0 0]
+				if {$tag == "Options"} {
+					foreach a $attr {
+						set key [lindex $a 0]
+						set val [lreplace $a 0 0]
+						switch $key {
+							"options"      {set options $val}
+							"program"      {set program $val}
+							"contents"     {set contents $val}
+						}
+					}
+					if {$program == "slicer" && $contents == "presets"} {
+						MainOptionsParsePresets $attr
+						puts "preset=$attr"
+					}
+				}
+			}
 	    }
 	}
+
+	#-------------------------------------------
+	# Load MRML data
+	#-------------------------------------------	
+	MainMrmlRead $mrmlFile
+	MainUpdateMRML
 
 	#-------------------------------------------
 	# Initialize the Program State
@@ -308,7 +328,7 @@ proc MainInit {} {
 	set Module(procRecallPresets) ""
 	set m Main
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.29 $} {$Date: 2000/02/21 20:51:06 $}]
+		{$Revision: 1.30 $} {$Date: 2000/02/21 22:37:04 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -762,7 +782,10 @@ proc MainUpdateMRML {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSetup {} {
-	global Module Gui Volume Slice View Model Color Matrix Options
+	global Module Gui Volume Slice View Model Color Matrix Options Preset
+
+	# Set current values to preset 0 (user preferences)
+	MainOptionsRecallPresets $Preset(userOptions)
 
 	# Set active volume
 	set v [lindex $Volume(idList) 0]

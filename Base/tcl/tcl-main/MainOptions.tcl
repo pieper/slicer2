@@ -133,7 +133,7 @@ proc MainOptionsBuildVTK {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsCreate {t} {
-	global View Matrix Gui Dag Lut
+	global Options
 
 	# If we've already built this volume, then do nothing
 	if {[info exists Options($t,created)] == 1} {
@@ -164,7 +164,7 @@ proc MainOptionsDelete {t} {
 	# Delete VTK objects (and remove commands from TCL namespace)
 
 	# Delete all TCL variables of the form: Options($t,<whatever>)
-	foreach name [array names Matrix] {
+	foreach name [array names Options] {
 		if {[string first "$t," $name] == 0} {
 			unset Options($name)
 		}
@@ -198,7 +198,7 @@ proc MainOptionsSetActive {t} {
 			$mb config -text "NEW"
 		}
 		# Use defaults to update GUI
-		vtkMrmlMatrixNode default
+		vtkMrmlOptionsNode default
 		set Options(program)  "slicer"
 		set Options(contents) "presets"
 #		set Options(options)  ""
