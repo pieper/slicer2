@@ -68,7 +68,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc VolBXHLoadVolumes {} {
-    global VolBXH 
+    global VolBXH Gui 
 
     set fn $VolBXH(bxh-fileName)
 
@@ -139,7 +139,7 @@ proc VolBXHLoadVolumes {} {
         while {$i < $sliderNum} {
             set slider [lindex $VolBXH(slider) $i]
             $slider set 0 
-            $slider configure -showvalue 0
+            $slider configure -showvalue 1 
             incr i
         }
     }
@@ -153,6 +153,9 @@ proc VolBXHLoadVolumes {} {
             VolBXHLoadAnalyze
         }
     }
+
+    # Volume loading complete
+    set VolBXH(name) "" 
 
     # If the loaded bxh file contains a single volume, go back to
     # the parent frame; otherwise stay in the bxh UI so that 
@@ -299,7 +302,9 @@ proc VolBXHDisplayDCMSingleVolume {fileName volData} {
     
     set volName [VolBXHCreateVolumeNameFromFileName $fileName]
     set Volume(name) $volName
-    set VolBXH(name) $volName
+    set load "Loading volume:\n"
+    append load $volName
+    set VolBXH(name) $load 
 
     set id [VolBXHCreateMrmlNodeForVolume $volName $volData]
     set VolBXH(1,id) $id
@@ -433,7 +438,9 @@ proc VolBXHLoadSiemensMosaic {} {
 
         set volName [VolBXHCreateVolumeNameFromFileName $f]
         set Volume(name) $volName
-        set VolBXH(name) $volName
+        set load "Loading volume:\n"
+        append load $volName
+        set VolBXH(name) $load 
 
         VolBXHCreateVolumeFromMosaic $f
         set volData [VolBXH(imageAppend) GetOutput] 
@@ -527,19 +534,18 @@ proc VolBXHLoadAnalyze {} {
     while {$i <= $VolBXH(bxh-noOfImgFiles)} {
         set f $VolBXH(bxh-img,$i,name)
 
-        puts "reading $f"
+        # puts "reading $f"
         MainVolumesSetActive "NEW"
         set Volume(VolAnalyze,FileName) $f
 
         set volName [VolBXHCreateVolumeNameFromFileName $f]
         set Volume(name) $volName
-        set VolBXH(name) $volName
+        set load "Loading volume:\n"
+        append load $volName
+        set VolBXH(name) $load 
 
         set ii [VolAnalyzeApply $VolBXH(bxh-volPropList)]
         set VolBXH($i,id) $ii
-
-        # MainVolumesSetParam Window 800
-        # MainVolumesSetParam Level  500
 
         incr i
     }

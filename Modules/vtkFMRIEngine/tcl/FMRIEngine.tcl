@@ -162,7 +162,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2004/05/20 17:35:03 $}]
+        {$Revision: 1.6 $} {$Date: 2004/06/02 14:45:55 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -418,19 +418,20 @@ proc FMRIEngineSetImageFormat {imgFormat} {
 # .END
 #-------------------------------------------------------------------------------
 proc FMRIEngineBuildUIForAnalyze {parent} {
-    global FMRIEngine Gui 
+    global FMRIEngine Gui Volume 
 
     set f $parent
     frame $f.fVolume -bg $Gui(activeWorkspace) -relief groove -bd 3
     frame $f.fSlider -bg $Gui(activeWorkspace)
     frame $f.fApply  -bg $Gui(activeWorkspace)
+    frame $f.fStatus  -bg $Gui(activeWorkspace)
  
-    pack $f.fVolume $f.fSlider $f.fApply \
+    pack $f.fVolume $f.fSlider $f.fApply $f.fStatus \
         -side top -fill x -pady $Gui(pad)
 
     set f $parent.fVolume
     DevAddFileBrowse $f Volume "VolAnalyze,FileName" "Analyze Header File:" \
-        "VolAnalyzeSetFileName;FMRIEngineSetVolumeName" "hdr" "\$Volume(DefaultDir)" \
+        "VolAnalyzeSetFileName" "hdr" "\$Volume(DefaultDir)" \
         "Open" "Browse for an Analyze header file (.hdr) that has a matching .img" \
         "" "Absolute"
 
@@ -444,15 +445,21 @@ proc FMRIEngineBuildUIForAnalyze {parent} {
         -length 160 \
         -state disabled \
         -command {FMRIEngineUpdateVolume}} \
-        $Gui(WSA) {-showvalue 0}
+        $Gui(WSA) {-showvalue 1}
 
     set FMRIEngine(slider) $f.slider
     pack $f.label $f.slider -side left -expand false -fill x
 
     set f $parent.fApply
     DevAddButton $f.bApply "Apply" "FMRIEngineLoadVolumes" 8 
-    DevAddButton $f.bClear "Cancel" "VolumesPropsCancel" 8 
-    grid $f.bApply $f.bClear -padx $Gui(pad)
+    DevAddButton $f.bCancel "Cancel" "VolumesPropsCancel" 8 
+    grid $f.bApply $f.bCancel -padx $Gui(pad)
+
+
+    set f $parent.fStatus
+    set FMRIEngine(name) " "
+    eval {label $f.eName -textvariable FMRIEngine(name) -width 50} $Gui(WLA)
+    pack $f.eName -side left -padx 0 -pady 30
 }
 
 
@@ -504,6 +511,10 @@ proc FMRIEngineUpdateVolume {volumeNo} {
         return
     }
 
+    if {[info exists FMRIEngine($volumeNo,id)] == 0} {
+        return
+    }
+
     MainSlicesSetVolumeAll Back $FMRIEngine($volumeNo,id)
     RenderAll
 }
@@ -539,7 +550,7 @@ proc FMRIEngineLoadAnalyzeVolumes {} {
     global FMRIEngine Volume Mrml
 
     $FMRIEngine(slider) set 0 
-    $FMRIEngine(slider) configure -showvalue 0
+    $FMRIEngine(slider) configure -showvalue 1 
 
     if {[info exists FMRIEngine(lastIndex)]} {
         set i 1
@@ -580,7 +591,10 @@ proc FMRIEngineLoadAnalyzeVolumes {} {
 
         set volName [VolBXHCreateVolumeNameFromFileName $f] 
         set Volume(name) $volName
-        set FMRIEngine(name) $volName
+
+        set load "Loading volume:\n"
+        append load $volName
+        set FMRIEngine(name) $load
 
         set id [VolAnalyzeApply]
         set FMRIEngine($t,id) $id
@@ -619,6 +633,8 @@ proc FMRIEngineLoadAnalyzeVolumes {} {
     # show the first volume by default
     MainSlicesSetVolumeAll Back $FMRIEngine(1,id)
     RenderAll
+
+    set FMRIEngine(name) ""
 }
 
 

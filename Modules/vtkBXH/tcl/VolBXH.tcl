@@ -41,7 +41,6 @@
 #   VolBXHUpdateVolume the
 #   VolBXHBuildVTK
 #   VolBXHEnter
-#   VolBXHEnter
 #   VolBXHExit
 #   VolBXHMainFileCloseUpdate
 #==========================================================================auto=
@@ -92,39 +91,21 @@ proc VolBXHBuildGUI {parentFrame} {
     }
 
     set f $parentFrame
-
-    frame $f.fTop -bg $Gui(activeWorkspace)  
-    frame $f.fBottom -bg $Gui(activeWorkspace)  
-
-    pack $f.fTop $f.fBottom \
-        -side top -fill x -pady $Gui(pad)
-
-    #------------------------------
-    # Top frame
-    #------------------------------
-    set f $parentFrame.fTop
     frame $f.fVolume -bg $Gui(activeWorkspace) -relief groove -bd 3
-    pack $f.fVolume \
+    frame $f.fSlider -bg $Gui(activeWorkspace)
+    frame $f.fApply  -bg $Gui(activeWorkspace)
+    frame $f.fStatus -bg $Gui(activeWorkspace)
+ 
+    pack $f.fVolume $f.fSlider $f.fApply $f.fStatus \
         -side top -fill x -pady $Gui(pad)
 
-    set f $parentFrame.fTop.fVolume
+    set f $parentFrame.fVolume
     DevAddFileBrowse $f VolBXH "bxh-fileName" "BXH File:" \
         "" "bxh" "\$Volume(DefaultDir)" \
         "Open" "Browse for a BXH file" \
         "" "Absolute"
 
-    #------------------------------
-    # Bottom frame
-    #------------------------------
-    set f $parentFrame.fBottom
-
-    frame $f.fSlider -bg $Gui(activeWorkspace)
-    frame $f.fApply  -bg $Gui(activeWorkspace)
-    pack $f.fApply $f.fSlider \
-        -side bottom -fill x -pady $Gui(pad)
-
-    # Bottom->Slider frame
-    set f $parentFrame.fBottom.fSlider
+    set f $parentFrame.fSlider
     DevAddLabel $f.label "Volume No:"
     eval { scale $f.slider \
         -orient horizontal \
@@ -134,20 +115,23 @@ proc VolBXHBuildGUI {parentFrame} {
         -length 160 \
         -state disabled \
         -command {VolBXHUpdateVolume}} \
-        $Gui(WSA) {-showvalue 0}
+        $Gui(WSA) {-showvalue 1}
 
     lappend VolBXH(slider) $f.slider
-
     pack $f.label $f.slider -side left -expand false -fill x
 
-    # Bottom->Apply frame
-    set f $parentFrame.fBottom.fApply
+    set f $parentFrame.fApply
     DevAddButton $f.bApply "Apply" "VolBXHLoadVolumes"  8 
     # If we are in the following data flow:
     # Add Volume -> BXH Readers
     # VolumesPropsCancel will bring you back to the parent frame
     DevAddButton $f.bCancel "Cancel" "VolumesPropsCancel" 8 
     grid $f.bApply $f.bCancel -padx $Gui(pad)
+
+    set f $parentFrame.fStatus
+    set VolBXH(name) ""
+    eval {label $f.eName -textvariable VolBXH(name) -width 50} $Gui(WLA)
+    pack $f.eName -side left -padx 0 -pady 30
 }
 
 
@@ -163,6 +147,10 @@ proc VolBXHUpdateVolume {volumeNo} {
 
     if {$volumeNo == 0} {
 #        DevErrorWindow "Volume number must be greater than 0."
+        return
+    }
+
+    if {[info exists VolBXH($volumeNo,id)] == 0} {
         return
     }
 
@@ -185,13 +173,6 @@ proc VolBXHBuildVTK {} {
 # .PROC VolBXHEnter
 # Called when this module is entered by the user.  Pushes the event manager
 # for this module. 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# .PROC VolBXHEnter
-# 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
