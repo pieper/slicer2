@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkCompareHistogramImageToImageMetric.txx,v $
   Language:  C++
-  Date:      $Date: 2003/12/23 16:46:38 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2003/12/23 22:43:12 $
+  Version:   $Revision: 1.3 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -19,10 +19,6 @@
 
 #include "itkCompareHistogramImageToImageMetric.h"
 #include "itkHistogram.h"
-
-// Todo: need to access Use_Padding in parent. Make in protected
-// need to figure out what to do when "stuff" is not in histogram
-// kernel function?
 
 namespace itk
 {
@@ -101,14 +97,15 @@ namespace itk
     }
 
   this->m_TrainingInterpolator->SetInputImage(GetTrainingMovingImage());
-
+  //
   // Create the exact histogram structure as the one to be used
-  // to evaluate the metric
+  // to evaluate the metric. This code is mostly copied
+  // from itkHistogramImageToImageMetric
+  //
   this->m_TrainingHistogram = HistogramType::New();
   this->m_TrainingHistogram->Initialize(this->Superclass::m_HistogramSize,
                      this->Superclass::m_LowerBound,
                      this->Superclass::m_UpperBound);
-
   typedef itk::ImageRegionConstIteratorWithIndex<FixedImageType>
     TrainingFixedIteratorType;
   typename FixedImageType::IndexType index;

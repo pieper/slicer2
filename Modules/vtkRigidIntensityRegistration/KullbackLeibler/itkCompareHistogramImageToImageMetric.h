@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkCompareHistogramImageToImageMetric.h,v $
   Language:  C++
-  Date:      $Date: 2003/12/17 03:36:23 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/12/23 22:43:12 $
+  Version:   $Revision: 1.2 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -22,29 +22,33 @@
 namespace itk
 {
   /** \class ComareHistogramImageToImageMetric
-       \brief Compares Histograms between two images to be registered to
-       a Training Histogram.
-
-      This class is templated over the type of the fixed and moving
-      images to be compared. 
-
-      This metric computes the similarity between the histogram produced
-      by two images overlapping and a training histogram.
-
-      It is to be sub-classed by the method of comparing the
-      histograms.
-
-      Generally, the histogram from the pre-aligned (Training) data is
-      computed in exactly the same way as the way the histogram from
-      the images to be compared are computed. Thus, the user can set
-      the interpolator, region of interest, two training images and
-      the transform and the histogram will be formed in the same way
-      the histogram is formed for the images to be tested. OR, the
-      user can simply set the Training histogram.
-
-      Epsilon ....
-
-      \ingroup RegistrationMetrics */
+    *  \brief Compares Histograms between two images to be registered to
+    *   a Training Histogram.
+    *
+    *  This class is templated over the type of the fixed and moving
+    *  images to be compared. 
+    *
+    *  This metric computes the similarity between the histogram produced
+    *  by two images overlapping and a training histogram.
+    *
+    *  It is to be sub-classed by the method of comparing the
+    *  histograms.
+    *
+    *  Generally, the histogram from the training data is to be
+    *  computed in exactly the same way as the histogram from the
+    *  images to be compared are computed. Thus, the user can set the
+    *  interpolator, region, two training images and the transfrom and
+    *  the training histogram will be formed. OR, the user can simply
+    *  calculate the training histogram seperately and set it.
+    *
+    * \warning The Initialize function does nothing if the training
+    * histogram already exists. Thus repeated calls to the Initialize
+    * function do nothing after the first call. If you wish the
+    * training histogram to be re-calculated, you should set it to 0.
+    *
+    *  \author Samson Timoner.
+    *
+    *  \ingroup RegistrationMetrics */
 template <class TFixedImage, class TMovingImage>
 class ITK_EXPORT CompareHistogramImageToImageMetric :
 public HistogramImageToImageMetric<TFixedImage, TMovingImage>
@@ -135,7 +139,7 @@ public HistogramImageToImageMetric<TFixedImage, TMovingImage>
   { return m_Transform->GetNumberOfParameters(); }
  
   /** Forms the histogram of the training images to prepare to evaluate the */
-  /** metric. Must set all parameters first */
+  /** metric. Must set all parameters first. */
   void Initialize() throw (ExceptionObject);
 
 protected:
@@ -158,7 +162,6 @@ protected:
   InterpolatorPointer     m_TrainingInterpolator;
   FixedImageRegionType    m_TrainingFixedImageRegion;
   HistogramPointerType    m_TrainingHistogram;
-  double                  m_Epsilon;
 
 private:
   // Purposely not implemented.
