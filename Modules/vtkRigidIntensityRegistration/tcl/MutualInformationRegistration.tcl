@@ -102,7 +102,7 @@ proc MutualInformationRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2003/12/21 22:56:14 $}]
+        {$Revision: 1.7 $} {$Date: 2003/12/28 23:25:56 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -254,7 +254,7 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
     #-------------------------------------------
     set f $fnormal.fDesc
 
-    eval {label $f.l -text "\Press 'Start' to start the program \nthat performs automatic registration\nby Mutual Information.\n\Your manual registration is used\n\ as an initial pose.\ "} $Gui(WLA)
+    eval {label $f.l -text "\Press 'Start' to perform automatic\n registration by Mutual Information.\n\Your manual registration is used\n\ as an initial pose.\ "} $Gui(WLA)
     pack $f.l -pady $Gui(pad)
 
     #-------------------------------------------
