@@ -94,7 +94,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.43 $} {$Date: 2002/10/02 11:51:20 $}]
+        {$Revision: 1.44 $} {$Date: 2002/10/02 13:15:06 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"
@@ -972,7 +972,7 @@ proc MainSlicesSetSliderRange {s} {
 
     # adjust hidden scale widgets in Alignments if module is loaded
     if { [info command AlignmentsSlicesSetSliderRange] != "" } {
-        AlignmentsSlicesSetSliderRange $s
+        catch "AlignmentsSlicesSetSliderRange $s"
     }
 }
 
