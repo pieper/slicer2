@@ -47,7 +47,7 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
   //BTX
   typedef vnl_matrix<double> InputType;
   // TEST increase this, see comment in cxx file
-  const static int InternalNumberOfEigenvectors = 3;
+  const static int InternalNumberOfEigenvectors = 2;
 
   typedef itk::Vector< double, InternalNumberOfEigenvectors > EmbedVectorType;
   typedef itk::Statistics::ListSample< EmbedVectorType > EmbedSampleType;
@@ -96,13 +96,23 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
   vtkGetObjectMacro(NormalizedWeightMatrixImage, vtkImageData);
   vtkGetObjectMacro(EigenvectorsImage, vtkImageData);
 
+  // Description
+  // Normalized cuts normalization of embedding vectors
   void SetEmbeddingNormalizationToRowSum()
     {
       this->SetEmbeddingNormalization(ROW_SUM);
     };
+  // Description
+  // Spectral clustering normalization of embedding vectors
   void SetEmbeddingNormalizationToLengthOne()
     {
       this->SetEmbeddingNormalization(LENGTH_ONE);
+    };
+  // Description
+  // No normalization of embedding vectors
+  void SetEmbeddingNormalizationToNone()
+    {
+      this->SetEmbeddingNormalization(NONE);
     };
   vtkGetMacro(EmbeddingNormalization,int);
 
@@ -119,7 +129,7 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
   int NumberOfEigenvectors;
   int EmbeddingNormalization;
   //BTX
-  enum EmbeddingNormalizationType { ROW_SUM, LENGTH_ONE } ;
+  enum EmbeddingNormalizationType { NONE, ROW_SUM, LENGTH_ONE } ;
   //ETX
   vtkSetMacro(EmbeddingNormalization,int);
 

@@ -8,7 +8,7 @@ proc DTMRITractClusterInit {} {
     set DTMRI(TractCluster,ShapeFeature) MeanAndCovariance
     set DTMRI(TractCluster,ShapeFeature,menu) {MeanAndCovariance Hausdorff}
     set DTMRI(TractCluster,EmbeddingNormalization) RowSum
-    set DTMRI(TractCluster,EmbeddingNormalization,menu) {RowSum LengthOne}
+    set DTMRI(TractCluster,EmbeddingNormalization,menu) {RowSum LengthOne None}
 
     set DTMRI(TractCluster,SettingsList,Names) {{Number of Clusters} Sigma N ShapeFeature EmbedNormalization}
     set DTMRI(TractCluster,SettingsList,Variables) {NumberOfClusters Sigma HausdorffN ShapeFeature EmbeddingNormalization}

@@ -18,7 +18,7 @@
 #include <ctime>
 
 
-vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.5 $");
+vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.6 $");
 vtkStandardNewMacro(vtkNormalizedCuts);
 
 
@@ -147,6 +147,8 @@ void vtkNormalizedCuts::ComputeClusters()
   vtkDebugMacro("Eigenvector matrix: " << eigensystem.V << 
         " Eigenvalues: " << eigensystem.D);
 
+  vtkErrorMacro("Eigenvalues: " << eigensystem.D);
+
 
   if (this->EigenvectorsImage) 
     {
@@ -183,6 +185,10 @@ void vtkNormalizedCuts::ComputeClusters()
   // TEST then see if zero-padding affects the classifier
   EmbedVectorType ev;
   EmbedSampleType::Pointer embedding = EmbedSampleType::New();
+  
+  // TEST write to disk
+  ofstream fileEmbed;
+  fileEmbed.open("embed.txt");
 
   idx1=0;
   // outer loop over rows of eigenvector matrix, 
@@ -200,16 +206,21 @@ void vtkNormalizedCuts::ComputeClusters()
     {
       // this was wrong.
       //ev[idx2]=(eigensystem.V[idx1][idx2+1])/rowWeightSum[idx1];
-        
+      // This included the constant major eigenvector 
+      //ev[idx2]=(eigensystem.V[idx1][eigensystem.V.cols()-idx2-1]);
+
+      // This is correct.
+      ev[idx2]=(eigensystem.V[idx1][eigensystem.V.cols()-idx2-2]);
+
       if (this->EmbeddingNormalization == LENGTH_ONE)
     {
-      ev[idx2]=(eigensystem.V[idx1][eigensystem.V.cols()-idx2-1]);
       length += ev[idx2]*ev[idx2];
     }
-      else 
+      if (this->EmbeddingNormalization == ROW_SUM)
     {
-      ev[idx2]=(eigensystem.V[idx1][eigensystem.V.cols()-idx2-1])/rowWeightSum[idx1];
+      ev[idx2]=ev[idx2]/rowWeightSum[idx1];
     }
+      // else don't normalize
 
       idx2++;
     }
@@ -229,11 +240,20 @@ void vtkNormalizedCuts::ComputeClusters()
         }
     }
 
+      // TEST write to disk
+      for (idx2 = 0; idx2 < this->InternalNumberOfEigenvectors; idx2++)
+        {
+          fileEmbed << ev[idx2] << " ";
+        }
+      fileEmbed << endl;
+
       // put the embedding vector for this tract onto the sample list
       embedding->PushBack( ev );      
       idx1++;
     }
 
+  // TEST write to disk
+  fileEmbed.close();
 
   // Create a Kd tree and populate it with the embedding vectors,
   // in order to run k-means.
