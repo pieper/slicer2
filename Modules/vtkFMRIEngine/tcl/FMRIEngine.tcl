@@ -167,7 +167,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.13 $} {$Date: 2004/07/08 22:03:35 $}]
+        {$Revision: 1.14 $} {$Date: 2004/07/09 20:35:52 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -289,15 +289,15 @@ proc FMRIEngineBuildGUI {} {
     set f $fInput.fOption
 
     Notebook:create $f.fNotebook \
-                    -pages {{Load Seq.} {Select Seq.}} \
+                    -pages {{Load Seq} {Select Seq}} \
                     -pad 2 \
                     -bg $Gui(activeWorkspace) \
                     -height 356 \
                     -width 240
     pack $f.fNotebook -fill both -expand 1
-    set w [Notebook:frame $f.fNotebook {Load Seq.}]
+    set w [Notebook:frame $f.fNotebook {Load Seq}]
     FMRIEngineBuildUIForLoad $w
-    set w [Notebook:frame $f.fNotebook {Select Seq.}]
+    set w [Notebook:frame $f.fNotebook {Select Seq}]
     FMRIEngineBuildUIForSelect $w
 
     #-------------------------------------------
@@ -396,47 +396,45 @@ proc FMRIEngineBuildUIForSelect {parent} {
 
 #-------------------------------------------------------------------------------
 # .PROC FMRIEngineSelectSequence
-# Chooses one sequence from the sequence list loaded within the Ibrowser 
+# Chooses one sequence from the sequence list loaded within the Ibrowser module 
 # .END
 #-------------------------------------------------------------------------------
 proc FMRIEngineSelectSequence {} {
     global FMRIEngine 
 
-    set curIndex [$FMRIEngine(seqsListBox) cursel]
-    if {[string length $curIndex] > 0} { 
-        set curContent [$FMRIEngine(seqsListBox) get $curIndex]
-        set id $Ibrowser($curContent,id)
-        set FMRIEngine(currentSequenceID) $id
+    set ci [$FMRIEngine(seqsListBox) cursel]
+    if {[string length $ci] > 0} { 
+        set cc [$FMRIEngine(seqsListBox) get $ci]
+        set id $Ibrowser($cc,id)
+        set FMRIEngine(firstMRMLid) Ibrowser($id,firstMRMLid)
+        set FMRIEngine(lastMRMLid) Ibrowser($id,lastMRMLid)
     }
 }
 
 
 #-------------------------------------------------------------------------------
 # .PROC FMRIEngineUpdateSequences
-# Updates sequence list loaded within the Ibrowser 
+# Updates sequence list loaded within the Ibrowser module 
 # .END
 #-------------------------------------------------------------------------------
 proc FMRIEngineUpdateSequences {} {
     global FMRIEngine Ibrowser 
 
-    # clear the listbox
+    # clears the listbox
     set size [$FMRIEngine(seqsListBox) size]
     $FMRIEngine(seqsListBox) delete 0 [expr $size-1]
 
-    if {[info exists Ibrowser(idList)]} {
-       set n [llength $Ibrowser(idList)]
-       if {$n > 0} {
-           set i 0
-           while {$i < $n} {
-               set id [lindex $Ibrowder(idList) $i]
-               $FMRIEngine(seqsListBox) insert end $Ibrowser($id,name) 
-               incr i
-           }
-       } else {
-           $FMRIEngine(seqsListBox) insert end None 
-       }
+    set b [info exists Ibrowser(idList)] 
+    set n [expr {$b == 0 ? 0 : [llength $Ibrowser(idList)]}]
+    if {$n > 0} {
+        set i 0
+        while {$i < $n} {
+            set id [lindex $Ibrowder(idList) $i]
+            $FMRIEngine(seqsListBox) insert end $Ibrowser($id,name) 
+            incr i
+        }
     } else {
-        $FMRIEngine(seqsListBox) insert end One Two Three 
+        $FMRIEngine(seqsListBox) insert end None 
     }
 }
 
@@ -583,7 +581,7 @@ proc FMRIEngineScaleActivation {no} {
         set FMRIEngine(pValue) $p
         set FMRIEngine(tStat) $t
 
-        set index [MIRIADSegmentGetVolumeByName act] 
+        set index [MIRIADSegmentGetVolumeByName actvol] 
         if {$index > 0} {
 
             # map the t value into the range between 1 and 100
@@ -725,11 +723,10 @@ proc FMRIEngineUpdateVolume {volumeNo} {
         return
     }
 
-    if {[info exists FMRIEngine($volumeNo,id)] == 0} {
-        return
-    }
+    set v [expr $volumeNo-1]
+    set id [expr $FMRIEngine(firstMRMLid)+$v]
 
-    MainSlicesSetVolumeAll Back $FMRIEngine($volumeNo,id)
+    MainSlicesSetVolumeAll Back $id 
     RenderAll
 }
 
@@ -766,15 +763,9 @@ proc FMRIEngineLoadAnalyzeVolumes {} {
     $FMRIEngine(slider) set 0 
     $FMRIEngine(slider) configure -showvalue 1 
 
-    if {[info exists FMRIEngine(noOfAnalyzeVolumes)]} {
-        set i 1
-        while {$i <= $FMRIEngine(noOfAnalyzeVolumes)} {
-            unset FMRIEngine($i,id)
-            incr i
-        }
-
-        unset FMRIEngine(noOfAnalyzeVolumes)
-    }
+    unset -nocomplain FMRIEngine(noOfAnalyzeVolumes)
+    unset -nocomplain FMRIEngine(firstMRMLid)
+    unset -nocomplain FMRIEngine(lastMRMLid)
 
     set fileName $Volume(VolAnalyze,FileName)
     if {$fileName == ""} {
@@ -792,14 +783,10 @@ proc FMRIEngineLoadAnalyzeVolumes {} {
     }
 
     set analyzeFiles [lsort -dictionary $fileList]
-    set t 1
-
     foreach f $analyzeFiles { 
 
         MainVolumesSetActive "NEW"
         set Volume(VolAnalyze,FileName) $f
-        set FMRIEngine($t,f) $f
-
         set volName [VolBXHCreateVolumeNameFromFileName $f] 
         set Volume(name) $volName
 
@@ -810,39 +797,20 @@ proc FMRIEngineLoadAnalyzeVolumes {} {
         # VolAnalyzeApply without argument is for Cindy's data (IS scan order) 
         # VolAnalyzeApply "PA" is for Chandlee's data (PA scan order) 
         # set id [VolAnalyzeApply "PA"]
-        set id [VolAnalyzeApply]
-        set FMRIEngine($t,id) $id
-
-        incr t
+        lappend mrmlIds [VolAnalyzeApply]
     }
-    set FMRIEngine(noOfAnalyzeVolumes) [llength $analyzeFiles] 
-
-    # Add volumes into vtkActivationVolumeGenerator
-    if {[info exists FMRIEngine(actvolgen)]} {
-        $FMRIEngine(actvolgen) Delete
-    }
-    vtkActivationVolumeGenerator ad
-    set ii 1
-    while {$ii < $t} {
-
-        set volId $FMRIEngine($ii,id)
-        Volume($volId,vol) Update
-        ad AddInput [Volume($volId,vol) GetOutput]
-        incr ii
-    }
-    set FMRIEngine(actvolgen) ad
-
-    set no [expr $ii-1]
-    set ext [[Volume($no,vol) GetOutput] GetWholeExtent]
+    set FMRIEngine(firstMRMLid) [lindex $mrmlIds 0] 
+    set FMRIEngine(lastMRMLid) [lindex $mrmlIds end] 
+    set FMRIEngine(noOfAnalyzeVolumes) [llength $mrmlIds] 
+    set ext [[Volume([lindex $mrmlIds 0],vol) GetOutput] GetWholeExtent]
     set FMRIEngine(volextent) $ext 
 
-    set m [expr $t-1]
-    $FMRIEngine(slider) configure -from 1 -to $m
+    $FMRIEngine(slider) configure -from 1 -to [llength $mrmlIds] 
     $FMRIEngine(slider) configure -state active
     $FMRIEngine(slider) configure -showvalue 1 
 
     # show the first volume by default
-    MainSlicesSetVolumeAll Back $FMRIEngine(1,id)
+    MainSlicesSetVolumeAll Back [lindex $mrmlIds 0] 
     RenderAll
 
     set FMRIEngine(name) ""
@@ -859,11 +827,22 @@ proc FMRIEngineComputeActivationVolume {} {
     global FMRIEngine Module Volume
 
     # Checks if volumes have been loaded
-    set slider [$FMRIEngine(slider) get]
-    
-    if {$slider == 0} {
+    if {[info exists FMRIEngine(firstMRMLid)] == 0} {
         DevErrorWindow "Please load volumes first."
         return
+    }
+
+    # Add volumes into vtkActivationVolumeGenerator
+    if {[info commands FMRIEngine(actvolgen)] != ""} {
+        FMRIEngine(actvolgen) Delete
+        unset -nocomplain FMRIEngine(actvolgen)
+    }
+    vtkActivationVolumeGenerator FMRIEngine(actvolgen)
+    set id $FMRIEngine(firstMRMLid) 
+    while {$id <= $FMRIEngine(lastMRMLid)} {
+        Volume($id,vol) Update
+        FMRIEngine(actvolgen) AddInput [Volume($id,vol) GetOutput]
+        incr id
     }
 
     # Checks if paradigm file has been properly parsed 
@@ -872,31 +851,31 @@ proc FMRIEngineComputeActivationVolume {} {
     }
 
     set stimSize [$FMRIEngine(stimulus) GetNumberOfTuples]
-    set volSize [$FMRIEngine(actvolgen) GetNumberOfInputs]
+    set volSize [FMRIEngine(actvolgen) GetNumberOfInputs]
     if {$stimSize != $volSize} {
         DevErrorWindow "Stimulus size ($stimSize) is not same as no of volumes ($volSize)."
         return
     }
 
-    if {[info exists FMRIEngine(detector)]} {
-        $FMRIEngine(detector) Delete
+    if {[info commands FMRIEngine(detector)] != ""} {
+        FMRIEngine(detector) Delete
+        unset -nocomplain FMRIEngine(detector)
     }
-    vtkActivationDetector detector
-    detector SetDetectionMethod 1
-    detector SetNumberOfPredictors [lindex $FMRIEngine(paradigm) 1] 
-    detector SetStimulus $FMRIEngine(stimulus) 
-    set FMRIEngine(detector) detector
+    vtkActivationDetector FMRIEngine(detector)
+    FMRIEngine(detector) SetDetectionMethod 1
+    FMRIEngine(detector) SetNumberOfPredictors [lindex $FMRIEngine(paradigm) 1] 
+    FMRIEngine(detector) SetStimulus $FMRIEngine(stimulus) 
 
     if {[info exists FMRIEngine(lowerThreshold)]} {
-        $FMRIEngine(actvolgen) SetLowerThreshold $FMRIEngine(lowerThreshold)
+        FMRIEngine(actvolgen) SetLowerThreshold $FMRIEngine(lowerThreshold)
     }
-    $FMRIEngine(actvolgen) SetDetector detector  
-    $FMRIEngine(actvolgen) Update
-    set FMRIEngine(actLow) [$FMRIEngine(actvolgen) GetLowRange] 
-    set FMRIEngine(actHigh) [$FMRIEngine(actvolgen) GetHighRange] 
+    FMRIEngine(actvolgen) SetDetector FMRIEngine(detector)  
+    FMRIEngine(actvolgen) Update
+    set FMRIEngine(actLow) [FMRIEngine(actvolgen) GetLowRange] 
+    set FMRIEngine(actHigh) [FMRIEngine(actvolgen) GetHighRange] 
 
-    set id [$FMRIEngine(actvolgen) GetOutput]
-    $id Update
+    set act [FMRIEngine(actvolgen) GetOutput]
+    $act Update
 
     # add a mrml node
     set n [MainMrmlAddNode Volume]
@@ -904,20 +883,20 @@ proc FMRIEngineComputeActivationVolume {} {
     MainVolumesCreate $i
 
     # set the name and description of the volume
-    $n SetName "act"
-    $n SetDescription "act"
+    $n SetName "actvol"
+    $n SetDescription "actvol"
 
-    eval Volume($i,node) SetSpacing [$id GetSpacing]
-    Volume($i,node) SetScanOrder [Volume($FMRIEngine(1,id),node) GetScanOrder]
-    Volume($i,node) SetNumScalars [$id GetNumberOfScalarComponents]
-    set ext [$id GetWholeExtent]
+    eval Volume($i,node) SetSpacing [$act GetSpacing]
+    Volume($i,node) SetScanOrder [Volume($FMRIEngine(firstMRMLid),node) GetScanOrder]
+    Volume($i,node) SetNumScalars [$act GetNumberOfScalarComponents]
+    set ext [$act GetWholeExtent]
     Volume($i,node) SetImageRange [expr 1 + [lindex $ext 4]] [expr 1 + [lindex $ext 5]]
-    Volume($i,node) SetScalarType [$id GetScalarType]
-    Volume($i,node) SetDimensions [lindex [$id GetDimensions] 0] [lindex [$id GetDimensions] 1]
+    Volume($i,node) SetScalarType [$act GetScalarType]
+    Volume($i,node) SetDimensions [lindex [$act GetDimensions] 0] [lindex [$act GetDimensions] 1]
     Volume($i,node) ComputeRasToIjkFromScanOrder [Volume($i,node) GetScanOrder]
 
     MainUpdateMRML
-    Volume($i,vol) SetImageData $id
+    Volume($i,vol) SetImageData $act
     MainSlicesSetVolumeAll Fore $i
     MainVolumesSetActive $i
     RenderAll
@@ -938,14 +917,13 @@ proc FMRIEngineSetWindowLevelThresholds {} {
         return
     }
 
-    set len $FMRIEngine(noOfAnalyzeVolumes)
-    set low [Volume(1,node) GetLowerThreshold]
-    set win [Volume(1,node) GetWindow]
-    set level [Volume(1,node) GetLevel]
+    set low [Volume($FMRIEngine(firstMRMLid),node) GetLowerThreshold]
+    set win [Volume($FMRIEngine(firstMRMLid),node) GetWindow]
+    set level [Volume($FMRIEngine(firstMRMLid),node) GetLevel]
     set FMRIEngine(lowerThreshold) $low
 
-    set i 1 
-    while {$i <= $len} {
+    set i $FMRIEngine(firstMRMLid)
+    while {$i <= $FMRIEngine(lastMRMLid)} {
         # If AutoWindowLevel is ON, 
         # we can't set new values for window and level.
         Volume($i,node) AutoWindowLevelOff
