@@ -343,8 +343,11 @@ void vtkFemurMetric::Precompute()
 
 void vtkFemurMetric::FindDeepestPoint(vtkFloatingPointType* p) 
 {
+
   int* coords = (int*)malloc(3*sizeof(int));
-  for(int i=0;i<3;i++)
+  int i, j, k;
+
+  for(i=0;i<3;i++)
     coords[i] = (int)( - (Volume->GetOutput()->GetOrigin()[i] - p[i]));
 
 
@@ -364,27 +367,27 @@ void vtkFemurMetric::FindDeepestPoint(vtkFloatingPointType* p)
       int currentY = coords[1];
       int currentZ = coords[2];
 
-      for(int i = currentX -1; i <=currentX +1;i++)
-    for(int j = currentY -1; j <=currentY +1;j++)
-      for(int k = currentZ -1; k <=currentZ +1;k++)
-        {
-          if(!IsInsideVolume(i,j,k))
-        continue;
-#if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 3)
-          vtkFloatingPointType depth = DepthAnnotatedVolume->GetOutput()->GetScalarComponentAsDouble(i,j,k,0);
-#else
-          vtkFloatingPointType depth = DepthAnnotatedVolume->GetOutput()->GetScalarComponentAsFloat(i,j,k,0);
-#endif
-          if(depth> currentDepth)
-        {
-          currentDepth = depth;
-          isDeepestPoint = false;
-          coords[0] = i;
-          coords[1] = j;
-          coords[2] = k;
+      for(i = currentX -1; i <=currentX +1;i++)
+        for(j = currentY -1; j <=currentY +1;j++)
+            for(k = currentZ -1; k <=currentZ +1;k++)
+            {
+              if(!IsInsideVolume(i,j,k))
+                continue;
+    #if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 3)
+              vtkFloatingPointType depth = DepthAnnotatedVolume->GetOutput()->GetScalarComponentAsDouble(i,j,k,0);
+    #else
+              vtkFloatingPointType depth = DepthAnnotatedVolume->GetOutput()->GetScalarComponentAsFloat(i,j,k,0);
+    #endif
+              if(depth> currentDepth)
+                {
+                  currentDepth = depth;
+                  isDeepestPoint = false;
+                  coords[0] = i;
+                  coords[1] = j;
+                  coords[2] = k;
+                }
+            }
         }
-        }
-    }
 
   for(i=0;i<3;i++)
     p[i] = DepthAnnotatedVolume->GetOutput()->GetPoint(DepthAnnotatedVolume->GetOutput()->ComputePointId(coords))[i];
