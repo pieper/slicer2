@@ -89,13 +89,13 @@ proc VolFreeSurferReadersBuildGUI {parentFrame} {
     # Logo frame
     #-------------------------------------------
     set f $parentFrame.fLogo
-    set logoFile [ExpandPath [file join $::PACKAGE_DIR_VTKFREESURFERREADERS ".." ".." ".." tcl images "mgh.ppm"]]
+    set logoFile [ExpandPath [file join $::PACKAGE_DIR_VTKFREESURFERREADERS ".." ".." ".." tcl images "FreeSurferlogo.ppm"]]
     if {[file exists $logoFile]} {
         image create photo iFSLogo -file $logoFile
-        eval {label $f.lLogo -image iFSLogo -width 62 -height 68 -anchor center} \
+        eval {label $f.lLogo -image iFSLogo -width 179 -height 30 -anchor center} \
             -bg $Gui(activeWorkspace)   -padx 0 -pady 0 
     } else {
-        eval {label $f.lLogo -text "MGH" -anchor center} $Gui(WLA)
+        eval {label $f.lLogo -text "FreeSurfer" -anchor center} $Gui(WLA)
     }
     pack $f.lLogo 
 
