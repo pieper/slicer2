@@ -43,7 +43,7 @@ enum classType {CLASS, SUPERCLASS};
 
 //BTX
 // Class for  capturing different protocols throughout the segmentation process
-class ProtocolMessages {
+class  VTK_EMLOCALSEGMENT_EXPORT ProtocolMessages {
 public:
   int GetFlag() {return this->Flag;}
   char* GetMessages();
