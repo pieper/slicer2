@@ -355,12 +355,13 @@ void vtkImageCrossHair2D::DrawCursor(vtkImageData *outData, int outExt[6])
 
 //---------------------------------------------------------------------------- 
  
-void vtkImageCrossHair2D::ExecuteData(vtkDataObject *)
+void vtkImageCrossHair2D::ExecuteData(vtkDataObject *out)
 {
+  // let superclass allocate data
+  this->vtkImageInPlaceFilter::ExecuteData(out);
+
   vtkImageData *inData = this->GetInput();
   vtkImageData *outData = this->GetOutput();
-  outData->SetExtent(this->GetOutput()->GetWholeExtent());
-  outData->AllocateScalars();
 
     int *outExt = outData->GetExtent();
         int *inExt;
