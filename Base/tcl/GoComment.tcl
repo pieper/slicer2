@@ -33,7 +33,7 @@ if {$file != ""} {
 	foreach dir $dirs {
 		foreach file "[glob -nocomplain $prog/$dir/*.tcl] \
 			[glob -nocomplain $prog/$dir/*.h] \
-			[glob -nocomplain $dir/*.cxx]" {
+			[glob -nocomplain $prog/$dir/*.cxx]" {
 			puts $file
 			set filename [file join $prog $file]
 			ProcessFile $filename
