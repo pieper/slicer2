@@ -138,7 +138,8 @@ proc RenderSlice {s {scale ""}} {
     sl${s}Win Render
 
     if {$s == $Interactor(s)} {
-        if {$View(createMagWin) == "Yes" && $View(closeupVisibility) == "On"} {
+        if {$View(createMagWin) == "Yes" && $View(closeupVisibility) == "On"
+                && [info command magWin] != "" } {
             magWin Render
         }
     }

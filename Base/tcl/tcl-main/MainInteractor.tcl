@@ -85,6 +85,7 @@ proc MainInteractorInit {} {
 proc MainInteractorBind {widget} {
     global Gui
 
+
     # NOTE: <Motion> is not called when <B1-Motion> is called
     #       <Any-ButtonPress> is not called when <Button-1> is called
     
@@ -235,7 +236,8 @@ proc MainInteractorCursor {s xs ys x y} {
     $Interactor(activeSlicer) SetCursorPosition $s $xs $ys
     
     # Show close-up image
-    if {$View(createMagWin) == "Yes" && $View(closeupVisibility) == "On"} {
+    if {$View(createMagWin) == "Yes" && $View(closeupVisibility) == "On"
+            && [info command View(mag)] != "" } {
         View(mag) SetX $x
         View(mag) SetY $y
     }
