@@ -92,6 +92,8 @@ proc ModelCompareInit {} {
     # Module Summary Info
     #------------------------------------
     set Module($m,overview) "Comparing Lots of Models."
+    set Module($m,author) "Samson Timoner, MIT AI Lab, samson@bwh.harvard.edu"
+    set Module($m,category) [lindex $Module(categories) 0]
 
     # Define Procedures
     #------------------------------------
@@ -146,7 +148,7 @@ proc ModelCompareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2003/03/19 19:16:32 $}]
+        {$Revision: 1.6 $} {$Date: 2004/03/15 21:04:48 $}]
 
     # Initialize module-level variables
     #------------------------------------

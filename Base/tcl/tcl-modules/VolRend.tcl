@@ -79,7 +79,8 @@ proc VolRendInit {} {
     # Module Summary Info
     #------------------------------------
     set Module($m,overview) "Volume rendering."
-    set Module($m,author) "Attila Tanacs, Johns Hopkins University"
+    set Module($m,author) "Attila Tanacs, Johns Hopkins University, tanacs@cs.jhu.edu"
+    set Module($m,category) [lindex $Module(categories) 1]
 
     # Set version info
     #------------------------------------
@@ -89,7 +90,7 @@ proc VolRendInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.10 $} {$Date: 2003/07/22 20:36:21 $}]
+        {$Revision: 1.11 $} {$Date: 2004/03/15 21:04:52 $}]
 
     set Module($m,row1List) "Help Settings Transfer"
     set Module($m,row1Name) "{Help} {Settings} {Transfer Functions}"

@@ -110,8 +110,9 @@ proc TetraMeshInit {} {
     #
     set m TetraMesh
 
-    set Module($m,author) "Samson Timoner MIT AI Lab"
+    set Module($m,author) "Samson Timoner, MIT AI Lab,  samson@bwh.harvard.edu"
     set Module($m,overview) "Displays Tetrahedral Meshes"
+    set Module($m,category) [lindex $Module(categories) 1]
 
     set Module($m,row1List) "Help Read Props Visualize View"
     set Module($m,row1Name) "{Help} {Read/Write} {Props} {Vis} {View}"
@@ -174,7 +175,7 @@ proc TetraMeshInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.39 $} {$Date: 2003/09/19 18:25:41 $}]
+        {$Revision: 1.40 $} {$Date: 2004/03/15 21:04:51 $}]
 
     # Initialize module-level variables
     #------------------------------------

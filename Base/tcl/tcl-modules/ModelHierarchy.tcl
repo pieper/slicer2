@@ -100,7 +100,8 @@ proc ModelHierarchyInit {} {
     # Module Summary Info
     #------------------------------------
     set Module($m,overview) "Group models to create atlases."
-    set Module($m,author) "Arne Hans, SPL"
+    set Module($m,author) "Arne Hans, SPL, ahans@bwh.harvard.edu"
+    set Module($m,category) [lindex $Module(categories) 0]
 
     # Define Procedures
     #------------------------------------
@@ -156,7 +157,7 @@ proc ModelHierarchyInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.12 $} {$Date: 2003/03/19 19:16:33 $}]
+        {$Revision: 1.13 $} {$Date: 2004/03/15 21:04:48 $}]
 
     # Initialize module-level variables
     #------------------------------------

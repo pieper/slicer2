@@ -63,6 +63,10 @@ proc PathPlanningInit {} {
     set m PathPlanning
 
     set Module($m,depend) ""
+    set Module($m,author) "Delphine Nain, MIT, delfin@ai.mit.edu"
+    set Module($m,category) [lindex $Module(categories) 1]
+    set Module($m,overview) "Path planning algorithms for use with Endoscopic module"
+
     
     # Define Procedures
     #------------------------------------

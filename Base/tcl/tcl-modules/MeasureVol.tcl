@@ -103,6 +103,7 @@ proc MeasureVolInit {} {
     #------------------------------------
     set Module($m,overview) "Measure volumes of labelled voxels."
     set Module($m,author) "Lauren O'Donnell, MIT AI Lab"
+    set Module($m,category) [lindex $Module(categories) 0]
 
     # Define Dependencies
     #------------------------------------
@@ -111,7 +112,7 @@ proc MeasureVolInit {} {
     # Set version info
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.19 $} {$Date: 2003/12/07 18:16:44 $}]
+        {$Revision: 1.20 $} {$Date: 2004/03/15 21:04:48 $}]
     
     # Initialize module-level variables
     #------------------------------------

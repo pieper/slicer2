@@ -59,6 +59,8 @@ proc TwinInit {} {
 
     # Module Summary Info
     set Module($m,overview) "Display another 3D window on a different (MRT) monitor."
+    set Module($m,author) "Dave Gering, MIT, gering@ai.mit.edu"
+    set Module($m,category) [lindex $Module(categories) 0]
 
     # Define Procedures
     set Module($m,procGUI) TwinBuildGUI
@@ -76,7 +78,7 @@ proc TwinInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.17 $} {$Date: 2003/03/19 19:16:35 $}]
+        {$Revision: 1.18 $} {$Date: 2004/03/15 21:04:51 $}]
 }
 
 #-------------------------------------------------------------------------------

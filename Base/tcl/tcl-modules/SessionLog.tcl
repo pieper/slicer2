@@ -99,6 +99,8 @@ proc SessionLogInit {} {
 
     # Module Summary Info
     set Module($m,overview) "Logging of Editor sessions."
+    set Module($m,category)  [lindex $Module(categories) 0]
+    set Module($m,author) "Core"
 
     # Register procedures that will be called 
     set Module($m,procGUI) SessionLogBuildGUI
@@ -117,7 +119,7 @@ proc SessionLogInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.16 $} {$Date: 2003/03/19 19:16:34 $}]
+        {$Revision: 1.17 $} {$Date: 2004/03/15 21:04:50 $}]
 
     # Initialize module-level variables
     set SessionLog(fileName)  ""

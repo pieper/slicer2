@@ -61,9 +61,11 @@ proc CustomCsysInit {} {
     #------------------------------------
     set Module($m,overview) "This module is an example of how to hava a csys actor in your own module"
     set Module($m,author) "Delphine, Nain, SlicerHaker, delfin@mit.edu"
+    set Module($m,category) [lindex $Module(categories) 3]
+
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2003/03/19 19:16:30 $}]
+        {$Revision: 1.7 $} {$Date: 2004/03/15 21:04:42 $}]
 
     # Define Tabs
     #------------------------------------
