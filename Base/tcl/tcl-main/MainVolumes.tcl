@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.76 $} {$Date: 2004/06/28 21:23:32 $}]
+    {$Revision: 1.77 $} {$Date: 2004/07/22 15:56:33 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -150,7 +150,7 @@ proc MainVolumesUpdateMRML {} {
             set Volume($v,fly) 0
             if {$Module(verbose) == 1} {
                 puts "MainVolumesUpdateMRML: about to call MainVolumesRead for $v"
-                DevErrorWindow "MainVolumesUpdateMRML: about to call MainVolumesRead for $v"
+                # DevErrorWindow "MainVolumesUpdateMRML: about to call MainVolumesRead for $v"
             }
             set retval [MainVolumesRead $v]
             if {$Module(verbose) == 1} { 
@@ -212,7 +212,7 @@ proc MainVolumesUpdateMRML {} {
         if {$v != $Volume(idList)} {
             if {$Module(verbose) == 1} {
                 puts "MainVolumesUpdateMRML: calling MainVolumesUpdate on v=$v"
-                DevErrorWindow "MainVolumesUpdateMRML: calling MainVolumesUpdate on v=$v"
+                # DevErrorWindow "MainVolumesUpdateMRML: calling MainVolumesUpdate on v=$v"
             }
             MainVolumesUpdate $v
         }
