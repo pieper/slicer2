@@ -104,7 +104,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.53 $} {$Date: 2001/07/06 19:50:03 $}]
+	    {$Revision: 1.54 $} {$Date: 2001/09/18 21:32:51 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -962,7 +962,7 @@ proc EditorBuildGUI {} {
     set f $fDetails
     
     frame $f.fTitle  -bg $Gui(backdrop) -relief sunken -bd 2
-    frame $f.fEffect -bg $Gui(activeWorkspace)
+    frame $f.fEffect -height 338 -bg $Gui(activeWorkspace)
     pack $f.fTitle -side top -pady 5 -padx 2 -fill x
     pack $f.fEffect -side top -pady 0 -padx 2 -fill both -expand 1
     
