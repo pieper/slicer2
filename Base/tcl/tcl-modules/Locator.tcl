@@ -79,7 +79,8 @@ proc LocatorInit {} {
 	lappend Module(procStorePresets) LocatorStorePresets
 	lappend Module(procRecallPresets) LocatorRecallPresets
 	set Module(Locator,presets) "0,driver='User' 1,driver='User' 2,driver='User'\
- visibility='0'"
+ visibility='0' transverseVisibility='1' normalLen='100' transverseLen='25'\
+ radius='3.0' diffuseColor='.9 .9 .1'"
 
 	# Patient/Table position
 	set Locator(tblPosList)   "Front Side"
@@ -1624,7 +1625,10 @@ proc LocatorStorePresets {p} {
 	foreach s $Slice(idList) {
 		set Preset(Locator,$p,$s,driver) $Locator($s,driver)
 	}
-	set Preset(Locator,$p,visibility) $Locator(visibility)
+	foreach k "visibility transverseVisibility normalLen transverseLen\
+		radius diffuseColor" {
+		set Preset(Locator,$p,$k) $Locator($k)
+	}
 }
 	    
 proc LocatorRecallPresets {p} {
@@ -1633,6 +1637,13 @@ proc LocatorRecallPresets {p} {
 	foreach s $Slice(idList) {
 		LocatorSetDriver $s $Preset(Locator,$p,$s,driver)
 	}
-	set Locator(visibility) $Preset(Locator,$p,visibility)
+	foreach k "visibility transverseVisibility normalLen transverseLen\
+		radius diffuseColor" {
+		set Locator($k) $Preset(Locator,$p,$k)
+	}
 	LocatorSetVisibility
+	scan $Locator(diffuseColor) "%g %g %g" Locator(red) Locator(green) Locator(blue)
+	LocatorSetColor
+	LocatorSetSize
+	LocatorSetMatrices
 }
