@@ -1,6 +1,6 @@
 #!/bin/sh
 # the next line restarts using tclsh \
-exec tclsh "$0" "$@"
+    exec tclsh "$0" "$@"
 
 ################################################################################
 #
@@ -406,8 +406,10 @@ if { ![file exists $vtkTestFile] } {
 
     runcmd $CMAKE \
         -G$GENERATOR \
-    -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
+        -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
         -DBUILD_SHARED_LIBS:BOOL=ON \
+        -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
+        -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
         -DBUILD_TESTING:BOOL=OFF \
         -DVTK_USE_CARBON:BOOL=OFF \
         -DVTK_USE_X:BOOL=ON \
@@ -421,12 +423,19 @@ if { ![file exists $vtkTestFile] } {
         -DTCL_TCLSH:FILEPATH=$vtkTclsh \
         ../VTK
 
+
+    if { $isDarwin } {
+    # Darwin will fail on the first make, then succeed on the second
+    catch "runcmd make -j4"
+    set OpenGLString "-framework OpenGL -lgl"
+    runcmd $CMAKE -G$GENERATOR -DOPENGL_gl_LIBRARY:STRING=$OpenGLString -DVTK_USE_SYSTEM_ZLIB:BOOL=ON ../VTK
+    }
+    
     if { $isWindows } {
         runcmd devenv VTK.SLN /build  $::VTK_BUILD_TYPE
-    } elseif { !$isDarwin } {
+    } else {
         runcmd make -j4
     }
-
 }
 
 ################################################################################
