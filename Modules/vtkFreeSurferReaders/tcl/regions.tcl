@@ -738,6 +738,34 @@ proc QueryAtlas_fdemo { {demodata c:/pieper/bwh/data/fbirn-phantom-staple/averag
     ModelsPropsApplyButNotToNew
 }
 
+    
+proc QueryAtlas_mdemo { {demodata c:/pieper/bwh/data/MGH-Siemens15-SP.1-uw} } {
+    
+    set fstcldir [file normalize $::PACKAGE_DIR_VTKFREESURFERREADERS/../../../tcl]
+
+    regions r
+
+    r configure -arrow $fstcldir/QueryA.html
+    r configure -arrowout [r cget -tmpdir]/QueryAout.html
+
+    if { ![file exists $demodata] } {
+        set demodata $::env(SLICER_HOME)/../data/MGH-Siemens15-SP.1-uw
+    }
+
+    vtkFreeSurferReadersLoadVolume $demodata/mri/orig/COR-.info
+    set asegid [vtkFreeSurferReadersLoadVolume $demodata/mri/aseg/COR-.info 1]
+    MainSlicesSetVolumeAll Fore $asegid
+
+    $this configure -talfile $demodata/mri/transforms/talairach.xfm
+    $this configure -arrow "$fstcldir/QueryA.html"
+    $this configure -arrowout "$fstcldir/QueryAout.html"
+    $this configure -umlsfile "$fstcldir/label2UMLS.txt"
+    $this configure -javapath [file normalize "$fstcldir/../talairach"]
+
+    MainSlicesSetVisibilityAll 1
+    RenderAll
+}
+
 
 itcl::body regions::demo {} {
     
