@@ -111,8 +111,6 @@ void vtkMrmlDataTetraMesh::CheckMrmlNode()
 //----------------------------------------------------------------------------
 void vtkMrmlDataTetraMesh::Update()
 {
-  int ext[6];
-
   this->vtkMrmlData::Update();
   
   // We really should have an Update time that we compare with the

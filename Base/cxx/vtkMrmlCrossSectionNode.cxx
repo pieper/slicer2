@@ -169,7 +169,6 @@ void vtkMrmlCrossSectionNode::Copy(vtkMrmlNode *anode)
 //----------------------------------------------------------------------------
 void vtkMrmlCrossSectionNode::PrintSelf(ostream& os, vtkIndent indent)
 {
-  int idx;
   
   vtkMrmlNode::PrintSelf(os,indent);
 

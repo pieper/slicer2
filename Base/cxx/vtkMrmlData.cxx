@@ -176,7 +176,6 @@ void vtkMrmlData::CheckLabelIndirectLUT()
 //----------------------------------------------------------------------------
 void vtkMrmlData::Update()
 {
-  int ext[6];
   
   // We really should have an Update time that we compare with the
   // MTime, but since the other objects inside this class do this, 

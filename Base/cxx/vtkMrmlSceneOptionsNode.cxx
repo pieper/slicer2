@@ -250,7 +250,6 @@ void vtkMrmlSceneOptionsNode::Copy(vtkMrmlNode *anode)
 //----------------------------------------------------------------------------
 void vtkMrmlSceneOptionsNode::PrintSelf(ostream& os, vtkIndent indent)
 {
-  int idx;
   
   vtkMrmlNode::PrintSelf(os,indent);
 

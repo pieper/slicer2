@@ -116,10 +116,8 @@ static void vtkImageStatisticsExecute(vtkImageStatistics *self,
 {
   int min0, max0, min1, max1, min2, max2;
   int Amin0, Amax0, Amin1, Amax1, Amin2, Amax2;
-  int idx0, idx1, idx2;
-  int outExt[6];
   unsigned long count = 0;
-  unsigned long target;
+
   T *dataPtr;
   // Information
   inData->GetExtent(min0, max0, min1, max1, min2, max2);

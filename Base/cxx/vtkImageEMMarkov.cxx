@@ -90,7 +90,7 @@ void vtkImageEMMarkov::ExecuteInformation(vtkImageData *inData, vtkImageData *ou
 {
   
   int ext[6];
-  float spacing[3], factor, origin[3];
+  float spacing[3], origin[3];
 
   spacing[0] = 1.0;
   spacing[1] = 1.0;
@@ -123,8 +123,7 @@ void vtkImageEMMarkov::ExecuteInformation(vtkImageData *inData, vtkImageData *ou
 template <class T>
 static void vtkImageEMMarkovExecute(vtkImageEMMarkov *self,vtkImageData *in1Data, T *in1Ptr,int inExt[6],vtkImageData *outData, T *outPtr,int outExt[6], int maxZ, int id)
 {
-  int idxC,idxR, idxY, idxZ;
-  int inMaxX, inMaxY, inMaxZ;
+  int idxR, idxY, idxZ;
   int maxY;
   int inIncX, inIncY, inIncZ;
   int outIncX, outIncY, outIncZ;
