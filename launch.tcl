@@ -115,28 +115,31 @@ set env(TK_LIBRARY) $env(SLICER_HOME)/Lib/$env(BUILD)/ActiveTcl-8.4.1/lib/tk8.4
 set env(TCLLIBPATH) "$env(VTK_SRC_DIR) $env(SLICER_HOME)/Base/Wrapping/Tcl/vtkSlicerBase $env(TCLLIBPATH)"
 
 # Add the module bin directories to the load library path and the Wrapping/Tcl directories to the tcl library path
-set modulePath ${env(SLICER_HOME)}/Modules
-set modulePaths [glob ${modulePath}/vtk*]
-foreach dir $modulePaths {
-    # get the module name
-    regexp "$modulePath/(\.\*)" $dir match moduleName
-    # if it's not the custom one, append it to the path
-    if {[string first Custom $moduleName] == -1} {
-        puts "Adding module: ${moduleName}"
-        switch $env(BUILD) {
-            "solaris8" -
-            "redhat7.3" {
-                set env(LD_LIBRARY_PATH) $env(SLICER_HOME)/Modules/$moduleName/builds/$env(BUILD)/bin:$env(LD_LIBRARY_PATH)
-                set env(TCLLIBPATH) "$env(SLICER_HOME)/Modules/$moduleName/Wrapping/Tcl $env(TCLLIBPATH)"
-            }
-            "Win32VC7" {
-                set env(Path) $env(SLICER_HOME)/Modules/$moduleName/builds/$env(BUILD)/bin/debug\;$env(Path)
-                set env(TCLLIBPATH) "$env(SLICER_HOME)/Modules/$moduleName/Wrapping/Tcl $env(TCLLIBPATH)"
+# check both the base slicer home and the user's home dir
+set baseModulePath ${env(SLICER_HOME)}/Modules
+set userModulePath ${env(HOME)}/Modules
+foreach modulePath "${baseModulePath} ${userModulePath}" {
+    set modulePaths [glob ${modulePath}/vtk*]
+    foreach dir $modulePaths {
+        # get the module name
+        regexp "$modulePath/(\.\*)" $dir match moduleName
+        # if it's not the custom one, append it to the path
+        if {[string first Custom $moduleName] == -1} {
+            puts "Adding module to library paths: ${moduleName}"
+            switch $env(BUILD) {
+                "solaris8" -
+                "redhat7.3" {
+                    set env(LD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$env(BUILD)/bin:$env(LD_LIBRARY_PATH)
+                    set env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $env(TCLLIBPATH)"
+                }
+                "Win32VC7" {
+                    set env(Path) $modulePath/$moduleName/builds/$env(BUILD)/bin/debug\;$env(Path)
+                    set env(TCLLIBPATH) "$modulePath/$moduleName/Wrapping/Tcl $env(TCLLIBPATH)"
+                }
             }
         }
     }
 }
-
 
 set msg "Slicer is an experimental software package.
 Any human use requires proper research controls.  
