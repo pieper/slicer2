@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkQuaternionRigidTransformGradientDescentOptimizerModified.h,v $
   Language:  C++
-  Date:      $Date: 2003/09/17 16:42:18 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/09/17 18:04:48 $
+  Version:   $Revision: 1.2 $
 
   Copyright (c) 2002 Insight Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -24,15 +24,16 @@
 // 1) First, search and replace on 
 //   QuaternionRigidTransformGradientDescentOptimizer ->
 //     QuaternionRigidTransformGradientDescentOptimizerModified
-// 2) #include "itkGradientDescentOptimizerWithStopCondition.h"
-//    instead of #include "itkGradientDescentOptimizer.h"
+// 2) Then search and replace on
+//     itkGradientDescentOptimizer -> 
+//     itkGradientDescentOptimizerWithStopCondition
 // 3) Inherit from itkGradientDescentOptimizerWithStopCondition instead
 //    of itkGradientDescentOptimizer.
 // 4) ITK_EXPORT -> VTK_MUTUALINFORMATIONREGISTRATION_EXPORT
 // 5) addition of: #include "vtkMutualInformationRegistrationConfigure.h"
 
 #include "vtkMutualInformationRegistrationConfigure.h"
-#include "itkGradientDescentOptimizer.h"
+#include "itkGradientDescentOptimizerWithStopCondition.h"
 
 namespace itk
 {
@@ -64,12 +65,12 @@ namespace itk
  */  
 
 class VTK_MUTUALINFORMATIONREGISTRATION_EXPORT QuaternionRigidTransformGradientDescentOptimizerModified : 
-        public GradientDescentOptimizer
+        public GradientDescentOptimizerWithStopCondition
 {
 public:
   /** Standard class typedefs. */
   typedef QuaternionRigidTransformGradientDescentOptimizerModified  Self;
-  typedef GradientDescentOptimizer                          Superclass;
+  typedef GradientDescentOptimizerWithStopCondition         Superclass;
   typedef SmartPointer<Self>                                Pointer;
   typedef SmartPointer<const Self>                          ConstPointer;
   
