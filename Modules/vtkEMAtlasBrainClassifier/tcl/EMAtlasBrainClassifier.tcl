@@ -42,7 +42,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2004/12/16 19:24:00 $}]
+        {$Revision: 1.3 $} {$Date: 2004/12/16 20:02:19 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -240,14 +240,14 @@ proc EMAtlasBrainClassifierEnter {} {
     #   (See slicer/program/tcl-shared/Events.tcl for more details.)
     pushEventManager $EMAtlasBrainClassifier(eventManager)
     set WarningMsg ""
-    if { [catch "package require vtkEMLocalSegment"] } {
-    set WarningMsg "- vtkEMLocalSegment \n"
+    if { [info proc EMSegmentStartEM] == "" } {
+       set WarningMsg "- vtkEMLocalSegment \n"
     }
 
     if {[catch "package require vtkAG"]} {
     set WarningMsg "${WarningMsg}- vtkAG: This module does not come with the standard distribution. \n  You can download it from ... . \n  You will need to modify INCLUDE_DIRECTORIES in vtkAG/cxx/CMakeListLocals.txt to correctly compile the module"
     }
-    if {$WarningMsg != ""} {DevWarningWindow "Please install the following three modules before working with this module: \n$WarningMsg"}
+    if {$WarningMsg != ""} {DevWarningWindow "Please install the following modules before working with this module: \n$WarningMsg"}
 }
 
 
@@ -547,16 +547,24 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
 
     # ---------------------------------------------------------------
     # Initialize values 
+    # Kilian Check the names of the input so that they are not the same as we expect
+    if { [info proc EMSegmentStartEM] == "" } {
+    DevErrorWindow "One of the following two modules is not loaded : vtkEMLocalSegment or vtkAG. Please load in these modules first before starting to run this segmentation" 
+    return 
+
+    }
     # Check if input is set
     if {($EMAtlasBrainClassifier(Volume,SPGR) == $Volume(idNone)) || ($EMAtlasBrainClassifier(Volume,T2W) == $Volume(idNone))} {
     DevErrorWindow "Please define both SPGR and T2W before starting the segmentation" 
     return 
     } 
-    # Kilian Check the names of the input so that they are not the same as we expect
+
     if {([Volume($EMAtlasBrainClassifier(Volume,SPGR),node) GetName] == "NormedSPGR") || ([Volume($EMAtlasBrainClassifier(Volume,T2W),node) GetName] == "NormedT2W") } {
-    DevErrorWindow "Please rename the SPGR and T2W Volume. They cannot be named NormedSPGR or NormedT2W" 
-    return 
+      DevErrorWindow "Please rename the SPGR and T2W Volume. They cannot be named NormedSPGR or NormedT2W" 
+      return 
     }
+
+
     set Mrml(dir) $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation
 
     EMAtlasBrainClassifierDeleteAllVolumeNodesButSPGRAndT2W
