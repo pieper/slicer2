@@ -38,6 +38,7 @@
 # PROCEDURES:  
 #   FMRIEngineInit
 #   FMRIEngineBuildGUI
+#   FMRIEngineScaleActivation the
 #   FMRIEngineSetImageFormat the
 #   FMRIEngineBuildUIForAnalyze the
 #   FMRIEngineEnter
@@ -104,8 +105,8 @@ proc FMRIEngineInit {} {
     #   row2Name = like row1
     #   row2,tab = like row1 
     #
-    set Module($m,row1List) "Help Load Compute"
-    set Module($m,row1Name) "{Help} {Load} {Compute}"
+    set Module($m,row1List) "Help Load Compute Display"
+    set Module($m,row1Name) "{Help} {Load} {Compute} {Display}"
     set Module($m,row1,tab) Load
 
     # Define Procedures
@@ -162,7 +163,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.11 $} {$Date: 2004/06/26 19:58:01 $}]
+        {$Revision: 1.12 $} {$Date: 2004/07/06 15:34:08 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -384,6 +385,100 @@ proc FMRIEngineBuildGUI {} {
     set f $f.fApply
     DevAddButton $f.bApply "Compute" "FMRIEngineComputeActivationVolume" 8
     grid $f.bApply -padx $Gui(pad)
+
+    #-------------------------------------------
+    # Display tab 
+    #-------------------------------------------
+    set fDisplay $Module(FMRIEngine,fDisplay)
+    set f $fDisplay
+    
+    frame $f.fActScale  -bg $Gui(activeWorkspace) -relief groove -bd 3
+    pack $f.fActScale -side top -fill x -pady $Gui(pad)
+    
+    set f $f.fActScale 
+    # Entry fields (the loop makes a frame for each variable)
+    foreach param "pValue tStat actScale" \
+        name "{p Value} {t Statistic} {Act Scale}" {
+
+        eval {label $f.l$param -text "$name:"} $Gui(WLA)
+        if {$param == "actScale"} {
+            eval {scale $f.e$param \
+                -orient horizontal \
+                -from 1 -to 20 \
+                -resolution 1 \
+                -bigincrement 10 \
+                -length 155 \
+                -command {FMRIEngineScaleActivation}} \
+                $Gui(WSA) {-showvalue 1}
+        } else {
+            set FMRIEngine($param) "None"
+            eval {entry $f.e$param -width 10 -state readonly \
+                -textvariable FMRIEngine($param)} $Gui(WEA)
+        }
+
+        grid $f.l$param $f.e$param -padx $Gui(pad) -pady $Gui(pad) -sticky e
+        grid $f.e$param -sticky w
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC FMRIEngineScaleActivation
+# Scales the activation volume 
+# .ARGS
+# no the scale index 
+# .END
+#-------------------------------------------------------------------------------
+proc FMRIEngineScaleActivation {no} {
+    global Volume FMRIEngine
+
+    if {[info exists FMRIEngine(allPValues)] == 0} {
+        
+        set i 10 
+        while {$i >= 1} {
+            set v [expr 1 / pow(10,$i)] 
+            lappend FMRIEngine(allPValues) $v 
+            if {$i == 2} {
+                lappend FMRIEngine(allPValues) 0.05
+            }
+            set i [expr $i - 1] 
+        }
+        set i 1
+        while {$i <= 9} {
+            set v [expr 0.1 + 0.1 * $i]
+            lappend FMRIEngine(allPValues) $v
+            incr i
+        }
+    }
+
+    if {[info exists FMRIEngine(noOfAnalyzeVolumes)] == 1} {
+
+        vtkCDF cdf
+        set dof [expr $FMRIEngine(noOfAnalyzeVolumes) - 1]
+        # The index of list starts with 0
+        set p [lindex $FMRIEngine(allPValues) [expr $no - 1]]
+        set t [cdf p2t $p $dof]
+       
+        cdf Delete
+        set FMRIEngine(pValue) $p
+        set FMRIEngine(tStat) $t
+
+        set index [MIRIADSegmentGetVolumeByName act] 
+        if {$index > 0} {
+
+            # map the t value into the range between 1 and 100
+            set value [expr 100 * ($t - $FMRIEngine(actLow)) / \
+                ($FMRIEngine(actHigh) - $FMRIEngine(actLow))]
+     
+            Volume($index,node) AutoThresholdOff
+            Volume($index,node) ApplyThresholdOn
+            Volume($index,node) SetLowerThreshold [expr round($value)] 
+            MainVolumesSetParam ApplyThreshold 
+            MainVolumesRender
+            # puts "low = $FMRIEngine(actLow)"
+            # puts "high = $FMRIEngine(actHigh)"
+        }
+    }
 }
 
 
@@ -422,11 +517,10 @@ proc FMRIEngineBuildUIForAnalyze {parent} {
     set f $parent
     frame $f.fVolume     -bg $Gui(activeWorkspace) -relief groove -bd 3
     frame $f.fSlider     -bg $Gui(activeWorkspace)
-    frame $f.fWinLevel   -bg $Gui(activeWorkspace)
     frame $f.fApply      -bg $Gui(activeWorkspace)
     frame $f.fStatus     -bg $Gui(activeWorkspace)
  
-    pack $f.fVolume $f.fSlider $f.fWinLevel $f.fApply $f.fStatus \
+    pack $f.fVolume $f.fSlider $f.fApply $f.fStatus \
         -side top -fill x -pady $Gui(pad)
 
     set f $parent.fVolume
@@ -450,14 +544,11 @@ proc FMRIEngineBuildUIForAnalyze {parent} {
     set FMRIEngine(slider) $f.slider
     pack $f.label $f.slider -side left -expand false -fill x
 
-    set f $parent.fWinLevel
-    DevAddButton $f.bThrlds "Adjust Window/Level/Thresholds" "FMRIEngineSetWindowLevelThresholds" 30 
-    pack $f.bThrlds -side top -pady 8 
-
     set f $parent.fApply
-    DevAddButton $f.bApply "Apply" "FMRIEngineLoadVolumes" 8 
-    DevAddButton $f.bCancel "Cancel" "VolumesPropsCancel" 8 
-    grid $f.bApply $f.bCancel -padx $Gui(pad)
+    DevAddButton $f.bApply "Load" "FMRIEngineLoadVolumes" 8 
+    DevAddButton $f.bThrlds "Set Win/Lev/Thresholds" \
+        "FMRIEngineSetWindowLevelThresholds" 20 
+    grid $f.bApply $f.bThrlds -padx $Gui(pad)
 
     set f $parent.fStatus
     set FMRIEngine(name) " "
@@ -681,6 +772,9 @@ proc FMRIEngineComputeActivationVolume {} {
     }
     $FMRIEngine(actvolgen) SetDetector detector  
     $FMRIEngine(actvolgen) Update
+    set FMRIEngine(actLow) [$FMRIEngine(actvolgen) GetLowRange] 
+    set FMRIEngine(actHigh) [$FMRIEngine(actvolgen) GetHighRange] 
+
     set id [$FMRIEngine(actvolgen) GetOutput]
     $id Update
 
@@ -700,7 +794,7 @@ proc FMRIEngineComputeActivationVolume {} {
     Volume($i,node) SetImageRange [expr 1 + [lindex $ext 4]] [expr 1 + [lindex $ext 5]]
     Volume($i,node) SetScalarType [$id GetScalarType]
     Volume($i,node) SetDimensions [lindex [$id GetDimensions] 0] [lindex [$id GetDimensions] 1]
-    Volume($i,node) ComputeRasToIjkFromScanOrder [::Volume($i,node) GetScanOrder]
+    Volume($i,node) ComputeRasToIjkFromScanOrder [Volume($i,node) GetScanOrder]
 
     MainUpdateMRML
     Volume($i,vol) SetImageData $id
