@@ -75,7 +75,7 @@ proc MatricesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.19 $} {$Date: 2000/07/19 05:00:24 $}]
+		{$Revision: 1.20 $} {$Date: 2000/07/31 18:45:03 $}]
 
 	# Props
 	set Matrix(propertyType) Basic
@@ -495,9 +495,9 @@ are already roughly aligned.
 
     frame $f.fTitle -bg $Gui(activeWorkspace)
     frame $f.fBtns -bg $Gui(activeWorkspace)
-    pack $f.fTitle $f.fBtns -side top -pady $Gui(pad) -padx 1
+    pack $f.fTitle $f.fBtns -side left -pady $Gui(pad) -padx 1
 
-    eval {label $f.fTitle.l -text "Mouse Action in Slice Window: "} $Gui(WLA)
+    eval {label $f.fTitle.l -text "Mouse Action: "} $Gui(WLA)
     pack $f.fTitle.l
 
     foreach text "Translate Rotate" value "Translate Rotate" \
@@ -506,6 +506,9 @@ are already roughly aligned.
             -text "$text" -value "$value" -variable Matrix(mouse) \
             -indicatoron 0} $Gui(WCA)
         pack $f.fBtns.rSpeed$value -side left -padx 0 -pady 0
+        TooltipAdd  $f.fBtns.rSpeed$value  \
+		"$value volumes in the Slice Window"
+
     }
 
 
