@@ -148,18 +148,41 @@ public:
   featureProperties *GetFeatureSettings(int f) {return &this->FeatureSettings[f];};
 
   // Description:
-  // training...
-  vtkSetObjectMacro(TrainingPoints, vtkPoints);
-  vtkGetObjectMacro(TrainingPoints, vtkPoints);
-
+  // Turn on training mode, where means and variances are calculated
+  // for all features
   vtkBooleanMacro(TrainingMode, int);
   vtkSetMacro(TrainingMode, int);
   vtkGetMacro(TrainingMode, int);
 
   // Description:
+  // Multi-slice training mode, where means and variances are
+  // calculated across many slices
+  vtkBooleanMacro(TrainingComputeRunningTotals, int);
+  vtkSetMacro(TrainingComputeRunningTotals, int);
+  vtkGetMacro(TrainingComputeRunningTotals, int);
+
+  // Description: 
+  // The file where the feature means and variances will be written
+  // Use this to save training information
+  vtkSetStringMacro(TrainingFileName);
+  vtkGetStringMacro(TrainingFileName);
+
+  // Description:
   // internal access from Execute: don't call this
-  //vtkGetMacro(TrainingAverages, float*);
+  vtkSetMacro(RunningNumberOfTrainingPoints, int);
+  vtkGetMacro(RunningNumberOfTrainingPoints, int);
+
+  // Description:
+  // internal access from Execute: don't call this
   float *GetTrainingAverages(){return this->TrainingAverages;};
+
+  // Description:
+  // internal access from Execute: don't call this
+  float *GetTrainingVariances(){return this->TrainingVariances;};
+
+  // Description:
+  // internal access from Execute: don't call this
+  vtkSetMacro(NumberOfTrainingPoints,int);
 
 protected:
   vtkImageLiveWireEdgeWeights();
@@ -186,9 +209,21 @@ protected:
   // for testing
   char *FileName;
 
-  vtkPoints *TrainingPoints;
+  char *TrainingFileName;
   int TrainingMode;
+  int TrainingComputeRunningTotals;
+  // Description:
+  // sum of number of points drawn on all training slices so far
+  int RunningNumberOfTrainingPoints;
+  // Description:
+  // average of each feature
   float *TrainingAverages;
+  // Description:
+  // variance of each feature
+  float *TrainingVariances;
+  // Description:
+  // total number of points used in computing averages/variances
+  int NumberOfTrainingPoints;
 
   void ExecuteInformation(vtkImageData **inputs, vtkImageData *output); 
 
