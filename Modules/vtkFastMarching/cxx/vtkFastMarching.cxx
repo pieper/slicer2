@@ -116,7 +116,7 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
           // we're not on one of the border of the volume
 
           // extended median filtering
-          std::vector<short int> intensities;
+          VecInt intensities;
           for(int kp=-1;kp<=1;kp++)
           for(int jp=-1;jp<=1;jp++)
           for(int ip=-1;ip<=1;ip++)
