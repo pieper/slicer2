@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2002 Massachusetts Institute of Technology
+# (c) Copyright 2001 Massachusetts Institute of Technology
 #
 # Permission is hereby granted, without payment, to copy, modify, display 
 # and distribute this software and its documentation, if any, for any purpose, 
@@ -59,7 +59,7 @@ proc EventsInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.13 $} {$Date: 2002/03/21 23:05:30 $}]
+        {$Revision: 1.14 $} {$Date: 2002/03/22 20:37:49 $}]
     
     # Props
     set Events(managerStack) ""
@@ -104,8 +104,9 @@ proc popHandler { widget event } {
     } else {
     set script [lindex $Events(handlers,$widget,$event) 0]
     set Events(handlers,$widget,$event) \
-        [lreplace $Events(handler,$widget,$event) 0 0]
+        [lreplace $Events(handlers,$widget,$event) 0 0]
     bind $widget $event $script
+    DebugMsg "unbinding $widget $event"
     }
 }
 
@@ -136,6 +137,7 @@ proc pushEventManager { manager } {
     set event [lindex $entry 1]
     set command [lindex $entry 2]    
     pushHandler $widget $event $command
+    DebugMsg "pushing $widget $event $command"
     }
     set Events(managerStack) [concat $manager $Events(managerStack)]
 }
@@ -153,13 +155,26 @@ proc popEventManager {} {
     #    global [lindex $EventManagerStack 0]
     global Events
     
+    DebugMsg "pop top event Manager"
+    
     set manager [lindex $Events(managerStack) 0]
+    
     foreach entry [array names $manager] {
     set item [split $entry ,]
     set widget [subst [lindex $item 0]]
     set event [lindex $item 1]
     set command [subst $${manager}($entry)]
     popHandler $widget $event
+    DebugMsg "poping $widget $event"
     }
     set Events(managerStack) [lreplace $Events(managerStack) 0 0]
 }
+#    set widget [lindex $manager 0]
+#    set event  [lindex $manager 1]
+#    set command [lindex $manager 2]
+#    
+#    popHandler $widget $event
+#
+#    set Events(managerStack) [lreplace $Events(managerStack) 0 0]
+#    DebugMsg "poping $widget $event"
+
