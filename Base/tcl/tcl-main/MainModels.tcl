@@ -695,9 +695,15 @@ proc MainModelsSetClip {m} {
 # .PROC MainModelsSetOpacity
 # .END
 #-------------------------------------------------------------------------------
-proc MainModelsSetOpacity {m} {
+proc MainModelsSetOpacity {m {value ""}} {
 	global Model
 
+        if {$value != ""} {
+	    if {[ValidateFloat $value] == 1 && $value >= 0.0 \
+		    && $value <= 1.0} {
+		set Model($m,opacity) $value
+	    }
+	}
 	Model($m,node) SetOpacity $Model($m,opacity)
 	$Model($m,prop) SetOpacity [Model($m,node) GetOpacity]
 }

@@ -405,7 +405,7 @@ Models are fun. Do you like models, Ron?
 	set f $fClip.fHelp
 
 	eval {label $f.l  -justify left -text "The slices clip the models that\n\
-		have clipping turn on.\n\n\
+		have clipping turned on.\n\n\
 		To turn clipping on for a model,\n\
 		check the box to the right of the\n\
 		model's name on the Display page."} $Gui(WLA)

@@ -507,7 +507,7 @@ proc MainViewLightFollowCamera {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMainViewPresetCallback {p} {
-	global View Target Gui Preset Slice Locator Anno
+	global View Target Gui Preset Slice Locator Anno Model
 
 	if {$Preset($p,state) == "Press"} {
 		$View(fPreset).c$p config -activebackground red
@@ -543,7 +543,15 @@ proc MainMainViewPresetCallback {p} {
 		# Anno
 		foreach item "box axes outline letters cross hashes mouse" {
 			set Preset($p,anno,$item) $Anno($item)
-		}
+		}		    
+
+		# Models
+		foreach m $Model(idList) {
+			set Preset($p,$m,visibility) $Model($m,visibility)
+puts "visibility saved as: $Preset($p,$m,visibility)"
+			set Preset($p,$m,opacity)    $Model($m,opacity)
+puts "opacity saved as: $Preset($p,$m,opacity)"
+		}		    
 
 	} else {
 		# Set current to the preset value
@@ -584,6 +592,17 @@ proc MainMainViewPresetCallback {p} {
 			set Anno($item) $Preset($p,anno,$item)
 		}
 		MainAnnoSetVisibility
+
+		# Models
+		foreach m $Model(idList) {
+		    if {[info exists Preset($p,$m,visibility)] == 1} {
+			MainModelsSetVisibility $m $Preset($p,$m,visibility)
+		    }
+		    if {[info exists Preset($p,$m,opacity)] == 1} {
+			MainModelsSetOpacity $m $Preset($p,$m,opacity)
+		    }
+		}		    
+
 	}
 }
 
