@@ -436,6 +436,7 @@ $Contents($index,html)
 		}
 	}
 
+	HtmlFoot $fid
 	close $fid
 }
 
