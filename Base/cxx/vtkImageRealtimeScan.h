@@ -83,7 +83,7 @@ public:
   vtkTypeMacro(vtkImageRealtimeScan,vtkImageSource);
 	void PrintSelf(ostream& os, vtkIndent indent);
 
-	void UpdateInformation();
+	void ExecuteInformation();
   
 	vtkGetObjectMacro(LocatorMatrix,vtkMatrix4x4);
 	vtkGetObjectMacro(ImageMatrix,vtkMatrix4x4);

@@ -95,27 +95,13 @@ void vtkImageFrameSource::SetExtent(int xMin, int xMax, int yMin, int yMax)
 }
 
 //----------------------------------------------------------------------------
-void vtkImageFrameSource::UpdateInformation()
+void vtkImageFrameSource::ExecuteInformation()
 {
   vtkImageData *output = this->GetOutput();
-  unsigned long mem;
  
   output->SetWholeExtent(this->WholeExtent);
   output->SetScalarType(VTK_UNSIGNED_CHAR);
   output->SetNumberOfScalarComponents(3);
- 
-  // What if we are trying to process a VERY large 2D image?
-  mem = output->GetScalarSize();
-  mem = mem * (this->WholeExtent[1] - this->WholeExtent[0] + 1);
-  mem = mem * (this->WholeExtent[3] - this->WholeExtent[2] + 1);
-  mem = mem / 1000;
-  mem = mem * (this->WholeExtent[5] - this->WholeExtent[4] + 1);
-  if (mem < 1)
-    {
-    mem = 1;
-    }
- 
-  output->SetEstimatedWholeMemorySize(mem);
 }
 
 //----------------------------------------------------------------------------

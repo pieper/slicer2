@@ -41,7 +41,7 @@ public:
 
 	void SetExtent(int xMin, int xMax, int yMin, int yMax);
 
-	void UpdateInformation();
+	void ExecuteInformation();
 
 	vtkSetObjectMacro(RenderWindow, vtkRenderWindow);
 	vtkGetObjectMacro(RenderWindow, vtkRenderWindow);
@@ -49,6 +49,9 @@ public:
 protected:
 	vtkImageFrameSource();
 	~vtkImageFrameSource();
+  vtkImageFrameSource(const vtkImageFrameSource&) {};
+  void operator=(const vtkImageFrameSource&) {};
+
 	int WholeExtent[6];
 	vtkRenderWindow *RenderWindow;
 

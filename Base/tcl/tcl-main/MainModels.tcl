@@ -1,4 +1,4 @@
-b#=auto==========================================================================
+#=auto==========================================================================
 # Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
 #  
 # Direct all questions regarding this copyright to slicer@ai.mit.edu.

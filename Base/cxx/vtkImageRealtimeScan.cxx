@@ -437,7 +437,7 @@ int vtkImageRealtimeScan::PollRealtime()
 }
 
 //----------------------------------------------------------------------------
-void vtkImageRealtimeScan::UpdateInformation()
+void vtkImageRealtimeScan::ExecuteInformation()
 {
 	float spacing[3];
 	short dim[3];
