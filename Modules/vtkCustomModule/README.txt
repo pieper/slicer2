@@ -77,15 +77,16 @@ Be SURE you are in your new directory when you run this command!
   paths for include files and libraries. See
   http://www.cmake.org/HTML/Index.html for more information.
 
-* Make a directory called tcl (e.g. /home/halazar/slicer2/Modules/vtkTest/tcl)
-and put your tcl code in it.
+* Change to the tcl directory (e.g. /home/halazar/slicer2/Modules/vtkTest/tcl)
+and put your tcl code in the skeleton file, ie Test.tcl.
 
 * Edit the files in Wrapping/Tcl to specify the version number of your
-  module.  You may also need to change the vkt<Modulename>.tcl file to
+  module.  You may also need to change the vtk<Modulename>.tcl file to
   specify a unique command that's only in your class -- by default it
   assumes there will be a class with the same name as your module.
 
-* Add the following two lines to your Wrapping/Tcl/pkgIndex.tcl file:
+* Add the following two lines to your Wrapping/Tcl/pkgIndex.tcl file,
+if they are not already present:
     global PACKAGE_DIR_VTK[MODULENAME]
     set PACKAGE_DIR_VTK[MODULENAME] $dir
 then add 

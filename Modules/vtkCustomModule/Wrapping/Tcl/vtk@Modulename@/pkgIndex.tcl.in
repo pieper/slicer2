@@ -8,4 +8,8 @@
 # script is sourced, the variable $dir must contain the
 # full path name of this file's directory.
 
+# Added these so that we can source in Slicer Module tcl files
+global PACKAGE_DIR_VTK@Modulename@
+set PACKAGE_DIR_VTK@Modulename@ $dir
+
 package ifneeded vtk@Modulename@ 1.0 [list source [file join $dir vtk@Modulename@.tcl]]
