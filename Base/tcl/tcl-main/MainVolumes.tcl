@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.70 $} {$Date: 2004/03/15 20:52:13 $}]
+    {$Revision: 1.71 $} {$Date: 2004/03/16 23:55:10 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -309,7 +309,7 @@ proc MainVolumesRead {v} {
         Volume($v,node) SetFileType "DICOM"
     }
     
-    if {[catch {[Volume($v,node) GetFileType]} errmsg] != 0} {
+    if {[catch "Volume($v,node) GetFileType" errmsg] != 0} {
         puts "ERROR: volume node $v does not have a GetFileType method:\n\t$errmsg"
         set volumeFileType "none"
     } else {
