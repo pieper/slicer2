@@ -123,7 +123,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.25 $} {$Date: 2004/08/17 15:49:58 $}]
+                  {$Revision: 1.26 $} {$Date: 2004/08/17 20:33:23 $}]
 
      # Define Tabs
     #------------------------------------
@@ -237,6 +237,15 @@ proc DTMRIInit {} {
                                 "3D View settings to display DTMRIs: transparent slices." \
                                 "Reset to Slicer default settings."  \
                                    ]
+                                   
+   # whether removing actors when leaving the module or not
+   set DTMRI(mode,visualizationRemoveTypeList) {On Off}
+   set DTMRI(mode,visualizationRemoveTypeValue) {1 0}
+   set DTMRI(mode,visualizationRemoveTypeList,tooltips) [list \
+       "Remove Glyphs and Streamlns when leaving the module." \
+       "Keep Glyphs and Streamlns when leaving the module." \
+       ]
+
 
     # type of reformatting
     set DTMRI(mode,reformatType) 0
@@ -323,6 +332,7 @@ proc DTMRIInit {} {
 
     # Whether to remove actors on module exit
     set DTMRI(vtk,actors,removeOnExit) 1
+    set DTMRI(vtk,actors,firstEnter) 1
 
     # scalar bar
     set DTMRI(mode,scalarBar) Off
@@ -618,10 +628,20 @@ proc DTMRIEnter {} {
     # Default to reformatting along with the currently active slice
     set DTMRI(mode,reformatType) $Slice(activeID)
 
-    # Add our actors if removed on module exit.
-    if {$DTMRI(vtk,actors,removeOnExit)} {
-    DTMRIAddAllActors
-    }
+    #Add our actors the first time we enter the module during exec
+    if {$DTMRI(vtk,actors,firstEnter)} {
+      DTMRIAddAllActors
+      set DTMRI(vtk,actors,firstEnter) 0
+    } else {  
+      # Add our actors if removed on module exit.
+      if {$DTMRI(vtk,actors,removeOnExit)} {
+      DTMRIAddAllActors
+      } else {
+      #Reconnect glyphs vis pipeline
+      DTMRI(vtk,glyphs) SetOutput [DTMRI(vtk,glyphs,mapper) GetInput]
+      }
+      
+    }  
     Render3D
 
     #Update LMI logo
@@ -663,7 +683,11 @@ proc DTMRIExit {} {
     # Remove our actors if the user wants that on module exit.
     if {$DTMRI(vtk,actors,removeOnExit)} {
     DTMRIRemoveAllActors
+    } else {
+    #Disconnect vis glyphs pipeline
+    DTMRI(vtk,glyphs) UnRegisterAllOutputs
     }
+    
     # make 3D slices opaque now
     #MainSlicesReset3DOpacity
     
@@ -995,6 +1019,9 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
 
     frame $f.fSettings  -bg $Gui(activeWorkspace)
     pack $f.fSettings -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    
+    frame $f.fRemove  -bg $Gui(activeWorkspace)
+    pack $f.fRemove -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
 #    frame $f.fGlyphsMode  -bg $Gui(activeWorkspace)
 #    pack $f.fGlyphsMode -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
@@ -1047,7 +1074,22 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
         pack $f.rMode$vis -side left -padx 0 -pady 0
         TooltipAdd  $f.rMode$vis $tip
     }   
- 
+
+    set f $fDisplay.fRemove
+
+    eval {label $f.lRemove -text "Remove on Exit: "} $Gui(WLA)
+    pack $f.lRemove -side left -pady $Gui(pad) -padx $Gui(pad)
+    # Add menu items
+    foreach vis $DTMRI(mode,visualizationRemoveTypeList) val $DTMRI(mode,visualizationRemoveTypeValue) \
+            tip $DTMRI(mode,visualizationRemoveTypeList,tooltips) {
+        eval {radiobutton $f.r$vis \
+              -text "$vis" \
+              -value $val \
+              -variable DTMRI(vtk,actors,removeOnExit) \
+              -indicatoron 0} $Gui(WCA)
+        pack $f.r$vis -side left -padx 0 -pady 0
+        TooltipAdd  $f.r$vis $tip     
+   }          
 
     #-------------------------------------------
     # Display->Notebook frame
@@ -2406,7 +2448,7 @@ set FrameOption3 [Notebook:frame $f {Option 3}]
     set DTMRI(scrolledGui,advanced) $fScrolled
 
     # loop through all the vtk objects and build GUIs
-    #------------------------------------
+    #------------------------------------              
     foreach o $DTMRI(vtkObjectList) {
 
         set f $fScrolled
@@ -4742,14 +4784,16 @@ proc DTMRIUpdate {} {
             set slice $DTMRI(mode,reformatType)
 
         # find ijk->ras rotation to apply to each DTMRI
-        vtkTransform t2 
-        DTMRICalculateIJKtoRASRotationMatrix t2 $t
+        #vtkTransform t2 
+        #DTMRICalculateIJKtoRASRotationMatrix t2 $t
         #puts "Lauren testing rm -y"
         #t2 Scale 1 -1 1
-        puts [[t2 GetMatrix] Print]
-        DTMRI(vtk,glyphs) SetTensorRotationMatrix [t2 GetMatrix]
-        t2 Delete
-
+        #puts [[t2 GetMatrix] Print]
+        #DTMRI(vtk,glyphs) SetTensorRotationMatrix [t2 GetMatrix]
+        #t2 Delete
+        DTMRICalculateIJKtoRASRotationMatrix DTMRI(vtk,glyphs,trans) $t
+        DTMRI(vtk,glyphs) SetTensorRotationMatrix [DTMRI(vtk,glyphs,trans) GetMatrix]
+        
             if {$slice != "None"} {
 
                 # We are reformatting a slice of glyphs
@@ -5388,7 +5432,10 @@ proc DTMRIBuildVTK {} {
 
     DTMRI(vtk,$object) SetProgressMethod  "MainShowProgress DTMRI(vtk,$object)"
     DTMRI(vtk,$object) SetEndMethod        MainEndProgress
-
+    
+    set object glyphs,trans
+    DTMRIMakeVTKObject vtkTransform $object
+    
     # poly data normals filter cleans up polydata for nice display
     # use this for ellipses/boxes only
     #------------------------------------
@@ -5536,8 +5583,8 @@ if {[info exists DTMRI(selectedpattern)]} {
         DTMRI SetB $DTMRI(convert,lebihan)
 
 } else {
-
-    puts "Please select a protocol"
+    DevErrorWindow "Please select a protocol"
+    DTMRI Delete
     return
 
 }
