@@ -18,5 +18,5 @@ if {[info commands vtkActivationDetector] != "" ||
     # to have it's init procedure get called, @ModuleName@Init will be 
     # called by the Slicer Base code
     global Module
-    lappend Module(customModules) FMRIEngine
+    lappend Module(customModules) fMRIEngine
 }

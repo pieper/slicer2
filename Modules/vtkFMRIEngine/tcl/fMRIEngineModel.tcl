@@ -1,12 +1,12 @@
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineBuildUIForSetupTab
+# .PROC fMRIEngineBuildUIForSetupTab
 # Creates UI for model tab 
 # .ARGS
 # parent the parent frame 
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineBuildUIForSetupTab {parent} {
-    global FMRIEngine Gui
+proc fMRIEngineBuildUIForSetupTab {parent} {
+    global fMRIEngine Gui
 
     frame $parent.fHelp    -bg $Gui(activeWorkspace)
     frame $parent.fMethods -bg $Gui(backdrop)
@@ -23,7 +23,7 @@ proc FMRIEngineBuildUIForSetupTab {parent} {
     # Help frame 
     #-------------------------------------------
 #    set f $parent.fHelp
-#    DevAddButton $f.bHelp "?" "FMRIEngineShowHelp" 2 
+#    DevAddButton $f.bHelp "?" "fMRIEngineShowHelp" 2 
 #    pack $f.bHelp -side left -padx 1 -pady 1 
 
     #-------------------------------------------
@@ -53,139 +53,139 @@ proc FMRIEngineBuildUIForSetupTab {parent} {
     }
 
     # Save menubutton for config
-    set FMRIEngine(gui,mbActDetector) $f.mbType
+    set fMRIEngine(gui,mbActDetector) $f.mbType
 
     #-------------------------------------------
     # Model frame 
     #-------------------------------------------
     set f $parent.fModel
-    DevAddButton $f.bLoad "Load Model" "FMRIEngineLoadModel"   13 
-    DevAddButton $f.bSave "Save Model" "FMRIEngineSaveModel"   13 
-    DevAddButton $f.bView "View Model" "FMRIEngineViewModel"   13 
-    DevAddButton $f.bClear "Clear Model" "FMRIEngineClearModel" 13 
+    DevAddButton $f.bLoad "Load Model" "fMRIEngineLoadModel"   13 
+    DevAddButton $f.bSave "Save Model" "fMRIEngineSaveModel"   13 
+    DevAddButton $f.bView "View Model" "fMRIEngineViewModel"   13 
+    DevAddButton $f.bClear "Clear Model" "fMRIEngineClearModel" 13 
     grid $f.bLoad $f.bSave -padx 1 -pady 1 -sticky e
     grid $f.bView $f.bClear -padx 1 -pady 1 -sticky e
 
     #-------------------------------------------
     # Tabs frame 
     #-------------------------------------------
-    FMRIEngineBuildUIForTasks $parent.fTasks
+    fMRIEngineBuildUIForTasks $parent.fTasks
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineShowHelp
+# .PROC fMRIEngineShowHelp
 # Displays help message 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineShowHelp {} {
-    global FMRIEngine Gui
+proc fMRIEngineShowHelp {} {
+    global fMRIEngine Gui
     
     puts "show help"
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineLoadModel
+# .PROC fMRIEngineLoadModel
 # Loads a saved model 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineLoadModel {} {
-    global FMRIEngine Gui
+proc fMRIEngineLoadModel {} {
+    global fMRIEngine Gui
     
     puts "load model"
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineSaveModel
+# .PROC fMRIEngineSaveModel
 # Saves the current model 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineSaveModel {} {
-    global FMRIEngine Gui
+proc fMRIEngineSaveModel {} {
+    global fMRIEngine Gui
     
     puts "save model"
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineClearModel
+# .PROC fMRIEngineClearModel
 # Clears the current model 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineClearModel {} {
-    global FMRIEngine
+proc fMRIEngineClearModel {} {
+    global fMRIEngine
 
-    set FMRIEngine(baselineEVsAdded)  0
+    set fMRIEngine(baselineEVsAdded)  0
  
     # clear paradigm design panel
-    set FMRIEngine(paradigmDesignType) blocked
-    set FMRIEngine(checkbuttonRunIdentical) 1
+    set fMRIEngine(paradigmDesignType) blocked
+    set fMRIEngine(checkbuttonRunIdentical) 1
     
-    FMRIEngineSelectRunForConditionConfig 1
+    fMRIEngineSelectRunForConditionConfig 1
 
-    set FMRIEngine(entry,title) ""
-    set FMRIEngine(entry,tr) ""
-    set FMRIEngine(entry,startVol) ""
-    set FMRIEngine(entry,onsets) ""
-    set FMRIEngine(entry,durations) ""
+    set fMRIEngine(entry,title) ""
+    set fMRIEngine(entry,tr) ""
+    set fMRIEngine(entry,startVol) ""
+    set fMRIEngine(entry,onsets) ""
+    set fMRIEngine(entry,durations) ""
 
-    FMRIEngineSelectRunForConditionShow 1
+    fMRIEngineSelectRunForConditionShow 1
 
-    $FMRIEngine(condsListBox) delete 0 end 
+    $fMRIEngine(condsListBox) delete 0 end 
 
-    for {set r 1} {$r <= $FMRIEngine(noOfRuns)} {incr r} {
-        if {[info exists FMRIEngine($r,conditionList)]} {
-            foreach title $FMRIEngine($r,conditionList) {
-                unset -nocomplain FMRIEngine($r,$title,title)
-                unset -nocomplain FMRIEngine($r,$title,startVol)
-                unset -nocomplain FMRIEngine($r,$title,onsets)
-                unset -nocomplain FMRIEngine($r,$title,durations)
+    for {set r 1} {$r <= $fMRIEngine(noOfRuns)} {incr r} {
+        if {[info exists fMRIEngine($r,conditionList)]} {
+            foreach title $fMRIEngine($r,conditionList) {
+                unset -nocomplain fMRIEngine($r,$title,title)
+                unset -nocomplain fMRIEngine($r,$title,startVol)
+                unset -nocomplain fMRIEngine($r,$title,onsets)
+                unset -nocomplain fMRIEngine($r,$title,durations)
             }
-            unset -nocomplain FMRIEngine($r,tr)
-            unset -nocomplain FMRIEngine($r,conditionList)
+            unset -nocomplain fMRIEngine($r,tr)
+            unset -nocomplain fMRIEngine($r,conditionList)
         }
     }
 
     # clear signal modeling panel
-    FMRIEngineUpdateConditionsForSignalModeling 
-    FMRIEngineSelectWaveFormForSignalModeling {Box Car} 
-    FMRIEngineSelectConvolutionForSignalModeling {none} 
-    FMRIEngineSelectHighpassForSignalModeling {none} 
-    FMRIEngineSelectLowpassForSignalModeling {none}
+    fMRIEngineUpdateConditionsForSignalModeling 
+    fMRIEngineSelectWaveFormForSignalModeling {Box Car} 
+    fMRIEngineSelectConvolutionForSignalModeling {none} 
+    fMRIEngineSelectHighpassForSignalModeling {none} 
+    fMRIEngineSelectLowpassForSignalModeling {none}
 
-    set FMRIEngine(checkbuttonTempDerivative) 0
-    set FMRIEngine(checkbuttonGlobalEffects)  0
-    $FMRIEngine(evsListBox) delete 0 end 
+    set fMRIEngine(checkbuttonTempDerivative) 0
+    set fMRIEngine(checkbuttonGlobalEffects)  0
+    $fMRIEngine(evsListBox) delete 0 end 
  
     # clear contrasts panel
-    set FMRIEngine(contrastOption) t 
-    set FMRIEngine(entry,contrastVector) ""
-    $FMRIEngine(contrastsListBox) delete 0 end 
+    set fMRIEngine(contrastOption) t 
+    set fMRIEngine(entry,contrastVector) ""
+    $fMRIEngine(contrastsListBox) delete 0 end 
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineViewModel
+# .PROC fMRIEngineViewModel
 # Views the current model 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineViewModel {} {
-    global FMRIEngine
+proc fMRIEngineViewModel {} {
+    global fMRIEngine
     
     # check if we have real evs (not baseline) added
     set i 0
     set count 0
     set found -1 
-    set size [$FMRIEngine(evsListBox) size]
+    set size [$fMRIEngine(evsListBox) size]
     while {$i < $size} {  
-        set v [$FMRIEngine(evsListBox) get $i] 
+        set v [$fMRIEngine(evsListBox) get $i] 
         if {$v != ""} {
             set found [string first "baseline" $v]
             if {$found >= 0} {
@@ -206,14 +206,14 @@ proc FMRIEngineViewModel {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineBuildUIForTasks
+# .PROC fMRIEngineBuildUIForTasks
 # Creates UI for tasks in model 
 # .ARGS
 # parent the parent frame 
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineBuildUIForTasks {parent} {
-    global FMRIEngine Gui
+proc fMRIEngineBuildUIForTasks {parent} {
+    global fMRIEngine Gui
 
     frame $parent.fTop  -bg $Gui(backdrop)
     frame $parent.fHelp -bg $Gui(activeWorkspace)
@@ -242,20 +242,20 @@ proc FMRIEngineBuildUIForTasks {parent} {
     pack  $f.mbTask -side left -pady 1 -padx $Gui(pad)
 
     # Save menubutton for config
-    set FMRIEngine(gui,currentModelTask) $f.mbTask
+    set fMRIEngine(gui,currentModelTask) $f.mbTask
 
     # Add menu items
     set count 1
     foreach m $taskList  {
         $f.mbTask.m add command -label $m \
-            -command "FMRIEngineSetModelTask {$m}"
+            -command "fMRIEngineSetModelTask {$m}"
     }
 
     #-------------------------------------------
     # Help frame 
     #-------------------------------------------
 #    set f $parent.fHelp
-#    DevAddButton $f.bHelp "?" "FMRIEngineShowHelp" 2 
+#    DevAddButton $f.bHelp "?" "fMRIEngineShowHelp" 2 
 #    pack $f.bHelp -side left -padx 5 -pady 1 
 
     #-------------------------------------------
@@ -271,34 +271,34 @@ proc FMRIEngineBuildUIForTasks {parent} {
         place $f.f$count -relwidth 1.0 -relx 0.0 -relheight 1.0 -rely 0.0 
         switch $m {
             "Paradigm Design" {
-                FMRIEngineBuildUIForParadigmDesign $f.f$count
+                fMRIEngineBuildUIForParadigmDesign $f.f$count
             }
             "Signal Modeling" {
-                FMRIEngineBuildUIForSignalModeling $f.f$count
+                fMRIEngineBuildUIForSignalModeling $f.f$count
             }
             "Contrasts" {
-                FMRIEngineBuildUIForContrasts $f.f$count
+                fMRIEngineBuildUIForContrasts $f.f$count
             }
         }
-        set FMRIEngine(f$count) $f.f$count
+        set fMRIEngine(f$count) $f.f$count
         incr count
     }
 
     # raise the default one 
-    raise $FMRIEngine(f1)
+    raise $fMRIEngine(f1)
 
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineBuildUIForContrasts 
+# .PROC fMRIEngineBuildUIForContrasts 
 # Creates UI for task "Contrasts" 
 # .ARGS
 # parent the parent frame 
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineBuildUIForContrasts {parent} {
-    global FMRIEngine Gui
+proc fMRIEngineBuildUIForContrasts {parent} {
+    global fMRIEngine Gui
 
     frame $parent.fTop    -bg $Gui(activeWorkspace) -relief groove -bd 1 
     frame $parent.fMiddle -bg $Gui(activeWorkspace) -relief groove -bd 1
@@ -330,7 +330,7 @@ proc FMRIEngineBuildUIForContrasts {parent} {
     foreach param "t f" \
         name "{t test} {F test}" {
         eval {radiobutton $f.r$param -width 10 -text $name \
-            -variable FMRIEngine(contrastOption) -value $param \
+            -variable fMRIEngine(contrastOption) -value $param \
             -relief raised -offrelief raised -overrelief raised \
             -selectcolor white} $Gui(WEA)
     } 
@@ -343,19 +343,19 @@ proc FMRIEngineBuildUIForContrasts {parent} {
     #-----------------------
     set f $parent.fTop.fComp
     DevAddLabel $f.lName "Name: "
-    eval {entry $f.eName -width 22 -textvariable FMRIEngine(entry,contrastName)} $Gui(WEA)
+    eval {entry $f.eName -width 22 -textvariable fMRIEngine(entry,contrastName)} $Gui(WEA)
     grid $f.lName $f.eName -padx 1 -pady 1 -sticky e
 
     DevAddLabel $f.lExp "Vector: "
     DevAddButton $f.bHelp "?" "fMRIEngineHelpSetupContrasts" 2
-    eval {entry $f.eExp -width 22 -textvariable FMRIEngine(entry,contrastVector)} $Gui(WEA)
+    eval {entry $f.eExp -width 22 -textvariable fMRIEngine(entry,contrastVector)} $Gui(WEA)
     grid $f.lExp $f.eExp $f.bHelp -padx 1 -pady 1 -sticky e
 
     #-----------------------
     # Action panel 
     #-----------------------
     set f $parent.fTop.fActions
-    DevAddButton $f.bOK "OK" "FMRIEngineAddOrEditContrast" 6 
+    DevAddButton $f.bOK "OK" "fMRIEngineAddOrEditContrast" 6 
     grid $f.bOK -padx 2 -pady 3 
 
     #-------------------------------------------
@@ -377,39 +377,39 @@ proc FMRIEngineBuildUIForContrasts {parent} {
     set f $parent.fMiddle.fMiddle
     scrollbar $f.vs -orient vertical -bg $Gui(activeWorkspace)
     scrollbar $f.hs -orient horizontal -bg $Gui(activeWorkspace)
-    set FMRIEngine(contrastsVerScroll) $f.vs
-    set FMRIEngine(contrastsHorScroll) $f.hs
+    set fMRIEngine(contrastsVerScroll) $f.vs
+    set fMRIEngine(contrastsHorScroll) $f.hs
     listbox $f.lb -height 4 -bg $Gui(activeWorkspace) \
-        -yscrollcommand {$::FMRIEngine(contrastsVerScroll) set} \
-        -xscrollcommand {$::FMRIEngine(contrastsHorScroll) set}
-    set FMRIEngine(contrastsListBox) $f.lb
-    $FMRIEngine(contrastsVerScroll) configure -command {$FMRIEngine(contrastsListBox) yview}
-    $FMRIEngine(contrastsHorScroll) configure -command {$FMRIEngine(contrastsListBox) xview}
+        -yscrollcommand {$::fMRIEngine(contrastsVerScroll) set} \
+        -xscrollcommand {$::fMRIEngine(contrastsHorScroll) set}
+    set fMRIEngine(contrastsListBox) $f.lb
+    $fMRIEngine(contrastsVerScroll) configure -command {$fMRIEngine(contrastsListBox) yview}
+    $fMRIEngine(contrastsHorScroll) configure -command {$fMRIEngine(contrastsListBox) xview}
 
     blt::table $f \
-        0,0 $FMRIEngine(contrastsListBox) -padx 1 -pady 1 \
-        1,0 $FMRIEngine(contrastsHorScroll) -fill x -padx 1 -pady 1 \
-        0,1 $FMRIEngine(contrastsVerScroll) -cspan 2 -fill y -padx 1 -pady 1
+        0,0 $fMRIEngine(contrastsListBox) -padx 1 -pady 1 \
+        1,0 $fMRIEngine(contrastsHorScroll) -fill x -padx 1 -pady 1 \
+        0,1 $fMRIEngine(contrastsVerScroll) -cspan 2 -fill y -padx 1 -pady 1
 
     #-----------------------
     # Action  
     #-----------------------
     set f $parent.fMiddle.fDown
-    DevAddButton $f.bEdit "Edit" "FMRIEngineShowContrastToEdit" 6 
-    DevAddButton $f.bDelete "Delete" "FMRIEngineDeleteContrast" 6 
+    DevAddButton $f.bEdit "Edit" "fMRIEngineShowContrastToEdit" 6 
+    DevAddButton $f.bDelete "Delete" "fMRIEngineDeleteContrast" 6 
     grid $f.bEdit $f.bDelete -padx 2 -pady 3 
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineBuildUIForSignalModeling 
+# .PROC fMRIEngineBuildUIForSignalModeling 
 # Creates UI for task "Signal Modeling" 
 # .ARGS
 # parent the parent frame 
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineBuildUIForSignalModeling {parent} {
-    global FMRIEngine Gui
+proc fMRIEngineBuildUIForSignalModeling {parent} {
+    global fMRIEngine Gui
 
     frame $parent.fModeling     -bg $Gui(activeWorkspace) -relief groove -bd 1 
     frame $parent.fAddiModeling -bg $Gui(activeWorkspace) -relief groove -bd 1 
@@ -453,8 +453,8 @@ proc FMRIEngineBuildUIForSignalModeling {parent} {
     }
 
     # Save menubutton for config
-    set FMRIEngine(gui,conditionsMenuButtonForSignal) $f.mbType
-    set FMRIEngine(gui,conditionsMenuForSignal) $f.mbType.m
+    set fMRIEngine(gui,conditionsMenuButtonForSignal) $f.mbType
+    set fMRIEngine(gui,conditionsMenuForSignal) $f.mbType.m
 
     # Build pulldown menu for wave forms 
     DevAddLabel $f.lWave "Waveform:"
@@ -469,13 +469,13 @@ proc FMRIEngineBuildUIForSignalModeling {parent} {
 
     foreach m $waveForms  {
         $f.mbType2.m add command -label $m \
-            -command "FMRIEngineSelectWaveFormForSignalModeling \{$m\}" 
+            -command "fMRIEngineSelectWaveFormForSignalModeling \{$m\}" 
     }
 
     # Save menubutton for config
-    set FMRIEngine(gui,waveFormsMenuButtonForSignal) $f.mbType2
-    set FMRIEngine(gui,waveFormsMenuForSignal) $f.mbType2.m
-    set FMRIEngine(curWaveFormForSignal) $df
+    set fMRIEngine(gui,waveFormsMenuButtonForSignal) $f.mbType2
+    set fMRIEngine(gui,waveFormsMenuForSignal) $f.mbType2.m
+    set fMRIEngine(curWaveFormForSignal) $df
 
     # Build pulldown menu for convolution functions 
     DevAddLabel $f.lConv "Convolution:"
@@ -490,18 +490,18 @@ proc FMRIEngineBuildUIForSignalModeling {parent} {
 
     foreach m $convFuncs  {
         $f.mbType3.m add command -label $m \
-            -command "FMRIEngineSelectConvolutionForSignalModeling \{$m\}" 
+            -command "fMRIEngineSelectConvolutionForSignalModeling \{$m\}" 
     }
-    set FMRIEngine(gui,convolutionMenuButtonForSignal) $f.mbType3
-    set FMRIEngine(gui,convolutionMenuForSignal) $f.mbType3.m
-    set FMRIEngine(curConvolutionForSignal) $df 
+    set fMRIEngine(gui,convolutionMenuButtonForSignal) $f.mbType3
+    set fMRIEngine(gui,convolutionMenuForSignal) $f.mbType3.m
+    set fMRIEngine(curConvolutionForSignal) $df 
 
     #-----------------------
     # Temporal derivative 
     #-----------------------
     DevAddButton $f.bTempHelp "?" "fMRIEngineHelpSetupTempDerivative" 2 
     eval {checkbutton $f.cTemp \
-        -variable FMRIEngine(checkbuttonTempDerivative) \
+        -variable fMRIEngine(checkbuttonTempDerivative) \
         -text "Add temporal derivative"} $Gui(WEA) 
     $f.cTemp deselect 
 
@@ -549,11 +549,11 @@ proc FMRIEngineBuildUIForSignalModeling {parent} {
 
     foreach m $highpassFilters  {
         $f.mbType.m add command -label $m \
-            -command "FMRIEngineSelectHighpassForSignalModeling \{$m\}" 
+            -command "fMRIEngineSelectHighpassForSignalModeling \{$m\}" 
     }
-    set FMRIEngine(gui,highpassMenuButtonForSignal) $f.mbType
-    set FMRIEngine(gui,highpassMenuForSignal) $f.mbType.m
-    set FMRIEngine(curHighpassForSignal) $df 
+    set fMRIEngine(gui,highpassMenuButtonForSignal) $f.mbType
+    set fMRIEngine(gui,highpassMenuForSignal) $f.mbType.m
+    set fMRIEngine(curHighpassForSignal) $df 
 
     # Build pulldown menu for lowpass filters 
     DevAddLabel $f.lLowpass "Lowpass filter:"
@@ -568,11 +568,11 @@ proc FMRIEngineBuildUIForSignalModeling {parent} {
 
     foreach m $lowpassFilters  {
         $f.mbType2.m add command -label $m \
-            -command "FMRIEngineSelectLowpassForSignalModeling \{$m\}" 
+            -command "fMRIEngineSelectLowpassForSignalModeling \{$m\}" 
     }
-    set FMRIEngine(gui,lowpassMenuButtonForSignal) $f.mbType2
-    set FMRIEngine(gui,lowpassMenuForSignal) $f.mbType2.m
-    set FMRIEngine(curLowpassForSignal) $df
+    set fMRIEngine(gui,lowpassMenuButtonForSignal) $f.mbType2
+    set fMRIEngine(gui,lowpassMenuForSignal) $f.mbType2.m
+    set fMRIEngine(curLowpassForSignal) $df
 
     #-----------------------
     # Remove global effects 
@@ -580,7 +580,7 @@ proc FMRIEngineBuildUIForSignalModeling {parent} {
     DevAddButton $f.bEffectsHelp "?" "fMRIEngineHelpSetupGlobalFX" 2 
 
     eval {checkbutton $f.cEffects \
-        -variable FMRIEngine(checkbuttonGlobalEffects) \
+        -variable fMRIEngine(checkbuttonGlobalEffects) \
         -text "Remove global effects"} $Gui(WEA) 
     $f.cEffects deselect 
 
@@ -591,7 +591,7 @@ proc FMRIEngineBuildUIForSignalModeling {parent} {
     DevAddButton $f.bCustomHelp "?" "fMRIEngineHelpSetupCustomFX" 2 
 
     eval {entry $f.eCustom -width 18 -state disabled \
-        -textvariable FMRIEngine(entry,custom)} $Gui(WEA)
+        -textvariable fMRIEngine(entry,custom)} $Gui(WEA)
 
     blt::table $f \
         0,0 $f.lHighpass -padx 1 -pady 1 \
@@ -610,7 +610,7 @@ proc FMRIEngineBuildUIForSignalModeling {parent} {
     # OK frame 
     #-------------------------------------------
     set f $parent.fOK
-    DevAddButton $f.bOK "OK" "FMRIEngineAddOrEditEV" 6 
+    DevAddButton $f.bOK "OK" "fMRIEngineAddOrEditEV" 6 
     grid $f.bOK -padx 1 -pady 3 
 
     #-------------------------------------------
@@ -632,26 +632,26 @@ proc FMRIEngineBuildUIForSignalModeling {parent} {
     set f $parent.fEVs.fMiddle
     scrollbar $f.vs -orient vertical -bg $Gui(activeWorkspace)
     scrollbar $f.hs -orient horizontal -bg $Gui(activeWorkspace)
-    set FMRIEngine(evsVerScroll) $f.vs
-    set FMRIEngine(evsHorScroll) $f.hs
+    set fMRIEngine(evsVerScroll) $f.vs
+    set fMRIEngine(evsHorScroll) $f.hs
     listbox $f.lb -height 4 -bg $Gui(activeWorkspace) \
-        -yscrollcommand {$::FMRIEngine(evsVerScroll) set} \
-        -xscrollcommand {$::FMRIEngine(evsHorScroll) set}
-    set FMRIEngine(evsListBox) $f.lb
-    $FMRIEngine(evsVerScroll) configure -command {$FMRIEngine(evsListBox) yview}
-    $FMRIEngine(evsHorScroll) configure -command {$FMRIEngine(evsListBox) xview}
+        -yscrollcommand {$::fMRIEngine(evsVerScroll) set} \
+        -xscrollcommand {$::fMRIEngine(evsHorScroll) set}
+    set fMRIEngine(evsListBox) $f.lb
+    $fMRIEngine(evsVerScroll) configure -command {$fMRIEngine(evsListBox) yview}
+    $fMRIEngine(evsHorScroll) configure -command {$fMRIEngine(evsListBox) xview}
 
     blt::table $f \
-        0,0 $FMRIEngine(evsListBox) -padx 1 -pady 1 \
-        1,0 $FMRIEngine(evsHorScroll) -fill x -padx 1 -pady 1 \
-        0,1 $FMRIEngine(evsVerScroll) -cspan 2 -fill y -padx 1 -pady 1
+        0,0 $fMRIEngine(evsListBox) -padx 1 -pady 1 \
+        1,0 $fMRIEngine(evsHorScroll) -fill x -padx 1 -pady 1 \
+        0,1 $fMRIEngine(evsVerScroll) -cspan 2 -fill y -padx 1 -pady 1
 
     #-----------------------
     # Action  
     #-----------------------
     set f $parent.fEVs.fDown
-    DevAddButton $f.bView "Edit" "FMRIEngineShowEVToEdit" 6 
-    DevAddButton $f.bDelete "Delete" "FMRIEngineDeleteEV" 6 
+    DevAddButton $f.bView "Edit" "fMRIEngineShowEVToEdit" 6 
+    DevAddButton $f.bDelete "Delete" "fMRIEngineDeleteEV" 6 
     grid $f.bView $f.bDelete -padx 2 -pady 3 
 
     #-------------------------------------------
@@ -659,20 +659,20 @@ proc FMRIEngineBuildUIForSignalModeling {parent} {
     #-------------------------------------------
     set f $parent.fEstimate
     DevAddButton $f.bHelp "?" "fMRIEngineHelpSetupEstimate" 2
-    DevAddButton $f.bEstimate "Fit Model" "FMRIEngineEstimate" 15 
+    DevAddButton $f.bEstimate "Fit Model" "fMRIEngineEstimate" 15 
     grid $f.bEstimate $f.bHelp -padx 1 -pady 4 -sticky e
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineBuildUIForParadigmDesign 
+# .PROC fMRIEngineBuildUIForParadigmDesign 
 # Creates UI for task "Paradigm Design" 
 # .ARGS
 # parent the parent frame 
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineBuildUIForParadigmDesign {parent} {
-    global FMRIEngine Gui
+proc fMRIEngineBuildUIForParadigmDesign {parent} {
+    global fMRIEngine Gui
 
     frame $parent.fTop   -bg $Gui(activeWorkspace) -relief groove -bd 1 
     frame $parent.fBot   -bg $Gui(activeWorkspace) -relief groove -bd 1
@@ -701,7 +701,7 @@ proc FMRIEngineBuildUIForParadigmDesign {parent} {
     foreach param "blocked event-related mixed" \
         name "{Blocked} {Event-r} {Mixed}" {
         eval {radiobutton $f.r$param -width 6 -text $name \
-            -variable FMRIEngine(paradigmDesignType) -value $param \
+            -variable fMRIEngine(paradigmDesignType) -value $param \
             -relief raised -offrelief raised -overrelief raised \
             -command "" \
             -selectcolor white} $Gui(WEA)
@@ -712,10 +712,10 @@ proc FMRIEngineBuildUIForParadigmDesign {parent} {
 
     set f $parent.fTop.fUp.fLabel
     eval {checkbutton $f.cRunIdentical \
-        -variable FMRIEngine(checkbuttonRunIdentical) \
+        -variable fMRIEngine(checkbuttonRunIdentical) \
         -text "All runs are identical"} $Gui(WEA) 
-    bind $f.cRunIdentical <1> "FMRIEngineSelectRunForConditionConfig 1" 
-#    bind $f.cRunIdentical <1> "FMRIEngineIdenticalizeConditions" 
+    bind $f.cRunIdentical <1> "fMRIEngineSelectRunForConditionConfig 1" 
+#    bind $f.cRunIdentical <1> "fMRIEngineIdenticalizeConditions" 
     $f.cRunIdentical select 
 
     # Build pulldown menu for all runs 
@@ -725,20 +725,20 @@ proc FMRIEngineBuildUIForParadigmDesign {parent} {
     eval {menubutton $f.mbType -text $df \
         -relief raised -bd 2 -width 8 \
         -menu $f.mbType.m} $Gui(WMBA)
-    bind $f.mbType <1> "FMRIEngineUpdateRunsForConditionConfig" 
+    bind $f.mbType <1> "fMRIEngineUpdateRunsForConditionConfig" 
     eval {menu $f.mbType.m} $Gui(WMA)
 
     # Add menu items
     foreach m $runList  {
         $f.mbType.m add command -label $m \
-            -command "FMRIEngineUpdateRunsForConditionConfig" 
+            -command "fMRIEngineUpdateRunsForConditionConfig" 
     }
 
-    set FMRIEngine(curRunForConditionConfig) 1
+    set fMRIEngine(curRunForConditionConfig) 1
 
     # Save menubutton for config
-    set FMRIEngine(gui,runListMenuButtonForConditionConfig) $f.mbType
-    set FMRIEngine(gui,runListMenuForConditionConfig) $f.mbType.m
+    set fMRIEngine(gui,runListMenuButtonForConditionConfig) $f.mbType
+    set fMRIEngine(gui,runListMenuForConditionConfig) $f.mbType.m
 
     blt::table $f \
         0,0 $f.cRunIdentical -cspan 2 -fill x -padx 3 -pady 3 \
@@ -747,19 +747,19 @@ proc FMRIEngineBuildUIForParadigmDesign {parent} {
 
     set f $parent.fTop.fMiddle
     # Entry fields (the loop makes a frame for each variable)
-    set FMRIEngine(paramConfigLabels) \
+    set fMRIEngine(paramConfigLabels) \
         [list {Title} {TR} {Start Vol} {Onsets} {Durations}]
-    set FMRIEngine(paramConfigEntries) \
+    set fMRIEngine(paramConfigEntries) \
         [list title tr startVol onsets durations]
     set i 0      
-    set len [llength $FMRIEngine(paramConfigLabels)]
+    set len [llength $fMRIEngine(paramConfigLabels)]
     while {$i < $len} { 
 
-        set name [lindex $FMRIEngine(paramConfigLabels) $i]
-        set param [lindex $FMRIEngine(paramConfigEntries) $i]
+        set name [lindex $fMRIEngine(paramConfigLabels) $i]
+        set param [lindex $fMRIEngine(paramConfigEntries) $i]
  
         eval {label $f.l$param -text "$name:"} $Gui(WLA)
-        eval {entry $f.e$param -width 23 -textvariable FMRIEngine(entry,$param)} $Gui(WEA)
+        eval {entry $f.e$param -width 23 -textvariable fMRIEngine(entry,$param)} $Gui(WEA)
 
         grid $f.l$param $f.e$param -padx 1 -pady 1 -sticky e
         grid $f.e$param -sticky w
@@ -771,7 +771,7 @@ proc FMRIEngineBuildUIForParadigmDesign {parent} {
     # Add or update 
     #-----------------------
     set f $parent.fTop.fDown
-    DevAddButton $f.bOK "OK" "FMRIEngineAddOrEditCondition" 6 
+    DevAddButton $f.bOK "OK" "fMRIEngineAddOrEditCondition" 6 
     grid $f.bOK -padx 1 -pady 2 
 
     #-------------------------------------------
@@ -791,52 +791,52 @@ proc FMRIEngineBuildUIForParadigmDesign {parent} {
     eval {menubutton $f.mbType -text $df \
         -relief raised -bd 2 -width 8 \
         -menu $f.mbType.m} $Gui(WMBA)
-    bind $f.mbType <1> "FMRIEngineUpdateRunsForConditionShow" 
+    bind $f.mbType <1> "fMRIEngineUpdateRunsForConditionShow" 
     eval {menu $f.mbType.m} $Gui(WMA)
 
     # Add menu items
     foreach m $runList  {
         $f.mbType.m add command -label $m \
-            -command "FMRIEngineUpdateRunsForConditionShow" 
+            -command "fMRIEngineUpdateRunsForConditionShow" 
     }
 
-    set FMRIEngine(curRunForConditionShow) 1 
+    set fMRIEngine(curRunForConditionShow) 1 
 
     # Save menubutton for config
-    set FMRIEngine(gui,runListMenuButtonForConditionShow) $f.mbType
-    set FMRIEngine(gui,runListMenuForConditionShow) $f.mbType.m
+    set fMRIEngine(gui,runListMenuButtonForConditionShow) $f.mbType
+    set fMRIEngine(gui,runListMenuForConditionShow) $f.mbType.m
     blt::table $f \
         0,0 $f.l -padx 2 -pady 3 \
         0,1 $f.mbType -fill x -padx 2 -pady 3
 
     set f $parent.fBot.fMiddle
     scrollbar $f.vs -orient vertical -bg $Gui(activeWorkspace)
-    set FMRIEngine(condsVerScroll) $f.vs
+    set fMRIEngine(condsVerScroll) $f.vs
     listbox $f.lb -height 5 -bg $Gui(activeWorkspace) \
-        -yscrollcommand {$::FMRIEngine(condsVerScroll) set}
-    set FMRIEngine(condsListBox) $f.lb
-    $FMRIEngine(condsVerScroll) configure -command {$FMRIEngine(condsListBox) yview}
+        -yscrollcommand {$::fMRIEngine(condsVerScroll) set}
+    set fMRIEngine(condsListBox) $f.lb
+    $fMRIEngine(condsVerScroll) configure -command {$fMRIEngine(condsListBox) yview}
 
     blt::table $f \
-        0,0 $FMRIEngine(condsListBox) -padx 1 -pady 1 \
-        0,1 $FMRIEngine(condsVerScroll) -fill y -padx 1 -pady 1
+        0,0 $fMRIEngine(condsListBox) -padx 1 -pady 1 \
+        0,1 $fMRIEngine(condsVerScroll) -fill y -padx 1 -pady 1
 
     #-----------------------
     # Action  
     #-----------------------
     set f $parent.fBot.fDown
-    DevAddButton $f.bDelete "Delete" "FMRIEngineDeleteCondition" 6 
-    DevAddButton $f.bView "Edit" "FMRIEngineShowConditionToEdit" 6 
+    DevAddButton $f.bDelete "Delete" "fMRIEngineDeleteCondition" 6 
+    DevAddButton $f.bView "Edit" "fMRIEngineShowConditionToEdit" 6 
     grid $f.bView $f.bDelete -padx 1 -pady 2 
 }
 
 
-proc FMRIEngineShowConditionToEdit {} {
-    global FMRIEngine 
+proc fMRIEngineShowConditionToEdit {} {
+    global fMRIEngine 
 
-    set curs [$FMRIEngine(condsListBox) curselection]
+    set curs [$fMRIEngine(condsListBox) curselection]
     if {$curs != ""} {
-        set con [$FMRIEngine(condsListBox) get $curs] 
+        set con [$fMRIEngine(condsListBox) get $curs] 
         if {$con != ""} {
             set i 1 
             set i2 [string first ":" $con]
@@ -846,125 +846,125 @@ proc FMRIEngineShowConditionToEdit {} {
 
         set run [string trim $run]
         set title [string trim $title]
-        set found [lsearch -exact $FMRIEngine($run,conditionList) $title]
+        set found [lsearch -exact $fMRIEngine($run,conditionList) $title]
 
         if {$found >= 0} {
-            if {! $FMRIEngine(checkbuttonRunIdentical) &&
-                $FMRIEngine(noOfRuns) > 1} {
-                set run2 $FMRIEngine(curRunForConditionShow)
-                FMRIEngineSelectRunForConditionConfig $run2 
+            if {! $fMRIEngine(checkbuttonRunIdentical) &&
+                $fMRIEngine(noOfRuns) > 1} {
+                set run2 $fMRIEngine(curRunForConditionShow)
+                fMRIEngineSelectRunForConditionConfig $run2 
             }
 
-            set FMRIEngine(entry,title) $FMRIEngine($run,$title,title)
-            set FMRIEngine(entry,tr) $FMRIEngine($run,tr)
-            set FMRIEngine(entry,startVol) $FMRIEngine($run,$title,startVol)
-            set FMRIEngine(entry,onsets) $FMRIEngine($run,$title,onsets)
-            set FMRIEngine(entry,durations) $FMRIEngine($run,$title,durations)
+            set fMRIEngine(entry,title) $fMRIEngine($run,$title,title)
+            set fMRIEngine(entry,tr) $fMRIEngine($run,tr)
+            set fMRIEngine(entry,startVol) $fMRIEngine($run,$title,startVol)
+            set fMRIEngine(entry,onsets) $fMRIEngine($run,$title,onsets)
+            set fMRIEngine(entry,durations) $fMRIEngine($run,$title,durations)
         }
 
-        set FMRIEngine(indexForEdit,condsListBox) $curs
+        set fMRIEngine(indexForEdit,condsListBox) $curs
     }
 }
 
  
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineUpdateRunsForConditionShow
+# .PROC fMRIEngineUpdateRunsForConditionShow
 # Chooses one sequence from the sequence list loaded within the Ibrowser module 
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineUpdateRunsForConditionShow {} {
-    global FMRIEngine 
+proc fMRIEngineUpdateRunsForConditionShow {} {
+    global fMRIEngine 
 
-    set runs [string trim $FMRIEngine(noOfRuns)]
+    set runs [string trim $fMRIEngine(noOfRuns)]
     if {$runs < 1} {
         DevErrorWindow "No of runs must be at least 1."
     } else { 
-        $FMRIEngine(gui,runListMenuForConditionShow) delete 0 end
+        $fMRIEngine(gui,runListMenuForConditionShow) delete 0 end
         if {$runs > 1} {
-            $FMRIEngine(gui,runListMenuForConditionShow) add command -label All \
-                -command "FMRIEngineSelectRunForConditionShow All"
+            $fMRIEngine(gui,runListMenuForConditionShow) add command -label All \
+                -command "fMRIEngineSelectRunForConditionShow All"
         }
 
         set count 1
         while {$count <= $runs} {
-            $FMRIEngine(gui,runListMenuForConditionShow) add command -label $count \
-                -command "FMRIEngineSelectRunForConditionShow $count"
+            $fMRIEngine(gui,runListMenuForConditionShow) add command -label $count \
+                -command "fMRIEngineSelectRunForConditionShow $count"
             incr count
         }   
     }
 }
 
 
-proc FMRIEngineSelectRunForConditionShow {run} {
-    global FMRIEngine 
+proc fMRIEngineSelectRunForConditionShow {run} {
+    global fMRIEngine 
 
     # configure menubutton
-    $FMRIEngine(gui,runListMenuButtonForConditionShow) config -text $run
-    set FMRIEngine(curRunForConditionShow) $run 
+    $fMRIEngine(gui,runListMenuButtonForConditionShow) config -text $run
+    set fMRIEngine(curRunForConditionShow) $run 
 
-    FMRIEngineShowConditions 
+    fMRIEngineShowConditions 
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineUpdateRunsForConditionConfig
+# .PROC fMRIEngineUpdateRunsForConditionConfig
 # Chooses one sequence from the sequence list loaded within the Ibrowser module 
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineUpdateRunsForConditionConfig {} {
-    global FMRIEngine 
+proc fMRIEngineUpdateRunsForConditionConfig {} {
+    global fMRIEngine 
 
-    if {! $FMRIEngine(checkbuttonRunIdentical)} {
-        set runs [string trim $FMRIEngine(noOfRuns)]
+    if {! $fMRIEngine(checkbuttonRunIdentical)} {
+        set runs [string trim $fMRIEngine(noOfRuns)]
         if {$runs < 1} {
             DevErrorWindow "No of runs must be at least 1."
         } else { 
-            $FMRIEngine(gui,runListMenuForConditionConfig) delete 0 end
+            $fMRIEngine(gui,runListMenuForConditionConfig) delete 0 end
             set count 1
             while {$count <= $runs} {
-                $FMRIEngine(gui,runListMenuForConditionConfig) add command -label $count \
-                    -command "FMRIEngineSelectRunForConditionConfig $count"
+                $fMRIEngine(gui,runListMenuForConditionConfig) add command -label $count \
+                    -command "fMRIEngineSelectRunForConditionConfig $count"
                 incr count
             } 
         }
     } else {
-        $FMRIEngine(gui,runListMenuForConditionConfig) delete 0 end
-        $FMRIEngine(gui,runListMenuForConditionConfig) add command -label 1\
-            -command "FMRIEngineSelectRunForConditionConfig 1"
+        $fMRIEngine(gui,runListMenuForConditionConfig) delete 0 end
+        $fMRIEngine(gui,runListMenuForConditionConfig) add command -label 1\
+            -command "fMRIEngineSelectRunForConditionConfig 1"
     }
 }
 
-proc FMRIEngineSelectRunForConditionConfig {run} {
-    global FMRIEngine 
+proc fMRIEngineSelectRunForConditionConfig {run} {
+    global fMRIEngine 
 
     # configure menubutton
-    $FMRIEngine(gui,runListMenuButtonForConditionConfig) config -text $run
-    set FMRIEngine(curRunForConditionConfig) $run 
+    $fMRIEngine(gui,runListMenuButtonForConditionConfig) config -text $run
+    set fMRIEngine(curRunForConditionConfig) $run 
 }
 
 
-proc FMRIEngineIdenticalizeConditions {} {
-    global FMRIEngine 
+proc fMRIEngineIdenticalizeConditions {} {
+    global fMRIEngine 
 
-    FMRIEngineSelectRunForConditionConfig 1
+    fMRIEngineSelectRunForConditionConfig 1
 
     # If we have multiple runs, copy all conditions of Run# 1 
     # to the rest of runs.
-    if {$FMRIEngine(checkbuttonRunIdentical)} {
-        set runs [string trim $FMRIEngine(noOfRuns)]
+    if {$fMRIEngine(checkbuttonRunIdentical)} {
+        set runs [string trim $fMRIEngine(noOfRuns)]
         if {$runs > 1} {
-            $FMRIEngine(gui,runListMenuForConditionConfig) delete 0 end
+            $fMRIEngine(gui,runListMenuForConditionConfig) delete 0 end
             set count 2 
             while {$count <= $runs} {
-                set FMRIEngine($count,$title,title) $FMRIEngine(1,$title,title)  
-                set FMRIEngine($count,$title,startVol) $FMRIEngine(1,$title,startVol) 
-                set FMRIEngine($count,$title,onsets) $FMRIEngine(1,$title,onsets) 
-                set FMRIEngine($count,$title,durations) $FMRIEngine(1,$title,durations) 
+                set fMRIEngine($count,$title,title) $fMRIEngine(1,$title,title)  
+                set fMRIEngine($count,$title,startVol) $fMRIEngine(1,$title,startVol) 
+                set fMRIEngine($count,$title,onsets) $fMRIEngine(1,$title,onsets) 
+                set fMRIEngine($count,$title,durations) $fMRIEngine(1,$title,durations) 
 
                 incr count
             } 
 
-            FMRIEngineShowConditions 
+            fMRIEngineShowConditions 
         }
     } 
 
@@ -972,63 +972,63 @@ proc FMRIEngineIdenticalizeConditions {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineConfigureEntryDurations
+# .PROC fMRIEngineConfigureEntryDurations
 # Configures the Durations entry 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineConfigureEntryDurations {} {
-    global FMRIEngine
+proc fMRIEngineConfigureEntryDurations {} {
+    global fMRIEngine
 
-    if {$FMRIEngine(durationsOption) == "No"} {
-        $FMRIEngine(entryWidget,durations) configure -state disabled 
+    if {$fMRIEngine(durationsOption) == "No"} {
+        $fMRIEngine(entryWidget,durations) configure -state disabled 
     } else {
-        $FMRIEngine(entryWidget,durations) configure -state normal 
+        $fMRIEngine(entryWidget,durations) configure -state normal 
     }
 
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineEditCondition
+# .PROC fMRIEngineEditCondition
 # Views a condition 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineEditCondition {} {
-    global FMRIEngine
+proc fMRIEngineEditCondition {} {
+    global fMRIEngine
 
-    set index [$FMRIEngine(condHierTable) curselection] 
+    set index [$fMRIEngine(condHierTable) curselection] 
     if {$index == ""} {
         return
     }
 
-    set name [eval $FMRIEngine(condHierTable) get -full $index] 
-    set b [info exists FMRIEngine(conditionList)]
+    set name [eval $fMRIEngine(condHierTable) get -full $index] 
+    set b [info exists fMRIEngine(conditionList)]
     if {$b} {
-        set found [lsearch -exact $FMRIEngine(conditionList) $name]
+        set found [lsearch -exact $fMRIEngine(conditionList) $name]
     }
 
     if {$found >= 0} {
-        set FMRIEngine(entry,title) $FMRIEngine($name,title)
-        set FMRIEngine(entry,onsets) $FMRIEngine($name,onsets)
-        set FMRIEngine(entry,durations) $FMRIEngine($name,durations)
+        set fMRIEngine(entry,title) $fMRIEngine($name,title)
+        set fMRIEngine(entry,onsets) $fMRIEngine($name,onsets)
+        set fMRIEngine(entry,durations) $fMRIEngine($name,durations)
     }
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineDeleteCondition
+# .PROC fMRIEngineDeleteCondition
 # Deletes a condition 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineDeleteCondition {} {
-    global FMRIEngine
+proc fMRIEngineDeleteCondition {} {
+    global fMRIEngine
 
-    set curs [$FMRIEngine(condsListBox) curselection]
+    set curs [$fMRIEngine(condsListBox) curselection]
     if {$curs != ""} {
-        set con [$FMRIEngine(condsListBox) get $curs] 
+        set con [$fMRIEngine(condsListBox) get $curs] 
         if {$con != ""} {
             set i 1 
             set i2 [string first ":" $con]
@@ -1038,36 +1038,36 @@ proc FMRIEngineDeleteCondition {} {
 
         set run [string trim $run]
         set title [string trim $title]
-        set found [lsearch -exact $FMRIEngine($run,conditionList) $title]
+        set found [lsearch -exact $fMRIEngine($run,conditionList) $title]
 
         if {$found >= 0} {
-            set FMRIEngine($run,conditionList) \
-                [lreplace $FMRIEngine($run,conditionList) $found $found]
-            unset -nocomplain FMRIEngine($run,$title,title)
-            unset -nocomplain FMRIEngine($run,$title,startVol)
-            unset -nocomplain FMRIEngine($run,$title,onsets)
-            unset -nocomplain FMRIEngine($run,$title,durations)
+            set fMRIEngine($run,conditionList) \
+                [lreplace $fMRIEngine($run,conditionList) $found $found]
+            unset -nocomplain fMRIEngine($run,$title,title)
+            unset -nocomplain fMRIEngine($run,$title,startVol)
+            unset -nocomplain fMRIEngine($run,$title,onsets)
+            unset -nocomplain fMRIEngine($run,$title,durations)
         }
 
-        $FMRIEngine(condsListBox) delete $curs 
+        $fMRIEngine(condsListBox) delete $curs 
     }
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineAddOrEditCondition
+# .PROC fMRIEngineAddOrEditCondition
 # Adds or edit a condition 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineAddOrEditCondition {} {
-    global FMRIEngine
+proc fMRIEngineAddOrEditCondition {} {
+    global fMRIEngine
 
-    set title [string trim $FMRIEngine(entry,title)]
-    set tr [string trim $FMRIEngine(entry,tr)]
-    set startVol [string trim $FMRIEngine(entry,startVol)]
-    set onsets [string trim $FMRIEngine(entry,onsets)]
-    set durations [string trim $FMRIEngine(entry,durations)]
+    set title [string trim $fMRIEngine(entry,title)]
+    set tr [string trim $fMRIEngine(entry,tr)]
+    set startVol [string trim $fMRIEngine(entry,startVol)]
+    set onsets [string trim $fMRIEngine(entry,onsets)]
+    set durations [string trim $fMRIEngine(entry,durations)]
 
     # Error checking
     if {$title == ""} {
@@ -1086,75 +1086,75 @@ proc FMRIEngineAddOrEditCondition {} {
         DevErrorWindow "Input the onset vector in seconds."
         return
     }
-    if {$FMRIEngine(paradigmDesignType) != "event-related" && $durations == ""} {
+    if {$fMRIEngine(paradigmDesignType) != "event-related" && $durations == ""} {
         DevErrorWindow "Input the duration vector in seconds."
         return
     }
 
-    set currRun $FMRIEngine(curRunForConditionConfig)
+    set currRun $fMRIEngine(curRunForConditionConfig)
     set found -1
-    set b [info exists FMRIEngine($currRun,conditionList)]
+    set b [info exists fMRIEngine($currRun,conditionList)]
     if {$b} {
-        set found [lsearch -exact $FMRIEngine($currRun,conditionList) $title]
+        set found [lsearch -exact $fMRIEngine($currRun,conditionList) $title]
     }
 
     if {$found == -1} {
-        lappend FMRIEngine($currRun,conditionList) $title
+        lappend fMRIEngine($currRun,conditionList) $title
     }
     
-    set FMRIEngine($currRun,designType) $FMRIEngine(paradigmDesignType)
-    set FMRIEngine($currRun,tr) $tr
+    set fMRIEngine($currRun,designType) $fMRIEngine(paradigmDesignType)
+    set fMRIEngine($currRun,tr) $tr
 
-    set FMRIEngine($currRun,$title,title) $title
-    set FMRIEngine($currRun,$title,startVol) $startVol
-    set FMRIEngine($currRun,$title,onsets) $onsets
-    set FMRIEngine($currRun,$title,durations) $durations
+    set fMRIEngine($currRun,$title,title) $title
+    set fMRIEngine($currRun,$title,startVol) $startVol
+    set fMRIEngine($currRun,$title,onsets) $onsets
+    set fMRIEngine($currRun,$title,durations) $durations
 
-    if {$FMRIEngine(checkbuttonRunIdentical)} {
-        set runs [string trim $FMRIEngine(noOfRuns)]
+    if {$fMRIEngine(checkbuttonRunIdentical)} {
+        set runs [string trim $fMRIEngine(noOfRuns)]
         if {$runs > 1} {
-            $FMRIEngine(gui,runListMenuForConditionConfig) delete 0 end
+            $fMRIEngine(gui,runListMenuForConditionConfig) delete 0 end
             set count 2 
             while {$count <= $runs} {
-                set b [info exists FMRIEngine($count,conditionList)]
+                set b [info exists fMRIEngine($count,conditionList)]
                 if {$b} {
-                    set found [lsearch -exact $FMRIEngine($count,conditionList) $title]
+                    set found [lsearch -exact $fMRIEngine($count,conditionList) $title]
                 }
 
                 if {$found == -1} {
-                    lappend FMRIEngine($count,conditionList) $title
+                    lappend fMRIEngine($count,conditionList) $title
                 }
 
-                set FMRIEngine($count,designType) $FMRIEngine(paradigmDesignType)
-                set FMRIEngine($count,tr) $FMRIEngine(1,tr) 
+                set fMRIEngine($count,designType) $fMRIEngine(paradigmDesignType)
+                set fMRIEngine($count,tr) $fMRIEngine(1,tr) 
 
-                set FMRIEngine($count,$title,title) $FMRIEngine(1,$title,title)  
-                set FMRIEngine($count,$title,startVol) $FMRIEngine(1,$title,startVol) 
-                set FMRIEngine($count,$title,onsets) $FMRIEngine(1,$title,onsets) 
-                set FMRIEngine($count,$title,durations) $FMRIEngine(1,$title,durations) 
+                set fMRIEngine($count,$title,title) $fMRIEngine(1,$title,title)  
+                set fMRIEngine($count,$title,startVol) $fMRIEngine(1,$title,startVol) 
+                set fMRIEngine($count,$title,onsets) $fMRIEngine(1,$title,onsets) 
+                set fMRIEngine($count,$title,durations) $fMRIEngine(1,$title,durations) 
 
                 incr count
             } 
         }
     } 
 
-    FMRIEngineShowConditions 
+    fMRIEngineShowConditions 
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineShowConditions
+# .PROC fMRIEngineShowConditions
 # Displays conditions 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineShowConditions {} {
-    global FMRIEngine 
+proc fMRIEngineShowConditions {} {
+    global fMRIEngine 
 
     set start 1
-    set end [$FMRIEngine(gui,runListMenuForConditionShow) index end] 
-    set currRun $FMRIEngine(curRunForConditionShow)
-    $FMRIEngine(condsListBox) delete 0 end
+    set end [$fMRIEngine(gui,runListMenuForConditionShow) index end] 
+    set currRun $fMRIEngine(curRunForConditionShow)
+    $fMRIEngine(condsListBox) delete 0 end
 
     if {$currRun != "All"} {
         set start $currRun
@@ -1163,12 +1163,12 @@ proc FMRIEngineShowConditions {} {
 
     set i $start
     while {$i <= $end} {
-        if {[info exists FMRIEngine($i,conditionList)]} {  
-            set len [llength $FMRIEngine($i,conditionList)]
+        if {[info exists fMRIEngine($i,conditionList)]} {  
+            set len [llength $fMRIEngine($i,conditionList)]
             set count 0
             while {$count < $len} {
-                set title [lindex $FMRIEngine($i,conditionList) $count]
-                $FMRIEngine(condsListBox) insert end "r$i:$title"
+                set title [lindex $fMRIEngine($i,conditionList) $count]
+                $fMRIEngine(condsListBox) insert end "r$i:$title"
                 incr count
             }
         }
@@ -1179,37 +1179,37 @@ proc FMRIEngineShowConditions {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineSetConvFunction
+# .PROC fMRIEngineSetConvFunction
 # Switches convolution function 
 # .ARGS
 # func the convolution function 
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineSetConvFunction {func} {
-    global FMRIEngine
+proc fMRIEngineSetConvFunction {func} {
+    global fMRIEngine
     
-    set FMRIEngine(currentConvFunc) $func
+    set fMRIEngine(currentConvFunc) $func
 
     # configure menubutton
-    $FMRIEngine(gui,currentConvFunc) config -text $func
+    $fMRIEngine(gui,currentConvFunc) config -text $func
 
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineSetModelTask
+# .PROC fMRIEngineSetModelTask
 # Switches model task 
 # .ARGS
 # task the model task 
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineSetModelTask {task} {
-    global FMRIEngine
+proc fMRIEngineSetModelTask {task} {
+    global fMRIEngine
     
-    set FMRIEngine(currentModelTask) $task
+    set fMRIEngine(currentModelTask) $task
 
     # configure menubutton
-    $FMRIEngine(gui,currentModelTask) config -text $task
+    $fMRIEngine(gui,currentModelTask) config -text $task
 
     set count -1 
     switch $task {
@@ -1218,14 +1218,14 @@ proc FMRIEngineSetModelTask {task} {
         }
         "Signal Modeling" {
             set count 2
-            FMRIEngineUpdateConditionsForSignalModeling
+            fMRIEngineUpdateConditionsForSignalModeling
        }
         "Contrasts" {
             set count 3
         }
     }
 
-    set f  $FMRIEngine(f$count)
+    set f  $fMRIEngine(f$count)
     raise $f
     focus $f
 }

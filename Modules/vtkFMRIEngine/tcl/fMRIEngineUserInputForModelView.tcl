@@ -1,5 +1,5 @@
 proc fMRIModelViewSortUserInput { } {
-    global FMRIEngine
+    global fMRIEngine
     #---
     #--- numRuns should be set to 1 by default; changed only
     #--- when user wants to analyze several runs at once:
@@ -11,19 +11,19 @@ proc fMRIModelViewSortUserInput { } {
     #--- we set fMRIModelView(Design,identicalRuns) = 1;
     #--- otherwise zero.
     #---
-    set ::fMRIModelView(Design,numRuns) $FMRIEngine(noOfRuns) 
-    set ::fMRIModelView(Design,identicalRuns) $FMRIEngine(checkbuttonRunIdentical)
+    set ::fMRIModelView(Design,numRuns) $fMRIEngine(noOfRuns) 
+    set ::fMRIModelView(Design,identicalRuns) $fMRIEngine(checkbuttonRunIdentical)
     set ::fMRIModelView(Layout,NoDisplay) 0
 
     #---
     #--- Design types supported: blocked, event-related, or mixed
     #--- default is 'blocked'
     for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
-        set ::fMRIModelView(Design,Run$r,Type) $FMRIEngine($r,designType) 
+        set ::fMRIModelView(Design,Run$r,Type) $fMRIEngine($r,designType) 
     }
     #--- scan interval in seconds.
     for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
-        set ::fMRIModelView(Design,Run$r,TR) $FMRIEngine($r,tr) 
+        set ::fMRIModelView(Design,Run$r,TR) $fMRIEngine($r,tr) 
     }
     #--- fraction-of-second increment used in modeling
     #--- please keep the product ($::fMRIModelView(Design,Run$r,TR) *
@@ -44,17 +44,17 @@ proc fMRIModelViewSortUserInput { } {
     #--- **if onsets are typically specified in seconds, have to change this.
     #--- For parametric designs, specify Condition intensity too.
     for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
-        if {[info exists FMRIEngine($r,conditionList)]} {  
-            set len [llength $FMRIEngine($r,conditionList)]
+        if {[info exists fMRIEngine($r,conditionList)]} {  
+            set len [llength $fMRIEngine($r,conditionList)]
             set ::fMRIModelView(Design,Run$r,numConditions) $len
 
             set i 0
             while {$i < $len} {
-                set title [lindex $FMRIEngine($r,conditionList) $i]
+                set title [lindex $fMRIEngine($r,conditionList) $i]
                 set indx [expr $i+1]
 
                 # Intensities
-                set onsets [split $FMRIEngine($r,$title,onsets) " "]     
+                set onsets [split $fMRIEngine($r,$title,onsets) " "]     
                 set l [llength $onsets]
                 for {set j 0} {$j < $l} {incr j} {
                     lappend intensities
@@ -63,7 +63,7 @@ proc fMRIModelViewSortUserInput { } {
 
                 fMRIModelViewSetConditionOnsets $r $indx $onsets 
 
-                set durs [split $FMRIEngine($r,$title,durations) " "]     
+                set durs [split $fMRIEngine($r,$title,durations) " "]     
                 fMRIModelViewSetConditionDurations $r $indx $durs 
 
                 incr i 
@@ -74,7 +74,7 @@ proc fMRIModelViewSortUserInput { } {
 
     #--- numEVs derived from conditions.
     for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
-        set len [llength $FMRIEngine($r,conditionList)]
+        set len [llength $fMRIEngine($r,conditionList)]
         set ::fMRIModelView(Design,Run$r,numConditionEVs) $len 
         set ::fMRIModelView(Design,Run$r,numAdditionalEVs) 0
     }
@@ -107,10 +107,10 @@ proc fMRIModelViewSortUserInput { } {
     #--- of conditions, and selection of additional EVs.
     #--- So here, ::fMRIModelView(Design,EV1,SignalType)
     #--- corresponds to condition1.
-    set size [$FMRIEngine(evsListBox) size]
+    set size [$fMRIEngine(evsListBox) size]
     set i 0
     while {$i < $size} {
-        set ev [$FMRIEngine(evsListBox) get $i]
+        set ev [$fMRIEngine(evsListBox) get $i]
         if {$ev != ""} {
             set found [string first "baseline" $ev 0]
             if {$found >= 0} {
@@ -121,18 +121,18 @@ proc fMRIModelViewSortUserInput { } {
                 set r [string trim $r]
                 set ::fMRIModelView(Design,Run$r,UseBaseline) 1
             } else {
-                set run $FMRIEngine($ev,run)
-                if {[info exists FMRIEngine($run,noOfEVs)]} {
-                    incr FMRIEngine($run,noOfEVs)
+                set run $fMRIEngine($ev,run)
+                if {[info exists fMRIEngine($run,noOfEVs)]} {
+                    incr fMRIEngine($run,noOfEVs)
                 } else {
-                    set FMRIEngine($run,noOfEVs) 1
+                    set fMRIEngine($run,noOfEVs) 1
                 }
 
-                set wform $FMRIEngine($ev,waveform,ev)   
-                set conv  $FMRIEngine($ev,convolution,ev)
-                set deriv $FMRIEngine($ev,derivative,ev)
-                set hpass $FMRIEngine($ev,highpass,ev)
-                set title $FMRIEngine($ev,title,ev)
+                set wform $fMRIEngine($ev,waveform,ev)   
+                set conv  $fMRIEngine($ev,convolution,ev)
+                set deriv $fMRIEngine($ev,derivative,ev)
+                set hpass $fMRIEngine($ev,highpass,ev)
+                set title $fMRIEngine($ev,title,ev)
 
                 if {$hpass == "Discrete Cosine Set"} {
                     set ::fMRIModelView(Design,Run$run,UseDCBasis) 1
@@ -168,18 +168,18 @@ proc fMRIModelViewSortUserInput { } {
                     }
                 }
 
-                fMRIModelViewSetEVSignalType $run $FMRIEngine($run,noOfEVs) $wf 
-                fMRIModelViewAddConditionName $run $FMRIEngine($run,noOfEVs) $title 
+                fMRIModelViewSetEVSignalType $run $fMRIEngine($run,noOfEVs) $wf 
+                fMRIModelViewAddConditionName $run $fMRIEngine($run,noOfEVs) $title 
             }
         }
          
         incr i
     } 
 
-    for {set r 1} {$r <= $FMRIEngine(noOfRuns)} {incr r} { 
-        unset -nocomplain FMRIEngine($r,noOfEVs) 
-        unset -nocomplain FMRIEngine($r,noOfEVs) 
-        unset -nocomplain FMRIEngine($r,noOfEVs) 
+    for {set r 1} {$r <= $fMRIEngine(noOfRuns)} {incr r} { 
+        unset -nocomplain fMRIEngine($r,noOfEVs) 
+        unset -nocomplain fMRIEngine($r,noOfEVs) 
+        unset -nocomplain fMRIEngine($r,noOfEVs) 
     }
  
     #--- compute totalEVs across runs.
@@ -239,16 +239,16 @@ proc fMRIModelViewSortUserInput { } {
 
     #---
     #--- assume that t-contrasts will be available in vector form
-    set size [$FMRIEngine(contrastsListBox) size]
+    set size [$fMRIEngine(contrastsListBox) size]
     set ::fMRIModelView(Design,numTContrasts) $size 
     unset -nocomplain ::fMRIModelView(Design,TContrastNames)
     unset -nocomplain ::fMRIModelView(Design,TContrasts)
  
     set i 0
     while {$i < $size} {
-        set name [$FMRIEngine(contrastsListBox) get $i]
+        set name [$fMRIEngine(contrastsListBox) get $i]
         if {$name != ""} {
-            set c $FMRIEngine($name,contrastVector)
+            set c $fMRIEngine($name,contrastVector)
             set l [split $c " "]
             set noOfEVs [expr $::fMRIModelView(Design,totalEVs) / $::fMRIModelView(Design,numRuns)]
             set len [llength $l]

@@ -1,58 +1,58 @@
-proc FMRIEngineAddOrEditContrast {} {
-    global FMRIEngine 
+proc fMRIEngineAddOrEditContrast {} {
+    global fMRIEngine 
 
     # Error checking
-    set name [string trim $FMRIEngine(entry,contrastName)]
+    set name [string trim $fMRIEngine(entry,contrastName)]
     if {$name == ""} {
         DevErrorWindow "Input a unique name for this contrast."
         return
     }
 
-    set vec [string trim $FMRIEngine(entry,contrastVector)]
+    set vec [string trim $fMRIEngine(entry,contrastVector)]
     if {$vec == ""} {
         DevErrorWindow "Input a contrast vector."
         return
     }
 
-    if {! [info exists FMRIEngine($name,contrastName)]} {
-        $FMRIEngine(contrastsListBox) insert end $name 
+    if {! [info exists fMRIEngine($name,contrastName)]} {
+        $fMRIEngine(contrastsListBox) insert end $name 
     } else {
-        if {$name == $FMRIEngine($name,contrastName) &&
-            $vec == $FMRIEngine($name,contrastVector)} {
+        if {$name == $fMRIEngine($name,contrastName) &&
+            $vec == $fMRIEngine($name,contrastVector)} {
             DevErrorWindow "The following contrast has been added:\nName: $name\nVector: $vec"
         }
     }
 
-    set FMRIEngine($name,contrastName) $name
-    set FMRIEngine($name,contrastVector) $vec
+    set fMRIEngine($name,contrastName) $name
+    set fMRIEngine($name,contrastVector) $vec
 }
 
 
-proc FMRIEngineDeleteContrast {} {
-    global FMRIEngine 
+proc fMRIEngineDeleteContrast {} {
+    global fMRIEngine 
 
-    set curs [$FMRIEngine(contrastsListBox) curselection]
+    set curs [$fMRIEngine(contrastsListBox) curselection]
     if {$curs != ""} {
-        set name [$FMRIEngine(contrastsListBox) get $curs] 
+        set name [$fMRIEngine(contrastsListBox) get $curs] 
         if {$name != ""} {
-            unset -nocomplain FMRIEngine($name,contrastName) 
-            unset -nocomplain FMRIEngine($name,contrastVector)
+            unset -nocomplain fMRIEngine($name,contrastName) 
+            unset -nocomplain fMRIEngine($name,contrastVector)
         }
 
-        $FMRIEngine(contrastsListBox) delete $curs 
+        $fMRIEngine(contrastsListBox) delete $curs 
     }
 }
 
 
-proc FMRIEngineShowContrastToEdit {} {
-    global FMRIEngine 
+proc fMRIEngineShowContrastToEdit {} {
+    global fMRIEngine 
 
-    set curs [$FMRIEngine(contrastsListBox) curselection]
+    set curs [$fMRIEngine(contrastsListBox) curselection]
     if {$curs != ""} {
-        set name [$FMRIEngine(contrastsListBox) get $curs] 
+        set name [$fMRIEngine(contrastsListBox) get $curs] 
         if {$name != ""} {
-            set FMRIEngine(entry,contrastName) $name
-            set FMRIEngine(entry,contrastVector) $FMRIEngine($name,contrastVector) 
+            set fMRIEngine(entry,contrastName) $name
+            set fMRIEngine(entry,contrastVector) $fMRIEngine($name,contrastVector) 
         }
     }
 }

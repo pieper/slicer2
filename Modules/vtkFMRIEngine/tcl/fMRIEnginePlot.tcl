@@ -34,18 +34,18 @@
 # 
 #
 #===============================================================================
-# FILE:        FMRIEnginePlot.tcl
+# FILE:        fMRIEnginePlot.tcl
 # PROCEDURES:  
-#   FMRIEnginePopUpPlot y)
-#   FMRIEngineDrawPlotShort y,
-#   FMRIEngineShowData a
-#   FMRIEngineCreateCurvesFromTimeCourse j,
-#   FMRIEngineDrawPlotLong y,
-#   FMRIEngineCloseDataWindow
-#   FMRIEngineCloseTimeCourseWindow
-#   FMRIEngineGetDataVolumeDimensions
-#   FMRIEngineGetVoxelFromSelection y)
-#   FMRIEngineCheckSelectionAgainstVolumeLimits the
+#   fMRIEnginePopUpPlot y)
+#   fMRIEngineDrawPlotShort y,
+#   fMRIEngineShowData a
+#   fMRIEngineCreateCurvesFromTimeCourse j,
+#   fMRIEngineDrawPlotLong y,
+#   fMRIEngineCloseDataWindow
+#   fMRIEngineCloseTimeCourseWindow
+#   fMRIEngineGetDataVolumeDimensions
+#   fMRIEngineGetVoxelFromSelection y)
+#   fMRIEngineCheckSelectionAgainstVolumeLimits the
 #==========================================================================auto=
 #===============================================================================
 # (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
@@ -67,7 +67,7 @@
 #
 #===============================================================================
 #-------------------------------------------------------------------------------
-# .PROC FMRIEnginePopUpPlot
+# .PROC fMRIEnginePopUpPlot
 # This routine pops up a plot of a selected voxel's response over
 # time, overlayed onto a reference signal. This reference may be the
 # experimental protocol, or the protocol convolved with a hemodynamic
@@ -76,15 +76,15 @@
 # (x, y) the selected point
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEnginePopUpPlot {x y} {
-    global FMRIEngine MultiVolumeReader
+proc fMRIEnginePopUpPlot {x y} {
+    global fMRIEngine MultiVolumeReader
 
-    if {$FMRIEngine(currentTab) != "Inspect"} {
+    if {$fMRIEngine(currentTab) != "Inspect"} {
         return
     }
 
     # Checks time course plotting option
-    switch $FMRIEngine(tcPlottingOption) {
+    switch $fMRIEngine(tcPlottingOption) {
         "" {
             return
         }
@@ -120,8 +120,8 @@ proc FMRIEnginePopUpPlot {x y} {
         }
     }
 
-#    if {! [info exists FMRIEngine(firstMRMLid)] ||
-#        ! [info exists FMRIEngine(lastMRMLid)]} {
+#    if {! [info exists fMRIEngine(firstMRMLid)] ||
+#        ! [info exists fMRIEngine(lastMRMLid)]} {
         # DevErrorWindow "Please load volume sequence first."
 #        return
 #    }
@@ -130,24 +130,24 @@ proc FMRIEnginePopUpPlot {x y} {
     # these indices against the dimensions of the volume.
     # If they're good values, assemble the selected voxel's
     # time-course, the reference signal, and plot both.
-    scan [FMRIEngineGetVoxelFromSelection $x $y] "%d %d %d" i j k
+    scan [fMRIEngineGetVoxelFromSelection $x $y] "%d %d %d" i j k
     if {$i == -1} {
         return
     }
 
-    scan [FMRIEngineGetDataVolumeDimensions] "%d %d %d %d %d %d" \
+    scan [fMRIEngineGetDataVolumeDimensions] "%d %d %d %d %d %d" \
         xmin ymin zmin xmax ymax zmax
 
     # Check to make sure that the selected voxel
     # is within the data volume. If not, return.
     set argstr "$i $j $k $xmin $ymin $zmin $xmax $ymax $zmax"
-    if {[ FMRIEngineCheckSelectionAgainstVolumeLimits $argstr] == 0} {
+    if {[ fMRIEngineCheckSelectionAgainstVolumeLimits $argstr] == 0} {
         # DevErrorWindow "Selected voxel not in volume."
         return 
     }
 
     # Plot the time course
-    if {[info exists FMRIEngine(timeCourseToplevel)] == 0 } {
+    if {[info exists fMRIEngine(timeCourseToplevel)] == 0 } {
         set w .tcren
         toplevel $w
         wm title $w $plotTitle 
@@ -162,38 +162,38 @@ proc FMRIEnginePopUpPlot {x y} {
         # $w.graph grid on
         # $w.graph grid configure -color black
 
-        wm protocol $w WM_DELETE_WINDOW "FMRIEngineCloseTimeCourseWindow" 
+        wm protocol $w WM_DELETE_WINDOW "fMRIEngineCloseTimeCourseWindow" 
 
-        set FMRIEngine(timeCourseToplevel) $w
-        set FMRIEngine(timeCourseGraph) $w.graph
+        set fMRIEngine(timeCourseToplevel) $w
+        set fMRIEngine(timeCourseGraph) $w.graph
     }
 
-    if {$FMRIEngine(tcPlottingOption) == "Short"} {
-        $FMRIEngine(timeCourseGraph) axis configure x \
+    if {$fMRIEngine(tcPlottingOption) == "Short"} {
+        $fMRIEngine(timeCourseGraph) axis configure x \
             -title "Combined Condition/Baseline Volume Number" 
     } else {
-        $FMRIEngine(timeCourseGraph) axis configure x -title "Volume Number" 
+        $fMRIEngine(timeCourseGraph) axis configure x -title "Volume Number" 
     }
 
-    FMRIEngineDrawPlot$FMRIEngine(tcPlottingOption) $i $j $k 
+    fMRIEngineDrawPlot$fMRIEngine(tcPlottingOption) $i $j $k 
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineDrawPlotShort
+# .PROC fMRIEngineDrawPlotShort
 # Draws time course plot in short format 
 # .ARGS
 # (x, y, z) the index of voxel whose time course is to be plotted
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineDrawPlotShort {x y z} {
-    global FMRIEngine
+proc fMRIEngineDrawPlotShort {x y z} {
+    global fMRIEngine
 
     # Creates curves from time course
-    FMRIEngineCreateCurvesFromTimeCourse $x $y $z
+    fMRIEngineCreateCurvesFromTimeCourse $x $y $z
   
-    set volsPerBaseline [lindex $FMRIEngine(paradigm) 2]
-    set volsPerCondition [lindex $FMRIEngine(paradigm) 3]
+    set volsPerBaseline [lindex $fMRIEngine(paradigm) 2]
+    set volsPerCondition [lindex $fMRIEngine(paradigm) 3]
     set noVols [expr $volsPerBaseline + $volsPerCondition - 1] 
 
     blt::vector xVecCon yVecCon xVecBase yVecBase
@@ -209,86 +209,86 @@ proc FMRIEngineDrawPlotShort {x y z} {
         incr i
     }
 
-    $FMRIEngine(timeCourseGraph) axis configure x -min 1 -max $noVols 
-    $FMRIEngine(timeCourseGraph) axis configure y \
-        -min $FMRIEngine(timeCourseYMin) -max $FMRIEngine(timeCourseYMax)
+    $fMRIEngine(timeCourseGraph) axis configure x -min 1 -max $noVols 
+    $fMRIEngine(timeCourseGraph) axis configure y \
+        -min $fMRIEngine(timeCourseYMin) -max $fMRIEngine(timeCourseYMax)
 
     xVecCon set $xAxisCondition
-    yVecCon set $FMRIEngine(conditionTCAve)
+    yVecCon set $fMRIEngine(conditionTCAve)
     xVecBase set $xAxisBaseline
-    yVecBase set $FMRIEngine(baselineTCAve)
+    yVecBase set $fMRIEngine(baselineTCAve)
 
     set i 0 
     while {$i < $volsPerBaseline} {
         lappend coordsBase $xVecBase($i) 
-        lappend coordsBase [lindex $FMRIEngine(baselineTCMax) $i] 
+        lappend coordsBase [lindex $fMRIEngine(baselineTCMax) $i] 
         lappend coordsBase $xVecBase($i) 
-        lappend coordsBase [lindex $FMRIEngine(baselineTCMin) $i] 
+        lappend coordsBase [lindex $fMRIEngine(baselineTCMin) $i] 
  
         incr i
     }
 
-    if {[info exists FMRIEngine(conditionCurve)] &&
-        [$FMRIEngine(timeCourseGraph) element exists $FMRIEngine(conditionCurve)]} {
-        $FMRIEngine(timeCourseGraph) element delete $FMRIEngine(conditionCurve)
+    if {[info exists fMRIEngine(conditionCurve)] &&
+        [$fMRIEngine(timeCourseGraph) element exists $fMRIEngine(conditionCurve)]} {
+        $fMRIEngine(timeCourseGraph) element delete $fMRIEngine(conditionCurve)
     }
-    if {[info exists FMRIEngine(baselineCurve)] &&
-        [$FMRIEngine(timeCourseGraph) element exists $FMRIEngine(baselineCurve)]} {
-        $FMRIEngine(timeCourseGraph) element delete $FMRIEngine(baselineCurve)
+    if {[info exists fMRIEngine(baselineCurve)] &&
+        [$fMRIEngine(timeCourseGraph) element exists $fMRIEngine(baselineCurve)]} {
+        $fMRIEngine(timeCourseGraph) element delete $fMRIEngine(baselineCurve)
     }
-    if {[info exists FMRIEngine(voxelIndices)] &&
-        [$FMRIEngine(timeCourseGraph) marker exists $FMRIEngine(voxelIndices)]} {
-        $FMRIEngine(timeCourseGraph) marker delete $FMRIEngine(voxelIndices)
+    if {[info exists fMRIEngine(voxelIndices)] &&
+        [$fMRIEngine(timeCourseGraph) marker exists $fMRIEngine(voxelIndices)]} {
+        $fMRIEngine(timeCourseGraph) marker delete $fMRIEngine(voxelIndices)
     }
 
 
-    set FMRIEngine(conditionCurve) cCurve 
-    set FMRIEngine(baselineCurve) bCurve 
-    set FMRIEngine(voxelIndices) voxelIndices
+    set fMRIEngine(conditionCurve) cCurve 
+    set fMRIEngine(baselineCurve) bCurve 
+    set fMRIEngine(voxelIndices) voxelIndices
 
-    $FMRIEngine(timeCourseGraph) element create $FMRIEngine(conditionCurve) \
+    $fMRIEngine(timeCourseGraph) element create $fMRIEngine(conditionCurve) \
         -label "Condition Average" -xdata xVecCon -ydata yVecCon
-    $FMRIEngine(timeCourseGraph) element configure $FMRIEngine(conditionCurve) \
+    $fMRIEngine(timeCourseGraph) element configure $fMRIEngine(conditionCurve) \
         -symbol none -color red -linewidth 2 
 
-    $FMRIEngine(timeCourseGraph) element bind $FMRIEngine(conditionCurve) <ButtonPress-1> { 
-        # puts "Touched $FMRIEngine(conditionCurve)"
-        FMRIEngineShowData condition 
+    $fMRIEngine(timeCourseGraph) element bind $fMRIEngine(conditionCurve) <ButtonPress-1> { 
+        # puts "Touched $fMRIEngine(conditionCurve)"
+        fMRIEngineShowData condition 
     }
 
     set i 0 
     while {$i < $volsPerCondition} {
         set x1 $xVecCon($i) 
-        set y1 [lindex $FMRIEngine(conditionTCMax) $i] 
+        set y1 [lindex $fMRIEngine(conditionTCMax) $i] 
         set x2 $xVecCon($i) 
-        set y2 [lindex $FMRIEngine(conditionTCMin) $i] 
+        set y2 [lindex $fMRIEngine(conditionTCMin) $i] 
 
-        $FMRIEngine(timeCourseGraph) marker create line \
+        $fMRIEngine(timeCourseGraph) marker create line \
             -coords {$x1 $y1 $x2 $y2} -name lineMarkerCon$i -linewidth 1 \
             -outline red -under yes 
 
         incr i
     }
 
-    $FMRIEngine(timeCourseGraph) element create $FMRIEngine(baselineCurve) \
+    $fMRIEngine(timeCourseGraph) element create $fMRIEngine(baselineCurve) \
         -label "Baseline Average" -xdata xVecBase -ydata yVecBase
-    $FMRIEngine(timeCourseGraph) element configure $FMRIEngine(baselineCurve) \
+    $fMRIEngine(timeCourseGraph) element configure $fMRIEngine(baselineCurve) \
         -symbol none -color blue -linewidth 2 
 
-    $FMRIEngine(timeCourseGraph) element bind $FMRIEngine(baselineCurve) <ButtonPress-1> {
-        # puts "Touched $FMRIEngine(baselineCurve)"
-        FMRIEngineShowData baseline 
+    $fMRIEngine(timeCourseGraph) element bind $fMRIEngine(baselineCurve) <ButtonPress-1> {
+        # puts "Touched $fMRIEngine(baselineCurve)"
+        fMRIEngineShowData baseline 
     }
 
     set i 0 
     while {$i < $volsPerBaseline} {
  
         set x1 $xVecBase($i) 
-        set y1 [lindex $FMRIEngine(baselineTCMax) $i] 
+        set y1 [lindex $fMRIEngine(baselineTCMax) $i] 
         set x2 $xVecBase($i) 
-        set y2 [lindex $FMRIEngine(baselineTCMin) $i] 
+        set y2 [lindex $fMRIEngine(baselineTCMin) $i] 
 
-        $FMRIEngine(timeCourseGraph) marker create line \
+        $fMRIEngine(timeCourseGraph) marker create line \
             -coords {$x1 $y1 $x2 $y2} -name lineMarkerBase$i -linewidth 1 -outline blue \
             -xoffset 1 -under yes 
 
@@ -296,37 +296,37 @@ proc FMRIEngineDrawPlotShort {x y z} {
     }
     
     # Voxel indices
-    $FMRIEngine(timeCourseGraph) marker create text -text "Voxel: ($x,$y,$z)" \
-        -coords {$noVols $FMRIEngine(timeCourseYMax)} \
-        -yoffset 5 -xoffset -70 -name $FMRIEngine(voxelIndices) -under yes -bg white \
+    $fMRIEngine(timeCourseGraph) marker create text -text "Voxel: ($x,$y,$z)" \
+        -coords {$noVols $fMRIEngine(timeCourseYMax)} \
+        -yoffset 5 -xoffset -70 -name $fMRIEngine(voxelIndices) -under yes -bg white \
         -font fixed 
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineShowData
+# .PROC fMRIEngineShowData
 # Pops a separate window to show data for the selected curve 
 # .ARGS
 # curve a string to indicate which curve has been selected. 
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineShowData {curve} {
-    global FMRIEngine Gui
+proc fMRIEngineShowData {curve} {
+    global fMRIEngine Gui
 
     # if the user selects a different curve, close the current window
     # and open a new window for the new curve
-    if {[info exists FMRIEngine(curve)] && 
-        $FMRIEngine(curve) != $curve} {
-        FMRIEngineCloseDataWindow
+    if {[info exists fMRIEngine(curve)] && 
+        $fMRIEngine(curve) != $curve} {
+        fMRIEngineCloseDataWindow
     }
-    set FMRIEngine(curve) $curve
+    set fMRIEngine(curve) $curve
     if {$curve == "condition"} {
         set title "Condition Data"
     } else {
         set title "Baseline Data"
     }
 
-    if {[info exists FMRIEngine(dataToplevel)] == 0 } {
+    if {[info exists fMRIEngine(dataToplevel)] == 0 } {
         set w .dataren
         toplevel $w
         wm title $w $title 
@@ -342,8 +342,8 @@ proc FMRIEngineShowData {curve} {
         blt::table $w 
         blt::table $w $w.vol 0,0 $w.min 0,1 $w.max 0,2 $w.ave 0,3 $w.std 0,4
 
-        set volsPerBaseline [lindex $FMRIEngine(paradigm) 2]
-        set volsPerCondition [lindex $FMRIEngine(paradigm) 3]
+        set volsPerBaseline [lindex $fMRIEngine(paradigm) 2]
+        set volsPerCondition [lindex $fMRIEngine(paradigm) 3]
         set noVols \
         [expr {$curve == "baseline" ? $volsPerBaseline : $volsPerCondition}] 
 
@@ -361,12 +361,12 @@ proc FMRIEngineShowData {curve} {
         }
       
         set i [expr $noVols + 1]
-        button $w.bDismiss -text "Dismiss" -font fixed -command "FMRIEngineCloseDataWindow"
+        button $w.bDismiss -text "Dismiss" -font fixed -command "fMRIEngineCloseDataWindow"
         blt::table $w $w.bDismiss $i,1 -cspan 3 
 
-        wm protocol $w WM_DELETE_WINDOW "FMRIEngineCloseDataWindow" 
-        set FMRIEngine(dataToplevel) $w
-        set FMRIEngine(dataTable) $w.table
+        wm protocol $w WM_DELETE_WINDOW "fMRIEngineCloseDataWindow" 
+        set fMRIEngine(dataToplevel) $w
+        set fMRIEngine(dataTable) $w.table
 
         # adding data into the table
         set i 1
@@ -378,7 +378,7 @@ proc FMRIEngineShowData {curve} {
             foreach m "TCMin TCMax TCAve TCStd" {
                 set v ""
                 append v $curve $m 
-                set v [lindex $FMRIEngine($v) $index]
+                set v [lindex $fMRIEngine($v) $index]
 
                 label $w.l$m$i -text $v -font fixed  
                 blt::table $w $w.l$m$i $i,$j
@@ -394,42 +394,42 @@ proc FMRIEngineShowData {curve} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineCreateCurvesFromTimeCourse
+# .PROC fMRIEngineCreateCurvesFromTimeCourse
 # Creates curves for short format time course plotting 
 # .ARGS
 # (i, j, k) the index of voxel whose time course is to be plotted
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineCreateCurvesFromTimeCourse {i j k} {
-    global FMRIEngine
+proc fMRIEngineCreateCurvesFromTimeCourse {i j k} {
+    global fMRIEngine
 
     # Retrieves paradigm (model) parameter 
-    set TotalVolumes [lindex $FMRIEngine(paradigm) 0]
-    set NumberOfConditions [lindex $FMRIEngine(paradigm) 1] 
-    set VolumesPerBaseline [lindex $FMRIEngine(paradigm) 2] 
-    set VolumesPerCondition [lindex $FMRIEngine(paradigm) 3] 
-    set VolumesAtStart [lindex $FMRIEngine(paradigm) 4] 
-    set StartsWith [lindex $FMRIEngine(paradigm) 5] 
+    set TotalVolumes [lindex $fMRIEngine(paradigm) 0]
+    set NumberOfConditions [lindex $fMRIEngine(paradigm) 1] 
+    set VolumesPerBaseline [lindex $fMRIEngine(paradigm) 2] 
+    set VolumesPerCondition [lindex $fMRIEngine(paradigm) 3] 
+    set VolumesAtStart [lindex $fMRIEngine(paradigm) 4] 
+    set StartsWith [lindex $fMRIEngine(paradigm) 5] 
 
     # Cleans variables
-    unset -nocomplain FMRIEngine(conditionTCMax)
-    unset -nocomplain FMRIEngine(conditionTCMin)
-    unset -nocomplain FMRIEngine(conditionTCAve)
-    unset -nocomplain FMRIEngine(conditionTCStd)
-    unset -nocomplain FMRIEngine(baselineTCMax)
-    unset -nocomplain FMRIEngine(baselineTCMin)
-    unset -nocomplain FMRIEngine(baselineTCAve)
-    unset -nocomplain FMRIEngine(baselineTCStd)
+    unset -nocomplain fMRIEngine(conditionTCMax)
+    unset -nocomplain fMRIEngine(conditionTCMin)
+    unset -nocomplain fMRIEngine(conditionTCAve)
+    unset -nocomplain fMRIEngine(conditionTCStd)
+    unset -nocomplain fMRIEngine(baselineTCMax)
+    unset -nocomplain fMRIEngine(baselineTCMin)
+    unset -nocomplain fMRIEngine(baselineTCAve)
+    unset -nocomplain fMRIEngine(baselineTCStd)
  
     # Creates curves
     set cStart [expr {$StartsWith == 1 ? ($VolumesAtStart + $VolumesPerBaseline) : $VolumesAtStart}]
     set bStart [expr {$StartsWith == 0 ? ($VolumesAtStart + $VolumesPerCondition) : $VolumesAtStart}]
 
-    set timeCourse [FMRIEngine(actEstimator) GetTimeCourse $i $j $k]
+    set timeCourse [fMRIEngine(actEstimator) GetTimeCourse $i $j $k]
     set myRange [$timeCourse GetRange]
-    set FMRIEngine(timeCourseYMin) [lindex $myRange 0]
+    set fMRIEngine(timeCourseYMin) [lindex $myRange 0]
     set max [lindex $myRange 1]
-    set FMRIEngine(timeCourseYMax) [expr {$max == 0 ? 1 : $max}] 
+    set fMRIEngine(timeCourseYMax) [expr {$max == 0 ? 1 : $max}] 
 
     # For condition
     set i 0
@@ -456,10 +456,10 @@ proc FMRIEngineCreateCurvesFromTimeCourse {i j k} {
             incr count 
         }
 
-        lappend FMRIEngine(conditionTCMin) $min
-        lappend FMRIEngine(conditionTCMax) $max
+        lappend fMRIEngine(conditionTCMin) $min
+        lappend fMRIEngine(conditionTCMax) $max
         set ave [expr round($total / $count)]
-        lappend FMRIEngine(conditionTCAve) $ave
+        lappend fMRIEngine(conditionTCAve) $ave
 
         # calculates std
         set v1 [expr $total * $total / $VolumesPerCondition]
@@ -467,7 +467,7 @@ proc FMRIEngineCreateCurvesFromTimeCourse {i j k} {
         set var [expr abs($var)]
         set std [expr sqrt($var)]
         set rv [expr round($std)]
-        lappend FMRIEngine(conditionTCStd) $rv
+        lappend fMRIEngine(conditionTCStd) $rv
 
         incr i
     }
@@ -497,10 +497,10 @@ proc FMRIEngineCreateCurvesFromTimeCourse {i j k} {
             incr count
         }
 
-        lappend FMRIEngine(baselineTCMin) $min
-        lappend FMRIEngine(baselineTCMax) $max
+        lappend fMRIEngine(baselineTCMin) $min
+        lappend fMRIEngine(baselineTCMax) $max
         set ave [expr round($total / $count)]
-        lappend FMRIEngine(baselineTCAve) $ave 
+        lappend fMRIEngine(baselineTCAve) $ave 
 
         # calculates std
         set v1 [expr $total * $total / $VolumesPerBaseline]
@@ -508,7 +508,7 @@ proc FMRIEngineCreateCurvesFromTimeCourse {i j k} {
         set var [expr abs($var)]
         set std [expr sqrt($var)]
         set rv [expr round($std)]
-        lappend FMRIEngine(baselineTCStd) $rv
+        lappend fMRIEngine(baselineTCStd) $rv
 
         incr i
    }
@@ -516,22 +516,22 @@ proc FMRIEngineCreateCurvesFromTimeCourse {i j k} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineDrawPlotLong
+# .PROC fMRIEngineDrawPlotLong
 # Draws time course plot in long format 
 # .ARGS
 # (x, y, z) the index of voxel whose time course is to be plotted
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineDrawPlotLong {x y z} {
-    global MultiVolumeReader FMRIEngine fMRIModelView 
+proc fMRIEngineDrawPlotLong {x y z} {
+    global MultiVolumeReader fMRIEngine fMRIModelView 
 
 
     # Cleans variables
-    unset -nocomplain FMRIEngine(conValues)
-    unset -nocomplain FMRIEngine(parValues1)
-    unset -nocomplain FMRIEngine(parValues2)
+    unset -nocomplain fMRIEngine(conValues)
+    unset -nocomplain fMRIEngine(parValues1)
+    unset -nocomplain fMRIEngine(parValues2)
  
-    set timeCourse [FMRIEngine(actEstimator) GetTimeCourse $x $y $z]
+    set timeCourse [fMRIEngine(actEstimator) GetTimeCourse $x $y $z]
     set myRange [$timeCourse GetRange]
     set timeCourseYMin [lindex $myRange 0]
     set max [lindex $myRange 1]
@@ -539,9 +539,9 @@ proc FMRIEngineDrawPlotLong {x y z} {
 
     set TotalVolumes $MultiVolumeReader(noOfVolumes) 
 
-    set name $FMRIEngine(currentActVolName)
+    set name $fMRIEngine(currentActVolName)
     set cName [string range $name 11 end]
-    set cVec $FMRIEngine($cName,contrastVector)
+    set cVec $fMRIEngine($cName,contrastVector)
     set cList [split $cVec " "]
     set a [lsearch -exact $cList 1]
     set b [lsearch -exact $cList -1]
@@ -566,137 +566,137 @@ proc FMRIEngineDrawPlotLong {x y z} {
     set i 0
     while {$i < $TotalVolumes} {
         lappend xAxis [expr $i + 1]
-        lappend FMRIEngine(conValues) [$timeCourse GetComponent $i 0]
+        lappend fMRIEngine(conValues) [$timeCourse GetComponent $i 0]
 
         if {$a != -1} {
             set v [lindex $paradigm1 $i]
-            lappend FMRIEngine(parValues1) [expr $v * ($parMin + $parMax) / 2] 
+            lappend fMRIEngine(parValues1) [expr $v * ($parMin + $parMax) / 2] 
         }
         if {$b != -1} {
             set v [lindex $paradigm2 $i]
-            lappend FMRIEngine(parValues2) [expr $v * ($parMin + $parMax) / 2] 
+            lappend fMRIEngine(parValues2) [expr $v * ($parMin + $parMax) / 2] 
         }
 
         incr i
     }
 
 
-    $FMRIEngine(timeCourseGraph) axis configure x -min 1 -max $TotalVolumes 
-    $FMRIEngine(timeCourseGraph) axis configure y \
+    $fMRIEngine(timeCourseGraph) axis configure x -min 1 -max $TotalVolumes 
+    $fMRIEngine(timeCourseGraph) axis configure y \
         -min $timeCourseYMin -max $timeCourseYMax
 
     blt::vector xVecCon yVecCon xVecPar1 yVecPar1 xVecPar2 yVecPar2
     xVecCon set $xAxis
-    yVecCon set $FMRIEngine(conValues)
+    yVecCon set $fMRIEngine(conValues)
 
     if {$a != -1} {
         xVecPar1 set $xAxis
-        yVecPar1 set $FMRIEngine(parValues1)
+        yVecPar1 set $fMRIEngine(parValues1)
     }
     if {$b != -1} {
         xVecPar2 set $xAxis
-        yVecPar2 set $FMRIEngine(parValues2)
+        yVecPar2 set $fMRIEngine(parValues2)
     }
 
    
-    if {[info exists FMRIEngine(conditionCurve)] &&
-        [$FMRIEngine(timeCourseGraph) element exists $FMRIEngine(conditionCurve)]} {
-        $FMRIEngine(timeCourseGraph) element delete $FMRIEngine(conditionCurve)
+    if {[info exists fMRIEngine(conditionCurve)] &&
+        [$fMRIEngine(timeCourseGraph) element exists $fMRIEngine(conditionCurve)]} {
+        $fMRIEngine(timeCourseGraph) element delete $fMRIEngine(conditionCurve)
     }
-    if {[info exists FMRIEngine(baselineCurve1)] &&
-        [$FMRIEngine(timeCourseGraph) element exists $FMRIEngine(baselineCurve1)]} {
-        $FMRIEngine(timeCourseGraph) element delete $FMRIEngine(baselineCurve1)
+    if {[info exists fMRIEngine(baselineCurve1)] &&
+        [$fMRIEngine(timeCourseGraph) element exists $fMRIEngine(baselineCurve1)]} {
+        $fMRIEngine(timeCourseGraph) element delete $fMRIEngine(baselineCurve1)
     }
-    if {[info exists FMRIEngine(baselineCurve2)] &&
-        [$FMRIEngine(timeCourseGraph) element exists $FMRIEngine(baselineCurve2)]} {
-        $FMRIEngine(timeCourseGraph) element delete $FMRIEngine(baselineCurve2)
+    if {[info exists fMRIEngine(baselineCurve2)] &&
+        [$fMRIEngine(timeCourseGraph) element exists $fMRIEngine(baselineCurve2)]} {
+        $fMRIEngine(timeCourseGraph) element delete $fMRIEngine(baselineCurve2)
     }
-    if {[info exists FMRIEngine(voxelIndices)] &&
-        [$FMRIEngine(timeCourseGraph) marker exists $FMRIEngine(voxelIndices)]} {
-        $FMRIEngine(timeCourseGraph) marker delete $FMRIEngine(voxelIndices)
+    if {[info exists fMRIEngine(voxelIndices)] &&
+        [$fMRIEngine(timeCourseGraph) marker exists $fMRIEngine(voxelIndices)]} {
+        $fMRIEngine(timeCourseGraph) marker delete $fMRIEngine(voxelIndices)
     }
 
 
-    set FMRIEngine(conditionCurve) cCurve 
-    set FMRIEngine(baselineCurve1) bCurve1 
-    set FMRIEngine(baselineCurve2) bCurve2 
-    set FMRIEngine(voxelIndices) voxelIndices
+    set fMRIEngine(conditionCurve) cCurve 
+    set fMRIEngine(baselineCurve1) bCurve1 
+    set fMRIEngine(baselineCurve2) bCurve2 
+    set fMRIEngine(voxelIndices) voxelIndices
 
-    $FMRIEngine(timeCourseGraph) element create $FMRIEngine(conditionCurve) \
+    $fMRIEngine(timeCourseGraph) element create $fMRIEngine(conditionCurve) \
         -label "Response" -xdata xVecCon -ydata yVecCon
-    $FMRIEngine(timeCourseGraph) element configure $FMRIEngine(conditionCurve) \
+    $fMRIEngine(timeCourseGraph) element configure $fMRIEngine(conditionCurve) \
         -symbol none -color red -linewidth 1 
 
     if {$a != -1} {
-        $FMRIEngine(timeCourseGraph) element create $FMRIEngine(baselineCurve1) \
+        $fMRIEngine(timeCourseGraph) element create $fMRIEngine(baselineCurve1) \
             -label "Condition1" -xdata xVecPar1 -ydata yVecPar1
-        $FMRIEngine(timeCourseGraph) element configure $FMRIEngine(baselineCurve1) \
+        $fMRIEngine(timeCourseGraph) element configure $fMRIEngine(baselineCurve1) \
             -symbol none -color blue -linewidth 1 
     }   
     if {$b != -1} {
-        $FMRIEngine(timeCourseGraph) element create $FMRIEngine(baselineCurve2) \
+        $fMRIEngine(timeCourseGraph) element create $fMRIEngine(baselineCurve2) \
             -label "Condition2" -xdata xVecPar2 -ydata yVecPar2
-        $FMRIEngine(timeCourseGraph) element configure $FMRIEngine(baselineCurve2) \
+        $fMRIEngine(timeCourseGraph) element configure $fMRIEngine(baselineCurve2) \
             -symbol none -color black -linewidth 1 
     }   
 
 
     # Voxel indices
-    $FMRIEngine(timeCourseGraph) marker create text -text "Voxel: ($x,$y,$z)" \
+    $fMRIEngine(timeCourseGraph) marker create text -text "Voxel: ($x,$y,$z)" \
         -coords {$TotalVolumes $timeCourseYMax} \
-        -yoffset 5 -xoffset -70 -name $FMRIEngine(voxelIndices) -under yes -bg white \
+        -yoffset 5 -xoffset -70 -name $fMRIEngine(voxelIndices) -under yes -bg white \
         -font fixed 
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineCloseDataWindow
+# .PROC fMRIEngineCloseDataWindow
 # Cleans up if the data window is closed 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineCloseDataWindow {} {
-    global FMRIEngine
+proc fMRIEngineCloseDataWindow {} {
+    global fMRIEngine
 
-    unset -nocomplain FMRIEngine(curve)
+    unset -nocomplain fMRIEngine(curve)
 
-    destroy $FMRIEngine(dataTable)
-    unset -nocomplain FMRIEngine(dataTable)
+    destroy $fMRIEngine(dataTable)
+    unset -nocomplain fMRIEngine(dataTable)
 
-    destroy $FMRIEngine(dataToplevel)
-    unset FMRIEngine(dataToplevel)
+    destroy $fMRIEngine(dataToplevel)
+    unset fMRIEngine(dataToplevel)
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineCloseTimeCourseWindow
+# .PROC fMRIEngineCloseTimeCourseWindow
 # Cleans up if the time course window is closed 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineCloseTimeCourseWindow {} {
-    global FMRIEngine
+proc fMRIEngineCloseTimeCourseWindow {} {
+    global fMRIEngine
 
-    destroy $FMRIEngine(timeCourseGraph)
-    unset -nocomplain FMRIEngine(timeCourseGraph)
-    unset -nocomplain FMRIEngine(conditionCurve)]
-    unset -nocomplain FMRIEngine(baselineCurve)]
+    destroy $fMRIEngine(timeCourseGraph)
+    unset -nocomplain fMRIEngine(timeCourseGraph)
+    unset -nocomplain fMRIEngine(conditionCurve)]
+    unset -nocomplain fMRIEngine(baselineCurve)]
 
-    destroy $FMRIEngine(timeCourseToplevel)
-    unset FMRIEngine(timeCourseToplevel)
+    destroy $fMRIEngine(timeCourseToplevel)
+    unset fMRIEngine(timeCourseToplevel)
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineGetDataVolumeDimensions
+# .PROC fMRIEngineGetDataVolumeDimensions
 # Gets volume dimensions 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineGetDataVolumeDimensions {} {
-    global Volume FMRIEngine
+proc fMRIEngineGetDataVolumeDimensions {} {
+    global Volume fMRIEngine
 
-    set ext $FMRIEngine(volumeExtent) 
+    set ext $fMRIEngine(volumeExtent) 
 
     set xmin [lindex $ext 0]
     set xmax [lindex $ext 1]
@@ -710,14 +710,14 @@ proc FMRIEngineGetDataVolumeDimensions {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineGetVoxelFromSelection
+# .PROC fMRIEngineGetVoxelFromSelection
 # Gets voxel index from the selection 
 # .ARGS
 # (x, y) the selected point 
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineGetVoxelFromSelection {x y} {
-    global FMRIEngine Interactor Gui
+proc fMRIEngineGetVoxelFromSelection {x y} {
+    global fMRIEngine Interactor Gui
     
     # Which slice was picked?
     set s $Interactor(s)
@@ -727,8 +727,8 @@ proc FMRIEngineGetVoxelFromSelection {x y} {
     }
 
 #    set fvName [[[Slicer GetForeVolume $s] GetMrmlNode] GetName]
-#    if {! [info exists FMRIEngine(actVolName)] ||
-#        $fvName != $FMRIEngine(actVolName)} {
+#    if {! [info exists fMRIEngine(actVolName)] ||
+#        $fvName != $fMRIEngine(actVolName)} {
 #        return "-1 -1 -1"
 #    }
 
@@ -773,13 +773,13 @@ proc FMRIEngineGetVoxelFromSelection {x y} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC FMRIEngineCheckSelectionAgainstVolumeLimits
+# .PROC fMRIEngineCheckSelectionAgainstVolumeLimits
 # Checks voxel selection against volume limits 
 # .ARGS
 # argstr the data string
 # .END
 #-------------------------------------------------------------------------------
-proc FMRIEngineCheckSelectionAgainstVolumeLimits {argstr} {
+proc fMRIEngineCheckSelectionAgainstVolumeLimits {argstr} {
 
     scan $argstr "%d %d %d %d %d %d %d %d %d" i j k xmin ymin zmin xmax ymax zmax
     # puts "argstr = $argstr\n"
