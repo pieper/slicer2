@@ -304,8 +304,9 @@ WARN_LOGFILE           =
 # documented source files. You may enter file names like "myfile.cpp" or 
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
-# INPUT                  = . examplesTcl java python tcl
-INPUT                  =  $(SLICER_HOME)/Base/cxx  $(SLICER_HOME)/Base/cxx/java $(SLICER_HOME)/Base/cxx/python $(SLICER_HOME)/Base/cxx/tcl
+# Don't include the java, python, tcl subdirs of cxx until we put code in there
+# INPUT                  = $(SLICER_HOME)/Base/cxx/java $(SLICER_HOME)/Base/cxx/python $(SLICER_HOME)/Base/cxx/tcl
+INPUT                  =  $(SLICER_HOME)/Base/cxx  
 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
