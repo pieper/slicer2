@@ -196,6 +196,7 @@ The 3D Slicer will exit so the problem can be corrected."
 	}
 	MainViewSetFov
 
+
 	# Debuging the slice rendering (no longer necessary)
 	if {$checkSliceRender == 1} {
 		Anno(0,curBack,actor) SetVisibility 1
@@ -219,6 +220,7 @@ The 3D Slicer will exit so the problem can be corrected."
 			tk_messageBox -message "$i $m"
 		}
 	}
+
 	
 	#-------------------------------------------
 	# Read user options from Options.xml
@@ -268,11 +270,14 @@ The 3D Slicer will exit so the problem can be corrected."
 	# Initial tab
 	#-------------------------------------------
 	$Gui(lBoot) config -text "Ready!"
+
+	set Module(bootDone) 0
 	if {$Module(activeID) == ""} {
 		Tab [lindex $Module(idList) 0]
 	}
 	bind .tViewer <Configure> "MainViewerUserResize"
 	puts "Ready"
+	set Module(bootDone) 1
 }
 
 #-------------------------------------------------------------------------------
@@ -312,6 +317,9 @@ proc MainInit {} {
 	#-------------------------------------------
 	set Module(activeID) ""
 	set Module(freezer) ""
+	set Module(bootDone) 0
+	set Module(bootModule) ""
+	set Module(moduleTabsAdded) 0
 
 	foreach m $Module(idList) {
 		set Module($m,more) 0
@@ -331,12 +339,15 @@ proc MainInit {} {
 	set Module(procRecallPresets) ""
 	# for recording user actions during segmentation trials
 	set Module(procSessionLog) ""
-
 	set Module(Renderers) ""
+
+	set Module(controlsHeight) 396
+	set Module(controlsWidth) 239
+	set Module(scrollIncr) 10
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.59 $} {$Date: 2001/05/28 05:09:25 $}]
+		{$Revision: 1.60 $} {$Date: 2001/07/20 17:31:59 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -412,6 +423,7 @@ proc MainBuildGUI {} {
 	# Main Window
 	#-------------------------------------------
 	set f .tMain
+
 	toplevel     $f -bg $Gui(backdrop)
 	wm title     $f $Gui(title) 
 	wm resizable $f  0 0
@@ -551,6 +563,16 @@ proc MainBuildGUI {} {
 		set Module(rMore)  $f.rMore
 	}
 
+	# Add the arrow image (the one that makes the scrollbar appear) 
+	# at the end of the row 
+	set Module(scrollbar,image) [image create photo -file \
+		[ExpandPath [file join gui moduleArrows.gif]]]
+	
+	set Module(scrollbar,visible) 0
+	eval {checkbutton $f.bDn -image $Module(scrollbar,image) -variable Module(scrollbar,visible) -width 10 -indicatoron 0 -command "MainSetScrollbarVisibility" -height 20} $Gui(WBA)
+	
+	pack $f.bDn -side right -padx 20
+	
 	#-------------------------------------------
 	# Main->Modules->Btns frame
 	#-------------------------------------------
@@ -590,17 +612,28 @@ proc MainBuildGUI {} {
 		$Module(rMore) config -text "$firstMore"
 	}
 
+
 	#-------------------------------------------
 	# Main->Controls Frame
 	#-------------------------------------------
 	set f .tMain.fControls
 	
 	frame $f.fTabs -bg $Gui(inactiveWorkspace) -height 20
-	frame $f.fWorkspace -bg $Gui(activeWorkspace)
+	set Module(canvas) $f.fWorkspace
+	set s $f.fWorkspace.fScroll
+        canvas $Module(canvas) -yscrollcommand "$s set" -bg $Gui(activeWorkspace)
+        eval { scrollbar $s -command "MainCheckScrollLimits $Module(canvas) yview" } $Gui(WSBA)
 	
-	pack $f.fTabs -side top -fill x
-	pack $f.fWorkspace -side top -expand 1 -fill both
-
+	# default scroll
+        $Module(canvas) config -scrollregion "0 0 1 $Module(controlsHeight)"
+	$Module(canvas) config -yscrollincrement $Module(scrollIncr) -confine true
+	
+	pack $f.fTabs -side top -fill x        
+	pack $s -side right -fill y
+	lower $s 
+	set Module(scrollbar,widget) $s
+	pack $Module(canvas) -expand true -side top -fill both
+	
 	set Gui(fTabs) $f.fTabs
 
 	#-------------------------------------------
@@ -609,18 +642,20 @@ proc MainBuildGUI {} {
 	set fWork .tMain.fControls.fWorkspace
 	set f .tMain.fControls.fTabs
 
+
 	foreach m $Module(idList) {
             MainBuildModuleTabs $m
 	}
-		
+
 	# Blank page to show during boot
+
 	frame $fWork.fBoot -bg $Gui(activeWorkspace)
 	eval {label $fWork.fBoot.l -text "Loading data..."} $Gui(WLA)
 	set Gui(lBoot) $fWork.fBoot.l
 	pack $fWork.fBoot.l -fill both -expand t
 	place $fWork.fBoot -in $fWork -relheight 1.0 -relwidth 1.0
-	raise $fWork.fBoot
-
+	raise $fWork.fBoot 
+	
 	#-------------------------------------------
 	# Main->Display Frame
 	#-------------------------------------------
@@ -687,7 +722,8 @@ proc MainBuildGUI {} {
 	# Main->Display->Right frame
 	#-------------------------------------------
 	set f .tMain.fDisplay.fRight
-
+	
+	
 	# Exit button
 	#-------------------------------------------
 	eval {button $f.bExit -text Exit -width 5 \
@@ -743,20 +779,20 @@ proc MainBuildModuleTabs {ModuleName}  {
     set m $ModuleName
     set fWork .tMain.fControls.fWorkspace
     set f .tMain.fControls.fTabs
-    
+
     # Make page frames for each tab
     foreach tab "$Module($m,row1List) $Module($m,row2List)" {
+	# create the frame for that module/tab, but don't pack it yet, 
+	# it is done in MainAddModuleTabs
         frame $fWork.f${m}${tab} -bg $Gui(activeWorkspace)
-        place $fWork.f${m}${tab} -in $fWork -relheight 1.0 -relwidth 1.0
         set Module($m,f${tab}) $fWork.f${m}${tab}
     }
-
+    
     foreach row "row1 row2" {
         # Make tab-row frame for each row
         frame $f.f${m}${row} -bg $Gui(activeWorkspace)
         place $f.f${m}${row} -in $f -relheight 1.0 -relwidth 1.0
         set Module($m,f$row) $f.f${m}${row}
-
         
         foreach tab $Module($m,${row}List) name $Module($m,${row}Name) {
             set Module($m,b$tab) $Module($m,f$row).b$tab
@@ -765,7 +801,7 @@ proc MainBuildModuleTabs {ModuleName}  {
                     -width [expr [string length "$name"] + 1]} $Gui(TA)
             pack $Module($m,b$tab) -side left -expand 1 -fill both
         }
-        
+
         # "More..." if more than one row exists
         if {$Module($m,row2List) != ""} {
             eval {button $Module($m,f$row).bMore -text "More..." \
@@ -774,6 +810,58 @@ proc MainBuildModuleTabs {ModuleName}  {
         }
     }
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC MainAddModuleTabs
+# 
+#  Add the frames of module ModuleName to the canvas so it can be scrolled
+#  This procedure has to be called once the 3D Slicer window is rendered 
+#  on the screen, otherwise the height of the frames is not yet initialized
+#
+# .ARGS
+# str ModuleName the name of the Module.
+# .END
+#-------------------------------------------------------------------------------
+proc MainAddModuleTabs {ModuleName}  {
+    global Module Gui
+
+    set m $ModuleName
+    set fWork .tMain.fControls.fWorkspace
+    set f .tMain.fControls.fTabs
+
+    # Make page frames for each tab
+    foreach tab "$Module($m,row1List) $Module($m,row2List)" {
+        set Module($m,f$tab,height) [winfo reqheight $fWork.f${m}${tab}]
+	
+	if {$Module($m,f$tab,height) < $Module(controlsHeight)} {
+	    set Module($m,f$tab,height) $Module(controlsHeight)
+	}
+	
+	# give the default width and height initially so that each module 
+	# frame fills the controls area, otherwise some module
+	# frames will overlap (if one is smaller than the other)
+	$fWork create window 0 0 -width $Module(controlsWidth) -height $Module($m,f$tab,height) -anchor nw -window $fWork.f${m}${tab} 	
+    }
+
+}
+    
+
+
+# This procedure allows scrolling only if the entire frame is not visible
+proc MainCheckScrollLimits {args} {
+
+    set canvas [lindex $args 0]
+    set view   [lindex $args 1]
+    set fracs [$canvas $view]
+
+    if {double([lindex $fracs 0]) == 0.0 && \
+	    double([lindex $fracs 1]) == 1.0} {
+	return
+    }
+    eval $args
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC MainUpdateMRML
@@ -981,129 +1069,211 @@ proc IsModule {m} {
 proc Tab {m {row ""} {tab ""}} {
 	global Module Gui View
 
-	# Frozen?
-	if {$Module(freezer) != ""} {
-		set Module(btn) $Module(activeID)
-		set Module(moreBtn) 0
-		tk_messageBox -message "Please press the Apply or Cancel button."
-		return
+    # if Tab is called before the boot, add the active panel to the canvas
+    # so it can be shown (it will have the default panel height)
+    #
+    # The first time Tab is called after the boot, add all the other modules
+    # tabs to the canvas now that we know their required size 
+    # (for some reason we can't get the size of a frame with "winfo" 
+    # unless the 3D Slicer window is rendered on the screen)
+ 
+   if { $Module(bootDone) == 0 } {
+       MainAddModuleTabs $m
+	set Module(bootModule) $m
+    
+   } elseif { $Module(moduleTabsAdded) == 0 } {
+	foreach t $Module(idList) {
+	    if {$t != $Module(bootModule) } {
+		MainAddModuleTabs $t
+	    }
 	}
-
-	# No modules?
-	if {$m == ""} {return}
-
-	# If "More" then switch rows
-	if {$m == "More"} {
-		set m $Module(activeID)
-		set row $Module($m,row)
-		switch $row {
-			row1 {
-				set row row2
-				set tab $Module($m,$row,tab)
-			}
-			row2 {
-				set row row1
-				set tab $Module($m,$row,tab)
-			}
-		}
-	}
-
-	# If "menu" then use currently selected menu item
-	if {$m == "Menu"} {
-		set m [$Module(rMore) cget -text]
-	}
-
-	# Remember prev
-	set prevID $Module(activeID)
-	if {$prevID != ""} {
-		set prevRow $Module($prevID,row)
-		set prevTab $Module($prevID,$prevRow,tab)
-	}
-
-	# If no change, do nichts
-	if {$m == $prevID} {
-		if {$row == $prevRow} {
-			if {$tab == $prevTab } {
-				return
-			}
-		}
-	}
-
-	# Reset previous tab button
-	if {$prevID != ""} {
-		$Gui(fTabs).f${prevID}${prevRow}.b${prevTab} config \
-			-bg $Gui(backdrop) -fg $Gui(textLight) \
-			-activebackground $Gui(backdrop) -activeforeground $Gui(textLight)
-	}
-
-	# If no row specified, then use default
-	if {$row == ""} {
-		set row $Module($m,row)
-	}
-		
-	# If no btn specified, then use default
-	if {$tab == ""} {
+	set Module(moduleTabsAdded) 1
+    }
+    
+    # Frozen?
+    if {$Module(freezer) != ""} {
+	set Module(btn) $Module(activeID)
+	set Module(moreBtn) 0
+	tk_messageBox -message "Please press the Apply or Cancel button."
+	return
+    }
+    
+    # No modules?
+    if {$m == ""} {return}
+    
+    # If "More" then switch rows
+    if {$m == "More"} {
+	set m $Module(activeID)
+	set row $Module($m,row)
+	switch $row {
+	    row1 {
+		set row row2
 		set tab $Module($m,$row,tab)
+	    }
+	    row2 {
+		set row row1
+		set tab $Module($m,$row,tab)
+	    }
 	}
-
-	# Set new
-	set Module(activeID) $m
-	set Module($m,row) $row
-	set Module($m,$row,tab) $tab
-
-	# Show row
-	raise $Module($m,f${row})
-
-	# Shrink names of inactive tabs.
-	foreach long $Module($m,${row}List) name $Module($m,${row}Name) {
-		$Module($m,b$long) config -text "$name" -width \
-			[expr [string length "$name"] + 1]
+    }
+    
+    # If "menu" then use currently selected menu item
+    if {$m == "Menu"} {
+	set m [$Module(rMore) cget -text]
+    }
+    
+    # Remember prev
+    set prevID $Module(activeID)
+    if {$prevID != ""} {
+	set prevRow $Module($prevID,row)
+	set prevTab $Module($prevID,$prevRow,tab)
+    }
+    
+    # If no change, do nichts
+    if {$m == $prevID} {
+	if {$row == $prevRow} {
+	    if {$tab == $prevTab } {
+		return
+	    }
 	}
-
-	# Expand name of active tab (only if "name" is shorter)
-	set idx [lsearch $Module($m,${row}List) $tab]
-	set name [lindex $Module($m,${row}Name) $idx]
-	if {[string length $name] < [string length $tab]} {
-		set name $tab
-	} else {
-		set name $name
+    }
+    
+    # Reset previous tab button
+    if {$prevID != ""} {
+	$Gui(fTabs).f${prevID}${prevRow}.b${prevTab} config \
+		-bg $Gui(backdrop) -fg $Gui(textLight) \
+		-activebackground $Gui(backdrop) -activeforeground $Gui(textLight)
+    }
+    
+    # If no row specified, then use default
+    if {$row == ""} {
+	set row $Module($m,row)
+    }
+    
+    # If no btn specified, then use default
+    if {$tab == ""} {
+	set tab $Module($m,$row,tab)
+    }
+    
+    # Set new
+    set Module(activeID) $m
+    set Module($m,row) $row
+    set Module($m,$row,tab) $tab
+    
+    
+    # Show row
+    raise $Module($m,f${row})
+    
+    # Shrink names of inactive tabs.
+    foreach long $Module($m,${row}List) name $Module($m,${row}Name) {
+	$Module($m,b$long) config -text "$name" -width \
+		[expr [string length "$name"] + 1]
+    }
+    
+    # Expand name of active tab (only if "name" is shorter)
+    set idx [lsearch $Module($m,${row}List) $tab]
+    set name [lindex $Module($m,${row}Name) $idx]
+    if {[string length $name] < [string length $tab]} {
+	set name $tab
+    } else {
+	set name $name
+    }
+    $Module($m,b$tab) config -text $name \
+	    -width [expr [string length $name] + 1]
+    
+    # Activate active tab button	
+    $Module($m,b$tab) config -bg $Gui(activeWorkspace) -fg $Gui(textDark) \
+	    -activebackground $Gui(activeWorkspace) \
+	    -activeforeground $Gui(textDark)
+    
+    # Execute Exit procedure (if one exists for the prevID module)
+    if {$prevID != $m} {
+	if {[info exists Module($prevID,procExit)] == 1} {
+	    $Module($prevID,procExit)
 	}
-	$Module($m,b$tab) config -text $name \
-		 -width [expr [string length $name] + 1]
-
-	# Activate active tab button	
-	$Module($m,b$tab) config -bg $Gui(activeWorkspace) -fg $Gui(textDark) \
-		-activebackground $Gui(activeWorkspace) \
-		-activeforeground $Gui(textDark)
-
-	# Execute Exit procedure (if one exists for the prevID module)
-	if {$prevID != $m} {
-		if {[info exists Module($prevID,procExit)] == 1} {
-			$Module($prevID,procExit)
-		}
-	}
+    }
+    
+    # Show panel
+    raise $Module($m,f$tab)
+    
+    # Show scrollbar (if it is visible and we are not in a Help panel)
+    # and reconfigure its height based on the height required by 
+    # the current panel
+    
+    if {$tab == "Help"} {
+	set Module(scrollbar,helpTabActive) 1
+	# don't need to call MainSetScrollbarVisibility to lower the scrollbar 
+	# since the panel is raised above it already
 	
-	# Show panel
-	raise $Module($m,f$tab)
-	set Module(btn) $m
-	
-	# Give tab the focus.  
-	# (make sure entry boxes from other tabs don't keep focus!)
-	focus $Module($m,f$tab)
-	
-	# Execute Entrance procedure
-	if {$prevID != $m} {
-		if {[info exists Module($m,procEnter)] == 1} {
-			$Module($m,procEnter)
-		}
+    } else {
+	set Module(scrollbar,helpTabActive) 0
+	set reqHeight [winfo reqheight $Module($m,f$tab)] 
+	MainSetScrollbarHeight $reqHeight
+	MainSetScrollbarVisibility
+    }
+    
+    set Module(btn) $m
+    
+    # Give tab the focus.  
+    # (make sure entry boxes from other tabs don't keep focus!)
+    focus $Module($m,f$tab)
+    
+    # Execute Entrance procedure
+    if {$prevID != $m} {
+	if {[info exists Module($m,procEnter)] == 1} {
+	    $Module($m,procEnter)
 	}
+    }
+    
+    # Toggle more radio button
+    if {$Module($m,more) == 1} {
+	set Module(moreBtn) 1
+    } else {
+	set Module(moreBtn) 0
+    }
+}
 
-	# Toggle more radio button
-	if {$Module($m,more) == 1} {
-		set Module(moreBtn) 1
-	} else {
-		set Module(moreBtn) 0
-	}
+
+#-------------------------------------------------------------------------------
+# .PROC MainSetScrollbarHeight
+#
+# This procedure reconfigures the height of the scrollbar based on the 
+# height required by the active panel
+#
+# .ARGS
+#  int reqHeight
+# .END
+#-------------------------------------------------------------------------------
+
+proc MainSetScrollbarHeight {reqHeight} {
+    
+    global Module
+    # Make the scrollbar slightly smaller so that we don't see the bottom of
+    # previous frames
+    set reqHeight [expr $reqHeight - 5]
+    $Module(canvas) config -scrollregion "0 0 1 $reqHeight"
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainSetScrollbarVisibility
+#
+# If the scrollbar is visible and we are not in a help panel =>
+# raise the scrollbar so that the user can scroll down the panel 
+# 
+# Otherwise => lower the scrollbar
+#
+# .END
+#-------------------------------------------------------------------------------
+
+proc MainSetScrollbarVisibility {} {
+    
+    global Module
+    if { $Module(scrollbar,visible) == 1 && $Module(scrollbar,helpTabActive) == 0} {
+	raise $Module(scrollbar,widget)
+    } else {
+	lower $Module(scrollbar,widget)
+    }
+    
 }
 
 #-------------------------------------------------------------------------------
