@@ -74,6 +74,10 @@ proc HtmlHead {fid title {styleFile "../../style.css"} \
 <td align=left>
 	&nbsp;<a href='$homeFile' target='_top'>www.slicer.org</a>
 </td>
+<td align=right> 
+        <a href='http://slicer.sourceforge.net/'>slicer.sourceforge.net</a>&nbsp; 
+</td> 
+</tr> 
 </table>
 
 [BlueGrayLine]"
@@ -345,6 +349,10 @@ proc DocumentGenerateAuto {dir} {
 <td align=left>
 	&nbsp;<a href='../index.html' target='_top'>www.slicer.org</a>
 </td>
+<td align=right> 
+        <a href='http://slicer.sourceforge.net/'>slicer.sourceforge.net</a>&nbsp; 
+</td> 
+</tr> 
 </table>
 
 [BlueGrayLine]
