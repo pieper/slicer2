@@ -65,7 +65,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
         set m MainView
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.34 $} {$Date: 2002/02/22 01:08:42 $}]
+		{$Revision: 1.35 $} {$Date: 2002/02/22 22:10:31 $}]
 
 	set View(viewerHeightNormal) 656
 	set View(viewerWidth)  956 
@@ -94,10 +94,13 @@ viewMode='Normal' viewBgColor='Blue'"
 	set View(createMagWin) Yes
 	set View(parallelScale) $View(fov)
 
-	# Bug in OpenGL on Windows98 version II ??
-	if {$Gui(pc) == 1} {
-		set View(createMagWin) No
-		set View(closeupVisibility) Off
+	# sp-2002-02-22: removed for 1.3; seems to work on modern Windows
+	if {0} {
+		# Bug in OpenGL on Windows98 version II ??
+		if {$Gui(pc) == 1} {
+			set View(createMagWin) No
+			set View(closeupVisibility) Off
+		}
 	}
 
 	# Lauren bugfix (temporary?) due to core dumps 
