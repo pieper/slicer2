@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.69 $} {$Date: 2004/02/19 13:25:02 $}]
+    {$Revision: 1.70 $} {$Date: 2004/03/15 20:52:13 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -150,6 +150,7 @@ proc MainVolumesUpdateMRML {} {
             set Volume($v,fly) 0
             if {$Module(verbose) == 1} {
                 puts "MainVolumesUpdateMRML: about to call MainVolumesRead for $v"
+                DevErrorWindow "MainVolumesUpdateMRML: about to call MainVolumesRead for $v"
             }
             set retval [MainVolumesRead $v]
             if {$Module(verbose) == 1} { 
@@ -198,6 +199,7 @@ proc MainVolumesUpdateMRML {} {
         if {$v != $Volume(idList)} {
             if {$Module(verbose) == 1} {
                 puts "MainVolumesUpdateMRML: calling MainVolumesUpdate on v=$v"
+                DevErrorWindow "MainVolumesUpdateMRML: calling MainVolumesUpdate on v=$v"
             }
             MainVolumesUpdate $v
         }
@@ -307,7 +309,13 @@ proc MainVolumesRead {v} {
         Volume($v,node) SetFileType "DICOM"
     }
     
-    switch -glob [Volume($v,node) GetFileType] {
+    if {[catch {[Volume($v,node) GetFileType]} errmsg] != 0} {
+        puts "ERROR: volume node $v does not have a GetFileType method:\n\t$errmsg"
+        set volumeFileType "none"
+    } else {
+        set volumeFileType [Volume($v,node) GetFileType]
+    }
+    switch -glob $volumeFileType {
         "DICOM" {
             for {set i 0} {$i < $num} {incr i} {
                 if {[CheckFileExists "[Volume($v,node) GetDICOMFileName $i]" 0] == "0"} {
@@ -335,7 +343,7 @@ proc MainVolumesRead {v} {
 
     puts "Reading volume: [Volume($v,node) GetName]..."
     
-    switch -glob [Volume($v,node) GetFileType] {
+    switch -glob $volumeFileType {
         "Analyze*" {
             if { [info commands vtkCISGAnalyzeReader] == "" } {
                 DevErrorWindow "No Analyze Reader available."
@@ -364,6 +372,22 @@ proc MainVolumesRead {v} {
             if { $compressed } {
                 VolAnalyzeCleanupCompressed [Volume($v,node) GetFullPrefix] 
             }
+        }
+        "MGH" {
+            DevErrorWindow "MainVolumes: Have an MGH volume, special reader attempt..."
+            if { [info commands vtkMGHReader] == "" } {
+                DevErrorWindow "No MGH Reader available."
+                return -1
+            }
+            catch "mghreader Delete"
+            vtkMGHReader mghreader
+            
+            mghreader SetFileName [Volume($v,node) GetFullPrefix]
+            mghreader Update
+            mghreader ReadVolumeHeader
+            [[mghreader GetOutput] GetPointData] SetScalars [mghreader ReadVolumeData]
+            Volume($v,vol) SetImageData [mghreader GetOutput]
+            mghreader Delete
         }
         default {
             Volume($v,vol) Read
