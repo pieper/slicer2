@@ -59,8 +59,6 @@
 #   FMRIEnginePopBindings 
 #   FMRIEngineCreateBindings  
 #   FMRIEngineSetVolumeName   
-#   StripChartTest
-#   FMRIEngineTestBLT
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -171,7 +169,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.28 $} {$Date: 2004/10/17 14:31:55 $}]
+        {$Revision: 1.29 $} {$Date: 2004/10/18 15:18:10 $}]
 
     # Initialize module-level variables
     #------------------------------------
