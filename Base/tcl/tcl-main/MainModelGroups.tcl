@@ -120,7 +120,30 @@ proc MainModelGroupsCreateGUI {f m {hlevel 0}} {
 
 	return 1
 }
+proc MainModelGroupsRefreshGUI {mg c} {
+    global Model
+    
+    # Find the GUI components
+    set f $Model(fScrolledGUI)
+    set slider $f.sg$mg
+    set button $f.cg$mg
 
+    # Find the color for this model group
+    if {$c != ""} {
+	set rgb [Color($c,node) GetDiffuseColor]
+    } else {
+	set rgb "0 0 0"
+    }
+    set color [MakeColorNormalized $rgb]
+
+    # Color slider and colored checkbuttons
+    # catch is important here, because the GUI variables for
+    # model groups may have not been initialized yet
+    ColorSlider $slider $rgb
+    catch {$button configure -bg $color}
+    catch {$button configure -selectcolor $color}
+
+}
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelGroupsPopupCallback

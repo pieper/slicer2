@@ -72,7 +72,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.42 $} {$Date: 2001/12/11 18:11:55 $}]
+		{$Revision: 1.43 $} {$Date: 2001/12/12 03:06:43 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""
@@ -98,54 +98,38 @@ proc MainModelsInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsUpdateMRML
-# 
+#
+# This proc is called whenever the MRML scene graph changes.
+# It updates everything except the GUI for all models.  
+# This means reading/deleting polydata, updating actors, and redoing
+# any existing menus of models in Model(mActiveList). (These are menus to
+# select the active model in the Models module and may be in other modules).
+#
+#
+# Updating GUIs for all models is done in tcl-modules/Models.tcl 
+# since if the module is not loaded, no GUIs should exist!
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsUpdateMRML {} {
 	global Model Gui Module Color ModelGroup
-	global Mrml(dataTree)
 
 	# Build any new models
 	#--------------------------------------------------------
-	
-	set success 0
-	
-	Mrml(dataTree) InitTraversal
-	set node [Mrml(dataTree) GetNextItem]
-	while {$node != ""} {
-		if {[string compare -length 8 $node "ModelRef"] == 0} {
-			set success 1
-			set CurrentModelID [SharedModelLookup [$node GetModelRefID]]
-			if {$CurrentModelID != -1} {
-				if {[MainModelsCreate $CurrentModelID] > 0} {
-					set Model($CurrentModelID,fly) 0
-					if {[MainModelsRead $CurrentModelID] < 0} {
-						MainMrmlDeleteNodeDuringUpdate Model $CurrentModelID
-					}
-				}
-			}
-		}
-		set node [Mrml(dataTree) GetNextItem]
+    foreach m $Model(idList) {
+	if {[MainModelsCreate $m] > 0} {
+	    
+	    # Mark it as not being created on the fly 
+	    # since it was added from the Data module or read in from MRML
+	    set Model($m,fly) 0
+	    
+	    # Read
+	    if {[MainModelsRead $m] < 0} {
+		# failed
+		MainMrmlDeleteNodeDuringUpdate Model $m
+	    }
 	}
-
-	if {$success == 0} {
-	# MRML file didn't contain any hierarchies
-		foreach m $Model(idList) {
-			if {[MainModelsCreate $m] > 0} {
-			
-				# Mark it as not being created on the fly 
-				# since it was added from the Data module or read in from MRML
-				set Model($m,fly) 0
-	
-				# Read
-				if {[MainModelsRead $m] < 0} {
-					# failed
-					MainMrmlDeleteNodeDuringUpdate Model $m
-				}
-			}
-		}
-	}
+    }
 	
 	set f $Model(fScrolledGUI)
 	
@@ -166,7 +150,7 @@ proc MainModelsUpdateMRML {} {
 	}
 	
 
-	# Refresh Actor and GUI (in case color changed)
+	# Refresh Actor (in case color changed)
 	#--------------------------------------------------------
 	
 	foreach m $Model(idList) {
@@ -186,43 +170,11 @@ proc MainModelsUpdateMRML {} {
 	    }
 	    set Model(activeRenderer) $activeRenderer
 	    
-		# Color slider and colored checkbuttons
-		set c $Model($m,colorID)
-		if {$c != ""} {
-		    # catch is important here, because the GUI variables for
-		    # models may have not been initialized yet
-		    ColorSlider $Gui(wModels).fGrid.s$m [Color($c,node) GetDiffuseColor]
-		    catch {$Model(fScrolledGUI).c$m configure -bg [MakeColorNormalized \
-		    	[Color($c,node) GetDiffuseColor]]}
-		    catch {$Model(fScrolledGUI).c$m configure -selectcolor [MakeColorNormalized \
-		    	[Color($c,node) GetDiffuseColor]]}
-		} else {
-		    ColorSlider $Gui(wModels).fGrid.s$m "0 0 0"
-		    $f.cg$m configure -bg [MakeColorNormalized "0 0 0"]
-		    $f.cg$m configure -selectcolor [MakeColorNormalized "0 0 0"]
-		}
-	}
-	
-	foreach mg $ModelGroup(idList) {
-		# catch is important here, because the GUI variables for
-		# model groups may have not been initialized yet
-		catch {set c $ModelGroup($mg,colorID)}
-		if {$c != ""} {
-			catch {ColorSlider $Model(fScrolledGUI).sg$mg [Color($c,node) GetDiffuseColor]}
-			catch {$Model(fScrolledGUI).cg$mg configure -bg [MakeColorNormalized \
-				[Color($c,node) GetDiffuseColor]]}
-		    	catch {$Model(fScrolledGUI).cg$mg configure -selectcolor [MakeColorNormalized \
-		    		[Color($c,node) GetDiffuseColor]]}
-			
-
-		} else {
-			catch {ColorSlider $Model(fScrolledGUI).sg$mg "0 0 0"}
-			catch {$Model(fScrolledGUI).cg$mg configure -bg [MakeColorNormalized "0 0 0"]}
-		    	catch {$Model(fScrolledGUI).cg$mg configure -selectcolor [MakeColorNormalized "0 0 0"]}
-		}
+	    foreach mg $ModelGroup(idList) {
 		# second parameter "1" means: this group only, doesn't affect
 		# anything that is below in the hierarchy
 		catch {MainModelGroupsSetOpacity $mg 1}
+	    }
 	}
 
 	# Form the Active Model menu 
@@ -231,29 +183,10 @@ proc MainModelsUpdateMRML {} {
 	foreach menu $Model(mActiveList) {
 		$menu delete 0 end
 		
-		set success 0
-		
-		Mrml(dataTree) InitTraversal
-		set node [Mrml(dataTree) GetNextItem]
-		while {$node != ""} {
-			if {[string compare -length 8 $node "ModelRef"] == 0} {
-				set success 1
-				set CurrentModelID [SharedModelLookup [$node GetModelRefID]]
-				if {$CurrentModelID != -1} {
-					$menu add command -label [Model($CurrentModelID,node) GetName] \
-					-command "MainModelsSetActive $CurrentModelID"
-				}
-			}
-			set node [Mrml(dataTree) GetNextItem]
-		}
-		
-		if {$success == 0} {
-		# MRML file didn't contain hierarchies
-			foreach m $Model(idList) {
-				$menu add command -label [Model($m,node) GetName] \
-					-command "MainModelsSetActive $m"
-			}
-		}
+	    foreach m $Model(idList) {
+		$menu add command -label [Model($m,node) GetName] \
+			-command "MainModelsSetActive $m"
+	    }
 	}
 
 	# In case we changed the name of the active model
@@ -352,7 +285,9 @@ proc MainModelsCreate {m} {
 	# Need to call this before MainModelsCreateGUI so the
 	# variable Model($m,colorID) is created and valid
 	MainModelsSetColor $m
-	MainModelsCreateGUI $Gui(wModels).fGrid $m
+
+	# Do not create the GUI here, that is done in Models.tcl
+	#MainModelsCreateGUI $Gui(wModels).fGrid $m
 
 	MainAddModelActor $m
 	
@@ -368,7 +303,8 @@ proc MainModelsCreate {m} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsRead
-# 
+# Reads in a model from disk.  The other vtk objects, etc. associated
+# with the model must already have been created using MainModelsCreate.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -402,7 +338,7 @@ proc MainModelsRead {m} {
 
 	# Read it in now
 	set Gui(progressText) "Reading $name"
-	puts "Reading model $name..."
+	puts "Reading model $m $name..."
 	
 	# NOTE: if I have the following line, then when I
 	# set the clipper's input to be Model($m,polyData), then
@@ -500,7 +436,9 @@ proc MainModelsDelete {m} {
 #-------------------------------------------------------------------------------
 # .PROC MainModelsBuildGUI
 #
-# Builds a popup GUI
+# Builds the basic part of the Models GUI. (creates the popup window
+# and the frames)  The rest is done in MainModelsCreateGUI
+# for each model, so that it can be redrawn when needed.
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsBuildGUI {} {
@@ -556,15 +494,21 @@ proc MainModelsBuildGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsCreateGUI
-# Makes the popup menu that comes up when you right-click a model.
-# This is made for each new model.
+# Makes the GUI for each model on the Models->Display panel.
+# This is called for each new model.
+# Also makes the popup menu that comes up when you right-click a model.
+#
 # .ARGS
+# f widget the frame to create the GUI in
+# m int the id of the model
+# hlevel int the indentation to use when building the GUI
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsCreateGUI {f m {hlevel 0}} {
 	global Gui Model Color
 
-		
+
+    puts "Creating GUI for model $m"		
 	# If the GUI already exists, then just change name.
 	if {[info command $f.c$m] != ""} {
 		$f.c$m config -text "[Model($m,node) GetName]"
@@ -643,6 +587,36 @@ proc MainModelsCreateGUI {f m {hlevel 0}} {
 	return 1
 }
 
+proc MainModelsRefreshGUI {m c} {
+    global Model
+
+    # This was from Dave
+    # I shouldn't have to do this test, but making sure
+    #if {[lsearch $Color(idList) $c] != -1}
+    
+    # Find the GUI components
+    set f $Model(fScrolledGUI)
+    set slider $f.s$m
+    set button $f.c$m
+
+    # Find the color for this model
+    if {$c != ""} {
+	set rgb [Color($c,node) GetDiffuseColor]
+    } else {
+	set rgb "0 0 0"
+    }
+    set color [MakeColorNormalized $rgb]
+
+    # Color slider and colored checkbuttons
+    # catch is important here, because the GUI variables for
+    # models may have not been initialized yet
+    ColorSlider $slider $rgb
+    catch {$button configure -bg $color}
+    catch {$button configure -selectcolor $color}
+
+}
+
+
 #-------------------------------------------------------------------------------
 # .PROC MainModelsPopupCallback
 # 
@@ -691,8 +665,8 @@ proc MainModelsDeleteGUI {f m} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsDestroyGUI {} {
-	global Mrml(dataTree) Model
-	
+	global Model
+
 	set f $Model(fScrolledGUI)
 
 	# delete all models in hierarchy tree

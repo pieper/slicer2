@@ -63,7 +63,7 @@ proc ModelsInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.38 $} {$Date: 2001/12/11 18:11:56 $}]
+		{$Revision: 1.39 $} {$Date: 2001/12/12 03:06:43 $}]
 
 	# Props
 	set Model(propertyType) Basic
@@ -76,18 +76,26 @@ proc ModelsInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelsUpdateMRML
-# 
+# Handle all GUI-related things needed when MRML updates.
+#  Creates the GUI for any new models (that were read in 
+# in MainUpdateMRML or made through ModelMaker)
+# Refreshes the GUI in case colors changed.  Also reconfigures the sliders.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ModelsUpdateMRML {} {
 
 	global Gui Model Slice Module Color Volume Label
-	global Mrml(dataTree) ModelGroup
+	global ModelGroup
 
 	# Create the GUI for any new models
 	set gui 0
-	
+
+    # We want to create the GUI for the hierarchy and put all other
+    # models from the ID list at the end
+    
+    set hierarchyModelList ""
+
 	set hlevel 0; # hierarchy level
 	Mrml(dataTree) InitTraversal
 	set node [Mrml(dataTree) GetNextItem]
@@ -119,16 +127,20 @@ proc ModelsUpdateMRML {} {
 			set CurrentModelID [SharedModelLookup [$node GetModelRefID]]
 			if {$CurrentModelID != -1} {
 				set gui [expr $gui + [MainModelsCreateGUI $Model(fScrolledGUI) $CurrentModelID $hlevel]]
+			    # remember we put this one on the list.
+			    # hopefully if it is on multiple times this is okay
+			    lappend hierarchyModelList $CurrentModelID
+
 			}
 		}
 		set node [Mrml(dataTree) GetNextItem]
 	}
 
-	if {$success == 0} {
-	# MRML file did not contain hierarchies
-		foreach m $Model(idList) {
-			set gui [expr $gui + [MainModelsCreateGUI $Model(fScrolledGUI) $m]]
-		}
+	# Now build GUI for any models not in hierarchies
+	foreach m $Model(idList) {
+	    if {[lsearch $hierarchyModelList $m] == -1} {
+		set gui [expr $gui + [MainModelsCreateGUI $Model(fScrolledGUI) $m]]
+	    }
 	}
 
 	# Delete the GUI for any old models
@@ -136,21 +148,26 @@ proc ModelsUpdateMRML {} {
 		set gui [expr $gui + [MainModelsDeleteGUI $Model(fScrolledGUI) $m]]
 	}
 
+	# Tell the scrollbar to update if the gui height changed
 	if {$gui > 0} {
 		ModelsConfigScrolledGUI
 	}
 
-	# Refresh the GUI for all models (in case color changed)
+	# Refresh  GUIs (in case color changed)
+	#--------------------------------------------------------
+	
 	foreach m $Model(idList) {
-		set c $Model($m,colorID)
-		# I shouldn't have to do this test, but making sure
-		if {[lsearch $Color(idList) $c] != -1} {
-		    ColorSlider $Model(fScrolledGUI).s$m [Color($c,node) GetDiffuseColor]
-		} else {
-		    ColorSlider $Model(fScrolledGUI).s$m "0 0 0"
-		}
+	    set c $Model($m,colorID)
+	    MainModelsRefreshGUI $m $c
 	}
-}
+	
+	foreach mg $ModelGroup(idList) {
+	    # catch is important here, because the GUI variables for
+	    # model groups may have not been initialized yet
+	    catch {set c $ModelGroup($mg,colorID)}
+	    MainModelGroupsRefreshGUI $mg $c
+	}
+    }
 
 #-------------------------------------------------------------------------------
 # .PROC ModelsBuildGUI
