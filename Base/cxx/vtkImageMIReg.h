@@ -26,9 +26,12 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "vtkImageData.h"
 #include "vtkMatrix4x4.h"
-#include "vtkMrmlVolumeNode.h"
+#include "vtkRasToIjkTransform.h"
 #include "vtkTimeStamp.h"
 #include "vtkMath.h"
+#include "vtkVector3.h"
+#include "vtkQuaternion.h"
+#include "vtkPose.h"
 
 class VTK_EXPORT vtkImageMIReg : public vtkObject
 {
@@ -45,17 +48,17 @@ public:
   vtkGetObjectMacro(Subject, vtkImageData);
   vtkSetObjectMacro(Subject, vtkImageData);
 
-  vtkGetObjectMacro(RefNode, vtkMrmlVolumeNode);
-  vtkSetObjectMacro(RefNode, vtkMrmlVolumeNode);
+  vtkGetObjectMacro(RefTrans, vtkRasToIjkTransform);
+  vtkSetObjectMacro(RefTrans, vtkRasToIjkTransform);
 
-  vtkGetObjectMacro(SubNode, vtkMrmlVolumeNode);
-  vtkSetObjectMacro(SubNode, vtkMrmlVolumeNode);
+  vtkGetObjectMacro(SubTrans, vtkRasToIjkTransform);
+  vtkSetObjectMacro(SubTrans, vtkRasToIjkTransform);
 
-  vtkGetObjectMacro(InitialPose, vtkMatrix4x4);
-  vtkSetObjectMacro(InitialPose, vtkMatrix4x4);
+  vtkGetObjectMacro(InitialPose, vtkPose);
+  vtkSetObjectMacro(InitialPose, vtkPose);
 
-  vtkGetObjectMacro(CurrentPose, vtkMatrix4x4);
-  vtkGetObjectMacro(FinalPose, vtkMatrix4x4);
+  vtkGetObjectMacro(CurrentPose, vtkPose);
+  vtkGetObjectMacro(FinalPose, vtkPose);
 
   // Parameters
   vtkGetMacro(SampleSize, int);
@@ -82,8 +85,8 @@ public:
   // Downsampled images (made accessible for interactive rendering)
   vtkImageData *GetRef(int res) {return this->Refs[res];};
   vtkImageData *GetSub(int res) {return this->Subs[res];};
-  vtkMatrix4x4 *GetRefRasToIjk(int res) {return this->RefRasToIjk[res];};
-  vtkMatrix4x4 *GetSubRasToIjk(int res) {return this->SubRasToIjk[res];};
+  vtkRasToIjkTransform *GetRefRasToIjk(int res) {return this->RefRasToIjk[res];};
+  vtkRasToIjkTransform *GetSubRasToIjk(int res) {return this->SubRasToIjk[res];};
 
   // Pipeline
   void Update();
@@ -102,17 +105,16 @@ protected:
 
   vtkImageData *Reference;
   vtkImageData *Subject;
-  vtkMrmlVolumeNode *RefNode;
-  vtkMrmlVolumeNode *SubNode;
-  vtkMatrix4x4 *InitialPose;
-  vtkMatrix4x4 *FinalPose;
+  vtkRasToIjkTransform *RefTrans;
+  vtkRasToIjkTransform *SubTrans;
+  vtkPose *InitialPose;
+  vtkPose *FinalPose;
 
   vtkImageData *Subs[4];
   vtkImageData *Refs[4];
-  vtkMatrix4x4 *RefIjkToRas[4];
-  vtkMatrix4x4 *RefRasToIjk[4];
-  vtkMatrix4x4 *SubRasToIjk[4];
-  vtkMatrix4x4 *CurrentPose;
+  vtkRasToIjkTransform *RefRasToIjk[4];
+  vtkRasToIjkTransform *SubRasToIjk[4];
+  vtkPose *CurrentPose;
 
   float LambdaDisplacement[4];
   float LambdaRotation[4];
@@ -136,8 +138,7 @@ protected:
   void Cleanup();
 
   // Helpers
-  double GetGradientAndInterpolation(double *rasGrad, 
-    vtkImageData *data, vtkMatrix4x4 *rasToIjk, double *ras, char *sliceOrder);
+  double GetGradientAndInterpolation(vtkVector3 *rasGrad, 
+    vtkImageData *data, vtkRasToIjkTransform *rasToIjk, vtkVector3 *ras);
 };
-
 #endif
