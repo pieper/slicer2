@@ -162,7 +162,7 @@ proc FMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2004/06/02 14:45:55 $}]
+        {$Revision: 1.7 $} {$Date: 2004/06/14 18:52:00 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -176,7 +176,8 @@ proc FMRIEngineInit {} {
 
 
     # For now, spew heavily.
-    set Module(verbose) 0
+    # this bypasses the command line setting of --verbose or -v
+    # set Module(verbose) 0
     
     # Creates bindings
     FMRIEngineCreateBindings 
