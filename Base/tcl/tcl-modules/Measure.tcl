@@ -99,7 +99,7 @@ proc MeasureInit {} {
     
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8 $} {$Date: 2002/06/17 20:10:34 $}]
+        {$Revision: 1.9 $} {$Date: 2002/07/10 12:53:18 $}]
     
     # Initialize module-level variables
     #    set Measure(Model1) $Model(idNone)
@@ -180,7 +180,9 @@ proc MeasureBuildGUI {} {
     #-----------------------------------------
     
     set help "
-    These measuring tools can be used to calculate Surface Area, Volume, and Cross Sectional Area."  
+    These measuring tools can be used to calculate Surface Area, Volume, and Cross Sectional Area.
+    
+NOTE: None of the slicer measurement tools have been validated...the results may be (wildly) inaccurate.  The functionality is still under development.  Use at your own risk."  
     MainHelpApplyTags Measure $help
     MainHelpBuildGUI Measure
     
