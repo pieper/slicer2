@@ -319,6 +319,15 @@ proc tarup { {destdir "auto"} } {
         if { [file exists $moddir/data] } {
             file copy -force $moddir/data $moddest
         }
+
+        # TODO: these as special cases for the birn Query Atlas and 
+        # should be generalized (maybe a manifest file or something)
+        if { [file exists $moddir/java] } {
+            file copy -force $moddir/java $moddest
+        }
+        if { [file exists $moddir/talairach] } {
+            file copy -force $moddir/talairach $moddest
+        }
     }
 
     #
