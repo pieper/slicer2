@@ -596,6 +596,7 @@ itcl::body regions::findptscalars {} {
             tc-$id SetLinePoint1Local 0 0 0
             tc-$id SetScale 7 
             tc-$id SetBoxEdgeColor 1 1 1
+            tc-$id SetOpacityBase 0.7
             eval tc-$id SetOffsetActorAndMarker Model($_id,actor,viewRen) [Point($id,node) GetXYZ] 0 0 -10
             tc-$id AddActors viewRen
         }
