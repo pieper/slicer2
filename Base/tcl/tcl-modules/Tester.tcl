@@ -90,6 +90,7 @@ proc TesterInit {} {
     #   row2,tab = like row1 
     #
     set m Tester
+    set Module($m,author) "Samson Timoner MIT AI Lab"
     set Module($m,row1List) "Help Source Watch"
         set Module($m,row1Name) "{Help} {Source} {Watch}"
     set Module($m,row1,tab) Source
@@ -150,7 +151,7 @@ proc TesterInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.15 $} {$Date: 2003/03/19 19:16:34 $}]
+        {$Revision: 1.16 $} {$Date: 2003/07/14 22:36:09 $}]
 
     # Initialize module-level variables
     #------------------------------------
