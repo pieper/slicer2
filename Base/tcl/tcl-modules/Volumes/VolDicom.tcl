@@ -713,14 +713,14 @@ proc FindDICOM2 { StartDir AddDir Pattern } {
                 } 
                 if { $ImageNumber == "" } {
                     if [expr [parser FindElement 0x0020 0x0013] == "1"] {
-                    #set Length [lindex [split [parser ReadElement]] 3]
-                    #set ImageNumber [parser ReadText $Length]
-                    #scan [parser ReadText $length] "%d" ImageNumber
-                    
-                    set NextBlock [lindex [split [parser ReadElement]] 4]
-                    set ImageNumber [parser ReadIntAsciiNumeric $NextBlock]
+                        #set Length [lindex [split [parser ReadElement]] 3]
+                        #set ImageNumber [parser ReadText $Length]
+                        #scan [parser ReadText $length] "%d" ImageNumber
+                        
+                        set NextBlock [lindex [split [parser ReadElement]] 4]
+                        set ImageNumber [parser ReadIntAsciiNumeric $NextBlock]
                     } else  {
-                    set ImageNumber 1
+                        set ImageNumber 1
                     }
                 }
                 set DICOMFiles($FindDICOMCounter,ImageNumber) $ImageNumber
@@ -1499,15 +1499,17 @@ proc DICOMReadHeaderValues { filename } {
             set Volume(pixelHeight) [parser ReadFloatAsciiNumeric $NextBlock]
 
         } else  {
-            set Volume(pixelWidth) "unknown"
-            set Volume(pixelHeight) "unknown"
+            set Volume(pixelWidth) 1.0
+            set Volume(pixelHeight) 1.0
+            puts stderr "No PixelSize found - using 1.0 ($filename)"
         }
 
         if { [parser FindElement 0x0018 0x0050] == "1" } {
             set NextBlock [lindex [split [parser ReadElement]] 4]
             set Volume(sliceThickness) [parser ReadFloatAsciiNumeric $NextBlock]
         } else  {
-            set Volume(sliceThickness) "unknown"
+            set Volume(sliceThickness) 1.0
+            puts stderr "No SliceThickness found - using 1.0 ($filename)"
         }
 
         if { [parser FindElement 0x0018 0x1120] == "1" } {
