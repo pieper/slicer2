@@ -38,7 +38,7 @@ option add *isvolume.volume "None" widgetDefault
 option add *isvolume.slice 128 widgetDefault
 option add *isvolume.interpolation linear widgetDefault
 option add *isvolume.resolution 256 widgetDefault
-option add *isvolume.transform "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1" widgetDefault
+option add *isvolume.transform "" widgetDefault
 
 #
 # The class definition - define if needed (not when re-sourcing)
@@ -62,7 +62,7 @@ if { [itcl::find class isvolume] == "" } {
       itk_option define -slice slice Slice 0
       itk_option define -interpolation interpolation Interpolation {linear}
       itk_option define -resolution resolution Resolution {256}
-      itk_option define -transform transform Transform { 1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1 }
+      itk_option define -transform transform Transform { }
 
       # widgets for the control area
       variable _controls
@@ -422,7 +422,7 @@ itcl::body isvolume::volmenu_update {} {
 
     set idindex [lsearch $::Volume(idList) $current_id]
     if { $idindex == -1 } {
-        $_volmenu select 0
+        $_volmenu select end
     } else {
         $_volmenu select $idindex
     }
@@ -517,10 +517,17 @@ itcl::body isvolume::transform_update {} {
     #
     # make a matrix of the supplied transform - positions the volume
     # in RAS space (inverted for use with ImageReslice)
+    # - use the config option transform if supplied, otherwise get from node
     #
     catch "transformmatrix Delete"
     vtkMatrix4x4 transformmatrix
-    eval transformmatrix DeepCopy $itk_option(-transform)
+
+    if { $itk_option(-transform) != "" } {
+        eval transformmatrix DeepCopy $itk_option(-transform)
+    } else {
+        transformmatrix DeepCopy [Volume($id,node) GetRasToWld]
+    }
+
     transformmatrix Invert
     for {set i 0} {$i < 4} {incr i} {
         transformmatrix SetElement 0 $i [expr -1 * [transformmatrix GetElement 0 $i]]
