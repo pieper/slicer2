@@ -358,6 +358,7 @@ foreach m $env(SLICER_MODULES_TO_REQUIRE) {
     puts "Loading Module $m..."
     if { [catch {package require $m} errVal] } {
         puts stderr "Warning: can't load module $m:\n$errVal"
+        puts stderr "\tContinuing without this module's functionality."
     }
 }
 
@@ -637,7 +638,7 @@ if { $SLICER(versionInfo) != "" } {
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
     set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.72 2004/02/29 18:40:53 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: [ParseCVSInfo "" {$Name:  $}] CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.73 2004/03/04 20:38:54 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
