@@ -33,16 +33,22 @@ if { [itcl::find class dup] == "" } {
         constructor {args} {}
         destructor {}
 
+        variable _prefs ;# array of preferences
+
         variable _sort
-        variable _deident
+        variable _deidentify
         variable _review
         variable _upload
 
 
         method menus {} {}
         method about_dialog {} {}
+        method pref {KEY} {}
+        method prefs {} {}
+        method log {message} {}
 
         method fill { {dir "choose"} } {}
+        method refresh { pane } {}
 
         method statusvar {} { return [itcl::scope _statusVar($this)] }
         method w {} {return $_w}
@@ -64,11 +70,12 @@ itcl::body dup::constructor {args} {
     foreach p {sort deidentify review upload} {
         $cs.panes add $p
         set w [$cs.panes childsite $p]
-        set _$p $w.sort
+        set _$p $w.$p
         label $w.l -text [string totitle $p] -bg white
         pack $w.l -side top -fill x
         pack [dup_$p [set _$p]] -fill both -expand true
     }
+
 
     # put the app name and logo at the bottom
     set im [image create photo -file $::PACKAGE_DIR_BIRNDUP/../../../images/new-birn.ppm]
@@ -78,6 +85,13 @@ itcl::body dup::constructor {args} {
     $this configure -title "BIRN Deidentification and Upload Pipeline"
 
     eval itk_initialize $args
+
+    $this prefs
+
+    foreach p {sort deidentify review upload} {
+        [set _$p] configure -parent $this
+        [set _$p] refresh 
+    }
 }
 
 
@@ -111,8 +125,10 @@ itcl::body dup::menus {} {
 }
 
 itcl::body dup::fill { {dir "choose"} } {
+
     catch "destroy $_sort"
-    pack [dup_sort $_sort] -fill both -expand true
+    pack [dup_sort $_sort -parent $this] -fill both -expand true
+    
     if { $dir == "choose" } {
         set dir [tk_chooseDirectory]
     }
@@ -121,12 +137,66 @@ itcl::body dup::fill { {dir "choose"} } {
     }
 }
 
+itcl::body dup::refresh {pane} {
+    switch $pane {
+        "deidentify" {
+            $_deidentify refresh
+        }
+        "review" {
+            $_review refresh
+        }
+        "upload" {
+            $_upload refresh
+        }
+    }
+}
+
+itcl::body dup::log { message } {
+    set fp [open $::env(HOME)/.birndup/log "a"]
+    puts $fp "\{$::env(USER) [clock format [clock seconds]]\} \{$message\}"
+    close $fp
+}
+
+itcl::body dup::pref { KEY } {
+    if { [info exists _prefs($KEY)] } {
+        return $_prefs($KEY)
+    } else {
+        return ""
+    }
+}
+
+itcl::body dup::prefs { } {
+
+    if { ![file exists $::env(HOME)/.birndup/prefs] } {
+        set resp [tk_messageBox -type okcancel -message "A preferences file must be created for you.\n\nClick Ok to continue or Cancel to exit"]
+        if { $resp == "cancel" } {
+            itcl::delete object $this
+        }
+
+        # put all preference entries here
+        set _prefs(DEFACE_DIR) /opt/birn/deface
+
+        file mkdir $::env(HOME)/.birndup    
+        set fp [open $::env(HOME)/.birndup/prefs w]
+        foreach n [array names _prefs] {
+            puts $fp "$n \"$_prefs($n)\""
+        }
+        close $fp
+    }
+
+    set fp [open $::env(HOME)/.birndup/prefs r]
+    array set _prefs [read $fp]
+    close $fp
+}
+
 proc dup_demo {} {
 
-    catch "itcl::delete class dup"
-    source $::PACKAGE_DIR_BIRNDUP/../../../tcl/dup.tcl;
+    foreach c { "" _sort _deidentify _review _upload } {
+        catch "itcl::delete class dup$c"
+        source $::PACKAGE_DIR_BIRNDUP/../../../tcl/dup$c.tcl;
+    }
 
     dup .t
     .t activate
-    wm geometry .t 900x700
+    wm geometry .t 900x700+50+50
 }

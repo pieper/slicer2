@@ -6,7 +6,7 @@ package require vtkinteraction
 # library is uniquely available through this module
 #
 
-if { [info commands BIRNDUPInit] == "" } {
+if { [info commands dup] == "" } {
     global PACKAGE_DIR_BIRNDUP
     package provide BIRNDUP 1.0
 

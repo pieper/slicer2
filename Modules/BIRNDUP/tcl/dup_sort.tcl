@@ -22,10 +22,12 @@ dup_sort - the sort pane of the birndup interface
 if { [itcl::find class dup_sort] == "" } {
 
     itcl::class dup_sort {
-        inherit iwidgets::Labeledwidget
+        inherit iwidgets::Labeledframe
 
+        public variable parent ""
         public variable sourcedir ""
 
+        variable _defacedir ""
         variable _study
         variable _series
         variable _DICOMFiles 
@@ -33,6 +35,7 @@ if { [itcl::find class dup_sort] == "" } {
         constructor {args} {}
         destructor {}
 
+        method refresh {} {}
         method view {id} {}
         method setdeident {id method} {}
         method fill {dir} {}
@@ -54,8 +57,12 @@ itcl::body dup_sort::constructor {args} {
 
     set cs [$this childsite]
 
+    #
+    # the sorting interface is created here in three frames, but they
+    # are not packed until the directory is filled in (fill method)
+    #
     set f $cs.info
-    pack [iwidgets::labeledframe $f -labeltext "Study Info" -labelpos nw] -fill x -pady 5
+    iwidgets::labeledframe $f -labeltext "Study Info" -labelpos nw
     set fcs [$f childsite]
     pack [iwidgets::entryfield $fcs.sourcedir -labeltext "Source Dir: " -state readonly]
     pack [iwidgets::entryfield $fcs.project -labeltext "Project #: " -textvariable [itcl::scope _study(project)]]
@@ -64,12 +71,17 @@ itcl::body dup_sort::constructor {args} {
     pack [iwidgets::entryfield $fcs.birnid -labeltext "BIRN ID: " -textvariable [itcl::scope _study(birnid)]] 
     ::iwidgets::Labeledwidget::alignlabels $fcs.sourcedir $fcs.project $fcs.visit $fcs.study $fcs.birnid
     set f $cs.series
-    pack [::iwidgets::scrolledframe $f -hscrollmode dynamic -vscrollmode dynamic] -fill both -expand true
+    ::iwidgets::scrolledframe $f -hscrollmode dynamic -vscrollmode dynamic
 
     set f $cs.buttons
-    pack [frame $f] -fill x  -pady 5
-    pack [iwidgets::entryfield $f.destdir -labeltext "Destination Dir: " -textvariable [itcl::scope _study(destdir)]]
+    frame $f
     pack [button $f.sort -text "Sort" -command "$this sort"]
+
+
+    #
+    # a button to be packed when the sort interface isn't
+    #
+    pack [button $cs.new -text "Select new study to process..." -command "$this fill choose"]
 
     eval itk_initialize $args
 }
@@ -78,13 +90,43 @@ itcl::body dup_sort::constructor {args} {
 itcl::body dup_sort::destructor {} {
 }
 
+itcl::configbody dup_sort::parent {
+    
+    if { $parent != "" } {
+        set _defacedir [$parent pref DEFACE_DIR]
+    }
+}
 
 itcl::body dup_sort::fill {dir} {
 
-    [[$this childsite].info childsite].sourcedir configure -state normal
-    [[$this childsite].info childsite].sourcedir delete 0 end
-    [[$this childsite].info childsite].sourcedir insert end $dir
-    [[$this childsite].info childsite].sourcedir configure -state readonly
+    if { $dir == "choose" } {
+        $parent fill choose
+        return
+    }
+
+    set cs [$this childsite]
+    set infocs [$cs.info childsite]
+
+    $infocs.sourcedir configure -state normal
+    $infocs.sourcedir delete 0 end
+    $infocs.sourcedir insert end $dir
+    $infocs.sourcedir configure -state readonly
+
+    if { $dir == "" } {
+        foreach w [winfo children [[$this childsite].series childsite]] {
+            destroy $w
+        }
+        pack forget $cs.info
+        pack forget $cs.buttons
+        pack forget $cs.series
+        pack $cs.new 
+        return
+    } 
+
+    pack forget $cs.new 
+    pack $cs.info -fill x -pady 5
+    pack $cs.series -fill both -expand true
+    pack $cs.buttons -fill x  -pady 5
 
     DefaceFindDICOM $dir *
     if {$::FindDICOMCounter <= 0} {
@@ -125,7 +167,7 @@ itcl::body dup_sort::fill {dir} {
         label $sf.l$id -text "Ser $id, Flip $_series($id,FlipAngle)" -anchor w -justify left
         radiobutton $sf.cb$id -value $id -variable [itcl::scope _series(master)]
         iwidgets::optionmenu $sf.om$id -command "$this setdeident $id \[$sf.om$id get\]"
-        $sf.om$id insert end "Mask" "Deface" "Ignore"
+        $sf.om$id insert end "Mask" "Deface" "Header Only" "No Deident" "Ignore"
         $this setdeident $id "Mask"
         button $sf.b$id -text "View" -command "$this view $id"
         grid $sf.l$id $sf.cb$id $sf.om$id $sf.b$id -row $row -sticky ew
@@ -152,7 +194,7 @@ itcl::body dup_sort::sort {} {
         DevErrorWindow "Please set BIRN ID"
         return
     }
-    if { $_study(destdir) == "" } {
+    if { $_defacedir == "" } {
         DevErrorWindow "Please set Destination Directory (temp area for deface processing)"
         return
     }
@@ -165,17 +207,20 @@ itcl::body dup_sort::sort {} {
         return
     }
 
-    set studypath $_study(destdir)/Project_$_study(project)/$_study(birnid)/Visit_$_study(visit)/Raw_Data
+    set studypath $_defacedir/Project_$_study(project)/$_study(birnid)/Visit_$_study(visit)/Study_$_study(study)/Raw_Data
 
     foreach id $_series(ids) {
         set dir $studypath/$id
         if { [glob -nocomplain $dir/*] != "" } {
-            if { [DevOKCancel "$dir is not empty - okay to delete?"] != "ok" } {
+            if { [DevOKCancel "$studypath is not empty - okay to delete?"] != "ok" } {
                 return
-            }
+            } 
         }
+    }
+    foreach id $_series(ids) {
+        set dir $studypath/$id
         file delete -force $dir
-        file mkdir -force $dir
+        file mkdir $dir
         set _series($id,destdir) $dir
     }
 
@@ -198,6 +243,12 @@ itcl::body dup_sort::sort {} {
             "Mask" {
                 lappend deident_operations "dcanon -mask $_series($_series(master),destdir) $_series($id,destdir)"
             }
+            "Header Only" {
+                lappend deident_operations "dcanon -convert $_series($id,destdir)"
+            }
+            "No Dident" {
+                lappend deident_operations "dcanon -noanon -convert $_series($id,destdir)"
+            }
             "Ignore" {
                 # nothing
             }
@@ -206,8 +257,16 @@ itcl::body dup_sort::sort {} {
             }
         }
     }
-    puts $deident_operations
-    return $deident_operations
+    $this fill ""
+
+    set fp [open "$studypath/deidentify_operations" w]
+    puts $fp $deident_operations
+    close $fp
+
+    $parent log "sort operation complete for $sourcedir to $studypath"
+
+    tk_messageBox -message "Directory sorted"
+    $parent refresh deidentify
 }
 
 itcl::body dup_sort::setdeident {id method} {
