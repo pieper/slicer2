@@ -3,12 +3,13 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkBVolumeReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2003/08/19 22:44:18 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2003/08/20 12:17:57 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================*/
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <ctype.h>
 #include <unistd.h>
 #include "vtkBVolumeReader.h"
 #include "vtkShortArray.h"
