@@ -23,7 +23,7 @@ SET (USE_GNATS "Off")
 SET (GNATS_WEB_URL "http://${DROP_SITE}/")
 
 # copy over the testing logo
-CONFIGURE_FILE(${VTK_SOURCE_DIR}/TestingLogo.gif ${VTK_BINARY_DIR}/Testing/HTML/TestingResults/Icons/Logo.gif COPYONLY)
+CONFIGURE_FILE(${VTKSLICER_SOURCE_DIR}/Doc/images/logo.jpg ${VTKSLICER_BINARY_DIR}/Testing/HTML/TestingResults/Icons/Logo.gif COPYONLY)
 
 # Continuous email delivery variables
 SET (CONTINUOUS_FROM "slicerdart@bwh.harvard.edu")
