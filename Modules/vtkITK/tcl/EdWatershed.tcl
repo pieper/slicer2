@@ -36,7 +36,7 @@ proc EdWatershedInit {} {
     set e EdWatershed
     set Ed($e,name)      "Watershed"
     set Ed($e,initials)  "Ws"
-    set Ed($e,desc)      "Watershed: 3D segmentation"
+    set Ed($e,desc)      "ITK-Based Watershed: 3D segmentation"
     set Ed($e,rank)      14;
     set Ed($e,procGUI)   EdWatershedBuildGUI
     set Ed($e,procEnter) EdWatershedEnter
@@ -161,7 +161,7 @@ proc EdWatershedEnter {} {
         ws_cast SetInput [Volume($v,vol) GetOutput]
   
         vtkITKCurvatureAnisotropicDiffusionImageFilter ws_diffusion 
-        ws_diffusion SetTimeStep 0.125
+        ws_diffusion SetTimeStep 0.0625
         ws_diffusion SetNumberOfIterations 5
         ws_diffusion SetConductanceParameter 1
         ws_diffusion SetInput [ws_cast GetOutput]
@@ -196,7 +196,7 @@ proc EdWatershedEnter {} {
 
         MainStartProgress
 
-        Ed(editor) Apply  ws_cast ws_magnitude
+        Ed(editor) Apply  ws_cast ws_labelcast
 
         MainEndProgress
 
@@ -212,11 +212,11 @@ proc EdWatershedEnter {} {
 proc EdWatershedExit {} {
     global Ed EdWatershed
 
-    catch "ws_cast Delete"
-    catch "ws_diffusion Delete"
-    catch "ws_magnitude Delete"
-    catch "ws_watershed Delete"
-    catch "ws_labelcast Delete"
+    #catch "ws_cast Delete"
+    #catch "ws_diffusion Delete"
+    #catch "ws_magnitude Delete"
+    #catch "ws_watershed Delete"
+    #catch "ws_labelcast Delete"
 
     set EdWatershed(watershedInitialized) 0
 
