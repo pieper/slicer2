@@ -204,8 +204,6 @@ void vtkMrmlTetraMeshNode::Copy(vtkMrmlNode *anode)
 
 void vtkMrmlTetraMeshNode::PrintSelf(ostream& os, vtkIndent indent)
 {
-  int idx;
-  
   vtkMrmlNode::PrintSelf(os,indent);
 
   os << indent << "TetraMeshID: " <<
