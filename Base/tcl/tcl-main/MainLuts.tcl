@@ -41,7 +41,7 @@ proc MainLutsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainLuts \
-    {$Revision: 1.16 $} {$Date: 2002/11/12 13:06:49 $}]
+    {$Revision: 1.17 $} {$Date: 2003/02/01 03:37:30 $}]
 
     # Create an ID for Labels
     set Lut(idLabel) -1
@@ -54,6 +54,7 @@ proc MainLutsInit {} {
     set Lut(0,hueRange) "0 0"
     set Lut(0,saturationRange) "0 0"
     set Lut(0,valueRange) "0 1"
+    # set Lut(0,annoColor) = Set color for Histogram 
     set Lut(0,annoColor) "1 0 0"
 
     set Lut(1,name) Iron

@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2002 Massachusetts Institute of Technology
+# (c) Copyright 2003 Massachusetts Institute of Technology
 #
 # Permission is hereby granted, without payment, to copy, modify, display 
 # and distribute this software and its documentation, if any, for any purpose, 
@@ -22,7 +22,7 @@
 #===============================================================================
 # FILE:        EMSegmentAlgorithm.tcl
 # PROCEDURES:  
-#   EMSegmentAlgorithmStart
+#   EMSegmentSetVtkSuperClassSetting
 #   EMSegmentAlgorithmStart
 #==========================================================================auto=
 #=auto==========================================================================
@@ -49,8 +49,8 @@
 #===============================================================================
 
 #-------------------------------------------------------------------------------
-# .PROC EMSegmentAlgorithmStart
-# Starts the EM Algorithm 
+# .PROC  EMSegmentSetVtkSuperClassSetting
+# Setting up everything for the super classes  
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -145,7 +145,7 @@ proc EMSegmentAlgorithmStart { } {
        }
        # Transfer Bias Print out Information
        EMSegment(vtkEMSegment) SetBiasPrint $EMSegment(BiasPrint)
-       if {$EMSegment(BiasPrint)} {EMSegment(vtkEMSegment) SetBiasRootFileName $EMSegment(BiasRootFileName)}
+       EMSegment(vtkEMSegment) SetPrintIntermediateDir $EMSegment(PrintIntermediateDir)
    }
 
    # This is just here for memory -> that's how the structure was before introducing hirachy

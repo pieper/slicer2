@@ -156,6 +156,10 @@ void vtkIndirectLookupTable::MapDirect(float scalar, int index)
 }
 
 // Consider the Lookup Table when getting the modified time
+// Kilian - This M function does not do anything good, because LookupTable->Build 
+// will not doe anthing. This is due to the way how this->Build is written 
+// (it uses the function LookupTable->SetTebleValue which disables LookupTable->Build)
+// Therefore to update a LookupTable you have to delete it and recreate it and assign it to this!  
 //----------------------------------------------------------------------------
 unsigned long vtkIndirectLookupTable::GetMTime()
 {
@@ -317,6 +321,9 @@ void vtkIndirectLookupTable::Build()
 
   // Set the first color to be transparent for use when a pixel is
   // outside the threshold
+
+   // Kilian - This Function disables LookupTable->Build() 
+   // Therefore to update a LookupTable you have to delete it, recreate it and assign it to this !  
   this->LookupTable->SetTableValue(0, 0, 0, 0, 0);
   
   // Check that the LookupTable has the right number of colors

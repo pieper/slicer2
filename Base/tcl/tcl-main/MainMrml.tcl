@@ -78,7 +78,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.71 $} {$Date: 2003/01/24 13:32:30 $}]
+        {$Revision: 1.72 $} {$Date: 2003/02/01 03:37:30 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -1347,14 +1347,14 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                     "printintermediateresults" {$n SetPrintIntermediateResults $val}
                     "printintermediateslice" {$n SetPrintIntermediateSlice $val}
                     "printintermediatefrequency" {$n SetPrintIntermediateFrequency $val}
+            "printintermediatedir" {$n SetPrintIntermediateDir $val}
+                    "biasprint" {$n SetBiasPrint $val}
                     "startslice" {$n SetStartSlice $val}
                     "endslice" {$n SetEndSlice $val}
                     "displayprob" {$n SetDisplayProb $val}
                     "numberoftrainingsamples" {$n SetNumberOfTrainingSamples $val}
                     "intensityavgclass"  {$n SetIntensityAvgClass  $val}
-            "biasprint" {$n SetBiasPrint $val}
-            "biasrootfilename" {$n SetBiasRootFileName $val}
-        }
+         }
         }
     }
     "EndSegmenter" {

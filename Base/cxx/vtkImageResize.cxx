@@ -173,8 +173,7 @@ void vtkImageResize::ExecuteInformation(vtkImageData *inData,
 
       origin[idx] += this->InputClipExtent[idx*2];
     }
-
-    outData->SetWholeExtent(extent);
+  outData->SetWholeExtent(extent);
   outData->SetSpacing(spacing);
   outData->SetOrigin(origin);
 }
@@ -223,6 +222,12 @@ static void vtkImageResizeExecute1D(vtkImageResize *self,
   int nTmp = (inMaxX+1) / iMagX;
   T *tmp = new T[nTmp];
   ptr = tmp;
+  // Kilian : 
+  // 1.) Interpolation: Here we interpolate by just adding up neighbors 
+  // Example : inMaxX = 99 (Input Size) , maxX = 29 (Output size)
+  //           => iMagX = 3 => nTemp = 33 
+  //           We wantoutput size 29+1 and not 33
+  //           => 2. Interpolation is following 
   for (idxX = 0; idxX < nTmp; idxX++)
   {
     *ptr = 0;
@@ -272,6 +277,10 @@ static void vtkImageResizeExecute1D(vtkImageResize *self,
 
   // Get increments to march through data 
   outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
+  // Kilian
+  // 2.) Interpolation: Here we interpolate between two neighbors x[i] and x[i+1]
+  //     to shink it to final size  
+  // Example : ptr is of size 33 and outPtr is of size 30 
 
       for (idxX = outExt[0]; idxX <= maxX; idxX++)
       {
@@ -480,7 +489,7 @@ void vtkImageResize::ThreadedExecute(vtkImageData *inData,
   this->ComputeInputUpdateExtent(inExt, outExt);
   void *inPtr = inData->GetScalarPointerForExtent(inExt);
   void *outPtr = outData->GetScalarPointerForExtent(outExt);
-  
+
   // For now, need 1D
   if (outExt[5] != outExt[4] || outExt[3] != outExt[2])
   {
@@ -581,4 +590,5 @@ void vtkImageResize::PrintSelf(ostream& os, vtkIndent indent)
 
   os << indent << "Initialized: " << this->Initialized << "\n";
 }
+
 

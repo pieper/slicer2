@@ -62,16 +62,16 @@ vtkMrmlSegmenterNode::vtkMrmlSegmenterNode()
   this->DisplayProb     = 0;
   this->NumberOfTrainingSamples = 0;
   this->IntensityAvgClass = -1;
-  this->BiasRootFileName = NULL;
+  this->PrintIntermediateDir = NULL;
   this->BiasPrint = 0;
 }
 
 //----------------------------------------------------------------------------
 vtkMrmlSegmenterNode::~vtkMrmlSegmenterNode()
 {
-  if (this->BiasRootFileName) {
-    delete [] this->BiasRootFileName;
-    this->BiasRootFileName = NULL;
+  if (this->PrintIntermediateDir) {
+    delete [] this->PrintIntermediateDir;
+    this->PrintIntermediateDir = NULL;
   }
 }
 
@@ -110,13 +110,13 @@ void vtkMrmlSegmenterNode::Write(ofstream& of, int nIndent)
   of << " NumberOfTrainingSamples ='"    << this->NumberOfTrainingSamples << "'";
   of << " IntensityAvgClass ='"          << this->IntensityAvgClass << "'";
   of << " BiasPrint ='"                  << this->BiasPrint << "'";
-  if (this->BiasRootFileName && strcmp(this->BiasRootFileName, "")) of << " BiasRootFileName ='"           << this->BiasRootFileName << "'";
+  if (this->PrintIntermediateDir && strcmp(this->PrintIntermediateDir, "")) of << " PrintIntermediateDir ='"           << this->PrintIntermediateDir << "'";
   of << ">\n";;
 }
 
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
-// Does NOT copy: ID, FilePrefix, Name and BiasRootFileName
+// Does NOT copy: ID, FilePrefix, Name and PrintIntermediateDir
 void vtkMrmlSegmenterNode::Copy(vtkMrmlNode *anode)
 {
   vtkMrmlNode::MrmlNodeCopy(anode);
@@ -161,5 +161,5 @@ void vtkMrmlSegmenterNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "NumberOfTrainingSamples: "   << this->NumberOfTrainingSamples <<  "\n"; 
   os << indent << "IntensityAvgClass:"          << this->IntensityAvgClass << "\n";
   os << indent << "BiasPrint:"                  << this->BiasPrint << "\n";
-  os << indent << "BiasRootFileName:"           << this->BiasRootFileName << "\n"; 
+  os << indent << "PrintIntermediateDir:"           << this->PrintIntermediateDir << "\n"; 
 }

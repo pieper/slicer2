@@ -26,7 +26,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // Currently just used in vtkMrmlVolume for the histogram, which
 // died with the advent of vtk3.1.  The histogram needs to be 
 // fixed.
-//
+// Kilian: Just workes if the input image is of larger extent the the output image !
+//         otherwise use vtkImageResample !!!
 
 #ifndef __vtkImageResize_h
 #define __vtkImageResize_h

@@ -137,8 +137,8 @@ public:
 
   // Description:
   // Get/Set for Segmenter
-  vtkGetStringMacro(BiasRootFileName);
-  vtkSetStringMacro(BiasRootFileName);
+  vtkGetStringMacro(PrintIntermediateDir);
+  vtkSetStringMacro(PrintIntermediateDir);
 
   // Description:
   // Get/Set for Segmenter
@@ -167,7 +167,7 @@ protected:
   int    DisplayProb;
   int    NumberOfTrainingSamples;
   int    IntensityAvgClass;
-  char*  BiasRootFileName;
+  char*  PrintIntermediateDir;
   int    BiasPrint;
 };
 
