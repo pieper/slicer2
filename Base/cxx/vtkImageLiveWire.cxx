@@ -147,36 +147,36 @@ void vtkImageLiveWire::ClearLastContourSegment()
     }  
 
 
-  // do all the above for this->ContourEdges too
-  tempPixels->Reset();
-  done = 0;
-  numPoints = this->ContourEdges->GetNumberOfPoints();
-  // find the previous endpoint, at location number index
-  for (index=numPoints-2; (index>=0 && !done); index--)
-    {
-      point = this->ContourEdges->GetPoint(index);
-      if ((int)point[2] == 1)
-	{
-	  // we have hit an endpoint at index
-	  done = 1;
-	}
-    }  
-  // remove all things after the index by resetting, copying, etc.
-  for (i = 0; i <= index; i++)
-    {
-      point = this->ContourEdges->GetPoint(i);
-      tempPixels->InsertPoint(i,point);
-    }
-  this->ContourEdges->Reset();
-  for (i = 0; i <= index; i++)
-    {
-      point = tempPixels->GetPoint(i);
-      this->ContourEdges->InsertPoint(i,point);
-    }  
+//    // do all the above for this->ContourEdges too
+//    tempPixels->Reset();
+//    done = 0;
+//    numPoints = this->ContourEdges->GetNumberOfPoints();
+//    // find the previous endpoint, at location number index
+//    for (index=numPoints-2; (index>=0 && !done); index--)
+//      {
+//        point = this->ContourEdges->GetPoint(index);
+//        if ((int)point[2] == 1)
+//  	{
+//  	  // we have hit an endpoint at index
+//  	  done = 1;
+//  	}
+//      }  
+//    // remove all things after the index by resetting, copying, etc.
+//    for (i = 0; i <= index; i++)
+//      {
+//        point = this->ContourEdges->GetPoint(i);
+//        tempPixels->InsertPoint(i,point);
+//      }
+//    this->ContourEdges->Reset();
+//    for (i = 0; i <= index; i++)
+//      {
+//        point = tempPixels->GetPoint(i);
+//        this->ContourEdges->InsertPoint(i,point);
+//      }  
 
 
   // reset the moving "tail" of the wire
-  this->NewEdges->Reset();
+  //  this->NewEdges->Reset();
   this->NewPixels->Reset();
 
   this->Modified();
@@ -257,7 +257,6 @@ void vtkImageLiveWire::AllocatePathInformation(int numRows, int numCols)
     }
 }
 
-// Lauren make sure this does what we want...
 //----------------------------------------------------------------------------
 // This method computes the input extent necessary to generate the output.
 void vtkImageLiveWire::ComputeInputUpdateExtent(int inExt[6],
@@ -306,29 +305,28 @@ void vtkImageLiveWire::SetStartPoint(int x, int y)
 
   // if we have a previous short path, add it to contour 
   // and start next short path from contour's end
-  // (even if end point of contour doesn't match where the user clicked.)
-  if (this->NewEdges->GetNumberOfPoints())
+  if (this->NewPixels->GetNumberOfPoints())
     {
-      // Lauren need to check if clicked twice on same start point???
 
+      // if end point of current contour doesn't match where the user clicked.
       if (x != this->EndPoint[0] || y != this->EndPoint[1])
 	{
 	  cout << "click: ("<<x<<","<<y<<") end: ("<<this->EndPoint[0]<<","<<this->EndPoint[1]<<")"<<endl;
 	}
+
       // we have a contour already.  Start adding to its end:
       x  = this->EndPoint[0];
       y  = this->EndPoint[1];     
 
-      // Lauren make sure curve goes through this point??
+      // append new points to the saved contour
+     //   int numPoints = this->NewEdges->GetNumberOfPoints();
+//        for (i = 0; i < numPoints; i++)
+//  	{
+//  	  this->ContourEdges->InsertNextPoint(this->NewEdges->GetPoint(i));
+//  	}
 
       // append new points to the saved contour
-      int numPoints = this->NewEdges->GetNumberOfPoints();
-      for (i = 0; i < numPoints; i++)
-	{
-	  this->ContourEdges->InsertNextPoint(this->NewEdges->GetPoint(i));
-	}
-
-      numPoints = this->NewPixels->GetNumberOfPoints();
+      int numPoints = this->NewPixels->GetNumberOfPoints();
       for (i = 0; i < numPoints; i++)
 	{
 	  this->ContourPixels->InsertNextPoint(this->NewPixels->GetPoint(i));
@@ -369,7 +367,6 @@ void vtkImageLiveWire::SetStartPoint(int x, int y)
 
   //cout << "Coords of start point: (" << x << "," << y << ")" << endl;      
 
-  // Lauren check this first???
   if (this->StartPoint[0] != x)
     {
       modified = 1;
@@ -381,16 +378,14 @@ void vtkImageLiveWire::SetStartPoint(int x, int y)
       this->StartPoint[1] = y;
     }
 
-  //cout << "deallocating..." << endl;
-
   if (modified)
     {
       // delete everything
       this->DeallocatePathInformation();
-      // Lauren don't set Modified until EndPoint is also set?
+      // Don't set this->Modified until EndPoint is also set 
+      // (this is when we are ready to execute).
 
     }
-  //cout << "deallocated" << endl;
 }
 
 //----------------------------------------------------------------------------
@@ -425,12 +420,10 @@ void vtkImageLiveWire::SetEndPoint(int x, int y)
     }
      
   // crop point with image coordinates
-  // Lauren remove the outer "if"
   if (x < extent[0] || x > extent[1] ||
       y < extent[2] || y > extent[3]) 
     {
       cout << "Coords (" << x << "," << y << ") are outside of image!" << endl;      
-      // Lauren test!
       if (x < extent[0]) x = extent[0];
       else
 	if (x > extent[1]) x = extent[1];
@@ -464,14 +457,14 @@ void vtkImageLiveWire::SetEndPoint(int x, int y)
 // (use it to start over from a new start point)
 void vtkImageLiveWire::ClearContour()
 {
-  if (this->Verbose > 0)
-    {
-      cout << "Clear Contour" << endl;
-    }
+//    if (this->Verbose > 0)
+//      {
+//        cout << "Clear Contour" << endl;
+//      }
 
   this->ContourPixels->Reset();
-  this->ContourEdges->Reset();
-  this->NewEdges->Reset();
+  //  this->ContourEdges->Reset();
+  //this->NewEdges->Reset();
   this->NewPixels->Reset();
 
   // unset start and end points
@@ -485,10 +478,10 @@ void vtkImageLiveWire::ClearContour()
   // Next Execute will output a clear image.
   this->Modified();
 
-  if (this->Verbose > 0)
-    {
-      cout << "Clear Contour Done" << endl;
-    }
+//    if (this->Verbose > 0)
+//      {
+//        cout << "Clear Contour Done" << endl;
+//      }
 }
 
 //----------------------------------------------------------------------------
@@ -525,20 +518,15 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
       return;
     }  
 
-  // Lauren test if input image is different, must deallocate all stuff.
-  // Need to override SetInput! (also check for 2D input, etc.)
-  // Also, is update information for this kind of thing?????
-
-
   // ----------------  Data structures  ------------------ //
 
   // The reason for all the tests for the number of neighbors 
   // below is that the phase-based live wire uses 8-connected neighbors
   // and finds paths along pixels, while the regular live wire 
   // uses 4-connected paths *along the cracks between pixels*.
-  // so the input images are not perfectly aligned in the 
+  // The input images are not perfectly aligned in the 
   // 4-neighbor case, and the path found is the outline of the pixels
-  // to draw on the slice
+  // to draw on the slice.
 
   // allocate if don't exist
   self->AllocatePathInformation(numrows, numcols);
@@ -559,16 +547,21 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   const int DOWN_LEFT = self->DOWN_LEFT;
   const int DOWN_RIGHT = self->DOWN_RIGHT;
 
-  // arrows, neighbors, offsets, and colors match with edges below.
-  int arrows[8] = {UP, DOWN, LEFT, RIGHT, UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT};
+  // order of arrows, neighbors, offsets, and colors matches with edges below.
+  
+  // directions the path takes to the neighbors
+  int arrows[8] = {UP, DOWN, LEFT, RIGHT, UP_LEFT, UP_RIGHT, 
+		   DOWN_LEFT, DOWN_RIGHT};
 
-  // to test path to 4 or 8 neighbors of current pixel corner
-  int neighbors[8][2] = {{0,1},{0,-1},{-1,0},{1,0},{-1,1},{1,1},{-1,-1},{1,-1}};
+  // to look for path to 4 or 8 neighbors of current pixel corner
+  int neighbors[8][2] = {{0,1},{0,-1},{-1,0},{1,0},{-1,1},
+			 {1,1},{-1,-1},{1,-1}};
+
   // sqrt two factor: diagonal edges cost more.
 #define SQRT_TWO 1.4142
   float factor[8] = {1,1,1,1,SQRT_TWO,SQRT_TWO,SQRT_TWO,SQRT_TWO};
 
-  // offset to access edge images
+  // offset to access edge images 
   int offset[8][2] = {{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0},{0,0}};
   if (self->GetNumberOfNeighbors() == 4)
     {
@@ -596,41 +589,17 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
       color[2][0] = -1;
       color[3][1] = -1;
     }
-  
-  vtkImageData *upEdge, *downEdge, *leftEdge, *rightEdge;
-  upEdge = self->GetUpEdges();
-  downEdge = self->GetDownEdges();
-  leftEdge = self->GetLeftEdges();
-  rightEdge = self->GetRightEdges();
-  // if we are running 8-connected:
-  vtkImageData *upLeftEdge, *upRightEdge, *downLeftEdge, *downRightEdge;
-  upLeftEdge = self->GetUpLeftEdges();
-  upRightEdge = self->GetUpRightEdges();
-  downLeftEdge = self->GetDownLeftEdges();
-  downRightEdge = self->GetDownRightEdges();
 
-  T *upEdgeVal, *downEdgeVal, *leftEdgeVal, *rightEdgeVal;
-  T *upLeftEdgeVal, *upRightEdgeVal, *downLeftEdgeVal, *downRightEdgeVal;
-  upLeftEdgeVal = upRightEdgeVal = downLeftEdgeVal = downRightEdgeVal = NULL;
-
-  upEdgeVal = (T*)upEdge->GetScalarPointerForExtent(upEdge->GetExtent());
-  downEdgeVal = (T*)downEdge->GetScalarPointerForExtent(downEdge->GetExtent());
-  leftEdgeVal = (T*)leftEdge->GetScalarPointerForExtent(leftEdge->GetExtent());
-  rightEdgeVal = (T*)rightEdge->GetScalarPointerForExtent(rightEdge->GetExtent());
-
-  // if we are running 8-connected:
-  if (self->GetNumberOfNeighbors() == 8)
-    {  
-      upLeftEdgeVal = (T*)upLeftEdge->GetScalarPointerForExtent(upLeftEdge->GetExtent());
-      upRightEdgeVal = (T*)upRightEdge->GetScalarPointerForExtent(upRightEdge->GetExtent());
-      downLeftEdgeVal = (T*)downLeftEdge->GetScalarPointerForExtent(downLeftEdge->GetExtent());
-      downRightEdgeVal = (T*)downRightEdge->GetScalarPointerForExtent(downRightEdge->GetExtent());      
+  // edge information to use when checking out a pixel's neighbors:
+  T* edges[8] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+  for (i = 1; i < self->GetNumberOfInputs(); i++) 
+    {
+      // i-1 since 1st input to this filter is original image, not edge image
+      edges[i - 1] = inPtrs[i];
     }
 
-  T* edges[8] = {upEdgeVal, downEdgeVal, leftEdgeVal, rightEdgeVal,
-		 upLeftEdgeVal, upRightEdgeVal, downLeftEdgeVal, downRightEdgeVal};
 
-  // ----------------  Dijkstra ------------------ //
+  // ----------------  Dijkstra's algorithm starts here ------------------ //
 
   // cumulative cost of "longest shortest" path found so far
   int currentCC = self->GetCurrentCC();
@@ -667,21 +636,21 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
       // remove it from Q
       Q->Remove(min);
       
-      if (self->GetVerbose() > 1) 
-	{
-	  cout << "-- CC: " << currentCC << " --  (" << currentX 
-	       << "," << currentY << ") -- L: " << L(end[0],end[1]) 
-	       <<" --" << endl;
-	}
+//        if (self->GetVerbose() > 1) 
+//  	{
+//  	  cout << "-- CC: " << currentCC << " --  (" << currentX 
+//  	       << "," << currentY << ") -- L: " << L(end[0],end[1]) 
+//  	       <<" --" << endl;
+//  	}
     
-      if (self->GetVerbose() > 0) 
-	{
-	  if (currentX == end[0] && currentY == end[1])
-	    {
-	      cout << "final point: (" << currentX << "," 
-		   << currentY << ")  CC: " << currentCC << endl;
-	    }
-	}
+//        if (self->GetVerbose() > 0) 
+//  	{
+//  	  if (currentX == end[0] && currentY == end[1])
+//  	    {
+//  	      cout << "final point: (" << currentX << "," 
+//  		   << currentY << ")  CC: " << currentCC << endl;
+//  	    }
+//  	}
 
 
       // check out its 4 or 8 neighbors
@@ -717,10 +686,10 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 		  else
 		    {
 		      // error checking
-		      if ((int)edge[ex + ey*numcols] > self->GetMaxEdgeCost())
-			{
-			  cout << "lw: " << (int)edge[ex + ey*numcols];
-			}
+		      //  if ((int)edge[ex + ey*numcols] > self->GetMaxEdgeCost())
+//  			{
+//  			  cout << "lw: " << (int)edge[ex + ey*numcols];
+//  			}
 		      
 		      // extra cost for 8-connected corner path
 		      int edgeCost = (int)(edge[ex + ey*numcols]*factor[n]);
@@ -736,11 +705,11 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 		  tempCC = currentCC + self->GetMaxEdgeCost();
 		}
 
-	      if (self->GetVerbose() > 2) 
-		{
-		  cout << "NEIGHBOR (" << x << "," << y << ") CC: " 
-		       << tempCC << "," << oldCC << endl;
-		}
+//  	      if (self->GetVerbose() > 2) 
+//  		{
+//  		  cout << "NEIGHBOR (" << x << "," << y << ") CC: " 
+//  		       << tempCC << "," << oldCC << endl;
+//  		}
 	      
 	      // if path from current point shorter than old path
 	      if (tempCC < oldCC) 
@@ -767,14 +736,13 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   
   //cout << "current cc: " << currentCC << endl;
 
+
   // ------- Trace the shortest path using the Dir array. -----------//
 
-  // Lauren row column, x and y confusing.  test/fix it all.
-
   // clear previous shortest path points
-  vtkPoints *newEdges = self->GetNewEdges();
+  //vtkPoints *newEdges = self->GetNewEdges();
   vtkPoints *newPixels = self->GetNewPixels();
-  newEdges->Reset();
+  //newEdges->Reset();
   newPixels->Reset();
   vtkPoints *tempPixels = vtkPoints::New();
 
@@ -783,26 +751,26 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
   int traceY = end[1];
 
   // current pixel to color in output image
-  // (not same as trace since trace is along pixel edges
-  // and outlines the area to color)
-  // coloring assumes clockwise segmentation.
+  // (may not be same as trace since trace is along pixel edges
+  // for 4-connected and it outlines the area to color)
+  // in this case coloring assumes clockwise segmentation.
   int colorX, colorY;
 
   // Insert first points into lists
   //newEdges->InsertNextPoint(traceX,traceY,0);
-  newEdges->InsertNextPoint(traceX,traceY,Dir(traceX,traceY));
+  //newEdges->InsertNextPoint(traceX,traceY,Dir(traceX,traceY));
   colorX = traceX + color[Dir(traceX,traceY)][0];
   colorY = traceY + color[Dir(traceX,traceY)][1];
   // the 1 at the end means this was an endpoint
   tempPixels->InsertNextPoint(colorX,colorY,1);
 
-  // follow "arrows" backwards to the start point
+  // follow "arrows" backwards from end point to the start point
   while (traceX!=start[0] || traceY!=start[1])
     {
-      if (self->GetVerbose() > 2) 
-	{
-	  cout <<"("<<traceX<<","<<traceY<<")"<<"  ("<<colorX<<","<<colorY<<")"<<endl;
-	}
+//        if (self->GetVerbose() > 2) 
+//  	{
+//  	  cout <<"("<<traceX<<","<<traceY<<")"<<"  ("<<colorX<<","<<colorY<<")"<<endl;
+//  	}
 
       // arrow is NONE, UP, DOWN, LEFT, or RIGHT
       int arrow = Dir(traceX,traceY);
@@ -825,15 +793,14 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 
       // add to path lists
       tempPixels->InsertNextPoint(colorX,colorY,0);
-      //newEdges->InsertNextPoint(traceX,traceY,0);
-      newEdges->InsertNextPoint(traceX,traceY,Dir(traceX,traceY));
+      //newEdges->InsertNextPoint(traceX,traceY,Dir(traceX,traceY));
 
     } // end while
 
-  if (self->GetVerbose() > 0) 
-    {
-      cout << "(" << traceX << "," << traceY << ")" << endl;
-    }  
+//    if (self->GetVerbose() > 0) 
+//      {
+//        cout << "(" << traceX << "," << traceY << ")" << endl;
+//      }  
 
   // fix (reverse) the order of the pixels list.
   int numPoints = tempPixels->GetNumberOfPoints();
@@ -852,6 +819,7 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
       newPixels->SetPoint(count,point);
       count++;
     }  
+
 
   // ----------------  Output Image  ------------------ //
   // draw points over image
@@ -905,25 +873,25 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
     }  
 
 
-  // ------------- test --------------
-  numPoints = newEdges->GetNumberOfPoints();
-  for (i=0; i<numPoints; i++)
-    {
-      //cout << ".";
-      point = newEdges->GetPoint(i);
-      //cout << (int)point[0] + ((int)point[1])*sizeX << endl;
-      //outPtr[(int)point[0] + ((int)point[1])*sizeX] += 10;
-      // color depending on direction followed...
-      //outPtr[(int)point[0] + ((int)point[1])*sizeX] = (T)((point[2]+1)*2);
-    }
-  // ------------- end test --------------
+//    // ------------- test --------------
+//    numPoints = newEdges->GetNumberOfPoints();
+//    for (i=0; i<numPoints; i++)
+//      {
+//        //cout << ".";
+//        point = newEdges->GetPoint(i);
+//        //cout << (int)point[0] + ((int)point[1])*sizeX << endl;
+//        //outPtr[(int)point[0] + ((int)point[1])*sizeX] += 10;
+//        // color depending on direction followed...
+//        //outPtr[(int)point[0] + ((int)point[1])*sizeX] = (T)((point[2]+1)*2);
+//      }
+//    // ------------- end test --------------
 
   // test points
   //cout << "num points C++ " << newEdges->GetNumberOfPoints() << endl;
 
   tEnd = clock();
   tDiff = tEnd - tStart;
-  //cout << "LW time: " << tDiff << endl;
+  cout << "LW time: " << tDiff << endl;
 
   return;
 }
@@ -935,76 +903,85 @@ static void vtkImageLiveWireExecute(vtkImageLiveWire *self,
 // algorithm to fill the output from the input.
 // It just executes a switch statement to call the correct function for
 // the datas data types.
-void vtkImageLiveWire::Execute(vtkImageData **inData, 
+void vtkImageLiveWire::Execute(vtkImageData **inDatas, 
 			       vtkImageData *outData)
 {
+  void **inPtrs = new void*[this->NumberOfInputs];
+  void *outPtr;
+  int i;
+
   // if EndPoint is the same, do nothing.
-  // Lauren what does this do to the output?
   if (this->EndPoint[0] == this->PrevEndPoint[0] &&
       this->EndPoint[1] == this->PrevEndPoint[1]) 
     {
-      //cout << "Lauren end point the SAME" << endl;
+      //cout << "End point the SAME, not executing" << endl;
       return;
     }
   this->PrevEndPoint[0] = this->EndPoint[0];
   this->PrevEndPoint[1] = this->EndPoint[1];
 
-  int x1;
+  int type = this->GetInput(0)->GetScalarType();
 
-  // Single component input is required
-  for (int i = 0; i < this->NumberOfInputs; i++)
+  for (i = 0; i < this->NumberOfInputs; i++) 
     {
-      x1 = this->GetInput(i)->GetNumberOfScalarComponents();
-      if (x1 != 1) {
-	vtkErrorMacro(<<"Input " << i << "  has "<<x1<<" instead of 1 scalar component.");
+      // Scalar type of all inputs should be the same
+      if (this->GetInput(i)->GetScalarType() != type) {
+	vtkErrorMacro(<<"Inputs are not same scalar type");
 	return;
       }
+
+      // Single component input is required
+      int c = this->GetInput(i)->GetNumberOfScalarComponents();
+      if (c != 1) {
+	vtkErrorMacro(<<"Input " << i << "  has "<< c <<" instead of 1 scalar component.");
+	return;
+      }
+
+      // 2D input is required
+      int ext[6];
+      inDatas[i]->GetExtent(ext);
+      if (ext[4] != ext[5]) {
+	vtkErrorMacro(<<"Input is not 2D");
+	return;
+      }
+
+      // input pointers        
+      inPtrs[i] = inDatas[i]->GetScalarPointerForExtent(ext);
     }
-
-  // Lauren check this
-  // 2D input is required
-
-  void *inPtr[5], *outPtr;
-
-  inPtr[0] = inData[0]->GetScalarPointerForExtent(inData[0]->GetExtent());
-  inPtr[1] = inData[1]->GetScalarPointerForExtent(inData[1]->GetExtent());
-  inPtr[2] = inData[2]->GetScalarPointerForExtent(inData[2]->GetExtent());
-  inPtr[3] = inData[3]->GetScalarPointerForExtent(inData[3]->GetExtent());
-  inPtr[4] = inData[4]->GetScalarPointerForExtent(inData[4]->GetExtent());
 
   outPtr = outData->GetScalarPointerForExtent(outData->GetExtent());
   
-  switch (inData[0]->GetScalarType())
+  switch (inDatas[0]->GetScalarType())
     {
     case VTK_DOUBLE:
-      vtkImageLiveWireExecute(this, inData, (double **)(inPtr), outData, (double *)(outPtr));
+      vtkImageLiveWireExecute(this, inDatas, (double **)(inPtrs), outData, (double *)(outPtr));
       break;
     case VTK_FLOAT:
-      vtkImageLiveWireExecute(this, inData, (float **)(inPtr), outData, (float *)(outPtr));
+      vtkImageLiveWireExecute(this, inDatas, (float **)(inPtrs), outData, (float *)(outPtr));
       break;
     case VTK_LONG:
-      vtkImageLiveWireExecute(this, inData, (long **)(inPtr), outData, (long *)(outPtr));
+      vtkImageLiveWireExecute(this, inDatas, (long **)(inPtrs), outData, (long *)(outPtr));
       break;
     case VTK_UNSIGNED_LONG:
-      vtkImageLiveWireExecute(this, inData, (unsigned long **)(inPtr), outData, (unsigned long *)(outPtr));
+      vtkImageLiveWireExecute(this, inDatas, (unsigned long **)(inPtrs), outData, (unsigned long *)(outPtr));
       break;
     case VTK_INT:
-      vtkImageLiveWireExecute(this, inData, (int **)(inPtr), outData, (int *)(outPtr));
+      vtkImageLiveWireExecute(this, inDatas, (int **)(inPtrs), outData, (int *)(outPtr));
       break;
     case VTK_UNSIGNED_INT:
-      vtkImageLiveWireExecute(this, inData, (unsigned int **)(inPtr), outData, (unsigned int *)(outPtr));
+      vtkImageLiveWireExecute(this, inDatas, (unsigned int **)(inPtrs), outData, (unsigned int *)(outPtr));
       break;
     case VTK_SHORT:
-      vtkImageLiveWireExecute(this, inData, (short **)(inPtr), outData, (short *)(outPtr));
+      vtkImageLiveWireExecute(this, inDatas, (short **)(inPtrs), outData, (short *)(outPtr));
       break;
     case VTK_UNSIGNED_SHORT:
-      vtkImageLiveWireExecute(this, inData, (unsigned short **)(inPtr), outData, (unsigned short *)(outPtr));
+      vtkImageLiveWireExecute(this, inDatas, (unsigned short **)(inPtrs), outData, (unsigned short *)(outPtr));
       break;
     case VTK_CHAR:
-      vtkImageLiveWireExecute(this, inData, (char **)(inPtr), outData, (char *)(outPtr));
+      vtkImageLiveWireExecute(this, inDatas, (char **)(inPtrs), outData, (char *)(outPtr));
       break;
     case VTK_UNSIGNED_CHAR:
-      vtkImageLiveWireExecute(this, inData, (unsigned char **)(inPtr), outData, (unsigned char *)(outPtr));
+      vtkImageLiveWireExecute(this, inDatas, (unsigned char **)(inPtrs), outData, (unsigned char *)(outPtr));
       break;
     default:
       vtkErrorMacro(<< "Execute: Unknown input ScalarType");
