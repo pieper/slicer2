@@ -105,7 +105,7 @@ proc MeasureInit {} {
     
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.17 $} {$Date: 2003/03/31 22:52:48 $}]
+        {$Revision: 1.18 $} {$Date: 2003/06/03 20:59:23 $}]
     
     # Initialize module-level variables
     #    set Measure(Model1) $Model(idNone)
@@ -443,23 +443,32 @@ proc UpdateModelSelector {fRoot} {
     set numModels [Mrml(dataTree) GetNumberOfModels]
 
     for {set i 0} {$i < $numModels} {incr i} {
-    set currModel [Mrml(dataTree) GetNthModel $i]
-    set currID    [string trimleft [$currModel GetModelID] M]
-    
-    set r  [lindex $Module(Renderers) 0]
-    
-    if { [info exists Model($currID,selected)] == 0 } {
-        set Model($currID,selected) 0        
-    }
-    
-    if { [Model($currID,actor,$r) GetVisibility] } {
-        set state normal
-    } else {
-        set state disabled
-    }
-    $m add checkbutton -label [$currModel GetName] \
-        -command "SelectModel $fRoot $currID" \
-        -variable Model($currID,selected) -state $state
+        set currModel [Mrml(dataTree) GetNthModel $i]
+        set currID    [string trimleft [$currModel GetModelID] M]
+        if { $currID == "" } {
+            # ModelID is not set for models created on the fly using ModelMaker
+            # so use regular ID 
+            set currID [$currModel GetID]
+        }
+        if { $currID == "" } {
+            puts "Warning: no ID for $currModel"
+            continue
+        }
+        
+        set r  [lindex $Module(Renderers) 0]
+        
+        if { [info exists Model($currID,selected)] == 0 } {
+            set Model($currID,selected) 0        
+        }
+        
+        if { [Model($currID,actor,$r) GetVisibility] } {
+            set state normal
+        } else {
+            set state disabled
+        }
+        $m add checkbutton -label [$currModel GetName] \
+            -command "SelectModel $fRoot $currID" \
+            -variable Model($currID,selected) -state $state
     }   
     
     $m add command -label "<None>" -command "SelectModel $fRoot -1"
