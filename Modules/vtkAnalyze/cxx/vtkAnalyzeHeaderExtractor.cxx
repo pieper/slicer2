@@ -40,7 +40,7 @@ PROVIDE MAINTENANCE << SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkObjectFactory.h"
 #include "vtkAnalyzeHeaderExtractor.h"
 #include <stdio.h> 
-#include <fstream.h>
+//#include <fstream.h>
 
 
 vtkStandardNewMacro(vtkAnalyzeHeaderExtractor);
