@@ -84,6 +84,7 @@ vtkImageEMLocalSegmenter::vtkImageEMLocalSegmenter()
   this->HeadClass = NULL;
   this->activeSuperClass = NULL;
   this->activeClass      = NULL;
+  this->DebugImage       = NULL;             // Just used for debuging
   this->activeClassType  = SUPERCLASS;
 
   this->IntensityAvgValuePreDef = NULL;this->IntensityAvgValueCurrent = NULL; 
