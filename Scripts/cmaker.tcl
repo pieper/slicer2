@@ -311,11 +311,11 @@ foreach target $TARGETS {
             } else {
                 set sln [string toupper [file tail $target]].sln
             }
-            puts "running: devenv $sln /build debug"
+            puts "running: devenv $sln /build $::VTK_BUILD_TYPE"
 
             # no output from devenv so just go ahead and run it with no loop
-            set ret [catch {exec devenv $sln /build debug} res]
-            # set ret [catch {exec "c:/Program Files/Microsoft Visual Studio .NET/Common7/IDE/devenv" $sln /build debug} res]
+            set ret [catch {exec devenv $sln /build $::VTK_BUILD_TYPE} res]
+            # set ret [catch {exec "c:/Program Files/Microsoft Visual Studio .NET/Common7/IDE/devenv" $sln /build $::VTK_BUILD_TYPE} res]
 
             puts $res
             
