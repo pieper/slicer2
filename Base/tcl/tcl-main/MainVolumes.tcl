@@ -58,7 +58,7 @@ proc MainVolumesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.41 $} {$Date: 2001/06/12 18:43:39 $}]
+		{$Revision: 1.42 $} {$Date: 2001/06/14 17:08:48 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -265,11 +265,23 @@ proc MainVolumesRead {v} {
 	scan [Volume($v,node) GetImageRange] "%d %d" lo hi
 
     # Removed by Attila Tanacs 10/16/2000
+    # Fixed by Attila Tanacs 6/14/2001
 
-	#if {[CheckVolumeExists [Volume($v,node) GetFullPrefix] \
-	\#	[Volume($v,node) GetFilePattern] $lo $hi] != ""} {
-	#	return -1
-	#}
+    set num [Volume($v,node) GetNumberOfDICOMFiles]
+    if {$num == 0} {
+	# if not DICOM, do the good old check
+	if {[CheckVolumeExists [Volume($v,node) GetFullPrefix] \
+		 [Volume($v,node) GetFilePattern] $lo $hi] != ""} {
+	    return -1
+	}
+    } else {
+	# DICOM requires another approach
+	for {set i 0} {$i < $num} {incr i} {
+	    if {[CheckFileExists [Volume($v,node) GetDICOMFileName $i] 0] == "0"} {
+		return -1
+	    }
+	}
+    }
 
     # End
 
