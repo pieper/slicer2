@@ -99,7 +99,7 @@ proc MainSlicesInit {} {
     lappend Module(procRecallPresets) MainSlicesRecallPresets
 
     # Preset Defaults
-    set Module(Slices,presets) "opacity='1.0' fade='0' clipType='Union' \
+    set Module(Slices,presets) "opacity='1.0' fade='0' clipType='Intersection' \
 0,visibility='0' 0,backVolID='0' 0,foreVolID='0' 0,labelVolID='0' \
 0,orient='Axial' 0,offset='0' 0,zoom='1.0' 0,clipState='0'\
 1,visibility='0' 1,backVolID='0' 1,foreVolID='0' 1,labelVolID='0' \
@@ -109,7 +109,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.53 $} {$Date: 2004/06/28 14:23:47 $}]
+        {$Revision: 1.53.2.1 $} {$Date: 2004/12/22 20:40:27 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"
