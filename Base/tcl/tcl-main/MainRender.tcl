@@ -43,7 +43,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc Render3D {{scale ""}} {
-	global Video viewWin Twin twinWin
+	global Video viewWin Twin twinWin View
 
 	$viewWin Render
 	
@@ -55,6 +55,14 @@ proc Render3D {{scale ""}} {
 
 	if {[IsModule Video] == 1 && $Video(record) == "On"} {
 		VideoSave
+	}
+
+	if { $View(movie) > 0 } {
+		set filestring $View(moviePrefix)
+		append filestring [format %04d.ppm $View(movieFrame)]
+		$viewWin SetFileName $filestring
+		$viewWin SaveImageAsPPM
+		incr View(movieFrame)
 	}
 }
 
