@@ -165,7 +165,10 @@ if { $CLEANFLAG } {
     foreach target $TARGETS {
         set build $target/builds/$env(BUILD) 
         puts "Deleting $build"
-        catch "file delete -force $build"
+        if { [catch "file delete -force $build" res] } {
+            puts stderr "coun't delete $build"
+            puts stderr $res
+        }
     }
 }
 
@@ -188,9 +191,9 @@ foreach target $TARGETS {
         puts "$CMAKE $target -G$GENERATOR \
             $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 $VTK_ARG7 \
             $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4 $SLICER_MODULE_ARG1 $SLICER_MODULE_ARG2 $SLICER_MODULE_ARG3 $SLICER_MODULE_ARG4"
-        if { [ catch "exec $CMAKE $target -G$GENERATOR \
+        if { [ catch [list exec $CMAKE $target -G$GENERATOR \
             $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 $VTK_ARG7 \
-            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4 $SLICER_MODULE_ARG1 $SLICER_MODULE_ARG2 $SLICER_MODULE_ARG3 $SLICER_MODULE_ARG4" err ]} {
+            $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4 $SLICER_MODULE_ARG1 $SLICER_MODULE_ARG2 $SLICER_MODULE_ARG3 $SLICER_MODULE_ARG4] err ]} {
             # catch here so that the build can continue if they're just warnings
             puts "\n--------\nCMAKE error using cmaker_local.tcl: $err\n--------\n"
         }
