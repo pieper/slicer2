@@ -133,7 +133,7 @@ proc tarup { {destdir "auto"} } {
     file mkdir $destdir/Lib/$::env(BUILD)/vtk/VTK/Wrapping/Tcl
     set vtkparts { vtk vtkbase vtkcommon vtkpatented vtkfiltering
             vtkrendering vtkgraphics vtkhybrid vtkimaging 
-            vtkinteraction vtkio }
+            vtkinteraction vtkio vtktesting }
     foreach vtkpart $vtkparts {
         file copy -force $::env(VTK_SRC_DIR)/Wrapping/Tcl/$vtkpart $destdir/Lib/$::env(BUILD)/vtk/VTK/Wrapping/Tcl
     }
