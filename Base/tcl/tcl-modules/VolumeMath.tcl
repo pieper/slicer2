@@ -161,7 +161,7 @@ proc VolumeMathInit {} {
     #   appropriate info when the module is checked in.
     #   
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38 $} {$Date: 2004/04/22 15:17:41 $}]
+        {$Revision: 1.39 $} {$Date: 2004/07/06 15:54:52 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1140,7 +1140,7 @@ proc VolumeMathPrepareResultVolume {{logic "0"}}  {
     set v2 $VolumeMath(Volume2)
     set v1 $VolumeMath(Volume1)
 
-    # Do we need to Create a New Volume?
+    # Do we need to Create a New Volume? (special -5 "Create New" code)
     # If so, let's do it.
     
     if {$v3 == -5 } {
@@ -1527,9 +1527,78 @@ proc VolumeMathDoAbs {} {
 # .PROC VolumeMathDoResample
 #   Actually do the Resampling
 #
+# This is Samson's older version
+#
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeMathDoResample {} {
+    global VolumeMath Volume
+
+        # Check to make sure no volume is none
+
+    if {[VolumeMathCheckErrors] == 1} {
+        return
+    }
+    if {[VolumeMathPrepareResultVolume] == 1} {
+        return
+    }
+
+    set v3 $VolumeMath(Volume3)
+    set v2 $VolumeMath(Volume2)
+    set v1 $VolumeMath(Volume1)
+
+    puts "$v3 $v2 $v1"
+
+    # Set up the VolumeMath Resampling
+
+    # You would think we would want 
+    # ScaledIJKtoRAS2^-1 * ScaledIJKtoRAS1 
+    # But in fact, if there is a transformation matrix affecting
+    # the two volumes, it shows up in the RasToWld matrix.
+    # so that we want
+    # (RasToWld2*ScaledIJKToWld2)^-1 (RasToWld1*ScaledIJKToWld1)
+
+    # Get ScaledIJKs
+    set sIJK2 [Volume($v2,node) GetPosition]
+    set sIJK1 [Volume($v1,node) GetPosition]
+    # Get RasToWlds
+    set RasWld2 [Volume($v2,node) GetRasToWld]
+    set RasWld1 [Volume($v1,node) GetRasToWld]
+
+    vtkMatrix4x4 Amatrix
+    Amatrix Multiply4x4 $RasWld2 $sIJK2 Amatrix
+    Amatrix Invert
+    Amatrix Multiply4x4 Amatrix $RasWld1 Amatrix
+    Amatrix Multiply4x4 Amatrix $sIJK1   Amatrix
+
+    Amatrix Print
+    # Resampling
+
+    vtkResliceImage Reslice
+     Reslice SetInput            [Volume($v2,vol) GetOutput]
+     Reslice SetOutputImageParam [Volume($v1,vol) GetOutput]
+     Reslice SetTransformOutputToInput Amatrix
+     Reslice Update
+
+    [Reslice GetOutput] Print
+    Volume($v3,vol) SetImageData [Reslice GetOutput]
+#    [Volume($v3,vol) GetOutput] Print
+    puts "$v3 $v2 $v1"
+
+    MainVolumesUpdate $v3
+    Amatrix Delete
+    Reslice Delete
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathDoResample_Hanifa
+#   Actually do the Resampling
+#
+# Hanifa's new version has trouble handling different spacings
+#
+# .END
+#-------------------------------------------------------------------------------
+proc VolumeMathDoResample_Hanifa {} {
     global VolumeMath Volume
 
     # Check to make sure no volume is none
@@ -1755,10 +1824,10 @@ proc VolumeMathDoMaskStat {} {
 
     # Check to make sure no volume is none
     if {[VolumeMathCheckErrors] == 1} {
-    return
+        return
     }
     if {[VolumeMathPrepareResultVolume] == 1} {
-    return
+        return
     }
     
     set v3 $VolumeMath(Volume3)
@@ -1767,8 +1836,8 @@ proc VolumeMathDoMaskStat {} {
 
     # validate input for saving the file
     if {$VolumeMath(fileName) == ""} {
-    DevErrorWindow "Please enter a filename first."
-    return
+        DevErrorWindow "Please enter a filename first."
+        return
     }
     # create the binary volume of the label catch "mathThresh Delete"
     vtkImageThreshold mathThresh
@@ -1846,14 +1915,15 @@ proc VolumeMathDoCast {} {
     vtkImageCast CastMath
     CastMath SetInput [Volume($v2,vol) GetOutput]
     CastMath SetOutputScalarTypeTo$::VolumeMath(castType)
+    CastMath ClampOverflowOn
     CastMath Update
 
     # Start copying in the output data.
     # Taken from MainVolumesCopyData
 
     Volume($v3,vol) SetImageData [CastMath GetOutput]
-    MainVolumesUpdate $v3
     Volume($v3,node) SetScalarTypeTo$::VolumeMath(castType)
+    MainVolumesUpdate $v3
 
     CastMath Delete
 }
