@@ -124,7 +124,7 @@ proc CorrespondanceInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.1 $} {$Date: 2001/12/27 14:47:18 $}]
+		{$Revision: 1.2 $} {$Date: 2002/01/10 20:15:21 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -485,18 +485,42 @@ vtkMaskPoints PointSelection
   PointSelection SetInput $PD
   PointSelection SetOnRatio $Correspondance(CorSphereSkip)
   PointSelection RandomModeOff
-
+  PointSelection Update
 
 set PointData     [PointSelection GetOutput]
-set NumSelectNode [$PointData GetNumberOfPoints]
-set Increment [ expr $NumSelectNode / 4 ]
 
+set NumSelectNode [$PointData GetNumberOfPoints]
+set Increment [ expr $NumSelectNode / 2 ]
+
+vtkPolyData tempPolyData
+  tempPolyData ShallowCopy [PointSelection GetOutput]
+  tempPolyData Print
+
+vtkIntArray seen
+  seen SetNumberOfValues $NumSelectNode
+  for {set i 0} { $i < $NumSelectNode } {incr i 1} {
+    seen SetValue $i 0
+  }
+
+puts "Increment: $Increment"
 vtkScalars Scalars
-for {set i 0} { $i < $NumNode } {incr i 1} {
+set p 0
+for {set i 0} { $i < $NumSelectNode } {incr i 1} {
+    # increment $p
+    set p [expr $p + $Increment]
+    if {$p >= $NumSelectNode} {set p [expr $p - $NumSelectNode] }
+    while { [seen GetValue $p] == 1 } { 
+        incr p  
+        if {$p >= $NumSelectNode} {set p [expr $p - $NumSelectNode] }
+    }
     Scalars InsertScalar $i [expr $i * $Increment]
+    seen SetValue $p 1
+    puts "$i $p"
 }
 
-[$PointData GetPointData] SetScalars Scalars
+seen Delete
+
+[tempPolyData GetPointData] SetScalars Scalars
 
 #
 #  PointSelection Update
@@ -507,7 +531,7 @@ vtkSphereSource ASphere
   ASphere SetThetaResolution 5
   ASphere SetRadius [ expr 0.15 * $Correspondance(CorSphereScale) ]
 vtkGlyph3D ScalarGlyph
-  ScalarGlyph SetInput  [PointSelection GetOutput]
+  ScalarGlyph SetInput  tempPolyData
   ScalarGlyph SetSource [ASphere GetOutput]
   ScalarGlyph SetScaleModeToDataScalingOff
   ScalarGlyph SetColorModeToColorByScalar
@@ -519,7 +543,7 @@ vtkGlyph3D ScalarGlyph
   ##### Form the Model
   ########################################
 
-  set range [[PointSelection GetOutput] GetScalarRange]
+  set range [tempPolyData GetScalarRange]
   set LOWSCALAR  [ lindex $range 0 ]
   set HIGHSCALAR [ lindex $range 1 ]
   set name [Model($m,node) GetName]
@@ -533,9 +557,7 @@ vtkGlyph3D ScalarGlyph
   ASphere Delete
   ScalarGlyph Delete
   Scalars Delete
+  tempPolyData Delete
 
   return $m
 }
-
-
-
