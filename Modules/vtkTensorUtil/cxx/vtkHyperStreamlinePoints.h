@@ -10,7 +10,7 @@ class VTK_TENSORUTIL_EXPORT vtkHyperStreamlinePoints : public vtkHyperStreamline
 {
 public:
   static vtkHyperStreamlinePoints *New();
-  vtkTypeMacro(vtkHyperStreamlinePoints,vtkDataSetToPolyDataFilter);
+  vtkTypeMacro(vtkHyperStreamlinePoints,vtkHyperStreamlineDTMRI);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   vtkGetObjectMacro(HyperStreamline0,vtkPoints);
