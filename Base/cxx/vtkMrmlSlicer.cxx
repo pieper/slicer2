@@ -1218,51 +1218,56 @@ void vtkMrmlSlicer::ComputeOffsetRangeIJK(int s)
   this->OffsetRange[s][MRML_SLICER_ORIENT_ORIGSLICE][0] = zMin;
   this->OffsetRange[s][MRML_SLICER_ORIENT_ORIGSLICE][1] = zMax;
 
+      // sp 2002-10-01 - changed for non square slices to use yMin yMax for 
+      // sagittal and coronal ranges.  Tested for Axial (IS) input where coronal
+      // dim larger than sagittal dim.  Other branches changed symmetrically,
+      // but not tested.
+      //
     // Sagittal
   if (!strcmp(order,"LR") || !strcmp(order,"RL")) 
   {
-      this->SetOffsetRange(s, MRML_SLICER_ORIENT_AXISLICE, xMin, xMax, &modified);
+      this->SetOffsetRange(s, MRML_SLICER_ORIENT_AXISLICE, yMin, yMax, &modified);
       this->SetOffsetRange(s, MRML_SLICER_ORIENT_SAGSLICE, zMin, zMax, &modified);
       this->SetOffsetRange(s, MRML_SLICER_ORIENT_CORSLICE, xMin, xMax, &modified);
 
     if (modified)
     {
       this->Offset[s][MRML_SLICER_ORIENT_ORIGSLICE] = zAvg;
-      this->Offset[s][MRML_SLICER_ORIENT_AXISLICE]  = xAvg;
+      this->Offset[s][MRML_SLICER_ORIENT_AXISLICE]  = yAvg;
       this->Offset[s][MRML_SLICER_ORIENT_SAGSLICE]  = zAvg;
       this->Offset[s][MRML_SLICER_ORIENT_CORSLICE]  = xAvg;
     }
-    }
+  }
   // Coronal
     else if (!strcmp(order,"AP") || !strcmp(order,"PA")) 
   {
-      this->SetOffsetRange(s, MRML_SLICER_ORIENT_AXISLICE, xMin, xMax, &modified);
+      this->SetOffsetRange(s, MRML_SLICER_ORIENT_AXISLICE, yMin, yMax, &modified);
       this->SetOffsetRange(s, MRML_SLICER_ORIENT_SAGSLICE, xMin, xMax, &modified);
       this->SetOffsetRange(s, MRML_SLICER_ORIENT_CORSLICE, zMin, zMax, &modified);
 
     if (modified)
     {
       this->Offset[s][MRML_SLICER_ORIENT_ORIGSLICE] = zAvg;
-      this->Offset[s][MRML_SLICER_ORIENT_AXISLICE]  = xAvg;
+      this->Offset[s][MRML_SLICER_ORIENT_AXISLICE]  = yAvg;
       this->Offset[s][MRML_SLICER_ORIENT_SAGSLICE]  = xAvg;
       this->Offset[s][MRML_SLICER_ORIENT_CORSLICE]  = zAvg;
     }
-    }
+  }
   // Axial (and oblique)
     else 
   {
       this->SetOffsetRange(s, MRML_SLICER_ORIENT_AXISLICE, zMin, zMax, &modified);
       this->SetOffsetRange(s, MRML_SLICER_ORIENT_SAGSLICE, xMin, xMax, &modified);
-      this->SetOffsetRange(s, MRML_SLICER_ORIENT_CORSLICE, xMin, xMax, &modified);
+      this->SetOffsetRange(s, MRML_SLICER_ORIENT_CORSLICE, yMin, yMax, &modified); 
 
     if (modified)
     {
       this->Offset[s][MRML_SLICER_ORIENT_ORIGSLICE] = zAvg;
       this->Offset[s][MRML_SLICER_ORIENT_AXISLICE]  = zAvg;
       this->Offset[s][MRML_SLICER_ORIENT_SAGSLICE]  = xAvg;
-      this->Offset[s][MRML_SLICER_ORIENT_CORSLICE]  = xAvg;
+      this->Offset[s][MRML_SLICER_ORIENT_CORSLICE]  = yAvg; 
     }
-    }
+  }
 }
 
 void vtkMrmlSlicer::InitOffset(int s, char *str, float offset)
