@@ -1,4 +1,9 @@
 
+#
+# ./slicer2-linux-x86 --load-dicom /home/pieper/data/1.2.840.113619.2.5.1762874864.1932.1015502256.640.UID/000004.SER/ --script Modules/iSlicer/tcl/evaluation-movies.tcl --exec "eval_movies /var/tmp/facemovies 10 5; exit"
+
+#
+#
 source $env(SLICER_HOME)/Modules/iSlicer/tcl/isvolume.tcl
 source $env(SLICER_HOME)/Modules/iSlicer/tcl/is3d.tcl
 
@@ -18,10 +23,11 @@ proc eval_movies { {dir /tmp} {steps 30} {skip 10} } {
     raise .eval
 
     eval_3d_movie $dir $steps
-    eval_slice_movie axial $dir $skip
-    eval_slice_movie sagittal $dir $skip
-    eval_slice_movie coronal $dir $skip
+    eval_slice_movie $dir axial $skip
+    eval_slice_movie $dir sagittal $skip
+    eval_slice_movie $dir coronal $skip
 
+    catch "destroy .eval"
 }
 
 proc eval_3d_movie { dir steps } {
