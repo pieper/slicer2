@@ -30,18 +30,11 @@ vtkFastMarching* vtkFastMarching::New()
 
 void vtkFastMarching::collectInfoSeed( int index )
 {
-  for(int ip=-1;ip<=1;ip++)
-    for(int jp=-1;jp<=1;jp++)
-      for(int kp=-1;kp<=1;kp++)
-        {
-          int neiIndex = index + ip + jp*dimY + kp*dimXY;
+  int med, inh;
+  getMedianInhomo(index, med, inh);
 
-      int med, inh;
-      getMedianInhomo(neiIndex, med, inh);
-
-          pdfIntensityIn->addRealization( med );
-          pdfInhomoIn->addRealization( inh );
-        }
+  pdfIntensityIn->addRealization( med );
+  pdfInhomoIn->addRealization( inh );
 }
 
 // speed at index
@@ -68,7 +61,13 @@ float vtkFastMarching::speed( int index )
   /*
     s = (float)min(pdfIntensityIn->value(I)/pdfIntensityAll->value(I),pdfInhomoIn->value(H)/pdfInhomoAll->value(H)) ;
   */
-  return s*s;
+
+  /*
+    with prob^2 fast speed have a strong advantage over small speed so the expanding volume
+    behaves like a very fluid fluid, less regular but deepends less on initial seeds
+   */
+
+  return s;
 
   /*
     return (float)min(pdfIntensityIn->value(I)/pdfIntensityAll->value(I),
@@ -82,8 +81,10 @@ void vtkFastMarching::setSeed( int index )
   assert( (index>=(1+dimX+dimXY)) && (index<(dimXYZ-1-dimX-dimXY)) );
 
   if( node[index].status!=fmsFAR )
+    {
     // this seed has already been planted
     return;
+    }
 
   // by definition, T=0, and that voxel is known
   node[index].T=0.0;
@@ -97,7 +98,7 @@ void vtkFastMarching::setSeed( int index )
       FMleaf f;
       f.nodeIndex=index+shiftNeighbor(nei);
 
-      if( node[f.nodeIndex].status == fmsFAR )
+      if(node[f.nodeIndex].status == fmsFAR)
     {
       node[f.nodeIndex].status=fmsTRIAL;
       node[f.nodeIndex].T=computeT(f.nodeIndex);
@@ -135,6 +136,71 @@ inline void vtkFastMarching::getMedianInhomo( int index, int &med, int &inh )
   return;
 }
 
+void vtkFastMarching::initNewExpansion( void )
+{
+  pdfIntensityIn->reset();
+  pdfInhomoIn->reset();
+
+  // empty interface points
+  while(tree.size()>0)
+    {
+      node[ tree[tree.size()-1].nodeIndex ].status=fmsFAR; 
+      node[ tree[tree.size()-1].nodeIndex ].T=INF; 
+      tree.pop_back();
+    }
+  // empty the list of known points
+  while(knownPoints.size()>0)
+    {
+      while(knownPoints[knownPoints.size()-1].size()>0)
+    knownPoints[knownPoints.size()-1].pop_back();
+
+      knownPoints.pop_back();
+    }
+
+    nEvolutions=-1;
+    
+    firstCall=true;
+
+    while(seedPoints.size()>0)
+      seedPoints.pop_back();
+
+   int index=0;
+    for(int k=0;k<dimZ;k++)
+      for(int j=0;j<dimY;j++)
+    for(int i=0;i<dimX;i++)
+      {
+        if(outdata[index]==label)
+          {
+        bool hasIntensityZeroNeighbor = false;
+        for(int n=1;n<nNeighbors;n++)
+          if(outdata[index+shiftNeighbor(n)]==0)
+            {
+              hasIntensityZeroNeighbor=true;
+              break;
+            }
+
+        if(hasIntensityZeroNeighbor)
+          {
+            node[index].status=fmsFAR;
+            seedPoints.push_back( index );
+          }
+        else
+          {
+            node[index].status=fmsKNOWN;
+            node[index].T=0.0;
+          }
+          }
+
+        index++;
+      }
+ 
+}
+
+int vtkFastMarching::nValidSeeds( void )
+{
+  return seedPoints.size()+tree.size();
+}
+
 void vtkFastMarchingExecute(vtkFastMarching *self,
                 vtkImageData *inData, short *inPtr,
                 vtkImageData *outData, short *outPtr, 
@@ -164,11 +230,14 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
       int sparseSampling=100;
 
       for(int k=0;k<self->dimZ;k++)
-    for(int j=0;j<self->dimY;j++)
+      for(int j=0;j<self->dimY;j++)
       for(int i=0;i<self->dimX;i++)
         {
           self->node[index].T=INF;
-          self->node[index].status=fmsFAR;
+      if(self->outdata[index]==0)
+        self->node[index].status=fmsFAR;
+      else 
+        self->node[index].status=fmsDONE;
       
           self->inhomo[index]=-1; // meaning inhomo and median have not been computed there
 
@@ -293,6 +362,7 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
   // use the seeds
   // note: we have to make sure knownPoints[nEvolution] is ready to receive
   // indexes, ok
+
   while(self->seedPoints.size()>0)
     {
       int index=self->seedPoints[self->seedPoints.size()-1];
@@ -300,26 +370,26 @@ void vtkFastMarchingExecute(vtkFastMarching *self,
 
       self->setSeed( index );
     }
-  
+
   if(!self->minHeapIsSorted())
     {
       /* don't seem to be able to do that outside of the class due to def of macro
      vtkErrorMacro( "Error in vtkFastMarchingExecute: minHeap was not sorted bwfore entering main loop" << endl );
       */
 
-      std::cerr << "Error in vtkFastMarchingExecute: minHeap was not sorted bwfore entering main loop" << endl;
+      std::cerr << "Error in vtkFastMarchingExecute: minHeap was not sorted before entering main loop" << endl;
     }
 
   for(n=0;n<self->nPointsEvolution;n++)
     {
-      if( n % (self->nPointsEvolution/GRANULARITY_PROGRESS) == 0 )
+          if( (n*GRANULARITY_PROGRESS) % self->nPointsEvolution == 0 )
     self->UpdateProgress(float(n)/float(self->nPointsEvolution));
 
       float T=self->step();
 
       if( T==INF )
     {
-      std::cout << "FastMarching: nowhere else to go. End of evolution." << endl;
+      std::cerr << "FastMarching: nowhere else to go. End of evolution." << endl;
       break;
     }
     }
@@ -591,7 +661,7 @@ vtkFastMarching::vtkFastMarching()
 
 void vtkFastMarching::init(int dimX, int dimY, int dimZ, int depth)
 {
-  nNeighbors=6; // 6 or 26
+  nNeighbors=26; // 6 or 26
   dx=1.0;
 
   nEvolutions=-1;
@@ -690,7 +760,6 @@ float vtkFastMarching::step( void )
 
   if( emptyTree() )
     {
-      
       vtkErrorMacro( "vtkFastMarching::step empty tree!" << endl );
       return INF;
     }
@@ -949,11 +1018,15 @@ int vtkFastMarching::addSeed( float r, float a, float s )
   J = (int) ( m21*r + m22*a + m23*s + m24*1 );
   K = (int) ( m31*r + m32*a + m33*s + m34*1 );
 
-  if ( (I>=0) && (I<dimX)
-       &&  (J>=0) && (J<dimY)
-       &&  (K>=0) && (K<dimZ) )
+  if ( (I>=1) && (I<(dimX-1))
+       &&  (J>=1) && (J<(dimY-1))
+       &&  (K>=1) && (K<(dimZ-1)) )
     {
       seedPoints.push_back( I+J*dimX+K*dimXY );
+
+            for(int n=0;n<=26;n++)
+    seedPoints.push_back( I+J*dimX+K*dimXY+shiftNeighbor(n) );
+      
       return 1;
     }
 

@@ -17,12 +17,15 @@
 
 #include "FMpdf.h"
 
+#define MAJOR_VERSION 2
+#define MINOR_VERSION 0
+#define DATE_VERSION "2002-12-11/12:00"
 
 ///////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
 
 // pretty big
-#define INF 1.0e+20 
+#define INF 1e20 
 
 // outside margin
 #define BAND_OUT 1
@@ -160,6 +163,10 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
 
   void setActiveLabel(int label);
 
+  void  initNewExpansion( void );
+
+  int nValidSeeds( void );
+
   void setNPointsEvolution( int n );
 
   void setInData(short* data);
@@ -178,6 +185,19 @@ class VTK_FASTMARCHING_EXPORT vtkFastMarching : public vtkImageToImageFilter
   float step( void );
 
   void show(float r);
+
+  char * cxxVersionString(void)
+    {
+      char *text = new char[100];
+      
+      sprintf(text,"%d.%d \t(%s)",MAJOR_VERSION,MINOR_VERSION,DATE_VERSION);
+      return text;
+    }; 
+
+  int cxxMajorVersion(void)
+    {
+      return MAJOR_VERSION;
+    }; 
 
  protected:
   void ExecuteData(vtkDataObject *);

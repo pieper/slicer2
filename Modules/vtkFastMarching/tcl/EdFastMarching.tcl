@@ -56,6 +56,13 @@ proc EdFastMarchingInit {} {
     set EdFastMarching(nExpand) 10000
     set EdFastMarching(userExpand) 0
 
+    set EdFastMarching(majorVersionTCL) 2
+    set EdFastMarching(minorVersionTCL) 0
+    set EdFastMarching(dateVersionTCL) "2002-12-11/12:00"
+
+    set EdFastMarching(versionTCL) "$EdFastMarching(majorVersionTCL).$EdFastMarching(minorVersionTCL) \t($EdFastMarching(dateVersionTCL))"
+
+    set EdFastMarching(shouldDisplayWarningVersion) 1
 }
 
 #-------------------------------------------------------------------------------
@@ -181,10 +188,23 @@ When satisfied with the segmentation use other editing modules on the labelmap (
     #-------------------------------------------
     set f $Ed(EdFastMarching,frame).fTabbedFrame.fAdvanced
 
-    eval {label $f.lWarning1 -text "Nothing here yet..." } \
-    $Gui(WLA)
+    frame $f.fVersion     -bg $Gui(activeWorkspace)
 
-    pack $f.lWarning1
+    pack $f.fVersion -side top -fill x 
+
+    #-------------------------------------------
+    # TabbedFrame->Advanced->version frame
+    #-------------------------------------------
+
+    set f $Ed(EdFastMarching,frame).fTabbedFrame.fAdvanced.fVersion
+
+    eval {label $f.lTextCXX -text "CXX version: "} $Gui(WLA)
+    eval {label $f.lCXX -textvariable EdFastMarching(versionCXX) } $Gui(WLA)
+    grid $f.lTextCXX $f.lCXX -padx 2
+ 
+    eval {label $f.lTextTCL -text "TCL version: " } $Gui(WLA)
+    eval {label $f.lTCL -textvariable EdFastMarching(versionTCL) } $Gui(WLA)
+    grid $f.lTextTCL $f.lTCL -padx 2 -pady $Gui(pad)
 }
 
 proc EdFastMarchingUserExpand {zero userExpand} {
@@ -242,6 +262,8 @@ proc EdFastMarchingEnter {} {
 
     set e EdFastMarching
 
+    set EdFastMarching(label) -1
+
     EdFastMarchingLabel         
 
     # Make sure we're colored
@@ -252,17 +274,31 @@ proc EdFastMarchingEnter {} {
 
     set dim [[Volume($v,vol) GetOutput] GetWholeExtent]
 
-    set EdFastMarching(fastMarchingInitialized) 1
-
-    set EdFastMarching(fidFiducialList) \
-        [ FiducialsCreateFiducialsList "default" "FastMarching-seeds" 0 3 ]
 
     # create the vtk object 
     vtkFastMarching EdFastMarching(FastMarching) 
 
+
+    set EdFastMarching(majorVersionCXX) [EdFastMarching(FastMarching) cxxMajorVersion]
+    set EdFastMarching(versionCXX) [EdFastMarching(FastMarching) cxxVersionString]
+
+    if $EdFastMarching(majorVersionTCL)==$EdFastMarching(majorVersionCXX) {
+        set EdFastMarching(shouldDisplayWarningVersion) 0
+    }
+
+    if $EdFastMarching(shouldDisplayWarningVersion)==1 {
+    tk_messageBox -message "The module binaries are outdated, you should probably recompile them.\n\n You can have a look at the 'advanced' tab for more info and at the on-line tutorial (URL given in the 'help' tab) to learn more about re-compiling the module."
+    set EdFastMarching(shouldDisplayWarningVersion) 0
+    }
+
     # initialize the object
     EdFastMarching(FastMarching) init \
         [expr [lindex $dim 1] + 1] [expr [lindex $dim 3] + 1] [expr [lindex $dim 5] + 1] $depth
+
+    set EdFastMarching(fastMarchingInitialized) 1
+
+    set EdFastMarching(fidFiducialList) \
+        [ FiducialsCreateFiducialsList "default" "FastMarching-seeds" 0 3 ]
 
     # Required
     set Ed($e,scope)  3D 
@@ -273,14 +309,6 @@ proc EdFastMarchingEnter {} {
     
     EditorClear Working
     
-    # need one pass through the execute function
-    # to be properly initialized
-    set e EdFastMarching
-
-    set Ed($e,scope)  3D 
-    set Ed($e,input)  Original
-    set Ed($e,interact) Active   
-
     set v [EditorGetInputID $Ed($e,input)]
 
     EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
@@ -292,6 +320,11 @@ proc EdFastMarchingEnter {} {
 
     EdFastMarching(FastMarching) Modified
     Ed(editor) Apply EdFastMarching(FastMarching) EdFastMarching(FastMarching)
+
+    # necessary for init
+    EdFastMarchingLabel 
+    # Make sure we're colored
+    LabelsColorWidgets
 
     MainEndProgress
 
@@ -326,9 +359,26 @@ proc EdFastMarchingExit {} {
 }
 
 proc EdFastMarchingLabel {} {
-    global Ed
+    global Ed Label EdFastMarching
 
     LabelsFindLabel
+    if $Label(label)!=$EdFastMarching(label) {
+    if {$EdFastMarching(fastMarchingInitialized) == 1} {
+        puts "init new expansion\n";
+
+        set EdFastMarching(label) $Label(label)
+
+        EdFastMarching(FastMarching) setActiveLabel $Label(label)
+ 
+        FiducialsDeleteList "FastMarching-seeds"
+        
+        set EdFastMarching(fidFiducialList) \
+        [ FiducialsCreateFiducialsList "default" "FastMarching-seeds" 0 3 ]
+        
+        EdFastMarching(FastMarching) initNewExpansion
+        set EdFastMarching(userExpand) 0
+    }
+    }
 }
 
 #
@@ -357,9 +407,6 @@ proc EdFastMarchingSegment {} {
     return
     }   
 
-    set label   $Label(label)
-    EdFastMarching(FastMarching) setActiveLabel $label
- 
     set e EdFastMarching
 
     set Ed($e,scope)  3D 
@@ -399,13 +446,13 @@ proc EdFastMarchingSegment {} {
 
     set l [FiducialsGetPointIdListFromName "FastMarching-seeds"]
 
-    if { [llength $l]<=0 } {
+    EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
+    Ed(editor)  UseInputOn
+
+    if { [EdFastMarching(FastMarching) nValidSeeds]<=0 } {
     tk_messageBox -message "No seeds defined !\n(see help section)"
     return
     }
-
-    EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
-    Ed(editor)  UseInputOn
 
     set Gui(progressText) "FastMarching"
 
