@@ -47,7 +47,7 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
   //BTX
   typedef vnl_matrix<double> InputType;
   // TEST increase this, see comment in cxx file
-  const static int InternalNumberOfEigenvectors = 3;
+  const static int InternalNumberOfEigenvectors = 7;
 
   typedef itk::Vector< double, InternalNumberOfEigenvectors > EmbedVectorType;
   typedef itk::Statistics::ListSample< EmbedVectorType > EmbedSampleType;
@@ -87,7 +87,7 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
   // Description
   // Number of eigenvectors to use in the embedding
   // NOTE not currently implemented due to fixed-length itk vector
-  vtkSetMacro(NumberOfEigenvectors,int);
+  //vtkSetMacro(NumberOfEigenvectors,int);
   vtkGetMacro(NumberOfEigenvectors,int);
 
   // Description

@@ -17,16 +17,16 @@
 #include <ctime>
 
 
-vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkNormalizedCuts);
 
 
 vtkNormalizedCuts::vtkNormalizedCuts()
 {
-  this->InputWeightMatrix = NULL;
+  //this->InputWeightMatrix = NULL;
 
   this->NumberOfClusters = 2;
-  this->NumberOfEigenvectors = 7;
+  this->NumberOfEigenvectors = this->InternalNumberOfEigenvectors;
 
   this->NormalizedWeightMatrixImage = NULL;
   this->EigenvectorsImage = NULL;
@@ -124,6 +124,16 @@ void vtkNormalizedCuts::ComputeClusters()
       idx1++;
     }
 
+  // Test the matrix is finite (not NaN or Inf), otherwise can have
+  // an error in eigensystem computation
+  if (!this->InputWeightMatrix->is_finite())
+    {    
+      // Exit here with an error, and clear output
+      vtkErrorMacro("Normalized input weight matrix not finite (Nan or Inf)");
+      this->OutputClassifier = NULL;
+      return;
+    }
+
   // Calculate eigenvectors
   vnl_symmetric_eigensystem<double> eigensystem(*this->InputWeightMatrix);
 
@@ -150,7 +160,6 @@ void vtkNormalizedCuts::ComputeClusters()
       idx2=0;
       while (idx2 < eigensystem.V.cols())
     {
-      // scale for slicer, cast to write png
       *eigenvectorsImage = eigensystem.V[idx1][idx2]; 
       eigenvectorsImage++;
       idx2++;
@@ -265,6 +274,8 @@ void vtkNormalizedCuts::ComputeClusters()
   typedef itk::MinimumDecisionRule DecisionRuleType;
   DecisionRuleType::Pointer decisionRule = DecisionRuleType::New();
   
+  // this smart pointer will deallocate anything old it may have
+  // pointed to, so this line is okay.
   this->OutputClassifier = OutputClassifierType::New();
 
   //this->OutputClassifier->DebugOn();
