@@ -100,7 +100,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.43 $} {$Date: 2001/01/30 02:05:32 $}]
+	    {$Revision: 1.44 $} {$Date: 2001/02/19 17:30:29 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -1021,8 +1021,20 @@ proc EditorEnter {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EditorExit {} {
-popEventManager
+    global Editor Ed
+
+    # undo any new bindings we may have added
+    popEventManager
+
+    set e $Editor(activeID)
+
+    # make sure exit gets called for the active effect
+    # (to turn off effects that use pipelined filters w/ Slicer)
+    if {[info exists Ed($e,procExit)] == 1} {
+	$Ed($e,procExit)
+    }
 }
+
 #-------------------------------------------------------------------------------
 # .PROC EditorMakeModel
 # Sets the active volume (to the first one of Composite, Working, or Original 
