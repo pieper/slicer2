@@ -58,11 +58,15 @@ proc VolumesInit {} {
 	# Define Procedures
 	set Module($m,procGUI)  VolumesBuildGUI
 
+        # For now, never display histograms to avoid bug in histWin Render
+        # call in MainVolumesSetActive. (This happened when starting slicer,
+        # switching to Volumes panel, switching back to Data, and then 
+        # adding 2 transforms.)
 	# Windows98 Version II can't render histograms
-	set Volume(histogram) On
-	if {$Gui(pc) == 1} {
-		set Volume(histogram) Off
-	}
+	set Volume(histogram) Off
+#	if {$Gui(pc) == 1} {
+#		set Volume(histogram) Off
+#	}
 
 	# Props
 	set Volume(propertyType) Basic
