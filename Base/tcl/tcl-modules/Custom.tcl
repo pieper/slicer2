@@ -33,8 +33,25 @@
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
-# .PROC CustomInit
+#  Description
+#  This module is an example for developers.  It shows how to add a module 
+#  to the Slicer.  To find it when you run the Slicer, click on More->Custom.
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+#  Variables
+#  These are the variables defined by this module.
 # 
+#  int Custom(count) counts the button presses for the demo 
+#  list Custom(eventManager)  list of event bindings used by this module
+#-------------------------------------------------------------------------------
+
+
+#-------------------------------------------------------------------------------
+# .PROC CustomInit
+#  The "Init" procedure is called automatically by the slicer.  
+#  It puts information about the module into a global array called Module, 
+#  and it also initializes module-level variables.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -98,6 +115,8 @@ proc CustomInit {} {
 	#   set Module($m,presets) "key1='val1' key2='val2' ..."
 	#   
 	set Module($m,procGUI) CustomBuildGUI
+	set Module($m,procEnter) CustomEnter
+	set Module($m,procExit) CustomExit
 
 	# Define Dependencies
 	#------------------------------------
@@ -112,10 +131,10 @@ proc CustomInit {} {
 	# Description:
 	#   Record the version number for display under Help->Version Info.
 	#   The strings with the $ symbol tell CVS to automatically insert the
-	#   appropriate info when the module is checked in.
+	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.13 $} {$Date: 2000/04/17 22:33:19 $}]
+		{$Revision: 1.14 $} {$Date: 2000/05/05 19:01:44 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -127,6 +146,7 @@ proc CustomInit {} {
 	set Custom(count) 0
 	set Custom(Volume1) $Volume(idNone)
 	set Custom(Model1)  $Model(idNone)
+	set Custom(eventManager)  ""
 }
 
 
@@ -164,7 +184,13 @@ proc CustomBuildGUI {} {
 	# Refer to the documentation for details on the syntax.
 	#
 	set help "
-Models are fun. Do you like models, Ron?
+The Custom module is an example for developers.  It shows how to add a module 
+to the Slicer.  The source code is in slicer/program/tcl-modules/Custom.tcl.
+<P>
+Description by tab:
+<BR>
+<UL>
+<LI><B>Tons o' Stuff:</B> This tab is a demo for developers.
 "
 	regsub -all "\n" $help {} help
 	MainHelpApplyTags Custom $help
@@ -217,6 +243,47 @@ Models are fun. Do you like models, Ron?
 
 	pack $f.bCount $f.bCount $f.eCount -side left -padx $Gui(pad) -pady $Gui(pad)
 }
+
+#-------------------------------------------------------------------------------
+# .PROC CustomEnter
+# Called when this module is entered by the user.  Pushes the event manager
+# for this module. 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc CustomEnter {} {
+    global Custom
+    
+    # Push event manager
+    #------------------------------------
+    # Description:
+    #   So that this module's event bindings don't conflict with other 
+    #   modules, use our bindings only when the user is in this module.
+    #   The pushEventManager routine saves the previous bindings on 
+    #   a stack and binds our new ones.
+    #   (See slicer/program/tcl-shared/Events.tcl for more details.)
+    pushEventManager $Custom(eventManager)
+}
+
+#-------------------------------------------------------------------------------
+# .PROC CustomExit
+# Called when this module is exited by the user.  Pops the event manager
+# for this module.  
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc CustomExit {} {
+
+    # Pop event manager
+    #------------------------------------
+    # Description:
+    #   Use this with pushEventManager.  popEventManager removes our 
+    #   bindings when the user exits the module, and replaces the 
+    #   previous ones.
+    #
+    popEventManager
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC CustomUpdateGUI
