@@ -99,7 +99,7 @@ proc RigidIntensityRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2003/12/09 01:42:45 $}]
+        {$Revision: 1.4 $} {$Date: 2003/12/09 01:58:41 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -296,6 +296,16 @@ proc RigidIntensityRegistrationCheckSetUp {} {
         return 0
     }
 
+    if {[RigidIntensityRegistrationGantryTiltTest $Matrix(refVolume)] == 0} {
+        DevWarningWindow "The Reference Volume has Gantry Tilt. This is not allowed."
+        return 0
+    }
+
+    if {[RigidIntensityRegistrationGantryTiltTest $Matrix(volume)] == 0} {
+        DevWarningWindow "The Moving Volume has Gantry Tilt. This is not allowed."
+        return 0
+    }
+
     #
     # Store which transform we're editing
     # If the user has not selected a tranform, then create a new one by default
@@ -380,3 +390,19 @@ proc RigidIntensityRegistrationTestTransformConnections \
 }   
 
 
+#-------------------------------------------------------------------------------
+# .PROC RigidIntensityRegistrationGantryTiltTest
+#
+# Make sure the volume has no gantry tilt. Return 0 if GantryTilt
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc RigidIntensityRegistrationGantryTiltTest {vId} {
+
+  set det [[Volume($vId,node) GetPosition] Determinant]
+  set risidual [expr abs(abs($det) - 1)]
+    if {$risidual > 0.01} {
+        return 0
+    }
+ return 1
+}
