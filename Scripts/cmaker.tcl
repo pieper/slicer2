@@ -42,9 +42,22 @@ if { [file exists $localvarsfile] } {
     exit 1
 }
 
+##
+## All arguments do nothing by default
+##
+foreach var "VTK_ARG1 VTK_ARG2 VTK_ARG3 VTK_ARG4 VTK_ARG5 VTK_ARG6 VTK_ARG7 VTK_ARG8 SLICER_ARG1 SLICER_ARG2 SLICER_ARG3" {
+    set $var "-DDUMMY:BOOL=ON"
+}
+
+set SLICER_ARG1 "-DVTKSLICERBASE_SOURCE_DIR:PATH=$SLICER_HOME/Base"
+set SLICER_ARG2 "-DVTKSLICERBASE_BUILD_DIR:PATH=$SLICER_HOME/Base/builds/$BUILD"
+set SLICER_ARG3 "-DVTKSLICERBASE_BUILD_LIB:PATH=$VTKSLICERBASE_BUILD_LIB"
+
 # use an already built version of vtk
 set VTK_ARG1 "-DUSE_BUILT_VTK:BOOL=ON"
 set VTK_ARG2 "-DVTK_DIR:PATH=$VTK_DIR"
+
+## some operating systems 
 switch $tcl_platform(os) {
     "SunOS" {
         # in order to bypass warnings about Source files
@@ -57,26 +70,20 @@ switch $tcl_platform(os) {
     }
     "Darwin" {
         set VTK_ARG3 "-DVTK_WRAP_HINTS:FILEPATH=$VTK_SRC_PATH/Wrapping/hints"
-        set VTK_ARG4 "-DDUMMY:BOOL=ON"
-        set VTK_ARG5 "-DDUMMY:BOOL=ON"
-    }
-    default {
-        set VTK_ARG3 "-DDUMMY:BOOL=ON"
-        set VTK_ARG4 "-DDUMMY:BOOL=ON"
-        set VTK_ARG5 "-DDUMMY:BOOL=ON"
     }
 }
 # make sure to generate shared libraries
 set VTK_ARG6 "-DBUILD_SHARED_LIBS:BOOL=ON"
+
+# Do we have ITK?
 if { $ITK_BINARY_PATH != "" } {
     set VTK_ARG7 "-DITK_DIR:FILEPATH=$ITK_BINARY_PATH"
-} else {
-    set VTK_ARG7 "-DDUMMY:BOOL=ON"
 }
 
-set SLICER_ARG1 "-DVTKSLICERBASE_SOURCE_DIR:PATH=$SLICER_HOME/Base"
-set SLICER_ARG2 "-DVTKSLICERBASE_BUILD_DIR:PATH=$SLICER_HOME/Base/builds/$BUILD"
-set SLICER_ARG3 "-DVTKSLICERBASE_BUILD_LIB:PATH=$VTKSLICERBASE_BUILD_LIB"
+# Do we have SLICER_DATA_ROOT?
+if {[file isdirectory $SLICER_DATA_ROOT]} {
+    set VTK_ARG8 "-DSLICER_DATA_ROOT:PATH=$SLICER_DATA_ROOT"
+}
 
 #
 # ----------------------------- Shouldn't need to edit anything below here...
@@ -169,10 +176,10 @@ foreach target $TARGETS {
     puts "running cmake ..."
     puts "$CMAKE $target -G$GENERATOR \
         $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 $VTK_ARG7 \
-        $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3"
+        $VTK_ARG8 $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3"
     exec $CMAKE $target -G$GENERATOR \
         $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 $VTK_ARG6 $VTK_ARG7 \
-        $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3
+        $VTK_ARG8 $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3
 
     switch $tcl_platform(os) {
         "SunOS" -
