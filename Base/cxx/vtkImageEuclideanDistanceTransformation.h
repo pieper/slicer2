@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkImageEuclideanDistanceTransformation.h,v $
   Language:  C++
-  Date:      $Date: 2001/06/22 09:51:46 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2001/06/27 10:34:20 $
+  Version:   $Revision: 1.2 $
   Thanks:    Olivier Cuisenaire who developed this class
              URL: http://ltswww.epfl.ch/~cuisenai
 	     Email: Olivier.Cuisenaire@epfl.ch
@@ -113,9 +113,6 @@ public:
   // set to this->MaximumDistance instead. 
   vtkSetMacro(MaximumDistance, float);
   vtkGetMacro(MaximumDistance, float);
-
-  virtual void IterativeExecuteData(vtkImageData *in, vtkImageData *out)
-    { this->MultiThread(in,out); };
 
 protected:
   float MaximumDistance;

@@ -3,13 +3,13 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkImageEuclideanDistanceTransformation.cxx,v $
   Language:  C++
-  Date:      $Date: 2001/06/22 09:51:46 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2001/06/27 10:34:20 $
+  Version:   $Revision: 1.2 $
   Thanks:    Olivier Cuisenaire who developed this class
              URL: http://ltswww.epfl.ch/~cuisenai
 	     Email: Olivier.Cuisenaire@epfl.ch
 
-Copyright (c) 1993-1995 Ken Martin, Will Schroeder, Bill Lorensen.
+Copyright (c)  Olivier Cuisenaire
 
 This software is copyrighted by Ken Martin, Will Schroeder and Bill Lorensen.
 The following terms apply to all files associated with the software unless
@@ -70,17 +70,11 @@ void vtkImageEuclideanDistanceTransformation::ComputeInputUpdateExtent(int inExt
 {
   int *extent;
   
-  memcpy(inExt, outExt, 6 * sizeof(int));
-
   // Assumes that the input update extent has been initialized to output ...
-  if ( this->GetInput() != NULL ) 
-    {
-      extent = this->GetInput()->GetWholeExtent();
-      inExt[this->Iteration*2] = extent[this->Iteration*2];
-      inExt[this->Iteration*2 + 1] = extent[this->Iteration*2 + 1];
-    } else {
-      vtkErrorMacro( "Input is NULL" );
-    }
+  extent = this->GetInput()->GetWholeExtent();
+  memcpy(inExt, outExt, 6 * sizeof(int));
+  inExt[this->Iteration*2] = extent[this->Iteration*2];
+  inExt[this->Iteration*2 + 1] = extent[this->Iteration*2 + 1];
 }
 
 //----------------------------------------------------------------------------
