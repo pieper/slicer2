@@ -31,8 +31,8 @@ set windows "Win32VC7"
 
 switch $tcl_platform(os) {
     "SunOS" {
-        set SLICER_HOME /spl/tmp/nicole/slicer2
-        set VTK_DIR /projects/birn/slicer2/Lib/solaris8/vtk/VTK-build-4.2.3
+        set SLICER_HOME /spl/tmp/nicole/branch/slicer2
+        set VTK_DIR /projects/birn/slicer2/Lib/solaris8/vtk/VTK-build-2003-09-18
         set ITK_BINARY_PATH /projects/birn/itk/itk-1.2/itk-build
         set BUILD $solaris
         set VTKSLICERBASE_BUILD_LIB $SLICER_HOME/Base/builds/$BUILD/bin/vtkSlicerBase.so
