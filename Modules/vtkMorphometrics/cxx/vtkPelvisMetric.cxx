@@ -96,7 +96,10 @@ vtkPelvisMetric::vtkPelvisMetric()
 
 void vtkPelvisMetric::SetPelvis(vtkPolyData* newPelvis)
 {
-  if(newPelvis==NULL)
+  if(newPelvis==NULL )
+    return;
+
+  if(newPelvis==Pelvis)
     return;
 
   Pelvis = newPelvis;
