@@ -667,7 +667,7 @@ itcl::body regions::refresh {args} {
     }
 }
 
-proc QueryAtlas_fdemo {} {
+proc QueryAtlas_fdemo { {demodata c:/pieper/bwh/data/fbirn-phantom-staple/average7} } {
     
     set fstcldir [file normalize $::PACKAGE_DIR_VTKFREESURFERREADERS/../../../tcl]
 
@@ -676,12 +676,14 @@ proc QueryAtlas_fdemo {} {
     r configure -arrow $fstcldir/QueryA.html
     r configure -arrowout [r cget -tmpdir]/QueryAout.html
 
-    set mydata c:/pieper/bwh/data/staple/average7
+    if { ![file exists $demodata] } {
+        set demodata $::env(SLICER_HOME)/../data/fbirn-phantom-staple/average7
+    }
 
-    set modelid [vtkFreeSurferReadersLoadModel $mydata/surf/lh.pial]
-    #r configure -annotfile $mydata/label/lh_aparc.annot 
-    r configure -annotfile $mydata/label/lh.atlas2002_simple.annot 
-    r configure -talfile $mydata/mri/transforms/talairach.xfm
+    set modelid [vtkFreeSurferReadersLoadModel $demodata/surf/lh.pial]
+    #r configure -annotfile $demodata/label/lh_aparc.annot 
+    r configure -annotfile $demodata/label/lh.atlas2002_simple.annot 
+    r configure -talfile $demodata/mri/transforms/talairach.xfm
     r configure -arrow "$fstcldir/QueryA.html"
     r configure -arrowout "$fstcldir/QueryAout.html"
     r configure -umlsfile "$fstcldir/label2UMLS.txt"
@@ -690,9 +692,9 @@ proc QueryAtlas_fdemo {} {
     r apply
 
     set lutid [MainLutsGetLutIDByName "InvGray"]
-    foreach scalarfile [glob $mydata/../../staple/stap*/*lh*.vtk] {
+    foreach scalarfile [glob $demodata/../../fbirn-phantom-staple/stap*/*lh*.vtk] {
         ModelsAddScalars $scalarfile
-        ModelsSetScalarsLut $modelid $lutid "false"
+        ModelsSetScalarsLut $modelid $lutid "true"
     }
 
     # 
