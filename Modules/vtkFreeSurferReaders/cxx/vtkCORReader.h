@@ -1,0 +1,66 @@
+/*=========================================================================
+
+  Program:   Visualization Toolkit
+  Module:    $RCSfile: vtkCORReader.h,v $
+  Language:  C++
+  Date:      $Date: 2002/08/16 22:12:26 $
+  Version:   $Revision: 1.1 $
+
+=========================================================================*/
+// .NAME vtkFSSurfaceReader - read a surface file from Freesurfer tools
+// .SECTION Description
+// .SECTION Caveats
+// .SECTION See Also
+// vtkPolyData vtkDataReader
+
+#ifndef __vtkCORReader_h
+#define __vtkCORReader_h
+
+#include <vtkFreeSurferReadersConfigure.h>
+#include <stdio.h>
+#include "vtkVolumeReader.h"
+#include "vtkTransform.h"
+
+class VTK_FREESURFERREADERS_EXPORT vtkCORReader : public vtkVolumeReader
+{
+public:
+  vtkTypeMacro(vtkCORReader,vtkVolumeReader);
+
+  void PrintSelf(ostream& os, vtkIndent indent);
+
+  // Description:
+  static vtkCORReader *New();
+
+  // Description:
+  vtkGetVectorMacro(DataDimensions,int,3);
+
+  // Description: 
+  // Other objects make use of these methods but we don't. Left here
+  // but not implemented.
+  vtkStructuredPoints *GetImage(int ImageNumber);
+
+protected:
+  vtkCORReader();
+  ~vtkCORReader();
+
+  void Execute();
+  void ExecuteInformation();
+
+  // COR volumes are always 256^3, so this is just for future changes.
+  int DataDimensions[3];
+
+  // Description:
+  // Reads the actual COR files and creates an array of values.
+  vtkDataArray *ReadVolumeData();
+
+  // Description:
+  // Read the COR-.info file and get header information from it.
+  void          ReadVolumeHeader();
+
+private:
+  vtkCORReader(const vtkCORReader&);  // Not implemented.
+  void operator=(const vtkCORReader&);  // Not implemented.
+};
+
+#endif
+
