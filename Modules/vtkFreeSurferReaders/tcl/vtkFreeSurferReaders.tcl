@@ -60,7 +60,9 @@ proc vtkFreeSurferReadersInit {} {
     set vtkFreeSurferReaders(castToShort) 1
     # flag to load in free surfer colour file when loading a label map
     set vtkFreeSurferReaders(loadColours) 1
-    # Set up the file name of the free surfer modules' colour xml file, 
+    # flag to say that they've been loaded (is reset to zero when MainFileClose is called)
+    set vtkFreeSurferReaders(coloursLoaded) 0
+    # Set up the file name of the free surfer module's colour xml file, 
     # it's in the Module's tcl directory. Try setting it from the slicer home
     # environment variable first, otherwise, assume search  is starting from slicer home
     if {[info exists env(SLICER_HOME)] == 1} {
@@ -104,9 +106,17 @@ proc vtkFreeSurferReadersInit {} {
     set vtkFreeSurferReaders(scanStep) 1
     set vtkFreeSurferReaders(scanStartCOR) -128
     set vtkFreeSurferReaders(scanStartSAG) -128
-    set vtkFreeSurferReaders(scanMs) 100
+    set vtkFreeSurferReaders(scanMs) 2000
     set vtkFreeSurferReaders(QAEdit) 0
     set vtkFreeSurferReaders(QASubjectFileName) "QA.log"
+    set vtkFreeSurferReaders(QASubjects) ""
+    set vtkFreeSurferReaders(MGHDecompressorExec) "/local/os/bin/gunzip"
+    set vtkFreeSurferReaders(QAOpacity) "0.5"
+    set vtkFreeSurferReaders(QAtime) 0
+    # save these settings and put them back after done qa
+    set vtkFreeSurferReaders(QAcast) $vtkFreeSurferReaders(castToShort)
+    set vtkFreeSurferReaders(QAopacity) $::Slice(opacity)
+    set vtkFreeSurferReaders(QAviewmode) $::View(mode)
 
     lappend Module($m,fiducialsPointCreatedCallback) FreeSurferReadersFiducialsPointCreatedCallback
 
@@ -204,7 +214,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.16 $} {$Date: 2005/03/15 00:15:22 $}]
+        {$Revision: 1.17 $} {$Date: 2005/03/18 21:35:18 $}]
 
 }
 
@@ -512,7 +522,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
     pack $f.bSetDir -padx $Gui(pad) -pady $Gui(pad)
     
     # a list of the subjects found in the directory
-    set qaSubjectNameListBox [ScrolledListbox $f.slbQASubjects 0 0 -height 5 -bg $Gui(activeWorkspace) -selectmode multiple]
+    set qaSubjectNameListBox [ScrolledListbox $f.slbQASubjects 0 0 -height 4 -bg $Gui(activeWorkspace) -selectmode multiple]
     # make the scroll bars a bit skinnier when they appear
     $f.slbQASubjects.xscroll configure -width 10
     $f.slbQASubjects.yscroll configure -width 10
@@ -521,16 +531,6 @@ proc vtkFreeSurferReadersBuildGUI {} {
 
     # if the list of subjects has already been set, populate it
     vtkFreeSurferReadersQAResetSubjectsListBox
-    if {0} {
-    if {[info exist vtkFreeSurferReaders(QASubjectNames)] && $vtkFreeSurferReaders(QASubjectNames) != ""} {
-        if {$::Module(verbose)} { puts "Using already set QASubjectNames" }
-        foreach sub $vtkFreeSurferReaders(QASubjectNames) {
-            $vtkFreeSurferReaders(qaSubjectsListbox) insert end $sub
-            # for now make them all active as add them
-            $vtkFreeSurferReaders(qaSubjectsListbox) selection set end end
-        }
-    }
-    }
 
     DevAddLabel $f.lClick "Click on Subjects you wish to load for QA\nOR set a subjects file name below"
     pack $f.lClick  -side top -padx $Gui(pad) -pady 0
@@ -598,13 +598,32 @@ proc vtkFreeSurferReadersBuildGUI {} {
     DevAddButton $f.bStart "Run QA" vtkFreeSurferReadersStartQA
     TooltipAdd $f.bStart "Start the QA process, loading the volumes for the selected subjects (if they exist)"
 
-    DevAddButton $f.bPause "Pause QA" vtkFreeSurferReadersPauseQA
-    TooltipAdd $f.bPause "Pause the QA process, hitting Continue QA again will continue"
+#    DevAddButton $f.bPause "Pause QA" vtkFreeSurferReadersPauseQA
+#    TooltipAdd $f.bPause "Pause the QA process, hitting Continue QA again will continue"
 
-    DevAddButton $f.bContinue "Continue QA" vtkFreeSurferReadersContinueQA
-    TooltipAdd $f.bContinue "Continue the QA process from pause point"
+#    DevAddButton $f.bContinue "Continue QA" vtkFreeSurferReadersContinueQA
+#    TooltipAdd $f.bContinue "Continue the QA process from pause point"
 
-    pack $f.bStart $f.bPause $f.bContinue -side left -padx $Gui(pad) -expand 1
+    pack $f.bStart -side top -padx $Gui(pad) -expand 1
+
+    DevAddLabel $f.lTime "Scan through slices manually"
+    eval {scale $f.sTime -from 0 -to 9 \
+              -length 220 -resolution 1 \
+              -command vtkFreeSurferReadersQASetTime } \
+        $::Gui(WSA) {-sliderlength 22}
+    set ::vtkFreeSurferReaders(timescale) $f.sTime
+    if { ![catch "package require iSlicer"] } {
+        if { [info command istask] != "" } { 
+            istask $f.play \
+                -taskcommand vtkFreeSurferReadersStepFrame \
+                -taskdelay $vtkFreeSurferReaders(scanMs) \
+                -labeltext "Auto scanning display:" \
+                -labelfont {helvetica 8} \
+                -background $Gui(activeWorkspace)
+            pack $f.play
+        }
+    }
+    pack $f.lTime $f.sTime 
 
     #-----------
     # QA -> Options
@@ -614,15 +633,10 @@ proc vtkFreeSurferReadersBuildGUI {} {
     eval {label $f.ltitle -text "Options:"} $Gui(WLA)
     pack $f.ltitle
 
-    frame $f.fScanPause -bg $Gui(activeWorkspace)
-    frame $f.fScanStep -bg $Gui(activeWorkspace)
-    frame $f.fScanStart -bg $Gui(activeWorkspace)
-    frame $f.fEdit -bg $Gui(activeWorkspace)
-
-    pack $f.fScanPause -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-    pack $f.fScanStep -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-    pack $f.fScanStart -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-    pack $f.fEdit -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    foreach subf { ScanPause ScanStep ScanStart Edit Opacity } {
+        frame $f.f${subf} -bg $Gui(activeWorkspace)
+        pack $f.f${subf}  -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    }
 
     # QA -> Options -> ScanPause
     set f $fQA.fOptions.fScanPause
@@ -630,6 +644,8 @@ proc vtkFreeSurferReadersBuildGUI {} {
     # auto scroll time interval
     eval {label $f.lscanpause -text "Scan pause milliseconds:"} $Gui(WLA)
     eval {entry $f.escanpause -textvariable vtkFreeSurferReaders(scanMs) -width 3} $Gui(WEA)
+    # if the pause length changes, need to reset the delay on the scanning task
+    bind $f.escanpause <Return> "vtkFreeSurferReadersQAResetTaskDelay"
     pack $f.lscanpause -side left -padx $Gui(pad) 
     pack $f.escanpause -side left -padx $Gui(pad) -expand 1 -fill x
 
@@ -641,6 +657,8 @@ proc vtkFreeSurferReadersBuildGUI {} {
     eval {entry $f.escanstep -textvariable vtkFreeSurferReaders(scanStep) -width 3} $Gui(WEA)
     pack $f.lscanstep -side left -padx $Gui(pad) 
     pack $f.escanstep -side left -padx $Gui(pad) -expand 1 -fill x
+    # reset the time scale on the slider
+    bind $f.escanstep <Return> vtkFreeSurferReadersResetTimeScale
 
     # QA -> Options -> ScanStart
     set f $fQA.fOptions.fScanStart
@@ -655,6 +673,10 @@ proc vtkFreeSurferReadersBuildGUI {} {
     pack $f.lscanstartSAG -side left -padx 0
     pack $f.escanstartSAG -side left -padx $Gui(pad) -expand 1 -fill x
 
+    # reset the scale on the slider
+    bind $f.escanstartCOR <Return> vtkFreeSurferReadersResetTimeScale
+    bind $f.escanstartSAG <Return> vtkFreeSurferReadersResetTimeScale
+
     # QA -> Options -> Edit
     set f $fQA.fOptions.fEdit
     # have editing enabled?
@@ -665,9 +687,16 @@ proc vtkFreeSurferReadersBuildGUI {} {
               -indicatoron 0} $Gui(WCA)
     pack $f.cQAEdit -side top -padx 0
 
-    # opacity for aseg volume overlay
+    # QA -> Options -> Opacity
+    set f $fQA.fOptions.fOpacity
+    eval {label $f.lOpacity -text "Opacity of aseg"} $Gui(WLA)
+    eval {entry $f.eOpacity -textvariable vtkFreeSurferReaders(QAOpacity) -width 4} $Gui(WEA)
+    TooltipAdd $f.eOpacity "Opacity of foreground aseg volume, 0-1"
+    pack $f.lOpacity -side left -padx 0
+    pack $f.eOpacity -side left -padx $Gui(pad) -expand 1 -fill x
 
-    
+    # once everything's set up, reset the slider scale 
+    vtkFreeSurferReadersResetTimeScale
 }
 
 #-------------------------------------------------------------------------------
@@ -810,7 +839,7 @@ proc vtkFreeSurferReadersApply {} {
         }
     } elseif {[string match *.mgh.gz $vtkFreeSurferReaders(VolumeFileName)]} {
         if {[vtkFreeSurferReadersUncompressMGH] != -1} {
-            set vid[vtkFreeSurferReadersMGHApply]
+            set vid [vtkFreeSurferReadersMGHApply]
         }
     } elseif {[string match *.bfloat $vtkFreeSurferReaders(VolumeFileName)]} {
         set vid [vtkFreeSurferReadersBfloatApply]
@@ -965,15 +994,15 @@ proc vtkFreeSurferReadersCORApply {} {
 
     # load in free surfer colours for a label map?
     if {[Volume($i,node) GetLabelMap] == 1 &&
-        $vtkFreeSurferReaders(loadColours)} {
+        $vtkFreeSurferReaders(loadColours) &&
+        $vtkFreeSurferReaders(coloursLoaded) != 1} {
         if {$::Module(verbose)} {
             puts "vtkFreeSurferReadersCORApply: loading colour file $vtkFreeSurferReaders(colourFileName)."
         }
         # piggy back on the Color module
-        set Color(fileName) $vtkFreeSurferReaders(colourFileName)
+        set ::Color(fileName) $vtkFreeSurferReaders(colourFileName)
         ColorsLoadApply
-        # try turning off the flag now that they're loaded
-        set vtkFreeSurferReaders(loadColours) 0
+        set vtkFreeSurferReaders(coloursLoaded) 1
     }
 
 
@@ -1374,6 +1403,19 @@ set useMatrices 0
     }
     set View(fov) $fov
     MainViewSetFov
+
+    # load in free surfer colours for a label map?
+    if {[Volume($i,node) GetLabelMap] == 1 &&
+        $vtkFreeSurferReaders(loadColours) &&
+        $vtkFreeSurferReaders(coloursLoaded) != 1} {
+        if {$::Module(verbose)} {
+            puts "vtkFreeSurferReadersCORApply: loading colour file $vtkFreeSurferReaders(colourFileName)."
+        }
+        # piggy back on the Color module
+        set ::Color(fileName) $vtkFreeSurferReaders(colourFileName)
+        ColorsLoadApply
+        set vtkFreeSurferReaders(coloursLoaded) 1
+    }
 
     # display the new volume in the background of all slices if not a label map
     if {[Volume($i,node) GetLabelMap] == 1} {
@@ -2110,6 +2152,12 @@ proc vtkFreeSurferReadersMainFileCloseUpdate {} {
         }
         $rasmat Delete
     }
+
+    # let myself know that the FreeSurfer colours were unloaded
+    if {$::Module(verbose)} {
+        puts "setting coloursLoaded to 0"
+    }
+    set ::vtkFreeSurferReaders(coloursLoaded) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -4083,6 +4131,14 @@ proc vtkFreeSurferReadersPlotCancel {} {
 proc vtkFreeSurferReadersUncompressMGH {} {
     global vtkFreeSurferReaders Module
 
+    # if this is the first time we've hit an zipped mgh file, set up the uncompression program (and the temp dir?)
+    if {$vtkFreeSurferReaders(MGHDecompressorExec) == "" ||
+        ![file executable $vtkFreeSurferReaders(MGHDecompressorExec)]} {
+        set vtkFreeSurferReaders(MGHDecompressorExec) [tk_getOpenFile \
+                                                           -initialdir $::env(SLICER_HOME) \
+                                                           -parent .tMain \
+                                                           -title "A file that can gunzip:"]
+    }
     # if it's a .mgz file, copy it to .mgh.gz so that gunzip can process it, otherwise just make a copy to uncompress
     if {[string match *.mgz $vtkFreeSurferReaders(VolumeFileName)]} {
         set longFileName [file rootname $vtkFreeSurferReaders(VolumeFileName)].mgh.gz
@@ -4093,19 +4149,31 @@ proc vtkFreeSurferReadersUncompressMGH {} {
         } else {
             set vtkFreeSurferReaders(VolumeFileName) $longFileName
         }
-    } 
-    switch $::tcl_platform(os) {
-        "win32" {
-            puts " -- calling unzip"
-            exec unzip $vtkFreeSurferReaders(VolumeFileName)
-        }
-        default {
-            puts " -- calling gunzip"
-            exec gunzip -f $vtkFreeSurferReaders(VolumeFileName)
+    } else {
+        # if it's just an mgh.gz file:
+        # make a copy to work from, as when unzip it, it's going to replace itself
+        set fileCopyName COPY${vtkFreeSurferReaders(VolumeFileName)}
+        set reteval [catch {file copy -force $vtkFreeSurferReaders(VolumeFileName) $fileCopyName} errmsg]
+        if {$retval != 0} {
+            DevErrorWindow "Error: Cannot copy $vtkFreeSurferReaders(VolumeFileName) to $fileCopyName for decompression:\n$errmsg"
+            return -1
+        } else {
+            set vtkFreeSurferReaders(VolumeFileName) $fileCopyName
         }
     }
+
+    if {[file exist [file rootname $vtkFreeSurferReaders(VolumeFileName)]]} {
+        puts "Warning: file [file rootname $vtkFreeSurferReaders(VolumeFileName)] already exists, using it instead of unzipping $vtkFreeSurferReaders(VolumeFileName)"
+
+    } else {
+        puts " -- calling $vtkFreeSurferReaders(MGHDecompressorExec) $vtkFreeSurferReaders(VolumeFileName)"
+        exec $vtkFreeSurferReaders(MGHDecompressorExec) $vtkFreeSurferReaders(VolumeFileName)
+    }
+
     # take the .gz off the volume file name
     set vtkFreeSurferReaders(VolumeFileName) [file rootname $vtkFreeSurferReaders(VolumeFileName)]
+    puts " -- reset the volume file name to the uncompressed version"
+
     return 0
 }
 
@@ -4134,14 +4202,6 @@ proc vtkFreeSurferReadersSetQADirName { { startdir $::env(SLICER_HOME) } } {
     # pick up subject dirs from this directory and put them in the list box
     vtkFreeSurferReadersSetQASubjects
     vtkFreeSurferReadersQAResetSubjectsListBox
-    if {0} {
-    $vtkFreeSurferReaders(qaSubjectsListbox) delete 0 end
-    foreach sub $vtkFreeSurferReaders(QASubjectNames) {
-        $vtkFreeSurferReaders(qaSubjectsListbox) insert end $sub
-        # for now make them all active
-        $vtkFreeSurferReaders(qaSubjectsListbox) selection set end end
-    }
-    }
 }
 
 #-------------------------------------------------------------------------------
@@ -4331,159 +4391,62 @@ proc vtkFreeSurferReadersQASetLoadAddNew {} {
     }
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersStartQA
+# This will set up the interface for the first subject. Once it's done, the pop up
+# panel button push will launch the next subject
+# .ARGS
+# 
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersStartQA {} {
     global vtkFreeSurferReaders Module
 
     # get the selected subjects from the list box
-    set subjects ""
+    set vtkFreeSurferReaders(QASubjects) ""
     foreach ind [$vtkFreeSurferReaders(qaSubjectsListbox) curselection] {
-        lappend subjects [$vtkFreeSurferReaders(qaSubjectsListbox) get $ind]
+        lappend vtkFreeSurferReaders(QASubjects) [$vtkFreeSurferReaders(qaSubjectsListbox) get $ind]
     }
     
     if {$::Module(verbose)} {
         puts "vtkFreeSurferReadersStartQA"
         puts "\t subjects dir =  $vtkFreeSurferReaders(QADirName)"
-        puts "\t subjects to QA = $subjects"
+        puts "\t subjects to QA = $vtkFreeSurferReaders(QASubjects)"
         puts "\t vols to load = $vtkFreeSurferReaders(QAVolFiles)"
     }
 
+    # close out anything that's open
+    puts "Closing all volumes to start QA"
+    MainFileClose
+
     # turn off casting to short, as we're just viewing
-    set cast $vtkFreeSurferReaders(castToShort)
+    set vtkFreeSurferReaders(QAcast) $vtkFreeSurferReaders(castToShort)
     if {$vtkFreeSurferReaders(QAEdit)} {
          set vtkFreeSurferReaders(castToShort) 1
     } else {
         set vtkFreeSurferReaders(castToShort) 0
     }
+
+    # set the foreground opacity level 
+    set vtkFreeSurferReaders(QAopacity) $::Slice(opacity)
+    set ::Slice(opacity) $vtkFreeSurferReaders(QAOpacity)
+    MainSlicesSetOpacityAll
+
     # turn it into a better viewing set up
-    set viewmode $::View(mode)
+    set vtkFreeSurferReaders(QAviewmode) $::View(mode)
     MainViewerSetMode $vtkFreeSurferReaders(QADefaultView)
     RenderAll
 
     set islabelmap 0
 
-    foreach subject $subjects {
-        set response ok
+    # clear out the global message
+    set vtkFreeSurferReaders(QAmsg) ""
 
+    # reset the scanning time?
 
-        foreach vol $vtkFreeSurferReaders(QAVolFiles) {
-            if {$response == "cancel"} {
-                break
-            }
-
-            vtkFreeSurferReadersBuildQAInteractor $subject $vol
-
-            set subfilename [file join $vtkFreeSurferReaders(QADirName) $subject mri $vol]
-            set filetoload ""
-            # check to see if there's an mgh file there
-            set mghfilenames [glob -nocomplain ${subfilename}*.*]
-            if {$mghfilenames != ""} {
-                # figure out if have more than one
-                if {$::Module(verbose)} { puts $mghfilenames }
-                set filetoload [lindex $mghfilenames 0]
-            } else {
-                # otherwise check for a COR file in a subdir of that name
-                if {[file isdirectory $subfilename]} {
-                    # check to see if there's a COR-.info file there
-                    set corfilename [file join $subfilename COR-.info]
-                    if {[file exist $corfilename]} {
-                        set filetoload $corfilename
-                    }
-                }
-            }
-            if {$filetoload != ""} {
-                # load it up
-                puts "Loading $filetoload"
-                        
-                # if it's an aseg volume (could be an added one) it's a label map, so keep it 
-                # loaded in the foreground as well
-                if {$vol == "aseg" || [regexp "^aseg.*" $vol matchVar] == 1} {
-                    set islabelmap 1
-                    vtkFreeSurferReadersLoadVolume $filetoload $islabelmap ${subject}-${vol}-lb
-                    # but, load it as a regular volume too
-                    set volID [vtkFreeSurferReadersLoadVolume $filetoload 0 ${subject}-${vol}]
-                    # and put it in the foreground instead
-                    if {$::Module(verbose)} { puts "Loaded aseg, got volume id $volID" }
-                    MainSlicesSetVolumeAll Fore $volID
-                    RenderAll
-                } else {
-                    set islabelmap 0
-                    vtkFreeSurferReadersLoadVolume $filetoload $islabelmap ${subject}-${vol}
-                }
-                # make all slices visible
-                foreach s {0 1 2} {
-                    set ::Slice($s,visibility) 1
-                    MainSlicesSetVisibility $s
-                }
-                # then update the viewer
-                RenderAll
-                
-                # then spin it until the user clicks
-                # set ::View(spinDir) 1
-                # MainViewSpin
-                
-                # need to put up a pause box here before go on to the next one
-                # don't pause if this is the aseg and there are more to load
-                if {$vol != "aseg" || [llength $vtkFreeSurferReaders(QAVolFiles)] == 1} {
-                    # run the slice animations here
-                    # first, in cor mode
-                    MainViewerSetMode "Single512COR"
-#                    DevInfoWindow "auto scanning in COR"
-                    MainSlicesSetOffset 2 $vtkFreeSurferReaders(scanStartCOR)
-                    RenderBoth 2
-                    set vtkFreeSurferReaders(scan) 1
-                    vtkFreeSurferReadersScan 2
-                    # that exits too quickly, going through to the next one right away, 
-                    # put in a hack in scanning that will start scanning 1 after done with 2
-                    if {0} {
-
-                        DevInfoWindow "Click when ready to start auto scanning in SAG"
-
-                        # then in saggital mode
-                        MainViewerSetMode "Single512SAG"                   
-                        MainSlicesSetOffset 1 $vtkFreeSurferReaders(scanStartSAG)
-                        RenderBoth 1
-                        set vtkFreeSurferReaders(scan) 1
-                        vtkFreeSurferReadersScan 1
-                    }
-
-                    DevInfoWindow "Click when ready to go to manual mode"
-
-                    # reset the slices
-                    MainSlicesSetOffset 0 0
-                    MainSlicesSetOffset 1 0
-                    MainSlicesSetOffset 2 0
-
-                    MainViewerSetMode "Quad512"
-                    RenderAll
-                    set response [tk_messageBox -type okcancel \
-                        -message "Click when you're ready to go onto the next one\nCurrently viewing:\n$filetoload" \
-                                      -title "QA $subject $vol"]
-                
-                }
-                # stop spinning
-                # set ::View(spinDir) 0
-                
-            } else {
-                puts "Can't find a file to load for $subject $vol, skipping"
-            }
-        }
-        # done the volumes for this subject
-        
-        # close the volumes loaded for this subject
-        # this will remove the label maps
-        # MainFileClose
-    }
-    # now done all subjects
-
-    # puts stuff back the way it was
-    set vtkFreeSurferReaders(castToShort) $cast
-    MainViewerSetMode $viewmode
-
-    set closeup [tk_messageBox -type yesno -message "Do you want to close all volumes?"]
-    if {$closeup == "yes"} {
-        MainFileClose
-    }
-    
+    # this call will set up with the next subject
+    vtkFreeSurferReadersQAReviewSubject [lindex  $vtkFreeSurferReaders(QASubjects) 0]    
 }
 
 proc vtkFreeSurferReadersPauseQA {} {
@@ -4567,18 +4530,24 @@ proc vtkFreeSurferReadersSetQAEdit {} {
 proc vtkFreeSurferReadersBuildQAInteractor { subject vol } {
     global vtkFreeSurferReaders Gui
 
+    if {$subject == "" || $vol == ""} {
+        puts "No subject or volume..."
+        return
+    }
     if {$::Module(verbose)} {
         puts "Building interactor window for subject $subject and vol $vol"
     }
 
     if {[info command .top${subject}${vol}] !=  ""} {
-        puts "Already have a .top${subject}${vol}"
+        if {$::Module(verbose)} {
+            puts "Already have a .top${subject}${vol}"
+        }
         wm deiconify .top${subject}${vol}
         return
     }
 
     toplevel .top${subject}${vol}
-    
+    wm geometry .top${subject}${vol} +[winfo x .tMain]+10
 
     frame .top${subject}${vol}.f1 -bg $Gui(activeWorkspace)
     pack .top${subject}${vol}.f1  -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
@@ -4611,6 +4580,43 @@ proc vtkFreeSurferReadersBuildQAInteractor { subject vol } {
     }
 }
 
+# this provides the button that will go onto the next subject
+proc vtkFreeSurferReadersBuildQAInteractorNextSubject { subject } {
+    global vtkFreeSurferReaders Gui
+
+    if {$::Module(verbose)} {
+        puts "Building next subject interactor window for subject $subject"
+    }
+
+    if {[info command .top${subject}] !=  ""} {
+        puts "Already have a .top${subject}"
+        wm deiconify .top${subject}
+        return
+    }
+    toplevel .top${subject}
+    wm geometry .top${subject} +[winfo x .tMain]+50
+
+    frame .top${subject}.f1 -bg $Gui(activeWorkspace)
+    pack .top${subject}.f1  -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+    set f .top${subject}.f1
+
+    eval {label $f.lSubject -text "Subject = $subject"} $Gui(WLA)
+    pack $f.lSubject
+
+    eval {label $f.lVol -text "Volumes = $vtkFreeSurferReaders(QAVolFiles)"} $Gui(WLA)
+    pack $f.lVol
+
+    frame $f.fNext -bg $Gui(activeWorkspace)
+    pack $f.fNext -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+
+    set f .top${subject}.f1.fNext
+    # when you press this, it gets the next subject in the list, and starts the review process for them
+    DevAddButton $f.bNext "Click for Next Subject" "vtkFreeSurferReadersReviewNextSubject $subject"
+    pack $f.bNext -side left -padx $Gui(pad) -expand 1
+}
+
 proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     global vtkFreeSurferReaders 
 
@@ -4628,10 +4634,375 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     }
     
     # write it out
-    puts $fid "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.16 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.17 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    puts $fid $msg
     close $fid
 
     # now close down the window that called me
-    puts "Closing .top${subject}${vol}"
+    if {$::Module(verbose)} {
+        puts "Closing .top${subject}${vol}"
+    }
     wm withdraw .top${subject}${vol}
+
+    # and add to the global qa run's message
+    append vtkFreeSurferReaders(QAmsg) "\n$msg"
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersResetTimeScale
+#
+#  When the starting slice or the slice step change, reset the timescale slider.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersResetTimeScale { } {
+    global vtkFreeSurferReaders
+
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersResetTimeScale: startCOR: $vtkFreeSurferReaders(scanStartCOR), startSAG: $vtkFreeSurferReaders(scanStartSAG), step: $vtkFreeSurferReaders(scanStep), slice cor range high =  [Slicer GetOffsetRangeHigh 2], slice sag range high = [Slicer GetOffsetRangeHigh 1]"
+    }
+    # break up the scanning into cor scanning and sag scanning
+    # cor goes from the high offset on slice 2 to the start value
+    set corsteps [expr ( [Slicer GetOffsetRangeHigh 2] -  $vtkFreeSurferReaders(scanStartCOR) ) / $vtkFreeSurferReaders(scanStep)]
+    # sag goes from the high offset on slice 1 to the start value
+    set sagsteps [expr ( [Slicer GetOffsetRangeHigh 1] - $vtkFreeSurferReaders(scanStartSAG) ) / $vtkFreeSurferReaders(scanStep)]
+
+    # then reset the slider to go from 0 to (corsteps + sagsteps) - 1
+    if {[$::Module(vtkFreeSurferReaders,fQA).fBtns.sTime cget -to] != [expr $corsteps + $sagsteps - 1]} {
+        $::Module(vtkFreeSurferReaders,fQA).fBtns.sTime configure -to [expr $corsteps + $sagsteps - 1]
+        if {$::Module(verbose)} {
+            puts "\n\n\treset time slider's to value to [expr $corsteps + $sagsteps - 1]"
+        }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersQAResetTaskDelay
+#
+#  When the scan pause changes, reset the task delay on the Start button.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersQAResetTaskDelay { } {
+    global vtkFreeSurferReaders Module
+
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersQAResetTaskDelay: new delay: $vtkFreeSurferReaders(scanMs) ms"
+    }
+    if {[info command istask] != ""} {
+        $::Module(vtkFreeSurferReaders,fQA).fBtns.play configure -taskdelay $vtkFreeSurferReaders(scanMs)
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersQASetTime
+#
+#  Show the slice and view for the current time
+# .ARGS
+# t the time step
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersQASetTime { {t ""} } {
+    global vtkFreeSurferReaders
+
+    if {$::Module(verbose)} { puts "vtkFreeSurferReadersQASetTime t = $t, QAtime = $::vtkFreeSurferReaders(QAtime)" }
+
+    # if time hasn't been changed, return
+    if { $t != "" } {
+        if { $t == $::vtkFreeSurferReaders(QAtime) } {
+            return
+        }
+    }
+
+    if {$t == "" } {
+        set t $vtkFreeSurferReaders(QAtime)
+    } else {
+        set vtkFreeSurferReaders(QAtime) $t
+    }
+
+    # recalibrate the slider if necessary
+    vtkFreeSurferReadersResetTimeScale
+
+    # set the slider
+    $vtkFreeSurferReaders(timescale) set $t
+
+    # now display the right slice
+    # break up the scanning into cor scanning and sag scanning
+    # cor goes from the high offset on slice 2 to the start value
+    set corsteps [expr ( [Slicer GetOffsetRangeHigh 2] -  $vtkFreeSurferReaders(scanStartCOR) ) / $vtkFreeSurferReaders(scanStep)]
+    # sag goes from the high offset on slice 1 to the start value
+    set sagsteps [expr ( [Slicer GetOffsetRangeHigh 1] - $vtkFreeSurferReaders(scanStartSAG) ) / $vtkFreeSurferReaders(scanStep)]
+
+    # if the time is less than the corsteps, reset the COR slice
+    if {$t < $corsteps} {
+        if {$::Module(verbose)} { 
+            puts "$t < $corsteps, doing cor" 
+        }
+        # check the view mode
+        if {$::View(mode) != "Single512COR"} {
+            MainViewerSetMode "Single512COR"
+        }
+        # take the starting slice and add the time mult by the scan step
+        set corslice [expr $vtkFreeSurferReaders(scanStartCOR) + [expr $t * $vtkFreeSurferReaders(scanStep)]]
+
+        # puts -nonewline "\t C${corslice}" 
+
+        MainSlicesSetOffset 2 $corslice
+        RenderSlice 2
+    } else {
+        if {$t == $corsteps} {
+            # reset the slices on the cor and axi to be 0
+            MainSlicesSetOffset 0 0
+            MainSlicesSetOffset 2 0
+            RenderSlice 0
+            RenderSlice 2
+        }
+        # reset the SAG slice
+        if {$::Module(verbose)} { 
+            puts "$t >= $corsteps, doing sag" 
+        }
+        if {$::View(mode) != "Single512SAG"} {
+            MainViewerSetMode "Single512SAG"
+        }
+        # take the starting slice and add t then take way the cor steps that have already been done
+        set sagslice [expr $vtkFreeSurferReaders(scanStartSAG) + [expr ($t - $corsteps) * $vtkFreeSurferReaders(scanStep)]]
+        # puts -nonewline "\tS${sagslice}" 
+
+        MainSlicesSetOffset 1 $sagslice
+        RenderSlice 1
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersStepFrame
+#
+#  adjust the frame according to current increment and handle boundaries
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersStepFrame {} {
+    global vtkFreeSurferReaders
+
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersStepFrame"
+    }
+    set first [$::Module(vtkFreeSurferReaders,fQA).fBtns.sTime cget -from]
+    set last [$::Module(vtkFreeSurferReaders,fQA).fBtns.sTime cget -to]
+    # set inc $::vtkFreeSurferReaders(scanStep)
+    # incrementing is handled in the qa set time function
+    set inc 1
+    set t $::vtkFreeSurferReaders(QAtime)
+
+    set t [expr $t + $inc]
+
+    if {$t > $last} {
+        set t $last
+        # reset the view mode to normal if not there already
+        if {$::View(mode) != $vtkFreeSurferReaders(QADefaultView)} {
+            MainViewerSetMode $vtkFreeSurferReaders(QADefaultView)
+        }
+    } 
+    if {$t < $first} {
+        set t $first 
+    } 
+    vtkFreeSurferReadersQASetTime $t
+}
+
+proc vtkFreeSurferReadersReviewNextSubject { subject } {
+    global vtkFreeSurferReaders
+
+    # turn off any istask
+    $::Module(vtkFreeSurferReaders,fQA).fBtns.play off
+
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersQAReviewNextSubject"
+    }
+
+    # if I'm the last one, just quit
+    if {$subject == [lindex  $vtkFreeSurferReaders(QASubjects) end]} {
+        puts "vtkFreeSurferReadersReviewNextSubject: No more subjects."
+        return
+    }
+
+    # close the last ones
+    MainFileClose
+
+    # close the window that called me
+    wm withdraw .top${subject}
+
+    # find out where I am in the subjects list
+    set myindex [lsearch  $vtkFreeSurferReaders(QASubjects)  $subject]
+
+    # get the next one
+    set nextindex [incr myindex]
+    set nextsubject [lindex $vtkFreeSurferReaders(QASubjects) $nextindex]
+
+    # review it
+    vtkFreeSurferReadersQAReviewSubject $nextsubject
+}
+
+proc vtkFreeSurferReadersQAReviewSubject { subject } {
+    global vtkFreeSurferReaders
+
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersQAReviewSubject"
+    }
+    
+    foreach vol $vtkFreeSurferReaders(QAVolFiles) {
+
+        vtkFreeSurferReadersBuildQAInteractor $subject $vol
+
+        set subfilename [file join $vtkFreeSurferReaders(QADirName) $subject mri $vol]
+        set filetoload ""
+        # check to see if there's an mgh file there
+        set mghfilenames [glob -nocomplain ${subfilename}*.*]
+        if {$mghfilenames != ""} {
+            # figure out if have more than one
+            if {$::Module(verbose)} { puts $mghfilenames }
+            set filetoload [lindex $mghfilenames 0]
+        } else {
+            # otherwise check for a COR file in a subdir of that name
+            if {[file isdirectory $subfilename]} {
+                # check to see if there's a COR-.info file there
+                set corfilename [file join $subfilename COR-.info]
+                if {[file exist $corfilename]} {
+                    set filetoload $corfilename
+                }
+            }
+        }
+        if {$filetoload != ""} {
+            # load it up
+            puts "Loading $filetoload"
+            
+            # if it's an aseg volume (could be an added one) it's a label map, so keep it 
+            # loaded in the foreground as well
+            if {$vol == "aseg" || [regexp "^aseg.*" $vol matchVar] == 1} {
+                set islabelmap 1
+
+                # load the colours
+                if {$vtkFreeSurferReaders(coloursLoaded) != 1} {
+                    set ::Color(fileName) $vtkFreeSurferReaders(colourFileName)
+                    puts "Loading $::Color(fileName)"
+                    ColorsLoadApply
+                    set vtkFreeSurferReaders(coloursLoaded) 1
+                }
+
+                # vtkFreeSurferReadersLoadVolume $filetoload $islabelmap ${subject}-${vol}-lb
+                # but, load it as a regular volume too
+                # just load it as a label map and set both fore and label to it
+                set volID [vtkFreeSurferReadersLoadVolume $filetoload $islabelmap ${subject}-${vol}]
+                # and put it in the background instead so can see the colours
+                if {$::Module(verbose)} { puts "Loaded aseg, got volume id $volID" }
+                MainSlicesSetVolumeAll Fore $volID
+                MainSlicesSetVolumeAll Label $volID
+                RenderAll
+            } else {
+                set islabelmap 0
+                set volID [vtkFreeSurferReadersLoadVolume $filetoload $islabelmap ${subject}-${vol}]
+                # and put it in the foreground
+                MainSlicesSetVolumeAll Back $volID
+            }
+            # make all slices visible
+            foreach s {0 1 2} {
+                set ::Slice($s,visibility) 1
+                MainSlicesSetVisibility $s
+            }
+            # then update the viewer
+            RenderAll
+            
+            # don't pause if this is the aseg and there are more to load
+            if {$vol != "aseg" || [llength $vtkFreeSurferReaders(QAVolFiles)] == 1} {
+                # reset the time scale
+
+                # kick off the istask to cycle through the volumes
+            }
+        } else {
+            puts "Can't find a file to load for $subject $vol, skipping"
+        }
+    }
+    # done the volumes for this subject
+
+   
+    # scan through slices now
+    set vtkFreeSurferReaders(QAtime) 0
+    $::Module(vtkFreeSurferReaders,fQA).fBtns.play on
+    vtkFreeSurferReadersStepFrame
+
+    # is this the last subject?
+    if {$subject == [lindex $vtkFreeSurferReaders(QASubjects) end]} {
+        vtkFreeSurferReadersBuildQAInteractorStop
+    } else {
+        # make the interactor that allows you to go onto the next subject
+        vtkFreeSurferReadersBuildQAInteractorNextSubject $subject
+    }
+}
+
+# basically builds a button to stop everything
+proc vtkFreeSurferReadersBuildQAInteractorStop {} {
+    global vtkFreeSurferReaders Gui
+
+    if {$::Module(verbose)} {
+        puts "Building done QA interactor window"
+    }
+    if {[info command .topStopQA] !=  ""} {
+        if {$::Module(verbose)} {
+            puts "Already have a .topStopQA"
+        }
+        wm deiconify .topStopQA
+        return
+    }
+    toplevel .topStopQA
+    wm geometry .topStopQA +[winfo x .tMain]+0
+
+    frame .topStopQA.f1 -bg $Gui(activeWorkspace)
+    pack .topStopQA.f1  -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+    set f .topStopQA.f1
+
+    frame $f.fStop -bg $Gui(activeWorkspace)
+    pack $f.fStop -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+    set f .topStopQA.f1.fStop
+    DevAddButton $f.bStop "Click to Stop QA" "vtkFreeSurferReadersQAStop"
+    TooltipAdd $f.bStop "Writes results to a file. Turns off slice scanning, resets editing, view options.\nCloses all volumes."
+    pack $f.bStop -side left -padx $Gui(pad) -expand 1
+
+}
+
+proc vtkFreeSurferReadersQAStop {} {
+    global vtkFreeSurferReaders 
+
+    # puts stuff back the way it was
+    puts "Resetting everything to the way it was before we changed things for qa"
+
+    # turn off istask that scans through slices
+    $::Module(vtkFreeSurferReaders,fQA).fBtns.play off
+    
+    # reset the time
+    set vtkFreeSurferReaders(QAtime) 0
+
+    set vtkFreeSurferReaders(castToShort) $vtkFreeSurferReaders(QAcast)
+    MainViewerSetMode $vtkFreeSurferReaders(QAviewmode)
+    
+    set ::Slice(opacity) $vtkFreeSurferReaders(QAopacity)
+    MainSlicesSetOpacityAll
+    
+    # also write out the overall QA message to a file
+    set fname [file join $vtkFreeSurferReaders(QADirName) QA-[clock format [clock seconds] -format "%Y-%m-%d-%T-%Z"].log]
+    if {[catch {set fid [open $fname "w"]} errmsg] == 1} {
+        DevErrorWindow "Cannot open file for writing about this QA run:\nfilename = $fname\n$errMsg"
+        return 
+    }
+    puts $fid  $vtkFreeSurferReaders(QAmsg) 
+    close $fid
+    
+    #        set closeup [tk_messageBox -type yesno -message "Do you want to close all subject volumes?"]
+    #        if {$closeup == "yes"} {
+    #            MainFileClose
+    #        }
+    # close the last subject
+    MainFileClose
+
+    # close the window that called us
+    wm withdraw .topStopQA
 }
