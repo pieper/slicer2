@@ -139,6 +139,8 @@ proc MainBoot {{mrmlFile ""}} {
     lappend Module(Renderers) viewRen
     set View(viewCam) [viewRen GetActiveCamera]
 
+    update
+
     MainViewerBuildGUI
 
     # Module Init
@@ -357,7 +359,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.81 $} {$Date: 2002/08/22 19:44:48 $}]
+        {$Revision: 1.82 $} {$Date: 2002/08/26 14:26:04 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
