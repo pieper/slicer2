@@ -21,12 +21,15 @@
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 
 int vtkNRRDReader::CanReadFile(const char* filename)
-{ 
+{
+#ifndef NRRD_SPACE_DIM_MAX 
+    return false;
+#else
   // Check the extension first to avoid opening files that do not
   // look like nrrds.  The file must have an appropriate extension to be
   // recognized.
@@ -89,11 +92,15 @@ int vtkNRRDReader::CanReadFile(const char* filename)
 
   inputStream.close();
   return false;
+#endif
 }
 
 
 void vtkNRRDReader::ExecuteInformation()
 {
+#ifndef NRRD_SPACE_DIM_MAX 
+    return;
+#else
    // This method determines the following and sets the appropriate value in
    // the parent IO class:
    //
@@ -222,6 +229,7 @@ void vtkNRRDReader::ExecuteInformation()
    
    nrrdNix(nrrd);
    nrrdIoStateNix(nio);
+#endif
 }
 
 
@@ -293,6 +301,9 @@ void vtkNRRDReaderUpdate(vtkNRRDReader *self, vtkImageData *data,
 // are assumed to be the same as the file extent/order.
 void vtkNRRDReader::ExecuteData(vtkDataObject *output)
 {
+#ifndef NRRD_SPACE_DIM_MAX 
+    return;
+#else
   output->SetUpdateExtentToWholeExtent();
   vtkImageData *data = this->AllocateOutputData(output);
 
@@ -320,6 +331,7 @@ void vtkNRRDReader::ExecuteData(vtkDataObject *output)
       vtkGenericWarningMacro("ExecuteData: Unknown input ScalarType");
       return;
     }
+#endif
 }
 
 //----------------------------------------------------------------------------
