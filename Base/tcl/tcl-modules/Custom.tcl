@@ -137,7 +137,7 @@ proc CustomInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.24 $} {$Date: 2001/05/24 00:29:15 $}]
+	    {$Revision: 1.25 $} {$Date: 2001/06/12 21:01:14 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -205,8 +205,7 @@ proc CustomBuildGUI {} {
     #   Bottom
     #     FileLabel
     #     CountDemo
-    # Bindings
-    #   TextBox
+    #     TextBox
     #-------------------------------------------
     
     #-------------------------------------------
