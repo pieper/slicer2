@@ -151,7 +151,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.23 $} {$Date: 2004/02/19 14:33:20 $}]
+        {$Revision: 1.24 $} {$Date: 2004/02/19 17:41:14 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -330,7 +330,7 @@ proc MIRIADSegmentExit {} {
 #-------------------------------------------------------------------------------
 proc MIRIADSegmentProcessStudy { {archive "default"} {BIRNID "000397921927"} {visit 001} {atlas "spl"} } {
 
-    set ::MIRIADSegment(version) reg_LONIbAb__params_SP_ic
+    set ::MIRIADSegment(version) reg_LONIbAb__params_params-sp-duke-2004-02-19_ic
 
     MIRIADSegmentLoadStudy $archive $BIRNID $visit $atlas
 
@@ -339,10 +339,11 @@ proc MIRIADSegmentProcessStudy { {archive "default"} {BIRNID "000397921927"} {vi
         return
     }
 
-    MIRIADParametersDefault
+    MIRIADParametersDefaults
+    MIRIADParametersLoad $::env(SLICER_HOME)/Modules/vtkMIRIADSegment/data/params-sp-duke-2004-02-19
 
     MIRIADSegmentSetEMParameters
-    MIRIADSegmentRunEM
+    MIRIADSegmentRunEM 
 
     if { $::MIRIADSegment(status) != "okay" } {
         puts "MIRIADSegment Failed"
@@ -828,7 +829,17 @@ proc MIRIADSegmentSetEMParameters { } {
     #         |-> BRAIN (3)
     #             |-> CSF (4)
     #             |-> Gray (5)
-    #                 |-> (TODO add subtree)
+    #                 |-> OtherGray (9)
+    #                 |-> lr Amygdala (10,11)
+    #                 |-> lr AnteriorInsulaCortex (12 13)
+    #                 |-> lr Hippocampus (14 15)
+    #                 |-> lr InferiorTemporalGyrus (16 17)
+    #                 |-> lr MiddleTemporalGyrus (18 19)
+    #                 |-> lr Parahippocampus (20 21)
+    #                 |-> lr PosteriorInsulaCortex (22 23)
+    #                 |-> lr SuperiorTemporalGyrus (24 25)
+    #                 |-> lr TemporalLobe (26 27)
+    #                 |-> lr Thalamus (28 29)
     #             |-> White (6)
     #                 |-> WMNormal (7)
     #                 |-> WMLesion (8)
@@ -1088,10 +1099,10 @@ proc MIRIADSegmentRunEM { {mode "full"} } {
         # preview mode
         set ::EMSegment(SegmentationBoundaryMin,0) 1
         set ::EMSegment(SegmentationBoundaryMin,1) 1
-        set ::EMSegment(SegmentationBoundaryMin,2) 30
+        set ::EMSegment(SegmentationBoundaryMin,2) 22
         set ::EMSegment(SegmentationBoundaryMax,0) 128
         set ::EMSegment(SegmentationBoundaryMax,1) 256
-        set ::EMSegment(SegmentationBoundaryMax,2) 30
+        set ::EMSegment(SegmentationBoundaryMax,2) 22
         set ::EMSegment(EMiteration) 5
         set ::EMSegment(MFAiteration) 2
     }
