@@ -110,7 +110,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.18 $} {$Date: 2004/07/27 21:11:28 $}]
+                  {$Revision: 1.19 $} {$Date: 2004/07/29 16:45:39 $}]
 
     # Define Tabs
     #------------------------------------
@@ -283,7 +283,7 @@ proc DTMRIInit {} {
     set DTMRI(stream,BSplineOrderList,tooltip) {"Order of the BSpline interpolation."}
 
     # Method Orders
-    set DTMRI(stream,MethodOrder) "rk45"
+    set DTMRI(stream,MethodOrder) "rk4"
     set DTMRI(stream,MethodOrderList) {"rk2" "rk4" "rk45"}
     set DTMRI(stream,MethodOrderList,tooltip) {"Order of the tractography"}
 
@@ -340,14 +340,14 @@ proc DTMRIInit {} {
                             "MaxError: Length of fiber when considering maximum angle" ]
 
     # Upper Bound to add regularization Bias
-    set DTMRI(stream,UpperBoundBias)  0.0
+    set DTMRI(stream,UpperBoundBias)  0.3
     # Lower Bound to add regularization Bias
-    set DTMRI(stream,LowerBoundBias)  0.0
+    set DTMRI(stream,LowerBoundBias)  0.2
     # Magnitude of the correction bias
-    set DTMRI(stream,CorrectionBias)  0.0
+    set DTMRI(stream,CorrectionBias)  0.5
 
-    set DTMRI(stream,MaximumPropagationDistance)  30
-    set DTMRI(stream,MinimumPropagationDistance)  2
+    set DTMRI(stream,MaximumPropagationDistance)  100.0
+    set DTMRI(stream,MinimumPropagationDistance)  30.0
     # Terminal Eigenvalue
     set DTMRI(stream,TerminalEigenvalue)  0.0
     # nominal integration step size (expressed as a fraction of the
@@ -361,7 +361,7 @@ proc DTMRIInit {} {
     set DTMRI(stream,MaxError) 0.000001
 
     # Set/Get the Maximum Angle of a fiber
-    set DTMRI(stream,MaxAngle) 60
+    set DTMRI(stream,MaxAngle) 30
 
     # Set/Get the length of the fiber when considering the maximum angle
     set DTMRI(stream,LengthOfMaxAngle) 1
@@ -373,7 +373,7 @@ proc DTMRIInit {} {
     set DTMRI(stream,Radius)  0.2 
     # sides of tube
     #set DTMRI(stream,NumberOfSides)  30
-    set DTMRI(stream,NumberOfSides)  10
+    set DTMRI(stream,NumberOfSides)  4
     # 2 means SetIntegrationDirectionToIntegrateBothDirections
     set DTMRI(stream,IntegrationDirection)  2
 
@@ -505,7 +505,7 @@ proc DTMRIInit {} {
     DTMRI(vtk,rk4) SetFunctionSet DTMRI(vtk,itf)
     DTMRI(vtk,rk2) SetFunctionSet DTMRI(vtk,itf)
 
-    set DTMRI(vtk,ivps) DTMRI(vtk,rk45)
+    set DTMRI(vtk,ivps) DTMRI(vtk,rk4)
 }
 
 ################################################################
@@ -3125,6 +3125,7 @@ proc DTMRIAddPreciseStreamline {} {
     # Lauren we may want to use this once have no neg eigenvalues
     #DTMRIMakeVTKObject vtkLogLookupTable $object
     DTMRIMakeVTKObject vtkLookupTable $object
+    DTMRI(vtk,$object) SetTableRange 0.0 1.0
     DTMRI(vtk,$object) SetHueRange .6667 0.0
     #    DTMRIAddObjectProperty $object HueRange \
     #        {.6667 0.0} float {Hue Range}
@@ -3133,6 +3134,7 @@ proc DTMRIAddPreciseStreamline {} {
     DTMRIMakeVTKObject vtkPolyDataMapper $object
     DTMRI(vtk,$streamline,mapper) SetInput [DTMRI(vtk,$streamline) GetOutput]
     DTMRI(vtk,$streamline,mapper) SetLookupTable DTMRI(vtk,$streamline,lut)
+    DTMRI(vtk,$streamline,mapper) UseLookupTableScalarRangeOn
     DTMRIAddObjectProperty $object ImmediateModeRendering \
     1 bool {Immediate Mode Rendering}    
 
@@ -3141,8 +3143,10 @@ proc DTMRIAddPreciseStreamline {} {
     set object $streamline,actor
     DTMRIMakeVTKObject vtkActor $object
     DTMRI(vtk,$streamline,actor) SetMapper DTMRI(vtk,$streamline,mapper)
-    [DTMRI(vtk,$streamline,actor) GetProperty] SetAmbient 1
-    [DTMRI(vtk,$streamline,actor) GetProperty] SetDiffuse 0
+    [DTMRI(vtk,$streamline,actor) GetProperty] SetAmbient 0
+    [DTMRI(vtk,$streamline,actor) GetProperty] SetDiffuse 1
+    [DTMRI(vtk,$streamline,actor) GetProperty] SetSpecular 0
+    [DTMRI(vtk,$streamline,actor) GetProperty] SetSpecularPower 1
 
     # Update the scalar range of everything
     # this makes the tube's mapper display the streamline in colors
