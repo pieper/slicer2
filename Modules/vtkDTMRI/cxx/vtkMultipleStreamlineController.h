@@ -101,7 +101,6 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // Add Print function
   // Add option to create new/old streamline classes
   // Add save function
-  // Add actor collection
   // Add observers for progress/implement progress updating
   
  protected:

@@ -423,7 +423,8 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROI()
                   if (this->PointWithinTensorData(point,point2))
                     {
                       // Now create a streamline and put it on the collection.
-                      newStreamline=vtkHyperStreamlineDTMRI::New();
+                      //newStreamline=vtkHyperStreamlineDTMRI::New();
+                      newStreamline=vtkHyperStreamlinePoints::New();
                       this->Streamlines->AddItem((vtkObject *)newStreamline);
                       
                       // Set its input information.
