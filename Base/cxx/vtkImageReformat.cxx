@@ -561,7 +561,8 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
 
 	// Find input dimensions
 	numComps = inData->GetNumberOfScalarComponents();
-	scalarSize = sizeof(T);
+	// This must include all components or we will see red.
+	scalarSize = sizeof(T)*numComps;
 	inRowLength = (inExt[1] - inExt[0]+1);
 	nz = inExt[5] - inExt[4] + 1;
 	ny = inExt[3] - inExt[2] + 1;
@@ -571,7 +572,7 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
 	nx2 = nx-2;
 	ny2 = ny-2;
 	nz2 = nz-2;
-  nz1 = nx-1;
+  nz1 = nz-1;
 
   // When the input extent is 0-based, then an index into it can be calculated as:
   // idx = zi*nxy + ni*nx + x

@@ -699,7 +699,7 @@ void vtkMrmlSlicer::BuildUpper(int s)
   if (v->GetOutput()->GetNumberOfScalarComponents() > 1)
   {
     // Overlay
-	  this->Overlay[s]->SetInput(0, v->GetOutput());
+    this->Overlay[s]->SetInput(0, this->BackReformat[s]->GetOutput());
   }
   else 
   {
@@ -732,7 +732,7 @@ void vtkMrmlSlicer::BuildUpper(int s)
     if (v->GetOutput()->GetNumberOfScalarComponents() > 1)
     {
       // Overlay
-	    this->Overlay[s]->SetInput(0, v->GetOutput());
+      this->Overlay[s]->SetInput(0, this->ForeReformat[s]->GetOutput());
     }
     else 
     {
