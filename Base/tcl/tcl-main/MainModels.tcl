@@ -1,3 +1,4 @@
+
 #=auto==========================================================================
 # (c) Copyright 2001 Massachusetts Institute of Technology
 #
@@ -70,7 +71,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.33 $} {$Date: 2001/04/12 17:44:58 $}]
+		{$Revision: 1.34 $} {$Date: 2001/04/27 07:12:24 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""
@@ -139,8 +140,9 @@ proc MainModelsUpdateMRML {} {
 		MainModelsSetVisibility $m
 		MainModelsSetScalarVisibility $m
 		MainModelsSetOpacity $m
-		eval Model($m,mapper) SetScalarRange [Model($m,node) GetScalarRange]
-
+	    foreach r $Module(Renderers) {
+		eval Model($m,mapper,$r) SetScalarRange [Model($m,node) GetScalarRange]
+	    }
 		# Color slider
 		set c $Model($m,colorID)
 		if {$c != ""} {
@@ -183,9 +185,10 @@ proc MainModelsUpdateMRML {} {
 proc MainModelsShouldBeAVtkClass {m} {
 	global Model Slice Module
 
+    foreach r $Module(Renderers) {
 	# Mapper
-	vtkPolyDataMapper Model($m,mapper)
-
+	vtkPolyDataMapper Model($m,mapper,$r)
+    }
 	# Create a sphere as a default model
 	vtkSphereSource src
 	src SetRadius 10
@@ -195,7 +198,9 @@ proc MainModelsShouldBeAVtkClass {m} {
 	#
 	set Model($m,polyData) [src GetOutput]
 	$Model($m,polyData) Update
-	Model($m,mapper) SetInput $Model($m,polyData)
+    foreach r $Module(Renderers) {
+	Model($m,mapper,$r) SetInput $Model($m,polyData)
+    }
 	src SetOutput ""
 	src Delete
 
@@ -210,7 +215,7 @@ proc MainModelsShouldBeAVtkClass {m} {
 
 	    # Actor
 	    vtkActor Model($m,actor,$r)
-	    Model($m,actor,$r) SetMapper Model($m,mapper)
+	    Model($m,actor,$r) SetMapper Model($m,mapper,$r)
 	    
 	    # Registration
 	    Model($m,actor,$r) SetUserMatrix [Model($m,node) GetRasToWld]
@@ -274,7 +279,7 @@ proc MainModelsCreate {m} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsRead {m} {
-	global Model Gui
+	global Model Gui Module
 
 	# If fileName = "", then do nothing
 	set fileName [Model($m,node) GetFullFileName]
@@ -318,8 +323,9 @@ proc MainModelsRead {m} {
 	#
 	set Model($m,polyData) [reader GetOutput]
 	$Model($m,polyData) Update
-	Model($m,mapper) SetInput $Model($m,polyData)
-
+	foreach r $Module(Renderers) {
+	    Model($m,mapper,$r) SetInput $Model($m,polyData)
+	}
 	reader SetOutput ""
 	reader Delete
 
@@ -368,8 +374,8 @@ proc MainModelsDelete {m} {
 	
 	# Delete VTK objects (and remove commands from TCL namespace)
 	Model($m,clipper) Delete
-	Model($m,mapper) Delete
         foreach r $Module(Renderers) {
+	    Model($m,mapper,$r) Delete	
 	    Model($m,actor,$r) Delete
 	}
 	Model($m,rasToWld) Delete
@@ -724,7 +730,7 @@ proc MainModelsRefreshClipping {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsSetClipping {m {value ""}} {
-	global Model Slice
+	global Model Slice Module
 
 	if {$m == ""} {return}
 
@@ -749,8 +755,9 @@ proc MainModelsSetClipping {m {value ""}} {
 
 		#   polyData --> clipper --> mapper
 		Model($m,clipper) SetInput $Model($m,polyData)
-		Model($m,mapper)  SetInput [Model($m,clipper) GetOutput]
-
+	    foreach r $Module(Renderers) {
+		Model($m,mapper,$r)  SetInput [Model($m,clipper) GetOutput]
+	    }
 		# Show backface
 		set Model($m,oldCulling) [Model($m,node) GetBackfaceCulling]
 		MainModelsSetCulling $m 0
@@ -761,7 +768,9 @@ proc MainModelsSetClipping {m {value ""}} {
 
 		set Model($m,clipped) 0
 
-		Model($m,mapper) SetInput $Model($m,polyData)
+	    foreach r $Module(Renderers) {
+		Model($m,mapper,$r) SetInput $Model($m,polyData)
+	    }
 		Model($m,clipper) SetInput ""
 
 		MainModelsSetCulling $m $Model($m,oldCulling)
@@ -805,7 +814,9 @@ proc MainModelsSetOpacity {m {value ""}} {
 	}
 	Model($m,node) SetOpacity $Model($m,opacity)
 	$Model($m,prop,viewRen) SetOpacity [Model($m,node) GetOpacity]
-	
+	puts "viewRen [$Model($m,prop,viewRen) GetOpacity]"
+	puts "endRen [$Model($m,prop,endRen) GetOpacity]"
+
 	# If this is the active model, update GUI
 	if {$m == $Model(activeID)} {
 			set Model(opacity) [Model($m,node) GetOpacity]
@@ -845,15 +856,16 @@ proc MainModelsSetCulling {m {value ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsSetScalarVisibility {m {value ""}} {
-	global Model
+	global Model Module
 		
 	if {$value != ""} {
 		set Model($m,scalarVisibility) $value
 	}
 	Model($m,node) SetScalarVisibility $Model($m,scalarVisibility)
-	Model($m,mapper) SetScalarVisibility \
-		[Model($m,node) GetScalarVisibility]
-
+	foreach r $Module(Renderers) {
+	    Model($m,mapper,$r) SetScalarVisibility \
+		    [Model($m,node) GetScalarVisibility]
+	}
 	# If this is the active model, update GUI
 	if {$m == $Model(activeID)} {
 			set Model(scalarVisibility) [Model($m,node) GetScalarVisibility]
@@ -861,11 +873,12 @@ proc MainModelsSetScalarVisibility {m {value ""}} {
 }
  
 proc MainModelsSetScalarRange {m lo hi} {
-	global Model
+	global Model Module
 		
 	Model($m,node)   SetScalarRange $lo $hi
-	Model($m,mapper) SetScalarRange $lo $hi
-
+    foreach r $Module(Renderers) {
+	Model($m,mapper,$r) SetScalarRange $lo $hi
+    }
 	# If this is the active model, update GUI
 	if {$m == $Model(activeID)} {
 		set Model(scalarLo) $lo
@@ -979,7 +992,7 @@ proc MainModelsRecallPresets {p} {
 #-------------------------------------------------------------------------------
 proc MainModelsRaiseScalarBar { {m ""} } {
 
-    global viewWin Model
+    global viewWin Model Module
     
     if {$m == ""} {
 	set m $Model(activeID)
@@ -998,7 +1011,7 @@ proc MainModelsRaiseScalarBar { {m ""} } {
     set Model($m,scalarBar) bar$m
 
     # get lookup table
-    set lut [Model($m,mapper) GetLookupTable]
+    set lut [Model($m,mapper,viewRen) GetLookupTable]
 
     # set up scalar bar 
     $Model($m,scalarBar) SetLookupTable $lut
