@@ -52,6 +52,7 @@ proc EdErodeInit {} {
 	set Ed($e,scope) Multi 
 	set Ed($e,input) Working
 
+	set Ed($e,multi) Native
 	set Ed($e,fill) 0
 	set Ed($e,iterations) 1
 	set Ed($e,neighbors) 4
@@ -64,6 +65,7 @@ proc EdErodeInit {} {
 proc EdErodeBuildGUI {} {
 	global Ed Gui Label
 
+	set e EdErode
 	#-------------------------------------------
 	# Erode frame
 	#-------------------------------------------
@@ -71,15 +73,17 @@ proc EdErodeBuildGUI {} {
 
 	frame $f.fInput   -bg $Gui(activeWorkspace)
 	frame $f.fScope   -bg $Gui(activeWorkspace)
+	frame $f.fMulti   -bg $Gui(activeWorkspace)
 	frame $f.fGrid    -bg $Gui(activeWorkspace)
 	frame $f.fApply   -bg $Gui(activeWorkspace)
 	pack \
-		$f.fInput $f.fScope \
+		$f.fInput $f.fScope $f.fMulti \
 		$f.fGrid $f.fApply \
 		-side top -pady $Gui(pad) -fill x
 
-	EdBuildScopeGUI $Ed(EdErode,frame).fScope Ed(EdErode,scope) 
-	EdBuildInputGUI $Ed(EdErode,frame).fInput Ed(EdErode,input)
+	EdBuildInputGUI $Ed($e,frame).fInput Ed($e,input)
+	EdBuildScopeGUI $Ed($e,frame).fScope Ed($e,scope) 
+	EdBuildMultiGUI $Ed($e,frame).fMulti Ed($e,multi) 
 
 	#-------------------------------------------
 	# Erode->Grid frame
@@ -181,8 +185,7 @@ proc EdErodeApply {effect} {
 		return
 	}
 
-
-	EdSetupBeforeApplyEffect $Ed($e,scope) $v
+	EdSetupBeforeApplyEffect $v $Ed($e,scope) $Ed($e,multi)
 
 	set Gui(progressText) "$effect [Volume($v,node) GetName]"
 	

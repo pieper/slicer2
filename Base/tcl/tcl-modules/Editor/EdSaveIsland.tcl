@@ -120,7 +120,7 @@ proc EdSaveIslandApply {} {
 	set e EdSaveIsland
 	set v [EditorGetInputID $Ed($e,input)]
 
-	EdSetupBeforeApplyEffect $Ed($e,scope) $v
+	EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
 
 	set Gui(progressText) "Save Island in [Volume($v,node) GetName]"
 	

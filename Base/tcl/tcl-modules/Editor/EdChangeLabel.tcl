@@ -78,7 +78,7 @@ proc EdChangeLabelBuildGUI {} {
 		$f.fGrid $f.fApply \
 		-side top -pady $Gui(pad) -fill x
 
-	EdBuildScopeGUI $Ed(EdChangeLabel,frame).fScope Ed(EdChangeLabel,scope) 
+	EdBuildScopeGUI $Ed(EdChangeLabel,frame).fScope Ed(EdChangeLabel,scope) Multi
 	EdBuildInputGUI $Ed(EdChangeLabel,frame).fInput Ed(EdChangeLabel,input)
 
 	#-------------------------------------------
@@ -152,7 +152,7 @@ proc EdChangeLabelApply {} {
 		return
 	}
 
-	EdSetupBeforeApplyEffect $Ed($e,scope) $v
+	EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
 
 	set Gui(progressText) "Change Label in [Volume($v,node) GetName]"
 	

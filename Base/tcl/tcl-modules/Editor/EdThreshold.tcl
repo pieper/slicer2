@@ -406,7 +406,7 @@ proc EdThresholdApply {} {
 		return
 	}
 
-	EdSetupBeforeApplyEffect $Ed($e,scope) $v
+	EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
 
 	set Gui(progressText) "Threshold [Volume($v,node) GetName]"	
 

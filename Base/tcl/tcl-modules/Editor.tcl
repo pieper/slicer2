@@ -96,7 +96,6 @@ proc EditorInit {} {
 	set Editor(prefixWorking) ""
 	set Editor(fgName) Working
 	set Editor(bgName) Composite
-	set Editor(native) Native
 
 	# Look for Editor effects and form an array, Ed, for them.
 	# Each effect has a *.tcl file in the tcl-modules/Editor directory.
@@ -485,9 +484,8 @@ Models are fun. Do you like models, Ron?
 
 	frame $f.fEffects   -bg $Gui(activeWorkspace) -relief groove -bd 2
 	frame $f.fActive    -bg $Gui(activeWorkspace)
-	frame $f.fNative    -bg $Gui(activeWorkspace)
 	frame $f.fTime      -bg $Gui(activeWorkspace)
-	pack $f.fEffects $f.fActive $f.fNative $f.fTime \
+	pack $f.fEffects $f.fActive $f.fTime \
 		-side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
 	#-------------------------------------------
@@ -502,22 +500,6 @@ Models are fun. Do you like models, Ron?
 		set c {radiobutton $f.r$s -width $width -indicatoron 0\
 			-text "$text" -value "$s" -variable Slice(activeID) \
 			-command "MainSlicesSetActive" $Gui(WCA) -selectcolor  $Gui(slice$s)}
-			eval [subst $c]
-		pack $f.r$s -side left -fill x -anchor e
-	}
-
-	#-------------------------------------------
-	# Effects->Native frame
-	#-------------------------------------------
-	set f $fEffects.fNative
-
-	set c {label $f.l -text "Multi-Slice Orient:" $Gui(WLA)}; eval [subst $c]
-	pack $f.l -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
-
-	foreach s "Native Active" text "Native Active" width "7 7" {
-		set c {radiobutton $f.r$s -width $width -indicatoron 0\
-			-text "$text" -value "$s" -variable Editor(native) \
-			$Gui(WCA)}
 			eval [subst $c]
 		pack $f.r$s -side left -fill x -anchor e
 	}
@@ -688,34 +670,6 @@ Models are fun. Do you like models, Ron?
 	
 	# Initialize to the first effect
 	EditorSetEffect EdNone
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EditorSetPrefix
-# .END
-#-------------------------------------------------------------------------------
-proc EditorSetPrefix {data} {
-	global Editor Mrml
-
-	# Cannot have blank prefix
-	if {$Editor(prefix$data) == ""} {
-		set Editor(prefix$data) [Uncap $data]
-	}
-
- 	# Show popup initialized to the last file saved
-	set filename [file join $Mrml(dir) $Editor(prefix$data)]
-	set dir [file dirname $filename]
-	set typelist {
-		{"All Files" {*}}
-	}
-	set filename [tk_getSaveFile -title "Save Volume" \
-		-filetypes $typelist -initialdir "$dir" -initialfile $filename]
-
-	# Do nothing if the user cancelled
-	if {$filename == ""} {return}
-
-	# Store it as a relative prefix for next time
-	set Editor(prefix$data) [MainFileGetRelativePrefix $filename]
 }
 
 #-------------------------------------------------------------------------------
@@ -984,6 +938,37 @@ proc EditorUpdateEffect {} {
 	}
 }
 
+proc EditorSameExtents {dst src} {
+	set dstExt [[Volume($dst,vol) GetOutput] GetExtent]
+	set srcExt [[Volume($src,vol) GetOutput] GetExtent]
+	if {$dstExt == $srcExt} {
+		return 1
+	}
+	return 0
+}
+
+proc EditorCopyNode {dst src} {
+	global Volume Lut
+
+	Volume($dst,vol) CopyNode Volume($src,vol)
+	Volume($dst,node) InterpolateOff
+	Volume($dst,node) LabelMapOn
+	Volume($dst,node) SetLUTName $Lut(idLabel)
+}
+
+proc EditorCopyData {dst src clear} {
+	global Volume Lut
+
+	vtkImageCopy copy
+	copy SetInput [Volume($src,vol) GetOutput]
+	copy Clear$clear
+	copy Update
+	copy SetInput ""
+	Volume($dst,vol) SetImageData [copy GetOutput]
+	copy SetOutput ""
+	copy Delete
+}
+
 #-------------------------------------------------------------------------------
 # .PROC EditorGetOriginalID
 # .END
@@ -1023,7 +1008,6 @@ proc EditorGetWorkingID {} {
 	Volume($v,vol) UseLabelIndirectLUTOn
 
 	EditorSetWorking $v
-	puts "NEW WORKING=$v"
 
 	MainUpdateMRML
 
@@ -1059,7 +1043,6 @@ proc EditorGetCompositeID {} {
 	Volume($v,vol) UseLabelIndirectLUTOn
 
 	EditorSetComposite $v
-	puts "NEW COMPOSITE=$v"
 
 	MainUpdateMRML
 
@@ -1310,6 +1293,21 @@ proc EdBuildScopeGUI {f var {not ""}} {
 	pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
 }
 
+proc EdBuildMultiGUI {f var} {
+	global Gui
+
+	set c {label $f.l -text "Multi-Slice Orient:" $Gui(WLA)}; eval [subst $c]
+	pack $f.l -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
+
+	foreach s "Native Active" text "Native Active" width "7 7" {
+		set c {radiobutton $f.r$s -width $width -indicatoron 0\
+			-text "$text" -value "$s" -variable $var \
+			$Gui(WCA)}
+			eval [subst $c]
+		pack $f.r$s -side left -fill x -anchor e
+	}
+}
+
 #-------------------------------------------------------------------------------
 # .PROC EdBuildInputGUI
 # .END
@@ -1377,12 +1375,17 @@ proc EdBuildRenderGUI {f var {options ""}} {
 # .PROC EdSetupBeforeApplyEffect
 # .END
 #-------------------------------------------------------------------------------
-proc EdSetupBeforeApplyEffect {scope v} {
+proc EdSetupBeforeApplyEffect {v scope multi} {
 	global Volume Ed Editor
 
 	set o [EditorGetOriginalID]
 	set w [EditorGetWorkingID]
 
+	if {[EditorSameExtents $w $o] != 1} {
+		EditorCopyNode $w $o
+		EditorCopyData $w $o On
+	}
+	
 	# Set the editor's input & output
 	Ed(editor) SetInput [Volume($o,vol) GetOutput]
 	if {$v == $w} {
@@ -1419,7 +1422,7 @@ proc EdSetupBeforeApplyEffect {scope v} {
 		}
 
 		# Does the user want the orien of the active slice or native slices?
-		if {$Editor(native) == "Native"} {
+		if {$multi == "Native"} {
 			set order [Volume($o,node) GetScanOrder]
 		}
 		switch $order {
@@ -1454,11 +1457,10 @@ proc EdUpdateAfterApplyEffect {v {render All}} {
 	Volume($w,vol) SetImageData [Ed(editor) GetOutput]
 	EditorActivateUndo [Ed(editor) GetUndoable]
 
-	# w copies o's MrmlNode
-	Volume($w,node) Copy Volume($o,node)
-	Volume($w,node) InterpolateOff
-	Volume($w,node) LabelMapOn
-	Volume($w,node) SetLUTName $Lut(idLabel)
+	# w copies o's MrmlNode if the Input was the Original
+	if {$v == $o} {
+		EditorCopyNode $w $o
+	}
 
 	# Keep a copy for undo
 	Editor(undoNode) Copy Volume($w,node)
@@ -1624,27 +1626,13 @@ Merge with the Working or Composite, not '$bgName'"; return}
 	# If extents are equal, then overlay, else copy.
 	# If we copy the data, then we also have to copy the nodes.
 
-	set bgExt [[Volume($bg,vol) GetOutput] GetExtent]
-	set fgExt [[Volume($fg,vol) GetOutput] GetExtent]
-
-	if {$bgExt != $fgExt} {
-
+	if {[EditorSameExtents $bg $fg] != 1} {
 		# copy node from fg to bg
-		Volume($bg,vol) CopyNode Volume($fg,vol)
-		Volume($bg,node) InterpolateOff
-		Volume($bg,node) LabelMapOn
-		Volume($bg,node) SetLUTName $Lut(idLabel)
+		EditorCopyNode $bg $fg
 
 		# copy data
-		vtkImageCopy copy
-		copy SetInput [Volume($fg,vol) GetOutput]
-		copy Update
-		copy SetInput ""
-		Volume($bg,vol) SetImageData [copy GetOutput]
-		copy SetOutput ""
-		copy Delete
+		EditorCopyData $bg $fg Off
 	} else {
-		
 		vtkImageOverlay over
 		over SetInput 0 [Volume($bg,vol) GetOutput]
 		over SetInput 1 [Volume($fg,vol) GetOutput]

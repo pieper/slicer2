@@ -159,7 +159,7 @@ proc EdChangeIslandApply {} {
 		return
 	}
 
-	EdSetupBeforeApplyEffect $Ed($e,scope) $v
+	EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
 
 	set Gui(progressText) "Change Island in [Volume($v,node) GetName]"
 	

@@ -183,7 +183,7 @@ proc EdMeasureIslandApply {} {
 		return
 	}
 
-	EdSetupBeforeApplyEffect $Ed($e,scope) $v
+	EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
 
 	set Gui(progressText) "Measure Island in [Volume($v,node) GetName]"
 	

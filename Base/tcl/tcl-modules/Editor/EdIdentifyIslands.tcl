@@ -188,7 +188,7 @@ proc EdIdentifyIslandsApply {} {
 		return
 	}
 
-	EdSetupBeforeApplyEffect $Ed($e,scope) $v
+	EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
 
 	set Gui(progressText) "IdentifyIslands in [Volume($v,node) GetName]"
 	

@@ -58,6 +58,7 @@ proc EdDrawInit {} {
 	set Ed($e,input) Working
 
 	set Ed($e,mode)   Draw
+	set Ed($e,delete) No
 	set Ed($e,radius) 0
 	set Ed($e,shape)  Polygon
 	set Ed($e,render) Active
@@ -77,10 +78,13 @@ proc EdDrawBuildGUI {} {
 
 	frame $f.fRender  -bg $Gui(activeWorkspace)
 	frame $f.fMode    -bg $Gui(activeWorkspace)
+	frame $f.fDelete  -bg $Gui(activeWorkspace)
 	frame $f.fGrid    -bg $Gui(activeWorkspace)
 	frame $f.fBtns    -bg $Gui(activeWorkspace)
 	frame $f.fApply   -bg $Gui(activeWorkspace)
-	pack $f.fRender $f.fMode $f.fGrid $f.fBtns $f.fApply \
+	pack $f.fRender $f.fMode $f.fDelete \
+		-side top -pady $Gui(pad) -fill x
+	pack $f.fGrid $f.fBtns $f.fApply \
 		-side top -pady $Gui(pad) -fill x
 
 	EdBuildRenderGUI $Ed(EdDraw,frame).fRender Ed(EdDraw,render)
@@ -102,6 +106,22 @@ proc EdDrawBuildGUI {} {
 		pack $f.fMode.r$mode -side left -padx 0 -pady 0
 	}
 	pack $f.fMode -side top -pady 5 -padx 0 
+
+	#-------------------------------------------
+	# Draw->Delete frame
+	#-------------------------------------------
+	set f $Ed(EdDraw,frame).fDelete
+
+	set c {label $f.l -text "Delete points after apply:" $Gui(WLA)}; eval [subst $c]
+	pack $f.l -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
+
+	foreach s "Yes No" text "Yes No" width "3 2" {
+		set c {radiobutton $f.r$s -width $width -indicatoron 0\
+			-text "$text" -value "$s" -variable Ed(EdDraw,delete) \
+			$Gui(WCA)}
+			eval [subst $c]
+		pack $f.r$s -side left -fill x -anchor e
+	}
 
 	#-------------------------------------------
 	# Draw->Grid frame
@@ -174,7 +194,7 @@ proc EdDrawBuildGUI {} {
 
 	set c {button $f.bApply -text "Apply" \
 		-command "EdDrawApply" $Gui(WBA) -width 8}; eval [subst $c]
-	pack $f.f $f.bApply -side top -padx $Gui(pad) -pady 2
+	pack $f.f $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
 
 
 }
@@ -283,7 +303,7 @@ proc EdDrawApply {} {
 		return
 	}
 
-	EdSetupBeforeApplyEffect $Ed($e,scope) $v
+	EdSetupBeforeApplyEffect $v $Ed($e,scope) Active
 
 	# Only draw on native slices
 	set outOrder [Ed(editor) GetOutputSliceOrder]
@@ -323,9 +343,13 @@ proc EdDrawApply {} {
 	Ed(editor)   SetInput ""
 	Ed(editor)   UseInputOff
 
-	EdUpdateAfterApplyEffect $v $Ed($e,render)
+	# Delete points?
+	if {$Ed($e,delete) == "Yes"} {
+		EdDrawUpdate DeleteAll
+	} else {
+		EdDrawUpdate DeselectAll
+	}
 
-	# Reset mode
-	EdDrawUpdate DeselectAll
+	EdUpdateAfterApplyEffect $v $Ed($e,render)
 }
 

@@ -54,6 +54,7 @@ proc EdRemoveIslandsInit {} {
 	set Ed($e,scope) Multi 
 	set Ed($e,input) Working
 
+	set Ed($e,multi) Native
 	set Ed($e,minSize) 10000
 	set Ed($e,fgMin)   $Gui(minShort)
 	set Ed($e,fgMax)   $Gui(maxShort)
@@ -67,22 +68,25 @@ proc EdRemoveIslandsInit {} {
 proc EdRemoveIslandsBuildGUI {} {
 	global Ed Gui Label
 
+	set e EdRemoveIslands
 	#-------------------------------------------
 	# RemoveIslands frame
 	#-------------------------------------------
-	set f $Ed(EdRemoveIslands,frame)
+	set f $Ed($e,frame)
 
 	frame $f.fInput   -bg $Gui(activeWorkspace)
 	frame $f.fScope   -bg $Gui(activeWorkspace)
+	frame $f.fMulti   -bg $Gui(activeWorkspace)
 	frame $f.fGrid    -bg $Gui(activeWorkspace)
 	frame $f.fApply   -bg $Gui(activeWorkspace)
 	pack \
-		$f.fInput $f.fScope \
+		$f.fInput $f.fScope $f.fMulti \
 		$f.fGrid $f.fApply \
 		-side top -pady $Gui(pad) -fill x
 
-	EdBuildScopeGUI $Ed(EdRemoveIslands,frame).fScope Ed(EdRemoveIslands,scope) 
-	EdBuildInputGUI $Ed(EdRemoveIslands,frame).fInput Ed(EdRemoveIslands,input)
+	EdBuildInputGUI $Ed($e,frame).fInput Ed($e,input)
+	EdBuildScopeGUI $Ed($e,frame).fScope Ed($e,scope) 
+	EdBuildMultiGUI $Ed($e,frame).fMulti Ed($e,multi) 
 
 	#-------------------------------------------
 	# RemoveIslands->Grid frame
@@ -202,7 +206,7 @@ proc EdRemoveIslandsApply {} {
 		return
 	}
 
-	EdSetupBeforeApplyEffect $Ed($e,scope) $v
+	EdSetupBeforeApplyEffect $v $Ed($e,scope) $Ed($e,multi)
 
 	set Gui(progressText) "RemoveIslands in [Volume($v,node) GetName]"
 	
