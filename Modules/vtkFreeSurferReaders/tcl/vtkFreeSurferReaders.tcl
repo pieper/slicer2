@@ -51,7 +51,7 @@
 #   vtkFreeSurferReadersMGHUpdateMRML
 #   vtkFreeSurferReadersShowMGH the
 #   vtkFreeSurferReadersVolumesPropsApplyPre
-#   vtkFreeSurferReadersBfloatApply
+#   vtkFreeSurferReadersBApply
 #   vtkFreeSurferReadersBuildSurface the
 #   vtkFreeSurferReadersSetSurfaceVisibility the the
 #   vtkFreeSurferReadersSetModelScalar the the
@@ -296,7 +296,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.23 $} {$Date: 2005/04/01 22:49:16 $}]
+        {$Revision: 1.24 $} {$Date: 2005/04/04 22:17:49 $}]
 
 }
 
@@ -354,7 +354,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
 
     set f $fVolumes.fVolume
 
-    DevAddFileBrowse $f  vtkFreeSurferReaders "VolumeFileName" "FreeSurfer File:" "vtkFreeSurferReadersSetVolumeFileName" "" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer volume file (.info, .mgh, .bfloat, .bshort)" 
+    DevAddFileBrowse $f  vtkFreeSurferReaders "VolumeFileName" "FreeSurfer File:" "vtkFreeSurferReadersSetVolumeFileName" "" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer volume file (.info, .mgh, .bhdr)" 
 
     frame $f.fLabelMap -bg $Gui(activeWorkspace)
     frame $f.fCast  -bg $Gui(activeWorkspace)
@@ -915,10 +915,10 @@ proc vtkFreeSurferReadersApply {} {
         if {[vtkFreeSurferReadersUncompressMGH] != -1} {
             set vid [vtkFreeSurferReadersMGHApply]
         }
-    } elseif {[string match *.bfloat $vtkFreeSurferReaders(VolumeFileName)]} {
-        set vid [vtkFreeSurferReadersBfloatApply]
+    } elseif {[string match *.bhdr $vtkFreeSurferReaders(VolumeFileName)]} {
+        set vid [vtkFreeSurferReadersBApply]
     } else {
-        DevErrorWindow "ERROR: Invalid file extension, file $vtkFreeSurferReaders(VolumeFileName) does not match info or mgh extensions for COR or MGH files."
+        DevErrorWindow "ERROR: Invalid file extension, file $vtkFreeSurferReaders(VolumeFileName) does not match info or mgh extensions for COR or MGH files, or bfloat or bshort extensions for binary files."
     }
 
     # allow use of other module GUIs
@@ -1612,25 +1612,25 @@ proc vtkFreeSurferReadersVolumesPropsApplyPre {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC vtkFreeSurferReadersBfloatApply
-# Read in the freesurfer Bfloat volume specified
+# .PROC vtkFreeSurferReadersBApply
+# Read in the freesurfer Bfloat or Bshort volume specified
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc vtkFreeSurferReadersBfloatApply {} {
+proc vtkFreeSurferReadersBApply {} {
     global vtkFreeSurferReaders Module Volume View
 
-    if {![info exists Volume(name)] } { set Volume(name) "Bfloat"}
+    if {![info exists Volume(name)] } { set Volume(name) "FSB"}
 
     # encapsulate the standard stuff
     set retval [vtkFreeSurferReadersVolumesPropsApplyPre]
     if {$retval == -1} { 
-        puts "Error from vtkFreeSurferReadersVolumesPropsApplyPre, exiting vtkFreeSurferReadersBfloatApply"
+        puts "Error from vtkFreeSurferReadersVolumesPropsApplyPre, exiting vtkFreeSurferReadersBApply"
         return
     }
 
     if {$::Module(verbose)} {
-        puts "vtkFreeSurferReadersBfloatApply:\n\tLoading Bfloat file $vtkFreeSurferReaders(VolumeFileName)"
+        puts "vtkFreeSurferReadersBApply:\n\tLoading B file $vtkFreeSurferReaders(VolumeFileName)"
     }
 
 
@@ -1641,7 +1641,7 @@ proc vtkFreeSurferReadersBfloatApply {} {
     # Set up the reading
     if {[info command Volume($i,vol,rw)] != ""} {
         # have to delete it first, needs to be cleaned up
-        DevErrorWindow "Problem: reader for this new volume number $i already exists, deleting it"
+        puts "Problem: reader for this new volume number $i already exists, deleting it"
         Volume($i,vol,rw) Delete
     }
     vtkBVolumeReader Volume($i,vol,rw)
@@ -1651,23 +1651,45 @@ proc vtkFreeSurferReadersBfloatApply {} {
     }
 
     # set the filename  stem
-    if {[regexp {(.*)_(.*)} $vtkFreeSurferReaders(VolumeFileName) match stem ext] == 0} {
-        DevErrorWindow "vtkFreeSurferReadersBfloatApply: error parsing file name $vtkFreeSurferReaders(VolumeFileName)"
-        set stem $vtkFreeSurferReaders(VolumeFileName)
-    } else {
+    set stem [file rootname $vtkFreeSurferReaders(VolumeFileName)]
+    if {$::Module(verbose)} {
         puts "Set stem to $stem"
     }
 
     Volume($i,vol,rw) SetFileName $vtkFreeSurferReaders(VolumeFileName)
     Volume($i,vol,rw) SetFilePrefix $stem
+    Volume($i,vol,rw) SetStem $stem
 
-    Volume($i,vol,rw) Update
-    set newstem [Volume($i,vol,rw) GetStem]
-    DevInfoWindow "After reading, new stem = $newstem (orig stem = $stem)"
+
+    # read the header to get the info we need
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersBApply:\n\tReading volume header"
+    }
+    set headerReturn [Volume($i,vol,rw) ReadVolumeHeader]
+    if {$headerReturn != 1} {
+        DevErrorWindow "Error reading volume header for $vtkFreeSurferReaders(VolumeFileName)"
+        return
+    }
+
+
+    set updateReturn [Volume($i,vol,rw) Update]
+    if {$updateReturn == 0} {
+        DevErrorWindow "vtkMGHReader: update on volume $i failed."
+    }
+
+
+    if {$::Module(verbose)} {
+        set newstem [Volume($i,vol,rw) GetStem]
+        puts "After reading, new stem = $newstem (orig stem = $stem)"
+    }
 
     # try setting the registration filename
-    Volume($i,vol,rw) SetRegistrationFileName ${stem}.dat
-    set regmat [Volume($i,vol,rw) GetRegistrationMatrix]
+    if {[file exist ${stem}.dat] == 1} {
+        Volume($i,vol,rw) SetRegistrationFileName ${stem}.dat
+        set regmat [Volume($i,vol,rw) GetRegistrationMatrix]
+    } else {
+        set regmat ""
+    }
     if {$::Module(verbose)} {
         puts "Got registration matrix $regmat"
         if {$regmat != ""} {
@@ -1680,8 +1702,27 @@ proc vtkFreeSurferReadersBfloatApply {} {
         }
     }
 
+    # set the name and description of the volume
+    $n SetName $Volume(name)
+    $n SetDescription $Volume(desc)
+
+
+    #--------------------------
+    # Set the Volume variables
+    #-------------------------
     set Volume(isDICOM) 0
-    set Volume($i,type) "bfloat"
+    # set Volume($i,type) "bfloat"
+    set scalarType [Volume($i,vol,rw) GetScalarType]
+    # Scalar type can be VTK_FLOAT (10), VTK_SHORT (4), 
+    # set it to either bfloat or bshort
+    switch $scalarType {
+        "4" { set Volume($i,type) "bshort" }
+        "10" { set Volume($i,type) "bfloat" }
+        default {
+            puts "Unknown scalarType $scalarType, using bfloat"
+            set Volume($i,type) "bfloat"
+        }
+    }
 
     set dims [Volume($i,vol,rw) GetDataDimensions]
     if {$::Module(verbose)} {
@@ -1696,13 +1737,18 @@ proc vtkFreeSurferReadersBfloatApply {} {
     set Volume(pixelWidth) [lindex $spc 0]
     set Volume(pixelHeight) [lindex $spc 1]
     set Volume(sliceThickness) [lindex $spc 2]
-    set Volume(sliceSpacing) [lindex $spc 2]
+    # use a slice spacing of 0 since we don't want it doubled in the fov calc
+    set Volume(sliceSpacing) 0
+# [lindex $spc 2]
 
     set Volume(gantryDetectorTilt) 0
+
+    # this may need to change if we've got lots of data in the one b volume
     set Volume(numScalars) 1
     if {$::Module(verbose)} {
         puts "$vtkFreeSurferReaders(VolumeFileName) numScalars = $Volume(numScalars)"
     }
+
     set Volume(littleEndian) 0
 
     # Sag:LR RL Ax:SI IS Cor: AP PA
@@ -1717,23 +1763,26 @@ proc vtkFreeSurferReadersBfloatApply {} {
         "10" { set  Volume(scalarType) Float }
         default {
             puts "Unknown scalarType $scalarType, using Float"
-            DevErrorWindow "vtkFreeSurferReadersBfloatApply: Unknown scalarType $scalarType, using Float"
+            DevErrorWindow "vtkFreeSurferReadersBApply: Unknown scalarType $scalarType, using Float"
             set Volume(scalarType) Float 
         }
     }
 
     set Volume(readHeaders) 0
 
-    set Volume(filePattern) {%s_%03d.bfloat}
+    set Volume(filePattern) %s_%03d.$Volume($i,type)
     set Volume(dimensions) "[lindex $dims 0] [lindex $dims 1]"
 
     set Volume(imageRange) "0 [expr [lindex $dims 2] - 1]"
     if {$::Module(verbose)} {
         puts "$vtkFreeSurferReaders(VolumeFileName) imageRange $Volume(imageRange)"
     }
-    # set the name and description of the volume
-    $n SetName $Volume(name)
-    $n SetDescription $Volume(desc)
+
+
+    #---------------------
+    # Set up the MRML node
+    #---------------------
+
 
     # set the volume properties
     Volume($i,node) SetName $Volume(name)
@@ -1754,10 +1803,174 @@ proc vtkFreeSurferReadersBfloatApply {} {
     Volume($i,node) SetDimensions [lindex $Volume(dimensions) 0] [lindex $Volume(dimensions) 1]
     # without these, getting a seg fault when debug is turned on in the vtkMrmlVolumeNode
     Volume($i,node) SetLUTName ""
-    Volume($i,node) SetFileType "bfloat"
+    Volume($i,node) SetFileType Volume($i,type) 
+
+
+    #----------------------------------
+    # now compute the RAS to IJK matrix
+    #----------------------------------
+    # get the IJK to RAS matrix from the volume:
+    # x_r x_a x_s y_r y_a y_s z_r z_a z_s c_r c_a c_s
+    set ijkmat [Volume($i,vol,rw) GetRASMatrix]
+    # get the corners
+    set topR [Volume($i,vol,rw) GetTopR]
+    set topL [Volume($i,vol,rw) GetTopL]
+    set bottomR [Volume($i,vol,rw) GetBottomR]
+    
     if {$::Module(verbose)} {
-        puts "vtkFreeSurferReaders: About  to call main update mrml for a Bfloat volume, \# $i"
-        DevErrorWindow "vtkFreeSurferReaders: About  to call main update mrml for an Bfloat volume"
+        puts "Bfloat Reader: IJK matrix for volume $i: $ijkmat"
+        puts "Bfloat Reader: topR $topR, topL $topL, bottomR $bottomR"
+    }
+
+    if {0} {
+    # see the comments in MGH apply proc 
+    set xr [lindex $ijkmat 0]
+    set xa [lindex $ijkmat 1]
+    set xs [lindex $ijkmat 2]
+    set yr [lindex $ijkmat 3]
+    set ya [lindex $ijkmat 4]
+    set ys [lindex $ijkmat 5]
+    set zr [lindex $ijkmat 6]
+    set za [lindex $ijkmat 7]
+    set zs [lindex $ijkmat 8]
+    set cr [lindex $ijkmat 9]
+    set ca [lindex $ijkmat 10]
+    set cs [lindex $ijkmat 11]
+    set xspacing [lindex $spc 0]
+    set yspacing [lindex $spc 1]
+    set zspacing [lindex $spc 2]
+    set w2 [expr [lindex $dims 0] / 2]
+    set h2 [expr [lindex $dims 1] / 2]
+    set d2 [expr [lindex $dims 2] / 2]
+        
+    # try something - zero out the cras to take out the shift away from origin
+    set cr 0
+    set ca 0
+    set cs 0
+
+    set tr [expr $cr - $xr*$xspacing*$w2 - $yr*$yspacing*$h2 - $zr*$zspacing*$d2]
+    set ta [expr $ca - $xa*$xspacing*$w2 - $ya*$yspacing*$h2 - $za*$zspacing*$d2]
+    set ts [expr $cs - $xs*$xspacing*$w2 - $ys*$yspacing*$h2 - $zs*$zspacing*$d2]
+
+    if {$::Module(verbose)} {
+        puts "tr = $tr, ta = $ta, ts = $ts"
+    }
+
+    # calculate the transform from the corners of the volume
+        catch "rasmat$i Delete"
+    vtkMatrix4x4 rasmat$i
+    rasmat$i Identity
+
+    # by rows:
+    # x_r
+    rasmat$i SetElement 0 0 [lindex $ijkmat 0]
+    # y_r
+    rasmat$i SetElement 0 1 [lindex $ijkmat 3]
+    # z_r
+    rasmat$i SetElement 0 2 [lindex $ijkmat 6]
+    # t_r 
+    rasmat$i SetElement 0 3 $tr
+
+    # x_a
+    rasmat$i SetElement 1 0 [lindex $ijkmat 1]
+    # y_a
+    rasmat$i SetElement 1 1 [lindex $ijkmat 4]
+    # z_a
+    rasmat$i SetElement 1 2 [lindex $ijkmat 7]
+    # t_a
+    rasmat$i SetElement 1 3 $ta
+
+    # x_s
+    rasmat$i SetElement 2 0 [lindex $ijkmat 2]
+    # y_s
+    rasmat$i SetElement 2 1 [lindex $ijkmat 5]
+    # z_s
+    rasmat$i SetElement 2 2 [lindex $ijkmat 8]
+    # t_s
+    rasmat$i SetElement 2 3 $ts
+
+    # now include the scaling factor, from the voxel size
+    catch "scalemat$i Delete"
+    vtkMatrix4x4 scalemat$i
+    scalemat$i Identity
+    # s_x
+    scalemat$i SetElement 0 0 $Volume(pixelWidth)
+    # s_y
+    scalemat$i SetElement 1 1 $Volume(pixelHeight)
+    # s_z
+    scalemat$i SetElement 2 2 $Volume(sliceThickness)
+    
+    # now apply it to the rasmat
+    rasmat$i Multiply4x4 rasmat$i scalemat$i rasmat$i
+    
+    if {$::Module(verbose)} {
+        if {[info command DevPrintMatrix4x4] != ""} {
+            DevPrintMatrix4x4 rasmat$i "Bfloat vol $i RAS -> IJK (with scale)"
+        }
+    }
+
+    # To get the corners, find the max values of the volume, assume mins are 0
+    set maxx [lindex $dims 0]
+    set maxy [lindex $dims 1]
+    set maxz [lindex $dims 2]
+
+    # first slice, top left corner = (minx,maxy,minz) 0,1,0 y axis
+    set ftl [rasmat$i MultiplyPoint 0 0 0 1]
+
+    # first slice, top right corner = (maxx,maxy,minz) 1,1,0
+    set ftr [rasmat$i MultiplyPoint $maxx 0 0 1]
+
+    # first slice, bottom right corner =(maxx,miny,minz) 1,0,0 x axis
+    set fbr [rasmat$i MultiplyPoint $maxx $maxy 0 1]
+
+    # last slice, top left corner = (minx,maxy,maxz) 0,1,1
+    set ltl [rasmat$i MultiplyPoint 0 0 $maxz 1]
+
+    # these aren't used
+    set fc [rasmat$i MultiplyPoint 0 0 0 1]
+    set lc [rasmat$i MultiplyPoint 0 0 0 1]
+
+    if {$::Module(verbose)} {
+        if {[info command DevPrintMatrix4x4] != ""} {
+            DevPrintMatrix4x4 rasmat$i "Bfloat vol $i RAS -> IJK (with scaling, t_ras)"
+        } 
+        puts "dims $dims"
+        puts "spc $spc"
+        puts  "ftl $ftl"
+        puts  "ftr $ftr"
+        puts  "fbr $fbr"
+        puts  "ltl $ltl"
+    }
+    # now do the magic bit
+    # Volume($i,node) ComputeRasToIjkFromCorners $fc $ftl $ftr $fbr $lc $ltl
+    Volume($i,node) ComputeRasToIjkFromCorners \
+        [lindex $fc 0]  [lindex $fc 1]  [lindex $fc 2] \
+        [lindex $ftl 0] [lindex $ftl 1] [lindex $ftl 2] \
+        [lindex $ftr 0] [lindex $ftr 1] [lindex $ftr 2] \
+        [lindex $fbr 0] [lindex $fbr 1] [lindex $fbr 2]  \
+        [lindex $lc 0]  [lindex $lc 1]  [lindex $lc 2] \
+        [lindex $ltl 0] [lindex $ltl 1] [lindex $ltl 2]
+
+} else {
+    # TODO: Calculate the last slices's top left corner
+    set ltl {0 0 0 1}
+    Volume($i,node) ComputeRasToIjkFromCorners \
+        0 0 0 \
+        [lindex $topL 0] [lindex $topL 1] [lindex $topL 2] \
+        [lindex $topR 0] [lindex $topR 1] [lindex $topR 2] \
+        [lindex $bottomR 0] [lindex $bottomR 1] [lindex $bottomR 2]  \
+        0 0 0 \
+        [lindex $ltl 0] [lindex $ltl 1] [lindex $ltl 2]
+}
+    # Turn off using the ras to vtk matrix, as otherwise the volume is flipped in Y
+    if {$::Module(verbose)} {
+        puts "Turning off UseRasToVtkMatrix on volume $i"
+    }
+    Volume($i,node) UseRasToVtkMatrixOff
+
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReaders: About  to call main update mrml for a B  volume, \# $i"
+        DevInfoWindow "vtkFreeSurferReaders: About  to call main update mrml for an Bfloat volume"
         puts "\tFile prefix = [Volume($i,node) GetFilePrefix]"
         puts "\tFull prefix = [Volume($i,node) GetFullPrefix]"
         puts "\tFile pattern = [Volume($i,node) GetFilePattern]"
@@ -1774,7 +1987,7 @@ proc vtkFreeSurferReadersBfloatApply {} {
     }
 
     # try doing some manual reading here - necessary to show the data legibly
-    if {1} {
+    if {0} {
         if {$::Module(verbose)} {
             puts "BfloatReaderApply: calling SetImageData"
         }
@@ -1815,10 +2028,6 @@ proc vtkFreeSurferReadersBfloatApply {} {
         MainSlicesSetVolumeAll Back $i
     }
 
-    # set up a secondary window to view the slices
-    if {$::Module(verbose)} {
-        vtkFreeSurferReadersShowMGH $i
-    }
     # Update all fields that the user changed (not stuff that would need a file reread)
     return $i
 }
@@ -4919,7 +5128,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.23 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.24 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
