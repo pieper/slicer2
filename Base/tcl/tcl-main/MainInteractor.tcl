@@ -156,6 +156,9 @@ proc MainInteractorBind {widget} {
     bind $widget <KeyPress-0>        {MainInteractorKeyPress 0 %W %x %y}
     bind $widget <KeyPress-d>        {MainInteractorKeyPress d %W %x %y}
     bind $widget <KeyPress-c>        {MainInteractorKeyPress c %W %x %y}
+    # toggle between fore and background volumes
+    bind $widget <KeyPress-g>        {MainInteractorKeyPress g %W %x %y}
+
     # Added for Fiducials
     if {[IsModule Fiducials] == 1 || [IsModule Alignments] == 1} {
     bind $widget <KeyPress-p> {
@@ -400,6 +403,11 @@ proc MainInteractorKeyPress {key widget x y} {
                     }
                 }
             }
+        }
+        "g" {
+            # call the toggle between fore and background volumes
+            set toggleCmd [.tMain.fDisplay.fRight.bToggle cget -command]
+            eval $toggleCmd
         }
     }
 }
