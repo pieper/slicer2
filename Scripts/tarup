@@ -2,21 +2,47 @@
 
 # Usage: Copy this file to /d/bigdaily, and then run it.
 
-echo cp slicer
-cp -r /local/share/src/slicer_12_99 slicer
+echo Checkout into cvs directory
+setenv CVSROOT /projects/cvs/slicer
+mkdir cvs
+mkdir slicer
+cd cvs
+cvs checkout slicer
+cd ..
 
-echo cp script
-cp /local/bin/slicer2k slicer/slicer2k
+cd slicer
 
-echo cp local
-cp -r /local/src/vtk3.01/local slicer/local
+echo Copy the program directories
+cp -r ../cvs/slicer/program .
 
-echo cp vtk
-cp -r /local/pkg/vtk3.01 slicer/slicer_1299/vtk3.01
+echo Copy the doc directories
+cp -r ../cvs/slicer/doc .
 
-echo cp tcltk
-cp /local/share/src/tcl8.2.2/unix/libtcl8.2.so slicer
-cp /local/share/src/tk8.2.2/unix/libtk8.2.so slicer
+echo Copy tclsh
+cp /local/share/src/tcl8.2.2/unix/tclsh program/bin
 
-echo change VTK_HOME to SLICER_HOME/vtk3.01
+echo Copy tcl *.so
+mkdir lib
+cp /local/share/src/tcl8.2.2/unix/libtcl8.2.so lib
+cp /local/share/src/tk8.2.2/unix/libtk8.2.so lib
+
+echo Copy tcl library directorys
+cp -r /local/share/src/tcl8.2.2/library lib/tcl8.2
+cp -r /local/share/src/tk8.2.2/library lib/tk8.2
+
+echo Copy vtk *.so
+cp /local/src/vtk3.01/common/*.so lib
+cp /local/src/vtk3.01/graphics/*.so lib
+cp /local/src/vtk3.01/imaging/*.so lib
+cp /local/src/vtk3.01/patented/*.so lib
+cp /local/src/vtk3.01/local/*.so lib
+
+echo Copy vtk executable
+cp /local/src/vtk3.01/tcl/vtk .
+
+echo Copy the VTK Sources
+cp -r ../cvs/slicer/vtksrc slicer/vtksrc
+
+echo Finished
+echo NOT, just change SLICER_HOME when you install. 
 
