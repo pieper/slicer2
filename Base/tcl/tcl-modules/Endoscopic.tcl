@@ -161,6 +161,7 @@ proc EndoscopicInit {} {
     
     set Module($m,procVTK) EndoscopicBuildVTK
     set Module($m,procGUI) EndoscopicBuildGUI
+    set Module($m,procCameraMotion) EndoscopicCameraMotionFromUser
     set Module($m,procEnter) EndoscopicEnter
     set Module($m,procExit) EndoscopicExit
     set Module($m,procMRML) EndoscopicUpdateMRML
@@ -348,7 +349,6 @@ proc EndoscopicBuildVTK {} {
 	proc EndoscopicCreateCamera {} {
 	    global Endoscopic
 	    
-
 	    vtkCubeSource camCube
 	    vtkTransform CubeXform	    
 	    vtkCubeSource camCube2
@@ -435,6 +435,8 @@ proc EndoscopicBuildVTK {} {
 	    # set the camera invisible until the user enters the module (through EndoscopicAddView)
 	    Endoscopic(cam,actor) SetVisibility 0
 
+	    vtkMatrix4x4 Endoscopic(actor,matrix)
+	    Endoscopic(cam,actor) SetUserMatrix Endoscopic(actor,matrix)
 	}
 
 
@@ -1426,14 +1428,6 @@ proc EndoscopicSetSize {a} {
     }
 }
 
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicSetCameraPosition
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetCameraPosition
 # 
@@ -1618,6 +1612,178 @@ proc EndoscopicSetCameraDirection {{value ""}} {
     
 
 #-------------------------------------------------------------------------------
+# .PROC EndoscopicSetFocalAndCameraPosition
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EndoscopicSetFocalAndCameraPosition {x y z FPx FPy FPz} {
+	global Endoscopic View Path Model
+
+
+    set Endoscopic(cam,xStr) $x
+    set Endoscopic(cam,yStr) $y
+    set Endoscopic(cam,zStr) $z
+
+    #*******************************************************************
+    #
+    # STEP 0: set the new position of the camera and fp and then update
+    #         the virtual camera first
+    #
+    #*******************************************************************
+
+    set Endoscopic(cam,x) $x
+    set Endoscopic(cam,y) $y
+    set Endoscopic(cam,z) $z
+
+    set Endoscopic(fp,x) $FPx
+    set Endoscopic(fp,y) $FPy
+    set Endoscopic(fp,z) $FPz
+
+    EndoscopicUpdateCamera
+
+    #*********************************************************************
+    #
+    # STEP 1: set the focal point actor's position
+    #
+    #*********************************************************************
+
+    Endoscopic(fp,actor) SetPosition $Endoscopic(fp,x) $Endoscopic(fp,y) $Endoscopic(fp,z)
+
+    #*********************************************************************
+    #
+    # STEP 2: set the camera actor's orientation based on the virtual
+    #         camera's orientation
+    #         then set the position
+    #
+    #*********************************************************************
+
+    vtkMatrix4x4 matrix
+    vtkTransform transform
+    
+    # first set the rotation matrix based on the Virtual Camera's 
+    # coordinate axis (orthogonal unit vectors):
+
+    # Uy = ViewPlaneNormal
+    set Uy(x) $Endoscopic(cam,viewPlaneNormalX)
+    set Uy(y) $Endoscopic(cam,viewPlaneNormalY)
+    set Uy(z) $Endoscopic(cam,viewPlaneNormalZ)
+    # Uz = ViewUp
+    set Uz(x) $Endoscopic(cam,viewUpX)
+    set Uz(y) $Endoscopic(cam,viewUpY)
+    set Uz(z) $Endoscopic(cam,viewUpZ)
+    # Ux = Uy x Uz
+    set Ux(x) [expr $Uy(y)*$Uz(z) - $Uz(y)*$Uy(z)]
+    set Ux(y) [expr $Uz(x)*$Uy(z) - $Uy(x)*$Uz(z)]
+    set Ux(z) [expr $Uy(x)*$Uz(y) - $Uz(x)*$Uy(y)]
+    
+    #Ux
+    matrix SetElement 0 0 $Ux(x)
+    matrix SetElement 1 0 $Ux(y)
+    matrix SetElement 2 0 $Ux(z)
+    matrix SetElement 3 0 0
+    # Uy
+    matrix SetElement 0 1 $Uy(x)
+    matrix SetElement 1 1 $Uy(y)
+    matrix SetElement 2 1 $Uy(z)
+    matrix SetElement 3 1 0
+    # Uz
+    matrix SetElement 0 2 $Uz(x)
+    matrix SetElement 1 2 $Uz(y)
+    matrix SetElement 2 2 $Uz(z)
+    matrix SetElement 3 2 0
+    # Bottom row
+    matrix SetElement 0 3 0
+    matrix SetElement 1 3 0
+    matrix SetElement 2 3 0
+    matrix SetElement 3 3 1
+    
+    transform Identity
+
+    # Set the vtkTransform to PostMultiply so a concatenated matrix, C,
+    # is multiplied by the existing matrix, M: C*M (not M*C)
+    transform PostMultiply
+
+    # STEP 2.1: translate the actor back to the origin
+    set old [Endoscopic(cam,actor) GetPosition] 
+    set oldx [expr -[lindex $old 0]]
+    set oldy [expr -[lindex $old 1]]
+    set oldz [expr -[lindex $old 2]]
+    transform Translate [expr $oldx] [expr $oldy] [expr $oldz]
+
+    # STEP 2.2: rotate the actor according to the rotation of the virtual 
+    #         camera
+    transform Concatenate matrix
+
+    # STEP 2.3: translate the actor to its new position
+    transform Translate [expr $Endoscopic(cam,x)] [expr $Endoscopic(cam,y)] [expr $Endoscopic(cam,z)]
+     
+    # STEP 2.4: set the user matrix
+    transform GetMatrix Endoscopic(actor,matrix)
+    Endoscopic(actor,matrix) Modified
+
+    matrix Delete
+    transform Delete
+
+    #*******************************************************************
+    #
+    # STEP 3: if the user decided to have the camera drive the slice, 
+    #         then do it!
+    #
+    #*******************************************************************
+
+    if { $Endoscopic(fp,driver) == 1 } {
+	EndoscopicSetSlicePosition fp 
+    } elseif { $Endoscopic(cam,driver) == 1 } {
+	EndoscopicSetSlicePosition cam 
+    }
+    
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicUpdateCamera
+#       Updates the virtual camera's position, orientation and view angle
+#       Calls EndoscopicLightFollowsEndoCamera
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EndoscopicUpdateCamera {} {
+    global Endoscopic Model View Path
+
+    # use prior information to prevent the View from flipping at undefined
+    # boundary points (i.e when the viewUp and the viewPlaneNormal are 
+    # parallel, OrthogonalizeViewUp sometimes produces a viewUp that 
+    # flips direction 
+    
+    $View(endCam) SetViewUp $Endoscopic(cam,viewUpX) $Endoscopic(cam,viewUpY) $Endoscopic(cam,viewUpZ)
+    $View(endCam) SetFocalPoint $Endoscopic(fp,x) $Endoscopic(fp,y) $Endoscopic(fp,z)
+    $View(endCam) SetPosition $Endoscopic(cam,x) $Endoscopic(cam,y) $Endoscopic(cam,z)
+    $View(endCam) ComputeViewPlaneNormal        
+    $View(endCam) OrthogonalizeViewUp
+
+    # save the current view Up
+    set l [$View(endCam) GetViewUp]
+    set Endoscopic(cam,viewUpX) [expr [lindex $l 0]]
+    set Endoscopic(cam,viewUpY) [expr [lindex $l 1]] 
+    set Endoscopic(cam,viewUpZ) [expr [lindex $l 2]]
+
+    # save the current view Plane
+    set l [$View(endCam) GetViewPlaneNormal]
+    set Endoscopic(cam,viewPlaneNormalX) [expr -[lindex $l 0]]
+    set Endoscopic(cam,viewPlaneNormalY) [expr -[lindex $l 1]] 
+    set Endoscopic(cam,viewPlaneNormalZ) [expr -[lindex $l 2]]
+        
+    EndoscopicSetCameraViewAngle
+    eval $View(endCam) SetClippingRange $View(endoscopicClippingRange)    
+    
+    EndoscopicLightFollowEndoCamera
+    
+   
+}
+
+
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicSetCameraZoom
 # 
 # .ARGS
@@ -1658,185 +1824,6 @@ proc EndoscopicSetCameraViewAngle {} {
     $View(endCam) SetViewAngle $Endoscopic(cam,viewAngle)
     
 }
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicSetFocalAndCameraPosition
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EndoscopicSetFocalAndCameraPosition {x y z FPx FPy FPz} {
-	global Endoscopic View Path Model
-
-
-    set Endoscopic(cam,xStr) $x
-    set Endoscopic(cam,yStr) $y
-    set Endoscopic(cam,zStr) $z
-
-    set Endoscopic(cam,x) $x
-    set Endoscopic(cam,y) $y
-    set Endoscopic(cam,z) $z
-
-    set Endoscopic(fp,x) $FPx
-    set Endoscopic(fp,y) $FPy
-    set Endoscopic(fp,z) $FPz
-
-
-    Endoscopic(cam,actor) SetPosition $Endoscopic(cam,x) $Endoscopic(cam,y) $Endoscopic(cam,z)
-    Endoscopic(fp,actor) SetPosition $Endoscopic(fp,x) $Endoscopic(fp,y) $Endoscopic(fp,z)
-    
-    EndoscopicUpdateCamera
-
-    # now that the view up and the view plane are updated, set the right
-    # camera directions (and position for roller coaster)
-
-
-    if {$Path(rollerCoaster) == 1} { 
-	set l [$View(endCam) GetViewUp]
-	set U(x) [expr [lindex $l 0]]
-	set U(y) [expr [lindex $l 1]] 
-	set U(z) [expr [lindex $l 2]]
-
-	set Endoscopic(cam,x) [expr $Endoscopic(cam,x) + $U(x)*2*$Endoscopic(cPath,size)] 
-	set Endoscopic(cam,y) [expr $Endoscopic(cam,y) + $U(y)*2*$Endoscopic(cPath,size)] 
-	set Endoscopic(cam,z) [expr $Endoscopic(cam,z) + $U(z)*2*$Endoscopic(cPath,size)]
-	Endoscopic(cam,actor) SetPosition $Endoscopic(cam,x) $Endoscopic(cam,y) $Endoscopic(cam,z) 
-	EndoscopicUpdateCamera
-    }
-
-    # get the view plane normal and orient the camera that way
-    
-    set l [$View(endCam) GetViewPlaneNormal]
-    set T(x) [expr -[lindex $l 0]]
-    set T(y) [expr -[lindex $l 1]] 
-    set T(z) [expr -[lindex $l 2]]
-    Normalize T
-    #puts "T $T(x) $T(y) $T(z)"
-
-    set l [$View(endCam) GetViewUp]
-    set V(x) [expr [lindex $l 0]]
-    set V(y) [expr [lindex $l 1]] 
-    set V(z) [expr [lindex $l 2]]
-    Normalize V
-
-    # Find angle between T, and the xy plane (angle between T and its 
-    # projection on the plane)
-    set xCos [expr sqrt(($T(x) * $T(x)) + ($T(y) * $T(y))) / 1]
-    set Endoscopic(cam,xRotation) [expr acos($xCos) * 180 / 3.14]
-
-    # same deal as above, if Z is negative, then we want 360 - z
-    if {$T(z) < 0} {
-	set Endoscopic(cam,xRotation) [expr 360-$Endoscopic(cam,xRotation)]
-    }
-
-    # Find angle between T and Rx.[0,1,0]' (the y axis rotated by xRotation) 
-    # from their dot product
-    # first, find y' = Rx.y = [0 cos(xRotation) sin(xRotation)]'
-    # then, dot them
-    #set zCos [expr ($T(y)*$xCos) + ($T(z)*sin($Endoscopic(cam,xRotation) * 3.14 / 180))]
-    set zCos [expr $T(y)]
-    set Endoscopic(cam,zRotation) [expr acos($zCos) * 180 / 3.14]
-    # the cosine of T and y is always between 0 and 180 (by definition)
-    # if T(x) is positive, then we are in the last 2 quadrants of the unit 
-    # cercle and the angle is really 360-angle
-    if {$T(x) > 0} {
-	puts "*** change ***"
-	set Endoscopic(cam,zRotation) [expr 360-$Endoscopic(cam,zRotation)+45]
-    }
-
-    
-    if { $Endoscopic(cam,xRotation) <= 0.05 && $Endoscopic(cam,xRotation) >= 0 } {
-	set Endoscopic(cam,xRotation) 0
-    }
-    if { $Endoscopic(cam,xRotation) >= -0.05 && $Endoscopic(cam,xRotation) <= 0 } {
-	set Endoscopic(cam,xRotation) 0
-    }
-    if { $Endoscopic(cam,zRotation) == 0.0} {
-	set Endoscopic(cam,zRotation) 0
-    }
-
-    set Endoscopic(cam,rxStr)  $Endoscopic(cam,xRotation)
-    set Endoscopic(cam,ryStr)  $Endoscopic(cam,yRotation)
-    set Endoscopic(cam,rzStr)  $Endoscopic(cam,zRotation)    
-    Endoscopic(cam,actor) SetOrientation $Endoscopic(cam,xRotation) $Endoscopic(cam,yRotation) $Endoscopic(cam,zRotation)
-    
-    # now extract the y Orientation of the actor in the new frame coordinate 
-    # and compare it to the View Up of the virtual Camera. the Angle between
-    # them is the amount of y rotation that we want
-    
-#    set l [$View(endCam) GetViewUp]
-#    set V(x) [expr [lindex $l 0]]
-#    set V(y) [expr [lindex $l 1]] 
-#    set V(z) [expr [lindex $l 2]]
-
-    # find default z' axis in the new frame
-    # z' = z [zRotMatrix] [xRotMatrix] = [0 0 1 1]' [xRotMatrix] 
-    #    = [0 -sin(xRot) cos(xRot) 1] (in homogeneous coordinates)
-
-    #find angle between V (viewUp) and z', and that is the amount we want 
-    #to rotate around the y axis
- #   set yCos [expr ($V(y)*-sin($Endoscopic(cam,xRotation) * 3.14 / 180)) + ($V(z)*cos($Endoscopic(cam,xRotation) * 3.14 / 180))]
- #   set Endoscopic(cam,yRotation) [expr acos($yCos) * 180 / 3.14]
-    
-    # the cosine of V and z is always between 0 and 180 (by definition)
-    # if V(y) is positive, then we are in the last 2 quadrants of the unit 
-    # cercle and the angle is really 360-angle
-    #if {$xCos > 0} {
-#	set Endoscopic(cam,yRotation) [expr 360-$Endoscopic(cam,yRotation)]
-#    }
-
- #   set Endoscopic(cam,ryStr)  $Endoscopic(cam,yRotation)
- #   Endoscopic(cam,actor) SetOrientation $Endoscopic(cam,xRotation) $Endoscopic(cam,yRotation) $Endoscopic(cam,zRotation)
-
-    # if the user decided to have the camera drive the slice, then do it!
-if { $Endoscopic(fp,driver) == 1 } {
-    EndoscopicSetSlicePosition fp 
-} elseif { $Endoscopic(cam,driver) == 1 } {
-    EndoscopicSetSlicePosition cam 
-}
-
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicUpdateCamera
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EndoscopicUpdateCamera {} {
-    global Endoscopic Model View Path
-
-    # use prior information to prevent the View from flipping at undefined
-    # boundary points (i.e when the viewUp and the viewPlaneNormal are 
-    # parallel, OrthogonalizeViewUp sometimes produces a viewUp that 
-    #flips direction 
-    
-    $View(endCam) SetViewUp $Endoscopic(cam,viewUpX) $Endoscopic(cam,viewUpY) $Endoscopic(cam,viewUpZ)
-    $View(endCam) SetFocalPoint $Endoscopic(fp,x) $Endoscopic(fp,y) $Endoscopic(fp,z)
-    $View(endCam) SetPosition $Endoscopic(cam,x) $Endoscopic(cam,y) $Endoscopic(cam,z)
-    $View(endCam) ComputeViewPlaneNormal        
-    $View(endCam) OrthogonalizeViewUp
-
-    # save the current view Up
-    set l [$View(endCam) GetViewUp]
-    set Endoscopic(cam,viewUpX) [expr [lindex $l 0]]
-    set Endoscopic(cam,viewUpY) [expr [lindex $l 1]] 
-    set Endoscopic(cam,viewUpZ) [expr [lindex $l 2]]
-
-    # save the current view Plane
-    set l [$View(endCam) GetViewPlaneNormal]
-    set Endoscopic(cam,viewPlaneNormalX) [expr -[lindex $l 0]]
-    set Endoscopic(cam,viewPlaneNormalY) [expr -[lindex $l 1]] 
-    set Endoscopic(cam,viewPlaneNormalZ) [expr -[lindex $l 2]]
-        
-    EndoscopicSetCameraViewAngle
-    eval $View(endCam) SetClippingRange $View(endoscopicClippingRange)    
-    EndoscopicLightFollowEndoCamera
-    
-   
-}
-
 
 
 #-------------------------------------------------------------------------------
@@ -2161,15 +2148,6 @@ proc EndoscopicCreateNewPath {} {
     }
 }
 
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicShowPath
-# 
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicShowPath
 # 
@@ -2265,14 +2243,6 @@ proc EndoscopicResetPath {} {
 }
 
 
-    
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicSetPathFrame
-# 
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetPathFrame
@@ -2596,3 +2566,149 @@ proc EndoscopicUpdateMRML {} {
     }
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicCameraMotionFromUser
+#
+# called whenever the active camera is moved. This routine syncs the position of
+# the graphical endoscopic camera with the virtual endoscopic camera
+# (i.e if the user changes the view of the endoscopic window with the mouse,
+#  we want to change the position of the graphical camera)
+# .END
+#-------------------------------------------------------------------------------
+proc EndoscopicCameraMotionFromUser {} {
+    global View Endoscopic 
+    global CurrentCamera 
+    
+    if {$CurrentCamera == $View(endCam)} {
+	
+	set l [$View(endCam) GetPosition]
+	set p(x) [lindex $l 0]
+	set p(y) [lindex $l 1]
+	set p(z) [lindex $l 2]
+	
+	set Endoscopic(cam,x) $p(x)
+	set Endoscopic(cam,y) $p(y)
+	set Endoscopic(cam,z) $p(z)
+	
+	set l [$View(endCam) GetFocalPoint]
+	set f(x) [lindex $l 0]
+	set f(y) [lindex $l 1]
+	set f(z) [lindex $l 2]
+
+	set Endoscopic(fp,x) $f(x)
+	set Endoscopic(fp,y) $f(y)
+	set Endoscopic(fp,z) $f(z)
+
+
+	# save the current view Up
+	set l [$View(endCam) GetViewUp]
+	set Endoscopic(cam,viewUpX) [expr [lindex $l 0]]
+	set Endoscopic(cam,viewUpY) [expr [lindex $l 1]] 
+	set Endoscopic(cam,viewUpZ) [expr [lindex $l 2]]
+	
+	# save the current view Plane
+	set l [$View(endCam) GetViewPlaneNormal]
+	set Endoscopic(cam,viewPlaneNormalX) [expr -[lindex $l 0]]
+	set Endoscopic(cam,viewPlaneNormalY) [expr -[lindex $l 1]] 
+	set Endoscopic(cam,viewPlaneNormalZ) [expr -[lindex $l 2]]
+	
+
+	#*********************************************************************
+	#
+	# STEP 1: set the focal point actor's position
+	#
+	#*********************************************************************
+	
+	Endoscopic(fp,actor) SetPosition $f(x) $f(y) $f(z)
+	
+	#*********************************************************************
+	#
+	# STEP 2: set the camera actor's orientation based on the virtual
+	#         camera's orientation
+	#         then set the position
+	#
+	#*********************************************************************
+	
+	vtkMatrix4x4 matrix
+	vtkTransform transform
+	
+	# first set the rotation matrix based on the Virtual Camera's 
+    # coordinate axis (orthogonal unit vectors):
+
+    # Uy = ViewPlaneNormal
+    set Uy(x) $Endoscopic(cam,viewPlaneNormalX)
+    set Uy(y) $Endoscopic(cam,viewPlaneNormalY)
+    set Uy(z) $Endoscopic(cam,viewPlaneNormalZ)
+    # Uz = ViewUp
+    set Uz(x) $Endoscopic(cam,viewUpX)
+    set Uz(y) $Endoscopic(cam,viewUpY)
+    set Uz(z) $Endoscopic(cam,viewUpZ)
+    # Ux = Uy x Uz
+    set Ux(x) [expr $Uy(y)*$Uz(z) - $Uz(y)*$Uy(z)]
+    set Ux(y) [expr $Uz(x)*$Uy(z) - $Uy(x)*$Uz(z)]
+    set Ux(z) [expr $Uy(x)*$Uz(y) - $Uz(x)*$Uy(y)]
+    
+    #Ux
+    matrix SetElement 0 0 $Ux(x)
+    matrix SetElement 1 0 $Ux(y)
+    matrix SetElement 2 0 $Ux(z)
+    matrix SetElement 3 0 0
+    # Uy
+    matrix SetElement 0 1 $Uy(x)
+    matrix SetElement 1 1 $Uy(y)
+    matrix SetElement 2 1 $Uy(z)
+    matrix SetElement 3 1 0
+    # Uz
+    matrix SetElement 0 2 $Uz(x)
+    matrix SetElement 1 2 $Uz(y)
+    matrix SetElement 2 2 $Uz(z)
+    matrix SetElement 3 2 0
+    # Bottom row
+    matrix SetElement 0 3 0
+    matrix SetElement 1 3 0
+    matrix SetElement 2 3 0
+    matrix SetElement 3 3 1
+    
+    transform Identity
+
+    # Set the vtkTransform to PostMultiply so a concatenated matrix, C,
+    # is multiplied by the existing matrix, M: C*M (not M*C)
+    transform PostMultiply
+
+    # STEP 2.1: translate the actor back to the origin
+    set old [Endoscopic(cam,actor) GetPosition] 
+    set oldx [expr -[lindex $old 0]]
+    set oldy [expr -[lindex $old 1]]
+    set oldz [expr -[lindex $old 2]]
+    transform Translate [expr $oldx] [expr $oldy] [expr $oldz]
+
+    # STEP 2.2: rotate the actor according to the rotation of the virtual 
+    #         camera
+    transform Concatenate matrix
+
+    # STEP 2.3: translate the actor to its new position
+    transform Translate [expr $Endoscopic(cam,x)] [expr $Endoscopic(cam,y)] [expr $Endoscopic(cam,z)]
+     
+    # STEP 2.4: set the user matrix
+    transform GetMatrix Endoscopic(actor,matrix)
+    Endoscopic(actor,matrix) Modified
+
+    matrix Delete
+    transform Delete
+
+    #*******************************************************************
+    #
+    # STEP 3: if the user decided to have the camera drive the slice, 
+    #         then do it!
+    #
+    #*******************************************************************
+
+    if { $Endoscopic(fp,driver) == 1 } {
+	EndoscopicSetSlicePosition fp 
+    } elseif { $Endoscopic(cam,driver) == 1 } {
+	EndoscopicSetSlicePosition cam 
+    }
+    
+}
+}

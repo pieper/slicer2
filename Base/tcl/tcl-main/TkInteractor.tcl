@@ -51,6 +51,7 @@ proc BindTkRenderWidget {widget} {
     bind $widget <B2-Motion> {Pan %W %x %y}
     bind $widget <B3-Motion> {Zoom %W %x %y}
     bind $widget <Shift-B1-Motion> {Pan %W %x %y}
+    bind $widget <Shift-B3-Motion> {PitchYaw %W %x %y}
     bind $widget <KeyPress-r> {Reset %W %x %y}
     bind $widget <KeyPress-u> {wm deiconify .vtkInteract}
     bind $widget <KeyPress-w> Wireframe
@@ -63,7 +64,7 @@ proc BindTkRenderWidget {widget} {
 #-------------------------------------------------------------------------------
 # .PROC Expose
 # a litle more complex than just "bind $widget <Expose> {%W Render}"
-# we have to handle all pending expose events otherwise they que up.
+# we have to handle all pending expose events otherwise they queue up.
 # .END
 #-------------------------------------------------------------------------------
 proc Expose {widget} {
@@ -199,16 +200,59 @@ proc Rotate {widget x y} {
     global CurrentCamera 
     global LastX LastY
     global RendererFound
-	global View
+	global View Module
 
     if { ! $RendererFound } { return }
-
+    
     $CurrentCamera Azimuth [expr ($LastX - $x)]
     $CurrentCamera Elevation [expr ($y - $LastY)]
     $CurrentCamera OrthogonalizeViewUp
 
     set LastX $x
     set LastY $y
+
+    # Call each Module's "CameraMotion" routine
+    #-------------------------------------------
+    foreach m $Module(idList) {
+	if {[info exists Module($m,procCameraMotion)] == 1} {
+	    if {$Module(verbose) == 1} {puts "CameraMotion: $m"}
+	    $Module($m,procCameraMotion)
+	}
+    }
+
+    Render
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC PitchYaw
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc PitchYaw {widget x y} {
+    global CurrentCamera 
+    global LastX LastY
+    global RendererFound
+	global View Module
+
+    if { ! $RendererFound } { return }
+    
+    $CurrentCamera Yaw [expr ($LastX - $x)]
+    $CurrentCamera Pitch [expr ($y - $LastY)]
+    $CurrentCamera OrthogonalizeViewUp
+
+    set LastX $x
+    set LastY $y
+
+    # Call each Module's "CameraMotion" routine
+    #-------------------------------------------
+    foreach m $Module(idList) {
+	if {[info exists Module($m,procCameraMotion)] == 1} {
+	    if {$Module(verbose) == 1} {puts "CameraMotion: $m"}
+	    $Module($m,procCameraMotion)
+	}
+    }
 
     Render
 }
@@ -223,7 +267,7 @@ proc Pan {widget x y} {
     global CurrentRenderer CurrentCamera
     global WindowCenterX WindowCenterY LastX LastY
     global RendererFound
-	global View
+	global View Module
 
     if { ! $RendererFound } { return }
 
@@ -268,12 +312,28 @@ proc Pan {widget x y} {
       [expr ($FPoint1 - $RPoint1)/2.0 + $PPoint1] \
       [expr ($FPoint2 - $RPoint2)/2.0 + $PPoint2]
 
-	set LastX $x
+    set LastX $x
     set LastY $y
 
-	MainAnnoUpdateFocalPoint $FPoint0 $FPoint1 $FPoint2
+   # only move the annotations if the mainView camera is panning
+    if {[info exists View(viewCam)] == 1} {
+	if {$CurrentCamera == $View(viewCam)} {
+	    MainAnnoUpdateFocalPoint $FPoint0 $FPoint1 $FPoint2
+	}
+    }
+
+    # Call each Module's "CameraMotion" routine
+    #-------------------------------------------
+    foreach m $Module(idList) {
+	if {[info exists Module($m,procCameraMotion)] == 1} {
+	    if {$Module(verbose) == 1} {puts "CameraMotion: $m"}
+	    $Module($m,procCameraMotion)
+	}
+    }
+
     Render
 }
+
 
 #-------------------------------------------------------------------------------
 # .PROC Zoom
@@ -285,7 +345,7 @@ proc Zoom {widget x y} {
     global CurrentCamera
     global LastX LastY
     global RendererFound
-	global View
+	global View Module
 
     if { ! $RendererFound } { return }
 
@@ -301,8 +361,20 @@ proc Zoom {widget x y} {
 	set LastX $x
     set LastY $y
 
+    # Call each Module's "CameraMotion" routine
+    #-------------------------------------------
+    foreach m $Module(idList) {
+	if {[info exists Module($m,procCameraMotion)] == 1} {
+	    if {$Module(verbose) == 1} {puts "CameraMotion: $m"}
+	    $Module($m,procCameraMotion)
+	}
+    }
+
+
     Render
 }
+
+
 
 #-------------------------------------------------------------------------------
 # .PROC Reset

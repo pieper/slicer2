@@ -107,6 +107,8 @@ proc CustomInit {} {
     #               its button on the main menu
     #   procExit  = Called when the user leaves this module by clicking
     #               another modules button
+    #   procCameraMotion = Called right before the camera of the active 
+    #                      renderer is about to move 
     #   procStorePresets  = Called when the user holds down one of the Presets
     #               buttons.
     #   procRecallPresets  = Called when the user clicks one of the Presets buttons
@@ -135,7 +137,7 @@ proc CustomInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-	    {$Revision: 1.23 $} {$Date: 2001/02/19 17:53:27 $}]
+	    {$Revision: 1.24 $} {$Date: 2001/05/24 00:29:15 $}]
 
     # Initialize module-level variables
     #------------------------------------
