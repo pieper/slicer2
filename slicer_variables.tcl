@@ -96,8 +96,8 @@ switch $tcl_platform(os) {
         # that if it doesn't match above it must be windows
         # (VC7 is Visual C++ 7.0, also known as the .NET version)
         # set ::VTK_BUILD_TYPE RelWithDebInfo
-        # set ::VTK_BUILD_TYP Release
-        set ::VTK_BUILD_TYPE Debug
+        set ::VTK_BUILD_TYP Release
+        # set ::VTK_BUILD_TYPE Debug
         set ::env(VTK_BUILD_TYPE) $VTK_BUILD_TYPE
         set ::VTKSLICERBASE_BUILD_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/$::VTK_BUILD_TYPE/vtkSlicerBase.lib
         set ::VTKSLICERBASE_BUILD_TCL_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/$::VTK_BUILD_TYPE/vtkSlicerBaseTCL.lib
