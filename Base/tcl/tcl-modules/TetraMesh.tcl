@@ -148,7 +148,7 @@ proc TetraMeshInit {} {
 	#   appropriate revision number and date when the module is checked in.
 	#   
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.21 $} {$Date: 2001/09/06 21:41:59 $}]
+		{$Revision: 1.22 $} {$Date: 2001/10/30 15:35:04 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -1345,6 +1345,7 @@ vtkMaskPoints PointSelection
 vtkGlyph3D VectorGlyph
   VectorGlyph SetInput [PointSelection GetOutput]
   VectorGlyph SetSource [TetraCone GetOutput]
+  VectorGlyph SetScaleModeToScaleByVector
   VectorGlyph SetScaleFactor $TetraMeshArrowScale
 
   ######################################################################
