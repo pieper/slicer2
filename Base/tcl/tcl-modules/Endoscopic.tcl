@@ -259,7 +259,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.65 $} {$Date: 2004/08/17 20:07:52 $}] 
+    {$Revision: 1.66 $} {$Date: 2004/08/31 20:03:31 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -545,11 +545,19 @@ proc EndoscopicCreateRenderer {renName} {
     
     vtkLight View($cam,light)
     vtkLight View($cam,light2)
+    
+    vtkLightKit View(light3)
+    View(light3) SetKeyLightIntensity 0.1
+    View(light3) SetKeyToFillRatio 1.5
+    View(light3) SetKeyToHeadRatio 1.75
+    View(light3) SetKeyToBackRatio 3.75
+    
     #puts "renderer $renName, light obj View($View($camName,cam),light"
     #View($View($camName,cam),light) SetLightTypeToCameraLight
     #View($View($camName,cam),light2) SetLightTypeToSceneLight
     $renName AddLight View($cam,light)
     $renName AddLight View($cam,light2)
+    View(light3) AddLightsToRenderer $renName
     # initial settings. 
     # These parameters are then set in EndoscopicUpdateVirtualEndoscope
     $cam SetPosition 0 0 0
@@ -5090,7 +5098,7 @@ proc EndoscopicAddFlatView {} {
      
      #light
      vtkLight Endoscopic($name,light)
-     Endoscopic($name,light) SetIntensity 0.5
+     Endoscopic($name,light) SetIntensity 0.3
      Endoscopic($name,light) SetPosition [expr $Endoscopic(flatColon,xCamDist)-10] $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zCamDist)
      Endoscopic($name,light) SetFocalPoint $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zMin)
      Endoscopic($name,light) SetDirectionAngle 0 0
@@ -5098,7 +5106,7 @@ proc EndoscopicAddFlatView {} {
      
      # add command for changing the light's elevation and azimuth
      set Endoscopic(flatColon,LightElev) 0
-     set Endoscopic(flatColon,LightAzi) 0
+     set Endoscopic(flatColon,LightAzi) -20
      $Endoscopic(flatScale,elevation) config -command "EndoscopicFlatLightElevationAzimuth $f.flatRenderWidget$name"
      $Endoscopic(flatScale,azimuth) config -command "EndoscopicFlatLightElevationAzimuth $f.flatRenderWidget$name"
   
