@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkGradientDescentOptimizerWithStopCondition.cxx,v $
   Language:  C++
-  Date:      $Date: 2003/09/17 18:04:47 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2003/10/18 18:40:58 $
+  Version:   $Revision: 1.3 $
 
   Copyright (c) 2002 Insight Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -21,6 +21,7 @@
 #include "itkCommand.h"
 #include "itkEventObject.h"
 #include "itkExceptionObject.h"
+#include <iostream.h>
 
 namespace itk
 {
