@@ -332,7 +332,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.45 $} {$Date: 2000/08/08 15:49:14 $}]
+		{$Revision: 1.46 $} {$Date: 2000/08/09 21:09:17 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -750,7 +750,6 @@ proc MainBuildModuleTabs {ModuleName}  {
 
     foreach row "row1 row2" {
         # Make tab-row frame for each row
-        puts $f.f${m}${row}
         frame $f.f${m}${row} -bg $Gui(activeWorkspace)
         place $f.f${m}${row} -in $f -relheight 1.0 -relwidth 1.0
         set Module($m,f$row) $f.f${m}${row}
