@@ -35,8 +35,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkLevelSetFastMarching.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/03/15 16:36:39 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2005/03/30 19:34:33 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================*/
 #include "vtkLevelSetFastMarching.h"
@@ -54,10 +54,6 @@
 //  Brigham and Women's hospital
 //  Surgical Planning Laboratory
 //
-
-// FOR
-#define For(number, min, max)  for(number=min; number<=max; number++) {
-#define EndFor                 }
 
 #define macro_min(n1,n2) ((n1)<(n2)?(n1):(n2))
 #define macro_max(n1,n2) ((n1)>(n2)?(n1):(n2))
@@ -402,12 +398,12 @@ void vtkLevelSetFastMarching::ExecuteData(vtkDataObject *outData)
 //    if( (dim==VTK_MODE_2D) ){
 //    n = iterations/200;
 //        if( n<ImEvol->_tz ){
-//    For(x,0,tx-1)
-//    For(y,0,ty-1)
+//    for(x=0; x<=tx-1; x++){
+//    for(y=0; y<=ty-1; y++) {
 //    ImEvol->BufferPos(x,y,n);
 //    ImEvol->FixeValeur((*this->T)(x,y,0));
-//    EndFor
-//    EndFor
+//    }
+//    }
 //        } // end if
 
     } // end if
@@ -468,12 +464,12 @@ void vtkLevelSetFastMarching::AddAcceptedPoint( short x, short y, short z, int p
   float      value; // time of the accepted point
 
   // setup the neighbors  
-  For(nb,0,5)
+  for (nb=0; nb<=5; nb++) {
     neighbors[nb] = pos;
     neighb_x[nb]  = x;
     neighb_y[nb]  = y;
     neighb_z[nb]  = z;
-  EndFor
+  }
 
   nb = 0;
   if (x-1>=0) { neighb_x[nb] = x-1; neighbors[nb] -=1;   dir[nb]=0; nb++;}
@@ -491,7 +487,7 @@ void vtkLevelSetFastMarching::AddAcceptedPoint( short x, short y, short z, int p
 
   // Tag as trial all the neighbors of A that are Known
   // if the neighbor is far, remove and add to the set of Trial
-  For(n,0,nb-1)
+  for (n=0; n<=nb-1; n++) {
 
     status_buf  =  this->status+neighbors[n];
 
@@ -554,7 +550,7 @@ void vtkLevelSetFastMarching::AddAcceptedPoint( short x, short y, short z, int p
         break;
     } // end switch
   
-  EndFor
+  }
     
 
 
@@ -584,12 +580,12 @@ void vtkLevelSetFastMarching::AddTrialPointsOld( short x, short y, short z, int 
   float valmin;
 
   // setup the neighbors  
-  For(nb,0,5)
+  for (nb=0; nb<=5; nb++) {
     neighbors[nb] = pos;
     neighb_x[nb]  = x;
     neighb_y[nb]  = y;
     neighb_z[nb]  = z;
-  EndFor
+  }
 
   nb = 0;
   if (x-1>=0) { neighb_x[nb] = x-1; neighbors[nb] -=1;   dir[nb]=0; nb++;}
@@ -604,7 +600,7 @@ void vtkLevelSetFastMarching::AddTrialPointsOld( short x, short y, short z, int 
 
   // Tag as trial all the neighbors of A that are Known
   // if the neighbor is far, remove and add to the set of Trial
-  For(n,0,nb-1)
+  for (n=0; n<=nb-1; n++) {
 
     status_buf  =  this->status+neighbors[n];
     if ( this->mask != NULL ) {
@@ -653,7 +649,7 @@ void vtkLevelSetFastMarching::AddTrialPointsOld( short x, short y, short z, int 
       break;
     } // end switch
   
-  EndFor
+  }
     
 
 
@@ -1238,24 +1234,24 @@ void vtkLevelSetFastMarching::Init2D(int cx, int cy, int radius)
   for(pos=0;pos<tx*ty*tz;pos++) surf_buf[pos] = 0.0;
 
   // Distance function around the surface
-  For(x,cx-myrad2,cx+myrad2)
-  For(y,cy-myrad2,cy+myrad2)
+  for (x=cx-myrad2; x<=cx+myrad2; x++) {
+      for(y=cy-myrad2; y<=cy+myrad2; y++) {
 
-    val =  sqrt((double)((x-cx)*(x-cx)+
-        (y-cy)*(y-cy))) - 
-                (radius-margin);
+          val =  sqrt((double)((x-cx)*(x-cx)+
+                               (y-cy)*(y-cy))) - 
+              (radius-margin);
 
 
-    surf_buf  = surf+x+y*tx;
-    *surf_buf = val;
+          surf_buf  = surf+x+y*tx;
+          *surf_buf = val;
+          
+          if ( val<0 ) {
+              T_buf1  = (float*) this->T->GetScalarPointer(x,y,0);
+              *T_buf1 = val;
+          } // end if
 
-    if ( val<0 ) {
-      T_buf1  = (float*) this->T->GetScalarPointer(x,y,0);
-      *T_buf1 = val;
-    } // end if
-
-  EndFor
-  EndFor
+      }
+  }
 
 
   //----- Compute the time T around the surface
@@ -1264,44 +1260,44 @@ void vtkLevelSetFastMarching::Init2D(int cx, int cy, int radius)
   t   = 0;
   dt = 0.01;
 
-  For(n,1,1000)
+  for (n=1; n<=1000; n++) {
 
       //      if ( GB_debug ) fprintf(stderr,"LevelSetFastMarching::Init() \t 7 \n");
-      For(y,cy-myrad2,cy+myrad2)
-      For(x,cx-myrad2,cx+myrad2)
+      for (y=cy-myrad2; y<=cy+myrad2; y++) {
+          for(x=cx-myrad2; x<=cx+myrad2; x++) {
 
-        pos = x+y*tx;
-        surf_buf  = surf + pos;
-        val = *surf_buf;
-
-        NGx = 0;
-        NGx = macro_max(NGx, val- *(surf_buf+1));
-        NGx = macro_max(NGx, val- *(surf_buf-1));
-        NGy = 0;
-        NGy = macro_max(NGy, val- *(surf_buf+tx));
-        NGy = macro_max(NGy, val- *(surf_buf-tx));
-    //        NG = macro_max(NGx,NGy);
-        NG = sqrt(NGx*NGx+NGy*NGy);
-
-    //    if (NG>0.01) printf("x %d y %d \n", x,y);
-
-    force_buf1 = force_buf + pos;
-        newval = val - dt*(*force_buf1)*NG;
-        if ( (val>=0)&&(newval<0) ) {
-
-        T_buf1 = (float*) this->T->GetScalarPointer(x,y,0);
-          if ( val-newval > EPSILON ) {
-            *T_buf1 = ((t-dt)*(-newval)+t*val)/(val-newval);
-          } else {
-            *T_buf1 = t-dt;
-          } // end if
-        } // end if
-        *surf_buf = newval;
-
-      EndFor
-      EndFor    
+              pos = x+y*tx;
+              surf_buf  = surf + pos;
+              val = *surf_buf;
+              
+              NGx = 0;
+              NGx = macro_max(NGx, val- *(surf_buf+1));
+              NGx = macro_max(NGx, val- *(surf_buf-1));
+              NGy = 0;
+              NGy = macro_max(NGy, val- *(surf_buf+tx));
+              NGy = macro_max(NGy, val- *(surf_buf-tx));
+              //        NG = macro_max(NGx,NGy);
+              NG = sqrt(NGx*NGx+NGy*NGy);
+              
+              //    if (NG>0.01) printf("x %d y %d \n", x,y);
+              
+              force_buf1 = force_buf + pos;
+              newval = val - dt*(*force_buf1)*NG;
+              if ( (val>=0)&&(newval<0) ) {
+                  
+                  T_buf1 = (float*) this->T->GetScalarPointer(x,y,0);
+                  if ( val-newval > EPSILON ) {
+                      *T_buf1 = ((t-dt)*(-newval)+t*val)/(val-newval);
+                  } else {
+                      *T_buf1 = t-dt;
+                  } // end if
+              } // end if
+              *surf_buf = newval;
+              
+          }
+      }    
       t += dt;
-    EndFor
+  }
 
 
       //  if ( GB_debug ) fprintf(stderr,"LevelSetFastMarching::Init() \t 10 \n");
@@ -1316,25 +1312,25 @@ void vtkLevelSetFastMarching::Init2D(int cx, int cy, int radius)
 
   // 2. Set the known, trial, and far away points
 
-  For(y,cy-myrad2,cy+myrad2)
-    // fprintf(stderr,"y= %d \n",y);
-  For(x,cx-myrad2,cx+myrad2)
+  for(y=cy-myrad2; y<=cy+myrad2; y++) {
+      // fprintf(stderr,"y= %d \n",y);
+      for(x=cx-myrad2; x<=cx+myrad2; x++) {
 
-    T_buf1      = (float*)         this->T     ->GetScalarPointer(x,y,0);
-    status_buf = this->status+x+y*tx;
-    val = *T_buf1;
-  
-    if ( val<=0 ) {
-      *status_buf = VTK_VAL_ACCEPTED;
-    } else {
-      if ( val<=margin ) {
-        *status_buf = VTK_VAL_TRIAL;
-    this->mh   += FM_TrialPoint(x,y,0,x+y*tx,val);
-      } // end if
-    } // end if
-
-  EndFor
-  EndFor    
+          T_buf1      = (float*)         this->T     ->GetScalarPointer(x,y,0);
+          status_buf = this->status+x+y*tx;
+          val = *T_buf1;
+          
+          if ( val<=0 ) {
+              *status_buf = VTK_VAL_ACCEPTED;
+          } else {
+              if ( val<=margin ) {
+                  *status_buf = VTK_VAL_TRIAL;
+                  this->mh   += FM_TrialPoint(x,y,0,x+y*tx,val);
+              } // end if
+          } // end if
+          
+      }
+  }    
 
     //this->T     ->Sauve("T-init.ami.gz");
     //this->status->Sauve("status-init.ami.gz");
@@ -1404,27 +1400,27 @@ void vtkLevelSetFastMarching::Init3D(int cx, int cy, int cz, int radius)
   for(pos=0;pos<tx*ty*tz;pos++) surf_buf[pos] = 0.0;
 
   // Distance function around the surface
-  For(x,cx-myrad2,cx+myrad2)
-  For(y,cy-myrad2,cy+myrad2)
-  For(z,cz-myrad2,cz+myrad2)
+  for(x=cx-myrad2; x <=cx+myrad2; x++) {
+      for(y=cy-myrad2; y<=cy+myrad2; y++) {
+          for(z=cz-myrad2; z<=cz+myrad2; z++) {
 
-    val =  sqrt((double)((x-cx)*(x-cx)+
-        (y-cy)*(y-cy)+
-        (z-cz)*(z-cz))) - 
-                (radius-d);
+              val =  sqrt((double)((x-cx)*(x-cx)+
+                                   (y-cy)*(y-cy)+
+                                   (z-cz)*(z-cz))) - 
+                  (radius-d);
+              
+              pos = x+y*tx+z*txy;
+              surf_buf  = surf+pos;
+              *surf_buf = val;
+              
+              if ( val<0 ) {
+                  T_buf1  = T_buf+pos;
+                  *T_buf1 = val;
+              } // end if
 
-    pos = x+y*tx+z*txy;
-    surf_buf  = surf+pos;
-    *surf_buf = val;
-
-    if ( val<0 ) {
-      T_buf1  = T_buf+pos;
-      *T_buf1 = val;
-    } // end if
-
-  EndFor
-  EndFor
-  EndFor
+          }
+      }
+  }
 
 
   //----- Compute the time T around the surface
@@ -1433,50 +1429,50 @@ void vtkLevelSetFastMarching::Init3D(int cx, int cy, int cz, int radius)
   t   = 0;
   dt = 0.01;
 
-  For(n,1,1000)
+  for(n=1; n<=1000; n++) {
 
 
-      For(z,cz-myrad2,cz+myrad2)
-      For(y,cy-myrad2,cy+myrad2)
-      For(x,cx-myrad2,cx+myrad2)
+      for(z=cz-myrad2; z<=cz+myrad2; z++) {
+          for(y=cy-myrad2; y<=cy+myrad2; y++) {
+              for(x=cx-myrad2; x<=cx+myrad2; x++) {
 
-        pos = x+y*tx+z*txy;
-        surf_buf  = surf + pos;
-        val = *surf_buf;
-
-        NGx = 0;
-        NGx = macro_max(NGx, val- *(surf_buf+1));
-        NGx = macro_max(NGx, val- *(surf_buf-1));
-        NGy = 0;
-        NGy = macro_max(NGy, val- *(surf_buf+tx));
-        NGy = macro_max(NGy, val- *(surf_buf-tx));
-        NGz = 0;
-        NGz = macro_max(NGz, val- *(surf_buf+txy));
-        NGz = macro_max(NGz, val- *(surf_buf-txy));
-        NG = sqrt(NGx*NGx+NGy*NGy+NGz*NGz);
-
-
-    //    if (NG>0.01) printf("x %d y %d \n", x,y);
-
-    force_buf1 = force_buf + pos;
-        newval = val - dt*(*force_buf1)*NG;
+                  pos = x+y*tx+z*txy;
+                  surf_buf  = surf + pos;
+                  val = *surf_buf;
+                  
+                  NGx = 0;
+                  NGx = macro_max(NGx, val- *(surf_buf+1));
+                  NGx = macro_max(NGx, val- *(surf_buf-1));
+                  NGy = 0;
+                  NGy = macro_max(NGy, val- *(surf_buf+tx));
+                  NGy = macro_max(NGy, val- *(surf_buf-tx));
+                  NGz = 0;
+                  NGz = macro_max(NGz, val- *(surf_buf+txy));
+                  NGz = macro_max(NGz, val- *(surf_buf-txy));
+                  NG = sqrt(NGx*NGx+NGy*NGy+NGz*NGz);
+                  
+                  
+                  //    if (NG>0.01) printf("x %d y %d \n", x,y);
+                  
+                  force_buf1 = force_buf + pos;
+                  newval = val - dt*(*force_buf1)*NG;
         if ( (val>=0)&&(newval<0) ) {
-
-        T_buf1 = T_buf + pos;
-          if ( val-newval > EPSILON ) {
-            *T_buf1 = ((t-dt)*(-newval)+t*val)/(val-newval);
-          } else {
-            *T_buf1 = t-dt;
-          } // end if
+            
+            T_buf1 = T_buf + pos;
+            if ( val-newval > EPSILON ) {
+                *T_buf1 = ((t-dt)*(-newval)+t*val)/(val-newval);
+            } else {
+                *T_buf1 = t-dt;
+            } // end if
         } // end if
         *surf_buf = newval;
-
-      EndFor
-      EndFor
-      EndFor    
+        
+              }
+          }
+      }    
       t += dt;
-
-    EndFor
+      
+    }
 
 
   // 1. substract d to the time image
@@ -1486,28 +1482,28 @@ void vtkLevelSetFastMarching::Init3D(int cx, int cy, int cz, int radius)
 
   // 2. Set the known, trial, and far away points
 
-  For(z,cz-myrad2,cz+myrad2)
-  For(y,cy-myrad2,cy+myrad2)
-  For(x,cx-myrad2,cx+myrad2)
+  for(z=cz-myrad2; z<=cz+myrad2; z++) {
+      for(y=cy-myrad2; y<=cy+myrad2; y++) {
+          for(x=cx-myrad2; x<=cx+myrad2; x++) {
 
-    pos = x+y*tx+z*txy;
-    T_buf1     = T_buf+pos;
-    status_buf = this->status+pos;
-    val        = *T_buf1;
+              pos = x+y*tx+z*txy;
+              T_buf1     = T_buf+pos;
+              status_buf = this->status+pos;
+              val        = *T_buf1;
+              
+              if ( val<=0 ) {
+                  *status_buf = VTK_VAL_ACCEPTED;
+              } else {
+                  if ( val<=d ) {
+                      *status_buf = VTK_VAL_TRIAL;
+                      this->mh   += FM_TrialPoint(x,y,z,pos,val);
+                  } // end if
+              } // end if
+              
+          }
+      }
+  }    
   
-    if ( val<=0 ) {
-      *status_buf = VTK_VAL_ACCEPTED;
-    } else {
-      if ( val<=d ) {
-        *status_buf = VTK_VAL_TRIAL;
-    this->mh   += FM_TrialPoint(x,y,z,pos,val);
-      } // end if
-    } // end if
-
-  EndFor
-  EndFor
-  EndFor    
-
 
   cout << mh << endl;
 
@@ -1652,85 +1648,85 @@ void vtkLevelSetFastMarching::InitIsoSurf()
   case VTK_MODE_3D: zmin = 0; zmax = tz-2; nmax = 2; break;
   }
 
-  For(z,zmin,zmax)
-  For(y,0,ty-2)
+  for(z=zmin; z<=zmax; z++) {
+      for(y=0; y<=ty-2; y++) {
 
-  init_buf   = (float*)this->initimage->GetScalarPointer(0,y,z);
-  T_buf1     = T_buf + y*tx + z*txy;
+          init_buf   = (float*)this->initimage->GetScalarPointer(0,y,z);
+          T_buf1     = T_buf + y*tx + z*txy;
+          
+          for(x=0; x<=tx-2; x++) {
 
-  For(x,0,tx-2)
+              val0 =  *init_buf-initiso;
+              sign = (val0>0); 
+              
+              grad_computed = 0;
+              
+              for(n=0; n<=nmax; n++) {
+                  
+                  val1 = *(init_buf+displace[n])-initiso;
+                  neigh_sign =  (val1>0);
 
-    val0 =  *init_buf-initiso;
-    sign = (val0>0); 
+                  if (sign != neigh_sign) {
 
-    grad_computed = 0;
-
-    For(n,0,nmax)
-
-      val1 = *(init_buf+displace[n])-initiso;
-      neigh_sign =  (val1>0);
-
-      if (sign != neigh_sign) {
-
-    if (!grad_computed) {
-      // gradient estimation
-      if (isotropic_voxels) {
-        Grad[0] = *(init_buf+1)    - *init_buf;
-        Grad[1] = *(init_buf+tx)   - *init_buf;
-        if (dim==VTK_MODE_3D)
-          Grad[2] = *(init_buf+txy)  - *init_buf;
-      } else {
-        Grad[0] = (*(init_buf+1)    - *init_buf)/vs[0];
-        Grad[1] = (*(init_buf+tx)   - *init_buf)/vs[1];
-        if (dim==VTK_MODE_3D)
-          Grad[2] = (*(init_buf+txy)  - *init_buf)/vs[2];
+                      if (!grad_computed) {
+                          // gradient estimation
+                          if (isotropic_voxels) {
+                              Grad[0] = *(init_buf+1)    - *init_buf;
+                              Grad[1] = *(init_buf+tx)   - *init_buf;
+                              if (dim==VTK_MODE_3D)
+                                  Grad[2] = *(init_buf+txy)  - *init_buf;
+                          } else {
+                              Grad[0] = (*(init_buf+1)    - *init_buf)/vs[0];
+                              Grad[1] = (*(init_buf+tx)   - *init_buf)/vs[1];
+                              if (dim==VTK_MODE_3D)
+                                  Grad[2] = (*(init_buf+txy)  - *init_buf)/vs[2];
+                          }
+                          
+                          // Normalization
+                          norm = Grad[0]*Grad[0]+Grad[1]*Grad[1];
+                          if (dim==VTK_MODE_3D)
+                              norm += Grad[2]*Grad[2];
+                          norm = sqrt(norm);
+                          
+                          grad_computed = 1;
+                          if (norm<EPSILON) 
+                              fprintf(stderr, " %d %d %d norm=%f \n",x,y,z,norm);
+                      }
+                      
+                      if (sign)
+                          diff = val0-val1;
+                      else
+                          diff = val1-val0;
+                      
+                      if (diff<EPSILON) {
+                          fprintf(stderr," %d %d %d %d  diff = %f : val0 %f val1 %f vs[n] %f diff<1-2 \n",x,y,z,n,diff,
+                                  val0,val1,vs[n]);
+                          continue;
+                      }
+                      
+                      val = fabs(Grad[n])/norm/diff;
+                      if (!isotropic_voxels)  val *= vs[n];
+                      
+                      if (norm>EPSILON) {
+                          val0_new = val0*val;
+                          val1_new = val1*val;
+                      }
+                      
+                      if (fabs(val0_new)<fabs(*T_buf1)) 
+                          *T_buf1 = val0_new;
+                      
+                      if (fabs(val1_new)<fabs(*(T_buf1+displace[n])))
+                          *(T_buf1+displace[n]) = val1_new;
+                      
+                  }
+              }
+              
+              init_buf++;
+              T_buf1++;
+              
+          }
       }
-
-      // Normalization
-      norm = Grad[0]*Grad[0]+Grad[1]*Grad[1];
-      if (dim==VTK_MODE_3D)
-        norm += Grad[2]*Grad[2];
-      norm = sqrt(norm);
-      
-      grad_computed = 1;
-      if (norm<EPSILON) 
-        fprintf(stderr, " %d %d %d norm=%f \n",x,y,z,norm);
-    }
-
-        if (sign)
-          diff = val0-val1;
-        else
-          diff = val1-val0;
-
-        if (diff<EPSILON) {
-      fprintf(stderr," %d %d %d %d  diff = %f : val0 %f val1 %f vs[n] %f diff<1-2 \n",x,y,z,n,diff,
-          val0,val1,vs[n]);
-      continue;
-    }
-
-        val = fabs(Grad[n])/norm/diff;
-        if (!isotropic_voxels)  val *= vs[n];
-
-    if (norm>EPSILON) {
-      val0_new = val0*val;
-      val1_new = val1*val;
-    }
-
-    if (fabs(val0_new)<fabs(*T_buf1)) 
-      *T_buf1 = val0_new;
-
-    if (fabs(val1_new)<fabs(*(T_buf1+displace[n])))
-      *(T_buf1+displace[n]) = val1_new;
-
-      }
-    EndFor
-
-    init_buf++;
-    T_buf1++;
-
-  EndFor
-  EndFor
-  EndFor
+  }
 
  
   // Now initialize with positive values and set the status image
@@ -1759,15 +1755,15 @@ void vtkLevelSetFastMarching::InitIsoSurf()
   case VTK_MODE_3D: zmin = 2; zmax = tz-3;  break;
   }
 
-  For(z,zmin,zmax)
-  For(y,2,ty-3)
-    pos = z*txy+y*tx+2;
-    For(x,2,tx-3)
-      if (fabs(T_buf1[pos])<maxTime) AddTrialPoints(x,y,z,pos);
-      pos++;
-    EndFor
-  EndFor
-  EndFor    
+  for(z=zmin; z<=zmax; z++) {
+      for(y=2; y<=ty-3; y++) {
+          pos = z*txy+y*tx+2;
+          for(x=2; x<=tx-3; x++) {
+              if (fabs(T_buf1[pos])<maxTime) AddTrialPoints(x,y,z,pos);
+              pos++;
+          }
+      }
+  }    
 
   
 

@@ -42,23 +42,6 @@
 #define FALSE   0
 #define EPSILON 1E-5
 
-#define Si                if(
-#define Alors                 ){
-#define Sinon                  }else{
-#define FinSi                  }
-#define AlorsFait               )
-
-
-#define SelonQue             switch (
-#define Vaut                 ){
-#define Valeur               case
-#define FinValeur            break;
-#define FinSelonQue          }
-#define Defaut                  default
-
-// POUR
-#define Pour(nombre, min, max)  for(nombre=min; nombre<=max; nombre++) {
-#define FinPour                 }
 
 #define min(x,y) (((x)<(y))?(x):(y))
 #define max(x,y) (((x)>(y))?(x):(y))
@@ -252,25 +235,25 @@ void vtkImageFastSignedChamfer::FastSignedChamfer2D( )
   i = 0;
   i1 = i2 = 0;
 
-  Pour(y,-1,1)
-  Pour(x,-1,1)
-    Si i>3 AlorsFait break;
-    n = abs(x)+abs(y);
-    neighbor[i]      = y*tx + x;
-    SelonQue n Vaut
-      Valeur 1: 
-        neighbor1[i1] = neighbor[i];
-        i1++;
-      FinValeur
-      Valeur 2: 
-        neighbor2[i2] = neighbor[i];
-        i2++;
-      FinValeur
-      Defaut: fprintf(stderr,"Func_Chamfer2_2D() \t Chamfer error n = %d (%d,%d)\n",n,x,y);
-    FinSelonQue
-    i++;
-  FinPour
-  FinPour
+  for (y=-1; y<=1; y++) {
+      for (x=-1; x<=1; x++) {
+          if ( i>3 ) break;
+          n = abs(x)+abs(y);
+          neighbor[i]      = y*tx + x;
+          switch ( n ) {
+          case 1: 
+              neighbor1[i1] = neighbor[i];
+              i1++;
+              break;
+          case 2: 
+              neighbor2[i2] = neighbor[i];
+              i2++;
+              break;
+          default: fprintf(stderr,"Func_Chamfer2_2D() \t Chamfer error n = %d (%d,%d)\n",n,x,y);
+          }
+          i++;
+      }
+  }
 
   // The copy is already done in the InitParam() function
   outputImage->CopyAndCastFrom(this->inputImage,
@@ -367,25 +350,25 @@ void vtkImageFastSignedChamfer::FastSignedChamfer2D( )
     min = *buf;
 
     buf1 = buf + imin;
-    Pour(i,imin,imax)
-          buf2 = buf1;
-          if (jmin==-1) buf2 -= tx;
-      Pour(j,jmin,jmax)
-        n = abs(i)+abs(j);
-        Si n==0 AlorsFait continue;
-        SelonQue n Vaut
-              Valeur 1:  val = *buf2+coeff_a; FinValeur
-          Valeur 2:  val = *buf2+coeff_b; FinValeur
-          Defaut: 
-            fprintf(stderr,
-                "Func_Chamfer2_2D() \t Chamfer error (%d,%d) \n",x,y);
-            FinSelonQue
-            Si val<min AlorsFait min = val;
-        buf2 += tx;
-          FinPour
-          buf1++;
-        FinPour
-
+    for (i=imin; i<=imax; i++) {
+        buf2 = buf1;
+        if (jmin==-1) buf2 -= tx;
+        for (j=jmin; j<=jmax; j++) {
+            n = abs(i)+abs(j);
+            if ( n==0 ) continue;
+            switch ( n ) {
+            case 1:  val = *buf2+coeff_a; break;
+            case 2:  val = *buf2+coeff_b; break;
+            default: 
+                fprintf(stderr,
+                        "Func_Chamfer2_2D() \t Chamfer error (%d,%d) \n",x,y);
+            }
+            if ( val<min ) min = val;
+            buf2 += tx;
+        }
+        buf1++;
+    }
+    
         *buf = min;
       
       } // end if
@@ -421,31 +404,31 @@ void vtkImageFastSignedChamfer::FastSignedChamfer3DOld( )
 
   i = 0;
   i1 = i2 = i3 = 0;
-  Pour(z,-1,1)
-  Pour(y,-1,1)
-  Pour(x,-1,1)
-    Si i>12 AlorsFait break;
-    n = abs(x)+abs(y)+abs(z);
-    neighbor[i]      = (z*ty+y)*tx + x;
-    SelonQue n Vaut
-      Valeur 1: 
-        neighbor1[i1] = neighbor[i];
-        i1++;
-      FinValeur
-      Valeur 2: 
-        neighbor2[i2] = neighbor[i];
-        i2++;
-      FinValeur
-      Valeur 3: 
-        neighbor3[i3] = neighbor[i];
-        i3++;
-      FinValeur
-      Defaut: fprintf(stderr,"FastSignedChamfer3DOld() \t Chamfer error \n");
-    FinSelonQue
-    i++;
-  FinPour
-  FinPour
-  FinPour
+  for (z=-1; z<= 1; z++) {
+      for (y=-1; y<=1; y++) {
+          for (x=-1; x<=1; x++) {
+              if ( i>12 ) break;
+              n = abs(x)+abs(y)+abs(z);
+              neighbor[i]      = (z*ty+y)*tx + x;
+              switch ( n ) {
+              case 1: 
+                  neighbor1[i1] = neighbor[i];
+                  i1++;
+                  break;
+              case 2: 
+                  neighbor2[i2] = neighbor[i];
+                  i2++;
+                  break;
+              case 3: 
+                  neighbor3[i3] = neighbor[i];
+                  i3++;
+                  break;
+              default: fprintf(stderr,"FastSignedChamfer3DOld() \t Chamfer error \n");
+              }
+              i++;
+          }
+      }
+  }
 
   // The copy is already done in the InitParam() function
   outputImage->CopyAndCastFrom(this->inputImage,
@@ -617,28 +600,28 @@ void vtkImageFastSignedChamfer::FastSignedChamfer3DOld( )
       if (z==tz-1) kmax = 0; else kmax = 1;
 
       buf1 = buf + imin;
-      Pour(i,imin,imax)
+      for(i=imin; i<=imax; i++) {
           buf2 = buf1;
           if (jmin==-1) buf2 -= tx;
-          Pour(j,jmin,jmax)
+          for(j=jmin; j<=jmax; j++) {
             buf3 = buf2;
             if (kmin==-1) buf3 -= txy;
-          Pour(k,kmin,kmax)
+            for (k=kmin; k<=kmax; k++) {
                 n = abs(i)+abs(j)+abs(k);
-                SelonQue n Vaut
-          Valeur 0: continue;
-                  Valeur 1: val = *buf3+coeff_a; FinValeur
-                  Valeur 2: val = *buf3+coeff_b; FinValeur
-                  Valeur 3: val = *buf3+coeff_c; FinValeur
-                  Defaut: fprintf(stderr,"FastSignedChamfer3DOld() \tChamfer error \n");
-                FinSelonQue
-                Si val<min AlorsFait min = val;
+                switch ( n ) {
+                case 0: continue;
+                case 1: val = *buf3+coeff_a; break;
+                case 2: val = *buf3+coeff_b; break;
+                case 3: val = *buf3+coeff_c; break;
+                default: fprintf(stderr,"FastSignedChamfer3DOld() \tChamfer error \n");
+                }
+                if ( val<min ) min = val;
                 buf3 += txy;
-              FinPour
-          buf2 += tx;
-            FinPour
-        buf1++;
-          FinPour
+              }
+            buf2 += tx;
+          }
+          buf1++;
+      }
 
 
       *buf = min;
@@ -962,28 +945,28 @@ void vtkImageFastSignedChamfer::FastSignedChamfer3DBorders( )
       if (z==tz-1) kmax = 0; else kmax = 1;
 
       buf1 = buf + imin;
-      Pour(i,imin,imax)
+      for(i=imin; i <= imax; i++) {
           buf2 = buf1;
           if (jmin==-1) buf2 -= tx;
-          Pour(j,jmin,jmax)
-            buf3 = buf2;
-            if (kmin==-1) buf3 -= txy;
-          Pour(k,kmin,kmax)
-                n = abs(i)+abs(j)+abs(k);
-                SelonQue n Vaut
-          Valeur 0: continue;
-                  Valeur 1: val = *buf3+coeff_a; FinValeur
-                  Valeur 2: val = *buf3+coeff_b; FinValeur
-                  Valeur 3: val = *buf3+coeff_c; FinValeur
-                  Defaut: fprintf(stderr,"FastSignedChamfer3D() \tChamfer error \n");
-                FinSelonQue
-                Si val<min AlorsFait min = val;
-                buf3 += txy;
-              FinPour
-          buf2 += tx;
-            FinPour
-        buf1++;
-          FinPour
+          for(j=jmin; j<=jmax; j++) {
+              buf3 = buf2;
+              if (kmin==-1) buf3 -= txy;
+              for (k=kmin; k<=kmax; k++) {
+                  n = abs(i)+abs(j)+abs(k);
+                  switch ( n ) {
+                  case 0: continue;
+                  case 1: val = *buf3+coeff_a; break;
+                  case 2: val = *buf3+coeff_b; break;
+                  case 3: val = *buf3+coeff_c; break;
+                  default: fprintf(stderr,"FastSignedChamfer3D() \tChamfer error \n");
+                  }
+                  if ( val<min ) min = val;
+                  buf3 += txy;
+              }
+              buf2 += tx;
+          }
+          buf1++;
+      }
 
 
       *buf = min;

@@ -43,25 +43,6 @@
 #define FALSE   0
 #define EPSILON 1E-5
 
-#define Si                if(
-#define Alors                 ){
-#define Sinon                  }else{
-#define FinSi                  }
-#define AlorsFait               )
-
-
-#define SelonQue             switch (
-#define Vaut                 ){
-#define Valeur               case
-#define FinValeur            break;
-#define FinSelonQue          }
-#define Defaut                  default
-
-// POUR
-#define Pour(nombre, min, max)  for(nombre=min; nombre<=max; nombre++) {
-#define FinPour                 }
-
-
 #define min(x,y) (((x)<(y))?(x):(y))
 #define max(x,y) (((x)>(y))?(x):(y))
 
