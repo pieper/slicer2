@@ -60,7 +60,7 @@
 #    MorphometricsGenericSphereUndisplay sphere
 #    MorphometricsGenericSphereUI sphere instructions frame
 #    MorphometricsGenericSphereChangeRadius sphere delta
-#    MorphometricsAlignPolydataWithCsys polydata center directionXAxis
+#    MorphometricsAlignPolydataWithCsys Polydata Center Orientation
 #    MorphometricsUnAlignPolydataWithCsys
 #    MorphometricsViewPolydata polydata
 #    MorphometricsHidePolydata
@@ -287,7 +287,15 @@ proc MorphometricsInitStepFactories { } {
 # .END
 #-------------------------------------------------------------------------------
 proc MorphometricsGenericPlaneDisplay {plane} {
-    MorphometricsAlignPolydataWithCsys [$plane GetOutput] [$plane GetCenter] [$plane GetNormal]
+    global Morphometrics
+    $Morphometrics(StepFactories,Filter) SetInput [$plane GetOutput]
+
+    $Morphometrics(StepFactories,FilterTransform) Identity
+
+    MorphometricsPositionCsys  [$plane GetCenter] [$plane GetNormal]
+
+    [$Morphometrics(StepFactories,FilterTransform) GetMatrix] Invert [$Morphometrics(csys,actor) GetMatrix] [$Morphometrics(StepFactories,FilterTransform) GetMatrix]
+
     MorphometricsViewPolydataWithCsys
     Render3D
 }
@@ -411,10 +419,10 @@ proc MorphometricsGenericCylinderChangeHeight {cylinderSource delta} {
 #-------------------------------------------------------------------------------
 proc MorphometricsGenericPolyDataDisplay {polyDataTransformFilter userOnEnter} {
     eval $userOnEnter
-    set xyz [[[$polyDataTransformFilter GetTransform] GetMatrix] MultiplyPoint 1 0 0 0]
+    set orientation [[$polyDataTransformFilter GetTransform] GetOrientationWXYZ]
     set center [[$polyDataTransformFilter GetTransform] GetPosition] 
 
-    MorphometricsAlignPolydataWithCsys [$polyDataTransformFilter GetOutput] $center $xyz
+    MorphometricsAlignPolydataWithCsys [$polyDataTransformFilter GetInput] $center $orientation
     MorphometricsViewPolydataWithCsys
     Render3D
 }
@@ -559,7 +567,10 @@ proc MorphometricsModelChooserOnExit {internalId} {
 # .END
 #-------------------------------------------------------------------------------
 proc MorphometricsGenericSphereDisplay {sphere} {
-    MorphometricsAlignPolydataWithCsys [$sphere GetOutput] [$sphere GetCenter] {1 0 0}
+    global Morphometrics
+    # the last argument to AlignPolydataWithCsys is a dummy argument.
+    MorphometricsAlignPolydataWithCsys [$sphere GetOutput] [$sphere GetCenter] {180 1 0 0}
+    $Morphometrics(StepFactories,FilterTransform) Translate [expr -1 * [lindex [$sphere GetCenter] 0]] [expr -1 * [lindex [$sphere GetCenter] 1]] [expr -1 * [lindex [$sphere GetCenter] 2]]
     MorphometricsViewPolydataWithCsys
     Render3D
 }
@@ -630,23 +641,22 @@ proc MorphometricsGenericSphereChangeRadius {sphere delta} {
 # transformation matrix of the actor holds the information about its new orientation
 # and location after interaction by the user.
 # .ARGS
-# str polydata object of type vtkPolydata
-# list center the center where the actor should be
-# list directionXAxis  direction of the x-axis
+# str Polydata object of type vtkPolydata
+# list Center the center where the actor should be
+# list Orientation the orientation of the actor
 # .END
 #-------------------------------------------------------------------------------
-proc MorphometricsAlignPolydataWithCsys {polydata center directionXAxis} {
+proc MorphometricsAlignPolydataWithCsys {Polydata Center Orientation} {
     global Morphometrics
-    $Morphometrics(StepFactories,Filter) SetInput $polydata
+
+    $Morphometrics(StepFactories,Filter) SetInput $Polydata
 
     $Morphometrics(StepFactories,FilterTransform) Identity
 
-    MorphometricsPositionCsys $center $directionXAxis
-    # for aligning, we have to inverse the action of MorphometricsPositionCsys.
-    # thus, we have to rotate 
-
-    [$Morphometrics(StepFactories,FilterTransform) GetMatrix] Invert [$Morphometrics(csys,actor) GetMatrix] [$Morphometrics(StepFactories,FilterTransform) GetMatrix]
-
+    $Morphometrics(csys,actor) SetPosition 0 0 0 
+    $Morphometrics(csys,actor) SetOrientation 0 0 0
+    $Morphometrics(csys,actor) RotateWXYZ [lindex $Orientation 0] [lindex $Orientation 1] [lindex $Orientation 2] [lindex $Orientation 3]
+    $Morphometrics(csys,actor) SetPosition [lindex $Center 0] [lindex $Center 1] [lindex $Center 2]
 }
 
 #-------------------------------------------------------------------------------
