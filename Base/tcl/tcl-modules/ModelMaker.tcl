@@ -63,7 +63,7 @@ proc ModelMakerInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.26 $} {$Date: 2001/02/19 17:53:30 $}]
+		{$Revision: 1.27 $} {$Date: 2001/04/13 20:45:05 $}]
 
 	# Create
 	set ModelMaker(idVolume) $Volume(idNone)
@@ -828,12 +828,10 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
 	# If there are no polygons, then the smoother gets mad, so stop.
 	if {$ModelMaker(n,$p) == 0} {
 		tk_messageBox -message "No polygons can be created."
-		flip SetInput ""
 		thresh SetInput ""
 		to SetInput ""
 		mcubes SetInput ""
 		rot Delete
-		flip Delete
 		thresh Delete
 		to Delete
 		mcubes Delete
