@@ -244,36 +244,36 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
   // >> AT 4/2/01
 
   if(this->GetNumberOfDICOMFiles() > 0)
-    {
+  {
       of << " dicomFileNameList='";
       int i;
       int num = GetNumberOfDICOMFiles();
       for(i = 0; i < num; i++)
-    {
-      if(i > 0)
-        of << " ";
-      of << GetDICOMFileName(i);
-    }
+      {
+          if(i > 0)
+              of << " ";
+          of << GetDICOMFileName(i);
+      }
       of << "'";
-    }
+  }
 
   // << AT 4/2/01
 
   // >> AT 1/4/02
 
   if(this->GetNumberOfDICOMMultiFrameOffsets() > 0)
-    {
+  {
       of << " dicomMultiFrameOffsetList='";
       int i;
       int num = GetNumberOfDICOMMultiFrameOffsets();
       for(i = 0; i < num; i++)
-    {
-      if(i > 0)
-        of << " ";
-      of << GetDICOMMultiFrameOffset(i);
-    }
+      {
+          if(i > 0)
+              of << " ";
+          of << GetDICOMMultiFrameOffset(i);
+      }
       of << "'";
-    }
+  }
 
   // << AT 1/4/02
 
@@ -1002,15 +1002,15 @@ void vtkMrmlVolumeNode::SetDICOMFileName(int idx, char *str)
 
 void vtkMrmlVolumeNode::DeleteDICOMFileNames()
 {
-  int i;
-  for(i=0; i<500; i++)
-    if(DICOMFileList[i] != NULL)
-      {
-    delete [] DICOMFileList[i];
-    DICOMFileList[i] = NULL;
-      }
+    int i;
+    for(i=0; i<500; i++)
+        if(DICOMFileList[i] != NULL)
+        {
+            delete [] DICOMFileList[i];
+            DICOMFileList[i] = NULL;
+        }
 
-  DICOMFiles = 0;
+    DICOMFiles = 0;
 }
 
 void vtkMrmlVolumeNode::AddDICOMMultiFrameOffset(int offset)
