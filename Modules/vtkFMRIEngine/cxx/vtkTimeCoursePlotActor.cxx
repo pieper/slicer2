@@ -41,7 +41,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
-#include "vtkStimulusGenerator.h"
 #include "vtkDataSet.h"
 #include "vtkUnstructuredGrid.h"
 #include "vtkPoints.h"
