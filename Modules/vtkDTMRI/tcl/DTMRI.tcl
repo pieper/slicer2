@@ -126,6 +126,10 @@ proc DTMRIInit {} {
 
     # Source all appropriate tcl files here. 
     source "$env(SLICER_HOME)/Modules/vtkDTMRI/tcl/notebook.tcl"
+    
+    # Load tensor registration module.
+    source "$env(SLICER_HOME)/Modules/vtkDTMRI/tcl/DTMRITensorRegistration.tcl"
+    DTMRIRegInit
      
     # Module Summary Info
     #------------------------------------
@@ -135,7 +139,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.57 $} {$Date: 2005/01/23 02:52:46 $}]
+                  {$Revision: 1.58 $} {$Date: 2005/01/23 06:44:42 $}]
 
     # Define Tabs
     #------------------------------------
@@ -143,8 +147,8 @@ proc DTMRIInit {} {
     set Module($m,row1Name) "{Help} {Input} {Convert} {Disp} {ROI}"
     set Module($m,row1,tab) Input
     # Use these lines to add a second row of tabs
-    set Module($m,row2List) "Scalars Advanced Save"
-    set Module($m,row2Name) "{Scalars} {Advanced} {Save}"
+    set Module($m,row2List) "Scalars Advanced Regist Save"
+    set Module($m,row2Name) "{Scalars} {Advanced} {Regist} {Save}"
     set Module($m,row2,tab) Scalars
     
 
@@ -549,6 +553,11 @@ proc DTMRIInit {} {
     #------------------------------------
 
 
+    # Init the tensor registration
+    #------------------------------------
+    DTMRIRegInit
+
+
     #------------------------------------
     # Number display variables
     #------------------------------------
@@ -572,7 +581,7 @@ proc DTMRIInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIUpdateMRML {} {
-    global Tensor
+    global Tensor DTMRI
 
     set t $Tensor(activeID)
     
@@ -586,6 +595,29 @@ proc DTMRIUpdateMRML {} {
         DTMRI(vtk,streamlineControl) SetWorldToTensorScaledIJK transform
         transform Delete 
     }
+    
+     # Do MRML update for Tensor Registration tab. Necessary because
+     # multiple lists are used.
+     if {([catch "package require vtkAG"]==0)&&([info exist DTMRI(reg,AG)])} {
+       # This is needed to handle deletion of tensors.
+       if {[catch "Tensor($DTMRI(InputTensorSource),node) GetName"]==1} {
+     set DTMRI(InputTensorSource) $Tensor(idNone)
+         $DTMRI(mbInputTensorSource) config -text None
+       }
+       if {[catch "Tensor($DTMRI(InputTensorTarget),node) GetName"]==1} {
+     set DTMRI(InputTensorTarget) $Tensor(idNone)
+         $DTMRI(mbInputTensorTarget) config -text None
+       }
+       if {[catch "Tensor($DTMRI(ResultTensor),node) GetName"]==1} {
+     set DTMRI(ResultTensor) -5
+       }
+       DevUpdateNodeSelectButton Tensor DTMRI InputTensorSource   InputTensorSource   DevSelectNode
+       DevUpdateNodeSelectButton Tensor DTMRI InputTensorTarget   InputTensorTarget   DevSelectNode 0 0 0 DTMRIReg2DUpdate
+       DevUpdateNodeSelectButton Tensor DTMRI ResultTensor  ResultTensor  DevSelectNode  0 1 0
+       DevSelectNode Tensor $DTMRI(ResultTensor) DTMRI ResultTensor ResultTensor
+       DevUpdateNodeSelectButton Volume DTMRI InputCoregVol InputCoregVol DevSelectNode
+     }
+       
 }
 
 #-------------------------------------------------------------------------------
@@ -2397,6 +2429,13 @@ especially Diffusion DTMRI MRI.
     pack $f.bCreate -side top -pady $Gui(pad) -fill x
     TooltipAdd $f.bCreate "Click this button to create a new protocol after filling in parameters entries"
     
+
+     #-------------------------------------------
+     # Regist frame
+     #-------------------------------------------
+
+     DTMRIBuildRegistFrame
+
 
 ######################################################################################
 ######################################################################################
