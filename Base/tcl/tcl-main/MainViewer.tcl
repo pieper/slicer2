@@ -49,7 +49,7 @@ proc MainViewerInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainViewer \
-		{$Revision: 1.9 $} {$Date: 2000/02/22 16:30:12 $}]
+		{$Revision: 1.10 $} {$Date: 2000/02/22 17:56:09 $}]
 
         # Props
 	set Gui(midHeight) 1
@@ -155,8 +155,8 @@ proc MainViewerBuildGUI {} {
 		#-------------------------------------------
 		set f $Gui(fSlice$s).fThumb.fOrient
 
-		set c {label $f.lOrient -text "INIT" -width 12 \
-			$Gui(WLA) -bg $Gui(slice$s) }; eval [subst $c]
+		eval {label $f.lOrient -text "INIT" -width 12} \
+			$Gui(WLA) {-bg $Gui(slice$s)}
 		pack $f.lOrient
 		set Slice($s,lOrient) $f.lOrient
 

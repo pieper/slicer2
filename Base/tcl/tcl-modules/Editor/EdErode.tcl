@@ -90,23 +90,20 @@ proc EdErodeBuildGUI {} {
 	set f $Ed(EdErode,frame).fGrid
 
 	# Fields for background, foreground pixel values
-	set c {button $f.bBack -text "Value to Erode:" \
-		-command "ShowLabels" $Gui(WBA)}; eval [subst $c]
-	set c {entry $f.eBack -width 6 \
-		-textvariable Label(label) $Gui(WEA)}; eval [subst $c]
+	eval {button $f.bBack -text "Value to Erode:" \
+		-command "ShowLabels"} $Gui(WBA)
+	eval {entry $f.eBack -width 6 -textvariable Label(label)} $Gui(WEA)
 	bind $f.eBack <Return>   "LabelsFindLabel"
 	bind $f.eBack <FocusOut> "LabelsFindLabel"
-	set c {entry $f.eName -width 6 \
-		-textvariable Label(name) $Gui(WEA) \
-		-bg $Gui(activeWorkspace) -state disabled}; eval [subst $c]
-	set c {label $f.lFore -text "Fill value: " $Gui(WLA)}
-		eval [subst $c]
-	set c {entry $f.eFore -width 6 \
-		-textvariable Ed(EdErode,fill) $Gui(WEA)}; eval [subst $c]
-	set c {label $f.lIter -text "Iterations: " $Gui(WLA)}
-		eval [subst $c]
-	set c {entry $f.eIter -width 6 \
-		-textvariable Ed(EdErode,iterations) $Gui(WEA)}; eval [subst $c]
+	eval {entry $f.eName -width 6 \
+		-textvariable Label(name)} $Gui(WEA) \
+		{-bg $Gui(activeWorkspace) -state disabled}
+	eval {label $f.lFore -text "Fill value: "} $Gui(WLA)
+	eval {entry $f.eFore -width 6 \
+		-textvariable Ed(EdErode,fill)} $Gui(WEA)
+	eval {label $f.lIter -text "Iterations: "} $Gui(WLA)
+	eval {entry $f.eIter -width 6 \
+		-textvariable Ed(EdErode,iterations)} $Gui(WEA)
 	grid $f.bBack $f.eBack $f.eName -padx $Gui(pad) -pady $Gui(pad) -sticky e
 	grid $f.lFore $f.eFore -padx $Gui(pad) -pady $Gui(pad) -sticky e
 	grid $f.lIter $f.eIter -padx $Gui(pad) -pady $Gui(pad) -sticky e
@@ -114,14 +111,12 @@ proc EdErodeBuildGUI {} {
 	lappend Label(colorWidgetList) $f.eName
 
 	# Neighborhood Size
-    set c {label $f.lNeighbor -text "Neighborhood Size: " $Gui(WLA)}
-        eval [subst $c]
+    eval {label $f.lNeighbor -text "Neighborhood Size: "} $Gui(WLA)
     frame $f.fNeighbor -bg $Gui(activeWorkspace)
     foreach mode "4 8" {
-        set c {radiobutton $f.fNeighbor.r$mode \
+        eval {radiobutton $f.fNeighbor.r$mode \
             -text "$mode" -variable Ed(EdErode,neighbors) -value $mode -width 2 \
-            -indicatoron 0 $Gui(WCA)}
-			eval [subst $c]
+            -indicatoron 0} $Gui(WCA)
         pack $f.fNeighbor.r$mode -side left -padx 0
     }
     grid $f.lNeighbor $f.fNeighbor -padx $Gui(pad) -pady $Gui(pad) -sticky e
@@ -133,18 +128,14 @@ proc EdErodeBuildGUI {} {
 	#-------------------------------------------
 	set f $Ed(EdErode,frame).fApply
 
-	set c {button $f.bErode -text "Erode" \
-		-command "EdErodeApply Erode" $Gui(WBA)}
-		eval [subst $c]
-	set c {button $f.bDilate -text "Dilate" \
-		-command "EdErodeApply Dilate" $Gui(WBA)}
-		eval [subst $c]
-	set c {button $f.bED -text "Erode & Dilate" \
-		-command "EdErodeApply ErodeDilate" $Gui(WBA)}
-		eval [subst $c]
-	set c {button $f.bDE -text "Dilate & Erode" \
-		-command "EdErodeApply DilateErode" $Gui(WBA)}
-		eval [subst $c]
+	eval {button $f.bErode -text "Erode" \
+		-command "EdErodeApply Erode"} $Gui(WBA)
+	eval {button $f.bDilate -text "Dilate" \
+		-command "EdErodeApply Dilate"} $Gui(WBA)
+	eval {button $f.bED -text "Erode & Dilate" \
+		-command "EdErodeApply ErodeDilate"} $Gui(WBA)
+	eval {button $f.bDE -text "Dilate & Erode" \
+		-command "EdErodeApply DilateErode"} $Gui(WBA)
 	grid $f.bErode  $f.bED -padx $Gui(pad) -pady $Gui(pad)
 	grid $f.bDilate $f.bDE -padx $Gui(pad) -pady $Gui(pad)
 

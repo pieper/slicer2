@@ -70,7 +70,7 @@ proc VolumesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.26 $} {$Date: 2000/02/22 16:30:19 $}]
+		{$Revision: 1.27 $} {$Date: 2000/02/22 17:56:15 $}]
 
 	# Props
 	set Volume(propertyType) Basic
@@ -138,10 +138,10 @@ Ron, the interpolation button won't work without downloading dll's again.
 	#-------------------------------------------
 	set f $fDisplay.fActive
 
-	set c {label $f.lActive -text "Active Volume: " $Gui(BLA)}; eval [subst $c]
-	set c {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
-		-menu $f.mbActive.m $Gui(WMBA)}; eval [subst $c]
-	set c {menu $f.mbActive.m $Gui(WMA)}; eval [subst $c]
+	eval {label $f.lActive -text "Active Volume: "} $Gui(BLA)
+	eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
+		-menu $f.mbActive.m} $Gui(WMBA)
+	eval {menu $f.mbActive.m} $Gui(WMA)
 	pack $f.lActive $f.mbActive -side left -pady $Gui(pad) -padx $Gui(pad)
 
 	# Append widgets to list that gets refreshed during UpdateMRML
@@ -163,15 +163,14 @@ Ron, the interpolation button won't work without downloading dll's again.
 	#-------------------------------------------
 	set f $fDisplay.fWinLvl.fAuto
 
-	set c {label $f.lAuto -text "Window/Level:" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.lAuto -text "Window/Level:"} $Gui(WLA)
 	frame $f.fAuto -bg $Gui(activeWorkspace)
 	pack $f.lAuto $f.fAuto -side left -padx $Gui(pad)  -pady $Gui(pad) -fill x
 
 	foreach value "1 0" text "Auto Manual" width "5 7" {
-		set c {radiobutton $f.fAuto.rAuto$value -width $width -indicatoron 0\
+		eval {radiobutton $f.fAuto.rAuto$value -width $width -indicatoron 0\
 			-text "$text" -value "$value" -variable Volume(autoWindowLevel) \
-			-command "MainVolumesSetParam AutoWindowLevel; MainVolumesRender" \
-			$Gui(WCA)}; eval [subst $c]
+			-command "MainVolumesSetParam AutoWindowLevel; MainVolumesRender"} $Gui(WCA)
 		pack $f.fAuto.rAuto$value -side left -fill x
 	}
 
@@ -181,18 +180,17 @@ Ron, the interpolation button won't work without downloading dll's again.
 	set f $fDisplay.fWinLvl.fSliders
 
 	foreach slider "Window Level" text "Win Lev" {
-		set c {label $f.l${slider} -text "$text:" $Gui(WLA)}
-			eval [subst $c]
-		set c {entry $f.e${slider} -width 6 \
-			-textvariable Volume([Uncap ${slider}]) $Gui(WEA)}; eval [subst $c]
+		eval {label $f.l${slider} -text "$text:"} $Gui(WLA)
+		eval {entry $f.e${slider} -width 6 \
+			-textvariable Volume([Uncap ${slider}])} $Gui(WEA)
 		bind $f.e${slider} <Return>   \
 			"MainVolumesSetParam ${slider}; MainVolumesRender"
 		bind $f.e${slider} <FocusOut> \
 			"MainVolumesSetParam ${slider}; MainVolumesRender"
-		set c {scale $f.s${slider} -from 1 -to 700 -length 140\
+		eval {scale $f.s${slider} -from 1 -to 700 -length 140\
 			-variable Volume([Uncap ${slider}])  -resolution 1 \
-			-command "MainVolumesSetParam ${slider}; MainVolumesRenderActive"\
-			 $Gui(WSA) -sliderlength 14}; eval [subst $c]
+			-command "MainVolumesSetParam ${slider}; MainVolumesRenderActive"} \
+			 $Gui(WSA) {-sliderlength 14}
 		bind $f.s${slider} <Leave> "MainVolumesRender"
 		grid $f.l${slider} $f.e${slider} $f.s${slider} -padx 2 -pady $Gui(pad) \
 			-sticky news
@@ -216,22 +214,20 @@ Ron, the interpolation button won't work without downloading dll's again.
 	#-------------------------------------------
 	set f $fDisplay.fThresh.fAuto
 
-	set c {label $f.lAuto -text "Threshold: " $Gui(WLA)}; eval [subst $c]
+	eval {label $f.lAuto -text "Threshold: "} $Gui(WLA)
 	frame $f.fAuto -bg $Gui(activeWorkspace)
 	pack $f.lAuto $f.fAuto -side left -pady $Gui(pad) -fill x
 
 	foreach value "1 0" text "Auto Manual" width "5 7" {
-		set c {radiobutton $f.fAuto.rAuto$value -width $width -indicatoron 0\
+		eval {radiobutton $f.fAuto.rAuto$value -width $width -indicatoron 0\
 			-text "$text" -value "$value" -variable Volume(autoThreshold) \
-			-command "MainVolumesSetParam AutoThreshold; MainVolumesRender" \
-			$Gui(WCA)}; eval [subst $c]
+			-command "MainVolumesSetParam AutoThreshold; MainVolumesRender"} $Gui(WCA)
 		pack $f.fAuto.rAuto$value -side left -fill x
 	}
-	set c {checkbutton $f.cApply \
+	eval {checkbutton $f.cApply \
 		-text "Apply" -variable Volume(applyThreshold) \
 		-command "MainVolumesSetParam ApplyThreshold; MainVolumesRender" -width 6 \
-		-indicatoron 0 $Gui(WCA)}
-		eval [subst $c]
+		-indicatoron 0} $Gui(WCA)
 	pack $f.cApply -side left -padx $Gui(pad)
 
 	#-------------------------------------------
@@ -240,18 +236,17 @@ Ron, the interpolation button won't work without downloading dll's again.
 	set f $fDisplay.fThresh.fSliders
 
 	foreach slider "Lower Upper" text "Lo Hi" {
-		set c {label $f.l${slider} -text "$text:" $Gui(WLA)}; eval [subst $c]
-		set c {entry $f.e${slider} -width 6 \
-			-textvariable Volume([Uncap ${slider}]Threshold) $Gui(WEA)}; 
-			eval [subst $c]
+		eval {label $f.l${slider} -text "$text:"} $Gui(WLA)
+		eval {entry $f.e${slider} -width 6 \
+			-textvariable Volume([Uncap ${slider}]Threshold)} $Gui(WEA)
 			bind $f.e${slider} <Return>   \
 				"MainVolumesSetParam ${slider}Threshold; MainVolumesRender"
 			bind $f.e${slider} <FocusOut> \
 				"MainVolumesSetParam ${slider}Threshold; MainVolumesRender"
-		set c {scale $f.s${slider} -from 1 -to 700 -length 140 \
+		eval {scale $f.s${slider} -from 1 -to 700 -length 140 \
 			-variable Volume([Uncap ${slider}]Threshold)  -resolution 1 \
-			-command "MainVolumesSetParam ${slider}Threshold; MainVolumesRender"\
-			$Gui(WSA) -sliderlength 14 }; eval [subst $c]
+			-command "MainVolumesSetParam ${slider}Threshold; MainVolumesRender"} \
+			$Gui(WSA) {-sliderlength 14}
 		grid $f.l${slider} $f.e${slider} $f.s${slider} -padx 2 -pady $Gui(pad) \
 			-sticky news
 	}
@@ -274,12 +269,12 @@ Ron, the interpolation button won't work without downloading dll's again.
 	#-------------------------------------------
 	set f $fDisplay.fHistogram.fLut
 
-	set c {label $f.lLUT -text "Palette:" $Gui(WLA)}; eval [subst $c]
-	set c {menubutton $f.mbLUT \
+	eval {label $f.lLUT -text "Palette:"} $Gui(WLA)
+	eval {menubutton $f.mbLUT \
 		-text "$Lut([lindex $Lut(idList) 0],name)" \
 			-relief raised -bd 2 -width 9 \
-		-menu $f.mbLUT.menu $Gui(WMBA)}; eval [subst $c]
-		set c {menu $f.mbLUT.menu $Gui(WMA)}; eval [subst $c]
+		-menu $f.mbLUT.menu} $Gui(WMBA)
+		eval {menu $f.mbLUT.menu} $Gui(WMA)
 		# Add menu items
 		foreach l $Lut(idList) {
 			$f.mbLUT.menu add command -label $Lut($l,name) \
@@ -308,16 +303,13 @@ Ron, the interpolation button won't work without downloading dll's again.
 	#-------------------------------------------
 	set f $fDisplay.fInterpolate
 
-	set c {label $f.lInterpolate -text "Interpolation:" $Gui(WLA)}
-		eval [subst $c]
+	eval {label $f.lInterpolate -text "Interpolation:"} $Gui(WLA)
 	pack $f.lInterpolate -pady $Gui(pad) -padx $Gui(pad) -side left -fill x
 
 	foreach value "1 0" text "On Off" width "4 4" {
-		set c {radiobutton $f.rInterp$value -width $width -indicatoron 0\
+		eval {radiobutton $f.rInterp$value -width $width -indicatoron 0\
 			-text "$text" -value "$value" -variable Volume(interpolate) \
-			-command "MainVolumesSetParam Interpolate; MainVolumesRender" \
-			$Gui(WCA)}
-			eval [subst $c]
+			-command "MainVolumesSetParam Interpolate; MainVolumesRender"} $Gui(WCA)
 		pack $f.rInterp$value -side left -fill x
 	}
 
@@ -413,17 +405,15 @@ Ron, the interpolation button won't work without downloading dll's again.
 	# Instr
 	set f $fProps.fBot.fBasic.fVolume.fInstr
 
-	set c {label $f.l -text "First Image File:" \
-		$Gui(WLA)}; eval [subst $c]
-	set c {button $f.bFind -text "Browse..." -width 9 \
-		-command "VolumesSetFirst" $Gui(WBA)}; eval [subst $c]
+	eval {label $f.l -text "First Image File:"} $Gui(WLA)
+	eval {button $f.bFind -text "Browse..." -width 9 \
+		-command "VolumesSetFirst"} $Gui(WBA)
 	pack $f.l $f.bFind -side left -padx $Gui(pad) 
 
 	# First
 	set f $fProps.fBot.fBasic.fVolume.fFirst
 
-	set c {entry $f.eFirst -textvariable Volume(firstFile) \
-		$Gui(WEA)}; eval [subst $c]
+	eval {entry $f.eFirst -textvariable Volume(firstFile)} $Gui(WEA)
 		bind $f.eFirst <Return> "VolumesSetFirst"
 		bind $f.eFirst <Tab> "VolumesSetLast"
 	pack $f.eFirst -side left -padx $Gui(pad) -expand 1 -fill x
@@ -431,10 +421,8 @@ Ron, the interpolation button won't work without downloading dll's again.
 	# Last
 	set f $fProps.fBot.fBasic.fVolume.fLast
 
-	set c {label $f.lLast -text "Number of Last Image:" \
-		 $Gui(WLA)}; eval [subst $c]
-	set c {entry $f.eLast -textvariable Volume(lastNum) $Gui(WEA)}
-		eval [subst $c]
+	eval {label $f.lLast -text "Number of Last Image:"} $Gui(WLA)
+	eval {entry $f.eLast -textvariable Volume(lastNum)} $Gui(WEA)
 	pack $f.lLast -side left -padx $Gui(pad)
 	pack $f.eLast -side left -padx $Gui(pad) -expand 1 -fill x
 
@@ -445,17 +433,15 @@ Ron, the interpolation button won't work without downloading dll's again.
 	frame $f.fBtns -bg $Gui(activeWorkspace)
    	pack $f.fTitle $f.fBtns -side left -pady 5
 
-	set c {label $f.fTitle.l -text "Image Headers:" $Gui(WLA)}
-		eval [subst $c]
+	eval {label $f.fTitle.l -text "Image Headers:"} $Gui(WLA)
 	pack $f.fTitle.l -side left -padx $Gui(pad) -pady 0
 
 	foreach text "Auto Manual" \
 		value "1 0" \
 		width "5 7" {
-		set c {radiobutton $f.fBtns.rMode$value -width $width \
+		eval {radiobutton $f.fBtns.rMode$value -width $width \
 			-text "$text" -value "$value" -variable Volume(readHeaders) \
-			-indicatoron 0 $Gui(WCA)}
-			eval [subst $c]
+			-indicatoron 0} $Gui(WCA)
 		pack $f.fBtns.rMode$value -side left -padx 0 -pady 0
 	}
 
@@ -466,27 +452,23 @@ Ron, the interpolation button won't work without downloading dll's again.
 	frame $f.fBtns -bg $Gui(activeWorkspace)
    	pack $f.fTitle $f.fBtns -side left -pady 5
 
-	set c {label $f.fTitle.l -text "Image Data:" $Gui(WLA)}
-		eval [subst $c]
+	eval {label $f.fTitle.l -text "Image Data:"} $Gui(WLA)
 	pack $f.fTitle.l -side left -padx $Gui(pad) -pady 0
 
 	foreach text "{Grayscale} {Label Map}" \
 		value "0 1" \
 		width "9 9 " {
-		set c {radiobutton $f.fBtns.rMode$value -width $width \
+		eval {radiobutton $f.fBtns.rMode$value -width $width \
 			-text "$text" -value "$value" -variable Volume(labelMap) \
-			-indicatoron 0 $Gui(WCA)}
-			eval [subst $c]
+			-indicatoron 0} $Gui(WCA)
 		pack $f.fBtns.rMode$value -side left -padx 0 -pady 0
 	}
 
 	# Options
 	set f $fProps.fBot.fBasic.fVolume.fOptions
 
-	set c {label $f.lName -text "Name:" \
-		 $Gui(WLA)}; eval [subst $c]
-	set c {entry $f.eName -textvariable Volume(name) -width 13 $Gui(WEA)}
-		eval [subst $c]
+	eval {label $f.lName -text "Name:"} $Gui(WLA)
+	eval {entry $f.eName -textvariable Volume(name) -width 13} $Gui(WEA)
 	pack  $f.lName -side left -padx $Gui(pad) 
 	pack $f.eName -side left -padx $Gui(pad) -expand 1 -fill x
 	pack $f.lName -side left -padx $Gui(pad) 
@@ -494,10 +476,8 @@ Ron, the interpolation button won't work without downloading dll's again.
 	# Desc row
 	set f $fProps.fBot.fBasic.fVolume.fDesc
 
-	set c {label $f.lDesc -text "Optional Description:" \
-		 $Gui(WLA)}; eval [subst $c]
-	set c {entry $f.eDesc -textvariable Volume(desc) $Gui(WEA)}
-		eval [subst $c]
+	eval {label $f.lDesc -text "Optional Description:"} $Gui(WLA)
+	eval {entry $f.eDesc -textvariable Volume(desc)} $Gui(WEA)
 	pack $f.lDesc -side left -padx $Gui(pad)
 	pack $f.eDesc -side left -padx $Gui(pad) -expand 1 -fill x
 
@@ -540,9 +520,8 @@ Ron, the interpolation button won't work without downloading dll's again.
 	    pack $f.f$param -side top -fill x -pady 2
 
 	    set f $f.f$param
-	    set c {label $f.l$param -text "$name:" $Gui(WLA)}; eval [subst $c]
-	    set c {entry $f.e$param -width 10 -textvariable Volume($param) $Gui(WEA)}
-	    eval [subst $c]
+	    eval {label $f.l$param -text "$name:"} $Gui(WLA)
+	    eval {entry $f.e$param -width 10 -textvariable Volume($param)} $Gui(WEA)
 	    pack $f.l$param -side left -padx $Gui(pad) -fill x -anchor w
 	    pack $f.e$param -side left -padx $Gui(pad) -expand 1 -fill x
 	}
@@ -555,14 +534,14 @@ Ron, the interpolation button won't work without downloading dll's again.
 	pack $f.f$param -side top -fill x -pady 2
 	
 	set f $f.f$param
-	set c {label $f.l${param} -text "$name:" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.l${param} -text "$name:"} $Gui(WLA)
 	# button text corresponds to default scan order value in Volume(scanOrder)
-	set c {menubutton $f.mb${param} -relief raised -bd 2 \
+	eval {menubutton $f.mb${param} -relief raised -bd 2 \
 		-text [lindex $Volume(scanOrderMenu)\
 		[lsearch $Volume(scanOrderList) $Volume(scanOrder)]] \
-		-width 10 -menu $f.mb${param}.menu $Gui(WMBA)}; eval [subst $c]
+		-width 10 -menu $f.mb${param}.menu} $Gui(WMBA)
 	set Volume(mb${param}) $f.mb${param}
-	set c {menu $f.mb${param}.menu $Gui(WMA)}; eval [subst $c]
+	eval {menu $f.mb${param}.menu} $Gui(WMA)
 	
 	set m $f.mb${param}.menu
 	foreach label $Volume(${param}Menu)  value $Volume(${param}List) {
@@ -579,12 +558,12 @@ Ron, the interpolation button won't work without downloading dll's again.
 	pack $f.f$param -side top -fill x -pady 2
 	
 	set f $f.f$param
-	set c {label $f.l${param} -text "$name:" $Gui(WLA)}; eval [subst $c]
-	set c {menubutton $f.mb${param} -relief raised -bd 2 \
+	eval {label $f.l${param} -text "$name:"} $Gui(WLA)
+	eval {menubutton $f.mb${param} -relief raised -bd 2 \
 		-text $Volume(scalarType)\
-		-width 10 -menu $f.mb${param}.menu $Gui(WMBA)}; eval [subst $c]
+		-width 10 -menu $f.mb${param}.menu} $Gui(WMBA)
 	set Volume(mb${param}) $f.mb${param}
-	set c {menu $f.mb${param}.menu $Gui(WMA)}; eval [subst $c]
+	eval {menu $f.mb${param}.menu} $Gui(WMA)
 	
 	set m $f.mb${param}.menu
 	foreach type $Volume(${param}Menu) {
@@ -602,9 +581,8 @@ Ron, the interpolation button won't work without downloading dll's again.
 	    pack $f.f$param -side top -fill x -pady 2
 
 	    set f $f.f$param
-	    set c {label $f.l$param -text "$name:" $Gui(WLA)}; eval [subst $c]
-	    set c {entry $f.e$param -width 10 -textvariable Volume($param) $Gui(WEA)}
-	    eval [subst $c]
+	    eval {label $f.l$param -text "$name:"} $Gui(WLA)
+	    eval {entry $f.e$param -width 10 -textvariable Volume($param)} $Gui(WEA)
 	    pack $f.l$param -side left -padx $Gui(pad) -fill x -anchor w
 	    pack $f.e$param -side left -padx $Gui(pad) -expand 1 -fill x
 	}
@@ -615,14 +593,13 @@ Ron, the interpolation button won't work without downloading dll's again.
 	pack $f.fEndian -side top -fill x -pady 2
 	set f $f.fEndian
 
-	set c {label $f.l -text "Little Endian (PC,SGI):" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.l -text "Little Endian (PC,SGI):"} $Gui(WLA)
 	frame $f.f -bg $Gui(activeWorkspace)
 	pack $f.l $f.f -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
 
 	foreach value "1 0" text "Yes No" width "4 3" {
-		set c {radiobutton $f.f.r$value -width $width -indicatoron 0\
-			-text $text -value $value -variable Volume(littleEndian) \
-			$Gui(WCA)}; eval [subst $c]
+		eval {radiobutton $f.f.r$value -width $width -indicatoron 0\
+			-text $text -value $value -variable Volume(littleEndian)} $Gui(WCA)
 		pack $f.f.r$value -side left -fill x
 	}
 
@@ -657,10 +634,10 @@ Ron, the interpolation button won't work without downloading dll's again.
 	#-------------------------------------------
 	set f $fOther.fActive
 
-	set c {label $f.lActive -text "Active Volume: " $Gui(BLA)}; eval [subst $c]
-	set c {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
-		-menu $f.mbActive.m $Gui(WMBA)}; eval [subst $c]
-	set c {menu $f.mbActive.m $Gui(WMA)}; eval [subst $c]
+	eval {label $f.lActive -text "Active Volume: "} $Gui(BLA)
+	eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
+		-menu $f.mbActive.m} $Gui(WMBA)
+	eval {menu $f.mbActive.m} $Gui(WMA)
 	pack $f.lActive $f.mbActive -side left -pady $Gui(pad) -padx $Gui(pad)
 
 	# Append widgets to list that gets refreshed during UpdateMRML
@@ -683,15 +660,14 @@ Ron, the interpolation button won't work without downloading dll's again.
 	#-------------------------------------------
 	set f $fOther.fRange.fAuto
 
-	set c {label $f.lAuto -text "Slider Range:" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.lAuto -text "Slider Range:"} $Gui(WLA)
 	frame $f.fAuto -bg $Gui(activeWorkspace)
 	pack $f.lAuto $f.fAuto -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
 
 	foreach value "1 0" text "Auto Manual" width "5 7" {
-		set c {radiobutton $f.fAuto.rAuto$value -width $width -indicatoron 0\
+		eval {radiobutton $f.fAuto.rAuto$value -width $width -indicatoron 0\
 			-text "$text" -value "$value" -variable Volume(rangeAuto) \
-			-command "MainVolumesSetParam RangeAuto; MainVolumesRender" \
-			$Gui(WCA)}; eval [subst $c]
+			-command "MainVolumesSetParam RangeAuto; MainVolumesRender"} $Gui(WCA)
 		pack $f.fAuto.rAuto$value -side left -fill x
 	}
 
@@ -701,10 +677,9 @@ Ron, the interpolation button won't work without downloading dll's again.
 	set f $fOther.fRange.fSliders
 
 	foreach slider "Low High" {
-		set c {label $f.l${slider} -text "${slider}:" $Gui(WLA)}
-			eval [subst $c]
-		set c {entry $f.e${slider} -width 7 \
-			-textvariable Volume(range${slider}) $Gui(WEA)}; eval [subst $c]
+		eval {label $f.l${slider} -text "${slider}:"} $Gui(WLA)
+		eval {entry $f.e${slider} -width 7 \
+			-textvariable Volume(range${slider})} $Gui(WEA)
 		bind $f.e${slider} <Return>   \
 			"MainVolumesSetParam Range${slider}; MainVolumesRender"
 		bind $f.e${slider} <FocusOut> \

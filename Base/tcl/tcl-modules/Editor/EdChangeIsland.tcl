@@ -90,15 +90,14 @@ proc EdChangeIslandBuildGUI {} {
 	set f $Ed(EdChangeIsland,frame).fGrid
 
 	# New label
-	set c {button $f.bOutput -text "New Label:" \
-		-command "ShowLabels" $Gui(WBA)}; eval [subst $c]
-	set c {entry $f.eOutput -width 6 \
-		-textvariable Label(label) $Gui(WEA)}; eval [subst $c]
+	eval {button $f.bOutput -text "New Label:" -command "ShowLabels"} $Gui(WBA)
+	eval {entry $f.eOutput -width 6 \
+		-textvariable Label(label)} $Gui(WEA)
 	bind $f.eOutput <Return> "LabelsFindLabel"
 	bind $f.eOutput <FocusOut> "LabelsFindLabel"
-	set c {entry $f.eName -width 14 \
-		-textvariable Label(name) $Gui(WEA) \
-		-bg $Gui(activeWorkspace) -state disabled}; eval [subst $c]
+	eval {entry $f.eName -width 14 \
+		-textvariable Label(name)} $Gui(WEA) \
+		{-bg $Gui(activeWorkspace) -state disabled}
 	grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
 	grid $f.eOutput $f.eName -sticky w
 	grid $f.eName -columnspan 2
@@ -106,13 +105,10 @@ proc EdChangeIslandBuildGUI {} {
 	lappend Label(colorWidgetList) $f.eName
 
 	# Seed
-	set c {label $f.lSeed -text "Location:" $Gui(WLA)}; eval [subst $c]
-	set c {entry $f.eX -width 4 -textvariable Ed(EdChangeIsland,xSeed) \
-		$Gui(WEA)}; eval [subst $c]
-	set c {entry $f.eY -width 4 -textvariable Ed(EdChangeIsland,ySeed) \
-		$Gui(WEA)}; eval [subst $c]
-	set c {entry $f.eZ -width 4 -textvariable Ed(EdChangeIsland,zSeed) \
-		$Gui(WEA)}; eval [subst $c]
+	eval {label $f.lSeed -text "Location:"} $Gui(WLA)
+	eval {entry $f.eX -width 4 -textvariable Ed(EdChangeIsland,xSeed)} $Gui(WEA)
+	eval {entry $f.eY -width 4 -textvariable Ed(EdChangeIsland,ySeed)} $Gui(WEA)
+	eval {entry $f.eZ -width 4 -textvariable Ed(EdChangeIsland,zSeed)} $Gui(WEA)
 #	grid $f.lSeed $f.eX $f.eY $f.eZ -padx $Gui(pad) -pady $Gui(pad) -sticky e
 
 	#-------------------------------------------
@@ -120,12 +116,11 @@ proc EdChangeIslandBuildGUI {} {
 	#-------------------------------------------
 	set f $Ed(EdChangeIsland,frame).fApply
 
-#	set c {button $f.bApply -text "Apply" \
-#		-command "EdChangeIslandApply" $Gui(WBA) -width 8}; eval [subst $c]
+#	eval {button $f.bApply -text "Apply" \
+#		-command "EdChangeIslandApply"} $Gui(WBA) {-width 8}
 #	pack $f.bApply -side top -padx $Gui(pad) -pady 2
 
-    set c {label $f.l -text "Apply by clicking on the island." \
-		$Gui(WLA)}; eval [subst $c]
+    eval {label $f.l -text "Apply by clicking on the island."} $Gui(WLA)
 	pack $f.l -side top
 
 }

@@ -69,7 +69,7 @@ proc ColorsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.9 $} {$Date: 2000/02/22 16:30:14 $}]
+		{$Revision: 1.10 $} {$Date: 2000/02/22 17:56:10 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -128,20 +128,19 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fColors.fTop.fColors
 
-	set c {label $f.lTitle -text "Color Name" $Gui(WTA)}; eval [subst $c]
+	eval {label $f.lTitle -text "Color Name"} $Gui(WTA)
 
 	set Color(fColorList) [ScrolledListbox $f.list 1 1 -height 5 -width 15]
 	bind $Color(fColorList) <ButtonRelease-1> {ColorsSelectColor}
 
-	set c {entry $f.eName -textvariable Color(name) -width 18 \
-		$Gui(WEA)}; eval [subst $c]
+	eval {entry $f.eName -textvariable Color(name) -width 18} $Gui(WEA)
 	bind $f.eName <Return> "ColorsAddColor"
 	
 	frame $f.fBtns -bg $Gui(activeWorkspace)
-	set c {button $f.fBtns.bAdd -text "Add" -width 4 \
-		-command "ColorsAddColor" $Gui(WBA)}; eval [subst $c]
-	set c {button $f.fBtns.bDelete -text "Delete" -width 7 \
-		-command "ColorsDeleteColor" $Gui(WBA)}; eval [subst $c]
+	eval {button $f.fBtns.bAdd -text "Add" -width 4 \
+		-command "ColorsAddColor"} $Gui(WBA)
+	eval {button $f.fBtns.bDelete -text "Delete" -width 7 \
+		-command "ColorsDeleteColor"} $Gui(WBA)
 	pack $f.fBtns.bAdd $f.fBtns.bDelete -side left -padx $Gui(pad)
 
 	pack $f.lTitle -side top -pady 2
@@ -152,20 +151,19 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fColors.fTop.fLabels
 
-	set c {label $f.lTitle -text "Label" $Gui(WTA)}; eval [subst $c]
+	eval {label $f.lTitle -text "Label"} $Gui(WTA)
 
 	set Color(fLabelList) [ScrolledListbox $f.list 1 1 -height 5 -width 6]
 		bind $Color(fLabelList) <ButtonRelease-1> "ColorsSelectLabel"
 
-	set c {entry $f.eName -textvariable Color(label) -width 9 \
-		$Gui(WEA)}; eval [subst $c]
+	eval {entry $f.eName -textvariable Color(label) -width 9} $Gui(WEA)
 	bind $f.eName <Return> "ColorsAddLabel"
 
 	frame $f.fBtns -bg $Gui(activeWorkspace)
-	set c {button $f.fBtns.bAdd -text "Add" -width 4 \
-		-command "ColorsAddLabel" $Gui(WBA)}; eval [subst $c]
-	set c {button $f.fBtns.bDelete -text "Del" -width 4 \
-		-command "ColorsDeleteLabel" $Gui(WBA)}; eval [subst $c]
+	eval {button $f.fBtns.bAdd -text "Add" -width 4 \
+		-command "ColorsAddLabel"} $Gui(WBA)
+	eval {button $f.fBtns.bDelete -text "Del" -width 4 \
+		-command "ColorsDeleteLabel"} $Gui(WBA)
 	pack $f.fBtns.bAdd $f.fBtns.bDelete -side left -padx $Gui(pad)
 
 	pack $f.lTitle -side top -pady 2
@@ -187,18 +185,16 @@ Models are fun. Do you like models, Ron?
 
 	foreach slider "Red Green Blue Ambient Diffuse Specular Power" {
 
-		set c {label $f.l${slider} -text "${slider}" $Gui(WLA)}
-			eval [subst $c]
+		eval {label $f.l${slider} -text "${slider}"} $Gui(WLA)
 
-		set c {entry $f.e${slider} -textvariable Color([Uncap $slider]) \
-			-width 3 $Gui(WEA)}; eval [subst $c]
+		eval {entry $f.e${slider} -textvariable Color([Uncap $slider]) \
+			-width 3} $Gui(WEA)
 			bind $f.e${slider} <Return>   "ColorsSetColor"
 			bind $f.e${slider} <FocusOut> "ColorsSetColor"
 
-		set c {scale $f.s${slider} -from 0.0 -to 1.0 -length 40 \
+		eval {scale $f.s${slider} -from 0.0 -to 1.0 -length 40 \
 			-variable Color([Uncap $slider]) -command "ColorsSetColor" \
-			-resolution 0.1 $Gui(WSA) -sliderlength 15} 
-			eval [subst $c]
+			-resolution 0.1} $Gui(WSA) {-sliderlength 15}
 		set Color(s$slider) $f.s$slider
 
 		grid $f.l${slider} $f.e${slider} $f.s${slider} \
@@ -212,8 +208,8 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fColors.fBot.fApply
 
-	set c {button $f.bApply -text "Update" -width 7 \
-		-command "ColorsApply; RenderAll" $Gui(WBA)}; eval [subst $c]
+	eval {button $f.bApply -text "Update" -width 7 \
+		-command "ColorsApply; RenderAll"} $Gui(WBA)
 	pack $f.bApply -side top -pady $Gui(pad) 
 }
 

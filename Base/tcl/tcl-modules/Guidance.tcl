@@ -75,7 +75,7 @@ proc GuidanceInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.8 $} {$Date: 2000/02/22 16:30:16 $}]
+		{$Revision: 1.9 $} {$Date: 2000/02/22 17:56:11 $}]
 
 	# Target
 	set Target(idList) "0 1"
@@ -186,14 +186,12 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fTarget.fTop.fActive
 
-	set c {label $f.lActive -text "Active Target:" $Gui(BLA)}; eval [subst $c]
+	eval {label $f.lActive -text "Active Target:"} $Gui(BLA)
 	frame $f.fActive -bg $Gui(activeWorkspace)
 	foreach mode "0 1" name "Red Yellow" {
-		set c {checkbutton $f.fActive.c$mode \
+		eval {checkbutton $f.fActive.c$mode \
 			-text "$name" -variable Target(active$mode) -width 7 \
-			-indicatoron 0 -command "GuidanceSetActiveTarget $mode; Render3D"\
-			 $Gui(WCA)}
-			eval [subst $c]
+			-indicatoron 0 -command "GuidanceSetActiveTarget $mode; Render3D"} $Gui(WCA)
 		pack $f.fActive.c$mode -side left -padx 0
 	}
 	pack $f.lActive $f.fActive -side left -padx $Gui(pad)
@@ -217,11 +215,9 @@ Models are fun. Do you like models, Ron?
 	set f $fTarget.fBot.fVis
 
 	# Visibility
-	set c {checkbutton $f.cTarget \
+	eval {checkbutton $f.cTarget \
 		-text "Show Target" -variable Target(visibility) -width 18 \
-		-indicatoron 0 -command "GuidanceSetTargetVisibility; Render3D" \
-		 $Gui(WCA)}
-		eval [subst $c]            
+		-indicatoron 0 -command "GuidanceSetTargetVisibility; Render3D"} $Gui(WCA)            
 	pack $f.cTarget
 	
 	#-------------------------------------------
@@ -229,7 +225,7 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fTarget.fBot.fTitle
 
-	set c {label $f.l -text "Target Position" $Gui(WTA)}; eval [subst $c]
+	eval {label $f.l -text "Target Position"} $Gui(WTA)
 	pack $f.l
 
 	#-------------------------------------------
@@ -239,22 +235,19 @@ Models are fun. Do you like models, Ron?
 
 	# Position Sliders
 	foreach slider $axi text $texts {
-		set c {label $f.l${slider} -text "$text:" $Gui(WLA)}
-			eval [subst $c]
+		eval {label $f.l${slider} -text "$text:"} $Gui(WLA)
 
-		set c {entry $f.e${slider} \
-			-textvariable Target([Uncap ${slider}]Str) \
-			-width 7 $Gui(WEA)}; eval [subst $c]
+		eval {entry $f.e${slider} \
+			-textvariable Target([Uncap ${slider}]Str) -width 7} $Gui(WEA)
 			bind $f.e${slider} <Return> \
 				"GuidanceSetTargetPosition $slider; Render3D"
 			bind $f.e${slider} <FocusOut> \
 				"GuidanceSetTargetPosition $slider; Render3D"
 
-		set c {scale $f.s${slider} -from -180 -to 180 -length 120 \
+		eval {scale $f.s${slider} -from -180 -to 180 -length 120 \
 			-variable Target([Uncap ${slider}]Str) \
 			-command "GuidanceSetTargetPosition $slider; Render3D" \
-			-resolution 1 $Gui(WSA)} 
-			eval [subst $c]
+			-resolution 1} $Gui(WSA)
 	}
 
 	# Grid
@@ -270,12 +263,10 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fTarget.fBot.fButtons
 
-	set c {button $f.bFocus -text "Use as Focal Point" -width 18 \
-		-command "GuidanceSetFocalPointToTarget; RenderAll" $Gui(WBA)}
-		eval [subst $c]
-	set c {button $f.cTrajectory -text "View Trajectory" -width 18 \
-		-command "GuidanceViewTrajectory; RenderAll" $Gui(WBA)}
-		eval [subst $c]
+	eval {button $f.bFocus -text "Use as Focal Point" -width 18 \
+		-command "GuidanceSetFocalPointToTarget; RenderAll"} $Gui(WBA)
+	eval {button $f.cTrajectory -text "View Trajectory" -width 18 \
+		-command "GuidanceViewTrajectory; RenderAll"} $Gui(WBA)
 
 	pack $f.bFocus $f.cTrajectory \
 		-side top -pady $Gui(pad) -padx 0

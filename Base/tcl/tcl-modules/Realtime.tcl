@@ -72,7 +72,7 @@ proc RealtimeInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.9 $} {$Date: 2000/02/22 16:30:18 $}]
+		{$Revision: 1.10 $} {$Date: 2000/02/22 17:56:14 $}]
 
 	# Initialize globals
 	set Realtime(idRealtime)     $Volume(idNone)
@@ -225,11 +225,11 @@ Models are fun. Do you like models, Ron?
 	set f $fProcessing.fRealtime
 
 	# Realtime Volume menu
-	set c {label $f.lRealtime -text "Realtime Volume:" $Gui(WTA)}; eval [subst $c]
+	eval {label $f.lRealtime -text "Realtime Volume:"} $Gui(WTA)
 
-	set c {menubutton $f.mbRealtime -text "None" -relief raised -bd 2 -width 18 \
-		-menu $f.mbRealtime.m $Gui(WMBA)}; eval [subst $c]
-	set c {menu $f.mbRealtime.m $Gui(WMA)}; eval [subst $c]
+	eval {menubutton $f.mbRealtime -text "None" -relief raised -bd 2 -width 18 \
+		-menu $f.mbRealtime.m} $Gui(WMBA)
+	eval {menu $f.mbRealtime.m} $Gui(WMA)
 	pack $f.lRealtime -padx $Gui(pad) -side left -anchor e
 	pack $f.mbRealtime -padx $Gui(pad) -side left -anchor w
 
@@ -256,11 +256,11 @@ Models are fun. Do you like models, Ron?
 	set f $fProcessing.fBaseline.fMenu
 
 	# Volume menu
-	set c {label $f.lBaseline -text "Baseline Volume:" $Gui(WTA)}; eval [subst $c]
+	eval {label $f.lBaseline -text "Baseline Volume:"} $Gui(WTA)
 
-	set c {menubutton $f.mbBaseline -text "NEW" -relief raised -bd 2 -width 18 \
-		-menu $f.mbBaseline.m $Gui(WMBA)}; eval [subst $c]
-	set c {menu $f.mbBaseline.m $Gui(WMA)}; eval [subst $c]
+	eval {menubutton $f.mbBaseline -text "NEW" -relief raised -bd 2 -width 18 \
+		-menu $f.mbBaseline.m} $Gui(WMBA)
+	eval {menu $f.mbBaseline.m} $Gui(WMA)
 	pack $f.lBaseline $f.mbBaseline -padx $Gui(pad) -side left
 
 	# Save widgets for changing
@@ -273,8 +273,8 @@ Models are fun. Do you like models, Ron?
 	set f $fProcessing.fBaseline.fPrefix
 
 	eval {label $f.l -text "Prefix:"} $Gui(WLA)
-	set c {entry $f.e \
-		-textvariable Realtime(prefixBaseline) $Gui(WEA)}; eval [subst $c]
+	eval {entry $f.e \
+		-textvariable Realtime(prefixBaseline)} $Gui(WEA)
 	pack $f.l -padx 3 -side left
 	pack $f.e -padx 3 -side left -expand 1 -fill x
 
@@ -283,12 +283,12 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fProcessing.fBaseline.fBtns
 
-	set c {button $f.bWrite -text "Save" -width 5 \
-		-command "RealtimeWrite Baseline; RenderAll" $Gui(WBA)}; eval [subst $c]
-	set c {button $f.bRead -text "Read" -width 5 \
-		-command "RealtimeRead Baseline; RenderAll" $Gui(WBA)}; eval [subst $c]
-	set c {button $f.bSet -text "Copy Realtime" -width 14 \
-		-command "RealtimeMakeBaseline; RenderAll" $Gui(WBA)}; eval [subst $c]
+	eval {button $f.bWrite -text "Save" -width 5 \
+		-command "RealtimeWrite Baseline; RenderAll"} $Gui(WBA)
+	eval {button $f.bRead -text "Read" -width 5 \
+		-command "RealtimeRead Baseline; RenderAll"} $Gui(WBA)
+	eval {button $f.bSet -text "Copy Realtime" -width 14 \
+		-command "RealtimeMakeBaseline; RenderAll"} $Gui(WBA)
 	pack $f.bWrite $f.bRead $f.bSet -side left -padx $Gui(pad)
 
 
@@ -310,11 +310,11 @@ Models are fun. Do you like models, Ron?
 	set f $fProcessing.fResult.fMenu
 
 	# Volume menu
-	set c {label $f.lResult -text "Result Volume:" $Gui(WTA)}; eval [subst $c]
+	eval {label $f.lResult -text "Result Volume:"} $Gui(WTA)
 
-	set c {menubutton $f.mbResult -text "NEW" -relief raised -bd 2 -width 18 \
-		-menu $f.mbResult.m $Gui(WMBA)}; eval [subst $c]
-	set c {menu $f.mbResult.m $Gui(WMA)}; eval [subst $c]
+	eval {menubutton $f.mbResult -text "NEW" -relief raised -bd 2 -width 18 \
+		-menu $f.mbResult.m} $Gui(WMBA)
+	eval {menu $f.mbResult.m} $Gui(WMA)
 	pack $f.lResult $f.mbResult -padx $Gui(pad) -side left
 
 	# Save widgets for changing
@@ -327,8 +327,8 @@ Models are fun. Do you like models, Ron?
 	set f $fProcessing.fResult.fPrefix
 
 	eval {label $f.l -text "Prefix:"} $Gui(WLA)
-	set c {entry $f.e \
-		-textvariable Realtime(prefixResult) $Gui(WEA)}; eval [subst $c]
+	eval {entry $f.e \
+		-textvariable Realtime(prefixResult)} $Gui(WEA)
 	pack $f.l -padx 3 -side left
 	pack $f.e -padx 3 -side left -expand 1 -fill x
 
@@ -337,8 +337,8 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fProcessing.fResult.fBtns
 
-	set c {button $f.bWrite -text "Save" -width 5 \
-		-command "RealtimeWrite Result; RenderAll" $Gui(WBA)}; eval [subst $c]
+	eval {button $f.bWrite -text "Save" -width 5 \
+		-command "RealtimeWrite Result; RenderAll"} $Gui(WBA)
 	pack $f.bWrite -side left -padx $Gui(pad)
 
 
@@ -358,11 +358,11 @@ Models are fun. Do you like models, Ron?
 	set f $fProcessing.fEffects.fMenu
 
 	# Effects menu
-	set c {label $f.l -text "Effect:" $Gui(WTA)}; eval [subst $c]
+	eval {label $f.l -text "Effect:"} $Gui(WTA)
 
-	set c {menubutton $f.mbEffect -text $Realtime(effect) -relief raised -bd 2 -width 15 \
-		-menu $f.mbEffect.m $Gui(WMBA)}; eval [subst $c]
-	set c {menu $f.mbEffect.m $Gui(WMA)}; eval [subst $c]
+	eval {menubutton $f.mbEffect -text $Realtime(effect) -relief raised -bd 2 -width 15 \
+		-menu $f.mbEffect.m} $Gui(WMBA)
+	eval {menu $f.mbEffect.m} $Gui(WMA)
 	set Realtime(mbEffect) $f.mbEffect
 	set m $Realtime(mbEffect).m
 	foreach e $Realtime(effectList) {
@@ -375,21 +375,19 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fProcessing.fEffects.fMode
 
-	set c {label $f.lActive -text "Processing:" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.lActive -text "Processing:"} $Gui(WLA)
 	pack $f.lActive -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
 
 	foreach s "On Off" text "On Off" width "3 4" {
-		set c {radiobutton $f.r$s -width $width -indicatoron 0\
+		eval {radiobutton $f.r$s -width $width -indicatoron 0\
 			-text $text -value $s -variable Realtime(mode) \
-			-command "RealtimeSetMode" $Gui(WCA)}
-			eval [subst $c]
+			-command "RealtimeSetMode"} $Gui(WCA)
 		pack $f.r$s -side left -fill x -anchor e
 	}
 
-	set c {checkbutton $f.cPause \
+	eval {checkbutton $f.cPause \
 		-text "Pause" -variable Realtime(pause) -command "LocatorPause" -width 6 \
-		-indicatoron 0 $Gui(WCA)}
-		eval [subst $c]
+		-indicatoron 0} $Gui(WCA)
 	pack $f.cPause -side left -padx $Gui(pad)
 }
 

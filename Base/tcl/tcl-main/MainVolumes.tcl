@@ -62,7 +62,7 @@ proc MainVolumesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.27 $} {$Date: 2000/02/22 16:30:12 $}]
+		{$Revision: 1.28 $} {$Date: 2000/02/22 17:56:09 $}]
 
 	set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -413,9 +413,7 @@ proc MainVolumesBuildGUI {} {
 	set f $w
 
 	# Close button
-	set c {button $f.bClose -text "Close" \
-		-command "wm withdraw $w" $Gui(WBA)}
-		eval [subst $c]
+	eval {button $f.bClose -text "Close" -command "wm withdraw $w"} $Gui(WBA)
 
 	# Frames
 	frame $f.fActive -bg $Gui(inactiveWorkspace)
@@ -430,11 +428,11 @@ proc MainVolumesBuildGUI {} {
 	#-------------------------------------------
 	set f $w.fActive
 
-	set c {label $f.lActive -text "Active Volume: " $Gui(WLA)\
-		-bg $Gui(inactiveWorkspace)}; eval [subst $c]
-	set c {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
-		-menu $f.mbActive.m $Gui(WMBA)}; eval [subst $c]
-	set c {menu $f.mbActive.m $Gui(WMA)}; eval [subst $c]
+	eval {label $f.lActive -text "Active Volume: "} $Gui(WLA)\
+		{-bg $Gui(inactiveWorkspace)}
+	eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
+		-menu $f.mbActive.m} $Gui(WMBA)
+	eval {menu $f.mbActive.m} $Gui(WMA)
 	pack $f.lActive $f.mbActive -side left -padx $Gui(pad) -pady 0 
 
 	# Append widgets to list that gets refreshed during UpdateMRML
@@ -449,16 +447,16 @@ proc MainVolumesBuildGUI {} {
 	#-------------------------------------------
 	# Auto W/L
 	#-------------------------------------------
-	set c {label $f.lAuto -text "Window/Level:" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.lAuto -text "Window/Level:"} $Gui(WLA)
 	frame $f.fAuto -bg $Gui(activeWorkspace)
 	grid $f.lAuto $f.fAuto -pady $Gui(pad)  -padx $Gui(pad) -sticky e
 	grid $f.fAuto -columnspan 2 -sticky w
 
 	foreach value "1 0" text "Auto Manual" width "5 7" {
-		set c {radiobutton $f.fAuto.rAuto$value -width $width -indicatoron 0\
+		eval {radiobutton $f.fAuto.rAuto$value -width $width -indicatoron 0\
 			-text "$text" -value "$value" -variable Volume(autoWindowLevel) \
 			-command "MainVolumesSetParam AutoWindowLevel; MainVolumesRender" \
-			$Gui(WCA)}; eval [subst $c]
+			} $Gui(WCA)
 		pack $f.fAuto.rAuto$value -side left -fill x
 	}
 
@@ -466,18 +464,17 @@ proc MainVolumesBuildGUI {} {
 	# W/L Sliders
 	#-------------------------------------------
 	foreach slider "Window Level" {
-		set c {label $f.l${slider} -text "${slider}:" $Gui(WLA)}
-			eval [subst $c]
-		set c {entry $f.e${slider} -width 7 \
-			-textvariable Volume([Uncap ${slider}]) $Gui(WEA)}; eval [subst $c]
+		eval {label $f.l${slider} -text "${slider}:"} $Gui(WLA)
+		eval {entry $f.e${slider} -width 7 \
+			-textvariable Volume([Uncap ${slider}])} $Gui(WEA)
 		bind $f.e${slider} <Return>   \
 			"MainVolumesSetParam ${slider}; MainVolumesRender"
 		bind $f.e${slider} <FocusOut> \
 			"MainVolumesSetParam ${slider}; MainVolumesRender"
-		set c {scale $f.s${slider} -from 1 -to 1024 \
+		eval {scale $f.s${slider} -from 1 -to 1024 \
 			-variable Volume([Uncap ${slider}]) -length 200 -resolution 1 \
 			-command "MainVolumesSetParam ${slider}; MainVolumesRenderActive"\
-			 $Gui(WSA)}; eval [subst $c]
+			 } $Gui(WSA)
 		bind $f.s${slider} <Leave> "MainVolumesRender"
 		grid $f.l${slider} $f.e${slider} $f.s${slider} \
 			-pady $Gui(pad) -padx $Gui(pad)
@@ -497,36 +494,39 @@ proc MainVolumesBuildGUI {} {
 	#-------------------------------------------
 	# Auto Threshold
 	#-------------------------------------------
-	set c {label $f.lAuto -text "Threshold:" $Gui(WLA)}
-		eval [subst $c]
+	eval {label $f.lAuto -text "Threshold:"} $Gui(WLA)
 	frame $f.fAuto -bg $Gui(activeWorkspace)
 	grid $f.lAuto $f.fAuto -pady $Gui(pad) -padx $Gui(pad) -sticky e
 	grid $f.fAuto -columnspan 2 -sticky w
 
-	foreach value "1 0 -1" text "Auto Manual None" width "5 7 5" {
-		set c {radiobutton $f.fAuto.rAuto$value -width $width -indicatoron 0\
+	foreach value "1 0" text "Auto Manual" width "5 7" {
+		eval {radiobutton $f.fAuto.rAuto$value -width $width -indicatoron 0\
 			-text "$text" -value "$value" -variable Volume(autoThreshold) \
-			-command "MainVolumesSetParam AutoThreshold; MainVolumesRender" \
-			$Gui(WCA)}; eval [subst $c]
-		pack $f.fAuto.rAuto$value -side left -fill x
+			-command "MainVolumesSetParam AutoThreshold; MainVolumesRender"} $Gui(WCA)
 	}
+	eval {checkbutton $f.cApply \
+		-text "Apply" -variable Volume(applyThreshold) \
+		-command "MainVolumesSetParam ApplyThreshold; MainVolumesRender" -width 6 \
+		-indicatoron 0} $Gui(WCA)
+	
+	grid $f.fAuto.rAuto1 $f.fAuto.rAuto0 $f.cApply
+	grid $f.cApply -padx $Gui(pad)
 
 	#-------------------------------------------
 	# Threshold Sliders
 	#-------------------------------------------
 	foreach slider "Lower Upper" {
-		set c {label $f.l${slider} -text "${slider}:" $Gui(WLA)}
-			eval [subst $c]
-		set c {entry $f.e${slider} -width 7 \
-			-textvariable Volume([Uncap ${slider}]Threshold) $Gui(WEA)}; eval [subst $c]
+		eval {label $f.l${slider} -text "${slider}:"} $Gui(WLA)
+		eval {entry $f.e${slider} -width 7 \
+			-textvariable Volume([Uncap ${slider}]Threshold)} $Gui(WEA)
 			bind $f.e${slider} <Return>   \
 				"MainVolumesSetParam ${slider}Threshold; MainVolumesRender"
 			bind $f.e${slider} <FocusOut> \
 				"MainVolumesSetParam ${slider}Threshold; MainVolumesRender"
-		set c {scale $f.s${slider} -from 1 -to 1024 \
+		eval {scale $f.s${slider} -from 1 -to 1024 \
 			-variable Volume([Uncap ${slider}]Threshold) -length 200 -resolution 1 \
 			-command "MainVolumesSetParam ${slider}Threshold; MainVolumesRender"\
-			 $Gui(WSA)}; eval [subst $c]
+			 } $Gui(WSA)
 		grid $f.l${slider} $f.e${slider} $f.s${slider} \
 			 -padx $Gui(pad) -pady $Gui(pad)
 		grid $f.l$slider -sticky e

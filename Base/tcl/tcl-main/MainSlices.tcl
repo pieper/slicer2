@@ -86,7 +86,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-		{$Revision: 1.16 $} {$Date: 2000/02/22 16:30:11 $}]
+		{$Revision: 1.17 $} {$Date: 2000/02/22 17:56:08 $}]
 
 	# Initialize Variables
 	set Slice(idList) "0 1 2"
@@ -244,16 +244,15 @@ proc MainSlicesBuildControlsForVolume {f s layer text} {
 	global Gui
 
 	# All Slices
-	set c {menubutton $f.mb${layer}Volume -text "${text}:" -width 3 \
-		-menu $f.mb${layer}Volume.m $Gui(WMBA)}; eval [subst $c]
-	set c {menu $f.mb${layer}Volume.m $Gui(WMA)}; eval [subst $c]
+	eval {menubutton $f.mb${layer}Volume -text "${text}:" -width 3 \
+		-menu $f.mb${layer}Volume.m} $Gui(WMBA)
+	eval {menu $f.mb${layer}Volume.m} $Gui(WMA)
 	bind $f.mb${layer}Volume <Button-3> "MainVolumesPopupGo $layer $s %X %Y"
 
 	# This Slice
-	set c {menubutton $f.mb${layer}Volume${s} -text None -width 13 \
-		-menu $f.mb${layer}Volume${s}.m $Gui(WMBA) -bg $Gui(slice$s)}
-		eval [subst $c]
-	set c {menu $f.mb${layer}Volume${s}.m $Gui(WMA)}; eval [subst $c]
+	eval {menubutton $f.mb${layer}Volume${s} -text None -width 13 \
+		-menu $f.mb${layer}Volume${s}.m} $Gui(WMBA) {-bg $Gui(slice$s)}
+	eval {menu $f.mb${layer}Volume${s}.m} $Gui(WMA)
 	bind $f.mb${layer}Volume$s <Button-3> "MainVolumesPopupGo $layer $s %X %Y"			
 	
 	pack $f.mb${layer}Volume $f.mb${layer}Volume${s} \
@@ -281,14 +280,13 @@ proc MainSlicesBuildControls {s F} {
 	set f $F.fOffset
 	set fov2 [expr $View(fov) / 2]
 
-	set c {entry $f.eOffset -width 4 \
-		-textvariable Slice($s,offset) $Gui(WEA)}; eval [subst $c]
+	eval {entry $f.eOffset -width 4 -textvariable Slice($s,offset)} $Gui(WEA)
 		bind $f.eOffset <Return>   "MainSlicesSetOffset $s; RenderBoth $s"
 		bind $f.eOffset <FocusOut> "MainSlicesSetOffset $s; RenderBoth $s"
-	set c {scale $f.sOffset -from -$fov2 -to $fov2 \
+	eval {scale $f.sOffset -from -$fov2 -to $fov2 \
 		-variable Slice($s,offset) -length 160 -resolution 1.0 -command \
-		"MainSlicesSetOffsetInit $s $f.sOffset" $Gui(WSA) -troughcolor $Gui(slice$s) }
-		eval [subst $c]
+		"MainSlicesSetOffsetInit $s $f.sOffset"} $Gui(WSA) \
+		{-troughcolor $Gui(slice$s)}
 
 	pack $f.sOffset $f.eOffset -side left -anchor w -padx 2 -pady 0
 
@@ -296,14 +294,15 @@ proc MainSlicesBuildControls {s F} {
 	#-------------------------------------------
 
 	# This Slice
-	set c {checkbutton $f.cVisibility${s} \
+	eval {checkbutton $f.cVisibility${s} \
 		-variable Slice($s,visibility) -indicatoron 0 -text "V" -width 2 \
-		-command "MainSlicesSetVisibility ${s}; MainViewerHideSliceControls; Render3D" \
-		$Gui(WCA) -selectcolor $Gui(slice$s)}; eval [subst $c]
+		-command "MainSlicesSetVisibility ${s}; \
+		MainViewerHideSliceControls; Render3D"} $Gui(WCA) \
+		{-selectcolor $Gui(slice$s)}
 	pack $f.cVisibility${s} -side left -padx 2
 
 	# Menu on the Visibility checkbutton
-	set c {menu $f.cVisibility${s}.men $Gui(WMA)}; eval [subst $c]
+	eval {menu $f.cVisibility${s}.men} $Gui(WMA)
 	set men $f.cVisibility${s}.men
 	$men add command -label "All Visible" \
 		-command "MainSlicesSetVisibilityAll 1; MainViewerHideSliceControls; Render3D"
@@ -327,22 +326,22 @@ proc MainSlicesBuildControls {s F} {
 	set f $F.fOrient
 
 	# All Slices
-	set c {menubutton $f.mbOrient -text "Or:" -width 3 -menu $f.mbOrient.m \
-		$Gui(WMBA) -anchor e}; eval [subst $c]
+	eval {menubutton $f.mbOrient -text "Or:" -width 3 -menu $f.mbOrient.m} \
+		$Gui(WMBA) {-anchor e}
 	pack $f.mbOrient -side left -pady 0 -padx 2 -fill x
 
-	set c {menu $f.mbOrient.m $Gui(WMA)}; eval [subst $c];
+	eval {menu $f.mbOrient.m} $Gui(WMA)
 	foreach item "AxiSagCor Orthogonal Slices" {
 		$f.mbOrient.m add command -label $item -command \
 			"MainSlicesSetOrientAll $item; MainViewerHideSliceControls; RenderAll"
 	}
 
 	# This slice
-	set c {menubutton $f.mbOrient${s} -text INIT -menu $f.mbOrient${s}.m \
-		-width 13 $Gui(WMBA) -bg $Gui(slice$s)}; eval [subst $c]
+	eval {menubutton $f.mbOrient${s} -text INIT -menu $f.mbOrient${s}.m \
+		-width 13} $Gui(WMBA) {-bg $Gui(slice$s)}
 	pack $f.mbOrient${s} -side left -pady 0 -padx 2 -fill x
 
-	set c {menu $f.mbOrient${s}.m $Gui(WMA)}; eval [subst $c];
+	eval {menu $f.mbOrient${s}.m} $Gui(WMA)
 	foreach item "[Slicer GetOrientList]" {
 		$f.mbOrient${s}.m add command -label $item -command \
 			"MainSlicesSetOrient ${s} $item; MainViewerHideSliceControls; RenderBoth $s"

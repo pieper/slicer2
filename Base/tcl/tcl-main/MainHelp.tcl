@@ -46,7 +46,7 @@ proc MainHelpInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-		{$Revision: 1.6 $} {$Date: 2000/02/22 16:30:09 $}]
+		{$Revision: 1.7 $} {$Date: 2000/02/22 17:56:07 $}]
 
 	set Help(tagNormal)   "-font {times 10}"
 	set Help(tagItalic)   "-font {times 10 italic}"
@@ -104,8 +104,8 @@ proc MainHelpBuildGUI {ModuleName} {
 	MainHelpShow $ModuleArray(helpWidget) $ModuleName
 
 	set f $f.fBtns
-	set c {button $f.bHome -text "Home" -width 5 \
-		-command "$ModuleArray(helpWidget) see 0.0" $Gui(WBA)}; eval [subst $c]
+	eval {button $f.bHome -text "Home" -width 5 \
+		-command "$ModuleArray(helpWidget) see 0.0"} $Gui(WBA)
 	pack $f.bHome -side left -padx $Gui(pad)
 }
 

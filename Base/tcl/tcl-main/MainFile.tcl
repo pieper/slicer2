@@ -65,7 +65,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-		{$Revision: 1.17 $} {$Date: 2000/02/22 16:30:08 $}]
+		{$Revision: 1.18 $} {$Date: 2000/02/22 17:56:07 $}]
 
 	set File(filePrefix) data
 }
@@ -118,7 +118,7 @@ proc MainFileBuildOpenGUI {} {
 	#-------------------------------------------
 	set f $w.fTop.fHelp
 
-	set c {label $f.lTitle -text "Open a MRML file with this prefix:" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.lTitle -text "Open a MRML file with this prefix:"} $Gui(WLA)
 	pack $f.lTitle
 	
 	#-------------------------------------------
@@ -126,10 +126,9 @@ proc MainFileBuildOpenGUI {} {
 	#-------------------------------------------
 	set f $w.fTop.fGrid
 
-	set c {button $f.b -text "Browse:" -width 7 \
-		-command "MainFileOpen" $Gui(WBA)}; eval [subst $c]
-	set c {entry $f.e -textvariable File(filePrefix) -width 60 $Gui(WEA)}
-		eval [subst $c]
+	eval {button $f.b -text "Browse:" -width 7 \
+		-command "MainFileOpen"} $Gui(WBA)
+	eval {entry $f.e -textvariable File(filePrefix) -width 60} $Gui(WEA)
 	bind $f.e <Return> {MainFileOpen}
 	pack $f.b -side left -padx $Gui(pad)
 	pack $f.e -side left -padx $Gui(pad) -fill x -expand 1
@@ -138,10 +137,10 @@ proc MainFileBuildOpenGUI {} {
 	# Top->Buttons frame
 	#-------------------------------------------
 	set f $w.fBtns
-	set c {button $f.bCancel -text "Cancel" \
-		-command "wm withdraw $w" $Gui(WBA)}; eval [subst $c]
-	set c {button $f.bApply -text "Apply" \
-		-command "wm withdraw $w; MainFileOpenApply" $Gui(WBA)}; eval [subst $c]
+	eval {button $f.bCancel -text "Cancel" \
+		-command "wm withdraw $w"} $Gui(WBA)
+	eval {button $f.bApply -text "Apply" \
+		-command "wm withdraw $w; MainFileOpenApply"} $Gui(WBA)
 	pack $f.bApply $f.bCancel -side left -padx $Gui(pad)
 }
 
@@ -182,7 +181,7 @@ proc MainFileBuildSaveAsGUI {} {
 	#-------------------------------------------
 	set f $w.fTop.fHelp
 
-	set c {label $f.lTitle -text "Save a MRML file with this prefix:" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.lTitle -text "Save a MRML file with this prefix:"} $Gui(WLA)
 	pack $f.lTitle
 	
 	#-------------------------------------------
@@ -190,10 +189,9 @@ proc MainFileBuildSaveAsGUI {} {
 	#-------------------------------------------
 	set f $w.fTop.fGrid
 
-	set c {button $f.b -text "Browse:" -width 7 \
-		-command "MainFileSaveAs" $Gui(WBA)}; eval [subst $c]
-	set c {entry $f.e -textvariable File(filePrefix) -width 60 $Gui(WEA)}
-		eval [subst $c]
+	eval {button $f.b -text "Browse:" -width 7 \
+		-command "MainFileSaveAs"} $Gui(WBA)
+	eval {entry $f.e -textvariable File(filePrefix) -width 60} $Gui(WEA)
 	bind $f.e <Return> {MainFileSaveAs}
 	pack $f.b -side left -padx $Gui(pad)
 	pack $f.e -side left -padx $Gui(pad) -fill x -expand 1
@@ -202,10 +200,10 @@ proc MainFileBuildSaveAsGUI {} {
 	# Top->Buttons frame
 	#-------------------------------------------
 	set f $w.fBtns
-	set c {button $f.bCancel -text "Cancel" \
-		-command "wm withdraw $w" $Gui(WBA)}; eval [subst $c]
-	set c {button $f.bApply -text "Apply" \
-		-command "wm withdraw $w; MainFileSaveAsApply" $Gui(WBA)}; eval [subst $c]
+	eval {button $f.bCancel -text "Cancel" \
+		-command "wm withdraw $w"} $Gui(WBA)
+	eval {button $f.bApply -text "Apply" \
+		-command "wm withdraw $w; MainFileSaveAsApply"} $Gui(WBA)
 	pack $f.bApply $f.bCancel -side left -padx $Gui(pad)
 }
 

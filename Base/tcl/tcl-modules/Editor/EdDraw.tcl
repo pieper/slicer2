@@ -94,14 +94,13 @@ proc EdDrawBuildGUI {} {
 	set f $Ed(EdDraw,frame).fMode
 
 	frame $f.fMode -bg $Gui(activeWorkspace)
-	set c {label $f.fMode.lMode -text "Mode:" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.fMode.lMode -text "Mode:"} $Gui(WLA)
 	pack $f.fMode.lMode -side left -padx 0 -pady 0
 	foreach mode "Draw Select Move" {
-		set c {radiobutton $f.fMode.r$mode \
+		eval {radiobutton $f.fMode.r$mode \
 			-text "$mode" -variable Ed(EdDraw,mode) -value $mode \
 			-width [expr [string length $mode] +1] \
-			-indicatoron 0 \
-			 $Gui(WCA)}; eval [subst $c]
+			-indicatoron 0} $Gui(WCA)
 		pack $f.fMode.r$mode -side left -padx 0 -pady 0
 	}
 	pack $f.fMode -side top -pady 5 -padx 0 
@@ -111,14 +110,12 @@ proc EdDrawBuildGUI {} {
 	#-------------------------------------------
 	set f $Ed(EdDraw,frame).fDelete
 
-	set c {label $f.l -text "Delete points after apply:" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.l -text "Delete points after apply:"} $Gui(WLA)
 	pack $f.l -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
 
 	foreach s "Yes No" text "Yes No" width "4 3" {
-		set c {radiobutton $f.r$s -width $width -indicatoron 0\
-			-text "$text" -value "$s" -variable Ed(EdDraw,delete) \
-			$Gui(WCA)}
-			eval [subst $c]
+		eval {radiobutton $f.r$s -width $width -indicatoron 0\
+			-text "$text" -value "$s" -variable Ed(EdDraw,delete)} $Gui(WCA)
 		pack $f.r$s -side left -fill x -anchor e
 	}
 
@@ -128,25 +125,24 @@ proc EdDrawBuildGUI {} {
 	set f $Ed(EdDraw,frame).fGrid
 
 	# Output label
-	set c {button $f.bOutput -text "Output:" \
-		-command "ShowLabels EdDrawLabel" $Gui(WBA)}; eval [subst $c]
-	set c {entry $f.eOutput -width 6 \
-		-textvariable Label(label) $Gui(WEA)}; eval [subst $c]
+	eval {button $f.bOutput -text "Output:" \
+		-command "ShowLabels EdDrawLabel"} $Gui(WBA)
+	eval {entry $f.eOutput -width 6 \
+		-textvariable Label(label)} $Gui(WEA)
 	bind $f.eOutput <Return>   "EdDrawLabel"
 	bind $f.eOutput <FocusOut> "EdDrawLabel"
-	set c {entry $f.eName -width 14 \
-		-textvariable Label(name) $Gui(WEA) \
-		-bg $Gui(activeWorkspace) -state disabled}; eval [subst $c]
+	eval {entry $f.eName -width 14 \
+		-textvariable Label(name)} $Gui(WEA) \
+		{-bg $Gui(activeWorkspace) -state disabled}
 	grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
 	grid $f.eOutput $f.eName -sticky w
 
 	lappend Label(colorWidgetList) $f.eName
 
 	# Radius
-	set c {label $f.lRadius -text "Point Radius:" $Gui(WLA)}
-		eval [subst $c]
-	set c {entry $f.eRadius -width 6 \
-		-textvariable Ed(EdDraw,radius) $Gui(WEA)}; eval [subst $c]
+	eval {label $f.lRadius -text "Point Radius:"} $Gui(WLA)
+	eval {entry $f.eRadius -width 6 \
+		-textvariable Ed(EdDraw,radius)} $Gui(WEA)
 		bind $f.eRadius <Return> "EdDrawUpdate SetRadius; RenderActive"
 	grid $f.lRadius $f.eRadius -padx $Gui(pad) -pady $Gui(pad) -sticky e
 	grid $f.eRadius -sticky w
@@ -156,18 +152,14 @@ proc EdDrawBuildGUI {} {
 	#-------------------------------------------
 	set f $Ed(EdDraw,frame).fBtns
 
-	set c {button $f.bSelectAll -text "Select All" \
-		-command "EdDrawUpdate SelectAll; RenderActive" \
-		$Gui(WBA) -width 16}; eval [subst $c]
-	set c {button $f.bDeselectAll -text "Deselect All" \
-		-command "EdDrawUpdate DeselectAll; RenderActive" \
-		$Gui(WBA) -width 16}; eval [subst $c]
-	set c {button $f.bDeleteSel -text "Delete Selected" \
-		-command "EdDrawUpdate DeleteSelected; RenderActive" \
-		$Gui(WBA) -width 16}; eval [subst $c]
-	set c {button $f.bDeleteAll -text "Delete All" \
-		-command "EdDrawUpdate DeleteAll; RenderActive" \
-		$Gui(WBA) -width 16}; eval [subst $c]
+	eval {button $f.bSelectAll -text "Select All" \
+		-command "EdDrawUpdate SelectAll; RenderActive"} $Gui(WBA) {-width 16}
+	eval {button $f.bDeselectAll -text "Deselect All" \
+		-command "EdDrawUpdate DeselectAll; RenderActive"} $Gui(WBA) {-width 16}
+	eval {button $f.bDeleteSel -text "Delete Selected" \
+		-command "EdDrawUpdate DeleteSelected; RenderActive"} $Gui(WBA) {-width 16}
+	eval {button $f.bDeleteAll -text "Delete All" \
+		-command "EdDrawUpdate DeleteAll; RenderActive"} $Gui(WBA) {-width 16}
 
 	grid $f.bSelectAll $f.bDeselectAll  -padx $Gui(pad) -pady $Gui(pad)
 	grid $f.bDeleteSel $f.bDeleteAll    -padx $Gui(pad) -pady $Gui(pad)
@@ -179,20 +171,19 @@ proc EdDrawBuildGUI {} {
 	set f $Ed(EdDraw,frame).fApply
 
 	frame $f.f -bg $Gui(activeWorkspace)
-	set c {label $f.f.l -text "Shape:" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.f.l -text "Shape:"} $Gui(WLA)
 	pack $f.f.l -side left -padx $Gui(pad)
 
 	foreach shape "Polygon Lines Points" {
-		set c {radiobutton $f.f.r$shape -width [expr [string length $shape]+1] \
+		eval {radiobutton $f.f.r$shape -width [expr [string length $shape]+1] \
 			-text "$shape" -variable Ed(EdDraw,shape) -value $shape \
 			-command "EdDrawUpdate SetShape; RenderActive" \
-			-indicatoron 0 $Gui(WCA)}
-			eval [subst $c]
+			-indicatoron 0} $Gui(WCA)
 		pack $f.f.r$shape -side left 
 	}
 
-	set c {button $f.bApply -text "Apply" \
-		-command "EdDrawApply" $Gui(WBA) -width 8}; eval [subst $c]
+	eval {button $f.bApply -text "Apply" \
+		-command "EdDrawApply"} $Gui(WBA) {-width 8}
 	pack $f.f $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
 
 

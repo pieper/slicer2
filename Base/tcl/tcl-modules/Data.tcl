@@ -74,7 +74,7 @@ proc DataInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.18 $} {$Date: 2000/02/22 16:30:15 $}]
+		{$Revision: 1.19 $} {$Date: 2000/02/22 17:56:10 $}]
 
 	set Data(index) ""
 	set Data(clipboard) ""
@@ -155,16 +155,16 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fList.fBtns
 	
-	set c {button $f.bVolume -image $Data(imgVolumeOff) \
-		-command "DataAddVolume" $Gui(WBA)}; eval [subst $c]
+	eval {button $f.bVolume -image $Data(imgVolumeOff) \
+		-command "DataAddVolume"} $Gui(WBA)
 	set Data(bVolume) $f.bVolume
 	bind $Data(bVolume) <Enter> \
 		"$Data(bVolume) config -image $Data(imgVolumeOn)"
 	bind $Data(bVolume) <Leave> \
 		"$Data(bVolume) config -image $Data(imgVolumeOff)"
 
-	set c {button $f.bModel  -image $Data(imgModelOff) \
-		-command "DataAddModel" $Gui(WBA)}; eval [subst $c]
+	eval {button $f.bModel  -image $Data(imgModelOff) \
+		-command "DataAddModel"} $Gui(WBA)
 	set Data(bModel) $f.bModel
 	bind $Data(bModel) <Enter> \
 		"$Data(bModel) config -image $Data(imgModelOn)"
@@ -178,10 +178,10 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fList.fMenu
 
-	set c {button $f.bTransform  -text "Add Transform" \
-		-command "DataAddTransform" $Gui(WBA)}; eval [subst $c]
-	set c {button $f.bEnd  -text "Add Matrix" \
-		-command "DataAddMatrix" $Gui(WBA)}; eval [subst $c]
+	eval {button $f.bTransform  -text "Add Transform" \
+		-command "DataAddTransform"} $Gui(WBA)
+	eval {button $f.bEnd  -text "Add Matrix" \
+		-command "DataAddMatrix"} $Gui(WBA)
 
 	pack $f.bTransform $f.bEnd -side left -padx $Gui(pad)
 
@@ -190,8 +190,7 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fList.fTitle
 	
-	set c {label $f.lTitle -text "MRML File Contents:" $Gui(WTA)};
-		eval [subst $c]
+	eval {label $f.lTitle -text "MRML File Contents:"} $Gui(WTA)
 	pack $f.lTitle 
 
 	#-------------------------------------------
@@ -218,7 +217,7 @@ Models are fun. Do you like models, Ron?
 
 	# Menu for right mouse button
 
-	set c {menu $f.list.mRight $Gui(WMA)}; eval [subst $c];
+	eval {menu $f.list.mRight} $Gui(WMA)
 	set Data(rightMenu) $f.list.mRight
 	set m $Data(rightMenu)
 	set id 0

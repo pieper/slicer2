@@ -90,15 +90,12 @@ proc EdMeasureIslandBuildGUI {} {
 	set f $Ed(EdMeasureIsland,frame).fGrid
 
 	# New label
-	set c {button $f.bOutput -text "Island Label:" \
-		-command "ShowLabels" $Gui(WBA)}; eval [subst $c]
-	set c {entry $f.eOutput -width 6 \
-		-textvariable Label(label) $Gui(WEA)}; eval [subst $c]
+	eval {button $f.bOutput -text "Island Label:" -command "ShowLabels"} $Gui(WBA)
+	eval {entry $f.eOutput -width 6 -textvariable Label(label)} $Gui(WEA)
 	bind $f.eOutput <Return> "LabelsFindLabel"
 	bind $f.eOutput <FocusOut> "LabelsFindLabel"
-	set c {entry $f.eName -width 14 \
-		-textvariable Label(name) $Gui(WEA) \
-		-bg $Gui(activeWorkspace) -state disabled}; eval [subst $c]
+	eval {entry $f.eName -width 14 -textvariable Label(name)} $Gui(WEA) \
+		{-bg $Gui(activeWorkspace) -state disabled}
 	grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
 	grid $f.eOutput $f.eName -sticky w
 	grid $f.eName -columnspan 2
@@ -106,13 +103,10 @@ proc EdMeasureIslandBuildGUI {} {
 	lappend Label(colorWidgetList) $f.eName
 
 	# Seed
-	set c {label $f.lSeed -text "IJK Location:" $Gui(WLA)}; eval [subst $c]
-	set c {entry $f.eX -width 4 -textvariable Ed(EdMeasureIsland,xSeed) \
-		$Gui(WEA)}; eval [subst $c]
-	set c {entry $f.eY -width 4 -textvariable Ed(EdMeasureIsland,ySeed) \
-		$Gui(WEA)}; eval [subst $c]
-	set c {entry $f.eZ -width 4 -textvariable Ed(EdMeasureIsland,zSeed) \
-		$Gui(WEA)}; eval [subst $c]
+	eval {label $f.lSeed -text "IJK Location:"} $Gui(WLA)
+	eval {entry $f.eX -width 4 -textvariable Ed(EdMeasureIsland,xSeed)} $Gui(WEA)
+	eval {entry $f.eY -width 4 -textvariable Ed(EdMeasureIsland,ySeed)} $Gui(WEA)
+	eval {entry $f.eZ -width 4 -textvariable Ed(EdMeasureIsland,zSeed)} $Gui(WEA)
 #	grid $f.lSeed $f.eX $f.eY $f.eZ -padx $Gui(pad) -pady $Gui(pad) -sticky e
 
 	#-------------------------------------------
@@ -120,12 +114,11 @@ proc EdMeasureIslandBuildGUI {} {
 	#-------------------------------------------
 	set f $Ed(EdMeasureIsland,frame).fApply
 
-#	set c {button $f.bApply -text "Apply" \
-#		-command "EdMeasureIslandApply" $Gui(WBA) -width 8}; eval [subst $c]
+#	eval {button $f.bApply -text "Apply" \
+#		-command "EdMeasureIslandApply"} $Gui(WBA) {-width 8}
 #	pack $f.bApply -side top -padx $Gui(pad) -pady 2
 
-    set c {label $f.l -text "Apply by clicking on the island." \
-		$Gui(WLA)}; eval [subst $c]
+    eval {label $f.l -text "Apply by clicking on the island."} $Gui(WLA)
 	pack $f.l -side top
 
 	#-------------------------------------------
@@ -134,22 +127,20 @@ proc EdMeasureIslandBuildGUI {} {
 	set f $Ed(EdMeasureIsland,frame).fResults
 
     # Title
-	set c {label $f.l -text "Results:" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.l -text "Results:"} $Gui(WLA)
 	grid $f.l
 
 	# Size
-	set c {label $f.lSize -text "Size:" \
-		$Gui(WLA)}; eval [subst $c]
-	set c {entry $f.eSize -width 9 \
-		-textvariable Ed(EdMeasureIsland,size) $Gui(WEA)}; eval [subst $c]
+	eval {label $f.lSize -text "Size:"} $Gui(WLA)
+	eval {entry $f.eSize -width 9 \
+		-textvariable Ed(EdMeasureIsland,size)} $Gui(WEA)
 	grid $f.lSize $f.eSize -padx $Gui(pad) -pady $Gui(pad) -sticky e
 	grid $f.eSize -sticky w
 	
 	# Largest
-	set c {label $f.lLargest -text "Largest:" \
-		$Gui(WLA)}; eval [subst $c]
-	set c {entry $f.eLargest -width 9 \
-		-textvariable Ed(EdMeasureIsland,largest) $Gui(WEA)}; eval [subst $c]
+	eval {label $f.lLargest -text "Largest:"} $Gui(WLA)
+	eval {entry $f.eLargest -width 9 \
+		-textvariable Ed(EdMeasureIsland,largest)} $Gui(WEA)
  	grid $f.lLargest $f.eLargest -padx $Gui(pad) -pady $Gui(pad) -sticky e
 	grid $f.eLargest -sticky w
 }

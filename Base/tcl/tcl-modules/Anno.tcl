@@ -54,7 +54,7 @@ proc AnnoInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.6 $} {$Date: 2000/02/22 16:30:14 $}]
+		{$Revision: 1.7 $} {$Date: 2000/02/22 17:56:09 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -110,7 +110,7 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fVisibility.fVis
 
-	set c {label $f.lTitle -text "Visibility" $Gui(WTA)}; eval [subst $c]
+	eval {label $f.lTitle -text "Visibility"} $Gui(WTA)
 	pack $f.lTitle -side top -padx $Gui(pad) -pady $Gui(pad)
 
 	# 3D
@@ -120,10 +120,9 @@ Models are fun. Do you like models, Ron?
 	foreach anno "Box Axes Letters Outline" \
 		name "{3D Cube} {3D Axes} {3D Letters} {3D Outline around slices}" {
 
-		set c {checkbutton $f.c${anno} -text "$name" \
+		eval {checkbutton $f.c${anno} -text "$name" \
 			-variable Anno([Uncap $anno]) -indicatoron 0 \
-			-command "MainAnnoSetVisibility; Render3D" $Gui(WCA)}
-			eval [subst $c]
+			-command "MainAnnoSetVisibility; Render3D"} $Gui(WCA)
 			 
 		pack $f.c${anno} -side top -fill x -padx $Gui(pad) -pady $Gui(pad) 
 	} 
@@ -136,10 +135,9 @@ Models are fun. Do you like models, Ron?
 	foreach anno "Cross Hashes Mouse" \
 		name "{Crosshair} {Hash marks} {Slice window text}" {
 
-		set c {checkbutton $f.c${anno} -text "$name" \
+		eval {checkbutton $f.c${anno} -text "$name" \
 			-variable Anno([Uncap $anno]) -indicatoron 0 \
-			-command "MainAnnoSetVisibility; RenderSlices" $Gui(WCA)}
-			eval [subst $c]
+			-command "MainAnnoSetVisibility; RenderSlices"} $Gui(WCA)
 			 
 		pack $f.c${anno} -side top -fill x -padx $Gui(pad) -pady $Gui(pad) 
 	}
@@ -161,13 +159,12 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fMode.fCoords
 
-	set c {label $f.l -text "Slice Cursor:" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.l -text "Slice Cursor:"} $Gui(WLA)
 	frame $f.f -bg $Gui(activeWorkspace)
 	foreach mode "RAS IJK XY" {
-		set c {radiobutton $f.f.r$mode -width 4 \
+		eval {radiobutton $f.f.r$mode -width 4 \
 			-text "$mode" -variable Anno(cursorMode) -value $mode \
-			-indicatoron 0 $Gui(WCA)}
-			eval [subst $c]
+			-indicatoron 0} $Gui(WCA)
 		pack $f.f.r$mode -side left -padx 0 -pady 0
 	}
 	pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
@@ -177,17 +174,15 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fMode.fFollow
 
-	set c {label $f.lTitle -text "Position" $Gui(WTA)}; eval [subst $c]
+	eval {label $f.lTitle -text "Position"} $Gui(WTA)
 	pack $f.lTitle -side top -padx $Gui(pad) -pady $Gui(pad)
 
-	set c {checkbutton $f.cAxes -text "Axes follow focal point" \
+	eval {checkbutton $f.cAxes -text "Axes follow focal point" \
 		-variable Anno(axesFollowFocalPoint) -indicatoron 0 -width 24 \
-		-command "MainAnnoUpdateFocalPoint; Render3D" $Gui(WCA)}
-		eval [subst $c]
-	set c {checkbutton $f.cBox -text "Cube follows focal point" \
+		-command "MainAnnoUpdateFocalPoint; Render3D"} $Gui(WCA)
+	eval {checkbutton $f.cBox -text "Cube follows focal point" \
 		-variable Anno(boxFollowFocalPoint) -indicatoron 0 -width 24 \
-		-command "MainAnnoUpdateFocalPoint; Render3D" $Gui(WCA)}
-		eval [subst $c]
+		-command "MainAnnoUpdateFocalPoint; Render3D"} $Gui(WCA)
 	pack $f.cAxes $f.cBox \
 		-side top -fill x -padx $Gui(pad) -pady $Gui(pad) 
 

@@ -63,7 +63,7 @@ proc GuiInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo Gui \
-		{$Revision: 1.14 $} {$Date: 2000/02/22 16:30:06 $}]
+		{$Revision: 1.15 $} {$Date: 2000/02/22 17:56:06 $}]
 
 	if {$tcl_platform(platform) == "windows"} {
 		set Gui(pc) 1
@@ -323,7 +323,7 @@ proc YesNoPopup {win x y msg {yesCmd ""} {noCmd ""} \
 	pack $f.fMsg $f.fBtns -side top -pady $Gui(pad) -padx $Gui(pad)
 	
 	set f $w.fMsg
-	set c {label $f.l -justify $justify -text "$msg" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.l -justify $justify -text "$msg"} $Gui(WLA)
 	if {$font != ""} { 
 	    $f.l config -font $font
 	}
@@ -332,14 +332,13 @@ proc YesNoPopup {win x y msg {yesCmd ""} {noCmd ""} \
 
 	set f $w.fBtns
 	if {$yesCmd == ""} {
-		set c {button $f.bOk -text "Ok" -width 4 \
-			-command "destroy $w" $Gui(WBA)}; eval [subst $c]
+		eval {button $f.bOk -text "Ok" -width 4 -command "destroy $w"} $Gui(WBA)
 		pack $f.bOk -side left -padx $Gui(pad)
 	} else {
-		set c {button $f.bYes -text "Yes" -width 4 \
-			-command "destroy $w; $yesCmd" $Gui(WBA)}; eval [subst $c]
-		set c {button $f.bNo -text "No" -width 4 \
-			-command "destroy $w; $noCmd" $Gui(WBA)}; eval [subst $c]
+		eval {button $f.bYes -text "Yes" -width 4 \
+			-command "destroy $w; $yesCmd"} $Gui(WBA)
+		eval {button $f.bNo -text "No" -width 4 \
+			-command "destroy $w; $noCmd"} $Gui(WBA)
 		pack $f.bYes $f.bNo -side left -padx $Gui(pad)
 	}
 
@@ -632,8 +631,8 @@ proc WaitWindow {text x y} {
 	wm title $tWait "Wait..." 
 
 	set f $tWait
-    set c {label $f.lDesc -text "$text" \
-		-width [expr [string length $text] + 2] $Gui(BLA)}; eval [subst $c]
+    eval {label $f.lDesc -text "$text" \
+		-width [expr [string length $text] + 2]} $Gui(BLA)
 	pack $f.lDesc -padx 10 -pady 10
 
 	tkwait visibility $tWait

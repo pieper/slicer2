@@ -67,7 +67,7 @@ proc ModelMakerInit {} {
 
         # Set Version Info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.19 $} {$Date: 2000/02/22 16:46:21 $}]
+		{$Revision: 1.20 $} {$Date: 2000/02/22 17:56:13 $}]
 
 	# Create
 	set ModelMaker(idVolume) $Volume(idNone)

@@ -84,13 +84,10 @@ proc EdSaveIslandBuildGUI {} {
 	set f $Ed(EdSaveIsland,frame).fGrid
 
 	# Seed
-	set c {label $f.lSeed -text "Location:" $Gui(WLA)}; eval [subst $c]
-	set c {entry $f.eX -width 4 -textvariable Ed(EdSaveIsland,xSeed) \
-		$Gui(WEA)}; eval [subst $c]
-	set c {entry $f.eY -width 4 -textvariable Ed(EdSaveIsland,ySeed) \
-		$Gui(WEA)}; eval [subst $c]
-	set c {entry $f.eZ -width 4 -textvariable Ed(EdSaveIsland,zSeed) \
-		$Gui(WEA)}; eval [subst $c]
+	eval {label $f.lSeed -text "Location:"} $Gui(WLA)
+	eval {entry $f.eX -width 4 -textvariable Ed(EdSaveIsland,xSeed)} $Gui(WEA)
+	eval {entry $f.eY -width 4 -textvariable Ed(EdSaveIsland,ySeed)} $Gui(WEA)
+	eval {entry $f.eZ -width 4 -textvariable Ed(EdSaveIsland,zSeed)} $Gui(WEA)
 #	grid $f.lSeed $f.eX $f.eY $f.eZ -padx $Gui(pad) -pady $Gui(pad) -sticky e
 
 	#-------------------------------------------
@@ -98,12 +95,11 @@ proc EdSaveIslandBuildGUI {} {
 	#-------------------------------------------
 	set f $Ed(EdSaveIsland,frame).fApply
 
-#	set c {button $f.bApply -text "Apply" \
-#		-command "EdSaveIslandApply" $Gui(WBA) -width 8}; eval [subst $c]
+#	eval {button $f.bApply -text "Apply" \
+#		-command "EdSaveIslandApply"} $Gui(WBA) {-width 8}
 #	pack $f.bApply -side top -padx $Gui(pad) -pady 2
 
-    set c {label $f.l -text "Apply by clicking on the island." \
-		$Gui(WLA)}; eval [subst $c]
+    eval {label $f.l -text "Apply by clicking on the island."} $Gui(WLA)
 	pack $f.l -side top
 
 }

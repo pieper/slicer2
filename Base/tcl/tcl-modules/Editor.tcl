@@ -91,7 +91,7 @@ proc EditorInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.20 $} {$Date: 2000/02/22 16:30:15 $}]
+		{$Revision: 1.21 $} {$Date: 2000/02/22 17:56:11 $}]
 
 	# Initialize globals
 	set Editor(idOriginal)  $Volume(idNone)
@@ -320,11 +320,11 @@ Models are fun. Do you like models, Ron?
 	set f $fVolumes.fOriginal
 
 	# Volume menu
-	set c {label $f.lOriginal -text "Original Volume:" $Gui(WTA)}; eval [subst $c]
+	eval {label $f.lOriginal -text "Original Volume:"} $Gui(WTA)
 
-	set c {menubutton $f.mbOriginal -text "None" -relief raised -bd 2 -width 18 \
-		-menu $f.mbOriginal.m $Gui(WMBA)}; eval [subst $c]
-	set c {menu $f.mbOriginal.m $Gui(WMA)}; eval [subst $c]
+	eval {menubutton $f.mbOriginal -text "None" -relief raised -bd 2 -width 18 \
+		-menu $f.mbOriginal.m} $Gui(WMBA)
+	eval {menu $f.mbOriginal.m} $Gui(WMA)
 	pack $f.lOriginal -padx $Gui(pad) -side left -anchor e
 	pack $f.mbOriginal -padx $Gui(pad) -side left -anchor w
 
@@ -351,11 +351,11 @@ Models are fun. Do you like models, Ron?
 	set f $fVolumes.fWorking.fMenu
 
 	# Volume menu
-	set c {label $f.lWorking -text "Working Volume:" $Gui(WTA)}; eval [subst $c]
+	eval {label $f.lWorking -text "Working Volume:"} $Gui(WTA)
 
-	set c {menubutton $f.mbWorking -text "NEW" -relief raised -bd 2 -width 18 \
-		-menu $f.mbWorking.m $Gui(WMBA)}; eval [subst $c]
-	set c {menu $f.mbWorking.m $Gui(WMA)}; eval [subst $c]
+	eval {menubutton $f.mbWorking -text "NEW" -relief raised -bd 2 -width 18 \
+		-menu $f.mbWorking.m} $Gui(WMBA)
+	eval {menu $f.mbWorking.m} $Gui(WMA)
 	pack $f.lWorking $f.mbWorking -padx $Gui(pad) -side left
 
 	# Save widgets for changing
@@ -368,8 +368,7 @@ Models are fun. Do you like models, Ron?
 	set f $fVolumes.fWorking.fPrefix
 
 	eval {label $f.l -text "Prefix:"} $Gui(WLA)
-	set c {entry $f.e \
-		-textvariable Editor(prefixWorking) $Gui(WEA)}; eval [subst $c]
+	eval {entry $f.e -textvariable Editor(prefixWorking)} $Gui(WEA)
 	pack $f.l -padx 3 -side left
 	pack $f.e -padx 3 -side left -expand 1 -fill x
 
@@ -378,12 +377,12 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fVolumes.fWorking.fBtns
 
-	set c {button $f.bWrite -text "Save" -width 5 \
-		-command "EditorWrite Working; RenderAll" $Gui(WBA)}; eval [subst $c]
-	set c {button $f.bClear -text "Clear to 0's" -width 12 \
-		-command "EditorClear Working; RenderAll" $Gui(WBA)}; eval [subst $c]
-	set c {button $f.bRead -text "Read" -width 5 \
-		-command "EditorRead Working; RenderAll" $Gui(WBA)}; eval [subst $c]
+	eval {button $f.bWrite -text "Save" -width 5 \
+		-command "EditorWrite Working; RenderAll"} $Gui(WBA)
+	eval {button $f.bClear -text "Clear to 0's" -width 12 \
+		-command "EditorClear Working; RenderAll"} $Gui(WBA)
+	eval {button $f.bRead -text "Read" -width 5 \
+		-command "EditorRead Working; RenderAll"} $Gui(WBA)
 	pack $f.bWrite $f.bRead $f.bClear -side left -padx $Gui(pad)
 
 
@@ -405,11 +404,11 @@ Models are fun. Do you like models, Ron?
 	set f $fVolumes.fComposite.fMenu
 
 	# Volume menu
-	set c {label $f.lComposite -text "Composite Volume:" $Gui(WTA)}; eval [subst $c]
+	eval {label $f.lComposite -text "Composite Volume:"} $Gui(WTA)
 
-	set c {menubutton $f.mbComposite -text "NEW" -relief raised -bd 2 -width 18 \
-		-menu $f.mbComposite.m $Gui(WMBA)}; eval [subst $c]
-	set c {menu $f.mbComposite.m $Gui(WMA)}; eval [subst $c]
+	eval {menubutton $f.mbComposite -text "NEW" -relief raised -bd 2 -width 18 \
+		-menu $f.mbComposite.m} $Gui(WMBA)
+	eval {menu $f.mbComposite.m} $Gui(WMA)
 	pack $f.lComposite $f.mbComposite -padx $Gui(pad) -side left
 
 	# Save widgets for changing
@@ -422,8 +421,8 @@ Models are fun. Do you like models, Ron?
 	set f $fVolumes.fComposite.fPrefix
 
 	eval {label $f.l -text "Prefix:"} $Gui(WLA)
-	set c {entry $f.e \
-		-textvariable Editor(prefixComposite) $Gui(WEA)}; eval [subst $c]
+	eval {entry $f.e \
+		-textvariable Editor(prefixComposite)} $Gui(WEA)
 	pack $f.l -padx 3 -side left
 	pack $f.e -padx 3 -side left -expand 1 -fill x
 
@@ -432,12 +431,12 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fVolumes.fComposite.fBtns
 
-	set c {button $f.bWrite -text "Save" -width 5 \
-		-command "EditorWrite Composite; RenderAll" $Gui(WBA)}; eval [subst $c]
-	set c {button $f.bClear -text "Clear to 0's" -width 12 \
-		-command "EditorClear Composite; RenderAll" $Gui(WBA)}; eval [subst $c]
-	set c {button $f.bRead -text "Read" -width 5 \
-		-command "EditorRead Composite; RenderAll" $Gui(WBA)}; eval [subst $c]
+	eval {button $f.bWrite -text "Save" -width 5 \
+		-command "EditorWrite Composite; RenderAll"} $Gui(WBA)
+	eval {button $f.bClear -text "Clear to 0's" -width 12 \
+		-command "EditorClear Composite; RenderAll"} $Gui(WBA)
+	eval {button $f.bRead -text "Read" -width 5 \
+		-command "EditorRead Composite; RenderAll"} $Gui(WBA)
 	pack $f.bWrite $f.bRead $f.bClear -side left -padx $Gui(pad)
 
 
@@ -446,32 +445,30 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fVolumes.fMerge
 
-	set c {label $f.lTitle -text "Combine 2 Label Maps" $Gui(WTA)}
-		eval [subst $c]
+	eval {label $f.lTitle -text "Combine 2 Label Maps"} $Gui(WTA)
 	frame $f.f  -bg $Gui(activeWorkspace)
-	set c {button $f.b -text "Merge" -width 6 \
-		-command "EditorMerge merge 0; RenderAll" $Gui(WBA)}; 
-		eval [subst $c]
+	eval {button $f.b -text "Merge" -width 6 \
+		-command "EditorMerge merge 0; RenderAll"} $Gui(WBA)
 	pack $f.lTitle $f.f $f.b -pady $Gui(pad) -side top
 
 	set f $fVolumes.fMerge.f
 
-	set c {label $f.l1 -text "Write" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.l1 -text "Write"} $Gui(WLA)
 
-	set c {menubutton $f.mbFore -text "$Editor(fgName)" -relief raised -bd 2 -width 9 \
-		-menu $f.mbFore.m $Gui(WMBA)}; eval [subst $c]
-	set c {menu $f.mbFore.m $Gui(WMA)}; eval [subst $c]
+	eval {menubutton $f.mbFore -text "$Editor(fgName)" -relief raised -bd 2 -width 9 \
+		-menu $f.mbFore.m} $Gui(WMBA)
+	eval {menu $f.mbFore.m} $Gui(WMA)
 	set Editor(mbFore) $f.mbFore
 	set m $Editor(mbFore).m
 	foreach v "Working Composite Original" {
 		$m add command -label $v -command "EditorMerge Fore $v"
 	}
 
-	set c {label $f.l2 -text "over" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.l2 -text "over"} $Gui(WLA)
 
-	set c {menubutton $f.mbBack -text "$Editor(bgName)" -relief raised -bd 2 -width 9 \
-		-menu $f.mbBack.m $Gui(WMBA)}; eval [subst $c]
-	set c {menu $f.mbBack.m $Gui(WMA)}; eval [subst $c]
+	eval {menubutton $f.mbBack -text "$Editor(bgName)" -relief raised -bd 2 -width 9 \
+		-menu $f.mbBack.m} $Gui(WMBA)
+	eval {menu $f.mbBack.m} $Gui(WMA)
 	set Editor(mbBack) $f.mbBack
 	set m $Editor(mbBack).m
 	foreach v "Working Composite" {
@@ -503,14 +500,13 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fEffects.fActive
 
-	set c {label $f.l -text "Active Slice:" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.l -text "Active Slice:"} $Gui(WLA)
 	pack $f.l -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
 
 	foreach s $Slice(idList) text "Red Yellow Green" width "4 7 6" {
-		set c {radiobutton $f.r$s -width $width -indicatoron 0\
+		eval {radiobutton $f.r$s -width $width -indicatoron 0\
 			-text "$text" -value "$s" -variable Slice(activeID) \
-			-command "MainSlicesSetActive" $Gui(WCA) -selectcolor  $Gui(slice$s)}
-			eval [subst $c]
+			-command "MainSlicesSetActive"} $Gui(WCA) {-selectcolor $Gui(slice$s)}
 		pack $f.r$s -side left -fill x -anchor e
 	}
 
@@ -519,10 +515,10 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fEffects.fTime
 
-	set c {label $f.lRun -text "Run time:" $Gui(WLA)}; eval [subst $c]
-	set c {label $f.lRunTime -text "0 sec," $Gui(WLA)}; eval [subst $c]
-	set c {label $f.lTotal -text "Total:" $Gui(WLA)}; eval [subst $c]
-	set c {label $f.lTotalTime -text "0 sec" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.lRun -text "Run time:"} $Gui(WLA)
+	eval {label $f.lRunTime -text "0 sec,"} $Gui(WLA)
+	eval {label $f.lTotal -text "Total:"} $Gui(WLA)
+	eval {label $f.lTotalTime -text "0 sec"} $Gui(WLA)
 	pack $f.lRun $f.lRunTime $f.lTotal $f.lTotalTime \
 		-side left -pady $Gui(pad) -padx $Gui(pad) -fill x
 
@@ -535,7 +531,7 @@ Models are fun. Do you like models, Ron?
 	set f $fEffects.fModel
 
 	if {[IsModule ModelMaker] == 1} {
-		set c {button $f.b -text "Make Model" -command "EditorMakeModel" $Gui(WBA)}; eval [subst $c]
+		eval {button $f.b -text "Make Model" -command "EditorMakeModel"} $Gui(WBA)
 		pack $f.b
 	}
 
@@ -570,12 +566,12 @@ Models are fun. Do you like models, Ron?
 		if {$Ed($e,more) == 1} {set Editor(more) 1}
 	}
 	if {$Editor(more) == 1} {
-		set c {menubutton $f.mbMore -text "More:" -relief raised -bd 2 \
-			-width 6 -menu $f.mbMore.m $Gui(WMBA)}; eval [subst $c]
-			set c {menu $f.mbMore.m $Gui(WMA)}; eval [subst $c]
-		set c {radiobutton $f.rMore -width 13 \
+		eval {menubutton $f.mbMore -text "More:" -relief raised -bd 2 \
+			-width 6 -menu $f.mbMore.m} $Gui(WMBA)
+			eval {menu $f.mbMore.m} $Gui(WMA)
+		eval {radiobutton $f.rMore -width 13 \
 			-text "None" -variable Editor(moreBtn) -value 1 \
-			-command "EditorSetEffect Menu" -indicatoron 0 $Gui(WCA)}; eval [subst $c]
+			-command "EditorSetEffect Menu" -indicatoron 0} $Gui(WCA)
 		pack $f.mbMore $f.rMore -side left -padx $Gui(pad) -pady 0 
 
 		set Editor(mbMore) $f.mbMore
@@ -600,10 +596,9 @@ Models are fun. Do you like models, Ron?
 		foreach e "$e1 $e2" {
 			# Either make a button for it, or add it to the "more" menu
 			if {$Ed($e,more) == 0} {
-				set c {radiobutton $f.$row.r$e -width 13 \
+				eval {radiobutton $f.$row.r$e -width 13 \
 					-text "$Ed($e,name)" -variable Editor(btn) -value $e \
-					-command "EditorSetEffect $e" -indicatoron 0 $Gui(WCA)}
-					eval [subst $c]
+					-command "EditorSetEffect $e" -indicatoron 0} $Gui(WCA)
 				pack $f.$row.r$e -side left -padx 0 -pady 0
 			} else {
 				if {$firstMore == ""} {
@@ -626,9 +621,8 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fEffects.fEffects.fUndo
 
-	set c {button $f.bUndo -text "Undo last effect" -width 17 \
-		-command "EditorUndo; RenderAll" $Gui(WBA) -state disabled}; 
-		eval [subst $c]
+	eval {button $f.bUndo -text "Undo last effect" -width 17 \
+		-command "EditorUndo; RenderAll"} $Gui(WBA) {-state disabled}
 	pack $f.bUndo -side left -padx $Gui(pad) -pady 0
 	
 	set Editor(bUndo) $f.bUndo
@@ -661,22 +655,20 @@ Models are fun. Do you like models, Ron?
 	# List top 8 effects on a button bar across the top
 	set f $fDetails.fTitle.fBar
 	foreach e [lrange $Ed(idList) 0 7] {
-		set c {radiobutton $f.r$e -width 2 -indicatoron 0\
+		eval {radiobutton $f.r$e -width 2 -indicatoron 0\
 			-text $Ed($e,initials) -value $e -variable Editor(btn) \
-			-command "EditorSetEffect $e" $Gui(WCA)}
-			eval [subst $c]
+			-command "EditorSetEffect $e"} $Gui(WCA)
 		pack $f.r$e -side left -fill x -anchor e
 	}
 	# Add an Undo button
-	set c {button $f.bUndo -width 2 -text Un -command "EditorUndo; RenderAll" \
-		$Gui(WBA) -state disabled}
-			eval [subst $c]
+	eval {button $f.bUndo -width 2 -text Un -command "EditorUndo; RenderAll"} \
+		$Gui(WBA) {-state disabled}
 	pack $f.bUndo -side left -fill x -anchor e
 	set Editor(bUndo2) $f.bUndo
 
 	set f $fDetails.fTitle.fHelp
-	set c {label $f.lName -text "None" $Gui(BLA)}; eval [subst $c]
-	set c {label $f.lDesc -text "Does nothing." $Gui(BLA)}; eval [subst $c]
+	eval {label $f.lName -text "None"} $Gui(BLA)
+	eval {label $f.lDesc -text "Does nothing."} $Gui(BLA)
 	pack $f.lDesc
 
 	set Editor(lEffectName) $f.lName
@@ -1344,13 +1336,12 @@ proc EdBuildScopeGUI {f var {not ""}} {
 			set names "{1 Slice} {Multi Slice} {3D}"
 		}
 	}
-	set c {label $f.l -text "Scope:" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.l -text "Scope:"} $Gui(WLA)
 	frame $f.f -bg $Gui(activeWorkspace)
 	foreach mode $modes name $names {
-		set c {radiobutton $f.f.r$mode -width [expr [string length $name]+1]\
+		eval {radiobutton $f.f.r$mode -width [expr [string length $name]+1]\
 			-text "$name" -variable $var -value $mode \
-			-indicatoron 0 $Gui(WCA)}
-			eval [subst $c]
+			-indicatoron 0} $Gui(WCA)
 		pack $f.f.r$mode -side left -padx 0 -pady 0
 	}
 	pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
@@ -1363,14 +1354,12 @@ proc EdBuildScopeGUI {f var {not ""}} {
 proc EdBuildMultiGUI {f var} {
 	global Gui
 
-	set c {label $f.l -text "Multi-Slice Orient:" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.l -text "Multi-Slice Orient:"} $Gui(WLA)
 	pack $f.l -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
 
 	foreach s "Native Active" text "Native Active" width "7 7" {
-		set c {radiobutton $f.r$s -width $width -indicatoron 0\
-			-text "$text" -value "$s" -variable $var \
-			$Gui(WCA)}
-			eval [subst $c]
+		eval {radiobutton $f.r$s -width $width -indicatoron 0\
+			-text "$text" -value "$s" -variable $var} $Gui(WCA)
 		pack $f.r$s -side left -fill x -anchor e
 	}
 }
@@ -1382,13 +1371,12 @@ proc EdBuildMultiGUI {f var} {
 proc EdBuildInputGUI {f var {options ""}} {
 	global Gui
 
-	set c {label $f.l -text "Input Volume:" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.l -text "Input Volume:"} $Gui(WLA)
 	frame $f.f -bg $Gui(activeWorkspace)
 	foreach input "Original Working" {
-		set c {radiobutton $f.f.r$input \
+		eval {radiobutton $f.f.r$input \
 			-text "$input" -variable $var -value $input -width 8 \
-			-indicatoron 0 $options $Gui(WCA)}
-			eval [subst $c]
+			-indicatoron 0} $options $Gui(WCA)
 		pack $f.f.r$input -side left -padx 0
 	}
 	pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
@@ -1404,13 +1392,12 @@ proc EdBuildInteractGUI {f var {options ""}} {
 	set modes "Active Slices All"
 	set names "{1 Slice} {3 Slices} {3D}"
 
-	set c {label $f.l -text "Interact:" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.l -text "Interact:"} $Gui(WLA)
 	frame $f.f -bg $Gui(activeWorkspace)
 	foreach mode $modes name $names {
-		set c {radiobutton $f.f.r$mode -width [expr [string length $name]+1]\
+		eval {radiobutton $f.f.r$mode -width [expr [string length $name]+1]\
 			-text "$name" -variable $var -value $mode \
-			-indicatoron 0 $options $Gui(WCA)}
-			eval [subst $c]
+			-indicatoron 0} $options $Gui(WCA)
 		pack $f.f.r$mode -side left -padx 0 -pady 0
 	}
 	pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
@@ -1426,13 +1413,12 @@ proc EdBuildRenderGUI {f var {options ""}} {
 	set modes "Active Slices All"
 	set names "{1 Slice} {3 Slices} {3D}"
 
-	set c {label $f.l -text "Render:" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.l -text "Render:"} $Gui(WLA)
 	frame $f.f -bg $Gui(activeWorkspace)
 	foreach mode $modes name $names {
-		set c {radiobutton $f.f.r$mode -width [expr [string length $name]+1]\
+		eval {radiobutton $f.f.r$mode -width [expr [string length $name]+1]\
 			-text "$name" -variable $var -value $mode \
-			-indicatoron 0 $options $Gui(WCA)}
-			eval [subst $c]
+			-indicatoron 0} $options $Gui(WCA)
 		pack $f.f.r$mode -side left -padx 0 -pady 0
 	}
 	pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w

@@ -87,39 +87,33 @@ proc EdIdentifyIslandsBuildGUI {} {
 	set f $Ed(EdIdentifyIslands,frame).fGrid
 
 	# Label of Sea
-	set c {button $f.bOutput -text "Label of the sea:" \
-		-command "ShowLabels" $Gui(WBA)}; eval [subst $c]
-	set c {entry $f.eOutput -width 6 \
-		-textvariable Label(label) $Gui(WEA)}; eval [subst $c]
+	eval {button $f.bOutput -text "Label of the sea:" -command "ShowLabels"} $Gui(WBA)
+	eval {entry $f.eOutput -width 6 -textvariable Label(label)} $Gui(WEA)
 	bind $f.eOutput <Return>   "LabelsFindLabel"
 	bind $f.eOutput <FocusOut> "LabelsFindLabel"
-	set c {entry $f.eName -width 14 \
-		-textvariable Label(name) $Gui(WEA) \
-		-bg $Gui(activeWorkspace) -state disabled}; eval [subst $c]
+	eval {entry $f.eName -width 14 -textvariable Label(name)} $Gui(WEA) \
+		{-bg $Gui(activeWorkspace) -state disabled}
 	grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
 	grid $f.eOutput $f.eName -sticky w
 
 	lappend Label(colorWidgetList) $f.eName
 
 	# No Threshold
-	set c {button $f.bNo -text "No Threshold" \
-		-command "EdIdentifyIslandsNoThreshold" $Gui(WBA)}
-		eval [subst $c]
+	eval {button $f.bNo -text "No Threshold" \
+		-command "EdIdentifyIslandsNoThreshold"} $Gui(WBA)
 
 	# Min Threshold
-	set c {label $f.lMinFore -text "Min Threshold: " $Gui(WLA)}
-		eval [subst $c]
-	set c {entry $f.eMinFore -width 6 \
-		-textvariable Ed(EdIdentifyIslands,fgMin) $Gui(WEA)}; eval [subst $c]
+	eval {label $f.lMinFore -text "Min Threshold: "} $Gui(WLA)
+	eval {entry $f.eMinFore -width 6 \
+		-textvariable Ed(EdIdentifyIslands,fgMin)} $Gui(WEA)
 	grid $f.lMinFore $f.eMinFore $f.bNo -padx $Gui(pad) -pady $Gui(pad) -sticky e
 	grid $f.eMinFore $f.bNo -sticky w
 	grid $f.bNo -rowspan 2
 
 	# Max Threshold
-	set c {label $f.lMaxFore -text "Max Threshold: " $Gui(WLA)}
-		eval [subst $c]
-	set c {entry $f.eMaxFore -width 6 \
-		-textvariable Ed(EdIdentifyIslands,fgMax) $Gui(WEA)}; eval [subst $c]
+	eval {label $f.lMaxFore -text "Max Threshold: "} $Gui(WLA)
+	eval {entry $f.eMaxFore -width 6 \
+		-textvariable Ed(EdIdentifyIslands,fgMax)} $Gui(WEA)
 	grid $f.lMaxFore $f.eMaxFore -padx $Gui(pad) -pady $Gui(pad) -sticky e
 	grid $f.eMaxFore -sticky w
 
@@ -128,14 +122,12 @@ proc EdIdentifyIslandsBuildGUI {} {
 	#-------------------------------------------
 	set f $Ed(EdIdentifyIslands,frame).fApply
 
-#	set c {button $f.bApply -text "Apply" \
-#		-command "EdIdentifyIslandsApply" $Gui(WBA) -width 8}; eval [subst $c]
+#	eval {button $f.bApply -text "Apply" \
+#		-command "EdIdentifyIslandsApply"} $Gui(WBA) {-width 8}
 #	pack $f.bApply -side top -padx $Gui(pad) -pady 2
 
-    set c {label $f.lApply1 -text "Apply by clicking on the" \
-		$Gui(WLA)}; eval [subst $c]
-    set c {label $f.lApply2 -text "'sea' which contains the 'islands'." \
-		$Gui(WLA)}; eval [subst $c]
+    eval {label $f.lApply1 -text "Apply by clicking on the"} $Gui(WLA)
+    eval {label $f.lApply2 -text "'sea' which contains the 'islands'."} $Gui(WLA)
 	pack $f.lApply1 $f.lApply2 -side top -pady 0 -padx 0
 
 }

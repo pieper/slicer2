@@ -74,7 +74,7 @@ proc MatricesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.12 $} {$Date: 2000/02/22 16:30:17 $}]
+		{$Revision: 1.13 $} {$Date: 2000/02/22 17:56:12 $}]
 
 	# Props
 	set Matrix(propertyType) Basic
@@ -314,10 +314,10 @@ Ron is nice.
 	#-------------------------------------------
 	set f $fProps.fBot.fAdvanced.fVolume.fVolume
 
-	set c {label $f.lActive -text "Volume: " $Gui(WLA)}; eval [subst $c]
-	set c {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
-		-menu $f.mbActive.m $Gui(WMBA)}; eval [subst $c]
-	set c {menu $f.mbActive.m $Gui(WMA)}; eval [subst $c]
+	eval {label $f.lActive -text "Volume: "} $Gui(WLA)
+	eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
+		-menu $f.mbActive.m} $Gui(WMBA)
+	eval {menu $f.mbActive.m} $Gui(WMA)
 	pack $f.lActive $f.mbActive -side left -pady $Gui(pad) -padx $Gui(pad)
 
 	# Append widgets to list that gets refreshed during UpdateMRML
@@ -331,11 +331,11 @@ Ron is nice.
 
 	# Menu of Matrices
 	# ------------------------------------
-	set c {label $f.l -text "Type of Matrix: " $Gui(WLA)}; eval [subst $c]
-	set c {menubutton $f.mb -text "$Matrix(volumeMatrix)" -relief raised -bd 2 -width 20 \
-		-menu $f.mb.m $Gui(WMBA)}; eval [subst $c]
+	eval {label $f.l -text "Type of Matrix: "} $Gui(WLA)
+	eval {menubutton $f.mb -text "$Matrix(volumeMatrix)" -relief raised -bd 2 -width 20 \
+		-menu $f.mb.m} $Gui(WMBA)
 	set Matrix(mbVolumeMatrix) $f.mb
-	set c {menu $f.mb.m $Gui(WMA)}; eval [subst $c]
+	eval {menu $f.mb.m} $Gui(WMA)
 	pack $f.l $f.mb -side left -pady $Gui(pad) -padx $Gui(pad)
 
 	foreach v "None ScaledIJK->RAS RAS->IJK RAS->VTK" {
@@ -385,10 +385,10 @@ Ron is nice.
 	#-------------------------------------------
 	set f $fManual.fActive
 
-	set c {label $f.lActive -text "Active Matrix: " $Gui(BLA)}; eval [subst $c]
-	set c {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
-		-menu $f.mbActive.m $Gui(WMBA)}; eval [subst $c]
-	set c {menu $f.mbActive.m $Gui(WMA)}; eval [subst $c]
+	eval {label $f.lActive -text "Active Matrix: "} $Gui(BLA)
+	eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
+		-menu $f.mbActive.m} $Gui(WMBA)
+	eval {menu $f.mbActive.m} $Gui(WMA)
 	pack $f.lActive $f.mbActive -side left -pady $Gui(pad) -padx $Gui(pad)
 
 	# Append widgets to list that gets refreshed during UpdateMRML
@@ -403,13 +403,12 @@ Ron is nice.
 	set modes "Active Slices All"
 	set names "{1 Slice} {3 Slices} {3D}"
 
-	set c {label $f.l -text "Render:" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.l -text "Render:"} $Gui(WLA)
 	frame $f.f -bg $Gui(activeWorkspace)
 	foreach mode $modes name $names {
-		set c {radiobutton $f.f.r$mode -width [expr [string length $name]+1]\
+		eval {radiobutton $f.f.r$mode -width [expr [string length $name]+1]\
 			-text "$name" -variable Matrix(render) -value $mode \
-			-indicatoron 0 $Gui(WCA)}
-			eval [subst $c]
+			-indicatoron 0} $Gui(WCA)
 		pack $f.f.r$mode -side left -padx 0 -pady 0
 	}
 	pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
@@ -419,26 +418,23 @@ Ron is nice.
 	#-------------------------------------------
 	set f $fManual.fTranslate
 
-	set c {label $f.lTitle -text "Translation (mm)" $Gui(WLA)}
-		eval [subst $c]
+	eval {label $f.lTitle -text "Translation (mm)"} $Gui(WLA)
 	grid $f.lTitle -columnspan 3 -pady $Gui(pad) -padx 1 
 
 	foreach slider "LR PA IS" {
 
-		set c {label $f.l${slider} -text "${slider} : " $Gui(WLA)}
-			eval [subst $c]
+		eval {label $f.l${slider} -text "${slider} : "} $Gui(WLA)
 
-		set c {entry $f.e${slider} -textvariable Matrix(regTran${slider}) \
-			-width 4 $Gui(WEA)}; eval [subst $c]
+		eval {entry $f.e${slider} -textvariable Matrix(regTran${slider}) \
+			-width 4} $Gui(WEA)
 			bind $f.e${slider} <Return> \
 				"MatricesManualTranslate regTran${slider}"
 			bind $f.e${slider} <FocusOut> \
 				"MatricesManualTranslate regTran${slider}"
 
-		set c {scale $f.s${slider} -from -240 -to 240 -length 120 \
+		eval {scale $f.s${slider} -from -240 -to 240 -length 120 \
 			-command "MatricesManualTranslate regTran${slider}" \
-			-variable Matrix(regTran${slider}) -resolution 1 $Gui(WSA)} 
-			eval [subst $c]
+			-variable Matrix(regTran${slider}) -resolution 1} $Gui(WSA)
 		bind $f.s${slider} <Leave> "MatricesManualTranslate regTran$slider"
 
 		grid $f.l${slider} $f.e${slider} $f.s${slider} -pady 2
@@ -449,26 +445,23 @@ Ron is nice.
 	#-------------------------------------------
 	set f $fManual.fRotate
 
-	set c {label $f.lTitle -text "Rotation (mm)" $Gui(WLA)}
-		eval [subst $c]
+	eval {label $f.lTitle -text "Rotation (mm)"} $Gui(WLA)
 	grid $f.lTitle -columnspan 3 -pady $Gui(pad) -padx 1 
 
 	foreach slider "LR PA IS" {
 
-		set c {label $f.l${slider} -text "${slider} : " $Gui(WLA)}
-			eval [subst $c]
+		eval {label $f.l${slider} -text "${slider} : "} $Gui(WLA)
 
-		set c {entry $f.e${slider} -textvariable Matrix(regRot${slider}) \
-			-width 4 $Gui(WEA)}; eval [subst $c]
+		eval {entry $f.e${slider} -textvariable Matrix(regRot${slider}) \
+			-width 4} $Gui(WEA)
 			bind $f.e${slider} <Return> \
 				"MatricesManualRotate regRot${slider}"
 			bind $f.e${slider} <FocusOut> \
 				"MatricesManualRotate regRot${slider}"
 
-		set c {scale $f.s${slider} -from -180 -to 180 -length 120 \
+		eval {scale $f.s${slider} -from -180 -to 180 -length 120 \
 			-command "MatricesManualRotate regRot${slider}" \
-			-variable Matrix(regRot${slider}) -resolution 1 $Gui(WSA)} 
-			eval [subst $c]
+			-variable Matrix(regRot${slider}) -resolution 1} $Gui(WSA)
 
 		grid $f.l${slider} $f.e${slider} $f.s${slider} -pady 2
 	}
@@ -482,16 +475,14 @@ Ron is nice.
     frame $f.fBtns -bg $Gui(activeWorkspace)
     pack $f.fTitle $f.fBtns -side left -padx 5
 
-    set c {label $f.fTitle.l -text "Mouse Action: " $Gui(WLA)}
-        eval [subst $c]
+    eval {label $f.fTitle.l -text "Mouse Action: "} $Gui(WLA)
     pack $f.fTitle.l
 
     foreach text "Translate Rotate" value "Translate Rotate" \
         width "10 7" {
-        set c {radiobutton $f.fBtns.rSpeed$value -width $width \
+        eval {radiobutton $f.fBtns.rSpeed$value -width $width \
             -text "$text" -value "$value" -variable Matrix(mouse) \
-            -indicatoron 0 $Gui(WCA)}
-            eval [subst $c]
+            -indicatoron 0} $Gui(WCA)
         pack $f.fBtns.rSpeed$value -side left -padx 0 -pady 0
     }
 
@@ -517,10 +508,10 @@ Ron is nice.
 	#-------------------------------------------
 	set f $fAuto.fActive
 
-	set c {label $f.lActive -text "Active Matrix: " $Gui(BLA)}; eval [subst $c]
-	set c {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
-		-menu $f.mbActive.m $Gui(WMBA)}; eval [subst $c]
-	set c {menu $f.mbActive.m $Gui(WMA)}; eval [subst $c]
+	eval {label $f.lActive -text "Active Matrix: "} $Gui(BLA)
+	eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
+		-menu $f.mbActive.m} $Gui(WMBA)
+	eval {menu $f.mbActive.m} $Gui(WMA)
 	pack $f.lActive $f.mbActive -side left -pady $Gui(pad) -padx $Gui(pad)
 
 	# Append widgets to list that gets refreshed during UpdateMRML
@@ -532,19 +523,15 @@ Ron is nice.
 	#-------------------------------------------
 	set f $fAuto.fVolumes
 
-	set c {label $f.lVolume -text "Volume to Move" $Gui(WLA)}; 
-		eval [subst $c]
-	set c {menubutton $f.mbVolume -text "None" \
-		-relief raised -bd 2 -width 13 -menu $f.mbVolume.m $Gui(WMBA)}
-		eval [subst $c]
-	set c {menu $f.mbVolume.m $Gui(WMA)}; eval [subst $c]
+	eval {label $f.lVolume -text "Volume to Move"} $Gui(WLA)
+	eval {menubutton $f.mbVolume -text "None" \
+		-relief raised -bd 2 -width 13 -menu $f.mbVolume.m} $Gui(WMBA)
+	eval {menu $f.mbVolume.m} $Gui(WMA)
 
-	set c {label $f.lRefVolume -text "Reference Vol." $Gui(WLA)}; 
-		eval [subst $c]
-	set c {menubutton $f.mbRefVolume -text "None" \
-		-relief raised -bd 2 -width 13 -menu $f.mbRefVolume.m $Gui(WMBA)}
-		eval [subst $c]
-	set c {menu $f.mbRefVolume.m $Gui(WMA)}; eval [subst $c]
+	eval {label $f.lRefVolume -text "Reference Vol."} $Gui(WLA)
+	eval {menubutton $f.mbRefVolume -text "None" \
+		-relief raised -bd 2 -width 13 -menu $f.mbRefVolume.m} $Gui(WMBA)
+	eval {menu $f.mbRefVolume.m} $Gui(WMA)
 	grid $f.lVolume $f.mbVolume -sticky e -padx $Gui(pad) -pady $Gui(pad)
 	grid $f.mbVolume -sticky w
 	grid $f.lRefVolume $f.mbRefVolume -sticky e -padx $Gui(pad) -pady $Gui(pad)
@@ -559,13 +546,13 @@ Ron is nice.
 	#-------------------------------------------
 	set f $fAuto.fDesc
 
-	set c {label $f.l -justify left -text "\
+	eval {label $f.l -justify left -text "\
 		Press 'Run' to start the program\n\
 		that performs automatic registration\n\
 		by Mutual Information.\n\
 		Your manual registration is used\n\
 		as an initial pose.\
-		" $Gui(WLA)}; eval [subst $c]
+		"} $Gui(WLA)
 	pack $f.l
 	
     #-------------------------------------------
@@ -577,16 +564,14 @@ Ron is nice.
     frame $f.fBtns -bg $Gui(activeWorkspace)
     pack $f.fTitle $f.fBtns -side left -padx 5
 
-    set c {label $f.fTitle.lSpeed -text "Run Speed: " $Gui(WLA)}
-        eval [subst $c]
+    eval {label $f.fTitle.lSpeed -text "Run Speed: "} $Gui(WLA)
     pack $f.fTitle.lSpeed
 
     foreach text "Fast Slow" value "Fast Slow" \
         width "5 5" {
-        set c {radiobutton $f.fBtns.rSpeed$value -width $width \
+        eval {radiobutton $f.fBtns.rSpeed$value -width $width \
             -text "$text" -value "$value" -variable Matrix(autoSpeed) \
-            -indicatoron 0 $Gui(WCA)}
-            eval [subst $c]
+            -indicatoron 0} $Gui(WCA)
         pack $f.fBtns.rSpeed$value -side left -padx 0 -pady 0
     }
 
@@ -596,8 +581,8 @@ Ron is nice.
 	set f $fAuto.fRun
 
 	foreach str "Run Cancel Undo" {
-		set c {button $f.b$str -text "$str" -width [expr [string length $str]+1] \
-			-command "MatricesAuto$str" $Gui(WBA)}; eval [subst $c]
+		eval {button $f.b$str -text "$str" -width [expr [string length $str]+1] \
+			-command "MatricesAuto$str"} $Gui(WBA)
 		set Matrix(b$str) $f.b$str
 	}
 	pack $f.bRun $f.bUndo -side left -padx $Gui(pad) -pady $Gui(pad)
@@ -622,10 +607,10 @@ Ron is nice.
 	#-------------------------------------------
 	set f $fFiducial.fActive
 
-	set c {label $f.lActive -text "Active Matrix: " $Gui(BLA)}; eval [subst $c]
-	set c {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
-		-menu $f.mbActive.m $Gui(WMBA)}; eval [subst $c]
-	set c {menu $f.mbActive.m $Gui(WMA)}; eval [subst $c]
+	eval {label $f.lActive -text "Active Matrix: "} $Gui(BLA)
+	eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
+		-menu $f.mbActive.m} $Gui(WMBA)
+	eval {menu $f.mbActive.m} $Gui(WMA)
 	pack $f.lActive $f.mbActive -side left -pady $Gui(pad) -padx $Gui(pad)
 
 	# Append widgets to list that gets refreshed during UpdateMRML

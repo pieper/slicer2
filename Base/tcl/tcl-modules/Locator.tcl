@@ -90,7 +90,7 @@ proc LocatorInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.14 $} {$Date: 2000/02/22 16:30:16 $}]
+		{$Revision: 1.15 $} {$Date: 2000/02/22 17:56:12 $}]
 
 	# Patient/Table position
 	set Locator(tblPosList)   "Front Side"
@@ -309,19 +309,17 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fTracking.fConn
 
-	set c {label $f.l -text "Connection to Server" $Gui(WTA)}; eval [subst $c]
+	eval {label $f.l -text "Connection to Server"} $Gui(WTA)
 	frame $f.f -bg $Gui(activeWorkspace)
 	pack $f.l $f.f -side top -pady 3 -padx $Gui(pad)
 
 	set f $fTracking.fConn.f
-	set c {checkbutton $f.cConnect \
+	eval {checkbutton $f.cConnect \
 		-text "Connect" -variable Locator(connect) -width 8 \
-		-indicatoron 0 -command "LocatorConnect" $Gui(WCA)}
-		eval [subst $c]
-	set c {checkbutton $f.cPause \
+		-indicatoron 0 -command "LocatorConnect"} $Gui(WCA)
+	eval {checkbutton $f.cPause \
 		-text "Pause" -variable Locator(pause) -command "LocatorPause" -width 6 \
-		-indicatoron 0 $Gui(WCA)}
-		eval [subst $c]
+		-indicatoron 0} $Gui(WCA)
 	pack $f.cConnect $f.cPause -side left -pady $Gui(pad) -padx $Gui(pad)
 
 	#-------------------------------------------
@@ -329,29 +327,28 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fTracking.fDriver
 
-	set c {label $f.lTitle -text "The Locator can Drive Slices" $Gui(WTA)}
-		eval [subst $c]
+	eval {label $f.lTitle -text "The Locator can Drive Slices"} $Gui(WTA)
 	grid $f.lTitle -padx $Gui(pad) -pady 3 -columnspan 2
 	
 	foreach s $Slice(idList) {
 
-		set c {menubutton $f.mbDriver${s} -text "User" \
+		eval {menubutton $f.mbDriver${s} -text "User" \
 			-menu $f.mbDriver${s}.m -width 12 -relief raised \
-			-bd 2 $Gui(WMBA) -bg $Gui(slice$s)}; eval [subst $c]
+			-bd 2} $Gui(WMBA) {-bg $Gui(slice$s)}
 		set Locator(mDriver$s) $f.mbDriver${s}.m
 		set Locator(mbDriver$s) $f.mbDriver${s}
-		set c {menu $f.mbDriver${s}.m $Gui(WMA)}; eval [subst $c];
+		eval {menu $f.mbDriver${s}.m} $Gui(WMA)
 		foreach item "User Locator" {
 			$Locator(mDriver$s) add command -label $item \
 				-command "LocatorSetDriver ${s} $item; RenderBoth $s"
 		}
 		if {$s == 0} {
-			set c {menubutton $f.mbDriver -text "Driver: " \
+			eval {menubutton $f.mbDriver -text "Driver: " \
 				-menu $f.mbDriver.m -width 10 -relief raised \
-				-bd 2 $Gui(WMBA) -anchor e}; eval [subst $c]
+				-bd 2} $Gui(WMBA) {-anchor e}
 
 			set Locator(mDriver) $f.mbDriver.m
-			set c {menu $Locator(mDriver) $Gui(WMA)}; eval [subst $c];
+			eval {menu $Locator(mDriver)} $Gui(WMA)
 			foreach item "User Locator" {
 				$f.mbDriver.m add command -label $item \
 					-command "LocatorSetDriverAll $item; RenderAll"
@@ -370,14 +367,12 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fTracking.fVis
 
-	set c {checkbutton $f.cLocator \
+	eval {checkbutton $f.cLocator \
 		-text "Show Locator" -variable Locator(visibility) -width 16 \
-		-indicatoron 0 -command "LocatorSetVisibility; Render3D" $Gui(WCA)}
-		eval [subst $c]
-	set c {checkbutton $f.cTransverse \
+		-indicatoron 0 -command "LocatorSetVisibility; Render3D"} $Gui(WCA)
+	eval {checkbutton $f.cTransverse \
 		-text "Handle" -variable Locator(transverseVisibility) -width 7 \
-		-indicatoron 0 -command "LocatorSetTransverseVisibility; Render3D" $Gui(WCA)}
-		eval [subst $c]
+		-indicatoron 0 -command "LocatorSetTransverseVisibility; Render3D"} $Gui(WCA)
 	pack $f.cLocator $f.cTransverse -side left -padx $Gui(pad)
 
 
@@ -399,11 +394,11 @@ Models are fun. Do you like models, Ron?
 	set f $fTracking.fRealtime.fMenu
 
 	# Volume menu
-	set c {label $f.lRealtime -text "Realtime Volume:" $Gui(WTA)}; eval [subst $c]
+	eval {label $f.lRealtime -text "Realtime Volume:"} $Gui(WTA)
 
-	set c {menubutton $f.mbRealtime -text "NEW" -relief raised -bd 2 -width 18 \
-		-menu $f.mbRealtime.m $Gui(WMBA)}; eval [subst $c]
-	set c {menu $f.mbRealtime.m $Gui(WMA)}; eval [subst $c]
+	eval {menubutton $f.mbRealtime -text "NEW" -relief raised -bd 2 -width 18 \
+		-menu $f.mbRealtime.m} $Gui(WMBA)
+	eval {menu $f.mbRealtime.m} $Gui(WMA)
 	pack $f.lRealtime $f.mbRealtime -padx $Gui(pad) -side left
 
 	# Save widgets for changing
@@ -416,8 +411,7 @@ Models are fun. Do you like models, Ron?
 	set f $fTracking.fRealtime.fPrefix
 
 	eval {label $f.l -text "Prefix:"} $Gui(WLA)
-	set c {entry $f.e \
-		-textvariable Locator(prefixRealtime) $Gui(WEA)}; eval [subst $c]
+	eval {entry $f.e -textvariable Locator(prefixRealtime)} $Gui(WEA)
 	pack $f.l -padx 3 -side left
 	pack $f.e -padx 3 -side left -expand 1 -fill x
 
@@ -426,10 +420,10 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fTracking.fRealtime.fBtns
 
-	set c {button $f.bWrite -text "Save" -width 5 \
-		-command "LocatorWrite Realtime; RenderAll" $Gui(WBA)}; eval [subst $c]
-	set c {button $f.bRead -text "Read" -width 5 \
-		-command "LocatorRead Realtime; RenderAll" $Gui(WBA)}; eval [subst $c]
+	eval {button $f.bWrite -text "Save" -width 5 \
+		-command "LocatorWrite Realtime; RenderAll"} $Gui(WBA)
+	eval {button $f.bRead -text "Read" -width 5 \
+		-command "LocatorRead Realtime; RenderAll"} $Gui(WBA)
 	pack $f.bWrite $f.bRead -side left -padx $Gui(pad)
 
 
@@ -515,8 +509,8 @@ Models are fun. Do you like models, Ron?
 	set s File
 	foreach x "msPoll" text \
 		"{Update Period (ms)}" {
-		set c {label $f.l$x -text "${text}:" $Gui(WLA)}; eval [subst $c]
-		set c {entry $f.e$x -textvariable Locator($s,$x) -width 7 $Gui(WEA)}; eval [subst $c]
+		eval {label $f.l$x -text "${text}:"} $Gui(WLA)
+		eval {entry $f.e$x -textvariable Locator($s,$x) -width 7} $Gui(WEA)
 		grid $f.l$x $f.e$x -pady $Gui(pad) -padx $Gui(pad) -sticky e
 		grid $f.e$x -sticky w
 	}
@@ -552,8 +546,8 @@ Models are fun. Do you like models, Ron?
 	set s Images
 	foreach x "firstNum lastNum increment msPoll" text \
 		"{First image number} {Last image number} {Image increment} {Update period (ms)}" {
-		set c {label $f.l$x -text "${text}:" $Gui(WLA)}; eval [subst $c]
-		set c {entry $f.e$x -textvariable Locator($s,$x) -width 7 $Gui(WEA)}; eval [subst $c]
+		eval {label $f.l$x -text "${text}:"} $Gui(WLA)
+		eval {entry $f.e$x -textvariable Locator($s,$x) -width 7} $Gui(WEA)
 		grid $f.l$x $f.e$x -pady $Gui(pad) -padx $Gui(pad) -sticky e
 		grid $f.e$x -sticky w
 	}
@@ -585,8 +579,8 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fServer.fBot.fSignaSP.fStatus
 
-	set c {label $f.lLocTitle -text "Locator Status" $Gui(WTA)}; eval [subst $c]
-	set c {label $f.lLocStatus -text "None" -width 8 $Gui(WLA)}; eval [subst $c]
+	eval {label $f.lLocTitle -text "Locator Status"} $Gui(WTA)
+	eval {label $f.lLocStatus -text "None" -width 8} $Gui(WLA)
 	grid $f.lLocTitle $f.lLocStatus -pady 0 -padx $Gui(pad)
 	set Locator(lLocStatus) $f.lLocStatus
 
@@ -595,14 +589,14 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fServer.fBot.fSignaSP.fGrid
 
-	set c {label $f.lTitle -text "Server Connection" $Gui(WTA)}; eval [subst $c]
+	eval {label $f.lTitle -text "Server Connection"} $Gui(WTA)
 	grid $f.lTitle -columnspan 2 -pady $Gui(pad)
 
 	set s SignaSP
 	foreach x "host port msPoll" text \
 		"{Host name} {Port number} {Update period (ms)}" {
-		set c {label $f.l$x -text "${text}:" $Gui(WLA)}; eval [subst $c]
-		set c {entry $f.e$x -textvariable Locator($s,$x) -width 10 $Gui(WEA)}; eval [subst $c]
+		eval {label $f.l$x -text "${text}:"} $Gui(WLA)
+		eval {entry $f.e$x -textvariable Locator($s,$x) -width 10} $Gui(WEA)
 		grid $f.l$x $f.e$x -pady $Gui(pad) -padx $Gui(pad) -sticky e
 		grid $f.e$x -sticky w
 	}
@@ -612,18 +606,17 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fServer.fBot.fSignaSP.fPatient
 
-	set c {label $f.lTitle -text "Patient Position" $Gui(WTA)}; eval [subst $c]
+	eval {label $f.lTitle -text "Patient Position"} $Gui(WTA)
 
 	foreach pos "TblPos PatEntry PatPos" \
 		name "{Table} {Entry} {Patient}" width "12 12 12"\
 		choices "{$Locator(tblPosList)} {$Locator(patEntryList)} \
 			{$Locator(patPosList)}" {
-		set c {label $f.l$pos -text "$name:" $Gui(WLA)}; eval [subst $c]
-		set c {menubutton $f.mb$pos -text "$Locator([Uncap $pos])" \
-			-relief raised -bd 2 -width $width -menu $f.mb$pos.menu $Gui(WMBA)}
-			eval [subst $c]
+		eval {label $f.l$pos -text "$name:"} $Gui(WLA)
+		eval {menubutton $f.mb$pos -text "$Locator([Uncap $pos])" \
+			-relief raised -bd 2 -width $width -menu $f.mb$pos.menu} $Gui(WMBA)
 		set Locator(mb$pos) $f.mb$pos
-		set c {menu $f.mb$pos.menu $Gui(WMA)}; eval [subst $c]
+		eval {menu $f.mb$pos.menu} $Gui(WMA)
 			set m $f.mb$pos.menu
 			foreach choice $choices {
 				$m add command -label $choice -command \
@@ -679,17 +672,15 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fHandpiece.fOffsetSize.fOffset
 
-	set c {label $f.l -text "Offset from Tip" $Gui(WTA)}
-		eval [subst $c]
+	eval {label $f.l -text "Offset from Tip"} $Gui(WTA)
 	frame $f.f -bg $Gui(activeWorkspace)
 	pack $f.l $f.f -side top -pady 3 -padx $Gui(pad)
 
 	set f $f.f
 	foreach axis "N T NxT" text "Normal Trans. {N x T}" \
 		var "normalOffset transverseOffset crossOffset" {
-		set c {label $f.l$axis -text "$text" $Gui(WLA)}; eval [subst $c]
-		set c {entry $f.e$axis -textvariable Locator($var) \
-			-width 4 $Gui(WEA)}; eval [subst $c]
+		eval {label $f.l$axis -text "$text"} $Gui(WLA)
+		eval {entry $f.e$axis -textvariable Locator($var) -width 4} $Gui(WEA)
 		bind $f.e$axis <Return> "LocatorSetPosition; Render3D"
 		grid $f.l$axis $f.e$axis -pady 2 -padx $Gui(pad) -sticky e
 		grid $f.e$axis -sticky w 
@@ -700,17 +691,15 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fHandpiece.fOffsetSize.fSize
 
-	set c {label $f.l -text "Size (mm)" $Gui(WTA)}
-		eval [subst $c]
+	eval {label $f.l -text "Size (mm)"} $Gui(WTA)
 	frame $f.f -bg $Gui(activeWorkspace)
 	pack $f.l $f.f -side top -pady 3 -padx $Gui(pad)
 
 	set f $f.f
 	foreach var "normalLen transverseLen radius" \
 		text "{Normal} {Trans.} {Radius}" {
-		set c {label $f.l$var -text "$text" $Gui(WLA)}; eval [subst $c]
-		set c {entry $f.e$var -textvariable Locator($var) \
-			-width 4 $Gui(WEA)}; eval [subst $c]
+		eval {label $f.l$var -text "$text"} $Gui(WLA)
+		eval {entry $f.e$var -textvariable Locator($var) -width 4} $Gui(WEA)
 		bind $f.e$var <Return> "LocatorSetSize; LocatorSetMatrices; Render3D"
 		grid $f.l$var $f.e$var -pady 2 -padx $Gui(pad) -sticky e
 		grid $f.e$var -sticky w
@@ -722,22 +711,22 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fHandpiece.fPos
 
-	set c {label $f.l -text "Position & Orientation" $Gui(WTA)}; eval [subst $c]
+	eval {label $f.l -text "Position & Orientation"} $Gui(WTA)
 	frame $f.f -bg $Gui(activeWorkspace)
 	pack $f.l $f.f -side top -pady 3 -padx $Gui(pad)
 
 	set f $f.f
-	set c {label $f.l -text "" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.l -text ""} $Gui(WLA)
 	foreach ax "x y z" text "R A S" {
-		set c {label $f.l$ax -text $text -width 7 $Gui(WLA)}; eval [subst $c]
+		eval {label $f.l$ax -text $text -width 7} $Gui(WLA)
 	}
 	grid $f.l $f.lx $f.ly $f.lz -pady 2 -padx $Gui(pad) -sticky e
 
 	foreach axis "N T P" var "n t p" {
-		set c {label $f.l$axis -text "$axis:" $Gui(WLA)}; eval [subst $c]
+		eval {label $f.l$axis -text "$axis:"} $Gui(WLA)
 		foreach ax "x y z" text "R A S" {
-			set c {entry $f.e$axis$ax -justify right -width 7 \
-				-textvariable Locator($var${ax}Str) $Gui(WEA)}; eval [subst $c]
+			eval {entry $f.e$axis$ax -justify right -width 7 \
+				-textvariable Locator($var${ax}Str)} $Gui(WEA)
 			bind $f.e$axis$ax <Return> "LocatorSetPosition; Render3D"
 		}
 		grid $f.l$axis $f.e${axis}x $f.e${axis}y $f.e${axis}z \
@@ -750,27 +739,24 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fHandpiece.fColor
 
-	set c {label $f.l -text "Color" $Gui(WTA)}
-		eval [subst $c]
+	eval {label $f.l -text "Color"} $Gui(WTA)
 	frame $f.f -bg $Gui(activeWorkspace)
 	pack $f.l $f.f -side top -pady 3 -padx $Gui(pad)
 
 	set f $fHandpiece.fColor.f
 	foreach slider "Red Green Blue" {
 
-		set c {label $f.l${slider} -text "${slider}" $Gui(WLA)}
-			eval [subst $c]
+		eval {label $f.l${slider} -text "${slider}"} $Gui(WLA)
 
-		set c {entry $f.e${slider} -textvariable Locator([Uncap $slider]) \
-			-width 3 $Gui(WEA)}; eval [subst $c]
+		eval {entry $f.e${slider} -textvariable Locator([Uncap $slider]) \
+			-width 3} $Gui(WEA)
 			bind $f.e${slider} <Return>   "LocatorSetColor; Render3D"
 			bind $f.e${slider} <FocusOut> "LocatorSetColor; Render3D"
 
-		set c {scale $f.s${slider} -from 0.0 -to 1.0 -length 100 \
+		eval {scale $f.s${slider} -from 0.0 -to 1.0 -length 100 \
 			-variable Locator([Uncap $slider]) \
 			-command "LocatorSetColor; Render3D" \
-			-resolution 0.1 $Gui(WSA) -sliderlength 20} 
-			eval [subst $c]
+			-resolution 0.1} $Gui(WSA) {-sliderlength 20} 
 		set Locator(s$slider) $f.s$slider
 
 		grid $f.l${slider} $f.e${slider} $f.s${slider}  \

@@ -71,7 +71,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.19 $} {$Date: 2000/02/22 16:30:10 $}]
+		{$Revision: 1.20 $} {$Date: 2000/02/22 17:56:07 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""
@@ -390,9 +390,7 @@ proc MainModelsBuildGUI {} {
 	wm withdraw $w
 
 	# Close button
-	set c {button $w.bClose -text "Close" \
-		-command "wm withdraw $w" $Gui(WBA)}
-		eval [subst $c]
+	eval {button $w.bClose -text "Close" -command "wm withdraw $w"} $Gui(WBA)
 
 	# Frames
 	frame $w.fGrid -bg $Gui(activeWorkspace)
@@ -403,19 +401,19 @@ proc MainModelsBuildGUI {} {
 	# Models->All frame
 	#-------------------------------------------
 	set f $w.fAll
-	set c {button $f.bAll -text "Show All" -width 10 \
-		-command "MainModelsSetVisibility All" $Gui(WBA)}; eval [subst $c]
-	set c {button $f.bNone -text "Show None" -width 10 \
-		-command "MainModelsSetVisibility None" $Gui(WBA)}; eval [subst $c]
+	eval {button $f.bAll -text "Show All" -width 10 \
+		-command "MainModelsSetVisibility All"} $Gui(WBA)
+	eval {button $f.bNone -text "Show None" -width 10 \
+		-command "MainModelsSetVisibility None"} $Gui(WBA)
 	pack $f.bAll $f.bNone -side left -padx $Gui(pad) -pady 0
 
 	#-------------------------------------------
 	# Models->Grid frame
 	#-------------------------------------------
 	set f $Gui(wModels).fGrid
-	set c {label $f.lV -text Visibility $Gui(WLA)}; eval [subst $c]
-	set c {label $f.lO -text Opacity $Gui(WLA)}; eval [subst $c]
-#	set c {label $f.lC -text Clip $Gui(WLA)}; eval [subst $c]
+	eval {label $f.lV -text Visibility} $Gui(WLA)
+	eval {label $f.lO -text Opacity} $Gui(WLA)
+#	eval {label $f.lC -text Clip} $Gui(WLA)
 #	grid $f.lV $f.lO $f.lC -pady 2 -padx 2
 	grid $f.lV $f.lO -pady 2 -padx 2
 	grid $f.lO -columnspan 2
@@ -445,7 +443,7 @@ proc MainModelsCreateGUI {f m} {
 		-command "MainModelsSetVisibility $m; Render3D"} $Gui(WCA)
 
 	# menu
-	set c {menu $f.c$m.men $Gui(WMA)}; eval [subst $c]
+	eval {menu $f.c$m.men} $Gui(WMA)
 	set men $f.c$m.men
 	$men add command -label "Change Color..." -command \
 		"MainModelsSetActive $m; ShowColors MainModelsPopupCallback"
@@ -463,23 +461,19 @@ proc MainModelsCreateGUI {f m} {
 	bind $f.c$m <Button-3> "$men post %X %Y"
 
 	# Opacity
-	set c {entry $f.e${m} -textvariable Model($m,opacity) \
-		-width 3 $Gui(WEA)}; eval [subst $c]
+	eval {entry $f.e${m} -textvariable Model($m,opacity) -width 3} $Gui(WEA)
 	bind $f.e${m} <Return> "MainModelsSetOpacity $m; Render3D"
 	bind $f.e${m} <FocusOut> "MainModelsSetOpacity $m; Render3D"
-	set c {scale $f.s${m} -from 0.0 -to 1.0 -length 50 \
+	eval {scale $f.s${m} -from 0.0 -to 1.0 -length 50 \
 		-variable Model($m,opacity) \
 		-command "MainModelsSetOpacityInit $m $f.s$m" \
-		-resolution 0.1 $Gui(WSA) -sliderlength 14 \
+		-resolution 0.1} $Gui(WSA) {-sliderlength 14 \
 		-troughcolor [MakeColorNormalized \
 			[Color($Model($m,colorID),node) GetDiffuseColor]]}
-		eval [subst $c]
 
 	# Clipping
-#	set c {checkbutton $f.cClip${m} \
-#		-variable Model($m,clipping) \
-#		-command "MainModelsSetClipping $m; Render3D" $Gui(WCA) -indicatoron 1}
-#		eval [subst $c]
+#	eval {checkbutton $f.cClip${m} -variable Model($m,clipping) \
+	-command "MainModelsSetClipping $m; Render3D"} $Gui(WCA) {-indicatoron 1}
 
 #	grid $f.c${m} $f.e${m} $f.s${m} $f.cClip$m -pady 2 -padx 2
 	grid $f.c${m} $f.e${m} $f.s${m} -pady 2 -padx 2

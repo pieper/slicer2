@@ -63,7 +63,7 @@ proc ViewInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.7 $} {$Date: 2000/02/22 16:30:19 $}]
+		{$Revision: 1.8 $} {$Date: 2000/02/22 17:56:15 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -112,15 +112,13 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fView.fBg
 	
-    set c {label $f.l -text "Background: " $Gui(WLA)}
-		eval [subst $c]
+    eval {label $f.l -text "Background: "} $Gui(WLA)
 	pack $f.l -side left -padx $Gui(pad) -pady 0
 
 	foreach value "Blue Black Midnight" width "5 6 9" {
-		set c {radiobutton $f.r$value -width $width \
+		eval {radiobutton $f.r$value -width $width \
 			-text "$value" -value "$value" -variable View(bgName) \
-			-indicatoron 0 -command "MainViewSetBackgroundColor; Render3D" $Gui(WCA)}
-			eval [subst $c]
+			-indicatoron 0 -command "MainViewSetBackgroundColor; Render3D"} $Gui(WCA)
 		pack $f.r$value -side left -padx 0 -pady 0
 	}
 	
@@ -129,15 +127,13 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fView.fCloseup
 	
-    set c {label $f.lCloseup -text "Closeup Window: " $Gui(WLA)}
-		eval [subst $c]
+    eval {label $f.lCloseup -text "Closeup Window: "} $Gui(WLA)
 	pack $f.lCloseup -side left -padx $Gui(pad) -pady 0
 
 	foreach value "On Off" width "4 4" {
-		set c {radiobutton $f.rCloseup$value -width $width \
+		eval {radiobutton $f.rCloseup$value -width $width \
 			-text "$value" -value "$value" -variable View(closeupVisibility) \
-			-indicatoron 0 -command "MainViewSetWelcome Welcome" $Gui(WCA)}
-			eval [subst $c]
+			-indicatoron 0 -command "MainViewSetWelcome Welcome"} $Gui(WCA)
 		pack $f.rCloseup$value -side left -padx 0 -pady 0
 	}
 	
@@ -150,16 +146,13 @@ Models are fun. Do you like models, Ron?
 	frame $f.fBtns -bg $Gui(activeWorkspace)
    	pack $f.fTitle $f.fBtns -side top -pady 5
 
-    set c {label $f.fTitle.lTitle -text "Window Size in 3D Mode:" $Gui(WLA)}
-		eval [subst $c]
+    eval {label $f.fTitle.lTitle -text "Window Size in 3D Mode:"} $Gui(WLA)
 	pack $f.fTitle.lTitle -side left -padx $Gui(pad) -pady 0
 
-    set c {label $f.fBtns.lW -text "Width:" $Gui(WLA)}; eval [subst $c]
-    set c {label $f.fBtns.lH -text "Height:" $Gui(WLA)}; eval [subst $c]
-	set c {entry $f.fBtns.eWidth -width 5 -textvariable View(viewerWidth) $Gui(WEA)}
-		eval [subst $c]
-	set c {entry $f.fBtns.eHeight -width 5 -textvariable View(viewerHeight) $Gui(WEA)}
-		eval [subst $c]
+    eval {label $f.fBtns.lW -text "Width:"} $Gui(WLA)
+    eval {label $f.fBtns.lH -text "Height:"} $Gui(WLA)
+	eval {entry $f.fBtns.eWidth -width 5 -textvariable View(viewerWidth)} $Gui(WEA)
+	eval {entry $f.fBtns.eHeight -width 5 -textvariable View(viewerHeight)} $Gui(WEA)
 		bind $f.fBtns.eWidth  <Return> {MainViewerSetMode}
 		bind $f.fBtns.eHeight <Return> {MainViewerSetMode}
 	pack $f.fBtns.lW $f.fBtns.eWidth $f.fBtns.lH $f.fBtns.eHeight \
@@ -171,10 +164,9 @@ Models are fun. Do you like models, Ron?
 	set f $fView.fStereo
 	
 	# Stereo button
-    set c {checkbutton $f.cStereo \
+    eval {checkbutton $f.cStereo \
         -text "Stereo" -variable View(stereo) -width 6 \
-        -indicatoron 0 -command "MainViewSetStereo; Render3D" $Gui(WCA)}
-        eval [subst $c]
+        -indicatoron 0 -command "MainViewSetStereo; Render3D"} $Gui(WCA)
  
 	pack $f.cStereo -side top -padx 0 -pady 2
 

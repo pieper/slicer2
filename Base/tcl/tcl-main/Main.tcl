@@ -328,7 +328,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.35 $} {$Date: 2000/02/22 16:46:21 $}]
+		{$Revision: 1.36 $} {$Date: 2000/02/22 17:56:06 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -442,7 +442,7 @@ proc MainBuildGUI {} {
 	$f config -menu .menubar
 	# Create more cascade menus
 	foreach m {File View Help} {
-		set c {menu .menubar.m$m $Gui(SMA)}; eval [subst $c]
+		eval {menu .menubar.m$m} $Gui(SMA)
 		set Gui(m$m) .menubar.m$m
 		.menubar add cascade -label $m -menu .menubar.m$m
 	}
@@ -528,13 +528,13 @@ proc MainBuildGUI {} {
 		if {$Module($m,more) == 1} {set Module(more) 1}
 	}
 	if {$Module(more) == 1} {
-		set c {menubutton $f.mbMore -text "More:" -relief raised -bd 2 \
-			-width 6 -menu $f.mbMore.m $Gui(WMBA)}; eval [subst $c]
-			set c {menu $f.mbMore.m $Gui(WMA)}; eval [subst $c]
+		eval {menubutton $f.mbMore -text "More:" -relief raised -bd 2 \
+			-width 6 -menu $f.mbMore.m} $Gui(WMBA)
+			eval {menu $f.mbMore.m} $Gui(WMA)
 		set Module(mbMore) $f.mbMore
-		set c {radiobutton $f.rMore -width 10 \
+		eval {radiobutton $f.rMore -width 10 \
 			-text "None" -variable Module(moreBtn) -value 1 \
-			-command "Tab Menu" -indicatoron 0 $Gui(WCA)}; eval [subst $c]
+			-command "Tab Menu" -indicatoron 0} $Gui(WCA)
 		set Module(rMore) $f.rMore
 		pack $f.mbMore $f.rMore -side left -padx $Gui(pad) -pady 0 
 
@@ -560,10 +560,9 @@ proc MainBuildGUI {} {
 		foreach m "$m1 $m2 $m3" {
 			# Either make a button for it, or add it to the "more" menu
 			if {$Module($m,more) == 0} {
-				set c {radiobutton $f.$row.r$m -width 10 \
+				eval {radiobutton $f.$row.r$m -width 10 \
 					-text "$m" -variable Module(btn) -value $m \
-					-command "Tab $m" -indicatoron 0 $Gui(WCA)}
-					eval [subst $c]
+					-command "Tab $m" -indicatoron 0} $Gui(WCA)
 				pack $f.$row.r$m -side left -padx 0 -pady 0
 			} else {
 				if {$firstMore == ""} {
@@ -619,17 +618,16 @@ proc MainBuildGUI {} {
 
 			foreach tab $Module($m,${row}List) name $Module($m,${row}Name) {
 				set Module($m,b$tab) $Module($m,f$row).b$tab
-				set c {button $Module($m,b$tab) -text "$name" \
+				eval {button $Module($m,b$tab) -text "$name" \
 					-command "Tab $m $row $tab" \
-					-width [expr [string length "$name"] + 1] $Gui(TA)}
-					eval [subst $c]
+					-width [expr [string length "$name"] + 1]} $Gui(TA)
 				pack $Module($m,b$tab) -side left -expand 1 -fill both
 			}
 
 			# "More..." if more than one row exists
 			if {$Module($m,row2List) != ""} {
-				set c {button $Module($m,f$row).bMore -text "More..." \
-					-command "Tab More" $Gui(TA)}; eval [subst $c]
+				eval {button $Module($m,f$row).bMore -text "More..." \
+					-command "Tab More"} $Gui(TA)
 				pack $Module($m,f$row).bMore -side left -expand 1 -fill both
 			}
 		}
@@ -637,7 +635,7 @@ proc MainBuildGUI {} {
 		
 	# Blank page to show during boot
 	frame $fWork.fBoot -bg $Gui(activeWorkspace)
-	set c {label $fWork.fBoot.l -text "Loading data..." $Gui(WLA)}; eval [subst $c]
+	eval {label $fWork.fBoot.l -text "Loading data..."} $Gui(WLA)
 	set Gui(lBoot) $fWork.fBoot.l
 	pack $fWork.fBoot.l -fill both -expand t
 	place $fWork.fBoot -in $fWork -relheight 1.0 -relwidth 1.0
@@ -712,16 +710,16 @@ proc MainBuildGUI {} {
 
 	# Exit button
 	#-------------------------------------------
-	set c {button $f.bExit -text Exit -width 5 \
-		-command "MainExitQuery" $Gui(WBA)}; eval [subst $c]
+	eval {button $f.bExit -text Exit -width 5 \
+		-command "MainExitQuery"} $Gui(WBA)
 	set Gui(bExit) $f.bExit
 
 	# Opacity Slider
 	#-------------------------------------------
-	set c {scale $f.sOpacity -from 1.0 -to 0.0 -variable Slice(opacity) \
+	eval {scale $f.sOpacity -from 1.0 -to 0.0 -variable Slice(opacity) \
 		-command "MainSlicesSetOpacityAll; RenderAll" \
-		-length 80 -resolution 0.1 $Gui(BSA) -sliderlength 30  \
-		-troughcolor [MakeColorNormalized ".7 .7 .9"]}; eval [subst $c]
+		-length 80 -resolution 0.1} $Gui(BSA) {-sliderlength 30  \
+		-troughcolor [MakeColorNormalized ".7 .7 .9"]}
 
 	# Fade button
 	#-------------------------------------------

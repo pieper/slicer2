@@ -115,7 +115,7 @@ proc CustomInit {} {
 	#   appropriate info when the module is checked in.
 	#   
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.7 $} {$Date: 2000/02/22 16:30:14 $}]
+		{$Revision: 1.8 $} {$Date: 2000/02/22 17:56:10 $}]
 
 	# Initialize module-level variables
 	#------------------------------------
@@ -183,8 +183,7 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fStuff.fTop
         
-	set c {label $f.lStuff -text "You clicked 0 times." $Gui(WLA)}
-		eval [subst $c]
+	eval {label $f.lStuff -text "You clicked 0 times."} $Gui(WLA)
     pack $f.lStuff -side top -padx $Gui(pad) -fill x
 	set Custom(lStuff) $f.lStuff
 
@@ -193,10 +192,8 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fStuff.fBottom
 
-	set c {button $f.bCount -text "Count" \
-		-command "CustomCount" $Gui(WBA)}; eval [subst $c]
-	set c {entry $f.eCount -width 5 -textvariable Custom(count) $Gui(WEA)}
-		eval [subst $c]
+	eval {button $f.bCount -text "Count" -command "CustomCount"} $Gui(WBA)
+	eval {entry $f.eCount -width 5 -textvariable Custom(count)} $Gui(WEA)
 	pack $f.bCount $f.eCount -side left -padx $Gui(pad) -pady $Gui(pad)
 
 }

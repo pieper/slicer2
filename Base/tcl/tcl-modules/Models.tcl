@@ -66,7 +66,7 @@ proc ModelsInit {} {
 
         # Set Version Info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.16 $} {$Date: 2000/02/22 16:30:17 $}]
+		{$Revision: 1.17 $} {$Date: 2000/02/22 17:56:13 $}]
 	# Props
 	set Model(propertyType) Basic
 
@@ -186,8 +186,8 @@ Models are fun. Do you like models, Ron?
 	# fDisplay->Grid frame
 	#-------------------------------------------
 	set f $Module(Models,fDisplay).fGrid
-	set c {label $f.lV -text Visibility $Gui(WLA)}; eval [subst $c]
-	set c {label $f.lO -text Opacity $Gui(WLA)}; eval [subst $c]
+	eval {label $f.lV -text Visibility} $Gui(WLA)
+	eval {label $f.lO -text Opacity} $Gui(WLA)
 	grid $f.lV $f.lO -pady 0 -padx 12
 	grid $f.lO -columnspan 2
 

@@ -63,7 +63,7 @@ proc OptionsInit {} {
 
         # Set Version Info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.9 $} {$Date: 2000/02/22 16:30:18 $}]
+		{$Revision: 1.10 $} {$Date: 2000/02/22 17:56:13 $}]
 
 	# Initialize Globals
 	set Options(propertyType) Basic
@@ -479,16 +479,15 @@ proc OptionsModulesGUI {} {
 	foreach m $Module(allList) {
 
 		# Name / Visible
-		set c {checkbutton $f.c$m \
+		eval {checkbutton $f.c$m \
 			-text $m -variable Module($m,visibility) -width 17 \
-			-indicatoron 0 $Gui(WCA)}
-			eval [subst $c]
+			-indicatoron 0} $Gui(WCA)
 
 		# Move buttons
-		set c {button $f.bUp$m -text "Up" -width 3 \
-			-command "OptionsModulesUp $m" $Gui(WBA)}; eval [subst $c]
-		set c {button $f.bDown$m -text "Down" -width 5\
-			-command "OptionsModulesDown $m" $Gui(WBA)}; eval [subst $c]
+		eval {button $f.bUp$m -text "Up" -width 3 \
+			-command "OptionsModulesUp $m"} $Gui(WBA)
+		eval {button $f.bDown$m -text "Down" -width 5\
+			-command "OptionsModulesDown $m"} $Gui(WBA)
 		
 		grid $f.c$m $f.bUp$m $f.bDown$m -pady $pady -padx 5
 	}

@@ -86,20 +86,18 @@ proc EdChangeLabelBuildGUI {} {
 
 	# Input label
 	set Ed(fOpChangeLabelGrid) $f
-	set c {label $f.lInput -text "Value to change:" $Gui(WLA)}; eval [subst $c]
-	set c {entry $f.eInput -width 6 \
-		-textvariable Ed(EdChangeLabel,inputLabel) $Gui(WEA)}; eval [subst $c]
+	eval {label $f.lInput -text "Value to change:"} $Gui(WLA)
+	eval {entry $f.eInput -width 6 \
+		-textvariable Ed(EdChangeLabel,inputLabel)} $Gui(WEA)
 
 	# Output label
-	set c {button $f.bOutput -text "Output:" \
-		-command "ShowLabels" $Gui(WBA)}; eval [subst $c]
-	set c {entry $f.eOutput -width 6 \
-		-textvariable Label(label) $Gui(WEA)}; eval [subst $c]
+	eval {button $f.bOutput -text "Output:" -command "ShowLabels"} $Gui(WBA)
+	eval {entry $f.eOutput -width 6 -textvariable Label(label)} $Gui(WEA)
 	bind $f.eOutput <Return>   "LabelsFindLabel"
 	bind $f.eOutput <FocusOut> "LabelsFindLabel"
-	set c {entry $f.eName -width 14 \
-		-textvariable Label(name) $Gui(WEA) \
-		-bg $Gui(activeWorkspace) -state disabled}; eval [subst $c]
+	eval {entry $f.eName -width 14 \
+		-textvariable Label(name)} $Gui(WEA) \
+		{-bg $Gui(activeWorkspace) -state disabled}
 
 	lappend Label(colorWidgetList) $f.eName
 
@@ -111,11 +109,9 @@ proc EdChangeLabelBuildGUI {} {
 	#-------------------------------------------
 	set f $Ed(EdChangeLabel,frame).fApply
 
-	set c {button $f.bApply -text "Apply" \
-		-command "EdChangeLabelApply" $Gui(WBA) -width 8}
-		eval [subst $c]
-    set c {label $f.lApply -text "Also apply by clicking on a label." \
-		$Gui(WLA)}; eval [subst $c]
+	eval {button $f.bApply -text "Apply" \
+		-command "EdChangeLabelApply"} $Gui(WBA) {-width 8}
+    eval {label $f.lApply -text "Also apply by clicking on a label."} $Gui(WLA)
 	pack $f.bApply $f.lApply -side top -padx $Gui(pad) -pady 2
 
 }

@@ -66,7 +66,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
         set m MainView
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.14 $} {$Date: 2000/02/22 16:30:12 $}]
+		{$Revision: 1.15 $} {$Date: 2000/02/22 17:56:08 $}]
 
 	set View(viewerHeightNormal) 656
 	set View(viewerWidth)  956 
@@ -219,10 +219,9 @@ proc MainViewBuildGUI {} {
 
 # Comment out spin button to avoid bug when hit presets during spin	
 	# MainViewSpin button
-#    set c {checkbutton $f.cMainViewSpin \
+#    eval {checkbutton $f.cMainViewSpin \
 #        -text "Spin" -variable View(spin) -width 6 \
-#        -indicatoron 0 -command "MainViewSpin" $Gui(WCA)}
-#        eval [subst $c]
+#        -indicatoron 0 -command "MainViewSpin"} $Gui(WCA)
 
 	pack $f.fRotate $f.fFov -side top -pady 2 
 #	pack $f.fRotate $f.cMainViewSpin -side top -pady 3 

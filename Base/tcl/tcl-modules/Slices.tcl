@@ -48,7 +48,7 @@ proc SlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.8 $} {$Date: 2000/02/22 16:30:18 $}]
+		{$Revision: 1.9 $} {$Date: 2000/02/22 17:56:14 $}]
 
 	# Props
 	set Slice(prefix) slice
@@ -104,14 +104,13 @@ Use these slice controls when the <B>View Mode</B> is set to 3D.
 	#-------------------------------------------
 	set f $fControls.fActive
 
-	set c {label $f.lActive -text "Active Slice:" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.lActive -text "Active Slice:"} $Gui(WLA)
 	pack $f.lActive -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
 
 	foreach s $Slice(idList) text "Red Yellow Green" width "4 7 6" {
-		set c {radiobutton $f.r$s -width $width -indicatoron 0\
+		eval {radiobutton $f.r$s -width $width -indicatoron 0\
 			-text "$text" -value "$s" -variable Slice(activeID) \
-			-command "MainSlicesSetActive" $Gui(WCA) -selectcolor  $Gui(slice$s)}
-			eval [subst $c]
+			-command "MainSlicesSetActive"} $Gui(WCA) {-selectcolor $Gui(slice$s)}
 		pack $f.r$s -side left -fill x -anchor e
 	}
 
@@ -120,10 +119,9 @@ Use these slice controls when the <B>View Mode</B> is set to 3D.
 	#-------------------------------------------
 	set f $fControls.fSave
 
-	set c {button $f.bSave -text "Save Active" -width 12 \
-		-command "MainSlicesSave" $Gui(WBA)}; eval [subst $c]
-	set c {entry $f.eSave -textvariable Slice(prefix) $Gui(WEA)}
-		eval [subst $c]
+	eval {button $f.bSave -text "Save Active" -width 12 \
+		-command "MainSlicesSave"} $Gui(WBA)
+	eval {entry $f.eSave -textvariable Slice(prefix)} $Gui(WEA)
 	bind $f.eSave <Return> {MainSlicesSavePopup}
 	pack $f.bSave -side left -padx 3
 	pack $f.eSave -side left -padx 2 -expand 1 -fill x

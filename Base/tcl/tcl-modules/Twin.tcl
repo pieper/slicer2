@@ -63,7 +63,7 @@ proc TwinInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.4 $} {$Date: 2000/02/22 16:30:19 $}]
+		{$Revision: 1.5 $} {$Date: 2000/02/22 17:56:14 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -134,15 +134,13 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fTwin.fMode
 	
-    set c {label $f.l -text "Mode: " $Gui(WLA)}
-		eval [subst $c]
+    eval {label $f.l -text "Mode: "} $Gui(WLA)
 	pack $f.l -side left -padx $Gui(pad) -pady 0
 
 	foreach value "On Pause Off" width "3 6 4" {
-		set c {radiobutton $f.r$value -width $width \
+		eval {radiobutton $f.r$value -width $width \
 			-text "$value" -value "$value" -variable Twin(mode) \
-			-indicatoron 0 -command "TwinApply" $Gui(WCA)}
-			eval [subst $c]
+			-indicatoron 0 -command "TwinApply"} $Gui(WCA)
 		pack $f.r$value -side left -padx 0 -pady 0
 	}
 		
@@ -155,15 +153,14 @@ Models are fun. Do you like models, Ron?
 	foreach param "xPos yPos width height screen" \
 		name "{X Position} {Y Position} {Width} {Height} {Screen Number}" {
 
-	    set c {label $f.l$param -text "$name:" $Gui(WLA)}; eval [subst $c]
-	    set c {entry $f.e$param -width 5 -textvariable Twin($param) $Gui(WEA)}
-	    eval [subst $c]
+	    eval {label $f.l$param -text "$name:"} $Gui(WLA)
+	    eval {entry $f.e$param -width 5 -textvariable Twin($param)} $Gui(WEA)
 
 		grid $f.l$param $f.e$param -padx $Gui(pad) -pady $Gui(pad) -sticky e
 		grid $f.e$param -sticky w
 	}
 
-	set c {button $f.b -text "Apply" -command "TwinApply" $Gui(WBA)}; eval [subst $c]
+	eval {button $f.b -text "Apply" -command "TwinApply"} $Gui(WBA)
 	grid $f.b -columnspan 2 -padx $Gui(pad) -pady $Gui(pad) 
 }
 

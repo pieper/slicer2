@@ -135,7 +135,7 @@ proc EdThresholdBuildGUI {} {
 	set f $Ed(EdThreshold,frame).fHistogram
 
 	if {$Ed(EdThreshold,histogram) == "On"} {
-		set c {label $f.l -text "Histogram:" $Gui(WLA)}; eval [subst $c]
+		eval {label $f.l -text "Histogram:"} $Gui(WLA)
 		frame $f.fHistBorder -bg $Gui(activeWorkspace) -relief sunken -bd 2
 		pack $f.l $f.fHistBorder -side left -padx $Gui(pad) -pady $Gui(pad)
 
@@ -159,25 +159,22 @@ proc EdThresholdBuildGUI {} {
 	set f $Ed(EdThreshold,frame).fGrid
 
 	# Output label
-	set c {button $f.bOutput -text "Output:" \
-		-command "ShowLabels EdThresholdLabel" $Gui(WBA)}; eval [subst $c]
-	set c {entry $f.eOutput -width 6 \
-		-textvariable Label(label) $Gui(WEA)}; eval [subst $c]
+	eval {button $f.bOutput -text "Output:" \
+		-command "ShowLabels EdThresholdLabel"} $Gui(WBA)
+	eval {entry $f.eOutput -width 6 -textvariable Label(label)} $Gui(WEA)
 	bind $f.eOutput <Return>   "EdThresholdLabel"
 	bind $f.eOutput <FocusOut> "EdThresholdLabel"
-	set c {entry $f.eName -width 14 \
-		-textvariable Label(name) $Gui(WEA) \
-		-bg $Gui(activeWorkspace) -state disabled}; eval [subst $c]
+	eval {entry $f.eName -width 14 -textvariable Label(name)} $Gui(WEA) \
+		{-bg $Gui(activeWorkspace) -state disabled}
 	grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
 	grid $f.eOutput $f.eName -sticky w
 
 	lappend Label(colorWidgetList) $f.eName
 
 	# Whether to Replace the output
-#	set c {checkbutton $f.cReplaceOutput \
+#	eval {checkbutton $f.cReplaceOutput \
 #		-text "Replace Output" -width 14 -variable Ed(EdThreshold,replaceIn) \
-#		-indicatoron 0 $Gui(WCA) -command "EdThresholdUpdate; RenderAll"}
-#		eval [subst $c]
+#		-indicatoron 0} $Gui(WCA) {-command "EdThresholdUpdate; RenderAll"}
 #	grid $f.cReplaceOutput -columnspan 2 -pady $Gui(pad) -sticky e
 
 	#-------------------------------------------
@@ -186,16 +183,15 @@ proc EdThresholdBuildGUI {} {
 	set f $Ed(EdThreshold,frame).fSliders
 
 	foreach slider "Lower Upper" text "Lo Hi" {
-		set c {label $f.l$slider -text "$text:" $Gui(WLA)}; eval [subst $c]
-		set c {entry $f.e$slider -width 6 \
-			-textvariable Ed(EdThreshold,[Uncap $slider]) $Gui(WEA)}; 
-			eval [subst $c]
+		eval {label $f.l$slider -text "$text:"} $Gui(WLA)
+		eval {entry $f.e$slider -width 6 \
+			-textvariable Ed(EdThreshold,[Uncap $slider])} $Gui(WEA)
 		bind $f.e$slider <Return>   "EdThresholdUpdate; RenderActive;"
 		bind $f.e$slider <FocusOut> "EdThresholdUpdate; RenderActive;"
-		set c {scale $f.s$slider -from $Ed(EdThreshold,rangeLow) -to $Ed(EdThreshold,rangeHigh)\
+		eval {scale $f.s$slider -from $Ed(EdThreshold,rangeLow) -to $Ed(EdThreshold,rangeHigh)\
 			-length 220 -variable Ed(EdThreshold,[Uncap $slider])  -resolution 1 \
-			-command "EdThresholdUpdateInit $f.s$slider"\
-			$Gui(WSA) -sliderlength 22 }; eval [subst $c]
+			-command "EdThresholdUpdateInit $f.s$slider"} \
+			$Gui(WSA) {-sliderlength 22}
 		grid $f.l$slider $f.e$slider -padx 2 -pady 2 -sticky w
 		grid $f.l$slider -sticky e
 		grid $f.s$slider -columnspan 2 -pady 2 
@@ -208,9 +204,8 @@ proc EdThresholdBuildGUI {} {
 	#-------------------------------------------
 	set f $Ed(EdThreshold,frame).fApply
 
-	set c {button $f.bApply -text "Apply" \
-		-command "EdThresholdApply" $Gui(WBA) -width 8}
-		eval [subst $c]
+	eval {button $f.bApply -text "Apply" \
+		-command "EdThresholdApply"} $Gui(WBA) {-width 8}
 	pack $f.bApply
 
 }
