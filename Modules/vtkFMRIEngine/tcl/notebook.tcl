@@ -1,10 +1,11 @@
 #=========================================================================
+#  This file is a modified version of notebook.tcl from the following:
 #
 #  Library   : A Notebook widget for Tcl/Tk
 #  Author    : D. Richard Hipp <drh@acm.org>
 #  Web       : http://www.hwaci.com/drh/
 #  Copyright : (C) 1996,1997,1998 D. Richard Hipp
-#  Version   : $Revision: 1.1 $
+#  Version   : $Revision: 1.2 $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -26,7 +27,7 @@
 #
 # Create a new notebook widget
 #
-proc Notebook:create {w args} {
+proc Notebook-create {w args} {
     global Notebook
 
     set Notebook($w,width) 400
@@ -38,16 +39,16 @@ proc Notebook:create {w args} {
     set Notebook($w,fg,off) grey50
     canvas $w -bd 0 -highlightthickness 0 -takefocus 0
     set Notebook($w,bg) [$w cget -bg]
-    bind $w <1> "Notebook:click $w %x %y"
-    bind $w <Configure> "Notebook:scheduleExpand $w"
-    eval Notebook:config $w $args
+    bind $w <1> "Notebook-click $w %x %y"
+    bind $w <Configure> "Notebook-scheduleExpand $w"
+    eval Notebook-config $w $args
 }
 
 
 #
 # Change configuration options for the notebook widget
 #
-proc Notebook:config {w args} {
+proc Notebook-config {w args} {
     global Notebook
 
     foreach {tag value} $args {
@@ -137,7 +138,17 @@ proc Notebook:config {w args} {
         -bg $Notebook($w,bg)
     set top $Notebook($w,top)
     set Notebook($w,top) -1
-    Notebook:raise.page $w $top
+    Notebook-raise.page $w $top
+}
+
+
+#
+# Set callback function 
+#
+proc Notebook-setCallback {w callback} {
+    global Notebook
+
+    set Notebook($w,callback) $callback 
 }
 
 
@@ -146,14 +157,19 @@ proc Notebook:config {w args} {
 # the notebook.  It determines if any page should be raised and raises
 # that page.
 #
-proc Notebook:click {w x y} {
+proc Notebook-click {w x y} {
     global Notebook
 
     if {$y<$Notebook($w,y1) || $y>$Notebook($w,y6)} return
     set N [llength $Notebook($w,pages)]
     for {set i 0} {$i<$N} {incr i} {
         if {$x>=$Notebook($w,p$i,x5) && $x<=$Notebook($w,p$i,x6)} {
-            Notebook:raise.page $w $i
+            Notebook-raise.page $w $i
+
+            if {[info exists Notebook($w,callback)] && $i == 1} {
+                $Notebook($w,callback)
+            }
+
             break
         }
     }
@@ -164,7 +180,7 @@ proc Notebook:click {w x y} {
 # For internal use only.  This procedure raised the n-th page of
 # the notebook
 #
-proc Notebook:raise.page {w n} {
+proc Notebook-raise.page {w n} {
     global Notebook
 
     if {$n < 0 || $n >= [llength $Notebook($w,pages)]} {
@@ -202,7 +218,7 @@ proc Notebook:raise.page {w n} {
 #
 # Change the page-specific configuration options for the notebook
 #
-proc Notebook:pageconfig {w name args} {
+proc Notebook-pageconfig {w name args} {
     global Notebook
 
     set i [lsearch $Notebook($w,pages) $name]
@@ -231,7 +247,7 @@ proc Notebook:pageconfig {w name args} {
 # we check the "onexit" procedure for the current page (if any) and
 # if it returns false, we don't allow the raise to proceed.
 #
-proc Notebook:raise {w name} {
+proc Notebook-raise {w name} {
     global Notebook
 
     set i [lsearch $Notebook($w,pages) $name]
@@ -241,10 +257,10 @@ proc Notebook:raise {w name} {
     if {[info exists Notebook($w,p$i,onexit)]} {
         set onexit $Notebook($w,p$i,onexit)
         if {"$onexit"!="" && [eval uplevel #0 $onexit]!=0} {
-            Notebook:raise.page $w $i
+            Notebook-raise.page $w $i
         }
     } else {
-        Notebook:raise.page $w $i
+        Notebook-raise.page $w $i
     }
 }
 
@@ -252,7 +268,7 @@ proc Notebook:raise {w name} {
 #
 # Return the frame associated with a given page of the notebook.
 #
-proc Notebook:frame {w name} {
+proc Notebook-frame {w name} {
     global Notebook
 
     set i [lsearch $Notebook($w,pages) $name]
@@ -267,26 +283,26 @@ proc Notebook:frame {w name} {
 #
 # Try to resize the notebook to the next time we become idle.
 #
-proc Notebook:scheduleExpand w {
+proc Notebook-scheduleExpand w {
     global Notebook
 
     if {[info exists Notebook($w,expand)]} {
         return
     }
     set Notebook($w,expand) 1
-    after idle "Notebook:expand $w"
+    after idle "Notebook-expand $w"
 }
 
 
 #
 # Resize the notebook to fit inside its containing widget.
 #
-proc Notebook:expand w {
+proc Notebook-expand w {
     global Notebook
 
     set wi [expr [winfo width $w]-($Notebook($w,pad)*2+4)]
     set hi [expr [winfo height $w]-($Notebook($w,pad)*2+36)]
-    Notebook:config $w -width $wi -height $hi
+    Notebook-config $w -width $wi -height $hi
     catch {
         unset Notebook($w,expand)
     }
