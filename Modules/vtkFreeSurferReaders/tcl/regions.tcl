@@ -183,9 +183,17 @@ itcl::body regions::apply {} {
 
     set scalars [[$Model($_id,polyData) GetPointData] GetScalars]
 
+    if { $scalars == "" } {
+        set scalars ${_name}_scalars
+        vtkFloatArray $scalars
+        $scalars SetNumberOfComponents 1
+        [$Model($_id,polyData) GetPointData] SetScalars $scalars
+    }
+
     set fp [open $annotfile "r"]
     gets $fp nn
 
+    $scalars SetNumberOfTuples $nn
     for {set n 0} {$n < $nn} {incr n} {
         gets $fp line
         set i [lindex $line 0]
@@ -200,6 +208,9 @@ itcl::body regions::apply {} {
     }
 
     close $fp
+
+    MainModelsSetScalarVisibility $_id 1
+    Render3D
 }
 
 itcl::body regions::query {} {
@@ -316,7 +327,7 @@ itcl::body regions::demo {} {
     # $this configure -model lh-pial
 
     $this configure -labelfile "$env(SLICER_HOME)/Modules/vtkFreeSurferReaders/tcl/Simple_surface_labels2002.txt"
-    $this configure -annotfile "$env(SLICER_HOME)/../../slicerdata/freesurfer/freesurferInterop/label/lh.aparc.pannot"
+    $this configure -annotfile "$env(SLICER_HOME)/../../slicerdata/freesurferInterop/label/lh.aparc.pannot"
     $this configure -model lh-pial
 
     $this apply
