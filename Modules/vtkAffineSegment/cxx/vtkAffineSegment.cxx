@@ -576,13 +576,13 @@ static void vtkAffineSegmentContract(vtkAffineSegment *self,
     fflush(fp);
     
  #endif
-*/
 
+*/
   //we assume that we have the seedPoints array filled with the
   // interface points.
   
   //speed of inflationary term
-  int v = 1;
+  int v = 50;
 
   int lastPercentageProgressBarUpdated=-1;
 
@@ -594,6 +594,7 @@ static void vtkAffineSegmentContract(vtkAffineSegment *self,
       {
         count = -2*initial_interface_size;
         self->Compute_Extension(self);
+        initial_interface_size = self->zero_set.size();
         count += self->knownPoints.size();
         //fprintf(fp,"finished computing Extension# %d, seedPoints = %d,count=%d\n",iter,self->seedPoints.size(),count);
         //fflush(fp);
@@ -656,7 +657,7 @@ static void vtkAffineSegmentContract(vtkAffineSegment *self,
                 else
                     psi_hat_z = psi_hat_zp;
 
-                if(self->eucl_ext[x] <= 0)
+                if(self->eucl_ext[x] >= 0)
                     eucl_grad = sqrt(pow(min(psi_hat_xm,0),2.0) + pow(max(psi_hat_xp,0),2.0) + pow(min(psi_hat_ym,0),2.0) +
                                     pow(max(psi_hat_yp,0),2.0) + pow(min(psi_hat_zm,0),2.0) + pow(max(psi_hat_zp,0),2.0));
                 else
@@ -737,7 +738,7 @@ static void vtkAffineSegmentContract(vtkAffineSegment *self,
 
     } //end for(iterations )
 
-/*   
+/*
 #ifdef DEBUG
     if(!fp)
         fclose(fp);
@@ -1292,7 +1293,7 @@ void vtkAffineSegment::Compute_Extension(vtkAffineSegment *self)
         }
 
         //arbitarily chosen
-       self->nPointsEvolution = 8*knownPoints.size();
+       self->nPointsEvolution = 15*knownPoints.size();
 
        for(n=0;n<self->nPointsEvolution;n++)
         {
