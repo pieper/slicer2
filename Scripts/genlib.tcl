@@ -182,7 +182,7 @@ switch $tcl_platform(os) {
         set vtkTclLib $TCL_LIB_DIR/tcl84.lib
         set vtkTkLib $TCL_LIB_DIR/tk84.lib
         set vtkTclsh $TCL_BIN_DIR/tclsh84.exe
-        set itkTestFile $ITK_BINARY_PATH/bin/$VTK_BUILD_TYPE/libITKCommon.dll
+        set itkTestFile $ITK_BINARY_PATH/bin/$VTK_BUILD_TYPE/ITKCommon.dll
     }
 }
 
