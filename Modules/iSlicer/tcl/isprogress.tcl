@@ -152,7 +152,7 @@ itcl::configbody isprogress::use_main_progress {
 
 itcl::configbody isprogress::vtk_process_object {
    if {$itk_option(-vtk_process_object) != ""} {
-       $itk_option(-vtk_process_object) SetProgressMethod \
+       $itk_option(-vtk_process_object) AddObserver ProgressEvent \
        "$this update_progress $itk_option(-vtk_process_object)"
    }
 }
