@@ -213,7 +213,7 @@ void vtkImageReformatIJK::ComputeOutputExtent()
   // Output is XYZ, input is IJK
   // tran: XYZ->IJK
   
-    // Convert origin from XYZ to IJK space
+  // Convert origin from XYZ to IJK space
   // (find unit vectors in IJK space corresponding to 
   // the XYZ (RAS without voxel scaling) unit vectors.)
     this->tran->MultiplyPoint(x, this->XStep);
@@ -577,13 +577,20 @@ static void vtkImageReformatIJKExecute(vtkImageReformatIJK *self,
 // algorithm to fill the output from the input.
 // It just executes a switch statement to call the correct function for
 // the datas data types.
-void vtkImageReformatIJK::Execute(vtkImageData *inData, vtkImageData *outData)
+void vtkImageReformatIJK::ExecuteData(vtkDataObject *)
 {
     int outExt[6], id=0;
-    this->GetOutput()->GetWholeExtent(outExt);
+
+    vtkImageData *inData = this->GetInput(); 
+
+    vtkImageData *outData = this->GetOutput();
+    outData->GetWholeExtent(outExt);
+    outData->SetExtent(outExt);
+    outData->AllocateScalars();
+
     void *inPtr = inData->GetScalarPointerForExtent(outExt);
     void *outPtr = outData->GetScalarPointerForExtent(outExt);
-  
+
     switch (inData->GetScalarType())
     {
     case VTK_DOUBLE:
