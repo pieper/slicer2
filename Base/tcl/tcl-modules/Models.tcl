@@ -63,7 +63,7 @@ proc ModelsInit {} {
 
 	# Set Version Info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.34 $} {$Date: 2001/11/13 20:44:54 $}]
+		{$Revision: 1.35 $} {$Date: 2001/11/13 22:21:48 $}]
 
 	# Props
 	set Model(propertyType) Basic
@@ -83,52 +83,11 @@ proc ModelsInit {} {
 proc ModelsUpdateMRML {} {
 
 	global Gui Model Slice Module Color Volume Label
-	global Mrml(dataTree) ModelGroup
 
 	# Create the GUI for any new models
 	set gui 0
-	
-	set hlevel 0; # hierarchy level
-	Mrml(dataTree) InitTraversal
-	set node [Mrml(dataTree) GetNextItem]
-	set success 0
-	while {$node != ""} {
-		if {[string compare -length 10 $node "ModelGroup"] == 0} {
-			incr hlevel
-			
-			# Set some ModelGroup properties
-			set ModelGroup([$node GetID],visibility) [$node GetVisibility]
-			set ModelGroup([$node GetID],opacity) [format %#.1f [$node GetOpacity]]
-			set ModelGroup([$node GetID],expansion) [$node GetExpansion]
-			set colorname [$node GetColor]
-			foreach c $Color(idList) {
-				if {[Color($c,node) GetName] == $colorname} {
-					set ModelGroup([$node GetID],colorID) $c
-				}
-			}
-			
-			set gui [expr $gui + [MainModelGroupsCreateGUI $Model(fScrolledGUI) [$node GetID] [expr $hlevel-1]]]
-		}
-		
-		if {[string compare -length 13 $node "EndModelGroup"] == 0} {
-			incr hlevel -1
-		}
-		
-		if {[string compare -length 8 $node "ModelRef"] == 0} {
-			set success 1
-			set CurrentModelID [SharedModelLookup [$node GetmodelRefID]]
-			if {$CurrentModelID != -1} {
-				set gui [expr $gui + [MainModelsCreateGUI $Model(fScrolledGUI) $CurrentModelID $hlevel]]
-			}
-		}
-		set node [Mrml(dataTree) GetNextItem]
-	}
-
-	if {$success == 0} {
-	# MRML file did not contain hierarchies
-		foreach m $Model(idList) {
-			set gui [expr $gui + [MainModelsCreateGUI $Model(fScrolledGUI) $m]]
-		}
+	foreach m $Model(idList) {
+		set gui [expr $gui + [MainModelsCreateGUI $Model(fScrolledGUI) $m]]
 	}
 
 	# Delete the GUI for any old models
@@ -228,10 +187,11 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 	set f $fDisplay
 
 	frame $f.fTitle -bg $Gui(activeWorkspace)
-	frame $f.fAll -bg $Gui(activeWorkspace)
+	frame $f.fRend -bg $Gui(activeWorkspace)
+        frame $f.fAll -bg $Gui(activeWorkspace)
 	frame $f.fGrid -bg $Gui(activeWorkspace)
 	frame $f.fScroll -bg $Gui(activeWorkspace)
-	pack $f.fTitle $f.fAll -side top -pady $Gui(pad)
+	pack $f.fTitle $f.fRend $f.fAll -side top -pady $Gui(pad)
 	pack $f.fGrid $f.fScroll -side top -pady 1
 
 	#-------------------------------------------
@@ -242,12 +202,30 @@ If <B>Backface Culling</B> is on, you will see nothing when looking inside a cli
 	eval {label $f.lTitle -justify left -text \
 		"Click the right mouse button on\nthe name of a model for options."} $Gui(WLA)
 	pack $f.lTitle
+	
+
+	#-------------------------------------------
+	# fDisplay->Rend frame
+	#-------------------------------------------
+ 
+	set f $fDisplay.fRend
+
+        eval {label $f.label -text "Choose a screen:"} $Gui(WLA)
+        eval {menubutton $f.fMenuB -text "viewRen" -menu $f.fMenuB.menu} $Gui(WMBA)
+        TooltipAdd $f.fMenuB "Choose in which screen you want to change the options of a model"
+        eval {menu $f.fMenuB.menu} $Gui(WMA)
+           foreach rend $Module(Renderers) {
+	       $f.fMenuB.menu add command -label $rend -command "$f.fMenuB configure -text $rend; MainModelsSetRenderer $rend"
+	   }
+       
+	   pack $f.label $f.fMenuB  -side left -padx $Gui(pad) -pady 0
+
 
 	#-------------------------------------------
 	# fDisplay->All frame
 	#-------------------------------------------
-	set f $fDisplay.fAll
 
+	set f $fDisplay.fAll
         DevAddButton $f.bAll "Show All" \
                 "MainModelsSetVisibility All; Render3D" 10 
         DevAddButton $f.bNone "Show None" \
@@ -639,19 +617,15 @@ proc ModelsBuildScrolledGUI {} {
 
         # Delete everything from last time
         set canvas $f.cGrid
-	set Model(canvasScrolledGUI) $canvas
+		set Model(canvasScrolledGUI) $canvas
         catch {destroy $canvas}
-        set sy $f.syGrid
-        set sx $f.sxGrid
-        catch {destroy $sy}
-        catch {destroy $sx}
+        set s $f.sGrid
+        catch {destroy $s}
 
-        canvas $canvas -yscrollcommand "$sy set" -xscrollcommand "$sx set" -bg $Gui(activeWorkspace)
-        eval "scrollbar $sy -command \"ModelsCheckScrollLimits $canvas yview\"	\
+        canvas $canvas -yscrollcommand "$s set" -bg $Gui(activeWorkspace)
+        eval "scrollbar $s -command \"ModelsCheckScrollLimits $canvas yview\"	\
 		$Gui(WSBA)"
-	eval "scrollbar $sx -command \"$canvas xview\" -orient horizontal $Gui(WSBA)"
-        pack $sy -side right -fill y
-        pack $sx -side bottom -fill x
+        pack $s -side right -fill y
         pack $canvas -side top -fill both -expand true
 
         set f $canvas.fModels
@@ -678,7 +652,7 @@ proc ModelsBuildScrolledGUI {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ModelsConfigScrolledGUI {} {
-	global Model ModelGroup RemovedModels
+	global Model
 
 	set f $Model(fScrolledGUI)
 	set canvas $Model(canvasScrolledGUI)
@@ -690,26 +664,13 @@ proc ModelsConfigScrolledGUI {} {
 	    # Must use $f.s$m since the scrollbar ("s") fields are tallest
 	    set lastButton $f.s$m
 	    # Find how many modules (lines) in the frame
-	    set numLines 0
-	    foreach m $Model(idList) {
-	    	if {$RemovedModels($m) == 0} {
-	    		incr numLines
-	    	}
-	    }
-	    incr numLines [llength $ModelGroup(idList)]
-	    #set numLines [expr [llength $Model(idList)] + [llength $ModelGroup(idList)]]
+	    set numLines [llength $Model(idList)]
 	    # Find the height of a line
 	    set incr [expr {[winfo reqheight $lastButton] + 2*$pady}]
 	    # Find the total height that should scroll
 	    set height [expr {$numLines * $incr}]
-	    # Find the width of the scrolling region
-	    update; 	# wait for some stuff to be done before requesting
-	    		# window positions
-	    set last_x [winfo x $lastButton]
-	    set width [expr $last_x + [winfo reqwidth $lastButton]]
-	    $canvas config -scrollregion "0 0 $width $height"
+	    $canvas config -scrollregion "0 0 1 $height"
 	    $canvas config -yscrollincrement $incr -confine true
-	    $canvas config -xscrollincrement 1 -confine true
 	}
 }
 
@@ -833,7 +794,6 @@ proc ModelsPropsApply {} {
 		}
 		set n [MainMrmlAddNode Model]
 		set i [$n GetID]
-		$n SetModelID M$i
 		$n SetOpacity          1.0
 		$n SetVisibility       1
 		$n SetClipping         0

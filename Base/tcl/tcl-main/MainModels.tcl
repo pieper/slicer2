@@ -33,7 +33,6 @@
 #   MainModelsCreateGUI
 #   MainModelsPopupCallback
 #   MainModelsDeleteGUI
-#   MainModelsDestroyGUI
 #   MainModelsPopup
 #   MainModelsSetActive
 #   MainModelsSetColor
@@ -72,7 +71,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-		{$Revision: 1.38 $} {$Date: 2001/11/13 20:44:53 $}]
+		{$Revision: 1.39 $} {$Date: 2001/11/13 22:21:48 $}]
 
 	set Model(idNone) -1
 	set Model(activeID) ""
@@ -93,6 +92,7 @@ proc MainModelsInit {} {
 	set Model(scalarLo) 0
 	set Model(scalarHi) 100
 	set Model(desc) ""
+        set Model(activeRenderer) viewRen
 }
 
 #-------------------------------------------------------------------------------
@@ -102,52 +102,25 @@ proc MainModelsInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsUpdateMRML {} {
-	global Model Gui Module Color ModelGroup
-	global Mrml(dataTree)
+	global Model Gui Module Color
 
 	# Build any new models
 	#--------------------------------------------------------
-	
-	set success 0
-	
-	Mrml(dataTree) InitTraversal
-	set node [Mrml(dataTree) GetNextItem]
-	while {$node != ""} {
-		if {[string compare -length 8 $node "ModelRef"] == 0} {
-			set success 1
-			set CurrentModelID [SharedModelLookup [$node GetmodelRefID]]
-			if {$CurrentModelID != -1} {
-				if {[MainModelsCreate $CurrentModelID] > 0} {
-					set Model($CurrentModelID,fly) 0
-					if {[MainModelsRead $CurrentModelID] < 0} {
-						MainMrmlDeleteNodeDuringUpdate Model $CurrentModelID
-					}
-				}
+	foreach m $Model(idList) {
+		if {[MainModelsCreate $m] > 0} {
+
+			# Mark it as not being created on the fly 
+			# since it was added from the Data module or read in from MRML
+			set Model($m,fly) 0
+
+			# Read
+			if {[MainModelsRead $m] < 0} {
+				# failed
+				MainMrmlDeleteNodeDuringUpdate Model $m
 			}
 		}
-		set node [Mrml(dataTree) GetNextItem]
 	}
 
-	if {$success == 0} {
-	# MRML file didn't contain any hierarchies
-		foreach m $Model(idList) {
-			if {[MainModelsCreate $m] > 0} {
-			
-				# Mark it as not being created on the fly 
-				# since it was added from the Data module or read in from MRML
-				set Model($m,fly) 0
-	
-				# Read
-				if {[MainModelsRead $m] < 0} {
-					# failed
-					MainMrmlDeleteNodeDuringUpdate Model $m
-				}
-			}
-		}
-	}
-	
-	set f $Model(fScrolledGUI)
-	
 	# Delete any old models
 	#--------------------------------------------------------
 	foreach m $Model(idListDelete) {
@@ -158,92 +131,40 @@ proc MainModelsUpdateMRML {} {
 		MainModelsSetActive [lindex $Model(idList) 0]
 	}
 
-	# Delete any old model groups
-	#--------------------------------------------------------
-	foreach mg $ModelGroup(idListDelete) {
-		MainModelGroupsDelete $f $mg
-	}
-	
-
 	# Refresh Actor and GUI (in case color changed)
 	#--------------------------------------------------------
 	foreach m $Model(idList) {
+
+	    # save the current active renderer
+	    set activeRenderer $Model(activeRenderer)
+	    foreach rend $Module(Renderers) {
+		set Model(activeRenderer) $rend
 		MainModelsSetClipping $m
 		MainModelsSetColor $m
 		MainModelsSetCulling $m
 		MainModelsSetVisibility $m
 		MainModelsSetScalarVisibility $m
 		MainModelsSetOpacity $m
-	    foreach r $Module(Renderers) {
-		eval Model($m,mapper,$r) SetScalarRange [Model($m,node) GetScalarRange]
+		
+		eval Model($m,mapper,$rend) SetScalarRange [Model($m,node) GetScalarRange]
 	    }
-		# Color slider and colored checkbuttons
-		set c $Model($m,colorID)
-		if {$c != ""} {
-		    # catch is important here, because the GUI variables for
-		    # models may have not been initialized yet
-		    ColorSlider $Gui(wModels).fGrid.s$m [Color($c,node) GetDiffuseColor]
-		    catch {$Model(fScrolledGUI).c$m configure -bg [MakeColorNormalized \
-		    	[Color($c,node) GetDiffuseColor]]}
-		    catch {$Model(fScrolledGUI).c$m configure -selectcolor [MakeColorNormalized \
-		    	[Color($c,node) GetDiffuseColor]]}
-		} else {
-		    ColorSlider $Gui(wModels).fGrid.s$m "0 0 0"
-		    $f.cg$m configure -bg [MakeColorNormalized "0 0 0"]
-		    $f.cg$m configure -selectcolor [MakeColorNormalized "0 0 0"]
-		}
-	}
-	
-	foreach mg $ModelGroup(idList) {
-		# catch is important here, because the GUI variables for
-		# model groups may have not been initialized yet
-		catch {set c $ModelGroup($mg,colorID)}
-		if {$c != ""} {
-			catch {ColorSlider $Model(fScrolledGUI).sg$mg [Color($c,node) GetDiffuseColor]}
-			catch {$Model(fScrolledGUI).cg$mg configure -bg [MakeColorNormalized \
-				[Color($c,node) GetDiffuseColor]]}
-		    	catch {$Model(fScrolledGUI).cg$mg configure -selectcolor [MakeColorNormalized \
-		    		[Color($c,node) GetDiffuseColor]]}
-			
-
-		} else {
-			catch {ColorSlider $Model(fScrolledGUI).sg$mg "0 0 0"}
-			catch {$Model(fScrolledGUI).cg$mg configure -bg [MakeColorNormalized "0 0 0"]}
-		    	catch {$Model(fScrolledGUI).cg$mg configure -selectcolor [MakeColorNormalized "0 0 0"]}
-		}
-		# second parameter "1" means: this group only, doesn't affect
-		# anything that is below in the hierarchy
-		catch {MainModelGroupsSetOpacity $mg 1}
+	    set Model(activeRenderer) $activeRenderer
+		# Color slider
+	    set c $Model($m,colorID)
+	    if {$c != ""} {
+		ColorSlider $Gui(wModels).fGrid.s$m [Color($c,node) GetDiffuseColor]
+	    } else {
+		ColorSlider $Gui(wModels).fGrid.s$m "0 0 0"
+	    }
 	}
 
 	# Form the Active Model menu 
 	#--------------------------------------------------------
-	
 	foreach menu $Model(mActiveList) {
 		$menu delete 0 end
-		
-		set success 0
-		
-		Mrml(dataTree) InitTraversal
-		set node [Mrml(dataTree) GetNextItem]
-		while {$node != ""} {
-			if {[string compare -length 8 $node "ModelRef"] == 0} {
-				set success 1
-				set CurrentModelID [SharedModelLookup [$node GetmodelRefID]]
-				if {$CurrentModelID != -1} {
-					$menu add command -label [Model($CurrentModelID,node) GetName] \
-					-command "MainModelsSetActive $CurrentModelID"
-				}
-			}
-			set node [Mrml(dataTree) GetNextItem]
-		}
-		
-		if {$success == 0} {
-		# MRML file didn't contain hierarchies
-			foreach m $Model(idList) {
-				$menu add command -label [Model($m,node) GetName] \
-					-command "MainModelsSetActive $m"
-			}
+	        foreach m $Model(idList) {
+			$menu add command -label [Model($m,node) GetName] \
+				-command "MainModelsSetActive $m"
 		}
 	}
 
@@ -427,21 +348,13 @@ proc MainModelsRead {m} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsInitGUIVariables {m} {
-	global Model RemovedModels
+	global Model
 
 	set Model($m,visibility)       [Model($m,node) GetVisibility]
 	set Model($m,opacity)          [Model($m,node) GetOpacity]
 	set Model($m,scalarVisibility) [Model($m,node) GetScalarVisibility]
 	set Model($m,backfaceCulling)  [Model($m,node) GetBackfaceCulling]
 	set Model($m,clipping)         [Model($m,node) GetClipping]
-	# set expansion to 1 if variable doesn't exist
-	if {[info exists Model($m,expansion)] == 0} {
-		set Model($m,expansion)	1
-	}
-	# set RemovedModels to 0 if variable doesn't exist
-	if {[info exists RemovedModels($m)] == 0} {
-		set RemovedModels($m) 0
-	}
 }
 
 #-------------------------------------------------------------------------------
@@ -552,10 +465,9 @@ proc MainModelsBuildGUI {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MainModelsCreateGUI {f m {hlevel 0}} {
+proc MainModelsCreateGUI {f m} {
 	global Gui Model Color
 
-		
 	# If the GUI already exists, then just change name.
 	if {[info command $f.c$m] != ""} {
 		$f.c$m config -text "[Model($m,node) GetName]"
@@ -563,23 +475,11 @@ proc MainModelsCreateGUI {f m {hlevel 0}} {
 	}
 
 	# Name / Visible
-	
 	eval {checkbutton $f.c$m \
 		-text [Model($m,node) GetName] -variable Model($m,visibility) \
 		-width 17 -indicatoron 0 \
 		-command "MainModelsSetVisibility $m; Render3D"} $Gui(WCA)
-	$f.c$m configure -bg [MakeColorNormalized \
-			[Color($Model($m,colorID),node) GetDiffuseColor]]
-	$f.c$m configure -selectcolor [MakeColorNormalized \
-			[Color($Model($m,colorID),node) GetDiffuseColor]]
-			
-	# Add a tool tip if the string is too long for the button
-	if {[string length [Model($m,node) GetName]] > [$f.c$m cget -width]} {
-		TooltipAdd $f.c$m [Model($m,node) GetName]
-	}
-	
-	eval {label $f.l1_$m -text "" -width 1} $Gui(WLA)
-	
+
 	# menu
 	eval {menu $f.c$m.men} $Gui(WMA)
 	set men $f.c$m.men
@@ -600,36 +500,25 @@ proc MainModelsCreateGUI {f m {hlevel 0}} {
 	$men add command -label "Delete Model" -command "MainMrmlDeleteNode Model $m; Render3D"
 	$men add command -label "-- Close Menu --" -command "$men unpost"
 	bind $f.c$m <Button-3> "$men post %X %Y"
-	
-	# Opacity	
+
+	# Opacity
 	eval {entry $f.e${m} -textvariable Model($m,opacity) -width 3} $Gui(WEA)
 	bind $f.e${m} <Return> "MainModelsSetOpacity $m; Render3D"
 	bind $f.e${m} <FocusOut> "MainModelsSetOpacity $m; Render3D"
-	eval {scale $f.s${m} -from 0.0 -to 1.0 -length 40 \
+	eval {scale $f.s${m} -from 0.0 -to 1.0 -length 50 \
 		-variable Model($m,opacity) \
 		-command "MainModelsSetOpacityInit $m $f.s$m" \
 		-resolution 0.1} $Gui(WSA) {-sliderlength 14 \
 		-troughcolor [MakeColorNormalized \
 			[Color($Model($m,colorID),node) GetDiffuseColor]]}
-	
+		
+
 	# Clipping
 #	eval {checkbutton $f.cClip${m} -variable Model($m,clipping) \
 	-command "MainModelsSetClipping $m; Render3D"} $Gui(WCA) {-indicatoron 1}
 
 #	grid $f.c${m} $f.e${m} $f.s${m} $f.cClip$m -pady 2 -padx 2
-	
-	set l1_command $f.l1_${m}
-	set c_command $f.c${m}
-	
-	for {set i 0} {$i<[expr $hlevel+1]} {incr i} {
-		lappend l1_command "-"
-	}
-	
-	for {set i 5} {$i>$hlevel} {incr i -1} {
-		lappend c_command "-"
-	}
-	
-	eval grid $l1_command $c_command $f.e${m} $f.s${m} -pady 2 -padx 2 -sticky we
+	grid $f.c${m} $f.e${m} $f.s${m} -pady 2 -padx 2
 
 	return 1
 }
@@ -648,7 +537,7 @@ proc MainModelsPopupCallback {} {
 
 	Model($m,node) SetColor $Label(name)
 	MainModelsSetColor $m
-	MainUpdateMRML
+	MainUpdateMRML	
 }
 
 #-------------------------------------------------------------------------------
@@ -660,7 +549,7 @@ proc MainModelsPopupCallback {} {
 proc MainModelsDeleteGUI {f m} {
 	global Gui Model Color
 
-	# If the GUI is already deleted, return
+	# If the GUI already deleted, return
 	if {[info command $f.c$m] == ""} {
 		return 0
 	}
@@ -669,40 +558,9 @@ proc MainModelsDeleteGUI {f m} {
 	destroy $f.c$m
 	destroy $f.e$m
 	destroy $f.s$m
-	destroy $f.l1_$m
 #	destroy $f.cClip$m
 
 	return 1
-}
-
-#-------------------------------------------------------------------------------
-# .PROC MainModelsDestroyGUI
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc MainModelsDestroyGUI {} {
-	global Mrml(dataTree) Model
-	
-	set f $Model(fScrolledGUI)
-
-	# delete all models in hierarchy tree
-	
-	Mrml(dataTree) InitTraversal
-	set node [Mrml(dataTree) GetNextItem]
-	while {$node != ""} {
-		if {[string compare -length 8 $node "ModelRef"] == 0} {
-			set CurrentModelID [SharedModelLookup [$node GetmodelRefID]]
-			if {$CurrentModelID != -1} {
-				MainModelsDeleteGUI $f $CurrentModelID
-			}
-		}
-		if {[string compare -length 10 $node "ModelGroup"] == 0} {
-			MainModelGroupsDeleteGUI $f [$node GetID]
-		}
-		set node [Mrml(dataTree) GetNextItem]
-	}
-	
 }
 
 #-------------------------------------------------------------------------------
@@ -806,7 +664,6 @@ proc MainModelsSetColor {m {name ""}} {
 	    eval $Model($m,prop,$r) SetColor    [Color($c,node) GetDiffuseColor]
 	}
 }
-
 #-------------------------------------------------------------------------------
 # .PROC MainModelsSetVisibility
 # 
@@ -814,31 +671,22 @@ proc MainModelsSetColor {m {name ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsSetVisibility {model {value ""}} {
-	global Model ModelGroup Module
+	global Model Module
 
     if {[string compare $model "None"] == 0} {
 	foreach m $Model(idList) {
 	    set Model($m,visibility) 0
 	    Model($m,node)  SetVisibility 0
-	    foreach r $Module(Renderers) {
-		Model($m,actor,$r) SetVisibility [Model($m,node) GetVisibility] 
-	    }
-	}
-	foreach mg $ModelGroup(idList) {
-		set ModelGroup($mg,visibility) 0
-		ModelGroup($mg,node) SetVisibility 0
+	    # set the visibility for the chosen screen
+	    Model($m,actor,$Model(activeRenderer)) SetVisibility [Model($m,node) GetVisibility] 
+	    
 	}
     } elseif {[string compare $model "All"] == 0} {
 	foreach m $Model(idList) {
 	    set Model($m,visibility) 1
 	    Model($m,node)  SetVisibility 1
-	    foreach r $Module(Renderers) { 
-		Model($m,actor,$r) SetVisibility [Model($m,node) GetVisibility] 
-	    }
-	}
-	foreach mg $ModelGroup(idList) {
-		set ModelGroup($mg,visibility) 1
-		ModelGroup($mg,node) SetVisibility 1
+		Model($m,actor,$Model(activeRenderer)) SetVisibility [Model($m,node) GetVisibility] 
+
 	}
     } else {
 	if {$model == ""} {return}
@@ -851,9 +699,9 @@ proc MainModelsSetVisibility {model {value ""}} {
 	    set Model($m,visibility) $value
 	}
 	Model($m,node)  SetVisibility $Model($m,visibility)
-        foreach r $Module(Renderers) {
-	    Model($m,actor,$r) SetVisibility [Model($m,node) GetVisibility] 
-	}
+
+	Model($m,actor,$Model(activeRenderer)) SetVisibility [Model($m,node) GetVisibility] 
+	
 	# If this is the active model, update GUI
 	if {$m == $Model(activeID)} {
 	    set Model(visibility) [Model($m,node) GetVisibility]
@@ -970,14 +818,14 @@ proc MainModelsSetOpacity {m {value ""}} {
 	    }
 	}
 	Model($m,node) SetOpacity $Model($m,opacity)
-	$Model($m,prop,viewRen) SetOpacity [Model($m,node) GetOpacity]
+	#set the opacity in the screen chosen by the user
+	$Model($m,prop,$Model(activeRenderer)) SetOpacity [Model($m,node) GetOpacity]
 	
 	# If this is the active model, update GUI
 	if {$m == $Model(activeID)} {
-			set Model(opacity) [Model($m,node) GetOpacity]
+	    set Model(opacity) [Model($m,node) GetOpacity]
 	}
-}
-
+    }
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsSetCulling
@@ -993,10 +841,11 @@ proc MainModelsSetCulling {m {value ""}} {
 	}
 	Model($m,node) SetBackfaceCulling $Model($m,backfaceCulling)
 	
-	foreach r $Module(Renderers) {
-	    $Model($m,prop,$r) SetBackfaceCulling \
-		    [Model($m,node) GetBackfaceCulling]
-	}
+
+	#set the backface culling in the screen chosen by the user
+	$Model($m,prop,$Model(activeRenderer)) SetBackfaceCulling \
+		[Model($m,node) GetBackfaceCulling]
+	
 	
 	# If this is the active model, update GUI
 	if {$m == $Model(activeID)} {
@@ -1018,16 +867,16 @@ proc MainModelsSetScalarVisibility {m {value ""}} {
 		set Model($m,scalarVisibility) $value
 	}
 	Model($m,node) SetScalarVisibility $Model($m,scalarVisibility)
-	foreach r $Module(Renderers) {
-	    Model($m,mapper,$r) SetScalarVisibility \
-		    [Model($m,node) GetScalarVisibility]
-	}
+	
+	Model($m,mapper,$Model(activeRenderer)) SetScalarVisibility \
+		[Model($m,node) GetScalarVisibility]
+	
 	# If this is the active model, update GUI
 	if {$m == $Model(activeID)} {
-			set Model(scalarVisibility) [Model($m,node) GetScalarVisibility]
+	    set Model(scalarVisibility) [Model($m,node) GetScalarVisibility]
 	}
-}
- 
+    }
+    
 proc MainModelsSetScalarRange {m lo hi} {
 	global Model Module
 		
@@ -1236,3 +1085,29 @@ proc MainModelsToggleScalarBar {m} {
 	MainModelsRaiseScalarBar $m
     }    
 }
+
+#-------------------------------------------------------------------------------
+# .PROC MainModelsChangeRenderer
+# 
+# str r the name of the renderer
+# .END
+#-------------------------------------------------------------------------------
+proc MainModelsSetRenderer {r} {
+    
+    global Model
+    
+    set Model(activeRenderer) $r
+    # change the opacity sliders
+    foreach m $Model(idList) {
+	set opacity [$Model($m,prop,$Model(activeRenderer)) GetOpacity]
+	MainModelsSetOpacity $m $opacity
+	set scalarvisibility [Model($m,mapper,$Model(activeRenderer)) GetScalarVisibility] 
+	MainModelsSetScalarVisibility $m $scalarvisibility
+	set backfaceculling [$Model($m,prop,$Model(activeRenderer)) GetBackfaceCulling]
+	MainModelsSetCulling $m $backfaceculling
+	set visibility  [Model($m,actor,$Model(activeRenderer)) GetVisibility]
+	MainModelsSetVisibility $m $visibility
+    }
+}
+
+
