@@ -161,7 +161,7 @@ for {set i 0} {$i < $argc} {incr i} {
                 }
             }
             # add in the compiler info after MainBoot is called
-            set SLICER(versionInfo)  "$execName $argv\n${SLICER(version)} Platform: $tcl_platform(os)"
+            set SLICER(versionInfo)  "$execName $argv\nTimestamp: [clock format [clock seconds] -format "%D-%T-%Z"] Version: ${SLICER(version)} User: $env(USER) Machine: $tcl_platform(machine) Platform: $tcl_platform(os) PlatformVersion: $tcl_platform(osVersion)"
 
         }
         "-*" {
@@ -564,8 +564,8 @@ if { $SLICER(versionInfo) != "" } {
     set compilerVersion [Slicer GetCompilerVersion]
     set compilerName [Slicer GetCompilerName]
     set vtkVersion [Slicer GetVTKVersion]
-    set libVersions "VTK: ${vtkVersion} TCL: ${tcl_patchLevel} TK: ${tk_patchLevel}"
-    set SLICER(versionInfo) "$SLICER(versionInfo) ${compilerName}: $compilerVersion ${libVersions} CVS: [ParseCVSInfo " " {$Id: Go.tcl,v 1.57 2003/05/21 21:26:15 pieper Exp $}] "
+    set libVersions "LibName1: VTK LibVersion1: ${vtkVersion} LibName2: TCL LibVersion2: ${tcl_patchLevel} LibName3: TK LibVersion2: ${tk_patchLevel}"
+    set SLICER(versionInfo) "$SLICER(versionInfo) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.58 2003/05/27 19:59:44 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
