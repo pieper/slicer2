@@ -35,7 +35,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 //  #define LIVEWIRE_TRAINING_EXPERIMENT
 
-#include "vtkImageNeighborhoodFilter.h"
+#include "vtkImageMultipleInputFilter.h"
 
 //BTX
 
@@ -60,11 +60,26 @@ class featureProperties
 
 //ETX
 
-class VTK_EXPORT vtkImageLiveWireEdgeWeights : public vtkImageNeighborhoodFilter
+class VTK_EXPORT vtkImageLiveWireEdgeWeights : public vtkImageMultipleInputFilter
 {
 public:
   static vtkImageLiveWireEdgeWeights *New();
-  vtkTypeMacro(vtkImageLiveWireEdgeWeights,vtkImageNeighborhoodFilter);
+  vtkTypeMacro(vtkImageLiveWireEdgeWeights,vtkImageMultipleInputFilter);
+
+  // Description:
+  // grayscale ImageData for creating edge weight map
+  void SetOriginalImage(vtkImageData *image) {this->SetInput(0,image);}
+  vtkImageData *GetOriginalImage() {return this->GetInput(0);}
+
+  // Description:
+  // colormap with previous (2D) image's contour drawn
+  void SetPreviousContourImage(vtkImageData *image) {this->SetInput(1,image);}
+  vtkImageData *GetPreviousContourImage() {return this->GetInput(1);}
+
+  // Description:
+  // colormap with points of interest marked for training
+  void SetTrainingPointsImage(vtkImageData *image) {this->SetInput(2,image);}
+  vtkImageData *GetTrainingPointsImage() {return this->GetInput(2);}
 
   // Description:
   // Maximum edge weight that this filter will output
@@ -107,6 +122,11 @@ public:
   //vtkSetMacro(NumberOfFeatures, int);
 
   // Description:
+  // Size of neighborhood to compute features in
+  vtkGetMacro(Neighborhood, int);
+  //vtkSetMacro(Neighborhood, int);
+
+  // Description:
   // Set/Gets are for access from tcl
   // Lauren check bounds!!!!!!!!!!
   // Set a parameter used to compute this feature
@@ -127,6 +147,20 @@ public:
   // Get all parameters used to compute the ith feature
   featureProperties *GetFeatureSettings(int f) {return &this->FeatureSettings[f];};
 
+  // Description:
+  // training...
+  vtkSetObjectMacro(TrainingPoints, vtkPoints);
+  vtkGetObjectMacro(TrainingPoints, vtkPoints);
+
+  vtkBooleanMacro(TrainingMode, int);
+  vtkSetMacro(TrainingMode, int);
+  vtkGetMacro(TrainingMode, int);
+
+  // Description:
+  // internal access from Execute: don't call this
+  //vtkGetMacro(TrainingAverages, float*);
+  float *GetTrainingAverages(){return this->TrainingAverages;};
+
 protected:
   vtkImageLiveWireEdgeWeights();
   ~vtkImageLiveWireEdgeWeights();
@@ -142,6 +176,9 @@ protected:
   // Total number of features to compute
   int NumberOfFeatures;
 
+  // Neighborhood to compute features in
+  int Neighborhood;
+
   // Array containing all settings for each feature
   // The intention is to make adding new features simple and general
   featureProperties *FeatureSettings;
@@ -149,7 +186,13 @@ protected:
   // for testing
   char *FileName;
 
-  void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
+  vtkPoints *TrainingPoints;
+  int TrainingMode;
+  float *TrainingAverages;
+
+  void ExecuteInformation(vtkImageData **inputs, vtkImageData *output); 
+
+  void ThreadedExecute(vtkImageData **inDatas, vtkImageData *outData, 
     int extent[6], int id);
 };
 
