@@ -27,6 +27,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <stdlib.h>
 #include "vtkObjectFactory.h"
 #include <iomanip.h>
+#include <time.h>
 
 //------------------------------------------------------------------------------
 vtkImageLiveWireScale* vtkImageLiveWireScale::New()
