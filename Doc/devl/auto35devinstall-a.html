@@ -43,7 +43,7 @@ c:\tcl.
 	      <li>tcl.h
 	      <li>tclDecls.h
 	      <li>tclInt.h
-	      <li>tclIndDecls.h
+	      <li>tclIntDecls.h
 	      <li>tclPort.h
 	    </ul>
 	    
@@ -123,28 +123,27 @@ c:\tcl.
 	      <li>cd to your MSDEV\vc98\bin directory and execute vcvars32.bat to set the environment variables needed by Visual C++
 	      <li>Version without debug information:
 		<ul>
-		    <li>cd to VTK\lib
-		    <li>nmake
-		    <li>...and wait patiently
+		    <li>cd to VTK\lib		    
 		</ul>
 	      <li>Version with debug information:
 		<ul>
 		    <li>cd to VTK\lib\Debug\
-		  <li>nmake
-		  <li>...and wait patiently
 		</ul>
+	      <li>nmake
+	      <li>...and wait patiently. You may need to add double quotes around some makefile paths that contain spaces. 
 	    </ul>
 
 	  <li>Copy DLLs
 	    <ul>
-		<li>Copy all dll files from VTK\lib\lib or
-		VTK\lib\Debug\lib to TCL\bin or add one of these directories to your PATH environment variable
+		<li>Copy all dll files from VTK\lib\lib or VTK\lib\Debug\lib to TCL\bin or add one of these directories to your PATH environment variable.
 	    </ul>
 	</ol>
 
       <li>Running Slicer
 	<ul>
-	  <li>Run SLICER\program\Go.tcl (assuming that .tcl files are associated with wish.exe)
+	<li>You must delete or rename the file SLICER\program\tcl-main\MainTensor.tcl as that module does not work under Windows. You must change it's extension to not be .tcl if you rename it, otherwise an attempt will be made upon start up to load it.
+	<li>set SLICER_HOME=SLICER
+	<li>Run SLICER\program\Go.tcl (assuming that .tcl files are associated with the wish.exe in the TCL\bin directory in which you placed the Slicer DLLs.)
 	</ul>
 
       <li>If you modify some of the source files
