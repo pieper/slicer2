@@ -55,8 +55,8 @@ public:
 
   // Description:
   // ID of the referenced model
-  vtkSetStringMacro(modelRefID);
-  vtkGetStringMacro(modelRefID);
+  vtkSetStringMacro(ModelRefID);
+  vtkGetStringMacro(ModelRefID);
 
  
 protected:
@@ -66,7 +66,7 @@ protected:
   void operator=(const vtkMrmlModelRefNode&) {};
 
   // Strings
-  char *modelRefID;
+  char *ModelRefID;
 
 };
 

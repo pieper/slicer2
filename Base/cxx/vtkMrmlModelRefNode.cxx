@@ -45,16 +45,16 @@ vtkMrmlModelRefNode* vtkMrmlModelRefNode::New()
 vtkMrmlModelRefNode::vtkMrmlModelRefNode()
 {
   // Strings
-  this->modelRefID = NULL;
+  this->ModelRefID = NULL;
 }
 
 //----------------------------------------------------------------------------
 vtkMrmlModelRefNode::~vtkMrmlModelRefNode()
 {
-  if (this->modelRefID)
+  if (this->ModelRefID)
   {
-    delete [] this->modelRefID;
-    this->modelRefID = NULL;
+    delete [] this->ModelRefID;
+    this->ModelRefID = NULL;
   }
 }
 
@@ -68,9 +68,9 @@ void vtkMrmlModelRefNode::Write(ofstream& of, int nIndent)
   of << i1 << "<ModelRef";
 
   // Strings
-  if (this->modelRefID && strcmp(this->modelRefID, "")) 
+  if (this->ModelRefID && strcmp(this->ModelRefID, "")) 
   {
-    of << " modelRefID='" << this->modelRefID << "'";
+    of << " ModelRefID='" << this->ModelRefID << "'";
   }
   
   of << "></ModelRef>\n";;
@@ -85,7 +85,7 @@ void vtkMrmlModelRefNode::Copy(vtkMrmlNode *anode)
   vtkMrmlModelRefNode *node = (vtkMrmlModelRefNode *) anode;
 
   // Strings
-  this->SetmodelRefID(node->modelRefID);
+  this->SetModelRefID(node->ModelRefID);
   
 }
 
@@ -96,6 +96,6 @@ void vtkMrmlModelRefNode::PrintSelf(ostream& os, vtkIndent indent)
   
   vtkMrmlNode::PrintSelf(os,indent);
 
-  os << indent << "modelRefID: " <<
-    (this->modelRefID ? this->modelRefID : "(none)") << "\n";  
+  os << indent << "ModelRefID: " <<
+    (this->ModelRefID ? this->ModelRefID : "(none)") << "\n";  
 }
