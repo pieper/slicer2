@@ -75,7 +75,7 @@ proc DataInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.22 $} {$Date: 2000/02/28 17:56:15 $}]
+		{$Revision: 1.23 $} {$Date: 2000/03/05 22:19:28 $}]
 
 	set Data(index) ""
 	set Data(clipboard) ""
@@ -679,16 +679,33 @@ proc DataAddModel {} {
 # .END
 #-------------------------------------------------------------------------------
 proc DataAddMatrix {} {
-	global Matrix Module
+    global Data Matrix Mrml
 
-	if {[IsModule Matrices] == 1} {
-		set Matrix(propertyType) Basic
-		MatricesSetPropertyType
-		MainMatricesSetActive NEW
-		set Matrix(freeze) 1
-		Tab Matrices row1 Props
-		set Module(freezer) "Data row1 List"
-	}
+    # Check that the matrix is being added after another matrix or transform
+    set selection [$Data(fNodeList) curselection]
+    if {$selection == ""} {
+	tk_messageBox -message "Select a Transform to add the Matrix to."
+	return
+    }
+    set lastSel [Mrml(dataTree) GetNthItem [lindex $selection end]]    
+    set class [$lastSel GetClassName]
+    if {$class != "vtkMrmlTransformNode" && $class != "vtkMrmlMatrixNode"} {
+	tk_messageBox -message "Select a Transform to add the Matrix to."
+	return
+    }
+    
+    set i $Matrix(nextID)
+    incr Matrix(nextID)
+    lappend Matrix(idList) $i
+    vtkMrmlMatrixNode Matrix($i,node)
+    set n Matrix($i,node)
+    $n SetID $i
+    $n SetName matrix$i
+    Mrml(dataTree) InsertAfterItem $lastSel $n
+
+    MainMatricesSetActive $i
+
+    MainUpdateMRML    
 }
 
 #-------------------------------------------------------------------------------
@@ -698,12 +715,9 @@ proc DataAddMatrix {} {
 # .END
 #-------------------------------------------------------------------------------
 proc DataAddTransform {} {
-    global Transform Matrix EndTransform Data
+    global Transform Matrix EndTransform Data Mrml
 
     # Add Transform, Matrix, EndTransform
-
-    # Lauren fix this (vtk function to paste before since 1st sel can be 1st node)
-    
     # Transform will enclose selected nodes
     set selection [$Data(fNodeList) curselection]
 
@@ -711,17 +725,13 @@ proc DataAddTransform {} {
     set numTrans [DataCountTransforms $selection]
     
     # Empty list, no selection, or partial transform in selection: put Transform at end	
-    if {[$Data(fNodeList) index end] == 0 || $selection == "" || [lindex $selection 0] == 0 || $numTrans != 0} {
+    if {[$Data(fNodeList) index end] == 0 || $selection == "" || $numTrans != 0} {
 	set append 1
     } else {
 	set append 0
-	# Paste before first selected node: fix if it is the first node
-	set firstSel [Mrml(dataTree) GetNthItem [expr [lindex $selection 0] - 1]]
-	set last [expr [llength $selection] - 1]
-	set lastSel [Mrml(dataTree) GetNthItem [lindex $selection $last]]
-	puts "$firstSel $lastSel"
+	set firstSel [Mrml(dataTree) GetNthItem [lindex $selection 0]]
+	set lastSel [Mrml(dataTree) GetNthItem [lindex $selection end]]
     }
-    
     
     # Transform
     set i $Transform(nextID)
@@ -733,10 +743,8 @@ proc DataAddTransform {} {
     if {$append == 1} {
 	Mrml(dataTree) AddItem $n
     } else {
-	Mrml(dataTree) InsertAfterItem $firstSel $n
+	Mrml(dataTree) InsertBeforeItem $firstSel $n
     }
-# for now: later, use InsertBefore for matrix and don't need to save transform
-    set t $n
 
     # Matrix
     set i $Matrix(nextID)
@@ -745,9 +753,12 @@ proc DataAddTransform {} {
     vtkMrmlMatrixNode Matrix($i,node)
     set n Matrix($i,node)
     $n SetID $i
-    $n SetName manual
-# for now: later, use InsertBefore.
-    Mrml(dataTree) InsertAfterItem $t $n
+    $n SetName matrix$i
+    if {$append == 1} {
+	Mrml(dataTree) AddItem $n
+    } else {
+	Mrml(dataTree) InsertBeforeItem $firstSel $n
+    }
     MainMatricesSetActive $i
 
     # EndTransform
@@ -764,7 +775,6 @@ proc DataAddTransform {} {
     }
 
     MainUpdateMRML
-
 }
 
 
