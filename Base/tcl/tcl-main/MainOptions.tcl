@@ -42,21 +42,21 @@
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsInit {} {
-	global Module Option Preset
+	global Module Options Preset
 
 	lappend Module(procVTK)  MainOptionsBuildVTK
 
 	# Append widgets to list that gets refreshed during UpdateMRML
-	set Option(mbActiveList) ""
-	set Option(mActiveList)  ""
+	set Options(mbActiveList) ""
+	set Options(mActiveList)  ""
 
-	set Option(activeID) ""
-	set Option(freeze) ""
+	set Options(activeID) ""
+	set Options(freeze) ""
 
 	# Props
-	set Option(program) "slicer"
-	set Option(contents) ""
-#	set Option(options) ""
+	set Options(program) "slicer"
+	set Options(contents) ""
+#	set Options(options) ""
 
 	foreach p "0 1 2 3" {
 		set Preset($p,state) Release
@@ -68,11 +68,11 @@ proc MainOptionsInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsUpdateMRML {} {
-	global Option
+	global Options
 
 	# Build any new nodes
 	#--------------------------------------------------------
-	foreach t $Option(idList) {
+	foreach t $Options(idList) {
 		if {[MainOptionsCreate $t] == 1} {
 			# Success
 		}
@@ -80,28 +80,28 @@ proc MainOptionsUpdateMRML {} {
 
 	# Delete any old nodes
 	#--------------------------------------------------------
-	foreach t $Option(idListDelete) {
+	foreach t $Options(idListDelete) {
 		if {[MainOptionsDelete $t] == 1} {
 			# Success
 		}
 	}
 	# Did we delete the active node?
-	if {[lsearch $Option(idList) $Option(activeID)] == -1} {
-		MainOptionsSetActive [lindex $Option(idList) 0]
+	if {[lsearch $Options(idList) $Options(activeID)] == -1} {
+		MainOptionsSetActive [lindex $Options(idList) 0]
 	}
 
 	# Form the menu
 	#--------------------------------------------------------
-	foreach m $Option(mActiveList) {
+	foreach m $Options(mActiveList) {
 		$m delete 0 end
-		foreach t $Option(idList) {
-			$m add command -label [Option($t,node) GetContents] \
+		foreach t $Options(idList) {
+			$m add command -label [Options($t,node) GetContents] \
 				-command "MainOptionsSetActive $t"
 		}
 	}
 
 	# In case we changed the name of the active transform
-	MainOptionsSetActive $Option(activeID)
+	MainOptionsSetActive $Options(activeID)
 }
 
 #-------------------------------------------------------------------------------
@@ -109,7 +109,7 @@ proc MainOptionsUpdateMRML {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsBuildVTK {} {
-	global Option
+	global Options
 
 }
 
@@ -126,10 +126,10 @@ proc MainOptionsCreate {t} {
 	global View Matrix Gui Dag Lut
 
 	# If we've already built this volume, then do nothing
-	if {[info exists Option($t,created)] == 1} {
+	if {[info exists Options($t,created)] == 1} {
 		return 0
 	}
-	set Option($t,created) 1
+	set Options($t,created) 1
 
 	return 1
 }
@@ -144,19 +144,19 @@ proc MainOptionsCreate {t} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsDelete {t} {
-	global Option
+	global Options
 
 	# If we've already deleted this transform, then return 0
-	if {[info exists Option($t,created)] == 0} {
+	if {[info exists Options($t,created)] == 0} {
 		return 0
 	}
 
 	# Delete VTK objects (and remove commands from TCL namespace)
 
-	# Delete all TCL variables of the form: Option($t,<whatever>)
+	# Delete all TCL variables of the form: Options($t,<whatever>)
 	foreach name [array names Matrix] {
 		if {[string first "$t," $name] == 0} {
-			unset Option($name)
+			unset Options($name)
 		}
 	}
 
@@ -169,39 +169,39 @@ proc MainOptionsDelete {t} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsSetActive {t} {
-	global Option
+	global Options
 
-	if {$Option(freeze) == 1} {return}
+	if {$Options(freeze) == 1} {return}
 	
 	# Set activeID to t
-	set Option(activeID) $t
+	set Options(activeID) $t
 
 	if {$t == ""} {
 		# Change button text
-		foreach mb $Option(mbActiveList) {
+		foreach mb $Options(mbActiveList) {
 			$mb config -text None
 		}
 		return
 	} elseif {$t == "NEW"} {
 		# Change button text
-		foreach mb $Option(mbActiveList) {
+		foreach mb $Options(mbActiveList) {
 			$mb config -text "NEW"
 		}
 		# Use defaults to update GUI
 		vtkMrmlMatrixNode default
-		set Option(program)  "slicer"
-		set Option(contents) "presets"
-#		set Option(options)  ""
+		set Options(program)  "slicer"
+		set Options(contents) "presets"
+#		set Options(options)  ""
 		default Delete
 	} else {
 		# Change button text
-		foreach mb $Option(mbActiveList) {
-			$mb config -text [Option($t,node) GetContents]
+		foreach mb $Options(mbActiveList) {
+			$mb config -text [Options($t,node) GetContents]
 		}
 		# Update GUI
-		set Option(program)  [Option($t,node) GetProgram]
-		set Option(contents) [Option($t,node) GetContents]
-#		set Option(options)  [Option($t,node) GetOptions]
+		set Options(program)  [Options($t,node) GetProgram]
+		set Options(contents) [Options($t,node) GetContents]
+#		set Options(options)  [Options($t,node) GetOptions]
 	}
 }
 
@@ -247,7 +247,7 @@ proc MainOptionsParseDefaults {m} {
 }
 
 proc MainOptionsUnparsePresets {} {
-	global Preset Mrml Option Module Model
+	global Preset Mrml Options Module Model
 	
 	# Store current settings as preset #0
 	set Preset(0,state) Press
@@ -320,11 +320,11 @@ proc MainOptionsUnparsePresets {} {
 
 	if {$found == 0} {
 		# Create a node
-		set i $Option(nextID)
-		incr Option(nextID)
-		lappend Option(idList) $i
-		vtkMrmlOptionsNode Option($i,node)
-		set n Option($i,node)
+		set i $Options(nextID)
+		incr Options(nextID)
+		lappend Options(idList) $i
+		vtkMrmlOptionsNode Options($i,node)
+		set n Options($i,node)
 		$n SetID           $i
 		$n SetOptions $options
 		$n SetProgram slicer
@@ -346,7 +346,7 @@ proc MainOptionsPreset {p state} {
 }
 
 proc MainOptionsPresetCallback {p} {
-	global View Target Gui Preset Slice Locator Anno Model Option Module
+	global View Target Gui Preset Slice Locator Anno Model Options Module
 
 	if {$Preset($p,state) == "Press"} {
 		

@@ -72,10 +72,10 @@ proc MainMrmlInit {} {
 proc MainMrmlInitIdLists {} {
 	global Mrml
 	global Model Volume Color Transform EndTransform Matrix
-	global TransferFunction WindowLevel TFPoint ColorLUT Option
+	global TransferFunction WindowLevel TFPoint ColorLUT Options
 
 	foreach node "Color Model Volume Transform EndTransform Matrix \
-		TransferFunction WindowLevel TFPoint ColorLUT Option" {
+		TransferFunction WindowLevel TFPoint ColorLUT Options" {
 		set ${node}(nextID) 0
 		set ${node}(idList) ""
 		set ${node}(idListDelete) ""
@@ -119,12 +119,32 @@ proc MainMrmlDumpTree {type} {
 #-------------------------------------------------------------------------------
 proc MainMrmlClearList {} {
 	global Model Volume Color Transform EndTransform Matrix
-	global TransferFunction WindowLevel TFPoint ColorLUT Option
+	global TransferFunction WindowLevel TFPoint ColorLUT Options
 
 	foreach node "Color Model Volume Transform EndTransform Matrix \
-		TransferFunction WindowLevel TFPoint ColorLUT Option" {
+		TransferFunction WindowLevel TFPoint ColorLUT Options" {
 		set ${node}(idListDelete) ""
 	}
+}
+
+proc MainMrmlAddNode {nodeType} {
+	global Mrml Model Volume Color Transform EndTransform Matrix Options
+	global TransferFunction WindowLevel TFPoint ColorLUT 
+
+	upvar $nodeType Array
+
+	set tree "dataTree"
+	if {$nodeType == "Color"} {
+		set tree "colorTree"
+	}
+
+	set i $Array(nextID)
+	incr Array(nextID)
+	lappend Array(idList) $i
+	vtkMrml${nodeType}Node ${nodeType}($i,node)
+	${nodeType}($i,node) SetID $i
+
+	return ${nodeType}($i,node)
 }
 
 #-------------------------------------------------------------------------------
@@ -133,7 +153,7 @@ proc MainMrmlClearList {} {
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteNodeDuringUpdate {nodeType id} {
 	global Mrml Model Volume Color Transform EndTransform Matrix
-	global TransferFunction WindowLevel TFPoint ColorLUT Option
+	global TransferFunction WindowLevel TFPoint ColorLUT Options
 
 	upvar $nodeType Array
 
@@ -159,7 +179,7 @@ proc MainMrmlDeleteNodeDuringUpdate {nodeType id} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteNode {nodeType id} {
-	global Mrml Model Volume Color Transform EndTransform Matrix Option
+	global Mrml Model Volume Color Transform EndTransform Matrix Options
 	global TransferFunction WindowLevel TFPoint ColorLUT 
 
 	upvar $nodeType Array
@@ -192,7 +212,7 @@ proc MainMrmlDeleteNode {nodeType id} {
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteAll {} {
 	global Mrml Model Volume Color Transform EndTransform Matrix
-	global TransferFunction WindowLevel TFPoint ColorLUT Option
+	global TransferFunction WindowLevel TFPoint ColorLUT Options
 
 	# Volumes are a special case because the "None" always exists
 	foreach id $Volume(idList) {
@@ -213,7 +233,7 @@ proc MainMrmlDeleteAll {} {
 
 	# dataTree
 	foreach node "Model Transform EndTransform Matrix \
-		TransferFunction WindowLevel TFPoint ColorLUT Option" {
+		TransferFunction WindowLevel TFPoint ColorLUT Options" {
 		upvar 0 $node Array
 
 		foreach id $Array(idList) {
@@ -373,30 +393,6 @@ proc MainMrmlRead {mrmlFile} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MainMrmlReadVersion1.0
-# .END
-#-------------------------------------------------------------------------------
-proc MainMrmlReadVersion1.0 {fileName} {
-	global Lut Dag Volume Model Config Color Gui Mrml env Transform
-
-	# Read file
-	if {$fileName == ""} {
-		set Dag(read) [MRMLCreateDag]
-	} else {
-		set Dag(read) [MRMLRead $fileName]
-		if {$Dag(read) == "-1"} {
-			tk_messageBox -message "Error reading MRML file: '$fileName'\n\
-				See message written in console." 
-			return
-		}
-	}
-
-	# Expand URLs
-	set Dag(expanded) [MRMLExpandUrls $Dag(read) $Mrml(dir)]
-}
-
-
-#-------------------------------------------------------------------------------
 # .PROC MainMrmlReadVersion2.0
 # .END
 #-------------------------------------------------------------------------------
@@ -504,230 +500,13 @@ proc MainMrmlReadVersion2.0 {fileName} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MainMrmlAddColors
-# .END
-#-------------------------------------------------------------------------------
-proc MainMrmlAddColors {tags} {
-
-	# If there are no Color nodes, then read, and append default colors.
-	# Return a new list of tags, possibly including default colors.
-
-	set colors 0
-	foreach pair $tags {
-		set tag  [lindex $pair 0]
-		if {$tag == "Color"} {
-			set colors 1
-		}
-	}
-	if {$colors == 1} {return $tags}
-	
-	set fileName [ExpandPath Colors.xml]
-	set tagsColors [MainMrmlReadVersion2.0 $fileName]
-	if {$tagsColors == 0} {
-		set msg "Unable to read file default MRML color file '$fileName'"
-		puts $msg
-		tk_messageBox -message $msg
-		return $tags
-	}
-
-	return "$tags $tagsColors"
-}
-
-#-------------------------------------------------------------------------------
-# .PROC MainMrmlBuildTreesVersion1.0
-# .END
-#-------------------------------------------------------------------------------
-proc MainMrmlBuildTreesVersion1.0 {} {
-	global Dag Color Model Volume Transform EndTransform Matrix Path
-	
-	set level 0
-	set transformCount($level) 0
-	set dag $Dag(expanded)
-	set num [MRMLGetNumNodes $dag]
-
-	for {set j 0} {$j < $num} {incr j} {
-		set node [MRMLGetNode $dag $j]
-		set type [MRMLGetNodeType $node]
-		switch $type {
-		
-		"Separator" {
-			# Increment the separator level.
-			# Initialize the counter of transforms inside this separator.
-			# Add a Transform node.
-			
-			incr level
-			set transformCount($level) 0
-
-			set i $Transform(nextID)
-			incr Transform(nextID)
-			vtkMrmlTransformNode Transform($i,node)
-			Mrml(dataTree) AddItem Transform($i,node)
-		}
-		
-		"End" {
-			# For each transform inside this separator, add an EndTransform node.
-			# Also add an EndTransform node for this separator itself.
-
-			for {set c 0} {$c < $transformCount($level)} {incr c} {
-				set i $EndTransform(nextID)
-				incr EndTransform(nextID)
-				vtkMrmlEndTransformNode EndTransform($i,node)
-				Mrml(dataTree) AddItem EndTransform($i,node)
-			}
-			set level [expr $level - 1]
-
-			set i $EndTransform(nextID)
-			incr EndTransform(nextID)
-			vtkMrmlEndTransformNode EndTransform($i,node)
-			Mrml(dataTree) AddItem EndTransform($i,node)
-		}
-		
-		"Transform" {
-			# Increment the count of transforms inside the current separator.
-			# Add a Transform node and a Matrix node.
-			
-			incr transformCount($level)
-
-			set i $Transform(nextID)
-			incr Transform(nextID)
-			vtkMrmlTransformNode Transform($i,node)
-			Mrml(dataTree) AddItem Transform($i,node)
-
-			set i $Matrix(nextID)
-			incr Matrix(nextID)
-			lappend Matrix(idList) $i
-			vtkMrmlMatrixNode Matrix($i,node)
-			set n Matrix($i,node)
-			$n SetID           $i
-			$n SetDescription  [MRMLGetValue $node desc]
-			$n SetName         [MRMLGetValue $node name]
-			$n SetMatrix       [MRMLGetValue $node matrix]
-			eval $n Scale      [MRMLGetValue $node scale]
-			$n RotateX         [MRMLGetValue $node rotateX]
-			$n RotateY         [MRMLGetValue $node rotateY]
-			$n RotateZ         [MRMLGetValue $node rotateZ]
-			eval $n Translate  [MRMLGetValue $node translate]
-			Mrml(dataTree) AddItem $n
-		}
-
-		"Color" {
-			set i $Color(nextID)
-			incr Color(nextID)
-			lappend Color(idList) $i
-			vtkMrmlColorNode Color($i,node)
-			set n Color($i,node)
-			$n SetID           $i
-			$n SetDescription  ""
-			$n SetName         [MRMLGetValue $node name]
-			$n SetAmbient      [MRMLGetValue $node ambient]
-			$n SetDiffuse      [MRMLGetValue $node diffuse]
-			$n SetSpecular     [MRMLGetValue $node specular]
-			$n SetPower        [MRMLGetValue $node power]
-			$n SetLabels       [MRMLGetValue $node labels]
-			eval $n SetDiffuseColor [MRMLGetValue $node diffuseColor]
-
-			Mrml(colorTree) AddItem $n
-		}
-		
-		"Model" {
-			set i $Model(nextID)
-			incr Model(nextID)
-			lappend Model(idList) $i
-			vtkMrmlModelNode Model($i,node)
-			set n Model($i,node)
-			$n SetID               $i
-			$n SetDescription      [MRMLGetValue $node desc]
-			$n SetName             [MRMLGetValue $node name]
-			$n SetFileName         [MRMLGetValue $node fileName]
-			$n SetFullFileName     [MRMLGetValue $node fileName]
-			$n SetColor            [MRMLGetValue $node colorName]
-			$n SetOpacity          [MRMLGetValue $node opacity]
-			$n SetVisibility       [MRMLGetValue $node visibility]
-			$n SetClipping         [MRMLGetValue $node clipping]
-			$n SetBackfaceCulling  [MRMLGetValue $node backfaceCulling]
-			$n SetScalarVisibility [MRMLGetValue $node scalarVisibility]
-			eval $n SetScalarRange [MRMLGetValue $node scalarRange]
-
-			Mrml(dataTree) AddItem $n
-		}
-		
-		"Volume" {
-			set i $Volume(nextID)
-			incr Volume(nextID)
-			lappend Volume(idList) $i
-			vtkMrmlVolumeNode Volume($i,node)
-			set n Volume($i,node)
-			$n SetID               $i
-			$n SetDescription      [MRMLGetValue $node desc]
-			$n SetName             [MRMLGetValue $node name]
-			eval $n SetImageRange  [MRMLGetValue $node imageRange]
-			eval $n SetDimensions  [MRMLGetValue $node dimensions]
-			eval $n SetSpacing     [MRMLGetValue $node spacing]
-			$n SetScalarTypeTo[MRMLGetValue $node scalarType]
-			$n SetNumScalars       [MRMLGetValue $node numScalars]
-			$n SetLittleEndian     [MRMLGetValue $node littleEndian]
-			$n SetTilt             [MRMLGetValue $node tilt]
-			$n SetRasToIjkMatrix   [MRMLGetValue $node rasToIjkMatrix]
-			$n SetRasToVtkMatrix   [MRMLGetValue $node rasToVtkMatrix]
-			$n UseRasToVtkMatrixOn
-			$n SetFilePattern      [MRMLGetValue $node filePattern]
-			$n SetFilePrefix       [MRMLGetValue $node filePrefix]
-			$n SetFullPrefix       [MRMLGetValue $node filePrefix]
-			$n SetWindow           [MRMLGetValue $node window]
-			$n SetLevel            [MRMLGetValue $node level]
-			$n SetAutoWindowLevel  [MRMLGetValue $node autoWindowLevel]
-			puts "auto=[$n GetAutoWindowLevel]"
-			$n SetLabelMap         [MRMLGetValue $node labelMap]
-			$n SetScanOrder        [MRMLGetValue $node scanOrder]
-
-			# Don't interpolate label maps
-			if {[MRMLGetValue $node labelMap] == 1} {
-				$n SetInterpolate [MRMLGetValue $node interpolate]
-			}
-
-			# Options NOT CURRENTLY SUPPORTED
-#			set program [lindex [MRMLGetValue $node options] 0]
-#			set options [lrange [MRMLGetValue $node options] 1 end]
-#			if {$program == "slicer"} {
-#				# Parse options in format: key1 value1 key2 value2 ...
-#				# Verify that options exist in the list of defaults.
-#				foreach {key value} $options {
-#					set $key $value
-#				}
-#			}
-#			$n SetLUTName        [MRMLGetValue $node lutID]
-#			$n SetUpperThreshold [MRMLGetValue $node showAbove]
-#			$n SetLowerThreshold [MRMLGetValue $node showBelow]
-#			$n SetInterpolate    [MRMLGetValue $node interpolate]
-#			if {[MRMLGetValue $node autoThreshold] == 1} {
-#				$n AutoThresholdOn
-#			} else {
-#				$n AutoThresholdOff
-#			}
-
-			Mrml(dataTree) AddItem $n
-		}
-		}
-	}
-
-	# Add EndTransforms for each transform at the base level
-	# (outside all separators)
-	for {set c 0} {$c < $transformCount($level)} {incr c} {
-		set i $EndTransform(nextID)
-		incr EndTransform(nextID)
-		vtkMrmlEndTransformNode EndTransform($i,node)
-		Mrml(dataTree) AddItem EndTransform($i,node)
-	}
-}
-
-#-------------------------------------------------------------------------------
 # .PROC MainMrmlBuildTreesVersion2.0
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlBuildTreesVersion2.0 {tags} {
 	global Mrml
 	global Model Volume Color Transform EndTransform Matrix
-	global TransferFunction WindowLevel TFPoint ColorLUT Option
+	global TransferFunction WindowLevel TFPoint ColorLUT Options
 	
 	foreach pair $tags {
 		set tag  [lindex $pair 0]
@@ -736,28 +515,17 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 		switch $tag {
 		
 		"Transform" {
-			set i $Transform(nextID)
-			incr Transform(nextID)
-			lappend Transform(idList) $i
-			vtkMrmlTransformNode Transform($i,node)
-			Mrml(dataTree) AddItem Transform($i,node)
+			set n [MainMrmlAddNode Transform]
+			Mrml(dataTree) AddItem $n
 		}
 		
 		"EndTransform" {
-			set i $EndTransform(nextID)
-			incr EndTransform(nextID)
-			lappend EndTransform(idList) $i
-			vtkMrmlEndTransformNode EndTransform($i,node)
-			Mrml(dataTree) AddItem EndTransform($i,node)
+			set n [MainMrmlAddNode EndTransform]
+			Mrml(dataTree) AddItem $n
 		}
 		
 		"Matrix" {
-			set i $Matrix(nextID)
-			incr Matrix(nextID)
-			lappend Matrix(idList) $i
-			vtkMrmlMatrixNode Matrix($i,node)
-			set n Matrix($i,node)
-			$n SetID           $i
+			set n [MainMrmlAddNode Matrix]
 			foreach a $attr {
 				set key [lindex $a 0]
 				set val [lreplace $a 0 0]
@@ -771,12 +539,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 		}
 
 		"Color" {
-			set i $Color(nextID)
-			incr Color(nextID)
-			lappend Color(idList) $i
-			vtkMrmlColorNode Color($i,node)
-			set n Color($i,node)
-			$n SetID           $i
+			set n [MainMrmlAddNode Color]
 			foreach a $attr {
 				set key [lindex $a 0]
 				set val [lreplace $a 0 0]
@@ -795,12 +558,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 		}
 		
 		"Model" {
-			set i $Model(nextID)
-			incr Model(nextID)
-			lappend Model(idList) $i
-			vtkMrmlModelNode Model($i,node)
-			set n Model($i,node)
-			$n SetID               $i
+			set n [MainMrmlAddNode Model]
 			foreach a $attr {
 				set key [lindex $a 0]
 				set val [lreplace $a 0 0]
@@ -849,12 +607,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 		}
 		
 		"Volume" {
-			set i $Volume(nextID)
-			incr Volume(nextID)
-			lappend Volume(idList) $i
-			vtkMrmlVolumeNode Volume($i,node)
-			set n Volume($i,node)
-			$n SetID     $i 
+			set n [MainMrmlAddNode Volume]
 			foreach a $attr {
 				set key [lindex $a 0]
 				set val [lreplace $a 0 0]
@@ -912,17 +665,11 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 		}
 
 		"Options" {
-		    set i $Option(nextID)
-		    incr Option(nextID)
-		    lappend Option(idList) $i
-		    vtkMrmlOptionsNode Option($i,node)
-		    set n Option($i,node)
-		    $n SetID           $i
-
+			set n [MainMrmlAddNode Options]
 		    foreach a $attr {
 				set key [lindex $a 0]
 				set val [lreplace $a 0 0]
-				set Option($key) $val
+				set Options($key) $val
 				switch $key {
 					"options"      {$n SetOptions $val}
 					"program"      {$n SetProgram $val}
@@ -939,6 +686,216 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 
 	    }
 	}
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlReadVersion1.0
+# .END
+#-------------------------------------------------------------------------------
+proc MainMrmlReadVersion1.0 {fileName} {
+	global Lut Dag Volume Model Config Color Gui Mrml env Transform
+
+	# Read file
+	if {$fileName == ""} {
+		set Dag(read) [MRMLCreateDag]
+	} else {
+		set Dag(read) [MRMLRead $fileName]
+		if {$Dag(read) == "-1"} {
+			tk_messageBox -message "Error reading MRML file: '$fileName'\n\
+				See message written in console." 
+			return
+		}
+	}
+
+	# Expand URLs
+	set Dag(expanded) [MRMLExpandUrls $Dag(read) $Mrml(dir)]
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlBuildTreesVersion1.0
+# .END
+#-------------------------------------------------------------------------------
+proc MainMrmlBuildTreesVersion1.0 {} {
+	global Dag Color Model Volume Transform EndTransform Matrix Path
+	
+	set level 0
+	set transformCount($level) 0
+	set dag $Dag(expanded)
+	set num [MRMLGetNumNodes $dag]
+
+	for {set j 0} {$j < $num} {incr j} {
+		set node [MRMLGetNode $dag $j]
+		set type [MRMLGetNodeType $node]
+		switch $type {
+		
+		"Separator" {
+			# Increment the separator level.
+			# Initialize the counter of transforms inside this separator.
+			# Add a Transform node.
+			
+			incr level
+			set transformCount($level) 0
+
+			set n [MainMrmlAddNode Transform]
+			Mrml(dataTree) AddItem $n
+		}
+		
+		"End" {
+			# For each transform inside this separator, add an EndTransform node.
+			# Also add an EndTransform node for this separator itself.
+
+			for {set c 0} {$c < $transformCount($level)} {incr c} {
+				set n [MainMrmlAddNode EndTransform]
+				Mrml(dataTree) AddItem $n
+			}
+			set level [expr $level - 1]
+
+			set n [MainMrmlAddNode EndTransform]
+			Mrml(dataTree) AddItem $n
+		}
+		
+		"Transform" {
+			# Increment the count of transforms inside the current separator.
+			# Add a Transform node and a Matrix node.
+			
+			incr transformCount($level)
+
+			set n [MainMrmlAddNode Transform]
+			Mrml(dataTree) AddItem $n
+
+			set n [MainMrmlAddNode Matrix]
+			$n SetDescription  [MRMLGetValue $node desc]
+			$n SetName         [MRMLGetValue $node name]
+			$n SetMatrix       [MRMLGetValue $node matrix]
+			eval $n Scale      [MRMLGetValue $node scale]
+			$n RotateX         [MRMLGetValue $node rotateX]
+			$n RotateY         [MRMLGetValue $node rotateY]
+			$n RotateZ         [MRMLGetValue $node rotateZ]
+			eval $n Translate  [MRMLGetValue $node translate]
+			Mrml(dataTree) AddItem $n
+		}
+
+		"Color" {
+			set n [MainMrmlAddNode Color]
+			$n SetDescription  ""
+			$n SetName         [MRMLGetValue $node name]
+			$n SetAmbient      [MRMLGetValue $node ambient]
+			$n SetDiffuse      [MRMLGetValue $node diffuse]
+			$n SetSpecular     [MRMLGetValue $node specular]
+			$n SetPower        [MRMLGetValue $node power]
+			$n SetLabels       [MRMLGetValue $node labels]
+			eval $n SetDiffuseColor [MRMLGetValue $node diffuseColor]
+
+			Mrml(colorTree) AddItem $n
+		}
+		
+		"Model" {
+			set n [MainMrmlAddNode Model]
+			$n SetDescription      [MRMLGetValue $node desc]
+			$n SetName             [MRMLGetValue $node name]
+			$n SetFileName         [MRMLGetValue $node fileName]
+			$n SetFullFileName     [MRMLGetValue $node fileName]
+			$n SetColor            [MRMLGetValue $node colorName]
+			$n SetOpacity          [MRMLGetValue $node opacity]
+			$n SetVisibility       [MRMLGetValue $node visibility]
+			$n SetClipping         [MRMLGetValue $node clipping]
+			$n SetBackfaceCulling  [MRMLGetValue $node backfaceCulling]
+			$n SetScalarVisibility [MRMLGetValue $node scalarVisibility]
+			eval $n SetScalarRange [MRMLGetValue $node scalarRange]
+
+			Mrml(dataTree) AddItem $n
+		}
+		
+		"Volume" {
+			set n [MainMrmlAddNode Volume]
+			$n SetDescription      [MRMLGetValue $node desc]
+			$n SetName             [MRMLGetValue $node name]
+			eval $n SetImageRange  [MRMLGetValue $node imageRange]
+			eval $n SetDimensions  [MRMLGetValue $node dimensions]
+			eval $n SetSpacing     [MRMLGetValue $node spacing]
+			$n SetScalarTypeTo[MRMLGetValue $node scalarType]
+			$n SetNumScalars       [MRMLGetValue $node numScalars]
+			$n SetLittleEndian     [MRMLGetValue $node littleEndian]
+			$n SetTilt             [MRMLGetValue $node tilt]
+			$n SetRasToIjkMatrix   [MRMLGetValue $node rasToIjkMatrix]
+			$n SetRasToVtkMatrix   [MRMLGetValue $node rasToVtkMatrix]
+			$n UseRasToVtkMatrixOn
+			$n SetFilePattern      [MRMLGetValue $node filePattern]
+			$n SetFilePrefix       [MRMLGetValue $node filePrefix]
+			$n SetFullPrefix       [MRMLGetValue $node filePrefix]
+			$n SetWindow           [MRMLGetValue $node window]
+			$n SetLevel            [MRMLGetValue $node level]
+			$n SetAutoWindowLevel  [MRMLGetValue $node autoWindowLevel]
+			puts "auto=[$n GetAutoWindowLevel]"
+			$n SetLabelMap         [MRMLGetValue $node labelMap]
+			$n SetScanOrder        [MRMLGetValue $node scanOrder]
+
+			# Don't interpolate label maps
+			if {[MRMLGetValue $node labelMap] == 1} {
+				$n SetInterpolate [MRMLGetValue $node interpolate]
+			}
+
+			# Options NOT CURRENTLY SUPPORTED
+#			set program [lindex [MRMLGetValue $node options] 0]
+#			set options [lrange [MRMLGetValue $node options] 1 end]
+#			if {$program == "slicer"} {
+#				# Parse options in format: key1 value1 key2 value2 ...
+#				# Verify that options exist in the list of defaults.
+#				foreach {key value} $options {
+#					set $key $value
+#				}
+#			}
+#			$n SetLUTName        [MRMLGetValue $node lutID]
+#			$n SetUpperThreshold [MRMLGetValue $node showAbove]
+#			$n SetLowerThreshold [MRMLGetValue $node showBelow]
+#			$n SetInterpolate    [MRMLGetValue $node interpolate]
+#			if {[MRMLGetValue $node autoThreshold] == 1} {
+#				$n AutoThresholdOn
+#			} else {
+#				$n AutoThresholdOff
+#			}
+
+			Mrml(dataTree) AddItem $n
+		}
+		}
+	}
+
+	# Add EndTransforms for each transform at the base level
+	# (outside all separators)
+	for {set c 0} {$c < $transformCount($level)} {incr c} {
+		set n [MainMrmlAddNode EndTransform]
+		Mrml(dataTree) AddItem $n
+	}
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainMrmlAddColors
+# .END
+#-------------------------------------------------------------------------------
+proc MainMrmlAddColors {tags} {
+
+	# If there are no Color nodes, then read, and append default colors.
+	# Return a new list of tags, possibly including default colors.
+
+	set colors 0
+	foreach pair $tags {
+		set tag  [lindex $pair 0]
+		if {$tag == "Color"} {
+			set colors 1
+		}
+	}
+	if {$colors == 1} {return $tags}
+	
+	set fileName [ExpandPath Colors.xml]
+	set tagsColors [MainMrmlReadVersion2.0 $fileName]
+	if {$tagsColors == 0} {
+		set msg "Unable to read file default MRML color file '$fileName'"
+		puts $msg
+		tk_messageBox -message $msg
+		return $tags
+	}
+
+	return "$tags $tagsColors"
 }
 
 proc MainMrmlCheckColors {} {

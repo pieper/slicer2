@@ -44,7 +44,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc OptionsInit {} {
-	global Option Module
+	global Options Module
 
 	# Define Tabs
 	set m Options
@@ -60,10 +60,10 @@ proc OptionsInit {} {
 	set Module($m,depend) ""
 
 	# Props
-	set Option(propertyType) Basic
-	set Option(program) "slicer"
-	set Option(contents) "presets"
-#	set Option(options) ""
+	set Options(propertyType) Basic
+	set Options(program) "slicer"
+	set Options(contents) "presets"
+#	set Options(options) ""
 }
 
 #-------------------------------------------------------------------------------
@@ -79,7 +79,7 @@ proc OptionsUpdateMRML {} {
 # .END
 #-------------------------------------------------------------------------------
 proc OptionsBuildGUI {} {
-	global Gui Option Module
+	global Gui Options Module
 
 	#-------------------------------------------
 	# Frame Hierarchy:
@@ -132,9 +132,9 @@ Options are fun. Do you like models, Ron?
 	foreach type "Basic Advanced" {
 		frame $f.f${type} -bg $Gui(activeWorkspace)
 		place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
-		set Option(f${type}) $f.f${type}
+		set Options(f${type}) $f.f${type}
 	}
-	raise $Option(fBasic)
+	raise $Options(fBasic)
 
 	#-------------------------------------------
 	# Props->Top frame
@@ -157,8 +157,8 @@ Options are fun. Do you like models, Ron?
 	pack $f.lActive $f.mbActive -side left
 
 	# Append widgets to list that gets refreshed during UpdateMRML
-	lappend Option(mbActiveList) $f.mbActive
-	lappend Option(mActiveList)  $f.mbActive.m
+	lappend Options(mbActiveList) $f.mbActive
+	lappend Options(mActiveList)  $f.mbActive.m
 
 	#-------------------------------------------
 	# Props->Top->Type frame
@@ -170,7 +170,7 @@ Options are fun. Do you like models, Ron?
 	foreach p "Basic Advanced" {
 		eval {radiobutton $f.f.r$p \
 			-text "$p" -command "OptionsSetPropertyType" \
-			-variable Option(propertyType) -value $p -width 8 \
+			-variable Options(propertyType) -value $p -width 8 \
 			-indicatoron 0} $Gui(WCA)
 		pack $f.f.r$p -side left -padx 0
 	}
@@ -202,7 +202,7 @@ Options are fun. Do you like models, Ron?
 	set f $fProps.fBot.fBasic.fProgram
 
 	eval {label $f.l -text "Program:" } $Gui(WLA)
-	eval {entry $f.e -textvariable Option(program)} $Gui(WEA)
+	eval {entry $f.e -textvariable Options(program)} $Gui(WEA)
 	pack $f.l -side left -padx $Gui(pad)
 	pack $f.e -side left -padx $Gui(pad) -expand 1 -fill x
 
@@ -212,7 +212,7 @@ Options are fun. Do you like models, Ron?
 	set f $fProps.fBot.fBasic.fContents
 
 	eval {label $f.l -text "Contents:" } $Gui(WLA)
-	eval {entry $f.e -textvariable Option(contents)} $Gui(WEA)
+	eval {entry $f.e -textvariable Options(contents)} $Gui(WEA)
 	pack $f.l -side left -padx $Gui(pad)
 	pack $f.e -side left -padx $Gui(pad) -expand 1 -fill x
 
@@ -245,9 +245,9 @@ Options are fun. Do you like models, Ron?
 # .END
 #-------------------------------------------------------------------------------
 proc OptionsSetPropertyType {} {
-	global Option
+	global Options
 	
-	raise $Option(f$Option(propertyType))
+	raise $Options(f$Options(propertyType))
 }
 
 
@@ -256,64 +256,64 @@ proc OptionsSetPropertyType {} {
 # .END
 #-------------------------------------------------------------------------------
 proc OptionsPropsApply {} {
-	global Option Module Mrml
+	global Options Module Mrml
 
 	# Validate program
-	if {$Option(program) == ""} {
+	if {$Options(program) == ""} {
 		tk_messageBox -message "Please enter a program that will recognize this option."
 		return
 	}
-	if {[ValidateName $Option(program)] == 0} {
+	if {[ValidateName $Options(program)] == 0} {
 		tk_messageBox -message "The program can consist of letters, digits, dashes, or underscores"
 		return
 	}
 
 	# Validate contents
-	if {$Option(contents) == ""} {
+	if {$Options(contents) == ""} {
 		tk_messageBox -message "Please enter the contents of this option."
 		return
 	}
-	if {[ValidateName $Option(contents)] == 0} {
+	if {[ValidateName $Options(contents)] == 0} {
 		tk_messageBox -message "The contents can consist of letters, digits, dashes, or underscores"
 		return
 	}
 
-	set m $Option(activeID)
+	set m $Options(activeID)
 	if {$m == ""} {return}
 
 	if {$m == "NEW"} {
 		# Ensure prefix not blank
-		if {$Option(prefix) == ""} {
+		if {$Options(prefix) == ""} {
 			tk_messageBox -message "Please enter a file prefix."
 			return
 		}
-		set i $Option(nextID)
-		incr Option(nextID)
-		lappend Option(idList) $i
-		vtkMrmlOptionsNode Option($i,node)
-		set n Option($i,node)
+		set i $Options(nextID)
+		incr Options(nextID)
+		lappend Options(idList) $i
+		vtkMrmlOptionsNode Options($i,node)
+		set n Options($i,node)
 		$n SetID               $i
 
 		# These get set down below, but we need them before MainUpdateMRML
-		$n SetProgram  $Option(program)
-		$n SetContents $Option(contents)
-#		$n SetOptions  $Option(options)
+		$n SetProgram  $Options(program)
+		$n SetContents $Options(contents)
+#		$n SetOptions  $Options(options)
 
 		Mrml(dataTree) AddItem $n
 		MainUpdateMRML
 
 		# If failed, then it's no longer in the idList
-		if {[lsearch $Option(idList) $i] == -1} {
+		if {[lsearch $Options(idList) $i] == -1} {
 			return
 		}
-		set Option(freeze) 0
+		set Options(freeze) 0
 		MainOptionsSetActive $i
 		set m $i
 	}
 
-	Option($m,node) SetProgram  $Option(program)
-	Option($m,node) SetContents $Option(contents)
-#	Option($m,node) SetOptions  $Option(options)
+	Options($m,node) SetProgram  $Options(program)
+	Options($m,node) SetContents $Options(contents)
+#	Options($m,node) SetOptions  $Options(options)
 
 	# If tabs are frozen, then return to the "freezer"
 	if {$Module(freezer) != ""} {
@@ -330,14 +330,14 @@ proc OptionsPropsApply {} {
 # .END
 #-------------------------------------------------------------------------------
 proc OptionsPropsCancel {} {
-	global Option Module
+	global Options Module
 
 	# Reset props
-	set m $Option(activeID)
+	set m $Options(activeID)
 	if {$m == "NEW"} {
-		set m [lindex $Option(idList) 0]
+		set m [lindex $Options(idList) 0]
 	}
-	set Option(freeze) 0
+	set Options(freeze) 0
 	MainOptionsSetActive $m
 
 	# Unfreeze

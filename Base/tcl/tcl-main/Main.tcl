@@ -309,7 +309,7 @@ proc MainInit {} {
 	set Module(procRecallPresets) ""
 	set m Main
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.16 $} {$Date: 2000/02/09 16:37:05 $}]
+		{$Revision: 1.17 $} {$Date: 2000/02/11 20:32:27 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -749,7 +749,7 @@ proc MainUpdateMRML {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSetup {} {
-	global Module Gui Volume Slice View Model Color Matrix Option
+	global Module Gui Volume Slice View Model Color Matrix Options
 
 	# Set active volume
 	set v [lindex $Volume(idList) 0]
@@ -794,7 +794,7 @@ proc MainSetup {} {
 	MainColorsSetActive [lindex $Color(idList) 0]
 
 	# Active option
-	MainOptionsSetActive [lindex $Option(idList) 0]
+	MainOptionsSetActive [lindex $Options(idList) 0]
 
 	# Presets
 	MainOptionsPresetCallback 0
