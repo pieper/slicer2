@@ -134,7 +134,7 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.47 $} {$Date: 2004/11/16 21:07:59 $}]
+                  {$Revision: 1.48 $} {$Date: 2004/11/17 00:15:48 $}]
 
      # Define Tabs
     #------------------------------------
@@ -4187,6 +4187,73 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
     DTMRI(vtk,streamlineControl) AddStreamlinesToScene
 }
 
+
+
+#-------------------------------------------------------------------------------
+# .PROC DTMRISeedStreamlinesFromSegmentation
+# Seeds streamlines at all points in a segmentation.
+# This does not display anything, just one by one seeds
+# the streamline and saves it to disk. So nothing is 
+# visualized, this is for exporting files only.
+# (Actually displaying all of the streamlines would be impossible
+# with a whole brain ROI.)
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc DTMRISeedAndSaveStreamlinesFromSegmentation {{verbose 1}} {
+    global DTMRI Label Tensor Volume
+
+    set t $Tensor(activeID)
+    set v $Volume(activeID)
+
+    # make sure they are using a segmentation (labelmap)
+    if {[Volume($v,node) GetLabelMap] != 1} {
+        set name [Volume($v,node) GetName]
+        set msg "The volume $name is not a label map (segmented ROI). Continue anyway?"
+        if {[tk_messageBox -type yesno -message $msg] == "no"} {
+            return
+        }
+
+    }
+
+    # set base filename for all stored files
+    set filename [tk_getSaveFile  -title "Save Tracts: Choose Initial Filename"]
+    if { $filename == "" } {
+        return
+    }
+
+    # ask for user confirmation first
+    if {$verbose == "1"} {
+        set name [Volume($v,node) GetName]
+        set msg "About to seed streamlines in all labelled voxels of volume $name.  This may take a while, so make sure the Tracts settings are what you want first. Go ahead?"
+        if {[tk_messageBox -type yesno -message $msg] == "no"} {
+            return
+        }
+    }
+
+    # set up the input segmented volume
+    DTMRI(vtk,streamlineControl) SetInputROI [Volume($v,vol) GetOutput] 
+    DTMRI(vtk,streamlineControl) SetInputROIValue $Label(label)
+
+    # Get positioning information from the MRML node
+    # world space (what you see in the viewer) to ijk (array) space
+    vtkTransform transform
+    transform SetMatrix [Volume($v,node) GetWldToIjk]
+    # now it's ijk to world
+    transform Inverse
+    DTMRI(vtk,streamlineControl) SetROIToWorld transform
+    transform Delete
+
+    # create all streamlines
+    puts "Starting to seed streamlines. Files will be $filename*.*"
+    DTMRI(vtk,streamlineControl) SeedAndSaveStreamlinesFromROI $filename
+
+    # let user know something happened
+    if {$verbose == "1"} {
+        set msg "Finished writing tracts. The filename is: $filename*.*"
+        tk_messageBox -message $msg
+    }
+}
 
 
 ################################################################

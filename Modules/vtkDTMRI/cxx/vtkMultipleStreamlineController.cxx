@@ -329,22 +329,56 @@ void vtkMultipleStreamlineController::DeleteStreamline(vtkActor *pickedActor)
     }
 }
 
+// Save only one streamline. Called from within functions that save 
+// many streamlines in a loop.
+void vtkMultipleStreamlineController::SaveStreamlineAsTextFile(ofstream &file,
+                                                               vtkHyperStreamlinePoints *currStreamline)
+{
+  vtkPoints *hs0, *hs1;
+  int ptidx, numPts;
+  double point[3];
+
+  
+  //GetHyperStreamline0/1 and write their points.
+  hs0=currStreamline->GetHyperStreamline0();
+  hs1=currStreamline->GetHyperStreamline1();
+  
+  // Write the first one in reverse order since both lines
+  // travel outward from the initial point.
+  // Also, skip the first point in the second line since it
+  // is a duplicate of the initial point.
+  numPts=hs0->GetNumberOfPoints();
+  ptidx=numPts-1;
+  while (ptidx >= 0)
+    {
+      hs0->GetPoint(ptidx,point);
+      file << point[0] << " " << point[1] << " " << point[2] << endl;
+      ptidx--;
+    }
+  numPts=hs1->GetNumberOfPoints();
+  ptidx=1;
+  while (ptidx < numPts)
+    {
+      hs1->GetPoint(ptidx,point);
+      file << point[0] << " " << point[1] << " " << point[2] << endl;
+      ptidx++;
+    }
+  
+}
+
 
 void vtkMultipleStreamlineController::SaveStreamlinesAsTextFiles(char *filename)
 { 
   char fileName[101];
   vtkHyperStreamlinePoints *currStreamline;
   ofstream file;
-  int idx, ptidx, numPts;
-  vtkPoints *hs0, *hs1;
-  double point[3];
-
+  int idx;
 
   // traverse streamline collection
   this->Streamlines->InitTraversal();
   // TO DO: make sure this is a vtkHyperStreamlinePoints object
   currStreamline= (vtkHyperStreamlinePoints *)this->Streamlines->GetNextItemAsObject();
-
+  
   // test we have streamlines
   if (currStreamline == NULL)
     {
@@ -376,32 +410,8 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsTextFiles(char *filename)
           return;
         }
 
-
-      //GetHyperStreamline0/1 and write their points.
-      hs0=currStreamline->GetHyperStreamline0();
-      hs1=currStreamline->GetHyperStreamline1();
+      this->SaveStreamlineAsTextFile(file, currStreamline);
       
-      // Write the first one in reverse order since both lines
-      // travel outward from the initial point.
-      // Also, skip the first point in the second line since it
-      // is a duplicate of the initial point.
-      numPts=hs0->GetNumberOfPoints();
-      ptidx=numPts-1;
-      while (ptidx >= 0)
-        {
-          hs0->GetPoint(ptidx,point);
-          file << point[0] << " " << point[1] << " " << point[2] << endl;
-          ptidx--;
-        }
-      numPts=hs1->GetNumberOfPoints();
-      ptidx=1;
-      while (ptidx < numPts)
-        {
-          hs1->GetPoint(ptidx,point);
-          file << point[0] << " " << point[1] << " " << point[2] << endl;
-          ptidx++;
-        }
-
       // Close file
       file.close();
       
@@ -926,5 +936,185 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROI()
         }
       inPtr += inIncZ;
     }
+}
+
+
+
+// Seed each streamline, cause it to Update, save its info to disk
+// and then Delete it.  This is a way to seed in the whole brain
+// without running out of memory. Nothing is displayed in the renderers.
+//----------------------------------------------------------------------------
+void vtkMultipleStreamlineController::SeedAndSaveStreamlinesFromROI(char *filename)
+{
+  int idxX, idxY, idxZ;
+  int maxX, maxY, maxZ;
+  int inIncX, inIncY, inIncZ;
+  int inExt[6];
+  double point[3], point2[3];
+  unsigned long count = 0;
+  unsigned long target;
+  short *inPtr;
+  vtkHyperStreamline *newStreamline;
+  vtkTransform *transform;
+  vtkTransformPolyDataFilter *transformer;
+  vtkPolyDataWriter *writer;
+  char fileName[101];
+  int idx;
+  ofstream file;
+
+  // test we have input
+  if (this->InputROI == NULL)
+    {
+      vtkErrorMacro("No ROI input.");
+      return;      
+    }
+  if (this->InputTensorField == NULL)
+    {
+      vtkErrorMacro("No tensor data input.");
+      return;      
+    }
+  // check ROI's value of interest
+  if (this->InputROIValue <= 0)
+    {
+      vtkErrorMacro("Input ROI value has not been set or is 0. (value is "  << this->InputROIValue << ".");
+      return;      
+    }
+  // make sure it is short type
+  if (this->InputROI->GetScalarType() != VTK_SHORT)
+    {
+      vtkErrorMacro("Input ROI is not of type VTK_SHORT");
+      return;      
+    }
+
+
+  // Create transformation matrix to place actors in scene
+  // This is used to transform the models before writing them to disk
+  transform=vtkTransform::New();
+  transform->SetMatrix(this->WorldToTensorScaledIJK->GetMatrix());
+  transform->Inverse();
+  transformer=vtkTransformPolyDataFilter::New();
+  transformer->SetTransform(transform);
+
+  writer = vtkPolyDataWriter::New();
+
+  // currently this filter is not multithreaded, though in the future 
+  // it could be (especially if it inherits from an image filter class)
+  this->InputROI->GetWholeExtent(inExt);
+  this->InputROI->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
+
+  // find the region to loop over
+  maxX = inExt[1] - inExt[0];
+  maxY = inExt[3] - inExt[2]; 
+  maxZ = inExt[5] - inExt[4];
+
+  //cout << "Dims: " << maxX << " " << maxY << " " << maxZ << endl;
+  //cout << "Incr: " << inIncX << " " << inIncY << " " << inIncZ << endl;
+
+  // for progress notification
+  target = (unsigned long)((maxZ+1)*(maxY+1)/50.0);
+  target++;
+
+  // start point in input integer field
+  inPtr = (short *) this->InputROI->GetScalarPointerForExtent(inExt);
+
+  // filename index
+  idx=0;
+
+  for (idxZ = 0; idxZ <= maxZ; idxZ++)
+    {
+      //for (idxY = 0; !this->AbortExecute && idxY <= maxY; idxY++)
+      for (idxY = 0; idxY <= maxY; idxY++)
+        {
+          if (!(count%target)) 
+          {
+            //this->UpdateProgress(count/(50.0*target) + (maxZ+1)*(maxY+1));
+            //cout << (count/(50.0*target) + (maxZ+1)*(maxY+1)) << endl;
+            //cout << "progress: " << count << endl;
+            cout << "." ;
+            flush(cout);
+          }
+          count++;
+          
+          for (idxX = 0; idxX <= maxX; idxX++)
+            {
+              // If the point is equal to the ROI value then seed here.
+              if (*inPtr == this->InputROIValue)
+                {
+                  vtkDebugMacro( << "start streamline at: " << idxX << " " <<
+                                 idxY << " " << idxZ);
+
+                  // First transform to world space.
+                  point[0]=idxX;
+                  point[1]=idxY;
+                  point[2]=idxZ;
+                  this->ROIToWorld->TransformPoint(point,point2);
+                  // Now transform to scaled ijk of the input tensors
+                  this->WorldToTensorScaledIJK->TransformPoint(point2,point);
+
+                  // make sure it is within the bounds of the tensor dataset
+                  if (this->PointWithinTensorData(point,point2))
+                    {
+                      // Now create a streamline 
+                      newStreamline=this->CreateHyperStreamline();
+                      
+                      // Set its input information.
+                      newStreamline->SetInput(this->InputTensorField);
+                      newStreamline->SetStartPosition(point[0],point[1],point[2]);
+                      //newStreamline->DebugOn();
+                      
+                      // Force it to execute
+                      newStreamline->Update();
+
+                      // transform model
+                      transformer->SetInput(newStreamline->GetOutput());
+
+                      // Save the model to disk
+                      writer->SetInput(transformer->GetOutput());
+                      writer->SetFileType(2);
+                      snprintf(fileName,100,"%s_%d.vtk",filename,idx);
+                      writer->SetFileName(fileName);
+                      writer->Write();
+
+                      // Save the center points to disk
+                      if (newStreamline->IsTypeOf("vtkHyperStreamlinePoints"))
+                        {
+                          snprintf(fileName,100,"%s_%d.txt",filename,idx);
+                          // Open file
+                          file.open(fileName);
+                          if (file.fail())
+                            {
+                              vtkErrorMacro("Write: Could not open file " 
+                                            << fileName);
+                              cerr << "Write: Could not open file " << fileName;
+#if (VTK_MAJOR_VERSION <= 5)      
+                              this->SetErrorCode(2);
+#else
+                              this->SetErrorCode(vtkErrorCode::GetErrorCodeFromString("CannotOpenFileError"));
+#endif
+                              return;
+                            }                   
+                          this->SaveStreamlineAsTextFile(file,(vtkHyperStreamlinePoints *) newStreamline);
+                          // Close file
+                          file.close();
+                        }
+
+                      // Delete objects
+                      newStreamline->Delete();
+
+                      idx++;
+                    }
+                }
+              inPtr++;
+              inPtr += inIncX;
+            }
+          inPtr += inIncY;
+        }
+      inPtr += inIncZ;
+    }
+
+  transform->Delete();
+  transformer->Delete();
+  writer->Delete();
+
 }
 
