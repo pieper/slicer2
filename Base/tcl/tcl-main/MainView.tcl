@@ -64,7 +64,7 @@ viewMode='Normal' viewBgColor='Blue'"
 
         set m MainView
         lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.30 $} {$Date: 2001/05/25 19:01:37 $}]
+		{$Revision: 1.31 $} {$Date: 2001/07/10 11:45:56 $}]
 
 	set View(viewerHeightNormal) 656
 	set View(viewerWidth)  956 
@@ -98,6 +98,11 @@ viewMode='Normal' viewBgColor='Blue'"
 		set View(createMagWin) No
 		set View(closeupVisibility) Off
 	}
+
+	# Lauren bugfix (temporary?) due to core dumps 
+	# with vtk3.2 under Solaris.
+	#set View(createMagWin) No
+	#set View(closeupVisibility) Off
 
 	# Init
 	set View(rotateDegrees) 15
@@ -170,7 +175,6 @@ proc MainViewBuildGUI {} {
 	#   Bot
 	#     Preset
 	#     Center
-	#     Save
 	#     Parallel
 	#-------------------------------------------
 
@@ -259,12 +263,11 @@ proc MainViewBuildGUI {} {
 	#-------------------------------------------
 	set f $Gui(fNav).fBot
 
-	frame $f.fSave -bg $Gui(activeWorkspace)
 	frame $f.fPreset  -bg $Gui(activeWorkspace)
 	frame $f.fCenter  -bg $Gui(activeWorkspace)
 	frame $f.fParallel  -bg $Gui(activeWorkspace)
 
-	pack $f.fPreset $f.fCenter $f.fSave $f.fParallel -side top -pady 2 -fill x
+	pack $f.fPreset $f.fCenter $f.fParallel -side top -pady 2 -fill x
 
 	#-------------------------------------------
 	# View->Nav->Bot->Preset Frame
@@ -301,20 +304,6 @@ proc MainViewBuildGUI {} {
 		-command "MainViewResetFocalPoint; RenderAll"} $Gui(WBA)
  
 	pack $f.bFocus -side left -padx 3 -pady 0
-
-	#-------------------------------------------
-	# View->Nav->Bot->Save Frame
-	#-------------------------------------------
-	set f $Gui(fNav).fBot.fSave
-
-	eval {button $f.bSave -text "Save 3D" -width 7 \
-		-command "MainViewSaveView"} $Gui(WBA)
-	eval {entry $f.eSave -textvariable View(viewPrefix)} $Gui(WEA)
-	bind $f.eSave <Return> {MainViewSaveViewPopup}
-        TooltipAdd $f.bSave "Save the 3D window in the chosen filename."
-
-	pack $f.bSave -side left -padx 3
-	pack $f.eSave -side left -padx 2 -expand 1 -fill x
 
 	#-------------------------------------------
 	# View->Nav->Bot->Parallel Frame
