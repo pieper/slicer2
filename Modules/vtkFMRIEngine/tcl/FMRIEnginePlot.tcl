@@ -460,6 +460,7 @@ proc FMRIEngineCreateCurvesFromTimeCourse {i j k} {
         # calculates std
         set v1 [expr $total * $total / $VolumesPerCondition]
         set var [expr {($qtotal - $v1) / ($VolumesPerCondition - 1)}]
+        set var [expr abs($var)]
         set std [expr sqrt($var)]
         set rv [expr round($std)]
         lappend FMRIEngine(conditionTCStd) $rv
@@ -500,6 +501,7 @@ proc FMRIEngineCreateCurvesFromTimeCourse {i j k} {
         # calculates std
         set v1 [expr $total * $total / $VolumesPerBaseline]
         set var [expr {($qtotal - $v1) / ($VolumesPerBaseline - 1)}]
+        set var [expr abs($var)]
         set std [expr sqrt($var)]
         set rv [expr round($std)]
         lappend FMRIEngine(baselineTCStd) $rv
@@ -685,10 +687,27 @@ proc FMRIEngineGetVoxelFromSelection {x y} {
     scan [MainInteractorXY $s $xs $ys] "%d %d %d %d" xs ys x y
     # puts "Click: $s $x $y"
 
+    # We had the following problem for time course plotting:
+    # If the background volume is structural (even it was well co-registrated 
+    # with the functional volumes) and the foreground volume is the activation
+    # the time course plotting cannot work properly. This was caused by method
+    # GetIJKPoint which returned voxel index of the background image (but we
+    # needed that from the activation itself).
+    #
+    # To fix this problem, (permitted by Steve P.) I added another 
+    # SetReformatPoint in vtkMrmlSlicer with different signature:
+    # void vtkMrmlSlicer::SetReformatPoint(vtkMrmlDataVolume *vol, 
+    #                                 vtkImageReformat *ref,  
+    #                                 int s, int x, int y)
+    # This change keeps the current functionality of vtkMrmlSlicer and adds
+    # a possibility for user to get the voxel index of the activation volume 
+    # (i.e. the foreground image) as s/he moves the mouse over one of the three
+    # slice windows.
+    set fVol [$Interactor(activeSlicer) GetForeVolume $s]
+    set fRef [$Interactor(activeSlicer) GetForeReformat $s]
+    $Interactor(activeSlicer) SetReformatPoint $fVol $fRef $s $x $y
     # Which voxel index (ijk) were picked?
-    $Interactor(activeSlicer) SetReformatPoint $s $x $y
     scan [$Interactor(activeSlicer) GetIjkPoint]  "%g %g %g" i j k
-    # puts "Voxel coords: $i $j $k"
 
     # Let's snap to the nearest voxel
     set i [expr round ($i)]
