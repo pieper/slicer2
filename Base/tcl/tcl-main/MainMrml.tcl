@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainMrml \
-        {$Revision: 1.94 $} {$Date: 2003/11/26 16:56:13 $}]
+        {$Revision: 1.95 $} {$Date: 2003/12/17 15:45:16 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -764,390 +764,389 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
         set attr [lreplace $pair 0 0]
 
         switch $tag {
-        
-        "Transform" {
-            set n [MainMrmlAddNode Transform]
-        }
-        
-        "EndTransform" {
-            set n [MainMrmlAddNode EndTransform]
-        }
-        
-        "Matrix" {
-            set n [MainMrmlAddNode Matrix]
-            # special trick to avoid vtk 4.2 legacy hack message 
-            # (adds a concatenated identity transform to the transform)
-            if { [info commands __dummy_transform] == "" } {
-                vtkTransform __dummy_transform
+            
+            "Transform" {
+                set n [MainMrmlAddNode Transform]
             }
-            [$n GetTransform] SetInput __dummy_transform
-            foreach a $attr {
-                set key [lindex $a 0]
-                set val [lreplace $a 0 0]
-                switch [string tolower $key] {
-                "desc"   {$n SetDescription $val}
-                "name"   {$n SetName        $val}
-                "matrix" {eval [$n GetTransform] SetMatrix $val}
+            
+            "EndTransform" {
+                set n [MainMrmlAddNode EndTransform]
+            }
+            
+            "Matrix" {
+                set n [MainMrmlAddNode Matrix]
+                # special trick to avoid vtk 4.2 legacy hack message 
+                # (adds a concatenated identity transform to the transform)
+                if { [info commands __dummy_transform] == "" } {
+                    vtkTransform __dummy_transform
                 }
-            }
-        }
-
-        "Color" {
-            set n [MainMrmlAddNode Color]
-            foreach a $attr {
-                set key [lindex $a 0]
-                set val [lreplace $a 0 0]
-                switch [string tolower $key] {
-                "desc"         {$n SetDescription  $val}
-                "name"         {$n SetName         $val}
-                "ambient"      {$n SetAmbient      $val}
-                "diffuse"      {$n SetDiffuse      $val}
-                "specular"     {$n SetSpecular     $val}
-                "power"        {$n SetPower        $val}
-                "labels"       {$n SetLabels       $val}
-                "diffusecolor" {eval $n SetDiffuseColor $val}
-                }
-            }
-        }
-        
-        "Model" {
-            set n [MainMrmlAddNode Model]
-            foreach a $attr {
-                set key [lindex $a 0]
-                set val [lreplace $a 0 0]
-                switch [string tolower $key] {
-                    "id"               {$n SetModelID      $val}
-                    "desc"             {$n SetDescription  $val}
-                    "name"             {$n SetName         $val}
-                    "filename"         {$n SetFileName     $val}
-                    "color"            {$n SetColor        $val}
-                    "opacity"          {$n SetOpacity      $val}
-                    "scalarrange"      {eval $n SetScalarRange $val}
-                    "visibility" {
-                        if {$val == "yes" || $val == "true"} {
-                            $n SetVisibility 1
-                        } else {
-                            $n SetVisibility 0
-                        }
-                    }
-                    "clipping" {
-                        if {$val == "yes" || $val == "true"} {
-                            $n SetClipping 1
-                        } else {
-                            $n SetClipping 0
-                        }
-                    }
-                    "backfaceculling" {
-                        if {$val == "yes" || $val == "true"} {
-                            $n SetBackfaceCulling 1
-                        } else {
-                            $n SetBackfaceCulling 0
-                        }
-                    }
-                    "scalarvisibility" {
-                        if {$val == "yes" || $val == "true"} {
-                            $n SetScalarVisibility 1
-                        } else {
-                            $n SetScalarVisibility 0
-                        }
+                [$n GetTransform] SetInput __dummy_transform
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "desc"   {$n SetDescription $val}
+                        "name"   {$n SetName        $val}
+                        "matrix" {eval [$n GetTransform] SetMatrix $val}
                     }
                 }
             }
 
-            # Compute full path name relative to the MRML file
-            $n SetFullFileName [file join $Mrml(dir) [$n GetFileName]]
-            if {$::Module(verbose)} { 
-                puts "MainMrmlBuildTreesVersion2.0: Model FullFileName set to [$n GetFullFileName], from mrml dir ($Mrml(dir)) and file name ([$n GetFileName])"
+            "Color" {
+                set n [MainMrmlAddNode Color]
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "desc"         {$n SetDescription  $val}
+                        "name"         {$n SetName         $val}
+                        "ambient"      {$n SetAmbient      $val}
+                        "diffuse"      {$n SetDiffuse      $val}
+                        "specular"     {$n SetSpecular     $val}
+                        "power"        {$n SetPower        $val}
+                        "labels"       {$n SetLabels       $val}
+                        "diffusecolor" {eval $n SetDiffuseColor $val}
+                    }
+                }
             }
-            # Generate model ID if necessary
-           if {[$n GetModelID] == ""} {
-               $n SetModelID "M[$n GetID]"
-           }
-        }
-        
-        "Volume" {
-            if {$::Module(verbose)} {
-                puts "Volume:"
-            }
-            set n [MainMrmlAddNode Volume]
-            foreach a $attr {
-                set key [lindex $a 0]
-                set val [lreplace $a 0 0]
-                if {$::Module(verbose)} {
-                    puts "attr = $a"
-                    puts "\tkey = $key\n\tval = $val"
-                }
-                switch [string tolower $key] {
-                "id"              {$n SetVolumeID       $val}
-                "desc"            {$n SetDescription    $val}
-                "name"            {$n SetName           $val}
-                "filepattern"     {$n SetFilePattern    $val}
-                "fileprefix"      {$n SetFilePrefix     $val}
-                "imagerange"      {eval $n SetImageRange $val}
-                "spacing"         {eval $n SetSpacing   $val}
-                "dimensions"      {eval $n SetDimensions $val}
-                "scalartype"      {$n SetScalarTypeTo$val}
-                "numscalars"      {$n SetNumScalars     $val}
-                "rastoijkmatrix"  {$n SetRasToIjkMatrix $val}
-                "rastovtkmatrix"  {$n SetRasToVtkMatrix $val}
-                "positionmatrix"  {$n SetPositionMatrix $val}
-                "scanorder"       {$n SetScanOrder $val}
-                "colorlut"        {$n SetLUTName        $val}
-                "window"          {$n SetWindow         $val}
-                "level"           {$n SetLevel          $val}
-                "lowerthreshold"  {$n SetLowerThreshold $val}
-                "upperthreshold"  {$n SetUpperThreshold $val}
-                "autowindowlevel" {
-                    if {$val == "yes" || $val == "true"} {
-                        $n SetAutoWindowLevel 1
-                    } else {
-                        $n SetAutoWindowLevel 0
-                    }
-                }
-                "autothreshold" {
-                    if {$val == "yes" || $val == "true"} {
-                        $n SetAutoThreshold 1
-                    } else {
-                        $n SetAutoThreshold 0
-                    }
-                }
-                "applythreshold" {
-                    if {$val == "yes" || $val == "true"} {
-                        $n SetApplyThreshold 1
-                    } else {
-                        $n SetApplyThreshold 0
-                    }
-                }
-                "interpolate" {
-                    if {$val == "yes" || $val == "true"} {
-                        $n SetInterpolate 1
-                    } else {
-                        $n SetInterpolate 0
-                    }
-                }
-                "labelmap" {
-                    if {$val == "yes" || $val == "true"} {
-                        $n SetLabelMap 1
-                    } else {
-                        $n SetLabelMap 0
-                    }
-                }
-                "littleendian" {
-                    if {$val == "yes" || $val == "true"} {
-                        $n SetLittleEndian 1
-                    } else {
-                        $n SetLittleEndian 0
-                    }
-                }
-                "dicomfilenamelist" {
-                    set filelist {}
-                    eval {lappend filelist} $val
-                    foreach file $filelist {
-                        set DICOMName [file join $Mrml(dir) $file]
-                        if {$::Module(verbose) } {
-                            puts "MainMrmlBuildTreesVersion2.0: Added mrml dir to file $file, dicomname = $DICOMName (prefix = [$n GetFilePrefix])"
-                        }
-                        if {[file exists $DICOMName] == 0} {
-                            set DICOMName [file join [$n GetFilePrefix] $file]
-                            if {$::Module(verbose) } {
-                                puts "MainMrmlBuildTreesVersion2.0: Reset dicomname to $DICOMName, because first try didn't exist: [file join $Mrml(dir) $file]"
+            
+            "Model" {
+                set n [MainMrmlAddNode Model]
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "id"               {$n SetModelID      $val}
+                        "desc"             {$n SetDescription  $val}
+                        "name"             {$n SetName         $val}
+                        "filename"         {$n SetFileName     $val}
+                        "color"            {$n SetColor        $val}
+                        "opacity"          {$n SetOpacity      $val}
+                        "scalarrange"      {eval $n SetScalarRange $val}
+                        "visibility" {
+                            if {$val == "yes" || $val == "true"} {
+                                $n SetVisibility 1
+                            } else {
+                                $n SetVisibility 0
                             }
                         }
-                        $n AddDICOMFileName $DICOMName
-                    }
-                }
-                "dicommultiframeoffsetlist" {
-                    set offsetlist {}
-                    eval {lappend offsetlist} $val
-                    foreach offset $offsetlist {
-                        $n AddDICOMMultiFrameOffset $offset
-                    }
-                }
-                    "frequencyphaseswap" {
-                        # added by odonnell for DTI data: will move 
-                        # to submodule of Volumes.tcl
-                        if {$val == "yes" || $val == "true"} {
-                            $n SetFrequencyPhaseSwap 1
+                        "clipping" {
+                            if {$val == "yes" || $val == "true"} {
+                                $n SetClipping 1
+                            } else {
+                                $n SetClipping 0
+                            }
+                        }
+                        "backfaceculling" {
+                            if {$val == "yes" || $val == "true"} {
+                                $n SetBackfaceCulling 1
+                            } else {
+                                $n SetBackfaceCulling 0
+                            }
+                        }
+                        "scalarvisibility" {
+                            if {$val == "yes" || $val == "true"} {
+                                $n SetScalarVisibility 1
+                            } else {
+                                $n SetScalarVisibility 0
+                            }
                         }
                     }
-
-                }
-            }
-
-            # Compute full path name relative to the MRML file
-            $n SetFullPrefix [file join $Mrml(dir) [$n GetFilePrefix]]
-            # if it's an absolute path, it may have ..'s in it, so normalize it
-            if {([file pathtype [$n GetFullPrefix]] == "absolute") 
-                && ([string first ".." [$n GetFullPrefix]] != -1)} {
-                $n SetFullPrefix [file normalize [$n GetFullPrefix]]
-                if  {$::Module(verbose)} { 
-                    puts "MainMrmlBuildTreesVersion2.0: Volume [$n GetVolumeID] normalised full prefix: [$n GetFullPrefix]"
-                }
-            }
-            # Set volume ID if necessary
-            if {[$n GetVolumeID] == ""} {
-                $n SetVolumeID "V[$n GetID]"
-            }
-
-            if {$::Module(verbose)} { 
-                puts "MainMrmlBuildTreesVersion2.0: Volume [$n GetVolumeID] FullPrefix set to [$n GetFullPrefix]" 
-            }
-            # Compute the absolute directory that the volume lives in
-            # puts "MainMrmlBuildTreesVersion2.0: [file dirname [$n GetFullPrefix]]"
-            # set Volume([$n GetVolumeID],absDir) [file dirname [$n GetFullPrefix]]
-            # puts "Set Volume([$n GetVolumeID],absDir) to $Volume([$n GetVolumeID],absDir)"
-
-            $n UseRasToVtkMatrixOn
-        }
-
-        "TetraMesh" {
-                    MainTetraMeshProcessMrml "$attr"
-                  }
-
-        "Options" {
-            # Legacy: options shouldn't be stored in an options tag,
-            # use the fancy XML tags instead
-
-            foreach a $attr {
-                set key [lindex $a 0]
-                set val [lreplace $a 0 0]
-                switch [string tolower $key] {
-                    "options"      {set options $val}
-                    "program"      {set program $val}
-                    "contents"     {set contents $val}
-                }
-            }
-            # I don't want any of gimpy's stinkin' modules in my tree!
-            if {$contents != "modules"} {
-                set n [MainMrmlAddNode Options]
-                $n SetOptions $options
-                $n SetProgram $program
-                $n SetContents $contents
-            }
-
-            # Check that this is a slicer options node.
-            if {[$n GetProgram] != "slicer"} {
-                return
-            }
-
-            # If these are presets, then do preset stuff on stuffing, not attr
-            if {[$n GetContents] == "presets"} {
-                # Since presets aren't written to the MRML file when different
-                # from their default values, I must first reset them to their defaults.
-                MainOptionsUseDefaultPresets
-                MainOptionsParsePresets $attr
-            }
-            }
-
-        "Fiducials" {
-            set n [MainMrmlAddNode Fiducials]
-            foreach a $attr {
-                  set key [lindex $a 0]
-                 set val [lreplace $a 0 0]
-                 switch [string tolower $key] {
-                 "description"             {$n SetDescription  $val}
-                 "name"             {$n SetName         $val}
-                 "type"              {eval $n SetType     $val}
-         "visibility"        {eval $n SetVisibility $val}
-         "symbolsize"         {eval $n SetSymbolSize    $val}
-         "textsize"         {eval $n SetTextSize    $val}
-         "color"            {eval $n SetColor     $val}
-         }
-        }
-    }
-        "EndFiducials" {
-            set n [MainMrmlAddNode EndFiducials]
-        }
-        "Point" {
-            set n [MainMrmlAddNode Point]
-            foreach a $attr {
-                set key [lindex $a 0]
-                set val [lreplace $a 0 0]
-                switch [string tolower $key] {
-                "description"             {$n SetDescription  $val}
-                "name"             {$n SetName         $val}
-        "index"            {eval $n SetIndex        $val}
-        "xyz"              {eval $n SetXYZ     $val}
-        "focalxyz"         {eval $n SetFXYZ     $val}
                 }
 
+                # Compute full path name relative to the MRML file
+                $n SetFullFileName [file join $Mrml(dir) [$n GetFileName]]
+                if {$::Module(verbose)} { 
+                    puts "MainMrmlBuildTreesVersion2.0: Model FullFileName set to [$n GetFullFileName], from mrml dir ($Mrml(dir)) and file name ([$n GetFileName])"
+                }
+                # Generate model ID if necessary
+               if {[$n GetModelID] == ""} {
+                   $n SetModelID "M[$n GetID]"
+               }
             }
-            }
-        ####### The next 3 nodes are only here for backward compatibility
-        ####### Endoscopic paths are now defined with Fiducials/Point nodes
-        "Path" {
-            set n [MainMrmlAddNode Path]
-        }
-        
-        "EndPath" {
-            set n [MainMrmlAddNode EndPath]
-        }
-        "Landmark" {
-            set n [MainMrmlAddNode Landmark]
-            foreach a $attr {
-                set key [lindex $a 0]
-                set val [lreplace $a 0 0]
+            
+            "Volume" {
+                if {$::Module(verbose)} {
+                    puts "Volume:"
+                }
+                set n [MainMrmlAddNode Volume]
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    if {$::Module(verbose)} {
+                        puts "attr = $a"
+                        puts "\tkey = $key\n\tval = $val"
+                    }
                     switch [string tolower $key] {
-                
-                "desc"             {$n SetDescription  $val}
-                "name"             {$n SetName         $val}
-                "xyz"              {eval $n SetXYZ     $val}
-                "focalxyz"              {eval $n SetFXYZ     $val}
-                "pathposition"    {$n SetPathPosition  $val}
-
-                }
-            }
-            }
-
-        "Hierarchy" {
-            set n [MainMrmlAddNode Hierarchy]
-            foreach a $attr {
-                set key [lindex $a 0]
-                set val [lreplace $a 0 0]
-                switch [string tolower $key] {
-                    "id" {$n SetHierarchyID $val}
-                    "type" {$n SetType $val}
-                }
-            }
-        }
-        "EndHierarchy" {
-            set n [MainMrmlAddNode EndHierarchy]
-        }
-        "ModelGroup" {
-            set n [MainMrmlAddNode ModelGroup]
-            $n SetExpansion 1; #always show groups expanded
-            foreach a $attr {
-                set key [lindex $a 0]
-                set val [lreplace $a 0 0]
-                switch [string tolower $key] {
-                    "id" {$n SetModelGroupID $val}
-                    "name" {$n SetName $val}
-                    "color" {$n SetColor $val}
-                    "opacity" {$n SetOpacity $val}
-                    "visibility" {
-                        if {$val == "yes" || $val == "true"} {
-                            $n SetVisibility 1
-                        } else {
-                            $n SetVisibility 0
+                        "id"              {$n SetVolumeID       $val}
+                        "desc"            {$n SetDescription    $val}
+                        "name"            {$n SetName           $val}
+                        "filepattern"     {$n SetFilePattern    $val}
+                        "fileprefix"      {$n SetFilePrefix     $val}
+                        "imagerange"      {eval $n SetImageRange $val}
+                        "spacing"         {eval $n SetSpacing   $val}
+                        "dimensions"      {eval $n SetDimensions $val}
+                        "scalartype"      {$n SetScalarTypeTo$val}
+                        "numscalars"      {$n SetNumScalars     $val}
+                        "rastoijkmatrix"  {$n SetRasToIjkMatrix $val}
+                        "rastovtkmatrix"  {$n SetRasToVtkMatrix $val}
+                        "positionmatrix"  {$n SetPositionMatrix $val}
+                        "scanorder"       {$n SetScanOrder $val}
+                        "colorlut"        {$n SetLUTName        $val}
+                        "window"          {$n SetWindow         $val}
+                        "level"           {$n SetLevel          $val}
+                        "lowerthreshold"  {$n SetLowerThreshold $val}
+                        "upperthreshold"  {$n SetUpperThreshold $val}
+                        "autowindowlevel" {
+                            if {$val == "yes" || $val == "true"} {
+                                $n SetAutoWindowLevel 1
+                            } else {
+                                $n SetAutoWindowLevel 0
+                            }
+                        }
+                        "autothreshold" {
+                            if {$val == "yes" || $val == "true"} {
+                                $n SetAutoThreshold 1
+                            } else {
+                                $n SetAutoThreshold 0
+                            }
+                        }
+                        "applythreshold" {
+                            if {$val == "yes" || $val == "true"} {
+                                $n SetApplyThreshold 1
+                            } else {
+                                $n SetApplyThreshold 0
+                            }
+                        }
+                        "interpolate" {
+                            if {$val == "yes" || $val == "true"} {
+                                $n SetInterpolate 1
+                            } else {
+                                $n SetInterpolate 0
+                            }
+                        }
+                        "labelmap" {
+                            if {$val == "yes" || $val == "true"} {
+                                $n SetLabelMap 1
+                            } else {
+                                $n SetLabelMap 0
+                            }
+                        }
+                        "littleendian" {
+                            if {$val == "yes" || $val == "true"} {
+                                $n SetLittleEndian 1
+                            } else {
+                                $n SetLittleEndian 0
+                            }
+                        }
+                        "dicomfilenamelist" {
+                            set filelist {}
+                            eval {lappend filelist} $val
+                            foreach file $filelist {
+                                set DICOMName [file join $Mrml(dir) $file]
+                                if {$::Module(verbose) } {
+                                    puts "MainMrmlBuildTreesVersion2.0: Added mrml dir to file $file, dicomname = $DICOMName (prefix = [$n GetFilePrefix])"
+                                }
+                                if {[file exists $DICOMName] == 0} {
+                                    set DICOMName [file join [$n GetFilePrefix] $file]
+                                    if {$::Module(verbose) } {
+                                        puts "MainMrmlBuildTreesVersion2.0: Reset dicomname to $DICOMName, because first try didn't exist: [file join $Mrml(dir) $file]"
+                                    }
+                                }
+                                $n AddDICOMFileName $DICOMName
+                            }
+                        }
+                        "dicommultiframeoffsetlist" {
+                            set offsetlist {}
+                            eval {lappend offsetlist} $val
+                            foreach offset $offsetlist {
+                                $n AddDICOMMultiFrameOffset $offset
+                            }
+                        }
+                        "frequencyphaseswap" {
+                            # added by odonnell for DTI data: will move 
+                            # to submodule of Volumes.tcl
+                            if {$val == "yes" || $val == "true"} {
+                                $n SetFrequencyPhaseSwap 1
+                            }
                         }
                     }
                 }
-            }        
-        }
-        "EndModelGroup" {
-            set n [MainMrmlAddNode EndModelGroup]
-        }
-        "ModelRef" {
-            set n [MainMrmlAddNode ModelRef]
-            foreach a $attr {
-                set key [lindex $a 0]
-                set val [lreplace $a 0 0]
-                switch [string tolower $key] {
-                    "modelrefid" {$n SetModelRefID $val}
+
+                # Compute full path name relative to the MRML file
+                $n SetFullPrefix [file join $Mrml(dir) [$n GetFilePrefix]]
+                # if it's an absolute path, it may have ..'s in it, so normalize it
+                if {([file pathtype [$n GetFullPrefix]] == "absolute") 
+                        && ([string first ".." [$n GetFullPrefix]] != -1)} {
+                    $n SetFullPrefix [file normalize [$n GetFullPrefix]]
+                    if  {$::Module(verbose)} { 
+                        puts "MainMrmlBuildTreesVersion2.0: Volume [$n GetVolumeID] normalised full prefix: [$n GetFullPrefix]"
+                    }
+                }
+                # Set volume ID if necessary
+                if {[$n GetVolumeID] == ""} {
+                    $n SetVolumeID "V[$n GetID]"
+                }
+
+                if {$::Module(verbose)} { 
+                    puts "MainMrmlBuildTreesVersion2.0: Volume [$n GetVolumeID] FullPrefix set to [$n GetFullPrefix]" 
+                }
+                # Compute the absolute directory that the volume lives in
+                # puts "MainMrmlBuildTreesVersion2.0: [file dirname [$n GetFullPrefix]]"
+                # set Volume([$n GetVolumeID],absDir) [file dirname [$n GetFullPrefix]]
+                # puts "Set Volume([$n GetVolumeID],absDir) to $Volume([$n GetVolumeID],absDir)"
+
+                $n UseRasToVtkMatrixOn
+            }
+
+            "TetraMesh" {
+                MainTetraMeshProcessMrml "$attr"
+            }
+
+            "Options" {
+                # Legacy: options shouldn't be stored in an options tag,
+                # use the fancy XML tags instead
+
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "options"      {set options $val}
+                        "program"      {set program $val}
+                        "contents"     {set contents $val}
+                    }
+                }
+                # I don't want any of gimpy's stinkin' modules in my tree!
+                if {$contents != "modules"} {
+                    set n [MainMrmlAddNode Options]
+                    $n SetOptions $options
+                    $n SetProgram $program
+                    $n SetContents $contents
+                }
+
+                # Check that this is a slicer options node.
+                if {[$n GetProgram] != "slicer"} {
+                    return
+                }
+
+                # If these are presets, then do preset stuff on stuffing, not attr
+                if {[$n GetContents] == "presets"} {
+                    # Since presets aren't written to the MRML file when different
+                    # from their default values, I must first reset them to their defaults.
+                    MainOptionsUseDefaultPresets
+                    MainOptionsParsePresets $attr
                 }
             }
-        }
-        "Scenes" {
+
+            "Fiducials" {
+                set n [MainMrmlAddNode Fiducials]
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "description"             {$n SetDescription  $val}
+                        "name"             {$n SetName         $val}
+                        "type"              {eval $n SetType     $val}
+                        "visibility"        {eval $n SetVisibility $val}
+                        "symbolsize"         {eval $n SetSymbolSize    $val}
+                        "textsize"         {eval $n SetTextSize    $val}
+                        "color"            {eval $n SetColor     $val}
+                    }
+                }
+            }
+            "EndFiducials" {
+                set n [MainMrmlAddNode EndFiducials]
+            }
+            "Point" {
+                set n [MainMrmlAddNode Point]
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "description"             {$n SetDescription  $val}
+                        "name"             {$n SetName         $val}
+                        "index"            {eval $n SetIndex        $val}
+                        "xyz"              {eval $n SetXYZ     $val}
+                        "focalxyz"         {eval $n SetFXYZ     $val}
+                        "orientationwxyz"  {eval $n SetOrientationWXYZ     $val}
+                    }
+
+                }
+            }
+            ####### The next 3 nodes are only here for backward compatibility
+            ####### Endoscopic paths are now defined with Fiducials/Point nodes
+            "Path" {
+                set n [MainMrmlAddNode Path]
+            }
+            
+            "EndPath" {
+                set n [MainMrmlAddNode EndPath]
+            }
+            "Landmark" {
+                set n [MainMrmlAddNode Landmark]
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        
+                        "desc"             {$n SetDescription  $val}
+                        "name"             {$n SetName         $val}
+                        "xyz"              {eval $n SetXYZ     $val}
+                        "focalxyz"              {eval $n SetFXYZ     $val}
+                        "pathposition"    {$n SetPathPosition  $val}
+                    }
+                }
+            }
+
+            "Hierarchy" {
+                set n [MainMrmlAddNode Hierarchy]
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "id" {$n SetHierarchyID $val}
+                        "type" {$n SetType $val}
+                    }
+                }
+            }
+            "EndHierarchy" {
+                set n [MainMrmlAddNode EndHierarchy]
+            }
+            "ModelGroup" {
+                set n [MainMrmlAddNode ModelGroup]
+                $n SetExpansion 1; #always show groups expanded
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "id" {$n SetModelGroupID $val}
+                        "name" {$n SetName $val}
+                        "color" {$n SetColor $val}
+                        "opacity" {$n SetOpacity $val}
+                        "visibility" {
+                            if {$val == "yes" || $val == "true"} {
+                                $n SetVisibility 1
+                            } else {
+                                $n SetVisibility 0
+                            }
+                        }
+                    }
+                }        
+            }
+            "EndModelGroup" {
+                set n [MainMrmlAddNode EndModelGroup]
+            }
+            "ModelRef" {
+                set n [MainMrmlAddNode ModelRef]
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "modelrefid" {$n SetModelRefID $val}
+                    }
+                }
+            }
+            "Scenes" {
                 set n [MainMrmlAddNode Scenes]
                 foreach a $attr {
                     set key [lindex $a 0]
@@ -1158,13 +1157,13 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                         "description" {$n SetDescription $val}
                     }
                 }
-        }
-        "EndScenes" {
-            set n [MainMrmlAddNode EndScenes]
-        }
-        "VolumeState" {
-            set n [MainMrmlAddNode VolumeState]
-            foreach a $attr {
+            }
+            "EndScenes" {
+                set n [MainMrmlAddNode EndScenes]
+            }
+            "VolumeState" {
+                set n [MainMrmlAddNode VolumeState]
+                foreach a $attr {
                     set key [lindex $a 0]
                     set val [lreplace $a 0 0]
                     switch [string tolower $key] {
@@ -1192,336 +1191,344 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                             }
                         }
                         "opacity" {
-                        $n SetOpacity $val
-                    }
-                    }
-                }
-        }
-        "EndVolumeState" {
-            set n [MainMrmlAddNode EndVolumeState]
-        }
-        "CrossSection" {
-            set n [MainMrmlAddNode CrossSection]
-            foreach a $attr {
-                set key [lindex $a 0]
-                set val [lreplace $a 0 0]
-                switch [string tolower $key] {
-                    "position" {$n SetPosition $val}
-                    "direction" {$n SetDirection $val}
-                    "sliceslider" {$n SetSliceSlider $val}
-                    "rotatorx" {$n SetRotatorX $val}
-                    "rotatory" {$n SetRotatorY $val}
-                    "inmodel" {
-                        if {$val == "true"} {
-                            $n SetInModel 1
-                        } else {
-                            $n SetInModel 0
-                        }
-                    }
-                    "clipstate" { 
-                        switch $val {
-                            "true" { set val 1 }
-                            "false" { set val 0 }
-                        }
-                        $n SetClipState $val
-                    }
-                    "cliptype" { $n SetClipType $val}
-                    "zoom" {$n SetZoom $val}
-                    "backvolrefid" {$n SetBackVolRefID $val}
-                    "forevolrefid" {$n SetForeVolRefID $val}
-                    "labelvolrefid" {$n SetLabelVolRefID $val}
-                }
-            }
-        }
-        "SceneOptions" {
-            set n [MainMrmlAddNode SceneOptions]
-            foreach a $attr {
-                set key [lindex $a 0]
-                set val [lreplace $a 0 0]
-                switch [string tolower $key] {
-                    "viewup" {$n SetViewUp $val}
-                    "position" {$n SetPosition $val}
-                    "focalpoint" {$n SetFocalPoint $val}
-                    "clippingrange" {$n SetClippingRange $val}
-                    "viewmode" {$n SetViewMode $val}
-                    "viewbgcolor" {$n SetViewBgColor $val}
-                    "showaxes" {
-                        if {$val == "true"} {
-                            $n SetShowAxes 1
-                        } else {
-                            $n SetShowAxes 0
-                        }
-                    }
-                    "showbox" {
-                        if {$val == "true"} {
-                            $n SetShowBox 1
-                        } else {
-                            $n SetShowBox 0
-                        }
-                    }
-                    "showannotations" {
-                        if {$val == "true"} {
-                            $n SetShowAnnotations 1
-                        } else {
-                            $n SetShowAnnotations 0
-                        }
-                    }
-                    "showslicebounds" {
-                        if {$val == "true"} {
-                            $n SetShowSliceBounds 1
-                        } else {
-                            $n SetShowSliceBounds 0
-                        }
-                    }
-                    "showletters" {
-                        if {$val == "true"} {
-                            $n SetShowLetters 1
-                        } else {
-                            $n SetShowLetters 0
-                        }
-                    }
-                    "showcross" {
-                        if {$val == "true"} {
-                            $n SetShowCross 1
-                        } else {
-                            $n SetShowCross 0
-                        }
-                    }
-                    "showhashes" {
-                        if {$val == "true"} {
-                            $n SetShowHashes 1
-                        } else {
-                            $n SetShowHashes 0
-                        }
-                    }
-                    "showmouse" {
-                        if {$val == "true"} {
-                            $n SetShowMouse 1
-                        } else {
-                            $n SetShowMouse 0
-                        }
-                    }
-                    "dicomstartdir" {$n SetDICOMStartDir $val}
-                    "filenamesortparam" {$n SetFileNameSortParam $val}
-                    "dicomdatadictfile" {$n SetDICOMDataDictFile $val}
-                    "dicompreviewwidth" {$n SetDICOMPreviewWidth $val}
-                    "dicompreviewheight" {$n SetDICOMPreviewHeight $val}
-                    "dicompreviewhighestvalue" {$n SetDICOMPreviewHighestValue $val}
-                }
-            }
-        }
-        "ModelState" {
-            set n [MainMrmlAddNode ModelState]
-            foreach a $attr {
-                set key [lindex $a 0]
-                set val [lreplace $a 0 0]
-                switch [string tolower $key] {
-                    "modelrefid" {$n SetModelRefID $val}
-                    "opacity" {$n SetOpacity $val}
-                    "visible" {
-                        if {$val == "true"} {
-                            $n SetVisible 1
-                        } else {
-                            $n SetVisible 0
-                        }
-                    }
-                    "slidervisible" {
-                        if {$val == "true"} {
-                            $n SetSliderVisible 1
-                        } else {
-                            $n SetSliderVisible 0
-                        }
-                    }
-                    "sonsvisible" {
-                        if {$val == "true"} {
-                            $n SetSonsVisible 1
-                        } else {
-                            $n SetSonsVisible 0
-                        }
-                    }
-                    "clipping" {
-                        if {$val == "true"} {
-                            $n SetClipping 1
-                        } else {
-                            $n SetClipping 0
+                            $n SetOpacity $val
                         }
                     }
                 }
             }
-        }
-        "WindowLevel" {
-            set n [MainMrmlAddNode WindowLevel]
-            foreach a $attr {
-                set key [lindex $a 0]
-                set val [lreplace $a 0 0]
-                switch [string tolower $key] {
-                    "window" {$n SetWindow $val}
-                    "level" {$n SetLevel $val}
-                    "lowerthreshold" {$n SetLowerThreshold $val}
-                    "upperthreshold" {$n SetUpperThreshold $val}
-                    "autowindowlevel" {
-                        if {$val == "true"} {
-                            $n SetAutoWindowLevel 1
-                        } else {
-                            $n SetAutoWindowLevel 0
+            "EndVolumeState" {
+                set n [MainMrmlAddNode EndVolumeState]
+            }
+            "CrossSection" {
+                set n [MainMrmlAddNode CrossSection]
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "position" {$n SetPosition $val}
+                        "direction" {$n SetDirection $val}
+                        "sliceslider" {$n SetSliceSlider $val}
+                        "rotatorx" {$n SetRotatorX $val}
+                        "rotatory" {$n SetRotatorY $val}
+                        "inmodel" {
+                            if {$val == "true"} {
+                                $n SetInModel 1
+                            } else {
+                                $n SetInModel 0
+                            }
                         }
-                    }
-                    "applythreshold" {
-                        if {$val == "true"} {
-                            $n SetApplyThreshold 1
-                        } else {
-                            $n SetApplyThreshold 0
+                        "clipstate" { 
+                            switch $val {
+                                "true" { set val 1 }
+                                "false" { set val 0 }
+                            }
+                            $n SetClipState $val
                         }
+                        "cliptype" { $n SetClipType $val}
+                        "zoom" {$n SetZoom $val}
+                        "backvolrefid" {$n SetBackVolRefID $val}
+                        "forevolrefid" {$n SetForeVolRefID $val}
+                        "labelvolrefid" {$n SetLabelVolRefID $val}
                     }
-                    "autothreshold" {
-                        if {$val == "true"} {
-                            $n SetAutoThreshold 1
-                        } else {
-                            $n SetAutoThreshold 0
+                }
+            }
+            "SceneOptions" {
+                set n [MainMrmlAddNode SceneOptions]
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "viewup" {$n SetViewUp $val}
+                        "position" {$n SetPosition $val}
+                        "focalpoint" {$n SetFocalPoint $val}
+                        "clippingrange" {$n SetClippingRange $val}
+                        "viewmode" {$n SetViewMode $val}
+                        "viewbgcolor" {$n SetViewBgColor $val}
+                        "showaxes" {
+                            if {$val == "true"} {
+                                $n SetShowAxes 1
+                            } else {
+                                $n SetShowAxes 0
+                            }
+                        }
+                        "showbox" {
+                            if {$val == "true"} {
+                                $n SetShowBox 1
+                            } else {
+                                $n SetShowBox 0
+                            }
+                        }
+                        "showannotations" {
+                            if {$val == "true"} {
+                                $n SetShowAnnotations 1
+                            } else {
+                                $n SetShowAnnotations 0
+                            }
+                        }
+                        "showslicebounds" {
+                            if {$val == "true"} {
+                                $n SetShowSliceBounds 1
+                            } else {
+                                $n SetShowSliceBounds 0
+                            }
+                        }
+                        "showletters" {
+                            if {$val == "true"} {
+                                $n SetShowLetters 1
+                            } else {
+                                $n SetShowLetters 0
+                            }
+                        }
+                        "showcross" {
+                            if {$val == "true"} {
+                                $n SetShowCross 1
+                            } else {
+                                $n SetShowCross 0
+                            }
+                        }
+                        "showhashes" {
+                            if {$val == "true"} {
+                                $n SetShowHashes 1
+                            } else {
+                                $n SetShowHashes 0
+                            }
+                        }
+                        "showmouse" {
+                            if {$val == "true"} {
+                                $n SetShowMouse 1
+                            } else {
+                                $n SetShowMouse 0
+                            }
+                        }
+                        "dicomstartdir" {$n SetDICOMStartDir $val}
+                        "filenamesortparam" {$n SetFileNameSortParam $val}
+                        "dicomdatadictfile" {$n SetDICOMDataDictFile $val}
+                        "dicompreviewwidth" {$n SetDICOMPreviewWidth $val}
+                        "dicompreviewheight" {$n SetDICOMPreviewHeight $val}
+                        "dicompreviewhighestvalue" {$n SetDICOMPreviewHighestValue $val}
+                    }
+                }
+            }
+            "ModelState" {
+                set n [MainMrmlAddNode ModelState]
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "modelrefid" {$n SetModelRefID $val}
+                        "opacity" {$n SetOpacity $val}
+                        "visible" {
+                            if {$val == "true"} {
+                                $n SetVisible 1
+                            } else {
+                                $n SetVisible 0
+                            }
+                        }
+                        "slidervisible" {
+                            if {$val == "true"} {
+                                $n SetSliderVisible 1
+                            } else {
+                                $n SetSliderVisible 0
+                            }
+                        }
+                        "sonsvisible" {
+                            if {$val == "true"} {
+                                $n SetSonsVisible 1
+                            } else {
+                                $n SetSonsVisible 0
+                            }
+                        }
+                        "clipping" {
+                            if {$val == "true"} {
+                                $n SetClipping 1
+                            } else {
+                                $n SetClipping 0
+                            }
                         }
                     }
                 }
             }
-        }
-        "Locator" {
-            set n [MainMrmlAddNode Locator]
-            foreach a $attr {
-                set key [lindex $a 0]
-                set val [lreplace $a 0 0]
-                switch [string tolower $key] {
-                    "driver" {$n SetDriver $val}
-                    "diffusecolor" {$n SetDiffuseColor $val}
-                    "visibility" {
-                        if {$val == "true"} {
-                            $n SetVisibility 1
-                        } else {
-                            $n SetVisibility 0
+            "WindowLevel" {
+                set n [MainMrmlAddNode WindowLevel]
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "window" {$n SetWindow $val}
+                        "level" {$n SetLevel $val}
+                        "lowerthreshold" {$n SetLowerThreshold $val}
+                        "upperthreshold" {$n SetUpperThreshold $val}
+                        "autowindowlevel" {
+                            if {$val == "true"} {
+                                $n SetAutoWindowLevel 1
+                            } else {
+                                $n SetAutoWindowLevel 0
+                            }
+                        }
+                        "applythreshold" {
+                            if {$val == "true"} {
+                                $n SetApplyThreshold 1
+                            } else {
+                                $n SetApplyThreshold 0
+                            }
+                        }
+                        "autothreshold" {
+                            if {$val == "true"} {
+                                $n SetAutoThreshold 1
+                            } else {
+                                $n SetAutoThreshold 0
+                            }
                         }
                     }
-                    "transversevisibility" {
-                        if {$val == "true"} {
-                            $n SetTransverseVisibility 1
-                        } else {
-                            $n SetTransverseVisibility 0
-                        }
-                    }
-                    "normallen" {$n SetNormalLen $val}
-                    "transverselen" {$n SetTransverseLen $val}
-                    "radius" {$n SetRadius $val}
                 }
             }
-        }
-    "Segmenter" {
-            set n [MainMrmlAddNode Segmenter]
-            foreach a $attr {
-                set key [lindex $a 0]
-                set val [lreplace $a 0 0]
-                switch [string tolower $key] {
-                    "numclasses" {$n SetNumClasses $val}
-                    "maxinputchanneldef" {$n SetMaxInputChannelDef $val}
-                    "emshapeiter"        {$n SetEMShapeIter $val}
-                    "emiteration"        {$n SetEMiteration $val}
-                    "mfaiteration"       {$n SetMFAiteration $val}
-                    "alpha"              {$n SetAlpha $val}
-                    "smwidth"            {$n SetSmWidth $val}
-                    "smsigma"            {$n SetSmSigma $val}
-                    "printintermediateresults" {$n SetPrintIntermediateResults $val}
-                    "printintermediateslice" {$n SetPrintIntermediateSlice $val}
-                    "printintermediatefrequency" {$n SetPrintIntermediateFrequency $val}
-                    "printintermediatedir" {$n SetPrintIntermediateDir $val}
-                    "biasprint" {$n SetBiasPrint $val}
-                    "startslice" {$n SetStartSlice $val}
-                    "endslice" {$n SetEndSlice $val}
-                    "displayprob" {$n SetDisplayProb $val}
-                    "numberoftrainingsamples" {$n SetNumberOfTrainingSamples $val}
-                    "intensityavgclass"  {$n SetIntensityAvgClass  $val}
-                    "segmentationboundarymin" {eval $n SetSegmentationBoundaryMin $val}
-                    "segmentationboundarymax" {eval $n SetSegmentationBoundaryMax $val}
-         }
+            "Locator" {
+                set n [MainMrmlAddNode Locator]
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "driver" {$n SetDriver $val}
+                        "diffusecolor" {$n SetDiffuseColor $val}
+                        "visibility" {
+                            if {$val == "true"} {
+                                $n SetVisibility 1
+                            } else {
+                                $n SetVisibility 0
+                            }
+                        }
+                        "transversevisibility" {
+                            if {$val == "true"} {
+                                $n SetTransverseVisibility 1
+                            } else {
+                                $n SetTransverseVisibility 0
+                            }
+                        }
+                        "normallen" {$n SetNormalLen $val}
+                        "transverselen" {$n SetTransverseLen $val}
+                        "radius" {$n SetRadius $val}
+                    }
+                }
+            }
+            "Segmenter" {
+                    set n [MainMrmlAddNode Segmenter]
+                    foreach a $attr {
+                        set key [lindex $a 0]
+                        set val [lreplace $a 0 0]
+                        switch [string tolower $key] {
+                            "numclasses" {$n SetNumClasses $val}
+                            "maxinputchanneldef" {$n SetMaxInputChannelDef $val}
+                            "emshapeiter"        {$n SetEMShapeIter $val}
+                            "emiteration"        {$n SetEMiteration $val}
+                            "mfaiteration"       {$n SetMFAiteration $val}
+                            "alpha"              {$n SetAlpha $val}
+                            "smwidth"            {$n SetSmWidth $val}
+                            "smsigma"            {$n SetSmSigma $val}
+                            "printintermediateresults" {$n SetPrintIntermediateResults $val}
+                            "printintermediateslice" {$n SetPrintIntermediateSlice $val}
+                            "printintermediatefrequency" {$n SetPrintIntermediateFrequency $val}
+                            "printintermediatedir" {$n SetPrintIntermediateDir $val}
+                            "biasprint" {$n SetBiasPrint $val}
+                            "startslice" {$n SetStartSlice $val}
+                            "endslice" {$n SetEndSlice $val}
+                            "displayprob" {$n SetDisplayProb $val}
+                            "numberoftrainingsamples" {$n SetNumberOfTrainingSamples $val}
+                            "intensityavgclass"  {$n SetIntensityAvgClass  $val}
+                            "segmentationboundarymin" {eval $n SetSegmentationBoundaryMin $val}
+                            "segmentationboundarymax" {eval $n SetSegmentationBoundaryMax $val}
+                    }
+                }
+            }
+            "EndSegmenter" {
+                set n [MainMrmlAddNode EndSegmenter]
+            }
+            "SegmenterGraph" {
+                set n [MainMrmlAddNode SegmenterGraph]
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "name" {$n SetName $val}
+                        "xmin" {$n SetXmin $val}
+                        "xmax" {$n SetXmax $val}
+                        "xsca" {$n SetXsca $val}
+                    }
+                }
+            } 
+            "SegmenterInput" {
+                set n [MainMrmlAddNode SegmenterInput]
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "name"        {$n SetName $val}
+                        "fileprefix"  {$n SetFilePrefix $val}
+                        "filename"    {$n SetFileName $val}
+                        "imagerange"  {eval $n SetImageRange  $val}
+                        "intensityavgvaluepredef"  {$n SetIntensityAvgValuePreDef $val}
+                    }
+                }
+            }
+            "SegmenterSuperClass" {
+                set n [MainMrmlAddNode SegmenterSuperClass]
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "numclasses"          {$n SetNumClasses $val}
+                        "name"                {$n SetName $val}
+                        "prob"                {$n SetProb $val}
+                        "localpriorweight"    {$n SetLocalPriorWeight $val}
+                        "inputchannelweights" {$n SetInputChannelWeights $val}
+                    }
+                }
+            }
+            "EndSegmenterSuperClass" {
+                set n [MainMrmlAddNode EndSegmenterSuperClass]
+            }
+            "SegmenterClass" {
+                set n [MainMrmlAddNode SegmenterClass]
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "name"                 {$n SetName $val}
+                        "localpriorprefix"     {$n SetLocalPriorPrefix $val}
+                        "localpriorname"       {$n SetLocalPriorName $val}
+                        "localpriorrange"      {eval $n SetLocalPriorRange  $val}
+                        "logmean"              {$n SetLogMean $val}
+                        "logcovariance"        {$n SetLogCovariance $val}
+                        "label"                {$n SetLabel $val}
+                        "prob"                 {$n SetProb $val}
+                        "shapeparameter"       {$n SetShapeParameter $val}
+                        "weightconfidencename" {$n SetWeightConfidenceName $val}
+                        "localpriorweight"     {$n SetLocalPriorWeight $val}
+                        "inputchannelweights"  {$n SetInputChannelWeights $val}
+                    }
+                }
+            }
+            "SegmenterCIM" {
+                set n [MainMrmlAddNode SegmenterCIM]
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    switch [string tolower $key] {
+                        "name"       {$n SetName $val}
+                        "cimmatrix"  {$n SetCIMMatrix $val}
+                    }
+                }
+            }
+            default {
+                foreach m $Module(idList) {
+                    if { [info exists ${m}(procMRMLLoad)] } {
+                        set loadproc ${m}(procMRMLLoad)
+                        $loadproc $tag $attr
+                    }
+                }
+            }
         }
     }
-    "EndSegmenter" {
-            set n [MainMrmlAddNode EndSegmenter]
-    }
-    "SegmenterGraph" {
-            set n [MainMrmlAddNode SegmenterGraph]
-            foreach a $attr {
-                set key [lindex $a 0]
-                set val [lreplace $a 0 0]
-                switch [string tolower $key] {
-                    "name" {$n SetName $val}
-                    "xmin" {$n SetXmin $val}
-                    "xmax" {$n SetXmax $val}
-                    "xsca" {$n SetXsca $val}
-                }
-        }
-    } 
-    "SegmenterInput" {
-            set n [MainMrmlAddNode SegmenterInput]
-            foreach a $attr {
-                set key [lindex $a 0]
-                set val [lreplace $a 0 0]
-                switch [string tolower $key] {
-                    "name"        {$n SetName $val}
-                    "fileprefix"  {$n SetFilePrefix $val}
-                    "filename"    {$n SetFileName $val}
-                    "imagerange"  {eval $n SetImageRange  $val}
-                    "intensityavgvaluepredef"  {$n SetIntensityAvgValuePreDef $val}
-                }
-            }
-    }
-    "SegmenterSuperClass" {
-            set n [MainMrmlAddNode SegmenterSuperClass]
-            foreach a $attr {
-                set key [lindex $a 0]
-                set val [lreplace $a 0 0]
-                switch [string tolower $key] {
-                    "numclasses"          {$n SetNumClasses $val}
-                    "name"                {$n SetName $val}
-                    "prob"                {$n SetProb $val}
-                    "localpriorweight"    {$n SetLocalPriorWeight $val}
-                    "inputchannelweights" {$n SetInputChannelWeights $val}
-                }
-            }
-    }
-    "EndSegmenterSuperClass" {
-            set n [MainMrmlAddNode EndSegmenterSuperClass]
-    }
-    "SegmenterClass" {
-            set n [MainMrmlAddNode SegmenterClass]
-            foreach a $attr {
-                set key [lindex $a 0]
-                set val [lreplace $a 0 0]
-                switch [string tolower $key] {
-                    "name"                 {$n SetName $val}
-                    "localpriorprefix"     {$n SetLocalPriorPrefix $val}
-                    "localpriorname"       {$n SetLocalPriorName $val}
-                    "localpriorrange"      {eval $n SetLocalPriorRange  $val}
-                    "logmean"              {$n SetLogMean $val}
-                    "logcovariance"        {$n SetLogCovariance $val}
-                    "label"                {$n SetLabel $val}
-                    "prob"                 {$n SetProb $val}
-                    "shapeparameter"       {$n SetShapeParameter $val}
-                    "weightconfidencename" {$n SetWeightConfidenceName $val}
-                    "localpriorweight"     {$n SetLocalPriorWeight $val}
-                    "inputchannelweights"  {$n SetInputChannelWeights $val}
-                }
-            }
-        }
-    "SegmenterCIM" {
-            set n [MainMrmlAddNode SegmenterCIM]
-            foreach a $attr {
-                set key [lindex $a 0]
-                set val [lreplace $a 0 0]
-                switch [string tolower $key] {
-                    "name"       {$n SetName $val}
-                    "cimmatrix"  {$n SetCIMMatrix $val}
-                }
-        }
-        }
-        }
-        }
-    }
+}
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlReadVersion1.0
@@ -2016,16 +2023,16 @@ proc MainMrmlWriteProceed {filename} {
         # TODO: check that nodes can actually be written, files exist
         tree Write $filename
         if {[tree GetErrorCode] != 0} {
-            puts "ERROR: MainMrmlWriteProceed: unable to write mrml file with colours: $filename"
-            DevErrorWindow "ERROR: MainMrmlWriteProceed: unable to write mrml file with colours: $filename"
+            #puts "ERROR: MainMrmlWriteProceed: unable to write mrml file with colours: $filename"
+            #DevErrorWindow "ERROR: MainMrmlWriteProceed: unable to write mrml file with colours: $filename"
         }
         tree RemoveAllItems
         tree Delete
     } else {
         Mrml(dataTree) Write $filename
         if {[Mrml(dataTree) GetErrorCode] != 0} {
-            puts "ERROR: MainMrmlWriteProceed: unable to write mrml data file $filename"
-            DevErrorWindow "ERROR: MainMrmlWriteProceed: unable to write mrml data file $filename"
+            #puts "ERROR: MainMrmlWriteProceed: unable to write mrml data file $filename"
+            #DevErrorWindow "ERROR: MainMrmlWriteProceed: unable to write mrml data file $filename"
         }
     }
     # Colors don't need saving now
