@@ -34,8 +34,6 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endif
 // End Samson interface
 
-#include "vtkImageReader.h"
-#include "vtkImageWriter.h"
 // ------------------------------------------------------------------
 
 // This has always to be defined when using vtkPrivateDataTimeDef . Do not ask me why
@@ -346,32 +344,6 @@ void* GetPointerToVtkImageData(vtkImageData *Image, int DataType, int Ext[6]) {
 }
 
 //----------------------------------------------------------------------------
-//Could not put it into another file like vtkImageGeneral - then it would seg falt - do not ask me why 
-void ShortGEImageReader(vtkImageReader *VOLUME, const char FileName[], int Zmin, int Zmax) {
-  cout << "Load file " <<  FileName << endl;
-  VOLUME->ReleaseDataFlagOff();
-  VOLUME->SetDataScalarTypeToShort();
-  VOLUME->SetDataSpacing(0.9375,0.9375,1.5);
-  VOLUME->SetFilePattern("%s.%03d");
-  VOLUME->SetFilePrefix(FileName);
-  VOLUME->SetDataExtent(0, 255, 0 ,255 , Zmin , Zmax);
-  VOLUME->SetNumberOfScalarComponents(1);
-  VOLUME->SetDataByteOrderToLittleEndian();
-  VOLUME->Update();
-}
-
-//----------------------------------------------------------------------------
-void GEImageWriter(vtkImageData *Volume, char *FileName) {
-  cout << "Write to file " <<  FileName << endl;
-  vtkImageWriter *Write=vtkImageWriter::New();
-  Write->SetInput(Volume);
-  Write->SetFilePrefix(FileName);
-  Write->SetFilePattern("%s.%03d");
-  Write->Write();
-  Write->Delete();
-}
-
-//----------------------------------------------------------------------------
 // Transferes the data wrom the working extent (that is only the area defined by the SegmentationBounday)
 // to the Extent of the output
 template <class TIn, class TOut>
@@ -452,7 +424,7 @@ static void vtkImageEMLocalSegmenter_PrintDataToOutputExtension(vtkImageEMLocalS
   int outInc[3] = {outIncX, OutIncY, outIncZ};
   vtkImageEMLocalSegmenter_TransfereDataToOutputExtension(self,inputExtension_Vector,OriginalExtension_DataPtr ,outInc);
   
-  GEImageWriter(OriginalExtension_Data,FileName);
+  self->GEImageWriter(OriginalExtension_Data,FileName,1);
   OriginalExtension_Data->Delete();    
 }
 //------------------------------------------------------------------------------
@@ -869,7 +841,6 @@ void MeanFieldApproximation3DThreadPrivate(void *jobparm) {
 void vtkImageEMLocalSegmenter::PrintIntermediateResultsToFile(int iter, float **w_m, short* ROI, unsigned char* OutputVector, int NumTotalTypeCLASS, int* NumChildClasses, 
                                 vtkImageEMLocalSuperClass* actSupCl, char* LevelName, void **ClassList, classType *ClassListType, int* LabelList, 
                                 FILE** QualityFile) {
-  vtkFileOps write;
 
   // -----------------------------------------------------------
   // 1. Print out Weights
@@ -891,7 +862,7 @@ void vtkImageEMLocalSegmenter::PrintIntermediateResultsToFile(int iter, float **
     // Just a dummy so it does not cut of the last directory ! => will create this->PrintDir if needed  
     sprintf(FileName,"%s/weights/blub",this->PrintDir);
     
-    if (write.makeDirectoryIfNeeded(FileName) == -1) {
+    if (vtkFileOps::makeDirectoryIfNeeded(FileName) == -1) {
       vtkEMAddErrorMessage( "Could not create the follwoing directory :" << this->PrintDir << "/weights");
       return;
     } 
@@ -984,11 +955,11 @@ void vtkImageEMLocalSegmenter::PrintIntermediateResultsToFile(int iter, float **
     char FileName[1000];
     cout << "Labelmap will be printed in directory "<< this->PrintDir << "/labelmaps" << endl;
     sprintf(FileName,"%s/labelmaps/EMLabelMapL%sI%d",this->PrintDir,LevelName,iter); 
-    if (write.makeDirectoryIfNeeded(FileName) == -1) {
+    if (vtkFileOps::makeDirectoryIfNeeded(FileName) == -1) {
       vtkEMAddErrorMessage( "Could not create the directory :" << this->PrintDir << "/LabelMaps");
       return;
     }
-    GEImageWriter(LabelMap_OriginalExtension_Data,FileName);
+    this->GEImageWriter(LabelMap_OriginalExtension_Data,FileName,1);
   }
 
   // -----------------------------------------------------------
