@@ -329,7 +329,7 @@ proc MorphometricsGenericPlaneUndisplay {plane} {
 #-------------------------------------------------------------------------------
 proc MorphometricsGenericPlaneUI {instructions frame} {
     global Gui Morphometrics
-    text $frame.tInstructions -bg $Gui(normalButton) -height 5
+    text $frame.tInstructions -wrap word -bg $Gui(normalButton) -height 5
     $frame.tInstructions insert end $instructions
     pack $frame.tInstructions -side top -padx $Gui(pad) -pady $Gui(pad)
 }
@@ -457,7 +457,7 @@ proc MorphometricsGenericPolyDataUndisplay {polyDataTransformFilter userOnExit} 
 proc MorphometricsGenericPolyDataUI {customUI instructions frame} {
     global Gui Morphometrics
 
-    text $frame.tInstructions -bg $Gui(normalButton) -height 5
+    text $frame.tInstructions -wrap word -bg $Gui(normalButton) -height 5
     $frame.tInstructions insert end $instructions
     pack $frame.tInstructions -side top -padx $Gui(pad) -pady $Gui(pad)
 
@@ -465,7 +465,7 @@ proc MorphometricsGenericPolyDataUI {customUI instructions frame} {
     pack $frame.fUser -side top -padx 0 -pady $Gui(pad) -fill x
     eval $customUI $frame.fUser
 
-    text $frame.tHowToCsys -bg $Gui(normalButton) -height 5
+    text $frame.tHowToCsys -wrap word -bg $Gui(normalButton) -height 5
     $frame.tHowToCsys insert end [MorphometricsHowToInteractWithCsys]
     pack $frame.tHowToCsys -side top -padx $Gui(pad) -pady $Gui(pad)
    
@@ -605,7 +605,7 @@ proc MorphometricsGenericSphereUndisplay {sphere} {
 proc MorphometricsGenericSphereUI {sphere instructions frame} {
     global Gui Morphometrics
 
-    text $frame.tInstructions -bg $Gui(normalButton) -height 5
+    text $frame.tInstructions -wrap word -bg $Gui(normalButton) -height 5
     $frame.tInstructions insert end $instructions
     pack $frame.tInstructions -side top -padx $Gui(pad) -pady $Gui(pad)
 
@@ -614,7 +614,6 @@ proc MorphometricsGenericSphereUI {sphere instructions frame} {
 
     DevAddButton $frame.bMakeSphereSmaller "Smaller" [list eval [subst -nocommands {MorphometricsGenericSphereChangeRadius $sphere -1; Render3D}]]
     pack $frame.bMakeSphereSmaller -side right -padx $Gui(pad) -pady $Gui(pad)
-
 }
 
 

@@ -34,7 +34,7 @@
 # 
 #
 #===============================================================================
-# FILE:        Workflow.tcl
+# FILE:        MeasurementDeveloper.tcl
 # PROCEDURES:  
 #    IgnoreModelsChoosen ids
 #    DescribeStepsUI frame
@@ -86,7 +86,7 @@ proc IgnoreModelsChoosen {ids} {
 #-------------------------------------------------------------------------------
 proc DescribeStepsUI {frame} {
     global Gui
-    text $frame.tInstructions -bg $Gui(normalButton) -height 20
+    text $frame.tInstructions -wrap word -bg $Gui(normalButton) -height 20
     $frame.tInstructions insert end "This is an example how to implement a morphometric tool. The source code is located at Modules/vtkMorphometrics/tcl/MeasurementDeveloper.tcl . The following steps demonstrate how to use the 'step factories' available in vtkMorphometrics/tcl/StepFactories.tcl"
     pack $frame.tInstructions -side top -padx $Gui(pad) -pady $Gui(pad)
 }
@@ -103,6 +103,7 @@ proc MorphometricsDeveloperMeasurementInit {} {
     WorkflowInitWorkflow MorphometricsDeveloper $Morphometrics(workflowFrame)
     WorkflowAddStep MorphometricsDeveloper MorphometricsDoNothingOnEnterExit MorphometricsDoNothingOnEnterExit DescribeStepsUI "Introduction"
 
+    MorphometricsCreateModelChooserStep MorphometricsDeveloper "Femur Pelvis" IgnoreModelsChoosen
 
     vtkPlaneSource MorphometricsExamplePlane
     MorphometricsExamplePlane SetOrigin 0 0 0
@@ -135,10 +136,10 @@ proc MorphometricsDeveloperMeasurementInit {} {
     MorphometricsExampleCylindertpdf SetTransform MorphometricsExampleCylindertpdt
     MorphometricsExampleCylindertpdf SetInput [MorphometricsExampleCylinder GetOutput]
 
-    MorphometricsCreateCylinderPlacementStep MorphometricsDeveloper MorphometricsExampleCylinder MorphometricsExampleCylindertpdf "Place example plane" "The name of the vtk-object is 'MorphometricsExampleCylinder'. Place it using the csys  and examine how 'MorphometricsExampleCylinder' is updated. A cylinder is a good way of representong lines."
+    MorphometricsCreateCylinderPlacementStep MorphometricsDeveloper MorphometricsExampleCylinder MorphometricsExampleCylindertpdf "Place example cylinder" "The name of the vtk-object is 'MorphometricsExampleCylinder'. Place it using the csys  and examine how 'MorphometricsExampleCylinder' is updated. A cylinder is a good way of representong lines."
 
 
-    MorphometricsCreateModelChooserStep MorphometricsDeveloper "Femur Pelvis" IgnoreModelsChoosen
+
 }
 
 

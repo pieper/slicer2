@@ -43,7 +43,7 @@
 #    MorphometricsUpdateGUI
 #    MorphometricsClearText textField
 #    MorphometricsUpdateChooseMeasurementTab
-#    MorphometricsAddMeasurement nameOfTool nameOfWorkflow providedMeasurements
+#    MorphometricsAddMeasurement nameOfTool nameOfWorkflow providedMeasurements initFunction
 #    MorphometricsStartMeasure
 #    MorphometricsPositionCsys center normal
 #    MorphometricsHideCsys
@@ -193,7 +193,7 @@ proc MorphometricsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2004/01/23 22:14:38 $}]
+        {$Revision: 1.5 $} {$Date: 2004/01/29 00:08:13 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -312,7 +312,7 @@ proc MorphometricsBuildGUI {} {
     label $f.lProvides  -padx 0 -pady $Gui(pad) -text "Provides:" -bg $Gui(activeWorkspace)
     pack $f.lProvides -side top -padx 0 -pady $Gui(pad)
 
-    text $f.tProvidesText -bg $Gui(normalButton) -height 5
+    text $f.tProvidesText -wrap word -bg $Gui(normalButton) -height 5
     pack $f.tProvidesText -side top -padx $Gui(pad) -pady $Gui(pad)
 
     #--------------------------------------------
