@@ -1,8 +1,6 @@
-catch {load vtktcl}
-if { [catch {set VTK_TCL $env(VTK_TCL)}] != 0} { set VTK_TCL "../../examplesTcl" }
-if { [catch {set VTK_DATA $env(VTK_DATA)}] != 0} { set VTK_DATA "../../../vtkdata" }
-source ../../imaging/examplesTcl/vtkImageInclude.tcl
-source ../../imaging/examplesTcl/TkImageViewerInteractor.tcl
+package require vtk
+package require vtkinteraction
+package require vtkSlicerBase
 
 # This script tests the livewire stuff...
 
@@ -11,8 +9,8 @@ source ../../imaging/examplesTcl/TkImageViewerInteractor.tcl
 vtkImageReader reader
 reader ReleaseDataFlagOff
 reader SetDataByteOrderToLittleEndian
-reader SetDataExtent 0 255 0 255 1 93
-reader SetFilePrefix "../../../vtkdata/fullHead/headsq"
+reader SetDataExtent 0 63 0 63 1 93
+reader SetFilePrefix ${VTK_DATA_ROOT}/Data/headsq/quarter
 reader SetDataMask 0x7fff
 
 #reader SetFilePattern "%s.%03d"
@@ -20,9 +18,13 @@ reader SetDataMask 0x7fff
 #reader SetDataScalarTypeToShort
 #reader SetFilePrefix "/home/ai/odonnell/imtest/test_image"
 
+vtkImageMagnify mag
+  mag SetInput [reader GetOutput]
+  mag SetMagnificationFactors 4 4 1
+
 # get just one slice
 vtkImageClip clip
-clip SetInput [reader GetOutput]
+clip SetInput [mag GetOutput]
 clip SetOutputWholeExtent 0 255 0 255 10 10
 clip ClipDataOn
 clip ReleaseDataFlagOff
@@ -35,7 +37,7 @@ lw SetVerbose 1
 foreach dir {0 1 2 3} name {Up Down Left Right} {
     #### cost to travel along edges in graph (aka pixel edges)
     vtkImageLiveWireEdgeWeights lwedge$dir
-    lwedge$dir SetInput [clip GetOutput]
+    lwedge$dir SetInput 0 [clip GetOutput]
     lwedge$dir SetEdgeDirection $dir
     lwedge$dir Update
 
@@ -76,8 +78,7 @@ pack .top.f -fill both -expand t
 BindTkImageViewer .top.f.v
 
 #make interface
-source WindowLevelInterface.tcl
-
+source [file join [file dirname [info script]] WindowLevelInterface.tcl]
 
 ######## unfinished attempt at interactivity...
 # bindings
@@ -96,11 +97,4 @@ proc addPoint { x y } {
     puts "-----------------------------------------------"
 
 }
-
-
-
-
-
-
-
 
