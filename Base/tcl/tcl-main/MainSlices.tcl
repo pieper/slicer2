@@ -92,7 +92,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-		{$Revision: 1.37 $} {$Date: 2002/02/11 19:38:46 $}]
+		{$Revision: 1.38 $} {$Date: 2002/02/19 21:06:59 $}]
 
 	# Initialize Variables
 	set Slice(idList) "0 1 2"
@@ -350,7 +350,6 @@ proc MainSlicesBuildControls {s F} {
 		-command "MainSlicesSetVisibility ${s}; \
 		MainViewerHideSliceControls; Render3D"} $Gui(WCA) \
 		{-selectcolor $Gui(slice$s)}
-	pack $f.cVisibility${s} -side left -padx 2
 	# tooltip for Visibility checkbutton
 	TooltipAdd $f.cVisibility${s} "Click to make this slice visible.\n \
 		Right-click for menu: \nzoom, slice increments, \
