@@ -54,16 +54,29 @@ Be SURE you are in your new directory when you run this!
 
     cp CMakeListsLocal-SAMPLE.txt CMakeListsLocal.txt
 
-* Edit this file to include the names of your source files.  Be sure
+* Edit CMakeListsLocal.txt to include the names of your source files.  Be sure
    not to include suffixes.  If you have abstract classes, put them
    in the source files area as well as the abstract files area.  The
    file also includes directions for adding link libraries.
+
+* Make a directory called tcl (e.g. /home/pieper/slicer2/Modules/vtkTest/tcl)
+and put your tcl code in it.
 
 * Edit the files in Wrapping/Tcl to specify the version number of your
 module.  You may also need to change the vkt<Modulename>.tcl file 
 to specify a unique command that's only in your class -- by default it
 assumes there will be a class with the same name as your module.
 
+* Add the following two lines to your Wrapping/Tcl/pkgIndex.tcl file:
+    global PACKAGE_DIR_VTK[MODULENAME]
+    set PACKAGE_DIR_VTK[MODULENAME] $dir
+then add 
+    global PACKAGE_DIR_VTK[MODULENAME]
+    source  $PACKAGE_DIR_VTK[MODULENAME]/../../../tcl/<module tcl file>.tcl
+in the if statement in Wrapping/Tcl/vtk[ModuleName]/vtk[ModuleName].tcl
+
+Where vtk[ModuleName].tcl is the entry point for any tcl code associated
+with your module.
 
 * You're ready to build; cd to the builds directory and make a new
 directory of the same name as the Slicer build you want to link with.
