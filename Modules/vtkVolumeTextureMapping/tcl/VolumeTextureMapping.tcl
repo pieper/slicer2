@@ -115,7 +115,8 @@ proc VolumeTextureMappingInit {} {
     #------------------------------------
     set Module($m,overview) "3D Texture Mapping, volume rendering."
     set Module($m,author) "Frida Hernell, Link÷ping University"
-    set Module($m,category) "Visualisation"
+#    set Module($m,category) "Visualisation"
+    set Module($m,category) "Alpha"
     set Module($m,row1List) "Help Settings Transfer Clip"
     set Module($m,row1Name) "{Help} {Settings} {Transfer Functions} {Clip}"
     set Module($m,row1,tab) Settings
@@ -270,7 +271,9 @@ Description by tabs:
     set f $fSettings.fRefreshSettings.fButtons
 
     DevAddButton $f.bRefresh {Refresh View} VolumeTextureMappingRefresh
+    DevAddLabel $f.lWarning {(Not working with all video cards.)} 
     pack $f.bRefresh -side top
+    pack $f.lWarning
   
 
 
