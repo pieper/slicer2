@@ -50,7 +50,7 @@ if { [file exists $localvarsfile] } {
 ##
 ## All arguments do nothing by default
 ##
-foreach var "VTK_ARG1 VTK_ARG2 VTK_ARG3 VTK_ARG4 VTK_ARG5 VTK_ARG6 VTK_ARG7 VTK_ARG8 VTK_ARG9 SLICER_ARG1 SLICER_ARG2 SLICER_ARG3 SLICER_ARG4" {
+foreach var "VTK_ARG1 VTK_ARG2 VTK_ARG3 VTK_ARG4 VTK_ARG5 VTK_ARG6 VTK_ARG7 VTK_ARG8 VTK_ARG9 VTK_ARG_CONFIGURATIONS SLICER_ARG1 SLICER_ARG2 SLICER_ARG3 SLICER_ARG4" {
     set $var "-DDUMMY:BOOL=ON"
 }
 
@@ -62,7 +62,7 @@ set SLICER_ARG4 "-DVTKSLICERBASE_BUILD_TCL_LIB:PATH=$VTKSLICERBASE_BUILD_TCL_LIB
 # use an already built version of vtk
 set VTK_ARG1 "-DUSE_BUILT_VTK:BOOL=ON"
 set VTK_ARG2 "-DVTK_DIR:PATH=$VTK_DIR"
-
+set VTK_ARG_CONFIGURATIONS "-DCMAKE_CONFIGURATION_TYPES:STRING=Debug;RelWithDebInfo"
 
 ## some operating systems 
 switch $tcl_platform(os) {
@@ -190,6 +190,10 @@ for {set i 0} {$i < $argc} {incr i} {
             set VTK_ARG_DEBUG   "-DCMAKE_BUILD_TYPE:STRING=Debug"
             set AttributeFlag 1
         }
+        "--relwithdebinfo"    { puts "Compiling in relwithdebinfo mode" 
+            set VTK_ARG_DEBUG   "-DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo"
+            set AttributeFlag 1
+        }
         default {
             if {[string range $a 0 1 ] == "--"} { 
                 puts stderr "Do not know option $a. Currently the following attributes are defined: "
@@ -265,6 +269,7 @@ foreach target $TARGETS {
         set cmakecmd [list $CMAKE $target -G$GENERATOR \
             $VTK_ARG1 $VTK_ARG2 $VTK_ARG3 $VTK_ARG4 $VTK_ARG5 \
             $VTK_ARG6 $VTK_ARG7 $VTK_ARG8 $VTK_ARG9 $VTK_ARG_VERBOSE $VTK_ARG_DEBUG $VTK_ARG_ENDIAN \
+            $VTK_ARG_CONFIGURATIONS \
             $SLICER_ARG1 $SLICER_ARG2 $SLICER_ARG3 $SLICER_ARG4] 
 
         if {[file exists [file join $target cmaker_local.tcl]]} {
