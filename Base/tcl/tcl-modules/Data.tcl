@@ -75,7 +75,7 @@ proc DataInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.25 $} {$Date: 2000/05/05 19:03:35 $}]
+		{$Revision: 1.26 $} {$Date: 2000/07/19 05:00:24 $}]
 
 	set Data(index) ""
 	set Data(clipboard) ""
@@ -207,7 +207,7 @@ to quickly cut and paste items.
 	#-------------------------------------------
 	set f $fList.fTitle
 	
-	eval {label $f.lTitle -text "MRML File Contents:"} $Gui(WTA)
+	eval {label $f.lTitle -text "MRML File Contents (Current Scene):"} $Gui(WTA)
 	pack $f.lTitle 
 
 	#-------------------------------------------

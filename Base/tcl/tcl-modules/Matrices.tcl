@@ -75,7 +75,7 @@ proc MatricesInit {} {
 
 	# Set version info
 	lappend Module(versions) [ParseCVSInfo $m \
-		{$Revision: 1.18 $} {$Date: 2000/03/06 17:55:01 $}]
+		{$Revision: 1.19 $} {$Date: 2000/07/19 05:00:24 $}]
 
 	# Props
 	set Matrix(propertyType) Basic
@@ -180,7 +180,7 @@ copy one of the matrices derived from the header of a volume.
 with 6 degrees of freedom (3 translation, 3 rotation). 
 Either move the sliders, or click the left mouse button on a slice window 
 and drag it.  The <B>Mouse Action</B> buttons indicate whether to translate
-or rotate. 
+or rotate the volume in the Slice windows.  
 <BR><B>TIP:</B> The <B>Render</B> buttons indicate which windows to render
 as you move the sliders or mouse.  Rendering just one slice is much faster.
 <BR><LI><B>Auto:</B> Automatic registration using the method of Mutual 
@@ -495,9 +495,9 @@ are already roughly aligned.
 
     frame $f.fTitle -bg $Gui(activeWorkspace)
     frame $f.fBtns -bg $Gui(activeWorkspace)
-    pack $f.fTitle $f.fBtns -side left -padx 5
+    pack $f.fTitle $f.fBtns -side top -pady $Gui(pad) -padx 1
 
-    eval {label $f.fTitle.l -text "Mouse Action: "} $Gui(WLA)
+    eval {label $f.fTitle.l -text "Mouse Action in Slice Window: "} $Gui(WLA)
     pack $f.fTitle.l
 
     foreach text "Translate Rotate" value "Translate Rotate" \
