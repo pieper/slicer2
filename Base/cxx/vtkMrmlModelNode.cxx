@@ -57,6 +57,7 @@ vtkMrmlModelNode::vtkMrmlModelNode()
   this->Name = NULL;
   this->FileName = NULL;
   this->Color = NULL;
+  this->RasToIjkMatrix = NULL;
 
   memset(this->ScalarRange, 0, 2*sizeof(int));
 
@@ -85,7 +86,16 @@ vtkMrmlModelNode::~vtkMrmlModelNode()
     delete [] this->FileName;
     this->FileName = NULL;
   }
-
+  if (this->Color)
+  {
+    delete [] this->Color;
+    this->Color = NULL;
+  }
+  if (this->RasToIjkMatrix)
+  {
+    delete [] this->RasToIjkMatrix;
+    this->RasToIjkMatrix = NULL;
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -98,6 +108,7 @@ void vtkMrmlModelNode::Copy(vtkMrmlModelNode *node)
   // Strings
   this->SetFileName(node->FileName);
   this->SetColor(node->Color);
+  this->SetRasToIjkMatrix(node->RasToIjkMatrix);
 
   // Vectors
   this->SetScalarRange(node->ScalarRange);
@@ -125,7 +136,7 @@ void vtkMrmlModelNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   int idx;
   
-  vtkObject::PrintSelf(os,indent);
+  vtkMrmlNode::PrintSelf(os,indent);
 
   os << indent << "Name: " <<
     (this->Name ? this->Name : "(none)") << "\n";
@@ -133,6 +144,8 @@ void vtkMrmlModelNode::PrintSelf(ostream& os, vtkIndent indent)
     (this->FileName ? this->FileName : "(none)") << "\n";
   os << indent << "Color: " <<
     (this->Color ? this->Color : "(none)") << "\n";
+  os << indent << "RasToIjkMatrix: " <<
+    (this->RasToIjkMatrix ? this->RasToIjkMatrix : "(none)") << "\n";
 
   os << indent << "Opacity:           " << this->Opacity << "\n";
   os << indent << "Visibility:        " << this->Visibility << "\n";

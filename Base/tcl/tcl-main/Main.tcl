@@ -5,7 +5,7 @@
 # The following terms apply to all files associated with the software unless
 # explicitly disclaimed in individual files.   
 # 
-# The authors hereby grant permission to use and copy (but not distribute) this
+# The authors hereby grant permission to use, copy, and distribute this
 # software and its documentation for any NON-COMMERCIAL purpose, provided
 # that existing copyright notices are retained verbatim in all copies.
 # The authors grant permission to modify this software and its documentation 
@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Main.tcl
-# DATE:        12/10/1999 08:40
+# DATE:        12/09/1999 14:09
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   BootSlicer
@@ -116,6 +116,8 @@ proc MainBoot {{mrmlFile ""}} {
 	#-------------------------------------------
 	MainInit
 
+	# Build the Viewer window before doing anything else to see if that helps
+	# with the apparent OpenGL bug on Windows98 version 2
 	vtkMrmlSlicer Slicer
 	Slicer SetFieldOfView $View(fov)
 
@@ -158,6 +160,7 @@ proc MainBoot {{mrmlFile ""}} {
 	}
 	MainViewSetFov
 
+	# Debuging the slice rendering (no longer necessary)
 	if {$checkSliceRender == 1} {
 		Anno(0,curBack,actor) SetVisibility 1
 		set i 0
@@ -182,7 +185,9 @@ proc MainBoot {{mrmlFile ""}} {
 	#-------------------------------------------
 	# Load MRML data
 	#-------------------------------------------	
-	MainMrmlRead $mrmlFile
+	puts "Loading MRML"
+	MainMrmlReadDag $mrmlFile
+	MainMrmlBuildTrees
 	MainUpdateMRML
 
 	#-------------------------------------------
@@ -194,9 +199,10 @@ proc MainBoot {{mrmlFile ""}} {
 	#-------------------------------------------
 	# Initial tab
 	#-------------------------------------------
-#	Tab [lindex $Module(idList) 0]
 	$Gui(lBoot) config -text "Ready!"
-
+	if {$Module(activeID) == ""} {
+		Tab [lindex $Module(idList) 0]
+	}
 	bind .tViewer <Configure> "MainViewerUserResize"
 	puts "Ready"
 }
@@ -229,6 +235,7 @@ proc MainInit {} {
 	# Initialize Module info
 	#-------------------------------------------
 	set Module(activeID) ""
+	set Module(freezer) ""
 
 	foreach m $Module(idList) {
 		set Module($m,more) 0
@@ -280,13 +287,6 @@ proc MainBuildVTK {} {
 	# Now that the MainLut non-module has built the indirectLUT,
 	# I can set it in the Slicer object.
 	Slicer SetLabelIndirectLUT Lut($Lut(idLabel),indirectLUT)
-
-    # Read welcome image
-	set dim1 [expr $Gui(magDim) - 1]
-	vtkPNMReader welcomeReader 
-	welcomeReader SetDataExtent 0 $dim1 0 $dim1 0 0 
-	welcomeReader SetFileName [ExpandPath [file join gui welcome.ppm]]
-	welcomeReader Update
 }
 
 #-------------------------------------------------------------------------------
@@ -328,7 +328,7 @@ proc MainBuildGUI {} {
 	# Status bar dimensions
 
 	frame $f.fModules  -bd $Gui(borderWidth) -bg $Gui(backdrop)
-	frame $f.fControls -bd $Gui(borderWidth) -bg $Gui(backdrop) -height 430
+	frame $f.fControls -bd $Gui(borderWidth) -bg $Gui(backdrop) -height 420
 	frame $f.fDisplay  -bd $Gui(borderWidth) -bg $Gui(backdrop)
 	frame $f.fStatus   -bd $Gui(borderWidth) -bg $Gui(inactiveWorkspace) \
 		-relief sunken
@@ -348,6 +348,29 @@ proc MainBuildGUI {} {
 	pack $f.fStatus   -side top -expand 1 -fill both -padx 0 -pady 0
 	pack propagate $f.fControls  false
 
+	#-------------------------------------------
+	# System Menu
+	#-------------------------------------------
+	set f .tMain
+
+	menu .menubar
+	# attach it to the main window
+	$f config -menu .menubar
+	# Create more cascade menus
+	foreach m {File Edit Help} {
+		set c {menu .menubar.m$m $Gui(SMA)}; eval [subst $c]
+		set Gui(m$m) .menubar.m$m
+		.menubar add cascade -label $m -menu .menubar.m$m
+	}
+	$Gui(mFile) add command -label "Open..." -command \
+		"MainMenu File Open"
+	$Gui(mFile) add separator
+	$Gui(mFile) add command -label "Exit" -command MainExitProgram
+	$Gui(mHelp) add command -label "Documentation..." -command \
+		"MainMenu Help Documentation"
+	$Gui(mHelp) add command -label "Copyright..." -command \
+		"MainMenu Help Copyright"
+	
 	#-------------------------------------------
 	# Main->Module Frame
 	#-------------------------------------------
@@ -515,16 +538,24 @@ proc MainBuildGUI {} {
 	#-------------------------------------------
 	set f .tMain.fDisplay.fLeft.fImage
 
-	frame $f.fMagBorder -bg $Gui(inactiveWorkspace) -bd $Gui(borderWidth) \
-		-relief sunken
-	frame $f.fNav -bg $Gui(activeWorkspace) -bd $Gui(borderWidth) \
-		-relief sunken
-	set Gui(fMagBorder) $f.fMagBorder
-	set Gui(fNav) $f.fNav
+	foreach name "MagBorder Nav Welcome" {
+		frame $f.f$name -bg $Gui(inactiveWorkspace) -bd $Gui(borderWidth) \
+			-relief sunken
+		set Gui(f$name) $f.f$name
+		place $f.f$name -in $f -relwidth 1.0 -relheight 1.0
+	}
+	raise $Gui(fWelcome)
 
-	place $f.fMagBorder -in $f -relwidth 1.0 -relheight 1.0
-	place $f.fNav -in $f -relwidth 1.0 -relheight 1.0
-	raise $Gui(fNav)
+	#-------------------------------------------
+	# Main->Display->Left->Image->Welcome Frame
+	#-------------------------------------------
+	set f .tMain.fDisplay.fLeft.fImage.fWelcome
+
+	image create photo iWelcome \
+		-file [ExpandPath [file join gui "welcome.ppm"]]
+	eval {label $f.lWelcome -image iWelcome  \
+		-width $Gui(magDim) -height $Gui(magDim) -anchor w} $Gui(WLA)
+	pack $f.lWelcome
 
 	#-------------------------------------------
 	# Main->Display->Left->Image->MagBorder Frame
@@ -532,7 +563,7 @@ proc MainBuildGUI {} {
 	set f .tMain.fDisplay.fLeft.fImage.fMagBorder
 
 	if {$View(createMagWin) == "Yes"} {
-		MakeVTKImageWindow mag welcomeReader
+		MakeVTKImageWindow mag 
 
 		vtkTkImageWindowWidget $f.fMag -iw magWin \
 			-width $Gui(magDim) -height $Gui(magDim)  
@@ -591,23 +622,33 @@ proc MainBuildGUI {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainUpdateMRML {} {
-	global Module
+	global Module Label
+	
+	set verbose 0
 	
 	# Call each "MRML" routine that's not part of a module
 	#-------------------------------------------
-	puts "MRML: MainVolumes"; MainVolumesBuildMRML
-	puts "MRML: MainModels";  MainModelsUpdateMRML
-	puts "MRML: MainColors";  MainColorsUpdateMRML
+	if {$verbose == 1} {puts "MRML: MainMrml"}
+	MainMrmlUpdateMRML
+	if {$verbose == 1} {puts "MRML: MainColors"}
+	MainColorsUpdateMRML
+	if {$verbose == 1} {puts "MRML: MainVolumes"}
+	MainVolumesUpdateMRML
+	if {$verbose == 1} {puts "MRML: MainModels"}
+	MainModelsUpdateMRML
+	if {$verbose == 1} {puts "MRML: MainTransforms"}
+	MainTransformsUpdateMRML
 
 	foreach p $Module(procMRML) {
-		puts "MRML: $p";  $p
+		if {$verbose == 1} {puts "MRML: $p"}
+		$p
 	}
 
 	# Call each Module's "MRML" routine
 	#-------------------------------------------
 	foreach m $Module(idList) {
 		if {[info exists Module($m,procMRML)] == 1} {
-			puts "MRML: $m"
+			if {$verbose == 1} {puts "MRML: $m"}
 			$Module($m,procMRML)
 		}
 	}
@@ -618,7 +659,7 @@ proc MainUpdateMRML {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSetup {} {
-	global Module Gui Dag Volume Slice View Model
+	global Module Gui Volume Slice View Model Color Transform
 
 	# idList is: -2 -1 0 1
 	set len [llength $Volume(idList)]
@@ -626,7 +667,6 @@ proc MainSetup {} {
 
 		# Set active volume
 		set v [lindex $Volume(idList) $Volume(numBuiltIn)]
-		set Volume(activeID) $v
 		
 		# Set FOV
 		set dim     [lindex [Volume($v,node) GetDimensions] 0]
@@ -635,9 +675,9 @@ proc MainSetup {} {
 		set View(fov) $fov
 		MainViewSetFov
 	} else {
-		set Volume(activeID) 0
+		set v 0
 	}
-	MainVolumesSetActive $Volume(activeID)
+	MainVolumesSetActive $v
 
 	# If no volume set in the slices' background, set the active one
 	set doit 1 
@@ -660,6 +700,15 @@ proc MainSetup {} {
 	if {$m != ""} {	
 		MainModelsSetActive $m
 	}
+
+	# Active transform
+	set m [lindex $Transform(idList) 0]
+	if {$m != ""} {	
+		MainTransformsSetActive $m
+	}
+
+	# Active color
+	MainColorsSetActive [lindex $Color(idList) 0]
 }
 
 #-------------------------------------------------------------------------------
@@ -681,6 +730,13 @@ proc IsModule {m} {
 #-------------------------------------------------------------------------------
 proc Tab {m {row ""} {tab ""}} {
 	global Module Gui View
+
+	# Frozen?
+	if {$Module(freezer) != ""} {
+		set Module(btn) $Module(activeID)
+		set Module(moreBtn) 0
+		return
+	}
 
 	# No modules?
 	if {$m == ""} {return}
@@ -707,7 +763,7 @@ proc Tab {m {row ""} {tab ""}} {
 	}
 
 	# Remember prev
-	set prevID  $Module(activeID)
+	set prevID $Module(activeID)
 	if {$prevID != ""} {
 		set prevRow $Module($prevID,row)
 		set prevTab $Module($prevID,$prevRow,tab)
@@ -740,7 +796,7 @@ proc Tab {m {row ""} {tab ""}} {
 	}
 
 	# Set new
-	set Module(activeID)  $m
+	set Module(activeID) $m
 	set Module($m,row) $row
 	set Module($m,$row,tab) $tab
 
@@ -862,6 +918,63 @@ proc MainEndProgress {} {
 	update
 }
 
+proc MainMenu {menu cmd} {
+	global Gui
+
+	set x 50
+	set y 50
+
+	switch $menu {
+
+	"File" {
+		switch $cmd {
+		"Open" {
+			MainFileOpenPopup "" 50 50
+		}
+		}
+	}
+
+	"Help" {
+		switch $cmd {
+		"Copyright" {
+			MsgPopup Copyright $x $y "\
+Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
+
+Direct all questions regarding this copyright to slicer@ai.mit.edu.
+The following terms apply to all files associated with the software unless
+explicitly disclaimed in individual files.   
+
+The authors hereby grant permission to use and copy (but not distribute) this
+software and its documentation for any NON-COMMERCIAL purpose, provided
+that existing copyright notices are retained verbatim in all copies.
+The authors grant permission to modify this software and its documentation 
+for any NON-COMMERCIAL purpose, provided that such modifications are not 
+distributed without the explicit consent of the authors and that existing
+copyright notices are retained in all copies. Some of the algorithms
+implemented by this software are patented, observe all applicable patent law.
+
+IN NO EVENT SHALL THE AUTHORS OR DISTRIBUTORS BE LIABLE TO ANY PARTY FOR
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT
+OF THE USE OF THIS SOFTWARE, ITS DOCUMENTATION, OR ANY DERIVATIVES THEREOF,
+EVEN IF THE AUTHORS HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+THE AUTHORS AND DISTRIBUTORS SPECIFICALLY DISCLAIM ANY WARRANTIES, INCLUDING,
+BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
+'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
+MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS."
+		}
+		"Documentation" {
+			MsgPopup Documentation $x $y "\
+For the latest documentation, visit:
+
+http://www.slicer.org"
+		}
+		}
+	}
+	}
+}
+
 #-------------------------------------------------------------------------------
 # .PROC MainExitQuery
 #
@@ -910,17 +1023,6 @@ proc MainSaveMRMLQuery { } {
 proc MainExitProgram { } {
 	global Gui
 	
-	# Save *.log file
-#	SaveLogFile "slicer.log"
-
-	# Delete AutoSave file
-#	catch {file delete $State(0,name)[pid].auto}
-#	catch {file delete smg.mrml}
-
-	# Delete all "*.state" files
-#	foreach match [glob -nocomplain "*.state"] {
-#		catch {file delete $match}
-#	}
 	exit
 }
 

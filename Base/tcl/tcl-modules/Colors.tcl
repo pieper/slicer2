@@ -5,7 +5,7 @@
 # The following terms apply to all files associated with the software unless
 # explicitly disclaimed in individual files.   
 # 
-# The authors hereby grant permission to use and copy (but not distribute) this
+# The authors hereby grant permission to use, copy, and distribute this
 # software and its documentation for any NON-COMMERCIAL purpose, provided
 # that existing copyright notices are retained verbatim in all copies.
 # The authors grant permission to modify this software and its documentation 
@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Colors.tcl
-# DATE:        12/10/1999 08:40
+# DATE:        12/09/1999 14:15
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   ColorsInit
@@ -54,7 +54,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsInit {} {
-	global Colors Gui Module
+	global Color Gui Module
 
 	# Define Tabs
 	set m Colors
@@ -65,10 +65,6 @@ proc ColorsInit {} {
 	# Define Procedures
 	set Module($m,procGUI)  ColorsBuildGUI
 	set Module($m,procMRML) ColorsUpdateMRML
-
-	set Colors(node) ""
-	set Colors(nodeIndex) ""
-	set Colors(label) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -129,10 +125,10 @@ Models are fun. Do you like models, Ron?
 
 	set c {label $f.lTitle -text "Color Name" $Gui(WTA)}; eval [subst $c]
 
-	set Colors(fColorList) [ScrolledListbox $f.list 1 1 -height 5 -width 15]
-		bind $Colors(fColorList) <ButtonRelease-1> {ColorsSelectColor}
+	set Color(fColorList) [ScrolledListbox $f.list 1 1 -height 5 -width 15]
+	bind $Color(fColorList) <ButtonRelease-1> {ColorsSelectColor}
 
-	set c {entry $f.eName -textvariable Colors(colorName) -width 18 \
+	set c {entry $f.eName -textvariable Color(name) -width 18 \
 		$Gui(WEA)}; eval [subst $c]
 	bind $f.eName <Return> "ColorsAddColor"
 	
@@ -153,10 +149,10 @@ Models are fun. Do you like models, Ron?
 
 	set c {label $f.lTitle -text "Label" $Gui(WTA)}; eval [subst $c]
 
-	set Colors(fLabelList) [ScrolledListbox $f.list 1 1 -height 5 -width 6]
-		bind $Colors(fLabelList) <ButtonRelease-1> "ColorsSelectLabel"
+	set Color(fLabelList) [ScrolledListbox $f.list 1 1 -height 5 -width 6]
+		bind $Color(fLabelList) <ButtonRelease-1> "ColorsSelectLabel"
 
-	set c {entry $f.eName -textvariable Colors(labelName) -width 9 \
+	set c {entry $f.eName -textvariable Color(label) -width 9 \
 		$Gui(WEA)}; eval [subst $c]
 	bind $f.eName <Return> "ColorsAddLabel"
 
@@ -189,16 +185,16 @@ Models are fun. Do you like models, Ron?
 		set c {label $f.l${slider} -text "${slider}" $Gui(WLA)}
 			eval [subst $c]
 
-		set c {entry $f.e${slider} -textvariable Colors([Uncap $slider]) \
+		set c {entry $f.e${slider} -textvariable Color([Uncap $slider]) \
 			-width 3 $Gui(WEA)}; eval [subst $c]
 			bind $f.e${slider} <Return>   "ColorsSetColor"
 			bind $f.e${slider} <FocusOut> "ColorsSetColor"
 
 		set c {scale $f.s${slider} -from 0.0 -to 1.0 -length 40 \
-			-variable Colors([Uncap $slider]) -command "ColorsSetColor" \
+			-variable Color([Uncap $slider]) -command "ColorsSetColor" \
 			-resolution 0.1 $Gui(WSA) -sliderlength 15} 
 			eval [subst $c]
-		set Colors(s$slider) $f.s$slider
+		set Color(s$slider) $f.s$slider
 
 		grid $f.l${slider} $f.e${slider} $f.s${slider} \
 			-pady 1 -padx 1 -sticky e
@@ -211,7 +207,7 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fColors.fBot.fApply
 
-	set c {button $f.bApply -text "Apply" -width 6 \
+	set c {button $f.bApply -text "Update" -width 7 \
 		-command "ColorsApply; RenderAll" $Gui(WBA)}; eval [subst $c]
 	pack $f.bApply -side top -pady $Gui(pad) 
 }
@@ -223,7 +219,7 @@ Models are fun. Do you like models, Ron?
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsApply {} {
-	global Colors Color
+	global Color
 
 	MainUpdateMRML
 }
@@ -235,8 +231,10 @@ proc ColorsApply {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsUpdateMRML {} {
+	global Color
+
 	ColorsDisplayColors
-	ColorsSelectColor 0
+	ColorsSelectColor $Color(activeID)
 	ColorsSelectLabel 0
 }
 
@@ -245,16 +243,17 @@ proc ColorsUpdateMRML {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsDisplayColors {} {
-	global Color Colors
+	global Color Mrml
 
 	# Clear old
-	$Colors(fColorList) delete 0 end
+	$Color(fColorList) delete 0 end
 
 	# Append new
-	set num [MRMLGetNumNodes $Color(dag)]
-	for {set n 0} {$n < $num} {incr n} {
-		set Colors(node) [MRMLGetNode $Color(dag) $n]
-		$Colors(fColorList) insert end [MRMLGetValue $Colors(node) name]
+    set tree Mrml(colorTree) 
+    set node [$tree InitColorTraversal]
+    while {$node != ""} {
+		$Color(fColorList) insert end [$node GetName]
+        set node [$tree GetNextColor]
 	}
 }
 
@@ -262,33 +261,19 @@ proc ColorsDisplayColors {} {
 # .PROC ColorsSelectColor
 # .END
 #-------------------------------------------------------------------------------
-proc ColorsSelectColor {{index ""}} {
-	global Color Colors
+proc ColorsSelectColor {{i ""}} {
+	global Color Mrml
 
-	if {$index == ""} {
-		set index [$Colors(fColorList) curselection]
+	if {$i == ""} {
+		set i [$Color(fColorList) curselection]
 	}
-	if {$index == ""} {return}
-	$Colors(fColorList) selection set $index $index
+	if {$i == ""} {return}
+	$Color(fColorList) selection set $i $i
+	set c [lindex $Color(idList) $i]
 
-	set Colors(nodeIndex) $index
-	set Colors(node) [MRMLGetNode $Color(dag) $Colors(nodeIndex)]
-	if {$Colors(node) == ""} {return}
+	MainColorsSetActive $c
 
-	# Show the selection below listbox
-	set Colors(colorName) [MRMLGetValue $Colors(node) name]
-
-	# Show the color
-	set color [MRMLGetValue $Colors(node) diffuseColor]
-	set Colors(red)   [lindex $color 0]
-	set Colors(green) [lindex $color 1]
-	set Colors(blue)  [lindex $color 2]
-	foreach param "ambient diffuse specular power" {
-		set Colors($param) [MRMLGetValue $Colors(node) $param]
-	}
-	
 	ColorsColorSample
-
 	ColorsDisplayLabels
 }
 
@@ -297,15 +282,14 @@ proc ColorsSelectColor {{index ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsSetColor {{value ""}} {
-	global Colors Color
+	global Color
 
-	# Set the new color in the node and update the dag
-	set color "$Colors(red) $Colors(green) $Colors(blue)"
-	set Colors(node) [MRMLSetValue $Colors(node) diffuseColor $color]
-	foreach param "ambient diffuse specular power" {
-		set Colors(node) [MRMLSetValue $Colors(node) $param $Colors($param)]
+	# Set the new color from the GUI into the node
+	set c $Color(activeID)
+	Color($c,node) SetDiffuseColor $Color(red) $Color(green) $Color(blue)
+	foreach param "Ambient Diffuse Specular Power" {
+		Color($c,node) Set$param $Color([Uncap $param])
 	}
-	set Color(dag) [MRMLSetNode $Color(dag) $Colors(nodeIndex) $Colors(node)]
 
 	# Draw Sample
 	ColorsColorSample
@@ -314,20 +298,15 @@ proc ColorsSetColor {{value ""}} {
 #-------------------------------------------------------------------------------
 # .PROC ColorsAddColor
 #
-# returns 1 on success, else 0
 # .END
 #-------------------------------------------------------------------------------
-proc ColorsAddColor {{diffuseColor ""}} {
-	global Colors Color Gui
+proc ColorsAddColor {} {
+	global Color Gui
 
-	MainColorsAddColor $Colors(colorName)
-
-	# Select this node
-	set Colors(nodeIndex) [expr [MRMLGetNumNodes $Color(dag)] - 1]
-
-	ColorsDisplayColors
-	ColorsSelectColor $Colors(nodeIndex)
-	return 1
+	if {[MainColorsAddColor $Color(name) $Color(diffuseColor) \
+		$Color(ambient) $Color(diffuse) $Color(specular) $Color(power)] != ""} {
+		MainUpdateMRML
+	}
 }
 
 #-------------------------------------------------------------------------------
@@ -335,12 +314,10 @@ proc ColorsAddColor {{diffuseColor ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsDeleteColor {} {
-	global Color Colors
+	global Color
 
-	MainColorsDeleteColor $Colors(nodeIndex)
-	
-	ColorsDisplayColors
-	ColorsSelectColor 0
+	MainMrmlDeleteNode Color $Color(activeID)
+	RenderAll
 }
 
 #-------------------------------------------------------------------------------
@@ -348,11 +325,11 @@ proc ColorsDeleteColor {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsColorSample {} {
-	global Colors
+	global Color
 	
 	foreach slider "Red Green Blue" {
-		$Colors(s$slider) config -troughcolor \
-		[MakeColorNormalized "$Colors(red) $Colors(green) $Colors(blue)"]
+		$Color(s$slider) config -troughcolor \
+		[MakeColorNormalized "$Color(red) $Color(green) $Color(blue)"]
 	}
 }
 
@@ -361,16 +338,17 @@ proc ColorsColorSample {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsDisplayLabels {} {
-	global Colors
+	global Color
 
 	# Clear old
-	$Colors(fLabelList) delete 0 end
+	$Color(fLabelList) delete 0 end
 
 	# Append new
-	if {$Colors(node) == ""} {return}
-	set Colors(labelName) ""
-	foreach label [MRMLGetValue $Colors(node) labels] {
-		$Colors(fLabelList) insert end $label
+	set c $Color(activeID)
+
+	set Color(label) ""
+	foreach label [Color($c,node) GetLabels] {
+		$Color(fLabelList) insert end $label
 	}
 }
 
@@ -378,22 +356,18 @@ proc ColorsDisplayLabels {} {
 # .PROC ColorsSelectLabel
 # .END
 #-------------------------------------------------------------------------------
-proc ColorsSelectLabel {{index ""}} {
-	global Colors
+proc ColorsSelectLabel {{i ""}} {
+	global Color
 
-	if {$index == ""} {
-		set index [$Colors(fLabelList) curselection]
+	if {$i == ""} {
+		set i [$Color(fLabelList) curselection]
 	}
-	if {$index == ""} {return}
-	$Colors(fLabelList) selection set $index $index
+	if {$i == ""} {return}
+	$Color(fLabelList) selection set $i $i
 	
-	set labels [MRMLGetValue $Colors(node) labels]
-	if {$index >= 0 && $index < [llength $labels]} {
-		set Colors(label) [lindex $labels $index]
-	}
-
-	# Show the selection below listbox
-	set Colors(labelName) $Colors(label)
+	set c $Color(activeID)
+	set labels [Color($c,node) GetLabels]
+	set Color(label) [lindex $labels $i]
 }
 
 #-------------------------------------------------------------------------------
@@ -403,10 +377,10 @@ proc ColorsSelectLabel {{index ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsAddLabel {} {
-	global Colors Color Gui
+	global Color Color Gui
 
 	# Convert to integer
-	set index [MainColorsAddLabel $Colors(nodeIndex) $Colors(labelName)]
+	set index [MainColorsAddLabel $Color(activeID) $Color(label)]
 
 	ColorsDisplayLabels
 	ColorsSelectLabel $index
@@ -418,30 +392,10 @@ proc ColorsAddLabel {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsDeleteLabel {} {
-	global Colors Color
+	global Color Color
 
-	MainColorsDeleteLabel $Colors(nodeIndex) $Colors(labelName)
+	MainColorsDeleteLabel $Color(activeID) $Color(label)
 
 	ColorsDisplayLabels
 	ColorsSelectLabel 0
 }
-
-#-------------------------------------------------------------------------------
-# .PROC ColorsFindLabel
-#
-# Find the color for a label
-# .END
-#-------------------------------------------------------------------------------
-proc ColorsFindLabel {} {
-	global Colors
-
-	set result [ColorsGetColorFromLabel $Colors(label)]
-	if {[llength $result] != 3} {return}
-	set n [lindex $result 0]
-	set index [lindex $result 2]
-
-	# Select color and label
-	ColorsSelectColor $n
-	ColorsSelectLabel $index
-}
-

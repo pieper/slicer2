@@ -1,4 +1,4 @@
-am/*=auto=========================================================================
+/*=auto=========================================================================
 Copyright (c) 1999 Surgical Planning Lab, Brigham and Women's Hospital
  
 Direct all questions on this copyright to slicer@ai.mit.edu.
@@ -27,7 +27,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 // .NAME vtkMrmlTransformNode - Writes images to files.
 // .SECTION Description
-// vtkMrmlTransformNode writes images to files with any data type. The data type of
+// 
 
 #ifndef __vtkMrmlTransformNode_h
 #define __vtkMrmlTransformNode_h
@@ -45,6 +45,36 @@ public:
   const char *GetClassName() {return "vtkMrmlTransformNode";};
   void PrintSelf(ostream& os, vtkIndent indent);
   
+  // Description:
+  //
+  vtkSetStringMacro(Name);
+  vtkGetStringMacro(Name);
+
+  // Description:
+  void SetMatrix(char *str) {
+    this->SetMatrixToString(this->Transform->GetMatrixPointer(), str);};
+  char *GetMatrix() { 
+    return this->GetMatrixToString(this->Transform->GetMatrixPointer());};
+
+  // Description:
+  // Rotate around each axis: x,y, and z in degrees
+  void Scale(float x, float y, float z) {
+    this->Transform->Scale(x, y, z);};
+
+  // Description:
+  // Rotate around each axis: x,y, and z in degrees
+  void RotateX(float d) {
+    this->Transform->RotateX(d);};
+  void RotateY(float d) {
+    this->Transform->RotateY(d);};
+  void RotateZ(float d) {
+    this->Transform->RotateZ(d);};
+
+  // Description:
+  // Rotate around each axis: x,y, and z in degrees
+  void Translate(float x, float y, float z) {
+    this->Transform->Translate(x, y, z);};
+
   //--------------------------------------------------------------------------
   // Utility Functions
   //--------------------------------------------------------------------------
@@ -58,31 +88,15 @@ public:
   vtkGetObjectMacro(Transform, vtkTransform);
   vtkSetObjectMacro(Transform, vtkTransform);
 
-  // Description:
-  // Rotate around each axis: x,y, and z in degrees
-  void SetRotate(float *rotate)
-    {this->Transform->RotateX(rotate[0]);
-    this->Transform->RotateY(rotate[1]);
-    this->Transform->RotateZ(rotate[2]);}
-
-
-  // Description:
-  // Translate by x= translate[0], y=tra
-  void SetTranslate(float *translate)
-    {this->Transform->Translate(translate[0], translate[1], translate[2]);}
-
-  void SetScale(float *scale)
-    {this->Transform->Scale(scale[0], scale[1], scale[2]);}
-
+private:
   vtkMrmlTransformNode();
   ~vtkMrmlTransformNode();
-  
-private:
-
   vtkMrmlTransformNode(const vtkMrmlTransformNode&) {};
   void operator=(const vtkMrmlTransformNode&) {};
 
+  char *Name;
   vtkTransform *Transform;
+
 };
 
 #endif

@@ -5,7 +5,7 @@
 # The following terms apply to all files associated with the software unless
 # explicitly disclaimed in individual files.   
 # 
-# The authors hereby grant permission to use and copy (but not distribute) this
+# The authors hereby grant permission to use, copy, and distribute this
 # software and its documentation for any NON-COMMERCIAL purpose, provided
 # that existing copyright notices are retained verbatim in all copies.
 # The authors grant permission to modify this software and its documentation 
@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainView.tcl
-# DATE:        12/10/1999 08:40
+# DATE:        12/09/1999 14:09
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MainViewInit
@@ -53,25 +53,25 @@
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewInit {} {
-	global Module View Gui
+	global Module View Gui Path
 
 	# The MainViewBuildGUI proc is called specifically
 	lappend Module(procVTK)  MainViewBuildVTK
 
-	set View(createMagWin) Yes
-	set View(createDirWin) Yes
+	set View(viewerHeightNormal) 656
+	set View(viewerWidth)  956 
+	set View(viewerHeight) 956 
 	if {$Gui(pc) == 1} {
-		set View(createMagWin) No
-		set View(createDirWin) No
+		set View(viewerHeightNormal) 400
+		set View(viewerWidth)  700 
+		set View(viewerHeight) 700 
 	}
 
 	# Configurable
 	set View(mode) Normal
 	set View(viewerWidth)  700 
 	set View(viewerHeight) 700 
-	set View(viewerHeightNormal) 400
 	set View(toolbarPosition) Top
-	set View(closeupVisibility) Off
 	set View(bgColorR) .7
 	set View(bgColorG) .7
 	set View(bgColorB) .9 
@@ -82,6 +82,14 @@ proc MainViewInit {} {
 	set View(spinDegrees) 2 
 	set View(stereo) 0
 	set View(stereoType) RedBlue
+	set View(closeupVisibility) On
+	set View(createMagWin) Yes
+
+	# Bug in OpenGL on Windows98 version II ??
+	if {$Gui(pc) == 1} {
+		set View(createMagWin) No
+		set View(closeupVisibility) Off
+	}
 
 	# Init
 	set View(rotateDegrees) 15
@@ -103,9 +111,9 @@ proc MainViewInit {} {
 	set View(focalPoint3)    "0 0 0"
 	set View(clippingRange3) "1 2001"
 
-	set View(magWin) none
+	set View(magWin) Welcome
 	set View(inWin) none
-	set View(image3D) $Gui(prefixSaveImage3D)
+	set View(image3D) $Path(prefixSaveImage3D)
 }
 
 #-------------------------------------------------------------------------------
@@ -122,9 +130,7 @@ proc MainViewBuildVTK {} {
 	# Closeup magnification of the slice with the cursor over it
 	#--------------------------------------------
 	
-	#  [ActiveOutput] -----> mag -> magCursor -\
-	#                                           >-> magMapper
-	#                           welcomeReader -/
+	#  [ActiveOutput] -----> mag -> magCursor -> magMapper
 
 	# Create closeup magnification
 	vtkImageCloseUp2D View(mag)
@@ -158,15 +164,16 @@ proc MainViewBuildGUI {} {
 	#-------------------------------------------
 	# Frame Hierarchy:
 	#-------------------------------------------
-	#	Nav
-	#		Top
-	#			Dir
-	#				Image
-	#				Buttons
-	#			Move
-	#				Rotate
-	#				Buttons
-	#		Bot
+	# Nav
+	#	Top
+	#	  Dir
+	#	  Preset
+	#     Move
+	#       Rotate
+	#   Bot
+	#     Btns2
+	#     Save
+	#     Mode
 	#-------------------------------------------
 
 	#-------------------------------------------
@@ -184,7 +191,7 @@ proc MainViewBuildGUI {} {
 	#-------------------------------------------
 	set f $Gui(fNav).fTop
 	
-	frame $f.fDir     -bg $Gui(activeWorkspace)
+	frame $f.fDir     -bg $Gui(activeWorkspace) -bd $Gui(borderWidth) -relief sunken
 	frame $f.fPreset  -bg $Gui(activeWorkspace)
 	frame $f.fMove    -bg $Gui(activeWorkspace)
 	
@@ -195,36 +202,18 @@ proc MainViewBuildGUI {} {
 	#-------------------------------------------
 	set f $Gui(fNav).fTop.fDir
 	
-	frame $f.fImage   -bg $Gui(activeWorkspace) \
-		-bd $Gui(borderWidth) -relief sunken	
-	
-	pack $f.fImage -side left -padx 0 -pady 0
-	
-	#-------------------------------------------
-	# View->Nav->Top->Dir->Image Frame
-	#-------------------------------------------
-	set f $Gui(fNav).fTop.fDir.fImage
-	set Gui(fDir) $f
-	
 	# Create control for setting view Direction
-	vtkPNMReader dirReader
-		dirReader SetDataExtent 0 73 0 73 1 7
-		dirReader SetFilePrefix [ExpandPath [file join gui view.ppm]]
-
-	if {$View(createDirWin) == "Yes"} {
-		
-		MakeVTKImageWindow dir dirReader
-
-		vtkTkImageWindowWidget $f.fDir -iw dirWin -width 74 -height 74 
-		bind $f.fDir <Expose> {ExposeTkImageViewer %W %x %y %w %h}
-		bind $f.fDir <1>      {if {[MainViewNavReset %x %y click] == 1} {Render3D}}
-		bind $f.fDir <Enter>  {MainViewNavReset %x %y      }
-		bind $f.fDir <Leave>  {MainViewNavReset %x %y leave}
-		bind $f.fDir <Motion> {MainViewNavReset %x %y      }
-
-		pack $f.fDir
-		dirWin DoubleBufferOn
-	}
+	foreach pict "N R L A P S I" {
+		image create photo iDir$pict \
+			-file [ExpandPath [file join gui "dir$pict.ppm"]]
+	}		
+	eval {label $f.lDir -image iDirN -width 74 -height 74 -anchor w} $Gui(WLA)
+	bind $f.lDir <1>      {if {[MainViewNavReset %x %y click] == 1} {Render3D}}
+	bind $f.lDir <Enter>  {MainViewNavReset %x %y      }
+	bind $f.lDir <Leave>  {MainViewNavReset %x %y leave}
+	bind $f.lDir <Motion> {MainViewNavReset %x %y      }
+	pack $f.lDir
+	set Gui(fDir) $f.lDir
 
 	#-------------------------------------------
 	# View->Nav->Top->Preset Frame
@@ -265,7 +254,7 @@ proc MainViewBuildGUI {} {
 	# Create control for Rotating the view
 	foreach pict "None Left Right Down Up" {
 		image create photo iRotate${pict} \
-		-file [ExpandPath [file join gui "rotate$pict.gif"]]			
+			-file [ExpandPath [file join gui "rotate$pict.gif"]]			
 	}
 	label $f.lRotate -image iRotateNone -relief sunken -bd $Gui(borderWidth)
 	bind $f.lRotate <1>      {MainViewNavRotate %W %x %y click}
@@ -420,17 +409,8 @@ proc MainViewPreset {btn state} {
 proc MainViewNavReset {x y {cmd ""}} {
 	global dirWin View Target Gui
 
-	set iswin 0
-	if {$View(createDirWin) == "Yes"} {
-		set iswin 1
-	}
-
 	if {$cmd == "leave"} {
-		if {$iswin == 1} {
-			dirMapper SetZSlice 0
-			dirWin Render
-			$Gui(fDir) config -cursor top_left_arrow
-		}
+		$Gui(fDir) config -cursor top_left_arrow -image iDirN
 		return 0
 	}
 	set directions "R L A P S I"
@@ -450,14 +430,8 @@ proc MainViewNavReset {x y {cmd ""}} {
 		if {$x > [expr $X - 10] && $x < [expr $X + 10] && \
 			$y > [expr $Y - 10] && $y < [expr $Y + 10]} {
 			
-			if {$iswin == 1} {
-				$Gui(fDir) config -cursor hand2
-				set slice [expr $i + 1]
-				if {$slice != [dirMapper GetZSlice]} {
-					dirMapper SetZSlice $slice
-					dirWin Render
-				}
-			}
+			$Gui(fDir) config -cursor hand2 -image iDir$dir
+
 			if {$cmd == "click"} {
 				set d [expr $View(fov) * 3]
 
@@ -497,13 +471,7 @@ proc MainViewNavReset {x y {cmd ""}} {
 			return 0
 		}
 	}
-	if {$iswin == 1} {
-		if {0 != [dirMapper GetZSlice]} {
-			dirMapper SetZSlice 0
-			dirWin Render
-		}
-		$Gui(fDir) config -cursor top_left_arrow
-	}
+	$Gui(fDir) config -cursor top_left_arrow -image iDirN
 }
 
 #-------------------------------------------------------------------------------
@@ -599,35 +567,31 @@ proc MainViewSpin {} {
 proc MainViewSetWelcome {win} {
 	global Edit Gui Slice View
 
-	if {$View(createMagWin) == "No"} {
-		set win Controls
-	}
-
 	# Do nothing if no change
 	if {$win == $View(magWin)} {return}
 
 	if {$win == "Controls"} {
-		raise $Gui(fNav)
+		# The gui may not be created yet
+		if {[info exists Gui(fNav)] == 1} {
+			raise $Gui(fNav)
+		}
 	} elseif {$win == "Welcome"} {
-		if {$View(magWin) == "Controls"} {
-			raise $Gui(fMagBorder)
+		if {[info exists Gui(fWelcome)] == 1} {
+			raise $Gui(fWelcome)
 		}
-		magMapper SetInput [welcomeReader GetOutput]
-		magWin Render
 	} else {
-		if {$View(magWin) == "Controls"} {
-			raise $Gui(fMagBorder)
-		}
-		if {$View(closeupVisibility) == "On"} {
-			set s [string index $win 2]
-			View(mag) SetInput [Slicer GetActiveOutput $s]
-			magMapper SetInput [View(magCursor) GetOutput]
-			magWin Render
+		if {$View(createMagWin) == "Yes" && $View(closeupVisibility) == "On"} {
+			if {[info exists Gui(fMagBorder)] == 1} {
+				raise $Gui(fMagBorder)
+				set s [string index $win 2]
+				View(mag) SetInput [Slicer GetActiveOutput $s]
+				magMapper SetInput [View(magCursor) GetOutput]
+				magWin Render
+			}
 		}
 	}
 	
 	set View(magWin) $win
-
 }
 		
 #-------------------------------------------------------------------------------
@@ -676,12 +640,12 @@ proc MainViewSetFocalPoint {x y z} {
 # .END
 #-------------------------------------------------------------------------------
 proc SaveScreen {} {
-	global viewWin Gui View
+	global viewWin Path View
 
-    set filename [GetSaveFile $Gui(root) $View(image3D) "" ppm "" 0]
+    set filename [GetSaveFile $Path(root) $View(image3D) "" ppm "" 0]
     if {$filename == ""} {return}
 
-	set filename [file join $Gui(root) $filename]
+	set filename [file join $Path(root) $filename]
 	$viewWin SetFileName $filename
 	$viewWin SaveImageAsPPM
 	puts "Saved screen: $filename"
@@ -692,22 +656,22 @@ proc SaveScreen {} {
 # .END
 #-------------------------------------------------------------------------------
 proc SaveImage3D {} {
-	global View Gui viewWin
+	global View Path viewWin
 
  	set typelist {
 		{"PPM File" {".ppm"}}
 		{"All Files" {*}}
 	}
-	set filename [GetSaveFile $Gui(root) $View(image3D)  \
+	set filename [GetSaveFile $Path(root) $View(image3D)  \
 		$typelist ppm "Save 3D Screen"]
 	if {$filename == ""} {return}
 
 	# Store for next time
 	set code [DecodeFileName $filename]
-	set Gui(prefixSaveImage3D) [lindex $code 1]
-	set View(image3D) $Gui(prefixSaveImage3D)
+	set Path(prefixSaveImage3D) [lindex $code 1]
+	set View(image3D) $Path(prefixSaveImage3D)
 
-	set filename [file join $Gui(root) $filename]
+	set filename [file join $Path(root) $filename]
 	$viewWin SetFileName $filename
 	$viewWin SaveImageAsPPM
 	puts "Saved image: $filename"

@@ -5,7 +5,7 @@
 # The following terms apply to all files associated with the software unless
 # explicitly disclaimed in individual files.   
 # 
-# The authors hereby grant permission to use and copy (but not distribute) this
+# The authors hereby grant permission to use, copy, and distribute this
 # software and its documentation for any NON-COMMERCIAL purpose, provided
 # that existing copyright notices are retained verbatim in all copies.
 # The authors grant permission to modify this software and its documentation 
@@ -26,12 +26,12 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainVolumes.tcl
-# DATE:        12/10/1999 08:40
+# DATE:        12/09/1999 14:09
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MainVolumesInit
 #   MainVolumesBuildVTK
-#   MainVolumesBuildMRML
+#   MainVolumesUpdateMRML
 #   MainVolumesCreate
 #   MainVolumesDelete
 #   MainVolumesBuildGUI
@@ -68,8 +68,9 @@ proc MainVolumesInit {} {
 	set Volume(sWindowList) ""
 	set Volume(sLevelList) ""
 
-	set Volume(idNone)      0
+	set Volume(idNone) 0
 	set Volume(activeID)  $Volume(idNone)
+	set Volume(freeze) ""
 }
 
 #-------------------------------------------------------------------------------
@@ -79,20 +80,17 @@ proc MainVolumesInit {} {
 proc MainVolumesBuildVTK {} {
 	global Volume Lut
 	
-	# Add Volumes for  None, Working, Result
-
-	# None
-	# -----------------------------------------------------
+	# Make the None Volume
 	set v $Volume(idNone)
 
-	# MrmlVolumeNode
+	lappend Volume(idList) $v
 	vtkMrmlVolumeNode Volume($v,node)
-	Volume($v,node) SetID $v
-	Volume($v,node) SetDescription "NoneVolume=$v"
-	Volume($v,node) SetName "None"
-	Volume($v,node) SetLUTName 0
+	set n Volume($v,node)
+	$n SetID $v
+	$n SetName "None"
+	$n SetDescription "NoneVolume=$v"
+	$n SetLUTName 0
 
-	# MrmlVolume
 	vtkMrmlVolume Volume($v,vol)
 	Volume($v,vol) SetMrmlNode Volume($v,node)
 	Volume($v,vol) SetHistogramWidth $Volume(histWidth)
@@ -103,10 +101,10 @@ proc MainVolumesBuildVTK {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MainVolumesBuildMRML
+# .PROC MainVolumesUpdateMRML
 # .END
 #-------------------------------------------------------------------------------
-proc MainVolumesBuildMRML {} {
+proc MainVolumesUpdateMRML {} {
 	global Volume Lut Gui
 
 	# Build any new volumes
@@ -123,6 +121,10 @@ proc MainVolumesBuildMRML {} {
 		if {[MainVolumesDelete $v] == 1} {
 			# Success
 		}
+	}
+	# Did we delete the active volume?
+	if {[lsearch $Volume(idList) $Volume(activeID)] == -1} {
+		MainVolumesSetActive [lindex $Volume(idList) 0]
 	}
 
 	# Set the lut to use for label maps in each MrmlVolume 
@@ -147,9 +149,8 @@ proc MainVolumesBuildMRML {} {
 		}
 	}
 
-	# The active volume may have been deleted 
-	# DAVE
-	#--------------------------------------------------------
+	# In case we changed the name of the active transform
+	MainVolumesSetActive $Volume(activeID)
 }
 
 #-------------------------------------------------------------------------------
@@ -165,7 +166,7 @@ proc MainVolumesCreate {v} {
 	global View Volume Gui Dag Lut
 
 	# If we've already built this volume, then do nothing
-	if {[info command Volume($v,node)] != ""} {
+	if {[info command Volume($v,vol)] != ""} {
 		return 0
 	}
 
@@ -173,64 +174,21 @@ proc MainVolumesCreate {v} {
 	if {$v <= 0} {return 0}
 	
 	# Check that all files exist
-	if {[CheckVolumeExists $Volume($v,filePrefix) \
-		$Volume($v,filePattern) [lindex $Volume($v,imageRange) 0]\
-		[lindex $Volume($v,imageRange) 1]] != ""} {
+	scan [Volume($v,node) GetImageRange] "%d %d" lo hi
+	if {[CheckVolumeExists [Volume($v,node) GetFilePrefix] \
+		[Volume($v,node) GetFilePattern] $lo $hi] != ""} {
 		set str "Unable to build the VTK objects for Volumes."
 		puts $str
 		tk_messageBox -message $str
 		return -1
 	}
 
-	# If we don't specify headerSize, then it just reads the
-	# last bytes in the file as the pictures.  This allows
-	# variable file header lengths, as in is true of DICOM.
-
-	# DAVE: don't interpolate label maps
-	if {$Volume($v,labelMap) == 1} {
-		set Volume($v,interpolate) 0
+	# If no LUT name, use first
+	if {[Volume($v,node) GetLUTName] == ""} {
+		Volume($v,node) SetLUTName [lindex $Lut(idList) 0]
 	}
 
-	vtkMrmlVolumeNode Volume($v,node)
-	Volume($v,node) SetID                        $v
-	Volume($v,node) SetDescription               $Volume($v,desc)
-	Volume($v,node) SetOptions                   $Volume($v,options)
-	eval Volume($v,node) SetImageRange           $Volume($v,imageRange)
-	eval Volume($v,node) SetDimensions           $Volume($v,dimensions)
-	eval Volume($v,node) SetSpacing              $Volume($v,spacing)
-	Volume($v,node) SetScalarTypeTo$Volume($v,scalarType)
-	Volume($v,node) SetNumScalars                $Volume($v,numScalars)
-	Volume($v,node) SetLittleEndian              $Volume($v,littleEndian)
-	Volume($v,node) SetTilt                      $Volume($v,tilt)
-	Volume($v,node) SetScanOrder                 $Volume($v,scanOrder)
-	Volume($v,node) SetRasToIjkMatrix            $Volume($v,rasToIjkMatrix)
-	Volume($v,node) SetRasToVtkMatrix            $Volume($v,rasToVtkMatrix)
-	Volume($v,node) SetFilePrefix                $Volume($v,filePrefix)
-	Volume($v,node) SetFilePattern               $Volume($v,filePattern)
-	Volume($v,node) SetName                      $Volume($v,name)
-	Volume($v,node) SetFullPrefix                $Volume($v,filePrefix)
-	Volume($v,node) UseRasToVtkMatrixOn
-	Volume($v,node) SetLUTName                   $Volume($v,lutID)
-	Volume($v,node) SetLabelMap                  $Volume($v,labelMap)
-	Volume($v,node) SetAutoWindowLevel           $Volume($v,autoWindowLevel)
-	Volume($v,node) SetWindow                    $Volume($v,window)
-	Volume($v,node) SetLevel                     $Volume($v,level)
-	Volume($v,node) SetAutoThreshold             $Volume($v,autoThreshold)
-	Volume($v,node) SetUpperThreshold            $Volume($v,upperThreshold)
-	Volume($v,node) SetLowerThreshold            $Volume($v,lowerThreshold)
-	Volume($v,node) SetInterpolate               $Volume($v,interpolate)
-
-	# Registration
-	vtkMatrix4x4 mat
-	set matrixList $Volume($v,rasToRefMatrix)
-	for {set row 0} { $row < 4 } {incr row} {
-		for {set col 0} {$col < 4} {incr col} {
-			mat SetElement $row $col [lindex $matrixList [expr $row*4+$col]]
-		}
-	}
-	Volume($v,node) SetRasToWld mat
-	mat Delete
-
+	# Create vtkMrmlVolume
 	vtkMrmlVolume Volume($v,vol)
 	Volume($v,vol) SetMrmlNode Volume($v,node)
 	Volume($v,vol) SetLabelIndirectLUT Lut($Lut(idLabel),indirectLUT)
@@ -241,7 +199,7 @@ proc MainVolumesCreate {v} {
 	Volume($v,vol) RangeAutoOn
 
 	# Label maps use the Label indirectLUT
-	if {$Volume($v,labelMap) == 1} {
+	if {[Volume($v,node) GetLabelMap] == 1} {
 		Volume($v,vol) UseLabelIndirectLUTOn
 	}	
 
@@ -272,16 +230,12 @@ proc MainVolumesDelete {v} {
 	global Dag Volume
 
 	# If we've already deleted this volume, then return 0
-	if {[info command Volume($v,node)] == ""} {
+	if {[info command Volume($v,vol)] == ""} {
 		return 0
 	}
 
-	# Skip imaginary volumes (id <= 0)
-	if {$v <= 0} {return 0}
-	
 	# Delete VTK objects (and remove commands from TCL namespace)
 	Volume($v,vol)  Delete
-	Volume($v,node) Delete
 
 	# Delete all TCL variables of the form: Volume($v,<whatever>)
 	foreach name [array names Volume] {
@@ -289,14 +243,6 @@ proc MainVolumesDelete {v} {
 			unset Volume($name)
 		}
 	}
-
-	# Delete ID from array
-	set i [lsearch $Volume(idList) $v]
-	set Volume(idList) [lreplace $Volume(idList) $i $i]
-
-	# Delete node from dag
-	set n [MRMLGetIndexOfNodeInDag $Dag(current) $v "Volume"]
-	set Dag(current) [MRMLDeleteNode $Dag(current) $n]
 
 	return 1
 }
@@ -531,39 +477,52 @@ proc MainVolumesRenderActive {{scale ""}} {
 proc MainVolumesSetActive {{v ""}} {
 	global Volume Lut
 
-	# Optionally set activeID to v
+	if {$Volume(freeze) == 1} {return}
+	
+	set Volume(activeID) $v
+
 	if {$v == ""} {
-		set v $Volume(activeID)
-	} else {
-		set Volume(activeID) $v
-	}
-
-	# Slider range (obviously must be set before window/level)
-	set Volume(rangeLow)    [Volume($v,vol) GetRangeLow]
-	set Volume(rangeHigh)   [Volume($v,vol) GetRangeHigh]
-	set Volume(rangeAuto)   [Volume($v,vol) GetRangeAuto]
-	MainVolumesUpdateSliderRange
-
-	# Update GUI
-	foreach item "Window Level AutoWindowLevel UpperThreshold LowerThreshold \
-		AutoThreshold Interpolate" {
-		set Volume([Uncap $item]) [Volume($v,node) Get$item]
-	}
-
-	# Change button text
-	foreach mb $Volume(mbActiveList) {
-		$mb config -text [Volume($v,node) GetName]
-	}
+		return
+	} elseif {$v == "NEW"} {
 		
-	if {[IsModule Volumes] == 1} {
-		# LUT menu
-		$Volume(mbLUT) config -text \
-			$Lut([Volume($v,node) GetLUTName],name)
-
-		if {$Volume(histogram) == "On"} {
-			histMapper SetInput [Volume($v,vol) GetHistogramPlot]
-			histWin Render
+		# Change button text
+		foreach mb $Volume(mbActiveList) {
+			$mb config -text "NEW"
 		}
+		
+		# Use defaults to update GUI
+		vtkMrmlVolumeNode default
+		set Volume(name) [default GetName]
+		default Delete
+
+	} else {
+
+		# Change button text
+		foreach mb $Volume(mbActiveList) {
+			$mb config -text [Volume($v,node) GetName]
+		}
+
+		# Update GUI
+		foreach item "Window Level AutoWindowLevel UpperThreshold LowerThreshold \
+			AutoThreshold Interpolate" {
+			set Volume([Uncap $item]) [Volume($v,node) Get$item]
+		}
+		if {[IsModule Volumes] == 1} {
+			# LUT menu
+			$Volume(mbLUT) config -text \
+				$Lut([Volume($v,node) GetLUTName],name)
+
+			if {$Volume(histogram) == "On"} {
+				histMapper SetInput [Volume($v,vol) GetHistogramPlot]
+				histWin Render
+			}
+		}
+
+		# Slider range (obviously must be set before window/level)
+		set Volume(rangeLow)    [Volume($v,vol) GetRangeLow]
+		set Volume(rangeHigh)   [Volume($v,vol) GetRangeHigh]
+		set Volume(rangeAuto)   [Volume($v,vol) GetRangeAuto]
+		MainVolumesUpdateSliderRange
 	}
 }
 

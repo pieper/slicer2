@@ -5,7 +5,7 @@
 # The following terms apply to all files associated with the software unless
 # explicitly disclaimed in individual files.   
 # 
-# The authors hereby grant permission to use and copy (but not distribute) this
+# The authors hereby grant permission to use, copy, and distribute this
 # software and its documentation for any NON-COMMERCIAL purpose, provided
 # that existing copyright notices are retained verbatim in all copies.
 # The authors grant permission to modify this software and its documentation 
@@ -26,17 +26,15 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainColors.tcl
-# DATE:        12/10/1999 08:40
+# DATE:        12/09/1999 14:09
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MainColorsInit
 #   MainColorsUpdateMRML
-#   MainColorsDelete
 #   MainColorsAddLabel
 #   MainColorsAddColor
 #   MainColorsDeleteLabel
-#   MainColorsMakeColors
-#   MainColorsBuildDag
+#   MainColorsDeleteColor
 #   MainColorsGetColorFromLabel
 #==========================================================================auto=
 
@@ -48,65 +46,98 @@
 proc MainColorsInit {} {
 	global Color Gui
 
-	set Color(dag) ""
+	set Color(activeID) ""
+	set Color(name) ""
+	set Color(label) ""
+	set Color(ambient) 0
+	set Color(diffuse) 1
+	set Color(specular) 0
+	set Color(power) 1
+	set Color(labels) ""
+	set Color(diffuseColor) "1 1 1"
 }
 
 #-------------------------------------------------------------------------------
 # .PROC MainColorsUpdateMRML
 #
-# Create any portions of the GUI that depend on the data.  For example, a
-# menu widget that lists all the volumes would be created here.  That way,
-# it could be refreshed by calling this routine whenever new volumes are
-# loaded into the slicer.
+#
 # .END
 #-------------------------------------------------------------------------------
 proc MainColorsUpdateMRML {} {
-	global Dag Color
+	global Lut Color Mrml
 
-	# Build a dag of just colors for the editor to use
-	MainColorsBuildDag $Dag(withColors)
+	# Build any new colors
+	#--------------------------------------------------------
+	# (nothing to be done)
 
-	MainColorsMakeColors
-}
+	# Delete any old colors
+	#--------------------------------------------------------
+	# (nothing to be done)
 
-#-------------------------------------------------------------------------------
-# .PROC MainColorsDelete
-#
-# Clear Color(dag) and delete all tcl variables related to colors
-# .END
-#-------------------------------------------------------------------------------
-proc MainColorsDelete {} {
-	global Color
-
-	set idList $Color(idList)
-	foreach c $Color(idList) {
-		if {$c >= 0} {
-			# Delete TCL variables
-			foreach key [MRMLGetDefault Color keyList] {
-				unset Color($c,$key)
-			}
-			unset Color($c,id)
-
-			# Delete ID
-			set i [lsearch $idList $c]
-			set idList [lreplace $idList $i $i]
-		}
+	# Did we delete the active color?
+	if {[lsearch $Color(idList) $Color(activeID)] == -1} {
+		MainColorsSetActive [lindex $Color(idList) 0]
 	}
 
-	set Color(dag) [MRMLClearDag $Color(dag)]
+	# Refresh GUI 
+	#--------------------------------------------------------
+	set lut  Lut($Lut(idLabel),lut)
+	set iLut Lut($Lut(idLabel),indirectLUT)
 
-	set Color(idList) $idList
-	set Color(nextID) 0
+	# Set default color to white, and thresholded color to clear black.
+	set num [llength $Color(idList)]
+	$lut SetNumberOfTableValues [expr $num + 2]
+	$lut SetTableValue 0 0.0 0.0 0.0 0.0
+	$lut SetTableValue 1 1.0 1.0 1.0 1.0
+
+	# Set colors for each label value
+	$iLut InitDirect
+    set tree Mrml(colorTree) 
+    set node [$tree InitColorTraversal]
+	set n 0
+    while {$node != ""} {
+		set diffuseColor [$node GetDiffuseColor]
+		eval $lut SetTableValue [expr $n+2] $diffuseColor 1.0
+
+		set values [$node GetLabels]
+		foreach v $values {
+			$iLut MapDirect $v [expr $n+2]
+		}
+        set node [$tree GetNextColor]
+		incr n
+	}
+	$iLut Build
+}
+ 
+#-------------------------------------------------------------------------------
+# .PROC MainColorsSetActive
+# .END
+#-------------------------------------------------------------------------------
+proc MainColorsSetActive {{c ""}} {
+	global Color
+
+	set Color(activeID) $c
+
+	if {$c == ""} {return}
+
+	# Update GUI
+	set Color(name) [Color($c,node) GetName]
+	scan [Color($c,node) GetDiffuseColor] "%g %g %g" \
+		Color(red) Color(green) Color(blue)
+	foreach param "Ambient Diffuse Specular Power" {
+		set Color([Uncap $param]) [Color($c,node) Get$param]
+	}
+	
 }
 
 #-------------------------------------------------------------------------------
 # .PROC MainColorsAddLabel
 #
-# Creates a new label "newLabel" to the node at index "nodeIndex"
-# returns index of newLabel into node's list of labels on success, else -1
+# Creates a new label "newLabel" to the color with ID c
+# returns 1 on success, else 0
 # .END
 #-------------------------------------------------------------------------------
-proc MainColorsAddLabel {nodeIndex newLabel} {
+proc MainColorsAddLabel {c newLabel} {
 	global Color Gui
 
 	# Convert to integer
@@ -114,183 +145,114 @@ proc MainColorsAddLabel {nodeIndex newLabel} {
 	} else {
 		tk_messageBox -icon error -title $Gui(title) \
 			-message "Label '$newLabel' must be a short integer."
-		return -1
+		return 0
 	}
 
 	# Don't allow duplicate labels
-	set node [MRMLGetNode $Color(dag) $nodeIndex]
-	set labels [MRMLGetValue $node labels]
+	set labels [Color($c,node) GetLabels]
 	if {[lsearch $labels $newLabel] != "-1"} {
 		tk_messageBox -icon error -title $Gui(title) \
 			-message "Label '$newLabel' already exists."
-		return -1
+		return 0
 	}
 
 	# Append the new label and sort the list of labels
 	lappend labels $newLabel
 	set labels [lsort -increasing $labels]
-	set index [lsearch $labels $newLabel]
+	set index  [lsearch $labels $newLabel]
 
 	# Update the node
-	set node [MRMLSetValue $node labels $labels]
+	Color($c,node) SetLabels $labels
 
-	# Update the dag
-	set Color(dag) [MRMLSetNode $Color(dag) $nodeIndex $node]
-
-	return $index
+	return 1
 }
 
 #-------------------------------------------------------------------------------
 # .PROC MainColorsAddColor
 #
 # Creates a new color named "newColor"
-# returns 1 on success, else 0
+# returns the new color's ID on success, else ""
 # .END
 #-------------------------------------------------------------------------------
-proc MainColorsAddColor {newColor {diffuseColor ""}} {
-	global Color Gui
+proc MainColorsAddColor {name diffuseColor \
+	{ambient ""} {diffuse ""} {specular ""} {power ""}} {
+	global Color Mrml Gui
 
 	# Don't allow duplicate colors
 	set colors ""
-	set num [MRMLGetNumNodes $Color(dag)]
-	for {set n 0} {$n < $num} {incr n} {
-		set node [MRMLGetNode $Color(dag) $n]
-		set type [MRMLGetNodeType $node]
-		if {$type == "Color"} {
-			set name [MRMLGetValue $node name]
-			set colors "$colors $name"
-		}
-	}
-	if {[lsearch $colors $newColor] != "-1"} {
+    set tree Mrml(colorTree) 
+    set node [$tree InitColorTraversal]
+    while {$node != ""} {
+		set colors "$colors [$node GetName]"
+        set node [$tree GetNextColor]
+    }
+	if {[lsearch $colors $name] != "-1"} {
 		tk_messageBox -icon error -title $Gui(title) \
-			-message "Color '$newColor' already exists."
-		return 0
+			-message "Color '$name' already exists."
+		return ""
 	}
 
-	# Create new node initialized to defaults
-	set Color(node) [MRMLCreateNode "Color"]
-	
-	# Change name
-	set Color(node) [MRMLSetValue $Color(node) name $newColor]
-
-	# Diffuse
-	if {$diffuseColor != ""} {
-		set Color(node) [MRMLSetValue $Color(node) diffuseColor $diffuseColor]
+	# Create new node
+	set c $Color(nextID)
+	incr Color(nextID)
+	lappend Color(idList) $c
+	vtkMrmlColorNode Color($c,node)
+	set n Color($c,node)
+	$n SetID           $c
+	$n SetDescription  ""
+	$n SetName         $name
+	eval $n SetDiffuseColor $diffuseColor
+	if {$ambient != ""} {
+		$n SetAmbient      $ambient
+	}
+	if {$diffuse != ""} {
+		$n SetDiffuse      $diffuse
+	}
+	if {$specular != ""} {
+		$n SetSpecular     $specular
+	}
+	if {$power != ""} {
+		$n SetPower        $power
 	}
 
-	# Update the dag
-	set Color(dag) [MRMLAppendNode $Color(dag) $Color(node)]
-
-	return 1
-}
-
-#-------------------------------------------------------------------------------
-# MainColorsDeleteColor
-#
-# Delete dag at index "nodeIndex" in Color(dag)
-#-------------------------------------------------------------------------------
-proc MainColorsDeleteColor {nodeIndex} {
-	global Color Gui
-
-	set Color(dag) [MRMLDeleteNode $Color(dag) $nodeIndex]
+	Mrml(colorTree) AddItem $n
+	return $c
 }
 
 #-------------------------------------------------------------------------------
 # .PROC MainColorsDeleteLabel
 #
-# Deletes "delLabel" from node at index "nodeIndex"
+# Deletes "delLabel" from Color node "node"
 #-------------------------------------------------------------------------------
-proc MainColorsDeleteLabel {nodeIndex delLabel} {
+proc MainColorsDeleteLabel {c delLabel} {
 	global Color
 
-	# Delete the label
-	set node   [MRMLGetNode $Color(dag) $nodeIndex]
-	set labels [MRMLGetValue $node labels]
-	set index  [lsearch $labels $delLabel]
-	set labels [lreplace $labels $index $index]
+	set labels [Color($c,node) GetLabels]
 
-	# Update the node
-	set node [MRMLSetValue $node labels $labels]
-
-	# Update the dag
-	set Color(dag) [MRMLSetNode $Color(dag) $nodeIndex $node]
-}
-
-#-------------------------------------------------------------------------------
-# .PROC MainColorsMakeColors
-#
-# Set the colors from Color(dag) into the Label WL.
-# .END
-#-------------------------------------------------------------------------------
-proc MainColorsMakeColors {} {
-	global Lut Color
-
-	set lut  Lut($Lut(idLabel),lut)
-	set iLut Lut($Lut(idLabel),indirectLUT)
-
-	# Set default color to white, and thresholded color to clear black.
-	set num [MRMLGetNumNodes $Color(dag)]
-	$lut SetNumberOfTableValues [expr $num + 2]
-	$lut SetTableValue 0 0.0 0.0 0.0 0.0
-	$lut SetTableValue 1 1.0 1.0 1.0 1.0
-
-	# Set colors for each label value
-	$iLut InitDirect
-	for {set n 0} {$n < $num} {incr n} {
-		set node [MRMLGetNode $Color(dag) $n]
-
-		set color [MRMLGetValue $node diffuseColor]
-		eval $lut SetTableValue [expr $n+2] $color 1.0
-
-		set values [MRMLGetValue $node labels]
-		foreach v $values {
-			$iLut MapDirect $v [expr $n+2]
-		}
-	}
-	$iLut Build
-}
- 
-
-#-------------------------------------------------------------------------------
-# .PROC MainColorsBuildDag
-#
-# Build Color(dag) from the color nodes in "dag"
-# .END
-#-------------------------------------------------------------------------------
-proc MainColorsBuildDag {dag} {
-	global Color
-	
-	set Color(dag) ""
-	set num [MRMLCountTypeOfNode $dag "Color"]
-	for {set n 0} {$n < $num} {incr n} {
-		set i [MRMLGetIndexOfNodeInDag $dag $n "Color"]
-		set node [MRMLGetNode $dag $i]
-		set Color(dag) [MRMLAppendNode $Color(dag) $node]
-	}
+	set i  [lsearch $labels $delLabel]
+	set labels [lreplace $labels $i $i]
+	Color($c,node) SetLabels $labels
 }
 
 #-------------------------------------------------------------------------------
 # .PROC MainColorsGetColorFromLabel
 #
-# Find the color for a label
+# Returns the color ID of a label value, or "" if unsuccessful.
 # .END
 #-------------------------------------------------------------------------------
 proc MainColorsGetColorFromLabel {label} {
-	global Color
+	global Color Mrml
 
-	set num [MRMLGetNumNodes $Color(dag)]
-	for {set n 0} {$n < $num} {incr n} {
-		set node   [MRMLGetNode $Color(dag) $n]
-		set labels [MRMLGetValue $node labels]
-
-		set index 0
+	set tree Mrml(colorTree) 
+    set node [$tree InitColorTraversal]
+    while {$node != ""} {
+		set labels [$node GetLabels]
 		foreach l $labels {
 			if {$l == $label} {
-				set name [MRMLGetValue $node name]
-				return "$n $name $index"
+				return [$node GetID]
 			}
-			incr index
 		}
+		set node [$tree GetNextColor]
 	}
 	return ""
 }

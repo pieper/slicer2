@@ -5,7 +5,7 @@
 # The following terms apply to all files associated with the software unless
 # explicitly disclaimed in individual files.   
 # 
-# The authors hereby grant permission to use and copy (but not distribute) this
+# The authors hereby grant permission to use, copy, and distribute this
 # software and its documentation for any NON-COMMERCIAL purpose, provided
 # that existing copyright notices are retained verbatim in all copies.
 # The authors grant permission to modify this software and its documentation 
@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Models.tcl
-# DATE:        12/10/1999 08:40
+# DATE:        12/09/1999 14:15
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   ModelsInit
@@ -51,28 +51,27 @@ proc ModelsInit {} {
 
 	# Define Tabs
 	set m Models
-	set Module($m,row1List) "Help Options Clip Create"
-	set Module($m,row1Name) "Help Options Clip Create "
-	set Module($m,row1,tab) Options
-	set Module($m,row2List) "Edit Meter"
-	set Module($m,row2Name) "Edit Meter"
-	set Module($m,row2,tab) Edit
+	set Module($m,row1List) "Help Display Props Clip Meter"
+	set Module($m,row1Name) "{Help} {Display} {Props} {Clip} {Meter}"
+	set Module($m,row1,tab) Display
+# Use these lines to add a second row of tabs
+#	set Module($m,row2List) "Meter"
+#	set Module($m,row2Name) "{Meter}"
+#	set Module($m,row2,tab) Meter
 
 	# Define Procedures
 	set Module($m,procGUI) ModelsBuildGUI
 	set Module($m,procMRML) ModelsUpdateMRML
-	set Module($m,procEnter) ModelsEnter
 
-	# Create
-	set Model(idVolume) 0
-	set Model(create,name) skin
-	set Model(create,smooth) 5
-	set Model(create,decimate) 1
-	set Model(marching) 0
-
-	# Edit
-	set Model(edit,smooth) 5
-	set Model(fileName) skin
+	# Props
+	set Model(propertyType) Basic
+	set Model(name) ""
+	# also Model(prefix)
+	set Model(culling) 1
+	set Model(scalarVisibility) 0
+	set Model(scalarLo) 0
+	set Model(scalarHi) 100
+	set Model(desc) ""
 
 	# Meter
 	set Model(meter,first) 1
@@ -87,30 +86,20 @@ proc ModelsUpdateMRML {} {
 
 	# Create the GUI for any new models
 	foreach m $Model(idList) {
-		MainModelsCreateGUI $Module(Models,fOptions).fGrid $m
+		MainModelsCreateGUI $Module(Models,fDisplay).fGrid $m
 	}
 
 	# Delete the GUI for any old models
 	foreach m $Model(idListDelete) {
-		MainModelsDeleteGUI $Module(Models,fOptions).fGrid $m
+		MainModelsDeleteGUI $Module(Models,fDisplay).fGrid $m
 	}
 
 	# Refresh the GUI for all models (in case color changed)
 	foreach m $Model(idList) {
 		set c $Model($m,colorID)
-		$Module(Models,fOptions).fGrid.s$m config \
-			-troughcolor [MakeColorNormalized $Color($c,diffuseColor)]
+		$Module(Models,fDisplay).fGrid.s$m config \
+			-troughcolor [MakeColorNormalized [Color($c,node) GetDiffuseColor]]
 	}
-
-	# Volume menu
-	#---------------------------------------------------------------------------
-	set m $Model(mVolume)
-	$m delete 0 end
-	foreach v $Volume(idListForMenu) {
-		$m add command -label [Volume($v,node) GetName] -command \
-			"ModelsSetVolume $v"
-	}
-
 }
 
 #-------------------------------------------------------------------------------
@@ -124,15 +113,21 @@ proc ModelsBuildGUI {} {
 	# Frame Hierarchy:
 	#-------------------------------------------
 	# Help
-	# Options
+	# Display
 	#   Title
 	#   All
 	#   Grid
+	# Props
+	#   Top
+	#     Active
+	#     Type
+	#   Bot
+	#     Basic
+	#     Advanced
 	# Clip
 	#   Help
 	#   Grid
-	# Create
-	# Edit
+	# Meter
 	#   
 	#-------------------------------------------
 
@@ -147,10 +142,10 @@ Models are fun. Do you like models, Ron?
 	MainHelpBuildGUI Models
 
 	#-------------------------------------------
-	# Options frame
+	# Display frame
 	#-------------------------------------------
-	set fOptions $Module(Models,fOptions)
-	set f $fOptions
+	set fDisplay $Module(Models,fDisplay)
+	set f $fDisplay
 
 	frame $f.fTitle -bg $Gui(activeWorkspace)
 	frame $f.fAll -bg $Gui(activeWorkspace)
@@ -158,31 +153,240 @@ Models are fun. Do you like models, Ron?
 	pack $f.fTitle $f.fAll $f.fGrid -side top -pady $Gui(pad)
 
 	#-------------------------------------------
-	# fOptions->Title frame
+	# fDisplay->Title frame
 	#-------------------------------------------
-	set f $fOptions.fTitle
+	set f $fDisplay.fTitle
 
-	set c {label $f.lTitle -justify left -text \
-		"Click the right mouse button on\nthe name of a model for options." $Gui(WLA)}
-		eval [subst $c]
+	eval {label $f.lTitle -justify left -text \
+		"Click the right mouse button on\nthe name of a model for options."} $Gui(WLA)
 	pack $f.lTitle
 
 	#-------------------------------------------
-	# fOptions->All frame
+	# fDisplay->All frame
 	#-------------------------------------------
-	set f $fOptions.fAll
+	set f $fDisplay.fAll
 
-	set c {button $f.bAll -text "Show All" -width 10 \
-		-command "MainModelsSetVisibility All; Render3D" $Gui(WBA)}; eval [subst $c]
-	set c {button $f.bNone -text "Show None" -width 10 \
-		-command "MainModelsSetVisibility None; Render3D" $Gui(WBA)};
-	eval [subst $c]
+	eval {button $f.bAll -text "Show All" -width 10 \
+		-command "MainModelsSetVisibility All; Render3D"} $Gui(WBA)
+	eval {button $f.bNone -text "Show None" -width 10 \
+		-command "MainModelsSetVisibility None; Render3D"} $Gui(WBA)
 	pack $f.bAll $f.bNone -side left -padx $Gui(pad) -pady 0
 
 	#-------------------------------------------
-	# fOptions->Grid frame
+	# fDisplay->Grid frame
 	#-------------------------------------------
 	# Done in MainModelsRefreshGUI
+
+	#-------------------------------------------
+	# Props frame
+	#-------------------------------------------
+	set fProps $Module(Models,fProps)
+	set f $fProps
+
+	frame $f.fTop -bg $Gui(backdrop) -relief sunken -bd 2
+	frame $f.fBot -bg $Gui(activeWorkspace) -height 300
+	pack $f.fTop $f.fBot -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+
+	#-------------------------------------------
+	# Props->Bot frame
+	#-------------------------------------------
+	set f $fProps.fBot
+
+	foreach type "Basic Advanced" {
+		frame $f.f${type} -bg $Gui(activeWorkspace)
+		place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
+		set Model(f${type}) $f.f${type}
+	}
+	raise $Model(fBasic)
+
+	#-------------------------------------------
+	# Props->Top frame
+	#-------------------------------------------
+	set f $fProps.fTop
+
+	frame $f.fActive -bg $Gui(backdrop)
+	frame $f.fType   -bg $Gui(backdrop)
+	pack $f.fActive $f.fType -side top -fill x -pady $Gui(pad) -padx $Gui(pad)
+
+	#-------------------------------------------
+	# Props->Top->Active frame
+	#-------------------------------------------
+	set f $fProps.fTop.fActive
+
+	eval {label $f.lActive -text "Active Model: "} $Gui(BLA)
+	eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
+		-menu $f.mbActive.m} $Gui(WMBA)
+	eval {menu $f.mbActive.m} $Gui(WMA)
+	pack $f.lActive $f.mbActive -side left
+
+	# Append widgets to list that gets refreshed during UpdateMRML
+	lappend Model(mbActiveList) $f.mbActive
+	lappend Model(mActiveList)  $f.mbActive.m
+
+	#-------------------------------------------
+	# Props->Top->Type frame
+	#-------------------------------------------
+	set f $fProps.fTop.fType
+
+	eval {label $f.l -text "Properties:"} $Gui(BLA)
+	frame $f.f -bg $Gui(backdrop)
+	foreach p "Basic Advanced" {
+		eval {radiobutton $f.f.r$p \
+			-text "$p" -command "ModelsSetPropertyType" \
+			-variable Model(propertyType) -value $p -width 8 \
+			-indicatoron 0} $Gui(WCA)
+		pack $f.f.r$p -side left -padx 0
+	}
+	pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
+
+	#-------------------------------------------
+	# Props->Bot->Basic frame
+	#-------------------------------------------
+	set f $fProps.fBot.fBasic
+
+	frame $f.fPrefix  -bg $Gui(activeWorkspace) -relief groove -bd 3
+	frame $f.fName    -bg $Gui(activeWorkspace)
+	frame $f.fColor   -bg $Gui(activeWorkspace)
+	frame $f.fApply   -bg $Gui(activeWorkspace)
+	pack $f.fPrefix $f.fName $f.fColor $f.fApply \
+		-side top -fill x -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Props->Bot->Advanced frame
+	#-------------------------------------------
+	set f $fProps.fBot.fAdvanced
+
+	frame $f.fCulling -bg $Gui(activeWorkspace)
+	frame $f.fScalars -bg $Gui(activeWorkspace) -relief groove -bd 3
+	frame $f.fDesc    -bg $Gui(activeWorkspace)
+	frame $f.fApply   -bg $Gui(activeWorkspace)
+	pack $f.fCulling $f.fScalars $f.fDesc $f.fApply \
+		-side top -fill x -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Props->Bot->Basic->Name frame
+	#-------------------------------------------
+	set f $fProps.fBot.fBasic.fName
+
+	eval {label $f.l -text "Name:" } $Gui(WLA)
+	eval {entry $f.e -textvariable Model(name)} $Gui(WEA)
+	pack $f.l -side left -padx $Gui(pad)
+	pack $f.e -side left -padx $Gui(pad) -expand 1 -fill x
+
+	#-------------------------------------------
+	# Props->Bot->Basic->Prefix frame
+	#-------------------------------------------
+	set f $fProps.fBot.fBasic.fPrefix
+
+	frame $f.f -bg $Gui(activeWorkspace)
+	pack $f.f -side top -pady $Gui(pad)
+
+	eval {label $f.f.l -text "File Prefix (without .vtk)"} $Gui(WLA)
+	eval {button $f.f.b -text "Browse..." -width 10 \
+		-command "ModelsSetPrefix"} $Gui(WBA)
+	pack $f.f.l $f.f.b -side left -padx $Gui(pad)
+
+	eval {entry $f.eFile -textvariable Model(prefix) -width 50} $Gui(WEA)
+	bind $f.eFile <Return> {ModelsSetPrefix}
+	pack $f.eFile -side top -pady $Gui(pad) -padx $Gui(pad) -expand 1 -fill x
+
+	#-------------------------------------------
+	# Props->Bot->Basic->Color frame
+	#-------------------------------------------
+	set f $fProps.fBot.fBasic.fColor
+
+	eval {button $f.b -text "Color:" -command "ShowColors"} $Gui(WBA)
+	eval {entry $f.e -width 20 \
+		-textvariable Label(name)} $Gui(WEA) \
+		{-bg $Gui(activeWorkspace) -state disabled}
+	pack $f.b $f.e -side left -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+	lappend Label(colorWidgetList) $f.e
+
+	#-------------------------------------------
+	# Props->Bot->Basic->Apply frame
+	#-------------------------------------------
+	set f $fProps.fBot.fBasic.fApply
+
+	eval {button $f.bApply -text "Apply" \
+		-command "ModelsPropsApply; RenderAll"} $Gui(WBA) {-width 8}
+	eval {button $f.bCancel -text "Cancel" \
+		-command "ModelsPropsCancel"} $Gui(WBA) {-width 8}
+	grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Props->Bot->Advanced->Culling frame
+	#-------------------------------------------
+	set f $fProps.fBot.fAdvanced.fCulling
+
+	eval {label $f.l -text "Backface Culling:"} $Gui(WLA)
+	frame $f.f -bg $Gui(activeWorkspace)
+	pack $f.l $f.f -side left -padx $Gui(pad)
+
+	foreach text "{Yes} {No}" \
+		value "1 0" \
+		width "3 3" {
+		eval {radiobutton $f.f.rMode$value -width $width \
+			-text "$text" -value "$value" -variable Model(culling) \
+			-indicatoron 0} $Gui(WCA)
+		pack $f.f.rMode$value -side left -padx 0 -pady 0
+	}
+
+	#-------------------------------------------
+	# Props->Bot->Advanced->Scalars frame
+	#-------------------------------------------
+	set f $fProps.fBot.fAdvanced.fScalars
+
+	frame $f.fVisible -bg $Gui(activeWorkspace)
+	frame $f.fRange   -bg $Gui(activeWorkspace)
+	pack $f.fVisible $f.fRange -side top -pady $Gui(pad)
+	set fVisible $f.fVisible
+	set fRange $f.fRange
+
+	# fVisible
+	set f $fVisible
+
+	eval {label $f.l -text "Scalars Visible:"} $Gui(WLA)
+	frame $f.f -bg $Gui(activeWorkspace)
+	pack $f.l $f.f -side left -padx $Gui(pad) -pady 0
+
+	foreach text "{Yes} {No}" \
+		value "1 0" \
+		width "4 4" {
+		eval {radiobutton $f.f.rMode$value -width $width \
+			-text "$text" -value "$value" -variable Model(scalarVisibility) \
+			-indicatoron 0} $Gui(WCA)
+		pack $f.f.rMode$value -side left
+	}
+
+	# fRange
+	set f $fRange
+
+	eval {label $f.l -text "  Scalar Range:"} $Gui(WLA)
+	eval {entry $f.eLo -width 6 -textvariable Model(scalarLo)} $Gui(WEA)
+	eval {entry $f.eHi -width 6 -textvariable Model(scalarHi)} $Gui(WEA)
+	pack $f.l $f.eLo $f.eHi -side left -padx $Gui(pad)
+
+	#-------------------------------------------
+	# Props->Bot->Advanced->Desc frame
+	#-------------------------------------------
+	set f $fProps.fBot.fAdvanced.fDesc
+
+	eval {label $f.l -text "Optional Description:"} $Gui(WLA)
+	eval {entry $f.e -textvariable Model(desc)} $Gui(WEA)
+	pack $f.l -side top -padx $Gui(pad) -fill x -anchor w
+	pack $f.e -side top -padx $Gui(pad) -expand 1 -fill x
+
+	#-------------------------------------------
+	# Props->Bot->Advanced->Apply frame
+	#-------------------------------------------
+	set f $fProps.fBot.fAdvanced.fApply
+
+	eval {button $f.bApply -text "Apply" \
+		-command "ModelsPropsApply; RenderAll"} $Gui(WBA) {-width 8}
+	eval {button $f.bCancel -text "Cancel" \
+		-command "ModelsPropsCancel"} $Gui(WBA) {-width 8}
+	grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
 
 
 	#-------------------------------------------
@@ -200,12 +404,11 @@ Models are fun. Do you like models, Ron?
 	#-------------------------------------------
 	set f $fClip.fHelp
 
-	set c {label $f.l  -justify left -text "The slices clip the models that\n\
+	eval {label $f.l  -justify left -text "The slices clip the models that\n\
 		have clipping turn on.\n\n\
 		To turn clipping on for a model,\n\
 		check the box to the right of the\n\
-		model's name on the Options page."\
-		$Gui(WLA)}; eval [subst $c]
+		model's name on the Display page."} $Gui(WLA)
 	pack $f.l
 
 	#-------------------------------------------
@@ -215,178 +418,19 @@ Models are fun. Do you like models, Ron?
 	
 	foreach s $Slice(idList) name "Red Yellow Green" {
 
-		set c {label $f.l$s -text "$name Slice: " $Gui(WLA)}; eval [subst $c]
+		eval {label $f.l$s -text "$name Slice: "} $Gui(WLA)
 		
 		frame $f.f$s -bg $Gui(activeWorkspace)
 		foreach text "Off + -" value "0 1 2" width "4 2 2" {
-			set c {radiobutton $f.f$s.r$value -width $width \
+			eval {radiobutton $f.f$s.r$value -width $width \
 				-text "$text" -value "$value" -variable Slice($s,clipState) \
 				-indicatoron 0 \
 				-command "MainSlicesSetClipState $s; MainModelsRefreshClip; Render3D" \
-				$Gui(WCA) -bg $Gui(slice$s)}
-				eval [subst $c]
+				} $Gui(WCA) {-bg $Gui(slice$s)}
 			pack $f.f$s.r$value -side left -padx 0 -pady 0
 		}
 		grid $f.l$s $f.f$s -pady $Gui(pad)
 	}
-
-
-	#-------------------------------------------
-	# Create frame
-	#-------------------------------------------
-	set fCreate $Module(Models,fCreate)
-	set f $fCreate
-
-	foreach frm " Volume Label Grid Apply Results" {
-		frame $f.f$frm -bg $Gui(activeWorkspace)
-		pack  $f.f$frm -side top -pady $Gui(pad)
-	}
-
-	#-------------------------------------------
-	# Create->Volume frame
-	#-------------------------------------------
-	set f $fCreate.fVolume
-
-	# Volume menu
-	set c {label $f.lVolume -text "Volume:" $Gui(WLA)}; eval [subst $c]
-
-	set c {menubutton $f.mbVolume -text "None" -relief raised -bd 2 -width 18 \
-		-menu $f.mbVolume.m $Gui(WMBA)}; eval [subst $c]
-	set c {menu $f.mbVolume.m $Gui(WMA)}; eval [subst $c]
-	pack $f.lVolume -padx $Gui(pad) -side left -anchor e
-	pack $f.mbVolume -padx $Gui(pad) -side left -anchor w
-
-	# Save widgets for changing
-	set Model(mbVolume) $f.mbVolume
-	set Model(mVolume)  $f.mbVolume.m
-
-	#-------------------------------------------
-	# Create->Label frame
-	#-------------------------------------------
-	set f $fCreate.fLabel
-
-	set c {button $f.bLabel -text "Label:" \
-		-command "ShowLabels ModelsLabelCallback" $Gui(WBA)}; eval [subst $c]
-	set c {entry $f.eLabel -width 6 \
-		-textvariable Label(label) $Gui(WEA)}; eval [subst $c]
-	bind $f.eLabel <Return>   "LabelsFindLabel; ModelsLabelCallback"
-	bind $f.eLabel <FocusOut> "LabelsFindLabel; ModelsLabelCallback"
-	set c {entry $f.eName -width 13 \
-		-textvariable Label(name) $Gui(WEA) \
-		-bg $Gui(activeWorkspace) -state disabled}; eval [subst $c]
-	grid $f.bLabel $f.eLabel $f.eName -padx $Gui(pad) -pady $Gui(pad) -sticky e
-
-	lappend Label(colorWidgetList) $f.eName
-
-	#-------------------------------------------
-	# Create->Grid frame
-	#-------------------------------------------
-	set f $fCreate.fGrid
-
-	foreach Param "Name Smooth Decimate" width "13 7 7" {
-		set c {label $f.l$Param -text "$Param:" $Gui(WLA)}; eval [subst $c]
-		set c {entry $f.e$Param -width $width \
-			-textvariable Model(create,[Uncap $Param]) $Gui(WEA)}; eval [subst $c]
-		grid $f.l$Param $f.e$Param  -padx $Gui(pad) -pady $Gui(pad) -sticky e
-		grid $f.e$Param -sticky w
-	}
-
-	#-------------------------------------------
-	# Create->Apply frame
-	#-------------------------------------------
-	set f $fCreate.fApply
-
-	set c {button $f.bCreate -text "Create" -width 7 \
-		-command "ModelsCreate; Render3D" $Gui(WBA)}; eval [subst $c]
-	pack $f.bCreate -side top -pady $Gui(pad)
-
-	#-------------------------------------------
-	# Create->Results frame
-	#-------------------------------------------
-	set f $fCreate.fResults
-
-	set c {label $f.l -justify left -text "" $Gui(WLA)}; eval [subst $c]
-	pack $f.l -side top -pady 1
-	set Model(create,msg) $f.l
-
-	#-------------------------------------------
-	# Edit frame
-	#-------------------------------------------
-	set fEdit $Module(Models,fEdit)
-	set f $fEdit
-
-	frame $f.fActive -bg $Gui(activeWorkspace)
-	frame $f.fGrid   -bg $Gui(activeWorkspace) -relief groove -bd 3
-	frame $f.fWrite  -bg $Gui(activeWorkspace) -relief groove -bd 3
-	pack  $f.fActive $f.fGrid $f.fWrite \
-		-side top -padx $Gui(pad) -pady 10 -fill x
-
-	#-------------------------------------------
-	# Edit->Active frame
-	#-------------------------------------------
-	set f $fEdit.fActive
-
-	set c {label $f.lActive -text "Active Model: " $Gui(WLA)}; eval [subst $c]
-	set c {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
-		-menu $f.mbActive.m $Gui(WMBA)}; eval [subst $c]
-	set c {menu $f.mbActive.m $Gui(WMA)}; eval [subst $c]
-	pack $f.lActive $f.mbActive -side left -padx $Gui(pad) -pady 0 
-
-	# Append widgets to list that gets refreshed during UpdateMRML
-	lappend Model(mbActiveList) $f.mbActive
-	lappend Model(mActiveList)  $f.mbActive.m
-
-	#-------------------------------------------
-	# Edit->Grid frame
-	#-------------------------------------------
-	set f $fEdit.fGrid
-
-	set c {label $f.lTitle -text "Apply an Effect" $Gui(WTA)}
-		eval [subst $c]
-	grid $f.lTitle -columnspan 3 -pady $Gui(pad)
-
-	set Param Smooth
-	set c {label $f.l$Param -text "$Param:" $Gui(WLA)}; eval [subst $c]
-	set c {entry $f.e$Param -width 7 \
-		-textvariable Model(edit,[Uncap $Param]) $Gui(WEA)}; eval [subst $c]
-	set c {button $f.bSmooth -text "Smooth" -width 7 \
-		-command "ModelsSmoothWrapper; Render3D" $Gui(WBA)}; eval [subst $c]
-	grid $f.l$Param $f.e$Param $f.bSmooth \
-		-padx $Gui(pad) -pady $Gui(pad) -sticky e
-	grid $f.e$Param -sticky w
-
-	#-------------------------------------------
-	# Edit->Write frame
-	#-------------------------------------------
-	set f $fEdit.fWrite
-
-	set c {label $f.lTitle -text "Save model as a VTK file" $Gui(WTA)}
-		eval [subst $c]
-	frame $f.fPrefix -bg $Gui(activeWorkspace)
-	frame $f.fBtns   -bg $Gui(activeWorkspace)
-	pack $f.lTitle   -side top -pady $Gui(pad)
-	pack $f.fPrefix  -side top -pady $Gui(pad) -fill x
-	pack $f.fBtns    -side top -pady $Gui(pad)
-
-	#-------------------------------------------
-	# Edit->Write->Prefix frame
-	#-------------------------------------------
-	set f $fEdit.fWrite.fPrefix
-
-	set c {label $f.lFile -text "Prefix:" $Gui(WLA)}; eval [subst $c]
-	set c {entry $f.eFile -textvariable Model(fileName) -width 50 $Gui(WEA)}
-		eval [subst $c]
-	pack $f.lFile -side left -padx $Gui(pad)
-	pack $f.eFile -side left -padx $Gui(pad) -expand 1 -fill x
-
-	#-------------------------------------------
-	# Edit->Write->Btns frame
-	#-------------------------------------------
-	set f $fEdit.fWrite.fBtns
-
-	set c {button $f.bWrite -text "Write" -width 6 \
-		-command "MainModelsWrite; Render3D" $Gui(WBA)}; eval [subst $c]
-	pack $f.bWrite
 
 
 	#-------------------------------------------
@@ -406,9 +450,9 @@ Models are fun. Do you like models, Ron?
 	set f $fMeter.fApply
 
 	set text "Measure Performance"
-	set c {button $f.bMeasure -text "$text" \
+	eval {button $f.bMeasure -text "$text" \
 		-width [expr [string length $text] + 1] \
-		-command "ModelsMeter" $Gui(WBA)}; eval [subst $c]
+		-command "ModelsMeter"} $Gui(WBA)
 	pack $f.bMeasure
 
 	#-------------------------------------------
@@ -421,324 +465,109 @@ Models are fun. Do you like models, Ron?
 	pack $f.fTop $f.fBot -side top -pady $Gui(pad)
 
 	set f $fMeter.fResults.fTop
-	set c {label $f.l -justify left -text "" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.l -justify left -text ""} $Gui(WLA)
 	pack $f.l
 	set Model(meter,msgTop) $f.l
 
 	set f $fMeter.fResults.fBot
-	set c {label $f.lL -justify left -text "" $Gui(WLA)}; eval [subst $c]
-	set c {label $f.lR -justify right -text "" $Gui(WLA)}; eval [subst $c]
+	eval {label $f.lL -justify left -text ""} $Gui(WLA)
+	eval {label $f.lR -justify right -text ""} $Gui(WLA)
 	pack $f.lL $f.lR -side left -padx $Gui(pad)
 	set Model(meter,msgLeft) $f.lL
 	set Model(meter,msgRight) $f.lR
 
 }
 
-#-------------------------------------------------------------------------------
-# .PROC ModelsEnter
-# .END
-#-------------------------------------------------------------------------------
-proc ModelsEnter {} {
-	global Volume
-	
-	ModelsSetVolume $Volume(activeID)
-}
-
-#-------------------------------------------------------------------------------
-# .PROC ModelsSetVolume
-# .END
-#-------------------------------------------------------------------------------
-proc ModelsSetVolume {v} {
-	global Model Volume Label
-
-	set Model(idVolume) $v
-	
-	# Change button text
-    $Model(mbVolume) config -text [Volume($v,node) GetName]
-
-	# Initialize the label to the highest value in the volume
-	set Label(label) [Volume($v,vol) GetRangeHigh]
-	LabelsFindLabel
-	ModelsLabelCallback
-}
-
-#-------------------------------------------------------------------------------
-# .PROC ModelsCreate
-# .END
-#-------------------------------------------------------------------------------
-proc ModelsCreate {} {
-	global Model Label
-
-	set m [MainModelsCreateUnreadable]
-	set v $Model(idVolume)
-	Model($m,node) SetName $Model(create,name)
-	Model($m,node) SetColor $Label(name)
-
-	# Registration
-	Model($m,node) SetRasToWld [Volume($m,node) GetRasToWld]
-
-	if {[ModelsMarch $m $v $Model(create,decimate) $Model(create,smooth)] != 0} {
-		MainModelsDelete $m
-		return
-	}
-	$Model(create,msg) config -text "\
-Marching cubes: $Model(t,mcubes) sec.\n\
-Decimate: $Model(t,decimator) sec.\n\
-Smooth: $Model(t,smoother) sec.\n\
-$Model(n,mcubes) polygons reduced to $Model(n,decimator)."
-
-	MainUpdateMRML
-	MainModelsSetActive $m
-}
-
-#-------------------------------------------------------------------------------
-# .PROC ModelsLabelCallback
-# .END
-#-------------------------------------------------------------------------------
-proc ModelsLabelCallback {} {
-	global Label Model Gui
-
-	set Model(create,name) $Label(name)
-	set Model(fileName) $Label(name)
-}
-
-#-------------------------------------------------------------------------------
-# .PROC ModelsSmoothWrapper
-# .END
-#-------------------------------------------------------------------------------
-proc ModelsSmoothWrapper {{m ""}} {
+proc ModelsSetPropertyType {} {
 	global Model
+	
+	raise $Model(f$Model(propertyType))
+}
+ 
+proc ModelsSetPrefix {} {
+	global Model Path
 
-	if {$m == ""} {
-		set m $Model(activeID)
+	set typelist {
+		{"VTK Files" {.vtk}}
+		{"All Files" {*}}
 	}
-	if {$m < 0} {return}
+	set filename [GetOpenFile $Path(root) $Model(prefix) \
+		$typelist .vtk "Open Model"]
+	if {$filename == ""} {return}
 
-	ModelsSmooth $m $Model(edit,smooth)
+    # Store for next time 
+	set Path(prefixOpenModel) [file root $filename]
+
+	set Model(prefix) $Path(prefixOpenModel)
+
+	# Guess the name based on the prefix
+	set Model(name) [file tail $Model(prefix)]
 }
 
-#-------------------------------------------------------------------------------
-# .PROC ModelsSmooth
-# .END
-#-------------------------------------------------------------------------------
-proc ModelsSmooth {m iterations} {
-	global Model Gui
+proc ModelsPropsApply {} {
+	global Model Label Module Mrml
 
-	set name [Model($m,node) GetName]
+	set m $Model(activeID)
+	if {$m == ""} {return}
 
-	set p smoother
-	vtkSmoothPolyDataFilter $p
-    $p SetInput $Model($m,polyData)
-    $p SetNumberOfIterations $iterations
-	# This next line massively rounds corners
-	$p SetRelaxationFactor 0.33
-    $p SetFeatureAngle 60
-    $p FeatureEdgeSmoothingOff
-    $p BoundarySmoothingOff
-    $p SetConvergence 0
-    [$p GetOutput] ReleaseDataFlagOn
-	set Gui(progressText) "Smoothing $name"
-	$p SetStartMethod     MainStartProgress
-	$p SetProgressMethod "MainShowProgress $p"
-	$p SetEndMethod       MainEndProgress
-	set Model(t,$p) [expr [lindex [time {$p Update}] 0]/1000000.0]
-	set Model(n,$p) [[$p GetOutput] GetNumberOfPolys]
-	set Model($m,nPolys) $Model(n,$p)
+	if {$m == "NEW"} {
+		set i $Model(nextID)
+		incr Model(nextID)
+		lappend Model(idList) $i
+		vtkMrmlModelNode Model($i,node)
+		set n Model($i,node)
+		$n SetID               $i
+		$n SetOpacity          1.0
+		$n SetVisibility       1
+		$n SetClipping         0
 
-	set p normals
-	vtkPolyDataNormals $p
-    $p SetInput [smoother GetOutput]
-    $p SetFeatureAngle 60
-    [$p GetOutput] ReleaseDataFlagOn
+		# These get set down below, but we need them before MainUpdateMRML
+		$n SetName $Model(name)
+		$n SetFileName "$Model(prefix).vtk"
+		$n SetColor $Label(name)
 
-	set p stripper
-	vtkStripper $p
-    $p SetInput [normals GetOutput]
-	[$p GetOutput] ReleaseDataFlagOff
-
-	# polyData will survive as long as it's the input to the mapper
-	set Model($m,polyData) [$p GetOutput]
-	$Model($m,polyData) Update
-	Model($m,mapper) SetInput $Model($m,polyData)
-
-	stripper SetOutput ""
-	foreach p "smoother normals stripper" {
-		$p SetInput ""
-		$p Delete
+		Mrml(dataTree) AddItem $n
+		MainUpdateMRML
+		set Model(freeze) 0
+		MainModelsSetActive $i
+		set m $i
 	}
+
+	Model($m,node) SetName $Model(name)
+	Model($m,node) SetFileName "$Model(prefix).vtk"
+	Model($m,node) SetDescription $Model(desc)
+	MainModelsSetCulling $m $Model(culling)
+	MainModelsSetScalarVisibility $m $Model(scalarVisibility)
+	MainModelsSetScalarRange $m $Model(scalarLo) $Model(scalarHi)
+	MainModelsSetColor $m $Label(name)
+
+	# If tabs are frozen, then 
+	if {$Module(freezer) != ""} {
+		set cmd "Tab $Module(freezer)"
+		set Module(freezer) ""
+		eval $cmd
+	}
+	
+	MainUpdateMRML
 }
 
-#-------------------------------------------------------------------------------
-# .PROC ModelsMarch
-# .END
-#-------------------------------------------------------------------------------
-proc ModelsMarch {m v decimateIterations smoothIterations} {
-	global Model Gui
-	
-	if {$Model(marching) == 1} {
-		puts "already marching"
-		return -1
+proc ModelsPropsCancel {} {
+	global Model Module
+
+	# Reset props
+	set m $Model(activeID)
+	if {$m == "NEW"} {
+		set m [lindex $Model(idList) 0]
 	}
+	set Model(freeze) 0
+	MainModelsSetActive $m
 
-	set Model(marching) 1
-	set name [Model($m,node) GetName]
-
-	# Marching cubes cannot run on data of dimension less than 3
-	set dim [[Volume($v,vol) GetOutput] GetExtent]
-	if {[lindex $dim 0] == [lindex $dim 1] ||
-	    [lindex $dim 2] == [lindex $dim 3] ||
-	    [lindex $dim 4] == [lindex $dim 5]} {
-		puts "extent=$dim"
-		tk_messageBox -message "The volume '[Volume($v,node) GetName]' is not 3D"
-		set Model(marching) 0
-		return -1
+	# Unfreeze
+	if {$Module(freezer) != ""} {
+		set cmd "Tab $Module(freezer)"
+		set Module(freezer) ""
+		eval $cmd
 	}
-
-	set spacing [[Volume($v,vol) GetOutput] GetSpacing]
-	set origin  [[Volume($v,vol) GetOutput] GetOrigin]
-	# The spacing is accounted for in the rasToVtk transform, 
-	# so we have to remove it here, or mcubes will use it.
-	[Volume($v,vol) GetOutput] SetSpacing 1 1 1
-	[Volume($v,vol) GetOutput] SetOrigin 0 0 0
-
-	# Transform crap
-	
-	# Read orientation matrix and permute the images if necessary.
-	vtkTransform rot
-	set matrixList [Volume($v,node) GetRasToVtkMatrix]
-	for {set row 0} { $row < 4 } {incr row} {
-		for {set col 0} {$col < 4} {incr col} {
-			[rot GetMatrix] SetElement $row $col \
-				[lindex $matrixList [expr $row*4+$col]]
-		}
-	}
-	[rot GetMatrix] Invert
-
-	# Tramsform
-	vtkImageFlip flip
-	set mm [rot GetMatrix] 
-	if {[$mm Determinant $mm] < 0} {
-		for {set col 0} {$col < 4} {incr col} {
-			set el [[rot GetMatrix] GetElement $col 0]
-			[rot GetMatrix] SetElement $col 0 [expr -1*$el]
-		}
-		puts permute
-		# vtkTransform permute
-		# [permute GetMatrix] SetElement 0 0 -1
-		# reader SetTransform permute
-		flip SetInput [Volume($v,vol) GetOutput]
-		set src flip
-	} else {
-		set src Volume($v,vol)
-	}
-
-	vtkImageToStructuredPoints to
-	to SetInput [$src GetOutput]
-
-	set p mcubes
-	vtkMarchingCubes $p
-	$p SetInput [to GetOutput]
-	$p SetValue 0 1
-	$p ComputeScalarsOff
-	$p ComputeGradientsOff
-	$p ComputeNormalsOff
-	[$p GetOutput] ReleaseDataFlagOn
-	set Gui(progressText) "Marching $name"
-	$p SetStartMethod     MainStartProgress
-	$p SetProgressMethod "MainShowProgress $p"
-	$p SetEndMethod       MainEndProgress
-	set Model(t,$p) [expr [lindex [time {$p Update}] 0]/1000000.0]
-	set Model(n,$p) [[$p GetOutput] GetNumberOfPolys]
-
-	# If there are no polygons, then the smoother gets mad, so stop.
-	if {$Model(n,$p) == 0} {
-		tk_messageBox -message "No polygons can be created."
-		to SetInput ""
-		mcubes SetInput ""
-		flip SetInput ""
-		to Delete
-		mcubes Delete
-		flip Delete
-		rot Delete
-		set Model(marching) 0
-		return -1
-	}
-
-	set p decimator
-	vtkDecimate $p
-	$p SetInput [mcubes GetOutput]
-    $p SetInitialFeatureAngle 60
-    $p SetMaximumIterations $decimateIterations
-    $p SetMaximumSubIterations 0
-    $p PreserveEdgesOn
-    $p SetMaximumError 1
-    $p SetTargetReduction 1
-	$p GlobalWarningDisplayOff
-    $p SetInitialError .0002
-    $p SetErrorIncrement .0002
-	[$p GetOutput] ReleaseDataFlagOn
-	set Gui(progressText) "Decimating $name"
-	$p SetStartMethod     MainStartProgress
-	$p SetProgressMethod "MainShowProgress $p"
-	$p SetEndMethod       MainEndProgress
-	set Model(t,$p) [expr [lindex [time {$p Update}] 0]/1000000.0]
-	set Model(n,$p) [[$p GetOutput] GetNumberOfPolys]
-	$p GlobalWarningDisplayOn
-	
-	set p smoother
-	vtkSmoothPolyDataFilter $p
-    $p SetInput [decimator GetOutput]
-    $p SetNumberOfIterations $smoothIterations
-	# This next line massively rounds corners
-	$p SetRelaxationFactor 0.33
-    $p SetFeatureAngle 60
-    $p FeatureEdgeSmoothingOff
-    $p BoundarySmoothingOff
-    $p SetConvergence 0
-    [$p GetOutput] ReleaseDataFlagOn
-	set Gui(progressText) "Smoothing $name"
-	$p SetStartMethod     MainStartProgress
-	$p SetProgressMethod "MainShowProgress $p"
-	$p SetEndMethod       MainEndProgress
-	set Model(t,$p) [expr [lindex [time {$p Update}] 0]/1000000.0]
-	set Model(n,$p) [[$p GetOutput] GetNumberOfPolys]
-	set Model($m,nPolys) $Model(n,$p)
-
-	set p transformer
-	vtkTransformPolyDataFilter $p
-	$p SetInput [smoother GetOutput]
-	$p SetTransform rot
-	[$p GetOutput] ReleaseDataFlagOn
-
-	set p normals
-	vtkPolyDataNormals $p
-    $p SetInput [transformer GetOutput]
-    $p SetFeatureAngle 60
-    [$p GetOutput] ReleaseDataFlagOn
-
-	set p stripper
-	vtkStripper $p
-    $p SetInput [normals GetOutput]
-	[$p GetOutput] ReleaseDataFlagOff
-
-	# polyData will survive as long as it's the input to the mapper
-	set Model($m,polyData) [$p GetOutput]
-	$Model($m,polyData) Update
-	Model($m,mapper) SetInput $Model($m,polyData)
-
-	stripper SetOutput ""
-	foreach p "to flip mcubes decimator transformer smoother normals stripper" {
-		$p SetInput ""
-		$p Delete
-	}
-	rot Delete
-
-	# Restore spacing
-	eval [Volume($v,vol) GetOutput] SetSpacing $spacing
-	eval [Volume($v,vol) GetOutput] SetOrigin $origin
-
-	set Model(marching) 0
-	return 0
 }
 
 #-------------------------------------------------------------------------------
@@ -780,10 +609,6 @@ proc ModelsMeter {} {
 #		puts "m=$m: ref=[$Model($m,polyData) GetReferenceCount]"
 
 		set n $Model($m,nPolys)
-#		set Model($m,oldVis) [Model($m,node) GetVisibility]
-#		if {$Model($m,oldVis) == 1} {
-#			set total [expr $total + $n]
-#		}
 		if {[Model($m,node) GetVisibility] == 1} {
 			set total [expr $total + $n]
 		}
@@ -791,28 +616,18 @@ proc ModelsMeter {} {
 		set msgRight "$msgRight\n$n"
 	}
 
-	# Without
-#	MainModelsSetVisibility None
-#	set tWithout [lindex [time {Render3D}] 0]
-
-	# With
-#	foreach m $Model(idList) {
-#		MainModelsSetVisibility $m $Model($m,oldVis)
-#	}
-	set tWith [lindex [time {Render3D}] 0]
 
 	# Compute rate
-#	set dif [expr $tWith - $tWithout]
-	set dif $tWith
-	if {$dif > 0} {
-		set rate [expr $total / ($dif/1000000.0)]
+	set t [lindex [time {Render3D}] 0]
+	if {$t > 0} {
+		set rate [expr $total / ($t/1000000.0)]
 	} else {
 		set rate 0
 	}
 
 	set msgTop "\
 Total visible polygons: $total\n\
-Render time: [format "%.3f" [expr $tWith/1000000.0]]\n\
+Render time: [format "%.3f" [expr $t/1000000.0]]\n\
 Polygons/sec rendered: [format "%.0f" $rate]"
 
 	$Model(meter,msgTop) config -text $msgTop

@@ -29,24 +29,24 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <ctype.h>
 #include <string.h>
 #include <math.h>
-#include "vtkMrmlTransformNode.h"
+#include "vtkMrmlEndTransformNode.h"
 #include "vtkObjectFactory.h"
 
 //------------------------------------------------------------------------------
-vtkMrmlTransformNode* vtkMrmlTransformNode::New()
+vtkMrmlEndTransformNode* vtkMrmlEndTransformNode::New()
 {
   // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMrmlTransformNode");
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMrmlEndTransformNode");
   if(ret)
   {
-    return (vtkMrmlTransformNode*)ret;
+    return (vtkMrmlEndTransformNode*)ret;
   }
   // If the factory was unable to create the object, then create it here.
-  return new vtkMrmlTransformNode;
+  return new vtkMrmlEndTransformNode;
 }
 
 //----------------------------------------------------------------------------
-vtkMrmlTransformNode::vtkMrmlTransformNode()
+vtkMrmlEndTransformNode::vtkMrmlEndTransformNode()
 {
   // vtkMrmlNode's attributes
   this->ID = 0;
@@ -54,42 +54,25 @@ vtkMrmlTransformNode::vtkMrmlTransformNode()
   this->Options = NULL;
   this->Ignore = 0;
 
-  this->Name = NULL;
-  this->Transform = vtkTransform::New();
 }
 
 //----------------------------------------------------------------------------
-vtkMrmlTransformNode::~vtkMrmlTransformNode()
+vtkMrmlEndTransformNode::~vtkMrmlEndTransformNode()
 {
-  if (this->Name)
-  {
-    delete [] this->Name;
-    this->Name = NULL;
-  }
-  this->Transform->Delete();
 }
 
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, Name
-void vtkMrmlTransformNode::Copy(vtkMrmlTransformNode *node)
+void vtkMrmlEndTransformNode::Copy(vtkMrmlEndTransformNode *node)
 {
   vtkMrmlNode::Copy(node);
 
-  this->Transform->DeepCopy(node->Transform);
 }
 
 //----------------------------------------------------------------------------
-void vtkMrmlTransformNode::PrintSelf(ostream& os, vtkIndent indent)
+void vtkMrmlEndTransformNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkMrmlNode::PrintSelf(os,indent);
 
-  os << indent << "Name: " <<
-    (this->Name ? this->Name : "(none)") << "\n";
-
-  // Transform
-  os << indent << "Transform:\n";
-    this->Transform->PrintSelf(os, indent.GetNextIndent());  
 }
-
-

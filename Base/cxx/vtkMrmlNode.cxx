@@ -94,4 +94,44 @@ void vtkMrmlNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Ignore:      " << this->Ignore << "\n";
 }
 
+//----------------------------------------------------------------------------
+char* vtkMrmlNode::GetMatrixToString(vtkMatrix4x4 *mat)
+{
+  int i, j;
+  float m[16];
+  char *s = new char[200];
+ 
+  for (i=0; i<4; i++)
+  {
+	  for (j=0; j<4; j++)
+    {
+      m[i*4+j] = mat->GetElement(i, j);
+    }
+  }
+  sprintf(s, "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g",
+    m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8],
+    m[9], m[10], m[11], m[12], m[13], m[14], m[15]);
+
+  return s;
+}
+
+//----------------------------------------------------------------------------
+void vtkMrmlNode::SetMatrixToString(vtkMatrix4x4 *mat, char *s)
+{
+  int i, j;
+  float m[16];
+  
+  sscanf(s, "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g",
+    &m[0], &m[1], &m[2], &m[3], &m[4], &m[5], &m[6], &m[7], &m[8],
+    &m[9], &m[10], &m[11], &m[12], &m[13], &m[14], &m[15]);
+
+  for (i=0; i<4; i++)
+  {
+    for (j=0; j<4; j++)
+    {
+       mat->SetElement(i, j, m[i*4+j]);
+    }
+  }
+}
+
 

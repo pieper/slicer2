@@ -5,7 +5,7 @@
 # The following terms apply to all files associated with the software unless
 # explicitly disclaimed in individual files.   
 # 
-# The authors hereby grant permission to use and copy (but not distribute) this
+# The authors hereby grant permission to use, copy, and distribute this
 # software and its documentation for any NON-COMMERCIAL purpose, provided
 # that existing copyright notices are retained verbatim in all copies.
 # The authors grant permission to modify this software and its documentation 
@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Editor.tcl
-# DATE:        12/10/1999 08:40
+# DATE:        12/09/1999 14:15
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   EditorInit
@@ -217,7 +217,7 @@ proc EditorUpdateMRML {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EditorBuildGUI {} {
-	global Gui Volume Editor Ed Module Slice
+	global Gui Volume Editor Ed Module Slice Path
 
 	#-------------------------------------------
 	# Frame Hierarchy:
@@ -533,7 +533,7 @@ Models are fun. Do you like models, Ron?
 	set c {label $f.lWorking -text "Prefix:" $Gui(WLA)}
 		eval [subst $c]
 	set c {entry $f.eWorking \
-		-textvariable Gui(prefixEditorWorking) $Gui(WEA)}; eval [subst $c]
+		-textvariable Path(prefixEditorWorking) $Gui(WEA)}; eval [subst $c]
 	pack $f.lWorking -padx $Gui(pad) -side left
 	pack $f.eWorking -padx $Gui(pad) -side left -expand 1 -fill x
 
@@ -569,7 +569,7 @@ Models are fun. Do you like models, Ron?
 	set c {label $f.lComposite -text "Prefix:" $Gui(WLA)}
 		eval [subst $c]
 	set c {entry $f.eComposite \
-		-textvariable Gui(prefixEditorComposite) $Gui(WEA)}; eval [subst $c]
+		-textvariable Path(prefixEditorComposite) $Gui(WEA)}; eval [subst $c]
 	pack $f.lComposite -padx $Gui(pad) -side left
 	pack $f.eComposite -padx $Gui(pad) -side left -expand 1 -fill x
 
@@ -785,14 +785,8 @@ proc EditorSetOriginal {v} {
 		# Display the origin as the background on the slices
 		EditorResetDisplay
 
-set fid [open log.txt a]
-puts $fid "EditorSetOriginal done EditorResetDisplay"
-close $fid
 		# Refresh the effect, if it's an interactive one
 		EditorUpdateEffect
-set fid [open log.txt a]
-puts $fid "EditorSetOriginal done EditorUpdateEffect"
-close $fid
 	}
 }
 
@@ -1052,17 +1046,10 @@ proc EditorSetEffect {e} {
 		EditorResetDisplay
 	}
 
-set fid [open log.txt a]
-puts $fid "EditorSetEffect describe"
-close $fid
-
 	# Describe effect atop the "Details" frame
 	$Editor(lEffectName) config -text $Ed($e,name)
 	$Editor(lEffectDesc) config -text $Ed($e,desc)
 
-set fid [open log.txt a]
-puts $fid "EditorSetEffect tab"
-close $fid
 	# Jump there
 	if {$e != "EdNone"} {
 		Tab Editor row1 Details
@@ -1074,30 +1061,18 @@ close $fid
 	#
 	if {$e != $prevID} {
 		if {[info exists Ed($prevID,procExit)] == 1} {
-set fid [open log.txt a]
-puts $fid "EditorSetEffect $prevID procExit"
-close $fid
 			$Ed($prevID,procExit)
 		}
 	}
 
-set fid [open log.txt a]
-puts $fid "EditorSetEffect raise"
-close $fid
 	# Show "Details" frame
 	raise $Ed($e,frame)
 
 	if {$e != $prevID} {
 		if {[info exists Ed($e,procEnter)] == 1} {
-set fid [open log.txt a]
-puts $fid "EditorSetEffect $e procEnter"
-close $fid
 			$Ed($e,procEnter)
 		}
 	}
-set fid [open log.txt a]
-puts $fid "EditorSetEffect DONE"
-close $fid
 }
 
 #-------------------------------------------------------------------------------
@@ -1555,7 +1530,7 @@ proc EditorMerge {data overwriteComposite} {
 # .END
 #-------------------------------------------------------------------------------
 proc EditorWriteOutput {data} {
-	global Volume Gui Lut tcl_platform
+	global Volume Gui Path Lut tcl_platform
 
 	switch $data {
 		Composite {set v [EditorGetCompositeID]}
@@ -1564,8 +1539,8 @@ proc EditorWriteOutput {data} {
 
 	# Change prefix and header to differ from the input volume
 	#
-	set filePrefix $Gui(prefixEditor$data)
-	set fileFull [file join $Gui(root) $filePrefix]
+	set filePrefix $Path(prefixEditor$data)
+	set fileFull [file join $Path(root) $filePrefix]
 
 	# Check that it's not blank
 	if {[file isdirectory $fileFull] == 1} {
@@ -1603,10 +1578,10 @@ proc EditorWriteOutput {data} {
 	puts " ...done."
 
 	# Write MRML file
-	# Here I have to call "GetPrefix" because the filenames must be relative
+	# Here I have to Get Prefix because the filenames must be relative
 	# to the MRML file.
 	set filename "$fileFull.mrml"
-	Volume($v,node) SetFilePrefix [GetPrefix $filePrefix]
+	Volume($v,node) SetFilePrefix [file root [file tail $filePrefix]]
 
 	# DAVE interpolate off
 

@@ -5,7 +5,7 @@
 # The following terms apply to all files associated with the software unless
 # explicitly disclaimed in individual files.   
 # 
-# The authors hereby grant permission to use and copy (but not distribute) this
+# The authors hereby grant permission to use, copy, and distribute this
 # software and its documentation for any NON-COMMERCIAL purpose, provided
 # that existing copyright notices are retained verbatim in all copies.
 # The authors grant permission to modify this software and its documentation 
@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainInteractor.tcl
-# DATE:        12/10/1999 08:40
+# DATE:        12/09/1999 14:09
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MainInteractorInit
@@ -204,7 +204,7 @@ proc MainInteractorCursor {s xs ys x y} {
 	Slicer SetCursorPosition $s $xs $ys
 	
 	# Show close-up image
-	if {$View(closeupVisibility) == "On"} {
+	if {$View(createMagWin) == "Yes" && $View(closeupVisibility) == "On"} {
 		View(mag) SetX $x
 		View(mag) SetY $y
 	}

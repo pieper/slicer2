@@ -5,7 +5,7 @@
 # The following terms apply to all files associated with the software unless
 # explicitly disclaimed in individual files.   
 # 
-# The authors hereby grant permission to use and copy (but not distribute) this
+# The authors hereby grant permission to use, copy, and distribute this
 # software and its documentation for any NON-COMMERCIAL purpose, provided
 # that existing copyright notices are retained verbatim in all copies.
 # The authors grant permission to modify this software and its documentation 
@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Modules.tcl
-# DATE:        12/10/1999 08:40
+# DATE:        12/09/1999 14:15
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   ModulesInit
@@ -141,25 +141,37 @@ time it runs." \
 proc ModulesApply {} {
 	global Module
 
-	# Write the modules into 2 lists: ordered, suppressed
-	if {[catch {set ord [open OrderedModules.txt w]} errmsg] == 1} {
-		puts $errmsg
-		return
-	}
-	if {[catch {set sup [open SuppressedModules.txt w]} errmsg] == 1} {
-		puts $errmsg
-		return
-	}
+	set ordList ""
+	set supList ""
 	foreach m $Module(idList) {
-	puts $m
 		if {$Module($m,visibility) == 1} {
-			puts $ord $m
+			lappend ordList $m
 		} else {
-			puts $sup $m
+			lappend supList $m
 		}
 	}
-	close $ord
-	close $sup
+
+	# Write the modules into 2 lists: ordered, suppressed
+	if {$ordList != ""} {
+		if {[catch {set ord [open OrderedModules.txt w]} errmsg] == 1} {
+			puts $errmsg
+			return
+		}
+		foreach m $ordList {
+			puts $ord $m
+		}
+		close $ord
+	}
+	if {$supList != ""} {
+		if {[catch {set sup [open SuppressedModules.txt w]} errmsg] == 1} {
+			puts $errmsg
+			return
+		}
+		foreach m $supList {
+			puts $sup $m
+		}
+		close $sup
+	}
 }
 
 #-------------------------------------------------------------------------------

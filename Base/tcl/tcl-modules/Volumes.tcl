@@ -5,7 +5,7 @@
 # The following terms apply to all files associated with the software unless
 # explicitly disclaimed in individual files.   
 # 
-# The authors hereby grant permission to use and copy (but not distribute) this
+# The authors hereby grant permission to use, copy, and distribute this
 # software and its documentation for any NON-COMMERCIAL purpose, provided
 # that existing copyright notices are retained verbatim in all copies.
 # The authors grant permission to modify this software and its documentation 
@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Volumes.tcl
-# DATE:        12/10/1999 08:40
+# DATE:        12/09/1999 14:15
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   VolumesInit
@@ -42,9 +42,9 @@ proc VolumesInit {} {
 
 	# Define Tabs
 	set m Volumes
-	set Module($m,row1List) "Help WL Other"
-	set Module($m,row1Name) "{Help} {Window/Level} {Other}"
-	set Module($m,row1,tab) WL
+	set Module($m,row1List) "Help Display Props Other"
+	set Module($m,row1Name) "{Help} {Display} {Props} {Other}"
+	set Module($m,row1,tab) Display
 
 	# Define Procedures
 	set Module($m,procGUI)  VolumesBuildGUI
@@ -54,6 +54,12 @@ proc VolumesInit {} {
 	if {$Gui(pc) == 1} {
 		set Volume(histogram) Off
 	}
+
+	# Props
+	set Volume(propertyType) Basic
+	set Volume(name) ""
+	set Volume(desc) ""
+
 }
 
 #-------------------------------------------------------------------------------
@@ -67,7 +73,14 @@ proc VolumesBuildGUI {} {
 	# Frame Hierarchy:
 	#-------------------------------------------
 	# Help
-	# WL
+	# Display
+	# Props
+	#   Top
+	#     Active
+	#     Type
+	#   Bot
+	#     Basic
+	#     Advanced
 	# Other
 	#-------------------------------------------
 
@@ -82,31 +95,30 @@ Ron, the interpolation button won't work without downloading dll's again.
 	MainHelpBuildGUI  Volumes
 
 	#-------------------------------------------
-	# WL frame
+	# Display frame
 	#-------------------------------------------
-	set fWL $Module(Volumes,fWL)
-	set f $fWL
+	set fDisplay $Module(Volumes,fDisplay)
+	set f $fDisplay
 
 	# Frames
-	frame $f.fActive    -bg $Gui(activeWorkspace)
+	frame $f.fActive    -bg $Gui(backdrop) -relief sunken -bd 2
 	frame $f.fWinLvl    -bg $Gui(activeWorkspace) -relief groove -bd 2
 	frame $f.fThresh    -bg $Gui(activeWorkspace) -relief groove -bd 2
 	frame $f.fHistogram -bg $Gui(activeWorkspace)
 	frame $f.fInterpolate -bg $Gui(activeWorkspace)
-	pack $f.fActive -side top -pady $Gui(pad) -padx $Gui(pad)
-	pack $f.fWinLvl $f.fThresh $f.fHistogram $f.fInterpolate \
-		-side top -pady $Gui(pad) -padx 2 -fill x
+	pack $f.fActive $f.fWinLvl $f.fThresh $f.fHistogram $f.fInterpolate \
+		-side top -pady $Gui(pad) -padx $Gui(pad) -fill x
 
 	#-------------------------------------------
-	# WL->Active frame
+	# Display->Active frame
 	#-------------------------------------------
-	set f $fWL.fActive
+	set f $fDisplay.fActive
 
-	set c {label $f.lActive -text "Active Volume: " $Gui(WLA)}; eval [subst $c]
+	set c {label $f.lActive -text "Active Volume: " $Gui(BLA)}; eval [subst $c]
 	set c {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
 		-menu $f.mbActive.m $Gui(WMBA)}; eval [subst $c]
 	set c {menu $f.mbActive.m $Gui(WMA)}; eval [subst $c]
-	pack $f.lActive $f.mbActive -side left
+	pack $f.lActive $f.mbActive -side left -pady $Gui(pad) -padx $Gui(pad)
 
 	# Append widgets to list that gets refreshed during UpdateMRML
 	lappend Volume(mbActiveList) $f.mbActive
@@ -114,18 +126,18 @@ Ron, the interpolation button won't work without downloading dll's again.
 
 
 	#-------------------------------------------
-	# WL->WinLvl frame
+	# Display->WinLvl frame
 	#-------------------------------------------
-	set f $fWL.fWinLvl
+	set f $fDisplay.fWinLvl
 
 	frame $f.fAuto    -bg $Gui(activeWorkspace)
 	frame $f.fSliders -bg $Gui(activeWorkspace)
 	pack $f.fAuto $f.fSliders -side top -fill x -expand 1
 
 	#-------------------------------------------
-	# WL->WinLvl->Auto frame
+	# Display->WinLvl->Auto frame
 	#-------------------------------------------
-	set f $fWL.fWinLvl.fAuto
+	set f $fDisplay.fWinLvl.fAuto
 
 	set c {label $f.lAuto -text "Window/Level:" $Gui(WLA)}; eval [subst $c]
 	frame $f.fAuto -bg $Gui(activeWorkspace)
@@ -140,9 +152,9 @@ Ron, the interpolation button won't work without downloading dll's again.
 	}
 
 	#-------------------------------------------
-	# WL->WinLvl->Sliders frame
+	# Display->WinLvl->Sliders frame
 	#-------------------------------------------
-	set f $fWL.fWinLvl.fSliders
+	set f $fDisplay.fWinLvl.fSliders
 
 	foreach slider "Window Level" text "Win Lev" {
 		set c {label $f.l${slider} -text "$text:" $Gui(WLA)}
@@ -167,18 +179,18 @@ Ron, the interpolation button won't work without downloading dll's again.
 
 	
 	#-------------------------------------------
-	# WL->Thresh frame
+	# Display->Thresh frame
 	#-------------------------------------------
-	set f $fWL.fThresh
+	set f $fDisplay.fThresh
 
 	frame $f.fAuto    -bg $Gui(activeWorkspace)
 	frame $f.fSliders -bg $Gui(activeWorkspace)
 	pack $f.fAuto $f.fSliders -side top  -fill x -expand 1
 
 	#-------------------------------------------
-	# WL->Thresh->Auto frame
+	# Display->Thresh->Auto frame
 	#-------------------------------------------
-	set f $fWL.fThresh.fAuto
+	set f $fDisplay.fThresh.fAuto
 
 	set c {label $f.lAuto -text "Threshold: " $Gui(WLA)}; eval [subst $c]
 	frame $f.fAuto -bg $Gui(activeWorkspace)
@@ -193,9 +205,9 @@ Ron, the interpolation button won't work without downloading dll's again.
 	}
 
 	#-------------------------------------------
-	# WL->Thresh->Sliders frame
+	# Display->Thresh->Sliders frame
 	#-------------------------------------------
-	set f $fWL.fThresh.fSliders
+	set f $fDisplay.fThresh.fSliders
 
 	foreach slider "Lower Upper" text "Lo Hi" {
 		set c {label $f.l${slider} -text "$text:" $Gui(WLA)}; eval [subst $c]
@@ -219,18 +231,18 @@ Ron, the interpolation button won't work without downloading dll's again.
 
 
 	#-------------------------------------------
-	# WL->Histogram frame
+	# Display->Histogram frame
 	#-------------------------------------------
-	set f $fWL.fHistogram
+	set f $fDisplay.fHistogram
 
 	frame $f.fHistBorder -bg $Gui(activeWorkspace) -relief sunken -bd 2
 	frame $f.fLut -bg $Gui(activeWorkspace)
 	pack $f.fLut $f.fHistBorder -side left -padx $Gui(pad) -pady $Gui(pad)
 	
 	#-------------------------------------------
-	# WL->Histogram->Lut frame
+	# Display->Histogram->Lut frame
 	#-------------------------------------------
-	set f $fWL.fHistogram.fLut
+	set f $fDisplay.fHistogram.fLut
 
 	set c {label $f.lLUT -text "Palette:" $Gui(WLA)}; eval [subst $c]
 	set c {menubutton $f.mbLUT -text "Gray" -relief raised -bd 2 -width 9 \
@@ -245,9 +257,9 @@ Ron, the interpolation button won't work without downloading dll's again.
 	pack $f.lLUT $f.mbLUT -pady $Gui(pad) -side top
 
 	#-------------------------------------------
-	# WL->Histogram->HistBorder frame
+	# Display->Histogram->HistBorder frame
 	#-------------------------------------------
-	set f $fWL.fHistogram.fHistBorder
+	set f $fDisplay.fHistogram.fHistBorder
 
 	if {$Volume(histogram) == "On"} {
 		MakeVTKImageWindow hist
@@ -260,9 +272,9 @@ Ron, the interpolation button won't work without downloading dll's again.
 	}
 
 	#-------------------------------------------
-	# WL->Interpolate frame
+	# Display->Interpolate frame
 	#-------------------------------------------
-	set f $fWL.fInterpolate
+	set f $fDisplay.fInterpolate
 
 	set c {label $f.lInterpolate -text "Interpolation:" $Gui(WLA)}
 		eval [subst $c]
@@ -279,14 +291,139 @@ Ron, the interpolation button won't work without downloading dll's again.
 
 
 	#-------------------------------------------
+	# Props frame
+	#-------------------------------------------
+	set fProps $Module(Volumes,fProps)
+	set f $fProps
+
+	frame $f.fTop -bg $Gui(backdrop) -relief sunken -bd 2
+	frame $f.fBot -bg $Gui(activeWorkspace) -height 300
+	pack $f.fTop $f.fBot -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+
+	#-------------------------------------------
+	# Props->Bot frame
+	#-------------------------------------------
+	set f $fProps.fBot
+
+	foreach type "Basic Advanced" {
+		frame $f.f${type} -bg $Gui(activeWorkspace)
+		place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
+		set Volume(f${type}) $f.f${type}
+	}
+	raise $Volume(fBasic)
+
+	#-------------------------------------------
+	# Props->Top frame
+	#-------------------------------------------
+	set f $fProps.fTop
+
+	frame $f.fActive -bg $Gui(backdrop)
+	frame $f.fType   -bg $Gui(backdrop)
+	pack $f.fActive $f.fType -side top -fill x -pady $Gui(pad) -padx $Gui(pad)
+
+	#-------------------------------------------
+	# Props->Top->Active frame
+	#-------------------------------------------
+	set f $fProps.fTop.fActive
+
+	eval {label $f.lActive -text "Active Volume: "} $Gui(BLA)
+	eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
+		-menu $f.mbActive.m} $Gui(WMBA)
+	eval {menu $f.mbActive.m} $Gui(WMA)
+	pack $f.lActive $f.mbActive -side left
+
+	# Append widgets to list that gets refreshed during UpdateMRML
+	lappend Volume(mbActiveList) $f.mbActive
+	lappend Volume(mActiveList)  $f.mbActive.m
+
+	#-------------------------------------------
+	# Props->Top->Type frame
+	#-------------------------------------------
+	set f $fProps.fTop.fType
+
+	eval {label $f.l -text "Properties:"} $Gui(BLA)
+	frame $f.f -bg $Gui(backdrop)
+	foreach p "Basic Advanced" {
+		eval {radiobutton $f.f.r$p \
+			-text "$p" -command "VolumesSetPropertyType" \
+			-variable Volume(propertyType) -value $p -width 8 \
+			-indicatoron 0} $Gui(WCA)
+		pack $f.f.r$p -side left -padx 0
+	}
+	pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
+
+	#-------------------------------------------
+	# Props->Bot->Basic frame
+	#-------------------------------------------
+	set f $fProps.fBot.fBasic
+
+	frame $f.fName    -bg $Gui(activeWorkspace)
+	frame $f.fApply   -bg $Gui(activeWorkspace)
+	pack $f.fName $f.fApply \
+		-side top -fill x -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Props->Bot->Advanced frame
+	#-------------------------------------------
+	set f $fProps.fBot.fAdvanced
+
+	frame $f.fDesc    -bg $Gui(activeWorkspace)
+	frame $f.fApply   -bg $Gui(activeWorkspace)
+	pack $f.fDesc $f.fApply \
+		-side top -fill x -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Props->Bot->Basic->Name frame
+	#-------------------------------------------
+	set f $fProps.fBot.fBasic.fName
+
+	eval {label $f.l -text "Name:" } $Gui(WLA)
+	eval {entry $f.e -textvariable Volume(name)} $Gui(WEA)
+	pack $f.l -side left -padx $Gui(pad)
+	pack $f.e -side left -padx $Gui(pad) -expand 1 -fill x
+
+	#-------------------------------------------
+	# Props->Bot->Basic->Apply frame
+	#-------------------------------------------
+	set f $fProps.fBot.fBasic.fApply
+
+	eval {button $f.bApply -text "Apply" \
+		-command "VolumesPropsApply; RenderAll"} $Gui(WBA) {-width 8}
+	eval {button $f.bCancel -text "Cancel" \
+		-command "VolumesPropsCancel"} $Gui(WBA) {-width 8}
+	grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
+
+	#-------------------------------------------
+	# Props->Bot->Advanced->Desc frame
+	#-------------------------------------------
+	set f $fProps.fBot.fAdvanced.fDesc
+
+	eval {label $f.l -text "Optional Description:"} $Gui(WLA)
+	eval {entry $f.e -textvariable Volume(desc)} $Gui(WEA)
+	pack $f.l -side top -padx $Gui(pad) -fill x -anchor w
+	pack $f.e -side top -padx $Gui(pad) -expand 1 -fill x
+
+	#-------------------------------------------
+	# Props->Bot->Advanced->Apply frame
+	#-------------------------------------------
+	set f $fProps.fBot.fAdvanced.fApply
+
+	eval {button $f.bApply -text "Apply" \
+		-command "VolumesPropsApply; RenderAll"} $Gui(WBA) {-width 8}
+	eval {button $f.bCancel -text "Cancel" \
+		-command "VolumesPropsCancel"} $Gui(WBA) {-width 8}
+	grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
+
+
+	#-------------------------------------------
 	# Other frame
 	#-------------------------------------------
 	set fOther $Module(Volumes,fOther)
 	set f $fOther
 
 	# Frames
-	frame $f.fActive -bg $Gui(activeWorkspace)
-	frame $f.fRange -bg $Gui(activeWorkspace) -relief groove -bd 3
+	frame $f.fActive -bg $Gui(backdrop) -relief sunken -bd 2
+	frame $f.fRange  -bg $Gui(activeWorkspace) -relief groove -bd 3
 
 	pack $f.fActive -side top -pady $Gui(pad) -padx $Gui(pad)
 	pack $f.fRange  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
@@ -296,11 +433,11 @@ Ron, the interpolation button won't work without downloading dll's again.
 	#-------------------------------------------
 	set f $fOther.fActive
 
-	set c {label $f.lActive -text "Active Volume: " $Gui(WLA)}; eval [subst $c]
+	set c {label $f.lActive -text "Active Volume: " $Gui(BLA)}; eval [subst $c]
 	set c {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
 		-menu $f.mbActive.m $Gui(WMBA)}; eval [subst $c]
 	set c {menu $f.mbActive.m $Gui(WMA)}; eval [subst $c]
-	pack $f.lActive $f.mbActive -side left
+	pack $f.lActive $f.mbActive -side left -pady $Gui(pad) -padx $Gui(pad)
 
 	# Append widgets to list that gets refreshed during UpdateMRML
 	lappend Volume(mbActiveList) $f.mbActive
@@ -318,7 +455,7 @@ Ron, the interpolation button won't work without downloading dll's again.
 	pack $f.fSliders -side top -fill x -expand 1
 
 	#-------------------------------------------
-	# WL->Range->Auto frame
+	# Other->Range->Auto frame
 	#-------------------------------------------
 	set f $fOther.fRange.fAuto
 
@@ -335,7 +472,7 @@ Ron, the interpolation button won't work without downloading dll's again.
 	}
 
 	#-------------------------------------------
-	# WL->Range->Sliders frame
+	# Other->Range->Sliders frame
 	#-------------------------------------------
 	set f $fOther.fRange.fSliders
 
@@ -351,5 +488,70 @@ Ron, the interpolation button won't work without downloading dll's again.
 		grid $f.l${slider} $f.e${slider}  -padx 2 -pady $Gui(pad) -sticky w
 	}
 	
+}
+
+proc VolumesSetPropertyType {} {
+	global Volume
+	
+	raise $Volume(f$Volume(propertyType))
+}
+ 
+proc VolumesPropsApply {} {
+	global Volume Label Module Mrml
+
+	tk_messageBox -message "Can't add volumes yet."
+	VolumesPropsCancel
+	return
+	
+	set m $Volume(activeID)
+	if {$m == ""} {return}
+
+	if {$m == "NEW"} {
+		set i $Volume(nextID)
+		incr Volume(nextID)
+		lappend Volume(idList) $i
+		vtkMrmlVolumeNode Volume($i,node)
+		set n Volume($i,node)
+		$n SetID               $i
+
+		# These get set down below, but we need them before MainUpdateMRML
+		$n SetName $Volume(name)
+
+		Mrml(dataTree) AddItem $n
+		MainUpdateMRML
+		set Volume(freeze) 0
+		MainVolumesSetActive $i
+		set m $i
+	}
+
+	Volume($m,node) SetName $Volume(name)
+
+	# If tabs are frozen, then 
+	if {$Module(freezer) != ""} {
+		set cmd "Tab $Module(freezer)"
+		set Module(freezer) ""
+		eval $cmd
+	}
+	
+	MainUpdateMRML
+}
+
+proc VolumesPropsCancel {} {
+	global Volume Module
+
+	# Reset props
+	set m $Volume(activeID)
+	if {$m == "NEW"} {
+		set m [lindex $Volume(idList) 0]
+	}
+	set Volume(freeze) 0
+	MainVolumesSetActive $m
+
+	# Unfreeze
+	if {$Module(freezer) != ""} {
+		set cmd "Tab $Module(freezer)"
+		set Module(freezer) ""
+		eval $cmd
+	}
 }
 

@@ -5,7 +5,7 @@
 # The following terms apply to all files associated with the software unless
 # explicitly disclaimed in individual files.   
 # 
-# The authors hereby grant permission to use and copy (but not distribute) this
+# The authors hereby grant permission to use, copy, and distribute this
 # software and its documentation for any NON-COMMERCIAL purpose, provided
 # that existing copyright notices are retained verbatim in all copies.
 # The authors grant permission to modify this software and its documentation 
@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainSlices.tcl
-# DATE:        12/10/1999 08:40
+# DATE:        12/09/1999 14:09
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MainSlicesInit
@@ -925,23 +925,11 @@ proc MainSlicesSetVisibilityAll {{value ""}} {
 proc MainSlicesSetVisibility {s} {
 	global Slice Anno
 
-set fid [open log.txt w]
-puts $fid "MainSlicesSetVisibility s=$s setVis"
-close $fid
 	Slice($s,planeActor)   SetVisibility $Slice($s,visibility) 
-set fid [open log.txt a]
-puts $fid "MainSlicesSetVisibility render"
-close $fid
-Render3D
-set fid [open log.txt a]
-puts $fid "MainSlicesSetVisibility outline"
-close $fid
+
 	if {$Anno(outline) == 1} {
 		Slice($s,outlineActor) SetVisibility $Slice($s,visibility)
 	} 
-set fid [open log.txt a]
-puts $fid "MainSlicesSetVisibility all"
-close $fid
 	
 	# If any slice is invisible, then Slice(visibilityAll) should be 0
 	set Slice(visibilityAll) 1
@@ -950,9 +938,6 @@ close $fid
 			set Slice(visibilityAll) 0
 		}
 	}
-set fid [open log.txt a]
-puts $fid "MainSlicesSetVisibility done"
-close $fid
 }
 
 #-------------------------------------------------------------------------------

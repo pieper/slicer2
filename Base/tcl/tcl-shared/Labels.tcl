@@ -5,7 +5,7 @@
 # The following terms apply to all files associated with the software unless
 # explicitly disclaimed in individual files.   
 # 
-# The authors hereby grant permission to use and copy (but not distribute) this
+# The authors hereby grant permission to use, copy, and distribute this
 # software and its documentation for any NON-COMMERCIAL purpose, provided
 # that existing copyright notices are retained verbatim in all copies.
 # The authors grant permission to modify this software and its documentation 
@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        Labels.tcl
-# DATE:        12/10/1999 08:40
+# DATE:        12/09/1999 14:06
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   LabelsInit
@@ -59,12 +59,11 @@
 proc LabelsInit {} {
 	global Module Label 
 
-	lappend Module(procVTK)  LabelsBuildVTK
 	lappend Module(procGUI)  LabelsBuildGUI
 	lappend Module(procMRML) LabelsUpdateMRML
 
-	set Label(node) ""
 	set Label(nameBrowse) ""
+	set Label(activeID) ""
 	set Label(label) ""
 	set Label(name) ""
 	set Label(diffuse) "1 1 1"
@@ -79,29 +78,9 @@ proc LabelsInit {} {
 
 	set Label(colorWidgetList) ""
 
-	set Label(sample,red)      0.0
-	set Label(sample,green)    0.0
-	set Label(sample,blue)     0.0
-	set Label(sample,ambient)  0.0
-	set Label(sample,diffuse)  0.0
-	set Label(sample,specular) 0.0
-	set Label(sample,power)    1
-}
-
-#-------------------------------------------------------------------------------
-# .PROC LabelsBuildVTK
-# .END
-#-------------------------------------------------------------------------------
-proc LabelsBuildVTK {} {
-	global Label 
-
-	# Color Selection
-	set dim1 [expr $Label(dim) - 1]
-	vtkImageCanvasSource2D Label(source)
-		Label(source) SetScalarType 3
-		Label(source) SetNumberOfScalarComponents 3
-		Label(source) SetExtent 0 $dim1 0 $dim1 0 0
-		Label(source) AllocateScalars
+	set Label(sample,red)      1.0
+	set Label(sample,green)    1.0
+	set Label(sample,blue)     1.0
 }
 
 #-------------------------------------------------------------------------------
@@ -134,9 +113,9 @@ proc LabelsBuildGUI {} {
 	#-------------------------------------------
 	set f $w.fClose
 
-	set c {button $f.bCancel -text "Cancel" -width 6 \
-		-command "wm withdraw $w" $Gui(WBA)}
-		eval [subst $c]
+	eval {button $f.bCancel -text "Cancel" -width 6 \
+		-command "wm withdraw $w"} $Gui(WBA)
+		
 	pack $f.bCancel -side left -padx $Gui(pad)
 
 	#-------------------------------------------
@@ -154,9 +133,8 @@ proc LabelsBuildGUI {} {
 	#-------------------------------------------
 	set f $w.fTop.fInfo
 
-	set c {label $f.lInfo -justify left  -text\
-		"1.) Click on a color.\n2.) Click on a label value." \
-		$Gui(WLA)}; eval [subst $c]
+	eval {label $f.lInfo -justify left  -text\
+		"1.) Click on a color.\n2.) Click on a label value."} $Gui(WLA)
 	pack $f.lInfo
 	set Label(lInfo) $f.lInfo
 
@@ -184,15 +162,13 @@ proc LabelsBuildGUI {} {
 	#-------------------------------------------
 	set f $w.fTop.fNew.fEntry
 
-	set c {label $f.lTitle -text "Create New Color" $Gui(WTA)}; eval [subst $c]
-	set c {label $f.lName -text "Color:" $Gui(WLA)}; eval [subst $c]
-	set c {entry $f.eName -textvariable Label(nameNew) -width 15 \
-		$Gui(WEA)}; eval [subst $c]
-	set c {label $f.lLabel -text "Label:" $Gui(WLA)}; eval [subst $c]
-	set c {entry $f.eLabel -textvariable Label(nabelNew) -width 15 \
-		$Gui(WEA)}; eval [subst $c]
-	set c {button $f.bCreate -text Create -width 7 \
-		-command LabelsCreateColor $Gui(WBA)}; eval [subst $c]
+	eval {label $f.lTitle -text "Create New Color"} $Gui(WTA)
+	eval {label $f.lName -text "Color:"} $Gui(WLA)
+	eval {entry $f.eName -textvariable Label(nameNew) -width 15} $Gui(WEA)
+	eval {label $f.lLabel -text "Label:"} $Gui(WLA) 
+	eval {entry $f.eLabel -textvariable Label(labelNew) -width 15} $Gui(WEA)
+	eval {button $f.bCreate -text Create -width 7 \
+		-command LabelsCreateColor} $Gui(WBA)
 
 	grid $f.lTitle -columnspan 2 -padx $Gui(pad) -pady $Gui(pad)
 	grid $f.lName $f.eName -padx $Gui(pad) -pady $Gui(pad)
@@ -204,20 +180,20 @@ proc LabelsBuildGUI {} {
 	#-------------------------------------------
 	set f $w.fTop.fNew.fWheel
 
-	foreach slider "Red Green Blue Ambient Diffuse Specular Power" {
+	foreach slider "Red Green Blue" {
 
-		set c {label $f.l${slider} -text "${slider}" $Gui(WLA)}
-			eval [subst $c]
+		eval {label $f.l${slider} -text "${slider}"} $Gui(WLA)
+			
 
-		set c {entry $f.e${slider} -textvariable Label(sample,[Uncap $slider]) \
-			-width 3 $Gui(WEA)}; eval [subst $c]
-			bind $f.e${slider} <Return>   "LabelsColorSample"
-			bind $f.e${slider} <FocusOut> "LabelsColorSample"
+		eval {entry $f.e${slider} -textvariable Label(sample,[Uncap $slider]) \
+			-width 3} $Gui(WEA)
+		bind $f.e${slider} <Return>   "LabelsColorSample"
+		bind $f.e${slider} <FocusOut> "LabelsColorSample"
 
-		set c {scale $f.s${slider} -from 0.0 -to 1.0 -length 40 \
+		eval {scale $f.s${slider} -from 0.0 -to 1.0 -length 40 \
 			-variable Label(sample,[Uncap $slider]) -command "LabelsColorSample" \
-			-resolution 0.1 $Gui(WSA) -sliderlength 15} 
-			eval [subst $c]
+			-resolution 0.1} $Gui(WSA) {-sliderlength 15} 
+			
 		set Label(s$slider) $f.s$slider
 
 		grid $f.l${slider} $f.e${slider} $f.s${slider} \
@@ -229,32 +205,29 @@ proc LabelsBuildGUI {} {
 	#-------------------------------------------
 	set f $w.fTop.fData.fCanvas
 
-	MakeVTKImageWindow color Label(source)
-
-	vtkTkImageWindowWidget $f.fColor -iw colorWin \
-		-width $Label(dim) -height $Label(dim) 
-		bind $f.fColor <Expose>   {ExposeTkImageViewer %W %x %y %w %h}
-		bind $f.fColor <Motion>   {LabelsBrowseColor %x %y}
-		bind $f.fColor <Button-1> {LabelsSelectColor %x %y}
-		bind $f.fColor <Leave>    {LabelsLeaveGrid}
-	set Label(fColorWin) $f.fColor
-
+	set dim [expr $Label(dim) + 1]
+	eval {canvas $f.canvas -width $dim -height $dim \
+		-background $Gui(activeWorkspace) -highlightthickness 0 \
+		-borderwidth 0}
+	bind $f.canvas <Motion>   {LabelsBrowseColor %x %y}
+	bind $f.canvas <Button-1> {LabelsSelectColor %x %y}
+	bind $f.canvas <Leave>    {LabelsLeaveGrid}
+	set Label(canvas) $f.canvas
+	
 	frame $f.fName -bg $Gui(activeWorkspace)
-	set c {label $f.fName.lName -text "Color:" $Gui(WTA)}; eval [subst $c]
-	set c {entry $f.fName.eName -textvariable Label(nameBrowse) -width 20 \
-		$Gui(WEA) -state disabled}; eval [subst $c]
+	eval {label $f.fName.lName -text "Color:"} $Gui(WTA)
+	eval {entry $f.fName.eName -textvariable Label(nameBrowse) -width 20} \
+		$Gui(WEA) {-state disabled}
 	pack $f.fName.lName $f.fName.eName -side left -padx $Gui(pad) -pady 0
 
-	pack $f.fName $f.fColor -side top  -pady $Gui(pad)
-
-	LabelsDisplayColors
+	pack $f.fName $f.canvas -side top -pady $Gui(pad)
 
 	#-------------------------------------------
 	# Labels->List frame
 	#-------------------------------------------
 	set f $w.fTop.fData.fList
 
-	set c {label $f.lTitle -text "Labels" $Gui(WTA)}; eval [subst $c]
+	eval {label $f.lTitle -text "Labels"} $Gui(WTA)
 
 	set Label(fLabelList) [ScrolledListbox $f.list 0 1 -height 11 -width 6]
 	bind $Label(fLabelList) <ButtonRelease-1> "LabelsSelectLabelClick"
@@ -354,12 +327,18 @@ proc ShowColors {{callback ""} {x 100} {y 100}} {
 # .END
 #-------------------------------------------------------------------------------
 proc LabelsUpdateMRML {} {
-	global Label
+	global Label Color
 
-	# Initialize
+	# If no active color, take the first one
+	if {$Label(activeID) == "" || \
+		[lsearch $Color(idList) $Label(activeID)] == -1} {
+		LabelsSelectColor 0 0 [lindex $Color(idList) 0]
+	}
+
+	# If no label, take the first one for this color
 	if {$Label(label) == ""} {
-		set Label(label) 1
-		LabelsFindLabel
+		set labels [Color($Label(activeID),node) GetLabels]
+		set Label(label) [lindex $labels 0]
 	}
 
 	LabelsDisplayColors
@@ -371,58 +350,61 @@ proc LabelsUpdateMRML {} {
 # .END
 #-------------------------------------------------------------------------------
 proc LabelsDisplayColors {} {
-	global Color Label Gui
+	global Color Label Gui Mrml
 
 	# Determine size of color grid
 
-	set dag $Color(dag)
-	set numColors [MRMLGetNumNodes $dag]
+    set tree Mrml(colorTree) 
+    set numColors [$tree GetNumberOfColors]
+
 	set p 2
-	while {$numColors > [expr $p * $p]} {incr p}
+	while {$numColors > [expr $p * $p]} {
+		incr p
+	}
 	set n [expr $Label(dim) / $p]
 	set Label(gridDim)     $p
 	set Label(gridCellDim) $n
 
-	# Make color grid
-
+	# Start out all black
 	set dim1 [expr $Label(dim) - 1]
-	eval Label(source) SetDrawColor 0 0 0
-	Label(source) FillBox 0 $dim1 0 $dim1
+	$Label(canvas) create rect 0 0 $dim1 $dim1 -fill black
 
+	# Make color grid
 	for {set y 0} {$y < $p} {incr y} {
 		for {set x 0} {$x < $p} {incr x} {
 			set i [expr $y*$p+$x]
-			if {$i > $numColors} {
+			if {$i >= $numColors} {
 				set color "0 0 0"
 			} else {
-				set node  [MRMLGetNode $dag $i]
-				set color [MRMLGetValue $node diffuseColor]
-				if {[llength $color] != 3} {
-					set color "0 0 0"
-				}
+				set node  [$tree GetNthColor $i]
+				set color [$node GetDiffuseColor]
 			}
-			foreach c "r g b" i "0 1 2" {
-				set $c [expr [lindex $color $i] * $dim1]
-			}
-			Label(source) SetDrawColor $r $g $b
-			Label(source) FillBox [expr $x*$n] [expr $x*$n+$n-1] \
-				[expr $dim1-($y*$n)-$n+1] [expr $dim1-($y*$n)]
+			$Label(canvas) create rect \
+				[expr $x*$n] [expr $y*$n] \
+				[expr $x*$n+$n]  [expr $y*$n+$n]\
+				-fill [MakeColorNormalized $color]
 		}
 	}
 }
 
 #-------------------------------------------------------------------------------
-# LabelsGetColorNodeFromPosition
+# LabelsGetColorFromPosition
 #
 # x,y are positions in color canvas on [1, $Label(dim)]
+# Returns color ID
 #-------------------------------------------------------------------------------
-proc LabelsGetColorNodeFromPosition {x y} {
-	global Label
+proc LabelsGetColorFromPosition {x y} {
+	global Label Mrml
 
 	set xGrid [expr $x / $Label(gridCellDim)]
 	set yGrid [expr $y / $Label(gridCellDim)]
 	set i [expr $Label(gridDim) * $yGrid + $xGrid]
-	return $i
+	set node [Mrml(colorTree) GetNthColor $i]
+	if {$node == ""} {
+		return ""
+	}
+	set id [$node GetID]
+	return $id
 }
 
 #-------------------------------------------------------------------------------
@@ -434,10 +416,12 @@ proc LabelsGetColorNodeFromPosition {x y} {
 proc LabelsBrowseColor {x y} {
 	global Label Color
 
-	set i [LabelsGetColorNodeFromPosition $x $y]
-	set node [MRMLGetNode $Color(dag) $i]
-
-	set Label(nameBrowse) [MRMLGetValue $node name]
+	set c [LabelsGetColorFromPosition $x $y]
+	if {$c == ""} {
+		set Label(nameBrowse) ""
+	} else {
+		set Label(nameBrowse) [Color($c,node) GetName]
+	}
 }
 
 #-------------------------------------------------------------------------------
@@ -446,20 +430,26 @@ proc LabelsBrowseColor {x y} {
 # Select the color the mouse is over
 # .END
 #-------------------------------------------------------------------------------
-proc LabelsSelectColor {x y} {
+proc LabelsSelectColor {x y {c ""}} {
 	global Label Color
 
-	set i [LabelsGetColorNodeFromPosition $x $y]
-	set Label(node) [MRMLGetNode $Color(dag) $i]
+	if {$c == ""} {
+		set c [LabelsGetColorFromPosition $x $y]
+	}
+	set Label(activeID) $c
 
 	# Show the selection
-	set Label(nameBrowse) [MRMLGetValue $Label(node) name]
-	set Label(diffuse)    [MRMLGetValue $Label(node) diffuseColor]
-
+	if {$c == ""} {
+		set Label(nameBrowse) ""
+		LabelsDisplayLabels		
+		return
+	}
+	set Label(nameBrowse) [Color($c,node) GetName]
+	set Label(diffuse)    [Color($c,node) GetDiffuseColor]
 	LabelsDisplayLabels
 
 	# If there's only one label, or labels or hidden, select it
-	if {[llength [MRMLGetValue $Label(node) labels]] == 1 ||
+	if {[llength [Color($c,node) GetLabels]] == 1 ||
 		$Label(hideLabels) == 1} {
 		LabelsSelectLabelClick 0
 		return
@@ -473,8 +463,9 @@ proc LabelsSelectColor {x y} {
 proc LabelsLeaveGrid {} {
 	global Label
 	
-	if {$Label(node) != ""} {
-		set Label(nameBrowse) [MRMLGetValue $Label(node) name]
+	set c $Label(activeID)
+	if {$Label(activeID) != ""} {
+		set Label(nameBrowse) [Color($c,node) GetName]
 	} else {
 		set Label(nameBrowse) ""
 	}
@@ -491,9 +482,10 @@ proc LabelsDisplayLabels {} {
 	$Label(fLabelList) delete 0 end
 
 	# Append new
-	if {$Label(node) == ""} {return}
+	set c $Label(activeID)
+	if {$c == ""} {return}
 
-	foreach label [MRMLGetValue $Label(node) labels] {
+	foreach label [Color($c,node) GetLabels] {
 		$Label(fLabelList) insert end $label
 	}
 }
@@ -519,23 +511,57 @@ proc LabelsSelectLabelClick {{index ""}} {
 # .PROC LabelsSelectLabel
 # .END
 #-------------------------------------------------------------------------------
-proc LabelsSelectLabel {{index ""}} {
+proc LabelsSelectLabel {{i ""}} {
 	global Label
 
-	if {$index == ""} {
-		set index [$Label(fLabelList) curselection]
+	if {$i == ""} {
+		set i [$Label(fLabelList) curselection]
 	}
-	if {$index == ""} {return}
-	$Label(fLabelList) selection set $index $index
+	if {$i == ""} {return}
+	$Label(fLabelList) selection set $i $i
 	
-	set labels [MRMLGetValue $Label(node) labels]
-	if {$index >= 0 && $index < [llength $labels]} {
-		set Label(label) [lindex $labels $index]
-	}
+	set c $Label(activeID)
+	if {$c == ""} {return}
+	set labels [Color($c,node) GetLabels]
+	set Label(label) [lindex $labels $i]
 
 	# Update GUI
-	set Label(name)    [MRMLGetValue $Label(node) name]
-	set Label(diffuse) [MRMLGetValue $Label(node) diffuseColor]
+	set Label(name)    [Color($c,node) GetName]
+	set Label(diffuse) [Color($c,node) GetDiffuseColor]
+	LabelsColorWidgets
+}
+
+proc LabelsSetColor {colorName} {
+	global Label Color
+
+	# Made for Models properties GUI
+
+	set id ""
+	foreach c $Color(idList) {
+		if {[Color($c,node) GetName] == $colorName} {
+			set id $c
+		}
+	}
+	set c $id
+
+	# The rest is stolen from LabelsFindLabel
+	# DAVE clean this crap up, or just leave it. Ha!
+
+puts LabelsSetColor
+	if {$c == ""} {
+		# Update GUI
+		set Label(name)    ""
+		set Label(diffuse) "0 0 0"
+		LabelsColorWidgets
+		return
+	}
+	set i [lsearch [Color($c,node) GetLabels] $Label(label)]	
+	set labels [Color($c,node) GetLabels]
+	set Label(label) [lindex $labels $i]
+
+	# Update GUI
+	set Label(name)    [Color($c,node) GetName]
+	set Label(diffuse) [Color($c,node) GetDiffuseColor]
 	LabelsColorWidgets
 }
 
@@ -552,60 +578,29 @@ proc LabelsColorWidgets {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC LabelsGetColorFromLabel
-#
-# Find the color for a label
-# .END
-#-------------------------------------------------------------------------------
-proc LabelsGetColorFromLabel {label} {
-	global Label Color
-
-	set num [MRMLGetNumNodes $Color(dag)]
-	for {set n 0} {$n < $num} {incr n} {
-		set node   [MRMLGetNode $Color(dag) $n]
-		set labels [MRMLGetValue $node labels]
-
-		set index 0
-		foreach l $labels {
-			if {$l == $label} {
-				set name [MRMLGetValue $node name]
-				return "$n $name $index"
-			}
-			incr index
-		}
-	}
-	return ""
-}
-
-#-------------------------------------------------------------------------------
 # .PROC LabelsFindLabel
 #
 # Find the color for the current label value, and select the color.
 # .END
 #-------------------------------------------------------------------------------
 proc LabelsFindLabel {} {
-	global Label
+	global Label Mrml
 
-	set result [LabelsGetColorFromLabel $Label(label)]
-
-	# If no color has this label, color the GUI black
-	if {[llength $result] != 3} {
-		set Label(name)    None
+puts LabelsFindLabel
+	set c [MainColorsGetColorFromLabel $Label(label)]
+	if {$c == ""} {
+		# Update GUI
+		set Label(name)    ""
 		set Label(diffuse) "0 0 0"
 		LabelsColorWidgets
 		return
 	}
-	set n   [lindex $result 0]
-	set idx [lindex $result 2]
+	set i [lsearch [Color($c,node) GetLabels] $Label(label)]	
 
-	# Select color and label
-	set y [expr $n / $Label(gridDim)]
-	set x [expr $n - $y * $Label(gridDim)]
-	set y [expr $y * $Label(gridCellDim)]
-	set x [expr $x * $Label(gridCellDim)]
-	
-	LabelsSelectColor $x $y
-	LabelsSelectLabel $idx
+	LabelsSelectColor 0 0 $c
+	if {$i != -1} {
+		LabelsSelectLabel $i
+	}
 }
 
 #-------------------------------------------------------------------------------
@@ -629,26 +624,26 @@ proc LabelsCreateColor {} {
 	set newLabel $Label(labelNew)
     if {$newLabel >= -32768 && $newLabel <= 32767} {
     } else {
-        tk_messageBox -icon error -title $Gui(title) \
-            -message "Label '$newLabel' must be a short integer."
+        tk_messageBox -icon error -title $Gui(title) -message \
+			"Label '$newLabel' must be a number\nbetween -32768 and 32767."
         return 0
     }
 
-	if {[MainColorsAddColor $Label(nameNew) "$Label(diffuseNew)"] == 0} {
+	# Add color
+	set c [MainColorsAddColor $Label(nameNew) $Label(diffuseNew)]
+	if {$c == ""} {
 		return
 	}
 	
-	set nodeIndex [expr [MRMLGetNumNodes $Color(dag)] - 1]
-	set node      [MRMLGetNode $Color(dag) $nodeIndex]
-	if {[MainColorsAddLabel $nodeIndex $Label(labelNew)] == -1} {
+	# Add label
+	if {[MainColorsAddLabel $c $Label(labelNew)] == 0} {
 		return
 	}
 
 	# Update MRML since we're adding a color
 	MainUpdateMRML
 	
-	set Label(node)    $node
-	set Label(name)    [MRMLGetValue $Label(node) name]
-	set Label(diffuse) [MRMLGetValue $Label(node) diffuseColor]
+	# Select it (since there's one label, close the popup)
+	LabelsSelectColor 0 0 $c
 }
 

@@ -209,46 +209,6 @@ void vtkMrmlVolumeNode::SetScanOrder(char *s)
 }
 
 //----------------------------------------------------------------------------
-char* vtkMrmlVolumeNode::GetMatrixToString(vtkMatrix4x4 *mat)
-{
-  int i, j;
-  float m[16];
-  char *s = new char[200];
- 
-  for (i=0; i<4; i++)
-  {
-	  for (j=0; j<4; j++)
-    {
-      m[i*4+j] = mat->GetElement(i, j);
-    }
-  }
-  sprintf(s, "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g",
-    m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8],
-    m[9], m[10], m[11], m[12], m[13], m[14], m[15]);
-
-  return s;
-}
-
-//----------------------------------------------------------------------------
-void vtkMrmlVolumeNode::SetMatrixToString(vtkMatrix4x4 *mat, char *s)
-{
-  int i, j;
-  float m[16];
-  
-  sscanf(s, "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g",
-    &m[0], &m[1], &m[2], &m[3], &m[4], &m[5], &m[6], &m[7], &m[8],
-    &m[9], &m[10], &m[11], &m[12], &m[13], &m[14], &m[15]);
-
-  for (i=0; i<4; i++)
-  {
-    for (j=0; j<4; j++)
-    {
-       mat->SetElement(i, j, m[i*4+j]);
-    }
-  }
-}
-
-//----------------------------------------------------------------------------
 void vtkMrmlVolumeNode::SetRasToWld(vtkMatrix4x4 *rasToWld)
 {
   // Store RasToWld for posterity and because modern computer systems
@@ -294,7 +254,7 @@ void vtkMrmlVolumeNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   int idx;
   
-  vtkObject::PrintSelf(os,indent);
+  vtkMrmlNode::PrintSelf(os,indent);
 
   os << indent << "Name: " <<
     (this->Name ? this->Name : "(none)") << "\n";

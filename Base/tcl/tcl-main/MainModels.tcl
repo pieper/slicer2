@@ -5,7 +5,7 @@
 # The following terms apply to all files associated with the software unless
 # explicitly disclaimed in individual files.   
 # 
-# The authors hereby grant permission to use and copy (but not distribute) this
+# The authors hereby grant permission to use, copy, and distribute this
 # software and its documentation for any NON-COMMERCIAL purpose, provided
 # that existing copyright notices are retained verbatim in all copies.
 # The authors grant permission to modify this software and its documentation 
@@ -26,7 +26,7 @@
 # MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #===============================================================================
 # FILE:        MainModels.tcl
-# DATE:        12/10/1999 08:40
+# DATE:        12/09/1999 14:09
 # LAST EDITOR: gering
 # PROCEDURES:  
 #   MainModelsInit
@@ -42,7 +42,7 @@
 #   MainModelsPopupCallback
 #   MainModelsDeleteGUI
 #   MainModelsPopup
-#   MainModelsSetActive
+#   MainModelsActive
 #   MainModelsSetColor
 #   MainModelsSetVisibility
 #   MainModelsRefreshClip
@@ -65,7 +65,8 @@ proc MainModelsInit {} {
 	# lappend Module(procGUI)  MainModelsBuildGUI
 
 	set Model(idNone) -1
-	set Model(activeID) -1
+	set Model(activeID) ""
+	set Model(freeze) ""
 
 	# Append widgets to list that gets refreshed during UpdateMRML
 	set Model(mbActiveList) ""
@@ -97,6 +98,10 @@ proc MainModelsUpdateMRML {} {
 			MainModelsDeleteGUI $Gui(wModels).fGrid $m
 		}
 	}
+	# Did we delete the active model?
+	if {[lsearch $Model(idList) $Model(activeID)] == -1} {
+		MainModelsSetActive [lindex $Model(idList) 0]
+	}
 
 	# Refresh Actor and GUI (in case color changed)
 	#--------------------------------------------------------
@@ -114,7 +119,7 @@ proc MainModelsUpdateMRML {} {
 		# Color slider
 		set c $Model($m,colorID)
 		$Gui(wModels).fGrid.s$m config \
-			-troughcolor [MakeColorNormalized $Color($c,diffuseColor)]
+			-troughcolor [MakeColorNormalized [Color($c,node) GetDiffuseColor]]
 	}
 
 	# Form the menus 
@@ -129,6 +134,9 @@ proc MainModelsUpdateMRML {} {
 				-command "MainModelsSetActive $m"
 		}
 	}
+
+	# In case we changed the name of the active model
+	MainModelsSetActive $Model(activeID)
 }
 
 #-------------------------------------------------------------------------------
@@ -145,9 +153,6 @@ proc MainModelsUpdateMRML {} {
 #-------------------------------------------------------------------------------
 proc MainModelsShouldBeAVtkClass {m} {
 	global Model Slice
-
-	# MRML node
-	vtkMrmlModelNode Model($m,node)
 
 	# Clipper
 	vtkClipPolyData Model($m,clipper)
@@ -193,32 +198,8 @@ proc MainModelsCreate {m} {
 		return 0
 	}
 
-	MainModelsShouldBeAVtkClass	$m
-	
-	# MRML node
-	Model($m,node) SetID               $m
-	Model($m,node) SetDescription      $Model($m,desc)
-	Model($m,node) SetOptions          $Model($m,options)
-	Model($m,node) SetName             $Model($m,name)
-	Model($m,node) SetFileName         $Model($m,fileName)
-	Model($m,node) SetOpacity          $Model($m,opacity)
-	Model($m,node) SetColor            $Model($m,colorName)
-	eval Model($m,node) SetScalarRange $Model($m,scalarRange)
-	Model($m,node) SetVisibility       $Model($m,visibility)
-	Model($m,node) SetScalarVisibility $Model($m,scalarVisibility)
-	Model($m,node) SetBackfaceCulling  $Model($m,backfaceCulling)
-	Model($m,node) SetClipping         $Model($m,clipping)
-
-	# Registration
-	vtkMatrix4x4 mat
-	set matrixList $Model($m,rasToRefMatrix)
-	for {set row 0} { $row < 4 } {incr row} {
-		for {set col 0} {$col < 4} {incr col} {
-			mat SetElement $row $col [lindex $matrixList [expr $row*4+$col]]
-		}
-	}
-	Model($m,node) SetRasToWld mat
-	mat Delete
+	MainModelsShouldBeAVtkClass	$m	
+	MainModelsInitGUIVariables $m
 
 	# Read it in from disk
 	set status [MainModelsRead $m]
@@ -227,7 +208,7 @@ proc MainModelsCreate {m} {
 	}
 
 	# Need to call this before MainModelsCreateGUI so the
-	# variable Model($m,colorID) created and valid
+	# variable Model($m,colorID) is created and valid
 	MainModelsSetColor $m
 
 	viewRen AddActor Model($m,actor)
@@ -247,7 +228,6 @@ proc MainModelsRead {m} {
 	if {$fileName == ""} {return}
 
 	# Check fileName
-	set fileName $Model($m,fileName)
 	if {[CheckFileExists $fileName] == 0} {
 		set str "Cannot open model $m file '$fileName'"
 		puts $str
@@ -257,11 +237,11 @@ proc MainModelsRead {m} {
 	set name [Model($m,node) GetName]
 
 	# Reader
-	set suffix [GetSuffix $fileName]
-	if {$suffix == "g"} {
+	set suffix [file extension $fileName]
+	if {$suffix == ".g"} {
 		vtkBYUReader reader
 		reader SetGeometryFileName $fileName
-	} elseif {$suffix == "vtk"} {
+	} elseif {$suffix == ".vtk"} {
 		vtkPolyDataReader reader
 		reader SetFileName $fileName
 	}
@@ -301,10 +281,8 @@ proc MainModelsCreateUnreadable {} {
 	# Find the next available ID
 	set m $Model(nextID)
 	
-	# See if it already exists (only if there's a bug)
-	if {[info command Model($m,actor)] != ""} {
-		tk_messageBox -message "This software sucks!"
-	}
+	# MRML node
+	vtkMrmlModelNode Model($m,node)
 
 	MainModelsShouldBeAVtkClass	$m
 	MainModelsInitGUIVariables $m
@@ -367,7 +345,6 @@ proc MainModelsDelete {m} {
 	viewRen RemoveActor Model($m,actor)
 
 	# Delete VTK objects (and remove commands from TCL namespace)
-	Model($m,node) Delete
 	Model($m,clipper) Delete
 	Model($m,mapper) Delete
 	Model($m,actor) Delete
@@ -387,8 +364,6 @@ proc MainModelsDelete {m} {
 	set Model(idList) [lreplace $Model(idList) $i $i]
 
 	# Delete node from dag
-	set n [MRMLGetIndexOfNodeInDag $Dag(current) $m "Model"]
-	set Dag(current) [MRMLDeleteNode $Dag(current) $n]
 
 	return 1
 }
@@ -447,23 +422,23 @@ proc MainModelsBuildGUI {} {
 proc MainModelsCreateGUI {f m} {
 	global Gui Model Color
 
-	# If the GUI already exists, return
+	# If the GUI already exists, then just change name.
 	if {[info command $f.c$m] != ""} {
+		$f.c$m config -text "[Model($m,node) GetName]"
 		return
 	}
-	
+
 	# Name / Visible
-	set c {checkbutton $f.c$m \
+	eval {checkbutton $f.c$m \
 		-text [Model($m,node) GetName] -variable Model($m,visibility) \
 		-width 17 -indicatoron 0 \
-		-command "MainModelsSetVisibility $m; Render3D" $Gui(WCA)}
-		eval [subst $c]
+		-command "MainModelsSetVisibility $m; Render3D"} $Gui(WCA)
 
 	# menu
 	set c {menu $f.c$m.men $Gui(WMA)}; eval [subst $c]
 	set men $f.c$m.men
 	$men add command -label "Change Color..." -command \
-		"set Model(activeID) $m; ShowColors MainModelsPopupCallback"
+		"MainModelsSetActive $m; ShowColors MainModelsPopupCallback"
 	$men add check -label "Clipping" \
 		-variable Model($m,clipping) \
 		-command "MainModelsSetClip $m; Render3D"
@@ -473,7 +448,7 @@ proc MainModelsCreateGUI {f m} {
 	$men add check -label "Scalar Visibility" \
 		-variable Model($m,scalarVisibility) \
 		-command "MainModelsSetScalarVisibility $m; Render3D"
-	$men add command -label "Delete Model" -command "MainMrmlDeleteModel $m; Render3D"
+	$men add command -label "Delete Model" -command "MainMrmlDeleteNode Model $m; Render3D"
 	$men add command -label "-- Close Menu --" -command "$men unpost"
 	bind $f.c$m <Button-3> "$men post %X %Y"
 
@@ -487,7 +462,7 @@ proc MainModelsCreateGUI {f m} {
 		-command "MainModelsSetOpacity $m; Render3D" \
 		-resolution 0.1 $Gui(WSA) -sliderlength 14 \
 		-troughcolor [MakeColorNormalized \
-			$Color($Model($m,colorID),diffuseColor)]}
+			[Color($Model($m,colorID),node) GetDiffuseColor]]}
 		eval [subst $c]
 
 	# Clipping
@@ -507,7 +482,7 @@ proc MainModelsPopupCallback {} {
 	global Label Model
 
 	set m $Model(activeID)
-	puts "m=$m name=$Label(name)"
+	if {$m == ""} {return}
 
 	Model($m,node) SetColor $Label(name)
 	MainModelsSetColor $m
@@ -552,51 +527,75 @@ proc MainModelsPopup {X Y} {
 # .PROC MainModelsSetActive
 # .END
 #-------------------------------------------------------------------------------
-proc MainModelsSetActive {{m ""}} {
-	global Model
+proc MainModelsSetActive {m} {
+	global Model Label
 
-	# Optionally set activeID to m
-	if {$m == ""} {
-		set m $Model(activeID)
-	} else {
-		set Model(activeID) $m
-	}
-
-	# Update GUI
+	if {$Model(freeze) == 1} {return}
+	
+	set Model(activeID) $m
 
 	# Change button text
-	foreach mb $Model(mbActiveList) {
-		$mb config -text [Model($m,node) GetName]
-	}
-		
+	if {$m == ""} {
+		foreach mb $Model(mbActiveList) {
+			$mb config -text "None"
+		}
+	} elseif {$m == "NEW"} {
+		foreach mb $Model(mbActiveList) {
+			$mb config -text "NEW"
+		}
+		# Use defaults
+		vtkMrmlModelNode default
+		set Model(name)             [default GetName]
+		set Model(prefix)           [file root [default GetFileName]]
+		set Model(culling)          [default GetBackfaceCulling]
+		set Model(scalarVisibility) [default GetScalarVisibility]
+		set Model(scalarLo)         [lindex [default GetScalarRange] 0]
+		set Model(scalarHi)         [lindex [default GetScalarRange] 1]
+		set Model(desc)             [default GetDescription]
+		LabelsSetColor              [default GetColor]
+		default Delete
+	} else {
+		foreach mb $Model(mbActiveList) {
+			$mb config -text [Model($m,node) GetName]
+		}
+		set Model(name)             [Model($m,node) GetName]
+		set Model(prefix)           [file root [Model($m,node) GetFileName]]
+		set Model(culling)          [Model($m,node) GetBackfaceCulling]
+		set Model(scalarVisibility) [Model($m,node) GetScalarVisibility]
+		set Model(scalarLo)         [lindex [Model($m,node) GetScalarRange] 0]
+		set Model(scalarHi)         [lindex [Model($m,node) GetScalarRange] 1]
+		set Model(desc)             [Model($m,node) GetDescription]
+		LabelsSetColor              [Model($m,node) GetColor]
+	}	
 }
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsSetColor
 # .END
 #-------------------------------------------------------------------------------
-proc MainModelsSetColor {m} {
+proc MainModelsSetColor {m {name ""}} {
 	global Model Color Gui
 
-	set Model($m,colorID) -1
-	set Color(-1,ambient) 0
-	set Color(-1,diffuse) 1
-	set Color(-1,specular) 0
-	set Color(-1,power) 1
-	set Color(-1,diffuseColor) "1 1 1"
+	if {$name == ""} {
+		set name [Model($m,node) GetColor]
+	} else {
+		Model($m,node) SetColor $name
+	}
 
+	# Use first color by default
+	set Model($m,colorID) [lindex $Color(idList) 0]
 	foreach c $Color(idList) {
-		if {$Color($c,name) == [Model($m,node) GetColor]} {
+		if {[Color($c,node) GetName] == $name} {
 			set Model($m,colorID) $c
 		}
 	}
 	set c $Model($m,colorID)
 
-	$Model($m,prop) SetAmbient       $Color($c,ambient)
-	$Model($m,prop) SetDiffuse       $Color($c,diffuse)
-	$Model($m,prop) SetSpecular      $Color($c,specular)
-	$Model($m,prop) SetSpecularPower $Color($c,power)
-	eval $Model($m,prop) SetColor $Color($c,diffuseColor)
+	$Model($m,prop) SetAmbient       [Color($c,node) GetAmbient]
+	$Model($m,prop) SetDiffuse       [Color($c,node) GetDiffuse]
+	$Model($m,prop) SetSpecular      [Color($c,node) GetSpecular]
+	$Model($m,prop) SetSpecularPower [Color($c,node) GetPower]
+	eval $Model($m,prop) SetColor    [Color($c,node) GetDiffuseColor]
 }
 
 #-------------------------------------------------------------------------------
@@ -656,7 +655,7 @@ proc MainModelsSetClip {m} {
 		set union [expr $union + $Slice($s,addedFunction)]
 	}
 
-	# Automatically turn backface culling on during clipping
+	# Automatically turn backface culling OFF during clipping
 
 	# Clip
 	if {$Model($m,clipping) == 1 && $union > 0} {
@@ -665,7 +664,7 @@ proc MainModelsSetClip {m} {
 		Model($m,mapper) SetInput [Model($m,clipper) GetOutput]
 
 		set Model($m,oldCulling) [Model($m,node) GetBackfaceCulling]
-		MainModelsSetCulling $m 1
+		MainModelsSetCulling $m 0
 	
 	# No clip
 	} else {
@@ -708,6 +707,11 @@ proc MainModelsSetCulling {m {value ""}} {
 	Model($m,node) SetBackfaceCulling $Model($m,backfaceCulling)
 	$Model($m,prop) SetBackfaceCulling \
 		[Model($m,node) GetBackfaceCulling]
+
+	# If this is the active model, update GUI
+	if {$m == $Model(activeID)} {
+		set Model(culling) $Model($m,backfaceCulling)
+	}
 }
  
 #-------------------------------------------------------------------------------
@@ -723,6 +727,24 @@ proc MainModelsSetScalarVisibility {m {value ""}} {
 	Model($m,node) SetScalarVisibility $Model($m,scalarVisibility)
 	Model($m,mapper) SetScalarVisibility \
 		[Model($m,node) GetScalarVisibility]
+
+	# If this is the active model, update GUI
+	if {$m == $Model(activeID)} {
+		set Model(scalarVisibility) $Model($m,backfaceCulling)
+	}
+}
+ 
+proc MainModelsSetScalarRange {m lo hi} {
+	global Model
+		
+	Model($m,node)   SetScalarRange $lo $hi
+	Model($m,mapper) SetScalarRange $lo $hi
+
+	# If this is the active model, update GUI
+	if {$m == $Model(activeID)} {
+		set Model(scalarLo) $lo
+		set Model(scalarHi) $hi
+	}
 }
  
 #-------------------------------------------------------------------------------
@@ -747,6 +769,8 @@ proc MainModelsWrite {{m ""}} {
 	if {$m == ""} {
 		set m $Model(activeID)
 	}
+	if {$m == ""} {return}
+
 	Model($m,node) SetFileName $Model(fileName).vtk
 
 	vtkPolyDataWriter writer

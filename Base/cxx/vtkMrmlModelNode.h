@@ -104,6 +104,11 @@ public:
 
   // Description:
   // 
+  vtkSetStringMacro(RasToIjkMatrix);
+  vtkGetStringMacro(RasToIjkMatrix);
+
+  // Description:
+  // 
   void SetRasToWld(vtkMatrix4x4 *reg);
   vtkGetObjectMacro(RasToWld, vtkMatrix4x4);
 
@@ -116,6 +121,7 @@ private:
   char *Name;
   char *FileName;
   char *Color;
+  char *RasToIjkMatrix;
 
   float Opacity;
 
@@ -127,7 +133,6 @@ private:
   int Clipping;
 
   vtkMatrix4x4 *RasToWld;
-
 };
 
 #endif

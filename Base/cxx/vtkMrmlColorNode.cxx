@@ -48,12 +48,14 @@ vtkMrmlColorNode* vtkMrmlColorNode::New()
 //----------------------------------------------------------------------------
 vtkMrmlColorNode::vtkMrmlColorNode()
 {
-  vtkMrmlNode::vtkMrmlNode();
+  // vtkMrmlNode's attributes
+  this->ID = 0;
+  this->Description = NULL;
+  this->Options = NULL;
+  this->Ignore = 0;
 
   this->Name = NULL;
   this->Labels = NULL;
-  this->NodeType = new char[6];
-  strcpy(this->NodeType,"Color");
 
   memset(this->DiffuseColor,0,3*sizeof(float));
 
@@ -104,7 +106,7 @@ void vtkMrmlColorNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   int idx;
   
-  vtkObject::PrintSelf(os,indent);
+  vtkMrmlNode::PrintSelf(os,indent);
 
   os << indent << "Name: " <<
     (this->Name ? this->Name : "(none)") << "\n";

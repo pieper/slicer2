@@ -25,68 +25,41 @@ PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE IS PROVIDED ON AN
 'AS IS' BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO PROVIDE
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
-// .NAME vtkMrmlNode - Writes images to files.
+// .NAME vtkMrmlEndTransformNode - Writes images to files.
 // .SECTION Description
-// vtkMrmlNode writes images to files with any data type. The data type of
+// 
 
-#ifndef __vtkMrmlNode_h
-#define __vtkMrmlNode_h
+#ifndef __vtkMrmlEndTransformNode_h
+#define __vtkMrmlEndTransformNode_h
 
 #include <iostream.h>
 #include <fstream.h>
-#include "vtkObject.h"
+#include "vtkMrmlNode.h"
 #include "vtkMatrix4x4.h"
+#include "vtkTransform.h"
 
-class VTK_EXPORT vtkMrmlNode : public vtkObject
+class VTK_EXPORT vtkMrmlEndTransformNode : public vtkMrmlNode
 {
 public:
-  static vtkMrmlNode *New();
-  const char *GetClassName() {return "vtkMrmlNode";};
+  static vtkMrmlEndTransformNode *New();
+  const char *GetClassName() {return "vtkMrmlEndTransformNode";};
   void PrintSelf(ostream& os, vtkIndent indent);
   
-  // Copy the node's parameters to this object
-  // except: ID
-  void Copy(vtkMrmlNode *node);
-  
-  // Description:
-  // Set/Get a numerical ID for the calling program to use to keep track
-  // of its various volume objects.
-  vtkSetMacro(ID, int);
-  vtkGetMacro(ID, int);
+  //--------------------------------------------------------------------------
+  // Utility Functions
+  //--------------------------------------------------------------------------
 
   // Description:
-  // Orientation of slices to edit
-  vtkSetStringMacro(Description);
-  vtkGetStringMacro(Description);
+  // Copy the node's attributes to this object
+  void Copy(vtkMrmlEndTransformNode *node);
 
-  // Description:
-  // Orientation of slices to edit
-  vtkSetStringMacro(Options);
-  vtkGetStringMacro(Options);
+private:
+  vtkMrmlEndTransformNode();
+  ~vtkMrmlEndTransformNode();
+  vtkMrmlEndTransformNode(const vtkMrmlEndTransformNode&) {};
+  void operator=(const vtkMrmlEndTransformNode&) {};
 
-  // Description:
-  // Set/Get Ignore value of this node
-  vtkGetMacro(Ignore, int);
-  vtkSetMacro(Ignore, int);
-  vtkBooleanMacro(Ignore, int);
-
-  vtkMrmlNode();
-  ~vtkMrmlNode();
-
-protected:
-
-  vtkMrmlNode(const vtkMrmlNode&) {};
-  void operator=(const vtkMrmlNode&) {};
-
-  void SetMatrixToString(vtkMatrix4x4 *m, char *s);
-  char* GetMatrixToString(vtkMatrix4x4 *m);
-
-  int ID;
-  char *Description;
-  char *Options;
-  int Ignore;
 };
 
 #endif
-
 

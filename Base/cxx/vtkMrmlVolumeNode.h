@@ -224,8 +224,6 @@ private:
   vtkMrmlVolumeNode(const vtkMrmlVolumeNode&) {};
   void operator=(const vtkMrmlVolumeNode&) {};
 
-  void SetMatrixToString(vtkMatrix4x4 *m, char *s);
-  char* GetMatrixToString(vtkMatrix4x4 *m);
   void ComputeRasToIjk(vtkMatrix4x4 *matRotate, 
     float ox, float oy, float oz);
 
