@@ -83,7 +83,7 @@ proc MainTensorInit {} {
     # Set version info
     #-------------------------------------------
     lappend Module(versions) [ParseCVSInfo MainTensor \
-	    {$Revision: 1.4 $} {$Date: 2002/01/31 22:47:17 $}]
+	    {$Revision: 1.5 $} {$Date: 2002/02/03 22:09:13 $}]
 
 
     # List variables that shadow the active MRML node 
@@ -214,7 +214,7 @@ proc MainTensorGetAllVariablesFromNode {n} {
     global Tensor
 
     # Lauren temporary fix for CVS since no tensor node there yet
-    #return
+    return
 
     puts "Lauren set tensors vars from node $n"
     
