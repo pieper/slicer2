@@ -336,7 +336,7 @@ proc MainInit {} {
 
         # Set version info
 	lappend Module(versions) [ParseCVSInfo Main \
-		{$Revision: 1.57 $} {$Date: 2001/04/04 02:38:21 $}]
+		{$Revision: 1.58 $} {$Date: 2001/05/27 12:48:23 $}]
 
 	# Call each "Init" routine that's not part of a module
 	#-------------------------------------------
@@ -1365,6 +1365,12 @@ proc MainExitProgram { } {
     }
     # end logging
 
+#### Turn these lines on if you want to see what classes have not yet been
+#### deleted. This is vtk3.2 only. it also requires special compilation 
+#### of vtkObjectFactory and vtkObject
+#### see: http://www.kitware.com/vtkhtml/vtkdata/html/class_vtkdebugleaks.html
+#    vtkDebugLeaks DebugLeaks
+#    DebugLeaks PrintCurrentLeaks
     exit
 }
 
