@@ -172,6 +172,7 @@ proc SAddMrmlImage {imname extension } {
 #    -------------
   global Volume
 
+
   set imid [SGetImageId $imname]
   set resname [append imname $extension]
   set newvol [DevCreateNewCopiedVolume $imid ""  $resname ]
@@ -387,21 +388,29 @@ proc SSubVol {imname x1 x2 y1 y2 z1 z2 } {
 #    -------
   global Volume
 
-  set  I [SGetImage $imname]
+  vtkExtractVOI op
+  op SetInput [SGetImage $imname]
+  op SetVOI  $x1 $x2 $y1 $y2 $z1 $z2
+  op Update
 
-  vtkImageData sI 
-  sI SetScalarType [$I GetScalarType]
-  sI SetNumberOfScalarComponents [$I GetNumberOfScalarComponents]
-  set spacing [$I GetSpacing]
-  sI SetSpacing [lindex $spacing 0] [lindex $spacing 1] [lindex $spacing 2]
-  sI SetDimensions [expr $x2-$x1+1] [expr $y2-$y1+1] [expr $z2-$z1+1]
-
-  sI CopyAndCastFrom $I $x1 $x2 $y1 $y2 $z1 $z2
+  set imid [SGetImageId $imname]
 
   set newvol [SAddMrmlImage $imname "_subvol"]
+  set res [op GetOutput]
+  Volume($newvol,vol) SetImageData $res
+  op Delete
 
-  Volume($newvol,vol) SetImageData [sI]
+#  $res SetExtent 0 [expr $x2-$x1] 0 [expr $y2-$y1] 0 [expr $z2-$z1]
+
+  Volume($newvol,node) SetDimensions [expr $x2-$x1+1] [expr $y2-$y1+1]
+  Volume($newvol,node) SetImageRange $z1 $z2
+
+  MainUpdateMRML
   MainVolumesUpdate $newvol
+
+  # update matrices
+  Volume($newvol,node) ComputeRasToIjkFromScanOrder [Volume($imid,node) GetScanOrder]
+
 
   return [append $imname "_subvol"]
 }
