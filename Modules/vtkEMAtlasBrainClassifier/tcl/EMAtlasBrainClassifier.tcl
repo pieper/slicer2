@@ -42,7 +42,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2005/01/17 01:16:19 $}]
+        {$Revision: 1.6 $} {$Date: 2005/01/17 18:40:57 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -655,12 +655,10 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
            if {[DevOKCancel "$text" ] == "ok"} {
            DownloadInit
            if {$tcl_platform(os) == "Linux"} { 
-               set urlAddress blub.tar.gz
+               set urlAddress "http://na-mic.org/Wiki/images/8/8d/VtkEMAtlasBrainClassifier_AtlasDefault.tar.gz" 
                set outputFile "[file dirname $EMAtlasBrainClassifier(AtlasDir)]/atlas.tar.gz"
            } else {
                set urlAddress "http://na-mic.org/Wiki/images/5/57/VtkEMAtlasBrainClassifier_AtlasDefault.zip"
-               # Debugging 
-               # set urlAddress http://na-mic.org/Wiki/images/f/fa/Blubber.zip 
                set outputFile "[file dirname $EMAtlasBrainClassifier(AtlasDir)]/atlas.zip"
            }
 
