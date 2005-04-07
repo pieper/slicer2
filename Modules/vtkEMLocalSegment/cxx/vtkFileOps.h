@@ -26,8 +26,6 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "vtkObject.h"
 #include <vtkEMLocalSegmentConfigure.h>
-    // for cerr
-#include <iostream>
     
 class VTK_EMLOCALSEGMENT_EXPORT vtkFileOps { //; prevent man page generation
   public:
@@ -125,7 +123,8 @@ static int WriteToGEFile(char *filename,T *vec, int size) {
   // If you enter - as name => prints it on the screen
   FILE *f = (strcmp(filename,"-")) ? fopen(filename,((appendFlag)?"ab":"wb")):stdout;
   if ( f == NULL ) {
-    cerr << "Could not open file " << filename << "\n";
+      //cerr << "Could not open file " << filename << "\n";
+      fprintf(stderr, "Could not open file %s\n", filename);
     return 0;
   }
   // Cannot individually do fwrite for each element - > makes a double out of it 
