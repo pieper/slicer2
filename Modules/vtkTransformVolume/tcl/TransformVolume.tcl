@@ -106,7 +106,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.19 $} {$Date: 2005/04/06 13:44:55 $}]
+        {$Revision: 1.20 $} {$Date: 2005/04/07 21:31:13 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -162,20 +162,6 @@ proc TransformVolumeBuildVTK {} {
 }
 proc TransformVolumeEnter {} {
     global TransformVolume Gui
-
-    if {[info exists TransformVolume(fResample)] && (![info exists TransformVolume(isv)] || $TransformVolume(isv) == "") } {
-        set f $TransformVolume(fResample)
-        
-        catch "$f.isv pre_destroy"
-        catch "destroy $f.isv"
-        
-        isvolume $f.isv
-        pack $f.isv -side top -padx $Gui(pad) -pady $Gui(pad) -ipady 100
-        
-        set TransformVolume(isv) $f.isv
-        
-        TransformVolumeUpdatePreview
-    }
 }
 
 
@@ -201,12 +187,9 @@ proc TransformVolumeExit {} {
         $TransformVolume(OutputIsv) pre_destroy
         destroy $TransformVolume(OutputIsv)
     }
-    if { [info exists TransformVolume(isv)] && $TransformVolume(isv) != "" } {
-        $TransformVolume(isv) pre_destroy
-        destroy $TransformVolume(isv)
-    }
     set TransformVolume(OutputIsv) ""
-    set TransformVolume(isv) ""
+
+    TransformVolumeExitPreview
 }
 
 
@@ -487,7 +470,18 @@ proc TransformVolumeBuildGUI {} {
     lappend TransformVolume(resampleConrols) $f.bAutoDimension 
 
     set TransformVolume(fResample) $fResample
-#    TransformVolumeEnter
+
+    # Resample->Preview
+    set f $fResample  
+    iwidgets::pushbutton  $f.bPreview \
+        -text "Show Preview" \
+        -background "#e2cdba" -foreground "#000000" \
+        -font {helvetica 8} \
+        -height 32 \
+        -command TransformVolumeCreatePreview
+
+    pack $f.bPreview -side top -padx $Gui(pad) -pady $Gui(pad)
+
     TransformVolumeResampleMode
 }
 
@@ -1128,7 +1122,7 @@ proc TransformVolumeOutputSpacingPA {{spacing ""}} {
 # .PROC TransformVolumeOutputSpacingIS
 #
 # .ARGS
-# .END
+# .ENDTransformVolumeExitPreview
 #-------------------------------------------------------------------------------
 proc TransformVolumeOutputSpacingIS {{spacing ""} } {
     global TransformVolume
@@ -1257,3 +1251,48 @@ proc TransformVolumePermuteSpacing {} {
     set TransformVolume(OutputSpacingJ) $spacingJ
     set TransformVolume(OutputSpacingK) $spacingK
 }
+
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeCreatePreview
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TransformVolumeCreatePreview {} {
+    global TransformVolume Gui
+
+    #catch " $TransformVolume(isv) pre_destroy"
+    catch "destroy .isvolumepreview"
+    
+    set f .isvolumepreview
+    toplevel $f
+    wm title $f "isvolume preview"
+    wm protocol $f WM_DELETE_WINDOW "TransformVolumeExitPreview"
+
+    pack [isvolume .isvolumepreview.isv] -fill both -expand true
+    
+    set TransformVolume(isv) .isvolumepreview.isv
+    set TransformVolume(wisv) $f
+        
+    TransformVolumeUpdatePreview
+}
+
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeExitPreview
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TransformVolumeExitPreview {} {
+    global TransformVolume Gui
+    if { [info exists TransformVolume(isv)] && $TransformVolume(isv) != "" } {
+        $TransformVolume(isv) pre_destroy
+        if {[info exists TransformVolume(wisv)] && $TransformVolume(wisv) != "" } {
+            set f $TransformVolume(wisv)
+            wm withdraw $f
+        }
+    }
+    set TransformVolume(isv) ""
+    set TransformVolume(wisv) ""
+}
+
