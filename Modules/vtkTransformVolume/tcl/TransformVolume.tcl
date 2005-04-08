@@ -106,7 +106,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.20 $} {$Date: 2005/04/07 21:31:13 $}]
+        {$Revision: 1.21 $} {$Date: 2005/04/08 14:20:55 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -298,6 +298,14 @@ proc TransformVolumeBuildGUI {} {
 
     set TransformVolume(resultPrefix) $f.ePrefix
 
+    # Main->Preview
+    iwidgets::pushbutton  $f.bPreview \
+        -text "Show Preview" \
+        -background "#e2cdba" -foreground "#000000" \
+        -font {helvetica 8} \
+        -height 32 \
+        -command TransformVolumeCreatePreview
+
     # Transform button
     iwidgets::pushbutton  $f.brun \
         -text "Do Transform" \
@@ -310,7 +318,7 @@ proc TransformVolumeBuildGUI {} {
 
     iwidgets::Labeledwidget::alignlabels $f.matopt $f.volopt $f.volref $f.ePrefix 
 
-    pack $f.matopt $f.volopt $f.volref $f.rbresample $f.rbinterpmode $f.ePrefix $f.brun \
+    pack $f.matopt $f.volopt $f.volref $f.rbresample $f.rbinterpmode $f.ePrefix $f.bPreview $f.brun \
         -side top -padx $Gui(pad) -pady $Gui(pad) \
         -fill x \
         -expand yes
