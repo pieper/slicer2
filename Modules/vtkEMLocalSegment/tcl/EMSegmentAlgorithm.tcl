@@ -61,15 +61,6 @@ proc EMSegmentSetVtkGenericClassSetting {vtkGenericClass Sclass} {
   eval $vtkGenericClass SetSegmentationBoundaryMin $EMSegment(SegmentationBoundaryMin,0) $EMSegment(SegmentationBoundaryMin,1) $EMSegment(SegmentationBoundaryMin,2)
   eval $vtkGenericClass SetSegmentationBoundaryMax $EMSegment(SegmentationBoundaryMax,0) $EMSegment(SegmentationBoundaryMax,1) $EMSegment(SegmentationBoundaryMax,2)
 
-  if {$EMSegment(Cattrib,$Sclass,ProbabilityData) != $Volume(idNone)} {
-      # Pipeline does not automatically update volumes bc of fake first input  
-      Volume($EMSegment(Cattrib,$Sclass,ProbabilityData),vol) Update
-      $vtkGenericClass SetProbDataPtr [Volume($EMSegment(Cattrib,$Sclass,ProbabilityData),vol) GetOutput]
-      
-      # Kilian: Currently LocalPriorWeight is also used for shape parameters - should change it later
-  } elseif {($EMSegment(Cattrib,$Sclass,IsSuperClass) == 0 ) && ($EMSegment(Cattrib,$Sclass,PCAMeanData) ==  $Volume(idNone))} {
-      # set EMSegment(Cattrib,$Sclass,LocalPriorWeight) 0.0
-  }
   $vtkGenericClass SetProbDataWeight $EMSegment(Cattrib,$Sclass,LocalPriorWeight)
 
   $vtkGenericClass SetTissueProbability $EMSegment(Cattrib,$Sclass,Prob)
@@ -87,8 +78,17 @@ proc EMSegmentSetVtkGenericClassSetting {vtkGenericClass Sclass} {
     eval $vtkGenericClass SetPrintRegistrationParameters                $EMSegment(Cattrib,$Sclass,PrintRegistrationParameters)   
     eval $vtkGenericClass SetPrintRegistrationSimularityMeasure         $EMSegment(Cattrib,$Sclass,PrintRegistrationSimularityMeasure) 
     eval $vtkGenericClass SetRegistrationClassSpecificRegistrationFlag  $EMSegment(Cattrib,$Sclass,RegistrationClassSpecificRegistrationFlag) 
-  }
 
+    if {$EMSegment(Cattrib,$Sclass,ProbabilityData) != $Volume(idNone) } {
+    # Pipeline does not automatically update volumes bc of fake first input  
+    Volume($EMSegment(Cattrib,$Sclass,ProbabilityData),vol) Update
+    $vtkGenericClass SetProbDataPtr [Volume($EMSegment(Cattrib,$Sclass,ProbabilityData),vol) GetOutput]
+      
+    # Kilian: Currently LocalPriorWeight is also used for shape parameters - should change it later
+    } elseif {($EMSegment(Cattrib,$Sclass,IsSuperClass) == 0 ) && ($EMSegment(Cattrib,$Sclass,PCAMeanData) ==  $Volume(idNone))} {
+    # set EMSegment(Cattrib,$Sclass,LocalPriorWeight) 0.0
+    }
+  }
 
 }
 
