@@ -43,7 +43,6 @@
 #   fMRIEngineViewModel
 #   fMRIEngineBuildUIForTasks the
 #   fMRIEngineSetModelTask the
-#   fMRIEngineAskModelClearing
 #==========================================================================auto=
 #-------------------------------------------------------------------------------
 # .PROC fMRIEngineBuildUIForSetupTab
@@ -212,29 +211,21 @@ proc fMRIEngineClearModel {} {
 #-------------------------------------------------------------------------------
 proc fMRIEngineViewModel {} {
     global fMRIEngine
-    
-    # check if we have real evs (not baseline) added
-    set i 0
-    set count 0
-    set found -1 
-    set size [$fMRIEngine(evsListBox) size]
-    while {$i < $size} {  
-        set v [$fMRIEngine(evsListBox) get $i] 
-        if {$v != ""} {
-            set found [string first "baseline" $v]
-            if {$found >= 0} {
-                incr count
-            }
-        }
 
-        incr i
-    }
+    fMRIEngineCountEVs
 
-    if {$size == $count} {
-        DevErrorWindow "View the model after signal modeling is complete."
+    if {$fMRIEngine(noOfSpecifiedRuns) == 0} {
+        DevErrorWindow "No run has been specified."
         return
     }
- 
+
+    for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} { 
+        if {! [info exists fMRIEngine($r,noOfEVs)]} {
+            DevErrorWindow "Complete signal modeling first for run$r."
+            return
+        }
+    }
+
     fMRIModelViewLaunchModelView
 }
 
@@ -251,7 +242,7 @@ proc fMRIEngineBuildUIForTasks {parent} {
 
     frame $parent.fTop  -bg $Gui(backdrop)
     frame $parent.fHelp -bg $Gui(activeWorkspace)
-    frame $parent.fBot  -bg $Gui(activeWorkspace) -height 445 
+    frame $parent.fBot  -bg $Gui(activeWorkspace) -height 465 
     pack $parent.fTop $parent.fHelp $parent.fBot \
         -side top -fill x -pady 2 -padx 5 
 
@@ -360,23 +351,13 @@ proc fMRIEngineSetModelTask {task} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC fMRIEngineAskModelClearing
-# Asks the usre if s/he needs to clear the current model 
+# .PROC fMRIEngineUpdateSetupTab
+# 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineAskModelClearing {} {
+proc fMRIEngineUpdateSetupTab {} {
     global fMRIEngine
 
-    set fMRIEngine(currentTab) "Set Up"
-
-    if {$fMRIEngine(baselineEVsAdded) == 0} {
-        fMRIEngineAddBaselineEVs
-    } elseif {$fMRIEngine(baselineEVsAdded) != 0 &&
-      $fMRIEngine(baselineEVsAdded) != $fMRIEngine(noOfRuns)} {
-        DevWarningWindow "The number of runs has changed. You probably need to save/clear the current model."
-        Tab fMRIEngine row1 Setup 
-    }
+    set fMRIEngine(currentTab) "Set up"
 }
-
-
