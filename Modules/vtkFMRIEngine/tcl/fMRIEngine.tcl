@@ -155,7 +155,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2005/03/30 16:14:33 $}]
+        {$Revision: 1.7 $} {$Date: 2005/04/10 17:14:36 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -349,7 +349,7 @@ proc fMRIEngineBuildGUI {} {
     set fSetup $Module(fMRIEngine,fSetup)
     fMRIEngineBuildUIForSetupTab $fSetup
     set b $Module(fMRIEngine,bSetup)
-    bind $b <1> "fMRIEngineAskModelClearing" 
+    bind $b <1> "fMRIEngineUpdateSetupTab" 
 
     #-------------------------------------------
     # Compute tab 
