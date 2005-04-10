@@ -190,6 +190,7 @@ proc fMRIEngineBuildUIForSelect {parent} {
     listbox $f.lb -height 4 -bg $Gui(activeWorkspace) \
         -yscrollcommand {$::fMRIEngine(seqVerScroll) set}
     set fMRIEngine(seqListBox) $f.lb
+    set fMRIEngine(noOfSpecifiedRuns) [$fMRIEngine(seqListBox) size] 
     $fMRIEngine(seqVerScroll) configure -command {$fMRIEngine(seqListBox) yview}
 
     blt::table $f \
@@ -311,6 +312,29 @@ proc fMRIEngineDeleteSeq-RunMatch {} {
         set first [lindex $curs 0] 
         set last [lindex $curs end]
         $fMRIEngine(seqListBox) delete $first $last
+
+        fMRIEngineUpdateRunsForModelFitting
+
+        # delete baseline 
+        set index [string first ":" $curs]
+        set run [string range $curs 0 [expr $index-1]]
+
+        set size [$fMRIEngine(evsListBox) size]
+        set i 0 
+        set found -1
+        while {$i < $size} {  
+            set v [$fMRIEngine(evsListBox) get $i] 
+            if {$v != ""} {
+                set found [string first "$run:baseline" $v]
+                if {$found >= 0} {
+                    break
+                }
+            } 
+            incr i
+        }
+        if {$found >= 0} {
+            $fMRIEngine(evsListBox) delete $i $i 
+        }
     }
 }
 
@@ -340,31 +364,54 @@ proc fMRIEngineAddSeq-RunMatch {} {
     set str \
         "r$fMRIEngine(currentSelectedRun):$fMRIEngine(currentSelectedSequence)"
     set i 0
-    set found 0
+    set foundRun 0
+    set foundSeq 0
     set size [$fMRIEngine(seqListBox) size]
     while {$i < $size} {  
         set v [$fMRIEngine(seqListBox) get $i] 
         if {$v != ""} {
             set i1 1 
             set i2 [string first ":" $v]
-            set r [string range $v $i1 [expr $i2-1]] 
-            set r [string trim $r]
 
-            if {$r == $fMRIEngine(currentSelectedRun)} {
-                set found 1
-                break
+            set run [string range $v $i1 [expr $i2-1]] 
+            set run [string trim $run]
+            set seq [string range $v [expr $i2+1] end]
+            set seq [string trim $seq]
+
+            if {$run == $fMRIEngine(currentSelectedRun)} {
+                DevErrorWindow "r$run has been specified."
+                return
+            }
+            if {$seq == $fMRIEngine(currentSelectedSequence)} {
+                DevErrorWindow "$seq has been specified."
+                return
             }
         }
-
         incr i
     }
 
-    if {$found} {
-        DevErrorWindow "The r$r has been specified."
-    } else {
-        $fMRIEngine(seqListBox) insert end $str 
-        set fMRIEngine($fMRIEngine(currentSelectedRun),sequenceName) \
-            $fMRIEngine(currentSelectedSequence)
+    $fMRIEngine(seqListBox) insert end $str 
+    set fMRIEngine($fMRIEngine(currentSelectedRun),sequenceName) \
+        $fMRIEngine(currentSelectedSequence)
+
+    fMRIEngineUpdateRunsForModelFitting
+
+    # add baseline 
+    set size [$fMRIEngine(evsListBox) size]
+    set i 0 
+    set found -1
+    while {$i < $size} {  
+        set v [$fMRIEngine(evsListBox) get $i] 
+        if {$v != ""} {
+            set found [string first "r$fMRIEngine(currentSelectedRun):baseline" $v]
+            if {$found >= 0} {
+                break
+            }
+        } 
+        incr i
+    }
+    if {$found == -1} {
+        $fMRIEngine(evsListBox) insert 0 "r$fMRIEngine(currentSelectedRun):baseline" 
     }
 }
 
@@ -456,19 +503,17 @@ proc fMRIEngineUpdateSequences {} {
     set b [info exists MultiVolumeReader(sequenceNames)] 
     set n [expr {$b == 0 ? 0 : [llength $MultiVolumeReader(sequenceNames)]}]
 
-    $fMRIEngine(gui,sequenceMenu) add command -label "none" \
-        -command "fMRIEngineSelectSequence none"
-
     if {$n > 0} {
         set i 0 
         while {$i < $n} {
             set name [lindex $MultiVolumeReader(sequenceNames) $i]
+            fMRIEngineSelectSequence $name
             $fMRIEngine(gui,sequenceMenu) add command -label $name \
                 -command "fMRIEngineSelectSequence $name"
             incr i
         }
+    } else {
+        $fMRIEngine(gui,sequenceMenu) add command -label "none" \
+            -command "fMRIEngineSelectSequence none"
     }
 }
-
-
-
