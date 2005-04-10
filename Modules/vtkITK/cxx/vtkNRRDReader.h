@@ -27,6 +27,7 @@
 
 #include "vtkITKConfigure.h"
 #include "vtkMedicalImageReader2.h"
+#include "vtkMatrix4x4.h"
 
 #include "NrrdIO/NrrdIO.h"
 
@@ -34,7 +35,19 @@ class VTK_ITK_EXPORT vtkNRRDReader : public vtkMedicalImageReader2
 {
 public:
   static vtkNRRDReader *New();
+
   vtkTypeRevisionMacro(vtkNRRDReader,vtkMedicalImageReader2);
+
+  // Description:
+  // Returns a IJK to RAS transformation matrix
+  vtkMatrix4x4* GetIjkToRasMatrix();
+
+  // Description:
+  // Specifies whether to create interleave volume from multucomponent data
+  vtkBooleanMacro(InterleaveVolume, int);
+  vtkGetMacro(InterleaveVolume, int);
+  vtkSetMacro(InterleaveVolume, int);
+
   virtual void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description: is the given file name a NRRD file?
@@ -140,8 +153,11 @@ public:
   }
 
 protected:
-  vtkNRRDReader() {};
-  ~vtkNRRDReader() {};
+  vtkNRRDReader();
+  ~vtkNRRDReader();
+
+  vtkMatrix4x4* IjkToRasMatrix;
+  int           InterleaveVolume;
 
   virtual void ExecuteInformation();
   virtual void ExecuteData(vtkDataObject *out);
@@ -149,6 +165,7 @@ protected:
 private:
   vtkNRRDReader(const vtkNRRDReader&);  // Not implemented.
   void operator=(const vtkNRRDReader&);  // Not implemented.
+
 };
 #endif
 

@@ -21,8 +21,27 @@
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkNRRDReader);
+
+vtkNRRDReader::vtkNRRDReader() 
+{
+  IjkToRasMatrix = 0;
+  InterleaveVolume = 1;
+}
+
+vtkNRRDReader::~vtkNRRDReader() 
+{
+  if (IjkToRasMatrix) {
+    IjkToRasMatrix->Delete();
+  }
+}
+
+vtkMatrix4x4* vtkNRRDReader::GetIjkToRasMatrix()
+{
+  this->ExecuteInformation();
+  return IjkToRasMatrix;
+}
 
 
 int vtkNRRDReader::CanReadFile(const char* filename)
@@ -121,27 +140,31 @@ void vtkNRRDReader::ExecuteInformation()
    NrrdIoState *nio;
    Nrrd *nrrd;
 
+   if (IjkToRasMatrix) {
+     IjkToRasMatrix->Delete();
+   }
+   IjkToRasMatrix = vtkMatrix4x4::New();
+
+   IjkToRasMatrix->Identity();
+
    nio = nrrdIoStateNew();
    nrrdIoStateSet(nio, nrrdIoStateSkipData, 1);
 
    nrrd = nrrdNew();
-   if (nrrdLoad(nrrd, this->GetFileName(), nio) != 0)
-     {
+   if (nrrdLoad(nrrd, this->GetFileName(), nio) != 0) {
      err = biffGetDone("nrrd");
      vtkErrorMacro("Error reading " << this->GetFileName() << ": " << err);
      free(err); // err points to malloc'd data!!
      //     err = NULL;
      return;
-     }
+   }
 
-   if ( nio->endian == airEndianLittle )
-     {
+   if ( nio->endian == airEndianLittle ) {
      this->SetDataByteOrderToLittleEndian();
-     }
-   else 
-     {
+   }
+   else {
      this->SetDataByteOrderToBigEndian();
-     }
+   }
 
 // Probably not needed
 #if 0
@@ -155,18 +178,29 @@ void vtkNRRDReader::ExecuteInformation()
      }
 #endif
    
-   // NrrdIO only supports scalar data.  Future implementations may support
+   // NrrdIO only supports 3 dimensional image with scalar data.  
+   // Future implementations may support
    // read/write of vector data.
-   this->SetNumberOfScalarComponents(1);
 
-   // Set the number of image dimensions
-   // TODO -- figure out mapping to multi-component 
-   //this->SetNumberOfDimensions(nrrd->dim);
-   if ( nrrd->dim != 3)
-     {
-     vtkErrorMacro("Error reading " << this->GetFileName() << ": " << "only 3D volumes supported");
-     return;
+   if ( nrrd->dim == 3) {
+     // Assume that all dimensions are spacial
+     // and there is 1 data scalar
+     this->SetNumberOfScalarComponents(1);
+  }
+   else if ( nrrd->dim == 4) {
+     // Assume that 3 first dimensions are spacial
+     // and last dimension is the number of data components
+     if (InterleaveVolume) {
+       this->SetNumberOfScalarComponents(1);
      }
+     else {
+       this->SetNumberOfScalarComponents(nrrd->axis[3].size);
+     }
+   }
+   else {
+      vtkErrorMacro("Error reading " << this->GetFileName() << ": " << "only 3D volumes supported");
+     return;
+   }
 
    // Set type information
    //   this->SetPixelType( this->NrrdToITKComponentType(nrrd->type) );
@@ -175,33 +209,46 @@ void vtkNRRDReader::ExecuteInformation()
    this->SetDataScalarType( this->NrrdToVTKScalarType(nrrd->type) );
    
    // Set axis information
-   int dataextent[6];
+   int dataExtent[6];
    vtkFloatingPointType spacings[3];
    vtkFloatingPointType origins[3];
    int sdim;
    double axis[NRRD_SPACE_DIM_MAX];
-   for (i=0; i < nrrd->dim; i++)
-     {
-     dataextent[2*i] = 0;
-     dataextent[2*i+1] = nrrd->axis[i].size - 1;
-     spacings[i] = nrrd->axis[i].spacing;
-     nrrdSpacingCalculate(nrrd, i, &spacings[i], &sdim, axis);
-     if ( !AIR_EXISTS(spacings[i]) ) // is the spacing NaN?
-       {
-       spacings[i] = 1.0;
+
+   for (i=0; i < nrrd->dim; i++) {
+
+     if (i < 3) {
+       // spacial dimesion
+       dataExtent[2*i] = 0;
+       dataExtent[2*i+1] = nrrd->axis[i].size - 1;  
+       spacings[i] = nrrd->axis[i].spacing;
+       nrrdSpacingCalculate(nrrd, i, &spacings[i], &sdim, axis);
+       if ( !AIR_EXISTS(spacings[i]) ) { // is the spacing NaN?
+         spacings[i] = 1.0;
        }
-     if ( AIR_EXISTS(nrrd->axis[i].min) ) // is the min NaN?
-       {
-       origins[i] = nrrd->axis[i].min;
+       if ( AIR_EXISTS(nrrd->axis[i].min) ) { // is the min NaN?
+         origins[i] = nrrd->axis[i].min;
        }
-     else // If min has not been set, assume a default.
-       {  // An ITK image _must_ have a valid origin.
-       origins[i] = 0;
+       else { // If min has not been set, assume a default.
+         // An ITK image _must_ have a valid origin.
+         origins[i] = 0;
        }
+       
+       // get IJK to RAS direction vector
+       for (int j=0; j<nrrd->spaceDim; j++) {
+         IjkToRasMatrix->SetElement(j, i, nrrd->axis[i].spaceDirection[j]);
+       }
+       IjkToRasMatrix->SetElement(3, i, (dataExtent[2*i+1] - dataExtent[2*i])/2.0);
      }
+     else { 
+       // assume this is data dimension
+       // combine with the last spacial dimension
+       dataExtent[2*(i-1)+1] =  nrrd->axis[i-1].size * nrrd->axis[i].size - 1;
+     }
+   }
    this->SetDataSpacing(spacings);
    this->SetDataOrigin(origins);
-   this->SetDataExtent(dataextent);
+   this->SetDataExtent(dataExtent);
 
 
 // TODO - make map of key/value pairs and add GetKeys and GetValue <key> methods
@@ -273,11 +320,11 @@ void vtkNRRDReaderUpdate(vtkNRRDReader *self, vtkImageData *data,
   // fixed at 3 dimensions for vtk - TODO: handle multiple volumes
   
   nrrd->dim = 3;
-  int dataextent[6];
-  self->GetDataExtent(dataextent);
+  int dataExtent[6];
+  self->GetDataExtent(dataExtent);
   for (unsigned int i = 0; i < 3; i++)
     {
-    nrrd->axis[i].size = dataextent[2*i+1] + 1;
+    nrrd->axis[i].size = dataExtent[2*i+1] + 1;
     }
 
   // Set data type information

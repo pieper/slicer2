@@ -265,6 +265,13 @@ proc VolNrrdApply {} {
 
     $imdata UpdateInformation
 
+    #catch "mat Delete"
+    puts "NAME= [nrrdReader GetFileName]"
+    #vtkMatrix4x4 mat
+    
+    [nrrdReader GetIjkToRasMatrix] Print
+    #puts "ELEM = [[nrrdReader GetIjkToRasMatrix] GetElement(0,0)]"
+
     if {$Module(verbose) == 1} {
         puts "proc VolNrrd: UpdateInformation done"
     }
@@ -333,6 +340,7 @@ proc VolNrrdApply {} {
         puts "VolNrrd: setting full prefix for volume node $i"
     }
 
+
     # Reads in the volume via the Execute procedure
     MainUpdateMRML
 
@@ -396,26 +404,28 @@ proc VolNrrdReaderProc {v} {
         DevErrorWindow "No Nrrd Reader available."
         return -1
     }
-    catch "nrrdReader Delete"
-    vtkNRRDReader nrrdReader
+    catch "nrrdReader1 Delete"
+    vtkNRRDReader nrrdReader1
 
-    if {![nrrdReader CanReadFile [Volume($v,node) GetFullPrefix]]} {
+    if {![nrrdReader1 CanReadFile [Volume($v,node) GetFullPrefix]]} {
         DevErrorWindow "Cannot read file [Volume($v,node) GetFullPrefix]"
         return
     }
 
-    nrrdReader SetFileName [Volume($v,node) GetFullPrefix]
+    nrrdReader1 SetFileName [Volume($v,node) GetFullPrefix]
 
     catch "flip Delete"
     vtkImageFlip flip
     flip SetFilteredAxis 1
-    flip SetInput  [nrrdReader GetOutput]   
+    flip SetInput  [nrrdReader1 GetOutput]   
 
     flip Update
     Volume($v,vol) SetImageData [flip GetOutput]
 
+    [nrrdReader1 GetIjkToRasMatrix] Print
+
     flip Delete
-    nrrdReader Delete
+    nrrdReader1 Delete
 
     set Volume(fileType) ""
 }
