@@ -112,13 +112,6 @@ proc fMRIEngineComputeContrasts {} {
 
         unset -nocomplain fMRIEngine(actVolumeNames)
 
-        # total volumes from all runs
-        set totalVols 0
-        for {set r 1} {$r <= $fMRIEngine(noOfRuns)} {incr r} { 
-            set seqName $fMRIEngine($r,sequenceName)
-            set totalVols [expr $MultiVolumeReader($seqName,noOfVolumes) + $totalVols]
-        }
-
         set size [llength $curs]
         for {set ii 0} {$ii < $size} {incr ii} {
             set jj [lindex $curs $ii]
@@ -163,7 +156,10 @@ proc fMRIEngineComputeContrasts {} {
                     incr count
                 }
 
-                fMRIEngine(actVolumeGenerator) SetNumberOfVolumes $totalVols 
+                # fMRIEngine(actVolumeGenerator) SetNumberOfVolumes $totalVols 
+                fMRIEngine(actVolumeGenerator) SetNumberOfVolumes \
+                    $fMRIEngine(totalVolsForModelFitting)
+ 
                 fMRIEngine(actVolumeGenerator) SetContrastVector fMRIEngine(contrast) 
                 fMRIEngine(actVolumeGenerator) SetInput $fMRIEngine(actBetaAndStd) 
                 set act [fMRIEngine(actVolumeGenerator) GetOutput]
