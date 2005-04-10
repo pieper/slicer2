@@ -38,7 +38,6 @@
 # PROCEDURES:  
 #   fMRIEngineBuildUIForSignalModeling  the
 #   fMRIEngineUpdateConditionsForSignalModeling
-#   fMRIEngineAddBaselineEVs
 #   fMRIEngineSelectConditionForSignalModeling
 #   fMRIEngineSelectWaveFormForSignalModeling
 #   fMRIEngineSelectConvolutionForSignalModeling
@@ -46,8 +45,8 @@
 #   fMRIEngineSelectLowpassForSignalModeling
 #   fMRIEngineDeleteEV
 #   fMRIEngineShowEVToEdit
-#   fMRIEngineCombineRuns
-#   fMRIEngineEstimate
+#   fMRIEngineAddRegressors
+#   fMRIEngineFitModel
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -62,11 +61,12 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
 
     frame $parent.fModeling     -bg $Gui(activeWorkspace) -relief groove -bd 1 
     frame $parent.fAddiModeling -bg $Gui(activeWorkspace) -relief groove -bd 1 
+    frame $parent.fChoices      -bg $Gui(activeWorkspace)
     frame $parent.fOK           -bg $Gui(activeWorkspace)
     frame $parent.fEVs          -bg $Gui(activeWorkspace) -relief groove -bd 1
     frame $parent.fEstimate     -bg $Gui(activeWorkspace) -relief groove -bd 1
  
-    pack $parent.fModeling $parent.fAddiModeling $parent.fOK \
+    pack $parent.fModeling $parent.fAddiModeling $parent.fChoices $parent.fOK \
         $parent.fEVs $parent.fEstimate -side top -fill x -pady 2 -padx 1 
 
     #-------------------------------------------
@@ -256,6 +256,16 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
         3,2 $f.bCustomHelp -padx 1 -pady 1 
 
     #-------------------------------------------
+    # Choices frame 
+    #-------------------------------------------
+    set f $parent.fChoices
+    eval {checkbutton $f.cApplyAll \
+        -variable fMRIEngine(checkbuttonApplyAllConditions) \
+        -text "Apply to all conditions"} $Gui(WEA) 
+    $f.cApplyAll deselect 
+    pack $f.cApplyAll -padx 1 -pady 2 -fill x
+
+    #-------------------------------------------
     # OK frame 
     #-------------------------------------------
     set f $parent.fOK
@@ -307,9 +317,101 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
     # Estimate frame 
     #-------------------------------------------
     set f $parent.fEstimate
+    frame $f.fTop      -bg $Gui(activeWorkspace)
+    frame $f.fBot    -bg $Gui(activeWorkspace)
+    pack $f.fTop $f.fBot -side top -fill x -pady 1 -padx 2 
+
+    set f $parent.fEstimate.fTop
+
     DevAddButton $f.bHelp "?" "fMRIEngineHelpSetupEstimate" 2
-    DevAddButton $f.bEstimate "Fit Model" "fMRIEngineEstimate" 15 
-    grid $f.bEstimate $f.bHelp -padx 1 -pady 4 -sticky e
+    DevAddButton $f.bEstimate "Fit Model" "fMRIEngineFitModel" 15 
+
+    set runList [list {None}]
+    set df [lindex $runList 0] 
+    eval {menubutton $f.mbType -text $df \
+        -relief raised -bd 2 -width 8 \
+        -menu $f.mbType.m} $Gui(WMBA)
+#    bind $f.mbType <1> "fMRIEngineUpdateRunsForModelFitting" 
+    eval {menu $f.mbType.m} $Gui(WMA)
+
+    # Add menu items
+    foreach m $runList  {
+        $f.mbType.m add command -label $m \
+            -command "fMRIEngineUpdateRunsForModelFitting" 
+    }
+
+    set fMRIEngine(curRunForModelFitting) 1 
+
+    # Save menubutton for config
+    set fMRIEngine(gui,runListMenuButtonForModelFitting) $f.mbType
+    set fMRIEngine(gui,runListMenuForModelFitting) $f.mbType.m
+
+    grid $f.bHelp $f.bEstimate $f.mbType -padx 1 -pady 2 
+
+#    set f $parent.fEstimate.fBot
+#    DevAddButton $f.bView "View Coefficients" "fMRIEngineViewCoefficients" 27 
+#    grid $f.bView -padx 1 -pady 2 
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineViewCoefficients
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineViewCoefficients {} {
+    global fMRIEngine 
+
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineSelectRunForModelFitting
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineSelectRunForModelFitting {run} {
+    global fMRIEngine 
+
+    # configure menubutton
+    $fMRIEngine(gui,runListMenuButtonForModelFitting) config -text $run
+    set fMRIEngine(curRunForModelFitting) $run 
+}
+
+ 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineUpdateRunsForModelFitting
+#
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineUpdateRunsForModelFitting {} {
+    global fMRIEngine 
+ 
+    set fMRIEngine(noOfSpecifiedRuns) [$fMRIEngine(seqListBox) size] 
+
+    $fMRIEngine(gui,runListMenuForModelFitting) delete 0 end
+    set runs [$fMRIEngine(seqListBox) size] 
+    if {$runs == 0} {
+        fMRIEngineSelectRunForModelFitting None 
+        $fMRIEngine(gui,runListMenuForModelFitting) add command -label None \
+            -command "fMRIEngineSelectRunForModelFitting None"
+    } else { 
+        if {$runs > 1} {
+            fMRIEngineSelectRunForModelFitting All 
+            $fMRIEngine(gui,runListMenuForModelFitting) add command -label All \
+                -command "fMRIEngineSelectRunForModelFitting All"
+        }
+
+        set count 1
+        while {$count <= $runs} {
+            fMRIEngineSelectRunForModelFitting $count
+            $fMRIEngine(gui,runListMenuForModelFitting) add command -label $count \
+                -command "fMRIEngineSelectRunForModelFitting $count"
+            incr count
+        }   
+    }
 }
 
 
@@ -355,27 +457,6 @@ proc fMRIEngineUpdateConditionsForSignalModeling {} {
     }
 
     fMRIEngineSelectConditionForSignalModeling $firstCondition 
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC fMRIEngineAddBaselineEVs
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc fMRIEngineAddBaselineEVs {} {
-    global fMRIEngine 
-
-    $fMRIEngine(evsListBox) delete 0 end
-
-    set i 1
-    while {$i <= $fMRIEngine(noOfRuns)} {
-        $fMRIEngine(evsListBox) insert end "r$i:baseline"
-        incr i 
-    }
-
-    set fMRIEngine(baselineEVsAdded) $fMRIEngine(noOfRuns) 
 }
 
 
@@ -453,7 +534,7 @@ proc fMRIEngineSelectLowpassForSignalModeling {pass} {
     set fMRIEngine(curLowpassForSignal) $pass 
 }
 
-  
+   
 proc fMRIEngineAddOrEditEV {} {
     global fMRIEngine 
 
@@ -462,20 +543,21 @@ proc fMRIEngineAddOrEditEV {} {
         DevErrorWindow "Select a valid condition."
         return
     }
+
     set wform $fMRIEngine(curWaveFormForSignal) 
     set conv  $fMRIEngine(curConvolutionForSignal) 
     set deriv $fMRIEngine(checkbuttonTempDerivative) 
     set hpass $fMRIEngine(curHighpassForSignal)
     set lpass $fMRIEngine(curLowpassForSignal) 
     set effes $fMRIEngine(checkbuttonGlobalEffects) 
-
     set ev "$con:$wform:$conv:$deriv:$hpass:$lpass:$effes"
     if {[info exists fMRIEngine($ev,ev)]} {
-        DevErrorWindow "This EV already exists: \n$ev"
-        return
+        DevErrorWindow "This EV already exists:\n$ev"
+        if {! $fMRIEngine(checkbuttonApplyAllConditions)} {
+            return
+        }
     }
 
-    # If an EV exists with the same conditon, remove it
     set i 0
     set found -1 
     set index -1
@@ -483,38 +565,60 @@ proc fMRIEngineAddOrEditEV {} {
     while {$i < $size} {  
         set v [$fMRIEngine(evsListBox) get $i] 
         if {$v != ""} {
-            set found [string first $con $v]
-            if {$found >= 0} {
-                fMRIEngineDeleteEV $i
-                break
+            if {! $fMRIEngine(checkbuttonApplyAllConditions)} {
+                # If an EV exists with the same conditon, remove it
+                set found [string first $con $v]
+                if {$found >= 0} {
+                    fMRIEngineDeleteEV $i
+                    break
+                }
+            } else {
+                set found [string first "baseline" $v]
+                if {$found == -1} {
+                    $fMRIEngine(evsListBox) delete $i end 
+                    break
+                }
             }
-        }
-
+        } 
         incr i
     }
 
-    if {$con != ""} {
-        set i 1 
-        set i2 [string first ":" $con]
-        set run [string range $con $i [expr $i2-1]] 
-        set run [string trim $run]
-        set title [string range $con [expr $i2+1] end] 
-        set title [string trim $title]
+    # add EVs
+    set j 0
+    set end [$fMRIEngine(gui,conditionsMenuForSignal) index end] 
+    while {$j <= $end} {  
+        set v [$fMRIEngine(gui,conditionsMenuForSignal) entrycget $j -label] 
+        if {$v != ""} {
+            set i 1 
+            set i2 [string first ":" $v]
+            set run [string range $v $i [expr $i2-1]] 
+            set run [string trim $run]
+            set title [string range $v [expr $i2+1] end] 
+            set title [string trim $title]
+
+            set ev "$v:$wform:$conv:$deriv:$hpass:$lpass:$effes"
+
+            if {$fMRIEngine(checkbuttonApplyAllConditions) ||
+                ((! $fMRIEngine(checkbuttonApplyAllConditions)) && $con == $v)} {
+
+                set fMRIEngine($ev,ev)               $ev
+                set fMRIEngine($ev,run)              $run
+                set fMRIEngine($ev,title,ev)         $title
+                set fMRIEngine($ev,condition,ev)     $v
+                set fMRIEngine($ev,waveform,ev)      $wform
+                set fMRIEngine($ev,convolution,ev)   $conv
+                set fMRIEngine($ev,derivative,ev)    $deriv
+                set fMRIEngine($ev,highpass,ev)      $hpass
+                set fMRIEngine($ev,lowpass,ev)       $lpass
+                set fMRIEngine($ev,globaleffects,ev) $effes
+
+                $fMRIEngine(evsListBox) insert end $ev
+            }
+        } 
+
+        incr j 
     }
-
-    set fMRIEngine($ev,ev)               $ev
-    set fMRIEngine($ev,run)              $run
-    set fMRIEngine($ev,title,ev)         $title
-    set fMRIEngine($ev,condition,ev)     $con
-    set fMRIEngine($ev,waveform,ev)      $wform
-    set fMRIEngine($ev,convolution,ev)   $conv
-    set fMRIEngine($ev,derivative,ev)    $deriv
-    set fMRIEngine($ev,highpass,ev)      $hpass
-    set fMRIEngine($ev,lowpass,ev)       $lpass
-    set fMRIEngine($ev,globaleffects,ev) $effes
-
-    $fMRIEngine(evsListBox) insert end $ev 
-}
+} 
 
 
 #-------------------------------------------------------------------------------
@@ -584,84 +688,27 @@ proc fMRIEngineShowEVToEdit {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC fMRIEngineCombineRuns
+# .PROC fMRIEngineAddInputVolumes
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineCombineRuns {} {
-    global MultiVolumeReader fMRIEngine fMRIModelView 
+proc fMRIEngineAddInputVolumes {run} {
+    global MultiVolumeReader fMRIEngine
 
-    if {[info commands fMRIEngine(regressors)] != ""} {
-        fMRIEngine(regressors) Delete
-        unset -nocomplain fMRIEngine(regressors)
-    }
-    vtkFloatArray fMRIEngine(regressors)
-
-    set evs [expr $fMRIModelView(Design,totalEVs) / $fMRIEngine(noOfRuns)] 
-    set vols 0
-    for {set r 1} {$r <= $fMRIEngine(noOfRuns)} {incr r} { 
-        set seqName $fMRIEngine($r,sequenceName)
-        set vols [expr $MultiVolumeReader($seqName,noOfVolumes) + $vols]
-    }
-#    puts "evs = $evs"
-#    puts "vols = $vols"
-
-    fMRIEngine(regressors) SetNumberOfTuples $vols 
-    fMRIEngine(regressors) SetNumberOfComponents $evs 
-
-    for {set i 1} {$i <= $evs} {incr i} { 
-        set data ""
-        for {set r 1} {$r <= $fMRIEngine(noOfRuns)} {incr r} { 
-            set data [concat $data $fMRIModelView(Data,Run$r,EV$i,EVData)]
-        }
-
-        set fMRIEngine($i,combinedEVs) $data 
+    if {$run == "None"} {
+        return
     }
 
-    for {set j 0} {$j < $vols} {incr j} { 
-        for {set i 0} {$i < $evs} {incr i} { 
-            set index [expr $i+1]
-            set data $fMRIEngine($index,combinedEVs)
-            set e [lindex $data $j]
-            fMRIEngine(regressors) InsertComponent $j $i $e 
-        }
-    }
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC fMRIEngineEstimate
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc fMRIEngineEstimate {} {
-    global fMRIEngine Gui Volume MultiVolumeReader
-
-    # generates data without popping up the model image 
-    set done [fMRIModelViewGenerateModel]
-    if {! $done} {
-        return 
+    set start $run
+    set last $run
+    if {$run == "All"} {
+        set start 1
+        set last [$fMRIEngine(seqListBox) size] 
     }
 
-    fMRIEngineCombineRuns
-
-    # always uses a new instance of vtkActivationEstimator 
-    if {[info commands fMRIEngine(actEstimator)] != ""} {
-        fMRIEngine(actEstimator) Delete
-        unset -nocomplain fMRIEngine(actEstimator)
-    }
-    vtkActivationEstimator fMRIEngine(actEstimator)
-
-    # adds progress bar
-    set obs1 [fMRIEngine(actEstimator) AddObserver StartEvent MainStartProgress]
-    set obs2 [fMRIEngine(actEstimator) AddObserver ProgressEvent \
-              "MainShowProgress fMRIEngine(actEstimator)"]
-    set obs3 [fMRIEngine(actEstimator) AddObserver EndEvent MainEndProgress]
-    set Gui(progressText) "Estimating..."
-
-    for {set r 1} {$r <= $fMRIEngine(noOfRuns)} {incr r} { 
+    set fMRIEngine(totalVolsForModelFitting) 0
+    for {set r $start} {$r <= $last} {incr r} { 
         set seqName $fMRIEngine($r,sequenceName)
         set id $MultiVolumeReader($seqName,firstMRMLid)
         set id2 $MultiVolumeReader($seqName,lastMRMLid)
@@ -670,10 +717,314 @@ proc fMRIEngineEstimate {} {
         while {$id <= $id2} {
             Volume($id,vol) Update
             fMRIEngine(actEstimator) AddInput [Volume($id,vol) GetOutput]
+            incr fMRIEngine(totalVolsForModelFitting)
+ 
             incr id
         }
     }
+}
 
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineCheckMultiRuns
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineCheckMultiRuns {} {
+    global fMRIEngine
+
+    # check number of condition EVs
+    for {set r 2} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
+        if {$fMRIEngine($r,noOfEVs) != $fMRIEngine(1,noOfEVs)} {
+            DevErrorWindow "Run1 and run$r are not equal in number of condition EVs."
+            return 1
+        }
+    }
+
+    # check types of condition EVs
+    for {set r 2} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
+        foreach n1 $fMRIEngine(1,namesOfEVs) \
+                n2 $fMRIEngine($r,namesOfEVs) {
+            if {! [string equal -nocase $n1 $n2]} {
+                DevErrorWindow "Run1 and run$r don't have the same types of condition EVs."
+                return 1
+            }
+        }
+    }
+
+    # check baseline for each run 
+    for {set r 2} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
+        if {$::fMRIModelView(Design,Run1,UseBaseline) !=  
+            $::fMRIModelView(Design,Run$r,UseBaseline)} {
+            DevErrorWindow "Run1 and run$r are different in baseline modeling."
+            return 1
+        }
+    }
+
+    # check baseline for each run 
+    for {set r 2} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
+        if {$::fMRIModelView(Design,Run1,UseDCBasis) !=  
+            $::fMRIModelView(Design,Run$r,UseDCBasis)} {
+            DevErrorWindow "Run1 and run$r are different in baseline modeling."
+            return 1
+        }
+    }
+    return 0
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineAddRegressors
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineAddRegressors {run} {
+    global MultiVolumeReader fMRIEngine fMRIModelView 
+
+    if {$run == "None"} {
+        return 1
+    }
+
+    if {[info commands fMRIEngine(regressors)] != ""} {
+        fMRIEngine(regressors) Delete
+        unset -nocomplain fMRIEngine(regressors)
+    }
+    vtkFloatArray fMRIEngine(regressors)
+
+    #--- Additional EVs: baseline and DCBasis
+    for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
+        if {$::fMRIModelView(Design,Run$r,UseBaseline)} {
+            set evs($r) [expr $fMRIEngine($r,noOfEVs)+1]
+        }
+        if {$::fMRIModelView(Design,Run$r,UseDCBasis)} {
+            set evs($r) [expr $fMRIEngine($r,noOfEVs)+7]
+        }
+    }
+ 
+    if {$run != "All"} {
+        # single run
+        fMRIEngine(regressors) SetNumberOfComponents $evs($run)
+        set seqName $fMRIEngine($run,sequenceName)
+        set vols $MultiVolumeReader($seqName,noOfVolumes) 
+        fMRIEngine(regressors) SetNumberOfTuples $vols
+
+        for {set j 0} {$j < $vols} {incr j} { 
+            for {set i 0} {$i < $evs($run)} {incr i} { 
+                set index [expr $i+1]
+                set data $fMRIModelView(Data,Run$run,EV$index,EVData)
+                set e [lindex $data $j]
+                fMRIEngine(regressors) InsertComponent $j $i $e 
+            }
+        }
+    } else {
+        # runs combined
+
+        if {[fMRIEngineCheckMultiRuns] == 1} {
+            return 1
+        }
+
+        set vols 0
+        for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} { 
+            set seqName $fMRIEngine($r,sequenceName)
+            set vols [expr $MultiVolumeReader($seqName,noOfVolumes) + $vols]
+        }
+
+        fMRIEngine(regressors) SetNumberOfTuples $vols 
+        fMRIEngine(regressors) SetNumberOfComponents $evs(1) 
+
+        for {set i 1} {$i <= $evs(1)} {incr i} { 
+            set data ""
+            for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} { 
+                set data [concat $data $fMRIModelView(Data,Run$r,EV$i,EVData)]
+            }
+            set fMRIEngine($i,combinedEVs) $data 
+        }
+
+        for {set j 0} {$j < $vols} {incr j} { 
+            for {set i 0} {$i < $evs(1)} {incr i} { 
+                set index [expr $i+1]
+                set data $fMRIEngine($index,combinedEVs)
+                set e [lindex $data $j]
+                fMRIEngine(regressors) InsertComponent $j $i $e 
+            }
+        }
+    }
+
+    return 0
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineCountEVs
+# Counts real EVs for each run
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineCountEVs {} {
+    global fMRIEngine
+
+    # cleaning
+    for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} { 
+        set ::fMRIModelView(Design,Run$r,UseBaseline) 0
+        set ::fMRIModelView(Design,Run$r,UseDCBasis) 0 
+        unset -nocomplain fMRIEngine($r,noOfEVs)
+        unset -nocomplain fMRIEngine($r,namesOfEVs)
+    }
+
+    # how many real (not including baseline and DCBasis) evs for each run
+    set i 0
+    set size [$fMRIEngine(evsListBox) size]
+    while {$i < $size} {  
+        set ev [$fMRIEngine(evsListBox) get $i] 
+        if {$ev != ""} {
+            set found [string first "baseline" $ev]
+            if {$found >= 0} {
+                # baseline ev
+                set i1 1 
+                set i2 [string first ":" $ev]
+                set r [string range $ev $i1 [expr $i2-1]] 
+                set r [string trim $r]
+                set ::fMRIModelView(Design,Run$r,UseBaseline) 1
+            } else {
+                set run $fMRIEngine($ev,run)
+                set wform $fMRIEngine($ev,waveform,ev)   
+                set conv  $fMRIEngine($ev,convolution,ev)
+                set deriv $fMRIEngine($ev,derivative,ev)
+                set hpass $fMRIEngine($ev,highpass,ev)
+                set title $fMRIEngine($ev,title,ev)
+
+                # Names of EVs for each run
+                lappend fMRIEngine($run,namesOfEVs) $title
+
+                # Number of EVs for each run
+                if {! [info exists fMRIEngine($run,noOfEVs)]} {
+                    set fMRIEngine($run,noOfEVs) 1
+                } else {
+                    incr fMRIEngine($run,noOfEVs) 
+                }
+
+                # DCBasis
+                if {$hpass == "Discrete Cosine Set"} {
+                    set ::fMRIModelView(Design,Run$run,UseDCBasis) 1
+                }
+
+                # EV signal type
+                if {$deriv} {
+                    if {$conv == "none"} {
+                        if {$wform == "Box Car"} {
+                            set wf "boxcar_dt"
+                        } else {
+                            set wf "halfsine_dt"
+                        }
+                    } else {
+                        if {$wform == "Box Car"} {
+                            set wf "boxcar_cHRF_dt"
+                        } else {
+                            set wf "halfsine_cHRF_dt"
+                        }
+                    }
+                } else {
+                    if {$conv == "none"} {
+                        if {$wform == "Box Car"} {
+                            set wf "boxcar"
+                        } else {
+                            set wf "halfsine"
+                        }
+                    } else {
+                        if {$wform == "Box Car"} {
+                            set wf "boxcar_cHRF"
+                        } else {
+                            set wf "halfsine_cHRF"
+                        }
+                    }
+                }
+                # Signal types of EVs for each run
+                set fMRIEngine($run,$title,signalType) $wf
+            }
+        } 
+        incr i
+    }
+
+    # re-order the name lists
+    for {set r 2} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} { 
+        unset -nocomplain names
+        foreach name $fMRIEngine(1,namesOfEVs) {
+            set found [lsearch -exact $fMRIEngine($r,namesOfEVs) $name]
+            if {$found >= 0} {
+                lappend names $name
+                # delete it from the list of run r
+                set fMRIEngine($r,namesOfEVs) \
+                    [lreplace $fMRIEngine($r,namesOfEVs) $found $found]
+            }
+        }
+        set fMRIEngine($r,namesOfEVs) [concat $names $fMRIEngine($r,namesOfEVs)] 
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineFitModel
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineFitModel {} {
+    global fMRIEngine Gui Volume MultiVolumeReader
+
+    if {$fMRIEngine(curRunForModelFitting) == "None"} {
+        DevErrorWindow "Select a valid run for model fitting."
+        return 
+    }
+
+    if {$fMRIEngine(noOfSpecifiedRuns) == 0} {
+        DevErrorWindow "No run has been specified."
+        return
+    }
+
+    fMRIEngineCountEVs
+
+    set start $fMRIEngine(curRunForModelFitting)
+    set last $start
+    if {$start == "All"} {
+        set start 1
+        set last $fMRIEngine(noOfSpecifiedRuns)
+    }
+    for {set r $start} {$r <= $last} {incr r} { 
+        if {! [info exists fMRIEngine($r,noOfEVs)]} {
+            DevErrorWindow "Complete signal modeling first for run$r."
+            return
+        }
+    }
+
+    # generates data without popping up the model image 
+    set done [fMRIModelViewGenerateModel]
+    if {! $done} {
+        DevErrorWindow "Error in generating model for model fitting."
+        puts "Error in generating model for model fitting."
+        return 
+    }
+
+    # always uses a new instance of vtkActivationEstimator 
+    if {[info commands fMRIEngine(actEstimator)] != ""} {
+        fMRIEngine(actEstimator) Delete
+        unset -nocomplain fMRIEngine(actEstimator)
+    }
+    vtkActivationEstimator fMRIEngine(actEstimator)
+    fMRIEngineAddInputVolumes $fMRIEngine(curRunForModelFitting)
+ 
+    # adds progress bar
+    set obs1 [fMRIEngine(actEstimator) AddObserver StartEvent MainStartProgress]
+    set obs2 [fMRIEngine(actEstimator) AddObserver ProgressEvent \
+              "MainShowProgress fMRIEngine(actEstimator)"]
+    set obs3 [fMRIEngine(actEstimator) AddObserver EndEvent MainEndProgress]
+    if {$fMRIEngine(curRunForModelFitting) == "All"} {
+        set Gui(progressText) "Estimating all runs..."
+    } else {
+        set Gui(progressText) "Estimating run$fMRIEngine(curRunForModelFitting)..."
+    }
     puts $Gui(progressText)
  
     # always uses a new instance of vtkActivationDetector
@@ -682,6 +1033,12 @@ proc fMRIEngineEstimate {} {
         unset -nocomplain fMRIEngine(detector)
     }
     vtkActivationDetector fMRIEngine(detector)
+
+    set rt [fMRIEngineAddRegressors $fMRIEngine(curRunForModelFitting)]
+    if {$rt == 1} {
+        puts "...failed"
+        return 
+    }
 
     fMRIEngine(detector) SetDetectionMethod 1
     fMRIEngine(detector) SetRegressors fMRIEngine(regressors) 
