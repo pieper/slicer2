@@ -25,6 +25,9 @@
 #ifndef __vtkNRRDReader_h
 #define __vtkNRRDReader_h
 
+#include <string>
+#include <map>
+
 #include "vtkITKConfigure.h"
 #include "vtkMedicalImageReader2.h"
 #include "vtkMatrix4x4.h"
@@ -41,6 +44,15 @@ public:
   // Description:
   // Returns a IJK to RAS transformation matrix
   vtkMatrix4x4* GetRasToIjkMatrix();
+
+  // Description:
+  // Get a space separated list of all keys in the header
+  // the string is allocated and deleted in this object
+  char* GetHeaderKeys();
+
+  // Description:
+  // Get a value given a key in the header
+  char* GetHeaderValue(char *key);
 
   virtual void PrintSelf(ostream& os, vtkIndent indent);
 
@@ -151,7 +163,12 @@ protected:
   ~vtkNRRDReader();
 
   vtkMatrix4x4* RasToIjkMatrix;
-  int           InterleaveVolume;
+
+  char* HeaderKeys;
+
+  //BTX
+  std::map <std::string, std::string> HeaderKeyValue;
+  //ETX
 
   virtual void ExecuteInformation();
   virtual void ExecuteData(vtkDataObject *out);

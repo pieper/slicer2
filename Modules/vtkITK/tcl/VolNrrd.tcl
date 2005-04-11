@@ -265,7 +265,7 @@ proc VolNrrdApply {} {
 
     $imdata UpdateInformation
 
-    puts [[nrrdReader GetRasToIjkMatrix] Print]
+    puts "Header Keys = [nrrdReader GetHeaderKeys]"
 
     if {$Module(verbose) == 1} {
         puts "proc VolNrrd: UpdateInformation done"

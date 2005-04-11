@@ -21,18 +21,24 @@
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.4 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.5 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
 {
-  RasToIjkMatrix = 0;
+  RasToIjkMatrix = NULL;
+  HeaderKeys = NULL;
 }
 
 vtkNRRDReader::~vtkNRRDReader() 
 {
   if (RasToIjkMatrix) {
     RasToIjkMatrix->Delete();
+    RasToIjkMatrix = NULL;
+  }
+  if (HeaderKeys) {
+    delete [] HeaderKeys;
+    HeaderKeys = NULL;
   }
 }
 
@@ -42,6 +48,36 @@ vtkMatrix4x4* vtkNRRDReader::GetRasToIjkMatrix()
   return RasToIjkMatrix;
 }
 
+char* vtkNRRDReader::GetHeaderKeys()
+{
+  std::string keys;
+  for (std::map<std::string,std::string>::iterator i = HeaderKeyValue.begin();
+       i != HeaderKeyValue.end(); i++) {
+    std::string s = static_cast<std::string> (i->first);
+    if (i != HeaderKeyValue.begin()){
+      keys = keys + " ";
+    }
+    keys = keys + s;
+  }
+  if (HeaderKeys) {
+    delete [] HeaderKeys;
+  }
+  HeaderKeys = new char[keys.size()];
+  strcpy(HeaderKeys, keys.c_str());
+
+  return HeaderKeys;
+}
+
+char* vtkNRRDReader::GetHeaderValue(char *key)
+{
+  std::map<std::string,std::string>::iterator i = HeaderKeyValue.find(key);
+  if (i != HeaderKeyValue.end()) {
+    return (char *)(i->second.c_str());
+  }
+  else {
+    return NULL;
+  }
+}
 
 int vtkNRRDReader::CanReadFile(const char* filename)
 {
@@ -138,6 +174,8 @@ void vtkNRRDReader::ExecuteInformation()
    char *err;
    NrrdIoState *nio;
    Nrrd *nrrd;
+
+   HeaderKeyValue.clear();
 
    if (RasToIjkMatrix) {
      RasToIjkMatrix->Delete();
@@ -261,27 +299,14 @@ void vtkNRRDReader::ExecuteInformation()
    this->SetDataOrigin(origins);
    this->SetDataExtent(dataExtent);
 
-
-// TODO - make map of key/value pairs and add GetKeys and GetValue <key> methods
-#if 0 
-
    // Push extra key/value pair data into an itkDataDictionary
-   MetaDataDictionary &thisDic=this->GetMetaDataDictionary();
-   std::string classname(this->GetNameOfClass());
-   EncapsulateMetaData<std::string>(thisDic, ITK_InputFilterName, classname);
-   // EncapsulateMetaData<std::string>(thisDic, ITK_OnDiskStorageTypeName,  std::string());
-   // itk::EncapsulateMetaData<std::string>(thisDic,ITK_ImageFileBaseName,std::string(this->m_hdr.hk.db_name,18));
-
-   for (i=0; i < nrrdKeyValueSize(nrrd); i++)
-     {
+   for (i=0; i < nrrdKeyValueSize(nrrd); i++) {
      nrrdKeyValueIndex(nrrd, &key, &val, i);
-     EncapsulateMetaData<std::string>(thisDic, std::string(key), std::string(val));
+     HeaderKeyValue[std::string(key)] = std::string(val);
      free(key);  // key and val point to malloc'd data!!
      free(val);
      key = val = NULL;
-     }
-#endif
-
+   }
 
   this->vtkImageReader2::ExecuteInformation();
    
