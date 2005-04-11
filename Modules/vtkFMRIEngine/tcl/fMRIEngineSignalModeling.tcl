@@ -766,10 +766,11 @@ proc fMRIEngineCheckMultiRuns {} {
     for {set r 2} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
         if {$::fMRIModelView(Design,Run1,UseDCBasis) !=  
             $::fMRIModelView(Design,Run$r,UseDCBasis)} {
-            DevErrorWindow "Run1 and run$r are different in baseline modeling."
+            DevErrorWindow "Run1 and run$r are different in DCBasis modeling."
             return 1
         }
     }
+
     return 0
 }
 
@@ -796,22 +797,22 @@ proc fMRIEngineAddRegressors {run} {
     #--- Additional EVs: baseline and DCBasis
     for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
         if {$::fMRIModelView(Design,Run$r,UseBaseline)} {
-            set evs($r) [expr $fMRIEngine($r,noOfEVs)+1]
+            set fMRIEngine($r,totalEVs) [expr $fMRIEngine($r,noOfEVs)+1]
         }
         if {$::fMRIModelView(Design,Run$r,UseDCBasis)} {
-            set evs($r) [expr $fMRIEngine($r,noOfEVs)+7]
+            set fMRIEngine($r,totalEVs) [expr $fMRIEngine($r,noOfEVs)+7]
         }
     }
  
     if {$run != "All"} {
         # single run
-        fMRIEngine(regressors) SetNumberOfComponents $evs($run)
+        fMRIEngine(regressors) SetNumberOfComponents $fMRIEngine($run,totalEVs)
         set seqName $fMRIEngine($run,sequenceName)
         set vols $MultiVolumeReader($seqName,noOfVolumes) 
         fMRIEngine(regressors) SetNumberOfTuples $vols
 
         for {set j 0} {$j < $vols} {incr j} { 
-            for {set i 0} {$i < $evs($run)} {incr i} { 
+            for {set i 0} {$i < $fMRIEngine($run,totalEVs)} {incr i} { 
                 set index [expr $i+1]
                 set data $fMRIModelView(Data,Run$run,EV$index,EVData)
                 set e [lindex $data $j]
@@ -832,9 +833,9 @@ proc fMRIEngineAddRegressors {run} {
         }
 
         fMRIEngine(regressors) SetNumberOfTuples $vols 
-        fMRIEngine(regressors) SetNumberOfComponents $evs(1) 
+        fMRIEngine(regressors) SetNumberOfComponents $fMRIEngine(1,totalEVs) 
 
-        for {set i 1} {$i <= $evs(1)} {incr i} { 
+        for {set i 1} {$i <= $fMRIEngine(1,totalEVs)} {incr i} { 
             set data ""
             for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} { 
                 set data [concat $data $fMRIModelView(Data,Run$r,EV$i,EVData)]
@@ -843,7 +844,7 @@ proc fMRIEngineAddRegressors {run} {
         }
 
         for {set j 0} {$j < $vols} {incr j} { 
-            for {set i 0} {$i < $evs(1)} {incr i} { 
+            for {set i 0} {$i < $fMRIEngine(1,totalEVs)} {incr i} { 
                 set index [expr $i+1]
                 set data $fMRIEngine($index,combinedEVs)
                 set e [lindex $data $j]
