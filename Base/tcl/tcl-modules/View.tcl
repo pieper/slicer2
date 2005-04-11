@@ -87,13 +87,16 @@ proc ViewInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.41 $} {$Date: 2005/01/28 21:45:01 $}]
+        {$Revision: 1.42 $} {$Date: 2005/04/11 14:47:49 $}]
 
     # Default values
     set View(default,LightIntensity) 0.7
     set View(default,LightKeyToFillRatio) 2
     set View(default,LightKeyToHeadRatio) 1.75
     set View(default,LightKeyToBackRatio) 3.75
+
+
+    set ::View(LightKit,updating) 0
 
 }
 
@@ -475,6 +478,13 @@ proc ViewUpdateLightIntensity {args} {
 proc ViewSwitchLightKit {{state ""}} {
     global View
 
+    if { $::View(LightKit,updating) } {
+        return 
+    }
+    set ::View(LightKit,updating) 1
+    
+
+
     set ren viewRen
 
     if {![info exists View(LightSavedHeadlight)]} {
@@ -506,19 +516,23 @@ proc ViewSwitchLightKit {{state ""}} {
     if {$View(LightMode) == "Headlight"} {
         $View(LightSavedHeadlight) SetIntensity $View(LightIntensity)
 
-        catch {
-            $View(HeadRatioScale) config -state disabled
-            $View(FillRatioScale) config -state disabled
-            if {$View(LightKitHasBackLights)} {
-                $View(BackRatioScale) config -state disabled
+        if { 0 } {
+            catch {
+                $View(HeadRatioScale) config -state disabled
+                $View(FillRatioScale) config -state disabled
+                if {$View(LightKitHasBackLights)} {
+                    $View(BackRatioScale) config -state disabled
+                }
             }
         }
     } else {
-        catch {
-            $View(HeadRatioScale) config -state normal
-            $View(FillRatioScale) config -state normal
-            if {$View(LightKitHasBackLights)} {
-                $View(BackRatioScale) config -state normal              
+        if { 0 } {
+            catch {
+                $View(HeadRatioScale) config -state normal
+                $View(FillRatioScale) config -state normal
+                if {$View(LightKitHasBackLights)} {
+                    $View(BackRatioScale) config -state normal              
+                }
             }
         }
         $View(LightKit) SetKeyLightIntensity $View(LightIntensity)
@@ -528,8 +542,10 @@ proc ViewSwitchLightKit {{state ""}} {
             $View(LightKit) SetKeyToBackRatio $View(LightKeyToBackRatio)
         }
 
-    }   
+    }
+
     Render3D
+    set ::View(LightKit,updating) 0
 }
 
 #-------------------------------------------------------------------------------
