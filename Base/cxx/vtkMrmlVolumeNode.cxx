@@ -1154,4 +1154,35 @@ void vtkMrmlVolumeNode::DeleteDICOMMultiFrameOffsets()
   DICOMMultiFrameOffsets = 0;
 }
 
+char* vtkMrmlVolumeNode::ComputeScanOrderFromRasToIjk(vtkMatrix4x4 *RasToIjk)
+{
+  vtkMatrix4x4 *IjkToRas = vtkMatrix4x4::New();
+  vtkMatrix4x4::Invert(RasToIjk, IjkToRas);
+
+  vtkFloatingPointType dir[3];
+  for (int i=0; i<3; i++) {
+    dir[i] = IjkToRas->GetElement(i,2);
+  }
+  double l = vtkMath::Normalize(dir);
+  if (l == 0.0) {
+    return 0;
+  }
+  if (fabs(dir[0] - 1.0) < 0.01 ) {
+    return "LR";
+  } else  if (fabs(dir[0] + 1.0) < 0.01 ) {
+    return "RL";
+  } else  if (fabs(dir[1] - 1.0) < 0.01 ) {
+    return "PA";
+  } else  if (fabs(dir[1] + 1.0) < 0.01 ) {
+    return "AP";
+  } else  if (fabs(dir[2] - 1.0) < 0.01 ) {
+    return "IS";
+  } else  if (fabs(dir[2] + 1.0) < 0.01 ) {
+    return "SI";
+  }
+  else {
+    return 0;
+  }
+}
+
 // End

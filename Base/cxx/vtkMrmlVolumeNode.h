@@ -285,6 +285,8 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
   // This matrix can be computed either from corner points, or just he
   // scanOrder.
   void ComputeRasToIjkFromScanOrder(char *order);
+  static char* ComputeScanOrderFromRasToIjk(vtkMatrix4x4 *RasToIjk);
+
   void SetScanOrder(char *s);
   vtkGetStringMacro(ScanOrder);
 
