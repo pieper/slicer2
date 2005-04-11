@@ -135,12 +135,35 @@ proc fMRIEngineComputeContrasts {} {
                 set Gui(progressText) "Computing contrast $name..."
                 puts $Gui(progressText)
 
+                # Extract contrast info from the long 
+                # contrast vector
                 set vec $fMRIEngine($name,contrastVector) 
-                # trim white spaces at beginning and end
-                set vec [string trim $vec]
-                # replace multiple spaces in the middle of the string by one space  
-                regsub -all {( )+} $vec " " vec
-                set contrList [split $vec " "]
+                set originalContrastList [split $vec " "]
+
+                set first 0
+                for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
+                    set last [expr $first+$fMRIEngine($r,totalEVs)-1]
+                    set fMRIEngine($r,contrastList) [lrange $originalContrastList $first $last]
+                    set fMRIEngine($r,contrastString) [join $fMRIEngine($r,contrastList) " "]
+                     
+                    set first [expr $first+$fMRIEngine($r,totalEVs)]
+                }
+
+                set run $fMRIEngine(curRunForModelFitting)
+                if {$run == "All"} {
+                    # combined runs
+                    for {set r 2} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
+                        if {! [string equal -nocase $fMRIEngine(1,contrastString) $fMRIEngine($r,contrastString)]} {
+                            DevErrorWindow "Bad contrast vector for combined runs:\nName: $name\nVector: $vec"
+                            return 
+                        }
+                    }
+
+                    set contrList $fMRIEngine(1,contrastList)
+                } else {
+                    set contrList $fMRIEngine($run,contrastList)
+                }
+
                 set len [llength $contrList]
                 if {[info commands fMRIEngine(contrast)] != ""} {
                     fMRIEngine(contrast) Delete
@@ -223,9 +246,8 @@ proc fMRIEngineComputeContrasts {} {
         MainEndProgress
 
         puts "...done"
-
     } else {
-        DevWarningWindow "There is no contrast to compute."
+        DevErrorWindow "Select contrast(s) to compute."
     }
 }
 
