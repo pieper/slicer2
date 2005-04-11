@@ -40,13 +40,7 @@ public:
 
   // Description:
   // Returns a IJK to RAS transformation matrix
-  vtkMatrix4x4* GetIjkToRasMatrix();
-
-  // Description:
-  // Specifies whether to create interleave volume from multucomponent data
-  vtkBooleanMacro(InterleaveVolume, int);
-  vtkGetMacro(InterleaveVolume, int);
-  vtkSetMacro(InterleaveVolume, int);
+  vtkMatrix4x4* GetRasToIjkMatrix();
 
   virtual void PrintSelf(ostream& os, vtkIndent indent);
 
@@ -156,7 +150,7 @@ protected:
   vtkNRRDReader();
   ~vtkNRRDReader();
 
-  vtkMatrix4x4* IjkToRasMatrix;
+  vtkMatrix4x4* RasToIjkMatrix;
   int           InterleaveVolume;
 
   virtual void ExecuteInformation();

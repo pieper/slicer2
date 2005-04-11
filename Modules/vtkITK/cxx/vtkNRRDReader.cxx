@@ -21,26 +21,25 @@
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.3 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.4 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
 {
-  IjkToRasMatrix = 0;
-  InterleaveVolume = 1;
+  RasToIjkMatrix = 0;
 }
 
 vtkNRRDReader::~vtkNRRDReader() 
 {
-  if (IjkToRasMatrix) {
-    IjkToRasMatrix->Delete();
+  if (RasToIjkMatrix) {
+    RasToIjkMatrix->Delete();
   }
 }
 
-vtkMatrix4x4* vtkNRRDReader::GetIjkToRasMatrix()
+vtkMatrix4x4* vtkNRRDReader::GetRasToIjkMatrix()
 {
   this->ExecuteInformation();
-  return IjkToRasMatrix;
+  return RasToIjkMatrix;
 }
 
 
@@ -140,11 +139,13 @@ void vtkNRRDReader::ExecuteInformation()
    NrrdIoState *nio;
    Nrrd *nrrd;
 
-   if (IjkToRasMatrix) {
-     IjkToRasMatrix->Delete();
+   if (RasToIjkMatrix) {
+     RasToIjkMatrix->Delete();
    }
-   IjkToRasMatrix = vtkMatrix4x4::New();
+   RasToIjkMatrix = vtkMatrix4x4::New();
+   vtkMatrix4x4* IjkToRasMatrix = vtkMatrix4x4::New();
 
+   RasToIjkMatrix->Identity();
    IjkToRasMatrix->Identity();
 
    nio = nrrdIoStateNew();
@@ -190,15 +191,10 @@ void vtkNRRDReader::ExecuteInformation()
    else if ( nrrd->dim == 4) {
      // Assume that 3 first dimensions are spacial
      // and last dimension is the number of data components
-     if (InterleaveVolume) {
-       this->SetNumberOfScalarComponents(1);
-     }
-     else {
-       this->SetNumberOfScalarComponents(nrrd->axis[3].size);
-     }
+     this->SetNumberOfScalarComponents(1);
    }
    else {
-      vtkErrorMacro("Error reading " << this->GetFileName() << ": " << "only 3D volumes supported");
+      vtkErrorMacro("Error reading " << this->GetFileName() << ": " << "only 3D/4D volumes supported");
      return;
    }
 
@@ -216,8 +212,12 @@ void vtkNRRDReader::ExecuteInformation()
    double axis[NRRD_SPACE_DIM_MAX];
 
    for (i=0; i < nrrd->dim; i++) {
-
+     int kind =  nrrd->axis[i].kind;
      if (i < 3) {
+       if (kind != nrrdKindSpace) {
+         vtkErrorMacro("Error reading " << this->GetFileName() << ": " << "dimension # " << i << " must be spacial");
+         return;
+       }
        // spacial dimesion
        dataExtent[2*i] = 0;
        dataExtent[2*i+1] = nrrd->axis[i].size - 1;  
@@ -238,14 +238,25 @@ void vtkNRRDReader::ExecuteInformation()
        for (int j=0; j<nrrd->spaceDim; j++) {
          IjkToRasMatrix->SetElement(j, i, nrrd->axis[i].spaceDirection[j]);
        }
-       IjkToRasMatrix->SetElement(3, i, (dataExtent[2*i+1] - dataExtent[2*i])/2.0);
      }
      else { 
        // assume this is data dimension
        // combine with the last spacial dimension
+       if (kind == nrrdKindSpace) {
+         vtkErrorMacro("Error reading " << this->GetFileName() << ": " << "dimension # " << i << " must be not spacial");
+         return;
+       }
        dataExtent[2*(i-1)+1] =  nrrd->axis[i-1].size * nrrd->axis[i].size - 1;
      }
    }
+
+   vtkMatrix4x4::Invert(IjkToRasMatrix, RasToIjkMatrix);
+   for (i=0; i < nrrd->dim; i++) {
+       RasToIjkMatrix->SetElement(i, 3, (dataExtent[2*i+1] - dataExtent[2*i])/2.0);
+   }
+   RasToIjkMatrix->SetElement(3,3,1.0);
+   IjkToRasMatrix->Delete();
+
    this->SetDataSpacing(spacings);
    this->SetDataOrigin(origins);
    this->SetDataExtent(dataExtent);

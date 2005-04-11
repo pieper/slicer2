@@ -265,12 +265,7 @@ proc VolNrrdApply {} {
 
     $imdata UpdateInformation
 
-    #catch "mat Delete"
-    puts "NAME= [nrrdReader GetFileName]"
-    #vtkMatrix4x4 mat
-    
-    [nrrdReader GetIjkToRasMatrix] Print
-    #puts "ELEM = [[nrrdReader GetIjkToRasMatrix] GetElement(0,0)]"
+    puts [[nrrdReader GetRasToIjkMatrix] Print]
 
     if {$Module(verbose) == 1} {
         puts "proc VolNrrd: UpdateInformation done"
@@ -301,9 +296,11 @@ proc VolNrrdApply {} {
     set Volume(dimensions) "[lindex $dims 0] [lindex $dims 1]"
     set Volume(imageRange) "1 [lindex $dims 2]"
 
-    # TODO fix scan order and bite order
-    set Volume(scanOrder) IS
-    set Volume(littleEndian) 1
+    if {[nrrdReader GetDataByteOrderAsString] == "LittleEndian"} {
+        set Volume(littleEndian) 1
+    } else {
+        set Volume(littleEndian)
+    }
 
     set Volume(sliceSpacing) 0 
 
@@ -322,8 +319,11 @@ proc VolNrrdApply {} {
             [expr $Volume(sliceSpacing) + $Volume(sliceThickness)]
     Volume($i,node) SetTilt $Volume(gantryDetectorTilt)
 
-    Volume($i,node) SetFilePattern $Volume(filePattern) 
+    Volume($i,node) SetFilePattern $Volume(filePattern)
+
+    set Volume(scanOrder)  [Volume($i,node) ComputeScanOrderFromRasToIjk [nrrdReader GetRasToIjkMatrix]]
     Volume($i,node) SetScanOrder $Volume(scanOrder)
+
     Volume($i,node) SetNumScalars $Volume(numScalars)
     Volume($i,node) SetLittleEndian $Volume(littleEndian)
     Volume($i,node) SetFileType $fileType
@@ -421,8 +421,6 @@ proc VolNrrdReaderProc {v} {
 
     flip Update
     Volume($v,vol) SetImageData [flip GetOutput]
-
-    [nrrdReader1 GetIjkToRasMatrix] Print
 
     flip Delete
     nrrdReader1 Delete
