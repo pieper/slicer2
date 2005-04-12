@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkBVolumeReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/04/04 22:18:46 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2005/04/12 16:58:02 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================*/
 #include <sys/types.h>
@@ -77,6 +77,9 @@ vtkBVolumeReader::vtkBVolumeReader()
   this->DataDimensions[0] = 
     this->DataDimensions[1] = 
     this->DataDimensions[2] = 0;
+  this->DataSpacing[0] = 
+    this->DataSpacing[1] = 
+    this->DataSpacing[2] = 0;
   this->FileName = NULL;
   this->RegistrationFileName = NULL;
   this->SliceFileNameExtension = NULL;
@@ -85,10 +88,18 @@ vtkBVolumeReader::vtkBVolumeReader()
   this->ScalarType = 0;
   this->NumTimePoints = 0;
   this->CurTimePoint = 0;
+  for (int i=0; i<12; i++)
+  {
+      this->RASMatrix[i] = 0.0;
+  }
   this->TopL[0] = this->TopL[1] = this->TopL[2] = 0.0;
   this->TopR[0] = this->TopR[1] = this->TopR[2] = 0.0;
   this->BottomR[0] = this->BottomR[1] = this->BottomR[2] = 0.0;
-  
+  this->Normal[0] = this->Normal[1] = this->Normal[2] = 0.0;
+  this->TE = 0.0;
+  this->TR = 0.0;
+  this->TI = 0.0;
+  this->FlipAngle = 0.0;
 }
 
 vtkBVolumeReader::~vtkBVolumeReader()
@@ -482,7 +493,17 @@ int vtkBVolumeReader::ReadVolumeHeader()
             else if(strncmp(line, "n_time_points: ", 15) == 0)
                 sscanf(line, "%*s %d", &this->NumTimePoints);
             else if(strncmp(line, "slice_thick: ", 13) == 0)
-                sscanf(line, "%*s %f", &this->DataSpacing[2]);
+            {
+                // check for a floating point
+                if (strstr(line, ".") == NULL) {
+                    int ds2;
+                    sscanf(line, "%*s %d", &ds2);
+                    this->DataSpacing[2] = (float)ds2;
+                } else {
+                    sscanf(line, "%*s %f", &this->DataSpacing[2]);
+                }
+                vtkDebugMacro(<<"vtkBVolumeReader: Read Volume Header: got slice thickness " << this->DataSpacing[2]);
+            }
             else if(strncmp(line, "image_te: ", 10) == 0)
                 sscanf(line, "%*s %f", &this->TE);
             else if(strncmp(line, "image_tr: ", 10) == 0)
@@ -537,11 +558,20 @@ int vtkBVolumeReader::ReadVolumeHeader()
                 this->BottomR[2] = brs;
             }
             else if(strncmp(line, "normal_r: ", 10) == 0)
+            {
                 sscanf(line, "%*s %g", &this->RASMatrix[6]);
+                this->Normal[0] = this->RASMatrix[6];
+            }
             else if(strncmp(line, "normal_a: ", 10) == 0)
+            {
                 sscanf(line, "%*s %g", &this->RASMatrix[7]);
+                this->Normal[1] = this->RASMatrix[7];
+            }
             else if(strncmp(line, "normal_s: ", 10) == 0)
+            {
                 sscanf(line, "%*s %g", &this->RASMatrix[8]);
+                this->Normal[2] = this->RASMatrix[8];
+            }
         }
     }
     fclose( fp );
@@ -619,7 +649,7 @@ int vtkBVolumeReader::ReadVolumeHeader()
           }
       }
       this->DataDimensions[2] = numSlices;
-      vtkDebugMacro(<<"\n*\n*\n*\n*\n*\n*\n*\n*\nReadVolumeHeader: got numSlices = " << numSlices << ", using it as DataDimensions[2]\n");
+      vtkDebugMacro(<<"\n*\n*\n*\n*\n*\n*\n*\n*\nReadVolumeHeader: got numSlices = " << numSlices << ", using it as DataDimensions[2]\nSetting Dataspacing to be 1, 1, 1");
       
       // We don't have any spacing information, so assign defaults.
       this->DataSpacing[0] = 1.0;
@@ -904,7 +934,13 @@ void vtkBVolumeReader::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Number of time points: " << this->NumTimePoints << endl;
   os << indent << "Current time point: " << this->CurTimePoint << endl;
 
-  os << indent << "RAS Matrix: " << this->RASMatrix << endl;
+  //os << indent << "RAS Matrix: " << this->RASMatrix << endl;
+  os << indent << "RAS to IJK matrix: " << endl;
+  os << indent << "\tx_r " << this->RASMatrix[0] << "\t\tx_a " << this->RASMatrix[1] << "\t\tx_s " << this->RASMatrix[2] << endl;
+  os << indent << "\ty_r " << this->RASMatrix[3] << "\t\ty_a " << this->RASMatrix[4] << "\t\ty_s " << this->RASMatrix[5] << endl;
+  os << indent << "\tz_r " << this->RASMatrix[6] << "\t\tz_a " << this->RASMatrix[7] << "\t\tz_s " << this->RASMatrix[8] << endl;
+  os << indent << "\tc_r " << this->RASMatrix[9] << "\tc_a " << this->RASMatrix[10] << "\tc_s " << this->RASMatrix[11] << endl;
+  
   os << indent << "Registration Matrix: " << endl;
   if (this->RegistrationMatrix)
   {
@@ -916,4 +952,11 @@ void vtkBVolumeReader::PrintSelf(ostream& os, vtkIndent indent)
   }
   
   os << indent << "Meta data: TE " << this->TE << ", TR " << this->TR << ", TI " << this->TI << ", Flip angle " << this->FlipAngle << endl;
+
+  os << indent << "Top Left corner: " << this->TopL[0] << ", " << this->TopL[1] << ", " << this->TopL[2] << endl;
+  os << indent << "Top Right corner: " << this->TopR[0] << ", " << this->TopR[1] << ", " << this->TopR[2] << endl;
+  os << indent << "Bottom Right corner: " << this->BottomR[0] << ", " << this->BottomR[1] << ", " << this->BottomR[2] << endl;
+  os << indent << "Normal: " << this->Normal[0] << ", " << this->Normal[1] << ", " << this->Normal[2] << endl;
+
+  
 }
