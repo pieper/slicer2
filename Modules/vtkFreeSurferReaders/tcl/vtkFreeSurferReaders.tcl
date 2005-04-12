@@ -296,7 +296,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.24 $} {$Date: 2005/04/04 22:17:49 $}]
+        {$Revision: 1.25 $} {$Date: 2005/04/12 21:58:54 $}]
 
 }
 
@@ -1397,14 +1397,14 @@ set useMatrices 0
     # first slice, bottom right corner =(maxx,miny,minz) 1,0,0 x axis
     set fbr [rasmat$i MultiplyPoint $maxx $maxy 0 1]
 
-    # last slice, top left corner = (minx,maxy,maxz) 0,1,1
+    # last slice, top left corner = (minx,maxy,maxz) 0,0,1
     set ltl [rasmat$i MultiplyPoint 0 0 $maxz 1]
 
     # these aren't used
     set fc [rasmat$i MultiplyPoint 0 0 0 1]
     set lc [rasmat$i MultiplyPoint 0 0 0 1]
 
-    if {$::Module(verbose)} {
+    
         if {[info command DevPrintMatrix4x4] != ""} {
             DevPrintMatrix4x4 rasmat$i "MGH vol $i RAS -> IJK (with scaling, t_ras)"
         } 
@@ -1414,7 +1414,7 @@ set useMatrices 0
         puts  "ftr $ftr"
         puts  "fbr $fbr"
         puts  "ltl $ltl"
-    }
+
     # now do the magic bit
     # Volume($i,node) ComputeRasToIjkFromCorners $fc $ftl $ftr $fbr $lc $ltl
     Volume($i,node) ComputeRasToIjkFromCorners \
@@ -1671,16 +1671,21 @@ proc vtkFreeSurferReadersBApply {} {
         return
     }
 
+    # gets all the info needed from the header, read it in MainUpdateMrml
+    if {0} {
+        if {$::Module(verbose)} {
+            puts "vtkFreeSurferReadersBApply:\n\tNOT Reading volume"
+        }
+        set updateReturn [Volume($i,vol,rw) Update]
+        if {$updateReturn == 0} {
+            DevErrorWindow "vtkMGHReader: update on volume $i failed."
+        }
 
-    set updateReturn [Volume($i,vol,rw) Update]
-    if {$updateReturn == 0} {
-        DevErrorWindow "vtkMGHReader: update on volume $i failed."
-    }
 
-
-    if {$::Module(verbose)} {
-        set newstem [Volume($i,vol,rw) GetStem]
-        puts "After reading, new stem = $newstem (orig stem = $stem)"
+        if {$::Module(verbose)} {
+            set newstem [Volume($i,vol,rw) GetStem]
+            puts "After reading, new stem = $newstem (orig stem = $stem)"
+        }
     }
 
     # try setting the registration filename
@@ -1711,7 +1716,7 @@ proc vtkFreeSurferReadersBApply {} {
     # Set the Volume variables
     #-------------------------
     set Volume(isDICOM) 0
-    # set Volume($i,type) "bfloat"
+
     set scalarType [Volume($i,vol,rw) GetScalarType]
     # Scalar type can be VTK_FLOAT (10), VTK_SHORT (4), 
     # set it to either bfloat or bshort
@@ -1727,13 +1732,15 @@ proc vtkFreeSurferReadersBApply {} {
     set dims [Volume($i,vol,rw) GetDataDimensions]
     if {$::Module(verbose)} {
         puts "$vtkFreeSurferReaders(VolumeFileName) dimensions: [lindex $dims 0] [lindex $dims 1]  [lindex $dims 2]"
-        # DevErrorWindow "$vtkFreeSurferReaders(VolumeFileName) dimensions: [lindex $dims 0] [lindex $dims 1]  [lindex $dims 2]"
     }
     set Volume(lastNum) [expr [lindex $dims 2] - 1]
     set Volume(width) [expr [lindex $dims 0] - 1]
     set Volume(height) [expr [lindex $dims 1] - 1]
 
     set spc [Volume($i,vol,rw) GetDataSpacing]
+    if {$::Module(verbose)} { 
+        puts "B reader apply: got data spacing $spc"
+    }
     set Volume(pixelWidth) [lindex $spc 0]
     set Volume(pixelHeight) [lindex $spc 1]
     set Volume(sliceThickness) [lindex $spc 2]
@@ -1752,7 +1759,8 @@ proc vtkFreeSurferReadersBApply {} {
     set Volume(littleEndian) 0
 
     # Sag:LR RL Ax:SI IS Cor: AP PA
-    set Volume(scanOrder) {RL}
+    # this gets reset when calc the scan order from the corners
+    set Volume(scanOrder) {PA}
     set scalarType [Volume($i,vol,rw) GetScalarType]
     # Scalar type can be VTK_UNSIGNED_CHAR (3),  VTK_INT (6), VTK_FLOAT (10), VTK_SHORT (4), 
     # set it to the valid volume values of $Volume(scalarTypeMenu)
@@ -1812,17 +1820,25 @@ proc vtkFreeSurferReadersBApply {} {
     # get the IJK to RAS matrix from the volume:
     # x_r x_a x_s y_r y_a y_s z_r z_a z_s c_r c_a c_s
     set ijkmat [Volume($i,vol,rw) GetRASMatrix]
-    # get the corners
+    # get the corners from the volume:
     set topR [Volume($i,vol,rw) GetTopR]
     set topL [Volume($i,vol,rw) GetTopL]
     set bottomR [Volume($i,vol,rw) GetBottomR]
-    
+    set normal [Volume($i,vol,rw) GetNormal]
+
+    # Calculate the last top left
+    set v1 [list [expr [lindex $topR 0] - [lindex $topL 0]] [expr [lindex $topR 1] - [lindex $topL 1]] [expr [lindex $topR 2] - [lindex $topL 2]]]
+    set v2 [list [expr [lindex $bottomR 0] - [lindex $topR 0]] [expr [lindex $bottomR 1] - [lindex $topR 1]] [expr [lindex $bottomR 2] - [lindex $topR 2]]]
+    package require tclVectorUtils
+    set v3 [tclVectorUtils::VCross $v2 $v1]
+    set v3 [tclVectorUtils::VNorm $v3]
+    set v4 [tclVectorUtils::VScale [expr  [lindex $dims 2] *  [lindex $spc 2]] $v3 ]
+    set lTopL [tclVectorUtils::VAdd $topL $v4]
     if {$::Module(verbose)} {
-        puts "Bfloat Reader: IJK matrix for volume $i: $ijkmat"
-        puts "Bfloat Reader: topR $topR, topL $topL, bottomR $bottomR"
+        puts "Bfloat Reader: lTopL $lTopL"
     }
 
-    if {0} {
+    
     # see the comments in MGH apply proc 
     set xr [lindex $ijkmat 0]
     set xa [lindex $ijkmat 1]
@@ -1847,17 +1863,41 @@ proc vtkFreeSurferReadersBApply {} {
     set cr 0
     set ca 0
     set cs 0
+    
+    # this is not used, as don't use tras in the rasmat
+    # calculate the centre point of the volume, cras, as it's actually zero in the matrix since the bvolume reader doesn't calculate it
+    # the vector pointing from the origin to the centre of the first slice is bottomR + (topL - bottomR)/2 = A = cf
+    # the vector pointing from the top left corner to the centre of the depth is (last top left - front topL)/2 = B = cd
+    # so to get to the centre of the volume take A + B
+    set cf [tclVectorUtils::VSub $topL $bottomR]
+    set cf [tclVectorUtils::VScale 0.5 $cf]
+    set cf [tclVectorUtils::VAdd $bottomR $cf]
 
+    set cd [tclVectorUtils::VSub $lTopL $topL]
+    set cd [tclVectorUtils::VScale 0.5 $cd]
+
+    set cras [tclVectorUtils::VAdd $cf $cd]
+    set cr [lindex $cras 0]
+    set ca [lindex $cras 1]
+    set cs [lindex $cras 2]
+    if {$::Module(verbose)} {
+        puts "New Centre Calc:"
+        puts "cf $cf"
+        puts "cd $cd"
+        puts "cras $cras"
+    }
+
+    # Calculate the translation
     set tr [expr $cr - $xr*$xspacing*$w2 - $yr*$yspacing*$h2 - $zr*$zspacing*$d2]
     set ta [expr $ca - $xa*$xspacing*$w2 - $ya*$yspacing*$h2 - $za*$zspacing*$d2]
     set ts [expr $cs - $xs*$xspacing*$w2 - $ys*$yspacing*$h2 - $zs*$zspacing*$d2]
 
     if {$::Module(verbose)} {
-        puts "tr = $tr, ta = $ta, ts = $ts"
+        puts "BReader: tr = $tr, ta = $ta, ts = $ts"
     }
 
     # calculate the transform from the corners of the volume
-        catch "rasmat$i Delete"
+    catch "rasmat$i Delete"
     vtkMatrix4x4 rasmat$i
     rasmat$i Identity
 
@@ -1869,7 +1909,8 @@ proc vtkFreeSurferReadersBApply {} {
     # z_r
     rasmat$i SetElement 0 2 [lindex $ijkmat 6]
     # t_r 
-    rasmat$i SetElement 0 3 $tr
+    rasmat$i SetElement 0 3 0
+# $tr
 
     # x_a
     rasmat$i SetElement 1 0 [lindex $ijkmat 1]
@@ -1878,7 +1919,8 @@ proc vtkFreeSurferReadersBApply {} {
     # z_a
     rasmat$i SetElement 1 2 [lindex $ijkmat 7]
     # t_a
-    rasmat$i SetElement 1 3 $ta
+    rasmat$i SetElement 1 3 0
+# $ta
 
     # x_s
     rasmat$i SetElement 2 0 [lindex $ijkmat 2]
@@ -1887,33 +1929,55 @@ proc vtkFreeSurferReadersBApply {} {
     # z_s
     rasmat$i SetElement 2 2 [lindex $ijkmat 8]
     # t_s
-    rasmat$i SetElement 2 3 $ts
+    rasmat$i SetElement 2 3 0 
+# $ts
 
-    # now include the scaling factor, from the voxel size
-    catch "scalemat$i Delete"
-    vtkMatrix4x4 scalemat$i
-    scalemat$i Identity
-    # s_x
-    scalemat$i SetElement 0 0 $Volume(pixelWidth)
-    # s_y
-    scalemat$i SetElement 1 1 $Volume(pixelHeight)
-    # s_z
-    scalemat$i SetElement 2 2 $Volume(sliceThickness)
-    
-    # now apply it to the rasmat
-    rasmat$i Multiply4x4 rasmat$i scalemat$i rasmat$i
-    
-    if {$::Module(verbose)} {
-        if {[info command DevPrintMatrix4x4] != ""} {
-            DevPrintMatrix4x4 rasmat$i "Bfloat vol $i RAS -> IJK (with scale)"
+    # the scaling factor is included in the RAS Matrix in the reader
+    if {1} {
+        # now include the scaling factor, from the voxel size
+        catch "scalemat$i Delete"
+        vtkMatrix4x4 scalemat$i
+        scalemat$i Identity
+        # s_x
+        scalemat$i SetElement 0 0 $Volume(pixelWidth)
+        # s_y
+        scalemat$i SetElement 1 1 $Volume(pixelHeight)
+        # s_z
+        scalemat$i SetElement 2 2 $Volume(sliceThickness)
+        
+        # now apply it to the rasmat
+        rasmat$i Multiply4x4 rasmat$i scalemat$i rasmat$i
+
+        if {$::Module(verbose)} {
+            if {[info command DevPrintMatrix4x4] != ""} {
+                DevPrintMatrix4x4 rasmat$i "Bfloat vol $i RAS -> IJK (with scale)"
+            }
         }
     }
 
-    # To get the corners, find the max values of the volume, assume mins are 0
-    set maxx [lindex $dims 0]
-    set maxy [lindex $dims 1]
-    set maxz [lindex $dims 2]
+    # To get the corners, the volume is centered about zero, so use the (number of rows, number of cols, number of slices) / 2 +/- the origin at 0,0,0.
+    set maxx [expr [lindex $dims 0] / 2.0]
+    set maxy [expr [lindex $dims 1] / 2.0]
+    set maxz [expr [lindex $dims 2] / 2.0]
+    set minx [expr 0 - $maxx]
+    set miny [expr 0 - $maxy]
+    set minz [expr 0 - $maxz]
 
+    if {$::Module(verbose)} {
+        puts "Calculating min/max on a b volume:"
+        puts "Dimensions: $dims"
+        puts "maxx $maxx"
+        puts "maxy $maxy"
+        puts "maxz $maxz"
+        puts "minx $minx"
+        puts "miny $miny"
+        puts "minz $minz"
+        puts "maxx - minx = [expr $maxx - $minx]"
+        puts "maxy - miny = [expr $maxy - $miny]"
+        puts "maxz - minz = [expr $maxz - $minz]"
+    }
+
+if {0} {
     # first slice, top left corner = (minx,maxy,minz) 0,1,0 y axis
     set ftl [rasmat$i MultiplyPoint 0 0 0 1]
 
@@ -1923,8 +1987,31 @@ proc vtkFreeSurferReadersBApply {} {
     # first slice, bottom right corner =(maxx,miny,minz) 1,0,0 x axis
     set fbr [rasmat$i MultiplyPoint $maxx $maxy 0 1]
 
-    # last slice, top left corner = (minx,maxy,maxz) 0,1,1
+    # last slice, top left corner = (minx,miny,maxz) 0,0,1
+    puts "B reader: maxz = $maxz, normal = $normal"
     set ltl [rasmat$i MultiplyPoint 0 0 $maxz 1]
+    puts "rasmat$i times '0 0 maxz 1' = $ltl"
+    # set ltl [rasmat$i MultiplyPoint [lindex $normal 0] [lindex $normal 1] [lindex $normal 2] 1]
+    # puts "rasmat$i times normal = $ltl"
+
+} else {
+    # using bvolume values: first = minz, last = maxz, top = maxy, bottom = miny, right = maxx, left = minx
+    # first slice, top left corner 
+    set ftl [rasmat$i MultiplyPoint $minx $maxy $minz 1]
+
+    # first slice, top right corner  
+    set ftr [rasmat$i MultiplyPoint $maxx $maxy $minz 1]
+
+    # first slice, bottom right corner
+    set fbr [rasmat$i MultiplyPoint $maxx $miny $minz 1]
+
+    # last slice, top left corner
+    set ltl [rasmat$i MultiplyPoint $minx $maxy $maxz 1]
+}
+    # 
+    # All I need is the top left corner of the last slice, the others are in the header file
+    #
+
 
     # these aren't used
     set fc [rasmat$i MultiplyPoint 0 0 0 1]
@@ -1942,6 +2029,7 @@ proc vtkFreeSurferReadersBApply {} {
         puts  "ltl $ltl"
     }
     # now do the magic bit
+if {1} {
     # Volume($i,node) ComputeRasToIjkFromCorners $fc $ftl $ftr $fbr $lc $ltl
     Volume($i,node) ComputeRasToIjkFromCorners \
         [lindex $fc 0]  [lindex $fc 1]  [lindex $fc 2] \
@@ -1952,8 +2040,28 @@ proc vtkFreeSurferReadersBApply {} {
         [lindex $ltl 0] [lindex $ltl 1] [lindex $ltl 2]
 
 } else {
-    # TODO: Calculate the last slices's top left corner
-    set ltl {0 0 0 1}
+    # TODO: Calculate the last slices's top left corner, same RA as the front top left, 
+    # S caculated from the number of slices times the slice spacing
+    # set ltl [list [lindex $topL 0] [lindex $topL 1] [expr [lindex $dims 2] *  [lindex $spc 2]]]
+    # set ltl [list 0 0 0]
+    
+    # redoing ltl: || topR - topL || x || bottomR - topR || scaled by  num slices times spacing
+    set v1 [list [expr [lindex $topR 0] - [lindex $topL 0]] [expr [lindex $topR 1] - [lindex $topL 1]] [expr [lindex $topR 2] - [lindex $topL 2]]]
+    set v2 [list [expr [lindex $bottomR 0] - [lindex $topR 0]] [expr [lindex $bottomR 1] - [lindex $topR 1]] [expr [lindex $bottomR 2] - [lindex $topR 2]]]
+    package require tclVectorUtils
+    set v3 [tclVectorUtils::VCross $v2 $v1]
+    set v3 [tclVectorUtils::VNorm $v3]
+    set v4 [tclVectorUtils::VScale [expr  [lindex $dims 2] *  [lindex $spc 2]] $v3 ]
+    set ltl [tclVectorUtils::VAdd $topL $v4]
+    if {$::Module(verbose)} {
+        puts "About to call ComputeRasToIjkFromCorners:"
+        puts "v1 $v1"
+        puts "v2 $v2"
+        puts "v3 $v3; normal = $normal"
+        puts "v4 $v4"
+        puts "ltl $ltl"
+    }
+
     Volume($i,node) ComputeRasToIjkFromCorners \
         0 0 0 \
         [lindex $topL 0] [lindex $topL 1] [lindex $topL 2] \
@@ -5128,7 +5236,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.24 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.25 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -5753,3 +5861,4 @@ proc vtkFreeSurferReadersQAMakeNewSubjectsCsh { subjectsDir { subset  "Review" }
         wm withdraw .top${summaryName}
     }
 }
+
