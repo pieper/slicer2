@@ -86,7 +86,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.59 $} {$Date: 2005/01/28 21:45:44 $}]
+        {$Revision: 1.60 $} {$Date: 2005/04/12 22:00:05 $}]
 
     set File(filePrefix) data
 }
@@ -941,9 +941,6 @@ proc CheckVolumeExists {filePrefix filePattern firstNum lastNum  {verbose 0} } {
 proc CheckFileExists {filename {verbose 1}} {
     global Gui
     set mrmlFilename ""
-    if {$::Module(verbose)} {
-        puts "CheckFileExists: filename = $filename, verbose = $verbose"
-    }
     if {[file exists $filename] == 0} {
         if {[file pathtype $filename] == "relative"} {
             # try prepending the mrml dir to it
@@ -1030,9 +1027,9 @@ proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
         }
         return "%s $ImageFile 0"
     }
-    if {$fext == ".bfloat"} {
+    if {$fext == ".bfloat" || $fext == ".bshort"} {
         if {$::Module(verbose)} {
-            puts "MainFileParseImageFile: bfloat volume, returning default pattern of %s_%03d.bfloat."
+            puts "MainFileParseImageFile: freesurfer binary volume, returning default pattern of %s_%03d${fext}."
         }
         if {[regexp {(.+)_([0-9]*)$} $fname match filePrefix num] == 0} {
             set filePrefix $fdir/$fname
@@ -1042,7 +1039,7 @@ proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
             set ZerolessNum [string trimleft $num "0"]
             if {$ZerolessNum == ""} {set ZerolessNum 0}
         }
-        return "%s_%03d.bfloat $filePrefix $ZerolessNum"
+        return "%s_%03d${fext} $filePrefix $ZerolessNum"
     }
     # this will fail if there's another volume in the directory with the same 
     # extension: second test = ftail is in the list, and any other elements
