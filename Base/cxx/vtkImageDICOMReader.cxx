@@ -653,17 +653,26 @@ int vtkImageDICOMReader::GetHeaderSize(int idx)
     }
   if ( ! this->ManualHeaderSize)
     {
-    this->ComputeDataIncrements();
+      this->ComputeDataIncrements();
 
-    // make sure we figure out a filename to open
-    this->ComputeInternalFileName(idx);
-    this->OpenFile();
-    
-    // Get the size of the header from the size of the image
-    this->File->seekg(0,ios::end);
-    
-    return (int)(this->File->tellg() - 
-      (istream::pos_type)this->DataIncrements[this->GetFileDimensionality()]);
+      // make sure we figure out a filename to open
+      this->ComputeInternalFileName(idx);
+      this->OpenFile();
+      
+      // Get the size of the header from the size of the image
+      this->File->seekg(0,ios::end);
+#ifdef __GNUC__
+      #if (__GNUC__ >= 3)
+       return (int)(this->File->tellg() -       
+               (istream::pos_type)this->DataIncrements[this->GetFileDimensionality()]);
+      #else 
+      return (int)(this->File->tellg() - 
+               this->DataIncrements[this->GetFileDimensionality()]);
+#endif
+#else
+      return (int)(this->File->tellg() - 
+           this->DataIncrements[this->GetFileDimensionality()]);
+#endif
     }
   
   return this->HeaderSize;
@@ -864,7 +873,16 @@ static void vtkImageDICOMReaderUpdate2(vtkImageDICOMReader *self, vtkImageData *
       // if that happens, store the value in correction and apply later
       if (filePos + streamSkip0 >= 0)
     {
-    self->GetFile()->seekg(self->GetFile()->tellg() + (istream::pos_type)streamSkip0, ios::beg);
+#ifdef __GNUC__
+      #if (__GNUC__ >= 3)
+      self->GetFile()->seekg(self->GetFile()->tellg() + (istream::pos_type) streamSkip0, ios::beg);
+      #else
+      self->GetFile()->seekg(self->GetFile()->tellg() +  streamSkip0, ios::beg);
+#endif
+#else
+      self->GetFile()->seekg(self->GetFile()->tellg() +  streamSkip0, ios::beg);
+#endif
+
     correction = 0;
     }
       else
@@ -874,8 +892,18 @@ static void vtkImageDICOMReaderUpdate2(vtkImageDICOMReader *self, vtkImageData *
       outPtr1 += outIncr[1];
       }
     // move to the next image in the file and data
-    self->GetFile()->seekg(self->GetFile()->tellg() + (istream::pos_type)streamSkip1 + (istream::pos_type)correction, 
+#ifdef __GNUC__
+#if (__GNUC__ >= 3)
+    self->GetFile()->seekg(self->GetFile()->tellg() + (istream::pos_type) streamSkip1 + (istream::pos_type)correction, 
+                   ios::beg);
+#else
+    self->GetFile()->seekg(self->GetFile()->tellg() + streamSkip1 + correction, 
+                   ios::beg);
+#endif
+#else 
+    self->GetFile()->seekg(self->GetFile()->tellg() + streamSkip1 + correction, 
               ios::beg);
+#endif
     outPtr2 += outIncr[2];
     }
 
