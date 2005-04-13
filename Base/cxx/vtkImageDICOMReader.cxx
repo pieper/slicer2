@@ -671,7 +671,7 @@ int vtkImageDICOMReader::GetHeaderSize(int idx)
 #endif
 #else
       return (int)(this->File->tellg() - 
-                   this->DataIncrements[this->GetFileDimensionality()]);
+                   (istream::pos_type)this->DataIncrements[this->GetFileDimensionality()]);
 #endif
     }
   
@@ -880,7 +880,7 @@ static void vtkImageDICOMReaderUpdate2(vtkImageDICOMReader *self, vtkImageData *
         self->GetFile()->seekg(self->GetFile()->tellg() +  streamSkip0, ios::beg);
 #endif
 #else
-        self->GetFile()->seekg(self->GetFile()->tellg() +  streamSkip0, ios::beg);
+        self->GetFile()->seekg(self->GetFile()->tellg() +  (istream::pos_type)streamSkip0, ios::beg);
 #endif
         
     correction = 0;
@@ -901,7 +901,7 @@ static void vtkImageDICOMReaderUpdate2(vtkImageDICOMReader *self, vtkImageData *
                            ios::beg);
 #endif
 #else 
-    self->GetFile()->seekg(self->GetFile()->tellg() + streamSkip1 + correction, 
+    self->GetFile()->seekg(self->GetFile()->tellg() + (istream::pos_type)streamSkip1 + (istream::pos_type)correction, 
                            ios::beg);
 #endif
     outPtr2 += outIncr[2];
