@@ -1645,13 +1645,15 @@ proc fMRIModelViewSetupButtonImages { c refX refY dmatHit dmatWid cmatHit cmatWi
         "%W itemconfig $::fMRIModelView(Layout,SaveRectTag) -outline $::fMRIModelView(Colors,hexblack) "
     $c bind $::fMRIModelView(Layout,SaveTag) <Leave> \
         "%W itemconfig $::fMRIModelView(Layout,SaveRectTag) -outline $::fMRIModelView(Colors,liteGrey) "
-    $c bind $::fMRIModelView(Layout,SaveTag) <Button-1> "fMRIModelViewSaveModelPostscript $c"
+    #--- WJP changed 4/13/05
+    $c bind $::fMRIModelView(Layout,SaveTag) <Button-1> "fMRIModelViewSaveModelPostscriptPopup $c"
 
     $c bind $::fMRIModelView(Layout,SaveRectTag) <Enter> \
         "%W itemconfig $::fMRIModelView(Layout,SaveRectTag) -outline $::fMRIModelView(Colors,hexblack) "
     $c bind $::fMRIModelView(Layout,SaveRectTag) <Leave> \
         "%W itemconfig $::fMRIModelView(Layout,SaveRectTag) -outline $::fMRIModelView(Colors,liteGrey) "
-    $c bind $::fMRIModelView(Layout,SaveRectTag) <Button-1> "fMRIModelViewSaveModelPostscript $c"
+    #--- WJP changed 4/13/05
+    $c bind $::fMRIModelView(Layout,SaveRectTag) <Button-1> "fMRIModelViewSaveModelPostscriptPopup $c"
 
     #--- draw surrounding CLOSE rect and text; tag...
     set y1 [ expr $y2 + $::fMRIModelView(Layout,VSpace) ]
@@ -1679,20 +1681,78 @@ proc fMRIModelViewSetupButtonImages { c refX refY dmatHit dmatWid cmatHit cmatWi
 }
 
 
+
 proc fMRIModelViewSaveModelPostscript { c } {
-    #---
-    #--- default filename for now.
-    #--- later, pop up a file browse box and enter filename.
-    #---
-    set fn "$::fMRIEngine(modulePath)/designmatrix.ps"
-    puts "saving file to $fn"
+    #--- WJP change 4/13/05
+    #set fn "$::fMRIEngine(modulePath)/designmatrix.ps"
+    #puts "saving file to $fn"
+    set fn [ file join $::fMRIModelView(psDirectory) $::fMRIModelView(psFile)]
     $c postscript -file $fn -colormode color -pageheight 9.0i -pagewidth 7.0i
     #$c postscript -file $fn -colormode grey -pageheight 9.0i -pagewidth 7.0i
-    
-    #--- hmmm, saves outline around two rects covering up
-    #--- filename text and explanatory variable names.
-    #--- need to fix.
 }
+
+
+proc fMRIModelViewSaveModelPostscriptPopup { {toplevelName .fMRIModelViewSavePS} } {
+    global Gui
+    
+    #--- WJP added proc 4/13/05
+    if {[winfo exists $toplevelName]} {
+        wm deiconify $toplevelName
+        raise $toplevelName
+        return
+    }
+    set root [toplevel $toplevelName]
+    wm title $root "fMRIEngine save model postscript"
+    wm protocol $root WM_DELETE_WINDOW "fMRIModelViewCloseModelPostscriptPopup $root"
+
+    set ::fMRIModelView(psDirectory) "$::fMRIEngine(modulePath)"
+    set ::fMRIModelView(psFilePrefix) "designmatrix.ps"
+
+    frame $root.fSaveOptions -relief flat -border 2 -bg #FFFFFF
+    set f $root.fSaveOptions
+
+    button $f.bChooseDir -text "browse..." -command fMRIModelViewChooseDirectory -bg #DDDDDD -fg #000000
+    grid $f.bChooseDir -sticky w -row 0 -column 1 -pady $Gui(pad)
+    
+    label $f.lDir -text "directory:" -bg #FFFFFF -fg #000000
+    entry $f.eDir -width 35 -textvariable ::fMRIModelView(psDirectory) -bg #DDDDDD -fg #000000
+    grid $f.lDir -sticky w -row 1 -column 0
+    grid $f.eDir -sticky w -row 1 -column 1
+
+    label $f.lFilename -text "filename.ps:" -bg #FFFFFF -fg #000000
+    entry $f.eFilename -width 35 -textvariable ::fMRIModelView(psFile) -bg #DDDDDD -fg #000000
+    grid $f.lFilename  -sticky w  -pady $Gui(pad) -row 2 -column 0
+    grid $f.eFilename -sticky w  -pady $Gui(pad) -row 2 -column 1
+
+    frame $root.fApply -relief flat -border 2 -padx 3 -bg #FFFFFF 
+    set f $root.fApply
+    
+    button $f.bCloseWindow -text "close" -command "fMRIModelViewClosePostscriptPopup $root" -bg #DDDDDD -fg #000000
+    button $f.bSaveNow     -text "save" -command "fMRIModelViewSaveModelPostscript" -bg #DDDDDD -fg #000000
+    grid $f.bCloseWindow -sticky e -padx $Gui(pad) -pady 5 -ipadx 2 -ipady 2 -row 0 -column 0
+    grid $f.bSaveNow -sticky e -padx $Gui(pad) -pady 5 -ipadx 2 -ipady 2 -row 0 -column 1
+
+    pack $root.fSaveOptions $root.fApply -fill x
+    return $root
+}
+
+
+proc fMRIModelViewChooseDirectory { } {
+    #--- WJP added proc 4/13/05
+    set newdir [ tk_chooseDirectory -initialdir $::fMRIModelView(psDirectory)]
+    puts "$newdir"
+    if { "$newdir" != "" } {
+        set ::fMRIModelView(psDirectory) $newdir
+    }
+}
+
+proc fMRIModelViewClosePostscriptPopup { win } {
+    #--- WJP added proc 4/13/05
+    destroy $win
+}
+
+
+
 
 
 proc fMRIModelViewSetupOrthogonalityImage { c refX refY dmatHit dmatWid cmatHit cmatWid b } {
