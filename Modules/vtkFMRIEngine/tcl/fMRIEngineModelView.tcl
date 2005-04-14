@@ -1646,14 +1646,14 @@ proc fMRIModelViewSetupButtonImages { c refX refY dmatHit dmatWid cmatHit cmatWi
     $c bind $::fMRIModelView(Layout,SaveTag) <Leave> \
         "%W itemconfig $::fMRIModelView(Layout,SaveRectTag) -outline $::fMRIModelView(Colors,liteGrey) "
     #--- WJP changed 4/13/05
-    $c bind $::fMRIModelView(Layout,SaveTag) <Button-1> "fMRIModelViewSaveModelPostscriptPopup $c"
+    $c bind $::fMRIModelView(Layout,SaveTag) <Button-1> "fMRIModelViewSaveModelPostscriptPopup"
 
     $c bind $::fMRIModelView(Layout,SaveRectTag) <Enter> \
         "%W itemconfig $::fMRIModelView(Layout,SaveRectTag) -outline $::fMRIModelView(Colors,hexblack) "
     $c bind $::fMRIModelView(Layout,SaveRectTag) <Leave> \
         "%W itemconfig $::fMRIModelView(Layout,SaveRectTag) -outline $::fMRIModelView(Colors,liteGrey) "
     #--- WJP changed 4/13/05
-    $c bind $::fMRIModelView(Layout,SaveRectTag) <Button-1> "fMRIModelViewSaveModelPostscriptPopup $c"
+    $c bind $::fMRIModelView(Layout,SaveRectTag) <Button-1> "fMRIModelViewSaveModelPostscriptPopup"
 
     #--- draw surrounding CLOSE rect and text; tag...
     set y1 [ expr $y2 + $::fMRIModelView(Layout,VSpace) ]
@@ -1682,17 +1682,15 @@ proc fMRIModelViewSetupButtonImages { c refX refY dmatHit dmatWid cmatHit cmatWi
 
 
 
-proc fMRIModelViewSaveModelPostscript { c } {
+proc fMRIModelViewSaveModelPostscript { } {
     #--- WJP change 4/13/05
-    #set fn "$::fMRIEngine(modulePath)/designmatrix.ps"
-    #puts "saving file to $fn"
+    set c $::fMRIModelView(modelViewCanvas) 
     set fn [ file join $::fMRIModelView(psDirectory) $::fMRIModelView(psFile)]
     $c postscript -file $fn -colormode color -pageheight 9.0i -pagewidth 7.0i
-    #$c postscript -file $fn -colormode grey -pageheight 9.0i -pagewidth 7.0i
 }
 
 
-proc fMRIModelViewSaveModelPostscriptPopup { {toplevelName .fMRIModelViewSavePS} } {
+proc fMRIModelViewSaveModelPostscriptPopup { { toplevelName .fMRIModelViewSavePS} } {
     global Gui
     
     #--- WJP added proc 4/13/05
@@ -1701,6 +1699,7 @@ proc fMRIModelViewSaveModelPostscriptPopup { {toplevelName .fMRIModelViewSavePS}
         raise $toplevelName
         return
     }
+    puts "$toplevelName"
     set root [toplevel $toplevelName]
     wm title $root "fMRIEngine save model postscript"
     wm protocol $root WM_DELETE_WINDOW "fMRIModelViewCloseModelPostscriptPopup $root"
@@ -1728,7 +1727,7 @@ proc fMRIModelViewSaveModelPostscriptPopup { {toplevelName .fMRIModelViewSavePS}
     set f $root.fApply
     
     button $f.bCloseWindow -text "close" -command "fMRIModelViewClosePostscriptPopup $root" -bg #DDDDDD -fg #000000
-    button $f.bSaveNow     -text "save" -command "fMRIModelViewSaveModelPostscript" -bg #DDDDDD -fg #000000
+    button $f.bSaveNow     -text "save" -command "fMRIModelViewSaveModelPostscript " -bg #DDDDDD -fg #000000
     grid $f.bCloseWindow -sticky e -padx $Gui(pad) -pady 5 -ipadx 2 -ipady 2 -row 0 -column 0
     grid $f.bSaveNow -sticky e -padx $Gui(pad) -pady 5 -ipadx 2 -ipady 2 -row 0 -column 1
 
@@ -1770,7 +1769,7 @@ proc fMRIModelViewSetupOrthogonalityImage { c refX refY dmatHit dmatWid cmatHit 
     for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
         set lastn $n
         set n $::fMRIModelView(Design,Run$r,numConditionEVs)
-        if { $lastn != $n } {
+        if { $lastn != $n || $n <= 1 } {
             #--- not computable; draw nothing.
             return
         }
@@ -1837,11 +1836,6 @@ proc fMRIModelViewSetupOrthogonalityImage { c refX refY dmatHit dmatWid cmatHit 
     $c create rect $x1 $y1 $x2 $y2 -outline $::fMRIModelView(Colors,hexblack) \
         -width $b
 
-    #--- text label beneath
-#    set x1 [ expr $x1 + ( ($x2 - $x1)/2)  ]
-#    set y1 [ expr $y2 + $::fMRIModelView(Layout,bigVSpace) ]
-#    $c create text  $x1 $y1 -text "design orthogonality" -anchor center \
-#        -font $::fMRIModelView(UI,Smallfont) -fill $::fMRIModelView(Colors,hexblack)
 }
 
 
