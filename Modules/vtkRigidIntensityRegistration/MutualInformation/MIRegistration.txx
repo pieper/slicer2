@@ -90,10 +90,10 @@ void MIRegistration<TFixedImage,TMovingImage>::SetMetricParam()
   //
   // Setup the metric
   //
-  m_Metric->SetMovingImageStandardDeviation(m_MovingImageStandardDeviation);
-  m_Metric->SetFixedImageStandardDeviation(m_FixedImageStandardDeviation);
-  m_Metric->SetNumberOfSpatialSamples(m_NumberOfSpatialSamples);
-  m_Optimizer->MaximizeOn();
+  this->m_Metric->SetMovingImageStandardDeviation(m_MovingImageStandardDeviation);
+  this->m_Metric->SetFixedImageStandardDeviation(m_FixedImageStandardDeviation);
+  this->m_Metric->SetNumberOfSpatialSamples(m_NumberOfSpatialSamples);
+  this->m_Optimizer->MaximizeOn();
 }
 
 

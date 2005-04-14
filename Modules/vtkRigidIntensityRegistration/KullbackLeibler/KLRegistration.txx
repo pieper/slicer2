@@ -55,24 +55,25 @@ KLRegistration<TFixedImage,TMovingImage>::KLRegistration()
   HistogramSizeType histSize;
   histSize[0] = nBins;
   histSize[1] = nBins;
-  m_Metric->UsePaddingValue(false);
-  m_Metric->SetHistogramSize(histSize);
-  m_Metric->SetDerivativeStepLength(0.1); // 0.1 mm
+  this->m_Metric->UsePaddingValue(false);
+  this->m_Metric->SetHistogramSize(histSize);
+  this->m_Metric->SetDerivativeStepLength(0.1); // 0.1 mm
 
   // set the step length scales
   typedef typename MetricType::ScalesType ScalesType;
-  ScalesType DerivativeStepLengthScales( GetNumberOfParameters() );
+  ScalesType DerivativeStepLengthScales( this->GetNumberOfParameters() );
   DerivativeStepLengthScales.fill(1.0);
-  m_Metric->SetDerivativeStepLengthScales(DerivativeStepLengthScales);
+  this->m_Metric->SetDerivativeStepLengthScales(DerivativeStepLengthScales);
 
   // possible memory leak
-  InterpolatorType::Pointer  TrainingInterpolator = InterpolatorType::New();
-  m_Metric->SetTrainingInterpolator(TrainingInterpolator);
+  typedef typename InterpolatorType::Pointer  InterpolatorPointer;
+  InterpolatorPointer  TrainingInterpolator = InterpolatorType::New();
+  this->m_Metric->SetTrainingInterpolator(TrainingInterpolator);
 
   // Default parameters
-  m_MovingImageStandardDeviation = 0.4;
-  m_FixedImageStandardDeviation = 0.4;
-  m_NumberOfSpatialSamples = 50;
+  this->m_MovingImageStandardDeviation = 0.4;
+  this->m_FixedImageStandardDeviation = 0.4;
+  this->m_NumberOfSpatialSamples = 50;
 }
 
 //----------------------------------------------------------------------
@@ -105,7 +106,7 @@ template < typename TFixedImage, typename TMovingImage  >
 void KLRegistration<TFixedImage,TMovingImage>
 ::SetMetricParam()
 {
-  m_Optimizer->MinimizeOn();
+  this->m_Optimizer->MinimizeOn();
 }
 
 } // namespace itk

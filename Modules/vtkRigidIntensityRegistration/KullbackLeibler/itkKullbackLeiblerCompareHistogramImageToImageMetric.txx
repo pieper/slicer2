@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkKullbackLeiblerCompareHistogramImageToImageMetric.txx,v $
   Language:  C++
-  Date:      $Date: 2004/01/13 21:41:18 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2005/04/14 12:49:41 $
+  Version:   $Revision: 1.2 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -57,14 +57,14 @@ KullbackLeiblerCompareHistogramImageToImageMetric<TFixedImage, \
   HistogramIteratorType measured_it   = histogram.Begin();
   HistogramIteratorType measured_end  = histogram.End();
 
-  HistogramIteratorType training_it   = m_TrainingHistogram->Begin();
-  HistogramIteratorType training_end  = m_TrainingHistogram->End();
+  HistogramIteratorType training_it   = this->m_TrainingHistogram->Begin();
+  HistogramIteratorType training_end  = this->m_TrainingHistogram->End();
 
   while (measured_it != measured_end)
     {
     // Every bin gets epsilon added to it
-    double TrainingFreq = training_it.GetFrequency()+m_Epsilon;
-    double MeasuredFreq = measured_it.GetFrequency()+m_Epsilon;
+    double TrainingFreq = training_it.GetFrequency()+this->m_Epsilon;
+    double MeasuredFreq = measured_it.GetFrequency()+this->m_Epsilon;
 
     KullbackLeibler += MeasuredFreq*log(MeasuredFreq/TrainingFreq);
 
@@ -76,15 +76,15 @@ KullbackLeiblerCompareHistogramImageToImageMetric<TFixedImage, \
     itkWarningMacro("The Measured and Training Histograms have different number of bins.");
 
   // Get the total frequency for each histogram.
-  HistogramFrequencyType totalTrainingFreq = m_TrainingHistogram->GetTotalFrequency();
+  HistogramFrequencyType totalTrainingFreq = this->m_TrainingHistogram->GetTotalFrequency();
   HistogramFrequencyType totalMeasuredFreq = histogram.GetTotalFrequency();
 
   // The actual number of total frequency is a bit larger
-  // than the number of counts because we add m_Epsilon to every bin
+  // than the number of counts because we add this->m_Epsilon to every bin
   double AdjustedTotalTrainingFreq = totalTrainingFreq +
-    m_HistogramSize[0]*m_HistogramSize[1]*m_Epsilon;
+    this->m_HistogramSize[0]*this->m_HistogramSize[1]*this->m_Epsilon;
   double AdjustedTotalMeasuredFreq = totalMeasuredFreq +
-    m_HistogramSize[0]*m_HistogramSize[1]*m_Epsilon;
+    this->m_HistogramSize[0]*this->m_HistogramSize[1]*this->m_Epsilon;
 
   KullbackLeibler = KullbackLeibler/static_cast<MeasureType>(AdjustedTotalMeasuredFreq)
     - log(AdjustedTotalMeasuredFreq/AdjustedTotalTrainingFreq);

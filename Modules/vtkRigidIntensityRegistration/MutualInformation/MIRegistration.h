@@ -125,25 +125,25 @@ public:
   itkStaticConstMacro (ImageDimension, unsigned int, TFixedImage::ImageDimension);
 
   /** Transform Type. */
-  typedef Superclass::TransformType           TransformType;
+  typedef typename Superclass::TransformType           TransformType;
 
   /** Optimizer Type. */
-  typedef Superclass::OptimizerType           OptimizerType;
+  typedef typename Superclass::OptimizerType           OptimizerType;
 
   /** Metric Type. */
   typedef typename Superclass::MetricType              MetricType;
 
   /** Interpolation Type. */
-  typedef Superclass::InterpolatorType        InterpolatorType;
+  typedef typename Superclass::InterpolatorType        InterpolatorType;
 
   /** Fixed Image Pyramid Type. */
-  typedef Superclass::FixedImagePyramidType   FixedImagePyramidType;
+  typedef typename Superclass::FixedImagePyramidType   FixedImagePyramidType;
 
   /** Moving Image Pyramid Type. */
-  typedef Superclass::MovingImagePyramidType  MovingImagePyramidType;
+  typedef typename Superclass::MovingImagePyramidType  MovingImagePyramidType;
 
   /** Registration Method. */
-  typedef Superclass::RegistrationType        RegistrationType;
+  typedef typename Superclass::RegistrationType        RegistrationType;
 
   /** Transform parameters type. */
   typedef typename Superclass::ParametersType          ParametersType;

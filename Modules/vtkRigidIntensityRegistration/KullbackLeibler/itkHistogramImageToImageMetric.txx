@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkHistogramImageToImageMetric.txx,v $
   Language:  C++
-  Date:      $Date: 2003/12/23 19:27:26 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2005/04/14 12:49:41 $
+  Version:   $Revision: 1.3 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -41,13 +41,16 @@ namespace itk
   {
     Superclass::Initialize();
 
-    if (!GetFixedImage())
+    FixedImageConstPointerType pFixedImage = this->GetFixedImage();
+    MovingImageConstPointerType pMovingImage = this->GetMovingImage();
+
+    if (!pFixedImage)
     {
       ExceptionObject ex(__FILE__, __LINE__);
       ex.SetDescription("Fixed image has not been set.");
       throw ex;
     }
-    else if (!GetMovingImage())
+    else if (!pMovingImage)
     {
       ExceptionObject ex(__FILE__, __LINE__);
       ex.SetDescription("Moving image has not been set.");
@@ -55,7 +58,6 @@ namespace itk
     }
 
     // Calculate min and max image values in fixed image.
-    FixedImageConstPointerType pFixedImage = GetFixedImage();
     FixedImagePixelType minFixed, maxFixed;
     ImageRegionConstIterator<FixedImageType> fiIt(pFixedImage,
       pFixedImage->GetBufferedRegion());
@@ -76,7 +78,6 @@ namespace itk
     }
     
     // Calculate min and max image values in moving image.
-    MovingImageConstPointerType pMovingImage = GetMovingImage();
     MovingImagePixelType minMoving, maxMoving;
     ImageRegionConstIterator<MovingImageType> miIt(pMovingImage,
       pMovingImage->GetBufferedRegion());
@@ -194,10 +195,10 @@ namespace itk
     fixedRegion = this->GetFixedImageRegion();
     FixedIteratorType ti(fixedImage, fixedRegion);
     
-    m_NumberOfPixelsCounted = 0;
+    this->m_NumberOfPixelsCounted = 0;
     this->SetTransformParameters(parameters);
     
-    histogram.Initialize(m_HistogramSize, m_LowerBound, m_UpperBound);
+    histogram.Initialize(this->m_HistogramSize, this->m_LowerBound, this->m_UpperBound);
     
     ti.GoToBegin();
     while (!ti.IsAtEnd())
@@ -205,21 +206,21 @@ namespace itk
       index = ti.GetIndex();
       
       if (fixedRegion.IsInside(index) &&
-        (!m_UsePaddingValue ||
-          (m_UsePaddingValue && ti.Get() > m_PaddingValue)))
+        (!this->m_UsePaddingValue ||
+          (this->m_UsePaddingValue && ti.Get() > this->m_PaddingValue)))
       {
         typename Superclass::InputPointType inputPoint;
         fixedImage->TransformIndexToPhysicalPoint(index, inputPoint);
         
         typename Superclass::OutputPointType transformedPoint =
-          m_Transform->TransformPoint(inputPoint);
+          this->m_Transform->TransformPoint(inputPoint);
 
-        if (m_Interpolator->IsInsideBuffer(transformedPoint))
+        if (this->m_Interpolator->IsInsideBuffer(transformedPoint))
         {
           const RealType movingValue =
-            m_Interpolator->Evaluate(transformedPoint);
+            this->m_Interpolator->Evaluate(transformedPoint);
           const RealType fixedValue = ti.Get();
-          m_NumberOfPixelsCounted++;
+          this->m_NumberOfPixelsCounted++;
           
           typename HistogramType::MeasurementVectorType sample;
           sample[0] = fixedValue;
@@ -231,7 +232,7 @@ namespace itk
       ++ti;
     }
     
-    if (m_NumberOfPixelsCounted == 0)
+    if (this->m_NumberOfPixelsCounted == 0)
       itkExceptionMacro(<< "All the points mapped to outside of the moving \
 image");
   }

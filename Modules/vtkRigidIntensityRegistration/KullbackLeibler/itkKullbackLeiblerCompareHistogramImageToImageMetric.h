@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkKullbackLeiblerCompareHistogramImageToImageMetric.h,v $
   Language:  C++
-  Date:      $Date: 2004/01/13 21:44:07 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2005/04/14 12:49:41 $
+  Version:   $Revision: 1.3 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -121,7 +121,7 @@ public CompareHistogramImageToImageMetric<TFixedImage, TMovingImage>
 
   /** Return the number of parameters required by the Transform */
   unsigned int GetNumberOfParameters(void) const 
-  { return m_Transform->GetNumberOfParameters(); }
+  { return this->m_Transform->GetNumberOfParameters(); }
  
   /** Forms the histogram of the training images to prepare to evaluate the */
   /** metric. Must set all parameters first */

@@ -141,10 +141,11 @@ template <class itkImageType>
 itkImageType *VTKtoITKImageBB(vtkImageData *VtkImage, itkImageType *)
 {
   typedef itk::VTKImageImport<itkImageType>  ImageImportType;
+  typedef typename ImageImportType::Pointer  ImageImportPointer;
 
   vtkImageExport *ImageExporter = vtkImageExport::New();
     ImageExporter->SetInput(VtkImage);
-  ImageImportType::Pointer ItkImporter = ImageImportType::New();
+  ImageImportPointer ItkImporter = ImageImportType::New();
   ConnectPipelines(ImageExporter, ItkImporter);
   ItkImporter->Update();
   ItkImporter->GetOutput()->Register();
@@ -214,8 +215,8 @@ static void vtkITKKLExecute(vtkITKKullbackLeiblerTransform *self,
 #endif
 #endif
   
-  KLRegistrator->SetTrainingFixedImage(VTKtoITKImageBB(self->GetTrainingTargetImage(),(RegistratorType::FixedImageType *)(NULL)));
-  KLRegistrator->SetTrainingMovingImage(VTKtoITKImageBB(self->GetTrainingSourceImage(),(RegistratorType::MovingImageType *)(NULL)));
+  KLRegistrator->SetTrainingFixedImage(VTKtoITKImageBB(self->GetTrainingTargetImage(),(typename RegistratorType::FixedImageType *)(NULL)));
+  KLRegistrator->SetTrainingMovingImage(VTKtoITKImageBB(self->GetTrainingSourceImage(),(typename RegistratorType::MovingImageType *)(NULL)));
 
   // take care of memory leak 
   //  KLRegistrator->GetTrainingFixedImage()

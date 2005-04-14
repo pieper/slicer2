@@ -120,25 +120,25 @@ public:
   itkStaticConstMacro (ImageDimension, unsigned int, TFixedImage::ImageDimension);
 
   /** Transform Type. */
-  typedef Superclass::TransformType           TransformType;
+  typedef typename Superclass::TransformType           TransformType;
 
   /** Optimizer Type. */
-  typedef Superclass::OptimizerType           OptimizerType;
+  typedef typename Superclass::OptimizerType           OptimizerType;
 
   /** Metric Type. */
   typedef typename Superclass::MetricType              MetricType;
 
   /** Interpolation Type. */
-  typedef Superclass::InterpolatorType        InterpolatorType;
+  typedef typename Superclass::InterpolatorType        InterpolatorType;
 
   /** Fixed Image Pyramid Type. */
-  typedef Superclass::FixedImagePyramidType   FixedImagePyramidType;
+  typedef typename Superclass::FixedImagePyramidType   FixedImagePyramidType;
 
   /** Moving Image Pyramid Type. */
-  typedef Superclass::MovingImagePyramidType  MovingImagePyramidType;
+  typedef typename Superclass::MovingImagePyramidType  MovingImagePyramidType;
 
   /** Registration Method. */
-  typedef Superclass::RegistrationType        RegistrationType;
+  typedef typename Superclass::RegistrationType        RegistrationType;
 
   /** Transform parameters type. */
   typedef typename Superclass::ParametersType          ParametersType;
@@ -173,30 +173,30 @@ public:
   // Either set all the images and transform and interpolator, or
   // just set the histogram
   void SetTrainingMovingImage( const MovingImageType *TrainingMovingImage )
-    { m_Metric->SetTrainingMovingImage(TrainingMovingImage); }
+    { this->m_Metric->SetTrainingMovingImage(TrainingMovingImage); }
 
   void SetTrainingFixedImage(  const FixedImageType  *TrainingFixedImage )
     { 
-      m_Metric->SetTrainingFixedImage(TrainingFixedImage);
-      m_Metric->SetTrainingFixedImageRegion( TrainingFixedImage->GetBufferedRegion() );
+      this->m_Metric->SetTrainingFixedImage(TrainingFixedImage);
+      this->m_Metric->SetTrainingFixedImageRegion( TrainingFixedImage->GetBufferedRegion() );
      }
   void SetTrainingTransform(  const typename AffineTransformType::Pointer TrainingTransform )
-    { m_Metric->SetTrainingTransform(TrainingTransform); }
+    { this->m_Metric->SetTrainingTransform(TrainingTransform); }
   void SetTrainingInterpolator( const typename InterpolatorType::Pointer TrainingInterpolator )
-    { m_Metric->SetTrainingInterpolator(TrainingInterpolator); }
+    { this->m_Metric->SetTrainingInterpolator(TrainingInterpolator); }
   void SetHistogram( const HistogramType TrainingHistogram )
-    { m_Metric->SetTrainingHistogram(TrainingHistogram); }
+    { this->m_Metric->SetTrainingHistogram(TrainingHistogram); }
 
     // Description:
     // Set the size of the histogram for the metric
     // Default is 32 by 32
   void SetHistogramSize( const HistogramSizeType histSize )
-    { m_Metric->SetHistogramSize(histSize); }
+    { this->m_Metric->SetHistogramSize(histSize); }
 
     // Description:
     // Set the histogram frequency to use if the frequency is 0
   void SetHistogramEpsilon( const double Epsilon) 
-    { m_Metric->SetEpsilon(Epsilon);  }
+    { this->m_Metric->SetEpsilon(Epsilon);  }
 
 
 protected:
