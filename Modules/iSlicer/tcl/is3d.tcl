@@ -676,7 +676,7 @@ itcl::body is3d::screensave { filename {imagetype "PNM"} } {
     $wif Delete
 } 
 
-proc is3d_demo {} {
+proc is3d_demo { {volume "off"} } {
 
     catch "destroy .is3ddemo"
     toplevel .is3ddemo
@@ -687,7 +687,11 @@ proc is3d_demo {} {
     .is3ddemo.isv configure -resolution 256 
     .is3ddemo.isv configure -orientation axial
     .is3ddemo.isv configure -orientation coronal
-    pack [is3d .is3ddemo.is3d -isvolume .is3ddemo.isv] -fill both -expand true
+    pack [is3d .is3ddemo.is3d] -fill both -expand true
+
+    if { $volume != "off" } {
+        .is3ddemo.is3d configure -isvolume .is3ddemo.isv
+    }
 }
 
 proc is3d_demo_movie { filebase {steps 10} } {
