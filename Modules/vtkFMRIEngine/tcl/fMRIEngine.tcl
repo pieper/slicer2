@@ -155,7 +155,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2005/04/10 17:14:36 $}]
+        {$Revision: 1.8 $} {$Date: 2005/04/14 15:24:10 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -365,7 +365,7 @@ proc fMRIEngineBuildGUI {} {
     set fInspect $Module(fMRIEngine,fInspect)
     fMRIEngineBuildUIForInspectTab $fInspect
     set b $Module(fMRIEngine,bInspect)
-    bind $b <1> "fMRIEngineUpdateInspectTab" 
+    bind $b <1> "fMRIEngineUpdateInspectTab;fMRIEngineUpdateEVsForPlotting"
 }
 
 
