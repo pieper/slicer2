@@ -626,9 +626,12 @@ if {[info exists Module(customModules)]  == 1} {
     }
     # it's already been sourced, so just add to the foundOrdered list 
     foreach customModule $Module(customModules) {
-        if {[lsearch $foundOrdered $customModule] == -1} {
-            # it's not already on the foundOrdered list - can have duplicates if 
-            # a custom module was saved to a local Options.xml file
+        if {[lsearch $foundOrdered $customModule] == -1 && 
+            [lsearch $suppressed $customModule] == -1} {
+            # it's not already on the foundOrdered list, nor on the suppressed list.
+            # You can get duplicates if a custom module was saved to a local 
+            # Options.xml file, or is on the suppressed list, and slicer will crash 
+            # with a tcl error as it tries to build two gui's for a module.
             lappend foundOrdered $customModule
         }
     }
@@ -681,6 +684,7 @@ if {$verbose == 1} {
     puts "ordered=$ordered"
     puts "main=$main"
     puts "shared=$shared"
+    puts "allList = $Module(allList)"
 }
 
 # Bootup
@@ -702,7 +706,7 @@ if { $SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.85 2005/03/11 01:23:13 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.86 2005/04/14 16:43:58 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
