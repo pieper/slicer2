@@ -48,6 +48,26 @@ switch $tcl_platform(os) {
 
 puts stderr "SLICER_HOME is $::SLICER_HOME"
 
+# Choose which library versions you want to compile against.  These
+# shouldn't be changed between releases except for testing purposes.
+# If you change them and Slicer breaks, you get to keep both pieces.
+#
+# When modifying these variables, make sure to make appropriate
+# changes in the "Files to test if library has already been built"
+# section below, or genlib will happily build the library again.
+
+set ::CMAKE_TAG "CMake-2-0-5"
+set ::VTK_TAG "Slicer-2-4"
+set ::ITK_TAG "Slicer-2-4"
+set ::TCL_TAG "core-8-4-6"
+set ::TK_TAG "core-8-4-6"
+set ::ITCL_TAG "itcl-3-2-1"
+set ::IWIDGETS_TAG "iwidgets-4-0-1"
+set ::BLT_TAG "blt24z"
+set ::GSL_TAG "release-1-4"
+
+# Set library, binary, etc. paths...
+
 set ::SLICER_LIB $SLICER_HOME/Lib/$::env(BUILD)
 set ::VTK_DIR  $::SLICER_LIB/VTK-build
 set ::VTK_SRC_DIR $::SLICER_LIB/VTK
@@ -64,7 +84,45 @@ set ::GSL_SRC_DIR $::SLICER_LIB/gsl-build/gsl-mirror/gsl
 set ::SOV_BINARY_DIR " "
 set ::XVNC_EXECUTABLE " "
 
-## system dependent variables
+# Files to test if library has already been built by genlib.tcl.
+
+switch $tcl_platform(os) {
+    "SunOS" -
+    "Linux" -
+    "Darwin" {
+        set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh8.4
+        set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish8.4
+        set ::ITCL_TEST_FILE $::TCL_LIB_DIR/libitclstub3.2.a
+        set ::IWIDGETS_TEST_FILE $::TCL_LIB_DIR/iwidgets4.0.1/iwidgets.tcl
+        set ::BLT_TEST_FILE $::TCL_BIN_DIR/bltwish
+        set ::GSL_TEST_FILE $::GSL_LIB_DIR/libgsl.so
+        set ::VTK_TEST_FILE $::VTK_DIR/bin/vtk
+        set ::VTK_TCL_LIB $::TCL_LIB_DIR/libtcl8.4.so 
+        set ::VTK_TK_LIB $::TCL_LIB_DIR/libtk8.4.so
+        set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh8.4
+        set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/libITKCommon.so
+        set ::TK_EVENT_PATCH $SLICER_HOME/tkEventPatch.diff
+    }
+    "Windows NT" {
+    # Windows NT currently covers WinNT, Win2000, XP Home, XP Pro
+        set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh84.exe
+        set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish84.exe
+        set ::ITCL_TEST_FILE $::TCL_LIB_DIR/itcl3.2/itcl32.dll
+        set ::IWIDGETS_TEST_FILE $::TCL_LIB_DIR/iwidgets4.0.2/iwidgets.tcl
+        set ::BLT_TEST_FILE $::TCL_BIN_DIR/BLT24.dll
+        set ::GSL_TEST_FILE $::GSL_LIB_DIR/gsl.lib
+        set ::VTK_TEST_FILE $::VTK_DIR/bin/$VTK_BUILD_TYPE/vtk.exe
+        set ::VTK_TCL_LIB $::TCL_LIB_DIR/tcl84.lib
+        set ::VTK_TK_LIB $::TCL_LIB_DIR/tk84.lib
+        set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh84.exe
+        set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/$VTK_BUILD_TYPE/libITKCommon.dll
+    }
+    default {
+    puts stderr "Could not match platform."
+    }
+}
+
+# System dependant variables
 
 switch $tcl_platform(os) {
     "SunOS" {
