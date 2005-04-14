@@ -134,6 +134,10 @@ if { [itcl::find class isregistration] == "" } {
         method get_last_metric_value {} {}
         method start {} {$_task on;}
         method stop  {} {$_task off }
+        method pre_delete  {} {
+            $_sourcevol pre_delete
+            $_targetvol pre_delete
+        }
     }
 }
 
