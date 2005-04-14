@@ -26,18 +26,6 @@
 # - sp - 2004-06-20
 #
 
-# set up the versions to check out
-set cmakeTag "CMake-2-0-5"
-set vtkTag "Slicer-2-4"
-set itkTag "ITK-2-0"
-#set itkTag "Slicer-2-4"
-set tclTag "core-8-4-6"
-set tkTag "core-8-4-6"
-set itclTag "itcl-3-2-1"
-set iwidgetsTag "iwidgets-4-0-1"
-set bltTag "blt24z"
-set gslTag "release-1-4"
-
 if {[info exists ::env(CVS)]} {
     set ::CVS $::env(CVS)
 } else {
@@ -210,72 +198,6 @@ if { ![file exists $SLICER_LIB] } {
     file mkdir $SLICER_LIB
 }
 
-# set up cross platform files to check for existence
-if {$isSolaris || $isLinux || $isDarwin} {
-    set tclTestFile $TCL_BIN_DIR/tclsh8.4
-    set tkTestFile  $TCL_BIN_DIR/wish8.4
-    set itclTestFile $TCL_LIB_DIR/libitclstub3.2.a
-    set iwidgetsTestFile $TCL_LIB_DIR/iwidgets4.0.1/iwidgets.tcl
-    set bltTestFile $TCL_BIN_DIR/bltwish
-    set gslTestFile $GSL_LIB_DIR/libgsl.so
-    set vtkTestFile $VTK_DIR/bin/vtk
-    set vtkTclLib $TCL_LIB_DIR/libtcl8.4.so 
-    set vtkTkLib $TCL_LIB_DIR/libtk8.4.so
-    set vtkTclsh $TCL_BIN_DIR/tclsh8.4
-    set itkTestFile $ITK_BINARY_PATH/bin/libITKCommon.so
-    set tkEventPatch $SLICER_HOME/tkEventPatch.diff
-} elseif {$isWindows} {
-    set tclTestFile $TCL_BIN_DIR/tclsh84.exe
-    set tkTestFile  $TCL_BIN_DIR/wish84.exe
-    set itclTestFile $TCL_LIB_DIR/itcl3.2/itcl32.dll
-    set iwidgetsTestFile $TCL_LIB_DIR/iwidgets4.0.2/iwidgets.tcl
-    set bltTestFile $TCL_BIN_DIR/BLT24.dll
-    set gslTestFile $GSL_LIB_DIR/gsl.lib
-    set vtkTestFile $VTK_DIR/bin/$VTK_BUILD_TYPE/vtk.exe
-    set vtkTclLib $TCL_LIB_DIR/tcl84.lib
-    set vtkTkLib $TCL_LIB_DIR/tk84.lib
-    set vtkTclsh $TCL_BIN_DIR/tclsh84.exe
-    set itkTestFile $ITK_BINARY_PATH/bin/$VTK_BUILD_TYPE/libITKCommon.dll
-    # set itkTestFile $ITK_BINARY_PATH/bin/$VTK_BUILD_TYPE/ITKCommon.dll
-} else {
-    puts "Could not match platform."
-}
-
-
-# switch $tcl_platform(os) {
-#     "SunOS" -
-#     "Linux" -
-#     "Darwin" {
-#         set tclTestFile $TCL_BIN_DIR/tclsh8.4
-#         set tkTestFile  $TCL_BIN_DIR/wish8.4
-#         set itclTestFile $TCL_LIB_DIR/libitclstub3.2.a
-#         set iwidgetsTestFile $TCL_LIB_DIR/iwidgets4.0.1/iwidgets.tcl
-#         set bltTestFile $TCL_BIN_DIR/bltwish
-#         set gslTestFile $GSL_LIB_DIR/libgsl.so
-#         set vtkTestFile $VTK_DIR/bin/vtk
-#         set vtkTclLib $TCL_LIB_DIR/libtcl8.4.so 
-#         set vtkTkLib $TCL_LIB_DIR/libtk8.4.so
-#         set vtkTclsh $TCL_BIN_DIR/tclsh8.4
-#         set itkTestFile $ITK_BINARY_PATH/bin/libITKCommon.so
-#         set tkEventPatch $SLICER_HOME/tkEventPatch.diff
-#     }
-#     default {
-#         # different windows machines return different values, assume if none of the above, windows
-#         set tclTestFile $TCL_BIN_DIR/tclsh84.exe
-#         set tkTestFile  $TCL_BIN_DIR/wish84.exe
-#         set itclTestFile $TCL_LIB_DIR/itcl3.2/itcl32.dll
-#         set iwidgetsTestFile $TCL_LIB_DIR/iwidgets4.0.2/iwidgets.tcl
-#         set bltTestFile $TCL_BIN_DIR/BLT24.dll
-#         set gslTestFile $GSL_LIB_DIR/gsl.lib
-#         set vtkTestFile $VTK_DIR/bin/$VTK_BUILD_TYPE/vtk.exe
-#         set vtkTclLib $TCL_LIB_DIR/tcl84.lib
-#         set vtkTkLib $TCL_LIB_DIR/tk84.lib
-#         set vtkTclsh $TCL_BIN_DIR/tclsh84.exe
-#         set itkTestFile $ITK_BINARY_PATH/bin/$VTK_BUILD_TYPE/libITKCommon.dll
-#         #        set itkTestFile $ITK_BINARY_PATH/bin/$VTK_BUILD_TYPE/ITKCommon.dll
-#     }
-# }
-
 ################################################################################
 # Get and build CMake
 #
@@ -298,7 +220,7 @@ if { ![file exists $CMAKE] } {
         exit
     } else {
         runcmd $::CVS -d :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login
-        runcmd $::CVS -z3 -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $cmakeTag CMake
+        runcmd $::CVS -z3 -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $::CMAKE_TAG CMake
 
         cd $CMAKE_PATH
         if { $isSolaris } {
@@ -317,7 +239,7 @@ if { ![file exists $CMAKE] } {
 #
 
 # on windows, tcl won't build right, as can't configure, so save commands have to run
-if { ![file exists $tclTestFile] } {
+if { ![file exists $::TCL_TEST_FILE] } {
 
     if {$isWindows} {
         puts stderr "-- genlib.tcl cannot generate the tcl binaries for windows --"
@@ -335,7 +257,7 @@ if { ![file exists $tclTestFile] } {
     cd $SLICER_LIB/tcl
 
     runcmd $::CVS -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/tcl login
-    runcmd $::CVS -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tcl checkout -r $tclTag tcl
+    runcmd $::CVS -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tcl checkout -r $::TCL_TAG tcl
 
     if {$isWindows} {
         # can't do windows
@@ -348,15 +270,15 @@ if { ![file exists $tclTestFile] } {
     }
 }
 
-if { ![file exists $tkTestFile] } {
+if { ![file exists $::TK_TEST_FILE] } {
     cd $SLICER_LIB/tcl
 
     runcmd $::CVS -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/tktoolkit login
-    runcmd $::CVS -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tktoolkit checkout -r $tkTag tk
+    runcmd $::CVS -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tktoolkit checkout -r $::TK_TAG tk
 
     if {$isDarwin} {
         if { ![file exists $SLICER_HOME/isPatched] } {
-            if { [file exists $tkEventPatch] } {
+            if { [file exists $::TK_EVENT_PATCH] } {
                 puts "Patching..."
                 cd $SLICER_LIB/tcl/tk/generic
                 runcmd cp $SLICER_HOME/tkEventPatch.diff $SLICER_LIB/tcl/tk/generic 
@@ -387,11 +309,11 @@ if { ![file exists $tkTestFile] } {
     }
 }
 
-if { ![file exists $itclTestFile] } {
+if { ![file exists $::ITCL_TEST_FILE] } {
     cd $SLICER_LIB/tcl
 
     runcmd $::CVS -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/incrtcl login
-    runcmd $::CVS -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/incrtcl checkout -r $itclTag incrTcl
+    runcmd $::CVS -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/incrtcl checkout -r $::ITCL_TAG incrTcl
 
     cd $SLICER_LIB/tcl/incrTcl
 
@@ -412,11 +334,11 @@ if { ![file exists $itclTestFile] } {
     }
 }
 
-if { ![file exists $iwidgetsTestFile] } {
+if { ![file exists $::IWIDGETS_TEST_FILE] } {
     cd $SLICER_LIB/tcl
 
     runcmd $::CVS -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/incrtcl login
-    runcmd $::CVS -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/incrtcl checkout -r $iwidgetsTag iwidgets
+    runcmd $::CVS -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/incrtcl checkout -r $::IWIDGETS_TAG iwidgets
 
 
     if {$isWindows} {
@@ -435,11 +357,11 @@ if { ![file exists $iwidgetsTestFile] } {
 # Get and build blt
 #
 
-if { ![file exists $bltTestFile] } {
+if { ![file exists $::BLT_TEST_FILE] } {
     cd $SLICER_LIB/tcl
     
     runcmd $::CVS -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt login
-    runcmd $::CVS -z3 -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt co -r $bltTag blt
+    runcmd $::CVS -z3 -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt co -r $::BLT_TAG blt
 
     if { $isWindows } {
         # can't do Windows
@@ -461,7 +383,7 @@ if { ![file exists $bltTestFile] } {
 # Get and build gsl
 #
 
-if { ![file exists $gslTestFile] } {
+if { ![file exists $::GSL_TEST_FILE] } {
     file mkdir $SLICER_LIB/gsl-build
     file mkdir $SLICER_LIB/gsl
 
@@ -470,7 +392,7 @@ if { ![file exists $gslTestFile] } {
     runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
     runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co gsl-mirror
 #    runcmd $::CVS -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl login
-#    runcmd $::CVS -z3 -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl co -r $gslTag gsl
+#    runcmd $::CVS -z3 -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl co -r $::GSL_TAG gsl
 
     if { !$isWindows } {
         # can't do Windows
@@ -502,11 +424,11 @@ if { ![file exists $gslTestFile] } {
 # Get and build vtk
 #
 
-if { ![file exists $vtkTestFile] } {
+if { ![file exists $::VTK_TEST_FILE] } {
     cd $SLICER_LIB
 
     runcmd $::CVS -d :pserver:anonymous:vtk@public.kitware.com:/cvsroot/VTK login
-    runcmd $::CVS -z3 -d :pserver:anonymous@public.kitware.com:/cvsroot/VTK checkout -r $vtkTag VTK
+    runcmd $::CVS -z3 -d :pserver:anonymous@public.kitware.com:/cvsroot/VTK checkout -r $::VTK_TAG VTK
 
     # Andy's temporary hack to get around wrong permissions in VTK cvs repository
     # catch statement is to make file attributes work with RH 7.3
@@ -538,9 +460,9 @@ if { ![file exists $vtkTestFile] } {
         -DVTK_USE_PATENTED:BOOL=ON \
         -DTCL_INCLUDE_PATH:PATH=$TCL_INCLUDE_DIR \
         -DTK_INCLUDE_PATH:PATH=$TCL_INCLUDE_DIR \
-        -DTCL_LIBRARY:FILEPATH=$vtkTclLib \
-        -DTK_LIBRARY:FILEPATH=$vtkTkLib \
-        -DTCL_TCLSH:FILEPATH=$vtkTclsh \
+        -DTCL_LIBRARY:FILEPATH=$::VTK_TCL_LIB \
+        -DTK_LIBRARY:FILEPATH=$::VTK_TK_LIB \
+        -DTCL_TCLSH:FILEPATH=$::VTK_TCLSH \
         $USE_VTK_ANSI_STDLIB \
         ../VTK
 
@@ -567,11 +489,11 @@ if { ![file exists $vtkTestFile] } {
 # Get and build itk
 #
 
-if { ![file exists $itkTestFile] } {
+if { ![file exists $::ITK_TEST_FILE] } {
     cd $SLICER_LIB
 
     runcmd $::CVS -d :pserver:anoncvs:@www.itk.org:/cvsroot/Insight login
-    runcmd $::CVS -z3 -d :pserver:anoncvs@www.itk.org:/cvsroot/Insight checkout -r $itkTag Insight
+    runcmd $::CVS -z3 -d :pserver:anoncvs@www.itk.org:/cvsroot/Insight checkout -r $::ITK_TAG Insight
 
     file mkdir $SLICER_LIB/Insight-build
     cd $SLICER_LIB/Insight-build
