@@ -106,7 +106,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.23 $} {$Date: 2005/04/14 16:41:17 $}]
+        {$Revision: 1.24 $} {$Date: 2005/04/14 21:05:46 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1372,8 +1372,8 @@ proc TransformVolumeCreatePreview {} {
 proc TransformVolumeExitPreview {} {
     global TransformVolume Gui
 
-    catch "$TransformVolume(isv) pre_destroy"
-    catch "destroy $TransformVolume(wisv)"
+    catch {$TransformVolume(isv) pre_destroy}
+    catch {destroy $TransformVolume(wisv)}
     set TransformVolume(isv) ""
     set TransformVolume(wisv) ""
 }
