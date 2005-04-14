@@ -83,7 +83,7 @@ int vtkMrmlDataVolumeReadWriteStructuredPoints::Read(vtkMrmlVolumeNode *node,
                                                      vtkImageSource **output)
 {
   vtkStructuredPointsReader* reader = vtkStructuredPointsReader::New();
-  reader->DebugOn();
+  //reader->DebugOn();
   reader->SetFileName(this->FileName);
   reader->Update();
   // perhaps we should tell the reader this info,
@@ -123,7 +123,7 @@ int vtkMrmlDataVolumeReadWriteStructuredPoints::Write(vtkMrmlVolumeNode *node,
                                                       vtkImageData *input)
 {
   vtkStructuredPointsWriter* writer = vtkStructuredPointsWriter::New();
-  writer->DebugOn();
+  //writer->DebugOn();
   writer->SetFileName(this->FileName);
   writer->SetInput(input);
   writer->Update();
