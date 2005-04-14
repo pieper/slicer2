@@ -208,8 +208,8 @@ proc fMRIEngineBuildUIForInspectTab {parent} {
     set f $parent.fThreshold.fParams.fStat 
     DevAddLabel $f.lPV "p Value:"
     DevAddLabel $f.lTS "t Stat:"
-    set fMRIEngine(pValue) "None"
-    set fMRIEngine(tStat) "None"
+    set fMRIEngine(pValue) "none"
+    set fMRIEngine(tStat) "none"
     eval {entry $f.ePV -width 10 -state readonly \
         -textvariable fMRIEngine(pValue)} $Gui(WEA)
     eval {entry $f.eTS -width 10 -state readonly \
@@ -238,19 +238,44 @@ proc fMRIEngineBuildUIForInspectTab {parent} {
     #-------------------------------------------
     set f $parent.fPlot
     frame $f.fTitle  -bg $Gui(activeWorkspace)
+    frame $f.fLong   -bg $Gui(activeWorkspace) -relief groove -bd 1 
     frame $f.fChoice -bg $Gui(activeWorkspace)
-    pack $f.fTitle $f.fChoice -side top -fill x -padx 2 -pady 1 
+    pack $f.fTitle -side top -fill x -padx 2 -pady 1 
+    pack $f.fLong -side top -padx 2 -pady 1 
+    pack $f.fChoice -side top -fill x -padx 2 -pady 1 
 
     set f $parent.fPlot.fTitle
     DevAddButton $f.bHelp "?" "fMRIEngineHelpInspectPlotting " 2
     DevAddLabel $f.lLabel "Time series plotting:"
+
     grid $f.bHelp $f.lLabel -padx 1 -pady 5 
 
-    set f $parent.fPlot.fChoice
-    foreach param "Long Short ROI" \
-        name "{Timecourse} {Peristimulus histogram} {ROI}" {
+    set f $parent.fPlot.fLong
+    eval {radiobutton $f.rLong -width 10 -text "Timecourse" \
+        -variable fMRIEngine(tcPlottingOption) -value Long \
+        -relief raised -offrelief raised -overrelief raised \
+        -selectcolor white} $Gui(WEA)
 
-        eval {radiobutton $f.r$param -width 20 -text $name \
+    set evList [list {none}]
+    set df [lindex $evList 0] 
+    eval {menubutton $f.mbType -text $df \
+          -relief raised -bd 2 -width 16 \
+          -menu $f.mbType.m} $Gui(WMBA)
+    eval {menu $f.mbType.m} $Gui(WMA)
+    foreach m $evList  {
+        $f.mbType.m add command -label $m \
+            -command ""
+    }
+    grid $f.rLong $f.mbType -padx 1 -pady 2 
+
+    # Save menubutton for config
+    set fMRIEngine(gui,evsMenuButtonForPlotting) $f.mbType
+    set fMRIEngine(gui,evsMenuForPlotting) $f.mbType.m
+
+    set f $parent.fPlot.fChoice
+    foreach param "Short ROI" \
+        name "{Peristimulus histogram} {ROI}" {
+        eval {radiobutton $f.r$param -width 27 -text $name \
             -variable fMRIEngine(tcPlottingOption) -value $param \
             -relief raised -offrelief raised -overrelief raised \
             -selectcolor white} $Gui(WEA)
@@ -261,4 +286,54 @@ proc fMRIEngineBuildUIForInspectTab {parent} {
     set fMRIEngine(tcPlottingOption) "" 
 }
 
+     
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineUpdateEVsForPlotting
+# Updates ev list for timecourse plotting 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineUpdateEVsForPlotting {} {
+    global fMRIEngine
+
+    set run $fMRIEngine(curRunForModelFitting)
+    if {$run == "none"} {
+        return
+    }
+
+    if {$run == "All"} {
+        set run 1
+    }
+
+    if {! [info exists fMRIEngine($run,namesOfEVs)]} {
+        return
+    }
+
+    if {[llength $fMRIEngine($run,namesOfEVs)] > 0} {
+        $fMRIEngine(gui,evsMenuForPlotting) delete 0 end
+        set count 1 
+        foreach name $fMRIEngine($run,namesOfEVs) { 
+            $fMRIEngine(gui,evsMenuForPlotting) add command -label $name \
+                -command "fMRIEngineSelectEVForPlotting $name $count"
+
+            fMRIEngineSelectEVForPlotting $name $count 
+            incr count
+        }
+    }
+} 
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineSelectEVForPlotting
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineSelectEVForPlotting {ev count} {
+    global fMRIEngine 
+
+    # configure menubutton
+    $fMRIEngine(gui,evsMenuButtonForPlotting) config -text $ev
+    set fMRIEngine(curEVIndexForPlotting) $count 
+}
 
