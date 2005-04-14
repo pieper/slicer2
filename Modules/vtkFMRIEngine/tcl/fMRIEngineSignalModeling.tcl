@@ -326,7 +326,7 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
     DevAddButton $f.bHelp "?" "fMRIEngineHelpSetupEstimate" 2
     DevAddButton $f.bEstimate "Fit Model" "fMRIEngineFitModel" 15 
 
-    set runList [list {None}]
+    set runList [list {none}]
     set df [lindex $runList 0] 
     eval {menubutton $f.mbType -text $df \
         -relief raised -bd 2 -width 8 \
@@ -394,9 +394,9 @@ proc fMRIEngineUpdateRunsForModelFitting {} {
     $fMRIEngine(gui,runListMenuForModelFitting) delete 0 end
     set runs [$fMRIEngine(seqListBox) size] 
     if {$runs == 0} {
-        fMRIEngineSelectRunForModelFitting None 
-        $fMRIEngine(gui,runListMenuForModelFitting) add command -label None \
-            -command "fMRIEngineSelectRunForModelFitting None"
+        fMRIEngineSelectRunForModelFitting none 
+        $fMRIEngine(gui,runListMenuForModelFitting) add command -label none \
+            -command "fMRIEngineSelectRunForModelFitting none"
     } else { 
         if {$runs > 1} {
             fMRIEngineSelectRunForModelFitting All 
@@ -426,7 +426,7 @@ proc fMRIEngineUpdateConditionsForSignalModeling {} {
 
     $fMRIEngine(gui,conditionsMenuForSignal) delete 0 end 
     set start 1
-    set end $fMRIEngine(noOfRuns)
+    set end $fMRIEngine(noOfSpecifiedRuns)
 
     set firstCondition ""
     set i $start
@@ -696,7 +696,7 @@ proc fMRIEngineShowEVToEdit {} {
 proc fMRIEngineAddInputVolumes {run} {
     global MultiVolumeReader fMRIEngine
 
-    if {$run == "None"} {
+    if {$run == "none"} {
         return
     }
 
@@ -784,7 +784,7 @@ proc fMRIEngineCheckMultiRuns {} {
 proc fMRIEngineAddRegressors {run} {
     global MultiVolumeReader fMRIEngine fMRIModelView 
 
-    if {$run == "None"} {
+    if {$run == "none"} {
         return 1
     }
 
@@ -975,7 +975,7 @@ proc fMRIEngineCountEVs {} {
 proc fMRIEngineFitModel {} {
     global fMRIEngine Gui Volume MultiVolumeReader
 
-    if {$fMRIEngine(curRunForModelFitting) == "None"} {
+    if {$fMRIEngine(curRunForModelFitting) == "none"} {
         DevErrorWindow "Select a valid run for model fitting."
         return 
     }
