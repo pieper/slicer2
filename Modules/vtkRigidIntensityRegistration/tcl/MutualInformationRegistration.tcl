@@ -102,7 +102,7 @@ proc MutualInformationRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.9 $} {$Date: 2005/01/28 23:31:05 $}]
+        {$Revision: 1.10 $} {$Date: 2005/04/14 12:58:33 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -613,6 +613,7 @@ proc MutualInformationRegistrationAutoRun {} {
 
     ## if it is not already there, create it.
     if { [info command .mi.reg] == "" } {
+        catch ".mi.reg pre_destroy"
         catch "destroy .mi"
         toplevel .mi
         wm withdraw .mi

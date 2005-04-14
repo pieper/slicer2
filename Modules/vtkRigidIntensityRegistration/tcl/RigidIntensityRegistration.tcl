@@ -83,6 +83,7 @@ proc RigidIntensityRegistrationInit {} {
 #    set Module($m,procVTK) RigidIntensityRegistrationBuildVTK
     set Module($m,procEnter) RigidIntensityRegistrationEnter
     set Module($m,procExit) RigidIntensityRegistrationExit
+    set Module($m,procMainExit) RigidIntensityRegistrationMainExit
 
     # Define Dependencies
     #------------------------------------
@@ -100,7 +101,7 @@ proc RigidIntensityRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8 $} {$Date: 2004/04/13 21:33:57 $}]
+        {$Revision: 1.9 $} {$Date: 2005/04/14 12:58:57 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -275,6 +276,19 @@ proc RigidIntensityRegistrationExit {} {
     #   previous ones.
     #
     popEventManager
+}
+
+#-------------------------------------------------------------------------------
+# .PROC RigidIntensityRegistrationMainExit
+# Called when slicer is going to exit -- clean up anything that needs a 
+# special shutdown sequence.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc RigidIntensityRegistrationMainExit {} {
+
+    catch ".mi.reg pre_destroy"
+    catch "destroy .mi"
 }
 
 
