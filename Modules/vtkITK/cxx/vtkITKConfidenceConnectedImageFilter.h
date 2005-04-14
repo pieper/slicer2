@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKConfidenceConnectedImageFilter.h,v $
   Language:  C++
-  Date:      $Date: 2003/04/14 19:44:06 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2005/04/14 12:55:54 $
+  Version:   $Revision: 1.3 $
 */
 // .NAME vtkITKConfidenceConnectedImageFilter - Wrapper class around itk::ConfidenceConnectedImageFilter
 // .SECTION Description
@@ -54,6 +54,20 @@ class VTK_EXPORT vtkITKConfidenceConnectedImageFilter : public vtkITKImageToImag
     this->GetImageFilterPointer()->SetSeed ( seed );
   }
 
+  void AddSeed ( int x, int y, int z )
+  {
+    ImageFilterType::IndexType seed;
+    seed[0] = x;
+    seed[1] = y;
+    seed[2] = z;
+    this->GetImageFilterPointer()->AddSeed ( seed );
+  }
+
+  void ClearSeeds ( )
+  {
+      this->GetImageFilterPointer()->ClearSeeds();
+  }
+
 protected:
   //BTX
   typedef itk::ConfidenceConnectedImageFilter<Superclass::InputImageType, Superclass::OutputImageType> ImageFilterType;
@@ -67,7 +81,7 @@ private:
   void operator=(const vtkITKConfidenceConnectedImageFilter&);  // Not implemented.
 };
 
-vtkCxxRevisionMacro(vtkITKConfidenceConnectedImageFilter, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkITKConfidenceConnectedImageFilter, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkITKConfidenceConnectedImageFilter);
 
 #endif
