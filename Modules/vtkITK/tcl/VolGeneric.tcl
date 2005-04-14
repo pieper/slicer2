@@ -306,6 +306,13 @@ proc VolGenericApply {} {
     Volume($i,node) SetDescription $Volume(desc)
     Volume($i,node) SetLabelMap $Volume(labelMap)
 
+    if { ![string is double $Volume(sliceThickness)] } {
+        DevWarningWindow "Bad slice thickess/spacing from Generic Reader - assuming 1.0"
+        set Volume(pixelWidth) 1.0
+        set Volume(pixelHeight) 1.0
+        set Volume(sliceThickness) 1.0
+    }
+
     eval Volume($i,node) SetSpacing $Volume(pixelWidth) $Volume(pixelHeight) \
             [expr $Volume(sliceSpacing) + $Volume(sliceThickness)]
     Volume($i,node) SetTilt $Volume(gantryDetectorTilt)
