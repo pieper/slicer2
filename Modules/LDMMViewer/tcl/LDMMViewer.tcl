@@ -156,7 +156,7 @@ proc LDMMViewerInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.12 $} {$Date: 2004/07/25 12:58:24 $}]
+        {$Revision: 1.13 $} {$Date: 2005/04/14 13:00:41 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -651,6 +651,7 @@ proc LDMMViewerMovie {} {
         LDMMViewerRenderNTimes 3
     }
     LDMMViewerRenderNTimes 5
+
     MainViewNavReset $dir(A,x) $dir(A,y) click
     LDMMViewerSetTime 0
     LDMMViewerRenderNTimes 5
@@ -682,7 +683,7 @@ proc LDMMViewerBatchRender { dir } {
     }
     if { ![info exists ::env(IMAGEMAGICK_CONVERT)] } {
         puts stderr "Set environment variable IMAGEMAGIC_CONVERT to the convert command"
-        exit
+        return;
     }
 
     LDMMViewerSetDirectory $dir
