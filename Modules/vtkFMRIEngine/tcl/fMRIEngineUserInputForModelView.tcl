@@ -239,6 +239,7 @@ proc fMRIModelViewSortUserInput { } {
             # replace multiple spaces in the middle of the string by one space  
             regsub -all {( )+} $c " " c 
 
+            # reformat the contrast string
             set cl [split $c " "]
             set len [llength $cl]
             if {$len > $::fMRIModelView(Design,totalEVs)} {
@@ -254,6 +255,9 @@ proc fMRIModelViewSortUserInput { } {
             fMRIModelViewSetTContrast $index $cl
             fMRIModelViewSetTContrastName $index t-$name 
             fMRIModelViewSetTContrastLabel $index
+
+            set str [join $cl " "]
+            set fMRIEngine($name,contrastVector) $str
         }
 
         incr i
