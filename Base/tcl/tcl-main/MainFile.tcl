@@ -86,7 +86,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.60 $} {$Date: 2005/04/12 22:00:05 $}]
+        {$Revision: 1.61 $} {$Date: 2005/04/15 16:43:57 $}]
 
     set File(filePrefix) data
 }
@@ -388,7 +388,8 @@ proc MainFileSaveOptions {} {
     }
     # Get presets
     set options [MainOptionsUnparsePresets $Preset(userOptions)]
-    
+    if {$Module(verbose)} { puts "MainFileSaveOptions:\n\tUnparsed options $options.\n\tOptions(moduleList) = $Options(moduleList)" }
+
     # Make a temporary node for presets
     vtkMrmlOptionsNode pre
     pre SetOptions $options
@@ -396,6 +397,7 @@ proc MainFileSaveOptions {} {
     pre SetContents presets
 
     # Make a temporary node for modules
+    OptionsUpdateModuleList
     vtkMrmlOptionsNode mod
     mod SetOptions $Options(moduleList)
     mod SetProgram slicer
@@ -412,6 +414,10 @@ proc MainFileSaveOptions {} {
     if {[tree GetErrorCode] != 0} {
         puts "ERROR: MainFileSaveOptions: unable to write Options file $filename"
         DevErrorWindow "ERROR: MainFileSaveOptions: unable to write Options file $filename"
+    } else {
+        if {$Module(verbose)} {
+            puts "Wrote Options file $filename"
+        }
     }
 
     # Clean up.
