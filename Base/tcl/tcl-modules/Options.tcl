@@ -76,13 +76,15 @@ proc OptionsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.22 $} {$Date: 2004/04/13 21:00:09 $}]
+        {$Revision: 1.23 $} {$Date: 2005/04/15 16:42:36 $}]
 
     # Module Summary Info
     set Module($m,overview) "Save User Preferences to Options.xml file."
 
     # Initialize Globals
     set Options(propertyType) Basic
+
+#    set Options(moduleTypes) {ordered suppressed ignored}
 
     foreach m $Module(idList) {
         set Module($m,visibility) 1
@@ -405,17 +407,19 @@ proc OptionsPropsApply {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC OptionsModulesApply
-# 
+# .PROC OptionsUpdateModuleList
+# The Options(moduleList) is saved out in the Options.xml file, built up from the ordered
+# and suppressed lists. It has to be updated before writing.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc OptionsModulesApply {} {
-
-        global Module Options
+proc OptionsUpdateModuleList {} {
+    global Module Options
 
     set ordered "ordered='"
     set suppressed "suppressed='"
+    set ignored "ignored='$Module(ignoredList)'"
+
     foreach m $Module(allList) {
         if {$Module($m,visibility) == 1} {
             set ordered "$ordered $m"
@@ -424,7 +428,23 @@ proc OptionsModulesApply {} {
         }
     }
 
-    set Options(moduleList) "$ordered'\n$suppressed'\n"
+    set Options(moduleList) "$ordered'\n$suppressed'\n$ignored\n"
+
+    if {$::Module(verbose)} { puts "OptionsUpdateModuleList: Options(moduleList) $Options(moduleList)" }
+
+}
+
+#-------------------------------------------------------------------------------
+# .PROC OptionsModulesApply
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc OptionsModulesApply {} {
+
+    global Module Options
+
+    OptionsUpdateModuleList
     
     MainFileSaveOptions
     return
@@ -506,28 +526,38 @@ proc OptionsModulesGUI {} {
         # y spacing important for calculation of frame height for scrolling
         set pady 2
 
-    foreach m $Module(allList) {
+    if {$::Module(verbose)} { puts "OptionsModulesGUI: Module(allList) = $Module(allList)" }
 
+    # calculate the length of the longest string, for the visibility button
+    set maxButtonLen 0
+    foreach m $Module(allList) {
+        if {[string length $m] > $maxButtonLen} {
+            set maxButtonLen [string length $m]
+        }
+    }
+    if {$Module(verbose)} { puts "From Module(allList), got max button length = $maxButtonLen" }
+
+    foreach m $Module(allList) {
+        
         # Name / Visible
         eval {checkbutton $f.c$m \
-            -text $m -variable Module($m,visibility) -width 17 \
+            -text $m -variable Module($m,visibility) -width $maxButtonLen \
             -indicatoron 0} $Gui(WCA)
 
         # Move buttons
-        eval {button $f.bUp$m -text "Up" -width 3 \
+        eval {button $f.bUp$m -text "Up" -width 2 \
             -command "OptionsModulesUp $m"} $Gui(WBA)
-        eval {button $f.bDown$m -text "Down" -width 5\
+        eval {button $f.bDown$m -text "Down" -width 4\
             -command "OptionsModulesDown $m"} $Gui(WBA)
         
-        grid $f.c$m $f.bUp$m $f.bDown$m -pady $pady -padx 5
+        grid $f.c$m $f.bUp$m $f.bDown$m -pady $pady -padx 2
     }
 
     if {[info exists m] == 1} {
         # Find the height of a single button
         set lastButton $f.bUp$m
-        set width [winfo reqwidth $lastButton]
         # Find how many modules (lines) in the frame
-        set numLines [llength $Module(idList)]
+        set numLines [llength $Module(allList)]
         # Find the height of a line
         set incr [expr {[winfo reqheight $lastButton] + 2*$pady}]
         # Find the total height that should scroll
@@ -567,6 +597,16 @@ proc OptionsModulesUp {m} {
     set Module(allList) [linsert  $Module(allList) $i $m]
 
     OptionsModulesGUI
+
+    # move the module up in the ordered list
+    set j [lsearch $Module(idList) $m]
+    if {$::Module(verbose)} { puts "OptionsModuleUp: got $j in idList" }
+    if {$j == 0} { return }
+    set i [expr $j - 1]
+    set n [lindex $Module(idList) $i]
+    set Module(idList) [lreplace $Module(idList) $i $j $n]
+    set Module(idList) [linsert  $Module(idList) $i $m]
+
 }
 
 #-------------------------------------------------------------------------------
@@ -584,5 +624,14 @@ proc OptionsModulesDown {m} {
     set Module(allList) [linsert  $Module(allList) $i $n]
 
     OptionsModulesGUI
+
+    # move the module down in the ordered list
+    set i [lsearch $Module(idList) $m]
+    if {$i == [expr [llength $Module(idList)] - 1]} {return}
+    set j [expr $i + 1]
+    set n [lindex $Module(idList) $j]
+    set Module(idList) [lreplace $Module(idList) $i $j $m]
+    set Module(idList) [linsert  $Module(idList) $i $n]
+
 }
 
