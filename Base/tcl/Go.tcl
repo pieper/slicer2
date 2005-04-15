@@ -398,14 +398,6 @@ pdm_dummy Delete
 # this is required by the widget interactors
 package require vtkinteraction
 
-foreach m $env(SLICER_MODULES_TO_REQUIRE) {
-    puts "Loading Module $m..."
-    if { [catch {package require $m} errVal] } {
-        puts stderr "Warning: can't load module $m:\n$errVal"
-        puts stderr "\tContinuing without this module's functionality."
-    }
-}
-
 #
 # turn off if user wants - re-enabled threading by default
 # based on Raul's fixes to vtkImageReformat 2002-11-26
@@ -429,14 +421,21 @@ if { $SLICER(threaded) == "false" } {
 # .END
 #-------------------------------------------------------------------------------
 proc ReadModuleNames {filename} {
+    global Options verbose
 
-    if {$filename == ""} {
-        return [list "" ""]
+    set retList ""
+    foreach m $Options(moduleTypes) {
+        lappend retList ""
     }
 
+    if {$filename == ""} {
+        return $retList
+    }
+
+    if {$verbose} { puts "ReadModuleNames: about to read $filename" }
     set tags [MainMrmlReadVersion2.0 $filename 0]
     if {$tags == 0} {
-        return [list "" ""]
+        return $retList
     }
 
     foreach pair $tags {
@@ -452,12 +451,23 @@ proc ReadModuleNames {filename} {
                     set node($key) $val
                 }
                 if {$node(program) == "slicer" && $node(contents) == "modules"} {
-                    return [list $node(ordered) $node(suppressed)]
+                    # return [list $node(ordered) $node(suppressed)]
+                    set retList ""
+                    foreach m  $Options(moduleTypes) {
+                        if {[info exist node($m)]} {
+                            lappend retList $node($m)
+                        } else {
+                            lappend retList ""
+                        }
+                    }
+                    if {$verbose} { puts "Got retList from Options.xml $retList" }
+                    return $retList
+                    
                 }
             }
         }
     }
-    return [list "" ""]
+    return $retList
 }
 
 #-------------------------------------------------------------------------------
@@ -505,6 +515,7 @@ proc ReadModuleNamesLocalOrCentral {name ext} {
     global prog verbose
 
     set path [GetFullPath $name $ext "" 0]
+    puts "Reading $path"
     set names [ReadModuleNames $path]
     return $names
 }
@@ -515,7 +526,7 @@ proc ReadModuleNamesLocalOrCentral {name ext} {
 #
 # .END
 #-------------------------------------------------------------------------------
-proc GetFullPath {name ext {dir "" } {verbose 1}} {
+proc GetFullPath {name ext {dir "" } {verbose 0}} {
     global prog
 
     # Form a full path by appending the name (ie: Volumes) to
@@ -524,12 +535,18 @@ proc GetFullPath {name ext {dir "" } {verbose 1}} {
     set central [file join [file join $prog $dir] $name].$ext
 
     if {[file exists $local] == 1} {
+        if {$verbose} { 
+            puts "GetFullPath returning local $local"
+        }
         return $local
     } elseif {[file exists $central] == 1} {
+        if {$verbose} { 
+            puts "GetFullPath returning central $central" 
+        }
         return $central
     } else {
         if {$verbose == 1} {
-            set msg "File '$name.$ext' cannot be found"
+            set msg "GetFullPath: File '$name.$ext' cannot be found (dir = $dir)"
             puts $msg
             tk_messageBox -message $msg
         }
@@ -564,18 +581,32 @@ proc GetFullPath {name ext {dir "" } {verbose 1}} {
 set path [GetFullPath Parse tcl tcl-main]
 source $path
 
+# this should be set in the OptionsInit proc, but need it now
+set ::Options(moduleTypes) {ordered suppressed ignored}
+# set path [GetFullPath Options tcl tcl-modules]
+# source $path
+
 # Look for an Options.xml file locally and then centrally
 set moduleNames [ReadModuleNamesLocalOrCentral Options xml]
-set ordered [lindex $moduleNames 0]
-set suppressed [lindex $moduleNames 1]
 
-# Find all module names
+# Get the list of module types from the Options.xml file
+for {set i 0} {$i < [llength $::Options(moduleTypes)]} {incr i} {
+    set listname [lindex $::Options(moduleTypes) $i]
+   
+    set $listname [lindex $moduleNames $i]
+    if {$verbose} { puts "Got list name $listname = [subst $$listname]"}
+}
+
+# Find all Base module names
 set found [FindNames tcl-modules]
 
 if {$verbose == 1} {
     puts "found=$found"
-    puts "ordered=$ordered"
-    puts "suppressed=$suppressed"
+    foreach mType $::Options(moduleTypes) {
+        puts "$mType = [subst $$mType]"
+    }
+    # puts "ordered=$ordered"
+    # puts "suppressed=$suppressed"
 }
 
 # Append found names to ordered names
@@ -589,28 +620,53 @@ foreach name $found {
 }
 
 # Suppress unwanted (need a more PC term for this) modules
-foreach name $suppressed {
+foreach name [list $suppressed $ignored] {
     set i [lsearch $ordered $name]
     if {$i != -1} {
         set ordered [lreplace $ordered $i $i]
     }
 }
 
-# Source the modules
+foreach m $env(SLICER_MODULES_TO_REQUIRE) {
+    if {[lsearch $m $ignored] == -1} {
+        puts "Loading Module $m..."
+        if { [catch {package require $m} errVal] } {
+            puts stderr "Warning: can't load module $m:\n$errVal"
+            puts stderr "\tContinuing without this module's functionality."
+        }
+    } else {
+        if {$verbose} {
+            puts "IGNORING $m"
+        }
+    }
+}
+
+# Source the modules that haven't been package required
 set foundOrdered ""
 foreach name $ordered {
-    if { [info command ${name}Init] == "" } {
-        # if the entry point proc doesn't exist yet,
-        # then read the file (Modules loaded through 
-        # 'package require' will already have had their code sourced
-        set path [GetFullPath $name tcl tcl-modules]
-        if {$path != ""} {
-            if {$verbose == 1} {puts "source $path"}
-            source $path
+    if {[lsearch $env(SLICER_MODULES_TO_REQUIRE) $name] == -1 &&
+        [lsearch $env(SLICER_MODULES_TO_REQUIRE) vtk${name}] == -1} {
+        # the module hasn't been package required yet, so the tcl file hasn't been sourced,
+        # so this should be a Base module that needs to be sourced
+        if { [info command ${name}Init] == "" } {
+            if {$verbose} { puts "Sourcing modules from ordered list: ${name}Init hasn't been loaded yet, searching for it in tcl-modules"}
+            # if the entry point proc doesn't exist yet,
+            # then read the file (Modules loaded through 
+            # 'package require' will already have had their code sourced
+            set path [GetFullPath $name tcl tcl-modules]
+            if {$path != ""} {
+                if {$verbose == 1} {puts "Found and sourcing $path"}
+                source $path
+                lappend foundOrdered $name
+            } 
+        } else {
+            if {$verbose == 1} {puts "Sourcing stuff from ordered list: already sourced $name"}
             lappend foundOrdered $name
-        } 
+        }
     } else {
-        if {$verbose == 1} {puts "already have $name"}
+        if {$verbose} {
+            puts "Sourcing the modules from ordered list: ${name} is in the SLICER_MODULES_TO_REQUIRE list, not sourcing it from tcl-modules. Just adding to foundOrdered list"
+        }
         lappend foundOrdered $name
     }
 }
@@ -627,8 +683,9 @@ if {[info exists Module(customModules)]  == 1} {
     # it's already been sourced, so just add to the foundOrdered list 
     foreach customModule $Module(customModules) {
         if {[lsearch $foundOrdered $customModule] == -1 && 
-            [lsearch $suppressed $customModule] == -1} {
-            # it's not already on the foundOrdered list, nor on the suppressed list.
+            [lsearch $suppressed $customModule] == -1 &&
+            [lsearch $ignored $customModule] == -1} {
+            # it's not already on the foundOrdered list, nor on the suppressed or ignored list.
             # You can get duplicates if a custom module was saved to a local 
             # Options.xml file, or is on the suppressed list, and slicer will crash 
             # with a tcl error as it tries to build two gui's for a module.
@@ -641,17 +698,28 @@ if {[info exists Module(customModules)]  == 1} {
 #          Make sure every module is included only once in ordered
 
 
-# Ordered list only contains modules that exist
+if {$verbose} {
+    puts "Copying foundOrdered into ordered without duplicates:"
+    puts "ordered = $ordered"
+    puts "foundOrdered = $foundOrdered"
+}
+# Ordered list only contains modules that exist, are not suppressed or ignored
 set ordered ""
 foreach Entry $foundOrdered {
-    if {[lsearch $ordered $Entry] < 0} {
-    lappend ordered $Entry
+    if {[lsearch $ordered $Entry] < 0 &&
+        [lsearch $suppressed $Entry] == -1 &&
+        [lsearch $ignored $Entry] == -1} {
+        lappend ordered $Entry
+    } else {
+        if {$verbose} {
+            puts "Checking through foundOrdered, not adding $Entry"
+        }
     }
 }  
 
-# Source shared stuff either locally or globally
-# For example for a module MyModule, we looks for
-# ./tcl-modules/MyModule.tcl and then for $SLICER_HOME/program/tcl-modules/MyModule.tcl
+# Source Base shared files either locally or globally
+# For example for a module MyModule, we look for
+# ./tcl-modules/MyModule.tcl and then for $SLICER_HOME/Base/tcl/tcl-modules/MyModule.tcl
 # Similar for tcl-shared and tcl-main
 
 set shared [FindNames tcl-shared]
@@ -678,13 +746,18 @@ set Module(idList)     $ordered
 set Module(mainList)   $main
 set Module(sharedList) $shared
 set Module(supList)    $suppressed
+set Module(ignoredList) $ignored
+# don't add the ignored list here, as it's a list of modules that aren't loaded or sourced at all
 set Module(allList)    [concat $ordered $suppressed]
 
 if {$verbose == 1} {
+    puts "After sourcing all tcl files:"
     puts "ordered=$ordered"
     puts "main=$main"
     puts "shared=$shared"
     puts "allList = $Module(allList)"
+    puts "idList = $Module(idList)"
+    puts "ignored = $ignored"
 }
 
 # Bootup
@@ -706,7 +779,7 @@ if { $SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.86 2005/04/14 16:43:58 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.87 2005/04/15 16:30:51 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
