@@ -259,7 +259,8 @@ proc fMRIEngineBuildUIForInspectTab {parent} {
     set evList [list {none}]
     set df [lindex $evList 0] 
     eval {menubutton $f.mbType -text $df \
-          -relief raised -bd 2 -width 16 \
+          -relief raised -bd 2 -width 11 \
+          -indicatoron 1 \
           -menu $f.mbType.m} $Gui(WMBA)
     eval {menu $f.mbType.m} $Gui(WMA)
     foreach m $evList  {

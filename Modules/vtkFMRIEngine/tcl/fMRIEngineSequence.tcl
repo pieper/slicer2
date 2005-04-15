@@ -129,7 +129,8 @@ proc fMRIEngineBuildUIForSelect {parent} {
     set sequenceList [list {none}]
     set df [lindex $sequenceList 0] 
     eval {menubutton $f.mbType -text $df \
-        -relief raised -bd 2 -width 17 \
+        -relief raised -bd 2 -width 13 \
+        -indicatoron 1 \
         -menu $f.mbType.m} $Gui(WMBA)
     eval {menu $f.mbType.m} $Gui(WMA)
 
@@ -148,7 +149,8 @@ proc fMRIEngineBuildUIForSelect {parent} {
     set runList [list {1}]
     set df [lindex $runList 0] 
     eval {menubutton $f.mbType2 -text $df \
-        -relief raised -bd 2 -width 17 \
+        -relief raised -bd 2 -width 13 \
+        -indicatoron 1 \
         -menu $f.mbType2.m} $Gui(WMBA)
     bind $f.mbType2 <1> "fMRIEngineUpdateRuns" 
     eval {menu $f.mbType2.m} $Gui(WMA)
