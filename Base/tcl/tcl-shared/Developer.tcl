@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -51,15 +51,20 @@
 #   DevUpdateSelectButton ArrayName Label Name ChoiceList Command
 #   DevSelectNode type id ArrayName ModelLabel ModelName
 #   DevCreateNewCopiedVolume VolumeId Description VolName
-#   DevGetFile filename MustPop DefaultExt DefaultDir Title Action
+#   DevGetFile filename MustPop DefaultExt DefaultDir Title Action PathType
 #   DevAddFileBrowse Frame ArrayName VarFileName Message Command DefaultExt DefaultDir Action Title Tooltip PathType
 #   DevCreateScrollList ScrollFrame ItemCreateGui ScrollListConfigScrolledGUI: ItemList
 #   DevCheckScrollLimits 
 #   DevCheckScrollLimits
 #   DevFileExists
 #   DevSourceTclFilesInDirectory dir verbose
-#   DevCreateTextPopup
-#   DevApplyTextTags
+#   DevPrintMrmlDataTree class if
+#   DevPrintMatrix
+#   DevPrintMatrix
+#   DevPrintMatrix4x4
+#   DevCreateTextPopup topicWinName title x textBoxHit txt
+#   DevApplyTextTags str
+#   configures text widget w
 #   DevTextLink
 #   DevLaunchBrowser
 #   DevLaunchBrowserURL
@@ -752,7 +757,6 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
 # str PathType   Default is filename is relative to Mrml(dir).  Use "Absolute" for absolute pathnames
 # .END
 #-------------------------------------------------------------------------------
-
 proc DevAddFileBrowse {Frame ArrayName VarFileName Message { Command ""} { DefaultExt "" } { DefaultDir "" } {Action ""} {Title ""} {Tooltip ""} {PathType ""}} {
 
     global Gui $ArrayName Model
@@ -948,8 +952,95 @@ proc DevSourceTclFilesInDirectory {dir {verbose "0"}} {
     return $sourced
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DevPrintMrmlDataTree
+# A helper proc to print out bits of the mrml data tree for debugging volumes and transforms.
+# .ARGS 
+# tagList class names to match, ie Volume
+# justMatrices if 1, just print the matrices in the volume
+# .END
+#-------------------------------------------------------------------------------
+proc DevPrintMrmlDataTree { { tagList "Volume" } { justMatrices 1 } } {
+    global Module Mrml
 
+    if {$::Module(verbose)} {
+        puts "DevPrintMrmlDataTree: tagList = $tagList, justMatrices = $justMatrices"
+    }
+    Mrml(dataTree) InitTraversal
+    set node [Mrml(dataTree) GetNextItem]
+    while {$node != ""} {
+        set class [$node GetClassName]
+        set name [$node GetName]
+        if {$::Module(verbose)} {
+            puts "\t${name}: class = $class"
+        }
+        foreach tag $tagList {
+            if {$class == "vtkMrml${tag}Node"} {
+                if {$tag == "Volume"} {
+                    if {$justMatrices} {
+                        puts "$class [$node GetID] $name"
+                        DevPrintMatrix4x4 [$node GetPosition] "Position"
+                        DevPrintMatrix4x4 [$node GetRasToIjk] "RAS -> IJK"
+                        if {[$node GetUseRasToVtkMatrix] == 1} {
+                            if {[info command "$node GetRasToVtk"] == ""} {
+                                # try getting the matrix
+                                DevPrintMatrix [$node GetRasToVtkMatrix] "RAS -> VTK"
+                            } else {
+                                DevPrintMatrix4x4 [$node GetRasToVtk] "RAS -> VTK"
+                            }
+                        }
+                        DevPrintMatrix4x4 [$node GetWldToIjk] "WLD -> IJK"
+                    } else {
+                        $node Print
+                    }
+                }
+                if {$tag == "Matrix"} {
+                    puts "$class [$node GetID]"
+                    DevPrintMatrix [$node GetMatrix] "Matrix"
+                }
+            }
+        }
+        set node [Mrml(dataTree) GetNextItem]   
+    }
 
+}
+
+#-------------------------------------------------------------------------------
+# .PROC DevPrintMatrix
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc DevPrintMatrix { mat {name "matrix"} } { 
+    puts "$name:"
+    # puts $mat
+    set i 0
+    while {$i < [llength $mat]} {
+        puts -nonewline [format "% 3.05f" [lindex $mat $i]]
+        if {[expr fmod([expr $i + 1],4)] == 0.0} {
+            puts -nonewline "\n"
+        } else {
+            puts -nonewline "\t"
+        }
+        incr i
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC DevPrintMatrix4x4
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc DevPrintMatrix4x4 { mat { name "matrix"} } {
+    puts "$name:"
+    for {set i 0} { $i < 4} { incr i} {
+        for { set j 0} { $j < 4} { incr j} {
+            puts -nonewline [format "% 3.05f\t" [$mat GetElement $i $j]]
+        }
+        puts -nonewline "\n"
+    }
+}
 
 #-------------------------------------------------------------------------------
 # .PROC DevCreateTextPopup
@@ -1242,3 +1333,4 @@ proc DevLaunchBrowserURL { url } {
         DevWarningWindow "Could not detect your default browser.\n\nYou may need to set your BROWSER environment variable.\n\nPlease open $url manually."
     }
 }
+
