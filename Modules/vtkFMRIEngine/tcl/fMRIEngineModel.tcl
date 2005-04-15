@@ -87,7 +87,8 @@ proc fMRIEngineBuildUIForSetupTab {parent} {
     set detectorList [list {Linear Modeling}]
     set df [lindex $detectorList 0] 
     eval {menubutton $f.mbType -text $df \
-          -relief raised -bd 2 -width 20 \
+          -relief raised -bd 2 -width 16 \
+          -indicatoron 1 \
           -menu $f.mbType.m} $Gui(WMBA)
     eval {menu $f.mbType.m} $Gui(WMA)
     pack  $f.mbType -side left -pady 1 -padx $Gui(pad)
@@ -106,7 +107,9 @@ proc fMRIEngineBuildUIForSetupTab {parent} {
     #-------------------------------------------
     set f $parent.fModel
     DevAddButton $f.bLoad "Load Model" "fMRIEngineLoadModel"   13 
+    $f.bLoad configure -state disabled
     DevAddButton $f.bSave "Save Model" "fMRIEngineSaveModel"   13 
+    $f.bSave configure -state disabled
     DevAddButton $f.bView "View Model" "fMRIEngineViewModel"   13 
     DevAddButton $f.bClear "Clear Model" "fMRIEngineClearModel" 13 
     grid $f.bLoad $f.bSave -padx 1 -pady 1 -sticky e
@@ -261,7 +264,8 @@ proc fMRIEngineBuildUIForTasks {parent} {
     set taskList [list {Paradigm Design} {Signal Modeling} {Contrasts}]
     set df [lindex $taskList 0] 
     eval {menubutton $f.mbTask -text $df \
-          -relief raised -bd 2 -width 35 \
+          -relief raised -bd 2 -width 33 \
+          -indicatoron 1 \
           -menu $f.mbTask.m} $Gui(WMBA)
     eval {menu $f.mbTask.m} $Gui(WMA)
     pack  $f.mbTask -side left -pady 1 -padx $Gui(pad)
