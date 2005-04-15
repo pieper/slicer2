@@ -177,7 +177,8 @@ proc MainBoot {{mrmlFile ""}} {
                 if {[lsearch "$Module(idList) $Module(sharedList)" $d] == -1} {
                     tk_messageBox -message "\
 The '$m' module depends on the '$d' module, which is not present.\n\
-Slicer will exit so the problem can be corrected."
+Unexpected behaviour may occur."
+# Slicer will exit so the problem can be corrected."
                     # exit
                 }
             }
@@ -253,7 +254,7 @@ Slicer will exit so the problem can be corrected."
     #-------------------------------------------
     set fileName [ExpandPath "Options.xml"]
     if {[CheckFileExists $fileName 0] == "1"} {
-        puts "Reading $fileName"
+        puts "MainBoot: Reading $fileName"
         set tags [MainMrmlReadVersion2.0 $fileName]
         if {$tags != "0"} {
             # Apply the presets immediately rather than 
@@ -459,7 +460,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.119 $} {$Date: 2005/03/03 22:31:45 $}]
+        {$Revision: 1.120 $} {$Date: 2005/04/15 16:46:32 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
