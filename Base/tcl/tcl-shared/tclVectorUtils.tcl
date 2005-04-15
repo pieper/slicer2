@@ -45,8 +45,8 @@ namespace eval tclVectorUtils {
         foreach {b0 b1 b2} $b {}
 
         return [list [expr {$a1*$b2 - $a2*$b1}] \
-                [expr {$a2*$b0 - $a0*$b2}] \
-                [expr {$a0*$b1 - $a1*$b0}]]
+               [expr {$a2*$b0 - $a0*$b2}] \
+               [expr {$a0*$b1 - $a1*$b0}]]
     }
 
     proc VDist {a b} {
