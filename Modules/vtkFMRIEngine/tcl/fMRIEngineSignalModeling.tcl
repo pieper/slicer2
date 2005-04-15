@@ -93,7 +93,8 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
     set condiList [list {none}]
     set df [lindex $condiList 0] 
     eval {menubutton $f.mbType -text $df \
-          -relief raised -bd 2 -width 18 \
+          -relief raised -bd 2 -width 15 \
+          -indicatoron 1 \
           -menu $f.mbType.m} $Gui(WMBA)
     eval {menu $f.mbType.m} $Gui(WMA)
     foreach m $condiList  {
@@ -112,7 +113,8 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
     set waveForms [list {Box Car} {Half Sine}]
     set df [lindex $waveForms 0] 
     eval {menubutton $f.mbType2 -text $df \
-          -relief raised -bd 2 -width 18 \
+          -relief raised -bd 2 -width 15 \
+          -indicatoron 1 \
           -menu $f.mbType2.m} $Gui(WMBA)
     eval {menu $f.mbType2.m} $Gui(WMA)
 
@@ -133,7 +135,8 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
     set convFuncs [list {none} {HRF}]
     set df [lindex $convFuncs 0] 
     eval {menubutton $f.mbType3 -text $df \
-          -relief raised -bd 2 -width 18 \
+          -relief raised -bd 2 -width 15 \
+          -indicatoron 1 \
           -menu $f.mbType3.m} $Gui(WMBA)
     eval {menu $f.mbType3.m} $Gui(WMA)
 
@@ -192,7 +195,8 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
     set highpassFilters [list {none} {Discrete Cosine Set}]
     set df [lindex $highpassFilters 0] 
     eval {menubutton $f.mbType -text $df \
-          -relief raised -bd 2 -width 17 \
+          -relief raised -bd 2 -width 15 \
+          -indicatoron 1 \
           -menu $f.mbType.m} $Gui(WMBA)
     eval {menu $f.mbType.m} $Gui(WMA)
 
@@ -211,7 +215,8 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
     set lowpassFilters [list {none}]
     set df [lindex $lowpassFilters 0] 
     eval {menubutton $f.mbType2 -text $df \
-          -relief raised -bd 2 -width 17 \
+          -relief raised -bd 2 -width 15 \
+          -indicatoron 1 \
           -menu $f.mbType2.m} $Gui(WMBA)
     eval {menu $f.mbType2.m} $Gui(WMA)
 
@@ -232,6 +237,7 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
         -variable fMRIEngine(checkbuttonGlobalEffects) \
         -text "Remove global effects"} $Gui(WEA) 
     $f.cEffects deselect 
+    $f.cEffects configure -state disabled 
 
     #-----------------------
     # Custom 
@@ -329,7 +335,8 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
     set runList [list {none}]
     set df [lindex $runList 0] 
     eval {menubutton $f.mbType -text $df \
-        -relief raised -bd 2 -width 8 \
+        -relief raised -bd 2 -width 9 \
+        -indicatoron 1 \
         -menu $f.mbType.m} $Gui(WMBA)
 #    bind $f.mbType <1> "fMRIEngineUpdateRunsForModelFitting" 
     eval {menu $f.mbType.m} $Gui(WMA)
