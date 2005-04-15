@@ -182,73 +182,87 @@ proc fMRIEngineDrawPlotShort {x y z} {
     set count 1
     set noVols 0
     foreach ev $fMRIEngine(allEVs) {
-        set len [llength fMRIEngine($ev,max)]
-        set noVols [expr $noVols+len]
+        set len [llength $fMRIEngine($ev,max)]
+        # We have end points overlapping in the graph
+        if {$noVols > 0} {
+            set noVols [expr $noVols-1]
+        }
+        set noVols [expr $noVols+$len]
 
         blt::vector xVec$ev yVec$ev
         set tmpList ""
+
+        # We have end points overlapping in the graph
         for {set i 1} {$i <= $len} {incr i} {
             lappend tmpList $count
-            incr count
+            if {$i != $len} {
+                incr count
+            }
         }
         xVec$ev set $tmpList
         yVec$ev set $fMRIEngine($ev,ave)
-
     }
 
     $fMRIEngine(timeCourseGraph) axis configure x -min 1 -max $noVols 
     $fMRIEngine(timeCourseGraph) axis configure y \
-        -min $fMRIEngine(timeCourseYMin) -max $fMRIEngine(timeCourseYMax)
+        -min $timeCourseYMin -max $timeCourseYMax
 
-    # cleaning
-    if {[info exists fMRIEngine(voxelIndices)] &&
-        [$fMRIEngine(timeCourseGraph) marker exists $fMRIEngine(voxelIndices)]} {
-        $fMRIEngine(timeCourseGraph) marker delete $fMRIEngine(voxelIndices)
-    }
-    foreach ev $fMRIEngine(allEVs) {
+    # colors for lines
+    set allColors [list red purple pink blue orange yellow]
+    set len [llength $fMRIEngine(allEVs)]
+    set colors [lrange $allColors 0 [expr $len-2]]
+    lappend colors black
+
+    foreach ev $fMRIEngine(allEVs) \
+            color $colors {
+        # cleaning
         if {[info exists fMRIEngine(curve$ev)] &&
             [$fMRIEngine(timeCourseGraph) element exists $fMRIEngine(curve$ev)]} {
                 $fMRIEngine(timeCourseGraph) element delete $fMRIEngine(curve$ev)
         }
-    }
 
-    # create curves
-    set fMRIEngine(voxelIndices) voxelIndices
-    foreach ev $fMRIEngine(allEVs) {
-        set fMRIEngine(curve$ev) curve$ev 
-
+        # create curves
+        set fMRIEngine(curve$ev) $ev 
         $fMRIEngine(timeCourseGraph) element create $fMRIEngine(curve$ev) \
-            -label "$ev average" -xdata xVec$ev -ydata yVec$ev
+            -label "$ev" -xdata xVec$ev -ydata yVec$ev
         $fMRIEngine(timeCourseGraph) element configure $fMRIEngine(curve$ev) \
-            -symbol none -color red -linewidth 2 
+            -symbol none -color $color -linewidth 2 
 
         $fMRIEngine(timeCourseGraph) element bind $fMRIEngine(curve$ev) <ButtonPress-1> { 
-            # puts "Touched $fMRIEngine(signalCurve)"
-            fMRIEngineShowData $ev 
+            fMRIEngineShowData
         }
-    }
 
-    foreach ev $fMRIEngine(allEVs) {
-        set len [llength fMRIEngine($ev,max)]
-
+        # create vertical bars
+        set len [llength $fMRIEngine($ev,max)]
+        blt::vector xVec
+        xVec set xVec$ev
+ 
         set i 0 
         while {$i < $len} {
-            set x1 $xVec$ev($i) 
+            set x1 $xVec($i) 
             set y1 [lindex $fMRIEngine($ev,max) $i] 
-            set x2 $xVec$ev($i) 
+            set x2 $x1 
             set y2 [lindex $fMRIEngine($ev,min) $i] 
 
+            set lmName "lm$ev$i"
             $fMRIEngine(timeCourseGraph) marker create line \
-                -coords {$x1 $y1 $x2 $y2} -name lineMarkerCon$i -linewidth 1 \
-                -outline blue -under yes 
+                -coords {$x1 $y1 $x2 $y2} -name $lmName -linewidth 1 \
+                -outline $color -under yes 
 
             incr i
         }
+        unset xVec
     }
 
     # Voxel indices
+    if {[info exists fMRIEngine(voxelIndices)] &&
+        [$fMRIEngine(timeCourseGraph) marker exists $fMRIEngine(voxelIndices)]} {
+        $fMRIEngine(timeCourseGraph) marker delete $fMRIEngine(voxelIndices)
+    }
+ 
+    set fMRIEngine(voxelIndices) voxelIndices
     $fMRIEngine(timeCourseGraph) marker create text -text "Voxel: ($x,$y,$z)" \
-        -coords {$noVols $fMRIEngine(timeCourseYMax)} \
+        -coords {$noVols $timeCourseYMax} \
         -yoffset 5 -xoffset -70 -name $fMRIEngine(voxelIndices) -under yes -bg white \
         -font fixed 
 }
@@ -256,91 +270,82 @@ proc fMRIEngineDrawPlotShort {x y z} {
 
 #-------------------------------------------------------------------------------
 # .PROC fMRIEngineShowData
-# Pops a separate window to show data for the selected curve 
+# Pops a separate window to show data for all curves 
 # .ARGS
-# curve a string to indicate which curve has been selected. 
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineShowData {curve} {
-    global fMRIEngine Gui
+proc fMRIEngineShowData {{loc 0}} {
+    global fMRIEngine
 
-    # if the user selects a different curve, close the current window
-    # and open a new window for the new curve
-    if {[info exists fMRIEngine(curve)] && 
-        $fMRIEngine(curve) != $curve} {
+    if {[info exists fMRIEngine(dataToplevel)] &&
+        $loc == $fMRIEngine(currIndexForDataShow)} {
+        # data window exists without any changes
+        return
+    }
+
+    if {$loc == 0} {
+        set fMRIEngine(currIndexForDataShow) 0
+    } elseif {$loc == -2} {
+        set fMRIEngine(currIndexForDataShow) \
+            [expr ($fMRIEngine(currIndexForDataShow)+1) % [llength $fMRIEngine(allEVs)]]
+    } else {
+        set i [expr $fMRIEngine(currIndexForDataShow)-1]
+        if {$i < 0} {
+            set fMRIEngine(currIndexForDataShow) \
+                [expr [llength $fMRIEngine(allEVs)]-1]
+        } else {
+            set fMRIEngine(currIndexForDataShow) $i
+        }
+    }
+
+    set ev [lindex $fMRIEngine(allEVs) $fMRIEngine(currIndexForDataShow)]
+    if {[info exists fMRIEngine(dataToplevel)]} { 
         fMRIEngineCloseDataWindow
     }
-    set fMRIEngine(curve) $curve
-    if {$curve == "condition"} {
-        set title "Condition Data"
-    } else {
-        set title "Baseline Data"
+
+    set w .dataren
+    toplevel $w
+    wm title $w "Intensities for $ev" 
+    # wm minsize $w 250 360 
+    # wm geometry $w "+898+200" 
+    wm geometry $w "+850+200" 
+
+    # data table headers
+    label $w.vol -text "VolIndex" -font fixed
+    label $w.min -text "Min" -font fixed
+    label $w.max -text "Max" -font fixed
+    label $w.ave -text "Average" -font fixed
+    blt::table $w \
+        $w.vol 0,0 $w.min 0,1 $w.max 0,2 $w.ave 0,3
+
+    # data for the first ev
+    set count 1
+    foreach min $fMRIEngine($ev,min) \
+            max $fMRIEngine($ev,max) \
+            ave $fMRIEngine($ev,ave) {
+
+        label $w.vol$count -text $count -font fixed
+        label $w.min$count -text $min -font fixed
+        label $w.max$count -text $max -font fixed
+        label $w.ave$count -text $ave -font fixed
+            
+        blt::table $w \
+            $w.vol$count $count,0 $w.min$count $count,1 \
+            $w.max$count $count,2 $w.ave$count $count,3
+
+        incr count
     }
 
-    if {[info exists fMRIEngine(dataToplevel)] == 0 } {
-        set w .dataren
-        toplevel $w
-        wm title $w $title 
-        wm minsize $w 250 360 
-        wm geometry $w "+898+200" 
+    button $w.bPrev -text "Prev EV" -font fixed -command "fMRIEngineShowData -1"
+    blt::table $w $w.bPrev $count,1 
+    button $w.bNext -text "Next EV" -font fixed -command "fMRIEngineShowData -2"
+    blt::table $w $w.bNext $count,2 
+    button $w.bDismiss -text "Dismiss" -font fixed -command "fMRIEngineCloseDataWindow"
+    blt::table $w $w.bDismiss $count,3 
 
-        label $w.vol -text "vol" -font fixed
-        label $w.min -text "min" -font fixed
-        label $w.max -text "max" -font fixed
-        label $w.ave -text "ave" -font fixed
-        label $w.std -text "std" -font fixed
-   
-        blt::table $w 
-        blt::table $w $w.vol 0,0 $w.min 0,1 $w.max 0,2 $w.ave 0,3 $w.std 0,4
-
-        set volsPerBaseline [lindex $fMRIEngine(paradigm) 2]
-        set volsPerCondition [lindex $fMRIEngine(paradigm) 3]
-        set noVols \
-        [expr {$curve == "baseline" ? $volsPerBaseline : $volsPerCondition}] 
-
-        set i 1
-        while {$i <= $noVols} {
-            if {$curve == "condition"} {
-                label $w.$i -text $i -font fixed
-            } else {
-                label $w.$i -font fixed -text [expr $i + $volsPerCondition - 1] 
- 
-            }
-
-            blt::table $w $w.$i $i,0 
-            incr i
-        }
-      
-        set i [expr $noVols + 1]
-        button $w.bDismiss -text "Dismiss" -font fixed -command "fMRIEngineCloseDataWindow"
-        blt::table $w $w.bDismiss $i,1 -cspan 3 
-
-        wm protocol $w WM_DELETE_WINDOW "fMRIEngineCloseDataWindow" 
-        set fMRIEngine(dataToplevel) $w
-        set fMRIEngine(dataTable) $w.table
-
-        # adding data into the table
-        set i 1
-        while {$i <= $noVols} {
-
-            set index [expr $i - 1]
-
-            set j 1
-            foreach m "TCMin TCMax TCAve TCStd" {
-                set v ""
-                append v $curve $m 
-                set v [lindex $fMRIEngine($v) $index]
-
-                label $w.l$m$i -text $v -font fixed  
-                blt::table $w $w.l$m$i $i,$j
-
-                incr j
-            }
-
-            incr i
-        }
-
-    }
+    wm protocol $w WM_DELETE_WINDOW "fMRIEngineCloseDataWindow" 
+    set fMRIEngine(dataToplevel) $w
+    set fMRIEngine(dataTable) $w.table
 }
 
 
@@ -359,7 +364,7 @@ proc fMRIEngineSortEVsForStat {x y z} {
         unset -nocomplain fMRIEngine($r,timeCourse)
         unset -nocomplain fMRIEngine($r,fakeTimeCourse)
     
-        foreach name $fMRIEngine($r,namesOfEVs) {
+        foreach name $fMRIEngine(allEVs) {
             if {[info exists fMRIEngine($name,noOfSections)]} {
                 for {set c 1} {$c <= $fMRIEngine($name,noOfSections)} {incr c} {
                     unset -nocomplain fMRIEngine($name,$c,sections)
@@ -424,8 +429,8 @@ proc fMRIEngineSortEVsForStat {x y z} {
             set count 1
             foreach slot $onsets \
                     dur  $durations {
-                set last [expr $slot+$dur-1]
-                for {set j $slot} {$j <= $last} {incr j} {
+                set end [expr $slot+$dur-1]
+                for {set j $slot} {$j <= $end} {incr j} {
                     lappend fMRIEngine($name,$count,sections) [lindex $tc $j]
                     set fMRIEngine($r,fakeTimeCourse) \
                         [lset fMRIEngine($r,fakeTimeCourse) $j "1"] 
@@ -484,8 +489,6 @@ proc fMRIEngineCreateCurvesFromTimeCourse {i j k} {
         }
     }
 
-    unset -nocomplain fMRIEngine(allEVs)
-
     fMRIEngineSortEVsForStat $i $j $k 
 
     set run $fMRIEngine(curRunForModelFitting)
@@ -493,8 +496,9 @@ proc fMRIEngineCreateCurvesFromTimeCourse {i j k} {
         set run 1
     }
  
-    set evNames [$fMRIEngine($run,namesOfEVs)]
-    set fMRIEngine(allEVs) [lappend $evNames rest]
+    unset -nocomplain fMRIEngine(allEVs)
+    set fMRIEngine(allEVs) $fMRIEngine($run,namesOfEVs)
+    set fMRIEngine(allEVs) [lappend fMRIEngine(allEVs) rest]
     foreach ev $fMRIEngine(allEVs) {
         set no $fMRIEngine($ev,noOfSections)
         set len [llength $fMRIEngine($ev,1,sections)]
@@ -503,20 +507,22 @@ proc fMRIEngineCreateCurvesFromTimeCourse {i j k} {
            set total 0.0
            set max 0.0
            set min 1000000.0
+           set count 0
 
-            for {set j 1} {$j <= $no} {incr j} {
-                set sec fMRIEngine($ev,$j,sections)
-                set v [lindex $sec $i]
-                if {$v > $max} {
-                    set max $v 
-                }
+           for {set j 1} {$j <= $no} {incr j} {
+               set sec $fMRIEngine($ev,$j,sections)
+               set v [lindex $sec $i]
+               if {$v > $max} {
+                   set max $v 
+               }
 
-                if {$v < $min} {
-                    set min $v
-                }
+               if {$v < $min} {
+                   set min $v
+               }
 
-                set total [expr $total + $v]
-            }
+               set total [expr $total+$v]
+               incr count
+           }
 
            lappend fMRIEngine($ev,min) $min
            lappend fMRIEngine($ev,max) $max
@@ -624,11 +630,11 @@ proc fMRIEngineDrawPlotLong {x y z} {
     set fMRIEngine(voxelIndices) voxelIndices
 
     $fMRIEngine(timeCourseGraph) element create $fMRIEngine(signalCurve) \
-        -label "Response" -xdata xVecSig -ydata yVecSig
+        -label "response" -xdata xVecSig -ydata yVecSig
     $fMRIEngine(timeCourseGraph) element configure $fMRIEngine(signalCurve) \
         -symbol none -color red -linewidth 1 
     $fMRIEngine(timeCourseGraph) element create $fMRIEngine(evCurve) \
-        -label "EV" -xdata xVecEV -ydata yVecEV
+        -label $fMRIEngine(curEVForPlotting) -xdata xVecEV -ydata yVecEV
     $fMRIEngine(timeCourseGraph) element configure $fMRIEngine(evCurve) \
         -symbol none -color blue -linewidth 1 
 
