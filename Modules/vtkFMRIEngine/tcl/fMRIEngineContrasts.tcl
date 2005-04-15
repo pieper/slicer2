@@ -94,17 +94,20 @@ proc fMRIEngineBuildUIForContrasts {parent} {
     # Compose a contrast 
     #-----------------------
     set f $parent.fTop.fComp
-    DevAddLabel $f.lName "Name:"
-    eval {entry $f.eName -width 21 -textvariable fMRIEngine(entry,contrastName)} $Gui(WEA)
+    DevAddLabel $f.lName "Contrast Name:"
+    eval {entry $f.eName -width 16 -textvariable fMRIEngine(entry,contrastName)} $Gui(WEA)
+    TooltipAdd $f.eName "Input a unique name for this contrast."
     grid $f.lName $f.eName -padx 1 -pady 1 -sticky e
 
-    DevAddLabel $f.lVolName "Vol Name:"
-    eval {entry $f.eVolName -width 21 -textvariable fMRIEngine(entry,contrastVolName)} $Gui(WEA)
+    DevAddLabel $f.lVolName "Volume Name:"
+    eval {entry $f.eVolName -width 16 -textvariable fMRIEngine(entry,contrastVolName)} $Gui(WEA)
+    TooltipAdd $f.eVolName "Input a unique name for the activation volume \nassociated with this contrast."
     grid $f.lVolName $f.eVolName -padx 1 -pady 1 -sticky e
 
     DevAddLabel $f.lExp "Vector:"
     DevAddButton $f.bHelp "?" "fMRIEngineHelpSetupContrasts" 2
-    eval {entry $f.eExp -width 21 -textvariable fMRIEngine(entry,contrastVector)} $Gui(WEA)
+    eval {entry $f.eExp -width 16 -textvariable fMRIEngine(entry,contrastVector)} $Gui(WEA)
+    # TooltipAdd $f.eExp "Input a vector for this contrast."
     grid $f.lExp $f.eExp $f.bHelp -padx 1 -pady 1 -sticky e
 
     #-----------------------
