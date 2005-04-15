@@ -335,5 +335,6 @@ proc fMRIEngineSelectEVForPlotting {ev count} {
     # configure menubutton
     $fMRIEngine(gui,evsMenuButtonForPlotting) config -text $ev
     set fMRIEngine(curEVIndexForPlotting) $count 
+    set fMRIEngine(curEVForPlotting) $ev 
 }
 
