@@ -80,14 +80,16 @@ proc MainOptionsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainOptions \
-    {$Revision: 1.26 $} {$Date: 2005/01/28 21:45:44 $}]
+    {$Revision: 1.27 $} {$Date: 2005/04/15 16:44:19 $}]
 
     # Props
     set Options(program) "slicer"
     set Options(contents) ""
 #    set Options(options) ""
 
-    set Options(moduleList) "ordered='$Module(idList)'\nsuppressed='$Module(supList)'"
+    # this can be updated via a call to OptionsUpdateModuleList when change the order, 
+    # or suppress modules in the Options tab
+    set Options(moduleList) "ordered='$Module(idList)'\nsuppressed='$Module(supList)'\nignored='$Module(ignoredList)'"
 
     set Preset(userOptions) 0
     set Preset(idList) "0 1 2 3"
