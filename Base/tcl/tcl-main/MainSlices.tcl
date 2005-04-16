@@ -109,7 +109,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.54 $} {$Date: 2004/12/22 20:43:29 $}]
+        {$Revision: 1.55 $} {$Date: 2005/04/16 18:11:17 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"
@@ -897,6 +897,22 @@ proc MainSlicesSetVolumeAll {Layer v} {
 
         # Always update Slider Range when change volume or orient
         MainSlicesSetSliderRange $s
+
+        #--- Remove Ibrowser's control of viewer if Ibrowser is present
+        #--- and update the Ibrowser's icons to reflect the change
+        if { [catch "package require vtkIbrowser"] == 0 } {
+            if { $Layer == "fore" || $Layer == "Fore" } {
+                if { [info exists ::IbrowserController(Icanvas)] } {
+                    IbrowserDeselectFGIcon $::IbrowserController(Icanvas)
+                }
+                set ::Ibrowser(FGInterval) $::Ibrowser(NoInterval)
+            } elseif { $Layer == "back" || $Layer == "Back" } {
+                if { [info exists ::IbrowserController(Icanvas)] } {
+                    IbrowserDeselectBGIcon $::IbrowserController(Icanvas)
+                }
+                set ::Ibrowser(BGInterval) $::Ibrowser(NoInterval)
+            }
+        }
     }
 }
 
@@ -940,6 +956,22 @@ proc MainSlicesSetVolume {Layer s v} {
 
     # Always update Slider Range when change volume or orient
     MainSlicesSetSliderRange $s
+
+    #--- Remove Ibrowser's control of viewer if Ibrowser is present
+    #--- and update the Ibrowser's icons to reflect the change
+    if { [catch "package require vtkIbrowser"] == 0 } {        
+        if { $Layer == "fore" || $Layer == "Fore" } {
+            if { [info exists ::IbrowserController(Icanvas)] } {
+                IbrowserDeselectFGIcon $::IbrowserController(Icanvas)
+            }
+            set ::Ibrowser(FGInterval) $::Ibrowser(NoInterval)
+        } elseif { $Layer == "back" || $Layer == "Back" } {
+            if { [info exists ::IbrowserController(Icanvas)] } {
+                IbrowserDeselectBGIcon $::IbrowserController(Icanvas)
+            }
+            set ::Ibrowser(BGInterval) $::Ibrowser(NoInterval)
+        }
+    }
 }
 
 #-------------------------------------------------------------------------------
