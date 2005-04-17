@@ -337,5 +337,15 @@ proc fMRIEngineSelectEVForPlotting {ev count} {
     $fMRIEngine(gui,evsMenuButtonForPlotting) config -text $ev
     set fMRIEngine(curEVIndexForPlotting) $count 
     set fMRIEngine(curEVForPlotting) $ev 
+
+    if {[info exists fMRIEngine(timeCourseToplevel)] &&
+        $fMRIEngine(tcPlottingOption) == "Long"} {
+            set x $fMRIEngine(x,voxelIndex)
+            set y $fMRIEngine(y,voxelIndex)
+            set z $fMRIEngine(z,voxelIndex)
+
+            # re-plot due to ev switch
+            fMRIEngineDrawPlotLong $x $y $z
+    }
 }
 
