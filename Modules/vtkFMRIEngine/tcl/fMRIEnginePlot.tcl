@@ -363,7 +363,8 @@ proc fMRIEngineSortEVsForStat {x y z} {
     for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
         unset -nocomplain fMRIEngine($r,timeCourse)
         unset -nocomplain fMRIEngine($r,fakeTimeCourse)
-    
+    }
+    if {[info exists fMRIEngine(allEVs)]} {
         foreach name $fMRIEngine(allEVs) {
             if {[info exists fMRIEngine($name,noOfSections)]} {
                 for {set c 1} {$c <= $fMRIEngine($name,noOfSections)} {incr c} {
