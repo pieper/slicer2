@@ -127,6 +127,11 @@ proc fMRIEnginePopUpPlot {x y} {
         return 
     }
 
+    if {[info exists fMRIEngine(timeCourseToplevel)] &&
+        $fMRIEngine(curPlotting) != $fMRIEngine(tcPlottingOption)} { 
+        fMRIEngineCloseTimeCourseWindow
+    }
+
     # Plot the time course
     if {[info exists fMRIEngine(timeCourseToplevel)] == 0 } {
         set w .tcren
@@ -268,6 +273,8 @@ proc fMRIEngineDrawPlotShort {x y z} {
         -coords {$noVols $timeCourseYMax} \
         -yoffset 5 -xoffset -70 -name $fMRIEngine(voxelIndices) -under yes -bg white \
         -font fixed 
+
+    set fMRIEngine(curPlotting) "Short"
 }
 
 
@@ -647,6 +654,8 @@ proc fMRIEngineDrawPlotLong {x y z} {
         -coords {$totalVolumes $timeCourseYMax} \
         -yoffset 5 -xoffset -70 -name $fMRIEngine(voxelIndices) -under yes -bg white \
         -font fixed 
+
+    set fMRIEngine(curPlotting) "Long"
 }
 
 
