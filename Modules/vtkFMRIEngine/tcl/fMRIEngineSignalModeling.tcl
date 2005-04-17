@@ -192,7 +192,7 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
     DevAddLabel $f.lHighpass "Highpass filter:"
     DevAddButton $f.bHighpassHelp "?" "fMRIEngineHelpSetupHighpassFilter" 2 
  
-    set highpassFilters [list {none} {Discrete Cosine Set}]
+    set highpassFilters [list {none} {Discrete Cosine}]
     set df [lindex $highpassFilters 0] 
     eval {menubutton $f.mbType -text $df \
           -relief raised -bd 2 -width 15 \
@@ -340,6 +340,8 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
         -menu $f.mbType.m} $Gui(WMBA)
 #    bind $f.mbType <1> "fMRIEngineUpdateRunsForModelFitting" 
     eval {menu $f.mbType.m} $Gui(WMA)
+    TooltipAdd $f.mbType "Specify which run is going to be used for LM model fitting.\
+    \nSelect 'combined' if you have multiple runs and want to use them all."
 
     # Add menu items
     foreach m $runList  {
@@ -347,7 +349,7 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
             -command "fMRIEngineUpdateRunsForModelFitting" 
     }
 
-    set fMRIEngine(curRunForModelFitting) 1 
+    set fMRIEngine(curRunForModelFitting) run1 
 
     # Save menubutton for config
     set fMRIEngine(gui,runListMenuButtonForModelFitting) $f.mbType
@@ -384,7 +386,12 @@ proc fMRIEngineSelectRunForModelFitting {run} {
 
     # configure menubutton
     $fMRIEngine(gui,runListMenuButtonForModelFitting) config -text $run
-    set fMRIEngine(curRunForModelFitting) $run 
+    if {$run == "combined" || $run == "none"} {
+        set fMRIEngine(curRunForModelFitting) $run 
+    } else {
+        set r [string range $run 3 end]
+        set fMRIEngine(curRunForModelFitting) $r 
+    }
 }
 
  
@@ -406,16 +413,16 @@ proc fMRIEngineUpdateRunsForModelFitting {} {
             -command "fMRIEngineSelectRunForModelFitting none"
     } else { 
         if {$runs > 1} {
-            fMRIEngineSelectRunForModelFitting All 
-            $fMRIEngine(gui,runListMenuForModelFitting) add command -label All \
-                -command "fMRIEngineSelectRunForModelFitting All"
+            fMRIEngineSelectRunForModelFitting combined 
+            $fMRIEngine(gui,runListMenuForModelFitting) add command -label combined \
+                -command "fMRIEngineSelectRunForModelFitting combined"
         }
 
         set count 1
         while {$count <= $runs} {
-            fMRIEngineSelectRunForModelFitting $count
-            $fMRIEngine(gui,runListMenuForModelFitting) add command -label $count \
-                -command "fMRIEngineSelectRunForModelFitting $count"
+            fMRIEngineSelectRunForModelFitting "run$count"
+            $fMRIEngine(gui,runListMenuForModelFitting) add command -label "run$count" \
+                -command "fMRIEngineSelectRunForModelFitting run$count"
             incr count
         }   
     }
@@ -709,7 +716,7 @@ proc fMRIEngineAddInputVolumes {run} {
 
     set start $run
     set last $run
-    if {$run == "All"} {
+    if {$run == "combined"} {
         set start 1
         set last [$fMRIEngine(seqListBox) size] 
     }
@@ -811,7 +818,7 @@ proc fMRIEngineAddRegressors {run} {
         }
     }
  
-    if {$run != "All"} {
+    if {$run != "combined"} {
         # single run
         fMRIEngine(regressors) SetNumberOfComponents $fMRIEngine($run,totalEVs)
         set seqName $fMRIEngine($run,sequenceName)
@@ -915,7 +922,7 @@ proc fMRIEngineCountEVs {} {
                 }
 
                 # DCBasis
-                if {$hpass == "Discrete Cosine Set"} {
+                if {$hpass == "Discrete Cosine"} {
                     set ::fMRIModelView(Design,Run$run,UseDCBasis) 1
                 }
 
@@ -996,7 +1003,7 @@ proc fMRIEngineFitModel {} {
 
     set start $fMRIEngine(curRunForModelFitting)
     set last $start
-    if {$start == "All"} {
+    if {$start == "combined"} {
         set start 1
         set last $fMRIEngine(noOfSpecifiedRuns)
     }
@@ -1028,7 +1035,7 @@ proc fMRIEngineFitModel {} {
     set obs2 [fMRIEngine(actEstimator) AddObserver ProgressEvent \
               "MainShowProgress fMRIEngine(actEstimator)"]
     set obs3 [fMRIEngine(actEstimator) AddObserver EndEvent MainEndProgress]
-    if {$fMRIEngine(curRunForModelFitting) == "All"} {
+    if {$fMRIEngine(curRunForModelFitting) == "combined"} {
         set Gui(progressText) "Estimating all runs..."
     } else {
         set Gui(progressText) "Estimating run$fMRIEngine(curRunForModelFitting)..."
