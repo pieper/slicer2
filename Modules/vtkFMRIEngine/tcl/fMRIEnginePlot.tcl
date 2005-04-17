@@ -157,6 +157,9 @@ proc fMRIEnginePopUpPlot {x y} {
     }
 
     fMRIEngineDrawPlot$fMRIEngine(tcPlottingOption) $i $j $k 
+    set fMRIEngine(x,voxelIndex) $i
+    set fMRIEngine(y,voxelIndex) $j
+    set fMRIEngine(z,voxelIndex) $k
 }
 
 
@@ -566,7 +569,7 @@ proc fMRIEngineDrawPlotLong {x y z} {
     # ev array
     set run $fMRIEngine(curRunForModelFitting)
     set index $fMRIEngine(curEVIndexForPlotting)
-    if {$run != "All"} {
+    if {$run != "combined"} {
         set ev $fMRIModelView(Data,Run$run,EV$index,EVData)
     } else {
         set ev ""
