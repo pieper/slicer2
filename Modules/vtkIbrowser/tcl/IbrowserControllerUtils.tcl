@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -38,6 +38,7 @@
 # PROCEDURES:  
 #   IbrowserRadians
 #   IbrowserNameFromCurrent
+#   IbrowserGetAllSequenceNames
 #==========================================================================auto=
 
 
@@ -66,6 +67,12 @@ proc IbrowserNameFromCurrent { strg } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserGetAllSequenceNames
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserGetAllSequenceNames { } {
     foreach id $::Ibrowser(idList) {
         set name $::Ibrowser(id,name)

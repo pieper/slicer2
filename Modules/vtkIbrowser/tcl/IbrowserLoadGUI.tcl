@@ -1,3 +1,57 @@
+#=auto==========================================================================
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+#
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
+#
+#===============================================================================
+# FILE:        IbrowserLoadGUI.tcl
+# PROCEDURES:  
+#   IbrowserBuildUIForImport
+#   IbrowserBuildUIForAppend
+#   IbrowserBuildUIForAssemble
+#   IbrowserAssembleSequence
+#   IbrowserAssembleSequenceFromFiles
+#   IbrowserAssembleSequenceFromSequences
+#   IbrowserAssembleSequenceFromVolumes
+#   IbrowserCancelAssembleSequence
+#   IbrowserAddVolumeToSequenceList
+#   IbrowserSelectVolumeForSequenceList
+#   IbrowserBuildUIForLoad
+#   IbrowserMultiVolumeReaderBuildGUI
+#   IbrowserUpdateSequences
+#   IbrowserImportSequenceFromOtherModule
+#   IbrowserMultiVolumeReaderLoad
+#==========================================================================auto=
 #-------------------------------------------------------------------------------
 proc IbrowserBuildLoadFrame { } {
     global Gui Module Volume
@@ -21,7 +75,7 @@ proc IbrowserBuildLoadFrame { } {
     #---WJP comment out tabs during development
     Notebook:create $f.fNotebook \
         #-pages {Load Assemble Append Import} \
-        -pages {Load} \
+        -pages {Load Assemble} \
         -pad 2 \
         -bg $Gui(activeWorkspace) \
         -height 300 \
@@ -30,9 +84,9 @@ proc IbrowserBuildLoadFrame { } {
     #--- Load or construct a sequence from disk
     set w [ Notebook:frame $f.fNotebook Load ]
     IbrowserBuildUIForLoad $w
+    set w [ Notebook:frame $f.fNotebook Assemble ]
+    IbrowserBuildUIForAssemble $w
     #--- WJP comment out during development
-    #set w [ Notebook:frame $f.fNotebook Assemble ]
-    #IbrowserBuildUIForAssemble $w
     #set w [ Notebook:frame $f.fNotebook Append ]
     #IbrowserBuildUIForAppend $w
     #--- Import a sequence from elsewhere in Slicer
@@ -55,6 +109,12 @@ proc IbrowserBuildLoadFrame { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserBuildUIForImport
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserBuildUIForImport { parent } {
        global Gui
 
@@ -115,6 +175,12 @@ proc IbrowserBuildUIForImport { parent } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserBuildUIForAppend
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserBuildUIForAppend { parent } {
        global Gui
 
@@ -131,6 +197,12 @@ proc IbrowserBuildUIForAppend { parent } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserBuildUIForAssemble
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserBuildUIForAssemble { parent } {
        global Gui
 
@@ -149,14 +221,14 @@ proc IbrowserBuildUIForAssemble { parent } {
     pack $f.lNote -side top -pady 2 -padx 10 -anchor w
     eval {radiobutton $f.r1 -width 27 -text {selected files on disk} \
               -variable ::Ibrowser(New,assembleChoice) -value 0 \
-              -relief flat -offrelief flat -overrelief raised \
+              -relief flat -offrelief flat -overrelief raised -state disabled\
               -command "raise $parent.fAssembleFrom.fFiles" \
               -selectcolor white} $Gui(WEA)
     pack $f.r1 -side top -pady 2 -padx 10 -anchor w
 
     eval {radiobutton $f.r2 -width 27 -text {selected Slicer sequences} \
               -variable ::Ibrowser(New,assembleChoice) -value 1 \
-              -relief flat -offrelief flat -overrelief raised \
+              -relief flat -offrelief flat -overrelief raised -state disabled \
               -command "raise $parent.fAssembleFrom.fSequences" \
               -selectcolor white} $Gui(WEA)
     pack $f.r2 -side top -pady 2 -padx 10 -anchor w
@@ -199,7 +271,7 @@ proc IbrowserBuildUIForAssemble { parent } {
     #--- Assemble from selected Slicer sequences:
     #------------------------------------------------------------------------
     set f $parent.fAssembleFrom.fSequences
-    DevAddLabel $f.lNote "(select sequence, add, & repeat until done)"
+    DevAddLabel $f.lNote "(option not yet supported)"
     pack $f.lNote -side top -pady 2 -padx 10
     frame $f.fSelectSequences -bg $Gui(activeWorkspace)
     pack $f.fSelectSequences -side top -pady 2 -anchor w
@@ -285,6 +357,12 @@ proc IbrowserBuildUIForAssemble { parent } {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserAssembleSequence
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserAssembleSequence { } {
 
     if { $::Ibrowser(New,assembleChoice) == 0 } {
@@ -296,18 +374,37 @@ proc IbrowserAssembleSequence { } {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserAssembleSequenceFromFiles
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserAssembleSequenceFromFiles { } {
 }
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserAssembleSequenceFromSequences
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserAssembleSequenceFromSequences { } {
 }
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserAssembleSequenceFromVolumes
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserAssembleSequenceFromVolumes { } {
     IbrowserRaiseProgressBar
 
     #--- get the interval started
     set ivalID $::Ibrowser(uniqueNum)
-    set ::Ibrowser(loadVol,name) [format "imageData-%d" $ivalID]
+    set ::Ibrowser(loadVol,name) [format "assembleVol%d" $ivalID]
+    #lappend $::MultiVolumeReader(sequenceNames) $iname
     set iname $::Ibrowser(loadVol,name)
     set ::Ibrowser($ivalID,name) $iname
     set ::Ibrowser($iname,intervalID) $ivalID
@@ -362,6 +459,12 @@ proc IbrowserAssembleSequenceFromVolumes { } {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserCancelAssembleSequence
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserCancelAssembleSequence { } {
 
     if { $::Ibrowser(assembleChoice) == 0 } {
@@ -382,6 +485,12 @@ proc IbrowserCancelAssembleSequence { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserAddVolumeToSequenceList
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserAddVolumeToSequenceList { } {
 
     if { $::Ibrowser(New,selectedVolumeID) != ""} {
@@ -401,6 +510,12 @@ proc IbrowserAddVolumeToSequenceList { } {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserSelectVolumeForSequenceList
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserSelectVolumeForSequenceList { id } {
 
     #--- modify menu button
@@ -412,6 +527,12 @@ proc IbrowserSelectVolumeForSequenceList { id } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserBuildUIForLoad
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserBuildUIForLoad { parent } {
         global Gui
 
@@ -436,6 +557,12 @@ proc IbrowserBuildUIForLoad { parent } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserMultiVolumeReaderBuildGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserMultiVolumeReaderBuildGUI {parent {status 0}} {
     global Gui MultiVolumeReader Module Volume Model
 
@@ -556,6 +683,12 @@ proc IbrowserMultiVolumeReaderBuildGUI {parent {status 0}} {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateSequences
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserUpdateSequences { } {
     global MultiVolumeReader 
 
@@ -586,6 +719,12 @@ proc IbrowserUpdateSequences { } {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserImportSequenceFromOtherModule
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserImportSequenceFromOtherModule { } {
     global MultiVolumeReader
 
@@ -608,7 +747,7 @@ proc IbrowserImportSequenceFromOtherModule { } {
         DevErrorWindow "No sequence available."
         return
     } else {
-        #--- for now, just bring this interval to the FG and make active.
+        #--- for now, just bring this interval to the BG and make active.
         #--- make this the active interval.
         #--- display the first volume
         #--- make it the active volume
@@ -619,12 +758,14 @@ proc IbrowserImportSequenceFromOtherModule { } {
         IbrowserDeselectFGIcon $::IbrowserController(Icanvas)
 
         IbrowserSetActiveInterval $id
-        set ::Ibrowser(FGInterval) $id
-        IbrowserSelectFGIcon $id $::IbrowserController(Icanvas)
+        IbrowserSlicesSetVolumeAll Back $::Ibrowser($id,0,MRMLid) 
 
-        MainSlicesSetVolumeAll Fore $::Ibrowser($id,0,MRMLid) 
+        #--- let Ibrowser set viewer background layer.
+        set ::Ibrowser(BGInterval) $id
+        IbrowserSelectBGIcon $id $::IbrowserController(Icanvas)
+
         MainVolumesSetActive $::Ibrowser($id,0,MRMLid)
-        MainSlicesSetVisibilityAll 1
+        #MainSlicesSetVisibilityAll 1
         RenderAll
     }
 }
@@ -632,6 +773,12 @@ proc IbrowserImportSequenceFromOtherModule { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserMultiVolumeReaderLoad
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserMultiVolumeReaderLoad { status } {
 
     set readfailure [ MultiVolumeReaderLoad $status ]
@@ -667,8 +814,10 @@ proc IbrowserMultiVolumeReaderLoad { status } {
     set m $::MultiVolumeReader(noOfVolumes)
     set spanmax [ expr $m - 1 ]
     IbrowserMakeNewInterval $iname $::IbrowserController(Info,Ival,imageIvalType) 0.0 $spanmax $m
-    #--- for feeback...
+        #--- for feeback...
     set ::Volume(VolAnalyze,FileName) ""
     set ::Volume(name) ""
     IbrowserUpdateMRML
+    set ::Ibrowser(BGInterval) $id
+    IbrowserSelectBGIcon $id $::IbrowserController(Icanvas)
 }

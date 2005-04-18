@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -54,6 +54,11 @@
 #   IbrowserDeleteInterval
 #   IbrowserDeleteAllIntervals
 #   IbrowserUpdateMaxDrops
+#   IbrowserInitNewInterval
+#   IbrowserMakeNoneInterval
+#   IbrowserSetActiveInterval
+#   IbrowserSetFGInterval
+#   IbrowserSetBGInterval
 #   IbrowserMakeNewInterval
 #   IbrowserGetIntervalAdaptiveUnitSpan
 #   IbrowserGetIntervalAdaptiveUnitXmin
@@ -610,8 +615,10 @@ proc IbrowserDeleteIntervalVolumes { id } {
     for { set drop 0} { $drop < $::Ibrowser($id,numDrops) } { incr drop } {
         set i $::Ibrowser($id,$drop,MRMLid)
         MainMrmlDeleteNodeDuringUpdate Volume $::Ibrowser($id,$drop,MRMLid)
-        set progress [ expr double( $drop ) / double ( $::Ibrowser($id,numDrops) ) ]
-        IbrowserUpdateProgressBar $progress "::"
+        if { $::Ibrowser($id,numDrops) != 0 } {
+            set progress [ expr double( $drop ) / double ( $::Ibrowser($id,numDrops) ) ]
+            IbrowserUpdateProgressBar $progress "::"
+        }
     }
     MainMrmlClearList
     MainUpdateMRML
@@ -656,7 +663,8 @@ proc IbrowserCopyIntervalVolumes { sourceName copyName numVols } {
         #--- note first and last MRML IDs in the interval.
         if { $i == 0 } {
             set ::Ibrowser($id,firstMRMLid) $vid
-        } elseif { $i == $top } {
+        }
+        if { $i == $top } {
             set ::Ibrowser($id,lastMRMLid) $vid
         }
 
@@ -767,7 +775,7 @@ proc IbrowserDeleteInterval { ivalName } {
     IbrowserSayThis $tt 0
     
     #--- if just the none interval is left,
-    #--- reconfigure the loadSlider, displaySlider and selectSlider
+    #--- reconfigure all sliders
     if { $::IbrowserController(Info,Ival,ivalCount) == 1 } {
         IbrowserSynchronizeAllSliders "disabled"
     }
@@ -793,7 +801,7 @@ proc IbrowserDeleteAllIntervals { } {
     set ::IbrowserController(Info,Ival,firstIval) 1
 
     #--- if number if intervals is 0,
-    #--- reconfigure the loadSlider, displaySlider and selectSlider
+    #--- reconfigure all sliders
     IbrowserSynchronizeAllSliders "disabled"
 }
 
@@ -822,6 +830,12 @@ proc IbrowserUpdateMaxDrops { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserInitNewInterval
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserInitNewInterval { newname } {
 
     set id $::Ibrowser(uniqueNum)
@@ -833,29 +847,91 @@ proc IbrowserInitNewInterval { newname } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserMakeNoneInterval
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserMakeNoneInterval { } {
     set ival "none"
+    set ival $::Ibrowser(${::Ibrowser(idNone)},name)
     set w $::Ibrowser(initIntervalWid)
     if { [ IbrowserUniqueNameCheck $ival ] } {
         IbrowserMakeNewInterval $ival $::IbrowserController(Info,Ival,imageIvalType) 0.0 $w 0
     }
+
+    #--- if none volume is in Foreground in all slice windows
+    #--- set the none interval to be the FGInterval
+    set tst 1
+    foreach s $::Slice(idList) {
+        if {$::Slice($s,foreVolID) != $::Volume(idNone) } { set tst 0 }
+    }
+    if { $tst } {IbrowserSetFGInterval $::Ibrowser(idNone) }
+    
+    #--- if none volume is in Background in all slice windows
+    #--- set the none interval to be the BGInterval
+    set tst 1
+    foreach s $::Slice(idList) {
+        if {$::Slice($s,backVolID) != $::Volume(idNone) } { set tst 0 }
+    }
+    if { $tst } {IbrowserSetBGInterval $::Ibrowser(idNone) }
 }
 
 
 
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserSetActiveInterval
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserSetActiveInterval { id } {
     
     IbrowserDeselectActiveInterval $::IbrowserController(Icanvas)
     set ::Ibrowser(activeInterval) $id
     IbrowserSelectActiveInterval $id $::IbrowserController(Icanvas)
+    IbrowserUpdateMRML
 
-    #--- configure all menu buttons which reflect the active interval
-    #--- WJP comment out during development
-    #$::Ibrowser(Process,Smooth,mbIntervals) config -text $::Ibrowser($id,name)
-    $::Ibrowser(Process,Reorient,mbIntervals) config -text $::Ibrowser($id,name)
-    #$::Ibrowser(Process,Reassemble,mbIntervals) config -text $::Ibrowser($id,name)
-    #$::Ibrowser(Process,MotionCorrect,mbIntervals) config -text $::Ibrowser($id,name)
-    #$::Ibrowser(Process,KeyframeRegister,mbIntervals) config -text $::Ibrowser($id,name)
+}
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserSetFGInterval
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserSetFGInterval { id } {
+
+    IbrowserDeselectFGIcon $::IbrowserController(Icanvas)
+    #if { $id != $::Ibrowser(NoInterval) } 
+        IbrowserSlicesSetVolumeAll Fore $::Ibrowser($id,$::Ibrowser(ViewDrop),MRMLid)
+        IbrowserSelectFGIcon $id $::IbrowserController(Icanvas)
+    # end if
+    set ::Ibrowser(FGInterval) $id
+}
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserSetBGInterval
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserSetBGInterval { id } {
+
+    IbrowserDeselectBGIcon $::IbrowserController(Icanvas)
+   # if { $id != $::Ibrowser(NoInterval)} 
+        IbrowserSlicesSetVolumeAll Back $::Ibrowser($id,$::Ibrowser(ViewDrop),MRMLid)
+        IbrowserSelectBGIcon $id $::IbrowserController(Icanvas)
+        #IbrowserGangFGandBGVisibility
+    # end if
+    set ::Ibrowser(BGInterval) $id
 }
 
 
@@ -1023,24 +1099,21 @@ proc IbrowserMakeNewInterval { intval ikind spanmin spanmax numDrops } {
         IbrowserUpdateMaxDrops
         IbrowserSynchronizeAllSliders "active"
 
-        #--- make this the active interval.
-        IbrowserSetActiveInterval $id
         #--- display the first volume
         #--- make it the active volume
         #--- and put it in the background
         #--- as is the loading convention.
-        IbrowserDeselectBGIcon $::IbrowserController(Icanvas)
-        set ::Ibrowser(BGInterval) $id
-        IbrowserSelectBGIcon $id $::IbrowserController(Icanvas)
-
         #------------------ UPDATE & RENDER ---------------------------------
-        MainSlicesSetVolumeAll Back $::Ibrowser($id,0,MRMLid) 
+        IbrowserDeselectBGIcon $::IbrowserController(Icanvas)        
+        IbrowserSlicesSetVolumeAll Back $::Ibrowser($id,0,MRMLid)
         MainVolumesSetActive $::Ibrowser($id,0,MRMLid)
-        MainSlicesSetVisibilityAll 1
         MainUpdateMRML
         RenderAll
+        IbrowserSetActiveInterval $id
+        set ::Ibrowser(BGInterval) $id
+        IbrowserSelectBGIcon $id $::IbrowserController(Icanvas)
+        puts ""
     }
-
 }
 
 

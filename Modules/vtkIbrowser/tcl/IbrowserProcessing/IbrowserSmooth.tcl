@@ -1,3 +1,43 @@
+#=auto==========================================================================
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+#
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
+#
+#===============================================================================
+# FILE:        IbrowserSmooth.tcl
+# PROCEDURES:  
+#   IbrowserCancelSmoothSequence
+#==========================================================================auto=
 
 proc IbrowserBuildSmoothGUI { f master } {
     global Gui
@@ -10,6 +50,7 @@ proc IbrowserBuildSmoothGUI { f master } {
     #--- default values for full-width-half-maximum of gaussian in mm.
     set ::Ibrowser(Process,Smooth,rl_FWHM) 4.0
     set ::Ibrowser(Process,Smooth,is_FWHM) 4.0
+    set ::Ibrowser(Process,Smooth,ap_FWHM) 4.0
     
     frame $f.fSpace -bg $::Gui(activeWorkspace) -bd 2 
     eval { label $f.fSpace.lSpace -text "       " } $Gui(WLA)
@@ -20,7 +61,7 @@ proc IbrowserBuildSmoothGUI { f master } {
     frame $f.fSelectInterval -bg $::Gui(activeWorkspace) -bd 2
     pack $f.fSelectInterval -side top -anchor w -fill x
     eval { label $f.fSelectInterval.lText -text "interval to process:" } $Gui(WLA)    
-    eval { menubutton $f.fSelectInterval.mbIntervals -text "none" -width 20 -relief raised \
+    eval { menubutton $f.fSelectInterval.mbIntervals -text "none" -width 18 -relief raised \
                -height 1 -menu $f.fSelectInterval.mbIntervals.m -bg $::Gui(activeWorkspace) \
                -indicatoron 1 } $Gui(WBA)
     eval { menu $f.fSelectInterval.mbIntervals.m } $Gui(WMA)
@@ -43,14 +84,21 @@ proc IbrowserBuildSmoothGUI { f master } {
     eval { entry $f.fConfiguration.eRLFWHM -width 8 \
                -textvariable ::Ibrowser(Process,Smooth,rl_FWHM) } $Gui(WEA)
     eval { label $f.fConfiguration.lISFWHM -text "I/S: FWHM (mm)" } $Gui(WLA)
-    TooltipAdd $f.fConfiguration.lISFWHM "FWHM is the value along the I/S axis at which the full width of the Gaussian filter's kernel is half the central peak value. \n The standard deviation (sigma) is computed as FWHM/sqrt(8*ln(2)), \n and the point at which the filter's value is clamped to zero is set at 3*sigma."
+    TooltipAdd $f.fConfiguration.lISFWHM "FWHM is the value along the S/I axis at which the full width of the Gaussian filter's kernel is half the central peak value. \n The standard deviation (sigma) is computed as FWHM/sqrt(8*ln(2)), \n and the point at which the filter's value is clamped to zero is set at 3*sigma."
     eval { entry $f.fConfiguration.eISFWHM -width 8 \
                -textvariable ::Ibrowser(Process,Smooth,is_FWHM) } $Gui(WEA)
+    eval { label $f.fConfiguration.lAPFWHM -text "A/P: FWHM (mm)" } $Gui(WLA)
+    TooltipAdd $f.fConfiguration.lAPFWHM "FWHM is the value along the A/P axis at which the full width of the Gaussian filter's kernel is half the central peak value. \n The standard deviation (sigma) is computed as FWHM/sqrt(8*ln(2)), \n and the point at which the filter's value is clamped to zero is set at 3*sigma."
+    eval { entry $f.fConfiguration.eAPFWHM -width 8 \
+               -textvariable ::Ibrowser(Process,Smooth,ap_FWHM) } $Gui(WEA)
+
     grid $f.fConfiguration.lText -row 0 -columnspan 3  -pady 6
     grid $f.fConfiguration.lRLFWHM -row 1 -column 1 -sticky w -padx 2 -pady 2
     grid $f.fConfiguration.eRLFWHM -row 1 -column 2 -sticky w -padx 2 -pady 2
-    grid $f.fConfiguration.lISFWHM -row 2 -column 1 -sticky w -padx 2 -pady 2
-    grid $f.fConfiguration.eISFWHM -row 2 -column 2 -sticky w -padx 2 -pady 2
+    grid $f.fConfiguration.lAPFWHM -row 2 -column 1 -sticky w -padx 2 -pady 2
+    grid $f.fConfiguration.eAPFWHM -row 2 -column 2 -sticky w -padx 2 -pady 2
+    grid $f.fConfiguration.lISFWHM -row 3 -column 1 -sticky w -padx 2 -pady 2
+    grid $f.fConfiguration.eISFWHM -row 3 -column 2 -sticky w -padx 2 -pady 2
 
     frame $f.fApply -bg $Gui(activeWorkspace) -bd 2 -relief groove 
     pack $f.fApply -side top -anchor w -padx 2 -pady 5 -fill x
@@ -63,6 +111,12 @@ proc IbrowserBuildSmoothGUI { f master } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserCancelSmoothSequence
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserCancelSmoothSequence { } {
 
     #--- revert to default values.

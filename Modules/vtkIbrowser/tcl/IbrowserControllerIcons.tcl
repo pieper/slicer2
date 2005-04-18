@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -854,9 +854,9 @@ proc IbrowserToggleVisibilityIcon { id } {
 
     set win $::IbrowserController(Icanvas)
     
+    #--- If the interval is currently visible,
+    #--- set its status to invisible and changs the icon state.
     if { $::Ibrowser($id,visStatus) == $::IbrowserController(Info,Ival,isVisible) } {
-        #--- If the interval is currently visible,
-        #--- set its status to invisible and changs the icon state.
         set thing "$::IbrowserController($id,visIconTag)"
         $win itemconfig  $thing -image $::IbrowserController(Images,Icon,invisIcon)
         set ::Ibrowser($id,visStatus) $::IbrowserController(Info,Ival,isInvisible)
@@ -866,10 +866,11 @@ proc IbrowserToggleVisibilityIcon { id } {
             #--- must update the visibility status of the
             #--- background interval to match.
             set bgID $::Ibrowser(BGInterval)
-            set otherthing "$::IbrowserController($bgID,visIconTag)"
-            $win itemconfig $otherthing -image $::IbrowserController(Images,Icon,invisIcon)
-            set ::Ibrowser($id,visStatus) $::IbrowserController(Info,Ival,isInvisible)
-
+            if { $bgID != $::Ibrowser(NoInterval) } {
+                set otherthing "$::IbrowserController($bgID,visIconTag)"
+                $win itemconfig $otherthing -image $::IbrowserController(Images,Icon,invisIcon)
+                set ::Ibrowser($id,visStatus) $::IbrowserController(Info,Ival,isInvisible)
+            }
             #--- Then, update the MainViewer
             MainSlicesSetVisibilityAll 0
             RenderAll
@@ -879,10 +880,11 @@ proc IbrowserToggleVisibilityIcon { id } {
             #--- must update the visibility status of the
             #--- foreground interval to match.
             set fgID $::Ibrowser(FGInterval)
-            set otherthing "$::IbrowserController($fgID,visIconTag)"
-            $win itemconfig $otherthing -image $::IbrowserController(Images,Icon,invisIcon)
-            set ::Ibrowser($id,visStatus) $::IbrowserController(Info,Ival,isInvisible)
-            
+            if { $fgID != $::Ibrowser(NoInterval) } {
+                set otherthing "$::IbrowserController($fgID,visIconTag)"
+                $win itemconfig $otherthing -image $::IbrowserController(Images,Icon,invisIcon)
+                set ::Ibrowser($id,visStatus) $::IbrowserController(Info,Ival,isInvisible)
+            }            
             #--- Then, update the MainViewer
             MainSlicesSetVisibilityAll 0
             RenderAll
@@ -903,9 +905,11 @@ proc IbrowserToggleVisibilityIcon { id } {
             #--- must update the visibility status of the
             #--- background interval to match.
             set bgID $::Ibrowser(BGInterval)
-            set otherthing "$::IbrowserController($bgID,visIconTag)"
-            $win itemconfig $otherthing -image $::IbrowserController(Images,Icon,visIcon)
-            set ::Ibrowser($id,visStatus) $::IbrowserController(Info,Ival,isVisible)
+            if { $bgID != $::Ibrowser(NoInterval) } {
+                set otherthing "$::IbrowserController($bgID,visIconTag)"
+                $win itemconfig $otherthing -image $::IbrowserController(Images,Icon,visIcon)
+                set ::Ibrowser($id,visStatus) $::IbrowserController(Info,Ival,isVisible)
+            }
 
             #--- Then, update the MainViewer
             MainSlicesSetVisibilityAll 1
@@ -916,9 +920,11 @@ proc IbrowserToggleVisibilityIcon { id } {
             #--- must update the visibility status of the
             #--- foreground interval to match.
             set fgID $::Ibrowser(FGInterval)
-            set otherthing "$::IbrowserController($fgID,visIconTag)"
-            $win itemconfig $otherthing -image $::IbrowserController(Images,Icon,visIcon)
-            set ::Ibrowser($id,visStatus) $::IbrowserController(Info,Ival,isVisible)            
+            if { $fgID != $::Ibrowser(NoInterval) } {
+                set otherthing "$::IbrowserController($fgID,visIconTag)"
+                $win itemconfig $otherthing -image $::IbrowserController(Images,Icon,visIcon)
+                set ::Ibrowser($id,visStatus) $::IbrowserController(Info,Ival,isVisible)
+            }
 
             #--- Then, update the MainViewer
             MainSlicesSetVisibilityAll 1
@@ -1045,10 +1051,10 @@ proc IbrowserMakeFGIcon { id x1 y1 x2 y2 } {
     $::IbrowserController(Icanvas) bind $::IbrowserController($id,FGIconTag) <Leave> \
         "IbrowserLeaveFGIcon $id %W"
     $::IbrowserController(Icanvas) bind $::IbrowserController($id,FGIconTag) <Button-1> \
-        "MainSlicesSetVolumeAll Fore $::Ibrowser($id,$::Ibrowser(ViewDrop),MRMLid);
-         IbrowserDeselectFGIcon %W;
-         IbrowserSelectFGIcon $id %W;
+         "IbrowserDeselectFGIcon %W;
+         IbrowserSlicesSetVolumeAll Fore $::Ibrowser($id,$::Ibrowser(ViewDrop),MRMLid);
          set ::Ibrowser(FGInterval) $id;
+         IbrowserSelectFGIcon $id %W;
          IbrowserGangFGandBGVisibility;
          RenderAll"
     
@@ -1081,10 +1087,10 @@ proc IbrowserMakeBGIcon { id x1 y1 x2 y2 } {
     $::IbrowserController(Icanvas) bind $::IbrowserController($id,BGIconTag) <Leave> \
         "IbrowserLeaveBGIcon $id %W"
     $::IbrowserController(Icanvas) bind $::IbrowserController($id,BGIconTag) <Button-1> \
-        "MainSlicesSetVolumeAll Back $::Ibrowser($id,$::Ibrowser(ViewDrop),MRMLid) ;
-          IbrowserDeselectBGIcon %W; 
-          IbrowserSelectBGIcon $id %W;
+        "IbrowserDeselectBGIcon %W;
+          IbrowserSlicesSetVolumeAll Back $::Ibrowser($id,$::Ibrowser(ViewDrop),MRMLid) ;
           set ::Ibrowser(BGInterval) $id;
+          IbrowserSelectBGIcon $id %W;
           IbrowserGangFGandBGVisibility;
           RenderAll"
     
@@ -1103,7 +1109,7 @@ proc IbrowserDeselectFGIcon { w } {
 
     #deselect old FG interval in the Controller panel
     foreach id $::Ibrowser(idList) {
-        if { $id == $::Ibrowser(FGInterval) } {
+        if { $id == $::Ibrowser(FGInterval) && $id != $::Ibrowser(NoInterval) } {
             $w itemconfig $::IbrowserController($id,FGIconHILOtag) \
                 -outline $::IbrowserController(Colors,lolite)
         }
@@ -1124,14 +1130,15 @@ proc IbrowserGangFGandBGVisibility { } {
     #--- check the background's visibility status.
     #--- if they don't match, change the background's
     #--- to match the foreground
+
     set fgID $::Ibrowser(FGInterval)
-    set fgstatus $::Ibrowser($fgID,visStatus)
-
     set bgID $::Ibrowser(BGInterval)
-    set bgstatus $::Ibrowser($bgID,visStatus)
-
-    if { $fgstatus != $bgstatus } {
-        IbrowserToggleVisibilityIcon $bgID
+    if { $fgID != $::Ibrowser(NoInterval) && $bgID != $::Ibrowser(NoInterval) } {
+        set fgstatus $::Ibrowser($fgID,visStatus)
+        set bgstatus $::Ibrowser($bgID,visStatus)
+        if { $fgstatus != $bgstatus } {
+            IbrowserToggleVisibilityIcon $bgID
+        }
     }
 }
 
@@ -1181,6 +1188,7 @@ proc IbrowserLeaveFGIcon { id w } {
 }
 
 
+
 #-------------------------------------------------------------------------------
 # .PROC IbrowserDeselectBGIcon
 # 
@@ -1191,7 +1199,7 @@ proc IbrowserDeselectBGIcon { w } {
 
     #deselect old BG interval in the Controller panel
     foreach id $::Ibrowser(idList) {
-        if { $id == $::Ibrowser(BGInterval) } {
+        if { $id == $::Ibrowser(BGInterval) && $id != $::Ibrowser(NoInterval) } {
             $w itemconfig $::IbrowserController($id,BGIconHILOtag) \
                 -outline $::IbrowserController(Colors,lolite)
         }

@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -45,6 +45,10 @@
 #   IbrowserPlayOnce
 #   IbrowserPlayOnceReverse
 #   IbrowserStopAnimation
+#   IbrowserStopRecordingAnimation
+#   IbrowserRecordAnimationToFile
+#   IbrowserCloseRecordPopupWindow
+#   IbrowserRecordPopupWindow
 #   IbrowserPauseAnimation
 #   IbrowserLoopAnimate
 #   IbrowserPingPongAnimate
@@ -553,6 +557,12 @@ proc IbrowserStopAnimation { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserStopRecordingAnimation
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserStopRecordingAnimation { } {
     if { $::Ibrowser(AnimationRecording) } {
         puts "exiting record mode"
@@ -569,6 +579,12 @@ proc IbrowserStopRecordingAnimation { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserRecordAnimationToFile
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserRecordAnimationToFile { } {
     #--- if we're recording, stop; and
     #--- if we're not recording, start
@@ -601,12 +617,24 @@ proc IbrowserRecordAnimationToFile { } {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserCloseRecordPopupWindow
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserCloseRecordPopupWindow { root } {
     unset ::Ibrowser(AnimationRecordbutton)
     destroy $root    
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserRecordPopupWindow
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserRecordPopupWindow { {toplevelName .ibrowserRecord} } {
     global Gui
     

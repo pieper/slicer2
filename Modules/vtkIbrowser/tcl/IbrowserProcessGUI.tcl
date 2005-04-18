@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -38,6 +38,13 @@
 # PROCEDURES:  
 #   IbrowserBuildProcessFrame
 #   IbrowserRaiseProcessingFrame
+#   IbrowserProcessingSelectInternalReference
+#   IbrowserProcessingSelectExternalReference
+#   IbrowserResetSelectSequence
+#   IbrowserResetInternalReference
+#   IbrowserAddSequenceTransforms
+#   IbrowserRemoveTransforms
+#   IbrowserGetRasToVtkAxis
 #==========================================================================auto=
 
 
@@ -58,7 +65,11 @@ proc IbrowserBuildProcessFrame { } {
     set f $fProcess
 
     frame $f.fProcessMaster -relief groove -bg $::Gui(backdrop) -bd 3
-    frame $f.fProcessInfo -relief groove -bg $::Gui(activeWorkspace) -bd 3 -height 350 
+    #--- This frame's size determines the height of all processing frames
+    #--- placed within it. I'd like to have each of the placed frames have
+    #--- control the size of the master frame, but can't figure out how
+    #--- to do that. For now, Just set the height here when you need more room.
+    frame $f.fProcessInfo -relief groove -bg $::Gui(activeWorkspace) -bd 3 -height 350
     pack $f.fProcessMaster -side top -padx 0 -pady $::Gui(pad) -fill x 
     pack $f.fProcessInfo -side top -padx 0 -pady $::Gui(pad) -fill both -expand 1 
 
@@ -67,7 +78,6 @@ proc IbrowserBuildProcessFrame { } {
     #--- Catalog of all processing that the Ibrowser can do:
     #--- Developers: Add menu text for all new processing options here.
     #-------------------------------------------
-    #--- WJP comment out during development
     set ::Ibrowser(Process,Text,Reassemble) "Reassemble"
     set ::Ibrowser(Process,Text,Reorient) "Reorient"
     set ::Ibrowser(Process,Text,MotionCorrect) "MotionCorrect"
@@ -82,7 +92,7 @@ proc IbrowserBuildProcessFrame { } {
     #--- fProcess->fProcessInfo:fMotionCorrect
     #--- fProcess->fProcessInfo:fSmooth
     #--- fProcess->fProcessInfo:fKeyframeRegister
-    #--- These are the set of frames inside the
+    #--- These are the set of frames for each processing option
     #-------------------------------------------
     set ff $f.fProcessInfo
     frame $ff.fReorient -bg  $::Gui(activeWorkspace)  
@@ -91,15 +101,14 @@ proc IbrowserBuildProcessFrame { } {
     #--- WJP comment out during development
     #frame $ff.fMotionCorrect -bg $::Gui(activeWorkspace) 
     #IbrowserBuildMotionCorrectGUI $ff.fMotionCorrect $f.fProcessInfo
-
-    #frame $ff.fReassemble -bg $::Gui(activeWorkspace)
-    #IbrowserBuildReassembleGUI $ff.fReassemble $f.fProcessInfo
-
     #frame $ff.fSmooth -bg $::Gui(activeWorkspace)
     #IbrowserBuildSmoothGUI $ff.fSmooth $f.fProcessInfo    
 
-    #frame $ff.fKeyframeRegister -bg  $::Gui(activeWorkspace)
-    #IbrowserBuildKeyframeRegisterGUI $ff.fKeyframeRegister $f.fProcessInfo
+    frame $ff.fReassemble -bg $::Gui(activeWorkspace)
+    IbrowserBuildReassembleGUI $ff.fReassemble $f.fProcessInfo
+
+    frame $ff.fKeyframeRegister -bg  $::Gui(activeWorkspace) -height 600
+    IbrowserBuildKeyframeRegisterGUI $ff.fKeyframeRegister $f.fProcessInfo
     raise $ff.fReorient
     
     #-------------------------------------------
@@ -127,10 +136,9 @@ proc IbrowserBuildProcessFrame { } {
     eval { menu $ff.mbProcessType.m } $::Gui(WMA)
 
     #--- do not expose until code is complete
-    #foreach r "Reorient MotionCorrect Smooth KeyframeRegister" 
-    #foreach r "Reassemble Reorient Smooth MotionCorrect KeyframeRegister" 
     #--- WJP comment out during development
-    foreach r "Reorient" {
+    #foreach r "Reassemble Reorient Smooth MotionCorrect KeyframeRegister" 
+    foreach r "Reassemble Reorient KeyframeRegister" {
         $ff.mbProcessType.m add command -label $r \
             -command "IbrowserRaiseProcessingFrame $::Ibrowser(Process,Text,${r}) $::Ibrowser(fProcess${r})"
     }
@@ -138,6 +146,8 @@ proc IbrowserBuildProcessFrame { } {
     #--- By default, raise first frame on th process list.
     raise $::Ibrowser(fProcessReorient)
 }
+
+
 
 
 #-------------------------------------------------------------------------------
@@ -154,90 +164,265 @@ proc IbrowserRaiseProcessingFrame { menuText processFrame } {
 
 
 
-proc IbrowserProcessingSelectSequence { id } {
-
-    set ::Ibrowser(Process,SelectSequence)  $id
-    IbrowserResetInternalReference
-    set name $::Ibrowser($id,name)
-    $::Ibrowser(Process,MotionCorrect,mbSequence) config -text $name
-    IbrowserConfigureInternalReference
-}
 
 
-
+#-------------------------------------------------------------------------------
+# .PROC IbrowserProcessingSelectInternalReference
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserProcessingSelectInternalReference { name id } {
+    #---
     #--- name gives the text that goes on the menu
     #--- and id gives the MRML id of the volume in the sequence
     #--- to be used as the reference volume.
     #--- specifies a reference volume within the sequence being processed.
-    set ::Ibrowser(Process,SelectInternalReference) $id
-    $::Ibrowser(Process,MotionCorrect,mbIntReference) config -text $name
+    set ::Ibrowser(Process,InternalReference) $id
+    foreach process "MotionCorrect KeyframeRegister" {
+        if { [info exists ::Ibrowser(Process,$process,mbReference)] } {
+            $::Ibrowser(Process,$process,mbReference) config -text $name
+        }
+    }
 }
 
 
 
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserProcessingSelectExternalReference
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserProcessingSelectExternalReference { name id } {
+    #---
     #---specifies a reference sequence outside the sequence being processed.
-    set ::Ibrowser(Process,SelectExternalReference) $id
-    $::Ibrowser(Process,KeyframeRegister,mbExtReference) config -text $name
-
-}
-
-
-
-proc IbrowserConfigureInternalReference { } {
-
-    #--- this menu gets configured based on what sequence is selected.
-    #--- the menu should contain the volume numbers or names of
-    #--- volumes within a selected sequence.
-    set s $::Ibrowser(idNone)
-    set v $::Volume(idNone)
-    
-    #---configure Menus of reference volumes
-    set m $::Ibrowser(Process,MotionCorrect,mIntReference)
-    $m delete 0 end
-    set start 0
-    set stop 0
-    if { $::Ibrowser(Process,SelectSequence) != $v } {
-        set start $::Ibrowser($::Ibrowser(Process,SelectSequence),firstMRMLid)
-        set stop $::Ibrowser($::Ibrowser(Process,SelectSequence),lastMRMLid)
-    }
-    set count 0
-    #---based on which interval drop is selected,
-    #---set the MRMLid of the volume that drop represents.
-    for { set i $start } { $start < $stop } { incr start } {
-        set id $::Ibrowser(Process,SelectSequence)
-        set name $::Ibrowser($id,name)
-        set name $name\_$count
-        $m add command -label $name \
-            -command "IbrowserProcessingSelectInternalReference $name $::Ibrowser($id,$start,MRMLid)"
-        incr count
+    set ::Ibrowser(Process,ExternalReference) $id
+    foreach process "MotionCorrect KeyframeRegister" {
+        if { [info exists ::Ibrowser(Process,$process,mbReference)] } {
+            $::Ibrowser(Process,$process,mbReference) config -text $name
+        }
     }
 }
 
 
 
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserResetSelectSequence
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserResetSelectSequence { } {
-
-    set s $::Ibrowser(idNone)
-    set ::Ibrowser(Process,SelectSequence) $s
-    #---configure sequence menu
-    $::Ibrowser(Process,MotionCorrect,mbSequence) config -text "none"
+    #---
+    #--- sets the selected sequence to be "none" in all menus.
+    set ::Ibrowser(activeInterval) $::Ibrowser(idNone)
+    #set ::Ibrowser(Process,SelectSequence) $::Ibrowser(idNone)
+    IbrowserUpdateMRML
 }
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserResetInternalReference
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserResetInternalReference { } {
 
     #--- Each time the user selects a new sequence,
     #--- a new reference should be specified. So, this proc
-    #--- resets the internal reference to 'none' when the
+    #--- resets the reference to 'none' when the
     #--- sequence has changed. 
-    set v $::Volume(idNone)
-    set ::Ibrowser(Process,SelectIntReference) $v
-    #---configure Menus of reference volumes
-    set m $::Ibrowser(Process,MotionCorrect,mIntReference)
-    $m delete 0 end
-    $::Ibrowser(Process,MotionCorrect,mbIntReference) config -text "none"
+    set ::Ibrowser(Process,SelectIntReference) $::Volume(idNone)
+    IbrowserUpdateMRML
+
 
 }
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserAddSequenceTransforms
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserAddSequenceTransforms { } {
+    global Data Mrml Volume
+
+    #--- Add Transform, Matrix, and EndTransform
+    #--- Transform will enclose each volume node in the active interval.
+
+    #--- ID of selected sequence
+    set id $::Ibrowser(activeInterval)
+    IbrowserRaiseProgressBar
+    set pcount 0
+
+    #--- for each volume within the sequence:
+    #--- add a new transform node for each volume
+    for { set i 0 } { $i < $::Ibrowser($id,numDrops) } { incr i } {
+        if { $::Ibrowser($id,numDrops)  != 0 } {
+            set progress [ expr double ($pcount) / double ($::Ibrowser($id,numDrops)) ]
+            IbrowserUpdateProgressBar $progress "::"
+            IbrowserPrintProgressFeedback
+        }
+        
+        set vid $::Ibrowser($id,$i,MRMLid)
+        set node Volume($vid,node)
+        set mid [ DataAddTransform 0 Volume($vid,node) Volume($vid,node) ]
+        #--- save a way to find this matrix later.
+        set ::Ibrowser($id,$i,matrixID) $mid
+        incr pcount
+    }
+    IbrowserEndProgressFeedback
+    IbrowserSayThis "Transforms for $::Ibrowser($id,name) added." 0
+    MainUpdateMRML
+    IbrowserLowerProgressBar
+}
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserRemoveTransforms
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserRemoveTransforms { } {
+
+    #--- ID of selected sequence
+    set id $::Ibrowser(activeInterval)
+
+    #--- For each volume within the interval, delete it's
+    #--- innermost transform and matrix.
+    #--- We know the node before each volume is a matrix node
+    #--- and before that node is the target transform node
+    #--- and after the volume is the target end-transform node. 
+    #--- So, find each volume node in the sequence:
+    IbrowserRaiseProgressBar
+    set pcount 0
+    
+    for { set i 0 } { $i < $::Ibrowser($id,numDrops) } { incr i } {
+        if { $::Ibrowser($id,numDrops) != 0 } {
+            set progress [ expr double ($pcount) / double ($::Ibrowser($id,numDrops)) ]
+            IbrowserUpdateProgressBar $progress "::"
+            IbrowserPrintProgressFeedback
+        }
+        
+        set vid $::Ibrowser($id,$i,MRMLid)
+        set node Volume($vid,node)
+        #---traverse the mrml tree to find each volume node in sequence.
+        ::Mrml(dataTree) InitTraversal
+        set tstnode [ Mrml(dataTree) GetNextItem ]
+        #--- what element is it in the Mrml tree?
+        set whereisVolume 1
+        while { $tstnode != "" } {
+            if { [string compare -length 6 $tstnode "Volume"] == 0 } {
+                if { [$tstnode GetID ] == $vid } {
+                    #--- looks like we found the volume node
+                    set gotnode 1
+                    break
+                }
+            }
+            set tstnode [ Mrml(dataTree) GetNextItem ]                
+            incr whereisVolume
+        }
+        #--- remove transform, matrix and end-transform nodes
+        if { $gotnode == 1 } {
+            ::Mrml(dataTree) InitTraversal
+            set counter 0
+            set whereisTransform [ expr $whereisVolume - 2 ]
+            #--- the three nodes start 2 nodes before the volume node
+            while { $counter < $whereisTransform } {
+                set tstnode [ Mrml(dataTree) GetNextItem ]
+                incr counter
+            }
+            #--- transform node
+            set tnode $tstnode
+            #--- matrix node
+            set mnode [ Mrml(dataTree) GetNextItem ]
+            #--- volume node again.
+            set tstnode [ Mrml(dataTree) GetNextItem ]
+            #--- end transform node
+            set endtnode [ Mrml(dataTree) GetNextItem ]
+            #--- get the IDs of the three nodes.
+            set tid [ $tnode GetID ]
+            set mid [ $mnode GetID ]
+            set etid [ $endtnode GetID ]
+            #--- delete the three nodes.
+            MainMrmlDeleteNode Matrix $mid
+            MainMrmlDeleteNode Transform $tid
+            MainMrmlDeleteNode EndTransform $etid
+            MainUpdateMRML
+        } else {
+            DevErrorWindow "Notice: all transforms were not deleted."
+        }
+        incr pcount
+    }
+    IbrowserEndProgressFeedback
+    IbrowserResetSelectSequence
+    IbrowserResetInternalReference
+    IbrowserSayThis "Transforms for $::Ibrowser($id,name) deleted." 0
+    IbrowserLowerProgressBar
+
+}
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserGetRasToVtkAxis
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserGetRasToVtkAxis { axis vnode } {
+    #
+    #--- Given an axis in RAS space, we want
+    #--- to find the axis that corresponds in VTK 
+    #--- space (which describes the vtkImageData
+    #--- represented by a vtkMrmlVolumeNode.)
+    #
+    #--- create a vtkTransform
+    vtkTransform T
+    #--- get the transform matrix in string form
+    #--- and set it to be the transform's matrix.
+    set m [ $vnode GetRasToVtkMatrix ]
+    eval T SetMatrix $m
+
+    #--- axis along which to flip in VTK space
+    if { $axis == "RL" } {
+        #--- if Flipping along R-L
+        #puts "RAS axis 1 0 0"
+        set newvec [ T TransformFloatVectorAtPoint 0 0 0 -1 0 0 ]
+    } elseif { $axis == "AP" } {
+        #--- if flipping along A-P
+        #puts "RAS axis 0 1 0"
+        set newvec [ T TransformFloatVectorAtPoint 0 0 0 0 -1 0 ]
+    } elseif { $axis == "SI" } {
+        #--- if flipping along S-I
+        #puts "RAS axis 0 0 1"
+        set newvec [ T TransformFloatVectorAtPoint 0 0 0 0 0 -1 ]
+    }
+    foreach { x y z } $newvec { }
+    #puts "VTK axis: $x $y $z"
+    #--- because of scale, newvec might not be unit
+    if { $x != 0 } {
+        set newvec [ lreplace $newvec 0 0 1 ]
+    }
+    if { $y != 0 } {
+        set newvec [ lreplace $newvec 1 1 1 ]
+    }
+    if { $z != 0 } {
+        set newvec [ lreplace $newvec 2 2 1 ]
+    }
+    
+    #--- clean up
+    T Delete
+    #--- return the new axis as a vector.
+    return $newvec
+}
+

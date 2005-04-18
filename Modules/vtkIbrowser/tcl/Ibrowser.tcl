@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -47,7 +47,7 @@
 #   IbrowserGetIntervalNameFromID
 #   IbrowserGetIntervalIDFromName
 #   IbrowserBuildVTK
-#   IbrowserValidateName
+#   IbrowserUpdateMRML
 #==========================================================================auto=
 #-------------------------------------------------------------------------------
 # .PROC IbrowserInit
@@ -97,7 +97,7 @@ proc IbrowserInit {} {
     #---Set category and version info
     set Module($m,category) "Alpha"
        lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.10 $} {$Date: 2005/03/19 13:17:42 $}]
+        {$Revision: 1.11 $} {$Date: 2005/04/18 15:12:20 $}]
 
     #---Initialize module-level variables
     #---Global array with the same name as the module. Ibrowser()
@@ -116,9 +116,15 @@ proc IbrowserInit {} {
     set Ibrowser(0,lastMRMLid) 0
     set Ibrowser(0,0,MRMLid) 0
     set Ibrowser(idNone) 0
+    set Ibrowser(NoInterval) -1
+    set Ibrowser(${Ibrowser(idNone)},name) "none"
     set Ibrowser(activeInterval) $::Ibrowser(idNone)
-    set Ibrowser(FGInterval) $Ibrowser(idNone)
-    set Ibrowser(BGInterval) $Ibrowser(idNone)
+    #--- Manage what's in Slicer Viewer's FG and BG.
+    #set Ibrowser(FGInterval) $Ibrowser(idNone)
+    #set Ibrowser(BGInterval) $Ibrowser(idNone)
+    set Ibrowser(FGInterval) $Ibrowser(NoInterval)
+    set Ibrowser(BGInterval) $Ibrowser(NoInterval)
+
     #--- Here, 20.0 is chosen to be the number of units wide to make
     #--- the none interval. This arbitrary number makes certain the
     #--- subsequent populated intervals don't have overlapping
@@ -142,7 +148,7 @@ proc IbrowserInit {} {
     
     #--- set initial values for GUI radio buttons.
     #--- assembleChoice [0=files, 1=sequences, 2=volumes]
-    set Ibrowser(New,assembleChoice) 0
+    set Ibrowser(New,assembleChoice) 2
     set Ibrowser(New,selectedVolumeID) ""
     set Ibrowser(New,assembleList) ""
 
@@ -177,8 +183,8 @@ proc IbrowserInit {} {
     source ${modulePath}IbrowserProcessing/IbrowserReorient.tcl
     #source ${modulePath}IbrowserProcessing/IbrowserMotionCorrect.tcl
     #source ${modulePath}IbrowserProcessing/IbrowserSmooth.tcl
-    #source ${modulePath}IbrowserProcessing/IbrowserKeyframeRegister.tcl
-    #source ${modulePath}IbrowserProcessing/IbrowserReassemble.tcl
+    source ${modulePath}IbrowserProcessing/IbrowserKeyframeRegister.tcl
+    source ${modulePath}IbrowserProcessing/IbrowserReassemble.tcl
     
     #--- These contain tcl code for the interval controller
     #--- which is launched in proc IbrowserEnter().
@@ -210,11 +216,8 @@ proc IbrowserInit {} {
     #Ibrowser($i,Icollection) SetnumIntervals 0
 
     #--- For processing....
-    set ::Ibrowser(Process,SelectSequence) "none"
-    set ::Ibrowser(Process,SelectInternalReference) "none"
-    set ::Ibrowser(Process,SelectExternalReference) "none"
+    #set ::Ibrowser(Process,SelectSequence) $Ibrowser(idNone)
     set ::Ibrowser(Process,reassembleAxis) ""
-
     set ::VolumeGroupCollection(numCollections) 0
 }
 
@@ -437,14 +440,26 @@ proc IbrowserBuildVTK {} {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateMRML
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserUpdateMRML { } {
     global Matrix Volume
 
-    #--- Eventually, this should be called inside MainUpdateMRML
     #--- This routine configures all pulldown interval menus to include 
     #--- names of new intervals as they are added by a user.
 
-    #--- Update pulldown menus for the 'new' GUI tab
+    #--- update menu buttons.
+    foreach process "MotionCorrect KeyframeRegister Smooth Reorient Reassemble" {
+        if { [info exists ::Ibrowser(Process,$process,mbIntervals) ] } {
+            set name $::Ibrowser(${::Ibrowser(activeInterval)},name)
+            $::Ibrowser(Process,$process,mbIntervals) config -text $name
+        }
+    }
+    
     if { [info exists ::Ibrowser(New,mAssembleVolume) ] } {
         set m $::Ibrowser(New,mAssembleVolume)
         $m delete 0 end
@@ -455,7 +470,7 @@ proc IbrowserUpdateMRML { } {
             }
         }
     }
-
+    #--- not yet implemented
     if { [info exists ::Ibrowser(New,mAssembleSequences) ] } {
         set m $::Ibrowser(New,mAssembleSequences)
         $m delete 0 end
@@ -467,52 +482,103 @@ proc IbrowserUpdateMRML { } {
         }
     }
 
-    if { [info exists ::Ibrowser(Process,Smooth,mIntervals) ] } {
-        set m $::Ibrowser(Process,Smooth,mIntervals)
-        $m delete 0 end
-        foreach id $::Ibrowser(idList) {
-            $m add command -label $::Ibrowser($id,name)  \
-                -command "IbrowserSetActiveInterval $id"
+    foreach process "Smooth Reorient Reassemble" {
+        if { [info exists ::Ibrowser(Process,${process},mIntervals) ] } {
+            set m $::Ibrowser(Process,${process},mIntervals)
+            $m delete 0 end
+            foreach id $::Ibrowser(idList) {
+                $m add command -label $::Ibrowser($id,name)  \
+                    -command "IbrowserSetActiveInterval $id"
+            }
         }
     }
 
-    if { [info exists ::Ibrowser(Process,Reorient,mIntervals) ] } {
-        set m $::Ibrowser(Process,Reorient,mIntervals)
-        $m delete 0 end
-        foreach id $::Ibrowser(idList) {
-            $m add command -label $::Ibrowser($id,name)  \
-                -command "IbrowserSetActiveInterval $id"
+    #--- may be more processes someday..."
+    foreach process "MotionCorrect" {
+        if { [info exists ::Ibrowser(Process,${process},mIntervals) ] } {
+            #--- configure interval selection menu
+            set m $::Ibrowser(Process,${process},mIntervals)
+            $m delete 0 end
+            foreach id $::Ibrowser(idList) {
+                $m add command -label $::Ibrowser($id,name)  \
+                    -command "IbrowserSetActiveInterval $id"
+            }
+
+            #--- configure reference selection menu and menubutton
+            set m $::Ibrowser(Process,${process},mReference)
+            $m delete 0 end
+            set id $::Ibrowser(activeInterval)
+            if { $id == $::Ibrowser(idNone) } {
+                set mb $::Ibrowser(Process,${process},mbReference)
+                $mb configure -text $::Ibrowser(${::Ibrowser(idNone)},name)
+            } else {
+                set mb $::Ibrowser(Process,${process},mbReference)
+                #set volnum $::Ibrowser(ViewDrop)
+                #set volID $::Ibrowser($id,$volnum,MRMLid)
+                #set vname [ ::Volume($volID,node) GetName ]
+                #$mb configure -text $vname
+                $mb configure -text "none"
+                set start $::Ibrowser($::Ibrowser(activeInterval),firstMRMLid)
+                set stop $::Ibrowser($::Ibrowser(activeInterval),lastMRMLid)
+                set count 0
+                #---build selections; all volumes in an interval
+                set vname "none"
+                $m add command -label $vname \
+                    -command "IbrowserProcessinGSelecdtInternalReference $vname $::Volume(idNone)"
+                for { set i $start } { $i <= $stop } { incr i } {
+                    set vname [ ::Volume($i,node) GetName ]
+                    $m add command -label $vname \
+                        -command "IbrowserProcessingSelectInternalReference $vname $i;
+                                         $mb configure -text $vname"
+                    incr count
+                }
+            }
         }
     }
 
-    if { [info exists ::Ibrowser(Process,Reassemble,mIntervals) ] } {    
-        set m $::Ibrowser(Process,Reassemble,mIntervals)
-        $m delete 0 end
-        foreach id $::Ibrowser(idList) {
-            $m add command -label $::Ibrowser($id,name)  \
-                -command "IbrowserSetActiveInterval $id"
-        }
-    }
+    #--- may be more processes someday..."
+    foreach process "KeyframeRegister" {
+        if { [info exists ::Ibrowser(Process,${process},mIntervals) ] } {
+            #--- configure interval selection menu
+            set m $::Ibrowser(Process,${process},mIntervals)
+            $m delete 0 end
+            foreach id $::Ibrowser(idList) {
+                $m add command -label $::Ibrowser($id,name)  \
+                    -command "IbrowserSetActiveInterval $id;
+                                     IbrowserKeyframeClearAllKeyframes"
+            }
 
-    if { [info exists ::Ibrowser(Process,MotionCorrect,mIntervals) ] } {
-        set m $::Ibrowser(Process,MotionCorrect,mIntervals)
-        $m delete 0 end
-        foreach id $::Ibrowser(idList) {
-            $m add command -label $::Ibrowser($id,name)  \
-                -command "IbrowserSetActiveInterval $id"
+            #--- configure reference selection menu and menubutton
+            set m $::Ibrowser(Process,${process},mReference)
+            $m delete 0 end
+            set id $::Ibrowser(activeInterval)
+            if { $id == $::Ibrowser(idNone) } {
+                set mb $::Ibrowser(Process,${process},mbReference)
+                $mb configure -text $::Ibrowser(${::Ibrowser(idNone)},name)
+            } else {
+                set mb $::Ibrowser(Process,${process},mbReference)
+                #set volnum $::Ibrowser(ViewDrop)
+                #set volID $::Ibrowser($id,$volnum,MRMLid)
+                #set vname [ ::Volume($volID,node) GetName ]
+                #$mb configure -text $vname
+                $mb configure -text "none"
+                set start $::Ibrowser($::Ibrowser(activeInterval),firstMRMLid)
+                set stop $::Ibrowser($::Ibrowser(activeInterval),lastMRMLid)
+                set count 0
+                #---build selections; all volumes in an interval
+                set vname "none"
+                $m add command -label $vname \
+                    -command "IbrowserProcessinGSelecdtInternalReference $vname $::Volume(idNone)"
+                for { set i $start } { $i <= $stop } { incr i } {
+                    set vname [ ::Volume($i,node) GetName ]
+                    $m add command -label $vname \
+                        -command "IbrowserProcessingSelectInternalReference $vname $i;
+                                         $mb configure -text $vname"
+                    incr count
+                }
+            }
         }
-    }
-
-    if { [info exists ::Ibrowser(Process,KeyframeRegister,mIntervals) ] } {
-        set m $::Ibrowser(Process,KeyframeRegister,mIntervals)
-        $m delete 0 end
-        foreach id $::Ibrowser(idList) {
-            $m add command -label $::Ibrowser($id,name)  \
-                -command "IbrowserSetActiveInterval $id"
-        }
-    }
-    
-
+    }    
 }
 
 

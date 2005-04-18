@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -38,6 +38,7 @@
 # PROCEDURES:  
 #   IbrowserBuildDisplayFrame
 #   IbrowserUpdateMainViewer
+#   IbrowserSlicesSetVolumeAll
 #   IbrowserSetIntervalParam
 #==========================================================================auto=
 
@@ -271,30 +272,31 @@ proc IbrowserUpdateMainViewer { n } {
     
     #--- If the requested drop number to view is appropriate for the 
     #--- selectedInterval, update the main viewer to display this drop.
-    #--- check here to see if the none interval is in the FG or BG.
-    if { [ info exists ::Ibrowser(FGInterval) ] &&
-          [ info exists ::Ibrowser(BGInterval)]} {
+    #--- check here to see if the none interval is in the FG or BG or if
+    #--- the Slice window menus have been used to set the FG & BG instead.
+    if { [ info exists ::Ibrowser(FGInterval) ] && [ info exists ::Ibrowser(BGInterval)]} {
 
         set inumFG $::Ibrowser(FGInterval)
         set inumBG $::Ibrowser(BGInterval)
         set inumActive $::Ibrowser(activeInterval)
 
-        #--- update the slices window.
-        if { $inumFG > 0 } {
+        #--- update the slices window if the interval is a valid FG interval
+        if { $inumFG != $::Ibrowser(NoInterval) && $inumFG != $::Ibrowser(none,intervalID) } {
             if { $::Ibrowser($inumFG,numDrops) > $n } {
                 #--- What's active in the foreground?
-                MainSlicesSetVolumeAll Fore $::Ibrowser($inumFG,$n,MRMLid)
+                IbrowserSlicesSetVolumeAll Fore $::Ibrowser($inumFG,$n,MRMLid)
+                
                 if { $inumFG == $inumActive } {
                     MainVolumesSetActive $::Ibrowser($inumFG,$n,MRMLid)
                 }
             } else {
                 if { $::Ibrowser($inumFG,holdStatus) == $::IbrowserController(Info,Ival,nohold) } {
-                    MainSlicesSetVolumeAll Fore "None"
+                    IbrowserSlicesSetVolumeAll Fore "None"
                     if { $inumFG == $inumActive } {
                         MainVolumesSetActive $::Volume(idNone)
                     }
                 } else {
-                    MainSlicesSetVolumeAll Fore $::Ibrowser($inumFG,lastMRMLid)
+                    IbrowserSlicesSetVolumeAll Fore $::Ibrowser($inumFG,lastMRMLid)
                     if { $inumFG == $inumActive } {
                         MainVolumesSetActive $::Ibrowser($inumFG,lastMRMLid)
                     }
@@ -302,34 +304,74 @@ proc IbrowserUpdateMainViewer { n } {
             }
         }
 
-        #--- update BG if there's a volume in the FG
-        if { $inumBG > 0 } {
+        #--- update the slices window if the interval is a valid BG interval
+        if { $inumBG != $::Ibrowser(NoInterval) && $inumBG != $::Ibrowser(none,intervalID) } {
 
             if { $::Ibrowser($inumBG,numDrops) > $n } {
                 #--- What's active in the background?
-                MainSlicesSetVolumeAll Back $::Ibrowser($inumBG,$n,MRMLid)
+                IbrowserSlicesSetVolumeAll Back $::Ibrowser($inumBG,$n,MRMLid)
                 if { $inumBG == $inumActive } {
                     MainVolumesSetActive $::Ibrowser($inumBG,$n,MRMLid)
                 }
             } else {
                 if { $::Ibrowser($inumBG,holdStatus) == $::IbrowserController(Info,Ival,nohold) } {
-                    MainSlicesSetVolumeAll Back "None"
+                    IbrowserSlicesSetVolumeAll Back "None"
                     if { $inumBG == $inumActive } {
                         MainVolumesSetActive $::Volume(idNone)
                     }
                 } else {
-                    MainSlicesSetVolumeAll Back $::Ibrowser($inumBG,lastMRMLid)
+                    IbrowserSlicesSetVolumeAll Back $::Ibrowser($inumBG,lastMRMLid)
                     if { $inumBG == $inumActive } {
-                        MainVolumesSetActive $::Ibrowser($inumFG,lastMRMLid)
+                        MainVolumesSetActive $::Ibrowser($inumBG,lastMRMLid)
                     }
                 }
             }
         }
         RenderAll
     }
-
-
 }
+
+
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserSlicesSetVolumeAll
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserSlicesSetVolumeAll { Layer v } {
+        global Slice Volume
+
+    # Check if volume exists and use the None if not
+    if {[lsearch $Volume(idList) $v] == -1} {
+        set v $Volume(idNone)
+    }
+    
+    # Fields in the Slice array are uncapitalized
+    set layer [Uncap $Layer]
+
+    # Set the volume in the Slicer
+    Slicer Set${Layer}Volume Volume($v,vol)
+    Slicer Update
+
+    foreach s $Slice(idList) {
+        set Slice($s,${layer}VolID) $v
+
+        # Change button text
+        if {$Layer == "Back"} {
+            MainSlicesConfigGui $s fOrient.mb${Layer}Volume$s \
+                "-text \"[Volume($v,node) GetName]\""
+        } else {
+            MainSlicesConfigGui $s fVolume.mb${Layer}Volume$s \
+                "-text \"[Volume($v,node) GetName]\""
+        }
+        # Always update Slider Range when change volume or orient
+        MainSlicesSetSliderRange $s
+    }
+}
+
 
 
 

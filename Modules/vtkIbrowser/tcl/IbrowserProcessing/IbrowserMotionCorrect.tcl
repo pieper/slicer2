@@ -1,6 +1,54 @@
+#=auto==========================================================================
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+#
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
+#
+#===============================================================================
+# FILE:        IbrowserMotionCorrect.tcl
+# PROCEDURES:  
+#   IbrowserBuildMotionCorrectGUI
+#   IbrowserMotionCorrectStopGo
+#   IbrowserHardenTransforms
+#==========================================================================auto=
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserBuildMotionCorrectGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserBuildMotionCorrectGUI { f master } {
     global Gui
 
@@ -10,6 +58,8 @@ proc IbrowserBuildMotionCorrectGUI { f master } {
     set ::Ibrowser(Process,MotionCorrectQuality) 1
     set ::Ibrowser(Process,MotionCorrectIterate) 0
     set ::Ibrowser(Process,MotionCorrect,Hardened) 0
+    set ::Ibrowser(Process,InternalReference) $::Volume(idNone)
+    set ::Ibrowser(Process,ExternalReference) $::Volume(idNone)
 
     frame $f.fInput -bg $Gui(activeWorkspace) -bd 2 
     frame $f.fModel -bg $Gui(activeWorkspace) -bd 2 -relief groove
@@ -22,13 +72,12 @@ proc IbrowserBuildMotionCorrectGUI { f master } {
     set ff $f.fInput
     eval { label $ff.lChooseProcInterval -text "interval:" } $Gui(WLA)
     eval { menubutton $ff.mbIntervals -text "none" \
-               -relief raised -bd 2 -width 20 \
+               -relief raised -bd 2 -width 18 \
                -menu $ff.mbIntervals.m -indicatoron 1 } $::Gui(WMBA)
     eval { menu $ff.mbIntervals.m } $::Gui(WMA)
     foreach i $::Ibrowser(idList) {
-        puts "adding $::Ibrowser($i,name)"
-        $ff.mbIntervals.m add command -label $::Ibrowser($i,name) \
-            -command "IbrowserSetActiveInterval $i"
+        puts "adding $::Ibrowser($i,name) to Motion correction menu"
+        $ff.mbIntervals.m add command -label $::Ibrowser($i,name) 
     }
     set ::Ibrowser(Process,MotionCorrect,mbIntervals) $ff.mbIntervals
     set ::Ibrowser(Process,MotionCorrect,mIntervals) $ff.mbIntervals.m
@@ -37,11 +86,10 @@ proc IbrowserBuildMotionCorrectGUI { f master } {
     
     eval { label $ff.lReference -text "reference:" } $Gui(WLA)
     eval { menubutton $ff.mbReference -text "none" \
-               -relief raised -bd 2 -width 20 -indicatoron 1 \
+               -relief raised -bd 2 -width 18 -indicatoron 1 \
                -menu $ff.mbReference.m } $::Gui(WMBA)
     eval { menu $ff.mbReference.m } $::Gui(WMA)
     foreach i $::Ibrowser(idList) {
-        puts "adding $::Ibrowser($i,name)"
         $ff.mbReference.m add command -label $::Ibrowser($i,name) \
             -command ""
     }
@@ -112,106 +160,15 @@ proc IbrowserBuildMotionCorrectGUI { f master } {
 }
 
 
-proc IbrowserAddSequenceTransforms { } {
-    global Data Mrml Volume
-
-    #--- Add Transform, Matrix, and EndTransform
-    #--- Transform will enclose each volume node in the sequence.
-
-    #--- ID of selected sequence
-    set id $::Ibrowser(Process,SelectSequence)
-
-    #--- for each volume within the sequence:
-    for { set i 0 } { $i < $::Ibrowser($id,numDrops) } { incr i } {
-        set vid $::Ibrowser($id,$i,MRMLid)
-        set node Volume($vid,node)
-        DataAddTransform 0 Volume($vid,node) Volume($vid,node)
-        puts "adding transform to volume $i"
-    }
-    MainUpdateMRML
-}
-
-
-proc IbrowserRemoveTransforms { } {
-
-    set stopbutton $::Ibrowser(Process,MotionCorrect,GoStop) 
-    #--- check for stopping
-    set state [ $stopbutton cget -text ]
-    if { $state == "Stop" } {
-        $stopbutton configure -text "Go"
-    }
-
-    if { $::Ibrowser(Process,MotionCorrect,Hardened) == 0 } {
-        #--- ID of selected sequence
-        set id $::Ibrowser(Process,SelectSequence)
-
-        #--- For each volume within the interval, delete it's
-        #--- innermost transform and matrix.
-        #--- We know the node before each volume is a matrix node
-        #--- and before that node is the target transform node
-        #--- and after the volume is the target end-transform node. 
-        #--- So, find each volume node in the sequence:
-        for { set i 0 } { $i < $::Ibrowser($id,numDrops) } { incr i } {
-            set vid $::Ibrowser($id,$i,MRMLid)
-            set node Volume($vid,node)
-            #---traverse the mrml tree to find each volume node in sequence.
-            ::Mrml(dataTree) InitTraversal
-            set tstnode [ Mrml(dataTree) GetNextItem ]
-            #--- what element is it in the Mrml tree?
-            set whereisVolume 1
-            while { $tstnode != "" } {
-                if { [string compare -length 6 $tstnode "Volume"] == 0 } {
-                    if { [$tstnode GetID ] == $vid } {
-                        #--- looks like we found the volume node
-                        set gotnode 1
-                        break
-                    }
-                }
-                set tstnode [ Mrml(dataTree) GetNextItem ]                
-                incr whereisVolume
-            }
-            #--- remove transform, matrix and end-transform nodes
-            if { $gotnode == 1 } {
-                ::Mrml(dataTree) InitTraversal
-                set counter 0
-                set whereisTransform [ expr $whereisVolume - 2 ]
-                #--- the three nodes start 2 nodes before the volume node
-                while { $counter < $whereisTransform } {
-                    set tstnode [ Mrml(dataTree) GetNextItem ]
-                    incr counter
-                }
-                #--- transform node
-                set tnode $tstnode
-                #--- matrix node
-                set mnode [ Mrml(dataTree) GetNextItem ]
-                #--- volume node again.
-                set tstnode [ Mrml(dataTree) GetNextItem ]
-                #--- end transform node
-                set endtnode [ Mrml(dataTree) GetNextItem ]
-                #--- get the IDs of the three nodes.
-                set tid [ $tnode GetID ]
-                set mid [ $mnode GetID ]
-                set etid [ $endtnode GetID ]
-                #--- delete the three nodes.
-                MainMrmlDeleteNode Matrix $mid
-                MainMrmlDeleteNode Transform $tid
-                MainMrmlDeleteNode EndTransform $etid
-                MainUpdateMRML
-            } else {
-                DevErrorWindow "Notice: all transforms were not deleted."
-            }
-        }
-        IbrowserResetSelectSequence
-        IbrowserResetInternalReference
-        IbrowserSayThis "Motion correction cancelled." 0
-
-    } else {
-        DevErrorWindow "Motion correction cannot be undone once hardened."
-    }
-}
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserMotionCorrectStopGo
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserMotionCorrectStopGo { stopbutton } {
 
     #--- check for stopping
@@ -224,18 +181,18 @@ proc IbrowserMotionCorrectStopGo { stopbutton } {
     }
     
     #--- otherwise, it's go
-    if { [lsearch $::Ibrowser(idList) $::Ibrowser(Process,SelectSequence) ] == -1 } {
+    if { [lsearch $::Ibrowser(idList) $::Ibrowser(activeInterval) ] == -1 } {
         DevErrorWindow "First select a valid sequence to motion correct."
         return
-    } elseif { $::Ibrowser(Process,SelectSequence) == $::Ibrowser(idNone) } {
+    } elseif { $::Ibrowser(activeInterval) == $::Ibrowser(idNone) } {
         DevErrorWindow "First select a valid sequence to motion correct."
         return
     }
     
-    if { [lsearch $::Volume(idList) $::Ibrowser(Process,SelectInternalReference) ] == -1 } {
+    if { [lsearch $::Volume(idList) $::Ibrowser(Process,InternalReference) ] == -1 } {
         DevErrorWindow "First select a valid reference volume."
         return
-    } elseif { $::Ibrowser(Process,SelectInternalReference) == $::Volume(idNone) } {
+    } elseif { $::Ibrowser(Process,InternalReference) == $::Volume(idNone) } {
         DevErrorWindow "First select a valid reference volume."
         return
     }    
@@ -246,6 +203,12 @@ proc IbrowserMotionCorrectStopGo { stopbutton } {
     $stopbutton configure -text "Stop"
 }
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserHardenTransforms
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserHardenTransforms { } {
     puts "transform hardened."
     set ::Ibrowser(Process,MotionCorrect,Hardened) 1

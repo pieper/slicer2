@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -40,7 +40,7 @@
 #   IbrowserUpdateIndexAndSliderMarker
 #   IbrowserUpdateIndexFromGUI
 #   IbrowserUpdateIndexFromAnimControls
-#   IbrowserSynchronizeAllSliders
+#   IbrowserUpdateIndexFromAnimControls
 #   IbrowserMarkSlider
 #   IbrowserDragSlider
 #==========================================================================auto=
@@ -273,33 +273,37 @@ proc IbrowserUpdateIndexFromAnimControls { } {
     #--- on the scale; this is where we want to move the slider
     set xval [ lindex [ $::IbrowserController(Ccanvas) coords $ticktag ] 0 ]
     IbrowserDragSlider $xval
-    
-           
-
 }
 
 
 
+
+#-------------------------------------------------------------------------------
+# .PROC 
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc   IbrowserSynchronizeAllSliders { target } {
 
     if { $target == "active" } {
-        $::Ibrowser(displaySlider) configure -state active
-        $::Ibrowser(loadSlider) configure -state active
-        #--- WJP comment out during development
-        #$::Ibrowser(selectSlider) configure -state active
-        #$::Ibrowser(keyframeSlider) configure -state active
+        foreach s "display load select keyframe1 keyframe2" {
+            if { [info exists ::Ibrowser(${s}Slider)] } {
+                $::Ibrowser(${s}Slider) configure -state active
+            }            
+        }
     } elseif { $target == "disabled" } {
-        $::Ibrowser(displaySlider) configure -state disabled
-        $::Ibrowser(loadSlider) configure -state disabled
-        #--- WJP comment out during development
-        #$::Ibrowser(selectSlider) configure -state disabled
-        #$::Ibrowser(keyframeSlider) configure -state disabled
+        foreach s "display load select keyframe1 keyframe2" {
+            if { [info exists ::Ibrowser(${s}Slider)] } {
+                $::Ibrowser(${s}Slider) configure -state disabled
+            }            
+        }
     } else {
-        $::Ibrowser(displaySlider) configure -from 0 -to $target -state active
-        $::Ibrowser(loadSlider) configure -from 0 -to $target -state active
-        #--- WJP comment out during development
-        #$::Ibrowser(selectSlider) configure -from 0 -to $target -state active
-        #$::Ibrowser(keyframeSlider) configure -from 0 -to $target -state active
+        foreach s "display load select keyframe1 keyframe2" {
+            if { [info exists ::Ibrowser(${s}Slider)] } {
+                $::Ibrowser(${s}Slider) configure -state active -from 0 -to $target
+            }            
+        }
     }
 }
 
