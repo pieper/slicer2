@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -37,13 +37,16 @@
 # FILE:        MultiVolumeReader.tcl
 # PROCEDURES:  
 #   MultiVolumeReaderInit
-#   MultiVolumeReaderBuildGUI  the
+#   MultiVolumeReaderBuildGUI  the whether
+#   fMRIEngineHelpLoadSequence
 #   MultiVolumeReaderUpdateVolume the
 #   MultiVolumeReaderSetWindowLevelThresholds 
 #   MultiVolumeReaderSetFileFilter 
-#   MultiVolumeReaderLoad 
+#   MultiVolumeReaderLoad  whether
+#   MultiVolumeReaderGetFilelistFromFilter  the
 #   MultiVolumeReaderLoadAnalyze 
 #   MultiVolumeReaderLoadBXH 
+#   MultiVolumeReaderLoadDICOM 
 #==========================================================================auto=
 #-------------------------------------------------------------------------------
 # .PROC MultiVolumeReaderInit
@@ -149,7 +152,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.20 $} {$Date: 2005/03/18 16:03:28 $}]
+        {$Revision: 1.21 $} {$Date: 2005/04/18 21:35:17 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -191,8 +194,8 @@ proc MultiVolumeReaderInit {} {
 # .PROC MultiVolumeReaderBuildGUI 
 # Creates UI for for user input 
 # .ARGS
-# parent the parent frame 
-# status whether you want to turn on (1) or off (0) the status message
+# frame parent the parent frame 
+# binary status whether you want to turn on (1) or off (0) the status message
 # .END
 #-------------------------------------------------------------------------------
 proc MultiVolumeReaderBuildGUI {parent {status 0}} {
@@ -303,6 +306,12 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpLoadSequence
+# Populate and pop up a window giving help about loading sequences.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineHelpLoadSequence { } {
     #--- Sequence->Load
     #--- loading sequences
@@ -320,7 +329,7 @@ proc fMRIEngineHelpLoadSequence { } {
 # .PROC MultiVolumeReaderUpdateVolume
 # Updates image volume as user moves the slider 
 # .ARGS
-# volumeNo the volume number
+# int volumeNo the volume number
 # .END
 #-------------------------------------------------------------------------------
 proc MultiVolumeReaderUpdateVolume {volumeNo} {
@@ -418,7 +427,7 @@ proc MultiVolumeReaderSetFileFilter {} {
 # .PROC MultiVolumeReaderLoad 
 # Loads volumes 
 # .ARGS
-# status whether the status message is on(1) or off(0)
+# int status whether the status message is on(1) or off(0)
 # .END
 #-------------------------------------------------------------------------------
 proc MultiVolumeReaderLoad {{status 0}} {
@@ -522,7 +531,7 @@ proc MultiVolumeReaderLoad {{status 0}} {
 # .PROC MultiVolumeReaderGetFilelistFromFilter 
 # Returns a list of file names that match the user's filter. 
 # .ARGS
-# extension the image file extension such as .hdr, .dcm, or .bxh
+# string extension the image file extension such as .hdr, .dcm, or .bxh
 # .END
 #-------------------------------------------------------------------------------
 proc MultiVolumeReaderGetFilelistFromFilter {extension} {

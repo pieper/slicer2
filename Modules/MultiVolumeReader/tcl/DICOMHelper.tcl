@@ -1,8 +1,54 @@
+#=auto==========================================================================
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+#
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
+#
+#===============================================================================
+# FILE:        DICOMHelper.tcl
+# PROCEDURES:  
+#   DICOMHelperLoad  a
+#   DICOMHelperCreateVolumeNameFromFileName  the
+#   DICOMHelperCreateMrmlNodeForVolume the the the the
+#   DICOMHelperLoadNonSiemensMosaicVolume  a
+#   DICOMHelperLoadStudy
+#   DICOMHelperLoadSiemensMosaicVolume  a
+#   DICOMHelperIsSiemensMosaic  a
+#==========================================================================auto=
 #-------------------------------------------------------------------------------
 # .PROC DICOMHelperLoad 
 # Loads DICOM volume(s). It returns 0 if successful; 1 otherwise. 
 # .ARGS
-# fileNames a list of dicom file names
+# list fileNames a list of dicom file names
 # .END
 #-------------------------------------------------------------------------------
 proc DICOMHelperLoad {fileNames} {
@@ -26,7 +72,7 @@ proc DICOMHelperLoad {fileNames} {
 # .PROC DICOMHelperCreateVolumeNameFromFileName 
 # Creates a volume name from the file name 
 # .ARGS
-# fileName the file name
+# string fileName the file name
 # .END
 #-------------------------------------------------------------------------------
 proc DICOMHelperCreateVolumeNameFromFileName {fileName} {
@@ -43,10 +89,10 @@ proc DICOMHelperCreateVolumeNameFromFileName {fileName} {
 # .PROC DICOMHelperCreateMrmlNodeForVolume
 # Creates a mrml node for a vtkImageData object 
 # .ARGS
-# volName the volume name
-# volData the volume data
-# byteOrder the byte order of the data
-# zSpacing the spacing between two slices
+# string volName the volume name
+# vtkMrmlDataVolume volData the volume data
+# string byteOrder the byte order of the data
+# float zSpacing the spacing between two slices
 # .END
 #-------------------------------------------------------------------------------
 proc DICOMHelperCreateMrmlNodeForVolume {volName volData byteOrder zSpacing} {
@@ -92,7 +138,7 @@ proc DICOMHelperCreateMrmlNodeForVolume {volName volData byteOrder zSpacing} {
 # .PROC DICOMHelperLoadNonSiemensMosaicVolume 
 # Loads a non Siemens mosaic volume. It returns 0 if successful; 1 otherwise. 
 # .ARGS
-# fileNames a list of dicom file names
+# list fileNames a list of dicom file names
 # .END
 #-------------------------------------------------------------------------------
 proc DICOMHelperLoadNonSiemensMosaicVolume {fileNames} {
@@ -116,7 +162,8 @@ proc DICOMHelperLoadNonSiemensMosaicVolume {fileNames} {
 # .PROC DICOMHelperLoadStudy
 # sp 2003-07-10 support for loading directories full of dicom
 # images via the --load-dicom command line argument
-# .ARGS dir - start dir for loading
+# .ARGS 
+# path dir start dir for loading
 # .END
 #-------------------------------------------------------------------------------
 proc DICOMHelperLoadStudy {dir {Pattern "*"}} {
@@ -181,7 +228,7 @@ proc DICOMHelperLoadStudy {dir {Pattern "*"}} {
 # .PROC DICOMHelperLoadSiemensMosaicVolume 
 # Loads Siemens mosaic volume(s). It returns 0 if successful; 1 otherwise. 
 # .ARGS
-# fileNames a list of dicom file names
+# list fileNames a list of dicom file names
 # .END
 #-------------------------------------------------------------------------------
 proc DICOMHelperLoadSiemensMosaicVolume {fileNames} {
@@ -200,7 +247,7 @@ proc DICOMHelperLoadSiemensMosaicVolume {fileNames} {
 # Checks if this DICOM file is Siemens mosaic format. It returns 1 if yes; 
 # 0 otherwise. 
 # .ARGS
-# fileName a dicom file name
+# path fileName a dicom file name
 # .END
 #-------------------------------------------------------------------------------
 proc DICOMHelperIsSiemensMosaic {fileName} {
