@@ -1,3 +1,110 @@
+#=auto==========================================================================
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+#
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
+#
+#===============================================================================
+# FILE:        fMRIEngineModelView.tcl
+# PROCEDURES:  
+#   fMRIModelViewLaunchModelView
+#   fMRIModelViewGenerateModel
+#   fMRIModelViewCreatePopup
+#   fMRIModelViewRaisePopup
+#   fMRIModelViewShowPopup
+#   fMRIModelViewSetConditionOnsets
+#   fMRIModelViewSetConditionDurations
+#   fMRIModelViewSetConditionIntensities
+#   fMRIModelViewSetTContrast
+#   fMRIModelViewSetEVSignalType
+#   fMRIModelViewAddConditionName
+#   fMRIModelViewSetTContrastName
+#   fMRIModelViewSetTContrastLabel
+#   fMRIModelViewGenerateEVName
+#   fMRIModelViewGenerateEVLabel
+#   fMRIModelViewAddFileName
+#   fMRIModelViewSetInitialOrthogonalityDim
+#   fMRIModelViewSetElementSpacing
+#   fMRIModelViewComputeCaptionBuffers
+#   fMRIModelViewSetupLayout
+#   fMRIModelViewDisplayModelView
+#   fMRIModelViewBuildDesignMatrix
+#   fMRIModelViewBuildEVData
+#   fMRIModelViewBuildEVImages
+#   fMRIModelViewBuildModelSignals
+#   fMRIModelViewLongestEpochSpacing
+#   fMRIModelViewBuildDCBasis
+#   fMRIModelViewBuildBaseline
+#   fMRIModelViewComputeBoxCar
+#   fMRIModelViewComputeHalfSine
+#   fMRIModelViewComputeHRF
+#   fMRIModelViewConvolveWithHRF
+#   fMRIModelViewAddDerivatives
+#   fMRIModelViewComputeGaussianFilter
+#   fMRIModelViewGaussianDownsampleList
+#   fMRIModelViewRangemapList
+#   fMRIModelViewRangemapListForImage
+#   fMRIModelViewListToImage
+#   fMRIModelViewComputeDotProduct
+#   fMRIModelViewComputeVectorMagnitude
+#   fMRIModelViewBuildContrastTable
+#   fMRIModelViewBufFromChars
+#   fMRIModelViewScrolledCanvas
+#   fMRIModelViewSetFonts
+#   fMRIModelViewSetColors
+#   fMRIModelViewSetupButtonImages
+#   fMRIModelViewSaveModelPostscript
+#   fMRIModelViewSaveModelPostscriptPopup
+#   fMRIModelViewChooseDirectory
+#   fMRIModelViewClosePostscriptPopup
+#   fMRIModelViewSetupOrthogonalityImage
+#   fMRIModelViewLabelTContrasts
+#   fMRIModelViewLabelTContrastNames
+#   fMRIModelViewLabelEVs
+#   fMRIModelViewLabelEVnames
+#   fMRIModelViewEVnameRollover
+#   fMRIModelViewLabelFilenames
+#   fMRIModelViewFilenameRollover
+#   fMRIModelViewHideRolloverInfo
+#   fMRIModelViewFreeCanvasTags
+#   fMRIModelViewFreeFonts
+#   fMRIModelViewFreeColors
+#   fMRIModelViewFreeModel
+#   fMRIModelViewClearUserInput
+#   fMRIModelViewFreeVisualLayout
+#   fMRIModelViewCleanCanvas
+#   fMRIModelViewCleanForRegeneration
+#   fMRIModelViewCloseAndClean
+#==========================================================================auto=
 #---------------------------------------------------------------------------
 #--- fMRIEngine assumptions and notes:
 #---------------------------------------------------------------------------
@@ -63,6 +170,12 @@
 #---------------------------------------------------------------------------
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewLaunchModelView
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewLaunchModelView { {toplevelName .wfMRIModelView} } {
     #---
     #--- fMRIModelViewLaunchModelView gets run at button press
@@ -145,6 +258,12 @@ proc fMRIModelViewLaunchModelView { {toplevelName .wfMRIModelView} } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewGenerateModel
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewGenerateModel { {toplevelName .wfMRIModelView} } {
     #---
     #--- fMRIModelViewGenerateModel gets run each time someone
@@ -194,6 +313,12 @@ proc fMRIModelViewGenerateModel { {toplevelName .wfMRIModelView} } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewCreatePopup
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewCreatePopup { w title x y } {
     #---
     toplevel $w -class Dialog -background ::fMRIModelView(Colors,hexwhite)
@@ -204,6 +329,12 @@ proc fMRIModelViewCreatePopup { w title x y } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewRaisePopup
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewRaisePopup { w } {
     #---
     if {[winfo exists $w] != 0} {
@@ -216,6 +347,12 @@ proc fMRIModelViewRaisePopup { w } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewShowPopup
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewShowPopup { w x y } {
     #---
     wm deiconify $w
@@ -239,48 +376,96 @@ proc fMRIModelViewShowPopup { w x y } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewSetConditionOnsets
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewSetConditionOnsets { r cnum clist } {
     #---
     set ::fMRIModelView(Design,Run$r,Condition$cnum,Onsets) $clist
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewSetConditionDurations
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewSetConditionDurations { r cnum clist } {
     #---
     set ::fMRIModelView(Design,Run$r,Condition$cnum,Durations) $clist
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewSetConditionIntensities
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewSetConditionIntensities { r cnum clist } {
     #---
     set ::fMRIModelView(Design,Run$r,Condition$cnum,Intensities) $clist
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewSetTContrast
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewSetTContrast { cnum clist } {
     #---
     set ::fMRIModelView(Design,TContrast$cnum,Vector) $clist
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewSetEVSignalType
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewSetEVSignalType { r evnum signal } {
     #---
     set ::fMRIModelView(Design,Run$r,EV$evnum,SignalType) $signal
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewAddConditionName
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewAddConditionName { r cnum cname } {
     #---
     lappend ::fMRIModelView(Design,Run$r,ConditionNames) $cname
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewSetTContrastName
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewSetTContrastName {cnum cname } {
     #---
     lappend ::fMRIModelView(Design,TContrastNames) $cname
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewSetTContrastLabel
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewSetTContrastLabel { cnum } {
     #---
     # Haiying's change
@@ -289,6 +474,12 @@ proc fMRIModelViewSetTContrastLabel { cnum } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewGenerateEVName
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewGenerateEVName { evnum r } {
     #---
     #--- The name for ev1 derives from name of condition1;
@@ -335,6 +526,12 @@ proc fMRIModelViewGenerateEVName { evnum r } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewGenerateEVLabel
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewGenerateEVLabel { evnum } {
     #---
     #--- stick all explanatory variable lables in one list
@@ -343,6 +540,12 @@ proc fMRIModelViewGenerateEVLabel { evnum } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewAddFileName
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewAddFileName { fname } {
     #---
     #--- stick all filenames in one long list
@@ -351,6 +554,12 @@ proc fMRIModelViewAddFileName { fname } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewSetInitialOrthogonalityDim
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewSetInitialOrthogonalityDim { } {
     #---
     #--- optimal dimensions of the design orthogonality matrix
@@ -360,6 +569,12 @@ proc fMRIModelViewSetInitialOrthogonalityDim { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewSetElementSpacing
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewSetElementSpacing { } {
     #---
     #--- some little space buffers for the canvas
@@ -375,6 +590,12 @@ proc fMRIModelViewSetElementSpacing { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewComputeCaptionBuffers
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewComputeCaptionBuffers { } {
     #---
     #--- configure regions for captions;
@@ -437,6 +658,12 @@ proc fMRIModelViewComputeCaptionBuffers { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewSetupLayout
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewSetupLayout { } {
     #---    
     #--- dimensions, in pixels, of image of each timepoint
@@ -506,6 +733,12 @@ proc fMRIModelViewSetupLayout { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewDisplayModelView
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewDisplayModelView { f } {
     #---
     set c $::fMRIModelView(modelViewCanvas) 
@@ -556,6 +789,12 @@ proc fMRIModelViewDisplayModelView { f } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewBuildDesignMatrix
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewBuildDesignMatrix { c refX refY dmatHit dmatWid borderWid } {
     #---
     #--- For each column of the design matrix, compute an 
@@ -654,6 +893,12 @@ proc fMRIModelViewBuildDesignMatrix { c refX refY dmatHit dmatWid borderWid } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewBuildEVData
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewBuildEVData { r i } {
     #---
     #--- Return 1 if successful; 0 if no model can be generated.
@@ -749,7 +994,13 @@ proc fMRIModelViewBuildEVData { r i } {
 }
 
 
-proc  fMRIModelViewBuildEVImages { r i imgwid } {
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewBuildEVImages
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIModelViewBuildEVImages { r i imgwid } {
         #--- 
         #--- Compute Image samples from EVData; store in a list, convert to image.
         #--- $::fMRIModelView(Design,Run$r,numTimePoints) samples in list.
@@ -797,6 +1048,12 @@ proc  fMRIModelViewBuildEVImages { r i imgwid } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewBuildModelSignals
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewBuildModelSignals { r i imghit imgwid signalType } {
         #---
         #--- Calls procs to generate appropriate signal for
@@ -934,6 +1191,12 @@ proc fMRIModelViewBuildModelSignals { r i imghit imgwid signalType } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewLongestEpochSpacing
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewLongestEpochSpacing { } {
     #---
     set T 0.0
@@ -961,6 +1224,12 @@ proc fMRIModelViewLongestEpochSpacing { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewBuildDCBasis
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewBuildDCBasis { imgwid imghit r evnum freq } {
     #--- Discrete Cosine basis functions to capture drift
     #--- basis functions look like:
@@ -995,7 +1264,13 @@ proc fMRIModelViewBuildDCBasis { imgwid imghit r evnum freq } {
 
 
 
-proc  fMRIModelViewBuildBaseline { imgwid imghit r evnum } {
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewBuildBaseline
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIModelViewBuildBaseline { imgwid imghit r evnum } {
     #---
     set min 0.0
     set max 1.0
@@ -1011,6 +1286,12 @@ proc  fMRIModelViewBuildBaseline { imgwid imghit r evnum } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewComputeBoxCar
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewComputeBoxCar { onset duration imgwid r i } {
     #---
     #--- what row of the image should this footprint begin on?
@@ -1036,6 +1317,12 @@ proc fMRIModelViewComputeBoxCar { onset duration imgwid r i } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewComputeHalfSine
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewComputeHalfSine { onset duration imgwid r i } {
     #---
     #--- what row of the image should this footprint begin on?
@@ -1067,6 +1354,12 @@ proc fMRIModelViewComputeHalfSine { onset duration imgwid r i } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewComputeHRF
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewComputeHRF { r } {
     #---
     #--- computes a single HRF for each run.
@@ -1139,6 +1432,12 @@ proc fMRIModelViewComputeHRF { r } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewConvolveWithHRF
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewConvolveWithHRF { imgwid imghit run evnum } {
     #---
     #--- Convolve image with canonical hemodynamic response
@@ -1198,6 +1497,12 @@ proc fMRIModelViewConvolveWithHRF { imgwid imghit run evnum } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewAddDerivatives
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewAddDerivatives { imgwid imghit r evnum } {
     #---    
     #--- computes derivative of Signal
@@ -1240,6 +1545,12 @@ proc fMRIModelViewAddDerivatives { imgwid imghit r evnum } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewComputeGaussianFilter
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewComputeGaussianFilter { r } {
     #---
     #--- Computes a gaussian kernel for convolution
@@ -1276,6 +1587,12 @@ proc fMRIModelViewComputeGaussianFilter { r } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewGaussianDownsampleList
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewGaussianDownsampleList { i r olen nlen inputList } {
     #---
     #--- takes a list in, subsamples it to a new length
@@ -1316,6 +1633,12 @@ proc fMRIModelViewGaussianDownsampleList { i r olen nlen inputList } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewRangemapList
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewRangemapList { data  finalRangeMax finalRangeMid } {
     #---
     #--- compute $data's positive range (>0)
@@ -1377,6 +1700,12 @@ proc fMRIModelViewRangemapList { data  finalRangeMax finalRangeMid } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewRangemapListForImage
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewRangemapListForImage { min max dim data  finalRangeMax finalRangeMid } {
     #---
     #--- In the image, we need zerogrey to correspond to signal zero.
@@ -1394,6 +1723,12 @@ proc fMRIModelViewRangemapListForImage { min max dim data  finalRangeMax finalRa
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewListToImage
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewListToImage { imghit imgwid rowrun lst } {
     #---
     #--- converts a list of values from [ 0 to 255] into an image
@@ -1417,6 +1752,12 @@ proc fMRIModelViewListToImage { imghit imgwid rowrun lst } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewComputeDotProduct
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewComputeDotProduct { v1 v2 len } {
     #---
     #--- takes dot product of two vectors of equal len
@@ -1431,6 +1772,12 @@ proc fMRIModelViewComputeDotProduct { v1 v2 len } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewComputeVectorMagnitude
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewComputeVectorMagnitude { v len } {
     #---
     #--- computes magnitude of vector in a list
@@ -1446,6 +1793,12 @@ proc fMRIModelViewComputeVectorMagnitude { v len } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewBuildContrastTable
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewBuildContrastTable { c refX refY dmatHit dmatWid cmatHit cmatWid borderWid } {
     #---
     #--- For each contrast, populate the
@@ -1504,6 +1857,12 @@ proc fMRIModelViewBuildContrastTable { c refX refY dmatHit dmatWid cmatHit cmatW
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewBufFromChars
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewBufFromChars { thinglist whichfont } {
     #---    
     #--- this routine takes in a list of strings and a fontsize
@@ -1541,6 +1900,12 @@ proc fMRIModelViewBufFromChars { thinglist whichfont } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewScrolledCanvas
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewScrolledCanvas { f args } {
     #---
     frame $f
@@ -1570,6 +1935,12 @@ proc fMRIModelViewScrolledCanvas { f args } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewSetFonts
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewSetFonts { } {
     # Haiying's change ---
     # option add "*font" "-Adobe-Helvetica-Bold-R-Normal-*-12-*-*-*-*-*-*-*"
@@ -1581,6 +1952,12 @@ proc fMRIModelViewSetFonts { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewSetColors
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewSetColors { } {
     #---
     set ::fMRIModelView(Colors,bkg) #FFFFFF
@@ -1597,6 +1974,12 @@ proc fMRIModelViewSetColors { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewSetupButtonImages
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewSetupButtonImages { c refX refY dmatHit dmatWid cmatHit cmatWid }  {
     #---
     #--- xy dimensions:
@@ -1682,6 +2065,12 @@ proc fMRIModelViewSetupButtonImages { c refX refY dmatHit dmatWid cmatHit cmatWi
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewSaveModelPostscript
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewSaveModelPostscript { } {
     #--- WJP change 4/13/05
     set c $::fMRIModelView(modelViewCanvas) 
@@ -1690,6 +2079,12 @@ proc fMRIModelViewSaveModelPostscript { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewSaveModelPostscriptPopup
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewSaveModelPostscriptPopup { { toplevelName .fMRIModelViewSavePS} } {
     global Gui
     
@@ -1736,6 +2131,12 @@ proc fMRIModelViewSaveModelPostscriptPopup { { toplevelName .fMRIModelViewSavePS
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewChooseDirectory
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewChooseDirectory { } {
     #--- WJP added proc 4/13/05
     set newdir [ tk_chooseDirectory -initialdir $::fMRIModelView(psDirectory)]
@@ -1745,6 +2146,12 @@ proc fMRIModelViewChooseDirectory { } {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewClosePostscriptPopup
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewClosePostscriptPopup { win } {
     #--- WJP added proc 4/13/05
     destroy $win
@@ -1754,6 +2161,12 @@ proc fMRIModelViewClosePostscriptPopup { win } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewSetupOrthogonalityImage
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewSetupOrthogonalityImage { c refX refY dmatHit dmatWid cmatHit cmatWid b } {
     #---
     #--- computes and visualizes design orthogonality matrix.
@@ -1839,7 +2252,13 @@ proc fMRIModelViewSetupOrthogonalityImage { c refX refY dmatHit dmatWid cmatHit 
 }
 
 
-proc  fMRIModelViewLabelTContrasts { c refX refY dmatHit cmatHit } {
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewLabelTContrasts
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIModelViewLabelTContrasts { c refX refY dmatHit cmatHit } {
     #---
     #--- xy start positions and increment
     set inc [ expr $cmatHit / $::fMRIModelView(Design,numTContrasts) ]
@@ -1855,7 +2274,13 @@ proc  fMRIModelViewLabelTContrasts { c refX refY dmatHit cmatHit } {
 }
 
 
-proc  fMRIModelViewLabelTContrastNames { c refX refY dmatHit cmatHit } {
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewLabelTContrastNames
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIModelViewLabelTContrastNames { c refX refY dmatHit cmatHit } {
     #---
     #--- xy start positions and increment
     set inc [ expr $cmatHit / $::fMRIModelView(Design,numTContrasts) ]
@@ -1876,6 +2301,12 @@ proc  fMRIModelViewLabelTContrastNames { c refX refY dmatHit cmatHit } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewLabelEVs
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewLabelEVs { c refX refY dmatWid } {
     #---
     #--- xy start positions and increment
@@ -1901,7 +2332,13 @@ proc fMRIModelViewLabelEVs { c refX refY dmatWid } {
 }
 
 
-proc  fMRIModelViewLabelEVnames { c refX refY dmatWid  } {
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewLabelEVnames
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIModelViewLabelEVnames { c refX refY dmatWid  } {
     #---
     #--- make little lines pointing up from columns
     #--- these encroach a little on EVBufHit, but
@@ -1955,6 +2392,12 @@ proc  fMRIModelViewLabelEVnames { c refX refY dmatWid  } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewEVnameRollover
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewEVnameRollover { c refY evnum runNum } {
     #---
     $c raise $::fMRIModelView(EVnameCover)
@@ -1963,6 +2406,12 @@ proc fMRIModelViewEVnameRollover { c refY evnum runNum } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewLabelFilenames
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewLabelFilenames { c refX refY dmatHit dmatWid } {
     #---
     #--- position of first filename
@@ -1993,6 +2442,12 @@ proc fMRIModelViewLabelFilenames { c refX refY dmatHit dmatWid } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewFilenameRollover
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewFilenameRollover { c  refY dmatHit mousey} {
     #---
     #--- map mousey to filenames
@@ -2017,6 +2472,12 @@ proc fMRIModelViewFilenameRollover { c  refY dmatHit mousey} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewHideRolloverInfo
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewHideRolloverInfo { c } {
     #---
     #--- cover up filenames and EVnames
@@ -2025,6 +2486,12 @@ proc fMRIModelViewHideRolloverInfo { c } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewFreeCanvasTags
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewFreeCanvasTags { } {
     #---
     #--- unset tags
@@ -2057,6 +2524,12 @@ proc fMRIModelViewFreeCanvasTags { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewFreeFonts
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewFreeFonts { } {
     #---
     #--- unset fonts
@@ -2066,6 +2539,12 @@ proc fMRIModelViewFreeFonts { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewFreeColors
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewFreeColors { } {
     #---
     #--- unset colors
@@ -2082,6 +2561,12 @@ proc fMRIModelViewFreeColors { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewFreeModel
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewFreeModel { } {
     #---
     #--- clears all modeling derived from user input
@@ -2104,6 +2589,12 @@ proc fMRIModelViewFreeModel { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewClearUserInput
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewClearUserInput { } {
     #---
     #--- unset all user input 
@@ -2157,6 +2648,12 @@ proc fMRIModelViewClearUserInput { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewFreeVisualLayout
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewFreeVisualLayout { } {
     #---
     #--- unset drawing and layout things
@@ -2189,6 +2686,12 @@ proc fMRIModelViewFreeVisualLayout { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewCleanCanvas
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewCleanCanvas { } { 
     #---
     #--- deletes all canvas elements, the
@@ -2207,6 +2710,12 @@ proc fMRIModelViewCleanCanvas { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewCleanForRegeneration
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewCleanForRegeneration { } {
     #---
     #--- freeing everything but user input
@@ -2221,6 +2730,12 @@ proc fMRIModelViewCleanForRegeneration { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewCloseAndClean
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewCloseAndClean { } {
     #---
     #--- freeing everything but user input
@@ -2235,6 +2750,12 @@ proc fMRIModelViewCloseAndClean { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewCloseAndCleanAndExit
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIModelViewCloseAndCleanAndExit { } {
     #---
     #--- unset all globals, canvas,
