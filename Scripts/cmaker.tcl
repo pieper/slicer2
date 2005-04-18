@@ -272,7 +272,7 @@ if { $CLEANFLAG } {
         set build $target/builds/$env(BUILD) 
         puts "Deleting $build"
         if { [catch "file delete -force $build" res] } {
-            puts stderr "coun't delete $build"
+            puts stderr "couldn't delete $build"
             puts stderr $res
         }
     }
