@@ -228,6 +228,8 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
     set fMRIEngine(gui,lowpassMenuForSignal) $f.mbType2.m
     set fMRIEngine(curLowpassForSignal) $df
 
+    $fMRIEngine(gui,lowpassMenuButtonForSignal) configure -state disabled
+
     #-----------------------
     # Remove global effects 
     #-----------------------
