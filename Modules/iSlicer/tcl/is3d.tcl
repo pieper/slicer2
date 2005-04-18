@@ -1,3 +1,45 @@
+#=auto==========================================================================
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+#
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
+#
+#===============================================================================
+# FILE:        is3d.tcl
+# PROCEDURES:  
+#   is3d::dtor
+#   is3d_demo
+#   is3d_demo_movie
+#==========================================================================auto=
 
 # TODO - won't be needed once iSlicer is a package
 package require Iwidgets
@@ -611,6 +653,13 @@ itcl::body is3d::dragcb {state x y} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC is3d::dtor
+# Return the conversion of the input to radians
+# .ARGS
+# int d degrees
+# .END
+#-------------------------------------------------------------------------------
 proc is3d::dtor {d} {
     # pi rad = 180 deg => rad/deg = pi/180
     return [expr $d * 3.14159 / 180.]
@@ -676,6 +725,13 @@ itcl::body is3d::screensave { filename {imagetype "PNM"} } {
     $wif Delete
 } 
 
+#-------------------------------------------------------------------------------
+# .PROC is3d_demo
+# 
+# .ARGS
+# binary volume 
+# .END
+#-------------------------------------------------------------------------------
 proc is3d_demo { {volume "off"} } {
 
     catch "destroy .is3ddemo"
@@ -694,6 +750,14 @@ proc is3d_demo { {volume "off"} } {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC is3d_demo_movie
+# 
+# .ARGS
+# path filebase
+# int steps
+# .END
+#-------------------------------------------------------------------------------
 proc is3d_demo_movie { filebase {steps 10} } {
 
     raise .is3ddemo
