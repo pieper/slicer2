@@ -296,7 +296,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.25 $} {$Date: 2005/04/12 21:58:54 $}]
+        {$Revision: 1.26 $} {$Date: 2005/04/18 18:33:19 $}]
 
 }
 
@@ -1149,8 +1149,6 @@ proc vtkFreeSurferReadersMGHApply {} {
     Volume($i,vol,rw) SetFileName $vtkFreeSurferReaders(VolumeFileName)
 
 #----------------
-set saveverbose $Module(verbose)
-set Module(verbose) 0
 set usePos 0
 set useMatrices 0
 
@@ -1296,9 +1294,9 @@ set useMatrices 0
     set xspacing [lindex $spc 0]
     set yspacing [lindex $spc 1]
     set zspacing [lindex $spc 2]
-    set w2 [expr [lindex $dims 0] / 2]
-    set h2 [expr [lindex $dims 1] / 2]
-    set d2 [expr [lindex $dims 2] / 2]
+    set w2 [expr [lindex $dims 0] / 2.0]
+    set h2 [expr [lindex $dims 1] / 2.0]
+    set d2 [expr [lindex $dims 2] / 2.0]
         
     # try something - zero out the cras to take out the mgh shift away from origin
     set cr 0
@@ -1310,7 +1308,7 @@ set useMatrices 0
     set ts [expr $cs - $xs*$xspacing*$w2 - $ys*$yspacing*$h2 - $zs*$zspacing*$d2]
 
     if {$::Module(verbose)} {
-        puts "tr = $tr, ta = $ta, ts = $ts"
+        puts "MGH: tr = $tr, ta = $ta, ts = $ts"
     }
 
     # there's a problem with getting the MGH volume to display properly,
@@ -1497,11 +1495,6 @@ set useMatrices 0
     } else {
         MainSlicesSetVolumeAll Back $i
     }
-
-
-
-#-------------------
-set Module(verbose) $saveverbose
 
     # Update all fields that the user changed (not stuff that would need a file reread)
     return $i
@@ -1855,15 +1848,17 @@ proc vtkFreeSurferReadersBApply {} {
     set xspacing [lindex $spc 0]
     set yspacing [lindex $spc 1]
     set zspacing [lindex $spc 2]
-    set w2 [expr [lindex $dims 0] / 2]
-    set h2 [expr [lindex $dims 1] / 2]
-    set d2 [expr [lindex $dims 2] / 2]
+    set w2 [expr [lindex $dims 0] / 2.0]
+    set h2 [expr [lindex $dims 1] / 2.0]
+    set d2 [expr [lindex $dims 2] / 2.0]
         
     # try something - zero out the cras to take out the shift away from origin
     set cr 0
     set ca 0
     set cs 0
-    
+
+    if {0} {
+        # calculate cras from the vectors to the corner points
     # this is not used, as don't use tras in the rasmat
     # calculate the centre point of the volume, cras, as it's actually zero in the matrix since the bvolume reader doesn't calculate it
     # the vector pointing from the origin to the centre of the first slice is bottomR + (topL - bottomR)/2 = A = cf
@@ -1886,7 +1881,13 @@ proc vtkFreeSurferReadersBApply {} {
         puts "cd $cd"
         puts "cras $cras"
     }
-
+}
+    # calculate centre points from volume size
+    if {0} {
+    set cr $w2
+    set ca $h2
+    set cs $d2
+    }
     # Calculate the translation
     set tr [expr $cr - $xr*$xspacing*$w2 - $yr*$yspacing*$h2 - $zr*$zspacing*$d2]
     set ta [expr $ca - $xa*$xspacing*$w2 - $ya*$yspacing*$h2 - $za*$zspacing*$d2]
@@ -1909,8 +1910,7 @@ proc vtkFreeSurferReadersBApply {} {
     # z_r
     rasmat$i SetElement 0 2 [lindex $ijkmat 6]
     # t_r 
-    rasmat$i SetElement 0 3 0
-# $tr
+    rasmat$i SetElement 0 3  $tr
 
     # x_a
     rasmat$i SetElement 1 0 [lindex $ijkmat 1]
@@ -1919,8 +1919,7 @@ proc vtkFreeSurferReadersBApply {} {
     # z_a
     rasmat$i SetElement 1 2 [lindex $ijkmat 7]
     # t_a
-    rasmat$i SetElement 1 3 0
-# $ta
+    rasmat$i SetElement 1 3 $ta
 
     # x_s
     rasmat$i SetElement 2 0 [lindex $ijkmat 2]
@@ -1929,10 +1928,9 @@ proc vtkFreeSurferReadersBApply {} {
     # z_s
     rasmat$i SetElement 2 2 [lindex $ijkmat 8]
     # t_s
-    rasmat$i SetElement 2 3 0 
-# $ts
+    rasmat$i SetElement 2 3 $ts
 
-    # the scaling factor is included in the RAS Matrix in the reader
+    # the scaling factor is included in the RAS Matrix in the B volume reader
     if {1} {
         # now include the scaling factor, from the voxel size
         catch "scalemat$i Delete"
@@ -1955,14 +1953,24 @@ proc vtkFreeSurferReadersBApply {} {
         }
     }
 
-    # To get the corners, the volume is centered about zero, so use the (number of rows, number of cols, number of slices) / 2 +/- the origin at 0,0,0.
+    if {0} {
+    # To get the corners, the B volume is centered about zero, so use the (number of rows, number of cols, number of slices) / 2 +/- the origin at 0,0,0.
     set maxx [expr [lindex $dims 0] / 2.0]
     set maxy [expr [lindex $dims 1] / 2.0]
     set maxz [expr [lindex $dims 2] / 2.0]
-    set minx [expr 0 - $maxx]
-    set miny [expr 0 - $maxy]
-    set minz [expr 0 - $maxz]
-
+    set minx [expr 0.0 - $maxx]
+    set miny [expr 0.0 - $maxy]
+    set minz [expr 0.0 - $maxz]
+} else {
+    # To get the corners, the B volume is cornered at zero, so use the (number of rows, number of cols, number of slices), and 0,0,0 as the corners
+    set maxx [lindex $dims 0]
+    set maxy [lindex $dims 1]
+    set maxz [lindex $dims 2] 
+    set minx 0.0
+    set miny 0.0
+    set minz 0.0
+}
+    
     if {$::Module(verbose)} {
         puts "Calculating min/max on a b volume:"
         puts "Dimensions: $dims"
@@ -2077,8 +2085,7 @@ if {1} {
     Volume($i,node) UseRasToVtkMatrixOff
 
     if {$::Module(verbose)} {
-        puts "vtkFreeSurferReaders: About  to call main update mrml for a B  volume, \# $i"
-        DevInfoWindow "vtkFreeSurferReaders: About  to call main update mrml for an Bfloat volume"
+        puts "vtkFreeSurferReaders: About to call main update mrml for a B  volume, $i"
         puts "\tFile prefix = [Volume($i,node) GetFilePrefix]"
         puts "\tFull prefix = [Volume($i,node) GetFullPrefix]"
         puts "\tFile pattern = [Volume($i,node) GetFilePattern]"
@@ -5236,7 +5243,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.25 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.26 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
