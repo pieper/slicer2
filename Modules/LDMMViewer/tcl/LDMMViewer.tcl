@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -40,9 +40,17 @@
 #   LDMMViewerBuildGUI
 #   LDMMViewerEnter
 #   LDMMViewerExit
-#   LDMMViewerCount
-#   LDMMViewerShowFile
-#   LDMMViewerBindingCallback
+#   LDMMViewerSetDirectory
+#   LDMMViewerLoadStructuredPoints 
+#   LDMMViewerLoadVolumes 
+#   LDMMViewerMakeModels 
+#   LDMMViewerShowVectors 
+#   LDMMViewerHideVectors 
+#   LDMMViewerStepFrame
+#   LDMMViewerSetTime
+#   LDMMViewerRenderNTimes 
+#   LDMMViewerMovie 
+#   LDMMViewerBatchRender 
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -156,7 +164,7 @@ proc LDMMViewerInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.13 $} {$Date: 2005/04/14 13:00:41 $}]
+        {$Revision: 1.14 $} {$Date: 2005/04/18 21:31:34 $}]
 
     # Initialize module-level variables
     #------------------------------------
