@@ -52,7 +52,7 @@
 #  Author    : D. Richard Hipp <drh@acm.org>
 #  Web       : http://www.hwaci.com/drh/
 #  Copyright : (C) 1996,1997,1998 D. Richard Hipp
-#  Version   : $Revision: 1.2 $
+#  Version   : $Revision: 1.3 $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -74,7 +74,7 @@
 
 #-------------------------------------------------------------------------------
 # .PROC Notebook:create
-# 
+#  Creates a notebook widget
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -99,7 +99,7 @@ proc Notebook:create {w args} {
 
 #-------------------------------------------------------------------------------
 # .PROC Notebook:config
-# 
+#  Configures a notebook widget
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -197,7 +197,7 @@ proc Notebook:config {w args} {
 
 #-------------------------------------------------------------------------------
 # .PROC Notebook:click
-# 
+#  Raises a page when a tab is clicked
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -218,7 +218,7 @@ proc Notebook:click {w x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC Notebook:raise.page
-# 
+#  Raises appropriate notebook page
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -260,7 +260,7 @@ proc Notebook:raise.page {w n} {
 
 #-------------------------------------------------------------------------------
 # .PROC Notebook:pageconfig
-# 
+#  Configures a notebook page
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -316,7 +316,7 @@ proc Notebook:raise {w name} {
 
 #-------------------------------------------------------------------------------
 # .PROC Notebook:frame
-# 
+#  Creates a new frame in the notebook
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
