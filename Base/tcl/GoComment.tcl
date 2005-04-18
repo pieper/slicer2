@@ -24,7 +24,8 @@ set file [lindex $argv 0]
 if {$file != ""} {
     puts $file
     # if the user noted that this is a module, just run on the module
-    if {$::isModFlag} {
+    # if it's a directory, check if it's a module
+    if {$::isModFlag || [file isdirectory [file join $moddir $file]]} {
         if {$::verbose} { puts "$file is a module" }
         # check to see that it exists
         set file [file join $moddir $file]
