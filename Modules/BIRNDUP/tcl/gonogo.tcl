@@ -1,3 +1,52 @@
+#=auto==========================================================================
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+#
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
+#
+#===============================================================================
+# FILE:        gonogo.tcl
+# PROCEDURES:  
+#   createImages
+#   getDone
+#   getSeriesApproval
+#   getStudyApproval
+#   mpClose
+#   mpCloseAll
+#   mpForward
+#   mpOpen
+#   mpTogglePause
+#   viewSlicer
+#==========================================================================auto=
 #===============================================================================
 # gonogo.tcl
 #
@@ -30,6 +79,12 @@ set VIEW_LIST "face slices-axial slices-coronal slices-sagittal"
 # TODO - fix mplayer
 ##set MP $env(MP_PATH)
 
+#-------------------------------------------------------------------------------
+# .PROC createImages
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc createImages {} {
     global play pause forward
 
@@ -68,6 +123,14 @@ proc createImages {} {
    image create bitmap forward -data $bitmapdata(forward)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC getDone
+# 
+# .ARGS
+# path upload_file contains the list of series that were approved for upload
+# path defer_file contains the list of deferred series
+# .END
+#-------------------------------------------------------------------------------
 proc getDone {upload_file defer_file} {
     global ROOT
 
@@ -107,6 +170,13 @@ proc getDone {upload_file defer_file} {
     destroy $ROOT.done
 }
 
+#-------------------------------------------------------------------------------
+# .PROC getSeriesApproval
+# 
+# .ARGS
+# path series_path Path to the files in the series
+# .END
+#-------------------------------------------------------------------------------
 proc getSeriesApproval {series_path} {
     global ROOT VIEW_LIST mp_file ser_rvalue series_approval series_reviewal mp_out mp_paused bitmapdata pause play forward
 
@@ -207,6 +277,13 @@ proc getSeriesApproval {series_path} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC getStudyApproval
+# 
+# .ARGS
+# path study_path 
+# .END
+#-------------------------------------------------------------------------------
 proc getStudyApproval {study_path} {
     global ROOT MP series_approval rvalue series_reviewal upload_series_list defer_series_list
 
@@ -286,6 +363,13 @@ proc getStudyApproval {study_path} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC mpClose
+# 
+# .ARGS
+# int view 
+# .END
+#-------------------------------------------------------------------------------
 proc mpClose {view} {
     global ROOT mp_out VIEW_LIST mp_paused mp_file
 
@@ -310,6 +394,12 @@ proc mpClose {view} {
     eval $ROOT.mp.$view.open config -text Open -command [list "mpOpen $view"]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC mpCloseAll
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc mpCloseAll {} {
     global VIEW_LIST mp_out
 
@@ -318,6 +408,13 @@ proc mpCloseAll {} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC mpForward
+# 
+# .ARGS
+# int view
+# .END
+#-------------------------------------------------------------------------------
 proc mpForward {view} {
     global mp_out mp_paused mp_file
 
@@ -333,6 +430,13 @@ proc mpForward {view} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC mpOpen
+# 
+# .ARGS
+# int view
+# .END
+#-------------------------------------------------------------------------------
 proc mpOpen {view} {
     global ROOT MP mp_file mp_out
 
@@ -369,6 +473,13 @@ proc mpOpen {view} {
     eval $ROOT.mp.$view.open config -text Close -command [list "mpClose $view"]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC mpTogglePause
+# 
+# .ARGS
+# int view
+# .END
+#-------------------------------------------------------------------------------
 proc mpTogglePause {view} {
     global ROOT mp_out mp_file mp_paused pause play
 
@@ -386,6 +497,13 @@ proc mpTogglePause {view} {
     #flush $mp_out($view)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC viewSlicer
+# 
+# .ARGS
+# path series_path
+# .END
+#-------------------------------------------------------------------------------
 proc viewSlicer {series_path} {
 
     # TODO - this is linux specific

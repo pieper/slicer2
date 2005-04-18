@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -40,9 +40,6 @@
 #   BIRNDUPBuildGUI
 #   BIRNDUPEnter
 #   BIRNDUPExit
-#   BIRNDUPCount
-#   BIRNDUPShowFile
-#   BIRNDUPBindingCallback
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -156,7 +153,7 @@ proc BIRNDUPInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2004/04/13 21:08:50 $}]
+        {$Revision: 1.5 $} {$Date: 2005/04/18 21:18:19 $}]
 
     # Initialize module-level variables
     #------------------------------------
