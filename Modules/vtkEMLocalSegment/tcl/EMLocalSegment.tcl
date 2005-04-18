@@ -166,7 +166,9 @@ proc EMSegmentInit {} {
     #  set EMSegment(SegmentMode) 1
     #} 
     set EMSegment(SegmentMode) 0
-    puts "Debugging - just loadin local version"
+    if {$::Module(verbose)} {
+        puts "Debugging - just loadin local version"
+    }
 
     # Source EMSegmentAlgorithm.tcl File 
     source $::PACKAGE_DIR_VTKEMLocalSegment/../../../tcl/EMSegmentAlgorithm.tcl
@@ -260,7 +262,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.55 $} {$Date: 2005/04/03 20:01:26 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.56 $} {$Date: 2005/04/18 19:31:03 $}]}
 
     # Initialize module-level variables
     #------------------------------------
