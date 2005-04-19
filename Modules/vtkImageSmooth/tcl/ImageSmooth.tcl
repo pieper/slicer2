@@ -1,3 +1,55 @@
+#=auto==========================================================================
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+#
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
+#
+#===============================================================================
+# FILE:        ImageSmooth.tcl
+# PROCEDURES:  
+#   ImageSmoothInit
+#   ImageSmoothUpdateGUI
+#   ImageSmoothBuildGUI
+#   ImageSmoothBuildHelpFrame
+#   ImageSmoothBuildMainFrame
+#   ImageSmoothEnter
+#   ImageSmoothExit
+#   ImageSmoothCount
+#   ImageSmoothShowFile
+#   ImageSmoothBindingCallback event W X Y x y t
+#   ImageSmoothPrepareResult
+#   ImageSmoothPrepareResultVolume
+#   RunImageSmooth
+#==========================================================================auto=
 #   ==================================================
 #   Module: vtkFluxDiffusion
 #   Author: Karl Krissian
@@ -32,23 +84,6 @@
 #   The full GNU Lesser General Public License file is in vtkImageSmooth/LesserGPL_license.txt
 
 
-#=auto==========================================================================
-#
-#===============================================================================
-# FILE:        ImageSmooth.tcl
-# PROCEDURES:  
-#   ImageSmoothInit
-#   ImageSmoothBuildGUI
-#   ImageSmoothBuildHelpFrame
-#   ImageSmoothBuildMainFrame
-#   ImageSmoothBuildExpertFrame
-#   ImageSmoothEnter
-#   ImageSmoothExit
-#   ImageSmoothUpdateGUI
-#   ImageSmoothCount
-#   ImageSmoothShowFile
-#   ImageSmoothBindingCallback
-#==========================================================================auto=
 
 #-------------------------------------------------------------------------------
 #  Description
@@ -158,7 +193,7 @@ proc ImageSmoothInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2004/09/17 15:42:14 $}]
+        {$Revision: 1.4 $} {$Date: 2005/04/19 18:45:00 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -236,6 +271,7 @@ proc ImageSmoothUpdateGUI {} {
 # .PROC ImageSmoothBuildGUI
 #
 # Create the Graphical User Interface.
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ImageSmoothBuildGUI {} {
@@ -268,6 +304,7 @@ proc ImageSmoothBuildGUI {} {
 # .PROC ImageSmoothBuildHelpFrame
 #
 #   Create the Help frame
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ImageSmoothBuildHelpFrame {} {
@@ -310,6 +347,7 @@ proc ImageSmoothBuildHelpFrame {} {
 # .PROC ImageSmoothBuildMainFrame
 #
 #   Create the Main frame
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ImageSmoothBuildMainFrame {} {
@@ -425,17 +463,6 @@ proc ImageSmoothBuildMainFrame {} {
 }
 # end ImageSmoothBuildMainFrame
 
-
-#-------------------------------------------------------------------------------
-# .PROC ImageSmoothBuildExpertFrame
-#
-#   Create the Expert frame
-# .END
-#-------------------------------------------------------------------------------
-
-# end ImageSmoothBuildExpertFrame
-
-
 #-------------------------------------------------------------------------------
 # .PROC ImageSmoothEnter
 # Called when this module is entered by the user.  Pushes the event manager
@@ -487,6 +514,7 @@ proc ImageSmoothExit {} {
 #
 # This routine demos how to make button callbacks and use global arrays
 # for object oriented programming.
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ImageSmoothCount {} {
@@ -502,6 +530,7 @@ proc ImageSmoothCount {} {
 #
 # This routine demos how to make button callbacks and use global arrays
 # for object oriented programming.
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ImageSmoothShowFile {} {
@@ -516,6 +545,13 @@ proc ImageSmoothShowFile {} {
 # Demo of callback routine for bindings
 # 
 # .ARGS
+# string event
+# windowpath W
+# int X
+# int Y
+# int x
+# int y
+# int t
 # .END
 #-------------------------------------------------------------------------------
 proc ImageSmoothBindingCallback { event W X Y x y t } {
@@ -541,6 +577,7 @@ proc ImageSmoothBindingCallback { event W X Y x y t } {
 # .PROC ImageSmoothPrepareResult
 #   Create the New Volume if necessary. Otherwise, ask to overwrite.
 #   returns 1 if there is are errors 0 otherwise
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ImageSmoothCheckErrors {} {
@@ -559,6 +596,7 @@ proc ImageSmoothCheckErrors {} {
 # .PROC ImageSmoothPrepareResultVolume
 #   Check for Errors in the setup
 #   returns 1 if there are errors, 0 otherwise
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc ImageSmoothPrepareResultVolume {}  {
@@ -602,6 +640,7 @@ proc ImageSmoothPrepareResultVolume {}  {
 # .PROC RunImageSmooth
 #   Run the fast marching
 #
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc RunImageSmooth {} {
