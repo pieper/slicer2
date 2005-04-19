@@ -36,8 +36,9 @@
 #===============================================================================
 # FILE:        fMRIEngineCompute.tcl
 # PROCEDURES:  
-#   fMRIEngineBuildUIForComputeTab
+#   fMRIEngineBuildUIForComputeTab parent
 #   fMRIEngineComputeContrasts
+#   fMRIEngineUpdateMRML 
 #   fMRIEngineUpdateContrastList
 #==========================================================================auto=
 
@@ -45,6 +46,7 @@
 # .PROC fMRIEngineBuildUIForComputeTab
 # Creates UI for the compute tab 
 # .ARGS
+# windowpath parent
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineBuildUIForComputeTab {parent} {
