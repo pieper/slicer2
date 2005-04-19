@@ -1,6 +1,6 @@
 /*=auto=========================================================================
 
-(c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+(c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 
 This software ("3D Slicer") is provided by The Brigham and Women's 
 Hospital, Inc. on behalf of the copyright holders and contributors.
@@ -51,7 +51,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMatrix4x4.h"
 #include "vtkMath.h"
 
-vtkCxxRevisionMacro(vtkRigidTransformInterpolate, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkRigidTransformInterpolate, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkRigidTransformInterpolate);
 
 /*
