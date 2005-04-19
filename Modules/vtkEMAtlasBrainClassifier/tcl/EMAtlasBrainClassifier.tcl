@@ -1,3 +1,62 @@
+#=auto==========================================================================
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+#
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
+#
+#===============================================================================
+# FILE:        EMAtlasBrainClassifier.tcl
+# PROCEDURES:  
+#   EMAtlasBrainClassifierInit
+#   EMAtlasBrainClassifierBuildGUI
+#   EMAtlasBrainClassifierBuildVTK
+#   EMAtlasBrainClassifierEnter
+#   EMAtlasBrainClassifierExit
+#   EMAtlasBrainClassifierUpdateMRML
+#   EMAtlasBrainClassifierDefineWorkingDirectory
+#   EMAtlasBrainClassifierDefineAtlasDir
+#   EMAtlasBrainClassifierDefineXMLTemplate
+#   EMAtlasBrainClassifier_Normalize VolIDInput VolIDOutput Mode
+#   EMAtlasBrainClassifierVolumeWriter VolID
+#   EMAtlasBrainClassifierReadXMLFile FileName
+#   EMAtlasBrainClassifierGrepLine input search_string
+#   EMAtlasBrainClassifierReadNextKey input
+#   EMAtlasBrainClassifierLoadAtlasVolume GeneralDir AtlasDir AtlasName
+#   EMAtlasBrainClassifierResetEMSegment
+#   EMAtlasBrainClassifierDeleteAllVolumeNodesButSPGRAndT2W
+#   EMAtlasBrainClassifierStartSegmentation
+#   EMAtlasBrainClassifierRegistration inTarget inSource
+#   EMAtlasBrainClassifierResample inTarget inSource outResampled
+#==========================================================================auto=
 #-------------------------------------------------------------------------------
 # .PROC EMAtlasBrainClassifierInit
 #  The "Init" procedure is called automatically by the slicer.  
@@ -42,7 +101,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8 $} {$Date: 2005/04/03 18:13:32 $}]
+        {$Revision: 1.9 $} {$Date: 2005/04/19 16:13:00 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -73,7 +132,11 @@ proc EMAtlasBrainClassifierInit {} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierBuildGUI
 # Build Gui
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierBuildGUI {} {
     global Gui EMAtlasBrainClassifier Module Volume 
     
@@ -229,7 +292,6 @@ proc EMAtlasBrainClassifierBuildVTK {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-
 proc EMAtlasBrainClassifierEnter {} {
     global EMAtlasBrainClassifier
 
@@ -273,12 +335,24 @@ proc EMAtlasBrainClassifierExit {} {
     popEventManager
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierUpdateMRML
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierUpdateMRML { } { 
     global EMAtlasBrainClassifier
     DevUpdateNodeSelectButton Volume EMAtlasBrainClassifier Seg-SPGRSelect Volume,SPGR
     DevUpdateNodeSelectButton Volume EMAtlasBrainClassifier Seg-T2WSelect  Volume,T2W
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierDefineWorkingDirectory
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierDefineWorkingDirectory {} {
     global EMAtlasBrainClassifier
     set dir [tk_chooseDirectory -initialdir $EMAtlasBrainClassifier(WorkingDirectory)]
@@ -288,6 +362,12 @@ proc EMAtlasBrainClassifierDefineWorkingDirectory {} {
     set EMAtlasBrainClassifier(WorkingDirectory) "$dir"    
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierDefineAtlasDir
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierDefineAtlasDir {} {
     global EMAtlasBrainClassifier
     set dir [tk_chooseDirectory -initialdir $EMAtlasBrainClassifier(AtlasDir) -title "Atlas Directory"]
@@ -297,6 +377,12 @@ proc EMAtlasBrainClassifierDefineAtlasDir {} {
     set EMAtlasBrainClassifier(AtlasDir) "$dir"    
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierDefineXMLTemplate
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierDefineXMLTemplate {} {
     global EMAtlasBrainClassifier
     set file [tk_getOpenFile -title "XML Template File" -filetypes {{XML {.xml} }} -defaultextension .xml -initialdir [file dirname $EMAtlasBrainClassifier(XMLTemplate)]]
@@ -306,6 +392,15 @@ proc EMAtlasBrainClassifierDefineXMLTemplate {} {
     set EMAtlasBrainClassifier(XMLTemplate) "$file"    
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifier_Normalize
+# 
+# .ARGS
+# int VolIDInput input volume id
+# int VolIDOutput output volume id
+# string Mode
+# .END
+#-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifier_Normalize { VolIDInput VolIDOutput Mode } {
     global Volume Matrix EMAtlasBrainClassifier
     set Vol [Volume($VolIDInput,vol) GetOutput]
@@ -412,6 +507,13 @@ proc EMAtlasBrainClassifier_Normalize { VolIDInput VolIDOutput Mode } {
 } 
  
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierVolumeWriter
+# 
+# .ARGS
+# int VolID volume id specifying what to write out
+# .END
+#-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierVolumeWriter {VolID} {
     global Volume
     set prefix [MainFileGetRelativePrefix [Volume($VolID,node) GetFilePrefix]] 
@@ -420,6 +522,13 @@ proc EMAtlasBrainClassifierVolumeWriter {VolID} {
     catch {file delete -force [file join [file dirname [Volume($VolID,node) GetFullPrefix]] [Volume($VolID,node) GetFilePrefix]].xml }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierReadXMLFile
+# 
+# .ARGS
+# path FileName
+# .END
+#-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierReadXMLFile { FileName } {
     global EMAtlasBrainClassifier
     if {[catch {set fid [open $FileName r]} errmsg] == 1} {
@@ -436,6 +545,14 @@ proc EMAtlasBrainClassifierReadXMLFile { FileName } {
     return $file 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierGrepLine
+# 
+# .ARGS
+# string input
+# string search_string
+# .END
+#-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierGrepLine {input search_string} {
     set foundIndex [string first $search_string  $input]
     if {$foundIndex < 0} {
@@ -450,6 +567,13 @@ proc EMAtlasBrainClassifierGrepLine {input search_string} {
     return "$start $last"
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierReadNextKey
+# 
+# .ARGS
+# string input
+# .END
+#-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierReadNextKey {input} {
     if {([regexp "^(\[^=\]*)\[\n\t \]*=\[\n\t \]*\['\"\](\[^'\"\]*)\['\"\](.*)$" \
              $input match key value input] != 0) && ([string equal -length 1 $input "/"] == 0)} {
@@ -458,7 +582,15 @@ proc EMAtlasBrainClassifierReadNextKey {input} {
     return "" 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierLoadAtlasVolume
 # In the future should probably be more independent but should work for right now 
+# .ARGS
+# path GeneralDir
+# path AtlasDir
+# string AtlasName
+# .END
+#-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierLoadAtlasVolume {GeneralDir AtlasDir AtlasName} {
     global Volume EMAtlasBrainClassifier
     set Volume(firstFile) "$GeneralDir/$AtlasDir/I.001"
@@ -492,6 +624,12 @@ proc EMAtlasBrainClassifierLoadAtlasVolume {GeneralDir AtlasDir AtlasName} {
     return $VolID 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierResetEMSegment
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierResetEMSegment { } {
     global EMSegment 
     eval {global} $EMSegment(MrmlNode,TypeList) 
@@ -542,6 +680,12 @@ proc EMAtlasBrainClassifierResetEMSegment { } {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierDeleteAllVolumeNodesButSPGRAndT2W
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierDeleteAllVolumeNodesButSPGRAndT2W { } {
    global  EMAtlasBrainClassifier Volume Mrml 
 
@@ -562,6 +706,12 @@ proc EMAtlasBrainClassifierDeleteAllVolumeNodesButSPGRAndT2W { } {
     MainUpdateMRML
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierStartSegmentation
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierStartSegmentation { } {
     global EMAtlasBrainClassifier Volume EMSegment Mrml tcl_platform
 
@@ -837,6 +987,14 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierRegistration
+# 
+# .ARGS
+# int inTarget input target volume id
+# int inSource
+# .END
+#-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierRegistration {inTarget inSource} {
     global EMAtlasBrainClassifier Volume AG 
    
@@ -926,6 +1084,15 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierResample
+# 
+# .ARGS
+# int inTarget input target volume id
+# int inSource volume id
+# vtkImageData outResampled
+# .END
+#-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierResample {inTarget inSource outResampled} {
     global EMAtlasBrainClassifier Volume Gui
     
