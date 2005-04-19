@@ -1,3 +1,81 @@
+#=auto==========================================================================
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+#
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
+#
+#===============================================================================
+# FILE:        AG.tcl
+# PROCEDURES:  
+#   AGInit
+#   AGUpdateMRML
+#   AGBuildGUI
+#   AGStartCNIWebPage 
+#   AGBuildHelpFrame
+#   AGBuildMainFrame
+#   AGBuildTransformFrame
+#   AGBuildExpertFrame
+#   Test
+#   ModifyOptions
+#   AGEnter
+#   AGExit
+#   AGPrepareResult
+#   AGPrepareResultVolume
+#   AGWritevtkImageData image filename
+#   AGIntensityTransform Source
+#   AGTransformScale Source Target
+#   AGWriteHomogeneous
+#   AGWriteGrid
+#   WritePWConstant it fid
+#   WritePolynomial it fileid
+#   WriteIntensityTransform it fileid
+#   WriteTransform gt flag it FileName
+#   RunAG
+#   AGBatchProcessResampling
+#   AGCoregister
+#   AGTransformOneVolume SouceVolume TargetVolume
+#   AGPreprocess Source Target SourceVol TargetVol
+#   AGResample Source Target
+#   AGNormalize SourceImage TargetImage NormalizeSource SourceScanOrder TargetScanOrder
+#   AGTestWriting
+#   AGReadvtkImageData
+#   AGTestReadvtkImageData
+#   AGUpdateInitial
+#   AGTurnInitialOff
+#   AGCreateLinMat
+#   AGSaveGridTransform
+#   AGColorComparison
+#==========================================================================auto=
+
 #   ==================================================
 #   Module: vtkAG
 #   Author: Lifeng Liu
@@ -25,24 +103,6 @@
 #   The full GNU Lesser General Public License file is in vtkAG/LesserGPL_license.txt
 
 
-#=auto==========================================================================
-#
-#===============================================================================
-# FILE:        AG.tcl
-# PROCEDURES:  
-#   AGInit
-#   AGUpdateMRML
-#   AGBuildGUI
-#   AGBuildHelpFrame
-#   AGBuildMainFrame
-#   AGBuildExpertFrame
-#   AGEnter
-#   AGExit
-#   AGUpdateMRML
-#   AGCount
-#   AGShowFile
-#   AGBindingCallback
-#==========================================================================auto=
 
 #-------------------------------------------------------------------------------
 #  Description
@@ -58,7 +118,7 @@
 #-------------------------------------------------------------------------------
 
 
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
 # .PROC AGInit
 #  The "Init" procedure is called automatically by the slicer.  
 #  It puts information about the module into a global array called Module, 
@@ -148,7 +208,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8 $} {$Date: 2005/03/04 20:51:01 $}]
+        {$Revision: 1.9 $} {$Date: 2005/04/19 14:40:30 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -240,7 +300,7 @@ proc AGInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC AGUpdateMRML
-# 
+#
 # This procedure is called to update the buttons
 # due to such things as volumes or models being added or subtracted.
 # (Note: to do this, this proc must be this module's procMRML.  Right now,
@@ -299,6 +359,7 @@ proc AGUpdateMRML {} {
 # .PROC AGBuildGUI
 #
 # Create the Graphical User Interface.
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc AGBuildGUI {} {
@@ -331,11 +392,12 @@ proc AGBuildGUI {} {
 # .PROC AGStartCNIWebPage 
 #
 #   Start Browser and go to CNI Web
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc AGStartCNIWebPage {} {
 
-MainHelpLaunchBrowserURL http://cni.bwh.harvard.edu/
+    MainHelpLaunchBrowserURL http://cni.bwh.harvard.edu/
 
 } 
 
@@ -346,6 +408,7 @@ MainHelpLaunchBrowserURL http://cni.bwh.harvard.edu/
 # .PROC AGBuildHelpFrame
 #
 #   Create the Help frame
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc AGBuildHelpFrame {} {
@@ -395,6 +458,7 @@ proc AGBuildHelpFrame {} {
 # .PROC AGBuildMainFrame
 #
 #   Create the Main frame
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc AGBuildMainFrame {} {
@@ -511,12 +575,12 @@ proc AGBuildMainFrame {} {
     TooltipAdd $f.bCoregister "Run coregistration based on previous computed transformation."
     pack $f.bCoregister -pady 0
 }
-# end AGBuildMainFrame
 
 #-------------------------------------------------------------------------------
 # .PROC AGBuildTransformFrame
 #
 #   Create the Transform frame
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc AGBuildTransformFrame {} {
@@ -627,6 +691,7 @@ proc AGBuildTransformFrame {} {
 # .PROC AGBuildExpertFrame
 #
 #   Create the Expert frame
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc AGBuildExpertFrame {} {
@@ -845,20 +910,27 @@ proc AGBuildExpertFrame {} {
 
 
 }
- 
 
 
-# end  AGBuildExpertFrame
-
+#-------------------------------------------------------------------------------
+# .PROC Test
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc Test {}  {
   
   puts "AG(SSD) is $AG(SSD)"
 }
 
-#.PROC   ModifyOptions
+#-------------------------------------------------------------------------------
+# .PROC ModifyOptions
+# 
 #  Modify the options for registration according to the user 
 #  selection
-#.END
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc ModifyOptions {optClass value} {
     global  AG Volume Gui 
   
@@ -1037,6 +1109,7 @@ proc AGExit {} {
 # .PROC AGPrepareResult
 #   Create the New Volume if necessary. Otherwise, ask to overwrite.
 #   returns 1 if there is are errors 0 otherwise
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc AGCheckErrors {} {
@@ -1080,6 +1153,7 @@ proc AGCheckErrors {} {
 # .PROC AGPrepareResultVolume
 #   Check for Errors in the setup
 #   returns 1 if there are errors, 0 otherwise
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc AGPrepareResultVolume {}  {
@@ -1150,9 +1224,13 @@ proc AGPrepareResultVolume {}  {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC  AGWritevtkImageData
+# .PROC AGWritevtkImageData
 # Write vtkImageData to file using the vtkStructuredPointWriter
 #
+# .ARGS
+# string image input to the writer
+# string filename file to write out
+# .END
 #-----------------------------------------------------------------------------
 proc AGWritevtkImageData {image filename} {
 
@@ -1176,9 +1254,11 @@ proc AGWritevtkImageData {image filename} {
 # .PROC AGIntensityTransform
 # According to the options, set the intensity transformation. 
 #  
+# .ARGS
+# string Source
 # .END
 #------------------------------------------------------------------------------
-proc  AGIntensityTransform {Source} {
+proc AGIntensityTransform {Source} {
     global AG Volume
 
     catch {$AG(tfm) Delete}
@@ -1257,9 +1337,12 @@ proc  AGIntensityTransform {Source} {
 # .PROC AGTransformScale
 # According to the options, do the scale transformation. 
 #  
+# .ARGS
+# string Source
+# string Target
 # .END
 #------------------------------------------------------------------------------
-proc  AGTransformScale { Source Target} {
+proc AGTransformScale { Source Target} {
 #def TransformScale(Target,Source,scale):   
    #    log=vtkImageMathematics()
    #    log.SetOperationToLog()
@@ -1299,7 +1382,13 @@ proc  AGTransformScale { Source Target} {
 }
 
 
-proc  AGWriteHomogeneous {t ii fileid} {
+#-------------------------------------------------------------------------------
+# .PROC AGWriteHomogeneous
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc AGWriteHomogeneous {t ii fileid} {
     global AG
     
     puts " Start to save homogeneous Transform"
@@ -1369,6 +1458,12 @@ proc  AGWriteHomogeneous {t ii fileid} {
     DevInfoWindow "Matrix $m generated."
 } 
 
+#-------------------------------------------------------------------------------
+# .PROC AGWriteGrid
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc AGWriteGrid {t ii fileid} {      
     # Matthan: removed fileid as argument after t ii
     
@@ -1400,9 +1495,12 @@ proc AGWriteGrid {t ii fileid} {
 # .PROC WritePWConstant
 #  Save the polynomial intensity transform to file
 #
+# .ARGS
+# string it
+# int fid
 # .END
 #-------------------------------------------------------------------------------
-proc  WritePWConstant {it fileid} {
+proc WritePWConstant {it fileid} {
 
     puts $fileid "Piecewise Constant IT\n"
     
@@ -1435,9 +1533,12 @@ proc  WritePWConstant {it fileid} {
 # .PROC WritePolynomial
 #  Save the polynomial intensity transform to file
 #
+# .ARGS
+# string it
+# int fileid
 # .END
 #-------------------------------------------------------------------------------
-proc  WritePolynomial {it fileid} {
+proc WritePolynomial {it fileid} {
 
     puts $fileid "Polynomial IT\n"
 
@@ -1459,6 +1560,9 @@ proc  WritePolynomial {it fileid} {
 # .PROC WriteIntensityTransform
 #  Save the transform to file
 #
+# .ARGS
+# string it
+# int fileid
 # .END
 #-------------------------------------------------------------------------------
 proc WriteIntensityTransform {it fileid } {
@@ -1477,6 +1581,11 @@ proc WriteIntensityTransform {it fileid } {
 # .PROC WriteTransform
 #  Save the transform to file
 #
+# .ARGS
+# int gt
+# int flag
+# int it
+# string FileName
 # .END
 #-------------------------------------------------------------------------------
 proc WriteTransform {gt flag it FileName} {
@@ -1517,6 +1626,7 @@ proc WriteTransform {gt flag it FileName} {
 # .PROC RunAG
 #   Run the Registration.
 #
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc RunAG {} {
@@ -2161,6 +2271,7 @@ proc RunAG {} {
 # .PROC AGBatchProcessResampling
 # Transform all volumes(except the source and target) to  new volumes based on the target volume and the
 # transform stored in AG(transform)
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc AGBatchProcessResampling  {  }  {
@@ -2192,6 +2303,7 @@ proc AGBatchProcessResampling  {  }  {
 # .PROC AGCoregister
 #Transform one volume to a new volume based on the target volume and the
 # transform stored in AG(transform)
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc AGCoregister {} {
@@ -2217,6 +2329,9 @@ proc AGCoregister {} {
 # .PROC AGTransformOneVolume
 #Transform one volume to a new volume based on the target volume and the
 # transform stored in AG(transform)
+# .ARGS
+# string SouceVolume
+# string TargetVolume
 # .END
 #-------------------------------------------------------------------------------
 proc AGTransformOneVolume {SourceVolume TargetVolume} {
@@ -2277,10 +2392,15 @@ proc AGTransformOneVolume {SourceVolume TargetVolume} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC  AGPreprocess
+# .PROC AGPreprocess
 #  Check the source and target, and set the target's origin to be at the
 #  center. Set source to be at the same orientation and resolution as the target
 # 
+# .ARGS
+# string Source
+# string Target
+# string SourceVol
+# string TargetVol
 # .END
 #-------------------------------------------------------------------------------
 proc AGPreprocess {Source Target SourceVol TargetVol} {
@@ -2414,6 +2534,9 @@ proc AGPreprocess {Source Target SourceVol TargetVol} {
 # .Resample a new source according to the target and the transform saved i
 # AG(Transform).
 #
+# .ARGS
+# string Source
+# string Target
 # .END
 #-------------------------------------------------------------------------------
 proc AGResample {Source Target Resampled} {
@@ -2558,6 +2681,12 @@ proc AGResample {Source Target Resampled} {
 # .PROC AGNormalize
 #   Run the Orientation Normalization.
 #
+# .ARGS
+# string SourceImage
+# string TargetImage
+# string NormalizeSource
+# string SourceScanOrder
+# string TargetScanOrder
 # .END
 #-------------------------------------------------------------------------------
 proc AGNormalize { SourceImage TargetImage NormalizedSource SourceScanOrder TargetScanOrder} {
@@ -2854,8 +2983,12 @@ proc AGNormalize { SourceImage TargetImage NormalizedSource SourceScanOrder Targ
     reslice Delete
 }
 
-
-#Test writing vtkImageData for the input.
+#-------------------------------------------------------------------------------
+# .PROC AGTestWriting
+# Test writing vtkImageData for the input.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc AGTestWriting {} {
 
   global AG Volume Gui
@@ -3054,6 +3187,12 @@ proc AGTestWriting {} {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC AGReadvtkImageData
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc AGReadvtkImageData {image filename}  {
     
 
@@ -3072,6 +3211,12 @@ proc AGReadvtkImageData {image filename}  {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC AGTestReadvtkImageData
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc AGTestReadvtkImageData {}  {
   
 
@@ -3112,6 +3257,12 @@ proc AGTestReadvtkImageData {}  {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC AGUpdateInitial
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc AGUpdateInitial {meth} {
     global Matrix AG
     switch $meth {
@@ -3152,6 +3303,12 @@ proc AGUpdateInitial {meth} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC AGTurnInitialOff
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc AGTurnInitialOff {} {
     global AG
     set AG(Initial_tfm) 0
@@ -3163,6 +3320,12 @@ proc AGTurnInitialOff {} {
     AGUpdateInitial "prev"
 }
 
+#-------------------------------------------------------------------------------
+# .PROC AGCreateLinMat
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc AGCreateLinMat {} {
     global AG
     if {![info exist AG(Transform)]} {
@@ -3189,6 +3352,12 @@ proc AGCreateLinMat {} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC AGSaveGridTransform
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc AGSaveGridTransform {} {
     global AG
     if {![info exist AG(Transform)]} {
@@ -3217,6 +3386,12 @@ proc AGSaveGridTransform {} {
     
 }
 
+#-------------------------------------------------------------------------------
+# .PROC AGColorComparison
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc AGColorComparison {} {
     global AG Volume Slice
 
@@ -3297,4 +3472,3 @@ proc AGColorComparison {} {
     MainSlicesSetVolumeAll Fore $Volume(idNone)
     RenderAll
 }
-
