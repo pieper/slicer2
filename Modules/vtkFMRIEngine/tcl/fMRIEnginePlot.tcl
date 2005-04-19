@@ -36,17 +36,19 @@
 #===============================================================================
 # FILE:        fMRIEnginePlot.tcl
 # PROCEDURES:  
-#   fMRIEnginePopUpPlot y)
-#   fMRIEngineDrawPlotShort y,
-#   fMRIEngineShowData a
-#   fMRIEngineCreateCurvesFromTimeCourse j,
-#   fMRIEngineDrawPlotLong y,
+#   fMRIEnginePopUpPlot x y
+#   fMRIEngineDrawPlotShort x y z
+#   fMRIEngineShowData loc
+#   fMRIEngineSortEVsForStat i j k
+#   fMRIEngineCreateCurvesFromTimeCourse i j k
+#   fMRIEngineDrawPlotLong x y z
 #   fMRIEngineCloseDataWindow
 #   fMRIEngineCloseTimeCourseWindow
 #   fMRIEngineGetDataVolumeDimensions
-#   fMRIEngineGetVoxelFromSelection y)
-#   fMRIEngineCheckSelectionAgainstVolumeLimits the
+#   fMRIEngineGetVoxelFromSelection x y
+#   fMRIEngineCheckSelectionAgainstVolumeLimits argstr
 #==========================================================================auto=
+
 #-------------------------------------------------------------------------------
 # .PROC fMRIEnginePopUpPlot
 # This routine pops up a plot of a selected voxel's response over
@@ -54,7 +56,8 @@
 # experimental protocol, or the protocol convolved with a hemodynamic
 # response function.
 # .ARGS
-# (x, y) the selected point
+# int x the selected point's x coord
+# int y the selected point's y coord
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEnginePopUpPlot {x y} {
@@ -172,7 +175,9 @@ proc fMRIEnginePopUpPlot {x y} {
 # .PROC fMRIEngineDrawPlotShort
 # Draws time course plot in short format 
 # .ARGS
-# (x, y, z) the index of voxel whose time course is to be plotted
+# int x the x index of voxel whose time course is to be plotted
+# int y the y index of voxel whose time course is to be plotted
+# int z the z index of voxel whose time course is to be plotted
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineDrawPlotShort {x y z} {
@@ -282,6 +287,7 @@ proc fMRIEngineDrawPlotShort {x y z} {
 # .PROC fMRIEngineShowData
 # Pops a separate window to show data for all curves 
 # .ARGS
+# int loc defaults to 0
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineShowData {{loc 0}} {
@@ -363,7 +369,9 @@ proc fMRIEngineShowData {{loc 0}} {
 # .PROC fMRIEngineSortEVsForStat
 # Sorts EVs into different bins 
 # .ARGS
-# (i, j, k) the index of voxel whose time course is to be plotted
+# int i the i index of voxel whose time course is to be plotted
+# int j the j index of voxel whose time course is to be plotted
+# int k the k index of voxel whose time course is to be plotted
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineSortEVsForStat {x y z} {
@@ -484,7 +492,9 @@ proc fMRIEngineSortEVsForStat {x y z} {
 # .PROC fMRIEngineCreateCurvesFromTimeCourse
 # Creates curves for short format time course plotting 
 # .ARGS
-# (i, j, k) the index of voxel whose time course is to be plotted
+# int i the i index of voxel whose time course is to be plotted
+# int j the j index of voxel whose time course is to be plotted
+# int k the k index of voxel whose time course is to be plotted
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineCreateCurvesFromTimeCourse {i j k} {
@@ -548,7 +558,9 @@ proc fMRIEngineCreateCurvesFromTimeCourse {i j k} {
 # .PROC fMRIEngineDrawPlotLong
 # Draws time course plot in long format 
 # .ARGS
-# (x, y, z) the index of voxel whose time course is to be plotted
+# int x the x index of voxel whose time course is to be plotted
+# int y the y index of voxel whose time course is to be plotted
+# int z the z index of voxel whose time course is to be plotted
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineDrawPlotLong {x y z} {
@@ -723,7 +735,8 @@ proc fMRIEngineGetDataVolumeDimensions {} {
 # .PROC fMRIEngineGetVoxelFromSelection
 # Gets voxel index from the selection 
 # .ARGS
-# (x, y) the selected point 
+# int x the selected point's x
+# int y the selected point's y
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineGetVoxelFromSelection {x y} {
@@ -786,7 +799,7 @@ proc fMRIEngineGetVoxelFromSelection {x y} {
 # .PROC fMRIEngineCheckSelectionAgainstVolumeLimits
 # Checks voxel selection against volume limits 
 # .ARGS
-# argstr the data string
+# string argstr the data string
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineCheckSelectionAgainstVolumeLimits {argstr} {
