@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -34,6 +34,12 @@
 # 
 #
 #===============================================================================
+# FILE:        ItkToSlicerTransform.tcl
+# PROCEDURES:  
+#   GetSlicerWldToItkMatrix vnode matrix
+#   GetSlicerRASToItkMatrix vnode matrix
+#   GetSlicerRasToItkStandAloneMatrix vnode matrix
+#   GetYFlippedItkCenteringMatrix vnode matrix
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -180,9 +186,11 @@
 # This is the transform used to go from RAS space to ITK space
 # if the volume was read in by the slicer (which it was)
 #
+# .ARGS
+# vtkMrmlVolumeNode vnode
+# vtkMatrix4x4 matrix
 # .END
 #-------------------------------------------------------------------------------
-
 proc GetSlicerWldToItkMatrix {vnode matrix} {
  
     GetSlicerRASToItkMatrix $vnode $matrix
@@ -204,9 +212,11 @@ proc GetSlicerWldToItkMatrix {vnode matrix} {
 # This is the transform used to go from RAS space to ITK space
 # if the volume was read in by the slicer (which it was)
 #
+# .ARGS
+# vtkMrmlVolumeNode vnode
+# vtkMatrix4x4 matrix
 # .END
 #-------------------------------------------------------------------------------
-
 proc GetSlicerRASToItkMatrix {vnode matrix} {
 
     GetSlicerToItkStandAloneMatrix $vnode $matrix
@@ -228,9 +238,11 @@ proc GetSlicerRASToItkMatrix {vnode matrix} {
 #
 # This is P = PosFix*Pos, as described above.
 #
+# .ARGS
+# vtkMrmlVolumeNode vnode
+# vtkMatrix4x4 matrix
 # .END
 #-------------------------------------------------------------------------------
-
 proc GetSlicerToItkStandAloneMatrix  {vnode matrix} {
     SetModelMoveOriginMatrix $vnode $matrix
     $matrix Multiply4x4 [$vnode GetPosition] $matrix $matrix
@@ -244,6 +256,9 @@ proc GetSlicerToItkStandAloneMatrix  {vnode matrix} {
 # Set the incoming vtkMatrix4x4 to the ITK un-centering matrix
 # Then do the y-flip.
 # This is refered to as yflip*Trans1 above.
+# .ARGS
+# vtkMrmlVolumeNode vnode
+# vtkMatrix4x4 matrix
 # .END
 #-------------------------------------------------------------------------------
 proc GetYFlippedItkCenteringMatrix  {vnode matrix} {
