@@ -1,6 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) 
-#     All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -38,9 +37,15 @@
 # FILE:        QueryAtlas.tcl
 # PROCEDURES:  
 #   QueryAtlasInit
+#   QueryAtlasBIRNButtonZoom level
+#   QueryAtlasBIRNZoom level
+#   QueryAtlasBIRNSliderZoom level
+#   BIRNAnimateZoom
+#   QueryAtlasBIRNSetcardZoom zoom
+#   QueryAtlasBIRNEnter
+#   QueryAtlasBIRNExit
 #   QueryAtlasBuildGUI
 #   QueryAtlasBuildVTK
-#   QueryAtlasEnter
 #   QueryAtlasEnter
 #   QueryAtlasExit
 #==========================================================================auto=
@@ -166,7 +171,7 @@ proc QueryAtlasInit {} {
    #   appropriate revision number and date when the module is checked in.
    #   
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.1 $} {$Date: 2005/03/29 15:55:22 $}]
+       {$Revision: 1.2 $} {$Date: 2005/04/19 21:42:19 $}]
 
    # Initialize module-level variables
    #------------------------------------
@@ -199,8 +204,13 @@ proc QueryAtlasInit {} {
 #=== BIRN =====================================================================================================================================================
 
 
+#-------------------------------------------------------------------------------
+# .PROC QueryAtlasBIRNButtonZoom
 # from icon button press - setup to start an animated zoom
-
+# .ARGS
+# int level 
+# .END
+#-------------------------------------------------------------------------------
 proc QueryAtlasBIRNButtonZoom {level} {
     global QueryAtlas
     
@@ -213,8 +223,13 @@ proc QueryAtlasBIRNButtonZoom {level} {
 }    
 
 
+#-------------------------------------------------------------------------------
+# .PROC QueryAtlasBIRNZoom
 # old icon button press - jump right to new level - unused?
-
+# .ARGS
+# int level 
+# .END
+#-------------------------------------------------------------------------------
 proc QueryAtlasBIRNZoom {level} {
     #puts "QueryAtlasBIRNZoom $level"
         
@@ -225,8 +240,13 @@ proc QueryAtlasBIRNZoom {level} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC QueryAtlasBIRNSliderZoom
 # from slider press - setup to start an animated zoom
-
+# .ARGS
+# int level 
+# .END
+#-------------------------------------------------------------------------------
 proc QueryAtlasBIRNSliderZoom {level} {
     global QueryAtlas
     
@@ -294,6 +314,7 @@ proc BIRNAnimateZoom {} {
 #  Actually update the BIRN Card models to the new zoom level.
 #
 # .ARGS
+# int zoom
 # .END
 #-------------------------------------------------------------------------------
 proc QueryAtlasBIRNSetCardZoom {zoom} {

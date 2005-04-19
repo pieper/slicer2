@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -35,17 +35,24 @@
 #
 #===============================================================================
 # FILE:        MeasurementHipJoint.tcl
-#    MorphometricsHipJointMeasurementWrapper
-#    MorphometricsHipJointMeasurementInit
-#    MorphometricsHipJointSetModels idList
-#    MorphometricsHipJointMeasurementInitGeometry
-#    MorphometricsHipJointPlaceHeadSphere
-#    MorphometricsHipJointResultEnter
-#    MorphometricsHipJointResultExit
-#    MorphometricsHipJointResultUserInterface frame
-#    MorphometricsHipJointDisplayInit
-#    MorphometricsHipJointCreateModel polydata name
-#===============================================================================
+# PROCEDURES:  
+#   MorphometricsHipJointMeasurementWrapper
+#   MorphometricsHipJointMeasurementInit
+#   MorphometricsHipJointSetVolume idList
+#   MorphometricsHipJointSetModels idList
+#   MorphometricsHipJointPrecomputeGeometry
+#   MorphometricsHipJointInitGeometry
+#   MorphometricsHipJointResultEnter
+#   MorphometricsHipJointResultExit
+#   MorphometricsHipJointResultUserInterface
+#   MorphometricsHipJointSaveResult
+#   MorphometricsHipJointCreateResultsModels
+#   MorphometricsHipJointDisplayInit
+#   PelvisPrecompute
+#   MorphometricsHipJointPelvisFemurHeadAxis
+#   MorphometricsHipJointCreateModel
+#   MorphometricsHipJointCreateModel
+#==========================================================================auto=
 
 # add the module to the list of tools 
 lappend Morphometrics(measurementInitTools) MorphometricsHipJointMeasurementWrapper
@@ -216,6 +223,7 @@ proc MorphometricsHipJointResultExit {} {
 # .PROC MorphometricsHipJointResultUserInterface
 # User interface presenting (and computing) the derived angles for the hip joint geometry.
 # .ARGS
+# windowpath frame where to add the UI elements
 # .END
 #-------------------------------------------------------------------------------
 proc MorphometricsHipJointResultUserInterface {frame} {
@@ -365,6 +373,12 @@ proc MorphometricsHipJointDisplayInit {} {
     vtkDistancePredicate nearConvexHullHipJoint
 }
 
+#-------------------------------------------------------------------------------
+# .PROC PelvisPrecompute
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc PelvisPrecompute {} {
     vprince SetInput [Pelvis GetPelvis]
     vprince Update
@@ -405,6 +419,14 @@ proc PelvisPrecompute {} {
     
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MorphometricsHipJointPelvisFemurHeadAxis
+# 
+# .ARGS
+# string Axis
+# float factor
+# .END
+#-------------------------------------------------------------------------------
 proc MorphometricsHipJointPelvisFemurHeadAxis {Axis factor } {
     set pelvisCenter [vprince GetCenter]
 
@@ -427,15 +449,17 @@ proc MorphometricsHipJointPelvisFemurHeadAxis {Axis factor } {
     set angle [expr acos($length / [expr sqrt($length * $length + $femurRadius * $femurRadius)])]
     return [expr $angle *  57.2957795131]
 }
+
 #-------------------------------------------------------------------------------
 # .PROC MorphometricsHipJointCreateModel
 # Create a MRML node for $polydata with name $name. No fancy stuff is done, so
 # this could be in Base/tcl/tcl-main/ModelMaker.tcl as well. This function is
 # based upon the function for creating a model out of a segmentation.
 # .ARGS
+# string polydata
+# string name
 # .END
 #-------------------------------------------------------------------------------
-
 proc MorphometricsHipJointCreateModel {polydata name} {
     global Model Module ModelMaker Label
 

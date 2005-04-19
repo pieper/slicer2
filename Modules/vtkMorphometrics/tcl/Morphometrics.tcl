@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -36,25 +36,25 @@
 #===============================================================================
 # FILE:        Morphometrics.tcl
 # PROCEDURES:  
-#    MorphometricsInit
-#    MorphometricsBuildVTK
-#    MorphometricsEnter
-#    MorphometricsExit
-#    MorphometricsUpdateGUI
-#    MorphometricsClearText textField
-#    MorphometricsUpdateChooseMeasurementTab
-#    MorphometricsAddMeasurement nameOfTool nameOfWorkflow providedMeasurements initFunction
-#    MorphometricsStartMeasure
-#    MorphometricsPositionCsys center normal
-#    MorphometricsHideCsys
-#    MorphometricsViewCsys
-#    MorphometricsGetTool nameOfTool
-#    MorphometricsToolName tool
-#    MorphometricsToolWorkflow tool
-#    MorphometricsToolProvides tool
-#    MorphometricsToolInitFunction tool
-#    MorphometricsReplaceInitWithDummy
-#===============================================================================
+#   MorphometricsInit
+#   MorphometricsBuildGUI
+#   MorphometricsBuildVTK
+#   MorphometricsEnter
+#   MorphometricsEnter
+#   MorphometricsExit
+#   MorphometricsUpdateGUI
+#   MorphometricsClearText textField
+#   MorphometricsUpdateChooseMeasurementTab  tool
+#   MorphometricsAddMeasurement nameOfTool nameOfWorkflow providedMeasurements initFunction
+#   MorphometricsStartMeasure
+#   MorphometricsGetTool nameOfTool
+#   MorphometricsToolName tool
+#   MorphometricsToolWorkflow tool
+#   MorphometricsToolProvides tool
+#   MorphometricsToolInitFunction tool
+#   MorphometricsReplaceInitWithDummy
+#==========================================================================auto=
+
 # How to add a new morphometric tool:
 # 1.) Write an initialization function for your tool. In this function you
 #     call MorphometricsAddMeasurement with the tools name as well as the 
@@ -194,7 +194,7 @@ proc MorphometricsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2004/04/13 21:05:53 $}]
+        {$Revision: 1.8 $} {$Date: 2005/04/19 21:38:19 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -224,6 +224,12 @@ proc MorphometricsInit {} {
 #
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC MorphometricsBuildGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MorphometricsBuildGUI {} {
     global Gui Morphometrics Module
     
@@ -360,7 +366,6 @@ proc MorphometricsBuildVTK {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-
 proc MorphometricsEnter {} {
     global Morphometrics Csys
                                                                                 
