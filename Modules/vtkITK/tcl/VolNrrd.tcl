@@ -70,7 +70,6 @@ proc VolNrrdInit {} {
 
     # register the procedures in this file that will read in volumes
     set Module(Volumes,readerProc,Nrrd) VolNrrdReaderProc
-    set VolNrrd(multiComp) 0
 }
 
 
@@ -151,31 +150,12 @@ proc VolNrrdBuildGUI {parentFrame} {
         pack $f.fBtns.rMode$value -side left -padx 0 -pady 0
     }
 
-    # Multi Components
-    set f $parentFrame.fVolume.fComp
-
-    frame $f.fTitle -bg $Gui(activeWorkspace)
-    frame $f.fBtns -bg $Gui(activeWorkspace)
-    pack $f.fTitle $f.fBtns -side left -pady 5
-
-    DevAddLabel $f.fTitle.l "Data:"
-    pack $f.fTitle.l -side left -padx $Gui(pad) -pady 0
-
-    foreach text "{Multi Component} {Slice Interleave}" \
-        value "0 1" \
-        width "15 15 " {
-        eval {radiobutton $f.fBtns.rMode$value -width $width \
-            -text "$text" -value "$value" -variable VolNrrd(multiComp) \
-            -indicatoron 0 } $Gui(WCA)
-        pack $f.fBtns.rMode$value -side left -padx 0 -pady 0
-    }
-
     #-------------------------------------------
     # Apply frame
     #-------------------------------------------
     set f $parentFrame.fApply
         
-    DevAddButton $f.bApply "Apply" "set Volume(fileType) Nrrd; VolNrrdApply" 8
+    DevAddButton $f.bApply "Apply" "set Volume(fileType) Nrrd; VolNrrdApply; RenderAll" 8
     DevAddButton $f.bCancel "Cancel" "VolumesPropsCancel" 8
     grid $f.bApply $f.bCancel -padx $Gui(pad)
 }
@@ -382,6 +362,13 @@ proc VolNrrdApply {} {
 
     # allow use of other module GUIs
     set Volume(freeze) 0
+
+    # Unfreeze
+    if {$Module(freezer) != ""} {
+        set cmd "Tab $Module(freezer)"
+        set Module(freezer) ""
+        eval $cmd
+    }
 
     # set active volume on all menus
     MainVolumesSetActive $i
