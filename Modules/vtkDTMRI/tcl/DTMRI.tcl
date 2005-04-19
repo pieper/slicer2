@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -34,7 +34,7 @@
 # 
 #
 #===============================================================================
-# FILE:        tmp.tcl
+# FILE:        DTMRI.tcl
 # PROCEDURES:  
 #   DTMRIInit
 #   DTMRIUpdateMRML
@@ -43,72 +43,77 @@
 #   DTMRIBuildGUI
 #   DTMRIRaiseMoreOptionsFrame mode
 #   DTMRIBuildScrolledGUI f
-#   DTMRICheckScrollLimits
+#   DTMRICheckScrollLimits args
 #   DTMRISizeScrolledGUI f
 #   DTMRISetPropertyType
-#   RunLSDIrecon               -------->    Convert Volume Data from Scanner to a DTMRImodule readable format (from I.## to D.##)  
+#   RunLSDIrecon
 #   ShowPatternFrame
-#   DTMRIDisplayScrollBar
-#   ShowPatternFrame           -------->    Show and hide Create-Pattern frame
-#   DTMRIDisplayScrollBar      -------->    Show Scrollbar when resizing a frame
-#   DTMRICreatePatternSlice    -------->    Create a new tensor convertion pattern for slice interleaved data. This procedure writes the information of the new patterns in $env(HOME). To declare a permanent pattern so that Slicer is able to load it, you have to write in the file"patterns.txt" located in vtkDTMRI subdirectory.
-#   DTMRICreatePatternVolume   -------->    Create a new tensor convertion pattern for volume interleaved data. This procedure writes the information of the new patterns in $env(HOME). To declare a permanent pattern so that Slicer is able to load it, you have to write in the file "patterns.txt" located in vtkDTMRI subdirectory.
-#   DTMRILoadPattern           -------->    Looks for files with pattern information and adds them to the menubutton in the Create Pattern Frame.
+#   DTMRIDisplayScrollBar module tab
+#   DTMRICreatePatternSlice
+#   DTMRICreatePatternVolume
+#   DTMRILoadPattern
 #   DTMRIUpdateTipsPattern
-#   DTMRIViewProps             -------->    Show properties of the selected pattern
-#   DTMRIDisplayNewData         -------->    Once converted de New Data, load it and display it automatically
+#   DTMRIViewProps
+#   DTMRIViewProps
+#   DTMRIDisplayNewData
 #   DTMRIPropsApply
 #   DTMRIPropsCancel
 #   DTMRIAdvancedApply
 #   DTMRISetFileName
 #   DTMRICreateBindings
-#   DTMRIRoundFloatingPoint
+#   DTMRIRoundFloatingPoint val
 #   DTMRIRemoveAllActors
 #   DTMRIAddAllActors
 #   DTMRIUpdateReformatType
 #   DTMRIUpdateScalarBar
 #   DTMRIShowScalarBar
 #   DTMRIHideScalarBar
-#   DTMRIUpdateThreshold
+#   DTMRIUpdateThreshold not_used
 #   DTMRIUpdateMaskLabel
 #   DTMRISpecificVisualizationSettings
 #   DTMRIResetDefaultVisualizationSettings
 #   DTMRIApplyVisualizationSettings mode
+#   DTMRIUpdateGlyphResolution value
 #   DTMRIUpdateGlyphEigenvector
 #   DTMRIUpdateGlyphColor
-#   DTMRIUpdateGlyphScalarRange
-#   DTMRISelectRemoveHyperStreamline
-#   DTMRISelectStartHyperStreamline x y z
+#   DTMRIUpdateGlyphScalarRange not_used
+#   DTMRISelectRemoveHyperStreamline x y z
+#   DTMRISelectChooseHyperStreamline x y z
+#   DTMRISelectStartHyperStreamline x y z render
 #   DTMRIUpdateStreamlineSettings
 #   DTMRIUpdateStreamlines
-#   DTMRIUpdateTractingMethod
-#   DTMRIUpdateBSplineOrder
+#   DTMRIUpdateTractingMethod TractingMethod
+#   DTMRIUpdateBSplineOrder SplineOrder
 #   DTMRIUpdateTractColorToSolid
 #   DTMRIUpdateTractColorToMulti
-#   DTMRIUpdateTractColor
+#   DTMRIUpdateTractColor mode
 #   DTMRIRemoveAllStreamlines
 #   DTMRIAddAllStreamlines
 #   DTMRIDeleteAllStreamlines
-#   DTMRISeedStreamlinesFromSegmentation
+#   DTMRISeedStreamlinesFromSegmentation verbose
+#   DTMRISeedStreamlinesEvenlyInMask verbose
+#   DTMRISeedAndSaveStreamlinesFromSegmentation verbose
+#   DTMRIFindStreamlinesThroughROI verbose
 #   DTMRIUpdate
 #   DTMRISetOperation math
 #   DTMRIUpdateMathParams
-#   DTMRICreateEmptyVolume
-#   DTMRIDoMath
+#   DTMRICreateEmptyVolume OrigId Description VolName
+#   DTMRIDoMath operation
 #   DTMRIApplyVisualizationParameters
-#   DTMRIDeleteVTKObject
-#   DTMRIMakeVTKObject
-#   DTMRIAddObjectProperty
+#   DTMRIDeleteVTKObject object
+#   DTMRIMakeVTKObject class object
+#   DTMRIAddObjectProperty object parameter value type desc
 #   DTMRIBuildVTK
 #   ConvertVolumeToTensors
-#   DTMRIWriteStructuredPoints
-#   DTMRISaveStreamlinesAsIJKPoints subdir name verbose
+#   DTMRICreateNewVolume volume name desc scanOrder
+#   DTMRIWriteStructuredPoints filename
+#   DTMRISaveStreamlinesAsIJKPoints verbose
 #   DTMRISaveStreamlinesAsPolyLines subdir name verbose
-#   DTMRISaveStreamlinesAsModel
+#   DTMRISaveStreamlinesAsModel verbose
 #   DTMRIGetScaledIjkCoordinatesFromWorldCoordinates x y z
 #   DTMRICalculateActorMatrix transform t
-#   DTMRICalculateIJKtoRASRotationMatrix
-#   DTMRI SetActive
+#   DTMRICalculateIJKtoRASRotationMatrix transform t
+#   DTMRI SetActive n
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -148,7 +153,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.65 $} {$Date: 2005/03/28 22:46:12 $}]
+                  {$Revision: 1.66 $} {$Date: 2005/04/19 15:17:17 $}]
 
     # Define Tabs
     #------------------------------------
@@ -2835,6 +2840,7 @@ proc DTMRIBuildScrolledGUI {f} {
 # .PROC DTMRICheckScrollLimits
 # This procedure allows scrolling only if the entire frame is not visible
 # .ARGS
+# list args
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRICheckScrollLimits {args} {
@@ -2978,9 +2984,12 @@ proc RunLSDIrecon {} {
 # .PROC DTMRIDisplayScrollBar
 #  If the size of a workframe changes, display the scrollbar if necessary.
 #  
+# .ARGS
+# string module
+# string tab
+# .END
 #-------------------------------------------------------------------------------
-
-   proc DTMRIDisplayScrollBar {module tab} {
+proc DTMRIDisplayScrollBar {module tab} {
     global Module
 
     set reqHeight [winfo reqheight $Module($module,f$tab)]
@@ -3076,6 +3085,8 @@ proc DTMRICreatePatternSlice {} {
 # .PROC DTMRICreatePatternVolume
 # Write new patterns defined by user in $env(HOME)/PatternData and update patterns selectbutton
 #  
+# .ARGS
+# .END
 #-------------------------------------------------------------------------------
 proc DTMRICreatePatternVolume {} {
       global Module Gui Volume DTMRI Mrml env
@@ -3148,14 +3159,13 @@ proc DTMRICreatePatternVolume {} {
 
 
 
-
 #-------------------------------------------------------------------------------
 # .PROC DTMRILoadPattern
 # Looks for files with information of patterns and adds this information in the menubutton of the create pattern frame
-#  
-#-------------------------------------------------------------------------------
 #nowworking2
-
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRILoadPattern {} {
     global Module Gui Volume DTMRI Mrml env PACKAGE_DIR_VTKDTMRI
 
@@ -3313,9 +3323,10 @@ proc DTMRILoadPattern {} {
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRIUpdateTipsPattern
-#  
+#  Commented out
+# .ARGS
+# .END
 #-------------------------------------------------------------------------------
-
 #proc DTMRIUpdateTipsPattern {} {
 
 #tkwait variable $DTMRI(selectedpattern)
@@ -3589,6 +3600,7 @@ proc DTMRICreateBindings {} {
 # .PROC DTMRIRoundFloatingPoint
 # Format floats for GUI display (we don't want -5e-11)
 # .ARGS
+# float val
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIRoundFloatingPoint {val} {
@@ -3719,6 +3731,7 @@ proc DTMRIHideScalarBar {} {
 # If we are thresholding the glyphs to display a subvolume and
 # the user requests a new threshold range this is called.
 # .ARGS
+# string not_used Not used
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIUpdateThreshold {{not_used ""}} {
@@ -3829,10 +3842,12 @@ proc DTMRIApplyVisualizationSettings {{mode ""}} {
 ################################################################
 #  visualization procedures that deal with glyphs
 ################################################################
+
 #-------------------------------------------------------------------------------
 # .PROC DTMRIUpdateGlyphResolution
 # choose the resolution of the glyphs
 # .ARGS
+# int value not used
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIUpdateGlyphResolution { value } {
@@ -3941,6 +3956,7 @@ proc DTMRIUpdateGlyphColor {} {
 # Called to reset the scalar range displayed to correspond to the 
 # numbers output by the current coloring method
 # .ARGS
+# string not_used Not used
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIUpdateGlyphScalarRange {{not_used ""}} {
@@ -4003,6 +4019,9 @@ proc DTMRIUpdateGlyphScalarRange {{not_used ""}} {
 # .PROC DTMRISelectRemoveHyperStreamline
 #  Remove the selected hyperstreamline
 # .ARGS
+# int x
+# int y
+# int z
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRISelectRemoveHyperStreamline {x y z} {
@@ -4018,6 +4037,15 @@ proc DTMRISelectRemoveHyperStreamline {x y z} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRISelectChooseHyperStreamline
+# 
+# .ARGS
+# int x
+# int y
+# int z
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRISelectChooseHyperStreamline {x y z} {
     global DTMRI
     global Select
@@ -4039,6 +4067,7 @@ proc DTMRISelectChooseHyperStreamline {x y z} {
 # int x 
 # int y
 # int z 
+# bool render Defaults to true
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRISelectStartHyperStreamline {x y z {render "true"} } {
@@ -4163,7 +4192,7 @@ proc DTMRIUpdateStreamlines {} {
 #-------------------------------------------------------------------------------
 # .PROC DTMRIUpdateTractingMethod
 # .ARGS
-# TractingMethod
+# string TractingMethod
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIUpdateTractingMethod { TractingMethod } {
@@ -4210,7 +4239,7 @@ proc DTMRIUpdateTractingMethod { TractingMethod } {
 #-------------------------------------------------------------------------------
 # .PROC DTMRIUpdateBSplineOrder
 # .ARGS
-# SplineOrder
+# string SplineOrder
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIUpdateBSplineOrder { SplineOrder } {
@@ -4256,6 +4285,7 @@ proc DTMRIUpdateTractColorToMulti {} {
 # .PROC DTMRIUpdateTractColor
 # configure the coloring to be solid or scalar per triangle 
 # .ARGS
+# string mode Optional, defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIUpdateTractColor {{mode ""}} {
@@ -4379,6 +4409,7 @@ proc DTMRIDeleteAllStreamlines {} {
 # .PROC DTMRISeedStreamlinesFromSegmentation
 # Seeds streamlines at all points in a segmentation.
 # .ARGS
+# int verbose Defaults to 1
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
@@ -4441,6 +4472,7 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
 # .PROC DTMRISeedStreamlinesEvenlyInMask
 # Seeds streamlines at all points in a segmentation.
 # .ARGS
+# int verbose defaults to 1
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRISeedStreamlinesEvenlyInMask {{verbose 1}} {
@@ -4509,6 +4541,7 @@ proc DTMRISeedStreamlinesEvenlyInMask {{verbose 1}} {
 # (Actually displaying all of the streamlines would be impossible
 # with a whole brain ROI.)
 # .ARGS
+# int verbose Defaults to 1
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRISeedAndSaveStreamlinesFromSegmentation {{verbose 1}} {
@@ -4587,6 +4620,7 @@ proc DTMRISeedAndSaveStreamlinesFromSegmentation {{verbose 1}} {
 # .PROC DTMRIFindStreamlinesThroughROI
 # Seeds streamlines at all points in a segmentation.
 # .ARGS
+# int verbose defaults to 1
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIFindStreamlinesThroughROI { {verbose 1} } {
@@ -5018,6 +5052,9 @@ proc DTMRIUpdateMathParams {} {
 # to copy parameters from instead of a volume node
 # Used for scalar output from DTMRI math calculations.
 # .ARGS
+# int OrigId
+# string Description Defaults to empty string
+# string VolName Defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRICreateEmptyVolume {OrigId {Description ""} { VolName ""}} {
@@ -5050,6 +5087,7 @@ proc DTMRICreateEmptyVolume {OrigId {Description ""} { VolName ""}} {
 # .PROC DTMRIDoMath
 # Called to compute a scalar vol from DTMRIs
 # .ARGS
+# string operation Defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIDoMath {{operation ""}} {
@@ -5217,6 +5255,7 @@ proc DTMRIApplyVisualizationParameters {} {
 # .PROC DTMRIDeleteVTKObject
 # 
 # .ARGS
+# string object
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIDeleteVTKObject {object} {
@@ -5240,6 +5279,8 @@ proc DTMRIDeleteVTKObject {object} {
 # .PROC DTMRIMakeVTKObject
 #  Wrapper for vtk object creation.
 # .ARGS
+# string class
+# string object
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIMakeVTKObject {class object} {
@@ -5263,6 +5304,11 @@ proc DTMRIMakeVTKObject {class object} {
 #  Initialize vtk object access: saves object's property on list
 #  for automatic GUI creation so user can change the property.
 # .ARGS
+# string object
+# string parameter
+# string value
+# string type
+# string desc
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIAddObjectProperty {object parameter value type desc} {
@@ -6248,6 +6294,16 @@ proc ConvertVolumeToTensors {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRICreateNewVolume
+# 
+# .ARGS
+# string volume
+# string name
+# string desc
+# string scanOrder
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRICreateNewVolume {volume name desc scanOrder} {
   global Volume View
   
@@ -6300,6 +6356,7 @@ proc DTMRICreateNewVolume {volume name desc scanOrder} {
 # Dump DTMRIs to structured points file.  this ignores
 # world to RAS, DTMRIs are just written in scaled ijk coordinate system.
 # .ARGS
+# path filename
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIWriteStructuredPoints {filename} {
@@ -6462,6 +6519,7 @@ proc DTMRISaveStreamlinesAsPolyLines {subdir name {verbose "1"}} {
 # Save all streamlines as a vtk model(s).
 # Each color is written as a separate model.
 # .ARGS
+# int verbose default is 1
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRISaveStreamlinesAsModel {{verbose "1"}} {
@@ -6608,6 +6666,8 @@ proc DTMRICalculateActorMatrix {transform t} {
 #  a rotation matrix that can act on each DTMRI.
 #
 # .ARGS
+# string transform
+# int t
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRICalculateIJKtoRASRotationMatrix {transform t} {
@@ -6661,6 +6721,7 @@ proc DTMRICalculateIJKtoRASRotationMatrix {transform t} {
 # the glyph button is pressed, in the procedure DTMRIUpdate. It could
 # be faster to set it up here also.)
 # .ARGS
+# int n
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRISetActive {n} {
