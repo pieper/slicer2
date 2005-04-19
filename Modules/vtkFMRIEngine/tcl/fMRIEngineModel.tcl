@@ -36,19 +36,21 @@
 #===============================================================================
 # FILE:        fMRIEngineModel.tcl
 # PROCEDURES:  
-#   fMRIEngineBuildUIForSetupTab the
+#   fMRIEngineBuildUIForSetupTab parent
 #   fMRIEngineLoadModel
 #   fMRIEngineSaveModel
 #   fMRIEngineClearModel
 #   fMRIEngineViewModel
-#   fMRIEngineBuildUIForTasks the
-#   fMRIEngineSetModelTask the
+#   fMRIEngineBuildUIForTasks parent
+#   fMRIEngineSetModelTask task
+#   fMRIEngineUpdateSetupTab
 #==========================================================================auto=
+
 #-------------------------------------------------------------------------------
 # .PROC fMRIEngineBuildUIForSetupTab
 # Creates UI for model tab 
 # .ARGS
-# parent the parent frame 
+# windowpath parent the parent frame 
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineBuildUIForSetupTab {parent} {
@@ -237,7 +239,7 @@ proc fMRIEngineViewModel {} {
 # .PROC fMRIEngineBuildUIForTasks
 # Creates UI for tasks in model 
 # .ARGS
-# parent the parent frame 
+# windowpath parent the parent frame 
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineBuildUIForTasks {parent} {
@@ -323,7 +325,7 @@ proc fMRIEngineBuildUIForTasks {parent} {
 # .PROC fMRIEngineSetModelTask
 # Switches model task 
 # .ARGS
-# task the model task 
+# string task the model task 
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineSetModelTask {task} {

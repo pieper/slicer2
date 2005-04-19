@@ -1,3 +1,6 @@
+#===============================================================================
+# FILE:        notebook.tcl
+# PROCEDURES:  
 #=========================================================================
 #  This file is a modified version of notebook.tcl from the following:
 #
@@ -5,7 +8,7 @@
 #  Author    : D. Richard Hipp <drh@acm.org>
 #  Web       : http://www.hwaci.com/drh/
 #  Copyright : (C) 1996,1997,1998 D. Richard Hipp
-#  Version   : $Revision: 1.2 $
+#  Version   : $Revision: 1.3 $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -24,9 +27,16 @@
 #
 #=========================================================================
 
+#-------------------------------------------------------------------------------
+# .PROC Notebook-create
 #
 # Create a new notebook widget
 #
+# .ARGS
+# int w
+# list args
+# .END
+#-------------------------------------------------------------------------------
 proc Notebook-create {w args} {
     global Notebook
 
@@ -44,10 +54,16 @@ proc Notebook-create {w args} {
     eval Notebook-config $w $args
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC Notebook-create
 #
 # Change configuration options for the notebook widget
 #
+# .ARGS
+# int w
+# list args
+# .END
+#-------------------------------------------------------------------------------
 proc Notebook-config {w args} {
     global Notebook
 
@@ -141,10 +157,16 @@ proc Notebook-config {w args} {
     Notebook-raise.page $w $top
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC Notebook-setCallback 
 #
 # Set callback function 
 #
+# .ARGS
+# int w
+# string callback
+# .END
+#-------------------------------------------------------------------------------
 proc Notebook-setCallback {w callback} {
     global Notebook
 
@@ -152,11 +174,20 @@ proc Notebook-setCallback {w callback} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC Notebook-click
+#
 #
 # This routine is called whenever the mouse-button is pressed over
 # the notebook.  It determines if any page should be raised and raises
 # that page.
 #
+# .ARGS
+# int w
+# int x
+# int y
+# .END
+#-------------------------------------------------------------------------------
 proc Notebook-click {w x y} {
     global Notebook
 
@@ -175,11 +206,16 @@ proc Notebook-click {w x y} {
     }
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC Notebook-raise.page
 #
 # For internal use only.  This procedure raised the n-th page of
 # the notebook
 #
+# int w
+# int n
+# .END
+#-------------------------------------------------------------------------------
 proc Notebook-raise.page {w n} {
     global Notebook
 
@@ -214,10 +250,17 @@ proc Notebook-raise.page {w n} {
     raise $w.f$n
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC Notebook-pageconfi
 #
 # Change the page-specific configuration options for the notebook
 #
+# .ARGS
+# int w
+# string name
+# list args
+# .END
+#-------------------------------------------------------------------------------
 proc Notebook-pageconfig {w name args} {
     global Notebook
 
@@ -241,12 +284,18 @@ proc Notebook-pageconfig {w name args} {
     }
 }
  
-
+#-------------------------------------------------------------------------------
+# .PROC Notebook-raise 
 #
 # This procedure raises a notebook page given its name.  But first
 # we check the "onexit" procedure for the current page (if any) and
 # if it returns false, we don't allow the raise to proceed.
 #
+# .ARGS
+# int w
+# string name
+# .END
+#-------------------------------------------------------------------------------
 proc Notebook-raise {w name} {
     global Notebook
 
@@ -264,10 +313,16 @@ proc Notebook-raise {w name} {
     }
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC Notebook-frame
 #
 # Return the frame associated with a given page of the notebook.
 #
+# .ARGS
+# int w
+# string name
+# .END
+#-------------------------------------------------------------------------------
 proc Notebook-frame {w name} {
     global Notebook
 
@@ -279,10 +334,15 @@ proc Notebook-frame {w name} {
     }
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC 
 #
 # Try to resize the notebook to the next time we become idle.
 #
+# .ARGS
+# int w
+# .END
+#-------------------------------------------------------------------------------
 proc Notebook-scheduleExpand w {
     global Notebook
 
@@ -293,10 +353,15 @@ proc Notebook-scheduleExpand w {
     after idle "Notebook-expand $w"
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC 
 #
 # Resize the notebook to fit inside its containing widget.
 #
+# .ARGS
+# int w
+# .END
+#-------------------------------------------------------------------------------
 proc Notebook-expand w {
     global Notebook
 
