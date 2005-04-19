@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -38,15 +38,15 @@
 # PROCEDURES:  
 #   FSLReaderInit
 #   FSLReaderBuildGUI
-#   FSLReaderSetPlottingOption the
-#   FSLReaderSetBackgroundOption the
+#   FSLReaderSetPlottingOption option
+#   FSLReaderSetBackgroundOption option
 #   FSLReaderLoadAnalyze4D 
 #   FSLReaderLoadTimeSeries
 #   FSLReaderLoadBackgroundVolume
 #   FSLReaderLoadModels
 #   FSLReaderLoadForegroundVolume
-#   FSLReaderLoadVolume a
-#   FSLReaderSetFSLDir where the
+#   FSLReaderLoadVolume bg
+#   FSLReaderSetFSLDir option pathName
 #   FSLReaderLaunchBrowser
 #   FSLReaderBuildVTK
 #   FSLReaderEnter
@@ -162,7 +162,7 @@ proc FSLReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2004/08/30 19:48:19 $}]
+        {$Revision: 1.7 $} {$Date: 2005/04/19 18:35:20 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -489,7 +489,7 @@ proc FSLReaderBuildGUI {} {
 # .PROC FSLReaderSetPlottingOption
 # Switches time series plotting options 
 # .ARGS
-# option the option to be set 
+# string option the option to be set 
 # .END
 #-------------------------------------------------------------------------------
 proc FSLReaderSetPlottingOption {option} {
@@ -514,7 +514,7 @@ proc FSLReaderSetPlottingOption {option} {
 # .PROC FSLReaderSetBackgroundOption
 # Switches background volume 
 # .ARGS
-# option the volume tag to switch 
+# string option the volume tag to switch 
 # .END
 #-------------------------------------------------------------------------------
 proc FSLReaderSetBackgroundOption {option} {
@@ -706,7 +706,7 @@ proc FSLReaderLoadForegroundVolume {} {
 # .PROC FSLReaderLoadVolume
 # Load a volume 
 # .ARGS
-# bg a boolean value; 1 - the volume displayed as background, 0 - foreground 
+# boolean bg 1 - the volume displayed as background, 0 - foreground 
 # .END
 #-------------------------------------------------------------------------------
 proc FSLReaderLoadVolume {bg} {
@@ -746,8 +746,8 @@ proc FSLReaderLoadVolume {bg} {
 # .PROC FSLReaderSetFSLDir
 # Sets FSL output directory 
 # .ARGS
-# option where to call
-# pathName the input where the FSL output directory to be derived
+# string option where to call
+# path pathName the input where the FSL output directory to be derived
 # .END
 #-------------------------------------------------------------------------------
 proc FSLReaderSetFSLDir {option {pathName ""}} {

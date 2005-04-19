@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -36,13 +36,14 @@
 #===============================================================================
 # FILE:        FSLReaderPlot.tcl
 # PROCEDURES:  
-#   FSLReaderPopUpPlot y)
-#   FSLReaderRetrieveTimeCourse
+#   FSLReaderPopUpPlot x y
+#   FSLReaderRetrieveTimeCourse i j k
 #   FSLReaderCloseTimeCourseWindow
 #   FSLReaderGetDataVolumeDimensions
-#   FSLReaderGetVoxelFromSelection y)
-#   FSLReaderCheckSelectionAgainstVolumeLimits the
+#   FSLReaderGetVoxelFromSelection x y
+#   FSLReaderCheckSelectionAgainstVolumeLimits argstr
 #==========================================================================auto=
+
 #-------------------------------------------------------------------------------
 # .PROC FSLReaderPopUpPlot
 # This routine pops up a plot of a selected voxel's response over
@@ -50,7 +51,8 @@
 # experimental protocol, or the protocol convolved with a hemodynamic
 # response function.
 # .ARGS
-# (x, y) the selected point
+# int x the selected point's x coord
+# int y the selected point's y coord
 # .END
 #-------------------------------------------------------------------------------
 proc FSLReaderPopUpPlot {x y} {
@@ -131,6 +133,9 @@ proc FSLReaderPopUpPlot {x y} {
 # .PROC FSLReaderRetrieveTimeCourse
 # Returns time course data for a specified voxel
 # .ARGS
+# int i
+# int j
+# int k
 # .END
 #-------------------------------------------------------------------------------
 proc FSLReaderRetrieveTimeCourse {i j k} {
@@ -220,7 +225,8 @@ proc FSLReaderGetDataVolumeDimensions {} {
 # .PROC FSLReaderGetVoxelFromSelection
 # Gets voxel index from the selection 
 # .ARGS
-# (x, y) the selected point 
+# int x the selected point's x coord
+# int y the selected point's y coord
 # .END
 #-------------------------------------------------------------------------------
 proc FSLReaderGetVoxelFromSelection {x y} {
@@ -293,7 +299,7 @@ proc FSLReaderGetVoxelFromSelection {x y} {
 # .PROC FSLReaderCheckSelectionAgainstVolumeLimits
 # Checks voxel selection against volume limits 
 # .ARGS
-# argstr the data string
+# string argstr the data string
 # .END
 #-------------------------------------------------------------------------------
 proc FSLReaderCheckSelectionAgainstVolumeLimits {argstr} {
