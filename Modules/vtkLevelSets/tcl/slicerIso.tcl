@@ -1,3 +1,44 @@
+#=auto==========================================================================
+
+#===============================================================================
+# FILE:        slicerIso.tcl
+# PROCEDURES:  
+#   SGetImage volname
+#   SGetImageId volname
+#   SRenameImage volname1 volname2
+#   SGetSurface modelname
+#   SGetSurfaceId modelname
+#   SAddMrmlImage imname extension
+#   SSaveImage imname filename
+#   SSaveImageId imid filename
+#   DisplayMatrix mat
+#   SImageToUSHORT imname extension
+#   SInvertIntensity imname sd
+#   SMultiplyIntensity imname ext f
+#   SSmooth imname sd
+#   SUpSample imname fx fy fz mode
+#   SAniso imname sd th it
+#   SSubVol imname extension x1 x2 y1 y2 z1 z2
+#   SSubVol2 imname extension x1 x2 y1 y2 z1 z2
+#   SGetTransfromMatrix VolId volid
+#   SModelMakerCreate volname name threshold smooth decimate
+#   SModelMakerMarch m v threshold decimateIterations smoothIterations
+#   SCleanMarch
+#   SModel_IJK_2_RAS volID modelname newmodelname
+#   SModelLine_IJK_2_RAS volID modelname newmodelname
+#   SModelConvert volID modelfilename model2filename
+#   SModelLine_AMI_2_RAS volID modelname newmodelname
+#   SModel_RAS_2_IJK volID modelname newmodelname
+#   SModel_Scale modelname newmodelname sx sy sz
+#   SModelLine_Scale modelname newmodelname sx sy sz
+#   SModelLine_Smooth modelname newmodelname length
+#   SModel_FlipY modelname newmodelname ty
+#   SModelLine_FlipY modelname newmodelname ty
+#   SModel_Translation modelname newmodelname tx ty tz
+#   SModelLine_Translation modelname newmodelname tx ty tz
+#   SModel_Reverse modelname newmodelname
+#   SMainCC surfname
+#==========================================================================auto=
 #   ==================================================
 #   Module : vtkLevelSets
 #   Authors: Karl Krissian
@@ -109,8 +150,13 @@
 # BuildUpper, BuildLower
 #
 
-
-#======================================================================
+#-------------------------------------------------------------------------------
+# .PROC SGetImage
+# 
+# .ARGS
+# string volname
+# .END
+#-------------------------------------------------------------------------------
 proc SGetImage {volname} {
 #    ---------
   global Volume
@@ -124,7 +170,13 @@ proc SGetImage {volname} {
   return -1
 }
 
-#======================================================================
+#-------------------------------------------------------------------------------
+# .PROC SGetImageId
+# 
+# .ARGS
+# string volname
+# .END
+#-------------------------------------------------------------------------------
 proc SGetImageId {volname} {
 #    -----------
   global Volume
@@ -138,7 +190,14 @@ proc SGetImageId {volname} {
   return -1
 }
 
-#======================================================================
+#-------------------------------------------------------------------------------
+# .PROC SRenameImage
+# 
+# .ARGS
+# string volname1
+# string volname2
+# .END
+#-------------------------------------------------------------------------------
 proc SRenameImage { volname1 volname2 } {
 #    -----------
 
@@ -154,7 +213,13 @@ proc SRenameImage { volname1 volname2 } {
   return -1
 }
 
-#======================================================================
+#-------------------------------------------------------------------------------
+# .PROC SGetSurface
+# 
+# .ARGS
+# string modelname
+# .END
+#-------------------------------------------------------------------------------
 proc SGetSurface {modelname} {
 #    -----------
   global Model
@@ -168,7 +233,13 @@ proc SGetSurface {modelname} {
   return -1
 }
 
-#======================================================================
+#-------------------------------------------------------------------------------
+# .PROC SGetSurfaceId
+# 
+# .ARGS
+# string modelname
+# .END
+#-------------------------------------------------------------------------------
 proc SGetSurfaceId {modelname} {
 #    -------------
   global Model
@@ -182,8 +253,14 @@ proc SGetSurfaceId {modelname} {
   return -1
 }
 
-
-#======================================================================
+#-------------------------------------------------------------------------------
+# .PROC SAddMrmlImage
+# 
+# .ARGS
+# string imname
+# string extension
+# .END
+#-------------------------------------------------------------------------------
 proc SAddMrmlImage {imname extension } {
 #    -------------
   global Volume
@@ -201,8 +278,14 @@ proc SAddMrmlImage {imname extension } {
   return $newvol
 }
 
-
-#======================================================================
+#-------------------------------------------------------------------------------
+# .PROC SSaveImage
+# 
+# .ARGS
+# string imname
+# path filename
+# .END
+#-------------------------------------------------------------------------------
 proc SSaveImage {imname filename } {
 #    ----------
   global Volume
@@ -222,6 +305,14 @@ proc SSaveImage {imname filename } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC SSaveImageId
+# 
+# .ARGS
+# int imid
+# path filename
+# .END
+#-------------------------------------------------------------------------------
 proc SSaveImageId {imid filename } {
 #    ------------
   global Volume
@@ -240,7 +331,13 @@ proc SSaveImageId {imid filename } {
 
 }
 
-#======================================================================
+#-------------------------------------------------------------------------------
+# .PROC DisplayMatrix
+# 
+# .ARGS
+# vtkMatrix4x4 mat
+# .END
+#-------------------------------------------------------------------------------
 proc DisplayMatrix {mat} {
 #    -------------
     set e00 [$mat GetElement 0 0]
@@ -270,8 +367,14 @@ proc DisplayMatrix {mat} {
   
 }
 
-
-#======================================================================
+#-------------------------------------------------------------------------------
+# .PROC SImageToUSHORT
+# 
+# .ARGS
+# string imname
+# string extension
+# .END
+#-------------------------------------------------------------------------------
 proc SImageToUSHORT {imname extension} {
 #    --------------
 
@@ -296,7 +399,14 @@ proc SImageToUSHORT {imname extension} {
 
 }
 
-#======================================================================
+#-------------------------------------------------------------------------------
+# .PROC SInvertIntensity
+# 
+# .ARGS
+# string imname
+# float sd standard deviation
+# .END
+#-------------------------------------------------------------------------------
 proc SInvertIntensity {imname sd} {
 #    ----------------
 
@@ -321,7 +431,15 @@ proc SInvertIntensity {imname sd} {
 
 }
 
-#======================================================================
+#-------------------------------------------------------------------------------
+# .PROC SMultiplyIntensity
+# 
+# .ARGS
+# string imname
+# string ext
+# int f
+# .END
+#-------------------------------------------------------------------------------
 proc SMultiplyIntensity {imname ext f} {
 #    ----------------
 
@@ -346,7 +464,14 @@ proc SMultiplyIntensity {imname ext f} {
 
 }
 
-#======================================================================
+#-------------------------------------------------------------------------------
+# .PROC SSmooth
+# 
+# .ARGS
+# string imname
+# float sd standard deviation
+# .END
+#-------------------------------------------------------------------------------
 proc SSmooth {imname sd} {
 #    -------
   global Volume
@@ -371,7 +496,17 @@ proc SSmooth {imname sd} {
 
 }
 
-#======================================================================
+#-------------------------------------------------------------------------------
+# .PROC SUpSample
+# 
+# .ARGS
+# string imname
+# float fx
+# float fy
+# float fz
+# string mode defaults to linear
+# .END
+#-------------------------------------------------------------------------------
 proc SUpSample {imname fx fy fz { mode "linear" } } {
 #    ---------
 
@@ -457,8 +592,16 @@ proc SUpSample {imname fx fy fz { mode "linear" } } {
 
 }
 
-
-#======================================================================
+#-------------------------------------------------------------------------------
+# .PROC SAniso
+# 
+# .ARGS
+# string imname
+# float sd
+# float th
+# int it number of interations
+# .END
+#-------------------------------------------------------------------------------
 proc SAniso {imname sd th it} {
 #    ------
   global Volume
@@ -483,15 +626,25 @@ proc SAniso {imname sd th it} {
 
 }
 
-
-#======================================================================
-# Slicer does not handle non-0 based extents for now (vtkImageReformat)
-# so some ticks need to be done
-#
-#
+#-------------------------------------------------------------------------------
+# .PROC SSubVol
+# 
+# .ARGS
+# string imname
+# string extension
+# int x1
+# int x2
+# int y1
+# int y2
+# int z1
+# int z2
+# float 
+# .END
+#-------------------------------------------------------------------------------
 proc SSubVol {imname extension x1 x2 y1 y2 z1 z2 } {
 #    -------
-
+# Slicer does not handle non-0 based extents for now (vtkImageReformat)
+# so some ticks need to be done
 
   global Volume Transform Matrix
 
@@ -621,15 +774,24 @@ proc SSubVol {imname extension x1 x2 y1 y2 z1 z2 } {
 
   return [append $imname $extension]
 }
-#
 
-#======================================================================
-# trying with non-zero based extent
-#
-#
+#-------------------------------------------------------------------------------
+# .PROC SSubVol2
+# 
+# .ARGS
+# string imname
+# string extension
+# int x1
+# int x2
+# int y1
+# int y2
+# int z1
+# int z2
+# .END
+#-------------------------------------------------------------------------------
 proc SSubVol2 {imname extension x1 x2 y1 y2 z1 z2 } {
 #    -------
-
+# trying with non-zero based extent
 
   global Volume
 
@@ -715,6 +877,7 @@ proc SSubVol2 {imname extension x1 x2 y1 y2 z1 z2 } {
 # with a limited depth of 1 ...
 #
 # .ARGS
+# int volid volume id
 # .END
 #-------------------------------------------------------------------------------
 proc SGetTransfromMatrix { volid } {
@@ -785,6 +948,11 @@ proc SGetTransfromMatrix { volid } {
 # .PROC SModelMakerCreate
 # 
 # .ARGS
+# string volname
+# string name
+# float threshold
+# int smooth
+# int decimate
 # .END
 #-------------------------------------------------------------------------------
 proc SModelMakerCreate { volname name threshold smooth decimate} {
@@ -868,7 +1036,12 @@ $ModelMaker(n,mcubes) polygons reduced to $ModelMaker(n,decimator)."
 #-------------------------------------------------------------------------------
 # .PROC SModelMakerMarch
 # 
-# 
+# .ARGS
+# int m
+# int v
+# int threshold
+# int decimateIterations
+# int smoothIterations
 # .END
 #-------------------------------------------------------------------------------
 proc SModelMakerMarch {m v threshold decimateIterations smoothIterations} {
@@ -1068,8 +1241,12 @@ proc SModelMakerMarch {m v threshold decimateIterations smoothIterations} {
     return 0
 }
 
-
-#----------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# .PROC SCleanMarch
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc SCleanMarch {} {
     foreach p "mcubes decimator reverser transformer smoother normals stripper" {
          $p SetInput ""
@@ -1079,7 +1256,15 @@ proc SCleanMarch {} {
     set ModelMaker(marching) 0
 }
 
-#----------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# .PROC SModel_IJK_2_RAS
+# 
+# .ARGS
+# int volID 
+# string modelname
+# string newmodelname 
+# .END
+#-------------------------------------------------------------------------------
 proc SModel_IJK_2_RAS { volID modelname newmodelname } {
 #
 # Not tested yet ...
@@ -1178,9 +1363,15 @@ proc SModel_IJK_2_RAS { volID modelname newmodelname } {
 } 
 # SModel_IJK_2_RAS
 
-
-
-#----------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# .PROC SModelLine_IJK_2_RAS
+# 
+# .ARGS
+# int volID 
+# string modelname
+# string newmodelname 
+# .END
+#-------------------------------------------------------------------------------
 proc SModelLine_IJK_2_RAS { volID modelname newmodelname } {
 #
 # Not tested yet ...
@@ -1254,8 +1445,15 @@ proc SModelLine_IJK_2_RAS { volID modelname newmodelname } {
 } 
 # SModelLine_IJK_2_RAS
 
-
-#----------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# .PROC SModelConvert
+# 
+# .ARGS
+# int volID 
+# string modelfilename
+# string model2filename 
+# .END
+#-------------------------------------------------------------------------------
 proc SModelConvert { volID modelfilename model2filename } {
 #
 #
@@ -1300,8 +1498,15 @@ proc SModelConvert { volID modelfilename model2filename } {
 
 }
 
-
-#----------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# .PROC SModelLine_AMI_2_RAS
+# 
+# .ARGS
+# int volID 
+# string modelname
+# string newmodelname 
+# .END
+#-------------------------------------------------------------------------------
 proc SModelLine_AMI_2_RAS { volID modelname newmodelname } {
 #
 # Not tested yet ...
@@ -1375,9 +1580,15 @@ proc SModelLine_AMI_2_RAS { volID modelname newmodelname } {
 } 
 # SModelLine_AMI_2_RAS
 
-
-
-#----------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# .PROC SModel_RAS_2_IJK
+# 
+# .ARGS
+# int volID 
+# string modelname
+# string newmodelname 
+# .END
+#-------------------------------------------------------------------------------
 proc SModel_RAS_2_IJK { volID modelname newmodelname } {
 #
 # Not tested yet ...
@@ -1476,8 +1687,17 @@ proc SModel_RAS_2_IJK { volID modelname newmodelname } {
 } 
 # RAS_2_IJK
 
-
-#----------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# .PROC SModel_Scale
+# 
+# .ARGS
+# string modelname
+# string newmodelname 
+# int sx
+# int sy
+# int sz
+# .END
+#-------------------------------------------------------------------------------
 proc SModel_Scale { modelname newmodelname sx sy sz} {
 #
 # Not tested yet ...
@@ -1561,7 +1781,17 @@ proc SModel_Scale { modelname newmodelname sx sy sz} {
 } 
 # SModel_Scale
 
-#----------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# .PROC SModelLine_Scale
+# 
+# .ARGS
+# string modelname
+# string newmodelname 
+# int sx
+# int sy
+# int sz
+# .END
+#-------------------------------------------------------------------------------
 proc SModelLine_Scale { modelname newmodelname sx sy sz} {
 #
 # Not tested yet ...
@@ -1620,7 +1850,15 @@ proc SModelLine_Scale { modelname newmodelname sx sy sz} {
 } 
 # SModelLine_Scale
 
-#----------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# .PROC SModelLine_Smooth
+# 
+# .ARGS
+# string modelname
+# string newmodelname 
+# int length
+# .END
+#-------------------------------------------------------------------------------
 proc SModelLine_Smooth { modelname newmodelname length } {
 #
 # Not tested yet ...
@@ -1673,7 +1911,15 @@ proc SModelLine_Smooth { modelname newmodelname length } {
 } 
 # SModelLine_Smooth
 
-#----------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# .PROC SModel_FlipY
+# 
+# .ARGS
+# string modelname
+# string newmodelname
+# int ty
+# .END
+#-------------------------------------------------------------------------------
 proc SModel_FlipY { modelname newmodelname ty} {
 #
 # Not working for the moment ...
@@ -1758,7 +2004,15 @@ proc SModel_FlipY { modelname newmodelname ty} {
 } 
 # SModel_FlipY
 
-#----------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# .PROC SModelLine_FlipY
+# 
+# .ARGS
+# string modelname
+# string newmodelname
+# int ty
+# .END
+#-------------------------------------------------------------------------------
 proc SModelLine_FlipY { modelname newmodelname ty} {
 #
 # Not tested yet ...
@@ -1818,8 +2072,17 @@ proc SModelLine_FlipY { modelname newmodelname ty} {
 } 
 # SModelLine_Scale
 
-
-#----------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# .PROC SModel_Translation
+# 
+# .ARGS
+# string modelname
+# string newmodelname
+# float tx
+# float ty
+# float tz
+# .END
+#-------------------------------------------------------------------------------
 proc SModel_Translation { modelname newmodelname tx ty tz} {
 #
 # Not tested yet ...
@@ -1903,8 +2166,17 @@ proc SModel_Translation { modelname newmodelname tx ty tz} {
 } 
 # SModel_Translation
 
-
-#----------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# .PROC SModelLine_Translation
+# 
+# .ARGS
+# string modelname
+# string newmodelname
+# float tx
+# float ty
+# float tz
+# .END
+#-------------------------------------------------------------------------------
 proc SModelLine_Translation { modelname newmodelname tx ty tz} {
 #
 # Not tested yet ...
@@ -1966,8 +2238,14 @@ proc SModelLine_Translation { modelname newmodelname tx ty tz} {
 } 
 # SModelLine_Translation
 
-
-#----------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# .PROC SModel_Reverse
+# 
+# .ARGS
+# string modelname
+# string newmodelname
+# .END
+#-------------------------------------------------------------------------------
 proc SModel_Reverse { modelname newmodelname } {
 #
 # Not tested yet ...
@@ -2040,6 +2318,13 @@ proc SModel_Reverse { modelname newmodelname } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC SMainCC
+# 
+# .ARGS
+# string surfname
+# .END
+#-------------------------------------------------------------------------------
 proc SMainCC { surfname} {
 
   set sid [SGetSurfaceId surfname]
