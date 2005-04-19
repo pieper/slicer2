@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -28,13 +28,16 @@
 # WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
 # NON-INFRINGEMENT.
 # 
-# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
 #
 #===============================================================================
-# FILE:        EMSegment.tcl
+# FILE:        EMLocalSegment.tcl
 # PROCEDURES:  
+#   EMSegmentInit
+#   EMSegmentForceInit
 #   EMSegmentInit
 #   EMSegmentBuildGUI
 #   EMSegmentUpdateLocalProb
@@ -43,11 +46,19 @@
 #   EMSegmentExit
 #   EMSegmentShowFile
 #   EMSegmentBindingCallback
+#   EMSegmentLoadMRML
 #   EMSegmentUpdateMRML
 #   EMSegmentProbVolumeSelectNode
-#   EMSegmentMRMLDeleteCreateNodesNodesListEntries 
+#   EMSegmentUpdateReferenceStandard
+#   EMSegmentReferenceStandardSelectNode
+#   EMSegmentBuildEntryBox
+#   EMSegmentAddEntries
+#   EMSegmentUpdateEntries
+#   EMSegmentFindParentClass
 #   EMSegmentClassNavigation
-#   EMSegmentSaveSeting 
+#   EMSegmentBuildWeightPannel
+#   EMSegmentMRMLDeleteCreateNodesNodesListEntries 
+#   EMSegmentSaveSetting 
 #   EMSegmentSaveSettingClass 
 #   EMSegmentChangeSuperClassName
 #   EMSegmentStartEM
@@ -72,6 +83,7 @@
 #   EMSegmentUseSamples
 #   EMSegmentFindClassAndTestfromIntClass
 #   EMSegmentChangeClass
+#   EMSegmentUpdateClassNavigationButton
 #   EMSegmentChangeIntensityClass 
 #   EMSegmentUpdateClasses 
 #   EMSegmentPlotCurveRegion
@@ -93,14 +105,14 @@
 #   EMSegmentCreateCIMRowsColumns
 #   EMSegmentSetCIMMatrix
 #   EMSegmentChangeCIMMatrix
-#   EMSegmentEndSlice 
+#   EMSegmentSegmentationBoundaryMax 
 #   EMSegmentAssignInput
 #   EMSegmentSelectfromVolumeList
 #   EMSegmentChangeVolumeSegmented 
 #   EMSegmentTransfereVolume
 #   EMSegmentUpdateVolumeList
 #   EMSegmentDeleteFromSelList
-#   EMSegmentCreateMeanCovarianceRowsColumns 
+#   EMSegmentCreate_Mean_Covariance_InputChannelWeights_RowsColumns 
 #   EMSegmentCreateGraphDisplayButton
 #   EMSegmentShowGraphWindow
 #   EMSegmentCreateGraphWindow
@@ -111,6 +123,8 @@
 #   EMSegmentCreateDisplayRedCross 
 #   EMSegmentChangeDiceVolume
 #   EMSegmentCalcDice
+#   EMSegmentWriteClassModels 
+#   EMSegmentMakeModels
 #   EMSegmentReadTextBox  
 #   EMSegmentScrolledHorizontal  
 #   EMSegmentScrolledText  
@@ -140,12 +154,24 @@ proc EMLocalSegmentInit {} {
     EMSegmentInit
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentForceInit
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EMSegmentForceInit {} {
     global EMSegment
     array unset EMSegment 
     EMSegmentInit
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentInit
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EMSegmentInit {} {
     global EMSegment Module Volume Model Mrml Color Slice Gui env
 
@@ -262,7 +288,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.56 $} {$Date: 2005/04/18 19:31:03 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.57 $} {$Date: 2005/04/19 16:47:04 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -577,6 +603,7 @@ proc EMSegmentInit {} {
 # .PROC EMSegmentBuildGUI
 #
 # Create the Graphical User Interface.
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentBuildGUI {} {
@@ -1480,10 +1507,13 @@ Description of the tabs:
     # Depending on the Situation we want to en- or disable certain fields
     EMSegmentUseSamples 0
 }
+
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentUpdateLocalProb
 # Update local porb panel 
 # .ARGS
+# string ModelLabel
+# string Sclass
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentUpdateLocalProb {ModelLabel Sclass} {
@@ -1491,10 +1521,15 @@ proc EMSegmentUpdateLocalProb {ModelLabel Sclass} {
     DevUpdateNodeSelectButton Volume EMSegment $ModelLabel ProbVolumeSelect EMSegmentProbVolumeSelectNode
     EMSegmentProbVolumeSelectNode Volume $EMSegment(Cattrib,$Sclass,ProbabilityData) EMSegment $ModelLabel blub
 }
+
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentDefineLocalProb
 # Defines the panel with Probability, Color and Label Class Definition 
 # .ARGS
+# windowpath f
+# string Panel
+# string Sclass
+# string General
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentDefineLocalProb {f Panel Sclass General} {
@@ -1563,6 +1598,7 @@ proc EMSegmentExit {} {
 #
 # This routine demos how to make button callbacks and use global arrays
 # for object oriented programming.
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentShowFile {} {
@@ -1577,6 +1613,9 @@ proc EMSegmentShowFile {} {
 # Callback routine for bindings to take samples for classes
 # 
 # .ARGS
+# string event
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentBindingCallback { event x y} {
@@ -1597,7 +1636,13 @@ proc EMSegmentBindingCallback { event x y} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentDefineNodeAttributeList
 # Filters out all the SetCommands of a node 
+# .ARGS
+# string MrmlNodeType
+# .END
+#-------------------------------------------------------------------------------
 proc EMSegmentDefineNodeAttributeList {MrmlNodeType} {
     set SetList ""          
     set SetListLower ""
@@ -1627,7 +1672,14 @@ proc EMSegmentDefineNodeAttributeList {MrmlNodeType} {
     return "{$SetList} {$SetListLower} {$AttributeList} {$InitList}" 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentLoadMRMLNode
 # Loads Mrml parameters of a certain type
+# .ARGS
+# string NodeType
+# strign attr
+# .END
+#-------------------------------------------------------------------------------
 proc EMSegmentLoadMRMLNode {NodeType attr} {
     global Mrml EMSegment
     set n [MainMrmlAddNode $NodeType]
@@ -1650,6 +1702,8 @@ proc EMSegmentLoadMRMLNode {NodeType attr} {
 # Whenever the MRML Tree is loaded this function is called to update all 
 # EMLocalSegmenter related information
 # .ARGS
+# string tag
+# string attr
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentLoadMRML {tag attr} {
@@ -2060,6 +2114,12 @@ proc EMSegmentUpdateMRML {} {
 # .PROC EMSegmentProbVolumeSelectNode
 #
 # Called by when the mb{type}-ProbVolumeSelect is called 
+# .ARGS
+# string type
+# int id
+# string ArrayName
+# string ModelLabel
+# string ModelName
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentProbVolumeSelectNode { type id ArrayName ModelLabel ModelName} {
@@ -2107,6 +2167,12 @@ proc EMSegmentProbVolumeSelectNode { type id ArrayName ModelLabel ModelName} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentUpdateReferenceStandard
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EMSegmentUpdateReferenceStandard { } {
     global EMSegment
     DevUpdateNodeSelectButton Volume EMSegment  Cl-ReferenceStandardSelect  ReferenceStandardSelect EMSegmentReferenceStandardSelectNode
@@ -2117,6 +2183,12 @@ proc EMSegmentUpdateReferenceStandard { } {
 # .PROC EMSegmentReferenceStandardSelectNode
 #
 # Called by when the mbCl-ReferenceStandardSelect is called 
+# .ARGS
+# string type
+# int id
+# string ArrayName
+# string ModelLabel
+# string ModelName
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentReferenceStandardSelectNode { type id ArrayName ModelLabel ModelName} {
@@ -2139,6 +2211,14 @@ proc EMSegmentReferenceStandardSelectNode { type id ArrayName ModelLabel ModelNa
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentBuildEntryBox
+# 
+# .ARGS
+# windowpath f
+# string Name
+# .END
+#-------------------------------------------------------------------------------
 proc EMSegmentBuildEntryBox {f Name} {
     global Gui EMSegment
     if {[llength $EMSegment(Gui${Name}NameList)] == 0} {return}
@@ -2162,6 +2242,16 @@ proc EMSegmentBuildEntryBox {f Name} {
     $EMSegment(Cl-fClass) configure -height $EMSegment(tabbedFrameHeight)   
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentAddEntries
+# 
+# .ARGS
+# windowpath f
+# list NameList
+# list AttributeList
+# list EntryTypeList
+# .END
+#-------------------------------------------------------------------------------
 proc EMSegmentAddEntries {f NameList AttributeList EntryTypeList} {
     global EMSegment Gui
     set Sclass $EMSegment(Class)
@@ -2193,6 +2283,13 @@ proc EMSegmentAddEntries {f NameList AttributeList EntryTypeList} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentUpdateEntries
+# 
+# .ARGS
+# string Name
+# .END
+#-------------------------------------------------------------------------------
 proc EMSegmentUpdateEntries {Name} {
     global EMSegment 
     set Sclass $EMSegment(Class)
@@ -2221,6 +2318,14 @@ proc EMSegmentUpdateEntries {Name} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentFindParentClass
+# 
+# .ARGS
+# string Sclass
+# string SuperClass
+# .END
+#-------------------------------------------------------------------------------
 proc EMSegmentFindParentClass {Sclass SuperClass} {
     global EMSegment
     # puts "EMSegmentFindParentClass $Sclass $SuperClass" 
@@ -2243,6 +2348,7 @@ proc EMSegmentFindParentClass {Sclass SuperClass} {
 # .PROC EMSegmentClassNavigation
 # Call from the Navigation button in the EM Tab - Calls the previous/next class
 # .ARGS
+# string direction
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentClassNavigation {direction} {
@@ -2286,6 +2392,15 @@ proc EMSegmentClassNavigation {direction} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentBuildWeightPannel
+# 
+# .ARGS
+# windowpath f
+# string Sclass
+# string Tab
+# .END
+#-------------------------------------------------------------------------------
 proc EMSegmentBuildWeightPannel {f Sclass Tab} {
     global Gui EMSegment
     frame $f.fPriorWeight -bg $Gui(activeWorkspace)
@@ -2309,6 +2424,9 @@ proc EMSegmentBuildWeightPannel {f Sclass Tab} {
 # Deletes or adds Nodes to the list - just used for Input and graph => get rid of it 
 # at some point
 # .ARGS
+# string Type
+# string New
+# string LastNode 
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentMRMLDeleteCreateNodesListEntries {Type New LastNode} {
@@ -2356,6 +2474,9 @@ proc EMSegmentMRMLDeleteCreateNodesListEntries {Type New LastNode} {
 # .PROC EMSegmentSaveSetting 
 # Updates the MRML Tree and saves the setting to a file  
 # .ARGS
+# int FileFlag
+# path FileName Defaults to -1
+# int CheckToProceed Defaults to 1
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentSaveSetting {FileFlag {FileName -1} {CheckToProceed 1} } {
@@ -2442,6 +2563,8 @@ proc EMSegmentSaveSetting {FileFlag {FileName -1} {CheckToProceed 1} } {
 # Just saves the class setting ! Necessary because of Super Class 
 # If you call it with superclass -1 it is to initialize it with head class
 # .ARGS
+# string SuperClass
+# string LastNode
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
@@ -2636,6 +2759,8 @@ rClass($pid,node) SetPCAMeanName  [Volume($EMSegment(Cattrib,$i,PCAMeanData),nod
 # .PROC EMSegmentChangeSuperClassName
 # Change the name of the current Super Class
 # .ARGS
+# int Active
+# int SuperClass
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentChangeSuperClassName {Active SuperClass} {
@@ -2662,6 +2787,7 @@ proc EMSegmentChangeSuperClassName {Active SuperClass} {
 # .PROC EMSegmentStartEM
 # Starts the EM Algorithm 
 # .ARGS
+# string save_mode Defaults to save
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentStartEM { {save_mode "save"} } {
@@ -2849,6 +2975,7 @@ proc EMSegmentStartEM { {save_mode "save"} } {
 # Erases sample values 
 # 
 # .ARGS
+# windowpath f
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentEraseSampleMenu {f} {
@@ -2883,6 +3010,10 @@ proc EMSegmentEraseSampleMenu {f} {
 # Sets everything correctly after user choosed label number and color 
 # 
 # .ARGS
+# string Sclass defaults to empty string
+# string ActiveGui defaults to empty string
+# string label defaults to empty string
+# string colorcode defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentClickLabel {{Sclass ""} {ActiveGui ""} {label ""} {colorcode ""} } {
@@ -3018,6 +3149,8 @@ proc EMSegmentDisplayClassDefinition {} {
 # Transfere class type form Class to SuperClass and the otherway around 
 # DeleteNode should be set to 1 if not called by UpdateMRML
 # .ARGS
+# string ActiveGui
+# int DeleteNode
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
@@ -3174,6 +3307,8 @@ proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
 # Changes Active Super Class 
 # 
 # .ARGS
+# string NewSuperClass
+# string ActiveGui
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentChangeSuperClass {NewSuperClass ActiveGui} {
@@ -3228,6 +3363,7 @@ proc EMSegmentUpdateClassOverview { } {
 # .PROC EMSegmentCreateClassOverviewButton
 # Creates the clas overview button 
 # .ARGS
+# windowpath Frame
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentCreateClassOverviewButton {Frame } {
@@ -3240,6 +3376,8 @@ proc EMSegmentCreateClassOverviewButton {Frame } {
 # Class overview of all values 
 # 
 # .ARGS
+# int x defaults to 0
+# int y defaults to 0
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentClassOverview {{x 0} {y 0}} {
@@ -3320,6 +3458,7 @@ proc EMSegmentCreateClassOverviewWindow { } {
 # .PROC EMSegmentAddClassToOverview
 # Adds a class to the overview table
 # .ARGS
+# string cl
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentAddClassToOverview {cl} {
@@ -3360,6 +3499,7 @@ proc EMSegmentAddClassToOverview {cl} {
 # .PROC EMSegmentDefineClassInOverview
 # Defines the row in the overview table if the a CLASS is defined 
 # .ARGS
+# string cl
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentDefineClassInOverview {cl} {
@@ -3378,6 +3518,7 @@ proc EMSegmentDefineClassInOverview {cl} {
 # .PROC EMSegmentDefineSuperClassInOverview
 # Defines the row for a SUPERCLASS   
 # .ARGS
+# string cl
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentDefineSuperClassInOverview {cl} {
@@ -3395,6 +3536,9 @@ proc EMSegmentDefineSuperClassInOverview {cl} {
 # .PROC EMSegmentAddGlobalProbEntry
 # Adds the Glbabl Probability Entry Field
 # .ARGS
+# windowpath Frame
+# string Sclass
+# boolean General
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentAddGlobalProbEntry {Frame Sclass General} {
@@ -3428,6 +3572,9 @@ proc EMSegmentSumGlobalUpdate { } {
 # .PROC EMSegmentAddColorLabelButton
 # Adds a color label button
 # .ARGS
+# windowpath Frame
+# string Sclass
+# boolean General
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentAddColorLabelButton {Frame Sclass General} {
@@ -3443,6 +3590,8 @@ proc EMSegmentAddColorLabelButton {Frame Sclass General} {
 # .PROC EMSegmentAddSuperClassName
 # Adss the field Super Class Name 
 # .ARGS
+# windowpath Frame
+# string Sclass
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentAddSuperClassName {Frame Sclass} {
@@ -3539,6 +3688,7 @@ proc EMSegmentSetSampleText {} {
 # Use Sample for calulating Mean or Variance
 # 
 # .ARGS
+# boolean change
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentUseSamples {change} {
@@ -3579,6 +3729,7 @@ proc EMSegmentUseSamples {change} {
 # .PROC EMSegmentFindClassAndTestfromIntClass
 # Find Class and Text to put on menu button 
 # .ARGS
+# string IntLabel
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentFindClassAndTestfromIntClass {IntLabel} {
@@ -3594,6 +3745,7 @@ proc EMSegmentFindClassAndTestfromIntClass {IntLabel} {
 # .PROC EMSegmentChangeClass
 # Changes from one to another class and displays new class in window 
 # .ARGS
+# string Sclass
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentChangeClass {Sclass} {
@@ -3688,6 +3840,12 @@ proc EMSegmentChangeClass {Sclass} {
     EMSegmentUpdateClassNavigationButton
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentUpdateClassNavigationButton
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EMSegmentUpdateClassNavigationButton { } {
     global EMSegment
     if {($EMSegment(SuperClass) ==  $EMSegment(Class)) &&  $EMSegment(Class) } {
@@ -3717,10 +3875,13 @@ proc EMSegmentUpdateClassNavigationButton { } {
        $EMSegment(EM-bNavigationDown) configure -state disable 
     }
 }
+
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentChangeIntensityClass 
 # Changes from one to another intensity class 
 # .ARGS
+# string Sclass
+# string reset
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentChangeIntensityClass {Sclass reset} {
@@ -3744,6 +3905,7 @@ proc EMSegmentChangeIntensityClass {Sclass reset} {
 # .PROC  EMSegmentUpdateClasses 
 # Updates the class vlaues and plots the new curves 
 # .ARGS
+# boolean flag
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentUpdateClasses {flag} {
@@ -3760,10 +3922,12 @@ proc EMSegmentUpdateClasses {flag} {
     }
     }
 }
+
 #-------------------------------------------------------------------------------
 # .PROC  EMSegmentPlotCurveRegion
 # Plot the curves of a graph
 # .ARGS
+# int numGraph
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentPlotCurveRegion {numGraph} {
@@ -3924,6 +4088,7 @@ proc EMSegmentCalcProb {} {
 # Erases Sample i form the board 
 #
 # .ARGS
+# int i
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentEraseSample {i} {
@@ -3951,6 +4116,10 @@ proc EMSegmentEraseSample {i} {
 # If it is not called from UpdateMRML DeleteNode == 1
 # InitClasses = only set it to 1 if it set from EMSegmentInit
 # .ARGS
+# string ChangeGui
+# boolean DeleteNode
+# list InitClasses 
+# int HeadClass Defaults to 1
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses {HeadClass 1}} {
@@ -4192,6 +4361,7 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses {HeadClass 1
 # Set Maximum Input Channel => only changes something if new max input channel
 # is larger than old max input channel 
 # .ARGS
+# int NewMaxInputChannelDef
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentSetMaxInputChannelDef {NewMaxInputChannelDef} {
@@ -4218,6 +4388,9 @@ proc EMSegmentSetMaxInputChannelDef {NewMaxInputChannelDef} {
 # When mouse is clicked, find out location and pixel gray value.
 # if flag is set it also gives coordinates 
 # .ARGS
+# int x
+# int y
+# boolean flag
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentReadGreyValue {x y flag} {
@@ -4270,6 +4443,7 @@ proc EMSegmentReadGreyValue {x y flag} {
 # .PROC EMSegmentDefineSample
 # Transferes the taken sample from the image into EMSegment structure
 # .ARGS
+# list SampleList
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentDefineSample {SampleList} {
@@ -4297,6 +4471,8 @@ proc EMSegmentDefineSample {SampleList} {
 # or if DisplayFlag is set it just adjus values/lines/cross to the current position 
 # of the mouse 
 # .ARGS
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentEnterDisplaySample {x y} {
@@ -4346,6 +4522,8 @@ proc EMSegmentLeaveSample { } {
 # .PROC EMSegmentChangeVolumeGraph
 # Changes the Volume of the graph for which everything is plotted
 # .ARGS
+# int VolumeID
+# int numGraph
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentChangeVolumeGraph {VolumeID numGraph} {
@@ -4369,6 +4547,11 @@ proc EMSegmentChangeVolumeGraph {VolumeID numGraph} {
 # Creates for Class <Sclass> a Button so the class distribution can be diplayed 
 # in the graph
 # .ARGS
+# string Sclass 
+# string Label 
+# string Color 
+# int Above Defaults to 0
+# boolean UpdateGraph defaults to 1
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentCreateGraphButton {Sclass Label Color {Above 0} {UpdateGraph 1}} {
@@ -4423,6 +4606,7 @@ proc EMSegmentCreateGraphButton {Sclass Label Color {Above 0} {UpdateGraph 1}} {
 # Draws or delete curves/regions in all exisitng graphs 
 # in the graph
 # .ARGS
+# string Sclass
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentMultipleDrawDeleteCurveRegion {Sclass} {
@@ -4437,6 +4621,7 @@ proc EMSegmentMultipleDrawDeleteCurveRegion {Sclass} {
 # Delete Graph Button and curve for Class <Sclass> 
 # in the graph
 # .ARGS
+# string Sclass
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentDeleteGraphButton {Sclass} {
@@ -4472,6 +4657,8 @@ proc EMSegmentDeleteGraphButton {Sclass} {
 # Depending if the graph for the class <Sclass> exist it deletes it or 
 # otherwise cretes a new one
 # .ARGS
+# string Sclass
+# int NumGraph
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentDrawDeleteCurveRegion {Sclass NumGraph} {
@@ -4537,6 +4724,9 @@ proc EMSegmentDrawDeleteCurveRegion {Sclass NumGraph} {
 # .PROC EMSegmentExecute 
 # Executes command that is selected in CIM Menu Selection
 # .ARGS
+# string menue
+# string command
+# string save_mode defaults to save
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentExecute {menue command {save_mode "save"} } {
@@ -4564,6 +4754,8 @@ proc EMSegmentExecute {menue command {save_mode "save"} } {
 # Creates the CIM Matrix (with start =1 and end = [llength $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)]
 # in the CIM Panel or adds Rows and Columns to it  
 # .ARGS
+# int start
+# int end defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentCreateCIMRowsColumns {start {end ""}} {
@@ -4637,10 +4829,12 @@ proc EMSegmentSetCIMMatrix {} {
      $f.fMatrix.cMatrix config -height [expr ($reqheight+2)*($dim+1)] -scrollregion "0 0 [expr ($reqwidth+1)*$dim + $reqlabel+20] 1"   
    } 
 }
+
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentChangeCIMMatrix
 # Changes the Marcov Matrix depending on the MarcovType 
 # .ARGS
+# string CIMType
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentChangeCIMMatrix {CIMType} {
@@ -4659,6 +4853,8 @@ proc EMSegmentChangeCIMMatrix {CIMType} {
 # .PROC EMSegmentSegmentationBoundaryMax 
 # Calculates the last slice of the current selected Volume 
 # .ARGS
+# boolean flag
+# int VolID defaults to -1
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentSegmentationBoundaryMax {flag {VolID -1}} {
@@ -4689,6 +4885,7 @@ proc EMSegmentSegmentationBoundaryMax {flag {VolID -1}} {
 # .PROC EMSegmentAssignInput
 # Create selection Mask for multiple input images in EM Tab
 # .ARGS
+# windowpath froot
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentAssignInput {froot} {
@@ -4738,10 +4935,12 @@ proc EMSegmentAssignInput {froot} {
         $EMSegment(fSelVolList) insert end  [Volume($v,node) GetName] 
     }
 }
+
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentSelectfromVolumeList
 # Activate selection from either list 
 # .ARGS
+# string type
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentSelectfromVolumeList {type} {
@@ -4755,10 +4954,12 @@ proc EMSegmentSelectfromVolumeList {type} {
         set EMSegment(AllVolList,ActiveID) -1
     }
 }
+
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentChangeVolumeSegmented 
 # This is for the one channel case !
 # .ARGS
+# int index
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentChangeVolumeSegmented {index} {
@@ -4774,6 +4975,7 @@ proc EMSegmentChangeVolumeSegmented {index} {
 # .PROC EMSegmentTransfereVolume
 # Transfer one entry form the one window to the other one 
 # .ARGS
+# string from
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentTransfereVolume {from} {
@@ -4899,10 +5101,12 @@ proc EMSegmentUpdateVolumeList { } {
       } 
     }    
 }
+
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentDeleteFromSelList
 # Delete entries from the Selection List 
 # .ARGS
+# list args
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentDeleteFromSelList {args} {
@@ -4965,8 +5169,10 @@ proc EMSegmentDeleteFromSelList {args} {
 }
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentCreate_Mean_Covariance_InputChannelWeights_RowsColumns 
-# Creates the Mean and Covariance Matrix for each noew element in the list 
+# Creates the Mean and Covariance Matrix for each new element in the list 
 # .ARGS
+# int OldNumInputCh 
+# int NewNumInputCh
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentCreate_Mean_Covariance_InputChannelWeights_RowsColumns {OldNumInputCh NewNumInputCh} {
@@ -5018,6 +5224,7 @@ proc EMSegmentCreate_Mean_Covariance_InputChannelWeights_RowsColumns {OldNumInpu
 # .PROC EMSegmentCreateGraphDisplayButton
 # Creates the graph display button on the Class Tab
 # .ARGS
+# windowpath f
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentCreateGraphDisplayButton {f} {
@@ -5033,6 +5240,8 @@ proc EMSegmentCreateGraphDisplayButton {f} {
 # .PROC EMSegmentShowGraphWindow
 # Creates the graph window 
 # .ARGS
+# int x defaults to 0
+# int y defaults to 0
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentShowGraphWindow {{x 0} {y 0}} {
@@ -5152,10 +5361,13 @@ proc EMSegmentCreateGraphWindow { } {
 
     # ShowPopup $Gui(wDownload) 100 100
 }
+
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentCreateHistogramButton
 # Defines the Historgramm button
 # .ARGS
+# windowpath f
+# int index
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentCreateHistogramButton {f index} {
@@ -5198,6 +5410,10 @@ proc EMSegmentCreateHistogramButton {f index} {
 # .PROC EMSegmentGraphXAxisUpdate path Xmin Xmax Xsca 
 # Called from Graph when X axis is update 
 # .ARGS
+# string path
+# int Xmin
+# int Xmax
+# int Xsca
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentGraphXAxisUpdate {path Xmin Xmax Xsca} {
@@ -5263,6 +5479,10 @@ proc EMSegmentGraphXAxisUpdate {path Xmin Xmax Xsca} {
 # .PROC EMSegmentGraphYAxisUpdate path Ymin Ymax Ysca 
 # Called from Graph when Y axis is update 
 # .ARGS
+# string path
+# int Ymin
+# int Ymax
+# int Ysca
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentGraphYAxisUpdate {path Ymin Ymax Ysca} {
@@ -5295,6 +5515,8 @@ proc EMSegmentGraphYAxisUpdate {path Ymin Ymax Ysca} {
 # .PROC EMSegmentCreateDisplayRedLine 
 # Creates or displays a red line on the graph 
 # .ARGS
+# int NumGraph
+# string Value
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentCreateDisplayRedLine {NumGraph Value} {
@@ -5316,6 +5538,9 @@ proc EMSegmentCreateDisplayRedLine {NumGraph Value} {
 # .PROC EMSegmentCreateDisplayRedCross 
 # Creates or displays a cross line on the graph 
 # .ARGS
+# int NumGraph
+# int Xvalue
+# int Yvalue
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentCreateDisplayRedCross {NumGraph Xvalue Yvalue} {
@@ -5344,6 +5569,7 @@ proc EMSegmentCreateDisplayRedCross {NumGraph Xvalue Yvalue} {
 # .PROC EMSegmentChangeDiceVolume
 # Just changes the selected volume for the DICE measure 
 # .ARGS
+# int vol volume id
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentChangeDiceVolume {vol} {
@@ -5391,6 +5617,7 @@ proc EMSegmentCalcDice { } {
 # .PROC EMSegmentWriteClassModels 
 # Writes out models for each class  
 # .ARGS
+# string SuperClass
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentWriteClassModels {SuperClass} { 
@@ -5526,6 +5753,7 @@ proc EMSegmentReadTextBox {} {
 # Creates a Text box with only a X Scroll Bar
 # 
 # .ARGS
+# windowpath f
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentScrolledHorizontal {f} {
@@ -5548,6 +5776,7 @@ proc EMSegmentScrolledHorizontal {f} {
 # Creates a Text box with only a Y Scroll Bar
 # 
 # .ARGS
+# windowpath f
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentScrolledText {f} {

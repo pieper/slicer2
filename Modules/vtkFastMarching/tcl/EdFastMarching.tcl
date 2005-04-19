@@ -1,27 +1,52 @@
-#=auto=========================================================================
-# (c) Copyright 2001 Massachusetts Institute of Technology
+#=auto==========================================================================
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for any purpose, 
-# provided that the above copyright notice and the following three paragraphs 
-# appear on all copies of this software.  Use of this software constitutes 
-# acceptance of these terms and conditions.
-#
-# IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, 
-# INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE 
-# AND ITS DOCUMENTATION, EVEN IF MIT HAS BEEN ADVISED OF THE POSSIBILITY OF 
-# SUCH DAMAGE.
-#
-# MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING, 
-# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR 
-# A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-#
-# THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE 
-# MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
 #
 #===============================================================================
 # FILE:        EdFastMarching.tcl
 # PROCEDURES:  
+#   EdFastMarchingInit
+#   EdFastMarchingBuildGUI
+#   ConversiontomL Voxels
+#   ConversiontoVoxels mL
+#   EdFastMarchingUserExpand zero userExpand
+#   EdFastMarchingExpand
+#   Called whenever we enter the FastMarching tab
+#   EdFastMarchingExit
+#   EdFastMarchingLabel
+#   EdFastMarchingSegment
+#   EdFastMarchingApply
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -221,6 +246,13 @@ When satisfied with the segmentation use other editing modules on the labelmap (
     grid $f.lTextTCL $f.lTCL -padx 2 -pady $Gui(pad)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ConversiontomL
+# 
+# .ARGS
+# int Voxels
+# .END
+#-------------------------------------------------------------------------------
 proc ConversiontomL {Voxels} {
     global EdFastMarching Ed
 
@@ -237,6 +269,13 @@ proc ConversiontomL {Voxels} {
     return $mL
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ConversiontoVoxels
+# 
+# .ARGS
+# float mL
+# .END
+#-------------------------------------------------------------------------------
 proc ConversiontoVoxels {mL} {
     global EdFastMarching Ed
 
@@ -253,6 +292,14 @@ proc ConversiontoVoxels {mL} {
     return $Voxels
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdFastMarchingUserExpand
+# 
+# .ARGS
+# string zero Not used
+# string userExpand
+# .END
+#-------------------------------------------------------------------------------
 proc EdFastMarchingUserExpand {zero userExpand} {
     global EdFastMarching
 
@@ -323,6 +370,12 @@ proc EdFastMarchingUserExpand {zero userExpand} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdFastMarchingExpand
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdFastMarchingExpand {} {
     global Ed EdFastMarching
 
@@ -351,8 +404,13 @@ proc EdFastMarchingExpand {} {
 
 
 
-
-#called whenever we enter the FastMarching tab
+#-------------------------------------------------------------------------------
+# .PROC 
+# Called whenever we enter the FastMarching tab
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdFastMarchingEnter {} {
     global Ed Label Slice EdFastMarching Fiducials Gui Volumes
 
@@ -472,8 +530,13 @@ proc EdFastMarchingEnter {} {
     FiducialsSetActiveList "FastMarching-seeds"
 }
 
-
-#called whenever we exit the FastMarching tab
+#-------------------------------------------------------------------------------
+# .PROC EdFastMarchingExit
+# called whenever we exit the FastMarching tab
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdFastMarchingExit {} {
     global Ed EdFastMarching
 
@@ -493,6 +556,12 @@ proc EdFastMarchingExit {} {
     Slicer Update
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdFastMarchingLabel
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdFastMarchingLabel {} {
     global Ed Label EdFastMarching
 
@@ -515,9 +584,14 @@ proc EdFastMarchingLabel {} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdFastMarchingSegment
 #
 # Where the job gets done
 #
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdFastMarchingSegment {} {
     global Label Fiducials EdFastMarching Volume Ed Gui
 
@@ -637,5 +711,12 @@ proc EdFastMarchingSegment {} {
 }
 
 # this is called when the user clicks on the active slice
-# we don't want to do anything special in this case
+#-------------------------------------------------------------------------------
+# .PROC EdFastMarchingApply
+#
+#  we don't want to do anything special in this case
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdFastMarchingApply {} {}
