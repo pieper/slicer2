@@ -1,3 +1,37 @@
+#=auto==========================================================================
+# FILE:        LevelSets.tcl
+# PROCEDURES:  
+#   LevelSetsInit
+#   LevelSetsUpdateGUI
+#   LevelSetsBuildGUI
+#   LevelSetsBuildHelpFrame
+#   LevelSetsBuildInitFrame
+#   LevelSetsBuildInitFrame
+#   myDevAddSelectButton TabName f aLabel message tooltip width color
+#   DevAddImageButton ButtonName Message Command Width
+#   LevelSetsBuildMainFrame
+#   LevelSetsBuildEquFrame
+#   LevelSetsEnter
+#   LevelSetsExit
+#   LevelSetsBindingCallback event W X Y x y t
+#   LevelSetsPrepareResult
+#   LevelSetsPrepareResultVolume
+#   LevelSetsUpdateResults
+#   LevelSetsUpdateParams
+#   LevelSetsShowProgress progress
+#   LevelSetsEndProgress
+#   LevelSetsRun
+#   LevelSetsStart
+#   LevelSetsPause
+#   LevelSetsContinue
+#   LevelSetsEnd
+#   LevelSetsCreateModel
+#   SetSPGR_WM_Param
+#   SetMRAParam
+#   SetUSLiver
+#   SetUSLiver
+#   LevelSetsSaveParam
+#==========================================================================auto=
 #   ==================================================
 #   Module : vtkLevelSets
 #   Authors: Karl Krissian
@@ -29,35 +63,6 @@
 #   The full GNU Lesser General Public License file is in vtkLevelSets/LesserGPL_license.txt
 
 
-#=auto==========================================================================
-#
-#===============================================================================
-# FILE:        LevelSets.tcl
-# PROCEDURES:  
-#   LevelSetsInit
-#   LevelSetsBuildGUI
-#   LevelSetsBuildHelpFrame
-#   LevelSetsBuildMainFrame
-#   LevelSetsBuildProbFrame
-#   LevelSetsBuildEquFrame
-#   LevelSetsEnter
-#   LevelSetsExit
-#   LevelSetsUpdateGUI
-#   LevelSetsBindingCallback
-#   LevelSetsCheckErrors
-#   LevelSetsPrepareResultVolume
-#   LevelSetsUpdateResults
-#   LevelSetsRun
-#   LevelSetsStart
-#   LevelSetsPause
-#   LevelSetsContinue
-#   LevelSetsEnd
-#   LevelSetsCreateModel
-#   SetSPGR_WM_Param
-#   SetMRAParam
-#   SetUSLiverParam
-#   LevelSetsSaveParam
-#==========================================================================auto=
 
 #-------------------------------------------------------------------------------
 #  Description
@@ -168,7 +173,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.33 $} {$Date: 2004/11/24 16:17:34 $}]
+        {$Revision: 1.34 $} {$Date: 2005/04/19 19:50:17 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -344,6 +349,7 @@ proc LevelSetsUpdateGUI {} {
 # .PROC LevelSetsBuildGUI
 #
 # Create the Graphical User Interface.
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc LevelSetsBuildGUI {} {
@@ -677,9 +683,18 @@ proc LevelSetsBuildProbFrame {} {
 }
 #----- LevelSetsBuildProbFrame
 
-#----------------------------------------------------------------------
-#
-#----------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# .PROC myDevAddSelectButton
+# .ARGS
+# string TabName
+# windowpath f
+# string aLabel
+# string message
+# string tooltip defaults to empty string
+# int width defaults to 13
+# string color defaults to WLA
+# .END
+#-------------------------------------------------------------------------------
 proc myDevAddSelectButton { TabName f aLabel message {tooltip ""} \
                             {width 13} {color WLA}} {
   
@@ -734,6 +749,11 @@ proc myDevAddSelectButton { TabName f aLabel message {tooltip ""} \
 #-------------------------------------------------------------------------------
 # .PROC DevAddImageButton
 #
+# .ARGS
+# string ButtonName
+# string Message 
+# string Command 
+# int Width defaults to 0
 # .END
 #-------------------------------------------------------------------------------
 proc DevAddImageButton { ButtonName Message Command {Width 0} } {
@@ -1335,9 +1355,16 @@ proc LevelSetsExit {} {
 #-------------------------------------------------------------------------------
 # .PROC LevelSetsBindingCallback
 #
-# Demo of callback routine for bindings
+# Callback routine for bindings
 # 
 # .ARGS
+# string event 
+# string W 
+# int X 
+# int Y 
+# int x 
+# int y 
+# int t 
 # .END
 #-------------------------------------------------------------------------------
 proc LevelSetsBindingCallback { event W X Y x y t } {
@@ -1547,8 +1574,8 @@ proc LevelSetsUpdateParams {} {
 #-------------------------------------------------------------------------------
 # .PROC LevelSetsShowProgress
 #
-#   
-#
+# .ARGS   
+# string progress
 # .END
 #-------------------------------------------------------------------------------
 proc LevelSetsShowProgress { progress } {
