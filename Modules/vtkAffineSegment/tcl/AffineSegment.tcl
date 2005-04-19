@@ -1,27 +1,50 @@
-#=auto=========================================================================
-# (c) Copyright 2001 Massachusetts Institute of Technology
+#=auto==========================================================================
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for any purpose, 
-# provided that the above copyright notice and the following three paragraphs 
-# appear on all copies of this software.  Use of this software constitutes 
-# acceptance of these terms and conditions.
-#
-# IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, 
-# INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE 
-# AND ITS DOCUMENTATION, EVEN IF MIT HAS BEEN ADVISED OF THE POSSIBILITY OF 
-# SUCH DAMAGE.
-#
-# MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING, 
-# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR 
-# A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-#
-# THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE 
-# MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
 #
 #===============================================================================
-# FILE:        EdAffineSegment.tcl
+# FILE:        AffineSegment.tcl
 # PROCEDURES:  
+#   EdAffineSegmentInit
+#   EdAffineSegmentBuildGUI
+#   ConversiontomL
+#   ConversiontoVoxels
+#   EdAffineSegmentUserExpand
+#   EdAffineSegmentExpand
+#   EdAffineSegmentInitialSize
+#   EdAffineSegmentReset
+#   EdAffineSegmentLabel
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -275,6 +298,13 @@ If you want to start afresh, click the 'Reset' button"
     grid $f.lTextTCL $f.lTCL -padx 2 -pady $Gui(pad)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ConversiontomL
+# 
+# .ARGS
+# int Voxels number of voxels
+# .END
+#-------------------------------------------------------------------------------
 proc ConversiontomL {Voxels} {
     global EdAffineSegment Ed
 
@@ -291,6 +321,13 @@ proc ConversiontomL {Voxels} {
     return $mL
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ConversiontoVoxels
+# 
+# .ARGS
+# int mL millilitres
+# .END
+#-------------------------------------------------------------------------------
 proc ConversiontoVoxels {mL} {
     global EdAffineSegment Ed
 
@@ -307,6 +344,14 @@ proc ConversiontoVoxels {mL} {
     return $Voxels
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdAffineSegmentUserExpand
+# 
+# .ARGS
+# int zero not used
+# int Inflation not used
+# .END
+#-------------------------------------------------------------------------------
 proc EdAffineSegmentUserExpand {zero Inflation} {
     global EdAffineSegment
 
@@ -333,6 +378,12 @@ proc EdAffineSegmentUserExpand {zero Inflation} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdAffineSegmentExpand
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdAffineSegmentExpand {} {
     global Ed EdAffineSegment
 
@@ -353,11 +404,23 @@ proc EdAffineSegmentExpand {} {
     EdAffineSegmentUserExpand 0 $EdAffineSegment(Inflation)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdAffineSegmentInitialSize
+# Does nothing
+# .ARGS
+# int zero
+# int SphereSize
+# .END
+#-------------------------------------------------------------------------------
 proc EdAffineSegmentInitialSize {zero SphereSize} {
      global EdAffineSegment
 }
 
-#We need to do the Affine flow now
+#-------------------------------------------------------------------------------
+# .PROC EdAffineSegmentContract
+# We need to do the Affine flow now
+# .END
+#-------------------------------------------------------------------------------
 proc EdAffineSegmentContract {} {
   global EdAffineSegment
   
@@ -370,8 +433,13 @@ proc EdAffineSegmentContract {} {
  
 }
 
-#Reset the output 
 
+#-------------------------------------------------------------------------------
+# .PROC EdAffineSegmentReset
+# Reset the output 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdAffineSegmentReset {} {
   global EdAffineSegment Ed
 
@@ -389,8 +457,12 @@ proc EdAffineSegmentReset {} {
 }
 
 
-
-#called whenever we enter the AffineEvolve tab
+#-------------------------------------------------------------------------------
+# .PROC EdAffineSegmentEnter
+# Called whenever we enter the AffineEvolve tab
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdAffineSegmentEnter {} {
     global Ed Label Slice EdAffineSegment Fiducials Gui Volumes
 
@@ -536,6 +608,12 @@ proc EdAffineSegmentExit {} {
     Slicer Update
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdAffineSegmentLabel
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdAffineSegmentLabel {} {
     global Ed Label EdAffineSegment
 
@@ -559,133 +637,141 @@ proc EdAffineSegmentLabel {} {
 
 }
 
-#
+#-------------------------------------------------------------------------------
+# .PROC EdAffineSegmentLabel
 # Where the job gets done
-#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdAffineSegmentSegment {} {
     global Label Fiducials EdAffineSegment Volume Ed Gui
 
     if {[ValidateInt $Label(label)] == 0} {
-    tk_messageBox -message "Output label is not an integer !"
-    return
+        tk_messageBox -message "Output label is not an integer !"
+        return
     }
 
     if {[ValidateInt $Label(label)] <= 0} {
-    tk_messageBox -message "Output label is not positive !"
-    return
+        tk_messageBox -message "Output label is not positive !"
+        return
     }
-   
+    
     if {[ValidateFloat $EdAffineSegment(nExpand)] == 0} {
-    tk_messageBox -message "Expansion is not a valid number !"
-    return
+        tk_messageBox -message "Expansion is not a valid number !"
+        return
     } 
-  
+    
     if { $EdAffineSegment(nExpand) <= 0 } {
-    tk_messageBox -message "Expansion is not positive !"
-    return
+        tk_messageBox -message "Expansion is not positive !"
+        return
     }   
-
-        
+    
+    
     # note: we should probably use GetRasToIjkMatrix here but it does not
     # seem to work (?)
     set e EdAffineSegment
     set Ed($e,scope)  3D 
     set Ed($e,input)  Original
     set Ed($e,interact) Active   
-
+    
     set v [EditorGetInputID $Ed($e,input)]
     
     scan [Volume($v,node) GetRasToVtkMatrix] \
-    "%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f" \
-    m11 m12 m13 m14 \
-    m21 m22 m23 m24 \
-    m31 m32 m33 m34 \
-    m41 m42 m43 m44;
-
+        "%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f" \
+        m11 m12 m13 m14 \
+        m21 m22 m23 m24 \
+        m31 m32 m33 m34 \
+        m41 m42 m43 m44;
+    
     EdAffineSegment(AffineEvolve) setRAStoIJKmatrix $m11 $m12 $m13 $m14 $m21 $m22 $m23 $m24 $m31 $m32 $m33 $m34 $m41 $m42 $m43 $m44
-
-if { [EdAffineSegment(AffineEvolve) nValidSeeds]<=0 } {
-
-    set l [FiducialsGetPointIdListFromName "FastMarching-seeds"]
-
-    foreach s $l {
-
-    set coord [FiducialsGetPointCoordinates $s]
-
-    set cr [lindex $coord 0]
-    set ca [lindex $coord 1]
-    set cs [lindex $coord 2]
-
-    if { [EdAffineSegment(AffineEvolve) addSeed $cr $ca $cs]==0 } {
-        FiducialsDeletePoint $EdAffineSegment(fidFiducialList) $s
-        tk_messageBox -message "Seed $s is outside of the volume.\nIt has therefore been removed."
-    }
-
-    }
-
-
-    set l [FiducialsGetPointIdListFromName "FastMarching-seeds"]
-
-    EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
-    Ed(editor)  UseInputOn
-
+    
     if { [EdAffineSegment(AffineEvolve) nValidSeeds]<=0 } {
-    tk_messageBox -message "No seeds defined !\n(see help section)"
-    return
+        
+        set l [FiducialsGetPointIdListFromName "FastMarching-seeds"]
+        
+        foreach s $l {
+            
+            set coord [FiducialsGetPointCoordinates $s]
+            
+            set cr [lindex $coord 0]
+            set ca [lindex $coord 1]
+            set cs [lindex $coord 2]
+            
+            if { [EdAffineSegment(AffineEvolve) addSeed $cr $ca $cs]==0 } {
+                FiducialsDeletePoint $EdAffineSegment(fidFiducialList) $s
+                tk_messageBox -message "Seed $s is outside of the volume.\nIt has therefore been removed."
+            }
+            
+        }
+        
+        
+        set l [FiducialsGetPointIdListFromName "FastMarching-seeds"]
+        
+        EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
+        Ed(editor)  UseInputOn
+        
+        if { [EdAffineSegment(AffineEvolve) nValidSeeds]<=0 } {
+            tk_messageBox -message "No seeds defined !\n(see help section)"
+            return
+        }
+        
     }
-
-}
-if { [EdAffineSegment(AffineEvolve) nValidSeeds]>0 } {
- EdAffineSegment(AffineEvolve) OutputReset
-}
+    if { [EdAffineSegment(AffineEvolve) nValidSeeds]>0 } {
+        EdAffineSegment(AffineEvolve) OutputReset
+    }
     set Gui(progressText) "AffineSegmentation"
-
+    
     # insert a cast to SHORT before the editor
     # note: no effect if data already SHORT
     EdAffineSegment(castToShort) SetInput [Ed(editor) GetInput]
     Ed(editor)  SetInput [EdAffineSegment(castToShort) GetOutput]
-
+    
     EdAffineSegment(AffineEvolve) Modified
-
-
-   EdAffineSegment(AffineEvolve) SetNumberOfIterations $EdAffineSegment(nExpand)
-   EdAffineSegment(AffineEvolve) SetInflation $EdAffineSegment(Inflation)
-   EdAffineSegment(AffineEvolve) SetInitialSize $EdAffineSegment(SphereSize)
-
-#EdAffineSegment(castToShort) SetInput $vtkImageDataOriginal
-
-
-EdAffineSegment(AffineEvolve) SetInput [EdAffineSegment(castToShort) GetOutput]
-
-
-     EdAffineSegment(AffineEvolve) AddObserver StartEvent     MainStartProgress
-     EdAffineSegment(AffineEvolve) AddObserver ProgressEvent  "MainShowProgress EdAffineSegment(AffineEvolve)"
-     EdAffineSegment(AffineEvolve) AddObserver EndEvent       MainEndProgress
-
-
+    
+    
+    EdAffineSegment(AffineEvolve) SetNumberOfIterations $EdAffineSegment(nExpand)
+    EdAffineSegment(AffineEvolve) SetInflation $EdAffineSegment(Inflation)
+    EdAffineSegment(AffineEvolve) SetInitialSize $EdAffineSegment(SphereSize)
+    
+    #EdAffineSegment(castToShort) SetInput $vtkImageDataOriginal
+    
+    
+    EdAffineSegment(AffineEvolve) SetInput [EdAffineSegment(castToShort) GetOutput]
+    
+    
+    EdAffineSegment(AffineEvolve) AddObserver StartEvent     MainStartProgress
+    EdAffineSegment(AffineEvolve) AddObserver ProgressEvent  "MainShowProgress EdAffineSegment(AffineEvolve)"
+    EdAffineSegment(AffineEvolve) AddObserver EndEvent       MainEndProgress
+    
+    
 #set outdat [EdAffineSegment(AffineEvolve) GetOutput]
+    
+    #RenderAll
+    
+    EdAffineSegment(AffineEvolve) Modified
+    EdAffineSegment(AffineEvolve) Update
+    ################### try that
+    set o [EditorGetOriginalID]
+    set w [EditorGetWorkingID]
 
-#RenderAll
-
-EdAffineSegment(AffineEvolve) Modified
-EdAffineSegment(AffineEvolve) Update
-################### try that
-set o [EditorGetOriginalID]
-set w [EditorGetWorkingID]
-
-set vtkImageDataOriginal [Volume($o,vol) GetOutput]
-set vtkImageDataWorking [Volume($w,vol) GetOutput]
-EdAffineSegment(AffineEvolve) SetOutput $vtkImageDataWorking
-
-
+    set vtkImageDataOriginal [Volume($o,vol) GetOutput]
+    set vtkImageDataWorking [Volume($w,vol) GetOutput]
+    EdAffineSegment(AffineEvolve) SetOutput $vtkImageDataWorking
+    
+    
     Ed(editor)  SetInput ""
     Ed(editor)  UseInputOff
-
-EdAffineSegment(AffineEvolve) SetEvolve 0
-RenderAll
-
+    
+    EdAffineSegment(AffineEvolve) SetEvolve 0
+    RenderAll
+    
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdAffineSegmentApply
 # this is called when the user clicks on the active slice
 # we don't want to do anything special in this case
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EdAffineSegmentApply {} {}
