@@ -36,17 +36,19 @@
 #===============================================================================
 # FILE:        fMRIEngineInspect.tcl
 # PROCEDURES:  
-#   fMRIEngineScaleActivation the
+#   fMRIEngineScaleActivation no
 #   fMRIEngineUpdateInspectTab
 #   fMRIEngineInspectActVolume
-#   fMRIEngineBuildUIForInspectTab
+#   fMRIEngineBuildUIForInspectTab parent
+#   fMRIEngineUpdateEVsForPlotting
+#   fMRIEngineSelectEVForPlotting ev count
 #==========================================================================auto=
      
 #-------------------------------------------------------------------------------
 # .PROC fMRIEngineScaleActivation
 # Scales the activation volume 
 # .ARGS
-# no the scale index 
+# int no the scale index 
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineScaleActivation {no} {
@@ -154,6 +156,7 @@ proc fMRIEngineInspectActVolume {} {
 # .PROC fMRIEngineBuildUIForInspectTab
 # Creates UI for the inspect tab 
 # .ARGS
+# windowpath parent
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineBuildUIForInspectTab {parent} {
@@ -328,6 +331,8 @@ proc fMRIEngineUpdateEVsForPlotting {} {
 # .PROC fMRIEngineSelectEVForPlotting
 # 
 # .ARGS
+# string ev
+# int count
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineSelectEVForPlotting {ev count} {

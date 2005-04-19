@@ -36,14 +36,16 @@
 #===============================================================================
 # FILE:        fMRIEngineParadigmDesign.tcl
 # PROCEDURES:  
-#   fMRIEngineBuildUIForParadigmDesign  the
+#   fMRIEngineBuildUIForParadigmDesign  parent
 #   fMRIEngineShowConditionToEdit
 #   fMRIEngineDeleteCondition
-#   fMRIEngineSelectRunForConditionConfig
+#   fMRIEngineSelectRunForConditionConfig run
 #   fMRIEngineUpdateRunsForConditionConfig
-#   fMRIEngineSelectRunForConditionShow
+#   fMRIEngineSelectRunForConditionShow run
 #   fMRIEngineUpdateRunsForConditionShow
 #   fMRIEngineIdenticalizeConditions
+#   fMRIEngineEditCondition
+#   fMRIEngineAddCondition
 #   fMRIEngineAddOrEditCondition
 #   fMRIEngineShowConditions
 #==========================================================================auto=
@@ -52,7 +54,7 @@
 # .PROC fMRIEngineBuildUIForParadigmDesign 
 # Creates UI for task "Paradigm Design" 
 # .ARGS
-# parent the parent frame 
+# windowpath parent the parent frame 
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineBuildUIForParadigmDesign {parent} {
@@ -317,6 +319,7 @@ proc fMRIEngineDeleteCondition {} {
 # .PROC fMRIEngineSelectRunForConditionConfig
 # 
 # .ARGS
+# string run
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineSelectRunForConditionConfig {run} {
@@ -331,6 +334,7 @@ proc fMRIEngineSelectRunForConditionConfig {run} {
 #-------------------------------------------------------------------------------
 # .PROC fMRIEngineUpdateRunsForConditionConfig
 # Chooses one sequence from the sequence list loaded within the Ibrowser module 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineUpdateRunsForConditionConfig {} {
@@ -361,6 +365,7 @@ proc fMRIEngineUpdateRunsForConditionConfig {} {
 # .PROC fMRIEngineSelectRunForConditionShow
 # 
 # .ARGS
+# string run
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineSelectRunForConditionShow {run} {
@@ -377,6 +382,7 @@ proc fMRIEngineSelectRunForConditionShow {run} {
 #-------------------------------------------------------------------------------
 # .PROC fMRIEngineUpdateRunsForConditionShow
 # Chooses one sequence from the sequence list loaded within the Ibrowser module 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineUpdateRunsForConditionShow {} {
