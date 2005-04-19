@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -40,6 +40,23 @@
 #   MIRIADSegmentBuildGUI
 #   MIRIADSegmentEnter
 #   MIRIADSegmentExit
+#   MIRIADSegmentProcessStudy archive BIRNID visit atlas
+#   MIRIADSegmentLoadStudy archive BIRNID visit atlas
+#   MIRIADSegmentSaveResults
+#   MIRIADSegmentLoadDukeStudy  imtype
+#   MIRIADSegmentLoadAtlas  dir
+#   MIRIADSegmentCreateSPLWarpedAtlas 
+#   MIRIADSegmentLoadSPLWarpedAtlas 
+#   MIRIADSegmentLoadLONIWarpedAtlas  atlas labels
+#   MIRIADSegmentSubTreeClassDefinition SuperClass
+#   MIRIADSegmentSetEMParameters
+#   MIRIADSegmentRunEM mode
+#   MIRIADSegmentSamplesFromSegmentation class SEGid label
+#   MIRIADSegmentClassPDFFromSegmentation
+#   MIRIADSegmentGetVolumeByName  name
+#   MIRIADSegmentGetVolumesByNamePattern pattern
+#   MIRIADSegmentDeleteVolumeByName  name
+#   MIRIADSegmentNormalizeImage  volid MaxValue
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -152,7 +169,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.31 $} {$Date: 2005/01/28 23:21:10 $}]
+        {$Revision: 1.32 $} {$Date: 2005/04/19 20:07:14 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -327,6 +344,10 @@ proc MIRIADSegmentExit {} {
 # Main entry point for the Module
 # Read the dicom data and the atlas for a subject, runs the segmentation and saves results
 # .ARGS
+# string archive defaults to default
+# int BIRNID defaults to 000397921927
+# int visit defaults to 001
+# string atlas defaults to spl
 # .END
 #-------------------------------------------------------------------------------
 proc MIRIADSegmentProcessStudy { {archive "default"} {BIRNID "000397921927"} {visit 001} {atlas "spl"} } {
@@ -365,6 +386,10 @@ proc MIRIADSegmentProcessStudy { {archive "default"} {BIRNID "000397921927"} {vi
 # .PROC MIRIADSegmentLoadStudy
 # Read the dicom data and the atlas for a subject, runs the segmentation and saves results
 # .ARGS
+# string archive defaults to default
+# int BIRNID defaults to 000397921927
+# int visit defaults to 001
+# string atlas defaults to spl
 # .END
 #-------------------------------------------------------------------------------
 proc MIRIADSegmentLoadStudy { {archive "default"} {BIRNID "000397921927"} {visit 001} {atlas "spl"} } {
@@ -460,6 +485,7 @@ proc MIRIADSegmentSaveResults { } {
 # .PROC MIRIADSegmentLoadDukeStudy 
 # Reads the bwh probability atlas
 # .ARGS
+# string imtype defaults to raw
 # .END
 #-------------------------------------------------------------------------------
 proc MIRIADSegmentLoadDukeStudy { {imtype "raw"} } {
@@ -490,6 +516,7 @@ proc MIRIADSegmentLoadDukeStudy { {imtype "raw"} } {
 # .PROC MIRIADSegmentLoadAtlas 
 # Reads the bwh probability atlas
 # .ARGS
+# path dir defaults to choose
 # .END
 #-------------------------------------------------------------------------------
 proc MIRIADSegmentLoadSPLAtlas { {dir "choose"} } {
@@ -630,6 +657,8 @@ proc MIRIADSegmentLoadSPLWarpedAtlas { } {
 # .PROC MIRIADSegmentLoadLONIWarpedAtlas 
 # Reads the bwh probability atlas as warped by LONI
 # .ARGS
+# string atlas defaults to bseANDbet
+# string labels defaults to full
 # .END
 #-------------------------------------------------------------------------------
 proc MIRIADSegmentLoadLONIWarpedAtlas { { atlas "bseANDbet" } {labels "full"} } {
@@ -731,6 +760,7 @@ proc MIRIADSegmentLoadLONIWarpedAtlas { { atlas "bseANDbet" } {labels "full"} } 
 # .PROC MIRIADSegmentSubTreeClassDefinition
 # Recursive proc to setup subtrees based on globally set parameters 
 # .ARGS
+# string SuperClass
 # .END
 #-------------------------------------------------------------------------------
 proc MIRIADSegmentSubTreeClassDefinition {SuperClass} {
@@ -1085,6 +1115,7 @@ proc MIRIADSegmentSetEMParameters { } {
 # Run the EM algorithm on the loaded data
 # - mimic user actions
 # .ARGS
+# string mode defaults to full
 # .END
 #-------------------------------------------------------------------------------
 proc MIRIADSegmentRunEM { {mode "full"} } {
@@ -1129,6 +1160,9 @@ proc MIRIADSegmentRunEM { {mode "full"} } {
 # .PROC MIRIADSegmentSamplesFromSegmentation
 # Use a segmentation volume to define the samples for the EM starting point
 # .ARGS
+# string class
+# int SEGid
+# string label
 # .END
 #-------------------------------------------------------------------------------
 proc MIRIADSegmentSamplesFromSegmentation {class SEGid label} {
@@ -1211,6 +1245,7 @@ proc MIRIADSegmentClassPDFFromSegmentation {} {
 # .PROC MIRIADSegmentGetVolumeByName 
 # returns the id of first match for a name
 # .ARGS
+# string name
 # .END
 #-------------------------------------------------------------------------------
 proc MIRIADSegmentGetVolumeByName {name} {
@@ -1231,6 +1266,7 @@ proc MIRIADSegmentGetVolumeByName {name} {
 # .PROC MIRIADSegmentGetVolumesByNamePattern
 # returns a list of IDs for a given pattern
 # .ARGS
+# string pattern
 # .END
 #-------------------------------------------------------------------------------
 proc MIRIADSegmentGetVolumesByNamePattern {pattern} {
@@ -1250,6 +1286,7 @@ proc MIRIADSegmentGetVolumesByNamePattern {pattern} {
 # .PROC MIRIADSegmentDeleteVolumeByName 
 # clean up volumes before reloading them
 # .ARGS
+# string name
 # .END
 #-------------------------------------------------------------------------------
 proc MIRIADSegmentDeleteVolumeByName {name} {
@@ -1272,6 +1309,8 @@ proc MIRIADSegmentDeleteVolumeByName {name} {
 # Rescale the image data to the correct atlas range
 # (assumes that the max value actually occurs in the image somewhere)
 # .ARGS
+# int volid
+# float MaxValue
 # .END
 #-------------------------------------------------------------------------------
 proc MIRIADSegmentNormalizeImage {volid MaxValue} { 
