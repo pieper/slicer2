@@ -36,6 +36,15 @@
 #===============================================================================
 # FILE:        notebook.tcl
 # PROCEDURES:  
+#   create w args
+#   config w args
+#   click w x y
+#   raise.page w n
+#   pageconfig w name args
+#   raise w name
+#   frame w name
+#   scheduleExpand w
+#   Resize the notebook to fit inside its containing widget. w
 #==========================================================================auto=
 #=========================================================================
 #
@@ -43,7 +52,7 @@
 #  Author    : D. Richard Hipp <drh@acm.org>
 #  Web       : http://www.hwaci.com/drh/
 #  Copyright : (C) 1996,1997,1998 D. Richard Hipp
-#  Version   : $Revision: 1.2 $
+#  Version   : $Revision: 1.3 $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
