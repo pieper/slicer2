@@ -1,25 +1,45 @@
 #=auto==========================================================================
-# (c) Copyright 2002 Massachusetts Institute of Technology
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for any purpose, 
-# provided that the above copyright notice and the following three paragraphs 
-# appear on all copies of this software.  Use of this software constitutes 
-# acceptance of these terms and conditions.
-#
-# IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, 
-# INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE 
-# AND ITS DOCUMENTATION, EVEN IF MIT HAS BEEN ADVISED OF THE POSSIBILITY OF 
-# SUCH DAMAGE.
-#
-# MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING, 
-# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR 
-# A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-#
-# THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE 
-# MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
 #
 #===============================================================================
+# FILE:        NormalizeImage.tcl
+# PROCEDURES:  
+#   NormImage1
+#   NormImage MaxValue NormList resultsDir
+#   NormImage2
+#==========================================================================auto=
 
 # -----------------------------------------------------------------------------
 # This script normalizes the images so that the maximum in the image is the given value 
@@ -29,10 +49,13 @@
 # /home/ai2/kpohl/slicer_devel/pkg/bin/vtk $SLICER_HOME/program/tcl-modules/EMSegment/NormalizeImage.tcl <Mrml File Defining Segmentation> <MaxValue>
 # ------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# 1. Step Initialize and check Parameters 
-#-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC NormImage1
+# 1. Step Initialize and check Parameters 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc NormImage1 {} {
     if {[info exists env(SCRIPT_HOME)] != 0} {
         set Script_Home $env(SCRIPT_HOME)
@@ -55,6 +78,15 @@ proc NormImage1 {} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC NormImage
+# 
+# .ARGS
+# float MaxValue
+# list NormList
+# path resultsDir
+# .END
+#-------------------------------------------------------------------------------
 proc NormImage {MaxValue NormList resultsDir} { 
   global Volume tcl_precision
   vtkImageAccumulate Accu
@@ -114,7 +146,10 @@ proc NormImage {MaxValue NormList resultsDir} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC NormImage2
 # 2. Start program if it is called from a different function
+# .ARGS
+# .END
 #-------------------------------------------------------------------------------
 proc NormImage2 {} {
     if {$argc == 2} {
