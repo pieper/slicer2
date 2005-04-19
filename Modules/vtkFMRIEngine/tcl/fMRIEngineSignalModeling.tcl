@@ -36,16 +36,23 @@
 #===============================================================================
 # FILE:        fMRIEngineSignalModeling.tcl
 # PROCEDURES:  
-#   fMRIEngineBuildUIForSignalModeling  the
+#   fMRIEngineBuildUIForSignalModeling  parent
+#   fMRIEngineViewCoefficients
+#   fMRIEngineSelectRunForModelFitting run
+#   fMRIEngineUpdateRunsForModelFitting
 #   fMRIEngineUpdateConditionsForSignalModeling
-#   fMRIEngineSelectConditionForSignalModeling
-#   fMRIEngineSelectWaveFormForSignalModeling
-#   fMRIEngineSelectConvolutionForSignalModeling
-#   fMRIEngineSelectHighpassForSignalModeling
-#   fMRIEngineSelectLowpassForSignalModeling
-#   fMRIEngineDeleteEV
+#   fMRIEngineSelectConditionForSignalModeling condition
+#   fMRIEngineSelectWaveFormForSignalModeling form
+#   fMRIEngineSelectConvolutionForSignalModeling conv
+#   fMRIEngineSelectHighpassForSignalModeling pass
+#   fMRIEngineSelectLowpassForSignalModeling pass
+#   fMRIEngineAddOrEditEV
+#   fMRIEngineDeleteEV index
 #   fMRIEngineShowEVToEdit
-#   fMRIEngineAddRegressors
+#   fMRIEngineAddInputVolumes run
+#   fMRIEngineCheckMultiRuns
+#   fMRIEngineAddRegressors run
+#   fMRIEngineCountEVs
 #   fMRIEngineFitModel
 #==========================================================================auto=
 
@@ -53,7 +60,7 @@
 # .PROC fMRIEngineBuildUIForSignalModeling 
 # Creates UI for task "Signal Modeling" 
 # .ARGS
-# parent the parent frame 
+# windowpath parent the parent frame 
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineBuildUIForSignalModeling {parent} {
@@ -381,6 +388,7 @@ proc fMRIEngineViewCoefficients {} {
 # .PROC fMRIEngineSelectRunForModelFitting
 # 
 # .ARGS
+# string run
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineSelectRunForModelFitting {run} {
@@ -400,6 +408,7 @@ proc fMRIEngineSelectRunForModelFitting {run} {
 #-------------------------------------------------------------------------------
 # .PROC fMRIEngineUpdateRunsForModelFitting
 #
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineUpdateRunsForModelFitting {} {
@@ -480,6 +489,7 @@ proc fMRIEngineUpdateConditionsForSignalModeling {} {
 # .PROC fMRIEngineSelectConditionForSignalModeling
 # 
 # .ARGS
+# string condition
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineSelectConditionForSignalModeling {condition} {
@@ -495,6 +505,7 @@ proc fMRIEngineSelectConditionForSignalModeling {condition} {
 # .PROC fMRIEngineSelectWaveFormForSignalModeling
 # 
 # .ARGS
+# string form
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineSelectWaveFormForSignalModeling {form} {
@@ -510,6 +521,7 @@ proc fMRIEngineSelectWaveFormForSignalModeling {form} {
 # .PROC fMRIEngineSelectConvolutionForSignalModeling
 # 
 # .ARGS
+# string conv
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineSelectConvolutionForSignalModeling {conv} {
@@ -525,6 +537,7 @@ proc fMRIEngineSelectConvolutionForSignalModeling {conv} {
 # .PROC fMRIEngineSelectHighpassForSignalModeling
 # 
 # .ARGS
+# string pass
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineSelectHighpassForSignalModeling {pass} {
@@ -540,6 +553,7 @@ proc fMRIEngineSelectHighpassForSignalModeling {pass} {
 # .PROC fMRIEngineSelectLowpassForSignalModeling
 # 
 # .ARGS
+# string pass
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineSelectLowpassForSignalModeling {pass} {
@@ -550,7 +564,12 @@ proc fMRIEngineSelectLowpassForSignalModeling {pass} {
     set fMRIEngine(curLowpassForSignal) $pass 
 }
 
-   
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineAddOrEditEV
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineAddOrEditEV {} {
     global fMRIEngine 
 
@@ -641,6 +660,7 @@ proc fMRIEngineAddOrEditEV {} {
 # .PROC fMRIEngineDeleteEV
 # 
 # .ARGS
+# int index defaults to -1
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineDeleteEV {{index -1}} {
@@ -707,6 +727,7 @@ proc fMRIEngineShowEVToEdit {} {
 # .PROC fMRIEngineAddInputVolumes
 # 
 # .ARGS
+# string run
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineAddInputVolumes {run} {
@@ -795,6 +816,7 @@ proc fMRIEngineCheckMultiRuns {} {
 # .PROC fMRIEngineAddRegressors
 # 
 # .ARGS
+# string run
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineAddRegressors {run} {
