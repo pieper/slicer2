@@ -37,7 +37,7 @@
 # FILE:        vtkFreeSurferReaders.tcl
 # PROCEDURES:  
 #   vtkFreeSurferReadersInit
-#   vtkFreeSurferReadersBuildGUI the
+#   vtkFreeSurferReadersBuildGUI
 #   vtkFreeSurferDemo
 #   vtkFreeSurferReaderBuildVTK
 #   vtkFreeSurferReadersEnter
@@ -49,70 +49,92 @@
 #   vtkFreeSurferReadersCORApply
 #   vtkFreeSurferReadersMGHApply
 #   vtkFreeSurferReadersMGHUpdateMRML
-#   vtkFreeSurferReadersShowMGH the
+#   vtkFreeSurferReadersShowMGH i
 #   vtkFreeSurferReadersVolumesPropsApplyPre
 #   vtkFreeSurferReadersBApply
-#   vtkFreeSurferReadersBuildSurface the
-#   vtkFreeSurferReadersSetSurfaceVisibility the the
-#   vtkFreeSurferReadersSetModelScalar the the
-#   vtkFreeSurferReadersSetModelVector the the
-#   vtkFreeSurferReadersDisplayPopup the
+#   vtkFreeSurferReadersBuildSurface m
+#   vtkFreeSurferReadersSetSurfaceVisibility i vis
+#   vtkFreeSurferReadersSetModelScalar modelID scalarName
+#   vtkFreeSurferReadersSetModelVector modelID vectorName
+#   vtkFreeSurferReadersDisplayPopup modelID
 #   vtkFreeSurferReadersMainFileCloseUpdate
-#   vtkFreeSurferReadersAddColors the
-#   vtkFreeSurferReadersCORHeaderRead the
+#   vtkFreeSurferReadersAddColors tags
+#   vtkFreeSurferReadersCORHeaderRead file
 #   vtkFreeSurferReadersSetUMLSMapping
-#   vtkFreeSurferReadersReadAnnotations  model
+#   vtkFreeSurferReadersReadAnnotations  _id
 #   vtkFreeSurferReadersCheckAnnotError
 #   vtkFreeSurferReadersModelApply
 #   vtkFreeSurferReadersModelCancel
-#   vtkFreeSurferReadersSetLoad -
-#   vtkFreeSurferReadersLoadVolume volume the the
-#   vtkFreeSurferReadersLoadModel model name
-#   FreeSurferReadersFiducialsPointCreatedCallback
-#   vtkFreeSurferReadersReadMGH
-#   vtkFreeSurferReadersReadBfloat
+#   vtkFreeSurferReadersSetLoad param
+#   vtkFreeSurferReadersLoadVolume filename labelMap name
+#   vtkFreeSurferReadersLoadModel filename name
+#   FreeSurferReadersFiducialsPointCreatedCallback type fid pid
+#   vtkFreeSurferReadersReadMGH v
+#   vtkFreeSurferReadersReadBfloat v
 #   vtkFreeSurferReadersSetCast
-#   vtkFreeSurferReadersCast
+#   vtkFreeSurferReadersCast v toType
 #   vtkFreeSurferReadersSetLoadColours
 #   vtkFreeSurferReadersSetColourFileName
 #   vtkFreeSurferReadersGDFInit
-#   vtkFreeSurferReadersGDFPlotBuildWindow window
-#   vtkFreeSurferReadersGDFPlotUnhilightElement
-#   vtkFreeSurferReadersGDFPlotFocusElement
-#   vtkFreeSurferReadersGDFPlotGetClassIndexFromLabel
-#   vtkFreeSurferReadersGDFPlotCBLegendEnter
-#   vtkFreeSurferReadersGDFPlotCBLegendLeave
-#   vtkFreeSurferReadersGDFPlotCBLegendClick
-#   vtkFreeSurferReadersGDFPlotCBGraphMotion
-#   vtkFreeSurferReadersPlotHideWindow
-#   vtkFreeSurferReadersPlotSetNthClassColor
-#   vtkFreeSurferReadersPlotBeginPointList
-#   vtkFreeSurferReadersPlotAddPoint
-#   vtkFreeSurferReadersPlotEndPointList
+#   vtkFreeSurferReadersGDFPlotBuildWindow iID
+#   vtkFreeSurferReadersGDFFPlotBuildDynamicWindowElements iID
+#   vtkFreeSurferReadersPlotParseHeader ifnHeader
+#   vtkFreeSurferReadersPlotPlotData iID
+#   vtkFreeSurferReadersPlotCalculateSubjectMeasurement iID inSubject
+#   vtkFreeSurferReadersGDFPlotHilightElement iID iElement
+#   vtkFreeSurferReadersGDFPlotUnhilightElement iID iElement
+#   vtkFreeSurferReadersGDFPlotToggleVisibility iID iElement
+#   vtkFreeSurferReadersGDFPlotUnfocusElement iID
+#   vtkFreeSurferReadersGDFPlotFocusElement iID iElement inSubjInClass iX iY
+#   vtkFreeSurferReadersGDFPlotFindMousedElement iID iX iY
+#   vtkFreeSurferReadersGDFPlotGetSubjectIndexFromID iID iSubjID
+#   vtkFreeSurferReadersGDFPlotGetClassIndexFromLabel iID iLabel
+#   vtkFreeSurferReadersGDFPlotCBCloseWindow iID
+#   vtkFreeSurferReadersGDFPlotCBLegendEnter iID igw
+#   vtkFreeSurferReadersGDFPlotCBLegendLeave iID igw
+#   vtkFreeSurferReadersGDFPlotCBLegendClick iID igw
+#   vtkFreeSurferReadersGDFPlotCBGraphMotion iID igw iX iY
+#   vtkFreeSurferReadersGDFPlotRead ifnHeader
+#   vtkFreeSurferReadersGDFPlotPrint iID
+#   vtkFreeSurferReadersPlotShowWindow iID
+#   vtkFreeSurferReadersPlotHideWindow iID
+#   vtkFreeSurferReadersPlotSetVariable iID inVariable
+#   vtkFreeSurferReadersPlotSetVariable iID iMode
+#   vtkFreeSurferReadersPlotSetNthClassMarker iID inClass iMarker
+#   vtkFreeSurferReadersPlotSetNthClassColor iID inClass iColor
+#   vtkFreeSurferReadersPlotSetPoint iID iX iY iZ
+#   vtkFreeSurferReadersPlotBeginPointList iID
+#   vtkFreeSurferReadersPlotAddPoint iID iX iY iZ
+#   vtkFreeSurferReadersPlotEndPointList iID
+#   vtkFreeSurferReadersPlotSetInfo iID isInfo
+#   vtkFreeSurferReadersPlotSaveToTable iID ifnTable
+#   vtkFreeSurferReadersPlotSaveToPostscript iID ifnPS
 #   vtkFreeSurferReadersSetPlotFileName
 #   vtkFreeSurferReadersPlotApply
 #   vtkFreeSurferReadersPlotCancel
 #   vtkFreeSurferReadersUncompressMGH 
-#   vtkFreeSurferReadersSetQADirName a
+#   vtkFreeSurferReadersSetQADirName startdir
 #   vtkFreeSurferReadersSetQASubjectsFileName
 #   vtkFreeSurferReadersSetQASubjects
-#   vtkFreeSurferReadersLoadQA the
-#   vtkFreeSurferReadersQASetLoad -
+#   vtkFreeSurferReadersLoadQA fname
+#   vtkFreeSurferReadersQASetLoad voltype
 #   vtkFreeSurferReadersQASetLoadAddNew
 #   vtkFreeSurferReadersStartQA
 #   vtkFreeSurferReadersQAResetSubjectsListBox
 #   vtkFreeSurferReadersSetQAEdit
-#   vtkFreeSurferReadersBuildQAInteractor
-#   vtkFreeSurferReadersRecordSubjectQA
+#   vtkFreeSurferReadersBuildQAInteractor subject vol
+#   vtkFreeSurferReadersBuildQAInteractorNextSubject subject
+#   vtkFreeSurferReadersRecordSubjectQA subject vol eval
 #   vtkFreeSurferReadersResetTimeScale
 #   vtkFreeSurferReadersQAResetTaskDelay
-#   vtkFreeSurferReadersQASetTime the
+#   vtkFreeSurferReadersQASetTime t
 #   vtkFreeSurferReadersStepFrame
-#   vtkFreeSurferReadersReviewNextSubject
-#   vtkFreeSurferReadersQAReviewSubject
+#   vtkFreeSurferReadersReviewNextSubject subject
+#   vtkFreeSurferReadersQAReviewSubject subject
+#   vtkFreeSurferReadersBuildQAInteractorStop
 #   vtkFreeSurferReadersQAStop
 #   vtkFreeSurferReadersQASummary
-#   vtkFreeSurferReadersQAMakeNewSubjectsCsh
+#   vtkFreeSurferReadersQAMakeNewSubjectsCsh subjectsDir subset
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -296,15 +318,14 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.26 $} {$Date: 2005/04/18 18:33:19 $}]
+        {$Revision: 1.27 $} {$Date: 2005/04/19 18:26:15 $}]
 
 }
 
 #-------------------------------------------------------------------------------
 # .PROC vtkFreeSurferReadersBuildGUI
-# Builds the GUI for the free surfer readers, as a submodule of the Volumes module
+# Builds the GUI for the free surfer readers as it's own module.
 # .ARGS
-# windowpath parentFrame the frame in which to build this Module's GUI
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersBuildGUI {} {
@@ -5243,7 +5264,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.26 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"

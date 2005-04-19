@@ -36,9 +36,9 @@
 #===============================================================================
 # FILE:        regions.tcl
 # PROCEDURES:  
-#   QueryAtlas_fdemo
-#   QueryAtlas_custom_view
-#   QueryAtlas_mdemo
+#   QueryAtlas_fdemo demodata
+#   QueryAtlas_custom_view the
+#   QueryAtlas_mdemo demodata
 #==========================================================================auto=
 package require Iwidgets
 package require http

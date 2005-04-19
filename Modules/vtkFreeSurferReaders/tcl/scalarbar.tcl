@@ -37,7 +37,7 @@
 # FILE:        scalarbar.tcl
 # PROCEDURES:  
 #   uniqueCommandName
-#   addScalarBar
+#   addScalarBar vlt ren1 renderWindow
 #==========================================================================auto=
 
 
