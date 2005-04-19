@@ -1,10 +1,49 @@
+#=auto==========================================================================
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+#
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
+#
+#===============================================================================
+# FILE:        notebook.tcl
+# PROCEDURES:  
+#==========================================================================auto=
 #=========================================================================
 #
 #  Library   : A Notebook widget for Tcl/Tk
 #  Author    : D. Richard Hipp <drh@acm.org>
 #  Web       : http://www.hwaci.com/drh/
 #  Copyright : (C) 1996,1997,1998 D. Richard Hipp
-#  Version   : $Revision: 1.1 $
+#  Version   : $Revision: 1.2 $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -23,9 +62,16 @@
 #
 #=========================================================================
 
+#-------------------------------------------------------------------------------
+# .PROC create
 #
 # Create a new notebook widget
 #
+# .ARGS
+# int w 
+# list args
+# .END
+#-------------------------------------------------------------------------------
 proc Notebook:create {w args} {
     global Notebook
 
@@ -43,10 +89,16 @@ proc Notebook:create {w args} {
     eval Notebook:config $w $args
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC config
 #
 # Change configuration options for the notebook widget
 #
+# .ARGS
+# int w 
+# list args
+# .END
+#-------------------------------------------------------------------------------
 proc Notebook:config {w args} {
     global Notebook
 
@@ -140,12 +192,19 @@ proc Notebook:config {w args} {
     Notebook:raise.page $w $top
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC click
 #
 # This routine is called whenever the mouse-button is pressed over
 # the notebook.  It determines if any page should be raised and raises
 # that page.
-#
+# 
+# .ARGS
+# int w
+# int x
+# int y
+# .END
+#-------------------------------------------------------------------------------
 proc Notebook:click {w x y} {
     global Notebook
 
@@ -159,11 +218,17 @@ proc Notebook:click {w x y} {
     }
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC raise.page
 #
 # For internal use only.  This procedure raised the n-th page of
 # the notebook
 #
+# .ARGS
+# int w
+# int n
+# .END
+#-------------------------------------------------------------------------------
 proc Notebook:raise.page {w n} {
     global Notebook
 
@@ -198,10 +263,17 @@ proc Notebook:raise.page {w n} {
     raise $w.f$n
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC pageconfig
 #
 # Change the page-specific configuration options for the notebook
 #
+# .ARGS
+# int w
+# string name
+# list args
+# .END
+#-------------------------------------------------------------------------------
 proc Notebook:pageconfig {w name args} {
     global Notebook
 
@@ -225,12 +297,18 @@ proc Notebook:pageconfig {w name args} {
     }
 }
  
-
+#-------------------------------------------------------------------------------
+# .PROC raise
 #
 # This procedure raises a notebook page given its name.  But first
 # we check the "onexit" procedure for the current page (if any) and
 # if it returns false, we don't allow the raise to proceed.
 #
+# .ARGS
+# int w
+# string name
+# .END
+#-------------------------------------------------------------------------------
 proc Notebook:raise {w name} {
     global Notebook
 
@@ -248,10 +326,16 @@ proc Notebook:raise {w name} {
     }
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC frame
 #
 # Return the frame associated with a given page of the notebook.
 #
+# .ARGS
+# int w
+# string name
+# .END
+#-------------------------------------------------------------------------------
 proc Notebook:frame {w name} {
     global Notebook
 
@@ -263,11 +347,16 @@ proc Notebook:frame {w name} {
     }
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC scheduleExpand
 #
 # Try to resize the notebook to the next time we become idle.
 #
-proc Notebook:scheduleExpand w {
+# .ARGS
+# int w
+# .END
+#-------------------------------------------------------------------------------
+proc Notebook:scheduleExpand {w} {
     global Notebook
 
     if {[info exists Notebook($w,expand)]} {
@@ -277,11 +366,16 @@ proc Notebook:scheduleExpand w {
     after idle "Notebook:expand $w"
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC 
 #
 # Resize the notebook to fit inside its containing widget.
 #
-proc Notebook:expand w {
+# .ARGS
+# int w
+# .END
+#-------------------------------------------------------------------------------
+proc Notebook:expand {w} {
     global Notebook
 
     set wi [expr [winfo width $w]-($Notebook($w,pad)*2+4)]
