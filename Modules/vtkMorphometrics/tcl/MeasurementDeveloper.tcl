@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -36,10 +36,12 @@
 #===============================================================================
 # FILE:        MeasurementDeveloper.tcl
 # PROCEDURES:  
-#    IgnoreModelsChoosen ids
-#    DescribeStepsUI frame
-#    MorphometricsDeveloperMeasurementInit
-#
+#   IgnoreModelsChoosen ids
+#   DescribeStepsUI frame
+#   MorphometricsDeveloperMeasurementInit
+#   MorphometricsDeveloperMeasurementWrapper
+#==========================================================================auto=
+
 #===============================================================================
 # This file serves as an example of how to add a morphometric tool to the 
 # vtkMorphometrics module. Essentially you don't have to change anything inside
