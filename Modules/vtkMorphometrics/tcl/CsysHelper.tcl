@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -34,17 +34,18 @@
 # 
 #
 #===============================================================================
-# FILE:  CsysHelper.tcl
-# PROCEDURES:
-#    MorphometricsPositionCsys Center DirectionXAxis
-#    MorphometricsHideCsys
-#    MorphometricsViewCsys
-#    MorphometricsCsysCenter 
-#    MorphometricsCsysDirectionX 
-#    MorphometricsCsysDirectionY 
-#    MorphometricsCsysDirectionZ 
-#
-#=========================================================================
+# FILE:        CsysHelper.tcl
+# PROCEDURES:  
+#   MorphometricsPositionCsys Center DirectionXAxis
+#   MorphometricsHowToInteractWithCsys
+#   MorphometricsHideCsys
+#   MorphometricsViewCsys
+#   MorphometricsCsysCenter
+#   MorphometricsCsysDirectionX
+#   MorphometricsCsysDirectionY
+#   MorphometricsCsysDirectionZ
+#==========================================================================auto=
+
 # Public Interface Description
 # CsysHelper is a collection of accessing and interacting with Morphometrics(csys,actor).
 # Namely toggling whether it is displayed on viewRen and Set/Get methods for the center

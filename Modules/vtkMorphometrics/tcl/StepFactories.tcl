@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -36,38 +36,46 @@
 #===============================================================================
 # FILE:        StepFactories.tcl
 # PROCEDURES:  
-#    MorphometricsDoNothingOnEnterExit
-#    MorphometricsNoUI frame
-#    MorphometricsCreateModelChooserStep workflowName modelNames modelDistributor
-#    MorphometricsCreateVolumeChooserStep workflowName volumeNames modelDistributor
-#    MorphometricsCreatePlanePlacementStep workflowName plane shortDescription instructions
-#    MorphometricsCreateSpherePlacementStep workflowName sphere shortDescription instructions
-#    MorphometricsCreateAxisPlacementStep workflowName axis shortDescription instructions
-#    MorphometricsCreateCylinderPlacementStep workflowName cylinderSource cylinderSourceTransformFilter shortDescription instructions CustomUserInterface callOnEnter callOnExit
-#    MorphometricsCreatePolyDataPlacementStep workflowName polyDataTransformFilter shortDescription instructions CustomUserInterface callOnEnter callOnExit
-#    MorphometricsInitStepFactories
-#    MorphometricsGenericPlaneDisplay plane
-#    MorphometricsGenericPlaneUndisplay plane
-#    MorphometricsGenericPlaneUI instructions frame
-#    MorphometricsGenericCylinderUI cylinderSource customUI frame
-#    MorphometricsGenericCylinderChangeRadius cylinderSource delta
-#    MorphometricsGenericCylinderChangeHeight cylinderSource delta
-#    MorphometricsGenericPolyDataDisplay polyDataTransformFilter userOnEnter
-#    MorphometricsGenericPolyDataUndisplay polyDataTransformFilter userOnExit
-#    MorphometricsGenericPolyDataUI customUI instructions frame
-#    MorphometricsModelChooserUI internalId frame
-#    MorphometricsModelChooserOnEnter internalId
-#    MorphometricsModelChooserOnExit internalId
-#    MorphometricsGenericSphereDisplay sphere
-#    MorphometricsGenericSphereUndisplay sphere
-#    MorphometricsGenericSphereUI sphere instructions frame
-#    MorphometricsGenericSphereChangeRadius sphere delta
-#    MorphometricsAlignPolydataWithCsys Polydata Center Orientation
-#    MorphometricsUnAlignPolydataWithCsys
-#    MorphometricsViewPolydata polydata
-#    MorphometricsHidePolydata
-#    MorphometricsViewPolydataWithCsys
-#    MorphometricsHidePolydataWithCsys
+#   MorphometricsDoNothingOnEnterExit
+#   MorphometricsNoUI frame
+#   MorphometricsCreateVolumeChooserStep workflowName volumeNames volumeDistributor
+#   MorphometricsCreateModelChooserStep workflowName modelNames modelDistributor
+#   MorphometricsCreatePlanePlacementStep workflowName plane shortDescription instructions
+#   MorphometricsCreateSpherePlacementStep workflowName sphere shortDescription instructions
+#   MorphometricsCreateAxisPlacementStep workflowName axis shortDescription instructions
+#   MorphometricsCreateCylinderPlacementStep workflowName cylinderSource cylinderSourceTransformFilter shortDescription instructions CustomUserInterface callOnEnter callOnExit
+#   MorphometricsCreatePolyDataPlacementStep workflowName polyDataTransformFilter shortDescription instructions CustomUserInterface callOnEnter callOnExit
+#   MorphometricsInitStepFactories
+#   MorphometricsGenericPlaneDisplay plane
+#   MorphometricsGenericPlaneUndisplay plane
+#   MorphometricsGenericPlaneUI instructions frame
+#   MorphometricsGenericCylinderUI cylinderSource customUI frame
+#   MorphometricsGenericCylinderUI
+#   MorphometricsGenericCylinderChangeRadius cylinderSource delta
+#   MorphometricsGenericCylinderChangeHeight cylinderSource delta
+#   MorphometricsGenericPolyDataDisplay polyDataTransformFilter userOnEnter
+#   MorphometricsGenericPolyDataDisplay polyDataTransformFilter userOnExit
+#   MorphometricsGenericPolyDataUI customUI instructions frame
+#   MorphometricsModelChooserUI internalId frame
+#   MorphometricsModelChooserOnEnter internalId
+#   MorphometricsModelChooserOnExit internalId
+#   MorphometricsVolumeChooserUI internalId frame
+#   MorphometricsVolumeChooserOnEnter internalId
+#   MorphometricsVolumeChooserOnExit internalId
+#   MorphometricsGenericSphereDisplay sphere
+#   MorphometricsGenericSphereUndisplay sphere
+#   MorphometricsGenericSphereUI sphere instructions frame
+#   MorphometricsGenericSphereChangeRadius sphere delta
+#   MorphometricsGenericAxisDisplay axis
+#   MorphometricsGenericAxisUndisplay axis
+#   MorphometricsAlignPolydataWithCsys Polydata Center Orientation
+#   MorphometricsUnAlignPolydataWithCsys
+#   MorphometricsViewPolydata polydata
+#   MorphometricsHidePolydata
+#   MorphometricsViewPolydataWithCsys
+#   MorphometricsHidePolydataWithCsys
+#==========================================================================auto=
+
 #=========================================================================
 # Public Interface Description
 # This file provides functions for generating some steps for the workflow
@@ -383,6 +391,8 @@ proc MorphometricsGenericPlaneUI {instructions frame} {
 }
 
 ## Cylinder specific stuff
+
+
 #-------------------------------------------------------------------------------
 # .PROC MorphometricsGenericCylinderUI
 # Construct an interface for accessing the height as well as the radius parameters
@@ -393,7 +403,6 @@ proc MorphometricsGenericPlaneUI {instructions frame} {
 # str frame name of frame where the user interface should be created. 
 # .END
 #-------------------------------------------------------------------------------
-
 proc MorphometricsGenericCylinderUI {cylinderSource customUI frame} {
     global Gui Morphometrics
     # A subframe for modifying the radius of the cylinder
