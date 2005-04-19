@@ -1,6 +1,6 @@
 /*=auto=========================================================================
 
-(c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+(c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 
 This software ("3D Slicer") is provided by The Brigham and Women's 
 Hospital, Inc. on behalf of the copyright holders and contributors.
@@ -107,8 +107,8 @@ void vtkImageFlipper::SetFlippingSequence(const char *seq)
               Div. of Radiological Sciences, 
               Computational Imaging Science Group, 1997 - 2000
           http://www-ipg.umds.ac.uk/cisg
-  Date      : $Date: 2004/07/21 21:45:20 $
-  Version   : $Revision: 1.1 $
+  Date      : $Date: 2005/04/19 14:46:10 $
+  Version   : $Revision: 1.2 $
 */
 void vtkImageFlipper::SimpleExecute(vtkImageData* input, vtkImageData* output)
 {
