@@ -1,3 +1,20 @@
+# FILE:        FluxDiffusion.tcl
+# PROCEDURES:  
+#   FluxDiffusionInit
+#   FluxDiffusionUpdateGUI
+#   FluxDiffusionBuildGUI
+#   FluxDiffusionBuildHelpFrame
+#   FluxDiffusionBuildMainFrame
+#   FluxDiffusionBuildExpertFrame
+#   FluxDiffusionEnter
+#   FluxDiffusionExit
+#   FluxDiffusionCount
+#   FluxDiffusionShowFile
+#   FluxDiffusionBindingCallback event W X Y x y t
+#   FluxDiffusionPrepareResult
+#   FluxDiffusionPrepareResultVolume
+#   RunFluxDiffusion
+
 #   ==================================================
 #   Module: vtkFluxDiffusion
 #   Author: Karl Krissian
@@ -32,23 +49,6 @@
 #   The full GNU Lesser General Public License file is in vtkFluxDiffusion/LesserGPL_license.txt
 
 
-#=auto==========================================================================
-#
-#===============================================================================
-# FILE:        FluxDiffusion.tcl
-# PROCEDURES:  
-#   FluxDiffusionInit
-#   FluxDiffusionBuildGUI
-#   FluxDiffusionBuildHelpFrame
-#   FluxDiffusionBuildMainFrame
-#   FluxDiffusionBuildExpertFrame
-#   FluxDiffusionEnter
-#   FluxDiffusionExit
-#   FluxDiffusionUpdateGUI
-#   FluxDiffusionCount
-#   FluxDiffusionShowFile
-#   FluxDiffusionBindingCallback
-#==========================================================================auto=
 
 #-------------------------------------------------------------------------------
 #  Description
@@ -158,7 +158,7 @@ proc FluxDiffusionInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.12 $} {$Date: 2004/09/17 15:41:23 $}]
+        {$Revision: 1.13 $} {$Date: 2005/04/19 16:55:16 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -239,6 +239,7 @@ proc FluxDiffusionUpdateGUI {} {
 # .PROC FluxDiffusionBuildGUI
 #
 # Create the Graphical User Interface.
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc FluxDiffusionBuildGUI {} {
@@ -271,6 +272,7 @@ proc FluxDiffusionBuildGUI {} {
 # .PROC FluxDiffusionBuildHelpFrame
 #
 #   Create the Help frame
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc FluxDiffusionBuildHelpFrame {} {
@@ -313,6 +315,7 @@ proc FluxDiffusionBuildHelpFrame {} {
 # .PROC FluxDiffusionBuildMainFrame
 #
 #   Create the Main frame
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc FluxDiffusionBuildMainFrame {} {
@@ -475,6 +478,7 @@ proc FluxDiffusionBuildMainFrame {} {
 # .PROC FluxDiffusionBuildExpertFrame
 #
 #   Create the Expert frame
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc FluxDiffusionBuildExpertFrame {} {
@@ -646,6 +650,7 @@ proc FluxDiffusionExit {} {
 #
 # This routine demos how to make button callbacks and use global arrays
 # for object oriented programming.
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc FluxDiffusionCount {} {
@@ -661,6 +666,7 @@ proc FluxDiffusionCount {} {
 #
 # This routine demos how to make button callbacks and use global arrays
 # for object oriented programming.
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc FluxDiffusionShowFile {} {
@@ -675,6 +681,13 @@ proc FluxDiffusionShowFile {} {
 # Demo of callback routine for bindings
 # 
 # .ARGS
+# string event 
+# int W 
+# int X 
+# int Y 
+# int x 
+# int y 
+# int t 
 # .END
 #-------------------------------------------------------------------------------
 proc FluxDiffusionBindingCallback { event W X Y x y t } {
@@ -700,6 +713,7 @@ proc FluxDiffusionBindingCallback { event W X Y x y t } {
 # .PROC FluxDiffusionPrepareResult
 #   Create the New Volume if necessary. Otherwise, ask to overwrite.
 #   returns 1 if there is are errors 0 otherwise
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc FluxDiffusionCheckErrors {} {
@@ -718,6 +732,7 @@ proc FluxDiffusionCheckErrors {} {
 # .PROC FluxDiffusionPrepareResultVolume
 #   Check for Errors in the setup
 #   returns 1 if there are errors, 0 otherwise
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc FluxDiffusionPrepareResultVolume {}  {
@@ -760,7 +775,7 @@ proc FluxDiffusionPrepareResultVolume {}  {
 #-------------------------------------------------------------------------------
 # .PROC RunFluxDiffusion
 #   Run the fast marching
-#
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc RunFluxDiffusion {} {
