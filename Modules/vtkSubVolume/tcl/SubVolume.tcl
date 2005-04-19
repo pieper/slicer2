@@ -1,3 +1,58 @@
+#=auto==========================================================================
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+#
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
+#
+#===============================================================================
+# FILE:        SubVolume.tcl
+# PROCEDURES:  
+#   SubVolumeInit
+#   SubVolumeBuildGUI
+#   SubVolume3DOpacity opacity
+#   SubVolumeApply
+#   SubVolumeAddMrmlImage volID resname
+#   SubVolumeBuildVTK
+#   SubVolumeEnter
+#   SubVolumeExit
+#   SubVolumeUpdateGUI
+#   SubVolumeGetInitParams
+#   SubVolumePick3D type
+#   SubVolumeUpdate3DScales notUsed
+#   SubVolumeCreate3DCube
+#   SubVolumeDelete3DCube
+#   SubVolumeRenderCube
+#==========================================================================auto=
+
 #-------------------------------------------------------------------------------
 # .PROC SubVolumeInit
 #  The "Init" procedure is called automatically by the slicer.  
@@ -105,7 +160,7 @@ proc SubVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2005/01/28 23:33:15 $}]
+        {$Revision: 1.8 $} {$Date: 2005/04/19 22:04:42 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -188,6 +243,12 @@ proc SubVolumeInit {} {
 #-------------------------------------------------------------------------------
 
 
+#-------------------------------------------------------------------------------
+# .PROC SubVolumeBuildGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc SubVolumeBuildGUI {} {
     global Gui SubVolume Module Volume Model
     
@@ -416,6 +477,13 @@ proc SubVolumeBuildGUI {} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC SubVolume3DOpacity
+# 
+# .ARGS
+# float opacity
+# .END
+#-------------------------------------------------------------------------------
 proc SubVolume3DOpacity {opacity} {
  global SubVolume
  
@@ -426,24 +494,24 @@ proc SubVolume3DOpacity {opacity} {
 }
 
 #----------------------------------------------------------------------
+# .PROC SubVolumeApply
 #
-#
-#
+# .ARGS
+# .END
 #----------------------------------------------------------------------
 proc SubVolumeApply {} {
-#    --------------
 
-global SubVolume Volume
+    global SubVolume Volume
+    
+    set volID $SubVolume(VolumeIn)
 
-set volID $SubVolume(VolumeIn)
-
-set x1 [expr round([lindex $SubVolume(Ext3D,Ijk) 0])]
-set x2 [expr round([lindex $SubVolume(Ext3D,Ijk) 1])]
-set y1 [expr round([lindex $SubVolume(Ext3D,Ijk) 2])]
-set y2 [expr round([lindex $SubVolume(Ext3D,Ijk) 3])]
-set z1 [expr round([lindex $SubVolume(Ext3D,Ijk) 4])]
-set z2 [expr round([lindex $SubVolume(Ext3D,Ijk) 5])]
-
+    set x1 [expr round([lindex $SubVolume(Ext3D,Ijk) 0])]
+    set x2 [expr round([lindex $SubVolume(Ext3D,Ijk) 1])]
+    set y1 [expr round([lindex $SubVolume(Ext3D,Ijk) 2])]
+    set y2 [expr round([lindex $SubVolume(Ext3D,Ijk) 3])]
+    set z1 [expr round([lindex $SubVolume(Ext3D,Ijk) 4])]
+    set z2 [expr round([lindex $SubVolume(Ext3D,Ijk) 5])]
+    
   vtkExtractVOI op
   op SetInput [Volume($volID,vol) GetOutput]
   op SetVOI $x1 $x2 $y1 $y2 $z1 $z2
@@ -553,6 +621,8 @@ set z2 [expr round([lindex $SubVolume(Ext3D,Ijk) 5])]
 # .PROC SubVolumeAddMrmlImage
 # Build any vtk objects you wish here
 # .ARGS
+# int volID
+# string resname
 # .END
 #-------------------------------------------------------------------------------
 proc SubVolumeAddMrmlImage {volID resname } {
@@ -576,10 +646,10 @@ proc SubVolumeAddMrmlImage {volID resname } {
 # .END
 #-------------------------------------------------------------------------------
 proc SubVolumeBuildVTK {} {
-global SubVolume
+    global SubVolume
 
-vtkMatrix4x4 SubVolume(tmpMatrix)
-vtkMatrix4x4 SubVolume(tmp2Matrix)
+    vtkMatrix4x4 SubVolume(tmpMatrix)
+    vtkMatrix4x4 SubVolume(tmp2Matrix)
 
 }
 
@@ -590,7 +660,6 @@ vtkMatrix4x4 SubVolume(tmp2Matrix)
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-
 proc SubVolumeEnter {} {
     global SubVolume
     
@@ -761,6 +830,7 @@ proc SubVolumeGetInitParams {} {
 # .PROC SubVolumePick3D
 # 
 # .ARGS
+# string type
 # .END
 #-------------------------------------------------------------------------------
 proc SubVolumePick3D { type } {
@@ -774,6 +844,7 @@ proc SubVolumePick3D { type } {
 # .PROC SubVolumeUpdate3DScales
 # 
 # .ARGS
+# string notUsed not used
 # .END
 #-------------------------------------------------------------------------------
 proc SubVolumeUpdate3DScales { notUsed } {
