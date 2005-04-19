@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -36,53 +36,52 @@
 #===============================================================================
 # FILE:        VolumeTextureMapping.tcl
 # PROCEDURES:  
-# VolumeTextureMappingInit 
-# VolumeTextureMappingBuildGUI 
-# changeDim 
-# getColor
-# gradImage
-# ClipVolumes
-# CheckLines 
-# ChangeRotDir 
-# RotateClipPlanePlane 
-# DistanceClipPlanePlane 
-# SetClipPlaneType 
-# SpacingClipPlane 
-# ChangeVolumeDim 
-# NumberOfPlanes 
-# defaultPoints 
-# getPointX 
-# getPointY 
-# ChangeVolume 
-# TFPoints 
-# TFInteractions 
-# menuPopLine 
-# menuPopPoint 
-# holdOverLine 
-# leaveLine 
-# createHistLine
-# createTFLine 
-# holdOverPoint 
-# leavePoint 
-# setValues 
-# addPoint 
-# removePoint
-# clickOnPoint
-# releasePoint 
-# movePoint 
-# ChangeTransformMatrix 
-# VolumeTextureMappingBuildVTK 
-# VolumeTextureMappingRefresh 
-#VolumeTextureMappingCameraMotion
-# VolumeTextureMappingEnter 
-# VolumeTextureMappingExit 
-# VolumeTextureMappingUpdateMRML 
-# VolumeTextureMappingSetOriginal1 
-# VolumeTextureMappingSetOriginal2 
-# VolumeTextureMappingSetOriginal3 
-# VolumeTextureMappingStorePresets 
-# VolumeTextureMappingRecallPresets 
-
+#   VolumeTextureMappingInit
+#   VolumeTextureMappingBuildGUI
+#   changeDim f dir dim
+#   getColor f
+#   gradImage w
+#   ClipVolumes
+#   CheckLines
+#   ChangeRotDir f
+#   RotateClipPlanePlane f angle
+#   DistanceClipPlanePlane f distance
+#   SetClipPlaneType
+#   SpacingClipPlane f spacing
+#   ChangeVolumeDim f
+#   NumberOfPlanes planes
+#   defaultPoints f
+#   getPointX
+#   getPointY
+#   ChangeVolume f
+#   TFPoints f
+#   TFInteractions f
+#   menuPopLine f x y x2 y2
+#   menuPopPoint f x y x2 y2
+#   holdOverLine f x y
+#   leaveLine f
+#   createHistLine f
+#   createTFLine f
+#   holdOverPoint f x y
+#   leavePoint f
+#   setValues f x y
+#   addPoint f
+#   removePoint f
+#   clickOnPoint volume f x y
+#   releasePoint volume f x y
+#   movePoint f x y
+#   ChangeTransformMatrix
+#   VolumeTextureMappingBuildVTK
+#   VolumeTextureMappingRefresh
+#   VolumeTextureMappingCameraMotion
+#   VolumeTextureMappingEnter
+#   VolumeTextureMappingExit
+#   VolumeTextureMappingUpdateMRML
+#   VolumeTextureMappingSetOriginal1 v
+#   VolumeTextureMappingSetOriginal2 v
+#   VolumeTextureMappingSetOriginal3 v
+#   VolumeTextureMappingStorePresets p
+#   VolumeTextureMappingRecallPresets p
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -454,24 +453,27 @@ Description by tabs:
 # .PROC changeDim
 # 
 # .ARGS
+# windowpath f
+# path dir
+# string dim
 # .END
 #-------------------------------------------------------------------------------
 proc changeDim {f dir dim} {
     global VolumeTextureMapping
     $f configure -text $dim
     if {[string compare $dir "x"] == 0} {
-    set d 0
+        set d 0
     } elseif {[string compare $dir "y"] == 0} {
-    set d 1
+        set d 1
     } elseif {[string compare $dir "z"] == 0} {
-    set d 2
+        set d 2
     }
     if {[string compare $VolumeTextureMapping(currentVolume) "volume1"] == 0} {
-    set thisVol 0
+        set thisVol 0
     } elseif {[string compare $VolumeTextureMapping(currentVolume) "volume2"] == 0} {
-    set thisVol 1
+        set thisVol 1
     } elseif {[string compare $VolumeTextureMapping(currentVolume) "volume3"] == 0} {
-    set thisVol 2
+        set thisVol 2
     }
     VolumeTextureMapping(texturevolumeMapper) SetDimension $thisVol $d $dim
 }
@@ -482,6 +484,7 @@ proc changeDim {f dir dim} {
 # .PROC getColor
 # 
 # .ARGS
+# windowpath f
 # .END
 #-------------------------------------------------------------------------------
 proc getColor {f} {
@@ -498,6 +501,7 @@ proc getColor {f} {
 # .PROC gradImage
 # 
 # .ARGS
+# int w optional
 # .END
 #-------------------------------------------------------------------------------
 proc gradImage {{w}} {
@@ -585,6 +589,7 @@ proc CheckLines {} {
 # .PROC ChangeRotDir
 # 
 # .ARGS
+# windowpath f
 # .END
 #-------------------------------------------------------------------------------
 proc ChangeRotDir {f} {
@@ -625,6 +630,8 @@ proc ChangeRotDir {f} {
 # .PROC RotateClipPlanePlane
 # 
 # .ARGS
+# windowpath f
+# float angle
 # .END
 #-------------------------------------------------------------------------------
 proc RotateClipPlanePlane {f angle} {
@@ -652,6 +659,8 @@ proc RotateClipPlanePlane {f angle} {
 # .PROC DistanceClipPlanePlane
 # 
 # .ARGS
+# windowpath f
+# float distance
 # .END
 #-------------------------------------------------------------------------------
 proc DistanceClipPlanePlane {f distance} {
@@ -692,6 +701,8 @@ proc SetClipPlaneType {} {
 # .PROC SpacingClipPlane
 # 
 # .ARGS
+# windowpath f
+# float spacing
 # .END
 #-------------------------------------------------------------------------------
 proc SpacingClipPlane {f spacing} {
@@ -704,6 +715,7 @@ proc SpacingClipPlane {f spacing} {
 # .PROC ChangeVolumeDim
 # 
 # .ARGS
+# windowpath f
 # .END
 #-------------------------------------------------------------------------------
 proc ChangeVolumeDim {f} {
@@ -725,6 +737,7 @@ proc ChangeVolumeDim {f} {
 # .PROC NumberOfPlanes
 # 
 # .ARGS
+# int planes
 # .END
 #-------------------------------------------------------------------------------
 proc NumberOfPlanes {planes} {
@@ -739,6 +752,7 @@ proc NumberOfPlanes {planes} {
 # .PROC defaultPoints
 # 
 # .ARGS
+# windowpath f
 # .END
 #-------------------------------------------------------------------------------
 proc defaultPoints {f} {
@@ -801,6 +815,7 @@ proc getPointY {} {
 # .PROC ChangeVolume
 # 
 # .ARGS
+# windowpath f
 # .END
 #-------------------------------------------------------------------------------
 proc ChangeVolume {f} {
@@ -828,6 +843,7 @@ proc ChangeVolume {f} {
 # .PROC TFPoints
 # 
 # .ARGS
+# windowpath f
 # .END
 #-------------------------------------------------------------------------------
 proc TFPoints {f} {
@@ -852,6 +868,7 @@ proc TFPoints {f} {
 # .PROC TFInteractions
 # 
 # .ARGS
+# windowpath f
 # .END
 #-------------------------------------------------------------------------------
 proc TFInteractions {f} {
@@ -878,6 +895,11 @@ proc TFInteractions {f} {
 # .PROC menuPopLine
 # 
 # .ARGS
+# windowpath f
+# int x
+# int y
+# int x2
+# int y2
 # .END
 #-------------------------------------------------------------------------------
 proc menuPopLine {f x y x2 y2} {
@@ -893,6 +915,11 @@ proc menuPopLine {f x y x2 y2} {
 # .PROC menuPopPoint
 # 
 # .ARGS
+# windowpath f
+# int x
+# int y
+# int x2
+# int y2
 # .END
 #-------------------------------------------------------------------------------
 proc menuPopPoint {f x y x2 y2} {
@@ -908,6 +935,9 @@ proc menuPopPoint {f x y x2 y2} {
 # .PROC holdOverLine
 # 
 # .ARGS
+# windowpath f
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc holdOverLine {f x y} {
@@ -921,6 +951,7 @@ proc holdOverLine {f x y} {
 # .PROC leaveLine
 # 
 # .ARGS
+# windowpath f
 # .END
 #-------------------------------------------------------------------------------
 proc leaveLine {f} {
@@ -932,6 +963,7 @@ proc leaveLine {f} {
 # .PROC createHistLine
 # 
 # .ARGS
+# windowpath f
 # .END
 #-------------------------------------------------------------------------------
 proc createHistLine {f} {
@@ -956,6 +988,7 @@ proc createHistLine {f} {
 # .PROC createTFLine
 # 
 # .ARGS
+# windowpath f
 # .END
 #-------------------------------------------------------------------------------
 proc createTFLine {f} {
@@ -982,6 +1015,9 @@ proc createTFLine {f} {
 # .PROC holdOverPoint
 # 
 # .ARGS
+# windowpath f
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc holdOverPoint {f x y} {
@@ -1003,6 +1039,7 @@ proc holdOverPoint {f x y} {
 # .PROC leavePoint
 # 
 # .ARGS
+# windowpath f
 # .END
 #-------------------------------------------------------------------------------
 proc leavePoint {f} {
@@ -1014,6 +1051,9 @@ proc leavePoint {f} {
 # .PROC setValues
 # 
 # .ARGS
+# windowpath f
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc setValues {f x y} {
@@ -1028,6 +1068,7 @@ proc setValues {f x y} {
 # .PROC addPoint
 # 
 # .ARGS
+# windowpath f
 # .END
 #-------------------------------------------------------------------------------
 proc addPoint {f} {
@@ -1045,6 +1086,7 @@ proc addPoint {f} {
 # .PROC removePoint
 # 
 # .ARGS
+# windowpath f
 # .END
 #-------------------------------------------------------------------------------
 proc removePoint {f} {
@@ -1063,6 +1105,10 @@ proc removePoint {f} {
 # .PROC clickOnPoint
 # 
 # .ARGS
+# int volume
+# windowpath f
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc clickOnPoint {volume f x y} {
@@ -1085,6 +1131,10 @@ proc clickOnPoint {volume f x y} {
 # .PROC releasePoint
 # 
 # .ARGS
+# int volume
+# windowpath f
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc releasePoint {volume f x y} {
@@ -1122,6 +1172,9 @@ proc releasePoint {volume f x y} {
 # .PROC movePoint
 # 
 # .ARGS
+# windowpath f
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc movePoint {f x y} {
@@ -1452,7 +1505,7 @@ proc VolumeTextureMappingUpdateMRML {} {
 #   Sets which volume is used in this module.
 #   Called from VolumeTextureMappingUpdateMRML and VolumeTextureMappingEnter.
 # .ARGS
-#   v    Volume ID
+#  int  v Volume ID
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeTextureMappingSetOriginal1 {v} {
@@ -1470,7 +1523,7 @@ proc VolumeTextureMappingSetOriginal1 {v} {
 #   Sets which volume is used in this module.
 #   Called from VolumeTextureMappingUpdateMRML and VolumeTextureMappingEnter.
 # .ARGS
-#   v    Volume ID
+# int  v    Volume ID
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeTextureMappingSetOriginal2 {v} {
@@ -1488,7 +1541,7 @@ proc VolumeTextureMappingSetOriginal2 {v} {
 #   Sets which volume is used in this module.
 #   Called from VolumeTextureMappingUpdateMRML and VolumeTextureMappingEnter.
 # .ARGS
-#   v    Volume ID
+# int  v    Volume ID
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeTextureMappingSetOriginal3 {v} {
@@ -1508,6 +1561,7 @@ proc VolumeTextureMappingSetOriginal3 {v} {
 # .PROC VolumeTextureMappingStorePresets
 # 
 # .ARGS
+# int p
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeTextureMappingStorePresets {p} {
@@ -1524,6 +1578,7 @@ proc VolumeTextureMappingStorePresets {p} {
 # .PROC VolumeTextureMappingRecallPresets
 # 
 # .ARGS
+# int p
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeTextureMappingRecallPresets {p} {
