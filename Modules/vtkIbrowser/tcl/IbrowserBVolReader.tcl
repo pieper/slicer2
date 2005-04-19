@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -36,10 +36,16 @@
 #===============================================================================
 # FILE:        IbrowserBVolReader.tcl
 # PROCEDURES:  
-#   IbrowserBVolReaderApply
+#   IbrowserBVolReaderSetFileName
 #   IbrowserBVolReaderApply
 #==========================================================================auto=
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserBVolReaderSetFileName
+# Set the Volume(name) from the Volume(Ibrowser,FileName)
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserBVolReaderSetFileName {} {
 
     if {$::Module(verbose) == 1} {
@@ -60,15 +66,8 @@ proc IbrowserBVolReaderSetFileName {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# .PROC IbrowserBVolReaderApply
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc IbrowserBVolReaderApply { } {
-global Ibrowser Module
+    global Ibrowser Module
     
     if {$::Module(verbose) == 1} {
         puts "proc IbrowserBVolReaderApply\n"

@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -36,9 +36,9 @@
 #===============================================================================
 # FILE:        IbrowserControllerArrayList.tcl
 # PROCEDURES:  
-#   IbrowserAddToList
-#   IbrowserOrderCompare
-#   IbrowserDeleteFromList
+#   IbrowserAddToList Aname
+#   IbrowserOrderCompare a b
+#   IbrowserDeleteFromList ival
 #==========================================================================auto=
 
 
@@ -50,6 +50,7 @@
 # Adds an element to a list.
 # 
 # .ARGS
+# string Aname
 # .END
 #-------------------------------------------------------------------------------
 proc IbrowserAddToList { Aname } {
@@ -69,6 +70,8 @@ proc IbrowserAddToList { Aname } {
 # based on their orders; from lowest to highest.
 # 
 # .ARGS
+# int a id
+# int b id
 # .END
 #-------------------------------------------------------------------------------
 proc IbrowserOrderCompare { a b } {
@@ -101,6 +104,7 @@ proc IbrowserOrderCompare { a b } {
 # then deletes the array too
 # 
 # .ARGS
+# int ival
 # .END
 #-------------------------------------------------------------------------------
 proc IbrowserDeleteFromList { ival } {
