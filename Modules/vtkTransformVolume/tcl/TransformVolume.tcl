@@ -1,3 +1,78 @@
+#=auto==========================================================================
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+#
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
+#
+#===============================================================================
+# FILE:        TransformVolume.tcl
+# PROCEDURES:  
+#   TransformVolumeInit
+#   TransformVolumeBuildVTK
+#   TransformVolumeEnter
+#   TransformVolumeExit
+#   TransformVolumeBuildGUI
+#   TransformVolumeUpdateGUI
+#   TransformVolumeRun
+#   TransformVolumeGetVolumes transformId
+#   TransformVolumeVolumeExists name
+#   TransformVolumeTransform id
+#   TransformVolumeDispVolume id
+#   TransformVolumeRefVolume id
+#   TransformVolumeOrientation orient
+#   TransformVolumeResampleMode mode
+#   TransformVolumeUpdateResample
+#   TransformVolumeUpdatePreview
+#   TransformVolumeAutoSpacing
+#   AutoExtent
+#   TransformVolumeInterpolationMode mode
+#   TransformVolumeAutoDimensionLR
+#   TransformVolumeAutoDimensionPA
+#   TransformVolumeAutoDimensionIS
+#   TransformVolumeResultPrefix prefix
+#   TransformVolumeOutputSpacingLR spacing
+#   TransformVolumeOutputSpacingPA spacing
+#   TransformVolumeOutputSpacingIS spacing
+#   TransformVolumeOutputDimensionLR dimension
+#   TransformVolumeOutputDimensionPA dimension
+#   TransformVolumeOutputDimensionIS dimension
+#   TransformVolumePermuteDimensions
+#   TransformVolumePermuteDimensions
+#   TransformVolumePermuteSpacing
+#   TransformVolumePermuteSpacing
+#   TransformVolumeCreatePreview
+#   TransformVolumeExitPreview
+#==========================================================================auto=
+
 #-------------------------------------------------------------------------------
 # .PROC TransformVolumeInit
 #  The "Init" procedure is called automatically by the slicer.  
@@ -106,7 +181,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.24 $} {$Date: 2005/04/14 21:05:46 $}]
+        {$Revision: 1.25 $} {$Date: 2005/04/19 22:13:34 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -160,6 +235,13 @@ proc TransformVolumeInit {} {
 proc TransformVolumeBuildVTK {} {
 
 }
+
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeEnter
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TransformVolumeEnter {} {
     global TransformVolume Gui
 }
@@ -193,6 +275,12 @@ proc TransformVolumeExit {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeBuildGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TransformVolumeBuildGUI {} {
     global Gui TransformVolume Module Volume 
     
@@ -493,6 +581,12 @@ proc TransformVolumeBuildGUI {} {
     TransformVolumeResampleMode
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeUpdateGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TransformVolumeUpdateGUI {} {
     global TransformVolume
     $TransformVolume(displacementVol) initSelection
@@ -500,6 +594,12 @@ proc TransformVolumeUpdateGUI {} {
     $TransformVolume(transform) initSelection
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeRun
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TransformVolumeRun {} {
     global TransformVolume Volume
     
@@ -577,6 +677,13 @@ proc TransformVolumeRun {} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeGetVolumes
+# 
+# .ARGS
+# int transformId
+# .END
+#-------------------------------------------------------------------------------
 proc TransformVolumeGetVolumes {transformId} {
     global Data Mrml Transform EndTransform
     
@@ -627,6 +734,13 @@ proc TransformVolumeGetVolumes {transformId} {
 
 #-----------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeVolumeExists
+# 
+# .ARGS
+# string name
+# .END
+#-------------------------------------------------------------------------------
 proc TransformVolumeVolumeExists {name} {
     global Volume
     foreach v $Volume(idList) {
@@ -639,7 +753,13 @@ proc TransformVolumeVolumeExists {name} {
     return 0
 }
 
-#-----------------------------
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeTransform
+# 
+# .ARGS
+# list id defaults to empty string
+# .END
+#-------------------------------------------------------------------------------
 proc TransformVolumeTransform {{id ""}} {
     global TransformVolume
     
@@ -652,7 +772,13 @@ proc TransformVolumeTransform {{id ""}} {
     TransformVolumeUpdatePreview
 }
 
-#-----------------------------
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeDispVolume
+# 
+# .ARGS
+# list id defaults to empty string
+# .END
+#-------------------------------------------------------------------------------
 proc TransformVolumeDispVolume {{id ""}} {
     global TransformVolume
     
@@ -664,7 +790,13 @@ proc TransformVolumeDispVolume {{id ""}} {
     TransformVolumeUpdatePreview
 }
 
-#-----------------------------
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeRefVolume
+# 
+# .ARGS
+# list id defaults to empty string
+# .END
+#-------------------------------------------------------------------------------
 proc TransformVolumeRefVolume {{id ""}} {
     global TransformVolume
     
@@ -678,7 +810,13 @@ proc TransformVolumeRefVolume {{id ""}} {
     TransformVolumeUpdatePreview
 }
 
-#-----------------------------
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeOrientation
+# 
+# .ARGS
+# string orient defaults to empty string
+# .END
+#-------------------------------------------------------------------------------
 proc TransformVolumeOrientation {{orient ""}} {
     global TransformVolume
     
@@ -691,7 +829,13 @@ proc TransformVolumeOrientation {{orient ""}} {
     TransformVolumeUpdatePreview
 }
 
-#-----------------------------
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeResampleMode
+# 
+# .ARGS
+# string mode defaults to emtpy string
+# .END
+#-------------------------------------------------------------------------------
 proc TransformVolumeResampleMode {{mode ""}} {
     global TransformVolume
     
@@ -729,7 +873,12 @@ proc TransformVolumeResampleMode {{mode ""}} {
     TransformVolumeUpdatePreview
 }
 
-#-----------------------------
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeUpdateResample
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TransformVolumeUpdateResample {} {
     global TransformVolume Volume
     
@@ -778,7 +927,12 @@ proc TransformVolumeUpdateResample {} {
     }
 }
 
-#-----------------------------
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeUpdatePreview
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TransformVolumeUpdatePreview {} {
     global TransformVolume Volume
 
@@ -1022,9 +1176,13 @@ proc TransformVolumeAutoDimension {} {
     TransformVolumeUpdatePreview
 }
 
-
-
-#-----------------------------
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeInterpolationMode
+# 
+# .ARGS
+# string mode defaults to empty string
+# .END
+#-------------------------------------------------------------------------------
 proc TransformVolumeInterpolationMode {{mode ""}} {
     global TransformVolume
 
@@ -1087,6 +1245,7 @@ proc TransformVolumeAutoDimensionIS {} {
 # .PROC TransformVolumeResultPrefix
 #
 # .ARGS
+# string prefix defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc TransformVolumeResultPrefix {{prefix ""}} {
@@ -1103,6 +1262,7 @@ proc TransformVolumeResultPrefix {{prefix ""}} {
 # .PROC TransformVolumeOutputSpacingLR
 #
 # .ARGS
+# float spacing defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc TransformVolumeOutputSpacingLR {{spacing ""} } {
@@ -1118,6 +1278,7 @@ proc TransformVolumeOutputSpacingLR {{spacing ""} } {
 # .PROC TransformVolumeOutputSpacingPA
 #
 # .ARGS
+# float spacing defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc TransformVolumeOutputSpacingPA {{spacing ""}} {
@@ -1133,7 +1294,8 @@ proc TransformVolumeOutputSpacingPA {{spacing ""}} {
 # .PROC TransformVolumeOutputSpacingIS
 #
 # .ARGS
-# .ENDTransformVolumeExitPreview
+# float spacing defaults to empty string
+# .END
 #-------------------------------------------------------------------------------
 proc TransformVolumeOutputSpacingIS {{spacing ""} } {
     global TransformVolume
@@ -1148,6 +1310,7 @@ proc TransformVolumeOutputSpacingIS {{spacing ""} } {
 # .PROC TransformVolumeOutputDimensionLR
 #
 # .ARGS
+# string dimension defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc TransformVolumeOutputDimensionLR {{dimension ""} } {
@@ -1163,6 +1326,7 @@ proc TransformVolumeOutputDimensionLR {{dimension ""} } {
 # .PROC TransformVolumeOutputDimensionPA
 #
 # .ARGS
+# string dimension defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc TransformVolumeOutputDimensionPA {{dimension ""}} {
@@ -1178,6 +1342,7 @@ proc TransformVolumeOutputDimensionPA {{dimension ""}} {
 # .PROC TransformVolumeOutputDimensionIS
 #
 # .ARGS
+# string dimension defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc TransformVolumeOutputDimensionIS {{dimension ""} } {
