@@ -1,71 +1,66 @@
 #=auto==========================================================================
-# (c) Copyright 2002 Massachusetts Institute of Technology
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for any purpose, 
-# provided that the above copyright notice and the following three paragraphs 
-# appear on all copies of this software.  Use of this software constitutes 
-# acceptance of these terms and conditions.
-#
-# IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, 
-# INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE 
-# AND ITS DOCUMENTATION, EVEN IF MIT HAS BEEN ADVISED OF THE POSSIBILITY OF 
-# SUCH DAMAGE.
-#
-# MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING, 
-# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR 
-# A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-#
-# THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE 
-# MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
 #
 #===============================================================================
 # FILE:        VolDeface.tcl
 # PROCEDURES:  
 #   VolDefaceInit
-#   VolDefaceBuildGUI
-#   AddListUnique
-#   xDICOMFileNameTextBoxVisibleButton
-#   xDICOMPreviewImageClick
-#   xDICOMFillFileNameTextbox
-#   xDICOMIncrDecrButton
-#   xDICOMScrolledTextbox
-#   DefaceFindDICOM2
-#   DefaceFindDICOM
-#   CreateStudyList
-#   DefaceCreateSeriesList
-#   DefaceCreateFileNameList
-#   xClickListIDsNames
-#   xClickListStudyUIDs
-#   DefaceClickListSeriesUIDs
-#   xDICOMListSelectClose
-#   DefaceListSelect
-#   xChangeDir
-#   xClickDirList
-#   xDICOMHelp
-#   xDICOMSelectDirHelp
-#   xDICOMSelectDir
-#   DefaceSelectMain
-#   xHandleExtractHeader
-#   xDICOMReadHeaderValues
-#   xDICOMPredictScanOrder
-#   xDICOMPreviewAllButton
-#   xDICOMListHeadersButton
-#   xDICOMListHeader
-#   xDICOMPreviewFile
-#   xDICOMCheckFiles
-#   xDICOMCheckVolumeInit
-#   xDICOMCheckFile
-#   xDICOMShowPreviewSettings
-#   xDICOMHidePreviewSettings
-#   xDICOMShowDataDictSettings
-#   xDICOMHideDataDictSettings
-#   xDICOMHideAllSettings
-#   xDICOMSelectFragment
-#   xDICOMImageTextboxFragmentEnter
-#   xDICOMImageTextboxFragmentLeave
-#   xDICOMImageTextboxSelectAll
-#   xDICOMImageTextboxDeselectAll
+#   DefaceFindDICOM2 StartDir AddDir Pattern
+#   DefaceFindDICOM StartDir Pattern
+#   DefaceCreateSeriesList PatientIDName StudyUID
+#   DefaceCreateFileNameList PatientIDName StudyUID SeriesUID
+#   DefaceClickListStudyUIDs idsnames study seriesMask series filenames
+#   DefaceFillSeriesListbox t aidx
+#   DefaceResetSeriesListbox t
+#   DefaceToggleButton  t idx value
+#   DefaceClickListSeriesUIDs series
+#   DICOMListSelectClose parent filelist
+#   DefaceGetVisitId top message
+#   DefaceMakeDir  dirname
+#   DefaceValidateVisitId  top
+#   DefaceSortBySeries  datapath PatientID VisitID StudyUID
+#   DefaceInvoke  parent idsnames study series fileNames
+#   DefaceProgressExec args
+#   DefaceScrolledTextbox f xAlways yAlways variable labeltext args
+#   DefaceListSelect parent values
+#   DefaceSelectDir top
+#   DefaceSelectMain start_dir
+#   DICOMImageTextboxFragmentEnter w tag
+#   DICOMImageTextboxFragmentLeave w tag
+#   DICOMImageTextboxSelectAll
+#   DICOMImageTextboxDeselectAll
 #==========================================================================auto=
 
 
@@ -135,6 +130,9 @@ proc VolDefaceInit {} {
 # .PROC DefaceFindDICOM2
 # 
 # .ARGS
+# path StartDir
+# path AddDir
+# string Pattern
 # .END
 #-------------------------------------------------------------------------------
 proc DefaceFindDICOM2 { StartDir AddDir Pattern } {
@@ -321,6 +319,8 @@ proc DefaceFindDICOM2 { StartDir AddDir Pattern } {
 # .PROC DefaceFindDICOM
 # 
 # .ARGS
+# path StartDir
+# string Pattern
 # .END
 #-------------------------------------------------------------------------------
 proc DefaceFindDICOM { StartDir Pattern } {
@@ -363,6 +363,8 @@ proc DefaceFindDICOM { StartDir Pattern } {
 # .PROC DefaceCreateSeriesList
 # 
 # .ARGS
+# string PatientIDName
+# int StudyUID
 # .END
 #-------------------------------------------------------------------------------
 proc DefaceCreateSeriesList { PatientIDName StudyUID } {
@@ -389,6 +391,9 @@ proc DefaceCreateSeriesList { PatientIDName StudyUID } {
 # .PROC DefaceCreateFileNameList
 # 
 # .ARGS
+# string PatientIDName
+# int StudyUID
+# int SeriesUID
 # .END
 #-------------------------------------------------------------------------------
 proc DefaceCreateFileNameList { PatientIDName StudyUID SeriesUID} {
@@ -436,6 +441,11 @@ proc DefaceCreateFileNameList { PatientIDName StudyUID SeriesUID} {
 # .PROC DefaceClickListStudyUIDs
 # 
 # .ARGS
+# list idsnames 
+# string study 
+# string seriesMask 
+# string series 
+# list filenames
 # .END
 #-------------------------------------------------------------------------------
 proc DefaceClickListStudyUIDs { idsnames study seriesMask series filenames } {
@@ -463,6 +473,8 @@ proc DefaceClickListStudyUIDs { idsnames study seriesMask series filenames } {
 # .PROC DefaceFillSeriesListbox
 # 
 # .ARGS
+# windowpath t
+# int aidx
 # .END
 #-------------------------------------------------------------------------------
 proc DefaceFillSeriesListbox {t aidx} {
@@ -518,6 +530,7 @@ proc DefaceFillSeriesListbox {t aidx} {
 # .PROC DefaceResetSeriesListbox
 # 
 # .ARGS
+# windowpath t
 # .END
 #-------------------------------------------------------------------------------
 proc DefaceResetSeriesListbox {t} {
@@ -537,6 +550,9 @@ proc DefaceResetSeriesListbox {t} {
 # .PROC DefaceToggleButton 
 # 
 # .ARGS
+# windowpath t
+# int idx
+# string value
 # .END
 #-------------------------------------------------------------------------------
 proc DefaceToggleButton {t idx value} {
@@ -550,6 +566,7 @@ proc DefaceToggleButton {t idx value} {
 # .PROC DefaceClickListSeriesUIDs
 # idsnames study series filenames 
 # .ARGS
+# list series
 # .END
 #-------------------------------------------------------------------------------
 proc DefaceClickListSeriesUIDs {series} {
@@ -583,6 +600,8 @@ proc DefaceClickListSeriesUIDs {series} {
 # .PROC DICOMListSelectClose
 # 
 # .ARGS
+# windowpath parent
+# list filelist
 # .END
 #-------------------------------------------------------------------------------
 proc DICOMListSelectClose { parent filelist } {
@@ -607,6 +626,8 @@ proc DICOMListSelectClose { parent filelist } {
 # .PROC DefaceGetVisitId
 # 
 # .ARGS
+# windowpath top
+# string message
 # .END
 #-------------------------------------------------------------------------------
 proc DefaceGetVisitId { top message} {
@@ -641,6 +662,7 @@ proc DefaceGetVisitId { top message} {
 # .PROC DefaceMakeDir 
 # 
 # .ARGS
+# string dirname
 # .END
 #-------------------------------------------------------------------------------
 proc DefaceMakeDir { dirname } {
@@ -652,6 +674,7 @@ proc DefaceMakeDir { dirname } {
 # .PROC DefaceValidateVisitId 
 # 
 # .ARGS
+# windowpath top
 # .END
 #-------------------------------------------------------------------------------
 proc DefaceValidateVisitId { top } {
@@ -679,6 +702,10 @@ proc DefaceValidateVisitId { top } {
 # .PROC DefaceSortBySeries 
 # 
 # .ARGS
+# path datapath 
+# int PatientID 
+# int VisitID 
+# int StudyUID
 # .END
 #-------------------------------------------------------------------------------
 proc DefaceSortBySeries { datapath PatientID VisitID StudyUID} {
@@ -736,6 +763,11 @@ proc DefaceSortBySeries { datapath PatientID VisitID StudyUID} {
 # .PROC DefaceInvoke 
 # 
 # .ARGS
+# windowpath parent 
+# list idsnames 
+# string study 
+# string series 
+# list fileNames
 # .END
 #-------------------------------------------------------------------------------
 proc DefaceInvoke { parent idsnames study series fileNames } {
@@ -825,6 +857,7 @@ proc DefaceInvoke { parent idsnames study series fileNames } {
 # .PROC DefaceProgressExec
 # 
 # .ARGS
+# list args
 # .END
 #-------------------------------------------------------------------------------
 proc DefaceProgressExec {args} {
@@ -838,6 +871,12 @@ proc DefaceProgressExec {args} {
 # .PROC DefaceScrolledTextbox
 # 
 # .ARGS
+# windowpath f 
+# boolean xAlways 
+# boolean yAlways 
+# string variable 
+# string labeltext defaults to labeltext
+# list args defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc DefaceScrolledTextbox {f xAlways yAlways variable {labeltext "labeltext"} {args ""}} {
@@ -913,6 +952,8 @@ proc DefaceScrolledTextbox {f xAlways yAlways variable {labeltext "labeltext"} {
 # .PROC DefaceListSelect
 # 
 # .ARGS
+# windowpath parent
+# lsit values
 # .END
 #-------------------------------------------------------------------------------
 proc DefaceListSelect { parent values } {
@@ -989,6 +1030,7 @@ proc DefaceListSelect { parent values } {
 # .PROC DefaceSelectDir
 # 
 # .ARGS
+# windowpath top
 # .END
 #-------------------------------------------------------------------------------
 proc DefaceSelectDir { top } {
@@ -1049,6 +1091,7 @@ proc DefaceSelectDir { top } {
 # .PROC DefaceSelectMain
 # 
 # .ARGS
+# path start_dir defaults to emtpy string
 # .END
 #-------------------------------------------------------------------------------
 proc DefaceSelectMain { {start_dir ""} } {
@@ -1094,6 +1137,8 @@ proc DefaceSelectMain { {start_dir ""} } {
 #   Changes the cursor over the PointTextbox to a cross
 #   and stores the old one.
 # .ARGS
+# windowpath w
+# string tag
 # .END
 #-------------------------------------------------------------------------------
 proc DICOMImageTextboxFragmentEnter {w tag} {
@@ -1112,6 +1157,8 @@ proc DICOMImageTextboxFragmentEnter {w tag} {
 #   Changes back the original cursor after leaving
 #   the PointTextbox.
 # .ARGS
+# windowpath w
+# string tag
 # .END
 #-------------------------------------------------------------------------------
 proc DICOMImageTextboxFragmentLeave {w tag} {

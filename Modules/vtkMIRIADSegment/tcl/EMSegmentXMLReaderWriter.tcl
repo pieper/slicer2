@@ -1,4 +1,51 @@
 #=auto==========================================================================
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+#
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
+#
+#===============================================================================
+# FILE:        EMSegmentXMLReaderWriter.tcl
+# PROCEDURES:  
+#   EMSegmentXMLInit
+#   EMSegmentCreateSuperClass SuperClass NumClasses StartIndex
+#   DefineParamters VolumeStartNumber tags
+#   EMSegmentReadXMLFile XMLFile VolumeStartNumber
+#   EMSegmentWriteXMLFileSuperClass SuperClass Ident fid
+#   EMSegmentWriteXMLFile XMLFile
+#   IncrFileNumber index FilePrefix
+#   DeleteVolumes
+#==========================================================================auto=
+#=auto==========================================================================
 # (c) Copyright 2002 Massachusetts Institute of Technology
 #
 # Permission is hereby granted, without payment, to copy, modify, display 
@@ -36,6 +83,12 @@
 # Class will store results in EMSegment and Volume()
 # Do not forget to delete the Volumes at the end and to define SLICER_HOME !!!
 
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentXMLInit
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EMSegmentXMLInit {} {
     set ::EMSegment(debug) 0
     set ::EMSegment(CIMList) {West North Up East South Down}
@@ -46,6 +99,15 @@ proc EMSegmentXMLInit {} {
     set ::EMSegment(GlobalClassList) ""
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentCreateSuperClass
+# 
+# .ARGS
+# string SuperClass 
+# int NumClasses 
+# int StartIndex
+# .END
+#-------------------------------------------------------------------------------
 proc EMSegmentCreateSuperClass {SuperClass NumClasses StartIndex} {
     global EMSegment Volume
     set max  [expr  $NumClasses + $StartIndex]
@@ -86,6 +148,8 @@ proc EMSegmentCreateSuperClass {SuperClass NumClasses StartIndex} {
 #  Loads all the paramter necessary to start the segmentation process
 #  Short Version of MainMrml.tcl - MainMrmlBuildTreesVersion2.0
 # .ARGS
+# int VolumeStartNumber
+# list tags
 # .END
 #-------------------------------------------------------------------------------
 proc EMSegmentBatchDefineParameters {VolumeStartNumber tags} {
@@ -369,6 +433,14 @@ proc EMSegmentBatchDefineParameters {VolumeStartNumber tags} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentReadXMLFile
+# 
+# .ARGS
+# path XMLFile
+# int VolumeStartNumber  default is 0
+# .END
+#-------------------------------------------------------------------------------
 proc EMSegmentReadXMLFile {XMLFile {VolumeStartNumber 0}} {
     global EMSegment
 
@@ -403,6 +475,15 @@ proc EMSegmentReadXMLFile {XMLFile {VolumeStartNumber 0}} {
     puts "============================ End EMSegmentXMLReader ======================="
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentWriteXMLFileSuperClass
+# 
+# .ARGS
+# string SuperClass 
+# int Ident 
+# int fid
+# .END
+#-------------------------------------------------------------------------------
 proc EMSegmentWriteXMLFileSuperClass  {SuperClass Ident fid} { 
   global EMSegment Volume
   foreach ID $EMSegment(Cattrib,$SuperClass,ClassList) {
@@ -467,6 +548,13 @@ proc EMSegmentWriteXMLFileSuperClass  {SuperClass Ident fid} {
   # puts $fid "${Ident}<SegmenterCIM name ='West' CIMMatrix='0.973 0.0 0.061 0.085 0.014 0.0 0.0 | 0.0 0.916 0.006 0.001 0.078 0.013 0.073 | 0.004 0.002 0.764 0.003 0.062 0.033 0.002 | 0.022 0.001 0.012 0.909 0.006 0.0 0.0 | 0.002 0.076 0.152 0.003 0.837 0.028 0.005 | 0.0 0.004 0.001 0.0 0.0 0.925 0.0 | 0.0 0.001 0.004 0.0 0.002 0.001 0.92'></SegmenterCIM>" 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentWriteXMLFile
+# 
+# .ARGS
+# string XMLFile
+# .END
+#-------------------------------------------------------------------------------
 proc EMSegmentWriteXMLFile {XMLFile} { 
     global EMSegment Volume
     puts "============================ Start EMSegmentXMLWriter ======================="
@@ -534,7 +622,14 @@ proc EMSegmentWriteXMLFile {XMLFile} {
     puts "============================ End EMSegmentXMLReaderWriter ======================="
 }
 
-# IncrFileNumber increases the file number of the whole written back volume <index> (error in vtk start with 000 instead of 001 ! 
+#-------------------------------------------------------------------------------
+# .PROC IncrFileNumber
+# Increases the file number of the whole written back volume <index> (error in vtk start with 000 instead of 001 ! 
+# .ARGS
+# int index
+# string FilePrefix
+# .END
+#-------------------------------------------------------------------------------
 proc IncrFileNumber {index FilePrefix} { 
     global Volume
     set Max [lindex $Volume($index,imageRange) 1] 
@@ -546,6 +641,12 @@ proc IncrFileNumber {index FilePrefix} {
     }    
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DeleteVolumes
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DeleteVolumes {} {
     global EMSegment Volume
     for {set i 1} {$i <= $EMSegment(VolNumber)} {incr i} {
