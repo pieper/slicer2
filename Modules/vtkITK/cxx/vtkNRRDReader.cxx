@@ -21,7 +21,7 @@
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.6 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.7 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -65,7 +65,7 @@ char* vtkNRRDReader::GetHeaderKeys()
   HeaderKeys = NULL;
 
   if (keys.size() > 0) {
-    HeaderKeys = new char[keys.size()];
+    HeaderKeys = new char[keys.size()+1];
     strcpy(HeaderKeys, keys.c_str());
   }
   return HeaderKeys;
