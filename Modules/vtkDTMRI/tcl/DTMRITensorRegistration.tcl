@@ -1,3 +1,69 @@
+#=auto==========================================================================
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+#
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
+#
+#===============================================================================
+# FILE:        DTMRITensorRegistration.tcl
+# PROCEDURES:  
+#   DTMRIRegInit
+#   DTMRIBuildRegistFrame
+#   DTMRIRegModifyOptions optClass value
+#   DTMRIRegCheckErrors
+#   DTMRIRegPrepareResultVolume
+#   DTMRIWritevtkImageData
+#   DTMRIRegIntensityTransform
+#   DTMRIRegTransformScale
+#   DTMRIRegWriteHomogeneous
+#   DTMRIRegWriteGrid
+#   DTMRIRegRun
+#   DTMRIRegRun
+#   DTMRIRegMenuCoregister
+#   DTMRIRegCoregister
+#   DTMRIRegPreprocess
+#   DTMRIRegResample
+#   DTMRIRegNormalize
+#   DTMRIReadvtkImageData
+#   DTMRIRegPrmdSetup
+#   DTMRIReg2DUpate
+#   DTMRIRegUpdateInitial
+#   DTMRIRegTurnInitialOff
+#   DTMRIRegCreateLinMat
+#   DTMRIRegSaveGridTransform
+#   DTMRIRegColorComparison
+#   DTMRIRegHelpUpdate
+#==========================================================================auto=
+
 #   ==================================================
 #   SubModule: DTMRITensorRegistration
 #   Author: Matthan Caan
@@ -10,46 +76,6 @@
 #   Copyright (C) 2004  
 #
 #   See DTMRI.tcl for Copyright details
-
-#=auto==========================================================================
-#
-#===============================================================================
-# FILE:        DTMRITensorRegistration.tcl
-# PROCEDURES:  
-#   DTMRIRegInit
-#   DTMRIBuildRegistFrame
-#   DTMRIRegModifyOptions
-#   DTMRIRegCheckErrors
-#   DTMRIRegPrepareResultVolume
-#   DTMRIWritevtkImageData
-#   DTMRIRegIntensityTransform
-#   DTMRIRegTransformScale
-#   DTMRIRegWriteHomogeneous
-#   DTMRIRegWriteGrid
-#   DTMRIRegRun
-#   DTMRIRegMenuCoregister
-#   DTMRIRegCoregister
-#   DTMRIRegPreprocess
-#   DTMRIRegResample
-#   DTMRIRegNormalize
-#   DTMRIRegPrmdSetup
-#   DTMRIReg2DUpdate
-#   DTMRIRegUpdateInitial
-#   DTMRIRegTurnInitialOff
-#   DTMRIRegCreateLinMat
-#   DTMRIRegSaveGridTransform
-#   DTMRIRegCheckerboard
-#   DTMRIRegHelpUpdate
-#   DTMRIBuildHelpFrame
-#   DTMRIBuildMainFrame
-#   DTMRIBuildExpertFrame
-#   DTMRIEnter
-#   DTMRIExit
-#   DTMRIUpdateGUI
-#   DTMRICount
-#   DTMRIShowFile
-#   DTMRIBindingCallback
-#==========================================================================auto=
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRIRegInit
@@ -698,126 +724,131 @@ proc DTMRIBuildRegistFrame {} {
 }
 
 
-#.PROC   DTMRIRegModifyOptions
+#-------------------------------------------------------------------------------
+# .PROC DTMRIRegModifyOptions
 #  Modify the options for registration according to the user 
 #  selection
-#.END
+# .ARGS
+# string optClass
+# int value
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIRegModifyOptions {optClass value} {
     global  DTMRI Volume Gui Tensor
   
     switch $optClass {
-LinearRegistration  { 
-    set DTMRI(reg,LRName)  $value
-    $DTMRI(reg,mbLR) config -text $DTMRI(reg,LRName)
-
-    switch $value {
+        LinearRegistration  { 
+            set DTMRI(reg,LRName)  $value
+            $DTMRI(reg,mbLR) config -text $DTMRI(reg,LRName)
+            
+            switch $value {
                 "translation" { 
-    set DTMRI(reg,Linear_group) -1
+                    set DTMRI(reg,Linear_group) -1
                     puts "translation"
-}
-"rigid group" {
-    set DTMRI(reg,Linear_group) 0
+                }
+                "rigid group" {
+                    set DTMRI(reg,Linear_group) 0
                     puts "rigid group"
-
-}
-"similarity group" {
-    set DTMRI(reg,Linear_group) 1
-    puts "similarity group"
-}
-"affine group" {
-    set DTMRI(reg,Linear_group) 2
-    puts "affine group"
+                    
+                }
+                "similarity group" {
+                    set DTMRI(reg,Linear_group) 1
+                    puts "similarity group"
+                }
+                "affine group" {
+                    set DTMRI(reg,Linear_group) 2
+                    puts "affine group"
                     puts "DTMRI(SSD) is $DTMRI(reg,SSD)"
-    puts "DTMRI(reg,Scale) is $DTMRI(reg,Scale)"
-}
-default {
-    set DTMRI(reg,Linear) 1
-    set DTMRI(reg,Linear_group) 2
-}
-    }  
-}
-Warp {
+                    puts "DTMRI(reg,Scale) is $DTMRI(reg,Scale)"
+                }
+                default {
+                    set DTMRI(reg,Linear) 1
+                    set DTMRI(reg,Linear_group) 2
+                }
+            }  
+        }
+        Warp {
+            
+            set DTMRI(reg,WarpName)  $value
+            $DTMRI(reg,mbWarp) config -text $DTMRI(reg,WarpName)
+            switch $value {
+                "demons" {
+                    set DTMRI(reg,Warp)  1
+                    set DTMRI(reg,Force) 1
+                }
+                "optical flow" {
+                    set DTMRI(reg,Warp)  1
+                    set DTMRI(reg,Force) 2
+                }
+                default {
+                    set DTMRI(reg,Warp)  1
+                    set DTMRI(reg,Force) 1  
+                }
+            }
+        }
+        
+        IntensityTFM {
+            
+            set DTMRI(reg,IntensityTFMName)  $value
+            $DTMRI(reg,mbIntensityTFM) config -text $DTMRI(reg,IntensityTFMName)
+            switch $value {
+                "no intensity transform" {
+                    set  DTMRI(reg,Intensity_tfm) "none"
+                }
+                "mono functional" {
+                    set DTMRI(reg,Intensity_tfm)  "mono functional"
+                    
+                }
+                "piecewise median" {
+                    set DTMRI(reg,Intensity_tfm)  "piecewise median"
+                    
+                }
+                default {
+                    set DTMRI(reg,Intensity_tfm)  "mono functional"
+                    
+                }
+            }
+        }
+        
+        Criterion {
+            
+            set DTMRI(reg,CriterionName)  $value
+            $DTMRI(reg,mbCriterion) config -text $DTMRI(reg,CriterionName)
+            switch $value {
+                "GCR L1 norm" {
+                    set  DTMRI(reg,Gcr_criterion) 1
+                }
+                "GCR L2 norm" {
+                    set DTMRI(reg,Gcr_criterion)  2
+                    
+                }
+                "Correlation" {
+                    set DTMRI(reg,Gcr_criterion)  3
 
-    set DTMRI(reg,WarpName)  $value
-    $DTMRI(reg,mbWarp) config -text $DTMRI(reg,WarpName)
-      switch $value {
-"demons" {
-    set DTMRI(reg,Warp)  1
-    set DTMRI(reg,Force) 1
-}
-"optical flow" {
-    set DTMRI(reg,Warp)  1
-    set DTMRI(reg,Force) 2
-}
-default {
-    set DTMRI(reg,Warp)  1
-    set DTMRI(reg,Force) 1  
-}
-    }
-}
-
-IntensityTFM {
-
-    set DTMRI(reg,IntensityTFMName)  $value
-    $DTMRI(reg,mbIntensityTFM) config -text $DTMRI(reg,IntensityTFMName)
-      switch $value {
-"no intensity transform" {
-    set  DTMRI(reg,Intensity_tfm) "none"
-}
-"mono functional" {
-    set DTMRI(reg,Intensity_tfm)  "mono functional"
-
-}
-"piecewise median" {
-    set DTMRI(reg,Intensity_tfm)  "piecewise median"
-
-}
-default {
-    set DTMRI(reg,Intensity_tfm)  "mono functional"
-  
-}
-    }
-}
-
-Criterion {
-
-    set DTMRI(reg,CriterionName)  $value
-    $DTMRI(reg,mbCriterion) config -text $DTMRI(reg,CriterionName)
-      switch $value {
-"GCR L1 norm" {
-    set  DTMRI(reg,Gcr_criterion) 1
-}
-"GCR L2 norm" {
-    set DTMRI(reg,Gcr_criterion)  2
-
-}
-"Correlation" {
-    set DTMRI(reg,Gcr_criterion)  3
-
-}
-
-"mutual information" {
-    set DTMRI(reg,Gcr_criterion)  4
-
-}
-default {
-    set DTMRI(reg,Gcr_criterion)  2
-  
-}
-    }
-}
-
-Scalarmeas {
-  set DTMRI(reg,Scalarmeas) $value
-  $DTMRI(reg,mbScalmeas) config -text $DTMRI(reg,Scalarmeas)
-}
-
-
-Verbose {
-    set DTMRI(reg,VerboseName)  $value
-    $DTMRI(reg,mbVerbose) config -text $DTMRI(reg,VerboseName)
-    set  DTMRI(reg,Verbose)  $value
-}
+                }
+                
+                "mutual information" {
+                    set DTMRI(reg,Gcr_criterion)  4
+                    
+                }
+                default {
+                    set DTMRI(reg,Gcr_criterion)  2
+                    
+                }
+            }
+        }
+        
+        Scalarmeas {
+            set DTMRI(reg,Scalarmeas) $value
+            $DTMRI(reg,mbScalmeas) config -text $DTMRI(reg,Scalarmeas)
+        }
+        
+        
+        Verbose {
+            set DTMRI(reg,VerboseName)  $value
+            $DTMRI(reg,mbVerbose) config -text $DTMRI(reg,VerboseName)
+            set  DTMRI(reg,Verbose)  $value
+        }
     }
     return
 }
@@ -925,7 +956,7 @@ proc DTMRIRegPrepareResultVolume {}  {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC  DTMRIWritevtkImageData
+# .PROC DTMRIWritevtkImageData
 # Write vtkImageData to file using the vtkStructuredPointWriter
 #
 #-----------------------------------------------------------------------------
@@ -953,7 +984,7 @@ proc DTMRIWritevtkImageData {image filename} {
 #  
 # .END
 #------------------------------------------------------------------------------
-proc  DTMRIRegIntensityTransform {Source} {
+proc DTMRIRegIntensityTransform {Source} {
     global DTMRI Volume Tensor
 
     catch {$DTMRI(reg,inttfm) Delete}
@@ -1034,7 +1065,7 @@ proc  DTMRIRegIntensityTransform {Source} {
 #  
 # .END
 #------------------------------------------------------------------------------
-proc  DTMRIRegTransformScale { Source Target} {
+proc DTMRIRegTransformScale { Source Target} {
 #def TransformScale(Target,Source,scale):   
    #    log=vtkImageMathematics()
    #    log.SetOperationToLog()
@@ -1071,7 +1102,15 @@ proc  DTMRIRegTransformScale { Source Target} {
 }
 
 
-proc  DTMRIRegWriteHomogeneous {t ii} {
+#-------------------------------------------------------------------------------
+# .PROC DTMRIRegWriteHomogeneous
+# 
+# .ARGS
+# int t
+# int ii
+# .END
+#-------------------------------------------------------------------------------
+proc DTMRIRegWriteHomogeneous {t ii} {
     global DTMRI
     
     puts " Start to save homogeneous Transform"
@@ -1143,6 +1182,14 @@ proc  DTMRIRegWriteHomogeneous {t ii} {
     DevInfoWindow "Matrix $m generated."
 } 
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIRegWriteGrid
+# 
+# .ARGS
+# int t
+# int ii
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIRegWriteGrid {t ii} {      
 
     set g [$t GetDisplacementGrid]
@@ -1158,16 +1205,14 @@ proc DTMRIRegWriteGrid {t ii} {
 }
 
 
+
+
 #-------------------------------------------------------------------------------
 # .PROC DTMRIRegRun
-#   Run the Registration.
-#
+#  Run the Registration.
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
-################################################################################
-################################################################################
-################################################################################
-
 proc DTMRIRegRun {} {
 
   global DTMRI Volume Gui Tensor Slice AG Matrix
@@ -1635,6 +1680,12 @@ proc DTMRIRegRun {} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIRegMenuCoregister
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIRegMenuCoregister {} {
     global DTMRI Volume Tensor
     if {!$DTMRI(reg,Scope)} {
@@ -1742,7 +1793,7 @@ proc DTMRIRegCoregister {SourceVolume TargetTensor} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC  DTMRIRegPreprocess
+# .PROC DTMRIRegPreprocess
 #  Check the source and target, and set the target's origin to be at the
 #  center. Set source to be at the same orientation and resolution as the target
 # 
@@ -2269,6 +2320,14 @@ proc DTMRIRegNormalize { SourceImage TargetImage NormalizedSource SourceScanOrde
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIReadvtkImageData
+# 
+# .ARGS
+# string image
+# path filename
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIReadvtkImageData {image filename}  {
     
 
@@ -2380,6 +2439,13 @@ proc DTMRIReg2DUpdate {} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIRegUpdateInitial
+# 
+# .ARGS
+# string meth
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIRegUpdateInitial {meth} {
     global DTMRI Matrix AG
     switch $meth {
@@ -2429,6 +2495,12 @@ proc DTMRIRegUpdateInitial {meth} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIRegTurnInitialOff
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIRegTurnInitialOff {} {
     global DTMRI
     set DTMRI(reg,Initial_tfm) 0
@@ -2442,6 +2514,12 @@ proc DTMRIRegTurnInitialOff {} {
     DTMRIRegUpdateInitial "AG"
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIRegCreateLinMat
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIRegCreateLinMat {} {
     global DTMRI
     if {![info exist DTMRI(reg,Transform)]} {
@@ -2468,6 +2546,12 @@ proc DTMRIRegCreateLinMat {} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIRegSaveGridTransform
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIRegSaveGridTransform {} {
     global DTMRI
     if {![info exist DTMRI(reg,Transform)]} {
@@ -2496,6 +2580,12 @@ proc DTMRIRegSaveGridTransform {} {
     
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIRegColorComparison
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIRegColorComparison {} {
     global DTMRI Tensor Volume Slice
 
@@ -2648,6 +2738,13 @@ proc DTMRIRegColorComparison {} {
     RenderAll
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIRegHelpUpdate
+# 
+# .ARGS
+# string initial
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIRegHelpUpdate {initial} {
     global DTMRI
     # As Help is a notebook tab we can't use the HTML-stuff :-(
