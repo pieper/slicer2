@@ -51,8 +51,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 //#include <iostream.h>
 //#include <fstream.h>
-#include "vtkSlicer.h"
 #include "vtkMrmlNode.h"
+#include "vtkSlicer.h"
 
 class VTK_SLICER_BASE_EXPORT vtkMrmlColorNode : public vtkMrmlNode
 {
