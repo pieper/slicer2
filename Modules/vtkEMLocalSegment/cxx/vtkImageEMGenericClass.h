@@ -46,10 +46,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   
 #include <vtkEMLocalSegmentConfigure.h> 
 
-#include "vtkSlicer.h"
 #include "vtkImageMultipleInputFilter.h"
 #include "vtkImageData.h"
 #include "vtkOStreamWrapper.h"
+#include "vtkSlicer.h"
 
 #ifndef EM_VTK_OLD_SETTINGS
 #if (VTK_MAJOR_VERSION == 4 && (VTK_MINOR_VERSION >= 3 || (VTK_MINOR_VERSION == 2 && VTK_BUILD_VERSION > 5)))

@@ -41,8 +41,9 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   
 #include <vtkEMLocalSegmentConfigure.h> 
 
-#include "vtkSlicer.h"
+
 #include "vtkImageEMGenericClass.h"
+#include "vtkSlicer.h"
 
 #define EMSEGMENT_NUM_OF_QUALITY_MEASURE 1
 

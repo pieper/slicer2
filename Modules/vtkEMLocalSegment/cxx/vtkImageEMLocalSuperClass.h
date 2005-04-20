@@ -41,9 +41,9 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   
 #include <vtkEMLocalSegmentConfigure.h> 
 
-#include "vtkSlicer.h"
-#include "vtkImageEMLocalClass.h"
 
+#include "vtkImageEMLocalClass.h"
+#include "vtkSlicer.h"
 
 class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSuperClass : public vtkImageEMGenericClass
 {
