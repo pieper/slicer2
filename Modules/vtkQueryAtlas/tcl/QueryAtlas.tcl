@@ -171,7 +171,7 @@ proc QueryAtlasInit {} {
    #   appropriate revision number and date when the module is checked in.
    #   
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.2 $} {$Date: 2005/04/19 21:42:19 $}]
+       {$Revision: 1.3 $} {$Date: 2005/04/20 22:33:46 $}]
 
    # Initialize module-level variables
    #------------------------------------
@@ -331,7 +331,7 @@ proc QueryAtlasBIRNSetCardZoom {zoom} {
       # PEND - is this Render3D really needed here??
       Render3D
    } else {
-      puts "QueryAtlasBIRNSetCardZoom - error - Cards not loaded."
+       # silently ignore - this case happens in startup
    }
 }
 
