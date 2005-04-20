@@ -351,7 +351,9 @@ proc Polish {data} {
             "$line\n# .PROC ${name}\n# \n# .ARGS\n# .END\n$line\nproc $name " data
         incr numsubs
         if {$numsubs > 200} {
-            puts "ERROR: possible infinite loop while commenting proc $name.\nCheck file for a space between an existing comment and proc $name, or for two instances of the proc."
+            puts "ERROR: possible infinite loop while commenting proc '${name}'.\nCheck file for a space between an existing comment and proc '${name}', or for two instances of the proc."
+            puts "\tmatch = $match"
+            puts "\tfirst part of data = [string range $data 0 200]"
             exit
         } 
     }
