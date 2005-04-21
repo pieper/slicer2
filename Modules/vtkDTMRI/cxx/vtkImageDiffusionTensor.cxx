@@ -336,10 +336,19 @@ static void vtkImageDiffusionTensorExecute(vtkImageDiffusionTensor *self,
                     }
                   else 
                     {
+#ifdef DTMRI_REGULARIZATION_ON
                       // regularization factor is large when Sk is 
                       // small.  Remove noise where there's little signal.
                       r = alpha*exp(-beta*Sk);
                       fk = (log(So+r) - log(Sk+r))/b;
+#else
+                      // Ensure the samples are non-zero for numerical stability,
+                      // but leave in the noise so as not to bias the FA calculation
+                      // SP, C-F, GK - 2005-04-21
+                      if (So < 1) So = 1;
+                      if (Sk < 1) Sk = 1;
+                      fk = (log(So) - log(Sk))/b;
+#endif
                     }
                   // add contribution in the proper direction
                   gradientIdx = k-1; // row of G is the current gradient
