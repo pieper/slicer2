@@ -56,15 +56,15 @@ puts stderr "SLICER_HOME is $::SLICER_HOME"
 # changes in the "Files to test if library has already been built"
 # section below, or genlib will happily build the library again.
 
-set ::CMAKE_TAG "CMake-2-0-5"
-set ::VTK_TAG "Slicer-2-4"
-set ::ITK_TAG "Slicer-2-4"
+set ::CMAKE_TAG "CMake-2-0-6"
+set ::VTK_TAG "VTK-Slicer-2-5"
+set ::ITK_TAG "ITK-Slicer-2-5"
 set ::TCL_TAG "core-8-4-6"
 set ::TK_TAG "core-8-4-6"
 set ::ITCL_TAG "itcl-3-2-1"
 set ::IWIDGETS_TAG "iwidgets-4-0-1"
 set ::BLT_TAG "blt24z"
-set ::GSL_TAG "release-1-4"
+set ::GSL_TAG "release-1-6"
 
 # Set library, binary, etc. paths...
 
