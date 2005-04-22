@@ -66,6 +66,7 @@ isvolume - a widget for looking at Slicer volumes
     - split controls to different widget class
     - it is not a good idea to access volumes by Name
       because names are not unique. By Id number is appropriate.    
+
 }
 #
 #########################################################
