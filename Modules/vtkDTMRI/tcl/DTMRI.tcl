@@ -153,7 +153,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.66 $} {$Date: 2005/04/19 15:17:17 $}]
+                  {$Revision: 1.67 $} {$Date: 2005/04/22 23:16:01 $}]
 
     # Define Tabs
     #------------------------------------
@@ -551,9 +551,10 @@ proc DTMRIInit {} {
     # math op to produce scalars from DTMRIs
     set DTMRI(scalars,operation) Trace
     set DTMRI(scalars,operationList) [list Trace Determinant \
-                      RelativeAnisotropy FractionalAnisotropy LinearMeasure \
+                      RelativeAnisotropy FractionalAnisotropy Mode LinearMeasure \
                       PlanarMeasure SphericalMeasure MaxEigenvalue \
-                      MiddleEigenvalue MinEigenvalue ColorByOrientation D11 D22 D33]
+                      MiddleEigenvalue MinEigenvalue ColorByOrientation \
+                                     ColorByMode  D11 D22 D33]
 
     set DTMRI(scalars,operationList,tooltip) "Produce a scalar volume from DTMRI data.\nTrace, Determinant, Anisotropy, and Eigenvalues produce grayscale volumes,\nwhile Orientation produces a 3-component (Color) volume that is best viewed in the 3D window."
 
@@ -5151,7 +5152,7 @@ proc DTMRIDoMath {{operation ""}} {
         {^(Trace|Determinant|D11|D22|D33|MaxEigenvalue|MiddleEigenvalue|MinEigenvalue)$} {
             set DTMRI(scalars,scaleFactor) [expr 1000.0 / $maxTrace]
         }
-        {^(RelativeAnisotropy|FractionalAnisotropy|LinearMeasure|PlanarMeasure|SphericalMeasure|ColorByOrientation)$} {
+        {^(RelativeAnisotropy|FractionalAnisotropy|Mode|LinearMeasure|PlanarMeasure|SphericalMeasure|ColorByOrientation|ColorByMode)$} {
             set DTMRI(scalars,scaleFactor) 1000
         }
     }

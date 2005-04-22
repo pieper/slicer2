@@ -43,7 +43,9 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkFloatArray.h"
 #include "vtkPointData.h"
 #include "time.h"
+#include "vtkLookupTable.h"
 
+#define VTK_EPS 10e-15
 
 //----------------------------------------------------------------------------
 vtkTensorMathematics* vtkTensorMathematics::New()
@@ -94,10 +96,16 @@ void vtkTensorMathematics::ExecuteInformation(vtkImageData **inDatas,
   // We always want to output float, unless it is color
   outData->SetScalarType(VTK_FLOAT);
 
-  if (this->Operation == VTK_TENS_COLOR_ORIENTATION) 
+  if (this->Operation == VTK_TENS_COLOR_ORIENTATION)
     {
       // output color (RGBA)
       outData->SetNumberOfScalarComponents(4);
+      outData->SetScalarType(VTK_UNSIGNED_CHAR);
+    }
+  if (this->Operation == VTK_TENS_COLOR_MODE) 
+    {
+      // output color (RGB)
+      outData->SetNumberOfScalarComponents(3);
       outData->SetScalarType(VTK_UNSIGNED_CHAR);
     }
 
@@ -278,7 +286,7 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
   m[0] = m0; m[1] = m1; m[2] = m2; 
   v[0] = v0; v[1] = v1; v[2] = v2;
   int i, j;
-  vtkFloatingPointType trace, norm;
+  vtkFloatingPointType trace, norm, mean, fa, mode, r, g, b;
   int extractEigenvalues;
   vtkFloatingPointType cl;
   // scaling
@@ -286,6 +294,8 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
   // transformation of tensor orientations for coloring
   vtkTransform *trans = vtkTransform::New();
   int useTransform = 0;
+  // map 0..1 values into the range a char takes on
+  const int scale = 255;
 
   // find the input region to loop over
   pd = in1Data->GetPointData();
@@ -384,17 +394,8 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
           // trace is sum of eigenvalues
           trace = w[0]+w[1]+w[2];
 
-          
-
-          // regularization to compensate for small trace values
-          //vtkFloatingPointType r = 0.000001;
-          vtkFloatingPointType r = 0.0001;
-          
-          // we are not interested in regions with trace < r
-          int ignore = 0;
-          if (trace < r ) 
-            ignore = 1;
-          
+          // Avoid division by 0
+          vtkFloatingPointType r = VTK_EPS;
           trace +=r;
           
           // Lauren note that RA and LA could be computed
@@ -443,53 +444,89 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
           *outPtr = (T)w[2];
           break;
 
-        case VTK_TENS_COLOR_ORIENTATION:
-          if (ignore) 
-            {
-              memset(outPtr,0,4*sizeof(unsigned char));
-              outPtr++;
-              outPtr++;
-              outPtr++;
-            } 
-          else
-            {
-              // map 0..1 values into the range a char takes on
-              const int scale = 255;
-              
-              // If the user has set the rotation matrix
-              // then transform the eigensystem first
-              if (useTransform)
-                {
-                 trans->TransformPoint(v0,v0);
-                }
-              // Color R, G, B depending on max eigenvector
-              //Before
-              cl = (w[0]-w[1])/w[0];
-              *outPtr = (T)(scale*fabs(v[0][0])*cl);
-              outPtr++;
-              *outPtr = (T)(scale*fabs(v[1][0])*cl);
-              outPtr++;
-              *outPtr = (T)(scale*fabs(v[2][0])*cl);
-              outPtr++;
+        case VTK_TENS_MODE:
+          // see PhD thesis, Gordon Kindlmann
+          mean = (w[0] + w[1] + w[2])/3;
+          norm = ((w[0] - mean)*(w[0] - mean) + 
+                  (w[1] - mean)*(w[1] - mean) + 
+                  (w[2] - mean)*(w[2] - mean))/3;
+          norm = sqrt(norm);
+          norm = norm*norm*norm;
+          norm = norm + r;
+          // multiply by sqrt 2: range from -1 to 1
+          *outPtr = (T)(M_SQRT2*((w[0] + w[1] - 2*w[2]) * 
+                         (2*w[0] - w[1] - w[2]) * 
+                         (w[0] - 2*w[1] + w[2]))/(27*norm));
+          break;
 
-              // A: alpha (opacity) depends on anisotropy
-              // We want opacity to be less in spherical case.
-              // Also in general less when trace is small.
-              // 1 = opaque (high anisotropy), 0 = transparent
-              
-              // this is 1 - spherical anisotropy measure:
-              *outPtr = (T)(scale*(1 - 3*w[2]/trace));
-              }
-           break;
+        case VTK_TENS_COLOR_MODE:
+          // see PhD thesis, Gordon Kindlmann
+          // Compute FA for amount of gray 
+          norm = sqrt(w[0]*w[0] + w[1]*w[1] +  w[2]*w[2]);
+          norm += r;
+          fa = ((0.70710678)*
+                (sqrt((w[0]-w[1])*(w[0]-w[1]) + 
+                      (w[2]-w[1])*(w[2]-w[1]) +
+                      (w[2]-w[0])*(w[2]-w[0])))/norm);
+          
+          // Compute mode
+          mean = (w[0] + w[1] + w[2])/3;
+          norm = ((w[0] - mean)*(w[0] - mean) + 
+                  (w[1] - mean)*(w[1] - mean) + 
+                  (w[2] - mean)*(w[2] - mean))/3;
+          norm = sqrt(norm);
+          norm = norm*norm*norm;
+          norm = norm + r;
+          // multiply by sqrt 2: range from -1 to 1
+          mode = (M_SQRT2*((w[0] + w[1] - 2*w[2]) * 
+                           (2*w[0] - w[1] - w[2]) * 
+                           (w[0] - 2*w[1] + w[2]))/(27*norm));
+
+          // Calculate RGB value for this mode and FA
+          self->ModeToRGB(mode, fa, r, g, b);
+          
+          // scale maps 0..1 values into the range a char takes on
+          *outPtr = (T)(scale*r);
+          outPtr++;
+          *outPtr = (T)(scale*g);
+          outPtr++;
+          *outPtr = (T)(scale*b);
+
+          break;
+
+        case VTK_TENS_COLOR_ORIENTATION:
+          // If the user has set the rotation matrix
+          // then transform the eigensystem first
+          if (useTransform)
+            {
+              trans->TransformPoint(v0,v0);
+            }
+          // Color R, G, B depending on max eigenvector
+          cl = (w[0]-w[1])/(w[0]+r);
+          // scale maps 0..1 values into the range a char takes on
+          *outPtr = (T)(scale*fabs(v[0][0])*cl);
+          outPtr++;
+          *outPtr = (T)(scale*fabs(v[1][0])*cl);
+          outPtr++;
+          *outPtr = (T)(scale*fabs(v[2][0])*cl);
+          outPtr++;
+          
+          // A: alpha (opacity) depends on anisotropy
+          // We want opacity to be less in spherical case.
+          // Also in general less when trace is small.
+          // 1 = opaque (high anisotropy), 0 = transparent
+          
+          // this is 1 - spherical anisotropy measure:
+          *outPtr = (T)(scale*(1 - 3*w[2]/trace));
+
+          break;
 
         }
 
-        // we are not interested in regions with trace < r
-        if (ignore)
-          *outPtr = (T) 0;
 
           // scale vtkFloatingPointType if the user requested this
-          if (scaleFactor != 1 && op != VTK_TENS_COLOR_ORIENTATION)
+          if (scaleFactor != 1 && op != VTK_TENS_COLOR_ORIENTATION 
+              && op != VTK_TENS_COLOR_MODE)
         *outPtr = (T) ((*outPtr) * scaleFactor);
 
 //           if (inPtId > numPts) 
@@ -570,6 +607,8 @@ void vtkTensorMathematics::ThreadedExecute(vtkImageData **inData,
     case VTK_TENS_MID_EIGENVALUE:
     case VTK_TENS_MIN_EIGENVALUE:
     case VTK_TENS_COLOR_ORIENTATION:
+    case VTK_TENS_MODE:
+    case VTK_TENS_COLOR_MODE:
       switch (outData->GetScalarType())
     {
       vtkTemplateMacro6(vtkTensorMathematicsExecute1Eigen,
@@ -589,5 +628,47 @@ void vtkTensorMathematics::PrintSelf(ostream& os, vtkIndent indent)
   vtkImageTwoInputFilter::PrintSelf(os,indent);
 
   os << indent << "Operation: " << this->Operation << "\n";
+}
+
+// Colormap: convert our mode value (-1..1) to RGB
+void vtkTensorMathematics::ModeToRGB(double Mode, double FA,
+                                     double &R, double &G, double &B) 
+{
+
+   double Hue, min, frac, vsf, mid1, mid2;
+   int sextant;
+
+   // Mode is clamped to [-1,1]
+   Mode = (Mode < -1
+           ? -1
+           : (Mode > 1
+              ? 1
+              : Mode));
+   // invert mode to get desired colormap effect
+   // negative (blue) up to positive (red)
+   Mode = -Mode;
+   // Mode is limited to [-1,1)
+   Mode = (1 == Mode ? -1 : Mode);
+   // Hue is in [0, 6)
+   Hue = 3*(Mode+1);
+   // to avoid using last two sextants
+   Hue *= 4.0/6.0;
+   sextant = (int) floor(Hue);
+   frac = Hue - sextant;
+   switch (sextant) {
+   case 0: { R = 1;      G = frac;   B = 0;      break; }
+   case 1: { R = 1-frac; G = 1;      B = 0;      break; }
+   case 2: { R = 0;      G = 1;      B = frac;   break; }
+   case 3: { R = 0;      G = 1-frac; B = 1;      break; }
+   case 4: { R = frac;   G = 0;      B = 1;      break; }
+   case 5: { R = 1;      G = 0;      B = 1-frac; break; }
+   }
+   // FA controls lerp between gray and color
+   //R = FA*R + (1-FA)*0.5;
+   //G = FA*G + (1-FA)*0.5;
+   //B = FA*B + (1-FA)*0.5;
+   R = FA*R;
+   G = FA*G;
+   B = FA*B;
 }
 

@@ -66,6 +66,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define VTK_TENS_D11                   11
 #define VTK_TENS_D22                   12
 #define VTK_TENS_D33                   13
+#define VTK_TENS_MODE                  14
+#define VTK_TENS_COLOR_MODE            15
 
 #include "vtkTensorUtilConfigure.h"
 #include "vtkImageTwoInputFilter.h"
@@ -104,6 +106,10 @@ public:
     {this->SetOperation(VTK_TENS_PLANAR_MEASURE);};
   void SetOperationToSphericalMeasure() 
     {this->SetOperation(VTK_TENS_SPHERICAL_MEASURE);};
+  // This is the skewness of the eigenvalues 
+  // (thanks to Gordon Lothar (of the Hill People) Kindlmann)
+  void SetOperationToMode() 
+    {this->SetOperation(VTK_TENS_MODE);};
 
   // Description:
   // Output a selected eigenvalue
@@ -130,6 +136,14 @@ public:
   // anisotropy (1-spherical measure).
   void SetOperationToColorByOrientation() 
     {this->SetOperation(VTK_TENS_COLOR_ORIENTATION);};
+
+  // Description:
+  // Output RGB color according to colormapping of mode, with 
+  // final RGB being a linear combination of gray and 
+  // this color.  Amount of gray is determined by FA.
+  // Thanks to Gordon Lothar Kindlmann for this method.
+  void SetOperationToColorByMode() 
+    {this->SetOperation(VTK_TENS_COLOR_MODE);};
 
   // Description:
   // Specify scale factor to scale output (float) scalars by.
@@ -164,6 +178,10 @@ public:
   //
   vtkSetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
   vtkGetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
+
+  // Public for access from threads
+  void ModeToRGB(double Mode, double FA,
+                 double &R, double &G, double &B);
 
 protected:
   vtkTensorMathematics();
