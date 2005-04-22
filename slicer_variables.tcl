@@ -64,7 +64,7 @@ set ::TK_TAG "core-8-4-6"
 set ::ITCL_TAG "itcl-3-2-1"
 set ::IWIDGETS_TAG "iwidgets-4-0-1"
 set ::BLT_TAG "blt24z"
-set ::GSL_TAG "release-1-6"
+set ::GSL_TAG "release-1-4"
 
 # Set library, binary, etc. paths...
 
