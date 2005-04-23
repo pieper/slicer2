@@ -44,10 +44,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // Can scale in the following ways:
 // divide input by max value (after shifting input to begin at value 0)
 // do the above, then pass through a function
-// use a lookup table to convert input values to output
-//
-// also has some support for training to create the lookup table
-// this is under construction
 //
 // Can use the input as is, or ignore input values less than LowerCutoff
 // or greater than UpperCutoff.
@@ -79,18 +75,11 @@ class VTK_SLICER_BASE_EXPORT vtkImageLiveWireScale : public vtkImageToImageFilte
   vtkSetMacro(ScaleFactor,int);
   vtkGetMacro(ScaleFactor,int);
 
-  vtkSetMacro(UseLookupTable,int);
-  vtkGetMacro(UseLookupTable,int);
-  vtkSetMacro(UseGaussianLookup,int);
-  vtkGetMacro(UseGaussianLookup,int);
-
   vtkSetMacro(UseTransformationFunction,int);
   vtkGetMacro(UseTransformationFunction,int);
 
   vtkSetMacro(TransformationFunctionNumber,int);
   vtkGetMacro(TransformationFunctionNumber,int);
-
-  vtkSetObjectMacro(LookupPoints,vtkPoints);
 
 #define INVERSE_LINEAR_RAMP 1
 #define ONE_OVER_X 2
@@ -115,24 +104,6 @@ class VTK_SLICER_BASE_EXPORT vtkImageLiveWireScale : public vtkImageToImageFilte
   };
   // just here for access from Execute.
   vtkFloatingPointType TransformationFunction(vtkFloatingPointType intensity, vtkFloatingPointType max, vtkFloatingPointType min);
-  vtkFloatingPointType TableLookup(vtkFloatingPointType intensity, vtkFloatingPointType max, vtkFloatingPointType min);
-  vtkFloatingPointType GaussianLookup(vtkFloatingPointType intensity, vtkFloatingPointType max, vtkFloatingPointType min);
-  //vtkPriorityQueue * GetLookupTable(){return this->LookupTable;};
-  vtkFloatArray * GetLookupTable(){return this->LookupTable;};
-  vtkPoints * GetLookupPoints(){return this->LookupPoints;};
-  vtkSetMacro(TotalPointsInLookupTable,int);
-  vtkGetMacro(TotalPointsInLookupTable,int);
-  vtkSetMacro(MaxPointsInLookupTableBin,int);
-  vtkGetMacro(MaxPointsInLookupTableBin,int);
-  vtkSetMacro(MinimumBin,int);
-  vtkGetMacro(MinimumBin,int);
-  vtkSetMacro(MaximumBin,int);
-  vtkGetMacro(MaximumBin,int);
-
-  vtkSetMacro(MeanForGaussianModel,vtkFloatingPointType);
-  vtkGetMacro(MeanForGaussianModel,vtkFloatingPointType);
-  vtkSetMacro(VarianceForGaussianModel,vtkFloatingPointType);
-  vtkGetMacro(VarianceForGaussianModel,vtkFloatingPointType);
 
   protected:
   vtkImageLiveWireScale();
@@ -146,32 +117,14 @@ class VTK_SLICER_BASE_EXPORT vtkImageLiveWireScale : public vtkImageToImageFilte
   int UseUpperCutoff;
   int UseLowerCutoff;
 
-  int UseLookupTable;
-  int UseGaussianLookup;
-  vtkFloatingPointType MeanForGaussianModel;
-  vtkFloatingPointType VarianceForGaussianModel;
-
   int UseTransformationFunction;
   int TransformationFunctionNumber;
 
-  //vtkPriorityQueue *LookupTable;
-  vtkFloatArray *LookupTable;
-  vtkPoints *LookupPoints;
-  int TotalPointsInLookupTable;
-  int MaxPointsInLookupTableBin;
-  int MinimumBin;
-  int MaximumBin;
-
-  //void Execute(vtkImageData *inData, vtkImageData *outData);
+  void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
+  void UpdateData(vtkDataObject *data);
+  void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
-               int extent[6], int id);
-  void ExecuteInformation(vtkImageData *vtkNotUsed(input), 
-              vtkImageData *output);
-  // Description:
-  // Generate more than requested.  Called by the superclass before
-  // an execute, and before output memory is allocated.
-  void EnlargeOutputUpdateExtents( vtkDataObject *data );
-  
+                       int ext[6], int id);
 };
 
 #endif

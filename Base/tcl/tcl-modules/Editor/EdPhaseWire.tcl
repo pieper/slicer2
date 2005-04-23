@@ -205,8 +205,9 @@ proc EdPhaseWireSetOmega {omega} {
         Ed($e,phase,reader$o) SetFilePrefix $fullpath
         #reader SetDataScalarTypeToFloat
         
-        # cast to float to match output of fft of image
-        Ed($e,phase,cast$o) SetOutputScalarTypeToFloat
+        # cast to double to match output of fft of image
+        #Ed($e,phase,cast$o) SetOutputScalarTypeToFloat
+        Ed($e,phase,cast$o) SetOutputScalarTypeToDouble
         Ed($e,phase,cast$o) SetInput [Ed($e,phase,reader$o) GetOutput]
         
         # since we are using regular multiply
@@ -1762,14 +1763,6 @@ proc EdPhaseWireUsePhasePipeline {} {
     Ed($e,certNorm$s) SetLowerCutoff $Ed(EdPhaseWire,certLowerCutoff)
     Ed($e,certNorm$s) SetUpperCutoff $Ed(EdPhaseWire,certUpperCutoff)
 
-    # NOTE: no on-the-fly training is in use for now.
-    # Lauren try training someday
-    # training setup:
-    # train on all pixels from current wire (can limit number later)
-    # Ed($e,gradNorm$s) SetLookupPoints [Ed(EdPhaseWire,lwPath$s) GetContourPixels]
-    # Ed($e,gradNorm$s) SetUseLookupTable 1; # estimate distribution
-    #Ed($e,gradNorm)  SetUseGaussianLookup 1; # use simple gaussian model
-    
     # use current settings from Advanced GUI for combining images
     set sum Ed($e,imageSumFilter$s)
     $sum SetWeightForInput 0 $Ed($e,phaseWeight)

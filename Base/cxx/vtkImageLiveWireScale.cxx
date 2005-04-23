@@ -36,12 +36,14 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
 #include "vtkImageLiveWireScale.h"
-#include "vtkImageAccumulateDiscrete.h"
 #include <math.h>
-#include <stdlib.h>
-#include "vtkObjectFactory.h"
+//#include <stdlib.h>
 //#include <iomanip.h>
 #include <time.h>
+
+#include "vtkImageData.h"
+#include "vtkImageProgressIterator.h"
+#include "vtkObjectFactory.h"
 
 //------------------------------------------------------------------------------
 vtkImageLiveWireScale* vtkImageLiveWireScale::New()
@@ -60,19 +62,8 @@ vtkImageLiveWireScale* vtkImageLiveWireScale::New()
 // Constructor sets default values
 vtkImageLiveWireScale::vtkImageLiveWireScale()
 {  
-
-  // we only want one thread to execute since we do a pass
-  // over whole image to compute max and min. though perhaps
-  // this is stored in image data class as scalar range
-  // and does not need to be computed here.
-  this->NumberOfThreads = 1;
-
   this->ScaleFactor = 1;
 
-  this->UseLookupTable = 0;
-  this->UseGaussianLookup = 0;
-  this->MeanForGaussianModel = 0;
-  this->VarianceForGaussianModel = 1;
   this->UseTransformationFunction = 0;
   this->TransformationFunctionNumber = 0;
 
@@ -81,36 +72,12 @@ vtkImageLiveWireScale::vtkImageLiveWireScale()
   this->UseLowerCutoff = 0;
   this->LowerCutoff = 0;
 
-  this->LookupTable = vtkFloatArray::New();
-  this->MaxPointsInLookupTableBin = 1;
-  this->MinimumBin = 0;
-  this->MaximumBin = 1;
-
-  // set by user
-  this->LookupPoints = NULL;
 }
 
 //----------------------------------------------------------------------------
 vtkImageLiveWireScale::~vtkImageLiveWireScale()
 {
 
-  if (this->LookupTable != NULL) 
-    {
-      this->LookupTable->Delete();
-    }
-  if (this->LookupPoints != NULL) 
-    {
-      this->LookupPoints->Delete();
-    }
-}
-
-//----------------------------------------------------------------------------
-void vtkImageLiveWireScale::EnlargeOutputUpdateExtents(vtkDataObject *vtkNotUsed(data) )
-{
-  int wholeExtent[8];
-  
-  this->GetOutput()->GetWholeExtent(wholeExtent);
-  this->GetOutput()->SetUpdateExtent(wholeExtent);
 }
 
 //----------------------------------------------------------------------------
@@ -167,601 +134,152 @@ vtkFloatingPointType vtkImageLiveWireScale::TransformationFunction(vtkFloatingPo
 
 }
 
-vtkFloatingPointType vtkImageLiveWireScale::TableLookup(vtkFloatingPointType intensity, vtkFloatingPointType max,
-                       vtkFloatingPointType min) 
-{
 
-  // this assumes the table is already built.
-  
-  // get number of pix w/ this intensity in histogram
-  int bin = (int)intensity - this->MinimumBin;
-  vtkFloatingPointType numpix = LookupTable->GetValue(bin);  
-  // get max number of pixels in any bin
-  int binMax = this->MaxPointsInLookupTableBin;
+// //----------------------------------------------------------------------------
+// // This templated function executes the filter for any type of data.
+// template <class T>
+// static void vtkImageLiveWireScaleExecute(vtkImageLiveWireScale *self,
+//                       vtkImageData *inData, T *inPtr,
+//                       vtkImageData *outData, vtkFloatingPointType *outPtr)
+// {
+//   int outExt[6];
+//   unsigned long count = 0;
+//   unsigned long target;
+//   int outMin0, outMax0, outMin1, outMax1, outMin2, outMax2;
+//   int outIdx0, outIdx1, outIdx2;
+//   int inInc0, inInc1, inInc2;
+//   int outInc0, outInc1, outInc2;
+//   T *inPtr0, *inPtr1, *inPtr2;
+//   vtkFloatingPointType *outPtr0, *outPtr1, *outPtr2;
+//   int inImageMin0, inImageMin1, inImageMin2;
+//   int inImageMax0, inImageMax1, inImageMax2;
+//   clock_t tStart, tEnd, tDiff;
+//   T pix;
+//   int scaleFactor;
 
-  // "inverted" histogram: more points at this intensity means
-  // it should cost less to travel through this pixel.
-  // (1 - % pix at this intensity) * scaleFactor
-  
-  return(this->ScaleFactor*(binMax-numpix)/binMax);
-  
-}
+//   tStart = clock();
+//   scaleFactor = self->GetScaleFactor();
 
-template <class T>
-static void vtkImageLiveWireScaleBuildLookupTable(vtkImageLiveWireScale *self,
-                        vtkImageData *inData, 
-                        T *inPtr, vtkFloatingPointType max,
-                        vtkFloatingPointType min) 
-{
-
-  if (self->GetLookupPoints() == NULL) {
-    cout 
-      << "ERROR in build lookup table: Set LookupPoints before building table"
-      << endl;
-    self->SetUseLookupTable(0);
-    return;
-  }
-  
-  vtkPoints *LookupPoints = self->GetLookupPoints();
-  int numberOfPoints = LookupPoints->GetNumberOfPoints();
-
-  if (numberOfPoints == 0) {
-    cout 
-      << "ERROR in build lookup table: Need more than 0 LookupPoints before building table"
-      << endl;
+//   // Get information to march through data
+//   inData->GetIncrements(inInc0, inInc1, inInc2); 
+//   self->GetInput()->GetWholeExtent(inImageMin0, inImageMax0, inImageMin1,
+//                    inImageMax1, inImageMin2, inImageMax2);
+//   outData->GetIncrements(outInc0, outInc1, outInc2); 
+//   outData->GetExtent(outExt);
+//   outMin0 = outExt[0];   outMax0 = outExt[1];
+//   outMin1 = outExt[2];   outMax1 = outExt[3];
+//   outMin2 = outExt[4];   outMax2 = outExt[5];
     
-    self->SetUseLookupTable(0);
-    return;
-  }
+//   // in and out should be marching through corresponding pixels.
+//   inPtr = (T *)(inData->GetScalarPointerForExtent(inData->GetExtent()));
+//   //inPtr = (T *)(inData->GetScalarPointer(outMin0, outMin1, outMin2));
 
-  vtkFloatArray * LookupTable = self->GetLookupTable();
-  LookupTable->Reset();
-  
-  int minBin = (int)min - 1;
-  int maxBin = (int)max + 1;
-  int numBins = maxBin - minBin + 1;
-  //cout << "min bin: " << minBin << " max bin: " << maxBin 
-  //<< " num bins: " << numBins << endl;
-  // save for calculation of bins from intensities
-  self->SetMinimumBin(minBin);
-  self->SetMaximumBin(maxBin);
+//   target = (unsigned long)((outMax2-outMin2+1)*(outMax1-outMin1+1)/50.0);
+//   target++;
 
-  int maxPixInBin = 0;
+//   // note: this code assumes that the image is all >= 0 already. (!!!!!!)
+//   T max, min;
+//   double imgRange[2];
+//   inData->GetScalarRange(imgRange);
+//   min = (T) imgRange[0];
+//   max = (T) imgRange[1];
 
-  LookupTable->SetNumberOfValues(numBins);
-  int i;
-  for (i=0; i<numBins; i++)
-    {
-      LookupTable->SetValue(i,0);
-    }
+//   return;
 
-  // note: may only want to use some of the points later.
-  for (i = 0; i < numberOfPoints; i++) 
-    {
-      // for each point, grab its intensity value and 
-      // build a histogram to use as the LUT
-      vtkFloatingPointType * point = LookupPoints->GetPoint(i);
-      // get intensity at that point.
-      T *pix = (T*)inData->GetScalarPointer((int)point[0],
-                        (int)point[1],
-                        0);
-      int intensity = (int)*pix;
-      int bin = intensity - minBin;
+//   // use max, min info to scale input:
+
+//   //  try transformation function
+//   if (self->GetUseTransformationFunction())
+//     {
+//       //cout << "using transformation fcn" << endl;
+//       // loop through input and produce output:
+//       // output = input pixel/max
+//       outPtr2 = outPtr;
+//       inPtr2 = inPtr;
+//       for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
+//     {
+//       outPtr1 = outPtr2;
+//       inPtr1 = inPtr2;
+//       for (outIdx1 = outMin1; 
+//            !self->AbortExecute && outIdx1 <= outMax1; outIdx1++)
+//         {
+//           if (!(count%target)) 
+//         {
+//           self->UpdateProgress(count/(50.0*target));
+//         }
+//           count++;
       
-      // get previous bin count
-      vtkFloatingPointType numpix = LookupTable->GetValue(bin);
+//           outPtr0 = outPtr1;
+//           inPtr0 = inPtr1;
+//           for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+//         {
+//           //*outPtr0 = self->TransformationFunction(*inPtr0, max, min);
+//           *outPtr0 = *inPtr0;
 
-      // if max pixel count in any bin so far
-      if (numpix > maxPixInBin)
-        maxPixInBin = numpix;
-
-      // increment bin count
-      LookupTable->SetValue(bin,numpix+1);
-
-      //cout << "I: " << intensity << " bin: " << bin << "pix " << LookupTable->GetValue(bin)<< endl;
-    }
-
-  // dump histogram
-//    for (i=0; i<numBins; i++)
-//      {
-//        cout << i << ": " << LookupTable->GetValue(i) << endl;;
-//      }
-
-  // now smooth the histogram
-  // need to keep track of max pix
-  int maxPixInSmoothedBin = 0;
-  vtkFloatArray *tempBins = vtkFloatArray::New();
-  tempBins->SetNumberOfValues(numBins);
-  for (i=0; i<numBins; i++)
-    {
-      tempBins->SetValue(i,0);
-    }
-  
-  int offsets[6] = {-3,-2,-1,1,2,3};
-  vtkFloatingPointType fractions[6] = {0.2,0.3,0.5,0.5,0.3,0.2};
-  // loop through entire histogram
-  for (i = 0; i < numBins; i++) 
-    {
-      vtkFloatingPointType numpix = LookupTable->GetValue(i);
-
-      for (int j = 0; j < 6; j++)
-        {
-          int bin = i+offsets[j];
-
-          if (bin >= 0 && bin < numBins)
-            {
-              // add fraction of central bin to this one
-              vtkFloatingPointType count = tempBins->GetValue(bin);
-              count += numpix*fractions[j];
-              tempBins->SetValue(bin,count);
-
-              if (count > maxPixInSmoothedBin)
-                maxPixInSmoothedBin = count;
-            }
-        }
-    }
-
-  // now need to add these "extra fractions" onto the real bins
-  for (i=0; i<numBins; i++)
-    {
-      vtkFloatingPointType newval = LookupTable->GetValue(i) + tempBins->GetValue(i);
-//        cout << i << ": " << LookupTable->GetValue(i) <<
-//         " tB: " << tempBins->GetValue(i) << endl;;
-      LookupTable->SetValue(i,newval);
-      // dump histogram
-      //cout << i << ": " << LookupTable->GetValue(i) << endl;
-    }
-
-//    self->SetTotalPointsInLookupTable(numberOfPoints);
-  //self->SetMaxPointsInLookupTableBin(maxPixInBin);
-  self->SetMaxPointsInLookupTableBin(maxPixInSmoothedBin);
-  if (maxPixInSmoothedBin == 0) 
-    {
-      cout 
-    << "ERROR in build lookup table: No points in histogram! Not using it."
-    << endl;
-      self->SetUseLookupTable(0);
-    }
-
-  //tempBins->DebugOn();
-  //tempBins->Print(cout);
-  tempBins->Delete();
-  //cout << "built histogram" << endl;
-
-}
-
-vtkFloatingPointType vtkImageLiveWireScale::GaussianLookup(vtkFloatingPointType intensity, vtkFloatingPointType max,
-                      vtkFloatingPointType min) 
-{
-  // "inverted" Gaussian: closer to avg gives lower cost
-  vtkFloatingPointType tmp = intensity - this->MeanForGaussianModel;
-
-  return(this->ScaleFactor*(1 - exp( -(tmp*tmp)/(2*this->VarianceForGaussianModel) ))); 
-  
-}
-template <class T>
-static void vtkImageLiveWireScaleBuildGaussianModel(vtkImageLiveWireScale *self,
-                        vtkImageData *inData, 
-                        T *inPtr, vtkFloatingPointType max,
-                        vtkFloatingPointType min) 
-{
-
-  if (self->GetLookupPoints() == NULL) {
-    cout 
-      << "ERROR in build lookup table: Set LookupPoints before building table"
-      << endl;
-    self->SetUseGaussianLookup(0);
-    return;
-  }
-  
-  vtkPoints * LookupPoints = self->GetLookupPoints();
-  int numberOfPoints = LookupPoints->GetNumberOfPoints();
-
-  if (numberOfPoints == 0) {
-    cout 
-      << "ERROR in build lookup table: Need more than 0 LookupPoints before building table"
-      << endl;
-    
-    self->SetUseGaussianLookup(0);
-    return;
-  }
-
-  // note: may only want to use some of the points later.
-  vtkFloatingPointType sum = 0;
-  vtkFloatingPointType var = 0;
-  for (int i = 0; i < numberOfPoints; i++) 
-    {
-      // for each point, grab its intensity value and 
-      // find the average
-      vtkFloatingPointType * point = LookupPoints->GetPoint(i);
-      // get intensity at that point.
-      T *pix = (T*)inData->GetScalarPointer((int)point[0],
-                        (int)point[1],
-                        0);
-      vtkFloatingPointType intensity = (vtkFloatingPointType)*pix;
-      sum += intensity;
-      var += intensity*intensity;
-    }
-  vtkFloatingPointType average = sum/numberOfPoints;
-  vtkFloatingPointType variance = var/numberOfPoints - average*average;
-  self->SetMeanForGaussianModel(average);
-  self->SetVarianceForGaussianModel(variance);
-  //cout << "built G model" << endl;
-
-}
-
-//----------------------------------------------------------------------------
-// This templated function executes the filter for any type of data.
-template <class T>
-static void vtkImageLiveWireScaleExecute(vtkImageLiveWireScale *self,
-                      vtkImageData *inData, T *inPtr,
-                      vtkImageData *outData, vtkFloatingPointType *outPtr)
-{
-  int outExt[6];
-  unsigned long count = 0;
-  unsigned long target;
-  int outMin0, outMax0, outMin1, outMax1, outMin2, outMax2;
-  int outIdx0, outIdx1, outIdx2;
-  int inInc0, inInc1, inInc2;
-  int outInc0, outInc1, outInc2;
-  T *inPtr0, *inPtr1, *inPtr2;
-  vtkFloatingPointType *outPtr0, *outPtr1, *outPtr2;
-  int inImageMin0, inImageMin1, inImageMin2;
-  int inImageMax0, inImageMax1, inImageMax2;
-  clock_t tStart, tEnd, tDiff;
-  T pix;
-  int scaleFactor;
-
-  tStart = clock();
-  scaleFactor = self->GetScaleFactor();
-
-  // Get information to march through data
-  inData->GetIncrements(inInc0, inInc1, inInc2); 
-  self->GetInput()->GetWholeExtent(inImageMin0, inImageMax0, inImageMin1,
-                   inImageMax1, inImageMin2, inImageMax2);
-  outData->GetIncrements(outInc0, outInc1, outInc2); 
-  outData->GetExtent(outExt);
-  outMin0 = outExt[0];   outMax0 = outExt[1];
-  outMin1 = outExt[2];   outMax1 = outExt[3];
-  outMin2 = outExt[4];   outMax2 = outExt[5];
-    
-  // in and out should be marching through corresponding pixels.
-  inPtr = (T *)(inData->GetScalarPointerForExtent(inData->GetExtent()));
-  //inPtr = (T *)(inData->GetScalarPointer(outMin0, outMin1, outMin2));
-
-  target = (unsigned long)((outMax2-outMin2+1)*(outMax1-outMin1+1)/50.0);
-  target++;
-
-  // note: this code assumes that the image is all >= 0 already. (!!!!!!)
-  T max = *inPtr;
-  T min = *inPtr;
-
-  // Two loops: first computes max and min, then the second scales each pixel.
-  // loop through pixels of input
-  inPtr2 = inPtr;
-  for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
-    {
-      inPtr1 = inPtr2;
-      for (outIdx1 = outMin1; 
-       !self->AbortExecute && outIdx1 <= outMax1; outIdx1++)
-    {
-      if (!(count%target))
-        self->UpdateProgress(count/(50.0*target));
-      count++;
-
-      inPtr0 = inPtr1;
-      for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
-        {
-          pix = *inPtr0;
-
-          if (pix > max)
-        max = pix;
-          else
-        if (pix < min)
-          min = pix;
-          
-          inPtr0 += inInc0;
-        }//for0
-      inPtr1 += inInc1;
-    }//for1
-      inPtr2 += inInc2;
-    }//for2
-  //cout <<  "max : " << max << endl;
-
-
-  // second loops use max, min info to scale input:
-
-  // check if the lookup table is doing okay
-  if (self->GetUseLookupTable()) 
-    {
-      vtkImageLiveWireScaleBuildLookupTable(self, inData, inPtr, max, min);
-    }
-  if (self->GetUseGaussianLookup()) 
-    {
-      vtkImageLiveWireScaleBuildGaussianModel(self, inData, inPtr, max, min);
-    }
-
-  // Use gaussian if requested
-  if (self->GetUseGaussianLookup())
-    {
-      //cout << "using gaussian lookup" << endl;
-      // loop through input and produce output:
-      // output = input pixel/max
-      outPtr2 = outPtr;
-      inPtr2 = inPtr;
-      for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
-    {
-      outPtr1 = outPtr2;
-      inPtr1 = inPtr2;
-      for (outIdx1 = outMin1; 
-           !self->AbortExecute && outIdx1 <= outMax1; outIdx1++)
-        {
-          if (!(count%target)) 
-        {
-          self->UpdateProgress(count/(50.0*target));
-        }
-          count++;
+//           inPtr0 += inInc0;
+//           outPtr0 += outInc0;
+//         }//for0
+//           inPtr1 += inInc1;
+//           outPtr1 += outInc1;
+//         }//for1
+//       inPtr2 += inInc2;
+//       outPtr2 += outInc2;
+//     }//for2
       
-          outPtr0 = outPtr1;
-          inPtr0 = inPtr1;
-          for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
-        {
-          *outPtr0 = self->GaussianLookup(*inPtr0, max, min);
+//     } // end use transformation
 
-          inPtr0 += inInc0;
-          outPtr0 += outInc0;
-        }//for0
-          inPtr1 += inInc1;
-          outPtr1 += outInc1;
-        }//for1
-      inPtr2 += inInc2;
-      outPtr2 += outInc2;
-    }//for2
+//   // default: just shift and scale
+//   else
+//     {
+//       //cout << "using default shift and scale" << endl;
+//       T range = max - min;
+//       if (range == 0) 
+//     range = 1;
       
-    } // end use gaussian
-
-  // else use LUT
-  else if (self->GetUseLookupTable())
-    {
-      //cout << "using lookup table" << endl;
-      // loop through input and produce output:
-      // output = input pixel/max
-      outPtr2 = outPtr;
-      inPtr2 = inPtr;
-      for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
-    {
-      outPtr1 = outPtr2;
-      inPtr1 = inPtr2;
-      for (outIdx1 = outMin1; 
-           !self->AbortExecute && outIdx1 <= outMax1; outIdx1++)
-        {
-          if (!(count%target)) 
-        {
-          self->UpdateProgress(count/(50.0*target));
-        }
-          count++;
+//       // loop through input and produce output:
+//       // output = input pixel/max
+//       outPtr2 = outPtr;
+//       inPtr2 = inPtr;
+//       for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
+//     {
+//       outPtr1 = outPtr2;
+//       inPtr1 = inPtr2;
+//       for (outIdx1 = outMin1; 
+//            !self->AbortExecute && outIdx1 <= outMax1; outIdx1++)
+//         {
+//           if (!(count%target)) 
+//         {
+//           self->UpdateProgress(count/(50.0*target));
+//         }
+//           count++;
       
-          outPtr0 = outPtr1;
-          inPtr0 = inPtr1;
-          for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
-        {
+//           outPtr0 = outPtr1;
+//           inPtr0 = inPtr1;
+//           for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+//         {
 
-          *outPtr0 = self->TableLookup(*inPtr0, max, min);
+//           ////*outPtr0 = (*inPtr0 * scaleFactor)/max;
+//           //*outPtr0 = (*inPtr0-min) * scaleFactor/range;
+//           *outPtr0 = *inPtr0;
 
-          inPtr0 += inInc0;
-          outPtr0 += outInc0;
-        }//for0
-          inPtr1 += inInc1;
-          outPtr1 += outInc1;
-        }//for1
-      inPtr2 += inInc2;
-      outPtr2 += outInc2;
-    }//for2
-      
-    }// end use LUT
+//           inPtr0 += inInc0;
+//           outPtr0 += outInc0;
+//         }//for0
+//           inPtr1 += inInc1;
+//           outPtr1 += outInc1;
+//         }//for1
+//       inPtr2 += inInc2;
+//       outPtr2 += outInc2;
+//     }//for2
 
-  // else try transformation function
-  else if (self->GetUseTransformationFunction())
-    {
-      //cout << "using transformation fcn" << endl;
-      // loop through input and produce output:
-      // output = input pixel/max
-      outPtr2 = outPtr;
-      inPtr2 = inPtr;
-      for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
-    {
-      outPtr1 = outPtr2;
-      inPtr1 = inPtr2;
-      for (outIdx1 = outMin1; 
-           !self->AbortExecute && outIdx1 <= outMax1; outIdx1++)
-        {
-          if (!(count%target)) 
-        {
-          self->UpdateProgress(count/(50.0*target));
-        }
-          count++;
-      
-          outPtr0 = outPtr1;
-          inPtr0 = inPtr1;
-          for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
-        {
-          *outPtr0 = self->TransformationFunction(*inPtr0, max, min);
+//     } // end if in basic case: no transformation, no LUT
 
-          inPtr0 += inInc0;
-          outPtr0 += outInc0;
-        }//for0
-          inPtr1 += inInc1;
-          outPtr1 += outInc1;
-        }//for1
-      inPtr2 += inInc2;
-      outPtr2 += outInc2;
-    }//for2
-      
-    } // end use transformation
-
-  // default: just shift and scale
-  else
-    {
-      //cout << "using default shift and scale" << endl;
-      T range = max - min;
-      if (range == 0) 
-    range = 1;
-      
-      // loop through input and produce output:
-      // output = input pixel/max
-      outPtr2 = outPtr;
-      inPtr2 = inPtr;
-      for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
-    {
-      outPtr1 = outPtr2;
-      inPtr1 = inPtr2;
-      for (outIdx1 = outMin1; 
-           !self->AbortExecute && outIdx1 <= outMax1; outIdx1++)
-        {
-          if (!(count%target)) 
-        {
-          self->UpdateProgress(count/(50.0*target));
-        }
-          count++;
-      
-          outPtr0 = outPtr1;
-          inPtr0 = inPtr1;
-          for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
-        {
-
-          //*outPtr0 = (*inPtr0 * scaleFactor)/max;
-          *outPtr0 = (*inPtr0-min) * scaleFactor/range;
-
-          inPtr0 += inInc0;
-          outPtr0 += outInc0;
-        }//for0
-          inPtr1 += inInc1;
-          outPtr1 += outInc1;
-        }//for1
-      inPtr2 += inInc2;
-      outPtr2 += outInc2;
-    }//for2
-
-    } // end if in basic case: no transformation, no LUT
-
-  // ------------------------------------------------------------
-  // ERROR checking only
-  
-  outPtr2 = outPtr;
-  inPtr2 = inPtr;
-  for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
-    {
-      outPtr1 = outPtr2;
-      inPtr1 = inPtr2;
-      for (outIdx1 = outMin1; 
-       !self->AbortExecute && outIdx1 <= outMax1; outIdx1++)
-    {
-      if (!(count%target)) 
-        {
-          self->UpdateProgress(count/(50.0*target));
-        }
-      count++;
-      
-      outPtr0 = outPtr1;
-      inPtr0 = inPtr1;
-      for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
-        {
-          
-          if (*outPtr0 > scaleFactor) 
-        {
-          cout << "ERROR in vtkImageLiveWireScale: pix > scale factor "
-               << " pix: " << *outPtr0
-               << " s.f: " << scaleFactor
-               << endl;
-        }
-          
-          inPtr0 += inInc0;
-          outPtr0 += outInc0;
-        }//for0
-      inPtr1 += inInc1;
-      outPtr1 += outInc1;
-    }//for1
-      inPtr2 += inInc2;
-      outPtr2 += outInc2;
-    }//for2
-
-  // end ERROR checking only
-  // ------------------------------------------------------------
-
-  tEnd = clock();
-  tDiff = tEnd - tStart;
-  //cout << "LW scale time: " << tDiff << endl;
-}
+//   tEnd = clock();
+//   tDiff = tEnd - tStart;
+//   cout << "LW scale time: " << tDiff << endl;
+// }
 
     
-
-//----------------------------------------------------------------------------
-// This method is passed a input and output Data, and executes the filter
-// algorithm to fill the output from the input.
-// It just executes a switch statement to call the correct function for
-// the Datas data types.
-void vtkImageLiveWireScale::ThreadedExecute(vtkImageData *inData, 
-                                            vtkImageData *outData,
-                                            int outExt[6], int id)
-  //Execute(vtkImageData *inData,     vtkImageData *outData)
-{
-  void *inPtr = inData->GetScalarPointerForExtent(outExt);
-  vtkFloatingPointType *outPtr = (vtkFloatingPointType *)outData->GetScalarPointerForExtent(outExt);
-  //void *inPtr;
-  //vtkFloatingPointType *outPtr;
-  //inPtr  = inData->GetScalarPointer();
-
-  //cout << "type: " << outData->GetScalarType() << endl;
-  //outPtr = (vtkFloatingPointType *)outData->GetScalarPointer();
-
-  switch (inData->GetScalarType())
-  {
-    case VTK_CHAR:
-      vtkImageLiveWireScaleExecute(this, 
-              inData, (char *)(inPtr), outData, outPtr);
-      break;
-    case VTK_UNSIGNED_CHAR:
-      vtkImageLiveWireScaleExecute(this, 
-              inData, (unsigned char *)(inPtr), outData, outPtr);
-      break;
-    case VTK_SHORT:
-      vtkImageLiveWireScaleExecute(this, 
-              inData, (short *)(inPtr), outData, outPtr);
-      break;
-    case VTK_UNSIGNED_SHORT:
-      vtkImageLiveWireScaleExecute(this, 
-              inData, (unsigned short *)(inPtr), outData, outPtr);
-      break;
-    case VTK_INT:
-      vtkImageLiveWireScaleExecute(this, 
-              inData, (int *)(inPtr), outData, outPtr);
-      break;
-    case VTK_UNSIGNED_INT:
-      vtkImageLiveWireScaleExecute(this, 
-              inData, (unsigned int *)(inPtr), outData, outPtr);
-      break;
-    case VTK_LONG:
-      vtkImageLiveWireScaleExecute(this, 
-              inData, (long *)(inPtr), outData, outPtr);
-      break;
-    case VTK_UNSIGNED_LONG:
-      vtkImageLiveWireScaleExecute(this, 
-              inData, (unsigned long *)(inPtr), outData, outPtr);
-      break;
-    case VTK_FLOAT:
-      vtkImageLiveWireScaleExecute(this, 
-              inData, (float *)(inPtr), outData, outPtr);
-      break;
-    case VTK_DOUBLE:
-      vtkImageLiveWireScaleExecute(this, 
-              inData, (double *)(inPtr), outData, outPtr);
-      break;
-    default:
-      vtkErrorMacro(<< "Execute: Unsupported ScalarType");
-      return;
-    }
-}
-
 //----------------------------------------------------------------------------
 void vtkImageLiveWireScale::ExecuteInformation(vtkImageData *vtkNotUsed(input), 
                         vtkImageData *output)
@@ -770,6 +288,117 @@ void vtkImageLiveWireScale::ExecuteInformation(vtkImageData *vtkNotUsed(input),
   output->SetScalarType(VTK_FLOAT);
 }
 
+//----------------------------------------------------------------------------
+void vtkImageLiveWireScale::UpdateData(vtkDataObject *data)
+{
+  
+  if (! this->GetInput() || ! this->GetOutput())
+    {
+    vtkErrorMacro("Update: Input or output is not set.");
+    return;
+    }
+  
+  // call the superclass update which will cause an execute.
+  this->vtkImageToImageFilter::UpdateData(data);
+}
+
+
+//----------------------------------------------------------------------------
+// This templated function executes the filter for any type of data.
+template <class IT, class OT>
+void vtkImageLiveWireScaleExecute(vtkImageLiveWireScale *self,
+                         vtkImageData *inData,
+                         vtkImageData *outData,
+                         int outExt[6], int id, IT *, OT *)
+{
+  vtkImageIterator<IT> inIt(inData, outExt);
+  vtkImageProgressIterator<OT> outIt(outData, outExt, self, id);
+
+   IT max, min;
+   double imgRange[2];
+   inData->GetScalarRange(imgRange);
+   min = (IT) imgRange[0];
+   max = (IT) imgRange[1];
+   IT range = max - min;
+   if (range == 0) range = 1;
+   int scaleFactor = self->GetScaleFactor();
+
+  // Loop through output pixels
+  while (!outIt.IsAtEnd())
+    {
+    IT* inSI = inIt.BeginSpan();
+    OT* outSI = outIt.BeginSpan();
+    OT* outSIEnd = outIt.EndSpan();
+
+      while (outSI != outSIEnd)
+        {
+        // now process the components
+
+          if (self->GetUseTransformationFunction())
+            {
+              *outSI = static_cast<OT> 
+                (self->TransformationFunction(*inSI, max, min));
+            }
+          else
+            {
+              *outSI = static_cast<OT> ((*inSI-min) * scaleFactor/range);
+            }
+
+          ++outSI;
+          ++inSI;
+        }
+
+    inIt.NextSpan();
+    outIt.NextSpan();
+    }
+}
+
+
+
+//----------------------------------------------------------------------------
+template <class T>
+void vtkImageLiveWireScaleExecute(vtkImageLiveWireScale *self,
+                         vtkImageData *inData,
+                         vtkImageData *outData, int outExt[6], int id,
+                         T *)
+{
+  switch (outData->GetScalarType())
+    {
+    vtkTemplateMacro7(vtkImageLiveWireScaleExecute, self, 
+                      inData, outData, outExt, id,
+                      static_cast<T *>(0), static_cast<VTK_TT *>(0));
+    default:
+      vtkGenericWarningMacro("Execute: Unknown output ScalarType");
+      return;
+    }
+}
+
+
+
+
+//----------------------------------------------------------------------------
+// This method is passed a input and output region, and executes the filter
+// algorithm to fill the output from the input.
+// It just executes a switch statement to call the correct function for
+// the regions data types.
+void vtkImageLiveWireScale::ThreadedExecute(vtkImageData *inData, 
+                                   vtkImageData *outData,
+                                   int outExt[6], int id)
+{
+  vtkDebugMacro(<< "Execute: inData = " << inData 
+                << ", outData = " << outData);
+  
+  switch (inData->GetScalarType())
+    {
+    vtkTemplateMacro6(vtkImageLiveWireScaleExecute, this, inData, 
+                      outData, outExt, id, static_cast<VTK_TT *>(0));
+    default:
+      vtkErrorMacro(<< "Execute: Unknown input ScalarType");
+      return;
+    }
+}
+
+//----------------------------------------------------------------------------
 void vtkImageLiveWireScale::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkImageToImageFilter::PrintSelf(os,indent);
@@ -780,15 +409,8 @@ void vtkImageLiveWireScale::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "LowerCutoff: "<< this->LowerCutoff << "\n";
   os << indent << "UseUpperCutoff: "<< this->UseUpperCutoff << "\n";
   os << indent << "UseLowerCutoff: "<< this->UseLowerCutoff << "\n";
-  os << indent << "UseLookupTable: "<< this->UseLookupTable << "\n";
-  os << indent << "UseGaussianLookup: "<< this->UseGaussianLookup << "\n";
-  os << indent << "MeanForGaussianModel: "<< this->MeanForGaussianModel << "\n";
-  os << indent << "VarianceForGaussianModel: "<< this->VarianceForGaussianModel << "\n";
   os << indent << "UseTransformationFunction: "<< this->UseTransformationFunction << "\n";
   os << indent << "TransformationFunctionNumber: "<< this->TransformationFunctionNumber << "\n";
-  os << indent << "TotalPointsInLookupTable: "<< this->TotalPointsInLookupTable << "\n";
-  os << indent << "MaxPointsInLookupTableBin: "<< this->MaxPointsInLookupTableBin << "\n";
-  os << indent << "MinimumBin: "<< this->MinimumBin << "\n";
-  os << indent << "MaximumBin: "<< this->MaximumBin << "\n";
+
 }
 
