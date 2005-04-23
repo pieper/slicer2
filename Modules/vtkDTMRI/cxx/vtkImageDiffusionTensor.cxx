@@ -232,7 +232,10 @@ static void vtkImageDiffusionTensorExecute(vtkImageDiffusionTensor *self,
   unsigned long target;
   double So, Sk, fk;
   int numInputs, k,i,j,idx, gradientIdx;
-  float val, r, b, inputScaling, alpha, beta;
+  float val, b, inputScaling, alpha, beta;
+#ifdef DTMRI_REGULARIZATION_ON
+  float r
+#endif
   double **G;
 
   vtkDataArray *outTensors;
