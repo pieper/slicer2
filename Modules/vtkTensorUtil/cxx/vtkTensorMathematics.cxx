@@ -35,6 +35,12 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 =========================================================================auto=*/
+
+#ifdef _WIN32
+// to pick up M_SQRT2 and other nice things...
+#define _USE_MATH_DEFINES
+#endif
+
 #include "vtkImageData.h"
 #include "vtkTensorMathematics.h"
 #include "vtkMath.h"
@@ -46,10 +52,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkLookupTable.h"
 
 #define VTK_EPS 10e-15
-
-#ifndef M_SQRT2
-#define M_SQRT2    1.41421356237309504880168872421      /* sqrt(2) */
-#endif
 
 //----------------------------------------------------------------------------
 vtkTensorMathematics* vtkTensorMathematics::New()
