@@ -153,7 +153,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.66 $} {$Date: 2005/04/19 15:17:17 $}]
+                  {$Revision: 1.66.2.1 $} {$Date: 2005/04/23 15:02:05 $}]
 
     # Define Tabs
     #------------------------------------
@@ -630,6 +630,11 @@ proc DTMRIUpdateMRML {} {
         # our tensor data, set up the tractography matrix again.
         # transform from World coords to scaledIJK of the tensors
         vtkTransform transform
+
+        # special trick to avoid obnoxious windows warnings about legacy hack
+        # for vtkTransform
+        transform AddObserver WarningEvent ""
+
         DTMRICalculateActorMatrix transform $t    
         transform Inverse
         DTMRI(vtk,streamlineControl) SetWorldToTensorScaledIJK transform
@@ -5544,6 +5549,10 @@ proc DTMRIBuildVTK {} {
     
     set object glyphs,trans
     DTMRIMakeVTKObject vtkTransform $object
+
+    # special trick to avoid obnoxious windows warnings about legacy hack
+    # for vtkTransform
+    DTMRI(vtk,glyphs,trans) AddObserver WarningEvent ""
     
     #poly data append to join glyphs from the 3 slice planes
     set object glyphs,append
