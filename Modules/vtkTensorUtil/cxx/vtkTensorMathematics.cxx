@@ -47,6 +47,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #define VTK_EPS 10e-15
 
+#ifndef M_SQRT2
+#define M_SQRT2    1.41421356237309504880168872421      /* sqrt(2) */
+#endif
+
 //----------------------------------------------------------------------------
 vtkTensorMathematics* vtkTensorMathematics::New()
 {
