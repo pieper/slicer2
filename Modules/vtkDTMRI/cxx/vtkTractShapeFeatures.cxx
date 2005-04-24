@@ -58,7 +58,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 
-vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.5 $");
+vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.6 $");
 vtkStandardNewMacro(vtkTractShapeFeatures);
 
 vtkCxxSetObjectMacro(vtkTractShapeFeatures, InputStreamlines, vtkCollection);
@@ -189,6 +189,41 @@ void vtkTractShapeFeatures::GetPointsFromHyperStreamlinePointsSubclass(TractPoin
 
 void vtkTractShapeFeatures::ComputeFeatures()
 {
+  int N;
+
+  // test we have a streamline collection as input
+  if (this->InputStreamlines == NULL)
+    {
+      vtkErrorMacro("The InputStreamline collection must be set before using this class.");
+      return;      
+    }
+  N = this->InputStreamlines->GetNumberOfItems();
+
+  // Delete any old vtkImageDatas which contain old matrix info
+  if (this->InterTractDistanceMatrixImage) 
+    {
+      this->InterTractDistanceMatrixImage->Delete();
+    }
+  if (this->InterTractSimilarityMatrixImage) 
+    {
+      this->InterTractSimilarityMatrixImage->Delete();
+    }
+
+  // Set up our matrices (the matrix class provided by vnl)
+  // This also inits to 0.
+  if ( this->InterTractDistanceMatrix )
+    {
+      delete this->InterTractDistanceMatrix;
+    }
+  this->InterTractDistanceMatrix = 
+    new OutputType(N,N,0);
+  if ( this->InterTractSimilarityMatrix )
+    {
+      delete this->InterTractSimilarityMatrix;
+    }
+  this->InterTractSimilarityMatrix = 
+    new OutputType(N,N,0);
+
   switch (this->FeatureType)
     {
     case MEAN_AND_COVARIANCE:
@@ -201,6 +236,11 @@ void vtkTractShapeFeatures::ComputeFeatures()
     this->ComputeFeaturesHausdorff();
     break;
       }
+    case ENDPOINTS:
+      {
+    this->ComputeFeaturesEndPoints();
+    break;
+      }
       
     }
 }
@@ -211,20 +251,6 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
   XYZVectorType mv1, mv2;
 
   int numberOfStreamlines = this->InputStreamlines->GetNumberOfItems();
-
-  // Set up our matrices (the matrix class provided by vnl)
-  if ( this->InterTractDistanceMatrix )
-    {
-      delete this->InterTractDistanceMatrix;
-    }
-  this->InterTractDistanceMatrix = 
-    new OutputType(numberOfStreamlines,numberOfStreamlines,0);
-  if ( this->InterTractSimilarityMatrix )
-    {
-      delete this->InterTractSimilarityMatrix;
-    }
-  this->InterTractSimilarityMatrix = 
-    new OutputType(numberOfStreamlines,numberOfStreamlines,0);
 
   // put each tract's points onto a list
   TractPointsListType::Pointer sample1 = TractPointsListType::New();
@@ -342,16 +368,6 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
     }
 
 
-  // Delete any old vtkImageDatas which contain old matrix info
-  if (this->InterTractDistanceMatrixImage) 
-    {
-      this->InterTractDistanceMatrixImage->Delete();
-    }
-  if (this->InterTractSimilarityMatrixImage) 
-    {
-      this->InterTractSimilarityMatrixImage->Delete();
-    }
-
   // to convert distances to similarities/weights
   double sigmasq=this->Sigma*this->Sigma;
 
@@ -394,13 +410,6 @@ void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
   TractPointsListType::Pointer sample = TractPointsListType::New();
 
   // get ready to traverse streamline collection.
-  // test we have a streamline collection.
-  if (this->InputStreamlines == NULL)
-    {
-      vtkErrorMacro("The InputStreamline collection must be set before using this class.");
-      return;      
-    }
-  
   this->InputStreamlines->InitTraversal();
   // TO DO: make sure this is a vtkHyperStreamlinePoints object
   currStreamline= (vtkHyperStreamlinePoints *)this->InputStreamlines->GetNextItemAsObject();
@@ -523,31 +532,6 @@ void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
   DistanceMetricType::Pointer distanceMetric = DistanceMetricType::New();
 
 
-  // Set up our matrices (the matrix class provided by vnl)
-  if ( this->InterTractDistanceMatrix )
-    {
-      delete this->InterTractDistanceMatrix;
-    }
-  this->InterTractDistanceMatrix = 
-    new OutputType(features->Size(),features->Size(),0);
-  if ( this->InterTractSimilarityMatrix )
-    {
-      delete this->InterTractSimilarityMatrix;
-    }
-  this->InterTractSimilarityMatrix = 
-    new OutputType(features->Size(),features->Size(),0);
-
-
-  // Delete any old vtkImageDatas which contain old matrix info
-  if (this->InterTractDistanceMatrixImage) 
-    {
-      this->InterTractDistanceMatrixImage->Delete();
-    }
-  if (this->InterTractSimilarityMatrixImage) 
-    {
-      this->InterTractSimilarityMatrixImage->Delete();
-    }
-
   // Now we need to iterate over features and create feature distance matrix
   FeatureListType::Iterator iter1 = features->Begin() ;
   FeatureListType::Iterator iter2;
@@ -593,5 +577,129 @@ void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
       idx1++;
     }
 
+}
+
+
+void vtkTractShapeFeatures::ComputeFeaturesEndPoints()
+{
+  vtkHyperStreamlinePoints *currStreamline;
+
+  // the features are endpoints (3 values)
+  typedef itk::Vector< double, 3 > FeatureVectorType;
+  typedef itk::Statistics::ListSample< FeatureVectorType > FeatureListType;
+
+  FeatureListType::Pointer endpoint = FeatureListType::New();
+  FeatureVectorType fv, epA1, epA2, epB1, epB2;
+
+  // Ready the input for access
+  this->InputStreamlines->InitTraversal();
+  // TO DO: make sure this is a vtkHyperStreamlinePoints object
+  currStreamline= (vtkHyperStreamlinePoints *)this->InputStreamlines->GetNextItemAsObject();
+  
+  // test we have streamlines
+  if (currStreamline == NULL)
+    {
+      vtkErrorMacro("No streamlines are on the collection.");
+      return;      
+    }
+
+  vtkDebugMacro( "Traverse STREAMLINES" );
+
+  while(currStreamline)
+    {
+      double point[3];
+      vtkPoints *hs0, *hs1;
+
+      // GetHyperStreamline0/1 
+      hs0=currStreamline->GetHyperStreamline0();
+      hs1=currStreamline->GetHyperStreamline1();
+
+      // Get both endpoints
+      hs0->GetPoint(hs0->GetNumberOfPoints()-1,point);
+      fv[0]=point[0];      
+      fv[1]=point[1];      
+      fv[2]=point[2];
+      endpoint->PushBack( fv );
+
+      hs1->GetPoint(hs1->GetNumberOfPoints()-1,point);
+      fv[0]=point[0];      
+      fv[1]=point[1];      
+      fv[2]=point[2];
+      endpoint->PushBack( fv );
+
+      // get next object in collection
+      currStreamline= (vtkHyperStreamlinePoints *)
+        this->InputStreamlines->GetNextItemAsObject();
+    }
+
+  // See how many tracts' features we have computed
+  vtkDebugMacro( "Number of tracts = " << endpoint->Size()/2 );
+
+
+  // Now measure distance between feature vectors (endpoints)
+  typedef itk::Statistics::EuclideanDistance< FeatureVectorType > 
+    DistanceMetricType;
+  DistanceMetricType::Pointer distanceMetric = DistanceMetricType::New();
+
+
+  // to convert distances to similarities/weights
+  double sigmasq=this->Sigma*this->Sigma;
+      
+          
+  // indices into arrays of distances and weights
+  int idxr = 0;
+  int idxc;
+  
+  // iterate over features (endpoints) and create feature distance matrix
+  // measure from both endpoints to their matching endpoint
+  // We don't have correspondence but we assume the closest pair 
+  // of endpoints is a match.  then the other two must also match.
+  FeatureListType::Iterator iter1 = endpoint->Begin() ;
+  
+  while( iter1 != endpoint->End() )
+    {
+      
+      FeatureListType::Iterator iter2 = endpoint->Begin() ;
+      idxc = 0;
+
+      epA1 = iter1.GetMeasurementVector();
+      ++iter1 ;
+      epA2 = iter1.GetMeasurementVector();
+
+      while( iter2 != endpoint->End() )
+        {
+
+          epB1 = iter2.GetMeasurementVector();
+          ++iter2 ;
+          epB2 = iter2.GetMeasurementVector();
+          
+          // distances between all pairs of endpoints from tracts A and B
+          double dist_A1_B1 = distanceMetric->Evaluate( epA1, epB1 );
+          double dist_A1_B2 = distanceMetric->Evaluate( epA1, epB2 );
+          double dist_A2_B1 = distanceMetric->Evaluate( epA2, epB1 );
+          double dist_A2_B2 = distanceMetric->Evaluate( epA2, epB2 );
+
+          // find the min overall distance.
+          // assume these endpoints are the best match.
+          double distmin;
+          distmin = dist_A1_B1 + dist_A2_B2;
+          if (dist_A1_B2 + dist_A2_B1 < distmin)
+            distmin = dist_A1_B2 + dist_A2_B1;
+
+          // save this total distance in a matrix
+          (*this->InterTractDistanceMatrix)[idxr][idxc] = distmin;       
+          
+          // save the similarity in a matrix
+          (*this->InterTractSimilarityMatrix)[idxr][idxc] = 
+            exp(-((*this->InterTractDistanceMatrix)[idxr][idxc])/sigmasq);
+
+          // increment to the next tract to compare
+          ++iter2 ;
+          idxc++;
+        }
+      
+      ++iter1 ;
+      idxr++;
+    }
 }
 

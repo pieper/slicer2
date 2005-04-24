@@ -126,6 +126,10 @@ class VTK_DTMRI_EXPORT vtkTractShapeFeatures : public vtkObject
     {
       this->SetFeatureType(MEAN_AND_COVARIANCE);
     };
+  void SetFeatureTypeToEndPoints()
+    {
+      this->SetFeatureType(ENDPOINTS);
+    };
   vtkGetMacro(FeatureType,int);
 
   // Description
@@ -145,9 +149,10 @@ class VTK_DTMRI_EXPORT vtkTractShapeFeatures : public vtkObject
 
   void ComputeFeaturesMeanAndCovariance();
   void ComputeFeaturesHausdorff();
+  void ComputeFeaturesEndPoints();
   
   //BTX
-  enum ShapeFeatureType { MEAN_AND_COVARIANCE, HAUSDORFF } ;
+  enum ShapeFeatureType { MEAN_AND_COVARIANCE, HAUSDORFF, ENDPOINTS } ;
   //ETX
   int FeatureType;
   vtkSetMacro(FeatureType,int);
