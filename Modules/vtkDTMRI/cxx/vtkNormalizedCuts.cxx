@@ -54,11 +54,11 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <ctime>
 
 
-vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.9 $");
+vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.10 $");
 vtkStandardNewMacro(vtkNormalizedCuts);
 
 vtkCxxSetObjectMacro(vtkNormalizedCuts,NormalizedWeightMatrixImage, 
-             vtkImageData);
+                     vtkImageData);
 vtkCxxSetObjectMacro(vtkNormalizedCuts,EigenvectorsImage, vtkImageData);
 
 vtkNormalizedCuts::vtkNormalizedCuts()
@@ -108,13 +108,13 @@ void vtkNormalizedCuts::ComputeClusters()
     {
       idx2=0;
       while (idx2 < this->InputWeightMatrix->cols())
-    {
-      // sum the row (for matrix normalization later)
-      rowWeightSum[idx1] += (*this->InputWeightMatrix)[idx1][idx2];
-      // TEST to turn off normalization 
-      // rowWeightSum[idx1] =1;
-      idx2++;
-    }
+        {
+          // sum the row (for matrix normalization later)
+          rowWeightSum[idx1] += (*this->InputWeightMatrix)[idx1][idx2];
+          // TEST to turn off normalization 
+          // rowWeightSum[idx1] =1;
+          idx2++;
+        }
       // take square root of final row sum
       rowWeightSum[idx1] = sqrt(rowWeightSum[idx1]);
       vtkDebugMacro("row " << idx1 << " sum: " << rowWeightSum[idx1]);
@@ -147,13 +147,13 @@ void vtkNormalizedCuts::ComputeClusters()
     {
       idx2=0;
       while (idx2 < this->InputWeightMatrix->cols())
-    {
-      (*this->InputWeightMatrix)[idx1][idx2] = 
-        ((*this->InputWeightMatrix)[idx1][idx2])/
-        (rowWeightSum[idx1]*rowWeightSum[idx2]);
+        {
+          (*this->InputWeightMatrix)[idx1][idx2] = 
+            ((*this->InputWeightMatrix)[idx1][idx2])/
+            (rowWeightSum[idx1]*rowWeightSum[idx2]);
       
-      idx2++;
-    }
+          idx2++;
+        }
       idx1++;
     }
 
@@ -183,7 +183,7 @@ void vtkNormalizedCuts::ComputeClusters()
 
 
   vtkDebugMacro("Eigenvector matrix: " << this->EigenSystem->V << 
-        " Eigenvalues: " << this->EigenSystem->D);
+                " Eigenvalues: " << this->EigenSystem->D);
 
   vtkErrorMacro("Eigenvalues: " << this->EigenSystem->D);
 
@@ -214,42 +214,42 @@ void vtkNormalizedCuts::ComputeClusters()
 
       double length = 0;
       while (idx2 < this->InternalNumberOfEigenvectors)
-    {
-      // this was wrong.
-      //ev[idx2]=(this->EigenSystem->V[idx1][idx2+1])/rowWeightSum[idx1];
-      // This included the constant major eigenvector 
-      //ev[idx2]=(this->EigenSystem->V[idx1][this->EigenSystem->V.cols()-idx2-1]);
+        {
+          // this was wrong.
+          //ev[idx2]=(this->EigenSystem->V[idx1][idx2+1])/rowWeightSum[idx1];
+          // This included the constant major eigenvector 
+          //ev[idx2]=(this->EigenSystem->V[idx1][this->EigenSystem->V.cols()-idx2-1]);
 
-      // This is correct.
-      ev[idx2]=(this->EigenSystem->V[idx1][this->EigenSystem->V.cols()-idx2-2]);
+          // This is correct.
+          ev[idx2]=(this->EigenSystem->V[idx1][this->EigenSystem->V.cols()-idx2-2]);
 
-      if (this->EmbeddingNormalization == LENGTH_ONE)
-    {
-      length += ev[idx2]*ev[idx2];
-    }
-      if (this->EmbeddingNormalization == ROW_SUM)
-    {
-      ev[idx2]=ev[idx2]/rowWeightSum[idx1];
-    }
-      // else don't normalize
+          if (this->EmbeddingNormalization == LENGTH_ONE)
+            {
+              length += ev[idx2]*ev[idx2];
+            }
+          if (this->EmbeddingNormalization == ROW_SUM)
+            {
+              ev[idx2]=ev[idx2]/rowWeightSum[idx1];
+            }
+          // else don't normalize
 
-      idx2++;
-    }
+          idx2++;
+        }
       
       // If the embedding normalization is by length, normalize now
       if (this->EmbeddingNormalization == LENGTH_ONE)
-    {
-      length = sqrt(length);
-      if (length == 0)
         {
-          vtkErrorMacro("0-length embedding vector %d" << idx1);
-          length = 1;
+          length = sqrt(length);
+          if (length == 0)
+            {
+              vtkErrorMacro("0-length embedding vector %d" << idx1);
+              length = 1;
+            }
+          for (idx2 = 0; idx2 < this->InternalNumberOfEigenvectors; idx2++)
+            {
+              ev[idx2]=ev[idx2]/length;
+            }
         }
-      for (idx2 = 0; idx2 < this->InternalNumberOfEigenvectors; idx2++)
-        {
-          ev[idx2]=ev[idx2]/length;
-        }
-    }
 
       // TEST write to disk
       for (idx2 = 0; idx2 < this->InternalNumberOfEigenvectors; idx2++)
@@ -312,11 +312,11 @@ void vtkNormalizedCuts::ComputeClusters()
       ev = embedding->GetMeasurementVector(sampleIdx);
       idx2=0;
       while (idx2 < this->InternalNumberOfEigenvectors)
-    {
-      initialMeans[meanIdx] = ev[idx2];
-      idx2++;
-      meanIdx++;
-    }
+        {
+          initialMeans[meanIdx] = ev[idx2];
+          idx2++;
+          meanIdx++;
+        }
 
       idx1++;
     }
@@ -453,10 +453,10 @@ vtkImageData *vtkNormalizedCuts::ConvertVNLMatrixToVTKImage(InputType *matrix)
       for (int idx1 = rows-1; idx1 >= 0; idx1--)
         {
           for (int idx2 = 0; idx2 < cols; idx2++)
-        {
-          *imageArray = (*matrix)[idx1][idx2];
-          imageArray++;
-        }
+            {
+              *imageArray = (*matrix)[idx1][idx2];
+              imageArray++;
+            }
         }
     }
 

@@ -58,7 +58,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 
-vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.6 $");
+vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.7 $");
 vtkStandardNewMacro(vtkTractShapeFeatures);
 
 vtkCxxSetObjectMacro(vtkTractShapeFeatures, InputStreamlines, vtkCollection);
@@ -120,23 +120,23 @@ vtkImageData * vtkTractShapeFeatures::ConvertVNLMatrixToVTKImage(OutputType *mat
       image = vtkImageData::New();
 
       if (matrix != NULL)
-    {
-      int rows = matrix->rows();
-      int cols = matrix->cols();
-      image->SetDimensions(cols,rows,1);
-      image->SetScalarTypeToDouble();
-      image->AllocateScalars();
-      double *imageArray = (double *) image->GetScalarPointer();
+        {
+          int rows = matrix->rows();
+          int cols = matrix->cols();
+          image->SetDimensions(cols,rows,1);
+          image->SetScalarTypeToDouble();
+          image->AllocateScalars();
+          double *imageArray = (double *) image->GetScalarPointer();
       
-      for (int idx1 = rows-1; idx1 >= 0; idx1--)
-        {
-          for (int idx2 = 0; idx2 < cols; idx2++)
-        {
-          *imageArray = (*matrix)[idx1][idx2];
-          imageArray++;
+          for (int idx1 = rows-1; idx1 >= 0; idx1--)
+            {
+              for (int idx2 = 0; idx2 < cols; idx2++)
+                {
+                  *imageArray = (*matrix)[idx1][idx2];
+                  imageArray++;
+                }
+            }
         }
-        }
-    }
     }
 
   return (image);
@@ -228,18 +228,18 @@ void vtkTractShapeFeatures::ComputeFeatures()
     {
     case MEAN_AND_COVARIANCE:
       {
-    this->ComputeFeaturesMeanAndCovariance();
-    break;
+        this->ComputeFeaturesMeanAndCovariance();
+        break;
       }
     case HAUSDORFF:
       {
-    this->ComputeFeaturesHausdorff();
-    break;
+        this->ComputeFeaturesHausdorff();
+        break;
       }
     case ENDPOINTS:
       {
-    this->ComputeFeaturesEndPoints();
-    break;
+        this->ComputeFeaturesEndPoints();
+        break;
       }
       
     }
@@ -289,82 +289,82 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
     {
       vtkDebugMacro( "Current Streamline: " << i);
       currStreamline1= (vtkHyperStreamlinePoints *)
-    this->InputStreamlines->GetItemAsObject(i);
+        this->InputStreamlines->GetItemAsObject(i);
 
       // Get the tract path's points on an itk list sample object
       this->GetPointsFromHyperStreamlinePointsSubclass(sample1, 
-                               currStreamline1);
+                                                       currStreamline1);
       for (int j = 0; j < numberOfStreamlines; j++)
-    {
-      currStreamline2= (vtkHyperStreamlinePoints *)
-        this->InputStreamlines->GetItemAsObject(j);
-
-      // Get the tract path's points on an itk list sample object
-      this->GetPointsFromHyperStreamlinePointsSubclass(sample2, 
-                               currStreamline2);
-
-      // Compare the tracts sample1 and sample2 using 
-      // "average Hausdorff" distance.
-
-      // vars for computing distance
-      sumDist = 0;
-      maxMinDist = 0;
-      sumSqDist = 0;
-      countDist = 0;
-
-      size1 = sample1->Size();
-      count1 = 0;
-      while( count1 < size1 )
         {
-          // minDist is min dist so far to this point
-          minDist=VTK_DOUBLE_MAX;
+          currStreamline2= (vtkHyperStreamlinePoints *)
+            this->InputStreamlines->GetItemAsObject(j);
+
+          // Get the tract path's points on an itk list sample object
+          this->GetPointsFromHyperStreamlinePointsSubclass(sample2, 
+                                                           currStreamline2);
+
+          // Compare the tracts sample1 and sample2 using 
+          // "average Hausdorff" distance.
+
+          // vars for computing distance
+          sumDist = 0;
+          maxMinDist = 0;
+          sumSqDist = 0;
+          countDist = 0;
+
+          size1 = sample1->Size();
+          count1 = 0;
+          while( count1 < size1 )
+            {
+              // minDist is min dist so far to this point
+              minDist=VTK_DOUBLE_MAX;
           
-          size2 = sample2->Size();
-          count2 = 0;
-          while( count2 < size2 )
-        {
-          // distance between points
-          currDist = distanceMetric->
-            Evaluate( sample1->GetMeasurementVector(count1), 
-                  sample2->GetMeasurementVector(count2) );
+              size2 = sample2->Size();
+              count2 = 0;
+              while( count2 < size2 )
+                {
+                  // distance between points
+                  currDist = distanceMetric->
+                    Evaluate( sample1->GetMeasurementVector(count1), 
+                              sample2->GetMeasurementVector(count2) );
 
-          vtkDebugMacro( "size1 size2 i,j, count1, count2, Dist (min, curr)" << size1 << " " << size2 << " " << sample1->GetMeasurementVector(count1) << " " << sample2->GetMeasurementVector(count2) << " " << i << " " << j << " " << count1 << " " << count2 << " " << minDist << " " << currDist);
+                  vtkDebugMacro( "size1 size2 i,j, count1, count2, Dist (min, curr)" << size1 << " " << size2 << " " << sample1->GetMeasurementVector(count1) << " " << sample2->GetMeasurementVector(count2) << " " << i << " " << j << " " << count1 << " " << count2 << " " << minDist << " " << currDist);
 
-          if (currDist < minDist)
-            minDist=currDist;
+                  if (currDist < minDist)
+                    minDist=currDist;
 
-          count2+=increment;
+                  count2+=increment;
+                }
+              // accumulate the min dist to this point
+              sumDist = sumDist + minDist; 
+              sumSqDist = sumSqDist + minDist*minDist; 
+
+              // find max of min dists so far
+              if (minDist > maxMinDist) {maxMinDist = minDist;}
+
+              countDist++;
+              vtkDebugMacro( "sumDist: " << sumDist);
+              count1+=increment;
+            }
+
+          // Store distance for this pair of tracts.
+          // Save "average Hausdorff" (avg of min dists) in matrix.
+          // normal Hausdorff is the max of the min dists.
+          // Note this is a symmetric distance measure, we use the 
+          // average of dist(a->b) and (b->a):
+          // in a standard normal distribution, 80% of the distribution
+          // is to the left of 0.842 (CDF(0.842)=80%)
+
+          //double tmp = sumDist/countDist + 0.842*sqrt(sumSqDist);
+
+          // normal
+          double tmp = sumDist/countDist;
+          // for 90 %
+          //double tmp = sumDist + 1.28*sqrt(sumSqDist);
+          (*this->InterTractDistanceMatrix)[i][j] += tmp/2;
+          (*this->InterTractDistanceMatrix)[j][i] += tmp/2;
+          //(*this->InterTractDistanceMatrix)[i][j] += i+j;
         }
-          // accumulate the min dist to this point
-      sumDist = sumDist + minDist; 
-          sumSqDist = sumSqDist + minDist*minDist; 
-
-      // find max of min dists so far
-          if (minDist > maxMinDist) {maxMinDist = minDist;}
-
-          countDist++;
-          vtkDebugMacro( "sumDist: " << sumDist);
-          count1+=increment;
-        }
-
-      // Store distance for this pair of tracts.
-      // Save "average Hausdorff" (avg of min dists) in matrix.
-      // normal Hausdorff is the max of the min dists.
-      // Note this is a symmetric distance measure, we use the 
-      // average of dist(a->b) and (b->a):
-      // in a standard normal distribution, 80% of the distribution
-      // is to the left of 0.842 (CDF(0.842)=80%)
-
-      //double tmp = sumDist/countDist + 0.842*sqrt(sumSqDist);
-
-      // normal
-      double tmp = sumDist/countDist;
-      // for 90 %
-      //double tmp = sumDist + 1.28*sqrt(sumSqDist);
-      (*this->InterTractDistanceMatrix)[i][j] += tmp/2;
-      (*this->InterTractDistanceMatrix)[j][i] += tmp/2;
-      //(*this->InterTractDistanceMatrix)[i][j] += i+j;
-    }
     }
 
 
@@ -375,11 +375,11 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
   for (int idx1 = 0; idx1 < numberOfStreamlines; idx1++)
     {
       for (int idx2 = 0; idx2 < numberOfStreamlines; idx2++)
-    {
-      // save the similarity in a matrix
-      (*this->InterTractSimilarityMatrix)[idx1][idx2] = 
-        exp(-((*this->InterTractDistanceMatrix)[idx1][idx2])/sigmasq);
-    }
+        {
+          // save the similarity in a matrix
+          (*this->InterTractSimilarityMatrix)[idx1][idx2] = 
+            exp(-((*this->InterTractDistanceMatrix)[idx1][idx2])/sigmasq);
+        }
     }
   vtkDebugMacro( "Hausdorff distances computed." );
 
@@ -469,28 +469,28 @@ void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
       //eigenvals[2] = eigenvals[2]/norm;
 
       for (int i = 0; i < 3; i++)
-    {
-      for (int j = 0; i < 3; i++)
         {
-          cov[i][j]=0;
+          for (int j = 0; i < 3; i++)
+            {
+              cov[i][j]=0;
+            }
         }
-    }
       for (int i = 0; i < 3; i++)
-    {
-      // sum outer product matrix from each eigenvalue lambda*vv'
-      // the ith eigenvector is in column i of the eigenvector matrix
-      cov[0][0]=eigenvects[0][i]*eigenvects[0][i]*eigenvals[i];
-      cov[0][1]=eigenvects[0][i]*eigenvects[1][i]*eigenvals[i];
-      cov[0][2]=eigenvects[0][i]*eigenvects[2][i]*eigenvals[i];
+        {
+          // sum outer product matrix from each eigenvalue lambda*vv'
+          // the ith eigenvector is in column i of the eigenvector matrix
+          cov[0][0]=eigenvects[0][i]*eigenvects[0][i]*eigenvals[i];
+          cov[0][1]=eigenvects[0][i]*eigenvects[1][i]*eigenvals[i];
+          cov[0][2]=eigenvects[0][i]*eigenvects[2][i]*eigenvals[i];
 
-      cov[1][0]=eigenvects[1][i]*eigenvects[0][i]*eigenvals[i];
-      cov[1][1]=eigenvects[1][i]*eigenvects[1][i]*eigenvals[i];
-      cov[1][2]=eigenvects[1][i]*eigenvects[2][i]*eigenvals[i];
+          cov[1][0]=eigenvects[1][i]*eigenvects[0][i]*eigenvals[i];
+          cov[1][1]=eigenvects[1][i]*eigenvects[1][i]*eigenvals[i];
+          cov[1][2]=eigenvects[1][i]*eigenvects[2][i]*eigenvals[i];
 
-      cov[2][0]=eigenvects[2][i]*eigenvects[0][i]*eigenvals[i];
-      cov[2][1]=eigenvects[2][i]*eigenvects[1][i]*eigenvals[i];
-      cov[2][2]=eigenvects[2][i]*eigenvects[2][i]*eigenvals[i];
-    }
+          cov[2][0]=eigenvects[2][i]*eigenvects[0][i]*eigenvals[i];
+          cov[2][1]=eigenvects[2][i]*eigenvects[1][i]*eigenvals[i];
+          cov[2][2]=eigenvects[2][i]*eigenvects[2][i]*eigenvals[i];
+        }
  
       // TEST
       //mean[0]=1;
@@ -545,33 +545,33 @@ void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
   while( iter1 != features->End() )
     {
       vtkDebugMacro( "id = " << iter1.GetInstanceIdentifier()  
-             << "\t measurement vector = " 
-             << iter1.GetMeasurementVector() 
-             << "\t frequency = " 
-             << iter1.GetFrequency() 
-             ) ;
+                     << "\t measurement vector = " 
+                     << iter1.GetMeasurementVector() 
+                     << "\t frequency = " 
+                     << iter1.GetFrequency() 
+                     ) ;
       
       iter2 = features->Begin() ;
       idx2 = 0;
 
       while( iter2 != features->End() )
-    {
-      // save the distance in a matrix
-      (*this->InterTractDistanceMatrix)[idx1][idx2] = distanceMetric->
-        Evaluate( iter1.GetMeasurementVector(), 
-              iter2.GetMeasurementVector() );
+        {
+          // save the distance in a matrix
+          (*this->InterTractDistanceMatrix)[idx1][idx2] = distanceMetric->
+            Evaluate( iter1.GetMeasurementVector(), 
+                      iter2.GetMeasurementVector() );
 
-      // save the similarity in a matrix
-      (*this->InterTractSimilarityMatrix)[idx1][idx2] = 
-        exp(-((*this->InterTractDistanceMatrix)[idx1][idx2])/sigmasq);
+          // save the similarity in a matrix
+          (*this->InterTractSimilarityMatrix)[idx1][idx2] = 
+            exp(-((*this->InterTractDistanceMatrix)[idx1][idx2])/sigmasq);
 
-      vtkDebugMacro( "id1 = " << iter1.GetInstanceIdentifier()  
-             << " id2 = " << iter2.GetInstanceIdentifier()  
-             << " distance = "
-             << (*this->InterTractDistanceMatrix)[idx1][idx2] );
-      ++iter2 ;
-      idx2++;
-    }
+          vtkDebugMacro( "id1 = " << iter1.GetInstanceIdentifier()  
+                         << " id2 = " << iter2.GetInstanceIdentifier()  
+                         << " distance = "
+                         << (*this->InterTractDistanceMatrix)[idx1][idx2] );
+          ++iter2 ;
+          idx2++;
+        }
 
       ++iter1 ;
       idx1++;

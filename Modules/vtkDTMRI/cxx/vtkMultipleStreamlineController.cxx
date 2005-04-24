@@ -61,9 +61,9 @@ vtkMultipleStreamlineController* vtkMultipleStreamlineController::New()
   // First try to create the object from the vtkObjectFactory
   vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMultipleStreamlineController");
   if(ret)
-  {
-    return (vtkMultipleStreamlineController*)ret;
-  }
+    {
+      return (vtkMultipleStreamlineController*)ret;
+    }
   // If the factory was unable to create the object, then create it here.
   return new vtkMultipleStreamlineController;
 }
@@ -341,11 +341,11 @@ void vtkMultipleStreamlineController::DeleteStreamline(int index)
       this->InputRenderers->InitTraversal();
       currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
       while(currRenderer)
-    {
-      vtkDebugMacro( << "rm actor from renderer " << currRenderer);
-      currRenderer->RemoveActor(currActor);
-      currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
-    }
+        {
+          vtkDebugMacro( << "rm actor from renderer " << currRenderer);
+          currRenderer->RemoveActor(currActor);
+          currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
+        }
       this->Actors->RemoveItem(index);
       currActor->Delete();
     }
@@ -904,7 +904,7 @@ vtkHyperStreamline * vtkMultipleStreamlineController::CreateHyperStreamline()
         }
       break;
     }
-    return (NULL);
+  return (NULL);
 }
 
 //----------------------------------------------------------------------------
@@ -982,15 +982,15 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROIWithMultipleValues()
       this->InputROIValue = this->InputMultipleROIValues->GetValue(i);
       // check ROI's value of interest
       if (this->InputROIValue <= 0)
-       {
-         vtkErrorMacro("Input ROI value has not been set or is 0. (value is "  << this->InputROIValue << ". Trying next value");
-         break;      
-       }
-       this->SeedStreamlinesFromROI();
+        {
+          vtkErrorMacro("Input ROI value has not been set or is 0. (value is "  << this->InputROIValue << ". Trying next value");
+          break;      
+        }
+      this->SeedStreamlinesFromROI();
     }
     
-    //Restore InputROIValue variable
-    this->InputROIValue = initialROIValue;   
+  //Restore InputROIValue variable
+  this->InputROIValue = initialROIValue;   
 }       
       
 
@@ -1058,9 +1058,9 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROI()
         {
           //if (!(count%target)) 
           //{
-              //this->UpdateProgress(count/(50.0*target) + (maxZ+1)*(maxY+1));
-              //cout << (count/(50.0*target) + (maxZ+1)*(maxY+1)) << endl;
-              //cout << "progress: " << count << endl;
+          //this->UpdateProgress(count/(50.0*target) + (maxZ+1)*(maxY+1));
+          //cout << (count/(50.0*target) + (maxZ+1)*(maxY+1)) << endl;
+          //cout << "progress: " << count << endl;
           //}
           //count++;
           
@@ -1202,9 +1202,9 @@ void vtkMultipleStreamlineController::SeedStreamlinesEvenlyInROI()
         {
           //if (!(count%target)) 
           //{
-              //this->UpdateProgress(count/(50.0*target) + (maxZ+1)*(maxY+1));
-              //cout << (count/(50.0*target) + (maxZ+1)*(maxY+1)) << endl;
-              //cout << "progress: " << count << endl;
+          //this->UpdateProgress(count/(50.0*target) + (maxZ+1)*(maxY+1));
+          //cout << (count/(50.0*target) + (maxZ+1)*(maxY+1)) << endl;
+          //cout << "progress: " << count << endl;
           //}
           //count++;
           
@@ -1264,10 +1264,10 @@ void vtkMultipleStreamlineController::SeedStreamlinesEvenlyInROI()
                               pt[2]= (int) floor(point[2] + 0.5);
                               float *tmp = (float *)streamlineCount->GetScalarPointer(pt);
                               if (tmp != NULL)
-                {
-                  *(tmp) += 1;
-                  tmpCount++;
-                }
+                                {
+                                  *(tmp) += 1;
+                                  tmpCount++;
+                                }
                               ptidx++;
                             }
                           numPts=hs1->GetNumberOfPoints();
@@ -1287,10 +1287,10 @@ void vtkMultipleStreamlineController::SeedStreamlinesEvenlyInROI()
                               pt[2]= (int) floor(point[2] + 0.5);
                               float *tmp = (float *)streamlineCount->GetScalarPointer(pt);
                               if (tmp != NULL)
-                {
-                  *(tmp) += 1;
-                  tmpCount++;
-                }
+                                {
+                                  *(tmp) += 1;
+                                  tmpCount++;
+                                }
                               ptidx++;
                             }                          
 
@@ -1454,14 +1454,14 @@ void vtkMultipleStreamlineController::SeedAndSaveStreamlinesFromROI(char *points
       for (idxY = 0; idxY <= maxY; idxY++)
         {
           if (!(count%target)) 
-          {
-            //this->UpdateProgress(count/(50.0*target) + (maxZ+1)*(maxY+1));
-            //cout << (count/(50.0*target) + (maxZ+1)*(maxY+1)) << endl;
-            //cout << "progress: " << count << endl;
-            // just output numbers from 1 to 50.
-            cout << count2 << endl;
-            count2++;
-          }
+            {
+              //this->UpdateProgress(count/(50.0*target) + (maxZ+1)*(maxY+1));
+              //cout << (count/(50.0*target) + (maxZ+1)*(maxY+1)) << endl;
+              //cout << "progress: " << count << endl;
+              // just output numbers from 1 to 50.
+              cout << count2 << endl;
+              count2++;
+            }
           count++;
           
           for (idxX = 0; idxX <= maxX; idxX++)
@@ -1550,14 +1550,14 @@ void vtkMultipleStreamlineController::ConvertStreamlinesToPolyLines()
   
   this->Streamlines->InitTraversal();
   for(int i=0 ; i<numStreamlines; i++)
-  {
-    currStreamline= dynamic_cast<vtkHyperStreamlinePoints *> (this->Streamlines->GetNextItemAsObject());
+    {
+      currStreamline= dynamic_cast<vtkHyperStreamlinePoints *> (this->Streamlines->GetNextItemAsObject());
     
       strPoints = currStreamline->GetHyperStreamline0();
       npts += strPoints->GetNumberOfPoints();
       strPoints = currStreamline->GetHyperStreamline1();
       npts += strPoints->GetNumberOfPoints();
-  }
+    }
   
   cout<<"Number of points of the streamlines: "<<npts<<endl;
   
@@ -1566,66 +1566,66 @@ void vtkMultipleStreamlineController::ConvertStreamlinesToPolyLines()
   int strIdx=0;
   this->Streamlines->InitTraversal();
   for(int i=0 ; i<numStreamlines; i++)
-  {
-    cout<<"Processing streamline: "<<i<<endl;
-    currStreamline= dynamic_cast<vtkHyperStreamlinePoints *> (this->Streamlines->GetNextItemAsObject());
+    {
+      cout<<"Processing streamline: "<<i<<endl;
+      currStreamline= dynamic_cast<vtkHyperStreamlinePoints *> (this->Streamlines->GetNextItemAsObject());
     
-    strPoints = currStreamline->GetHyperStreamline0();
-    newLines->InsertNextCell(strPoints->GetNumberOfPoints());
-    for(int j=0; j<strPoints->GetNumberOfPoints();j++)
-      {
-      newPoints->SetPoint(strIdx,strPoints->GetPoint(j));
-      newLines->InsertCellPoint(strIdx);
-      strIdx++;
-      }
+      strPoints = currStreamline->GetHyperStreamline0();
+      newLines->InsertNextCell(strPoints->GetNumberOfPoints());
+      for(int j=0; j<strPoints->GetNumberOfPoints();j++)
+        {
+          newPoints->SetPoint(strIdx,strPoints->GetPoint(j));
+          newLines->InsertCellPoint(strIdx);
+          strIdx++;
+        }
       
-    strPoints = currStreamline->GetHyperStreamline1();
-    newLines->InsertNextCell(strPoints->GetNumberOfPoints());
-    for(int j=0; j<strPoints->GetNumberOfPoints();j++)
-      {
-      newPoints->SetPoint(strIdx,strPoints->GetPoint(j));
-      newLines->InsertCellPoint(strIdx);
-      strIdx++;
-      }
+      strPoints = currStreamline->GetHyperStreamline1();
+      newLines->InsertNextCell(strPoints->GetNumberOfPoints());
+      for(int j=0; j<strPoints->GetNumberOfPoints();j++)
+        {
+          newPoints->SetPoint(strIdx,strPoints->GetPoint(j));
+          newLines->InsertCellPoint(strIdx);
+          strIdx++;
+        }
     }
-    cout<<"Saving streamlines as poly lines"<<endl;
-    this->StreamlinesAsPolyLines->SetPoints(newPoints);
-    this->StreamlinesAsPolyLines->SetLines(newLines);
-    newPoints->Delete();
-    newLines->Delete();
- }
+  cout<<"Saving streamlines as poly lines"<<endl;
+  this->StreamlinesAsPolyLines->SetPoints(newPoints);
+  this->StreamlinesAsPolyLines->SetLines(newLines);
+  newPoints->Delete();
+  newLines->Delete();
+}
     
 void vtkMultipleStreamlineController::FindStreamlinesThatPassThroughROI()
 {
 
- cout<<"Converting Streamlines to PolyLines"<<endl;
- this->ConvertStreamlinesToPolyLines();
+  cout<<"Converting Streamlines to PolyLines"<<endl;
+  this->ConvertStreamlinesToPolyLines();
  
- vtkStreamlineConvolve *conv = vtkStreamlineConvolve::New();
- vtkPruneStreamline *finder = vtkPruneStreamline::New();
+  vtkStreamlineConvolve *conv = vtkStreamlineConvolve::New();
+  vtkPruneStreamline *finder = vtkPruneStreamline::New();
  
- //Create minipipeline
- conv->SetStreamlines(this->StreamlinesAsPolyLines);
- conv->SetInput(this->InputROI);
- conv->SetKernel7x7x7(this->ConvolutionKernel);
- cout<<"Updtating vtkStreamlineConvolve"<<endl;
- conv->Update();
+  //Create minipipeline
+  conv->SetStreamlines(this->StreamlinesAsPolyLines);
+  conv->SetInput(this->InputROI);
+  conv->SetKernel7x7x7(this->ConvolutionKernel);
+  cout<<"Updtating vtkStreamlineConvolve"<<endl;
+  conv->Update();
  
- finder->SetInput(conv->GetOutput());
- finder->SetROIValues(this->InputMultipleROIValues);
- finder->SetThreshold(1);
+  finder->SetInput(conv->GetOutput());
+  finder->SetROIValues(this->InputMultipleROIValues);
+  finder->SetThreshold(1);
  
- //Update minipipeline
- cout<<"Updating vtkPruneStreamline"<<endl;
- finder->Update();
+  //Update minipipeline
+  cout<<"Updating vtkPruneStreamline"<<endl;
+  finder->Update();
  
- //Get streamline info and set visibility off.
- this->StreamlineIdPassTest->DeepCopy(finder->GetStreamlineIdPassTest());
+  //Get streamline info and set visibility off.
+  this->StreamlineIdPassTest->DeepCopy(finder->GetStreamlineIdPassTest());
  
  
- //Delete minipipeline
- conv->Delete();
- finder->Delete();
+  //Delete minipipeline
+  conv->Delete();
+  finder->Delete();
  
 }
 
@@ -1633,48 +1633,48 @@ void vtkMultipleStreamlineController::FindStreamlinesThatPassThroughROI()
 void vtkMultipleStreamlineController::HighlightStreamlinesPassTest()
 {
  
- vtkIdType strId;
- int numStr = this->StreamlineIdPassTest->GetNumberOfTuples();
- cout<<"Number of Streamlines that pass test: "<<numStr<<endl;
- vtkActor *currActor;
- int idx=0;
- for (int i=0;i<this->GetNumberOfStreamlines();i++) {
-   strId = this->StreamlineIdPassTest->GetValue(idx);
-   if(strId!=i) {
-     //this->DeleteStreamline(i);
-     //Changes Opacity
-     currActor = (vtkActor *) this->Actors->GetItemAsObject(i);
-     currActor->GetProperty()->SetOpacity(0.1);
-   }
-   else {
-     currActor = (vtkActor *) this->Actors->GetItemAsObject(i);
-     currActor->GetProperty()->SetColor(1,0,0);
-     cout<<"Streamline Id: "<<strId<<endl;
-     idx++;
-   }  
+  vtkIdType strId;
+  int numStr = this->StreamlineIdPassTest->GetNumberOfTuples();
+  cout<<"Number of Streamlines that pass test: "<<numStr<<endl;
+  vtkActor *currActor;
+  int idx=0;
+  for (int i=0;i<this->GetNumberOfStreamlines();i++) {
+    strId = this->StreamlineIdPassTest->GetValue(idx);
+    if(strId!=i) {
+      //this->DeleteStreamline(i);
+      //Changes Opacity
+      currActor = (vtkActor *) this->Actors->GetItemAsObject(i);
+      currActor->GetProperty()->SetOpacity(0.1);
+    }
+    else {
+      currActor = (vtkActor *) this->Actors->GetItemAsObject(i);
+      currActor->GetProperty()->SetColor(1,0,0);
+      cout<<"Streamline Id: "<<strId<<endl;
+      idx++;
+    }  
      
- }
+  }
 }
 
- void vtkMultipleStreamlineController::DeleteStreamlinesNotPassTest()
+void vtkMultipleStreamlineController::DeleteStreamlinesNotPassTest()
 {
  
- vtkIdType strId;
- int numStr = this->StreamlineIdPassTest->GetNumberOfTuples();
- cout<<"Number of Streamlines that pass test: "<<numStr<<endl;
+  vtkIdType strId;
+  int numStr = this->StreamlineIdPassTest->GetNumberOfTuples();
+  cout<<"Number of Streamlines that pass test: "<<numStr<<endl;
 
- int idx=0;
- for (int i=0;i<this->GetNumberOfStreamlines();i++) {
-   strId = this->StreamlineIdPassTest->GetValue(idx);
-   if(strId!=i) {
-     this->DeleteStreamline(i);
-   }
-   else {
-     cout<<"Streamline Id: "<<strId<<endl;
-     idx++;
-   }  
+  int idx=0;
+  for (int i=0;i<this->GetNumberOfStreamlines();i++) {
+    strId = this->StreamlineIdPassTest->GetValue(idx);
+    if(strId!=i) {
+      this->DeleteStreamline(i);
+    }
+    else {
+      cout<<"Streamline Id: "<<strId<<endl;
+      idx++;
+    }  
      
- }
+  }
 }
  
 
@@ -1747,23 +1747,23 @@ void vtkMultipleStreamlineController::SaveTractClustersAsTextFiles(char *filenam
       vtkDebugMacro("index = " << idx << "class label = " << iter.GetClassLabel());
       
       currStreamline= (vtkHyperStreamline *) 
-    this->Streamlines->GetItemAsObject(idx);
+        this->Streamlines->GetItemAsObject(idx);
 
       
       if (currStreamline) 
-    {
-      // Save the center points to disk
-      if (currStreamline->IsA("vtkHyperStreamlinePoints"))
         {
-          this->SaveStreamlineAsTextFile(filePoints,fileAttribs,(vtkHyperStreamlinePoints *) currStreamline);
+          // Save the center points to disk
+          if (currStreamline->IsA("vtkHyperStreamlinePoints"))
+            {
+              this->SaveStreamlineAsTextFile(filePoints,fileAttribs,(vtkHyperStreamlinePoints *) currStreamline);
+            }
+          // Save the class label to disk also
+          fileLabels << iter.GetClassLabel() << endl;
         }
-      // Save the class label to disk also
-      fileLabels << iter.GetClassLabel() << endl;
-    }
       else
-    {
-      vtkErrorMacro("Streamline " << idx << " not found.");
-    }
+        {
+          vtkErrorMacro("Streamline " << idx << " not found.");
+        }
       
       idx++;
       ++iter;
@@ -1816,16 +1816,16 @@ void vtkMultipleStreamlineController::ClusterTracts(int tmp)
       currMapper = (vtkPolyDataMapper *) this->Mappers->GetItemAsObject(idx1);
 
       if (currActor && currMapper) 
-    {
-      lut->GetColor(iter.GetClassLabel(),rgba);
-      vtkDebugMacro("rgb " << rgba[0] << " " << rgba[1] << " " << rgba[2]); 
-      currActor->GetProperty()->SetColor(rgba[0],rgba[1],rgba[2]); 
+        {
+          lut->GetColor(iter.GetClassLabel(),rgba);
+          vtkDebugMacro("rgb " << rgba[0] << " " << rgba[1] << " " << rgba[2]); 
+          currActor->GetProperty()->SetColor(rgba[0],rgba[1],rgba[2]); 
           currMapper->SetScalarVisibility(0);
-    }
+        }
       else
-    {
-      vtkErrorMacro("Classified actor " << idx1 << " not found.");
-    }
+        {
+          vtkErrorMacro("Classified actor " << idx1 << " not found.");
+        }
       
       idx1++;
       ++iter;
@@ -1852,23 +1852,23 @@ void vtkMultipleStreamlineController::CleanStreamlines()
         this->Streamlines->GetItemAsObject(index);
 
       if (currStreamline == NULL)
-    {
-      vtkErrorMacro( << "No streamline " << index);
-      return;
-    }
+        {
+          vtkErrorMacro( << "No streamline " << index);
+          return;
+        }
 
       if (currStreamline->GetHyperStreamline0()->GetNumberOfPoints() +
-      currStreamline->GetHyperStreamline1()->GetNumberOfPoints() < 5)
-    {
-      vtkErrorMacro( << "Remove short streamline " << i);
-      // Delete the streamline from the collections
-      this->DeleteStreamline(index);
-    }
+          currStreamline->GetHyperStreamline1()->GetNumberOfPoints() < 5)
+        {
+          vtkErrorMacro( << "Remove short streamline " << i);
+          // Delete the streamline from the collections
+          this->DeleteStreamline(index);
+        }
       else
-    {
-      // Only increment if we haven't deleted one (and shortened the list)
-      index++;
-    }
+        {
+          // Only increment if we haven't deleted one (and shortened the list)
+          index++;
+        }
 
     }
 }
@@ -1905,28 +1905,28 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROIClusterAndDisplay()
         this->Streamlines->GetItemAsObject(index);
 
       if (currStreamline == NULL)
-    {
-      vtkErrorMacro( << "No streamline " << index);
-      return;
-    }
+        {
+          vtkErrorMacro( << "No streamline " << index);
+          return;
+        }
 
       // force path calculation
       currStreamline->Update();
 
       if (currStreamline->GetHyperStreamline0()->GetNumberOfPoints() +
-      currStreamline->GetHyperStreamline1()->GetNumberOfPoints() < 5)
-    {
-      vtkErrorMacro( << "Remove short streamline " << i);
-      // Delete the streamline from the collections
-      //this->DeleteStreamline(index);
-      this->Streamlines->RemoveItem(index);
-      currStreamline->Delete();
-    }
+          currStreamline->GetHyperStreamline1()->GetNumberOfPoints() < 5)
+        {
+          vtkErrorMacro( << "Remove short streamline " << i);
+          // Delete the streamline from the collections
+          //this->DeleteStreamline(index);
+          this->Streamlines->RemoveItem(index);
+          currStreamline->Delete();
+        }
       else
-    {
-      // Only increment if we haven't deleted one (and shortened the list)
-      index++;
-    }
+        {
+          // Only increment if we haven't deleted one (and shortened the list)
+          index++;
+        }
 
     }
 
@@ -2011,10 +2011,10 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROIClusterAndDisplay()
       currStreamline = (vtkHyperStreamlinePoints *) 
         this->Streamlines->GetItemAsObject(index);
       if (currStreamline != NULL)
-    {
-      // Append this streamline to the rest of the polydatas for its class
-      appenders[appenderIdx]->AddInput(currStreamline->GetOutput());
-    }
+        {
+          // Append this streamline to the rest of the polydatas for its class
+          appenders[appenderIdx]->AddInput(currStreamline->GetOutput());
+        }
      
       index++;
       ++iter;

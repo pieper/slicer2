@@ -89,13 +89,13 @@ class VTK_DTMRI_EXPORT vtkClusterTracts : public vtkObject
   OutputType *GetOutputMembershipSample()
     {
       if (this->NormalizedCuts->GetOutputClassifier())
-    {
-      return(this->NormalizedCuts->GetOutputClassifier()->GetOutput());
-    }
+        {
+          return(this->NormalizedCuts->GetOutputClassifier()->GetOutput());
+        }
       else
-    {
-      return(NULL);
-    }
+        {
+          return(NULL);
+        }
     }
   //ETX
 

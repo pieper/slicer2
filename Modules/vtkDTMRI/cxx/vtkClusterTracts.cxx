@@ -48,7 +48,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // itk object for exception handling
 #include "itkExceptionObject.h"
 
-vtkCxxRevisionMacro(vtkClusterTracts, "$Revision: 1.4 $");
+vtkCxxRevisionMacro(vtkClusterTracts, "$Revision: 1.5 $");
 vtkStandardNewMacro(vtkClusterTracts);
 
 vtkCxxSetObjectMacro(vtkClusterTracts, InputStreamlines, vtkCollection);
@@ -98,8 +98,8 @@ void vtkClusterTracts::ComputeClusters()
   if (this->InputStreamlines->GetNumberOfItems() <  2*this->NormalizedCuts->GetNumberOfEigenvectors())
     {
       vtkErrorMacro("At least " << 
-            2*this->NormalizedCuts->GetNumberOfEigenvectors()  
-            << " tract paths are needed for clustering");
+                    2*this->NormalizedCuts->GetNumberOfEigenvectors()  
+                    << " tract paths are needed for clustering");
       return;      
 
     }    
