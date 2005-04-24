@@ -411,12 +411,15 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
     xRewind[2] = xStep[2] * (maxX+1);
 
     // Prepare to convert and return points to the user
-    for (i=0; i<3; i++) 
+    if (id == 0) 
     {
-        self->Origin[i] = origin[i];
-        self->XStep[i] = mx[i] - zero[i];
-        self->YStep[i] = my[i] - zero[i];
-    }
+      for (i=0; i<3; i++) 
+        {
+          self->Origin[i] = origin[i];
+          self->XStep[i] = mx[i] - zero[i];
+          self->YStep[i] = my[i] - zero[i];
+        }
+    }    
 
     // Convert float to fast
     fx = FLOAT_TO_FAST1(x);
@@ -771,12 +774,15 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
     xRewind[2] = xStep[2] * (maxX+1);
 
     // Prepare to convert and return points to the user
-    for (i=0; i<3; i++) 
+    if ( id ==0 ) 
     {
-        self->Origin[i] = origin[i];
-        self->XStep[i] = mx[i] - zero[i];
-        self->YStep[i] = my[i] - zero[i];
-    }
+      for (i=0; i<3; i++) 
+        {
+          self->Origin[i] = origin[i];
+          self->XStep[i] = mx[i] - zero[i];
+          self->YStep[i] = my[i] - zero[i];
+        }
+    }    
 
     //
     // Interpolation
@@ -1002,9 +1008,14 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
 
     // Set the origin explicitly so structured points tensors 
     // will align with image data
-    vtkFloatingPointType pix = self->GetFieldOfView() / self->GetResolution();
-    outData->SetOrigin(-wExt[1]*pix/2, -wExt[3]*pix/2, 0);
-
+    vtkFloatingPointType pix =  self->GetFieldOfView() / self->GetResolution();
+    
+    if(id == 0)
+      {
+      outData->SetOrigin(-wExt[1]*pix/2, -wExt[3]*pix/2, 0.0);
+      }
+      
+       
     // If there are no scalars in the input, clear the output scalars
     if ((inData->GetPointData()->GetScalars() == NULL) ||
             (inData->GetPointData()->GetScalars()->GetNumberOfTuples() == 0))
