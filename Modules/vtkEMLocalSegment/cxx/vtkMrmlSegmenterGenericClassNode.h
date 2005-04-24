@@ -149,6 +149,11 @@ public:
   vtkGetMacro(RegistrationClassSpecificRegistrationFlag,int); 
   vtkSetMacro(RegistrationClassSpecificRegistrationFlag,int); 
   vtkBooleanMacro(RegistrationClassSpecificRegistrationFlag,int); 
+  // Description:
+  // If you eant to include a class just being set via its intensity value than set this flag
+  vtkGetMacro(ExcludeFromIncompleteEStepFlag,int);
+  vtkSetMacro(ExcludeFromIncompleteEStepFlag,int);
+  vtkBooleanMacro(ExcludeFromIncompleteEStepFlag,int);
 
 protected:
   vtkMrmlSegmenterGenericClassNode();
@@ -170,6 +175,7 @@ protected:
   double RegistrationScale[3];
   double RegistrationCovariance[9];
   int RegistrationClassSpecificRegistrationFlag; 
+int ExcludeFromIncompleteEStepFlag;
 
 };
 

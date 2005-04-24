@@ -79,6 +79,7 @@ proc EMSegmentSetVtkGenericClassSetting {vtkGenericClass Sclass} {
     eval $vtkGenericClass SetPrintRegistrationParameters                $EMSegment(Cattrib,$Sclass,PrintRegistrationParameters)   
     eval $vtkGenericClass SetPrintRegistrationSimularityMeasure         $EMSegment(Cattrib,$Sclass,PrintRegistrationSimularityMeasure) 
     eval $vtkGenericClass SetRegistrationClassSpecificRegistrationFlag  $EMSegment(Cattrib,$Sclass,RegistrationClassSpecificRegistrationFlag) 
+    $vtkGenericClass      SetExcludeFromIncompleteEStepFlag             $EMSegment(Cattrib,$Sclass,ExcludeFromIncompleteEStepFlag) 
 
     if {$EMSegment(Cattrib,$Sclass,ProbabilityData) != $Volume(idNone) } {
     # Pipeline does not automatically update volumes bc of fake first input  
