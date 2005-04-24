@@ -101,7 +101,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.9 $} {$Date: 2005/04/19 16:13:00 $}]
+        {$Revision: 1.9.2.1 $} {$Date: 2005/04/24 19:51:27 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -615,6 +615,8 @@ proc EMAtlasBrainClassifierLoadAtlasVolume {GeneralDir AtlasDir AtlasName} {
     set Volume(tensors,DTIdata) 0
     set Volume(tensors,pfSwap) 0
     set Volume(activeID) NEW
+    set Volume(isDICOM) 0
+    set Volume(DICOMMultiFrameFile) 0
     set VolID [VolumesPropsApply]
     if {$VolID == "" } {
        DevErrorWindow "Could not load Volume $AtlasName in directory $GeneralDir/$AtlasDir/I.001"
@@ -719,18 +721,18 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     # Initialize values 
     # Kilian Check the names of the input so that they are not the same as we expect
     if { [info proc EMSegmentStartEM] == "" } {
-    DevErrorWindow "One of the following two modules is not loaded : vtkEMLocalSegment or vtkAG. Please load in these modules first before starting to run this segmentation" 
-    return 
-
+        DevErrorWindow "One of the following two modules is not loaded : vtkEMLocalSegment or vtkAG. Please load in these modules first before starting to run this segmentation" 
+        return 
     }
     # Check if input is set
     if {($EMAtlasBrainClassifier(Volume,SPGR) == $Volume(idNone)) || ($EMAtlasBrainClassifier(Volume,T2W) == $Volume(idNone))} {
-    DevErrorWindow "Please define both SPGR and T2W before starting the segmentation" 
-    return 
+        DevErrorWindow "Please define both SPGR and T2W before starting the segmentation" 
+        return 
     } 
 
-    if {([Volume($EMAtlasBrainClassifier(Volume,SPGR),node) GetName] == "NormedSPGR") || ([Volume($EMAtlasBrainClassifier(Volume,T2W),node) GetName] == "NormedT2W") } {
-      DevErrorWindow "Please rename the SPGR and T2W Volume. They cannot be named NormedSPGR or NormedT2W" 
+    if {([Volume($EMAtlasBrainClassifier(Volume,SPGR),node) GetName] == "NormedSPGR") 
+      || ([Volume($EMAtlasBrainClassifier(Volume,T2W),node) GetName] == "NormedT2W") } {
+        DevErrorWindow "Please rename the SPGR and T2W Volume. They cannot be named NormedSPGR or NormedT2W" 
       return 
     }
 
@@ -781,24 +783,23 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     set NextLineIndex [EMAtlasBrainClassifierGrepLine "$XMLTemplateText" "<SegmenterClass"] 
     set NumCases 0
     while {$NextLineIndex != "-1 -1"} {
-    set Line [string range "$XMLTemplateText" [lindex $NextLineIndex 0] [lindex $NextLineIndex 1]]
-    set PriorPrefixIndex [string first "LocalPriorPrefix"  "$Line"]
-    set PriorNameIndex   [string first "LocalPriorName"  "$Line"]
+        set Line [string range "$XMLTemplateText" [lindex $NextLineIndex 0] [lindex $NextLineIndex 1]]
+        set PriorPrefixIndex [string first "LocalPriorPrefix"  "$Line"]
+        set PriorNameIndex   [string first "LocalPriorName"  "$Line"]
 
-    if {($PriorPrefixIndex > -1) && ($PriorNameIndex > -1)} {
-        set ResultPrefix [lindex [EMAtlasBrainClassifierReadNextKey  "[string range \"$Line\" $PriorPrefixIndex end]"] 1]
-        set AtlasDir [file tail [file dirname $ResultPrefix]]
-        set AtlasName   [lindex [EMAtlasBrainClassifierReadNextKey  "[string range \"$Line\" $PriorNameIndex end]"] 1]
+        if {($PriorPrefixIndex > -1) && ($PriorNameIndex > -1)} {
+            set ResultPrefix [lindex [EMAtlasBrainClassifierReadNextKey  "[string range \"$Line\" $PriorPrefixIndex end]"] 1]
+            set AtlasDir [file tail [file dirname $ResultPrefix]]
+            set AtlasName   [lindex [EMAtlasBrainClassifierReadNextKey  "[string range \"$Line\" $PriorNameIndex end]"] 1]
 
-        if {($ResultPrefix != "") && ($AtlasName != "") && ([lsearch $RegisterAtlasNameList "$AtlasName"] < 0) && ($AtlasDir != "") } {
-        lappend  RegisterAtlasDirList "$AtlasDir"
-        lappend  RegisterAtlasNameList "$AtlasName"
+            if {($ResultPrefix != "") && ($AtlasName != "") && ([lsearch $RegisterAtlasNameList "$AtlasName"] < 0) && ($AtlasDir != "") } {
+            lappend  RegisterAtlasDirList "$AtlasDir"
+            lappend  RegisterAtlasNameList "$AtlasName"
+            }
         }
-
-    }
-    set XMLTemplateText  [string range "$XMLTemplateText" [expr [lindex $NextLineIndex 1] +1] end]
-    set NextLineIndex [EMAtlasBrainClassifierGrepLine "$XMLTemplateText" "<SegmenterClass"] 
-    } 
+        set XMLTemplateText  [string range "$XMLTemplateText" [expr [lindex $NextLineIndex 1] +1] end]
+        set NextLineIndex [EMAtlasBrainClassifierGrepLine "$XMLTemplateText" "<SegmenterClass"] 
+        } 
   
     # b. Register Atlases 
     if {$RegisterAtlasDirList != "" } {
@@ -808,8 +809,8 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
        set UploadNeeded 0 
        foreach atlas "spgr $RegisterAtlasDirList" {
            if {[file exists [file join $EMAtlasBrainClassifier(AtlasDir) $atlas I.001]] == 0} {
-           set UploadNeeded 1
-           break
+               set UploadNeeded 1
+               break
            }
        }
        if {$UploadNeeded} {
@@ -835,35 +836,35 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
            catch {exec rm -rf $EMAtlasBrainClassifier(AtlasDir)}
 
            if {[DownloadFile "$urlAddress" "$outputFile"]} {
-           puts "Start extracting $outputFile ...." 
+               puts "Start extracting $outputFile ...." 
                if {$tcl_platform(os) == "Linux"} { 
-         catch {exec rm -f [file rootname $outputFile]}
-         puts "exec gunzip $outputFile"
-         set OKFlag [catch {exec gunzip -f $outputFile} errormsg]
-         if {$OKFlag == 0} {
+                 catch {exec rm -f [file rootname $outputFile]}
+                 puts "exec gunzip $outputFile"
+                 set OKFlag [catch {exec gunzip -f $outputFile} errormsg]
+                 if {$OKFlag == 0} {
                      catch {exec rm -f atlas}
-             puts "exec tar xf [file rootname $outputFile]]"
-             set OKFlag [catch {exec tar xf [file rootname $outputFile]} errormsg]
+                     puts "exec tar xf [file rootname $outputFile]]"
+                     set OKFlag [catch {exec tar xf [file rootname $outputFile]} errormsg]
                      if {$OKFlag == 0} {
-             puts "exec mv atlas ${EMAtlasBrainClassifier(AtlasDir)}/"
-             set OKFlag [catch {exec mv atlas ${EMAtlasBrainClassifier(AtlasDir)}/}  errormsg]
-             }
-         }
+                         puts "exec mv atlas ${EMAtlasBrainClassifier(AtlasDir)}/"
+                         set OKFlag [catch {exec mv atlas ${EMAtlasBrainClassifier(AtlasDir)}/}  errormsg]
+                     }
+                 }
                  set RMFile [file rootname $outputFile]
                } else {
                   set OKFlag [catch {exec unzip -o -qq $outputFile}  errormsg] 
                   set RMFile $outputFile
                } 
                puts "... finished extracting"
-               if {$OKFlag == 1} {
+               if {$OKFlag != 0} {
                  DevErrorWindow "Could not uncompress $outputFile because of the following error message:\n$errormsg\nPlease manually uncompress the file."
-             return
+                 return
                } 
                DevInfoWindow "Atlas installation completed!" 
                catch {rm $RMFile} 
              } else {
                return
-           }           
+             }           
            } else {
                return 
            }
@@ -874,31 +875,29 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
        # Check if we need to run registration
        set RunRegistrationFlag 0 
        foreach Dir "$RegisterAtlasDirList" {
-       if {[file exists $EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I.001] == 0  } {
-           set RunRegistrationFlag 1 
-           break 
-       }
+           if {[file exists $EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I.001] == 0  } {
+               set RunRegistrationFlag 1 
+               break 
+           }
        }
 
        if {$RunRegistrationFlag == 0 } {
-       if {[DevYesNo "We found already an atlas in $EMAtlasBrainClassifier(WorkingDirectory)/atlas. Do you still want to register ? " ] == "yes" } {
-           set RunRegistrationFlag 1
-       }
+           if {[DevYesNo "We found already an atlas in $EMAtlasBrainClassifier(WorkingDirectory)/atlas. Do you still want to register ? " ] == "yes" } {
+               set RunRegistrationFlag 1
+           }
        } 
-
-
        
        if {$RunRegistrationFlag} { 
 
-     set TemplateIDInput $EMAtlasBrainClassifier(Volume,NormalizedSPGR)
-     # Load Atlas SPGR 
-     set VolIDSource      [EMAtlasBrainClassifierLoadAtlasVolume $EMAtlasBrainClassifier(AtlasDir) spgr  AtlasSPGR]
-     if {$VolIDSource == "" } {return}
-     set EMAtlasBrainClassifier(Volume,AtlasSPGR) $VolIDSource
-       
-     # Target file is the normalized SPGR
-     set VolIDTarget $EMAtlasBrainClassifier(Volume,NormalizedSPGR)
-     if {$VolIDTarget == "" } {return}
+         set TemplateIDInput $EMAtlasBrainClassifier(Volume,NormalizedSPGR)
+         # Load Atlas SPGR 
+         set VolIDSource      [EMAtlasBrainClassifierLoadAtlasVolume $EMAtlasBrainClassifier(AtlasDir) spgr  AtlasSPGR]
+         if {$VolIDSource == "" } {return}
+         set EMAtlasBrainClassifier(Volume,AtlasSPGR) $VolIDSource
+           
+         # Target file is the normalized SPGR
+         set VolIDTarget $EMAtlasBrainClassifier(Volume,NormalizedSPGR)
+         if {$VolIDTarget == "" } {return}
 
          puts "============= Start registeration"  
          EMAtlasBrainClassifierRegistration $VolIDTarget $VolIDSource
@@ -939,14 +938,14 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
              RenderAll
          }
        } else {
-       puts "============= Skip registration" 
-       foreach Dir "$RegisterAtlasDirList" Name "$RegisterAtlasNameList" {
-             puts "=========== Load Atlas $Name  ============ "
-             # Load In the New Atlases
-             EMAtlasBrainClassifierLoadAtlasVolume $EMAtlasBrainClassifier(WorkingDirectory)/atlas $Dir $Name
-             MainUpdateMRML
-             RenderAll
-         }       
+           puts "============= Skip registration" 
+           foreach Dir "$RegisterAtlasDirList" Name "$RegisterAtlasNameList" {
+                 puts "=========== Load Atlas $Name  ============ "
+                 # Load In the New Atlases
+                 EMAtlasBrainClassifierLoadAtlasVolume $EMAtlasBrainClassifier(WorkingDirectory)/atlas $Dir $Name
+                 MainUpdateMRML
+                 RenderAll
+           }       
        }
    }
 
@@ -974,11 +973,11 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     if {$EMSegment(LatestLabelMap) == $Volume(idNone)} { 
         DevErrorWindow "Error: Could not segment subject"
     } else {
-    set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation/EMResult"
-    set VolIDOutput $EMSegment(LatestLabelMap)
-    Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
-    Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
-    EMAtlasBrainClassifierVolumeWriter $VolIDOutput
+        set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation/EMResult"
+        set VolIDOutput $EMSegment(LatestLabelMap)
+        Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
+        Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
+        EMAtlasBrainClassifierVolumeWriter $VolIDOutput
     }
     # Change xml directory
     if {$EMAtlasBrainClassifier(Save,XMLFile)}      {MainMrmlWrite  $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation/segmentation.xml}
