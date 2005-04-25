@@ -389,8 +389,8 @@ if { ![file exists $::GSL_TEST_FILE] } {
 
     cd $SLICER_LIB/gsl-build/
 
-    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:projects/cvs/slicer login
-    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:projects/cvs/slicer co -r $::GSL_TAG gsl
+    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
+    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co -r $::GSL_TAG gsl
 
     if { !$isWindows } {
         # can't do Windows
