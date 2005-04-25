@@ -68,6 +68,7 @@ vtkITKDemonsRegistrationFilter::vtkITKDemonsRegistrationFilter()
   ConnectPipelines(this->itkExporterDisplacement, this->vtkImporterDisplacement);
   this->itkExporterDisplacement->SetInput(m_Filter->GetOutput());
 
+  LinkITKProgressToVTKProgress(m_Filter);
   //Update();
 
 };
@@ -94,5 +95,12 @@ void vtkITKDemonsRegistrationFilter::Update()
   SetCurrentIteration(0);
 
   vtkITKImageToImageFilter::Update();
+
+  // m_Warper->Update();
+
+  vtkImporterDisplacement->Update();
+  vtkImporter->Update();
+
+  //vtkImporterDisplacement->GetOutput()->UpdateData();
 }
 
