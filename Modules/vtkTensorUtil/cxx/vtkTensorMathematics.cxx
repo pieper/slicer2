@@ -301,7 +301,7 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
   vtkTransform *trans = vtkTransform::New();
   int useTransform = 0;
   // map 0..1 values into the range a char takes on
-  const int scale = 255;
+  const vtkFloatingPointType scale = 255;
 
   // find the input region to loop over
   pd = in1Data->GetPointData();
@@ -391,7 +391,7 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
           w[2] = vtkMath::Normalize(v2);
         }
 
-        //Correct for negative eigenvalues: absolut value
+        //Correct for negative eigenvalues: absolute value
         w[0] = fabs(w[0]);
         w[1] = fabs(w[1]);
         w[2] = fabs(w[2]);
@@ -401,8 +401,8 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
           trace = w[0]+w[1]+w[2];
 
           // Avoid division by 0
-          vtkFloatingPointType r = VTK_EPS;
-          trace +=r;
+          vtkFloatingPointType reg = VTK_EPS;
+          trace += reg;
           
           // Lauren note that RA and LA could be computed
           // without diagonalization.  This should be implementred
@@ -419,7 +419,7 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
           break;
         case VTK_TENS_FRACTIONAL_ANISOTROPY:
           norm = sqrt(w[0]*w[0]+ w[1]*w[1] +  w[2]*w[2]);
-          norm += r;
+          norm += reg;
           *outPtr = (T)((0.70710678)*
                 (sqrt((w[0]-w[1])*(w[0]-w[1]) + 
                       (w[2]-w[1])*(w[2]-w[1]) +
@@ -458,7 +458,7 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
                   (w[2] - mean)*(w[2] - mean))/3;
           norm = sqrt(norm);
           norm = norm*norm*norm;
-          norm = norm + r;
+          norm += reg;
           // multiply by sqrt 2: range from -1 to 1
           *outPtr = (T)(M_SQRT2*((w[0] + w[1] - 2*w[2]) * 
                          (2*w[0] - w[1] - w[2]) * 
@@ -469,7 +469,7 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
           // see PhD thesis, Gordon Kindlmann
           // Compute FA for amount of gray 
           norm = sqrt(w[0]*w[0] + w[1]*w[1] +  w[2]*w[2]);
-          norm += r;
+          norm += reg;
           fa = ((0.70710678)*
                 (sqrt((w[0]-w[1])*(w[0]-w[1]) + 
                       (w[2]-w[1])*(w[2]-w[1]) +
@@ -482,7 +482,7 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
                   (w[2] - mean)*(w[2] - mean))/3;
           norm = sqrt(norm);
           norm = norm*norm*norm;
-          norm = norm + r;
+          norm += reg;
           // multiply by sqrt 2: range from -1 to 1
           mode = (M_SQRT2*((w[0] + w[1] - 2*w[2]) * 
                            (2*w[0] - w[1] - w[2]) * 
@@ -535,10 +535,6 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
               && op != VTK_TENS_COLOR_MODE)
         *outPtr = (T) ((*outPtr) * scaleFactor);
 
-//           if (inPtId > numPts) 
-//         {
-//           vtkGenericWarningMacro(<<"not enough input pts for output extent "<<numPts<<" "<<inPtId);
-//         }
           outPtr++;
           inPtId++;
         }
@@ -641,7 +637,7 @@ void vtkTensorMathematics::ModeToRGB(double Mode, double FA,
                                      double &R, double &G, double &B) 
 {
 
-   double Hue, min, frac, vsf, mid1, mid2;
+   double Hue, frac;
    int sextant;
 
    // Mode is clamped to [-1,1]
