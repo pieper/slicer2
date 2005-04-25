@@ -82,25 +82,21 @@ public:
     vtkSetMacro(DetectionMethod, int);
 
     // Description:
-    // Gets the number of regressors 
-    vtkGetMacro(NoOfRegressors, int);
+    // Gets the design matrix 
+    vtkFloatArray *GetDesignMatrix();
 
     // Description:
-    // Sets the regressors 
-    void SetRegressors(vtkFloatArray *regressors);
+    // Sets the design matrix 
+    void SetDesignMatrix(vtkFloatArray *designMat);
 
     // Description:
     // Fits linear model (voxel by voxel) 
-    void Detect(vtkFloatArray *timeCourse, float *beta, float *cov); 
+    void Detect(vtkFloatArray *timeCourse, float *beta, float *chisq); 
 
 private:
     int DetectionMethod;  // 1 - GLM; 2 - MI
     int NoOfRegressors;
-    vtkFloatArray *Regressors;
-
-    int *Dimensions;
-    float **DesignMatrix;
-
+    vtkFloatArray *DesignMatrix;
 };
 
 
