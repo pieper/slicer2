@@ -153,7 +153,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.67 $} {$Date: 2005/04/22 23:16:01 $}]
+                  {$Revision: 1.68 $} {$Date: 2005/04/25 03:29:45 $}]
 
     # Define Tabs
     #------------------------------------
@@ -5165,6 +5165,13 @@ proc DTMRIDoMath {{operation ""}} {
     math SetInput 0 $input
     math SetInput 1 $input
     math SetOperationTo$operation
+    # color by RAS orientation, not IJK
+    if {$operation == "ColorByOrientation"} {
+        vtkTransform transform
+        DTMRICalculateIJKtoRASRotationMatrix transform $Tensor(activeID)
+        math SetTensorRotationMatrix [transform GetMatrix]
+        transform Delete
+    }
     math AddObserver StartEvent MainStartProgress
     math AddObserver ProgressEvent "MainShowProgress math"
     math AddObserver EndEvent MainEndProgress

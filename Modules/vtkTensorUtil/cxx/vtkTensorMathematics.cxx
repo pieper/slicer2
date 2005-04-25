@@ -104,8 +104,8 @@ void vtkTensorMathematics::ExecuteInformation(vtkImageData **inDatas,
 
   if (this->Operation == VTK_TENS_COLOR_ORIENTATION)
     {
-      // output color (RGBA)
-      outData->SetNumberOfScalarComponents(4);
+      // output color (RGB)
+      outData->SetNumberOfScalarComponents(3);
       outData->SetScalarType(VTK_UNSIGNED_CHAR);
     }
   if (this->Operation == VTK_TENS_COLOR_MODE) 
@@ -503,27 +503,24 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
         case VTK_TENS_COLOR_ORIENTATION:
           // If the user has set the rotation matrix
           // then transform the eigensystem first
+          // This is used to rotate the vector into RAS space
+          // for consistent anatomical coloring.
+          double v_maj[3];
+          v_maj[0]=v[0][0];
+          v_maj[1]=v[1][0];
+          v_maj[2]=v[2][0];
           if (useTransform)
             {
-              trans->TransformPoint(v0,v0);
+              trans->TransformPoint(v_maj,v_maj);
             }
           // Color R, G, B depending on max eigenvector
-          cl = (w[0]-w[1])/(w[0]+r);
           // scale maps 0..1 values into the range a char takes on
-          *outPtr = (T)(scale*fabs(v[0][0])*cl);
+          cl = (w[0]-w[1])/(w[0]+reg);
+          *outPtr = (T)(scale*fabs(v_maj[0])*cl);
           outPtr++;
-          *outPtr = (T)(scale*fabs(v[1][0])*cl);
+          *outPtr = (T)(scale*fabs(v_maj[1])*cl);
           outPtr++;
-          *outPtr = (T)(scale*fabs(v[2][0])*cl);
-          outPtr++;
-          
-          // A: alpha (opacity) depends on anisotropy
-          // We want opacity to be less in spherical case.
-          // Also in general less when trace is small.
-          // 1 = opaque (high anisotropy), 0 = transparent
-          
-          // this is 1 - spherical anisotropy measure:
-          *outPtr = (T)(scale*(1 - 3*w[2]/trace));
+          *outPtr = (T)(scale*fabs(v_maj[2])*cl);
 
           break;
 
