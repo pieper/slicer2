@@ -397,7 +397,7 @@ proc fMRIEngineSortEVsForStat {x y z} {
     set totalVolumes [$oriTimeCourse GetNumberOfTuples]
     set run $fMRIEngine(curRunForModelFitting)
 
-    if {$run != "All"} {
+    if {$run != "combined"} {
         set first $run
         set last $run
 
@@ -513,7 +513,7 @@ proc fMRIEngineCreateCurvesFromTimeCourse {i j k} {
     fMRIEngineSortEVsForStat $i $j $k 
 
     set run $fMRIEngine(curRunForModelFitting)
-    if {$run == "All"} {
+    if {$run == "combined"} {
         set run 1
     }
  
