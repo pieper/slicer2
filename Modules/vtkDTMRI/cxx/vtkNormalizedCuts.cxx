@@ -54,7 +54,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <ctime>
 
 
-vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.10 $");
+vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.11 $");
 vtkStandardNewMacro(vtkNormalizedCuts);
 
 vtkCxxSetObjectMacro(vtkNormalizedCuts,NormalizedWeightMatrixImage, 
@@ -299,30 +299,106 @@ void vtkNormalizedCuts::ComputeClusters()
   // concatenated.  So array size is vector_length*number_of_vector_means.
   int numberOfClusters=this->NumberOfClusters;
   EstimatorType::ParametersType initialMeans(this->InternalNumberOfEigenvectors*numberOfClusters);
-  idx2=0;
+
+
+  // Now we try to choose evenly-spaced initial centroids for k-means
   std::srand ( static_cast<unsigned>(time(0)) );
-  idx1=0;
   int sampleIdx;
-  int meanIdx =0;
-  while (idx1 < numberOfClusters)
+  // keep track of chosen initial centroids
+  EmbedSampleType::Pointer centroids = EmbedSampleType::New();
+  EmbedSampleType::Pointer testCentroids = EmbedSampleType::New();
+  EmbedVectorType cent;
+
+  for (idx1 = 0; idx1 < numberOfClusters; idx1 ++)
     {
       // Init means with randomly selected sample member vectors.
       // index is random number between 0 and number of vectors-1.
       sampleIdx = std::rand()%embedding->Size();
       ev = embedding->GetMeasurementVector(sampleIdx);
-      idx2=0;
-      while (idx2 < this->InternalNumberOfEigenvectors)
+
+      // To aim for evenly spread centroids in the embedding space,
+      // ideally we would pick the data point that is furthest away
+      // from all chosen centroids. But this would mean looping over
+      // all of the embedding vectors. Instead randomly choose several
+      // potential centroids, and just compare to already-chosen
+      // centroids.  keep the new centroid that is furthest from the
+      // already-chosen centroids.
+      if (idx1 != 0)
         {
-          initialMeans[meanIdx] = ev[idx2];
-          idx2++;
-          meanIdx++;
+          const int numTestCentroids = 5;
+          
+          // measure how good each centroid is (want least similar to others)
+          double similarity[numTestCentroids];
+
+          // choose several centroids and measure their quality
+          for (int idxChoice = 0; idxChoice < numTestCentroids; idxChoice++)
+            {
+              testCentroids->PushBack( ev );      
+              similarity[idxChoice] = 0;
+              
+              // measure against centroids chosen so far
+              for (int idxCentroid = 0; idxCentroid < idx1; idxCentroid++)
+                {
+                  cent = centroids->GetMeasurementVector(idxCentroid);
+
+                  // dot product as similarity measure.  for this
+                  // application embedding points are approximately on
+                  // the surface of a sphere so we want angular
+                  // separation between centroids => dot product.
+                  double dot = 0;
+                  for (int idxComp = 0; 
+                       idxComp < this->InternalNumberOfEigenvectors; idxComp++)
+                    {                  
+                      dot += ev[idxComp]*cent[idxComp];
+                    }
+                  // we want approx 90 degrees apart, so we
+                  // want dot products close to 0 => use abs of dot
+                  // product, then we can do min later.
+                  similarity[idxChoice] += fabs(dot);
+                  
+                }
+
+              // get the next centroid to test
+              sampleIdx = std::rand()%embedding->Size();
+              ev = embedding->GetMeasurementVector(sampleIdx);
+            }
+          
+          // now find the best one with the minimim similarity to others
+          double minSimilarity = similarity[0];
+          ev = testCentroids->GetMeasurementVector(0);
+          for (int idxChoice = 1; idxChoice < numTestCentroids; idxChoice++)
+            {
+              if (similarity[idxChoice] < minSimilarity)
+                {
+                  minSimilarity = similarity[idxChoice];
+                  ev = testCentroids->GetMeasurementVector(idxChoice);
+                }
+            }          
         }
 
-      idx1++;
+
+      // save the chosen centroid for use when picking more centroids
+      centroids->PushBack( ev );      
+
     }
 
+  int meanIdx = 0;
+  // loop over final ordered centroid list
+  for (idx1 = 0; idx1 < numberOfClusters; idx1 ++)
+    {
+      // find next one in final ordered centroid list
+      ev = centroids->GetMeasurementVector(idx1);
 
+      // Put the centroid into the strange format for input to 
+      // the estimator
+      for (idx2 = 0; idx2 < this->InternalNumberOfEigenvectors; idx2++)
+        {
+          initialMeans[meanIdx] = ev[idx2];
+          meanIdx++;
+        }
+    }  
 
+  // Now back to standard itk k-means 
   estimator->SetParameters( initialMeans );
   vtkDebugMacro("estimator params: " << estimator->GetParameters());
   estimator->SetKdTree( treeGenerator->GetOutput() );
@@ -353,6 +429,60 @@ void vtkNormalizedCuts::ComputeClusters()
       vtkDebugMacro("    estimated mean : " << estimatedMeans[i]);
     }
 
+  // Copy the final centroids into a format we can understand
+  meanIdx = 0;
+  centroids->Clear();
+  // loop over final centroid list
+  for (idx1 = 0; idx1 < numberOfClusters; idx1 ++)
+    {
+      // Get the centroid out of the strange format from the estimator
+      for (idx2 = 0; idx2 < this->InternalNumberOfEigenvectors; idx2++)
+        {
+          ev[idx2] = estimatedMeans[meanIdx];
+          meanIdx++;
+        }
+
+      // put it onto the final centroid list
+      centroids->PushBack(ev);
+    }  
+
+  // Now that we have found the final centroids, order them according
+  // to their first component (so output class labels can be sorted
+  // according to the second eigenvector of the normalized laplacian)
+  double firstComp[numberOfClusters];
+
+  // first get all the first components
+  for (idx1 = 0; idx1 < numberOfClusters; idx1 ++)
+    {
+      ev = centroids->GetMeasurementVector(idx1);
+      firstComp[idx1] = ev[0];
+    }
+
+  // now order the centroids to make the class label list
+  std::vector< unsigned int > classLabels;
+  classLabels.resize( numberOfClusters );
+  int label = 0;
+  for (idx1 = 0; idx1 < numberOfClusters; idx1 ++)
+    {
+      double minComp = firstComp[0];
+      int minIdx = 0;
+      for (idx2 = 0; idx2 < numberOfClusters; idx2 ++)
+        {
+          if (firstComp[idx2] < minComp)
+            {
+              minComp = firstComp[idx2];
+              minIdx = idx2;
+            }
+        }
+      // remove the min so we find the next-largest next time
+      firstComp[minIdx] = VTK_DOUBLE_MAX;
+      // give this centroid the next class label
+      classLabels[minIdx] = label;
+      label++;
+    }
+
+
+
   typedef itk::Statistics::EuclideanDistance< EmbedVectorType > 
     MembershipFunctionType;
   typedef itk::MinimumDecisionRule DecisionRuleType;
@@ -372,16 +502,7 @@ void vtkNormalizedCuts::ComputeClusters()
   embedding->Register();
   //embedding->DebugOn();
   this->OutputClassifier->SetNumberOfClasses( numberOfClusters );
-
-  std::vector< unsigned int > classLabels;
-  classLabels.resize( numberOfClusters );
-  idx1=0;
-  while (idx1 < numberOfClusters)
-    {
-      classLabels[idx1] = idx1;
-      idx1++;
-    }
-
+  // label according to second eigenvector ordering
   this->OutputClassifier->SetMembershipFunctionClassLabels( classLabels );
 
 
