@@ -826,11 +826,11 @@ proc fMRIEngineAddRegressors {run} {
         return 1
     }
 
-    if {[info commands fMRIEngine(regressors)] != ""} {
-        fMRIEngine(regressors) Delete
-        unset -nocomplain fMRIEngine(regressors)
+    if {[info commands fMRIEngine(designMatrix)] != ""} {
+        fMRIEngine(designMatrix) Delete
+        unset -nocomplain fMRIEngine(designMatrix)
     }
-    vtkFloatArray fMRIEngine(regressors)
+    vtkFloatArray fMRIEngine(designMatrix)
 
     #--- Additional EVs: baseline and DCBasis
     for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
@@ -844,17 +844,17 @@ proc fMRIEngineAddRegressors {run} {
  
     if {$run != "combined"} {
         # single run
-        fMRIEngine(regressors) SetNumberOfComponents $fMRIEngine($run,totalEVs)
+        fMRIEngine(designMatrix) SetNumberOfComponents $fMRIEngine($run,totalEVs)
         set seqName $fMRIEngine($run,sequenceName)
         set vols $MultiVolumeReader($seqName,noOfVolumes) 
-        fMRIEngine(regressors) SetNumberOfTuples $vols
+        fMRIEngine(designMatrix) SetNumberOfTuples $vols
 
         for {set j 0} {$j < $vols} {incr j} { 
             for {set i 0} {$i < $fMRIEngine($run,totalEVs)} {incr i} { 
                 set index [expr $i+1]
                 set data $fMRIModelView(Data,Run$run,EV$index,EVData)
                 set e [lindex $data $j]
-                fMRIEngine(regressors) InsertComponent $j $i $e 
+                fMRIEngine(designMatrix) InsertComponent $j $i $e 
             }
         }
     } else {
@@ -870,8 +870,8 @@ proc fMRIEngineAddRegressors {run} {
             set vols [expr $MultiVolumeReader($seqName,noOfVolumes) + $vols]
         }
 
-        fMRIEngine(regressors) SetNumberOfTuples $vols 
-        fMRIEngine(regressors) SetNumberOfComponents $fMRIEngine(1,totalEVs) 
+        fMRIEngine(designMatrix) SetNumberOfTuples $vols 
+        fMRIEngine(designMatrix) SetNumberOfComponents $fMRIEngine(1,totalEVs) 
 
         for {set i 1} {$i <= $fMRIEngine(1,totalEVs)} {incr i} { 
             set data ""
@@ -886,7 +886,7 @@ proc fMRIEngineAddRegressors {run} {
                 set index [expr $i+1]
                 set data $fMRIEngine($index,combinedEVs)
                 set e [lindex $data $j]
-                fMRIEngine(regressors) InsertComponent $j $i $e 
+                fMRIEngine(designMatrix) InsertComponent $j $i $e 
             }
         }
     }
@@ -1080,7 +1080,7 @@ proc fMRIEngineFitModel {} {
     }
 
     fMRIEngine(detector) SetDetectionMethod 1
-    fMRIEngine(detector) SetRegressors fMRIEngine(regressors) 
+    fMRIEngine(detector) SetDesignMatrix fMRIEngine(designMatrix) 
 
     if {[info exists fMRIEngine(lowerThreshold)]} {
         fMRIEngine(actEstimator) SetLowerThreshold $fMRIEngine(lowerThreshold)
@@ -1097,7 +1097,3 @@ proc fMRIEngineFitModel {} {
 
     puts "...done"
 }
-
-
-
- 
