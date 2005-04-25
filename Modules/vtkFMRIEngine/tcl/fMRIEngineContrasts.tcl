@@ -258,10 +258,11 @@ proc fMRIEngineShowContrastToEdit {} {
 
     set curs [$fMRIEngine(contrastsListBox) curselection]
     if {$curs != ""} {
-        set name [$fMRIEngine(contrastsListBox) get $curs] 
-        if {$name != ""} {
-            set fMRIEngine(entry,contrastName) $name
-            set fMRIEngine(entry,contrastVector) $fMRIEngine($name,contrastVector) 
+        set key [$fMRIEngine(contrastsListBox) get $curs] 
+        if {$key != ""} {
+            set fMRIEngine(entry,contrastName) $fMRIEngine($key,contrastName)
+            set fMRIEngine(entry,contrastVolName) $fMRIEngine($key,contrastVolName)
+            set fMRIEngine(entry,contrastVector) $fMRIEngine($key,contrastVector)
         }
     } else {
         DevErrorWindow "Select a contrast to edit."
