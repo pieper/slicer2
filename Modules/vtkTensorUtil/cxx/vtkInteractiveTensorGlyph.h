@@ -202,6 +202,9 @@ protected:
   vtkMatrix4x4 *TensorRotationMatrix;
 
   vtkImageData *ScalarMask;
+
+  void RGBToIndex(double R, double G, 
+                  double B, double &index);
 };
 
 #endif

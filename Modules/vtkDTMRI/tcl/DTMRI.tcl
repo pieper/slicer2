@@ -153,7 +153,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.70 $} {$Date: 2005/04/25 06:58:34 $}]
+                  {$Revision: 1.71 $} {$Date: 2005/04/25 07:04:11 $}]
 
     # Define Tabs
     #------------------------------------
@@ -353,7 +353,7 @@ proc DTMRIInit {} {
     set DTMRI(mode,glyphEigenvectorList,tooltips) {{When displaying DTMRIs as Lines, use the eigenvector corresponding to the largest eigenvalue.} {When displaying DTMRIs as Lines, use the eigenvector corresponding to the middle eigenvalue.} {When displaying DTMRIs as Lines, use the eigenvector corresponding to the smallest eigenvalue.}}
 
     # type of glyph coloring
-    set DTMRI(mode,glyphColor) Linear; # default linear matches the vtk class
+    set DTMRI(mode,glyphColor) Direction; # default must match the vtk class
     set DTMRI(mode,glyphColorList) {Linear Planar Spherical Max Middle Min MaxMinusMiddle RA FA Direction}
     set DTMRI(mode,glyphColorList,tooltip) "Color DTMRIs according to\nLinear, Planar, or Spherical measures,\nwith the Max, Middle, or Min eigenvalue,\nwith relative or fractional anisotropy (RA or FA),\nor by direction of major eigenvector."
    
@@ -3907,6 +3907,10 @@ proc DTMRIUpdateGlyphColor {} {
     # display new mode while we are working...
     $DTMRI(gui,mbGlyphColor)    config -text $mode
     
+    # default lookup table colormap (changes for color by direction)
+    DTMRI(vtk,glyphs,lut) SetHueRange .6667 0.0
+    set DTMRI(vtk,glyphs,lut,HueRange) ".6667 0.0"
+
     foreach plane {0 1 2} {
     switch $mode {
         "Linear" {
@@ -3938,6 +3942,9 @@ proc DTMRIUpdateGlyphColor {} {
         }
         "Direction" {
             $DTMRI(mode,glyphsObject$plane) ColorGlyphsWithDirection
+            # lookup table colormap changes for color by direction
+            DTMRI(vtk,glyphs,lut) SetHueRange 0 1
+            set DTMRI(vtk,glyphs,lut,HueRange) "0 1"
         }
         
     }
@@ -5587,7 +5594,7 @@ proc DTMRIBuildVTK {} {
     #DTMRIMakeVTKObject vtkLogLookupTable $object
     DTMRIMakeVTKObject vtkLookupTable $object
     DTMRIAddObjectProperty $object HueRange \
-        {.6667 0.0} float {Hue Range}
+        {0 1} float {Hue Range}
 
     # mapper
     set object glyphs,mapper
