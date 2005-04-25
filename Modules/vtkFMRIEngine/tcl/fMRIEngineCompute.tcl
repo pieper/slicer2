@@ -112,6 +112,14 @@ proc fMRIEngineComputeContrasts {} {
             return
         }
 
+        # generates data without popping up the model image 
+        set done [fMRIModelViewGenerateModel]
+        if {! $done} {
+            DevErrorWindow "Error in generating model for activation computation."
+            puts "Error in generating model for activation computation."
+            return 
+        }
+
         unset -nocomplain fMRIEngine(actVolumeNames)
 
         set size [llength $curs]
@@ -140,19 +148,19 @@ proc fMRIEngineComputeContrasts {} {
                 # Extract contrast info from the long 
                 # contrast vector
                 set vec $fMRIEngine($name,contrastVector) 
-                set originalContrastList [split $vec " "]
+                set originalContrastVector [split $vec " "]
 
                 set first 0
                 for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
                     set last [expr $first+$fMRIEngine($r,totalEVs)-1]
-                    set fMRIEngine($r,contrastList) [lrange $originalContrastList $first $last]
-                    set fMRIEngine($r,contrastString) [join $fMRIEngine($r,contrastList) " "]
+                    set fMRIEngine($r,contrastVector) [lrange $originalContrastVector $first $last]
+                    set fMRIEngine($r,contrastString) [join $fMRIEngine($r,contrastVector) " "]
                      
                     set first [expr $first+$fMRIEngine($r,totalEVs)]
                 }
 
                 set run $fMRIEngine(curRunForModelFitting)
-                if {$run == "All"} {
+                if {$run == "combined"} {
                     # combined runs
                     for {set r 2} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
                         if {! [string equal -nocase $fMRIEngine(1,contrastString) $fMRIEngine($r,contrastString)]} {
@@ -161,31 +169,28 @@ proc fMRIEngineComputeContrasts {} {
                         }
                     }
 
-                    set contrList $fMRIEngine(1,contrastList)
+                    set contrVector $fMRIEngine(1,contrastVector)
                 } else {
-                    set contrList $fMRIEngine($run,contrastList)
+                    set contrVector $fMRIEngine($run,contrastVector)
                 }
 
-                set len [llength $contrList]
+                set len [llength $contrVector]
                 if {[info commands fMRIEngine(contrast)] != ""} {
                     fMRIEngine(contrast) Delete
-                        unset -nocomplain fMRIEngine(contrast)
+                    unset -nocomplain fMRIEngine(contrast)
                 }
                 vtkIntArray fMRIEngine(contrast)
 
                 fMRIEngine(contrast) SetNumberOfTuples $len 
                 fMRIEngine(contrast) SetNumberOfComponents 1
                 set count 0
-                foreach entry $contrList {
+                foreach entry $contrVector {
                     fMRIEngine(contrast) SetComponent $count 0 $entry 
                     incr count
                 }
 
-                # fMRIEngine(actVolumeGenerator) SetNumberOfVolumes $totalVols 
-                fMRIEngine(actVolumeGenerator) SetNumberOfVolumes \
-                    $fMRIEngine(totalVolsForModelFitting)
- 
                 fMRIEngine(actVolumeGenerator) SetContrastVector fMRIEngine(contrast) 
+                fMRIEngine(actVolumeGenerator) SetDesignMatrix fMRIEngine(designMatrix)
                 fMRIEngine(actVolumeGenerator) SetInput $fMRIEngine(actBetaAndStd) 
                 set act [fMRIEngine(actVolumeGenerator) GetOutput]
                 $act Update
