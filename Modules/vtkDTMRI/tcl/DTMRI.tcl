@@ -153,7 +153,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.69 $} {$Date: 2005/04/25 04:05:17 $}]
+                  {$Revision: 1.70 $} {$Date: 2005/04/25 06:58:34 $}]
 
     # Define Tabs
     #------------------------------------
@@ -5201,13 +5201,13 @@ proc DTMRIDoMath {{operation ""}} {
     # by inserting it right after that volume in the mrml file
     set nitems [Mrml(dataTree) GetNumberOfItems]
     for {set widx 0} {$widx < $nitems} {incr widx} {
-        if { [Mrml(dataTree) GetNthItem $widx] == "Tensor($t,node)" } {
+        if { [Mrml(dataTree) GetNthItem $widx] == "Volume($v,node)" } {
             break
         }
     }
     if { $widx < $nitems } {
         Mrml(dataTree) RemoveItem $widx
-        Mrml(dataTree) InsertAfterItem Volume($v,node) Tensor($t,node)
+        Mrml(dataTree) InsertAfterItem Tensor($t,node) Volume($v,node)
         MainUpdateMRML
     }
     
