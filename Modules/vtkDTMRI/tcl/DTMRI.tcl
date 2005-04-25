@@ -153,7 +153,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.68 $} {$Date: 2005/04/25 03:29:45 $}]
+                  {$Revision: 1.69 $} {$Date: 2005/04/25 04:05:17 $}]
 
     # Define Tabs
     #------------------------------------
@@ -5195,7 +5195,22 @@ proc DTMRIDoMath {{operation ""}} {
     
     # reset blue bar text
     set Gui(progressText) ""
-
+  
+    # Registration
+    # put the new volume inside the same transform as the original tensor
+    # by inserting it right after that volume in the mrml file
+    set nitems [Mrml(dataTree) GetNumberOfItems]
+    for {set widx 0} {$widx < $nitems} {incr widx} {
+        if { [Mrml(dataTree) GetNthItem $widx] == "Tensor($t,node)" } {
+            break
+        }
+    }
+    if { $widx < $nitems } {
+        Mrml(dataTree) RemoveItem $widx
+        Mrml(dataTree) InsertAfterItem Volume($v,node) Tensor($t,node)
+        MainUpdateMRML
+    }
+    
     # display this volume so the user knows something happened
     MainSlicesSetVolumeAll Back $v
     RenderAll
