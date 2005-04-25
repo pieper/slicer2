@@ -158,6 +158,13 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
   // Make a vtk image to visualize contents of a vnl matrix
   vtkImageData *ConvertVNLMatrixToVTKImage(InputType *matrix);
 
+  // Description
+  // Write output file embed.txt (useful to visualize embedding
+  // vectors using external code)
+  vtkSetMacro(SaveEmbeddingVectors, int);
+  vtkGetMacro(SaveEmbeddingVectors, int);
+  vtkBooleanMacro(SaveEmbeddingVectors, int);
+
  protected:
   vtkNormalizedCuts();
   ~vtkNormalizedCuts() {};
@@ -171,6 +178,8 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
   int NumberOfClusters;
   int NumberOfEigenvectors;
   int EmbeddingNormalization;
+  int SaveEmbeddingVectors;
+
   //BTX
   enum EmbeddingNormalizationType { NONE, ROW_SUM, LENGTH_ONE } ;
   //ETX

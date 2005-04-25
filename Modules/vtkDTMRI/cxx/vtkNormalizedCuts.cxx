@@ -54,7 +54,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <ctime>
 
 
-vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.11 $");
+vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.12 $");
 vtkStandardNewMacro(vtkNormalizedCuts);
 
 vtkCxxSetObjectMacro(vtkNormalizedCuts,NormalizedWeightMatrixImage, 
@@ -70,6 +70,8 @@ vtkNormalizedCuts::vtkNormalizedCuts()
   this->NormalizedWeightMatrixImage = NULL;
   this->EigenvectorsImage = NULL;
   this->EigenSystem = NULL;
+
+  this->SaveEmbeddingVectors = 0;
 }
 
 void vtkNormalizedCuts::PrintSelf(ostream& os, vtkIndent indent)
@@ -197,9 +199,12 @@ void vtkNormalizedCuts::ComputeClusters()
   EmbedVectorType ev;
   EmbedSampleType::Pointer embedding = EmbedSampleType::New();
   
-  // TEST write to disk
+  // write to disk if requested
   ofstream fileEmbed;
-  fileEmbed.open("embed.txt");
+  if (this->SaveEmbeddingVectors)
+    {
+      fileEmbed.open("embed.txt");
+    }
 
   idx1=0;
   // outer loop over rows of eigenvector matrix, 
@@ -251,20 +256,24 @@ void vtkNormalizedCuts::ComputeClusters()
             }
         }
 
-      // TEST write to disk
-      for (idx2 = 0; idx2 < this->InternalNumberOfEigenvectors; idx2++)
+      // write to disk if requested
+      if (this->SaveEmbeddingVectors)
         {
-          fileEmbed << ev[idx2] << " ";
+          for (idx2 = 0; idx2 < this->InternalNumberOfEigenvectors; idx2++)
+            {
+              fileEmbed << ev[idx2] << " ";
+            }
+          fileEmbed << endl;
         }
-      fileEmbed << endl;
 
       // put the embedding vector for this tract onto the sample list
       embedding->PushBack( ev );      
       idx1++;
     }
 
-  // TEST write to disk
-  fileEmbed.close();
+  // write to disk if requested
+  if (this->SaveEmbeddingVectors)
+    fileEmbed.close();
 
   // Create a Kd tree and populate it with the embedding vectors,
   // in order to run k-means.
