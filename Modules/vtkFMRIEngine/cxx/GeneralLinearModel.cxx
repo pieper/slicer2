@@ -64,53 +64,105 @@ gsl_vector *GeneralLinearModel::y = NULL;
 gsl_vector *GeneralLinearModel::c = NULL;
 gsl_multifit_linear_workspace *GeneralLinearModel::work = NULL;
 
-void GeneralLinearModel::FitModel(float **designMatrix, 
-                                  int *dims, 
-                                  float *timeCourse,
-                                  float *beta,
-                                  float *cov2)
+int *GeneralLinearModel::Dimensions = NULL;
+float **GeneralLinearModel::DesignMatrix = NULL;
+
+
+int GeneralLinearModel::FitModel(float *timeCourse,
+                                 float *beta,
+                                 float *chisq)
 {
     int i, j;
-    double xi, yi, chisq, t;
+    double xi, yi, ssr, t;
+
+    if (DesignMatrix == NULL || Dimensions == NULL) 
+    {
+        cout << "Design matix has not been set.\n";
+        return 1;
+    }
 
     if (X == NULL)
     {
-        X = gsl_matrix_alloc(dims[0], dims[1]);
+        X = gsl_matrix_alloc(Dimensions[0], Dimensions[1]);
     }
     if (y == NULL) 
     {
-        y = gsl_vector_alloc(dims[0]);
+        y = gsl_vector_alloc(Dimensions[0]);
     }
     if (c == NULL)
     {
-        c = gsl_vector_alloc(dims[1]);
+        c = gsl_vector_alloc(Dimensions[1]);
     }
     if (cov == NULL)
     {
-        cov = gsl_matrix_alloc(dims[1], dims[1]);
+        cov = gsl_matrix_alloc(Dimensions[1], Dimensions[1]);
     }
 
-    for (i = 0; i < dims[0]; i++)
+    for (i = 0; i < Dimensions[0]; i++)
     {
         gsl_vector_set(y, i, timeCourse[i]);
 
-        for(j = 0; j < dims[1]; j++)
+        for(j = 0; j < Dimensions[1]; j++)
         {
-            gsl_matrix_set(X, i, j, designMatrix[i][j]);
+            gsl_matrix_set(X, i, j, DesignMatrix[i][j]);
         }
     }
 
     if (work == NULL)
     {
-        work = gsl_multifit_linear_alloc(dims[0], dims[1]);
+        work = gsl_multifit_linear_alloc(Dimensions[0], Dimensions[1]);
     }
 
-    gsl_multifit_linear(X, y, c, cov, &chisq, work);
-    for(j = 0; j < dims[1]; j++)
+    gsl_multifit_linear(X, y, c, cov, &ssr, work);
+    *chisq = (float) ssr;
+    for(j = 0; j < Dimensions[1]; j++)
     {
         beta[j] = gsl_vector_get(c,j);
-        cov2[j] = gsl_matrix_get(cov,j,j);
     }
+
+    return 0;
+}
+
+
+int GeneralLinearModel::SetDesignMatrix(vtkFloatArray *designMat)
+{
+    int noOfRegressors = designMat->GetNumberOfComponents();
+
+    if (Dimensions == NULL)
+    {
+        Dimensions = new int[2];
+        if (Dimensions == NULL) 
+        {
+            cout << "Memory allocation failed for Dimensions in class GeneralLinearModel.\n";
+            return 1;
+        }
+    }  
+
+    // Number of volumes
+    Dimensions[0] = designMat->GetNumberOfTuples();
+    // Number of evs (predictors)
+    Dimensions[1] = noOfRegressors;
+
+    if (DesignMatrix == NULL)
+    {
+        DesignMatrix = new float *[Dimensions[0]];
+        if (DesignMatrix == NULL) 
+        {
+            cout << "Memory allocation failed for DesignMatrix in class GeneralLinearModel.\n";
+            return 1;
+        }
+
+        for (int i = 0; i < Dimensions[0]; i++)
+        {
+            DesignMatrix[i] = new float[Dimensions[1]];
+            for (int j = 0; j < Dimensions[1]; j++)
+            {
+                DesignMatrix[i][j] = designMat->GetComponent(i,j);
+            }
+        } 
+    }
+
+    return 0;
 }
 
 
@@ -127,7 +179,19 @@ void GeneralLinearModel::Free()
     y = NULL;
     c = NULL;
     work = NULL;
-}
 
+    if (DesignMatrix != NULL)
+    {
+        for (int i = 0; i < Dimensions[0]; i++)
+        {
+            delete [] DesignMatrix[i];
+        } 
+        delete [] DesignMatrix;
+    }
+    if (Dimensions != NULL)
+    {
+        delete [] Dimensions;
+    }
+}
 
 

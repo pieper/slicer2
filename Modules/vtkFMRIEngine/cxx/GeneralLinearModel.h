@@ -65,22 +65,27 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <vtkFMRIEngineConfigure.h>
 #include <gsl/gsl_multifit.h>
+#include "vtkFloatArray.h"
 
 class VTK_FMRIENGINE_EXPORT GeneralLinearModel
 {
 public:
+    // Description:
+    // Sets the design matrix 
+    // It returns 0 if successful; 1 otherwise.
+    static int SetDesignMatrix(vtkFloatArray *designMatrix);
+
     // Description:
     // Fits the linear model, with the following inputs:
     // designMatrix - glm design matrix
     // dims - dimensions of the design matrix (dims[0]: number of rows; dims[1]: number of cols)
     // timeCourse - voxel time course
     // beta - array of beta coefficients (output)
-    // cov - array of covariance (output)
-    static void FitModel(float **designMatrix, 
-                         int *dims, 
-                         float *timeCourse,
+    // chisq - the sum of squares of the residuals from the best-fit (output)
+    // It returns 0 if successful; 1 otherwise.
+    static int FitModel(float *timeCourse,
                          float *beta,
-                         float *cov);
+                         float *chisq);
 
     // Description:
     // Frees the allocated momery 
@@ -92,6 +97,9 @@ private:
     static gsl_vector *y;
     static gsl_vector *c;
     static gsl_multifit_linear_workspace *work; 
+
+    static int *Dimensions;
+    static float **DesignMatrix;
 };
 
 
