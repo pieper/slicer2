@@ -54,7 +54,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <ctime>
 
 
-vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.12 $");
+vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.13 $");
 vtkStandardNewMacro(vtkNormalizedCuts);
 
 vtkCxxSetObjectMacro(vtkNormalizedCuts,NormalizedWeightMatrixImage, 
@@ -458,7 +458,8 @@ void vtkNormalizedCuts::ComputeClusters()
   // Now that we have found the final centroids, order them according
   // to their first component (so output class labels can be sorted
   // according to the second eigenvector of the normalized laplacian)
-  double firstComp[numberOfClusters];
+  std::vector< double > firstComp;
+  firstComp.resize( numberOfClusters );
 
   // first get all the first components
   for (idx1 = 0; idx1 < numberOfClusters; idx1 ++)
