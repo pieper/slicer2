@@ -248,6 +248,16 @@ void vtkImageReformat::SetPoint(int x, int y)
 
 #define FAST1_TO_FAST2(x) ((x) >> (NBITS1-NBITS2))
 
+// with interpolation
+#define CoordOut1(x,y,z) ((x<inExt[0])||(y<inExt[2])||(z<inExt[4])||\
+                          (x>nx2     )||(y> ny2    )||(z>nz1     ))
+
+// without interpolation
+#define CoordOut2(x,y,z) ( (x<inExt[0])||(y<inExt[2])||(z<inExt[4]) || \
+                           (x>nx2)     ||(y> ny2)    ||(z > nz2)       )
+
+#define VolIndex(x,y,z)  z*nxy + y*nx + x + idx_shift;
+
 //----------------------------------------------------------------------------
 // Description:
 // This templated function executes the filter for any type of data.
@@ -270,6 +280,7 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
     //fast
     int fround, fx, fy, fz, fxStep[3], fyStep[3], fxRewind[3];
     int fone, fx0, fy0, fz0, fx1, fy1, fz1, fdx0, fdx1, fdxy0, fdxy1;
+    int idx_shift;
     // time
     clock_t tStart=0;
     if (id == 0) {tStart = clock();}
@@ -290,11 +301,17 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
     // idx = (zi-inExt[4])*nxy + (yi-inExt[2])*nx + (xi-inExt[0])
     // so we'll only handle 0-based for now.
     //
-    if (inExt[0] != 0 || inExt[2] != 0 || inExt[4] != 0)
-    {
-        fprintf(stderr, "Change vtkImageReformat to handle non-0-based extents.\n");
-        return;
-    }
+    // Karl Krissian: added this functionality:
+    // idx = (zi-inExt[4])*nxy + (yi-inExt[2])*nx + (xi-inExt[0])
+    //     = zi*nxy + ni*nx + x + idx_shift
+    //  where idx_shift = -(inExt[4]*nxy+inExt[2]*ny+inExt[0])
+    idx_shift=-(inExt[4]*nxy+inExt[2]*ny+inExt[0]);
+
+    //if (inExt[0] != 0 || inExt[2] != 0 || inExt[4] != 0)
+    //{
+    //    fprintf(stderr, "Change vtkImageReformat to handle non-0-based extents.\n");
+    //    return;
+    // }
 
     // find the region to loop over: this is the max pixel coordinate
     maxX = outExt[1]; 
@@ -464,12 +481,9 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
                 zi = FAST1_TO_INT(fz);
 
                 // Test if coordinates are outside volume
-                if ((xi < 0) || (yi < 0) || (zi < 0) ||
-                        (xi > nx2) || (yi > ny2) || (zi > nz1))
-                {
+                if CoordOut1(xi,yi,zi)
                     // Indicate out of bounds with a -1
                     *outPtr = 0;
-                }
                 // Handle the case of being on the last slice
                 else if (zi == nz1)
                 {
@@ -481,7 +495,7 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
 
                     // Interpolate in X and Y at Z0
                     //
-                    idx = zi*nxy + yi*nx + xi;
+                    idx = VolIndex(xi,yi,zi);
                     ptr = &inPtr[idx];
 
                     fdx0 = FAST2_MULT(fx0, INT_TO_FAST2((int)ptr[0])) + 
@@ -506,7 +520,7 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
 
                     // Interpolate in X and Y at Z0
                     //
-                    idx = zi*nxy + yi*nx + xi;
+                    idx = VolIndex(xi,yi,zi);
                     ptr = &inPtr[idx];
 
                     fdx0 = FAST2_MULT(fx0, INT_TO_FAST2((int)ptr[0])) + 
@@ -574,15 +588,12 @@ static void vtkImageReformatExecuteInt(vtkImageReformat *self,
                 zi = FAST1_TO_INT(fz + fround);
 
                 // Test if coordinates are outside volume
-                if ((xi < 0) || (yi < 0) || (zi < 0) ||
-                        (xi > nx2) || (yi > ny2) || (zi > nz2))
-                {
+                if CoordOut2(xi,yi,zi)
                     *outPtr = 0; 
-                }
                 else {
                     // Compute 'idx', the index into the input volume
                     // where the output pixel value comes from.
-                    idx = zi*nxy + yi*nx + xi;
+                    idx = VolIndex(xi,yi,zi);
                     *outPtr = inPtr[idx];
                 }
                 outPtr++;
@@ -629,6 +640,7 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
     vtkMatrix4x4 *world = self->GetWldToIjkMatrix();
     // multiple components
     int nxc, idxC, numComps, scalarSize, inRowLength;
+    int idx_shift;
     // time
     clock_t tStart=0;
     if (id == 0)
@@ -655,11 +667,16 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
     // idx = (zi-inExt[4])*nxy + (yi-inExt[2])*nx + (xi-inExt[0])
     // so we'll only handle 0-based for now.
     //
-    if (inExt[0] != 0 || inExt[2] != 0 || inExt[4] != 0)
-    {
-        fprintf(stderr, "Change vtkImageReformat to handle non-0-based extents.\n");
-        return;
-    }
+    // Karl Krissian: added this functionality:
+    // idx = (zi-inExt[4])*nxy + (yi-inExt[2])*nx + (xi-inExt[0])
+    //     = zi*nxy + ni*nx + x + idx_shift
+    //  where idx_shift = -(inExt[4]*nxy+inExt[2]*ny+inExt[0])
+    idx_shift=-(inExt[4]*nxy+inExt[2]*ny+inExt[0]);
+    //if (inExt[0] != 0 || inExt[2] != 0 || inExt[4] != 0)
+    //{
+    //    fprintf(stderr, "Change vtkImageReformat to handle non-0-based extents.\n");
+    //    return;
+    // }
 
     // find the region to loop over: this is the max pixel coordinate
     maxX = outExt[1]; 
@@ -805,13 +822,15 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
             for (idxX = outExt[0]; idxX <= maxX; idxX++)
             {
                 // Compute integer parts of volume coordinates
-                xi = (int)x;
-                yi = (int)y;
-                zi = (int)z;
+          // Karl Krissian: if we don't use floor() to convert, 
+          // there can be some problems at the borders: values between ]-1;0[
+          // can be processed
+                xi = (int)floor((double)x);
+                yi = (int)floor((double)y);
+                zi = (int)floor((double)z);
 
                 // Test if coordinates are outside volume
-                if ((xi < 0) || (yi < 0) || (zi < 0) ||
-                        (xi > nx2) || (yi > ny2) || (zi > nz1))
+                if CoordOut1(xi,yi,zi)
                 {
                     // Indicate out of bounds with a -1
                     memset(outPtr, 0, scalarSize);
@@ -826,7 +845,7 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
                     x0 = 1.0 - x1;
                     y0 = 1.0 - y1;
 
-                    idx = zi*nxy + yi*nx + xi;
+                    idx = VolIndex(xi,yi,zi);
                     idx *= numComps;
 
                     for (idxC = 0; idxC < numComps; idxC++)
@@ -853,7 +872,7 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
                     y0 = 1.0 - y1;
                     z0 = 1.0 - z1;
 
-                    idx = zi*nxy + yi*nx + xi;
+                    idx = VolIndex(xi,yi,zi);
                     idx *= numComps;
 
                     for (idxC = 0; idxC < numComps; idxC++)
@@ -920,15 +939,12 @@ static void vtkImageReformatExecute(vtkImageReformat *self,
                 zi = (int)(z + 0.5);
 
                 // Test if coordinates are outside volume
-                if ((xi < 0) || (yi < 0) || (zi < 0) ||
-                        (xi > nx2) || (yi > ny2) || (zi > nz2))
-                {
+                if CoordOut2(xi,yi,zi)
                     memset(outPtr, 0, scalarSize);
-                }
                 else {
                     // Compute 'idx', the index into the input volume
                     // where the output pixel value comes from.
-                    idx = zi*nxy + yi*nx + xi;
+                    idx = VolIndex(xi,yi,zi);
                     idx *= numComps;
                     ptr = &inPtr[idx];
                     memcpy(outPtr, ptr, scalarSize);
