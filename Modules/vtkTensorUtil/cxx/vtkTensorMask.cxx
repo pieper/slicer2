@@ -226,7 +226,7 @@ static void vtkTensorMaskExecuteTensor(vtkTensorMask *self, int ext[6],
   // This is the id in the input and output datasets.
   //ptId = ext[0] + ext[2]*(ext[1]-ext[0]) + ext[4]*(ext[3]-ext[2]);
 
-  int outInc[3],outFullUpdateExt[3];
+  int outInc[3],outFullUpdateExt[6];
   self->GetOutput()->GetIncrements(outInc);
   self->GetOutput()->GetUpdateExtent(outFullUpdateExt); //We are only working over the update extent
   ptId = ((ext[0] - outFullUpdateExt[0]) * outInc[0]
