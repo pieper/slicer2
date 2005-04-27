@@ -41,6 +41,11 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define _USE_MATH_DEFINES
 #endif
 
+// But, if you are on VS6.0 you don't get the define...
+#ifndef M_SQRT2
+#define M_SQRT2    1.41421356237309504880168872421      /* sqrt(2) */
+#endif
+
 #include "vtkImageData.h"
 #include "vtkTensorMathematics.h"
 #include "vtkMath.h"
