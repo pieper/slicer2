@@ -155,7 +155,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8 $} {$Date: 2005/04/14 15:24:10 $}]
+        {$Revision: 1.8.2.1 $} {$Date: 2005/04/28 18:59:33 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -259,18 +259,19 @@ proc fMRIEngineBuildGUI {} {
     set help "
 
     The fMRIEngine module is intended to process/display fMRI data.
-    <P>
-    <B>Sequence</B> allows you to load/select a sequence of fMRI \
+    <BR><BR>
+    <B>Sequence</B> allows you to load or select a sequence of fMRI \
     volumes to process.
-    <P>
-    <B>Compute</B> lets you to input a paradigm design, select \
-    an activation detector and compute activation.
-    <P>
+    <BR>
+    <B>Set up</B> allows you to specify the model and contrasts.
+    <BR>
+    <B>Compute</B> lets you to choose contrast(s) to compute \
+    activation volume(s).
+    <BR>
     <B>Inspect</B> gives you the ability to view the activation \
-    volume at different thresholds and dynamically plot any voxel \
+    at different thresholds and dynamically plot any voxel \
     time course.
-    <P>
-
+    <BR>
     Check the file README.txt in the docs directory of this module \
     for details about how to build and use the module.
     <BR><BR>
@@ -414,7 +415,7 @@ proc fMRIEngineViewGNULicense {} {
         pack $f.t -side left -fill both -expand true
 
         # Reads the data file
-        set gplText [file join $env(SLICER_HOME) Modules vtkfMRIEngine data gpl.txt]
+        set gplText [file join $env(SLICER_HOME) Modules vtkFMRIEngine data gpl.txt]
         set fp [open $gplText r]
         set data [read $fp]
         regsub -all "\f" $data {} data 
