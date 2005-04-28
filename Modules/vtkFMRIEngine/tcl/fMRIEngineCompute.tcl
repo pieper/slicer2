@@ -142,7 +142,7 @@ proc fMRIEngineComputeContrasts {} {
                 set obs3 [fMRIEngine(actVolumeGenerator) AddObserver EndEvent MainEndProgress]
                 set fMRIEngine(actVolName) $name 
 
-                set Gui(progressText) "Computing contrast $name..."
+                set Gui(progressText) "Computing $name..."
                 puts $Gui(progressText)
 
                 # Extract contrast info from the long 
@@ -208,9 +208,9 @@ proc fMRIEngineComputeContrasts {} {
                 MainVolumesCreate $i
 
                 # set the name and description of the volume
-                $n SetName "activation-$name" 
-                lappend fMRIEngine(actVolumeNames) "activation-$name"
-                $n SetDescription "activation-$name"
+                $n SetName "$name" 
+                lappend fMRIEngine(actVolumeNames) "$name"
+                $n SetDescription "$name"
 
                 eval Volume($i,node) SetSpacing [$act GetSpacing]
                 Volume($i,node) SetScanOrder [Volume($fMRIEngine(firstMRMLid),node) GetScanOrder]
