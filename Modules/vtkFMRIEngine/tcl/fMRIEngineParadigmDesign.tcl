@@ -91,8 +91,10 @@ proc fMRIEngineBuildUIForParadigmDesign {parent} {
             -relief raised -offrelief raised -overrelief raised \
             -command "" \
             -selectcolor white} $Gui(WEA)
+        $f.r$param configure -state disabled 
     } 
     $f.rblocked select
+    $f.rblocked configure -state normal 
     grid $f.bHelp $f.rblocked $f.revent-related $f.rmixed \
         -padx 0 -pady 1 -sticky e
 
