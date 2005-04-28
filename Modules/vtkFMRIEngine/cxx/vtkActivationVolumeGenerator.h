@@ -60,6 +60,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <vtkFMRIEngineConfigure.h>
 #include "vtkSimpleImageToImageFilter.h"
 #include "vtkIntArray.h"
+#include "vtkFloatArray.h"
+
+#include <gsl/gsl_blas.h>
+#include <gsl/gsl_linalg.h>
 
 
 class  VTK_FMRIENGINE_EXPORT vtkActivationVolumeGenerator : public vtkSimpleImageToImageFilter
@@ -81,8 +85,12 @@ public:
     void SetContrastVector(vtkIntArray *vec);
 
     // Description:
-    // Sets the total number of volumes (total data points). 
-    void SetNumberOfVolumes(int vols);
+    // Sets the design matrix 
+    void SetDesignMatrix(vtkFloatArray *designMat);
+
+    // Description:
+    // Computes the standard error for a voxel with a contrast. 
+    void ComputeStandardError(float rss);
 
 protected:
     vtkActivationVolumeGenerator();
@@ -90,10 +98,26 @@ protected:
 
     void SimpleExecute(vtkImageData *input,vtkImageData *output);
 
+    float StandardError;
     float LowRange;
     float HighRange;
-    int NumberOfVolumes;
+    int SizeOfContrastVector;
+    float *beta;
+
     vtkIntArray *ContrastVector;
+    vtkFloatArray *DesignMatrix;
+
+    // For matrix operations
+    gsl_matrix *X; 
+    gsl_matrix *c;
+    gsl_matrix *A;
+    gsl_matrix *V; 
+    gsl_matrix *S;
+    gsl_matrix *Z;
+    gsl_matrix *c2; 
+    gsl_matrix *result;
+    gsl_vector *Sv;
+    gsl_vector *work;
 };
 
 

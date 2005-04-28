@@ -63,7 +63,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <stdio.h>
 
-
 vtkStandardNewMacro(vtkActivationEstimator);
 
 
@@ -120,13 +119,16 @@ void vtkActivationEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* o
     unsigned long target;
 
     // Sets up properties for output vtkImageData
-    int noOfRegressors = this->Detector->GetNoOfRegressors();
+    int noOfRegressors = this->Detector->GetDesignMatrix()->GetNumberOfComponents();
     int imgDim[3];  
     this->GetInput(0)->GetDimensions(imgDim);
     output->SetScalarType(VTK_FLOAT);
     output->SetOrigin(this->GetInput(0)->GetOrigin());
     output->SetSpacing(this->GetInput(0)->GetSpacing());
-    output->SetNumberOfScalarComponents(noOfRegressors * 2);
+    // The scalar components hold the following:
+    // for each regressor: beta value
+    // plus chisq (the sum of squares of the residuals from the best-fit)
+    output->SetNumberOfScalarComponents(noOfRegressors+1);
     output->SetDimensions(imgDim[0], imgDim[1], imgDim[2]);
     output->AllocateScalars();
    
@@ -141,8 +143,7 @@ void vtkActivationEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* o
     // Use memory allocation for MS Windows VC++ compiler.
     // beta[noOfRegressors] is not allowed by MS Windows VC++ compiler.
     float *beta = new float [noOfRegressors];
-    float *cov = new float [noOfRegressors];
-    if (beta == NULL || cov == NULL)
+    if (beta == NULL)
     {
         vtkErrorMacro( << "Memory allocation failed.");
         return;
@@ -165,18 +166,18 @@ void vtkActivationEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* o
                         = (short *)this->GetInput(i)->GetScalarPointer(ii, jj, kk);
                     tc->SetComponent(i, 0, *value);
                     total += *value;
-                }   
+               }   
 
+                float chisq;
                 if ((total/this->NumberOfInputs) > lowerThreshold)
                 {
-                    this->Detector->Detect(tc, beta, cov);
+                    this->Detector->Detect(tc, beta, &chisq);
                 }
                 else
                 {
                     for (int dd = 0; dd < noOfRegressors; dd++)
                     {
                         beta[dd] = 0.0;
-                        cov[dd] = 0.0;
                     }
                 }
        
@@ -184,13 +185,13 @@ void vtkActivationEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* o
                 for (int dd = 0; dd < noOfRegressors; dd++)
                 {
                     scalarsInOutput->SetComponent(indx, yy++, beta[dd]);
-                    scalarsInOutput->SetComponent(indx, yy++, cov[dd]);
                 }
+                scalarsInOutput->SetComponent(indx, yy++, chisq);
                 indx++;
 
                 if (!(count%target))
                 {
-                    UpdateProgress(count / 2 / (50.0*target));
+                    UpdateProgress(count / (50.0*target));
                 }
                 count++;
             }
@@ -198,7 +199,6 @@ void vtkActivationEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* o
     }
 
     delete [] beta;
-    delete [] cov;
  
     GeneralLinearModel::Free();
     tc->Delete();

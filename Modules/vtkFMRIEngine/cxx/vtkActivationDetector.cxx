@@ -80,69 +80,36 @@ void vtkActivationDetector::PrintSelf(ostream& os, vtkIndent indent)
 
 vtkActivationDetector::vtkActivationDetector()
 {
-    this->Dimensions = NULL;
     this->DesignMatrix = NULL;
-    this->NoOfRegressors = 0;
 }
 
 
 vtkActivationDetector::~vtkActivationDetector()
 {
-    if (this->DesignMatrix != NULL)
-    {
-        for (int i = 0; i < this->Dimensions[0]; i++)
-        {
-            delete [] this->DesignMatrix[i];
-        } 
-        delete [] this->DesignMatrix;
-    }
-    if (this->Dimensions != NULL)
-    {
-        delete [] this->Dimensions;
-    }
 }
 
 
-void vtkActivationDetector::SetRegressors(vtkFloatArray *regressors)
+vtkFloatArray *vtkActivationDetector::GetDesignMatrix()
 {
-    this->Regressors = regressors;
-    this->NoOfRegressors = this->Regressors->GetNumberOfComponents();
+    return this->DesignMatrix;
+}
 
-    if (this->Dimensions == NULL)
-    {
-        this->Dimensions = new int[2];
-    }  
 
-    // Number of volumes
-    this->Dimensions[0] = this->Regressors->GetNumberOfTuples();
-    // Number of evs (predictors)
-    this->Dimensions[1] = this->NoOfRegressors;
-
-    if (this->DesignMatrix == NULL)
-    {
-        this->DesignMatrix = new float *[this->Dimensions[0]];
-        for (int i = 0; i < this->Dimensions[0]; i++)
-        {
-            this->DesignMatrix[i] = new float[this->Dimensions[1]];
-            for (int j = 0; j < this->Dimensions[1]; j++)
-            {
-                this->DesignMatrix[i][j] = this->Regressors->GetComponent(i,j);
-            }
-        } 
-    }
+void vtkActivationDetector::SetDesignMatrix(vtkFloatArray *designMat)
+{
+    this->DesignMatrix = designMat;
+    GeneralLinearModel::SetDesignMatrix(designMat);
 }
 
  
-void vtkActivationDetector::Detect(vtkFloatArray *timeCourse, float *beta, float *cov)
+void vtkActivationDetector::Detect(vtkFloatArray *timeCourse, float *beta, float *chisq)
 {
     if (this->DetectionMethod == ACTIVATION_DETECTION_METHOD_GLM)
     {
         float *tcArray = timeCourse->GetPointer(0);
-        GeneralLinearModel::FitModel(this->DesignMatrix, 
-                                     this->Dimensions, 
-                                     tcArray,
+        GeneralLinearModel::FitModel(tcArray,
                                      beta,
-                                     cov); 
+                                     chisq); 
     }
 }
 
