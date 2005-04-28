@@ -180,7 +180,7 @@ public:
   vtkGetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
 
   // Public for access from threads
-  void ModeToRGB(double Mode, double FA,
+  static void ModeToRGB(double Mode, double FA,
                  double &R, double &G, double &B);
 
 protected:
