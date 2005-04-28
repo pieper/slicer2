@@ -220,19 +220,20 @@ if { ![file exists $CMAKE] } {
         exit
     } else {
         runcmd $::CVS -d :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login
-        runcmd $::CVS -z3 -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $::CMAKE_TAG CMake
+        runcmd $::CVS -z3 -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -d $::CMAKE_SRC_DIR -r $::CMAKE_TAG  CMake
 
         cd $CMAKE_PATH
         if { $isSolaris } {
             # make sure to pick up curses.h in /local/os/include
-            runcmd $SLICER_LIB/CMake/bootstrap --init=$SLICER_HOME/Scripts/spl.cmake.init
+            runcmd $::{CMAKE_SRC_DIR}/bootstrap --init=$SLICER_HOME/Scripts/spl.cmake.init
         } else {
-            runcmd $SLICER_LIB/CMake/bootstrap
+            runcmd $::{CMAKE_SRC_DIR}/bootstrap
         } 
         eval runcmd $::MAKE
     }
 }
 
+exit
 
 ################################################################################
 # Get and build tcl, tk, itcl, widgets
@@ -253,8 +254,8 @@ if { ![file exists $::TCL_TEST_FILE] } {
         exit
     }
 
-    file mkdir $SLICER_LIB/tcl
-    cd $SLICER_LIB/tcl
+    file mkdir $::TCL_SRC_DIR
+    cd $::TCL_SRC_DIR
 
     runcmd $::CVS -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/tcl login
     runcmd $::CVS -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tcl checkout -r $::TCL_TAG tcl
@@ -262,16 +263,16 @@ if { ![file exists $::TCL_TEST_FILE] } {
     if {$isWindows} {
         # can't do windows
     } else {
-        cd $SLICER_LIB/tcl/tcl/unix
+        cd $::{TCL_SRC_DIR}/tcl/unix
 
-        runcmd ./configure --enable-threads --prefix=$SLICER_LIB/tcl-build
+        runcmd ./configure --enable-threads --prefix=$::TCL_BUILD_DIR
         eval runcmd $::MAKE
         eval runcmd $::MAKE install
     }
 }
 
 if { ![file exists $::TK_TEST_FILE] } {
-    cd $SLICER_LIB/tcl
+    cd $::TCL_SRC_DIR
 
     runcmd $::CVS -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/tktoolkit login
     runcmd $::CVS -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tktoolkit checkout -r $::TK_TAG tk
@@ -280,13 +281,13 @@ if { ![file exists $::TK_TEST_FILE] } {
         if { ![file exists $SLICER_HOME/isPatched] } {
             if { [file exists $::TK_EVENT_PATCH] } {
                 puts "Patching..."
-                cd $SLICER_LIB/tcl/tk/generic
-                runcmd cp $SLICER_HOME/tkEventPatch.diff $SLICER_LIB/tcl/tk/generic 
+                cd $::{TCL_SRC_DIR}/tk/generic
+                runcmd cp $SLICER_HOME/tkEventPatch.diff $::{TCL_SRC_DIR}/tk/generic 
                 runcmd patch -i tkEventPatch.diff
 
                 # create a file to make sure tkEvent.c isn't patched twice
                 runcmd touch $SLICER_HOME/isPatched
-                file delete $SLICER_LIB/tcl/tk/generic/tkEventPatch.diff
+                file delete $::{TCL_SRC_DIR}/tk/generic/tkEventPatch.diff
             } else { 
                 puts "Download tkEvent patch from Xythos and place in $SLICER_HOME"  
                 puts "then run genlib.tcl again.  Download from:"
@@ -301,28 +302,28 @@ if { ![file exists $::TK_TEST_FILE] } {
     if {$isWindows} {
         # can't do windows
     } else {
-        cd $SLICER_LIB/tcl/tk/unix
+        cd $::{TCL_SRC_DIR}/tk/unix
 
-        runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build/lib --prefix=$SLICER_LIB/tcl-build
+        runcmd ./configure --with-tcl=$::{TCL_LIB_DIR} --prefix=$::{TCL_BUILD_DIR}
         eval runcmd $::MAKE
         eval runcmd $::MAKE install
     }
 }
 
 if { ![file exists $::ITCL_TEST_FILE] } {
-    cd $SLICER_LIB/tcl
+    cd $::{TCL_SRC_DIR}
 
     runcmd $::CVS -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/incrtcl login
     runcmd $::CVS -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/incrtcl checkout -r $::ITCL_TAG incrTcl
 
-    cd $SLICER_LIB/tcl/incrTcl
+    cd $::{TCL_SRC_DIR}/incrTcl
 
     exec chmod +x ../incrTcl/configure 
 
     if {$isWindows} {
         # can't do windows
     } else {
-        runcmd ../incrTcl/configure --with-tcl=$SLICER_LIB/tcl-build/lib --with-tk=$SLICER_LIB/tcl-build/lib --prefix=$SLICER_LIB/tcl-build
+        runcmd ../incrTcl/configure --with-tcl=$::{TCL_LIB_DIR} --with-tk=$::{TCL_LIB_DIR} --prefix=$::{TCL_BUILD_DIR}
         if { $isDarwin } {
             # need to run ranlib separately on lib for Darwin
             # file is created and ranlib is needed inside make all
@@ -335,7 +336,7 @@ if { ![file exists $::ITCL_TEST_FILE] } {
 }
 
 if { ![file exists $::IWIDGETS_TEST_FILE] } {
-    cd $SLICER_LIB/tcl
+    cd $::{TCL_SRC_DIR}
 
     runcmd $::CVS -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/incrtcl login
     runcmd $::CVS -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/incrtcl checkout -r $::IWIDGETS_TAG iwidgets
@@ -344,8 +345,8 @@ if { ![file exists $::IWIDGETS_TEST_FILE] } {
     if {$isWindows} {
         # can't do windows
     } else {
-        cd $SLICER_LIB/tcl/iwidgets
-        runcmd ../iwidgets/configure --with-tcl=$SLICER_LIB/tcl-build/lib --with-tk=$SLICER_LIB/tcl-build/lib --with-itcl=$SLICER_LIB/tcl/incrTcl --prefix=$SLICER_LIB/tcl-build
+        cd $::{TCL_SRC_DIR}/iwidgets
+        runcmd ../iwidgets/configure --with-tcl=$::{TCL_LIB_DIR} --with-tk=$::{TCL_LIB_DIR} --with-itcl=$::{TCL_SRC_DIR}/incrTcl --prefix=$::{TCL_BUILD_DIR}
         # make all doesn't do anything... 
         eval runcmd $::MAKE all
         eval runcmd $::MAKE install
@@ -358,7 +359,7 @@ if { ![file exists $::IWIDGETS_TEST_FILE] } {
 #
 
 if { ![file exists $::BLT_TEST_FILE] } {
-    cd $SLICER_LIB/tcl
+    cd $::{TCL_SRC_DIR}
     
     runcmd $::CVS -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt login
     runcmd $::CVS -z3 -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt co -r $::BLT_TAG blt
@@ -367,13 +368,13 @@ if { ![file exists $::BLT_TEST_FILE] } {
         # can't do Windows
     } elseif { $isDarwin } {
         # this fails, but gets blt far enough along to build what is needed 
-        cd $SLICER_LIB/tcl/blt
-        runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
+        cd $::{TCL_SRC_DIR}/blt
+        runcmd ./configure --with-tcl=$::{TCL_BUILD_DIR} --with-tk=$::{TCL_BUILD_DIR} --prefix=$::{TCL_BUILD_DIR} 
         catch "eval runcmd $::MAKE"
         catch "eval runcmd $::MAKE install"
     } else {
-        cd $SLICER_LIB/tcl/blt
-        runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
+        cd $::{TCL_SRC_DIR}/blt
+        runcmd ./configure --with-tcl=$::{TCL_BUILD_DIR} --with-tk=$::{TCL_BUILD_DIR} --prefix=$::{TCL_BUILD_DIR}
         eval runcmd $::MAKE
         eval runcmd $::MAKE install
     }
@@ -384,17 +385,17 @@ if { ![file exists $::BLT_TEST_FILE] } {
 #
 
 if { ![file exists $::GSL_TEST_FILE] } {
-    file mkdir $SLICER_LIB/gsl-build
-    file mkdir $SLICER_LIB/gsl
+    file mkdir $::GSL_BUILD_DIR
+    file mkdir $::GSL_SRC_DIR 
 
-    cd $SLICER_LIB/gsl-build/
+    cd $::GSL_BUILD_DIR
 
     runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
     runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co -r $::GSL_TAG gsl
 
     if { !$isWindows } {
         # can't do Windows
-        cd $SLICER_LIB/gsl-build/gsl
+        cd $::{GSL_BUILD_DIR}/gsl
 
         if { $isDarwin } {
             # equivalent of autogen.sh for Darwin (libtoolize => glibtoolize)    
@@ -405,7 +406,7 @@ if { ![file exists $::GSL_TEST_FILE] } {
         } else {
             if { $isSolaris } {
                 # patch configure.ac
-                runcmd /usr/bin/patch -i $SLICER_HOME/Scripts/gslConfigureAc.diff $SLICER_LIB/gsl-build/gsl/configure.ac
+                runcmd /usr/bin/patch -i $SLICER_HOME/Scripts/gslConfigureAc.diff $::{GSL_BUILD_DIR}/gsl/configure.ac
             }
             # equivalent of autogen.sh with hack to make autoconf run on Solaris and RH 7.3.  
             runcmd libtoolize --automake
@@ -415,7 +416,7 @@ if { ![file exists $::GSL_TEST_FILE] } {
             catch "runcmd autoconf -I ."
             runcmd autoconf -I .
         }   
-        runcmd ./configure --prefix=$SLICER_LIB/gsl
+        runcmd ./configure --prefix=$::GSL_SRC_DIR
         runcmd touch doc/version-ref.texi
         eval runcmd $::MAKE
         eval runcmd $::MAKE install
@@ -430,16 +431,16 @@ if { ![file exists $::VTK_TEST_FILE] } {
     cd $SLICER_LIB
 
     runcmd $::CVS -d :pserver:anonymous:vtk@public.kitware.com:/cvsroot/VTK login
-    runcmd $::CVS -z3 -d :pserver:anonymous@public.kitware.com:/cvsroot/VTK checkout -r $::VTK_TAG VTK
+    runcmd $::CVS -z3 -d :pserver:anonymous@public.kitware.com:/cvsroot/VTK checkout -r $::VTK_TAG -d $::{VTK_TAG} VTK
 
     # Andy's temporary hack to get around wrong permissions in VTK cvs repository
     # catch statement is to make file attributes work with RH 7.3
     if { !$isWindows } {
-        catch "file attributes $SLICER_LIB/VTK/VTKConfig.cmake.in -permissions a+rw"
+        catch "file attributes $::{VTK_SRC_DIR}/VTKConfig.cmake.in -permissions a+rw"
     }
 
-    file mkdir $SLICER_LIB/VTK-build
-    cd $SLICER_LIB/VTK-build
+    file mkdir $::VTK_DIR
+    cd $::VTK_DIR
 
     set USE_VTK_ANSI_STDLIB ""
     if { $isWindows } {
@@ -466,14 +467,14 @@ if { ![file exists $::VTK_TEST_FILE] } {
         -DTK_LIBRARY:FILEPATH=$::VTK_TK_LIB \
         -DTCL_TCLSH:FILEPATH=$::VTK_TCLSH \
         $USE_VTK_ANSI_STDLIB \
-        ../VTK
+        ../$::{VTK_TAG}
 
 
     if { $isDarwin } {
         # Darwin will fail on the first make, then succeed on the second
         catch "eval runcmd $::MAKE -j4"
         set OpenGLString "-framework OpenGL -lgl"
-        runcmd $CMAKE -G$GENERATOR -DOPENGL_gl_LIBRARY:STRING=$OpenGLString -DVTK_USE_SYSTEM_ZLIB:BOOL=ON ../VTK
+        runcmd $CMAKE -G$GENERATOR -DOPENGL_gl_LIBRARY:STRING=$OpenGLString -DVTK_USE_SYSTEM_ZLIB:BOOL=ON ../$::{VTK_TAG}
     }
     
     if { $isWindows } {
@@ -495,10 +496,10 @@ if { ![file exists $::ITK_TEST_FILE] } {
     cd $SLICER_LIB
 
     runcmd $::CVS -d :pserver:anoncvs:@www.itk.org:/cvsroot/Insight login
-    runcmd $::CVS -z3 -d :pserver:anoncvs@www.itk.org:/cvsroot/Insight checkout -r $::ITK_TAG Insight
+    runcmd $::CVS -z3 -d :pserver:anoncvs@www.itk.org:/cvsroot/Insight checkout -r $::ITK_TAG -d $::ITK_SRC_PATH Insight
 
-    file mkdir $SLICER_LIB/Insight-build
-    cd $SLICER_LIB/Insight-build
+    file mkdir $::ITK_BINARY_PATH 
+    cd $::ITK_BINARY_PATH 
 
 
 
@@ -510,7 +511,7 @@ if { ![file exists $::ITK_TEST_FILE] } {
         -DBUILD_EXAMPLES:BOOL=OFF \
         -DBUILD_TESTING:BOOL=OFF \
         -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
-        ../Insight
+        ../Insight-$::{ITK_TAG}
 
     if {$isWindows} {
         if { $MSVC6 } {
