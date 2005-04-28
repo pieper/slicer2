@@ -55,7 +55,7 @@ proc fMRIEngineScaleActivation {no} {
     global Volume fMRIEngine MultiVolumeReader
 
     if {! [info exists fMRIEngine(allPValues)]} {
-        set i 30 
+        set i 20 
         while {$i >= 1} {
             set v [expr 1 / pow(10,$i)] 
             lappend fMRIEngine(allPValues) $v 
@@ -82,7 +82,6 @@ proc fMRIEngineScaleActivation {no} {
         cdf Delete
         set fMRIEngine(pValue) $p
         set fMRIEngine(tStat) $t
-
 
         set id $fMRIEngine(currentActVolID) 
         if {$id > 0} {
@@ -224,7 +223,7 @@ proc fMRIEngineBuildUIForInspectTab {parent} {
 #   DevAddLabel $f.lactScale "Levels:"
    eval {scale $f.sactScale \
        -orient horizontal \
-           -from 1 -to 40 \
+           -from 1 -to 30 \
            -resolution 1 \
            -bigincrement 10 \
            -length 155 \
@@ -305,7 +304,7 @@ proc fMRIEngineUpdateEVsForPlotting {} {
         return
     }
 
-    if {$run == "All"} {
+    if {$run == "combined"} {
         set run 1
     }
 

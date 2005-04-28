@@ -345,6 +345,7 @@ proc fMRIEngineShowData {{loc 0}} {
         label $w.max$count -text $max -font fixed
         label $w.ave$count -text $ave -font fixed
             
+        # todo: expression didn't have numeric value
         blt::table $w \
             $w.vol$count $count,0 $w.min$count $count,1 \
             $w.max$count $count,2 $w.ave$count $count,3
@@ -369,9 +370,7 @@ proc fMRIEngineShowData {{loc 0}} {
 # .PROC fMRIEngineSortEVsForStat
 # Sorts EVs into different bins 
 # .ARGS
-# int i the i index of voxel whose time course is to be plotted
-# int j the j index of voxel whose time course is to be plotted
-# int k the k index of voxel whose time course is to be plotted
+# (x, y, z) index of the voxel whose time course is to be plotted
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineSortEVsForStat {x y z} {
@@ -384,6 +383,7 @@ proc fMRIEngineSortEVsForStat {x y z} {
     }
     if {[info exists fMRIEngine(allEVs)]} {
         foreach name $fMRIEngine(allEVs) {
+            unset -nocomplain fMRIEngine(count$name)
             if {[info exists fMRIEngine($name,noOfSections)]} {
                 for {set c 1} {$c <= $fMRIEngine($name,noOfSections)} {incr c} {
                     unset -nocomplain fMRIEngine($name,$c,sections)
@@ -397,7 +397,7 @@ proc fMRIEngineSortEVsForStat {x y z} {
     set totalVolumes [$oriTimeCourse GetNumberOfTuples]
     set run $fMRIEngine(curRunForModelFitting)
 
-    if {$run != "All"} {
+    if {$run != "combined"} {
         set first $run
         set last $run
 
@@ -414,7 +414,7 @@ proc fMRIEngineSortEVsForStat {x y z} {
 
         set start 0
         for {set r 1} {$r <= $last} {incr r} {
-            set seqName $fMRIEngine($run,sequenceName)
+            set seqName $fMRIEngine($r,sequenceName)
             set vols $MultiVolumeReader($seqName,noOfVolumes) 
             set end [expr $start+$vols-1]
 
@@ -445,18 +445,20 @@ proc fMRIEngineSortEVsForStat {x y z} {
             regsub -all {( )+} $durationsStr " " durationsStr 
             set durations [split $durationsStr " "]     
 
-            set count 1
+            if {! [info exists fMRIEngine(count$name)]} {
+                set fMRIEngine(count$name) 1
+            }
             foreach slot $onsets \
                     dur  $durations {
                 set end [expr $slot+$dur-1]
                 for {set j $slot} {$j <= $end} {incr j} {
-                    lappend fMRIEngine($name,$count,sections) [lindex $tc $j]
+                    lappend fMRIEngine($name,$fMRIEngine(count$name),sections) [lindex $tc $j]
                     set fMRIEngine($r,fakeTimeCourse) \
                         [lset fMRIEngine($r,fakeTimeCourse) $j "1"] 
                 }
-                incr count
+                incr fMRIEngine(count$name)
             }
-            set fMRIEngine($name,noOfSections) [expr $count-1]
+            set fMRIEngine($name,noOfSections) [expr $fMRIEngine(count$name)-1]
         }
     }
 
@@ -513,7 +515,7 @@ proc fMRIEngineCreateCurvesFromTimeCourse {i j k} {
     fMRIEngineSortEVsForStat $i $j $k 
 
     set run $fMRIEngine(curRunForModelFitting)
-    if {$run == "All"} {
+    if {$run == "combined"} {
         set run 1
     }
  
