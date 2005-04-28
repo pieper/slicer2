@@ -191,7 +191,7 @@ void vtkActivationEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* o
 
                 if (!(count%target))
                 {
-                    UpdateProgress(count / 2 / (50.0*target));
+                    UpdateProgress(count / (50.0*target));
                 }
                 count++;
             }
