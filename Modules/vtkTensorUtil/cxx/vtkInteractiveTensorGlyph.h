@@ -178,6 +178,9 @@ public:
   vtkGetMacro(Resolution,int);
 
 
+   static void RGBToIndex(double R, double G, 
+                  double B, double &index);
+
   // Description:
   // When determining the modified time of the filter, 
   // this checks the modified time of the mask input,
@@ -203,8 +206,6 @@ protected:
 
   vtkImageData *ScalarMask;
 
-  void RGBToIndex(double R, double G, 
-                  double B, double &index);
 };
 
 #endif
