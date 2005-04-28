@@ -155,7 +155,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.9 $} {$Date: 2005/04/25 20:16:30 $}]
+        {$Revision: 1.10 $} {$Date: 2005/04/28 18:03:56 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -259,20 +259,19 @@ proc fMRIEngineBuildGUI {} {
     set help "
 
     The fMRIEngine module is intended to process/display fMRI data.
-    <P>
+    <BR><BR>
     <B>Sequence</B> allows you to load or select a sequence of fMRI \
     volumes to process.
-    <P>
+    <BR>
     <B>Set up</B> allows you to specify the model and contrasts.
-    <P>
+    <BR>
     <B>Compute</B> lets you to choose contrast(s) to compute \
     activation volume(s).
-    <P>
+    <BR>
     <B>Inspect</B> gives you the ability to view the activation \
     at different thresholds and dynamically plot any voxel \
     time course.
-    <P>
-
+    <BR>
     Check the file README.txt in the docs directory of this module \
     for details about how to build and use the module.
     <BR><BR>
