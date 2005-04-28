@@ -187,10 +187,13 @@ void GeneralLinearModel::Free()
             delete [] DesignMatrix[i];
         } 
         delete [] DesignMatrix;
+        DesignMatrix = NULL;
+        
     }
     if (Dimensions != NULL)
     {
         delete [] Dimensions;
+        Dimensions = NULL;
     }
 }
 
