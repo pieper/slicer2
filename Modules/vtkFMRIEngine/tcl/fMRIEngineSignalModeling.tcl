@@ -1081,15 +1081,12 @@ proc fMRIEngineFitModel {} {
 
     fMRIEngine(detector) SetDetectionMethod 1
     fMRIEngine(detector) SetDesignMatrix fMRIEngine(designMatrix) 
-
     if {[info exists fMRIEngine(lowerThreshold)]} {
         fMRIEngine(actEstimator) SetLowerThreshold $fMRIEngine(lowerThreshold)
     }
     fMRIEngine(actEstimator) SetDetector fMRIEngine(detector)  
     fMRIEngine(actEstimator) Update
-
     set fMRIEngine(actBetaAndStd) [fMRIEngine(actEstimator) GetOutput]
-    $fMRIEngine(actBetaAndStd) Update
 
     fMRIEngine(actEstimator) RemoveObserver $obs1 
     fMRIEngine(actEstimator) RemoveObserver $obs2 
