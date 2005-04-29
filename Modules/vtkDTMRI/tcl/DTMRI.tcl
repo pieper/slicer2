@@ -153,7 +153,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.71 $} {$Date: 2005/04/25 07:04:11 $}]
+                  {$Revision: 1.72 $} {$Date: 2005/04/29 17:38:57 $}]
 
     # Define Tabs
     #------------------------------------
@@ -3194,47 +3194,44 @@ proc DTMRILoadPattern {} {
    
     # look for a file containing pattern information, if it exists, put this information in variable lists
 
-    if { [file exists $PACKAGE_DIR_VTKDTMRI/../../../data/] != 0 } then {
+    if { [file exists $PACKAGE_DIR_VTKDTMRI/../../../data/] != 0 } {
 
         #set DTMRI(patternnamesdef) [exec ls $PACKAGE_DIR_VTKDTMRI/../../../data/]
-      set DTMRI(patternnamesdef) [glob -tail -directory $PACKAGE_DIR_VTKDTMRI/../../../data/ *]
-      # check if the file contains pattern information
-      foreach pattern $DTMRI(patternnamesdef) {
-        set DTMRI(ispatternfile) 0
-       
-            if { [file isfile $PACKAGE_DIR_VTKDTMRI/../../../data/$pattern] != 0 } {
+        set DTMRI(patternnamesdef) [glob -tail -directory $PACKAGE_DIR_VTKDTMRI/../../../data/ *]
+        # check if the file contains pattern information
 
+        foreach pattern $DTMRI(patternnamesdef) {
+            set DTMRI(ispatternfile) 0
+            if { [file isfile $PACKAGE_DIR_VTKDTMRI/../../../data/$pattern] != 0 } {
                 catch [set filelist [open $PACKAGE_DIR_VTKDTMRI/../../../data/$pattern {RDONLY}]]
                 while {[eof $filelist] != 1} {
-
                     set line [gets $filelist]
                     if {[lindex $line 0] == "vtkDTMRIprotocol"} {
                         set DTMRI(ispatternfile) 1
                     }
                 }
-
+                close $filelist 
            }
 
-            if {$DTMRI(ispatternfile) == 1} {
+           if {$DTMRI(ispatternfile) == 1} {
                 lappend DTMRI(patternnames) $pattern
-            }    
-       }
+           }    
+      }
 
 
     
 
-     # put pattern information into modules variables
+    # put pattern information into modules variables
     foreach pattern $DTMRI(patternnames) {
 
-        catch [set filelist [open $PACKAGE_DIR_VTKDTMRI/../../../data/$pattern {RDONLY}]]
-        while {[eof $filelist] != 1} {
+            catch [set filelist [open $PACKAGE_DIR_VTKDTMRI/../../../data/$pattern {RDONLY}]]
+            while {[eof $filelist] != 1} {
 
             set line [gets $filelist]
-          if {[lindex $line 0] != "vtkDTMRIprotocol"} {
+            if {[lindex $line 0] != "vtkDTMRIprotocol"} {
                 if {[lindex $line 0] != ""} {
                     if {[lindex $line 0] != "#"} {
                         for {set i 0} {$i<[llength $line]} {incr i} {
-                         
                             lappend DTMRI($pattern,parameters) [lindex $line $i]
                         }
                     }
