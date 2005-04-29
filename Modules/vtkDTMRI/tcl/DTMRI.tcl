@@ -153,7 +153,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.72 $} {$Date: 2005/04/29 17:38:57 $}]
+                  {$Revision: 1.73 $} {$Date: 2005/04/29 17:41:57 $}]
 
     # Define Tabs
     #------------------------------------
@@ -3221,8 +3221,8 @@ proc DTMRILoadPattern {} {
 
     
 
-    # put pattern information into modules variables
-    foreach pattern $DTMRI(patternnames) {
+        # put pattern information into modules variables
+        foreach pattern $DTMRI(patternnames) {
 
             catch [set filelist [open $PACKAGE_DIR_VTKDTMRI/../../../data/$pattern {RDONLY}]]
             while {[eof $filelist] != 1} {
@@ -3237,6 +3237,7 @@ proc DTMRILoadPattern {} {
                     }
                 }
             }
+            close $filelist 
         }
     }
 
@@ -3245,33 +3246,33 @@ proc DTMRILoadPattern {} {
    } 
 
      
-   if { [file exists $env(HOME)/PatternsData/] != 0 } then {
+    if { [file exists $env(HOME)/PatternsData/] != 0 } {
 
-    #set DTMRI(localpatternnamesdef) [exec ls $env(HOME)/PatternsData/]
-    set DTMRI(localpatternnamesdef) [glob -tail -directory $env(HOME)/PatternsData/ *]
-    set DTMRI(localpatternnames) ""
+        #set DTMRI(localpatternnamesdef) [exec ls $env(HOME)/PatternsData/]
+        set DTMRI(localpatternnamesdef) [glob -tail -directory $env(HOME)/PatternsData/ *]
+        set DTMRI(localpatternnames) ""
 
-    # check if the file contains pattern information
-    foreach pattern $DTMRI(localpatternnamesdef) {
-    set DTMRI(ispatternfile) 0    
-       
-       if { [file isfile $env(HOME)/PatternsData/$pattern] != 0 } {
+        # check if the file contains pattern information
+        foreach pattern $DTMRI(localpatternnamesdef) {
+            set DTMRI(ispatternfile) 0    
+           
+            if { [file isfile $env(HOME)/PatternsData/$pattern] != 0 } {
 
-        catch [set filelist [open $env(HOME)/PatternsData/$pattern {RDONLY}]]
-        while {[eof $filelist] != 1} {
+                catch [set filelist [open $env(HOME)/PatternsData/$pattern {RDONLY}]]
+                while {[eof $filelist] != 1} {
 
-            set line [gets $filelist]
-            if { [ lindex $line  0 ] == "vtkDTMRIprotocol" } {
-                set DTMRI(ispatternfile) 1
-            }
+                    set line [gets $filelist]
+                    if { [ lindex $line  0 ] == "vtkDTMRIprotocol" } {
+                        set DTMRI(ispatternfile) 1
+                    }
+                }
+                close $filelist
+           }
+
+            if {$DTMRI(ispatternfile) == 1} {
+                lappend DTMRI(localpatternnames) $pattern
+            }    
         }
-
-       }
-
-        if {$DTMRI(ispatternfile) == 1} {
-            lappend DTMRI(localpatternnames) $pattern
-        }    
-    }
  
      # Variable containing all the patterns available (the ones from the module and the locals ones)
     set DTMRI(patternnames) [concat $DTMRI(patternnames) $DTMRI(localpatternnames)]
@@ -3279,11 +3280,11 @@ proc DTMRILoadPattern {} {
      # put pattern information into modules variables
         foreach pattern $DTMRI(localpatternnames) {
 
-        catch [set filelist [open $env(HOME)/PatternsData/$pattern {RDONLY}]]
+            catch [set filelist [open $env(HOME)/PatternsData/$pattern {RDONLY}]]
             while {[eof $filelist] != 1} {
 
                 set line [gets $filelist]
-            if {[lindex $line 0] != "vtkDTMRIprotocol"} {
+                if {[lindex $line 0] != "vtkDTMRIprotocol"} {
                     if {[lindex $line 0] != ""} {
                         if {[lindex $line 0] != "#"} {
                             for {set i 0} {$i<[llength $line]} {incr i} {
@@ -3296,6 +3297,7 @@ proc DTMRILoadPattern {} {
                 }
 
             }
+            close $filelist
 
          }
      }
