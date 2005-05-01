@@ -121,9 +121,9 @@ proc FogApply {renwin} {
 
     if {$Fog(mode) == "linear"}  {
 
-        vtkFog f
+        catch "vtkFog Fog(vtk,f)"
         
-        f SetFogEnabled [expr  {$Fog(Enabled) == "On"}]
+        Fog(vtk,f) SetFogEnabled [expr  {$Fog(Enabled) == "On"}]
         
         set renderers [$renwin GetRenderers]
         set numRenderers [$renderers GetNumberOfItems]
@@ -136,13 +136,13 @@ proc FogApply {renwin} {
             set fov2  [expr $fov / 2   ]
             set dist  [[$ren GetActiveCamera] GetDistance]
 
-            f SetFogStart [expr $dist - $fov2 + $Fog(start) * $fov ]
-            f SetFogEnd   [expr $dist - $fov2 + $Fog(end)   * $fov ]
+            Fog(vtk,f) SetFogStart [expr $dist - $fov2 + $Fog(start) * $fov ]
+            Fog(vtk,f) SetFogEnd   [expr $dist - $fov2 + $Fog(end)   * $fov ]
 
-            f Render  $ren
+            Fog(vtk,f) Render  $ren
         }
       
-        f Delete
+        catch "Fog(vtk,f) Delete"
     }
 } 
 # end FogApply
