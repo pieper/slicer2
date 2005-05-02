@@ -32,6 +32,8 @@ vtkITKLaplacianSegmentationLevelSetImageFilter.h
 vtkITKNeighborhoodConnectedImageFilter.h
 vtkITKNormalizeImageFilter.cxx
 vtkITKPDEDeformableRegistrationFilter.h
+vtkITKOtsuThresholdImageFilter.h
+vtkITKOtsuMultipleThresholdsImageFilter.h
 vtkITKThresholdSegmentationLevelSetImageFilter.h
 vtkITKTobogganImageFilter.h
 vtkITKWatershedImageFilter.cxx
