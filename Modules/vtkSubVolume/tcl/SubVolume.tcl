@@ -160,7 +160,7 @@ proc SubVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8 $} {$Date: 2005/04/19 22:04:42 $}]
+        {$Revision: 1.9 $} {$Date: 2005/05/03 20:15:42 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -613,7 +613,8 @@ proc SubVolumeApply {} {
   ijk1ras1    Delete
   ras2ras1    Delete
   transf      Delete
-
+  
+  return $newvol
 
 }
 
