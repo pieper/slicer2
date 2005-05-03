@@ -358,10 +358,6 @@ void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *input, vtkImageDa
                 if (this->StandardError != 0.0)
                 {
                     t = newBeta / this->StandardError; 
-                    if (t < 0.0)
-                    {
-                        t = t * (-1);
-                    }
                 }
 
                 scalarsOutput->SetComponent(indx++, 0, t);
