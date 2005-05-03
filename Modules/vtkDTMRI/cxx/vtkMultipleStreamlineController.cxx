@@ -554,14 +554,16 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
   double R[1000], G[1000], B[1000];
   int arraySize=1000;
   int lastColor;
-  int currColor, newColor, idx;
+  int currColor, newColor, idx, found;
   vtkFloatingPointType rgb_vtk_float[3];
   double rgb[3];
   std::stringstream fileNameStr;
   vtkMrmlTree *tree;
   vtkMrmlModelNode *currNode;
   vtkMrmlColorNode *currColorNode;
-
+  std::stringstream colorNameStr;
+  vtkMrmlTree *colorTreeTwo;
+  
   // traverse streamline collection, grouping streamlines into models by color
   this->Streamlines->InitTraversal();
   this->Actors->InitTraversal();
@@ -617,6 +619,7 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
           R[currColor]=rgb[0];
           G[currColor]=rgb[1];
           B[currColor]=rgb[2];
+
         }
       else
         {
@@ -654,6 +657,9 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
   cout << "Traverse APPENDERS" << endl;
   writer = vtkPolyDataWriter::New();
   tree = vtkMrmlTree::New();
+  // object to hold any new colors we encounter (not on input color tree)
+  colorTreeTwo = vtkMrmlTree::New();
+
   collectionOfModels->InitTraversal();
   currAppender = (vtkAppendPolyData *) 
     collectionOfModels->GetNextItemAsObject();
@@ -684,7 +690,9 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
       if (this->ScalarVisibility) currNode->ScalarVisibilityOn();
       currNode->ClippingOn();
       currNode->SetScalarRange(this->StreamlineLookupTable->GetTableRange());
-      // If we have a color tree as input find the name of the color
+
+      // Find the name of the color if it's on the input color tree.
+      found = 0;
       if (colorTree)
         {
           colorTree->InitTraversal();
@@ -696,12 +704,33 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
                   rgb_vtk_float[1]==G[idx] &&
                   rgb_vtk_float[2]==B[idx])              
                 {
+                  found = 1;
                   currNode->SetColor(currColorNode->GetName());
                   break;
                 }
               currColorNode = (vtkMrmlColorNode *) 
                 colorTree->GetNextItemAsObject();
             }
+        }
+
+      // If we didn't find the color on the input color tree, 
+      // make a node for it then put it onto the new color tree.
+      if (found == 0) 
+        {
+          currColorNode = vtkMrmlColorNode::New();
+          rgb_vtk_float[0] = R[idx];
+          rgb_vtk_float[1] = G[idx];
+          rgb_vtk_float[2] = B[idx];
+          currColorNode->SetDiffuseColor(rgb_vtk_float);
+          colorNameStr.str("");
+          colorNameStr << "class_" << idx ;
+          currColorNode->SetName(colorNameStr.str().c_str());
+          currNode->SetColor(currColorNode->GetName());
+          // add it to the MRML tree with new colors
+          colorTreeTwo->AddItem(currColorNode);
+          // call Delete to decrement the reference count
+          // so that when we delete the tree the nodes delete too.
+          currColorNode->Delete();
         }
 
       // add it to the MRML file
@@ -724,6 +753,15 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
             colorTree->GetNextItemAsObject();
         }
     }
+  // Also add any new colors we found
+  colorTreeTwo->InitTraversal();
+  currColorNode = (vtkMrmlColorNode *) colorTreeTwo->GetNextItemAsObject();      
+  while (currColorNode)
+    {
+      tree->AddItem(currColorNode);
+      currColorNode = (vtkMrmlColorNode *) 
+        colorTreeTwo->GetNextItemAsObject();
+    }
   
   // Write the MRML file
   fileNameStr.str("");
@@ -736,6 +774,7 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
   collectionOfModels->Delete();
   writer->Delete();
   tree->Delete();
+  colorTreeTwo->Delete();
 
 }
 
@@ -1874,6 +1913,8 @@ void vtkMultipleStreamlineController::CleanStreamlines()
 }
 
 
+// Do clustering, then display one actor per cluster
+//----------------------------------------------------------------------------
 void vtkMultipleStreamlineController::SeedStreamlinesFromROIClusterAndDisplay()
 {
   //  ------------------------------------
