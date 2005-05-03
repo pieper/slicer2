@@ -68,7 +68,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #if !defined(HAVE_GLCOLORTABLE) && defined(HAVE_GLCOLORTABLEEXT)
 #  define glColorTable glColorTableEXT
 #else
-#  if !defined(HAVE_GLCOLORTABLE) && defined(HAVE_GLCOLORTABLESGI)
+#  if defined(sun) || defined(__sun) || !defined(HAVE_GLCOLORTABLE) && defined(HAVE_GLCOLORTABLESGI)
 #     define glColorTable glColorTableSGI
 #  endif
 #endif
