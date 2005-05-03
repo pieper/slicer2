@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKOtsuMultipleThresholdsImageFilter.h,v $
   Language:  C++
-  Date:      $Date: 2005/05/02 22:59:33 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2005/05/03 21:50:25 $
+  Version:   $Revision: 1.2 $
 */
 // .NAME vtkITKOtsuMultipleThresholdsImageFilter - Wrapper class around itk::OtsuMultipleThresholdsImageFilter
 // .SECTION Description
@@ -15,17 +15,16 @@
 #define __vtkITKOtsuMultipleThresholdsImageFilter_h
 
 
-#include "vtkITKImageToImageFilterUSUS.h"
+#include "vtkITKImageToImageFilterSS.h"
 #include "itkOtsuMultipleThresholdsImageFilter.h"
-#include "stream.h"
-#include "vtkUnsignedShortArray.h"
+#include "vtkShortArray.h"
 #include "vtkObjectFactory.h"
 
-class VTK_EXPORT vtkITKOtsuMultipleThresholdsImageFilter : public vtkITKImageToImageFilterUSUS
+class VTK_EXPORT vtkITKOtsuMultipleThresholdsImageFilter : public vtkITKImageToImageFilterSS
 {
  public:
   static vtkITKOtsuMultipleThresholdsImageFilter *New();
-  vtkTypeRevisionMacro(vtkITKOtsuMultipleThresholdsImageFilter, vtkITKImageToImageFilterUSUS);
+  vtkTypeRevisionMacro(vtkITKOtsuMultipleThresholdsImageFilter, vtkITKImageToImageFilterSS);
   
   void SetNumberOfHistogramBins( unsigned long value) 
   {
@@ -41,7 +40,7 @@ class VTK_EXPORT vtkITKOtsuMultipleThresholdsImageFilter : public vtkITKImageToI
   unsigned long GetNumberOfThresholds ()
   { DelegateITKOutputMacro ( GetNumberOfThresholds ); };  
   
-  void SetLabelOffset (unsigned short value)
+  void SetLabelOffset (short value)
   { 
     OutputImagePixelType d = static_cast<OutputImagePixelType> ( value );
     DelegateITKInputMacro (SetLabelOffset,d);
@@ -50,8 +49,8 @@ class VTK_EXPORT vtkITKOtsuMultipleThresholdsImageFilter : public vtkITKImageToI
   OutputImagePixelType GetLabelOffset ()
   { DelegateITKOutputMacro ( GetLabelOffset ); };
   
-  vtkUnsignedShortArray *GetThresholds () {
-    std::vector<unsigned short> th;
+  vtkShortArray *GetThresholds () {
+    std::vector<InputImagePixelType> th;
     th = this->GetImageFilterPointer()->GetThresholds();
     this->Thresholds->SetNumberOfComponents(1);
     this->Thresholds->SetNumberOfTuples(th.size());
@@ -68,7 +67,7 @@ protected:
   typedef itk::OtsuMultipleThresholdsImageFilter<Superclass::InputImageType, Superclass::OutputImageType> ImageFilterType;
   vtkITKOtsuMultipleThresholdsImageFilter() : Superclass (ImageFilterType::New())
   {
-    this->Thresholds = vtkUnsignedShortArray::New();
+    this->Thresholds = vtkShortArray::New();
   };
   ~vtkITKOtsuMultipleThresholdsImageFilter() {};
   ImageFilterType* GetImageFilterPointer() { return dynamic_cast<ImageFilterType*> ( m_Filter.GetPointer() ); }
@@ -78,11 +77,11 @@ private:
   vtkITKOtsuMultipleThresholdsImageFilter(const vtkITKOtsuMultipleThresholdsImageFilter&);  // Not implemented.
   void operator=(const vtkITKOtsuMultipleThresholdsImageFilter&);  // Not implemented.
   
-  vtkUnsignedShortArray *Thresholds;
+  vtkShortArray *Thresholds;
   
 };
 
-vtkCxxRevisionMacro(vtkITKOtsuMultipleThresholdsImageFilter, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkITKOtsuMultipleThresholdsImageFilter, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkITKOtsuMultipleThresholdsImageFilter);
 
 #endif

@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKOtsuThresholdImageFilter.h,v $
   Language:  C++
-  Date:      $Date: 2005/04/26 00:43:32 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2005/05/03 21:50:25 $
+  Version:   $Revision: 1.2 $
 */
 // .NAME vtkITKOtsuThresholdImageFilter - Wrapper class around itk::OtsuThresholdImageFilter
 // .SECTION Description
@@ -15,15 +15,15 @@
 #define __vtkITKOtsuThresholdImageFilter_h
 
 
-#include "vtkITKImageToImageFilterUSUS.h"
+#include "vtkITKImageToImageFilterSS.h"
 #include "itkOtsuThresholdImageFilter.h"
 #include "vtkObjectFactory.h"
 
-class VTK_EXPORT vtkITKOtsuThresholdImageFilter : public vtkITKImageToImageFilterUSUS
+class VTK_EXPORT vtkITKOtsuThresholdImageFilter : public vtkITKImageToImageFilterSS
 {
  public:
   static vtkITKOtsuThresholdImageFilter *New();
-  vtkTypeRevisionMacro(vtkITKOtsuThresholdImageFilter, vtkITKImageToImageFilterUSUS);
+  vtkTypeRevisionMacro(vtkITKOtsuThresholdImageFilter, vtkITKImageToImageFilterSS);
   
   void SetNumberOfHistogramBins( unsigned long value) 
   {
@@ -32,25 +32,25 @@ class VTK_EXPORT vtkITKOtsuThresholdImageFilter : public vtkITKImageToImageFilte
   unsigned long GetNumberOfHistogramBins ()
   { DelegateITKOutputMacro ( GetNumberOfHistogramBins ); };
   
-  void SetInsideValue (unsigned short value)
+  void SetInsideValue (short value)
   { 
     OutputImagePixelType d = static_cast<OutputImagePixelType> ( value );
     DelegateITKInputMacro (SetInsideValue,d);
   }
   
-  void SetOutsideValue (unsigned short value)
+  void SetOutsideValue (short value)
   { 
     OutputImagePixelType d = static_cast<OutputImagePixelType> ( value );
     DelegateITKInputMacro (SetOutsideValue,d);
   }
   
-  unsigned short GetInsideValue ()
+  short GetInsideValue ()
   { DelegateITKOutputMacro ( GetInsideValue ); };
   
-  unsigned short GetOutsideValue ()
+  short GetOutsideValue ()
   { DelegateITKOutputMacro ( GetOutsideValue ); };
  
-  unsigned short GetThreshold()
+  short GetThreshold()
   { DelegateITKOutputMacro ( GetThreshold ); };
 
 protected:
@@ -66,7 +66,7 @@ private:
   void operator=(const vtkITKOtsuThresholdImageFilter&);  // Not implemented.
 };
 
-vtkCxxRevisionMacro(vtkITKOtsuThresholdImageFilter, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkITKOtsuThresholdImageFilter, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkITKOtsuThresholdImageFilter);
 
 #endif
