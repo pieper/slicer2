@@ -152,7 +152,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.21 $} {$Date: 2005/04/18 21:35:17 $}]
+        {$Revision: 1.21.2.1 $} {$Date: 2005/05/04 20:33:12 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -254,7 +254,7 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
     grid $f.lFilter -row 1 -column 0 -padx 1 -pady 1 -sticky w
     grid $f.eFilter -row 1 -column 1 -padx 1 -pady 2 -sticky w
 
-    set MultiVolumeReader(fileChoice) single
+    set MultiVolumeReader(fileChoice) multiple 
     set MultiVolumeReader(singleRadiobutton) $f.r1
     set MultiVolumeReader(multipleRadiobutton) $f.r2
     set MultiVolumeReader(filterEntry) $f.eFilter
