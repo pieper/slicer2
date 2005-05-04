@@ -513,6 +513,21 @@ proc fMRIEngineCreateCurvesFromTimeCourse {i j k} {
     }
 
     fMRIEngineSortEVsForStat $i $j $k 
+    
+    # For each ev, there are multiple sections which may not be 
+    # identical in length. Pick up the bigest length for the
+    # following calculation:
+    foreach ev $fMRIEngine(allEVs) {
+        set no $fMRIEngine($ev,noOfSections)
+        set maxLen 1
+        for {set k 1} {$k <= $no} {incr k} {
+            set len [llength $fMRIEngine($ev,$k,sections)]
+            if {$len > $maxLen} {
+                set maxLen $len
+            }
+        }
+        set fMRIEngine($ev,sectionLength) $maxLen
+    }
 
     set run $fMRIEngine(curRunForModelFitting)
     if {$run == "combined"} {
@@ -524,33 +539,36 @@ proc fMRIEngineCreateCurvesFromTimeCourse {i j k} {
     set fMRIEngine(allEVs) [lappend fMRIEngine(allEVs) rest]
     foreach ev $fMRIEngine(allEVs) {
         set no $fMRIEngine($ev,noOfSections)
-        set len [llength $fMRIEngine($ev,1,sections)]
+        set len $fMRIEngine($ev,sectionLength)
         
-       for {set i 0} {$i < $len} {incr i} {
-           set total 0.0
-           set max 0.0
-           set min 1000000.0
-           set count 0
+        for {set i 0} {$i < $len} {incr i} {
+             set total 0.0
+             set max 0.0
+             set min 1000000.0
+             set count 0
 
-           for {set j 1} {$j <= $no} {incr j} {
-               set sec $fMRIEngine($ev,$j,sections)
-               set v [lindex $sec $i]
-               if {$v > $max} {
-                   set max $v 
-               }
+             for {set j 1} {$j <= $no} {incr j} {
+                 set sec $fMRIEngine($ev,$j,sections)
+                 if {$i < [llength $sec]} {
+                     set value [lindex $sec $i]
 
-               if {$v < $min} {
-                   set min $v
-               }
+                     if {$value > $max} {
+                         set max $value 
+                     }
 
-               set total [expr $total+$v]
-               incr count
-           }
+                     if {$value < $min} {
+                         set min $value
+                     }
 
-           lappend fMRIEngine($ev,min) $min
-           lappend fMRIEngine($ev,max) $max
-           set ave [expr round($total / $count)]
-           lappend fMRIEngine($ev,ave) $ave
+                     set total [expr $total+$value]
+                     incr count
+                 }
+             }
+
+             lappend fMRIEngine($ev,min) $min
+             lappend fMRIEngine($ev,max) $max
+             set ave [expr round($total / $count)]
+             lappend fMRIEngine($ev,ave) $ave
         }
     }
 }
