@@ -177,7 +177,7 @@ proc fMRIEngineClearModel {} {
 
     $fMRIEngine(condsListBox) delete 0 end 
 
-    for {set r 1} {$r <= $fMRIEngine(noOfRuns)} {incr r} {
+    for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
         if {[info exists fMRIEngine($r,conditionList)]} {
             foreach title $fMRIEngine($r,conditionList) {
                 unset -nocomplain fMRIEngine($r,$title,title)
@@ -196,18 +196,52 @@ proc fMRIEngineClearModel {} {
     fMRIEngineSelectConvolutionForSignalModeling {none} 
     fMRIEngineSelectHighpassForSignalModeling {none} 
     fMRIEngineSelectLowpassForSignalModeling {none}
-
     set fMRIEngine(checkbuttonTempDerivative) 0
     set fMRIEngine(checkbuttonGlobalEffects)  0
+
+    set size [$fMRIEngine(evsListBox) size]
+    set i 0
+    while {$i < $size} {  
+        set ev [$fMRIEngine(evsListBox) get $i] 
+        if {$ev != ""} {
+            unset -nocomplain fMRIEngine($ev,ev)            
+            unset -nocomplain fMRIEngine($ev,run)
+            unset -nocomplain fMRIEngine($ev,title,ev) 
+            unset -nocomplain fMRIEngine($ev,condition,ev) 
+            unset -nocomplain fMRIEngine($ev,waveform,ev)   
+            unset -nocomplain fMRIEngine($ev,convolution,ev)
+            unset -nocomplain fMRIEngine($ev,derivative,ev)
+            unset -nocomplain fMRIEngine($ev,highpass,ev) 
+            unset -nocomplain fMRIEngine($ev,lowpass,ev) 
+            unset -nocomplain fMRIEngine($ev,globaleffects,ev)
+        }
+        incr i
+    }
     $fMRIEngine(evsListBox) delete 0 end 
- 
+    for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
+        set str "r$r:baseline"
+        $fMRIEngine(evsListBox) insert end $str 
+    }
+
     # clear contrasts panel
     set fMRIEngine(contrastOption) t 
+    set fMRIEngine(entry,contrastName) ""
+    set fMRIEngine(entry,contrastVolName) ""
     set fMRIEngine(entry,contrastVector) ""
+
+    set size [$fMRIEngine(contrastsListBox) size]
+    for {set i 0} {$i < $size} {incr i} {
+        set name [$fMRIEngine(contrastsListBox) get $i] 
+        if {$name != ""} {
+            unset -nocomplain fMRIEngine($name,contrastName) 
+            unset -nocomplain fMRIEngine($name,contrastVolName) 
+            unset -nocomplain fMRIEngine($name,contrastVector)
+        }
+    } 
     $fMRIEngine(contrastsListBox) delete 0 end 
 
     # clear model view
-    fMRIModelViewCloseAndCleanAndExit 
+    fMRIModelViewCloseAndCleanAndExit
 }
 
 
