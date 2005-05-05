@@ -513,7 +513,16 @@ proc fMRIEngineCreateCurvesFromTimeCourse {i j k} {
     }
 
     fMRIEngineSortEVsForStat $i $j $k 
-    
+
+    set run $fMRIEngine(curRunForModelFitting)
+    if {$run == "combined"} {
+        set run 1
+    }
+ 
+    unset -nocomplain fMRIEngine(allEVs)
+    set fMRIEngine(allEVs) $fMRIEngine($run,namesOfEVs)
+    set fMRIEngine(allEVs) [lappend fMRIEngine(allEVs) rest]
+
     # For each ev, there are multiple sections which may not be 
     # identical in length. Pick up the bigest length for the
     # following calculation:
@@ -529,14 +538,6 @@ proc fMRIEngineCreateCurvesFromTimeCourse {i j k} {
         set fMRIEngine($ev,sectionLength) $maxLen
     }
 
-    set run $fMRIEngine(curRunForModelFitting)
-    if {$run == "combined"} {
-        set run 1
-    }
- 
-    unset -nocomplain fMRIEngine(allEVs)
-    set fMRIEngine(allEVs) $fMRIEngine($run,namesOfEVs)
-    set fMRIEngine(allEVs) [lappend fMRIEngine(allEVs) rest]
     foreach ev $fMRIEngine(allEVs) {
         set no $fMRIEngine($ev,noOfSections)
         set len $fMRIEngine($ev,sectionLength)
