@@ -205,6 +205,9 @@ proc fMRIEngineClearModel {} {
     set fMRIEngine(contrastOption) t 
     set fMRIEngine(entry,contrastVector) ""
     $fMRIEngine(contrastsListBox) delete 0 end 
+
+    # clear model view
+    fMRIModelViewCloseAndCleanAndExit 
 }
 
 
