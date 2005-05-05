@@ -2726,53 +2726,55 @@ proc fMRIModelViewFreeModel { } {
 proc fMRIModelViewClearUserInput { } {
     #---
     #--- unset all user input 
-    for { set r 1 } { $r < $::fMRIModelView(Design,numRuns) } { incr r } {
-        unset -nocomplain ::fMRIModelView(Design,Run$r,Type)
-    }
-
-    #--- unset ev signal configuration
-    set evs [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + \
-                  $::fMRIModelView(Design,Run$r,numAdditionalEVs) ]
-    for { set i 1 } { $i <= $evs } { incr i } {
-        unset -nocomplain ::fMRIModelView(Design,Run$r,EV$i,SignalType)
-    }
-
-    for { set r 1 } { $r < $::fMRIModelView(Design,numRuns) } { incr r } {
-        for { set i 1 } { $i < $::fMRIModelView(Design,Run$r,numConditions) } { incr i } {
-            unset -nocomplain ::fMRIModelView(Design,Run$r,Condition$i,Onsets)
-            unset -nocomplain ::fMRIModelView(Design,Run$r,Condition$i,Durations)
-            unset -nocomplain ::fMRIModelView(Design,Run$r,Condition$i,Intensities) 
+    if {[info exists ::fMRIModelView(Design,numRuns)]} {
+        for { set r 1 } { $r < $::fMRIModelView(Design,numRuns) } { incr r } {
+            unset -nocomplain ::fMRIModelView(Design,Run$r,Type)
         }
-        unset -nocomplain ::fMRIModelView(Design,Run$r,numConditions)
-    }
 
-    for { set i 1 } { $i < $::fMRIModelView(Design,numTContrasts) } { incr i } {
-        unset -nocomplain ::fMRIModelView(Design,TContrast$i,Vector)
-    }    
-    unset -nocomplain ::fMRIModelView(Design,numTContrasts)
-    unset -nocomplain ::fMRIModelView(Design,TContrastNames)
-    unset -nocomplain ::fMRIModelView(Design,TContrasts)
+        #--- unset ev signal configuration
+        set evs [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + \
+            $::fMRIModelView(Design,Run$r,numAdditionalEVs) ]
+        for { set i 1 } { $i <= $evs } { incr i } {
+            unset -nocomplain ::fMRIModelView(Design,Run$r,EV$i,SignalType)
+        }
 
-    for { set r 1 } { $r < $::fMRIModelView(Design,numRuns) } { incr r } {
-        unset -nocomplain ::fMRIModelView(Design,Run$r,numConditionEVs)
-        unset -nocomplain ::fMRIModelView(Design,Run$r,numAdditionalEVs)
-        unset -nocomplain ::fMRIModelView(Design,Run$r,UseDCBasis) 
-        unset -nocomplain ::fMRIModelView(Design,Run$r,UsePolyBasis)
-        unset -nocomplain ::fMRIModelView(Design,Run$r,UseSplineBasis)
-        unset -nocomplain ::fMRIModelView(Design,Run$r,UseExploratoryBasis)
-        unset -nocomplain ::fMRIModelView(Design,Run$r,UseBaseline) 
-        unset -nocomplain ::fMRIModelView(Design,Run$r,HRF)
-        unset -nocomplain ::fMRIModelView(Design,Run$r,TR)        
-        unset -nocomplain ::fMRIModelView(Design,Run$r,TimeIncrement)        
-        unset -nocomplain ::fMRIModelView(Design,Run$r,numTimePoints)        
+        for { set r 1 } { $r < $::fMRIModelView(Design,numRuns) } { incr r } {
+            for { set i 1 } { $i < $::fMRIModelView(Design,Run$r,numConditions) } { incr i } {
+                unset -nocomplain ::fMRIModelView(Design,Run$r,Condition$i,Onsets)
+                unset -nocomplain ::fMRIModelView(Design,Run$r,Condition$i,Durations)
+                unset -nocomplain ::fMRIModelView(Design,Run$r,Condition$i,Intensities) 
+            }
+            unset -nocomplain ::fMRIModelView(Design,Run$r,numConditions)
+        }
+
+        for { set i 1 } { $i < $::fMRIModelView(Design,numTContrasts) } { incr i } {
+            unset -nocomplain ::fMRIModelView(Design,TContrast$i,Vector)
+        }    
+        unset -nocomplain ::fMRIModelView(Design,numTContrasts)
+        unset -nocomplain ::fMRIModelView(Design,TContrastNames)
+        unset -nocomplain ::fMRIModelView(Design,TContrasts)
+
+        for { set r 1 } { $r < $::fMRIModelView(Design,numRuns) } { incr r } {
+            unset -nocomplain ::fMRIModelView(Design,Run$r,numConditionEVs)
+            unset -nocomplain ::fMRIModelView(Design,Run$r,numAdditionalEVs)
+            unset -nocomplain ::fMRIModelView(Design,Run$r,UseDCBasis) 
+            unset -nocomplain ::fMRIModelView(Design,Run$r,UsePolyBasis)
+            unset -nocomplain ::fMRIModelView(Design,Run$r,UseSplineBasis)
+            unset -nocomplain ::fMRIModelView(Design,Run$r,UseExploratoryBasis)
+            unset -nocomplain ::fMRIModelView(Design,Run$r,UseBaseline) 
+            unset -nocomplain ::fMRIModelView(Design,Run$r,HRF)
+            unset -nocomplain ::fMRIModelView(Design,Run$r,TR)        
+            unset -nocomplain ::fMRIModelView(Design,Run$r,TimeIncrement)        
+            unset -nocomplain ::fMRIModelView(Design,Run$r,numTimePoints)        
+        }
+        unset -nocomplain ::fMRIModelView(Design,numRuns)
+        unset -nocomplain ::fMRIModelView(Design,totalEVs)
+        unset -nocomplain ::fMRIModelView(Design,evNames)
+        unset -nocomplain ::fMRIModelView(Design,evs)
+        unset -nocomplain ::fMRIModelView(Design,fileNames)
+        unset -nocomplain ::fMRIModelView(Design,totalTimePoints) 
+        unset -nocomplain ::fMRIModelView(Layout,NoDisplay)
     }
-    unset -nocomplain ::fMRIModelView(Design,numRuns)
-    unset -nocomplain ::fMRIModelView(Design,totalEVs)
-    unset -nocomplain ::fMRIModelView(Design,evNames)
-    unset -nocomplain ::fMRIModelView(Design,evs)
-    unset -nocomplain ::fMRIModelView(Design,fileNames)
-    unset -nocomplain ::fMRIModelView(Design,totalTimePoints) 
-    unset -nocomplain ::fMRIModelView(Layout,NoDisplay)
 }
 
 
