@@ -834,18 +834,15 @@ proc fMRIEngineAddRegressors {run} {
 
     #--- Additional EVs: baseline and DCBasis
     for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
+        set fMRIEngine($r,totalEVs) [expr $fMRIEngine($r,noOfEVs)]
         if {$::fMRIModelView(Design,Run$r,UseBaseline)} {
-            set fMRIEngine($r,totalEVs) [expr $fMRIEngine($r,noOfEVs)+1]
-        } else {
-            set fMRIEngine($r,totalEVs) [expr $fMRIEngine($r,noOfEVs)]
+            incr fMRIEngine($r,totalEVs)
         }
         if {$::fMRIModelView(Design,Run$r,UseDCBasis)} {
-            set fMRIEngine($r,totalEVs) [expr $fMRIEngine($r,noOfEVs)+7]
-        } else {
-            set fMRIEngine($r,totalEVs) [expr $fMRIEngine($r,noOfEVs)]
+            set fMRIEngine($r,totalEVs) [expr $fMRIEngine($r,totalEVs)+7]
         }
     }
- 
+
     if {$run != "combined"} {
         # single run
         fMRIEngine(designMatrix) SetNumberOfComponents $fMRIEngine($run,totalEVs)
