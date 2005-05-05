@@ -7,6 +7,9 @@ IF (USE_ITK_FILE)
 ENDIF(USE_ITK_FILE)
 
 SET( LOCAL_MODULE_SRCS
+#vtkITKTransformRegistrationFilter.cxx
+vtkITKRegistrationFilter.cxx
+vtkITKDeformableRegistrationFilter.cxx
 vtkITKDemonsRegistrationFilter.cxx
 vtkNRRDReader.cxx
 vtkITKAntiAliasBinaryImageFilter.h

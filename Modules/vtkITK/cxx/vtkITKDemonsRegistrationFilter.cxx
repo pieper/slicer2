@@ -5,25 +5,20 @@ vtkITKDemonsRegistrationFilter::vtkITKDemonsRegistrationFilter()
   NumIterations = 100;
   StandardDeviations = 1.0;
   CurrentIteration = 0;
+}
 
-  // set pipeline for fixed image
-  this->vtkCast = vtkImageCast::New();
-  this->vtkExporter = vtkImageExport::New();
-  this->vtkCast->SetOutputScalarTypeToFloat();
-  this->vtkExporter->SetInput ( this->vtkCast->GetOutput() );
+vtkITKRegistrationFilter::OutputImageType::Pointer vtkITKDemonsRegistrationFilter::GetTransformedOutput()
+{
+  return m_Warper->GetOutput();
+}
 
-  this->itkImporterFixed = ImageImportType::New();
-  ConnectPipelines(this->vtkExporter, this->itkImporterFixed);
+vtkITKDeformableRegistrationFilter::DeformationFieldType::Pointer vtkITKDemonsRegistrationFilter::GetDisplacementOutput()
+{
+  return m_Filter->GetOutput();
+}
 
-  // set pipeline for movin image
-  this->vtkCastMoving = vtkImageCast::New();
-  this->vtkExporterMoving = vtkImageExport::New();
-  this->vtkCastMoving->SetOutputScalarTypeToFloat();
-  this->vtkExporterMoving->SetInput ( this->vtkCastMoving->GetOutput() );
-
-  this->itkImporterMoving = ImageImportType::New();
-  ConnectPipelines(this->vtkExporterMoving, this->itkImporterMoving);
-
+void vtkITKDemonsRegistrationFilter::CreateRegistrationPipeline()
+{
   // registration pipeline
 
   // first match the intensities of two images
@@ -56,51 +51,23 @@ vtkITKDemonsRegistrationFilter::vtkITKDemonsRegistrationFilter()
   m_Warper->SetInterpolator( m_Interpolator );
   m_Warper->SetDeformationField( m_Filter->GetOutput() );
 
-  // Set pipline for output transformed image
-  this->itkExporterTransformed = ImageExportType::New();
-  ConnectPipelines(this->itkExporterTransformed, this->vtkImporter);
-  this->itkExporterTransformed->SetInput (m_Warper->GetOutput() );
-
-
-  // Set pipline for output displacement image
-  this->vtkImporterDisplacement = vtkImageImport::New();
-  this->itkExporterDisplacement = DeformationExportType::New();
-  ConnectPipelines(this->itkExporterDisplacement, this->vtkImporterDisplacement);
-  this->itkExporterDisplacement->SetInput(m_Filter->GetOutput());
-
   LinkITKProgressToVTKProgress(m_Filter);
-  //Update();
-
 };
 
-vtkITKDemonsRegistrationFilter::~vtkITKDemonsRegistrationFilter()
-{
-  this->vtkExporterMoving->Delete();
-  this->vtkCastMoving->Delete();
-
-  this->vtkImporterDisplacement->Delete();
-};
-
-void vtkITKDemonsRegistrationFilter::Update()
+void vtkITKDemonsRegistrationFilter::UpdateRegistrationParameters()
 {
   // set registration parameters
-  m_Filter->SetNumberOfIterations( NumIterations );
-  m_Filter->SetStandardDeviations( StandardDeviations );
-
+  if (m_Filter->GetNumberOfIterations() != NumIterations ) {
+    m_Filter->SetNumberOfIterations( NumIterations );
+  }
+  const double *stddev = m_Filter->GetStandardDeviations();
+  if ( stddev[0] != StandardDeviations ) {
+    m_Filter->SetStandardDeviations( StandardDeviations );
+  }
 
   InputImageType::Pointer fixedImage = this->itkImporterFixed->GetOutput();
   m_Warper->SetOutputSpacing( fixedImage->GetSpacing() );
   m_Warper->SetOutputOrigin( fixedImage->GetOrigin() );
-
-  SetCurrentIteration(0);
-
-  vtkITKImageToImageFilter::Update();
-
-  // m_Warper->Update();
-
-  vtkImporterDisplacement->Update();
-  vtkImporter->Update();
-
-  //vtkImporterDisplacement->GetOutput()->UpdateData();
 }
+
 

@@ -6,112 +6,39 @@
 #define __vtkITKDemonsRegistrationFilter_h
 
 
-#include "vtkITKImageToImageFilter.h"
-#include "vtkImageToImageFilter.h"
-#include "itkImageToImageFilter.h"
-#include "itkVTKImageExport.h"
-#include "itkVTKImageImport.h"
-#include "vtkITKUtility.h"
+#include "vtkITKDeformableRegistrationFilter.h"
 
 #include "itkImageRegionIterator.h"
 #include "itkDemonsRegistrationFilter.h"
 #include "itkHistogramMatchingImageFilter.h"
-#include "itkCastImageFilter.h"
-#include "itkWarpImageFilter.h"
-#include "itkLinearInterpolateImageFunction.h"
 
 
 // vtkITKDemonsRegistrationFilter Class
 
-class VTK_EXPORT vtkITKDemonsRegistrationFilter : public vtkITKImageToImageFilter
+class VTK_EXPORT vtkITKDemonsRegistrationFilter : public vtkITKDeformableRegistrationFilter
 {
 public:
   vtkTypeMacro(vtkITKDemonsRegistrationFilter,vtkITKImageToImageFilter);
+
   static vtkITKDemonsRegistrationFilter* New();
+
   void PrintSelf(ostream& os, vtkIndent indent)
   {
     Superclass::PrintSelf ( os, indent );
   };
 
-  vtkSetMacro(NumIterations, int);
-  vtkGetMacro(NumIterations, int);
-
   vtkSetMacro(StandardDeviations, double);
   vtkGetMacro(StandardDeviations, double);
 
-  vtkSetMacro(CurrentIteration, int);
-  vtkGetMacro(CurrentIteration, int);
-
-  void Update();
-
-  // Description:
-  // Set the Input, 0-fixed image, 1-moving image
-  virtual void SetInput(vtkImageData *Input, int idx)
-  {
-    if (idx == 0) {
-      this->vtkCast->SetInput(Input);
-    }
-    else if (idx == 1) {
-      this->vtkCastMoving->SetInput(Input);
-    }
+  virtual void AbortIterations() {
+    m_Filter->SetAbortGenerateData(true);
   };
 
-  // Description:
-  // Set Moving Input
-  void SetMovingInput(vtkImageData *Input)
-  {
-    this->vtkCastMoving->SetInput(Input);
-  };
-
-  // Description:
-  // Get the Output, 0-transformed image, 1-dispacement image
-  virtual vtkImageData *GetOutput(int idx)
-  {
-    if (idx == 0) {
-      return (vtkImageData *) this->vtkImporter->GetOutput();
-    }
-    else if (idx == 1) {
-      return (vtkImageData *) this->vtkImporterDisplacement->GetOutput();
-    }
-  };
-  
 protected:
-  int    NumIterations;
   double StandardDeviations;
-  int    CurrentIteration;
+
   //BTX
-  
-  // To/from ITK
-  typedef float InputImagePixelType;
-  typedef float OutputImagePixelType;
-  typedef itk::Vector<float, 3>    VectorPixelType;
-
-  typedef itk::Image<InputImagePixelType, 3> InputImageType;
-  typedef itk::Image<OutputImagePixelType, 3> OutputImageType;
-  typedef itk::Image<VectorPixelType, 3> DeformationFieldType;
-
-  typedef itk::VTKImageImport<InputImageType> ImageImportType;
-  typedef itk::VTKImageExport<OutputImageType> ImageExportType;
-  typedef itk::VTKImageExport<DeformationFieldType> DeformationExportType;
-
-  // itk import for input itk images
-  ImageImportType::Pointer itkImporterFixed;
-  ImageImportType::Pointer itkImporterMoving;
-
-  // itk export for output itk images
-  ImageExportType::Pointer itkExporterTransformed;
-  DeformationExportType::Pointer itkExporterDisplacement;
-
-  // use superclass vtkCast for fixed image
-
-  // vtk export for moving vtk image
-  vtkImageCast* vtkCastMoving;
-  vtkImageExport* vtkExporterMoving;  
-
-  // use supercalass vtkImporter for Transformed image 
-
-  // vtk import for output vtk displacement image
-  vtkImageImport *vtkImporterDisplacement;
+  typedef OutputImageType::Pointer OutputImagePointerType;
 
   ////////////////////////////////
   // ITK Pipeline that does the job
@@ -140,11 +67,18 @@ protected:
   WarperType::Pointer m_Warper;
   InterpolatorType::Pointer m_Interpolator;
 
+  virtual vtkITKDeformableRegistrationFilter::DeformationFieldType::Pointer GetDisplacementOutput();
+
+  virtual vtkITKRegistrationFilter::OutputImageType::Pointer GetTransformedOutput();
+
+  virtual void UpdateRegistrationParameters();
+
+  virtual void CreateRegistrationPipeline();
 
   // default constructor
   vtkITKDemonsRegistrationFilter (); // This is called from New() by vtkStandardNewMacro
 
-  virtual ~vtkITKDemonsRegistrationFilter();
+  virtual ~vtkITKDemonsRegistrationFilter() {};
   //ETX
   
 private:
@@ -152,8 +86,9 @@ private:
   void operator=(const vtkITKDemonsRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKDemonsRegistrationFilter, "$Revision: 1.1 $");
-vtkStandardNewMacro(vtkITKDemonsRegistrationFilter);
+//vtkCxxRevisionMacro(vtkITKDemonsRegistrationFilter, "$Revision: 1.2 $");
+//vtkStandardNewMacro(vtkITKDemonsRegistrationFilter);
+vtkRegistrationNewMacro(vtkITKDemonsRegistrationFilter);
 
 
 
@@ -210,6 +145,9 @@ public:
       std::cout << filter->GetMetric() << std::endl;
       std::cout << "Iteration " << iter << std::endl;
       m_registration->SetCurrentIteration(iter+1);
+      if (m_registration->GetAbortExecute()) {
+        m_registration->AbortIterations();
+      }
     }
     else {
       std::cout << "Error in DemonsRegistrationFilterCommand::Execute" << std::endl;
