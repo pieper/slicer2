@@ -437,7 +437,7 @@ proc tarup { {destdir "auto"} } {
     }
 
     if { $do_upload == "true" } {
-    set scpdestination "$::env(USER)@slicerl.bwh.harvard.edu:/usr/local/apache2/htdocs/snapshots/slicer2.4"
+    set scpdestination "$::env(USER)@slicerl.bwh.harvard.edu:/usr/local/apache2/htdocs/snapshots/slicer2.5"
         puts " -- upload to $scpdestination"
         switch $::tcl_platform(os) {
             "SunOS" -
