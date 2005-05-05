@@ -836,9 +836,13 @@ proc fMRIEngineAddRegressors {run} {
     for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
         if {$::fMRIModelView(Design,Run$r,UseBaseline)} {
             set fMRIEngine($r,totalEVs) [expr $fMRIEngine($r,noOfEVs)+1]
+        } else {
+            set fMRIEngine($r,totalEVs) [expr $fMRIEngine($r,noOfEVs)]
         }
         if {$::fMRIModelView(Design,Run$r,UseDCBasis)} {
             set fMRIEngine($r,totalEVs) [expr $fMRIEngine($r,noOfEVs)+7]
+        } else {
+            set fMRIEngine($r,totalEVs) [expr $fMRIEngine($r,noOfEVs)]
         }
     }
  
