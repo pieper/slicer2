@@ -45,8 +45,22 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include <vtkFreeSurferReadersConfigure.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "vtkImageData.h"
 #include "vtkVolumeReader.h"
+
+#ifdef _WIN32
+#include <vector>
+#else
+#include <vector.h>
+#endif
+
+typedef struct gdfVars {
+    char subjectID[256];
+    char className[256];
+    float vars[];
+};
+
 
 class VTK_FREESURFERREADERS_EXPORT vtkGDFReader : public vtkVolumeReader {
 public:
@@ -112,6 +126,40 @@ public:
     vtkSetMacro(NumberOfSubjects,int);
 
 
+    // Description:
+    // type of tesselation
+    vtkGetStringMacro(Tessellation);
+    vtkSetStringMacro(Tessellation);
+
+    // Description:
+    // the averaged registration subject file name
+    vtkGetStringMacro(RegistrationSubject);
+    vtkSetStringMacro(RegistrationSubject);
+
+    // Description:
+    // the file that contains the design matrix
+    vtkGetStringMacro(DesignMatFile);
+    vtkSetStringMacro(DesignMatFile);
+    // Description:
+    // who created this descriptor file
+    vtkGetStringMacro(Creator);
+    vtkSetStringMacro(Creator);
+
+    // Description:
+    // number of smoothing steps
+    vtkGetMacro(SmoothSteps, int);
+    vtkSetMacro(SmoothSteps, int);
+    
+    // Description:
+    // the path to the subjects directory
+    vtkGetStringMacro(SUBJECTS_DIR);
+    vtkSetStringMacro(SUBJECTS_DIR);
+
+    // Description:
+    // seed for synthetic generation
+    vtkGetMacro(SynthSeed, int);
+    vtkSetMacro(SynthSeed, int);
+   
     char *GetNthClassLabel(int n);
     char *GetNthClassMarker(int n);
     char *GetNthClassColor(int n);
@@ -143,13 +191,13 @@ protected:
     char *Title;
 
     // measurement label
-    char *MeasurementName;
+    char * MeasurementName;
 
     // subject name
-    char *SubjectName;
+    char * SubjectName;
 
     // data file name
-    char *DataFileName;
+    char * DataFileName;
 
     // number of classes
     int NumClasses;
@@ -166,8 +214,27 @@ protected:
     // number of subjects
     int NumberOfSubjects;
 
+    char * Tessellation;
+    char * RegistrationSubject;
+    char * DesignMatFile;
+    char * Creator;
+    int SmoothSteps;
+    char * SUBJECTS_DIR;
+    int SynthSeed;
+
     // for testing
     char * val;
+
+private:
+    
+    char * Classes[];
+    char * Variables[];
+    gdfVars Subjects[];
+//BTX
+    std::vector<char *>ClassesVec;
+    std::vector<char *>VariablesVec;
+    std::vector<gdfVars>SubjectsVec;
+//ETX
 };
 
 #endif
