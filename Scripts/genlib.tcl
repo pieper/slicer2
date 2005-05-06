@@ -256,8 +256,8 @@ if { ![file exists $::TCL_TEST_FILE] } {
     file mkdir $SLICER_LIB/tcl
     cd $SLICER_LIB/tcl
 
-    runcmd $::CVS -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/tcl login
-    runcmd $::CVS -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tcl checkout -r $::TCL_TAG tcl
+    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
+    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TCL_TAG tcl
 
     if {$isWindows} {
         # can't do windows
@@ -273,8 +273,8 @@ if { ![file exists $::TCL_TEST_FILE] } {
 if { ![file exists $::TK_TEST_FILE] } {
     cd $SLICER_LIB/tcl
 
-    runcmd $::CVS -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/tktoolkit login
-    runcmd $::CVS -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tktoolkit checkout -r $::TK_TAG tk
+    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
+    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TK_TAG tk
 
     if {$isDarwin} {
         if { ![file exists $SLICER_HOME/isPatched] } {
@@ -312,8 +312,8 @@ if { ![file exists $::TK_TEST_FILE] } {
 if { ![file exists $::ITCL_TEST_FILE] } {
     cd $SLICER_LIB/tcl
 
-    runcmd $::CVS -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/incrtcl login
-    runcmd $::CVS -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/incrtcl checkout -r $::ITCL_TAG incrTcl
+    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
+    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::ITCL_TAG incrTcl
 
     cd $SLICER_LIB/tcl/incrTcl
 
@@ -337,8 +337,8 @@ if { ![file exists $::ITCL_TEST_FILE] } {
 if { ![file exists $::IWIDGETS_TEST_FILE] } {
     cd $SLICER_LIB/tcl
 
-    runcmd $::CVS -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/incrtcl login
-    runcmd $::CVS -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/incrtcl checkout -r $::IWIDGETS_TAG iwidgets
+    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
+    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::IWIDGETS_TAG iwidgets
 
 
     if {$isWindows} {
@@ -360,8 +360,8 @@ if { ![file exists $::IWIDGETS_TEST_FILE] } {
 if { ![file exists $::BLT_TEST_FILE] } {
     cd $SLICER_LIB/tcl
     
-    runcmd $::CVS -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt login
-    runcmd $::CVS -z3 -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt co -r $::BLT_TAG blt
+    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
+    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co -r $::BLT_TAG blt
 
     if { $isWindows } {
         # can't do Windows
