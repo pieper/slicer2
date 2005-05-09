@@ -282,9 +282,12 @@ if { $CLEANFLAG } {
 # go through each target module and do cmake then build
 # - use custom cmake argument if specified
 #
+set numTargets [llength $TARGETS]
+set numCompleted 0
+puts "Found $numTargets target(s) to build"
 set failed ""
 foreach target $TARGETS {
-
+    incr numCompleted
     puts "\n----\nprocessing $target..."
 
     set build $target/builds/$env(BUILD) 
@@ -366,6 +369,7 @@ foreach target $TARGETS {
             }
         }
     }
+    puts "Finished $numCompleted of $numTargets targets." 
 }
 
 if { [llength $failed] } {
