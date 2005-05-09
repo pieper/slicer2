@@ -7,6 +7,7 @@
 
 
 #include "vtkITKDeformableRegistrationFilter.h"
+#include "itkDemonsRegistrationImageFilter.h"
 
 #include "itkImageRegionIterator.h"
 #include "itkDemonsRegistrationFilter.h"
@@ -31,41 +32,15 @@ public:
   vtkGetMacro(StandardDeviations, double);
 
   virtual void AbortIterations() {
-    m_Filter->SetAbortGenerateData(true);
+    m_ITKFilter->SetAbortGenerateData(true);
   };
 
 protected:
   double StandardDeviations;
 
   //BTX
-  typedef OutputImageType::Pointer OutputImagePointerType;
 
-  ////////////////////////////////
-  // ITK Pipeline that does the job
-  ////////////////////////////////
-
-  // Matcher
-  typedef itk::HistogramMatchingImageFilter<InputImageType, InputImageType> MatchingFilterType;
-  MatchingFilterType::Pointer m_Matcher;
-
-  // Registration filter
-  typedef itk::DemonsRegistrationFilter<
-                                InputImageType,
-                                InputImageType,
-                                DeformationFieldType>   RegistrationFilterType;
-  RegistrationFilterType::Pointer m_Filter;
-
-  // Warper and interpolator
-  typedef itk::WarpImageFilter<
-                          InputImageType, 
-                          InputImageType,
-                          DeformationFieldType  >     WarperType;
-  typedef itk::LinearInterpolateImageFunction<
-                                   InputImageType,
-                                   double          >  InterpolatorType;
-
-  WarperType::Pointer m_Warper;
-  InterpolatorType::Pointer m_Interpolator;
+  itk::itkDemonsRegistrationImageFilter::Pointer m_ITKFilter;
 
   virtual vtkITKDeformableRegistrationFilter::DeformationFieldType::Pointer GetDisplacementOutput();
 
@@ -86,7 +61,7 @@ private:
   void operator=(const vtkITKDemonsRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKDemonsRegistrationFilter, "$Revision: 1.2 $");
+//vtkCxxRevisionMacro(vtkITKDemonsRegistrationFilter, "$Revision: 1.3 $");
 //vtkStandardNewMacro(vtkITKDemonsRegistrationFilter);
 vtkRegistrationNewMacro(vtkITKDemonsRegistrationFilter);
 
