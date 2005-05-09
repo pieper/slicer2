@@ -21,7 +21,7 @@
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.7 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.7.2.1 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -256,8 +256,8 @@ void vtkNRRDReader::ExecuteInformation()
      int kind =  nrrd->axis[i].kind;
      if (i < 3) {
        if (kind != nrrdKindSpace) {
-         vtkErrorMacro("Error reading " << this->GetFileName() << ": " << "dimension # " << i << " must be spacial");
-         return;
+         // assume this is really meant to be spatial -- even though it's not specified
+         // vtkErrorMacro("Error reading " << this->GetFileName() << ": " << "dimension # " << i << " must be spatial");
        }
        // spacial dimesion
        dataExtent[2*i] = 0;
@@ -284,8 +284,8 @@ void vtkNRRDReader::ExecuteInformation()
        // assume this is data dimension
        // combine with the last spacial dimension
        if (kind == nrrdKindSpace) {
-         vtkErrorMacro("Error reading " << this->GetFileName() << ": " << "dimension # " << i << " must be not spacial");
-         return;
+         // assume this is really meant to be spatial -- even though it's not specified
+         //vtkErrorMacro("Error reading " << this->GetFileName() << ": " << "dimension # " << i << " must be not spatial");
        }
        dataExtent[2*(i-1)+1] =  nrrd->axis[i-1].size * nrrd->axis[i].size - 1;
      }
@@ -311,7 +311,7 @@ void vtkNRRDReader::ExecuteInformation()
      key = val = NULL;
    }
 
-  this->vtkImageReader2::ExecuteInformation();
+    this->vtkImageReader2::ExecuteInformation();
    
    nrrdNix(nrrd);
    nrrdIoStateNix(nio);
@@ -372,8 +372,9 @@ void vtkNRRDReaderUpdate(vtkNRRDReader *self, vtkImageData *data,
   // Load using the nrrdLoad call.
   if ( nrrdLoad(nrrd, self->GetFileName(), NULL) != 0 )
     {
+    char *filename = self->GetFileName();
     char *err =  biffGetDone("nrrd");
-    //vtkErrorWithObjectMacro(self, "Could not read " << self->GetFileName() << std::endl << "The error returned was " << err << std::endl );
+    vtkErrorWithObjectMacro(self, "Could not read " << filename <<  "\nThe error returned was " << err << "\n");
     free(err); // err points to malloc'd data!
     }
 
