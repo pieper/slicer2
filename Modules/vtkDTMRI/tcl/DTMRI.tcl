@@ -153,7 +153,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.66.2.1 $} {$Date: 2005/04/23 15:02:05 $}]
+                  {$Revision: 1.66.2.2 $} {$Date: 2005/05/09 00:20:51 $}]
 
     # Define Tabs
     #------------------------------------
@@ -3286,11 +3286,11 @@ proc DTMRILoadPattern {} {
      # put pattern information into modules variables
         foreach pattern $DTMRI(localpatternnames) {
 
-        catch [set filelist [open $env(HOME)/PatternsData/$pattern {RDONLY}]]
+            catch [set filelist [open $env(HOME)/PatternsData/$pattern {RDONLY}]]
             while {[eof $filelist] != 1} {
 
                 set line [gets $filelist]
-            if {[lindex $line 0] != "vtkDTMRIprotocol"} {
+                if {[lindex $line 0] != "vtkDTMRIprotocol"} {
                     if {[lindex $line 0] != ""} {
                         if {[lindex $line 0] != "#"} {
                             for {set i 0} {$i<[llength $line]} {incr i} {
@@ -3303,6 +3303,7 @@ proc DTMRILoadPattern {} {
                 }
 
             }
+            close $filelist
 
          }
      }
@@ -4456,6 +4457,9 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
     # Get positioning information from the MRML node
     # world space (what you see in the viewer) to ijk (array) space
     vtkTransform transform
+    # special trick to avoid obnoxious windows warnings about legacy hack
+    # for vtkTransform
+    transform AddObserver WarningEvent ""
     transform SetMatrix [Volume($v,node) GetWldToIjk]
     # now it's ijk to world
     transform Inverse
@@ -4519,6 +4523,9 @@ proc DTMRISeedStreamlinesEvenlyInMask {{verbose 1}} {
     # Get positioning information from the MRML node
     # world space (what you see in the viewer) to ijk (array) space
     vtkTransform transform
+    # special trick to avoid obnoxious windows warnings about legacy hack
+    # for vtkTransform
+    transform AddObserver WarningEvent ""
     transform SetMatrix [Volume($v,node) GetWldToIjk]
     # now it's ijk to world
     transform Inverse
@@ -4603,6 +4610,9 @@ proc DTMRISeedAndSaveStreamlinesFromSegmentation {{verbose 1}} {
     # Get positioning information from the MRML node
     # world space (what you see in the viewer) to ijk (array) space
     vtkTransform transform
+    # special trick to avoid obnoxious windows warnings about legacy hack
+    # for vtkTransform
+    transform AddObserver WarningEvent ""
     transform SetMatrix [Volume($v,node) GetWldToIjk]
     # now it's ijk to world
     transform Inverse
@@ -4670,6 +4680,9 @@ proc DTMRIFindStreamlinesThroughROI { {verbose 1} } {
     # Get positioning information from the MRML node
     # world space (what you see in the viewer) to ijk (array) space
     vtkTransform transform
+    # special trick to avoid obnoxious windows warnings about legacy hack
+    # for vtkTransform
+    transform AddObserver WarningEvent ""
     transform SetMatrix [Volume($v,node) GetWldToIjk]
     # now it's ijk to world
     transform Inverse
@@ -4882,6 +4895,9 @@ proc DTMRIUpdate {} {
                 
                 # Want actor to be positioned in center with slices
                 vtkTransform t1
+                # special trick to avoid obnoxious windows warnings about legacy hack
+                # for vtkTransform
+                transform t1 WarningEvent ""
                 DTMRICalculateActorMatrix t1 $Tensor(activeID)
                 
                 # Position glyphs in the volume.
@@ -5157,7 +5173,7 @@ proc DTMRIDoMath {{operation ""}} {
             set DTMRI(scalars,scaleFactor) [expr 1000.0 / $maxTrace]
         }
         {^(RelativeAnisotropy|FractionalAnisotropy|LinearMeasure|PlanarMeasure|SphericalMeasure|ColorByOrientation)$} {
-            set DTMRI(scalars,scaleFactor) 1000
+            # set DTMRI(scalars,scaleFactor) 1000
         }
     }
     
@@ -5800,6 +5816,9 @@ proc ConvertVolumeToTensors {} {
 
     # transform gradient directions to make DTMRIs in ijk
     vtkTransform trans    
+    # special trick to avoid obnoxious windows warnings about legacy hack
+    # for vtkTransform
+    trans AddObserver WarningEvent ""
     puts "If not phase-freq flipped, swapping x and y in gradient directions"
     set swap [Volume($v,node) GetFrequencyPhaseSwap]
     set scanorder [Volume($v,node) GetScanOrder]
@@ -6592,6 +6611,9 @@ proc DTMRIGetScaledIjkCoordinatesFromWorldCoordinates {x y z} {
     set t $Tensor(activeID)
 
     vtkTransform transform
+    # special trick to avoid obnoxious windows warnings about legacy hack
+    # for vtkTransform
+    transform AddObserver WarningEvent ""
     DTMRICalculateActorMatrix transform $t    
     transform Inverse
     set point [transform TransformPoint $x $y $z]
@@ -6759,6 +6781,9 @@ proc DTMRISetActive {n} {
  
     # set correct transformation from World coords to scaledIJK of the tensors
     vtkTransform transform
+    # special trick to avoid obnoxious windows warnings about legacy hack
+    # for vtkTransform
+    transform AddObserver WarningEvent ""
     DTMRICalculateActorMatrix transform $t    
     transform Inverse
     DTMRI(vtk,streamlineControl) SetWorldToTensorScaledIJK transform
