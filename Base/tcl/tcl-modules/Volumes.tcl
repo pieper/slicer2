@@ -85,8 +85,8 @@ proc VolumesInit {} {
 
     # Define Tabs
     set m Volumes
-    set Module($m,row1List) "Help Display Props Reformat" 
-    set Module($m,row1Name) "{Help} {Display} {Props} {Reformat}"
+    set Module($m,row1List) "Help Display Props" 
+    set Module($m,row1Name) "{Help} {Display} {Props}"
     set Module($m,row1,tab) Display
     
     set Module($m,row2List) "Export Other" 
@@ -113,7 +113,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.106.2.1 $} {$Date: 2005/05/09 00:19:32 $}]
+            {$Revision: 1.106.2.2 $} {$Date: 2005/05/10 20:39:50 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -132,7 +132,7 @@ proc VolumesInit {} {
     #reformatting variable
     #---------------------------------------------
     vtkImageWriter Volumes(writer)
-    vtkImageReformat Volumes(reformatter)
+    # vtkImageReformat Volumes(reformatter)
     Volumes(writer) SetFileDimensionality 2
     Volumes(writer) AddObserver StartEvent MainStartProgress
     Volumes(writer) AddObserver ProgressEvent  "MainShowProgress Volumes(writer)"
@@ -238,13 +238,18 @@ slice planes.
 functional data on graylevel anatomical data.
 <BR><B>Interpolate:</B> indicate whether to interpolate between voxels
 on the reformatted slices.
-<BR><LI><B>Props</B> set the header information
-<BR><LI><B>Other</B> The <B>Slider Range</B> for the Window/Level/Threshold
+<BR><LI><B>Props:</B> set the header information
+<BR><LI><B>Export:</B> export a volume as an Analyze or COR file
+<BR><LI><B>Other:</B> The <B>Slider Range</B> for the Window/Level/Threshold
 sliders is normally automatically set according to the min and max voxel 
 values in the volume.  However, some applications, such as monitoring 
 thermal surgery, requires setting these manually to retain the same color 
 scheme as the volume's data changes over time due to realtime data
 acquisition.
+<BR><LI><B>Reformat:</B> this functionality has been removed from this module. Please use the Realign-Resample module to create a matrix from landmarks, and the Transform Volume module to resample a volume given a matrix and scan order.
+"
+
+set reformathelpstring "
 <BR><LI><B> Reformat: </B>
 <BR> You can reformat any 3 slice in any arbitrary orientation or define a new axial,sagittal or coronal orientation.
 <BR> To do that, create and select 3 fiducials that will define the new
@@ -547,6 +552,7 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
         }
     }
         
+if {0} { 
     #-------------------------------------------
     # Reformat frame
     #-------------------------------------------
@@ -704,7 +710,8 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
         -command "VolumesReformatSave"} $Gui(WBA)
     TooltipAdd $f.bWrite "Save the Volume."
     pack $f.bWrite
-
+}
+# end of commenting out the reformat pane
 
     #-------------------------------------------
     # Export frame
@@ -1414,8 +1421,8 @@ proc VolumesEnter {} {
     DataExit
     bind Listbox <Control-Button-1> {tkListboxBeginToggle %W [%W index @%x,%y]}
     #tk_messageBox -type ok -message "VolumesEnter" -title "Title" -icon  info
-    $Volumes(reformat,orMenu) invoke "ReformatSagittal"
-    $Volumes(reformat,saveMenu) invoke "ReformatCoronal"
+#    $Volumes(reformat,orMenu) invoke "ReformatSagittal"
+#    $Volumes(reformat,saveMenu) invoke "ReformatCoronal"
 }
 
 #-------------------------------------------------------------------------------
