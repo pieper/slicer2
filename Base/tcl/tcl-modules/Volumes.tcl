@@ -113,7 +113,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.106 $} {$Date: 2005/01/30 16:54:48 $}]
+            {$Revision: 1.107 $} {$Date: 2005/05/10 21:12:25 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -140,6 +140,7 @@ proc VolumesInit {} {
 
     set Volumes(prefixSave) ""
     set Volumes(prefixCORSave) ""
+    set Volumes(prefixNrrdSave) ""
 
     set Volumes(exportFileType) Radiological
     set Volumes(exportFileTypeList) {Radiological Neurological}
@@ -716,6 +717,7 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     frame $f.fActive -bg $Gui(backdrop) -relief sunken -bd 2
     frame $f.fFile -bg $Gui(activeWorkspace) -relief groove -bd 3
     frame $f.fCORFile -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fNrrdFile -bg $Gui(activeWorkspace) -relief groove -bd 3
 
     pack $f.fActive -side top -pady $Gui(pad) -padx $Gui(pad)
     pack $f.fFile  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
@@ -724,6 +726,7 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     pack $f.fCORFile  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
     eval {label $fExport.ll -text "Export COR Format\nWarning: only 1mm 256 cubed\n8 bit images supported"} $Gui(WLA)
     pack  $fExport.ll -side top -padx $Gui(pad)    
+    pack $f.fNrrdFile  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
 
     #-------------------------------------------
     # Export->Active frame
@@ -781,6 +784,19 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     pack  $f.bWrite -side bottom -padx $Gui(pad)    
 
     DevAddFileBrowse $f Volumes "prefixCORSave" "COR File:" "" "info" "\$Volume(DefaultDir)" "Save" "Browse for a COR file location (will save images and COR-.info file to directory)" "Absolute"
+
+    #-------------------------------------------
+    # Export->NrrdFilename frame
+    #-------------------------------------------
+
+    set f $fExport.fNrrdFile
+
+    eval {button $f.bWrite -text "Save" -width 5 \
+        -command "VolumesNrrdExport"} $Gui(WBA)
+    TooltipAdd $f.bWrite "Save the Volume."
+    pack  $f.bWrite -side bottom -padx $Gui(pad)    
+
+    DevAddFileBrowse $f Volumes "prefixNrrdSave" "Nrrd File:" "" "nrrd" "\$Volume(DefaultDir)" "Save" "Browse for a Nrrd file location (will save image file and .nhdr file to directory)" "Absolute"
 
     #-------------------------------------------
     # Other frame
@@ -2118,6 +2134,131 @@ z_ras 0.000000 1.000000 0.000000
 c_ras 0.000000 0.000000 0.000000"
     close $fp
 
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolumesNrrdExport
+# - export to Nrrd Format 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc VolumesNrrdExport {} {
+    
+    global Volume Volumes
+    
+    # get the chosen volume
+    set v $Volume(activeID)
+
+    if { $v == 0 } {
+        DevInfoWindow "VolumesNrrdExport: Please select a volume to export."
+        return
+    }
+    
+    if { $Volumes(prefixNrrdSave) == "" } {
+        DevInfoWindow "VolumesNrrdExport: Please select a filename."
+        return
+    }
+
+    set ext [file extension $Volumes(prefixNrrdSave)] 
+    if { [file extension $Volumes(prefixNrrdSave)] == ".nhdr" ||
+            [file extension $Volumes(prefixNrrdSave)] == ".nrrd" ||
+            [file extension $Volumes(prefixNrrdSave)] == ".img" } {
+        set Volumes(prefixNrrdSave) [file root $Volumes(prefixNrrdSave)] 
+    }
+
+
+    catch "export_iwriter Delete"
+    vtkImageWriter export_iwriter 
+    export_iwriter SetInput [Volume($v,vol) GetOutput]
+    export_iwriter SetFileName $Volumes(prefixNrrdSave).img
+    export_iwriter SetFileDimensionality 3
+    export_iwriter Write
+    export_iwriter Delete
+
+    catch "export_matrix Delete"
+    vtkMatrix4x4 export_matrix
+    eval export_matrix DeepCopy [Volume($v,node) GetRasToVtkMatrix]
+    export_matrix Invert
+    set space_directions [format "(%g, %g, %g) (%g, %g, %g) (%g, %g, %g)" \
+        [export_matrix GetElement 0 0]\
+        [export_matrix GetElement 0 1]\
+        [export_matrix GetElement 0 2]\
+        [export_matrix GetElement 1 0]\
+        [export_matrix GetElement 1 1]\
+        [export_matrix GetElement 1 2]\
+        [export_matrix GetElement 2 0]\
+        [export_matrix GetElement 2 1]\
+        [export_matrix GetElement 2 2] ]
+    export_matrix Delete
+
+
+    set fp [open $Volumes(prefixNrrdSave).nhdr "w"]
+
+    puts $fp "NRRD0001"
+    puts $fp "type: [[Volume($v,vol) GetOutput] GetScalarTypeAsString]"
+    puts $fp "dimension: 3"
+    puts $fp "space: right-anterior-superior"
+    foreach "w h d" [[Volume($v,vol) GetOutput] GetDimensions] {}
+    puts $fp "sizes: $w $h $d"
+    puts $fp "space directions: $space_directions"
+    puts $fp "centerings: cell cell cell"
+    puts $fp "kinds: space space space"
+    if { $::tcl_platform(byteOrder) == "littleEndian" } {
+        puts $fp "endian: little"
+    } else {
+        puts $fp "endian: big"
+    }
+    puts $fp "space units: \"mm\" \"mm\" \"mm\""
+    puts $fp "encoding: raw"
+    puts $fp "data file: [file tail $Volumes(prefixNrrdSave)].img"
+
+    close $fp
+
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolumesVtkToNrrdScalarType
+#  convert VTK scalar type (like "unsigned char") into
+#  Nrrd type string like "uchar"
+# .ARGS
+#  type is vtk scalar type
+# .END
+#-------------------------------------------------------------------------------
+proc VolumesVtkToNrrdScalarType {type} {
+    
+    switch $type {
+        "char" {
+            return "char"
+        }
+        "unsigned char" {
+            return "uchar"
+        }
+        "short" {
+            return "short"
+        }
+        "unsigned short" {
+            return "ushort"
+        }
+        "int" {
+            return "int"
+        }
+        "unsigned int" {
+            return "uint"
+        }
+        "long" {
+            return "long"
+        }
+        "unsigned long" {
+            return "ulong"
+        }
+        "float" {
+            return "float"
+        }
+        "double" {
+            return "double"
+        }
+    }
+    return ""
 }
 
 #-------------------------------------------------------------------------------
