@@ -575,7 +575,8 @@ proc fMRIEngineAddOrEditCondition {} {
 
     set tr [string trim $fMRIEngine(entry,tr)]
     set b [string is integer -strict $tr]
-    if {$b == 0 || $tr < 1} {
+    set c [string is double -strict $tr]
+    if {$b == 0 && $c == 0} {
         DevErrorWindow "Input the TR in seconds."
         return
     }
@@ -600,7 +601,8 @@ proc fMRIEngineAddOrEditCondition {} {
     foreach i $onsetsList { 
         set v [string trim $i]
         set b [string is integer -strict $v]
-        if {$b == 0 || $v < 0} {
+        set c [string is double -strict $v]
+        if {$b == 0 && $c == 0} {
             DevErrorWindow $errorMsg 
             return
         }
@@ -627,7 +629,9 @@ proc fMRIEngineAddOrEditCondition {} {
         foreach i $durationsList { 
             set v [string trim $i]
             set b [string is integer -strict $v]
-            if {$b == 0 || $v < 1} {
+            set c [string is double -strict $v]
+ 
+            if {$b == 0 && $c == 0} {
                 DevErrorWindow $errorMsg 
                 return
             }
