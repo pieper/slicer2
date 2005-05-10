@@ -942,15 +942,18 @@ proc fMRIModelViewBuildEVData { r i } {
         set siglen [ llength $::fMRIModelView(Data,Run$r,EV$i,Signal) ]
         if { $siglen == 0 } {
             return 0
-        }
+        } 
         #---
         #--- generate EVData directly when using analytic functions in model,
         #--- or by downsampling hi-res convolved, derivative signals
         set signalType $::fMRIModelView(Design,Run$r,EV$i,SignalType)
-        if { $signalType == "boxcar" } {
+        # Gaussian downsampling for all signal types. Don't analytically generate
+        # due to rounding errors for non-integer onsets and durations.
+        if {0} {
+            if { $signalType == "boxcar" } {
             #--- generate this analytic functions directly.
-            if { [ info exists ::fMRIModelView(Design,Run$r,Condition$i,Onsets) ] } {
-                set indx 0
+                if { [ info exists ::fMRIModelView(Design,Run$r,Condition$i,Onsets) ] } {
+                    set indx 0
                     foreach onset $::fMRIModelView(Design,Run$r,Condition$i,Onsets) {
                         set duration [lindex $::fMRIModelView(Design,Run$r,Condition$i,Durations) $indx ]
                         set start $onset 
@@ -961,15 +964,15 @@ proc fMRIModelViewBuildEVData { r i } {
                         }
                         incr indx
                     }
-                }
+                } 
             } elseif { $signalType == "baseline" } {
-                #--- generate this analytic functions directly.
+            #--- generate this analytic functions directly.
                 for { set t 0 } { $t < $timepoints } { incr t } {
                     set ::fMRIModelView(Data,Run$r,EV$i,EVData) \
                         [ lreplace $::fMRIModelView(Data,Run$r,EV$i,EVData) $t $t 1.0 ]
                 }
             } elseif { $signalType == "halfsine" } {
-                #--- generate this analytic functions directly.
+            #--- generate this analytic functions directly.
                 if { [ info exists ::fMRIModelView(Design,Run$r,Condition$i,Onsets) ] } {
                     set PI 3.14159265
                     set indx 0
@@ -989,31 +992,38 @@ proc fMRIModelViewBuildEVData { r i } {
                         incr indx
                     }
                 }
-            } else {
-                #--- gaussian subsample signal to make evData.
-                set evlen [ expr double($::fMRIModelView(Design,Run$r,numTimePoints)) ]
-                set ::fMRIModelView(Data,Run$r,EV$i,EVData) [ fMRIModelViewGaussianDownsampleList \
-                                                                  $i $r $siglen $evlen $::fMRIModelView(Data,Run$r,EV$i,Signal) ]
+            } 
+        } elseif { $signalType == "baseline" } {
+            #--- generate this analytic functions directly.
+            for { set t 0 } { $t < $timepoints } { incr t } {
+                set ::fMRIModelView(Data,Run$r,EV$i,EVData) \
+                    [ lreplace $::fMRIModelView(Data,Run$r,EV$i,EVData) $t $t 1.0 ]
             }
-            #---
-            #--- rescales range of evData to [-1.0 and 1.0]
-            #---
-            set max -1000000.0
-            set min 100000.0
-            set evlen [ llength $::fMRIModelView(Data,Run$r,EV$i,EVData) ]
-            for { set t 0 } { $t < $evlen } { incr t } {
+        } else {
+            #--- gaussian subsample signal to make evData.
+            set evlen [ expr double($::fMRIModelView(Design,Run$r,numTimePoints)) ]
+            set ::fMRIModelView(Data,Run$r,EV$i,EVData) [ fMRIModelViewGaussianDownsampleList \
+                $i $r $siglen $evlen $::fMRIModelView(Data,Run$r,EV$i,Signal) ]
+        } 
+        #---
+        #--- rescales range of evData to [-1.0 and 1.0]
+        #---
+        set max -1000000.0
+        set min 100000.0
+        set evlen [ llength $::fMRIModelView(Data,Run$r,EV$i,EVData) ]
+        for { set t 0 } { $t < $evlen } { incr t } {
             set v [ lindex $::fMRIModelView(Data,Run$r,EV$i,EVData) $t ]
-                if { $v > $max } {
-                    set max $v
-                }
-                if { $v < $min } {
-                    set min $v
-                }
+            if { $v > $max } {
+                set max $v
             }
-            set ::fMRIModelView(Data,Run$r,EV$i,EVData) [ fMRIModelViewRangemapList  \
-                                                              $::fMRIModelView(Data,Run$r,EV$i,EVData) 1.0 0.0 ]
-            return 1
+            if { $v < $min } {
+                set min $v
+            }
         }
+        set ::fMRIModelView(Data,Run$r,EV$i,EVData) [ fMRIModelViewRangemapList  \
+            $::fMRIModelView(Data,Run$r,EV$i,EVData) 1.0 0.0 ]
+        return 1
+    } 
 }
 
 
