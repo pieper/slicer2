@@ -288,7 +288,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.57 $} {$Date: 2005/04/19 16:47:04 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.58 $} {$Date: 2005/05/10 21:55:58 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -2805,6 +2805,11 @@ proc EMSegmentStartEM { {save_mode "save"} } {
        return
    }
    
+   if {$EMSegment(Cattrib,0,StopEMMaxIter) <= 0} {
+       DevErrorWindow "Please select a positive number of iterations (Step 2)"
+       return
+   }
+
   if {($EMSegment(SegmentationBoundaryMin,0) < 1) ||  ($EMSegment(SegmentationBoundaryMin,1) < 1) || ($EMSegment(SegmentationBoundaryMin,2) < 1)} {
        DevErrorWindow "Boundary box must be greater than 0 !" 
        return
