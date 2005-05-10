@@ -288,7 +288,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.57 $} {$Date: 2005/04/19 16:47:04 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.57.2.1 $} {$Date: 2005/05/10 21:54:54 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -2802,6 +2802,11 @@ proc EMSegmentStartEM { {save_mode "save"} } {
    # ----------------------------------------------
    if {$EMSegment(NumInputChannel)  == 0} {
        DevErrorWindow "Please load a volume before starting the segmentation algorithm!"
+       return
+   }
+
+   if {$EMSegment(Cattrib,0,StopEMMaxIter) <= 0} {
+       DevErrorWindow "Please select a positive number of iterations (Step 2)"
        return
    }
    
