@@ -219,8 +219,8 @@ if { ![file exists $CMAKE] } {
         puts stderr ""
         exit
     } else {
-        runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-        runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co -r $::CMAKE_TAG CMake
+        runcmd $::CVS -d :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login
+        runcmd $::CVS -z3 -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $::CMAKE_TAG CMake
 
         cd $CMAKE_PATH
         if { $isSolaris } {
@@ -429,8 +429,8 @@ if { ![file exists $::GSL_TEST_FILE] } {
 if { ![file exists $::VTK_TEST_FILE] } {
     cd $SLICER_LIB
 
-    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co -r $::VTK_TAG VTK
+    runcmd $::CVS -d :pserver:anonymous:vtk@public.kitware.com:/cvsroot/VTK login
+    runcmd $::CVS -z3 -d :pserver:anonymous@public.kitware.com:/cvsroot/VTK checkout -r $::VTK_TAG VTK
 
     # Andy's temporary hack to get around wrong permissions in VTK cvs repository
     # catch statement is to make file attributes work with RH 7.3
@@ -494,11 +494,13 @@ if { ![file exists $::VTK_TEST_FILE] } {
 if { ![file exists $::ITK_TEST_FILE] } {
     cd $SLICER_LIB
 
-    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co -r $::ITK_TAG Insight
+    runcmd $::CVS -d :pserver:anoncvs:@www.itk.org:/cvsroot/Insight login
+    runcmd $::CVS -z3 -d :pserver:anoncvs@www.itk.org:/cvsroot/Insight checkout -r $::ITK_TAG Insight
 
     file mkdir $SLICER_LIB/Insight-build
     cd $SLICER_LIB/Insight-build
+
+
 
     runcmd $CMAKE \
         -G$GENERATOR \
