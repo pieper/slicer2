@@ -318,7 +318,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.28 $} {$Date: 2005/05/11 19:35:22 $}]
+        {$Revision: 1.29 $} {$Date: 2005/05/11 21:17:39 $}]
 
 }
 
@@ -576,9 +576,28 @@ proc vtkFreeSurferReadersBuildGUI {} {
     pack $f.lWarning -side top -padx $Gui(pad) -pady 0
 
     DevAddFileBrowse $f vtkFreeSurferReaders "PlotFileName" "Plot header file:" "vtkFreeSurferReadersSetPlotFileName" "fsgd" "\$Volume(DefaultDir)" "Open" "Browse for a plot header file (fsgd)"
-    frame $f.fApply -bg $Gui(activeWorkspace)
 
-    pack $f.fApply -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
+    frame $f.fApply -bg $Gui(activeWorkspace)
+    frame $f.fModel -bg $Gui(activeWorkspace)
+
+    pack $f.fModel $f.fApply -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
+
+    #------------
+    # Plot->Model
+    #------------
+    set f $Module(vtkFreeSurferReaders,fPlot).fModel
+
+    DevAddLabel $f.lActive "Active Model: "
+    TooltipAdd $f.lActive "Which model to associate this plot data with"
+
+    eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
+            -menu $f.mbActive.m} $Gui(WMBA)
+    eval {menu $f.mbActive.m} $Gui(WMA)
+    pack $f.lActive $f.mbActive -side left
+
+    # Append widgets to list that gets refreshed during UpdateMRML
+    lappend ::Model(mbActiveList) $f.mbActive
+    lappend ::Model(mActiveList)  $f.mbActive.m
 
     #------------
     # Plot->Apply 
@@ -2317,6 +2336,7 @@ proc vtkFreeSurferReadersBuildSurface {m} {
             }
         }
     }
+    set Model(scalarVisibility) 1
     Model($m,node) SetScalarVisibility 1
     Model($m,node) SetVisibility 1
     # auto range on the scalar
@@ -5494,7 +5514,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.28 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.29 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
