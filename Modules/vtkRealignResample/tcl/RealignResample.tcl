@@ -72,9 +72,9 @@ proc RealignResampleInit {} {
     set Module($m,author) "Jacob Albertson, SPL, jacob@bwh.harvard.edu"
     set Module($m,category) "Alpha"
 
-    set Module($m,row1List) "Fiducials RealignResample Help"
-    set Module($m,row1Name) "{Fiducials} {Realign Resample} {Help}"
-    set Module($m,row1,tab) RealignResample
+    set Module($m,row1List) "Realign Resample Help"
+    set Module($m,row1Name) "{Realign} {Resample} {Help}"
+    set Module($m,row1,tab) Realign
 
     set Module($m,procGUI) RealignResampleBuildGUI
     set Module($m,procMRML) RealignResampleUpdateMRML
@@ -83,7 +83,7 @@ proc RealignResampleInit {} {
 #    set Module($m,depend) "Morphometrics"
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2005/04/19 21:44:29 $}]
+        {$Revision: 1.7 $} {$Date: 2005/05/11 20:03:58 $}]
 
     set Matrix(volume) $Volume(idNone)
     set Matrix(RealignResampleVolumeName2) None
@@ -174,8 +174,8 @@ proc RealignResampleBuildGUI {} {
     #-------------------------------------------
     # Realign frame
     #-------------------------------------------
-    set fFiducials $Module(RealignResample,fFiducials)
-    set f $fFiducials
+    set fRealign $Module(RealignResample,fRealign)
+    set f $fRealign
     
     foreach frame "Matrix Midline ACPC Calculate" {
     frame $f.f$frame -bg $Gui(activeWorkspace)
@@ -186,7 +186,7 @@ proc RealignResampleBuildGUI {} {
     #-------------------------------------------
     # Realign->Matrix
     #-------------------------------------------
-    set f $fFiducials.fMatrix
+    set f $fRealign.fMatrix
 
     DevAddLabel $f.lActive "Matrix: " 
     eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20  -menu $f.mbActive.m} $Gui(WMBA)
@@ -198,7 +198,7 @@ proc RealignResampleBuildGUI {} {
     #-------------------------------------------
     # Realign->Midline
     #-------------------------------------------   
-    set f $fFiducials.fMidline
+    set f $fRealign.fMidline
     
     DevAddLabel $f.lMidline "Midline List (>3):"
     eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20  -menu $f.mbActive.m} $Gui(WMBA)
@@ -212,7 +212,7 @@ proc RealignResampleBuildGUI {} {
     #-------------------------------------------
     # Realign->ACPC
     #-------------------------------------------   
-    set f $fFiducials.fACPC
+    set f $fRealign.fACPC
     
     DevAddLabel $f.lACPC "ACPC List (2):"
     eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20  -menu $f.mbActive.m} $Gui(WMBA)
@@ -225,7 +225,7 @@ proc RealignResampleBuildGUI {} {
     #-------------------------------------------
     # Realign->Calculate
     #-------------------------------------------
-    set f $fFiducials.fCalculate
+    set f $fRealign.fCalculate
   
     DevAddButton $f.bCalculate "Calculate Transform"  RealignCalculate 
     pack $f.bCalculate  -side top -padx $Gui(pad) -pady $Gui(pad)
@@ -234,8 +234,8 @@ proc RealignResampleBuildGUI {} {
     # Resample
     #-------------------------------------------
     
-    set fRealignResample $Module(RealignResample,fRealignResample)
-    set f $fRealignResample
+    set fResample $Module(RealignResample,fResample)
+    set f $fResample
 
     foreach frame "Volume Matrix NewVolume OutputSpacing AutoSpacing ImageSize SetExtent AutoExtent InterpolationMode BeginResample SaveAs BeginSave" {
     frame $f.f$frame -bg $Gui(activeWorkspace)
@@ -245,7 +245,7 @@ proc RealignResampleBuildGUI {} {
     #-------------------------------------------
     # Resample->Volume
     #-------------------------------------------
-    set f $fRealignResample.fVolume
+    set f $fResample.fVolume
     
     DevAddLabel $f.lVolume "Volume: "
     eval {menubutton $f.mbVolume -text "None" -relief raised -bd 2 -width 20 -menu $f.mbVolume.m} $Gui(WMBA)
@@ -257,7 +257,7 @@ proc RealignResampleBuildGUI {} {
     #-------------------------------------------
     # Resample->Matrix
     #-------------------------------------------
-    set f $fRealignResample.fMatrix
+    set f $fResample.fMatrix
     DevAddLabel $f.lActive "Matrix: " 
     eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20  -menu $f.mbActive.m} $Gui(WMBA)
     eval {menu $f.mbActive.m} $Gui(WMA)
@@ -269,7 +269,7 @@ proc RealignResampleBuildGUI {} {
     #-------------------------------------------
     # Resample->NewVolume
     #-------------------------------------------
-    set f $fRealignResample.fNewVolume
+    set f $fResample.fNewVolume
     
     DevAddLabel $f.lNewVolume "New Volume: "
     eval {entry $f.eNewVolume -width 30 -textvariable RealignResample(NewVolume) } $Gui(WEA)
@@ -281,7 +281,7 @@ proc RealignResampleBuildGUI {} {
     #-------------------------------------------
     # Resample->Pixel Size
     #-------------------------------------------   
-    set f $fRealignResample.fOutputSpacing
+    set f $fResample.fOutputSpacing
     eval {label $f.lOutputSpacing -text "New Spacing"} $Gui(WLA)
     pack $f.lOutputSpacing -side top -padx $Gui(pad) -pady $Gui(pad)
     eval {label $f.lOutputSpacingLR -text "LR:"} $Gui(WLA)
@@ -296,14 +296,14 @@ proc RealignResampleBuildGUI {} {
     #-------------------------------------------
     # Resample->Auto Spacing
     #-------------------------------------------   
-    set f $fRealignResample.fAutoSpacing
+    set f $fResample.fAutoSpacing
     DevAddButton $f.bAutoSpacing "Original Spacing"  AutoSpacing
     pack $f.bAutoSpacing -side left -padx $Gui(pad) -pady $Gui(pad)
 
     #-------------------------------------------
     # Resample->Output Extent
     #-------------------------------------------   
-    set f $fRealignResample.fImageSize 
+    set f $fResample.fImageSize 
 
     eval {label $f.lOutputExtent -text "New Dimensions"} $Gui(WLA)
     pack $f.lOutputExtent -side top -padx $Gui(pad) -pady $Gui(pad)
@@ -318,7 +318,7 @@ proc RealignResampleBuildGUI {} {
     #------------------------------------------
     # Resample->Set Extent
     #-------------------------------------------   
-    set f $fRealignResample.fSetExtent
+    set f $fResample.fSetExtent
     DevAddButton $f.bIsoExtentLR " Auto LR "  AutoExtentLR
     DevAddButton $f.bIsoExtentPA " Auto PA "  AutoExtentPA
     DevAddButton $f.bIsoExtentIS " Auto IS "  AutoExtentIS
@@ -327,14 +327,14 @@ proc RealignResampleBuildGUI {} {
     #-------------------------------------------
     # Resample->Auto Extent
     #-------------------------------------------   
-    set f $fRealignResample.fAutoExtent
+    set f $fResample.fAutoExtent
     DevAddButton $f.bAutoExtent "Auto Dimension"  AutoExtent
     pack $f.bAutoExtent -side left -padx $Gui(pad) -pady $Gui(pad)
 
     #-------------------------------------------
     # Resample->Interpolation Mode
     #-------------------------------------------
-    set f $fRealignResample.fInterpolationMode
+    set f $fResample.fInterpolationMode
     eval {label $f.lInterpolationMode -text "Interpolation Mode:"} $Gui(WLA)
   
     #Create label foreach type of interpolation
@@ -348,9 +348,9 @@ proc RealignResampleBuildGUI {} {
     #-------------------------------------------
     # Resample->Begin Resample
     #-------------------------------------------
-    set f $fRealignResample.fBeginResample
+    set f $fResample.fBeginResample
     
-    DevAddButton $f.bBeginResample "Realign Resample"  Resample
+    DevAddButton $f.bBeginResample "Resample"  Resample
 
     pack $f.bBeginResample -side top -padx $Gui(pad) -pady $Gui(pad)
     
@@ -359,7 +359,7 @@ proc RealignResampleBuildGUI {} {
     #-------------------------------------------
     # Resample->BeginSave
     #-------------------------------------------
-    set f $fRealignResample.fBeginSave
+    set f $fResample.fBeginSave
     
     DevAddButton $f.bBeginSave "Save"  Write
 
@@ -763,15 +763,15 @@ proc RealignCalculate {} {
         points SetPoint $i [lindex $list($i) 0] [lindex $list($i) 1] [lindex $list($i) 2]
     }
     polydata SetPoints points
-        if {$::Module(verbose)} { puts "Calling vtkPrincipleAxes" } 
+        if {$::Module(verbose)} { puts "Calling vtkPrincipalAxesAlign" } 
     catch "pa Delete"
-    vtkPrincipalAxes pa
+    vtkPrincipalAxesAlign pa
     if {$::Module(verbose)} { 
         puts "Making vtkPoints"
-        puts "Set Input to PrincipleAxes"
+        puts "Set Input to PrincipalAxesAlign"
     }
     pa SetInput polydata
-        if {$::Module(verbose)} { puts "Executing PrincipleAxes" } 
+        if {$::Module(verbose)} { puts "Executing PrincipalAxesAlign" } 
     pa Update
     set normal [pa GetZAxis]
     set nx [lindex $normal 0 ]
