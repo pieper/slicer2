@@ -433,7 +433,9 @@ proc fMRIEngineSortEVsForStat {x y z} {
     # sort out EVs
     for {set r $first} {$r <= $last} {incr r} {
         set tc $fMRIEngine($r,timeCourse)
-
+        set seqName $fMRIEngine($run,sequenceName)
+        set vols $MultiVolumeReader($seqName,noOfVolumes) 
+ 
         foreach name $fMRIEngine($r,namesOfEVs) {
             set onsetsStr $fMRIEngine($r,$name,onsets)
             set onsetsStr [string trim $onsetsStr]
@@ -444,6 +446,35 @@ proc fMRIEngineSortEVsForStat {x y z} {
             set durationsStr [string trim $durationsStr]
             regsub -all {( )+} $durationsStr " " durationsStr 
             set durations [split $durationsStr " "]     
+
+            # If onsets and durations are double, 
+            # we need convert them into integer for plotting
+            set newOnsets ""
+            set newDurations ""
+            foreach onset $onsets dur $durations {
+                set newOnset $onset
+                if {[string is double -strict $onset]} {
+                    set newOnset [expr ceil($onset)]
+                    scan $newOnset "%d" newOnset
+                }
+                lappend newOnsets $newOnset
+
+                if {[string is double -strict $dur]} {
+                    set t [expr $onset+$dur]
+                    set max [expr floor($t)]
+                    # if we reach the end of the sequence (vols-1)
+                    # add one volume to the duration
+                    if {$max == $t && $max != $vols-1} {
+                        set dur [expr {$max-$onset}]
+                    } else {
+                        set dur [expr {$max-$onset+1}]
+                    }
+                    scan $dur "%d" dur
+                }
+                lappend newDurations $dur
+            }
+            set onsets $newOnsets
+            set durations $newDurations
 
             if {! [info exists fMRIEngine(count$name)]} {
                 set fMRIEngine(count$name) 1
@@ -462,7 +493,7 @@ proc fMRIEngineSortEVsForStat {x y z} {
         }
     }
 
-    # sort out rest blocks
+    # sort out baseline blocks
     set fakeTc ""
     for {set r $first} {$r <= $last} {incr r} {
         set fakeTc [concat $fakeTc $fMRIEngine($r,fakeTimeCourse)]
@@ -480,13 +511,13 @@ proc fMRIEngineSortEVsForStat {x y z} {
                 set found 1
                 incr count
             }
-            lappend fMRIEngine(rest,$count,sections) [$oriTimeCourse GetComponent $i 0]
+            lappend fMRIEngine(baseline,$count,sections) [$oriTimeCourse GetComponent $i 0]
  
         }
 
         incr i
     }
-    set fMRIEngine(rest,noOfSections) $count
+    set fMRIEngine(baseline,noOfSections) $count
 }
 
 
@@ -521,7 +552,7 @@ proc fMRIEngineCreateCurvesFromTimeCourse {i j k} {
  
     unset -nocomplain fMRIEngine(allEVs)
     set fMRIEngine(allEVs) $fMRIEngine($run,namesOfEVs)
-    set fMRIEngine(allEVs) [lappend fMRIEngine(allEVs) rest]
+    set fMRIEngine(allEVs) [lappend fMRIEngine(allEVs) baseline]
 
     # For each ev, there are multiple sections which may not be 
     # identical in length. Pick up the bigest length for the
