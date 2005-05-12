@@ -11,16 +11,14 @@
 #
 
 # note: - SET replaced SOURCE_FILES for cmake 1.6
-#SET(LOCAL_MODULE_SRCS
-#vtkMyClass1.cxx
-#vtkMyClass2.cxx
-#...
-#)
+SET(LOCAL_MODULE_SRCS
+vtkPrincipalAxesAlign.cxx
+)
 
 ## classes that one does not want tcl wrapped
-#SET ( LOCAL_NO_WRAP_SRCS
+SET ( LOCAL_NO_WRAP_SRCS
 #vtkMyClassNoWrap.cxx
-#)
+)
 
 
 # Place names of abstract class implementations here. No file suffixes.
@@ -33,9 +31,9 @@
 #)
 
 # You can add additional include paths here
-#INCLUDE_DIRECTORIES(
-#${VTKMYCLASS_SOURCE_DIR}/include
-#)
+INCLUDE_DIRECTORIES(
+${VTKREALIGNRESAMPLE_SOURCE_DIR}/include
+)
 
 #### if you code depends on SlicerBase, uncomment the 
 #### INCLUDE_DIRECTORIES and LINK_LIBRARIES
@@ -49,9 +47,9 @@
 
 
 # Add additional directories to look in for libraries
-#LINK_DIRECTORIES(
-#${VTKMYCLASS_SOURCE_DIR}/lib
-#)
+LINK_DIRECTORIES(
+${VTKREALIGNRESAMPLE_SOURCE_DIR}/lib
+)
 
 
 
