@@ -47,15 +47,14 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <string>
 #include "vtkImageData.h"
 #include "vtkVolumeReader.h"
 
 #ifdef _WIN32
 #include <vector>
-#include <string>
 #else
 #include <vector.h>
-#include <string.h>
 #endif
 using namespace std;
 
