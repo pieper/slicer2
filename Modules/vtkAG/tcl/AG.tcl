@@ -172,7 +172,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.10 $} {$Date: 2005/04/19 18:30:35 $}]
+        {$Revision: 1.10.2.1 $} {$Date: 2005/05/13 23:45:52 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -259,6 +259,10 @@ proc AGInit {} {
         {all <Shift-1> {AGBindingCallback Shift-1 %W %X %Y %x %y %t}} \
         {all <Shift-2> {AGBindingCallback Shift-2 %W %X %Y %x %y %t}} \
         {all <Shift-3> {AGBindingCallback Shift-3 %W %X %Y %x %y %t}} }
+}
+
+proc AGBindingCallback {} {
+    # placeholder for future callbacks
 }
 
 
