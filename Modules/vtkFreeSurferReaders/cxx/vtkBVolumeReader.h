@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkBVolumeReader.h,v $
   Language:  C++
-  Date:      $Date: 2005/04/12 16:58:17 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2005/05/13 20:50:07 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================*/
 // .NAME vtkBVolumeReader - read a binary volume file from Freesurfer tools
@@ -117,6 +117,7 @@ public:
     
 
     vtkGetMacro(ScalarType,int);
+    vtkGetMacro(NumTimePoints,int);
 //    vtkGetVectorMacro(DataSpacing,int,3);
     
 protected:
