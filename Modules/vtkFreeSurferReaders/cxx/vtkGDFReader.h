@@ -45,6 +45,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include <vtkFreeSurferReadersConfigure.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include "vtkImageData.h"
 #include "vtkVolumeReader.h"
