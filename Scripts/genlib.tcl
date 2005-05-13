@@ -213,7 +213,7 @@ if { ![file exists $CMAKE] } {
         puts stderr ""
         puts stderr "Follow the instructions at the following link"
         puts stderr "to download precompiled versions of parts of the windows Lib"
-        puts stderr "http://www.na-mic.org/Wiki/index.php/Slicer:Slicer2.4_Building"
+        puts stderr "http://www.na-mic.org/Wiki/index.php/Slicer:Slicer_2.5_Building"
         puts stderr ""
         puts stderr "Then re-run genlib.tcl to build VTK and ITK"
         puts stderr ""
