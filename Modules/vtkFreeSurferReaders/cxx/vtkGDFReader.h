@@ -51,8 +51,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #ifdef _WIN32
 #include <vector>
+#include <string>
 #else
 #include <vector.h>
+#include <string.h>
 #endif
 using namespace std;
 
