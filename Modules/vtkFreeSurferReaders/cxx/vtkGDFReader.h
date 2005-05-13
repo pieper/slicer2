@@ -54,13 +54,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #else
 #include <vector.h>
 #endif
-
-typedef struct gdfVars {
-    char subjectID[256];
-    char className[256];
-    float vars[];
-};
-
+using namespace std;
 
 class VTK_FREESURFERREADERS_EXPORT vtkGDFReader : public vtkVolumeReader {
 public:
@@ -155,23 +149,29 @@ public:
     vtkGetStringMacro(SUBJECTS_DIR);
     vtkSetStringMacro(SUBJECTS_DIR);
 
+    vtkGetStringMacro(ErrVal);
+    
     // Description:
     // seed for synthetic generation
     vtkGetMacro(SynthSeed, int);
     vtkSetMacro(SynthSeed, int);
+
+    // Description:
+    // descriptor file to design matrix conversion method
+    vtkGetStringMacro(gd2mtx);
    
     char *GetNthClassLabel(int n);
     char *GetNthClassMarker(int n);
     char *GetNthClassColor(int n);
     char *GetNthVariableLabel(int n);
-    int GetNthSubjectID(int n);
+    char *GetNthSubjectID(int n);
     char *GetNthSubjectClass(int n);
     char *GetNthSubjectNthValue(int n1, int n2);
-    vtkFloatingPointType GetNthSubjectMeasurement(int n);
+    vtkFloatingPointType GetNthSubjectMeasurement(int n, char *subject, int x, int y, int z);
     
     // Description:
     //
-    void OffsetSlope();
+    void OffsetSlope(char *c, char *v, int x, int y, int z);
 
     // Description:
     // prints out to standard out
@@ -223,17 +223,28 @@ protected:
     int SynthSeed;
 
     // for testing
-    char * val;
+    char * ErrVal;
 
-private:
+    // the method by which the group descriptor file is converted to a design
+    // matrix (different offset same slope ; different offset different slope
+    // legal values: doss dods 
+    char * gd2mtx;
     
-    char * Classes[];
-    char * Variables[];
-    gdfVars Subjects[];
+private:
+   // to keep track of an increasing id for sucessive allocations
+    int lastID;
+    
 //BTX
-    std::vector<char *>ClassesVec;
-    std::vector<char *>VariablesVec;
-    std::vector<gdfVars>SubjectsVec;
+    string defaultMarker;
+    string defaultColour;
+
+    // use a vector to hold the class name, marker, colour (last two optional)
+    std::vector<std::vector<std::string> >ClassesVec;
+    //std::vector<char *>VariablesVec;
+    std::vector<std::string>VariablesVec;
+    // use a vector to hold the subject id, class, and values of a number that
+    // matches NumVariables
+    std::vector<std::vector<std::string> >SubjectsVec;
 //ETX
 };
 

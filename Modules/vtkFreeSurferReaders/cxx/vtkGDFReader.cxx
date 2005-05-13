@@ -35,6 +35,9 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 =========================================================================auto=*/
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <ctype.h>
 #include "vtkGDFReader.h"
 #include "vtkObjectFactory.h"
 
@@ -70,6 +73,14 @@ vtkGDFReader::vtkGDFReader()
     this->SmoothSteps = 0;
     this->SUBJECTS_DIR = NULL;
     this->SynthSeed = -1;
+    this->gd2mtx = "doss";
+
+    this->lastID = 0;
+    
+    this->defaultMarker = "plus";
+    this->defaultColour = "blue";
+
+    this->ErrVal = "ERROR";
 }
 
 vtkGDFReader::~vtkGDFReader()
@@ -96,6 +107,25 @@ vtkImageData *vtkGDFReader::GetImage(int ImageNumber)
 void vtkGDFReader::Read()
 {
     vtkDebugMacro(<< "Read");
+    // read the data plot file
+    if (this->DataFileName == NULL)
+    {
+        vtkErrorMacro(<<"ERROR: vtkGDFReader::Read data file name is null");
+        return;
+    }
+    vtkDebugMacro(<< "About to try reading the data file " << this->DataFileName);
+    if (strstr(this->DataFileName, ".bfloat") == NULL &&
+        strstr(this->DataFileName, ".bshort") == NULL)
+    {
+        vtkErrorMacro(<<"ERROR:  vtkGDFReader::Read does not recognise file type (has to be bfloat or bshort) of data file " << this->DataFileName);
+        return;
+    }
+/*
+    vtkBVolumeReader dataReader = new vtkBVolumeReader();
+    dataReader.SetFileName(this->DataFileName);
+
+    dataReader.Delete();
+*/  
 }
 
 // Format of the file is specified here:
@@ -163,8 +193,9 @@ int vtkGDFReader::ReadHeader(char *filename, int flag)
       while( isspace( (int)(*line) ) ) {
           line++;
       }
-      // now parse the lines in the files for the header values
-      if (strlen(line) > 0 && strncmp(line, "#", 1) != 0)
+      // now parse the lines in the files for the header values, skipping ones
+      // with only one character or less, or are comment lines
+      if (strlen(line) > 1 && strncmp(line, "#", 1) != 0)
       {
           vtkDebugMacro(<<"Parsing line " << line << endl);
           if (strncasecmp(line, "Title", 5) == 0)
@@ -178,6 +209,28 @@ int vtkGDFReader::ReadHeader(char *filename, int flag)
               this->NumClasses++;
               // the class name is required, but there may be a marker and a
               // colour after it
+              // this call will get 'Class', next calls will get the name, marker
+              // and colour (if present)
+              subline = strtok(line, " ");
+              // add the values to this temp vector, then push that into the
+              // classes vector
+              std::vector <string> tmpVec;
+              while ((subline = strtok(NULL, " ")) != NULL)
+              {
+                  // add to the classes vector
+                  vtkDebugMacro( << "Classes:\n\t line: " << line << "\n\t subline: "<< subline << endl);
+                  sscanf(subline, "%s", tempString);
+                  if (tempString != NULL)
+                  {
+                      std::string classval = tempString;
+                      tmpVec.push_back(classval);
+                      vtkDebugMacro(<<"classes: got tempString: " << tempString << ", adding it to tmpVec ");
+                  }
+              }
+              // check to make sure that have a marker and a colour
+              if (tmpVec.size() < 2) tmpVec.push_back(this->defaultMarker);
+              if (tmpVec.size() < 3) tmpVec.push_back(this->defaultColour);
+              this->ClassesVec.push_back(tmpVec);
           }
           else if (strncasecmp(line, "MeasurementName", 15) == 0)
           {
@@ -202,12 +255,13 @@ int vtkGDFReader::ReadHeader(char *filename, int flag)
               subline = strtok(line, " ");
               while ((subline = strtok(NULL, " ")) != NULL)
               {
-                  cerr << "Variables:\n\t line: " << line << "\n\t subline: "<< subline << endl;
+                  vtkDebugMacro( << "Variables:\n\t line: " << line << "\n\t subline: "<< subline << endl);
                   sscanf(subline, "%s", tempString);
                   if (tempString != NULL)
                   {
-                      this->VariablesVec.push_back(tempString);
-                      cerr << "Variables, got val, tempString = " << tempString << ", variables vec size = " << this->VariablesVec.size() << ", subline = " << subline << endl;
+                      std::string strval = tempString;
+                      this->VariablesVec.push_back(strval);
+                      vtkDebugMacro( << "Variables, got val, tempString = " << tempString << ", strval = " << strval.c_str() << ", variables vec size = " << this->VariablesVec.size() << ", subline = " << subline << endl);
                       //cerr << "Variables, got val " << this->VariablesVec[this->NumVariables] << ", variables vec size = " << this->VariablesVec.size() << ", subline = " << subline << endl;
                       this->NumVariables++;
                   }
@@ -227,6 +281,52 @@ int vtkGDFReader::ReadHeader(char *filename, int flag)
               // complex, this is one of many subjects
               // Input subjectid class var1val var1val .. varnval
               this->NumberOfSubjects++;
+              // this call will get 'Input', the next calls will get the
+              // subject id, classname, and variables (should match
+              // NumVariables)
+              subline = strtok(line, " ");
+              // add the values to this temp vector, then push that into the
+              // subjects vector
+              std::vector <string> tmpVec;
+              while ((subline = strtok(NULL, " ")) != NULL)
+              {
+                  // can have a mix of strings and numbers
+                  if (sscanf(subline, "%s", tempString) == 0)
+                  {
+                      /*
+                      int tempInt;
+                      if (sscanf(subline, "%d", tempInt) == 0)
+                      {
+                          float tempFloat;
+                          if (sscanf(subline, "%f", tempFloat) == 0)
+                          {
+                              vtkErrorMacro(<<"ERROR parsing line " << line << ", unknown token type for " << subline << endl);
+                          }
+                          else
+                          {
+                              // write the float to a string
+                              tempString += string.tempFloat;
+                          }
+                      }
+                      else
+                      {
+                          // write the int to a string
+                      }
+                      */
+                      vtkErrorMacro(<<"ERROR parsing line " << line << ", unknown token type for " << subline << endl);
+                  }
+                  if (tempString != NULL)
+                  {
+                      std::string subval = tempString;
+                      tmpVec.push_back(subval);
+                      vtkDebugMacro(<<"subjects: got tempString: " << tempString << ", adding it to tmpVec ");
+                  }
+              }
+              if (tmpVec.size()-2 != this->NumVariables)
+              {
+                  vtkErrorMacro(<<"Error: reading in subject " << this->NumberOfSubjects << " and not getting expected number of variables (" << this->NumVariables << ") from line: "<< line << endl);
+              }
+              this->SubjectsVec.push_back(tmpVec);
           }
           else if (strncasecmp(line, "Tessellation", 12) == 0)
           {
@@ -247,7 +347,8 @@ int vtkGDFReader::ReadHeader(char *filename, int flag)
           else if (strncasecmp(line, "DesignMatFile", 13) == 0)
           {
               this->DesignMatFile = (char *)malloc((strlen(line)) * sizeof(char));
-              sscanf(line, "%*s %s", this->DesignMatFile);
+              this->gd2mtx = (char *)malloc((strlen(line)) * sizeof(char));
+              sscanf(line, "%*s %s %s", this->DesignMatFile, this->gd2mtx);
           }
           else if (strncasecmp(line, "Creator", 7) == 0)
           {
@@ -275,56 +376,136 @@ int vtkGDFReader::ReadHeader(char *filename, int flag)
   }
   // cheating for a bit, allocate data structures and then rewind the file to fill in the data
   fclose(fp);
-
+  
   if (this->DefaultVariable == NULL && this->NumVariables > 0)
   {
-      this->DefaultVariable = this->VariablesVec[0];
+      vtkDebugMacro(<<"Default Variable is null, setting it to first variable " << this->VariablesVec[0].c_str());
+      this->DefaultVariable = (char *)this->VariablesVec[0].c_str();
+      this->DefaultVariableIndex = 0;
   }
-  cerr << "Done reading header file\n";
+  
+  vtkDebugMacro(<< "Done reading header file " << filename << "\n");
+  newID = this->lastID++;
   return newID;
 }
 
-void vtkGDFReader::OffsetSlope()
+// Calculate the offset and the slope for this point
+void vtkGDFReader::OffsetSlope(char * c, char * v, int x, int y, int z)
 {
-    vtkDebugMacro(<< "OffsetSlope");
+    vtkDebugMacro(<< "OffsetSlope: c=" << c << ", v=" << v << ", x=" << x << ",y=" << y << ",z=" << z);
 }
 
 char *vtkGDFReader::GetNthClassLabel(int n)
 {
     vtkDebugMacro(<< "GetNthClassLabel\n");
-    return this->val;
+    if (n < this->ClassesVec.size())
+    {
+        return (char *)this->ClassesVec[n][0].c_str();
+    }
+    else
+    {
+        vtkErrorMacro(<<"ERROR: GetNthClassLabel: n " << n << " is greater than classes vector size " << this->ClassesVec.size());
+        return this->ErrVal;
+    }
 }
 char *vtkGDFReader::GetNthClassMarker(int n)
 {
     vtkDebugMacro(<< "GetNthClassMarker\n");
-    return this->val;
+    if (n < this->ClassesVec.size())
+    {
+        return (char *)this->ClassesVec[n][1].c_str();
+    }
+    else
+    {
+        vtkErrorMacro(<<"ERROR: GetNthClassMarker: n " << n << " is greater than classes vector size " << this->ClassesVec.size());
+
+        return this->ErrVal;
+    }
 }
 char *vtkGDFReader::GetNthClassColor(int n)
 {
     vtkDebugMacro(<< "GetNthClassColor\n");
-    return this->val;
+    if (n < this->ClassesVec.size())
+    {
+        return (char *)this->ClassesVec[n][2].c_str();
+    }
+    else
+    {
+        vtkErrorMacro(<<"ERROR: GetNthClassColour: n " << n << " is greater than classes vector size " << this->ClassesVec.size());
+        return this->ErrVal;
+    }
 }
 char *vtkGDFReader::GetNthVariableLabel(int n)
 {
     vtkDebugMacro(<< "GetNthVariableLabel\n");
-    return this->val;
+    if (n < this->VariablesVec.size())
+    {
+        return (char *)this->VariablesVec[n].c_str();
+    }
+    else
+    {
+        vtkErrorMacro(<<"ERROR: GetNthVariableLabeln " << n << " is greater than variable vector size " << this->VariablesVec.size());
+        return this->ErrVal;
+    }
 }
-int vtkGDFReader::GetNthSubjectID(int n)
+
+// id is the first element of the vector of subject n
+char *vtkGDFReader::GetNthSubjectID(int n)
 {
     vtkDebugMacro(<< "GetNthSubjectID\n");
-    return 0;
+    if (n < this->SubjectsVec.size())
+    {
+        return (char *)this->SubjectsVec[n][0].c_str();
+    }
+    else
+    {
+        vtkErrorMacro(<<"ERROR: GetNthSubjectID " << n << " is greater than subject vector size " << this->SubjectsVec.size());
+        return this->ErrVal;
+    }
 }
+
+    // class is the second element of the vector of subject n
 char *vtkGDFReader::GetNthSubjectClass(int n)
 {
     vtkDebugMacro(<< "GetNthSubjectClass\n");
-    return this->val;
+    if (n < this->SubjectsVec.size())
+    {
+        return (char *)this->SubjectsVec[n][1].c_str();
+    }
+    else
+    {
+        vtkErrorMacro(<<"ERROR: GetNthSubjectClass " << n << " is greater than subject vector size " << this->SubjectsVec.size());
+        return this->ErrVal;
+    }
 }
+
+// the subject values start at the third entry in the subjects vec
+// and go for NumVariables entries
 char *vtkGDFReader::GetNthSubjectNthValue(int n1, int n2)
 {
     vtkDebugMacro(<< "GetNthSubjectNthValue\n");
-    return this->val;
+    if (n1 < this->SubjectsVec.size())
+    {
+        if (n2 < this->SubjectsVec[n1].size())
+        {
+            return (char*)this->SubjectsVec[n1][n2].c_str();
+        }
+        else
+        {
+            vtkErrorMacro(<<"ERROR: GetNthSubjectNthValue " << n2 << " is greater than subject " << n1 << "'s vector size " << this->SubjectsVec[n1].size());
+            return this->ErrVal;
+        }
+    }
+    else
+    {
+        vtkErrorMacro(<<"ERROR: GetNthSubjectNthValue " << n1 << " is greater than subject vector size " << this->SubjectsVec.size());
+        return this->ErrVal;
+    }
 }
-vtkFloatingPointType vtkGDFReader::GetNthSubjectMeasurement(int n)
+
+// return all the values for this subject
+// need to return a point in x, y, z - do it in tcl
+vtkFloatingPointType vtkGDFReader::GetNthSubjectMeasurement(int n, char *subject, int x, int y, int z)
 {
     vtkFloatingPointType retval;
     vtkDebugMacro(<< "GetNthSubjectMeasurement\n");
@@ -335,6 +516,9 @@ vtkFloatingPointType vtkGDFReader::GetNthSubjectMeasurement(int n)
 
 void vtkGDFReader::PrintSelf(ostream& os, vtkIndent indent)
 {
+    // to index vectors
+    unsigned int indx, subindx;
+    
     if (this->Title != NULL)
     {
       os << indent << "Title: " << this->Title << endl;
@@ -368,7 +552,27 @@ void vtkGDFReader::PrintSelf(ostream& os, vtkIndent indent)
       os << indent << "Data file name:" << endl;
     }
     os << indent << "Number of classes: " << this->NumClasses << endl;
+    if (this->NumClasses > 0)
+    {
+        for (indx = 0; indx < this->ClassesVec.size(); indx++)
+        {
+            os << indent << "Class " << indx << ":" << endl;
+            for (subindx = 0; subindx < this->ClassesVec[indx].size(); subindx++)
+            {
+                os << indent << " " << this->ClassesVec[indx][subindx].c_str();
+            }
+            os << endl;
+        } 
+    }
     os << indent << "Number of variables: " << this->NumVariables << endl;
+    if (this->NumVariables > 0)
+    {
+        
+        for (indx = 0; indx < this->VariablesVec.size(); indx++)
+        {
+            os << indent << "Variable " << indx << ": " << this->VariablesVec[indx].c_str() << endl; 
+        } 
+    }
     if (this->DefaultVariable != NULL)
     {
         os << indent << "Default variable: " << this->DefaultVariable << endl;
@@ -379,7 +583,22 @@ void vtkGDFReader::PrintSelf(ostream& os, vtkIndent indent)
     }
     os << indent << "Default variable index: " << this->DefaultVariableIndex << endl;
     os << indent << "Number of subjects: " << this->NumberOfSubjects << endl;
-
+    if (this->NumberOfSubjects > 0)
+    {
+        for (indx = 0; indx < this->SubjectsVec.size(); indx++)
+        {
+            os << indent << "Subject " << indx << ": " << endl;
+            for (subindx = 0; subindx < this->SubjectsVec[indx].size(); subindx++)
+            {
+                os << indent << " " << this->SubjectsVec[indx][subindx].c_str();
+            }
+            os << endl;
+            //os << indent << "\tsubject id: " << this->SubjectsVec[indx].subjectID.c_str() << endl; 
+            // os << indent << "\tclass name: " << this->SubjectsVec[indx].className.c_str() << endl; 
+//            os << indent << "\tvars: " << this->SubjectsVec[indx].vars[] << endl; 
+        } 
+    }
+    
     if (this->Tessellation != NULL)
         os << indent << "Tessellation: " << this->Tessellation << endl;
     else
@@ -405,6 +624,7 @@ void vtkGDFReader::PrintSelf(ostream& os, vtkIndent indent)
     else
         os << indent << "SUBJECTS_DIR: " << endl;
     os << indent << "SynthSeed: " << this->SynthSeed << endl;
+    os << indent << "GD file conversion method: " << this->gd2mtx << endl;
     
 }
 
@@ -480,5 +700,6 @@ void vtkGDFReader::PrintStdout()
     else
         cout << "SUBJECTS_DIR: " << endl;
     cout << "SynthSeed: " << this->SynthSeed << endl;
+    cout << "GD file conversion method: " << this->gd2mtx << endl;
     
 }
