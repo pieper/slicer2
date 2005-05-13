@@ -145,10 +145,10 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
     of << " ReferenceStandardFileName='" << this->ReferenceStandardFileName << "'";
   }
 
-  of << " PCALogisticSlope ='" << this->PCALogisticSlope << " "; 
-  of << " PCALogisticMin ='" << this->PCALogisticMin << " "; 
-  of << " PCALogisticMax ='" << this->PCALogisticMax << " "; 
-  of << " PCALogisticBoundary ='" << this->PCALogisticBoundary << " "; 
+  of << " PCALogisticSlope ='" << this->PCALogisticSlope << "'"; 
+  of << " PCALogisticMin ='" << this->PCALogisticMin << "'"; 
+  of << " PCALogisticMax ='" << this->PCALogisticMax << "'"; 
+  of << " PCALogisticBoundary ='" << this->PCALogisticBoundary << "'"; 
 
   of << " PrintQuality='" << this->PrintQuality << "'";
   of << " PrintPCA='" << this->PrintPCA << "'";
