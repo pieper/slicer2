@@ -38,6 +38,11 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <ctype.h>
+#ifdef _WIN32 // WINDOWS
+#define S_ISREG(m)  (((m)&_S_IFMT) == _S_IFREG)
+#else
+#include <unistd.h>
+#endif
 #include "vtkGDFReader.h"
 #include "vtkObjectFactory.h"
 
