@@ -111,7 +111,7 @@ proc fMRIEngineBuildUIForParadigmDesign {parent} {
     set runList [list {1}]
     set df [lindex $runList 0] 
     eval {menubutton $f.mbType -text $df \
-        -relief raised -bd 2 -width 5 \
+        -relief raised -bd 2 -width 4 \
         -indicatoron 1 \
         -menu $f.mbType.m} $Gui(WMBA)
     bind $f.mbType <1> "fMRIEngineUpdateRunsForConditionConfig" 
