@@ -55,9 +55,9 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // Needed to parallelise the algorithm
 typedef struct {
   int           id ;
-  vtkFloatingPointType         **w_m_input;
+  float         **w_m_input;
   unsigned char *MapVector;
-  vtkFloatingPointType         *cY_M; 
+  float         *cY_M; 
   int           imgX;
   int           imgY; 
   int           imgXY;
@@ -80,7 +80,7 @@ typedef struct {
   double        *InvSqrtDetLogCov;
   double        *TissueProbability;
   int           *VirtualNumInputImages;
-  vtkFloatingPointType         **w_m_output;
+  float         **w_m_output;
 } MF_Approximation_Work_Private;
 
 //ETX 
@@ -148,20 +148,24 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGene
   // -----------------------------------------------------  
   // Description:
   // Defines the Label map of a given image
-  static void DetermineLabelMap(short *LabelMap, int NumTotalTypeCLASS, int* NumChildClasses, vtkImageEMLocalSuperClass* head,  short* ROI,int ImageMax, vtkFloatingPointType **w_m);
+  static void DetermineLabelMap(short *LabelMap, int NumTotalTypeCLASS, int* NumChildClasses, vtkImageEMLocalSuperClass* head,  short* ROI,int ImageMax, float **w_m);
 
   // Desciption:
   // Special function for parallelise MF part -> Creating Threads 
-  int MF_Approx_Workpile(vtkFloatingPointType **w_m_input,unsigned char* MapVector, vtkFloatingPointType *cY_M, int imgXY,double ***InvLogCov,
-                         double *InvSqrtDetLogCov, int NumTotalTypeCLASS, int* NumChildClasses, int NumClasses, void** ProbDataPtr, 
-                         int* ProbDataIncY, int* ProbDataIncZ, vtkFloatingPointType* ProbDataWeight, vtkFloatingPointType *ProbDataMinusWeight, double** LogMu, 
-                         double* TissueProbability, int *VirtualNumInputImages, vtkImageEMLocalSuperClass* head, vtkFloatingPointType **_m_output);
+  int MF_Approx_Workpile(float **w_m_input, unsigned char* MapVector, float *cY_M, 
+                            int imgXY,double ***InvLogCov,
+                            double *InvSqrtDetLogCov, int NumTotalTypeCLASS, int* NumChildClasses, 
+                            int NumClasses, void** ProbDataPtr, 
+                            int* ProbDataIncY, int* ProbDataIncZ, vtkFloatingPointType* ProbDataWeight, 
+                            vtkFloatingPointType *ProbDataMinusWeight, double** LogMu, 
+                            double* TissueProbability, int *VirtualNumInputImages, 
+                            vtkImageEMLocalSuperClass* head, float **_m_output);
 
   // Description:
   // Print out intermediate result of the algorithm in a  file
   // The file is called  this->PrintIntermediateDir/EM*.m
-  void PrintIntermediateResultsToFile(int iter, vtkFloatingPointType **w_m, short *ROI, unsigned char* OutputVector, int NumTotalTypeCLASS, int* NumChildClasses, 
-                      vtkImageEMLocalSuperClass* actSupCl, char* LevelName, void **ClassList, classType *ClassListType, int* LabelList, FILE** QualityFile);
+  void PrintIntermediateResultsToFile(int iter, float **w_m, short *ROI, unsigned char* OutputVector, int NumTotalTypeCLASS, int* NumChildClasses, 
+          vtkImageEMLocalSuperClass* actSupCl, char* LevelName, void **ClassList, classType *ClassListType, int* LabelList, FILE** QualityFile);
 
   // -----------------------------------------------------
   // Intensity Correction 
@@ -183,7 +187,7 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGene
   vtkImageEMLocalSuperClass* GetActiveSuperClass() {return this->activeSuperClass;}
   vtkImageEMLocalSuperClass* GetHeadClass() {return this->HeadClass;}
   //ETX
-  int HierarchicalSegmentation(vtkImageEMLocalSuperClass* head, vtkFloatingPointType** InputVector,short *ROI, short *OutputVector, EMTriVolume & iv_m, EMVolume *r_m, char* LevelName);
+  int HierarchicalSegmentation(vtkImageEMLocalSuperClass* head, float** InputVector,short *ROI, short *OutputVector, EMTriVolume & iv_m, EMVolume *r_m, char* LevelName);
 
   //Kilian rewrite it 
   void PrintSuperClass () {

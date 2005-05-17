@@ -93,7 +93,7 @@ vtkFloatingPointType vtkImageEMGeneral_qgauss_sqrt(vtkFloatingPointType inverse_
 // ----------------------------------------
 // Normal Gauss Function for Multiple Input 
 // ----------------------------------------
- double vtkImageEMGeneral::GeneralGauss(vtkFloatingPointType *x,double *mu,double **inv_cov, double inv_sqrt_det_cov,int n) {
+ double vtkImageEMGeneral::GeneralGauss(float *x,double *mu,double **inv_cov, double inv_sqrt_det_cov,int n) {
   double *x_m = new double[n];
   double term = 0;
   int i,j; 
@@ -319,10 +319,10 @@ vtkFloatingPointType vtkImageEMGeneral_qgauss_sqrt(vtkFloatingPointType inverse_
 // Explanation: V = {y[1] ... y[numvar]}, V~ = Vleft = V / {y[n],y[m]}, and y = X <=> y element of X 
 //              =>  P(y[n] = x[n],y[m] = x[m]) = \sum{k = V~} (\sum{ l = [0..seq[y]]} P(y[n] = x[n],y[m] = x[m],y[k] = l,V~\{ y[k]}) 
 // -------------------------------------------------------------------------------------------------------------------
- double vtkImageEMGeneral::CalculatingPJointDistribution(vtkFloatingPointType* x,int *Vleft,double *mu, double **inv_cov, double inv_sqrt_det_cov,int SequenceMax, int setvar,int numvar) {
+ double vtkImageEMGeneral::CalculatingPJointDistribution(float* x,int *Vleft,double *mu, double **inv_cov, double inv_sqrt_det_cov,int SequenceMax, int setvar,int numvar) {
   double JointProb = 0.0; 
   if (setvar == numvar) {
-    if (numvar < 2) JointProb = FastGauss(inv_sqrt_det_cov, double(x[0]) - mu[0]);
+    if (numvar < 2) JointProb = FastGauss(inv_sqrt_det_cov, float(x[0]) - mu[0]);
       else {
     if (numvar < 3) JointProb = FastGauss2(inv_sqrt_det_cov,x, mu,inv_cov,2);
     else JointProb = vtkImageEMGeneral::GeneralGauss(x,mu,inv_cov,inv_sqrt_det_cov,numvar);
@@ -498,7 +498,7 @@ int vtkImageEMGeneral::CalculateLogMeanandLogCovariance(double **Mu, double ***C
   int *Vleft                = new int[VleftDim];
   double *LogCovDiag        = new double[NumberOfInputImages];
   double *SqrtCovDiag       = new double[NumberOfInputImages];
-  vtkFloatingPointType *x                  = new vtkFloatingPointType[NumberOfInputImages];
+  float *x                  = new float[NumberOfInputImages];
   double **inv_cov          = new double*[NumberOfInputImages];
   double *LogTestSequence  = new double[SequenceMax];
   for(i = 0; i < NumberOfInputImages; i++) { 
@@ -549,10 +549,10 @@ int vtkImageEMGeneral::CalculateLogMeanandLogCovariance(double **Mu, double ***C
       // Remember covariance matrixes are symmetric => start at j+1    
       JointSum = 0;
       for (l = 0; l < SequenceMax;l++) {
-        x[j] = (vtkFloatingPointType)l;
+        x[j] = (float)l;
         termJ = LogTestSequence[l] - LogMu[i][j];
         for (m = 0; m < SequenceMax;m++) {
-          x[k] = (vtkFloatingPointType)m;
+          x[k] = (float)m;
           // Calculating P(x[j] = l,x[k] = m)
           JointProb = vtkImageEMGeneral::CalculatingPJointDistribution(x,Vleft,Mu[i],inv_cov,inv_sqrt_det_cov,SequenceMax,2,NumberOfInputImages);
           LogCov[i][j][k] +=  termJ * (LogTestSequence[m] - LogMu[i][k]) * JointProb;
