@@ -28,7 +28,7 @@ void vtkITKDemonsRegistrationFilter::CreateRegistrationPipeline()
   m_ITKFilter->AddIterationObserver(observer );
   m_ITKFilter->SetInput(itkImporterFixed->GetOutput());
   m_ITKFilter->SetInput(1, itkImporterMoving->GetOutput());
-};
+}
 
 void vtkITKDemonsRegistrationFilter::UpdateRegistrationParameters()
 {

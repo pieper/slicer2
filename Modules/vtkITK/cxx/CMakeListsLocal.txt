@@ -8,7 +8,9 @@ ENDIF(USE_ITK_FILE)
 
 SET( LOCAL_MODULE_SRCS
 itkDemonsRegistrationImageFilter.cxx
-#vtkITKTransformRegistrationFilter.cxx
+itkVersorMattesMiVersorRegistrationFilter.cxx
+vtkITKVersorMattesMiVersorRegistrationFilter.cxx
+vtkITKTransformRegistrationFilter.cxx
 vtkITKRegistrationFilter.cxx
 vtkITKDeformableRegistrationFilter.cxx
 vtkITKDemonsRegistrationFilter.cxx
@@ -47,6 +49,7 @@ vtkITKVersion.cxx
 
 SET_SOURCE_FILES_PROPERTIES (
 itkDemonsRegistrationImageFilter.cxx
+itkVersorMattesMiVersorRegistrationFilter.cxx
 WRAP_EXCLUDE
 )
 
