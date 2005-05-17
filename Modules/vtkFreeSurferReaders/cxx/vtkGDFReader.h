@@ -48,6 +48,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <ctype.h>
 #include <stdlib.h>
 #include <string>
+#include <strings.h>
 #include "vtkImageData.h"
 #include "vtkVolumeReader.h"
 
