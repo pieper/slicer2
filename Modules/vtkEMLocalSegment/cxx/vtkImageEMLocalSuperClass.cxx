@@ -405,13 +405,13 @@ void vtkImageEMLocalSuperClass::ExecuteData(vtkDataObject *)
      memcpy(this->SegmentationBoundaryMax,((vtkImageEMLocalClass*) this->ClassList[index])->GetSegmentationBoundaryMax(),sizeof(int)*3);
      memcpy(this->SegmentationBoundaryMin,((vtkImageEMLocalClass*) this->ClassList[index])->GetSegmentationBoundaryMin(),sizeof(int)*3);
      memcpy(this->DataDim,((vtkImageEMLocalClass*) this->ClassList[index])->GetDataDim(),sizeof(int)*3);
-     memcpy(this->DataSpacing,((vtkImageEMLocalClass*) this->ClassList[index])->GetDataSpacing(),sizeof(float)*3);
+     memcpy(this->DataSpacing,((vtkImageEMLocalClass*) this->ClassList[index])->GetDataSpacing(),sizeof(vtkFloatingPointType)*3);
        }
        else {
      memcpy(this->SegmentationBoundaryMax,((vtkImageEMLocalSuperClass*) this->ClassList[index])->GetSegmentationBoundaryMax(),sizeof(int)*3);
      memcpy(this->SegmentationBoundaryMin,((vtkImageEMLocalSuperClass*) this->ClassList[index])->GetSegmentationBoundaryMin(),sizeof(int)*3);
      memcpy(this->DataDim,((vtkImageEMLocalSuperClass*) this->ClassList[index])->GetDataDim(),sizeof(int)*3);
-     memcpy(this->DataSpacing,((vtkImageEMLocalSuperClass*) this->ClassList[index])->GetDataSpacing(),sizeof(float)*3);
+     memcpy(this->DataSpacing,((vtkImageEMLocalSuperClass*) this->ClassList[index])->GetDataSpacing(),sizeof(vtkFloatingPointType)*3);
        }
      }
    } 
@@ -475,8 +475,8 @@ void vtkImageEMLocalSuperClass::ExecuteData(vtkDataObject *)
                 << ") is inconsistent with this super class' ones ("<< this->DataDim[0] <<","<<this->DataDim[1] << "," << this->DataDim[2] <<")");
        return; 
      }
-     float* spacing = ((vtkImageEMLocalClass*) this->ClassList[i])->GetDataSpacing();
-     if (memcmp(this->DataSpacing,spacing,sizeof(float)*3)) {
+     vtkFloatingPointType* spacing = ((vtkImageEMLocalClass*) this->ClassList[i])->GetDataSpacing();
+     if (memcmp(this->DataSpacing,spacing,sizeof(vtkFloatingPointType)*3)) {
        vtkEMAddErrorMessage("DataSpacing of class "<< i << " ("<< spacing[0] << "," << spacing[1] << "," << spacing[2] 
                 << ") is inconsistent with this super class' ones ("<< this->DataSpacing[0] <<","<<this->DataSpacing[1] << "," << this->DataSpacing[2] <<")");
        return; 
@@ -518,8 +518,8 @@ void vtkImageEMLocalSuperClass::ExecuteData(vtkDataObject *)
        return; 
      }
 
-     float* spacing = ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetDataSpacing();
-     if (memcmp(this->DataSpacing,spacing,sizeof(float)*3)) {
+     vtkFloatingPointType* spacing = ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetDataSpacing();
+     if (memcmp(this->DataSpacing,spacing,sizeof(vtkFloatingPointType)*3)) {
        vtkEMAddErrorMessage( "DataSpacing of class "<< i << " ("<< spacing[0] << "," << spacing[1] << "," << spacing[2] 
                        << ") is inconsistent with this super class' ones ("<< this->DataSpacing[0] <<","<<this->DataSpacing[1] << "," << this->DataSpacing[2] <<")");
        return; 

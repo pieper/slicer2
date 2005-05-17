@@ -50,7 +50,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // root of the argument, in other words, the
 // argument should already be squared.
 
-float vtkImageEMGeneral_qgauss_sqrt(float inverse_sigma, float x)
+vtkFloatingPointType vtkImageEMGeneral_qgauss_sqrt(vtkFloatingPointType inverse_sigma, vtkFloatingPointType x)
 {
     return EMSEGMENT_ONE_OVER_ROOT_2_PI * inverse_sigma 
     * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * inverse_sigma * inverse_sigma * x);
@@ -93,7 +93,7 @@ float vtkImageEMGeneral_qgauss_sqrt(float inverse_sigma, float x)
 // ----------------------------------------
 // Normal Gauss Function for Multiple Input 
 // ----------------------------------------
- double vtkImageEMGeneral::GeneralGauss(float *x,double *mu,double **inv_cov, double inv_sqrt_det_cov,int n) {
+ double vtkImageEMGeneral::GeneralGauss(vtkFloatingPointType *x,double *mu,double **inv_cov, double inv_sqrt_det_cov,int n) {
   double *x_m = new double[n];
   double term = 0;
   int i,j; 
@@ -319,7 +319,7 @@ float vtkImageEMGeneral_qgauss_sqrt(float inverse_sigma, float x)
 // Explanation: V = {y[1] ... y[numvar]}, V~ = Vleft = V / {y[n],y[m]}, and y = X <=> y element of X 
 //              =>  P(y[n] = x[n],y[m] = x[m]) = \sum{k = V~} (\sum{ l = [0..seq[y]]} P(y[n] = x[n],y[m] = x[m],y[k] = l,V~\{ y[k]}) 
 // -------------------------------------------------------------------------------------------------------------------
- double vtkImageEMGeneral::CalculatingPJointDistribution(float* x,int *Vleft,double *mu, double **inv_cov, double inv_sqrt_det_cov,int SequenceMax, int setvar,int numvar) {
+ double vtkImageEMGeneral::CalculatingPJointDistribution(vtkFloatingPointType* x,int *Vleft,double *mu, double **inv_cov, double inv_sqrt_det_cov,int SequenceMax, int setvar,int numvar) {
   double JointProb = 0.0; 
   if (setvar == numvar) {
     if (numvar < 2) JointProb = FastGauss(inv_sqrt_det_cov, double(x[0]) - mu[0]);
@@ -332,7 +332,7 @@ float vtkImageEMGeneral_qgauss_sqrt(float inverse_sigma, float x)
   setvar ++;
   int index = Vleft[numvar - setvar];
   for (int i = 0 ; i < SequenceMax; i++) {
-    x[index] = (float)i;
+    x[index] = (vtkFloatingPointType)i;
     JointProb += vtkImageEMGeneral::CalculatingPJointDistribution(x,Vleft,mu, inv_cov, inv_sqrt_det_cov,SequenceMax,setvar,numvar);
   }
   return JointProb;
@@ -498,7 +498,7 @@ int vtkImageEMGeneral::CalculateLogMeanandLogCovariance(double **Mu, double ***C
   int *Vleft                = new int[VleftDim];
   double *LogCovDiag        = new double[NumberOfInputImages];
   double *SqrtCovDiag       = new double[NumberOfInputImages];
-  float *x                  = new float[NumberOfInputImages];
+  vtkFloatingPointType *x                  = new vtkFloatingPointType[NumberOfInputImages];
   double **inv_cov          = new double*[NumberOfInputImages];
   double *LogTestSequence  = new double[SequenceMax];
   for(i = 0; i < NumberOfInputImages; i++) { 
@@ -549,10 +549,10 @@ int vtkImageEMGeneral::CalculateLogMeanandLogCovariance(double **Mu, double ***C
       // Remember covariance matrixes are symmetric => start at j+1    
       JointSum = 0;
       for (l = 0; l < SequenceMax;l++) {
-        x[j] = (float)l;
+        x[j] = (vtkFloatingPointType)l;
         termJ = LogTestSequence[l] - LogMu[i][j];
         for (m = 0; m < SequenceMax;m++) {
-          x[k] = (float)m;
+          x[k] = (vtkFloatingPointType)m;
           // Calculating P(x[j] = l,x[k] = m)
           JointProb = vtkImageEMGeneral::CalculatingPJointDistribution(x,Vleft,Mu[i],inv_cov,inv_sqrt_det_cov,SequenceMax,2,NumberOfInputImages);
           LogCov[i][j][k] +=  termJ * (LogTestSequence[m] - LogMu[i][k]) * JointProb;
@@ -822,8 +822,8 @@ void vtkImageEMGeneral::TestMatrixFunctions(int MatrixDim,int iter) {
   delete[] out;
 }
 
-float vtkImageEMGeneral_CountLabel(vtkImageThreshold* trash,vtkImageData * Input, float val) {
-  float result;
+vtkFloatingPointType vtkImageEMGeneral_CountLabel(vtkImageThreshold* trash,vtkImageData * Input, vtkFloatingPointType val) {
+  vtkFloatingPointType result;
   trash->SetInput(Input); 
   trash->ThresholdBetween(val,val);
   trash->SetInValue(1.0); 
@@ -848,7 +848,7 @@ float vtkImageEMGeneral_CountLabel(vtkImageThreshold* trash,vtkImageData * Input
 // Value defines the vooxel with those label to be measured
 // Returns  Dice sim measure
 
-float vtkImageEMGeneral::CalcSimularityMeasure (vtkImageData *Image1, vtkImageData *Image2,float val, int PrintRes, int *BoundaryMin, int *BoundaryMax) {
+vtkFloatingPointType vtkImageEMGeneral::CalcSimularityMeasure (vtkImageData *Image1, vtkImageData *Image2,vtkFloatingPointType val, int PrintRes, int *BoundaryMin, int *BoundaryMax) {
   vtkImageThreshold *Trash1 =  vtkImageThreshold::New(), 
                     *Trash2 =  vtkImageThreshold::New(),
                     *Final  =  vtkImageThreshold::New();
@@ -866,9 +866,9 @@ float vtkImageEMGeneral::CalcSimularityMeasure (vtkImageData *Image1, vtkImageDa
   ROI2->Update();
 
   vtkImageMathematics *MathImg = vtkImageMathematics::New();
-  float result;
-  float NumMeasure;
-  float DivMeasure = vtkImageEMGeneral_CountLabel(Trash1,ROI1->GetOutput(), val); 
+  vtkFloatingPointType result;
+  vtkFloatingPointType NumMeasure;
+  vtkFloatingPointType DivMeasure = vtkImageEMGeneral_CountLabel(Trash1,ROI1->GetOutput(), val); 
   DivMeasure += vtkImageEMGeneral_CountLabel(Trash2,ROI2->GetOutput(), val); 
 
   // Find out overlapping volume 
@@ -896,15 +896,15 @@ float vtkImageEMGeneral::CalcSimularityMeasure (vtkImageData *Image1, vtkImageDa
 }  
 
 
-float vtkImageEMGeneral::CalcSimularityMeasure (vtkImageData *Image1, vtkImageData *Image2,float val, int PrintRes) {
+vtkFloatingPointType vtkImageEMGeneral::CalcSimularityMeasure (vtkImageData *Image1, vtkImageData *Image2,vtkFloatingPointType val, int PrintRes) {
   vtkImageThreshold *Trash1 =  vtkImageThreshold::New(), 
                     *Trash2 =  vtkImageThreshold::New(),
                     *Final  =  vtkImageThreshold::New();
 
   vtkImageMathematics *MathImg = vtkImageMathematics::New();
-  float result;
-  float NumMeasure;
-  float DivMeasure = vtkImageEMGeneral_CountLabel(Trash1,Image1, val); 
+  vtkFloatingPointType result;
+  vtkFloatingPointType NumMeasure;
+  vtkFloatingPointType DivMeasure = vtkImageEMGeneral_CountLabel(Trash1,Image1, val); 
   DivMeasure += vtkImageEMGeneral_CountLabel(Trash2,Image2, val); 
 
   // Find out overlapping volume 

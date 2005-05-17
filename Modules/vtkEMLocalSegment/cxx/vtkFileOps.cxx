@@ -61,7 +61,7 @@ void vtkFileOps::WriteVectorMatlabFile (char *filename, char *name,unsigned char
   fclose(f);
 }
 
-void vtkFileOps::WriteVectorMatlabFile (char *filename, char *name,float *vec, int xMax) const {
+void vtkFileOps::WriteVectorMatlabFile (char *filename, char *name,vtkFloatingPointType *vec, int xMax) const {
   int appendFlag = 0;
   FILE *f = (strcmp(filename,"-"))?fopen(filename,((appendFlag)?"a":"w")):stdout;
   if ( f == NULL ) {
@@ -77,6 +77,7 @@ void vtkFileOps::WriteVectorMatlabFile (char *filename, char *name,float *vec, i
   fclose(f);
 }
 
+#if 0
 // Opens up a new file and writes down result in the file
 void vtkFileOps::WriteVectorMatlabFile (char *filename, char *varname,double *vec, int xMax) const {
   int appendFlag = 0;
@@ -84,15 +85,16 @@ void vtkFileOps::WriteVectorMatlabFile (char *filename, char *varname,double *ve
   if ( f == NULL ) {
     cerr << "Could not open file " << filename << "\n";
     return;
-  }
+  }double
   this->WriteVectorMatlabFile(f,varname,vec,xMax);
   fflush(f);
   fclose(f);
 }
+#endif
 
 // Writes Vector to file in Matlab format if name is specified otherwise just 
 // writes the values in the file
-void vtkFileOps::WriteVectorMatlabFile (FILE *f,char *name, double *vec, int xMax) const {
+void vtkFileOps::WriteVectorMatlabFile (FILE *f,char *name, vtkFloatingPointType *vec, int xMax) const {
   if (name != NULL) fprintf(f,"%s = [", name);
   xMax --;
   for (int x = 0; x < xMax; x++ )
@@ -102,7 +104,7 @@ void vtkFileOps::WriteVectorMatlabFile (FILE *f,char *name, double *vec, int xMa
 }
 
 // Opens up a new file and writes down result in the file
-void vtkFileOps::WriteMatrixMatlabFile (char *filename,char *varname, double **mat, int imgY, int imgX) const {
+void vtkFileOps::WriteMatrixMatlabFile (char *filename,char *varname, vtkFloatingPointType **mat, int imgY, int imgX) const {
   int appendFlag = 0;
   FILE *f = (strcmp(filename,"-"))?fopen(filename,((appendFlag)?"a":"w")):stdout;
   if ( f == NULL ) {
@@ -116,7 +118,7 @@ void vtkFileOps::WriteMatrixMatlabFile (char *filename,char *varname, double **m
 
 // Writes Matrix to file in Matlab format if name is specified otherwise just 
 // writes the values in the file
-void vtkFileOps::WriteMatrixMatlabFile (FILE *f,char *name,double **mat, int imgY, int imgX) const
+void vtkFileOps::WriteMatrixMatlabFile (FILE *f,char *name,vtkFloatingPointType **mat, int imgY, int imgX) const
 {
   if (name != NULL) fprintf(f,"%s = [", name);
   for (int y = 0; y < imgY; y++ ) {
@@ -147,7 +149,7 @@ void  vtkFileOps::WriteDoubleToUShortToGEFile(char* FileName, double* vec,int XS
 // Functions to write Short Data to an MRI File
 // ---------------------------------------------------------
 /* Copyright (c) Simon Warfield simonw@bwh.harvard.edu */
-/* $Id: vtkFileOps.cxx,v 1.6 2005/04/19 16:13:54 nicole Exp $ */
+/* $Id: vtkFileOps.cxx,v 1.6.2.1 2005/05/17 18:28:32 pieper Exp $ */
 int vtkFileOps::uncompressedFileName(char *fname, char **newFileName)
 {
 #ifndef _WIN32

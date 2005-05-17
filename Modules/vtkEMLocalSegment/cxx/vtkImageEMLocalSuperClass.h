@@ -72,8 +72,8 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSuperClass : public vtkImageEMGen
   int           GetProbDataPtr(void **PointerList,int index); 
   int           GetProbDataIncYandZ(int* ProbDataIncY,int* ProbDataIncZ,int index);
 
-  void          SetProbDataWeight(float value) {this->ProbDataWeight = value;}
-  float         GetProbDataWeight(){return this->ProbDataWeight;} 
+  void          SetProbDataWeight(vtkFloatingPointType value) {this->ProbDataWeight = value;}
+  vtkFloatingPointType         GetProbDataWeight(){return this->ProbDataWeight;} 
 
   int           GetTotalNumberOfClasses(bool flag); // if flag is set => includes subclasses of type SUPERCLASS
   int           GetAllLabels(short *LabelList, int result,int Max); // Gets all labels from the Substructures

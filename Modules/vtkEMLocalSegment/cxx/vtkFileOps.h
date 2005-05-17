@@ -47,9 +47,9 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkFileOps { //; prevent man page generation
 
   // Note if varname = NULL it will just write the data in the file
   void WriteVectorMatlabFile (char *filename, char *name,unsigned char *vec, int xMax) const;
-  void WriteVectorMatlabFile (char *filename, char *varname,float *vec, int xMax) const;
-  void WriteVectorMatlabFile (char *filename, char *varname,double *vec, int xMax) const;
-  void WriteMatrixMatlabFile (char *filename,char *varname, double **mat, int imgY, int imgX) const;
+  void WriteVectorMatlabFile (char *filename, char *varname,vtkFloatingPointType *vec, int xMax) const;
+  //void WriteVectorMatlabFile (char *filename, char *varname,double *vec, int xMax) const;
+  void WriteMatrixMatlabFile (char *filename,char *varname, vtkFloatingPointType **mat, int imgY, int imgX) const;
 
   // ----------------------------------------------
   // Kilian: Old Stuff - I think you can take all of this out  
@@ -70,8 +70,8 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkFileOps { //; prevent man page generation
   static char* pathComponent(char *fname);
 
 protected:
-  void WriteVectorMatlabFile (FILE *f,char *name, double *vec, int xMax) const;
-  void WriteMatrixMatlabFile (FILE *f,char *name,double **mat, int imgY, int imgX) const;
+  void WriteVectorMatlabFile (FILE *f,char *name, vtkFloatingPointType *vec, int xMax) const;
+  void WriteMatrixMatlabFile (FILE *f,char *name,vtkFloatingPointType **mat, int imgY, int imgX) const;
 
   void ensureGEByteOrderForShort(short *data, int np);
   int IsMSBFirstForShort(void);

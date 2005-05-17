@@ -91,8 +91,8 @@ public:
   // This variable allows to control the influence of the LocalPrioir in the segmentation process 
   // LocalPriorWeight = 1.0 default setting; 0.0 => LocalPrior is ignored
   // Note: this variable is applied to all the subclasses during the segmentation bc the subclasses define the local Prior 
-  vtkGetMacro(LocalPriorWeight,float);
-  vtkSetMacro(LocalPriorWeight,float);
+  vtkGetMacro(LocalPriorWeight,vtkFloatingPointType);
+  vtkSetMacro(LocalPriorWeight,vtkFloatingPointType);
 
   // Description:
   // Get/Set for SegmenterClass - define name of spatial prior
@@ -157,7 +157,7 @@ protected:
   void operator=(const vtkMrmlSegmenterGenericClassNode&) {};
 
   double Prob;
-  float  LocalPriorWeight;
+  vtkFloatingPointType  LocalPriorWeight;
   char   *InputChannelWeights;  
   int    PrintWeights;
   int    PrintRegistrationParameters;

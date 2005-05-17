@@ -120,11 +120,11 @@ do { \
 
 // From Simon convolution.cxx
 typedef struct {
-  float *input;
+  vtkFloatingPointType *input;
   int nrow;
   int ncol;
   int nslice;
-  float *filter;
+  vtkFloatingPointType *filter;
   int *indexes;
   int numindexes;
   int M1;
@@ -133,7 +133,7 @@ typedef struct {
   int N2;
   int O1;
   int O2;
-  float *output;
+  vtkFloatingPointType *output;
   int startindex;
   int endindex;   /* Process voxels in the range [startindex, endindex) */
 } convolution_filter_work;
@@ -141,11 +141,11 @@ typedef struct {
 // Function needed both in vtkDataTimeDef and vtkImageEMGeneral
 // Convolution and polynomial multiplication . 
 // This is assuming u and 'this' have the same dimensio
-inline void convVector(float vec[], float u[], int uLen, float v[], int vLen){
+inline void convVector(vtkFloatingPointType vec[], vtkFloatingPointType u[], int uLen, vtkFloatingPointType v[], int vLen){
   int stump = vLen /2;
   int k,j,jMin,jMax;
   int kMax = uLen + stump;
-  float *uSta =u, *vSta=v;  
+  vtkFloatingPointType *uSta =u, *vSta=v;  
 
   for (k = stump; k <  kMax; k++) {
     *vec = 0;
@@ -160,7 +160,7 @@ inline void convVector(float vec[], float u[], int uLen, float v[], int vLen){
 
 
 // ----------------------------------------------------------------------------------------------
-// Definitions for 3D float array EMVolume
+// Definitions for 3D vtkFloatingPointType array EMVolume
 // ----------------------------------------------------------------------------------------------/ 
 
 // Kilian turn around dimension so it is y,x,z like in matlab ! 
@@ -173,7 +173,7 @@ public:
 
   // Convolution in all three direction 
   // Can be made using less memory but then it will be probably be slower
-  void Conv(float *v,int vLen) {
+  void Conv(vtkFloatingPointType *v,int vLen) {
     this->ConvY(v,vLen);
     this->ConvX(v,vLen);
     this->ConvZ(v,vLen);
@@ -183,8 +183,8 @@ public:
     this->deallocate();this->allocate(DimZ,DimY,DimX);
   }
 
-  float& operator () (int z,int y, int x) {return this->Data[x+this->MaxX*y + this->MaxXY*z];}
-  const float& operator () (int z,int y, int x) const {return this->Data[x+this->MaxX*y + this->MaxXY*z];}
+  vtkFloatingPointType& operator () (int z,int y, int x) {return this->Data[x+this->MaxX*y + this->MaxXY*z];}
+  const vtkFloatingPointType& operator () (int z,int y, int x) const {return this->Data[x+this->MaxX*y + this->MaxXY*z];}
 
   EMVolume & operator = (const EMVolume &trg) {
     if ( this->Data == trg.Data ) return *this;
@@ -197,35 +197,35 @@ public:
     return *this;
   }
   // Kilian : Just to be compatible with older version
-  void Conv(double *v,int vLen);
-  int ConvMultiThread(float* filter, int filterLen);
+  //void Conv(double *v,int vLen);
+  int ConvMultiThread(vtkFloatingPointType* filter, int filterLen);
   // Start -  Multi Thread Function
-  int ConvolutionFilter_workpile(float *input, float *filter, int M1, int M2, int N1, int N2, int O1, int O2);
+  int ConvolutionFilter_workpile(vtkFloatingPointType *input, vtkFloatingPointType *filter, int M1, int M2, int N1, int N2, int O1, int O2);
 
   // End -  Multi Thread Function
-  void ConvY(float *v, int vLen);
-  void ConvX(float *v, int vLen);
+  void ConvY(vtkFloatingPointType *v, int vLen);
+  void ConvX(vtkFloatingPointType *v, int vLen);
   // Same as above only sorce and target Volume are different => Slower 
-  void ConvX(EMVolume &src,float v[], int vLen);
-  void ConvZ(float *v, int vLen);
+  void ConvX(EMVolume &src,vtkFloatingPointType v[], int vLen);
+  void ConvZ(vtkFloatingPointType *v, int vLen);
   // Same as above only sorce and target Volume are different => Slower 
-  void ConvZ(EMVolume &src,float v[], int vLen);
+  void ConvZ(EMVolume &src,vtkFloatingPointType v[], int vLen);
   void Print(char name[]);
   void Test(int Vdim);
-  void SetValue(float val) {
+  void SetValue(vtkFloatingPointType val) {
     if (val) {for (int i = 0; i < this->MaxXYZ; i++ ) this->Data[i] = val;}
-    else { memset(this->Data, 0,sizeof(float)*this->MaxXYZ);}
+    else { memset(this->Data, 0,sizeof(vtkFloatingPointType)*this->MaxXYZ);}
   }
-  float* GetData() {return this->Data;}
+  vtkFloatingPointType* GetData() {return this->Data;}
  
 protected :
-  float *Data;
+  vtkFloatingPointType *Data;
   int MaxX, MaxY, MaxZ, MaxXY, MaxXYZ;
 
   void allocate (int initZ,int initY, int initX) {
     this->MaxX  = initX;this->MaxY  = initY;this->MaxZ  = initZ;
     this->MaxXY = initX*initY; this->MaxXYZ = this->MaxXY*this->MaxZ;
-    this->Data = new float[this->MaxXYZ];
+    this->Data = new vtkFloatingPointType[this->MaxXYZ];
   } 
 
   void deallocate () {
@@ -237,7 +237,7 @@ protected :
 }; 
 
 // ----------------------------------------------------------------------------------------------
-// Definitions for 5D float array EMTriVolume (lower triangle)
+// Definitions for 5D vtkFloatingPointType array EMTriVolume (lower triangle)
 // ----------------------------------------------------------------------------------------------/ 
 // It is a 5 dimensional Volume where m[t1][t2][z][y][x] t1>= t2 is only defined 
 // Lower Traingular matrix - or a symmetric matrix where you only save the lower triangle
@@ -271,24 +271,26 @@ public:
     this->deallocate();this->allocate(initDim,DimZ,DimY,DimX);
   }
 
-  float& operator () (int t1, int t2, int z,int y, int x) {return this->TriVolume[t1][t2](z,y,x);}
-  const float& operator () (int t1, int t2, int z,int y, int x) const {return this->TriVolume[t1][t2](z,y,x);}
+  vtkFloatingPointType& operator () (int t1, int t2, int z,int y, int x) {return this->TriVolume[t1][t2](z,y,x);}
+  const vtkFloatingPointType& operator () (int t1, int t2, int z,int y, int x) const {return this->TriVolume[t1][t2](z,y,x);}
 
   // Kilian : Just to be complient with old version
+#if 0
   void Conv(double *v,int vLen) {
-    float *v_f = new float[vLen];
-    for (int i = 0; i < vLen; i++) v_f[i] = float(v[i]);
+    vtkFloatingPointType *v_f = new vtkFloatingPointType[vLen];
+    for (int i = 0; i < vLen; i++) v_f[i] = vtkFloatingPointType(v[i]);
     this->Conv(v_f,vLen);  
     delete[] v_f;
   }
+#endif
 
-  void Conv(float *v,int vLen) {
+  void Conv(vtkFloatingPointType *v,int vLen) {
     int x,y;
     for (y=0 ; y < this->Dim; y++) { 
       for (x = 0; x <= y; x++) this->TriVolume[y][x].Conv(v,vLen);
     }
   }
-  void SetValue(float val) {
+  void SetValue(vtkFloatingPointType val) {
     int x,y;
     for (y=0 ; y < this->Dim; y++) { 
       for (x = 0; x <= y; x++) this->TriVolume[y][x].SetValue(val);

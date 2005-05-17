@@ -58,8 +58,8 @@ void EMVolume::Test(int Vdim) {
   cout << "fix for windows ======================================================================" << endl;
 #ifndef _WIN32
   int x,y,z;
-  float v[Vdim];
-  float *vtest = new float[Vdim];
+  vtkFloatingPointType v[Vdim];
+  vtkFloatingPointType *vtest = new vtkFloatingPointType[Vdim];
   EMVolume result(this->MaxZ,this->MaxY,this->MaxX),
            Copy(this->MaxZ,this->MaxY,this->MaxX);
 
@@ -110,22 +110,24 @@ void EMVolume::Test(int Vdim) {
 }
 
 // Kilian : This is just so we are compatible with older version
+#if 0
 void EMVolume::Conv(double *v,int vLen) {
-  float *v_f = new float[vLen];
-  for (int i = 0; i < vLen; i++) v_f[i] = float(v[i]);
+  vtkFloatingPointType *v_f = new vtkFloatingPointType[vLen];
+  for (int i = 0; i < vLen; i++) v_f[i] = vtkFloatingPointType(v[i]);
   this->Conv(v_f,vLen);  
   delete[] v_f;
 }
+#endif
 
 
 
-inline void EMVolume::ConvY(float *v, int vLen) {
+inline void EMVolume::ConvY(vtkFloatingPointType *v, int vLen) {
   int x,y,z;
 
   // => Utrans[i] represents the i column of U;    
-  float * col     = new float[this->MaxY],
-        * result  = new float[this->MaxY];
-  float * DataStart = this->Data;
+  vtkFloatingPointType * col     = new vtkFloatingPointType[this->MaxY],
+        * result  = new vtkFloatingPointType[this->MaxY];
+  vtkFloatingPointType * DataStart = this->Data;
 
   for (z = 0; z < this->MaxZ; z++) {
     for (x = 0; x < this->MaxX; x++) {
@@ -151,14 +153,14 @@ inline void EMVolume::ConvY(float *v, int vLen) {
 // Same just v is a row vector instead of column one
 // We use the following equation :
 // conv(U,v) = conv(U',v')' => conv(U,v') = conv(U',v)';
-inline void EMVolume::ConvX(float *v, int vLen) {
+inline void EMVolume::ConvX(vtkFloatingPointType *v, int vLen) {
   int x,i,MaxYZ;
 
   // Use the i-th Rows of U = ith Column of U';
   // write it to the i-th Row of 'this' => Transpose again
-  float  * row     = new float[this->MaxX],
-         * result  = new float[this->MaxX];
-  float  * DataStart = this->Data;
+  vtkFloatingPointType  * row     = new vtkFloatingPointType[this->MaxX],
+         * result  = new vtkFloatingPointType[this->MaxX];
+  vtkFloatingPointType  * DataStart = this->Data;
 
   MaxYZ = this->MaxY*this->MaxZ;
   for (i = 0; i < MaxYZ; i++) {
@@ -175,13 +177,13 @@ inline void EMVolume::ConvX(float *v, int vLen) {
 // Same just v is a row vector instead of column one
 // We use the following equation :
 // conv(U,v) = conv(U',v')' => conv(U,v') = conv(U',v)';
-inline void EMVolume::ConvX(EMVolume &src,float *v, int vLen) {
+inline void EMVolume::ConvX(EMVolume &src,vtkFloatingPointType *v, int vLen) {
   int x,i,MaxYZ;
 
   // Use the i-th Rows of U = ith Column of U';
   // write it to the i-th Row of 'this' => Transpose again
-  float  * row       = new float[this->MaxX],
-         * result    = new float[this->MaxX],
+  vtkFloatingPointType  * row       = new vtkFloatingPointType[this->MaxX],
+         * result    = new vtkFloatingPointType[this->MaxX],
          * DataStart = this->Data,
          * SrcStart  = src.Data;
 
@@ -199,15 +201,15 @@ inline void EMVolume::ConvX(EMVolume &src,float *v, int vLen) {
 
 // Convolution and polynomial multiplication . 
 // This is assuming u and 'this' have the same dimension
-inline void EMVolume::ConvZ(EMVolume &src,float *v,int vLen) {
+inline void EMVolume::ConvZ(EMVolume &src,vtkFloatingPointType *v,int vLen) {
   int stump = vLen /2;
   int i,k,j,jMin,jMax;
 
   int kMax = this->MaxZ + stump;
 
-  float *SrcDataStart = src.Data;
-  float *DataStart    = this->Data;
-  float *vSta = v;
+  vtkFloatingPointType *SrcDataStart = src.Data;
+  vtkFloatingPointType *DataStart    = this->Data;
+  vtkFloatingPointType *vSta = v;
 
   for (k = stump; k <  kMax; k++) {
     for (i = 0; i < this->MaxXY; i++) {
@@ -233,14 +235,14 @@ inline void EMVolume::ConvZ(EMVolume &src,float *v,int vLen) {
 }
 
 // No unecessary memrory -> faster
-inline void EMVolume::ConvZ(float *v, int vLen) {
+inline void EMVolume::ConvZ(vtkFloatingPointType *v, int vLen) {
   int z,i;
 
   // Use the i-th Rows of U = ith Column of U';
   // write it to the i-th Row of 'this' => Transpose again
-  float  * vec     = new float[this->MaxZ],
-         * result  = new float[this->MaxZ];
-  float  * DataStart = this->Data;
+  vtkFloatingPointType  * vec     = new vtkFloatingPointType[this->MaxZ],
+         * result  = new vtkFloatingPointType[this->MaxZ];
+  vtkFloatingPointType  * DataStart = this->Data;
 
   for (i = 0; i < this->MaxXY; i++) {
     for (z = 0; z < this->MaxZ; z++) {
@@ -298,11 +300,11 @@ void ConvolutionFilterWorker(void *jobparm)
   int ncol = job->ncol;
   int nslice = job->nslice;
 
-  float *input = NULL;
-  float *output = NULL;
-  float *filter = job->filter;
+  vtkFloatingPointType *input = NULL;
+  vtkFloatingPointType *output = NULL;
+  vtkFloatingPointType *filter = job->filter;
 
-  float sum = 0.0;
+  vtkFloatingPointType sum = 0.0;
   int coeff = -1;
 
 
@@ -339,7 +341,7 @@ void ConvolutionFilterWorker(void *jobparm)
 
 }
 
-int EMVolume::ConvolutionFilter_workpile(float *input, float *filter, int M1, int M2, int N1, int N2, int O1, int O2)
+int EMVolume::ConvolutionFilter_workpile(vtkFloatingPointType *input, vtkFloatingPointType *filter, int M1, int M2, int N1, int N2, int O1, int O2)
 {
   #define MAXCONVOLUTIONWORKERTHREADS 32
   int numthreads = 0;
@@ -415,7 +417,7 @@ int EMVolume::ConvolutionFilter_workpile(float *input, float *filter, int M1, in
 
 // Be Carefull ouput will be written to the instance - and input must be of the same dimension
 // as *this 
-int EMVolume::ConvMultiThread(float* filter, int filterLen) {
+int EMVolume::ConvMultiThread(vtkFloatingPointType* filter, int filterLen) {
   int min_filter = - filterLen /2;
   int max_filter = min_filter + filterLen -1; // -1 for 0 !!!
   EMVolume temp(this->MaxZ,this->MaxY,this->MaxX);

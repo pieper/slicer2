@@ -222,11 +222,7 @@ int vtkImageEMLocalClass::CheckAndAssignImageData(vtkImageData *inData, int outE
 int vtkImageEMLocalClass::CheckInputImage(vtkImageData * inData,int DataTypeOrig, int num, int outExt[6]) {
   // Check if InData is defined 
   int inExt[6];
-#if EM_VTK_OLD_SETTINGS
-  float DataSpacingNew[3];
-#else 
   vtkFloatingPointType DataSpacingNew[3];
-#endif
 
   if (inData == 0) {
     vtkEMAddErrorMessage("CheckInputImage: Input "<< num << " must be specified.");
@@ -344,11 +340,7 @@ void vtkImageEMLocalClass::ExecuteData(vtkDataObject *)
       vtkEMAddErrorMessage("Input has no points!" );
       return;
    }
-#if EM_VTK_OLD_SETTINGS
-   memcpy(this->DataSpacing, inData[FirstData]->GetSpacing(),sizeof(float)*3);
-#else
    memcpy(this->DataSpacing, inData[FirstData]->GetSpacing(),sizeof(vtkFloatingPointType)*3);
-#endif
 
    // ================================================== 
    // Load the images

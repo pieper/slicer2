@@ -95,7 +95,7 @@ vtkImageEMGenericClass::vtkImageEMGenericClass()
     this->ProbDataScalarType = -1; // This means no prob data is defined
 
     memset(this->DataDim,0,sizeof(int)*3);
-    memset(this->DataSpacing,0,sizeof(float)*3);
+    memset(this->DataSpacing,0,sizeof(vtkFloatingPointType)*3);
 
     for (int i=0; i < 3; i++) {
       this->SegmentationBoundaryMin[i] = -1;    // Lower bound of the boundary box where the image gets segments.
@@ -150,7 +150,7 @@ void vtkImageEMGenericClass::DeleteVariables() {
 }
 
 //----------------------------------------------------------------------------
-void vtkImageEMGenericClass::SetInputChannelWeights(float val, int x){
+void vtkImageEMGenericClass::SetInputChannelWeights(vtkFloatingPointType val, int x){
   if ((x<0) || (x >= this->NumInputImages) || (val < 0) || (val > 1.0)) {
     vtkEMAddErrorMessage("Error:EMClass::SetInputChannelWeights: Incorrect input");
     return;
@@ -163,7 +163,7 @@ void vtkImageEMGenericClass::SetNumInputImages(int number) {
     if (this->NumInputImages == number) return;
     this->DeleteVariables();
     if (number > 0 ) {
-       this->InputChannelWeights = new float[number];
+       this->InputChannelWeights = new vtkFloatingPointType[number];
        for (int z= 0; z < number; z++) this->InputChannelWeights[z] = 1.0;
     }
     this->NumInputImages = number;  

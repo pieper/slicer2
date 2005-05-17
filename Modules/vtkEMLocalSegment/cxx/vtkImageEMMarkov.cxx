@@ -115,7 +115,7 @@ void vtkImageEMMarkov::ExecuteInformation(vtkImageData *inData, vtkImageData *ou
 //----------------------------------------------------------------------------
 // This templated function executes the filter for any type of data.
 template <class T>
-static void vtkImageEMMarkovExecute(vtkImageEMMarkov *self,vtkImageData *in1Data, T *in1Ptr,int inExt[6],vtkImageData *outData, float *outPtr,int outExt[6], int maxZ)
+static void vtkImageEMMarkovExecute(vtkImageEMMarkov *self,vtkImageData *in1Data, T *in1Ptr,int inExt[6],vtkImageData *outData, vtkFloatingPointType *outPtr,int outExt[6], int maxZ)
 {
   int idxR, idxY, idxZ;
   int maxY;
@@ -218,7 +218,7 @@ void vtkImageEMMarkov::ExecuteData(vtkDataObject *)
      return;
   }
   switch (inData->GetScalarType()) {
-    vtkTemplateMacro8(vtkImageEMMarkovExecute, this, inData, (VTK_TT *)(inPtr),inExt, outData, (float *)(outPtr),outExt, maxZ);
+    vtkTemplateMacro8(vtkImageEMMarkovExecute, this, inData, (VTK_TT *)(inPtr),inExt, outData, (vtkFloatingPointType *)(outPtr),outExt, maxZ);
   default:
     vtkErrorMacro(<< "Execute: Unknown ScalarType");
     return;
@@ -293,7 +293,7 @@ void vtkImageEMMarkov::SetLabel(int index, int Label){
 //----------------------------------------------------------------------------
 // Given the input volumes it derives a Markov Matrix
 
-void vtkImageEMMarkov::TrainMarkovMatrix(int ***Image, int Ydim, int Xdim, float *outPtr) {
+void vtkImageEMMarkov::TrainMarkovMatrix(int ***Image, int Ydim, int Xdim, vtkFloatingPointType *outPtr) {
   // Nothing to do
   if (this->NumClasses == 0 ) return;
   cout << "vtkImageEMMarkov::TrainMarkovMatrix" << endl; 

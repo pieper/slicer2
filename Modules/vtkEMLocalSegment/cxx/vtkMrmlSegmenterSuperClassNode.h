@@ -127,8 +127,8 @@ public:
   // Description:  
   // What is the obundary value, note if the number of iterations 
   // extend EMiter than stops than
-  vtkGetMacro(StopEMValue,float);      
-  vtkSetMacro(StopEMValue,float); 
+  vtkGetMacro(StopEMValue,vtkFloatingPointType);      
+  vtkSetMacro(StopEMValue,vtkFloatingPointType); 
 
   vtkGetMacro(StopEMMaxIter,int); 
   vtkSetMacro(StopEMMaxIter,int); 
@@ -145,8 +145,8 @@ public:
   // Description:  
   // What is the obundary value, note if the number of iterations 
   // extend MFAiter than stops than
-  vtkGetMacro(StopMFAValue,float);      
-  vtkSetMacro(StopMFAValue,float); 
+  vtkGetMacro(StopMFAValue,vtkFloatingPointType);      
+  vtkSetMacro(StopMFAValue,vtkFloatingPointType); 
 
   vtkGetMacro(StopMFAMaxIter,int); 
   vtkSetMacro(StopMFAMaxIter,int); 
@@ -209,7 +209,7 @@ protected:
                                 // 0 = fixed iterations 
                                 // 1 = Absolut measure 
                                 // 2 = Relative measure
-  float StopEMValue;    // What is the obundary value, note if the number of iterations 
+  vtkFloatingPointType StopEMValue;    // What is the obundary value, note if the number of iterations 
                                 // extend EMiter than stops than
                                 // if (StopEMType = 1) than it is percent
 
@@ -218,7 +218,7 @@ protected:
   int PrintMFALabelMapConvergence;  
   int PrintMFAWeightsConvergence; 
   int StopMFAType;       
-  float StopMFAValue;    
+  vtkFloatingPointType StopMFAValue;    
   int StopMFAMaxIter;
   int StopBiasCalculation;
 
