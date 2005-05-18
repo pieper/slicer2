@@ -432,16 +432,20 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
           break;
 
         case VTK_TENS_LINEAR_MEASURE:
-          *outPtr = (T) ((w[0] - w[1])/trace);
-          break;
+          //*outPtr = (T) ((w[0] - w[1])/trace);
+          *outPtr = (T) (w[0] - w[1])/(w[0]+reg);
+      
+      break;
 
         case VTK_TENS_PLANAR_MEASURE:
-          *outPtr = (T) (2*(w[1] - w[2])/trace);
+          //*outPtr = (T) (2*(w[1] - w[2])/trace);
+      *outPtr = (T) (w[1] - w[2])/(w[0]+reg);
           break;
 
         case VTK_TENS_SPHERICAL_MEASURE:
-          *outPtr = (T) (3*w[2]/trace);
-          break;
+          //*outPtr = (T) (3*w[2]/trace);
+          *outPtr = (T) (w[2])/(w[0]+reg);
+      break;
 
         case VTK_TENS_MAX_EIGENVALUE:
           *outPtr = (T)w[0];
