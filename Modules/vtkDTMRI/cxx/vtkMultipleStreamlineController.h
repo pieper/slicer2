@@ -189,6 +189,10 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // Convert Streamline from Points representation to PolyLines
   void ConvertStreamlinesToPolyLines();
   
+  //Description
+  // Get Streamlines as Polylines
+  vtkGetObjectMacro(StreamlinesAsPolyLines,vtkPolyData);
+  
   void HighlightStreamlinesPassTest();
   
   void DeleteStreamlinesNotPassTest();
