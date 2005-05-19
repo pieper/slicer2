@@ -2334,7 +2334,11 @@ proc fMRIModelViewSetupOrthogonalityImage { c refX refY dmatHit dmatWid cmatHit 
             set vdot [ expr abs ( $vdot ) ]
             set magv2 [ fMRIModelViewComputeVectorMagnitude $v2 $len2 ]
             #--- let zero mean correlated; 1 mean uncorrelated
-            set val [ expr 1.0 - ($vdot / ( $magv1 * $magv2)) ]
+            if {$magv1 == 0.0 || $magv2 == 0.0} {
+                set val 0.0
+            } else {
+                set val [ expr 1.0 - ($vdot / ( $magv1 * $magv2)) ]
+            }
             #--- convert range from [ 0 to 1 ] to [ 0 to 255 ]
             set fillval [ expr round ($val * 255) ]
             set hexval [ format "#%02x%02x%02x" $fillval $fillval $fillval ]
