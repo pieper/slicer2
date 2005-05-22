@@ -27,6 +27,22 @@ public:
   vtkSetMacro(NumberOfIterations, int);
   vtkGetMacro(NumberOfIterations, int);
 
+  vtkSetMacro(TranslateScale, double);
+  vtkGetMacro(TranslateScale, double);
+
+  vtkSetMacro(MinimumStepLength, double);
+  vtkGetMacro(MinimumStepLength, double);
+
+  vtkSetMacro(MaximumStepLength, double);
+  vtkGetMacro(MaximumStepLength, double);
+
+
+  void SetShrinkFactors(unsigned int i,
+                        unsigned int j, 
+                        unsigned int k);
+  unsigned int GetShrinkFactors(const int &dir)
+  { return ShrinkFactors[dir]; }
+  
   virtual void GetTransformationMatrix(vtkMatrix4x4* matrix);
   
   virtual void SetTransformationMatrix(vtkMatrix4x4 *matrix);
@@ -38,6 +54,13 @@ public:
 protected:
   int NumberOfIterations;
 
+  double TranslateScale;
+
+  double MinimumStepLength;
+
+  double MaximumStepLength;
+
+  unsigned int ShrinkFactors[3];
   //BTX
 
   itk::itkVersorMattesMiVersorRegistrationFilter::Pointer m_ITKFilter;
@@ -59,7 +82,7 @@ private:
   void operator=(const vtkITKVersorMattesMiVersorRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKVersorMattesMiVersorRegistrationFilter, "$Revision: 1.1 $");
+//vtkCxxRevisionMacro(vtkITKVersorMattesMiVersorRegistrationFilter, "$Revision: 1.2 $");
 //vtkStandardNewMacro(vtkITKVersorMattesMiVersorRegistrationFilter);
 vtkRegistrationNewMacro(vtkITKVersorMattesMiVersorRegistrationFilter);
 

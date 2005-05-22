@@ -5,7 +5,9 @@ vtkITKVersorMattesMiVersorRegistrationFilter::vtkITKVersorMattesMiVersorRegistra
 {
   m_ITKFilter = itk::itkVersorMattesMiVersorRegistrationFilter::New();
   LinkITKProgressToVTKProgress(m_ITKFilter);
-  NumberOfIterations = 100;
+  this->SetNumberOfIterations (100);
+  this->SetShrinkFactors(1,1,1);
+  this->SetTranslateScale(320);
 }
 
 void vtkITKVersorMattesMiVersorRegistrationFilter::CreateRegistrationPipeline()
@@ -26,8 +28,12 @@ vtkITKVersorMattesMiVersorRegistrationFilter::UpdateRegistrationParameters()
 {
   itk::itkVersorMattesMiVersorRegistrationFilter* filter = static_cast<itk::itkVersorMattesMiVersorRegistrationFilter *> (m_ITKFilter);
   UnsignedIntArray numberOfIterations = UnsignedIntArray(1);
-  numberOfIterations.Fill(NumberOfIterations);
+  numberOfIterations.Fill(this->GetNumberOfIterations());
   filter->SetNumberOfIterations(numberOfIterations);
+  filter->SetTranslationScale(this->GetTranslateScale());
+  filter->SetShrinkFactors(this->ShrinkFactors);
+  filter->SetMinimumStepLength(this->GetMinimumStepLength());
+  filter->SetMaximumStepLength(this->GetMaximumStepLength());
 }
 
 vtkITKRegistrationFilter::OutputImageType::Pointer vtkITKVersorMattesMiVersorRegistrationFilter::GetTransformedOutput()
@@ -96,3 +102,15 @@ vtkITKVersorMattesMiVersorRegistrationFilter::SetTransformationMatrix(vtkMatrix4
   // The guess is: a quaternion followed by a translation
   m_ITKFilter->SetTransform(transform);
 }
+
+
+void 
+vtkITKVersorMattesMiVersorRegistrationFilter::SetShrinkFactors(unsigned int i,
+                                                               unsigned int j, 
+                                                               unsigned int k)
+{
+  ShrinkFactors[0] = i;
+  ShrinkFactors[1] = j;
+  ShrinkFactors[2] = k;
+
+} //vtkITKVersorMattesMiVersorRegistrationFilter
