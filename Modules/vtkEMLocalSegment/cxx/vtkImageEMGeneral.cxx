@@ -50,7 +50,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // root of the argument, in other words, the
 // argument should already be squared.
 
-vtkFloatingPointType vtkImageEMGeneral_qgauss_sqrt(vtkFloatingPointType inverse_sigma, vtkFloatingPointType x)
+float vtkImageEMGeneral_qgauss_sqrt(float inverse_sigma, float x)
 {
     return EMSEGMENT_ONE_OVER_ROOT_2_PI * inverse_sigma 
     * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * inverse_sigma * inverse_sigma * x);
@@ -322,7 +322,7 @@ vtkFloatingPointType vtkImageEMGeneral_qgauss_sqrt(vtkFloatingPointType inverse_
  double vtkImageEMGeneral::CalculatingPJointDistribution(float* x,int *Vleft,double *mu, double **inv_cov, double inv_sqrt_det_cov,int SequenceMax, int setvar,int numvar) {
   double JointProb = 0.0; 
   if (setvar == numvar) {
-    if (numvar < 2) JointProb = FastGauss(inv_sqrt_det_cov, float(x[0]) - mu[0]);
+    if (numvar < 2) JointProb = FastGauss(inv_sqrt_det_cov, double(x[0]) - mu[0]);
       else {
     if (numvar < 3) JointProb = FastGauss2(inv_sqrt_det_cov,x, mu,inv_cov,2);
     else JointProb = vtkImageEMGeneral::GeneralGauss(x,mu,inv_cov,inv_sqrt_det_cov,numvar);
@@ -332,7 +332,7 @@ vtkFloatingPointType vtkImageEMGeneral_qgauss_sqrt(vtkFloatingPointType inverse_
   setvar ++;
   int index = Vleft[numvar - setvar];
   for (int i = 0 ; i < SequenceMax; i++) {
-    x[index] = (vtkFloatingPointType)i;
+    x[index] = (float)i;
     JointProb += vtkImageEMGeneral::CalculatingPJointDistribution(x,Vleft,mu, inv_cov, inv_sqrt_det_cov,SequenceMax,setvar,numvar);
   }
   return JointProb;
@@ -822,8 +822,8 @@ void vtkImageEMGeneral::TestMatrixFunctions(int MatrixDim,int iter) {
   delete[] out;
 }
 
-vtkFloatingPointType vtkImageEMGeneral_CountLabel(vtkImageThreshold* trash,vtkImageData * Input, vtkFloatingPointType val) {
-  vtkFloatingPointType result;
+float vtkImageEMGeneral_CountLabel(vtkImageThreshold* trash,vtkImageData * Input, float val) {
+  float result;
   trash->SetInput(Input); 
   trash->ThresholdBetween(val,val);
   trash->SetInValue(1.0); 
@@ -848,7 +848,7 @@ vtkFloatingPointType vtkImageEMGeneral_CountLabel(vtkImageThreshold* trash,vtkIm
 // Value defines the vooxel with those label to be measured
 // Returns  Dice sim measure
 
-vtkFloatingPointType vtkImageEMGeneral::CalcSimularityMeasure (vtkImageData *Image1, vtkImageData *Image2,vtkFloatingPointType val, int PrintRes, int *BoundaryMin, int *BoundaryMax) {
+float vtkImageEMGeneral::CalcSimularityMeasure (vtkImageData *Image1, vtkImageData *Image2,float val, int PrintRes, int *BoundaryMin, int *BoundaryMax) {
   vtkImageThreshold *Trash1 =  vtkImageThreshold::New(), 
                     *Trash2 =  vtkImageThreshold::New(),
                     *Final  =  vtkImageThreshold::New();
@@ -866,9 +866,9 @@ vtkFloatingPointType vtkImageEMGeneral::CalcSimularityMeasure (vtkImageData *Ima
   ROI2->Update();
 
   vtkImageMathematics *MathImg = vtkImageMathematics::New();
-  vtkFloatingPointType result;
-  vtkFloatingPointType NumMeasure;
-  vtkFloatingPointType DivMeasure = vtkImageEMGeneral_CountLabel(Trash1,ROI1->GetOutput(), val); 
+  float result;
+  float NumMeasure;
+  float DivMeasure = vtkImageEMGeneral_CountLabel(Trash1,ROI1->GetOutput(), val); 
   DivMeasure += vtkImageEMGeneral_CountLabel(Trash2,ROI2->GetOutput(), val); 
 
   // Find out overlapping volume 
@@ -896,15 +896,15 @@ vtkFloatingPointType vtkImageEMGeneral::CalcSimularityMeasure (vtkImageData *Ima
 }  
 
 
-vtkFloatingPointType vtkImageEMGeneral::CalcSimularityMeasure (vtkImageData *Image1, vtkImageData *Image2,vtkFloatingPointType val, int PrintRes) {
+float vtkImageEMGeneral::CalcSimularityMeasure (vtkImageData *Image1, vtkImageData *Image2,float val, int PrintRes) {
   vtkImageThreshold *Trash1 =  vtkImageThreshold::New(), 
                     *Trash2 =  vtkImageThreshold::New(),
                     *Final  =  vtkImageThreshold::New();
 
   vtkImageMathematics *MathImg = vtkImageMathematics::New();
-  vtkFloatingPointType result;
-  vtkFloatingPointType NumMeasure;
-  vtkFloatingPointType DivMeasure = vtkImageEMGeneral_CountLabel(Trash1,Image1, val); 
+  float result;
+  float NumMeasure;
+  float DivMeasure = vtkImageEMGeneral_CountLabel(Trash1,Image1, val); 
   DivMeasure += vtkImageEMGeneral_CountLabel(Trash2,Image2, val); 
 
   // Find out overlapping volume 

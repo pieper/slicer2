@@ -154,8 +154,8 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMGenericClass : public vtkImageMultiple
   // How much influence should the LocalPriorData have in the segmentation process 
   // 0   = no Probability data is used => if class is from type EMClass no ProbDataPtr will be loaded
   // 1.0 = complete trust is in ProbDataPtr => Whenever the ProbDataPtr = 0 => voxel will not be assigned to tissue class
-  vtkSetMacro(ProbDataWeight,vtkFloatingPointType);
-  vtkGetMacro(ProbDataWeight,vtkFloatingPointType);
+  vtkSetMacro(ProbDataWeight,float);
+  vtkGetMacro(ProbDataWeight,float);
 
   // Description
   // Scalar type of ProbData 
@@ -170,9 +170,9 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMGenericClass : public vtkImageMultiple
   // How much weight is given to each channel  
   // 0   = input is ignored 
   // 1.0 = input is fully considered  
-  void SetInputChannelWeights(vtkFloatingPointType val, int x);
+  void SetInputChannelWeights(float val, int x);
   //BTX
-  vtkFloatingPointType* GetInputChannelWeights() {return this->InputChannelWeights;}
+  float* GetInputChannelWeights() {return this->InputChannelWeights;}
   //ETX
 
   // Description:
@@ -189,7 +189,8 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMGenericClass : public vtkImageMultiple
 
   //Description:
   // Spacing of image data
-  vtkGetVector3Macro(DataSpacing, vtkFloatingPointType);                 
+  //vtkGetVector3Macro(DataSpacing, float);  
+  vtkGetVector3Macro(DataSpacing, vtkFloatingPointType);
 
   // Description:
   // Define the Segmentation areae.g. have the image of size 256x256x124
@@ -251,16 +252,17 @@ protected:
   //void  Execute();
   void  ExecuteData(vtkDataObject *) ;
 
-  vtkFloatingPointType  ProbDataWeight;              // How much influence should the LocalPriorData have in the segmentation process 
+  float  ProbDataWeight;              // How much influence should the LocalPriorData have in the segmentation process 
   int    ProbDataScalarType;          // Scalar Type of ProbData
 
   double TissueProbability;           // Global Tissue Probability
   short  Label;
-  vtkFloatingPointType* InputChannelWeights;         // You can define different weights of input channels
+  float* InputChannelWeights;         // You can define different weights of input channels
   int    NumInputImages;              // Important for several input parameters such as size of LogCovariance 
 
   int    DataDim[3];                  // Dimension of image Data 
-  vtkFloatingPointType  DataSpacing[3];              // Spacing of image data
+  vtkFloatingPointType DataSpacing[3];              // Spacing of image data
+  //  float  DataSpacing[3];              // Spacing of image data
   int    SegmentationBoundaryMin[3];  // Boundary Box for the area of interest for the segmentation
   int    SegmentationBoundaryMax[3];  // Boundary Box for the area of interest for the segmentation 
   

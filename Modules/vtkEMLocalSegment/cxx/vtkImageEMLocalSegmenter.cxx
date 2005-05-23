@@ -95,9 +95,7 @@ vtkImageEMLocalSegmenter::vtkImageEMLocalSegmenter()
   this->activeClass      = NULL;
   this->activeClassType  = SUPERCLASS;
 
-  this->IntensityAvgValuePreDef = NULL;
-  this->IntensityAvgValueCurrent = NULL; 
-  this->DebugImage = NULL; 
+  this->IntensityAvgValuePreDef = NULL;this->IntensityAvgValueCurrent = NULL; 
 }
 
 //------------------------------------------------------------------------------
@@ -151,7 +149,7 @@ void vtkImageEMLocalSegmenter::PrintSelf(ostream& os,vtkIndent indent) {
 }
 //----------------------------------------------------------------------------
 // Calculates the weighted inverse covariance 
-int EMLocalSegment_CalcWeightedCovariance(vtkImageEMLocalSegmenter* self,double** WeightedInvCov, double & SqrtDetWeightedInvCov, vtkFloatingPointType* Weights, double** LogCov, int & VirtualDim,int dim) {
+int EMLocalSegment_CalcWeightedCovariance(vtkImageEMLocalSegmenter* self,double** WeightedInvCov, double & SqrtDetWeightedInvCov, float* Weights, double** LogCov, int & VirtualDim,int dim) {
   int x,y,Xindex,Yindex;
   // Calculate the weighted coveriance => inpput channels are differently weighted
   VirtualDim = 0; 
@@ -335,7 +333,7 @@ static void vtkImageEMLocalSegmenterReadInputChannel(vtkImageEMLocalSegmenter *s
     for (idxY = 0; idxY <  ImageMaxY; idxY++) {
       for (idxR = 0; idxR < ImageMaxX; idxR++) {
     if (double(* in1Ptr) >  IntensityCorrection) {
-      InputVector[index][InputIndex] = log(vtkFloatingPointType(* in1Ptr) +1 - IntensityCorrection);
+      InputVector[index][InputIndex] = log(float(* in1Ptr) +1 - IntensityCorrection);
     } else {
       InputVector[index][InputIndex] = 0.0;
     }
@@ -496,8 +494,8 @@ int vtkImageEMLocalSegmenter::GetDimensionZ() {
 
 //------------------------------------------------------------------------------
 #if EM_VTK_OLD_SETTINGS
-int vtkImageEMLocalSegmenter::CheckInputImage(vtkImageData * inData,int DataTypeOrig, vtkFloatingPointType DataSpacingOrig[3], int num) {
-  vtkFloatingPointType DataSpacingNew[3];
+int vtkImageEMLocalSegmenter::CheckInputImage(vtkImageData * inData,int DataTypeOrig, float DataSpacingOrig[3], int num) {
+  float DataSpacingNew[3];
 #else 
 int vtkImageEMLocalSegmenter::CheckInputImage(vtkImageData * inData,int DataTypeOrig, vtkFloatingPointType DataSpacingOrig[3], int num) {
   vtkFloatingPointType DataSpacingNew[3];
@@ -573,18 +571,16 @@ void vtkImageEMLocalSegmenter::SetIntensityAvgValuePreDef(double value, int inde
 // --------------------------------------------------------------------------------------------------------------------------
 
 // Close to Sandies original approach +(part of ISBI04)
-inline double vtkEMLocalSegment_ConditionalTissueProbability(
-        const double TissueProbability, const double InvSqrtDetLogCov, 
-        const float *cY_M,  const double  *LogMu, double **InvLogCov, 
-        const int NumInputImages, const int  VirtualNumInputImages) {
-   return TissueProbability  * vtkImageEMGeneral::FastGaussMulti(
-           InvSqrtDetLogCov,cY_M, LogMu,InvLogCov,NumInputImages, VirtualNumInputImages); 
+inline double vtkEMLocalSegment_ConditionalTissueProbability(const double TissueProbability, const double InvSqrtDetLogCov, 
+                                                               const float *cY_M,  const double  *LogMu, double **InvLogCov, 
+                                                               const int NumInputImages, const int  VirtualNumInputImages) {
+   return TissueProbability  * vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov,cY_M, LogMu,InvLogCov,NumInputImages, VirtualNumInputImages); 
 }
 
 // Kilian's MICCAI02 + ISBI04 paper 
 template <class T> 
-inline double vtkEMLocalSegment_SpatialIntensityProbability(const double TissueProbability, const vtkFloatingPointType ProbDataMinusWeight, 
-                                                              const vtkFloatingPointType ProbDataWeight, const T *ProbDataPtr, const double InvSqrtDetLogCov, 
+inline double vtkEMLocalSegment_SpatialIntensityProbability(const double TissueProbability, const float ProbDataMinusWeight, 
+                                                              const float ProbDataWeight, const T *ProbDataPtr, const double InvSqrtDetLogCov, 
                                                               const float* cY_M,  const double  *LogMu, double **InvLogCov, 
                                                               const int  NumInputImages, const int VirtualNumInputImages) {
    return  (ProbDataMinusWeight + ProbDataWeight*(ProbDataPtr == NULL ? 0.0 : double(*ProbDataPtr))) 
@@ -616,8 +612,8 @@ static void MeanFieldApproximation3DPrivate(int id,
                      T **ProbDataPtr, 
                      int *ProbDataIncY, 
                      int *ProbDataIncZ,
-                     vtkFloatingPointType *ProbDataWeight,
-                                     vtkFloatingPointType *ProbDataMinusWeight,
+                     float *ProbDataWeight,
+                                     float *ProbDataMinusWeight,
                      double **LogMu, 
                      double ***InvLogCov, 
                      double *InvSqrtDetLogCov,
@@ -625,7 +621,7 @@ static void MeanFieldApproximation3DPrivate(int id,
                      int  *VirtualNumInputImages,
                      float **w_m_output) {
 
-  vtkFloatingPointType normRow;                                 
+  float normRow;                                 
   double NeighborhoodEnergy;
   double ConditionalTissueProbability;
   double SpatialTissueDistribution;
@@ -684,25 +680,25 @@ static void MeanFieldApproximation3DPrivate(int id,
           for (k=0;k< NumClasses ;k++){
         for (l=0;l< NumChildClasses[k];l++){
           // f(j,l,h-1)
-          if (*MapVector&EMSEGMENT_WEST) *wxn += (*w_m_input[ClassIndex])*(vtkFloatingPointType)MrfParams[3][k][i]; 
-          else                     *wxn += w_m_input[ClassIndex][-JumpHorizontal]*(vtkFloatingPointType)MrfParams[3][k][i];
+          if (*MapVector&EMSEGMENT_WEST) *wxn += (*w_m_input[ClassIndex])*(float)MrfParams[3][k][i]; 
+          else                     *wxn += w_m_input[ClassIndex][-JumpHorizontal]*(float)MrfParams[3][k][i];
           // f(j,l,h+1)
-          if (*MapVector&EMSEGMENT_EAST) *wxp += (*w_m_input[ClassIndex])*(vtkFloatingPointType)MrfParams[0][k][i];
-          else                     *wxp += w_m_input[ClassIndex][JumpHorizontal]*(vtkFloatingPointType)MrfParams[0][k][i];
+          if (*MapVector&EMSEGMENT_EAST) *wxp += (*w_m_input[ClassIndex])*(float)MrfParams[0][k][i];
+          else                     *wxp += w_m_input[ClassIndex][JumpHorizontal]*(float)MrfParams[0][k][i];
           //  Remember: The picture is upside down:
           // Therefore I had to switch the MRF parameters 1 (South) and 4(North)
           // f(j,l-1,h)
-          if (*MapVector&EMSEGMENT_NORTH)  *wyn += (*w_m_input[ClassIndex])*(vtkFloatingPointType)MrfParams[1][k][i];                       
-          else                     *wyn += w_m_input[ClassIndex][-1]*(vtkFloatingPointType)MrfParams[1][k][i]; 
+          if (*MapVector&EMSEGMENT_NORTH)  *wyn += (*w_m_input[ClassIndex])*(float)MrfParams[1][k][i];                       
+          else                     *wyn += w_m_input[ClassIndex][-1]*(float)MrfParams[1][k][i]; 
           // f(j,l+1,h)
-          if (*MapVector&EMSEGMENT_SOUTH)  *wyp += (*w_m_input[ClassIndex])*(vtkFloatingPointType)MrfParams[4][k][i];
-          else                     *wyp += w_m_input[ClassIndex][1]*(vtkFloatingPointType)MrfParams[4][k][i];
+          if (*MapVector&EMSEGMENT_SOUTH)  *wyp += (*w_m_input[ClassIndex])*(float)MrfParams[4][k][i];
+          else                     *wyp += w_m_input[ClassIndex][1]*(float)MrfParams[4][k][i];
           // f(j-1,l,h)
-          if (*MapVector&EMSEGMENT_FIRST) *wzn += (*w_m_input[ClassIndex])*(vtkFloatingPointType)MrfParams[5][k][i];  
-          else                     *wzn += w_m_input[ClassIndex][-JumpSlice]*(vtkFloatingPointType)MrfParams[5][k][i]; 
+          if (*MapVector&EMSEGMENT_FIRST) *wzn += (*w_m_input[ClassIndex])*(float)MrfParams[5][k][i];  
+          else                     *wzn += w_m_input[ClassIndex][-JumpSlice]*(float)MrfParams[5][k][i]; 
           // f(j+1,l,h)
-          if (*MapVector&EMSEGMENT_LAST)  *wzp += (*w_m_input[ClassIndex])*(vtkFloatingPointType)MrfParams[2][k][i]; 
-          else                     *wzp += w_m_input[ClassIndex][JumpSlice]*(vtkFloatingPointType)MrfParams[2][k][i]; 
+          if (*MapVector&EMSEGMENT_LAST)  *wzp += (*w_m_input[ClassIndex])*(float)MrfParams[2][k][i]; 
+          else                     *wzp += w_m_input[ClassIndex][JumpSlice]*(float)MrfParams[2][k][i]; 
 
               ClassIndex ++;
         }
@@ -716,17 +712,17 @@ static void MeanFieldApproximation3DPrivate(int id,
       for (k=0;k<NumClasses ;k++){
         for (l=0;l< NumChildClasses[k];l++){
           // f(j,l,h-1)
-          *wxn += w_m_input[ClassIndex][-JumpHorizontal]*(vtkFloatingPointType)MrfParams[3][k][i];
+          *wxn += w_m_input[ClassIndex][-JumpHorizontal]*(float)MrfParams[3][k][i];
           // f(j,l,h+1)
-          *wxp += w_m_input[ClassIndex][JumpHorizontal]*(vtkFloatingPointType)MrfParams[0][k][i];
+          *wxp += w_m_input[ClassIndex][JumpHorizontal]*(float)MrfParams[0][k][i];
           // f(j,l-1,h)
-          *wyn += w_m_input[ClassIndex][-1]*(vtkFloatingPointType)MrfParams[4][k][i]; 
+          *wyn += w_m_input[ClassIndex][-1]*(float)MrfParams[4][k][i]; 
           // f(j,l+1,h)
-          *wyp += w_m_input[ClassIndex][1]*(vtkFloatingPointType)MrfParams[1][k][i];
+          *wyp += w_m_input[ClassIndex][1]*(float)MrfParams[1][k][i];
           // f(j-1,l,h)
-          *wzn += w_m_input[ClassIndex][-JumpSlice]*(vtkFloatingPointType)MrfParams[5][k][i]; 
+          *wzn += w_m_input[ClassIndex][-JumpSlice]*(float)MrfParams[5][k][i]; 
           // f(j+1,l,h)
-          *wzp += w_m_input[ClassIndex][JumpSlice]*(vtkFloatingPointType)MrfParams[2][k][i]; 
+          *wzp += w_m_input[ClassIndex][JumpSlice]*(float)MrfParams[2][k][i]; 
           ClassIndex ++;
         }
       }
@@ -755,7 +751,7 @@ static void MeanFieldApproximation3DPrivate(int id,
     for (l=0;l< NumChildClasses[i];l++){
        ConditionalTissueProbability = TissueProbability[i] * vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[index],cY_M, LogMu[index],InvLogCov[index],NumInputImages, VirtualNumInputImages[i]); 
            SpatialTissueDistribution    = ProbDataMinusWeight[i] + ProbDataWeight[i]*(ProbDataPtr[index] == NULL ? 0.0 : double(*ProbDataPtr[index]));
-           w_m_output[index][j] = (vtkFloatingPointType) NeighborhoodEnergy *  SpatialTissueDistribution *  ConditionalTissueProbability;
+           w_m_output[index][j] = (float) NeighborhoodEnergy *  SpatialTissueDistribution *  ConditionalTissueProbability;
           // if (((j == 13891) || (j == 13946)) && i == 0) {
         // cout << "duda2 " << index << " " << j << " " << w_m_output[index][j]  << " " <<  mp   << " " << TissueProbability[i] << " " << ProbDataMinusWeight[i] << " " <<ProbDataWeight[i]  << " " << *ProbDataPtr[index]  << " ";
           //  for (int blub2=0; blub2 < 2; blub2++) cout <<  cY_M[blub2] << " "; 
@@ -772,7 +768,7 @@ static void MeanFieldApproximation3DPrivate(int id,
     for (i=0; i<NumClasses; i++) {
        NeighborhoodEnergy = TissueProbability[i] * exp((*wxp++) + (*wxn++) + (*wyp++) + (*wyn++) + (*wzp++) + (*wzn++));
       for (l=0;l< NumChildClasses[i];l++){
-        w_m_output[index][j] =  vtkFloatingPointType( NeighborhoodEnergy); 
+        w_m_output[index][j] =  float( NeighborhoodEnergy); 
         normRow += w_m_output[index][j];
         index ++;
       }
@@ -785,7 +781,7 @@ static void MeanFieldApproximation3DPrivate(int id,
               // the line below is the same as 
               // vtkEMLocalSegment_ConditionalTissueProbability(TissueProbability[i], InvSqrtDetLogCov[index],cY_M, LogMu[index],InvLogCov[index],NumInputImages, VirtualNumInputImages[i]); 
               // Just changed for speed (about 5% faster )
-          w_m_output[index][j] = (vtkFloatingPointType) (vtkFloatingPointType) TissueProbability[i] * vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[index],cY_M, LogMu[index],InvLogCov[index],NumInputImages, VirtualNumInputImages[i]); 
+          w_m_output[index][j] = (float) (float) TissueProbability[i] * vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[index],cY_M, LogMu[index],InvLogCov[index],NumInputImages, VirtualNumInputImages[i]); 
                 
           normRow += w_m_output[index][j];
           index ++;
@@ -1021,7 +1017,7 @@ void vtkImageEMLocalSegmenter::DetermineLabelMap(short* LabelMap, int NumTotalTy
   classType* ClassListType = head->GetClassListType(); 
   short HeadLabel          = head->GetLabel();
   int    idx,l,k,MaxProbIndex, ClassIndex;
-  vtkFloatingPointType  MaxProbValue, temp;
+  float  MaxProbValue, temp;
   short *Label             = new short[NumClasses];
   float **w_mPtr = new float*[NumTotalTypeCLASS];
   for (l=0;l< NumTotalTypeCLASS;l++) w_mPtr[l] = w_m[l];
@@ -1101,13 +1097,11 @@ void vtkImageEMLocalSegmenter::DeleteVariables() {
 // -----------------------------------------------------------
 // Calculate MF - necessary for parrallising algorithm
 // -----------------------------------------------------------
-int vtkImageEMLocalSegmenter::MF_Approx_Workpile(float **w_m_input,unsigned char* MapVector, 
-           float *cY_M, int imgXY,
-           double ***InvLogCov,double *InvSqrtDetLogCov,  int NumTotalTypeCLASS, 
-           int* NumChildClasses, int NumClasses, void** ProbDataPtr, int* ProbDataIncY, 
-           int* ProbDataIncZ, vtkFloatingPointType *ProbDataWeight, vtkFloatingPointType *ProbDataMinusWeight,
-           double** LogMu, double* TissueProbability, 
-           int *VirtualNumInputImages, vtkImageEMLocalSuperClass* head, float **w_m_output) {
+int vtkImageEMLocalSegmenter::MF_Approx_Workpile(float **w_m_input,unsigned char* MapVector, float *cY_M, int imgXY,
+                           double ***InvLogCov,double *InvSqrtDetLogCov,  int NumTotalTypeCLASS, 
+                                                   int* NumChildClasses, int NumClasses, void** ProbDataPtr, int* ProbDataIncY, 
+                           int* ProbDataIncZ, float *ProbDataWeight, float *ProbDataMinusWeight,
+                                                   double** LogMu, double* TissueProbability, int *VirtualNumInputImages, vtkImageEMLocalSuperClass* head, float **w_m_output) {
   #define MAXMFAPPROXIMATIONWORKERTHREADS 32
   int numthreads = 0;
   int jobsize,i,j;
@@ -1250,13 +1244,13 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,Tin **ProbDa
   actSupCl->GetProbDataIncYandZ(ProbDataIncY,ProbDataIncZ,0);
   
   double *TissueProbability        = new double[NumClasses];
-  vtkFloatingPointType  *ProbDataWeight           = new vtkFloatingPointType[NumClasses];
-  vtkFloatingPointType  *ProbDataMinusWeight      = new vtkFloatingPointType[NumClasses];
+  float  *ProbDataWeight           = new float[NumClasses];
+  float  *ProbDataMinusWeight      = new float[NumClasses];
 
   // if on of the weights is set to 0 the virtual dimension is one minus the real dimensio = NimInputImages -> necessary to calculate gaussian curve 
   // -> otherwise you get different reuslts from segmenting something with weight =(1,0) in comaprison to the equivalent one dimensional input channel segmentation 
   int *VirtualNumInputImages       = new int[NumClasses];
-  vtkFloatingPointType *InputChannelWeights;
+  float *InputChannelWeights;
 
   Tin **ProbDataPtrCopy = new Tin*[NumTotalTypeCLASS];
   for (i =0;i<NumTotalTypeCLASS;i++)  ProbDataPtrCopy[i] = ProbDataPtrStart[i]; 
@@ -1314,7 +1308,7 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,Tin **ProbDa
       TissueProbability[i]  = ((vtkImageEMLocalClass*) ClassList[i])->GetTissueProbability();
 
       ProbDataWeight[i]     = ((vtkImageEMLocalClass*) ClassList[i])->GetProbDataWeight();      
-      ProbDataMinusWeight[i] =  vtkFloatingPointType(NumberOfTrainingSamples)*(1.0 - ProbDataWeight[i]);
+      ProbDataMinusWeight[i] =  float(NumberOfTrainingSamples)*(1.0 - ProbDataWeight[i]);
 
       InputChannelWeights = ((vtkImageEMLocalClass*) ClassList[i])->GetInputChannelWeights();
  
@@ -1351,7 +1345,7 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,Tin **ProbDa
       NumChildClasses[i]   = ((vtkImageEMLocalSuperClass*) ClassList[i])->GetTotalNumberOfClasses(false);
       TissueProbability[i] = ((vtkImageEMLocalSuperClass*) ClassList[i])->GetTissueProbability();
       ProbDataWeight[i]    = ((vtkImageEMLocalSuperClass*) ClassList[i])->GetProbDataWeight();
-      if (NumChildClasses[i]) ProbDataMinusWeight[i] =  vtkFloatingPointType(NumberOfTrainingSamples)* (1.0 - ProbDataWeight[i])/vtkFloatingPointType(NumChildClasses[i]);
+      if (NumChildClasses[i]) ProbDataMinusWeight[i] =  float(NumberOfTrainingSamples)* (1.0 - ProbDataWeight[i])/float(NumChildClasses[i]);
       else ProbDataMinusWeight[i] = 0.0;
 
       InputChannelWeights = ((vtkImageEMLocalSuperClass*) ClassList[i])->GetInputChannelWeights();
@@ -1483,7 +1477,7 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,Tin **ProbDa
   float       **InputVectorPtr = InputVector;
   
   int ProbValue;
-  vtkFloatingPointType normRow;   
+  float normRow;   
 
   memset(OutputVector, 0, ImageProd*sizeof(unsigned char));
   // EMSEGMENT_DEFINED = this is an already defined voxel from previous segmentation
@@ -1526,10 +1520,10 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,Tin **ProbDa
   // M Step Variables 
   // ------------------------------------------------------------
   double lbound = (-(SmoothingWidth-1)/2); // upper bound = - lbound
-  vtkFloatingPointType temp;
-  vtkFloatingPointType *skern = new vtkFloatingPointType[SmoothingWidth];
+  float temp;
+  float *skern = new float[SmoothingWidth];
   // Kilian change to normal gaussian 
-  for (i=0; i < SmoothingWidth; i++) skern[i] = vtkFloatingPointType(vtkImageEMGeneral::FastGauss(1.0 / SmoothingSigma,i + lbound));
+  for (i=0; i < SmoothingWidth; i++) skern[i] = float(vtkImageEMGeneral::FastGauss(1.0 / SmoothingSigma,i + lbound));
 
   double **iv_mat     = new double*[VirtualOveralInputChannelNum];
   double **inv_iv_mat = new double*[VirtualOveralInputChannelNum];
@@ -1616,7 +1610,7 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,Tin **ProbDa
               if (PrintBiasFlag) {
             // b_m = r_m[l](i,j,k);
             fwrite(&b_m, sizeof(double), 1, BiasFile[l]); 
-            // fwrite(&(*InputVector)[l], sizeof(vtkFloatingPointType), 1, BiasFile[l]); 
+            // fwrite(&(*InputVector)[l], sizeof(float), 1, BiasFile[l]); 
               }
             }
           } else { 
@@ -1626,7 +1620,7 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,Tin **ProbDa
               if (PrintBiasFlag) {
             // b_m = r_m[l](i,j,k);
             fwrite(&b_m, sizeof(double), 1, BiasFile[l]); 
-            // fwrite(&(*InputVector)[l], sizeof(vtkFloatingPointType), 1, BiasFile[l]); 
+            // fwrite(&(*InputVector)[l], sizeof(float), 1, BiasFile[l]); 
               }
             }
           }
@@ -1649,7 +1643,7 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,Tin **ProbDa
           // we assume InputVector >= 0
         for (i=0; i< ImageProd; i++) {
            // Kili change it if you have too
-           memcpy(cY_M,(*InputVector),sizeof(vtkFloatingPointType)*NumInputImages);
+           memcpy(cY_M,(*InputVector),sizeof(float)*NumInputImages);
            cY_M += NumInputImages;
            InputVector++;
         }
@@ -1697,7 +1691,7 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,Tin **ProbDa
                                                           InverseWeightedLogCov[index],NumInputImages, VirtualNumInputImages[i]);
               
               // Work of MICCAI02 and ISBI04 
-              SpatialTissueDistribution    = ProbDataMinusWeight[i]  + ProbDataWeight[i] *vtkFloatingPointType(ProbDataPtrCopy[index] == NULL ? 0.0 : *ProbDataPtrCopy[index]);
+              SpatialTissueDistribution    = ProbDataMinusWeight[i]  + ProbDataWeight[i] *float(ProbDataPtrCopy[index] == NULL ? 0.0 : *ProbDataPtrCopy[index]);
   
               *w_m[index] = (float)  ConditionalTissueProbability * SpatialTissueDistribution; 
               normRow += *w_m[index];
@@ -1706,7 +1700,7 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,Tin **ProbDa
               if (ProbDataPtrCopy[index] == NULL) cout << "NULL ";
               else  fprintf(stdout, "%3d ", *ProbDataPtrCopy[index]);
               fprintf(stdout, " TP:%3.2f  GID:%5.4f \n", TissueProbability[i], 
-                  (vtkFloatingPointType)vtkImageEMGeneral::FastGaussMulti(InvSqrtDetWeightedLogCov[index], cY_M, LogMu[index],InverseWeightedLogCov[index],
+                  (float)vtkImageEMGeneral::FastGaussMulti(InvSqrtDetWeightedLogCov[index], cY_M, LogMu[index],InverseWeightedLogCov[index],
                                        NumInputImages, VirtualNumInputImages[i]));
 #endif
               // Predefine those areas where only one Atlas map has a value
@@ -1731,7 +1725,7 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,Tin **ProbDa
           for (i=0; i < NumClasses; i++) {
             for (k=0;k< NumChildClasses[i];k++) {
               if (ProbDataPtrCopy[index]) 
-            *w_m[index] += ProbDataMinusWeight[i] + ProbDataWeight[i] * vtkFloatingPointType(*ProbDataPtrCopy[index]);
+            *w_m[index] += ProbDataMinusWeight[i] + ProbDataWeight[i] * float(*ProbDataPtrCopy[index]);
               else if (ProbDataWeight[i] > 0.0) *w_m[index] += ProbDataMinusWeight[i];
               normRow += *w_m[index];
               index ++; 
@@ -1742,9 +1736,9 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,Tin **ProbDa
             for (j=0; j <  NumClasses ; j++) {
               for (k=0;k< NumChildClasses[j];k++) { 
             // The line below is the same as ConditionalTissueProbability is the same as 
-            (vtkFloatingPointType) vtkEMLocalSegment_ConditionalTissueProbability(TissueProbability[j], InvSqrtDetWeightedLogCov[index],cY_M, LogMu[index],
+            (float) vtkEMLocalSegment_ConditionalTissueProbability(TissueProbability[j], InvSqrtDetWeightedLogCov[index],cY_M, LogMu[index],
                                          InverseWeightedLogCov[index],NumInputImages, VirtualNumInputImages[j]);   
-            *w_m[index] = (float) (vtkFloatingPointType) TissueProbability[j]* vtkImageEMGeneral::FastGaussMulti(InvSqrtDetWeightedLogCov[index],cY_M, LogMu[index],
+            *w_m[index] = (float) (float) TissueProbability[j]* vtkImageEMGeneral::FastGaussMulti(InvSqrtDetWeightedLogCov[index],cY_M, LogMu[index],
                                                           InverseWeightedLogCov[index],NumInputImages, VirtualNumInputImages[j]); 
             normRow += *w_m[index];
             index ++;
@@ -1799,16 +1793,12 @@ static void vtkImageEMLocalAlgorithm(vtkImageEMLocalSegmenter *self,Tin **ProbDa
     if (Alpha > 0) {
       for (regiter=1; regiter <= NumRegIter; regiter++) {
         cout << "vtkImageEMLocalAlgorithm: "<< regiter << ". EM - MF Iteration" << endl;
-        if (regiter%2) self->MF_Approx_Workpile(
-                    w_m, OutputVector, cY_M, imgXY, InverseWeightedLogCov, InvSqrtDetWeightedLogCov,
-                    NumTotalTypeCLASS, NumChildClasses,NumClasses,(void**) ProbDataPtrStart, 
-                    ProbDataIncY, ProbDataIncZ, ProbDataWeight, ProbDataMinusWeight, LogMu, 
-                    TissueProbability,VirtualNumInputImages, actSupCl, w_m_second );
-        else self->MF_Approx_Workpile(
-                    w_m_second, OutputVector, cY_M, imgXY, InverseWeightedLogCov, InvSqrtDetWeightedLogCov,
-                    NumTotalTypeCLASS,NumChildClasses, NumClasses,(void**) ProbDataPtrStart,
-                    ProbDataIncY,ProbDataIncZ,ProbDataWeight, ProbDataMinusWeight, 
-                    LogMu, TissueProbability, VirtualNumInputImages, actSupCl, w_m);
+        if (regiter%2) self->MF_Approx_Workpile(w_m,OutputVector,cY_M,imgXY,InverseWeightedLogCov,InvSqrtDetWeightedLogCov,NumTotalTypeCLASS,
+                            NumChildClasses,NumClasses,(void**) ProbDataPtrStart, ProbDataIncY,ProbDataIncZ,
+                            ProbDataWeight, ProbDataMinusWeight, LogMu,TissueProbability,VirtualNumInputImages, actSupCl, w_m_second);
+        else self->MF_Approx_Workpile(w_m_second,OutputVector,cY_M,imgXY,InverseWeightedLogCov,InvSqrtDetWeightedLogCov,NumTotalTypeCLASS,NumChildClasses,
+                      NumClasses,(void**) ProbDataPtrStart,ProbDataIncY,ProbDataIncZ,ProbDataWeight,
+                      ProbDataMinusWeight, LogMu,TissueProbability, VirtualNumInputImages, actSupCl, w_m);
       }
       // if it is an odd number of iterations w_m_second holds the current result ! -> Therefore we have to change it !
       if (NumRegIter%2) {
@@ -2240,19 +2230,11 @@ void vtkImageEMLocalSegmenter::ExecuteData(vtkDataObject *)
       }
     }
   }
-
   // -----------------------------------------------------
   // Read Input Images
   // -----------------------------------------------------
-  //
-  /* allocate input vectors - changed to single large malloc for efficiency - sp 2005-05-17 */
-  /* _specifically_float_for_memory_ */
   float **InputVector = new float*[this->ImageProd];
-  float *InputVectorBlock = 
-        new float[this->ImageProd * this->NumInputImages];
-  for(idx1 = 0; idx1 <this->ImageProd; idx1++) 
-  { InputVector[idx1] = InputVectorBlock + (idx1 * this->NumInputImages);
-  }
+  for(idx1 = 0; idx1 <this->ImageProd; idx1++) InputVector[idx1] = new float[this->NumInputImages];
  
   for (idx1 = 0; idx1 < this->NumInputImages ; idx1++){  
     if (this->CheckInputImage(inData[idx1],this->GetInput(0)->GetScalarType(), this->GetInput(0)->GetSpacing(), idx1+1)) return;
@@ -2298,11 +2280,7 @@ void vtkImageEMLocalSegmenter::ExecuteData(vtkDataObject *)
     vtkEMAddErrorMessage("Execute: Unknown ScalarType");
     return;
   }
-
-  /* switched to input vector block
   for(idx1 = 0; idx1 <this->ImageProd; idx1++) delete[] InputVector[idx1];
-  */
-  delete[] InputVectorBlock;
   delete[] InputVector;
 }
 

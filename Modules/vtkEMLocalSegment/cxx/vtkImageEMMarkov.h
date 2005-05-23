@@ -111,7 +111,7 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMMarkov : public vtkImageToImageFilter
 
   // Description:
   // Creates a Tissue Class Interation Matrix form the given image
-  void TrainMarkovMatrix(int ***Image,int Ydim, int Xdim, vtkFloatingPointType * outPtr);
+  void TrainMarkovMatrix(int ***Image,int Ydim, int Xdim, float * outPtr);
 
   // Description:
   // Setting up Test Matrix to test 

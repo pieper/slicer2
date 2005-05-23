@@ -91,8 +91,8 @@ public:
   // This variable allows to control the influence of the LocalPrioir in the segmentation process 
   // LocalPriorWeight = 1.0 default setting; 0.0 => LocalPrior is ignored
   // Note: this variable is applied to all the subclasses during the segmentation bc the subclasses define the local Prior 
-  vtkGetMacro(LocalPriorWeight,vtkFloatingPointType);
-  vtkSetMacro(LocalPriorWeight,vtkFloatingPointType);
+  vtkGetMacro(LocalPriorWeight,float);
+  vtkSetMacro(LocalPriorWeight,float);
 
   // Description:
   // Get/Set for SegmenterClass - define name of spatial prior
@@ -149,6 +149,11 @@ public:
   vtkGetMacro(RegistrationClassSpecificRegistrationFlag,int); 
   vtkSetMacro(RegistrationClassSpecificRegistrationFlag,int); 
   vtkBooleanMacro(RegistrationClassSpecificRegistrationFlag,int); 
+  // Description:
+  // If you eant to include a class just being set via its intensity value than set this flag
+  vtkGetMacro(ExcludeFromIncompleteEStepFlag,int);
+  vtkSetMacro(ExcludeFromIncompleteEStepFlag,int);
+  vtkBooleanMacro(ExcludeFromIncompleteEStepFlag,int);
 
 protected:
   vtkMrmlSegmenterGenericClassNode();
@@ -157,7 +162,7 @@ protected:
   void operator=(const vtkMrmlSegmenterGenericClassNode&) {};
 
   double Prob;
-  vtkFloatingPointType  LocalPriorWeight;
+  float  LocalPriorWeight;
   char   *InputChannelWeights;  
   int    PrintWeights;
   int    PrintRegistrationParameters;
@@ -170,6 +175,7 @@ protected:
   double RegistrationScale[3];
   double RegistrationCovariance[9];
   int RegistrationClassSpecificRegistrationFlag; 
+int ExcludeFromIncompleteEStepFlag;
 
 };
 

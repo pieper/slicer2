@@ -77,6 +77,7 @@ vtkMrmlSegmenterGenericClassNode::vtkMrmlSegmenterGenericClassNode() {
   this->RegistrationCovariance[6] = this->RegistrationCovariance[7] = this->RegistrationCovariance[8] = 0.1;
 
   this->RegistrationClassSpecificRegistrationFlag = 0;
+  this->ExcludeFromIncompleteEStepFlag = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -125,6 +126,7 @@ void vtkMrmlSegmenterGenericClassNode::Write(ofstream& of, int nIndent)
   for(int i=0; i < 9; i++)  of << this->RegistrationCovariance[i] << " ";
   of << "'"; 
   if (this->RegistrationClassSpecificRegistrationFlag) of << " RegistrationClassSpecificRegistrationFlag='" << this->RegistrationClassSpecificRegistrationFlag << "'";
+  if (this->ExcludeFromIncompleteEStepFlag) of << " ExcludeFromIncompleteEStepFlag='" << this->ExcludeFromIncompleteEStepFlag << "'";
 }
 
 //----------------------------------------------------------------------------
@@ -143,7 +145,8 @@ void vtkMrmlSegmenterGenericClassNode::Copy(vtkMrmlNode *anode)
   this->PrintRegistrationParameters   = node->PrintRegistrationParameters;
   this->PrintRegistrationSimularityMeasure         = node->PrintRegistrationSimularityMeasure;
   this->RegistrationClassSpecificRegistrationFlag = node->RegistrationClassSpecificRegistrationFlag;
-
+  this->ExcludeFromIncompleteEStepFlag = node->ExcludeFromIncompleteEStepFlag;
+ 
   memcpy(this->RegistrationTranslation,node->RegistrationTranslation,3*sizeof(double));
   memcpy(this->RegistrationRotation, node->RegistrationRotation,3*sizeof(double));
   memcpy(this->RegistrationScale,node->RegistrationScale,3*sizeof(double));
@@ -171,6 +174,7 @@ void vtkMrmlSegmenterGenericClassNode::PrintSelf(ostream& os, vtkIndent indent)
   for (int i = 0 ; i < 9 ; i++)  os << RegistrationCovariance[i] << " "; 
   os << "\n" ;
   os << indent << "RegistrationClassSpecificRegistrationFlag: " << this->RegistrationClassSpecificRegistrationFlag << "\n" ;
+  os << indent << "ExcludeFromIncompleteEStepFlag:     " << this->ExcludeFromIncompleteEStepFlag << "\n" ;
 }
 
 

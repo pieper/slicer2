@@ -72,8 +72,8 @@ typedef struct {
   void          ** ProbDataPtr;
   int           *ProbDataIncY; 
   int           *ProbDataIncZ; 
-  vtkFloatingPointType         *ProbDataWeight;
-  vtkFloatingPointType         *ProbDataMinusWeight;
+  float         *ProbDataWeight;
+  float         *ProbDataMinusWeight;
   int           ProbDataType;
   double        **LogMu;
   double        ***InvLogCov;
@@ -152,20 +152,16 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGene
 
   // Desciption:
   // Special function for parallelise MF part -> Creating Threads 
-  int MF_Approx_Workpile(float **w_m_input, unsigned char* MapVector, float *cY_M, 
-                            int imgXY,double ***InvLogCov,
-                            double *InvSqrtDetLogCov, int NumTotalTypeCLASS, int* NumChildClasses, 
-                            int NumClasses, void** ProbDataPtr, 
-                            int* ProbDataIncY, int* ProbDataIncZ, vtkFloatingPointType* ProbDataWeight, 
-                            vtkFloatingPointType *ProbDataMinusWeight, double** LogMu, 
-                            double* TissueProbability, int *VirtualNumInputImages, 
-                            vtkImageEMLocalSuperClass* head, float **_m_output);
+  int MF_Approx_Workpile(float **w_m_input,unsigned char* MapVector, float *cY_M, int imgXY,double ***InvLogCov,
+                         double *InvSqrtDetLogCov, int NumTotalTypeCLASS, int* NumChildClasses, int NumClasses, void** ProbDataPtr, 
+                         int* ProbDataIncY, int* ProbDataIncZ, float* ProbDataWeight, float *ProbDataMinusWeight, double** LogMu, 
+                         double* TissueProbability, int *VirtualNumInputImages, vtkImageEMLocalSuperClass* head, float **_m_output);
 
   // Description:
   // Print out intermediate result of the algorithm in a  file
   // The file is called  this->PrintIntermediateDir/EM*.m
   void PrintIntermediateResultsToFile(int iter, float **w_m, short *ROI, unsigned char* OutputVector, int NumTotalTypeCLASS, int* NumChildClasses, 
-          vtkImageEMLocalSuperClass* actSupCl, char* LevelName, void **ClassList, classType *ClassListType, int* LabelList, FILE** QualityFile);
+                      vtkImageEMLocalSuperClass* actSupCl, char* LevelName, void **ClassList, classType *ClassListType, int* LabelList, FILE** QualityFile);
 
   // -----------------------------------------------------
   // Intensity Correction 
@@ -233,7 +229,7 @@ protected:
   // Description:
   // Checks all intput image if they have coresponding dimensions 
 #if EM_VTK_OLD_SETTINGS
-  int CheckInputImage(vtkImageData * inData,int DataTypeOrig, vtkFloatingPointType DataSpacingOrig[3], int num);
+  int CheckInputImage(vtkImageData * inData,int DataTypeOrig, float DataSpacingOrig[3], int num);
 #else 
   int CheckInputImage(vtkImageData * inData,int DataTypeOrig, vtkFloatingPointType DataSpacingOrig[3], int num);
 #endif

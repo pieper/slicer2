@@ -86,7 +86,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define EMSEGMENT_ONE_OVER_2_PI 0.15915494309190
   // #define EMSEGMENT_ONE_OVER_ROOT_2_PI sqrt(EMSEGMENT_ONE_OVER_2_PI)
 #define EMSEGMENT_ONE_OVER_ROOT_2_PI 0.39894228040144
-#define EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 ((vtkFloatingPointType) -.72134752)
+#define EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 ((float) -.72134752)
 #define EMSEGMENT_E  2.7182818284590452353
 #define EMSEGMENT_SQRT_E 1.64872127070013
 
@@ -231,17 +231,17 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMGeneral : public vtkImageMultipleInput
   // Description:
   // Special feature necessary bc we use weighted input images thus a matix of realDim 2 can be virtualDim 1
   // e.g. 1 0 | 0 0
-  static vtkFloatingPointType FastGauss2(const double inverse_sqrt_det_covariance, const float *x ,const double *mu, double **inv_cov, const int virtualDim );
+  static float FastGauss2(const double inverse_sqrt_det_covariance, const float *x ,const double *mu, double **inv_cov, const int virtualDim );
 
   // Description :
   // Same as FastGauss - just for multi dimensional input ->  x = (vec - mu) * InvCov *(vec - mu)
-  static vtkFloatingPointType FastGaussMulti(const double inverse_sqrt_det_covariance, const float x,const int dim);
+  static float FastGaussMulti(const double inverse_sqrt_det_covariance, const float x,const int dim);
 
   // Description :
   // Same as FastGauss - just for multi dimensional input 
   // Special feature necessary bc we use weighted input images thus a matix of realDim 2 can be virtualDim 1
   // e.g. 1 0 | 0 0
-  static vtkFloatingPointType FastGaussMulti(const double inverse_sqrt_det_covariance, const float* x,const double *mu, double **inv_cov, const int realDim, const int virtualDim);
+  static float FastGaussMulti(const double inverse_sqrt_det_covariance, const float* x,const double *mu, double **inv_cov, const int realDim, const int virtualDim);
 
   // Description :
   // Fastes Gauss Function (jep I wrote it) - just look in a predifend lookup table 
@@ -255,11 +255,11 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMGeneral : public vtkImageMultipleInput
   // Calculates DICE and Jakobian Simularity Measure 
   // Value defines the vooxel with those label to be measured
   // Returns  Dice sim measure
-  static vtkFloatingPointType CalcSimularityMeasure (vtkImageData *Image1, vtkImageData *Image2,vtkFloatingPointType val, int PrintRes, int *BoundaryMin, int *BoundaryMax);
+  static float CalcSimularityMeasure (vtkImageData *Image1, vtkImageData *Image2,float val, int PrintRes, int *BoundaryMin, int *BoundaryMax);
 
 //Kilian
 //ETX
-  static vtkFloatingPointType CalcSimularityMeasure (vtkImageData *Image1, vtkImageData *Image2,vtkFloatingPointType val, int PrintRes);
+  static float CalcSimularityMeasure (vtkImageData *Image1, vtkImageData *Image2,float val, int PrintRes);
 
   // Description:
   // Opens text file with the a file name according to Kilian's EM nameing convention 
@@ -392,7 +392,7 @@ protected:
 
 // Does no conditional branching on alpha or sparc :Jun  7, 1995
 
-inline vtkFloatingPointType vtkImageEMGeneral_qnexp2(float const x)
+inline float vtkImageEMGeneral_qnexp2(float const x)
 {
     unsigned result_bits;
     unsigned bits = COERCE(x, unsigned int);
@@ -417,14 +417,14 @@ inline vtkFloatingPointType vtkImageEMGeneral_qnexp2(float const x)
     fprintf(stderr, " %g\n", result);
     }
 #endif
-    return((vtkFloatingPointType)COERCE(result_bits, float));
+    return(COERCE(result_bits, float));
 }
 
 // An approximation to the Gaussian function.
 // The error seems to be a six percent ripple.
 inline double vtkImageEMGeneral::FastGauss(const double inverse_sigma, const double x)
 {
-    vtkFloatingPointType tmp = vtkFloatingPointType(inverse_sigma * x);
+    float tmp = float(inverse_sigma * x);
     return (double) EMSEGMENT_ONE_OVER_ROOT_2_PI * inverse_sigma * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * tmp * tmp);
 }
 
@@ -432,7 +432,7 @@ inline double vtkImageEMGeneral::FastGauss(const double inverse_sigma, const dou
 // The error seems to be a six percent ripple.
 inline double vtkImageEMGeneral::FastGaussTest(const double inverse_sigma, const double x)
 {
-    vtkFloatingPointType tmp = vtkFloatingPointType(inverse_sigma * x);
+    float tmp = float(inverse_sigma * x);
 #ifndef _WIN32
     cerr << "Result " << tmp << " " << inverse_sigma * x << " " << vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * tmp * tmp) << endl ;
 #endif
@@ -443,31 +443,31 @@ inline double vtkImageEMGeneral::FastGaussTest(const double inverse_sigma, const
  // Same as FastGauss - just for 2 Dimensional multi dimensional input 
  // Special feature necessary bc we use weighted input images thus a matix of realDim 2 can be virtualDim 1
  // e.g. 1 0 | 0 0
-inline vtkFloatingPointType vtkImageEMGeneral::FastGauss2(const double inverse_sqrt_det_covariance, const float *x ,const double *mu,  double **inv_cov, const int virtualDim) {
-  vtkFloatingPointType term1 = x[0] - vtkFloatingPointType(mu[0]),
-        term2 = x[1] - vtkFloatingPointType(mu[1]);
+inline float vtkImageEMGeneral::FastGauss2(const double inverse_sqrt_det_covariance, const float *x ,const double *mu,  double **inv_cov, const int virtualDim) {
+  float term1 = x[0] - float(mu[0]),
+        term2 = x[1] - float(mu[1]);
   // Kilian: can be done faster: term1*(inv_cov[0][0]*term1 + 2.0*inv_cov[0][1]*term2) + term2*term2*inv_cov[1][1];
-  term2 = term1*(vtkFloatingPointType(inv_cov[0][0])*term1 + vtkFloatingPointType(inv_cov[0][1])*term2) + term2*(vtkFloatingPointType(inv_cov[1][0])*term1 + vtkFloatingPointType(inv_cov[1][1])*term2);
-  if (virtualDim > 1) return EMSEGMENT_ONE_OVER_2_PI * vtkFloatingPointType(inverse_sqrt_det_covariance)  * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * term2);
-  return EMSEGMENT_ONE_OVER_ROOT_2_PI * vtkFloatingPointType(inverse_sqrt_det_covariance)  * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * term2);
+  term2 = term1*(float(inv_cov[0][0])*term1 + float(inv_cov[0][1])*term2) + term2*(float(inv_cov[1][0])*term1 + float(inv_cov[1][1])*term2);
+  if (virtualDim > 1) return EMSEGMENT_ONE_OVER_2_PI * float(inverse_sqrt_det_covariance)  * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * term2);
+  return EMSEGMENT_ONE_OVER_ROOT_2_PI * float(inverse_sqrt_det_covariance)  * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * term2);
 }
 
 // Same as FastGauss - just for multi dimensional input ->  x = (vec - mu) * InvCov *(vec - mu) 
-inline vtkFloatingPointType vtkImageEMGeneral::FastGaussMulti(const double inverse_sqrt_det_covariance, const float x,const int dim) {
+inline float vtkImageEMGeneral::FastGaussMulti(const double inverse_sqrt_det_covariance, const float x,const int dim) {
   return pow(EMSEGMENT_ONE_OVER_ROOT_2_PI,dim) * inverse_sqrt_det_covariance * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * x);
 }
 
  // Special feature necessary bc we use weighted input images thus a matix of realDim 2 can be virtualDim 1
  // e.g. 1 0 | 0 0
-inline vtkFloatingPointType vtkImageEMGeneral::FastGaussMulti(const double inverse_sqrt_det_covariance, const float* x,const double *mu, double **inv_cov, const int realDim, const int virtualDim) {
-  if (realDim <2) return (vtkFloatingPointType) vtkImageEMGeneral::FastGauss(inverse_sqrt_det_covariance,x[0]- vtkFloatingPointType(mu[0]));
+inline float vtkImageEMGeneral::FastGaussMulti(const double inverse_sqrt_det_covariance, const float* x,const double *mu, double **inv_cov, const int realDim, const int virtualDim) {
+  if (realDim <2) return (float) vtkImageEMGeneral::FastGauss(inverse_sqrt_det_covariance,x[0]- float(mu[0]));
   if (realDim <3) return vtkImageEMGeneral::FastGauss2(inverse_sqrt_det_covariance, x ,mu,inv_cov, virtualDim);
-  vtkFloatingPointType *x_m = new vtkFloatingPointType[realDim];
+  float *x_m = new float[realDim];
   float term = 0;
   int i,j; 
-  for (i=0; i < realDim; i++) x_m[i] = x[i] - vtkFloatingPointType(mu[i]);
+  for (i=0; i < realDim; i++) x_m[i] = x[i] - float(mu[i]);
   for (i=0; i < realDim; i++) {
-    for (j=0; j < realDim; j++) term += (vtkFloatingPointType(inv_cov[i][j])*x_m[j]);
+    for (j=0; j < realDim; j++) term += (float(inv_cov[i][j])*x_m[j]);
     term *= x_m[i];
   }
   delete []x_m;

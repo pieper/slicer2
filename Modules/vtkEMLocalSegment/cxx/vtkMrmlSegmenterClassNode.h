@@ -77,8 +77,8 @@ public:
 
   // Description:
   // Get/Set for SegmenterClass
-  vtkGetMacro(ShapeParameter, vtkFloatingPointType);
-  vtkSetMacro(ShapeParameter, vtkFloatingPointType);
+  vtkGetMacro(ShapeParameter, float);
+  vtkSetMacro(ShapeParameter, float);
 
   // Description:
   // Get/Set for SegmenterClass
