@@ -403,7 +403,7 @@ void vtkGDFReader::OffsetSlope(char * c, char * v, int x, int y, int z)
 char *vtkGDFReader::GetNthClassLabel(int n)
 {
     vtkDebugMacro(<< "GetNthClassLabel\n");
-    if (n < this->ClassesVec.size())
+    if (n < (int)this->ClassesVec.size())
     {
         return (char *)this->ClassesVec[n][0].c_str();
     }
@@ -416,7 +416,7 @@ char *vtkGDFReader::GetNthClassLabel(int n)
 char *vtkGDFReader::GetNthClassMarker(int n)
 {
     vtkDebugMacro(<< "GetNthClassMarker\n");
-    if (n < this->ClassesVec.size())
+    if (n < (int)this->ClassesVec.size())
     {
         return (char *)this->ClassesVec[n][1].c_str();
     }
@@ -430,7 +430,7 @@ char *vtkGDFReader::GetNthClassMarker(int n)
 char *vtkGDFReader::GetNthClassColor(int n)
 {
     vtkDebugMacro(<< "GetNthClassColor\n");
-    if (n < this->ClassesVec.size())
+    if (n < (int)this->ClassesVec.size())
     {
         return (char *)this->ClassesVec[n][2].c_str();
     }
@@ -443,7 +443,7 @@ char *vtkGDFReader::GetNthClassColor(int n)
 char *vtkGDFReader::GetNthVariableLabel(int n)
 {
     vtkDebugMacro(<< "GetNthVariableLabel\n");
-    if (n < this->VariablesVec.size())
+    if (n < (int)this->VariablesVec.size())
     {
         return (char *)this->VariablesVec[n].c_str();
     }
@@ -458,7 +458,7 @@ char *vtkGDFReader::GetNthVariableLabel(int n)
 char *vtkGDFReader::GetNthSubjectID(int n)
 {
     vtkDebugMacro(<< "GetNthSubjectID\n");
-    if (n < this->SubjectsVec.size())
+    if (n < (int)this->SubjectsVec.size())
     {
         return (char *)this->SubjectsVec[n][0].c_str();
     }
@@ -473,7 +473,7 @@ char *vtkGDFReader::GetNthSubjectID(int n)
 char *vtkGDFReader::GetNthSubjectClass(int n)
 {
     vtkDebugMacro(<< "GetNthSubjectClass\n");
-    if (n < this->SubjectsVec.size())
+    if (n < (int)this->SubjectsVec.size())
     {
         return (char *)this->SubjectsVec[n][1].c_str();
     }
