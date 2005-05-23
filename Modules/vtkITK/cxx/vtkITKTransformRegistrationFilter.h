@@ -29,6 +29,15 @@ public:
 
   virtual void AbortIterations() = 0;
 
+  vtkProcessObject* GetProcessObject() {return this;};
+
+  virtual void ResetMultiResolutionSettings() {};
+
+  vtkSetMacro(Error, int);
+  vtkGetMacro(Error, int);
+
+  virtual double GetMetricValue() {return 0;};
+
 protected:
 
   //BTX
@@ -38,8 +47,10 @@ protected:
 
   vtkMatrix4x4 *m_Matrix;
 
+  int Error;
+
   // default constructor
-  vtkITKTransformRegistrationFilter () {}; // This is called from New() by vtkStandardNewMacro
+  vtkITKTransformRegistrationFilter () {Error=0;}; // This is called from New() by vtkStandardNewMacro
 
   virtual void UpdateRegistrationParameters(){};
 

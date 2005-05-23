@@ -118,6 +118,8 @@ public:
   itkSetMacro(CurrentIteration, int);
   itkGetMacro(CurrentIteration, int);
 
+  double GetMetricValue();
+
 
 protected:  
 

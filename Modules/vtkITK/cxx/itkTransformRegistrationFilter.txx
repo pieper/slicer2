@@ -154,6 +154,14 @@ itk::itkTransformRegistrationFilter<TOptimizerClass, TTransformerClass, TMetricC
   return m_Optimizer->AddObserver( itk::IterationEvent(), observer );
 }
 
+template <class TOptimizerClass, class TTransformerClass, class TMetricClass >
+double 
+itk::itkTransformRegistrationFilter<TOptimizerClass, TTransformerClass, TMetricClass >::GetMetricValue()
+{
+  return m_Optimizer->GetValue();
+}
+
+
 } // namespace itk
 
 #endif /* _itkTransformRegistrationFilter__txx */

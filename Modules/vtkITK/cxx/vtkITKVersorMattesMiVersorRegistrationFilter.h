@@ -51,6 +51,10 @@ public:
     m_ITKFilter->AbortIterations();
   };
 
+  virtual double GetMetricValue() {
+    return  m_ITKFilter->GetMetricValue();
+  }
+
 protected:
   int NumberOfIterations;
 
@@ -82,7 +86,7 @@ private:
   void operator=(const vtkITKVersorMattesMiVersorRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKVersorMattesMiVersorRegistrationFilter, "$Revision: 1.2 $");
+//vtkCxxRevisionMacro(vtkITKVersorMattesMiVersorRegistrationFilter, "$Revision: 1.3 $");
 //vtkStandardNewMacro(vtkITKVersorMattesMiVersorRegistrationFilter);
 vtkRegistrationNewMacro(vtkITKVersorMattesMiVersorRegistrationFilter);
 

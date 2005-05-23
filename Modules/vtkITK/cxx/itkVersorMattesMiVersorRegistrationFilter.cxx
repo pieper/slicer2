@@ -36,3 +36,4 @@ itk::itkVersorMattesMiVersorRegistrationFilter::SetMetricParamters()
   m_Metric->SetNumberOfHistogramBins( m_NumberOfHistogramBins );
   m_Metric->SetNumberOfSpatialSamples( m_NumberOfSpatialSamples );
 }
+
