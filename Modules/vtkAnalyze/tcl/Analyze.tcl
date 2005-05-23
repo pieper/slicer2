@@ -162,7 +162,7 @@ proc AnalyzeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.11 $} {$Date: 2005/04/19 14:46:25 $}]
+        {$Revision: 1.11.2.1 $} {$Date: 2005/05/23 19:52:57 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -467,8 +467,8 @@ proc AnalyzeCreateMrmlNodeForVolume {volName volData} {
     $n SetName $volName 
     $n SetDescription $volName 
 
-    # Volume($i,node) SetScanOrder {SI} 
-    Volume($i,node) SetScanOrder {IS} 
+    Volume($i,node) SetScanOrder {SI} 
+    # Volume($i,node) SetScanOrder {IS} 
     Volume($i,node) SetLittleEndian $AnalyzeCache(byteOrder) 
 
     $volData Update 
@@ -517,7 +517,8 @@ proc AnalyzeCreateVolumeNameFromFileName {fileName} {
 
     set tail [file tail $fileName]
     set dot [string last "." $tail]
-    set name [string replace $tail $dot $dot "_"] 
+#    set name [string replace $tail $dot $dot "_"] 
+    set name [string range $tail 0 [expr $dot-1]] 
 
     return $name
 }
@@ -587,7 +588,7 @@ proc AnalyzeLoadVolumes {} {
 
     set volName [AnalyzeCreateVolumeNameFromFileName \
         $AnalyzeCache(fileName)]
-    set us "_"
+    set dash "-"
 
     set x1 0 
     set x2 $maxX 
@@ -599,8 +600,12 @@ proc AnalyzeLoadVolumes {} {
         # then you should set the AppendAxis to 2 (Z axis).
         vtkImageAppend imageAppend 
         imageAppend SetAppendAxis 2 
-
-        set vName $volName$us$j
+        
+        if {$n > 1} {
+            set vName $volName$dash$j
+        } else {
+            set vName $volName
+        }
         set load "Loading volume:\n"
         append load $vName
         puts "Loading volume $vName..."
