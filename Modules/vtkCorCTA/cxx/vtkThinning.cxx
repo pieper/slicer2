@@ -247,7 +247,7 @@ void vtkThinning::init_neighborhoods()
 
 
 //----------------------------------------------------------------------
-unsigned char CoordOK(vtkImageData* im,int x,int y,int z)
+unsigned char vtkThinning::CoordOK(vtkImageData* im,int x,int y,int z)
 {
   return (x>=0 && y>=0 && z>=0 && 
         x<im->GetDimensions()[0] &&

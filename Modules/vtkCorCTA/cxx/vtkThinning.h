@@ -171,6 +171,8 @@ protected:
 
   Boolean IsEndPoint( vtkImageData* im, int x, int y, int z);
 
+  unsigned char CoordOK(vtkImageData* im,int x,int y,int z);
+
   void ParseCC( int* domain, 
   //   -------
         int neighborhood[27][27], 

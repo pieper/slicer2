@@ -97,6 +97,8 @@ protected:
   void Init();
   void Init_Pos();
 
+  unsigned char CoordOK(vtkImageData* im,int x,int y,int z);
+
   void ExecuteData(vtkDataObject* output);
 
 //BTX
