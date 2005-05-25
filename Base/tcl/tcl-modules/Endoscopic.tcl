@@ -262,7 +262,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.97 $} {$Date: 2005/02/15 20:20:16 $}] 
+    {$Revision: 1.98 $} {$Date: 2005/05/25 23:15:04 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -4762,13 +4762,13 @@ proc EndoscopicAddMainViewRemoveEndoscopicView {} {
 
 #}
 
-#==================================================================
+#-------------------------------------------------------------------------------
 #  .PROC EndoscopicAutoSelectSourceSink
 # Automatically set PathPlanningSetSource and PathPlanningSetSink
-#
-#==================================================================
-
-
+# .ARGS
+# list list defaults to an empty list
+# .END 
+#-------------------------------------------------------------------------------
 proc EndoscopicAutoSelectSourceSink {{list ""}} {
     global Point Fiducials Select Endoscopic Model PathPlanning
 
@@ -4839,11 +4839,12 @@ proc EndoscopicAutoSelectSourceSink {{list ""}} {
 
 #=========================================================================
 
-#--------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # .PROC  EndoscopicSetFlatFileName
 # set file name
-#--------------------------------------------------------------------------
-
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicSetFlatFileName {} {
     global Endoscopic
 
@@ -4861,11 +4862,12 @@ proc EndoscopicSetFlatFileName {} {
     set Endoscopic(flatColon,name) [file root [file tail $Endoscopic(FlatSelect)]]
 }
 
-#-------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicCancelFlatFile
 # remove file name and reset variables.
-#-------------------------------------------------------------------------
-
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicCancelFlatFile {} {
    global Endoscopic
 
@@ -4879,8 +4881,9 @@ proc EndoscopicCancelFlatFile {} {
 # Open a separate render window to display the flattened colon.
 # Simple Gui are also written here with parameters tailored to the size of the flatttened colon.
 # Bindings are pushed here.
+# .ARGS
+# .END
 #-------------------------------------------------------------------------------
-
 proc EndoscopicAddFlatView {} {
     global Gui Endoscopic View viewWin MainViewer Slice Module
 
@@ -5236,11 +5239,14 @@ proc EndoscopicAddFlatView {} {
 
 }
 
-#-----------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicRemoveFlatView
 # Remove the flattened colon window and everything related to it.
 # Pop Bindings here
-#-----------------------------------------------------------------------------
+# .ARGS
+# string name defaults to empty string
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicRemoveFlatView {{name ""}} {
     global Module Endoscopic View
 
@@ -5313,12 +5319,14 @@ proc EndoscopicRemoveFlatView {{name ""}} {
     EndoscopicPopFlatBindings
 }
 
-#-----------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicCreateFlatBindings
 # Create and Activate binding sets that allow the user to double click at a location on the flattened colon,
 # move the endoscope to the corresponding location in 3D, and sychronize the 2D slices as well
-#-----------------------------------------------------------------------------------------------
-
+# .ARGS
+# windowelement widget 
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicCreateFlatBindings {widget} {
     global Endoscopic Ev
 
@@ -5353,18 +5361,25 @@ proc EndoscopicCreateFlatBindings {widget} {
     EvActivateBindingSet bindFlatWindowEvents
 
 }
-#------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicPopFlatBindings
 # Deactivate binding sets when the user closes the flat colon view.
-#--------------------------------------------------------------------
-
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicPopFlatBindings {} {
     global Ev Csys Endoscopic
    
     EvDeactivateBindingSet bindFlatWindowEvents
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicBuildFlatColonLookupTable
+# .ARGS
+# string name defaults to empty string
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicBuildFlatColonLookupTable {{name ""}} {
     global Endoscopic
      
@@ -5408,6 +5423,12 @@ proc EndoscopicBuildFlatColonLookupTable {{name ""}} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicBuildFlatBoundary
+# .ARGS
+# string name defaults to empty string
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicBuildFlatBoundary {{name ""}} {
 
      global Endoscopic
@@ -5514,7 +5535,15 @@ proc EndoscopicBuildFlatBoundary {{name ""}} {
     
 }
 
-#test proc to track mouse location in the flat window
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicMouseLocation
+# test proc to track mouse location in the flat window
+# .ARGS
+# windowelement widget
+# int xcoord
+# int ycoord 
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicMouseLocation {widget xcoord ycoord} {
     global Endoscopic
     
@@ -5523,7 +5552,14 @@ proc EndoscopicMouseLocation {widget xcoord ycoord} {
 
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicStartPan
+# .ARGS
+# windowelement widget
+# int xcoord
+# int ycoord
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicStartPan {widget xcoord ycoord} {
      global Endoscopic
 
@@ -5535,7 +5571,14 @@ proc EndoscopicStartPan {widget xcoord ycoord} {
      
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicEndPan
+# .ARGS
+# windowelement widget
+# int xcoord
+# int ycoord
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicEndPan {widget xcoord ycoord} {
      global Endoscopic
      
@@ -5573,7 +5616,13 @@ proc EndoscopicEndPan {widget xcoord ycoord} {
      
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicStartZoom
+# .ARGS
+# windowelement widget 
+# int ycoord
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicStartZoom {widget ycoord} {
      global Endoscopic
     
@@ -5583,7 +5632,13 @@ proc EndoscopicStartZoom {widget ycoord} {
      
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicEndZoom
+# .ARGS
+# windowelement widget 
+# int ycoord
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicEndZoom {widget ycoord} {
      global Endoscopic
 
@@ -5613,12 +5668,15 @@ proc EndoscopicEndZoom {widget ycoord} {
      
 }
 
-
-#-------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicPickFlatPoint
 # use vtkCellPicker to identify the cell Id and location of interest.
-#-------------------------------------------------------------------
-
+# .ARGS
+# windowelement widget
+# int xcoord
+# int ycoord
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicPickFlatPoint {widget xcoord ycoord} {
     global Select Endoscopic Model Fiducials
     
@@ -5688,11 +5746,16 @@ proc EndoscopicPickFlatPoint {widget xcoord ycoord} {
     tempPointLocator Delete
 }
 
-#-------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicAddTargetInFlatWindow
 # Draw a vertical red line behind the flattened colon at locations of interest selected by the user.
-#-------------------------------------------------------------------
-
+# .ARGS
+# windowelement widget
+# int x
+# int y
+# int z
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicAddTargetInFlatWindow {widget x y z} {
 
     global Select Endoscopic
@@ -5794,12 +5857,14 @@ proc EndoscopicAddTargetInFlatWindow {widget x y z} {
 #puts "end draw in flatwindow: clock format [clock seconds]"
 }
 
-#-------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicAddTargetFromFlatColon
 # Find and sychronize the corresponing location in 3D colon and 2D slices that 
 # corresponds to the location selected on the flattened colon
-#-------------------------------------------------------------------
-
+# .ARGS
+# int pointId
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicAddTargetFromFlatColon {pointId} {
 
     global Endoscopic Point Fiducials Select Model View Path Slice Volume Volumes
@@ -5896,10 +5961,15 @@ proc EndoscopicAddTargetFromFlatColon {pointId} {
     EndoscopicCreateTargets
 }
 
-#-----------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicAddTargetFromSlices
 #  When a user selects a location on the 2D slices, the Endoscope in 3D jumps to the corresponding location
-#-----------------------------------------------------------------------------------------
+# .ARGS
+# int x
+# int y
+# int z
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicAddTargetFromSlices {x y z} {
 
     global Endoscopic Point Fiducials Select Model View Slice Volume Volumes
@@ -6016,11 +6086,15 @@ tempPointLocator Delete
   
 }
 
-#-----------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicAddTargetFromWorldCoordinates
 #  When a user selects a location on the 3D model, the 2D slices sychronises.
-#-----------------------------------------------------------------------------------------
-
+# .ARGS
+# int sx
+# int sy
+# int sz
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicAddTargetFromWorldCoordinates {sx sy sz} {
      global Endoscopic Point Fiducials Select Model View Slice Volume Volumes
 
@@ -6140,11 +6214,12 @@ proc EndoscopicAddTargetFromWorldCoordinates {sx sy sz} {
   
 }
 
-#---------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicLoadTargets
 # given a particular path, this allows the user to reload reviously saved targets in the MRML tree.
-#--------------------------------------------------------------------------------------------------------
-
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicLoadTargets { }  {
 
      global Endoscopic Fiducials
@@ -6187,11 +6262,12 @@ proc EndoscopicLoadTargets { }  {
 
 }
 
-#---------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicMainFileCloseUpdated
 # Reset variables when one closes a scene.
-#--------------------------------------------------------------------------------------------------------
-
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicMainFileCloseUpdated {}  {
      global Endoscopic Model Module
      
@@ -6216,11 +6292,12 @@ proc EndoscopicMainFileCloseUpdated {}  {
 
 }
 
-#---------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicCreateTarget
 # create a target fiducial at the look at point, the look from point is located at the endoscopic camera
-#----------------------------------------------------------------------------------------
-
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicCreateTargets {} {
 
     global Endoscopic Point Fiducials Module
@@ -6297,12 +6374,13 @@ proc EndoscopicCreateTargets {} {
 #puts "end create target: clock format [clock seconds]"
 }
 
-#-------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicUpdateActiveTarget
 # this is called when the user modify the endoscope's position and orientation to look at an existing fiducial point.
 # i.e., the user can adjust the ideal view point for a particular polyp, and then save that information.
-#---------------------------------------------------------------------------------------------------------
-
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicUpdateActiveTarget {} {
     global Fiducials Endoscopic Point
 
@@ -6342,11 +6420,12 @@ proc EndoscopicUpdateActiveTarget {} {
 
 }
 
-#-------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicDeleteActiveTarget
 # delete an existing target from the fiducial list
-#---------------------------------------------------------------------------------------------------------
-
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicDeleteActiveTarget {} {
     global Fiducials Endoscopic Point
     
@@ -6425,11 +6504,14 @@ proc EndoscopicDeleteActiveTarget {} {
 
 }
 
-#--------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicSelectTarget
-# when a target is selected, the endoscope jumps to the optimum location (decided by the user) and aim itself at the target.
-#--------------------------------------------------------------------------------------------------------
-
+# when a target is selected, the endoscope jumps to the optimum location 
+# (decided by the user) and aim itself at the target.
+# .ARGS
+# int sT selected target
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicSelectTarget {sT} {
 
     global Fiducials Endoscopic Point Volume Volumes
@@ -6533,11 +6615,12 @@ proc EndoscopicSelectTarget {sT} {
     
 } 
 
-#----------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicSelectNextTarget
 # select the next target
-#----------------------------------------------------------------------------
-
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicSelectNextTarget {} {
 
     global Endoscopic
@@ -6561,10 +6644,12 @@ proc EndoscopicSelectNextTarget {} {
 
 }  
 
-#----------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicSelectPreviousTarget
 # select the previous target.
-#----------------------------------------------------------------------------
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicSelectPreviousTarget {} {
 
     global Endoscopic
@@ -6588,11 +6673,14 @@ proc EndoscopicSelectPreviousTarget {} {
 
 }  
 
-
-#----------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicUpdateTargetsInFlatWindow
-# this is called from the update button in the flat colon window to load the targets from the MRML tree into the flat colon window 
-#----------------------------------------------------------------------------
+# this is called from the update button in the flat colon window to load 
+# the targets from the MRML tree into the flat colon window 
+# .ARGS
+# windowelement widget
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicUpdateTargetsInFlatWindow {widget} {
 
     global Endoscopic Fiducials Point Model
@@ -6688,6 +6776,15 @@ proc EndoscopicUpdateTargetsInFlatWindow {widget} {
      
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicFlatLightElevationAzimuth
+# set the light key light eleveation and azimuth from the inputs
+# .ARGS
+# windowelement widget
+# string Endoscopic(flatColon,LightElev) light elevation, defaults to empty string
+# string Endoscopic(flatColon,LightAzi) light azimuth, defaults to empty string
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicFlatLightElevationAzimuth {widget {Endoscopic(flatColon,LightElev)"" Endoscopic(flatColon,LightAzi)""}} {
      global Endoscopic
      
@@ -6700,11 +6797,14 @@ proc EndoscopicFlatLightElevationAzimuth {widget {Endoscopic(flatColon,LightElev
 
 }
 
-#------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicMoveCameraX
 # move the camera in the flat colon window along the x axis
-#------------------------------------------------------------------------------------------
-
+# .ARGS
+# windowelement widget 
+# string Endoscopic(flatColon,xCamDist) distance to move the camera, defaults to emtpy string
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicMoveCameraX {widget {Endoscopic(flatColon,xCamDist)""}} {
     global Endoscopic
  
@@ -6722,12 +6822,14 @@ proc EndoscopicMoveCameraX {widget {Endoscopic(flatColon,xCamDist)""}} {
    [$widget GetRenderWindow] Render
 }
 
-
-#------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicMoveCameraY
 # move the camera in the flat colon window along the y axis
-#------------------------------------------------------------------------------------------
-
+# .ARGS
+# windowelement widget 
+# string Endoscopic(flatColon,yCamDist) distance to move the camera, defaults to emtpy string
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicMoveCameraY {widget {Endoscopic(flatColon,yCamDist)""}} {
    global Endoscopic
  
@@ -6745,11 +6847,14 @@ proc EndoscopicMoveCameraY {widget {Endoscopic(flatColon,yCamDist)""}} {
   [$widget GetRenderWindow] Render
 }
 
-#------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicMoveCameraZ
 # zoom the camera in the flat colon window along the z axis (in and out of the screen)
-#------------------------------------------------------------------------------------------
-
+# .ARGS
+# windowelement widget
+# string Endoscopic(flatColon,zCamDist) distance to move the camera, defaults to empty string
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicMoveCameraZ {widget {Endoscopic(flatColon,zCamDist)""}} {
     global Endoscopic
  
@@ -6766,11 +6871,13 @@ proc EndoscopicMoveCameraZ {widget {Endoscopic(flatColon,zCamDist)""}} {
   [$widget GetRenderWindow] Render
 }
 
-#------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # .PROC EndoscopicResetFlatCameraDist
 # reset the camera in the flat colon window to an optimum location along the z axis based on the size of the colon
-#------------------------------------------------------------------------------------------
-
+# .ARGS
+# windowelement widget
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicResetFlatCameraDist {widget} {
 
     global Endoscopic
@@ -6794,6 +6901,13 @@ proc EndoscopicResetFlatCameraDist {widget} {
     
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicScrollRightFlatColon
+# 
+# .ARGS
+# windowelement widget
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicScrollRightFlatColon {widget} {
 
     global Endoscopic
@@ -6825,7 +6939,13 @@ proc EndoscopicScrollRightFlatColon {widget} {
      
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicScrollLeftFlatColon
+# 
+# .ARGS
+# windowelement widget
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicScrollLeftFlatColon {widget} {
 
     global Endoscopic
@@ -6857,7 +6977,12 @@ proc EndoscopicScrollLeftFlatColon {widget} {
      
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicStopFlatColon
+# sets Endoscopic(flatColon,stop) to one
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicStopFlatColon {} {
 
     global Endoscopic
@@ -6866,6 +6991,13 @@ proc EndoscopicStopFlatColon {} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicResetFlatColon
+# Resets Endoscopic(flatColon,xCamDist) to minimum x value
+# .ARGS
+# windowelement widget
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicResetFlatColon {widget} {
 
     global Endoscopic
@@ -6876,6 +7008,12 @@ proc EndoscopicResetFlatColon {widget} {
     
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicResetStop
+# sets  Endoscopic(flatColon,stop) to zero
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicResetStop {} {
 
      global Endoscopic
@@ -6883,6 +7021,13 @@ proc EndoscopicResetStop {} {
      set Endoscopic(flatColon,stop) 0
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicSetFlatColonScalarVisibility
+# 
+# .ARGS
+# windowelement widget
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicSetFlatColonScalarVisibility {widget} {
      
      global Endoscopic
@@ -6920,6 +7065,13 @@ proc EndoscopicSetFlatColonScalarVisibility {widget} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicSetFlatColonScalarRange
+#
+# .ARGS
+# windowelement widget
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicSetFlatColonScalarRange {widget} {
      
      global Endoscopic
