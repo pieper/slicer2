@@ -82,7 +82,17 @@ vtkSkeleton2Lines::~vtkSkeleton2Lines()
 
 
 //CoordOK already defined in vtkThinning.cxx
-extern unsigned char CoordOK(vtkImageData*,int,int,int);
+//extern unsigned char CoordOK(vtkImageData*,int,int,int);
+
+//----------------------------------------------------------------------
+unsigned char vtkSkeleton2Lines::CoordOK(vtkImageData* im,int x,int y,int z)
+{
+  return (x>=0 && y>=0 && z>=0 && 
+        x<im->GetDimensions()[0] &&
+    y<im->GetDimensions()[1] && 
+    z<im->GetDimensions()[2]);
+}
+
 
 //----------------------------------------------------------------------
 void vtkSkeleton2Lines::Init_Pos()
@@ -147,13 +157,17 @@ void vtkSkeleton2Lines::ExecuteData(vtkDataObject* output)
   int          found;
   int          e;
 
+  float meanx, meany, meanz;
+  short pointid0, pointid1;
   vtkImageData* pointid;
+  vtkImageData* loopid;
   vtkPoints* surfPoints;
   vtkCellArray* surfCell;
   vtkIdList* pointIds;
   vtkFloatingPointType        origin[3];
   vtkFloatingPointType        spacing[3];
   unsigned short *inputPtr, *pointidPtr, *neighborsPtr;
+  short * loopidPtr;
   unsigned char *endpointsPtr;
 
 
@@ -175,6 +189,21 @@ void vtkSkeleton2Lines::ExecuteData(vtkDataObject* output)
   pointid->SetScalarType(VTK_UNSIGNED_SHORT);
   pointid->SetNumberOfScalarComponents(1);
   pointid->AllocateScalars();
+  
+  loopid = vtkImageData::New();
+  loopid->SetDimensions(this->GetInput()->GetDimensions());
+  loopid->SetSpacing(this->GetInput()->GetSpacing());
+  loopid->SetScalarType(VTK_SHORT);
+  loopid->SetNumberOfScalarComponents(1);
+  loopid->AllocateScalars();
+  
+  //Init loop id to -1 (0 index is used)
+  loopidPtr=(short*)loopid->GetScalarPointer();
+  for (int i = 0 ; i< loopid->GetNumberOfPoints() ; i++) {
+     *loopidPtr = -1;
+     loopidPtr++;
+  }   
+  
   //fprintf(stderr,"pointid image allocated...\n");
 
   surfPoints = vtkPoints::New();
@@ -225,6 +254,8 @@ void vtkSkeleton2Lines::ExecuteData(vtkDataObject* output)
       
       //don't care about spacing and origin, because it screws up the result...
       //simply insert x y z
+      //We should care though to comply with a polydata filter that gives point in physical space.
+      //So far let us keep like that.
       //surfPoints->InsertPoint(iPoint,(x*spacing[0])-origin[0],(y*spacing[1])-origin[1],(z*spacing[2])-origin[2]);
       surfPoints->InsertPoint(iPoint,x,y,z);
 
@@ -263,6 +294,48 @@ void vtkSkeleton2Lines::ExecuteData(vtkDataObject* output)
   }
   }
   this->UpdateProgress(0.45);
+
+ //Check for local loops in 2x2x2 neighborhoods and extract mean point of loops
+ inputPtr = (unsigned short*)InputImage->GetScalarPointer();
+ vtkIdType inc[3];
+ InputImage->GetIncrements(inc);
+  
+  for(z=0;z<=tz-2;z++) {
+  for(y=0;y<=ty-2;y++) {
+  for(x=0;x<=tx-2;x++) {
+    
+        n = ((*inputPtr) > 0) + (*(inputPtr+inc[0]) > 0) + (*(inputPtr+inc[1]) > 0) + (*(inputPtr+inc[0]+inc[1]) > 0) + 
+        (*(inputPtr+inc[2]) > 0) + (*(inputPtr+inc[0]+inc[2]) > 0) + (*(inputPtr+inc[1]+inc[2]) > 0) + (*(inputPtr+inc[0]+inc[1]+inc[2]) > 0);
+    
+    if (n>2) {
+    
+      cout<<x<<" "<<y<<" "<<z<<"--->n="<<n<<endl;
+      //compute the mean and store the id point
+      meanx = meany = meanz = 0;
+      for (z1 = z; z1<=z+1;z1++)
+        for (y1 = y;y1<=y+1;y1++)
+       for(x1 = x;x1<=x+1;x1++) {
+          
+          if((*(unsigned short *)InputImage->GetScalarPointer(x1,y1,z1))>0) {
+             meanx += x1;
+         meany += y1;
+         meanz += z1; 
+         //Buffer the point id of the loop point
+         loopidPtr=(short*)loopid->GetScalarPointer(x1,y1,z1);
+                 *loopidPtr=iPoint;
+          }
+          
+          //Add point to the centerline     
+          surfPoints->InsertPoint(iPoint,meanx*1.0/n,meany*1.0/n,meanz*1.0/n); 
+          iPoint++;
+       }
+       
+     } //end iff
+     
+    }
+   }
+   }             
+
 
   //--------------- Create the lines ----------------------
   n_lines = 0;
@@ -304,9 +377,33 @@ void vtkSkeleton2Lines::ExecuteData(vtkDataObject* output)
 
       if (!found) {
         vtkErrorMacro("General mess");
+    //Deallocate and return
+    neighbors->Delete();
+        pointid->Delete();
+        loopid->Delete();
+        endpoints->Delete();
+    surfCell->Delete();
+        surfPoints->Delete();
+    return;
       }
 
-
+      // Decide if the line must be created
+      pointid1 =  (*(short*)loopid->GetScalarPointer(x1,y1,z1));
+      pointid0 =  (*(short*)loopid->GetScalarPointer(x0,y0,z0));
+      if (pointid0>-1 && (pointid0 == pointid1)) {
+        neighborsPtr=(unsigned short*)neighbors->GetScalarPointer(x1,y1,z1);
+        *neighborsPtr=*neighborsPtr-1;
+        continue;
+      } else {
+        // Insert new line
+    if (pointid0 > -1) {
+             pointIds->InsertNextId(*(short*)loopid->GetScalarPointer(x0,y0,z0));
+    }
+    pointIds->InsertNextId(*(unsigned short*)pointid->GetScalarPointer(x0,y0,z0));
+        
+       }    
+    
+    
       // 1. follow the line
       while (found && *(unsigned short*)neighbors->GetScalarPointer(x1,y1,z1)==2 && !(*(unsigned char*)endpoints->GetScalarPointer(x1,y1,z1))) {
         // search for the next point
@@ -331,7 +428,7 @@ void vtkSkeleton2Lines::ExecuteData(vtkDataObject* output)
         //surfCell->InsertCellPoint(*(unsigned short*)pointid->GetScalarPointer(x0,y0,z0));
         pointIds->InsertNextId(*(unsigned short*)pointid->GetScalarPointer(x0,y0,z0));
             //fprintf(stderr,"(%2d %2d %2d) ",x0,y0,z0);
-        x1 = x2;
+    x1 = x2;
         y1 = y2;
         z1 = z2;
             found = TRUE;
@@ -348,13 +445,18 @@ void vtkSkeleton2Lines::ExecuteData(vtkDataObject* output)
 
       //surfCell->InsertCellPoint(*(unsigned short*)pointid->GetScalarPointer(x1,y1,z1));
       pointIds->InsertNextId(*(unsigned short*)pointid->GetScalarPointer(x1,y1,z1));
+      
+      if ((*(short*)loopid->GetScalarPointer(x1,y1,z1)) > -1 ) {
+        pointIds->InsertNextId(*(short*)loopid->GetScalarPointer(x1,y1,z1));
+      }
+      
       //surfCell->UpdateCellCount(n_points);
       // is the line long enough?
       if (pointIds->GetNumberOfIds() > MinPoints) {
         surfCell->InsertNextCell(pointIds);
       }
-      pointIds->Delete();
-      pointIds = vtkIdList::New();
+      pointIds->Reset();
+      //pointIds = vtkIdList::New();
       //fprintf(stderr,"%03d : %2d %2d %2d End \n",n_lines,x1,y1,z1);
 
       neighborsPtr=(unsigned short*)neighbors->GetScalarPointer(x1,y1,z1);
@@ -374,6 +476,7 @@ void vtkSkeleton2Lines::ExecuteData(vtkDataObject* output)
 
   neighbors->Delete();
   pointid->Delete();
+  loopid->Delete();
   endpoints->Delete();
   
   
