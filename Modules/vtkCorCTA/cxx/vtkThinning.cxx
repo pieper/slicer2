@@ -83,7 +83,7 @@ vtkThinning::vtkThinning()
   Criterion     = NULL;
 
   MinThreshold = 0;
-  MaxThreshold = 0;
+  MaxThreshold = 1000;
   
   UseLineEndpoints = TRUE;
   UseFiducialEndpoints = FALSE;
@@ -429,7 +429,7 @@ void vtkThinning::ExecuteData(vtkDataObject* output)
     int             cc1,cc2;
     vtkMinHeap<TrialPoint>  heap;
     unsigned long   n;
-    unsigned short *heapPtr,*outputPtr,*inputPtr,*CriterionPtr;
+    unsigned short *heapPtr,*outputPtr,*inputPtr;
  
   //fprintf(stderr,"vtkThinning execution...\n");
   
@@ -451,13 +451,8 @@ void vtkThinning::ExecuteData(vtkDataObject* output)
   //fprintf(stderr,"heap image allocated...\n");
 
   //im_Criterion = new_image(Criterion);
-  im_Criterion = vtkImageData::New();
-  im_Criterion->SetDimensions(Criterion->GetDimensions());
-  im_Criterion->SetSpacing(Criterion->GetSpacing());
-  im_Criterion->SetScalarType(VTK_UNSIGNED_SHORT);
-  im_Criterion->SetNumberOfScalarComponents(1);
-  im_Criterion->AllocateScalars();
-  im_Criterion->DeepCopy(Criterion);
+  im_Criterion = Criterion;
+  
   //fprintf(stderr,"criterion image allocated and copied, extent %d,%d,%d...\n",im_Criterion->GetDimensions()[0],im_Criterion->GetDimensions()[1],im_Criterion->GetDimensions()[2]);
   this->UpdateProgress(0.1);
 
@@ -498,7 +493,7 @@ void vtkThinning::ExecuteData(vtkDataObject* output)
         }
       }
       if ((contour) && IsSimple(OutputImage,x,y,z,cc1,cc2) ) {
-        heap += TrialPoint(x,y,z,*(unsigned short*)im_Criterion->GetScalarPointer(x,y,z));
+        heap += TrialPoint(x,y,z,im_Criterion->GetScalarComponentAsFloat(x,y,z,0));
     heapPtr=(unsigned short*)im_heap->GetScalarPointer(x,y,z);
     *heapPtr=1;
       }
@@ -525,7 +520,7 @@ void vtkThinning::ExecuteData(vtkDataObject* output)
 
     if ( IsSimple(OutputImage,p.x,p.y,p.z,cc1,cc2) ) {
       if ( !(IsEndPoint(OutputImage,p.x,p.y,p.z)) ||
-         (*(float*)im_Criterion->GetScalarPointer(p.x,p.y,p.z) < MinThreshold)) { 
+         (im_Criterion->GetScalarComponentAsFloat(p.x,p.y,p.z,0) < MinThreshold)) { 
         // remove P
     outputPtr=(unsigned short*)OutputImage->GetScalarPointer(p.x,p.y,p.z);
     *outputPtr=0;
@@ -547,7 +542,7 @@ void vtkThinning::ExecuteData(vtkDataObject* output)
           if (*(outputPtr+neighbors_pos[n])==255 ) {
             if ( ((*(unsigned short*)im_heap->GetScalarPointer(x1,y1,z1))==0) &&
             IsSimple(OutputImage,x1,y1,z1,cc1,cc2)) {
-              heap += TrialPoint(x1,y1,z1,*(unsigned short*)im_Criterion->GetScalarPointer(x1,y1,z1));
+              heap += TrialPoint(x1,y1,z1,im_Criterion->GetScalarComponentAsFloat(x1,y1,z1,0));
           heapPtr=(unsigned short*)im_heap->GetScalarPointer(x1,y1,z1);
           *heapPtr=1;
             }
@@ -570,13 +565,12 @@ void vtkThinning::ExecuteData(vtkDataObject* output)
 
 
   outputPtr=(unsigned short*)OutputImage->GetScalarPointer();
-  CriterionPtr=(unsigned short*)im_Criterion->GetScalarPointer();
 
   for(z=0;z<=OutputImage->GetDimensions()[2]-1;z++) {
   for(y=0;y<=OutputImage->GetDimensions()[1]-1;y++) {
   for(x=0;x<=OutputImage->GetDimensions()[0]-1;x++) {
 
-    if (*outputPtr && *CriterionPtr>MaxThreshold ) {
+    if (*outputPtr && im_Criterion->GetScalarComponentAsFloat(x,y,z,0)>MaxThreshold ) {
       *outputPtr=0;
     }
     
@@ -585,12 +579,10 @@ void vtkThinning::ExecuteData(vtkDataObject* output)
     }
 
     outputPtr++;
-    CriterionPtr++;
   }
   }
   }
 
-  im_Criterion->Delete();
   //fprintf(stderr,"Done!\n");
   this->UpdateProgress(1.0);
   
