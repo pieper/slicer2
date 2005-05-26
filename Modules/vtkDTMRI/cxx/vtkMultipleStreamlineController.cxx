@@ -1370,6 +1370,8 @@ void vtkMultipleStreamlineController::SeedStreamlinesEvenlyInROI()
 // Seed each streamline, cause it to Update, save its info to disk
 // and then Delete it.  This is a way to seed in the whole brain
 // without running out of memory. Nothing is displayed in the renderers.
+// Some defaults for deciding when to save (min length) are hard-coded
+// here for now.
 //----------------------------------------------------------------------------
 void vtkMultipleStreamlineController::SeedAndSaveStreamlinesFromROI(char *pointsFilename, char *modelFilename)
 {
@@ -1382,7 +1384,7 @@ void vtkMultipleStreamlineController::SeedAndSaveStreamlinesFromROI(char *points
   unsigned long target;
   int count2 = 0;
   short *inPtr;
-  vtkHyperStreamline *newStreamline;
+  vtkHyperStreamlinePoints *newStreamline;
   vtkTransform *transform;
   vtkTransformPolyDataFilter *transformer;
   vtkPolyDataWriter *writer;
@@ -1414,6 +1416,9 @@ void vtkMultipleStreamlineController::SeedAndSaveStreamlinesFromROI(char *points
       return;      
     }
 
+
+  // make sure we are creating objects with points
+  this->UseVtkHyperStreamlinePoints();
 
   // Create transformation matrix to place actors in scene
   // This is used to transform the models before writing them to disk
@@ -1523,7 +1528,8 @@ void vtkMultipleStreamlineController::SeedAndSaveStreamlinesFromROI(char *points
                   if (this->PointWithinTensorData(point,point2))
                     {
                       // Now create a streamline 
-                      newStreamline=this->CreateHyperStreamline();
+                      newStreamline=(vtkHyperStreamlinePoints *) 
+                        this->CreateHyperStreamline();
                       
                       // Set its input information.
                       newStreamline->SetInput(this->InputTensorField);
@@ -1533,29 +1539,34 @@ void vtkMultipleStreamlineController::SeedAndSaveStreamlinesFromROI(char *points
                       // Force it to execute
                       newStreamline->Update();
 
-                      // transform model
-                      transformer->SetInput(newStreamline->GetOutput());
-
-                      // Save the model to disk
-                      writer->SetInput(transformer->GetOutput());
-                      writer->SetFileType(2);
-
-                      // clear the buffer (set to empty string)
-                      fileNameStr.str("");
-                      fileNameStr << modelFilename << '_' << idx << ".vtk";
-                      writer->SetFileName(fileNameStr.str().c_str());
-                      writer->Write();
-
-                      // Save the center points to disk
-                      if (newStreamline->IsA("vtkHyperStreamlinePoints"))
+                      // See if we like it enough to write
+                      if (newStreamline->GetHyperStreamline0()->
+                          GetNumberOfPoints() + newStreamline->
+                          GetHyperStreamline1()->GetNumberOfPoints() > 56)
                         {
-                          this->SaveStreamlineAsTextFile(filePoints,fileAttribs,(vtkHyperStreamlinePoints *) newStreamline);
+                          
+                          // transform model
+                          transformer->SetInput(newStreamline->GetOutput());
+                          
+                          // Save the model to disk
+                          writer->SetInput(transformer->GetOutput());
+                          writer->SetFileType(2);
+                          
+                          // clear the buffer (set to empty string)
+                          fileNameStr.str("");
+                          fileNameStr << modelFilename << '_' << idx << ".vtk";
+                          writer->SetFileName(fileNameStr.str().c_str());
+                          writer->Write();
+                          
+                          // Save the center points to disk
+                          this->SaveStreamlineAsTextFile(filePoints,fileAttribs,newStreamline);
+
+                          idx++;
                         }
 
                       // Delete objects
                       newStreamline->Delete();
 
-                      idx++;
                     }
                 }
               inPtr++;
@@ -1573,6 +1584,9 @@ void vtkMultipleStreamlineController::SeedAndSaveStreamlinesFromROI(char *points
   // Close text file
   filePoints.close();
   fileAttribs.close();
+  
+  // Tell user how many we wrote
+  cout << "Wrote " << idx << "model files." << endl;
 
 }
 
