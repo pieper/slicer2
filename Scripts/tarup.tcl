@@ -31,7 +31,7 @@ set __comment__ {
     for windows visual studio 7, the following files are needed for a debug build:
         msvci70d.dll msvcp70d.dll msvcr70d.dll
     for linux redhat7.3
-        ld-2.2.5.so libpthread-0.9.so libstdc++-3-libc6.2-2-2.10.0.so  
+        ld-2.2.5.so libpthread-0.9.so libstdc++-3-libc6.2-2-2.10.0.so libstdc++.so.5  
     for solaris
         libgcc_s.so.1 libstdc++.so.3  
     for darwin
@@ -202,7 +202,7 @@ proc tarup { {destdir "auto"} } {
       }
       "Linux" {
 #         set sharedLibs [list ld-2.2.5.so libpthread-0.9.so libstdc++-3-libc6.2-2-2.10.0.so]
-          set sharedLibs [list libstdc++-libc6.2-2.so.3]
+          set sharedLibs [list libstdc++-libc6.2-2.so.3 libstdc++.so.5]
           set sharedSearchPath [split $::env(LD_LIBRARY_PATH) ":"]
       }
       "Darwin" {
