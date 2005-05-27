@@ -84,10 +84,14 @@ proc GetLinkedLibs { {toMatch {}} } {
         foreach strToMatch $toMatch {
             if {[regexp $strToMatch $l matchVar] == 1} {
                 # puts "working on $l"
-                set lddtokens [split $l]
-                lappend liblist [lindex $lddtokens end]
-                if {$::Module(verbose)} {
-                    puts "Found [lindex $lddtokens end]"
+                foreach lddtoken [split $l] {
+                    if {[file pathtype $lddtoken] == "absolute"} {
+                        lappend liblist $lddtoken
+                        if {$::Module(verbose)} {
+                            puts "Found [lindex $liblist end]"
+                        }
+                        break
+                    }
                 }
             } else { 
                 # puts "skipping $l" 
@@ -346,10 +350,11 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
             # (ie adding minor version numbers onto the end)
             # so copy the new file into the old file name
             file copy $checkpath [file join $sharedLibDir [file tail $slib]]
-            if {$::Module(verbose)} { puts "copied checkpath $checkpath to $sharedLibDir/[file tail $slib]" }
+            puts "\tCopied $checkpath to $sharedLibDir/[file tail $slib]" 
         } else {
             # copy it into the shared vtk bin dir
             file copy $slib  $sharedLibDir
+            puts "\tCopied $slib to $sharedLibDir"
         }
         
     }
