@@ -84,7 +84,7 @@
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc DTMRIRegInit {} {
+proc DTMRITensorRegistrationInit {} {
     global DTMRI Module Volume Transform Tensor Gui
     
     # Does the AG module exist? If not the registration tab will not be displayed
