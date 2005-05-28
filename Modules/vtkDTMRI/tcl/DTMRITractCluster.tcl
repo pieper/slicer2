@@ -40,8 +40,8 @@
 #   DTMRITractClusterApplyUserSettings
 #   DTMRITractClusterComputeClusters
 #   DTMRITractClusterBuildMatrixViewer
-#   DTMRITractClusterSelect
-#   DTMRITractClusterAdvancedDisplayMatrix
+#   DTMRITractClusterSelect widget
+#   DTMRITractClusterAdvancedDisplayMatrix input getOutput name
 #   DTMRITractClusterAdvancedViewMatrices
 #   DTMRIractClusterSaveTractClusters verbose
 #   DTMRITractClusterTest

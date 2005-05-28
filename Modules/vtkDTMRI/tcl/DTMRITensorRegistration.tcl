@@ -44,24 +44,23 @@
 #   DTMRIWritevtkImageData
 #   DTMRIRegIntensityTransform
 #   DTMRIRegTransformScale
-#   DTMRIRegWriteHomogeneous
-#   DTMRIRegWriteGrid
-#   DTMRIRegRun
+#   DTMRIRegWriteHomogeneous t ii
+#   DTMRIRegWriteGrid t ii
 #   DTMRIRegRun
 #   DTMRIRegMenuCoregister
 #   DTMRIRegCoregister
 #   DTMRIRegPreprocess
 #   DTMRIRegResample
 #   DTMRIRegNormalize
-#   DTMRIReadvtkImageData
+#   DTMRIReadvtkImageData image filename
 #   DTMRIRegPrmdSetup
 #   DTMRIReg2DUpate
-#   DTMRIRegUpdateInitial
+#   DTMRIRegUpdateInitial meth
 #   DTMRIRegTurnInitialOff
 #   DTMRIRegCreateLinMat
 #   DTMRIRegSaveGridTransform
 #   DTMRIRegColorComparison
-#   DTMRIRegHelpUpdate
+#   DTMRIRegHelpUpdate initial
 #==========================================================================auto=
 
 #   ==================================================

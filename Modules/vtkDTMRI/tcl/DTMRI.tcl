@@ -46,70 +46,17 @@
 #   DTMRICheckScrollLimits args
 #   DTMRISizeScrolledGUI f
 #   DTMRISetPropertyType
-#   RunLSDIrecon
-#   ShowPatternFrame
-#   DTMRIDisplayScrollBar module tab
-#   DTMRICreatePatternSlice
-#   DTMRICreatePatternVolume
-#   DTMRILoadPattern
-#   DTMRIUpdateTipsPattern
-#   DTMRIViewProps
-#   DTMRIViewProps
-#   DTMRIDisplayNewData
-#   DTMRIPropsApply
-#   DTMRIPropsCancel
 #   DTMRIAdvancedApply
-#   DTMRISetFileName
 #   DTMRICreateBindings
 #   DTMRIRoundFloatingPoint val
 #   DTMRIRemoveAllActors
 #   DTMRIAddAllActors
-#   DTMRIUpdateReformatType
-#   DTMRIUpdateScalarBar
-#   DTMRIShowScalarBar
-#   DTMRIHideScalarBar
-#   DTMRIUpdateThreshold not_used
-#   DTMRIUpdateMaskLabel
-#   DTMRISpecificVisualizationSettings
-#   DTMRIResetDefaultVisualizationSettings
-#   DTMRIApplyVisualizationSettings mode
-#   DTMRIUpdateGlyphResolution value
-#   DTMRIUpdateGlyphEigenvector
-#   DTMRIUpdateGlyphColor
-#   DTMRIUpdateGlyphScalarRange not_used
-#   DTMRISelectRemoveHyperStreamline x y z
-#   DTMRISelectChooseHyperStreamline x y z
-#   DTMRISelectStartHyperStreamline x y z render
-#   DTMRIUpdateStreamlineSettings
-#   DTMRIUpdateStreamlines
-#   DTMRIUpdateTractingMethod TractingMethod
-#   DTMRIUpdateBSplineOrder SplineOrder
-#   DTMRIUpdateTractColorToSolid
-#   DTMRIUpdateTractColorToMulti
-#   DTMRIUpdateTractColor mode
-#   DTMRIRemoveAllStreamlines
-#   DTMRIAddAllStreamlines
-#   DTMRIDeleteAllStreamlines
-#   DTMRISeedStreamlinesFromSegmentation verbose
-#   DTMRISeedStreamlinesEvenlyInMask verbose
-#   DTMRISeedAndSaveStreamlinesFromSegmentation verbose
-#   DTMRIFindStreamlinesThroughROI verbose
-#   DTMRIUpdate
-#   DTMRISetOperation math
-#   DTMRIUpdateMathParams
-#   DTMRICreateEmptyVolume OrigId Description VolName
-#   DTMRIDoMath operation
 #   DTMRIApplyVisualizationParameters
 #   DTMRIDeleteVTKObject object
 #   DTMRIMakeVTKObject class object
 #   DTMRIAddObjectProperty object parameter value type desc
 #   DTMRIBuildVTK
-#   ConvertVolumeToTensors
-#   DTMRICreateNewVolume volume name desc scanOrder
 #   DTMRIWriteStructuredPoints filename
-#   DTMRISaveStreamlinesAsIJKPoints verbose
-#   DTMRISaveStreamlinesAsPolyLines subdir name verbose
-#   DTMRISaveStreamlinesAsModel verbose
 #   DTMRIGetScaledIjkCoordinatesFromWorldCoordinates x y z
 #   DTMRICalculateActorMatrix transform t
 #   DTMRICalculateIJKtoRASRotationMatrix transform t
@@ -151,7 +98,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.76 $} {$Date: 2005/05/28 20:50:40 $}]
+                  {$Revision: 1.77 $} {$Date: 2005/05/28 20:53:29 $}]
 
     # Define Tabs
     #------------------------------------
