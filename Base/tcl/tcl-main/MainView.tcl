@@ -82,7 +82,7 @@ textureInterpolation='On' textureResolution='512'"
 
     set m MainView
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.50 $} {$Date: 2005/01/28 21:45:45 $}]
+    {$Revision: 1.51 $} {$Date: 2005/05/28 19:52:53 $}]
 
     set View(viewerHeightNormal) 656
     set View(viewerWidth)  956 
@@ -112,7 +112,6 @@ textureInterpolation='On' textureResolution='512'"
     set View(stereoType) RedBlue
     set View(closeupVisibility) On
     set View(createMagWin) Yes
-    set View(parallelScale) $View(fov)
     set View(textureResolution) 512
     set View(textureInterpolation) "On"
 
@@ -360,15 +359,8 @@ proc MainViewBuildGUI {} {
         -indicatoron 0 -command "MainViewSetParallelProjection"} $Gui(WCA)
         TooltipAdd $f.cParallel "Toggle parallel/perspective projection"
 
-    # Scale Label
-    eval {label $f.lParallelScale -text "Scale:"} $Gui(WLA)
 
-    #  Scale entry box
-    eval {entry $f.eParallelScale -textvariable View(parallelScale)} $Gui(WEA)
-        TooltipAdd $f.eParallelScale "Scale for parallel projection"
-
-    pack $f.cParallel $f.lParallelScale $f.eParallelScale \
-        -side left -padx 3
+    pack $f.cParallel -side left -padx 3
 }
 
 #-------------------------------------------------------------------------------
@@ -505,17 +497,11 @@ proc MainViewSetFov { {sceneNum "default"} } {
 proc MainViewSetParallelProjection {} {
     global View Gui Slice
 
-    puts $View(parallelProjection)
-
     if {$View(parallelProjection) == 1} {
-    if {[ValidateFloat $View(parallelScale)] == 0} {
-        tk_messageBox -message "The scale must be a number."
-        set View(parallelScale) $View(fov)
-    }    
-    $View(viewCam) ParallelProjectionOn
-    $View(viewCam) SetParallelScale $View(parallelScale)
+        $View(viewCam) ParallelProjectionOn
+        $View(viewCam) SetParallelScale $View(fov)
     } else {
-    $View(viewCam) ParallelProjectionOff
+        $View(viewCam) ParallelProjectionOff
     }    
 
     Render3D

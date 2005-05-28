@@ -623,6 +623,12 @@ proc Zoom {widget x y} {
     $CurrentCamera SetClippingRange [expr $minRange / $zoomFactor] \
                                     [expr $maxRange / $zoomFactor]
     $CurrentCamera Dolly $zoomFactor
+    
+    if {[$CurrentCamera GetParallelProjection] == 1} {
+        $CurrentCamera SetParallelScale \
+            [expr [$CurrentCamera GetParallelScale] / $zoomFactor]
+    }
+
 
     set LastX $x
     set LastY $y
