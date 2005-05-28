@@ -82,7 +82,7 @@ textureInterpolation='On' textureResolution='512'"
 
     set m MainView
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.51 $} {$Date: 2005/05/28 19:52:53 $}]
+    {$Revision: 1.52 $} {$Date: 2005/05/28 20:21:14 $}]
 
     set View(viewerHeightNormal) 656
     set View(viewerWidth)  956 
@@ -114,6 +114,7 @@ textureInterpolation='On' textureResolution='512'"
     set View(createMagWin) Yes
     set View(textureResolution) 512
     set View(textureInterpolation) "On"
+    set View(slice3DOpacity) 1
 
     # sp-2002-02-22: removed for 1.3; seems to work on modern Windows
     if {0} {
@@ -359,8 +360,16 @@ proc MainViewBuildGUI {} {
         -indicatoron 0 -command "MainViewSetParallelProjection"} $Gui(WCA)
         TooltipAdd $f.cParallel "Toggle parallel/perspective projection"
 
+     # Opacity Label
+     eval {label $f.lSlice3DOpacity -text "Slice Opacity:"} $Gui(WLA)
 
-    pack $f.cParallel -side left -padx 3
+     #  Opacity entry box
+     eval {entry $f.eSlice3DOpacity  -textvariable View(slice3DOpacity)} $Gui(WEA)
+     TooltipAdd $f.eSlice3DOpacity  "Opacity of slices in 3D scene. (Between 0 and 1)"
+     bind $f.eSlice3DOpacity  <Return> {MainSlicesSet3DOpacityAll $View(slice3DOpacity)}
+
+     pack $f.cParallel $f.lSlice3DOpacity $f.eSlice3DOpacity \
+         -side left -padx 3
 }
 
 #-------------------------------------------------------------------------------
