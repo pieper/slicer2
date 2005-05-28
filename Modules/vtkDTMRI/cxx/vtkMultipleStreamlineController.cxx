@@ -1367,6 +1367,215 @@ void vtkMultipleStreamlineController::SeedStreamlinesEvenlyInROI()
 }
 
 
+
+// seed in each voxel in the ROI, only keep paths that intersect the
+// second ROI
+//----------------------------------------------------------------------------
+void vtkMultipleStreamlineController::SeedStreamlinesFromROIIntersectWithROI2()
+{
+
+  int idxX, idxY, idxZ;
+  int maxX, maxY, maxZ;
+  int inIncX, inIncY, inIncZ;
+  int inExt[6];
+  double point[3], point2[3];
+  unsigned long count = 0;
+  //unsigned long target;
+  short *inPtr;
+  vtkHyperStreamlinePoints *newStreamline;
+
+  // test we have input
+  if (this->InputROI == NULL)
+    {
+      vtkErrorMacro("No ROI input.");
+      return;      
+    }
+  if (this->InputTensorField == NULL)
+    {
+      vtkErrorMacro("No tensor data input.");
+      return;      
+    }
+  if (this->InputROIForIntersection == NULL)
+    {
+      vtkErrorMacro("No ROI input.");
+      return;      
+    }
+
+  // check ROI's value of interest
+  if (this->InputROIValue <= 0)
+    {
+      vtkErrorMacro("Input ROI value has not been set or is 0. (value is "  << this->InputROIValue << ".");
+      return;      
+    }
+  // make sure it is short type
+  if (this->InputROI->GetScalarType() != VTK_SHORT)
+    {
+      vtkErrorMacro("Input ROI is not of type VTK_SHORT");
+      return;      
+    }
+
+  // Create transformation matrices to go backwards from streamline points to ROI space
+  // This is used to access ROIForIntersection, it has to have same 
+  // dimensions and location as seeding ROI for now.
+  vtkTransform *WorldToROI = vtkTransform::New();
+  WorldToROI->SetMatrix(this->ROIToWorld->GetMatrix());
+  WorldToROI->Inverse();
+  vtkTransform *TensorScaledIJKToWorld = vtkTransform::New();
+  TensorScaledIJKToWorld->SetMatrix(this->WorldToTensorScaledIJK->GetMatrix());
+  TensorScaledIJKToWorld->Inverse();
+
+  // currently this filter is not multithreaded, though in the future 
+  // it could be (especially if it inherits from an image filter class)
+  this->InputROI->GetWholeExtent(inExt);
+  this->InputROI->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
+
+  // find the region to loop over
+  maxX = inExt[1] - inExt[0];
+  maxY = inExt[3] - inExt[2]; 
+  maxZ = inExt[5] - inExt[4];
+
+  //cout << "Dims: " << maxX << " " << maxY << " " << maxZ << endl;
+  //cout << "Incr: " << inIncX << " " << inIncY << " " << inIncZ << endl;
+
+  // for progress notification
+  //target = (unsigned long)((maxZ+1)*(maxY+1)/50.0);
+  //target++;
+
+  // start point in input integer field
+  inPtr = (short *) this->InputROI->GetScalarPointerForExtent(inExt);
+
+  int increment = 10;
+
+  for (idxZ = 0; idxZ <= maxZ; idxZ++)
+    {
+      //for (idxY = 0; !this->AbortExecute && idxY <= maxY; idxY++)
+      //for (idxY = 0; idxY <= maxY; idxY++)
+      for (idxY = 0; idxY <= maxY; idxY += increment)
+        {
+          //if (!(count%target)) 
+          //{
+          //this->UpdateProgress(count/(50.0*target) + (maxZ+1)*(maxY+1));
+          //cout << (count/(50.0*target) + (maxZ+1)*(maxY+1)) << endl;
+          //cout << "progress: " << count << endl;
+          //}
+          //count++;
+          
+          //for (idxX = 0; idxX <= maxX; idxX++)
+          for (idxX = 0; idxX <= maxX; idxX += increment)
+            {
+              // if it is in the ROI/mask
+              if (*inPtr == this->InputROIValue)
+                {
+
+                  // seed there and update
+                  vtkDebugMacro( << "start streamline at: " << idxX << " " <<
+                                 idxY << " " << idxZ);
+                      
+                  // First transform to world space.
+                  point[0]=idxX;
+                  point[1]=idxY;
+                  point[2]=idxZ;
+                  this->ROIToWorld->TransformPoint(point,point2);
+                  // Now transform to scaled ijk of the input tensors
+                  this->WorldToTensorScaledIJK->TransformPoint(point2,point);
+
+                  // make sure it is within the bounds of the tensor dataset
+                  if (this->PointWithinTensorData(point,point2))
+                    {
+                      // Now create a streamline.
+                      newStreamline=(vtkHyperStreamlinePoints *) this->CreateHyperStreamline();
+
+                      // Set its input information.
+                      newStreamline->SetInput(this->InputTensorField);
+                      newStreamline->SetStartPosition(point[0],point[1],point[2]);
+                      
+                      // Force it to update to access the path points
+                      newStreamline->Update();
+                      
+                      // for each point on the path, test
+                      // the nearest voxel for path/ROI intersection.
+                      vtkPoints *hs0=newStreamline->GetHyperStreamline0();
+                      vtkPoints *hs1=newStreamline->GetHyperStreamline1();
+                      int numPts=hs0->GetNumberOfPoints();
+                      int ptidx=0;
+                      int pt[3];
+                      int intersects = 0;
+                      while (ptidx < numPts)
+                        {
+                          hs0->GetPoint(ptidx,point);
+                          // First transform to world space.
+                          TensorScaledIJKToWorld->TransformPoint(point,point2);
+                          // Now transform to ROI IJK space
+                          WorldToROI->TransformPoint(point2,point);
+                          // Find that voxel number
+                          pt[0]= (int) floor(point[0]);
+                          pt[1]= (int) floor(point[1]);
+                          pt[2]= (int) floor(point[2]);
+                          float *tmp = (float *) this->InputROIForIntersection->GetScalarPointer(pt);
+                          if (tmp != NULL)
+                            {
+                              if (*tmp > 0) {
+                                intersects = 1;
+                              }
+                            }
+                          ptidx++;
+                        }
+                      numPts=hs1->GetNumberOfPoints();
+                      // Skip the first point in the second line since it
+                      // is a duplicate of the initial point.
+                      ptidx=1;
+                      while (ptidx < numPts)
+                        {
+                          hs1->GetPoint(ptidx,point);
+                          // First transform to world space.
+                          TensorScaledIJKToWorld->TransformPoint(point,point2);
+                          // Now transform to ROI IJK space
+                          WorldToROI->TransformPoint(point2,point);
+                          // Find that voxel number
+                          pt[0]= (int) floor(point[0]);
+                          pt[1]= (int) floor(point[1]);
+                          pt[2]= (int) floor(point[2]);
+                          float *tmp = (float *) this->InputROIForIntersection->GetScalarPointer(pt);
+                          if (tmp != NULL)
+                            {
+                              if (*tmp > 0) {
+                                intersects = 1;
+                              }
+                            }
+                          ptidx++;
+                        }                          
+
+                      // if it intersects with some ROI, then 
+                      // display it, otherwise delete it.
+                      if (intersects) 
+                        {
+                          this->Streamlines->AddItem
+                            ((vtkObject *)newStreamline);
+                        }
+                      else 
+                        {
+                          newStreamline->Delete();
+                        }
+
+                    } // end if inside tensor field
+
+                } // end if in ROI
+
+              //inPtr++;
+              inPtr += increment;
+
+              inPtr += inIncX;
+            }
+          //inPtr += inIncY;
+          inPtr += inIncY*increment;
+        }
+      inPtr += inIncZ;
+    }
+
+}
+
+
+
 // Seed each streamline, cause it to Update, save its info to disk
 // and then Delete it.  This is a way to seed in the whole brain
 // without running out of memory. Nothing is displayed in the renderers.

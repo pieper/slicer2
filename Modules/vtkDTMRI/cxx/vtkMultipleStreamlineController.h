@@ -93,7 +93,12 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // in the InputROI volume.  Streamlines are added to the vtkCollection
   // this->Streamlines.
   void SeedStreamlinesFromROIWithMultipleValues();
-  
+
+  // Description
+  // Start a streamline from each voxel in ROI, keep those paths
+  // that pass through ROIForIntersection.
+  void SeedStreamlinesFromROIIntersectWithROI2();
+
   // Description
   // Seed each streamline, cause it to Update, save its info to disk
   // and then Delete it.  This is a way to seed in the whole brain
@@ -225,6 +230,13 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   vtkGetObjectMacro(InputROI, vtkImageData);
 
   // Description
+  // Input ROI volume to select streamlines (those that begin
+  // within InputROI and pass through InputROIForIntersection
+  // will be displayed).
+  vtkSetObjectMacro(InputROIForIntersection, vtkImageData);
+  vtkGetObjectMacro(InputROIForIntersection, vtkImageData);
+
+  // Description
   // Transformation used in seeding streamlines.  Their start
   // points are specified in the coordinate system of the ROI volume.
   // Transform the ijk coordinates of the ROI to world coordinates.
@@ -351,6 +363,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
 
   vtkImageData *InputTensorField;
   vtkImageData *InputROI;
+  vtkImageData *InputROIForIntersection;
   vtkCollection *InputRenderers;
   int InputROIValue;
   vtkShortArray *InputMultipleROIValues;
