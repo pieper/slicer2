@@ -170,19 +170,19 @@ proc DTMRIMaskBuildGUI {} {
 
     # mask label
     eval {button $f.bOutput -text "Label:" \
-          -command "ShowLabels DTMRIUpdateMaskLabel"} $Gui(WBA)
+          -command "ShowLabels DTMRIUpdateMaskLabelFromShowLabels"} $Gui(WBA)
     eval {entry $f.eOutput -width 6 \
-          -textvariable Label(label)} $Gui(WEA)
+          -textvariable DTMRI(maskLabel)} $Gui(WEA)
     bind $f.eOutput <Return>   "DTMRIUpdateMaskLabel"
     bind $f.eOutput <FocusOut> "DTMRIUpdateMaskLabel"
     eval {entry $f.eName -width 14 \
-          -textvariable Label(name)} $Gui(WEA) \
+          -textvariable DTMRI(maskLabelName)} $Gui(WEA) \
             {-bg $Gui(activeWorkspace) -state disabled}
     grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
     grid $f.eOutput $f.eName -sticky w
+    # save for changing color later
+    set DTMRI(maskLabelWidget) $f.eName
     
-    lappend Label(colorWidgetList) $f.eName
-
     TooltipAdd  $f.bOutput $DTMRI(mode,maskLabel,tooltip)
     TooltipAdd  $f.eOutput $DTMRI(mode,maskLabel,tooltip)
     TooltipAdd  $f.eName $DTMRI(mode,maskLabel,tooltip)
@@ -199,15 +199,35 @@ proc DTMRIMaskBuildGUI {} {
 #-------------------------------------------------------------------------------
 proc DTMRIUpdateMaskLabel {} {
 
-    global Label
+    global DTMRI
 
-    LabelsFindLabel
+    # display the color name and background color the GUI
+    set c [MainColorsGetColorFromLabel $DTMRI(maskLabel)]
+    if {$c == ""} {
+        # we don't have this color in the colormap for labels...
+    } else {
+        $DTMRI(maskLabelWidget) config -bg \
+            [MakeColorNormalized [Color($c,node) GetDiffuseColor]] \
+            -state normal
+        set DTMRI(maskLabelName) [Color($c,node) GetName]
+    }
 
     # this label becomes 1 in the mask
     set thresh DTMRI(vtk,mask,threshold)
-    $thresh ThresholdBetween $Label(label) $Label(label)
+    $thresh ThresholdBetween $DTMRI(maskLabel) $DTMRI(maskLabel)
 
     # Update pipelines
     Render3D
 }
 
+
+proc DTMRIUpdateMaskLabelFromShowLabels {} {
+
+    global Label DTMRI
+
+    LabelsFindLabel
+
+    set DTMRI(maskLabel) $Label(label)
+
+    DTMRIUpdateMaskLabel
+}
