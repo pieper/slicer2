@@ -59,7 +59,7 @@
 #   DTMRIGetScaledIjkCoordinatesFromWorldCoordinates x y z
 #   DTMRICalculateActorMatrix transform t
 #   DTMRICalculateIJKtoRASRotationMatrix transform t
-#   DTMRI SetActive n
+#   DTMRISetActive n
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -97,7 +97,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.80 $} {$Date: 2005/05/29 03:14:22 $}]
+                  {$Revision: 1.81 $} {$Date: 2005/05/29 03:19:55 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -1677,7 +1677,7 @@ proc DTMRICalculateIJKtoRASRotationMatrix {transform t} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC DTMRI SetActive
+# .PROC DTMRISetActive
 # Set the active tensor on the menus, and make it input to the 
 # tractography pipeline. (The glyph pipeline input is set up when 
 # the glyph button is pressed, in the procedure DTMRIUpdate. It could
