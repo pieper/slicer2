@@ -44,9 +44,9 @@
 #   DTMRICreateBindings
 #   DTMRIRemoveAllActors
 #   DTMRIAddAllActors
-#   DTMRIDeleteVTKObject
-#   DTMRIMakeVTKObject
-#   DTMRIAddObjectProperty
+#   DTMRIDeleteVTKObject object
+#   DTMRIMakeVTKObject object
+#   DTMRIAddObjectProperty object parameter value type desc
 #   DTMRIBuildVTK
 #   DTMRIWriteStructuredPoints filename
 #   DTMRIGetScaledIjkCoordinatesFromWorldCoordinates x y z
@@ -60,6 +60,8 @@
 #  The "Init" procedure is called automatically by the slicer.  
 #  It puts information about the module into a global array called Module, 
 #  and it also initializes module-level variables.
+#  In DTMRIInit a list of sub-modules is set up and their init procedures
+#  are called.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -91,7 +93,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.83 $} {$Date: 2005/05/29 05:12:03 $}]
+                  {$Revision: 1.84 $} {$Date: 2005/05/29 05:33:48 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -143,10 +145,6 @@ proc DTMRIInit {} {
         } 
     }
 
-
-    set DTMRI(Description) ""
-    set DTMRI(Name) ""
-
 }
 
 ################################################################
@@ -155,7 +153,8 @@ proc DTMRIInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRIUpdateMRML
-# 
+# Called automatically by the main slicer code whenever the 
+# transformations in the MRML tree change.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -274,7 +273,8 @@ proc DTMRIExit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRIBuildGUI
-# Builds the GUI panel.
+# Builds the GUI panel.  Calls any existing SubmoduleBuildGUI procedure in
+# submodule tcl files. Builds the VTK GUI for user interaction with objects.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -689,7 +689,7 @@ proc DTMRICreateBindings {} {
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRIRemoveAllActors
-# Rm all actors from scene.
+# Remove all actors (glyphs, tracts) from scene.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -709,7 +709,7 @@ proc DTMRIRemoveAllActors {} {
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRIAddAllActors
-# 
+# Add all actors (glyphs, tracts) to scene.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -738,8 +738,9 @@ proc DTMRIAddAllActors {} {
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRIDeleteVTKObject
-# 
+#  Wrapper around VTKOIDeleteVTKObject.
 # .ARGS
+# string object Name of object to delete
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIDeleteVTKObject {object} {
@@ -749,8 +750,9 @@ proc DTMRIDeleteVTKObject {object} {
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRIMakeVTKObject
-# 
+# Wrapper around VTKOIMakeVTKObject.
 # .ARGS
+# string object  Name of object to create
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIMakeVTKObject {class object} {
@@ -760,8 +762,13 @@ proc DTMRIMakeVTKObject {class object} {
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRIAddObjectProperty
-# 
+# Wrapper around VTKOIAddObjectProperty
 # .ARGS
+# string object name of vtk object (same as arg when creating it)
+# string parameter name of variable in the object
+# string value initial value
+# string type data type
+# string desc description for tooltip
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIAddObjectProperty {object parameter value type desc} {
@@ -782,31 +789,15 @@ proc DTMRIAddObjectProperty {object parameter value type desc} {
 proc DTMRIBuildVTK {} {
     global DTMRI Module
 
-    # Lauren: maybe this module should kill its objects on exit.
-    # We must be hogging a ton of memory all over the slicer.
-    # So possibly build (some) VTK upon entering module.
-
     #---------------------------------------------------------------
-    # coordinate system actor (also called "Csys" and "gyro" 
-    # in other modules).  Used for user interaction with hyperstreamlines
-    #---------------------------------------------------------------
-    #CsysCreate DTMRI coordinateAxesTool -1 -1 -1
-
-    #---------------------------------------------------------------
-    # Pipeline for preprocessing of glyphs
-    #---------------------------------------------------------------
-
-    #---------------------------------------------------------------
-    # Pipeline for display of DTMRIs over 2D slice
+    # Pipeline for display of DTMRIs over 2D slices
     #---------------------------------------------------------------
     
-    # Lauren how should reformatting be hooked into regular
-    # slicer slice reformatting?  Ideally want to follow
-    # the 3 slices.
     foreach plane "0 1 2" {
     DTMRIMakeVTKObject vtkImageReformat reformat$plane
     }
 
+    #------------------------------------
     # objects for masking before glyph display
     #------------------------------------
 
@@ -838,30 +829,9 @@ proc DTMRIBuildVTK {} {
 
     # User interaction objects
     #------------------------------------
-    # Lauren: doing this like Endoscopic (this vs PointPicker?)
     set object picker
     DTMRIMakeVTKObject vtkCellPicker $object
     DTMRIAddObjectProperty $object Tolerance 0.001 float {Pick Tolerance}
-
-    # Lauren test by displaying picked point
-    #DTMRI(vtk,picker) SetEndPickMethod "annotatePick DTMRI(vtk,picker)"
-    vtkTextMapper textMapper
-    if {[info commands vtkTextProperty] != ""} {
-        [textMapper GetTextProperty] SetFontFamilyToArial
-        [textMapper GetTextProperty] SetFontSize 20
-        [textMapper GetTextProperty] BoldOn
-        [textMapper GetTextProperty] ShadowOn
-    } else {
-        textMapper SetFontFamilyToArial
-        textMapper SetFontSize 20
-        textMapper BoldOn
-        textMapper ShadowOn
-    }
-    vtkActor2D textActor
-    textActor VisibilityOff
-    textActor SetMapper textMapper
-    [textActor GetProperty] SetColor 1 0 0
-    viewRen AddActor2D textActor
 
     # objects for creation of polydata glyphs
     #------------------------------------
@@ -1182,7 +1152,7 @@ proc DTMRIGetScaledIjkCoordinatesFromWorldCoordinates {x y z} {
 #-------------------------------------------------------------------------------
 # .PROC DTMRICalculateActorMatrix
 # Place the entire Tensor volume in world coordinates
-# using this transform.  Uses world to IJk matrix but
+# using this transform.  Uses world to IJK matrix but
 # removes the spacing since the data/actor know about this.
 # .ARGS
 # vtkTransform transform the transform to modify
@@ -1297,7 +1267,7 @@ proc DTMRICalculateIJKtoRASRotationMatrix {transform t} {
 # the glyph button is pressed, in the procedure DTMRIUpdate. It could
 # be faster to set it up here also.)
 # .ARGS
-# int n
+# int n ID number of the DTMRI volume that will become active
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRISetActive {n} {
