@@ -66,8 +66,8 @@ proc DTMRICalculateScalarsInit {} {
     
     # whether to compute vol from ROI or whole DTMRI volume
     set DTMRI(scalars,ROI) None
-    set DTMRI(scalars,ROIList) {None Threshold Mask}
-    set DTMRI(scalars,ROIList,tooltips) {"No ROI: derive the scalar volume from the entire DTMRI volume." "Use the thresholded area defined in the ROI tab to mask the DTMRI volume before scalar volume creation." "Use the mask labelmap volume defined in the ROI tab to mask the DTMRI volume before scalar volume creation."}
+    set DTMRI(scalars,ROIList) {None Mask}
+    set DTMRI(scalars,ROIList,tooltips) {"No ROI: derive the scalar volume from the entire DTMRI volume." "Use the mask labelmap volume defined in the ROI tab to mask the DTMRI volume before scalar volume creation."}
 
 
 
@@ -118,12 +118,6 @@ proc DTMRIUpdateMathParams {} {
 
     switch $mode {
         "None" {
-        }
-        "Threshold" {
-            if {$DTMRI(mode,threshold)    == "None"} {
-                set DTMRI(scalars,ROI) None
-                tk_messageBox -message $err
-            }
         }
         "Mask" {
             if {$DTMRI(mode,mask)    == "None"} {
@@ -216,9 +210,6 @@ proc DTMRIDoMath {{operation ""}} {
     switch $mode {
         "None" {
             set input [Tensor($t,data) GetOutput]
-        }
-        "Threshold" {
-            set input [DTMRI(vtk,thresh,mask) GetOutput]
         }
         "Mask" {
             set input [DTMRI(vtk,mask,mask) GetOutput]

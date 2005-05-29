@@ -149,7 +149,7 @@ proc DTMRIUpdateReformatType {} {
     # make sure we don't display all DTMRIs by accident
     switch $mode {
         "None" {
-            set message "This will display ALL DTMRIs.  If the volume is not masked using a labelmap or threshold ROI, this may take a long time or not work on your machine.  Proceed?"
+            set message "This will display ALL DTMRIs.  If the volume is not masked using a labelmap ROI, this may take a long time or not work on your machine.  Proceed?"
             set result [tk_messageBox -type okcancel -message $message]
         }
     }
@@ -412,40 +412,7 @@ proc DTMRIUpdate {} {
     #------------------------------------
 
 
-    # threshold DTMRIs if required
-    #------------------------------------
-    set mode $DTMRI(mode,threshold)
-    if {$mode != "None"} {
-        
-        puts "thresholding by $DTMRI(mode,threshold)"
-        set math DTMRI(vtk,thresh,math)
-
-        # calculate trace or whatever we are thresholding by
-        $math SetInput 0 [Tensor($t,data) GetOutput]
-        $math SetInput 1 [Tensor($t,data) GetOutput]
-        $math SetOperationTo$DTMRI(mode,threshold)
-
-        # threshold to make a mask of the area of interest
-        set thresh1 DTMRI(vtk,thresh,threshold)
-        $thresh1 ThresholdBetween $DTMRI(thresh,threshold,lower) \
-        $DTMRI(thresh,threshold,upper)
-
-        # this line seems to be needed
-        $thresh1 Update
-        
-        #DTMRI(vtk,glyphs) SetScalarMask [$thresh GetOutput]
-        # tell our filter to use this information
-        #DTMRI(vtk,glyphs) MaskGlyphsWithScalarsOn
-
-        #  set DTMRIs to 0 outside of mask generated above
-        set mask1 DTMRI(vtk,thresh,mask)
-        $mask1 SetImageInput [Tensor($t,data) GetOutput]
-
-        set dataSource [$mask1 GetOutput]
-    } else {
-        set dataSource [Tensor($t,data) GetOutput]
-        #DTMRI(vtk,glyphs) MaskGlyphsWithScalarsOff
-    }
+    set dataSource [Tensor($t,data) GetOutput]
 
     # mask DTMRIs if required
     #------------------------------------
@@ -453,9 +420,6 @@ proc DTMRIUpdate {} {
     if {$mode != "None"} {
         
         puts "masking by $DTMRI(mode,mask)"
-        # note it would be more efficient to 
-        # combine the two masks (from thresh and here) 
-        # but probably not both used at once 
 
         set thresh DTMRI(vtk,mask,threshold)    
         $thresh ThresholdBetween $Label(label) $Label(label)

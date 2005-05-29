@@ -202,7 +202,7 @@ proc DTMRIODFUpdateReformatType {} {
     # make sure we don't display all DTMRIs by accident
     switch $mode {
         "None" {
-            set message "This will display ALL DTMRIs.  If the volume is not masked using a labelmap or threshold ROI, this may take a long time or not work on your machine.  Proceed?"
+            set message "This will display ALL DTMRIs.  If the volume is not masked using a labelmap ROI, this may take a long time or not work on your machine.  Proceed?"
             set result [tk_messageBox -type okcancel -message $message]
         }
     }

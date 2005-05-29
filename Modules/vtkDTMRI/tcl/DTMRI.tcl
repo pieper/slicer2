@@ -98,7 +98,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.77 $} {$Date: 2005/05/28 20:53:29 $}]
+                  {$Revision: 1.78 $} {$Date: 2005/05/29 01:54:56 $}]
 
     # Define Tabs
     #------------------------------------
@@ -1433,7 +1433,7 @@ especially Diffusion DTMRI MRI.
     frame $f.fActive    -bg $Gui(backdrop) -relief sunken -bd 2
     pack $f.fActive -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
-    foreach frame "Threshold Mask" {
+    foreach frame "Mask" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
         $f.f$frame config -relief groove -bd 3
@@ -1452,74 +1452,6 @@ especially Diffusion DTMRI MRI.
     # that get refreshed during UpdateMRML
     lappend Tensor(mbActiveList) $f.mbActive
     lappend Tensor(mActiveList) $f.mbActive.m
-
-    #-------------------------------------------
-    # ROI->Threshold frame
-    #-------------------------------------------
-    set f $fROI.fThreshold
-
-    foreach frame "Label Mode Slider" {
-        frame $f.f$frame -bg $Gui(activeWorkspace)
-        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
-    }
-
-    #-------------------------------------------
-    # ROI->Threshold->Label frame
-    #-------------------------------------------
-    set f $fROI.fThreshold.fLabel
-
-    DevAddLabel $f.l "DTMRI Threshold Settings"
-    pack $f.l -side top -padx $Gui(pad) -pady $Gui(pad)
-
-    #-------------------------------------------
-    # ROI->Threshold->Mode frame
-    #-------------------------------------------
-    set f $fROI.fThreshold.fMode
-
-    DevAddLabel $f.l "Value:"
-    pack $f.l -side left -padx $Gui(pad) -pady 0
-
-    foreach vis $DTMRI(mode,thresholdList) tip $DTMRI(mode,thresholdList,tooltips) {
-        eval {radiobutton $f.rMode$vis \
-          -text "$vis" -value "$vis" \
-          -variable DTMRI(mode,threshold) \
-          -command {DTMRIUpdate} \
-          -indicatoron 0} $Gui(WCA)
-        pack $f.rMode$vis -side left -padx 0 -pady 0
-        TooltipAdd  $f.rMode$vis $tip
-    }    
-
-    #-------------------------------------------
-    # ROI->Threshold->Slider frame
-    #-------------------------------------------
-    foreach slider "Lower Upper" text "Lo Hi" {
-
-        set f $fROI.fThreshold.fSlider
-
-        frame $f.f$slider -bg $Gui(activeWorkspace)
-        pack $f.f$slider -side top -padx $Gui(pad) -pady $Gui(pad)
-        set f $f.f$slider
-
-        eval {label $f.l$slider -text "$text:"} $Gui(WLA)
-        eval {entry $f.e$slider -width 6 \
-          -textvariable DTMRI(thresh,threshold,[Uncap $slider])} \
-        $Gui(WEA)
-        bind $f.e$slider <Return>   "DTMRIUpdateThreshold"
-        #bind $f.e$slider <FocusOut> "EdThresholdUpdate; RenderActive;"
-        eval {scale $f.s$slider -from $DTMRI(thresh,threshold,rangeLow) \
-          -to $DTMRI(thresh,threshold,rangeHigh) \
-          -length 130 \
-          -variable DTMRI(thresh,threshold,[Uncap $slider]) \
-          -resolution 0.1 \
-          -command {DTMRIUpdateThreshold}} \
-        $Gui(WSA) {-sliderlength 15}
-        #grid $f.l$slider $f.e$slider -padx 2 -pady 2 -sticky w
-        #grid $f.l$slider -sticky e
-        #grid $f.s$slider -columnspan 2 -pady 2 
-        pack $f.l$slider $f.e$slider $f.s$slider -side left  -padx $Gui(pad)
-        set DTMRI(gui,slider,$slider) $f.s$slider
-    }
-
 
     #-------------------------------------------
     # ROI->Mask frame
@@ -2682,10 +2614,6 @@ proc DTMRIBuildVTK {} {
     # Pipeline for preprocessing of glyphs
     #---------------------------------------------------------------
 
-    # objects for thresholding before glyph display
-    #------------------------------------
-
-
     #---------------------------------------------------------------
     # Pipeline for display of DTMRIs over 2D slice
     #---------------------------------------------------------------
@@ -2697,44 +2625,11 @@ proc DTMRIBuildVTK {} {
     DTMRIMakeVTKObject vtkImageReformat reformat$plane
     }
 
-    # compute scalar data for thresholding
-    set object thresh,math
-    DTMRIMakeVTKObject vtkTensorMathematics $object
-    DTMRIAddObjectProperty $object ExtractEigenvalues 1 bool {Extract Eigenvalues}
-
-    # threshold the scalar data to produce binary mask 
-    set object thresh,threshold
-    #DTMRIMakeVTKObject vtkImageThresholdBeyond $object
-    DTMRIMakeVTKObject vtkImageThreshold $object
-    DTMRI(vtk,$object) SetInValue       1
-    DTMRI(vtk,$object) SetOutValue      0
-    DTMRI(vtk,$object) SetReplaceIn     1
-    DTMRI(vtk,$object) SetReplaceOut    1
-    DTMRI(vtk,$object) SetInput \
-        [DTMRI(vtk,thresh,math) GetOutput]
-
-    # convert the mask to unsigned char
-    # Lauren it would be better to have the threshold filter do this
-    set object thresh,cast
-    DTMRIMakeVTKObject vtkImageCast $object
-    DTMRI(vtk,$object) SetOutputScalarTypeToUnsignedChar    
-    DTMRI(vtk,$object) SetInput \
-        [DTMRI(vtk,thresh,threshold) GetOutput]
-
-    # mask the DTMRIs 
-    set object thresh,mask
-    DTMRIMakeVTKObject vtkTensorMask $object
-    #DTMRI(vtk,$object) SetMaskInput \
-    #    [DTMRI(vtk,thresh,threshold) GetOutput]
-    DTMRI(vtk,$object) SetMaskInput \
-        [DTMRI(vtk,thresh,cast) GetOutput]
-
     # objects for masking before glyph display
     #------------------------------------
 
     # produce binary mask from the input mask labelmap
     set object mask,threshold
-    #DTMRIMakeVTKObject vtkImageThresholdBeyond $object
     DTMRIMakeVTKObject vtkImageThreshold $object
     DTMRI(vtk,$object) SetInValue       1
     DTMRI(vtk,$object) SetOutValue      0
