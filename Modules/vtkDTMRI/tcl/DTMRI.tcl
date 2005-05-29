@@ -93,13 +93,13 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.85 $} {$Date: 2005/05/29 19:48:44 $}]
+                  {$Revision: 1.86 $} {$Date: 2005/05/29 20:24:09 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
     #------------------------------------
-    set Module($m,row1List) "Help Input Convert Glyph Tract ROI"
-    set Module($m,row1Name) "{Help} {Input} {Convert} {Glyph} {Tract} {ROI}"
+    set Module($m,row1List) "Help Input Convert Glyphs Tracts ROI"
+    set Module($m,row1Name) "{Help} {Input} {Convert} {Glyphs} {Tracts} {ROI}"
     set Module($m,row1,tab) Input
     # Use these lines to add a second row of tabs
     set Module($m,row2List) "Scalars Regist TC Save ODF VTK"

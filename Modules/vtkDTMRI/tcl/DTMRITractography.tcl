@@ -256,7 +256,7 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
     # Tract frame
     #-------------------------------------------
-    set fTract $Module(DTMRI,fTract)
+    set fTract $Module(DTMRI,fTracts)
     set f $fTract
 
     frame $f.fActive    -bg $Gui(backdrop) -relief sunken -bd 2
