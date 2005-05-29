@@ -233,7 +233,7 @@ proc DTMRIRaiseMoreOptionsFrame {mode} {
 #-------------------------------------------------------------------------------
 proc DTMRITractographyBuildGUI {} {
 
-    global DTMRI Tensor Module Gui
+    global DTMRI Tensor Module Gui Label
 
     #-------------------------------------------
     # Tract frame

@@ -65,7 +65,7 @@ proc DTMRIMaskInit {} {
 #-------------------------------------------------------------------------------
 proc DTMRIMaskBuildGUI {} {
 
-    global DTMRI Tensor Volume Module Gui
+    global DTMRI Tensor Volume Module Gui Label
 
     #-------------------------------------------
     # Frame Hierarchy:
