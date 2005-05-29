@@ -44,10 +44,9 @@
 #   DTMRICreateBindings
 #   DTMRIRemoveAllActors
 #   DTMRIAddAllActors
-#   DTMRIApplySettingsToVTKObjects
-#   DTMRIDeleteVTKObject object
-#   DTMRIMakeVTKObject class object
-#   DTMRIAddObjectProperty object parameter value type desc
+#   DTMRIDeleteVTKObject
+#   DTMRIMakeVTKObject
+#   DTMRIAddObjectProperty
 #   DTMRIBuildVTK
 #   DTMRIWriteStructuredPoints filename
 #   DTMRIGetScaledIjkCoordinatesFromWorldCoordinates x y z
@@ -72,6 +71,7 @@ proc DTMRIInit {} {
     # Source all appropriate tcl files here. 
     #------------------------------------
     source "$env(SLICER_HOME)/Modules/vtkDTMRI/tcl/notebook.tcl"
+    source "$env(SLICER_HOME)/Modules/vtkDTMRI/tcl/VTKObjectInspection.tcl"
     
     # List of all submodules (most are tcl files for tabs within this module)
     set DTMRI(submodulesList) "TensorRegistration ODF TractCluster Tractography Glyphs CalculateTensors CalculateScalars Mask"
@@ -91,7 +91,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.82 $} {$Date: 2005/05/29 04:04:43 $}]
+                  {$Revision: 1.83 $} {$Date: 2005/05/29 05:12:03 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -281,26 +281,6 @@ proc DTMRIExit {} {
 proc DTMRIBuildGUI {} {
     global Module Gui DTMRI Label Volume Tensor
 
-    #-------------------------------------------
-    # Frame Hierarchy:
-    #-------------------------------------------
-    # Help
-    # Display
-    #    Active
-    #       VisMethods
-    #          VisParams
-    #             None
-    #             Glyphs
-    #             Tracts
-    #             AutoTracts
-    #             SaveTracts
-    #       VisUpdate
-    # ROI
-    # Scalars
-    # Props
-    # Advanced
-    # Diffuse
-    #-------------------------------------------
 
     # Build GUI for all submodules
     foreach mod $DTMRI(submodulesList) {
@@ -312,6 +292,16 @@ proc DTMRIBuildGUI {} {
         }
     }
 
+    # Build GUI for the VTK object inspection
+    VTKOIBuildGUI DTMRI $Module(DTMRI,fVTK)
+
+
+    #-------------------------------------------
+    # Frame Hierarchy:
+    #-------------------------------------------
+    # Help
+    # Input
+    #-------------------------------------------
 
     #-------------------------------------------
     # Help frame
@@ -578,125 +568,6 @@ especially Diffusion DTMRI MRI.
 #######################################################################################
 #######################################################################################
 #######################################################################################
-    #-------------------------------------------
-    # VTK frame
-    #-------------------------------------------
-    set fVTK $Module(DTMRI,fVTK)
-    set f $fVTK
-    
-    foreach frame "Top Middle Bottom" {
-        frame $f.f$frame -bg $Gui(activeWorkspace)
-        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-    }
-
-    #-------------------------------------------
-    # VTK->Top frame
-    #-------------------------------------------
-    set f $fVTK.fTop
-    DevAddLabel $f.l "VTK objects in the pipeline"
-    pack $f.l -side top -padx $Gui(pad) -pady $Gui(pad)
-
-    #-------------------------------------------
-    # VTK->Middle frame
-    #-------------------------------------------
-    set f $fVTK.fMiddle
-    set fCurrent $f
-
-    # loop through all the vtk objects and build GUIs
-    #------------------------------------              
-    foreach o $DTMRI(vtkObjectList) {
-
-        set f $fCurrent
-
-        # if the object has properties
-        #-------------------------------------------
-        if {$DTMRI(vtkPropertyList,$o) != ""} {
-            
-            # make a new frame for this vtk object
-            #-------------------------------------------
-            frame $f.f$o -bg $Gui(activeWorkspace)
-            $f.f$o configure  -relief groove -bd 3 
-            pack $f.f$o -side top -padx $Gui(pad) -pady 2 -fill x
-            
-            # object name becomes the label for the frame
-            #-------------------------------------------
-            # Lauren we need an object description
-            # and also basic or advanced attrib
-            DevAddLabel $f.f$o.l$o [Cap $o]
-            pack $f.f$o.l$o -side top \
-                -padx 0 -pady 0
-        }
-
-        # loop through all the parameters for this object
-        # and build appropriate user entry stuff for each
-        #------------------------------------
-        foreach p $DTMRI(vtkPropertyList,$o) {
-
-            set f $fCurrent.f$o
-
-            # name of entire tcl variable
-            set variableName DTMRI(vtk,$o,$p)
-            # its value is:
-            set value $DTMRI(vtk,$o,$p)
-            # description of the parameter
-            set desc $DTMRI(vtk,$o,$p,description)
-            # datatype of the parameter
-            set type $DTMRI(vtk,$o,$p,type)
-
-            # make a new frame for this parameter
-            frame $f.f$p -bg $Gui(activeWorkspace)
-            pack $f.f$p -side top -padx 0 -pady 1 -fill x
-            set f $f.f$p
-
-            # see if value is a list (not used now)
-            #------------------------------------        
-            set length [llength $value]
-            set isList [expr $length > "1"]
-
-            # Build GUI entry boxes, etc
-            #------------------------------------        
-            switch $type {
-                "int" {
-                    eval {entry $f.e$p \
-                  -width 5 \
-                  -textvariable $variableName\
-                          } $Gui(WEA)
-                    DevAddLabel $f.l$p $desc:
-                    pack $f.l$p $f.e$p -side left \
-                        -padx $Gui(pad) -pady 2
-                }
-                "float" {
-                    eval {entry $f.e$p \
-                          -width 5 \
-                          -textvariable $variableName\
-                          } $Gui(WEA)
-                    DevAddLabel $f.l$p $desc:
-                    pack $f.l$p $f.e$p -side left \
-                        -padx $Gui(pad) -pady 2
-                }
-                "bool" {
-                    # puts "bool: $variableName, $desc"
-                    eval {checkbutton $f.r$p  \
-                          -text $desc -variable $variableName \
-                          } $Gui(WCA)
-                    pack  $f.r$p -side left \
-                        -padx $Gui(pad) -pady 2
-                }
-            }
-            
-        }
-    }
-    # end foreach vtk object in DTMRIs object list
-
-    # Apply user settings into objects
-    DevAddButton $fVTK.fMiddle.bApply Apply \
-        {DTMRIApplySettingsToVTKObjects; Render3D}
-    pack $fVTK.fMiddle.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
-
-
-####################################################################################
-####################################################################################
-####################################################################################
 
 
     #-------------------------------------------
@@ -864,139 +735,41 @@ proc DTMRIAddAllActors {} {
 ################################################################
 
 
-#-------------------------------------------------------------------------------
-# .PROC DTMRIApplySettingsToVTKObjects
-#  For interaction with pipeline under VTK tab.
-#  Apply all GUI parameters into our vtk objects.
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc DTMRIApplySettingsToVTKObjects {} {
-    global DTMRI
-
-    # this code actually makes a bunch of calls like the following:
-    # DTMRI(vtk,axes) SetScaleFactor $DTMRI(vtk,axes,scaleFactor)
-    # DTMRI(vtk,tubeAxes) SetRadius $DTMRI(vtk,tubeAxes,radius)
-    # DTMRI(vtk,glyphs) SetClampScaling 1
-    # we can't do calls like MyObject MyVariableOn now
-
-    # our naming convention is:
-    # DTMRI(vtk,object)  is the name of the object
-    # paramName is the name of the parameter
-    # $DTMRI(vtk,object,paramName) is the value 
-
-    # Lauren we need to validate too!!!!!!!!
-    #  too bad vtk can't return a string type desrciptor...
-
-    # loop through all vtk objects
-    #------------------------------------
-    foreach o $DTMRI(vtkObjectList) {
-
-        # loop through all parameters of the object
-        #------------------------------------
-        foreach p $DTMRI(vtkPropertyList,$o) {
-
-            # value of the parameter is $DTMRI(vtk,$o,$p)
-            #------------------------------------
-            set value $DTMRI(vtk,$o,$p)
-            
-            # Actually set the value appropriately in the vtk object
-            #------------------------------------    
-
-            # first capitalize the parameter name
-            set param [Cap $p]
-            
-            # MyObject SetMyParameter $value    
-            # handle the case in which value is a list with an eval 
-            # this puts it into the correct format for feeding to vtk
-            eval {DTMRI(vtk,$o) Set$param} $value
-        }
-    }
-
-}
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRIDeleteVTKObject
 # 
 # .ARGS
-# string object
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIDeleteVTKObject {object} {
     global DTMRI
-
-    # delete the object
-    #------------------------------------
-    DTMRI(vtk,$object) Delete
-
-    # rm from list for updating of its variables by user
-    #------------------------------------
-    set i [lsearch $DTMRI(vtkObjectList) $object]
-    set DTMRI(vtkObjectList) [lreplace $DTMRI(vtkObjectList) $i $i]
-
-    # kill list of its variables
-    #------------------------------------
-    unset DTMRI(vtkPropertyList,$object) 
+    VTKOIDeleteVTKObject DTMRI $object
 }
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRIMakeVTKObject
-#  Wrapper for vtk object creation.
+# 
 # .ARGS
-# string class
-# string object
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIMakeVTKObject {class object} {
     global DTMRI
-
-    # make the object
-    #------------------------------------
-    $class DTMRI(vtk,$object)
-
-    # save on list for updating of its variables by user
-    #------------------------------------
-    lappend DTMRI(vtkObjectList) $object
-
-    # initialize list of its variables
-    #------------------------------------
-    set DTMRI(vtkPropertyList,$object) ""
+    VTKOIMakeVTKObject DTMRI $class $object
 }
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRIAddObjectProperty
-#  Initialize vtk object access: saves object's property on list
-#  for automatic GUI creation so user can change the property.
+# 
 # .ARGS
-# string object
-# string parameter
-# string value
-# string type
-# string desc
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIAddObjectProperty {object parameter value type desc} {
     global DTMRI
-
-    # create tcl variables of the form:
-    #set DTMRI(vtk,tubeAxes,numberOfSides) 6
-    #set DTMRI(vtk,tubeAxes,numberOfSides,type) int
-    #set DTMRI(vtk,tubeAxes,numberOfSides,description) 
-    #lappend DTMRI(vtkPropertyList,tubeAxes) numberOfSides 
-
-
-    # make tcl variable and save its attributes (type, desc)
-    #------------------------------------
-    set param [Uncap $parameter]
-    set DTMRI(vtk,$object,$param) $value
-    set DTMRI(vtk,$object,$param,type) $type
-    set DTMRI(vtk,$object,$param,description) $desc
-
-    # save on list for updating variable by user
-    #------------------------------------
-    lappend DTMRI(vtkPropertyList,$object) $param
-    
+    VTKOIAddObjectProperty DTMRI $object $parameter $value $type $desc
 }
+
+
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRIBuildVTK
@@ -1314,11 +1087,6 @@ proc DTMRIBuildVTK {} {
     DTMRI(vtk,tmp1) Delete
     DTMRI(vtk,tmp2) Delete
     
-    # Apply all settings from tcl variables that were
-    # created above using calls to DTMRIAddObjectProperty
-    #------------------------------------
-    DTMRIApplySettingsToVTKObjects
-
 
     DTMRIBuildVTKODF
 
