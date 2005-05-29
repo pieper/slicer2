@@ -374,7 +374,7 @@ proc DTMRIGlyphsBuildGUI {} {
           -to $DTMRI(mode,glyphScalarRange,max) \
           -length 90 \
           -variable DTMRI(mode,glyphScalarRange,[Uncap $slider]) \
-          -resolution 0.1 \
+          -resolution 0.001 \
           -command {DTMRIUpdateGlyphScalarRange; Render3D}} \
         $Gui(WSA) {-sliderlength 15}
         pack $f.l$slider $f.e$slider $f.s$slider -side left  -padx $Gui(pad)
@@ -628,14 +628,15 @@ proc DTMRIUpdateGlyphScalarRange {{not_used ""}} {
     # This way -4e-12 will not look like a negative eigenvalue in
     # the GUI
     set DTMRI(mode,glyphScalarRange,low) \
-    [DTMRIRoundFloatingPoint $s1]
+    [format "%0.5f" $s1]
     set DTMRI(mode,glyphScalarRange,hi) \
-    [DTMRIRoundFloatingPoint $s2]
+    [format "%0.5f" $s2]
 
     # This causes multiple renders since for some reason
     # the scalar bar does not update on the first one
     Render3D
 }
+
 
 
 ################################################################

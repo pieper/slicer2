@@ -36,6 +36,7 @@
 #===============================================================================
 # FILE:        DTMRITractography.tcl
 # PROCEDURES:  
+#   DTMRIRaiseMoreOptionsFrame mode
 #   DTMRITractographyBuildGUI
 #   DTMRISelectRemoveHyperStreamline x y z
 #   DTMRISelectChooseHyperStreamline x y z
@@ -205,6 +206,23 @@ proc DTMRITractographyInit {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIRaiseMoreOptionsFrame
+# 
+# .ARGS
+# string mode identifies the frame to raise
+# .END
+#-------------------------------------------------------------------------------
+proc DTMRIRaiseMoreOptionsFrame {mode} {
+    global DTMRI
+
+    raise $DTMRI(frame,$mode)
+    focus $DTMRI(frame,$mode)
+
+    set DTMRI(mode,visualizationTypeGui) $mode
+    # config menubutton
+    $DTMRI(gui,mbVisMode)    config -text $mode
+}
 
 
 #-------------------------------------------------------------------------------

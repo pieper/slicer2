@@ -41,13 +41,7 @@
 #   DTMRIEnter
 #   DTMRIExit
 #   DTMRIBuildGUI
-#   DTMRIRaiseMoreOptionsFrame mode
-#   DTMRIBuildScrolledGUI f
-#   DTMRICheckScrollLimits args
-#   DTMRISizeScrolledGUI f
-#   DTMRISetPropertyType
 #   DTMRICreateBindings
-#   DTMRIRoundFloatingPoint val
 #   DTMRIRemoveAllActors
 #   DTMRIAddAllActors
 #   DTMRIApplySettingsToVTKObjects
@@ -97,7 +91,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.81 $} {$Date: 2005/05/29 03:19:55 $}]
+                  {$Revision: 1.82 $} {$Date: 2005/05/29 04:04:43 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -129,12 +123,6 @@ proc DTMRIInit {} {
     #------------------------------------
     DTMRICreateBindings
 
-
-    # Props: GUI tab we are currently on
-    #------------------------------------
-    set DTMRI(propertyType) Basic
-    
-
     #------------------------------------
     # Developers panel variables
     #------------------------------------
@@ -155,12 +143,6 @@ proc DTMRIInit {} {
         } 
     }
 
-    #------------------------------------
-    # Number display variables
-    #------------------------------------
-    # round floats to 8 digits
-    set DTMRI(floatingPointFormat) "%0.5f"
-    
 
     set DTMRI(Description) ""
     set DTMRI(Name) ""
@@ -239,9 +221,6 @@ proc DTMRIEnter {} {
 
     # add event handling for 3D
     EvActivateBindingSet DTMRI3DEvents
-
-    # configure all scrolled GUIs so frames inside fit
-    DTMRISizeScrolledGUI $DTMRI(scrolledGui,advanced)
 
     # color label selection widgets
     LabelsColorWidgets
@@ -621,14 +600,13 @@ especially Diffusion DTMRI MRI.
     # VTK->Middle frame
     #-------------------------------------------
     set f $fVTK.fMiddle
-    set fScrolled [DTMRIBuildScrolledGUI $f]
-    set DTMRI(scrolledGui,advanced) $fScrolled
+    set fCurrent $f
 
     # loop through all the vtk objects and build GUIs
     #------------------------------------              
     foreach o $DTMRI(vtkObjectList) {
 
-        set f $fScrolled
+        set f $fCurrent
 
         # if the object has properties
         #-------------------------------------------
@@ -654,7 +632,7 @@ especially Diffusion DTMRI MRI.
         #------------------------------------
         foreach p $DTMRI(vtkPropertyList,$o) {
 
-            set f $fScrolled.f$o
+            set f $fCurrent.f$o
 
             # name of entire tcl variable
             set variableName DTMRI(vtk,$o,$p)
@@ -777,124 +755,6 @@ especially Diffusion DTMRI MRI.
 
 }
 
-
-#-------------------------------------------------------------------------------
-# .PROC DTMRIRaiseMoreOptionsFrame
-# 
-# .ARGS
-# string mode identifies the frame to raise
-# .END
-#-------------------------------------------------------------------------------
-proc DTMRIRaiseMoreOptionsFrame {mode} {
-    global DTMRI
-
-    raise $DTMRI(frame,$mode)
-    focus $DTMRI(frame,$mode)
-
-    set DTMRI(mode,visualizationTypeGui) $mode
-    # config menubutton
-    $DTMRI(gui,mbVisMode)    config -text $mode
-}
-
-#-------------------------------------------------------------------------------
-# .PROC DTMRIBuildScrolledGUI
-# 
-# .ARGS
-# string f path to frame
-# .END
-#-------------------------------------------------------------------------------
-proc DTMRIBuildScrolledGUI {f} {
-    global Gui DTMRI
-
-    # window paths
-    #-------------------------------------------
-    set canvas $f.cGrid
-    set s $f.sGrid
-    
-    # create canvas and scrollbar
-    #-------------------------------------------
-    canvas $canvas -yscrollcommand "$s set" -bg $Gui(activeWorkspace)
-    eval "scrollbar $s -command \"DTMRICheckScrollLimits $canvas yview\"\
-            $Gui(WSBA)"
-    pack $s -side right -fill y
-    pack $canvas -side top -fill both -pady $Gui(pad) -expand true
-    
-    set f $canvas.f
-    #frame $f -bd 0 -bg $Gui(activeWorkspace)
-    frame $f -bd 0
-    $f configure  -relief groove -bd 3 
-    
-    # put the frame inside the canvas (so it can scroll)
-    #-------------------------------------------
-    $canvas create window 0 0 -anchor nw -window $f
-    
-    # y spacing important for calculation of frame height for scrolling
-    set pady 2
-    
-    # save name of canvas to configure later
-    set DTMRI(scrolledGUI,$f,canvas) $canvas
-
-    # return path to the frame for filling
-    return $f
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC DTMRICheckScrollLimits
-# This procedure allows scrolling only if the entire frame is not visible
-# .ARGS
-# list args
-# .END
-#-------------------------------------------------------------------------------
-proc DTMRICheckScrollLimits {args} {
-
-    set canvas [lindex $args 0]
-    set view   [lindex $args 1]
-    set fracs [$canvas $view]
-
-    if {double([lindex $fracs 0]) == 0.0 && \
-            double([lindex $fracs 1]) == 1.0} {
-        return
-    }
-    eval $args
-}
-
-#-------------------------------------------------------------------------------
-# .PROC DTMRISizeScrolledGUI
-# 
-# .ARGS
-# string f path to frame
-# .END
-#-------------------------------------------------------------------------------
-proc DTMRISizeScrolledGUI {f} {
-    global DTMRI
-
-    # see how tall our frame is these days
-    set height [winfo reqheight  $f]    
-    set canvas $DTMRI(scrolledGUI,$f,canvas)
-
-    # tell the canvas to scroll so we can see the whole frame
-    $canvas config -scrollregion "0 0 1 $height"
-}
-
-#-------------------------------------------------------------------------------
-# .PROC DTMRISetPropertyType
-# raise a panel in the GUI
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc DTMRISetPropertyType {} {
-    global Module DTMRI
-
-    #Lauren need properties subframes for this to work
-    #raise $Volume(f$Volume(propertyType))
-    #focus $Volume(f$Volume(propertyType))
-
-    # Lauren temporarily use this
-    raise $Module(DTMRI,f$DTMRI(propertyType))
-}
-
-
 ################################################################
 #  bindings for user interaction
 ################################################################
@@ -954,20 +814,6 @@ proc DTMRICreateBindings {} {
 ################################################################
 #  little procedures to handle display control, interaction with user
 ################################################################
-
-
-#-------------------------------------------------------------------------------
-# .PROC DTMRIRoundFloatingPoint
-# Format floats for GUI display (we don't want -5e-11)
-# .ARGS
-# float val
-# .END
-#-------------------------------------------------------------------------------
-proc DTMRIRoundFloatingPoint {val} {
-    global DTMRI
-
-    return [format $DTMRI(floatingPointFormat) $val]
-}
 
 
 #-------------------------------------------------------------------------------
