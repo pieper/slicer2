@@ -36,6 +36,7 @@
 #===============================================================================
 # FILE:        DTMRIMask.tcl
 # PROCEDURES:  
+#   DTMRIMaskBuildGUI
 #   DTMRIUpdateMaskLabel
 #==========================================================================auto=
 
@@ -56,6 +57,12 @@ proc DTMRIMaskInit {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIMaskBuildGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIMaskBuildGUI {} {
 
     global DTMRI Tensor Volume Module Gui

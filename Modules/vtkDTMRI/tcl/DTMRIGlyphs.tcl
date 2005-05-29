@@ -36,6 +36,7 @@
 #===============================================================================
 # FILE:        DTMRIGlyphs.tcl
 # PROCEDURES:  
+#   DTMRIGlyphsBuildGUI
 #   DTMRIUpdateReformatType
 #   DTMRIUpdateScalarBar
 #   DTMRIShowScalarBar
@@ -133,6 +134,12 @@ proc DTMRIGlyphsInit {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIGlyphsBuildGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIGlyphsBuildGUI {} {
 
     global DTMRI Tensor Module Gui

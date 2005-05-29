@@ -36,6 +36,7 @@
 #===============================================================================
 # FILE:        DTMRICalculateScalars.tcl
 # PROCEDURES:  
+#   DTMRICalculateScalarsBuildGUI
 #   DTMRISetOperation math
 #   DTMRIUpdateMathParams
 #   DTMRICreateEmptyVolume OrigId Description VolName
@@ -75,6 +76,12 @@ proc DTMRICalculateScalarsInit {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRICalculateScalarsBuildGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRICalculateScalarsBuildGUI {} {
 
     global DTMRI Tensor Module Gui

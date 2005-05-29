@@ -36,6 +36,7 @@
 #===============================================================================
 # FILE:        DTMRICalculateTensors.tcl
 # PROCEDURES:  
+#   DTMRICalculateTensorsBuildGUI
 #   RunLSDIrecon
 #   ShowPatternFrame
 #   DTMRIDisplayScrollBar module tab
@@ -139,6 +140,12 @@ proc DTMRICalculateTensorsInit {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRICalculateTensorsBuildGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRICalculateTensorsBuildGUI {} {
     
     global DTMRI Module Gui Volume

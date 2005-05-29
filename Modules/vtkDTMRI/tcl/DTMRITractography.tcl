@@ -36,6 +36,7 @@
 #===============================================================================
 # FILE:        DTMRITractography.tcl
 # PROCEDURES:  
+#   DTMRITractographyBuildGUI
 #   DTMRISelectRemoveHyperStreamline x y z
 #   DTMRISelectChooseHyperStreamline x y z
 #   DTMRISelectStartHyperStreamline x y z render
@@ -206,6 +207,12 @@ proc DTMRITractographyInit {} {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRITractographyBuildGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRITractographyBuildGUI {} {
 
     global DTMRI Tensor Module Gui

@@ -46,12 +46,11 @@
 #   DTMRICheckScrollLimits args
 #   DTMRISizeScrolledGUI f
 #   DTMRISetPropertyType
-#   DTMRIAdvancedApply
 #   DTMRICreateBindings
 #   DTMRIRoundFloatingPoint val
 #   DTMRIRemoveAllActors
 #   DTMRIAddAllActors
-#   DTMRIApplyVisualizationParameters
+#   DTMRIApplySettingsToVTKObjects
 #   DTMRIDeleteVTKObject object
 #   DTMRIMakeVTKObject class object
 #   DTMRIAddObjectProperty object parameter value type desc
@@ -98,7 +97,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.79 $} {$Date: 2005/05/29 03:07:42 $}]
+                  {$Revision: 1.80 $} {$Date: 2005/05/29 03:14:22 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
