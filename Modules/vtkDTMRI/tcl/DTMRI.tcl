@@ -76,7 +76,7 @@ proc DTMRIInit {} {
     source "$env(SLICER_HOME)/Modules/vtkDTMRI/tcl/VTKObjectInspection.tcl"
     
     # List of all submodules (most are tcl files for tabs within this module)
-    set DTMRI(submodulesList) "TensorRegistration ODF TractCluster Tractography Glyphs CalculateTensors CalculateScalars Mask"
+    set DTMRI(submodulesList) "TensorRegistration ODF TractCluster Tractography Glyphs CalculateTensors CalculateScalars Mask Save"
     
     # Source and Init all submodules
     foreach mod $DTMRI(submodulesList) {
@@ -93,7 +93,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.86 $} {$Date: 2005/05/29 20:24:09 $}]
+                  {$Revision: 1.87 $} {$Date: 2005/05/29 21:08:43 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -561,67 +561,6 @@ especially Diffusion DTMRI MRI.
     DevAddLabel $f.l2 "Press 'Display',\n 'ROI' or 'Scalar' Tab"
     $f.l2 configure -font {helvetica 8 bold} -justify left
     pack $f.l2 -side top -padx 10 -pady 2 -anchor w
-
-
-
-#######################################################################################
-#######################################################################################
-#######################################################################################
-
-
-    #-------------------------------------------
-    # Save frame
-    #-------------------------------------------
-    set fSave $Module(DTMRI,fSave)
-    set f $fSave
-    
-    frame $f.fActive    -bg $Gui(backdrop) -relief sunken -bd 2
-    pack $f.fActive -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-    
-    foreach frame "Top Middle Bottom" {
-        frame $f.f$frame -bg $Gui(activeWorkspace)
-        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-    }
-    $f.fTop configure  -relief groove -bd 3 
-    $f.fMiddle configure  -relief groove -bd 3 
-
-    #-------------------------------------------
-    # Scalars->Active frame
-    #-------------------------------------------
-    set f $fSave.fActive
-
-    # menu to select active DTMRI
-    DevAddSelectButton  Tensor $f Active "Active DTMRI:" Pack \
-    "Active DTMRI" 20 BLA 
-    
-    # Append these menus and buttons to lists 
-    # that get refreshed during UpdateMRML
-    lappend Tensor(mbActiveList) $f.mbActive
-    lappend Tensor(mActiveList) $f.mbActive.m
-
-    #-------------------------------------------
-    # Save->Top frame
-    #-------------------------------------------
-    set f $fSave.fTop
-
-    DevAddButton $f.bSave "Save Tensors" {DTMRIWriteStructuredPoints $DTMRI(devel,fileName)}
-    pack $f.bSave -side top -padx $Gui(pad) -pady $Gui(pad)
-    TooltipAdd $f.bSave "Save tensor data (Active DTMRI) to vtk file format."
-
-    #-------------------------------------------
-    # Save->Middle frame
-    #-------------------------------------------
-    set f $fSave.fMiddle
-    frame $f.fButton  -bg $Gui(activeWorkspace)
-    pack $f.fButton -side top -padx $Gui(pad) -pady $Gui(pad)
-
-    set f $fSave.fMiddle.fButton
-    DevAddButton $f.bApply "Save tract points" \
-        {DTMRISaveStreamlinesAsIJKPoints}
-    TooltipAdd $f.bApply "Save text file(s) with the tract paths.\n This does not save vtk models."
-
-    pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad) 
-
 
 }
 

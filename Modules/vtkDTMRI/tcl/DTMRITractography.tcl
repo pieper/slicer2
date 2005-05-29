@@ -233,13 +233,14 @@ proc DTMRIRaiseMoreOptionsFrame {mode} {
 #-------------------------------------------------------------------------------
 proc DTMRITractographyBuildGUI {} {
 
-    global DTMRI Tensor Module Gui Label
+    global DTMRI Tensor Module Gui Label Volume
 
     #-------------------------------------------
     # Frame Hierarchy:
     #-------------------------------------------
     # Tract
     #    Active
+    #    Bottom
     #    TractsMode
     #    VisMethods
     #       VisMode
@@ -262,11 +263,8 @@ proc DTMRITractographyBuildGUI {} {
     frame $f.fActive    -bg $Gui(backdrop) -relief sunken -bd 2
     pack $f.fActive -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
-    frame $f.fTractsMode  -bg $Gui(activeWorkspace)
-    pack $f.fTractsMode -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-
-    frame $f.fVisMethods  -bg $Gui(activeWorkspace) -bd 2
-    pack $f.fVisMethods -side top -padx $Gui(pad) -pady $Gui(pad) -fill both -expand true
+    frame $f.fBottom  -bg $Gui(activeWorkspace) -bd 2
+    pack $f.fBottom -side top -padx $Gui(pad) -pady $Gui(pad) -fill both -expand true
 
     #-------------------------------------------
     # Tract->Active frame
@@ -284,67 +282,42 @@ proc DTMRITractographyBuildGUI {} {
 
 
     #-------------------------------------------
-    # Display-> Notebook -> Tract frame->TractsMode frame
+    # Tract->Bottom frame
     #-------------------------------------------
-    set f $fTract.fTractsMode
+    set f $fTract.fBottom
 
-    eval {label $f.lVis -text "Display 'Tracts': "} $Gui(WLA)
-    pack $f.lVis -side left -pady $Gui(pad) -padx $Gui(pad)
-    # Add menu items
-    foreach vis $DTMRI(mode,visualizationType,tractsOnList) \
-    tip $DTMRI(mode,visualizationType,tractsOnList,tooltip) {
-        eval {radiobutton $f.r$vis \
-              -text $vis \
-              -command "DTMRIUpdateStreamlines" \
-              -value $vis \
-              -variable DTMRI(mode,visualizationType,tractsOn) \
-              -indicatoron 0} $Gui(WCA)
+    Notebook:create $f.fNotebook \
+                        -pages {{Settings} {Seeding} {Display}} \
+                        -pad 2 \
+                        -bg $Gui(activeWorkspace) \
+                        -height 500 \
+                        -width 240
+    pack $f.fNotebook -fill both -expand 1
 
-        pack $f.r$vis -side left -fill x
-        TooltipAdd $f.r$vis $tip
+    #-------------------------------------------
+    # Tract->Bottom->Notebook frame
+    #-------------------------------------------
+    set f $fTract.fBottom.fNotebook
+
+    set fSettings [Notebook:frame $f {Settings}]
+    set fSeeding [Notebook:frame $f {Seeding}]
+    set fDisplay [Notebook:frame $f {Display}]
+    foreach frame "$fSettings $fSeeding $fDisplay" {
+        $frame configure -relief groove -bd 3
     }
 
     #-------------------------------------------
-    # Display-> Notebook -> Tract frame ->VisMethods frame
+    # Tract->Bottom->Notebook->Settings frame
     #-------------------------------------------
-    set f $fTract.fVisMethods
-
-    frame $f.fVisMode -bg $Gui(activeWorkspace) 
-    pack $f.fVisMode -side top -padx 0 -pady 0 -fill x
-    $f.fVisMode config -relief sunken -bd 2
+    set f $fSettings
 
     # note the height is necessary to place frames inside later
     frame $f.fVisParams -bg $Gui(activeWorkspace) -height 500
     pack $f.fVisParams -side top -padx 0 -pady $Gui(pad) -fill both -expand true
-
-    #$f.fVisParams config -relief groove -bd 3
-    #$f.fVisParams config -bd 3
-
-    #-------------------------------------------
-    # Display-> Notebook ->Tract->VisMethods ->VisMode frame
-    #-------------------------------------------
-    set f $fTract.fVisMethods.fVisMode
-
-    eval {label $f.lVis -text "Visualization Menu: "} $Gui(WLA)
-    eval {menubutton $f.mbVis -text $DTMRI(mode,visualizationTypeGui) \
-          -relief raised -bd 2 -width 10 \
-          -menu $f.mbVis.m} $Gui(WMBA)
-    eval {menu $f.mbVis.m} $Gui(WMA)
-    pack $f.lVis $f.mbVis -side left -pady $Gui(pad) -padx $Gui(pad)
-    # Add menu items
-    foreach vis $DTMRI(mode,visualizationTypeGuiList) {
-        $f.mbVis.m add command -label $vis \
-        -command "DTMRIRaiseMoreOptionsFrame $vis"
-    }
-    # save menubutton for config
-    set DTMRI(gui,mbVisMode) $f.mbVis
-    # Add a tooltip
-    TooltipAdd $f.mbVis $DTMRI(mode,visualizationTypeGuiList,tooltip)
-
     #-------------------------------------------
     # Display-> Notebook ->Tract->VisMethods->VisParams frame
     #-------------------------------------------
-    set f $fTract.fVisMethods.fVisParams
+    set f $fSettings.fVisParams
     set fParams $f
 
     # make a parameters frame for each visualization type
@@ -601,9 +574,9 @@ proc DTMRITractographyBuildGUI {} {
     ##########################################################
 
     #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts frame
+    # Tract->Bottom->Notebook->Seeding frame
     #-------------------------------------------
-    set f $fParams.fAutoTracts
+    set f $fSeeding
 
     foreach frame "Label2 Entries" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
@@ -613,7 +586,7 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
     # Display-> Notebook ->Tract frame->VisMethods->VisParams->Autotracts->Label2 frame
     #-------------------------------------------
-    set f $fParams.fAutoTracts.fLabel2
+    set f $fSeeding.fLabel2
 
     DevAddLabel $f.l "Automatically start tractography\nfrom each voxel in an ROI."
     pack $f.l -side top -padx $Gui(pad) -pady $Gui(pad)
@@ -621,7 +594,7 @@ proc DTMRITractographyBuildGUI {} {
 
     #-------------------------------------------
     # Display-> Notebook ->Tract frame->VisMethods->VisParams->Tracts->Entries frame
-    set f $fParams.fAutoTracts.fEntries
+    set f $fSeeding.fEntries
     foreach frame "Volume" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
@@ -636,7 +609,7 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
     # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->Volume frame
     #-------------------------------------------
-    set f $fParams.fAutoTracts.fEntries.fVolume
+    set f $fSeeding.fEntries.fVolume
 
     # menu to select a volume: will set Volume(activeID)
     set name MaskLabelmap
@@ -652,7 +625,7 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
     # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->ChooseLabel frame
     #-------------------------------------------
-    set f $fParams.fAutoTracts.fEntries.fChooseLabel
+    set f $fSeeding.fEntries.fChooseLabel
     
     foreach frame "Title Label Apply" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
@@ -663,7 +636,7 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
     # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->ChooseLabel->Title frame
     #-------------------------------------------
-    set f $fParams.fAutoTracts.fEntries.fChooseLabel.fTitle
+    set f $fSeeding.fEntries.fChooseLabel.fTitle
     
     DevAddLabel $f.l "Create Tracts from label value"
     pack $f.l -side top
@@ -671,7 +644,7 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
     # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->ChooseLabel->Label frame
     #-------------------------------------------
-    set f $fParams.fAutoTracts.fEntries.fChooseLabel.fLabel
+    set f $fSeeding.fEntries.fChooseLabel.fLabel
     
     # mask label
     eval {button $f.bOutput -text "Label:" \
@@ -696,7 +669,7 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
     # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->ChooseLabel->Apply frame
     #-------------------------------------------
-    set f $fParams.fAutoTracts.fEntries.fChooseLabel.fApply
+    set f $fSeeding.fEntries.fChooseLabel.fApply
     DevAddButton $f.bApply "Seed 'Tracts' in ROI" \
         {puts "Seeding streamlines"; DTMRISeedStreamlinesFromSegmentation}
     pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
@@ -706,7 +679,7 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
     # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->FindTracts frame
     #-------------------------------------------
-    set f $fParams.fAutoTracts.fEntries.fFindTracts
+    set f $fSeeding.fEntries.fFindTracts
     
     foreach frame "Title ListLabels Apply" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
@@ -716,7 +689,7 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
     # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->FindTracts->Title frame
     #-------------------------------------------
-    set f $fParams.fAutoTracts.fEntries.fFindTracts.fTitle
+    set f $fSeeding.fEntries.fFindTracts.fTitle
     
     DevAddLabel $f.l "Choose Tracts that pass through\na set of labels"
     pack $f.l -side top
@@ -724,7 +697,7 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
     # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->FindTracts->ListLabels frame
     #-------------------------------------------
-    set f $fParams.fAutoTracts.fEntries.fFindTracts.fListLabels
+    set f $fSeeding.fEntries.fFindTracts.fListLabels
     
     DevAddLabel $f.l "List of labels:"
     
@@ -737,74 +710,34 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
     # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->FindTracts->Apply frame
     #-------------------------------------------
-    set f $fParams.fAutoTracts.fEntries.fFindTracts.fApply
+    set f $fSeeding.fEntries.fFindTracts.fApply
     
     DevAddButton $f.bApply "Find 'Tracts' through ROI" \
         {DTMRIFindStreamlinesThroughROI}
     pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
 
 
-    ##########################################################
-    #  SAVETRACTS   (frame raised when SaveTracts are selected)
-    ##########################################################
 
     #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->SaveTracts frame
+    # Tract->Bottom->Notebook->Display frame
     #-------------------------------------------
-    set f $fParams.fSaveTracts
+    set f $fDisplay
 
-    foreach frame "Entries" {
-        frame $f.f$frame -bg $Gui(activeWorkspace)
-        pack $f.f$frame -side top -padx 0 -pady 1 -fill x
+    eval {label $f.lVis -text "Display 'Tracts': "} $Gui(WLA)
+    pack $f.lVis -side left -pady $Gui(pad) -padx $Gui(pad)
+    # Add menu items
+    foreach vis $DTMRI(mode,visualizationType,tractsOnList) \
+    tip $DTMRI(mode,visualizationType,tractsOnList,tooltip) {
+        eval {radiobutton $f.r$vis \
+              -text $vis \
+              -command "DTMRIUpdateStreamlines" \
+              -value $vis \
+              -variable DTMRI(mode,visualizationType,tractsOn) \
+              -indicatoron 0} $Gui(WCA)
+
+        pack $f.r$vis -side left -fill x
+        TooltipAdd $f.r$vis $tip
     }
-
-    #-------------------------------------------
-    # Display--> Notebook ->Tract frame>VisMethods->VisParams->SaveTracts->Entries frame
-    #-------------------------------------------
-    set f $fParams.fSaveTracts.fEntries
-    foreach frame "Info1 Apply1 Info2 Apply2" {
-        frame $f.f$frame -bg $Gui(activeWorkspace)
-        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
-    }
-
-    #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->SaveTracts->Entries->Info frame
-    #-------------------------------------------
-    set f $fParams.fSaveTracts.fEntries.fInfo1
-    DevAddLabel $f.l "Save the tracts you have created."
-    pack $f.l -side top -padx $Gui(pad) -pady $Gui(pad)
-
-    #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->SaveTracts->Entries->Apply frame
-    #-------------------------------------------
-    set f $fParams.fSaveTracts.fEntries.fApply1
-    DevAddButton $f.bApply "Save tracts in model file(s)" \
-        {puts "Saving streamlines"; DTMRISaveStreamlinesAsModel}
-    pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
-    TooltipAdd  $f.bApply "Save tracts to vtk file(s).\nEach color of tract will become a separate model.\n Choose the initial part of the filename, and models\nwill be saved as filename_0.vtk, filename_1.vtk, etc.\nThen you can load the models into slicer\n(they must be re-added to the mrml tree)."
-
-    #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->SaveTracts->Entries->Info frame
-    #-------------------------------------------
-    set f $fParams.fSaveTracts.fEntries.fInfo2
-    DevAddLabel $f.l "Save currently visible tracts as a polyline.\n Useful for further processing on tracts.\nONLY DEVELOPERS"
-    pack $f.l -side top -padx $Gui(pad) -pady $Gui(pad)
-
-    #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->SaveTracts->Entries->Apply frame
-    #-------------------------------------------
-    set f $fParams.fSaveTracts.fEntries.fApply2
-    DevAddButton $f.bApply "Save tracts in vtk file" \
-        {puts "Saving streamlines"; DTMRISaveStreamlinesAsPolyLines "" tracts}
-    pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
-    TooltipAdd  $f.bApply "Save visible tracts to vtk file as a set of polylines."
-
-    #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisUpdate frame
-    #-------------------------------------------
-    #set f $fDisplay.fVisUpdate
-    #DevAddButton $f.bTest "Junk" {puts "this button is junk"} 4    
-    #pack $f.bTest -side top -padx 0 -pady 0
 
 }
 
