@@ -36,6 +36,7 @@
 #===============================================================================
 # FILE:        DTMRICalculateTensors.tcl
 # PROCEDURES:  
+#   DTMRICalculateTensorsInit
 #   DTMRICalculateTensorsBuildGUI
 #   RunLSDIrecon
 #   ShowPatternFrame
@@ -49,6 +50,15 @@
 #   ConvertVolumeToTensors
 #   DTMRICreateNewVolume volume name desc scanOrder
 #==========================================================================auto=
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC DTMRICalculateTensorsInit
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRICalculateTensorsInit {} {
 
     global DTMRI

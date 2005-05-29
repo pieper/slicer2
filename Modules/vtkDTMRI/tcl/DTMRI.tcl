@@ -55,6 +55,8 @@
 #   DTMRISetActive n
 #==========================================================================auto=
 
+
+
 #-------------------------------------------------------------------------------
 # .PROC DTMRIInit
 #  The "Init" procedure is called automatically by the slicer.  
@@ -93,7 +95,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.88 $} {$Date: 2005/05/29 22:32:29 $}]
+                  {$Revision: 1.89 $} {$Date: 2005/05/29 22:46:05 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.

@@ -36,7 +36,7 @@
 #===============================================================================
 # FILE:        DTMRITensorRegistration.tcl
 # PROCEDURES:  
-#   DTMRIRegInit
+#   DTMRITensorRegistrationInit
 #   DTMRIBuildRegistFrame
 #   DTMRIRegModifyOptions optClass value
 #   DTMRIRegCheckErrors
@@ -77,7 +77,7 @@
 #   See DTMRI.tcl for Copyright details
 
 #-------------------------------------------------------------------------------
-# .PROC DTMRIRegInit
+# .PROC DTMRITensorRegistrationInit
 #  This procedure is called from DTMRIInit and initializes the
 #  Tensor Registration Module.
 # .ARGS

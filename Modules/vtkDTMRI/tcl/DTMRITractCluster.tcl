@@ -36,6 +36,7 @@
 #===============================================================================
 # FILE:        DTMRITractCluster.tcl
 # PROCEDURES:  
+#   DTMRITractClusterInit
 #   DTMRITractClusterBuildClusterFrame
 #   DTMRITractClusterApplyUserSettings
 #   DTMRITractClusterComputeClusters
@@ -48,6 +49,13 @@
 #   DTMRITractClusterTestUndo
 #==========================================================================auto=
 
+
+#-------------------------------------------------------------------------------
+# .PROC DTMRITractClusterInit
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRITractClusterInit {} {
     global DTMRI 
 

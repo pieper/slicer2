@@ -36,6 +36,7 @@
 #===============================================================================
 # FILE:        DTMRIGlyphs.tcl
 # PROCEDURES:  
+#   DTMRIGlyphsInit
 #   DTMRIGlyphsBuildGUI
 #   DTMRIUpdateReformatType
 #   DTMRIUpdateScalarBar
@@ -47,6 +48,13 @@
 #   DTMRIUpdateGlyphScalarRange not_used
 #   DTMRIUpdate
 #==========================================================================auto=
+
+#-------------------------------------------------------------------------------
+# .PROC DTMRIGlyphsInit
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIGlyphsInit {} {
 
     global DTMRI

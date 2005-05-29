@@ -36,12 +36,22 @@
 #===============================================================================
 # FILE:        DTMRICalculateScalars.tcl
 # PROCEDURES:  
+#   DTMRICalculateScalarsInit
 #   DTMRICalculateScalarsBuildGUI
 #   DTMRISetOperation math
 #   DTMRIUpdateMathParams
 #   DTMRICreateEmptyVolume OrigId Description VolName
 #   DTMRIDoMath operation
 #==========================================================================auto=
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC DTMRICalculateScalarsInit
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRICalculateScalarsInit {} {
 
     global DTMRI

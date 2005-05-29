@@ -36,6 +36,7 @@
 #===============================================================================
 # FILE:        DTMRITractography.tcl
 # PROCEDURES:  
+#   DTMRITractographyInit
 #   DTMRIRaiseMoreOptionsFrame mode
 #   DTMRITractographyBuildGUI
 #   DTMRISelectRemoveHyperStreamline x y z
@@ -60,6 +61,16 @@
 #   DTMRISaveStreamlinesAsPolyLines subdir name verbose
 #   DTMRISaveStreamlinesAsModel verbose
 #==========================================================================auto=
+
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC DTMRITractographyInit
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRITractographyInit {} {
 
     global DTMRI

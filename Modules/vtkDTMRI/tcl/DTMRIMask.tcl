@@ -36,10 +36,19 @@
 #===============================================================================
 # FILE:        DTMRIMask.tcl
 # PROCEDURES:  
+#   DTMRIMaskInit
 #   DTMRIMaskBuildGUI
 #   DTMRIUpdateMaskLabel
+#   DTMRIUpdateMaskLabelFromShowLabels
 #==========================================================================auto=
 
+
+#-------------------------------------------------------------------------------
+# .PROC DTMRIMaskInit
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIMaskInit {} {
     
     global DTMRI Volume Label
@@ -218,6 +227,12 @@ proc DTMRIUpdateMaskLabel {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIUpdateMaskLabelFromShowLabels
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIUpdateMaskLabelFromShowLabels {} {
 
     global Label DTMRI
