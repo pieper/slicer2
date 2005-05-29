@@ -76,7 +76,7 @@ proc DTMRITractographyInit {} {
 
     # type of visualization settings GUI to display to user
     set DTMRI(mode,visualizationTypeGui) Tracts
-    set DTMRI(mode,visualizationTypeGuiList) {Help Tracts AutoTracts SaveTracts}
+    set DTMRI(mode,visualizationTypeGuiList) {Tracts AutoTracts SaveTracts}
     set DTMRI(mode,visualizationTypeGuiList,tooltip) "Select from this menu\n and settings for each type\n of visualization will appear below."
 
 
@@ -236,6 +236,24 @@ proc DTMRITractographyBuildGUI {} {
     global DTMRI Tensor Module Gui Label
 
     #-------------------------------------------
+    # Frame Hierarchy:
+    #-------------------------------------------
+    # Tract
+    #    Active
+    #    TractsMode
+    #    VisMethods
+    #       VisMode
+    #       VisParams
+    #          Tracts
+    #             Colors
+    #             Entries
+    #                TractingMethod
+    #                TractingVar
+    #          AutoTracts
+    #          SaveTracts
+    #-------------------------------------------
+
+    #-------------------------------------------
     # Tract frame
     #-------------------------------------------
     set fTract $Module(DTMRI,fTract)
@@ -293,16 +311,17 @@ proc DTMRITractographyBuildGUI {} {
 
     frame $f.fVisMode -bg $Gui(activeWorkspace) 
     pack $f.fVisMode -side top -padx 0 -pady 0 -fill x
+    $f.fVisMode config -relief sunken -bd 2
 
     # note the height is necessary to place frames inside later
     frame $f.fVisParams -bg $Gui(activeWorkspace) -height 500
     pack $f.fVisParams -side top -padx 0 -pady $Gui(pad) -fill both -expand true
-    $f.fVisMode config -relief sunken -bd 2
+
     #$f.fVisParams config -relief groove -bd 3
     #$f.fVisParams config -bd 3
 
-    #-----------------------------------------2--
-    # Display-> Notebook ->Tract frame ->VisMethods ->VisMode frame
+    #-------------------------------------------
+    # Display-> Notebook ->Tract->VisMethods ->VisMode frame
     #-------------------------------------------
     set f $fTract.fVisMethods.fVisMode
 
@@ -323,13 +342,13 @@ proc DTMRITractographyBuildGUI {} {
     TooltipAdd $f.mbVis $DTMRI(mode,visualizationTypeGuiList,tooltip)
 
     #-------------------------------------------
-    # Display-> Notebook ->Tract frame ->VisMethods ->VisParams frame
+    # Display-> Notebook ->Tract->VisMethods->VisParams frame
     #-------------------------------------------
     set f $fTract.fVisMethods.fVisParams
     set fParams $f
 
     # make a parameters frame for each visualization type
-    # types are: Help  Tracts AutoTracts SaveTracts
+    # types are: Tracts AutoTracts SaveTracts
     foreach frame $DTMRI(mode,visualizationTypeGuiList) {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         # for raising one frame at a time
@@ -338,15 +357,6 @@ proc DTMRITractographyBuildGUI {} {
         set DTMRI(frame,$frame) $f.f$frame
     }
     raise $DTMRI(frame,$DTMRI(mode,visualizationTypeGui))
-
-    #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->Help frame
-    #-------------------------------------------
-    set f $fParams.fHelp
-
-    DevAddLabel $f.l "Select from the Visualization\n menu above to adjust\n visualization parameters."
-    DevAddLabel $f.l2 "For tractography, point at \nthe voxel of interest with\n the mouse and click\n the letter 's'. To delete\n a tract, point and click 'd'."
-    pack $f.l $f.l2 -side top -padx $Gui(pad) -pady $Gui(pad)
 
     #-------------------------------------------
     # Display-> Notebook ->Tract frame->VisMethods->VisParams->Tracts frame
@@ -423,23 +433,28 @@ proc DTMRITractographyBuildGUI {} {
     set f $fParams.fTracts.fEntries
 
     frame $f.fTractingMethod -bg $Gui(activeWorkspace) 
-    pack $f.fTractingMethod -side top -padx 0 -pady 0 -fill x
+    pack $f.fTractingMethod -side top -padx $Gui(pad) -pady 0 -fill x
 
     # note the height is necessary to place frames inside later
     frame $f.fTractingVar -bg $Gui(activeWorkspace) -height 500
-    pack $f.fTractingVar -side top -padx 0 -pady $Gui(pad) -fill both -expand true
+    #frame $f.fTractingVar -bg $Gui(activeWorkspace) 
+    pack $f.fTractingVar -side top -padx $Gui(pad) -pady $Gui(pad) -fill both -expand true
 
     #    frame $f -bg $Gui(activeWorkspace)
     #    pack $f -side top -padx $Gui(pad) -pady 1 -fill x
 
+    #-------------------------------------------
+    # Display-> Notebook ->Tract frame->VisMethods->VisParams->Tracts->Entries->TractingMethod frame
+    #-------------------------------------------
     set f $fParams.fTracts.fEntries.fTractingMethod
 
-    eval {label $f.lVis -text "Tracting Method: "} $Gui(WLA)
+    eval {label $f.lVis -text "Interpolation Method: "} $Gui(WLA)
     eval {menubutton $f.mbVis -text $DTMRI(stream,tractingMethod) \
-          -relief raised -bd 2 -width 12 \
+          -relief raised -bd 2 -width 11 \
           -menu $f.mbVis.m} $Gui(WMBA)
     eval {menu $f.mbVis.m} $Gui(WMA)
-    pack $f.lVis $f.mbVis -side left -pady 1 -padx $Gui(pad)
+    pack $f.lVis -side left -pady 1 -padx $Gui(pad)
+    pack $f.mbVis -side right -pady 1 -padx $Gui(pad)
     foreach vis $DTMRI(stream,tractingMethodList) {
         $f.mbVis.m add command -label $vis \
         -command "DTMRIUpdateTractingMethod $vis"
@@ -449,6 +464,9 @@ proc DTMRITractographyBuildGUI {} {
     # Add a tooltip
     TooltipAdd $f.mbVis $DTMRI(stream,tractingMethodList,tooltip)
 
+    #-------------------------------------------
+    # Display-> Notebook ->Tract frame->VisMethods->VisParams->Tracts->Entries->TractingVar frame
+    #-------------------------------------------
     set f $fParams.fTracts.fEntries.fTractingVar
 
     #    frame $f -bg $Gui(activeWorkspace)
@@ -475,10 +493,11 @@ proc DTMRITractographyBuildGUI {} {
     eval {label $f.lVis -text "Spline Order: "} $Gui(WLA)
 
     eval {menubutton $f.mbVis -text $DTMRI(stream,BSplineOrder) \
-          -relief raised -bd 2 -width 12 \
+          -relief raised -bd 2 -width 11 \
           -menu $f.mbVis.m} $Gui(WMBA)
     eval {menu $f.mbVis.m} $Gui(WMA)
-    pack $f.lVis $f.mbVis -side left -pady 1 -padx $Gui(pad)
+    pack $f.lVis  -side left -pady 1 -padx $Gui(pad)
+    pack $f.mbVis -side right -pady 1 -padx $Gui(pad)
     # Add menu items
     foreach vis $DTMRI(stream,BSplineOrderList) {
         $f.mbVis.m add command -label $vis \
@@ -499,10 +518,11 @@ proc DTMRITractographyBuildGUI {} {
     eval {label $f.lVis -text "Method Order: "} $Gui(WLA)
 
     eval {menubutton $f.mbVis -text $DTMRI(stream,MethodOrder) \
-          -relief raised -bd 2 -width 12 \
+          -relief raised -bd 2 -width 11 \
           -menu $f.mbVis.m} $Gui(WMBA)
     eval {menu $f.mbVis.m} $Gui(WMA)
-    pack $f.lVis $f.mbVis -side left -pady 1 -padx $Gui(pad)
+    pack $f.lVis  -side left -pady 1 -padx $Gui(pad)
+    pack $f.mbVis -side right -pady 1 -padx $Gui(pad)
     # save menubutton for config
     set DTMRI(gui,mbMethodOrder) $f.mbVis
     # Add menu items
@@ -521,7 +541,7 @@ proc DTMRITractographyBuildGUI {} {
         
         frame $f.f$entry -bg $Gui(activeWorkspace)
         #place $f.f$frame -in $f -relheight 1.0 -relwidth 1.0
-        pack $f.f$entry -side top -padx $Gui(pad) -pady 1 -fill x
+        pack $f.f$entry -side top -padx 0 -pady 1 -fill x
         set f $f.f$entry
 
         eval {label $f.l$entry -text "$text:"} $Gui(WLA)
@@ -542,7 +562,7 @@ proc DTMRITractographyBuildGUI {} {
 
         frame $f.f$entry -bg $Gui(activeWorkspace)
         #place $f.f$frame -in $f -relheight 1.0 -relwidth 1.0
-        pack $f.f$entry -side top -padx $Gui(pad) -pady 1 -fill x
+        pack $f.f$entry -side top -padx 0 -pady 1 -fill x
         set f $f.f$entry
 
         eval {label $f.l$entry -text "$text:"} $Gui(WLA)
@@ -563,7 +583,7 @@ proc DTMRITractographyBuildGUI {} {
         
         frame $f.f$entry -bg $Gui(activeWorkspace)
         #place $f.f$frame -in $f -relheight 1.0 -relwidth 1.0
-        pack $f.f$entry -side top -padx $Gui(pad) -pady 1 -fill x
+        pack $f.f$entry -side top -padx 0 -pady 1 -fill x
         set f $f.f$entry
 
         eval {label $f.l$entry -text "$text:"} $Gui(WLA)
