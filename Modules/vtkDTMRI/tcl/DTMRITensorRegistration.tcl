@@ -191,7 +191,7 @@ proc DTMRITensorRegistrationInit {} {
 #   Create the Regist frame in DTMRI module
 # .END
 #-------------------------------------------------------------------------------
-proc DTMRIBuildRegistFrame {} {
+proc DTMRITensorRegistrationBuildGUI {} {
 
   global Gui Module Volume Tensor DTMRI Matrix
 

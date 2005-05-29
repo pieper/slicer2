@@ -56,6 +56,133 @@ proc DTMRIMaskInit {} {
 }
 
 
+proc DTMRIMaskBuildGUI {} {
+
+    global DTMRI Tensor Volume Module Gui
+
+    #-------------------------------------------
+    # Frame Hierarchy:
+    #-------------------------------------------
+    # ROI
+    #    Active
+    #    Mask
+    #       Label
+    #       Mode
+    #       Volume
+    #       ChooseLabel
+    #       Label
+    #       Label
+    #-------------------------------------------
+
+
+    set fROI $Module(DTMRI,fROI)
+    set f $fROI
+
+    #-------------------------------------------
+    # ROI frame
+    #-------------------------------------------
+    frame $f.fActive    -bg $Gui(backdrop) -relief sunken -bd 2
+    pack $f.fActive -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+    foreach frame "Mask" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
+        $f.f$frame config -relief groove -bd 3
+    }
+
+    #-------------------------------------------
+    # ROI->Active frame
+    #-------------------------------------------
+    set f $fROI.fActive
+
+    # menu to select active DTMRI
+    DevAddSelectButton  Tensor $f Active "Active DTMRI:" Pack \
+    "Active DTMRI" 20 BLA 
+    
+    # Append these menus and buttons to lists 
+    # that get refreshed during UpdateMRML
+    lappend Tensor(mbActiveList) $f.mbActive
+    lappend Tensor(mActiveList) $f.mbActive.m
+
+    #-------------------------------------------
+    # ROI->Mask frame
+    #-------------------------------------------
+    set f $fROI.fMask
+
+    foreach frame "Label Mode Volume ChooseLabel" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
+    }
+
+    #-------------------------------------------
+    # ROI->Mask->Label frame
+    #-------------------------------------------
+    set f $fROI.fMask.fLabel
+
+    DevAddLabel $f.l "DTMRI Mask Settings"
+    pack $f.l -side top -padx $Gui(pad) -pady $Gui(pad)
+
+    #-------------------------------------------
+    # ROI->Mask->Mode frame
+    #-------------------------------------------
+    set f $fROI.fMask.fMode
+
+    DevAddLabel $f.l "Mask:"
+    pack $f.l -side left -padx $Gui(pad) -pady 0
+
+    foreach vis $DTMRI(mode,maskList) tip $DTMRI(mode,maskList,tooltips) {
+        eval {radiobutton $f.rMode$vis \
+          -text "$vis" -value "$vis" \
+          -variable DTMRI(mode,mask) \
+          -command {DTMRIUpdate} \
+          -indicatoron 0} $Gui(WCA)
+        pack $f.rMode$vis -side left -padx 0 -pady 0
+        TooltipAdd  $f.rMode$vis $tip
+    }    
+
+    #-------------------------------------------
+    # ROI->Mask->Volume frame
+    #-------------------------------------------
+    set f $fROI.fMask.fVolume
+
+    # menu to select a volume: will set Volume(activeID)
+    set name MaskLabelmap
+    DevAddSelectButton  Volume $f $name "Mask Labelmap:" Grid \
+        "Select a labelmap volume to use as a mask.\nDTMRIs will be displayed only where the label matches the label you select below." \
+        13
+    
+    # Append these menus and buttons to lists 
+    # that get refreshed during UpdateMRML
+    lappend Volume(mbActiveList) $f.mb$name
+    lappend Volume(mActiveList) $f.mb$name.m
+
+    #-------------------------------------------
+    # ROI->Mask->ChooseLabel frame
+    #-------------------------------------------
+    set f $fROI.fMask.fChooseLabel
+
+    # mask label
+    eval {button $f.bOutput -text "Label:" \
+          -command "ShowLabels DTMRIUpdateMaskLabel"} $Gui(WBA)
+    eval {entry $f.eOutput -width 6 \
+          -textvariable Label(label)} $Gui(WEA)
+    bind $f.eOutput <Return>   "DTMRIUpdateMaskLabel"
+    bind $f.eOutput <FocusOut> "DTMRIUpdateMaskLabel"
+    eval {entry $f.eName -width 14 \
+          -textvariable Label(name)} $Gui(WEA) \
+            {-bg $Gui(activeWorkspace) -state disabled}
+    grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
+    grid $f.eOutput $f.eName -sticky w
+    
+    lappend Label(colorWidgetList) $f.eName
+
+    TooltipAdd  $f.bOutput $DTMRI(mode,maskLabel,tooltip)
+    TooltipAdd  $f.eOutput $DTMRI(mode,maskLabel,tooltip)
+    TooltipAdd  $f.eName $DTMRI(mode,maskLabel,tooltip)
+
+}
+
+
 #-------------------------------------------------------------------------------
 # .PROC DTMRIUpdateMaskLabel
 # If we are masking the glyphs to display a subvolume and
@@ -64,6 +191,7 @@ proc DTMRIMaskInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIUpdateMaskLabel {} {
+
     global Label
 
     LabelsFindLabel

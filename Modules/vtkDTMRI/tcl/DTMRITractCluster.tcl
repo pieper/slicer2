@@ -80,7 +80,7 @@ proc DTMRITractClusterInit {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc DTMRITractClusterBuildClusterFrame {} {
+proc DTMRITractClusterBuildGUI {} {
 
     global Gui Module Volume Tensor DTMRI Matrix
     

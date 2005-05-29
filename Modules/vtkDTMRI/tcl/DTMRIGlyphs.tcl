@@ -132,6 +132,253 @@ proc DTMRIGlyphsInit {} {
 
 }
 
+
+proc DTMRIGlyphsBuildGUI {} {
+
+    global DTMRI Tensor Module Gui
+
+    #-------------------------------------------
+    # Glyph frame
+    #-------------------------------------------
+    set fGlyph $Module(DTMRI,fGlyph)
+    set f $fGlyph
+
+    frame $f.fActive    -bg $Gui(backdrop) -relief sunken -bd 2
+    pack $f.fActive -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+    frame $f.fReformat  -bg $Gui(activeWorkspace)
+    pack $f.fReformat -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+    frame $f.fGlyphsMode  -bg $Gui(activeWorkspace)
+    pack $f.fGlyphsMode -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+    frame $f.fVisMethods  -bg $Gui(activeWorkspace) -relief sunken -bd 2
+    pack $f.fVisMethods -side top -padx $Gui(pad) -pady $Gui(pad) -fill both -expand true
+
+    #-------------------------------------------
+    # Glyph->Active frame
+    #-------------------------------------------
+    set f $fGlyph.fActive
+
+    # menu to select active DTMRI
+    DevAddSelectButton  Tensor $f Active "Active DTMRI:" Pack \
+    "Active DTMRI" 20 BLA 
+    
+    # Append these menus and buttons to lists 
+    # that get refreshed during UpdateMRML
+    lappend Tensor(mbActiveList) $f.mbActive
+    lappend Tensor(mActiveList) $f.mbActive.m
+
+
+    #-------------------------------------------
+    # Display->Notebook -> Glyph frame -> Reformat
+    #-------------------------------------------
+    set f $fGlyph.fReformat
+
+    DevAddLabel $f.l "Glyphs on Slice:"
+    pack $f.l -side left -padx $Gui(pad) -pady 0
+
+    set colors [list  $Gui(slice0) $Gui(slice1) $Gui(slice2) $Gui(activeWorkspace) $Gui(activeWorkspace)]
+    set widths [list  2 2 2 4 4]
+
+    foreach vis $DTMRI(mode,reformatTypeList) \
+    tip $DTMRI(mode,reformatTypeList,tooltips) \
+    text $DTMRI(mode,reformatTypeList,text) \
+    color $colors \
+    width $widths {
+        eval {radiobutton $f.rMode$vis \
+              -text "$text" -value "$vis" \
+              -variable DTMRI(mode,reformatType) \
+              -command {DTMRIUpdateReformatType} \
+              -indicatoron 0 } $Gui(WCA) \
+        {-bg $color -selectcolor $color -width $width}
+        pack $f.rMode$vis -side left -padx 0 -pady 0
+        TooltipAdd  $f.rMode$vis $tip
+    }
+    
+    #-------------------------------------------
+    # Display -> Notebook -> Glyph frame ->->GlyphsMode frame
+    #-------------------------------------------
+    set f $fGlyph.fGlyphsMode
+
+    eval {label $f.lVis -text "Display Glyphs: "} $Gui(WLA)
+    pack $f.lVis -side left -pady $Gui(pad) -padx $Gui(pad)
+    # Add menu items
+    foreach vis $DTMRI(mode,visualizationType,glyphsOnList) \
+    tip $DTMRI(mode,visualizationType,glyphsOnList,tooltip) {
+        eval {radiobutton $f.r$vis \
+              -text $vis \
+              -command "DTMRIUpdate" \
+              -value $vis \
+              -variable DTMRI(mode,visualizationType,glyphsOn) \
+              -indicatoron 0} $Gui(WCA)
+
+        pack $f.r$vis -side left -fill x
+        TooltipAdd $f.r$vis $tip
+    }
+
+    #-------------------------------------------
+    # Display-> Notebook ->Glyph frame->VisMethods->VisParams->Glyphs frame
+    #-------------------------------------------
+    frame $fGlyph.fVisMethods.fGlyphs -bg $Gui(activeWorkspace)
+    pack $fGlyph.fVisMethods.fGlyphs -side top -padx 0 -pady $Gui(pad) -fill x
+
+    set f $fGlyph.fVisMethods.fGlyphs
+
+    foreach frame "Resolution GlyphType Lines Colors ScalarBar GlyphScalarRange Slider" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
+    }
+
+    #-------------------------------------------
+    # Display-> Notebook ->Glyph frame->VisMethods->VisParams->Glyphs->Resolution frame
+    #-------------------------------------------
+    set f $fGlyph.fVisMethods.fGlyphs.fResolution
+    
+    eval {label $f.l -text "Density(H<->L):"\
+          -width 12 -justify right } $Gui(WLA)
+
+    eval {scale $f.s -from $DTMRI(mode,glyphResolution,min) \
+                          -to $DTMRI(mode,glyphResolution,max)    \
+          -variable  DTMRI(mode,glyphResolution)\
+      -command DTMRIUpdateGlyphResolution \
+          -orient vertical     \
+          -resolution 1      \
+          } $Gui(WSA)
+
+      pack $f.l $f.s -side left -padx $Gui(pad) -pady 0
+
+
+    #-------------------------------------------
+    # Display-> Notebook ->Glyph frame->VisMethods->VisParams->Glyphs->GlyphType frame
+    #-------------------------------------------
+    set f $fGlyph.fVisMethods.fGlyphs.fGlyphType
+
+    DevAddLabel $f.l "Glyph Type:"
+    pack $f.l -side left -padx $Gui(pad) -pady 1
+
+    eval {menubutton $f.mbVis -text $DTMRI(mode,glyphType) \
+          -relief raised -bd 2 -width 12 \
+          -menu $f.mbVis.m} $Gui(WMBA)
+    eval {menu $f.mbVis.m} $Gui(WMA)
+    pack  $f.mbVis -side left -pady 1 -padx $Gui(pad)
+    # Add menu items
+    foreach vis $DTMRI(mode,glyphTypeList) {
+        $f.mbVis.m add command -label $vis \
+        -command "$f.mbVis config -text $vis; set DTMRI(mode,glyphType) $vis; DTMRIUpdate"
+    }
+    # save menubutton for config
+    set DTMRI(gui,mbGlyphType) $f.mbVis
+    # Add a tooltip
+    #TooltipAdd $f.mbVis $DTMRI(mode,glyphColorList,tooltip)
+
+    #-------------------------------------------
+    # Display-> Notebook ->Glyph frame->VisMethods->VisParams->Glyphs->Lines frame
+    #-------------------------------------------
+
+    set f $fGlyph.fVisMethods.fGlyphs.fLines
+
+    DevAddLabel $f.l "Line Type:"
+    pack $f.l -side left -padx $Gui(pad) -pady 1
+
+    foreach vis $DTMRI(mode,glyphEigenvectorList) tip $DTMRI(mode,glyphEigenvectorList,tooltips) {
+        eval {radiobutton $f.rMode$vis \
+          -text "$vis" -value "$vis" \
+          -variable DTMRI(mode,glyphEigenvector) \
+          -command DTMRIUpdateGlyphEigenvector \
+          -indicatoron 0} $Gui(WCA)
+        pack $f.rMode$vis -side left -padx 0 -pady 1
+        TooltipAdd $f.rMode$vis $tip
+    }
+
+    #-------------------------------------------
+    # Display-> Notebook ->Glyph frame->VisMethods->VisParams->Glyphs->Colors frame
+    #-------------------------------------------
+    set f $fGlyph.fVisMethods.fGlyphs.fColors
+
+    eval {label $f.lVis -text "Color by: "} $Gui(WLA)
+    eval {menubutton $f.mbVis -text $DTMRI(mode,glyphColor) \
+          -relief raised -bd 2 -width 12 \
+          -menu $f.mbVis.m} $Gui(WMBA)
+    eval {menu $f.mbVis.m} $Gui(WMA)
+    pack $f.lVis $f.mbVis -side left -pady 1 -padx $Gui(pad)
+    # Add menu items
+    foreach vis $DTMRI(mode,glyphColorList) {
+        $f.mbVis.m add command -label $vis \
+        -command "set DTMRI(mode,glyphColor) $vis; DTMRIUpdateGlyphColor"
+    }
+    # save menubutton for config
+    set DTMRI(gui,mbGlyphColor) $f.mbVis
+    # Add a tooltip
+    TooltipAdd $f.mbVis $DTMRI(mode,glyphColorList,tooltip)
+
+    #-------------------------------------------
+    # Display-> Notebook ->Glyph frame->VisMethods->VisParams->Glyphs->ScalarBar frame
+    #-------------------------------------------
+    set f $fGlyph.fVisMethods.fGlyphs.fScalarBar
+
+    DevAddLabel $f.l "Scalar Bar:"
+    pack $f.l -side left -padx $Gui(pad) -pady 1
+
+    foreach vis $DTMRI(mode,scalarBarList) tip $DTMRI(mode,scalarBarList,tooltips) {
+        eval {radiobutton $f.rMode$vis \
+          -text "$vis" -value "$vis" \
+          -variable DTMRI(mode,scalarBar) \
+          -command {DTMRIUpdateScalarBar} \
+          -indicatoron 0} $Gui(WCA)
+        pack $f.rMode$vis -side left -padx 0 -pady 1
+        TooltipAdd  $f.rMode$vis $tip
+    }
+
+    #-------------------------------------------
+    # Display-> Notebook ->Glyph frame->VisMethods->VisParams->Glyphs->GlyphScalarRange frame
+    #-------------------------------------------
+    set f $fGlyph.fVisMethods.fGlyphs.fGlyphScalarRange
+
+    DevAddLabel $f.l "Scalar Range:"
+    pack $f.l -side left -padx $Gui(pad) -pady 1
+
+    foreach vis $DTMRI(mode,glyphScalarRangeList) tip $DTMRI(mode,glyphScalarRangeList,tooltips) {
+        eval {radiobutton $f.rMode$vis \
+          -text "$vis" -value "$vis" \
+          -variable DTMRI(mode,glyphScalarRange) \
+          -command {DTMRIUpdateGlyphScalarRange; Render3D} \
+          -indicatoron 0} $Gui(WCA)
+        pack $f.rMode$vis -side left -padx 0 -pady 1
+        TooltipAdd  $f.rMode$vis $tip
+    }
+
+    #-------------------------------------------
+    # Display-> Notebook ->Glyph frame->VisMethods->VisParams->Glyphs->Slider frame
+    #-------------------------------------------
+    foreach slider "Low Hi" text "Lo Hi" {
+
+        set f $fGlyph.fVisMethods.fGlyphs.fSlider
+
+        frame $f.f$slider -bg $Gui(activeWorkspace)
+        pack $f.f$slider -side top -padx $Gui(pad) -pady 1
+        set f $f.f$slider
+
+        eval {label $f.l$slider -text "$text:"} $Gui(WLA)
+        eval {entry $f.e$slider -width 10 \
+          -textvariable DTMRI(mode,glyphScalarRange,[Uncap $slider])} \
+        $Gui(WEA)
+        eval {scale $f.s$slider -from $DTMRI(mode,glyphScalarRange,min) \
+          -to $DTMRI(mode,glyphScalarRange,max) \
+          -length 90 \
+          -variable DTMRI(mode,glyphScalarRange,[Uncap $slider]) \
+          -resolution 0.1 \
+          -command {DTMRIUpdateGlyphScalarRange; Render3D}} \
+        $Gui(WSA) {-sliderlength 15}
+        pack $f.l$slider $f.e$slider $f.s$slider -side left  -padx $Gui(pad)
+        set DTMRI(gui,slider,$slider) $f.s$slider
+        bind $f.e${slider} <Return>   \
+        "DTMRIUpdateGlyphScalarRange ${slider}; Render3D"
+
+    }
+}
+
+
 #-------------------------------------------------------------------------------
 # .PROC DTMRIUpdateReformatType
 #  Reformat the requested slice (from GUI input) or all.  Then call

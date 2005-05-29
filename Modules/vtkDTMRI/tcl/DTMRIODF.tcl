@@ -95,7 +95,7 @@ proc DTMRIBuildVTKODF {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc DTMRIBuildODFFrame {} {
+proc DTMRIODFBuildGUI {} {
 
   global Gui Module Volume DTMRI
 

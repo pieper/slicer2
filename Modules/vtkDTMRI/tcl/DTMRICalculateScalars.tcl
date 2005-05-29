@@ -75,6 +75,109 @@ proc DTMRICalculateScalarsInit {} {
 }
 
 
+proc DTMRICalculateScalarsBuildGUI {} {
+
+    global DTMRI Tensor Module Gui
+
+    #-------------------------------------------
+    # Scalars frame
+    #-------------------------------------------
+    set fScalars $Module(DTMRI,fScalars)
+    set f $fScalars
+    
+    frame $f.fActive    -bg $Gui(backdrop) -relief sunken -bd 2
+    pack $f.fActive -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+    foreach frame "Top" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
+        $f.f$frame config -relief groove -bd 3
+    }
+
+    #-------------------------------------------
+    # Scalars->Active frame
+    #-------------------------------------------
+    set f $fScalars.fActive
+
+    # menu to select active DTMRI
+    DevAddSelectButton  Tensor $f Active "Active DTMRI:" Pack \
+    "Active DTMRI" 20 BLA 
+    
+    # Append these menus and buttons to lists 
+    # that get refreshed during UpdateMRML
+    lappend Tensor(mbActiveList) $f.mbActive
+    lappend Tensor(mActiveList) $f.mbActive.m
+    
+    #-------------------------------------------
+    # Scalars->Top frame
+    #-------------------------------------------
+    set f $fScalars.fTop
+    
+    foreach frame "ChooseOutput UseROI ScaleFactor Apply" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    }
+
+    #-------------------------------------------
+    # Scalars->Top->ChooseOutput frame
+    #-------------------------------------------
+    set f $fScalars.fTop.fChooseOutput
+
+    eval {label $f.lMath -text "Create Volume: "} $Gui(WLA)
+    eval {menubutton $f.mbMath -text $DTMRI(scalars,operation) \
+          -relief raised -bd 2 -width 20 \
+          -menu $f.mbMath.m} $Gui(WMBA)
+
+    eval {menu $f.mbMath.m} $Gui(WMA)
+    pack $f.lMath $f.mbMath -side left -pady $Gui(pad) -padx $Gui(pad)
+    # Add menu items
+    foreach math $DTMRI(scalars,operationList) {
+        $f.mbMath.m add command -label $math \
+        -command "DTMRISetOperation $math"
+    }
+    # save menubutton for config
+    set DTMRI(gui,mbMath) $f.mbMath
+    # Add a tooltip
+    TooltipAdd $f.mbMath $DTMRI(scalars,operationList,tooltip)
+
+    #-------------------------------------------
+    # Scalars->Top->UseROI frame
+    #-------------------------------------------
+    set f $fScalars.fTop.fUseROI
+
+    DevAddLabel $f.l "ROI:"
+    pack $f.l -side left -padx $Gui(pad) -pady 0
+
+    foreach vis $DTMRI(scalars,ROIList) tip $DTMRI(scalars,ROIList,tooltips) {
+        eval {radiobutton $f.rMode$vis \
+          -text "$vis" -value "$vis" \
+          -variable DTMRI(scalars,ROI) \
+          -command DTMRIUpdateMathParams \
+          -indicatoron 0} $Gui(WCA)
+        pack $f.rMode$vis -side left -padx 0 -pady 0
+        TooltipAdd  $f.rMode$vis $tip
+    }    
+
+    #-------------------------------------------
+    # Scalars->Top->ScaleFactor frame
+    #-------------------------------------------
+    set f $fScalars.fTop.fScaleFactor
+    DevAddLabel $f.l "Scale Factor:"
+    eval {entry $f.e -width 14 \
+          -textvariable DTMRI(scalars,scaleFactor)} $Gui(WEA)
+    TooltipAdd $f.e $DTMRI(scalars,scaleFactor,tooltip) 
+    pack $f.l $f.e -side left -padx $Gui(pad) -pady 0
+
+    #-------------------------------------------
+    # Scalars->Top->Apply frame
+    #-------------------------------------------
+    set f $fScalars.fTop.fApply
+
+    DevAddButton $f.bApply "Apply" "DTMRIDoMath"    
+    pack $f.bApply -side top -padx 0 -pady 0
+
+}
+
 
 ################################################################
 #  Procedures used to derive scalar volumes from DTMRI data

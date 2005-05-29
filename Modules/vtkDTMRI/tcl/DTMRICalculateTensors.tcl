@@ -139,6 +139,364 @@ proc DTMRICalculateTensorsInit {} {
 }
 
 
+proc DTMRICalculateTensorsBuildGUI {} {
+    
+    global DTMRI Module Gui Volume
+
+    #-------------------------------------------
+    # Convert frame
+    #-------------------------------------------
+    set fConvert $Module(DTMRI,fConvert)
+    set f $fConvert
+    
+    foreach frame "Convert ShowPattern Pattern" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
+    }
+
+    pack forget $f.fPattern
+    $f.fConvert configure  -relief groove -bd 3 
+
+
+    #-------------------------------------------
+    # Convert->Convert frame
+    #-------------------------------------------
+    set f $fConvert.fConvert
+
+    foreach frame "Title Select Pattern Repetitions Average Apply" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        $f.fTitle configure -bg $Gui(backdrop)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    }
+
+    #-------------------------------------------
+    # Convert->Convert->Title frame
+    #-------------------------------------------
+    set f $fConvert.fConvert.fTitle
+     
+    DevAddLabel $f.lWellcome "Convert Tensors"
+    $f.lWellcome configure -fg White -font {helvetica 10 bold}  -bg $Gui(backdrop) -bd 0 -relief groove
+    pack $f.lWellcome -side top -padx $Gui(pad) -pady $Gui(pad)
+   
+    DevAddLabel $f.lOption "This tab converts gradient data\n to diffusion tensor"
+    $f.lOption configure -fg White -font {helvetica 9 normal}  -bg $Gui(backdrop) -bd 0
+    pack $f.lOption -side top -padx $Gui(pad) -pady 2
+    
+
+    #-------------------------------------------
+    # Convert->Convert->Select frame
+    #-------------------------------------------
+    set f $fConvert.fConvert.fSelect
+    # Lauren test
+    # menu to select a volume: will set Volume(activeID)
+    DevAddSelectButton  Volume $f Active "Input Volume:" Pack \
+            "Input Volume to create DTMRIs from." 13 BLA
+    
+
+    # Append these menus and buttons to lists 
+    # that get refreshed during UpdateMRML
+    lappend Volume(mbActiveList) $f.mbActive
+    lappend Volume(mActiveList) $f.mbActive.m
+
+
+    #-------------------------------------------
+    # Convert->Convert->Pattern frame
+    #-------------------------------------------
+#nowworking
+    set f $fConvert.fConvert.fPattern
+
+    DevAddLabel $f.lLabel "Protocol:"
+    $f.lLabel configure -bg $Gui(backdrop) -fg white
+    eval {menubutton $f.mbPattern -text "None" -relief raised -bd 2 -menu $f.mbPattern.menu -width 15} $Gui(WMBA)
+    eval {menu $f.mbPattern.menu}  $Gui(WMA)
+    button $f.bProp -text Prop. -width 5 -font {helvetica 8} -bg $Gui(normalButton) -fg $Gui(textDark)  -activebackground $Gui(activeButton) -activeforeground $Gui(textDark)  -bd $Gui(borderWidth) -padx 0 -pady 0 -relief raised -command {
+        catch {DevInfoWindow $DTMRI($DTMRI(selectedpattern),tip)}
+        catch {puts $DTMRI($DTMRI(selectedpattern),tip)}
+        #DTMRIViewProps
+    }
+
+    pack $f.lLabel $f.bProp -side left -padx $Gui(pad) -pady $Gui(pad)
+    DTMRILoadPattern
+    TooltipAdd $f.lLabel "Choose a protocol to convert tensors.\n If desired does not exist, create one in the frame below."
+
+
+    #-------------------------------------------
+    # Convert->Convert->Repetitions frame
+    #-------------------------------------------
+    set f $fConvert.fConvert.fRepetitions
+    
+    DevAddLabel $f.l "Num. Repetitions:"
+    $f.l configure -bg $Gui(backdrop) -fg white
+    eval {entry $f.e -width 3 \
+          -textvariable DTMRI(convert,numberOfRepetitions)} \
+        $Gui(WEA)
+    eval {scale $f.s -from $DTMRI(convert,numberOfRepetitions,min) \
+                          -to $DTMRI(convert,numberOfRepetitions,max)    \
+          -variable  DTMRI(convert,numberOfRepetitions)\
+          -orient vertical     \
+          -resolution 1      \
+          } $Gui(WSA)
+      
+     pack $f.l $f.e $f.s -side left -padx $Gui(pad) -pady $Gui(pad)
+     
+    #-------------------------------------------
+    # Convert->Convert->Average frame
+    #-------------------------------------------
+    set f $fConvert.fConvert.fAverage
+    
+    DevAddLabel $f.l "Average Repetitions: "
+    pack $f.l -side left -pady $Gui(pad) -padx $Gui(pad)  
+    # Add menu items
+    foreach vis $DTMRI(convert,averageRepetitionsList) val $DTMRI(convert,averageRepetitionsValue) \
+            tip $DTMRI(convert,averageRepetitionsList,tooltips) {
+        eval {radiobutton $f.r$vis \
+              -text "$vis" \
+              -value $val \
+              -variable DTMRI(convert,averageRepetitions) \
+              -indicatoron 0} $Gui(WCA)
+        pack $f.r$vis -side left -padx 0 -pady 0
+        TooltipAdd  $f.r$vis $tip     
+    }
+              
+#    #-------------------------------------------
+#    # Convert->Convert->Apply frame
+#    #-------------------------------------------
+    set f $fConvert.fConvert.fApply
+    DevAddButton $f.bTest "Convert Volume" ConvertVolumeToTensors 20
+    pack $f.bTest -side top -padx 0 -pady $Gui(pad) -fill x -padx $Gui(pad)
+
+
+    #-------------------------------------------
+    # Convert->ShowPattern frame
+    #-------------------------------------------
+    set f $fConvert.fShowPattern
+    
+    DevAddLabel $f.lLabel "Create a new protocol if your data\n does not fit the predefined ones"
+
+    button $f.bShow -text "Create New Protocol" -bg $Gui(backdrop) -fg white -font {helvetica 9 bold} -command {
+        ShowPatternFrame 
+        after 250 DTMRIDisplayScrollBar DTMRI Convert}
+    TooltipAdd $f.bShow "Press this button to enter Create-Protocol Frame"
+    pack $f.lLabel $f.bShow -side top -pady 2 -fill x
+
+
+
+
+    #-------------------------------------------
+    # Convert->Pattern->Gradients Title frame
+    #-------------------------------------------
+
+#    set f $fConvert.fPattern
+#    frame $f.fTitle -bg $Gui(backdrop)
+#    pack $f.fTitle -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+#    set f $fConvert.fPattern.fTitle
+#    set f $Page.fTitle
+   
+#    DevAddLabel $f.lWellcome "Create New Protocol"
+#    $f.lWellcome configure -fg White -font {helvetica 10 bold}  -bg $Gui(backdrop) -bd 0 -relief groove
+#    pack $f.lWellcome -side top -padx $Gui(pad) -pady 0
+   
+
+
+    #-------------------------------------------
+    # Convert->Pattern frame (create tabs)
+    #-------------------------------------------
+    set f $fConvert.fPattern
+    DevAddLabel $f.lIni "Gradient Ordering scheme:"
+    pack $f.lIni -side top -pady 2
+
+    Notebook:create $f.fNotebook \
+                    -pages {{Slice Interleav.} {Volume Interleav.}} \
+                    -pad 2 \
+                    -bg $Gui(activeWorkspace) \
+                    -height 325 \
+                    -width 240
+    pack $f.fNotebook -fill both -expand 1
+
+    set f $fConvert.fPattern.fNotebook
+
+    set FrameCont [Notebook:frame $f {Slice Interleav.}] 
+    set FrameInter [Notebook:frame $f {Volume Interleav.}]
+
+    foreach Page "$FrameCont $FrameInter" {   
+
+        #-------------------------------------------
+        # Convert->Pattern frame
+        #-------------------------------------------
+    #    set f $fConvert.fPattern
+        set f $Page
+
+        foreach frame "Name Disposal GradientNum GradientImages NoGradientImages Gradients Parameter Create" {
+            frame $f.f$frame -bg $Gui(activeWorkspace)
+            pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+        }
+
+        $f configure  -relief sunken -bd 3 
+
+        #-------------------------------------------
+        # Convert->Pattern->Gradients Title frame
+        #-------------------------------------------
+
+    #    set f $fConvert.fPattern
+    #    frame $f.fTitle -bg $Gui(backdrop)
+    #    pack $f.fTitle -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+        set f $fConvert.fPattern.fTitle
+    #    set f $Page.fTitle
+       
+    #    DevAddLabel $f.lWellcome "Create New Protocol"
+    #    $f.lWellcome configure -fg White -font {helvetica 10 bold}  -bg $Gui(backdrop) -bd 0 -relief groove
+    #    pack $f.lWellcome -side top -padx $Gui(pad) -pady $Gui(pad)
+       
+
+        #-------------------------------------------
+        # Convert->Pattern->Gradients Name frame
+        #-------------------------------------------
+
+    #    set f $fConvert.fPattern.fName
+        set f $Page.fName
+
+        $f configure -relief raised -padx 2 -pady 2
+        DevAddLabel $f.lTitle "Protocol Name:"
+    #   $f.lTitle configure -relief sunken -background gray -bd 2
+        DevAddEntry DTMRI name,name $f.eName 15
+        pack $f.lTitle $f.eName -side left -padx $Gui(pad) -pady 4 -fill x
+
+
+     
+        #-------------------------------------------
+        # Convert->Pattern->Gradients Disposal frame
+        #-------------------------------------------
+
+    #    set f $fConvert.fPattern.fDisposal
+        set f $Page.fDisposal
+
+        $f configure -relief raised -padx 2 -pady 2
+        DevAddLabel $f.lTitle "Gradients/Baselines disposal in Volume:"
+        $f.lTitle configure -relief sunken -background gray -bd 2
+        pack $f.lTitle -side top -padx $Gui(pad) -pady 4 -fill x
+     
+        #-------------------------------------------
+        # Convert->Pattern->GradientNum frame
+        #-------------------------------------------
+    #    set f $fConvert.fPattern.fGradientNum
+        set f $Page.fGradientNum
+        
+        DevAddLabel $f.l "Number of Gradient Directions:"
+        eval {entry $f.eEntry \
+            -textvariable DTMRI(name,numberOfGradients) \
+            -width 5} $Gui(WEA)
+        pack $f.l $f.eEntry -side left -padx $Gui(pad) -pady 0 -fill x
+
+        #-------------------------------------------
+        # Convert->Pattern->GradientImages frame
+        #-------------------------------------------
+    #    set f $fConvert.fPattern.fGradientImages
+        set f $Page.fGradientImages
+
+        DevAddLabel $f.l "Gradient:"
+        eval {entry $f.eEntry1 \
+              -textvariable DTMRI(name,firstGradientImage) \
+              -width 5} $Gui(WEA)
+        eval {entry $f.eEntry2 \
+              -textvariable DTMRI(name,lastGradientImage) \
+              -width 5} $Gui(WEA)
+        pack $f.l $f.eEntry1 $f.eEntry2 -side left -padx $Gui(pad) -pady 0 -fill x
+        TooltipAdd $f.eEntry1 \
+            "First gradient (diffusion-weighted)\nimage number at first slice location"
+        TooltipAdd $f.eEntry2 \
+            "Last gradient (diffusion-weighted)\niimage number at first slice location"
+
+        #-------------------------------------------
+        # Convert->Pattern->NoGradientImages frame
+        #-------------------------------------------
+    #    set f $fConvert.fPattern.fNoGradientImages
+        set f $Page.fNoGradientImages
+
+
+        DevAddLabel $f.l "Baseline:"
+        eval {entry $f.eEntry1 \
+              -textvariable DTMRI(name,firstNoGradientImage) \
+              -width 5} $Gui(WEA)
+        eval {entry $f.eEntry2 \
+              -textvariable DTMRI(name,lastNoGradientImage) \
+              -width 5} $Gui(WEA)
+        pack $f.l $f.eEntry1 $f.eEntry2 -side left -padx $Gui(pad) -pady 0 -fill x
+        TooltipAdd $f.eEntry1 \
+            "First NO gradient (not diffusion-weighted)\nimage number at first slice location"
+        TooltipAdd $f.eEntry2 \
+            "Last NO gradient (not diffusion-weighted)\n image number at first slice location"
+
+
+        #-------------------------------------------
+        # Convert->Pattern->Gradients frame
+        #-------------------------------------------
+    #    set f $fConvert.fPattern.fGradients
+        set f $Page.fGradients
+
+
+        DevAddLabel $f.lLabel "Directions:"
+        frame $f.fEntry -bg $Gui(activeWorkspace)
+        eval {entry $f.fEntry.eEntry \
+            -textvariable DTMRI(name,gradients) \
+            -width 25 -xscrollcommand [list $f.fEntry.sx set]} $Gui(WEA)
+            scrollbar $f.fEntry.sx -orient horizontal -command [list $f.fEntry.eEntry xview] -bg $Gui(normalButton) -width 10 -troughcolor $Gui(normalButton) 
+        pack $f.fEntry.eEntry $f.fEntry.sx -side top -padx 0 -pady 0 -fill x
+        pack $f.lLabel $f.fEntry -side left -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor n
+        #pack $f.sx -side top -padx $Gui(pad) -pady 0 -fill x
+        TooltipAdd $f.fEntry.eEntry "List of diffusion gradient directions"
+
+        #-------------------------------------------
+        # Convert->Pattern->Parameters frame
+        #-------------------------------------------
+
+
+
+
+    # This frame is supposed to hold the entries for needed parameters in tensors conversion.
+
+    #    set f $fConvert.fPattern.fParameter
+        set f $Page.fParameter
+
+        $f configure -relief raised -padx 2 -pady 2
+        DevAddLabel $f.lTitle "Conversion Parameters:"
+        $f.lTitle configure -relief sunken -background gray -bd 2
+        pack $f.lTitle -side top -padx $Gui(pad) -pady 4 -fill x
+        DevAddLabel $f.lLeBihan "LeBihan factor (b):"
+        eval {entry $f.eEntrylebihan \
+            -textvariable DTMRI(name,lebihan)  \
+            -width 4} $Gui(WEA)
+        eval {scale $f.slebihan -from 100 -to 5000 -variable DTMRI(name,lebihan) -orient vertical -resolution 10 -width 10} $Gui(WSA)
+        pack $f.lLeBihan $f.eEntrylebihan $f.slebihan  -side left -padx $Gui(pad) -pady 0 -fill x -padx $Gui(pad)
+        TooltipAdd $f.eEntrylebihan "Diffusion weighting factor, introduced and defined by LeBihan et al.(1986)"
+      
+    }
+
+    #-------------------------------------------
+    # Convert->Pattern->FrameCont-->Create frame
+    #-------------------------------------------
+
+    set f $FrameCont.fCreate
+    DevAddButton $f.bCreate "Create New Protocol" DTMRICreatePatternSlice 8
+    pack $f.bCreate -side top -pady $Gui(pad) -fill x
+    TooltipAdd $f.bCreate "Click this button to create a new protocol after filling in parameters entries"
+    
+
+    #-------------------------------------------
+    # Convert->Pattern->FrameInter-->Create frame
+    #-------------------------------------------
+
+    set f $FrameInter.fCreate
+    DevAddButton $f.bCreate "Create New Protocol" DTMRICreatePatternVolume 8
+    pack $f.bCreate -side top -pady $Gui(pad) -fill x
+    TooltipAdd $f.bCreate "Click this button to create a new protocol after filling in parameters entries"
+
+
+
+}
+
+
 #-------------------------------------------------------------------------------
 # .PROC RunLSDIrecon
 # Convert volume data from scanner to a module readable data 
