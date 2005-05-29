@@ -93,7 +93,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.87 $} {$Date: 2005/05/29 21:08:43 $}]
+                  {$Revision: 1.88 $} {$Date: 2005/05/29 22:32:29 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -154,7 +154,7 @@ proc DTMRIInit {} {
 #-------------------------------------------------------------------------------
 # .PROC DTMRIUpdateMRML
 # Called automatically by the main slicer code whenever the 
-# transformations in the MRML tree change.
+# the MRML tree changes (transformation matrices, new volumes, etc.)
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -197,6 +197,8 @@ proc DTMRIUpdateMRML {} {
      }
      
      DevUpdateNodeSelectButton Volume DTMRI InputODF InputODF DevSelectNode
+
+    DevUpdateNodeSelectButton Volume DTMRI MaskLabelmap MaskLabelmap DevSelectNode 0 0 1 DTMRIUpdate
        
 }
 

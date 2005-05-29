@@ -322,6 +322,7 @@ proc DTMRIDoMath {{operation ""}} {
             set input [Tensor($t,data) GetOutput]
         }
         "Mask" {
+            DTMRI(vtk,mask,mask) Update
             set input [DTMRI(vtk,mask,mask) GetOutput]
         }
     }

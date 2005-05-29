@@ -42,7 +42,7 @@
 
 proc DTMRIMaskInit {} {
     
-    global DTMRI Volume
+    global DTMRI Volume Label
 
     # type of masking to use to reduce volume of DTMRIs
     set DTMRI(mode,mask) None
@@ -52,7 +52,8 @@ proc DTMRIMaskInit {} {
 
     # labelmap to use as mask
     set DTMRI(MaskLabelmap) $Volume(idNone)
-
+    # label value indicating mask voxels
+    set DTMRI(maskLabel) $Label(label)
 
 }
 
@@ -152,17 +153,13 @@ proc DTMRIMaskBuildGUI {} {
     #-------------------------------------------
     set f $fROI.fMask.fVolume
 
-    # menu to select a volume: will set Volume(activeID)
+    # menu to select a volume: will set DTMRI(MaskLabelmap)
+    # works with DevUpdateNodeSelectButton in UpdateMRML
     set name MaskLabelmap
-    DevAddSelectButton  Volume $f $name "Mask Labelmap:" Grid \
+    DevAddSelectButton  DTMRI $f $name "Mask Labelmap:" Pack \
         "Select a labelmap volume to use as a mask.\nDTMRIs will be displayed only where the label matches the label you select below." \
         13
     
-    # Append these menus and buttons to lists 
-    # that get refreshed during UpdateMRML
-    lappend Volume(mbActiveList) $f.mb$name
-    lappend Volume(mActiveList) $f.mb$name.m
-
     #-------------------------------------------
     # ROI->Mask->ChooseLabel frame
     #-------------------------------------------
