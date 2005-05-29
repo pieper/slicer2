@@ -93,7 +93,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.84 $} {$Date: 2005/05/29 05:33:48 $}]
+                  {$Revision: 1.85 $} {$Date: 2005/05/29 19:48:44 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -287,7 +287,6 @@ proc DTMRIBuildGUI {} {
         set name "DTMRI${mod}BuildGUI"
         # If the Build GUI procedure exists, call it.
         if {[info proc $name] == $name} {
-            puts "Calling $name"
             $name
         }
     }
