@@ -79,6 +79,8 @@ proc TensorInit {} {
     set Tensor(idList) ""
     # List of the data objects to delete next time we update mrml
     set Tensor(idListDelete) ""
+    # Initialize menus to None
+    DTMRISetActive ""
 
     # Append widgets to list that gets refreshed during UpdateMRML
     set Tensor(mbActiveList) ""
@@ -165,7 +167,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.91 $} {$Date: 2005/05/30 01:06:45 $}]
+                  {$Revision: 1.92 $} {$Date: 2005/05/30 19:38:05 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
