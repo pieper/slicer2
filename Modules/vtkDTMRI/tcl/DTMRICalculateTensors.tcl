@@ -163,7 +163,7 @@ proc DTMRICalculateTensorsBuildGUI {} {
     #-------------------------------------------
     # Convert frame
     #-------------------------------------------
-    set fConvert $Module(DTMRI,fConvert)
+    set fConvert $Module(DTMRI,fConv)
     set f $fConvert
     
     foreach frame "Convert ShowPattern Pattern" {
@@ -579,7 +579,7 @@ proc RunLSDIrecon {} {
     
     global DTMRI Volume Mrml Module Gui
 
-    set fConvert $Module(DTMRI,fConvert)
+    set fConvert $Module(DTMRI,fConv)
     set f $fConvert
 
     if { $DTMRI(convert,show) == 1} {
@@ -848,23 +848,23 @@ proc DTMRILoadPattern {} {
         }
     }
 
-    destroy $Module(DTMRI,fConvert).fConvert.fPattern.mbPattern.menu
-    eval {menu $Module(DTMRI,fConvert).fConvert.fPattern.mbPattern.menu}  $Gui(WMA)
+    destroy $Module(DTMRI,fConv).fConvert.fPattern.mbPattern.menu
+    eval {menu $Module(DTMRI,fConv).fConvert.fPattern.mbPattern.menu}  $Gui(WMA)
 
     # load existing patterns in the menu of the menubutton
     foreach z $DTMRI(patternnames) {
         set DTMRI(patt) $z
-        pack forget $Module(DTMRI,fConvert).fConvert.fPattern.mbPattern      
-        $Module(DTMRI,fConvert).fConvert.fPattern.mbPattern.menu add command -label $z -command "
+        pack forget $Module(DTMRI,fConv).fConvert.fPattern.mbPattern      
+        $Module(DTMRI,fConv).fConvert.fPattern.mbPattern.menu add command -label $z -command "
         set DTMRI(selectedpattern) $DTMRI(patt)
-        $Module(DTMRI,fConvert).fConvert.fPattern.mbPattern config -text $DTMRI(patt) 
+        $Module(DTMRI,fConv).fConvert.fPattern.mbPattern config -text $DTMRI(patt) 
         set DTMRI($DTMRI(patt),tip) {Selected Protocol:\n $DTMRI(patt) \n Number of gradients:\n [lindex $DTMRI($DTMRI(patt),parameters) 0] \n First Gradient in Slice:\n [lindex $DTMRI($DTMRI(patt),parameters) 1] \n Last Gradient in Slice:\n [lindex $DTMRI($DTMRI(patt),parameters) 2] \n Baselines:\n from [lindex $DTMRI($DTMRI(patt),parameters) 3] to [lindex $DTMRI($DTMRI(patt),parameters) 4] \n B-value:\n [lindex $DTMRI($DTMRI(patt),parameters) 5] \n Gradients Directions:\n [lindex $DTMRI($DTMRI(patt),parameters) 6] \n The gradient order is:\n [lindex $DTMRI($DTMRI(patt),parameters) 7] interleaved}
      
         "
 
     }  
 
-    pack  $Module(DTMRI,fConvert).fConvert.fPattern.mbPattern -side left -padx $Gui(pad) -pady $Gui(pad) -after $Module(DTMRI,fConvert).fConvert.fPattern.lLabel
+    pack  $Module(DTMRI,fConv).fConvert.fPattern.mbPattern -side left -padx $Gui(pad) -pady $Gui(pad) -after $Module(DTMRI,fConv).fConvert.fPattern.lLabel
 }
 
  
@@ -881,7 +881,7 @@ proc DTMRILoadPattern {} {
 #after 1000
 #puts "Reading Module"
 
-#catch {TooltipAdd $Module(DTMRI,fConvert).fConvert.fPattern.mbPattern $DTMRI($DTMRI(selectedpattern),tip)}
+#catch {TooltipAdd $Module(DTMRI,fConv).fConvert.fPattern.mbPattern $DTMRI($DTMRI(selectedpattern),tip)}
 
 #puts $DTMRI($DTMRI(selectedpattern),tip)
 

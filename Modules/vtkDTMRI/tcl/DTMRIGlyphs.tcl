@@ -155,7 +155,7 @@ proc DTMRIGlyphsBuildGUI {} {
     #-------------------------------------------
     # Glyph frame
     #-------------------------------------------
-    set fGlyph $Module(DTMRI,fGlyphs)
+    set fGlyph $Module(DTMRI,fGlyph)
     set f $fGlyph
 
     frame $f.fActive    -bg $Gui(backdrop) -relief sunken -bd 2
