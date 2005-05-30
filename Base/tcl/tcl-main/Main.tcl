@@ -460,7 +460,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.120 $} {$Date: 2005/04/15 16:46:32 $}]
+        {$Revision: 1.121 $} {$Date: 2005/05/30 19:34:37 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -1069,8 +1069,6 @@ proc MainUpdateMRML {} {
     MainColorsUpdateMRML
     if {$verbose == 1} {puts "MRML: MainVolumes"}
     MainVolumesUpdateMRML
-    if {$verbose == 1} {puts "MRML: MainVolumes"}
-    MainTensorUpdateMRML
     if {$verbose == 1} {puts "MRML: MainModels"}
     MainModelsUpdateMRML
     if {$verbose == 1} {puts "MRML: MainAlignments"}
@@ -1184,7 +1182,7 @@ proc MainRemoveModelActor { m } {
 #-------------------------------------------------------------------------------
 proc MainSetup { {sceneNum "default"}} {
     global Module Gui Volume Slice View Model Color Matrix Options Preset
-        global TetraMesh Tensor
+        global TetraMesh 
 
     # Set current values to preset 0 (user preferences)
     # Change: preset 0 is over written by opening a mrml file, reset to system default if no scene is passed in
@@ -1225,12 +1223,6 @@ proc MainSetup { {sceneNum "default"}} {
     set m [lindex $Model(idList) 0]
     if {$m != ""} {    
         MainModelsSetActive $m
-    }
-
-    # Active Tensor
-    set m [lindex $Tensor(idList) 0]
-    if {$m != ""} {    
-        MainTensorSetActive Tensor $m
     }
 
     # Active TetraMesh
