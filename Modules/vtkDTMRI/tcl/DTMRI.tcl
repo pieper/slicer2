@@ -36,6 +36,8 @@
 #===============================================================================
 # FILE:        DTMRI.tcl
 # PROCEDURES:  
+#   TensorInit
+#   TensorCreateNew t
 #   DTMRIInit
 #   DTMRIUpdateMRML
 #   DTMRIEnter
@@ -57,6 +59,12 @@
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC TensorInit
+# Sets up global array "Tensor" which holds IDs of tensor volumes.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc TensorInit {} {
 
     global Tensor
@@ -78,6 +86,13 @@ proc TensorInit {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC TensorCreateNew
+# Contains some code that is used when creating a new tensor volume.
+# .ARGS
+# int t ID of the volume
+# .END
+#-------------------------------------------------------------------------------
 proc TensorCreateNew {t} {
     
     global Tensor
@@ -150,7 +165,7 @@ proc DTMRIInit {} {
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.90 $} {$Date: 2005/05/30 00:50:51 $}]
+                  {$Revision: 1.91 $} {$Date: 2005/05/30 01:06:45 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -1260,9 +1275,7 @@ proc DTMRICalculateIJKtoRASRotationMatrix {transform t} {
 #-------------------------------------------------------------------------------
 # .PROC DTMRISetActive
 # Set the active tensor on the menus, and make it input to the 
-# tractography pipeline. (The glyph pipeline input is set up when 
-# the glyph button is pressed, in the procedure DTMRIUpdate. It could
-# be faster to set it up here also.)
+# glyph and tractography pipelines. 
 # .ARGS
 # int n ID number of the DTMRI volume that will become active
 # .END
