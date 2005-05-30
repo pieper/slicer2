@@ -57,6 +57,58 @@
 
 
 
+proc TensorInit {} {
+
+    global Tensor
+
+    # ID indicating no data object selected
+    set Tensor(idNone) -1
+    # ID indicating currently selected data object
+    set Tensor(activeID) ""
+    # The ID number of the next object we add
+    set Tensor(nextID) 0
+    # List of all the data objects in the slicer currently
+    set Tensor(idList) ""
+    # List of the data objects to delete next time we update mrml
+    set Tensor(idListDelete) ""
+
+    # Append widgets to list that gets refreshed during UpdateMRML
+    set Tensor(mbActiveList) ""
+    set Tensor(mActiveList) ""
+}
+
+
+proc TensorCreateNew {t} {
+    
+    global Tensor
+
+    set data "Tensor($t,data)"
+
+    # See if this data object already exists
+    #--------------------------------------------------------
+    if {[info command $data] != ""} {
+        puts "Tensor $d data exists"
+        return 0
+    }
+
+    # Create vtkMrmlData object 
+    #--------------------------------------------------------
+    vtkMrmlDataVolume $data
+
+    # Connect data object with the MRML node
+    #--------------------------------------------------------
+    $data SetMrmlNode Tensor($t,node)
+
+    # Progress methods
+    #--------------------------------------------------------
+    $data AddObserver StartEvent       MainStartProgress
+    $data AddObserver ProgressEvent   "MainShowProgress $data"
+    $data AddObserver EndEvent         MainEndProgress
+
+    
+}
+
+
 #-------------------------------------------------------------------------------
 # .PROC DTMRIInit
 #  The "Init" procedure is called automatically by the slicer.  
@@ -70,7 +122,9 @@
 proc DTMRIInit {} {
     global DTMRI Module Volume env
     
-    set m DTMRI
+    # Initialize the Tensor array for holding info about tensor volumes
+    #------------------------------------
+    TensorInit
 
     # Source all appropriate tcl files here. 
     #------------------------------------
@@ -89,13 +143,14 @@ proc DTMRIInit {} {
      
     # Module Summary Info
     #------------------------------------
+    set m DTMRI
     set Module($m,overview) "Diffusion Tensor MRI visualization and more..."
     set Module($m,author) "Lauren O'Donnell"
     set Module($m,category) "Visualisation"
 
     # version info
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.89 $} {$Date: 2005/05/29 22:46:05 $}]
+                  {$Revision: 1.90 $} {$Date: 2005/05/30 00:50:51 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -1212,17 +1267,39 @@ proc DTMRICalculateIJKtoRASRotationMatrix {transform t} {
 # int n ID number of the DTMRI volume that will become active
 # .END
 #-------------------------------------------------------------------------------
-proc DTMRISetActive {n} {
+proc DTMRISetActive {t} {
     global Tensor DTMRI
 
-    # Call the procedure that puts this tensor on the menus
-    MainDataSetActive Tensor $n
+    # Update ID number of active object
+    #--------------------------------------------------------
+    set Tensor(activeID) $t
+
+    # Decide which button text to use
+    #--------------------------------------------------------
+    if {$t == ""} {
+        # Menu button text reads "None"
+        set mbText "None"
+    } else {
+        # Get current MRML node
+        set node Tensor($t,node)
+        # Menu button text shows active object's name
+        set mbText [$node GetName]
+    }
+
+    # Change menu button text
+    #--------------------------------------------------------
+    foreach mb $Tensor(mbActiveList) {
+        $mb config -text $mbText
+    }
+
+    # Exit here if the ID was ""
+    #--------------------------------------------------------
+    if {$t == ""} {
+        return
+    }
 
     # Make sure this tensor is the input to the glyph pipeline
     DTMRIUpdate
-
-    # get the active ID (index into tensor list)
-    set t $Tensor(activeID)
 
     # set up the tractography pipeline with both data and location
     # information from the active tensor dataset

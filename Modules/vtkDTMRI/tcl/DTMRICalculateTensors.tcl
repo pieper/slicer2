@@ -1480,7 +1480,7 @@ proc ConvertVolumeToTensors {} {
     $newvol ComputeRasToIjkFromScanOrder $order
     
     puts "SPACING [$newvol GetSpacing] DIMS [$newvol GetDimensions] MAT [$newvol GetRasToIjkMatrix]"
-    MainDataCreate Tensor $n Volume
+    TensorCreateNew $n 
     
     # Set the slicer object's image data to what we created
     DTMRI Update

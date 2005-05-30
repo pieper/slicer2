@@ -903,7 +903,8 @@ proc DTMRIRegPrepareResultVolume {}  {
     $newvol SetName $name
     set t2 [$newvol GetID]
     
-    MainDataCreate Tensor $t2 Volume
+    #MainDataCreate Tensor $t2 Volume
+    TensorCreateNew $t2 
     #Tensor($t2,data) SetImageData [Tensor($t1,data) GetOutput]
         
         #set t2 [DevCreateNewCopiedVolume $t1 ""  "ResTensor_$DTMRI(reg,CountNewResults)"]
@@ -915,7 +916,8 @@ proc DTMRIRegPrepareResultVolume {}  {
     
     incr DTMRI(reg,CountNewResults)
 
-    MainDataSetActive Tensor $t2
+    #MainDataSetActive Tensor $t2
+    DTMRISetActive $t2
     
     } else {
         # Are We Overwriting a volume?
@@ -1631,7 +1633,8 @@ proc DTMRIRegRun {} {
     TargetScalar Delete
     Resampled Delete
   }
-  MainDataSetActive Tensor $DTMRI(ResultTensor)
+  #MainDataSetActive Tensor $DTMRI(ResultTensor)
+  DTMRISetActive $DTMRI(ResultTensor)
   
   MainUpdateMRML
 
