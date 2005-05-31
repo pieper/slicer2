@@ -5,9 +5,8 @@ vtkITKVersorMattesMiVersorRegistrationFilter::vtkITKVersorMattesMiVersorRegistra
 {
   m_ITKFilter = itk::itkVersorMattesMiVersorRegistrationFilter::New();
   LinkITKProgressToVTKProgress(m_ITKFilter);
-  this->SetNumberOfIterations (100);
   this->SetShrinkFactors(1,1,1);
-  this->SetTranslateScale(320);
+  this->SetTranslateScale(0.001);
 }
 
 void vtkITKVersorMattesMiVersorRegistrationFilter::CreateRegistrationPipeline()
@@ -18,7 +17,7 @@ void vtkITKVersorMattesMiVersorRegistrationFilter::CreateRegistrationPipeline()
   m_ITKFilter->SetInput(itkImporterFixed->GetOutput());
   m_ITKFilter->SetInput(1, itkImporterMoving->GetOutput());
 
-  vtkITKTransformRegistrationCommand::Pointer observer = vtkITKTransformRegistrationCommand::New();
+  vtkITKVersorMattesMiVersorRegistrationCommand::Pointer observer = vtkITKVersorMattesMiVersorRegistrationCommand::New();
   observer->SetRegistrationFilter(this);
   m_ITKFilter->AddIterationObserver(observer );
 }
@@ -28,7 +27,7 @@ vtkITKVersorMattesMiVersorRegistrationFilter::UpdateRegistrationParameters()
 {
   itk::itkVersorMattesMiVersorRegistrationFilter* filter = static_cast<itk::itkVersorMattesMiVersorRegistrationFilter *> (m_ITKFilter);
   UnsignedIntArray numberOfIterations = UnsignedIntArray(1);
-  numberOfIterations.Fill(this->GetNumberOfIterations());
+  numberOfIterations.Fill(this->GetNumIterations());
   filter->SetNumberOfIterations(numberOfIterations);
   filter->SetTranslationScale(this->GetTranslateScale());
   filter->SetShrinkFactors(this->ShrinkFactors);
@@ -44,13 +43,45 @@ vtkITKRegistrationFilter::OutputImageType::Pointer vtkITKVersorMattesMiVersorReg
 void
 vtkITKVersorMattesMiVersorRegistrationFilter::GetTransformationMatrix(vtkMatrix4x4* matrix)
 {
-  itk::itkVersorMattesMiVersorRegistrationFilter::TransformType* transform = m_ITKFilter->GetTransform();
+  itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::Pointer transform 
+    = itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::New();
+
+  m_ITKFilter->GetTransform(transform);
 
   transform->GetRotationMatrix();
 
   const itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::MatrixType ResMat   =transform->GetRotationMatrix();
   const itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::OffsetType ResOffset=transform->GetOffset();
 
+  // Copy the Rotation Matrix
+  for(int i=0;i<3;i++)
+    for(int j=0;j<3;j++)
+      matrix->Element[i][j] = ResMat[i][j];
+
+  // Copy the Offset
+  for(int s=0;s<3;s++)
+    matrix->Element[s][3] = ResOffset[s];
+
+  // Fill in the rest
+  matrix->Element[3][0] = 0;
+  matrix->Element[3][1] = 0;
+  matrix->Element[3][2] = 0;
+  matrix->Element[3][3] = 1;
+}
+  
+void
+vtkITKVersorMattesMiVersorRegistrationFilter::GetCurrentTransformationMatrix(vtkMatrix4x4* matrix)
+{
+  itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::Pointer transform 
+    = itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::New();
+  
+  m_ITKFilter->GetCurrentTransform(transform);
+  
+  transform->GetRotationMatrix();
+  
+  const itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::MatrixType ResMat   =transform->GetRotationMatrix();
+  const itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::OffsetType ResOffset=transform->GetOffset();
+  
   // Copy the Rotation Matrix
   for(int i=0;i<3;i++)
     for(int j=0;j<3;j++)
@@ -92,10 +123,10 @@ vtkITKVersorMattesMiVersorRegistrationFilter::SetTransformationMatrix(vtkMatrix4
   initialParameters[0] = conjugated.x();
   initialParameters[1] = conjugated.y();
   initialParameters[2] = conjugated.z();
-  initialParameters[3] = conjugated.r();
-  initialParameters[4] = matrix->Element[0][3];
-  initialParameters[5] = matrix->Element[1][3];
-  initialParameters[6] = matrix->Element[2][3];
+  //  initialParameters[3] = conjugated.r();
+  initialParameters[3] = matrix->Element[0][3];
+  initialParameters[4] = matrix->Element[1][3];
+  initialParameters[5] = matrix->Element[2][3];
 
   itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::Pointer transform = itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::New();
   transform->SetParameters(initialParameters);

@@ -25,6 +25,8 @@ public:
 
   virtual void GetTransformationMatrix(vtkMatrix4x4* matrix) = 0;
   
+  virtual void GetCurrentTransformationMatrix(vtkMatrix4x4* matrix) = 0;
+  
   virtual void SetTransformationMatrix(vtkMatrix4x4 *matrix) = 0;
 
   virtual void AbortIterations() = 0;
@@ -91,26 +93,35 @@ public:
   }
 
 protected:
-  vtkITKTransformRegistrationCommand() {};
-
+  vtkITKTransformRegistrationCommand() : m_fo("C:\\Tmp\\reg.log") {};
+  
   vtkITKTransformRegistrationFilter  *m_registration;
-
+  
+  std::ofstream m_fo;
+  
 public:
   
-  void Execute(itk::Object *caller, const itk::EventObject & event)
+  virtual void Execute(itk::Object *caller, const itk::EventObject & event)
   {
     Execute( (const itk::Object *)caller, event);
   }
   
-  void Execute(const itk::Object * object, const itk::EventObject & event)
+  virtual void Execute(const itk::Object * object, const itk::EventObject & event)
   {
     if(itk::IterationEvent().CheckEvent( &event ) ) {
       int iter = m_registration->GetCurrentIteration();
       m_registration->SetCurrentIteration(iter+1);
-      
+      m_registration->UpdateProgress((float)iter/m_registration->GetNumIterations() );
       if (m_registration->GetAbortExecute()) {
         m_registration->AbortIterations();
       }
+      vtkMatrix4x4 *mat = vtkMatrix4x4::New();
+      m_registration->GetCurrentTransformationMatrix(mat);
+      m_fo << iter << "," << m_registration->GetMetricValue() << "  ";
+      mat->Print(m_fo);
+      m_fo << std::endl;
+      m_fo.flush();
+      
       m_registration->InvokeEvent(vtkCommand::ProgressEvent);
     }
     else {

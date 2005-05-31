@@ -27,6 +27,7 @@ itk::itkVersorMattesMiVersorRegistrationFilter::SetOptimizerParamters()
 
   // TODO make m_NumberOfIterations array
   m_Optimizer->SetNumberOfIterations( m_NumberOfIterations[0]);
+  m_Optimizer->MinimizeOn();
 
 }
 

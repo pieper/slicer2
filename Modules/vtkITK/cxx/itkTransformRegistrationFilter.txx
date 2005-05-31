@@ -138,12 +138,24 @@ itkTransformRegistrationFilter< TOptimizerClass,  TTransformerClass, TMetricClas
 
 
 template <class TOptimizerClass, class TTransformerClass, class TMetricClass >
-typename itkTransformRegistrationFilter< TOptimizerClass,  TTransformerClass, TMetricClass >::TransformType *
-itkTransformRegistrationFilter< TOptimizerClass,  TTransformerClass, TMetricClass >
-::GetTransform()
+void
+itkTransformRegistrationFilter< TOptimizerClass,  TTransformerClass, TMetricClass >::GetTransform(typename itkTransformRegistrationFilter< TOptimizerClass,
+TTransformerClass, TMetricClass >::TransformType * transform)
 {
-  m_Transform->SetParameters( m_Registration->GetLastTransformParameters() );
-  return m_Transform;
+  transform->SetParameters( m_Registration->GetLastTransformParameters() );
+  //transform->SetCenter( m_Transform->GetCenter() );
+  //transform->SetParameters( m_Transform->GetParameters() );
+  return;
+}
+
+template <class TOptimizerClass, class TTransformerClass, class TMetricClass >
+void
+itkTransformRegistrationFilter< TOptimizerClass,  TTransformerClass, TMetricClass >::GetCurrentTransform(typename itkTransformRegistrationFilter< TOptimizerClass,
+TTransformerClass, TMetricClass >::TransformType * transform)
+{
+  transform->SetCenter( m_Transform->GetCenter() );
+  transform->SetParameters( m_Transform->GetParameters() );
+  return;
 }
 
 
@@ -152,6 +164,7 @@ unsigned long
 itk::itkTransformRegistrationFilter<TOptimizerClass, TTransformerClass, TMetricClass >::AddIterationObserver (itk::Command *observer ) 
 {
   return m_Optimizer->AddObserver( itk::IterationEvent(), observer );
+  return m_Optimizer->AddObserver( itk::EndEvent(), observer );
 }
 
 template <class TOptimizerClass, class TTransformerClass, class TMetricClass >

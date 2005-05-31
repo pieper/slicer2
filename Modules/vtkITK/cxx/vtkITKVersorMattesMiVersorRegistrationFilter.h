@@ -24,9 +24,6 @@ public:
     Superclass::PrintSelf ( os, indent );
   };
 
-  vtkSetMacro(NumberOfIterations, int);
-  vtkGetMacro(NumberOfIterations, int);
-
   vtkSetMacro(TranslateScale, double);
   vtkGetMacro(TranslateScale, double);
 
@@ -45,6 +42,8 @@ public:
   
   virtual void GetTransformationMatrix(vtkMatrix4x4* matrix);
   
+  virtual void GetCurrentTransformationMatrix(vtkMatrix4x4* matrix);
+  
   virtual void SetTransformationMatrix(vtkMatrix4x4 *matrix);
 
   virtual void AbortIterations() {
@@ -56,7 +55,6 @@ public:
   }
 
 protected:
-  int NumberOfIterations;
 
   double TranslateScale;
 
@@ -86,7 +84,7 @@ private:
   void operator=(const vtkITKVersorMattesMiVersorRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKVersorMattesMiVersorRegistrationFilter, "$Revision: 1.3 $");
+//vtkCxxRevisionMacro(vtkITKVersorMattesMiVersorRegistrationFilter, "$Revision: 1.4 $");
 //vtkStandardNewMacro(vtkITKVersorMattesMiVersorRegistrationFilter);
 vtkRegistrationNewMacro(vtkITKVersorMattesMiVersorRegistrationFilter);
 
@@ -101,49 +99,91 @@ vtkRegistrationNewMacro(vtkITKVersorMattesMiVersorRegistrationFilter);
 //
 
 //BTX
-class VersorMattesMiVersorRegistrationCommand : public itk::Command 
+class vtkITKVersorMattesMiVersorRegistrationCommand :  public itk::Command 
 {
 public:
-  typedef  VersorMattesMiVersorRegistrationCommand   Self;
+  typedef  vtkITKVersorMattesMiVersorRegistrationCommand   Self;
   typedef  itk::Command             Superclass;
-  typedef  itk::SmartPointer<VersorMattesMiVersorRegistrationCommand>  Pointer;
-  itkNewMacro( VersorMattesMiVersorRegistrationCommand );
+  typedef  itk::SmartPointer<vtkITKVersorMattesMiVersorRegistrationCommand>  Pointer;
+  itkNewMacro( vtkITKVersorMattesMiVersorRegistrationCommand );
 
   void SetRegistrationFilter (vtkITKVersorMattesMiVersorRegistrationFilter *registration) {
     m_registration = registration;
   }
+  void SetLogFileName(char *filename) {
+    m_fo.open(filename);
+  }
 
 protected:
-  VersorMattesMiVersorRegistrationCommand() {};
+  vtkITKVersorMattesMiVersorRegistrationCommand() : m_fo("C:\\Tmp\\reg.log"){};
   vtkITKVersorMattesMiVersorRegistrationFilter  *m_registration;
+  std::ofstream m_fo;
 
   typedef itk::VersorRigid3DTransformOptimizer     OptimizerType;
   typedef   const OptimizerType   *    OptimizerPointer;
 
 public:
   
-  void Execute(itk::Object *caller, const itk::EventObject & event)
+  virtual void Execute(itk::Object *caller, const itk::EventObject & event)
   {
     Execute( (const itk::Object *)caller, event);
   }
   
-  void Execute(const itk::Object * object, const itk::EventObject & event)
+  virtual void Execute(const itk::Object * object, const itk::EventObject & event)
   {
+
     OptimizerPointer optimizer = 
       dynamic_cast< OptimizerPointer >( object );
+
+    if( typeid( event ) == typeid( itk::EndEvent ) ) {
+      OptimizerType::StopConditionType stopCondition = optimizer->GetStopCondition();
+      if (m_fo.good()) {
+        m_fo << "Optimizer stopped : " << std::endl;
+        m_fo << "Stop condition   =  " << stopCondition << std::endl;
+        switch(stopCondition) {
+        case OptimizerType::GradientMagnitudeTolerance:
+          m_fo << "GradientMagnitudeTolerance" << std::endl; 
+          break;
+        case OptimizerType::StepTooSmall:
+          m_fo << "StepTooSmall" << std::endl; 
+          break;
+        case OptimizerType::ImageNotAvailable:
+          m_fo << "ImageNotAvailable" << std::endl; 
+          break;
+        case OptimizerType::SamplesNotAvailable:
+          m_fo << "SamplesNotAvailable" << std::endl; 
+          break;
+        case OptimizerType::MaximumNumberOfIterations:
+          m_fo << "MaximumNumberOfIterations" << std::endl; 
+          break;
+        }
+        m_fo.flush();
+      }
+    }
+
     if( ! itk::IterationEvent().CheckEvent( &event ) ) {
       return;
     }
-    std::cout << optimizer->GetCurrentIteration() << "   ";
-    std::cout << optimizer->GetValue() << "   ";
-    std::cout << optimizer->GetCurrentPosition() << std::endl;
     int iter = m_registration->GetCurrentIteration();
+    
+    vtkMatrix4x4 *mat = vtkMatrix4x4::New();
+    m_registration->GetCurrentTransformationMatrix(mat);
+
+    if (m_fo.good()) {
+      m_fo << "ITERATION =" << optimizer->GetCurrentIteration() << "   " << std::endl;
+      mat->Print(m_fo);
+      m_fo << "Value=" << optimizer->GetValue() << "   ";
+      m_fo << "Position=" << optimizer->GetCurrentPosition() << std::endl;
+      m_fo.flush();
+    }
+    m_registration->InvokeEvent(vtkCommand::ProgressEvent);
+    
     m_registration->SetCurrentIteration(iter+1);
+
+    m_registration->UpdateProgress((float)iter/m_registration->GetNumIterations() );
+
     if (m_registration->GetAbortExecute()) {
       m_registration->AbortIterations();
-    }
-    else {
-      std::cout << "Error in VersorMattesMiVersorRegistrationCommand::Execute" << std::endl;
     }
   }
 };

@@ -52,9 +52,9 @@ public:
   typedef ::itk::SmartPointer<Self>          Pointer;
   typedef ::itk::SmartPointer<const Self>    ConstPointer;
 
-  typedef typename TTransformerClass   TransformType;
-  typedef typename TOptimizerClass    OptimizerType;
-  typedef typename TMetricClass       MetricType;
+  typedef TTransformerClass   TransformType;
+  typedef TOptimizerClass    OptimizerType;
+  typedef TMetricClass       MetricType;
 
   typedef typename TransformType::ParametersType    ParametersType;
 
@@ -88,10 +88,13 @@ public:
   typedef itk::Image< InputImagePixelType,   Dimension >  MovingImageType;
 
   /** Set init transfrom */
-  void SetTransform( const TTransformerClass * transform );
+  void SetTransform( const TTransformerClass* transform );
 
   /** Get resulting transform */
-  TTransformerClass * GetTransform();
+  void GetTransform(TTransformerClass* transform);
+
+  /** Get current transform */
+  void GetCurrentTransform(TTransformerClass* transform);
 
   /** Get number of parameters. */
   unsigned long GetNumberOfParameters()
