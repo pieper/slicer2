@@ -75,7 +75,7 @@ proc DTMRITractographyInit {} {
     global DTMRI
 
     #------------------------------------
-    # Per-streamline settings
+    # Tab 1: Settings (Per-streamline settings)
     #------------------------------------
 
     # type of tract coloring
@@ -87,7 +87,8 @@ proc DTMRITractographyInit {} {
     # types of tractography: subclasses of vtkHyperStreamline
     #------------------------------------
     set DTMRI(stream,tractingMethod) NoSpline
-    set DTMRI(stream,tractingMethodList) {NoSpline BSpline }
+    # put the default last so its GUI is built on top.
+    set DTMRI(stream,tractingMethodList) {BSpline NoSpline}
     set DTMRI(stream,tractingMethodList,tooltip) {"Method for interpolating signal"}
 
 
@@ -204,12 +205,12 @@ proc DTMRITractographyInit {} {
 
 
     #------------------------------------
-    # Seeding (automatic from ROI)
+    # Tab 2: Seeding (automatic from ROI)
     #------------------------------------
 
 
     #------------------------------------
-    # Display of (all) streamlines
+    # Tab 3: Display of (all) streamlines
     #------------------------------------
 
     # whether we are currently displaying tracts
@@ -221,13 +222,6 @@ proc DTMRITractographyInit {} {
                                 "Clear all 'tracts'" ]
     # guard against multiple actor add/remove from GUI
     set DTMRI(vtk,streamline,actorsAdded) 1
-
-    # type of visualization settings GUI to display to user
-    set DTMRI(mode,visualizationTypeGui) Tracts
-    set DTMRI(mode,visualizationTypeGuiList) {Tracts AutoTracts SaveTracts}
-    set DTMRI(mode,visualizationTypeGuiList,tooltip) "Select from this menu\n and settings for each type\n of visualization will appear below."
-
-
 
 
 
@@ -266,18 +260,24 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
     # Tract
     #    Active
-    #    Bottom
-    #    TractsMode
-    #    VisMethods
-    #       VisMode
-    #       VisParams
-    #          Tracts
-    #             Colors
-    #             Entries
-    #                TractingMethod
-    #                TractingVar
-    #          AutoTracts
-    #          SaveTracts
+    #    Notebook
+    #       Settings
+    #          Colors
+    #          TractingMethod
+    #          TractingVar
+    #             BSpline
+    #                BSplineOrder
+    #                MethodOrder
+    #                MethodVariables ...
+    #                PreciseVariables ...
+    #             NoSpline
+    #                Variables...
+    #       Seeding
+    #
+    #       Display
+    #          OnOffDelete
+    #          ColorBy
+    #          ColorByVol
     #-------------------------------------------
 
     #-------------------------------------------
@@ -286,11 +286,18 @@ proc DTMRITractographyBuildGUI {} {
     set fTract $Module(DTMRI,fTract)
     set f $fTract
 
+    # active tensor frame
     frame $f.fActive    -bg $Gui(backdrop) -relief sunken -bd 2
     pack $f.fActive -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
-    frame $f.fBottom  -bg $Gui(activeWorkspace) -bd 2
-    pack $f.fBottom -side top -padx $Gui(pad) -pady $Gui(pad) -fill both -expand true
+    # notebook frame (to contain settings, seeding, display frames)
+    Notebook:create $f.fNotebook \
+                        -pages {{Settings} {Seeding} {Display}} \
+                        -pad 2 \
+                        -bg $Gui(activeWorkspace) \
+                        -height 500 \
+                        -width 400
+    pack $f.fNotebook -side top -padx $Gui(pad) -pady $Gui(pad) -fill both -expand true
 
     #-------------------------------------------
     # Tract->Active frame
@@ -308,22 +315,9 @@ proc DTMRITractographyBuildGUI {} {
 
 
     #-------------------------------------------
-    # Tract->Bottom frame
+    # Tract->Notebook frame
     #-------------------------------------------
-    set f $fTract.fBottom
-
-    Notebook:create $f.fNotebook \
-                        -pages {{Settings} {Seeding} {Display}} \
-                        -pad 2 \
-                        -bg $Gui(activeWorkspace) \
-                        -height 500 \
-                        -width 240
-    pack $f.fNotebook -fill both -expand 1
-
-    #-------------------------------------------
-    # Tract->Bottom->Notebook frame
-    #-------------------------------------------
-    set f $fTract.fBottom.fNotebook
+    set f $fTract.fNotebook
 
     set fSettings [Notebook:frame $f {Settings}]
     set fSeeding [Notebook:frame $f {Seeding}]
@@ -332,120 +326,45 @@ proc DTMRITractographyBuildGUI {} {
         $frame configure -relief groove -bd 3
     }
 
+
+    ##########################################################
+    #
+    #  Settings Frame
+    #
+    ##########################################################
+
     #-------------------------------------------
-    # Tract->Bottom->Notebook->Settings frame
+    # Tract->Notebook->Settings frame
     #-------------------------------------------
     set f $fSettings
 
-    # note the height is necessary to place frames inside later
-    frame $f.fVisParams -bg $Gui(activeWorkspace) -height 500
-    pack $f.fVisParams -side top -padx 0 -pady $Gui(pad) -fill both -expand true
-    #-------------------------------------------
-    # Display-> Notebook ->Tract->VisMethods->VisParams frame
-    #-------------------------------------------
-    set f $fSettings.fVisParams
-    set fParams $f
-
-    # make a parameters frame for each visualization type
-    # types are: Tracts AutoTracts SaveTracts
-    foreach frame $DTMRI(mode,visualizationTypeGuiList) {
-        frame $f.f$frame -bg $Gui(activeWorkspace)
-        # for raising one frame at a time
-        place $f.f$frame -in $f -relheight 1.0 -relwidth 1.0
-        #pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-        set DTMRI(frame,$frame) $f.f$frame
-    }
-    raise $DTMRI(frame,$DTMRI(mode,visualizationTypeGui))
-
-    #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->Tracts frame
-    #-------------------------------------------
-    set f $fParams.fTracts
-
-    foreach frame "Colors Entries" {
-        frame $f.f$frame -bg $Gui(activeWorkspace)
-        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-    }
-
-    #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->Tracts->Colors frame
-    #-------------------------------------------
-    set f $fParams.fTracts.fColors
-    foreach frame "ChooseColor ColorBy ColorByVol" {
+    foreach frame "Colors TractingMethod TractingVar" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     }
+    # note the height is necessary to place frames inside later
+    $f.fTractingVar configure -height 500
+    #pack $f.fTractingVar -side top -padx 0 -pady $Gui(pad) -fill both -expand true
+
 
     #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->Tracts->Colors->ChooseColor frame
+    # Tract->Notebook->Settings->Colors frame
     #-------------------------------------------
-    set f $fParams.fTracts.fColors.fChooseColor
+    set f $fSettings.fColors
 
     DevAddButton $f.b "Color:" {ShowColors DTMRIUpdateTractColorToSolid}
     eval {entry $f.e -width 20 \
           -textvariable Label(name)} $Gui(WEA) \
             {-bg $Gui(activeWorkspace) -state disabled}
-    pack $f.b $f.e -side left -padx $Gui(pad) -pady $Gui(pad) -fill x
+    pack $f.b -side left -padx $Gui(pad) -pady $Gui(pad) -fill x
+    pack $f.e -side right -padx $Gui(pad) -pady $Gui(pad) -fill x
 
     lappend Label(colorWidgetList) $f.e
 
     #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->Tracts->Colors->ColorBy frame
+    # Tract->Notebook->Settings->TractingMethod frame
     #-------------------------------------------
-    set f $fParams.fTracts.fColors.fColorBy
-
-    eval {label $f.lVis -text "Color by: "} $Gui(WLA)
-    eval {menubutton $f.mbVis -text $DTMRI(mode,tractColor) \
-          -relief raised -bd 2 -width 12 \
-          -menu $f.mbVis.m} $Gui(WMBA)
-    eval {menu $f.mbVis.m} $Gui(WMA)
-    pack $f.lVis $f.mbVis -side left -pady 1 -padx $Gui(pad)
-    # Add menu items
-    foreach vis $DTMRI(mode,tractColorList) {
-        $f.mbVis.m add command -label $vis \
-        -command "set DTMRI(mode,tractColor) $vis; DTMRIUpdateTractColor"
-    }
-    # save menubutton for config
-    set DTMRI(gui,mbTractColor) $f.mbVis
-    # Add a tooltip
-    TooltipAdd $f.mbVis $DTMRI(mode,tractColorList,tooltip)
-
-    #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->Tracts->Colors->ColorByVol frame
-    #-------------------------------------------
-    set f $fParams.fTracts.fColors.fColorByVol
-
-    # menu to select a volume: will set Volume(activeID)
-    set name ColorByVolume
-    DevAddSelectButton  Volume $f $name "Color by Volume:" Pack \
-    "First select Color by MultiColor, \nthen select the volume to use \nto color the tracts. \nFor example to color by FA, \ncreate the FA volume using the \n<More...> tab in this module, \nthen the <Scalars> tab.  \nThen select that volume from this list." \
-    13
-    
-    # Append these menus and buttons to lists 
-    # that get refreshed during UpdateMRML
-    lappend Volume(mbActiveList) $f.mb$name
-    lappend Volume(mActiveList) $f.mb$name.m
-
-    #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->Tracts->Entries frame
-    #-------------------------------------------
-    set f $fParams.fTracts.fEntries
-
-    frame $f.fTractingMethod -bg $Gui(activeWorkspace) 
-    pack $f.fTractingMethod -side top -padx $Gui(pad) -pady 0 -fill x
-
-    # note the height is necessary to place frames inside later
-    frame $f.fTractingVar -bg $Gui(activeWorkspace) -height 500
-    #frame $f.fTractingVar -bg $Gui(activeWorkspace) 
-    pack $f.fTractingVar -side top -padx $Gui(pad) -pady $Gui(pad) -fill both -expand true
-
-    #    frame $f -bg $Gui(activeWorkspace)
-    #    pack $f -side top -padx $Gui(pad) -pady 1 -fill x
-
-    #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->Tracts->Entries->TractingMethod frame
-    #-------------------------------------------
-    set f $fParams.fTracts.fEntries.fTractingMethod
+    set f $fSettings.fTractingMethod
 
     eval {label $f.lVis -text "Interpolation Method: "} $Gui(WLA)
     eval {menubutton $f.mbVis -text $DTMRI(stream,tractingMethod) \
@@ -464,14 +383,9 @@ proc DTMRITractographyBuildGUI {} {
     TooltipAdd $f.mbVis $DTMRI(stream,tractingMethodList,tooltip)
 
     #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->Tracts->Entries->TractingVar frame
+    # Tract->Notebook->Settings->TractingVar frame
     #-------------------------------------------
-    set f $fParams.fTracts.fEntries.fTractingVar
-
-    #    frame $f -bg $Gui(activeWorkspace)
-    #place $f.fVar -in $f -relheight 1.0 -relwidth 1.0
-    #    pack $f -side top -padx 0 -pady $Gui(pad) -fill both -expand true
-    #    pack $f.fVisParams -side top -padx 0 -pady $Gui(pad) -fill both -expand true
+    set f $fSettings.fTractingVar
 
     foreach frame $DTMRI(stream,tractingMethodList) {
         frame $f.f$frame -bg $Gui(activeWorkspace)
@@ -480,14 +394,22 @@ proc DTMRITractographyBuildGUI {} {
         #pack $f.f$frame -side top -padx 0 -pady 1 -fill x
         set DTMRI(stream,tractingFrame,$frame) $f.f$frame
     }
-    raise $DTMRI(stream,tractingFrame,$DTMRI(stream,tractingMethod))
     
+    #-------------------------------------------
+    # Tract->Notebook->Settings->TractingVar->BSpline frame
+    #-------------------------------------------
     set f $DTMRI(stream,tractingFrame,BSpline)
     
     frame $f.fBSplineOrder -bg $Gui(activeWorkspace) 
     pack $f.fBSplineOrder -side top -padx 0 -pady 0 -fill x
 
-    set f $f.fBSplineOrder
+    frame $f.fMethodOrder -bg $Gui(activeWorkspace) 
+    pack $f.fMethodOrder -side top -padx 0 -pady 0 -fill x
+
+    #-------------------------------------------
+    # Tract->Notebook->Settings->TractingVar->BSpline->BSplineOrder frame
+    #-------------------------------------------
+    set f $DTMRI(stream,tractingFrame,BSpline).fBSplineOrder
 
     eval {label $f.lVis -text "Spline Order: "} $Gui(WLA)
 
@@ -507,12 +429,10 @@ proc DTMRITractographyBuildGUI {} {
     # Add a tooltip
     TooltipAdd $f.mbVis $DTMRI(stream,BSplineOrderList,tooltip)
 
-    set f $DTMRI(stream,tractingFrame,BSpline)
-    
-    frame $f.fMethodOrder -bg $Gui(activeWorkspace) 
-    pack $f.fMethodOrder -side top -padx 0 -pady 0 -fill x
-
-    set f $f.fMethodOrder
+    #-------------------------------------------
+    # Tract->Notebook->Settings->TractingVar->BSpline->MethodOrder frame
+    #-------------------------------------------
+    set f $DTMRI(stream,tractingFrame,BSpline).fMethodOrder
 
     eval {label $f.lVis -text "Method Order: "} $Gui(WLA)
 
@@ -532,6 +452,9 @@ proc DTMRITractographyBuildGUI {} {
     # Add a tooltip
     TooltipAdd $f.mbVis $DTMRI(stream,BSplineOrderList,tooltip)
 
+    #-------------------------------------------
+    # Tract->Notebook->Settings->TractingVar->BSpline->MethodVariables frames
+    #-------------------------------------------
     foreach entry $DTMRI(stream,methodvariableList) \
         text $DTMRI(stream,methodvariableList,text) \
         tip $DTMRI(stream,methodvariableList,tooltips) {
@@ -544,7 +467,7 @@ proc DTMRITractographyBuildGUI {} {
         set f $f.f$entry
 
         eval {label $f.l$entry -text "$text:"} $Gui(WLA)
-        eval {entry $f.e$entry -width 10 \
+        eval {entry $f.e$entry -width 8 \
               -textvariable DTMRI(stream,$entry)} \
                 $Gui(WEA)
         TooltipAdd $f.l$entry $tip
@@ -552,6 +475,35 @@ proc DTMRITractographyBuildGUI {} {
         pack $f.l$entry -side left  -padx $Gui(pad)
         pack $f.e$entry -side right  -padx $Gui(pad)
     }
+
+    #-------------------------------------------
+    # Tract->Notebook->Settings->TractingVar->BSpline->PreciseVariables frames
+    #-------------------------------------------
+    foreach entry $DTMRI(stream,precisevariableList) \
+        text $DTMRI(stream,precisevariableList,text) \
+        tip $DTMRI(stream,precisevariableList,tooltips) {
+        
+        set f $DTMRI(stream,tractingFrame,BSpline)
+        
+        frame $f.f$entry -bg $Gui(activeWorkspace)
+        #place $f.f$frame -in $f -relheight 1.0 -relwidth 1.0
+        pack $f.f$entry -side top -padx 0 -pady 1 -fill x
+        set f $f.f$entry
+
+        eval {label $f.l$entry -text "$text:"} $Gui(WLA)
+        eval {entry $f.e$entry -width 8 \
+              -textvariable DTMRI(stream,$entry)} \
+                $Gui(WEA)
+        TooltipAdd $f.l$entry $tip
+        TooltipAdd $f.e$entry $tip
+        pack $f.l$entry -side left  -padx $Gui(pad)
+        pack $f.e$entry -side right  -padx $Gui(pad)
+    }
+
+
+    #-------------------------------------------
+    # Tract->Notebook->Settings->TractingVar->NoSpline->Variables frames
+    #-------------------------------------------
 
     foreach entry $DTMRI(stream,variableList) \
     text $DTMRI(stream,variableList,text) \
@@ -565,7 +517,7 @@ proc DTMRITractographyBuildGUI {} {
         set f $f.f$entry
 
         eval {label $f.l$entry -text "$text:"} $Gui(WLA)
-        eval {entry $f.e$entry -width 10 \
+        eval {entry $f.e$entry -width 8 \
               -textvariable DTMRI(stream,$entry)} \
         $Gui(WEA)
         TooltipAdd $f.l$entry $tip
@@ -574,33 +526,14 @@ proc DTMRITractographyBuildGUI {} {
         pack $f.e$entry -side right  -padx $Gui(pad)
     }
 
-    foreach entry $DTMRI(stream,precisevariableList) \
-        text $DTMRI(stream,precisevariableList,text) \
-        tip $DTMRI(stream,precisevariableList,tooltips) {
-        
-        set f $DTMRI(stream,tractingFrame,BSpline)
-        
-        frame $f.f$entry -bg $Gui(activeWorkspace)
-        #place $f.f$frame -in $f -relheight 1.0 -relwidth 1.0
-        pack $f.f$entry -side top -padx 0 -pady 1 -fill x
-        set f $f.f$entry
-
-        eval {label $f.l$entry -text "$text:"} $Gui(WLA)
-        eval {entry $f.e$entry -width 10 \
-              -textvariable DTMRI(stream,$entry)} \
-                $Gui(WEA)
-        TooltipAdd $f.l$entry $tip
-        TooltipAdd $f.e$entry $tip
-        pack $f.l$entry -side left  -padx $Gui(pad)
-        pack $f.e$entry -side right  -padx $Gui(pad)
-    }
-
     ##########################################################
-    #  AUTOTRACTS   (frame raised when AutoTracts are selected)
+    #
+    #  Seeding Frame
+    #
     ##########################################################
 
     #-------------------------------------------
-    # Tract->Bottom->Notebook->Seeding frame
+    # Tract->Notebook->Seeding frame
     #-------------------------------------------
     set f $fSeeding
 
@@ -610,7 +543,7 @@ proc DTMRITractographyBuildGUI {} {
     }
 
     #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->Autotracts->Label2 frame
+    # Tract->Notebook->Seeding->Label2 frame
     #-------------------------------------------
     set f $fSeeding.fLabel2
 
@@ -619,7 +552,8 @@ proc DTMRITractographyBuildGUI {} {
 
 
     #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->Tracts->Entries frame
+    # Tract->Notebook->Seeding->Entries frame
+    #-------------------------------------------
     set f $fSeeding.fEntries
     foreach frame "Volume" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
@@ -630,10 +564,9 @@ proc DTMRITractographyBuildGUI {} {
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
     }
 
-    #-------------------------------------------
 
     #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->Volume frame
+    # Tract->Notebook->Seeding->Entries->Volume frame
     #-------------------------------------------
     set f $fSeeding.fEntries.fVolume
 
@@ -649,7 +582,7 @@ proc DTMRITractographyBuildGUI {} {
     lappend Volume(mActiveList) $f.mb$name.m
 
     #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->ChooseLabel frame
+    # Tract->Notebook->Seeding->Entries->ChooseLabel frame
     #-------------------------------------------
     set f $fSeeding.fEntries.fChooseLabel
     
@@ -660,7 +593,7 @@ proc DTMRITractographyBuildGUI {} {
     
     
     #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->ChooseLabel->Title frame
+    # Tract->Notebook->Seeding->Entries->ChooseLabel->Title frame
     #-------------------------------------------
     set f $fSeeding.fEntries.fChooseLabel.fTitle
     
@@ -668,7 +601,7 @@ proc DTMRITractographyBuildGUI {} {
     pack $f.l -side top
     
     #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->ChooseLabel->Label frame
+    # Tract->Notebook->Seeding->Entries->ChooseLabel->Label frame
     #-------------------------------------------
     set f $fSeeding.fEntries.fChooseLabel.fLabel
     
@@ -693,7 +626,7 @@ proc DTMRITractographyBuildGUI {} {
 
 
     #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->ChooseLabel->Apply frame
+    # Tract->Notebook->Seeding->Entries->ChooseLabel->Apply frame
     #-------------------------------------------
     set f $fSeeding.fEntries.fChooseLabel.fApply
     DevAddButton $f.bApply "Seed 'Tracts' in ROI" \
@@ -703,7 +636,7 @@ proc DTMRITractographyBuildGUI {} {
 
 
     #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->FindTracts frame
+    # Tract->Notebook->Seeding->Entries->FindTracts frame
     #-------------------------------------------
     set f $fSeeding.fEntries.fFindTracts
     
@@ -713,7 +646,7 @@ proc DTMRITractographyBuildGUI {} {
     }
    
     #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->FindTracts->Title frame
+    # Tract->Notebook->Seeding->Entries->FindTracts->Title frame
     #-------------------------------------------
     set f $fSeeding.fEntries.fFindTracts.fTitle
     
@@ -721,7 +654,7 @@ proc DTMRITractographyBuildGUI {} {
     pack $f.l -side top
     
     #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->FindTracts->ListLabels frame
+    # Tract->Notebook->Seeding->Entries->FindTracts->ListLabels frame
     #-------------------------------------------
     set f $fSeeding.fEntries.fFindTracts.fListLabels
     
@@ -734,7 +667,7 @@ proc DTMRITractographyBuildGUI {} {
     pack $f.l $f.eName -side left
     
     #-------------------------------------------
-    # Display-> Notebook ->Tract frame->VisMethods->VisParams->AutoTracts->Entries->FindTracts->Apply frame
+    # Tract->Notebook->Seeding->Entries->FindTracts->Apply frame
     #-------------------------------------------
     set f $fSeeding.fEntries.fFindTracts.fApply
     
@@ -744,11 +677,27 @@ proc DTMRITractographyBuildGUI {} {
 
 
 
+    ##########################################################
+    #
+    #  Display Frame
+    #
+    ##########################################################
+
     #-------------------------------------------
-    # Tract->Bottom->Notebook->Display frame
+    # Tract->Notebook->Display frame
     #-------------------------------------------
     set f $fDisplay
 
+    foreach frame "OnOffDelete ColorBy ColorByVol" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    }
+
+
+    #-------------------------------------------
+    # Tract->Notebook->Display->OnOffDelete frame
+    #-------------------------------------------
+    set f $fDisplay.fOnOffDelete
     eval {label $f.lVis -text "Display 'Tracts': "} $Gui(WLA)
     pack $f.lVis -side left -pady $Gui(pad) -padx $Gui(pad)
     # Add menu items
@@ -764,6 +713,43 @@ proc DTMRITractographyBuildGUI {} {
         pack $f.r$vis -side left -fill x
         TooltipAdd $f.r$vis $tip
     }
+
+    #-------------------------------------------
+    # Tract->Notebook->Display->ColorBy frame
+    #-------------------------------------------
+    set f $fDisplay.fColorBy
+    eval {label $f.lVis -text "Color by: "} $Gui(WLA)
+    eval {menubutton $f.mbVis -text $DTMRI(mode,tractColor) \
+          -relief raised -bd 2 -width 12 \
+          -menu $f.mbVis.m} $Gui(WMBA)
+    eval {menu $f.mbVis.m} $Gui(WMA)
+    pack $f.lVis $f.mbVis -side left -pady 1 -padx $Gui(pad)
+    # Add menu items
+    foreach vis $DTMRI(mode,tractColorList) {
+        $f.mbVis.m add command -label $vis \
+        -command "set DTMRI(mode,tractColor) $vis; DTMRIUpdateTractColor"
+    }
+    # save menubutton for config
+    set DTMRI(gui,mbTractColor) $f.mbVis
+    # Add a tooltip
+    TooltipAdd $f.mbVis $DTMRI(mode,tractColorList,tooltip)
+
+    #-------------------------------------------
+    # Tract->Notebook->Display->ColorByVol frame
+    #-------------------------------------------
+    set f $fDisplay.fColorByVol
+
+    # menu to select a volume: will set Volume(activeID)
+    set name ColorByVolume
+    DevAddSelectButton  Volume $f $name "Color by Volume:" Pack \
+    "First select Color by MultiColor, \nthen select the volume to use \nto color the tracts. \nFor example to color by FA, \ncreate the FA volume using the \n<More...> tab in this module, \nthen the <Scalars> tab.  \nThen select that volume from this list." \
+    13
+    
+    # Append these menus and buttons to lists 
+    # that get refreshed during UpdateMRML
+    lappend Volume(mbActiveList) $f.mb$name
+    lappend Volume(mActiveList) $f.mb$name.m
+
 
 }
 
@@ -974,20 +960,23 @@ proc DTMRIUpdateTractingMethod { TractingMethod } {
                 # Apparently all of these Updates really are needed
                 # set up the BSpline tractography pipeline
                 set t $Tensor(activeID)
-                set DTMRI(vtk,BSpline,data) 1
-                set DTMRI(vtk,BSpline,init) 1;
-                DTMRI(vtk,itf) SetDataBounds [Tensor($t,data) GetOutput]
-                for {set i 0} {$i < 6} {incr i} {
-                    DTMRI(vtk,extractor($i)) SetInput [Tensor($t,data) GetOutput]
-                }
-                for {set i 0} {$i < 6} {incr i} {
-                    DTMRI(vtk,extractor($i)) Update
-                    DTMRI(vtk,bspline($i)) SetInput [DTMRI(vtk,extractor($i)) GetOutput]
-                }          
-                DTMRIUpdateBSplineOrder $DTMRI(stream,BSplineOrder)
-                for {set i 0} {$i < 6} {incr i} {
-                    DTMRI(vtk,bspline($i)) Update
-                    DTMRI(vtk,impComp($i)) SetInput [DTMRI(vtk,bspline($i)) GetOutput]
+                
+                if {$t != "" } {
+                    set DTMRI(vtk,BSpline,data) 1
+                    set DTMRI(vtk,BSpline,init) 1;
+                    DTMRI(vtk,itf) SetDataBounds [Tensor($t,data) GetOutput]
+                    for {set i 0} {$i < 6} {incr i} {
+                        DTMRI(vtk,extractor($i)) SetInput [Tensor($t,data) GetOutput]
+                    }
+                    for {set i 0} {$i < 6} {incr i} {
+                        DTMRI(vtk,extractor($i)) Update
+                        DTMRI(vtk,bspline($i)) SetInput [DTMRI(vtk,extractor($i)) GetOutput]
+                    }          
+                    DTMRIUpdateBSplineOrder $DTMRI(stream,BSplineOrder)
+                    for {set i 0} {$i < 6} {incr i} {
+                        DTMRI(vtk,bspline($i)) Update
+                        DTMRI(vtk,impComp($i)) SetInput [DTMRI(vtk,bspline($i)) GetOutput]
+                    }
                 }
 
             }
