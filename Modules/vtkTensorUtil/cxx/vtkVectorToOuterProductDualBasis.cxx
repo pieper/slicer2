@@ -39,10 +39,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkObjectFactory.h"
 #include "vtkMathUtils.h"
 #include "vtkMath.h"
-/*
+
 #include "vnl/vnl_matrix.h"
 #include "vnl/algo/vnl_matrix_inverse.h"
-*/
+
 #define VTK_VECTOR_LENGTH 3
 
 
@@ -321,13 +321,13 @@ void vtkVectorToOuterProductDualBasis::CalculateDualBasis()
   
   N =   this->NumberOfInputVectors;
 
-/*
+
   vnl_matrix<double> G;
   vnl_matrix<double> Ginv;
   
   G.set_size(9,N);
   Ginv.set_size(N,9);
-*/
+
   vtkDebugMacro("Calculating dual basis");
 
   // first fill the VV (outer product) array
@@ -345,9 +345,9 @@ void vtkVectorToOuterProductDualBasis::CalculateDualBasis()
         {
           // place in cols of VV
           this->VV[count][i] = A[j][k];
-          /*
+          
       G.put(count,i,A[j][k]);
-          */
+          
       // also place in rows of VVT (transposed) array
           this->VVT[i][count] = A[j][k];          
           //cout << "A[j][k]" << j << " " << k << " " << A[j][k] << endl;
@@ -379,7 +379,8 @@ void vtkVectorToOuterProductDualBasis::CalculateDualBasis()
 */
 
 
-  //New Approach
+  //New Approach using SVD
+  /*
   result = this->PseudoInverse(this->VV,this->PInv,9,N);
 
   if (result)
@@ -387,14 +388,15 @@ void vtkVectorToOuterProductDualBasis::CalculateDualBasis()
       vtkErrorMacro("VV PseudoInverse could not be computed!");
       vtkMathUtils::PrintMatrix(this->PInv,N,9);
     }
-
+  */
   //cout<<"My pseudoinverse"<<endl;
   //vtkMathUtils::PrintMatrix(this->PInv,N,9);
  
- //VNL approach avoiding reimplementation of Numerical Recipes
-/*
+ 
+  //VNL approach avoiding reimplementation of Numerical Recipes
+
    vnl_matrix_inverse<double>  Pinv(G);
-   Ginv = Pinv.pinverse();
+   Ginv = Pinv.pinverse(6);
 
    for (i = 0; i < N; i++)
     {
@@ -404,9 +406,12 @@ void vtkVectorToOuterProductDualBasis::CalculateDualBasis()
    
        }
     }
-  cout<<"vnl pseudoinverse"<<endl;
-  vtkMathUtils::PrintMatrix(this->PInv,N,9);
-*/
+   if (Pinv.valid()==0) {
+     vtkErrorMacro("VV PseudoInverse could not be computed!");
+     vtkMathUtils::PrintMatrix(this->PInv,N,9);
+   }
+   
+   
 
 
 }
