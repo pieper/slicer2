@@ -10,6 +10,12 @@
 #include "itkTransformRegistrationFilter.h"
 #include "vtkMatrix4x4.h"
 
+#ifdef _WIN32
+#include <iostream>
+#else
+#include <iostream.h>
+#endif
+
 
 
 ///////////////////////////
@@ -93,7 +99,7 @@ public:
   }
 
 protected:
-  vtkITKTransformRegistrationCommand() : m_fo("C:\\Tmp\\reg.log") {};
+  vtkITKTransformRegistrationCommand() {};
   
   vtkITKTransformRegistrationFilter  *m_registration;
   

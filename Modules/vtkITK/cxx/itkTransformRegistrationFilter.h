@@ -163,7 +163,7 @@ protected:
   typedef typename OptimizerType::ScalesType       OptimizerScalesType;
 
   /** Registration Method. */
-  typedef typename MultiResolutionImageRegistrationMethod< 
+  typedef MultiResolutionImageRegistrationMethod< 
                                     FixedImageType, 
                                     MovingImageType >    RegistrationType;
 
@@ -213,7 +213,7 @@ protected:
   typename FixedImageType::Pointer               m_FixedImage;
   typename MovingImageType::Pointer              m_MovingImage;
 
-  typename InputImagePixelType                   m_BackgroundLevel;
+  InputImagePixelType                            m_BackgroundLevel;
 
   //typename IterationObserverType::Pointer        m_IterationObserver;
   //typename StopObserverType::Pointer             m_StopObserver;

@@ -108,7 +108,7 @@ itk::itkTransformRegistrationFilter<TOptimizerClass, TTransformerClass, TMetricC
 
   m_FinalParameters = m_Registration->GetLastTransformParameters();
 
-  TransformType::Pointer finalTransform = TransformType::New();
+  typename TransformType::Pointer finalTransform = TransformType::New();
   finalTransform->SetParameters( m_FinalParameters );
 
 
