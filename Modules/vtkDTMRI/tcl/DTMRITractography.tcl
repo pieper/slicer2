@@ -74,6 +74,144 @@ proc DTMRITractographyInit {} {
 
     global DTMRI
 
+    #------------------------------------
+    # Per-streamline settings
+    #------------------------------------
+
+    # type of tract coloring
+    set DTMRI(mode,tractColor) SolidColor;
+    set DTMRI(mode,tractColorList) {SolidColor MultiColor}
+    set DTMRI(mode,tractColorList,tooltip) "Color tracts with a solid color \nOR MultiColor by scalars from the menu below."
+
+
+    # types of tractography: subclasses of vtkHyperStreamline
+    #------------------------------------
+    set DTMRI(stream,tractingMethod) NoSpline
+    set DTMRI(stream,tractingMethodList) {NoSpline BSpline }
+    set DTMRI(stream,tractingMethodList,tooltip) {"Method for interpolating signal"}
+
+
+    # vtkHyperStreamline tractography variables
+    # Initialize here (some can be changed in the GUI).
+    #------------------------------------
+    # Max length (in number of steps?)
+    set DTMRI(stream,MaximumPropagationDistance)  600.0
+    set DTMRI(stream,MinimumPropagationDistance)  30.0
+    # Terminal Eigenvalue
+    set DTMRI(stream,TerminalEigenvalue)  0.0
+    # nominal integration step size (expressed as a fraction of the
+    # size of each cell)  0.2 is default
+    set DTMRI(stream,IntegrationStepLength)  0.1
+    # Set / get the length of a tube segment composing the
+    # hyperstreamline. The length is specified as a fraction of the
+    # diagonal length of the input bounding box.  0.01 is vtk default
+    set DTMRI(stream,StepLength)  0.005
+    # radius of (polydata) tube that is displayed
+    #set DTMRI(stream,Radius)  0.2 
+    set DTMRI(stream,Radius)  0.4
+    # sides of tube
+    #set DTMRI(stream,NumberOfSides)  4
+    set DTMRI(stream,NumberOfSides)  6
+
+
+    # "NoSpline" tractography variables (lists are for GUI creation)
+    #------------------------------------
+    set DTMRI(stream,variableList) [list \
+                    MaximumPropagationDistance IntegrationStepLength \
+                    StepLength Radius  NumberOfSides MaxCurvature MinFractionalAnisotropy]
+
+    set DTMRI(stream,variableList,text) [list \
+                         "Max Length" "Step Size" \
+                         "Smoothness (along)" "Radius"  "Smoothness (around)" "Curvature Threshold" "FA Threshold"]
+    set DTMRI(stream,variableList,tooltips) [list \
+                         "MaximumPropagationDistance: Tractography will stop after this distance" \
+                         "IntegrationStepLength: step size when following path" \
+                         "StepLength: Length of each displayed tube segment" \
+                         "Radius: Initial radius (thickness) of displayed tube" \
+                         "NumberOfSides: Number of sides of displayed tube" \
+                         "Curvature Threshold: Max curvature allowed in tracking"\
+                         "FA Threshold: If FA falls below this value, tracking stops"]
+    #set DTMRI(stream,MaxCurvature) 1.3
+    set DTMRI(stream,MaxCurvature) 1.15
+    set DTMRI(stream,MinFractionalAnisotropy) 0.07
+    
+
+    # B-spline tractography variables (lists are for GUI creation)
+    #------------------------------------
+    set DTMRI(stream,methodvariableList) [list UpperBoundBias LowerBoundBias CorrectionBias ]
+
+    set DTMRI(stream,methodvariableList,text) [list "High Fractional Anisotropy" "Low Fractional Anisotropy" "Correction Bias Magnitude" ]
+
+    set DTMRI(stream,methodvariableList,tooltips) [list \
+                               "Inferior bound for fractional anisotropy before adding a regularization bias"\
+                               "Lowest fractional anisotropy allowable for tractography"\
+                               "Magnitude of the correction bias added for tractography" ]
+
+    set DTMRI(stream,precisevariableList) [list \
+                           MaximumPropagationDistance MinimumPropagationDistance TerminalEigenvalue \
+                           IntegrationStepLength \
+                           StepLength Radius  NumberOfSides  \
+                           MaxStep MinStep MaxError MaxAngle LengthOfMaxAngle]
+
+    set DTMRI(stream,precisevariableList,text) [list \
+                            "Max Length" "Min Length" "Terminal Eigenvalue"\
+                            "Step Size" \
+                            "Smoothness (along)" "Radius"  "Smoothness (around)" \
+                            "Max Step" "Min Step" "Max Error" "Max Angle" "Length for Max Angle"]
+    set DTMRI(stream,precisevariableList,tooltips) [list \
+                            "MaximumPropagationDistance: Tractography will stop after this distance" \
+                            "MinimumPropagationDistance: Streamline will be rejected if total length is under this value" \
+                            "TerminalEigenvalue: Set minimum propagation speed"\
+                            "IntegrationStepLength: step size when following path" \
+                            "StepLength: Length of each displayed tube segment" \
+                            "Radius: Initial radius (thickness) of displayed tube" \
+                            "NumberOfSides: Number of sides of displayed tube" \
+                            "MaxStep: Maximum step size when following path" \
+                            "MinStep: Minimum step size when following path" \
+                            "MaxError: Maximum Error of each step" \
+                            "MaxAngle: Maximum Angle allowed per fiber" \
+                            "MaxError: Length of fiber when considering maximum angle" ]
+
+    # BSpline Orders
+    set DTMRI(stream,BSplineOrder) "3"
+    set DTMRI(stream,BSplineOrderList) {"0" "1" "2" "3" "4" "5"}
+    set DTMRI(stream,BSplineOrderList,tooltip) {"Order of the BSpline interpolation."}
+
+    # Method Orders
+    set DTMRI(stream,MethodOrder) "rk4"
+    set DTMRI(stream,MethodOrderList) {"rk2" "rk4" "rk45"}
+    set DTMRI(stream,MethodOrderList,tooltip) {"Order of the tractography"}
+
+    # Upper Bound to add regularization Bias
+    set DTMRI(stream,UpperBoundBias)  0.3
+    # Lower Bound to add regularization Bias
+    set DTMRI(stream,LowerBoundBias)  0.2
+    # Magnitude of the correction bias
+    set DTMRI(stream,CorrectionBias)  0.5
+
+    # Set/Get the Minimum Step of integration
+    set DTMRI(stream,MinStep) 0.001
+    # Set/Get the Maximum Step of integration
+    set DTMRI(stream,MaxStep) 1.0
+    # Set/Get the Maximum Error per step of integration
+    set DTMRI(stream,MaxError) 0.000001
+
+    # Set/Get the Maximum Angle of a fiber
+    set DTMRI(stream,MaxAngle) 30
+
+    # Set/Get the length of the fiber when considering the maximum angle
+    set DTMRI(stream,LengthOfMaxAngle) 1
+
+
+    #------------------------------------
+    # Seeding (automatic from ROI)
+    #------------------------------------
+
+
+    #------------------------------------
+    # Display of (all) streamlines
+    #------------------------------------
+
     # whether we are currently displaying tracts
     set DTMRI(mode,visualizationType,tractsOn) 0n
     set DTMRI(mode,visualizationType,tractsOnList) {On Off Delete}
@@ -90,116 +228,13 @@ proc DTMRITractographyInit {} {
     set DTMRI(mode,visualizationTypeGuiList,tooltip) "Select from this menu\n and settings for each type\n of visualization will appear below."
 
 
-    # type of tract coloring
-    set DTMRI(mode,tractColor) SolidColor;
-    set DTMRI(mode,tractColorList) {SolidColor MultiColor}
-    set DTMRI(mode,tractColorList,tooltip) "Color tracts with a solid color \nOR MultiColor by scalars from the menu below."
 
 
-    #------------------------------------
-    # Variables for streamline display
-    #------------------------------------
-    # BSpline Orders
-    set DTMRI(stream,BSplineOrder) "3"
-    set DTMRI(stream,BSplineOrderList) {"0" "1" "2" "3" "4" "5"}
-    set DTMRI(stream,BSplineOrderList,tooltip) {"Order of the BSpline interpolation."}
 
-    # Method Orders
-    set DTMRI(stream,MethodOrder) "rk4"
-    set DTMRI(stream,MethodOrderList) {"rk2" "rk4" "rk45"}
-    set DTMRI(stream,MethodOrderList,tooltip) {"Order of the tractography"}
 
-    # type of tracting method
-    set DTMRI(stream,tractingMethod) NoSpline
-    set DTMRI(stream,tractingMethodList) {NoSpline BSpline }
-    set DTMRI(stream,tractingMethodList,tooltip) {"Method for interpolating signal"}
 
-    set DTMRI(stream,methodvariableList) [list UpperBoundBias LowerBoundBias CorrectionBias ]
 
-    set DTMRI(stream,methodvariableList,text) [list "High Fractional Anisotropy" "Low Fractional Anisotropy" "Correction Bias Magnitude" ]
 
-    set DTMRI(stream,methodvariableList,tooltips) [list \
-                               "Inferior bound for fractional anisotropy before adding a regularization bias"\
-                               "Lowest fractional anisotropy allowable for tractography"\
-                               "Magnitude of the correction bias added for tractography" ]
-    set DTMRI(stream,variableList) [list \
-                    MaximumPropagationDistance IntegrationStepLength \
-                    StepLength Radius  NumberOfSides MaxCurvature MinFractionalAnisotropy]
-    set DTMRI(stream,precisevariableList) [list \
-                           MaximumPropagationDistance MinimumPropagationDistance TerminalEigenvalue \
-                           IntegrationStepLength \
-                           StepLength Radius  NumberOfSides  \
-                           MaxStep MinStep MaxError MaxAngle LengthOfMaxAngle]
-    set DTMRI(stream,variableList,text) [list \
-                         "Max Length" "Step Size" \
-                         "Smoothness (along)" "Radius"  "Smoothness (around)" "Curvature Threshold" "FA Threshold"]
-    set DTMRI(stream,precisevariableList,text) [list \
-                            "Max Length" "Min Length" "Terminal Eigenvalue"\
-                            "Step Size" \
-                            "Smoothness (along)" "Radius"  "Smoothness (around)" \
-                            "Max Step" "Min Step" "Max Error" "Max Angle" "Length for Max Angle"]
-    set DTMRI(stream,variableList,tooltips) [list \
-                         "MaximumPropagationDistance: Tractography will stop after this distance" \
-                         "IntegrationStepLength: step size when following path" \
-                         "StepLength: Length of each displayed tube segment" \
-                         "Radius: Initial radius (thickness) of displayed tube" \
-                         "NumberOfSides: Number of sides of displayed tube" \
-                         "Curvature Threshold: Max curvature allowed in tracking"\
-                         "FA Threshold: If FA falls below this value, tracking stops"]
-    
-    set DTMRI(stream,precisevariableList,tooltips) [list \
-                            "MaximumPropagationDistance: Tractography will stop after this distance" \
-                            "MinimumPropagationDistance: Streamline will be rejected if total length is under this value" \
-                            "TerminalEigenvalue: Set minimum propagation speed"\
-                            "IntegrationStepLength: step size when following path" \
-                            "StepLength: Length of each displayed tube segment" \
-                            "Radius: Initial radius (thickness) of displayed tube" \
-                            "NumberOfSides: Number of sides of displayed tube" \
-                            "MaxStep: Maximum step size when following path" \
-                            "MinStep: Minimum step size when following path" \
-                            "MaxError: Maximum Error of each step" \
-                            "MaxAngle: Maximum Angle allowed per fiber" \
-                            "MaxError: Length of fiber when considering maximum angle" ]
-
-    # Upper Bound to add regularization Bias
-    set DTMRI(stream,UpperBoundBias)  0.3
-    # Lower Bound to add regularization Bias
-    set DTMRI(stream,LowerBoundBias)  0.2
-    # Magnitude of the correction bias
-    set DTMRI(stream,CorrectionBias)  0.5
-
-    set DTMRI(stream,MaximumPropagationDistance)  600.0
-    set DTMRI(stream,MinimumPropagationDistance)  30.0
-    # Terminal Eigenvalue
-    set DTMRI(stream,TerminalEigenvalue)  0.0
-    # nominal integration step size (expressed as a fraction of the
-    # size of each cell)  0.2 is default
-    set DTMRI(stream,IntegrationStepLength)  0.1
-    # Set/Get the Maximum Step of integration
-    set DTMRI(stream,MaxStep) 1.0
-    # Set/Get the Minimum Step of integration
-    set DTMRI(stream,MinStep) 0.001
-    # Set/Get the Maximum Error per step of integration
-    set DTMRI(stream,MaxError) 0.000001
-
-    # Set/Get the Maximum Angle of a fiber
-    set DTMRI(stream,MaxAngle) 30
-
-    # Set/Get the length of the fiber when considering the maximum angle
-    set DTMRI(stream,LengthOfMaxAngle) 1
-    # Set / get the length of a tube segment composing the
-    # hyperstreamline. The length is specified as a fraction of the
-    # diagonal length of the input bounding box.  0.01 is vtk default
-    set DTMRI(stream,StepLength)  0.005
-    # radius of (polydata) tube that is displayed
-    #set DTMRI(stream,Radius)  0.2 
-    set DTMRI(stream,Radius)  0.4
-    # sides of tube
-    #set DTMRI(stream,NumberOfSides)  4
-    set DTMRI(stream,NumberOfSides)  6
-    #set DTMRI(stream,MaxCurvature) 1.3
-    set DTMRI(stream,MaxCurvature) 1.15
-    set DTMRI(stream,MinFractionalAnisotropy) 0.07
     
      set DTMRI(activeStreamlineID) ""
     
