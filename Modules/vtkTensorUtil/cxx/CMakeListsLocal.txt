@@ -1,6 +1,15 @@
 # CMakeListsLocal.txt sample file.
 # Copy it to CMakeListsLocal.txt and edit to match your files.
 
+# Find ITK
+INCLUDE (${CMAKE_ROOT}/Modules/FindITK.cmake)
+
+# Use ITK.  This sets up include/link directories for us.
+IF (USE_ITK_FILE)
+  INCLUDE(${USE_ITK_FILE})
+ENDIF(USE_ITK_FILE)
+
+
 # The names of the source files for your module go here. Include
 # abstract files noted below in this list too. Do not include file
 # suffixes.
@@ -77,9 +86,17 @@ LINK_LIBRARIES (${VTKSLICERBASE_BUILD_LIB} ${VTKSLICERBASE_BUILD_TCL_LIB})
 # trailing suffix.
 # LINK_LIBRARIES (${LOCAL_LIBRARY_BASENAME} library_names_here)
 
-
 # Here's the rule to create the implementation C++ library.
 # It should happen in the CMakeLists.txt file that includes this one,
 # but because of a CMake bug that doesn't work.
 #
 ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} ${LOCAL_MODULE_SRCS})
+
+TARGET_LINK_LIBRARIES (
+${LOCAL_LIBRARY_BASENAME}
+ITKNumerics
+ITKCommon
+)
+
+ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} ${LOCAL_MODULE_SRCS})
+
