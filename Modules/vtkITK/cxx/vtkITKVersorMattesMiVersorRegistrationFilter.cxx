@@ -7,6 +7,8 @@ vtkITKVersorMattesMiVersorRegistrationFilter::vtkITKVersorMattesMiVersorRegistra
   LinkITKProgressToVTKProgress(m_ITKFilter);
   this->SetShrinkFactors(1,1,1);
   this->SetTranslateScale(0.001);
+  this->SetMinimumStepLength(0.0001);
+  this->SetMaximumStepLength(0.2);
 }
 
 void vtkITKVersorMattesMiVersorRegistrationFilter::CreateRegistrationPipeline()

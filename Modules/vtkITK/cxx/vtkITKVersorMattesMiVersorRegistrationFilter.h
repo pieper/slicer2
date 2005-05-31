@@ -5,6 +5,8 @@
 #ifndef __vtkITKVersorMattesMiVersorRegistrationFilter_h
 #define __vtkITKVersorMattesMiVersorRegistrationFilter_h
 
+#include <fstream>
+#include <string>
 
 #include "vtkITKTransformRegistrationFilter.h"
 #include "itkVersorMattesMiVersorRegistrationFilter.h"
@@ -53,6 +55,9 @@ public:
   virtual double GetMetricValue() {
     return  m_ITKFilter->GetMetricValue();
   }
+  void ReSeedSamples() {
+    m_ITKFilter->SetReinitializeSeed(8775070);
+  }
 
 protected:
 
@@ -84,7 +89,7 @@ private:
   void operator=(const vtkITKVersorMattesMiVersorRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKVersorMattesMiVersorRegistrationFilter, "$Revision: 1.4 $");
+//vtkCxxRevisionMacro(vtkITKVersorMattesMiVersorRegistrationFilter, "$Revision: 1.5 $");
 //vtkStandardNewMacro(vtkITKVersorMattesMiVersorRegistrationFilter);
 vtkRegistrationNewMacro(vtkITKVersorMattesMiVersorRegistrationFilter);
 

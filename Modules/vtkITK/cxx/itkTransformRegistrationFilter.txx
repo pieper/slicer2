@@ -163,7 +163,7 @@ template <class TOptimizerClass, class TTransformerClass, class TMetricClass >
 unsigned long 
 itk::itkTransformRegistrationFilter<TOptimizerClass, TTransformerClass, TMetricClass >::AddIterationObserver (itk::Command *observer ) 
 {
-  return m_Optimizer->AddObserver( itk::IterationEvent(), observer );
+  m_Optimizer->AddObserver( itk::IterationEvent(), observer );
   return m_Optimizer->AddObserver( itk::EndEvent(), observer );
 }
 

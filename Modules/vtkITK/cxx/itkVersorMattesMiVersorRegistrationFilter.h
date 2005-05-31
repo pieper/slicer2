@@ -48,6 +48,9 @@ public:
   itkGetMacro(NumberOfSpatialSamples, int);
   itkSetMacro(NumberOfSpatialSamples, int);
 
+  itkGetMacro(ReinitializeSeed, int);
+  itkSetMacro(ReinitializeSeed, int);
+
 protected:  
   virtual void SetOptimizerParamters();
   
@@ -59,6 +62,8 @@ protected:
   int m_NumberOfHistogramBins;
 
   int m_NumberOfSpatialSamples;
+
+  int m_ReinitializeSeed;
 
   // Default constructor
   itkVersorMattesMiVersorRegistrationFilter();

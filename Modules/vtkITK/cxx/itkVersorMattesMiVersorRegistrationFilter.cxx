@@ -6,6 +6,7 @@ itk::itkVersorMattesMiVersorRegistrationFilter::itkVersorMattesMiVersorRegistrat
   m_MaximumStepLength = 0.2;
   m_NumberOfHistogramBins = 256;
   m_NumberOfSpatialSamples = 100000;
+  m_ReinitializeSeed = 0;
 }
 
 
@@ -36,5 +37,8 @@ itk::itkVersorMattesMiVersorRegistrationFilter::SetMetricParamters()
 {
   m_Metric->SetNumberOfHistogramBins( m_NumberOfHistogramBins );
   m_Metric->SetNumberOfSpatialSamples( m_NumberOfSpatialSamples );
+  if (m_ReinitializeSeed > 0) {
+    m_Metric->ReinitializeSeed (m_ReinitializeSeed);
+  }
 }
 
