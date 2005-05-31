@@ -37,7 +37,6 @@
 # FILE:        DTMRITractography.tcl
 # PROCEDURES:  
 #   DTMRITractographyInit
-#   DTMRIRaiseMoreOptionsFrame mode
 #   DTMRITractographyBuildGUI
 #   DTMRISelectRemoveHyperStreamline x y z
 #   DTMRISelectChooseHyperStreamline x y z
@@ -214,25 +213,6 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set DTMRI(mode,autoTractsLabel,tooltip) "A tract will be seeded in each voxel of the ROI which is colored with this label."
 
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC DTMRIRaiseMoreOptionsFrame
-# 
-# .ARGS
-# string mode identifies the frame to raise
-# .END
-#-------------------------------------------------------------------------------
-proc DTMRIRaiseMoreOptionsFrame {mode} {
-    global DTMRI
-
-    raise $DTMRI(frame,$mode)
-    focus $DTMRI(frame,$mode)
-
-    set DTMRI(mode,visualizationTypeGui) $mode
-    # config menubutton
-    $DTMRI(gui,mbVisMode)    config -text $mode
 }
 
 
