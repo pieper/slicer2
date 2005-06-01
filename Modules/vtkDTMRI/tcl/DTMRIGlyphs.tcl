@@ -685,7 +685,7 @@ proc DTMRIUpdate {} {
         puts "masking by $DTMRI(mode,mask)"
 
         set thresh DTMRI(vtk,mask,threshold)    
-        $thresh ThresholdBetween $Label(label) $Label(label)
+        $thresh ThresholdBetween $DTMRI(MaskLabel) $DTMRI(MaskLabel)
         set v $DTMRI(MaskLabelmap)
         $thresh SetInput [Volume($v,vol) GetOutput]
 

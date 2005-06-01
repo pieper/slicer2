@@ -62,7 +62,11 @@ proc DTMRIMaskInit {} {
     # labelmap to use as mask
     set DTMRI(MaskLabelmap) $Volume(idNone)
     # label value indicating mask voxels
-    set DTMRI(maskLabel) $Label(label)
+    set DTMRI(MaskLabel) $DTMRI(defaultLabel)
+    # Name of this label/color
+    set DTMRI(MaskLabelName) ""
+    # Color ID corresponding to the label
+    set DTMRI(MaskLabelColorID) ""
 
 }
 
@@ -178,16 +182,16 @@ proc DTMRIMaskBuildGUI {} {
     eval {button $f.bOutput -text "Label:" \
           -command "ShowLabels DTMRIUpdateMaskLabelFromShowLabels"} $Gui(WBA)
     eval {entry $f.eOutput -width 6 \
-          -textvariable DTMRI(maskLabel)} $Gui(WEA)
+          -textvariable DTMRI(MaskLabel)} $Gui(WEA)
     bind $f.eOutput <Return>   "DTMRIUpdateMaskLabel"
-    bind $f.eOutput <FocusOut> "DTMRIUpdateMaskLabel"
     eval {entry $f.eName -width 14 \
-          -textvariable DTMRI(maskLabelName)} $Gui(WEA) \
+          -textvariable DTMRI(MaskLabelName)} $Gui(WEA) \
             {-bg $Gui(activeWorkspace) -state disabled}
     grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
     grid $f.eOutput $f.eName -sticky w
+    
     # save for changing color later
-    set DTMRI(maskLabelWidget) $f.eName
+    set DTMRI(MaskLabelWidget) $f.eName
     
     TooltipAdd  $f.bOutput $DTMRI(mode,maskLabel,tooltip)
     TooltipAdd  $f.eOutput $DTMRI(mode,maskLabel,tooltip)
@@ -207,20 +211,11 @@ proc DTMRIUpdateMaskLabel {} {
 
     global DTMRI
 
-    # display the color name and background color the GUI
-    set c [MainColorsGetColorFromLabel $DTMRI(maskLabel)]
-    if {$c == ""} {
-        # we don't have this color in the colormap for labels...
-    } else {
-        $DTMRI(maskLabelWidget) config -bg \
-            [MakeColorNormalized [Color($c,node) GetDiffuseColor]] \
-            -state normal
-        set DTMRI(maskLabelName) [Color($c,node) GetName]
-    }
+    DTMRIUpdateLabelWidget MaskLabel
 
     # this label becomes 1 in the mask
     set thresh DTMRI(vtk,mask,threshold)
-    $thresh ThresholdBetween $DTMRI(maskLabel) $DTMRI(maskLabel)
+    $thresh ThresholdBetween $DTMRI(MaskLabel) $DTMRI(MaskLabel)
 
     # Update pipelines
     Render3D
@@ -239,7 +234,7 @@ proc DTMRIUpdateMaskLabelFromShowLabels {} {
 
     LabelsFindLabel
 
-    set DTMRI(maskLabel) $Label(label)
+    set DTMRI(MaskLabel) $Label(label)
 
     DTMRIUpdateMaskLabel
 }

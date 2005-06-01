@@ -72,7 +72,7 @@
 #-------------------------------------------------------------------------------
 proc DTMRITractographyInit {} {
 
-    global DTMRI Volume
+    global DTMRI Volume Label
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -82,6 +82,13 @@ proc DTMRITractographyInit {} {
     set DTMRI(mode,tractColor) SolidColor;
     set DTMRI(mode,tractColorList) {SolidColor MultiColor}
     set DTMRI(mode,tractColorList,tooltip) "Color tracts with a solid color \nOR MultiColor by scalars from the menu below."
+    
+    # Label/color value for coloring tracts
+    set DTMRI(TractLabel) $DTMRI(defaultLabel)
+    # Name of this label/color
+    set DTMRI(TractLabelName) ""
+    # Color ID corresponding to the label
+    set DTMRI(TractLabelColorID) ""
 
 
     # types of tractography: subclasses of vtkHyperStreamline
@@ -210,6 +217,10 @@ proc DTMRITractographyInit {} {
 
     # Labelmap volume that gives input seed locations
     set DTMRI(ROILabelmap) $Volume(idNone)
+    # Label value indicating seed location
+    set DTMRI(ROILabel) $DTMRI(defaultLabel)
+    # Color value corresponding to the label
+    set DTMRI(ROILabelColorID) ""
 
     #------------------------------------
     # Tab 3: Display of (all) streamlines
@@ -357,14 +368,23 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
     set f $fSettings.fColors
 
-    DevAddButton $f.b "Color:" {ShowColors DTMRIUpdateTractColorToSolid}
-    eval {entry $f.e -width 20 \
-          -textvariable Label(name)} $Gui(WEA) \
+    # label/color for new tracts we create
+    eval {button $f.bOutput -text "Color:" -width 8 \
+              -command "ShowLabels DTMRIUpdateTractColorToSolidFromShowLabels"} $Gui(WBA)
+    eval {entry $f.eOutput -width 6 \
+          -textvariable DTMRI(TractLabel)} $Gui(WEA)
+    bind $f.eOutput <Return>   "DTMRIUpdateTractColorToSolid"
+    eval {entry $f.eName -width 14 \
+          -textvariable DTMRI(TractLabelName)} $Gui(WEA) \
             {-bg $Gui(activeWorkspace) -state disabled}
-    pack $f.b -side left -padx $Gui(pad) -pady $Gui(pad) -fill x
-    pack $f.e -side right -padx $Gui(pad) -pady $Gui(pad) -fill x
+    #grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
+    #grid $f.eOutput $f.eName -sticky w
+    pack $f.bOutput -padx $Gui(pad) -pady $Gui(pad) -side left
+    pack $f.eName $f.eOutput -padx $Gui(pad) -pady $Gui(pad) -side right
 
-    lappend Label(colorWidgetList) $f.e
+    # save for changing color later
+    set DTMRI(TractLabelWidget) $f.eName
+
 
     #-------------------------------------------
     # Tract->Notebook->Settings->TractingMethod frame
@@ -606,20 +626,20 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
     set f $fSeeding.fEntries.fChooseLabel.fLabel
     
-    # mask label
+    # label in input ROI for seeding
     eval {button $f.bOutput -text "Label:" \
-          -command "ShowLabels DTMRIUpdateMaskLabel"} $Gui(WBA)
+              -command "ShowLabels DTMRIUpdateROILabelWidgetFromShowLabels"} $Gui(WBA)
     eval {entry $f.eOutput -width 6 \
-          -textvariable Label(label)} $Gui(WEA)
-    bind $f.eOutput <Return>   "DTMRIUpdateMaskLabel"
-    bind $f.eOutput <FocusOut> "DTMRIUpdateMaskLabel"
+          -textvariable DTMRI(ROILabel)} $Gui(WEA)
+
+    bind $f.eOutput <Return>   "DTMRIUpdateLabelWidget ROILabel"
     eval {entry $f.eName -width 14 \
-          -textvariable Label(name)} $Gui(WEA) \
+          -textvariable DTMRI(ROILabelName)} $Gui(WEA) \
             {-bg $Gui(activeWorkspace) -state disabled}
     grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
     grid $f.eOutput $f.eName -sticky w
-    
-    lappend Label(colorWidgetList) $f.eName
+    # save for changing color later
+    set DTMRI(ROILabelWidget) $f.eName
 
     TooltipAdd  $f.bOutput $DTMRI(mode,autoTractsLabel,tooltip)
     TooltipAdd  $f.eOutput $DTMRI(mode,autoTractsLabel,tooltip)
@@ -1012,6 +1032,20 @@ proc DTMRIUpdateBSplineOrder { SplineOrder } {
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIUpdateTractColorToSolid {} {
+
+    # update the color and label numbers
+    DTMRIUpdateLabelWidget TractLabel
+
+    # update our pipeline
+    DTMRIUpdateTractColor SolidColor
+}
+
+proc DTMRIUpdateTractColorToSolidFromShowLabels {} {
+
+    # update the color and label numbers
+    DTMRIUpdateLabelWidgetFromShowLabels TractLabel
+
+    # update our pipeline
     DTMRIUpdateTractColor SolidColor
 }
 
@@ -1043,16 +1077,12 @@ proc DTMRIUpdateTractColor {{mode ""}} {
     switch $mode {
         "SolidColor" {
 
+            # Get the color calculated in UpdateLabelWidget procs
+            set c $DTMRI(TractLabelColorID)
+
             # display new mode while we are working...
             $DTMRI(gui,mbTractColor)    config -text $mode
 
-            # find color from the name we have saved; use 1st as default
-            set c [lindex $Color(idList) 1]
-            foreach id $Color(idList) {
-                if {[Color($id,node) GetName] == $Label(name)} {
-                    set c $id
-                }
-            }
             # set up properties of the new actors we will create
             set prop [DTMRI(vtk,streamlineControl) GetStreamlineProperty] 
             #$prop SetAmbient       [Color($c,node) GetAmbient]
@@ -1184,14 +1214,17 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
     # set mode to On (the Display Tracts button will go On)
     set DTMRI(mode,visualizationType,tractsOn) On
 
-    # make sure the settings are current
-    DTMRIUpdateTractColor
-    DTMRIUpdateStreamlineSettings
-    
     # set up the input segmented volume
     DTMRI(vtk,streamlineControl) SetInputROI [Volume($v,vol) GetOutput] 
-    DTMRI(vtk,streamlineControl) SetInputROIValue $Label(label)
+    DTMRI(vtk,streamlineControl) SetInputROIValue $DTMRI(ROILabel)
 
+    # color the streamlines like this ROI
+    set DTMRI(TractLabel) $DTMRI(ROILabel)
+    DTMRIUpdateTractColorToSolid
+
+    # make sure the settings are current
+    DTMRIUpdateStreamlineSettings
+    
     # Get positioning information from the MRML node
     # world space (what you see in the viewer) to ijk (array) space
     vtkTransform transform
@@ -1254,7 +1287,7 @@ proc DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI {{verbose 1}} {
     
     # set up the input segmented volume
     DTMRI(vtk,streamlineControl) SetInputROI [Volume($v,vol) GetOutput] 
-    DTMRI(vtk,streamlineControl) SetInputROIValue $Label(label)
+    DTMRI(vtk,streamlineControl) SetInputROIValue $DTMRI(ROILabel)
 
     DTMRI(vtk,streamlineControl) SetInputROIForIntersection \
         [Volume($v,vol) GetOutput] 
@@ -1322,7 +1355,7 @@ proc DTMRISeedStreamlinesEvenlyInMask {{verbose 1}} {
     
     # set up the input segmented volume
     DTMRI(vtk,streamlineControl) SetInputROI [Volume($v,vol) GetOutput] 
-    DTMRI(vtk,streamlineControl) SetInputROIValue $Label(label)
+    DTMRI(vtk,streamlineControl) SetInputROIValue $DTMRI(ROILabel)
 
     # Get positioning information from the MRML node
     # world space (what you see in the viewer) to ijk (array) space
@@ -1406,7 +1439,7 @@ proc DTMRISeedAndSaveStreamlinesFromSegmentation {{verbose 1}} {
 
     # set up the input segmented volume
     DTMRI(vtk,streamlineControl) SetInputROI [Volume($v,vol) GetOutput] 
-    DTMRI(vtk,streamlineControl) SetInputROIValue $Label(label)
+    DTMRI(vtk,streamlineControl) SetInputROIValue $DTMRI(ROILabel)
 
     # Get positioning information from the MRML node
     # world space (what you see in the viewer) to ijk (array) space
@@ -1471,7 +1504,7 @@ proc DTMRIFindStreamlinesThroughROI { {verbose 1} } {
     
     # set up the input segmented volume
     DTMRI(vtk,streamlineControl) SetInputROI [Volume($v,vol) GetOutput] 
-    DTMRI(vtk,streamlineControl) SetInputROIValue $Label(label)
+    DTMRI(vtk,streamlineControl) SetInputROIValue $DTMRI(ROILabel)
     DTMRI(vtk,streamlineControl) SetInputMultipleROIValues DTMRI(vtk,ListLabels)
     DTMRI(vtk,streamlineControl) SetConvolutionKernel DTMRI(vtk,convKernel)
 
@@ -1670,6 +1703,10 @@ proc DTMRISaveStreamlinesAsModel {{verbose "1"}} {
 
 }
 
+proc DTMRIUpdateROILabelWidgetFromShowLabels {} {
 
+    DTMRIUpdateLabelWidgetFromShowLabels ROILabel
+
+}
 
 

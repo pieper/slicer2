@@ -150,15 +150,9 @@ proc DTMRIInit {} {
     source "$env(SLICER_HOME)/Modules/vtkDTMRI/tcl/VTKObjectInspection.tcl"
     
     # List of all submodules (most are tcl files for tabs within this module)
+    #------------------------------------
     set DTMRI(submodulesList) "TensorRegistration ODF TractCluster Tractography Glyphs CalculateTensors CalculateScalars Mask Save"
     
-    # Source and Init all submodules
-    foreach mod $DTMRI(submodulesList) {
-        source [file join $env(SLICER_HOME)/Modules/vtkDTMRI/tcl DTMRI${mod}.tcl]
-        DTMRI${mod}Init
-    }
-    
-     
     # Module Summary Info
     #------------------------------------
     set m DTMRI
@@ -166,9 +160,10 @@ proc DTMRIInit {} {
     set Module($m,author) "Lauren O'Donnell"
     set Module($m,category) "Visualisation"
 
-    # version info
+    # Version info (just of this file, not submodule files)
+    #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.95 $} {$Date: 2005/06/01 00:29:18 $}]
+                  {$Revision: 1.96 $} {$Date: 2005/06/01 03:44:29 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -179,11 +174,9 @@ proc DTMRIInit {} {
     # Use these lines to add a second row of tabs
     set Module($m,row2List) "Scalars Regist TC Save ODF VTK"
     set Module($m,row2Name) "{Scalars} {Reg} {TC} {Save} {ODF} {VTK}"
-
     set Module($m,row2,tab) Scalars
     
-
-    
+  
     # Define Procedures
     #------------------------------------
     set Module($m,procGUI) DTMRIBuildGUI
@@ -200,8 +193,8 @@ proc DTMRIInit {} {
     #------------------------------------
     DTMRICreateBindings
 
-    #------------------------------------
-    # Developers panel variables
+
+    # Developers panel variables (possibly unused)
     #------------------------------------
     set DTMRI(devel,subdir) ""
     set DTMRI(devel,fileNamePoints) ""
@@ -219,6 +212,23 @@ proc DTMRIInit {} {
                 [lindex [lindex $tmp $row] $col]
         } 
     }
+
+
+    # Variables shared by submodules
+    #------------------------------------
+
+    # 3 is brain in the default colormap for labels in the slicer
+    set DTMRI(defaultLabel) 3
+
+
+    #------------------------------------
+    # Source and Init all submodules
+    #------------------------------------
+    foreach mod $DTMRI(submodulesList) {
+        source [file join $env(SLICER_HOME)/Modules/vtkDTMRI/tcl DTMRI${mod}.tcl]
+        DTMRI${mod}Init
+    }
+    
 
 }
 
@@ -275,8 +285,17 @@ proc DTMRIUpdateMRML {} {
 
     DevUpdateNodeSelectButton Volume DTMRI MaskLabelmap MaskLabelmap DevSelectNode 0 0 1 DTMRIUpdate
     DevUpdateNodeSelectButton Volume DTMRI ROILabelmap ROILabelmap DevSelectNode 0 0 1
-    DevUpdateNodeSelectButton Volume DTMRI ColorByVolume ColorByVolume DevSelectNode 0 0 0 DTMRIUpdateTractColor
-       
+    DevUpdateNodeSelectButton Volume DTMRI ColorByVolume ColorByVolume DevSelectNode 0 0 0 DTMRIUpdateTractColorToMulti
+
+
+    # Update label widgets.  This is because if the colormap changes,
+    # then the widget colors may have to change.
+    DTMRIUpdateLabelWidget ROILabel
+    DTMRIUpdateLabelWidget TractLabel
+    DTMRIUpdateLabelWidget MaskLabel
+
+
+
 }
 
 #-------------------------------------------------------------------------------
@@ -1368,3 +1387,48 @@ proc DTMRISetActive {t} {
 #     }
 }
 
+
+proc DTMRIUpdateLabelWidgetFromShowLabels {label} {
+
+    global Label DTMRI
+
+    # Get the output of the ShowLabels popup window.
+    # Label(label) is set to the selected number.
+    LabelsFindLabel
+
+    # Now this sets our local variable to the same value
+    set DTMRI($label) $Label(label)
+
+    DTMRIUpdateLabelWidget $label
+
+}
+
+
+proc DTMRIUpdateLabelWidget {label} {
+
+    global DTMRI
+
+    # new label value to use when updating
+    set labelValue $DTMRI($label)
+
+    # widget to update (name and color)
+    set widget $DTMRI(${label}Widget)
+    # label name variable to update
+    set labelName DTMRI(${label}Name)
+    # color value variable to update
+    set colorID DTMRI(${label}ColorID)
+
+    # display the color name and background color the GUI
+    set c [MainColorsGetColorFromLabel $labelValue]
+    set $colorID $c
+    if {$c == ""} {
+        # we don't have this color in the colormap for labels...
+    } else {
+        $widget config -bg \
+            [MakeColorNormalized [Color($c,node) GetDiffuseColor]] \
+            -state normal
+        set $labelName [Color($c,node) GetName]
+    }
+
+
+}
