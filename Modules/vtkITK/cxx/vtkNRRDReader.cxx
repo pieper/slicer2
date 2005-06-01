@@ -21,7 +21,7 @@
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.7 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.8 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -256,8 +256,7 @@ void vtkNRRDReader::ExecuteInformation()
      int kind =  nrrd->axis[i].kind;
      if (i < 3) {
        if (kind != nrrdKindSpace) {
-         vtkErrorMacro("Error reading " << this->GetFileName() << ": " << "dimension # " << i << " must be spacial");
-         return;
+         vtkWarningMacro("Reading " << this->GetFileName() << ": " << "dimension # " << i << " not labeled spatial");
        }
        // spacial dimesion
        dataExtent[2*i] = 0;
@@ -284,7 +283,7 @@ void vtkNRRDReader::ExecuteInformation()
        // assume this is data dimension
        // combine with the last spacial dimension
        if (kind == nrrdKindSpace) {
-         vtkErrorMacro("Error reading " << this->GetFileName() << ": " << "dimension # " << i << " must be not spacial");
+         vtkWarningMacro("Reading " << this->GetFileName() << ": " << "dimension # " << i << " should not be spatial");
          return;
        }
        dataExtent[2*(i-1)+1] =  nrrd->axis[i-1].size * nrrd->axis[i].size - 1;
