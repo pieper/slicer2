@@ -72,7 +72,7 @@
 #-------------------------------------------------------------------------------
 proc DTMRITractographyInit {} {
 
-    global DTMRI
+    global DTMRI Volume
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -208,6 +208,8 @@ proc DTMRITractographyInit {} {
     # Tab 2: Seeding (automatic from ROI)
     #------------------------------------
 
+    # Labelmap volume that gives input seed locations
+    set DTMRI(ROILabelmap) $Volume(idNone)
 
     #------------------------------------
     # Tab 3: Display of (all) streamlines
@@ -222,6 +224,9 @@ proc DTMRITractographyInit {} {
                                 "Clear all 'tracts'" ]
     # guard against multiple actor add/remove from GUI
     set DTMRI(vtk,streamline,actorsAdded) 1
+
+    # Non-labelmap volume that can be used for coloring tracts
+    set DTMRI(ColorByVolume) $Volume(idNone)
 
 
 
@@ -570,17 +575,13 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
     set f $fSeeding.fEntries.fVolume
 
-    # menu to select a volume: will set Volume(activeID)
-    set name MaskLabelmap
-    DevAddSelectButton  Volume $f $name "ROI Labelmap:" Grid \
+    # menu to select a volume: will set DTMRI(ROILabelmap)
+    # works with DevUpdateNodeSelectButton in UpdateMRML
+    set name ROILabelmap
+    DevAddSelectButton  DTMRI $f $name "ROI Labelmap:" Grid \
     "This labelmap will be used to seed tracts."\
     13
     
-    # Append these menus and buttons to lists 
-    # that get refreshed during UpdateMRML
-    lappend Volume(mbActiveList) $f.mb$name
-    lappend Volume(mActiveList) $f.mb$name.m
-
     #-------------------------------------------
     # Tract->Notebook->Seeding->Entries->ChooseLabel frame
     #-------------------------------------------
@@ -739,17 +740,12 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
     set f $fDisplay.fColorByVol
 
-    # menu to select a volume: will set Volume(activeID)
+    # menu to select a volume: will set DTMRI(ColorByVolume)
+    # works with DevUpdateNodeSelectButton in UpdateMRML
     set name ColorByVolume
-    DevAddSelectButton  Volume $f $name "Color by Volume:" Pack \
+    DevAddSelectButton  DTMRI $f $name "Color by Volume:" Pack \
     "First select Color by MultiColor, \nthen select the volume to use \nto color the tracts. \nFor example to color by FA, \ncreate the FA volume using the \n<More...> tab in this module, \nthen the <Scalars> tab.  \nThen select that volume from this list." \
     13
-    
-    # Append these menus and buttons to lists 
-    # that get refreshed during UpdateMRML
-    lappend Volume(mbActiveList) $f.mb$name
-    lappend Volume(mActiveList) $f.mb$name.m
-
 
 }
 
@@ -1072,7 +1068,7 @@ proc DTMRIUpdateTractColor {{mode ""}} {
             # put the volume we wish to color by as the Scalars field 
             # in the tensor volume.
             set t $Tensor(activeID)            
-            set v $Volume(activeID)
+            set v $DTMRI(ColorByVolume)
 
             # make sure they have the same extent
             set ext1 [[Tensor($t,data) GetOutput] GetWholeExtent]
@@ -1164,7 +1160,7 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
     global DTMRI Label Tensor Volume
 
     set t $Tensor(activeID)
-    set v $Volume(activeID)
+    set v $DTMRI(ROILabelmap)
 
     # make sure they are using a segmentation (labelmap)
     if {[Volume($v,node) GetLabelMap] != 1} {
@@ -1228,7 +1224,7 @@ proc DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI {{verbose 1}} {
     global DTMRI Label Tensor Volume
 
     set t $Tensor(activeID)
-    set v $Volume(activeID)
+    set v $DTMRI(ROILabelmap)
 
     # make sure they are using a segmentation (labelmap)
     if {[Volume($v,node) GetLabelMap] != 1} {
@@ -1296,7 +1292,7 @@ proc DTMRISeedStreamlinesEvenlyInMask {{verbose 1}} {
     global DTMRI Label Tensor Volume
 
     set t $Tensor(activeID)
-    set v $Volume(activeID)
+    set v $DTMRI(ROILabelmap)
 
     # make sure they are using a segmentation (labelmap)
     if {[Volume($v,node) GetLabelMap] != 1} {
@@ -1365,7 +1361,7 @@ proc DTMRISeedAndSaveStreamlinesFromSegmentation {{verbose 1}} {
     global DTMRI Label Tensor Volume
 
     set t $Tensor(activeID)
-    set v $Volume(activeID)
+    set v $DTMRI(ROILabelmap)
 
     # make sure they are using a segmentation (labelmap)
     if {[Volume($v,node) GetLabelMap] != 1} {
@@ -1444,7 +1440,7 @@ proc DTMRIFindStreamlinesThroughROI { {verbose 1} } {
     global DTMRI Label Tensor Volume
 
     set t $Tensor(activeID)
-    set v $Volume(activeID)
+    set v $DTMRI(ROILabelmap)
 
     # make sure they are using a segmentation (labelmap)
     if {[Volume($v,node) GetLabelMap] != 1} {
@@ -1673,6 +1669,7 @@ proc DTMRISaveStreamlinesAsModel {{verbose "1"}} {
     }
 
 }
+
 
 
 
