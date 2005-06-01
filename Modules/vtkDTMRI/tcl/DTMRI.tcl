@@ -55,6 +55,8 @@
 #   DTMRICalculateActorMatrix transform t
 #   DTMRICalculateIJKtoRASRotationMatrix transform t
 #   DTMRISetActive n
+#   DTMRIUpdateLabelWidgetFromShowLabels
+#   DTMRIUpdateLabelWidget
 #==========================================================================auto=
 
 
@@ -163,7 +165,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.96 $} {$Date: 2005/06/01 03:44:29 $}]
+                  {$Revision: 1.97 $} {$Date: 2005/06/01 04:08:03 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -1388,6 +1390,14 @@ proc DTMRISetActive {t} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIUpdateLabelWidgetFromShowLabels
+# Callback after ShowLabels window receives a label selection
+# from the user.  Calls DTMRIUpdateLabelWidget
+# after getting the Label(label) value set by the user.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIUpdateLabelWidgetFromShowLabels {label} {
 
     global Label DTMRI
@@ -1404,6 +1414,13 @@ proc DTMRIUpdateLabelWidgetFromShowLabels {label} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIUpdateLabelWidget
+# Update the color and color name of a label selection widget,
+# after receiving user input.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIUpdateLabelWidget {label} {
 
     global DTMRI

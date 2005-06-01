@@ -46,6 +46,8 @@
 #   DTMRIUpdateTractingMethod TractingMethod
 #   DTMRIUpdateBSplineOrder SplineOrder
 #   DTMRIUpdateTractColorToSolid
+#   DTMRIUpdateTractColorToSolidFromShowLabels
+#   DTMRIUpdateROILabelWidgetFromShowLabels
 #   DTMRIUpdateTractColorToMulti
 #   DTMRIUpdateTractColor mode
 #   DTMRIRemoveAllStreamlines
@@ -1040,6 +1042,14 @@ proc DTMRIUpdateTractColorToSolid {} {
     DTMRIUpdateTractColor SolidColor
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIUpdateTractColorToSolidFromShowLabels
+# Callback after ShowLabels window receives a label selection
+# from the user.  Gets this value from Label(label) and stores 
+# it as DTMRI(TractLabel).  Then calls DTMRIUpdateTractColorToSolid.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIUpdateTractColorToSolidFromShowLabels {} {
 
     # update the color and label numbers
@@ -1048,6 +1058,23 @@ proc DTMRIUpdateTractColorToSolidFromShowLabels {} {
     # update our pipeline
     DTMRIUpdateTractColor SolidColor
 }
+
+#-------------------------------------------------------------------------------
+# .PROC DTMRIUpdateROILabelWidgetFromShowLabels
+# Callback after ShowLabels window receives a label selection
+# from the user.  Calls DTMRIUpdateLabelWidgetFromShowLabels
+# with an argument (which is not possible to do directly as the
+# callback proc).
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc DTMRIUpdateROILabelWidgetFromShowLabels {} {
+
+    DTMRIUpdateLabelWidgetFromShowLabels ROILabel
+
+}
+
+
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRIUpdateTractColorToMulti
@@ -1702,11 +1729,4 @@ proc DTMRISaveStreamlinesAsModel {{verbose "1"}} {
     }
 
 }
-
-proc DTMRIUpdateROILabelWidgetFromShowLabels {} {
-
-    DTMRIUpdateLabelWidgetFromShowLabels ROILabel
-
-}
-
 
