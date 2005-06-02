@@ -318,7 +318,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.30 $} {$Date: 2005/06/02 18:14:45 $}]
+        {$Revision: 1.31 $} {$Date: 2005/06/02 22:20:39 $}]
 
 }
 
@@ -4028,75 +4028,196 @@ proc vtkFreeSurferReadersPlotPlotData { iID dID} {
     # false, so we won't try drawing it again.
     if { $vtkFreeSurferReaders(gPlot,$iID,state,bTryRegressionLine) } {
 
+        # init the variables
+        for  { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$dID,cClasses) } { incr nClass } {
+            if { $vtkFreeSurferReaders(gPlot,$dID,state,classes,$nClass,visible) } {
+            
+                set thisClass $vtkFreeSurferReaders(gGDF,$dID,classes,$nClass,label)
+                if {$::Module(verbose)} {
+                    puts "init vars thisClass = $thisClass"
+                }
+                set offsetArray($thisClass,N) 0
+                set offsetArray($thisClass,sumx) 0
+                set offsetArray($thisClass,sumy) 0
+                set offsetArray($thisClass,sumxx) 0
+                set offsetArray($thisClass,sumxy) 0
+                
+                set slopeArray($thisClass,N) 0
+                set slopeArray($thisClass,sumx) 0
+                set slopeArray($thisClass,sumy) 0
+                set slopeArray($thisClass,sumxx) 0
+                set slopeArray($thisClass,sumxy) 0
+            } 
+        }
+        # go through the subjects, adding the appropriate values on a per class basis
+        for {set sid 0} {$sid < $vtkFreeSurferReaders(gGDF,$dID,cSubjects)} {incr sid} {
+            set subjClass $vtkFreeSurferReaders(gGDF,$dID,subjects,$sid,nClass)
+            if {$vtkFreeSurferReaders(gPlot,$dID,state,classes,[vtkFreeSurferReadersGDFPlotGetClassIndexFromLabel $dID $subjClass],visible)} {
+                # get the subject's variable value and measurement
+                set x $vtkFreeSurferReaders(gGDF,$dID,subjects,$sid,variables,$labelid,value)
+                # measurement
+                set y [lindex [lindex $vtkFreeSurferReaders(gPlot,$iID,state,lPoints) $sid] 0]
 
-        if {$vtkFreeSurferReaders(gGDF,$dID,gd2mtx) == "doss"} {
-            puts "WARNING: not calculating regression line for different offset, same slope"
+            
+                incr offsetArray($subjClass,N)
+                set offsetArray($subjClass,sumx) [expr $offsetArray($subjClass,sumx) + $x]
+                set offsetArray($subjClass,sumy) [expr $offsetArray($subjClass,sumy) + $y]
+                set offsetArray($subjClass,sumxx) [expr $offsetArray($subjClass,sumxx) + ($x * $x)]
+                set offsetArray($subjClass,sumxy) [expr $offsetArray($subjClass,sumxy) + ($x * $y)]
+
+                incr slopeArray($subjClass,N) 
+                set slopeArray($subjClass,sumx) [expr $slopeArray($subjClass,sumx) + $x]
+                set slopeArray($subjClass,sumy) [expr $slopeArray($subjClass,sumy) + $y]
+                set slopeArray($subjClass,sumxx) [expr $slopeArray($subjClass,sumxx) + ($x * $x)]
+                set slopeArray($subjClass,sumxy) [expr $slopeArray($subjClass,sumxy) + ($x * $y)]
+            }
         }
 
-        for  { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$dID,cClasses) } { incr nClass } {
-        
-            if {$::Module(verbose)} { 
-                puts "Regression line: nClass = $nClass"
+        # if it's the same slope for all lines, calc that first
+        if {$vtkFreeSurferReaders(gGDF,$dID,gd2mtx) == "doss"} {
+            set slopeArray(N) 0
+            set slopeArray(sumx) 0
+            set slopeArray(sumy) 0
+            set slopeArray(sumxx) 0
+            set slopeArray(sumxy) 0
+            # sum together values from all classes
+            for  { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$dID,cClasses) } { incr nClass } {
+                if { $vtkFreeSurferReaders(gPlot,$dID,state,classes,$nClass,visible) }  {
+            
+                    set thisClass $vtkFreeSurferReaders(gGDF,$dID,classes,$nClass,label)
+                    set slopeArray(N) [expr $slopeArray(N) + $slopeArray($thisClass,N)]
+                    set slopeArray(sumx) [expr $slopeArray(sumx) + $slopeArray($thisClass,sumx)]
+                    set slopeArray(sumy) [expr $slopeArray(sumy) + $slopeArray($thisClass,sumy)]
+                    set slopeArray(sumxx) [expr $slopeArray(sumxx) + $slopeArray($thisClass,sumxx)]
+                    set slopeArray(sumxy) [expr $slopeArray(sumxy) + $slopeArray($thisClass,sumxy)]
+                }
             }
-            if { $vtkFreeSurferReaders(gPlot,$dID,state,classes,$nClass,visible) } {
-                
-                set nVar $vtkFreeSurferReaders(gPlot,$dID,state,nVariable)
-                set nSubjs $vtkFreeSurferReaders(gGDF,$dID,cSubjects)
+            if {$slopeArray(N) > 0} {
+                set slope [expr (($slopeArray(N) * $slopeArray(sumxy)) - ($slopeArray(sumx) * $slopeArray(sumy))) / ( ($slopeArray(N) * $slopeArray(sumxx)) - ($slopeArray(sumx)*$slopeArray(sumx)))]
+                if {$::Module(verbose)} {
+                    puts "Slope for all classes: N = $slopeArray(N), sumx = $slopeArray(sumx), sumy = $slopeArray(sumy), sumxx = $slopeArray(sumxx), sumxy = $slopeArray(sumxy)"
+                    puts "Got slope for all classes : $slope"
+                }
+            } else {
+                set slope 0
+            }
+        }
+
+        # now calculate the slope and offset for all classes
+        for  { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$dID,cClasses) } { incr nClass } {
+            if { $vtkFreeSurferReaders(gPlot,$dID,state,classes,$nClass,visible) }  {
                 set thisClass $vtkFreeSurferReaders(gGDF,$dID,classes,$nClass,label)
 
-                set cGood 0
-                if {$vtkFreeSurferReaders(gGDF,$dID,gd2mtx) == "dods"} {                    
-                    set sumxy 0
-                    set sumx 0
-                    set sumy 0
-                    set sumxx 0
+                # if it's a different slope for each class, calc it, otherwise use the already calcd slope
+                if {$vtkFreeSurferReaders(gGDF,$dID,gd2mtx) == "dods"} {
+                    if {$slopeArray($thisClass,N) > 0} {
+                        set slope [expr (($slopeArray(thisClass,N) * $slopeArray($thisClass,sumxy)) - ($slopeArray($thisClass,sumx) * $slopeArray($thisClass,sumy))) / ( ($slopeArray($thisClass,N) * $slopeArray($thisClass,sumxx)) - ($slopeArray($thisClass,sumx)*$slopeArray($thisClass,sumx)))] 
+                        if {$::Module(verbose)} {
+                            puts "Got slope $slope for class $thisClass"
+                        }
+                    } else {
+                        set slope 0
+                    }
                 } 
-                # for each subject 
-                for {set sid 0} {$sid < $vtkFreeSurferReaders(gGDF,$dID,cSubjects)} {incr sid} {
-                    # get the class 
-                    if {$vtkFreeSurferReaders(gGDF,$dID,subjects,$sid,nClass) == $thisClass} {
-                        # if it matches the one we're looking for
-                        # get the subject's variable value and measurement
-                        set x $vtkFreeSurferReaders(gGDF,$dID,subjects,$sid,variables,$labelid,value)
-                        # measurement
-                        set y [lindex [lindex $vtkFreeSurferReaders(gPlot,$iID,state,lPoints) $sid] 0]
-                 
-                        # add it to the offset/slope calc for this class
-                        if {$vtkFreeSurferReaders(gGDF,$dID,gd2mtx) == "dods"} {
-                            set sumxy [expr $sumxy + ($x * $y)]
-                            set sumx [expr $sumx + $x]
-                            set sumy [expr $sumy + $y]
-                            set sumxx [expr $sumxx + ($x * $x)]
+
+                if {$offsetArray($thisClass,N) > 0} {
+                    set offset  [expr (($offsetArray($thisClass,sumxx) * $offsetArray($thisClass,sumy)) - ($offsetArray($thisClass,sumx) * $offsetArray($thisClass,sumxy)))/(($offsetArray($thisClass,N) * $offsetArray($thisClass,sumxx)) - ($offsetArray($thisClass,sumx) * $offsetArray($thisClass,sumx)))]
+                    if {$::Module(verbose)} {
+                            puts "Got offset $offset for class $thisClass"
                         }
-                        incr cGood
-                        if {$::Module(verbose)} { puts "subject id = $sid x = $x y = $y" }
-                    }
+                    
+                } else {
+                    puts "Warning: offset for $thisClass hasn't got enough good points: $offsetArray($thisClass,N)"
+                    set offset 0
                 }
-                
-                
-                if { $cGood > 0 } {
-                    
-                    if {$vtkFreeSurferReaders(gGDF,$dID,gd2mtx) == "dods"} {
-                        if {$::Module(verbose)} { 
-                            puts "class $thisClass, sumx = $sumx, sumy = $sumy, cGood = $cGood, sumxx = $sumxx, sumxy = $sumxy"
-                        }
-                        set slope [expr (($cGood * $sumxy) - ($sumx * $sumy)) / ( ($cGood * $sumxx) - ($sumx*$sumx))]
-                        set offset [expr (($sumxx * $sumy) - ($sumx * $sumxy))/(($cGood * $sumxx) - ($sumx * $sumx))]
-                    
-                        set x1 $xmin
-                        set y1 [expr ($slope * $x1) + $offset]
-                        set x2 $xmax
-                        set y2 [expr ($slope * $x2) + $offset]
-                        if {$::Module(verbose)} { puts "class $thisClass, offset = $offset, slope = $slope (xmin $xmin, xmax $xmax)"} 
-                        $gw marker create line \
-                            -coords [list $x1 $y1 $x2 $y2] \
-                            -outline $vtkFreeSurferReaders(gGDF,$dID,classes,$nClass,color) \
-                            -dashes {5 5}
-                    }
-                }                
+
+                # now calculate the y values at the min and max x of the graph, and make a line between them
+                set x1 $xmin
+                set y1 [expr ($slope * $x1) + $offset]
+                set x2 $xmax
+                set y2 [expr ($slope * $x2) + $offset]
+                if {$::Module(verbose)} { puts "New way: class $thisClass, offset = $offset, slope = $slope (xmin $xmin, xmax $xmax)"} 
+                $gw marker create line \
+                    -coords [list $x1 $y1 $x2 $y2] \
+                    -outline $vtkFreeSurferReaders(gGDF,$dID,classes,$nClass,color) \
+                    -dashes {5 5}
+            }
+        }
+
+
+
+        if {$::Module(verbose)} { 
+
+            puts "\n\n\nTrying the old way"
+            if {$vtkFreeSurferReaders(gGDF,$dID,gd2mtx) == "doss"} {
+                puts "WARNING: not calculating regression line for different offset, same slope"
             }
 
-        }
+            for  { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$dID,cClasses) } { incr nClass } {
+        
+                if {$::Module(verbose)} { 
+                    puts "Regression line: nClass = $nClass"
+                }
+                if { $vtkFreeSurferReaders(gPlot,$dID,state,classes,$nClass,visible) } {
+                    
+                    set nVar $vtkFreeSurferReaders(gPlot,$dID,state,nVariable)
+                    set nSubjs $vtkFreeSurferReaders(gGDF,$dID,cSubjects)
+                    set thisClass $vtkFreeSurferReaders(gGDF,$dID,classes,$nClass,label)
+                    
+                    set cGood 0
+                    if {$vtkFreeSurferReaders(gGDF,$dID,gd2mtx) == "dods"} {                    
+                        set sumxy 0
+                        set sumx 0
+                        set sumy 0
+                        set sumxx 0
+                    } 
+                    # for each subject 
+                    for {set sid 0} {$sid < $vtkFreeSurferReaders(gGDF,$dID,cSubjects)} {incr sid} {
+                        # get the class 
+                        if {$vtkFreeSurferReaders(gGDF,$dID,subjects,$sid,nClass) == $thisClass} {
+                            # if it matches the one we're looking for
+                            # get the subject's variable value and measurement
+                            set x $vtkFreeSurferReaders(gGDF,$dID,subjects,$sid,variables,$labelid,value)
+                            # measurement
+                            set y [lindex [lindex $vtkFreeSurferReaders(gPlot,$iID,state,lPoints) $sid] 0]
+                            
+                            # add it to the offset/slope calc for this class
+                            if {$vtkFreeSurferReaders(gGDF,$dID,gd2mtx) == "dods"} {
+                                set sumxy [expr $sumxy + ($x * $y)]
+                                set sumx [expr $sumx + $x]
+                                set sumy [expr $sumy + $y]
+                                set sumxx [expr $sumxx + ($x * $x)]
+                            }
+                            incr cGood
+                            # if {$::Module(verbose)} { puts "subject id = $sid x = $x y = $y" }
+                        }
+                    }
+                
+                    if { $cGood > 0 } {
+                    
+                        if {$vtkFreeSurferReaders(gGDF,$dID,gd2mtx) == "dods"} {
+                            if {$::Module(verbose)} { 
+                                puts "class $thisClass, sumx = $sumx, sumy = $sumy, cGood = $cGood, sumxx = $sumxx, sumxy = $sumxy"
+                            }
+                            set slope [expr (($cGood * $sumxy) - ($sumx * $sumy)) / ( ($cGood * $sumxx) - ($sumx*$sumx))]
+                            set offset [expr (($sumxx * $sumy) - ($sumx * $sumxy))/(($cGood * $sumxx) - ($sumx * $sumx))]
+                            
+                            set x1 $xmin
+                            set y1 [expr ($slope * $x1) + $offset]
+                            set x2 $xmax
+                            set y2 [expr ($slope * $x2) + $offset]
+                            if {$::Module(verbose)} { puts "Original: class $thisClass, offset = $offset, slope = $slope (xmin $xmin, xmax $xmax)"} 
+                            $gw marker create line \
+                                -coords [list $x1 $y1 $x2 $y2] \
+                                -outline $vtkFreeSurferReaders(gGDF,$dID,classes,$nClass,color) \
+                                -dashes {5 5}
+                        }
+                    }                
+                }
+
+            }
+        } 
+        # end of trying it the old way
             
         if { $vtkFreeSurferReaders(gPlot,$iID,state,bTryRegressionLine) == 0 } { 
             break 
@@ -5475,7 +5596,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.30 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.31 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
