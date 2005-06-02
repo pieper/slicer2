@@ -84,7 +84,9 @@ vtkGDFReader::vtkGDFReader()
     
     this->defaultMarker = "plus";
     this->defaultColour = "blue";
-
+    this->defaultMarker2 = "cross";
+    this->defaultColour2 = "red";
+    
     this->ErrVal = "ERROR";
 }
 
@@ -148,6 +150,8 @@ int vtkGDFReader::ReadHeader(char *filename, int flag)
   char *subline;
 
   char tempString[1024];
+  bool usedDefaultMarker = false;
+  bool usedDefaultColour = false;
   
   vtkDebugMacro(<< "ReadHeader with filename " << filename << " and flag " << flag << "\n");
 
@@ -185,6 +189,7 @@ int vtkGDFReader::ReadHeader(char *filename, int flag)
   this->ClassesVec.clear();
   this->VariablesVec.clear();
   this->SubjectsVec.clear();
+
   
   // now read the values from the header and save them
   while (!feof(fp))
@@ -232,9 +237,24 @@ int vtkGDFReader::ReadHeader(char *filename, int flag)
                       vtkDebugMacro(<<"classes: got tempString: " << tempString << ", adding it to tmpVec ");
                   }
               }
-              // check to make sure that have a marker and a colour
-              if (tmpVec.size() < 2) tmpVec.push_back(this->defaultMarker);
-              if (tmpVec.size() < 3) tmpVec.push_back(this->defaultColour);
+              // check to make sure that have a marker and a colour, switch
+              // between the two defaults if not
+              if (tmpVec.size() < 2)
+              {
+                  if (!usedDefaultMarker) 
+                      tmpVec.push_back(this->defaultMarker);
+                  else
+                      tmpVec.push_back(this->defaultMarker2);
+                  usedDefaultMarker = !usedDefaultMarker;
+              }
+              if (tmpVec.size() < 3)
+              {
+                  if (!usedDefaultColour)
+                      tmpVec.push_back(this->defaultColour);
+                  else
+                      tmpVec.push_back(this->defaultColour2);
+                  usedDefaultColour = !usedDefaultColour;
+              }
               this->ClassesVec.push_back(tmpVec);
           }
           else if (strncasecmp(line, "MeasurementName", 15) == 0)
@@ -485,19 +505,20 @@ char *vtkGDFReader::GetNthSubjectClass(int n)
 }
 
 // the subject values start at the third entry in the subjects vec
-// and go for NumVariables entries
+// and go for NumVariables entries, so increment the n2 value by 2
 char *vtkGDFReader::GetNthSubjectNthValue(int n1, int n2)
 {
     vtkDebugMacro(<< "GetNthSubjectNthValue\n");
+    int nthIndex = n2 + 2;
     if (n1 < this->SubjectsVec.size())
     {
-        if (n2 < this->SubjectsVec[n1].size())
+        if (nthIndex < this->SubjectsVec[n1].size())
         {
-            return (char*)this->SubjectsVec[n1][n2].c_str();
+            return (char*)this->SubjectsVec[n1][nthIndex].c_str();
         }
         else
         {
-            vtkErrorMacro(<<"ERROR: GetNthSubjectNthValue " << n2 << " is greater than subject " << n1 << "'s vector size " << this->SubjectsVec[n1].size());
+            vtkErrorMacro(<<"ERROR: GetNthSubjectNthValue " << nthIndex << " is greater than subject " << n1 << "'s vector size " << this->SubjectsVec[n1].size() << "(increment n2 by 2 to skip subject name and class)");
             return this->ErrVal;
         }
     }

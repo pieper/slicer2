@@ -240,6 +240,9 @@ private:
 //BTX
     string defaultMarker;
     string defaultColour;
+    // in case have two cases of no set markers
+    string defaultMarker2;
+    string defaultColour2;
 
     // use a vector to hold the class name, marker, colour (last two optional)
     std::vector<std::vector<std::string> >ClassesVec;
