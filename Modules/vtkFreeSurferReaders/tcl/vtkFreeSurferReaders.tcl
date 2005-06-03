@@ -318,7 +318,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.31 $} {$Date: 2005/06/02 22:20:39 $}]
+        {$Revision: 1.32 $} {$Date: 2005/06/03 21:20:47 $}]
 
 }
 
@@ -3818,7 +3818,7 @@ proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
 # from scratch.
 # .ARGS
 # int iID the id of the vertex to plot
-# int dID the id of the data file to plot
+# int dID the id of the data file to plot, can be found in $::vtkFreeSurferReaders(gGDF,dataID)
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersPlotPlotData { iID dID} {
@@ -5037,7 +5037,7 @@ proc vtkFreeSurferReadersPlotApply {} {
     # get the model id of the active model (assume that the linking still works), otherwise
     # need to figure out which of $Model(idList) is $modelname
     set mid $::Model(activeID)
-    set vtkFreeSurferReaders(plot,$dataID,modelID) $mid
+    set vtkFreeSurferReaders(plot,$vtkFreeSurferReaders(gGDF,dataID),modelID) $mid
 
     # set it to be pickable
     ::Model($mid,actor,viewRen) SetPickable 1
@@ -5055,6 +5055,7 @@ proc vtkFreeSurferReadersPlotApply {} {
     vtkFreeSurferReadersGDFPlotBuildWindow $vtkFreeSurferReaders(gGDF,dataID)
 
     # and plot stuff by setting the mode to the default
+    set vtkFreeSurferReaders(gPlot,$vtkFreeSurferReaders(gGDF,dataID),state,nVariable) 0
     vtkFreeSurferReadersPlotSetMode $vtkFreeSurferReaders(gGDF,dataID)
 
     return $vtkFreeSurferReaders(gGDF,dataID)
@@ -5596,7 +5597,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.31 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.32 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
