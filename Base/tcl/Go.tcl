@@ -110,6 +110,7 @@ set Module(verbose) 0
 set SLICER(load-dicom) ""
 set SLICER(crystal-eyes-stereo) "false"
 set SLICER(old-voxel-shift) "false"
+set SLICER(immediateMode) "false"
 set SLICER(load-analyze) ""
 set SLICER(load-freesurfer-volume) ""
 set SLICER(load-freesurfer-label-volume) ""
@@ -209,6 +210,9 @@ for {set i 0} {$i < $argc} {incr i} {
         }
         "--old-voxel-shift" {
             set SLICER(old-voxel-shift) "true"
+        }
+        "--immediate-mode" {
+            set SLICER(immediateMode) "true"
         }
         "--script" {
             incr i
@@ -387,11 +391,17 @@ if { $::SLICER(old-voxel-shift) == "true" } {
     _dummy_node Delete
 }
 
+
 ## TODO - this is needed to avoid long model loading times on the mac
 # it may go away with future updates to mac osx opengl display lists
 catch "pdm_dummy Delete"
 vtkPolyDataMapper pdm_dummy
-pdm_dummy GlobalImmediateModeRenderingOn
+if {$tcl_platform(os) == "Darwin" || $::SLICER(immediateMode) == "true"} {
+    pdm_dummy GlobalImmediateModeRenderingOn
+puts "Immediate Mode Rendering == ON, may be slower"
+} else {
+    pdm_dummy GlobalImmediateModeRenderingOff
+}
 pdm_dummy Delete
 
 
@@ -779,7 +789,7 @@ if { $SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.88 2005/04/29 22:32:29 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.89 2005/06/06 20:20:16 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
