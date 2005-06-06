@@ -11,7 +11,7 @@
 #if defined(WIN32) && !defined(VTKREALIGNRESAMPLE_STATIC)
 #pragma warning ( disable : 4275 )
 
-#if defined(vtk@Modulename@_EXPORTS)
+#if defined(vtkRealignResample_EXPORTS)
 #define VTK_REALIGNRESAMPLE_EXPORT __declspec( dllexport ) 
 #else
 #define VTK_REALIGNRESAMPLE_EXPORT __declspec( dllimport ) 
