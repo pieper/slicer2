@@ -52,7 +52,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define volumeBox 3
 
 #ifndef VTK_IMPLEMENT_MESA_CXX
-vtkCxxRevisionMacro(vtkOpenGLVolumeTextureMapper3D, "$Revision: 1.16 $");
+vtkCxxRevisionMacro(vtkOpenGLVolumeTextureMapper3D, "$Revision: 1.17 $");
 vtkStandardNewMacro(vtkOpenGLVolumeTextureMapper3D);
 #endif
 
@@ -66,10 +66,17 @@ PFNGLTEXSUBIMAGE3DEXTPROC glTexSubImage3DEXT_pointer;
 PFNGLCOLORTABLEEXTPROC glColorTableEXT_pointer;
 PFNGLCOLORTABLEPROC glColorTableNOT_EXT_pointer;
 #else
+#if defined(sun) || defined(__sun)
+#define glTexImage3DEXT_pointer glTexImage3DEXT
+#define glTexSubImage3DEXT_pointer glTexSubImage3DEXT
+#define glColorTableEXT_pointer glColorTableSGI
+#define glColorTableNOT_EXT_pointer glColorTableNOT_EXT
+#else
 #define glTexImage3DEXT_pointer glTexImage3DEXT
 #define glTexSubImage3DEXT_pointer glTexSubImage3DEXT
 #define glColorTableEXT_pointer glColorTableEXT
 #define glColorTableNOT_EXT_pointer glColorTableNOT_EXT
+#endif
 #endif
 
 int intersectionPlanes[12][4] ={0, 1, 0, 1,
