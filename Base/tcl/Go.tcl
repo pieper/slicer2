@@ -96,6 +96,7 @@ proc Usage { {msg ""} } {
     set msg "$msg\n   --all-info : print out all of the version info and continue"
     set msg "$msg\n   --enable-stereo : set the flag to allow use of frame sequential stereo"
     set msg "$msg\n   --old-voxel-shift : start slicer with voxel coords in corner not center of image pixel"
+    set msg "$msg\n   --immediate-mode : turn on immediate mode rendering (slower)"
     puts stderr $msg
     tk_messageBox -message $msg -title $SLICER(version) -type ok
 }
@@ -110,7 +111,7 @@ set Module(verbose) 0
 set SLICER(load-dicom) ""
 set SLICER(crystal-eyes-stereo) "false"
 set SLICER(old-voxel-shift) "false"
-set SLICER(immediateMode) "false"
+set SLICER(immediate-mode) "false"
 set SLICER(load-analyze) ""
 set SLICER(load-freesurfer-volume) ""
 set SLICER(load-freesurfer-label-volume) ""
@@ -212,7 +213,7 @@ for {set i 0} {$i < $argc} {incr i} {
             set SLICER(old-voxel-shift) "true"
         }
         "--immediate-mode" {
-            set SLICER(immediateMode) "true"
+            set SLICER(immediate-mode) "true"
         }
         "--script" {
             incr i
@@ -396,9 +397,8 @@ if { $::SLICER(old-voxel-shift) == "true" } {
 # it may go away with future updates to mac osx opengl display lists
 catch "pdm_dummy Delete"
 vtkPolyDataMapper pdm_dummy
-if {$tcl_platform(os) == "Darwin" || $::SLICER(immediateMode) == "true"} {
+if {$tcl_platform(os) == "Darwin" || $::SLICER(immediate-mode) == "true"} {
     pdm_dummy GlobalImmediateModeRenderingOn
-puts "Immediate Mode Rendering == ON, may be slower"
 } else {
     pdm_dummy GlobalImmediateModeRenderingOff
 }
@@ -789,7 +789,7 @@ if { $SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.89 2005/06/06 20:20:16 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.90 2005/06/06 20:24:12 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
