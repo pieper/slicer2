@@ -61,6 +61,8 @@ vtkImageMeasureVoxels* vtkImageMeasureVoxels::New()
 vtkImageMeasureVoxels::vtkImageMeasureVoxels()
 {  
   this->FileName = NULL;
+  this->Result = vtkFloatArray::New();
+  this->Result->SetNumberOfComponents(2);
 }
 
 //----------------------------------------------------------------------------
@@ -70,6 +72,8 @@ vtkImageMeasureVoxels::~vtkImageMeasureVoxels()
     {
       delete [] this->FileName;
     }
+    
+  this->Result->Delete();  
 }
 
 //----------------------------------------------------------------------------
@@ -82,6 +86,7 @@ static void vtkImageMeasureVoxelsExecute(vtkImageMeasureVoxels *self,
   int idxR, idxY, idxZ;
   int maxY, maxZ;
   int IncX, IncY, IncZ;
+  int tuple = 0;
   int rowLength;
   int extent[6];
   int label;
@@ -138,6 +143,7 @@ static void vtkImageMeasureVoxelsExecute(vtkImageMeasureVoxels *self,
   voxelVolume = dimension[0]*dimension[1]*dimension[2]/1000.0;
   // printf("dimensions: %f %f %f, vol: %f \n", dimension[0], dimension[1], dimension[2], voxelVolume);
 
+  self->GetResult()->Initialize();
   // Loop through histogram pixels (really histogram is 1D, only X matters.)
   for (idxZ = 0; idxZ <= maxZ; idxZ++)
     {
@@ -172,14 +178,17 @@ static void vtkImageMeasureVoxelsExecute(vtkImageMeasureVoxels *self,
         file.width(15);
         file << vol2 << "\n" ;
         // << End of modifications 7/27/01
-          }
+        self->GetResult()->InsertComponent(tuple,0,label);
+    self->GetResult()->InsertComponent(tuple,1,volume);
+    tuple++;
+      }
         histPtr++;
       }
     histPtr += IncY;
       }
     histPtr += IncZ;
     }
-
+  self->GetResult()->Squeeze();
   file.close();
 }
 

@@ -48,6 +48,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
+#include "vtkFloatArray.h"
 
 #ifndef vtkFloatingPointType
 #define vtkFloatingPointType float
@@ -64,6 +65,8 @@ public:
   // Set/Get the filename where the measurements will be written
   vtkSetStringMacro(FileName);
   vtkGetStringMacro(FileName);
+  
+  vtkGetObjectMacro(Result,vtkFloatArray);
 
 protected:
   vtkImageMeasureVoxels();
@@ -72,7 +75,7 @@ protected:
   void operator=(const vtkImageMeasureVoxels&) {};
 
   char *FileName;
-
+  vtkFloatArray *Result;
   void ExecuteData(vtkDataObject *);
 };
 
