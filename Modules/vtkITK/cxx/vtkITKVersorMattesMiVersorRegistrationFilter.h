@@ -29,18 +29,68 @@ public:
   vtkSetMacro(TranslateScale, double);
   vtkGetMacro(TranslateScale, double);
 
-  vtkSetMacro(MinimumStepLength, double);
-  vtkGetMacro(MinimumStepLength, double);
+  // Description
+  // The Max Number of Iterations at each multi-resolution level.
+  vtkSetObjectMacro(MaxNumberOfIterations,vtkUnsignedIntArray);
+  vtkGetObjectMacro(MaxNumberOfIterations,vtkUnsignedIntArray);
 
-  vtkSetMacro(MaximumStepLength, double);
-  vtkGetMacro(MaximumStepLength, double);
+
+  vtkSetObjectMacro(MinimumStepLength, vtkDoubleArray);
+  vtkGetObjectMacro(MinimumStepLength, vtkDoubleArray);
+
+  vtkSetObjectMacro(MaximumStepLength, vtkDoubleArray);
+  vtkGetObjectMacro(MaximumStepLength, vtkDoubleArray);
+
+  // Description:
+  // Set the number of sample points for density estimation
+  vtkSetMacro(NumberOfSamples, int);
+  vtkGetMacro(NumberOfSamples, int);
+
+  // Description:
+  // Set the number of bins for density estimation
+  vtkSetMacro(NumberOfHistogramBins, int);
+  vtkGetMacro(NumberOfHistogramBins, int);
 
 
-  void SetShrinkFactors(unsigned int i,
-                        unsigned int j, 
-                        unsigned int k);
-  unsigned int GetShrinkFactors(const int &dir)
-  { return ShrinkFactors[dir]; }
+  // Description:
+  // Reset the Multiresolution Settings
+  // It blanks the Min/Max Step and NumberOfIterations
+  void ResetMultiResolutionSettings()
+  { MinimumStepLength->Reset(); 
+    MaxNumberOfIterations->Reset();
+    MaximumStepLength->Reset(); };
+  
+  // Description:
+  // Set the min step for the algorithm.
+  void SetNextMinimumStepLength(const double step)
+  { MinimumStepLength->InsertNextValue(step); };
+
+  // Description:
+  // Set the max step for the algorithm.
+  void SetNextMaximumStepLength(const double step)
+  { MaximumStepLength->InsertNextValue(step); };
+
+  // Description:
+  // Set the max number of iterations at each level
+  // Generally less than 5000, 2500 is OK.
+  // Must set the same number of Learning Rates as Iterations
+  void SetNextMaxNumberOfIterations(const int num)
+  { MaxNumberOfIterations->InsertNextValue(num); };
+
+
+  void SetSourceShrinkFactors(unsigned int i,
+                              unsigned int j, 
+                              unsigned int k);
+
+  void SetTargetShrinkFactors(unsigned int i,
+                              unsigned int j, 
+                              unsigned int k);
+
+  unsigned int GetSourceShrinkFactors(const int &dir)
+  { return SourceShrink[dir]; }
+
+  unsigned int GetTargetShrinkFactors(const int &dir)
+  { return TargetShrink[dir]; }
   
   virtual void GetTransformationMatrix(vtkMatrix4x4* matrix);
   
@@ -52,6 +102,11 @@ public:
     m_ITKFilter->AbortIterations();
   };
 
+
+  void SetAbort(int abort) {
+    m_ITKFilter->AbortIterations();
+  }
+
   virtual double GetMetricValue() {
     return  m_ITKFilter->GetMetricValue();
   }
@@ -59,15 +114,24 @@ public:
     m_ITKFilter->SetReinitializeSeed(8775070);
   }
 
+  int GetCurrentLevel() { return m_ITKFilter->GetCurrentLevel();};
+
 protected:
 
   double TranslateScale;
 
-  double MinimumStepLength;
+  vtkUnsignedIntArray  *MaxNumberOfIterations;
 
-  double MaximumStepLength;
+  vtkDoubleArray       *MinimumStepLength;
 
-  unsigned int ShrinkFactors[3];
+  vtkDoubleArray       *MaximumStepLength;
+
+  int NumberOfHistogramBins;
+
+  int NumberOfSamples;
+
+  unsigned int SourceShrink[3];
+  unsigned int TargetShrink[3];
   //BTX
 
   itk::itkVersorMattesMiVersorRegistrationFilter::Pointer m_ITKFilter;
@@ -89,7 +153,7 @@ private:
   void operator=(const vtkITKVersorMattesMiVersorRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKVersorMattesMiVersorRegistrationFilter, "$Revision: 1.5 $");
+//vtkCxxRevisionMacro(vtkITKVersorMattesMiVersorRegistrationFilter, "$Revision: 1.6 $");
 //vtkStandardNewMacro(vtkITKVersorMattesMiVersorRegistrationFilter);
 vtkRegistrationNewMacro(vtkITKVersorMattesMiVersorRegistrationFilter);
 
@@ -125,16 +189,16 @@ protected:
   std::ofstream m_fo;
 
   typedef itk::VersorRigid3DTransformOptimizer     OptimizerType;
-  typedef   const OptimizerType   *    OptimizerPointer;
+  typedef OptimizerType   *    OptimizerPointer;
 
 public:
   
-  virtual void Execute(itk::Object *caller, const itk::EventObject & event)
+  virtual void Execute(const itk::Object *caller, const itk::EventObject & event)
   {
-    Execute( (const itk::Object *)caller, event);
+    Execute( ( itk::Object *)caller, event);
   }
   
-  virtual void Execute(const itk::Object * object, const itk::EventObject & event)
+  virtual void Execute( itk::Object * object, const itk::EventObject & event)
   {
 
     OptimizerPointer optimizer = 
@@ -170,17 +234,27 @@ public:
       return;
     }
     int iter = m_registration->GetCurrentIteration();
+    unsigned int level = m_registration->GetCurrentLevel();
+
+    /*
+    int numIter = m_registration->GetMaxNumberOfIterations()->GetValue(level);
+    double maxStep  = m_registration->GetMaximumStepLength()->GetValue(level); 
+    double minStep =  m_registration->GetMinimumStepLength()->GetValue(level);
+    optimizer->SetNumberOfIterations( numIter );
+    optimizer->SetMaximumStepLength( maxStep);
+    optimizer->SetMinimumStepLength( minStep);
+    */
     
     vtkMatrix4x4 *mat = vtkMatrix4x4::New();
     m_registration->GetCurrentTransformationMatrix(mat);
 
-    if (m_fo.good()) {
-      m_fo << "ITERATION =" << optimizer->GetCurrentIteration() << "   " << std::endl;
+    //if (m_fo.good()) {
+      m_fo << "  ITERATION =" << optimizer->GetCurrentIteration() << "   " << std::endl;
       mat->Print(m_fo);
       m_fo << "Value=" << optimizer->GetValue() << "   ";
       m_fo << "Position=" << optimizer->GetCurrentPosition() << std::endl;
       m_fo.flush();
-    }
+   // }
     m_registration->InvokeEvent(vtkCommand::ProgressEvent);
     
     m_registration->SetCurrentIteration(iter+1);

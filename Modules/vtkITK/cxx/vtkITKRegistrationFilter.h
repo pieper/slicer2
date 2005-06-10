@@ -75,10 +75,17 @@ public:
   };
 
   // Description:
+  // Set Fixed Input
+  void SetFixedInput(vtkImageData *Input)
+  {
+    this->SetInput(Input, 0);
+  };
+
+  // Description:
   // Set Moving Input
   void SetMovingInput(vtkImageData *Input)
   {
-    this->vtkCastMoving->SetInput(Input);
+    this->SetInput(Input, 1);
   };
 
 protected:
@@ -135,7 +142,7 @@ private:
   void operator=(const vtkITKRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKRegistrationFilter, "$Revision: 1.1 $");
+//vtkCxxRevisionMacro(vtkITKRegistrationFilter, "$Revision: 1.2 $");
 //vtkStandardNewMacro(vtkITKRegistrationFilter);
 
 #endif

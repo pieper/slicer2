@@ -1,14 +1,25 @@
 #include "vtkITKVersorMattesMiVersorRegistrationFilter.h"
 typedef itk::Array<unsigned int> UnsignedIntArray;
+typedef itk::Array<double> DoubleArray;
 
 vtkITKVersorMattesMiVersorRegistrationFilter::vtkITKVersorMattesMiVersorRegistrationFilter()
 {
   m_ITKFilter = itk::itkVersorMattesMiVersorRegistrationFilter::New();
   LinkITKProgressToVTKProgress(m_ITKFilter);
-  this->SetShrinkFactors(1,1,1);
+  this->SetSourceShrinkFactors(1,1,1);
+  this->SetTargetShrinkFactors(1,1,1);
   this->SetTranslateScale(0.001);
-  this->SetMinimumStepLength(0.0001);
-  this->SetMaximumStepLength(0.2);
+
+  this->MinimumStepLength = vtkDoubleArray::New();
+  this->MaximumStepLength = vtkDoubleArray::New();
+  this->MaxNumberOfIterations = vtkUnsignedIntArray::New();
+
+  // Default Number of MultiResolutionLevels is 1
+  this->SetNextMaxNumberOfIterations(100);
+  this->SetNextMinimumStepLength(0.0001);
+  this->SetNextMaximumStepLength(0.2);
+  this->SetNumberOfSamples(100);
+  this->SetNumberOfHistogramBins(256);
 }
 
 void vtkITKVersorMattesMiVersorRegistrationFilter::CreateRegistrationPipeline()
@@ -28,13 +39,27 @@ void
 vtkITKVersorMattesMiVersorRegistrationFilter::UpdateRegistrationParameters()
 {
   itk::itkVersorMattesMiVersorRegistrationFilter* filter = static_cast<itk::itkVersorMattesMiVersorRegistrationFilter *> (m_ITKFilter);
-  UnsignedIntArray numberOfIterations = UnsignedIntArray(1);
-  numberOfIterations.Fill(this->GetNumIterations());
-  filter->SetNumberOfIterations(numberOfIterations);
+
   filter->SetTranslationScale(this->GetTranslateScale());
-  filter->SetShrinkFactors(this->ShrinkFactors);
-  filter->SetMinimumStepLength(this->GetMinimumStepLength());
-  filter->SetMaximumStepLength(this->GetMaximumStepLength());
+  filter->SetMovingImageShrinkFactors(this->SourceShrink);
+  filter->SetFixedImageShrinkFactors(this->TargetShrink);
+
+  DoubleArray      MinimumStepLength(this->GetMinimumStepLength()->GetNumberOfTuples());
+  DoubleArray      MaximumStepLength(this->GetMaximumStepLength()->GetNumberOfTuples());
+  UnsignedIntArray NumIterations(this->GetMaxNumberOfIterations()->GetNumberOfTuples());
+
+
+  for(int i=0; i< this->GetMaxNumberOfIterations()->GetNumberOfTuples();i++) {
+    MinimumStepLength[i]    = this->GetMinimumStepLength()->GetValue(i);
+    MaximumStepLength[i]    = this->GetMaximumStepLength()->GetValue(i);
+    NumIterations[i] = this->GetMaxNumberOfIterations()->GetValue(i);
+  }
+  filter->SetNumberOfLevels(this->GetMaxNumberOfIterations()->GetNumberOfTuples());
+  filter->SetMinimumStepLength(MinimumStepLength);
+  filter->SetMaximumStepLength(MaximumStepLength);
+  filter->SetNumberOfIterations(NumIterations);
+  filter->SetNumberOfSpatialSamples(NumberOfSamples);
+  filter->SetNumberOfHistogramBins(NumberOfHistogramBins);
 }
 
 vtkITKRegistrationFilter::OutputImageType::Pointer vtkITKVersorMattesMiVersorRegistrationFilter::GetTransformedOutput()
@@ -138,12 +163,21 @@ vtkITKVersorMattesMiVersorRegistrationFilter::SetTransformationMatrix(vtkMatrix4
 
 
 void 
-vtkITKVersorMattesMiVersorRegistrationFilter::SetShrinkFactors(unsigned int i,
-                                                               unsigned int j, 
-                                                               unsigned int k)
+vtkITKVersorMattesMiVersorRegistrationFilter::SetSourceShrinkFactors(unsigned int i,
+                                                                     unsigned int j, 
+                                                                     unsigned int k)
 {
-  ShrinkFactors[0] = i;
-  ShrinkFactors[1] = j;
-  ShrinkFactors[2] = k;
+  SourceShrink[0] = i;
+  SourceShrink[1] = j;
+  SourceShrink[2] = k;
+} //vtkITKVersorMattesMiVersorRegistrationFilter
 
+void 
+vtkITKVersorMattesMiVersorRegistrationFilter::SetTargetShrinkFactors(unsigned int i,
+                                                                     unsigned int j, 
+                                                                     unsigned int k)
+{
+  TargetShrink[0] = i;
+  TargetShrink[1] = j;
+  TargetShrink[2] = k;
 } //vtkITKVersorMattesMiVersorRegistrationFilter

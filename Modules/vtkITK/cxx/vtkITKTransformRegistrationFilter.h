@@ -8,8 +8,12 @@
 
 #include "vtkITKRegistrationFilter.h"
 #include "itkTransformRegistrationFilter.h"
+#include "vtkProcessObject.h"
+#include "vtkDoubleArray.h"
+#include "vtkImageData.h"
+#include "vtkUnsignedIntArray.h"
 #include "vtkMatrix4x4.h"
-
+#include "vtkUnsignedIntArray.h"
 
 ///////////////////////////
 
@@ -39,6 +43,31 @@ public:
 
   virtual double GetMetricValue() {return 0;};
 
+  // for compatibility with other modules:
+
+  void Initialize (vtkMatrix4x4 *matrix) {
+    SetTransformationMatrix(matrix);
+  };
+
+  vtkMatrix4x4* GetOutputMatrix() {
+    GetTransformationMatrix(m_Matrix);
+    return m_Matrix;
+  };
+
+  // Description:
+  // Set Fixed (Target) Input
+  void SetTargetImage(vtkImageData *input)
+  {
+    SetFixedInput(input);
+  };
+
+  // Description:
+  // Set Moving (Source) Input
+  void SetSourceImage(vtkImageData *input)
+  {
+    SetMovingInput(input);
+  };
+
 protected:
 
   //BTX
@@ -51,7 +80,7 @@ protected:
   int Error;
 
   // default constructor
-  vtkITKTransformRegistrationFilter () {Error=0;}; // This is called from New() by vtkStandardNewMacro
+  vtkITKTransformRegistrationFilter (); // This is called from New() by vtkStandardNewMacro
 
   virtual void UpdateRegistrationParameters(){};
 
@@ -59,7 +88,7 @@ protected:
 
   virtual void CreateRegistrationPipeline();
 
-  virtual ~vtkITKTransformRegistrationFilter(){};
+  virtual ~vtkITKTransformRegistrationFilter();
   //ETX
 
 

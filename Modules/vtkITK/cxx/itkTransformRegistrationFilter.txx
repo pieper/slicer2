@@ -46,7 +46,8 @@ itk::itkTransformRegistrationFilter<TOptimizerClass, TTransformerClass, TMetricC
   m_NumberOfLevels = 1;
   m_TranslationScale = 0.001;
 
-  m_ShrinkFactors.Fill(1);
+  m_FixedImageShrinkFactors.Fill(1);     
+  m_MovingImageShrinkFactors.Fill(1);
 
   m_NumberOfIterations = UnsignedIntArray(1);
   m_NumberOfIterations.Fill(10);
@@ -88,6 +89,12 @@ itk::itkTransformRegistrationFilter<TOptimizerClass, TTransformerClass, TMetricC
 
   m_Registration->SetFixedImageRegion( m_FixedImageCaster->GetOutput()->GetBufferedRegion() );
 
+  m_FixedImagePyramid->SetNumberOfLevels(m_NumberOfLevels);
+  m_FixedImagePyramid->SetStartingShrinkFactors(m_FixedImageShrinkFactors.GetDataPointer());
+
+  m_MovingImagePyramid->SetNumberOfLevels(m_NumberOfLevels);
+  m_MovingImagePyramid->SetStartingShrinkFactors( m_MovingImageShrinkFactors.GetDataPointer());
+
   m_Registration->SetNumberOfLevels( m_NumberOfLevels);
   
   // TODO: set number iteration per level
@@ -111,7 +118,7 @@ itk::itkTransformRegistrationFilter<TOptimizerClass, TTransformerClass, TMetricC
   typename TransformType::Pointer finalTransform = TransformType::New();
   finalTransform->SetParameters( m_FinalParameters );
 
-
+/*
   m_Resampler->SetTransform( finalTransform );
   m_Resampler->SetInput( m_MovingImageCaster->GetOutput() );
 
@@ -123,7 +130,7 @@ itk::itkTransformRegistrationFilter<TOptimizerClass, TTransformerClass, TMetricC
 
   m_Resampler->Update();
   this->GraftOutput(m_Resampler->GetOutput());
-
+*/
 } // GenerateData
 
 

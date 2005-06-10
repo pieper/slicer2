@@ -114,9 +114,11 @@ public:
   
   /** Set the number of iterations per level. */
   itkSetMacro( NumberOfIterations, UnsignedIntArray );
+  itkGetMacro( NumberOfIterations, UnsignedIntArray );
 
   /** Set the fixed and moving image shrink factors. */
-  itkSetMacro( ShrinkFactors, ShrinkFactorsArray );
+  itkSetMacro( FixedImageShrinkFactors, ShrinkFactorsArray );
+  itkSetMacro( MovingImageShrinkFactors, ShrinkFactorsArray );
 
   itkSetMacro(CurrentIteration, int);
   itkGetMacro(CurrentIteration, int);
@@ -231,7 +233,8 @@ protected:
   //DoubleArray                          m_LearningRates;
 
   // Multi-res Stuff
-  ShrinkFactorsArray                   m_ShrinkFactors;
+  ShrinkFactorsArray                   m_MovingImageShrinkFactors;
+  ShrinkFactorsArray                   m_FixedImageShrinkFactors;
                    
   // Transform-stuff
   ParametersType                       m_InitialParameters;
