@@ -58,7 +58,11 @@ public:
 
   typedef typename TransformType::ParametersType    ParametersType;
 
+#if defined(_MSC_VER) && (_MSC_VER < 1300) 
   itkStaticConstMacro( Dimension, unsigned int, 3 );
+#else
+  static const unsigned int Dimension = 3;
+#endif
 
   /** DoubleArray type. */
   typedef Array<double>  DoubleArray;
