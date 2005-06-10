@@ -590,3 +590,26 @@ proc DTMRITractClusterTestUndo {} {
     }  
     Render3D
 }
+
+
+proc DTMRITractClusterColorBack {vol} {
+    global DTMRI Volume
+
+    DTMRI(vtk,streamlineControl) SetInputROIForColoring [Volume($vol,vol) GetOutput]
+    DTMRI(vtk,streamlineControl) ColorROIFromStreamlines
+
+    set output [DTMRI(vtk,streamlineControl) GetOutputROIForColoring]
+
+    # export output to the slicer environment:
+    # slicer MRML volume creation and display
+    set v [DevCreateNewCopiedVolume $vol "Color back from clusters" "TractColors_$vol"]
+    Volume($v,vol) SetImageData $output
+    MainVolumesUpdate $v
+    # tell the node what type of data so MRML file will be okay
+    Volume($v,node) SetScalarType [$output GetScalarType]
+    # display this volume so the user knows something happened
+    MainSlicesSetVolumeAll Back $v
+    RenderAll
+
+}
+

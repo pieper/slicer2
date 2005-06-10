@@ -189,6 +189,9 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // stored in InputMultipleROIValues. This operation is performed
   // by convolving  the streamline with the kernel ConvolutionKernel.
   void FindStreamlinesThatPassThroughROI();
+
+
+ void ColorROIFromStreamlines();
   
   //Description
   // Convert Streamline from Points representation to PolyLines
@@ -235,6 +238,15 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // will be displayed).
   vtkSetObjectMacro(InputROIForIntersection, vtkImageData);
   vtkGetObjectMacro(InputROIForIntersection, vtkImageData);
+
+  // Description
+  // Input ROI volume to color with the ID of the streamlines through the ROI
+  vtkSetObjectMacro(InputROIForColoring, vtkImageData);
+  vtkGetObjectMacro(InputROIForColoring, vtkImageData);
+
+  // Description
+  // Output ROI volume, colored with the ID of the streamlines through the ROI
+  vtkGetObjectMacro(OutputROIForColoring, vtkImageData);
 
   // Description
   // Transformation used in seeding streamlines.  Their start
@@ -364,6 +376,8 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   vtkImageData *InputTensorField;
   vtkImageData *InputROI;
   vtkImageData *InputROIForIntersection;
+  vtkImageData *InputROIForColoring;
+  vtkImageData *OutputROIForColoring;
   vtkCollection *InputRenderers;
   int InputROIValue;
   vtkShortArray *InputMultipleROIValues;

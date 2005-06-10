@@ -78,10 +78,15 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
 
   // The user must set these for the class to function.
   this->InputTensorField = NULL;
-  this->InputROI = NULL;
   this->InputRenderers = vtkCollection::New();
+  
+  // The user may need to set these, depending on class usage
+  this->InputROI = NULL;
   this->InputROIValue = -1;
   this->InputMultipleROIValues = NULL;
+  this->InputROIForIntersection = NULL;
+  this->InputROIForColoring = NULL;
+  this->OutputROIForColoring = NULL;
 
   // collections
   this->Streamlines = vtkCollection::New();
@@ -1511,7 +1516,7 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROIIntersectWithROI2()
                           pt[0]= (int) floor(point[0]);
                           pt[1]= (int) floor(point[1]);
                           pt[2]= (int) floor(point[2]);
-                          float *tmp = (float *) this->InputROIForIntersection->GetScalarPointer(pt);
+                          short *tmp = (short *) this->InputROIForIntersection->GetScalarPointer(pt);
                           if (tmp != NULL)
                             {
                               if (*tmp > 0) {
@@ -1535,7 +1540,7 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROIIntersectWithROI2()
                           pt[0]= (int) floor(point[0]);
                           pt[1]= (int) floor(point[1]);
                           pt[2]= (int) floor(point[2]);
-                          float *tmp = (float *) this->InputROIForIntersection->GetScalarPointer(pt);
+                          short *tmp = (short *) this->InputROIForIntersection->GetScalarPointer(pt);
                           if (tmp != NULL)
                             {
                               if (*tmp > 0) {
@@ -2295,4 +2300,176 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROIClusterAndDisplay()
 }
 
 
+// Color in volume with color ID of streamline passing through it.
+// Note: currently does not handle multiple streamlines per voxel
+// (chooses last to pass through).
+// Note: currently IDs are assigned in order of colors on streamline list.
+// This should be changed to use internal color IDs when we have those.
+//----------------------------------------------------------------------------
+void vtkMultipleStreamlineController::ColorROIFromStreamlines()
+{
+  if (this->InputROIForColoring == NULL)
+    {
+      vtkErrorMacro("No ROI input.");
+      return;      
+    }
+  
+  // make sure it is short type
+  if (this->InputROI->GetScalarType() != VTK_SHORT)
+    {
+      vtkErrorMacro("Input ROI is not of type VTK_SHORT");
+      return;      
+    }
+  
+  // prepare to traverse streamline collection
+  this->Streamlines->InitTraversal();
+  vtkHyperStreamlinePoints *currStreamline = 
+    dynamic_cast<vtkHyperStreamlinePoints *> (this->Streamlines->GetNextItemAsObject());
+  
+  // test we have streamlines
+  if (currStreamline == NULL)
+    {
+      vtkErrorMacro("No streamlines have been created yet.");
+      return;      
+    }
+  
+  this->Actors->InitTraversal();
+  vtkActor *currActor= (vtkActor *)this->Actors->GetNextItemAsObject();
+  
+  // test we have actors and streamlines
+  if (currActor == NULL)
+    {
+      vtkErrorMacro("No streamlines have been created yet.");
+      return;      
+    }
+  
+  // Create output
+  if (this->OutputROIForColoring != NULL)
+    this->OutputROIForColoring->Delete();
+  this->OutputROIForColoring = vtkImageData::New();
+  // Start with some defaults.
+  this->OutputROIForColoring->CopyTypeSpecificInformation( this->InputROIForColoring );
+  this->OutputROIForColoring->SetExtent(this->InputROIForColoring->GetWholeExtent());
+  this->OutputROIForColoring->AllocateScalars();
+  
+  // Create transformation matrices to go backwards from streamline points to ROI space
+  // This is used to access ROIForColoring, it has to have same 
+  // dimensions and location as seeding ROI for now.
+  vtkTransform *WorldToROI = vtkTransform::New();
+  WorldToROI->SetMatrix(this->ROIToWorld->GetMatrix());
+  WorldToROI->Inverse();
+  vtkTransform *TensorScaledIJKToWorld = vtkTransform::New();
+  TensorScaledIJKToWorld->SetMatrix(this->WorldToTensorScaledIJK->GetMatrix());
+  TensorScaledIJKToWorld->Inverse();
+  
+  // init color IDs with the first streamline.
+  double rgb[3];
+  currActor->GetProperty()->GetColor(rgb);
+  double R[1000], G[1000], B[1000];
+  int arraySize=1000;
+  int lastColor = 0;
+  int currColor, newColor;
+  R[0]=rgb[0];
+  G[0]=rgb[1];
+  B[0]=rgb[2];
+  
+  while(currStreamline && currActor)
+    {
+      
+      currColor=0;
+      newColor=1;
+      // If we have this color already, store its index in currColor
+      while (currColor<=lastColor && currColor<arraySize)
+        {
+          currActor->GetProperty()->GetColor(rgb);
+          if (rgb[0]==R[currColor] &&
+              rgb[1]==G[currColor] &&
+              rgb[2]==B[currColor])
+            {
+              newColor=0;
+              break;
+            }
+          currColor++;
+        }
+      
+      if (newColor)
+        {
+          // increment count of colors
+          lastColor=currColor;
+          // save this color's info in the array
+          R[currColor]=rgb[0];
+          G[currColor]=rgb[1];
+          B[currColor]=rgb[2];
+        }
+      // now currColor is set to this color's index, which we will
+      // use to label voxels
+      
+      // for each point on the path, test
+      // the nearest voxel for path/ROI intersection.
+      vtkPoints *hs0=currStreamline->GetHyperStreamline0();
+      vtkPoints *hs1=currStreamline->GetHyperStreamline1();
+      int numPts=hs0->GetNumberOfPoints();
+      int ptidx=0;
+      int pt[3];
+      double point[3], point2[3];
+      int intersects = 0;
+      while (ptidx < numPts)
+    {
+      hs0->GetPoint(ptidx,point);
+      // First transform to world space.
+      TensorScaledIJKToWorld->TransformPoint(point,point2);
+      // Now transform to ROI IJK space
+      WorldToROI->TransformPoint(point2,point);
+      // Find that voxel number
+      pt[0]= (int) floor(point[0]);
+      pt[1]= (int) floor(point[1]);
+      pt[2]= (int) floor(point[2]);
+      short *tmp = (short *) this->InputROIForColoring->GetScalarPointer(pt);
+      if (tmp != NULL)
+        {
+          // if we are in the ROI to be colored 
+          if (*tmp > 0) {
+                
+        tmp = (short *) this->OutputROIForColoring->GetScalarPointer(pt);
+        *tmp = (short) (currColor + 1);
+                
+          }
+        }
+      ptidx++;
+    }
+      numPts=hs1->GetNumberOfPoints();
+      // Skip the first point in the second line since it
+      // is a duplicate of the initial point.
+      ptidx=1;
+      while (ptidx < numPts)
+    {
+      hs1->GetPoint(ptidx,point);
+      // First transform to world space.
+      TensorScaledIJKToWorld->TransformPoint(point,point2);
+      // Now transform to ROI IJK space
+      WorldToROI->TransformPoint(point2,point);
+      // Find that voxel number
+      pt[0]= (int) floor(point[0]);
+      pt[1]= (int) floor(point[1]);
+      pt[2]= (int) floor(point[2]);
+      short *tmp = (short *) this->InputROIForColoring->GetScalarPointer(pt);
+      if (tmp != NULL)
+        {
+          // if we are in the ROI to be colored 
+          if (*tmp > 0) {
+                
+        tmp = (short *) this->OutputROIForColoring->GetScalarPointer(pt);
+        *tmp = (short) (currColor + 1);
+                
+          }
+        }
+      ptidx++;
+    }                          
+      
+      // get next objects in collections
+      currStreamline = dynamic_cast<vtkHyperStreamlinePoints *> 
+    (this->Streamlines->GetNextItemAsObject());
+      currActor = (vtkActor *) this->Actors->GetNextItemAsObject();
+    }
+}
 
