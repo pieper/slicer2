@@ -131,6 +131,7 @@ public:
     if (m_fo.good()) {
       m_fo << "LEVEL = " << level << "  ITERATION =" << optimizer->GetCurrentIteration() << 
         " MaxStep=" << maxStep << " MinStep=" << minStep <<  "  Value=" << optimizer->GetValue() << std::endl;
+      m_fo.flush();
     }
   }
 };
