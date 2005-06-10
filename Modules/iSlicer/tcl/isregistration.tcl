@@ -81,15 +81,13 @@ option add *isregistration.target            "" widgetDefault
 option add *isregistration.source            "" widgetDefault
 option add *isregistration.transform         "" widgetDefault
 option add *isregistration.resolution       128 widgetDefault
-option add *isregistration.iterations         5 widgetDefault
-option add *isregistration.learningrate     .01 widgetDefault
-option add *isregistration.translatescale    64 widgetDefault
 option add *isregistration.target_shrink {1 1 1} widgetDefault
 option add *isregistration.source_shrink {1 1 1} widgetDefault
 option add *isregistration.vtk_itk_reg   "vtkITKMutualInformationTransform" \
                                                  widgetDefault
 option add *isregistration.set_metric_option  "" widgetDefault
-
+option add *isregistration.set_optimizer_option  "" widgetDefault
+option add *isregistration.resample        1 widgetDefault
 ## for debugging
 option add *isregistration.verbose         1 widgetDefault
 
@@ -112,14 +110,11 @@ if { [itcl::find class isregistration] == "" } {
 
         itk_option define -target target Target {0}
         itk_option define -source source Source {0}
+        itk_option define -resample resample Resample 0
         itk_option define -transform transform Transform {}
         itk_option define -resolution resolution Resolution 128
-        itk_option define -iterations iterations Iterations 5
-        itk_option define -learningrate learningrate Learningrate .01
         itk_option define -target_shrink target_shrink Target_shrink {1 1 1}
         itk_option define -source_shrink source_shrink Source_shrink {1 1 1}
-
-        itk_option define -translatescale translatescale Translatescale 64
 
         itk_option define -verbose verbose Verbose 0
         itk_option define -update_procedure updateprocedure UpdateProcedure ""
@@ -129,6 +124,7 @@ if { [itcl::find class isregistration] == "" } {
         itk_option define -vtk_itk_reg vtk_itk_reg  Vtk_Itk_Reg vtkITKMutualInformationTransform 
 
         itk_option define -set_metric_option set_metric_option Set_metric_option 1
+        itk_option define -set_optimizer_option set_optimizer_option Set_optimizer_option 1
         itk_option define -samples samples Samples 50
         itk_option define -target_standarddev target_stardarddev Target_standarddev 1
         itk_option define -source_standarddev source_stardarddev Source_standarddev 1
@@ -325,8 +321,11 @@ itcl::configbody isregistration::vtk_itk_reg {
     set _reg ::reg_$_name
     catch "$_reg Delete"
     $itk_option(-vtk_itk_reg) $_reg
-    $_reg Initialize $_matrix
 
+    $_reg Initialize $_matrix
+    puts "vtk_itk_reg INIT MATRIX"
+    puts [$_matrix Print]
+ 
     # need to explicitly call update with vtk 4.4 -- TODO figure out why...
     [$_targetnorm GetOutput] Update
     [$_sourcenorm GetOutput] Update
@@ -355,7 +354,22 @@ itcl::configbody isregistration::target {
     $_targetvol configure -resolution $itk_option(-resolution)
     $_targetvol configure -orientation coronal ;# TODO extra config due to isvolume bug
     $_targetvol configure -orientation axial
-    $_targetchangeinfo SetInput [Volume($itk_option(-target),vol) GetOutput]
+    
+    if {$itk_option(-resample)} {
+        catch "xform Delete"
+        vtkMatrix4x4 xform
+        xform Identity
+        $_targetvol configure -transform xform
+        [$_targetvol imagedata] SetUpdateExtentToWholeExtent
+        [$_targetvol imagedata] Update
+        catch "temp Delete"
+        vtkImageData temp
+        temp DeepCopy [$_targetvol imagedata]
+        $_targetchangeinfo SetInput temp
+        temp Delete
+    } else {
+        $_targetchangeinfo SetInput [Volume($itk_option(-target),vol) GetOutput]
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -377,7 +391,22 @@ itcl::configbody isregistration::source {
     $_sourcevol configure -resolution $itk_option(-resolution)
     $_sourcevol configure -orientation coronal ;# TODO extra config due to isvolume bug
     $_sourcevol configure -orientation axial
-    $_sourcechangeinfo SetInput [Volume($itk_option(-source),vol) GetOutput]
+
+    if {$itk_option(-resample)} {
+        catch "xform Delete"
+        vtkMatrix4x4 xform
+        xform Identity
+        $_sourcevol configure -transform xform
+        [$_sourcevol imagedata] SetUpdateExtentToWholeExtent
+        [$_sourcevol imagedata] Update
+        catch "temp Delete"
+        vtkImageData temp
+        temp DeepCopy [$_sourcevol imagedata]
+        $_sourcechangeinfo SetInput temp
+        temp Delete
+    } else {
+        $_sourcechangeinfo SetInput [Volume($itk_option(-source),vol) GetOutput]
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -427,10 +456,6 @@ itcl::body isregistration::step {} {
     ## set the default values
     #######
 
-    $_reg SetTranslateScale $itk_option(-translatescale)
-
-    $itk_option(-set_metric_option) $_reg;
-
     set i [lindex $itk_option(-source_shrink) 0 ]
     set j [lindex $itk_option(-source_shrink) 1 ]
     set k [lindex $itk_option(-source_shrink) 2 ]
@@ -445,24 +470,12 @@ itcl::body isregistration::step {} {
     if {$itk_option(-verbose)} {
         puts "$i $j $k $itk_option(-target_shrink)"
     }
+
     $_reg SetTargetShrinkFactors $i $j $k
 
-    ## Reset for MultiResSettings
-    $_reg ResetMultiResolutionSettings
+    $itk_option(-set_metric_option) $_reg;
 
-    # set for MultiResStuff
-    foreach iter  $itk_option(-iterations) {
-        $_reg SetNextMaxNumberOfIterations $iter
-    }
-    foreach rate $itk_option(-learningrate) {
-        $_reg SetNextLearningRate  $rate
-    }
-
-    if {[llength $itk_option(-iterations) ] != \
-        [llength $itk_option(-learningrate)] } {
-       DevErrorWindow "Must Have same number of levels of iterations as learning rates"
-       return
-     }
+    $itk_option(-set_optimizer_option) $_reg;
 
     ##########
     # Get the current matrix - if it's different from the
@@ -474,7 +487,12 @@ itcl::body isregistration::step {} {
     $this set_init_mat
 
     $_reg Modified
+    
+    $_sourcenorm Update
+    $_targetnorm Update
+
     $_reg Update
+
     if {$itk_option(-verbose)} {
         $_reg Print
         puts "Metric [$_reg GetMetricValue]"
@@ -630,24 +648,29 @@ itcl::body isregistration::update_slicer_mat {} {
         $this GetSimilarityMatrix $p2mat $mat [$this getP2]
         $mat Invert
     } else {
-        set p2mat [$this getP2]
-        $p2mat Invert
-        $mat Invert
-        $this GetSimilarityMatrix $p2mat $mat [$this getP1]
+        if {$itk_option(-resample) == 0} {
+            set p2mat [$this getP2]
+            $p2mat Invert
+            $mat Invert
+            $this GetSimilarityMatrix $p2mat $mat [$this getP1]
+        }
     }
 
     Matrix($t,node) SetMatrix [$this StringMatrix $mat]
-
+    
+    puts "RESULTING MATRIX"
+    puts [$mat Print]
+    
     if {$itk_option(-verbose)} {
         set results_mat [$this StringMatrix [$_reg GetOutputMatrix] ]
         puts "resulting mat: $results_mat"
         set tmp_mat [Matrix($t,node) GetMatrix]
         puts "actually set $tmp_mat"
     }
-
+    
     #$tmpnode Delete
     $mat Delete
-
+    
     set _mat_m_time [[Matrix($t,node) GetTransform] GetMTime]
 }
 
@@ -662,14 +685,14 @@ itcl::body isregistration::update_slicer_mat {} {
 #-------------------------------------------------------------------------------
 
 itcl::body isregistration::set_init_mat {} {
-
+    
     #
     # Get the current matrix - if this is the first time through
     # OR someone has edited it since the last iteration
     #
-
+    
     set t $itk_option(-transform)
-
+    
     if { $_firsttime == 1 || [[Matrix($t,node) GetTransform] GetMTime] != $_mat_m_time } {
     set mat ::tmpmatrix_$_name
     catch "$mat Delete"
@@ -743,9 +766,10 @@ itcl::body isregistration::set_init_mat {} {
         puts "Determinant"
         puts [$_matrix Determinant]
     }
-
     $_reg Initialize $_matrix
-    
+    puts "INITIAL MATRIX"
+    puts [$_matrix Print]
+
     if {$itk_option(-verbose)} {
         set matstring [Matrix($t,node) GetMatrix]
         puts "input matrix $matstring"
@@ -876,5 +900,5 @@ proc isregistration_demo {} {
     toplevel .isregistrationdemo
     wm title .isregistrationdemo "isregistrationdemo"
 
-    pack [isregistration .isregistrationdemo.isr -iterations 1] -fill both -expand true
+    pack [isregistration .isregistrationdemo.isr] -fill both -expand true
 }

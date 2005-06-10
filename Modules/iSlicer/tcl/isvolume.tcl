@@ -531,7 +531,7 @@ itcl::configbody isvolume::resolution {
 itcl::configbody isvolume::transform {
 
     $this transform_update
-    $this expose
+    #$this expose
 }
 
 # ------------------------------------------------------------------
