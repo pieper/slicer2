@@ -3,7 +3,8 @@
 #define __itkVersorMattesMiVersorRegistrationFilter_h
 
 //BTX
-
+#include <fstream>
+#include <string>
 
 #include "itkTransformRegistrationFilter.h"
 
