@@ -34,36 +34,36 @@
 # 
 #
 #===============================================================================
-# FILE:        MutualInformationRegistration.tcl
+# FILE:        VersorMattesMIRegistration.tcl
 # PROCEDURES:  
-#   MutualInformationRegistrationInit
-#   MutualInformationRegistrationBuildSubGui f
-#   MutualInformationRegistrationSetLevel
-#   MutualInformationRegistrationCoarseParam
-#   MutualInformationRegistrationFineParam
-#   MutualInformationRegistrationGSlowParam
-#   MutualInformationRegistrationGSlowParam
-#   MutualInformationRegistrationEnter
-#   MutualInformationRegistrationExit
-#   MutualInformationRegistrationAutoRun
-#   MutualInformationRegistrationStop
+#   VersorMattesMIRegistrationInit
+#   VersorMattesMIRegistrationBuildSubGui f
+#   VersorMattesMIRegistrationSetLevel
+#   VersorMattesMIRegistrationCoarseParam
+#   VersorMattesMIRegistrationFineParam
+#   VersorMattesMIRegistrationGSlowParam
+#   VersorMattesMIRegistrationGSlowParam
+#   VersorMattesMIRegistrationEnter
+#   VersorMattesMIRegistrationExit
+#   VersorMattesMIRegistrationAutoRun
+#   VersorMattesMIRegistrationStop
 #   MutualInformationSetMetricOption vtkITKMI
-#   MutualInformationRegistrationAutoRun_Vtk
-#   MutualInformationRegistrationCopyRegImages res r v
+#   VersorMattesMIRegistrationAutoRun_Vtk
+#   VersorMattesMIRegistrationCopyRegImages res r v
 #==========================================================================auto=
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationInit
+# .PROC VersorMattesMIRegistrationInit
 #  The "Init" procedure is called automatically by the slicer.  
 #  It puts information about the module into a global array called Module, 
 #  and it also initializes module-level variables.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationInit {} {
-    global RigidIntensityRegistration MutualInformationRegistration 
+proc VersorMattesMIRegistrationInit {} {
+    global RigidIntensityRegistration VersorMattesMIRegistration 
     global Module Volume Model
 
-    set m MutualInformationRegistration
+    set m VersorMattesMIRegistration
 
     # Module Summary Info
     #------------------------------------
@@ -111,7 +111,7 @@ proc MutualInformationRegistrationInit {} {
     #   procedures are optional.  If they exist, then their name (which
     #   can be anything) is registered with a line like this:
     #
-    #   set Module($m,procVTK) MutualInformationRegistrationBuildVTK
+    #   set Module($m,procVTK) VersorMattesMIRegistrationBuildVTK
     #
     #   All the options are:
 
@@ -132,10 +132,10 @@ proc MutualInformationRegistrationInit {} {
     #   string in your init function, of the form: 
     #   set Module($m,presets) "key1='val1' key2='val2' ..."
 
-#    set Module($m,procGUI) MutualInformationRegistrationBuildGUI
-#    set Module($m,procVTK) MutualInformationRegistrationBuildVTK
-#    set Module($m,procEnter) MutualInformationRegistrationEnter
-#    set Module($m,procExit) MutualInformationRegistrationExit
+#    set Module($m,procGUI) VersorMattesMIRegistrationBuildGUI
+#    set Module($m,procVTK) VersorMattesMIRegistrationBuildVTK
+#    set Module($m,procEnter) VersorMattesMIRegistrationEnter
+#    set Module($m,procExit) VersorMattesMIRegistrationExit
 
     # Define Dependencies
     #------------------------------------
@@ -155,7 +155,7 @@ proc MutualInformationRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.12 $} {$Date: 2005/06/10 03:57:26 $}]
+        {$Revision: 1.1 $} {$Date: 2005/06/10 03:57:26 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -166,17 +166,16 @@ proc MutualInformationRegistrationInit {} {
     #
 
     ## put here to show MI specific param
-    set MutualInformationRegistration(NumberOfSamples)  50
-    set MutualInformationRegistration(SourceStandardDeviation) 0.4
-    set MutualInformationRegistration(TargetStandardDeviation) 0.4
+    set VersorMattesMIRegistration(NumberOfSamples)  5000
+    set VersorMattesMIRegistration(NumberOfHistogramBins) 256
 
 
     ## Set the default to fast registration
-    MutualInformationRegistrationVerySlowParam
+    VersorMattesMIRegistrationVerySlowParam
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationBuildSubGui
+# .PROC VersorMattesMIRegistrationBuildSubGui
 #
 # Build the sub-gui under $f whatever frame is calling this one
 #
@@ -186,8 +185,8 @@ proc MutualInformationRegistrationInit {} {
 # frame f frame name
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationBuildSubGui {f} {
-    global Gui Matrix RigidIntensityRegistration MutualInformationRegistration
+proc VersorMattesMIRegistrationBuildSubGui {f} {
+    global Gui Matrix RigidIntensityRegistration VersorMattesMIRegistration
 
     set framename $f
 
@@ -223,14 +222,14 @@ proc MutualInformationRegistrationBuildSubGui {f} {
 
     foreach level "Help Normal Advanced" {
         eval {radiobutton $f.r$level \
-            -text "$level" -command "MutualInformationRegistrationSetLevel" \
-            -variable MutualInformationRegistration(Level) -value $level -width 10 \
+            -text "$level" -command "VersorMattesMIRegistrationSetLevel" \
+            -variable VersorMattesMIRegistration(Level) -value $level -width 10 \
             -indicatoron 0} $Gui(WRA)
-        set MutualInformationRegistration(r${level}) $f.r$level
+        set VersorMattesMIRegistration(r${level}) $f.r$level
         pack $f.r$level -side left -padx 0 
     }
 
-    set MutualInformationRegistration(Level) Normal
+    set VersorMattesMIRegistration(Level) Normal
 
     #-------------------------------------------
     # Level frame
@@ -243,9 +242,9 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     foreach type "Help Normal Advanced" {
         frame $f.f${type} -bg $Gui(activeWorkspace)
         place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
-        set MutualInformationRegistration(f${type}) $f.f${type}
+        set VersorMattesMIRegistration(f${type}) $f.f${type}
     }
-    raise $MutualInformationRegistration(fNormal)
+    raise $VersorMattesMIRegistration(fNormal)
 
     set fnormal   $framename.fLevel.fNormal
     set fadvanced $framename.fLevel.fAdvanced
@@ -280,15 +279,15 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
     </UL>"
 
     regsub -all "\n" $help { } help
-    MainHelpApplyTags MutualInformationRegistration $help
-#    MainHelpBuildGUI  MutualInformationRegistration 
+    MainHelpApplyTags VersorMattesMIRegistration $help
+#    MainHelpBuildGUI  VersorMattesMIRegistration 
 
     global Help
     set f  $fhelp
     frame $f.fWidget -bg $Gui(activeWorkspace)
     pack $f.fWidget -side top -padx 2 -fill both -expand true
     set tmp [HelpWidget $f.fWidget]
-    MainHelpShow $tmp MutualInformationRegistration
+    MainHelpShow $tmp VersorMattesMIRegistration
 
     #-------------------------------------------
     # Level->Normal frame
@@ -334,15 +333,15 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
         width "6 6 15 21" {
         eval {radiobutton $f.fBtns.$row.r$value -width $width \
         -text "$text" -value "$value" \
-        -command MutualInformationRegistration${value}Param \
-        -variable MutualInformationRegistration(Objective) \
+        -command VersorMattesMIRegistration${value}Param \
+        -variable VersorMattesMIRegistration(Objective) \
         -indicatoron 0} $Gui(WCA) 
         pack $f.fBtns.$row.r$value -side left -padx 4 -pady 2
         if { $value == "Fine" } {incr row};
         if { $value == "GSlow" } {incr row};
     }
 
-   set MutualInformationRegistration(Objective) VerySlow
+   set VersorMattesMIRegistration(Objective) VerySlow
 
     #-------------------------------------------
     # Level->Normal->Repeat Frame
@@ -366,10 +365,10 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
     set f $fnormal.fRun
 
     eval {button $f.bRun -text "Start" -width [expr [string length "Start"]+1] \
-            -command "MutualInformationRegistrationAutoRun"} $Gui(WBA)
+            -command "VersorMattesMIRegistrationAutoRun"} $Gui(WBA)
 
     pack $f.bRun -side left -padx $Gui(pad) -pady $Gui(pad)
-    set MutualInformationRegistration(b1Run) $f.bRun
+    set VersorMattesMIRegistration(b1Run) $f.bRun
 
     #-------------------------------------------
     # Level->Advanced
@@ -416,19 +415,19 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
 
     foreach param { \
                    {UpdateIterations} \
-                   {LearningRate} \
+                   {MinimumStepLength} \
+                   {MaximumStepLength} \
                    {TranslateScale} \
                    {NumberOfSamples} \
-                   {SourceStandardDeviation} \
-                   {TargetStandardDeviation} \
+                   {NumberOfHistogramBins} \
                    } name \
                   { \
                    {Update Iterations} \
-                   {Learning Rate} \
+                   {Minimum Step Length} \
+                   {Maximum Step Length} \
                    {Translate Scale} \
                    {Number Of Samples} \
-                   {Source Standard Deviation} \
-                   {Target Standard Deviation} \
+                   {Number Of Histogram Bins} \
                    } {
         set f $fadvanced.fParam
         frame $f.f$param   -bg $Gui(activeWorkspace)
@@ -436,7 +435,7 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
         
         set f $f.f$param
         eval {label $f.l$param -text "$name:"} $Gui(WLA)
-        eval {entry $f.e$param -width 10 -textvariable MutualInformationRegistration($param)} $Gui(WEA)
+        eval {entry $f.e$param -width 10 -textvariable VersorMattesMIRegistration($param)} $Gui(WEA)
         pack $f.l$param -side left -padx $Gui(pad) -fill x -anchor w
         pack $f.e$param -side left -padx $Gui(pad) -expand 1
     }
@@ -448,15 +447,15 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
 
     foreach str "Run" {
         eval {button $f.b$str -text "$str" -width [expr [string length $str]+1] \
-            -command "MutualInformationRegistrationAuto$str"} $Gui(WBA)
-        set MutualInformationRegistration(b$str) $f.b$str
+            -command "VersorMattesMIRegistrationAuto$str"} $Gui(WBA)
+        set VersorMattesMIRegistration(b$str) $f.b$str
     }
     pack $f.bRun -side left -padx $Gui(pad) -pady $Gui(pad)
-    set MutualInformationRegistration(b2Run) $f.bRun
+    set VersorMattesMIRegistration(b2Run) $f.bRun
 }  
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationSetLevel
+# .PROC VersorMattesMIRegistrationSetLevel
 #
 # Set the registration mechanism depending on which button the user selected in
 # the Auto tab.
@@ -464,16 +463,16 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationSetLevel {} {
-    global MutualInformationRegistration RigidIntensityRegistration
+proc VersorMattesMIRegistrationSetLevel {} {
+    global VersorMattesMIRegistration RigidIntensityRegistration
 
-    set level $MutualInformationRegistration(Level)
-    raise $MutualInformationRegistration(f${level})
-    focus $MutualInformationRegistration(f${level})
+    set level $VersorMattesMIRegistration(Level)
+    raise $VersorMattesMIRegistration(f${level})
+    focus $VersorMattesMIRegistration(f${level})
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationCoarseParam
+# .PROC VersorMattesMIRegistrationCoarseParam
 #
 #  These parameters should allow the user the ability to intervene
 #  and decide when he/she is done.
@@ -481,8 +480,40 @@ proc MutualInformationRegistrationSetLevel {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationCoarseParam {} {
-    global MutualInformationRegistration RigidIntensityRegistration
+proc VersorMattesMIRegistrationCoarseParam {} {
+    global VersorMattesMIRegistration RigidIntensityRegistration
+
+    set RigidIntensityRegistration(Resolution)       64
+    set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
+    set RigidIntensityRegistration(TargetShrinkFactors)   "1 1 1"
+    set RigidIntensityRegistration(Repeat) 1
+
+    # If Wells, Viola, Atsumi, etal, 
+    # used 2 and 4. Wells claims exact number not critical (personal communication)
+    # They scaled data 0...256.
+    # We scale data -1 to 1.
+    # 2/256*2 = 0.015
+    set VersorMattesMIRegistration(MinimumStepLength)    0.01
+    set VersorMattesMIRegistration(MaximumStepLength)    4.0
+    set VersorMattesMIRegistration(UpdateIterations) 100
+    set VersorMattesMIRegistration(TranslateScale)   0.001
+
+    set VersorMattesMIRegistration(NumberOfSamples)  10000
+    set VersorMattesMIRegistration(NumberOfHistogramBins) 256
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC VersorMattesMIRegistrationFineParam
+#
+#  These parameters should allow the user the ability to intervene
+#  and decide when he/she is done.
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc VersorMattesMIRegistrationFineParam {} {
+    global VersorMattesMIRegistration RigidIntensityRegistration
 
     set RigidIntensityRegistration(Resolution)       128
     set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
@@ -494,58 +525,26 @@ proc MutualInformationRegistrationCoarseParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
-    set MutualInformationRegistration(LearningRate)    3e-5
-    set MutualInformationRegistration(UpdateIterations) 100
-    set MutualInformationRegistration(TranslateScale)   320
+    set VersorMattesMIRegistration(MinimumStepLength)     0.001
+    set VersorMattesMIRegistration(MaximumStepLength)     1.5
+    set VersorMattesMIRegistration(UpdateIterations) 1000
+    set VersorMattesMIRegistration(TranslateScale)   0.001
 
-    set MutualInformationRegistration(NumberOfSamples)  50
-    set MutualInformationRegistration(SourceStandardDeviation) 0.4
-    set MutualInformationRegistration(TargetStandardDeviation) 0.4
+    set VersorMattesMIRegistration(NumberOfHistogramBins) 256
+    set VersorMattesMIRegistration(NumberOfSamples)  10000
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationFineParam
-#
-#  These parameters should allow the user the ability to intervene
-#  and decide when he/she is done.
-#
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc MutualInformationRegistrationFineParam {} {
-    global MutualInformationRegistration RigidIntensityRegistration
-
-    set RigidIntensityRegistration(Resolution)       128
-    set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
-    set RigidIntensityRegistration(TargetShrinkFactors)   "1 1 1"
-    set RigidIntensityRegistration(Repeat) 1
-
-    # If Wells, Viola, Atsumi, etal, 
-    # used 2 and 4. Wells claims exact number not critical (personal communication)
-    # They scaled data 0...256.
-    # We scale data -1 to 1.
-    # 2/256*2 = 0.015
-    set MutualInformationRegistration(LearningRate)     3e-6
-    set MutualInformationRegistration(UpdateIterations) 100
-    set MutualInformationRegistration(TranslateScale)   320
-
-    set MutualInformationRegistration(SourceStandardDeviation) 0.4
-    set MutualInformationRegistration(TargetStandardDeviation) 0.4
-    set MutualInformationRegistration(NumberOfSamples)  50
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationGSlowParam
+# .PROC VersorMattesMIRegistrationGSlowParam
 #
 # This should run until completion and give a good registration
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationGSlowParam {} {
-    global MutualInformationRegistration RigidIntensityRegistration
+proc VersorMattesMIRegistrationGSlowParam {} {
+    global VersorMattesMIRegistration RigidIntensityRegistration
 
     set RigidIntensityRegistration(Resolution)       128
     set RigidIntensityRegistration(SourceShrinkFactors)   "2 2 2"
@@ -557,25 +556,25 @@ proc MutualInformationRegistrationGSlowParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
-    set MutualInformationRegistration(UpdateIterations) "500 1000"
-    set MutualInformationRegistration(LearningRate)    "0.0001 0.00001"
-    set MutualInformationRegistration(TranslateScale)   320
+    set VersorMattesMIRegistration(UpdateIterations) "500 1000"
+    set VersorMattesMIRegistration(MinimumStepLength)    "0.01 0.001"
+    set VersorMattesMIRegistration(MaximumStepLength)    "2.0 0.5"
+    set VersorMattesMIRegistration(TranslateScale)   0.001
 
-    set MutualInformationRegistration(NumberOfSamples)  50
-    set MutualInformationRegistration(SourceStandardDeviation) 0.4
-    set MutualInformationRegistration(TargetStandardDeviation) 0.4
+    set VersorMattesMIRegistration(NumberOfSamples)  50000
+    set VersorMattesMIRegistration(NumberOfHistogramBins) 256
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationGSlowParam
+# .PROC VersorMattesMIRegistrationGSlowParam
 #
 # This should run until completion and give a good registration
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationVerySlowParam {} {
-    global MutualInformationRegistration RigidIntensityRegistration
+proc VersorMattesMIRegistrationVerySlowParam {} {
+    global VersorMattesMIRegistration RigidIntensityRegistration
 
     set RigidIntensityRegistration(Resolution)       128 
     set RigidIntensityRegistration(SourceShrinkFactors)   "4 4 1"
@@ -587,36 +586,26 @@ proc MutualInformationRegistrationVerySlowParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
-    set MutualInformationRegistration(UpdateIterations) "2500 2500 2500 2500 2500"
-    set MutualInformationRegistration(LearningRate)    "1e-4 1e-5 5e-6 1e-6 5e-7"
-    set MutualInformationRegistration(TranslateScale)   320
+    set VersorMattesMIRegistration(UpdateIterations) "2500 2500 2500 2500 2500"
+    set VersorMattesMIRegistration(MinimumStepLength) "0.01 0.001 0.0001 1e-5 5e-6"
+    set VersorMattesMIRegistration(MaximumStepLength) "2.0 1.5 1.0 0.5 0.1"
+    set VersorMattesMIRegistration(TranslateScale)   0.001
 
-    set MutualInformationRegistration(NumberOfSamples)          "50"
-    set MutualInformationRegistration(SourceStandardDeviation) 0.4
-    set MutualInformationRegistration(TargetStandardDeviation) 0.4
-}
+    set VersorMattesMIRegistration(NumberOfSamples)   100000
+    set VersorMattesMIRegistration(NumberOfHistogramBins) 256
 
-proc RigidIntensityRegistrationCheckParametersMI {} {
-    global MutualInformationRegistration RigidIntensityRegistration
-
-    if {[llength $MutualInformationRegistration(LearningRate) ] != \
-        [llength $MutualInformationRegistration(UpdateIterations) ] } {
-        DevErrorWindow "Must Have same number of levels of iterations as learning rates"
-       return 0
-    }
-    return 1
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationEnter
+# .PROC VersorMattesMIRegistrationEnter
 # Called when this module is entered by the user.  Pushes the event manager
 # for this module. This never gets called.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationEnter {} {
-    global MutualInformationRegistration RigidIntensityRegistration
+proc VersorMattesMIRegistrationEnter {} {
+    global VersorMattesMIRegistration RigidIntensityRegistration
     
     # Push event manager
     #------------------------------------
@@ -626,22 +615,22 @@ proc MutualInformationRegistrationEnter {} {
     #   The pushEventManager routine saves the previous bindings on 
     #   a stack and binds our new ones.
     #   (See slicer/program/tcl-shared/Events.tcl for more details.)
-    pushEventManager $MutualInformationRegistration(eventManager)
+    pushEventManager $VersorMattesMIRegistration(eventManager)
 
     # clear the text box and put instructions there
-    $MutualInformationRegistration(textBox) delete 1.0 end
-    $MutualInformationRegistration(textBox) insert end "Shift-Click anywhere!\n"
+    $VersorMattesMIRegistration(textBox) delete 1.0 end
+    $VersorMattesMIRegistration(textBox) insert end "Shift-Click anywhere!\n"
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationExit
+# .PROC VersorMattesMIRegistrationExit
 # Called when this module is exited by the user.  Pops the event manager
 # for this module. This never gets called. 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationExit {} {
+proc VersorMattesMIRegistrationExit {} {
 
     # Pop event manager
     #------------------------------------
@@ -654,26 +643,26 @@ proc MutualInformationRegistrationExit {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationAutoRun
+# .PROC VersorMattesMIRegistrationAutoRun
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationAutoRun {} {
-    global Matrix MutualInformationRegistration RigidIntensityRegistration
+proc VersorMattesMIRegistrationAutoRun {} {
+    global Matrix VersorMattesMIRegistration RigidIntensityRegistration
 
     if {[RigidIntensityRegistrationSetUp] == 0} {
       return 0
     }
 
     if {$::Module(verbose)} { 
-        puts "Starting MutualInformationRegistrationAutoRun"
+        puts "Starting VersorMattesMIRegistrationAutoRun"
     }
 
 #    Gering version disabled
-#    MutualInformationRegistrationAutoRun_Vtk  
+#    VersorMattesMIRegistrationAutoRun_Vtk  
 
-    global Path env Gui Matrix Volume MutualInformationRegistration
+    global Path env Gui Matrix Volume VersorMattesMIRegistration
 
     # TODO make islicer a package
     source $env(SLICER_HOME)/Modules/iSlicer/tcl/isregistration.tcl
@@ -692,46 +681,47 @@ proc MutualInformationRegistrationAutoRun {} {
         -target          $RigidIntensityRegistration(targetId)          \
         -resolution      $RigidIntensityRegistration(Resolution)        \
         -update_procedure RigidIntensityRegistrationUpdateParam        \
-        -stop_procedure    MutualInformationRegistrationStop            \
-        -set_metric_option MutualInformationRegistrationSetMetricOption \
-        -set_optimizer_option MutualInformationRegistrationSetOptimizerOption \
-        -vtk_itk_reg       vtkITKMutualInformationTransform               
+        -stop_procedure    VersorMattesMIRegistrationStop            \
+        -set_metric_option VersorMattesMIRegistrationSetMetricOption \
+        -set_optimizer_option VersorMattesMIRegistrationSetOptimizerOption \
+        -resample 1 \
+        -vtk_itk_reg       vtkITKVersorMattesMiVersorRegistrationFilter               
 
 
     if {$::Module(verbose)} {
         puts "to see the pop-up window, type: pack .mi.reg -fill both -expand true"
     }
   #  pack .mi.reg -fill both -expand true
-    $MutualInformationRegistration(b1Run) configure -command \
-                                      "MutualInformationRegistrationStop"
-    $MutualInformationRegistration(b2Run) configure -command \
-                                      "MutualInformationRegistrationStop"
-    $MutualInformationRegistration(b1Run) configure -text "Stop"
-    $MutualInformationRegistration(b2Run) configure -text "Stop"
+    $VersorMattesMIRegistration(b1Run) configure -command \
+                                      "VersorMattesMIRegistrationStop"
+    $VersorMattesMIRegistration(b2Run) configure -command \
+                                      "VersorMattesMIRegistrationStop"
+    $VersorMattesMIRegistration(b1Run) configure -text "Stop"
+    $VersorMattesMIRegistration(b2Run) configure -text "Stop"
     if {$::Module(verbose)} {
-        puts "MutualInformationRegistrationAutoRun: calling .mi.reg start"
+        puts "VersorMattesMIRegistrationAutoRun: calling .mi.reg start"
     }
     .mi.reg start
     if {$::Module(verbose)} { 
-        puts "MutualInformationRegistrationAutoRun: done .mi.reg"
+        puts "VersorMattesMIRegistrationAutoRun: done .mi.reg"
     }
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationStop
+# .PROC VersorMattesMIRegistrationStop
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationStop {} {
-    global MutualInformationRegistration RigidIntensityRegistration
+proc VersorMattesMIRegistrationStop {} {
+    global VersorMattesMIRegistration RigidIntensityRegistration
     .mi.reg stop
-    $MutualInformationRegistration(b1Run) configure -command \
-                                          "MutualInformationRegistrationAutoRun"
-    $MutualInformationRegistration(b2Run) configure -command \
-                                          "MutualInformationRegistrationAutoRun"
-    $MutualInformationRegistration(b1Run) configure -text "Start"
-    $MutualInformationRegistration(b2Run) configure -text "Start"
+    $VersorMattesMIRegistration(b1Run) configure -command \
+                                          "VersorMattesMIRegistrationAutoRun"
+    $VersorMattesMIRegistration(b2Run) configure -command \
+                                          "VersorMattesMIRegistrationAutoRun"
+    $VersorMattesMIRegistration(b1Run) configure -text "Start"
+    $VersorMattesMIRegistration(b2Run) configure -text "Start"
 }
 
 
@@ -744,17 +734,17 @@ proc MutualInformationRegistrationStop {} {
 # vtkITKMutualInformation vtkITKMI
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationSetMetricOption { vtkITKMI } {
-    global MutualInformationRegistration 
+proc VersorMattesMIRegistrationSetMetricOption { vtkITKMI } {
+    global VersorMattesMIRegistration 
 
-    $vtkITKMI SetSourceStandardDeviation $MutualInformationRegistration(SourceStandardDeviation)
-    $vtkITKMI SetTargetStandardDeviation $MutualInformationRegistration(TargetStandardDeviation)
-    $vtkITKMI SetNumberOfSamples $MutualInformationRegistration(NumberOfSamples)
+    $vtkITKMI SetNumberOfHistogramBins $VersorMattesMIRegistration(NumberOfHistogramBins)
+    $vtkITKMI SetNumberOfSamples $VersorMattesMIRegistration(NumberOfSamples)
 
 }
 
+
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationSetOptimizerOption
+# .PROC VersorMattesMIRegistrationSetOptimizerOption
 #
 # takes in a vtkITKMutualInformation object
 #
@@ -762,24 +752,43 @@ proc MutualInformationRegistrationSetMetricOption { vtkITKMI } {
 # vtkITKMutualInformation vtkITKMI
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationSetOptimizerOption { vtkITKMI } {
-    global MutualInformationRegistration
+proc VersorMattesMIRegistrationSetOptimizerOption { vtkITKMI } {
+    global VersorMattesMIRegistration
     
-    $vtkITKMI SetTranslateScale $MutualInformationRegistration(TranslateScale)
+    $vtkITKMI SetTranslateScale $VersorMattesMIRegistration(TranslateScale)
     
     # set for MultiResStuff
     $vtkITKMI ResetMultiResolutionSettings
 
-    foreach iter  $MutualInformationRegistration(UpdateIterations) {
+    foreach iter  $VersorMattesMIRegistration(UpdateIterations) {
         $vtkITKMI SetNextMaxNumberOfIterations $iter
     }
-    foreach rate $MutualInformationRegistration(LearningRate) {
-        $vtkITKMI SetNextLearningRate  $rate
+    foreach step $VersorMattesMIRegistration(MinimumStepLength) {
+        $vtkITKMI SetNextMinimumStepLength $step
+        puts "min step = $step"
+    }
+    foreach step $VersorMattesMIRegistration(MaximumStepLength) {
+        $vtkITKMI SetNextMaximumStepLength $step
+        puts "max step = $step"
     }
 }
 
+proc RigidIntensityRegistrationCheckParametersVersorMattesMI {} {
+    global VersorMattesMIRegistration RigidIntensityRegistration
+
+    if {([llength $VersorMattesMIRegistration(MinimumStepLength) ] != \
+        [llength $VersorMattesMIRegistration(UpdateIterations) ]) &&  \
+        ([llength $VersorMattesMIRegistration(MaximumStepLength) ] != \
+             [llength $VersorMattesMIRegistration(UpdateIterations) ])} {
+        DevErrorWindow "Must Have same number of levels of iterations as learning rates"
+       return 0
+    }
+    return 1
+}
+
+
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationAutoRun_Vtk
+# .PROC VersorMattesMIRegistrationAutoRun_Vtk
 #
 #
 # These are the tools written by Dave Gering (and implemented by Hanifa Dostmohamed)
@@ -789,10 +798,10 @@ proc MutualInformationRegistrationSetOptimizerOption { vtkITKMI } {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationAutoRun_Vtk {} {
-    global Path env Gui Matrix Volume MutualInformationRegistration
+proc VersorMattesMIRegistrationAutoRun_Vtk {} {
+    global Path env Gui Matrix Volume VersorMattesMIRegistration
 
-    if {$::Module(verbose)} { puts "starting MutualInformationRegistrationAutoRun_Vtk..." }
+    if {$::Module(verbose)} { puts "starting VersorMattesMIRegistrationAutoRun_Vtk..." }
 
     # v = ID of volume to register
     # r = ID of reference volume
@@ -899,19 +908,19 @@ proc MutualInformationRegistrationAutoRun_Vtk {} {
           if {$res != $resDisplay} {
               if {$::Module(verbose)} { puts "Current Pose at res=$res is: [$currentPose Print]" } 
             set resDisplay $res
-            MutualInformationRegistrationCopyRegImages $res $r $v
+            VersorMattesMIRegistrationCopyRegImages $res $r $v
           }
         }
 
         if {$::Module(verbose)} {
-            puts "MutualInformationRegistration\t calling main update mrml and renderall"
+            puts "VersorMattesMIRegistration\t calling main update mrml and renderall"
         }
         # Update MRML and display
         MainUpdateMRML
         RenderAll
    }
     if {$::Module(verbose)} { 
-        puts "\t MutualInformationRegistration done loop"
+        puts "\t VersorMattesMIRegistration done loop"
     }
    MainEndProgress
 
@@ -928,7 +937,7 @@ proc MutualInformationRegistrationAutoRun_Vtk {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationCopyRegImages
+# .PROC VersorMattesMIRegistrationCopyRegImages
 #
 # Stuff for Dave Gering implementation
 #
@@ -938,7 +947,7 @@ proc MutualInformationRegistrationAutoRun_Vtk {} {
 # int v
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationCopyRegImages {res r v} {
+proc VersorMattesMIRegistrationCopyRegImages {res r v} {
   global Volume
 
   #

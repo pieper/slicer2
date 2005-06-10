@@ -159,7 +159,7 @@ proc KullbackLeiblerRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.12 $} {$Date: 2005/04/19 21:59:48 $}]
+        {$Revision: 1.13 $} {$Date: 2005/06/10 03:57:26 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -416,18 +416,12 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
     pack $f.fParam $f.fRun -pady $Gui(pad) 
 
     foreach param { \
-                   {UpdateIterations} \
-                   {LearningRate} \
                    {SourceShrinkFactors} \
                    {TargetShrinkFactors} \
-                   {TranslateScale} \
                    } name \
                   { \
-                   {Update Iterations} \
-                   {Learning Rate} \
                    {Source MultiRes Reduction} \
                    {Target Multires Reduction} \
-                   {Translate Scale} \
                    } {
         set f $fadvanced.fParam
         frame $f.f$param   -bg $Gui(activeWorkspace)
@@ -441,6 +435,9 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
     }
 
     foreach param { \
+                   {UpdateIterations} \
+                   {LearningRate} \
+                   {TranslateScale} \
                    {NumberOfSamples} \
                    {SourceStandardDeviation} \
                    {TargetStandardDeviation} \
@@ -449,6 +446,9 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
                    {Epsilon} \
                    } name \
                   { \
+                   {Update Iterations} \
+                   {Learning Rate} \
+                   {Translate Scale} \
                    {Number Of Samples} \
                    {Source Standard Deviation} \
                    {Target Standard Deviation} \
@@ -574,9 +574,6 @@ proc KullbackLeiblerRegistrationCoarseParam {} {
     global KullbackLeiblerRegistration RigidIntensityRegistration
 
     set RigidIntensityRegistration(Resolution)       128
-    set RigidIntensityRegistration(LearningRate)    3e-5
-    set RigidIntensityRegistration(UpdateIterations) 100
-    set RigidIntensityRegistration(TranslateScale)   320
     set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
     set RigidIntensityRegistration(TargetShrinkFactors)   "1 1 1"
     set RigidIntensityRegistration(Repeat) 1
@@ -586,6 +583,10 @@ proc KullbackLeiblerRegistrationCoarseParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
+    set KullbackLeiblerRegistration(LearningRate)    3e-5
+    set KullbackLeiblerRegistration(UpdateIterations) 100
+    set KullbackLeiblerRegistration(TranslateScale)   320
+
     set KullbackLeiblerRegistration(NumberOfSamples)  50
     set KullbackLeiblerRegistration(SourceStandardDeviation) 0.4
     set KullbackLeiblerRegistration(TargetStandardDeviation) 0.4
@@ -608,9 +609,6 @@ proc KullbackLeiblerRegistrationFineParam {} {
     global KullbackLeiblerRegistration RigidIntensityRegistration
 
     set RigidIntensityRegistration(Resolution)       128
-    set RigidIntensityRegistration(LearningRate)     3e-6
-    set RigidIntensityRegistration(UpdateIterations) 100
-    set RigidIntensityRegistration(TranslateScale)   320
     set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
     set RigidIntensityRegistration(TargetShrinkFactors)   "1 1 1"
     set RigidIntensityRegistration(Repeat) 1
@@ -620,6 +618,10 @@ proc KullbackLeiblerRegistrationFineParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
+    set KullbackLeiblerRegistration(LearningRate)    3e-6
+    set KullbackLeiblerRegistration(UpdateIterations) 100
+    set KullbackLeiblerRegistration(TranslateScale)   320
+
     set KullbackLeiblerRegistration(SourceStandardDeviation) 0.4
     set KullbackLeiblerRegistration(TargetStandardDeviation) 0.4
     set KullbackLeiblerRegistration(NumberOfSamples)  50
@@ -641,9 +643,6 @@ proc KullbackLeiblerRegistrationGSlowParam {} {
     global KullbackLeiblerRegistration RigidIntensityRegistration
 
     set RigidIntensityRegistration(Resolution)       128
-    set RigidIntensityRegistration(UpdateIterations) "500 1000"
-    set RigidIntensityRegistration(LearningRate)    "0.0001 0.00001"
-    set RigidIntensityRegistration(TranslateScale)   320
     set RigidIntensityRegistration(SourceShrinkFactors)   "2 2 2"
     set RigidIntensityRegistration(TargetShrinkFactors)   "2 2 2"
     set RigidIntensityRegistration(Repeat) 0
@@ -653,6 +652,10 @@ proc KullbackLeiblerRegistrationGSlowParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
+    set KullbackLeiblerRegistration(LearningRate)    "0.0001 0.00001"
+    set KullbackLeiblerRegistration(UpdateIterations) "500 1000"
+    set KullbackLeiblerRegistration(TranslateScale)   320
+
     set KullbackLeiblerRegistration(NumberOfSamples)  50
     set KullbackLeiblerRegistration(SourceStandardDeviation) 0.4
     set KullbackLeiblerRegistration(TargetStandardDeviation) 0.4
@@ -673,10 +676,6 @@ proc KullbackLeiblerRegistrationVerySlowParam {} {
     global KullbackLeiblerRegistration RigidIntensityRegistration
 
     set RigidIntensityRegistration(Resolution)       128 
-    set RigidIntensityRegistration(UpdateIterations) "2500 2500 2500 2500 2500"
-    set RigidIntensityRegistration(LearningRate)    "1e-4 1e-5 5e-6 1e-6 5e-7"
-    set RigidIntensityRegistration(NumberOfSamples)  50
-    set RigidIntensityRegistration(TranslateScale)   320
     set RigidIntensityRegistration(SourceShrinkFactors)   "4 4 1"
     set RigidIntensityRegistration(TargetShrinkFactors)   "4 4 1"
     set RigidIntensityRegistration(Repeat) 0
@@ -686,6 +685,10 @@ proc KullbackLeiblerRegistrationVerySlowParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
+    set KullbackLeiblerRegistration(LearningRate)    "1e-4 1e-5 5e-6 1e-6 5e-7"
+    set KullbackLeiblerRegistration(UpdateIterations) "2500 2500 2500 2500 2500"
+    set KullbackLeiblerRegistration(TranslateScale)   320
+
     set KullbackLeiblerRegistration(NumberOfSamples)          "50"
     set KullbackLeiblerRegistration(SourceStandardDeviation) 0.4
     set KullbackLeiblerRegistration(TargetStandardDeviation) 0.4
@@ -785,6 +788,7 @@ proc KullbackLeiblerRegistrationAutoRun {} {
         -update_procedure RigidIntensityRegistrationUpdateParam         \
         -stop_procedure    KullbackLeiblerRegistrationStop              \
         -set_metric_option KullbackLeiblerRegistrationSetMetricOption   \
+        -set_metric_option KullbackLeiblerRegistrationSetOptimizerOption \
         -vtk_itk_reg       vtkITKKullbackLeiblerTransform
 
     if {$::Module(verbose)} {
@@ -847,6 +851,42 @@ proc KullbackLeiblerRegistrationSetMetricOption { vtkITKKL } {
     $vtkITKKL SetTrainingSourceImage [KLTrainSourceNorm GetOutput]
     $vtkITKKL SetTrainingTargetImage [KLTrainTargetNorm GetOutput]
     $vtkITKKL SetTrainingTransform   [KullbackLeiblerRegistrationGetTrainingTransform ]
+}
+
+#-------------------------------------------------------------------------------
+# .PROC  KullbackLeiblerRegistrationSetOptimizerOption
+#
+# takes in a vtkITKMutualInformation object
+#
+# .ARGS
+# vtkITKMutualInformation vtkITKMI
+# .END
+#-------------------------------------------------------------------------------
+proc KullbackLeiblerRegistrationSetOptimizerOption { vtkITKMI } {
+    global KullbackLeiblerRegistration
+    
+    $vtkITKMI SetTranslateScale $KullbackLeiblerRegistration(TranslateScale)
+    
+    # set for MultiResStuff
+    $vtkITKMI ResetMultiResolutionSettings
+
+    foreach iter  $KullbackLeiblerRegistration(UpdateIterations) {
+        $vtkITKMI SetNextMaxNumberOfIterations $iter
+    }
+    foreach rate $KullbackLeiblerRegistration(LearningRate) {
+        $vtkITKMI SetNextLearningRate  $rate
+    }
+}
+
+proc RigidIntensityRegistrationCheckParametersKL {} {
+    global MutualInformationRegistration RigidIntensityRegistration
+
+    if {[llength $KullbackLeiblerRegistration(LearningRate) ] != \
+        [llength $KullbackLeiblerRegistration(UpdateIterations) ] } {
+        DevErrorWindow "Must Have same number of levels of iterations as learning rates"
+       return 0
+     }
+    return 1
 }
 
 #-------------------------------------------------------------------------------

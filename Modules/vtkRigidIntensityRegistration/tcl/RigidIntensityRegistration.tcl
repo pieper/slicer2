@@ -152,7 +152,7 @@ proc RigidIntensityRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.10 $} {$Date: 2005/04/19 21:59:49 $}]
+        {$Revision: 1.11 $} {$Date: 2005/06/10 03:57:26 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -226,7 +226,7 @@ proc RigidIntensityRegistrationBuildSubGui {f} {
     eval {menu $f.mbType.m} $Gui(WMA)
     pack  $f.mbType -side left -pady 1 -padx $Gui(pad)
     # Add menu items
-    foreach RegType "MI KL" {
+    foreach RegType "MI VersorMattesMI KL" {
         $f.mbType.m add command -label $RegType \
                 -command "RigidIntensityRegistrationSetRegType $RegType"
     }
@@ -244,7 +244,7 @@ proc RigidIntensityRegistrationBuildSubGui {f} {
     #
     # Swappable Frames for MI/KL methods
     #
-    foreach type "MI KL" {
+    foreach type "MI VersorMattesMI KL" {
         frame $f.f${type} -bg $Gui(activeWorkspace)
         place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
         set RigidIntensityRegistration(f${type}) $f.f${type}
@@ -252,6 +252,7 @@ proc RigidIntensityRegistrationBuildSubGui {f} {
     raise $RigidIntensityRegistration(fMI)
 
     MutualInformationRegistrationBuildSubGui $f.fMI
+    VersorMattesMIRegistrationBuildSubGui $f.fVersorMattesMI
     KullbackLeiblerRegistrationBuildSubGui $f.fKL
     set fKL $f.fKL
 }
@@ -395,13 +396,12 @@ proc RigidIntensityRegistrationSetUp {} {
       DevErrorWindow $err1
     return 0
     }
-
-    if {[llength $RigidIntensityRegistration(LearningRate) ] != \
-        [llength $RigidIntensityRegistration(UpdateIterations) ] } {
-        DevErrorWindow "Must Have same number of levels of iterations as learning rates"
-       return 0
-     }
-
+    
+    set RegType $RigidIntensityRegistration(RegType)
+    if {[RigidIntensityRegistrationCheckParameters$RegType] == 0} {
+        return 0
+    }
+    
     # sourceId = ID of volume to register (source, moving)
     # targetId = ID of reference volume   (target, stationary)
     # matrixId = ID of the transform to change
@@ -518,9 +518,6 @@ proc RigidIntensityRegistrationUpdateParam { isreg } {
         -source          $RigidIntensityRegistration(sourceId)            \
         -target          $RigidIntensityRegistration(targetId)            \
         -resolution      $RigidIntensityRegistration(Resolution)          \
-        -iterations      $RigidIntensityRegistration(UpdateIterations)    \
-        -learningrate    $RigidIntensityRegistration(LearningRate)        \
-        -translatescale  $RigidIntensityRegistration(TranslateScale)      \
         -source_shrink   $RigidIntensityRegistration(SourceShrinkFactors) \
         -target_shrink   $RigidIntensityRegistration(TargetShrinkFactors) \
         -auto_repeat     $RigidIntensityRegistration(Repeat)
