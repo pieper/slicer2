@@ -374,7 +374,7 @@ proc VolTensorMake9ComponentTensorVolIntoTensors {v} {
     $newvol SetDescription "tensor volume"
     $newvol SetName "[Volume($v,node) GetName] - Tensor"
     set n [$newvol GetID]
-    MainDataCreate Tensor $n Volume
+    TensorCreateNew $n 
 
     # put the image data into the object for slicer use
     Tensor($n,data) SetImageData [Volume($v,vol) GetOutput]
@@ -391,7 +391,6 @@ proc VolTensorMake9ComponentTensorVolIntoTensors {v} {
         puts "node doesn't exist, should unfreeze and fix volumes.tcl too"
     } else {
         # Activate the new data object
-        MainDataSetActive Tensor $n
         DTMRISetActive $n
     }
 
@@ -413,7 +412,7 @@ proc VolTensorMake6ComponentScalarVolIntoTensors {v} {
     $newvol SetDescription "tensor volume"
     $newvol SetName "[Volume($v,node) GetName] - Tensor"
     set n [$newvol GetID]
-    MainDataCreate Tensor $n Volume
+    TensorCreateNew $n 
 
     # actually put the correct data inside the thing
     # need to go from 6-component data to 9-component
@@ -523,7 +522,6 @@ proc VolTensorMake6ComponentScalarVolIntoTensors {v} {
         puts "node doesn't exist, should unfreeze and fix volumes.tcl too"
     } else {
         # Activate the new data object
-        MainDataSetActive Tensor $n
         DTMRISetActive $n
     }
 
