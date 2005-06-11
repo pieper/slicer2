@@ -63,7 +63,7 @@ public:
   // Valid extentsions
   virtual const char* GetFileExtensions()
     {
-      return ".nhdr";
+      return ".nhdr .nrrd";
     }
 
   // Description: 
@@ -165,6 +165,9 @@ protected:
   vtkMatrix4x4* RasToIjkMatrix;
 
   char* HeaderKeys;
+  char* CurrentFileName;
+
+  Nrrd *nrrd;
 
   //BTX
   std::map <std::string, std::string> HeaderKeyValue;
