@@ -291,11 +291,13 @@ itcl::body isvolume::constructor {args} {
 
     vtkMatrix4x4 $_ijkmatrix
     vtkImageReslice $_reslice
-      $_reslice SetInput $_None_ImageData
       $_reslice SetInterpolationModeToLinear
     vtkGeneralTransform $_xform
     vtkImageChangeInformation $_changeinfo
+      $_changeinfo SetInput $_None_ImageData
       $_changeinfo CenterImageOn
+
+    $_reslice SetInput [$_changeinfo GetOutput]
 
     #
     # Initialize the widget based on the command line options.
@@ -355,12 +357,42 @@ itcl::configbody isvolume::slice {
 # Id is strongly prefered because it is unique.
 #-------------------------------------------------------------------------------
 itcl::configbody isvolume::volume {
-    global Volume
 
     set volname $itk_option(-volume)
 
     if { $volname == "" } {
         set volname "None"
+    }
+
+    #
+    # check to see if the volume is a vtkImageData, and if so, use it
+    #
+    if { [info command $volname] != "" } {
+        catch "$volname GetClassName" res
+        if { $res == "vtkImageData" } {
+            $_changeinfo SetInput $volname
+
+            $volname Update
+            foreach "min max" [$volname GetScalarRange] {}
+            $_mapper SetColorWindow [expr $max - $min]
+            $_mapper SetColorLevel [expr ($max + $min) / 2.]
+
+            $this configure -slice [expr $itk_option(-resolution) / 2]
+            $this configure -orientation Axial
+            $this transform_update
+        }
+        $this expose
+        return
+    }
+
+    # 
+    # otherwise, assume this is the name or id of a slicer volume
+    #
+
+    # but if slicer's variables aren't present, set to none
+    if { ![info exists ::Volume] } {
+        $_changeinfo SetInput $_None_ImageData 
+        return
     }
 
     set id $_VolIdMap($volname)
@@ -369,17 +401,16 @@ itcl::configbody isvolume::volume {
         error "bad volume id $id for $volname"
     }
 
-    if { $id == "None" || $id == $Volume(idNone)} {
+    if { $id == "None" || $id == $::Volume(idNone)} {
         $_changeinfo SetInput $_None_ImageData 
     } else {
-        $_changeinfo SetInput [Volume($id,vol) GetOutput]
+        $_changeinfo SetInput [::Volume($id,vol) GetOutput]
     }
 
-    $_reslice SetInput [$_changeinfo GetOutput]
 
     $_mapper SetInput [$_reslice GetOutput]
-    $_mapper SetColorWindow [Volume($id,node) GetWindow]
-    $_mapper SetColorLevel [Volume($id,node) GetLevel]
+    $_mapper SetColorWindow [::Volume($id,node) GetWindow]
+    $_mapper SetColorLevel [::Volume($id,node) GetLevel]
 
     $this transform_update
     if {$volname != "None" && $volname != ""} {
@@ -397,7 +428,6 @@ itcl::configbody isvolume::volume {
 # Id is strongly prefered because it is unique.
 #-------------------------------------------------------------------------------
 itcl::configbody isvolume::warpvolume {
-    global Volume
 
     set volname $itk_option(-warpvolume)
 
@@ -405,11 +435,13 @@ itcl::configbody isvolume::warpvolume {
         set volname "None"
     }
 
-    set _warpVolId $_VolIdMap($volname)
+    if { [info exists ::Volume] } {
+        set _warpVolId $_VolIdMap($volname)
 
-    if { ![info exists _VolIdMap($_warpVolId)] } {
-        set _warpVolId 0
-        error "bad volume id $_warpVolId for $volname"
+        if { ![info exists _VolIdMap($_warpVolId)] } {
+            set _warpVolId 0
+            error "bad volume id $_warpVolId for $volname"
+        }
     }
 }
 
@@ -506,7 +538,12 @@ itcl::configbody isvolume::resolution {
 
     set opos [expr ([$this cget -slice] * 1.0) / [$_slider cget -to] ]
     set res $itk_option(-resolution)
-    set spacing [expr $::View(fov) / (1.0 * $res)]
+    if { [info exists ::View(fov)] } {
+        set fov $::View(fov)
+    } else {
+        set fov 256
+    }
+    set spacing [expr $fov / (1.0 * $res)]
 
     set _spacing {$spacing $spacing $spacing}
 
@@ -524,7 +561,9 @@ itcl::configbody isvolume::resolution {
 
     $this transform_update
 
-    $_resmenu select $itk_option(-resolution)
+    # the "*" is there to avoid having the resolution number interpreted
+    # as a numerical index - it's a pattern match instead
+    $_resmenu select "*$itk_option(-resolution)" 
 }
 
 # ------------------------------------------------------------------
@@ -566,28 +605,31 @@ itcl::body isvolume::volmenu_update {} {
     }
 
     array unset _VolIdMap
+    array set _VolIdMap ""
 
-    foreach id $::Volume(idList) {
-        set name [Volume($id,node) GetName]
-        set _VolIdMap($name)  $id
-        set _VolIdMap($id)    $id
-        set _VolIdMap(${name}__$id)  $id 
-    }
+    if { [info exists ::Volume(idList) ] } {
+        foreach id $::Volume(idList) {
+            set name [::Volume($id,node) GetName]
+            set _VolIdMap($name)  $id
+            set _VolIdMap($id)    $id
+            set _VolIdMap(${name}__$id)  $id 
+        }
 
-    set ocmd [$_volmenu cget -command]
-    $_volmenu configure -command ""
-    $_volmenu delete 0 end
-    foreach id $::Volume(idList) {
-        set name [Volume($id,node) GetName]
-        $_volmenu insert end  ${name}__$id
-    }
-    $_volmenu configure -command $ocmd
+        set ocmd [$_volmenu cget -command]
+        $_volmenu configure -command ""
+        $_volmenu delete 0 end
+        foreach id $::Volume(idList) {
+            set name [::Volume($id,node) GetName]
+            $_volmenu insert end  ${name}__$id
+        }
+        $_volmenu configure -command $ocmd
 
-    set idindex [lsearch $::Volume(idList) $current_id]
-    if { $idindex == -1 } {
-        $_volmenu select end
-    } else {
-        $_volmenu select $idindex
+        set idindex [lsearch $::Volume(idList) $current_id]
+        if { $idindex == -1 } {
+            $_volmenu select end
+        } else {
+            $_volmenu select $idindex
+        }
     }
 }
 
@@ -601,13 +643,30 @@ itcl::body isvolume::volmenu_update {} {
 #           
 #-------------------------------------------------------------------------------
 itcl::body isvolume::transform_update {} {
-    global Volume
 
     if { ![info exists itk_option(-volume)] || $itk_option(-volume) == "" } {
         return
     }
 
-    set id $_VolIdMap($itk_option(-volume))
+    set volname $itk_option(-volume)
+
+    if { [info command $volname] != "" } {
+        catch "$volname GetClassName" res
+        if { $res == "vtkImageData" } {
+            set ScanOrder "IS"
+            set RasToWld "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1"
+        }
+    } else {
+        if { [info exists _VolIdMap($volname)] } {
+            set id $_VolIdMap($itk_option(-volume))
+            set ScanOrder [::Volume($id,node) GetScanOrder]
+            set RasToWld [::Volume($id,node) GetRasToWld]
+        } else {
+            # can't do anything - the volume isn't a vtkImageData or the 
+            # index of a slicer Volume node
+            return
+        }
+    }
 
     # Existing volume scan order and orientation
     # first, make the transform to put the images
@@ -619,7 +678,7 @@ itcl::body isvolume::transform_update {} {
     #
 
     $_ijkmatrix Identity
-    switch [Volume($id,node) GetScanOrder] {
+    switch $ScanOrder {
         #                    -R        -A        -S
         "LR" { set axes {  0  0 -1  -1  0  0   0  1  0 } }
         "RL" { set axes {  0  0  1  -1  0  0   0  1  0 } }
@@ -690,7 +749,7 @@ itcl::body isvolume::transform_update {} {
         "Coronal(PA)" {
             transposematrix DeepCopy \
                 1  0  0  0 \
-                0  0  1  0 \
+                0  0 -1  0 \
                 0  1  0  0 \
                 0  0  0  1    
         }
@@ -700,7 +759,7 @@ itcl::body isvolume::transform_update {} {
             transposematrix DeepCopy \
                 1  0  0  0 \
                 0  0  1  0 \
-                0 -1  0  0 \
+                0  1  0  0 \
                 0  0  0  1    
         }
         "AxiSlice" -
@@ -728,7 +787,6 @@ itcl::body isvolume::transform_update {} {
     if { $itk_option(-transform) != "" } {
         eval transformmatrix DeepCopy $itk_option(-transform)
     } else {
-        transformmatrix DeepCopy [Volume($id,node) GetRasToWld]
     }
 
     transformmatrix Invert
@@ -751,11 +809,13 @@ itcl::body isvolume::transform_update {} {
     $_xform Concatenate $_ijkmatrix
 
     # concatenate with displacement field transform
-    if {$_warpVolId != "" && $_warpVolId != $Volume(idNone)} {
-        catch "dispXform Delete"
-        vtkGridTransform dispXform 
-        dispXform SetDisplacementGrid [Volume($_warpVolId,vol) GetOutput]
-        $_xform Concatenate dispXform
+    if { [info exists ::Volume] } {
+        if {$_warpVolId != "" && $_warpVolId != $::Volume(idNone)} {
+            catch "dispXform Delete"
+            vtkGridTransform dispXform 
+            dispXform SetDisplacementGrid [::Volume($_warpVolId,vol) GetOutput]
+            $_xform Concatenate dispXform
+        }
     }
 
     $_reslice SetResliceTransform $_xform 
@@ -811,6 +871,10 @@ itcl::body isvolume::screensave { filename {imagetype "PNM"} } {
 # ------------------------------------------------------------------
 
 itcl::body isvolume::slicer_volume { {name ""} } {
+
+    if { [info command MainMrmlAddNode] == "" } {
+        error "cannot create slicer volume outside of slicer"
+    }
 
     # add a mrml node
     set n [MainMrmlAddNode Volume]
