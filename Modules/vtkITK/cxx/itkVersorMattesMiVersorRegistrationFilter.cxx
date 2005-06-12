@@ -9,6 +9,16 @@ itk::itkVersorMattesMiVersorRegistrationFilter::itkVersorMattesMiVersorRegistrat
   m_NumberOfHistogramBins = 256;
   m_NumberOfSpatialSamples = 100000;
   m_ReinitializeSeed = 0;
+
+  itkVersorMattesMiVersorRegistrationCommand::Pointer observer = itkVersorMattesMiVersorRegistrationCommand::New();
+  observer->SetRegistrationFilter(this);
+  m_Optimizer->AddObserver( itk::IterationEvent(), observer );
+
+  m_Optimizer->MinimizeOn();
+
+  m_Optimizer->SetRelaxationFactor( 0.9 );
+  m_Optimizer->SetGradientMagnitudeTolerance( 0.01);
+
 }
 
 
@@ -28,17 +38,12 @@ itk::itkVersorMattesMiVersorRegistrationFilter::SetOptimizerParamters()
 
   m_Optimizer->SetMaximumStepLength( m_MaximumStepLength(0) ); 
   m_Optimizer->SetMinimumStepLength( m_MinimumStepLength(0) );
-  // TODO expose as parameters
-  m_Optimizer->SetRelaxationFactor( 0.9 );
-  m_Optimizer->SetGradientMagnitudeTolerance( 0.01);
-
-  // TODO make m_NumberOfIterations array
   m_Optimizer->SetNumberOfIterations( m_NumberOfIterations[0]);
-  m_Optimizer->MinimizeOn();
 
-  itkVersorMattesMiVersorRegistrationCommand::Pointer observer = itkVersorMattesMiVersorRegistrationCommand::New();
-  observer->SetRegistrationFilter(this);
-  m_Optimizer->AddObserver( itk::IterationEvent(), observer );
+  // TODO expose as parameters
+  //m_Optimizer->SetRelaxationFactor( 0.9 );
+  //m_Optimizer->SetGradientMagnitudeTolerance( 0.01);
+
 }
 
 void

@@ -129,6 +129,7 @@ public:
 
   double GetMetricValue();
 
+  itkRegistrationFilterImageType* GetTransformedOutput (); 
 
 protected:  
 

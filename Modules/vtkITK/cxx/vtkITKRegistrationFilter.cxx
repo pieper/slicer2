@@ -53,6 +53,6 @@ void vtkITKRegistrationFilter::Update()
 
   vtkITKImageToImageFilter::Update();
 
-  vtkImporter->Update();
+  //vtkImporter->Update();
 }
 

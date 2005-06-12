@@ -114,12 +114,18 @@ itk::itkTransformRegistrationFilter<TOptimizerClass, TTransformerClass, TMetricC
   } 
 
   m_FinalParameters = m_Registration->GetLastTransformParameters();
+  m_Transform->SetParameters( m_FinalParameters ); 
 
-  typename TransformType::Pointer finalTransform = TransformType::New();
-  finalTransform->SetParameters( m_FinalParameters );
+  //this->GraftOutput(m_Resampler->GetOutput());
 
-/*
-  m_Resampler->SetTransform( finalTransform );
+} // GenerateData
+
+template <class TOptimizerClass, class TTransformerClass, class TMetricClass >
+itkRegistrationFilterImageType* 
+itkTransformRegistrationFilter< TOptimizerClass,  TTransformerClass, TMetricClass >
+::GetTransformedOutput () 
+{
+  m_Resampler->SetTransform( m_Transform );
   m_Resampler->SetInput( m_MovingImageCaster->GetOutput() );
 
   FixedImageType::Pointer fixedImage = m_FixedImageCaster->GetOutput();
@@ -128,11 +134,9 @@ itk::itkTransformRegistrationFilter<TOptimizerClass, TTransformerClass, TMetricC
   m_Resampler->SetOutputSpacing( fixedImage->GetSpacing() );
   m_Resampler->SetDefaultPixelValue( 100 );
 
-  m_Resampler->Update();
-  this->GraftOutput(m_Resampler->GetOutput());
-*/
-} // GenerateData
-
+  //m_Resampler->Update();
+  return m_Resampler->GetOutput();
+}
 
 template <class TOptimizerClass, class TTransformerClass, class TMetricClass >
 void
