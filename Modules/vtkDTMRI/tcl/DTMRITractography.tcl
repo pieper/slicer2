@@ -1280,15 +1280,15 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI {{verbose 1}} {
+proc DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI {vseg vintersect {verbose 1}} {
     global DTMRI Label Tensor Volume
 
     set t $Tensor(activeID)
-    set v $DTMRI(ROILabelmap)
+    #set v $DTMRI(ROILabelmap)
 
     # make sure they are using a segmentation (labelmap)
-    if {[Volume($v,node) GetLabelMap] != 1} {
-        set name [Volume($v,node) GetName]
+    if {[Volume($vseg,node) GetLabelMap] != 1} {
+        set name [Volume($vseg,node) GetName]
         set msg "The volume $name is not a label map (segmented ROI). Continue anyway?"
         if {[tk_messageBox -type yesno -message $msg] == "no"} {
             return
@@ -1298,7 +1298,7 @@ proc DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI {{verbose 1}} {
 
     # ask for user confirmation first
     if {$verbose == "1"} {
-        set name [Volume($v,node) GetName]
+        set name [Volume($vseg,node) GetName]
         set msg "About to seed streamlines in all labelled voxels of volume $name.  This may take a while, so make sure the Tracts settings are what you want first. Go ahead?"
         if {[tk_messageBox -type yesno -message $msg] == "no"} {
             return
@@ -1312,17 +1312,28 @@ proc DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI {{verbose 1}} {
     DTMRIUpdateTractColor
     DTMRIUpdateStreamlineSettings
     
+    # cast to short
+    vtkImageCast castVseg
+    castVseg SetOutputScalarTypeToShort
+    castVseg SetInput [Volume($vseg,vol) GetOutput] 
+    castVseg Update
+
+    vtkImageCast castVintersect
+    castVintersect SetOutputScalarTypeToShort
+    castVintersect SetInput [Volume($vintersect,vol) GetOutput] 
+    castVintersect Update
+
     # set up the input segmented volume
-    DTMRI(vtk,streamlineControl) SetInputROI [Volume($v,vol) GetOutput] 
+    DTMRI(vtk,streamlineControl) SetInputROI [castVseg GetOutput]
     DTMRI(vtk,streamlineControl) SetInputROIValue $DTMRI(ROILabel)
 
     DTMRI(vtk,streamlineControl) SetInputROIForIntersection \
-        [Volume($v,vol) GetOutput] 
-
+        [castVintersect GetOutput]
+        
     # Get positioning information from the MRML node
     # world space (what you see in the viewer) to ijk (array) space
     vtkTransform transform
-    transform SetMatrix [Volume($v,node) GetWldToIjk]
+    transform SetMatrix [Volume($vseg,node) GetWldToIjk]
     # now it's ijk to world
     transform Inverse
     DTMRI(vtk,streamlineControl) SetROIToWorld transform
@@ -1337,6 +1348,9 @@ proc DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI {{verbose 1}} {
     # actually display streamlines 
     # (this is the slow part since it causes pipeline execution)
     DTMRI(vtk,streamlineControl) AddStreamlinesToScene
+
+    castVseg Delete
+    castVintersect Delete
 }
 
 
