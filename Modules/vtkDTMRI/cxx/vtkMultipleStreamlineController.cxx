@@ -1450,7 +1450,7 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROIIntersectWithROI2()
   inPtr = (short *) this->InputROI->GetScalarPointerForExtent(inExt);
 
   // testing for seeding at a certain resolution.
-  int increment = 2;
+  int increment = 1;
 
   for (idxZ = 0; idxZ <= maxZ; idxZ++)
     {
@@ -2316,7 +2316,7 @@ void vtkMultipleStreamlineController::ColorROIFromStreamlines()
     }
   
   // make sure it is short type
-  if (this->InputROI->GetScalarType() != VTK_SHORT)
+  if (this->InputROIForColoring->GetScalarType() != VTK_SHORT)
     {
       vtkErrorMacro("Input ROI is not of type VTK_SHORT");
       return;      
@@ -2353,6 +2353,18 @@ void vtkMultipleStreamlineController::ColorROIFromStreamlines()
   this->OutputROIForColoring->SetExtent(this->InputROIForColoring->GetWholeExtent());
   this->OutputROIForColoring->AllocateScalars();
   
+  // initialize to all 0's
+  int dims[3];
+  this->OutputROIForColoring->GetDimensions(dims);
+  int size = dims[0]*dims[1]*dims[2];
+  short *outPtr = (short *) this->OutputROIForColoring->GetScalarPointer();
+  for(int i=0; i<size; i++)
+    {
+      *outPtr = (short) 0;
+      outPtr++;
+    }
+
+
   // Create transformation matrices to go backwards from streamline points to ROI space
   // This is used to access ROIForColoring, it has to have same 
   // dimensions and location as seeding ROI for now.
