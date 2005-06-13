@@ -1449,7 +1449,8 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROIIntersectWithROI2()
   // start point in input integer field
   inPtr = (short *) this->InputROI->GetScalarPointerForExtent(inExt);
 
-  int increment = 10;
+  // testing for seeding at a certain resolution.
+  int increment = 2;
 
   for (idxZ = 0; idxZ <= maxZ; idxZ++)
     {
@@ -1513,9 +1514,9 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROIIntersectWithROI2()
                           // Now transform to ROI IJK space
                           WorldToROI->TransformPoint(point2,point);
                           // Find that voxel number
-                          pt[0]= (int) floor(point[0]);
-                          pt[1]= (int) floor(point[1]);
-                          pt[2]= (int) floor(point[2]);
+                          pt[0]= (int) floor(point[0]+0.5);
+                          pt[1]= (int) floor(point[1]+0.5);
+                          pt[2]= (int) floor(point[2]+0.5);
                           short *tmp = (short *) this->InputROIForIntersection->GetScalarPointer(pt);
                           if (tmp != NULL)
                             {
@@ -1537,9 +1538,9 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROIIntersectWithROI2()
                           // Now transform to ROI IJK space
                           WorldToROI->TransformPoint(point2,point);
                           // Find that voxel number
-                          pt[0]= (int) floor(point[0]);
-                          pt[1]= (int) floor(point[1]);
-                          pt[2]= (int) floor(point[2]);
+                          pt[0]= (int) floor(point[0]+0.5);
+                          pt[1]= (int) floor(point[1]+0.5);
+                          pt[2]= (int) floor(point[2]+0.5);
                           short *tmp = (short *) this->InputROIForIntersection->GetScalarPointer(pt);
                           if (tmp != NULL)
                             {
@@ -2373,6 +2374,11 @@ void vtkMultipleStreamlineController::ColorROIFromStreamlines()
   G[0]=rgb[1];
   B[0]=rgb[2];
   
+  // testing
+  double spacing[3];
+  this->OutputROIForColoring->GetSpacing(spacing);
+
+  
   while(currStreamline && currActor)
     {
       
@@ -2408,12 +2414,10 @@ void vtkMultipleStreamlineController::ColorROIFromStreamlines()
       // the nearest voxel for path/ROI intersection.
       vtkPoints *hs0=currStreamline->GetHyperStreamline0();
       vtkPoints *hs1=currStreamline->GetHyperStreamline1();
-      int numPts=hs0->GetNumberOfPoints();
       int ptidx=0;
       int pt[3];
       double point[3], point2[3];
-      int intersects = 0;
-      while (ptidx < numPts)
+      for (ptidx = 0; ptidx < hs0->GetNumberOfPoints(); ptidx++)
     {
       hs0->GetPoint(ptidx,point);
       // First transform to world space.
@@ -2421,9 +2425,14 @@ void vtkMultipleStreamlineController::ColorROIFromStreamlines()
       // Now transform to ROI IJK space
       WorldToROI->TransformPoint(point2,point);
       // Find that voxel number
-      pt[0]= (int) floor(point[0]);
-      pt[1]= (int) floor(point[1]);
-      pt[2]= (int) floor(point[2]);
+      pt[0]= (int) floor(point[0]+0.5);
+      pt[1]= (int) floor(point[1]+0.5);
+      pt[2]= (int) floor(point[2]+0.5);
+      
+      //pt[0]= (int) floor(point[0]/spacing[0]+0.5);
+      //pt[1]= (int) floor(point[1]/spacing[1]+0.5);
+      //pt[2]= (int) floor(point[2]/spacing[2]+0.5);
+
       short *tmp = (short *) this->InputROIForColoring->GetScalarPointer(pt);
       if (tmp != NULL)
         {
@@ -2433,15 +2442,13 @@ void vtkMultipleStreamlineController::ColorROIFromStreamlines()
         tmp = (short *) this->OutputROIForColoring->GetScalarPointer(pt);
         *tmp = (short) (currColor + 1);
                 
+          
           }
         }
-      ptidx++;
     }
-      numPts=hs1->GetNumberOfPoints();
       // Skip the first point in the second line since it
       // is a duplicate of the initial point.
-      ptidx=1;
-      while (ptidx < numPts)
+      for (ptidx = 0; ptidx < hs1->GetNumberOfPoints(); ptidx++)
     {
       hs1->GetPoint(ptidx,point);
       // First transform to world space.
@@ -2449,9 +2456,14 @@ void vtkMultipleStreamlineController::ColorROIFromStreamlines()
       // Now transform to ROI IJK space
       WorldToROI->TransformPoint(point2,point);
       // Find that voxel number
-      pt[0]= (int) floor(point[0]);
-      pt[1]= (int) floor(point[1]);
-      pt[2]= (int) floor(point[2]);
+      pt[0]= (int) floor(point[0]+0.5);
+      pt[1]= (int) floor(point[1]+0.5);
+      pt[2]= (int) floor(point[2]+0.5);
+
+      //pt[0]= (int) floor(point[0]/spacing[0]+0.5);
+      //pt[1]= (int) floor(point[1]/spacing[1]+0.5);
+      //pt[2]= (int) floor(point[2]/spacing[2]+0.5);
+
       short *tmp = (short *) this->InputROIForColoring->GetScalarPointer(pt);
       if (tmp != NULL)
         {
@@ -2463,7 +2475,7 @@ void vtkMultipleStreamlineController::ColorROIFromStreamlines()
                 
           }
         }
-      ptidx++;
+
     }                          
       
       // get next objects in collections
