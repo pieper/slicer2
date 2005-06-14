@@ -158,6 +158,53 @@ public:
     }
   }
 
+  char *NrrdGetSpaceString ( Nrrd* nrrd ) const
+  {
+  switch( nrrd->space )
+    {
+    default:
+    case nrrdSpaceUnknown:
+        return "unknown";
+    break;
+    case nrrdSpaceRightAnteriorSuperior:
+        return "right-anterior-superior"; /*  1: NIFTI-1 (right-handed) */
+    break;
+    case nrrdSpaceLeftAnteriorSuperior:
+        return "left-anterior-superior"; /*  2: standard Analyze (left-handed) */
+    break;
+    case nrrdSpaceLeftPosteriorSuperior:     
+        return "left-posterior-superior"; /*  3: DICOM 3.0 (right-handed) */
+    break;
+    case nrrdSpaceRightAnteriorSuperiorTime:     
+        return "right-anterior-superior-time"; /*  4 */
+    break;
+    case nrrdSpaceLeftAnteriorSuperiorTime:     
+        return "left-anterior-superior-time"; /*  5 */
+    break;
+    case nrrdSpaceLeftPosteriorSuperiorTime:     
+        return "left-posterior-superior-time"; /*  6 */
+    break;
+    case nrrdSpaceScannerXYZ:     
+        return "scanner-xyz"; /*  7: ACR/NEMA 2.0 (pre-DICOM 3.0) */
+    break;
+    case nrrdSpaceScannerXYZTime:     
+        return "scanner-xyz-time"; /*  8 */
+    break;
+    case nrrdSpace3DRightHanded:     
+        return "3d-right-handed"; /*  9 */
+    break;
+    case nrrdSpace3DLeftHanded:     
+        return "3d-left-handed"; /*  10 */
+    break;
+    case nrrdSpace3DRightHandedTime:     
+        return "3d-right-handed-time"; /*  11 */
+    break;
+    case nrrdSpace3DLeftHandedTime:     
+        return "3d-left-handed-time"; /*  12 */
+    break;
+    }
+  }
+
 protected:
   vtkNRRDReader();
   ~vtkNRRDReader();
