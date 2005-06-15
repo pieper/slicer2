@@ -165,7 +165,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.97 $} {$Date: 2005/06/01 04:08:03 $}]
+                  {$Revision: 1.98 $} {$Date: 2005/06/15 23:05:37 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -288,7 +288,7 @@ proc DTMRIUpdateMRML {} {
     DevUpdateNodeSelectButton Volume DTMRI MaskLabelmap MaskLabelmap DevSelectNode 0 0 1 DTMRIUpdate
     DevUpdateNodeSelectButton Volume DTMRI ROILabelmap ROILabelmap DevSelectNode 0 0 1
     DevUpdateNodeSelectButton Volume DTMRI ColorByVolume ColorByVolume DevSelectNode 0 0 0 DTMRIUpdateTractColorToMulti
-
+    DevUpdateNodeSelectButton Volume DTMRI convertID convertID DevSelectNode 0 0 1 DTMRIConvertUpdate
 
     # Update label widgets.  This is because if the colormap changes,
     # then the widget colors may have to change.
@@ -308,7 +308,7 @@ proc DTMRIUpdateMRML {} {
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIEnter {} {
-    global DTMRI Slice View
+    global DTMRI Volume Slice View
     
     # set global flag to avoid possible render loop
     set View(resetCameraClippingRange) 0
@@ -323,7 +323,6 @@ proc DTMRIEnter {} {
 
     # color label selection widgets
     LabelsColorWidgets
-
 
     # Default to reformatting along with the currently active slice
     set DTMRI(mode,reformatType) $Slice(activeID)

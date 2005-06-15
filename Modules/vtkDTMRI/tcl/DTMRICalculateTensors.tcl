@@ -61,7 +61,7 @@
 #-------------------------------------------------------------------------------
 proc DTMRICalculateTensorsInit {} {
 
-    global DTMRI
+    global DTMRI Volume
 
     # Initial path to search when loading files
     #------------------------------------
@@ -146,6 +146,7 @@ proc DTMRICalculateTensorsInit {} {
     set DTMRI(convert,show) 0
 
     set DTMRI(convert,makeDWIasVolume) 0
+    set DTMRI(convertID) $Volume(idNone)
 
 }
 
@@ -206,14 +207,14 @@ proc DTMRICalculateTensorsBuildGUI {} {
     set f $fConvert.fConvert.fSelect
     # Lauren test
     # menu to select a volume: will set Volume(activeID)
-    DevAddSelectButton  Volume $f Active "Input Volume:" Pack \
+    DevAddSelectButton  DTMRI $f convertID "Input Volume:" Pack \
             "Input Volume to create DTMRIs from." 13 BLA
     
 
     # Append these menus and buttons to lists 
     # that get refreshed during UpdateMRML
-    lappend Volume(mbActiveList) $f.mbActive
-    lappend Volume(mActiveList) $f.mbActive.m
+    #lappend Volume(mbActiveList) $f.mbActive
+    #lappend Volume(mActiveList) $f.mbActive.m
 
 
     #-------------------------------------------
@@ -513,6 +514,61 @@ proc DTMRICalculateTensorsBuildGUI {} {
 
 }
 
+
+proc DTMRIConvertUpdate {} {
+  global DTMRI Volume
+  
+  set id $DTMRI(convertID)
+  
+  #Check if DTMRI headerKeys exits
+  set headerkeys [array names Volume "$id,headerKeys,DW*"]
+  
+  if {$headerkeys == ""} {
+     #Active protocols frame
+  
+  } else {
+     #Build protocol from headerKeys
+     set key DWMRI_b-value
+     set DTMRI(convert,lebihan) $Volume($id,headerKeys,$key) 
+     #Find baseline
+     set DTMRI(convert,gradients) ""
+     set gradientkeys [array names Volume "$id,headerKeys,DWMRI_gradient_*" ]
+     
+ 
+     set baselinepos 1
+     foreach key $gradientkeys {
+       if {$Volume($id,headerKeys,$key) == "0 0 0"} {
+         set DTMRI(convert,firstNoGradientImage) $baselinepos
+         #parse NEX key to figure out the last No Gradient
+         set DTMRI(convert,lastNoGradientImage) $baselinepos
+         
+         #Find number of gradients
+         set DTMRI(convert,numberOfGradients) [expr [llength $gradientkeys] - 1]
+     
+         
+         break
+       }  
+       else {
+         #This should be then a gradient
+         lappend DTMRI(convert,gradients) $Volume($id,headerKeys,$key)
+         incr baselinepos
+       }  
+     }
+     
+     if {$baselinepos > [llength $gradientkeys]} {
+       #Show error: no baseline in the file
+     
+     }
+       
+     set DTMRI(convert,order) "VOLUME"
+     
+   }
+  
+  #Build protocol from headerKeys
+  
+  #Disable protocols
+
+}
 
 #-------------------------------------------------------------------------------
 # .PROC RunLSDIrecon
