@@ -267,8 +267,6 @@ proc VolNrrdApply {} {
 
     $imdata UpdateInformation
 
-    puts "Header Keys = [nrrdReader GetHeaderKeys]"
-
     if {$Module(verbose) == 1} {
         puts "proc VolNrrd: UpdateInformation done"
     }
@@ -337,6 +335,14 @@ proc VolNrrdApply {} {
     Volume($i,node) SetDimensions [lindex $Volume(dimensions) 0] [lindex $Volume(dimensions) 1]
     Volume($i,node) ComputeRasToIjkFromScanOrder $Volume(scanOrder)
 
+ 
+    #Filling headerKeys in the volume array. This key might eventually belong to the MrmlNode
+    puts "Header Keys = [nrrdReader GetHeaderKeys]"
+    foreach key [nrrdReader GetHeaderKeys] {
+        Volume($i,headerKeys,$key) [nrrdReader GetHeaderValue $key]
+    }    
+ 
+    
     # so can read in the volume
     if {$Module(verbose) == 1} {
         puts "VolNrrd: setting full prefix for volume node $i"
