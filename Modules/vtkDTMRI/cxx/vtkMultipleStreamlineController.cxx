@@ -55,8 +55,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "vtkImageWriter.h"
 
-//------------------------------------------------------------------------------
-vtkMultipleStreamlineController* vtkMultipleStreamlineController::New()
+                                                                   //------------------------------------------------------------------------------
+                                                                   vtkMultipleStreamlineController* vtkMultipleStreamlineController::New()
 {
   // First try to create the object from the vtkObjectFactory
   vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMultipleStreamlineController");
@@ -69,8 +69,8 @@ vtkMultipleStreamlineController* vtkMultipleStreamlineController::New()
 }
 
 
-//----------------------------------------------------------------------------
-vtkMultipleStreamlineController::vtkMultipleStreamlineController()
+                                                                 //----------------------------------------------------------------------------
+                                                                   vtkMultipleStreamlineController::vtkMultipleStreamlineController()
 {
   // Initialize these to identity, so if the user doesn't set them it's okay.
   this->ROIToWorld = vtkTransform::New();
@@ -2430,69 +2430,69 @@ void vtkMultipleStreamlineController::ColorROIFromStreamlines()
       int pt[3];
       double point[3], point2[3];
       for (ptidx = 0; ptidx < hs0->GetNumberOfPoints(); ptidx++)
-    {
-      hs0->GetPoint(ptidx,point);
-      // First transform to world space.
-      TensorScaledIJKToWorld->TransformPoint(point,point2);
-      // Now transform to ROI IJK space
-      WorldToROI->TransformPoint(point2,point);
-      // Find that voxel number
-      pt[0]= (int) floor(point[0]+0.5);
-      pt[1]= (int) floor(point[1]+0.5);
-      pt[2]= (int) floor(point[2]+0.5);
-      
-      //pt[0]= (int) floor(point[0]/spacing[0]+0.5);
-      //pt[1]= (int) floor(point[1]/spacing[1]+0.5);
-      //pt[2]= (int) floor(point[2]/spacing[2]+0.5);
-
-      short *tmp = (short *) this->InputROIForColoring->GetScalarPointer(pt);
-      if (tmp != NULL)
         {
-          // if we are in the ROI to be colored 
-          if (*tmp > 0) {
+          hs0->GetPoint(ptidx,point);
+          // First transform to world space.
+          TensorScaledIJKToWorld->TransformPoint(point,point2);
+          // Now transform to ROI IJK space
+          WorldToROI->TransformPoint(point2,point);
+          // Find that voxel number
+          pt[0]= (int) floor(point[0]+0.5);
+          pt[1]= (int) floor(point[1]+0.5);
+          pt[2]= (int) floor(point[2]+0.5);
+      
+          //pt[0]= (int) floor(point[0]/spacing[0]+0.5);
+          //pt[1]= (int) floor(point[1]/spacing[1]+0.5);
+          //pt[2]= (int) floor(point[2]/spacing[2]+0.5);
+
+          short *tmp = (short *) this->InputROIForColoring->GetScalarPointer(pt);
+          if (tmp != NULL)
+            {
+              // if we are in the ROI to be colored 
+              if (*tmp > 0) {
                 
-        tmp = (short *) this->OutputROIForColoring->GetScalarPointer(pt);
-        *tmp = (short) (currColor + 1);
+                tmp = (short *) this->OutputROIForColoring->GetScalarPointer(pt);
+                *tmp = (short) (currColor + 1);
                 
           
-          }
+              }
+            }
         }
-    }
       // Skip the first point in the second line since it
       // is a duplicate of the initial point.
       for (ptidx = 0; ptidx < hs1->GetNumberOfPoints(); ptidx++)
-    {
-      hs1->GetPoint(ptidx,point);
-      // First transform to world space.
-      TensorScaledIJKToWorld->TransformPoint(point,point2);
-      // Now transform to ROI IJK space
-      WorldToROI->TransformPoint(point2,point);
-      // Find that voxel number
-      pt[0]= (int) floor(point[0]+0.5);
-      pt[1]= (int) floor(point[1]+0.5);
-      pt[2]= (int) floor(point[2]+0.5);
-
-      //pt[0]= (int) floor(point[0]/spacing[0]+0.5);
-      //pt[1]= (int) floor(point[1]/spacing[1]+0.5);
-      //pt[2]= (int) floor(point[2]/spacing[2]+0.5);
-
-      short *tmp = (short *) this->InputROIForColoring->GetScalarPointer(pt);
-      if (tmp != NULL)
         {
-          // if we are in the ROI to be colored 
-          if (*tmp > 0) {
-                
-        tmp = (short *) this->OutputROIForColoring->GetScalarPointer(pt);
-        *tmp = (short) (currColor + 1);
-                
-          }
-        }
+          hs1->GetPoint(ptidx,point);
+          // First transform to world space.
+          TensorScaledIJKToWorld->TransformPoint(point,point2);
+          // Now transform to ROI IJK space
+          WorldToROI->TransformPoint(point2,point);
+          // Find that voxel number
+          pt[0]= (int) floor(point[0]+0.5);
+          pt[1]= (int) floor(point[1]+0.5);
+          pt[2]= (int) floor(point[2]+0.5);
 
-    }                          
+          //pt[0]= (int) floor(point[0]/spacing[0]+0.5);
+          //pt[1]= (int) floor(point[1]/spacing[1]+0.5);
+          //pt[2]= (int) floor(point[2]/spacing[2]+0.5);
+
+          short *tmp = (short *) this->InputROIForColoring->GetScalarPointer(pt);
+          if (tmp != NULL)
+            {
+              // if we are in the ROI to be colored 
+              if (*tmp > 0) {
+                
+                tmp = (short *) this->OutputROIForColoring->GetScalarPointer(pt);
+                *tmp = (short) (currColor + 1);
+                
+              }
+            }
+
+        }                          
       
       // get next objects in collections
       currStreamline = dynamic_cast<vtkHyperStreamlinePoints *> 
-    (this->Streamlines->GetNextItemAsObject());
+        (this->Streamlines->GetNextItemAsObject());
       currActor = (vtkActor *) this->Actors->GetNextItemAsObject();
     }
 }
