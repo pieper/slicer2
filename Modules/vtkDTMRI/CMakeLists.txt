@@ -74,6 +74,7 @@ IF (VTKDTMRI_CAN_BUILD)
 
   SUBDIRS (
     cxx
+    Tests
   )
 
   #
