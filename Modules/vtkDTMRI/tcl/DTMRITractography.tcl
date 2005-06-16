@@ -126,21 +126,24 @@ proc DTMRITractographyInit {} {
 
     # "NoSpline" tractography variables (lists are for GUI creation)
     #------------------------------------
-    set DTMRI(stream,variableList) [list \
-                    MaximumPropagationDistance IntegrationStepLength \
-                    StepLength Radius  NumberOfSides MaxCurvature MinFractionalAnisotropy]
+    set DTMRI(stream,variableList) \
+        [list \
+             MaximumPropagationDistance IntegrationStepLength \
+             StepLength Radius  NumberOfSides MaxCurvature MinFractionalAnisotropy]
 
-    set DTMRI(stream,variableList,text) [list \
-                         "Max Length" "Step Size" \
-                         "Smoothness (along)" "Radius"  "Smoothness (around)" "Curvature Threshold" "FA Threshold"]
-    set DTMRI(stream,variableList,tooltips) [list \
-                         "MaximumPropagationDistance: Tractography will stop after this distance" \
-                         "IntegrationStepLength: step size when following path" \
-                         "StepLength: Length of each displayed tube segment" \
-                         "Radius: Initial radius (thickness) of displayed tube" \
-                         "NumberOfSides: Number of sides of displayed tube" \
-                         "Curvature Threshold: Max curvature allowed in tracking"\
-                         "FA Threshold: If FA falls below this value, tracking stops"]
+    set DTMRI(stream,variableList,text) \
+        [list \
+             "Max Length" "Step Size" \
+             "Smoothness (along)" "Radius"  "Smoothness (around)" "Curvature Threshold" "FA Threshold"]
+    set DTMRI(stream,variableList,tooltips) \
+        [list \
+             "MaximumPropagationDistance: Tractography will stop after this distance" \
+             "IntegrationStepLength: step size when following path" \
+             "StepLength: Length of each displayed tube segment" \
+             "Radius: Initial radius (thickness) of displayed tube" \
+             "NumberOfSides: Number of sides of displayed tube" \
+             "Curvature Threshold: Max curvature allowed in tracking"\
+             "FA Threshold: If FA falls below this value, tracking stops"]
     #set DTMRI(stream,MaxCurvature) 1.3
     set DTMRI(stream,MaxCurvature) 1.15
     set DTMRI(stream,MinFractionalAnisotropy) 0.07
@@ -148,39 +151,45 @@ proc DTMRITractographyInit {} {
 
     # B-spline tractography variables (lists are for GUI creation)
     #------------------------------------
-    set DTMRI(stream,methodvariableList) [list UpperBoundBias LowerBoundBias CorrectionBias ]
+    set DTMRI(stream,methodvariableList) \
+        [list UpperBoundBias LowerBoundBias CorrectionBias ]
 
-    set DTMRI(stream,methodvariableList,text) [list "High Fractional Anisotropy" "Low Fractional Anisotropy" "Correction Bias Magnitude" ]
+    set DTMRI(stream,methodvariableList,text) \
+        [list "High Fractional Anisotropy" "Low Fractional Anisotropy" "Correction Bias Magnitude" ]
 
-    set DTMRI(stream,methodvariableList,tooltips) [list \
-                               "Inferior bound for fractional anisotropy before adding a regularization bias"\
-                               "Lowest fractional anisotropy allowable for tractography"\
-                               "Magnitude of the correction bias added for tractography" ]
+    set DTMRI(stream,methodvariableList,tooltips) \
+        [list \
+             "Inferior bound for fractional anisotropy before adding a regularization bias"\
+             "Lowest fractional anisotropy allowable for tractography"\
+             "Magnitude of the correction bias added for tractography" ]
 
-    set DTMRI(stream,precisevariableList) [list \
-                           MaximumPropagationDistance MinimumPropagationDistance TerminalEigenvalue \
-                           IntegrationStepLength \
-                           StepLength Radius  NumberOfSides  \
-                           MaxStep MinStep MaxError MaxAngle LengthOfMaxAngle]
+    set DTMRI(stream,precisevariableList) \
+        [list \
+             MaximumPropagationDistance MinimumPropagationDistance TerminalEigenvalue \
+             IntegrationStepLength \
+             StepLength Radius  NumberOfSides  \
+             MaxStep MinStep MaxError MaxAngle LengthOfMaxAngle]
 
-    set DTMRI(stream,precisevariableList,text) [list \
-                            "Max Length" "Min Length" "Terminal Eigenvalue"\
-                            "Step Size" \
-                            "Smoothness (along)" "Radius"  "Smoothness (around)" \
-                            "Max Step" "Min Step" "Max Error" "Max Angle" "Length for Max Angle"]
-    set DTMRI(stream,precisevariableList,tooltips) [list \
-                            "MaximumPropagationDistance: Tractography will stop after this distance" \
-                            "MinimumPropagationDistance: Streamline will be rejected if total length is under this value" \
-                            "TerminalEigenvalue: Set minimum propagation speed"\
-                            "IntegrationStepLength: step size when following path" \
-                            "StepLength: Length of each displayed tube segment" \
-                            "Radius: Initial radius (thickness) of displayed tube" \
-                            "NumberOfSides: Number of sides of displayed tube" \
-                            "MaxStep: Maximum step size when following path" \
-                            "MinStep: Minimum step size when following path" \
-                            "MaxError: Maximum Error of each step" \
-                            "MaxAngle: Maximum Angle allowed per fiber" \
-                            "MaxError: Length of fiber when considering maximum angle" ]
+    set DTMRI(stream,precisevariableList,text) \
+        [list \
+             "Max Length" "Min Length" "Terminal Eigenvalue"\
+             "Step Size" \
+             "Smoothness (along)" "Radius"  "Smoothness (around)" \
+             "Max Step" "Min Step" "Max Error" "Max Angle" "Length for Max Angle"]
+    set DTMRI(stream,precisevariableList,tooltips) \
+        [list \
+             "MaximumPropagationDistance: Tractography will stop after this distance" \
+             "MinimumPropagationDistance: Streamline will be rejected if total length is under this value" \
+             "TerminalEigenvalue: Set minimum propagation speed"\
+             "IntegrationStepLength: step size when following path" \
+             "StepLength: Length of each displayed tube segment" \
+             "Radius: Initial radius (thickness) of displayed tube" \
+             "NumberOfSides: Number of sides of displayed tube" \
+             "MaxStep: Maximum step size when following path" \
+             "MinStep: Minimum step size when following path" \
+             "MaxError: Maximum Error of each step" \
+             "MaxAngle: Maximum Angle allowed per fiber" \
+             "MaxError: Length of fiber when considering maximum angle" ]
 
     # BSpline Orders
     set DTMRI(stream,BSplineOrder) "3"
@@ -231,10 +240,11 @@ proc DTMRITractographyInit {} {
     # whether we are currently displaying tracts
     set DTMRI(mode,visualizationType,tractsOn) 0n
     set DTMRI(mode,visualizationType,tractsOnList) {On Off Delete}
-    set DTMRI(mode,visualizationType,tractsOnList,tooltip) [list \
-                                "Display all 'tracts'" \
-                                "Hide all 'tracts'" \
-                                "Clear all 'tracts'" ]
+    set DTMRI(mode,visualizationType,tractsOnList,tooltip) \
+        [list \
+             "Display all 'tracts'" \
+             "Hide all 'tracts'" \
+             "Clear all 'tracts'" ]
     # guard against multiple actor add/remove from GUI
     set DTMRI(vtk,streamline,actorsAdded) 1
 
@@ -248,7 +258,7 @@ proc DTMRITractographyInit {} {
 
 
     
-     set DTMRI(activeStreamlineID) ""
+    set DTMRI(activeStreamlineID) ""
     
     #------------------------------------
     # Variablel to Find tracts that pass through ROI values
@@ -310,11 +320,11 @@ proc DTMRITractographyBuildGUI {} {
 
     # notebook frame (to contain settings, seeding, display frames)
     Notebook:create $f.fNotebook \
-                        -pages {{Settings} {Seeding} {Display}} \
-                        -pad 2 \
-                        -bg $Gui(activeWorkspace) \
-                        -height 500 \
-                        -width 400
+        -pages {{Settings} {Seeding} {Display}} \
+        -pad 2 \
+        -bg $Gui(activeWorkspace) \
+        -height 500 \
+        -width 400
     pack $f.fNotebook -side top -padx $Gui(pad) -pady $Gui(pad) -fill both -expand true
 
     #-------------------------------------------
@@ -324,7 +334,7 @@ proc DTMRITractographyBuildGUI {} {
 
     # menu to select active DTMRI
     DevAddSelectButton  Tensor $f Active "Active DTMRI:" Pack \
-    "Active DTMRI" 20 BLA 
+        "Active DTMRI" 20 BLA 
     
     # Append these menus and buttons to lists 
     # that get refreshed during UpdateMRML
@@ -374,11 +384,11 @@ proc DTMRITractographyBuildGUI {} {
     eval {button $f.bOutput -text "Color:" -width 8 \
               -command "ShowLabels DTMRIUpdateTractColorToSolidFromShowLabels"} $Gui(WBA)
     eval {entry $f.eOutput -width 6 \
-          -textvariable DTMRI(TractLabel)} $Gui(WEA)
+              -textvariable DTMRI(TractLabel)} $Gui(WEA)
     bind $f.eOutput <Return>   "DTMRIUpdateTractColorToSolid"
     eval {entry $f.eName -width 14 \
-          -textvariable DTMRI(TractLabelName)} $Gui(WEA) \
-            {-bg $Gui(activeWorkspace) -state disabled}
+              -textvariable DTMRI(TractLabelName)} $Gui(WEA) \
+        {-bg $Gui(activeWorkspace) -state disabled}
     #grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
     #grid $f.eOutput $f.eName -sticky w
     pack $f.bOutput -padx $Gui(pad) -pady $Gui(pad) -side left
@@ -395,14 +405,14 @@ proc DTMRITractographyBuildGUI {} {
 
     eval {label $f.lVis -text "Interpolation Method: "} $Gui(WLA)
     eval {menubutton $f.mbVis -text $DTMRI(stream,tractingMethod) \
-          -relief raised -bd 2 -width 11 \
-          -menu $f.mbVis.m} $Gui(WMBA)
+              -relief raised -bd 2 -width 11 \
+              -menu $f.mbVis.m} $Gui(WMBA)
     eval {menu $f.mbVis.m} $Gui(WMA)
     pack $f.lVis -side left -pady 1 -padx $Gui(pad)
     pack $f.mbVis -side right -pady 1 -padx $Gui(pad)
     foreach vis $DTMRI(stream,tractingMethodList) {
         $f.mbVis.m add command -label $vis \
-        -command "DTMRIUpdateTractingMethod $vis"
+            -command "DTMRIUpdateTractingMethod $vis"
     }
     # save menubutton for config
     set DTMRI(gui,mbTractingMethod) $f.mbVis
@@ -441,15 +451,15 @@ proc DTMRITractographyBuildGUI {} {
     eval {label $f.lVis -text "Spline Order: "} $Gui(WLA)
 
     eval {menubutton $f.mbVis -text $DTMRI(stream,BSplineOrder) \
-          -relief raised -bd 2 -width 11 \
-          -menu $f.mbVis.m} $Gui(WMBA)
+              -relief raised -bd 2 -width 11 \
+              -menu $f.mbVis.m} $Gui(WMBA)
     eval {menu $f.mbVis.m} $Gui(WMA)
     pack $f.lVis  -side left -pady 1 -padx $Gui(pad)
     pack $f.mbVis -side right -pady 1 -padx $Gui(pad)
     # Add menu items
     foreach vis $DTMRI(stream,BSplineOrderList) {
         $f.mbVis.m add command -label $vis \
-        -command "DTMRIUpdateBSplineOrder $vis"
+            -command "DTMRIUpdateBSplineOrder $vis"
     }
     # save menubutton for config
     set DTMRI(gui,mbBSplineOrder) $f.mbVis
@@ -464,8 +474,8 @@ proc DTMRITractographyBuildGUI {} {
     eval {label $f.lVis -text "Method Order: "} $Gui(WLA)
 
     eval {menubutton $f.mbVis -text $DTMRI(stream,MethodOrder) \
-          -relief raised -bd 2 -width 11 \
-          -menu $f.mbVis.m} $Gui(WMBA)
+              -relief raised -bd 2 -width 11 \
+              -menu $f.mbVis.m} $Gui(WMBA)
     eval {menu $f.mbVis.m} $Gui(WMA)
     pack $f.lVis  -side left -pady 1 -padx $Gui(pad)
     pack $f.mbVis -side right -pady 1 -padx $Gui(pad)
@@ -474,7 +484,7 @@ proc DTMRITractographyBuildGUI {} {
     # Add menu items
     foreach vis $DTMRI(stream,MethodOrderList) {
         $f.mbVis.m add command -label $vis \
-        -command "set DTMRI(vtk,ivps) DTMRI(vtk,$vis); $DTMRI(gui,mbMethodOrder) config -text $vis"
+            -command "set DTMRI(vtk,ivps) DTMRI(vtk,$vis); $DTMRI(gui,mbMethodOrder) config -text $vis"
     }
     # Add a tooltip
     TooltipAdd $f.mbVis $DTMRI(stream,BSplineOrderList,tooltip)
@@ -485,23 +495,23 @@ proc DTMRITractographyBuildGUI {} {
     foreach entry $DTMRI(stream,methodvariableList) \
         text $DTMRI(stream,methodvariableList,text) \
         tip $DTMRI(stream,methodvariableList,tooltips) {
-        
-        set f $DTMRI(stream,tractingFrame,BSpline)
-        
-        frame $f.f$entry -bg $Gui(activeWorkspace)
-        #place $f.f$frame -in $f -relheight 1.0 -relwidth 1.0
-        pack $f.f$entry -side top -padx 0 -pady 1 -fill x
-        set f $f.f$entry
+            
+            set f $DTMRI(stream,tractingFrame,BSpline)
+            
+            frame $f.f$entry -bg $Gui(activeWorkspace)
+            #place $f.f$frame -in $f -relheight 1.0 -relwidth 1.0
+            pack $f.f$entry -side top -padx 0 -pady 1 -fill x
+            set f $f.f$entry
 
-        eval {label $f.l$entry -text "$text:"} $Gui(WLA)
-        eval {entry $f.e$entry -width 8 \
-              -textvariable DTMRI(stream,$entry)} \
+            eval {label $f.l$entry -text "$text:"} $Gui(WLA)
+            eval {entry $f.e$entry -width 8 \
+                      -textvariable DTMRI(stream,$entry)} \
                 $Gui(WEA)
-        TooltipAdd $f.l$entry $tip
-        TooltipAdd $f.e$entry $tip
-        pack $f.l$entry -side left  -padx $Gui(pad)
-        pack $f.e$entry -side right  -padx $Gui(pad)
-    }
+            TooltipAdd $f.l$entry $tip
+            TooltipAdd $f.e$entry $tip
+            pack $f.l$entry -side left  -padx $Gui(pad)
+            pack $f.e$entry -side right  -padx $Gui(pad)
+        }
 
     #-------------------------------------------
     # Tract->Notebook->Settings->TractingVar->BSpline->PreciseVariables frames
@@ -509,23 +519,23 @@ proc DTMRITractographyBuildGUI {} {
     foreach entry $DTMRI(stream,precisevariableList) \
         text $DTMRI(stream,precisevariableList,text) \
         tip $DTMRI(stream,precisevariableList,tooltips) {
-        
-        set f $DTMRI(stream,tractingFrame,BSpline)
-        
-        frame $f.f$entry -bg $Gui(activeWorkspace)
-        #place $f.f$frame -in $f -relheight 1.0 -relwidth 1.0
-        pack $f.f$entry -side top -padx 0 -pady 1 -fill x
-        set f $f.f$entry
+            
+            set f $DTMRI(stream,tractingFrame,BSpline)
+            
+            frame $f.f$entry -bg $Gui(activeWorkspace)
+            #place $f.f$frame -in $f -relheight 1.0 -relwidth 1.0
+            pack $f.f$entry -side top -padx 0 -pady 1 -fill x
+            set f $f.f$entry
 
-        eval {label $f.l$entry -text "$text:"} $Gui(WLA)
-        eval {entry $f.e$entry -width 8 \
-              -textvariable DTMRI(stream,$entry)} \
+            eval {label $f.l$entry -text "$text:"} $Gui(WLA)
+            eval {entry $f.e$entry -width 8 \
+                      -textvariable DTMRI(stream,$entry)} \
                 $Gui(WEA)
-        TooltipAdd $f.l$entry $tip
-        TooltipAdd $f.e$entry $tip
-        pack $f.l$entry -side left  -padx $Gui(pad)
-        pack $f.e$entry -side right  -padx $Gui(pad)
-    }
+            TooltipAdd $f.l$entry $tip
+            TooltipAdd $f.e$entry $tip
+            pack $f.l$entry -side left  -padx $Gui(pad)
+            pack $f.e$entry -side right  -padx $Gui(pad)
+        }
 
 
     #-------------------------------------------
@@ -533,25 +543,25 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
 
     foreach entry $DTMRI(stream,variableList) \
-    text $DTMRI(stream,variableList,text) \
-    tip $DTMRI(stream,variableList,tooltips) {
+        text $DTMRI(stream,variableList,text) \
+        tip $DTMRI(stream,variableList,tooltips) {
 
-        set f $DTMRI(stream,tractingFrame,NoSpline)
+            set f $DTMRI(stream,tractingFrame,NoSpline)
 
-        frame $f.f$entry -bg $Gui(activeWorkspace)
-        #place $f.f$frame -in $f -relheight 1.0 -relwidth 1.0
-        pack $f.f$entry -side top -padx 0 -pady 1 -fill x
-        set f $f.f$entry
+            frame $f.f$entry -bg $Gui(activeWorkspace)
+            #place $f.f$frame -in $f -relheight 1.0 -relwidth 1.0
+            pack $f.f$entry -side top -padx 0 -pady 1 -fill x
+            set f $f.f$entry
 
-        eval {label $f.l$entry -text "$text:"} $Gui(WLA)
-        eval {entry $f.e$entry -width 8 \
-              -textvariable DTMRI(stream,$entry)} \
-        $Gui(WEA)
-        TooltipAdd $f.l$entry $tip
-        TooltipAdd $f.e$entry $tip
-        pack $f.l$entry -side left  -padx $Gui(pad)
-        pack $f.e$entry -side right  -padx $Gui(pad)
-    }
+            eval {label $f.l$entry -text "$text:"} $Gui(WLA)
+            eval {entry $f.e$entry -width 8 \
+                      -textvariable DTMRI(stream,$entry)} \
+                $Gui(WEA)
+            TooltipAdd $f.l$entry $tip
+            TooltipAdd $f.e$entry $tip
+            pack $f.l$entry -side left  -padx $Gui(pad)
+            pack $f.e$entry -side right  -padx $Gui(pad)
+        }
 
     ##########################################################
     #
@@ -601,8 +611,8 @@ proc DTMRITractographyBuildGUI {} {
     # works with DevUpdateNodeSelectButton in UpdateMRML
     set name ROILabelmap
     DevAddSelectButton  DTMRI $f $name "ROI Labelmap:" Grid \
-    "This labelmap will be used to seed tracts."\
-    13
+        "This labelmap will be used to seed tracts."\
+        13
     
     #-------------------------------------------
     # Tract->Notebook->Seeding->Entries->ChooseLabel frame
@@ -632,12 +642,12 @@ proc DTMRITractographyBuildGUI {} {
     eval {button $f.bOutput -text "Label:" \
               -command "ShowLabels DTMRIUpdateROILabelWidgetFromShowLabels"} $Gui(WBA)
     eval {entry $f.eOutput -width 6 \
-          -textvariable DTMRI(ROILabel)} $Gui(WEA)
+              -textvariable DTMRI(ROILabel)} $Gui(WEA)
 
     bind $f.eOutput <Return>   "DTMRIUpdateLabelWidget ROILabel"
     eval {entry $f.eName -width 14 \
-          -textvariable DTMRI(ROILabelName)} $Gui(WEA) \
-            {-bg $Gui(activeWorkspace) -state disabled}
+              -textvariable DTMRI(ROILabelName)} $Gui(WEA) \
+        {-bg $Gui(activeWorkspace) -state disabled}
     grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
     grid $f.eOutput $f.eName -sticky w
     # save for changing color later
@@ -667,7 +677,7 @@ proc DTMRITractographyBuildGUI {} {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
     }
-   
+    
     #-------------------------------------------
     # Tract->Notebook->Seeding->Entries->FindTracts->Title frame
     #-------------------------------------------
@@ -684,8 +694,8 @@ proc DTMRITractographyBuildGUI {} {
     DevAddLabel $f.l "List of labels:"
     
     eval {entry $f.eName -width 25 \
-          -textvariable DTMRI(stream,ListLabels)} $Gui(WEA) \
-            {-bg $Gui(activeWorkspace)}
+              -textvariable DTMRI(stream,ListLabels)} $Gui(WEA) \
+        {-bg $Gui(activeWorkspace)}
     
     pack $f.l $f.eName -side left
     
@@ -725,17 +735,17 @@ proc DTMRITractographyBuildGUI {} {
     pack $f.lVis -side left -pady $Gui(pad) -padx $Gui(pad)
     # Add menu items
     foreach vis $DTMRI(mode,visualizationType,tractsOnList) \
-    tip $DTMRI(mode,visualizationType,tractsOnList,tooltip) {
-        eval {radiobutton $f.r$vis \
-              -text $vis \
-              -command "DTMRIUpdateStreamlines" \
-              -value $vis \
-              -variable DTMRI(mode,visualizationType,tractsOn) \
-              -indicatoron 0} $Gui(WCA)
+        tip $DTMRI(mode,visualizationType,tractsOnList,tooltip) {
+            eval {radiobutton $f.r$vis \
+                      -text $vis \
+                      -command "DTMRIUpdateStreamlines" \
+                      -value $vis \
+                      -variable DTMRI(mode,visualizationType,tractsOn) \
+                      -indicatoron 0} $Gui(WCA)
 
-        pack $f.r$vis -side left -fill x
-        TooltipAdd $f.r$vis $tip
-    }
+            pack $f.r$vis -side left -fill x
+            TooltipAdd $f.r$vis $tip
+        }
 
     #-------------------------------------------
     # Tract->Notebook->Display->ColorBy frame
@@ -743,14 +753,14 @@ proc DTMRITractographyBuildGUI {} {
     set f $fDisplay.fColorBy
     eval {label $f.lVis -text "Color by: "} $Gui(WLA)
     eval {menubutton $f.mbVis -text $DTMRI(mode,tractColor) \
-          -relief raised -bd 2 -width 12 \
-          -menu $f.mbVis.m} $Gui(WMBA)
+              -relief raised -bd 2 -width 12 \
+              -menu $f.mbVis.m} $Gui(WMBA)
     eval {menu $f.mbVis.m} $Gui(WMA)
     pack $f.lVis $f.mbVis -side left -pady 1 -padx $Gui(pad)
     # Add menu items
     foreach vis $DTMRI(mode,tractColorList) {
         $f.mbVis.m add command -label $vis \
-        -command "set DTMRI(mode,tractColor) $vis; DTMRIUpdateTractColor"
+            -command "set DTMRI(mode,tractColor) $vis; DTMRIUpdateTractColor"
     }
     # save menubutton for config
     set DTMRI(gui,mbTractColor) $f.mbVis
@@ -766,8 +776,8 @@ proc DTMRITractographyBuildGUI {} {
     # works with DevUpdateNodeSelectButton in UpdateMRML
     set name ColorByVolume
     DevAddSelectButton  DTMRI $f $name "Color by Volume:" Pack \
-    "First select Color by MultiColor, \nthen select the volume to use \nto color the tracts. \nFor example to color by FA, \ncreate the FA volume using the \n<More...> tab in this module, \nthen the <Scalars> tab.  \nThen select that volume from this list." \
-    13
+        "First select Color by MultiColor, \nthen select the volume to use \nto color the tracts. \nFor example to color by FA, \ncreate the FA volume using the \n<More...> tab in this module, \nthen the <Scalars> tab.  \nThen select that volume from this list." \
+        13
 
 }
 
@@ -899,7 +909,7 @@ proc DTMRIUpdateStreamlineSettings {} {
                 } else {
                     DTMRI(vtk,$streamline) Set$var $DTMRI(stream,$var)
                 }
-    
+                
             }
 
         }
@@ -960,7 +970,7 @@ proc DTMRIUpdateStreamlines {} {
 #-------------------------------------------------------------------------------
 proc DTMRIUpdateTractingMethod { TractingMethod } {
     global DTMRI Tensor
- 
+    
     if {$TractingMethod != $DTMRI(stream,tractingMethod) } {
         set DTMRI(stream,tractingMethod) $TractingMethod
         switch $DTMRI(stream,tractingMethod) {
@@ -1140,7 +1150,7 @@ proc DTMRIUpdateTractColor {{mode ""}} {
                 # setting scalars like this caused a crash in
                 # the vtkMrmlDataVolume's vtkImageAccumulateDiscrete. why??
                 #[[Tensor($t,data) GetOutput] GetPointData] SetScalars \
-                #    [[[Volume($v,vol) GetOutput] GetPointData] GetScalars]
+                    #    [[[Volume($v,vol) GetOutput] GetPointData] GetScalars]
 
                 DTMRI(vtk,streamlineControl) ScalarVisibilityOn
                 eval {[DTMRI(vtk,streamlineControl) GetStreamlineLookupTable] \
@@ -1329,7 +1339,7 @@ proc DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI {vseg vintersect {v
 
     DTMRI(vtk,streamlineControl) SetInputROIForIntersection \
         [castVintersect GetOutput]
-        
+    
     # Get positioning information from the MRML node
     # world space (what you see in the viewer) to ijk (array) space
     vtkTransform transform
@@ -1535,12 +1545,12 @@ proc DTMRIFindStreamlinesThroughROI { {verbose 1} } {
     
     #Define list of ROI Values
     set numLabels [llength $DTMRI(stream,ListLabels)]
-   
+    
     DTMRI(vtk,ListLabels) SetNumberOfValues $numLabels
     set idx 0
     foreach value $DTMRI(stream,ListLabels) {
-      eval "DTMRI(vtk,ListLabels) SetValue" $idx $value
-      incr idx
+        eval "DTMRI(vtk,ListLabels) SetValue" $idx $value
+        incr idx
     }  
     
     # set up the input segmented volume
@@ -1672,7 +1682,7 @@ proc DTMRISaveStreamlinesAsPolyLines {subdir name {verbose "1"}} {
                 
                 c InsertCellPoint $idp
                 incr idp
-            
+                
             }   
             incr idcell
         }
