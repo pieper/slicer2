@@ -165,7 +165,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.98 $} {$Date: 2005/06/15 23:05:37 $}]
+                  {$Revision: 1.99 $} {$Date: 2005/06/16 02:36:31 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -1100,40 +1100,6 @@ proc DTMRIBuildVTK {} {
 }
 
 
-
-
-################################################################
-# procedures for saving DTMRIs, streamlines, etc.
-# TODO: some of this should happen automatically and be in MRML
-################################################################
-
-#-------------------------------------------------------------------------------
-# .PROC DTMRIWriteStructuredPoints
-# Dump DTMRIs to structured points file.  this ignores
-# world to RAS, DTMRIs are just written in scaled ijk coordinate system.
-# .ARGS
-# path filename
-# .END
-#-------------------------------------------------------------------------------
-proc DTMRIWriteStructuredPoints {filename} {
-    global DTMRI Tensor
-
-    set t $Tensor(activeID)
-
-    set filename [tk_getSaveFile -defaultextension ".vtk" -title "Save tensor as vtkstructurepoints"]
-    if { $filename == "" } {
-        return
-    }
-
-    vtkStructuredPointsWriter writer
-    writer SetInput [Tensor($t,data) GetOutput]
-    writer SetFileName $filename
-    writer SetFileTypeToBinary
-    puts "Writing $filename..."
-    writer Write
-    writer Delete
-    puts "Wrote DTMRI data, id $t, as $filename"
-}
 
 
 
