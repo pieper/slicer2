@@ -165,7 +165,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.100 $} {$Date: 2005/06/16 04:55:32 $}]
+                  {$Revision: 1.101 $} {$Date: 2005/06/16 22:47:51 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -227,8 +227,12 @@ proc DTMRIInit {} {
     # Source and Init all submodules
     #------------------------------------
     foreach mod $DTMRI(submodulesList) {
-        source [file join $env(SLICER_HOME)/Modules/vtkDTMRI/tcl DTMRI${mod}.tcl]
-        DTMRI${mod}Init
+        catch {source [file join $env(SLICER_HOME)/Modules/vtkDTMRI/tcl DTMRI${mod}.tcl]}
+        set name "DTMRI${mod}Init"
+        # If the Init procedure exists, call it.
+        if {[info proc $name] == $name} {
+            $name
+        }
     }
     
 
