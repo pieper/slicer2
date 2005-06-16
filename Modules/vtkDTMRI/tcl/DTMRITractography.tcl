@@ -228,6 +228,7 @@ proc DTMRITractographyInit {} {
 
     # Labelmap volume that gives input seed locations
     set DTMRI(ROILabelmap) $Volume(idNone)
+    set DTMRI(ROI2Labelmap) $Volume(idNone)
     # Label value indicating seed location
     set DTMRI(ROILabel) $DTMRI(defaultLabel)
     # Color value corresponding to the label
@@ -261,14 +262,9 @@ proc DTMRITractographyInit {} {
     set DTMRI(activeStreamlineID) ""
     
     #------------------------------------
-    # Variablel to Find tracts that pass through ROI values
+    # Variable to Find tracts that pass through ROI values
     #------------------------------------
     set DTMRI(stream,ListLabels) {0}
-
-    #------------------------------------
-    # Variables for auto streamline display
-    #------------------------------------
-    set DTMRI(mode,autoTractsLabel,tooltip) "A tract will be seeded in each voxel of the ROI which is colored with this label."
 
 }
 
@@ -574,74 +570,52 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
     set f $fSeeding
 
-    foreach frame "Label2 Entries" {
+    foreach frame "Title ROIMethod Entries" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
-        pack $f.f$frame -side top -padx 0 -pady 1 -fill x
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     }
+    $f.fROIMethod config -relief groove -bd 2 
+    $f.fEntries config -relief groove -bd 2
 
     #-------------------------------------------
-    # Tract->Notebook->Seeding->Label2 frame
+    # Tract->Notebook->Seeding->Title frame
     #-------------------------------------------
-    set f $fSeeding.fLabel2
+    set f $fSeeding.fTitle
 
-    DevAddLabel $f.l "Automatically start tractography\nfrom each voxel in an ROI."
+    DevAddLabel $f.l "Seed tracts in a region of interest (ROI)."
     pack $f.l -side top -padx $Gui(pad) -pady $Gui(pad)
 
 
     #-------------------------------------------
-    # Tract->Notebook->Seeding->Entries frame
+    # Tract->Notebook->Seeding->ROIMethod frame
     #-------------------------------------------
-    set f $fSeeding.fEntries
-    foreach frame "Volume" {
+    set f $fSeeding.fROIMethod
+    foreach frame "ROI ChooseLabel ROI2 Apply" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
-        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
-    }
-    foreach frame "ChooseLabel FindTracts" {
-        frame $f.f$frame -bg $Gui(activeWorkspace) -bd 2
-        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
+        pack $f.f$frame -side top -padx $Gui(pad) -pady 2 -fill both
     }
 
-
     #-------------------------------------------
-    # Tract->Notebook->Seeding->Entries->Volume frame
+    # Tract->Notebook->Seeding->ROIMethod->ROI frame
     #-------------------------------------------
-    set f $fSeeding.fEntries.fVolume
+    set f $fSeeding.fROIMethod.fROI
 
     # menu to select a volume: will set DTMRI(ROILabelmap)
     # works with DevUpdateNodeSelectButton in UpdateMRML
     set name ROILabelmap
-    DevAddSelectButton  DTMRI $f $name "ROI Labelmap:" Grid \
-        "This labelmap will be used to seed tracts."\
+    DevAddSelectButton  DTMRI $f $name "Seed ROI:" Pack \
+        "The region of interest in which to seed tracts."\
         13
     
     #-------------------------------------------
-    # Tract->Notebook->Seeding->Entries->ChooseLabel frame
+    # Tract->Notebook->Seeding->ROIMethod->ChooseLabel frame
     #-------------------------------------------
-    set f $fSeeding.fEntries.fChooseLabel
-    
-    foreach frame "Title Label Apply" {
-        frame $f.f$frame -bg $Gui(activeWorkspace)
-        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
-    }
-    
-    
-    #-------------------------------------------
-    # Tract->Notebook->Seeding->Entries->ChooseLabel->Title frame
-    #-------------------------------------------
-    set f $fSeeding.fEntries.fChooseLabel.fTitle
-    
-    DevAddLabel $f.l "Create Tracts from label value"
-    pack $f.l -side top
-    
-    #-------------------------------------------
-    # Tract->Notebook->Seeding->Entries->ChooseLabel->Label frame
-    #-------------------------------------------
-    set f $fSeeding.fEntries.fChooseLabel.fLabel
+    set f $fSeeding.fROIMethod.fChooseLabel
     
     # label in input ROI for seeding
-    eval {button $f.bOutput -text "Label:" \
+    eval {button $f.bOutput -text "Seed Label:" \
               -command "ShowLabels DTMRIUpdateROILabelWidgetFromShowLabels"} $Gui(WBA)
-    eval {entry $f.eOutput -width 6 \
+    eval {entry $f.eOutput -width 4 \
               -textvariable DTMRI(ROILabel)} $Gui(WEA)
 
     bind $f.eOutput <Return>   "DTMRIUpdateLabelWidget ROILabel"
@@ -653,20 +627,42 @@ proc DTMRITractographyBuildGUI {} {
     # save for changing color later
     set DTMRI(ROILabelWidget) $f.eName
 
-    TooltipAdd  $f.bOutput $DTMRI(mode,autoTractsLabel,tooltip)
-    TooltipAdd  $f.eOutput $DTMRI(mode,autoTractsLabel,tooltip)
-    TooltipAdd  $f.eName $DTMRI(mode,autoTractsLabel,tooltip)
-
+    set tip \
+        "Choose the color (label) of the region of interest."
+    TooltipAdd  $f.bOutput $tip
+    TooltipAdd  $f.eOutput $tip
+    TooltipAdd  $f.eName $tip
 
     #-------------------------------------------
-    # Tract->Notebook->Seeding->Entries->ChooseLabel->Apply frame
+    # Tract->Notebook->Seeding->ROIMethod->ROI2 frame
     #-------------------------------------------
-    set f $fSeeding.fEntries.fChooseLabel.fApply
-    DevAddButton $f.bApply "Seed 'Tracts' in ROI" \
-        {puts "Seeding streamlines"; DTMRISeedStreamlinesFromSegmentation}
+    set f $fSeeding.fROIMethod.fROI2
+
+    # menu to select a volume: will set DTMRI(ROI2Labelmap)
+    # works with DevUpdateNodeSelectButton in UpdateMRML
+    set name ROI2Labelmap
+    DevAddSelectButton  \
+        DTMRI $f $name "Selection ROI (Optional):" Pack \
+        "Tracts will selected if they pass through this ROI.\nChoose None to skip this step." \
+        13
+
+    #-------------------------------------------
+    # Tract->Notebook->Seeding->ROIMethod->Apply frame
+    #-------------------------------------------
+    set f $fSeeding.fROIMethod.fApply
+    DevAddButton $f.bApply "Seed Tracts" \
+        {puts "Seeding streamlines"; DTMRISeedStreamlinesInROI}
     pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
-    TooltipAdd  $f.bApply "Seed a 'tract' from each point in the ROI.\nThis can be slow; be patient."
+    TooltipAdd  $f.bApply "Seed tracts in the region of interest.\nThis can be slow for large ROIs."
 
+    #-------------------------------------------
+    # Tract->Notebook->Seeding->Entries frame
+    #-------------------------------------------
+    set f $fSeeding.fEntries
+    foreach frame "FindTracts" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
+    }
 
     #-------------------------------------------
     # Tract->Notebook->Seeding->Entries->FindTracts frame
@@ -1216,6 +1212,26 @@ proc DTMRIDeleteAllStreamlines {} {
     Render3D
 }
 
+
+proc DTMRISeedStreamlinesInROI {} {
+    global DTMRI Volume
+
+    # call the seeding procedure depending on whether
+    # a selection ROI was chosen
+    if {$DTMRI(ROI2Labelmap) == $Volume(idNone) || $DTMRI(ROI2Labelmap) == ""} {
+
+        # no selection ROI
+        DTMRISeedStreamlinesFromSegmentation
+
+    } else {
+
+        # we have a selection ROI
+        DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI
+    }
+
+}
+
+
 #-------------------------------------------------------------------------------
 # .PROC DTMRISeedStreamlinesFromSegmentation
 # Seeds streamlines at all points in a segmentation.
@@ -1290,15 +1306,27 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI {vseg vintersect {verbose 1}} {
+proc DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI {{verbose 1}} {
     global DTMRI Label Tensor Volume
 
     set t $Tensor(activeID)
-    #set v $DTMRI(ROILabelmap)
+    # seed at the labeled voxels in this volume
+    set vSeedROI $DTMRI(ROILabelmap)
+    # save and display the tracts that hit labeled voxels in this volume
+    set vSaveROI $DTMRI(ROI2Labelmap)
 
     # make sure they are using a segmentation (labelmap)
-    if {[Volume($vseg,node) GetLabelMap] != 1} {
-        set name [Volume($vseg,node) GetName]
+    if {[Volume($vSeedROI,node) GetLabelMap] != 1} {
+        set name [Volume($vSeedROI,node) GetName]
+        set msg "The volume $name is not a label map (segmented ROI). Continue anyway?"
+        if {[tk_messageBox -type yesno -message $msg] == "no"} {
+            return
+        }
+
+    }
+    # make sure they are using a segmentation (labelmap)
+    if {[Volume($vSaveROI,node) GetLabelMap] != 1} {
+        set name [Volume($vSaveROI,node) GetName]
         set msg "The volume $name is not a label map (segmented ROI). Continue anyway?"
         if {[tk_messageBox -type yesno -message $msg] == "no"} {
             return
@@ -1308,8 +1336,9 @@ proc DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI {vseg vintersect {v
 
     # ask for user confirmation first
     if {$verbose == "1"} {
-        set name [Volume($vseg,node) GetName]
-        set msg "About to seed streamlines in all labelled voxels of volume $name.  This may take a while, so make sure the Tracts settings are what you want first. Go ahead?"
+        set name1 [Volume($vSeedROI,node) GetName]
+        set name2 [Volume($vSaveROI,node) GetName]
+        set msg "Ready to seed tracts in all labeled voxels of volume $name1, and keep the ones that pass through labeled voxels in volume $name2.  This may take a while, so make sure the Tracts settings are what you want first. Go ahead?"
         if {[tk_messageBox -type yesno -message $msg] == "no"} {
             return
         }
@@ -1322,31 +1351,41 @@ proc DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI {vseg vintersect {v
     DTMRIUpdateTractColor
     DTMRIUpdateStreamlineSettings
     
-    # cast to short
-    vtkImageCast castVseg
-    castVseg SetOutputScalarTypeToShort
-    castVseg SetInput [Volume($vseg,vol) GetOutput] 
-    castVseg Update
+    # cast to short (as these are labelmaps the values are really integers
+    # so this prevents errors with float labelmaps which come from editing
+    # scalar volumes derived from the tensors).
+    vtkImageCast castVSeedROI
+    castVSeedROI SetOutputScalarTypeToShort
+    castVSeedROI SetInput [Volume($vSeedROI,vol) GetOutput] 
+    castVSeedROI Update
 
-    vtkImageCast castVintersect
-    castVintersect SetOutputScalarTypeToShort
-    castVintersect SetInput [Volume($vintersect,vol) GetOutput] 
-    castVintersect Update
+    vtkImageCast castVSaveROI
+    castVSaveROI SetOutputScalarTypeToShort
+    castVSaveROI SetInput [Volume($vSaveROI,vol) GetOutput] 
+    castVSaveROI Update
 
-    # set up the input segmented volume
-    DTMRI(vtk,streamlineControl) SetInputROI [castVseg GetOutput]
+    # set up the input segmented volumes
+    DTMRI(vtk,streamlineControl) SetInputROI [castVSeedROI GetOutput]
     DTMRI(vtk,streamlineControl) SetInputROIValue $DTMRI(ROILabel)
 
-    DTMRI(vtk,streamlineControl) SetInputROIForIntersection \
-        [castVintersect GetOutput]
+    DTMRI(vtk,streamlineControl) SetInputROI2 [castVSaveROI GetOutput]
     
-    # Get positioning information from the MRML node
+    # Get positioning information from the MRML node for the seed ROI
     # world space (what you see in the viewer) to ijk (array) space
     vtkTransform transform
-    transform SetMatrix [Volume($vseg,node) GetWldToIjk]
+    transform SetMatrix [Volume($vSeedROI,node) GetWldToIjk]
     # now it's ijk to world
     transform Inverse
     DTMRI(vtk,streamlineControl) SetROIToWorld transform
+    transform Delete
+
+    # Get positioning information from the MRML node for the second ROI
+    # world space (what you see in the viewer) to ijk (array) space
+    vtkTransform transform
+    transform SetMatrix [Volume($vSaveROI,node) GetWldToIjk]
+    # now it's ijk to world
+    transform Inverse
+    DTMRI(vtk,streamlineControl) SetROI2ToWorld transform
     transform Delete
 
     # create all streamlines
@@ -1359,8 +1398,8 @@ proc DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI {vseg vintersect {v
     # (this is the slow part since it causes pipeline execution)
     DTMRI(vtk,streamlineControl) AddStreamlinesToScene
 
-    castVseg Delete
-    castVintersect Delete
+    castVSeedROI Delete
+    castVSaveROI Delete
 }
 
 
