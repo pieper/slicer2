@@ -76,18 +76,27 @@ ENABLE_TESTING()
 # Pick up xml files to test
 FILE(GLOB_RECURSE xmlfiles "${CTEST_SLICER_HOME}/Testing/TestData/*.xml")
 
+# Pick up tcl files to test
+FILE(GLOB_RECURSE tclfiles "${CTEST_SLICER_HOME}/Modules/vtkDTMRI/Testing/Tcl/*.tcl")
+
 # For debugging purposes
-# MESSAGE("${xmlfiles}")
-# MESSAGE("${testname}")
-# MESSAGE(" path is: [${CTEST_SLICER_HOME}/Testing/TestData/*.xml]")
-# MESSAGE(" executable is: [${SLICER_EXECUTABLE}")
-# ADD_TEST("slicer${testname}" "${SLICER_EXECUTABLE}" --agree_to_license --no-tkcon "${xmlfile}" --exec exit)
+MESSAGE("${xmlfiles}")
+MESSAGE("${tclfiles}")
+MESSAGE("${testname}")
+MESSAGE(" path is: [${CTEST_SLICER_HOME}/Testing/TestData/*.xml]")
+MESSAGE(" executable is: [${SLICER_EXECUTABLE}")
+#ADD_TEST("slicer${testname}" "${SLICER_EXECUTABLE}" --agree_to_license --no-tkcon "${xmlfile}" --exec exit)
 
 # Try to open each xml file
-FOREACH(xmlfile ${xmlfiles}) 
-STRING(REGEX REPLACE "/" "_" testname "${xmlfile}")
-ADD_TEST("slicer-vnc${testname}" "${CTEST_SLICER_HOME}/Scripts/runvnc" "--Xvnc" "${CTEST_XVNC_EXECUTABLE}" "-d" "44" "--not-secure" "--" "${SLICER_EXECUTABLE}" "--agree_to_license" "${xmlfile}" --exec exit)
-ENDFOREACH(xmlfile)
+#FOREACH(xmlfile ${xmlfiles}) 
+#STRING(REGEX REPLACE "/" "_" testname "${xmlfile}")
+#ADD_TEST("slicer-vnc${testname}" "${CTEST_SLICER_HOME}/Scripts/runvnc" "--Xvnc" "${CTEST_XVNC_EXECUTABLE}" "-d" "44" "--not-secure" "--" "${SLICER_EXECUTABLE}" "--agree_to_license" "${xmlfile}" --exec exit)
+#ENDFOREACH(xmlfile)
+
+FOREACH(tclfile ${tclfiles})
+STRING(REGEX REPLACE "/" "_" dtmritestname "${tclfile}")
+ADD_TEST("slicer-${dtmritestname}" "${SLICER_EXECUTABLE}" --agree_to_license --no-tkcon --script ${tclfile} --exec exit)
+ENDFOREACH(tclfile)
 
 
 
