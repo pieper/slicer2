@@ -68,12 +68,12 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   return new vtkMultipleStreamlineController;
 }
 
-
-                                                                 //----------------------------------------------------------------------------
-                                                                   vtkMultipleStreamlineController::vtkMultipleStreamlineController()
+//----------------------------------------------------------------------------
+vtkMultipleStreamlineController::vtkMultipleStreamlineController()
 {
   // Initialize these to identity, so if the user doesn't set them it's okay.
   this->ROIToWorld = vtkTransform::New();
+  this->ROI2ToWorld = vtkTransform::New();
   this->WorldToTensorScaledIJK = vtkTransform::New();
 
   // The user must set these for the class to function.
@@ -84,7 +84,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   this->InputROI = NULL;
   this->InputROIValue = -1;
   this->InputMultipleROIValues = NULL;
-  this->InputROIForIntersection = NULL;
+  this->InputROI2 = NULL;
   this->InputROIForColoring = NULL;
   this->OutputROIForColoring = NULL;
 
@@ -1400,7 +1400,7 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROIIntersectWithROI2()
       vtkErrorMacro("No tensor data input.");
       return;      
     }
-  if (this->InputROIForIntersection == NULL)
+  if (this->InputROI2 == NULL)
     {
       vtkErrorMacro("No ROI input.");
       return;      
@@ -1420,11 +1420,11 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROIIntersectWithROI2()
     }
 
   // Create transformation matrices to go backwards from streamline points to ROI space
-  // This is used to access ROIForIntersection, it has to have same 
+  // This is used to access ROI2, it has to have same 
   // dimensions and location as seeding ROI for now.
-  vtkTransform *WorldToROI = vtkTransform::New();
-  WorldToROI->SetMatrix(this->ROIToWorld->GetMatrix());
-  WorldToROI->Inverse();
+  vtkTransform *WorldToROI2 = vtkTransform::New();
+  WorldToROI2->SetMatrix(this->ROI2ToWorld->GetMatrix());
+  WorldToROI2->Inverse();
   vtkTransform *TensorScaledIJKToWorld = vtkTransform::New();
   TensorScaledIJKToWorld->SetMatrix(this->WorldToTensorScaledIJK->GetMatrix());
   TensorScaledIJKToWorld->Inverse();
@@ -1511,13 +1511,13 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROIIntersectWithROI2()
                           hs0->GetPoint(ptidx,point);
                           // First transform to world space.
                           TensorScaledIJKToWorld->TransformPoint(point,point2);
-                          // Now transform to ROI IJK space
-                          WorldToROI->TransformPoint(point2,point);
+                          // Now transform to ROI2 IJK space
+                          WorldToROI2->TransformPoint(point2,point);
                           // Find that voxel number
                           pt[0]= (int) floor(point[0]+0.5);
                           pt[1]= (int) floor(point[1]+0.5);
                           pt[2]= (int) floor(point[2]+0.5);
-                          short *tmp = (short *) this->InputROIForIntersection->GetScalarPointer(pt);
+                          short *tmp = (short *) this->InputROI2->GetScalarPointer(pt);
                           if (tmp != NULL)
                             {
                               if (*tmp > 0) {
@@ -1536,12 +1536,12 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROIIntersectWithROI2()
                           // First transform to world space.
                           TensorScaledIJKToWorld->TransformPoint(point,point2);
                           // Now transform to ROI IJK space
-                          WorldToROI->TransformPoint(point2,point);
+                          WorldToROI2->TransformPoint(point2,point);
                           // Find that voxel number
                           pt[0]= (int) floor(point[0]+0.5);
                           pt[1]= (int) floor(point[1]+0.5);
                           pt[2]= (int) floor(point[2]+0.5);
-                          short *tmp = (short *) this->InputROIForIntersection->GetScalarPointer(pt);
+                          short *tmp = (short *) this->InputROI2->GetScalarPointer(pt);
                           if (tmp != NULL)
                             {
                               if (*tmp > 0) {

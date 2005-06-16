@@ -96,7 +96,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
 
   // Description
   // Start a streamline from each voxel in ROI, keep those paths
-  // that pass through ROIForIntersection.
+  // that pass through ROI2.
   void SeedStreamlinesFromROIIntersectWithROI2();
 
   // Description
@@ -234,10 +234,10 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
 
   // Description
   // Input ROI volume to select streamlines (those that begin
-  // within InputROI and pass through InputROIForIntersection
+  // within InputROI and pass through InputROI2
   // will be displayed).
-  vtkSetObjectMacro(InputROIForIntersection, vtkImageData);
-  vtkGetObjectMacro(InputROIForIntersection, vtkImageData);
+  vtkSetObjectMacro(InputROI2, vtkImageData);
+  vtkGetObjectMacro(InputROI2, vtkImageData);
 
   // Description
   // Input ROI volume to color with the ID of the streamlines through the ROI
@@ -254,6 +254,12 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // Transform the ijk coordinates of the ROI to world coordinates.
   vtkSetObjectMacro(ROIToWorld, vtkTransform);
   vtkGetObjectMacro(ROIToWorld, vtkTransform);
+
+  // Description
+  // Transformation used in seeding streamlines.  This is for the 
+  // second ROI volume.
+  vtkSetObjectMacro(ROI2ToWorld, vtkTransform);
+  vtkGetObjectMacro(ROI2ToWorld, vtkTransform);
 
   // Description
   // Transformation used in seeding streamlines.  Their start
@@ -371,11 +377,12 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   void CleanStreamlines();
 
   vtkTransform *ROIToWorld;
+  vtkTransform *ROI2ToWorld;
   vtkTransform *WorldToTensorScaledIJK;
 
   vtkImageData *InputTensorField;
   vtkImageData *InputROI;
-  vtkImageData *InputROIForIntersection;
+  vtkImageData *InputROI2;
   vtkImageData *InputROIForColoring;
   vtkImageData *OutputROIForColoring;
   vtkCollection *InputRenderers;
