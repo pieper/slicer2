@@ -55,8 +55,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "vtkImageWriter.h"
 
-                                                                   //------------------------------------------------------------------------------
-                                                                   vtkMultipleStreamlineController* vtkMultipleStreamlineController::New()
+//------------------------------------------------------------------------------
+vtkMultipleStreamlineController* vtkMultipleStreamlineController::New()
 {
   // First try to create the object from the vtkObjectFactory
   vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMultipleStreamlineController");
