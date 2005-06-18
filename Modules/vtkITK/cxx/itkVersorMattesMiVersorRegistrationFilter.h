@@ -14,19 +14,19 @@
 
 #include "itkArray.h"
 
-namespace itk {
 
+typedef  itk::Image<float, 3> ImageType;
 typedef  itk::VersorRigid3DTransformOptimizer OptimizerType;
 typedef  itk::VersorRigid3DTransform< double > TransformType;
 typedef  itk::MattesMutualInformationImageToImageMetric< 
-                                 itk::itkRegistrationFilterImageType,
-                                 itk::itkRegistrationFilterImageType >    MetricType;
-
-class ITK_EXPORT itkVersorMattesMiVersorRegistrationFilter : public itk::itkTransformRegistrationFilter<OptimizerType, TransformType, MetricType>
+                                 ImageType,
+                                 ImageType> MetricType;
+namespace itk {
+class ITK_EXPORT itkVersorMattesMiVersorRegistrationFilter : public itk::itkTransformRegistrationFilter<ImageType, OptimizerType, TransformType, MetricType>
 {
 public:
   typedef itkVersorMattesMiVersorRegistrationFilter             Self;
-  typedef itk::itkTransformRegistrationFilter<OptimizerType, TransformType, MetricType>  Superclass;
+  typedef itk::itkTransformRegistrationFilter<ImageType, OptimizerType, TransformType, MetricType>  Superclass;
   typedef ::itk::SmartPointer<Self>          Pointer;
   typedef ::itk::SmartPointer<const Self>    ConstPointer;
 

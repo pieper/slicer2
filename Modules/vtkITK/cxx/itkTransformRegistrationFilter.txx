@@ -7,17 +7,12 @@
 namespace itk
 {
 
-template <class TOptimizerClass, class TTransformerClass, class TMetricClass >
-itk::itkTransformRegistrationFilter<TOptimizerClass, TTransformerClass, TMetricClass >::itkTransformRegistrationFilter()
+template <class TImageClass, class TOptimizerClass, class TTransformerClass, class TMetricClass >
+itk::itkTransformRegistrationFilter<TImageClass, TOptimizerClass, TTransformerClass, TMetricClass >::itkTransformRegistrationFilter()
 {
   this->SetNumberOfRequiredInputs( 2 );  
 
   // registration pipeline
-  m_FixedImageCaster   = FixedImageCasterType::New();
-  m_MovingImageCaster  = MovingImageCasterType::New();
-
-  //m_FixedNormalizer     = FixedNormalizeFilterType::New();
-  //m_MovingNormalizer    = MovingNormalizeFilterType::New();
 
   m_FixedImagePyramid  = FixedImagePyramidType::New();
   m_MovingImagePyramid = MovingImagePyramidType::New();
@@ -38,7 +33,7 @@ itk::itkTransformRegistrationFilter<TOptimizerClass, TTransformerClass, TMetricC
   m_Registration->SetFixedImagePyramid(m_FixedImagePyramid);
   m_Registration->SetMovingImagePyramid(m_MovingImagePyramid);
 
-  m_BackgroundLevel = itk::NumericTraits< float >::Zero;
+  m_BackgroundLevel = itk::NumericTraits< TImageClass::PixelType >::Zero;
 
   m_Resampler = ResampleFilterType::New();
 
@@ -63,31 +58,25 @@ itk::itkTransformRegistrationFilter<TOptimizerClass, TTransformerClass, TMetricC
   //m_LearningRates.Fill(1e-4);
   //m_InitialParameters[3] = 1.0;
 
-
-  // set registration input
-  m_Registration->SetFixedImage(  m_FixedImageCaster->GetOutput() );
-  m_Registration->SetMovingImage( m_MovingImageCaster->GetOutput() );
-
   m_ResampleMovingImage = false;
 
 } // itkTransformRegistrationFilter
 
-template <class TOptimizerClass, class TTransformerClass, class TMetricClass >
+template <class TImageClass, class TOptimizerClass, class TTransformerClass, class TMetricClass >
 void 
-itk::itkTransformRegistrationFilter<TOptimizerClass, TTransformerClass, TMetricClass >::GenerateData()
+itk::itkTransformRegistrationFilter<TImageClass, TOptimizerClass, TTransformerClass, TMetricClass >::GenerateData()
 {
   itk::ProgressAccumulator::Pointer progress = itk::ProgressAccumulator::New();
   progress->SetMiniPipelineFilter(this);
 
   progress->RegisterInternalFilter(m_Registration,1.f);
   
-  m_FixedImageCaster->SetInput( this->GetInput() );
-  m_MovingImageCaster->SetInput( this->GetInput(1) );
 
-  m_FixedImageCaster->Update();
-  m_MovingImageCaster->Update();
+  // set registration input
+  m_Registration->SetFixedImage(  this->GetInput() );
+  m_Registration->SetMovingImage( this->GetInput(1) );
 
-  m_Registration->SetFixedImageRegion( m_FixedImageCaster->GetOutput()->GetBufferedRegion() );
+  m_Registration->SetFixedImageRegion( this->GetInput()->GetBufferedRegion() );
 
   m_FixedImagePyramid->SetNumberOfLevels(m_NumberOfLevels);
   m_FixedImagePyramid->SetStartingShrinkFactors(m_FixedImageShrinkFactors.GetDataPointer());
@@ -123,26 +112,26 @@ itk::itkTransformRegistrationFilter<TOptimizerClass, TTransformerClass, TMetricC
 
 } // GenerateData
 
-template <class TOptimizerClass, class TTransformerClass, class TMetricClass >
-itkRegistrationFilterImageType* 
-itkTransformRegistrationFilter< TOptimizerClass,  TTransformerClass, TMetricClass >
+template <class TImageClass, class TOptimizerClass, class TTransformerClass, class TMetricClass >
+TImageClass* 
+itkTransformRegistrationFilter<TImageClass, TOptimizerClass,  TTransformerClass, TMetricClass >
 ::GetTransformedOutput () 
 {
   m_Resampler->SetTransform( m_Transform );
-  m_Resampler->SetInput( m_MovingImageCaster->GetOutput() );
+  m_Resampler->SetInput( this->GetInput(1) );
 
-  FixedImageType::Pointer fixedImage = m_FixedImageCaster->GetOutput();
-  m_Resampler->SetSize(    fixedImage->GetLargestPossibleRegion().GetSize() );
-  m_Resampler->SetOutputOrigin(  fixedImage->GetOrigin() );
-  m_Resampler->SetOutputSpacing( fixedImage->GetSpacing() );
-  m_Resampler->SetDefaultPixelValue( 100 );
+  //FixedImageType::Pointer fixedImage = this->GetInput();
+  m_Resampler->SetSize(    this->GetInput()->GetLargestPossibleRegion().GetSize() );
+  m_Resampler->SetOutputOrigin(  this->GetInput()->GetOrigin() );
+  m_Resampler->SetOutputSpacing( this->GetInput()->GetSpacing() );
+  m_Resampler->SetDefaultPixelValue( m_BackgroundLevel );
 
   return m_Resampler->GetOutput();
 }
 
-template <class TOptimizerClass, class TTransformerClass, class TMetricClass >
+template <class TImageClass, class TOptimizerClass, class TTransformerClass, class TMetricClass >
 void
-itkTransformRegistrationFilter< TOptimizerClass,  TTransformerClass, TMetricClass >
+itkTransformRegistrationFilter<TImageClass, TOptimizerClass,  TTransformerClass, TMetricClass >
 ::SetTransform(const TransformType * transform)
 {
   m_Transform->SetCenter( transform->GetCenter() );
@@ -150,9 +139,9 @@ itkTransformRegistrationFilter< TOptimizerClass,  TTransformerClass, TMetricClas
 }
 
 
-template <class TOptimizerClass, class TTransformerClass, class TMetricClass >
+template <class TImageClass, class TOptimizerClass, class TTransformerClass, class TMetricClass >
 void
-itkTransformRegistrationFilter< TOptimizerClass,  TTransformerClass, TMetricClass >::GetTransform(typename itkTransformRegistrationFilter< TOptimizerClass,
+itkTransformRegistrationFilter<TImageClass, TOptimizerClass,  TTransformerClass, TMetricClass >::GetTransform(typename itkTransformRegistrationFilter<TImageClass, TOptimizerClass,
 TTransformerClass, TMetricClass >::TransformType * transform)
 {
   transform->SetParameters( m_Registration->GetLastTransformParameters() );
@@ -161,9 +150,9 @@ TTransformerClass, TMetricClass >::TransformType * transform)
   return;
 }
 
-template <class TOptimizerClass, class TTransformerClass, class TMetricClass >
+template <class TImageClass, class TOptimizerClass, class TTransformerClass, class TMetricClass >
 void
-itkTransformRegistrationFilter< TOptimizerClass,  TTransformerClass, TMetricClass >::GetCurrentTransform(typename itkTransformRegistrationFilter< TOptimizerClass,
+itkTransformRegistrationFilter<TImageClass, TOptimizerClass,  TTransformerClass, TMetricClass >::GetCurrentTransform(typename itkTransformRegistrationFilter<TImageClass, TOptimizerClass,
 TTransformerClass, TMetricClass >::TransformType * transform)
 {
   transform->SetCenter( m_Transform->GetCenter() );
@@ -172,17 +161,17 @@ TTransformerClass, TMetricClass >::TransformType * transform)
 }
 
 
-template <class TOptimizerClass, class TTransformerClass, class TMetricClass >
+template <class TImageClass, class TOptimizerClass, class TTransformerClass, class TMetricClass >
 unsigned long 
-itk::itkTransformRegistrationFilter<TOptimizerClass, TTransformerClass, TMetricClass >::AddIterationObserver (itk::Command *observer ) 
+itk::itkTransformRegistrationFilter<TImageClass, TOptimizerClass, TTransformerClass, TMetricClass >::AddIterationObserver (itk::Command *observer ) 
 {
   m_Optimizer->AddObserver( itk::IterationEvent(), observer );
   return m_Optimizer->AddObserver( itk::EndEvent(), observer );
 }
 
-template <class TOptimizerClass, class TTransformerClass, class TMetricClass >
+template <class TImageClass, class TOptimizerClass, class TTransformerClass, class TMetricClass >
 double 
-itk::itkTransformRegistrationFilter<TOptimizerClass, TTransformerClass, TMetricClass >::GetMetricValue()
+itk::itkTransformRegistrationFilter<TImageClass, TOptimizerClass, TTransformerClass, TMetricClass >::GetMetricValue()
 {
   return m_Optimizer->GetValue();
 }

@@ -10,9 +10,7 @@
 #include "itkImageRegistrationMethod.h"
 #include "itkNormalizeImageFilter.h"
 
-#include "itkCastImageFilter.h"
 #include "itkImageRegistrationMethod.h"
-#include "itkNormalizeImageFilter.h"
 #include "itkResampleImageFilter.h"
 
 #include "itkLinearInterpolateImageFunction.h"
@@ -28,7 +26,6 @@
 namespace itk
 {
 
-typedef itk::Image<float, 3> itkRegistrationFilterImageType;
 
 /** \class itkTransformRegistrationFilter
  * \brief Performs rigid registration at Multi-Resolution 
@@ -41,20 +38,23 @@ typedef itk::Image<float, 3> itkRegistrationFilterImageType;
  *                                InternalImageType >    MutualInformationMetricType;
  *
  */
-template <class TOptimizerClass, class TTransformerClass, class TMetricClass >
-class ITK_EXPORT itkTransformRegistrationFilter : public itk::ImageToImageFilter<itk::itkRegistrationFilterImageType, itk::itkRegistrationFilterImageType>
+template <class TImageType, class TOptimizerClass, class TTransformerClass, class TMetricClass >
+
+class ITK_EXPORT itkTransformRegistrationFilter : public itk::ImageToImageFilter< TImageType , TImageType >
 {
 public:
  
   /** Standard class typedefs */
   typedef itkTransformRegistrationFilter             Self;
-  typedef itk::ImageToImageFilter<itkRegistrationFilterImageType,itkRegistrationFilterImageType>  Superclass;
+  typedef itk::ImageToImageFilter<TImageType,TImageType>  Superclass;
   typedef ::itk::SmartPointer<Self>          Pointer;
   typedef ::itk::SmartPointer<const Self>    ConstPointer;
 
   typedef TTransformerClass   TransformType;
   typedef TOptimizerClass    OptimizerType;
   typedef TMetricClass       MetricType;
+  typedef TImageType FixedImageType;
+  typedef TImageType MovingImageType;
 
   typedef typename TransformType::ParametersType    ParametersType;
 
@@ -85,12 +85,6 @@ public:
   
   unsigned long AddIterationObserver (itk::Command *observer );
 
-  typedef  float         InputImagePixelType;
-  typedef  float         OutputImagePixelType;
-
-  typedef itk::Image< InputImagePixelType,    Dimension >  FixedImageType;
-  typedef itk::Image< InputImagePixelType,   Dimension >  MovingImageType;
-
   /** Set init transfrom */
   void SetTransform( const TTransformerClass* transform );
 
@@ -104,10 +98,6 @@ public:
   unsigned long GetNumberOfParameters()
   { return m_Transform->GetNumberOfParameters(); }
   
-  /** Get computed transform parameters. */
-  //const ParametersType& GetTransformParameters()
-  //{ return m_Registration->GetLastTransformParameters(); }
-
   /** Set the number of resolution levels. */
   itkSetClampMacro( NumberOfLevels, unsigned short, 1,
                     NumericTraits<unsigned short>::max() );
@@ -132,15 +122,11 @@ public:
   itkSetMacro(ResampleMovingImage, bool);
   itkGetMacro(ResampleMovingImage, bool);
 
-  itkRegistrationFilterImageType* GetTransformedOutput (); 
+  TImageType* GetTransformedOutput (); 
 
 protected:  
 
   // Types
-  
-
-  typedef  float         InternalPixelType;
-  typedef itk::Image< InternalPixelType, Dimension >  InternalImageType;
 
   /** Fixed Image Pyramid Type. */
   typedef RecursiveMultiResolutionPyramidImageFilter<
@@ -152,21 +138,17 @@ protected:
                                     MovingImageType,
                                     MovingImageType  >   MovingImagePyramidType;
 
-  typedef itk::NormalizeImageFilter< 
-                           FixedImageType,
-                           InternalImageType >    FixedNormalizeFilterType;
-
-  typedef itk::ResampleImageFilter< 
-                           InternalImageType, 
-                           InternalImageType >    ResampleFilterType;
+  typedef itk::ResampleImageFilter<
+                                    MovingImageType,
+                                    MovingImageType  >    ResampleFilterType;
   
 
   typedef itk::LinearInterpolateImageFunction< 
-                                InternalImageType,
+                                MovingImageType,
                                 double             > LinearInterpolatorType;
 
   typedef itk::NearestNeighborInterpolateImageFunction< 
-                                InternalImageType,
+                                MovingImageType,
                                 double             > NearestInterpolatorType;
 
 
@@ -176,15 +158,6 @@ protected:
   typedef MultiResolutionImageRegistrationMethod< 
                                     FixedImageType, 
                                     MovingImageType >    RegistrationType;
-
-
-  typedef itk::CastImageFilter< 
-                        FixedImageType,
-                        OutputImageType > FixedImageCasterType;
-
-  typedef itk::CastImageFilter< 
-                        MovingImageType,
-                        OutputImageType > MovingImageCasterType;
 
 
   void  GenerateData ();
@@ -199,14 +172,8 @@ protected:
 
   virtual void SetMetricParamters() = 0;
   
-  typename FixedImageCasterType::Pointer m_FixedImageCaster;
-  typename MovingImageCasterType::Pointer m_MovingImageCaster;
-
   typename FixedImagePyramidType::Pointer     m_FixedImagePyramid;
   typename MovingImagePyramidType::Pointer    m_MovingImagePyramid;
-
-  //typename FixedNormalizeFilterType::Pointer     m_FixedNormalizer;
-  //typename MovingNormalizeFilterType::Pointer    m_MovingNormalizer;
 
   typename TransformType::Pointer                m_Transform;
   typename OptimizerType::Pointer                m_Optimizer;
@@ -223,16 +190,11 @@ protected:
   typename FixedImageType::Pointer               m_FixedImage;
   typename MovingImageType::Pointer              m_MovingImage;
 
-  InputImagePixelType                            m_BackgroundLevel;
-
-  //typename IterationObserverType::Pointer        m_IterationObserver;
-  //typename StopObserverType::Pointer             m_StopObserver;
-
-  //typename TimerType                             m_Timer;
+  typename TImageType::PixelType                 m_BackgroundLevel;
 
   bool                                           m_ReportTimers;
 
-  bool                                          m_ResampleMovingImage;
+  bool                                           m_ResampleMovingImage;
 
   // Optimizer Stuff
   unsigned short                       m_NumberOfLevels;

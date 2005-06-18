@@ -71,9 +71,6 @@ public:
 protected:
 
   //BTX
-  typedef itk::ImageToImageFilter<itk::itkRegistrationFilterImageType, itk::itkRegistrationFilterImageType> ITKRegistrationType;
-  
-  //ITKRegistrationType::Pointer m_ITKFilter;
 
   vtkMatrix4x4 *m_Matrix;
 
