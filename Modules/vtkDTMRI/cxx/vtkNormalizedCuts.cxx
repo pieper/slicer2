@@ -54,7 +54,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <ctime>
 
 
-vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.13 $");
+vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.14 $");
 vtkStandardNewMacro(vtkNormalizedCuts);
 
 vtkCxxSetObjectMacro(vtkNormalizedCuts,NormalizedWeightMatrixImage, 
@@ -84,45 +84,15 @@ void vtkNormalizedCuts::PrintSelf(ostream& os, vtkIndent indent)
 
 }
 
+
 void vtkNormalizedCuts::ComputeClusters()
 {
-
-  // NOTE: what is the way to do this correctly for itk pointers?
-  // First clear output in case we exit with an error.
-  // This prevents any old output from being re-used after such an error.
-  //this->OutputClassifier->Delete();
-
-
   // test we have input
   if (this->InputWeightMatrix == NULL)
     {
       vtkDebugMacro("You must set the InputWeightMatrix before using this class.");
       return;
     }
-
-  // first normalize the matrix
-  typedef vnl_vector<double> VectorType;
-  // create vector initialized to zero
-  VectorType rowWeightSum(this->InputWeightMatrix->rows(),0);
-  int idx1, idx2;
-  idx1=0;
-  while (idx1 < this->InputWeightMatrix->rows())
-    {
-      idx2=0;
-      while (idx2 < this->InputWeightMatrix->cols())
-        {
-          // sum the row (for matrix normalization later)
-          rowWeightSum[idx1] += (*this->InputWeightMatrix)[idx1][idx2];
-          // TEST to turn off normalization 
-          // rowWeightSum[idx1] =1;
-          idx2++;
-        }
-      // take square root of final row sum
-      rowWeightSum[idx1] = sqrt(rowWeightSum[idx1]);
-      vtkDebugMacro("row " << idx1 << " sum: " << rowWeightSum[idx1]);
-      idx1++;
-    }
-
 
   // Create normalized Laplacian from weight matrix.
   // See Fowlkes et al., Spectral Grouping Using the Nystro¨m Method
@@ -136,14 +106,38 @@ void vtkNormalizedCuts::ComputeClusters()
   // compute row sum of W as a vector, for each
   // number then take 1/sqrt of it.  Then multiply columns and rows 
   // by this.
-  // Iterate over the matrix to perform normalization.
-  // Delete any old image from previous inputs
+
+  // first compute normalization factors by summing rows
+  typedef vnl_vector<double> VectorType;
+  // create vector initialized to zero
+  VectorType rowWeightSum(this->InputWeightMatrix->rows(),0);
+  int idx1, idx2;
+  idx1=0;
+  while (idx1 < this->InputWeightMatrix->rows())
+    {
+      idx2=0;
+      while (idx2 < this->InputWeightMatrix->cols())
+        {
+          // sum the row
+          rowWeightSum[idx1] += (*this->InputWeightMatrix)[idx1][idx2];
+          // TEST to turn off normalization 
+          // rowWeightSum[idx1] =1;
+          idx2++;
+        }
+      // take square root of final row sum
+      rowWeightSum[idx1] = sqrt(rowWeightSum[idx1]);
+      vtkDebugMacro("row " << idx1 << " sum: " << rowWeightSum[idx1]);
+      idx1++;
+    }
+
+  // Delete any old output image from previous inputs
   if (this->NormalizedWeightMatrixImage) 
     {
       this->NormalizedWeightMatrixImage->Delete();
       this->NormalizedWeightMatrixImage = NULL;
     }
 
+  // Iterate over the matrix to perform normalization.
   idx1=0;
   while (idx1 < this->InputWeightMatrix->rows())
     {
@@ -191,11 +185,10 @@ void vtkNormalizedCuts::ComputeClusters()
 
 
   // Create new feature vectors using the eigenvector embedding.
-  // eigenvectors are be sorted with smoothest last. 
+  // eigenvectors are sorted with smoothest last. 
   // TEST must have more than this many tracts for the code to run
-  // TEST this is a problem, must specify vector length at compile time.
-  // TEST Need to specify a larger number here, 
-  // TEST then see if zero-padding affects the classifier
+  // TEST We need to let user specify embedding vector length!
+  // TEST this is a problem, now we must specify vector length at compile time.
   EmbedVectorType ev;
   EmbedSampleType::Pointer embedding = EmbedSampleType::New();
   
@@ -207,16 +200,18 @@ void vtkNormalizedCuts::ComputeClusters()
     }
 
   idx1=0;
-  // outer loop over rows of eigenvector matrix, 
+  // outer loop over rows of eigenvector matrix, to
   // pick out all entries for one tract
   while (idx1 < this->EigenSystem->V.rows())
     {    
       idx2=0;
+
       // inner loop over columns of eigenvector matrix
       // place entries for this tract into an itk vector
-      // skip first eigenvector.
+      // skip first eigenvector (first column) because approx. constant.
+      // use as many eigenvectors (columns) as necessary.
+      // TEST embed vector length (number of evectors) needs to be specified at run time.
       // TEST put formula here
-
       double length = 0;
       while (idx2 < this->InternalNumberOfEigenvectors)
         {
@@ -228,12 +223,15 @@ void vtkNormalizedCuts::ComputeClusters()
           // This is correct.
           ev[idx2]=(this->EigenSystem->V[idx1][this->EigenSystem->V.cols()-idx2-2]);
 
+          // Take into account user-specified normalization method
           if (this->EmbeddingNormalization == LENGTH_ONE)
             {
+              // general spectral clustering normalization
               length += ev[idx2]*ev[idx2];
             }
           if (this->EmbeddingNormalization == ROW_SUM)
             {
+              // corresponds to normalized cuts
               ev[idx2]=ev[idx2]/rowWeightSum[idx1];
             }
           // else don't normalize

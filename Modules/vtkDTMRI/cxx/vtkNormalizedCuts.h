@@ -45,6 +45,9 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // VOL. 26, NO. 2, FEBRUARY 2004
 // The output is an itk classifier object, with labels for each of 
 // the N input items.
+// Depending on the type of embedding normalization chosen, performs either
+// Normalized Cuts or general spectral clustering.
+// The number of clusters must be specified by the user.
 
 // .SECTION See Also
 // vtkClusterTracts vtkTractShapeFeatures
@@ -77,14 +80,22 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description
-  // Compute the output
+  // Compute the output.  Call this after setting the InputWeightMatrix.
+  // This code does 4 main steps.
+  // 1. Normalize the weight matrix.
+  // 2. Compute the eigensystem of the normalized weight matrix.
+  // 3. Compute embedding vectors from rows of the eigenvector matrix.
+  // 4. Cluster embedding vectors using k-means.
+  // Note there is one embedding vector per row of the weight matrix (per
+  // data point), so embedding vector j corresponds to input row j.
+  // 
   void ComputeClusters();
 
   // Description
   // Use the matrix format provided by vnl for the input similarity matrix
   //BTX
   typedef vnl_matrix<double> InputType;
-  // TEST increase this, see comment in cxx file
+  // TEST we want this specified at run time!
   const static int InternalNumberOfEigenvectors = 2;
 
   typedef itk::Vector< double, InternalNumberOfEigenvectors > EmbedVectorType;
@@ -94,7 +105,9 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
   //ETX
 
   // Description
-  // Set/Get input to this class
+  // Set input to this class.  This matrix should be NxN, where N
+  // is the number of items we want to cluster.  Entries should be 
+  // similarity values (not distances).
   void SetInputWeightMatrix(InputType* matrix)
     {
       // Don't delete this here if it is non-NULL, because the
@@ -103,6 +116,8 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
       this->InputWeightMatrix = matrix;
     };
   
+  // Description
+  // Get input to this class. 
   InputType *GetInputWeightMatrix()
     {
       return this->InputWeightMatrix;
@@ -124,7 +139,7 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
 
   // Description
   // Number of eigenvectors to use in the embedding
-  // NOTE not currently implemented due to fixed-length itk vector
+  // TEST not currently implemented due to fixed-length itk vector!
   //vtkSetMacro(NumberOfEigenvectors,int);
   vtkGetMacro(NumberOfEigenvectors,int);
 
@@ -140,18 +155,23 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
     {
       this->SetEmbeddingNormalization(ROW_SUM);
     };
+
   // Description
   // Spectral clustering normalization of embedding vectors
   void SetEmbeddingNormalizationToLengthOne()
     {
       this->SetEmbeddingNormalization(LENGTH_ONE);
     };
+
   // Description
   // No normalization of embedding vectors
   void SetEmbeddingNormalizationToNone()
     {
       this->SetEmbeddingNormalization(NONE);
     };
+
+  // Description
+  // Return type of embedding normalization
   vtkGetMacro(EmbeddingNormalization,int);
 
   // Description
@@ -159,8 +179,8 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
   vtkImageData *ConvertVNLMatrixToVTKImage(InputType *matrix);
 
   // Description
-  // Write output file embed.txt (useful to visualize embedding
-  // vectors using external code)
+  // Write embedding vector coordinates to output file embed.txt 
+  // (useful to visualize embedding vectors using external code)
   vtkSetMacro(SaveEmbeddingVectors, int);
   vtkGetMacro(SaveEmbeddingVectors, int);
   vtkBooleanMacro(SaveEmbeddingVectors, int);
@@ -187,6 +207,7 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
 
   vtkImageData *NormalizedWeightMatrixImage;
   vtkImageData *EigenvectorsImage;
+  // functions for vtkCxxSetObjectMacro:
   virtual void SetNormalizedWeightMatrixImage(vtkImageData *);
   virtual void SetEigenvectorsImage(vtkImageData *);
 
