@@ -81,11 +81,13 @@ class VTK_DTMRI_EXPORT vtkNormalizedCuts : public vtkObject
 
   // Description
   // Compute the output.  Call this after setting the InputWeightMatrix.
-  // This code does 4 main steps.
+  // This code does 6 main steps.
   // 1. Normalize the weight matrix.
   // 2. Compute the eigensystem of the normalized weight matrix.
   // 3. Compute embedding vectors from rows of the eigenvector matrix.
   // 4. Cluster embedding vectors using k-means.
+  // 5. Sort output cluster centroids according to second eigenvector ordering.
+  // 6. Calculate output cluster memberships.
   // Note there is one embedding vector per row of the weight matrix (per
   // data point), so embedding vector j corresponds to input row j.
   // 

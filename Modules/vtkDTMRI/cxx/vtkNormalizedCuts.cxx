@@ -54,7 +54,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <ctime>
 
 
-vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.14 $");
+vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.15 $");
 vtkStandardNewMacro(vtkNormalizedCuts);
 
 vtkCxxSetObjectMacro(vtkNormalizedCuts,NormalizedWeightMatrixImage, 
@@ -94,6 +94,9 @@ void vtkNormalizedCuts::ComputeClusters()
       return;
     }
 
+  // -------------------------------------------------
+  // Step 1: Normalize the weight matrix.
+  // -------------------------------------------------
   // Create normalized Laplacian from weight matrix.
   // See Fowlkes et al., Spectral Grouping Using the Nystro¨m Method
   // IEEE TRANSACTIONS ON PATTERN ANALYSIS AND MACHINE INTELLIGENCE, 
@@ -162,6 +165,10 @@ void vtkNormalizedCuts::ComputeClusters()
       return;
     }
 
+  // ----------------------------------------------------------------
+  // Step 2: Compute the eigensystem of the normalized weight matrix.
+  // ----------------------------------------------------------------
+
   // Get rid of old values
   if ( this->EigenSystem )
     {
@@ -184,8 +191,12 @@ void vtkNormalizedCuts::ComputeClusters()
   vtkErrorMacro("Eigenvalues: " << this->EigenSystem->D);
 
 
+  // ----------------------------------------------------------------------
+  // Step 3: Compute embedding vectors from rows of the eigenvector matrix.
+  // ----------------------------------------------------------------------
+
   // Create new feature vectors using the eigenvector embedding.
-  // eigenvectors are sorted with smoothest last. 
+  // eigenvectors are sorted with smoothest (major) last. 
   // TEST must have more than this many tracts for the code to run
   // TEST We need to let user specify embedding vector length!
   // TEST this is a problem, now we must specify vector length at compile time.
@@ -272,6 +283,11 @@ void vtkNormalizedCuts::ComputeClusters()
   // write to disk if requested
   if (this->SaveEmbeddingVectors)
     fileEmbed.close();
+
+
+  // -------------------------------------------------
+  // Step 4: Cluster embedding vectors using k-means.
+  // -------------------------------------------------
 
   // Create a Kd tree and populate it with the embedding vectors,
   // in order to run k-means.
@@ -453,6 +469,10 @@ void vtkNormalizedCuts::ComputeClusters()
       centroids->PushBack(ev);
     }  
 
+  // ------------------------------------------------------------------------------
+  // Step 5: Sort output cluster centroids according to second eigenvector ordering
+  // ------------------------------------------------------------------------------
+
   // Now that we have found the final centroids, order them according
   // to their first component (so output class labels can be sorted
   // according to the second eigenvector of the normalized laplacian)
@@ -489,7 +509,9 @@ void vtkNormalizedCuts::ComputeClusters()
       label++;
     }
 
-
+  // -------------------------------------------------
+  // Step 6: Calculate output cluster memberships.
+  // -------------------------------------------------
 
   typedef itk::Statistics::EuclideanDistance< EmbedVectorType > 
     MembershipFunctionType;
