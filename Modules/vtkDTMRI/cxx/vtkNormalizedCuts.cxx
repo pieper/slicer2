@@ -54,7 +54,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <ctime>
 
 
-vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.15 $");
+vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.16 $");
 vtkStandardNewMacro(vtkNormalizedCuts);
 
 vtkCxxSetObjectMacro(vtkNormalizedCuts,NormalizedWeightMatrixImage, 
@@ -288,6 +288,8 @@ void vtkNormalizedCuts::ComputeClusters()
   // -------------------------------------------------
   // Step 4: Cluster embedding vectors using k-means.
   // -------------------------------------------------
+  // TEST we would like functionality like matlab in order to 
+  // do multiple runs of kmeans and pick the best.
 
   // Create a Kd tree and populate it with the embedding vectors,
   // in order to run k-means.
@@ -298,6 +300,8 @@ void vtkNormalizedCuts::ComputeClusters()
   treeGenerator->SetSample( embedding );
   // This is the number of items that can go into a leaf node.
   // it seems not to work with 1
+  // TEST what is relation of bucket size to min cluster size?
+  // TEST could calculate depending on input size
   treeGenerator->SetBucketSize( 3 );
   //treeGenerator->SetBucketSize( 16 );
   try {
@@ -325,6 +329,8 @@ void vtkNormalizedCuts::ComputeClusters()
 
 
   // Now we try to choose evenly-spaced initial centroids for k-means
+  // TEST though finding centroids 90 degrees apart is suggested in
+  // the literature, is it helpful with our data?
   std::srand ( static_cast<unsigned>(time(0)) );
   int sampleIdx;
   // keep track of chosen initial centroids
