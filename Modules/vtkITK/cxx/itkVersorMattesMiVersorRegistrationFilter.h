@@ -131,7 +131,9 @@ public:
     optimizer->SetMinimumStepLength( minStep);
     if (m_fo.good()) {
       m_fo << "LEVEL = " << level << "  ITERATION =" << optimizer->GetCurrentIteration() << 
-        " MaxStep=" << maxStep << " MinStep=" << minStep <<  "  Value=" << optimizer->GetValue() << std::endl;
+        " MaxStep=" << maxStep << " MinStep=" << minStep <<  
+        " Step=" << optimizer->GetCurrentStepLength() <<
+        "  Value=" << optimizer->GetValue() << std::endl;
       m_fo.flush();
     }
   }

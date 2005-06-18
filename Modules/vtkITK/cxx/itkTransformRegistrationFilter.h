@@ -129,6 +129,9 @@ public:
 
   double GetMetricValue();
 
+  itkSetMacro(ResampleMovingImage, bool);
+  itkGetMacro(ResampleMovingImage, bool);
+
   itkRegistrationFilterImageType* GetTransformedOutput (); 
 
 protected:  
@@ -229,6 +232,7 @@ protected:
 
   bool                                           m_ReportTimers;
 
+  bool                                          m_ResampleMovingImage;
 
   // Optimizer Stuff
   unsigned short                       m_NumberOfLevels;
