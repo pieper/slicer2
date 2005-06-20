@@ -13,6 +13,7 @@ itk::itkVersorMattesMiVersorRegistrationFilter::itkVersorMattesMiVersorRegistrat
   itkVersorMattesMiVersorRegistrationCommand::Pointer observer = itkVersorMattesMiVersorRegistrationCommand::New();
   observer->SetRegistrationFilter(this);
   m_Optimizer->AddObserver( itk::IterationEvent(), observer );
+  m_Optimizer->AddObserver( itk::EndEvent(), observer );
 
   m_Optimizer->MinimizeOn();
 

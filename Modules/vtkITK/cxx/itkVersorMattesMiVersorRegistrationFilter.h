@@ -99,9 +99,10 @@ public:
   }
   
 protected:
-  itkVersorMattesMiVersorRegistrationCommand() : m_fo("C:\\Tmp\\regLevel.log"){};
+  itkVersorMattesMiVersorRegistrationCommand() : m_fo("C:\\Tmp\\regLevel.log"), m_level(0){};
   itkVersorMattesMiVersorRegistrationFilter  *m_registration;
   std::ofstream m_fo;
+  int m_level;
   
   typedef itk::VersorRigid3DTransformOptimizer     OptimizerType;
   typedef   OptimizerType   *    OptimizerPointer;
@@ -118,11 +119,46 @@ public:
     
     OptimizerPointer optimizer = 
       dynamic_cast< OptimizerPointer >( object );
+
+    if( typeid( event ) == typeid( itk::EndEvent ) ) {
+      OptimizerType::StopConditionType stopCondition = optimizer->GetStopCondition();
+      if (m_fo.good()) {
+        m_fo << "Optimizer stopped : " << std::endl;
+        m_fo << "Stop condition   =  " << stopCondition << std::endl;
+        switch(stopCondition) {
+        case OptimizerType::GradientMagnitudeTolerance:
+          m_fo << "GradientMagnitudeTolerance" << std::endl; 
+          break;
+        case OptimizerType::StepTooSmall:
+          m_fo << "StepTooSmall" << std::endl; 
+          break;
+        case OptimizerType::ImageNotAvailable:
+          m_fo << "ImageNotAvailable" << std::endl; 
+          break;
+        case OptimizerType::SamplesNotAvailable:
+          m_fo << "SamplesNotAvailable" << std::endl; 
+          break;
+        case OptimizerType::MaximumNumberOfIterations:
+          m_fo << "MaximumNumberOfIterations" << std::endl; 
+          break;
+        }
+        m_fo.flush();
+      }
+    }
     
     if( ! itk::IterationEvent().CheckEvent( &event ) ) {
       return;
     }
     unsigned int level = m_registration->GetCurrentLevel();
+    if (level != m_level && m_registration->GetMaximumStepLength().GetNumberOfElements() > m_level + 1) {
+      m_level++;
+      optimizer->StopOptimization();
+      double maxStep = m_registration->GetMaximumStepLength().GetElement(m_level); 
+      optimizer->SetMaximumStepLength( maxStep );
+      optimizer->StartOptimization(); 
+      m_fo << "RESTART OPTIMIZATION FOR LEVEL= " <<  m_level <<
+        " WITH maxStep = " << maxStep << std::endl; 
+    }
     int numIter = m_registration->GetNumberOfIterations().GetElement(level);
     double maxStep  = m_registration->GetMaximumStepLength().GetElement(level); 
     double minStep =  m_registration->GetMinimumStepLength().GetElement(level);
