@@ -1267,8 +1267,16 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
     # set mode to On (the Display Tracts button will go On)
     set DTMRI(mode,visualizationType,tractsOn) On
 
+    # cast to short (as these are labelmaps the values are really integers
+    # so this prevents errors with float labelmaps which come from editing
+    # scalar volumes derived from the tensors).
+    vtkImageCast castVSeedROI
+    castVSeedROI SetOutputScalarTypeToShort
+    castVSeedROI SetInput [Volume($v,vol) GetOutput] 
+    castVSeedROI Update
+
     # set up the input segmented volume
-    DTMRI(vtk,streamlineControl) SetInputROI [Volume($v,vol) GetOutput] 
+    DTMRI(vtk,streamlineControl) SetInputROI [castVSeedROI GetOutput] 
     DTMRI(vtk,streamlineControl) SetInputROIValue $DTMRI(ROILabel)
 
     # color the streamlines like this ROI
@@ -1296,6 +1304,8 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
     # actually display streamlines 
     # (this is the slow part since it causes pipeline execution)
     DTMRI(vtk,streamlineControl) AddStreamlinesToScene
+
+    castVSeedROI Delete
 }
 
 
