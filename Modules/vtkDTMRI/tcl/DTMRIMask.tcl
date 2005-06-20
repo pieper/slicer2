@@ -53,6 +53,11 @@ proc DTMRIMaskInit {} {
     
     global DTMRI Volume Label
 
+    # Version info for files within DTMRI module
+    #------------------------------------
+    lappend DTMRI(versions) [ParseCVSInfo $m \
+                                 {$Revision: 1.11 $} {$Date: 2005/06/20 02:17:58 $}]
+
     # type of masking to use to reduce volume of DTMRIs
     set DTMRI(mode,mask) None
     set DTMRI(mode,maskList) {None MaskWithLabelmap}

@@ -59,6 +59,11 @@
 proc DTMRITractClusterInit {} {
     global DTMRI 
 
+    # Version info for files within DTMRI module
+    #------------------------------------
+    lappend DTMRI(versions) [ParseCVSInfo $m \
+                                 {$Revision: 1.13 $} {$Date: 2005/06/20 02:17:59 $}]
+
     set DTMRI(TractCluster,NumberOfClusters) 3
     set DTMRI(TractCluster,Sigma) 25
     set DTMRI(TractCluster,HausdorffN) 20

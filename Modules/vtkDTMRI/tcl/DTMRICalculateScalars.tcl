@@ -56,6 +56,11 @@ proc DTMRICalculateScalarsInit {} {
 
     global DTMRI
 
+    # Version info for files within DTMRI module
+    #------------------------------------
+    lappend DTMRI(versions) [ParseCVSInfo $m \
+                                 {$Revision: 1.8 $} {$Date: 2005/06/20 02:17:58 $}]
+
     #------------------------------------
     # Variables for producing scalar volumes
     #------------------------------------

@@ -86,6 +86,11 @@
 proc DTMRITensorRegistrationInit {} {
     global DTMRI Module Volume Transform Tensor Gui
     
+    # Version info for files within DTMRI module
+    #------------------------------------
+    lappend DTMRI(versions) [ParseCVSInfo $m \
+                                 {$Revision: 1.10 $} {$Date: 2005/06/20 02:17:59 $}]
+
     # Does the AG module exist? If not the registration tab will not be displayed
     if {[catch "package require vtkAG"]} {
       set DTMRI(reg,AG) 0

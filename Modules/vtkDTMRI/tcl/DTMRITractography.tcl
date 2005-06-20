@@ -76,6 +76,11 @@ proc DTMRITractographyInit {} {
 
     global DTMRI Volume Label
 
+    # Version info for files within DTMRI module
+    #------------------------------------
+    lappend DTMRI(versions) [ParseCVSInfo $m \
+                                 {$Revision: 1.23 $} {$Date: 2005/06/20 02:17:59 $}]
+
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
     #------------------------------------
