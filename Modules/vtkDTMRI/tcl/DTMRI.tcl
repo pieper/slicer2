@@ -165,7 +165,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.101 $} {$Date: 2005/06/16 22:47:51 $}]
+                  {$Revision: 1.102 $} {$Date: 2005/06/20 02:38:32 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -1419,3 +1419,13 @@ proc DTMRIUpdateLabelWidget {label} {
 
 
 }
+
+
+proc DTMRIGetVersionInfo {} {
+
+    global DTMRI
+
+    set msg [FormatCVSInfo $DTMRI(versions)]
+    tk_messageBox -message $msg -title "DTMRI Sub-Module Version Info"
+}
+

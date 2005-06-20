@@ -61,8 +61,9 @@ proc DTMRIGlyphsInit {} {
 
     # Version info for files within DTMRI module
     #------------------------------------
+    set m "Glyphs"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.12 $} {$Date: 2005/06/20 02:17:58 $}]
+                                 {$Revision: 1.13 $} {$Date: 2005/06/20 02:38:33 $}]
 
     # type of reformatting
     set DTMRI(mode,reformatType) 0

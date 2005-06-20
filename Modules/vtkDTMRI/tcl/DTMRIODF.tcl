@@ -58,8 +58,9 @@ proc DTMRIODFInit {} {
 
     # Version info for files within DTMRI module
     #------------------------------------
+    set m "ODF"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.7 $} {$Date: 2005/06/20 02:17:58 $}]
+                                 {$Revision: 1.8 $} {$Date: 2005/06/20 02:38:33 $}]
 
   set DTMRI(InputODF) $Volume(idNone)
   set DTMRI(ODF,scaleFactor) 2

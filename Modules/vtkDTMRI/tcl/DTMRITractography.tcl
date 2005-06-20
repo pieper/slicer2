@@ -78,8 +78,9 @@ proc DTMRITractographyInit {} {
 
     # Version info for files within DTMRI module
     #------------------------------------
+    set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.23 $} {$Date: 2005/06/20 02:17:59 $}]
+                                 {$Revision: 1.24 $} {$Date: 2005/06/20 02:38:34 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)

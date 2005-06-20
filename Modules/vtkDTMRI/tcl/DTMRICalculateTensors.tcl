@@ -65,8 +65,9 @@ proc DTMRICalculateTensorsInit {} {
 
     # Version info for files within DTMRI module
     #------------------------------------
+    set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.9 $} {$Date: 2005/06/20 02:17:58 $}]
+                                 {$Revision: 1.10 $} {$Date: 2005/06/20 02:38:32 $}]
 
     # Initial path to search when loading files
     #------------------------------------

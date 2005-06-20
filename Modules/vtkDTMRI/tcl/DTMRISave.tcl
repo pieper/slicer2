@@ -53,8 +53,9 @@ proc DTMRISaveInit {} {
 
     # Version info for files within DTMRI module
     #------------------------------------
+    set m "Save"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.4 $} {$Date: 2005/06/20 02:17:59 $}]
+                                 {$Revision: 1.5 $} {$Date: 2005/06/20 02:38:33 $}]
 
 }
 

@@ -55,8 +55,9 @@ proc DTMRIMaskInit {} {
 
     # Version info for files within DTMRI module
     #------------------------------------
+    set m "Mask"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.11 $} {$Date: 2005/06/20 02:17:58 $}]
+                                 {$Revision: 1.12 $} {$Date: 2005/06/20 02:38:33 $}]
 
     # type of masking to use to reduce volume of DTMRIs
     set DTMRI(mode,mask) None
