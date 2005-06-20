@@ -33,6 +33,7 @@ vtkTractShapeFeatures.cxx
 vtkNormalizedCuts.cxx
 vtkClusterTracts.cxx
 vtkMrmlTractGroupNode.cxx
+vtkMrmlTractsNode.cxx
 )
 
 ## classes that one does not want tcl wrapped
