@@ -339,7 +339,7 @@ proc VolNrrdApply {} {
     #Filling headerKeys in the volume array. This key might eventually belong to the MrmlNode
     puts "Header Keys = [nrrdReader GetHeaderKeys]"
     foreach key [nrrdReader GetHeaderKeys] {
-        Volume($i,headerKeys,$key) [nrrdReader GetHeaderValue $key]
+        set Volume($i,headerKeys,$key) [nrrdReader GetHeaderValue $key]
     }    
  
     
