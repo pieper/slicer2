@@ -232,14 +232,16 @@ static void vtkTensorMathematicsExecute1(vtkTensorMathematics *self,
           break;
 
         case VTK_TENS_TRACE:
-          *outPtr = (T)(scaleFactor*(tensor[0][0]
-                         +tensor[1][1]
-                         +tensor[2][2]));
+          //*outPtr = (T)(scaleFactor*(tensor[0][0]
+          //               +tensor[1][1]
+          //               +tensor[2][2]));
+          *outPtr = static_cast<T> (scaleFactor*vtkTensorMathematics::Trace(tensor));
           break;
 
         case VTK_TENS_DETERMINANT:
-          *outPtr = 
-            (T)(scaleFactor*(vtkMath::Determinant3x3(tensor)));
+          //*outPtr = 
+          //  (T)(scaleFactor*(vtkMath::Determinant3x3(tensor)));
+          *outPtr = static_cast<T> (scaleFactor*vtkTensorMathematics::Determinant(tensor));
           break;
         }
 
@@ -400,14 +402,6 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
         w[0] = fabs(w[0]);
         w[1] = fabs(w[1]);
         w[2] = fabs(w[2]);
-       
-
-          // trace is sum of eigenvalues
-          trace = w[0]+w[1]+w[2];
-
-          // Avoid division by 0
-          vtkFloatingPointType reg = VTK_EPS;
-          trace += reg;
           
           // Lauren note that RA and LA could be computed
           // without diagonalization.  This should be implementred
@@ -417,34 +411,22 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
           switch (op)
         {
         case VTK_TENS_RELATIVE_ANISOTROPY:
-          *outPtr = (T)((0.70710678)*
-                (sqrt((w[0]-w[1])*(w[0]-w[1]) + 
-                      (w[2]-w[1])*(w[2]-w[1]) +
-                      (w[2]-w[0])*(w[2]-w[0])))/trace);
+           *outPtr = static_cast<T> (vtkTensorMathematics::RelativeAnisotropy(w));
           break;
         case VTK_TENS_FRACTIONAL_ANISOTROPY:
-          norm = sqrt(w[0]*w[0]+ w[1]*w[1] +  w[2]*w[2]);
-          norm += reg;
-          *outPtr = (T)((0.70710678)*
-                (sqrt((w[0]-w[1])*(w[0]-w[1]) + 
-                      (w[2]-w[1])*(w[2]-w[1]) +
-                      (w[2]-w[0])*(w[2]-w[0])))/norm);
+           *outPtr = static_cast<T> (vtkTensorMathematics::FractionalAnisotropy(w));
           break;
 
         case VTK_TENS_LINEAR_MEASURE:
-          //*outPtr = (T) ((w[0] - w[1])/trace);
-          *outPtr = (T) (w[0] - w[1])/(w[0]+reg);
-      
+          *outPtr = static_cast<T> (vtkTensorMathematics::LinearMeasure(w));
       break;
 
         case VTK_TENS_PLANAR_MEASURE:
-          //*outPtr = (T) (2*(w[1] - w[2])/trace);
-      *outPtr = (T) (w[1] - w[2])/(w[0]+reg);
+          *outPtr = static_cast<T> (vtkTensorMathematics::PlanarMeasure(w));
           break;
 
         case VTK_TENS_SPHERICAL_MEASURE:
-          //*outPtr = (T) (3*w[2]/trace);
-          *outPtr = (T) (w[2])/(w[0]+reg);
+          *outPtr = static_cast<T> (vtkTensorMathematics::SphericalMeasure(w));
       break;
 
         case VTK_TENS_MAX_EIGENVALUE:
@@ -460,46 +442,12 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
           break;
 
         case VTK_TENS_MODE:
-          // see PhD thesis, Gordon Kindlmann
-          mean = (w[0] + w[1] + w[2])/3;
-          norm = ((w[0] - mean)*(w[0] - mean) + 
-                  (w[1] - mean)*(w[1] - mean) + 
-                  (w[2] - mean)*(w[2] - mean))/3;
-          norm = sqrt(norm);
-          norm = norm*norm*norm;
-          norm += reg;
-          // multiply by sqrt 2: range from -1 to 1
-          *outPtr = (T)(M_SQRT2*((w[0] + w[1] - 2*w[2]) * 
-                         (2*w[0] - w[1] - w[2]) * 
-                         (w[0] - 2*w[1] + w[2]))/(27*norm));
+          *outPtr = static_cast<T> (vtkTensorMathematics::Mode(w));
           break;
 
         case VTK_TENS_COLOR_MODE:
-          // see PhD thesis, Gordon Kindlmann
-          // Compute FA for amount of gray 
-          norm = sqrt(w[0]*w[0] + w[1]*w[1] +  w[2]*w[2]);
-          norm += reg;
-          fa = ((0.70710678)*
-                (sqrt((w[0]-w[1])*(w[0]-w[1]) + 
-                      (w[2]-w[1])*(w[2]-w[1]) +
-                      (w[2]-w[0])*(w[2]-w[0])))/norm);
-          
-          // Compute mode
-          mean = (w[0] + w[1] + w[2])/3;
-          norm = ((w[0] - mean)*(w[0] - mean) + 
-                  (w[1] - mean)*(w[1] - mean) + 
-                  (w[2] - mean)*(w[2] - mean))/3;
-          norm = sqrt(norm);
-          norm = norm*norm*norm;
-          norm += reg;
-          // multiply by sqrt 2: range from -1 to 1
-          mode = (M_SQRT2*((w[0] + w[1] - 2*w[2]) * 
-                           (2*w[0] - w[1] - w[2]) * 
-                           (w[0] - 2*w[1] + w[2]))/(27*norm));
 
-          // Calculate RGB value for this mode and FA
-          self->ModeToRGB(mode, fa, r, g, b);
-          
+          vtkTensorMathematics::ColorByMode(w,r,g,b);
           // scale maps 0..1 values into the range a char takes on
           *outPtr = (T)(scale*r);
           outPtr++;
@@ -524,7 +472,7 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
             }
           // Color R, G, B depending on max eigenvector
           // scale maps 0..1 values into the range a char takes on
-          cl = (w[0]-w[1])/(w[0]+reg);
+          cl = vtkTensorMathematics::LinearMeasure(w);
           *outPtr = (T)(scale*fabs(v_maj[0])*cl);
           outPtr++;
           *outPtr = (T)(scale*fabs(v_maj[1])*cl);
@@ -630,6 +578,97 @@ void vtkTensorMathematics::ThreadedExecute(vtkImageData **inData,
     }
 
 }
+
+vtkFloatingPointType vtkTensorMathematics::Trace(vtkFloatingPointType D[3][3])
+{
+  return (D[0][0] + D[1][1] + D[2][2]);
+
+}
+
+vtkFloatingPointType vtkTensorMathematics::Determinant(vtkFloatingPointType D[3][3])
+{
+  return vtkMath::Determinant3x3(D);
+}
+
+vtkFloatingPointType vtkTensorMathematics::RelativeAnisotropy(vtkFloatingPointType w[3]) 
+{
+  vtkFloatingPointType trace = w[0]+w[1]+w[2] + VTK_EPS;   
+  return ((0.70710678)*
+                (sqrt((w[0]-w[1])*(w[0]-w[1]) + 
+                      (w[2]-w[1])*(w[2]-w[1]) +
+                      (w[2]-w[0])*(w[2]-w[0])))/trace);
+}
+
+vtkFloatingPointType vtkTensorMathematics::FractionalAnisotropy(vtkFloatingPointType w[3])
+{
+  vtkFloatingPointType norm = sqrt(w[0]*w[0]+ w[1]*w[1] +  w[2]*w[2])+ VTK_EPS; 
+
+  return ((0.70710678)*
+                (sqrt((w[0]-w[1])*(w[0]-w[1]) + 
+                      (w[2]-w[1])*(w[2]-w[1]) +
+                      (w[2]-w[0])*(w[2]-w[0])))/norm);
+} 
+
+vtkFloatingPointType vtkTensorMathematics::LinearMeasure(vtkFloatingPointType w[3])
+{
+  return (w[0] - w[1])/(w[0]+VTK_EPS);
+}
+
+vtkFloatingPointType vtkTensorMathematics::PlanarMeasure(vtkFloatingPointType w[3])
+{
+  return (w[1] - w[2])/(w[0]+VTK_EPS);
+}
+
+vtkFloatingPointType vtkTensorMathematics::SphericalMeasure(vtkFloatingPointType w[3])
+{
+  return (w[2])/(w[0]+VTK_EPS);
+}
+
+
+vtkFloatingPointType vtkTensorMathematics::MaxEigenvalue(vtkFloatingPointType w[3])
+{
+  return w[0];
+}
+
+vtkFloatingPointType vtkTensorMathematics::MiddleEigenvalue(vtkFloatingPointType w[3])
+{
+  return w[1];
+}
+
+vtkFloatingPointType vtkTensorMathematics::MinEigenvalue(vtkFloatingPointType w[3])
+{
+  return w[2];
+}
+
+vtkFloatingPointType vtkTensorMathematics::Mode(vtkFloatingPointType w[3])
+{
+
+  // see PhD thesis, Gordon Kindlmann
+  vtkFloatingPointType mean = (w[0] + w[1] + w[2])/3;
+  vtkFloatingPointType norm = ((w[0] - mean)*(w[0] - mean) + 
+                  (w[1] - mean)*(w[1] - mean) + 
+                  (w[2] - mean)*(w[2] - mean))/3;
+  norm = sqrt(norm);
+  norm = norm*norm*norm;
+  norm += VTK_EPS;
+  // multiply by sqrt 2: range from -1 to 1
+  return  (M_SQRT2*((w[0] + w[1] - 2*w[2]) * 
+                         (2*w[0] - w[1] - w[2]) * 
+                         (w[0] - 2*w[1] + w[2]))/(27*norm)); 
+}
+
+void vtkTensorMathematics::ColorByMode(vtkFloatingPointType w[3], vtkFloatingPointType &R, 
+                                                       vtkFloatingPointType &G, vtkFloatingPointType &B)
+{
+  // see PhD thesis, Gordon Kindlmann
+  // Compute FA for amount of gray 
+  vtkFloatingPointType fa = vtkTensorMathematics::FractionalAnisotropy(w);      
+  // Compute mode
+  vtkFloatingPointType mode = vtkTensorMathematics::Mode(w);
+  // Calculate RGB value for this mode and FA
+  vtkTensorMathematics::ModeToRGB(mode, fa, R, G, B);
+}
+
 
 void vtkTensorMathematics::PrintSelf(ostream& os, vtkIndent indent)
 {

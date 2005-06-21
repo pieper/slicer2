@@ -183,6 +183,22 @@ public:
   static void ModeToRGB(double Mode, double FA,
                  double &R, double &G, double &B);
 
+
+  // Description:
+  // Helper functions to perform operations pixel-wise
+  static vtkFloatingPointType Determinant(vtkFloatingPointType D[3][3]);
+  static vtkFloatingPointType Trace(vtkFloatingPointType D[3][3]);
+  static vtkFloatingPointType RelativeAnisotropy(vtkFloatingPointType w[3]);
+  static vtkFloatingPointType FractionalAnisotropy(vtkFloatingPointType w[3]);
+  static vtkFloatingPointType LinearMeasure(vtkFloatingPointType w[3]);
+  static vtkFloatingPointType PlanarMeasure(vtkFloatingPointType w[3]);
+  static vtkFloatingPointType SphericalMeasure(vtkFloatingPointType w[3]);
+  static vtkFloatingPointType MaxEigenvalue(vtkFloatingPointType w[3]);
+  static vtkFloatingPointType MiddleEigenvalue(vtkFloatingPointType w[3]);
+  static vtkFloatingPointType MinEigenvalue(vtkFloatingPointType w[3]);
+  static vtkFloatingPointType Mode(vtkFloatingPointType w[3]);
+  static void ColorByMode(vtkFloatingPointType w[3], vtkFloatingPointType &R,vtkFloatingPointType &G, vtkFloatingPointType &B);
+
 protected:
   vtkTensorMathematics();
   ~vtkTensorMathematics() {};
