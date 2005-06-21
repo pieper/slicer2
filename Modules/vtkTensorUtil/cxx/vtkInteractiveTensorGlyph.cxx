@@ -44,6 +44,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkPolyData.h"
 #include "vtkPointData.h"
 #include "vtkCellArray.h"
+#include "vtkTensorMathematics.h"
 #include <time.h>
 
 //------------------------------------------------------------------------------
@@ -390,29 +391,22 @@ void vtkInteractiveTensorGlyph::Execute()
         }
       else 
         {
-          // create scalar data from computed features
-          vtkFloatingPointType trace = w[0]+w[1]+w[2];
+          //Correct for negative eigenvalues: absolute value
+          w[0] = fabs(w[0]);
+          w[1] = fabs(w[1]);
+          w[2] = fabs(w[2]);
+       
 
-          // avoid division by 0
-          vtkFloatingPointType eps = 1;
-          if (trace == 0) 
-        trace = eps;
-          vtkFloatingPointType norm;
-
-          // regularization to compensate for small eigenvalues
-          //vtkFloatingPointType r = 0.001;
-          //trace += r;
-
-          switch (this->ScalarMeasure) 
+        switch (this->ScalarMeasure) 
         {
         case VTK_LINEAR_MEASURE:
-          s = (w[0] - w[1])/trace;
+          s = vtkTensorMathematics::LinearMeasure(w);
           break;
         case VTK_PLANAR_MEASURE:
-          s = 2*(w[1] - w[2])/trace;
+          s = vtkTensorMathematics::PlanarMeasure(w);
           break;
         case VTK_SPHERICAL_MEASURE:
-          s = 3*w[2]/trace;
+          s = vtkTensorMathematics::SphericalMeasure(w);
           break;
         case VTK_MAX_EIGENVAL_MEASURE:
           s = w[0];
@@ -446,19 +440,10 @@ void vtkInteractiveTensorGlyph::Execute()
           
           break;
         case VTK_RELATIVE_ANISOTROPY_MEASURE:
-          // 1/sqrt(2) is the constant used here
-          s = (0.70710678)*(sqrt((w[0]-w[1])*(w[0]-w[1]) + 
-                     (w[2]-w[1])*(w[2]-w[1]) +
-                     (w[2]-w[0])*(w[2]-w[0])))/trace;
+          s = vtkTensorMathematics::RelativeAnisotropy(w);
           break;
         case VTK_FRACTIONAL_ANISOTROPY_MEASURE:
-          norm = sqrt(w[0]*w[0]+ w[1]*w[1] +  w[2]*w[2]);
-          if (norm == 0) 
-            norm = eps;
-          s = (0.70710678)*(sqrt((w[0]-w[1])*(w[0]-w[1]) + 
-                     (w[2]-w[1])*(w[2]-w[1]) +
-                     (w[2]-w[0])*(w[2]-w[0])))/norm;
-
+          s = vtkTensorMathematics::FractionalAnisotropy(w);
           break;
         default:
           s = 0;
