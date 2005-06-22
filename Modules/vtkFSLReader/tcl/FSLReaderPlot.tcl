@@ -56,13 +56,15 @@
 # .END
 #-------------------------------------------------------------------------------
 proc FSLReaderPopUpPlot {x y} {
-    global FSLReader
+    global FSLReader Interactor Volume
 
-    if {$FSLReader(tcPlottingOption) == "No"} {
+    if {[$FSLReader(gui,voxelWiseButton) cget -state] == "disabled" ||
+        $FSLReader(tcPlotOption) == "fsl"} {
         return
     }
 
-    set ext [[Volume($FSLReader(firstMRMLid),vol) GetOutput] GetWholeExtent]
+    set id [MIRIADSegmentGetVolumeByName "example_func"] 
+    set ext [[Volume($id,vol) GetOutput] GetWholeExtent]
     set FSLReader(volextent) $ext 
 
     # Get the indices of selected voxel. Then, check
@@ -85,87 +87,156 @@ proc FSLReaderPopUpPlot {x y} {
         return 
     }
 
-    FSLReaderRetrieveTimeCourse $i $j $k  
+    set s $Interactor(s)
+    set fvName [[[Slicer GetForeVolume $s] GetMrmlNode] GetName]
+    set overlay $FSLReader(currentOverlayVolumeName)
+    if {$fvName != $overlay} {
+        DevErrorWindow "The foreground volume displayed is different from the one selected."
+        return
+    }
+
+    # voxel time course - a vtkFloatArray
+    set timecourse [FSLReader(timecourseExtractor) GetTimeCourse $i $j $k]
+
+    # model data
+    set overlay $FSLReader(currentOverlayVolumeName)
+    if {! [info exists FSLReader($overlay,model)]} {
+        FSLReaderLoadModel $overlay
+    }
+
+    set plotTitle "Time Course ($overlay)"
+    set plotHeight 250 
+#    set plotGeometry "+335+200"
+    set plotGeometry "+300+200"
+
+    if {$FSLReader(noOfFuncVolumes) > 100} { 
+        set plotWidth 850
+        set graphWidth 850
+    } else {
+        set plotWidth 700
+        set graphWidth 700
+    }
 
     # Plot the time course
     if {! [info exists FSLReader(timeCourseToplevel)]} {
         set w .tcren
         toplevel $w
-        wm title $w "Voxel Time Course"
-        wm minsize $w 650 250
-        wm geometry $w +315+300 
-        set FSLReader(timeCourseToplevel) $w
+        wm title $w $plotTitle 
+        wm minsize $w $plotWidth $plotHeight
+        wm geometry $w $plotGeometry 
 
-        vtkTimeCoursePlotActor2 tcPlot
-        tcPlot SetVoxelIndex $i $j $k
-        tcPlot SetPlot $FSLReader(timeCourse) \
-            FSLReader($FSLReader(currentModelName),model) 
+        blt::graph $w.graph -plotbackground white -width $graphWidth -height $plotHeight
+        pack $w.graph 
+        $w.graph legend configure -position bottom -relief raised \
+            -font fixed -fg black 
+        $w.graph axis configure y -title "Intensity"
+        # $w.graph grid on
+        # $w.graph grid configure -color black
 
-        vtkRenderer render
-        render AddActor2D tcPlot 
-        render SetBackground 1.0 1.0 1.0
-        render SetViewport 0 0 1 1
-           vtkRenderWindow renWin
-        renWin AddRenderer render
-
-        set vtkw [vtkTkRenderWidget .tcren.rw \
-            -width 650 \
-            -height 250 \
-            -rw renWin]
-        ::vtk::bind_tk_render_widget $vtkw  
-        pack $vtkw -side top -fill both -expand yes     
         wm protocol $w WM_DELETE_WINDOW "FSLReaderCloseTimeCourseWindow" 
-        set FSLReader(tcPlot) tcPlot
-        set FSLReader(render) render
-        set FSLReader(renWin) renWin
+
+        set FSLReader(timeCourseToplevel) $w
+        set FSLReader(timeCourseGraph) $w.graph
+        $FSLReader(timeCourseGraph) axis configure x -title "Volume Number" 
     }
 
-    $FSLReader(tcPlot) SetVoxelIndex $i $j $k
-    $FSLReader(tcPlot) SetPlot $FSLReader(timeCourse) \
-        FSLReader($FSLReader(currentModelName),model) 
-
-    #Update the graph for the new data
-    $FSLReader(renWin) Render 
+    # real plotting
+    FSLReaderPlotTimecourse $i $j $k $timecourse $FSLReader($overlay,model) 
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC FSLReaderRetrieveTimeCourse
-# Returns time course data for a specified voxel
+# .PROC FSLReaderDrawPlotLong
+# Draws time course plot in long format 
 # .ARGS
-# int i
-# int j
-# int k
+# int x the x index of voxel whose time course is to be plotted
+# int y the y index of voxel whose time course is to be plotted
+# int z the z index of voxel whose time course is to be plotted
 # .END
 #-------------------------------------------------------------------------------
-proc FSLReaderRetrieveTimeCourse {i j k} {
-    global FSLReader Volume
+proc FSLReaderPlotTimecourse {x y z data model} {
+    global FSLReader
 
-    if {[info exists FSLReader(timeCourse)]} {
-        $FSLReader(timeCourse) Delete
-        unset -nocomplain FSLReader(timeCourse)
-    } 
+    # clean variables
+    unset -nocomplain FSLReader(signalArray,plotting)
+    unset -nocomplain FSLReader(modelArray,plotting)
 
-    vtkFloatArray timeCourse 
-    timeCourse SetNumberOfTuples $FSLReader(noOfAnalyzeVolumes) 
-    timeCourse SetNumberOfComponents 1
+    # signal (response) time course
+    set myRange [$data GetRange]
+    set timeCourseYMin [lindex $myRange 0]
+    set max [lindex $myRange 1]
+    set timeCourseYMax [expr {$max == 0 ? 1 : $max}] 
 
-    set start $FSLReader(firstMRMLid) 
-    set end $FSLReader(lastMRMLid)
-
-    set ii 0
-    while {$start <= $end} {
-
-        set vol [Volume($start,vol) GetOutput]
-        $vol Update
-        set val [$vol $::getScalarComponentAs $i $j $k 0]
-        timeCourse SetComponent $ii 0 $val 
-
-        incr ii
-        incr start
+    # get min and max of this model 
+    set modelMin 1000000 
+    set modelMax -1000000
+    foreach v $model { 
+        if {$v > $modelMax} {
+            set modelMax $v
+        }
+        if {$v < $modelMin} {
+            set modelMin $v
+        }
     }
 
-    set FSLReader(timeCourse) timeCourse
+    set modelMinToBe [expr {$timeCourseYMin + ($timeCourseYMax-$timeCourseYMin) / 4}]
+    set modelMaxToBe [expr {$timeCourseYMax - ($timeCourseYMax-$timeCourseYMin) / 4}]
+    set totalVolumes [$data GetNumberOfTuples]
+
+    set i 0
+    while {$i < $totalVolumes} {
+        lappend xAxis [expr $i + 1]
+        lappend FSLReader(signalArray,plotting) [$data GetComponent $i 0]
+
+        set m [lindex $model $i]
+        set nm [expr {(($modelMaxToBe-$modelMinToBe) * ($m-$modelMin) / ($modelMax-$modelMin)) + $modelMinToBe}]
+        lappend FSLReader(modelArray,plotting) $nm 
+
+        incr i
+    }
+
+    $FSLReader(timeCourseGraph) axis configure x -min 1 -max $totalVolumes 
+    $FSLReader(timeCourseGraph) axis configure y \
+        -min $timeCourseYMin -max $timeCourseYMax
+
+    blt::vector xVecSig yVecSig xVecModel yVecModel
+    xVecSig set $xAxis
+    yVecSig set $FSLReader(signalArray,plotting)
+
+    xVecModel set $xAxis
+    yVecModel set $FSLReader(modelArray,plotting)
+   
+    if {[info exists FSLReader(signalCurve)] &&
+        [$FSLReader(timeCourseGraph) element exists $FSLReader(signalCurve)]} {
+        $FSLReader(timeCourseGraph) element delete $FSLReader(signalCurve)
+    }
+    if {[info exists FSLReader(modelCurve)] &&
+        [$FSLReader(timeCourseGraph) element exists $FSLReader(modelCurve)]} {
+        $FSLReader(timeCourseGraph) element delete $FSLReader(modelCurve)
+    }
+    if {[info exists FSLReader(voxelIndices)] &&
+        [$FSLReader(timeCourseGraph) marker exists $FSLReader(voxelIndices)]} {
+        $FSLReader(timeCourseGraph) marker delete $FSLReader(voxelIndices)
+    }
+
+    set FSLReader(signalCurve) signalCurve 
+    set FSLReader(modelCurve) modelCurve 
+    set FSLReader(voxelIndices) voxelIndices
+
+    $FSLReader(timeCourseGraph) element create $FSLReader(signalCurve) \
+        -label "response" -xdata xVecSig -ydata yVecSig
+    $FSLReader(timeCourseGraph) element configure $FSLReader(signalCurve) \
+        -symbol none -color red -linewidth 1 
+    $FSLReader(timeCourseGraph) element create $FSLReader(modelCurve) \
+        -label "Full model" -xdata xVecModel -ydata yVecModel
+    $FSLReader(timeCourseGraph) element configure $FSLReader(modelCurve) \
+        -symbol none -color blue -linewidth 1 
+
+    # Voxel indices
+    $FSLReader(timeCourseGraph) marker create text -text "Voxel: ($x,$y,$z)" \
+        -coords {$totalVolumes $timeCourseYMax} \
+        -yoffset 5 -xoffset -70 -name $FSLReader(voxelIndices) -under yes -bg white \
+        -font fixed 
 }
 
 
@@ -178,24 +249,14 @@ proc FSLReaderRetrieveTimeCourse {i j k} {
 proc FSLReaderCloseTimeCourseWindow {} {
     global FSLReader
 
-    $FSLReader(tcPlot) Delete
-    $FSLReader(render) Delete
-    [$FSLReader(renWin) GetInteractor] Delete
-
-    # I found some useful information from "vtkusers mailing list" about
-    # some problems on destroying a vtkTkRenderWidget. Here is the respone
-    # from Hideaki Hiraki:
-    # 1. "[$renWin GetInteractor] Delete" is required if the 
-    # vtkGenericRenderWindowInteractor is created implicitly in 
-    # ::vtk::bind_tk_render_widget.
-    # 2. "$renWin MakeCurrent" is sometimes required (maybe when 
-    # the vtkRenderWindow is created implicitly in the widget).
-    # 3. "rename $widget {}" is required as "destroy $widget" is 
-    # not enough to remove the command.
-    $FSLReader(renWin) Delete
-
-    destroy $FSLReader(timeCourseToplevel)
-    unset FSLReader(timeCourseToplevel)
+    if {[info exists FSLReader(timeCourseToplevel)]} {
+        destroy $FSLReader(timeCourseToplevel)
+        
+        unset -nocomplain FSLReader(timeCourseToplevel)
+        unset -nocomplain FSLReader(timeCourseGraph)
+        unset -nocomplain FSLReader(signalCurve)]
+        unset -nocomplain FSLReader(modelCurve)]
+    }
 }
 
 
@@ -239,6 +300,7 @@ proc FSLReaderGetVoxelFromSelection {x y} {
         return "-1 -1 -1"
     }
 
+if {0} {
     set fvName [[[Slicer GetForeVolume $s] GetMrmlNode] GetName]
     set start [string first "_" $fvName 0]
     set end [string first "-" $fvName 0]
@@ -271,6 +333,7 @@ proc FSLReaderGetVoxelFromSelection {x y} {
     }
 
     set FSLReader(currentModelName) $name
+}
 
     set xs $x
     set ys $y
@@ -305,7 +368,7 @@ proc FSLReaderGetVoxelFromSelection {x y} {
 proc FSLReaderCheckSelectionAgainstVolumeLimits {argstr} {
 
     scan $argstr "%d %d %d %d %d %d %d %d %d" i j k xmin ymin zmin xmax ymax zmax
-    puts "argstr = $argstr"
+    # puts "argstr = $argstr"
     if {$i < $xmin || $j < $ymin || $k < $zmin} {
         return 0 
     }
@@ -315,3 +378,95 @@ proc FSLReaderCheckSelectionAgainstVolumeLimits {argstr} {
 
     return 1 
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC FSLReaderLoadModel
+# Loads a model from tsplot directory 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FSLReaderLoadModel {overlay} {
+    global FSLReader 
+
+    set i [string first "/" $overlay 0]
+    set fName [string range $overlay [expr $i+1] end]
+    set fileName [file join $FSLReader(featDir) tsplot tsplot_$fName.txt] 
+
+    if {! [file exists $fileName]} {
+        DevErrorWindow "File doesn't exist: $fileName."
+        return
+    }
+
+    # Reads file
+    set fp [open $fileName r]
+    set data [string trim [read $fp]]
+    set lines [split $data "\n"]
+    close $fp
+
+    if {! [info exists FSLReader($overlay,model)]} {
+        unset -nocomplain FSLReader($overlay,model)
+    }
+
+    set count 0
+    set i [string first "f" $overlay]
+    set n [expr {$i == -1 ? 2 : 1}] 
+    foreach l $lines {
+        set tokens [split $l " "]
+        set v [lindex $tokens $n]
+
+        # convert string to float
+        set index [string first "e" $v]
+        if {$index != -1} {
+            set f [string range $v 0 [expr $index-1]]
+            set e [string range $v [expr $index+2] end]
+        }
+        set v [expr {$f * pow(10,$e)}]
+
+        lappend FSLReader($overlay,model) $v 
+        incr count
+    }
+}
+
+
+proc FSLReaderCloseTimeSeriesGraphWindow {} {
+    global FSLReader Gui
+
+    if {[info exists FSLReader(timecourseGraphToplevel)]} {
+        destroy $FSLReader(timecourseGraphToplevel)
+        unset -nocomplain $FSLReader(timecourseGraphToplevel)
+    }
+}
+
+proc FSLReaderSelectTimeSeriesGraph {gif} {
+    global FSLReader Gui
+
+    # configure menubutton
+    $FSLReader(gui,gifMenuButton) config -text $gif 
+    set FSLReader(currentNativeTimeSeriesName) $gif 
+
+    FSLReaderCloseTimeSeriesGraphWindow
+ 
+    if {$gif != "none"} {
+        set w .tcGraph
+        toplevel $w
+        wm title $w $gif
+        set FSLReader(timecourseGraphToplevel) $w 
+
+        set img [file join $FSLReader(featDir) tsplot $gif] 
+        set uselogo [image create photo -file $img]
+        set height [image height $uselogo]
+        set width [image width $uselogo]
+        wm minsize $w $width $height 
+        wm geometry $w +315+300 
+        wm protocol $w WM_DELETE_WINDOW "FSLReaderCloseTimeSeriesGraphWindow"
+
+        eval {label $w.lLogoImages -width $width -height $height \
+            -image $uselogo -justify center} $Gui(BLA)
+
+        button $w.bClose -text "Close" -font fixed -command "FSLReaderCloseTimeSeriesGraphWindow"
+        pack $w.lLogoImages $w.bClose -side top -padx 5 -pady 5 -expand 1 
+    }
+}
+ 
+

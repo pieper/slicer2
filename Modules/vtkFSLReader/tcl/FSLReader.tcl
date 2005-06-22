@@ -73,8 +73,7 @@ proc FSLReaderInit {} {
     # Description:
     #  Give a brief overview of what your module does, for inclusion in the 
     #  Help->Module Summaries menu item.
-    set Module($m,overview) "This module is to display the output of FSL from \
-        University of Oxford, UK."
+    set Module($m,overview) "This module is to display the output of FSL from  University of Oxford, UK."
     #  Provide your name, affiliation and contact information so you can be 
     #  reached for any questions people may have regarding your module. 
     #  This is included in the  Help->Module Credits menu item.
@@ -104,9 +103,9 @@ proc FSLReaderInit {} {
     #   row2,tab = like row1 
     #
 
-    set Module($m,row1List) "Help Report TimeSeries ActOverlay"
-    set Module($m,row1Name) "{Help} {Report} {Time Series} {Act Overlay} "
-    set Module($m,row1,tab) Report 
+    set Module($m,row1List) "Help Setup Stats Report"
+    set Module($m,row1Name) "{Help} {Set Up} {Stats} {Report} "
+    set Module($m,row1,tab) Setup 
 
     # Define Procedures
     #------------------------------------
@@ -146,6 +145,7 @@ proc FSLReaderInit {} {
     set Module($m,procEnter) FSLReaderEnter
     set Module($m,procExit) FSLReaderExit
 
+
     # Define Dependencies
     #------------------------------------
     # Description:
@@ -161,8 +161,7 @@ proc FSLReaderInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2005/04/19 18:35:20 $}]
+    lappend Module(versions) [ParseCVSInfo $m  {$Revision: 1.8 $} {$Date: 2005/06/22 19:15:17 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -183,7 +182,9 @@ proc FSLReaderInit {} {
 
     # Source all appropriate tcl files here. 
     source "$FSLReader(modulePath)/tcl/FSLReaderPlot.tcl"
+
 }
+
 
 # NAMING CONVENTION:
 #-------------------------------------------------------------------------------
@@ -241,29 +242,61 @@ proc FSLReaderBuildGUI {} {
     # Refer to the documentation for details on the syntax.
     #
     set help "
-    The FSLReader module is intended to view activation \
-    results out of FSL from Univeristy of Oxford, UK.
+    The FSLReader module is intended to view Feat output. Feat is a model-based \
+    FMRI analysis tool within the FSL package, a comprehensive library of image \
+    analysis and statistical tools for FMRI, MRI and DTI brain imaging data. \
+    FSL is written mainly by members of the Analysis Group, FMRIB, Oxford, UK.  
     <P>
-    The <B>Report</B> tab allows you to choose an FSL output \
-    directory and to read the html report by specifying any \
-    web browser available on your system.
-    <BR><BR>
-    You can load the time series (filtered_func_data.hdr) on \
-    <B>Time Series</B> tab. You have options to turn on or off \
-    the time series plotting.
+    As the first step, the user needs to choose the FEAT output directory \
+    on the <B>Set Up</B> tab, where volumes and other data are going to be \
+    viewed in Slicer.
     <P>
-    On <B>Act Overlay</B> tab, you can overlay an activation \
-    onto any background volume. For better display, you need \
-    to make sure they are co-registered. If you already enabled \
-    time series plotting on the previous tab, you may see voxel \
-    time course plotting in a separate window as you move the \
-    mouse over any of the three slice windows. Again, you need \
-    verify that the activation, background volume and time series \
-    are all in the same space. 
+    On <B>Stats</B> tab, volumes are loaded in by clicking Apply button; \
+    filtered_func_data.hdr, the 4D FMRI data after all filtering has been carried \
+    out, may be opted out and in by toggling the checkbutton. 
+    <BR> 
+    Upon completion of loading, standard.hdr and example_func.hdr become background \
+    images and all stat maps form the overlay volume menu. For a different \
+    background or overlay in the Viewer window, just choose one from their own menu \
+    in the GUI. 
+    <BR>
+    There are two ways for plotting time series; however, the first one, Voxel wise, \
+    will be disabled if filtered_func_data.hdr is opted out during volume loading. \
+    FSL native list all static graphs in tsplot directory, which can be viewed one \
+    at a time. Voxel wise is an extra feature; time course can be dynamically viewed \
+    by clicking any voxel in one of the three slice windows.
+    <P>
+    The <B>Report</B> tab allows the user to read the html report by specifying \
+    a web browser available.
+
     "
     regsub -all "\n" $help {} help
     MainHelpApplyTags FSLReader $help
     MainHelpBuildGUI FSLReader
+
+    #-------------------------------------------
+    # Setup frame
+    #-------------------------------------------
+    set fSetup $Module(FSLReader,fSetup)
+    set f $fSetup
+    
+    foreach frame "Upper Lower" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        $f.f$frame configure -relief groove -bd 3  -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    }
+    
+    set f $fSetup.fUpper
+    
+    frame $f.f -bg $Gui(activeWorkspace)
+    pack $f.f -side top -padx $Gui(pad) -pady $Gui(pad)
+   
+    DevAddLabel  $f.f.l "Where is the Feat output?" 
+    DevAddButton $f.f.b "Browse..." "FSLReaderBrowse" 
+    pack $f.f.l $f.f.b -side left -padx $Gui(pad)
+
+    eval {entry $f.efile -textvariable FSLReader(featDir) -width 50} $Gui(WEA)
+    pack $f.efile -side top -pady $Gui(pad) -padx $Gui(pad)  -expand 1 -fill x    
 
     #-------------------------------------------
     # Report frame
@@ -273,42 +306,20 @@ proc FSLReaderBuildGUI {} {
     
     foreach frame "Upper Lower" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
-        $f.f$frame configure -relief groove -bd 3 \
-            -bg $Gui(activeWorkspace)
+        $f.f$frame configure -relief groove -bd 3  -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
-    
-    # Report->Upper frame
-    set f $fReport.fUpper
-    
-    frame $f.f -bg $Gui(activeWorkspace)
-    pack $f.f -side top -padx $Gui(pad) -pady $Gui(pad)
-   
-    DevAddLabel  $f.f.l "FSL Output Directory" 
-    DevAddButton $f.f.b "Browse..." "FSLReaderSetFSLDir 1" 
-    pack $f.f.l $f.f.b -side left -padx $Gui(pad)
 
-    eval {entry $f.efile -textvariable FSLReader(FSLDir) -width 50} $Gui(WEA)
-    pack $f.efile -side top -pady $Gui(pad) -padx $Gui(pad) \
-        -expand 1 -fill x    
-
-    # Report->Lower frame
     set f $fReport.fLower
-    
-    DevAddLabel $f.label1 "Read Report:"
-    pack $f.label1 -side top -padx $Gui(pad) -pady 4 
-
-    DevAddFileBrowse $f FSLReader "htmlFile" "Html File:" \
-        "" "html" "\$FSLReader(FSLDir)" \
-        "Open" "Browse for an Analyze file" "" "Absolute"
+    DevAddFileBrowse $f FSLReader "htmlFile" "Html File:"  "" "html" \
+        "\$FSLReader(featDir)"  "Open" "Browse for an html file" "" "Absolute"
 
     frame $f.fView -bg $Gui(activeWorkspace)
     pack $f.fView -side top  
     set f $f.fView
     DevAddLabel $f.label2 "Browser:"
     set FSLReader(browser) "mozilla"
-    eval {entry $f.entry -width 10 \
-        -textvariable FSLReader(browser)} $Gui(WEA)
+    eval {entry $f.entry -width 10  -textvariable FSLReader(browser)} $Gui(WEA)
     bind $f.entry <Return> FSLReaderLaunchBrowser
 
     # make a button that pops up the report 
@@ -317,171 +328,537 @@ proc FSLReaderBuildGUI {} {
     pack $f.label2 $f.entry $f.bWeb -side left -padx $Gui(pad) -pady $Gui(pad)  
 
     #-------------------------------------------
-    # Time course frame
+    # Stats frame
     #-------------------------------------------
-    set fTimeSeries $Module(FSLReader,fTimeSeries)
-    set f $fTimeSeries
-    foreach frame "Upper Lower" {
-        frame $f.f$frame -bg $Gui(activeWorkspace)
-        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-    }
+    set fStats $Module(FSLReader,fStats)
+    set f $fStats
 
-    # Load time series
-    # ----------------
-    set f $fTimeSeries.fUpper
-    DevAddFileBrowse $f FSLReader "tcFileName" "Time Series:" \
-        "FSLReaderSetFSLDir 2 \$FSLReader(tcFileName)" "hdr" \
-        "\$FSLReader(FSLDir)" "Open" "Browse for a time series" \
-        "" "Absolute"
+    frame $f.fTop  -bg $Gui(activeWorkspace)  -relief groove -bd 3  
+    frame $f.fMid  -bg $Gui(activeWorkspace)  -relief groove -bd 3
+    frame $f.fBot  -bg $Gui(activeWorkspace)  -relief groove -bd 3 
+    pack $f.fTop $f.fMid $f.fBot -side top -fill x -pady 5 -padx 2 
 
-    frame $f.fVolName -bg $Gui(activeWorkspace)
-    pack $f.fVolName -side top -fill x
-    set f $f.fVolName 
-    DevAddLabel $f.flVolName "Vol Name:" 
-    DevAddEntry Volume name $f.eTcVolName 25 
-    $f.eTcVolName config -state readonly
-    set FSLReader(eTcVolName) $f.eTcVolName
-    pack $f.flVolName $f.eTcVolName -side left -padx $Gui(pad) 
+    # top frame
+    # ---------------------
+    set f $fStats.fTop
+    frame $f.f1  -bg $Gui(activeWorkspace)
+    frame $f.f2  -bg $Gui(activeWorkspace)  -relief groove -bd 1 
+    frame $f.f3  -bg $Gui(activeWorkspace)
+    pack $f.f1 $f.f2 $f.f3 -side top -fill x -pady 1 -padx 2 
 
-    DevAddButton $fTimeSeries.fUpper.bApply "Load" "FSLReaderLoadTimeSeries" 13 
-    pack $fTimeSeries.fUpper.bApply -side top -pady $Gui(pad) 
+    set f $fStats.fTop.f1
+    DevAddLabel $f.lTitle "Load volumes: " 
+    pack $f.lTitle -side top -pady $Gui(pad) -fill x
 
-    # Options 
-    # -------
-    set f $fTimeSeries.fLower
-    $f config -bg $Gui(backdrop)
- 
-    set ops [list No Yes]
+    set f $fStats.fTop.f2
+    DevAddLabel $f.lVol1 "1. standard brain"
+    DevAddLabel $f.lVol2 "2. example_func"
+    DevAddLabel $f.lVol3 "3. All stats maps in both\nstats/ and reg_standard/stats/"
+    pack $f.lVol1 $f.lVol2 $f.lVol3 -side top -fill x -pady 2 -padx 2 
 
-    DevAddLabel $f.flOptions "Enable time series plotting: " 
-    pack $f.flOptions -side left -padx $Gui(pad) -fill x -anchor w
+    set f $fStats.fTop.f3
+    eval {checkbutton $f.cbTimecourse \
+        -variable FSLReader(timeCourse) \
+        -text "4. filtered_func_data"} $Gui(WEA) 
+    $f.cbTimecourse select 
 
-    set df [lindex $ops 0] 
-    eval {menubutton $f.mbType -text $df \
-          -relief raised -bd 2 -width 13 \
-          -menu $f.mbType.m} $Gui(WMBA)
-    eval {menu $f.mbType.m} $Gui(WMA)
-    pack  $f.mbType -side left -pady 5 -padx $Gui(pad)
+    pack $f.cbTimecourse -side top -fill x -pady 5 -padx 2 
 
-    # Add menu items
-    foreach m $ops  {
-        $f.mbType.m add command -label $m \
-            -command "FSLReaderSetPlottingOption $m"
-    }
+    DevAddButton $f.bApply "Apply" "FSLReaderApply" 
+    pack $f.bApply -side top -pady $Gui(pad)
 
-    # save menubutton for config
-    set FSLReader(gui,mbPlottingOption) $f.mbType
-    FSLReaderSetPlottingOption $df
+    # middle frame
+    # ---------------------
+    set f $fStats.fMid
+    frame $f.fTitle      -bg $Gui(activeWorkspace)
+    frame $f.fVols       -bg $Gui(activeWorkspace)
+    pack $f.fTitle $f.fVols -side top -fill x -pady 5 -padx 2 
 
-    #-------------------------------------------
-    # Activation overlay frame
-    #-------------------------------------------
-    set fActOverlay $Module(FSLReader,fActOverlay)
-    set f $fActOverlay
+    set f $fStats.fMid.fTitle
+    DevAddLabel $f.lTitle "Volume overlay:" 
+    pack $f.lTitle -side top -pady 1 -fill x
+   
+    # Build pulldown menu for background volumes 
+    set f $fStats.fMid.fVols
+    DevAddLabel $f.lBack "Background:"
 
-    foreach frame "Fg Bg" {
-        frame $f.f$frame -bg $Gui(activeWorkspace) -relief groove -bd 3 
-        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-    }
-
-    # Fg frame
-    #---------
-    set f $fActOverlay.fFg
-
-    DevAddLabel $f.flTitle "Foreground image:" 
-    pack $f.flTitle -side top -pady 6  
-
-    DevAddFileBrowse $f FSLReader "fgFileName" "Activation Volume:" \
-        "FSLReaderSetFSLDir 2 \$FSLReader(fgFileName)" "hdr" \
-        "\$FSLReader(FSLDir)" "Open" "Browse for an activation volume" \
-        "" "Absolute"
-
-    frame $f.fVolName -bg $Gui(activeWorkspace)
-    pack $f.fVolName -side top -fill x
-    set f $f.fVolName 
-    DevAddLabel $f.flVolName "Vol Name:" 
-    set FSLReader(fgVolName) None
-    DevAddEntry FSLReader fgVolName $f.eFgVolName 25 
-    $f.eFgVolName config -state readonly
-    pack $f.flVolName $f.eFgVolName -side left -padx $Gui(pad) 
-
-    DevAddButton $fActOverlay.fFg.bApply "Load" "FSLReaderLoadForegroundVolume" 13 
-    pack $fActOverlay.fFg.bApply -side top -pady $Gui(pad) 
-
-    # Bg frame
-    #---------
-    set f $fActOverlay.fBg
-
-    foreach frame "Top Middle Bottom" {
-        frame $f.f$frame -bg $Gui(activeWorkspace)
-        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-    }
-
-    # Top frame
-    DevAddLabel $f.fTop.flTitle "Background image:" 
-    pack $f.fTop.flTitle -side top -pady 2  
-
-    # Middle frame 
-    set f $fActOverlay.fBg.fMiddle
-    $f config -bg $Gui(backdrop)
-    
-    DevAddLabel $f.flOptions "What to load: " 
-    pack $f.flOptions -side left -padx $Gui(pad) -fill x -anchor w
-
-    set options [list Time-Series-Volume Other-Volume]
-    set df [lindex $options 1] 
-    eval {menubutton $f.mbType -text $df \
-        -relief raised -bd 2 -width 22 \
+    set backList [list {none}]
+    set df [lindex $backList 0] 
+    eval {menubutton $f.mbType \
+        -text $df \
+        -relief raised -bd 2 \
+        -width 25  \
+        -indicatoron 1  \
         -menu $f.mbType.m} $Gui(WMBA)
     eval {menu $f.mbType.m} $Gui(WMA)
-    pack  $f.mbType -side left -pady 1 -padx $Gui(pad)
-
-    # Add menu items
-    foreach m $options  {
-        $f.mbType.m add command -label $m \
-            -command "FSLReaderSetBackgroundOption $m"
+    foreach m $backList  {
+        $f.mbType.m add command -label $m  -command "FSLReaderSelectBackground $m"
     }
 
-    # save menubutton for config
-    set FSLReader(gui,mbBgOption) $f.mbType
+    # Save menubutton for config
+    set FSLReader(gui,backMenuButton) $f.mbType
+    set FSLReader(gui,backMenu) $f.mbType.m
 
-    # Bottom frame
-    set f $fActOverlay.fBg.fBottom
-    $f config -height 110 
-    set FSLReader(bgVolFrame) $f
+    # Build pulldown menu for background volumes 
+    DevAddLabel $f.lOverlay "Stats map:"
 
-    # Makes a frame for each reader submodule
-    foreach m $options {
-        frame $f.f${m} -bg $Gui(activeWorkspace) 
-        place $f.f${m} -in $f -relheight 1.0 -relwidth 1.0
-        switch $m {
-            "Other-Volume" {
+    set actList [list {none}]
+    set df [lindex $actList 0] 
+    eval {menubutton $f.mbType2 -text $df \
+        -relief raised -bd 2 \
+        -width 25  \
+        -indicatoron 1  \
+        -menu $f.mbType2.m} $Gui(WMBA)
+    eval {menu $f.mbType2.m} $Gui(WMA)
+    foreach m $actList  {
+        $f.mbType2.m add command -label $m  -command "FSLReaderSelectOverlay $m"
+    }
 
-                set f $f.f${m}
+    # Save menubutton for config
+    set FSLReader(gui,overlayMenuButton) $f.mbType2
+    set FSLReader(gui,overlayMenu) $f.mbType2.m
 
-                DevAddFileBrowse $f FSLReader "bgFileName" \
-                    "Background Volume:" "" "hdr" "\$FSLReader(FSLDir)" \
-                    "Open" "Browse for a background volume" "" "Absolute"
+    blt::table $f \
+        0,0 $f.lBack -padx 1 -pady 2 \
+        0,1 $f.mbType -fill x -padx 1 -pady 2 \
+        1,0 $f.lOverlay -padx 1 -pady 2 \
+        1,1 $f.mbType2 -fill x -padx 1 -pady 2 
 
-                frame $f.fVolName -bg $Gui(activeWorkspace)
-                pack $f.fVolName -side top -fill x
-                DevAddLabel $f.fVolName.flVolName "Vol Name:" 
-                set FSLReader(bgVolName) None
-                DevAddEntry FSLReader bgVolName $f.fVolName.eBgVolName 25 
-                $f.fVolName.eBgVolName config -state readonly
-                pack $f.fVolName.flVolName $f.fVolName.eBgVolName \
-                    -side left -padx $Gui(pad) 
+    # bottom frame
+    # ---------------------
+    set f $fStats.fBot
+    frame $f.fTitle  -bg $Gui(activeWorkspace)
+    frame $f.fFSL    -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    frame $f.fAdd    -bg $Gui(activeWorkspace)
+    pack $f.fTitle -side top -fill x -padx 2 -pady 1 
+    pack $f.fAdd -side top -fill x -padx 2 -pady 1 
+    pack $f.fFSL -side top -padx 2 -pady 1 
 
-                DevAddButton $f.bApply "Load" "FSLReaderLoadBackgroundVolume" 13 
-                pack $f.bApply -side top -pady $Gui(pad) 
+    set f $fStats.fBot.fTitle
+    DevAddLabel $f.lLabel "Time series plotting:"
+
+    grid $f.lLabel -padx 1 -pady 5 
+
+    set f $fStats.fBot.fFSL
+    eval {radiobutton $f.rFSL -width 6 -text "FSL native" \
+        -variable FSLReader(tcPlotOption) -value fsl \
+        -relief raised -offrelief raised -overrelief raised \
+        -selectcolor white} $Gui(WEA)
+    set FSLReader(gui,fslNativeButton) $f.rFSL
+    bind $f.rFSL <1> "FSLReaderEnableNativeTimeSeriesMenu 1" 
+    $f.rFSL config -state disabled
+
+    set gifList [list {none}]
+    set df [lindex $gifList 0] 
+    eval {menubutton $f.mbType -text $df \
+          -relief raised -bd 2 -width 40 \
+          -indicatoron 1 \
+          -menu $f.mbType.m} $Gui(WMBA)
+    eval {menu $f.mbType.m} $Gui(WMA)
+    foreach m $gifList  {
+        $f.mbType.m add command -label $m \
+            -command ""
+    }
+
+    blt::table $f \
+        0,0 $f.rFSL -padx 2 -pady 2 -fill x \
+        1,0 $f.mbType -padx 2 -pady 2 -fill x
+
+    $f.mbType config -state disabled
+
+    # Save menubutton for config
+    set FSLReader(gui,gifMenuButton) $f.mbType
+    set FSLReader(gui,gifMenu) $f.mbType.m
+
+    set f $fStats.fBot.fAdd
+    eval {radiobutton $f.rAdd -width 30 -text "Voxel wise" \
+            -variable FSLReader(tcPlotOption) -value add \
+            -relief raised -offrelief raised -overrelief raised \
+            -selectcolor white} $Gui(WEA)
+    pack $f.rAdd -side top -pady 2 -padx 2 -fill x 
+
+    $f.rAdd config -state disabled
+    set FSLReader(gui,voxelWiseButton) $f.rAdd
+
+    set FSLReader(tcPlotOption) "" 
+    bind $f.rAdd <1> "FSLReaderEnableNativeTimeSeriesMenu 0" 
+}
+
+
+proc FSLReaderBrowse {} {
+    global FSLReader
+
+    unset -nocomplain FSLReader(statsVolumeNames)
+    unset -nocomplain FSLReader(stdStatsVolumeNames)
+    unset -nocomplain FSLReader(noOfFuncVolumes)
+    unset -nocomplain FSLReader(backgroundVolumeNames)
+
+    FSLReaderSetFSLDir 1
+    FSLReaderUpdateTimeSeriesMenu 
+}
+
+
+proc FSLReaderUpdateTimeSeriesMenu {} {
+    global FSLReader
+
+    set featDir [string trim $FSLReader(featDir)]
+
+    if {$featDir == ""} {
+        DevErrorWindow "Set up the Feat output directory first."
+        return 0
+    }
+
+    set tsplot [file join $featDir tsplot] 
+    if {! [file exists $tsplot]} {
+        DevErrorWindow "Feat output directory doesn't exist: $tsplot."
+        return 0
+    }
+
+    # glob needs the trailing / for its -path option
+    set tsplot $tsplot/
+    set gifFiles [glob -nocomplain -tails -path $tsplot *.gif] 
+
+    $FSLReader(gui,gifMenu) delete 0 end
+    $FSLReader(gui,gifMenu) add command -label none \
+        -command "FSLReaderSelectTimeSeriesGraph none"
+
+    # sort the list for display in the menu in order
+    set gifFiles [lsort $gifFiles]
+    if {[llength $gifFiles] > 0} {
+        set gifNum 0
+        foreach f $gifFiles { 
+            set colbreak 0
+            incr gifNum
+            # every 15 entries, start a new column in the gif list
+            if {[expr fmod($gifNum,15)] == 0} {
+                set colbreak 1
             }
-            "Time-Series-Volume" {
+
+            $FSLReader(gui,gifMenu) add command -label $f \
+                -command "FSLReaderSelectTimeSeriesGraph $f" \
+                -columnbreak $colbreak 
+        }
+    }
+
+    FSLReaderSelectTimeSeriesGraph none
+    $FSLReader(gui,gifMenuButton) config -state disabled  
+    $FSLReader(gui,fslNativeButton) deselect 
+    $FSLReader(gui,fslNativeButton) config -state normal 
+}
+
+ 
+proc FSLReaderEnableNativeTimeSeriesMenu {true} {
+    global FSLReader
+
+    if {$true == 1 &&
+        [$FSLReader(gui,fslNativeButton) cget -state] != "disabled"} {  
+        $FSLReader(gui,gifMenuButton) config -state normal  
+    } elseif {$true == 0 &&
+        [$FSLReader(gui,voxelWiseButton) cget -state] != "disabled"} {  
+        FSLReaderSelectTimeSeriesGraph none
+        $FSLReader(gui,gifMenuButton) config -state disabled  
+    }
+}
+
+
+proc FSLReaderApply {} {
+    global FSLReader 
+
+    set a [info exists FSLReader(statsVolumeNames)]
+    set b [info exists FSLReader(stdStatsVolumeNames)]
+    set c [info exists FSLReader(backgroundVolumeNames)]
+    set d [info exists FSLReader(noOfFuncVolumes)]
+
+    set e [expr {$FSLReader(timeCourse) == 1 ? ($a && $b && $c && $d) : ($a && $b && $c)}]
+    if {$e} {
+        DevErrorWindow "Volumes have been loaded."
+        return 
+    }
+
+    FSLReaderLoadVolumes
+    FSLReaderUpdateBackgroundVolumes
+}
+
+
+proc FSLReaderLoadVolumes {} {
+    global Volume FSLReader AnalyzeCache
+
+    set featDir [string trim $FSLReader(featDir)]
+
+    if {$featDir == ""} {
+        DevErrorWindow "Set up the Feat output directory first."
+        set FSLReader(loadVolumesError) 1
+        return  
+    }
+
+    if {! [file exists $featDir]} {
+        DevErrorWindow "Feat output directory doesn't exist: $featDir."
+        set FSLReader(loadVolumesError) 1
+        return  
+    }
+
+    set pat "*.hdr"
+
+    # Load stats files 
+    # ---------------------
+    if {! [info exists FSLReader(statsVolumeNames)]} {
+        set statsPat [file join $featDir stats $pat] 
+        set statsFiles [glob -nocomplain $statsPat]
+
+        AnalyzeSetVolumeNamePrefix "stats/" 
+        unset -nocomplain AnalyzeCache(MRMLid)
+        unset -nocomplain FSLReader(statsVolumeNames)
+        foreach f $statsFiles { 
+            # VolAnalyzeApply without argument is for Cindy's data (IS scan order) 
+            # VolAnalyzeApply "PA" is for Chandlee's data (PA scan order) 
+            # set id [VolAnalyzeApply "PA"]
+            # lappend mrmlIds [VolAnalyzeApply]
+            set AnalyzeCache(fileName) $f 
+            set val [AnalyzeApply]
+            if {$val == 1} {
+                set FSLReader(loadVolumesError) $val 
+                return 
+            }
+            lappend FSLReader(statsVolumeNames) $Volume(name)
+        }
+    }
+
+    # Load reg_standard/stats files 
+    # ---------------------
+    if {! [info exists FSLReader(stdStatsVolumeNames)]} {
+        set regPat [file join $featDir reg_standard stats $pat] 
+        set regFiles [glob -nocomplain $regPat]
+
+        AnalyzeSetVolumeNamePrefix "reg_std/stats/" 
+        unset -nocomplain AnalyzeCache(MRMLid)
+        unset -nocomplain FSLReader(stdStatsVolumeNames)
+        foreach f $regFiles { 
+            set AnalyzeCache(fileName) $f 
+            set val [AnalyzeApply]
+            if {$val == 1} {
+                set FSLReader(loadVolumesError) $val 
+                return 
+            }
+            lappend FSLReader(stdStatsVolumeNames) $Volume(name)
+        }
+    }
+
+    # Load functional images 
+    # ---------------------
+    if {$FSLReader(timeCourse) && (! [info exists FSLReader(noOfFuncVolumes)])} {
+        unset -nocomplain FSLReader(noOfFuncVolumes)
+        set func_data [file join $featDir "filtered_func_data.hdr"] 
+        lappend funcFiles $func_data 
+
+        AnalyzeSetVolumeNamePrefix "" 
+        unset -nocomplain AnalyzeCache(MRMLid)
+        if {[info commands FSLReader(timecourseExtractor)] != ""} {
+            FSLReader(timecourseExtractor) Delete
+            unset -nocomplain FSLReader(timecourseExtractor)
+        }
+        vtkTimecourseExtractor FSLReader(timecourseExtractor)
+
+        foreach f $funcFiles { 
+            set AnalyzeCache(fileName) $f 
+            set val [AnalyzeApply]
+            if {$val == 1} {
+                set FSLReader(loadVolumesError) $val 
+                return 
             }
         }
-        set FSLReader(f$m) $f
+
+        set FSLReader(noOfFuncVolumes) [llength $AnalyzeCache(MRMLid)]
+        foreach id $AnalyzeCache(MRMLid) { 
+            Volume($id,vol) Update
+            FSLReader(timecourseExtractor) AddInput [Volume($id,vol) GetOutput]
+        }
     }
 
-    FSLReaderSetBackgroundOption $df
+    # Load background images 
+    # ---------------------
+    if {! [info exists FSLReader(backgroundVolumeNames)]} {
+        set backFiles ""
+        set standard [file join $featDir "standard.hdr"] 
+        set link [file readlink $standard]
+        set standard $link
+        lappend backFiles $standard 
+
+        set example_func [file join $featDir "example_func.hdr"] 
+        lappend backFiles $example_func 
+
+        if {[llength $backFiles] > 0} {
+            AnalyzeSetVolumeNamePrefix "" 
+            unset -nocomplain AnalyzeCache(MRMLid)
+            unset -nocomplain FSLReader(backgroundVolumeNames)
+            foreach f $backFiles { 
+                set AnalyzeCache(fileName) $f 
+                set val [AnalyzeApply]
+                if {$val == 1} {
+                    set FSLReader(loadVolumesError) $val 
+                    return 
+                }
+                lappend FSLReader(backgroundVolumeNames) $Volume(name)
+            }
+        }
+    }
+
+    set firstMRMLid [lindex $AnalyzeCache(MRMLid) 0] 
+    MainUpdateMRML
+
+    # show the first volume by default
+    MainSlicesSetVolumeAll Back $firstMRMLid
+ 
+    RenderAll
+    set FSLReader(loadVolumesError) 0 
+}
+
+
+proc FSLReaderUpdateOverlayVolumes {} {
+    global FSLReader 
+
+    if {! [info exists  FSLReader(statsVolumeNames)]} {
+        return
+    }
+ 
+    set bvName $FSLReader(currentBackgroundVolumeName)
+    if {$bvName == "none"} {
+        set volNames [concat $FSLReader(statsVolumeNames) \
+            $FSLReader(stdStatsVolumeNames)]
+    } elseif {$bvName == "example_func"} {
+        set volNames $FSLReader(statsVolumeNames)
+    } else {
+        set volNames $FSLReader(stdStatsVolumeNames)
+    }
+
+    $FSLReader(gui,overlayMenu) delete 0 end
+    if {[llength $volNames] > 0} {
+        set volnum 0
+        foreach name $volNames {
+            set colbreak 0
+            incr volnum
+            # every 20 entries, start a new column in the volumes list
+            if {[expr fmod($volnum,20)] == 0} {
+                set colbreak 1
+            }
+
+            $FSLReader(gui,overlayMenu) add command -label $name \
+                -command "FSLReaderSelectOverlayVolume $name" \
+                -columnbreak $colbreak 
+        }
+        FSLReaderSelectOverlayVolume $name
+    } else {
+        $FSLReader(gui,overlayMenu) add command -label none \
+            -command "FSLReaderSelectOverlayVolume none"
+        FSLReaderSelectOverlayVolume none
+    }
+}
+
+
+proc FSLReaderSelectOverlayVolume {overlay} {
+    global FSLReader 
+
+    # configure menubutton
+    $FSLReader(gui,overlayMenuButton) config -text $overlay 
+    set FSLReader(currentOverlayVolumeName) $overlay 
+
+    FSLReaderUpdateVoxelWisePlotButton
+    FSLReaderDisplayVolume Fore $overlay 
+}
+
+
+proc FSLReaderUpdateBackgroundVolumes {} {
+    global FSLReader 
+
+    if {$FSLReader(loadVolumesError)} {
+        return
+    }
+
+    $FSLReader(gui,backMenu) delete 0 end
+
+    if {[info exists FSLReader(backgroundVolumeNames)]} {
+        foreach name $FSLReader(backgroundVolumeNames) {
+            $FSLReader(gui,backMenu) add command -label $name \
+                -command "FSLReaderSelectBackgroundVolume $name"
+        }
+        FSLReaderSelectBackgroundVolume $name
+    } else {
+        $FSLReader(gui,backMenu) add command -label none \
+            -command "FSLReaderSelectOverlayVolume none"
+        FSLReaderSelectBackgroundVolume none
+    }
+}
+
+
+proc FSLReaderSelectBackgroundVolume {back} {
+    global FSLReader 
+
+    # configure menubutton
+    $FSLReader(gui,backMenuButton) config -text $back 
+    set FSLReader(currentBackgroundVolumeName) $back 
+
+    FSLReaderUpdateVoxelWisePlotButton
+    FSLReaderUpdateOverlayVolumes
+    FSLReaderDisplayVolume Back $back 
+}
+
+
+proc FSLReaderUpdateVoxelWisePlotButton {} {
+    global FSLReader 
+
+    # functional images loaded
+    set a [info exists FSLReader(noOfFuncVolumes)] 
+   
+    # the background is volume "example_func"
+    set b [expr {[info exists FSLReader(currentBackgroundVolumeName)] &&
+        $FSLReader(currentBackgroundVolumeName) == "example_func"}]
+       
+    # we have timecourse plotting only for the following volumes as 
+    # the overlay: zfstat*, zstat*
+    set c [expr {[info exists FSLReader(currentOverlayVolumeName)] &&
+        [string first z $FSLReader(currentOverlayVolumeName) 0] != -1}] 
+
+    if {$a && $b && $c} {
+        $FSLReader(gui,voxelWiseButton) config -state normal 
+    } else {
+        $FSLReader(gui,voxelWiseButton) config -state disabled 
+    }
+}
+
+
+proc FSLReaderUpdateEnableTimecourseButton-back {} {
+    global FSLReader 
+
+    # At this point, the checkbutton has been updated in interface
+    # but FSLReader(timeCourse) still holds old value, which will be updated 
+    # when this function is done.
+
+    set v $FSLReader(timeCourse)
+    set v [expr {$v == 1 ? 0 : 1}]
+    if {$v == 1} {
+        $FSLReader(gui,enableTimecourseButton) config -state normal 
+    } else {
+        $FSLReader(gui,enableTimecourseButton) config -state disabled 
+    }
+}
+
+
+proc FSLReaderDisplayVolume {where volName} {
+    global FSLReader Volume
+
+    if {$volName != "none"} {
+        set id [MIRIADSegmentGetVolumeByName $volName] 
+
+        # set the lower threshold to 1
+        Volume($id,node) AutoThresholdOff
+        Volume($id,node) ApplyThresholdOn
+        Volume($id,node) SetLowerThreshold 1
+    } else {
+        set id $Volume(idNone)
+    }
+
+    MainSlicesSetVolumeAll $where $id
+    MainVolumesSetActive $id
+    MainVolumesRender
 }
 
 
@@ -510,235 +887,42 @@ proc FSLReaderSetPlottingOption {option} {
 }
 
 
-#-------------------------------------------------------------------------------
-# .PROC FSLReaderSetBackgroundOption
-# Switches background volume 
-# .ARGS
-# string option the volume tag to switch 
-# .END
-#-------------------------------------------------------------------------------
-proc FSLReaderSetBackgroundOption {option} {
-    global Volume FSLReader 
-
-    set id 0
-    if {$option == "Other-Volume"} {
-        $FSLReader(bgVolFrame) config -height 110 
-
-        if {[info exists FSLReader(bgVolName)]  &&
-            $FSLReader(bgVolName) != "None"} {
-            set id [MIRIADSegmentGetVolumeByName $FSLReader(bgVolName)]
-        }
-    } else {
-        if {[info exists FSLReader(firstMRMLid)] &&
-            [info exists FSLReader(lastMRMLid)]} {
-            set id $FSLReader(firstMRMLid)
-        } else {
-            DevErrorWindow "Please load a time series first."
-            return
-        }
-
-        $FSLReader(bgVolFrame) config -height 1 
-    }
-
-    if {$id > 0} {
-        MainSlicesSetVolumeAll Back $id 
-        RenderAll
-    }
-    
-    # configure menubutton
-    $FSLReader(gui,mbBgOption) config -text $option 
-    set FSLReader(bgOption) $option
-
-    raise $FSLReader(f$option)
-    focus $FSLReader(f$option)
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC FSLReaderLoadAnalyze4D 
-# Reads an Analyze 4D file
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc FSLReaderLoadAnalyze4D {} {
-    global AnalyzeCache FSLReader Volume Mrml
-
-    unset -nocomplain AnalyzeCache(MRMLid)
-    unset -nocomplain FSLReader(firstMRMLid)
-    unset -nocomplain FSLReader(lastMRMLid)
-
-    set AnalyzeCache(fileName) $FSLReader(tcFileName) 
-    AnalyzeApply
-
-    set FSLReader(firstMRMLid) [lindex $AnalyzeCache(MRMLid) 0] 
-    set FSLReader(lastMRMLid) [lindex $AnalyzeCache(MRMLid) end] 
-    set FSLReader(noOfAnalyzeVolumes) [llength $AnalyzeCache(MRMLid)] 
-
-    # show the first volume by default
-    MainSlicesSetVolumeAll Back [lindex $AnalyzeCache(MRMLid) 0] 
-    RenderAll
-}
-
-   
-#-------------------------------------------------------------------------------
-# .PROC FSLReaderLoadTimeSeries
-# Loads a sequence of volumes 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc FSLReaderLoadTimeSeries {} {
-    global FSLReader Volume 
-
-    if {! [info exists FSLReader(tcFileName)]} {
-        DevErrorWindow "Please input a time series."
-        return
-    }
-    if {! [file exists $FSLReader(tcFileName)]} {
-        DevErrorWindow "Time series file doesn't exist: $FSLReader(tcFileName)."
-        return
-    }
-
-    # Analyze 4D file
-    FSLReaderLoadAnalyze4D
-
-    set volName Volume(name) 
-    $FSLReader(eTcVolName) config -textvariable volName
-
-    # Loads models from tsplot directory 
-    FSLReaderLoadModels
-}
- 
-
-#-------------------------------------------------------------------------------
-# .PROC FSLReaderLoadBackgroundVolume
-# Loads a background volume 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc FSLReaderLoadBackgroundVolume {} {
-    global FSLReader Volume 
-
-    if {! [info exists FSLReader(bgFileName)]} {
-        DevErrorWindow "Please input a background volume."
-        return
-    }
-    if {! [file exists $FSLReader(bgFileName)]} {
-        DevErrorWindow "Background volume file doesn't exist: $FSLReader(bgFileName)."
-        return
-    }
-
-    FSLReaderLoadVolume 1 
-    set FSLReader(bgVolName) $Volume(name)
-}
- 
-
-#-------------------------------------------------------------------------------
-# .PROC FSLReaderLoadModels
-# Loads models from tsplot directory 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc FSLReaderLoadModels {} {
+proc FSLReaderUpdateOverlays {} {
     global FSLReader 
 
-    set pattern "tsplot_*.txt"
-    set pattern [file join $FSLReader(FSLDir) tsplot $pattern] 
-    set plotFiles [glob -nocomplain $pattern]
+    $fMRIEngine(gui,conditionsMenuForSignal) delete 0 end 
+    set start 1
+    set end $fMRIEngine(noOfSpecifiedRuns)
 
-    if {$plotFiles == ""} {
-        DevErrorWindow "Time course text files don't exist."
-        return
-    }
+    set firstCondition ""
+    set i $start
+    while {$i <= $end} {
+        if {[info exists fMRIEngine($i,conditionList)]} {  
+            set len [llength $fMRIEngine($i,conditionList)]
+            set count 0
+            while {$count < $len} {
+                set title [lindex $fMRIEngine($i,conditionList) $count]
+                set l "r$i:$title"
+                $fMRIEngine(gui,conditionsMenuForSignal) add command -label $l  \
+                    -command "fMRIEngineSelectConditionForSignalModeling $l"
+                if {$firstCondition == ""} {
+                    set firstCondition $l
+                }
 
-    foreach f $plotFiles {
-
-        set name [string range [file tail $f] 7 end-4]
-
-        # puts "file = $name"
-
-        # Reads file
-        set fp [open $f r]
-        set data [string trim [read $fp]]
-        set lines [split $data "\n"]
-        close $fp
-
-        vtkFloatArray FSLReader($name,model)     
-        FSLReader($name,model) SetNumberOfTuples $FSLReader(noOfAnalyzeVolumes)
-        FSLReader($name,model) SetNumberOfComponents 1
-
-        set count 0
-        set i [string first "f" $name]
-        set n [expr {$i == -1 ? 2 : 1}] 
-        foreach l $lines {
-            set tokens [split $l " "]
-            FSLReader($name,model) SetComponent $count 0 [lindex $tokens $n]
-            incr count
-        }
-    }
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC FSLReaderLoadForegroundVolume
-# Loads a foreground volume 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc FSLReaderLoadForegroundVolume {} {
-    global FSLReader Volume 
-
-    if {! [info exists FSLReader(fgFileName)]} {
-        DevErrorWindow "Please input an activation volume."
-        return
-    }
-    if {! [file exists $FSLReader(fgFileName)]} {
-        DevErrorWindow "Activation volume file doesn't exist: $FSLReader(fgFileName)."
-        return
-    }
-
-    FSLReaderLoadVolume 0 
-
-    set FSLReader(fgVolName) $Volume(name)
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC FSLReaderLoadVolume
-# Load a volume 
-# .ARGS
-# boolean bg 1 - the volume displayed as background, 0 - foreground 
-# .END
-#-------------------------------------------------------------------------------
-proc FSLReaderLoadVolume {bg} {
-    global Volume FSLReader AnalyzeCache 
-
-    set fileName [expr {$bg == 1 ? $FSLReader(bgFileName) : \
-        $FSLReader(fgFileName)}]
-    set AnalyzeCache(fileName) $fileName 
-
-    if {[file extension $fileName] == ".hdr"} {
-        set fileName [AnalyzeSwitchExtension $fileName]
-    }
-    set volName [AnalyzeCreateVolumeNameFromFileName $fileName] 
-    set volName $volName-1
-
-    # Checks if the volume is already loaded.
-    set found 0
-    foreach v $Volume(idList) {
-        set name [Volume($v,node) GetName]
-            if {$volName == $name} {
-                set found 1 
+                incr count
             }
-    }
-    if {! $found} {
-        AnalyzeApply
+        }
+
+        incr i 
     }
 
-    set id [MIRIADSegmentGetVolumeByName $volName]
-    set opt [expr {$bg == 1 ? "Back" : "Fore"}]
+    if {$firstCondition == ""} {
+        set firstCondition "none"
+        $fMRIEngine(gui,conditionsMenuForSignal) add command -label "none"  \
+            -command "fMRIEngineSelectConditionForSignalModeling none"
+    }
 
-    MainSlicesSetVolumeAll $opt $id 
-    RenderAll
+    fMRIEngineSelectConditionForSignalModeling $firstCondition 
 }
 
 
@@ -754,7 +938,7 @@ proc FSLReaderSetFSLDir {option {pathName ""}} {
     global FSLReader Volume
    
     if {$option == "1"} {
-        set FSLReader(FSLDir) \
+        set FSLReader(featDir) \
             [tk_chooseDirectory -initialdir $Volume(DefaultDir)]
     } else {
         if {! [file exists $pathName]} {
@@ -763,18 +947,18 @@ proc FSLReaderSetFSLDir {option {pathName ""}} {
         } else {
             set dir [file dirname $pathName] 
         }
-        set FSLReader(FSLDir) $dir
+        set FSLReader(featDir) $dir
     }
 
-    if {$FSLReader(FSLDir) == ""} {
+    if {$FSLReader(featDir) == ""} {
 
         set FSLReader(htmlFile) "" 
         set FSLReader(tcFileName) "" 
         set FSLReader(fgFileName) "" 
         set FSLReader(bgFileName) "" 
     } else {
-        set FSLReader(htmlFile) [file join $FSLReader(FSLDir) report.html]
-        set FSLReader(tcFileName) [file join $FSLReader(FSLDir) \
+        set FSLReader(htmlFile) [file join $FSLReader(featDir) report.html]
+        set FSLReader(tcFileName) [file join $FSLReader(featDir) \
             filtered_func_data.hdr]
     }
 }
@@ -790,11 +974,11 @@ proc FSLReaderLaunchBrowser {} {
     global FSLReader
 
     if {! [info exists FSLReader(htmlFile)]} {
-        DevErrorWindow "Input your html file."
+        DevErrorWindow "Input the report file."
         return
     }
     if {[string trim $FSLReader(htmlFile)] == ""} {
-        DevErrorWindow "Input your html file."
+        DevErrorWindow "Input the report file."
         return
     }
     if {[file exists $FSLReader(htmlFile)] == 0} {
@@ -914,7 +1098,7 @@ proc FSLReaderPopBindings {} {
 proc FSLReaderCreateBindings {} {
     global Gui Ev
 
-    EvDeclareEventHandler FSLReaderSlicesEvents <Motion> \
+    EvDeclareEventHandler FSLReaderSlicesEvents <1> \
         {FSLReaderPopUpPlot %x %y}
             
     EvAddWidgetToBindingSet FSLSlice0Events $Gui(fSl0Win) {FSLReaderSlicesEvents}
