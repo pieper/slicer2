@@ -12,11 +12,12 @@
 
 # note: - SET replaced SOURCE_FILES for cmake 1.6
 SET(LOCAL_MODULE_SRCS
-vtkTimecourseExtractor.cxx
+vtkTimeCoursePlotActor2.cxx
 )
 
 ## classes that one does not want tcl wrapped
 SET ( LOCAL_NO_WRAP_SRCS
+#vtkMyClassNoWrap.cxx
 )
 
 
