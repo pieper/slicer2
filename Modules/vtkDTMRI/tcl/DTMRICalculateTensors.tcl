@@ -67,7 +67,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.10 $} {$Date: 2005/06/20 02:38:32 $}]
+                                 {$Revision: 1.11 $} {$Date: 2005/06/22 20:31:17 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -1026,7 +1026,7 @@ proc DTMRIDisplayNewData {} {
 proc ConvertVolumeToTensors {} {
     global DTMRI Volume Tensor
 
-    set v $Volume(activeID)
+    set v $DTMRI(convertID)
     if {$v == "" || $v == $Volume(idNone)} {
         puts "Can't create DTMRIs from None volume"
         return
