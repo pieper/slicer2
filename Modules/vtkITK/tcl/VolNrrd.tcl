@@ -321,9 +321,6 @@ proc VolNrrdApply {} {
 
     Volume($i,node) SetFilePattern $Volume(filePattern)
 
-    set Volume(scanOrder)  [Volume($i,node) ComputeScanOrderFromRasToIjk [nrrdReader GetRasToIjkMatrix]]
-    Volume($i,node) SetScanOrder $Volume(scanOrder)
-
     Volume($i,node) SetNumScalars $Volume(numScalars)
     Volume($i,node) SetLittleEndian $Volume(littleEndian)
     Volume($i,node) SetFileType $fileType
@@ -333,10 +330,56 @@ proc VolNrrdApply {} {
     Volume($i,node) SetImageRange [lindex $Volume(imageRange) 0] [lindex $Volume(imageRange) 1]
     Volume($i,node) SetScalarType [$imdata GetScalarType]
     Volume($i,node) SetDimensions [lindex $Volume(dimensions) 0] [lindex $Volume(dimensions) 1]
-    Volume($i,node) ComputeRasToIjkFromScanOrder $Volume(scanOrder)
+
+    set Volume(scanOrder)  [Volume($i,node) ComputeScanOrderFromRasToIjk [nrrdReader GetRasToIjkMatrix]]
+    Volume($i,node) SetScanOrder $Volume(scanOrder)
+
+    #
+    # parse the 'space directions' and 'space origin' information into
+    # a slicer RasToIjk and related matrices by telling the mrml node
+    # the RAS corners of the volume
+    #
+    catch "Ijk_matrix Delete"
+    vtkMatrix4x4 Ijk_matrix
+    Ijk_matrix DeepCopy [nrrdReader GetRasToIjkMatrix]
+    Ijk_matrix Invert
+
+    # first top left - start at zero, and add origin to all later
+    set ftl "0 0 0"
+    # first top right = width * row vector
+    set ftr [lrange [Ijk_matrix MultiplyPoint [lindex $dims 0] 0 0 0] 0 2]
+    # first bottom right = ftr + height * column vector
+    set column_vec [lrange [Ijk_matrix MultiplyPoint 0 [lindex $dims 1] 0 0] 0 2]
+    set fbr ""
+    foreach ftr_e $ftr column_vec_e $column_vec {
+        lappend fbr [expr $ftr_e + $column_vec_e]
+    }
+    # last top left = ftl + slice vector  (and ftl is zero)
+    set ltl [lrange [Ijk_matrix MultiplyPoint 0 0 [lindex $dims 2] 0] 0 2]
+
+    puts "ftl ftr fbr ltl"
+    puts "$ftl   $ftr   $fbr   $ltl"
+
+    # add the origin offset 
+    set origin [lrange [Ijk_matrix MultiplyPoint 0 0 0 1] 0 2]
+    foreach corner "ftl ftr fbr ltl" {
+        set new_corner ""
+        foreach corner_e [set $corner] origin_e $origin {
+            lappend new_corner [expr $corner_e + $origin_e]
+        }
+        set $corner $new_corner
+    }
+
+    puts "ftl ftr fbr ltl"
+    puts "$ftl   $ftr   $fbr   $ltl"
+    eval Volume($i,node) ComputeRasToIjkFromCorners "0 0 0" $ftl $ftr $fbr "0 0 0" $ltl
+
+    Ijk_matrix Delete
 
  
-    #Filling headerKeys in the volume array. This key might eventually belong to the MrmlNode
+    #
+    # Filling headerKeys in the volume array. This key might eventually belong to the MrmlNode
+    #
     puts "Header Keys = [nrrdReader GetHeaderKeys]"
     foreach key [nrrdReader GetHeaderKeys] {
         set Volume($i,headerKeys,$key) [nrrdReader GetHeaderValue $key]
