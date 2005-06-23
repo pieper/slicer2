@@ -90,7 +90,7 @@ proc VolRendInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.12 $} {$Date: 2004/04/13 21:00:11 $}]
+        {$Revision: 1.13 $} {$Date: 2005/06/23 21:59:02 $}]
 
     set Module($m,row1List) "Help Settings Transfer"
     set Module($m,row1Name) "{Help} {Settings} {Transfer Functions}"
@@ -467,6 +467,10 @@ Description by tabs:
 proc VolRendBuildVTK {} {
     global VolRend
 
+    if { $::SLICER(VTK_VERSION) >= 4.5 } {
+        return
+    }
+
     # Create transfer functions for opacity and color
     vtkPiecewiseFunction VolRend(opacityTransferFunction)
     vtkColorTransferFunction VolRend(colorTransferFunction)
@@ -512,6 +516,10 @@ proc VolRendBuildVTK {} {
 #-------------------------------------------------------------------------------
 proc VolRendRefresh {} {
     global VolRend Slice Volume
+
+    if { $::SLICER(VTK_VERSION) >= 4.5 } {
+        return
+    }
 
     if {$VolRend(idOriginal) == $Volume(idNone)} {
      return
@@ -633,6 +641,10 @@ proc VolRendRefresh {} {
 proc VolRendEnter {} {
     global VolRend Volume Slice Module
 
+    if { $::SLICER(VTK_VERSION) >= 4.5 } {
+        return
+    }
+
     # If the Original is None, then select what's being displayed,
     # otherwise the first volume in the mrml tree.
 
@@ -675,6 +687,10 @@ proc VolRendEnter {} {
 proc VolRendExit {} {
      global VolRend Module Volume
 
+    if { $::SLICER(VTK_VERSION) >= 4.5 } {
+        return
+    }
+
     if {$VolRend(hideOnExit)} {
     #    MainRemoveActor VolRend(volume)
     foreach r $Module(Renderers) {
@@ -698,6 +714,10 @@ proc VolRendExit {} {
 #-------------------------------------------------------------------------------
 proc VolRendUpdateMRML {} {
     global Volume VolRend
+
+    if { $::SLICER(VTK_VERSION) >= 4.5 } {
+        return
+    }
 
     # See if the volume for each menu actually exists.
     # If not, use the None volume
@@ -727,6 +747,10 @@ proc VolRendUpdateMRML {} {
 #-------------------------------------------------------------------------------
 proc VolRendSetOriginal {v} {
     global VolRend Volume
+
+    if { $::SLICER(VTK_VERSION) >= 4.5 } {
+        return
+    }
     
     set VolRend(idOriginal) $v
     
@@ -742,6 +766,10 @@ proc VolRendSetOriginal {v} {
 #-------------------------------------------------------------------------------
 proc VolRendSaveTransferFunctions {} {
     global VolRend Options
+
+    if { $::SLICER(VTK_VERSION) >= 4.5 } {
+        return
+    }
 
     set VolRend(transferFunctionReadFileName) [tk_getSaveFile -title "Save file" -filetypes "{{XML} {.xml}} {{All files} {*}}" -initialdir [file dirname $VolRend(transferFunctionSaveFileName)] -initialfile $VolRend(transferFunctionSaveFileName)]
 
@@ -819,6 +847,10 @@ proc VolRendSaveTransferFunctions {} {
 proc VolRendReadTransferFunctions {} {
     global VolRend
 
+    if { $::SLICER(VTK_VERSION) >= 4.5 } {
+        return
+    }
+
     set VolRend(transferFunctionReadFileName) [tk_getOpenFile -title "Input file" -filetypes "{{XML} {.xml}} {{All files} {*}}" -initialdir [file dirname $VolRend(transferFunctionReadFileName)] -initialfile $VolRend(transferFunctionReadFileName)]
 
     if {$VolRend(transferFunctionReadFileName) == ""} {
@@ -893,6 +925,10 @@ proc VolRendReadTransferFunctions {} {
 #-------------------------------------------------------------------------------
 proc VolRendSelectRenderMethod {} {
     global VolRend
+
+    if { $::SLICER(VTK_VERSION) >= 4.5 } {
+        return
+    }
     
     raise $VolRend(f$VolRend(renderMethod))
     focus $VolRend(f$VolRend(renderMethod))
@@ -908,6 +944,10 @@ proc VolRendSelectRenderMethod {} {
 #-------------------------------------------------------------------------------
 proc VolRendStorePresets {p} {
     global Preset VolRend Volume
+
+    if { $::SLICER(VTK_VERSION) >= 4.5 } {
+        return
+    }
 
     set Preset(VolRend,$p,idOriginal) $VolRend(idOriginal)
     set Preset(VolRend,$p,renderType) $VolRend(renderType)
@@ -965,6 +1005,10 @@ proc VolRendStorePresets {p} {
 proc VolRendRecallPresets {p} {
     global Preset VolRend
     
+    if { $::SLICER(VTK_VERSION) >= 4.5 } {
+        return
+    }
+
     set VolRend(idOriginal) $Preset(VolRend,$p,idOriginal)
     set VolRend(renderType) $Preset(VolRend,$p,renderType)
     set VolRend(sampleDistance) $Preset(VolRend,$p,sampleDistance)
