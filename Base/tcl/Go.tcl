@@ -388,8 +388,8 @@ set SLICER(VTK_VERSION) [package require vtk]
 
 proc VTK_AT_LEAST {version} {
 
-    foreach v "major minor patch" val "0 0 0" {}
-    foreach v "vtkmajor vtkminor vtkpatch" val "0 0 0" {}
+    foreach "major minor patch" "0 0 0" {}
+    foreach "vtkmajor vtkminor vtkpatch" "0 0 0" {}
     scan $version "%d.%d.%d" major minor patch
     scan $::SLICER(VTK_VERSION) "%d.%d.%d" vtkmajor vtkminor vtkpatch
     if { $major > $vtkmajor } { return 0 }
@@ -397,7 +397,8 @@ proc VTK_AT_LEAST {version} {
     if { $minor > $vtkminor } { return 0 }
     if { $minor < $vtkminor } { return 1 }
     if { $patch > $vtkpatch } { return 0 }
-    if { $patch < $vtpatch } { return 1 }
+    if { $patch < $vtkpatch } { return 1 }
+    return 1
 }
 
 puts "Loading Base..."
@@ -807,7 +808,7 @@ if { $SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.92 2005/06/23 22:15:38 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.93 2005/06/23 22:19:49 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
