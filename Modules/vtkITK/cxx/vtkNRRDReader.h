@@ -160,6 +160,8 @@ public:
 
   char *NrrdGetSpaceString ( Nrrd* nrrd ) const
   {
+      return (airEnumStr(nrrdSpace, nrrd->space));
+#if 0
   switch( nrrd->space )
     {
     default:
@@ -203,6 +205,7 @@ public:
         return "3d-left-handed-time"; /*  12 */
     break;
     }
+#endif
   }
 
 protected:
