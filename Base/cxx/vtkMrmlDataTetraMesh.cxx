@@ -188,11 +188,14 @@ int vtkMrmlDataTetraMesh::Write()
   writer->SetFileName(node->GetFileName());
   writer->SetInput(this->TheMesh);
   
+#ifndef SLICER_VTK5
+    // TODO -- need fix for vtk 5
   // Progress callback
   writer->AddObserver (vtkCommand::ProgressEvent,
                        this->ProgressObserver);
   // The progress callback function needs a handle to the writer 
   this->ProcessObject = writer;
+#endif
  
   // Write it
   writer->Write();

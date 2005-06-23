@@ -934,14 +934,19 @@ void vtkImageDrawROI::ExecuteData(vtkDataObject *out)
   // let superclass allocate data
   this->vtkImageInPlaceFilter::ExecuteData(out);
 
-  vtkImageData *inData = this->GetInput();
+  if ( this->GetInput()->GetDataObjectType() != VTK_IMAGE_DATA )
+  { vtkWarningMacro ("was sent non-image data data object");
+    return;
+  }
+
+  vtkImageData *inData = (vtkImageData *) this->GetInput();
   vtkImageData *outData = this->GetOutput();
   int *outExt = outData->GetWholeExtent();
 
   int x1, *inExt;
   
     // ensure 3 component data
-    x1 = this->GetInput()->GetNumberOfScalarComponents();
+    x1 = inData->GetNumberOfScalarComponents();
     if (!(x1 == 3 || x1 == 4))
     {
         vtkErrorMacro("Input has "<<x1<<" components instead of 3 or 4.");
@@ -949,7 +954,7 @@ void vtkImageDrawROI::ExecuteData(vtkDataObject *out)
     }
 
     // Ensure input is unsigned char
-    x1 = this->GetInput()->GetScalarType();
+    x1 = inData->GetScalarType();
     if (x1 != VTK_UNSIGNED_CHAR)
     {
         vtkErrorMacro("Input is type "<<x1<<" instead of unsigned char.");

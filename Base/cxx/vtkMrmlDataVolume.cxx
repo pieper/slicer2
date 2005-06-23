@@ -182,6 +182,7 @@ void vtkMrmlDataVolume::CheckImageData()
     vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) this->MrmlNode;
     node->GetDimensions(dim);
 
+#if 0
     vtkImageCanvasSource2D *canvas = vtkImageCanvasSource2D::New();
     canvas->SetScalarType(node->GetScalarType());
     canvas->SetNumberOfScalarComponents(node->GetNumScalars());
@@ -197,6 +198,24 @@ void vtkMrmlDataVolume::CheckImageData()
     copy->SetOutput(NULL);
     copy->Delete();
       canvas->Delete();
+#endif
+
+    // Make this an empty RGBA image
+    vtkImageData *id = vtkImageData::New();
+    id->SetNumberOfScalarComponents(4);
+    //id->SetScalarType(VTK_UNSIGNED_CHAR);
+    id->SetScalarType(VTK_SHORT);
+    id->SetNumberOfScalarComponents(1);
+    id->SetExtent(0, dim[0]-1, 0, dim[1]-1, 0, 0);
+    id->SetSpacing(node->GetSpacing());
+    id->AllocateScalars();
+
+    // clear the image, just in case
+    //unsigned char *ptr = (unsigned char *)id->GetScalarPointer();
+    //memset (ptr, 0, 4 * dim[0] * dim[1]);
+
+    this->SetImageData(id);
+    id->Delete();
   }
 }
 
@@ -548,7 +567,12 @@ int vtkMrmlDataVolume::Write()
       writer->AddObserver (vtkCommand::ProgressEvent,
                            this->ProgressObserver);
       // The progress callback function needs a handle to the writer 
+#ifdef SLICER_VTK5
+      // TODO - fix observer for vtk5
+      vtkWarningMacro ("vtkImageWriter is not a vtkProcessObject in vtk5");
+#else
       this->ProcessObject = writer;
+#endif
      
       // Write it
       writer->Write();

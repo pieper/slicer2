@@ -960,9 +960,9 @@ void vtkMrmlSlicer::BuildUpper(int s)
   // If the None volume, then turn the Fore input off
   if (v == this->NoneVolume) 
   {
-    this->Overlay[s]->SetInput(1, NULL);
+    this->Overlay[s]->SetInput(1, this->NoneVolume->GetOutput());
     // >> AT 11/09/01
-    this->Overlay3DView[s]->SetInput(1, NULL);
+    this->Overlay3DView[s]->SetInput(1, this->NoneVolume->GetOutput());
     // << AT 11/09/01
   } 
   else 
@@ -1044,9 +1044,10 @@ void vtkMrmlSlicer::BuildUpper(int s)
   // If the None volume, then turn the Label input off
   if (v == this->NoneVolume) 
   {
-    this->Overlay[s]->SetInput(2, NULL);
+    this->Overlay[s]->SetInput(2, this->NoneVolume->GetOutput());
     // >> AT 11/09/01
     this->Overlay3DView[s]->SetInput(2, NULL);
+    this->Overlay3DView[s]->SetInput(2, this->NoneVolume->GetOutput());
     // << AT 11/09/01
   }
   else
@@ -1944,12 +1945,20 @@ void vtkMrmlSlicer::DrawComputeIjkPoints()
 vtkFloatingPointType vtkMrmlSlicer::GetBackPixel(int s, int x, int y)
 {
   int ext[6];
+
+  if (this->BackVolume[s] == this->NoneVolume)
+  {
+    return 0;
+  }
+
   vtkImageData *data = this->BackReformat[s]->GetOutput();
 
   data->GetWholeExtent(ext);
   if (x >= ext[0] && x <= ext[1] && y >= ext[2] && y <= ext[3])
   {
-    if (data->GetPointData()->GetScalars()->GetNumberOfComponents() == 1) 
+    vtkPointData *pd = data->GetPointData();
+    vtkDataArray *da = pd->GetScalars();
+    if (da->GetNumberOfComponents() == 1) 
     {   return data->GetPointData()->GetScalars()->GetTuple1(y*(ext[1]-ext[0]+1)+x);
     }
   }

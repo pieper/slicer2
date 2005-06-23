@@ -83,7 +83,12 @@ void vtkImageEditorEffects::Threshold(float min, float max,
   thresh->SetInValue(in);
   thresh->SetOutValue(out);
 
+  // TODO - fix this
+#ifdef SLICER_VTK5
+  vtkWarningMacro ("cannot Threshold in vtk5");
+#else
   this->Apply(thresh, thresh);
+#endif
 
   thresh->SetInput(NULL);
   thresh->SetOutput(NULL);
@@ -101,7 +106,12 @@ void vtkImageEditorEffects::Draw(int value, vtkPoints *points, int radius,
   fill->SetShapeString(shape);
   fill->SetPoints(points);
 
+  // TODO - fix this
+#ifdef SLICER_VTK5
+  vtkWarningMacro ("cannot draw in vtk5");
+#else
   this->Apply(fill, fill);
+#endif
 
   fill->SetInput(NULL);
   fill->SetOutput(NULL);

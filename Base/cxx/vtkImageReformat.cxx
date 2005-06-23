@@ -1615,8 +1615,18 @@ void vtkImageReformat::ThreadedExecute(vtkImageData *inData,
 
 
     // Use integer math for short and unsigned char data.
+  int type = inData->GetScalarType();
 
-    switch (inData->GetScalarType())
+#ifdef SLICER_VTK5
+  //TODO type access is broken on vtk5?
+  if ( type != VTK_SHORT )
+  {
+      vtkErrorMacro( "setting input data type to VTK_SHORT (4), was " << type);
+      type = VTK_SHORT;
+  }
+#endif
+
+    switch (type)
     {
         case VTK_DOUBLE:
             vtkImageReformatExecute(this, inData, inExt, (double *)(inPtr), 

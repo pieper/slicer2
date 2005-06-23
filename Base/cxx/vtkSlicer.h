@@ -48,4 +48,12 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define vtkFloatingPointType float
 #endif
 
+//
+// use an ifdef on SLICER_VTK5 to flag code that won't
+// compile on vtk4.4 and before
+//
+#if ( (VTK_MAJOR_VERSION >= 5) || ( VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 5 ) )
+#define SLICER_VTK5
+#endif
+
 #include "vtkSlicerBaseWin32Header.h"

@@ -678,13 +678,20 @@ void vtkImageFillROI::ExecuteData(vtkDataObject *out)
   // let superclass allocate data
   this->vtkImageInPlaceFilter::ExecuteData(out);
 
+  if ( this->GetInput()->GetDataObjectType() != VTK_IMAGE_DATA )
+  { vtkWarningMacro ("was sent non-image data data object");
+    return;
+  }
+
+  vtkImageData *inData = (vtkImageData *) this->GetInput();
   vtkImageData *outData = this->GetOutput();
+
 
     void *ptr = NULL;
     int x1, *inExt;
   
     // ensure 1 component data
-    x1 = this->GetInput()->GetNumberOfScalarComponents();
+    x1 = inData->GetNumberOfScalarComponents();
     if (x1 != 1)
     {
         vtkErrorMacro("Input has "<<x1<<" components instead of 1.");
@@ -692,7 +699,7 @@ void vtkImageFillROI::ExecuteData(vtkDataObject *out)
     }
 
     // Ensure intput is 2D
-    inExt = this->GetInput()->GetWholeExtent();
+    inExt = inData->GetWholeExtent();
     if (inExt[5] != inExt[4]) 
     {
         vtkErrorMacro("Input must be 2D.");

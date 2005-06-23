@@ -4,14 +4,24 @@
 # Here is where you can add the name of your local core classes.
 #
 
+
+# not compatible with VTK 5:
+        #vtkFog.cxx 
+
 SET (Base_SRCS
 	vtkBoolTess.cxx vtkDCMLister.cxx vtkDCMParser.cxx 
-	vtkFastCellPicker.cxx vtkFog.cxx vtkImageAccumulateDiscrete.cxx
+	vtkFastCellPicker.cxx 
+        vtkImageAccumulateDiscrete.cxx
 	vtkImageBimodalAnalysis.cxx
 	vtkImageCloseUp2D.cxx
-	vtkImageConnectivity.cxx vtkImageCopy.cxx vtkImageCrossHair2D.cxx vtkImageDICOMReader.cxx
-	vtkImageDouble2D.cxx vtkImageDrawROI.cxx 
-	vtkImageEditor.cxx vtkImageEditorEffects.cxx vtkImageErode.cxx
+	vtkImageConnectivity.cxx vtkImageCopy.cxx 
+        vtkImageCrossHair2D.cxx 
+        vtkImageDICOMReader.cxx
+	vtkImageDouble2D.cxx 
+        vtkImageDrawROI.cxx 
+	vtkImageEditor.cxx 
+        vtkImageEditorEffects.cxx 
+        vtkImageErode.cxx
 	vtkImageFillROI.cxx
 	vtkImageFrameSource.cxx vtkImageLabelChange.cxx vtkImageLabelOutline.cxx
 	vtkImageLabelVOI.cxx vtkImageLiveWire.cxx 

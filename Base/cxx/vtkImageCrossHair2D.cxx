@@ -374,7 +374,12 @@ void vtkImageCrossHair2D::ExecuteData(vtkDataObject *out)
   // let superclass allocate data
   this->vtkImageInPlaceFilter::ExecuteData(out);
 
-  vtkImageData *inData = this->GetInput();
+  if ( this->GetInput()->GetDataObjectType() != VTK_IMAGE_DATA )
+  { vtkWarningMacro ("was sent non-image data data object");
+    return;
+  }
+
+  vtkImageData *inData = (vtkImageData *) this->GetInput();
   vtkImageData *outData = this->GetOutput();
 
     int *outExt = outData->GetExtent();
