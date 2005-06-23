@@ -214,7 +214,7 @@ template <class T>
 static void vtkImageOverlayExecute(vtkImageOverlay *self,
   vtkImageData *inData, T *inPtr, int inExt[6],
   vtkImageData *outData, T* outPtr,
-  int outExt[6], int id, int layer, int firstLayer)
+  int outExt[6], int layer, int firstLayer)
 {
   int zero, c, idxX, idxY, idxZ, maxX, maxY, maxZ;
   int rowLength, size, rowSize, pixSize;
@@ -493,13 +493,24 @@ static void vtkImageOverlayExecute(vtkImageOverlay *self,
 // algorithm to fill the output from the inputs.
 // It just executes a switch statement to call the correct function for
 // the regions data types.
-void vtkImageOverlay::ThreadedExecute(vtkImageData **inData, 
-  vtkImageData *outData, int outExt[6], int id)
+// 
+// changed to non-threaded - wasn't ever thread safe -sp 2005-06-10
+//void vtkImageOverlay::ThreadedExecute(vtkImageData **inData, 
+ //// vtkImageData *outData, int outExt[6], int id)
+
+void vtkImageOverlay::ExecuteData(vtkDataObject *data)
 {
   int inExt[6];
+  int outExt[6];
   int firstFound, first;
   int layer, x1, y1, z1, x2, y2, z2, s1, s2, c1, c2;
   void *inPtr, *outPtr;
+
+  vtkImageData **inData = (vtkImageData**)this->GetInputs();
+  vtkImageData *outData = this->AllocateOutputData(data);
+  
+  outData->GetExtent(outExt);
+
 
   // Ensure we have opacity info for each layer
   if (this->nOpacity < this->NumberOfInputs) 
@@ -578,43 +589,43 @@ void vtkImageOverlay::ThreadedExecute(vtkImageData **inData,
       {
         case VTK_FLOAT:
           vtkImageOverlayExecute(this, inData[layer], (float *)(inPtr),
-            inExt, outData, (float *) outPtr, outExt, id, layer, first);
+            inExt, outData, (float *) outPtr, outExt, layer, first);
           break;
         case VTK_INT:
           vtkImageOverlayExecute(this, inData[layer], (int *)(inPtr), 
-            inExt, outData, (int *) outPtr, outExt, id, layer, first);
+            inExt, outData, (int *) outPtr, outExt, layer, first);
           break;
         case VTK_SHORT:
           vtkImageOverlayExecute(this, inData[layer], (short *)(inPtr),
-            inExt, outData, (short *) outPtr, outExt, id, layer, first);
+            inExt, outData, (short *) outPtr, outExt, layer, first);
           break;
         case VTK_UNSIGNED_SHORT:
           vtkImageOverlayExecute(this, inData[layer], (unsigned short *)(inPtr),
-            inExt, outData, (unsigned short *) outPtr, outExt, id, layer, first);
+            inExt, outData, (unsigned short *) outPtr, outExt, layer, first);
           break;
         case VTK_UNSIGNED_CHAR:
           vtkImageOverlayExecute(this, inData[layer], (unsigned char *)(inPtr),
-            inExt, outData, (unsigned char *) outPtr, outExt, id, layer, first);
+            inExt, outData, (unsigned char *) outPtr, outExt, layer, first);
           break;
         case VTK_CHAR:
           vtkImageOverlayExecute(this, inData[layer],  (char *)(inPtr),
-            inExt, outData, (char *) outPtr, outExt, id, layer, first);
+            inExt, outData, (char *) outPtr, outExt, layer, first);
           break;
         case VTK_UNSIGNED_LONG:
           vtkImageOverlayExecute(this, inData[layer], (unsigned long *)(inPtr),
-            inExt, outData, (unsigned long *) outPtr, outExt, id, layer, first);
+            inExt, outData, (unsigned long *) outPtr, outExt, layer, first);
           break;
         case VTK_LONG:
           vtkImageOverlayExecute(this, inData[layer], (long *)(inPtr),
-            inExt, outData, (long *) outPtr, outExt, id, layer, first);
+            inExt, outData, (long *) outPtr, outExt, layer, first);
           break;
         case VTK_DOUBLE:
           vtkImageOverlayExecute(this, inData[layer], (double *)(inPtr),
-            inExt, outData, (double *) outPtr, outExt, id, layer, first);
+            inExt, outData, (double *) outPtr, outExt, layer, first);
           break;
         case VTK_UNSIGNED_INT:
           vtkImageOverlayExecute(this, inData[layer], (unsigned int *)(inPtr),
-            inExt, outData, (unsigned int *) outPtr, outExt, id, layer, first);
+            inExt, outData, (unsigned int *) outPtr, outExt, layer, first);
           break;
         default:
           vtkErrorMacro(<< "Execute: Unknown input ScalarType");

@@ -75,8 +75,9 @@ protected:
   int nFade;
 
   void UpdateForNumberOfInputs();
-  void ThreadedExecute(vtkImageData **inDatas, vtkImageData *outData,
-    int extent[6], int id);  
+  //void ThreadedExecute(vtkImageData **inDatas, vtkImageData *outData,
+    //int extent[6], int id);  
+  void ExecuteData(vtkDataObject *data);
 };
 
 #endif
