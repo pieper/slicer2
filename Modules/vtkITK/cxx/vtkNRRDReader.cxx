@@ -21,7 +21,7 @@
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.10 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.11 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -46,7 +46,7 @@ vtkNRRDReader::~vtkNRRDReader()
     delete [] CurrentFileName;
     CurrentFileName = NULL;
   }
-  nrrdNix(nrrd);
+  nrrdNuke(nrrd);
 }
 
 vtkMatrix4x4* vtkNRRDReader::GetRasToIjkMatrix()
@@ -207,7 +207,7 @@ void vtkNRRDReader::ExecuteInformation()
    this->CurrentFileName = new char[1 + strlen(this->GetFileName())];
    strcpy (this->CurrentFileName, this->GetFileName());
 
-   nrrdNix(this->nrrd); // nix and reallocate to reset the state
+   nrrdNuke(this->nrrd); // nuke and reallocate to reset the state
    this->nrrd = nrrdNew();
 
    HeaderKeyValue.clear();
