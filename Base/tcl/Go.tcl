@@ -64,6 +64,7 @@ set SLICER(state) "-dev"
 
 set SLICER(version) "$SLICER(major_version).$SLICER(minor_version)$SLICER(revision)$SLICER(state)"
 
+
 #
 ######################
 
@@ -381,6 +382,9 @@ update
 # load the tcl packages and shared libraries of cxx code
 # (proper environment is set up in launch.tcl)
 #
+
+puts "Loading VTK..."
+set SLICER(VTK_VERSION) [package require vtk]
 
 puts "Loading Base..."
 package require vtkSlicerBase ;# this pulls in all of slicer
@@ -789,7 +793,7 @@ if { $SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.90 2005/06/06 20:24:12 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.91 2005/06/23 21:59:39 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
