@@ -1,5 +1,5 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -41,6 +41,7 @@
 #   CopyrightFile filename
 #   CommentFile filename verbose
 #   Polish data
+#   ProcessModule modpath verbose
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -60,7 +61,7 @@ proc PrintCopyright {fid isTcl {verbose 0} } {
 
     if {$isTcl == 1} {
         puts $fid \
-"# (c) Copyright [clock format [clock seconds] -format %Y] Massachusetts Institute of Technology (MIT) All Rights Reserved.
+"# (c) Copyright [clock format [clock seconds] -format %Y] Brigham and Women's Hospital (BWH) All Rights Reserved.
 #
 # This software (\"3D Slicer\") is provided by The Brigham and Women's 
 # Hospital, Inc. on behalf of the copyright holders and contributors. 
@@ -97,7 +98,7 @@ proc PrintCopyright {fid isTcl {verbose 0} } {
     } else {
         puts $fid "/*=auto=========================================================================
 
-(c) Copyright [clock format [clock seconds] -format %Y] Massachusetts Institute of Technology (MIT) All Rights Reserved.
+(c) Copyright [clock format [clock seconds] -format %Y] Brigham and Women's Hospital (BWH) All Rights Reserved.
 
 This software (\"3D Slicer\") is provided by The Brigham and Women's 
 Hospital, Inc. on behalf of the copyright holders and contributors.
