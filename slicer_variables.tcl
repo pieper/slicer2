@@ -73,6 +73,7 @@ set ::VTK_DIR  $::SLICER_LIB/VTK-build
 set ::VTK_SRC_DIR $::SLICER_LIB/VTK
 set ::VTK_BUILD_TYPE ""
 set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
+set ::KWWIDGETS_DIR  $::SLICER_LIB/Widgets-build
 set ::ITK_BINARY_PATH $::SLICER_LIB/Insight-build
 set ::TCL_BIN_DIR $::SLICER_LIB/tcl-build/bin
 set ::TCL_LIB_DIR $::SLICER_LIB/tcl-build/lib
