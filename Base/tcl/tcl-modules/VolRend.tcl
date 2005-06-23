@@ -90,7 +90,7 @@ proc VolRendInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.13 $} {$Date: 2005/06/23 21:59:02 $}]
+        {$Revision: 1.14 $} {$Date: 2005/06/23 22:15:48 $}]
 
     set Module($m,row1List) "Help Settings Transfer"
     set Module($m,row1Name) "{Help} {Settings} {Transfer Functions}"
@@ -467,7 +467,7 @@ Description by tabs:
 proc VolRendBuildVTK {} {
     global VolRend
 
-    if { $::SLICER(VTK_VERSION) >= 4.5 } {
+    if { ![VTK_AT_LEAST 4.5] } {
         return
     }
 
@@ -517,7 +517,7 @@ proc VolRendBuildVTK {} {
 proc VolRendRefresh {} {
     global VolRend Slice Volume
 
-    if { $::SLICER(VTK_VERSION) >= 4.5 } {
+    if { ![VTK_AT_LEAST 4.5] } {
         return
     }
 
@@ -641,10 +641,10 @@ proc VolRendRefresh {} {
 proc VolRendEnter {} {
     global VolRend Volume Slice Module
 
-    if { $::SLICER(VTK_VERSION) >= 4.5 } {
+
+    if { ![VTK_AT_LEAST 4.5] } {
         return
     }
-
     # If the Original is None, then select what's being displayed,
     # otherwise the first volume in the mrml tree.
 
@@ -687,7 +687,8 @@ proc VolRendEnter {} {
 proc VolRendExit {} {
      global VolRend Module Volume
 
-    if { $::SLICER(VTK_VERSION) >= 4.5 } {
+
+    if { ![VTK_AT_LEAST 4.5] } {
         return
     }
 
@@ -715,7 +716,7 @@ proc VolRendExit {} {
 proc VolRendUpdateMRML {} {
     global Volume VolRend
 
-    if { $::SLICER(VTK_VERSION) >= 4.5 } {
+    if { ![VTK_AT_LEAST 4.5] } {
         return
     }
 
@@ -748,7 +749,7 @@ proc VolRendUpdateMRML {} {
 proc VolRendSetOriginal {v} {
     global VolRend Volume
 
-    if { $::SLICER(VTK_VERSION) >= 4.5 } {
+    if { ![VTK_AT_LEAST 4.5] } {
         return
     }
     
@@ -767,7 +768,7 @@ proc VolRendSetOriginal {v} {
 proc VolRendSaveTransferFunctions {} {
     global VolRend Options
 
-    if { $::SLICER(VTK_VERSION) >= 4.5 } {
+    if { ![VTK_AT_LEAST 4.5] } {
         return
     }
 
@@ -847,7 +848,7 @@ proc VolRendSaveTransferFunctions {} {
 proc VolRendReadTransferFunctions {} {
     global VolRend
 
-    if { $::SLICER(VTK_VERSION) >= 4.5 } {
+    if { ![VTK_AT_LEAST 4.5] } {
         return
     }
 
@@ -926,7 +927,7 @@ proc VolRendReadTransferFunctions {} {
 proc VolRendSelectRenderMethod {} {
     global VolRend
 
-    if { $::SLICER(VTK_VERSION) >= 4.5 } {
+    if { ![VTK_AT_LEAST 4.5] } {
         return
     }
     
@@ -945,7 +946,7 @@ proc VolRendSelectRenderMethod {} {
 proc VolRendStorePresets {p} {
     global Preset VolRend Volume
 
-    if { $::SLICER(VTK_VERSION) >= 4.5 } {
+    if { ![VTK_AT_LEAST 4.5] } {
         return
     }
 
@@ -1005,7 +1006,7 @@ proc VolRendStorePresets {p} {
 proc VolRendRecallPresets {p} {
     global Preset VolRend
     
-    if { $::SLICER(VTK_VERSION) >= 4.5 } {
+    if { ![VTK_AT_LEAST 4.5] } {
         return
     }
 
