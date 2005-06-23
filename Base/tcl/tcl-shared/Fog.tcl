@@ -100,8 +100,11 @@ proc FogApply {renwin} {
 
   global  boxActor View Fog
 
+  if { [info command vtkFog] == "" } {
+      # no fog support compiled in, skip it
+      return;
+  }
   #  set bounds [boxActor GetBounds]
-
 
   #
   # check the existence of the global variable or create them
