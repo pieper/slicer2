@@ -162,6 +162,7 @@ if { [itcl::find class is3d] == "" } {
       method tkrw {} {return $_tkrw}
       method rw {} {return [$_tkrw GetRenderWindow]}
       method camera {} {return [$_ren GetActiveCamera]}
+      method volprop {} {return $_volprop}
       method controls {} { return $_controls } 
       method longlatdist { {long 0} {lat 0} {dist 0} } {}
       method screensave { filename {imagetype "PNM"}} {} ;# TODO should be moved to superclass
@@ -422,12 +423,13 @@ itcl::configbody is3d::isvolume {
 
     # The mapper / ray cast function know how to render the data
     vtkVolumeRayCastCompositeFunction  $_compfunc
-    if {1} {
+    if {0} {
         vtkVolumeRayCastMapper $_volmapper
         $_volmapper SetVolumeRayCastFunction $_compfunc
         $_volmapper SetSampleDistance 0.5
     } else {
-        vtkVolumeTextureMapper2D $_volmapper
+        #vtkVolumeTextureMapper2D $_volmapper
+        vtkVolumeTextureMapper3D $_volmapper
     }
     $_volmapper SetInput [$_cast GetOutput]
 
@@ -748,6 +750,108 @@ proc is3d_demo { {volume "off"} } {
     if { $volume != "off" } {
         .is3ddemo.is3d configure -isvolume .is3ddemo.isv
     }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC is3d_demo_kw
+# 
+# .ARGS
+# Run the demo using data not loaded from slicer's data model
+# .END
+#-------------------------------------------------------------------------------
+proc is3d_demo_kw { } {
+
+    package require kwwidgets
+
+    catch "app Delete"
+    vtkKWApplication app
+
+    catch "win Delete"
+    vtkKWWindow win
+    win SetSecondaryPanelVisibility 0
+    win Create app ""
+    app AddWindow win
+
+    catch "vol_panel Delete"
+    vtkKWUserInterfacePanel vol_panel
+    vol_panel SetName "Volume Interface"
+    vol_panel SetUserInterfaceManager [win GetMainUserInterfaceManager]
+    vol_panel Create app
+
+    vol_panel AddPage "Properties" "Volume Properties" ""
+    set page_widget [vol_panel GetPageWidget "Properties"]
+
+    foreach p "1 2 3" {
+        vol_panel AddPage "Page$p" "Info About Page $p" ""
+        set page_$p [vol_panel GetPageWidget "Page$p"]
+    }
+
+    catch "vpw Delete"
+    vtkKWVolumePropertyWidget vpw
+    vpw SetParent $page_widget
+    vpw Create app ""
+    
+    pack [vpw GetWidgetName] -side left -anchor nw -expand y -padx 2 -pady 2
+
+    catch "vsplit Delete"
+    vtkKWSplitFrame vsplit
+    vsplit SetParent [win GetViewPanelFrame]
+    vsplit SetExpandFrameToBothFrames
+    vsplit SetOrientationToHorizontal
+    vsplit Create app
+
+    pack [vsplit GetWidgetName] -expand true -fill both -padx 0 -pady 0
+
+
+    catch "ellip Delete"
+    vtkImageEllipsoidSource ellip
+    ellip SetWholeExtent 0 255  0 255 0 255
+
+    set f1 [[vsplit GetFrame1] GetWidgetName]
+    set f2 [[vsplit GetFrame2] GetWidgetName]
+
+    pack [isvolume $f1.isv] -fill both -expand true
+    $f1.isv configure -resolution 128 
+    $f1.isv configure -volume [ellip GetOutput]
+    $f1.isv configure -orientation axial
+
+
+    pack [is3d $f2.is3d] -fill both -expand true
+
+    $f2.is3d configure -isvolume $f1.isv
+
+    vpw SetVolumeProperty [$f2.is3d volprop]
+    vpw SetVolumePropertyChangedCommand "" "$f2.is3d expose"
+
+    app Start
+
+}
+
+proc is3d_demo_kw_spgr {} {
+    package require vtkITK
+    catch "nr Delete"
+    vtkNRRDReader nr
+    nr SetFileName d:/data/namic/huva00024864/HUVA00024864_spgr.nhdr
+    nr Update
+
+    set f1 [[vsplit GetFrame1] GetWidgetName]
+    set f2 [[vsplit GetFrame2] GetWidgetName]
+    $f1.isv configure -volume [nr GetOutput]
+    $f1.isv configure -orientation AP
+    $f2.is3d expose
+}
+
+proc is3d_demo_kw_face {} {
+    catch "dcmr Delete"
+    vtkDICOMImageReader dcmr
+    dcmr SetDirectoryName d:/data/pieper-face-2005-05-11/1.2.840.113619.2.135.3596.6358736.5118.1115807980.182.uid/000019.SER/
+    dcmr Update
+
+    set f1 [[vsplit GetFrame1] GetWidgetName]
+    set f2 [[vsplit GetFrame2] GetWidgetName]
+    $f1.isv configure -volume [dcmr GetOutput]
+    $f1.isv configure -orientation AP
+    $f2.is3d expose
 }
 
 #-------------------------------------------------------------------------------
