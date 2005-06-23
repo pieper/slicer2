@@ -1,3 +1,5 @@
+# /home/mrtws/mrtmstr/DEVLSW is located on the mrt workstation in MRT suite
+# The files are proprietary to GE.
 EXTN_HOME = /home/mrtws/mrtmstr/DEVLSW
 EXTN_OBJS = $(EXTN_HOME)/mror_image_buffer.o $(EXTN_HOME)/locator_client.o $(EXTN_HOME)/locator_common.o $(EXTN_HOME)/xformlib.a
 
