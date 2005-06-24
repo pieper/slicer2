@@ -205,7 +205,6 @@ void vtkMrmlDataVolume::CheckImageData()
     id->SetNumberOfScalarComponents(4);
     //id->SetScalarType(VTK_UNSIGNED_CHAR);
     id->SetScalarType(VTK_SHORT);
-    id->SetNumberOfScalarComponents(1);
     id->SetExtent(0, dim[0]-1, 0, dim[1]-1, 0, 0);
     id->SetSpacing(node->GetSpacing());
     id->AllocateScalars();
