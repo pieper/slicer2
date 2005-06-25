@@ -73,6 +73,19 @@ public:
       // report error
     }
   };
+  virtual vtkImageData* GetInput(int idx)
+  {
+    if (idx == 0) {
+      return this->vtkCast->GetInput();
+    }
+    else if (idx == 1) {
+      return this->vtkCastMoving->GetInput();
+    }
+    else {
+      // report error
+    }
+    return NULL;
+  };
 
   // Description:
   // Set Fixed Input
@@ -81,12 +94,23 @@ public:
     this->SetInput(Input, 0);
   };
 
+  virtual vtkImageData* GetFixedInput()
+  {
+    return this->GetInput(0);
+  }
+
   // Description:
   // Set Moving Input
   void SetMovingInput(vtkImageData *Input)
   {
     this->SetInput(Input, 1);
   };
+
+  virtual vtkImageData* GetMovingInput()
+  {
+    return this->GetInput(1);
+  }
+
 
 protected:
   int    NumIterations;
@@ -142,7 +166,7 @@ private:
   void operator=(const vtkITKRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKRegistrationFilter, "$Revision: 1.2 $");
+//vtkCxxRevisionMacro(vtkITKRegistrationFilter, "$Revision: 1.3 $");
 //vtkStandardNewMacro(vtkITKRegistrationFilter);
 
 #endif
