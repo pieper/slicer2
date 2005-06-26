@@ -67,7 +67,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.11 $} {$Date: 2005/06/22 20:31:17 $}]
+                                 {$Revision: 1.12 $} {$Date: 2005/06/26 14:29:50 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -529,7 +529,8 @@ proc DTMRIConvertUpdate {} {
   #Check if DTMRI headerKeys exits
   set headerkeys [array names Volume "$id,headerKeys,DW*"]
   
-  if {$headerkeys == ""} {
+  # don't use the header keys for now...
+  if {1 || $headerkeys == ""} {
      #Active protocols frame
   
   } else {
@@ -543,7 +544,7 @@ proc DTMRIConvertUpdate {} {
  
      set baselinepos 1
      foreach key $gradientkeys {
-       if {$Volume($id,headerKeys,$key) == "0 0 0"} {
+       if {$Volume($key) == "0 0 0"} {
          set DTMRI(convert,firstNoGradientImage) $baselinepos
          #parse NEX key to figure out the last No Gradient
          set DTMRI(convert,lastNoGradientImage) $baselinepos
