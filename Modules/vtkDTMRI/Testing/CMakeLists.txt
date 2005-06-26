@@ -6,3 +6,7 @@
         ${SLICER_HOME}/Modules/vtkDTMRI/Tests/Tcl/${tfile}.tcl
         -A ${VTK_SOURCE_DIR}/Wrapping/Tcl)
     ENDFOREACH ( tfile )
+
+SUBDIRS (
+    Cxx
+)
