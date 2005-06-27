@@ -960,10 +960,17 @@ void vtkMrmlSlicer::BuildUpper(int s)
   // If the None volume, then turn the Fore input off
   if (v == this->NoneVolume) 
   {
+#ifdef SLICER_VTK5
     this->Overlay[s]->SetInput(1, this->NoneVolume->GetOutput());
     // >> AT 11/09/01
     this->Overlay3DView[s]->SetInput(1, this->NoneVolume->GetOutput());
     // << AT 11/09/01
+#else
+    this->Overlay[s]->SetInput(1, NULL);
+    // >> AT 11/09/01
+    this->Overlay3DView[s]->SetInput(1, NULL);
+    // << AT 11/09/01
+#endif
   } 
   else 
   {
@@ -1044,11 +1051,17 @@ void vtkMrmlSlicer::BuildUpper(int s)
   // If the None volume, then turn the Label input off
   if (v == this->NoneVolume) 
   {
+#ifdef SLICER_VTK5
     this->Overlay[s]->SetInput(2, this->NoneVolume->GetOutput());
     // >> AT 11/09/01
-    this->Overlay3DView[s]->SetInput(2, NULL);
     this->Overlay3DView[s]->SetInput(2, this->NoneVolume->GetOutput());
     // << AT 11/09/01
+#else
+    this->Overlay[s]->SetInput(2, NULL);
+    // >> AT 11/09/01
+    this->Overlay3DView[s]->SetInput(2, NULL);
+    // << AT 11/09/01
+#endif
   }
   else
   {

@@ -182,7 +182,7 @@ void vtkMrmlDataVolume::CheckImageData()
     vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) this->MrmlNode;
     node->GetDimensions(dim);
 
-#if 0
+#ifndef SLICER_VTK5
     vtkImageCanvasSource2D *canvas = vtkImageCanvasSource2D::New();
     canvas->SetScalarType(node->GetScalarType());
     canvas->SetNumberOfScalarComponents(node->GetNumScalars());
@@ -198,7 +198,7 @@ void vtkMrmlDataVolume::CheckImageData()
     copy->SetOutput(NULL);
     copy->Delete();
       canvas->Delete();
-#endif
+#else
 
     // Make this an empty RGBA image
     vtkImageData *id = vtkImageData::New();
@@ -215,6 +215,9 @@ void vtkMrmlDataVolume::CheckImageData()
 
     this->SetImageData(id);
     id->Delete();
+
+#endif /* !SLICER_VTK5 */
+
   }
 }
 
