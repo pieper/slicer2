@@ -38,8 +38,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // for vtk objects we use here
 #include "vtkHyperStreamlinePoints.h"
 #include "vtkCollection.h"
-#include "vtkImageData.h"
 #include "vtkObjectFactory.h"
+#include "vtkPolyData.h"
+#include "vtkPointData.h"
+#include "vtkFloatArray.h"
 
 
 #include "vtkTractShapeFeatures.h"
@@ -58,7 +60,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 
-vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.7 $");
+vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.8 $");
 vtkStandardNewMacro(vtkTractShapeFeatures);
 
 vtkCxxSetObjectMacro(vtkTractShapeFeatures, InputStreamlines, vtkCollection);
@@ -77,6 +79,7 @@ vtkTractShapeFeatures::vtkTractShapeFeatures()
   this->FeatureType = MEAN_AND_COVARIANCE;
 
   this->HausdorffN = 10;
+
 }
 
 vtkTractShapeFeatures::~vtkTractShapeFeatures()
@@ -147,43 +150,22 @@ void vtkTractShapeFeatures::GetPointsFromHyperStreamlinePointsSubclass(TractPoin
 {
   XYZVectorType mv;
   vtkPoints *hs0, *hs1;
+  vtkFloatArray *scalars;
   int ptidx, numPts;
   double point[3];
 
   // clear the contents of the list sample
   sample->Clear();
 
-  //GetHyperStreamline0/1 and FA at points.
-  hs0=currStreamline->GetHyperStreamline0();
-  hs1=currStreamline->GetHyperStreamline1();
-  //attr0=currStreamline->GetFractionalAnisotropy0();
-  //attr1=currStreamline->GetFractionalAnisotropy1();
-  
-  // Access the first one in reverse order since both lines
-  // travel outward from the initial point.
-  // Also, skip the first point in the second line since it
-  // is a duplicate of the initial point.
+  hs0 = currStreamline->GetOutput()->GetPoints();
   numPts=hs0->GetNumberOfPoints();
-  ptidx=numPts-1;
-  while (ptidx >= 0)
+  for (ptidx = 0; ptidx < numPts; ptidx++)
     {
       hs0->GetPoint(ptidx,point);
       mv[0]=point[0];
       mv[1]=point[1];
       mv[2]=point[2];
       sample->PushBack( mv );
-      ptidx--;
-    }
-  numPts=hs1->GetNumberOfPoints();
-  ptidx=1;
-  while (ptidx < numPts)
-    {
-      hs1->GetPoint(ptidx,point);
-      mv[0]=point[0];
-      mv[1]=point[1];
-      mv[2]=point[2];
-      sample->PushBack( mv );
-      ptidx++;
     }
 }
 

@@ -50,7 +50,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkHyperPointandArray.cxx"
 #endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.11 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.12 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 // Construct object with initial starting position (0,0,0); integration step 
@@ -528,12 +528,116 @@ void vtkHyperStreamlineDTMRI::Execute()
 
     } //for each hyperstreamline
 
-  this->BuildTube();
+  this->BuildLines();
 
   delete [] w;
   cellTensors->Delete();
   cellScalars->Delete();  
 }
+
+void vtkHyperStreamlineDTMRI::BuildLines()
+{
+  vtkHyperPoint *sPrev, *sPtr;
+  vtkPoints *newPoints;
+  vtkCellArray *newLines;
+  vtkFloatArray *newScalars=NULL;
+  vtkDataSet *input = this->GetInput();
+  vtkPolyData *output = this->GetOutput();
+  vtkPointData *outPD = output->GetPointData();
+
+  vtkIdType numIntPts;
+  //
+  // Initialize
+  //
+  vtkDebugMacro(<<"Creating hyperstreamline tube");
+  if ( this->NumberOfStreamers <= 0 )
+    {
+    return;
+    }
+
+  //
+  // Allocate
+  //
+  newPoints  = vtkPoints::New();
+  numIntPts = 0;
+  for (int ptId=0; ptId < this->NumberOfStreamers; ptId++)
+    {
+      numIntPts+=this->Streamers[ptId].GetNumberOfPoints();
+    }
+  newPoints ->Allocate(numIntPts);
+  newLines = vtkCellArray::New(); 
+
+  if ( input->GetPointData()->GetScalars() )
+    {
+    newScalars = vtkFloatArray::New();
+    newScalars->Allocate(numIntPts);
+    }
+ 
+  // index into the whole point array
+  int strIdx = 0;
+
+  for (int ptId=0; ptId < this->NumberOfStreamers; ptId++)
+    {
+      // if no points give up
+      if ( (numIntPts=this->Streamers[ptId].GetNumberOfPoints()) < 1 )
+        {
+          continue;
+        }
+
+      // cell indicates line connectivity
+      newLines->InsertNextCell(numIntPts);
+
+      // loop through all points on the path and make a line
+      int i=0;
+      sPtr=this->Streamers[ptId].GetHyperPoint(i);
+      while (i < numIntPts && sPtr->CellId >= 0)
+        {
+          //for (j=0; j<3; j++) // grab point's coordinates
+          //{
+          //cout << sPtr->X[j] << " ";
+          //}
+          //cout << endl;
+          newPoints->InsertPoint(strIdx,sPtr->X);
+          newLines->InsertCellPoint(strIdx);
+
+          if ( newScalars ) // add scalars at points
+            {
+              double s = sPtr->S;
+              newScalars->InsertNextTuple(&s);
+            }
+
+          i++;
+          sPtr=this->Streamers[ptId].GetHyperPoint(i);
+          strIdx++;
+          
+        } //while
+
+      // in case we ended earlier than numIntPts because sPtr->CellID=0
+      // this gets rid of empty cell points at the end
+      newLines->UpdateCellCount(i);
+
+    } //for this hyperstreamline
+
+  //
+  // Update ourselves
+  //
+  output->SetPoints(newPoints);
+  newPoints->Delete();
+
+  if ( newScalars )
+    {
+      int idx = outPD->AddArray(newScalars);
+      outPD->SetActiveAttribute(idx, vtkDataSetAttributes::SCALARS);
+      newScalars->Delete();
+    }
+
+  output->SetLines(newLines);
+  newLines->Delete();
+
+  output->Squeeze();
+
+}
+
 
 void vtkHyperStreamlineDTMRI::PrintSelf(ostream& os, vtkIndent indent)
 {

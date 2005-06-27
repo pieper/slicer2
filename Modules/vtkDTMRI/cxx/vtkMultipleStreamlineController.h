@@ -273,6 +273,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   vtkGetObjectMacro(Streamlines, vtkCollection);
   vtkGetObjectMacro(Actors, vtkCollection);
   vtkGetObjectMacro(Mappers, vtkCollection);
+  vtkGetObjectMacro(TubeFilters, vtkCollection);
   int GetNumberOfStreamlines() {return this->Streamlines->GetNumberOfItems();}
 
   // Description
@@ -393,6 +394,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
 
   vtkCollection *Streamlines;
   vtkCollection *Mappers;
+  vtkCollection *TubeFilters;
   vtkCollection *Actors;
   int NumberOfVisibleActors;
 

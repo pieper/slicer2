@@ -106,7 +106,7 @@ protected:
 
   // Integrate data
   void Execute();
-  //void BuildTube();
+  void BuildLines();
 
   vtkFloatingPointType MaxCurvature;
   vtkFloatingPointType MinFractionalAnisotropy;

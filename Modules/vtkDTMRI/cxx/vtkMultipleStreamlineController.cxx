@@ -50,6 +50,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkCellArray.h"
 #include "vtkStreamlineConvolve.h"
 #include "vtkPruneStreamline.h"
+#include "vtkTubeFilter.h"
 
 #include <sstream>
 
@@ -91,6 +92,7 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
   // collections
   this->Streamlines = vtkCollection::New();
   this->Mappers = vtkCollection::New();
+  this->TubeFilters = vtkCollection::New();
   this->Actors = vtkCollection::New();
 
   // Streamline parameters for all streamlines
@@ -135,6 +137,7 @@ vtkMultipleStreamlineController::~vtkMultipleStreamlineController()
   this->Streamlines->Delete();
   this->Mappers->Delete();
   this->Actors->Delete();
+  this->TubeFilters->Delete();
   this->StreamlinesAsPolyLines->Delete();
   this->StreamlineLookupTable->Delete();
   this->StreamlineIdPassTest->Delete();
@@ -168,9 +171,11 @@ void vtkMultipleStreamlineController::ApplyUserSettingsToGraphicsObject(int inde
 {
   vtkPolyDataMapper *currMapper;
   vtkActor *currActor;
+  vtkTubeFilter *currTubeFilter;
 
   currActor = (vtkActor *) this->Actors->GetItemAsObject(index);
   currMapper = (vtkPolyDataMapper *) this->Mappers->GetItemAsObject(index);
+  currTubeFilter = (vtkTubeFilter *) this->TubeFilters->GetItemAsObject(index);
 
   // set the Actor's properties according to the sample 
   // object that the user can access.
@@ -182,7 +187,9 @@ void vtkMultipleStreamlineController::ApplyUserSettingsToGraphicsObject(int inde
   currActor->GetProperty()->SetColor(this->StreamlineProperty->GetColor());    
   // Set the scalar visibility as desired by the user
   currMapper->SetScalarVisibility(this->ScalarVisibility);
-
+  // Set the tube width as desired by the user
+  // TEST this should be specified separately from hyperstreamline settings
+  currTubeFilter->SetRadius(this->VtkHyperStreamlinePointsSettings->GetRadius());
 
 }
 
@@ -197,6 +204,7 @@ void vtkMultipleStreamlineController::CreateGraphicsObjects()
   vtkActor *currActor;
   vtkTransform *currTransform;
   vtkRenderer *currRenderer;
+  vtkTubeFilter *currTubeFilter;
 
   // Find out how many streamlines we have, and if they all have actors
   numStreamlines = this->Streamlines->GetNumberOfItems();
@@ -225,12 +233,15 @@ void vtkMultipleStreamlineController::CreateGraphicsObjects()
       this->Actors->AddItem((vtkObject *)currActor);
       currMapper = vtkPolyDataMapper::New();
       this->Mappers->AddItem((vtkObject *)currMapper);
+      currTubeFilter = vtkTubeFilter::New();
+      this->TubeFilters->AddItem((vtkObject *)currTubeFilter);
 
       // Apply user's visualization settings to these objects
       this->ApplyUserSettingsToGraphicsObject(numActorsCreated);
 
       // Hook up the pipeline
-      currMapper->SetInput(currStreamline->GetOutput());
+      currTubeFilter->SetInput(currStreamline->GetOutput());
+      currMapper->SetInput(currTubeFilter->GetOutput());
       currMapper->SetLookupTable(this->StreamlineLookupTable);
       currMapper->UseLookupTableScalarRangeOn();
       currActor->SetMapper(currMapper);
@@ -332,6 +343,7 @@ void vtkMultipleStreamlineController::DeleteStreamline(int index)
   vtkRenderer *currRenderer;
   //vtkLookupTable *currLookupTable;
   vtkPolyDataMapper *currMapper;
+  vtkTubeFilter *currTubeFilter;
   vtkHyperStreamline *currStreamline;
   vtkActor *currActor;
 
@@ -370,6 +382,15 @@ void vtkMultipleStreamlineController::DeleteStreamline(int index)
       this->Mappers->RemoveItem(index);
       currMapper->Delete();
     }
+
+  vtkDebugMacro( << "Delete tubeFilter" );
+  currTubeFilter = (vtkTubeFilter *) this->TubeFilters->GetItemAsObject(index);
+  if (currTubeFilter != NULL)
+    {
+      this->TubeFilters->RemoveItem(index);
+      currTubeFilter->Delete();
+    }
+
   vtkDebugMacro( << "Done deleting streamline");
 
 }
