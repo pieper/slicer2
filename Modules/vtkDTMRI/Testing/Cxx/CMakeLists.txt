@@ -16,7 +16,7 @@ ENDIF(VTK_FOUND)
 
 
 ADD_EXECUTABLE(DTMRITest testCluster.cxx)
-TARGET_LINK_LIBRARIES(DTMRITest ITKCommon ITKNumerics vtkCommon vtkIO vtkImaging vtkFiltering)
+TARGET_LINK_LIBRARIES(DTMRITest vtkDTMRI ITKNumerics)
 
 
 
