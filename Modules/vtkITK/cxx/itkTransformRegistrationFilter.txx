@@ -33,7 +33,7 @@ itk::itkTransformRegistrationFilter<TImageClass, TOptimizerClass, TTransformerCl
   m_Registration->SetFixedImagePyramid(m_FixedImagePyramid);
   m_Registration->SetMovingImagePyramid(m_MovingImagePyramid);
 
-  m_BackgroundLevel = itk::NumericTraits< TImageClass::PixelType >::Zero;
+  m_BackgroundLevel = itk::NumericTraits< typename TImageClass::PixelType >::Zero;
 
   m_Resampler = ResampleFilterType::New();
 
