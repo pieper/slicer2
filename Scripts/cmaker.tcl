@@ -141,6 +141,8 @@ if { [info exists env(SLICER_MODULES)] } {
     }
 }
 
+set fd [open "../Modules/DartTestfile.txt" "w"]
+puts $fd "SUBDIRS ($modulePaths)"
 
 set TARGETS ""
 foreach dir $modulePaths {
