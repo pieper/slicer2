@@ -5,8 +5,8 @@
 # MY -> DTMRI
 # my -> DTMRI
 
-
-PROJECT (VTKDTMRI)
+SET(MODULE_NAME VTKDTMRI)
+PROJECT (${MODULE_NAME})
 
 #
 # Assume everything is set up correctly for build.
