@@ -23,9 +23,6 @@ SET (DOXYGEN_URL "http://${DROP_SITE}/VTK/doc/nightly/html/" )
 SET (USE_GNATS "Off")
 SET (GNATS_WEB_URL "http://${DROP_SITE}/")
 
-# copy over the testing logo
-CONFIGURE_FILE(${VTKSLICER_SOURCE_DIR}/../Doc/images/logo.jpg ${VTKSLICER_BINARY_DIR}/Testing/HTML/TestingResults/Icons/Logo.gif COPYONLY)
-
 # Continuous email delivery variables
 SET (CONTINUOUS_FROM "slicerdart@bwh.harvard.edu")
 SET (SMTP_MAILHOST "mail.bwh")
