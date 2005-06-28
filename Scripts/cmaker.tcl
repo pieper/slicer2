@@ -143,7 +143,7 @@ if { [info exists env(SLICER_MODULES)] } {
 
 set fd [open "${baseModulePath}/DartTestfile.txt" "w"]
 foreach dir $modulePaths {
-  puts $fd "SUBDIRS (\"[file root [file tail $dir]]/builds/$env{BUILD}\")"
+  puts $fd "SUBDIRS (\"[file root [file tail $dir]]/builds/$env(BUILD)\")"
 }
 
 set TARGETS ""
