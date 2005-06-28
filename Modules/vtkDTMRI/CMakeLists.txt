@@ -16,6 +16,7 @@ PROJECT (VTKDTMRI)
 #
 
 SET (VTKDTMRI_CAN_BUILD 1)
+ENABLE_TESTING()
 
 #
 # Load CMake commands that you probably should not modify.
