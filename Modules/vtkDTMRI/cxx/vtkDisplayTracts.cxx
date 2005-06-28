@@ -67,8 +67,13 @@ vtkDisplayTracts* vtkDisplayTracts::New()
 vtkDisplayTracts::vtkDisplayTracts()
 {
   // The user must set these for the class to function.
-  this->InputRenderers = vtkCollection::New();
+  this->Renderers = vtkCollection::New();
   
+
+  // Initialize transforms to identity, 
+  // so if the user doesn't set them it's okay.
+  this->WorldToTensorScaledIJK = vtkTransform::New();
+
   // collections
   this->Streamlines = NULL;
   this->Mappers = vtkCollection::New();
@@ -96,7 +101,7 @@ vtkDisplayTracts::~vtkDisplayTracts()
 {
   this->DeleteAllStreamlines();
 
-  this->InputRenderers->Delete();
+  this->Renderers->Delete();
   this->Streamlines->Delete();
   this->Mappers->Delete();
   this->Actors->Delete();
@@ -214,12 +219,12 @@ void vtkDisplayTracts::CreateGraphicsObjects()
 
       // add to the scene (to each renderer)
       // This is the same as MainAddActor in Main.tcl.
-      this->InputRenderers->InitTraversal();
-      currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
+      this->Renderers->InitTraversal();
+      currRenderer= (vtkRenderer *)this->Renderers->GetNextItemAsObject();
       while(currRenderer)
         {
           currRenderer->AddActor(currActor);
-          currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
+          currRenderer= (vtkRenderer *)this->Renderers->GetNextItemAsObject();
         }
       
       // Increment the count of actors we have created
@@ -318,13 +323,13 @@ void vtkDisplayTracts::DeleteStreamline(int index)
       this->NumberOfVisibleActors--;
       // Remove from the scene (from each renderer)
       // Just like MainRemoveActor in Main.tcl.
-      this->InputRenderers->InitTraversal();
-      currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
+      this->Renderers->InitTraversal();
+      currRenderer= (vtkRenderer *)this->Renderers->GetNextItemAsObject();
       while(currRenderer)
         {
           vtkDebugMacro( << "rm actor from renderer " << currRenderer);
           currRenderer->RemoveActor(currActor);
-          currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
+          currRenderer= (vtkRenderer *)this->Renderers->GetNextItemAsObject();
         }
       this->Actors->RemoveItem(index);
       currActor->Delete();

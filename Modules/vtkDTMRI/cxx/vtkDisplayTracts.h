@@ -70,7 +70,12 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
   vtkTypeMacro(vtkDisplayTracts,vtkObject);
 
   // Description
-  // Transformation used in seeding streamlines.  Their start
+  // Set the streamlines that we would like to visualize
+  vtkSetObjectMacro(Streamlines, vtkCollection);
+  vtkGetObjectMacro(Streamlines, vtkCollection);
+
+  // Description
+  // Transformation that was used in seeding streamlines.  Their start
   // points are specified in the coordinate system of the ROI volume.
   // Transform world coordinates into scaled ijk of the tensor field.
   // This transform is needed to display streamlines in world
@@ -102,8 +107,7 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
   int GetStreamlineIndexFromActor(vtkActor *pickedActor);
 
   // Description
-  // List of the output vtkHyperStreamlines (or subclasses)
-  vtkGetObjectMacro(Streamlines, vtkCollection);
+  // List of the output graphics objects
   vtkGetObjectMacro(Actors, vtkCollection);
   vtkGetObjectMacro(Mappers, vtkCollection);
   vtkGetObjectMacro(TubeFilters, vtkCollection);
@@ -112,8 +116,8 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
   // Description
   // Input: list of the renderers whose scenes will have streamlines
   // added.
-  vtkSetObjectMacro(InputRenderers, vtkCollection);
-  vtkGetObjectMacro(InputRenderers, vtkCollection);
+  vtkSetObjectMacro(Renderers, vtkCollection);
+  vtkGetObjectMacro(Renderers, vtkCollection);
 
   // Description
   // Control actor properties of created streamlines by setting
@@ -178,7 +182,7 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
 
   vtkTransform *WorldToTensorScaledIJK;
 
-  vtkCollection *InputRenderers;
+  vtkCollection *Renderers;
 
   vtkCollection *Streamlines;
   vtkCollection *Mappers;
