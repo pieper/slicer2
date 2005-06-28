@@ -15,7 +15,7 @@ ENDIF(VTK_FOUND)
 
 FOREACH(test testCluster)
   ADD_EXECUTABLE("${MODULE_NAME}-${test}" "${test}.cxx")
-  TARGET_LINK_LIBRARIES(DTMRI-${test} vtkDTMRI ITKNumerics)
+  TARGET_LINK_LIBRARIES(${MODULE_NAME}-${test} vtkDTMRI ITKNumerics)
   ADD_TEST("${MODULE_NAME}-${test}" 
     "${EXECUTABLE_OUTPUT_PATH}/${MODULE_NAME}-${test}")
 ENDFOREACH(test)
