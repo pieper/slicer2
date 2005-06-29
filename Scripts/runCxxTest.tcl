@@ -24,8 +24,12 @@ if { ! [ file exists $::execName ] } {
     }
 }
 
+puts "Execute test: $::execName"
+
 set ::insideArgs [ lrange $::argv 1 end ]
 set ::command [ concat "exec" "$::execName"  $::insideArgs ]
+
+puts "Invoke command: $::command"
 
 set ::res [ catch $::command ::output ]
 puts $::output
