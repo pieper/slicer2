@@ -15,8 +15,7 @@ tree AddItem node
 tree Write "test.mrml"
 
 # return success code for nightly testing
-return 0
-
+exit 0
 
 
 
