@@ -16,11 +16,22 @@ if { $::argc < 1 } {
 }
 
 set ::execName [ lindex $::argv 0 ]
+
 if { ! [ file exists $::execName ] } {
   set ::execName "[ file dirname $::execName ]/$::env(VTK_BUILD_TYPE)/[ file tail $::execName]"
-    if { ! [ file exists $::execName ] } {
-      puts "Cannot find file: $::execName"
-      exit 1
+
+     if { ! [ file exists $::execName ] } {
+
+     set ::execName "[ lindex $::argv 0 ].exe"
+
+         if { ! [ file exists $::execName ] } {
+            set ::execName "[ file dirname $::execName ]/$::env(VTK_BUILD_TYPE)/[ file tail $::execName]"
+
+            if { ! [ file exists $::execName ] } {
+                puts "Cannot find file: $::execName"
+                exit 1
+            }
+        }
     }
 }
 
