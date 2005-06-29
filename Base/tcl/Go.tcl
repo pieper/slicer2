@@ -808,7 +808,7 @@ if { $SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.93 2005/06/23 22:19:49 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.94 2005/06/29 19:35:40 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
@@ -918,8 +918,8 @@ foreach arg $SLICER(load-bxh) {
 # (for people who type exit into the console)
 #
 rename exit tcl_exit
-proc exit {} {
-    MainExitProgram
+proc exit { "code 0" } {
+    MainExitProgram $code
 }
 
 

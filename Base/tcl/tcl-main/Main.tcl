@@ -460,7 +460,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.121 $} {$Date: 2005/05/30 19:34:37 $}]
+        {$Revision: 1.122 $} {$Date: 2005/06/29 19:35:18 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -1853,7 +1853,7 @@ proc MainSaveMRMLQuery { } {
 #  Exit the Program with cleanup
 # .END
 #-------------------------------------------------------------------------------
-proc MainExitProgram { } {
+proc MainExitProgram { "code 0" } {
     global Module View
 
     set View(render_on) 0
@@ -1912,7 +1912,9 @@ proc MainExitProgram { } {
             }
         }
     }
-    tcl_exit
+
+    # this is the original "exit" built in call, but renamed so we can shut down nicely
+    tcl_exit $code
 }
 
 #-------------------------------------------------------------------------------
