@@ -40,7 +40,7 @@ switch -glob -- $TEST_TYPE {
   s SetSliceOffset 3
   s SetModeToSLICE
   s SetNumberOfThreads 6
-  s InterleaveRepetitionsOff
+  #s InterleaveRepetitionsOff
   s Update
   
   }
