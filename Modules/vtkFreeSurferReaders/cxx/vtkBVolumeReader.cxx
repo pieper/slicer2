@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkBVolumeReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/05/23 19:08:02 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2005/06/30 21:51:54 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================*/
 #include <sys/types.h>
@@ -477,7 +477,7 @@ int vtkBVolumeReader::ReadVolumeHeader()
   float tlr, tla, tls, trr, tra, trs, brr, bra, brs, xr, xa, xs, yr, ya, ys;
   int sliceNumber;
   int numSlices;
-  int found;
+  int found = 0;
   int error;
   struct stat fileInfo;
 
