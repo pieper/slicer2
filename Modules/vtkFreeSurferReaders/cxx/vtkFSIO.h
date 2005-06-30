@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSIO.h,v $
   Language:  C++
-  Date:      $Date: 2005/04/04 15:35:08 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2005/06/30 21:51:16 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================*/
 // .NAME vtkFSIO - Some IO functions for irregular FreeSurface files.
@@ -53,6 +53,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkFSIO_h
 
 #include <stdio.h>
+#include <zlib.h>
 
 
 class  vtkFSIO {
@@ -69,6 +70,11 @@ class  vtkFSIO {
   static int ReadInt2 (FILE* iFile, int& oInt);
   static int ReadFloat (FILE* iFile, float& oFloat);
 
+  static int ReadShortZ (gzFile iFile, short& oShort);
+  static int ReadIntZ (gzFile iFile, int& oInt);
+ static int ReadInt3Z (gzFile iFile, int& oInt);
+ static int ReadInt2Z (gzFile iFile, int& oInt);
+  static int ReadFloatZ (gzFile iFile, float& oFloat);
 };
 
 #endif
