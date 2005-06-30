@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkMGHReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/04/04 22:18:46 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2005/06/30 21:52:24 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================*/
 #include "vtkMGHReader.h"
@@ -73,6 +73,7 @@ vtkMGHReader::vtkMGHReader()
   this->ScalarType = 0;
   this->NumFrames = 0;
   this->CurFrame = 0;
+
 }
 
 vtkMGHReader::~vtkMGHReader()
@@ -181,12 +182,11 @@ vtkDataArray *vtkMGHReader::ReadVolumeData()
   short* short_destData;
   int* int_destData;
   float* float_destData;
-  FILE *fp;
+  //FILE *fp;
+  // using zlib to read the file, it will work on uncompressed files as well
+  gzFile fp;
   int numRead;
   int numPts;
-  int numPtsPerSlice;
-  int numReadTotal;
-  int slice;
   int elementSize;
   short s;
   int i;
@@ -258,7 +258,8 @@ vtkDataArray *vtkMGHReader::ReadVolumeData()
   
 
   // Open the file.
-  fp = fopen( this->FileName, "rb" );
+  //fp = fopen( this->FileName, "rb" );
+  fp = gzopen(this->FileName, "rb");
   if( !fp ) {
     vtkErrorMacro(<< "Can't find/open file: " << this->FileName);
     cout << "Can't find/open file: " << this->FileName;
@@ -266,14 +267,15 @@ vtkDataArray *vtkMGHReader::ReadVolumeData()
   }
 
   // Skip all the header information and the frames we don't want.
-  fseek( fp, FS_WHOLE_HEADER_SIZE + (this->CurFrame * numPts), SEEK_SET );
+  gzseek( fp, FS_WHOLE_HEADER_SIZE + (this->CurFrame * numPts), SEEK_SET );
 
   // Read in a frame. We need to do this element by element so we can
   // do byte swapping, except for the uchars because they don't need
   // it.
   vtkDebugMacro(<< "vtkMGHReader: ReadVolumeData: starting to read, numpts=" << numPts << " of scalarType " << this->ScalarType << endl);
   if( VTK_UNSIGNED_CHAR == this->ScalarType ) {
-      numRead = fread( destData, elementSize, numPts, fp );
+    //numRead = fread( destData, elementSize, numPts, fp );
+    numRead = gzread(fp, destData, elementSize*numPts);
       if ( numRead != numPts ) {
           vtkErrorMacro(<<"Trying to read " << numPts << " elements, "
                         "but only got " << numRead << " of them.");
@@ -291,15 +293,15 @@ vtkDataArray *vtkMGHReader::ReadVolumeData()
               for( int nX = 0; nX < this->DataDimensions[0]; nX++ ) {
                   switch ( this->ScalarType ) {
                   case VTK_SHORT:
-                      vtkFSIO::ReadShort( fp, s );
+                      vtkFSIO::ReadShortZ( fp, s );
                       *short_destData++ = s;
                       break;
                   case VTK_INT:
-                      vtkFSIO::ReadInt( fp, i );
+                      vtkFSIO::ReadIntZ( fp, i );
                       *int_destData++ = i;
                       break;
                   case VTK_FLOAT:
-                      vtkFSIO::ReadFloat( fp, f );
+                      vtkFSIO::ReadFloatZ( fp, f );
                       *float_destData++ = f;
                       break;
                   default:
@@ -313,7 +315,9 @@ vtkDataArray *vtkMGHReader::ReadVolumeData()
   }
 
   // Close the file.
-  fclose(fp);
+  //  fclose(fp);
+  gzclose(fp);
+
   
   // return the scalars.
   return scalars;
@@ -344,12 +348,13 @@ In the MGH header, they hold:
 */
 void vtkMGHReader::ReadVolumeHeader()
 {
-  FILE *fp;
+  //  FILE *fp;
+  gzFile fp;
   int version;
   int type;
   int dof;
   short RASgood;
-
+  int useCompressor = 0;
   
   // Check the file name.
   if( NULL == this->FileName || 
@@ -361,8 +366,20 @@ void vtkMGHReader::ReadVolumeHeader()
   }
   vtkDebugMacro(<< "vtkMGHReader: ReadVolumeHeader for file " << this->FileName << "\n");
 
-  // Open the file.
-  fp = fopen( this->FileName, "rb" );
+  // is the file compressed?
+  if (strstr(this->FileName,"mgz") != NULL ||
+      strstr(this->FileName,"gz") != NULL)
+  {
+      useCompressor = 1;
+      vtkDebugMacro(<<"ReadVolumeHeader " << this->FileName << " is compressed\n");
+  } else {
+    vtkDebugMacro(<<"ReadVolumeHeader " << this->FileName << " is NOT compressed\n");
+  }
+
+  // Open the file, gzopen will work on uncompressed files as well
+  fp = gzopen(this->FileName, "rb");
+  // fp = fopen( this->FileName, "rb" );
+
   if( !fp ) {
     vtkErrorMacro(<< "Can't find/open file: " << this->FileName);
     cout << "ReadVolumeHeader: Can't find/open file: " << this->FileName;
@@ -370,6 +387,7 @@ void vtkMGHReader::ReadVolumeHeader()
   }
 
   // Read in dimension information.
+  /*
   vtkFSIO::ReadInt( fp, version );
   vtkFSIO::ReadInt( fp, this->DataDimensions[0] );
   vtkFSIO::ReadInt( fp, this->DataDimensions[1] );
@@ -377,6 +395,14 @@ void vtkMGHReader::ReadVolumeHeader()
   vtkFSIO::ReadInt( fp, this->NumFrames );
   vtkFSIO::ReadInt( fp, type );
   vtkFSIO::ReadInt( fp, dof );
+  */
+    vtkFSIO::ReadIntZ( fp, version);
+    vtkFSIO::ReadIntZ( fp, this->DataDimensions[0] );
+    vtkFSIO::ReadIntZ( fp, this->DataDimensions[1] );
+    vtkFSIO::ReadIntZ( fp, this->DataDimensions[2] );
+    vtkFSIO::ReadIntZ( fp, this->NumFrames );
+    vtkFSIO::ReadIntZ( fp, type );
+    vtkFSIO::ReadIntZ( fp, dof );
 
   // Convert the type to a VTK scalar type.
   switch( type ) {
@@ -391,12 +417,13 @@ void vtkMGHReader::ReadVolumeHeader()
 
   // The next short is says whether the RAS registration information
   // is good. If so, read in the voxel size and then the matrix.
-  vtkFSIO::ReadShort( fp, RASgood );
+  //vtkFSIO::ReadShort( fp, RASgood );
+  vtkFSIO::ReadShortZ( fp, RASgood);
   float spacing[3];
   if( RASgood ) {
 
     for( int nSpacing = 0; nSpacing < 3; nSpacing++ ) {
-      vtkFSIO::ReadFloat( fp, spacing[nSpacing] );
+      vtkFSIO::ReadFloatZ( fp, spacing[nSpacing] );
       this->DataSpacing[nSpacing] = spacing[nSpacing];
     }
 
@@ -405,12 +432,13 @@ void vtkMGHReader::ReadVolumeHeader()
     // z_r z_a z_s
     // c_r c_a c_s
     for( int nMatrix = 0; nMatrix < 12; nMatrix++ ) {
-      vtkFSIO::ReadFloat( fp, this->RASMatrix[nMatrix] );
+      vtkFSIO::ReadFloatZ( fp, this->RASMatrix[nMatrix] );
       vtkDebugMacro(<<"RASMatrix[" << nMatrix << "] = " << this->RASMatrix[nMatrix] << ".");
     }
   }
 
-  fclose(fp);
+  //  fclose(fp);
+  gzclose(fp);
 }
 
 void vtkMGHReader::PrintSelf(ostream& os, vtkIndent indent)
