@@ -14,12 +14,12 @@ ENDIF(VTK_FOUND)
 
 
 FOREACH(test testCluster)
-  ADD_EXECUTABLE("${MODULE_NAME}-${test}" "${test}.cxx")
-  TARGET_LINK_LIBRARIES(${MODULE_NAME}-${test} vtkDTMRI ITKNumerics)
-  ADD_TEST("${MODULE_NAME}-${test}"
+  ADD_EXECUTABLE("${MODULE_NAME}.${test}" "${test}.cxx")
+  TARGET_LINK_LIBRARIES(${MODULE_NAME}.${test} vtkDTMRI ITKNumerics)
+  ADD_TEST("${MODULE_NAME}.${test}"
     "${SLICER_EXECUTABLE}" --agree_to_license
     "${CTEST_SLICER_HOME}/Scripts/runCxxTest.tcl"
-    "${EXECUTABLE_OUTPUT_PATH}/${MODULE_NAME}-${test}")
+    "${EXECUTABLE_OUTPUT_PATH}/${MODULE_NAME}.${test}")
 ENDFOREACH(test)
 
 
