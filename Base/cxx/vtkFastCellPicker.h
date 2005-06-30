@@ -66,8 +66,10 @@ class VTK_SLICER_BASE_EXPORT vtkFastCellPicker : public vtkPicker
 {
 public:
   vtkFastCellPicker();
-  static vtkFastCellPicker *New() {return new vtkFastCellPicker;};
-  const char *GetClassName() {return "vtkFastCellPicker";};
+//  static vtkFastCellPicker *New() {return new vtkFastCellPicker;};
+static vtkFastCellPicker *New();
+//  const char *GetClassName() {return "vtkFastCellPicker";};
+vtkTypeMacro(vtkFastCellPicker,vtkPicker);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
