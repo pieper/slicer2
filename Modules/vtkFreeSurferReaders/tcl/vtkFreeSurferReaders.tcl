@@ -222,6 +222,8 @@ proc vtkFreeSurferReadersInit {} {
     set vtkFreeSurferReaders(QAopacity) $::Slice(opacity)
     set vtkFreeSurferReaders(QAviewmode) $::View(mode)
 
+    set vtkFreeSurferReaders(PlotFileName) [file normalize [file join .. data fsgd y_doss-thickness-250rh.fsgd]]
+
     lappend Module($m,fiducialsPointCreatedCallback) FreeSurferReadersFiducialsPointCreatedCallback
 
     # Module Summary Info
@@ -318,7 +320,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.32 $} {$Date: 2005/06/03 21:20:47 $}]
+        {$Revision: 1.33 $} {$Date: 2005/06/30 21:52:59 $}]
 
 }
 
@@ -945,20 +947,17 @@ proc vtkFreeSurferReadersApply {} {
     # switch on the file name, it can be:
     # a COR file (*.info that defines the volume) 
     # an mgh file (*.mgh, volume in one file)
+    # an mgz file (*.mgz or *.mgh.gz - a gzippped mgh volume)
     # a bfloat file (*.bfloat)
     if {[string match *.info $vtkFreeSurferReaders(VolumeFileName)]} {
         set vid [vtkFreeSurferReadersCORApply]
     } elseif {[string match *.mgh $vtkFreeSurferReaders(VolumeFileName)]} {
         set vid [vtkFreeSurferReadersMGHApply]
     } elseif {[string match *.mgz $vtkFreeSurferReaders(VolumeFileName)]} {
-        # unzip it first and then send it to vtkFreeSurferReadersMGHApply
-        if {[vtkFreeSurferReadersUncompressMGH] != -1} {
-            set vid [vtkFreeSurferReadersMGHApply]
-        }
+        # the mgh reader will read from a compressed file
+        set vid [vtkFreeSurferReadersMGHApply]
     } elseif {[string match *.mgh.gz $vtkFreeSurferReaders(VolumeFileName)]} {
-        if {[vtkFreeSurferReadersUncompressMGH] != -1} {
-            set vid [vtkFreeSurferReadersMGHApply]
-        }
+    set vid [vtkFreeSurferReadersMGHApply]
     } elseif {[string match *.bhdr $vtkFreeSurferReaders(VolumeFileName)]} {
         set vid [vtkFreeSurferReadersBApply]
     } else {
@@ -1446,7 +1445,7 @@ set useMatrices 0
     set fc [rasmat$i MultiplyPoint 0 0 0 1]
     set lc [rasmat$i MultiplyPoint 0 0 0 1]
 
-    
+    if {$::Module(verbose)} {
         if {[info command DevPrintMatrix4x4] != ""} {
             DevPrintMatrix4x4 rasmat$i "MGH vol $i RAS -> IJK (with scaling, t_ras)"
         } 
@@ -1456,7 +1455,7 @@ set useMatrices 0
         puts  "ftr $ftr"
         puts  "fbr $fbr"
         puts  "ltl $ltl"
-
+    }
     # now do the magic bit
     # Volume($i,node) ComputeRasToIjkFromCorners $fc $ftl $ftr $fbr $lc $ltl
     Volume($i,node) ComputeRasToIjkFromCorners \
@@ -5085,6 +5084,11 @@ proc vtkFreeSurferReadersPlotCancel {} {
 proc vtkFreeSurferReadersUncompressMGH {} {
     global vtkFreeSurferReaders Module
 
+    # new changes, mgh reader will deal with this so return 0
+    if {$::Module(verbose)} { puts "vtkFreeSurferReadersUncompressMGH: letting the mgh reader uncompress it" }
+    return 0
+
+
     # if this is the first time we've hit an zipped mgh file, set up the uncompression program (and the temp dir?)
     if {$vtkFreeSurferReaders(MGHDecompressorExec) == "" ||
         ![file executable $vtkFreeSurferReaders(MGHDecompressorExec)]} {
@@ -5597,7 +5601,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.32 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.33 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -6275,15 +6279,64 @@ proc vtkFreeSurferReadersPlotBuildPointList {pointID scalarVar} {
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersPickPlot {widget x y} {
-    global vtkFreeSurferReaders Point Module Model viewRen
+    global vtkFreeSurferReaders Point Module Model viewRen Select
 
     if {$::Module(verbose)} { 
         puts "vtkFreeSurferReadersPickPlot widget = $widget x = $x y = $y"
     }
 
-    puts "Getting picked point for plotting"
+    if {$::Module(verbose)} { puts "Getting picked point for plotting" }
+    
+    if {0} {
+    # update this when get a working fast cell picker
+    set fastPickMs [time {set retval [SelectPick Select(picker) $widget $x $y]}]
+    if {$::Module(verbose)} {
+        puts "Fast Cell Picker took $fastPickMs"
+        puts "Fast Cell Picker cell id = [Select(picker) GetCellId]"
+    }
 
-    if { [SelectPick Point(picker) $widget $x $y] != 0} {
+    set pointpickMs [time {set retval [SelectPick Select(ptPicker) $widget $x $y]}]
+    if {$::Module(verbose)} { puts "Point picker took $pointpickMs" }
+    if {$retval != 0} {
+        set pid [Select(ptPicker) GetPointId]
+       if {$::Module(verbose)} { puts "Point picker point id = $pid" }
+       set actor [Select(ptPicker) GetActor]
+       set modelID -1
+       set Point(model) ""
+       foreach id $Model(idList) {
+        foreach r $Module(Renderers) {
+        if {$actor == "Model($id,actor,$r)" } {
+            set Point(model) Model($id,actor,$r)
+            set modelID $id
+        }
+        }
+       }
+       if {$::Module(verbose)} {
+        puts "Found model id $modelID for point $pid"
+       }
+       if {$modelID != -1} {
+           catch "cellIdList Delete"
+           vtkIdList cellIdList
+           $Model($modelID,polyData) GetPointCells $pid cellIdList
+           if {$::Module(verbose)} {
+           puts "Point $pid is in cells: "
+           for {set c 0} {$c < [cellIdList GetNumberOfIds]} {incr c} {
+               puts -nonewline " [cellIdList GetId $c]"
+           }
+           }
+           # now pick which cell the picked point is nearest/in
+        
+       } else {
+           if {$::Module(verbose)} { puts "point picker, model id = $modelID"}
+       }
+       }
+   }
+    set pickMs [time {set retval [SelectPick Point(picker) $widget $x $y]}]
+    if {$::Module(verbose)} {
+       puts "Cell picker took $pickMs"
+       puts "Cell picker cell id = [Point(picker) GetCellId]"
+    }
+    if { $retval != 0} {
         # check for a model
         set actor [Point(picker) GetActor]
         set Point(model) ""
@@ -6307,10 +6360,12 @@ proc vtkFreeSurferReadersPickPlot {widget x y} {
         }
         # check against the scalars array
         if {[$vtkFreeSurferReaders(plot,$vtkFreeSurferReaders(gGDF,dataID),scalars) GetNumberOfComponents] < $cellId} {
-            if {$::Module(verbose)} {
+        if {$::Module(verbose)} {
                 puts "Plotting vertex $cellId, data id = $vtkFreeSurferReaders(gGDF,dataID)"
-            }
+        }
             vtkFreeSurferReadersPlotPlotData $cellId $vtkFreeSurferReaders(gGDF,dataID)
         }
     }
 }
+
+
