@@ -125,7 +125,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.74 $} {$Date: 2004/09/16 19:39:28 $}]
+        {$Revision: 1.75 $} {$Date: 2005/07/01 13:48:03 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -227,7 +227,7 @@ proc EditorInit {} {
 # .PROC EditorBuildVTK
 # Calls BuildVTK procs for files in Editor subdirectory. <br>
 # Makes VTK objects vtkImageEditorEffects Ed(editor) and 
-# vtkMrmlVolumeNode Editor(undoNode).
+# vtkMrmlVolumeNode Editor(undoNode).  
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
