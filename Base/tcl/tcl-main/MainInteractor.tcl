@@ -130,9 +130,9 @@ proc MainInteractorBind {widget} {
 
     # Control-B1
     bind $widget <Control-B1-Motion>      {MainInteractorControlB1Motion %W %x %y}
-    bind $widget <Control-ButtonPress-1>  {MainInteractorShiftB1 %W %x %y}
+    bind $widget <Control-ButtonPress-1>  {MainInteractorControlB1 %W %x %y}
     bind $widget <Control-ButtonRelease-1> \
-        {MainInteractorShiftB1Release %W %x %y}
+        {MainInteractorControlB1Release %W %x %y}
 
     # NOTE: since this has been disabled for years, AltB1 is now
     # mapped to PAN to support two-button mice. - sp 2002-11-14
@@ -156,6 +156,11 @@ proc MainInteractorBind {widget} {
     bind $widget <KeyPress-0>        {MainInteractorKeyPress 0 %W %x %y}
     bind $widget <KeyPress-d>        {MainInteractorKeyPress d %W %x %y}
     bind $widget <KeyPress-c>        {MainInteractorKeyPress c %W %x %y}
+    bind $widget <Control-a>         {MainInteractorKeyPress Ctla %W %x %y}
+    bind $widget <Control-x>         {MainInteractorKeyPress Ctlx %W %x %y}
+    bind $widget <Control-c>         {MainInteractorKeyPress Ctlc %W %x %y}
+    bind $widget <Control-v>         {MainInteractorKeyPress Ctlv %W %x %y}
+    bind $widget <Control-d>         {MainInteractorKeyPress Ctld %W %x %y}
     # toggle between fore and background volumes
     bind $widget <KeyPress-g>        {MainInteractorKeyPress g %W %x %y}
 
@@ -409,6 +414,66 @@ proc MainInteractorKeyPress {key widget x y} {
             set toggleCmd [.tMain.fDisplay.fRight.bToggle cget -command]
             eval $toggleCmd
         }
+         "Ctla" {
+             switch $Module(activeID) {
+                 "Editor" {
+                     switch $Editor(activeID) {
+                         "EdDraw" {
+                             EdDrawUpdate SelectAll
+                             RenderActive
+                         }
+                     }
+                 }
+             }
+         }
+         "Ctlx" {
+             switch $Module(activeID) {
+                 "Editor" {
+                     switch $Editor(activeID) {
+                         "EdDraw" {
+                             EdDrawUpdate Cut
+                             RenderActive
+                         }
+                     }
+                 }
+             }
+         }
+         "Ctlc" {
+             switch $Module(activeID) {
+                 "Editor" {
+                     switch $Editor(activeID) {
+                         "EdDraw" {
+                             EdDrawUpdate Copy
+                             RenderActive
+                         }
+                     }
+                 }
+             }
+         }
+         "Ctlv" {
+             switch $Module(activeID) {
+                 "Editor" {
+                     switch $Editor(activeID) {
+                         "EdDraw" {
+                             EdDrawUpdate Paste
+                             RenderActive
+                         }
+                     }
+                 }
+             }
+         }
+         "Ctld" {
+             switch $Module(activeID) {
+                 "Editor" {
+                     switch $Editor(activeID) {
+                         "EdDraw" {
+                             EdDrawUpdate DeleteAll
+                             RenderActive
+                         }
+                     }
+                 }
+             }
+         }
     }
 }
 
@@ -630,7 +695,7 @@ proc MainInteractorB1Motion {widget x y} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorControlB1Motion {widget x y} {
-    global Interactor
+    global Interactor Module
     
     set s $Interactor(s)
     scan [MainInteractorXY $s $x $y] "%d %d %d %d" xs ys x y 
@@ -644,6 +709,12 @@ proc MainInteractorControlB1Motion {widget x y} {
     # BUG: I'm commenting this out because window/leveling for too long
     # causes a stack overflow.
 #    MainInteractorWindowLevel $s $xs $ys $Interactor(xsLast) $Interactor(ysLast)
+
+    switch $Module(activeID) {
+        "Editor" {
+            EditorControlB1Motion $x $y
+        }
+    }
 
     # Cursor
     MainInteractorCursor $s $xs $ys $x $y
@@ -1150,5 +1221,49 @@ proc Angle2D {ax1 ay1 ax2 ay2 bx1 by1 bx2 by2} {
     }
 
     return [expr $deg*180/3.1415962]
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainInteractorControlB1
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainInteractorControlB1 {widget x y} {
+    global Interactor Module
+    
+    set s $Interactor(s)
+    scan [MainInteractorStartMotion $widget $x $y] "%d %d %d %d" xs ys x y 
+
+    switch $Module(activeID) {
+        "Editor" {
+            EditorControlB1 $x $y
+        }
+    }
+
+    MainInteractorCursor $s $xs $ys $x $y
+    MainInteractorRender
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainInteractorControlB1Release
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainInteractorControlB1Release {widget x y} {
+    global Interactor Module
+    
+    set s $Interactor(s)
+    scan [MainInteractorStartMotion $widget $x $y] "%d %d %d %d" xs ys x y 
+
+    switch $Module(activeID) {
+        "Editor" {
+            EditorControlB1Release $x $y
+        }
+    }
+
+    MainInteractorCursor $s $xs $ys $x $y
+    MainInteractorRender
 }
 
