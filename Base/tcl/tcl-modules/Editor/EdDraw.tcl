@@ -216,8 +216,6 @@ proc EdDrawBuildGUI {} {
         -command "EdDrawApply"} $Gui(WBA) {-width 8}
 
     pack $f.f $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
-
-
 }
 
 #-------------------------------------------------------------------------------
