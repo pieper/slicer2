@@ -89,6 +89,7 @@ vtkImageDrawROI::vtkImageDrawROI()
     this->sbox2.y = 0;
 
     this->Points = vtkPoints::New();
+    this->Samples = vtkPoints::New();
 
     this->Shape = ROI_SHAPE_POLYGON;
 }
@@ -111,6 +112,209 @@ vtkPoints* vtkImageDrawROI::GetPoints()
         p = p->GetNext();
     }
     return this->Points;
+}
+
+static void Interpolate (Point *p, double t, double x0, double y0, double x1,
+                         double y1, double x2, double y2, double x3, double y3)
+{
+    double x01 = (1.0 - t) * x0 + t * x1;
+    double y01 = (1.0 - t) * y0 + t * y1;
+    double x11 = (1.0 - t) * x1 + t * x2;
+    double y11 = (1.0 - t) * y1 + t * y2;
+    double x21 = (1.0 - t) * x2 + t * x3;
+    double y21 = (1.0 - t) * y2 + t * y3;
+    double x02 = (1.0 - t) * x01 + t * x11;
+    double y02 = (1.0 - t) * y01 + t * y11;
+    double x12 = (1.0 - t) * x11 + t * x21;
+    double y12 = (1.0 - t) * y11 + t * y21;
+    double x03 = (1.0 - t) * x02 + t * x12;
+    double y03 = (1.0 - t) * y01 + t * y12;
+    p->x = (int)x03;
+    p->y = (int)y03;
+}
+
+vtkPoints* vtkImageDrawROI::GetPoints(int density)
+{
+    // Samples closed curves only right now
+    // Can sample open curves by simply omitting lastPoint-firstPoint curve
+    this->Samples->Reset();
+    Point *p0 = this->firstPoint;
+    Point *p1 = this->firstPoint;
+    Point *p2 = NULL;
+    Point *p3 = NULL;
+    double oneThird = 0.333333333333;
+
+    // Zero points
+    if (!p1) return this->Samples;
+    p2 = p1->GetNext();
+
+    // One point
+    if (!p2)
+    {
+        this->Samples->InsertNextPoint(p1->x, p1->y, 0);
+        return this->Samples;
+    }
+    p3 = p2->GetNext();
+
+    // Two points
+    if (!p3)
+    {
+        this->Samples->InsertNextPoint(p1->x, p1->y, 0);
+        // Linearly interpolate between the two points
+        for (int j = 1; j <= density; j++)
+        {
+            double t = (double)j / (double)(density + 1.0);
+            double Xt = (1.0 - t) * (p1->x) + t * (p2->x);
+            double Yt = (1.0 - t) * (p1->y) + t * (p2->y);
+            this->Samples->InsertNextPoint((int)Xt, (int)Yt, 0);
+        }
+        this->Samples->InsertNextPoint(p2->x, p2->y, 0);
+        return this->Samples;
+    }
+
+    // Three or more points
+    // p0 == p1 == this->firstPoint, p2 == second point, p3 == third point
+    while (p1)
+    {
+        // Draw curve connecting p1 and p2
+        if (p1 == this->firstPoint)
+        {
+            // First curve--don't increment p0
+            double p2dx = 0.5 * (p3->x - p1->x);
+            double p2dy = 0.5 * (p3->y - p1->y);
+            double p2_p1x = p2->x - p1->x;
+            double p2_p1y = p2->y - p1->y;
+            double p2_p1sq = p2_p1x * p2_p1x + p2_p1y * p2_p1y;
+            double A = p2_p1x;
+            double B = p2_p1y;
+            double C = 0.5 * ((p1->x - p2->x) * (p1->x + p2->x) +
+                              (p1->y - p2->y) * (p1->y + p2->y));
+            double x0 = p2->x + p2dx;
+            double y0 = p2->y + p2dy;
+            double ax0by0c = A * x0 + B * y0 + C;
+            // Derivative at p0 is reflection of derivative at p2
+            // (p2dx, p2dy) over the line bisecting the edge connecting
+            // p1 and p2
+            double p1dx = p2->x - p1->x + p2dx + 2.0 *
+                          (p1->x - p2->x) / p2_p1sq * ax0by0c;
+            double p1dy = p2->y - p1->y + p2dy + 2.0 *
+                          (p1->y - p2->y) / p2_p1sq * ax0by0c;
+            for (int j = 1; j <= density; j++)
+            {
+                Point *p = new Point(0, 0);
+                double t = (double)j / (double)(density + 1.0);
+                Interpolate(p, t, p1->x, p1->y,
+                            p1->x + oneThird * p1dx,
+                            p1->y + oneThird * p1dy,
+                            p2->x - oneThird * p2dx,
+                            p2->y - oneThird * p2dy,
+                            p2->x, p2->y);
+                this->Samples->InsertNextPoint(p->x, p->y, 0);
+            }
+            p1 = p1->GetNext();
+            p2 = p2->GetNext();
+            p3 = p3->GetNext();
+        }
+        else if (p3)
+        {
+            // Middle curve
+            double p1dx = 0.5 * (p2->x - p0->x);
+            double p1dy = 0.5 * (p2->y - p0->y);
+            double p2dx = 0.5 * (p3->x - p1->x);
+            double p2dy = 0.5 * (p3->y - p1->y);
+            double plx = oneThird * p1dx + p1->x;
+            double ply = oneThird * p1dy + p1->y;
+            double prx = p2->x - oneThird * p2dx;
+            double pry = p2->y - oneThird * p2dy;
+            for (int j = 1; j <= density; j++)
+            {
+                Point *p = new Point(0, 0);
+                double t = (double)j / (double)(density + 1.0);
+                Interpolate(p, t, p1->x, p1->y, plx, ply, prx, pry,
+                            p2->x, p2->y);
+                this->Samples->InsertNextPoint(p->x, p->y, 0);
+            }
+            p0 = p0->GetNext();
+            p1 = p1->GetNext();
+            p2 = p2->GetNext();
+            p3 = p3->GetNext();
+        }
+        else if (p2 && !p3)
+        {
+            // Curve connecting last two control points
+            double p1dx = 0.5 * (p2->x - p0->x);
+            double p1dy = 0.5 * (p2->y - p0->y);
+            double p1_p2x = p1->x - p2->x;
+            double p1_p2y = p1->y - p2->y;
+            double p1_p2sq = p1_p2x * p1_p2x + p1_p2y * p1_p2y;
+            double A = p1->x - p2->x;
+            double B = p1->y - p2->y;
+            double C = 0.5 * ((p2->x - p1->x) * (p2->x + p1->x) +
+                              (p2->y - p1->y) * (p2->y + p1->y));
+            double x0 = p1->x + p1dx;
+            double y0 = p1->y + p1dy;
+            double ax0by0c = A * x0 + B * y0 + C;
+            // Derivative at p2 is reflection of derivative at p1
+            // (p1dx, p1dy) over the line bisecting the edge connecting
+            // p2 and p1
+            double p2dx = p1->x - p2->x + p1dx + 2.0 *
+                          (p2->x - p1->x) / p1_p2sq * ax0by0c;
+            double p2dy = p1->y - p2->y + p1dy + 2.0 *
+                          (p2->y - p1->y) / p1_p2sq * ax0by0c;
+            double plx = oneThird * p1dx + p1->x;
+            double ply = oneThird * p1dy + p1->y;
+            double prx = p2->x - oneThird * p2dx;
+            double pry = p2->y - oneThird * p2dy;
+            for (int j = 1; j <= density; j++)
+            {
+                Point *p = new Point(0, 0);
+                double t = (double)j / (double)(density + 1.0);
+                Interpolate(p, t, p1->x, p1->y, plx, ply, prx, pry,
+                            p2->x, p2->y);
+                this->Samples->InsertNextPoint(p->x, p->y, 0);
+            }
+            p0 = p0->GetNext();
+            p1 = p1->GetNext();
+            p2 = p2->GetNext();
+            // p3 is already NULL
+        }
+        else // !p2 && !p3; p1 is lastPoint
+        {
+            // Curve connecting lastPoint (p1) and firstPoint (p2)
+            p2 = this->firstPoint;
+            p3 = p2->GetNext();
+            double p1dx = 0.5 * (p2->x - p0->x);
+            double p1dy = 0.5 * (p2->y - p0->y);
+            double p2dx = 0.5 * (p3->x - p1->x);
+            double p2dy = 0.5 * (p3->y - p1->y);
+            double plx = oneThird * p1dx + p1->x;
+            double ply = oneThird * p1dy + p1->y;
+            double prx = p2->x - oneThird * p2dx;
+            double pry = p2->y - oneThird * p2dy;
+            for (int j = 1; j <= density; j++)
+            {
+                Point *p = new Point(0, 0);
+                double t = (double)j / (double)(density + 1.0);
+                Interpolate(p, t, p1->x, p1->y, plx, ply, prx, pry,
+                            p2->x, p2->y);
+                this->Samples->InsertNextPoint(p->x, p->y, 0);
+            }
+            p1 = NULL; // this is the last iteration: exit the loop now
+        }
+    }
+    return this->Samples;
+}
+
+void vtkImageDrawROI::LoadStackPolygon(vtkPoints* pts)
+{
+    this->Points->Reset();
+    int n = pts->GetNumberOfPoints();
+    vtkFloatingPointType *rasPt;
+    for (int i = 0; i < n; i++)
+    {
+        rasPt = pts->GetPoint(i);
+        this->Points->InsertNextPoint(rasPt[0], rasPt[1], rasPt[2]);
+    }
 }
 
 void vtkImageDrawROI::AppendPoint(int x, int y)
@@ -277,6 +481,123 @@ void vtkImageDrawROI::DeselectAllPoints()
     this->Modified();
 }
 
+// Insert a point (x,y) between two existing points (CTJ).
+void vtkImageDrawROI::InsertPoint(int x, int y)
+{
+    this->DeselectAllPoints();
+    // Select only the point after which we want to insert (x,y)
+    if (this->NumPoints >= 3) {
+        // 1. Find nearest control point p to (x,y)
+        // 2. Find control points pLeft, pRight before and after p
+        // 3. Calculate distances from pLeft and pRight to (x,y)
+        // 4. If pLeft is closer, then select pLeft; otherwise select p
+        // Special case 1: p is firstPoint.
+        //                 Select p.  Insert point before or after p
+        //                 depending on whether pLeft or pRight is closer.
+        // Special case 2: p is lastPoint.
+        //                 Select p.  Insert point before or after p
+        //                 depending on whether pLeft or pRight is closer.
+        Point *p = this->firstPoint;
+        int dx = x - p->x;
+        int dy = y - p->y;
+        int distsq = dx * dx + dy * dy;
+        int mindistsq = distsq;
+        Point *minp = this->firstPoint;
+        p = p->GetNext();
+        Point *pLeft = this->firstPoint;
+        Point *minpLeft = pLeft;
+        while (p != NULL) {
+            dx = x - p->x;
+            dy = y - p->y;
+            distsq = dx * dx + dy * dy;
+            if (distsq < mindistsq) {
+                minp = p;
+                mindistsq = distsq;
+                minpLeft = pLeft;
+            }
+            pLeft = p;
+            p = p->GetNext();
+        }
+        if (minp == this->firstPoint)
+        {
+            minpLeft = this->lastPoint;
+            Point *minpRight = minp->GetNext();
+            int dxLeft = x - minpLeft->x;
+            int dyLeft = y - minpLeft->y;
+            int dxRight = x - minpRight->x;
+            int dyRight = y - minpRight->y;
+            int leftDistsq = dxLeft * dxLeft + dyLeft * dyLeft;
+            int rightDistsq = dxRight * dxRight + dyRight * dyRight;
+            if (leftDistsq < rightDistsq)
+            {
+                if (this->Closed)
+                {
+                    // Doesn't matter whether we add point to
+                    // beginning or end of polygon; let's add
+                    // to end since it's easier
+                    this->lastPoint->Select();
+                    this->NumSelectedPoints++;
+                    this->InsertAfterSelectedPoint(x, y);
+                }
+                else // Open contour
+                {
+                    // Add to beginning of polygon since the
+                    // first point is closer to (x,y) than the
+                    // last point
+                    Point *p = new Point(x,y);
+                    p->next = this->firstPoint;
+                    this->firstPoint = p;
+                    p->Select();
+                    this->NumSelectedPoints++;
+                    this->NumPoints++;
+                }
+            }
+            else
+            {
+                minp->Select();
+                this->NumSelectedPoints++;
+                this->InsertAfterSelectedPoint(x, y);
+            }
+            return;
+        }
+        else if (minp == this->lastPoint)
+        {
+            // For last point: regardless of whether curve is open or
+            // closed, simply add point based on distance from last point
+            // to last point's left point and first point
+            Point *minpRight = this->firstPoint;
+            int dxLeft = x - minpLeft->x;
+            int dyLeft = y - minpLeft->y;
+            int dxRight = x - minpRight->x;
+            int dyRight = y - minpRight->y;
+            int leftDistsq = dxLeft * dxLeft + dyLeft * dyLeft;
+            int rightDistsq = dxRight * dxRight + dyRight * dyRight;
+            if (leftDistsq < rightDistsq) minpLeft->Select();
+            else minp->Select();
+        }
+        else
+        {
+            Point *minpRight = minp->GetNext();
+            int dxLeft = x - minpLeft->x;
+            int dyLeft = y - minpLeft->y;
+            int dxRight = x - minpRight->x;
+            int dyRight = y - minpRight->y;
+            int leftDistsq = dxLeft * dxLeft + dyLeft * dyLeft;
+            int rightDistsq = dxRight * dxRight + dyRight * dyRight;
+            if (leftDistsq < rightDistsq) minpLeft->Select();
+            else minp->Select();
+        }
+        this->NumSelectedPoints++;
+    }
+    else if (this->NumPoints == 2) {
+        Point *p = this->firstPoint;
+        p->Select();
+        this->NumSelectedPoints++;
+    }
+    // Insert (x,y) after the selected point.
+    this->InsertAfterSelectedPoint(x, y);
+}
+
 // Insert a new point at (x,y) after the last selected point.
 // If no points exist, create a new one and select it.
 // If points exist, but none are selected, select the last.
@@ -432,6 +753,64 @@ void vtkImageDrawROI::MoveAllPoints(int deltaX, int deltaY)
         p = p->GetNext();
     }
     this->Modified();
+}
+
+int vtkImageDrawROI::IsNearSelected(int x, int y)
+{
+    int r = 3; // Distance for "nearness" in pixels
+    int r2 = r * r;
+    if (this->NumSelectedPoints < 1) return 0;
+    if (this->NumSelectedPoints == 1)
+    {
+        Point *p = this->firstPoint;
+        while (!p->IsSelected())
+            p = p->GetNext();
+        // Now p is the single selected point
+        int dx = x - p->x;
+        int dy = y - p->y;
+        return (-r <= dx && dx <= r && -r <= dy && dy <= r) ? 1 : 0;
+    }
+    // There are 2 or more selected points
+    Point *p0 = this->firstPoint;
+    while (!p0->IsSelected())
+        p0 = p0->GetNext();
+    // First selected point was found; p0 points to it
+    Point *p1;
+    int distsq = 100000;
+    for (int i = 1; i < this->NumSelectedPoints; i++)
+    {
+        p1 = p0->GetNext();
+        while (!p1->IsSelected())
+            p1 = p1->GetNext();
+        // Next selected point was found; p1 points to it
+        // Compute distance from (x,y) to line segment p0p1
+        // using algorithm from
+        // http://softsurfer.com/Archive/algorithm_0102/algorithm_0102.htm
+        // in the section "Distance to Ray or Segment"
+        int vx = p1->x - p0->x;
+        int vy = p1->y - p0->y;
+        int wx = x - p0->x;
+        int wy = y - p0->y;
+        int c1, c2;
+        if ((c1 = wx * vx + wy * vy) <= 0) distsq = wx * wx + wy * wy;
+        if (distsq <= r2) return 1;
+        else if ((c2 = vx * vx + vy * vy) <= c1)
+        {
+            int ux = x - p1->x;
+            int uy = y - p1->y;
+            distsq = ux * ux + uy * uy;
+        }
+        if (distsq <= r2) return 1;
+        float b = (float)c1 / (float)c2;
+        int pbx = (int)(p0->x + b * vx + 0.5);
+        int pby = (int)(p0->y + b * vy + 0.5);
+        int dx = x - pbx;
+        int dy = y - pby;
+        distsq = dx * dx + dy * dy;
+        if (distsq <= r2) return 1;
+        p0 = p1;
+    }
+    return 0;
 }
 
 static void ConvertColor(float *f, unsigned char *c)
@@ -925,6 +1304,164 @@ void vtkImageDrawROI::DrawBoxes(vtkImageData *outData, int outExt[6])
 }
 //<< AT 01/19/01
 
+static void DrawCurve(double x0, double y0, double x1, double y1,
+                      double x2, double y2, double x3, double y3,
+                      vtkImageData *outData, int outExt[6],
+                      unsigned char color[3])
+{       
+    double x3_x0 = x3 - x0;
+    double y3_y0 = y3 - y0;
+    double d03 = x3_x0 * x3_x0 + y3_y0 * y3_y0;
+    if (d03 <= 4.0)
+    {
+        // Curve can be approximated by a line segment
+        unsigned char *outPtr = (unsigned char *) \
+            outData->GetScalarPointerForExtent(outExt);
+        int nx, nc, nxnc;
+        nx = outExt[1] - outExt[0] + 1;
+        nc = outData->GetNumberOfScalarComponents();
+        nxnc = nx * nc;
+        DrawLine((int)x0, (int)y0, (int)x3, (int)y3, color, outPtr, nxnc, nc);
+    }
+    else
+    {
+        // Curve needs to be subdivided further
+        double x01 = 0.5 * (x0 + x1);
+        double y01 = 0.5 * (y0 + y1);
+        double x11 = 0.5 * (x1 + x2);
+        double y11 = 0.5 * (y1 + y2);
+        double x21 = 0.5 * (x2 + x3);
+        double y21 = 0.5 * (y2 + y3);
+        double x02 = 0.5 * (x01 + x11);
+        double y02 = 0.5 * (y01 + y11);
+        double x12 = 0.5 * (x11 + x21);
+        double y12 = 0.5 * (y11 + y21);
+        double x03 = 0.5 * (x02 + x12);
+        double y03 = 0.5 * (y02 + y12);
+        DrawCurve(x0, y0, x01, y01, x02, y02, x03, y03, outData, outExt, color);
+        DrawCurve(x03, y03, x12, y12, x21, y21, x3, y3, outData, outExt, color);
+    }
+}
+
+void vtkImageDrawROI::DrawSpline(vtkImageData *outData, int outExt[6])
+{   
+    if (NumPoints < 2) return; // No nondegenerate curve to draw for < 2 points
+    if (NumPoints == 2)
+    {
+        // Connect the two points with a line segment
+        unsigned char *outPtr = (unsigned char *) \
+            outData->GetScalarPointerForExtent(outExt);
+        int nx, nc, nxnc;
+        nx = outExt[1] - outExt[0] + 1;
+        nc = outData->GetNumberOfScalarComponents();
+        nxnc = nx * nc;
+        unsigned char color[3];
+        color[0] = 0;
+        color[1] = 255;
+        color[2] = 0;
+        Point *p = this->firstPoint;
+        Point *q = p->GetNext();
+        DrawLine(p->x, p->y, q->x, q->y, color, outPtr, nxnc, nc);
+        return;
+    }
+    double oneThird = 0.333333333333;
+    Point *p0 = this->firstPoint; 
+    Point *p1 = p0->GetNext();
+    Point *p2 = p1->GetNext();
+    Point *p3 = p2->GetNext(); // if only 3 points, this is NULL
+    double plx, ply, prx, pry; // intermediate point variables
+    double p2dx, p2dy; // derivative at p2
+    // Draw first segment (curve connecting p0 and p1)
+    double p1dx = 0.5 * (p2->x - p0->x);
+    double p1dy = 0.5 * (p2->y - p0->y);
+    double p1_p0x = p1->x - p0->x;
+    double p1_p0y = p1->y - p0->y;
+    double p1_p0sq = p1_p0x * p1_p0x + p1_p0y * p1_p0y;
+    double A = p1_p0x;
+    double B = p1_p0y;
+    double C = 0.5 * ((p0->x - p1->x) * (p0->x + p1->x) +
+                      (p0->y - p1->y) * (p0->y + p1->y));
+    double x0 = p1->x + p1dx;
+    double y0 = p1->y + p1dy;
+    double ax0by0c = A * x0 + B * y0 + C;
+    // Derivative at p0 is reflection of derivative at p1 (p1dx, p1dy) over the
+    // line bisecting the edge connecting p0 and p1
+    double p0dx = p1->x - p0->x + p1dx + 2.0 * (p0->x - p1->x) / p1_p0sq *
+                  ax0by0c;
+    double p0dy = p1->y - p0->y + p1dy + 2.0 * (p0->y - p1->y) / p1_p0sq *
+                  ax0by0c;
+    unsigned char color[3];
+    color[0] = 0;
+    color[1] = 255;
+    color[2] = 0;
+    DrawCurve(p0->x, p0->y, p0->x + oneThird * p0dx, p0->y + oneThird * p0dy,
+              p1->x - oneThird * p1dx, p1->y - oneThird * p1dy, p1->x, p1->y,
+              outData, outExt, color);
+    while (p3 != NULL)
+    {
+        // Draw middle segment (curve connecting p1 and p2)
+        p1dx = 0.5 * (p2->x - p0->x);
+        p1dy = 0.5 * (p2->y - p0->y);
+        p2dx = 0.5 * (p3->x - p1->x);
+        p2dy = 0.5 * (p3->y - p1->y);
+        plx = oneThird * p1dx + p1->x;
+        ply = oneThird * p1dy + p1->y;
+        prx = p2->x - oneThird * p2dx;
+        pry = p2->y - oneThird * p2dy;
+        DrawCurve(p1->x, p1->y, plx, ply, prx, pry, p2->x, p2->y,
+                  outData, outExt, color);
+        p0 = p0->GetNext();
+        p1 = p1->GetNext();
+        p2 = p2->GetNext();
+        p3 = p3->GetNext();
+    }
+    // Draw last segment (curve connecting p1 and p2)
+    p1dx = 0.5 * (p2->x - p0->x);
+    p1dy = 0.5 * (p2->y - p0->y);
+    double p1_p2x = p1->x - p2->x;
+    double p1_p2y = p1->y - p2->y;
+    double p1_p2sq = p1_p2x * p1_p2x + p1_p2y * p1_p2y;
+    A = p1->x - p2->x;
+    B = p1->y - p2->y;
+    C = 0.5 * ((p2->x - p1->x) * (p2->x + p1->x) +
+               (p2->y - p1->y) * (p2->y + p1->y));
+    ax0by0c = A * x0 + B * y0 + C;
+    // Derivative at p2 is reflection of derivative at p1 (p1dx, p1dy) over the
+    // line bisecting the edge connecting p2 and p1
+    p2dx = p1->x - p2->x + p1dx + 2.0 * (p2->x - p1->x) / p1_p2sq *
+           ax0by0c;
+    p2dy = p1->y - p2->y + p1dy + 2.0 * (p2->y - p1->y) / p1_p2sq *
+           ax0by0c;
+    plx = oneThird * p1dx + p1->x;
+    ply = oneThird * p1dy + p1->y;
+    prx = p2->x - oneThird * p2dx;
+    pry = p2->y - oneThird * p2dy;
+    DrawCurve(p1->x, p1->y, plx, ply, prx, pry, p2->x, p2->y, outData, outExt,
+              color);
+    // Connect last point and first point if curve is closed
+    if (this->Closed)
+    {
+        // Currently p2 is last point, p3 is null, and p1, p0 consecutively
+        // are before p2.  Move p0, p1 forward by one point, and set p2, p3
+        // to be the first and second points, respectively.
+        p0 = p0->GetNext();
+        p1 = p1->GetNext();
+        p2 = this->firstPoint;
+        p3 = p2->GetNext();
+        // Draw the segment (curve connecting p1 and p2)
+        p1dx = 0.5 * (p2->x - p0->x);
+        p1dy = 0.5 * (p2->y - p0->y);
+        p2dx = 0.5 * (p3->x - p1->x);
+        p2dy = 0.5 * (p3->y - p1->y);
+        plx = oneThird * p1dx + p1->x;
+        ply = oneThird * p1dy + p1->y;
+        prx = p2->x - oneThird * p2dx;
+        pry = p2->y - oneThird * p2dy;
+        DrawCurve(p1->x, p1->y, plx, ply, prx, pry, p2->x, p2->y,
+                  outData, outExt, color);
+    }
+}
+
 //----------------------------------------------------------------------------
 // Description:
 // this is cool
@@ -971,6 +1508,7 @@ void vtkImageDrawROI::ExecuteData(vtkDataObject *out)
     // Draw and connect points
     if (!(this->HideROI))
     {
+        this->DrawSpline(outData, outExt);
         switch (this->GetShape())
         {
         case ROI_SHAPE_POLYGON:
