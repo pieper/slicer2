@@ -113,7 +113,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.107 $} {$Date: 2005/05/10 21:12:25 $}]
+            {$Revision: 1.108 $} {$Date: 2005/07/01 15:15:58 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -721,7 +721,7 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
 
     pack $f.fActive -side top -pady $Gui(pad) -padx $Gui(pad)
     pack $f.fFile  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
-    eval {label $fExport.l -text "Export Analyze Format\nWarning: there is a pixel shift\nbug in the output"} $Gui(WLA)
+    eval {label $fExport.l -text "Export Analyze Format\nWarning: there is a pixel shift\nbug in the output\nOnly isometric voxels exported"} $Gui(WLA)
     pack  $fExport.l -side top -padx $Gui(pad)    
     pack $f.fCORFile  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
     eval {label $fExport.ll -text "Export COR Format\nWarning: only 1mm 256 cubed\n8 bit images supported"} $Gui(WLA)
@@ -2043,6 +2043,7 @@ proc VolumesAnalyzeExport {} {
     export_aw Delete
     export_flipX Delete
     export_flipY Delete
+    $w.isv pre_destroy
     catch "destroy $w"
 }
 
@@ -2179,13 +2180,14 @@ proc VolumesNrrdExport {} {
     vtkMatrix4x4 export_matrix
     eval export_matrix DeepCopy [Volume($v,node) GetRasToVtkMatrix]
     export_matrix Invert
+    export_matrix Transpose
     set space_directions [format "(%g, %g, %g) (%g, %g, %g) (%g, %g, %g)" \
         [export_matrix GetElement 0 0]\
         [export_matrix GetElement 0 1]\
         [export_matrix GetElement 0 2]\
-        [export_matrix GetElement 1 0]\
-        [export_matrix GetElement 1 1]\
-        [export_matrix GetElement 1 2]\
+        [expr -1. * [export_matrix GetElement 1 0]]\
+        [expr -1. * [export_matrix GetElement 1 1]]\
+        [expr -1. * [export_matrix GetElement 1 2]]\
         [export_matrix GetElement 2 0]\
         [export_matrix GetElement 2 1]\
         [export_matrix GetElement 2 2] ]
