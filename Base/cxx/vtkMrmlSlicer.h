@@ -70,6 +70,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageDouble2D.h"
 #include "vtkIndirectLookupTable.h"
 #include "vtkImageDrawROI.h"
+#include "vtkStackOfPolygons.h"
 #include "vtkCollection.h"
 #include "vtkVoidArray.h"
 
@@ -467,6 +468,8 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
     this->PolyDraw->DeleteSelectedPoints();};
   void DrawDeleteAll() {
     this->PolyDraw->DeleteAllPoints();};
+  void DrawInsert(int x, int y) {
+    this->PolyDraw->InsertPoint(x, y);};
   void DrawShowPoints(int s) {
     if (s) this->PolyDraw->SetPointRadius(1); 
     else this->PolyDraw->SetPointRadius(0);};
@@ -493,7 +496,12 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
     this->PolyDraw->EndSelectBox(x, y);};
   vtkPoints* DrawGetPoints() {
     return this->PolyDraw->GetPoints();}
-  void DrawComputeIjkPoints();
+  vtkPoints* DrawGetPoints(int density) {
+    return this->PolyDraw->GetPoints(density);}
+  void DrawComputeIjkPoints() {
+    this->DrawComputeIjkPoints(0);}
+  void DrawComputeIjkPoints(int density);
+  void DrawComputeIjkPoints(int s, int p);
   vtkGetObjectMacro(DrawIjkPoints, vtkPoints);
   void DrawSetShapeToPolygon() {this->PolyDraw->SetShapeToPolygon();};
   void DrawSetShapeToLines() {this->PolyDraw->SetShapeToLines();};
@@ -508,6 +516,11 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   void DrawSetShapeToBoxes() { this->PolyDraw->SetShapeToBoxes(); }
   void DrawSelectPoint(int x, int y) { this->PolyDraw->SelectPoint(x, y); }
   void DrawDeselectPoint(int x, int y) { this->PolyDraw->DeselectPoint(x, y); }
+  // (CTJ) To detect whether mouse (x,y) is "near" selected points
+  int DrawIsNearSelected(int x, int y)
+  {return this->PolyDraw->IsNearSelected(x, y);}
+  void DrawSetClosed(int closed)
+  { this->PolyDraw->SetClosed(closed); }
 
   void DrawSetStartMethod(void (*f)(void *), void *arg)
     {
@@ -521,6 +534,86 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
       this->PolyDraw->SetStartMethodArgDelete(f);
 #endif
     }
+
+  vtkPoints* CopyGetPoints()
+  {
+      return this->CopyPoly;
+  };
+
+  void CopySetDrawPoints()
+  {
+      int n = this->DrawGetNumPoints();
+      if (n < 1) return;
+      this->CopyPoly->Reset();
+      vtkPoints *polygon = this->DrawGetPoints();
+      vtkFloatingPointType *rasPt;
+      for (int i = 0; i < n; i++)
+      {
+          rasPt = polygon->GetPoint(i);
+          this->CopyPoly->InsertNextPoint(rasPt[0], rasPt[1], rasPt[2]);
+      }
+  };
+
+  // ---- Stack of polygons ---- //
+  void StackSetPolygon(int s, int d)
+  {
+    PolyStack->SetPolygon(this->PolyDraw->GetPoints(), s, d);
+  };
+
+  vtkPoints* StackGetPoints(int s)
+  {
+    return this->PolyStack->GetPoints(s);
+  };
+
+  vtkPoints* StackGetPoints(int s, int p)
+  {
+    return this->PolyStack->GetPoints(s, p);
+  };
+
+  void StackSetPolygon(int s, int p, int d, int closed, int preshape)
+  {
+      PolyStack->SetPolygon(this->PolyDraw->GetPoints(), s, p, d, closed, preshape);
+  };
+
+  void StackRemovePolygon(int s, int p)
+  {
+      this->PolyStack->RemovePolygon(s, p);
+  };
+
+  int StackGetNumberOfPoints(int s)
+  {
+      return this->PolyStack->GetNumberOfPoints(s);
+  };
+
+  int StackGetInsertPosition(int s)
+  {
+      return this->PolyStack->ListGetInsertPosition(s);
+  };
+
+  int StackGetNextInsertPosition(int s, int p)
+  {
+      return this->PolyStack->ListGetNextInsertPosition(s, p);
+  };
+
+  int StackGetRetrievePosition(int s)
+  {
+      return this->PolyStack->ListGetRetrievePosition(s);
+  };
+
+  int StackGetNextRetrievePosition(int s, int p)
+  {
+      return this->PolyStack->ListGetNextRetrievePosition(s, p);
+  };
+
+  int StackGetPreshape(int s, int p)
+  {
+      return this->PolyStack->GetPreshape(s, p);
+  };
+
+  void StackClear()
+  {
+      this->PolyStack->Clear();
+  };
 
   // Necessary for calculating the ROI windowsize
   // TO DO: Add check for s
@@ -634,6 +727,8 @@ protected:
   vtkImageZoom2D       *Zoom[NUM_SLICES];
   vtkImageDouble2D     *Double[NUM_SLICES];
   vtkImageDrawROI      *PolyDraw;
+  vtkStackOfPolygons *PolyStack;
+  vtkPoints            *CopyPoly;
   vtkImageReformatIJK  *ReformatIJK;
   vtkMrmlDataVolume        *NoneVolume;
   vtkMrmlVolumeNode    *NoneNode;
