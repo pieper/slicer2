@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.83 $} {$Date: 2005/04/04 15:50:46 $}]
+    {$Revision: 1.84 $} {$Date: 2005/07/01 14:19:46 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -494,7 +494,7 @@ proc MainVolumesRead {v} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesWrite {v prefix} {
-    global Volume Gui Mrml tcl_platform
+    global Volume Gui Mrml tcl_platform Editor
 
     if {$v == ""} {
         return
@@ -556,57 +556,74 @@ proc MainVolumesWrite {v prefix} {
     }
     Volume($v,node) SetFullPrefix $fileFull
 
-    if { [Volume($v,node) GetFilePattern] == "" } {
-        # no readwrite means it'll use the ImageWriter which needs this pattern
-        Volume($v,node) SetFilePattern "%s.%d"
-    }
-    if { [Volume($v,vol) GetReadWrite] == "" } {
-        # no readwrite means it'll use the ImageWriter which needs this pattern and type
-        Volume($v,node) SetFilePattern "%s.%03d"
-        Volume($v,node) SetFileType "Headerless"
-    }
+    switch $Editor(fileformat) {
+        Standard {
+            if { [Volume($v,node) GetFilePattern] == "" } {
+                # no readwrite means it'll use the ImageWriter which needs this pattern
+                Volume($v,node) SetFilePattern "%s.%d"
+            }
+            if { [Volume($v,vol) GetReadWrite] == "" } {
+                # no readwrite means it'll use the ImageWriter which needs this pattern and type
+                Volume($v,node) SetFilePattern "%s.%03d"
+                Volume($v,node) SetFileType "Headerless"
+            }
 
-    # Determine if littleEndian
-    if {$tcl_platform(byteOrder) == "littleEndian"} {
-        Volume($v,node) SetLittleEndian 1
-    } else {
-        Volume($v,node) SetLittleEndian 0
-    }
+            # Determine if littleEndian
+            if {$tcl_platform(byteOrder) == "littleEndian"} {
+                Volume($v,node) SetLittleEndian 1
+            } else {
+                Volume($v,node) SetLittleEndian 0
+            }
 
-    # Write volume data
-    set Gui(progressText) "Writing [Volume($v,node) GetName]"
-    puts "Writing '$fileFull' ..."
-    Volume($v,vol) Write
-    puts " ...checking to see if need to rename volume files from 0-(n-1) to 1-n"
-    set renumberFlag [MainVolumesRenumber $v]
-    if {$renumberFlag == 1} {
-        puts " ...renumbering successful"
-    } else {
-        if {$renumberFlag == 0} {
-            puts " ...renumbering not necessary"
-        } else {
-            puts " ...renumbering failed."
+            # Write volume data
+            set Gui(progressText) "Writing [Volume($v,node) GetName]"
+            puts "Writing '$fileFull' ..."
+            Volume($v,vol) Write
+            puts " ...checking to see if need to rename volume files from 0-(n-1) to 1-n"
+            set renumberFlag [MainVolumesRenumber $v]
+            if {$renumberFlag == 1} {
+                puts " ...renumbering successful"
+            } else {
+                if {$renumberFlag == 0} {
+                    puts " ...renumbering not necessary"
+                } else {
+                    puts " ...renumbering failed."
+                }
+            }
+            puts " ...done."
+
+            # put MRML file in dir where volume was saved, name it after the volume
+            set filename [file join [file dirname $fileFull] $name.xml]
+
+            # Write MRML file
+            vtkMrmlTree volumeTree
+            volumeTree AddItem Volume($v,node)
+            volumeTree Write $filename
+            if {[volumeTree GetErrorCode] != 0} {
+                puts "ERROR: MainVolumesWrite: unable to write MRML file $filename"
+                DevErrorWindow "ERROR: MainVolumesWrite: unable to write MRML file $filename"
+                volumeTree RemoveAllItems
+                volumeTree Delete
+                return
+            }
+            volumeTree RemoveAllItems
+            volumeTree Delete
+            puts "Saved MRML file: $filename"
+        }
+        ".pts" {
+            # Determine if littleEndian
+            if {$tcl_platform(byteOrder) == "littleEndian"} {
+                Volume($v,node) SetLittleEndian 1
+            } else {
+                Volume($v,node) SetLittleEndian 0
+            }
+
+            # Write volume data
+            set Gui(progressText) "Writing [Volume($v,node) GetName]"
+            puts "Writing '$fileFull.pts' ..."
+            Volume($v,vol) WritePTSFromStack $fileFull.pts
         }
     }
-    puts " ...done."
-
-    # put MRML file in dir where volume was saved, name it after the volume
-    set filename [file join [file dirname $fileFull] $name.xml]
-
-    # Write MRML file
-    vtkMrmlTree volumeTree
-    volumeTree AddItem Volume($v,node)
-    volumeTree Write $filename
-    if {[volumeTree GetErrorCode] != 0} {
-        puts "ERROR: MainVolumesWrite: unable to write MRML file $filename"
-        DevErrorWindow "ERROR: MainVolumesWrite: unable to write MRML file $filename"
-        volumeTree RemoveAllItems
-        volumeTree Delete
-        return
-    }
-    volumeTree RemoveAllItems
-    volumeTree Delete
-    puts "Saved MRML file: $filename"
 
     # Reset the pathnames to be relative to Mrml(dir)
     Volume($v,node) SetFilePrefix $filePrefix
