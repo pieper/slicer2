@@ -43,6 +43,7 @@
 #   EdDrawLabel
 #   EdDrawUpdate
 #   EdDrawApply
+#   EdDrawUnapply
 #==========================================================================auto=
 
 
@@ -70,9 +71,15 @@ proc EdDrawInit {} {
 
     set Ed($e,mode)   Draw
     set Ed($e,delete) Yes
-    set Ed($e,radius) 0
+    set Ed($e,radius) 2
     set Ed($e,shape)  Polygon
+    set Ed($e,preshape) Polygon
     set Ed($e,render) Active
+    set Ed($e,density) 3
+    set Ed($e,slice) -1
+    set Ed($e,polynum) -1
+    set Ed($e,unapplynum) -1
+    set Ed($e,closed) Closed
 
     set Ed($e,eventManager) {}
     
@@ -97,10 +104,11 @@ proc EdDrawBuildGUI {} {
     frame $f.fDelete  -bg $Gui(activeWorkspace)
     frame $f.fGrid    -bg $Gui(activeWorkspace)
     frame $f.fBtns    -bg $Gui(activeWorkspace)
+    frame $f.fClosed  -bg $Gui(activeWorkspace)
     frame $f.fApply   -bg $Gui(activeWorkspace)
     frame $f.fToggle  -bg $Gui(activeWorkspace)
-    pack $f.fGrid $f.fBtns $f.fMode $f.fDelete $f.fRender $f.fApply\
-        -side top -pady 2 -fill x
+    pack $f.fGrid $f.fBtns $f.fClosed $f.fMode $f.fDelete \
+        $f.fRender $f.fApply -side top -pady 2 -fill x
     pack $f.fToggle -side bottom -pady 4 -fill x
     
     EdBuildRenderGUI $Ed(EdDraw,frame).fRender Ed(EdDraw,render)
@@ -113,7 +121,7 @@ proc EdDrawBuildGUI {} {
     frame $f.fMode -bg $Gui(activeWorkspace)
     eval {label $f.fMode.lMode -text "Mode:"} $Gui(WLA)
     pack $f.fMode.lMode -side left -padx 0 -pady 0
-    foreach mode "Draw Select Move" {
+    foreach mode "Draw Select Move Insert" {
         eval {radiobutton $f.fMode.r$mode \
             -text "$mode" -variable Ed(EdDraw,mode) -value $mode \
             -width [expr [string length $mode] +1] \
@@ -158,28 +166,59 @@ proc EdDrawBuildGUI {} {
 
     # Radius
     eval {label $f.lRadius -text "Point Radius:"} $Gui(WLA)
-    eval {entry $f.eRadius -width 6 \
+    eval {entry $f.eRadius -width 3 \
         -textvariable Ed(EdDraw,radius)} $Gui(WEA)
         bind $f.eRadius <Return> "EdDrawUpdate SetRadius; RenderActive"
-    grid $f.lRadius $f.eRadius -padx $Gui(pad) -pady $Gui(pad) -sticky e
+
+    # Sampling density
+    eval {label $f.lDensity -width 12 -text "Sample Density:"} $Gui(WLA)
+    eval {entry $f.eDensity -width 3 \
+        -textvariable Ed(EdDraw,density)} $Gui(WEA)
+
+    grid $f.lRadius $f.eRadius $f.lDensity $f.eDensity -padx 2 -pady $Gui(pad) -sticky e
     grid $f.eRadius -sticky w
+    grid $f.lDensity -sticky e 
+    grid $f.eDensity -sticky w
 
     #-------------------------------------------
     # Draw->Btns frame
     #-------------------------------------------
     set f $Ed(EdDraw,frame).fBtns
 
-    eval {button $f.bSelectAll -text "Select All" \
-        -command "EdDrawUpdate SelectAll; RenderActive"} $Gui(WBA) {-width 16}
-    eval {button $f.bDeselectAll -text "Deselect All" \
-        -command "EdDrawUpdate DeselectAll; RenderActive"} $Gui(WBA) {-width 16}
-    eval {button $f.bDeleteSel -text "Delete Selected" \
-        -command "EdDrawUpdate DeleteSelected; RenderActive"} $Gui(WBA) {-width 16}
-    eval {button $f.bDeleteAll -text "Delete All" \
-        -command "EdDrawUpdate DeleteAll; RenderActive"} $Gui(WBA) {-width 16}
+    eval {menubutton $f.mbEdit -text "Edit:" -relief raised -bd 2 \
+        -width 6 -menu $f.mbEdit.m} $Gui(WMBA)
+    eval {menu $f.mbEdit.m} $Gui(WMA)
+    set editMenu $f.mbEdit.m
+    $editMenu add command -label "Cut             (CTRL+X)" \
+        -command "EdDrawUpdate Cut; RenderActive"
+    $editMenu add command -label "Copy            (CTRL+C)" \
+        -command "EdDrawUpdate Copy; RenderActive"
+    $editMenu add command -label "Paste           (CTRL+V)" \
+        -command "EdDrawUpdate Paste; RenderActive"
+    $editMenu add command -label "Select All      (CTRL+A)" \
+        -command "EdDrawUpdate SelectAll; RenderActive"
+    $editMenu add command -label "Deselect All" \
+        -command "EdDrawUpdate DeselectAll; RenderActive"
+    $editMenu add command -label "Delete Selected (DELETE)" \
+        -command "EdDrawUpdate DeleteSelected; RenderActive"
+    $editMenu add command -label "Delete All      (CTRL+D)" \
+        -command "EdDrawUpdate DeleteAll; RenderActive"
+    pack $f.mbEdit -side left -padx $Gui(pad) -pady 0
 
-    grid $f.bSelectAll $f.bDeselectAll  -padx $Gui(pad) -pady $Gui(pad)
-    grid $f.bDeleteSel $f.bDeleteAll    -padx $Gui(pad) -pady $Gui(pad)
+    #-------------------------------------------
+    # Draw->Closed frame
+    #-------------------------------------------
+    set f $Ed(EdDraw,frame).fClosed
+
+    eval {label $f.clopen -text "Contour Topology:"} $Gui(WLA)
+    pack $f.clopen -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
+
+    foreach s "Closed Open" text "Closed Open" width "8 6" {
+        eval {radiobutton $f.r$s -width $width -indicatoron 0\
+            -command "EdDrawUpdate SetShape; RenderActive" \
+            -text "$text" -value "$s" -variable Ed(EdDraw,closed)} $Gui(WCA)
+        pack $f.r$s -side left -fill x -anchor e
+    }
 
     #-------------------------------------------
     # Draw->Toggle frame
@@ -204,9 +243,9 @@ proc EdDrawBuildGUI {} {
     eval {label $f.f.l -text "Shape:"} $Gui(WLA)
     pack $f.f.l -side left -padx $Gui(pad)
 
-    foreach shape "Polygon Lines Points" {
+    foreach shape "Polygon Points" {
         eval {radiobutton $f.f.r$shape -width [expr [string length $shape]+1] \
-            -text "$shape" -variable Ed(EdDraw,shape) -value $shape \
+            -text "$shape" -variable Ed(EdDraw,preshape) -value $shape \
             -command "EdDrawUpdate SetShape; RenderActive" \
             -indicatoron 0} $Gui(WCA)
         pack $f.f.r$shape -side left 
@@ -214,8 +253,11 @@ proc EdDrawBuildGUI {} {
 
     eval {button $f.bApply -text "Apply" \
         -command "EdDrawApply"} $Gui(WBA) {-width 8}
+    eval {button $f.bUnapply -text "Unapply" \
+        -command "EdDrawUnapply; RenderActive"} $Gui(WBA) {-width 8}
 
-    pack $f.f $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
+    # To make Apply, Unapply in same line, make a new frame for them
+    pack $f.f $f.bApply $f.bUnapply -side top -padx $Gui(pad) -pady $Gui(pad)
 }
 
 #-------------------------------------------------------------------------------
@@ -237,6 +279,11 @@ proc EdDrawEnter {} {
         eval Slicer DrawSetColor $color
     } else {
         Slicer DrawSetColor 0 0 0
+    }
+    if {$Ed($e,closed) == "Closed"} {
+        Slicer DrawSetClosed 1
+    } else {
+        Slicer DrawSetClosed 0
     }
 
     # use the bindings stack for adding new bindings.
@@ -295,29 +342,22 @@ proc EdDrawUpdate {type} {
                     set Ed($e,mode) Select
                 }
                 "Select" {
-                    set Ed($e,mode) Move
+                    set Ed($e,mode) Insert
                 }
                 "Move" {
+                    set Ed($e,mode) Insert
+                }
+                "Insert" {
                     set Ed($e,mode) Draw
                 }
             }
         }
         Delete {
-            switch $Ed($e,mode) {
-                "Draw" {
-                    Slicer DrawDeleteSelected
-                    if {0} {
-                        EditorInsertPoint update
-                    }
-                    MainInteractorRender
-                }
-                "Select" {
-                    # nothing
-                }
-                "Move" {
-                    # nothing
-                }
+            Slicer DrawDeleteSelected
+            if {0} {
+                EditorInsertPoint update
             }
+            MainInteractorRender
         }
         "0" {
             switch $Ed($e,mode) {
@@ -330,11 +370,14 @@ proc EdDrawUpdate {type} {
                 "Move" {
                     # nothing
                 }
+                "Insert" {
+                    # nothing
+                }
             }
         }
         SelectAll {
             Slicer DrawSelectAll
-            set Ed($e,mode) Move
+            set Ed($e,mode) Select
         }
         DeselectAll {
             Slicer DrawDeselectAll
@@ -353,8 +396,55 @@ proc EdDrawUpdate {type} {
             set Ed($e,radius) [Slicer DrawGetRadius]
         }
         SetShape {
+            if { $Ed($e,preshape) == "Points" } {
+                set Ed($e,shape) "Points"
+            } else { # preshape is Polygon
+                if { $Ed($e,closed) == "Closed" } {
+                    set Ed($e,shape) "Polygon"
+                    Slicer DrawSetClosed 1
+                } else {
+                    set Ed($e,shape) "Lines"
+                    Slicer DrawSetClosed 0
+                }
+            }
             Slicer DrawSetShapeTo$Ed($e,shape)
             set Ed($e,shape) [Slicer GetShapeString]
+        }
+        Cut {
+            set n [Slicer DrawGetNumPoints]
+            if { $n < 1 } {
+                tk_messageBox -message "There is no polygon to Cut.  The last cut/copied polygon is still available."
+                # don't delete current CopyPoly if PolyDraw is empty
+                return
+            }
+            Slicer CopySetDrawPoints
+            Slicer DrawDeleteAll
+        }
+        Copy {
+            set n [Slicer DrawGetNumPoints]
+            if { $n < 1 } {
+                tk_messageBox -message "There is no polygon to Copy.  The last cut/copied polygon is still available."
+                # don't delete current CopyPoly if PolyDraw is empty
+                return
+            }
+            Slicer CopySetDrawPoints
+        }
+        Paste {
+            set poly [Slicer CopyGetPoints]
+            set n [$poly GetNumberOfPoints]
+            if { $n < 1 } {
+                tk_messageBox -message "There is nothing to Paste.  The current polygon you are drawing remains unchanged."
+                # don't erase PolyDraw if CopyPoly is empty
+                return
+            }
+            Slicer DrawDeleteAll
+            # Add each point of CopyPoly to PolyDraw
+            for {set i 0} {$i < $n} {incr i} {
+                set p [$poly GetPoint $i]
+                scan $p "%d %d %d" xx yy zz
+                Slicer DrawInsertPoint $xx $yy
+            }
+            Slicer DrawSelectAll
         }
     }
 }
@@ -366,7 +456,7 @@ proc EdDrawUpdate {type} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdDrawApply { {delete_pending true} } {
-    global Ed Volume Label Gui
+    global Ed Volume Label Gui Slice
 
     set e EdDraw
     set v [EditorGetInputID $Ed($e,input)]
@@ -388,6 +478,7 @@ proc EdDrawApply { {delete_pending true} } {
     set label    $Label(label)
     set radius   $Ed($e,radius)
     set shape    $Ed($e,shape)
+    set density  $Ed($e,density)
 
     #### How points selected by the user get here ###########
     # odonnell, 11-3-2000
@@ -409,9 +500,53 @@ proc EdDrawApply { {delete_pending true} } {
     #    other two slices.
     #########################################################
 
-    Slicer DrawComputeIjkPoints
-    set points [Slicer GetDrawIjkPoints]
-    Ed(editor)   Draw $label $points $radius $shape
+    if { $Ed($e,slice) != $Slice(0,offset) } {
+        set Ed($e,slice) $Slice(0,offset)
+        set Ed($e,polynum) -1
+        set Ed($e,unapplynum) -1
+    }
+    if { $Ed($e,unapplynum) != -1 } {
+        # Remove unapplied polygon so we can reapply in same slot
+        Slicer StackRemovePolygon $Slice(0,offset) $Ed($e,unapplynum)
+        Volume($v,vol) StackRemovePolygon $Slice(0,offset) $Ed($e,unapplynum)
+    }
+    set Ed($e,polynum) [Slicer StackGetNextInsertPosition $Slice(0,offset) $Ed($e,polynum)]
+    if { $Ed($e,polynum) == -1} { # Should only be true if polynum was -1 already
+        return
+    }
+    if { $Ed($e,closed) == "Open" } {
+        set closed 0
+    } else {
+        set closed 1
+    }
+    if { $Ed($e,preshape) == "Points" } {
+        set preshape 0
+    } else {
+        set preshape 1
+    }
+    Slicer StackSetPolygon $Slice(0,offset) $Ed($e,polynum) $density $closed $preshape
+    Volume($v,vol) StackSetPolygon [Slicer DrawGetPoints] $Slice(0,offset) $Ed($e,polynum) $density $closed $preshape
+    set Ed($e,unapplynum) -1
+    Ed(editor)   Clear
+    for {set p 0} {$p < 20} {incr p} {
+        set poly [Slicer StackGetPoints $Slice(0,offset) $p]
+        set n [$poly GetNumberOfPoints]
+        if { $n > 0 } {
+            Slicer DrawComputeIjkPoints $Slice(0,offset) $p
+            set points [Slicer GetDrawIjkPoints]
+            set preshape [Slicer StackGetPreshape $Slice(0,offset) $p]
+            if { $preshape == 0 } {
+                set shape "Points"
+            } else {
+                if { $Ed($e,closed) == "Closed" } {
+                    set shape "Polygon"
+                } else {
+                    set shape "Lines"
+                }
+            }
+            Ed(editor)   Draw $label $points $radius $shape
+        }
+    }
 
     # Dump points
     # points selected by the user and sent through MainInteractorXY
@@ -439,5 +574,44 @@ proc EdDrawApply { {delete_pending true} } {
     }
 
     EdUpdateAfterApplyEffect $v $Ed($e,render)
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EdDrawUnapply
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EdDrawUnapply {} {
+    global Ed Volume Label Gui Slice
+
+    set e EdDraw
+
+    Slicer DrawDeleteAll
+    if { $Ed($e,slice) != $Slice(0,offset) } {
+        set poly [Slicer StackGetPoints $Slice(0,offset)]
+        # n == -1 if poly is NULL
+        set n [Slicer StackGetNumberOfPoints $Slice(0,offset)]
+        for {set i 0} {$i < $n} {incr i} {
+            set p [$poly GetPoint $i]
+            scan $p "%d %d %d" xx yy zz
+            Slicer DrawInsertPoint $xx $yy
+        }
+        set Ed($e,slice) $Slice(0,offset)
+        set Ed($e,polynum) [Slicer StackGetRetrievePosition $Slice(0,offset)]
+        set Ed($e,unapplynum) $Ed($e,polynum)
+    } else {
+        set Ed($e,polynum) [Slicer StackGetNextRetrievePosition $Slice(0,offset) $Ed($e,polynum)]
+        if { $Ed($e,polynum) != -1 } {
+            set Ed($e,unapplynum) $Ed($e,polynum)
+            set poly [Slicer StackGetPoints $Slice(0,offset) $Ed($e,polynum)]
+            set n [$poly GetNumberOfPoints]
+            for {set i 0} {$i < $n} {incr i} {
+                set p [$poly GetPoint $i]
+                scan $p "%d %d %d" xx yy zz
+                Slicer DrawInsertPoint $xx $yy
+            }
+        }
+    }
 }
 

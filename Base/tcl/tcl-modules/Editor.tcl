@@ -125,7 +125,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.75 $} {$Date: 2005/07/01 13:48:03 $}]
+        {$Revision: 1.76 $} {$Date: 2005/07/01 14:07:13 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -142,6 +142,7 @@ proc EditorInit {} {
     set Editor(nameWorking) Working
     set Editor(nameComposite) Composite
     set Editor(eventManager)  {  }
+    set Editor(fileformat) ".pts"
 
     # add display settings for editor here: 
     # whether to keep the label layer visible at all times
@@ -227,7 +228,7 @@ proc EditorInit {} {
 # .PROC EditorBuildVTK
 # Calls BuildVTK procs for files in Editor subdirectory. <br>
 # Makes VTK objects vtkImageEditorEffects Ed(editor) and 
-# vtkMrmlVolumeNode Editor(undoNode).  
+# vtkMrmlVolumeNode Editor(undoNode).
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -805,16 +806,28 @@ proc EditorBuildGUI {} {
     TooltipAdd $f.e "To save the Volume, enter the prefix here or just click Save."
     pack $f.l -padx 3 -side left
     pack $f.e -padx 3 -side left -expand 1 -fill x
-    
+
     #-------------------------------------------
     # Volumes->TabbedFrame->File->Vol->Btns
     #-------------------------------------------
     set f $fVolumes.fTabbedFrame.fFile.fVol.fBtns
     
+    eval {label $f.l -text "Pick Format"} $Gui(WLA)
+    eval {menubutton $f.mbFormat -text $Editor(fileformat) -relief raised \
+        -bd 2 -width 12 -menu $f.mbFormat.m} $Gui(WMBA)
+    eval {menu $f.mbFormat.m} $Gui(WMA)
+    set formatMenu $f.mbFormat.m
+    $formatMenu add command -label "Standard" \
+        -command "set Editor(fileformat) Standard; \
+                  $f.mbFormat config -text Standard"
+    $formatMenu add command -label ".pts" \
+        -command "set Editor(fileformat) .pts; \
+                  $f.mbFormat config -text .pts"
+
     eval {button $f.bWrite -text "Save" -width 5 \
         -command "EditorWriteVolume"} $Gui(WBA)
     TooltipAdd $f.bWrite "Save the Volume."
-    pack  $f.bWrite -side left -padx $Gui(pad)    
+    pack  $f.l $f.mbFormat $f.bWrite -side left -padx $Gui(pad)    
 
     ############################################################################
     #                                 Effects
@@ -1158,6 +1171,26 @@ proc EditorMotion {x y} {
     global Ed Editor 
 
     switch $Editor(activeID) {
+        "EdDraw" {
+            switch $Ed(EdDraw,mode) {
+                "Draw" {
+                    # Do nothing
+                }
+                "Select" {
+                    set inside [Slicer DrawIsNearSelected $x $y]
+                    if {$inside == 1} {
+                        set Ed(EdDraw,mode) Move
+                    }
+                }
+                "Move" {
+                    set inside [Slicer DrawIsNearSelected $x $y]
+                    if {$inside == 0} {
+                        set Ed(EdDraw,mode) Select
+                    }
+                }
+            }
+            EditorIncrementAndLogEvent "motion"
+        }
         "EdLiveWire" {
             EdLiveWireMotion $x $y
             # log this event since it's used by the module
@@ -1194,6 +1227,7 @@ proc EditorB1 {x y} {
             # Act depending on the draw mode:
             #  - Draw:   Insert a point
             #  - Select: Select/deselect a point
+            #  - Insert: Insert a point between two points (CTJ)
             #
             switch $Ed(EdDraw,mode) {
                 "Draw" {
@@ -1205,7 +1239,11 @@ proc EditorB1 {x y} {
                     }
                 }
                 "Select" {
+                    Slicer DrawDeselectAll
                     Slicer DrawStartSelectBox $x $y
+                }
+                "Insert" {
+                    Slicer DrawInsert $x $y
                 }
             }
         }
@@ -1371,7 +1409,8 @@ proc EditorB1Motion {x y} {
                 "Draw" {
                     if {1} {
                         # this way just inserts the point normally
-                        Slicer DrawInsertPoint $x $y
+                        # (CTJ) do not insert points when mouse is dragged
+                        #Slicer DrawInsertPoint $x $y
                     } else {
                         # this way applies to show the rasterized labelmap
                         # and stores the points to support delete
@@ -2730,4 +2769,113 @@ proc EditorStopTiming {m} {
     set total [expr $elapsed + $Editor(log,$var)]
     set Editor(log,$var) $total    
 }
+
+#-------------------------------------------------------------------------------
+# .PROC EditorControlB1
+# Effect-specific response to B1 mouse click while control is pressed.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EditorControlB1 {x y} {
+    global Ed Editor 
+
+    EditorIncrementAndLogEvent "controlb1click"
+    
+    switch $Editor(activeID) {
+        "EdDraw" {
+            # Mark point for moving
+            Slicer DrawMoveInit $x $y
+            
+            # Act depending on the draw mode:
+            #  - Draw:   Insert a point
+            #  - Select: Select/deselect a point
+            #  - Insert: Insert a point between two points (CTJ)
+            #
+            switch $Ed(EdDraw,mode) {
+                "Draw" {
+                    if {1} {
+                        Slicer DrawInsertPoint $x $y
+                    } else {
+                        EditorInsertPoint $x $y
+                        #EditorIdleProc start
+                    }
+                }
+                "Select" {
+                    Slicer DrawStartSelectBox $x $y
+                }
+                "Move" {
+                    set Ed(EdDraw,mode) Select
+                    Slicer DrawStartSelectBox $x $y
+                }
+                "Insert" {
+                    Slicer DrawInsert $x $y
+                }
+            }
+        }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EditorControlB1Motion
+# Effect-specific response to B1 mouse motion while control is pressed.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EditorControlB1Motion {x y} {
+    global Ed Editor Slice Interactor
+
+    EditorIncrementAndLogEvent "controlb1motion"
+
+    set s $Slice(activeID)
+
+    switch $Editor(activeID) {
+        "EdDraw" {
+            # Act depending on the draw mode:
+            #  - Draw:   Insert a point
+            #  - Select: draw the "select" box
+            #
+            switch $Ed(EdDraw,mode) {
+                "Draw" {
+                    if {1} {
+                        # this way just inserts the point normally
+                        # (CTJ) do not insert points when mouse is dragged
+                        #Slicer DrawInsertPoint $x $y
+                    } else {
+                        # this way applies to show the rasterized labelmap
+                        # and stores the points to support delete
+                        # (this way isn't fully debugged)
+                        EditorInsertPoint $x $y
+                    }
+                }
+                "Select" {
+                    Slicer DrawDragSelectBox $x $y
+                }
+            }
+        }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EditorControlB1Release
+# Effect-specific response to B1 mouse release while control is pressed.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EditorControlB1Release {x y} {
+    global Ed Editor
+    
+    switch $Editor(activeID) {
+        "EdDraw" {
+            # Act depending on the draw mode:
+            #  - Select: stop drawing the "select" box
+            #
+            switch $Ed(EdDraw,mode) {
+                "Select" {
+                    Slicer DrawEndSelectBox $x $y
+                }
+            }
+        }
+    }
+}
+
 
