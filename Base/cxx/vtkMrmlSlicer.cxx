@@ -100,6 +100,8 @@ vtkMrmlSlicer::vtkMrmlSlicer()
   this->FieldOfView = 240.0;
   this->LabelIndirectLUT = NULL;
   this->PolyDraw = vtkImageDrawROI::New();
+  this->PolyStack = vtkStackOfPolygons::New();
+  this->CopyPoly = vtkPoints::New();
   this->ReformatIJK = vtkImageReformatIJK::New();
   this->DrawIjkPoints = vtkPoints::New();
 
@@ -402,6 +404,8 @@ vtkMrmlSlicer::~vtkMrmlSlicer()
     }
   }
   this->PolyDraw->Delete();
+  this->PolyStack->Delete();
+  this->CopyPoly->Delete();
   this->DrawIjkPoints->Delete();
   this->ReformatIJK->Delete();
 
@@ -1926,13 +1930,13 @@ void vtkMrmlSlicer::SetReformatPoint(vtkMrmlDataVolume *vol,
 //----------------------------------------------------------------------------
 // DrawComputeIjkPoints
 //----------------------------------------------------------------------------
-void vtkMrmlSlicer::DrawComputeIjkPoints()
+void vtkMrmlSlicer::DrawComputeIjkPoints(int density)
 {
   vtkFloatingPointType *rasPt;
   int ijkPt[3], i, n, x=0, y=0;
   int s = this->GetActiveSlice();
   vtkPoints *ijk = this->DrawIjkPoints;
-  vtkPoints *ras = this->PolyDraw->GetPoints();
+  vtkPoints *ras = this->PolyDraw->GetPoints(density);
 
   ijk->Reset();
   n = ras->GetNumberOfPoints();
@@ -1940,6 +1944,35 @@ void vtkMrmlSlicer::DrawComputeIjkPoints()
   {
     rasPt = ras->GetPoint(i);
     this->SetReformatPoint(s, (int)(rasPt[0]), (int)(rasPt[1]));
+    this->GetSeed2D(ijkPt);
+
+    if (i == 0 || ijkPt[0] != x || ijkPt[1] != y)
+    {
+      ijk->InsertNextPoint((vtkFloatingPointType)(ijkPt[0]), (vtkFloatingPointType)(ijkPt[1]),
+        (vtkFloatingPointType)(ijkPt[2]));
+    } 
+    x = ijkPt[0];
+    y = ijkPt[1];
+  }
+}
+
+//----------------------------------------------------------------------------
+// DrawComputeIjkPoints
+//----------------------------------------------------------------------------
+void vtkMrmlSlicer::DrawComputeIjkPoints(int s, int p)
+{
+  vtkFloatingPointType *rasPt;
+  int ijkPt[3], i, n, x=0, y=0;
+  int as = this->GetActiveSlice();
+  vtkPoints *ijk = this->DrawIjkPoints;
+  vtkPoints *ras = PolyStack->GetSampledPolygon(s, p);
+
+  ijk->Reset();
+  n = ras->GetNumberOfPoints();
+  for (i=0; i<n; i++)
+  {
+    rasPt = ras->GetPoint(i);
+    this->SetReformatPoint(as, (int)(rasPt[0]), (int)(rasPt[1]));
     this->GetSeed2D(ijkPt);
 
     if (i == 0 || ijkPt[0] != x || ijkPt[1] != y)
