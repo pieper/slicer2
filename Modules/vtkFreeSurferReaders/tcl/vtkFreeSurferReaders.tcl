@@ -222,7 +222,7 @@ proc vtkFreeSurferReadersInit {} {
     set vtkFreeSurferReaders(QAopacity) $::Slice(opacity)
     set vtkFreeSurferReaders(QAviewmode) $::View(mode)
 
-    set vtkFreeSurferReaders(PlotFileName) [file normalize [file join .. data fsgd y_doss-thickness-250rh.fsgd]]
+#    set vtkFreeSurferReaders(PlotFileName) [file normalize [file join .. data fsgd y_doss-thickness-250rh.fsgd]]
 
     lappend Module($m,fiducialsPointCreatedCallback) FreeSurferReadersFiducialsPointCreatedCallback
 
@@ -320,7 +320,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.33 $} {$Date: 2005/06/30 21:52:59 $}]
+        {$Revision: 1.34 $} {$Date: 2005/07/01 13:02:29 $}]
 
 }
 
@@ -5601,7 +5601,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.33 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.34 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
