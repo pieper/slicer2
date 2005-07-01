@@ -100,6 +100,9 @@ vtkImageEMMarkov \
 vtkImageEMSegmenter \
 vtkBoolTess \
 vtkPolyBoolean \
+vtkPolygonList \
+vtkStackOfPolygons \
+vtkPTSWriter \
 vtkSurfaceProps \
 vtkFog \
 vtkMrmlSegmenterNode \

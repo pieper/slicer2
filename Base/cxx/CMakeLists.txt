@@ -46,6 +46,8 @@ SET (Base_SRCS
 	vtkResliceImage.cxx vtkSurfaceProps.cxx
 	vtkPolyBoolean.cxx 
         vtkImageCurveRegion.cxx vtkImageDrawObjects.cxx vtkImageGraph.cxx
+        # Chand's storage of all user-defined polygons
+        vtkStackOfPolygons.cxx vtkPolygonList.cxx vtkPTSWriter.cxx
 	# vtkDistractorSource.cxx
 	#vtkImageEuclideanDistanceTransformation.cxx 
 	# more general volume reading API
