@@ -70,6 +70,8 @@ vtkMrmlDataVolume::vtkMrmlDataVolume()
   this->Resize = vtkImageResize::New();
   this->HistPlot = vtkImagePlot::New();
   this->ImageData = NULL;
+  this->PolyStack = vtkStackOfPolygons::New();
+  this->Samples = vtkPoints::New();
   this->ReadWrite = NULL;
 
   // W/L Slider range 
@@ -107,6 +109,8 @@ vtkMrmlDataVolume::~vtkMrmlDataVolume()
   }
 
   // Delete objects we allocated
+  this->PolyStack->Delete();
+  this->Samples->Delete();
   this->Accumulate->Delete();
   this->Bimodal->Delete();
   this->Resize->Delete();
@@ -124,6 +128,7 @@ void vtkMrmlDataVolume::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Range Auto: " << this->RangeAuto << endl;
 
   os << indent << "ImageData: " << this->ImageData << "\n";
+  os << indent << "PolyStack: " << this->PolyStack << "\n";
   if (this->ImageData)
   {
     this->ImageData->PrintSelf(os,indent.GetNextIndent());
@@ -596,6 +601,103 @@ int vtkMrmlDataVolume::Write()
 
   // Right now how no way to deal with failure
   return 1;
+}
+
+//----------------------------------------------------------------------------
+int vtkMrmlDataVolume::WritePTS(char *filename)
+{
+
+  this->CheckMrmlNode();
+  this->CheckImageData();
+  vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) this->MrmlNode;
+  
+  // Start progress reporting
+  this->InvokeEvent(vtkCommand::StartEvent,NULL);
+
+      // Make the z extent equal the desired range of image numbers
+      // so that the writer will start on the right image number (.001 not .000)
+      int tmpExt[6], saveExt[6], range[2];
+      this->ImageData->GetExtent(saveExt);
+      this->ImageData->GetExtent(tmpExt);
+      
+      node->GetImageRange(range);
+      tmpExt[4] = range[0];
+      tmpExt[5] = range[1];
+      this->ImageData->SetExtent(tmpExt);
+
+      // Set up the image writer
+      vtkPTSWriter *writer = vtkPTSWriter::New();
+      writer->SetFileName(filename);
+      writer->SetInput(this->ImageData);
+      
+      // Progress callback
+      writer->AddObserver (vtkCommand::ProgressEvent,
+                           this->ProgressObserver);
+      // The progress callback function needs a handle to the writer 
+      this->ProcessObject = writer;
+     
+      // Write it
+      //writer->Write();
+      writer->WriteAsciiPTS();
+
+      writer->SetInput(NULL);
+      writer->Delete();
+
+      // Reset the original extent of the data
+      this->ImageData->SetExtent(saveExt);
+
+  // End progress reporting
+  this->InvokeEvent(vtkCommand::EndEvent,NULL);
+
+  // Right now how no way to deal with failure
+  return 1;
+}
+
+int vtkMrmlDataVolume::WritePTSFromStack(char *filename)
+{
+    if (filename == NULL)
+    {
+        vtkErrorMacro(<< "Please specify filename to write");
+        return 1;
+    }
+
+    // Write ASCII PTS file
+    FILE *fp;
+    if ((fp = fopen(filename, "w")) == NULL)
+    {
+        vtkErrorMacro(<< "Couldn't open file: " << filename);
+        return 1;
+    }
+
+    for (int s = 0; s < NUM_STACK_SLICES; s++)
+    {
+        // Skip this slice of stack if no polygon ever been stored in it
+        if (!(PolyStack->Nonempty(s))) continue;
+        for (int p = 0; p < NUM_POLYGONS; p++)
+        {
+            // Skip this polygon if it has no points
+            if (PolyStack->GetNumberOfPoints(s, p) < 1) continue;
+            vtkPoints *ras = PolyStack->GetSampledPolygon(s, p);
+            int n = ras->GetNumberOfPoints();
+            for (int i = 0; i < n; i++)
+            {
+                vtkFloatingPointType *rasPt = ras->GetPoint(i);
+                int x = (int)(rasPt[0]);
+                int y = (int)(rasPt[1]);
+                if (fprintf (fp, "%d %d %d\n", x, y, s) < 0)
+                {
+                    fclose (fp);
+                    vtkErrorMacro (<< "Out of disk space error.");
+                    return 1;
+                }
+            }
+        }
+    }
+
+    fclose(fp);
+
+    // Right now how no way to deal with failure
+    return 1;
 }
 
 //----------------------------------------------------------------------------

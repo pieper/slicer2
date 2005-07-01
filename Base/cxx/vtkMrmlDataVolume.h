@@ -59,8 +59,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageResize.h"
 #include "vtkImagePlot.h"
 #include "vtkImageData.h"
+#include "vtkStackOfPolygons.h"
 #include "vtkSlicer.h"
 #include "vtkMrmlDataVolumeReadWrite.h"
+#include "vtkPTSWriter.h"
 
 #ifndef vtkFloatingPointType
 #define vtkFloatingPointType float
@@ -95,6 +97,8 @@ public:
   // Read/Write image 
   int Read();
   int Write();
+  int WritePTS(char *filename);
+  int WritePTSFromStack(char *filename);
 
   //--------------------------------------------------------------------------
   // Read/Write volume data contained by this object.
@@ -136,6 +140,11 @@ public:
   vtkSetMacro(RangeAuto, int);
   vtkBooleanMacro(RangeAuto, int);
 
+  void StackSetPolygon(vtkPoints *poly, int s, int p, int d, int closed, int preshape)
+  {PolyStack->SetPolygon(poly, s, p, d, closed, preshape);};
+  void StackRemovePolygon(int s, int p)
+  {this->PolyStack->RemovePolygon(s, p);};
+
 protected:
   vtkMrmlDataVolume();
   ~vtkMrmlDataVolume();
@@ -154,6 +163,8 @@ protected:
   vtkFloatingPointType HistogramColor[3];
 
   vtkImageData *ImageData;
+  vtkStackOfPolygons *PolyStack;
+  vtkPoints *Samples;
   vtkImageAccumulateDiscrete *Accumulate;
   vtkImageBimodalAnalysis *Bimodal;
   vtkImageResize *Resize;
