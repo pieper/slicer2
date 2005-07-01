@@ -74,11 +74,16 @@ public:
     void SelectAllPoints();
     void DeselectAllPoints();
     void AppendPoint(int x, int y);
+    void InsertPoint(int x, int y);
     void InsertAfterSelectedPoint(int x, int y);
     void DeleteSelectedPoints();
     void DeleteAllPoints();
     void MoveSelectedPoints(int deltaX, int deltaY);
     void MoveAllPoints(int deltaX, int deltaY);
+    int  IsNearSelected(int x, int y);
+
+    void SetClosed(int closed)
+    { this->Closed = closed; }
 
     // Description:
     // Attributes of the poly/line/points drawn in the slice
@@ -141,6 +146,8 @@ public:
     // Get the points from the contour drawn on the slice.
     // Used for Apply (to actually mark the points in the volume)
     vtkPoints* GetPoints(void);
+    vtkPoints* GetPoints(int density);
+    void LoadStackPolygon(vtkPoints* pts);
 
 protected:
         vtkImageDrawROI();
@@ -149,6 +156,7 @@ protected:
     void operator=(const vtkImageDrawROI&) {};
 
     vtkPoints *Points;
+    vtkPoints *Samples;
     
     Point *firstPoint;
     Point *lastPoint;
@@ -163,6 +171,7 @@ protected:
     int PointRadius;
     int HideROI;
     int Shape;
+    int Closed;
 
     float PointColor[3];
     float SelectedPointColor[3];
@@ -175,6 +184,7 @@ protected:
     void DrawCrosses(vtkImageData *outData, int extent[6]);
     void DrawBoxes(vtkImageData *outData, int extent[6]);
     //<< AT 01/17/01 01/19/01
+    void DrawSpline(vtkImageData *outData, int outExt[6]);
     // Not threaded because its too simple of a filter
     void ExecuteData(vtkDataObject *);
 };
