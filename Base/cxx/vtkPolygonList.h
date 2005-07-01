@@ -1,0 +1,116 @@
+/*=========================================================================
+
+    vtkPolygonList
+    Created by Chand T. John for Slicer/NMBL Pipeline
+
+=========================================================================*/
+// .NAME vtkPolygonList - represent and manipulate list of 3D polygons
+// .SECTION Description
+// vtkPolygonList represents a list of 3D polygons. The data model for
+// vtkPolygonList is a linked list of polygons, each of which is an array
+// of vx-vy-vz triplets accessible by (point or cell) id (see vtkPoints).
+
+#ifndef __vtkPolygonList_h
+#define __vtkPolygonList_h
+
+#include "vtkObject.h"
+#include "vtkPoints.h"
+#include "point.h"
+#include "vtkSlicer.h"
+
+// If you change this number here, it will need to be changed in
+// SLICER_HOME/Base/tcl/tcl-modules/Editor/EdDraw.tcl's EdDrawApply
+// procedure in a for loop that contains "{$p < 20}".
+#define NUM_POLYGONS 20
+
+class VTK_SLICER_BASE_EXPORT vtkPolygonList : public vtkObject
+{
+public:
+  static vtkPolygonList *New();
+  vtkTypeMacro(vtkPolygonList,vtkObject);
+  void PrintSelf(ostream& os, vtkIndent indent);
+
+  // Description:
+  // Make polygon p look empty but do not delete memory.
+  void Reset(int p);
+
+  // Description:
+  // Return number of points in polygon p.
+  int GetNumberOfPoints(int p);
+
+  // Description:
+  // Return a pointer to an array of points for a specific id.
+  vtkPoints *GetPolygon(int p);
+
+  // Description:
+  // Return a pointer to a sampling of polygon p.
+  vtkPoints *GetSampledPolygon(int p);
+
+  // Description:
+  // Store ith point of polygon p into ctlpoint array.
+  void GetPoint(int p, int i);
+
+  // Description:
+  // Returns lowest index in which there is an empty polygon.
+  int GetInsertPosition();
+
+  // Description:
+  // Returns lowest index at or after p in which there is an empty polygon.
+  int GetNextInsertPosition(int p);
+
+  // Description:
+  // Returns lowest index in which there is a nonempty polygon.
+  int GetRetrievePosition();
+
+  // Description:
+  // Returns lowest index after p in which there is a nonempty polygon.
+  int GetNextRetrievePosition(int p);
+
+  // Description:
+  // Insert point into next available slot. Returns id of slot.
+  int InsertNextPoint (int p, double x, double y, double z);
+
+  // Description:
+  // Returns density of polygon p.
+  int GetDensity (int p);
+
+  // Description:
+  // Returns closedness of polygon p.
+  int GetClosed(int p);
+
+  // Description:
+  // Returns preshape (points/polygon) of polygon p.
+  int GetPreshape(int p);
+
+  // Description:
+  // Sets density of polygon p to d.
+  void SetDensity (int p, int d);
+
+  // Description:
+  // Sets closedness of polygon p.
+  void SetClosed (int p, int closed);
+
+  // Description:
+  // Sets preshape (points/polygon) of polygon p.
+  void SetPreshape (int p, int preshape);
+
+  // Description:
+  // Removes all polygons.
+  void Clear ();
+
+protected:
+  vtkPolygonList();
+  ~vtkPolygonList();
+  vtkPolygonList(const vtkPolygonList&) {};  // Not implemented.
+  void operator=(const vtkPolygonList&) {};  // Not implemented.
+
+  vtkPoints *Polygons[NUM_POLYGONS];
+  int densities[NUM_POLYGONS]; // Sampling densities
+  int closed[NUM_POLYGONS]; // Whether each contour is closed or not
+  int preshape[NUM_POLYGONS]; // Preshape (points/polygon) of each contour
+  Point ctlpoint; // Stores a point for GetFirstPoint and GetLastPoint
+  vtkPoints            *Samples;
+};
+
+#endif
+
