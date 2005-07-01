@@ -86,7 +86,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.61 $} {$Date: 2005/04/15 16:43:57 $}]
+        {$Revision: 1.62 $} {$Date: 2005/07/01 14:22:33 $}]
 
     set File(filePrefix) data
 }
@@ -1045,7 +1045,23 @@ proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
             set ZerolessNum [string trimleft $num "0"]
             if {$ZerolessNum == ""} {set ZerolessNum 0}
         }
-        return "%s_%03d${fext} $filePrefix $ZerolessNum"
+        return "%s_%03d.bfloat $filePrefix $ZerolessNum"
+    }
+    if {$fext == ".pgi" || $fext == ".PGI" || $fext == ".mr" || $fext == ".MR"} {
+        if {$::Module(verbose)} {
+            puts "MainFileParseImageFile: GE volume, returning pattern of %s%03d$fext."
+        }
+        # If filename is of format <name>###.pgi, then parse it; else exit with error message
+        if {[regexp {(.+)([0-9][0-9][0-9])$} $fname match filePrefix num] == 0} {
+            if {$::Module(verbose)} {
+                puts "MainFileParseImageFile: expected filename format %s%03d$fext."
+            }
+            return
+        }
+        set filePrefix $fdir/$filePrefix
+        set ZerolessNum [string trimleft $num "0"]
+        if {$ZerolessNum == ""} {set ZerolessNum 0}
+        return "%s%03d$fext $filePrefix $ZerolessNum"
     }
     # this will fail if there's another volume in the directory with the same 
     # extension: second test = ftail is in the list, and any other elements
