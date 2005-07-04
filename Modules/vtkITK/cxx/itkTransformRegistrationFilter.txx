@@ -87,7 +87,7 @@ itk::itkTransformRegistrationFilter<TImageClass, TOptimizerClass, TTransformerCl
   m_Registration->SetNumberOfLevels( m_NumberOfLevels);
   
   // TODO: set number iteration per level
-  m_Optimizer->SetNumberOfIterations( m_NumberOfIterations[0] );
+  //m_Optimizer->SetNumberOfIterations( m_NumberOfIterations[0] );
 
   SetOptimizerParamters();
   SetMetricParamters();
@@ -134,7 +134,7 @@ void
 itkTransformRegistrationFilter<TImageClass, TOptimizerClass,  TTransformerClass, TMetricClass >
 ::SetTransform(const TransformType * transform)
 {
-  m_Transform->SetCenter( transform->GetCenter() );
+  //m_Transform->SetCenter( transform->GetCenter() );
   m_Transform->SetParameters( transform->GetParameters() );
 }
 
@@ -155,7 +155,7 @@ void
 itkTransformRegistrationFilter<TImageClass, TOptimizerClass,  TTransformerClass, TMetricClass >::GetCurrentTransform(typename itkTransformRegistrationFilter<TImageClass, TOptimizerClass,
 TTransformerClass, TMetricClass >::TransformType * transform)
 {
-  transform->SetCenter( m_Transform->GetCenter() );
+  //transform->SetCenter( m_Transform->GetCenter() );
   transform->SetParameters( m_Transform->GetParameters() );
   return;
 }
