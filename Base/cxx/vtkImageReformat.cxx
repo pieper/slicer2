@@ -199,12 +199,43 @@ void vtkImageReformat::ComputeInputUpdateExtent(int inExt[6], int outExt[6])
 }
 
 //----------------------------------------------------------------------------
+// >> Edited at 5.9.05  for slicer 2.4
+//    from float* to vtkFloatingPointType*
+
+void vtkImageReformat::CrossProduct(vtkFloatingPointType* v1, vtkFloatingPointType* v2, vtkFloatingPointType* v3) {
+  v3[0]=v1[1]*v2[2]-v1[2]*v2[1];
+  v3[1]=v1[2]*v2[0]-v1[0]*v2[2];
+  v3[2]=v1[0]*v2[1]-v1[1]*v2[0];
+  v3[3]=0;
+}
+
+//----------------------------------------------------------------------------
+// Karl - for new draw
 void vtkImageReformat::SetPoint(int x, int y)
 {
-    vtkFloatingPointType ras[4], ijk[4];
+    vtkFloatingPointType point[4],zstep[4], ras[4];
+    vtkMatrix4x4* m1;
     int i;
 
+    point[0]=x;
+    point[1]=y;
+    point[2]=0;
+    point[3]=1;
+    m1= vtkMatrix4x4::New();
+    
+    this->CrossProduct(this->XStep,this->YStep,zstep);
+
     for (i=0; i<3; i++) 
+    {
+      m1->SetElement(i,0,this->XStep[i]);
+      m1->SetElement(i,1,this->YStep[i]);
+      m1->SetElement(i,2,zstep[i]);
+      m1->SetElement(i,3,this->Origin[i]);
+    }
+
+    m1->MultiplyPoint(point,ras);
+        
+   /* for (i=0; i<3; i++) 
     {
         this->WldPoint[i] = this->Origin[i] + this->XStep[i]*(vtkFloatingPointType)x + 
             this->YStep[i]*(vtkFloatingPointType)y;
@@ -214,15 +245,109 @@ void vtkImageReformat::SetPoint(int x, int y)
     {
         ras[i] = this->WldPoint[i];
     }
-    ras[3] = 1.0;
+    ras[3] = 1.0;*/
+    
+    this->WldToIjkMatrix->MultiplyPoint(ras, this->IjkPoint);
+   // << 
+}
 
-    this->WldToIjkMatrix->MultiplyPoint(ras, ijk);
+//----------------------------------------------------------------------------
+// Karl - 2D to 3D
+void vtkImageReformat::Slice2IJK(int slice_x, int slice_y, float& x, float& y, float& z)
+{
+    vtkFloatingPointType point[4],zstep[4], ras[4];
+    vtkMatrix4x4* m1;
+    int i;
+    point[0]=slice_x;
+    point[1]=slice_y;
+    point[2]=0;
+    point[3]=1;
+    m1= vtkMatrix4x4::New();
+    
+    //Karl - 5.16.05
+    m1->Identity();
+    this->CrossProduct(this->XStep,this->YStep,zstep);
+    for (i=0; i<3; i++) 
+    {
+      m1->SetElement(i,0,this->XStep[i]);
+      m1->SetElement(i,1,this->YStep[i]);
+      m1->SetElement(i,2,zstep[i]);
+      m1->SetElement(i,3,this->Origin[i]);
+    }
+    m1->MultiplyPoint(point,ras);
+    this->WldToIjkMatrix->MultiplyPoint(ras, point);
+    x=point[0];
+    y=point[1];
+    z=point[2];
+    
+}
+
+//----------------------------------------------------------------------------
+//Karl - 3D to 2D
+void vtkImageReformat::IJK2Slice( float x, float y, float z, int& slice_x, int& slice_y)
+{
+    vtkFloatingPointType point[4],zstep[4],ras[4],slicepoint[4];
+    vtkMatrix4x4* m1;
+    vtkMatrix4x4* m2;
+    int i;
+
+    point[0]=x;
+    point[1]=y;
+    point[2]=z;
+    point[3]=1;
+    m1= vtkMatrix4x4::New();
+        
+    m1->Identity();
+    m2= vtkMatrix4x4::New();
+
+    this->CrossProduct(this->XStep,this->YStep,zstep);
 
     for (i=0; i<3; i++) 
     {
-        this->IjkPoint[i] = ijk[i];
+      m1->SetElement(i,0,this->XStep[i]);
+      m1->SetElement(i,1,this->YStep[i]);
+      m1->SetElement(i,2,zstep[i]);
+      m1->SetElement(i,3,this->Origin[i]);
     }
+
+    m1->Invert();
+    m2->DeepCopy( this->WldToIjkMatrix);
+    m2->Invert();
+ 
+    m2->MultiplyPoint(point, ras);
+    m1->MultiplyPoint(ras,   slicepoint);
+
+    slice_x=(int)(slicepoint[0]+0.5);
+    slice_y=(int)(slicepoint[1]+0.5);
 }
+
+// SetPoint before 3.7.05
+//void vtkImageReformat::SetPoint(int x, int y)
+//{
+//    vtkFloatingPointType ras[4], ijk[4];
+//    int i;
+
+//    for (i=0; i<3; i++) 
+//    {
+//        this->WldPoint[i] = this->Origin[i] + this->XStep[i]*(vtkFloatingPointType)x + 
+//            this->YStep[i]*(vtkFloatingPointType)y;
+//    }
+
+//    for (i=0; i<3; i++) 
+//    {
+//        ras[i] = this->WldPoint[i];
+//    }
+//    ras[3] = 1.0;
+
+//    this->WldToIjkMatrix->MultiplyPoint(ras, ijk);
+
+//    for (i=0; i<3; i++) 
+//    {
+//        this->IjkPoint[i] = ijk[i];
+//    }
+//    printf("setPoint\n");
+//}
+ 
 
 
 // FAST1 (for indices) uses more bits of precision to the right
@@ -238,8 +363,8 @@ void vtkImageReformat::SetPoint(int x, int y)
 #define INT_TO_FAST1(x)   ((x) << NBITS1)
 #define FAST1_MULT(x, y)  (((x) * (y)) >> NBITS1)
 
-#define NBITS2            8
-#define MULTIPLIER2       256.0f
+#define NBITS2            10
+#define MULTIPLIER2       1024.0f
 #define FLOAT_TO_FAST2(x) (int)((x) * MULTIPLIER2)
 #define FAST2_TO_FLOAT(x) ((x) / MULTIPLIER2)
 #define FAST2_TO_INT(x)   ((x) >> NBITS2)
@@ -1569,10 +1694,9 @@ void vtkImageReformat::ThreadedExecute(vtkImageData *inData,
 {
     int *inExt = inData->GetExtent();
     void *inPtr = inData->GetScalarPointerForExtent(inExt);
-    int wExt[6];
-    // int ext[6];
+    int wExt[6], ext[6];
     this->GetOutput()->GetWholeExtent(wExt);
-    int numComps = inData->GetNumberOfScalarComponents();
+    int i, numComps = inData->GetNumberOfScalarComponents();
 
     // Example values for the extents (for a 4-processor machine on a 124 slice volume) are:
     // id: 0 outExt: 0 255 0 63 0 0,    inExt: 0 255 0 255 0 123  wExt: 0 255 0 255 0 0
@@ -1628,7 +1752,8 @@ void vtkImageReformat::ThreadedExecute(vtkImageData *inData,
             break;
         case VTK_SHORT:
             if (numComps == 1) {
-                vtkImageReformatExecuteInt(this, inData, inExt, (short *)(inPtr), outData, outExt, wExt, id);
+          //vtkImageReformatExecuteInt(this, inData, inExt, (short *)(inPtr), outData, outExt, wExt, id);
+          vtkImageReformatExecute(this, inData, inExt, (short *)(inPtr), outData, outExt, wExt, id);
             } else {
                 vtkImageReformatExecute(this, inData, inExt, (short *)(inPtr), outData, outExt, wExt, id);
             }
@@ -1639,14 +1764,16 @@ void vtkImageReformat::ThreadedExecute(vtkImageData *inData,
             break;
         case VTK_CHAR:
             if (numComps == 1) {
-                vtkImageReformatExecuteInt(this, inData, inExt, (char *)(inPtr), outData, outExt, wExt, id);
+              //  vtkImageReformatExecuteInt(this, inData, inExt, (char *)(inPtr), outData, outExt, wExt, id);
+          vtkImageReformatExecute(this, inData, inExt, (char *)(inPtr), outData, outExt, wExt, id);
             } else {
                 vtkImageReformatExecute(this, inData, inExt, (char *)(inPtr), outData, outExt, wExt, id);
             }
             break;
         case VTK_UNSIGNED_CHAR:
             if (numComps == 1) {
-                vtkImageReformatExecuteInt(this, inData, inExt, (unsigned char *)(inPtr), outData, outExt, wExt, id);
+              //  vtkImageReformatExecuteInt(this, inData, inExt, (unsigned char *)(inPtr), outData, outExt, wExt, id);
+          vtkImageReformatExecute(this, inData, inExt, (unsigned char *)(inPtr), outData, outExt, wExt, id);
             } else {
                 vtkImageReformatExecute(this, inData, inExt, (unsigned char *)(inPtr), outData, outExt, wExt, id);
             }
