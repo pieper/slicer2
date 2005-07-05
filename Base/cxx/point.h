@@ -55,6 +55,8 @@ public:
         this->selected = 0;
         this->next = NULL;
     }
+
+
     ~Point() {
         this->next = NULL;
     }
@@ -64,9 +66,19 @@ public:
     int IsSelected()   {return this->selected;}
     Point *GetNext() {return this->next;}
 
+    void Set3DCoord(float x,float y,float z) {
+      this->x0=x;
+      this->y0=y;
+      this->z0=z;
+    }
+
 public:
     int x;
     int y;
+
+    //at 4.7.05 - jc add x,y,z for 3D point 
+    float x0, y0, z0;
+
     Point *next;
 
 private:
