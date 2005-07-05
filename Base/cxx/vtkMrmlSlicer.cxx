@@ -1666,13 +1666,13 @@ void vtkMrmlSlicer::SetOffset(int s, vtkFloatingPointType userOffset)
 
   if (this->IsOrientIJK(s))
   {
-    printf("vtkMrmlSlicer::SetOffset \t ComputeReformatMatrixIJK\n");
-    fflush(stdout);
+    //    printf("vtkMrmlSlicer::SetOffset \t ComputeReformatMatrixIJK\n");
+    //fflush(stdout);
     this->ComputeReformatMatrixIJK(s, offset, ref);
   }
   else
   {
-    printf("vtkMrmlSlicer::SetOffset \t IsOrientIJK false\n");
+    //    printf("vtkMrmlSlicer::SetOffset \t IsOrientIJK false\n");
     fflush(stdout);
     Uz[0] = ref->GetElement(0, 2);
     Uz[1] = ref->GetElement(1, 2);

@@ -421,7 +421,6 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   int DrawGetRadius() {
     return this->PolyDraw->GetPointRadius(); };
   void DrawInsertPoint(int x, int y) {
-    fprintf(stderr,"DrawInsetPoint %d %d \n",x,y);
     this->PolyDraw->InsertAfterSelectedPoint(x, y);};
   void DrawMoveInit(int x, int y) {
       this->DrawX = x; this->DrawY = y;};
