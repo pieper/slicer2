@@ -109,7 +109,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.55 $} {$Date: 2005/04/16 18:11:17 $}]
+        {$Revision: 1.55.4.1 $} {$Date: 2005/07/05 18:07:10 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"
@@ -776,11 +776,15 @@ proc MainSlicesSetFov {} {
 proc MainSlicesCenterCursor {s} {
     global View
 
-    if {$View(mode) == "Quad512"} {
-        Slicer SetCursorPosition $s 256 256
-    } else {
-        Slicer SetCursorPosition $s 128 128
-    }
+
+   set res [Slicer GetBackReformatResolution 0]
+    Slicer SetCursorPosition $s [expr $res/2.0] [expr $res/2.0]
+
+#    if {$View(mode) == "Quad512"} {
+#        Slicer SetCursorPosition $s 256 256
+#    } else {
+#        Slicer SetCursorPosition $s 128 128
+#    }
 }
 
 #-------------------------------------------------------------------------------
@@ -1211,12 +1215,18 @@ proc MainSlicesSetZoomAll {zoom} {
     # Change Slice's Zoom variable
     foreach s $Slice(idList) {
         set Slice($s,zoom) $zoom
-#>> Bouix 4/23/03 put the old version of zoom to solve the drawing problem    
+
+    # jc test M2 (1/20/2005)
+    #>> Bouix 4/23/03 put the old version of zoom to solve the drawing problem    
         # Attila's new zooming function
-#Slicer SetZoomNew $s $zoom
+    if {[Slicer GetDisplayMethod] ==2} {
+        Slicer SetZoomNew $s $zoom
     }
+    }
+    if {[Slicer GetDisplayMethod] ==1 || [Slicer GetDisplayMethod] == 3} {
     Slicer SetZoom $zoom
-#<< Bouix
+    }
+    #<< Bouix
     Slicer Update
 }
 
@@ -1269,12 +1279,17 @@ proc MainSlicesSetZoom {s {zoom ""}} {
 
     # Change Slice's Zoom variable
     set Slice($s,zoom) $zoom
-#>> Bouix 4/23/03 Back to old zoom
-    # Use Attila's new zooming code
-#    Slicer SetZoomNew $s $zoom
 
+    if {[Slicer GetDisplayMethod] ==2} {
+    # Use Attila's new zooming code
+    Slicer SetZoomNew $s $zoom
+    }
+
+    if {[Slicer GetDisplayMethod] ==1 || [Slicer GetDisplayMethod] ==3} {
     Slicer SetZoom $s $zoom
-#<< Bouix 
+    #<< Bouix
+    }
+
     Slicer Update
 }
 
