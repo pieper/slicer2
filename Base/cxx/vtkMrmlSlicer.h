@@ -148,6 +148,10 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   vtkGetMacro(ActiveSlice, int);
 
 
+  vtkSetMacro(DisplayMethod,int);
+  vtkGetMacro(DisplayMethod,int);
+
+
   //------ Factors that affect how slices are displayed: ------//
 
   // Description:
@@ -178,74 +182,17 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   // Description:
   // Double slice size outputs 512x512 images for larger display
   // (instead of 256x256)
-
   // >> AT 02/16/01 3/26/01
   //  void SetDouble(int s, int yes) {
   // this->DoubleSliceSize[s] = yes; this->BuildLowerTime.Modified();};
   // Should be moved to vtkMrmlSlicer.cxx
-  void SetDouble(int s, int yes) {
-    if(this->DrawDoubleApproach == 0)
-      {
-        this->DoubleSliceSize[s] = yes;
-        this->BackReformat[s]->SetResolution(256);
-    this->ForeReformat[s]->SetResolution(256);
-    this->LabelReformat[s]->SetResolution(256);
-      }
-    else
-      {
-    this->DoubleSliceSize[s] = 0;
-    vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) this->BackVolume[s]->GetMrmlNode();
-    int *dimension =node->GetDimensions();
-    int resolution;
-    if (dimension[0]>dimension[1]){
-      resolution = dimension[0];
-    }
-    else {
-      resolution= dimension[1];
-    }
-    if(yes == 1)
-      {
-        if (resolution>=512){
-          this->BackReformat[s]->SetResolution(512);
-          this->ForeReformat[s]->SetResolution(512);
-          this->LabelReformat[s]->SetResolution(512);
-    }
-    else{
-      this->DoubleSliceSize[s] = yes;
-      this->BackReformat[s]->SetResolution(256);
-      this->ForeReformat[s]->SetResolution(256);
-      this->LabelReformat[s]->SetResolution(256);      
-    }
-      }
-    else
-      {    
-    this->BackReformat[s]->SetResolution(256);
-    this->ForeReformat[s]->SetResolution(256);
-    this->LabelReformat[s]->SetResolution(256);
-      }
-      }
- 
-    this->BuildLowerTime.Modified();
-  }
+  void SetDouble(int s, int yes);
 
+  /*
   int GetDrawDoubleApproach() {return this->DrawDoubleApproach;}
-  // Should be moved to vtkMrmlSlicer.cxx
-  void SetDrawDoubleApproach(int approach)
-  {
-    this->DrawDoubleApproach = approach;
-    for (int s=0; s<NUM_SLICES; s++)
-    {
-      if((this->DoubleSliceSize[s] == 1) || (this->BackReformat[s]->GetResolution() == 512))
-      {
-    SetDouble(s, 1);
-      }
-      else
-      {
-    SetDouble(s, 0);
-      }
-    }
-    this->Update();
-  }
+
+  void SetDrawDoubleApproach(int approach);
+  */
 
   // << AT 02/16/01 3/26/01
 
@@ -366,7 +313,6 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
 
   // Points
   void SetReformatPoint(int s, int x, int y);
-  void SetReformatPoint(vtkMrmlDataVolume *vol, vtkImageReformat *ref, int s, int x, int y);
   vtkGetVectorMacro(WldPoint, vtkFloatingPointType, 3);
   vtkGetVectorMacro(IjkPoint, vtkFloatingPointType, 3);
   void SetScreenPoint(int s, int x, int y);
@@ -475,6 +421,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   int DrawGetRadius() {
     return this->PolyDraw->GetPointRadius(); };
   void DrawInsertPoint(int x, int y) {
+    fprintf(stderr,"DrawInsetPoint %d %d \n",x,y);
     this->PolyDraw->InsertAfterSelectedPoint(x, y);};
   void DrawMoveInit(int x, int y) {
       this->DrawX = x; this->DrawY = y;};
@@ -659,6 +606,8 @@ protected:
   int ReformatPoint[2];
   int Seed[3];
   int Seed2D[3];
+
+  int DisplayMethod;
 
   // Draw
   vtkPoints *DrawIjkPoints;
