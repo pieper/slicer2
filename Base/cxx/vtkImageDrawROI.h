@@ -47,6 +47,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkPoints.h"
 #include "point.h"
 #include "vtkSlicer.h"
+#include "vtkImageReformat.h"
 
 #define ROI_SHAPE_POLYGON 1
 #define ROI_SHAPE_LINES   2
@@ -99,6 +100,10 @@ public:
     vtkSetMacro(HideROI, int);
     vtkBooleanMacro(HideROI, int);
 
+    void SetImageReformat( vtkImageReformat* ir) {
+      this->image_reformat = ir;
+    }
+
     // Description:
     // Shape functions affect the way the contour is drawn
     // based on the input points
@@ -149,6 +154,7 @@ protected:
     void operator=(const vtkImageDrawROI&) {};
 
     vtkPoints *Points;
+    vtkImageReformat* image_reformat;
     
     Point *firstPoint;
     Point *lastPoint;
