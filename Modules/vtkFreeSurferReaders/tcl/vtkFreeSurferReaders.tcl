@@ -222,7 +222,7 @@ proc vtkFreeSurferReadersInit {} {
     set vtkFreeSurferReaders(QAopacity) $::Slice(opacity)
     set vtkFreeSurferReaders(QAviewmode) $::View(mode)
 
-#    set vtkFreeSurferReaders(PlotFileName) [file normalize [file join .. data fsgd y_doss-thickness-250rh.fsgd]]
+#    set vtkFreeSurferReaders(PlotFileName) [file normalize [file join .. .. freesurfer data fsgd y_doss-thickness-250rh.fsgd]]
 
     lappend Module($m,fiducialsPointCreatedCallback) FreeSurferReadersFiducialsPointCreatedCallback
 
@@ -320,7 +320,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.34 $} {$Date: 2005/07/01 13:02:29 $}]
+        {$Revision: 1.35 $} {$Date: 2005/07/06 22:02:37 $}]
 
 }
 
@@ -2201,7 +2201,16 @@ proc vtkFreeSurferReadersBuildSurface {m} {
     }
     # set up the reader
     vtkFSSurfaceReader Model($m,reader)
+    if {$::Module(verbose)} {
+        Model($m,reader) DebugOn
+    }
     Model($m,reader) SetFileName $vtkFreeSurferReaders(ModelFileName)
+
+    Model($m,reader) AddObserver StartEvent MainStartProgress
+    # Model($m,reader) ProgressEvent "MainShowProgress Model($m,reader)"
+    # Model($m,reader) EndEvent       MainEndProgress
+    set ::Gui(progressText) "Reading $vtkFreeSurferReaders(ModelFileName)"
+
 
     vtkPolyDataNormals Model($m,normals)
     Model($m,normals) SetSplitting 0
@@ -2216,6 +2225,10 @@ proc vtkFreeSurferReadersBuildSurface {m} {
         if {$::Module(verbose)} { puts "Deleting Model($m,mapper,$r)" }
         catch "Model($m,mapper,$r) Delete"
         vtkPolyDataMapper Model($m,mapper,$r)
+        if {$::Module(verbose) && $r == "viewRen"} {
+            puts "vtkFreeSurferReadersBuildSurface: turning on debug on the polydatamapper Model($m,mapper,$r)"
+            Model($m,mapper,$r) DebugOn
+        }
 #Model($m,mapper,$r) SetInput [Model($m,reader) GetOutput]
     }
 
@@ -2225,6 +2238,12 @@ proc vtkFreeSurferReadersBuildSurface {m} {
     Model($m,node) SetName $vtkFreeSurferReaders(ModelName)
     Model($m,node) SetFileName $vtkFreeSurferReaders(ModelFileName)
     set Model($m,polyData) [Model($m,stripper) GetOutput]
+
+    if {$::Module(verbose)} { puts "Setting observer on polyData" }
+    $Model($m,polyData) AddObserver StartEvent MainStartProgress
+    # $Model($m,polyData) ProgressEvent "MainShowProgress Model($m,polyData)"
+    # $Model($m,polyData) EndEvent       MainEndProgress
+
     $Model($m,polyData) Update
 
     #-------------------------
@@ -2442,6 +2461,9 @@ proc vtkFreeSurferReadersBuildSurface {m} {
     # MainModelsSetColor $m $Label(name)
 
     MainUpdateMRML
+
+    set ::Gui(progressText) ""
+
     MainModelsSetActive $m
 }
 
@@ -3478,7 +3500,7 @@ proc vtkFreeSurferReadersGDFPlotBuildWindow { iID } {
     $gwPlot axis configure y -title $vtkFreeSurferReaders(gGDF,$iID,measurementName)
 
     # Make the info label.
-    set vtkFreeSurferReaders(gPlot,$iID,state,info) "Vertex   "
+    set vtkFreeSurferReaders(gPlot,$iID,state,info) "Vertex number "
     # tkuMakeActiveLabel
     # will need to update this
     # DevAddLabel $lwInfo $vtkFreeSurferReaders(gPlot,$iID,state,info)
@@ -3837,7 +3859,7 @@ proc vtkFreeSurferReadersPlotPlotData { iID dID} {
     if {$::Module(verbose)} { puts "\nvtkFreeSurferReadersPlotPlotData iID = $iID, dID = $dID" }
 
     # update the info label variable
-    set vtkFreeSurferReaders(gPlot,$dID,state,info) "Vertex $iID"
+    set vtkFreeSurferReaders(gPlot,$dID,state,info) "Vertex number $iID"
 
     set gw $vtkFreeSurferReaders(gWidgets,$dID,gwPlot)
 
@@ -5601,7 +5623,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.34 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.35 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -6281,56 +6303,63 @@ proc vtkFreeSurferReadersPlotBuildPointList {pointID scalarVar} {
 proc vtkFreeSurferReadersPickPlot {widget x y} {
     global vtkFreeSurferReaders Point Module Model viewRen Select
 
+    set testPickers 0
+    set verb $::Module(verbose) 
+    set ::Module(verbose) 0
+
     if {$::Module(verbose)} { 
         puts "vtkFreeSurferReadersPickPlot widget = $widget x = $x y = $y"
     }
 
     if {$::Module(verbose)} { puts "Getting picked point for plotting" }
     
-    if {0} {
-    # update this when get a working fast cell picker
-    set fastPickMs [time {set retval [SelectPick Select(picker) $widget $x $y]}]
-    if {$::Module(verbose)} {
-        puts "Fast Cell Picker took $fastPickMs"
-        puts "Fast Cell Picker cell id = [Select(picker) GetCellId]"
-    }
-
-    set pointpickMs [time {set retval [SelectPick Select(ptPicker) $widget $x $y]}]
-    if {$::Module(verbose)} { puts "Point picker took $pointpickMs" }
-    if {$retval != 0} {
-        set pid [Select(ptPicker) GetPointId]
-       if {$::Module(verbose)} { puts "Point picker point id = $pid" }
-       set actor [Select(ptPicker) GetActor]
-       set modelID -1
-       set Point(model) ""
-       foreach id $Model(idList) {
-        foreach r $Module(Renderers) {
-        if {$actor == "Model($id,actor,$r)" } {
-            set Point(model) Model($id,actor,$r)
-            set modelID $id
+    if {$testPickers} {
+        # update this when get a working fast cell picker
+        set fastPickMs [time {set retval [SelectPick Select(picker) $widget $x $y]}]
+        if {$::Module(verbose)} {
+            puts "Fast Cell Picker took $fastPickMs"
+            puts "Fast Cell Picker cell id = [Select(picker) GetCellId]"
         }
-        }
-       }
-       if {$::Module(verbose)} {
-        puts "Found model id $modelID for point $pid"
-       }
-       if {$modelID != -1} {
-           catch "cellIdList Delete"
-           vtkIdList cellIdList
-           $Model($modelID,polyData) GetPointCells $pid cellIdList
-           if {$::Module(verbose)} {
-           puts "Point $pid is in cells: "
-           for {set c 0} {$c < [cellIdList GetNumberOfIds]} {incr c} {
-               puts -nonewline " [cellIdList GetId $c]"
-           }
-           }
-           # now pick which cell the picked point is nearest/in
         
-       } else {
-           if {$::Module(verbose)} { puts "point picker, model id = $modelID"}
-       }
-       }
-   }
+        set pointpickMs [time {set retval [SelectPick Select(ptPicker) $widget $x $y]}]
+        if {$::Module(verbose)} { puts "Point picker took $pointpickMs" }
+        if {$retval != 0} {
+            set pid [Select(ptPicker) GetPointId]
+            if {$::Module(verbose)} { puts "Point picker point id = $pid" }
+            set actor [Select(ptPicker) GetActor]
+            set modelID -1
+            set Point(model) ""
+            foreach id $Model(idList) {
+                foreach r $Module(Renderers) {
+                    if {$actor == "Model($id,actor,$r)" } {
+                        set Point(model) Model($id,actor,$r)
+                        set modelID $id
+                    }
+                }
+            }
+            if {$::Module(verbose)} {
+                puts "Found model id $modelID for point $pid"
+                if {$modelID != -1} {
+                    puts "(num cells = [$Model($modelID,polyData) GetNumberOfCells])"
+                }
+            }
+            if {$modelID != -1} {
+                catch "cellIdList Delete"
+                vtkIdList cellIdList
+                $Model($modelID,polyData) GetPointCells $pid cellIdList
+                # now pick which cell the picked point is nearest/in
+                for {set c 0} {$c < [cellIdList GetNumberOfIds]} {incr c} {
+                    set cellId [cellIdList GetId $c]
+                    set thisCell [$Model($modelID,polyData) GetCell $cellId]
+                    if {$::Module(verbose)} {
+                        puts "Is pt in cell $cellId ?"
+                    }
+                }
+            } else {
+                if {$::Module(verbose)} { puts "point picker, model id = $modelID"}
+            }
+        }
+    
     set pickMs [time {set retval [SelectPick Point(picker) $widget $x $y]}]
     if {$::Module(verbose)} {
        puts "Cell picker took $pickMs"
@@ -6360,12 +6389,37 @@ proc vtkFreeSurferReadersPickPlot {widget x y} {
         }
         # check against the scalars array
         if {[$vtkFreeSurferReaders(plot,$vtkFreeSurferReaders(gGDF,dataID),scalars) GetNumberOfComponents] < $cellId} {
-        if {$::Module(verbose)} {
-                puts "Plotting vertex $cellId, data id = $vtkFreeSurferReaders(gGDF,dataID)"
-        }
+            if {$::Module(verbose)} {
+                puts "Plotting vertex $cellId, data id = $vtkFreeSurferReaders(gGDF,dataID)  (vertex < [$vtkFreeSurferReaders(plot,$vtkFreeSurferReaders(gGDF,dataID),scalars) GetNumberOfTuples] )\n"
+            }
+            set ::Module(verbose) $verb
             vtkFreeSurferReadersPlotPlotData $cellId $vtkFreeSurferReaders(gGDF,dataID)
         }
     }
+    }
+
+    # use a point picker to get the point the cursor was over, then pass that in to the plotter
+    set pointpickMs [time {set retval [SelectPick Select(ptPicker) $widget $x $y]}]
+    if {$::Module(verbose)} { puts "Point picker took $pointpickMs" }
+    if {$retval != 0} {
+        set pid [Select(ptPicker) GetPointId]
+        if {$::Module(verbose)} {
+            puts "Point id = $pid"
+        }
+        # check against the scalars array
+        if {[$vtkFreeSurferReaders(plot,$vtkFreeSurferReaders(gGDF,dataID),scalars) GetNumberOfComponents] < $pid} {
+            if {$::Module(verbose)} {
+                puts "Plotting point $pid, data id = $vtkFreeSurferReaders(gGDF,dataID)"
+            }
+            set ::Module(verbose) $verb
+            vtkFreeSurferReadersPlotPlotData $pid $vtkFreeSurferReaders(gGDF,dataID) 
+        }
+    } else {
+        if {$::Module(verbose)} {
+            puts "Select(ptPicker) didn't find anything at $x $y"
+        }
+    }
+    set ::Module(verbose) $verb
 }
 
 
