@@ -456,7 +456,7 @@ proc EdDrawUpdate {type} {
 # .END
 #-------------------------------------------------------------------------------
 proc EdDrawApply { {delete_pending true} } {
-    global Ed Volume Label Gui Slice
+    global Ed Volume Label Gui Slice Interactor
 
     set e EdDraw
     set v [EditorGetInputID $Ed($e,input)]
@@ -500,17 +500,17 @@ proc EdDrawApply { {delete_pending true} } {
     #    other two slices.
     #########################################################
 
-    if { $Ed($e,slice) != $Slice(0,offset) } {
-        set Ed($e,slice) $Slice(0,offset)
+    if { $Ed($e,slice) != $Slice($Interactor(s),offset) } {
+        set Ed($e,slice) $Slice($Interactor(s),offset)
         set Ed($e,polynum) -1
         set Ed($e,unapplynum) -1
     }
     if { $Ed($e,unapplynum) != -1 } {
         # Remove unapplied polygon so we can reapply in same slot
-        Slicer StackRemovePolygon $Slice(0,offset) $Ed($e,unapplynum)
-        Volume($v,vol) StackRemovePolygon $Slice(0,offset) $Ed($e,unapplynum)
+        Slicer StackRemovePolygon $Slice($Interactor(s),offset) $Ed($e,unapplynum)
+        Volume($v,vol) StackRemovePolygon $Slice($Interactor(s),offset) $Ed($e,unapplynum)
     }
-    set Ed($e,polynum) [Slicer StackGetNextInsertPosition $Slice(0,offset) $Ed($e,polynum)]
+    set Ed($e,polynum) [Slicer StackGetNextInsertPosition $Slice($Interactor(s),offset) $Ed($e,polynum)]
     if { $Ed($e,polynum) == -1} { # Should only be true if polynum was -1 already
         return
     }
@@ -524,17 +524,17 @@ proc EdDrawApply { {delete_pending true} } {
     } else {
         set preshape 1
     }
-    Slicer StackSetPolygon $Slice(0,offset) $Ed($e,polynum) $density $closed $preshape
-    Volume($v,vol) StackSetPolygon [Slicer DrawGetPoints] $Slice(0,offset) $Ed($e,polynum) $density $closed $preshape
+    Slicer StackSetPolygon $Slice($Interactor(s),offset) $Ed($e,polynum) $density $closed $preshape
+    Volume($v,vol) StackSetPolygon [Slicer DrawGetPoints] $Slice($Interactor(s),offset) $Ed($e,polynum) $density $closed $preshape
     set Ed($e,unapplynum) -1
     Ed(editor)   Clear
     for {set p 0} {$p < 20} {incr p} {
-        set poly [Slicer StackGetPoints $Slice(0,offset) $p]
+        set poly [Slicer StackGetPoints $Slice($Interactor(s),offset) $p]
         set n [$poly GetNumberOfPoints]
         if { $n > 0 } {
-            Slicer DrawComputeIjkPoints $Slice(0,offset) $p
+            Slicer DrawComputeIjkPoints $Slice($Interactor(s),offset) $p
             set points [Slicer GetDrawIjkPoints]
-            set preshape [Slicer StackGetPreshape $Slice(0,offset) $p]
+            set preshape [Slicer StackGetPreshape $Slice($Interactor(s),offset) $p]
             if { $preshape == 0 } {
                 set shape "Points"
             } else {
@@ -583,28 +583,28 @@ proc EdDrawApply { {delete_pending true} } {
 # .END
 #-------------------------------------------------------------------------------
 proc EdDrawUnapply {} {
-    global Ed Volume Label Gui Slice
+    global Ed Volume Label Gui Slice Interactor
 
     set e EdDraw
 
     Slicer DrawDeleteAll
-    if { $Ed($e,slice) != $Slice(0,offset) } {
-        set poly [Slicer StackGetPoints $Slice(0,offset)]
+    if { $Ed($e,slice) != $Slice($Interactor(s),offset) } {
+        set poly [Slicer StackGetPoints $Slice($Interactor(s),offset)]
         # n == -1 if poly is NULL
-        set n [Slicer StackGetNumberOfPoints $Slice(0,offset)]
+        set n [Slicer StackGetNumberOfPoints $Slice($Interactor(s),offset)]
         for {set i 0} {$i < $n} {incr i} {
             set p [$poly GetPoint $i]
             scan $p "%d %d %d" xx yy zz
             Slicer DrawInsertPoint $xx $yy
         }
-        set Ed($e,slice) $Slice(0,offset)
-        set Ed($e,polynum) [Slicer StackGetRetrievePosition $Slice(0,offset)]
+        set Ed($e,slice) $Slice($Interactor(s),offset)
+        set Ed($e,polynum) [Slicer StackGetRetrievePosition $Slice($Interactor(s),offset)]
         set Ed($e,unapplynum) $Ed($e,polynum)
     } else {
-        set Ed($e,polynum) [Slicer StackGetNextRetrievePosition $Slice(0,offset) $Ed($e,polynum)]
+        set Ed($e,polynum) [Slicer StackGetNextRetrievePosition $Slice($Interactor(s),offset) $Ed($e,polynum)]
         if { $Ed($e,polynum) != -1 } {
             set Ed($e,unapplynum) $Ed($e,polynum)
-            set poly [Slicer StackGetPoints $Slice(0,offset) $Ed($e,polynum)]
+            set poly [Slicer StackGetPoints $Slice($Interactor(s),offset) $Ed($e,polynum)]
             set n [$poly GetNumberOfPoints]
             for {set i 0} {$i < $n} {incr i} {
                 set p [$poly GetPoint $i]
