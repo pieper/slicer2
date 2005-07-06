@@ -75,10 +75,12 @@ proc SelectBuildVTK {} {
     global Select
 
     vtkFastCellPicker Select(picker)
-#    vtkCellPicker Select(picker)
-        Select(picker) SetTolerance 0.001
-        Select(picker) PickFromListOff
-    }
+    #    vtkCellPicker Select(picker)
+    Select(picker) SetTolerance 0.001
+    Select(picker) PickFromListOff
+
+    vtkPointPicker Select(ptPicker)
+}
 
 #-------------------------------------------------------------------------------
 # .PROC SelectBuildGUI
@@ -147,8 +149,9 @@ proc SelectPick { picker widget x y } {
     set renderer [SelectPickRenderer $widget $x $y1]
     if { $renderer == "" } {
         return 0
-    } elseif { [$picker Pick $x $y1 0 $renderer] == 0 || \
-                [$picker GetCellId] < 0 } {
+    } elseif { ([$picker Pick $x $y1 0 $renderer] == 0) || \
+                   ([$picker IsA vtkCellPicker] && [$picker GetCellId] < 0) || \
+                   ([$picker IsA vtkPointPicker] && [$picker GetPointId] < 0)} {
         return 0
     } else {
         # new way of picking the FIRST actor hit by the ray in vtk3.2
@@ -156,22 +159,29 @@ proc SelectPick { picker widget x y } {
         $assemblyPath InitTraversal
         set assemblyNode [$assemblyPath GetLastNode]
         set Select(actor) [$assemblyNode GetProp]
-
+        
         if { $Select(actor) == ""} {
             return 0
         }
         set Select(actor) [$picker GetActor]
         set Select(xyz) [$picker GetPickPosition]
-        set Select(cellId) [$picker GetCellId]
-        #
-        # This part handles the fact that picking a point
-        # should return the point XYZ, not the picked XYZ.
-        #
-        foreach fid $Fiducials(idList) {
-            if { $Select(actor) == "Fiducials($fid,actor)" } {
-                set pid [FiducialsPointIdFromGlyphCellId $fid $Select(cellId)]
-                set Select(xyz) [FiducialsWorldPointXYZ $fid $pid]
+        
+        if {[$picker IsA vtkCellPicker]} {
+            set Select(cellId) [$picker GetCellId]
+            
+            #
+            # This part handles the fact that picking a point
+            # should return the point XYZ, not the picked XYZ.
+            #
+            foreach fid $Fiducials(idList) {
+                if { $Select(actor) == "Fiducials($fid,actor)" } {
+                    set pid [FiducialsPointIdFromGlyphCellId $fid $Select(cellId)]
+                    set Select(xyz) [FiducialsWorldPointXYZ $fid $pid]
+                }
             }
+        }
+        if {[$picker IsA vtkPointPicker]} {
+            set Select(pointId) [$picker GetPointId]
         }
         return 1
     }
