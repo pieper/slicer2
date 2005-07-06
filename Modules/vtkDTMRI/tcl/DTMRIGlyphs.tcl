@@ -63,7 +63,7 @@ proc DTMRIGlyphsInit {} {
     #------------------------------------
     set m "Glyphs"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.13 $} {$Date: 2005/06/20 02:38:33 $}]
+                                 {$Revision: 1.14 $} {$Date: 2005/07/06 13:49:59 $}]
 
     # type of reformatting
     set DTMRI(mode,reformatType) 0
@@ -808,6 +808,9 @@ proc DTMRIUpdate {} {
                 
                 # Want actor to be positioned in center with slices
                 vtkTransform t1
+                # special trick to avoid obnoxious windows warnings about legacy hack
+                # for vtkTransform
+                t1 AddObserver WarningEvent ""
                 DTMRICalculateActorMatrix t1 $Tensor(activeID)
                 
                 # Position glyphs in the volume.

@@ -67,7 +67,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.12 $} {$Date: 2005/06/26 14:29:50 $}]
+                                 {$Revision: 1.13 $} {$Date: 2005/07/06 13:48:38 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -1107,6 +1107,10 @@ proc ConvertVolumeToTensors {} {
 
     # transform gradient directions to make DTMRIs in ijk
     vtkTransform trans    
+    # special trick to avoid obnoxious windows warnings about legacy hack
+    # for vtkTransform
+    trans AddObserver WarningEvent ""
+
     puts "If not phase-freq flipped, swapping x and y in gradient directions"
     set swap [Volume($v,node) GetFrequencyPhaseSwap]
     set scanorder [Volume($v,node) GetScanOrder]
