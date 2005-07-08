@@ -247,15 +247,15 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
   // The upper threshold value to use when autoThreshold is 'no'
   // Warning:
   // XXX-MH Should be floating point....
-  vtkGetMacro(UpperThreshold, int);
-  vtkSetMacro(UpperThreshold, int);
+  vtkGetMacro(UpperThreshold, vtkFloatingPointType);
+  vtkSetMacro(UpperThreshold, vtkFloatingPointType);
 
   // Description:
   // The lower threshold value to use when autoThreshold is 'no'
   // Warning:
   // XXX-MH Should be floating point....
-  vtkGetMacro(LowerThreshold, int);
-  vtkSetMacro(LowerThreshold, int);
+  vtkGetMacro(LowerThreshold, vtkFloatingPointType);
+  vtkSetMacro(LowerThreshold, vtkFloatingPointType);
 
   // Description:
   // MR Diffusion Tensor Images may be saved on disk with 
@@ -409,8 +409,8 @@ protected:
   int NumScalars;
   vtkFloatingPointType Window;
   vtkFloatingPointType Level;
-  int UpperThreshold;
-  int LowerThreshold;
+  vtkFloatingPointType UpperThreshold;
+  vtkFloatingPointType LowerThreshold;
 
   // odonnell.  Fixes for diffusion tensor image data
   int FrequencyPhaseSwap;
