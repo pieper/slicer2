@@ -1913,7 +1913,7 @@ void vtkMrmlSlicer::SetReformatPoint(vtkMrmlDataVolume *vol,
     ijk->SetInput(vol->GetOutput());
     ijk->SetInputOrderString(node->GetScanOrder());
     ijk->SetOutputOrderString(orderString);
-    ijk->SetSlice(this->Offset[s][this->Orient[s]]);
+    ijk->SetSlice((int)(this->Offset[s][this->Orient[s]]));
     ijk->ComputeTransform();
     ijk->ComputeOutputExtent();
     ijk->SetIJKPoint(this->Seed[0], this->Seed[1], this->Seed[2]);
