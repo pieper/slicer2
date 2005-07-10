@@ -152,7 +152,7 @@ proc CorCTAInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2005/04/19 14:59:16 $}]
+        {$Revision: 1.8 $} {$Date: 2005/07/10 22:55:55 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -470,8 +470,8 @@ proc CorCTAThinning {} {
     Mrml(dataTree) InsertAfterItem $nodeBefore $node
     MainUpdateMRML
 
-    vtkImageEuclideanDistance DistTrans
-    vtkThinning Thinning
+    catch "vtkImageEuclideanDistance DistTrans"
+    catch "vtkThinning Thinning"
     
     Thinning SetUseLineEndpoints $CorCTA(UseLineEndpoints)
     Thinning SetUseFiducialEndpoints $CorCTA(UseFiducialEndpoints)
@@ -480,7 +480,7 @@ proc CorCTAThinning {} {
     DistTrans SetInput [Volume($input,vol) GetOutput]
     DistTrans InitializeOn
     DistTrans ConsiderAnisotropyOn
-    DistTrans SetMaximumDistance 10
+    DistTrans SetMaximumDistance 50
     DistTrans SetAlgorithmToSaitoCached
     set Gui(progressText) "Computing distance transform"
     DistTrans AddObserver StartEvent MainStartProgress
@@ -519,7 +519,7 @@ proc CorCTAConvert {} {
     
     set output $CorCTA(OutputVolume)
     
-    vtkSkeleton2Lines Converter
+    catch "vtkSkeleton2Lines Converter"
     
     set Gui(progressText) "Creating lines"
     Converter AddObserver StartEvent MainStartProgress
@@ -554,14 +554,14 @@ proc CorCTAConvert {} {
     }
     [rot GetMatrix] Invert
     
-    vtkTransformPolyDataFilter Transformer
+    catch "vtkTransformPolyDataFilter Transformer"
     Transformer SetInput [Converter GetOutput]
     Transformer SetTransform rot
     Transformer Update
     [Transformer GetOutput] ReleaseDataFlagOff
     
     if {$CorCTA(Splines) == 1} {
-      vtkSplineFilter Smoother
+      catch "vtkSplineFilter Smoother"
       Smoother SetInput [Transformer GetOutput]
       Smoother SetSubdivideToLength
       Smoother SetLength $CorCTA(SplineSegmentLength)  
