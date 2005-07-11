@@ -68,12 +68,24 @@ vtkITKTranslationMIGradientDescentRegistrationFilter::GetTransformationMatrix(vt
 
   itk::itkTranslationMIGradientDescentRegistrationFilter::TransformType::ParametersType params = transform->GetParameters();
  
-  matrix->Identity();
+  // itk to vtk flip matrix
+  vtkMatrix4x4 *rot = vtkMatrix4x4::New();
+  rot->Identity();
+  rot->Element[1][1] = -1;
+  rot->Element[2][2] = -1;
+  
+  // itk matrix
+  vtkMatrix4x4 *matrixITK =  vtkMatrix4x4::New();
+  matrixITK->Identity();
+  matrixITK->Element[0][3] = params[0];
+  matrixITK->Element[1][3] = params[1];
+  matrixITK->Element[2][3] = params[2];
 
-  // rotate around X-axis to tranform from itk to vtk CS
-  matrix->Element[0][3] = params[0];
-  matrix->Element[1][3] = -params[1];
-  matrix->Element[2][3] = -params[2];
+  // vtk matrix
+  vtkMatrix4x4::Multiply4x4(rot, matrixITK, matrix);
+  vtkMatrix4x4::Multiply4x4(matrix, rot, matrixITK);
+  matrix->DeepCopy(matrixITK);
+
 }
   
 void
@@ -86,13 +98,24 @@ vtkITKTranslationMIGradientDescentRegistrationFilter::GetCurrentTransformationMa
   
   itk::itkTranslationMIGradientDescentRegistrationFilter::TransformType::ParametersType params = transform->GetParameters();
  
-  vtkMatrix4x4 *mat = vtkMatrix4x4::New();
-  matrix->Identity();
+  // itk to vtk flip matrix
+  vtkMatrix4x4 *rot = vtkMatrix4x4::New();
+  rot->Identity();
+  rot->Element[1][1] = -1;
+  rot->Element[2][2] = -1;
+  
+  // itk matrix
+  vtkMatrix4x4 *matrixITK =  vtkMatrix4x4::New();
+  matrixITK->Identity();
+  matrixITK->Element[0][3] = params[0];
+  matrixITK->Element[1][3] = params[1];
+  matrixITK->Element[2][3] = params[2];
 
-  // rotate around X-axis to tranform from itk to vtk CS
-  matrix->Element[0][3] = params[0];
-  matrix->Element[1][3] = -params[1];
-  matrix->Element[2][3] = -params[2];
+  // vtk matrix
+  vtkMatrix4x4::Multiply4x4(rot, matrixITK, matrix);
+  vtkMatrix4x4::Multiply4x4(matrix, rot, matrixITK);
+  matrix->DeepCopy(matrixITK);
+
 }
   
 void 
@@ -100,10 +123,22 @@ vtkITKTranslationMIGradientDescentRegistrationFilter::SetTransformationMatrix(vt
 {
   itk::itkTranslationMIGradientDescentRegistrationFilter::ParametersType  initialParameters = itk::itkTranslationMIGradientDescentRegistrationFilter::ParametersType(3);
 
+ // itk to vtk flip matrix
+  vtkMatrix4x4 *rot = vtkMatrix4x4::New();
+  rot->Identity();
+  rot->Element[1][1] = -1;
+  rot->Element[2][2] = -1;
+
+  // itk matrix
+  vtkMatrix4x4 *matrixITK =  vtkMatrix4x4::New();
+  vtkMatrix4x4 *matrixITK1 =  vtkMatrix4x4::New();
+  vtkMatrix4x4::Multiply4x4(rot, matrix, matrixITK);
+  vtkMatrix4x4::Multiply4x4(matrixITK, rot, matrixITK1);
+
   // rotate around X-axis to tranform from itk to vtk CS
-  initialParameters[0] = matrix->Element[0][3];
-  initialParameters[1] = -matrix->Element[1][3];
-  initialParameters[2] = -matrix->Element[2][3];
+  initialParameters[0] = matrixITK1->Element[0][3];
+  initialParameters[1] = matrixITK1->Element[1][3];
+  initialParameters[2] = matrixITK1->Element[2][3];
 
   itk::itkTranslationMIGradientDescentRegistrationFilter::TransformType::Pointer transform = itk::itkTranslationMIGradientDescentRegistrationFilter::TransformType::New();
   transform->SetParameters(initialParameters);
