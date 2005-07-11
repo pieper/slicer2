@@ -161,7 +161,7 @@ proc FSLReaderInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    lappend Module(versions) [ParseCVSInfo $m  {$Revision: 1.8 $} {$Date: 2005/06/22 19:15:17 $}]
+    lappend Module(versions) [ParseCVSInfo $m  {$Revision: 1.9 $} {$Date: 2005/07/11 21:15:48 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -214,6 +214,13 @@ proc FSLReaderInit {} {
 proc FSLReaderBuildGUI {} {
     global Gui FSLReader Module Volume Model
     
+    # error if no private segment
+    if { [catch "package require BLT"] } {
+        DevErrorWindow "Must have the BLT package for building FSLReader UI \
+        and plotting time course."
+        return
+    }
+
     # A frame has already been constructed automatically for each tab.
     # A frame named "Display" can be referenced as follows:
     #   
