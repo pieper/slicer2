@@ -158,7 +158,7 @@ public:
     }
   }
 
-  char *NrrdGetSpaceString ( Nrrd* nrrd ) const
+  const char *NrrdGetSpaceString ( Nrrd* nrrd ) const
   {
       return (airEnumStr(nrrdSpace, nrrd->space));
 #if 0

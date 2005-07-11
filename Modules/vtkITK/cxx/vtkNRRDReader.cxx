@@ -21,7 +21,7 @@
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.11 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.12 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -264,7 +264,6 @@ void vtkNRRDReader::ExecuteInformation()
    int dataExtent[6];
    vtkFloatingPointType spacings[3];
    vtkFloatingPointType origins[3];
-   int sdim;
    double axis[NRRD_SPACE_DIM_MAX];
 
    for (i=0; i < this->nrrd->dim; i++) {
@@ -277,7 +276,7 @@ void vtkNRRDReader::ExecuteInformation()
        dataExtent[2*i] = 0;
        dataExtent[2*i+1] = this->nrrd->axis[i].size - 1;  
        spacings[i] = this->nrrd->axis[i].spacing;
-       nrrdSpacingCalculate(this->nrrd, i, &spacings[i], &sdim, axis);
+       nrrdSpacingCalculate(this->nrrd, i, &spacings[i], axis);
        if ( !AIR_EXISTS(spacings[i]) ) { // is the spacing NaN?
          spacings[i] = 1.0;
        }
