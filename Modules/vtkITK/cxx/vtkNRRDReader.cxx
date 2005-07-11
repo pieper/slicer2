@@ -21,7 +21,7 @@
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.12 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.13 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -324,8 +324,8 @@ void vtkNRRDReader::ExecuteInformation()
      key = val = NULL;
    }
    HeaderKeyValue[std::string("space")] = std::string( NrrdGetSpaceString(this->nrrd) );
-   HeaderKeyValue[std::string("measurement-frame")] = std::string( "(1, 0, 0) (0, 1, 0) (0, 0, 1)" );
-
+   //HeaderKeyValue[std::string("measurement-frame")] = std::string( "(1, 0, 0) (0, 1, 0) (0, 0, 1)" );
+   HeaderKeyValue[std::string("measurement-frame")] = std::string( nrrdKeyValueGet(this->nrrd,"measurement-frame"));
    this->vtkImageReader2::ExecuteInformation();
    
    nrrdIoStateNix(nio);
