@@ -17,7 +17,7 @@ if { [info commands isvolume] == "" } {
         is3d.tcl isregistration.tcl evaluation-movies.tcl isbutton.tcl 
         istask.tcl isrange.tcl spinfloat.tcl 
         ismvolumeselector.tcl isvolumeoption.tcl 
-        ismatrixoption.tcl istransformoption.tcl
+        ismatrixoption.tcl istransformoption.tcl iscomm.tcl
     }
         
     foreach f $files {
