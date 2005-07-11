@@ -20,7 +20,6 @@
 
 #include "itkTimeProbesCollectorBase.h"
 
-
 //BTX
 
 namespace itk
@@ -158,7 +157,6 @@ protected:
   typedef MultiResolutionImageRegistrationMethod< 
                                     FixedImageType, 
                                     MovingImageType >    RegistrationType;
-
 
   void  GenerateData ();
 

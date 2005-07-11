@@ -25,6 +25,10 @@ void vtkITKRegistrationFilter::ConnectInputPipelines()
 
   this->itkImporterMoving = ImageImportType::New();
   ConnectPipelines(this->vtkExporterMoving, this->itkImporterMoving);
+
+  this->itkFixedImageWriter         = FixedWriterType::New();
+  this->itkMovingImageWriter        = MovingWriterType::New();
+
 }
 
 void vtkITKRegistrationFilter::ConnectOutputPipelines()
@@ -55,4 +59,39 @@ void vtkITKRegistrationFilter::Update()
 
   //vtkImporter->Update();
 }
+
+void vtkITKRegistrationFilter::WriteFixedImage(char* filename)
+{
+  this->itkFixedImageWriter->SetInput(this->itkImporterFixed->GetOutput());
+  this->itkFixedImageWriter->SetFileName( filename );
+  this->itkFixedImageWriter->Update();
+}
+
+void vtkITKRegistrationFilter::WriteMovingImage(char* filename)
+{
+  this->itkMovingImageWriter->SetInput(this->itkImporterMoving->GetOutput());
+  this->itkMovingImageWriter->SetFileName( filename );
+  this->itkMovingImageWriter->Update();
+}
+
+void vtkITKRegistrationFilter::WriteFixedImageInfo(char* filename)
+{
+  std::ofstream ofs(filename);
+  InputImageType::SpacingType spacing = (this->itkImporterFixed->GetOutput()->GetSpacing());
+  InputImageType::PointType origin = (this->itkImporterFixed->GetOutput()->GetOrigin());
+  ofs << "Origin = " << origin << std::endl;
+  ofs << "Spacing = " << spacing << std::endl;
+  ofs.close();
+}
+
+void vtkITKRegistrationFilter::WriteMovingImageInfo(char* filename)
+{
+  std::ofstream ofs(filename);
+  InputImageType::SpacingType spacing = (this->itkImporterFixed->GetOutput()->GetSpacing());
+  InputImageType::PointType origin = (this->itkImporterFixed->GetOutput()->GetOrigin());
+  ofs << "Origin = " << origin << std::endl;
+  ofs << "Spacing = " << spacing << std::endl;
+  ofs.close();
+}
+
 

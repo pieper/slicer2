@@ -70,9 +70,10 @@ vtkITKTranslationMIGradientDescentRegistrationFilter::GetTransformationMatrix(vt
  
   matrix->Identity();
 
+  // rotate around X-axis to tranform from itk to vtk CS
   matrix->Element[0][3] = params[0];
-  matrix->Element[1][3] = params[1];
-  matrix->Element[2][3] = params[2];
+  matrix->Element[1][3] = -params[1];
+  matrix->Element[2][3] = -params[2];
 }
   
 void
@@ -85,11 +86,13 @@ vtkITKTranslationMIGradientDescentRegistrationFilter::GetCurrentTransformationMa
   
   itk::itkTranslationMIGradientDescentRegistrationFilter::TransformType::ParametersType params = transform->GetParameters();
  
+  vtkMatrix4x4 *mat = vtkMatrix4x4::New();
   matrix->Identity();
 
+  // rotate around X-axis to tranform from itk to vtk CS
   matrix->Element[0][3] = params[0];
-  matrix->Element[1][3] = params[1];
-  matrix->Element[2][3] = params[2];
+  matrix->Element[1][3] = -params[1];
+  matrix->Element[2][3] = -params[2];
 }
   
 void 
@@ -97,14 +100,14 @@ vtkITKTranslationMIGradientDescentRegistrationFilter::SetTransformationMatrix(vt
 {
   itk::itkTranslationMIGradientDescentRegistrationFilter::ParametersType  initialParameters = itk::itkTranslationMIGradientDescentRegistrationFilter::ParametersType(3);
 
+  // rotate around X-axis to tranform from itk to vtk CS
   initialParameters[0] = matrix->Element[0][3];
-  initialParameters[1] = matrix->Element[1][3];
-  initialParameters[2] = matrix->Element[2][3];
-
+  initialParameters[1] = -matrix->Element[1][3];
+  initialParameters[2] = -matrix->Element[2][3];
 
   itk::itkTranslationMIGradientDescentRegistrationFilter::TransformType::Pointer transform = itk::itkTranslationMIGradientDescentRegistrationFilter::TransformType::New();
   transform->SetParameters(initialParameters);
-  // The guess is: a quaternion followed by a translation
+
   m_ITKFilter->SetTransform(transform);
 }
 

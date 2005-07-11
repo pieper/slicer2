@@ -175,8 +175,6 @@ itk::itkTransformRegistrationFilter<TImageClass, TOptimizerClass, TTransformerCl
 {
   return m_Optimizer->GetValue();
 }
-
-
 } // namespace itk
 
 #endif /* _itkTransformRegistrationFilter__txx */

@@ -16,6 +16,10 @@
 #include "itkImageRegionIterator.h"
 #include "itkCastImageFilter.h"
 
+#include "itkImageFileWriter.h"
+
+#include <fstream>
+#include <string>
 
 #define vtkRegistrationNewMacro(thisClass) \
   thisClass* thisClass::New() \
@@ -112,6 +116,14 @@ public:
   }
 
 
+  void WriteFixedImage(char* filename);
+
+  void WriteMovingImage(char* filename);
+
+  void WriteFixedImageInfo(char* filename);
+
+  void WriteMovingImageInfo(char* filename);
+
 protected:
   int    NumIterations;
   int    CurrentIteration;
@@ -130,6 +142,9 @@ protected:
   typedef itk::VTKImageImport<InputImageType> ImageImportType;
   typedef itk::VTKImageExport<OutputImageType> ImageExportType;
 
+  typedef itk::ImageFileWriter< InputImageType  >    FixedWriterType;      
+  typedef itk::ImageFileWriter< InputImageType >     MovingWriterType;      
+
   // itk import for input itk images
   ImageImportType::Pointer itkImporterFixed;
   ImageImportType::Pointer itkImporterMoving;
@@ -140,6 +155,9 @@ protected:
   // vtk export for moving vtk image
   vtkImageCast* vtkCastMoving;
   vtkImageExport* vtkExporterMoving;  
+
+  FixedWriterType::Pointer   itkFixedImageWriter;
+  MovingWriterType::Pointer  itkMovingImageWriter;
 
   void InitializePipeline();
 
@@ -166,7 +184,7 @@ private:
   void operator=(const vtkITKRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKRegistrationFilter, "$Revision: 1.3 $");
+//vtkCxxRevisionMacro(vtkITKRegistrationFilter, "$Revision: 1.4 $");
 //vtkStandardNewMacro(vtkITKRegistrationFilter);
 
 #endif
