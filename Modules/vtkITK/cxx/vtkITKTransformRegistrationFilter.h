@@ -68,6 +68,9 @@ public:
     SetMovingInput(input);
   };
 
+  // convert itk space image to image matrix to vtk space and vise versa
+  static void vtkItkMatrixTransform (vtkMatrix4x4 *matIn, vtkMatrix4x4 *matOut);
+
 protected:
 
   //BTX
