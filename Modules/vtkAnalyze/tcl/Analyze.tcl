@@ -162,7 +162,7 @@ proc AnalyzeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.12 $} {$Date: 2005/05/23 18:43:46 $}]
+        {$Revision: 1.13 $} {$Date: 2005/07/11 21:13:57 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -402,6 +402,18 @@ proc AnalyzeExit {} {
 
 
 #-------------------------------------------------------------------------------
+# .PROC AnalyzeSetVolumeNamePrefix 
+# Sets a prefix for volume name 
+# .END
+#-------------------------------------------------------------------------------
+proc AnalyzeSetVolumeNamePrefix {prefix} {
+    global AnalyzeCache 
+    
+    set AnalyzeCache(volumeNamePrefix) $prefix
+}
+
+
+#-------------------------------------------------------------------------------
 # .PROC AnalyzeApply 
 #  Starts to load Analyze volume(s). It returns 0 if successful; 1 otherwise.
 # .END
@@ -435,6 +447,10 @@ proc AnalyzeApply {} {
     if {[file extension $AnalyzeCache(fileName)] == ".hdr"} {
         set name [AnalyzeSwitchExtension $AnalyzeCache(fileName)]
         set AnalyzeCache(fileName) $name
+    }
+
+    if {! [info exists AnalyzeCache(volumeNamePrefix)]} {
+        set AnalyzeCache(volumeNamePrefix) ""
     }
 
     # Loads volumes in .img file 
@@ -588,7 +604,7 @@ proc AnalyzeLoadVolumes {} {
 
     set volName [AnalyzeCreateVolumeNameFromFileName \
         $AnalyzeCache(fileName)]
-    set dash "-"
+    set underscore "_"
 
     set x1 0 
     set x2 $maxX 
@@ -602,9 +618,9 @@ proc AnalyzeLoadVolumes {} {
         imageAppend SetAppendAxis 2 
         
         if {$n > 1} {
-            set vName $volName$dash$j
+            set vName $AnalyzeCache(volumeNamePrefix)$volName$underscore$j
         } else {
-            set vName $volName
+            set vName $AnalyzeCache(volumeNamePrefix)$volName
         }
         set load "Loading volume:\n"
         append load $vName
