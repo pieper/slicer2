@@ -137,8 +137,10 @@ if { [itcl::find class isvolume] == "" } {
         variable _warpVolId 0
         variable _VolIdMap
         variable _volume_serial 0
+        variable _render_pending 0 ;# manages render event compaction
         
         # methods
+        method render {}   {}
         method expose {}   {}
         method actor  {}   {return $_actor}
         method mapper {}   {return $_mapper}
@@ -536,8 +538,9 @@ itcl::configbody isvolume::interpolation {
 # ------------------------------------------------------------------
 itcl::configbody isvolume::resolution {
 
-    set opos [expr ([$this cget -slice] * 1.0) / [$_slider cget -to] ]
     set res $itk_option(-resolution)
+
+    set opos [expr ([$this cget -slice] * 1.0) / [$_slider cget -to] ]
     if { [info exists ::View(fov)] } {
         set fov $::View(fov)
     } else {
@@ -554,23 +557,25 @@ itcl::configbody isvolume::resolution {
 
     $_reslice SetOutputExtent 0 $ext 0 $ext 0 $ext
 
-    $_slider configure -from 0
-    $_slider configure -to $res
-    $this configure -slice [expr round( $opos * $res )]
-    $_tkrw configure -width $res -height $res
-
     $this transform_update
 
     # the "*" is there to avoid having the resolution number interpreted
     # as a numerical index - it's a pattern match instead
-    $_resmenu select "*$itk_option(-resolution)" 
+    if { $res != [$_resmenu get] } {
+        $_resmenu select "*$itk_option(-resolution)" 
+    }
+
+    $_slider configure -from 0
+    $_slider configure -to $res
+    $_tkrw configure -width $res -height $res
+    $this configure -slice [expr round( $opos * $res )]
+
 }
 
 # ------------------------------------------------------------------
 itcl::configbody isvolume::transform {
 
     $this transform_update
-    #$this expose
 }
 
 # ------------------------------------------------------------------
@@ -578,8 +583,16 @@ itcl::configbody isvolume::transform {
 # ------------------------------------------------------------------
 
 
-itcl::body isvolume::expose {} {
+itcl::body isvolume::render {} {
     $_tkrw Render
+    set _render_pending 0
+}
+
+itcl::body isvolume::expose {} {
+    if { $_render_pending == 0 } {
+        after idle "$this render"
+        set _render_pending 1
+    } 
 }
 
 # ------------------------------------------------------------------
@@ -655,6 +668,9 @@ itcl::body isvolume::transform_update {} {
         if { $res == "vtkImageData" } {
             set ScanOrder "IS"
             set RasToWld "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1"
+        } else {
+            # can't do anything with a class that's not a vtkImageData
+            return
         }
     } else {
         if { [info exists _VolIdMap($volname)] } {
@@ -787,6 +803,7 @@ itcl::body isvolume::transform_update {} {
     if { $itk_option(-transform) != "" } {
         eval transformmatrix DeepCopy $itk_option(-transform)
     } else {
+        eval transformmatrix DeepCopy $RasToWld
     }
 
     transformmatrix Invert
