@@ -127,6 +127,7 @@ if {$validImageFound != 0} {
          vtkCommand DeleteAllObjects
          catch {destroy .top}
          catch {destroy .geo}
+         puts "Test failed"
          exit 1
       }
    }
@@ -262,6 +263,7 @@ if {$validImageFound != 0} {
      vtkCommand DeleteAllObjects
      catch {destroy .top}
      catch {destroy .geo}
+     puts "Test failed"
      exit 1; 
        }
    }
@@ -283,5 +285,7 @@ if {$validImageFound != 0} {
 vtkCommand DeleteAllObjects
 catch {destroy .top}
 catch {destroy .geo}
+
+puts "Test passed"
 
 exit 0
