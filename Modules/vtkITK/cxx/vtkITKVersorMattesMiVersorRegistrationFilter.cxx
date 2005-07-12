@@ -80,20 +80,24 @@ vtkITKVersorMattesMiVersorRegistrationFilter::GetTransformationMatrix(vtkMatrix4
   const itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::MatrixType ResMat   =transform->GetRotationMatrix();
   const itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::OffsetType ResOffset=transform->GetOffset();
 
-  // Copy the Rotation Matrix
-  for(int i=0;i<3;i++)
-    for(int j=0;j<3;j++)
+  
+  // Create Rotation Matrix
+  matrix->Identity();
+
+  for(int i=0;i<3;i++) {
+    for(int j=0;j<3;j++) {
       matrix->Element[i][j] = ResMat[i][j];
+    }
+  }
 
-  // Copy the Offset
-  for(int s=0;s<3;s++)
-    matrix->Element[s][3] = ResOffset[s];
+  matrix->Invert();
 
-  // Fill in the rest
-  matrix->Element[3][0] = 0;
-  matrix->Element[3][1] = 0;
-  matrix->Element[3][2] = 0;
-  matrix->Element[3][3] = 1;
+  // Add translation with vtk to itk flip in Y and Z
+  matrix->Element[0][3] = -ResOffset[0];
+  matrix->Element[1][3] = ResOffset[1];
+  matrix->Element[2][3] = ResOffset[2];
+  
+  matrix->Invert();
 }
   
 void
@@ -109,20 +113,23 @@ vtkITKVersorMattesMiVersorRegistrationFilter::GetCurrentTransformationMatrix(vtk
   const itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::MatrixType ResMat   =transform->GetRotationMatrix();
   const itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::OffsetType ResOffset=transform->GetOffset();
   
-  // Copy the Rotation Matrix
-  for(int i=0;i<3;i++)
-    for(int j=0;j<3;j++)
+  // Create Rotation Matrix
+  matrix->Identity();
+
+  for(int i=0;i<3;i++) {
+    for(int j=0;j<3;j++) {
       matrix->Element[i][j] = ResMat[i][j];
+    }
+  }
 
-  // Copy the Offset
-  for(int s=0;s<3;s++)
-    matrix->Element[s][3] = ResOffset[s];
+  matrix->Invert();
 
-  // Fill in the rest
-  matrix->Element[3][0] = 0;
-  matrix->Element[3][1] = 0;
-  matrix->Element[3][2] = 0;
-  matrix->Element[3][3] = 1;
+  // Add translation with vtk to itk flip in Y and Z
+  matrix->Element[0][3] = -ResOffset[0];
+  matrix->Element[1][3] = ResOffset[1];
+  matrix->Element[2][3] = ResOffset[2];
+  
+  matrix->Invert();
 }
   
 void 
@@ -130,11 +137,15 @@ vtkITKVersorMattesMiVersorRegistrationFilter::SetTransformationMatrix(vtkMatrix4
 {
   itk::itkVersorMattesMiVersorRegistrationFilter::ParametersType  initialParameters = itk::itkVersorMattesMiVersorRegistrationFilter::ParametersType(7);
 
+  // transform from vtk to itk space
+  vtkMatrix4x4 *matrixITK =  vtkMatrix4x4::New();
+  vtkITKTransformRegistrationFilter::vtkItkMatrixTransform(matrix, matrixITK);
+
   vnl_matrix<double> matrix3x4(3,4);
 
   for(int i=0;i<3;i++)
     for(int j=0;j<4;j++)
-      matrix3x4[i][j] = matrix->Element[i][j];
+      matrix3x4[i][j] = matrixITK->Element[i][j];
   
   vnl_quaternion<double> matrixAsQuaternion(matrix3x4);
 

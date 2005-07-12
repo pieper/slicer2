@@ -94,4 +94,18 @@ void vtkITKRegistrationFilter::WriteMovingImageInfo(char* filename)
   ofs.close();
 }
 
+void vtkITKRegistrationFilter::WriteVtkFixedImageInfo(char* filename)
+{
+  std::ofstream ofs(filename);
+  this->vtkExporter->GetInput()->PrintSelf(ofs, 0);
+  ofs.close();
+}
+
+void vtkITKRegistrationFilter::WriteVtkMovingImageInfo(char* filename)
+{
+  std::ofstream ofs(filename);
+  this->vtkExporterMoving->GetInput()->PrintSelf(ofs, 0);
+  ofs.close();
+}
+
 

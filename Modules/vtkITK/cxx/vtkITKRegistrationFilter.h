@@ -124,6 +124,10 @@ public:
 
   void WriteMovingImageInfo(char* filename);
 
+  void WriteVtkFixedImageInfo(char* filename);
+
+  void WriteVtkMovingImageInfo(char* filename);
+
 protected:
   int    NumIterations;
   int    CurrentIteration;
@@ -184,7 +188,7 @@ private:
   void operator=(const vtkITKRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKRegistrationFilter, "$Revision: 1.4 $");
+//vtkCxxRevisionMacro(vtkITKRegistrationFilter, "$Revision: 1.5 $");
 //vtkStandardNewMacro(vtkITKRegistrationFilter);
 
 #endif
