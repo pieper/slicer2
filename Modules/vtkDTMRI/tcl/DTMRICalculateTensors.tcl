@@ -67,7 +67,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.14 $} {$Date: 2005/07/12 21:03:06 $}]
+                                 {$Revision: 1.15 $} {$Date: 2005/07/12 23:53:51 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -153,6 +153,9 @@ proc DTMRICalculateTensorsInit {} {
     #This variable is used by Create-Pattern button and indicates weather it has to hide or show the create pattern frame. On status 0 --> show. On status 1 --> hide.
     set DTMRI(convert,show) 0
 
+    #Volume to convert is nrrd
+    set DTMRI(convert,nrrd) 0
+    
     set DTMRI(convert,makeDWIasVolume) 0
     set DTMRI(convertID) $Volume(idNone)
 
@@ -554,8 +557,7 @@ proc DTMRIConvertUpdate {} {
   
   #At this point with are dealing with a Nrrd DWI volume.
   
-  set DTMRI(convert,nrrd) 1
-  
+
   #Build protocol from headerKeys
   set key DWMRI_b-value
   set DTMRI(convert,lebihan) $Volume($id,headerKeys,$key) 
@@ -568,7 +570,7 @@ proc DTMRIConvertUpdate {} {
   set baselinepos 1
   set keyprefix "$id,headerKeys"
   set gradprefix "$keyprefix,DWMRI_gradient_"
-  set nexprefix "$keyprefix,DWMRI_NEW_"
+  set nexprefix "$keyprefix,DWMRI_NEX_"
 
   set idx 0
   while {1} {
@@ -577,41 +579,43 @@ proc DTMRIConvertUpdate {} {
     
     puts $key
     
-    if {![info exists $Volume($key)]} {
+    if {![info exists Volume($key)]} {
       break
     }
     
     #Check for baseline
-    if {$Volume($key) == "0 0 0"} {
+    if {$Volume($key) == " 0  0  0"} {
       #Check for NEX
       set keynex "$nexprefix$grad"
-      if {[info exists $Volume($keynex)]} {
+      if {[info exists Volume($keynex)]} {
         set nex $Volume($keynex)
       } else {
         set nex 1
       }
+      puts "INit index: $idx"
       set DTMRI(convert,firstNoGradientImage) [expr $idx + 1]
       set DTMRI(convert,lastNoGradientImage) [expr $idx + $nex]
       set idx [expr $idx + $nex]
+      puts $idx
      } else {
       set keynex "$nexprefix$grad"
-      if {[info exists $Volume($keynex)]} {
+      if {[info exists Volume($keynex)]} {
         set nex $Volume($keynex)
       } else {
         set nex 1
       }
-      for {set nidx 0} {$ndix < $nex} {incr nidx} {
+      for {set nidx 0} {$nidx < $nex} {incr nidx} {
         lappend DTMRI(convert,gradients) $Volume($key)
         incr DTMRI(convert,numberOfGradients)
       }
       set idx [expr $idx + $nex]    
-     puts $idx
+      puts $DTMRI(convert,numberOfGradients)
     }
     
   }
   
   set DTMRI(convert,firstGradientImage) [expr $DTMRI(convert,lastNoGradientImage) + 1]
-  set DTMRI(convert,lastGradientImage) [expr $DTMRI(convert,numberOfGradients) + 1]   
+  set DTMRI(convert,lastGradientImage) [expr $DTMRI(convert,numberOfGradients) + $DTMRI(convert,lastNoGradientImage)]   
   
          
   #Nrrd by default is VOLUME-Interslice
@@ -622,7 +626,10 @@ proc DTMRIConvertUpdate {} {
   # to accomodate somehow until this information is incorporated in
   # vtkMrmrlVolumeNode.
   set key "measurementframe"
-  #set DTMRI(convert,measurementframe) $Volume($id,headerKeys,$key)
+  set DTMRI(convert,measurementframe) $Volume($id,headerKeys,$key)
+  
+  #Set nrrd flag
+  set DTMRI(convert,nrrd) 1
        
   #Disable protocols
 
@@ -1085,9 +1092,11 @@ proc ConvertVolumeToTensors {} {
     }
 
     # DTMRI creation filter
-    vtkImageDiffusionTensor DTMRI
+    catch "vtkImageDiffusionTensor DTMRI"
     DTMRI SetInputScaleFactor 100
-
+    
+    if {0} {
+    puts "Loading pattern"
     if {[info exists DTMRI(selectedpattern)]} {
         
         set DTMRI(convert,numberOfGradients) [lindex $DTMRI($DTMRI(selectedpattern),parameters) 0]
@@ -1107,6 +1116,7 @@ proc ConvertVolumeToTensors {} {
         DTMRI Delete
         return
         
+    }
     }
 
 # define if the conversion is volume interleaved or slice interleaved depending on the pattern
@@ -1138,9 +1148,11 @@ proc ConvertVolumeToTensors {} {
     }
     puts $offsetsNoGradient
     set numberOfNoGradientImages $count
-
+    
     set slicePeriod \
     [expr $numberOfGradientImages+$numberOfNoGradientImages]
+    
+    puts "Slice period: $slicePeriod, Num No grad:$numberOfNoGradientImages" 
     
     set numberOfGradientImages $DTMRI(convert,numberOfGradients) 
     DTMRI SetNumberOfGradients $numberOfGradientImages
@@ -1246,8 +1258,8 @@ proc ConvertVolumeToTensors {} {
 
     set dimz [lindex [$input GetDimensions] 2]
     set rest [expr $dimz%$slicePeriod]
-   
-   if {$rest != 0 && [lindex $DTMRI($DTMRI(selectedpattern),parameters) 7] == "VOLUME"} {
+    puts "Rest: $rest, Dimz: $dimz, slice Period: $slicePeriod"
+   if {$rest != 0 && $DTMRI(convert,order) == "VOLUME"} {
        DevErrorWindow "Check your Input Data.\n Not enough number of slices"
        DTMRI Delete
        return
