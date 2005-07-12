@@ -388,16 +388,16 @@ proc VolNrrdApply {} {
     #
     # Setting measurement frame as a key value. This might eventually be part of the MrmlNode
     set mframe ""
-    foreach i "0 1 2" {
+    foreach r "0 1 2" {
       set axis ""
-      foreach j "0 1 2" {
-        lappend axis [[nrrdReader GetMeasurementFrameMatrix] GetElement $i $j]
+      foreach c "0 1 2" {
+        lappend axis [[nrrdReader GetMeasurementFrameMatrix] GetElement $r $c]
       }
       lappend mframe $axis
     }
     puts "Measurement frame: $mframe"
+    
     set Volume($i,headerKeys,measurementframe) $mframe    
-    puts $Volume($i,headerKeys,measurementframe)
     
     # so can read in the volume
     if {$Module(verbose) == 1} {
@@ -484,14 +484,16 @@ proc VolNrrdReaderProc {v} {
         return
     }
 
+  
     nrrdReader1 SetFileName [Volume($v,node) GetFullPrefix]
 
     catch "flip Delete"
     vtkImageFlip flip
     flip SetFilteredAxis 1
     flip SetInput  [nrrdReader1 GetOutput]   
-
+    
     flip Update
+    
     Volume($v,vol) SetImageData [flip GetOutput]
 
     flip Delete
