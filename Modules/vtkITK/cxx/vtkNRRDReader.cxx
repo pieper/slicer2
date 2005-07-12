@@ -21,12 +21,13 @@
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.13 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.14 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
 {
   RasToIjkMatrix = NULL;
+  MeasurementFrameMatrix = NULL;
   HeaderKeys = NULL;
   CurrentFileName = NULL;
   nrrd = nrrdNew();
@@ -38,6 +39,13 @@ vtkNRRDReader::~vtkNRRDReader()
     RasToIjkMatrix->Delete();
     RasToIjkMatrix = NULL;
   }
+  
+  if (MeasurementFrameMatrix) {
+    MeasurementFrameMatrix->Delete();
+    MeasurementFrameMatrix = NULL;
+  }  
+  
+  
   if (HeaderKeys) {
     delete [] HeaderKeys;
     HeaderKeys = NULL;
@@ -55,6 +63,12 @@ vtkMatrix4x4* vtkNRRDReader::GetRasToIjkMatrix()
   return RasToIjkMatrix;
 }
 
+vtkMatrix4x4* vtkNRRDReader::GetMeasurementFrameMatrix()
+{
+  this->ExecuteInformation();
+  return MeasurementFrameMatrix;
+}
+  
 char* vtkNRRDReader::GetHeaderKeys()
 {
   std::string keys;
@@ -221,6 +235,12 @@ void vtkNRRDReader::ExecuteInformation()
    RasToIjkMatrix->Identity();
    IjkToRasMatrix->Identity();
 
+  if (MeasurementFrameMatrix) {
+     MeasurementFrameMatrix->Delete();
+  }
+  MeasurementFrameMatrix = vtkMatrix4x4::New();
+  MeasurementFrameMatrix->Identity();   
+
    nio = nrrdIoStateNew();
 
    if (nrrdLoad(this->nrrd, this->GetFileName(), nio) != 0) {
@@ -325,7 +345,13 @@ void vtkNRRDReader::ExecuteInformation()
    }
    HeaderKeyValue[std::string("space")] = std::string( NrrdGetSpaceString(this->nrrd) );
    //HeaderKeyValue[std::string("measurement-frame")] = std::string( "(1, 0, 0) (0, 1, 0) (0, 0, 1)" );
-   HeaderKeyValue[std::string("measurement-frame")] = std::string( nrrdKeyValueGet(this->nrrd,"measurement-frame"));
+   //HeaderKeyValue[std::string("measurement-frame")] = std::string( nrrdKeyValueGet(this->nrrd,"measurement-frame"));
+   
+   for (int j=0;j<2;j++)
+     for (int i=0;i<2;i++)
+        MeasurementFrameMatrix->SetElement(i,j,this->nrrd->measurementFrame[i][j]);
+   
+   
    this->vtkImageReader2::ExecuteInformation();
    
    nrrdIoStateNix(nio);

@@ -46,6 +46,10 @@ public:
   vtkMatrix4x4* GetRasToIjkMatrix();
 
   // Description:
+  // Returns the measurement frame matrix used for tensor valued data.
+  vtkMatrix4x4* GetMeasurementFrameMatrix();
+
+  // Description:
   // Get a space separated list of all keys in the header
   // the string is allocated and deleted in this object
   char* GetHeaderKeys();
@@ -213,6 +217,7 @@ protected:
   ~vtkNRRDReader();
 
   vtkMatrix4x4* RasToIjkMatrix;
+  vtkMatrix4x4* MeasurementFrameMatrix;
 
   char* HeaderKeys;
   char* CurrentFileName;
