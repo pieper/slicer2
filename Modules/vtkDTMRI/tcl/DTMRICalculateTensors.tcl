@@ -67,7 +67,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.13 $} {$Date: 2005/07/06 13:48:38 $}]
+                                 {$Revision: 1.14 $} {$Date: 2005/07/12 21:03:06 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -147,6 +147,8 @@ proc DTMRICalculateTensorsInit {} {
                                  "Average the diffusion weighted images across repetitions."\
                  "If off having several repetitions means that the first repetition is used to compute the tensor" \
                  ]
+    set DTMRI(convert,measurementframe) {{1 0 0} {0 1 0} {0 0 1}}
+
     
     #This variable is used by Create-Pattern button and indicates weather it has to hide or show the create pattern frame. On status 0 --> show. On status 1 --> hide.
     set DTMRI(convert,show) 0
@@ -527,52 +529,101 @@ proc DTMRIConvertUpdate {} {
   set id $DTMRI(convertID)
   
   #Check if DTMRI headerKeys exits
+  set headerkey [array names Volume "$id,headerKeys,modality"]
+  
+  if {$headerkey == ""} {
+    #Active protocol frame
+    return
+  }
+  
+  if {$Volume($headerkey) != "DWMRI"} {
+    # Prompt advise
+    puts "Selected volume is not a DWI volume"
+  }     
+  
+  
   set headerkeys [array names Volume "$id,headerKeys,DW*"]
   
   # don't use the header keys for now...
-  if {1 || $headerkeys == ""} {
+  if {0 || $headerkeys == ""} {
      #Active protocols frame
+     puts "There is not protocol info. Nrrd header might be corrupted."
+     puts "If you feel conformtable, choose a protocol"
+     return
+  }
   
-  } else {
-     #Build protocol from headerKeys
-     set key DWMRI_b-value
-     set DTMRI(convert,lebihan) $Volume($id,headerKeys,$key) 
-     #Find baseline
-     set DTMRI(convert,gradients) ""
-     set gradientkeys [array names Volume "$id,headerKeys,DWMRI_gradient_*" ]
-     
- 
-     set baselinepos 1
-     foreach key $gradientkeys {
-       if {$Volume($key) == "0 0 0"} {
-         set DTMRI(convert,firstNoGradientImage) $baselinepos
-         #parse NEX key to figure out the last No Gradient
-         set DTMRI(convert,lastNoGradientImage) $baselinepos
-         
-         #Find number of gradients
-         set DTMRI(convert,numberOfGradients) [expr [llength $gradientkeys] - 1]
-     
-         
-         break
-       }  
-       else {
-         #This should be then a gradient
-         lappend DTMRI(convert,gradients) $Volume($id,headerKeys,$key)
-         incr baselinepos
-       }  
-     }
-     
-     if {$baselinepos > [llength $gradientkeys]} {
-       #Show error: no baseline in the file
-     
-     }
-       
-     set DTMRI(convert,order) "VOLUME"
-     
-   }
+  #At this point with are dealing with a Nrrd DWI volume.
+  
+  set DTMRI(convert,nrrd) 1
   
   #Build protocol from headerKeys
+  set key DWMRI_b-value
+  set DTMRI(convert,lebihan) $Volume($id,headerKeys,$key) 
+  #Find baseline
+  set DTMRI(convert,gradients) ""
+  set gradientkeys [array names Volume "$id,headerKeys,DWMRI_gradient_*" ]
   
+  set DTMRI(convert,numberOfGradients) 0
+  
+  set baselinepos 1
+  set keyprefix "$id,headerKeys"
+  set gradprefix "$keyprefix,DWMRI_gradient_"
+  set nexprefix "$keyprefix,DWMRI_NEW_"
+
+  set idx 0
+  while {1} {
+    set grad [format %04d $idx]
+    set key "$gradprefix$grad"
+    
+    puts $key
+    
+    if {![info exists $Volume($key)]} {
+      break
+    }
+    
+    #Check for baseline
+    if {$Volume($key) == "0 0 0"} {
+      #Check for NEX
+      set keynex "$nexprefix$grad"
+      if {[info exists $Volume($keynex)]} {
+        set nex $Volume($keynex)
+      } else {
+        set nex 1
+      }
+      set DTMRI(convert,firstNoGradientImage) [expr $idx + 1]
+      set DTMRI(convert,lastNoGradientImage) [expr $idx + $nex]
+      set idx [expr $idx + $nex]
+     } else {
+      set keynex "$nexprefix$grad"
+      if {[info exists $Volume($keynex)]} {
+        set nex $Volume($keynex)
+      } else {
+        set nex 1
+      }
+      for {set nidx 0} {$ndix < $nex} {incr nidx} {
+        lappend DTMRI(convert,gradients) $Volume($key)
+        incr DTMRI(convert,numberOfGradients)
+      }
+      set idx [expr $idx + $nex]    
+     puts $idx
+    }
+    
+  }
+  
+  set DTMRI(convert,firstGradientImage) [expr $DTMRI(convert,lastNoGradientImage) + 1]
+  set DTMRI(convert,lastGradientImage) [expr $DTMRI(convert,numberOfGradients) + 1]   
+  
+         
+  #Nrrd by default is VOLUME-Interslice
+  set DTMRI(convert,order) "VOLUME"
+     
+  #Measure frame: In VolNRRD we have converted measurement frame
+  # from an attribute to an header key. This is a temporary solution
+  # to accomodate somehow until this information is incorporated in
+  # vtkMrmrlVolumeNode.
+  set key "measurementframe"
+  #set DTMRI(convert,measurementframe) $Volume($id,headerKeys,$key)
+       
   #Disable protocols
 
 }
