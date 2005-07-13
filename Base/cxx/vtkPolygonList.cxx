@@ -304,6 +304,9 @@ vtkPoints* vtkPolygonList::GetSampledPolygon(int p)
                           (ras1[0] - ras2[0]) / p2_p1sq * ax0by0c;
             double p1dy = ras2[1] - ras1[1] + p2dy + 2.0 *
                           (ras1[1] - ras2[1]) / p2_p1sq * ax0by0c;
+            // Plot left endpoint
+            Samples->InsertNextPoint(ras1[0], ras1[1], 0);
+            // Plot intermediate points
             for (int j = 1; j <= density; j++)
             {
                 Point *p = new Point(0, 0);
@@ -316,6 +319,8 @@ vtkPoints* vtkPolygonList::GetSampledPolygon(int p)
                             ras2[0], ras2[1]);
                 Samples->InsertNextPoint(p->x, p->y, 0);
             }
+            // Plot right endpoint
+            Samples->InsertNextPoint(ras2[0], ras2[1], 0);
             p1++;
             p2++;
             p3++;
@@ -331,6 +336,9 @@ vtkPoints* vtkPolygonList::GetSampledPolygon(int p)
             double ply = oneThird * p1dy + ras1[1];
             double prx = ras2[0] - oneThird * p2dx;
             double pry = ras2[1] - oneThird * p2dy;
+            // Plot left endpoint
+            Samples->InsertNextPoint(ras1[0], ras1[1], 0);
+            // Plot intermediate points
             for (int j = 1; j <= density; j++)
             {
                 Point *p = new Point(0, 0);
@@ -339,6 +347,8 @@ vtkPoints* vtkPolygonList::GetSampledPolygon(int p)
                             ras2[0], ras2[1]);
                 Samples->InsertNextPoint(p->x, p->y, 0);
             }
+            // Plot right endpoint
+            Samples->InsertNextPoint(ras2[0], ras2[1], 0);
             p0++;
             p1++;
             p2++;
@@ -370,6 +380,9 @@ vtkPoints* vtkPolygonList::GetSampledPolygon(int p)
             double ply = oneThird * p1dy + ras1[1];
             double prx = ras2[0] - oneThird * p2dx;
             double pry = ras2[1] - oneThird * p2dy;
+            // Plot left endpoint
+            Samples->InsertNextPoint(ras1[0], ras1[1], 0);
+            // Plot intermediate points
             for (int j = 1; j <= density; j++)
             {
                 Point *p = new Point(0, 0);
@@ -378,6 +391,8 @@ vtkPoints* vtkPolygonList::GetSampledPolygon(int p)
                             ras2[0], ras2[1]);
                 Samples->InsertNextPoint(p->x, p->y, 0);
             }
+            // Plot right endpoint
+            Samples->InsertNextPoint(ras2[0], ras2[1], 0);
             p0++;
             p1++;
             p2++;
@@ -406,6 +421,9 @@ vtkPoints* vtkPolygonList::GetSampledPolygon(int p)
             double ply = oneThird * p1dy + ras1[1];
             double prx = ras2[0] - oneThird * p2dx;
             double pry = ras2[1] - oneThird * p2dy;
+            // Plot left endpoint
+            Samples->InsertNextPoint(ras1[0], ras1[1], 0);
+            // Plot intermediate points
             for (int j = 1; j <= density; j++)
             {
                 Point *p = new Point(0, 0);
@@ -414,6 +432,8 @@ vtkPoints* vtkPolygonList::GetSampledPolygon(int p)
                             ras2[0], ras2[1]);
                 Samples->InsertNextPoint(p->x, p->y, 0);
             }
+            // Plot right endpoint
+            Samples->InsertNextPoint(ras2[0], ras2[1], 0);
             p1 = -1; // this is the last iteration: exit the loop now
         }
     }
