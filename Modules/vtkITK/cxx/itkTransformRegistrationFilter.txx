@@ -106,7 +106,6 @@ itk::itkTransformRegistrationFilter<TImageClass, TOptimizerClass, TTransformerCl
   m_Transform->SetParameters( m_FinalParameters ); 
 
   if (m_ResampleMovingImage) {
-     m_Resampler->Update();
      this->GraftOutput(GetTransformedOutput());
   }
 
@@ -125,6 +124,7 @@ itkTransformRegistrationFilter<TImageClass, TOptimizerClass,  TTransformerClass,
   m_Resampler->SetOutputOrigin(  this->GetInput()->GetOrigin() );
   m_Resampler->SetOutputSpacing( this->GetInput()->GetSpacing() );
   m_Resampler->SetDefaultPixelValue( m_BackgroundLevel );
+  m_Resampler->Update();
 
   return m_Resampler->GetOutput();
 }

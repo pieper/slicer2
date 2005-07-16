@@ -139,7 +139,16 @@ vtkITKVersorMattesMiVersorRegistrationFilter::SetTransformationMatrix(vtkMatrix4
 
   // transform from vtk to itk space
   vtkMatrix4x4 *matrixITK =  vtkMatrix4x4::New();
-  vtkITKTransformRegistrationFilter::vtkItkMatrixTransform(matrix, matrixITK);
+  matrixITK->DeepCopy(matrix);
+  matrixITK->Invert();
+
+  initialParameters[3] = -matrixITK->Element[0][3];
+  initialParameters[4] = matrixITK->Element[1][3];
+  initialParameters[5] = matrixITK->Element[2][3];
+
+  matrixITK->Element[0][3] = 0;
+  matrixITK->Element[1][3] = 0;
+  matrixITK->Element[2][3] = 0;
 
   vnl_matrix<double> matrix3x4(3,4);
 
@@ -149,22 +158,22 @@ vtkITKVersorMattesMiVersorRegistrationFilter::SetTransformationMatrix(vtkMatrix4
   
   vnl_quaternion<double> matrixAsQuaternion(matrix3x4);
 
+  initialParameters[0] = matrixAsQuaternion.x();
+  initialParameters[1] = matrixAsQuaternion.y();
+  initialParameters[2] = matrixAsQuaternion.z();
+
   // There is a transpose between the vnl quaternion and itk quaternion.
-  vnl_quaternion<double> conjugated = matrixAsQuaternion.conjugate();
+  //vnl_quaternion<double> conjugated = matrixAsQuaternion.conjugate();
 
   // This command automatically does the conjugate.
   // But, it does not calculate the paramaters
   // m_Transform->SetRotation(matrixAsQuaternion);
 
-  // Quaternions have 7 parameters. The first four represents the
+  // Versor have 6 parameters. The first three  represents the
   // quaternion and the last three represents the offset. 
-  initialParameters[0] = conjugated.x();
-  initialParameters[1] = conjugated.y();
-  initialParameters[2] = conjugated.z();
-  //  initialParameters[3] = conjugated.r();
-  initialParameters[3] = matrix->Element[0][3];
-  initialParameters[4] = matrix->Element[1][3];
-  initialParameters[5] = matrix->Element[2][3];
+  //initialParameters[0] = conjugated.x();
+  //initialParameters[1] = conjugated.y();
+  //initialParameters[2] = conjugated.z();
 
   itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::Pointer transform = itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::New();
   transform->SetParameters(initialParameters);
