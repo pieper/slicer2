@@ -21,7 +21,7 @@
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.14 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.15 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -296,7 +296,12 @@ void vtkNRRDReader::ExecuteInformation()
        dataExtent[2*i] = 0;
        dataExtent[2*i+1] = this->nrrd->axis[i].size - 1;  
        spacings[i] = this->nrrd->axis[i].spacing;
+#if defined(TEEM_VERSION) && TEEM_VERSION >= 10900
        nrrdSpacingCalculate(this->nrrd, i, &spacings[i], axis);
+#else
+       int sdim;
+       nrrdSpacingCalculate(this->nrrd, i, &spacings[i], &sdim, axis);
+#endif
        if ( !AIR_EXISTS(spacings[i]) ) { // is the spacing NaN?
          spacings[i] = 1.0;
        }
@@ -344,12 +349,12 @@ void vtkNRRDReader::ExecuteInformation()
      key = val = NULL;
    }
    HeaderKeyValue[std::string("space")] = std::string( NrrdGetSpaceString(this->nrrd) );
-   //HeaderKeyValue[std::string("measurement-frame")] = std::string( "(1, 0, 0) (0, 1, 0) (0, 0, 1)" );
-   //HeaderKeyValue[std::string("measurement-frame")] = std::string( nrrdKeyValueGet(this->nrrd,"measurement-frame"));
    
+#if defined(TEEM_VERSION) && TEEM_VERSION >= 10900
    for (int j=0;j<2;j++)
      for (int i=0;i<2;i++)
         MeasurementFrameMatrix->SetElement(i,j,this->nrrd->measurementFrame[i][j]);
+#endif
    
    
    this->vtkImageReader2::ExecuteInformation();
