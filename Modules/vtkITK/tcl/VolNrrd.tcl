@@ -330,8 +330,9 @@ proc VolNrrdApply {} {
     Volume($i,node) SetImageRange [lindex $Volume(imageRange) 0] [lindex $Volume(imageRange) 1]
     Volume($i,node) SetScalarType [$imdata GetScalarType]
     Volume($i,node) SetDimensions [lindex $Volume(dimensions) 0] [lindex $Volume(dimensions) 1]
-
-    set Volume(scanOrder)  [Volume($i,node) ComputeScanOrderFromRasToIjk [nrrdReader GetRasToIjkMatrix]]
+    Volume($i,node) ComputeScanOrderFromRasToIjk [nrrdReader GetRasToIjkMatrix]
+    set Volume(scanOrder)  [Volume($i,node) GetScanOrder]
+    puts "Scan order: $Volume(scanOrder)"
     Volume($i,node) SetScanOrder $Volume(scanOrder)
 
     #
