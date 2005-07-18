@@ -67,7 +67,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.15 $} {$Date: 2005/07/12 23:53:51 $}]
+                                 {$Revision: 1.16 $} {$Date: 2005/07/18 18:27:01 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -304,7 +304,7 @@ proc DTMRICalculateTensorsBuildGUI {} {
 
     button $f.bShow -text "Create New Protocol" -bg $Gui(backdrop) -fg white -font {helvetica 9 bold} -command {
         ShowPatternFrame 
-        after 250 DTMRIDisplayScrollBar DTMRI Convert}
+        after 250 DTMRIDisplayScrollBar DTMRI Conv}
     TooltipAdd $f.bShow "Press this button to enter Create-Protocol Frame"
     pack $f.lLabel $f.bShow -side top -pady 2 -fill x
 
@@ -527,28 +527,37 @@ proc DTMRICalculateTensorsBuildGUI {} {
 
 
 proc DTMRIConvertUpdate {} {
-  global DTMRI Volume
+  global DTMRI Volume Module
   
   set id $DTMRI(convertID)
   
   #Check if DTMRI headerKeys exits
   set headerkey [array names Volume "$id,headerKeys,modality"]
   
+  set f $Module(DTMRI,fConv).fConvert
   if {$headerkey == ""} {
     #Active protocol frame
+    $f.fPattern.mbPattern configure -state normal
+    $f.fRepetitions.e configure -state normal
+    $f.fRepetitions.s configure -state normal
+    foreach vis $DTMRI(convert,averageRepetitionsList) {
+      $f.fAverage.r$vis configure -state normal
+    }
+    
+    set DTMRI(convert,nrrd) 0  
     return
   }
   
   if {$Volume($headerkey) != "DWMRI"} {
     # Prompt advise
-    puts "Selected volume is not a DWI volume"
+    puts "Selected volume is not a proper nrrd DWI volume"
+    return
   }     
   
   
   set headerkeys [array names Volume "$id,headerKeys,DW*"]
   
-  # don't use the header keys for now...
-  if {0 || $headerkeys == ""} {
+  if {$headerkeys == ""} {
      #Active protocols frame
      puts "There is not protocol info. Nrrd header might be corrupted."
      puts "If you feel conformtable, choose a protocol"
@@ -557,6 +566,13 @@ proc DTMRIConvertUpdate {} {
   
   #At this point with are dealing with a Nrrd DWI volume.
   
+  #Disable protocol frame
+  $f.fPattern.mbPattern configure -state disable
+  $f.fRepetitions.e configure -state disable
+  $f.fRepetitions.s configure -state disable
+  foreach vis $DTMRI(convert,averageRepetitionsList) {
+      $f.fAverage.r$vis configure -state disable
+  }  
 
   #Build protocol from headerKeys
   set key DWMRI_b-value
@@ -577,7 +593,6 @@ proc DTMRIConvertUpdate {} {
     set grad [format %04d $idx]
     set key "$gradprefix$grad"
     
-    puts $key
     
     if {![info exists Volume($key)]} {
       break
@@ -592,11 +607,9 @@ proc DTMRIConvertUpdate {} {
       } else {
         set nex 1
       }
-      puts "INit index: $idx"
       set DTMRI(convert,firstNoGradientImage) [expr $idx + 1]
       set DTMRI(convert,lastNoGradientImage) [expr $idx + $nex]
       set idx [expr $idx + $nex]
-      puts $idx
      } else {
       set keynex "$nexprefix$grad"
       if {[info exists Volume($keynex)]} {
@@ -609,7 +622,6 @@ proc DTMRIConvertUpdate {} {
         incr DTMRI(convert,numberOfGradients)
       }
       set idx [expr $idx + $nex]    
-      puts $DTMRI(convert,numberOfGradients)
     }
     
   }
@@ -1095,7 +1107,7 @@ proc ConvertVolumeToTensors {} {
     catch "vtkImageDiffusionTensor DTMRI"
     DTMRI SetInputScaleFactor 100
     
-    if {0} {
+    if {$DTMRI(convert,nrrd) == 0} {
     puts "Loading pattern"
     if {[info exists DTMRI(selectedpattern)]} {
         
@@ -1169,7 +1181,7 @@ proc ConvertVolumeToTensors {} {
     set input [Volume($v,vol) GetOutput]
 
     # transform gradient directions to make DTMRIs in ijk
-    vtkTransform trans    
+    catch "vtkTransform trans"    
     # special trick to avoid obnoxious windows warnings about legacy hack
     # for vtkTransform
     trans AddObserver WarningEvent ""
@@ -1177,8 +1189,42 @@ proc ConvertVolumeToTensors {} {
     puts "If not phase-freq flipped, swapping x and y in gradient directions"
     set swap [Volume($v,node) GetFrequencyPhaseSwap]
     set scanorder [Volume($v,node) GetScanOrder]
+    
+    
+    
+    #Two options: measurement frame known or not known.
+    
+    
+    if {$DTMRI(convert,nrrd)} {
+    
+      #Get RAS To Ijk Matrix
+      catch "vtkMatrix4x4 _RasToIjk"
+      _RasToIjk DeepCopy [Volume($v,node) GetRasToIjk]
+      #Ignore translation
+      _RasToIjk SetElement 0 3 0
+      _RasToIjk SetElement 1 3 0
+      _RasToIjk SetElement 2 3 0
       
-    if {$swap == 0} {    
+      #Set measurement frame matrix
+      catch "vtkMatrix4x4 _MF"
+      foreach axis "0 1 2" {
+        set axdir [lindex $DTMRI(convert,measurementframe) $axis]
+        foreach c "0 1 2" {
+      _MF SetElement $c $axis [lindex $axdir $c]
+    }
+      }
+      
+      trans PostMultiply
+      trans SetMatrix _RasToIjk
+      trans Concatenate _MF
+      trans Update
+      
+      _RasToIjk Delete
+      _MF Delete
+      
+    } else {         
+      
+      if {$swap == 0} {    
         # Gunnar Farneback, April 6, 2004
         #
         # Apparently nobody understands all the involved coordinate
@@ -1234,6 +1280,8 @@ proc ConvertVolumeToTensors {} {
     } else { 
         puts "Creating DTMRIs with -y for vtk compliance"
         trans Scale 1 -1 1
+    }
+    
     }
 
     #Hardcode specific parameters for MOSAIC. Experimental.
@@ -1298,8 +1346,8 @@ proc ConvertVolumeToTensors {} {
         extract$slice SetModeTo$DTMRI(convert,order)
         extract$slice SetSliceOffset $slice
         extract$slice SetSlicePeriod $slicePeriod
-    extract$slice SetNumberOfRepetitions $DTMRI(convert,numberOfRepetitions)
-    extract$slice SetAverageRepetitions $DTMRI(convert,averageRepetitions)
+        extract$slice SetNumberOfRepetitions $DTMRI(convert,numberOfRepetitions)
+        extract$slice SetAverageRepetitions $DTMRI(convert,averageRepetitions)
         
         if {$DTMRI(convert,order) == "MOSAIC"} {
           extract$slice SetSliceOffset [lindex $mosaicIndx $slice]   
@@ -1346,6 +1394,9 @@ proc ConvertVolumeToTensors {} {
           puts "-------computing ras to ijk from scan order----"
           Volume($id,node) ComputeRasToIjkFromScanOrder $order
 
+          DTMRIComputeRasToIjkFromCorners Volume($v,node) Volume($id,node) $extent
+
+
           # update slicer internals
           MainVolumesUpdate $id
 
@@ -1375,8 +1426,8 @@ proc ConvertVolumeToTensors {} {
         extract$slice SetModeTo$DTMRI(convert,order)
         extract$slice SetSliceOffset $slice
         extract$slice SetSlicePeriod $slicePeriod
-    extract$slice SetNumberOfRepetitions $DTMRI(convert,numberOfRepetitions)
-    extract$slice SetAverageRepetitions $DTMRI(convert,averageRepetitions)
+        extract$slice SetNumberOfRepetitions $DTMRI(convert,numberOfRepetitions)
+        extract$slice SetAverageRepetitions $DTMRI(convert,averageRepetitions)
         
         
         if {$DTMRI(convert,order) == "MOSAIC"} {
@@ -1414,6 +1465,8 @@ proc ConvertVolumeToTensors {} {
           set order [Volume($id,node) GetScanOrder]
           Volume($id,node) ComputeRasToIjkFromScanOrder $order
 
+          DTMRIComputeRasToIjkFromCorners Volume($v,node) Volume($id,node) $extent
+ 
           # update slicer internals
           MainVolumesUpdate $id
 
@@ -1495,6 +1548,8 @@ proc ConvertVolumeToTensors {} {
       set order [Volume($id,node) GetScanOrder]
       puts "-------computing ras to ijk from scan order----"
       Volume($id,node) ComputeRasToIjkFromScanOrder $order
+      
+      DTMRIComputeRasToIjkFromCorners Volume($v,node) Volume($id,node) $extent
 
       # update slicer internals
       MainVolumesUpdate $id
@@ -1515,8 +1570,8 @@ proc ConvertVolumeToTensors {} {
       }
 
 
-    # average gradient images for display and checking mechanism. 
-    # NOTE THIS WILL NOT WORK WITH MORE THAN 2
+      # average gradient images for display and checking mechanism. 
+      # NOTE THIS WILL NOT WORK WITH MORE THAN 2
       vtkImageMathematics math_g
       math_g SetOperationToAdd
 
@@ -1561,6 +1616,8 @@ proc ConvertVolumeToTensors {} {
       set order [Volume($id,node) GetScanOrder]
       puts "-------computing ras to ijk from scan order----"
       Volume($id,node) ComputeRasToIjkFromScanOrder $order
+      
+      DTMRIComputeRasToIjkFromCorners Volume($v,node) Volume($id,node) $extent
 
       # update slicer internals
       MainVolumesUpdate $id
@@ -1608,7 +1665,7 @@ proc ConvertVolumeToTensors {} {
     set order [$newvol GetScanOrder]
     
     $newvol ComputeRasToIjkFromScanOrder $order
-    
+        
     puts "SPACING [$newvol GetSpacing] DIMS [$newvol GetDimensions] MAT [$newvol GetRasToIjkMatrix]"
     TensorCreateNew $n 
     
@@ -1616,6 +1673,8 @@ proc ConvertVolumeToTensors {} {
     DTMRI Update
     #Tensor($n,data) SetData [DTMRI GetOutput]
     Tensor($n,data) SetImageData [DTMRI GetOutput]
+
+    DTMRIComputeRasToIjkFromCorners Volume($v,node) $newvol [[Tensor($n,data) GetOutput] GetExtent]
 
     # Registration
     # put the new tensor volume inside the same transform as the Original volume
@@ -1729,6 +1788,61 @@ proc DTMRICreateNewVolume {volume name desc scanOrder} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIComputeRasToIjkFromCorners
+# 
+# .ARGS
+# vtkMrmlNode refnode
+# vtkMrmlNode volid: id of the Mrml node to compute the transform.
+# array extent: extent of the volume. Needed to compute center
+# .END
+#-------------------------------------------------------------------------------
+proc DTMRIComputeRasToIjkFromCorners {refnode node extent} {
+
+  #Get Ras to Ijk Matrix from reference volume
+  catch "_Ijk Delete"
+  vtkMatrix4x4 _Ijk
+  _Ijk DeepCopy [$refnode GetRasToIjk]
+  
+  #Set Translation to center of the output volume.
+  #This is a particular thing of the slicer: all volumes are centered in their centroid.
+  _Ijk SetElement 0 3 [expr ([lindex $extent 1] - [lindex $extent 0])/2.0]
+  _Ijk SetElement 1 3 [expr ([lindex $extent 3] - [lindex $extent 2])/2.0]
+  _Ijk SetElement 2 3 [expr ([lindex $extent 5] - [lindex $extent 4])/2.0]  
+  #Invert to obtain IjkToRas transform
+  _Ijk Invert
+  
+  set dims "[expr [lindex $extent 1] - [lindex $extent 0] + 1] \
+              [expr [lindex $extent 3] - [lindex $extent 2] + 1] \
+              [expr [lindex $extent 5] - [lindex $extent 4] + 1]"           
+  
+   # first top left - start at zero, and add origin to all later
+   set ftl "0 0 0"
+   # first top right = width * row vector
+   set ftr [lrange [_Ijk MultiplyPoint [lindex $dims 0] 0 0 0] 0 2]
+   # first bottom right = ftr + height * column vector
+   set column_vec [lrange [_Ijk MultiplyPoint 0 [lindex $dims 1] 0 0] 0 2]
+   set fbr ""
+   foreach ftr_e $ftr column_vec_e $column_vec {
+        lappend fbr [expr $ftr_e + $column_vec_e]
+    }
+    # last top left = ftl + slice vector  (and ftl is zero)
+    set ltl [lrange [_Ijk MultiplyPoint 0 0 [lindex $dims 2] 0] 0 2]
 
 
+    # add the origin offset 
+    set origin [lrange [_Ijk MultiplyPoint 0 0 0 1] 0 2]
+    foreach corner "ftl ftr fbr ltl" {
+        set new_corner ""
+        foreach corner_e [set $corner] origin_e $origin {
+            lappend new_corner [expr $corner_e + $origin_e]
+        }
+        set $corner $new_corner
+    }
 
+    eval $node ComputeRasToIjkFromCorners "0 0 0" $ftl $ftr $fbr "0 0 0" $ltl
+
+    _Ijk Delete
+    MainUpdateMRML
+
+}
