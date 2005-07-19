@@ -67,7 +67,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.16 $} {$Date: 2005/07/18 18:27:01 $}]
+                                 {$Revision: 1.17 $} {$Date: 2005/07/19 23:06:25 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -1213,10 +1213,10 @@ proc ConvertVolumeToTensors {} {
       _MF SetElement $c $axis [lindex $axdir $c]
     }
       }
-      
+            
       trans PostMultiply
-      trans SetMatrix _RasToIjk
-      trans Concatenate _MF
+      trans SetMatrix _MF
+      trans Concatenate _RasToIjk
       trans Update
       
       _RasToIjk Delete
