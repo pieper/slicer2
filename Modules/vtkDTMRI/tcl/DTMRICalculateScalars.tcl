@@ -60,7 +60,7 @@ proc DTMRICalculateScalarsInit {} {
     #------------------------------------
     set m "CalculateScalars"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.9 $} {$Date: 2005/06/20 02:38:32 $}]
+                                 {$Revision: 1.10 $} {$Date: 2005/07/20 21:12:43 $}]
 
     #------------------------------------
     # Variables for producing scalar volumes
@@ -123,7 +123,7 @@ proc DTMRICalculateScalarsBuildGUI {} {
     set f $fScalars.fActive
 
     # menu to select active DTMRI
-    DevAddSelectButton  Tensor $f Active "Active DTMRI:" Pack \
+    DevAddSelectButton  DTMRI $f Active "Active DTMRI:" Pack \
     "Active DTMRI" 20 BLA 
     
     # Append these menus and buttons to lists 

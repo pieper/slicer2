@@ -63,7 +63,7 @@ proc DTMRIGlyphsInit {} {
     #------------------------------------
     set m "Glyphs"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.14 $} {$Date: 2005/07/06 13:49:59 $}]
+                                 {$Revision: 1.15 $} {$Date: 2005/07/20 21:13:02 $}]
 
     # type of reformatting
     set DTMRI(mode,reformatType) 0
@@ -182,7 +182,7 @@ proc DTMRIGlyphsBuildGUI {} {
     set f $fGlyph.fActive
 
     # menu to select active DTMRI
-    DevAddSelectButton  Tensor $f Active "Active DTMRI:" Pack \
+    DevAddSelectButton  DTMRI $f Active "Active DTMRI:" Pack \
     "Active DTMRI" 20 BLA 
     
     # Append these menus and buttons to lists 

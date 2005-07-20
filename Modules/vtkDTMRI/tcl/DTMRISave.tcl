@@ -55,7 +55,7 @@ proc DTMRISaveInit {} {
     #------------------------------------
     set m "Save"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.5 $} {$Date: 2005/06/20 02:38:33 $}]
+                                 {$Revision: 1.6 $} {$Date: 2005/07/20 21:13:31 $}]
 
 }
 
@@ -100,7 +100,7 @@ proc DTMRISaveBuildGUI {} {
     set f $fSave.fActive
 
     # menu to select active DTMRI
-    DevAddSelectButton  Tensor $f Active "Active DTMRI:" Pack \
+    DevAddSelectButton  DTMRI $f Active "Active DTMRI:" Pack \
     "Active DTMRI" 20 BLA 
     
     # Append these menus and buttons to lists 
