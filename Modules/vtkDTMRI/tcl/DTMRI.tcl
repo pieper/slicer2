@@ -87,7 +87,7 @@ proc TensorInit {} {
     set Tensor(mActiveList) ""
 
     # Initialize menus to None
-    DTMRISetActive ""
+    TensorSetActive ""
 }
 
 
@@ -128,7 +128,343 @@ proc TensorCreateNew {t} {
     
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TensorUpdateMRML
+#  General UpdateMRML procedure useable by all datatypes in the slicer.
+#  This procedure will create any new data objects and delete any old ones.
+#  If your datatype needs to handle datatype-specific things when
+#  there is a change in MRML, write a wrapper proc for this procedure.
+# .ARGS
+# 
+# .END
+#-------------------------------------------------------------------------------
+proc TensorUpdateMRML {ModuleArray} {
 
+    #puts "Lauren in TensorUpdateMRML $ModuleArray "
+
+    # If the module is not loaded in the Slicer, do nothing.
+    #--------------------------------------------------------
+    if {[IsModule $ModuleArray] == "0"} {
+        ## not all data types are module names, so don't return - steve & raul 2004-02-24
+        #return
+    }
+
+    # Get access to the global module array
+    #--------------------------------------------------------
+    upvar #0 $ModuleArray Array
+
+    # Build any new data objects
+    #--------------------------------------------------------
+    foreach d $Array(idList) {
+        if {[TensorCreate $ModuleArray $d] > 0} {
+
+            # Lauren improve this on the fly thing using MRML DATA object
+            # Mark it as not being created on the fly 
+            # since it was added from the Data module or read in from MRML
+            set Array($d,fly) 0
+            
+            # Read
+            if {[TensorRead $ModuleArray $d] < 0} {
+                # Let the user know about the error
+                # Lauren general filename we can print from node/data object?
+                tk_messageBox -message "Could not read [$Array($d,node) GetTitle]"
+                # Remove the objects we have created
+                MainMrmlDeleteNodeDuringUpdate $ModuleArray $d
+            }
+        }
+    }
+    
+    # Delete any old data objects
+    #--------------------------------------------------------
+    foreach d $Array(idListDelete) {
+        TensorDelete $ModuleArray $d
+    }
+    # Did we delete the active data?
+    if {[lsearch $Array(idList) $Array(activeID)] == -1} {
+        TensorSetActive [lindex $Array(idList) 0]
+    }
+    
+    # Update any menus that list all data objects 
+    #--------------------------------------------------------
+    if {[info exists Array(mActiveList)] == "1"} {
+    foreach menu $Array(mActiveList) {
+        # clear out menu
+        $menu delete 0 end
+        # add all current data objects to menu
+        foreach d $Array(idList) {
+            set node ${ModuleArray}($d,node)
+            $menu add command -label [$node GetName] \
+                -command "Main${ModuleArray}SetActive $ModuleArray $d"
+        }
+    }
+    } else {
+        if {$::Module(verbose)} {
+            puts "Developer: you have not put menus on ModuleArray(mActiveList),\
+            which is a convenience for updating menus listing all \
+            $ModuleArray objects.  See Tensor.tcl, proc TensorUpdateMRML \
+            for information on how to stop this message from appearing."
+        }
+    }
+
+    # In case we changed the name of the active data object
+    TensorSetActive $Array(activeID)
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC TensorCreate
+#  Actually create a data object.  Called from TensorUpdateMRML.
+#  Each module must add its own actor to the scene after
+#  using this procedure to create a vtkMrmlData* object for it.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TensorCreate {ModuleArray d {objectType ""}} {
+
+    # If the module is not loaded in the Slicer, do nothing.
+    #--------------------------------------------------------
+    if {[IsModule $ModuleArray] == "0"} {
+        ## not all data types are module names, so don't return - steve & raul 2004-02-24
+        #return
+    }
+
+    # Default value of vtkMrmlData subclass to create
+    #--------------------------------------------------------
+    if {$objectType == ""} {
+        set objectType $ModuleArray
+    }
+
+    # Get access to the global module array
+    #--------------------------------------------------------
+    upvar #0 $ModuleArray Array
+
+    # Get MRML node
+    #--------------------------------------------------------
+    set node ${ModuleArray}($d,node)
+
+    # Get MRML data
+    #--------------------------------------------------------
+    set data ${ModuleArray}($d,data)
+
+    # See if this data object already exists
+    #--------------------------------------------------------
+    if {[info command $data] != ""} {
+        #puts "TensorCreate: $ModuleArray $d data exists"
+        return 0
+    }
+
+    # Create vtkMrmlData* object 
+    #--------------------------------------------------------
+    #vtkMrmlData${ModuleArray} $data
+    vtkMrmlData${objectType} $data
+
+    # Connect data object with the MRML node
+    #--------------------------------------------------------
+    $data SetMrmlNode $node
+
+    # Progress methods
+    #--------------------------------------------------------
+    $data AddObserver StartEvent       MainStartProgress
+    $data AddObserver ProgressEvent   "MainShowProgress $data"
+    $data AddObserver EndEvent         MainEndProgress
+
+    # Here the module can hook in to set the new Data
+    # object's properties (as defined by user in GUI)
+    #--------------------------------------------------------
+    Main${ModuleArray}SetAllVariablesToData $d
+
+    # Mark the object as unsaved and created on the fly.
+    # If it actually isn't being created on the fly, I can't tell that from
+    # inside this procedure, so the "fly" variable will be set to 0 in the
+    # TensorUpdateMRML procedure.
+    set Array($d,dirty) 1
+    set Array($d,fly) 1
+    
+    return 1
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC TensorRead
+#  Read in a vtkMrmlData object.  Called from TensorUpdateMRML.
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TensorRead {ModuleArray d} {
+
+    # If the module is not loaded in the Slicer, do nothing.
+    #--------------------------------------------------------
+    if {[IsModule $ModuleArray] == "0"} {
+        ## not all data types are module names, so don't return - steve & raul 2004-02-24
+        #return
+    }
+
+    # Get access to the global module array
+    #--------------------------------------------------------
+    upvar #0 $ModuleArray Array
+
+    # Get MRML node
+    #--------------------------------------------------------
+    set node ${ModuleArray}($d,node)
+
+    # Get MRML data
+    #--------------------------------------------------------
+    set data ${ModuleArray}($d,data)
+
+    # Check FileName
+    #--------------------------------------------------------
+    # this test works in simple case where node has 1 filename
+    # for volumes this test can't work and should
+    # be handled by data object instead
+    set fileName ""
+    catch {set fileName [$node GetFileName]}
+    if {$fileName != ""} {
+        if {[CheckFileExists $fileName] == 0} {
+            return -1
+        }
+    }
+    
+    # Display appropriate text over progress bar while reading
+    #--------------------------------------------------------
+    set Gui(progressText) "Reading [$node GetName]"
+
+    # Read using vtkMrmlData object
+    #--------------------------------------------------------
+    puts "Reading [$node GetTitle]..."
+    $data Read
+    $data Update
+    puts "...finished reading [$node GetTitle]"
+
+    set Gui(progressText) ""
+
+    # Lauren: models did pipeline stuff here
+    # Now we either do pipeline junk here,
+    # or we write vtkMrmlSlicerTensors to handle it
+
+    # Mark this tensor as saved already
+    set Array($d,dirty) 0
+
+    # Return success code 
+    #--------------------------------------------------------
+    return 1
+}
+
+#-------------------------------------------------------------------------------
+# .PROC TensorDelete
+#  Delete a vtkMrmlData object.  Called from TensorUpdateMRML.
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TensorDelete {ModuleArray d} {
+
+    # If the module is not loaded in the Slicer, do nothing.
+    #--------------------------------------------------------
+    if {[IsModule $ModuleArray] == "0"} {
+        ## not all data types are module names, so don't return - steve & raul 2004-02-24
+        #return
+    }
+
+    # Get access to the global module array
+    #--------------------------------------------------------
+    upvar #0 $ModuleArray Array  
+
+    # Get MRML data
+    #--------------------------------------------------------
+    set data ${ModuleArray}($d,data)
+
+    # Make sure we are not deleting the idNone
+    #--------------------------------------------------------
+    if {$d == $Array(idNone)} {
+        puts "Warning: TensorDelete, trying to delete the none $moduleArray"
+        return 0
+    }
+
+    # See if this data object exists
+    #--------------------------------------------------------
+    if {[info command $data] != ""} {
+        return 0
+    }
+
+    # Remove actors from renderers
+    #--------------------------------------------------------
+    # Actor handling is not general and must be done by the module
+    #MainRemoveActor $d
+    
+    # Delete VTK objects 
+    #--------------------------------------------------------
+    $data  Delete
+    #puts "Lauren does deleting the volume really delete the node?"
+    
+    # Delete all TCL variables of the form: Array($d,<whatever>)
+    #--------------------------------------------------------
+    foreach name [array names Array] {
+        if {[string first "$d," $name] == 0} {
+            unset Array($name)
+        }
+    }
+    
+    return 1
+}
+
+#-------------------------------------------------------------------------------
+# .PROC TensorSetActive
+#  Select a data object as active, and update the GUI to 
+#  display properties of this object.  This proc calls the
+#  procedure Main${ModuleArray}GetAllVariablesFromNode,
+#  which the developer should write.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TensorSetActive {t} {
+    global Tensor
+
+    # Update ID number of active object
+    #--------------------------------------------------------
+    set Tensor(activeID) $t
+
+    # Decide which button text to use
+    #--------------------------------------------------------
+    if {$t == ""} {
+        # Menu button text reads "None"
+        set mbText "None"
+    } else {
+        # Get current MRML node
+        set node Tensor($t,node)
+        # Menu button text shows active object's name
+        set mbText [$node GetName]
+    }
+
+    # Change menu button text
+    #--------------------------------------------------------
+    foreach mb $Tensor(mbActiveList) {
+        $mb config -text $mbText
+    }
+
+    # Exit here if the ID was ""
+    #--------------------------------------------------------
+    if {$t == ""} {
+        return
+    }
+    
+    #Call SetActive in DTMRI module
+    DTMRISetActive $t
+}    
+
+
+#-------------------------------------------------------------------------------
+# .PROC MainTensorSetActive
+# Wrapping method around TensorSetActive
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainTensorSetActive {ModuleArray d} {
+  TensorSetActive $d
+  
+}  
+
+     
 #-------------------------------------------------------------------------------
 # .PROC DTMRIInit
 #  The "Init" procedure is called automatically by the slicer.  
@@ -140,7 +476,7 @@ proc TensorCreateNew {t} {
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIInit {} {
-    global DTMRI Module Volume env
+    global DTMRI Module Volume Tensor env
     
     # Initialize the Tensor array for holding info about tensor volumes
     #------------------------------------
@@ -165,7 +501,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.102 $} {$Date: 2005/06/20 02:38:32 $}]
+                  {$Revision: 1.103 $} {$Date: 2005/07/20 21:10:03 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -222,6 +558,8 @@ proc DTMRIInit {} {
     # 3 is brain in the default colormap for labels in the slicer
     set DTMRI(defaultLabel) 3
 
+    # Id of active Tensor volume
+    set DTMRI(Active) ""
 
     #------------------------------------
     # Source and Init all submodules
@@ -265,6 +603,9 @@ proc DTMRIUpdateMRML {} {
         transform Delete 
     }
     
+     # Do MRML update of Tensor nodes.
+     TensorUpdateMRML Tensor
+    
      # Do MRML update for Tensor Registration tab. Necessary because
      # multiple lists are used.
      if {([catch "package require vtkAG"]==0)&&([info exist DTMRI(reg,AG)])} {
@@ -286,9 +627,9 @@ proc DTMRIUpdateMRML {} {
        DevSelectNode Tensor $DTMRI(ResultTensor) DTMRI ResultTensor ResultTensor
        DevUpdateNodeSelectButton Volume DTMRI InputCoregVol InputCoregVol DevSelectNode
      }
-     
-     DevUpdateNodeSelectButton Volume DTMRI InputODF InputODF DevSelectNode
-
+          
+    DevUpdateNodeSelectButton Volume DTMRI InputODF InputODF DevSelectNode
+    
     DevUpdateNodeSelectButton Volume DTMRI MaskLabelmap MaskLabelmap DevSelectNode 0 0 1 DTMRIUpdate
     DevUpdateNodeSelectButton Volume DTMRI ROILabelmap ROILabelmap DevSelectNode 0 0 1
     DevUpdateNodeSelectButton Volume DTMRI ROI2Labelmap ROI2Labelmap DevSelectNode 1 0 1
@@ -1135,7 +1476,7 @@ proc DTMRIGetScaledIjkCoordinatesFromWorldCoordinates {x y z} {
     global DTMRI Tensor
 
     set t $Tensor(activeID)
-
+    
     vtkTransform transform
     DTMRICalculateActorMatrix transform $t    
     transform Inverse
@@ -1277,36 +1618,9 @@ proc DTMRICalculateIJKtoRASRotationMatrix {transform t} {
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRISetActive {t} {
-    global Tensor DTMRI
+    global DTMRI
 
-    # Update ID number of active object
-    #--------------------------------------------------------
-    set Tensor(activeID) $t
-
-    # Decide which button text to use
-    #--------------------------------------------------------
-    if {$t == ""} {
-        # Menu button text reads "None"
-        set mbText "None"
-    } else {
-        # Get current MRML node
-        set node Tensor($t,node)
-        # Menu button text shows active object's name
-        set mbText [$node GetName]
-    }
-
-    # Change menu button text
-    #--------------------------------------------------------
-    foreach mb $Tensor(mbActiveList) {
-        $mb config -text $mbText
-    }
-
-    # Exit here if the ID was ""
-    #--------------------------------------------------------
-    if {$t == ""} {
-        return
-    }
-
+    set DTMRI(Active) $t
     # Make sure this tensor is the input to the glyph pipeline
     DTMRIUpdate
 
