@@ -38,8 +38,6 @@
 # PROCEDURES:  
 #==========================================================================auto=
 
-# uses the comm package that is part of the tcllib
-package require comm
 
 
 #########################################################
@@ -87,6 +85,11 @@ if { [itcl::find class iscomm] == "" } {
 #                        CONSTRUCTOR/DESTRUCTOR
 # ------------------------------------------------------------------
 itcl::body iscomm::constructor {args} {
+
+    # uses the comm package that is part of the tcllib
+    if { [catch "package require comm"] } {
+        error "iscomm doesn't work without the tcllib comm package"
+    }
 
     # make a unique name associated with this object
     set _name [namespace tail $this]
