@@ -103,6 +103,7 @@ switch $tcl_platform(os) {
         set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh8.4
         set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/libITKCommon.so
         set ::TK_EVENT_PATCH $SLICER_HOME/tkEventPatch.diff
+        set ::BLT_PATCH $SLICER_HOME/blt-patch.diff
     }
     "Windows NT" {
     # Windows NT currently covers WinNT, Win2000, XP Home, XP Pro
