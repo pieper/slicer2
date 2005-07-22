@@ -371,7 +371,7 @@ if { ![file exists $::BLT_TEST_FILE] } {
                 puts "Patching..."
                 cd $SLICER_LIB/tcl
                 runcmd cp $SLICER_HOME/blt-patch.diff $SLICER_LIB/tcl 
-                runcmd patch -d blt -p 2 < blt-patch.diff
+                runcmd patch -d blt -p 2< blt-patch.diff
 
                 # create a file to make sure BLT isn't patched twice
                 runcmd touch $SLICER_HOME/isPatchedBLT
