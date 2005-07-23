@@ -174,6 +174,10 @@ if { [itcl::find class isregistration] == "" } {
             $_sourcevol pre_delete
             $_targetvol pre_delete
         }
+        method set_source_dimensions {v} {}
+        method set_source_spacing {v} {}
+        method set_target_dimensions {v} {}
+        method set_target_spacing {v} {}
     }
 }
 
@@ -351,11 +355,16 @@ itcl::configbody isregistration::target {
     }
     $_targetvol volmenu_update 
     $_targetvol configure -volume $itk_option(-target)
-    $_targetvol configure -resolution $itk_option(-resolution)
-    $_targetvol configure -orientation coronal ;# TODO extra config due to isvolume bug
     $_targetvol configure -orientation axial
-    
+
     if {$itk_option(-resample)} {
+        set_target_dimensions $itk_option(-target)
+        set_target_spacing $itk_option(-target)
+        # TEMPORARY TEST
+        #$_targetvol set_dimensions 256 256 27 
+        #$_targetvol set_spacing 0.859375 0.859375 6
+        # END TEMPORARY TEST
+
         catch "xform Delete"
         vtkMatrix4x4 xform
         xform Identity
@@ -389,10 +398,16 @@ itcl::configbody isregistration::source {
     $_sourcevol volmenu_update 
     $_sourcevol configure -volume $itk_option(-source)
     $_sourcevol configure -resolution $itk_option(-resolution)
-    $_sourcevol configure -orientation coronal ;# TODO extra config due to isvolume bug
     $_sourcevol configure -orientation axial
 
     if {$itk_option(-resample)} {
+        set_source_dimensions $itk_option(-source)
+        set_source_spacing $itk_option(-source)
+        # TEMPORARY TEST
+        #$_sourcevol set_dimensions 256 256 27 
+        #$_sourcevol set_spacing 0.859375 0.859375 6
+        # END TEMPORARY TEST
+
         catch "xform Delete"
         vtkMatrix4x4 xform
         xform Identity
@@ -419,11 +434,13 @@ itcl::configbody isregistration::resolution {
 
     if {$itk_option(-source) != ""} {
         $_sourcevol configure -resolution $itk_option(-resolution)
+
         $_sourcevol configure -orientation coronal ;# TODO extra config due to isvolume bug
         $_sourcevol configure -orientation axial
     }
     if {$itk_option(-target) != ""} {
         $_targetvol configure -resolution $itk_option(-resolution)
+
         $_targetvol configure -orientation coronal ;# TODO extra config due to isvolume bug
         $_targetvol configure -orientation axial
     }
@@ -555,6 +572,10 @@ itcl::body isregistration::update_slicer_mat {} {
     vtkMatrix4x4 $mat
 
     $mat DeepCopy [$_reg GetOutputMatrix]
+
+    puts "GetOutputMatrix"
+    puts [$mat Print]
+
     if {$itk_option(-verbose)} {
       puts "The real mat output by the registration algorithm"
       puts [$this StringMatrix $mat]
@@ -647,12 +668,14 @@ itcl::body isregistration::update_slicer_mat {} {
         $p2mat Invert
         $this GetSimilarityMatrix $p2mat $mat [$this getP2]
         $mat Invert
+        puts "SHOULD NOT BE HERE"
     } else {
-        if {$itk_option(-resample) == 0} {
+        if {!$itk_option(-resample)} {
             set p2mat [$this getP2]
             $p2mat Invert
             $mat Invert
             $this GetSimilarityMatrix $p2mat $mat [$this getP1]
+            puts "NO RESAMPLING"
         }
     }
 
@@ -714,29 +737,31 @@ itcl::body isregistration::set_init_mat {} {
 ## So, both of these are identical.
 
     if {0} {
-### works
-    ## switch p1,p2 invert mat before
-    $mat DeepCopy [[Matrix($t,node) GetTransform] GetMatrix]
-    set p1mat [$this getP2]
-    $p1mat Invert
-    $mat Invert
-    $this GetSimilarityMatrix [$this getP1] $mat $p1mat
-    if {$itk_option(-verbose)} {
-        puts "switch, before--"
-        puts [$this StringMatrix $mat]
-    }
+        ### works
+        ## switch p1,p2 invert mat before
+        $mat DeepCopy [[Matrix($t,node) GetTransform] GetMatrix]
+        set p1mat [$this getP2]
+        $p1mat Invert
+        $mat Invert
+        $this GetSimilarityMatrix [$this getP1] $mat $p1mat
+        if {$itk_option(-verbose)} {
+            puts "switch, before--"
+            puts [$this StringMatrix $mat]
+        }
     } else {
-#### works
-    ## normal p1,p2, invert mat after
-    $mat DeepCopy [[Matrix($t,node) GetTransform] GetMatrix]
-    set p1mat [$this getP1]
-    $p1mat Invert
-    $this GetSimilarityMatrix [$this getP2] $mat $p1mat
-    $mat Invert
-    if {$itk_option(-verbose)} {
-        puts "normal, after--"
-        puts [$this StringMatrix $mat]
-    }
+        #### works
+        ## normal p1,p2, invert mat after
+        $mat DeepCopy [[Matrix($t,node) GetTransform] GetMatrix]
+        if {!$itk_option(-resample)} {
+            set p1mat [$this getP1]
+            $p1mat Invert
+            $this GetSimilarityMatrix [$this getP2] $mat $p1mat
+            $mat Invert
+        }
+        if {$itk_option(-verbose)} {
+            puts "normal, after--"
+            puts [$this StringMatrix $mat]
+        }
     }
 
 #### does not work
@@ -887,6 +912,169 @@ itcl::body isregistration::get_last_metric_value { } {
  return [$_reg GetMetricValue]
 }
 
+#-------------------------------------------------------------------------------
+# METHOD: set_dimensions for target volume
+#
+# DESCRIPTION: 
+#-------------------------------------------------------------------------------
+itcl::body isregistration::set_target_dimensions { vId } {
+    set order [Volume($vId,node) GetScanOrder]
+
+    set dimension [split [[Volume($vId,vol) GetOutput] GetDimensions]] 
+        
+    set dimI [expr round(abs([lindex $dimension 0]))]
+    set dimJ [expr round(abs([lindex $dimension 1]))]
+    set dimK [expr round(abs([lindex $dimension 2]))]
+
+    switch $order {
+        "RL" -
+        "LR" {
+            set odimI $dimK
+            set odimJ $dimI
+            set odimK $dimJ
+        }
+        "PA" -
+        "AP" {
+            set odimI $dimI
+            set odimJ $dimK
+            set odimK $dimJ
+        }
+        "SI" -
+        "IS" {
+            set odimI $dimI
+            set odimJ $dimJ
+            set odimK $dimK
+        }
+        default {
+            tk_messageBox -message "isregistration: Unknown target orientation: $order"
+        }
+    }
+    $_targetvol set_dimensions $odimI $odimJ $odimK 
+    puts "isregistration: target dimensions are: $odimI $odimJ $odimK"
+}
+
+#-------------------------------------------------------------------------------
+# METHOD: set_dimensions for source volume
+#
+# DESCRIPTION: 
+#-------------------------------------------------------------------------------
+itcl::body isregistration::set_source_dimensions { vId } {
+    set order [Volume($vId,node) GetScanOrder]
+
+    set dimension [split [[Volume($vId,vol) GetOutput] GetDimensions]] 
+        
+    set dimI [expr round(abs([lindex $dimension 0]))]
+    set dimJ [expr round(abs([lindex $dimension 1]))]
+    set dimK [expr round(abs([lindex $dimension 2]))]
+
+    switch $order {
+        "RL" -
+        "LR" {
+            set odimI $dimK
+            set odimJ $dimI
+            set odimK $dimJ
+        }
+        "PA" -
+        "AP" {
+            set odimI $dimI
+            set odimJ $dimK
+            set odimK $dimJ
+        }
+        "SI" -
+        "IS" {
+            set odimI $dimI
+            set odimJ $dimJ
+            set odimK $dimK
+        }
+        default {
+            tk_messageBox -message "isregistration: Unknown source orientation: $order"
+        }
+    }
+    $_sourcevol set_dimensions $odimI $odimJ $odimK 
+    puts "isregistration: source dimensions are: $odimI $odimJ $odimK"
+}
+
+#-------------------------------------------------------------------------------
+# METHOD: set_spacing for target volume
+#
+# DESCRIPTION: 
+#-------------------------------------------------------------------------------
+itcl::body isregistration::set_target_spacing { vId } {
+    set order [Volume($vId,node) GetScanOrder]
+
+    set spacing [split [[Volume($vId,vol) GetOutput] GetSpacing]] 
+
+    set spacingI [lindex $spacing 0] 
+    set spacingJ [lindex $spacing 1] 
+    set spacingK [lindex $spacing 2] 
+
+    switch $order {
+        "RL" -
+        "LR" {
+            set ospacingI $spacingK
+            set ospacingJ $spacingI
+            set ospacingK $spacingJ
+        }
+        "PA" -
+        "AP" {
+            set ospacingI $spacingI
+            set ospacingJ $spacingK
+            set ospacingK $spacingJ
+        }
+        "SI" -
+        "IS" {
+            set ospacingI $spacingI
+            set ospacingJ $spacingJ
+            set ospacingK $spacingK
+        }
+        default {
+            tk_messageBox -message "isregistration: Unknown source orientation: $order"
+        }
+    }
+    $_targetvol set_spacing $ospacingI $ospacingJ $ospacingK
+    puts "isregistration: target spacing: $ospacingI $ospacingJ $ospacingK"
+}
+
+#-------------------------------------------------------------------------------
+# METHOD: set_spacing for source volume
+#
+# DESCRIPTION: 
+#-------------------------------------------------------------------------------
+itcl::body isregistration::set_source_spacing { vId } {
+    set order [Volume($vId,node) GetScanOrder]
+
+    set spacing [split [[Volume($vId,vol) GetOutput] GetSpacing]] 
+
+    set spacingI [lindex $spacing 0] 
+    set spacingJ [lindex $spacing 1] 
+    set spacingK [lindex $spacing 2] 
+
+    switch $order {
+        "RL" -
+        "LR" {
+            set ospacingI $spacingK
+            set ospacingJ $spacingI
+            set ospacingK $spacingJ
+        }
+        "PA" -
+        "AP" {
+            set ospacingI $spacingI
+            set ospacingJ $spacingK
+            set ospacingK $spacingJ
+        }
+        "SI" -
+        "IS" {
+            set ospacingI $spacingI
+            set ospacingJ $spacingJ
+            set ospacingK $spacingK
+        }
+        default {
+            tk_messageBox -message "isregistration: Unknown source orientation: $order"
+        }
+    }
+    $_sourcevol set_spacing $ospacingI $ospacingJ $ospacingK
+    puts "isregistration: source spacing: $ospacingI $ospacingJ $ospacingK"
+}
 
 #-------------------------------------------------------------------------------
 # .PROC isregistration_demo

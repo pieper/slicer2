@@ -964,6 +964,8 @@ itcl::body isvolume::set_spacing  {spacingI spacingJ spacingK} {
 itcl::body isvolume::set_dimensions  {dimensionI dimensionJ dimensionK} {
     set _dimensions [list $dimensionI $dimensionJ $dimensionK]
 
+    #puts "ISVOLUME::set_dimensions $dimensionI $dimensionJ $dimensionK"
+
     set opos [expr ([$this cget -slice] * 1.0) / [$_slider cget -to] ]
 
     $_reslice SetOutputExtent 0 [expr $dimensionI - 1]\
