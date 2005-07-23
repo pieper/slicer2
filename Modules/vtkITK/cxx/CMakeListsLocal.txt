@@ -8,8 +8,10 @@ ENDIF(USE_ITK_FILE)
 
 SET( LOCAL_MODULE_SRCS
 itkDemonsRegistrationImageFilter.cxx
+itkAffineMattesMIRegistrationFilter.cxx
 itkVersorMattesMiVersorRegistrationFilter.cxx
 itkTranslationMIGradientDescentRegistrationFilter.cxx
+vtkITKAffineMattesMIRegistrationFilter.cxx
 vtkITKVersorMattesMiVersorRegistrationFilter.cxx
 vtkITKTranslationMIGradientDescentRegistrationFilter.cxx
 vtkITKTransformRegistrationFilter.cxx
@@ -52,6 +54,7 @@ vtkITKVersion.cxx
 SET_SOURCE_FILES_PROPERTIES (
 itkDemonsRegistrationImageFilter.cxx
 itkVersorMattesMiVersorRegistrationFilter.cxx
+itkAffineMattesMIRegistrationFilter.cxx
 itkTranslationMIGradientDescentRegistrationFilter.cxx
 WRAP_EXCLUDE
 )
