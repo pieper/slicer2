@@ -34,36 +34,36 @@
 # 
 #
 #===============================================================================
-# FILE:        VersorMattesMIRegistration.tcl
+# FILE:        AffineMattesMIRegistration.tcl
 # PROCEDURES:  
-#   VersorMattesMIRegistrationInit
-#   VersorMattesMIRegistrationBuildSubGui f
-#   VersorMattesMIRegistrationSetLevel
-#   VersorMattesMIRegistrationCoarseParam
-#   VersorMattesMIRegistrationFineParam
-#   VersorMattesMIRegistrationGSlowParam
-#   VersorMattesMIRegistrationGSlowParam
-#   VersorMattesMIRegistrationEnter
-#   VersorMattesMIRegistrationExit
-#   VersorMattesMIRegistrationAutoRun
-#   VersorMattesMIRegistrationStop
+#   AffineMattesMIRegistrationInit
+#   AffineMattesMIRegistrationBuildSubGui f
+#   AffineMattesMIRegistrationSetLevel
+#   AffineMattesMIRegistrationCoarseParam
+#   AffineMattesMIRegistrationFineParam
+#   AffineMattesMIRegistrationGSlowParam
+#   AffineMattesMIRegistrationGSlowParam
+#   AffineMattesMIRegistrationEnter
+#   AffineMattesMIRegistrationExit
+#   AffineMattesMIRegistrationAutoRun
+#   AffineMattesMIRegistrationStop
 #   MutualInformationSetMetricOption vtkITKMI
-#   VersorMattesMIRegistrationAutoRun_Vtk
-#   VersorMattesMIRegistrationCopyRegImages res r v
+#   AffineMattesMIRegistrationAutoRun_Vtk
+#   AffineMattesMIRegistrationCopyRegImages res r v
 #==========================================================================auto=
 #-------------------------------------------------------------------------------
-# .PROC VersorMattesMIRegistrationInit
+# .PROC AffineMattesMIRegistrationInit
 #  The "Init" procedure is called automatically by the slicer.  
 #  It puts information about the module into a global array called Module, 
 #  and it also initializes module-level variables.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc VersorMattesMIRegistrationInit {} {
-    global RigidIntensityRegistration VersorMattesMIRegistration 
+proc AffineMattesMIRegistrationInit {} {
+    global RigidIntensityRegistration AffineMattesMIRegistration 
     global Module Volume Model
 
-    set m VersorMattesMIRegistration
+    set m AffineMattesMIRegistration
 
     # Module Summary Info
     #------------------------------------
@@ -111,7 +111,7 @@ proc VersorMattesMIRegistrationInit {} {
     #   procedures are optional.  If they exist, then their name (which
     #   can be anything) is registered with a line like this:
     #
-    #   set Module($m,procVTK) VersorMattesMIRegistrationBuildVTK
+    #   set Module($m,procVTK) AffineMattesMIRegistrationBuildVTK
     #
     #   All the options are:
 
@@ -132,10 +132,10 @@ proc VersorMattesMIRegistrationInit {} {
     #   string in your init function, of the form: 
     #   set Module($m,presets) "key1='val1' key2='val2' ..."
 
-#    set Module($m,procGUI) VersorMattesMIRegistrationBuildGUI
-#    set Module($m,procVTK) VersorMattesMIRegistrationBuildVTK
-#    set Module($m,procEnter) VersorMattesMIRegistrationEnter
-#    set Module($m,procExit) VersorMattesMIRegistrationExit
+#    set Module($m,procGUI) AffineMattesMIRegistrationBuildGUI
+#    set Module($m,procVTK) AffineMattesMIRegistrationBuildVTK
+#    set Module($m,procEnter) AffineMattesMIRegistrationEnter
+#    set Module($m,procExit) AffineMattesMIRegistrationExit
 
     # Define Dependencies
     #------------------------------------
@@ -155,7 +155,7 @@ proc VersorMattesMIRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2005/07/23 17:39:20 $}]
+        {$Revision: 1.1 $} {$Date: 2005/07/23 17:39:20 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -166,16 +166,16 @@ proc VersorMattesMIRegistrationInit {} {
     #
 
     ## put here to show MI specific param
-    set VersorMattesMIRegistration(NumberOfSamples)  5000
-    set VersorMattesMIRegistration(NumberOfHistogramBins) 256
+    set AffineMattesMIRegistration(NumberOfSamples)  5000
+    set AffineMattesMIRegistration(NumberOfHistogramBins) 256
 
 
     ## Set the default to fast registration
-    VersorMattesMIRegistrationVerySlowParam
+    AffineMattesMIRegistrationVerySlowParam
 }
 
 #-------------------------------------------------------------------------------
-# .PROC VersorMattesMIRegistrationBuildSubGui
+# .PROC AffineMattesMIRegistrationBuildSubGui
 #
 # Build the sub-gui under $f whatever frame is calling this one
 #
@@ -185,8 +185,8 @@ proc VersorMattesMIRegistrationInit {} {
 # frame f frame name
 # .END
 #-------------------------------------------------------------------------------
-proc VersorMattesMIRegistrationBuildSubGui {f} {
-    global Gui Matrix RigidIntensityRegistration VersorMattesMIRegistration
+proc AffineMattesMIRegistrationBuildSubGui {f} {
+    global Gui Matrix RigidIntensityRegistration AffineMattesMIRegistration
 
     set framename $f
 
@@ -222,14 +222,14 @@ proc VersorMattesMIRegistrationBuildSubGui {f} {
 
     foreach level "Help Normal Advanced" {
         eval {radiobutton $f.r$level \
-            -text "$level" -command "VersorMattesMIRegistrationSetLevel" \
-            -variable VersorMattesMIRegistration(Level) -value $level -width 10 \
+            -text "$level" -command "AffineMattesMIRegistrationSetLevel" \
+            -variable AffineMattesMIRegistration(Level) -value $level -width 10 \
             -indicatoron 0} $Gui(WRA)
-        set VersorMattesMIRegistration(r${level}) $f.r$level
+        set AffineMattesMIRegistration(r${level}) $f.r$level
         pack $f.r$level -side left -padx 0 
     }
 
-    set VersorMattesMIRegistration(Level) Normal
+    set AffineMattesMIRegistration(Level) Normal
 
     #-------------------------------------------
     # Level frame
@@ -242,9 +242,9 @@ proc VersorMattesMIRegistrationBuildSubGui {f} {
     foreach type "Help Normal Advanced" {
         frame $f.f${type} -bg $Gui(activeWorkspace)
         place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
-        set VersorMattesMIRegistration(f${type}) $f.f${type}
+        set AffineMattesMIRegistration(f${type}) $f.f${type}
     }
-    raise $VersorMattesMIRegistration(fNormal)
+    raise $AffineMattesMIRegistration(fNormal)
 
     set fnormal   $framename.fLevel.fNormal
     set fadvanced $framename.fLevel.fAdvanced
@@ -279,15 +279,15 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
     </UL>"
 
     regsub -all "\n" $help { } help
-    MainHelpApplyTags VersorMattesMIRegistration $help
-#    MainHelpBuildGUI  VersorMattesMIRegistration 
+    MainHelpApplyTags AffineMattesMIRegistration $help
+#    MainHelpBuildGUI  AffineMattesMIRegistration 
 
     global Help
     set f  $fhelp
     frame $f.fWidget -bg $Gui(activeWorkspace)
     pack $f.fWidget -side top -padx 2 -fill both -expand true
     set tmp [HelpWidget $f.fWidget]
-    MainHelpShow $tmp VersorMattesMIRegistration
+    MainHelpShow $tmp AffineMattesMIRegistration
 
     #-------------------------------------------
     # Level->Normal frame
@@ -333,15 +333,15 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
         width "6 6 15 21" {
         eval {radiobutton $f.fBtns.$row.r$value -width $width \
         -text "$text" -value "$value" \
-        -command VersorMattesMIRegistration${value}Param \
-        -variable VersorMattesMIRegistration(Objective) \
+        -command AffineMattesMIRegistration${value}Param \
+        -variable AffineMattesMIRegistration(Objective) \
         -indicatoron 0} $Gui(WCA) 
         pack $f.fBtns.$row.r$value -side left -padx 4 -pady 2
         if { $value == "Fine" } {incr row};
         if { $value == "GSlow" } {incr row};
     }
 
-   set VersorMattesMIRegistration(Objective) VerySlow
+   set AffineMattesMIRegistration(Objective) VerySlow
 
     #-------------------------------------------
     # Level->Normal->Repeat Frame
@@ -365,10 +365,10 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
     set f $fnormal.fRun
 
     eval {button $f.bRun -text "Start" -width [expr [string length "Start"]+1] \
-            -command "VersorMattesMIRegistrationAutoRun"} $Gui(WBA)
+            -command "AffineMattesMIRegistrationAutoRun"} $Gui(WBA)
 
     pack $f.bRun -side left -padx $Gui(pad) -pady $Gui(pad)
-    set VersorMattesMIRegistration(b1Run) $f.bRun
+    set AffineMattesMIRegistration(b1Run) $f.bRun
 
     #-------------------------------------------
     # Level->Advanced
@@ -435,7 +435,7 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
         
         set f $f.f$param
         eval {label $f.l$param -text "$name:"} $Gui(WLA)
-        eval {entry $f.e$param -width 10 -textvariable VersorMattesMIRegistration($param)} $Gui(WEA)
+        eval {entry $f.e$param -width 10 -textvariable AffineMattesMIRegistration($param)} $Gui(WEA)
         pack $f.l$param -side left -padx $Gui(pad) -fill x -anchor w
         pack $f.e$param -side left -padx $Gui(pad) -expand 1
     }
@@ -447,15 +447,15 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
 
     foreach str "Run" {
         eval {button $f.b$str -text "$str" -width [expr [string length $str]+1] \
-            -command "VersorMattesMIRegistrationAuto$str"} $Gui(WBA)
-        set VersorMattesMIRegistration(b$str) $f.b$str
+            -command "AffineMattesMIRegistrationAuto$str"} $Gui(WBA)
+        set AffineMattesMIRegistration(b$str) $f.b$str
     }
     pack $f.bRun -side left -padx $Gui(pad) -pady $Gui(pad)
-    set VersorMattesMIRegistration(b2Run) $f.bRun
+    set AffineMattesMIRegistration(b2Run) $f.bRun
 }  
 
 #-------------------------------------------------------------------------------
-# .PROC VersorMattesMIRegistrationSetLevel
+# .PROC AffineMattesMIRegistrationSetLevel
 #
 # Set the registration mechanism depending on which button the user selected in
 # the Auto tab.
@@ -463,16 +463,16 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc VersorMattesMIRegistrationSetLevel {} {
-    global VersorMattesMIRegistration RigidIntensityRegistration
+proc AffineMattesMIRegistrationSetLevel {} {
+    global AffineMattesMIRegistration RigidIntensityRegistration
 
-    set level $VersorMattesMIRegistration(Level)
-    raise $VersorMattesMIRegistration(f${level})
-    focus $VersorMattesMIRegistration(f${level})
+    set level $AffineMattesMIRegistration(Level)
+    raise $AffineMattesMIRegistration(f${level})
+    focus $AffineMattesMIRegistration(f${level})
 }
 
 #-------------------------------------------------------------------------------
-# .PROC VersorMattesMIRegistrationCoarseParam
+# .PROC AffineMattesMIRegistrationCoarseParam
 #
 #  These parameters should allow the user the ability to intervene
 #  and decide when he/she is done.
@@ -480,8 +480,8 @@ proc VersorMattesMIRegistrationSetLevel {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc VersorMattesMIRegistrationCoarseParam {} {
-    global VersorMattesMIRegistration RigidIntensityRegistration
+proc AffineMattesMIRegistrationCoarseParam {} {
+    global AffineMattesMIRegistration RigidIntensityRegistration
 
     set RigidIntensityRegistration(Resolution)       64
     set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
@@ -493,18 +493,18 @@ proc VersorMattesMIRegistrationCoarseParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
-    set VersorMattesMIRegistration(MinimumStepLength)    0.01
-    set VersorMattesMIRegistration(MaximumStepLength)    4.0
-    set VersorMattesMIRegistration(UpdateIterations) 100
-    set VersorMattesMIRegistration(TranslateScale)   0.0002
+    set AffineMattesMIRegistration(MinimumStepLength)    0.01
+    set AffineMattesMIRegistration(MaximumStepLength)    4.0
+    set AffineMattesMIRegistration(UpdateIterations) 100
+    set AffineMattesMIRegistration(TranslateScale)   0.0002
 
-    set VersorMattesMIRegistration(NumberOfSamples)  10000
-    set VersorMattesMIRegistration(NumberOfHistogramBins) 256
+    set AffineMattesMIRegistration(NumberOfSamples)  10000
+    set AffineMattesMIRegistration(NumberOfHistogramBins) 256
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC VersorMattesMIRegistrationFineParam
+# .PROC AffineMattesMIRegistrationFineParam
 #
 #  These parameters should allow the user the ability to intervene
 #  and decide when he/she is done.
@@ -512,8 +512,8 @@ proc VersorMattesMIRegistrationCoarseParam {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc VersorMattesMIRegistrationFineParam {} {
-    global VersorMattesMIRegistration RigidIntensityRegistration
+proc AffineMattesMIRegistrationFineParam {} {
+    global AffineMattesMIRegistration RigidIntensityRegistration
 
     set RigidIntensityRegistration(Resolution)       128
     set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
@@ -525,26 +525,26 @@ proc VersorMattesMIRegistrationFineParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
-    set VersorMattesMIRegistration(MinimumStepLength)     0.001
-    set VersorMattesMIRegistration(MaximumStepLength)     1.5
-    set VersorMattesMIRegistration(UpdateIterations) 1000
-    set VersorMattesMIRegistration(TranslateScale)   0.0002
+    set AffineMattesMIRegistration(MinimumStepLength)     0.001
+    set AffineMattesMIRegistration(MaximumStepLength)     1.5
+    set AffineMattesMIRegistration(UpdateIterations) 1000
+    set AffineMattesMIRegistration(TranslateScale)   0.0002
 
-    set VersorMattesMIRegistration(NumberOfHistogramBins) 256
-    set VersorMattesMIRegistration(NumberOfSamples)  10000
+    set AffineMattesMIRegistration(NumberOfHistogramBins) 256
+    set AffineMattesMIRegistration(NumberOfSamples)  10000
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC VersorMattesMIRegistrationGSlowParam
+# .PROC AffineMattesMIRegistrationGSlowParam
 #
 # This should run until completion and give a good registration
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc VersorMattesMIRegistrationGSlowParam {} {
-    global VersorMattesMIRegistration RigidIntensityRegistration
+proc AffineMattesMIRegistrationGSlowParam {} {
+    global AffineMattesMIRegistration RigidIntensityRegistration
 
     set RigidIntensityRegistration(Resolution)       128
     set RigidIntensityRegistration(SourceShrinkFactors)   "2 2 2"
@@ -556,25 +556,25 @@ proc VersorMattesMIRegistrationGSlowParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
-    set VersorMattesMIRegistration(UpdateIterations) "500 1000"
-    set VersorMattesMIRegistration(MinimumStepLength)    "0.01 0.001"
-    set VersorMattesMIRegistration(MaximumStepLength)    "2.0 0.5"
-    set VersorMattesMIRegistration(TranslateScale)   0.0002
+    set AffineMattesMIRegistration(UpdateIterations) "500 1000"
+    set AffineMattesMIRegistration(MinimumStepLength)    "0.01 0.001"
+    set AffineMattesMIRegistration(MaximumStepLength)    "2.0 0.5"
+    set AffineMattesMIRegistration(TranslateScale)   0.0002
 
-    set VersorMattesMIRegistration(NumberOfSamples)  50000
-    set VersorMattesMIRegistration(NumberOfHistogramBins) 256
+    set AffineMattesMIRegistration(NumberOfSamples)  50000
+    set AffineMattesMIRegistration(NumberOfHistogramBins) 256
 }
 
 #-------------------------------------------------------------------------------
-# .PROC VersorMattesMIRegistrationGSlowParam
+# .PROC AffineMattesMIRegistrationGSlowParam
 #
 # This should run until completion and give a good registration
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc VersorMattesMIRegistrationVerySlowParam {} {
-    global VersorMattesMIRegistration RigidIntensityRegistration
+proc AffineMattesMIRegistrationVerySlowParam {} {
+    global AffineMattesMIRegistration RigidIntensityRegistration
 
     set RigidIntensityRegistration(Resolution)       128 
     set RigidIntensityRegistration(SourceShrinkFactors)   "4 4 4"
@@ -586,26 +586,26 @@ proc VersorMattesMIRegistrationVerySlowParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
-    set VersorMattesMIRegistration(UpdateIterations) "2500 2500 2500"
-    set VersorMattesMIRegistration(MinimumStepLength) "0.01 0.001 0.0001"
-    set VersorMattesMIRegistration(MaximumStepLength) "4.0 1 0.5"
-    set VersorMattesMIRegistration(TranslateScale)   0.0002
+    set AffineMattesMIRegistration(UpdateIterations) "2500 2500 2500"
+    set AffineMattesMIRegistration(MinimumStepLength) "0.01 0.001 0.0001"
+    set AffineMattesMIRegistration(MaximumStepLength) "4.0 1 0.5"
+    set AffineMattesMIRegistration(TranslateScale)   0.0002
 
-    set VersorMattesMIRegistration(NumberOfSamples)   100000
-    set VersorMattesMIRegistration(NumberOfHistogramBins) 256
+    set AffineMattesMIRegistration(NumberOfSamples)   100000
+    set AffineMattesMIRegistration(NumberOfHistogramBins) 256
 
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC VersorMattesMIRegistrationEnter
+# .PROC AffineMattesMIRegistrationEnter
 # Called when this module is entered by the user.  Pushes the event manager
 # for this module. This never gets called.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc VersorMattesMIRegistrationEnter {} {
-    global VersorMattesMIRegistration RigidIntensityRegistration
+proc AffineMattesMIRegistrationEnter {} {
+    global AffineMattesMIRegistration RigidIntensityRegistration
     
     # Push event manager
     #------------------------------------
@@ -615,22 +615,22 @@ proc VersorMattesMIRegistrationEnter {} {
     #   The pushEventManager routine saves the previous bindings on 
     #   a stack and binds our new ones.
     #   (See slicer/program/tcl-shared/Events.tcl for more details.)
-    pushEventManager $VersorMattesMIRegistration(eventManager)
+    pushEventManager $AffineMattesMIRegistration(eventManager)
 
     # clear the text box and put instructions there
-    $VersorMattesMIRegistration(textBox) delete 1.0 end
-    $VersorMattesMIRegistration(textBox) insert end "Shift-Click anywhere!\n"
+    $AffineMattesMIRegistration(textBox) delete 1.0 end
+    $AffineMattesMIRegistration(textBox) insert end "Shift-Click anywhere!\n"
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC VersorMattesMIRegistrationExit
+# .PROC AffineMattesMIRegistrationExit
 # Called when this module is exited by the user.  Pops the event manager
 # for this module. This never gets called. 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc VersorMattesMIRegistrationExit {} {
+proc AffineMattesMIRegistrationExit {} {
 
     # Pop event manager
     #------------------------------------
@@ -643,26 +643,26 @@ proc VersorMattesMIRegistrationExit {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC VersorMattesMIRegistrationAutoRun
+# .PROC AffineMattesMIRegistrationAutoRun
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc VersorMattesMIRegistrationAutoRun {} {
-    global Matrix VersorMattesMIRegistration RigidIntensityRegistration
+proc AffineMattesMIRegistrationAutoRun {} {
+    global Matrix AffineMattesMIRegistration RigidIntensityRegistration
 
     if {[RigidIntensityRegistrationSetUp] == 0} {
       return 0
     }
 
     if {$::Module(verbose)} { 
-        puts "Starting VersorMattesMIRegistrationAutoRun"
+        puts "Starting AffineMattesMIRegistrationAutoRun"
     }
 
 #    Gering version disabled
-#    VersorMattesMIRegistrationAutoRun_Vtk  
+#    AffineMattesMIRegistrationAutoRun_Vtk  
 
-    global Path env Gui Matrix Volume VersorMattesMIRegistration
+    global Path env Gui Matrix Volume AffineMattesMIRegistration
 
     # TODO make islicer a package
     source $env(SLICER_HOME)/Modules/iSlicer/tcl/isregistration.tcl
@@ -680,47 +680,47 @@ proc VersorMattesMIRegistrationAutoRun {} {
         -source          $RigidIntensityRegistration(sourceId)          \
         -target          $RigidIntensityRegistration(targetId)          \
         -update_procedure RigidIntensityRegistrationUpdateParam        \
-        -stop_procedure    VersorMattesMIRegistrationStop            \
-        -set_metric_option VersorMattesMIRegistrationSetMetricOption \
-        -set_optimizer_option VersorMattesMIRegistrationSetOptimizerOption \
+        -stop_procedure    AffineMattesMIRegistrationStop            \
+        -set_metric_option AffineMattesMIRegistrationSetMetricOption \
+        -set_optimizer_option AffineMattesMIRegistrationSetOptimizerOption \
         -resample 1 \
-        -vtk_itk_reg       vtkITKVersorMattesMiVersorRegistrationFilter               
+        -vtk_itk_reg       vtkITKAffineMattesMIRegistrationFilter               
 
 
     if {$::Module(verbose)} {
         puts "to see the pop-up window, type: pack .mi.reg -fill both -expand true"
     }
   #  pack .mi.reg -fill both -expand true
-    $VersorMattesMIRegistration(b1Run) configure -command \
-                                      "VersorMattesMIRegistrationStop"
-    $VersorMattesMIRegistration(b2Run) configure -command \
-                                      "VersorMattesMIRegistrationStop"
-    $VersorMattesMIRegistration(b1Run) configure -text "Stop"
-    $VersorMattesMIRegistration(b2Run) configure -text "Stop"
+    $AffineMattesMIRegistration(b1Run) configure -command \
+                                      "AffineMattesMIRegistrationStop"
+    $AffineMattesMIRegistration(b2Run) configure -command \
+                                      "AffineMattesMIRegistrationStop"
+    $AffineMattesMIRegistration(b1Run) configure -text "Stop"
+    $AffineMattesMIRegistration(b2Run) configure -text "Stop"
     if {$::Module(verbose)} {
-        puts "VersorMattesMIRegistrationAutoRun: calling .mi.reg start"
+        puts "AffineMattesMIRegistrationAutoRun: calling .mi.reg start"
     }
     .mi.reg start
     if {$::Module(verbose)} { 
-        puts "VersorMattesMIRegistrationAutoRun: done .mi.reg"
+        puts "AffineMattesMIRegistrationAutoRun: done .mi.reg"
     }
 }
 
 #-------------------------------------------------------------------------------
-# .PROC VersorMattesMIRegistrationStop
+# .PROC AffineMattesMIRegistrationStop
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc VersorMattesMIRegistrationStop {} {
-    global VersorMattesMIRegistration RigidIntensityRegistration
+proc AffineMattesMIRegistrationStop {} {
+    global AffineMattesMIRegistration RigidIntensityRegistration
     .mi.reg stop
-    $VersorMattesMIRegistration(b1Run) configure -command \
-                                          "VersorMattesMIRegistrationAutoRun"
-    $VersorMattesMIRegistration(b2Run) configure -command \
-                                          "VersorMattesMIRegistrationAutoRun"
-    $VersorMattesMIRegistration(b1Run) configure -text "Start"
-    $VersorMattesMIRegistration(b2Run) configure -text "Start"
+    $AffineMattesMIRegistration(b1Run) configure -command \
+                                          "AffineMattesMIRegistrationAutoRun"
+    $AffineMattesMIRegistration(b2Run) configure -command \
+                                          "AffineMattesMIRegistrationAutoRun"
+    $AffineMattesMIRegistration(b1Run) configure -text "Start"
+    $AffineMattesMIRegistration(b2Run) configure -text "Start"
 }
 
 
@@ -733,17 +733,17 @@ proc VersorMattesMIRegistrationStop {} {
 # vtkITKMutualInformation vtkITKMI
 # .END
 #-------------------------------------------------------------------------------
-proc VersorMattesMIRegistrationSetMetricOption { vtkITKMI } {
-    global VersorMattesMIRegistration 
+proc AffineMattesMIRegistrationSetMetricOption { vtkITKMI } {
+    global AffineMattesMIRegistration 
 
-    $vtkITKMI SetNumberOfHistogramBins $VersorMattesMIRegistration(NumberOfHistogramBins)
-    $vtkITKMI SetNumberOfSamples $VersorMattesMIRegistration(NumberOfSamples)
+    $vtkITKMI SetNumberOfHistogramBins $AffineMattesMIRegistration(NumberOfHistogramBins)
+    $vtkITKMI SetNumberOfSamples $AffineMattesMIRegistration(NumberOfSamples)
 
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC VersorMattesMIRegistrationSetOptimizerOption
+# .PROC AffineMattesMIRegistrationSetOptimizerOption
 #
 # takes in a vtkITKMutualInformation object
 #
@@ -751,34 +751,34 @@ proc VersorMattesMIRegistrationSetMetricOption { vtkITKMI } {
 # vtkITKMutualInformation vtkITKMI
 # .END
 #-------------------------------------------------------------------------------
-proc VersorMattesMIRegistrationSetOptimizerOption { vtkITKMI } {
-    global VersorMattesMIRegistration
+proc AffineMattesMIRegistrationSetOptimizerOption { vtkITKMI } {
+    global AffineMattesMIRegistration
     
-    $vtkITKMI SetTranslateScale $VersorMattesMIRegistration(TranslateScale)
+    $vtkITKMI SetTranslateScale $AffineMattesMIRegistration(TranslateScale)
     
     # set for MultiResStuff
     $vtkITKMI ResetMultiResolutionSettings
 
-    foreach iter  $VersorMattesMIRegistration(UpdateIterations) {
+    foreach iter  $AffineMattesMIRegistration(UpdateIterations) {
         $vtkITKMI SetNextMaxNumberOfIterations $iter
     }
-    foreach step $VersorMattesMIRegistration(MinimumStepLength) {
+    foreach step $AffineMattesMIRegistration(MinimumStepLength) {
         $vtkITKMI SetNextMinimumStepLength $step
         puts "min step = $step"
     }
-    foreach step $VersorMattesMIRegistration(MaximumStepLength) {
+    foreach step $AffineMattesMIRegistration(MaximumStepLength) {
         $vtkITKMI SetNextMaximumStepLength $step
         puts "max step = $step"
     }
 }
 
-proc RigidIntensityRegistrationCheckParametersVersorMattesMI {} {
-    global VersorMattesMIRegistration RigidIntensityRegistration
+proc RigidIntensityRegistrationCheckParametersAffineMattesMI {} {
+    global AffineMattesMIRegistration RigidIntensityRegistration
 
-    if {([llength $VersorMattesMIRegistration(MinimumStepLength) ] != \
-        [llength $VersorMattesMIRegistration(UpdateIterations) ]) &&  \
-        ([llength $VersorMattesMIRegistration(MaximumStepLength) ] != \
-             [llength $VersorMattesMIRegistration(UpdateIterations) ])} {
+    if {([llength $AffineMattesMIRegistration(MinimumStepLength) ] != \
+        [llength $AffineMattesMIRegistration(UpdateIterations) ]) &&  \
+        ([llength $AffineMattesMIRegistration(MaximumStepLength) ] != \
+             [llength $AffineMattesMIRegistration(UpdateIterations) ])} {
         DevErrorWindow "Must Have same number of levels of iterations as learning rates"
        return 0
     }
@@ -787,7 +787,7 @@ proc RigidIntensityRegistrationCheckParametersVersorMattesMI {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC VersorMattesMIRegistrationAutoRun_Vtk
+# .PROC AffineMattesMIRegistrationAutoRun_Vtk
 #
 #
 # These are the tools written by Dave Gering (and implemented by Hanifa Dostmohamed)
@@ -797,10 +797,10 @@ proc RigidIntensityRegistrationCheckParametersVersorMattesMI {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc VersorMattesMIRegistrationAutoRun_Vtk {} {
-    global Path env Gui Matrix Volume VersorMattesMIRegistration
+proc AffineMattesMIRegistrationAutoRun_Vtk {} {
+    global Path env Gui Matrix Volume AffineMattesMIRegistration
 
-    if {$::Module(verbose)} { puts "starting VersorMattesMIRegistrationAutoRun_Vtk..." }
+    if {$::Module(verbose)} { puts "starting AffineMattesMIRegistrationAutoRun_Vtk..." }
 
     # v = ID of volume to register
     # r = ID of reference volume
@@ -907,19 +907,19 @@ proc VersorMattesMIRegistrationAutoRun_Vtk {} {
           if {$res != $resDisplay} {
               if {$::Module(verbose)} { puts "Current Pose at res=$res is: [$currentPose Print]" } 
             set resDisplay $res
-            VersorMattesMIRegistrationCopyRegImages $res $r $v
+            AffineMattesMIRegistrationCopyRegImages $res $r $v
           }
         }
 
         if {$::Module(verbose)} {
-            puts "VersorMattesMIRegistration\t calling main update mrml and renderall"
+            puts "AffineMattesMIRegistration\t calling main update mrml and renderall"
         }
         # Update MRML and display
         MainUpdateMRML
         RenderAll
    }
     if {$::Module(verbose)} { 
-        puts "\t VersorMattesMIRegistration done loop"
+        puts "\t AffineMattesMIRegistration done loop"
     }
    MainEndProgress
 
@@ -936,7 +936,7 @@ proc VersorMattesMIRegistrationAutoRun_Vtk {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC VersorMattesMIRegistrationCopyRegImages
+# .PROC AffineMattesMIRegistrationCopyRegImages
 #
 # Stuff for Dave Gering implementation
 #
@@ -946,7 +946,7 @@ proc VersorMattesMIRegistrationAutoRun_Vtk {} {
 # int v
 # .END
 #-------------------------------------------------------------------------------
-proc VersorMattesMIRegistrationCopyRegImages {res r v} {
+proc AffineMattesMIRegistrationCopyRegImages {res r v} {
   global Volume
 
   #

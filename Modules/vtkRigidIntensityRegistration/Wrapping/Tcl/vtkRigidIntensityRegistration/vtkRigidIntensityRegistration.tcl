@@ -14,7 +14,9 @@ if {[::vtk::load_component vtkRigidIntensityRegistrationTCL] == "" } {
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/ItkToSlicerTransform.tcl]
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/RigidIntensityRegistration.tcl]
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/MutualInformationRegistration.tcl]
+    source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/AffineMattesMIRegistration.tcl]
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/VersorMattesMIRegistration.tcl]
+    source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/TranslationMIGradientDescentRegistration.tcl]
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/KullbackLeiblerRegistration.tcl]
 
     # add this module's name to the list of custom modules in order 
@@ -23,6 +25,8 @@ if {[::vtk::load_component vtkRigidIntensityRegistrationTCL] == "" } {
     global Module
     lappend Module(customModules) RigidIntensityRegistration
     lappend Module(customModules) MutualInformationRegistration
+    lappend Module(customModules) AffineMattesMIRegistration
     lappend Module(customModules) VersorMattesMIRegistration
+    lappend Module(customModules) TranslationMIGradientDescentRegistration
     lappend Module(customModules) KullbackLeiblerRegistration
 }

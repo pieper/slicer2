@@ -152,7 +152,7 @@ proc RigidIntensityRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.11 $} {$Date: 2005/06/10 03:57:26 $}]
+        {$Revision: 1.12 $} {$Date: 2005/07/23 17:39:20 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -226,7 +226,7 @@ proc RigidIntensityRegistrationBuildSubGui {f} {
     eval {menu $f.mbType.m} $Gui(WMA)
     pack  $f.mbType -side left -pady 1 -padx $Gui(pad)
     # Add menu items
-    foreach RegType "MI VersorMattesMI KL" {
+    foreach RegType "MI TranslationMI VersorMattesMI AffineMattesMI KL" {
         $f.mbType.m add command -label $RegType \
                 -command "RigidIntensityRegistrationSetRegType $RegType"
     }
@@ -244,7 +244,7 @@ proc RigidIntensityRegistrationBuildSubGui {f} {
     #
     # Swappable Frames for MI/KL methods
     #
-    foreach type "MI VersorMattesMI KL" {
+    foreach type "MI TranslationMI VersorMattesMI AffineMattesMI KL" {
         frame $f.f${type} -bg $Gui(activeWorkspace)
         place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
         set RigidIntensityRegistration(f${type}) $f.f${type}
@@ -252,7 +252,9 @@ proc RigidIntensityRegistrationBuildSubGui {f} {
     raise $RigidIntensityRegistration(fMI)
 
     MutualInformationRegistrationBuildSubGui $f.fMI
+    TranslationMIGradientDescentRegistrationBuildSubGui $f.fTranslationMI
     VersorMattesMIRegistrationBuildSubGui $f.fVersorMattesMI
+    AffineMattesMIRegistrationBuildSubGui $f.fAffineMattesMI
     KullbackLeiblerRegistrationBuildSubGui $f.fKL
     set fKL $f.fKL
 }
