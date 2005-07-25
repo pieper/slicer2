@@ -222,6 +222,14 @@ proc fMRIEngineComputeContrasts {} {
                 Volume($i,node) ComputeRasToIjkFromScanOrder [Volume($i,node) GetScanOrder]
 
                 Volume($i,vol) SetImageData $act
+
+                Volume($i,vol) SetRangeLow [fMRIEngine(actVolumeGenerator) GetLowRange] 
+                Volume($i,vol) SetRangeHigh [fMRIEngine(actVolumeGenerator) GetHighRange] 
+
+                # To keep variables 'RangeLow' and 'RangeHigh' as float 
+                # in vtkMrmlDataVolume for float volume, use this function:
+                Volume($i,vol) SetRangeAuto 0
+
                 MainSlicesSetVolumeAll Fore $i
                 MainVolumesSetActive $i
 
@@ -235,8 +243,6 @@ proc fMRIEngineComputeContrasts {} {
 
                 set fMRIEngine($i,actLow) [fMRIEngine(actVolumeGenerator) GetLowRange] 
                 set fMRIEngine($i,actHigh) [fMRIEngine(actVolumeGenerator) GetHighRange] 
-                # puts "low = $fMRIEngine($i,actLow)"
-                # puts "high = $fMRIEngine($i,actHigh)"
 
                 MainEndProgress
                 puts "...done"
@@ -248,7 +254,12 @@ proc fMRIEngineComputeContrasts {} {
         puts $Gui(progressText)
         MainStartProgress
         MainShowProgress fMRIEngine(actVolumeGenerator) 
+        # Use fMRIEngineUpdateMRML - name of the activation volume is not updated 
+        # on the Active Volume list
+        # Use MainUpdateMRML - updating is slow for adding a new volume if we already
+        # have a long sequence loaded in Slicer
         fMRIEngineUpdateMRML
+        # MainUpdateMRML
         RenderAll
         MainEndProgress
 
@@ -275,7 +286,7 @@ proc fMRIEngineUpdateMRML {} {
     MainMrmlUpdateMRML
     MainColorsUpdateMRML
 #    MainVolumesUpdateMRML
-    MainTensorUpdateMRML
+#    MainTensorUpdateMRML
     MainModelsUpdateMRML
     MainTetraMeshUpdateMRML
 
