@@ -426,7 +426,7 @@ unsigned char *vtkIndirectLookupTable::MapValue(vtkFloatingPointType v)
 // of 8-bit chunks
 template<class T>
 static void vtkIndirectLookupTableMapData(vtkIndirectLookupTable *self, 
-  T *input, unsigned char *output, int length, int incr)
+  T *input, unsigned char *output,int length, int incr)
 {
   int i;
   vtkFloatingPointType *range = self->GetRange();
@@ -459,7 +459,19 @@ static void vtkIndirectLookupTableMapData(vtkIndirectLookupTable *self,
     long s = (long)v;
 
     // Map s to RGBA
-    memcpy(output, &lut[map[offset + s]], 4);
+    int index = offset + s;
+
+    // For VTK_FLOAT or VTK_DOUBLE, we need handle the following case:
+    // For instance, we set 2.3 for the lower threshold. All values less than 2.3, 
+    // including 2.1 and 2.2, must be thresholded out. 2.1 and 2.2 are special cases
+    // here since 2.1, 2.2 and 2.3 all become 2 if we cast them into long, int or short.
+    // The following statment will guarantee the removal of 2.1 and 2.2.
+    if (v < self->GetLowerThreshold())
+    {
+        index = offset;
+    }
+
+    memcpy(output, &lut[map[index]], 4);
 
     output += 4;
     input += incr;
@@ -487,7 +499,7 @@ void vtkIndirectLookupTable::MapScalarsThroughTable2(void *input,
                         int inputDataType, 
                         int numberOfValues,
                         int inputIncrement,
-                                            int outputFormat)
+                        int outputFormat)
 {
 
   switch (inputDataType)
