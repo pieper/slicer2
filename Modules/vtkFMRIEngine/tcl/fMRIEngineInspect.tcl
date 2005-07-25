@@ -52,7 +52,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineScaleActivation {no} {
-    global Volume fMRIEngine MultiVolumeReader
+    global Volume fMRIEngine MultiVolumeReader Slicer
 
     if {! [info exists fMRIEngine(allPValues)]} {
         set i 20 
@@ -83,16 +83,12 @@ proc fMRIEngineScaleActivation {no} {
         set fMRIEngine(pValue) $p
         set fMRIEngine(tStat) $t
 
-
         set id $fMRIEngine(currentActVolID) 
         if {$id > 0} {
-            # map the t value into the range between 1 and 100
-            set value [expr 100 * ($t - $fMRIEngine($id,actLow)) / \
-                ($fMRIEngine($id,actHigh) - $fMRIEngine($id,actLow))]
-     
             Volume($id,node) AutoThresholdOff
             Volume($id,node) ApplyThresholdOn
-            Volume($id,node) SetLowerThreshold [expr round($value)] 
+
+            Volume($id,node) SetLowerThreshold $t 
             MainVolumesSetParam ApplyThreshold 
             MainVolumesRender
         }
@@ -217,25 +213,20 @@ proc fMRIEngineBuildUIForInspectTab {parent} {
         -textvariable fMRIEngine(pValue)} $Gui(WEA)
     eval {entry $f.eTS -width 10 -state readonly \
         -textvariable fMRIEngine(tStat)} $Gui(WEA)
-   grid $f.lPV $f.ePV -padx 1 -pady 2 -sticky e
-   grid $f.lTS $f.eTS -padx 1 -pady 2 -sticky e
+    grid $f.lPV $f.ePV -padx 1 -pady 2 -sticky e
+    grid $f.lTS $f.eTS -padx 1 -pady 2 -sticky e
 
-   set f $parent.fThreshold.fParams.fScale 
+    set f $parent.fThreshold.fParams.fScale 
 #   DevAddLabel $f.lactScale "Levels:"
-   eval {scale $f.sactScale \
-       -orient horizontal \
-           -from 1 -to 30 \
-           -resolution 1 \
-           -bigincrement 10 \
-           -length 155 \
-           -command {fMRIEngineScaleActivation}} \
-           $Gui(WSA) {-showvalue 0}
-#   grid $f.lactScale $f.sactScale -padx 1 -pady 1 
-   grid $f.sactScale -padx 1 -pady 1 
+    eval {scale $f.sactScale \
+        -orient horizontal \
+        -from 1 -to 30 \
+        -resolution 1 \
+        -bigincrement 10 \
+        -length 155 \
+        -command {fMRIEngineScaleActivation}} $Gui(WSA) {-showvalue 0}
+    grid $f.sactScale -padx 1 -pady 1 
  
-   # grid $f.l$param $f.e$param -padx $Gui(pad) -pady 2 -sticky e
-   #  grid $f.e$param -sticky w
-
     #-------------------------------------------
     # Plot frame 
     #-------------------------------------------

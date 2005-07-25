@@ -364,7 +364,7 @@ void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *input, vtkImageDa
 
                 if (!(count%target))
                 {
-                    UpdateProgress(count / 2 / (50.0*target));
+                    UpdateProgress(count / (50.0*target));
                 }
                 count++;
             }
@@ -375,21 +375,7 @@ void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *input, vtkImageDa
 
     // Scales the scalar values in the activation volume between 0 - 100
     vtkFloatingPointType range[2];
-    float value;
-    float newValue;
     output->GetScalarRange(range);
     this->LowRange = range[0];
     this->HighRange = range[1];
-    for (int i = 0; i < indx; i++)
-    {
-        value = scalarsOutput->GetComponent(i, 0); 
-        newValue = 100 * (value - range[0]) / (range[1] - range[0]);
-        scalarsOutput->SetComponent(i, 0, newValue);
-
-        if (!(count%target))
-        {
-            UpdateProgress(count / 2 / (50.0*target));
-        }
-        count++;
-    }
 }
