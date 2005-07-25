@@ -66,7 +66,7 @@ proc MainAnnoInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainAnno \
-        {$Revision: 1.24 $} {$Date: 2003/08/21 21:36:10 $}]
+        {$Revision: 1.25 $} {$Date: 2005/07/25 15:13:23 $}]
 
     # Preset Defaults
     set Module(Anno,presets) "box='1' axes='0' outline='0' letters='1' cross='0'\
@@ -92,6 +92,11 @@ hashes='1' mouse='1'"
     set Anno(cursorModePrev) RAS
     # default display of floating point pixel values
     set Anno(pixelDispFormat) %.f
+
+    # The display format of pixel for background and foreground 
+    # could be different.
+    set Anno(backPixelDispFormat) $Anno(pixelDispFormat) 
+    set Anno(forePixelDispFormat) $Anno(pixelDispFormat)
 
     if {$Gui(smallFont) == 0} {
         set Anno(fontSize) 16
