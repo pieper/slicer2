@@ -355,7 +355,7 @@ itcl::configbody isregistration::target {
     }
     $_targetvol volmenu_update 
     $_targetvol configure -volume $itk_option(-target)
-    $_targetvol configure -orientation axial
+    $_targetvol configure -orientation RAS
 
     if {$itk_option(-resample)} {
         set_target_dimensions $itk_option(-target)
@@ -398,7 +398,7 @@ itcl::configbody isregistration::source {
     $_sourcevol volmenu_update 
     $_sourcevol configure -volume $itk_option(-source)
     $_sourcevol configure -resolution $itk_option(-resolution)
-    $_sourcevol configure -orientation axial
+    $_sourcevol configure -orientation RAS
 
     if {$itk_option(-resample)} {
         set_source_dimensions $itk_option(-source)
@@ -436,13 +436,13 @@ itcl::configbody isregistration::resolution {
         $_sourcevol configure -resolution $itk_option(-resolution)
 
         $_sourcevol configure -orientation coronal ;# TODO extra config due to isvolume bug
-        $_sourcevol configure -orientation axial
+        $_sourcevol configure -orientation RAS
     }
     if {$itk_option(-target) != ""} {
         $_targetvol configure -resolution $itk_option(-resolution)
 
         $_targetvol configure -orientation coronal ;# TODO extra config due to isvolume bug
-        $_targetvol configure -orientation axial
+        $_targetvol configure -orientation RAS
     }
 }
 
