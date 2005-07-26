@@ -74,8 +74,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkAnisoGaussSeidel.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/04/19 16:51:59 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2005/07/26 11:50:09 $
+  Version:   $Revision: 1.15 $
 
 =========================================================================*/
 
@@ -202,6 +202,12 @@ vtkAnisoGaussSeidel::vtkAnisoGaussSeidel()
   IsoCoeff           = 0.2;
 
   TruncNegValues     = 0;
+  
+  // Init coefficients
+  _alpha_y = NULL;
+  _gamma_y = NULL;
+  _alpha_z = NULL;
+  _gamma_z = NULL;
 
 } // vtkAnisoGaussSeidel::vtkAnisoGaussSeidel()
 
