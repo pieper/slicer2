@@ -151,7 +151,7 @@ switch $tcl_platform(os) {
         set ::VTKSLICERBASE_BUILD_TCL_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/vtkSlicerBaseTCL.dylib
         set ::GENERATOR "Unix Makefiles" 
         set ::COMPILER_PATH "/usr/bin"
-        set ::COMPILER "c++"
+        set ::COMPILER "g++-3.3"
         set ::CMAKE $::CMAKE_PATH/bin/cmake
         set ::MAKE make
     }
