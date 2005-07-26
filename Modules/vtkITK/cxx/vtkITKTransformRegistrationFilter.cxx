@@ -33,8 +33,10 @@ void vtkITKTransformRegistrationFilter::vtkItkMatrixTransform (vtkMatrix4x4 *mat
   vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
 
   // vtk matrix
-  vtkMatrix4x4::Multiply4x4(rot, matIn, matrix);
-  vtkMatrix4x4::Multiply4x4(matrix, rot, matOut);
+  //vtkMatrix4x4::Multiply4x4(rot, matIn, matrix);
+  //vtkMatrix4x4::Multiply4x4(matrix, rot, matOut);
+  vtkMatrix4x4::Multiply4x4(matIn, rot, matrix);
+  vtkMatrix4x4::Multiply4x4(rot, matrix, matOut);
 
   rot->Delete();
   matrix->Delete();

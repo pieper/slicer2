@@ -12,7 +12,13 @@ void vtkITKRegistrationFilter::ConnectInputPipelines()
   this->vtkCast = vtkImageCast::New();
   this->vtkExporter = vtkImageExport::New();
   this->vtkCast->SetOutputScalarTypeToFloat();
-  this->vtkExporter->SetInput ( this->vtkCast->GetOutput() );
+
+  this->vtkFlipFixed = vtkImageFlip::New();
+  this->vtkFlipFixed->SetInput( this->vtkCast->GetOutput() );
+  this->vtkFlipFixed->SetFilteredAxis(1);
+  this->vtkFlipFixed->FlipAboutOriginOn();
+
+  this->vtkExporter->SetInput ( this->vtkFlipFixed->GetOutput() );
 
   this->itkImporterFixed = ImageImportType::New();
   ConnectPipelines(this->vtkExporter, this->itkImporterFixed);
@@ -21,7 +27,13 @@ void vtkITKRegistrationFilter::ConnectInputPipelines()
   this->vtkCastMoving = vtkImageCast::New();
   this->vtkExporterMoving = vtkImageExport::New();
   this->vtkCastMoving->SetOutputScalarTypeToFloat();
-  this->vtkExporterMoving->SetInput ( this->vtkCastMoving->GetOutput() );
+
+  this->vtkFlipMoving = vtkImageFlip::New();
+  this->vtkFlipMoving->SetInput( this->vtkCastMoving->GetOutput() );
+  this->vtkFlipMoving->SetFilteredAxis(1);
+  this->vtkFlipMoving->FlipAboutOriginOn();
+
+  this->vtkExporterMoving->SetInput ( this->vtkFlipMoving->GetOutput() );
 
   this->itkImporterMoving = ImageImportType::New();
   ConnectPipelines(this->vtkExporterMoving, this->itkImporterMoving);
@@ -44,6 +56,8 @@ vtkITKRegistrationFilter::~vtkITKRegistrationFilter()
 {
   this->vtkExporterMoving->Delete();
   this->vtkCastMoving->Delete();
+  this->vtkFlipFixed->Delete();
+  this->vtkFlipMoving->Delete();
 };
 
 void vtkITKRegistrationFilter::Update()

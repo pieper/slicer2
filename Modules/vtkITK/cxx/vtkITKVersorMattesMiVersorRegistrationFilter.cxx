@@ -90,7 +90,7 @@ vtkITKVersorMattesMiVersorRegistrationFilter::GetTransformationMatrix(vtkMatrix4
     }
   }
 
-  matrix->Invert();
+  //matrix->Invert();
 
   // Add translation with vtk to itk flip in Y and Z
   matrix->Element[0][3] = -ResOffset[0];
@@ -122,7 +122,7 @@ vtkITKVersorMattesMiVersorRegistrationFilter::GetCurrentTransformationMatrix(vtk
     }
   }
 
-  matrix->Invert();
+  //matrix->Invert();
 
   // Add translation with vtk to itk flip in Y and Z
   matrix->Element[0][3] = -ResOffset[0];

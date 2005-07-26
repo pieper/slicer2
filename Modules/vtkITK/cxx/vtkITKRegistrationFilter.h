@@ -12,6 +12,7 @@
 #include "itkVTKImageExport.h"
 #include "itkVTKImageImport.h"
 #include "vtkITKUtility.h"
+#include "vtkImageFlip.h"
 
 #include "itkImageRegionIterator.h"
 #include "itkCastImageFilter.h"
@@ -159,6 +160,8 @@ protected:
   // vtk export for moving vtk image
   vtkImageCast* vtkCastMoving;
   vtkImageExport* vtkExporterMoving;  
+  vtkImageFlip* vtkFlipMoving;
+  vtkImageFlip* vtkFlipFixed;
 
   FixedWriterType::Pointer   itkFixedImageWriter;
   MovingWriterType::Pointer  itkMovingImageWriter;
@@ -188,7 +191,7 @@ private:
   void operator=(const vtkITKRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKRegistrationFilter, "$Revision: 1.5 $");
+//vtkCxxRevisionMacro(vtkITKRegistrationFilter, "$Revision: 1.6 $");
 //vtkStandardNewMacro(vtkITKRegistrationFilter);
 
 #endif

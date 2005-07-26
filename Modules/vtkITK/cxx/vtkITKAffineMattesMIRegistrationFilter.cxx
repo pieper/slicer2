@@ -77,28 +77,17 @@ vtkITKAffineMattesMIRegistrationFilter::GetTransformationMatrix(vtkMatrix4x4* ma
 
   itk::itkAffineMattesMIRegistrationFilter::TransformType::ParametersType params = transform->GetParameters();
   
-  // itk matrix
-  //vtkMatrix4x4 *matrixITK =  vtkMatrix4x4::New();
-  //matrixITK->Identity();
-
   int count=0;
   for(int i=0;i<3;i++) {
     for(int j=0;j<3;j++) {
       matrix->Element[i][j] = params[count++];
     }
   }
-  matrix->Invert();
 
-  // Add translation with vtk to itk flip in Y and Z
-  matrix->Element[0][3] = -params[9];
+  // Add translation
+  matrix->Element[0][3] = params[9];
   matrix->Element[1][3] = params[10];
   matrix->Element[2][3] = params[11];
-
-  matrix->Invert();
-
-  // transform from itk to vtk space
-  //vtkITKTransformRegistrationFilter::vtkItkMatrixTransform(matrixITK, matrix);
-  //matrixITK->Delete();
 }
   
 void
@@ -110,10 +99,6 @@ vtkITKAffineMattesMIRegistrationFilter::GetCurrentTransformationMatrix(vtkMatrix
   m_ITKFilter->GetCurrentTransform(transform);
   
   itk::itkAffineMattesMIRegistrationFilter::TransformType::ParametersType params = transform->GetParameters();
-  
- // itk matrix
-  //vtkMatrix4x4 *matrixITK =  vtkMatrix4x4::New();
-  //matrixITK->Identity();
 
   int count=0;
   for(int i=0;i<3;i++) {
@@ -121,18 +106,11 @@ vtkITKAffineMattesMIRegistrationFilter::GetCurrentTransformationMatrix(vtkMatrix
       matrix->Element[i][j] = params[count++];
     }
   }
-  matrix->Invert();
 
-  // Add translation with vtk to itk flip in Y and Z
-  matrix->Element[0][3] = -params[9];
+  // Add translation
+  matrix->Element[0][3] = params[9];
   matrix->Element[1][3] = params[10];
   matrix->Element[2][3] = params[11];
-
-  matrix->Invert();
-
-  // transform from itk to vtk space
-  //vtkITKTransformRegistrationFilter::vtkItkMatrixTransform(matrixITK, matrix);
-  //matrixITK->Delete();
 }
   
 void 
@@ -140,50 +118,19 @@ vtkITKAffineMattesMIRegistrationFilter::SetTransformationMatrix(vtkMatrix4x4 *ma
 {
   itk::itkAffineMattesMIRegistrationFilter::ParametersType  initialParameters = itk::itkAffineMattesMIRegistrationFilter::ParametersType(12);
 
-  /*****
-  // transform from vtk to itk space
-  vtkMatrix4x4 *matrixITK =  vtkMatrix4x4::New();
-  vtkITKTransformRegistrationFilter::vtkItkMatrixTransform(matrix, matrixITK);
-
   int count=0;
   for(int i=0;i<3;i++) {
     for(int j=0;j<3;j++) {
-      initialParameters[count++] = matrixITK->Element[i][j];
+      initialParameters[count++] = matrix->Element[i][j];
     }
   }
   
-  initialParameters[9] = matrixITK->Element[0][3];
-  initialParameters[10] = matrixITK->Element[1][3];
-  initialParameters[11] = matrixITK->Element[2][3];
-
-  matrixITK->Delete();
-  ***/
-
-  // transform from vtk to itk space
-  vtkMatrix4x4 *matrixITK =  vtkMatrix4x4::New();
-  matrixITK->DeepCopy(matrix);
-  matrixITK->Invert();
-
-  initialParameters[9] = -matrixITK->Element[0][3];
-  initialParameters[10] = matrixITK->Element[1][3];
-  initialParameters[11] = matrixITK->Element[2][3];
-
-  matrixITK->Element[0][3] = 0;
-  matrixITK->Element[1][3] = 0;
-  matrixITK->Element[2][3] = 0;
-
-  matrixITK->Invert();
-
-  int count=0;
-  for(int i=0;i<3;i++) {
-    for(int j=0;j<3;j++) {
-      initialParameters[count++] = matrixITK->Element[i][j];
-    }
-  }
+  initialParameters[9] = matrix->Element[0][3];
+  initialParameters[10] = matrix->Element[1][3];
+  initialParameters[11] = matrix->Element[2][3];
 
   itk::itkAffineMattesMIRegistrationFilter::TransformType::Pointer transform = itk::itkAffineMattesMIRegistrationFilter::TransformType::New();
   transform->SetParameters(initialParameters);
-  // The guess is: a quaternion followed by a translation
   m_ITKFilter->SetTransform(transform);
 }
 

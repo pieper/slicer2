@@ -58,14 +58,14 @@ public:
   // Set Fixed (Target) Input
   void SetTargetImage(vtkImageData *input)
   {
-    SetFixedInput(input);
+    SetMovingInput(input);
   };
 
   // Description:
   // Set Moving (Source) Input
   void SetSourceImage(vtkImageData *input)
   {
-    SetMovingInput(input);
+    SetFixedInput(input);
   };
 
   // convert itk space image to image matrix to vtk space and vise versa
