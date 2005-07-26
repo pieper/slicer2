@@ -206,6 +206,8 @@ itcl::body isvolume::constructor {args} {
     $cs.orientmenu insert end "Sagittal(LR)"
     $cs.orientmenu insert end "Coronal(PA)"
     $cs.orientmenu insert end "Coronal(AP)"
+    $cs.orientmenu insert end "RAS (VTK - Y/A up)"
+    $cs.orientmenu insert end "RAS (ITK - Y/A down)"
 
     set _resmenu $cs.resmenu
     iwidgets::optionmenu $_resmenu -labeltext "Res:" -labelpos w
@@ -505,6 +507,15 @@ itcl::configbody isvolume::orientation {
         "Coronal(AP)" {
             set orient "Coronal(AP)" 
         }
+        "RAS (VTK - Y/A up)" -
+        "RAS-VTK" -
+        "RAS" {
+            set orient "RAS (VTK - Y/A up)"
+        }
+        "RAS (ITK - Y/A down)" -
+        "RAS-ITK" {
+            set orient "RAS (ITK - Y/A down)"
+        }
         "AxiSlice" -
         "SagSlice" -
         "CorSlice" -
@@ -776,6 +787,20 @@ itcl::body isvolume::transform_update {} {
                 1  0  0  0 \
                 0  0  1  0 \
                 0  1  0  0 \
+                0  0  0  1    
+        }
+        "RAS (VTK - Y/A up)" {
+            transposematrix DeepCopy \
+               -1  0  0  0 \
+                0 -1  0  0 \
+                0  0  1  0 \
+                0  0  0  1    
+        }
+        "RAS (ITK - Y/A down)" {
+            transposematrix DeepCopy \
+               -1  0  0  0 \
+                0  1  0  0 \
+                0  0  1  0 \
                 0  0  0  1    
         }
         "AxiSlice" -
