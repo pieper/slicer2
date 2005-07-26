@@ -90,14 +90,11 @@ vtkITKVersorMattesMiVersorRegistrationFilter::GetTransformationMatrix(vtkMatrix4
     }
   }
 
-  //matrix->Invert();
-
-  // Add translation with vtk to itk flip in Y and Z
-  matrix->Element[0][3] = -ResOffset[0];
+  // Add translation 
+  matrix->Element[0][3] = ResOffset[0];
   matrix->Element[1][3] = ResOffset[1];
   matrix->Element[2][3] = ResOffset[2];
-  
-  matrix->Invert();
+
 }
   
 void
@@ -113,6 +110,8 @@ vtkITKVersorMattesMiVersorRegistrationFilter::GetCurrentTransformationMatrix(vtk
   const itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::MatrixType ResMat   =transform->GetRotationMatrix();
   const itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::OffsetType ResOffset=transform->GetOffset();
   
+
+  
   // Create Rotation Matrix
   matrix->Identity();
 
@@ -122,14 +121,11 @@ vtkITKVersorMattesMiVersorRegistrationFilter::GetCurrentTransformationMatrix(vtk
     }
   }
 
-  //matrix->Invert();
-
-  // Add translation with vtk to itk flip in Y and Z
-  matrix->Element[0][3] = -ResOffset[0];
+  // Add translation 
+  matrix->Element[0][3] = ResOffset[0];
   matrix->Element[1][3] = ResOffset[1];
   matrix->Element[2][3] = ResOffset[2];
-  
-  matrix->Invert();
+
 }
   
 void 
@@ -137,12 +133,10 @@ vtkITKVersorMattesMiVersorRegistrationFilter::SetTransformationMatrix(vtkMatrix4
 {
   itk::itkVersorMattesMiVersorRegistrationFilter::ParametersType  initialParameters = itk::itkVersorMattesMiVersorRegistrationFilter::ParametersType(7);
 
-  // transform from vtk to itk space
   vtkMatrix4x4 *matrixITK =  vtkMatrix4x4::New();
   matrixITK->DeepCopy(matrix);
-  matrixITK->Invert();
 
-  initialParameters[3] = -matrixITK->Element[0][3];
+  initialParameters[3] = matrixITK->Element[0][3];
   initialParameters[4] = matrixITK->Element[1][3];
   initialParameters[5] = matrixITK->Element[2][3];
 
@@ -158,12 +152,12 @@ vtkITKVersorMattesMiVersorRegistrationFilter::SetTransformationMatrix(vtkMatrix4
   
   vnl_quaternion<double> matrixAsQuaternion(matrix3x4);
 
-  initialParameters[0] = matrixAsQuaternion.x();
-  initialParameters[1] = matrixAsQuaternion.y();
-  initialParameters[2] = matrixAsQuaternion.z();
+  //initialParameters[0] = matrixAsQuaternion.x();
+  //initialParameters[1] = matrixAsQuaternion.y();
+  //initialParameters[2] = matrixAsQuaternion.z();
 
-  // There is a transpose between the vnl quaternion and itk quaternion.
-  //vnl_quaternion<double> conjugated = matrixAsQuaternion.conjugate();
+  //There is a transpose between the vnl quaternion and itk quaternion.
+  vnl_quaternion<double> conjugated = matrixAsQuaternion.conjugate();
 
   // This command automatically does the conjugate.
   // But, it does not calculate the paramaters
@@ -171,9 +165,9 @@ vtkITKVersorMattesMiVersorRegistrationFilter::SetTransformationMatrix(vtkMatrix4
 
   // Versor have 6 parameters. The first three  represents the
   // quaternion and the last three represents the offset. 
-  //initialParameters[0] = conjugated.x();
-  //initialParameters[1] = conjugated.y();
-  //initialParameters[2] = conjugated.z();
+  initialParameters[0] = conjugated.x();
+  initialParameters[1] = conjugated.y();
+  initialParameters[2] = conjugated.z();
 
   itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::Pointer transform = itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::New();
   transform->SetParameters(initialParameters);
