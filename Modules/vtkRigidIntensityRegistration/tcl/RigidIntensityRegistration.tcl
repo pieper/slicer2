@@ -152,7 +152,7 @@ proc RigidIntensityRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.12 $} {$Date: 2005/07/23 17:39:20 $}]
+        {$Revision: 1.13 $} {$Date: 2005/07/26 19:41:38 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -221,7 +221,7 @@ proc RigidIntensityRegistrationBuildSubGui {f} {
     set RigidIntensityRegistration(RegType) MI
 
     eval {menubutton $f.mbType -text $RigidIntensityRegistration(RegType) \
-            -relief raised -bd 2 -width 5 \
+            -relief raised -bd 2 -width 20 \
             -menu $f.mbType.m} $Gui(WMBA) 
     eval {menu $f.mbType.m} $Gui(WMA)
     pack  $f.mbType -side left -pady 1 -padx $Gui(pad)
@@ -234,7 +234,7 @@ proc RigidIntensityRegistrationBuildSubGui {f} {
     set RigidIntensityRegistration(gui,mbRegistrationType) $f.mbType
     # put a tooltip over the menu
     TooltipAdd $f.mbType \
-            "Choose the type of Registration Algorithm. Choose MI unless you know what you are doing."
+            "Choose the type of Registration Algorithm. Choose MattesMIVersor unless you know what you are doing."
 
     #-------------------------------------------
     # Choice frame

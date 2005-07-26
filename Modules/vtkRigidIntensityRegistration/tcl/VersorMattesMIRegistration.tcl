@@ -155,7 +155,7 @@ proc VersorMattesMIRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2005/07/23 17:39:20 $}]
+        {$Revision: 1.3 $} {$Date: 2005/07/26 19:41:38 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -483,7 +483,7 @@ proc VersorMattesMIRegistrationSetLevel {} {
 proc VersorMattesMIRegistrationCoarseParam {} {
     global VersorMattesMIRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(Resolution)       64
+    #set RigidIntensityRegistration(Resolution)       64
     set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
     set RigidIntensityRegistration(TargetShrinkFactors)   "1 1 1"
     set RigidIntensityRegistration(Repeat) 1
@@ -499,7 +499,7 @@ proc VersorMattesMIRegistrationCoarseParam {} {
     set VersorMattesMIRegistration(TranslateScale)   0.0002
 
     set VersorMattesMIRegistration(NumberOfSamples)  10000
-    set VersorMattesMIRegistration(NumberOfHistogramBins) 256
+    set VersorMattesMIRegistration(NumberOfHistogramBins) 128
 }
 
 
@@ -515,7 +515,7 @@ proc VersorMattesMIRegistrationCoarseParam {} {
 proc VersorMattesMIRegistrationFineParam {} {
     global VersorMattesMIRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(Resolution)       128
+    #set RigidIntensityRegistration(Resolution)       128
     set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
     set RigidIntensityRegistration(TargetShrinkFactors)   "1 1 1"
     set RigidIntensityRegistration(Repeat) 1
@@ -525,12 +525,12 @@ proc VersorMattesMIRegistrationFineParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
-    set VersorMattesMIRegistration(MinimumStepLength)     0.001
-    set VersorMattesMIRegistration(MaximumStepLength)     1.5
+    set VersorMattesMIRegistration(MinimumStepLength)     0.01
+    set VersorMattesMIRegistration(MaximumStepLength)     4.0
     set VersorMattesMIRegistration(UpdateIterations) 1000
     set VersorMattesMIRegistration(TranslateScale)   0.0002
 
-    set VersorMattesMIRegistration(NumberOfHistogramBins) 256
+    set VersorMattesMIRegistration(NumberOfHistogramBins) 200
     set VersorMattesMIRegistration(NumberOfSamples)  10000
 }
 
@@ -557,12 +557,12 @@ proc VersorMattesMIRegistrationGSlowParam {} {
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
     set VersorMattesMIRegistration(UpdateIterations) "500 1000"
-    set VersorMattesMIRegistration(MinimumStepLength)    "0.01 0.001"
-    set VersorMattesMIRegistration(MaximumStepLength)    "2.0 0.5"
+    set VersorMattesMIRegistration(MinimumStepLength)    "0.02 0.01"
+    set VersorMattesMIRegistration(MaximumStepLength)    "4.0 1.0"
     set VersorMattesMIRegistration(TranslateScale)   0.0002
 
     set VersorMattesMIRegistration(NumberOfSamples)  50000
-    set VersorMattesMIRegistration(NumberOfHistogramBins) 256
+    set VersorMattesMIRegistration(NumberOfHistogramBins) 200
 }
 
 #-------------------------------------------------------------------------------
@@ -586,8 +586,8 @@ proc VersorMattesMIRegistrationVerySlowParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
-    set VersorMattesMIRegistration(UpdateIterations) "2500 2500 2500"
-    set VersorMattesMIRegistration(MinimumStepLength) "0.01 0.001 0.0001"
+    set VersorMattesMIRegistration(UpdateIterations) "1000 1000 1000"
+    set VersorMattesMIRegistration(MinimumStepLength) "0.01 0.01 0.005"
     set VersorMattesMIRegistration(MaximumStepLength) "4.0 1 0.5"
     set VersorMattesMIRegistration(TranslateScale)   0.0002
 
