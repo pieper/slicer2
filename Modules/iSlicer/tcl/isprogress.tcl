@@ -208,6 +208,8 @@ itcl::configbody isprogress::progress_text {
 itcl::body isprogress::update_progress { process_obj } {
     update
     MainShowProgress $process_obj
+    update
+    return 0
 }
 
 #------------------------------------------------------------------------------
