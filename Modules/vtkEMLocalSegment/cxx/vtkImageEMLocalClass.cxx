@@ -190,8 +190,10 @@ int vtkImageEMLocalClass::CheckAndAssignImageData(vtkImageData *inData, int outE
   // -----------------------------------------------------
   
   int DataTypeIndex = 1; 
-  if (this->CheckInputImage(inData, inData->GetScalarType(), DataTypeIndex,outExt)) return 0;
-
+  if (this->CheckInputImage(inData, inData->GetScalarType(), DataTypeIndex,outExt)) {
+    vtkEMAddErrorMessage("CheckAndAssignImageData: Error occured at class with Label " <<(int) this->Label);      
+    return 0;
+  } 
   inData->GetContinuousIncrements(outExt, blub, DataIncY, DataIncZ);
         
   int LengthOfXDim = outExt[1] - outExt[0] + 1 + DataIncY;
@@ -255,8 +257,10 @@ int vtkImageEMLocalClass::CheckInputImage(vtkImageData * inData,int DataTypeOrig
     return 1;
   }
   inData->GetSpacing(DataSpacingNew);
-  if ((this->DataSpacing[0] !=  DataSpacingNew[0]) || (this->DataSpacing[1] !=  DataSpacingNew[1]) || (this->DataSpacing[2] !=  DataSpacingNew[2])) {
-    vtkEMAddErrorMessage("CheckInputImage: Data Spacing of input images is unequal" );
+  if ((this->DataSpacing[0] !=  float(DataSpacingNew[0])) || (this->DataSpacing[1] !=  float(DataSpacingNew[1])) || (this->DataSpacing[2] !=  float(DataSpacingNew[2]))) {
+    vtkEMAddErrorMessage("CheckInputImage: Data Spacing of input images is unequal ! Orig: " 
+                         << this->DataSpacing[0] << " " << this->DataSpacing[1] << " " << this->DataSpacing[2] << " New: "  
+                         << DataSpacingNew[0]    << " " << DataSpacingNew[1]    << " " << DataSpacingNew[2]);
     return 1;
   }
   // Kilian Check for orientation has to be done in TCL !!!!
@@ -344,11 +348,10 @@ void vtkImageEMLocalClass::ExecuteData(vtkDataObject *)
       vtkEMAddErrorMessage("Input has no points!" );
       return;
    }
-#if EM_VTK_OLD_SETTINGS
-   memcpy(this->DataSpacing, inData[FirstData]->GetSpacing(),sizeof(float)*3);
-#else
-   memcpy(this->DataSpacing, inData[FirstData]->GetSpacing(),sizeof(vtkFloatingPointType)*3);
-#endif
+
+   this->DataSpacing[0] = (float) inData[FirstData]->GetSpacing()[0];
+   this->DataSpacing[1] = (float) inData[FirstData]->GetSpacing()[1];
+   this->DataSpacing[2] = (float) inData[FirstData]->GetSpacing()[2];
 
    // ================================================== 
    // Load the images
