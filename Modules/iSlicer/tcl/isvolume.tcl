@@ -789,14 +789,17 @@ itcl::body isvolume::transform_update {} {
                 0  1  0  0 \
                 0  0  0  1    
         }
-        "RAS (VTK - Y/A up)" {
+        "RAS (VTK - Y/A up)" -
+        "RAS-VTK" -
+        "RAS" {
             transposematrix DeepCopy \
                -1  0  0  0 \
                 0 -1  0  0 \
                 0  0  1  0 \
                 0  0  0  1    
         }
-        "RAS (ITK - Y/A down)" {
+        "RAS (ITK - Y/A down)" -
+        "RAS-ITK" {
             transposematrix DeepCopy \
                -1  0  0  0 \
                 0  1  0  0 \
