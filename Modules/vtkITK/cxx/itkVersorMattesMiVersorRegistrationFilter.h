@@ -99,7 +99,7 @@ public:
   }
   
 protected:
-  itkVersorMattesMiVersorRegistrationCommand() : m_fo("C:\\Tmp\\regLevel.log"), m_level(0){};
+  itkVersorMattesMiVersorRegistrationCommand() : m_fo("regLevel.log"), m_level(0){};
   itkVersorMattesMiVersorRegistrationFilter  *m_registration;
   std::ofstream m_fo;
   int m_level;

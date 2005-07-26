@@ -153,7 +153,7 @@ private:
   void operator=(const vtkITKAffineMattesMIRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKAffineMattesMIRegistrationFilter, "$Revision: 1.1 $");
+//vtkCxxRevisionMacro(vtkITKAffineMattesMIRegistrationFilter, "$Revision: 1.2 $");
 //vtkStandardNewMacro(vtkITKAffineMattesMIRegistrationFilter);
 vtkRegistrationNewMacro(vtkITKAffineMattesMIRegistrationFilter);
 
@@ -184,7 +184,7 @@ public:
   }
 
 protected:
-  vtkITKAffineMattesMIRegistrationCommand() : m_fo("C:\\Tmp\\reg.log"){};
+  vtkITKAffineMattesMIRegistrationCommand() : m_fo("reg.log"){};
   vtkITKAffineMattesMIRegistrationFilter  *m_registration;
   std::ofstream m_fo;
 

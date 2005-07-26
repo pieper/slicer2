@@ -99,7 +99,7 @@ public:
   }
   
 protected:
-  itkAffineMattesMIRegistrationCommand() : m_fo("C:\\Tmp\\regLevel.log"), m_level(0){};
+  itkAffineMattesMIRegistrationCommand() : m_fo("regLevel.log"), m_level(0){};
   itkAffineMattesMIRegistrationFilter  *m_registration;
   std::ofstream m_fo;
   int m_level;

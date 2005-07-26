@@ -90,7 +90,7 @@ public:
   }
   
 protected:
-  itkTranslationMIGradientDescentRegistrationCommand() : m_fo("C:\\Tmp\\regLevel.log"), m_level(0){};
+  itkTranslationMIGradientDescentRegistrationCommand() : m_fo("regLevel.log"), m_level(0){};
   itkTranslationMIGradientDescentRegistrationFilter  *m_registration;
   std::ofstream m_fo;
   int m_level;

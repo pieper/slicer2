@@ -153,7 +153,7 @@ private:
   void operator=(const vtkITKVersorMattesMiVersorRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKVersorMattesMiVersorRegistrationFilter, "$Revision: 1.6 $");
+//vtkCxxRevisionMacro(vtkITKVersorMattesMiVersorRegistrationFilter, "$Revision: 1.7 $");
 //vtkStandardNewMacro(vtkITKVersorMattesMiVersorRegistrationFilter);
 vtkRegistrationNewMacro(vtkITKVersorMattesMiVersorRegistrationFilter);
 
@@ -184,7 +184,7 @@ public:
   }
 
 protected:
-  vtkITKVersorMattesMiVersorRegistrationCommand() : m_fo("C:\\Tmp\\reg.log"){};
+  vtkITKVersorMattesMiVersorRegistrationCommand() : m_fo("reg.log"){};
   vtkITKVersorMattesMiVersorRegistrationFilter  *m_registration;
   std::ofstream m_fo;
 

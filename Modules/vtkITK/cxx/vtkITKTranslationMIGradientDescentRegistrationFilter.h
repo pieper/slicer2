@@ -135,7 +135,7 @@ private:
   void operator=(const vtkITKTranslationMIGradientDescentRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKTranslationMIGradientDescentRegistrationFilter, "$Revision: 1.1 $");
+//vtkCxxRevisionMacro(vtkITKTranslationMIGradientDescentRegistrationFilter, "$Revision: 1.2 $");
 //vtkStandardNewMacro(vtkITKTranslationMIGradientDescentRegistrationFilter);
 vtkRegistrationNewMacro(vtkITKTranslationMIGradientDescentRegistrationFilter);
 
@@ -167,7 +167,7 @@ public:
   }
 
 protected:
-  vtkITKTranslationMIGradientDescentRegistrationCommand() : m_fo("C:\\Tmp\\reg.log"){};
+  vtkITKTranslationMIGradientDescentRegistrationCommand() : m_fo("reg.log"){};
   vtkITKTranslationMIGradientDescentRegistrationFilter  *m_registration;
   std::ofstream m_fo;
 
