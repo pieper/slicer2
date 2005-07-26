@@ -101,7 +101,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.9 $} {$Date: 2005/04/19 16:13:00 $}]
+        {$Revision: 1.10 $} {$Date: 2005/07/26 00:10:04 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -112,7 +112,9 @@ proc EMAtlasBrainClassifierInit {} {
     set EMAtlasBrainClassifier(Save,Segmentation) 1
     set EMAtlasBrainClassifier(Save,XMLFile) 1
 
+    # Debug 
     set EMAtlasBrainClassifier(WorkingDirectory) "$env(SLICER_HOME)/EMSeg"    
+    # set EMAtlasBrainClassifier(WorkingDirectory) "/data/projects/work_with_sylvain/caseG12/segm"
     set EMAtlasBrainClassifier(DefaultAtlasDir)  "$env(SLICER_HOME)/Modules/vtkEMAtlasBrainClassifier/atlas"   
     set EMAtlasBrainClassifier(AtlasDir)         $EMAtlasBrainClassifier(DefaultAtlasDir)  
     set EMAtlasBrainClassifier(XMLTemplate)      "$env(SLICER_HOME)/Modules/vtkEMAtlasBrainClassifier/template5_c2.xml"     
@@ -308,10 +310,10 @@ proc EMAtlasBrainClassifierEnter {} {
     if { [info proc EMSegmentStartEM] == "" } {
        set WarningMsg "- vtkEMLocalSegment \n"
     }
-
     if {[catch "package require vtkAG"]} {
-    set WarningMsg "${WarningMsg}- vtkAG: This module does not come with the standard distribution. \n  You can download it from ... . \n  You will need to modify INCLUDE_DIRECTORIES in vtkAG/cxx/CMakeListLocals.txt to correctly compile the module"
+      set WarningMsg "${WarningMsg}- vtkAG" 
     }
+
     if {$WarningMsg != ""} {DevWarningWindow "Please install the following modules before working with this module: \n$WarningMsg"}
 }
 
@@ -515,8 +517,10 @@ proc EMAtlasBrainClassifier_Normalize { VolIDInput VolIDOutput Mode } {
 # .END
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierVolumeWriter {VolID} {
-    global Volume
-    set prefix [MainFileGetRelativePrefix [Volume($VolID,node) GetFilePrefix]] 
+    global Volume Editor
+    set prefix [MainFileGetRelativePrefix [Volume($VolID,node) GetFilePrefix]]
+    set Editor(fileformat) Standard
+ 
     MainVolumesWrite $VolID $prefix 
     # RM unnecssary xml file 
     catch {file delete -force [file join [file dirname [Volume($VolID,node) GetFullPrefix]] [Volume($VolID,node) GetFilePrefix]].xml }
@@ -713,7 +717,7 @@ proc EMAtlasBrainClassifierDeleteAllVolumeNodesButSPGRAndT2W { } {
 # .END
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierStartSegmentation { } {
-    global EMAtlasBrainClassifier Volume EMSegment Mrml tcl_platform
+    global EMAtlasBrainClassifier Volume EMSegment Mrml tcl_platform 
 
     # ---------------------------------------------------------------
     # Initialize values 
@@ -874,14 +878,17 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
        # Check if we need to run registration
        set RunRegistrationFlag 0 
        foreach Dir "$RegisterAtlasDirList" {
-       if {[file exists $EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I.001] == 0  } {
-           set RunRegistrationFlag 1 
-           break 
+          if {[file exists $EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I.001] == 0  } {
+             set RunRegistrationFlag 1 
+             break 
+          }
        }
-       }
+       # if {[DevYesNo "$Dir $RunRegistrationFlag"] != "yes"} {
+       #  return
+       # }  
 
        if {$RunRegistrationFlag == 0 } {
-       if {[DevYesNo "We found already an atlas in $EMAtlasBrainClassifier(WorkingDirectory)/atlas. Do you still want to register ? " ] == "yes" } {
+         if {[DevYesNo "We found already an atlas in $EMAtlasBrainClassifier(WorkingDirectory)/atlas. Do you still want to register ? " ] == "yes" } {
            set RunRegistrationFlag 1
        }
        } 
@@ -974,11 +981,11 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     if {$EMSegment(LatestLabelMap) == $Volume(idNone)} { 
         DevErrorWindow "Error: Could not segment subject"
     } else {
-    set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation/EMResult"
-    set VolIDOutput $EMSegment(LatestLabelMap)
-    Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
-    Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
-    EMAtlasBrainClassifierVolumeWriter $VolIDOutput
+      set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation/EMResult"
+      set VolIDOutput $EMSegment(LatestLabelMap)
+      Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
+      Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
+      EMAtlasBrainClassifierVolumeWriter $VolIDOutput
     }
     # Change xml directory
     if {$EMAtlasBrainClassifier(Save,XMLFile)}      {MainMrmlWrite  $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation/segmentation.xml}
