@@ -104,11 +104,12 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.55 $} {$Date: 2005/01/28 21:45:01 $}]
+        {$Revision: 1.56 $} {$Date: 2005/07/27 21:54:33 $}]
     
     # Initialize module-level variables
     
     set Fiducials(renList) "viewRen matRen"
+    set Fiducials(renList2D) "sl0Imager sl1Imager sl2Imager"
     set Fiducials(scale) 6
     set Fiducials(minScale) 0
     set Fiducials(maxScale) 40
@@ -120,6 +121,7 @@ proc FiducialsInit {} {
     set Fiducials(activePointID) None
     set Fiducials(activeName) "(no point selected)"
     set Fiducials(activeXYZ) ""
+    set Fiducials(activeXY) ""
     set Fiducials(activeDescription) ""
 
     set Fiducials(textSelColor) "1.0 0.5 0.5"
@@ -136,7 +138,13 @@ proc FiducialsInit {} {
     set Fiducials(listOfIds) ""
     
     set Fiducials(displayList) ""
-    
+
+    set Fiducials(glyphTypes) {None Vertex Dash Cross ThickCross Triangle Square Circle Diamond Arrow ThickArrow HookedArrow}
+    set Fiducials(defaultGlyphType) "None"
+
+    # set this to 1 if you wish to NOT delete all VTK variables in FiducialsResetVariables
+    set Fiducials(NoDeleteFlag) 1
+
     set Fiducials(howto) "
 You can add Fiducial points in the volume using the 2D slice windows or on any models in the 3D View.
 
@@ -162,7 +170,12 @@ If you want to create a new list, go to the Fiducials module.
 
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC FiducialsDisplayDescriptionActive
+# Formats the active point's location into strings for the Display tab
+# .ARGS 
+# .END
+#-------------------------------------------------------------------------------
 proc FiducialsDisplayDescriptionActive {} {
     global Fiducials Point
 
@@ -174,11 +187,20 @@ proc FiducialsDisplayDescriptionActive {} {
             set Fiducials(activeName) [Point($Fiducials(activePointID),node) GetName]
             foreach {x y z} [Point($Fiducials(activePointID),node) GetXYZ] { break }
             set Fiducials(activeXYZ) [format "(%.2f, %.2f, %.2f)" $x $y $z]
+
+            foreach {x y s o} [Point($Fiducials(activePointID),node) GetXYSO] { break }
+            set Fiducials(activeXY) [format "(%d, %d, win %d, offset %d)" $x $y $s $o]
+
             set Fiducials(activeDescription) [Point($Fiducials(activePointID),node) GetDescription]
         }
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC FiducialsDescriptionActiveUpdated
+# .ARGS 
+# .END
+#-------------------------------------------------------------------------------
 proc FiducialsDescriptionActiveUpdated {} {
     global Fiducials Point
 
@@ -268,13 +290,13 @@ proc FiducialsBuildGUI {} {
     set fDisplay $Module(Fiducials,fDisplay)
     set f $fDisplay
 
-    foreach frame "buttons list scroll" {
+    foreach frame "buttons list scroll options2d" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
 
     #-------------------------------------------
-    # Display->Size frame
+    # Display->Buttons frame
     #-------------------------------------------
     set f $fDisplay.fbuttons
 
@@ -308,6 +330,22 @@ proc FiducialsBuildGUI {} {
 
     # Done in MainModelsCreateGUI
 
+    #-------------------------------------------
+    # Display->options2d frame
+    #-------------------------------------------
+    set f $fDisplay.foptions2d
+
+    # menu to select the 2d glyph symbols - one source, so affects all fid lists
+    eval {label $f.lSymbols -text "2D Fiducial Symbol: "} $Gui(WLA) \
+        {-bg $Gui(activeWorkspace)}
+    eval {menubutton $f.mbSymbols -text $Fiducials(defaultGlyphType) -relief raised -bd 2 -width 15 \
+              -menu $f.mbSymbols.m} $Gui(WMBA)
+    eval {menu $f.mbSymbols.m} $Gui(WMA)
+    pack $f.lSymbols $f.mbSymbols -side left -padx $Gui(pad) -pady 0 
+    foreach s $Fiducials(glyphTypes) {
+        $f.mbSymbols.m add command -label $s \
+            -command "FiducialsSetSymbol2D $s"
+    }
     #-------------------------------------------
     # Edit frame
     #-------------------------------------------
@@ -397,6 +435,8 @@ proc FiducialsCreateGUI {f id} {
         -resolution 0.2} $Gui(WSA) {-sliderlength 10 }
         
 
+    # 2d symbols
+    
     eval grid $f.c${id}  $f.s${id}  $f.st${id} -pady 2 -padx 2 -sticky we
 
     return 1
@@ -548,13 +588,25 @@ proc FiducialsBuildVTK {} {
     #       CREATE THE VTK SOURCE FOR THE DIAMOND FIDUCIALS
     #
     ########################################################
-    
 
     vtkSphereSource   Fiducials(sphereSource)     
     Fiducials(sphereSource) SetRadius 0.3
     Fiducials(sphereSource)     SetPhiResolution 10
     Fiducials(sphereSource)     SetThetaResolution 10
     
+    ########################################################
+    #
+    #       CREATE THE VTK SOURCE FOR THE 2D CROSS FIDUCIALS
+    #
+    ########################################################
+    vtkGlyphSource2D Fiducials(2DSource)
+      Fiducials(2DSource) SetGlyphTypeTo${Fiducials(defaultGlyphType)}
+      # Fiducials(2DSource) SetScale 4
+      Fiducials(2DSource) FilledOff
+     # Fiducials(2DSource) SetRotationAngle 45
+
+    #vtkGlyph2D Fiducials(2DGlyph)
+    #Fiducials(2DGlyph) SetInput [Fiducials(2DSource) GetOutput]
 }
 
 
@@ -562,7 +614,7 @@ proc FiducialsBuildVTK {} {
 # .PROC FiducialsVTKCreateFiducialsList
 #
 # Create a new set of fiducials vtk variables/actors corresponding to that list
-# id
+# id, if they don't exist yet
 # .ARGS 
 #  int id The Mrml id of the Fiducials list
 # .END
@@ -570,6 +622,9 @@ proc FiducialsBuildVTK {} {
 proc FiducialsVTKCreateFiducialsList { id type {scale ""} {textScale ""} {visibility ""}} {
     global Fiducials Mrml Module
     
+    if {$::Module(verbose)} {
+        puts "FiducialsVTKCreateFiducialsList id = $id"
+    }
     if {$scale == "" } {
         set scale $Fiducials(scale)
     }
@@ -583,27 +638,52 @@ proc FiducialsVTKCreateFiducialsList { id type {scale ""} {textScale ""} {visibi
     set Fiducials($id,scale) [Fiducials($id,node) GetSymbolSize]
     set Fiducials($id,textScale) $textScale
 
-    vtkPoints Fiducials($id,points)
+    if {[info command Fiducials($id,points)] == ""} {
+        vtkPoints Fiducials($id,points)
+    } else {
+    #    Fiducials($id,points) Initialize
+    }
     
-    vtkFloatArray Fiducials($id,scalars)
+    if {[info command Fiducials($id,scalars)] == ""} {
+        vtkFloatArray Fiducials($id,scalars)
+    } else {
+    #    Fiducials($id,scalars) Initialize
+    } 
     
-    vtkPolyData Fiducials($id,pointsPD)
+    if {[info command Fiducials($id,pointsPD)] == ""} {
+        vtkPolyData Fiducials($id,pointsPD)
+    } else {
+        # Fiducials($id,pointsPD) Initialize
+    }
     Fiducials($id,pointsPD) SetPoints Fiducials($id,points)
     [Fiducials($id,pointsPD) GetPointData] SetScalars Fiducials($id,scalars)
-    vtkGlyph3D Fiducials($id,glyphs)
+
+    if {[info command  Fiducials($id,glyphs)] == ""} {
+        vtkGlyph3D Fiducials($id,glyphs)
+    }
     
     # set the default size for text 
-    vtkTransform Point($id,textXform)
+    if {[info command Point($id,textXform)] == ""} {
+        vtkTransform Point($id,textXform)
+    } else {
+         Point($id,textXform) Identity
+    }
     Point($id,textXform) Translate 0 0 $Fiducials(textPush)
     [Point($id,textXform) GetMatrix] SetElement 0 1 .333
     Point($id,textXform) Scale $textScale $textScale 1
 
     # set the default size for symbols
-    vtkTransform Fiducials($id,symbolXform)
+    if {[info command Fiducials($id,symbolXform)] == ""} {
+        vtkTransform Fiducials($id,symbolXform)
+    } else {
+        Fiducials($id,symbolXform) Identity
+    }
     Fiducials($id,symbolXform) Scale $scale $scale $scale
     
-    
-    vtkTransformPolyDataFilter Fiducials($id,XformFilter)
+
+    if {[info command Fiducials($id,XformFilter)] == ""} {
+        vtkTransformPolyDataFilter Fiducials($id,XformFilter)
+    }
     if { ($type == "endoscopic") || ($type == "sphereSymbol") } {
         Fiducials($id,XformFilter) SetInput [Fiducials(sphereSource) GetOutput]
     } else {
@@ -620,7 +700,9 @@ proc FiducialsVTKCreateFiducialsList { id type {scale ""} {textScale ""} {visibi
     Fiducials($id,glyphs) ScalingOff
     Fiducials($id,glyphs) SetRange 0 1
     
-    vtkPolyDataMapper Fiducials($id,mapper)
+    if {[info command Fiducials($id,mapper)] == ""} {
+        vtkPolyDataMapper Fiducials($id,mapper)
+    }
     Fiducials($id,mapper) SetInput [Fiducials($id,glyphs) GetOutput]
     
     [Fiducials($id,mapper) GetLookupTable] SetNumberOfTableValues 2
@@ -631,21 +713,92 @@ proc FiducialsVTKCreateFiducialsList { id type {scale ""} {textScale ""} {visibi
     [Fiducials($id,mapper) GetLookupTable] SetTableValue 0 $r1 $g1 $b1 1.0
     [Fiducials($id,mapper) GetLookupTable] SetTableValue 1 $r2 $g2 $b2 1.0
 
-    vtkMatrix4x4 Fiducials($id,xform)
+    if {[info command Fiducials($id,xform)] == ""} {
+        vtkMatrix4x4 Fiducials($id,xform)
+    }
     Mrml(dataTree) ComputeNodeTransform Fiducials($id,node) \
         Fiducials($id,xform)
 
     # create a different actor for each renderer
     foreach r $Fiducials(renList) {
-        vtkActor Fiducials($id,actor,$r)
+        if {[info command Fiducials($id,actor,$r)] == ""} {
+            vtkActor Fiducials($id,actor,$r)
+        }
         Fiducials($id,actor,$r) SetMapper Fiducials($id,mapper)
         [Fiducials($id,actor,$r) GetProperty] SetColor 1 0 0
         [Fiducials($id,actor,$r) GetProperty] SetInterpolationToFlat
         Fiducials($id,actor,$r) SetUserMatrix Fiducials($id,xform)
-        
+        # can re-add an actor w/o error 
         $r AddActor Fiducials($id,actor,$r)
     }  
-     
+   
+    # ---------
+    # 2D glyphs
+    # ---------
+    if {$::Module(verbose)} {
+        puts "Creating a 2d glyph for id = $id"
+    }
+
+    # create different points, sclars, polydata, glyph, mapper and actor for each slice window
+    foreach r $Fiducials(renList2D) {
+        if {[info command Fiducials($id,points2D,$r)] == ""} {
+            vtkPoints Fiducials($id,points2D,$r)
+        }
+    
+
+        if {[info command Fiducials($id,scalars2D,$r)] == ""} {
+            vtkFloatArray Fiducials($id,scalars2D,$r)
+        }
+        if {[info command Fiducials($id,pointsPD2D,$r)] == ""} {
+            vtkPolyData Fiducials($id,pointsPD2D,$r)
+        }
+
+        Fiducials($id,pointsPD2D,$r) SetPoints  Fiducials($id,points2D,$r)
+        [Fiducials($id,pointsPD2D,$r) GetPointData] SetScalars Fiducials($id,scalars2D,$r)
+
+    
+        if {[info command Fiducials($id,glyphs2D,$r)] == ""} {
+            vtkGlyph2D Fiducials($id,glyphs2D,$r)
+        }
+        Fiducials($id,glyphs2D,$r) SetSource [Fiducials(2DSource) GetOutput]
+
+        # Fiducials($id,glyphs2D,$r) SetInput [Fiducials(2DSource) GetOutput]
+        Fiducials($id,glyphs2D,$r) SetInput Fiducials($id,pointsPD2D,$r)
+        Fiducials($id,glyphs2D,$r) SetScaleFactor 1.0
+        Fiducials($id,glyphs2D,$r) ClampingOn
+        Fiducials($id,glyphs2D,$r) ScalingOff
+        Fiducials($id,glyphs2D,$r) SetRange 0 1
+        
+   
+        if {[info command Fiducials($id,mapper2D,$r)] == ""} {
+            vtkPolyDataMapper2D Fiducials($id,mapper2D,$r)
+        }
+        Fiducials($id,mapper2D,$r) SetInput [Fiducials($id,glyphs2D,$r) GetOutput]
+        [Fiducials($id,mapper2D,$r) GetLookupTable] SetNumberOfTableValues 2
+
+        # use colours from 3d glyph
+        [Fiducials($id,mapper2D,$r) GetLookupTable] SetTableValue 0 $r1 $g1 $b1 1.0
+        [Fiducials($id,mapper2D,$r) GetLookupTable] SetTableValue 1 $r2 $g2 $b2 1.0
+
+        # create an actor for the right 2D renderer
+        if {0} {
+            # need the pid
+            set xyso [Point($pid,node) GetXYSO]
+            set ren2d [format "sl%dImager" [lindex $xyso 2]]
+            if {$::Module(verbose)} {
+                puts "Point($pid,node) XYSO = $xyso, slice num = [lindex $xyso 2], renderer = $ren2d"
+            }
+        }
+        # create an actor for the 2d renderer
+        if {[info command Fiducials($id,actor2D,$r)] == ""} {
+            vtkActor2D Fiducials($id,actor2D,$r)
+        }
+        Fiducials($id,actor2D,$r) SetMapper Fiducials($id,mapper2D,$r)
+        [Fiducials($id,actor2D,$r) GetProperty] SetColor 1 0 0
+        $r AddActor2D Fiducials($id,actor2D,$r)
+    
+    }
+
     # now set the visibility
     FiducialsSetFiducialsVisibility $Fiducials($id,name) $visibility
 }
@@ -653,7 +806,7 @@ proc FiducialsVTKCreateFiducialsList { id type {scale ""} {textScale ""} {visibi
 #-------------------------------------------------------------------------------
 # .PROC FiducialsVTKCreatePoint
 #
-# Create a point follower (vtk actor) 
+# Create a point follower (vtk actor). Will only declare vtk variables if they don't exist yet.
 # .ARGS 
 #       int fid Mrml id of the list that contains the new Point
 #       int pid Mrml id of the Point
@@ -662,8 +815,11 @@ proc FiducialsVTKCreateFiducialsList { id type {scale ""} {textScale ""} {visibi
 proc FiducialsVTKCreatePoint { fid pid visibility} {
     global Fiducials Point Mrml Module
     
-    if { [info command vtkTextureText] != "" } {            
-        vtkTextureText Point($pid,text)
+    if { [info command vtkTextureText] != "" } {   
+        if {[info command Point($pid,text)] == ""} {
+            # create it
+            vtkTextureText Point($pid,text)
+        }
         set Fiducials(FontManager) [Point($pid,text) GetFontParameters]
         [Point($pid,text) GetFontParameters] SetFontFileName "ARIAL.TTF"
         [Point($pid,text) GetFontParameters] SetBlur 2
@@ -671,16 +827,23 @@ proc FiducialsVTKCreatePoint { fid pid visibility} {
         Point($pid,text) SetText "   [Point($pid,node) GetName]"
         Point($pid,text) CreateTextureText
     } else {
-        vtkVectorText Point($pid,text)
+        if {[info command Point($pid,text)] == ""} {
+            # create it
+            vtkVectorText Point($pid,text)
+        }
         Point($pid,text) SetText "   [Point($pid,node) GetName]"
-        vtkPolyDataMapper Point($pid,mapper)
+        if {[info command Point($pid,mapper)] == ""} {
+            vtkPolyDataMapper Point($pid,mapper)
+        }
         Point($pid,mapper) SetInput [Point($pid,text) GetOutput]
     }
     # mikey - wasn't this redundant??
     #Point($pid,text) SetText "   [Point($pid,node) GetName]"
 
     foreach r $Fiducials(renList) {
-        vtkFollower Point($pid,follower,$r)
+        if {[info command Point($pid,follower,$r)] == ""} {
+            vtkFollower Point($pid,follower,$r)
+        }
         if { [info command vtkTextureText] != "" } {
             Point($pid,follower,$r) SetMapper [[Point($pid,text) GetFollower] GetMapper]
             Point($pid,follower,$r) SetTexture [Point($pid,text) GetTexture]
@@ -696,6 +859,7 @@ proc FiducialsVTKCreatePoint { fid pid visibility} {
         Point($pid,follower,$r) SetPickable 0
              eval [Point($pid,follower,$r) GetProperty] SetColor [Fiducials($fid,node) GetColor]
 
+        # check if it was already added
         $r AddActor Point($pid,follower,$r)
         Point($pid,follower,$r) SetVisibility $visibility
     }
@@ -720,6 +884,8 @@ proc FiducialsVTKUpdatePoints {fid symbolSize textSize} {
     Fiducials($fid,points) SetNumberOfPoints 0
     Fiducials($fid,scalars) SetNumberOfTuples 0
     
+    
+
     foreach pid $Fiducials($fid,pointIdList) {
         set xyz [Point($pid,node) GetXYZ]
         eval Fiducials($fid,points) InsertNextPoint $xyz
@@ -733,11 +899,16 @@ proc FiducialsVTKUpdatePoints {fid symbolSize textSize} {
         Point($pid,text) SetText "   [Point($pid,node) GetName]"
     }
 
+    
+
     # color the selected glyphs (by setting their scalar to 1)
     if {[info exists Fiducials($fid,oldSelectedPointIdList)]} {
         foreach pid $Fiducials($fid,pointIdList) {
             # see if that point was previously selected
             if {[lsearch $Fiducials($fid,oldSelectedPointIdList) $pid] != -1} { 
+                if {$::Module(verbose)} { 
+                    puts "FiducialsVTKUpdatePoints: pid $pid was selected"
+                }
 
                 set Fiducials(activeListID)  $fid
                 #set Fiducials(activePointID) $pid
@@ -749,19 +920,136 @@ proc FiducialsVTKUpdatePoints {fid symbolSize textSize} {
                 foreach r $Fiducials(renList) {
                     eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textSelColor)
                 }
+
+                
                 # add it to the current list of selected items
                 lappend Fiducials($fid,selectedPointIdList) $pid
             }
         }
     }
-    
+    # now do it for the 2d points
+    FiducialsVTKUpdatePoints2D $fid
+
     FiducialsDisplayDescriptionActive
 
     Fiducials($fid,pointsPD) Modified
 
+   
+
 }
 
+#-------------------------------------------------------------------------------
+# .PROC FiducialsVTKUpdatePoints2D
+#
+# Update the 2d points contained within all Fiducials/EndFiducials node after 
+# the UpdateMRML. Can be called from MainSlicesSetOffset to update which 2d
+# fiducials are visible on a given slice. Relies on Fiducials($fid,selectedPointIdList)
+# having been set properly via a call to FiducialsVTKUpdatePoints
+# .ARGS
+# int fid the fiducial list id
+# string renList optional renderer(s) to update, defaults to all of them
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsVTKUpdatePoints2D { fid {renList ""} } {
+    global Fiducials Point Module
+    
+    if {$renList == ""} {
+        set renList $Fiducials(renList2D)
+    }
 
+    if {$::Module(verbose)} {
+        puts "FiducialsVTKUpdatePoints2D updating fid list $fid for renderers $renList"
+    }
+
+    foreach r $renList {
+        if {[info command Fiducials($fid,points2D,$r)] == ""} {
+            if {$::Module(verbose)} { puts  "FiducialsVTKUpdatePoints2D: Points list for fiducials list $fid and renderer $r does not exist, returning (could be first call when create start/end list nodes)"}
+           return
+        }
+        Fiducials($fid,points2D,$r) SetNumberOfPoints 0
+        Fiducials($fid,scalars2D,$r) SetNumberOfTuples 0
+
+
+        foreach pid $Fiducials($fid,pointIdList,$r) {
+            if {[info command Point($pid,node)] == ""} {
+                puts "No point node for $pid"
+                break
+            }
+            set xyso [Point($pid,node) GetXYSO]
+            if {$::Module(verbose)} {
+                puts "FiducialsVTKUpdatePoints: creating 2d points list: fid $fid pid $pid xyso $xyso r $r"
+            }
+            
+            # get the slice number
+            set s [lindex $xyso 2]
+            # get the slice offset
+            set o [lindex $xyso 3]
+            # set the point to x,y and the slice offset
+            set xy "[lrange $xyso 0 1] $o"
+
+            if {$::Module(verbose)} {
+                puts "xyso = $xyso, s = $s, r = $r, o = $o"
+            }
+
+            # only add the point to the list if the current slice being displayed 
+            # matches the slice number of the point
+            if {$o == $::Slice($s,offset)} {
+                eval Fiducials($fid,points2D,$r) InsertNextPoint $xy
+                # 1 = selected, 0 == not selected, so set them all not, and redo it in next loop
+                Fiducials($fid,scalars2D,$r) InsertNextTuple1 0
+            } else {
+                if {$::Module(verbose)} {
+                    puts "(not adding point $pid, since offset $o != offset $::Slice($s,offset))"
+                }
+            }
+        }
+    
+    }
+    # the colour the selected glpyhs by setting their scalar to 1
+    # only check the selected point list, as it should have been updated in the 3D call
+    if {[info exists Fiducials($fid,selectedPointIdList)]} {
+        foreach pid $Fiducials($fid,pointIdList) {
+            if {[lsearch $Fiducials($fid,selectedPointIdList) $pid] != -1} { 
+                if {[info command Point($pid,node)] != ""} {
+                    set xyso [Point($pid,node) GetXYSO]
+                    set s [lindex $xyso 2]
+                    set r [FiducialsSliceNumberToRendererName $s]
+                    # get the slice offset
+                    set o [lindex $xyso 3]
+                    # only do this if the point is visible on this slice
+                    if {$o == $::Slice($s,offset)} {
+                        if {$::Module(verbose)} {
+                            puts "FiducialsVTKUpdatePoints2D: setting $fid scalars2D $r tuple 1 for pid $pid"
+                        }
+                        set scalarIndex [FiducialsScalarIdFromPointId2D $fid $pid $r]
+                        if {$scalarIndex != -1} {
+                            if {$::Module(verbose)} {
+                                puts "\tgot scalar index $scalarIndex from fid list $fid pid $pid r $r"
+                            }
+                            Fiducials($fid,scalars2D,$r) SetTuple1 $scalarIndex 1
+                        } else { 
+                            # it's not on this slice offset
+                            if {$::Module(verbose)} { 
+                                puts "\tnot setting tuple1 for pid $pid $r, scalar index == -1" 
+                            } 
+                        }
+                    } else {
+                        if {$::Module(verbose)} { 
+                            puts "FiducialsVTKUpdatePoints: NOT setting $fid scalars2D $r tuple 1 for pid $pid, since offset $o != $::Slice($s,offset)"
+                        }
+                    }
+                }
+            }
+        }
+    }
+    foreach r $renList {
+        if {[info command Fiducials($fid,pointsPD2D,$r)] != ""} {
+            Fiducials($fid,pointsPD2D,$r) Modified
+        } else {
+            DevErrorWindow "Fiducials($fid,pointsPD2D,$r) does not exist"
+        }
+    }
+}
 
 #-------------------------------------------------------------------------------
 # .PROC FiducialsSetTxtScale
@@ -800,12 +1088,41 @@ proc FiducialsSetScale { id {val ""}} {
     }
     
     Fiducials($id,node) SetSymbolSize $val
-    Fiducials($id,symbolXform) Identity
-    Fiducials($id,symbolXform) Scale $val $val $val
+    if {[info command Fiducials($id,symbolXform)] != ""} {
+        Fiducials($id,symbolXform) Identity
+        Fiducials($id,symbolXform) Scale $val $val $val
+    }
+
+    # 2d symbols
+    if {[info command Fiducials(2DSource)] != ""} {
+        Fiducials(2DSource) SetScale $val
+        RenderSlices
+    }
+
     Render3D
 }
 
+#-------------------------------------------------------------------------------
+# .PROC FiducialsSetSymbol2D
+# Set the glyph type of the Fiducials(2DSource)
+# .ARGS
+# string symbol defaults to Cross, valid values found in $Fiducials(glyphTypes)
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsSetSymbol2D { {symbol Cross} } {
+    global Fiducials
 
+    if {[lsearch $Fiducials(glyphTypes) $symbol] != -1} {
+        # valid type
+        $::Module(Fiducials,fDisplay).foptions2d.mbSymbols configure -text $symbol
+        Fiducials(2DSource) SetGlyphTypeTo${symbol}
+        # reset the default scale as well
+        # Fiducials(2DSource) SetScale $Fiducials(0,scale)
+        RenderAll
+    } else {
+        puts "ERROR: invalid glyph type $symbol, must be in list:\n$Fiducials(glyphTypes)"
+    }
+}
 #-------------------------------------------------------------------------------
 # .PROC FiducialsUpdateMRML
 #
@@ -820,7 +1137,7 @@ proc FiducialsUpdateMRML {} {
     # about to be updated
     foreach m $Module(idList) {
         if {[info exists Module($m,fiducialsStartUpdateMRMLCallback)] == 1} {
-            if {$Module(verbose) == 1} {puts "Fiducials Start Callback: $m"}
+            if {$Module(verbose) == 1} {puts "Fiducials Start Callback: $m = $Module($m,fiducialsStartUpdateMRMLCallback)"}
             $Module($m,fiducialsStartUpdateMRMLCallback)  
         }
     }
@@ -870,6 +1187,9 @@ proc FiducialsUpdateMRML {} {
             set Fiducials($fid,name) $name
             set Fiducials($name,fid) $fid
             set Fiducials($fid,pointIdList) ""
+            foreach r $Fiducials(renList2D) {
+                set Fiducials($fid,pointIdList,$r) ""
+            }
             set Fiducials($fid,selectedPointIdList) ""
             if {[info exists Fiducials($fid,oldSelectedPointIdList)] == 0 } {
                 set Fiducials($fid,oldSelectedPointIdList) ""
@@ -893,13 +1213,23 @@ proc FiducialsUpdateMRML {} {
 
         if { [$item GetClassName] == "vtkMrmlPointNode" } {
             set pid [$item GetID]
-            
-            lappend Fiducials($fid,pointIdList) $pid
-            #set its index based on its position in the list
-            Point($pid,node) SetIndex [lsearch $Fiducials($fid,pointIdList) $pid]
 
-            FiducialsVTKCreatePoint $fid $pid $visibility
-            set Fiducials($fid,pointsExist) 1
+            if {[info exist fid] == 1} {
+                lappend Fiducials($fid,pointIdList) $pid
+                #set its index based on its position in the list
+                Point($pid,node) SetIndex [lsearch $Fiducials($fid,pointIdList) $pid]
+
+                # also add it to the right id list depending on which slice it's showing on
+                if {$::Module(verbose)} {
+                    puts "Adding pid $pid to point ID list for renderer [lindex [Point($pid,node) GetXYSO] 2]"
+                }
+                lappend Fiducials($fid,pointIdList,[FiducialsSliceNumberToRendererName [lindex [Point($pid,node) GetXYSO] 2]]) $pid
+
+                FiducialsVTKCreatePoint $fid $pid $visibility
+                set Fiducials($fid,pointsExist) 1
+            } else {
+                DevErrorWindow "No fiducials list exists to add this point to!\n(no vtkMrmlFiducialsNode found before this point)"
+            }
         }
         if { [$item GetClassName] == "vtkMrmlEndFiducialsNode" } {
             set efid [$item GetID]
@@ -968,7 +1298,8 @@ proc FiducialsUpdateMRML {} {
     }
 
     Render3D
- 
+    RenderSlices
+
     ##################################################
     # UPDATE ACTIVE LISTS
     # Check to see if the active list still exists
@@ -981,13 +1312,18 @@ proc FiducialsUpdateMRML {} {
     if { [lsearch $Fiducials(listOfNames) $Fiducials(activeList) ] > -1 } {
         set name $Fiducials(activeList)
         set id $Fiducials($name,fid)
-        set type [Fiducials($id,node) GetType]
-        # callback in case any module wants to know the name of the active list    
-        foreach m $Module(idList) {
-            if {[info exists Module($m,fiducialsActivatedListCallback)] == 1} {
-                if {$Module(verbose) == 1} {puts "Fiducials Activated List Callback: $m"}
-                $Module($m,fiducialsActivatedListCallback)  $type $name $id
+        if {[info command Fiducials($id,node)] != ""} {
+            set type [Fiducials($id,node) GetType]
+            
+            # callback in case any module wants to know the name of the active list    
+            foreach m $Module(idList) {
+                if {[info exists Module($m,fiducialsActivatedListCallback)] == 1} {
+                    if {$Module(verbose) == 1} {puts "Fiducials Activated List Callback: $m"}
+                    $Module($m,fiducialsActivatedListCallback)  $type $name $id
+                }
             }
+        } else {
+            DevErrorWindow "No fiducials node found for id $id"
         }
        
     } else {
@@ -1103,39 +1439,68 @@ proc FiducialsUpdateMRML {} {
 proc FiducialsResetVariables {} {
 
     global Fiducials Module
-    # go through the list of existing fiducial list and clear them
-    foreach id $Fiducials(listOfIds) {
-        
-        foreach pid $Fiducials($id,pointIdList) {
-            foreach r $Fiducials(renList) {
+
+    if {!$Fiducials(NoDeleteFlag)} {
+        # go through the list of existing fiducial list and clear them
+        foreach id $Fiducials(listOfIds) {
+            
+            foreach pid $Fiducials($id,pointIdList) {
+                foreach r $Fiducials(renList) {
                 $r RemoveActor Point($pid,follower,$r)
-                Point($pid,follower,$r) Delete
+                    Point($pid,follower,$r) Delete
+                }
+                if { [info command vtkTextureText] == "" } {
+                    Point($pid,mapper) Delete
+                }
+                Point($pid,text) Delete
             }
-            if { [info command vtkTextureText] == "" } {
-                Point($pid,mapper) Delete
+            
+            foreach r $Fiducials(renList) {
+                $r RemoveActor Fiducials($id,actor,$r)
+                Fiducials($id,actor,$r) Delete 
             }
-            Point($pid,text) Delete
+            foreach r $Fiducials(renList2D) {
+                Fiducials($id,actor2D,$r) Delete
+            }
+            Fiducials($id,mapper) Delete 
+            Fiducials($id,glyphs) Delete
+            Fiducials($id,symbolXform) Delete
+            Fiducials($id,XformFilter) Delete
+            Fiducials($id,points) Delete 
+            Fiducials($id,scalars) Delete 
+            Fiducials($id,xform) Delete 
+            Fiducials($id,pointsPD) Delete 
+            Point($id,textXform) Delete
+            set Fiducials($id,pointIdList) ""
+            set Fiducials($id,oldSelectedPointIdList) $Fiducials($id,selectedPointIdList) 
+            set Fiducials($id,SelectedPointIdList) ""
+            
+            # delete the 2d glyph variables
+            foreach r $Fiducials(renList2D) {
+                set Fiducials($id,pointIdList,$r) ""
+                Fiducials($id,glyphs2D,$r) Delete
+                Fiducials($id,mapper2D,$r) Delete
+                Fiducials($id,scalars2D,$r) Delete
+                Fiducials($id,pointsPD2D,$r) Delete 
+                Fiducials($id,points2D,$r) Delete
+            }
         }
+        set Fiducials(listOfIds) ""
+        set Fiducials(listOfNames) ""
         
-        foreach r $Fiducials(renList) {
-            $r RemoveActor Fiducials($id,actor,$r)
-            Fiducials($id,actor,$r) Delete 
+    } else {
+        # these are operations that take place that don't involve deleting vtk variables
+        foreach id $Fiducials(listOfIds) {
+            set Fiducials($id,pointIdList) ""
+            set Fiducials($id,oldSelectedPointIdList) $Fiducials($id,selectedPointIdList) 
+            set Fiducials($id,SelectedPointIdList) ""
+            foreach r $Fiducials(renList2D) {
+                set Fiducials($id,pointIdList,$r) ""
+            }
         }
-        Fiducials($id,mapper) Delete 
-        Fiducials($id,glyphs) Delete
-        Fiducials($id,symbolXform) Delete
-        Fiducials($id,XformFilter) Delete
-        Fiducials($id,points) Delete 
-        Fiducials($id,scalars) Delete 
-        Fiducials($id,xform) Delete 
-        Fiducials($id,pointsPD) Delete 
-        Point($id,textXform) Delete
-        set Fiducials($id,pointIdList) ""
-        set Fiducials($id,oldSelectedPointIdList) $Fiducials($id,selectedPointIdList) 
-        set Fiducials($id,SelectedPointIdList) ""
+        set Fiducials(listOfIds) ""
+        set Fiducials(listOfNames) ""
     }
-    set Fiducials(listOfIds) ""
-    set Fiducials(listOfNames) ""
 }
 
 
@@ -1155,16 +1520,12 @@ proc FiducialsResetVariables {} {
 
 #-------------------------------------------------------------------------------
 # .PROC FiducialsCheckListExistence
-# Checks the Mrml tree to see if any lists with that name already exist 
+# Checks the Mrml tree to see if any lists with that name already exist.
+# Return fid value if requested 
+# Return 1 if a list with that name exists, 0 otherwise
 # .ARGS 
-#  int existence 1 if a list with that name exists, 0 otherwise
-# .END
-#-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# .PROC FiducialsCheckListExistence
-# 
-# .ARGS return fid value if requested
+# string name name of the list to check
+# string argfid
 # .END
 #-------------------------------------------------------------------------------
 proc FiducialsCheckListExistence {name {argfid ""}} {
@@ -1186,7 +1547,7 @@ proc FiducialsCheckListExistence {name {argfid ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC FiducialsCreateFiducialsList
-# Create a new Fiducials/pEndFiducials nodes with that name that will hold a set of points
+# Create a new Fiducials/EndFiducials nodes with that name that will hold a set of points
 # If a list with that name exists already, return -1
 # If the new Fiducials/EndFiducials pair is created, return its id  
 # .ARGS 
@@ -1207,6 +1568,9 @@ proc FiducialsCreateFiducialsList {type name {textSize "6"} {symbolSize "6"}} {
         Fiducials($fid,node) SetSymbolSize $symbolSize
         MainMrmlAddNode EndFiducials
 
+        if {$::Module(verbose)} {
+            puts "FiducialsCreateFiducialsList: Calling MainUpdateMRML and then Render3D since added new Fiducials/EndFiducials node"
+        }
         MainUpdateMRML
         # set that list active
         FiducialsSetActiveList $name
@@ -1235,6 +1599,10 @@ proc FiducialsCreateFiducialsList {type name {textSize "6"} {symbolSize "6"}} {
 proc FiducialsCreatePointFromWorldXYZ { type x y z  {listName ""} {name ""} {selected 1} } {
 
     global Fiducials Point Module Select
+
+    if {$::Module(verbose)} {
+        puts "FiducialsCreatePointFromWorldXYZ $x $y $z"
+    }
 
     # if the user specified a list, use that name
     # otherwise, if the user specified a default list for their module/tab, 
@@ -1340,19 +1708,33 @@ proc FiducialsCreatePointFromWorldXYZ { type x y z  {listName ""} {name ""} {sel
        }
    }
 
-    # select fiducial after creation
-    FiducialsSelectionUpdate $fid $pid $selected
 
     #
     # support automatically setting anatomical label description 
     # for fiducials created on the 2D slice windows
     #
     if { [info exists ::Fiducial(Pick2D)] } {
+        if {$::Module(verbose)} {
+            puts "Fiducial(Pick2D) = $::Fiducial(Pick2D), select xy = $::Select(xy)"
+            # get the slice window from the widget
+            if {[scan [lindex $::Select(xy) 0] ".tViewer.fSlice%d" slicenum] == 1} {
+                puts "\tSlice num = $slicenum, offset = $::Slice($slicenum,offset)"
+            }
+        }
         if { $::Fiducial(Pick2D) == 1 } {
             Point($pid,node) SetDescription $::Anno(curFore,label)
+            scan [lindex $::Select(xy) 0] ".tViewer.fSlice%d" slicenum
+            set x2d [lindex $::Select(xy) 1] 
+            set y2d [lindex $::Select(xy) 2] 
+            if {$::Module(verbose)} {
+                puts "\tSlice num = $slicenum, x2d = $x2d, y2d = $y2d, offset = $::Slice($slicenum,offset)"
+            }
+            Point($pid,node) SetXYSO $x2d $y2d $slicenum $::Slice($slicenum,offset)
         }
     }
 
+    # select fiducial after creation
+    FiducialsSelectionUpdate $fid $pid $selected
 
    # callback for modules who wish to know a point was created
    foreach m $Module(idList) {
@@ -1507,9 +1889,13 @@ proc FiducialsInsertPointFromWorldXYZ {type previousPid x y z  {listName ""} {na
 #       int pid the Mrml id of the Point
 # .END
 #-------------------------------------------------------------------------------
-proc FiducialsDeletePoint {fid pid} {
+proc FiducialsDeletePoint {fid pid {noUpdate 0}} {
      
     global Fiducials Point
+    if {$::Module(verbose)} {
+        puts "FiducialsDeletePoint: fid = $fid, pid = $pid"
+    }
+
     # first check if the ID of the Point to be deleted is in the selected 
     # list and if so, delete it
     set index [lsearch $Fiducials($fid,selectedPointIdList) $pid]
@@ -1523,9 +1909,36 @@ proc FiducialsDeletePoint {fid pid} {
         # remove the id from the list
         set Fiducials($fid,pointIdList) [lreplace $Fiducials($fid,pointIdList) $index $index]
     }
+
+    # remove the id from the 2d fiducials list it belongs to
+    foreach r $Fiducials(renList2D) {
+        set index [lsearch $Fiducials($fid,pointIdList,$r) $pid]
+        if { $index != -1 } {
+            # remove the id from the list
+            set Fiducials($fid,pointIdList) [lreplace $Fiducials($fid,pointIdList) $index $index]
+
+            # remove the point/scalar for this 2d fid so that no glyph will be displayed at that point
+            set sid [FiducialsScalarIdFromPointId2D $fid $pid $r]
+            if {$sid != -1} {
+                if {$::Module(verbose)} {
+                    puts "FiducialsDeletePoint: TODO: removing point $pid from points2D and scalars2D for renderer $r"
+                } 
+                if {0} {
+                    # not quite right, probably need to move things down one by one
+                    Fiducials($fid,points2D,$r) RemovePoint $sid
+                    Fiducials($fid,scalars2D,$r) SetTuple1 $sid
+                }
+            }
+        }
+    }
+    
+
     foreach r $Fiducials(renList) {
         $r RemoveActor Point($pid,follower,$r)
         Point($pid,follower,$r) Delete
+        if {$::Module(verbose)} {
+            puts "FiducialsDeletePoint: removed actor Point($pid,follower,$r) and deleted it"
+        }
     }
     if { [info command vtkTextureText] == "" } {
         Point($pid,mapper) Delete
@@ -1536,9 +1949,13 @@ proc FiducialsDeletePoint {fid pid} {
     unset Point($pid,cellId)
 
     # delete from Mrml
-    MainMrmlDeleteNode Point $pid
-    MainUpdateMRML
-    Render3D
+    if {!$noUpdate} {
+        MainMrmlDeleteNode Point $pid
+        MainUpdateMRML
+        Render3D
+    } else {
+        MainMrmlDeleteNodeNoUpdate Point $pid
+    }
 }
 
 
@@ -1606,11 +2023,17 @@ proc FiducialsDeleteList {name} {
         set Fiducials(activeList) "None"
     }
     
+    if {$::Module(verbose)} {
+        puts "FiducialsDeleteList $name"
+    }
     set fid $Fiducials($name,fid)
+
+    set noUpdate 1
 
     foreach pid $Fiducials($fid,pointIdList) {
         # delete from Mrml
-        MainMrmlDeleteNodeNoUpdate Point $pid
+        # MainMrmlDeleteNodeNoUpdate Point $pid
+        FiducialsDeletePoint $fid $pid $noUpdate
     }
     
     MainMrmlDeleteNodeNoUpdate EndFiducials $fid
@@ -1661,10 +2084,29 @@ proc FiducialsSetFiducialsVisibility {name {visibility ""} {rendererName ""}} {
                 foreach pid $Fiducials($fid,pointIdList) {
                     Point($pid,follower,$ren) SetVisibility $visibility
                 }
+                
+                
                 Render3D
             }
         }
+        # for the 2d glyphs, but use the 2d renderers
+        if {[lsearch $Fiducials(listOfNames) $l] != -1} {
+            set fid $Fiducials($l,fid)
+            if {$::Module(verbose)} {
+                puts "Setting fid visibility: for list $fid"
+                puts "\tPoint list = $Fiducials($fid,pointIdList)"
+            }
+            foreach ren $Fiducials(renList2D) {
+                if {$::Module(verbose)} {
+                    puts "Setting fid visibility: for renderer $ren"
+                }
+                Fiducials($fid,actor2D,$ren) SetVisibility $visibility
+            }
+            RenderSlices
+        }
     }
+
+    
 }
     
 
@@ -1754,12 +2196,18 @@ proc FiducialsSetActiveList {name {menu ""} {scroll ""}} {
 # .PROC FiducialsSelectionUpdate
 # 
 # .ARGS
+# int fid id of the fiducials list
+# int pid id of the point
+# bool on is the point selected now?
 # .END
 #-------------------------------------------------------------------------------
 proc FiducialsSelectionUpdate {fid pid on} {
     
     global Fiducials Module
 
+    if {$::Module(verbose)} {
+        puts "FiducialsSelectionUpdate: fid = $fid, pid = $pid, on = $on"
+    }
     ### ON CASE #####
     if {$on } {
         set index [lsearch $Fiducials($fid,selectedPointIdList) $pid]
@@ -1844,7 +2292,7 @@ proc FiducialsSelectionFromPicker {actor cellId} {
     }
     return 0
 }
-        
+
 
 #-------------------------------------------------------------------------------
 # .PROC FiducialsSelectionFromScroll
@@ -1933,6 +2381,17 @@ proc FiducialsUpdateSelectionForActor {fid} {
             foreach r $Fiducials(renList) {
                 eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textSelColor)
             }
+
+            # do the same for 2d point
+            set s [lindex [Point($pid,node) GetXYSO] 2]
+            set r [FiducialsSliceNumberToRendererName $s]
+            if {$::Module(verbose)} { 
+                puts "Setting selected for slice $s, renderer $r for pid $pid"
+            }
+            set scalarIndex [FiducialsScalarIdFromPointId2D $fid $pid $r]
+            if {$scalarIndex != -1} {
+                Fiducials($fid,scalars2D,$r) SetTuple1 $scalarIndex 1
+            } else { if {$::Module(verbose)} { puts "not setting tuple1 for pid $pid $r, scalar index == -1" } }
             # if it is not selected
         } else {
             # color the point the default color
@@ -1941,13 +2400,26 @@ proc FiducialsUpdateSelectionForActor {fid} {
             foreach r $Fiducials(renList) {
               eval [Point($pid,follower,$r) GetProperty] SetColor [Fiducials($fid,node) GetColor]
             }
+
+            # for 2d case
+            set s [lindex [Point($pid,node) GetXYSO] 2]
+            set r [FiducialsSliceNumberToRendererName $s]
+            set scalarIndex [FiducialsScalarIdFromPointId2D $fid $pid $r]
+            if {$scalarIndex != -1} {
+                Fiducials($fid,scalars2D,$r) SetTuple1 $scalarIndex 0
+            } else { if {$::Module(verbose)} { puts "not setting tuple1 for pid $pid $r, scalar index == -1" } }
         }
     }
     
     FiducialsDisplayDescriptionActive
 
     Fiducials($fid,pointsPD) Modified
+    foreach r $Fiducials(renList2D) {
+        Fiducials($fid,pointsPD2D,$r) Modified
+    }
+    
     Render3D
+    RenderSlices
 }
 
 
@@ -2000,6 +2472,64 @@ proc FiducialsScalarIdFromPointId {fid pid } {
     # scalar for that point is also in 2nd position in the list of scalars 
     return [lsearch $Fiducials($fid,pointIdList) $pid]
 }
+
+#-------------------------------------------------------------------------------
+# .PROC FiducialsScalarIdFromPointId2D
+#
+#  Return the vtk scalar ID that corresponds to that 2D point ID.
+# Takes into account that the 2d fiducials are in separate lists for each imager,
+# and that each imager (2d render window) only has points defined for the fiducials
+# visible on the currently displayed slice.
+# .ARGS 
+#  int fid the fiducial list id
+#       int pid Point ID
+# string r the renderer
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsScalarIdFromPointId2D {fid pid r } {
+    global Fiducials Point
+
+    # returns the index of the Point with the corresponding pid 
+    # (its position in the list of pointIdList)
+    # This works because scalars for each renderer are organized like the list of pointIdList for each renderer
+    # so if Point with id 4 is in 2nd position in the list, the corresponding 
+    # scalar for that point is also in 2nd position in the list of scalars 
+
+    set pointListIndex [lsearch $Fiducials($fid,pointIdList,$r) $pid]
+
+    # if it's not in this renderer's point list, return -1
+    if {$pointListIndex == -1} {
+        if {$::Module(verbose)} { 
+            puts "FiducialsScalarIdFromPointId2D: point $pid not on renderer's $r id list, returning -1"
+        }
+        return -1
+    }
+
+    # otherwise, need to take a look at the points that are visible on this slice 
+    # and see if pid is one of them
+    set xyso [Point($pid,node) GetXYSO]
+    for {set i 0} { $i < [Fiducials($fid,points2D,$r) GetNumberOfPoints]} { incr i} { 
+        set xyo [Fiducials($fid,points2D,$r) GetPoint $i]
+        if {$::Module(verbose)} {
+            puts "Testing point $i of the points2D array for renderer $r: $xyo"
+        }
+        # test if the x, y, offset are same
+        if {[lindex $xyo 0] == [lindex $xyso 0] &&
+            [lindex $xyo 1] == [lindex $xyso 1] &&
+            [lindex $xyo 2] == [lindex $xyso 3]} {
+            if {$::Module(verbose)} {
+                puts "xyo $xyo and xyso $xyso match, returning scalar id $i"
+            }
+            return $i
+        }
+    }
+
+
+    # this is complicated by the fact that only the points that are visible on the current slice are added to the scalar list, so this may return -1 if the point hasn't been added.
+
+    return -1
+}
+
 
 
 
@@ -2110,6 +2640,7 @@ proc FiducialsAddActiveListFrame {frame scrollHeight scrollWidth {defaultNames "
     bind $f.nameEntry <Return> {FiducialsDescriptionActiveUpdated}
     
     eval {label $f.xyzLabel -textvariable Fiducials(activeXYZ) } $Gui(WLA) 
+    eval {label $f.xyLabel -textvariable Fiducials(activeXY) } $Gui(WLA)
 
     eval {button $f.xyzEditButton -text "Edit..." -command FiducialsInteractActiveStart} $Gui(WBA) 
     eval {button $f.xyzEditButtonSlices -text "Edit w/Slices..." -command "FiducialsInteractActiveStart Slices"} $Gui(WBA) 
@@ -2118,7 +2649,7 @@ proc FiducialsAddActiveListFrame {frame scrollHeight scrollWidth {defaultNames "
     bind $f.descriptionEntry <Return> {FiducialsDescriptionActiveUpdated}
 
     lappend Fiducials(scrollActiveList) $scroll
-    pack $f.list $f.nameEntry $f.xyzLabel $f.xyzEditButton $f.xyzEditButtonSlices $f.descriptionEntry -side top
+    pack $f.list $f.nameEntry $f.xyzLabel $f.xyLabel $f.xyzEditButton $f.xyzEditButtonSlices $f.descriptionEntry -side top
 
     # if there any default names specified, add them to the list
     foreach d $defaultNames {
@@ -2381,4 +2912,52 @@ proc FiducialsToTextCards {modelid} {
     }
 
     FiducialsUpdateMRML
+}
+
+#-------------------------------------------------------------------------------
+# .PROC FiducialsPrint2DPoints
+# Prints out information about the 2D fiducials
+# .ARGS
+# int id the fiducials list id, defaults to 0
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsPrint2DPoints { {id 0} } {
+    global Fiducials
+    puts "Fiducials list id = $id, points ids = $Fiducials(0,pointIdList)"
+    foreach r $Fiducials(renList2D) {
+        puts "\nRenderer $r:"
+        for {set i 0} { $i < [Fiducials($id,points2D,$r) GetNumberOfPoints]} { incr i} { 
+            puts "Fiducials($id,points2D,$r) GetPoint $i = [Fiducials($id,points2D,$r) GetPoint $i]"
+        }
+        
+        puts "From the point ID list for this fiducials list (r=$r) (list = $Fiducials($id,pointIdList,$r)):"
+        foreach pid $Fiducials($id,pointIdList,$r) {
+            puts "Point $pid XYSO = [Point($pid,node) GetXYSO]"
+        }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC FiducialsSliceNumberToRendererName
+# returns the renderer name that corresponds to this slice window, assumes that 
+# Fiducials(renList2D) has been built up so indexing into it via the slice window 
+# number will return the proper renderer.
+# .ARGS
+# int s the slice window to return the renderer name for
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsSliceNumberToRendererName { s } {
+    global Fiducials
+
+    if {$s == ""} { 
+        puts "FiducialsSliceNumberToRendererName ERROR: empty input slice"
+        return
+    }
+
+    if {$s < 0 || $s >= [llength $Fiducials(renList2D)]} {
+        puts "FiducialsSliceNumberToRendererName ERROR: slice number $s not in range 0 to [expr [llength $Fiducials(renList2D)] - 1]"
+        return
+    }
+
+    return [lindex $Fiducials(renList2D) $s]
 }
