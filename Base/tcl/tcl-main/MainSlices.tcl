@@ -109,7 +109,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.55 $} {$Date: 2005/04/16 18:11:17 $}]
+        {$Revision: 1.56 $} {$Date: 2005/07/27 21:48:24 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"
@@ -1000,8 +1000,9 @@ proc MainSlicesSetOffsetInit {s widget {value ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainSlicesSetOffset {s {value ""}} {
-    global Slice
+    global Slice Fiducials
 
+   
     # figure out what offset to use
     if {$value == ""} {
         # this means we were called directly from the slider w/ no value param
@@ -1012,18 +1013,32 @@ proc MainSlicesSetOffset {s {value ""}} {
     } elseif {$value == "Next"} {
         set value [expr $Slice($s,offset) + $Slice($s,offsetIncrement)]
     }
-    
+   
+    if {$::Module(verbose)} {
+        puts "Main Slices Set Offset s = $s, value = $value"
+    } 
+
     # validate value
     if {[ValidateFloat $value] == 0}  {
         # don't change slice offset if value is bad
         # Set slider to the last used offset for this orient
         set value [Slicer GetOffset $s]
-    } 
-
+    }
+ 
+    
+    
     set Slice($s,offset) $value
 
     Slicer SetOffset $s $value
 
+    # check for fiducials, should they be visible on this new slice? 
+    # update the points for each fiducials list passing in this slice renderer
+    set r [FiducialsSliceNumberToRendererName $s]
+    # for each list of fiducials
+    foreach id $::Fiducials(idList) {
+        FiducialsVTKUpdatePoints2D $id $r
+    }
+    
     MainSlicesRefreshClip $s
 }
 
