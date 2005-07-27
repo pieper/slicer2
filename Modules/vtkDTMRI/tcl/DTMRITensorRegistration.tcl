@@ -90,7 +90,7 @@ proc DTMRITensorRegistrationInit {} {
     #------------------------------------
     set m "TensorRegistration"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.11 $} {$Date: 2005/06/20 02:38:33 $}]
+                                 {$Revision: 1.12 $} {$Date: 2005/07/27 07:15:24 $}]
 
     # Does the AG module exist? If not the registration tab will not be displayed
     if {[catch "package require vtkAG"]} {
@@ -1086,7 +1086,8 @@ proc DTMRIRegTransformScale { Source Target} {
    vtkImageMathematics div
    div SetOperationToMultiplyByK
    div SetConstantK  $DTMRI(reg,Scale)
-   div SetInput1 $Target
+   div SetInput 0 $Target
+   div SetInput 1 $Target
 # [Volume($DTMRI(reg,InputVolTarget),vol) GetOutput]
    div Update
   # [Volume($DTMRI(reg,InputVolTarget),vol) GetOutput] DeepCopy [div GetOutput]
@@ -1100,7 +1101,8 @@ proc DTMRIRegTransformScale { Source Target} {
    div2 SetConstantK $DTMRI(reg,Scale)
   # div2 SetInput1  [Volume($DTMRI(reg,InputVolSource),vol) GetOutput]
    
-   div2 SetInput1  $Source
+   div2 SetInput 0  $Source
+   div2 SetInput 1  $Source
    div2 Update
    #[Volume($DTMRI(reg,InputVolSource),vol) GetOutput] DeepCopy [div2 GetOutput]
    $Source  DeepCopy [div2 GetOutput]
@@ -1244,7 +1246,7 @@ proc DTMRIRegRun {} {
   }
 
   puts "DTMRIRegRun 1: Check Error"
-
+  
   if {[DTMRIRegCheckErrors]} {return}
 
   puts "DTMRIRegRun 2: Prepare Result Volume"
@@ -1533,6 +1535,7 @@ proc DTMRIRegRun {} {
       vtkTensorMathematics math
       #math SetScaleFactor $DTMRI(reg,scalars,scaleFactor)
       math SetInput 0 [setT GetOutput]
+      math SetInput 1 [setT GetOutput]
       math SetOperationTo$DTMRI(reg,Scalarmeas)
       math Update
       GCR SetTarget [math GetOutput]
@@ -1545,6 +1548,7 @@ proc DTMRIRegRun {} {
       vtkTensorMathematics math
       math SetOperationTo$DTMRI(reg,Scalarmeas)
       math SetInput 0 [setT GetOutput]
+      math SetInput 1 [setT GetOutput]
       math Update
       GCR SetSource [math GetOutput]
 
@@ -1742,6 +1746,7 @@ proc DTMRIRegCoregister {SourceVolume TargetTensor} {
     catch "math Delete"
     vtkTensorMathematics math
     math SetInput 0 [Tensor($TargetTensor,data) GetOutput]
+    math SetInput 1 [Tensor($TargetTensor,data) GetOutput]
     math SetOperationTo$DTMRI(reg,Scalarmeas)
     math Update
     Target DeepCopy  [ math GetOutput]
@@ -2631,11 +2636,13 @@ proc DTMRIRegColorComparison {} {
     math SetScaleFactor $DTMRI(reg,scaleFactor)
     math SetOperationTo$DTMRI(reg,Scalarmeas)
     math SetInput 0 [Tensor($DTMRI(ResultTensor),data) GetOutput]
+    math SetInput 1 [Tensor($DTMRI(ResultTensor),data) GetOutput]
     
     # Create absolute value, just in case.
     catch "abs Delete"
     vtkImageMathematics abs
     abs SetInput 0 [math GetOutput]
+    abs SetInput 1 [math GetOutput]
     abs SetOperationToAbsoluteValue
     
     #check SetInput1 [math GetOutput]
@@ -2652,10 +2659,12 @@ proc DTMRIRegColorComparison {} {
     math SetScaleFactor $DTMRI(reg,scaleFactor)
     math SetOperationTo$DTMRI(reg,Scalarmeas)
     math SetInput 0 [Tensor($DTMRI(InputTensorTarget),data) GetOutput]
+    math SetInput 1 [Tensor($DTMRI(InputTensorTarget),data) GetOutput]
 
     catch "abs Delete"
     vtkImageMathematics abs
     abs SetInput 0 [math GetOutput]
+    abs SetInput 1 [math GetOutput]
     abs SetOperationToAbsoluteValue
 
 
