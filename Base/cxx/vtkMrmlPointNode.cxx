@@ -66,6 +66,8 @@ vtkMrmlPointNode::vtkMrmlPointNode()
   this->OrientationWXYZ[0] = this->OrientationWXYZ[1] = this->OrientationWXYZ[2] = 0.0;
   this->OrientationWXYZ[3] = 1.0;
   this->Index = 0;
+
+  this->XYSO[0] = this->XYSO[1] = this->XYSO[2] = this->XYSO[3] = 0.0;
 }
 
 //----------------------------------------------------------------------------
@@ -143,6 +145,8 @@ void vtkMrmlPointNode::Write(ofstream& of, int nIndent)
   of << " index='" << this->Index << "'";
   of << " xyz='" << this->XYZ[0] << " " << this->XYZ[1] << " " <<
                     this->XYZ[2] << "'";
+  of << " xyso='" << this->XYSO[0] << " " << this->XYSO[1] << " " <<
+                    this->XYSO[2] << " " << this->XYSO[3] << "'";
   of << " focalxyz='" << this->FXYZ[0] << " " << this->FXYZ[1] << " " <<
     this->FXYZ[2] << "'";
   of << " orientationwxyz='" << this->OrientationWXYZ[0] << " " << this->OrientationWXYZ[1] << " " <<
@@ -161,6 +165,10 @@ void vtkMrmlPointNode::Copy(vtkMrmlNode *anode)
   this->XYZ[0] = node->XYZ[0];
   this->XYZ[1] = node->XYZ[1];
   this->XYZ[2] = node->XYZ[2];
+  this->XYSO[0] = node->XYSO[0];
+  this->XYSO[1] = node->XYSO[1];
+  this->XYSO[2] = node->XYSO[2];
+  this->XYSO[3] = node->XYSO[3];
   this->FXYZ[0] = node->FXYZ[0];
   this->FXYZ[1] = node->FXYZ[1];
   this->FXYZ[2] = node->FXYZ[2];
@@ -185,6 +193,10 @@ void vtkMrmlPointNode::PrintSelf(ostream& os, vtkIndent indent)
   // XYZ
   os << indent << "XYZ: (";
   os << indent << this->XYZ[0] << ", " << this->XYZ[1] << ", " << this->XYZ[2]
+                  << ") \n" ;
+  // XYSO
+  os << indent << "X Y Slice Offset: (";
+  os << indent << this->XYSO[0] << ", " << this->XYSO[1] << ", " << this->XYSO[2] << ", " << this->XYSO[3]
                   << ") \n" ;
 
 // FXYZ

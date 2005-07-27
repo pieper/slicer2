@@ -76,6 +76,11 @@ public:
   vtkSetVector3Macro(FXYZ,float);
   vtkGetVectorMacro(FXYZ,float,3);
 
+    // Description:
+    // Get/Set for 2d slice point
+    vtkSetVector4Macro(XYSO,float);
+    vtkGetVectorMacro(XYSO,float,4);
+
   // Description:
   // Get/Set for orientation 
   vtkSetVector4Macro(OrientationWXYZ,float);
@@ -96,6 +101,11 @@ protected:
   float XYZ[3];
   float FXYZ[3];
   float OrientationWXYZ[4];
+
+    // Description:
+    // a 2d point associated with the 3d one, for rendering on slice windows
+    // x, y, slice number, and the slice offset
+    float XYSO[4];
 };
 
 #endif
