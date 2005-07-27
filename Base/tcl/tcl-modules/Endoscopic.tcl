@@ -262,7 +262,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.98 $} {$Date: 2005/05/25 23:15:04 $}] 
+    {$Revision: 1.99 $} {$Date: 2005/07/27 21:50:42 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -4144,18 +4144,22 @@ proc EndoscopicFiducialsPointSelectedCallback {fid pid} {
     }
 
 
-    # if it is of type endoscopic, use the actual xyz and fxyz info
-    if {[Fiducials($fid,node) GetType] == "endoscopic" } {
-        EndoscopicResetCameraDirection    
-        EndoscopicUpdateVirtualEndoscope $Endoscopic(activeCam) [concat [Point($pid,node) GetXYZ] [Point($pid,node) GetFXYZ]]
-
-#set test [Point($pid,node) GetFXYZ]
-#puts $test
-
+    # if the point is of type endoscopic, use the actual xyz and fxyz info
+    if {[info command Fiducials($fid,node)] != ""} {
+        if {[Fiducials($fid,node) GetType] == "endoscopic" } {
+            EndoscopicResetCameraDirection    
+            EndoscopicUpdateVirtualEndoscope $Endoscopic(activeCam) [concat [Point($pid,node) GetXYZ] [Point($pid,node) GetFXYZ]]
+            
+            #set test [Point($pid,node) GetFXYZ]
+            #puts $test
+            
         } else {
-     # look at the point instead
-     EndoscopicResetCameraDirection    
-     EndoscopicUpdateVirtualEndoscope $Endoscopic(activeCam) [concat [Point($pid,node) GetFXYZ] [Point($pid,node) GetXYZ]]
+            # look at the point instead
+            EndoscopicResetCameraDirection    
+            EndoscopicUpdateVirtualEndoscope $Endoscopic(activeCam) [concat [Point($pid,node) GetFXYZ] [Point($pid,node) GetXYZ]]
+        }
+    } else {
+        DevErrorWindow "EndoscopicFiducialsPointSelectedCallback: Fiducials($fid,node) does not exist"
     }
     EndoscopicUpdateActorFromVirtualEndoscope $Endoscopic(activeCam)
     Render3D
