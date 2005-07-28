@@ -80,7 +80,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.25 $} {$Date: 2005/07/20 21:13:53 $}]
+                                 {$Revision: 1.26 $} {$Date: 2005/07/28 20:01:23 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -1124,11 +1124,13 @@ proc DTMRIUpdateTractColor {{mode ""}} {
 
             # set up properties of the new actors we will create
             set prop [DTMRI(vtk,streamlineControl) GetStreamlineProperty] 
-            #$prop SetAmbient       [Color($c,node) GetAmbient]
-            #$prop SetDiffuse       [Color($c,node) GetDiffuse]
-            #$prop SetSpecular      [Color($c,node) GetSpecular]
-            #$prop SetSpecularPower [Color($c,node) GetPower]
-            eval "$prop SetColor" [Color($c,node) GetDiffuseColor] 
+            if { $c != "" } {
+                #$prop SetAmbient       [Color($c,node) GetAmbient]
+                #$prop SetDiffuse       [Color($c,node) GetDiffuse]
+                #$prop SetSpecular      [Color($c,node) GetSpecular]
+                #$prop SetSpecularPower [Color($c,node) GetPower]
+                eval "$prop SetColor" [Color($c,node) GetDiffuseColor] 
+            }
 
             # display solid colors instead of scalars
             DTMRI(vtk,streamlineControl) ScalarVisibilityOff
