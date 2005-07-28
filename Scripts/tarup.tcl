@@ -4,7 +4,7 @@ set __comment__ {
     tarup.tcl
     sp - 2003-05
 
-    source this file into a running slicer2.1 to make a distribution 
+    source this file into a running slicer2.6 to make a distribution 
     copy of slicer in a new directory based on the currently loaded Modules.
     The resulting program will be self-contained, without intermediate build
     files, CVS directories, and stripped of debugging symbols if possible.
@@ -551,7 +551,7 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
     }
 
     if { $do_upload == "true" } {
-    set scpdestination "$::env(USER)@slicerl.bwh.harvard.edu:/usr/local/apache2/htdocs/snapshots/slicer2.5"
+    set scpdestination "$::env(USER)@slicerl.bwh.harvard.edu:/usr/local/apache2/htdocs/snapshots/slicer2.6"
         puts " -- upload to $scpdestination"
         switch $::tcl_platform(os) {
             "SunOS" -
