@@ -54,16 +54,48 @@
 # .END
 #-------------------------------------------------------------------------------
 proc SelectInit {} {
-    global Selected Module
+    global Selected Module Select
 
     set m Select
     # set Module($m,procVTK) SelectBuildVTK
     # set Module($m,procGUI) SelectBuildGUI
 
+    
     lappend Module(procGUI) SelectBuildGUI
     lappend Module(procVTK) SelectBuildVTK
+
+    set Select(actor) ""
+    set Select(xyz) ""
+    set Select(xy) ""
+    set Select(cellId) ""
+    set Select(pointId) ""
+
+    # used in Measure and Xform 
     set Selected(Model) ""
+}
+
+#-------------------------------------------------------------------------------
+# .PROC SelectClose
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc SelectClose {} {
+    global Select
+
+    if {$::Module(verbose)} { 
+        puts "Resetting Select array to emtpy strings"
     }
+    set Select(actor) ""
+    set Select(xyz) ""
+    set Select(xy) ""
+    set Select(cellId) ""
+    set Select(pointId) ""
+
+    # used in Measure and Xform 
+    set Selected(Model) ""
+
+}
 
 #-------------------------------------------------------------------------------
 # .PROC SelectBuildVTK
@@ -80,6 +112,7 @@ proc SelectBuildVTK {} {
     Select(picker) PickFromListOff
 
     vtkPointPicker Select(ptPicker)
+    Select(ptPicker) SetTolerance 0.001
 }
 
 #-------------------------------------------------------------------------------
@@ -240,6 +273,7 @@ proc SelectPick2D { widget x y } {
         Slicer SetReformatPoint $s $x $y
         scan [Slicer GetWldPoint] "%g %g %g" xRas yRas zRas
         set Select(xyz) "$xRas $yRas $zRas"
+        set Select(xy) "$widget $x $y"
         return 1
     } else {
         return 0
