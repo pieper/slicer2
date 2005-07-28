@@ -328,11 +328,11 @@ float vtkDCMParser::ReadFloatAsciiNumeric(unsigned int NextBlock)
       i=0;
       flag=1;
       while(flag && i<19 && ftell(file_in)<NextBlock)
-    {
-      ch=getc(file_in);
-      if(ch=='\\') flag=0;
-      else buff[i++]=ch;
-    }
+      {
+        ch=getc(file_in);
+        if(ch=='\\') flag=0;
+        else buff[i++]=ch;
+      }
       
       buff[i]='\0';
 
@@ -378,7 +378,7 @@ char *vtkDCMParser::ReadElement()
   else
     {
       ReadElement(&des);
-      sprintf(buff, "%s 0x%04x 0x%04x %d %lu", des.VR, des.GroupCode,
+      sprintf(buff, "%s 0x%04x 0x%04x %d %u", des.VR, des.GroupCode,
           des.ElementCode, des.Length, des.NextBlock);
     }
 
