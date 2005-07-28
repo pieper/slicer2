@@ -86,7 +86,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.62 $} {$Date: 2005/07/01 14:22:33 $}]
+        {$Revision: 1.63 $} {$Date: 2005/07/28 15:53:23 $}]
 
     set File(filePrefix) data
 }
@@ -258,6 +258,8 @@ proc MainFileClose {} {
             $Module($m,procMainFileCloseUpdateEntered)
         }
     }
+    # call Select's close proc to clear out any selections that were made
+    SelectClose
 
     MainMrmlDeleteAll
     MainUpdateMRML
