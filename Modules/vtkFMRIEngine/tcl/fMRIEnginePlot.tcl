@@ -61,7 +61,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEnginePopUpPlot {x y} {
-    global fMRIEngine MultiVolumeReader
+    global fMRIEngine MultiVolumeReader Gui
 
     if {$fMRIEngine(currentTab) != "Inspect"} {
         return
@@ -144,12 +144,21 @@ proc fMRIEnginePopUpPlot {x y} {
         wm geometry $w $plotGeometry 
 
         blt::graph $w.graph -plotbackground white -width $graphWidth 
-        pack $w.graph 
+        pack $w.graph -side top  
+
         $w.graph legend configure -position bottom -relief raised \
             -font fixed -fg black 
         $w.graph axis configure y -title "Intensity"
         # $w.graph grid on
         # $w.graph grid configure -color black
+
+        frame $w.fButtons
+        pack $w.fButtons -side top
+        button $w.fButtons.bSave -text "Save" -font fixed \
+            -command "fMRIEngineSaveTimeCourseGraph" -width 8 
+        button $w.fButtons.bClose -text "Close" -font fixed \
+            -command "fMRIEngineCloseTimeCourseWindow" -width 8 
+        pack $w.fButtons.bSave $w.fButtons.bClose -side left -pady 5 -padx 1 
 
         wm protocol $w WM_DELETE_WINDOW "fMRIEngineCloseTimeCourseWindow" 
 
@@ -720,6 +729,25 @@ proc fMRIEngineDrawPlotLong {x y z} {
         -font fixed 
 
     set fMRIEngine(curPlotting) "Long"
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineSaveTimeCourseGraph
+# Saves the current time course graph as a ps file
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineSaveTimeCourseGraph {} {
+    global fMRIEngine
+
+    set fileType {{"PostScript" *.ps}}
+    set fileName [tk_getSaveFile -filetypes $fileType -parent .]
+
+    if {[string length $fileName]} {
+        $fMRIEngine(timeCourseGraph) postscript configure -landscape no -maxpect yes
+        $fMRIEngine(timeCourseGraph) postscript output $fileName 
+    }
 }
 
 
