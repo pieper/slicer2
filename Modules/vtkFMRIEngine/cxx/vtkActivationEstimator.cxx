@@ -69,12 +69,25 @@ vtkStandardNewMacro(vtkActivationEstimator);
 vtkActivationEstimator::vtkActivationEstimator()
 {
     this->Detector = NULL; 
-    this->lowerThreshold = 0;
+    this->HPFilteredInputs = NULL;     
+
+    this->LowerThreshold = 0.0;
+    this->HighPassFiltering = 0;
+    this->XCutoff = 0.0;
+    this->YCutoff = 0.0;
+    this->ZCutoff = 0.0;
+
+    this->FFT = vtkImageFFT::New();
+    this->RFFT = vtkImageRFFT::New();
+    this->HighPass = vtkImageIdealHighPass::New();
 }
 
 
 vtkActivationEstimator::~vtkActivationEstimator()
 {
+    this->FFT->Delete();
+    this->RFFT->Delete();
+    this->HighPass->Delete();
 }
 
 
@@ -90,9 +103,19 @@ vtkFloatArray *vtkActivationEstimator::GetTimeCourse(int i, int j, int k)
     vtkFloatArray *timeCourse = vtkFloatArray::New();
     timeCourse->SetNumberOfTuples(this->NumberOfInputs);
     timeCourse->SetNumberOfComponents(1);
+
+    short *val;
     for (int ii = 0; ii < this->NumberOfInputs; ii++)
     {
-        short *val = (short *)this->GetInput(ii)->GetScalarPointer(i, j, k); 
+        if (! this->HighPassFiltering) 
+        {
+            val = (short *)this->GetInput(ii)->GetScalarPointer(i, j, k); 
+        }
+        else 
+        {
+            val = (short *)((vtkImageData *)this->HPFilteredInputs[ii])->GetScalarPointer(i, j, k);
+        }
+
         timeCourse->SetComponent(ii, 0, *val); 
     }
 
@@ -103,6 +126,50 @@ vtkFloatArray *vtkActivationEstimator::GetTimeCourse(int i, int j, int k)
 void vtkActivationEstimator::SetDetector(vtkActivationDetector *detector)
 {
     this->Detector = detector;
+}
+
+typedef vtkDataObject *vtkDataObjectPointer;
+void vtkActivationEstimator::PerformHighPassFiltering()
+{
+    // for progress update (bar)
+    unsigned long count = 0;
+    unsigned long target = 2; 
+    // unsigned long target = (unsigned long)(this->NumberOfInputs);
+    // target++;
+
+    if (this->HPFilteredInputs) 
+    {
+        for (int ii = 0; ii < this->NumberOfInputs; ii++)
+        {
+            this->HPFilteredInputs[ii]->Delete();
+        }
+
+        delete [] this->HPFilteredInputs;
+        this->HPFilteredInputs = NULL;
+    }
+
+    // Allocate new arrays.
+    this->HPFilteredInputs = new vtkDataObjectPointer[this->NumberOfInputs];
+    for (int ii = 0; ii < this->NumberOfInputs; ii++)
+    {
+        this->FFT->SetInput(this->GetInput(ii));
+        this->HighPass->SetInput(this->FFT->GetOutput());
+        this->HighPass->SetCutOff(this->XCutoff, this->YCutoff, this->ZCutoff);
+        this->RFFT->SetInput(this->HighPass->GetOutput());
+        this->RFFT->Update();
+
+        vtkImageData *img = vtkImageData::New();
+        img->DeepCopy(this->RFFT->GetOutput());
+        this->HPFilteredInputs[ii] = img; 
+
+        if (!(count%target))
+        {
+            // UpdateProgress(count / (1.0*target));
+            UpdateProgress(count / (1.0*this->NumberOfInputs));
+ 
+        }
+        count++;
+    }
 }
 
 
@@ -116,8 +183,8 @@ void vtkActivationEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* o
 
     // for progress update (bar)
     unsigned long count = 0;
-    unsigned long target;
-
+    unsigned long target = 0;
+    
     // Sets up properties for output vtkImageData
     int noOfRegressors = this->Detector->GetDesignMatrix()->GetNumberOfComponents();
     int imgDim[3];  
@@ -169,7 +236,7 @@ void vtkActivationEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* o
                }   
 
                 float chisq;
-                if ((total/this->NumberOfInputs) > lowerThreshold)
+                if ((total/this->NumberOfInputs) > this->LowerThreshold)
                 {
                     this->Detector->Detect(tc, beta, &chisq);
                 }
