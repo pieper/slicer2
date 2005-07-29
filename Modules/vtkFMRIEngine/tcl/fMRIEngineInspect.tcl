@@ -172,7 +172,7 @@ proc fMRIEngineBuildUIForInspectTab {parent} {
 
     scrollbar $f.vs -orient vertical -bg $Gui(activeWorkspace)
     set fMRIEngine(inspectVerScroll) $f.vs
-    listbox $f.lb -height 4 -bg $Gui(activeWorkspace) \
+    listbox $f.lb -height 3 -bg $Gui(activeWorkspace) \
         -yscrollcommand {$::fMRIEngine(inspectVerScroll) set}
     set fMRIEngine(inspectListBox) $f.lb
     $fMRIEngine(inspectVerScroll) configure -command {$fMRIEngine(inspectListBox) yview}
@@ -180,10 +180,10 @@ proc fMRIEngineBuildUIForInspectTab {parent} {
     DevAddButton $f.bGo "Select" "fMRIEngineInspectActVolume" 15 
  
     blt::table $f \
-        0,0 $f.l -cspan 2 -fill x -padx 1 -pady 5 \
+        0,0 $f.l -cspan 2 -fill x -padx 1 -pady 2 \
         1,0 $fMRIEngine(inspectListBox) -fill x -padx 1 -pady 1 \
         1,1 $fMRIEngine(inspectVerScroll) -fill y -padx 1 -pady 1 \
-        2,0 $f.bGo -cspan 2 -padx 1 -pady 3
+        2,0 $f.bGo -cspan 2 -padx 1 -pady 2 
 
     #-------------------------------------------
     # Threshold tab 
@@ -191,13 +191,13 @@ proc fMRIEngineBuildUIForInspectTab {parent} {
     set f $parent.fThreshold
     foreach m "Title Params" {
         frame $f.f${m} -bg $Gui(activeWorkspace)
-        pack $f.f${m} -side top -fill x -pady $Gui(pad)
+        pack $f.f${m} -side top -fill x -pady 2 
     }
 
     set f $parent.fThreshold.fTitle 
     DevAddButton $f.bHelp "?" "fMRIEngineHelpInspectActivationThreshold" 2
     DevAddLabel $f.lLabel "Activation thresholding:"
-    grid $f.bHelp $f.lLabel -padx 1 -pady 3 
+    grid $f.bHelp $f.lLabel -padx 1 -pady 2 
 
     set f $parent.fThreshold.fParams 
     frame $f.fStat  -bg $Gui(activeWorkspace) 
@@ -231,21 +231,48 @@ proc fMRIEngineBuildUIForInspectTab {parent} {
     # Plot frame 
     #-------------------------------------------
     set f $parent.fPlot
-    frame $f.fTitle  -bg $Gui(activeWorkspace)
-    frame $f.fLong   -bg $Gui(activeWorkspace) -relief groove -bd 1 
-    frame $f.fChoice -bg $Gui(activeWorkspace)
-    pack $f.fTitle -side top -fill x -padx 2 -pady 1 
-    pack $f.fLong -side top -padx 2 -pady 1 
-    pack $f.fChoice -side top -fill x -padx 2 -pady 1 
+    frame $f.fTitle    -bg $Gui(activeWorkspace)
+    frame $f.fHighPass -bg $Gui(activeWorkspace) -relief groove -bd 1
+    frame $f.fOptions  -bg $Gui(activeWorkspace) -relief groove -bd 1 
+    pack $f.fTitle $f.fHighPass $f.fOptions -side top -fill x -padx 5 -pady 2 
 
     set f $parent.fPlot.fTitle
     DevAddButton $f.bHelp "?" "fMRIEngineHelpInspectPlotting " 2
     DevAddLabel $f.lLabel "Time series plotting:"
-
     grid $f.bHelp $f.lLabel -padx 1 -pady 5 
 
-    set f $parent.fPlot.fLong
-    eval {radiobutton $f.rLong -width 10 -text "Timecourse" \
+    set f $parent.fPlot.fHighPass
+    eval {checkbutton $f.cbHighPass \
+        -variable fMRIEngine(highPass) \
+        -text "Apply high-pass filtering"} $Gui(WEA) 
+    $f.cbHighPass deselect 
+    bind $f.cbHighPass <1> "fMRIEngineUpdateHighPassFiltering"
+
+    DevAddLabel $f.lCutoff "Cutoff:"
+    eval {entry $f.eCutoff -width 20 \
+        -textvariable fMRIEngine(cutoff)} $Gui(WEA)
+    $f.eCutoff config -state disabled
+    set fMRIEngine(gui,cutoffFrequencyEntry) $f.eCutoff
+
+    DevAddButton $f.bFiltering "Filter" "fMRIEngineStartHighPassFiltering" 7 
+    $f.bFiltering config -state disabled
+    set fMRIEngine(gui,highPassFilterButton) $f.bFiltering
+
+    blt::table $f \
+        0,0 $f.cbHighPass -cspan 3 -fill x -padx 1 -pady 3 \
+        1,0 $f.lCutoff -padx 1 -pady 1 \
+        1,1 $f.eCutoff -padx 1 -pady 1 \
+        1,2 $f.bFiltering -padx 2 -pady 1 -fill x 
+
+    # Options frame
+    set f $parent.fPlot.fOptions
+    frame $f.fLong      -bg $Gui(activeWorkspace)
+    frame $f.fHistogram -bg $Gui(activeWorkspace)
+    frame $f.fROI       -bg $Gui(activeWorkspace)
+    pack $f.fLong $f.fHistogram $f.fROI -side top -padx 2 -pady 1 
+
+    set f $parent.fPlot.fOptions.fLong
+    eval {radiobutton $f.rLong -width 12 -text "Timecourse" \
         -variable fMRIEngine(tcPlottingOption) -value Long \
         -relief raised -offrelief raised -overrelief raised \
         -selectcolor white} $Gui(WEA)
@@ -253,9 +280,9 @@ proc fMRIEngineBuildUIForInspectTab {parent} {
     set evList [list {none}]
     set df [lindex $evList 0] 
     eval {menubutton $f.mbType -text $df \
-          -relief raised -bd 2 -width 11 \
-          -indicatoron 1 \
-          -menu $f.mbType.m} $Gui(WMBA)
+         -relief raised -bd 2 -width 13 \
+         -indicatoron 1 \
+         -menu $f.mbType.m} $Gui(WMBA)
     eval {menu $f.mbType.m} $Gui(WMA)
     foreach m $evList  {
         $f.mbType.m add command -label $m \
@@ -267,21 +294,118 @@ proc fMRIEngineBuildUIForInspectTab {parent} {
     set fMRIEngine(gui,evsMenuButtonForPlotting) $f.mbType
     set fMRIEngine(gui,evsMenuForPlotting) $f.mbType.m
 
-    set f $parent.fPlot.fChoice
-    foreach param "Short ROI" \
-        name "{Peristimulus histogram} {ROI}" {
-        eval {radiobutton $f.r$param -width 27 -text $name \
-            -variable fMRIEngine(tcPlottingOption) -value $param \
-            -relief raised -offrelief raised -overrelief raised \
-            -selectcolor white} $Gui(WEA)
-        pack $f.r$param -side top -pady 2 
-    } 
+    set f $parent.fPlot.fOptions.fHistogram
+    set param Short
+    set name {Peristimulus histogram}
+    eval {radiobutton $f.rShort -width 30 -text $name \
+        -variable fMRIEngine(tcPlottingOption) -value $param \
+        -relief raised -offrelief raised -overrelief raised \
+        -selectcolor white} $Gui(WEA)
+    pack $f.r$param -side top -pady 2 
 
+    set f $parent.fPlot.fOptions.fROI
+    set param ROI 
+    set name ROI 
+    eval {radiobutton $f.r$param -width 30 -text $name \
+        -variable fMRIEngine(tcPlottingOption) -value $param \
+        -relief raised -offrelief raised -overrelief raised \
+        -selectcolor white} $Gui(WEA)
+    pack $f.r$param -side top -pady 2 
+    
     $f.rROI configure -state disabled
+
     set fMRIEngine(tcPlottingOption) "" 
 }
 
-     
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineStatHighPassFiltering
+# Performs the high-pass filtering 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineStartHighPassFiltering {} { 
+    global fMRIEngine Gui
+
+    if {[info command fMRIEngine(actEstimator)] == ""} {
+        DevErrorWindow "No activation volume yet for inspecting."
+        return 
+    }
+
+    fMRIEngine(actEstimator) EnableHighPassFiltering 0 
+
+    set cutoff [split $fMRIEngine(cutoff) " "]
+    set size [llength $cutoff]
+    set errorMsg "Input valid values (float or integer) for cutoff." 
+
+    if {$size != 1 && $size != 3} {
+        DevErrorWindow $errorMsg
+        return
+    }
+
+    foreach m $cutoff {
+        set v [string trim $m]
+        set b [string is integer -strict $v]
+        set c [string is double -strict $v]
+        if {$b == 0 && $c == 0} {
+            DevErrorWindow $errorMsg 
+            return
+        }
+    }
+
+    if {$size == 1} {
+        set x [lindex $cutoff 0] 
+        fMRIEngine(actEstimator) SetCutoff $x $x $x
+    } else {
+        set x [lindex $cutoff 0] 
+        set y [lindex $cutoff 1] 
+        set z [lindex $cutoff 2] 
+        fMRIEngine(actEstimator) SetCutoff $x $y $z
+    }
+
+    fMRIEngine(actEstimator) EnableHighPassFiltering 1 
+
+    # adds progress bar
+    set obs1 [fMRIEngine(actEstimator) AddObserver StartEvent MainStartProgress]
+    set obs2 [fMRIEngine(actEstimator) AddObserver ProgressEvent \
+              "MainShowProgress fMRIEngine(actEstimator)"]
+    set obs3 [fMRIEngine(actEstimator) AddObserver EndEvent MainEndProgress]
+    set Gui(progressText) "High-pass filtering..."
+    puts $Gui(progressText)
+
+    fMRIEngine(actEstimator) PerformHighPassFiltering
+
+    MainEndProgress
+    fMRIEngine(actEstimator) RemoveObserver $obs1 
+    fMRIEngine(actEstimator) RemoveObserver $obs2 
+    fMRIEngine(actEstimator) RemoveObserver $obs3 
+
+    set Gui(progressText) ""
+    puts "...done"
+}
+    
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineUpdateHighPassFiltering
+# Enables or disables the high-pass filtering 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineUpdateHighPassFiltering {} {
+    global fMRIEngine
+
+    set state [expr {$fMRIEngine(highPass) == 1 ? "disabled" : "normal"}]
+    set hp [expr {$fMRIEngine(highPass) == 1 ? 0 : 1}]
+
+    $fMRIEngine(gui,cutoffFrequencyEntry) config -state $state
+    $fMRIEngine(gui,highPassFilterButton) config -state $state 
+
+    if {[info command fMRIEngine(actEstimator)] != ""} {
+        fMRIEngine(actEstimator) EnableHighPassFiltering $hp 
+    }
+}
+
+
 #-------------------------------------------------------------------------------
 # .PROC fMRIEngineUpdateEVsForPlotting
 # Updates ev list for timecourse plotting 
