@@ -361,7 +361,7 @@ if { ![file exists $::BLT_TEST_FILE] } {
     cd $SLICER_LIB/tcl
     
     runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co -r $::BLT_TAG blt
+    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co blt-cvs-head
 
     if { $isWindows } {
         # can't do Windows
@@ -468,26 +468,59 @@ if { ![file exists $::VTK_TEST_FILE] } {
             set USE_VTK_ANSI_STDLIB "-DVTK_USE_ANSI_STDLIB:BOOL=ON"
         }
     }
-    
-    runcmd $CMAKE \
-        -G$GENERATOR \
-        -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
-        -DBUILD_SHARED_LIBS:BOOL=ON \
-        -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
-        -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
-        -DBUILD_TESTING:BOOL=OFF \
-        -DVTK_USE_CARBON:BOOL=OFF \
-        -DVTK_USE_X:BOOL=ON \
-        -DVTK_WRAP_TCL:BOOL=ON \
-        -DVTK_USE_HYBRID:BOOL=ON \
-        -DVTK_USE_PATENTED:BOOL=ON \
-        -DTCL_INCLUDE_PATH:PATH=$TCL_INCLUDE_DIR \
-        -DTK_INCLUDE_PATH:PATH=$TCL_INCLUDE_DIR \
-        -DTCL_LIBRARY:FILEPATH=$::VTK_TCL_LIB \
-        -DTK_LIBRARY:FILEPATH=$::VTK_TK_LIB \
-        -DTCL_TCLSH:FILEPATH=$::VTK_TCLSH \
-        $USE_VTK_ANSI_STDLIB \
-        ../VTK
+
+    #
+    # Note - the two banches are identical down to the line starting -DOPENGL...
+    # -- the text needs to be duplicated to avoid quoting problems with paths that have spaces
+    #
+    if { $isLinux && $::tcl_platform(machine) == "x86_64" } {
+        runcmd $CMAKE \
+            -G$GENERATOR \
+            -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
+            -DBUILD_SHARED_LIBS:BOOL=ON \
+            -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
+            -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
+            -DBUILD_TESTING:BOOL=OFF \
+            -DVTK_USE_CARBON:BOOL=OFF \
+            -DVTK_USE_X:BOOL=ON \
+            -DVTK_WRAP_TCL:BOOL=ON \
+            -DVTK_USE_HYBRID:BOOL=ON \
+            -DVTK_USE_PATENTED:BOOL=ON \
+            -DTCL_INCLUDE_PATH:PATH=$TCL_INCLUDE_DIR \
+            -DTK_INCLUDE_PATH:PATH=$TCL_INCLUDE_DIR \
+            -DTCL_LIBRARY:FILEPATH=$::VTK_TCL_LIB \
+            -DTK_LIBRARY:FILEPATH=$::VTK_TK_LIB \
+            -DTCL_TCLSH:FILEPATH=$::VTK_TCLSH \
+            $USE_VTK_ANSI_STDLIB \
+            -DOPENGL_INCLUDE_DIR:PATH=/usr/include \
+            -DOPENGL_gl_LIBRARY:FILEPATH=/usr/lib64/libGL.so \
+            -DOPENGL_glu_LIBRARY:FILEPATH=/usr/lib64/libGLU.so \
+            -DX11_X11_LIB:FILEPATH=/usr/X11R6/lib64/libX11.a \
+            -DX11_Xext_LIB:FILEPATH=/usr/X11R6/lib64/libXext.a \
+            -DCMAKE_MODULE_LINKER_FLAGS:STRING=-L/usr/X11R6/lib64 \
+            -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+            ../VTK
+    } else {
+        runcmd $CMAKE \
+            -G$GENERATOR \
+            -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
+            -DBUILD_SHARED_LIBS:BOOL=ON \
+            -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
+            -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
+            -DBUILD_TESTING:BOOL=OFF \
+            -DVTK_USE_CARBON:BOOL=OFF \
+            -DVTK_USE_X:BOOL=ON \
+            -DVTK_WRAP_TCL:BOOL=ON \
+            -DVTK_USE_HYBRID:BOOL=ON \
+            -DVTK_USE_PATENTED:BOOL=ON \
+            -DTCL_INCLUDE_PATH:PATH=$TCL_INCLUDE_DIR \
+            -DTK_INCLUDE_PATH:PATH=$TCL_INCLUDE_DIR \
+            -DTCL_LIBRARY:FILEPATH=$::VTK_TCL_LIB \
+            -DTK_LIBRARY:FILEPATH=$::VTK_TK_LIB \
+            -DTCL_TCLSH:FILEPATH=$::VTK_TCLSH \
+            $USE_VTK_ANSI_STDLIB \
+            ../VTK
+    }
 
 
     if { $isDarwin } {
@@ -504,7 +537,7 @@ if { ![file exists $::VTK_TEST_FILE] } {
             runcmd $::MAKE VTK.SLN /build  $::VTK_BUILD_TYPE
         }
     } else {
-        eval runcmd $::MAKE
+        eval runcmd $::MAKE -j 8
     }
 }
 
@@ -540,7 +573,7 @@ if { ![file exists $::ITK_TEST_FILE] } {
             runcmd $::MAKE ITK.SLN /build  $::VTK_BUILD_TYPE
         }
     } else {
-        eval runcmd $::MAKE 
+        eval runcmd $::MAKE -j 8
     }
 }
 
