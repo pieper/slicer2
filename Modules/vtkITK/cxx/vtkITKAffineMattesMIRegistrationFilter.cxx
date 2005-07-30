@@ -77,6 +77,7 @@ vtkITKAffineMattesMIRegistrationFilter::GetTransformationMatrix(vtkMatrix4x4* ma
 
   itk::itkAffineMattesMIRegistrationFilter::TransformType::ParametersType params = transform->GetParameters();
   
+  matrix->Identity();
   int count=0;
   for(int i=0;i<3;i++) {
     for(int j=0;j<3;j++) {
@@ -100,6 +101,7 @@ vtkITKAffineMattesMIRegistrationFilter::GetCurrentTransformationMatrix(vtkMatrix
   
   itk::itkAffineMattesMIRegistrationFilter::TransformType::ParametersType params = transform->GetParameters();
 
+  matrix->Identity();
   int count=0;
   for(int i=0;i<3;i++) {
     for(int j=0;j<3;j++) {

@@ -80,10 +80,9 @@ vtkITKVersorMattesMiVersorRegistrationFilter::GetTransformationMatrix(vtkMatrix4
   const itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::MatrixType ResMat   =transform->GetRotationMatrix();
   const itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::OffsetType ResOffset=transform->GetOffset();
 
+  matrix->Identity();
   
   // Create Rotation Matrix
-  matrix->Identity();
-
   for(int i=0;i<3;i++) {
     for(int j=0;j<3;j++) {
       matrix->Element[i][j] = ResMat[i][j];
@@ -110,11 +109,9 @@ vtkITKVersorMattesMiVersorRegistrationFilter::GetCurrentTransformationMatrix(vtk
   const itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::MatrixType ResMat   =transform->GetRotationMatrix();
   const itk::itkVersorMattesMiVersorRegistrationFilter::TransformType::OffsetType ResOffset=transform->GetOffset();
   
-
-  
-  // Create Rotation Matrix
   matrix->Identity();
 
+  // Create Rotation Matrix
   for(int i=0;i<3;i++) {
     for(int j=0;j<3;j++) {
       matrix->Element[i][j] = ResMat[i][j];

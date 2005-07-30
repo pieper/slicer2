@@ -52,9 +52,6 @@ public:
     Superclass::PrintSelf ( os, indent );
   };
 
-  vtkSetMacro(NumIterations, int);
-  vtkGetMacro(NumIterations, int);
-
   void SetCurrentIteration (int iter) {
     CurrentIteration = iter;
   };
@@ -130,7 +127,6 @@ public:
   void WriteVtkMovingImageInfo(char* filename);
 
 protected:
-  int    NumIterations;
   int    CurrentIteration;
   //BTX
   
@@ -191,7 +187,7 @@ private:
   void operator=(const vtkITKRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKRegistrationFilter, "$Revision: 1.6 $");
+//vtkCxxRevisionMacro(vtkITKRegistrationFilter, "$Revision: 1.7 $");
 //vtkStandardNewMacro(vtkITKRegistrationFilter);
 
 #endif

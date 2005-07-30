@@ -31,12 +31,16 @@ public:
   vtkSetMacro(StandardDeviations, double);
   vtkGetMacro(StandardDeviations, double);
 
+  vtkSetMacro(NumIterations, int);
+  vtkGetMacro(NumIterations, int);
+
   virtual void AbortIterations() {
     m_ITKFilter->SetAbortGenerateData(true);
   };
 
 protected:
   double StandardDeviations;
+  int    NumIterations;
 
   //BTX
 
@@ -61,7 +65,7 @@ private:
   void operator=(const vtkITKDemonsRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKDemonsRegistrationFilter, "$Revision: 1.3 $");
+//vtkCxxRevisionMacro(vtkITKDemonsRegistrationFilter, "$Revision: 1.4 $");
 //vtkStandardNewMacro(vtkITKDemonsRegistrationFilter);
 vtkRegistrationNewMacro(vtkITKDemonsRegistrationFilter);
 

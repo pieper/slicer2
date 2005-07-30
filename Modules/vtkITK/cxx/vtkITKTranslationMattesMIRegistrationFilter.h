@@ -2,24 +2,24 @@
 // .SECTION Description
 // vtkITKImageToImageFilter provides a 
 
-#ifndef __vtkITKTranslationMIGradientDescentRegistrationFilter_h
-#define __vtkITKTranslationMIGradientDescentRegistrationFilter_h
+#ifndef __vtkITKTranslationMattesMIRegistrationFilter_h
+#define __vtkITKTranslationMattesMIRegistrationFilter_h
 
 #include <fstream>
 #include <string>
 
 #include "vtkITKTransformRegistrationFilter.h"
-#include "itkTranslationMIGradientDescentRegistrationFilter.h"
+#include "itkTranslationMattesMIRegistrationFilter.h"
 
 
-// vtkITKTranslationMIGradientDescentRegistrationFilter Class
+// vtkITKTranslationMattesMIRegistrationFilter Class
 
-class VTK_EXPORT vtkITKTranslationMIGradientDescentRegistrationFilter : public vtkITKTransformRegistrationFilter
+class VTK_EXPORT vtkITKTranslationMattesMIRegistrationFilter : public vtkITKTransformRegistrationFilter
 {
 public:
-  vtkTypeMacro(vtkITKTranslationMIGradientDescentRegistrationFilter,vtkITKTransformRegistrationFilter);
+  vtkTypeMacro(vtkITKTranslationMattesMIRegistrationFilter,vtkITKTransformRegistrationFilter);
 
-  static vtkITKTranslationMIGradientDescentRegistrationFilter* New();
+  static vtkITKTranslationMattesMIRegistrationFilter* New();
 
   void PrintSelf(ostream& os, vtkIndent indent)
   {
@@ -32,8 +32,11 @@ public:
   vtkGetObjectMacro(MaxNumberOfIterations,vtkUnsignedIntArray);
 
 
-  vtkSetObjectMacro(LearningRate, vtkDoubleArray);
-  vtkGetObjectMacro(LearningRate, vtkDoubleArray);
+  vtkSetObjectMacro(MinimumStepLength, vtkDoubleArray);
+  vtkGetObjectMacro(MinimumStepLength, vtkDoubleArray);
+
+  vtkSetObjectMacro(MaximumStepLength, vtkDoubleArray);
+  vtkGetObjectMacro(MaximumStepLength, vtkDoubleArray);
 
   // Description:
   // Set the number of sample points for density estimation
@@ -42,21 +45,27 @@ public:
 
   // Description:
   // Set the number of bins for density estimation
-  vtkSetMacro(StandardDeviation, double);
-  vtkGetMacro(StandardDeviation, double);
+  vtkSetMacro(NumberOfHistogramBins, int);
+  vtkGetMacro(NumberOfHistogramBins, int);
 
 
   // Description:
   // Reset the Multiresolution Settings
   // It blanks the Min/Max Step and NumberOfIterations
   void ResetMultiResolutionSettings()
-  { LearningRate->Reset(); 
-  MaxNumberOfIterations->Reset(); };
+  { MinimumStepLength->Reset(); 
+    MaxNumberOfIterations->Reset();
+    MaximumStepLength->Reset(); };
   
   // Description:
   // Set the min step for the algorithm.
-  void SetNextLearningRate(const double step)
-  { LearningRate->InsertNextValue(step); };
+  void SetNextMinimumStepLength(const double step)
+  { MinimumStepLength->InsertNextValue(step); };
+
+  // Description:
+  // Set the max step for the algorithm.
+  void SetNextMaximumStepLength(const double step)
+  { MaximumStepLength->InsertNextValue(step); };
 
   // Description:
   // Set the max number of iterations at each level
@@ -98,17 +107,21 @@ public:
   virtual double GetMetricValue() {
     return  m_ITKFilter->GetMetricValue();
   }
+  void ReSeedSamples() {
+    m_ITKFilter->SetReinitializeSeed(8775070);
+  }
 
   int GetCurrentLevel() { return m_ITKFilter->GetCurrentLevel();};
 
 protected:
 
-
   vtkUnsignedIntArray  *MaxNumberOfIterations;
 
-  vtkDoubleArray       *LearningRate;
+  vtkDoubleArray       *MinimumStepLength;
 
-  double StandardDeviation;
+  vtkDoubleArray       *MaximumStepLength;
+
+  int NumberOfHistogramBins;
 
   int NumberOfSamples;
 
@@ -116,7 +129,7 @@ protected:
   unsigned int TargetShrink[3];
   //BTX
 
-  itk::itkTranslationMIGradientDescentRegistrationFilter::Pointer m_ITKFilter;
+  itk::itkTranslationMattesMIRegistrationFilter::Pointer m_ITKFilter;
 
   virtual void UpdateRegistrationParameters();
 
@@ -125,19 +138,19 @@ protected:
   virtual vtkITKRegistrationFilter::OutputImageType::Pointer GetTransformedOutput();
 
   // default constructor
-  vtkITKTranslationMIGradientDescentRegistrationFilter (); // This is called from New() by vtkStandardNewMacro
+  vtkITKTranslationMattesMIRegistrationFilter (); // This is called from New() by vtkStandardNewMacro
 
-  virtual ~vtkITKTranslationMIGradientDescentRegistrationFilter() {};
+  virtual ~vtkITKTranslationMattesMIRegistrationFilter() {};
   //ETX
   
 private:
-  vtkITKTranslationMIGradientDescentRegistrationFilter(const vtkITKTranslationMIGradientDescentRegistrationFilter&);  // Not implemented.
-  void operator=(const vtkITKTranslationMIGradientDescentRegistrationFilter&);  // Not implemented.
+  vtkITKTranslationMattesMIRegistrationFilter(const vtkITKTranslationMattesMIRegistrationFilter&);  // Not implemented.
+  void operator=(const vtkITKTranslationMattesMIRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKTranslationMIGradientDescentRegistrationFilter, "$Revision: 1.3 $");
-//vtkStandardNewMacro(vtkITKTranslationMIGradientDescentRegistrationFilter);
-vtkRegistrationNewMacro(vtkITKTranslationMIGradientDescentRegistrationFilter);
+//vtkCxxRevisionMacro(vtkITKTranslationMattesMIRegistrationFilter, "$Revision: 1.1 $");
+//vtkStandardNewMacro(vtkITKTranslationMattesMIRegistrationFilter);
+vtkRegistrationNewMacro(vtkITKTranslationMattesMIRegistrationFilter);
 
 
 
@@ -150,16 +163,15 @@ vtkRegistrationNewMacro(vtkITKTranslationMIGradientDescentRegistrationFilter);
 //
 
 //BTX
-
-class vtkITKTranslationMIGradientDescentRegistrationCommand :  public itk::Command 
+class vtkITKTranslationMattesMIRegistrationCommand :  public itk::Command 
 {
 public:
-  typedef  vtkITKTranslationMIGradientDescentRegistrationCommand   Self;
+  typedef  vtkITKTranslationMattesMIRegistrationCommand   Self;
   typedef  itk::Command             Superclass;
-  typedef  itk::SmartPointer<vtkITKTranslationMIGradientDescentRegistrationCommand>  Pointer;
-  itkNewMacro( vtkITKTranslationMIGradientDescentRegistrationCommand );
+  typedef  itk::SmartPointer<vtkITKTranslationMattesMIRegistrationCommand>  Pointer;
+  itkNewMacro( vtkITKTranslationMattesMIRegistrationCommand );
 
-  void SetRegistrationFilter (vtkITKTranslationMIGradientDescentRegistrationFilter *registration) {
+  void SetRegistrationFilter (vtkITKTranslationMattesMIRegistrationFilter *registration) {
     m_registration = registration;
   }
   void SetLogFileName(char *filename) {
@@ -167,13 +179,14 @@ public:
   }
 
 protected:
-  vtkITKTranslationMIGradientDescentRegistrationCommand() : m_fo("reg.log"), iterTotalCount(0) {};
-  vtkITKTranslationMIGradientDescentRegistrationFilter  *m_registration;
+  vtkITKTranslationMattesMIRegistrationCommand() : m_fo("reg.log"), iterTotalCount(0) {};
+  vtkITKTranslationMattesMIRegistrationFilter  *m_registration;
   std::ofstream m_fo;
 
-  typedef itk::GradientDescentOptimizer     OptimizerType;
+  typedef itk::RegularStepGradientDescentOptimizer     OptimizerType;
   typedef OptimizerType   *    OptimizerPointer;
   int iterTotalCount;
+
 public:
   
   virtual void Execute(const itk::Object *caller, const itk::EventObject & event)
@@ -193,6 +206,18 @@ public:
         m_fo << "Optimizer stopped : " << std::endl;
         m_fo << "Stop condition   =  " << stopCondition << std::endl;
         switch(stopCondition) {
+        case OptimizerType::GradientMagnitudeTolerance:
+          m_fo << "GradientMagnitudeTolerance" << std::endl; 
+          break;
+        case OptimizerType::StepTooSmall:
+          m_fo << "StepTooSmall" << std::endl; 
+          break;
+        case OptimizerType::ImageNotAvailable:
+          m_fo << "ImageNotAvailable" << std::endl; 
+          break;
+        case OptimizerType::SamplesNotAvailable:
+          m_fo << "SamplesNotAvailable" << std::endl; 
+          break;
         case OptimizerType::MaximumNumberOfIterations:
           m_fo << "MaximumNumberOfIterations" << std::endl; 
           break;
@@ -206,7 +231,7 @@ public:
     }
     int iter = m_registration->GetCurrentIteration();
     unsigned int level = m_registration->GetCurrentLevel();
-    
+
     vtkMatrix4x4 *mat = vtkMatrix4x4::New();
     m_registration->GetCurrentTransformationMatrix(mat);
 
@@ -217,7 +242,6 @@ public:
     m_fo.flush();
 
     m_registration->SetCurrentIteration(iter+1);
-    
     float maxNumIter = 0;
     for(int i=0; i< m_registration->GetMaxNumberOfIterations()->GetNumberOfTuples();i++) {
       maxNumIter += m_registration->GetMaxNumberOfIterations()->GetValue(i);

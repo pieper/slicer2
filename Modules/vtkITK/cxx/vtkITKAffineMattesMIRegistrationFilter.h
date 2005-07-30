@@ -153,7 +153,7 @@ private:
   void operator=(const vtkITKAffineMattesMIRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKAffineMattesMIRegistrationFilter, "$Revision: 1.2 $");
+//vtkCxxRevisionMacro(vtkITKAffineMattesMIRegistrationFilter, "$Revision: 1.3 $");
 //vtkStandardNewMacro(vtkITKAffineMattesMIRegistrationFilter);
 vtkRegistrationNewMacro(vtkITKAffineMattesMIRegistrationFilter);
 
@@ -184,13 +184,13 @@ public:
   }
 
 protected:
-  vtkITKAffineMattesMIRegistrationCommand() : m_fo("reg.log"){};
+  vtkITKAffineMattesMIRegistrationCommand() : m_fo("reg.log"), iterTotalCount(0) {};
   vtkITKAffineMattesMIRegistrationFilter  *m_registration;
   std::ofstream m_fo;
 
   typedef itk::RegularStepGradientDescentOptimizer     OptimizerType;
   typedef OptimizerType   *    OptimizerPointer;
-
+  int  iterTotalCount;
 public:
   
   virtual void Execute(const itk::Object *caller, const itk::EventObject & event)
@@ -236,30 +236,26 @@ public:
     int iter = m_registration->GetCurrentIteration();
     unsigned int level = m_registration->GetCurrentLevel();
 
-    /*
-    int numIter = m_registration->GetMaxNumberOfIterations()->GetValue(level);
-    double maxStep  = m_registration->GetMaximumStepLength()->GetValue(level); 
-    double minStep =  m_registration->GetMinimumStepLength()->GetValue(level);
-    optimizer->SetNumberOfIterations( numIter );
-    optimizer->SetMaximumStepLength( maxStep);
-    optimizer->SetMinimumStepLength( minStep);
-    */
-    
     vtkMatrix4x4 *mat = vtkMatrix4x4::New();
     m_registration->GetCurrentTransformationMatrix(mat);
 
-    //if (m_fo.good()) {
-      m_fo << "  ITERATION =" << optimizer->GetCurrentIteration() << "   " << std::endl;
-      mat->Print(m_fo);
-      m_fo << "Value=" << optimizer->GetValue() << "   ";
-      m_fo << "Position=" << optimizer->GetCurrentPosition() << std::endl;
-      m_fo.flush();
-   // }
-    m_registration->InvokeEvent(vtkCommand::ProgressEvent);
-    
-    m_registration->SetCurrentIteration(iter+1);
+    m_fo << "  ITERATION =" << optimizer->GetCurrentIteration() << "   " << std::endl;
+    mat->Print(m_fo);
+    m_fo << "Value=" << optimizer->GetValue() << "   ";
+    m_fo << "Position=" << optimizer->GetCurrentPosition() << std::endl;
+    m_fo.flush();
 
-    m_registration->UpdateProgress((float)iter/m_registration->GetNumIterations() );
+    m_registration->SetCurrentIteration(iter+1);
+    
+    float maxNumIter = 0;
+    for(int i=0; i< m_registration->GetMaxNumberOfIterations()->GetNumberOfTuples();i++) {
+      maxNumIter += m_registration->GetMaxNumberOfIterations()->GetValue(i);
+    }
+    if (maxNumIter == 0) {
+      maxNumIter = 1;
+    }
+    m_registration->UpdateProgress( iterTotalCount++ / maxNumIter );
+    m_registration->InvokeEvent(vtkCommand::ProgressEvent);
 
     if (m_registration->GetAbortExecute()) {
       m_registration->AbortIterations();

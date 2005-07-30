@@ -68,10 +68,8 @@ itk::itkTransformRegistrationFilter<TImageClass, TOptimizerClass, TTransformerCl
 {
   itk::ProgressAccumulator::Pointer progress = itk::ProgressAccumulator::New();
   progress->SetMiniPipelineFilter(this);
-
   progress->RegisterInternalFilter(m_Registration,1.f);
   
-
   // set registration input
   m_Registration->SetFixedImage(  this->GetInput() );
   m_Registration->SetMovingImage( this->GetInput(1) );

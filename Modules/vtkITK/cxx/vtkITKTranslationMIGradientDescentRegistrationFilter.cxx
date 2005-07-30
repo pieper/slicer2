@@ -68,17 +68,11 @@ vtkITKTranslationMIGradientDescentRegistrationFilter::GetTransformationMatrix(vt
 
   itk::itkTranslationMIGradientDescentRegistrationFilter::TransformType::ParametersType params = transform->GetParameters();
  
-  // itk matrix
-  vtkMatrix4x4 *matrixITK =  vtkMatrix4x4::New();
-  matrixITK->Identity();
-  matrixITK->Element[0][3] = params[0];
-  matrixITK->Element[1][3] = params[1];
-  matrixITK->Element[2][3] = params[2];
+  matrix->Identity();
+  matrix->Element[0][3] = params[0];
+  matrix->Element[1][3] = params[1];
+  matrix->Element[2][3] = params[2];
 
-  // transform from itk to vtk space
-  vtkITKTransformRegistrationFilter::vtkItkMatrixTransform(matrixITK, matrix);
-
-  matrixITK->Delete();
 }
   
 void
@@ -91,17 +85,12 @@ vtkITKTranslationMIGradientDescentRegistrationFilter::GetCurrentTransformationMa
   
   itk::itkTranslationMIGradientDescentRegistrationFilter::TransformType::ParametersType params = transform->GetParameters();
  
-  // itk matrix
-  vtkMatrix4x4 *matrixITK =  vtkMatrix4x4::New();
-  matrixITK->Identity();
-  matrixITK->Element[0][3] = params[0];
-  matrixITK->Element[1][3] = params[1];
-  matrixITK->Element[2][3] = params[2];
+ 
+  matrix->Identity();
+  matrix->Element[0][3] = params[0];
+  matrix->Element[1][3] = params[1];
+  matrix->Element[2][3] = params[2];
 
-  // transform from itk to vtk space
-  vtkITKTransformRegistrationFilter::vtkItkMatrixTransform(matrixITK, matrix);
-
-  matrixITK->Delete();
 }
   
 void 
@@ -109,15 +98,9 @@ vtkITKTranslationMIGradientDescentRegistrationFilter::SetTransformationMatrix(vt
 {
   itk::itkTranslationMIGradientDescentRegistrationFilter::ParametersType  initialParameters = itk::itkTranslationMIGradientDescentRegistrationFilter::ParametersType(3);
 
-  // transform from vtk to itk space
-  vtkMatrix4x4 *matrixITK =  vtkMatrix4x4::New();
-  vtkITKTransformRegistrationFilter::vtkItkMatrixTransform(matrix, matrixITK);
-
-  initialParameters[0] = matrixITK->Element[0][3];
-  initialParameters[1] = matrixITK->Element[1][3];
-  initialParameters[2] = matrixITK->Element[2][3];
-
-  matrixITK->Delete();
+  initialParameters[0] = matrix->Element[0][3];
+  initialParameters[1] = matrix->Element[1][3];
+  initialParameters[2] = matrix->Element[2][3];
 
   itk::itkTranslationMIGradientDescentRegistrationFilter::TransformType::Pointer transform = itk::itkTranslationMIGradientDescentRegistrationFilter::TransformType::New();
   transform->SetParameters(initialParameters);
