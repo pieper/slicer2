@@ -155,7 +155,7 @@ proc TranslationMIGradientDescentRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2005/07/23 17:39:20 $}]
+        {$Revision: 1.2 $} {$Date: 2005/07/30 18:46:39 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -465,6 +465,8 @@ proc TranslationMIGradientDescentRegistrationSetLevel {} {
     set level $TranslationMIGradientDescentRegistration(Level)
     raise $TranslationMIGradientDescentRegistration(f${level})
     focus $TranslationMIGradientDescentRegistration(f${level})
+    set value $TranslationMIGradientDescentRegistration(Objective)
+    TranslationMIGradientDescentRegistration${value}Param 
 }
 
 #-------------------------------------------------------------------------------

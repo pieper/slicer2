@@ -34,36 +34,36 @@
 # 
 #
 #===============================================================================
-# FILE:        MutualInformationRegistration.tcl
+# FILE:        TranslationMattesMIRegistration.tcl
 # PROCEDURES:  
-#   MutualInformationRegistrationInit
-#   MutualInformationRegistrationBuildSubGui f
-#   MutualInformationRegistrationSetLevel
-#   MutualInformationRegistrationCoarseParam
-#   MutualInformationRegistrationFineParam
-#   MutualInformationRegistrationGSlowParam
-#   MutualInformationRegistrationGSlowParam
-#   MutualInformationRegistrationEnter
-#   MutualInformationRegistrationExit
-#   MutualInformationRegistrationAutoRun
-#   MutualInformationRegistrationStop
+#   TranslationMattesMIRegistrationInit
+#   TranslationMattesMIRegistrationBuildSubGui f
+#   TranslationMattesMIRegistrationSetLevel
+#   TranslationMattesMIRegistrationCoarseParam
+#   TranslationMattesMIRegistrationFineParam
+#   TranslationMattesMIRegistrationGSlowParam
+#   TranslationMattesMIRegistrationGSlowParam
+#   TranslationMattesMIRegistrationEnter
+#   TranslationMattesMIRegistrationExit
+#   TranslationMattesMIRegistrationAutoRun
+#   TranslationMattesMIRegistrationStop
 #   MutualInformationSetMetricOption vtkITKMI
-#   MutualInformationRegistrationAutoRun_Vtk
-#   MutualInformationRegistrationCopyRegImages res r v
+#   TranslationMattesMIRegistrationAutoRun_Vtk
+#   TranslationMattesMIRegistrationCopyRegImages res r v
 #==========================================================================auto=
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationInit
+# .PROC TranslationMattesMIRegistrationInit
 #  The "Init" procedure is called automatically by the slicer.  
 #  It puts information about the module into a global array called Module, 
 #  and it also initializes module-level variables.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationInit {} {
-    global RigidIntensityRegistration MutualInformationRegistration 
+proc TranslationMattesMIRegistrationInit {} {
+    global RigidIntensityRegistration TranslationMattesMIRegistration 
     global Module Volume Model
 
-    set m MutualInformationRegistration
+    set m TranslationMattesMIRegistration
 
     # Module Summary Info
     #------------------------------------
@@ -111,7 +111,7 @@ proc MutualInformationRegistrationInit {} {
     #   procedures are optional.  If they exist, then their name (which
     #   can be anything) is registered with a line like this:
     #
-    #   set Module($m,procVTK) MutualInformationRegistrationBuildVTK
+    #   set Module($m,procVTK) TranslationMattesMIRegistrationBuildVTK
     #
     #   All the options are:
 
@@ -132,10 +132,10 @@ proc MutualInformationRegistrationInit {} {
     #   string in your init function, of the form: 
     #   set Module($m,presets) "key1='val1' key2='val2' ..."
 
-#    set Module($m,procGUI) MutualInformationRegistrationBuildGUI
-#    set Module($m,procVTK) MutualInformationRegistrationBuildVTK
-#    set Module($m,procEnter) MutualInformationRegistrationEnter
-#    set Module($m,procExit) MutualInformationRegistrationExit
+#    set Module($m,procGUI) TranslationMattesMIRegistrationBuildGUI
+#    set Module($m,procVTK) TranslationMattesMIRegistrationBuildVTK
+#    set Module($m,procEnter) TranslationMattesMIRegistrationEnter
+#    set Module($m,procExit) TranslationMattesMIRegistrationExit
 
     # Define Dependencies
     #------------------------------------
@@ -155,7 +155,7 @@ proc MutualInformationRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.13 $} {$Date: 2005/07/30 18:46:39 $}]
+        {$Revision: 1.1 $} {$Date: 2005/07/30 18:46:39 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -166,17 +166,16 @@ proc MutualInformationRegistrationInit {} {
     #
 
     ## put here to show MI specific param
-    set MutualInformationRegistration(NumberOfSamples)  50
-    set MutualInformationRegistration(SourceStandardDeviation) 0.4
-    set MutualInformationRegistration(TargetStandardDeviation) 0.4
+    set TranslationMattesMIRegistration(NumberOfSamples)  5000
+    set TranslationMattesMIRegistration(NumberOfHistogramBins) 256
 
 
     ## Set the default to fast registration
-    MutualInformationRegistrationVerySlowParam
+    TranslationMattesMIRegistrationVerySlowParam
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationBuildSubGui
+# .PROC TranslationMattesMIRegistrationBuildSubGui
 #
 # Build the sub-gui under $f whatever frame is calling this one
 #
@@ -186,8 +185,8 @@ proc MutualInformationRegistrationInit {} {
 # frame f frame name
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationBuildSubGui {f} {
-    global Gui Matrix RigidIntensityRegistration MutualInformationRegistration
+proc TranslationMattesMIRegistrationBuildSubGui {f} {
+    global Gui Matrix RigidIntensityRegistration TranslationMattesMIRegistration
 
     set framename $f
 
@@ -223,14 +222,14 @@ proc MutualInformationRegistrationBuildSubGui {f} {
 
     foreach level "Help Normal Advanced" {
         eval {radiobutton $f.r$level \
-            -text "$level" -command "MutualInformationRegistrationSetLevel" \
-            -variable MutualInformationRegistration(Level) -value $level -width 10 \
+            -text "$level" -command "TranslationMattesMIRegistrationSetLevel" \
+            -variable TranslationMattesMIRegistration(Level) -value $level -width 10 \
             -indicatoron 0} $Gui(WRA)
-        set MutualInformationRegistration(r${level}) $f.r$level
+        set TranslationMattesMIRegistration(r${level}) $f.r$level
         pack $f.r$level -side left -padx 0 
     }
 
-    set MutualInformationRegistration(Level) Normal
+    set TranslationMattesMIRegistration(Level) Normal
 
     #-------------------------------------------
     # Level frame
@@ -243,9 +242,9 @@ proc MutualInformationRegistrationBuildSubGui {f} {
     foreach type "Help Normal Advanced" {
         frame $f.f${type} -bg $Gui(activeWorkspace)
         place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
-        set MutualInformationRegistration(f${type}) $f.f${type}
+        set TranslationMattesMIRegistration(f${type}) $f.f${type}
     }
-    raise $MutualInformationRegistration(fNormal)
+    raise $TranslationMattesMIRegistration(fNormal)
 
     set fnormal   $framename.fLevel.fNormal
     set fadvanced $framename.fLevel.fAdvanced
@@ -280,15 +279,15 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
     </UL>"
 
     regsub -all "\n" $help { } help
-    MainHelpApplyTags MutualInformationRegistration $help
-#    MainHelpBuildGUI  MutualInformationRegistration 
+    MainHelpApplyTags TranslationMattesMIRegistration $help
+#    MainHelpBuildGUI  TranslationMattesMIRegistration 
 
     global Help
     set f  $fhelp
     frame $f.fWidget -bg $Gui(activeWorkspace)
     pack $f.fWidget -side top -padx 2 -fill both -expand true
     set tmp [HelpWidget $f.fWidget]
-    MainHelpShow $tmp MutualInformationRegistration
+    MainHelpShow $tmp TranslationMattesMIRegistration
 
     #-------------------------------------------
     # Level->Normal frame
@@ -334,15 +333,15 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
         width "6 6 15 21" {
         eval {radiobutton $f.fBtns.$row.r$value -width $width \
         -text "$text" -value "$value" \
-        -command MutualInformationRegistration${value}Param \
-        -variable MutualInformationRegistration(Objective) \
+        -command TranslationMattesMIRegistration${value}Param \
+        -variable TranslationMattesMIRegistration(Objective) \
         -indicatoron 0} $Gui(WCA) 
         pack $f.fBtns.$row.r$value -side left -padx 4 -pady 2
         if { $value == "Fine" } {incr row};
         if { $value == "GSlow" } {incr row};
     }
 
-   set MutualInformationRegistration(Objective) VerySlow
+   set TranslationMattesMIRegistration(Objective) VerySlow
 
     #-------------------------------------------
     # Level->Normal->Repeat Frame
@@ -366,10 +365,10 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
     set f $fnormal.fRun
 
     eval {button $f.bRun -text "Start" -width [expr [string length "Start"]+1] \
-            -command "MutualInformationRegistrationAutoRun"} $Gui(WBA)
+            -command "TranslationMattesMIRegistrationAutoRun"} $Gui(WBA)
 
     pack $f.bRun -side left -padx $Gui(pad) -pady $Gui(pad)
-    set MutualInformationRegistration(b1Run) $f.bRun
+    set TranslationMattesMIRegistration(b1Run) $f.bRun
 
     #-------------------------------------------
     # Level->Advanced
@@ -416,19 +415,17 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
 
     foreach param { \
                    {UpdateIterations} \
-                   {LearningRate} \
-                   {TranslateScale} \
+                   {MinimumStepLength} \
+                   {MaximumStepLength} \
                    {NumberOfSamples} \
-                   {SourceStandardDeviation} \
-                   {TargetStandardDeviation} \
+                   {NumberOfHistogramBins} \
                    } name \
                   { \
                    {Update Iterations} \
-                   {Learning Rate} \
-                   {Translate Scale} \
+                   {Minimum Step Length} \
+                   {Maximum Step Length} \
                    {Number Of Samples} \
-                   {Source Standard Deviation} \
-                   {Target Standard Deviation} \
+                   {Number Of Histogram Bins} \
                    } {
         set f $fadvanced.fParam
         frame $f.f$param   -bg $Gui(activeWorkspace)
@@ -436,7 +433,7 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
         
         set f $f.f$param
         eval {label $f.l$param -text "$name:"} $Gui(WLA)
-        eval {entry $f.e$param -width 10 -textvariable MutualInformationRegistration($param)} $Gui(WEA)
+        eval {entry $f.e$param -width 10 -textvariable TranslationMattesMIRegistration($param)} $Gui(WEA)
         pack $f.l$param -side left -padx $Gui(pad) -fill x -anchor w
         pack $f.e$param -side left -padx $Gui(pad) -expand 1
     }
@@ -448,15 +445,15 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
 
     foreach str "Run" {
         eval {button $f.b$str -text "$str" -width [expr [string length $str]+1] \
-            -command "MutualInformationRegistrationAuto$str"} $Gui(WBA)
-        set MutualInformationRegistration(b$str) $f.b$str
+            -command "TranslationMattesMIRegistrationAuto$str"} $Gui(WBA)
+        set TranslationMattesMIRegistration(b$str) $f.b$str
     }
     pack $f.bRun -side left -padx $Gui(pad) -pady $Gui(pad)
-    set MutualInformationRegistration(b2Run) $f.bRun
+    set TranslationMattesMIRegistration(b2Run) $f.bRun
 }  
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationSetLevel
+# .PROC TranslationMattesMIRegistrationSetLevel
 #
 # Set the registration mechanism depending on which button the user selected in
 # the Auto tab.
@@ -464,18 +461,18 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationSetLevel {} {
-    global MutualInformationRegistration RigidIntensityRegistration
+proc TranslationMattesMIRegistrationSetLevel {} {
+    global TranslationMattesMIRegistration RigidIntensityRegistration
 
-    set level $MutualInformationRegistration(Level)
-    raise $MutualInformationRegistration(f${level})
-    focus $MutualInformationRegistration(f${level})
-    set value $MutualInformationRegistration(Objective)
-    MutualInformationRegistration${value}Param 
+    set level $TranslationMattesMIRegistration(Level)
+    raise $TranslationMattesMIRegistration(f${level})
+    focus $TranslationMattesMIRegistration(f${level})
+    set value $TranslationMattesMIRegistration(Objective)
+    TranslationMattesMIRegistration${value}Param 
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationCoarseParam
+# .PROC TranslationMattesMIRegistrationCoarseParam
 #
 #  These parameters should allow the user the ability to intervene
 #  and decide when he/she is done.
@@ -483,8 +480,39 @@ proc MutualInformationRegistrationSetLevel {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationCoarseParam {} {
-    global MutualInformationRegistration RigidIntensityRegistration
+proc TranslationMattesMIRegistrationCoarseParam {} {
+    global TranslationMattesMIRegistration RigidIntensityRegistration
+
+    set RigidIntensityRegistration(Resolution)       64
+    set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
+    set RigidIntensityRegistration(TargetShrinkFactors)   "1 1 1"
+    set RigidIntensityRegistration(Repeat) 1
+
+    # If Wells, Viola, Atsumi, etal, 
+    # used 2 and 4. Wells claims exact number not critical (personal communication)
+    # They scaled data 0...256.
+    # We scale data -1 to 1.
+    # 2/256*2 = 0.015
+    set TranslationMattesMIRegistration(MinimumStepLength)    0.01
+    set TranslationMattesMIRegistration(MaximumStepLength)    4.0
+    set TranslationMattesMIRegistration(UpdateIterations) 100
+
+    set TranslationMattesMIRegistration(NumberOfSamples)  10000
+    set TranslationMattesMIRegistration(NumberOfHistogramBins) 128
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC TranslationMattesMIRegistrationFineParam
+#
+#  These parameters should allow the user the ability to intervene
+#  and decide when he/she is done.
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc TranslationMattesMIRegistrationFineParam {} {
+    global TranslationMattesMIRegistration RigidIntensityRegistration
 
     set RigidIntensityRegistration(Resolution)       128
     set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
@@ -496,58 +524,25 @@ proc MutualInformationRegistrationCoarseParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
-    set MutualInformationRegistration(LearningRate)    3e-5
-    set MutualInformationRegistration(UpdateIterations) 100
-    set MutualInformationRegistration(TranslateScale)   320
+    set TranslationMattesMIRegistration(MinimumStepLength)     0.01
+    set TranslationMattesMIRegistration(MaximumStepLength)     4.0
+    set TranslationMattesMIRegistration(UpdateIterations) 1000
 
-    set MutualInformationRegistration(NumberOfSamples)  50
-    set MutualInformationRegistration(SourceStandardDeviation) 0.4
-    set MutualInformationRegistration(TargetStandardDeviation) 0.4
+    set TranslationMattesMIRegistration(NumberOfHistogramBins) 200
+    set TranslationMattesMIRegistration(NumberOfSamples)  10000
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationFineParam
-#
-#  These parameters should allow the user the ability to intervene
-#  and decide when he/she is done.
-#
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc MutualInformationRegistrationFineParam {} {
-    global MutualInformationRegistration RigidIntensityRegistration
-
-    set RigidIntensityRegistration(Resolution)       128
-    set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
-    set RigidIntensityRegistration(TargetShrinkFactors)   "1 1 1"
-    set RigidIntensityRegistration(Repeat) 1
-
-    # If Wells, Viola, Atsumi, etal, 
-    # used 2 and 4. Wells claims exact number not critical (personal communication)
-    # They scaled data 0...256.
-    # We scale data -1 to 1.
-    # 2/256*2 = 0.015
-    set MutualInformationRegistration(LearningRate)     3e-6
-    set MutualInformationRegistration(UpdateIterations) 100
-    set MutualInformationRegistration(TranslateScale)   320
-
-    set MutualInformationRegistration(SourceStandardDeviation) 0.4
-    set MutualInformationRegistration(TargetStandardDeviation) 0.4
-    set MutualInformationRegistration(NumberOfSamples)  50
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationGSlowParam
+# .PROC TranslationMattesMIRegistrationGSlowParam
 #
 # This should run until completion and give a good registration
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationGSlowParam {} {
-    global MutualInformationRegistration RigidIntensityRegistration
+proc TranslationMattesMIRegistrationGSlowParam {} {
+    global TranslationMattesMIRegistration RigidIntensityRegistration
 
     set RigidIntensityRegistration(Resolution)       128
     set RigidIntensityRegistration(SourceShrinkFactors)   "2 2 2"
@@ -559,29 +554,28 @@ proc MutualInformationRegistrationGSlowParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
-    set MutualInformationRegistration(UpdateIterations) "500 1000"
-    set MutualInformationRegistration(LearningRate)    "0.0001 0.00001"
-    set MutualInformationRegistration(TranslateScale)   320
+    set TranslationMattesMIRegistration(UpdateIterations) "500 1000"
+    set TranslationMattesMIRegistration(MinimumStepLength)    "0.02 0.01"
+    set TranslationMattesMIRegistration(MaximumStepLength)    "4.0 1.0"
 
-    set MutualInformationRegistration(NumberOfSamples)  50
-    set MutualInformationRegistration(SourceStandardDeviation) 0.4
-    set MutualInformationRegistration(TargetStandardDeviation) 0.4
+    set TranslationMattesMIRegistration(NumberOfSamples)  50000
+    set TranslationMattesMIRegistration(NumberOfHistogramBins) 200
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationGSlowParam
+# .PROC TranslationMattesMIRegistrationGSlowParam
 #
 # This should run until completion and give a good registration
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationVerySlowParam {} {
-    global MutualInformationRegistration RigidIntensityRegistration
+proc TranslationMattesMIRegistrationVerySlowParam {} {
+    global TranslationMattesMIRegistration RigidIntensityRegistration
 
     set RigidIntensityRegistration(Resolution)       128 
-    set RigidIntensityRegistration(SourceShrinkFactors)   "4 4 1"
-    set RigidIntensityRegistration(TargetShrinkFactors)   "4 4 1"
+    set RigidIntensityRegistration(SourceShrinkFactors)   "4 4 4"
+    set RigidIntensityRegistration(TargetShrinkFactors)   "4 4 4"
     set RigidIntensityRegistration(Repeat) 0
 
     # If Wells, Viola, Atsumi, etal, 
@@ -589,36 +583,25 @@ proc MutualInformationRegistrationVerySlowParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
-    set MutualInformationRegistration(UpdateIterations) "2500 2500 2500 2500 2500"
-    set MutualInformationRegistration(LearningRate)    "1e-4 1e-5 5e-6 1e-6 5e-7"
-    set MutualInformationRegistration(TranslateScale)   320
+    set TranslationMattesMIRegistration(UpdateIterations) "1000 1000 1000"
+    set TranslationMattesMIRegistration(MinimumStepLength) "0.01 0.01 0.005"
+    set TranslationMattesMIRegistration(MaximumStepLength) "4.0 1 0.5"
 
-    set MutualInformationRegistration(NumberOfSamples)          "50"
-    set MutualInformationRegistration(SourceStandardDeviation) 0.4
-    set MutualInformationRegistration(TargetStandardDeviation) 0.4
-}
+    set TranslationMattesMIRegistration(NumberOfSamples)   100000
+    set TranslationMattesMIRegistration(NumberOfHistogramBins) 256
 
-proc RigidIntensityRegistrationCheckParametersMI {} {
-    global MutualInformationRegistration RigidIntensityRegistration
-
-    if {[llength $MutualInformationRegistration(LearningRate) ] != \
-        [llength $MutualInformationRegistration(UpdateIterations) ] } {
-        DevErrorWindow "Must Have same number of levels of iterations as learning rates"
-       return 0
-    }
-    return 1
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationEnter
+# .PROC TranslationMattesMIRegistrationEnter
 # Called when this module is entered by the user.  Pushes the event manager
 # for this module. This never gets called.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationEnter {} {
-    global MutualInformationRegistration RigidIntensityRegistration
+proc TranslationMattesMIRegistrationEnter {} {
+    global TranslationMattesMIRegistration RigidIntensityRegistration
     
     # Push event manager
     #------------------------------------
@@ -628,22 +611,22 @@ proc MutualInformationRegistrationEnter {} {
     #   The pushEventManager routine saves the previous bindings on 
     #   a stack and binds our new ones.
     #   (See slicer/program/tcl-shared/Events.tcl for more details.)
-    pushEventManager $MutualInformationRegistration(eventManager)
+    pushEventManager $TranslationMattesMIRegistration(eventManager)
 
     # clear the text box and put instructions there
-    $MutualInformationRegistration(textBox) delete 1.0 end
-    $MutualInformationRegistration(textBox) insert end "Shift-Click anywhere!\n"
+    $TranslationMattesMIRegistration(textBox) delete 1.0 end
+    $TranslationMattesMIRegistration(textBox) insert end "Shift-Click anywhere!\n"
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationExit
+# .PROC TranslationMattesMIRegistrationExit
 # Called when this module is exited by the user.  Pops the event manager
 # for this module. This never gets called. 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationExit {} {
+proc TranslationMattesMIRegistrationExit {} {
 
     # Pop event manager
     #------------------------------------
@@ -656,26 +639,26 @@ proc MutualInformationRegistrationExit {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationAutoRun
+# .PROC TranslationMattesMIRegistrationAutoRun
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationAutoRun {} {
-    global Matrix MutualInformationRegistration RigidIntensityRegistration
+proc TranslationMattesMIRegistrationAutoRun {} {
+    global Matrix TranslationMattesMIRegistration RigidIntensityRegistration
 
     if {[RigidIntensityRegistrationSetUp] == 0} {
       return 0
     }
 
     if {$::Module(verbose)} { 
-        puts "Starting MutualInformationRegistrationAutoRun"
+        puts "Starting TranslationMattesMIRegistrationAutoRun"
     }
 
 #    Gering version disabled
-#    MutualInformationRegistrationAutoRun_Vtk  
+#    TranslationMattesMIRegistrationAutoRun_Vtk  
 
-    global Path env Gui Matrix Volume MutualInformationRegistration
+    global Path env Gui Matrix Volume TranslationMattesMIRegistration
 
     # TODO make islicer a package
     source $env(SLICER_HOME)/Modules/iSlicer/tcl/isregistration.tcl
@@ -692,48 +675,48 @@ proc MutualInformationRegistrationAutoRun {} {
     .mi.reg config \
         -source          $RigidIntensityRegistration(sourceId)          \
         -target          $RigidIntensityRegistration(targetId)          \
-        -resolution      $RigidIntensityRegistration(Resolution)        \
         -update_procedure RigidIntensityRegistrationUpdateParam        \
-        -stop_procedure    MutualInformationRegistrationStop            \
-        -set_metric_option MutualInformationRegistrationSetMetricOption \
-        -set_optimizer_option MutualInformationRegistrationSetOptimizerOption \
-        -vtk_itk_reg       vtkITKMutualInformationTransform               
+        -stop_procedure    TranslationMattesMIRegistrationStop            \
+        -set_metric_option TranslationMattesMIRegistrationSetMetricOption \
+        -set_optimizer_option TranslationMattesMIRegistrationSetOptimizerOption \
+        -resample 1 \
+        -vtk_itk_reg       vtkITKTranslationMattesMIRegistrationFilter               
 
 
     if {$::Module(verbose)} {
         puts "to see the pop-up window, type: pack .mi.reg -fill both -expand true"
     }
   #  pack .mi.reg -fill both -expand true
-    $MutualInformationRegistration(b1Run) configure -command \
-                                      "MutualInformationRegistrationStop"
-    $MutualInformationRegistration(b2Run) configure -command \
-                                      "MutualInformationRegistrationStop"
-    $MutualInformationRegistration(b1Run) configure -text "Stop"
-    $MutualInformationRegistration(b2Run) configure -text "Stop"
+    $TranslationMattesMIRegistration(b1Run) configure -command \
+                                      "TranslationMattesMIRegistrationStop"
+    $TranslationMattesMIRegistration(b2Run) configure -command \
+                                      "TranslationMattesMIRegistrationStop"
+    $TranslationMattesMIRegistration(b1Run) configure -text "Stop"
+    $TranslationMattesMIRegistration(b2Run) configure -text "Stop"
     if {$::Module(verbose)} {
-        puts "MutualInformationRegistrationAutoRun: calling .mi.reg start"
+        puts "TranslationMattesMIRegistrationAutoRun: calling .mi.reg start"
     }
     .mi.reg start
     if {$::Module(verbose)} { 
-        puts "MutualInformationRegistrationAutoRun: done .mi.reg"
+        puts "TranslationMattesMIRegistrationAutoRun: done .mi.reg"
     }
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationStop
+# .PROC TranslationMattesMIRegistrationStop
 #
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationStop {} {
-    global MutualInformationRegistration RigidIntensityRegistration
+proc TranslationMattesMIRegistrationStop {} {
+    global TranslationMattesMIRegistration RigidIntensityRegistration
     .mi.reg stop
-    $MutualInformationRegistration(b1Run) configure -command \
-                                          "MutualInformationRegistrationAutoRun"
-    $MutualInformationRegistration(b2Run) configure -command \
-                                          "MutualInformationRegistrationAutoRun"
-    $MutualInformationRegistration(b1Run) configure -text "Start"
-    $MutualInformationRegistration(b2Run) configure -text "Start"
+    $TranslationMattesMIRegistration(b1Run) configure -command \
+                                          "TranslationMattesMIRegistrationAutoRun"
+    $TranslationMattesMIRegistration(b2Run) configure -command \
+                                          "TranslationMattesMIRegistrationAutoRun"
+    $TranslationMattesMIRegistration(b1Run) configure -text "Start"
+    $TranslationMattesMIRegistration(b2Run) configure -text "Start"
 }
 
 
@@ -746,17 +729,17 @@ proc MutualInformationRegistrationStop {} {
 # vtkITKMutualInformation vtkITKMI
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationSetMetricOption { vtkITKMI } {
-    global MutualInformationRegistration 
+proc TranslationMattesMIRegistrationSetMetricOption { vtkITKMI } {
+    global TranslationMattesMIRegistration 
 
-    $vtkITKMI SetSourceStandardDeviation $MutualInformationRegistration(SourceStandardDeviation)
-    $vtkITKMI SetTargetStandardDeviation $MutualInformationRegistration(TargetStandardDeviation)
-    $vtkITKMI SetNumberOfSamples $MutualInformationRegistration(NumberOfSamples)
+    $vtkITKMI SetNumberOfHistogramBins $TranslationMattesMIRegistration(NumberOfHistogramBins)
+    $vtkITKMI SetNumberOfSamples $TranslationMattesMIRegistration(NumberOfSamples)
 
 }
 
+
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationSetOptimizerOption
+# .PROC TranslationMattesMIRegistrationSetOptimizerOption
 #
 # takes in a vtkITKMutualInformation object
 #
@@ -764,24 +747,41 @@ proc MutualInformationRegistrationSetMetricOption { vtkITKMI } {
 # vtkITKMutualInformation vtkITKMI
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationSetOptimizerOption { vtkITKMI } {
-    global MutualInformationRegistration
-    
-    $vtkITKMI SetTranslateScale $MutualInformationRegistration(TranslateScale)
+proc TranslationMattesMIRegistrationSetOptimizerOption { vtkITKMI } {
+    global TranslationMattesMIRegistration
     
     # set for MultiResStuff
     $vtkITKMI ResetMultiResolutionSettings
 
-    foreach iter  $MutualInformationRegistration(UpdateIterations) {
+    foreach iter  $TranslationMattesMIRegistration(UpdateIterations) {
         $vtkITKMI SetNextMaxNumberOfIterations $iter
     }
-    foreach rate $MutualInformationRegistration(LearningRate) {
-        $vtkITKMI SetNextLearningRate  $rate
+    foreach step $TranslationMattesMIRegistration(MinimumStepLength) {
+        $vtkITKMI SetNextMinimumStepLength $step
+        puts "min step = $step"
+    }
+    foreach step $TranslationMattesMIRegistration(MaximumStepLength) {
+        $vtkITKMI SetNextMaximumStepLength $step
+        puts "max step = $step"
     }
 }
 
+proc RigidIntensityRegistrationCheckParametersTranslationMattesMI {} {
+    global TranslationMattesMIRegistration RigidIntensityRegistration
+
+    if {([llength $TranslationMattesMIRegistration(MinimumStepLength) ] != \
+        [llength $TranslationMattesMIRegistration(UpdateIterations) ]) &&  \
+        ([llength $TranslationMattesMIRegistration(MaximumStepLength) ] != \
+             [llength $TranslationMattesMIRegistration(UpdateIterations) ])} {
+        DevErrorWindow "Must Have same number of levels of iterations as learning rates"
+       return 0
+    }
+    return 1
+}
+
+
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationAutoRun_Vtk
+# .PROC TranslationMattesMIRegistrationAutoRun_Vtk
 #
 #
 # These are the tools written by Dave Gering (and implemented by Hanifa Dostmohamed)
@@ -791,10 +791,10 @@ proc MutualInformationRegistrationSetOptimizerOption { vtkITKMI } {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationAutoRun_Vtk {} {
-    global Path env Gui Matrix Volume MutualInformationRegistration
+proc TranslationMattesMIRegistrationAutoRun_Vtk {} {
+    global Path env Gui Matrix Volume TranslationMattesMIRegistration
 
-    if {$::Module(verbose)} { puts "starting MutualInformationRegistrationAutoRun_Vtk..." }
+    if {$::Module(verbose)} { puts "starting TranslationMattesMIRegistrationAutoRun_Vtk..." }
 
     # v = ID of volume to register
     # r = ID of reference volume
@@ -901,19 +901,19 @@ proc MutualInformationRegistrationAutoRun_Vtk {} {
           if {$res != $resDisplay} {
               if {$::Module(verbose)} { puts "Current Pose at res=$res is: [$currentPose Print]" } 
             set resDisplay $res
-            MutualInformationRegistrationCopyRegImages $res $r $v
+            TranslationMattesMIRegistrationCopyRegImages $res $r $v
           }
         }
 
         if {$::Module(verbose)} {
-            puts "MutualInformationRegistration\t calling main update mrml and renderall"
+            puts "TranslationMattesMIRegistration\t calling main update mrml and renderall"
         }
         # Update MRML and display
         MainUpdateMRML
         RenderAll
    }
     if {$::Module(verbose)} { 
-        puts "\t MutualInformationRegistration done loop"
+        puts "\t TranslationMattesMIRegistration done loop"
     }
    MainEndProgress
 
@@ -930,7 +930,7 @@ proc MutualInformationRegistrationAutoRun_Vtk {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MutualInformationRegistrationCopyRegImages
+# .PROC TranslationMattesMIRegistrationCopyRegImages
 #
 # Stuff for Dave Gering implementation
 #
@@ -940,7 +940,7 @@ proc MutualInformationRegistrationAutoRun_Vtk {} {
 # int v
 # .END
 #-------------------------------------------------------------------------------
-proc MutualInformationRegistrationCopyRegImages {res r v} {
+proc TranslationMattesMIRegistrationCopyRegImages {res r v} {
   global Volume
 
   #

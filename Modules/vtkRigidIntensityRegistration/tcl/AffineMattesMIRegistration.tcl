@@ -155,7 +155,7 @@ proc AffineMattesMIRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2005/07/26 19:41:38 $}]
+        {$Revision: 1.3 $} {$Date: 2005/07/30 18:46:38 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -469,6 +469,8 @@ proc AffineMattesMIRegistrationSetLevel {} {
     set level $AffineMattesMIRegistration(Level)
     raise $AffineMattesMIRegistration(f${level})
     focus $AffineMattesMIRegistration(f${level})
+    set value $AffineMattesMIRegistration(Objective)
+    AffineMattesMIRegistration${value}Param 
 }
 
 #-------------------------------------------------------------------------------

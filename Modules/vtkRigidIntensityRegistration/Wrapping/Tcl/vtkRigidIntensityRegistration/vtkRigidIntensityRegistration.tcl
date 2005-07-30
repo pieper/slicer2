@@ -16,6 +16,7 @@ if {[::vtk::load_component vtkRigidIntensityRegistrationTCL] == "" } {
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/MutualInformationRegistration.tcl]
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/AffineMattesMIRegistration.tcl]
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/VersorMattesMIRegistration.tcl]
+    source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/TranslationMattesMIRegistration.tcl]
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/TranslationMIGradientDescentRegistration.tcl]
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/KullbackLeiblerRegistration.tcl]
 
@@ -27,6 +28,7 @@ if {[::vtk::load_component vtkRigidIntensityRegistrationTCL] == "" } {
     lappend Module(customModules) MutualInformationRegistration
     lappend Module(customModules) AffineMattesMIRegistration
     lappend Module(customModules) VersorMattesMIRegistration
+    lappend Module(customModules) TranslationMattesMIRegistration
     lappend Module(customModules) TranslationMIGradientDescentRegistration
     lappend Module(customModules) KullbackLeiblerRegistration
 }

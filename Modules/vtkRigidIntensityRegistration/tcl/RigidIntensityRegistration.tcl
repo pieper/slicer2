@@ -152,7 +152,7 @@ proc RigidIntensityRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.13 $} {$Date: 2005/07/26 19:41:38 $}]
+        {$Revision: 1.14 $} {$Date: 2005/07/30 18:46:39 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -218,23 +218,24 @@ proc RigidIntensityRegistrationBuildSubGui {f} {
     frame $f.f -bg $Gui(backdrop)
     pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
 
-    set RigidIntensityRegistration(RegType) MI
+    set RigidIntensityRegistration(RegType) VersorMattesMI
 
-    eval {menubutton $f.mbType -text $RigidIntensityRegistration(RegType) \
+    eval {menubutton $f.mbType -text "Rigid Mattes MI" \
             -relief raised -bd 2 -width 20 \
             -menu $f.mbType.m} $Gui(WMBA) 
     eval {menu $f.mbType.m} $Gui(WMA)
     pack  $f.mbType -side left -pady 1 -padx $Gui(pad)
     # Add menu items
-    foreach RegType "MI TranslationMI VersorMattesMI AffineMattesMI KL" {
-        $f.mbType.m add command -label $RegType \
+    foreach RegType {{MI} {TranslationMI} {TranslationMattesMI} {VersorMattesMI} {AffineMattesMI} {KL}} \
+        name {{Rigid MI} {Translation MI} {Translation Mattes MI} {Rigid Mattes MI} {Affine Mattes MI} {KL}} { \
+        $f.mbType.m add command -label $name \
                 -command "RigidIntensityRegistrationSetRegType $RegType"
-    }
+        }
     # save menubutton for config
     set RigidIntensityRegistration(gui,mbRegistrationType) $f.mbType
     # put a tooltip over the menu
     TooltipAdd $f.mbType \
-            "Choose the type of Registration Algorithm. Choose MattesMIVersor unless you know what you are doing."
+            "Choose the type of Registration Algorithm. Choose Rigid Mattes MI unless you know what you are doing."
 
     #-------------------------------------------
     # Choice frame
@@ -244,17 +245,18 @@ proc RigidIntensityRegistrationBuildSubGui {f} {
     #
     # Swappable Frames for MI/KL methods
     #
-    foreach type "MI TranslationMI VersorMattesMI AffineMattesMI KL" {
+    foreach type "MI TranslationMI TranslationMattesMI VersorMattesMI AffineMattesMI KL" {
         frame $f.f${type} -bg $Gui(activeWorkspace)
         place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
         set RigidIntensityRegistration(f${type}) $f.f${type}
     }
-    raise $RigidIntensityRegistration(fMI)
+    raise $RigidIntensityRegistration(fVersorMattesMI)
 
     MutualInformationRegistrationBuildSubGui $f.fMI
     TranslationMIGradientDescentRegistrationBuildSubGui $f.fTranslationMI
     VersorMattesMIRegistrationBuildSubGui $f.fVersorMattesMI
     AffineMattesMIRegistrationBuildSubGui $f.fAffineMattesMI
+    TranslationMattesMIRegistrationBuildSubGui $f.fTranslationMattesMI
     KullbackLeiblerRegistrationBuildSubGui $f.fKL
     set fKL $f.fKL
 }
