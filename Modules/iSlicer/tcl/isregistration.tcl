@@ -83,7 +83,7 @@ option add *isregistration.transform         "" widgetDefault
 option add *isregistration.resolution       128 widgetDefault
 option add *isregistration.target_shrink {1 1 1} widgetDefault
 option add *isregistration.source_shrink {1 1 1} widgetDefault
-option add *isregistration.vtk_itk_reg   "vtkITKMutualInformationTransform" \
+option add *isregistration.vtk_itk_reg   "vtkITKVersorMattesMiVersorRegistrationFilter" \
                                                  widgetDefault
 option add *isregistration.set_metric_option  "" widgetDefault
 option add *isregistration.set_optimizer_option  "" widgetDefault
