@@ -25,7 +25,7 @@ void vtkITKTranslationMIGradientDescentRegistrationFilter::CreateRegistrationPip
   m_ITKFilter->SetInput(itkImporterFixed->GetOutput());
   m_ITKFilter->SetInput(1, itkImporterMoving->GetOutput());
 
-  vtkITKTranslationMIGradientDescentRegistrationCommand::Pointer observer = vtkITKTranslationMIGradientDescentRegistrationCommand::New();
+  vtkITKTransformRegistrationCommand::Pointer observer = vtkITKTransformRegistrationCommand::New();
   observer->SetRegistrationFilter(this);
   m_ITKFilter->AddIterationObserver(observer );
 }

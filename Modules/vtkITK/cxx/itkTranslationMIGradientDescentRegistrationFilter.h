@@ -46,8 +46,6 @@ public:
   itkGetMacro(NumberOfSpatialSamples, int);
   itkSetMacro(NumberOfSpatialSamples, int);
 
-  int GetCurrentLevel() { return m_Registration->GetCurrentLevel();};
-
 protected:  
   virtual void SetOptimizerParamters();
   
@@ -124,10 +122,11 @@ public:
         m_fo.flush();
       }
     }
-    
+
     if( ! itk::IterationEvent().CheckEvent( &event ) ) {
       return;
     }
+
     unsigned int level = m_registration->GetCurrentLevel();
     int numIter = m_registration->GetNumberOfIterations().GetElement(level);
     double learningRate  = m_registration->GetLearningRate().GetElement(level); 

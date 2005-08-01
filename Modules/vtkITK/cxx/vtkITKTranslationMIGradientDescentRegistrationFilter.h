@@ -26,12 +26,6 @@ public:
     Superclass::PrintSelf ( os, indent );
   };
 
-  // Description
-  // The Max Number of Iterations at each multi-resolution level.
-  vtkSetObjectMacro(MaxNumberOfIterations,vtkUnsignedIntArray);
-  vtkGetObjectMacro(MaxNumberOfIterations,vtkUnsignedIntArray);
-
-
   vtkSetObjectMacro(LearningRate, vtkDoubleArray);
   vtkGetObjectMacro(LearningRate, vtkDoubleArray);
 
@@ -57,14 +51,6 @@ public:
   // Set the min step for the algorithm.
   void SetNextLearningRate(const double step)
   { LearningRate->InsertNextValue(step); };
-
-  // Description:
-  // Set the max number of iterations at each level
-  // Generally less than 5000, 2500 is OK.
-  // Must set the same number of Learning Rates as Iterations
-  void SetNextMaxNumberOfIterations(const int num)
-  { MaxNumberOfIterations->InsertNextValue(num); };
-
 
   void SetSourceShrinkFactors(unsigned int i,
                               unsigned int j, 
@@ -99,12 +85,12 @@ public:
     return  m_ITKFilter->GetMetricValue();
   }
 
-  int GetCurrentLevel() { return m_ITKFilter->GetCurrentLevel();};
+  virtual int GetCurrentLevel() { return m_ITKFilter->GetCurrentLevel();};
+
+  virtual int GetCurrentIteration() {return m_ITKFilter->GetCurrentIteration();};
 
 protected:
 
-
-  vtkUnsignedIntArray  *MaxNumberOfIterations;
 
   vtkDoubleArray       *LearningRate;
 
@@ -135,105 +121,8 @@ private:
   void operator=(const vtkITKTranslationMIGradientDescentRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKTranslationMIGradientDescentRegistrationFilter, "$Revision: 1.3 $");
-//vtkStandardNewMacro(vtkITKTranslationMIGradientDescentRegistrationFilter);
 vtkRegistrationNewMacro(vtkITKTranslationMIGradientDescentRegistrationFilter);
 
-
-
-
-
-///////////////////////////////////////////////////////////////////
-//
-//  The following section of code implements a Command observer
-//  that will monitor the evolution of the registration process.
-//
-
-//BTX
-
-class vtkITKTranslationMIGradientDescentRegistrationCommand :  public itk::Command 
-{
-public:
-  typedef  vtkITKTranslationMIGradientDescentRegistrationCommand   Self;
-  typedef  itk::Command             Superclass;
-  typedef  itk::SmartPointer<vtkITKTranslationMIGradientDescentRegistrationCommand>  Pointer;
-  itkNewMacro( vtkITKTranslationMIGradientDescentRegistrationCommand );
-
-  void SetRegistrationFilter (vtkITKTranslationMIGradientDescentRegistrationFilter *registration) {
-    m_registration = registration;
-  }
-  void SetLogFileName(char *filename) {
-    m_fo.open(filename);
-  }
-
-protected:
-  vtkITKTranslationMIGradientDescentRegistrationCommand() : m_fo("reg.log"), iterTotalCount(0) {};
-  vtkITKTranslationMIGradientDescentRegistrationFilter  *m_registration;
-  std::ofstream m_fo;
-
-  typedef itk::GradientDescentOptimizer     OptimizerType;
-  typedef OptimizerType   *    OptimizerPointer;
-  int iterTotalCount;
-public:
-  
-  virtual void Execute(const itk::Object *caller, const itk::EventObject & event)
-  {
-    Execute( ( itk::Object *)caller, event);
-  }
-  
-  virtual void Execute( itk::Object * object, const itk::EventObject & event)
-  {
-
-    OptimizerPointer optimizer = 
-      dynamic_cast< OptimizerPointer >( object );
-
-    if( typeid( event ) == typeid( itk::EndEvent ) ) {
-      OptimizerType::StopConditionType stopCondition = optimizer->GetStopCondition();
-      if (m_fo.good()) {
-        m_fo << "Optimizer stopped : " << std::endl;
-        m_fo << "Stop condition   =  " << stopCondition << std::endl;
-        switch(stopCondition) {
-        case OptimizerType::MaximumNumberOfIterations:
-          m_fo << "MaximumNumberOfIterations" << std::endl; 
-          break;
-        }
-        m_fo.flush();
-      }
-    }
-
-    if( ! itk::IterationEvent().CheckEvent( &event ) ) {
-      return;
-    }
-    int iter = m_registration->GetCurrentIteration();
-    unsigned int level = m_registration->GetCurrentLevel();
-    
-    vtkMatrix4x4 *mat = vtkMatrix4x4::New();
-    m_registration->GetCurrentTransformationMatrix(mat);
-
-    m_fo << "  ITERATION =" << optimizer->GetCurrentIteration() << "   " << std::endl;
-    mat->Print(m_fo);
-    m_fo << "Value=" << optimizer->GetValue() << "   ";
-    m_fo << "Position=" << optimizer->GetCurrentPosition() << std::endl;
-    m_fo.flush();
-
-    m_registration->SetCurrentIteration(iter+1);
-    
-    float maxNumIter = 0;
-    for(int i=0; i< m_registration->GetMaxNumberOfIterations()->GetNumberOfTuples();i++) {
-      maxNumIter += m_registration->GetMaxNumberOfIterations()->GetValue(i);
-    }
-    if (maxNumIter == 0) {
-      maxNumIter = 1;
-    }
-    m_registration->UpdateProgress( iterTotalCount++ / maxNumIter );
-    m_registration->InvokeEvent(vtkCommand::ProgressEvent);
-    
-    if (m_registration->GetAbortExecute()) {
-      m_registration->AbortIterations();
-    }
-  }
-};
-//ETX
 #endif
 
 

@@ -24,13 +24,10 @@ vtkITKVersorMattesMiVersorRegistrationFilter::vtkITKVersorMattesMiVersorRegistra
 
 void vtkITKVersorMattesMiVersorRegistrationFilter::CreateRegistrationPipeline()
 {
-  //DemonsRegistrationFilterCommand::Pointer observer = DemonsRegistrationFilterCommand::New();
-  //observer->SetDemonsRegistrationFilter(this);
-  //m_ITKFilter->AddIterationObserver(observer );
   m_ITKFilter->SetInput(itkImporterFixed->GetOutput());
   m_ITKFilter->SetInput(1, itkImporterMoving->GetOutput());
 
-  vtkITKVersorMattesMiVersorRegistrationCommand::Pointer observer = vtkITKVersorMattesMiVersorRegistrationCommand::New();
+  vtkITKTransformRegistrationCommand::Pointer observer = vtkITKTransformRegistrationCommand::New();
   observer->SetRegistrationFilter(this);
   m_ITKFilter->AddIterationObserver(observer );
 }

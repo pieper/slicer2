@@ -79,9 +79,13 @@ public:
   itkTypeMacro(itkTransformRegistrationFilter, itk::ImageToImageFilter);
 
   void AbortIterations() {
+    m_IsAborted = true;
     m_Optimizer->StopOptimization ();
   };
   
+  /** is aborted */
+  bool IsAborted() { return m_IsAborted; };
+
   unsigned long AddIterationObserver (itk::Command *observer );
 
   /** Set init transfrom */
@@ -113,8 +117,9 @@ public:
   itkSetMacro( FixedImageShrinkFactors, ShrinkFactorsArray );
   itkSetMacro( MovingImageShrinkFactors, ShrinkFactorsArray );
 
-  itkSetMacro(CurrentIteration, int);
-  itkGetMacro(CurrentIteration, int);
+  int GetCurrentLevel() { return m_Registration->GetCurrentLevel();};
+
+  int GetCurrentIteration() { return m_Optimizer->GetCurrentIteration(); };
 
   double GetMetricValue();
 
@@ -210,6 +215,8 @@ protected:
   ParametersType                       m_FinalParameters;
 
   int                                  m_CurrentIteration;
+
+  bool                                 m_IsAborted;
 
 private:
   itkTransformRegistrationFilter(const itkTransformRegistrationFilter&);  // Not implemented.

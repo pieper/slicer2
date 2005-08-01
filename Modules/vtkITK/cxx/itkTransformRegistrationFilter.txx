@@ -59,6 +59,7 @@ itk::itkTransformRegistrationFilter<TImageClass, TOptimizerClass, TTransformerCl
   //m_InitialParameters[3] = 1.0;
 
   m_ResampleMovingImage = false;
+  m_IsAborted = false;
 
 } // itkTransformRegistrationFilter
 

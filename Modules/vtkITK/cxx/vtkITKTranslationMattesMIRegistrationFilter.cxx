@@ -23,13 +23,11 @@ vtkITKTranslationMattesMIRegistrationFilter::vtkITKTranslationMattesMIRegistrati
 
 void vtkITKTranslationMattesMIRegistrationFilter::CreateRegistrationPipeline()
 {
-  //DemonsRegistrationFilterCommand::Pointer observer = DemonsRegistrationFilterCommand::New();
-  //observer->SetDemonsRegistrationFilter(this);
-  //m_ITKFilter->AddIterationObserver(observer );
   m_ITKFilter->SetInput(itkImporterFixed->GetOutput());
   m_ITKFilter->SetInput(1, itkImporterMoving->GetOutput());
 
-  vtkITKTranslationMattesMIRegistrationCommand::Pointer observer = vtkITKTranslationMattesMIRegistrationCommand::New();
+  vtkITKTransformRegistrationCommand::Pointer observer = vtkITKTransformRegistrationCommand::New();
+
   observer->SetRegistrationFilter(this);
   m_ITKFilter->AddIterationObserver(observer );
 }

@@ -52,8 +52,6 @@ public:
   itkGetMacro(ReinitializeSeed, int);
   itkSetMacro(ReinitializeSeed, int);
   
-  int GetCurrentLevel() { return m_Registration->GetCurrentLevel();};
-
 protected:  
   virtual void SetOptimizerParamters();
   
@@ -146,18 +144,26 @@ public:
       }
     }
     
+    if ( m_registration->IsAborted() ) {
+      optimizer->StopOptimization();
+      return;
+    }
+
     if( ! itk::IterationEvent().CheckEvent( &event ) ) {
       return;
     }
+
     unsigned int level = m_registration->GetCurrentLevel();
     if (level != m_level && m_registration->GetMaximumStepLength().GetNumberOfElements() > m_level + 1) {
       m_level++;
       optimizer->StopOptimization();
       double maxStep = m_registration->GetMaximumStepLength().GetElement(m_level); 
       optimizer->SetMaximumStepLength( maxStep );
-      optimizer->StartOptimization(); 
-      m_fo << "RESTART OPTIMIZATION FOR LEVEL= " <<  m_level <<
-        " WITH maxStep = " << maxStep << std::endl; 
+      if ( !m_registration->IsAborted() ) {
+        optimizer->StartOptimization(); 
+        m_fo << "RESTART OPTIMIZATION FOR LEVEL= " <<  m_level <<
+          " WITH maxStep = " << maxStep << std::endl; 
+      }
     }
     int numIter = m_registration->GetNumberOfIterations().GetElement(level);
     double maxStep  = m_registration->GetMaximumStepLength().GetElement(level); 
