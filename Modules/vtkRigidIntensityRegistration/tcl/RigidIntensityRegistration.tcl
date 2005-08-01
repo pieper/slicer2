@@ -152,7 +152,7 @@ proc RigidIntensityRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.14 $} {$Date: 2005/07/30 18:46:39 $}]
+        {$Revision: 1.15 $} {$Date: 2005/08/01 19:44:50 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -227,8 +227,9 @@ proc RigidIntensityRegistrationBuildSubGui {f} {
     pack  $f.mbType -side left -pady 1 -padx $Gui(pad)
     # Add menu items
     foreach RegType {{MI} {TranslationMI} {TranslationMattesMI} {VersorMattesMI} {AffineMattesMI} {KL}} \
-        name {{Rigid MI} {Translation MI} {Translation Mattes MI} {Rigid Mattes MI} {Affine Mattes MI} {KL}} { \
-        $f.mbType.m add command -label $name \
+        name {{Rigid MI} {Translation MI} {Translation Mattes MI} {Rigid Mattes MI} {Affine Mattes MI} {KL}} { 
+            set RigidIntensityRegistration($RegType) $name 
+            $f.mbType.m add command -label $name \
                 -command "RigidIntensityRegistrationSetRegType $RegType"
         }
     # save menubutton for config
@@ -275,7 +276,7 @@ proc RigidIntensityRegistrationSetRegType { RegType} {
 
  raise $RigidIntensityRegistration(f$RegType)
 
- $RigidIntensityRegistration(gui,mbRegistrationType) config -text $RegType
+ $RigidIntensityRegistration(gui,mbRegistrationType) config -text $RigidIntensityRegistration($RegType)
 }
 
 #-------------------------------------------------------------------------------
