@@ -361,7 +361,7 @@ if { ![file exists $::BLT_TEST_FILE] } {
     cd $SLICER_LIB/tcl
     
     runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co blt-cvs-head
+    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co -r $::BLT_TAG blt 
 
     if { $isWindows } {
         # can't do Windows
