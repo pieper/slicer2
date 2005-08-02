@@ -169,7 +169,7 @@ proc MIRIADSegmentInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.32 $} {$Date: 2005/04/19 20:07:14 $}]
+        {$Revision: 1.33 $} {$Date: 2005/08/02 19:51:32 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -488,19 +488,23 @@ proc MIRIADSegmentSaveResults { } {
 # string imtype defaults to raw
 # .END
 #-------------------------------------------------------------------------------
-proc MIRIADSegmentLoadDukeStudy { {imtype "raw"} } {
+proc MIRIADSegmentLoadDukeStudy { {imtype "raw"} {subject_dir ""} } {
 
     MIRIADSegmentDeleteVolumeByName "T2"
     MIRIADSegmentDeleteVolumeByName "PD"
 
+    if { $subject_dir == "" } {
+        set subject_dir $::MIRIADSegment(subject_dir)
+    }
+
     if { $imtype == "raw" } {
-        set dir $::MIRIADSegment(subject_dir)/RawData/001.ser
+        set dir $subject_dir/RawData/001.ser
         set T2id [DICOMLoadStudy $dir *\[02468\].dcm]
         set PDid [DICOMLoadStudy $dir *\[13579\].dcm]
         Volume($T2id,node) SetName "T2"
         Volume($PDid,node) SetName "PD"
     } else {
-        set dir $::MIRIADSegment(subject_dir)/DerivedData/SPL/mri/kld/norm_rcon_1
+        set dir $subject_dir/DerivedData/SPL/mri/kld/norm_rcon_1
         set ::Volume(VolAnalyze,FileName) $dir/t2_ic_ch1.hdr
         set ::Volume(name) "T2"
         VolAnalyzeApply
@@ -541,6 +545,7 @@ proc MIRIADSegmentLoadSPLAtlas { {dir "choose"} } {
         set name atlas-[file tail [file dir $vol]]
         regsub -all "\\." $name "" name
         MIRIADSegmentDeleteVolumeByName $name
+        MainUpdateMRML
 
         MainVolumesSetActive "NEW"
         set ::Volume(name) $name
@@ -1352,3 +1357,43 @@ proc MIRIADSegmentNormalizeImage {volid MaxValue} {
     Accu Delete
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MIRIADSegmentLoadJHUAtlas
+# Load the JHU white matter atlas 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRIADSegmentLoadJHUAtlas {} { 
+
+    MIRIADSegmentDeleteVolumeByName "JHU-atlas-MPRAGE"
+    set ::Volume(labelMap) 0
+    set ::Volume(name) "JHU-atlas-MPRAGE"
+    set ::Volume(VolNrrd,FileName) $::env(HOME)/data/susumu-dti/atlas/JHU_mprage55.nhdr
+    VolNrrdApply
+
+    MIRIADSegmentDeleteVolumeByName "JHU-atlas-labels"
+    set ::Volume(labelMap) 1
+    set ::Volume(name) "JHU-atlas-labels"
+    set ::Volume(VolNrrd,FileName) $::env(HOME)/data/susumu-dti/atlas/JHUWhiteMatterSeg.nhdr
+    VolNrrdApply
+
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC MIRIADSegmentBELLTest
+# Test for BIRN Effort to Localize Lesions
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MIRIADSegmentBELLTest {} { 
+
+    MIRIADSegmentLoadJHUAtlas 
+
+    MIRIADSegmentLoadSPLAtlas $::env(HOME)/bwh/data/atlas
+
+    MIRIADSegmentLoadDukeStudy "raw" $::env(HOME)/data/MIRIAD/Project_0002/000362391770/Visit_001/Study_0001/
+
+
+
+}
