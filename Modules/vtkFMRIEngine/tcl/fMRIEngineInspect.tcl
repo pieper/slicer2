@@ -51,37 +51,35 @@
 # int no the scale index 
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineScaleActivation {no} {
+proc fMRIEngineScaleActivation {v} {
     global Volume fMRIEngine MultiVolumeReader Slicer
 
-    if {! [info exists fMRIEngine(allPValues)]} {
-        set i 20 
-        while {$i >= 1} {
-            set v [expr 1 / pow(10,$i)] 
-            lappend fMRIEngine(allPValues) $v 
-            if {$i == 2} {
-                lappend fMRIEngine(allPValues) 0.05
-            }
-            set i [expr $i - 1] 
-        }
-        set i 1
-        while {$i <= 9} {
-            set v [expr 0.1 + 0.1 * $i]
-            lappend fMRIEngine(allPValues) $v
-            incr i
-        }
-    }
-
     if {[info exists fMRIEngine(currentActVolID)]} {
-        vtkCDF cdf
+        if {[info command cdf] == ""} {
+            vtkCDF cdf
+        }
+
         set dof [expr $MultiVolumeReader(noOfVolumes) - 1]
-        # The index of list starts with 0
-        set p [lindex $fMRIEngine(allPValues) [expr $no - 1]]
-        set t [cdf p2t $p $dof]
-       
+
+        if {$fMRIEngine(pValue) == "none"} {
+            set fMRIEngine(pValue) 0
+        }
+        if {$v == "+"} {
+            set fMRIEngine(pValue) [expr {$fMRIEngine(pValue) + 0.01}] 
+        }
+        if {$v == "-"} {
+            set fMRIEngine(pValue) [expr {$fMRIEngine(pValue) - 0.01}] 
+        }
+        if {$fMRIEngine(pValue) < 0} {
+            set fMRIEngine(pValue) 0.0
+        }
+        if {$fMRIEngine(pValue) > 1} {
+            set fMRIEngine(pValue) 1.0 
+        }
+ 
+        set t [cdf p2t $fMRIEngine(pValue) $dof]
         cdf Delete
-        set fMRIEngine(pValue) $p
-        set fMRIEngine(tStat) $t
+        set fMRIEngine(tStat) [format "%.1f" $t]
 
         set id $fMRIEngine(currentActVolID) 
         if {$id > 0} {
@@ -201,32 +199,28 @@ proc fMRIEngineBuildUIForInspectTab {parent} {
 
     set f $parent.fThreshold.fParams 
     frame $f.fStat  -bg $Gui(activeWorkspace) 
-    frame $f.fScale -bg $Gui(activeWorkspace)
-    pack $f.fStat $f.fScale -side top -fill x -padx 2 -pady 1 
+    pack $f.fStat -side top -fill x -padx 2 -pady 1 
 
     set f $parent.fThreshold.fParams.fStat 
     DevAddLabel $f.lPV "p Value:"
     DevAddLabel $f.lTS "t Stat:"
     set fMRIEngine(pValue) "none"
     set fMRIEngine(tStat) "none"
-    eval {entry $f.ePV -width 10 -state readonly \
+    eval {entry $f.ePV -width 10 \
         -textvariable fMRIEngine(pValue)} $Gui(WEA)
     eval {entry $f.eTS -width 10 -state readonly \
         -textvariable fMRIEngine(tStat)} $Gui(WEA)
-    grid $f.lPV $f.ePV -padx 1 -pady 2 -sticky e
+    bind $f.ePV <Return> "fMRIEngineScaleActivation p"
+    TooltipAdd $f.ePV "Input a p value and hit Return to threshold."
+
+    DevAddButton $f.bPlus "+" "fMRIEngineScaleActivation +" 2
+    TooltipAdd $f.bPlus "Increase the p value by 0.01 to threshold."
+    DevAddButton $f.bMinus "-" "fMRIEngineScaleActivation -" 2
+    TooltipAdd $f.bMinus "Decrease the p value by 0.01 to threshold."
+ 
+    grid $f.lPV $f.ePV $f.bPlus $f.bMinus -padx 1 -pady 2 -sticky e
     grid $f.lTS $f.eTS -padx 1 -pady 2 -sticky e
 
-    set f $parent.fThreshold.fParams.fScale 
-#   DevAddLabel $f.lactScale "Levels:"
-    eval {scale $f.sactScale \
-        -orient horizontal \
-        -from 1 -to 30 \
-        -resolution 1 \
-        -bigincrement 10 \
-        -length 155 \
-        -command {fMRIEngineScaleActivation}} $Gui(WSA) {-showvalue 0}
-    grid $f.sactScale -padx 1 -pady 1 
- 
     #-------------------------------------------
     # Plot frame 
     #-------------------------------------------
