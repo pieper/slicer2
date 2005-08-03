@@ -67,7 +67,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.17 $} {$Date: 2005/07/19 23:06:25 $}]
+                                 {$Revision: 1.18 $} {$Date: 2005/08/03 12:02:08 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -1393,9 +1393,10 @@ proc ConvertVolumeToTensors {} {
           set order [Volume($id,node) GetScanOrder]
           puts "-------computing ras to ijk from scan order----"
           Volume($id,node) ComputeRasToIjkFromScanOrder $order
-
-          DTMRIComputeRasToIjkFromCorners Volume($v,node) Volume($id,node) $extent
-
+          
+      if {$DTMRI(convert,nrrd)} {
+            DTMRIComputeRasToIjkFromCorners Volume($v,node) Volume($id,node) $extent
+          }
 
           # update slicer internals
           MainVolumesUpdate $id
@@ -1464,9 +1465,10 @@ proc ConvertVolumeToTensors {} {
           # recompute the matrices using this offset to center vol in the cube
           set order [Volume($id,node) GetScanOrder]
           Volume($id,node) ComputeRasToIjkFromScanOrder $order
-
-          DTMRIComputeRasToIjkFromCorners Volume($v,node) Volume($id,node) $extent
- 
+          
+      if {$DTMRI(convert,nrrd)} {
+            DTMRIComputeRasToIjkFromCorners Volume($v,node) Volume($id,node) $extent
+          }
           # update slicer internals
           MainVolumesUpdate $id
 
@@ -1549,8 +1551,9 @@ proc ConvertVolumeToTensors {} {
       puts "-------computing ras to ijk from scan order----"
       Volume($id,node) ComputeRasToIjkFromScanOrder $order
       
-      DTMRIComputeRasToIjkFromCorners Volume($v,node) Volume($id,node) $extent
-
+      if {$DTMRI(convert,nrrd)} {
+        DTMRIComputeRasToIjkFromCorners Volume($v,node) Volume($id,node) $extent
+      }
       # update slicer internals
       MainVolumesUpdate $id
 
@@ -1617,8 +1620,9 @@ proc ConvertVolumeToTensors {} {
       puts "-------computing ras to ijk from scan order----"
       Volume($id,node) ComputeRasToIjkFromScanOrder $order
       
-      DTMRIComputeRasToIjkFromCorners Volume($v,node) Volume($id,node) $extent
-
+      if {$DTMRI(convert,nrrd)} {
+        DTMRIComputeRasToIjkFromCorners Volume($v,node) Volume($id,node) $extent
+      }
       # update slicer internals
       MainVolumesUpdate $id
 
@@ -1673,9 +1677,11 @@ proc ConvertVolumeToTensors {} {
     DTMRI Update
     #Tensor($n,data) SetData [DTMRI GetOutput]
     Tensor($n,data) SetImageData [DTMRI GetOutput]
-
-    DTMRIComputeRasToIjkFromCorners Volume($v,node) $newvol [[Tensor($n,data) GetOutput] GetExtent]
-
+    
+    if {$DTMRI(convert,nrrd)} {
+      DTMRIComputeRasToIjkFromCorners Volume($v,node) $newvol [[Tensor($n,data) GetOutput] GetExtent]
+    }
+    
     # Registration
     # put the new tensor volume inside the same transform as the Original volume
     # by inserting it right after that volume in the mrml file
