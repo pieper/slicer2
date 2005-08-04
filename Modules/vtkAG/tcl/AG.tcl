@@ -1,5 +1,5 @@
 #===============================================================================
-# FILE:        AG.tcl
+# FILE:        AG.tcl    
 # PROCEDURES:  
 #   AGInit
 #   AGUpdateMRML
@@ -23,7 +23,7 @@
 #   WritePWConstant it fid
 #   WritePolynomial it fileid
 #   WriteIntensityTransform it fileid
-#   WriteTransform gt flag it FileName
+#   AGWriteTransform gt flag it FileName
 #   RunAG
 #   AGBatchProcessResampling
 #   AGCoregister
@@ -172,7 +172,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.11 $} {$Date: 2005/05/13 23:44:08 $}]
+        {$Revision: 1.12 $} {$Date: 2005/08/04 22:04:53 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -648,6 +648,23 @@ proc AGBuildTransformFrame {} {
     DevAddButton $f.bSaveGridTfm "Save VTK grid-transform" {AGSaveGridTransform}
     pack $f.bSaveGridTfm -side top -padx $Gui(pad) -pady $Gui(pad)
     TooltipAdd $f.bSaveGridTfm "Save just computed non-linear transform to file."
+
+  
+    set f $fTransform.fSaveAll
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx $Gui(pad) -pady 0 
+    DevAddButton $f.bSaveAllTfm "Save VTK linear and grid-transform" {AGWriteLinearNonLinearTransform}
+    pack $f.bSaveAllTfm -side top -padx $Gui(pad) -pady $Gui(pad)
+    TooltipAdd $f.bSaveAllTfm "Save computed linear and non-linear transforms to file."
+  
+    set f $fTransform.fReadAll
+    frame $f -bg $Gui(activeWorkspace)
+    pack $f -side top -padx $Gui(pad) -pady 0 
+    DevAddButton $f.bReadAllTfm "Read VTK linear and grid-transform for co-register" {AGReadLinearNonLinearTransform}
+    pack $f.bReadAllTfm -side top -padx $Gui(pad) -pady $Gui(pad)
+    TooltipAdd $f.bReadAllTfm "Save computed linear and non-linear transforms to file."
+  
+
   
 
 }
@@ -1348,7 +1365,99 @@ proc AGTransformScale { Source Target} {
    div2 Delete
    return 1
 }
+#-------------------------------------------------------------------------------
+# .PROC AGWriteHomogeneousOriginal
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 
+proc AGWriteHomogeneousOriginal {t ii fileid} {
+
+   
+    puts " Start to save homogeneous Transform"
+    #puts $fileid "Homogeneous Transform\n"
+
+    set str ""
+    set m [DataAddTransform 1 0 0]
+    #set matout [[Matrix($m,node)  GetTransform] GetMatrix]
+    set trans [Matrix($m,node) GetTransform] 
+    $trans Identity
+    set mat [$t GetMatrix]
+    catch "mat_copy Delete"
+    vtkMatrix4x4 mat_copy
+    mat_copy DeepCopy $mat
+    $trans Concatenate mat_copy
+   
+    for {set  i  0}  {$i < 4} {incr i} {
+    for {set  j  0}  {$j < 4} {incr j} {
+        set one_element [$mat GetElement $i $j]
+    #    $matout SetElement $i $j $one_element
+        set str "$str $one_element"
+            puts $fileid  "  $one_element "
+        puts "  $one_element " 
+    }
+    #puts $fileid "\n"
+    }
+    close $fileid
+    puts " m is $m"
+    puts " str is ---$str"
+    
+   
+# SetMatrix $str
+    puts " finish saving homogeneous Transform"
+
+} 
+
+
+#-------------------------------------------------------------------------------
+# .PROC AGReadHomogeneousOriginal
+# 
+# .ARGS   t: the general transform; fileid : file id of the file with homogenous transform matrix (one element per line)
+# .END
+#-------------------------------------------------------------------------------
+
+proc AGReadHomogeneousOriginal {t filename} {
+
+   
+    puts " Start to read homogeneous Transform"
+
+
+    set fileid [open $filename r ]
+    set str ""
+    catch "mat Delete"
+    vtkMatrix4x4 mat
+    
+    set i 0
+    set j 0
+    foreach line [split [read $fileid] \n] {
+     if { $line != ""} {
+     scan $line %f element
+     
+    mat SetElement $i $j $element
+    incr j
+    if {$j == 4} {
+        incr i
+        set j 0
+    }
+    if { $i ==4 } break
+    }
+    }
+    if { $i ==4 } {
+        catch "LinearT Delete"
+    vtkTransform LinearT
+    LinearT PostMultiply
+    LinearT  SetMatrix mat
+        $t Concatenate LinearT  
+    } else {
+        DevErrorWindow " The file is not complete "
+        }
+    
+   
+# SetMatrix $str
+    puts " finish reading homogeneous Transform"
+
+} 
 
 #-------------------------------------------------------------------------------
 # .PROC AGWriteHomogeneous
@@ -1356,7 +1465,7 @@ proc AGTransformScale { Source Target} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc AGWriteHomogeneous {t ii fileid} {
+proc AGWriteHomogeneous {t } {
     global AG
     
     puts " Start to save homogeneous Transform"
@@ -1425,6 +1534,31 @@ proc AGWriteHomogeneous {t ii fileid} {
     MainUpdateMRML
     DevInfoWindow "Matrix $m generated."
 } 
+
+
+#-------------------------------------------------------------------------------
+# .PROC AGReadGrid
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc AGReadGrid {t fname} {      
+
+    catch "g Delete"
+    vtkGridTransform g
+    catch "gridImage Delete"
+        vtkImageData gridImage
+
+        if {![AGReadvtkImageData gridImage $fname]} {
+            return
+        }
+    
+        g SetDisplacementGrid gridImage
+    g Inverse
+    
+    $t Concatenate g
+        return 1
+}
 
 #-------------------------------------------------------------------------------
 # .PROC AGWriteGrid
@@ -1545,8 +1679,41 @@ proc WriteIntensityTransform {it fileid } {
     }
 }
 
+
 #-------------------------------------------------------------------------------
-# .PROC WriteTransform
+# .PROC AGReadLinearNonLinearTransform
+#  Read the transform from file
+#
+# .ARGS
+# int gt  vtkGeneralTransform
+# .END
+#-------------------------------------------------------------------------------
+proc AGReadLinearNonLinearTransform {} {
+
+   global AG  
+   if {[info exist AG(Transform)]} {          
+          catch {$AG(Transform) Delete}
+   }
+   
+   catch "gt Delete"
+   vtkGeneralTransform gt
+   
+   gt  PostMultiply 
+   
+   set fname [tk_getOpenFile -defaultextension ".txt" -title "File for linear transform"]
+   if { $fname != "" } {
+       AGReadHomogeneousOriginal gt $fname
+   }
+   set fname2 [tk_getOpenFile -defaultextension ".vtk" -title "File for non-linear transform"]
+   if { $fname != "" } {
+      AGReadGrid gt $fname2        
+   }
+   set AG(Transform) gt
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC AGWriteLinearNonLinearTransform
 #  Save the transform to file
 #
 # .ARGS
@@ -1556,7 +1723,57 @@ proc WriteIntensityTransform {it fileid } {
 # string FileName
 # .END
 #-------------------------------------------------------------------------------
-proc WriteTransform {gt flag it FileName} {
+proc AGWriteLinearNonLinearTransform { } {
+
+    global AG  
+    if {![info exist AG(Transform)]} {
+        DevErrorWindow "No transformation available, grid-file not saved."
+    return
+    }
+ 
+    set gt  $AG(Transform)
+     
+    if { ($gt != 0 ) } {
+         set n [$gt GetNumberOfConcatenatedTransforms]
+     if {$AG(Debug) == 1} {
+        puts " There are $n concatenated transforms"
+         }
+     
+     set linearDone 0
+     set nonliearDOne 0
+         for {set  i  0}  {$i < $n} {incr i } {
+         set t [$gt GetConcatenatedTransform $i]
+         set int_H [$t IsA vtkHomogeneousTransform]
+         set int_G [$t IsA vtkGridTransform]
+         if { ($int_H != 0)&& ($linearDone == 0) } {
+      set fname [tk_getSaveFile -defaultextension ".txt" -title "File to save linear transform"]
+      set fileid [ open $fname w ]
+      puts "fileid is $fileid"
+          AGWriteHomogeneousOriginal $t $i  $fileid
+      set linearDone 1
+      
+         } 
+         if { ($int_G != 0) && ($nonliearDOne == 0) } {
+               
+      AGWriteGrid $t $i -1
+      
+      set nonliearDOne 1
+         }
+     }
+    }
+}
+#-------------------------------------------------------------------------------
+# .PROC AGWriteTransform
+#  Save the transform to file
+#
+# .ARGS
+# int gt
+# int flag
+# int it
+# string FileName
+# .END
+#-------------------------------------------------------------------------------
+proc AGWriteTransform {gt flag it FileName} {
 
     global AG  
   
@@ -1576,7 +1793,7 @@ proc WriteTransform {gt flag it FileName} {
          set int_H [$t IsA vtkHomogeneousTransform]
          set int_G [$t IsA vtkGridTransform]
          if { ($int_H != 0) } {
-         AGWriteHomogeneous $t $i  $fileid
+         AGWriteHomogeneousOriginal $t $i  $fileid
          } 
          if { ($int_G != 0) } {
          AGWriteGrid $t $i $fileid
@@ -1588,7 +1805,6 @@ proc WriteTransform {gt flag it FileName} {
     }
     close $fileid
 }
-
 
 #-------------------------------------------------------------------------------
 # .PROC RunAG
@@ -2206,9 +2422,9 @@ proc RunAG {} {
   # Write  Transforms
 
   #if {$intesity_transform_object == 1} {
-  #    WriteTransform TransformAG 1 $AG(tfm) "Test_transform.txt"
+  #    AGWriteTransform TransformAG 1 $AG(tfm) "Test_transform.txt"
   #} else {
-  #    WriteTransform TransformAG 0 0  "Test_transform.txt"
+  #    AGWriteTransform TransformAG 0 0  "Test_transform.txt"
   #}
 
   # keep the transforms until the next round for registration.
@@ -3176,6 +3392,7 @@ proc AGReadvtkImageData {image filename}  {
     $image DeepCopy [TReader GetOutput]
 
     TReader Delete
+    return 1
 }
 
 
