@@ -1000,7 +1000,7 @@ proc DevPrintMrmlDataTree { { tagList "Volume" } { justMatrices 1 } } {
                     DevPrintMatrix [$node GetMatrix] "Matrix"
                 }
                 if {$tag == "Model"} {
-                    puts "Model [$node GetID]" 
+                    puts "Model [$node GetID] [$node GetName]" 
                     DevPrintMatrix4x4 [$node GetRasToWld] "RAS -> WLD"
                 }
             }
