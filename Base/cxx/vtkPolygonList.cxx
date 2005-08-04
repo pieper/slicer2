@@ -174,23 +174,32 @@ void vtkPolygonList::Clear ()
         this->Polygons[p]->Reset();
 }
 
-static void Interpolate (Point *p, double t, double x0, double y0, double x1,
-                         double y1, double x2, double y2, double x3, double y3)
+static void Interpolate (vtkFloatingPointType p[3], double t, double x0,
+                         double y0, double z0, double x1, double y1, double z1,
+                         double x2, double y2, double z2, double x3, double y3,
+                         double z3)
 {
     double x01 = (1.0 - t) * x0 + t * x1;
     double y01 = (1.0 - t) * y0 + t * y1;
+    double z01 = (1.0 - t) * z0 + t * z1;
     double x11 = (1.0 - t) * x1 + t * x2;
     double y11 = (1.0 - t) * y1 + t * y2;
+    double z11 = (1.0 - t) * z1 + t * z2;
     double x21 = (1.0 - t) * x2 + t * x3;
     double y21 = (1.0 - t) * y2 + t * y3;
+    double z21 = (1.0 - t) * z2 + t * z3;
     double x02 = (1.0 - t) * x01 + t * x11;
     double y02 = (1.0 - t) * y01 + t * y11;
+    double z02 = (1.0 - t) * z01 + t * z11;
     double x12 = (1.0 - t) * x11 + t * x21;
     double y12 = (1.0 - t) * y11 + t * y21;
+    double z12 = (1.0 - t) * z11 + t * z21;
     double x03 = (1.0 - t) * x02 + t * x12;
-    double y03 = (1.0 - t) * y01 + t * y12;
-    p->x = (int)x03;
-    p->y = (int)y03;
+    double y03 = (1.0 - t) * y02 + t * y12;
+    double z03 = (1.0 - t) * z02 + t * z12;
+    p[0] = x03;
+    p[1] = y03;
+    p[2] = z03;
 }
 
 static bool IsValidIndex(int i, int n)
@@ -230,7 +239,7 @@ vtkPoints* vtkPolygonList::GetSampledPolygon(int p)
     if (!IsValidIndex (p2, n))
     {
         vtkFloatingPointType *ras = poly->GetPoint(p1);
-        Samples->InsertNextPoint(ras[0], ras[1], 0);
+        Samples->InsertNextPoint(ras[0], ras[1], ras[2]);
         return this->Samples;
     }
     p3 = p2 + 1;
@@ -239,24 +248,27 @@ vtkPoints* vtkPolygonList::GetSampledPolygon(int p)
     if (!IsValidIndex (p3, n))
     {
         vtkFloatingPointType *ras;
-        vtkFloatingPointType ras1[2];
+        vtkFloatingPointType ras1[3];
         ras = poly->GetPoint(p1);
         ras1[0] = ras[0];
         ras1[1] = ras[1];
-        vtkFloatingPointType ras2[2];
+        ras1[2] = ras[2];
+        vtkFloatingPointType ras2[3];
         ras = poly->GetPoint(p2);
         ras2[0] = ras[0];
         ras2[1] = ras[1];
-        Samples->InsertNextPoint(ras1[0], ras1[1], 0);
+        ras2[2] = ras[2];
+        Samples->InsertNextPoint(ras1[0], ras1[1], ras1[2]);
         // Linearly interpolate between the two points
         for (int j = 1; j <= density; j++)
         {
             double t = (double)j / (double)(density + 1.0);
             double Xt = (1.0 - t) * (ras1[0]) + t * (ras2[0]);
             double Yt = (1.0 - t) * (ras1[1]) + t * (ras2[1]);
-            Samples->InsertNextPoint((int)Xt, (int)Yt, 0);
+            double Zt = (1.0 - t) * (ras1[2]) + t * (ras2[2]);
+            Samples->InsertNextPoint(Xt, Yt, Zt);
         }
-        Samples->InsertNextPoint(ras2[0], ras2[1], 0);
+        Samples->InsertNextPoint(ras2[0], ras2[1], ras2[2]);
         return this->Samples;
     }
 
@@ -265,62 +277,74 @@ vtkPoints* vtkPolygonList::GetSampledPolygon(int p)
     while (IsValidIndex (p1, n))
     {
         vtkFloatingPointType *ras;
-        vtkFloatingPointType ras0[2];
+        vtkFloatingPointType ras0[3];
         ras = poly->GetPoint(p0);
         ras0[0] = ras[0];
         ras0[1] = ras[1];
-        vtkFloatingPointType ras1[2];
+        ras0[2] = ras[2];
+        vtkFloatingPointType ras1[3];
         ras = poly->GetPoint(p1);
         ras1[0] = ras[0];
         ras1[1] = ras[1];
-        vtkFloatingPointType ras2[2];
+        ras1[2] = ras[2];
+        vtkFloatingPointType ras2[3];
         ras = poly->GetPoint(p2);
         ras2[0] = ras[0];
         ras2[1] = ras[1];
-        vtkFloatingPointType ras3[2];
+        ras2[2] = ras[2];
+        vtkFloatingPointType ras3[3];
         ras = poly->GetPoint(p3);
         ras3[0] = ras[0];
         ras3[1] = ras[1];
+        ras3[2] = ras[2];
         // Draw curve connecting p1 and p2
         if (p1 == 0)
         {
             // First curve--don't increment p0
             double p2dx = 0.5 * (ras3[0] - ras1[0]);
             double p2dy = 0.5 * (ras3[1] - ras1[1]);
+            double p2dz = 0.5 * (ras3[2] - ras1[2]);
             double p2_p1x = ras2[0] - ras1[0];
             double p2_p1y = ras2[1] - ras1[1];
-            double p2_p1sq = p2_p1x * p2_p1x + p2_p1y * p2_p1y;
-            double A = p2_p1x;
-            double B = p2_p1y;
+            double p2_p1z = ras2[2] - ras1[2];
+            double p2_p1sq = p2_p1x * p2_p1x + p2_p1y * p2_p1y +
+                             p2_p1z * p2_p1z;
+            double Ax = p2_p1x;
+            double Ay = p2_p1y;
+            double Az = p2_p1z;
             double C = 0.5 * ((ras1[0] - ras2[0]) * (ras1[0] + ras2[0]) +
-                              (ras1[1] - ras2[1]) * (ras1[1] + ras2[1]));
+                              (ras1[1] - ras2[1]) * (ras1[1] + ras2[1]) +
+                              (ras1[2] - ras2[2]) * (ras1[2] + ras2[2]));
             double x0 = ras2[0] + p2dx;
             double y0 = ras2[1] + p2dy;
-            double ax0by0c = A * x0 + B * y0 + C;
+            double z0 = ras2[2] + p2dz;
+            double ax0by0c = Ax * x0 + Ay * y0 + Az * z0 + C;
             // Derivative at p0 is reflection of derivative at p2
-            // (p2dx, p2dy) over the line bisecting the edge connecting
+            // (p2dx, p2dy, p2dz) over the line bisecting the edge connecting
             // p1 and p2
             double p1dx = ras2[0] - ras1[0] + p2dx + 2.0 *
                           (ras1[0] - ras2[0]) / p2_p1sq * ax0by0c;
             double p1dy = ras2[1] - ras1[1] + p2dy + 2.0 *
                           (ras1[1] - ras2[1]) / p2_p1sq * ax0by0c;
+            double p1dz = ras2[2] - ras1[2] + p2dz + 2.0 *
+                          (ras1[2] - ras2[2]) / p2_p1sq * ax0by0c;
             // Plot left endpoint
-            Samples->InsertNextPoint(ras1[0], ras1[1], 0);
+            Samples->InsertNextPoint(ras1[0], ras1[1], ras1[2]);
             // Plot intermediate points
             for (int j = 1; j <= density; j++)
             {
-                Point *p = new Point(0, 0);
+                vtkFloatingPointType p[3];
                 double t = (double)j / (double)(density + 1.0);
-                Interpolate(p, t, ras1[0], ras1[1],
+                Interpolate(p, t, ras1[0], ras1[1], ras1[2],
                             ras1[0] + oneThird * p1dx,
                             ras1[1] + oneThird * p1dy,
+                            ras1[2] + oneThird * p1dz,
                             ras2[0] - oneThird * p2dx,
                             ras2[1] - oneThird * p2dy,
-                            ras2[0], ras2[1]);
-                Samples->InsertNextPoint(p->x, p->y, 0);
+                            ras2[2] - oneThird * p2dz,
+                            ras2[0], ras2[1], ras2[2]);
+                Samples->InsertNextPoint(p[0], p[1], p[2]);
             }
-            // Plot right endpoint
-            Samples->InsertNextPoint(ras2[0], ras2[1], 0);
             p1++;
             p2++;
             p3++;
@@ -330,25 +354,27 @@ vtkPoints* vtkPolygonList::GetSampledPolygon(int p)
             // Middle curve
             double p1dx = 0.5 * (ras2[0] - ras0[0]);
             double p1dy = 0.5 * (ras2[1] - ras0[1]);
+            double p1dz = 0.5 * (ras2[2] - ras0[2]);
             double p2dx = 0.5 * (ras3[0] - ras1[0]);
             double p2dy = 0.5 * (ras3[1] - ras1[1]);
+            double p2dz = 0.5 * (ras3[2] - ras1[2]);
             double plx = oneThird * p1dx + ras1[0];
             double ply = oneThird * p1dy + ras1[1];
+            double plz = oneThird * p1dz + ras1[2];
             double prx = ras2[0] - oneThird * p2dx;
             double pry = ras2[1] - oneThird * p2dy;
+            double prz = ras2[2] - oneThird * p2dz;
             // Plot left endpoint
-            Samples->InsertNextPoint(ras1[0], ras1[1], 0);
+            Samples->InsertNextPoint(ras1[0], ras1[1], ras1[2]);
             // Plot intermediate points
             for (int j = 1; j <= density; j++)
             {
-                Point *p = new Point(0, 0);
+                vtkFloatingPointType p[3];
                 double t = (double)j / (double)(density + 1.0);
-                Interpolate(p, t, ras1[0], ras1[1], plx, ply, prx, pry,
-                            ras2[0], ras2[1]);
-                Samples->InsertNextPoint(p->x, p->y, 0);
+                Interpolate(p, t, ras1[0], ras1[1], ras1[2], plx, ply, plz,
+                            prx, pry, prz, ras2[0], ras2[1], ras2[2]);
+                Samples->InsertNextPoint(p[0], p[1], p[2]);
             }
-            // Plot right endpoint
-            Samples->InsertNextPoint(ras2[0], ras2[1], 0);
             p0++;
             p1++;
             p2++;
@@ -359,40 +385,54 @@ vtkPoints* vtkPolygonList::GetSampledPolygon(int p)
             // Curve connecting last two control points
             double p1dx = 0.5 * (ras2[0] - ras0[0]);
             double p1dy = 0.5 * (ras2[1] - ras0[1]);
+            double p1dz = 0.5 * (ras2[2] - ras0[2]);
             double p1_p2x = ras1[0] - ras2[0];
             double p1_p2y = ras1[1] - ras2[1];
-            double p1_p2sq = p1_p2x * p1_p2x + p1_p2y * p1_p2y;
-            double A = ras1[0] - ras2[0];
-            double B = ras1[1] - ras2[1];
+            double p1_p2z = ras1[2] - ras2[2];
+            double p1_p2sq = p1_p2x * p1_p2x + p1_p2y * p1_p2y +
+                             p1_p2z * p1_p2z;
+            double Ax = ras1[0] - ras2[0];
+            double Ay = ras1[1] - ras2[1];
+            double Az = ras1[2] - ras2[2];
             double C = 0.5 * ((ras2[0] - ras1[0]) * (ras2[0] + ras1[0]) +
-                              (ras2[1] - ras1[1]) * (ras2[1] + ras1[1]));
+                              (ras2[1] - ras1[1]) * (ras2[1] + ras1[1]) +
+                              (ras2[2] - ras1[2]) * (ras2[2] + ras1[2]));
             double x0 = ras1[0] + p1dx;
             double y0 = ras1[1] + p1dy;
-            double ax0by0c = A * x0 + B * y0 + C;
+            double z0 = ras1[2] + p1dz;
+            double ax0by0c = Ax * x0 + Ay * y0 + Az * z0 + C;
             // Derivative at p2 is reflection of derivative at p1
-            // (p1dx, p1dy) over the line bisecting the edge connecting
+            // (p1dx, p1dy, p1dz) over the line bisecting the edge connecting
             // p2 and p1
             double p2dx = ras1[0] - ras2[0] + p1dx + 2.0 *
                           (ras2[0] - ras1[0]) / p1_p2sq * ax0by0c;
             double p2dy = ras1[1] - ras2[1] + p1dy + 2.0 *
                           (ras2[1] - ras1[1]) / p1_p2sq * ax0by0c;
+            double p2dz = ras1[2] - ras2[2] + p1dz + 2.0 *
+                          (ras2[2] - ras1[2]) / p1_p2sq * ax0by0c;
             double plx = oneThird * p1dx + ras1[0];
             double ply = oneThird * p1dy + ras1[1];
+            double plz = oneThird * p1dz + ras1[2];
             double prx = ras2[0] - oneThird * p2dx;
             double pry = ras2[1] - oneThird * p2dy;
+            double prz = ras2[2] - oneThird * p2dz;
             // Plot left endpoint
-            Samples->InsertNextPoint(ras1[0], ras1[1], 0);
+            Samples->InsertNextPoint(ras1[0], ras1[1], ras1[2]);
             // Plot intermediate points
             for (int j = 1; j <= density; j++)
             {
-                Point *p = new Point(0, 0);
+                vtkFloatingPointType p[3];
                 double t = (double)j / (double)(density + 1.0);
-                Interpolate(p, t, ras1[0], ras1[1], plx, ply, prx, pry,
-                            ras2[0], ras2[1]);
-                Samples->InsertNextPoint(p->x, p->y, 0);
+                Interpolate(p, t, ras1[0], ras1[1], ras1[2], plx, ply, plz,
+                            prx, pry, prz, ras2[0], ras2[1], ras2[2]);
+                Samples->InsertNextPoint(p[0], p[1], p[2]);
             }
-            // Plot right endpoint
-            Samples->InsertNextPoint(ras2[0], ras2[1], 0);
+            if (!closed)
+            {
+                // Plot right endpoint if curve is open--this is the last
+                // point to plot on the curve
+                Samples->InsertNextPoint(ras2[0], ras2[1], ras2[2]);
+            }
             p0++;
             p1++;
             p2++;
@@ -410,30 +450,34 @@ vtkPoints* vtkPolygonList::GetSampledPolygon(int p)
             ras = poly->GetPoint(p2);
             ras2[0] = ras[0];
             ras2[1] = ras[1];
+            ras2[2] = ras[2];
             ras = poly->GetPoint(p3);
             ras3[0] = ras[0];
             ras3[1] = ras[1];
+            ras3[2] = ras[2];
             double p1dx = 0.5 * (ras2[0] - ras0[0]);
             double p1dy = 0.5 * (ras2[1] - ras0[1]);
+            double p1dz = 0.5 * (ras2[2] - ras0[2]);
             double p2dx = 0.5 * (ras3[0] - ras1[0]);
             double p2dy = 0.5 * (ras3[1] - ras1[1]);
+            double p2dz = 0.5 * (ras3[2] - ras1[2]);
             double plx = oneThird * p1dx + ras1[0];
             double ply = oneThird * p1dy + ras1[1];
+            double plz = oneThird * p1dz + ras1[2];
             double prx = ras2[0] - oneThird * p2dx;
             double pry = ras2[1] - oneThird * p2dy;
+            double prz = ras2[2] - oneThird * p2dz;
             // Plot left endpoint
-            Samples->InsertNextPoint(ras1[0], ras1[1], 0);
+            Samples->InsertNextPoint(ras1[0], ras1[1], ras1[2]);
             // Plot intermediate points
             for (int j = 1; j <= density; j++)
             {
-                Point *p = new Point(0, 0);
+                vtkFloatingPointType p[3];
                 double t = (double)j / (double)(density + 1.0);
-                Interpolate(p, t, ras1[0], ras1[1], plx, ply, prx, pry,
-                            ras2[0], ras2[1]);
-                Samples->InsertNextPoint(p->x, p->y, 0);
+                Interpolate(p, t, ras1[0], ras1[1], ras1[2], plx, ply, plz,
+                            prx, pry, prz, ras2[0], ras2[1], ras2[2]);
+                Samples->InsertNextPoint(p[0], p[1], p[2]);
             }
-            // Plot right endpoint
-            Samples->InsertNextPoint(ras2[0], ras2[1], 0);
             p1 = -1; // this is the last iteration: exit the loop now
         }
     }
