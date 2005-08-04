@@ -71,6 +71,7 @@ vtkMrmlDataVolume::vtkMrmlDataVolume()
   this->HistPlot = vtkImagePlot::New();
   this->ImageData = NULL;
   this->PolyStack = vtkStackOfPolygons::New();
+  this->RasPolyStack = vtkStackOfPolygons::New();
   this->Samples = vtkPoints::New();
   this->ReadWrite = NULL;
 
@@ -110,6 +111,7 @@ vtkMrmlDataVolume::~vtkMrmlDataVolume()
 
   // Delete objects we allocated
   this->PolyStack->Delete();
+  this->RasPolyStack->Delete();
   this->Samples->Delete();
   this->Accumulate->Delete();
   this->Bimodal->Delete();
@@ -129,6 +131,7 @@ void vtkMrmlDataVolume::PrintSelf(ostream& os, vtkIndent indent)
 
   os << indent << "ImageData: " << this->ImageData << "\n";
   os << indent << "PolyStack: " << this->PolyStack << "\n";
+  os << indent << "RasPolyStack: " << this->RasPolyStack << "\n";
   if (this->ImageData)
   {
     this->ImageData->PrintSelf(os,indent.GetNextIndent());
@@ -653,7 +656,9 @@ int vtkMrmlDataVolume::WritePTS(char *filename)
   return 1;
 }
 
-int vtkMrmlDataVolume::WritePTSFromStack(char *filename)
+int vtkMrmlDataVolume::WritePTSFromStack(char *filename,
+                                         vtkMatrix4x4 *RasToIjkMatrix,
+                                         char *order, int activeSlice)
 {
     if (filename == NULL)
     {
@@ -672,19 +677,19 @@ int vtkMrmlDataVolume::WritePTSFromStack(char *filename)
     for (int s = 0; s < NUM_STACK_SLICES; s++)
     {
         // Skip this slice of stack if no polygon ever been stored in it
-        if (!(PolyStack->Nonempty(s))) continue;
+        if (!(RasPolyStack->Nonempty(s))) continue;
         for (int p = 0; p < NUM_POLYGONS; p++)
         {
             // Skip this polygon if it has no points
-            if (PolyStack->GetNumberOfPoints(s, p) < 1) continue;
-            vtkPoints *ras = PolyStack->GetSampledPolygon(s, p);
+            if (RasPolyStack->GetNumberOfPoints(s, p) < 1) continue;
+            vtkPoints *ras = RasPolyStack->GetSampledPolygon(s, p);
             int n = ras->GetNumberOfPoints();
             for (int i = 0; i < n; i++)
             {
-                vtkFloatingPointType *rasPt = ras->GetPoint(i);
-                int x = (int)(rasPt[0]);
-                int y = (int)(rasPt[1]);
-                if (fprintf (fp, "%d %d %d\n", x, y, s) < 0)
+                // outPt is the true 3D RAS coordinates of polygon point
+                vtkFloatingPointType *outPt = ras->GetPoint(i);
+                // Write out the RAS coordinates to the .pts file
+                if (fprintf(fp, "%f %f %f\n", outPt[0], outPt[1], outPt[2]) < 0)
                 {
                     fclose (fp);
                     vtkErrorMacro (<< "Out of disk space error.");
@@ -696,7 +701,7 @@ int vtkMrmlDataVolume::WritePTSFromStack(char *filename)
 
     fclose(fp);
 
-    // Right now how no way to deal with failure
+    // Right now no way to deal with failure
     return 1;
 }
 
