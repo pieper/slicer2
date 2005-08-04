@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.84 $} {$Date: 2005/07/01 14:19:46 $}]
+    {$Revision: 1.85 $} {$Date: 2005/08/04 02:45:41 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -621,7 +621,11 @@ proc MainVolumesWrite {v prefix} {
             # Write volume data
             set Gui(progressText) "Writing [Volume($v,node) GetName]"
             puts "Writing '$fileFull.pts' ..."
-            Volume($v,vol) WritePTSFromStack $fileFull.pts
+            set u [EditorGetOriginalID]
+            set rasijk [Volume($u,node) GetRasToIjk]
+            set order [Volume($u,node) GetScanOrder]
+            set asl [Slicer GetActiveSlice]
+            Volume($v,vol) WritePTSFromStack $fileFull.pts $rasijk $order $asl
         }
     }
 
