@@ -98,7 +98,8 @@ public:
   int Read();
   int Write();
   int WritePTS(char *filename);
-  int WritePTSFromStack(char *filename);
+  int WritePTSFromStack(char *filename, vtkMatrix4x4 *RasToIjkMatrix,
+                        char *order, int activeSlice);
 
   //--------------------------------------------------------------------------
   // Read/Write volume data contained by this object.
@@ -140,10 +141,17 @@ public:
   vtkSetMacro(RangeAuto, int);
   vtkBooleanMacro(RangeAuto, int);
 
-  void StackSetPolygon(vtkPoints *poly, int s, int p, int d, int closed, int preshape)
-  {PolyStack->SetPolygon(poly, s, p, d, closed, preshape);};
+  void StackSetPolygon(vtkPoints *poly, int s, int p, int d, int closed,
+                       int preshape)
+  {this->PolyStack->SetPolygon(poly, s, p, d, closed, preshape);};
   void StackRemovePolygon(int s, int p)
   {this->PolyStack->RemovePolygon(s, p);};
+
+  void RasStackRemovePolygon(int s, int p)
+  {this->RasPolyStack->RemovePolygon(s, p);};
+  void RasStackSetPolygon(vtkPoints *rasPoly, int s, int p, int d, int closed,
+                          int preshape)
+  {this->RasPolyStack->SetPolygon(rasPoly, s, p, d, closed, preshape);};
 
 protected:
   vtkMrmlDataVolume();
@@ -164,6 +172,7 @@ protected:
 
   vtkImageData *ImageData;
   vtkStackOfPolygons *PolyStack;
+  vtkStackOfPolygons *RasPolyStack;
   vtkPoints *Samples;
   vtkImageAccumulateDiscrete *Accumulate;
   vtkImageBimodalAnalysis *Bimodal;
