@@ -956,8 +956,8 @@ proc DevSourceTclFilesInDirectory {dir {verbose "0"}} {
 # .PROC DevPrintMrmlDataTree
 # A helper proc to print out bits of the mrml data tree for debugging volumes and transforms.
 # .ARGS 
-# tagList class names to match, ie Volume
-# justMatrices if 1, just print the matrices in the volume
+# array tagList class names to match, ie Volume
+# int justMatrices if 1, just print the matrices in the volume
 # .END
 #-------------------------------------------------------------------------------
 proc DevPrintMrmlDataTree { { tagList "Volume" } { justMatrices 1 } } {
@@ -989,6 +989,7 @@ proc DevPrintMrmlDataTree { { tagList "Volume" } { justMatrices 1 } } {
                                 DevPrintMatrix4x4 [$node GetRasToVtk] "RAS -> VTK"
                             }
                         }
+                        DevPrintMatrix4x4 [$node GetRasToWld] "RAS -> WLD"
                         DevPrintMatrix4x4 [$node GetWldToIjk] "WLD -> IJK"
                     } else {
                         $node Print
@@ -997,6 +998,10 @@ proc DevPrintMrmlDataTree { { tagList "Volume" } { justMatrices 1 } } {
                 if {$tag == "Matrix"} {
                     puts "$class [$node GetID]"
                     DevPrintMatrix [$node GetMatrix] "Matrix"
+                }
+                if {$tag == "Model"} {
+                    puts "Model [$node GetID]" 
+                    DevPrintMatrix4x4 [$node GetRasToWld] "RAS -> WLD"
                 }
             }
         }
