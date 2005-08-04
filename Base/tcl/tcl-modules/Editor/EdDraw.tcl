@@ -509,6 +509,8 @@ proc EdDrawApply { {delete_pending true} } {
         # Remove unapplied polygon so we can reapply in same slot
         Slicer StackRemovePolygon $Slice($Interactor(s),offset) $Ed($e,unapplynum)
         Volume($v,vol) StackRemovePolygon $Slice($Interactor(s),offset) $Ed($e,unapplynum)
+        Slicer RasStackRemovePolygon $Slice($Interactor(s),offset) $Ed($e,unapplynum)
+        Volume($v,vol) RasStackRemovePolygon $Slice($Interactor(s),offset) $Ed($e,unapplynum)
     }
     set Ed($e,polynum) [Slicer StackGetNextInsertPosition $Slice($Interactor(s),offset) $Ed($e,polynum)]
     if { $Ed($e,polynum) == -1} { # Should only be true if polynum was -1 already
@@ -524,8 +526,13 @@ proc EdDrawApply { {delete_pending true} } {
     } else {
         set preshape 1
     }
+
+    # set polygon and raspolygon in vtkMrmlSlicer and volume object
     Slicer StackSetPolygon $Slice($Interactor(s),offset) $Ed($e,polynum) $density $closed $preshape
     Volume($v,vol) StackSetPolygon [Slicer DrawGetPoints] $Slice($Interactor(s),offset) $Ed($e,polynum) $density $closed $preshape
+    set raspoly [Slicer RasStackSetPolygon $Slice($Interactor(s),offset) $Ed($e,polynum) $density $closed $preshape]
+    Volume($v,vol) RasStackSetPolygon $raspoly $Slice($Interactor(s),offset) $Ed($e,polynum) $density $closed $preshape
+
     set Ed($e,unapplynum) -1
     Ed(editor)   Clear
     for {set p 0} {$p < 20} {incr p} {
