@@ -125,7 +125,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.76 $} {$Date: 2005/07/01 14:07:13 $}]
+        {$Revision: 1.77 $} {$Date: 2005/08/04 02:46:39 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -142,7 +142,7 @@ proc EditorInit {} {
     set Editor(nameWorking) Working
     set Editor(nameComposite) Composite
     set Editor(eventManager)  {  }
-    set Editor(fileformat) ".pts"
+    set Editor(fileformat) "Standard"
 
     # add display settings for editor here: 
     # whether to keep the label layer visible at all times
