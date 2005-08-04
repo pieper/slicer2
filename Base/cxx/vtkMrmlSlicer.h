@@ -575,9 +575,36 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
       PolyStack->SetPolygon(this->PolyDraw->GetPoints(), s, p, d, closed, preshape);
   };
 
+  vtkPoints* RasStackSetPolygon(int s, int p, int d, int closed, int preshape)
+  {
+      vtkPoints *polygon = this->PolyDraw->GetPoints();
+      vtkFloatingPointType *screenPt;
+      int as = this->GetActiveSlice();
+      int n = polygon->GetNumberOfPoints();
+      vtkFloatingPointType rasPt[3];
+
+      rasPts->Reset();
+      for (int i = 0; i < n; i++)
+      {
+          screenPt = polygon->GetPoint(i);
+          this->SetReformatPoint(as, (int)(screenPt[0]), (int)(screenPt[1]));
+          this->GetWldPoint(rasPt);
+          rasPts->InsertNextPoint((vtkFloatingPointType)(rasPt[0]),
+                                  (vtkFloatingPointType)(rasPt[1]),
+                                  (vtkFloatingPointType)(rasPt[2]));
+      }
+      RasPolyStack->SetPolygon(rasPts, s, p, d, closed, preshape);
+      return this->rasPts;
+  };
+
   void StackRemovePolygon(int s, int p)
   {
       this->PolyStack->RemovePolygon(s, p);
+  };
+
+  void RasStackRemovePolygon(int s, int p)
+  {
+      this->RasPolyStack->RemovePolygon(s, p);
   };
 
   int StackGetNumberOfPoints(int s)
@@ -728,6 +755,8 @@ protected:
   vtkImageDouble2D     *Double[NUM_SLICES];
   vtkImageDrawROI      *PolyDraw;
   vtkStackOfPolygons *PolyStack;
+  vtkStackOfPolygons *RasPolyStack;
+  vtkPoints            *rasPts; // temporary RAS version of PolyDraw
   vtkPoints            *CopyPoly;
   vtkImageReformatIJK  *ReformatIJK;
   vtkMrmlDataVolume        *NoneVolume;
