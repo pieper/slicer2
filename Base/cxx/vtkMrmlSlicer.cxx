@@ -101,6 +101,8 @@ vtkMrmlSlicer::vtkMrmlSlicer()
   this->LabelIndirectLUT = NULL;
   this->PolyDraw = vtkImageDrawROI::New();
   this->PolyStack = vtkStackOfPolygons::New();
+  this->RasPolyStack = vtkStackOfPolygons::New();
+  this->rasPts = vtkPoints::New();
   this->CopyPoly = vtkPoints::New();
   this->ReformatIJK = vtkImageReformatIJK::New();
   this->DrawIjkPoints = vtkPoints::New();
@@ -405,6 +407,8 @@ vtkMrmlSlicer::~vtkMrmlSlicer()
   }
   this->PolyDraw->Delete();
   this->PolyStack->Delete();
+  this->RasPolyStack->Delete();
+  this->rasPts->Delete();
   this->CopyPoly->Delete();
   this->DrawIjkPoints->Delete();
   this->ReformatIJK->Delete();
