@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceWFileReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/08/05 19:23:08 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2005/08/05 19:51:57 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================*/
 #include "vtkFSSurfaceWFileReader.h"
@@ -117,21 +117,28 @@ void vtkFSSurfaceWFileReader::ReadWFile()
   vtkFSIO::ReadInt2 (wFile, magicNumber);
 
   // This is the number of values in the wfile.
-  vtkFSIO::ReadInt2 (wFile, numValues);
+  vtkFSIO::ReadInt3 (wFile, numValues);
   if (numValues < 0) {
     vtkErrorMacro (<< "vtkFSSurfaceWFileReader.cxx Execute: Number of vertices is 0 or negative, can't process file.");
       return;
   }
-   
+
+  vtkDebugMacro(<<"vtkFSSurfaceWFileReader: numValues = " << numValues);
+  
   // Make our float array.
   scalars = (float*) calloc (numValues, sizeof(float));
-
+  if (scalars == NULL)
+  {
+      vtkErrorMacro(<<"vtkFSSurfaceWFileReader: error allocating " << numValues << " floats!");
+      return;
+  }
+  
   // For each value in the wfile...
   for (vIndex = 0; vIndex < numValues; vIndex ++ ) {
     
     // Check for eof.
     if (feof(wFile)) {
-      vtkErrorMacro (<< "vtkFSSurfaceWFileReader.cxx Execute: Unexpected EOF after " << vIndex << " values read.");
+        vtkErrorMacro (<< "vtkFSSurfaceWFileReader.cxx Execute: Unexpected EOF after " << vIndex << " values read. Tried to read " << numValues);
       return;
     }
 
@@ -152,7 +159,7 @@ void vtkFSSurfaceWFileReader::ReadWFile()
     // should raise some kind of message to the user like, "This wfile
     // appears to be for a different surface; continue loading?"
     if (vIndexFromFile < 0 || vIndexFromFile >= numValues) {
-      vtkErrorMacro (<< "vtkFSSurfaceWFileReader.cxx Execute: Read an index that is out of bounds, skipping.");
+        vtkErrorMacro (<< "vtkFSSurfaceWFileReader.cxx Execute: Read an index that is out of bounds (" << vIndexFromFile << " not in 0-" << numValues << ", skipping.");
       continue;
     }
     
