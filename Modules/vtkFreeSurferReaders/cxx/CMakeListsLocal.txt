@@ -12,9 +12,12 @@ vtkCORReader.cxx
 vtkMGHReader.cxx
 vtkFSSurfaceReader.cxx
 vtkFSSurfaceScalarReader.cxx
+vtkFSSurfaceWFileReader.cxx
 vtkFSSurfaceAnnotationReader.cxx
 vtkGDFReader.cxx
+# vtkPickFilter.cxx
 )
+
 
 
 # Place names of abstract class implementations here. No file suffixes.
