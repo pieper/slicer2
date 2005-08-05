@@ -1,5 +1,5 @@
 #===============================================================================
-# FILE:        AG.tcl    
+# FILE:        AG.tcl   
 # PROCEDURES:  
 #   AGInit
 #   AGUpdateMRML
@@ -172,7 +172,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.12 $} {$Date: 2005/08/04 22:04:53 $}]
+        {$Revision: 1.13 $} {$Date: 2005/08/05 14:09:49 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -653,16 +653,16 @@ proc AGBuildTransformFrame {} {
     set f $fTransform.fSaveAll
     frame $f -bg $Gui(activeWorkspace)
     pack $f -side top -padx $Gui(pad) -pady 0 
-    DevAddButton $f.bSaveAllTfm "Save VTK linear and grid-transform" {AGWriteLinearNonLinearTransform}
+    DevAddButton $f.bSaveAllTfm "Save linear and grid transforms" {AGWriteLinearNonLinearTransform}
     pack $f.bSaveAllTfm -side top -padx $Gui(pad) -pady $Gui(pad)
     TooltipAdd $f.bSaveAllTfm "Save computed linear and non-linear transforms to file."
   
     set f $fTransform.fReadAll
     frame $f -bg $Gui(activeWorkspace)
     pack $f -side top -padx $Gui(pad) -pady 0 
-    DevAddButton $f.bReadAllTfm "Read VTK linear and grid-transform for co-register" {AGReadLinearNonLinearTransform}
+    DevAddButton $f.bReadAllTfm "Read linear and grid-transforms" {AGReadLinearNonLinearTransform}
     pack $f.bReadAllTfm -side top -padx $Gui(pad) -pady $Gui(pad)
-    TooltipAdd $f.bReadAllTfm "Save computed linear and non-linear transforms to file."
+    TooltipAdd $f.bReadAllTfm "Read  previous linear and non-linear transforms from file for co-registering."
   
 
   
