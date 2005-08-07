@@ -167,7 +167,6 @@ public:
   
   virtual void Execute( itk::Object * object, const itk::EventObject & event)
   {
-
     OptimizerPointer optimizer = 
       dynamic_cast< OptimizerPointer >( object );
     
@@ -179,92 +178,79 @@ public:
     
     if( rsoptimizer && typeid( event ) == typeid( itk::EndEvent ) ) {
       RSGDOptimizerType::StopConditionType stopCondition = rsoptimizer->GetStopCondition();
-      if (m_fo.good()) {
-        m_fo << "Optimizer stopped : " << std::endl;
-        m_fo << "Stop condition   =  " << stopCondition << std::endl;
-        switch(stopCondition) {
-        case RSGDOptimizerType::GradientMagnitudeTolerance:
-          m_fo << "GradientMagnitudeTolerance" << std::endl; 
-          break;
-        case RSGDOptimizerType::StepTooSmall:
-          m_fo << "StepTooSmall" << std::endl; 
-          break;
-        case RSGDOptimizerType::ImageNotAvailable:
-          m_fo << "ImageNotAvailable" << std::endl; 
-          break;
-        case RSGDOptimizerType::SamplesNotAvailable:
-          m_fo << "SamplesNotAvailable" << std::endl; 
-          break;
-        case RSGDOptimizerType::MaximumNumberOfIterations:
-          m_fo << "MaximumNumberOfIterations" << std::endl; 
-          break;
-        }
-        m_fo.flush();
+      m_fo << "Optimizer stopped : " << std::endl;
+      m_fo << "Stop condition   =  " << stopCondition << std::endl;
+      switch(stopCondition) {
+      case RSGDOptimizerType::GradientMagnitudeTolerance:
+        m_fo << "GradientMagnitudeTolerance" << std::endl; 
+        break;
+      case RSGDOptimizerType::StepTooSmall:
+        m_fo << "StepTooSmall" << std::endl; 
+        break;
+      case RSGDOptimizerType::ImageNotAvailable:
+        m_fo << "ImageNotAvailable" << std::endl; 
+        break;
+      case RSGDOptimizerType::SamplesNotAvailable:
+        m_fo << "SamplesNotAvailable" << std::endl; 
+        break;
+      case RSGDOptimizerType::MaximumNumberOfIterations:
+        m_fo << "MaximumNumberOfIterations" << std::endl; 
+        break;
       }
     }
-
+    
     if( gdoptimizer && typeid( event ) == typeid( itk::EndEvent ) ) {
       GDOptimizerType::StopConditionType stopCondition = gdoptimizer->GetStopCondition();
-      if (m_fo.good()) {
-        m_fo << "Optimizer stopped : " << std::endl;
-        m_fo << "Stop condition   =  " << stopCondition << std::endl;
-        switch(stopCondition) {
-        case GDOptimizerType::MaximumNumberOfIterations:
-          m_fo << "MaximumNumberOfIterations" << std::endl; 
-          break;
-        }
-        m_fo.flush();
+      m_fo << "Optimizer stopped : " << std::endl;
+      m_fo << "Stop condition   =  " << stopCondition << std::endl;
+      switch(stopCondition) {
+      case GDOptimizerType::MaximumNumberOfIterations:
+        m_fo << "MaximumNumberOfIterations" << std::endl; 
+        break;
       }
     }
 
-    if( ! itk::IterationEvent().CheckEvent( &event ) ) {
-      return;
-    }
-    int iter = m_registration->GetCurrentIteration();
-    unsigned int level = m_registration->GetCurrentLevel();
-    
-    vtkMatrix4x4 *mat = vtkMatrix4x4::New();
-    m_registration->GetCurrentTransformationMatrix(mat);
-
-    m_fo << "  ====== ITERATION =" << m_registration->GetCurrentIteration() << 
-      " LEVEL =" <<  m_registration->GetCurrentLevel() <<"   " << std::endl;
-    mat->Print(m_fo);
-    if (rsoptimizer) {
-      m_fo << "Value=" << rsoptimizer->GetValue() << "   ";
-      m_fo << "Position=" << rsoptimizer->GetCurrentPosition() << std::endl;
-    }
-    if (gdoptimizer) {
-      m_fo << "Value=" << gdoptimizer->GetValue() << "   ";
-      m_fo << "Position=" << gdoptimizer->GetCurrentPosition() << std::endl;
+    if( itk::IterationEvent().CheckEvent( &event ) ) {
+      int iter = m_registration->GetCurrentIteration();
+      unsigned int level = m_registration->GetCurrentLevel();
+      
+      vtkMatrix4x4 *mat = vtkMatrix4x4::New();
+      m_registration->GetCurrentTransformationMatrix(mat);
+      
+      m_fo << "  ====== ITERATION =" << m_registration->GetCurrentIteration() << 
+        " LEVEL =" <<  m_registration->GetCurrentLevel() <<"   " << std::endl;
+      mat->Print(m_fo);
+      if (rsoptimizer) {
+        m_fo << "Value=" << rsoptimizer->GetValue() << "   ";
+        m_fo << "Position=" << rsoptimizer->GetCurrentPosition() << std::endl;
+      }
+      if (gdoptimizer) {
+        m_fo << "Value=" << gdoptimizer->GetValue() << "   ";
+        m_fo << "Position=" << gdoptimizer->GetCurrentPosition() << std::endl;
+      }
+      
+      float maxNumIter = 0;
+      std::vector<float> maxProgressIter;
+      int i;
+      for( i=0; i< m_registration->GetMaxNumberOfIterations()->GetNumberOfTuples();i++) {
+        maxProgressIter.push_back( m_registration->GetMaxNumberOfIterations()->GetValue(i) );
+        maxNumIter += m_registration->GetMaxNumberOfIterations()->GetValue(i);
+      }
+      if (maxNumIter == 0) {
+        maxNumIter = 1;
+      }
+      for( i=0; i< m_registration->GetMaxNumberOfIterations()->GetNumberOfTuples();i++) {
+        maxProgressIter[i] = maxProgressIter[i]/maxNumIter;
+      }
+      double progress = 0;
+      for( i=0; i< level; i++) {
+        progress += maxProgressIter[i];
+      }
+      progress += (iter + 0.0)/m_registration->GetMaxNumberOfIterations()->GetValue(level) * maxProgressIter[level];
+      
+      m_registration->UpdateProgress( progress );
     }
     m_fo.flush();
-
-    
-    float maxNumIter = 0;
-    std::vector<float> maxProgressIter;
-    int i;
-    for( i=0; i< m_registration->GetMaxNumberOfIterations()->GetNumberOfTuples();i++) {
-      maxProgressIter.push_back( m_registration->GetMaxNumberOfIterations()->GetValue(i) );
-      maxNumIter += m_registration->GetMaxNumberOfIterations()->GetValue(i);
-    }
-    if (maxNumIter == 0) {
-      maxNumIter = 1;
-    }
-    for( i=0; i< m_registration->GetMaxNumberOfIterations()->GetNumberOfTuples();i++) {
-      maxProgressIter[i] = maxProgressIter[i]/maxNumIter;
-    }
-    double progress = 0;
-    for( i=0; i< level; i++) {
-      progress += maxProgressIter[i];
-    }
-    progress += (iter + 0.0)/m_registration->GetMaxNumberOfIterations()->GetValue(level) * maxProgressIter[level];
-
-    m_registration->UpdateProgress( progress );
-    //m_registration->InvokeEvent(vtkCommand::ProgressEvent);
-    
-    if (m_registration->GetAbortExecute()) {
-      m_registration->AbortIterations();
-    }
   }
 };
 //ETX

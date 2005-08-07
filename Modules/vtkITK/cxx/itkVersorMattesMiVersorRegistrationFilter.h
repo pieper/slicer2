@@ -114,66 +114,79 @@ public:
   
   virtual void Execute( itk::Object * object, const itk::EventObject & event)
   {
-    
     OptimizerPointer optimizer = 
       dynamic_cast< OptimizerPointer >( object );
 
     if( typeid( event ) == typeid( itk::EndEvent ) ) {
       OptimizerType::StopConditionType stopCondition = optimizer->GetStopCondition();
-      if (m_fo.good()) {
-        m_fo << "Optimizer stopped : " << std::endl;
-        m_fo << "Stop condition   =  " << stopCondition << std::endl;
-        switch(stopCondition) {
-        case OptimizerType::GradientMagnitudeTolerance:
-          m_fo << "GradientMagnitudeTolerance" << std::endl; 
-          break;
-        case OptimizerType::StepTooSmall:
-          m_fo << "StepTooSmall" << std::endl; 
-          break;
-        case OptimizerType::ImageNotAvailable:
-          m_fo << "ImageNotAvailable" << std::endl; 
-          break;
-        case OptimizerType::SamplesNotAvailable:
-          m_fo << "SamplesNotAvailable" << std::endl; 
-          break;
-        case OptimizerType::MaximumNumberOfIterations:
-          m_fo << "MaximumNumberOfIterations" << std::endl; 
-          break;
+      m_fo << "Optimizer stopped : " << std::endl;
+      m_fo << "Stop condition   =  " << stopCondition << std::endl;
+      switch(stopCondition) {
+      case OptimizerType::GradientMagnitudeTolerance:
+        m_fo << "GradientMagnitudeTolerance" << std::endl; 
+        break;
+      case OptimizerType::StepTooSmall:
+        m_fo << "StepTooSmall" << std::endl; 
+        break;
+      case OptimizerType::ImageNotAvailable:
+        m_fo << "ImageNotAvailable" << std::endl; 
+        break;
+      case OptimizerType::SamplesNotAvailable:
+        m_fo << "SamplesNotAvailable" << std::endl; 
+        break;
+      case OptimizerType::MaximumNumberOfIterations:
+        m_fo << "MaximumNumberOfIterations" << std::endl; 
+        break;
+      }
+    }
+
+    // force to stop if is aborted
+    if ( m_registration->IsAborted() ) {
+      optimizer->SetNumberOfIterations( 0 );
+      optimizer->SetMaximumStepLength( 0.0);
+      optimizer->SetMinimumStepLength( 10000.0);
+    }
+
+    if ( itk::IterationEvent().CheckEvent( &event ) ) {
+
+      unsigned int level = m_registration->GetCurrentLevel();
+
+      // set optimization parameters for a new level
+      if (level != m_level && m_registration->GetMaximumStepLength().GetNumberOfElements() > m_level + 1) {
+        m_level++;
+        optimizer->StopOptimization();
+        double maxStep = m_registration->GetMaximumStepLength().GetElement(m_level); 
+        optimizer->SetMaximumStepLength( maxStep );
+        if ( !m_registration->IsAborted() ) {
+          optimizer->StartOptimization(); 
+          m_fo << "RESTART OPTIMIZATION FOR LEVEL= " <<  m_level <<
+            " WITH maxStep = " << maxStep << std::endl; 
         }
-        m_fo.flush();
       }
-    }
+      int numIter = m_registration->GetNumberOfIterations().GetElement(level);
+      double maxStep  = m_registration->GetMaximumStepLength().GetElement(level); 
+      double minStep =  m_registration->GetMinimumStepLength().GetElement(level);
 
-    if( ! itk::IterationEvent().CheckEvent( &event ) ) {
-      return;
-    }
-
-    unsigned int level = m_registration->GetCurrentLevel();
-    if (level != m_level && m_registration->GetMaximumStepLength().GetNumberOfElements() > m_level + 1) {
-      m_level++;
-      optimizer->StopOptimization();
-      double maxStep = m_registration->GetMaximumStepLength().GetElement(m_level); 
-      optimizer->SetMaximumStepLength( maxStep );
-      if ( !m_registration->IsAborted() ) {
-        optimizer->StartOptimization(); 
-        m_fo << "RESTART OPTIMIZATION FOR LEVEL= " <<  m_level <<
-          " WITH maxStep = " << maxStep << std::endl; 
+      // force to stop if is aborted
+      if ( m_registration->IsAborted() ) {
+        numIter = 0;
+        maxStep = 0;
+        minStep = 1000;
       }
-    }
-    int numIter = m_registration->GetNumberOfIterations().GetElement(level);
-    double maxStep  = m_registration->GetMaximumStepLength().GetElement(level); 
-    double minStep =  m_registration->GetMinimumStepLength().GetElement(level);
-    optimizer->SetNumberOfIterations( numIter );
-    optimizer->SetMaximumStepLength( maxStep);
-    optimizer->SetMinimumStepLength( minStep);
-    if (m_fo.good()) {
+      optimizer->SetNumberOfIterations( numIter );
+      optimizer->SetMaximumStepLength( maxStep);
+      optimizer->SetMinimumStepLength( minStep);
+
       m_fo << "LEVEL = " << level << "  ITERATION =" << optimizer->GetCurrentIteration() << 
         " MaxStep=" << maxStep << " MinStep=" << minStep <<  
         " Step=" << optimizer->GetCurrentStepLength() <<
         "  Value=" << optimizer->GetValue() << std::endl;
-      m_fo.flush();
-    }
+
+    } // end if ( itk::IterationEvent().CheckEvent( &event ) )
+
+    m_fo.flush();      
   }
+
 };
 
 } // namespace itk
