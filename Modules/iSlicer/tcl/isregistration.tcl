@@ -357,7 +357,7 @@ itcl::configbody isregistration::target {
     $_targetvol configure -volume $itk_option(-target)
     $_targetvol configure -orientation RAS
 
-    if {$itk_option(-resample)} {
+    if {$itk_option(-resample) != 0} {
         set_target_dimensions $itk_option(-target)
         set_target_spacing $itk_option(-target)
         # TEMPORARY TEST
@@ -400,7 +400,7 @@ itcl::configbody isregistration::source {
     $_sourcevol configure -resolution $itk_option(-resolution)
     $_sourcevol configure -orientation RAS
 
-    if {$itk_option(-resample)} {
+    if {$itk_option(-resample) != 0} {
         set_source_dimensions $itk_option(-source)
         set_source_spacing $itk_option(-source)
         # TEMPORARY TEST
@@ -493,6 +493,11 @@ itcl::body isregistration::step {} {
     $itk_option(-set_metric_option) $_reg;
 
     $itk_option(-set_optimizer_option) $_reg;
+
+    if {$itk_option(-resample) != 0} {
+        set_source_dimensions $itk_option(-source)
+        set_source_spacing $itk_option(-source)
+    }
 
     ##########
     # Get the current matrix - if it's different from the
@@ -670,7 +675,7 @@ itcl::body isregistration::update_slicer_mat {} {
         $mat Invert
         puts "SHOULD NOT BE HERE"
     } else {
-        if {!$itk_option(-resample)} {
+        if {$itk_option(-resample) == 0} {
             set p2mat [$this getP2]
             $p2mat Invert
             $mat Invert
@@ -752,7 +757,7 @@ itcl::body isregistration::set_init_mat {} {
         #### works
         ## normal p1,p2, invert mat after
         $mat DeepCopy [[Matrix($t,node) GetTransform] GetMatrix]
-        if {!$itk_option(-resample)} {
+        if {$itk_option(-resample) == 0} {
             set p1mat [$this getP1]
             $p1mat Invert
             $this GetSimilarityMatrix [$this getP2] $mat $p1mat
@@ -914,6 +919,7 @@ itcl::body isregistration::get_last_metric_value { } {
 
 #-------------------------------------------------------------------------------
 # METHOD: set_dimensions for target volume
+# based on resample option that represents the downsample scale
 #
 # DESCRIPTION: 
 #-------------------------------------------------------------------------------
@@ -922,9 +928,14 @@ itcl::body isregistration::set_target_dimensions { vId } {
 
     set dimension [split [[Volume($vId,vol) GetOutput] GetDimensions]] 
         
-    set dimI [expr round(abs([lindex $dimension 0]))]
-    set dimJ [expr round(abs([lindex $dimension 1]))]
-    set dimK [expr round(abs([lindex $dimension 2]))]
+    set scale $itk_option(-resample)
+    if {$scale <= 0} {
+        set scale 1
+    }
+
+    set dimI [expr round(abs([lindex $dimension 0] - 1)/ $scale + 1)]
+    set dimJ [expr round(abs([lindex $dimension 1] - 1)/ $scale + 1)]
+    set dimK [expr round(abs([lindex $dimension 2] - 1)/ $scale + 1)]
 
     switch $order {
         "RL" -
@@ -955,17 +966,22 @@ itcl::body isregistration::set_target_dimensions { vId } {
 
 #-------------------------------------------------------------------------------
 # METHOD: set_dimensions for source volume
-#
+# based on resample option that represents the downsample scale#
 # DESCRIPTION: 
 #-------------------------------------------------------------------------------
 itcl::body isregistration::set_source_dimensions { vId } {
     set order [Volume($vId,node) GetScanOrder]
 
     set dimension [split [[Volume($vId,vol) GetOutput] GetDimensions]] 
-        
-    set dimI [expr round(abs([lindex $dimension 0]))]
-    set dimJ [expr round(abs([lindex $dimension 1]))]
-    set dimK [expr round(abs([lindex $dimension 2]))]
+
+    set scale $itk_option(-resample)
+    if {$scale <= 0} {
+        set scale 1
+    }
+
+    set dimI [expr round(abs([lindex $dimension 0] - 1)/ $scale + 1)]
+    set dimJ [expr round(abs([lindex $dimension 1] - 1)/ $scale + 1)]
+    set dimK [expr round(abs([lindex $dimension 2] - 1)/ $scale + 1)]
 
     switch $order {
         "RL" -
@@ -996,7 +1012,7 @@ itcl::body isregistration::set_source_dimensions { vId } {
 
 #-------------------------------------------------------------------------------
 # METHOD: set_spacing for target volume
-#
+# based on resample option that represents the downsample scale
 # DESCRIPTION: 
 #-------------------------------------------------------------------------------
 itcl::body isregistration::set_target_spacing { vId } {
@@ -1004,9 +1020,13 @@ itcl::body isregistration::set_target_spacing { vId } {
 
     set spacing [split [[Volume($vId,vol) GetOutput] GetSpacing]] 
 
-    set spacingI [lindex $spacing 0] 
-    set spacingJ [lindex $spacing 1] 
-    set spacingK [lindex $spacing 2] 
+    set scale $itk_option(-resample)
+    if {$scale <= 0} {
+        set scale 1
+    }
+    set spacingI [expr [lindex $spacing 0] * $scale]
+    set spacingJ [expr [lindex $spacing 1] * $scale]
+    set spacingK [expr [lindex $spacing 2] * $scale]
 
     switch $order {
         "RL" -
@@ -1037,7 +1057,7 @@ itcl::body isregistration::set_target_spacing { vId } {
 
 #-------------------------------------------------------------------------------
 # METHOD: set_spacing for source volume
-#
+# based on resample option that represents the downsample scale
 # DESCRIPTION: 
 #-------------------------------------------------------------------------------
 itcl::body isregistration::set_source_spacing { vId } {
@@ -1045,9 +1065,13 @@ itcl::body isregistration::set_source_spacing { vId } {
 
     set spacing [split [[Volume($vId,vol) GetOutput] GetSpacing]] 
 
-    set spacingI [lindex $spacing 0] 
-    set spacingJ [lindex $spacing 1] 
-    set spacingK [lindex $spacing 2] 
+    set scale $itk_option(-resample)
+    if {$scale <= 0} {
+        set scale 1
+    }
+    set spacingI [expr [lindex $spacing 0] * $scale]
+    set spacingJ [expr [lindex $spacing 1] * $scale]
+    set spacingK [expr [lindex $spacing 2] * $scale]
 
     switch $order {
         "RL" -
