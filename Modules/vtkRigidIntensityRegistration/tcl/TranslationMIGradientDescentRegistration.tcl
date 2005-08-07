@@ -155,7 +155,7 @@ proc TranslationMIGradientDescentRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2005/07/30 18:46:39 $}]
+        {$Revision: 1.3 $} {$Date: 2005/08/07 14:59:36 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -168,7 +168,7 @@ proc TranslationMIGradientDescentRegistrationInit {} {
     ## put here to show MI specific param
     set TranslationMIGradientDescentRegistration(NumberOfSamples)  50
     set TranslationMIGradientDescentRegistration(StandardDeviation) 0.4
-
+    set TranslationMIGradientDescentRegistration(Resample) 1
 
     ## Set the default to fast registration
     TranslationMIGradientDescentRegistrationVerySlowParam
@@ -414,12 +414,14 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
     }
 
     foreach param { \
+                   {Resample} \
                    {UpdateIterations} \
                    {LearningRate} \
                    {NumberOfSamples} \
                    {StandardDeviation} \
                    } name \
                   { \
+                   {Resample Dimension Reduction} \
                    {Update Iterations} \
                    {Learning Rate} \
                    {Number Of Samples} \
@@ -481,7 +483,6 @@ proc TranslationMIGradientDescentRegistrationSetLevel {} {
 proc TranslationMIGradientDescentRegistrationCoarseParam {} {
     global TranslationMIGradientDescentRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(Resolution)       128
     set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
     set RigidIntensityRegistration(TargetShrinkFactors)   "1 1 1"
     set RigidIntensityRegistration(Repeat) 1
@@ -491,6 +492,7 @@ proc TranslationMIGradientDescentRegistrationCoarseParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
+    set TranslationMIGradientDescentRegistration(Resample)       4
     set TranslationMIGradientDescentRegistration(LearningRate)    10
     set TranslationMIGradientDescentRegistration(UpdateIterations) 100
 
@@ -511,7 +513,6 @@ proc TranslationMIGradientDescentRegistrationCoarseParam {} {
 proc TranslationMIGradientDescentRegistrationFineParam {} {
     global TranslationMIGradientDescentRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(Resolution)       128
     set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
     set RigidIntensityRegistration(TargetShrinkFactors)   "1 1 1"
     set RigidIntensityRegistration(Repeat) 1
@@ -521,6 +522,7 @@ proc TranslationMIGradientDescentRegistrationFineParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
+    set TranslationMIGradientDescentRegistration(Resample)       2
     set TranslationMIGradientDescentRegistration(LearningRate)     5
     set TranslationMIGradientDescentRegistration(UpdateIterations) 100
 
@@ -540,7 +542,6 @@ proc TranslationMIGradientDescentRegistrationFineParam {} {
 proc TranslationMIGradientDescentRegistrationGSlowParam {} {
     global TranslationMIGradientDescentRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(Resolution)       128
     set RigidIntensityRegistration(SourceShrinkFactors)   "2 2 2"
     set RigidIntensityRegistration(TargetShrinkFactors)   "2 2 2"
     set RigidIntensityRegistration(Repeat) 0
@@ -550,6 +551,7 @@ proc TranslationMIGradientDescentRegistrationGSlowParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
+    set TranslationMIGradientDescentRegistration(Resample)       1
     set TranslationMIGradientDescentRegistration(UpdateIterations) "500 1000"
     set TranslationMIGradientDescentRegistration(LearningRate)    "10 2"
 
@@ -568,7 +570,6 @@ proc TranslationMIGradientDescentRegistrationGSlowParam {} {
 proc TranslationMIGradientDescentRegistrationVerySlowParam {} {
     global TranslationMIGradientDescentRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(Resolution)       256 
     set RigidIntensityRegistration(SourceShrinkFactors)   "4 4 4"
     set RigidIntensityRegistration(TargetShrinkFactors)   "4 4 4"
     set RigidIntensityRegistration(Repeat) 0
@@ -578,6 +579,7 @@ proc TranslationMIGradientDescentRegistrationVerySlowParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
+    set TranslationMIGradientDescentRegistration(Resample)       1
     set TranslationMIGradientDescentRegistration(UpdateIterations) "2000 1000 1000"
     set TranslationMIGradientDescentRegistration(LearningRate)    "15 7 3"
 
@@ -683,7 +685,7 @@ proc TranslationMIGradientDescentRegistrationAutoRun {} {
         -stop_procedure    TranslationMIGradientDescentRegistrationStop            \
         -set_metric_option TranslationMIGradientDescentRegistrationSetMetricOption \
         -set_optimizer_option TranslationMIGradientDescentRegistrationSetOptimizerOption \
-        -resample 1 \
+        -resample         $TranslationMIGradientDescentRegistration(Resample)          \
         -vtk_itk_reg       vtkITKTranslationMIGradientDescentRegistrationFilter               
 
 

@@ -155,7 +155,7 @@ proc TranslationMattesMIRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2005/07/30 18:46:39 $}]
+        {$Revision: 1.2 $} {$Date: 2005/08/07 14:59:36 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -168,7 +168,7 @@ proc TranslationMattesMIRegistrationInit {} {
     ## put here to show MI specific param
     set TranslationMattesMIRegistration(NumberOfSamples)  5000
     set TranslationMattesMIRegistration(NumberOfHistogramBins) 256
-
+    set TranslationMattesMIRegistration(Resample) 1
 
     ## Set the default to fast registration
     TranslationMattesMIRegistrationVerySlowParam
@@ -380,20 +380,6 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
     frame $f.fRun      -bg $Gui(activeWorkspace)
 
     pack $f.fParam $f.fRun -pady $Gui(pad) 
-
-### Variables for Gering implementation
-#                   {SampleSize} \
-#                   {SigmaUU} \
-#                   {SigmaVV} \
-#                   {SigmaV} \
-#                   {Pmin} \
-### Variables for Gering implementation
-#                   {SampleSize}  \
-#                   {SigmaUU} \
-#                   {SigmaVV} \
-#                   {SigmaV}  \
-#                   {Pmin}  \
-
     foreach param { \
                    {SourceShrinkFactors} \
                    {TargetShrinkFactors} \
@@ -414,6 +400,7 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
     }
 
     foreach param { \
+                   {Resample} \
                    {UpdateIterations} \
                    {MinimumStepLength} \
                    {MaximumStepLength} \
@@ -421,6 +408,7 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
                    {NumberOfHistogramBins} \
                    } name \
                   { \
+                   {Resample Dimension Reduction} \
                    {Update Iterations} \
                    {Minimum Step Length} \
                    {Maximum Step Length} \
@@ -483,7 +471,6 @@ proc TranslationMattesMIRegistrationSetLevel {} {
 proc TranslationMattesMIRegistrationCoarseParam {} {
     global TranslationMattesMIRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(Resolution)       64
     set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
     set RigidIntensityRegistration(TargetShrinkFactors)   "1 1 1"
     set RigidIntensityRegistration(Repeat) 1
@@ -493,12 +480,13 @@ proc TranslationMattesMIRegistrationCoarseParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
-    set TranslationMattesMIRegistration(MinimumStepLength)    0.01
-    set TranslationMattesMIRegistration(MaximumStepLength)    4.0
-    set TranslationMattesMIRegistration(UpdateIterations) 100
+    set TranslationMattesMIRegistration(Resample)       4
+    set TranslationMattesMIRegistration(MinimumStepLength)    0.001
+    set TranslationMattesMIRegistration(MaximumStepLength)    2.0
+    set TranslationMattesMIRegistration(UpdateIterations) 30
 
-    set TranslationMattesMIRegistration(NumberOfSamples)  10000
-    set TranslationMattesMIRegistration(NumberOfHistogramBins) 128
+    set TranslationMattesMIRegistration(NumberOfSamples)  3000
+    set TranslationMattesMIRegistration(NumberOfHistogramBins) 20
 }
 
 
@@ -514,7 +502,6 @@ proc TranslationMattesMIRegistrationCoarseParam {} {
 proc TranslationMattesMIRegistrationFineParam {} {
     global TranslationMattesMIRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(Resolution)       128
     set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
     set RigidIntensityRegistration(TargetShrinkFactors)   "1 1 1"
     set RigidIntensityRegistration(Repeat) 1
@@ -524,12 +511,13 @@ proc TranslationMattesMIRegistrationFineParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
-    set TranslationMattesMIRegistration(MinimumStepLength)     0.01
-    set TranslationMattesMIRegistration(MaximumStepLength)     4.0
-    set TranslationMattesMIRegistration(UpdateIterations) 1000
+    set TranslationMattesMIRegistration(Resample)       2
+    set TranslationMattesMIRegistration(MinimumStepLength)     0.001
+    set TranslationMattesMIRegistration(MaximumStepLength)     1.0
+    set TranslationMattesMIRegistration(UpdateIterations) 30
 
-    set TranslationMattesMIRegistration(NumberOfHistogramBins) 200
-    set TranslationMattesMIRegistration(NumberOfSamples)  10000
+    set TranslationMattesMIRegistration(NumberOfHistogramBins) 50
+    set TranslationMattesMIRegistration(NumberOfSamples)  6000
 }
 
 
@@ -544,7 +532,6 @@ proc TranslationMattesMIRegistrationFineParam {} {
 proc TranslationMattesMIRegistrationGSlowParam {} {
     global TranslationMattesMIRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(Resolution)       128
     set RigidIntensityRegistration(SourceShrinkFactors)   "2 2 2"
     set RigidIntensityRegistration(TargetShrinkFactors)   "2 2 2"
     set RigidIntensityRegistration(Repeat) 0
@@ -554,6 +541,7 @@ proc TranslationMattesMIRegistrationGSlowParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
+    set TranslationMattesMIRegistration(Resample)       1
     set TranslationMattesMIRegistration(UpdateIterations) "500 1000"
     set TranslationMattesMIRegistration(MinimumStepLength)    "0.02 0.01"
     set TranslationMattesMIRegistration(MaximumStepLength)    "4.0 1.0"
@@ -573,7 +561,6 @@ proc TranslationMattesMIRegistrationGSlowParam {} {
 proc TranslationMattesMIRegistrationVerySlowParam {} {
     global TranslationMattesMIRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(Resolution)       128 
     set RigidIntensityRegistration(SourceShrinkFactors)   "4 4 4"
     set RigidIntensityRegistration(TargetShrinkFactors)   "4 4 4"
     set RigidIntensityRegistration(Repeat) 0
@@ -583,6 +570,7 @@ proc TranslationMattesMIRegistrationVerySlowParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
+    set TranslationMattesMIRegistration(Resample)       1
     set TranslationMattesMIRegistration(UpdateIterations) "1000 1000 1000"
     set TranslationMattesMIRegistration(MinimumStepLength) "0.01 0.01 0.005"
     set TranslationMattesMIRegistration(MaximumStepLength) "4.0 1 0.5"
@@ -679,7 +667,7 @@ proc TranslationMattesMIRegistrationAutoRun {} {
         -stop_procedure    TranslationMattesMIRegistrationStop            \
         -set_metric_option TranslationMattesMIRegistrationSetMetricOption \
         -set_optimizer_option TranslationMattesMIRegistrationSetOptimizerOption \
-        -resample 1 \
+        -resample         $TranslationMattesMIRegistration(Resample)          \
         -vtk_itk_reg       vtkITKTranslationMattesMIRegistrationFilter               
 
 

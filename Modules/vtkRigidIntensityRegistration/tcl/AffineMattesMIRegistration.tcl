@@ -155,7 +155,7 @@ proc AffineMattesMIRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2005/07/30 18:46:38 $}]
+        {$Revision: 1.4 $} {$Date: 2005/08/07 14:59:35 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -168,7 +168,7 @@ proc AffineMattesMIRegistrationInit {} {
     ## put here to show MI specific param
     set AffineMattesMIRegistration(NumberOfSamples)  5000
     set AffineMattesMIRegistration(NumberOfHistogramBins) 256
-
+    set AffineMattesMIRegistration(Resample) 1
 
     ## Set the default to fast registration
     AffineMattesMIRegistrationVerySlowParam
@@ -380,20 +380,6 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
     frame $f.fRun      -bg $Gui(activeWorkspace)
 
     pack $f.fParam $f.fRun -pady $Gui(pad) 
-
-### Variables for Gering implementation
-#                   {SampleSize} \
-#                   {SigmaUU} \
-#                   {SigmaVV} \
-#                   {SigmaV} \
-#                   {Pmin} \
-### Variables for Gering implementation
-#                   {SampleSize}  \
-#                   {SigmaUU} \
-#                   {SigmaVV} \
-#                   {SigmaV}  \
-#                   {Pmin}  \
-
     foreach param { \
                    {SourceShrinkFactors} \
                    {TargetShrinkFactors} \
@@ -414,6 +400,7 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
     }
 
     foreach param { \
+                   {Resample} \
                    {UpdateIterations} \
                    {MinimumStepLength} \
                    {MaximumStepLength} \
@@ -422,6 +409,7 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
                    {NumberOfHistogramBins} \
                    } name \
                   { \
+                   {Resample Dimension Reduction} \
                    {Update Iterations} \
                    {Minimum Step Length} \
                    {Maximum Step Length} \
@@ -485,7 +473,6 @@ proc AffineMattesMIRegistrationSetLevel {} {
 proc AffineMattesMIRegistrationCoarseParam {} {
     global AffineMattesMIRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(Resolution)       64
     set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
     set RigidIntensityRegistration(TargetShrinkFactors)   "1 1 1"
     set RigidIntensityRegistration(Repeat) 1
@@ -495,13 +482,14 @@ proc AffineMattesMIRegistrationCoarseParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
+    set AffineMattesMIRegistration(Resample)       4
     set AffineMattesMIRegistration(MinimumStepLength)    0.01
-    set AffineMattesMIRegistration(MaximumStepLength)    4.0
-    set AffineMattesMIRegistration(UpdateIterations) 100
+    set AffineMattesMIRegistration(MaximumStepLength)    2.0
+    set AffineMattesMIRegistration(UpdateIterations) 30
     set AffineMattesMIRegistration(TranslateScale)   0.0002
 
-    set AffineMattesMIRegistration(NumberOfSamples)  10000
-    set AffineMattesMIRegistration(NumberOfHistogramBins) 128
+    set AffineMattesMIRegistration(NumberOfSamples)  3000
+    set AffineMattesMIRegistration(NumberOfHistogramBins) 20
 }
 
 
@@ -517,7 +505,6 @@ proc AffineMattesMIRegistrationCoarseParam {} {
 proc AffineMattesMIRegistrationFineParam {} {
     global AffineMattesMIRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(Resolution)       128
     set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
     set RigidIntensityRegistration(TargetShrinkFactors)   "1 1 1"
     set RigidIntensityRegistration(Repeat) 1
@@ -527,13 +514,14 @@ proc AffineMattesMIRegistrationFineParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
+    set AffineMattesMIRegistration(Resample)       2
     set AffineMattesMIRegistration(MinimumStepLength)     0.01
-    set AffineMattesMIRegistration(MaximumStepLength)     4.0
-    set AffineMattesMIRegistration(UpdateIterations) 1000
+    set AffineMattesMIRegistration(MaximumStepLength)     1.0
+    set AffineMattesMIRegistration(UpdateIterations) 30
     set AffineMattesMIRegistration(TranslateScale)   0.0002
 
-    set AffineMattesMIRegistration(NumberOfHistogramBins) 200
-    set AffineMattesMIRegistration(NumberOfSamples)  10000
+    set AffineMattesMIRegistration(NumberOfHistogramBins) 50
+    set AffineMattesMIRegistration(NumberOfSamples)  5000
 }
 
 
@@ -548,7 +536,6 @@ proc AffineMattesMIRegistrationFineParam {} {
 proc AffineMattesMIRegistrationGSlowParam {} {
     global AffineMattesMIRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(Resolution)       128
     set RigidIntensityRegistration(SourceShrinkFactors)   "2 2 2"
     set RigidIntensityRegistration(TargetShrinkFactors)   "2 2 2"
     set RigidIntensityRegistration(Repeat) 0
@@ -558,6 +545,7 @@ proc AffineMattesMIRegistrationGSlowParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
+    set AffineMattesMIRegistration(Resample)       1
     set AffineMattesMIRegistration(UpdateIterations) "500 1000"
     set AffineMattesMIRegistration(MinimumStepLength)    "0.02 0.01"
     set AffineMattesMIRegistration(MaximumStepLength)    "4.0 1.0"
@@ -578,7 +566,6 @@ proc AffineMattesMIRegistrationGSlowParam {} {
 proc AffineMattesMIRegistrationVerySlowParam {} {
     global AffineMattesMIRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(Resolution)       128 
     set RigidIntensityRegistration(SourceShrinkFactors)   "4 4 4"
     set RigidIntensityRegistration(TargetShrinkFactors)   "4 4 4"
     set RigidIntensityRegistration(Repeat) 0
@@ -588,6 +575,7 @@ proc AffineMattesMIRegistrationVerySlowParam {} {
     # They scaled data 0...256.
     # We scale data -1 to 1.
     # 2/256*2 = 0.015
+    set AffineMattesMIRegistration(Resample)       1
     set AffineMattesMIRegistration(UpdateIterations) "1000 1000 1000"
     set AffineMattesMIRegistration(MinimumStepLength) "0.01 0.01 0.005"
     set AffineMattesMIRegistration(MaximumStepLength) "4.0 1 0.5"
@@ -685,7 +673,7 @@ proc AffineMattesMIRegistrationAutoRun {} {
         -stop_procedure    AffineMattesMIRegistrationStop            \
         -set_metric_option AffineMattesMIRegistrationSetMetricOption \
         -set_optimizer_option AffineMattesMIRegistrationSetOptimizerOption \
-        -resample 1 \
+        -resample         $AffineMattesMIRegistration(Resample)          \
         -vtk_itk_reg       vtkITKAffineMattesMIRegistrationFilter               
 
 
