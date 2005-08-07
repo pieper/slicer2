@@ -18,7 +18,7 @@ itk::itkTranslationMattesMIRegistrationFilter::itkTranslationMattesMIRegistratio
   m_Optimizer->MinimizeOn();
 
   m_Optimizer->SetRelaxationFactor( 0.9 );
-  m_Optimizer->SetGradientMagnitudeTolerance( 0.01);
+  m_Optimizer->SetGradientMagnitudeTolerance( 0.001);
 
 }
 
