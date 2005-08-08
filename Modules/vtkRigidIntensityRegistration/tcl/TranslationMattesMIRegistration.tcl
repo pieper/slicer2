@@ -155,7 +155,7 @@ proc TranslationMattesMIRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2005/08/07 14:59:36 $}]
+        {$Revision: 1.3 $} {$Date: 2005/08/08 14:39:09 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -651,14 +651,19 @@ proc TranslationMattesMIRegistrationAutoRun {} {
     # TODO make islicer a package
     source $env(SLICER_HOME)/Modules/iSlicer/tcl/isregistration.tcl
 
+
+    # NOTE: destroying and creating isregistration
+    # is not efficient but it's a workaround the cleanup issue
+    # in isregistration
+
     ## if it is not already there, create it.
-    if { [info command .mi.reg] == "" } {
+    #if { [info command .mi.reg] == "" } {
         catch ".mi.reg pre_destroy"
         catch "destroy .mi"
         toplevel .mi
         wm withdraw .mi
         isregistration .mi.reg
-    }
+    #}
 
     .mi.reg config \
         -source          $RigidIntensityRegistration(sourceId)          \
