@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceWFileReader.h,v $
   Language:  C++
-  Date:      $Date: 2005/08/05 19:23:08 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2005/08/08 18:23:19 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================*/
 
@@ -64,6 +64,15 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // file type magic numbers
 const int FS_NEW_SCALAR_MAGIC_NUMBER = 16777215;
 
+// error codes
+const int FS_ERROR_W_NONE = 0;
+const int FS_ERROR_W_OUTPUT_NULL = 1;
+const int FS_ERROR_W_NO_FILENAME = 2;
+const int FS_ERROR_W_OPEN = 3;
+const int FS_ERROR_W_NUM_VALUES = 4;
+const int FS_ERROR_W_ALLOC = 5;
+const int FS_ERROR_W_EOF = 6;
+
 class VTK_FREESURFERREADERS_EXPORT vtkFSSurfaceWFileReader : public vtkDataReader
 {
 public:
@@ -76,7 +85,10 @@ public:
   void SetOutput(vtkFloatArray *output)
     {this->scalars = output; };
 
-  void ReadWFile();
+  int ReadWFile();
+
+    vtkGetMacro(NumberOfVertices,int);
+    vtkSetMacro(NumberOfVertices,int);
 
 protected:
   vtkFSSurfaceWFileReader();
@@ -84,6 +96,13 @@ protected:
 
   vtkFloatArray *scalars;
 
+
+    // Description:
+    // this is the number of vertices in the associated model file,
+    // there may not be as many value in this scalar file as there
+    // are vertices
+    int NumberOfVertices;
+    
   int ReadInt3 (FILE* iFile, int& oInt);
   int ReadInt2 (FILE* iFile, int& oInt);
   int ReadFloat (FILE* iFile, float& oInt);
