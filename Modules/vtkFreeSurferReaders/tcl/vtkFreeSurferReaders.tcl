@@ -327,7 +327,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.37 $} {$Date: 2005/08/08 18:27:47 $}]
+        {$Revision: 1.38 $} {$Date: 2005/08/08 22:17:00 $}]
 
 }
 
@@ -5677,7 +5677,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.37 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.38 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -6855,19 +6855,26 @@ proc vtkFreeSurferReadersReadScalars { m {fileName ""} } {
 
 #-------------------------------------------------------------------------------
 # .PROC vtkFreeSurferReadersLoadScalarFile
-# Sets up and reads in a scalar file for the active model, using vtkFreeSurferReaders(scalarFileName)
+# Sets up and reads in a scalar file for the active model, using vtkFreeSurferReaders(scalarFileName). Can be
+# called to load a file from the command line, if fileName is not an empty string, it will over ride 
+# vtkFreeSurferReaders(scalarFileName), otherwise load scalarFileName
 # .ARGS
+# path fileName path to a scalar file, defaults to empty string.
 # .END
 #-------------------------------------------------------------------------------
-proc vtkFreeSurferReadersLoadScalarFile {} {
+proc vtkFreeSurferReadersLoadScalarFile { {fileName ""} } {
     global vtkFreeSurferReaders Model
 
-     if {$::Module(verbose)} {
-        puts "vtkFreeSurferReadersLoadScalar: scalar file name = $vtkFreeSurferReaders(scalarFileName)"
+    if {$fileName != ""} {
+        set vtkFreeSurferReaders(scalarFileName) $fileName 
     }
 
     # check that there's an active model
     set m $Model(activeID)
+    
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersLoadScalar: for model id $m, loading scalar file name = $vtkFreeSurferReaders(scalarFileName)"
+    }
 
     # read in the scalar for this model 
     vtkFreeSurferReadersReadScalars $m $vtkFreeSurferReaders(scalarFileName)
