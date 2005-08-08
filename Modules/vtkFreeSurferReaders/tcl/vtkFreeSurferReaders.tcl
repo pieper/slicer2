@@ -327,7 +327,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.36 $} {$Date: 2005/08/05 19:26:22 $}]
+        {$Revision: 1.37 $} {$Date: 2005/08/08 18:27:47 $}]
 
 }
 
@@ -3077,6 +3077,35 @@ proc vtkFreeSurferReadersCheckAnnotError {val} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersCheckWError
+# references vtkFSSurfaceWFileReader.h. Returns error value (0 means success)
+# after calling DevErrorWindow with a useful message
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersCheckWError {val} {
+    if {$val == 1} {
+        DevErrorWindow "ERROR: output is null"
+    }
+    if {$val == 2} {
+        DevErrorWindow "ERROR: FileName not specified"
+    }
+    if {$val == 3} {
+        DevErrorWindow "ERROR: Could not open file"
+    }
+    if {$val == 4} {
+        DevErrorWindow "ERROR: Number of values in the file is 0 or negative, or greater than number of vertices in the associated scalar file"
+    }
+    if {$val == 5} {
+        DevErrorWindow "ERROR: Error allocating the array of floats"
+    }
+    if {$val == 6} {
+        DevErrorWindow "ERROR: Unexpected EOF"
+    }
+    return $val
+}
+
+#-------------------------------------------------------------------------------
 # .PROC vtkFreeSurferReadersModelApply
 # Read in the model specified. Used in place of the temp ModelsFreeSurferPropsApply.
 # .ARGS
@@ -5648,7 +5677,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.36 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.37 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -6757,7 +6786,17 @@ proc vtkFreeSurferReadersReadScalars { m {fileName ""} } {
                 Model($m,swr$s) SetFileName $scalarFileName
                 Model($m,swr$s) SetOutput Model($m,floatArray$s)
 
-                Model($m,swr$s) ReadWFile
+                # set the total number of vertices in the associated model
+                Model($m,swr$s) SetNumberOfVertices [[$Model($m,polyData) GetPointData] GetNumberOfTuples]
+
+                if {$::Module(verbose)} {
+                    Model($m,swr$s) DebugOn
+                }
+                set retval [Model($m,swr$s) ReadWFile]
+                if {[vtkFreeSurferReadersCheckWError $retval] != 0} {
+                    DevErrorWindow "vtkFreeSurferReadersReadScalars: Error reading $fileName, returning..."
+                    return
+                }
             } else {
                 catch "Model($m,ssr$s) Delete"
                 vtkFSSurfaceScalarReader Model($m,ssr$s)
