@@ -155,7 +155,7 @@ proc VersorMattesMIRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2005/08/08 14:39:09 $}]
+        {$Revision: 1.7 $} {$Date: 2005/08/08 14:57:20 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -522,7 +522,7 @@ proc VersorMattesMIRegistrationFineParam {} {
     set VersorMattesMIRegistration(TranslateScale)   0.0002
 
     set VersorMattesMIRegistration(NumberOfHistogramBins) 50
-    set VersorMattesMIRegistration(NumberOfSamples)  6000
+    set VersorMattesMIRegistration(NumberOfSamples)  8000
 }
 
 

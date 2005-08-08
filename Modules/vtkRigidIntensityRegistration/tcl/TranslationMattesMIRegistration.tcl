@@ -155,7 +155,7 @@ proc TranslationMattesMIRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2005/08/08 14:39:09 $}]
+        {$Revision: 1.4 $} {$Date: 2005/08/08 14:57:20 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -517,7 +517,7 @@ proc TranslationMattesMIRegistrationFineParam {} {
     set TranslationMattesMIRegistration(UpdateIterations) 30
 
     set TranslationMattesMIRegistration(NumberOfHistogramBins) 50
-    set TranslationMattesMIRegistration(NumberOfSamples)  6000
+    set TranslationMattesMIRegistration(NumberOfSamples)  8000
 }
 
 

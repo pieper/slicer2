@@ -155,7 +155,7 @@ proc AffineMattesMIRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2005/08/08 14:39:08 $}]
+        {$Revision: 1.6 $} {$Date: 2005/08/08 14:57:20 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -521,7 +521,7 @@ proc AffineMattesMIRegistrationFineParam {} {
     set AffineMattesMIRegistration(TranslateScale)   0.0002
 
     set AffineMattesMIRegistration(NumberOfHistogramBins) 50
-    set AffineMattesMIRegistration(NumberOfSamples)  5000
+    set AffineMattesMIRegistration(NumberOfSamples)  8000
 }
 
 
