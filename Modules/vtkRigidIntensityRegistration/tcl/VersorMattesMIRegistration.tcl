@@ -155,7 +155,7 @@ proc VersorMattesMIRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7 $} {$Date: 2005/08/08 14:57:20 $}]
+        {$Revision: 1.8 $} {$Date: 2005/08/08 20:42:40 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -664,7 +664,7 @@ proc VersorMattesMIRegistrationAutoRun {} {
 
     ## if it is not already there, create it.
     #if { [info command .mi.reg] == "" } {
-        catch ".mi.reg pre_destroy"
+        catch ".mi.reg pre_delete"
         catch "destroy .mi"
         toplevel .mi
         wm withdraw .mi

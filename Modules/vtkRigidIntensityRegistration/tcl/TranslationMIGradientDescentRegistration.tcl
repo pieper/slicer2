@@ -155,7 +155,7 @@ proc TranslationMIGradientDescentRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2005/08/08 14:39:08 $}]
+        {$Revision: 1.5 $} {$Date: 2005/08/08 20:42:39 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -676,7 +676,7 @@ proc TranslationMIGradientDescentRegistrationAutoRun {} {
 
     ## if it is not already there, create it.
     #if { [info command .mi.reg] == "" } {
-        catch ".mi.reg pre_destroy"
+        catch ".mi.reg pre_delete"
         catch "destroy .mi"
         toplevel .mi
         wm withdraw .mi
