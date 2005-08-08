@@ -90,6 +90,7 @@ proc Usage { {msg ""} } {
     set msg "$msg\n   --load-freesurfer-volume <COR-.info> : read freesurfer files"
     set msg "$msg\n   --load-freesurfer-label-volume <COR-.info> : read freesurfer label files"
     set msg "$msg\n   --load-freesurfer-model <file> : read freesurfer model file"
+    set msg "$msg\n   --load-freesurfer-scalar <file> : read a freesurfer scalar file for the active model"
     set msg "$msg\n   --load-freesurfer-qa <file> : read freesurfer QA subjects.csh file"
     set msg "$msg\n   --load-bxh <file.bxh> : read bxh file from <file.bxh>"
     set msg "$msg\n   --script <file.tcl> : script to execute after slicer loads"
@@ -117,6 +118,7 @@ set SLICER(load-analyze) ""
 set SLICER(load-freesurfer-volume) ""
 set SLICER(load-freesurfer-label-volume) ""
 set SLICER(load-freesurfer-model) ""
+set SLICER(load-freesurfer-scalar) ""
 set SLICER(load-freesurfer-qa) ""
 set SLICER(load-bxh) ""
 set SLICER(script) ""
@@ -192,6 +194,14 @@ for {set i 0} {$i < $argc} {incr i} {
                 Usage "missing argument for $a\n"
             } else {
                 lappend SLICER(load-freesurfer-model) [lindex $argv $i]
+            }
+        }
+        "--load-freesurfer-scalar" {
+            incr i
+            if { $i == $argc } {
+                Usage "missing argument for $a\n"
+            } else {
+                lappend SLICER(load-freesurfer-scalar) [lindex $argv $i]
             }
         }
         "--load-freesurfer-qa" {
@@ -808,7 +818,7 @@ if { $SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.94 2005/06/29 19:35:40 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.95 2005/08/08 22:14:46 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
@@ -883,6 +893,16 @@ foreach arg $SLICER(load-freesurfer-model) {
     vtkFreeSurferReadersLoadModel $arg
 }
 
+#
+# read freesurfer scalar command, gets associated with active (last loaded) model
+#
+if { [catch "package require vtkFreeSurferReaders"] } {
+    DevErrorWindow "vtkFreeSurferReaders Module required for --load-freesufer-scalar option."
+} else {
+    foreach arg $SLICER(load-freesurfer-scalar) {
+        vtkFreeSurferReadersLoadScalarFile $arg
+    }
+}
 #
 # read in freesurfer QA command line
 # 
