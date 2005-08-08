@@ -174,10 +174,9 @@ if { [itcl::find class isregistration] == "" } {
             $_sourcevol pre_delete
             $_targetvol pre_delete
         }
-        method set_source_dimensions {v} {}
-        method set_source_spacing {v} {}
-        method set_target_dimensions {v} {}
-        method set_target_spacing {v} {}
+        method get_dimensions {v} {}
+        method get_spacing {v} {}
+        method set_resample_parameters {} {}
     }
 }
 
@@ -358,12 +357,11 @@ itcl::configbody isregistration::target {
     $_targetvol configure -orientation RAS
 
     if {$itk_option(-resample) != 0} {
-        set_target_dimensions $itk_option(-target)
-        set_target_spacing $itk_option(-target)
-        # TEMPORARY TEST
-        #$_targetvol set_dimensions 256 256 27 
-        #$_targetvol set_spacing 0.859375 0.859375 6
-        # END TEMPORARY TEST
+        set dimension [get_dimensions $itk_option(-target)]
+        set spacing [get_spacing $itk_option(-target)]
+
+        $_targetvol set_dimensions [lindex $dimension 0] [lindex $dimension 1] [lindex $dimension 2]
+        $_targetvol set_spacing [lindex $spacing 0] [lindex $spacing 1] [lindex $spacing 2]
 
         catch "xform Delete"
         vtkMatrix4x4 xform
@@ -371,11 +369,14 @@ itcl::configbody isregistration::target {
         $_targetvol configure -transform xform
         [$_targetvol imagedata] SetUpdateExtentToWholeExtent
         [$_targetvol imagedata] Update
-        catch "temp Delete"
-        vtkImageData temp
-        temp DeepCopy [$_targetvol imagedata]
-        $_targetchangeinfo SetInput temp
-        temp Delete
+
+        $_targetchangeinfo SetInput [$_targetvol imagedata]
+
+        #catch "temp Delete"
+        #vtkImageData temp
+        #temp DeepCopy [$_targetvol imagedata]
+        #$_targetchangeinfo SetInput temp
+        #temp Delete
     } else {
         $_targetchangeinfo SetInput [Volume($itk_option(-target),vol) GetOutput]
     }
@@ -401,12 +402,11 @@ itcl::configbody isregistration::source {
     $_sourcevol configure -orientation RAS
 
     if {$itk_option(-resample) != 0} {
-        set_source_dimensions $itk_option(-source)
-        set_source_spacing $itk_option(-source)
-        # TEMPORARY TEST
-        #$_sourcevol set_dimensions 256 256 27 
-        #$_sourcevol set_spacing 0.859375 0.859375 6
-        # END TEMPORARY TEST
+        set dimension [get_dimensions $itk_option(-source)]
+        set spacing [get_spacing $itk_option(-source)]
+
+        $_sourcevol set_dimensions [lindex $dimension 0] [lindex $dimension 1] [lindex $dimension 2]
+        $_sourcevol set_spacing [lindex $spacing 0] [lindex $spacing 1] [lindex $spacing 2]
 
         catch "xform Delete"
         vtkMatrix4x4 xform
@@ -414,11 +414,14 @@ itcl::configbody isregistration::source {
         $_sourcevol configure -transform xform
         [$_sourcevol imagedata] SetUpdateExtentToWholeExtent
         [$_sourcevol imagedata] Update
-        catch "temp Delete"
-        vtkImageData temp
-        temp DeepCopy [$_sourcevol imagedata]
-        $_sourcechangeinfo SetInput temp
-        temp Delete
+        
+        $_sourcechangeinfo SetInput [$_sourcevol imagedata]
+ 
+        #catch "temp Delete"
+        #vtkImageData temp
+        #temp DeepCopy [$_sourcevol imagedata]
+        #$_sourcechangeinfo SetInput temp
+        #temp Delete
     } else {
         $_sourcechangeinfo SetInput [Volume($itk_option(-source),vol) GetOutput]
     }
@@ -495,8 +498,7 @@ itcl::body isregistration::step {} {
     $itk_option(-set_optimizer_option) $_reg;
 
     if {$itk_option(-resample) != 0} {
-        set_source_dimensions $itk_option(-source)
-        set_source_spacing $itk_option(-source)
+        set_resample_parameters
     }
 
     ##########
@@ -918,12 +920,12 @@ itcl::body isregistration::get_last_metric_value { } {
 }
 
 #-------------------------------------------------------------------------------
-# METHOD: set_dimensions for target volume
+# METHOD: set_dimensions for a  volume
 # based on resample option that represents the downsample scale
 #
 # DESCRIPTION: 
 #-------------------------------------------------------------------------------
-itcl::body isregistration::set_target_dimensions { vId } {
+itcl::body isregistration::get_dimensions { vId } {
     set order [Volume($vId,node) GetScanOrder]
 
     set dimension [split [[Volume($vId,vol) GetOutput] GetDimensions]] 
@@ -960,62 +962,16 @@ itcl::body isregistration::set_target_dimensions { vId } {
             tk_messageBox -message "isregistration: Unknown target orientation: $order"
         }
     }
-    $_targetvol set_dimensions $odimI $odimJ $odimK 
-    puts "isregistration: target dimensions are: $odimI $odimJ $odimK"
+    return [list $odimI $odimJ $odimK]
 }
 
-#-------------------------------------------------------------------------------
-# METHOD: set_dimensions for source volume
-# based on resample option that represents the downsample scale#
-# DESCRIPTION: 
-#-------------------------------------------------------------------------------
-itcl::body isregistration::set_source_dimensions { vId } {
-    set order [Volume($vId,node) GetScanOrder]
-
-    set dimension [split [[Volume($vId,vol) GetOutput] GetDimensions]] 
-
-    set scale $itk_option(-resample)
-    if {$scale <= 0} {
-        set scale 1
-    }
-
-    set dimI [expr round(abs([lindex $dimension 0] - 1)/ $scale + 1)]
-    set dimJ [expr round(abs([lindex $dimension 1] - 1)/ $scale + 1)]
-    set dimK [expr round(abs([lindex $dimension 2] - 1)/ $scale + 1)]
-
-    switch $order {
-        "RL" -
-        "LR" {
-            set odimI $dimK
-            set odimJ $dimI
-            set odimK $dimJ
-        }
-        "PA" -
-        "AP" {
-            set odimI $dimI
-            set odimJ $dimK
-            set odimK $dimJ
-        }
-        "SI" -
-        "IS" {
-            set odimI $dimI
-            set odimJ $dimJ
-            set odimK $dimK
-        }
-        default {
-            tk_messageBox -message "isregistration: Unknown source orientation: $order"
-        }
-    }
-    $_sourcevol set_dimensions $odimI $odimJ $odimK 
-    puts "isregistration: source dimensions are: $odimI $odimJ $odimK"
-}
 
 #-------------------------------------------------------------------------------
-# METHOD: set_spacing for target volume
+# METHOD: set_spacing for a volume
 # based on resample option that represents the downsample scale
 # DESCRIPTION: 
 #-------------------------------------------------------------------------------
-itcl::body isregistration::set_target_spacing { vId } {
+itcl::body isregistration::get_spacing { vId } {
     set order [Volume($vId,node) GetScanOrder]
 
     set spacing [split [[Volume($vId,vol) GetOutput] GetSpacing]] 
@@ -1051,53 +1007,53 @@ itcl::body isregistration::set_target_spacing { vId } {
             tk_messageBox -message "isregistration: Unknown source orientation: $order"
         }
     }
-    $_targetvol set_spacing $ospacingI $ospacingJ $ospacingK
-    puts "isregistration: target spacing: $ospacingI $ospacingJ $ospacingK"
+    return [list $ospacingI $ospacingJ $ospacingK]
 }
-
 #-------------------------------------------------------------------------------
-# METHOD: set_spacing for source volume
-# based on resample option that represents the downsample scale
+# METHOD: set_resample_parameters set spacing and dimension for target and source volumes
+# based maximum dimension of both
 # DESCRIPTION: 
 #-------------------------------------------------------------------------------
-itcl::body isregistration::set_source_spacing { vId } {
-    set order [Volume($vId,node) GetScanOrder]
+itcl::body isregistration::set_resample_parameters {} {
 
-    set spacing [split [[Volume($vId,vol) GetOutput] GetSpacing]] 
+    set source_dim [get_dimensions $itk_option(-source)]
+    set target_dim [get_dimensions $itk_option(-target)]
 
-    set scale $itk_option(-resample)
-    if {$scale <= 0} {
-        set scale 1
+    set source_spacing [get_spacing $itk_option(-source)]
+    set target_spacing [get_spacing $itk_option(-target)]
+
+    set s_dimension {}
+    set t_dimension {}
+    set s_spacing {}
+    set t_spacing {}
+
+    for {set x 0} {$x<3} {incr x} {
+        set s_dim [lindex $source_dim $x]
+        set t_dim [lindex $target_dim $x]
+        if {$t_dim >= $s_dim} {
+            lappend t_dimension $t_dim 
+            lappend s_dimension $t_dim 
+            lappend t_spacing [lindex $target_spacing $x]
+            lappend s_spacing [expr [lindex $source_spacing $x] * ($s_dim - 1.0)/($t_dim - 1.0)]
+        } else {
+            lappend t_dimension $s_dim 
+            lappend s_dimension $s_dim 
+            lappend s_spacing [lindex $source_spacing $x]
+            lappend t_spacing [expr [lindex $target_spacing $x] * ($t_dim - 1.0)/($s_dim - 1.0)]
+        }
+
     }
-    set spacingI [expr [lindex $spacing 0] * $scale]
-    set spacingJ [expr [lindex $spacing 1] * $scale]
-    set spacingK [expr [lindex $spacing 2] * $scale]
 
-    switch $order {
-        "RL" -
-        "LR" {
-            set ospacingI $spacingK
-            set ospacingJ $spacingI
-            set ospacingK $spacingJ
-        }
-        "PA" -
-        "AP" {
-            set ospacingI $spacingI
-            set ospacingJ $spacingK
-            set ospacingK $spacingJ
-        }
-        "SI" -
-        "IS" {
-            set ospacingI $spacingI
-            set ospacingJ $spacingJ
-            set ospacingK $spacingK
-        }
-        default {
-            tk_messageBox -message "isregistration: Unknown source orientation: $order"
-        }
-    }
-    $_sourcevol set_spacing $ospacingI $ospacingJ $ospacingK
-    puts "isregistration: source spacing: $ospacingI $ospacingJ $ospacingK"
+    puts "isregistration:: source dimensions = $s_dimension"
+    puts "isregistration:: source spcaing = $s_spacing"
+    puts "isregistration:: target dimensions = $t_dimension"
+    puts "isregistration:: target spcaing = $t_spacing"
+
+    $_sourcevol set_dimensions [lindex $s_dimension 0] [lindex $s_dimension 1] [lindex $s_dimension 2]
+    $_sourcevol set_spacing [lindex $s_spacing 0] [lindex $s_spacing 1] [lindex $s_spacing 2]
+    $_targetvol set_dimensions [lindex $t_dimension 0] [lindex $t_dimension 1] [lindex $t_dimension 2]
+    $_targetvol set_spacing [lindex $t_spacing 0] [lindex $t_spacing 1] [lindex $t_spacing 2]
+
 }
 
 #-------------------------------------------------------------------------------
