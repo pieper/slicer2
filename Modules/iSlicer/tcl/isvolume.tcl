@@ -986,7 +986,6 @@ itcl::body isvolume::set_spacing  {spacingI spacingJ spacingK} {
     set _spacing [list $spacingI $spacingJ $spacingK]
 
     $_reslice SetOutputSpacing $spacingI $spacingJ $spacingK
-    puts "ISVOLUME::set_spacing $spacingI $spacingJ $spacingK"
 }
 
 # ------------------------------------------------------------------
@@ -998,7 +997,6 @@ itcl::body isvolume::set_dimensions  {dimensionI dimensionJ dimensionK} {
     $_reslice SetOutputExtent 0 [expr $dimensionI - 1]\
         0 [expr $dimensionJ - 1]\
         0 [expr $dimensionK - 1] 
-    puts "ISVOLUME::set_dimensions $dimensionI $dimensionJ $dimensionK"
 
     $_slider configure -from 0
     $_slider configure -to $dimensionK

@@ -372,11 +372,6 @@ itcl::configbody isregistration::target {
 
         $_targetchangeinfo SetInput [$_targetvol imagedata]
 
-        #catch "temp Delete"
-        #vtkImageData temp
-        #temp DeepCopy [$_targetvol imagedata]
-        #$_targetchangeinfo SetInput temp
-        #temp Delete
     } else {
         $_targetchangeinfo SetInput [Volume($itk_option(-target),vol) GetOutput]
     }
@@ -416,12 +411,6 @@ itcl::configbody isregistration::source {
         [$_sourcevol imagedata] Update
         
         $_sourcechangeinfo SetInput [$_sourcevol imagedata]
- 
-        #catch "temp Delete"
-        #vtkImageData temp
-        #temp DeepCopy [$_sourcevol imagedata]
-        #$_sourcechangeinfo SetInput temp
-        #temp Delete
     } else {
         $_sourcechangeinfo SetInput [Volume($itk_option(-source),vol) GetOutput]
     }
