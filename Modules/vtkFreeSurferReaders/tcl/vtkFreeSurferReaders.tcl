@@ -327,7 +327,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38 $} {$Date: 2005/08/08 22:17:00 $}]
+        {$Revision: 1.39 $} {$Date: 2005/08/09 15:37:55 $}]
 
 }
 
@@ -5677,7 +5677,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.38 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.39 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -6567,7 +6567,7 @@ proc vtkFreeSurferReadersAddLuts {} {
                 set nextId $lid
             }
         }
-        if {$nextId == 0} {
+        if {$nextId == -1} {
             # find the next id
             set nextId [expr [lindex [lsort -integer $Lut(idList)] end] + 1]
             if {$::Module(verbose)} {
@@ -6579,7 +6579,7 @@ proc vtkFreeSurferReadersAddLuts {} {
             set Lut($nextId,fileName) ""
         } else {
             if {$::Module(verbose)} {
-                puts "$newLut already there, redefining it"
+                puts "$newLut already there (id = $nextId), redefining it"
             }
         }
         set Lut($nextId,numberOfColors) 256
@@ -6672,7 +6672,12 @@ proc vtkFreeSurferReadersPickScalarsLut { parentButton } {
     global vtkFreeSurferReaders Gui
 
     set m $::Model(activeID)
-    if {$m == ""} { return }
+    if {$m == ""} { 
+        if {$::Module(verbose)} {
+            puts "WARNING: vtkFreeSurferReadersPickScalarsLut Model(activeID) is empty! Returning..."
+        }
+        return 
+    }
 
     catch "destroy .mFSpickscalarslut"
     eval menu .mFSpickscalarslut $Gui(WMA)
@@ -6680,6 +6685,7 @@ proc vtkFreeSurferReadersPickScalarsLut { parentButton } {
     set ren [lindex $::Module(Renderers) 0]
     set currlut [Model($m,mapper,$ren) GetLookupTable]
 
+    set numcmds 0
     foreach l $::Lut(idList) {
         # is this a FS one?
         if {[lsearch $vtkFreeSurferReaders(lutNames) $::Lut($l,name)] != -1} {
@@ -6693,6 +6699,7 @@ proc vtkFreeSurferReadersPickScalarsLut { parentButton } {
             }
             .mFSpickscalarslut insert end command -label $labeltext \
                 -command "ModelsSetScalarsLut $m $l \; Render3D"
+            incr numcmds
         } else {
             if {$::Module(verbose)} {
                 puts "skipping $l, name = $::Lut($l,name)"
@@ -6702,7 +6709,11 @@ proc vtkFreeSurferReadersPickScalarsLut { parentButton } {
     set x [expr [winfo rootx $parentButton] + 10]
     set y [expr [winfo rooty $parentButton] + 10]
     
-    .mFSpickscalarslut post $x $y
+    if {$numcmds > 0} {
+        .mFSpickscalarslut post $x $y
+    } else {
+        DevWarningWindow "WARNING: no FS colour look up tables, call vtkFreeSurferReadersAddLuts"
+    }
 }
 
 #-------------------------------------------------------------------------------
