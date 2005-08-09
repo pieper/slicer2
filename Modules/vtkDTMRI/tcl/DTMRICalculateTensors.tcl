@@ -67,7 +67,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.18 $} {$Date: 2005/08/03 12:02:08 $}]
+                                 {$Revision: 1.19 $} {$Date: 2005/08/09 22:57:27 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -1815,6 +1815,12 @@ proc DTMRIComputeRasToIjkFromCorners {refnode node extent} {
   _Ijk SetElement 0 3 [expr ([lindex $extent 1] - [lindex $extent 0])/2.0]
   _Ijk SetElement 1 3 [expr ([lindex $extent 3] - [lindex $extent 2])/2.0]
   _Ijk SetElement 2 3 [expr ([lindex $extent 5] - [lindex $extent 4])/2.0]  
+  
+  #Trick: Negate y axis to compensate for flip in nrrd.
+  _Ijk SetElement 1 0 [expr -1 * [_Ijk GetElement 1 0]]
+  _Ijk SetElement 1 1 [expr -1 * [_Ijk GetElement 1 1]]
+  _Ijk SetElement 1 2 [expr -1 * [_Ijk GetElement 1 2]]
+  
   #Invert to obtain IjkToRas transform
   _Ijk Invert
   
