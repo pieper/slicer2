@@ -161,7 +161,11 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
                 }
             }
             set date [clock format [clock seconds] -format %Y-%m-%d]
-            set destdir $destdir/slicer$::SLICER(version)-$target-$date
+            if { $::tcl_platform(machine) == "x86_64" } {
+                set destdir $destdir/slicer$::SLICER(version)-${target}_64-$date
+            } else {
+                set destdir $destdir/slicer$::SLICER(version)-$target-$date
+            }
         }
         "birn" {
             set destdir /usr/local/birn/install/slicer2
@@ -560,6 +564,7 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
                 exec xterm -e scp $archroot.tar.gz $scpdestination
             }
             default { 
+                puts "rxvt -e scp $archroot.zip $scpdestination &"
                 exec rxvt -e scp $archroot.zip $scpdestination &
             }
         }
