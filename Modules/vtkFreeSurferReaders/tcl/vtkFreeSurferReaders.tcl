@@ -184,6 +184,8 @@ proc vtkFreeSurferReadersInit {} {
 
     # freesurfer specific colour scales
     set vtkFreeSurferReaders(lutNames) "RedGreen GreenRed Heat BlueRed"
+    # when add the LUTs, append their ids to this list
+    set vtkFreeSurferReaders(lutIDS) ""
 
     # for closing out a scene
     set vtkFreeSurferReaders(idList) ""
@@ -327,7 +329,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.39 $} {$Date: 2005/08/09 15:37:55 $}]
+        {$Revision: 1.40 $} {$Date: 2005/08/12 22:03:57 $}]
 
 }
 
@@ -387,10 +389,10 @@ proc vtkFreeSurferReadersBuildGUI {} {
     #-------------------------------------------
     set f $fDisplay.fScalars
 
-    frame $f.fLoadScalar -bg $Gui(activeWorkspace) 
-    pack $f.fLoadScalar  -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-    DevAddFileBrowse $f.fLoadScalar vtkFreeSurferReaders "scalarFileName" "Scalar (Overlay) file:" "vtkFreeSurferReadersSetScalarFileName" "thickness curv sulc area w" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer scalar overlay file for the active model"
-    DevAddButton $f.bLoad "Load Scalar File" "vtkFreeSurferReadersLoadScalarFile" 12
+#    frame $f.fLoadScalar -bg $Gui(activeWorkspace) 
+#    pack $f.fLoadScalar  -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    DevAddFileBrowse $f vtkFreeSurferReaders "scalarFileName" "Scalar (Overlay) file:" "vtkFreeSurferReadersSetScalarFileName" "thickness curv sulc area w" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer scalar overlay file for the active model"
+    eval {button $f.bLoad -text "Load Scalar File" -width 12 -command "vtkFreeSurferReadersLoadScalarFile"} $Gui(WBA)
     TooltipAdd $f.bLoad "Load the scalar file and associate it with the active model"
     pack $f.bLoad  -side top -pady $Gui(pad) -padx $Gui(pad)
 
@@ -1539,12 +1541,14 @@ set useMatrices 0
         [lindex $ltl 0] [lindex $ltl 1] [lindex $ltl 2]
 
 
-    # Turn off using the ras to vtk matrix, as otherwise the MGH volume is flipped in Y
-    if {$::Module(verbose)} {
-        puts "Turning off UseRasToVtkMatrix on volume $i"
-    }
-    Volume($i,node) UseRasToVtkMatrixOff
-
+    if {0} {
+        # this is taken care of by flipping the image upon reading it
+        # Turn off using the ras to vtk matrix, as otherwise the MGH volume is flipped in Y
+        if {$::Module(verbose)} {
+            puts "Turning off UseRasToVtkMatrix on volume $i"
+        }
+        Volume($i,node) UseRasToVtkMatrixOff
+    } 
 
     # when making models from these volumes, they're coming out wrong, since the RasToWld matrix
     # is still identity. Try setting it to the RasToIjk matrix, minus the position vector
@@ -3273,10 +3277,20 @@ proc vtkFreeSurferReadersReadMGH {v} {
     vtkMGHReader mghreader
             
     mghreader SetFileName [Volume($v,node) GetFullPrefix]
+
+    # flip it on reading in
+    catch "flipper Delete"
+    vtkImageFlip flipper
+    flipper SetFilteredAxis 1
+    flipper SetInput [mghreader GetOutput]
+
     mghreader Update
     mghreader ReadVolumeHeader
     [[mghreader GetOutput] GetPointData] SetScalars [mghreader ReadVolumeData]
-    Volume($v,vol) SetImageData [mghreader GetOutput]
+
+    # Volume($v,vol) SetImageData [mghreader GetOutput]
+    Volume($v,vol) SetImageData [flipper GetOutput]
+
     mghreader Delete
 }
 
@@ -5677,7 +5691,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.39 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.40 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -6550,14 +6564,17 @@ proc vtkFreeSurferReadersScalarSetLoadAddNew {} {
 # Add FreeSurfer look up tables to the Lut(idLabel) list, and build vtk obj for them.
 # Adds a table for each name listed in vtkFreeSurferReaders(lutNames).
 # Will create a table with a unique id. Will overwrite the last lut in the id list
-# who'se name matches if it has already been created
+# who's name matches if it has already been created.
+# Saves the IDs in vtkFreeSurferReaders(lutIDs)
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersAddLuts {} {
     global vtkFreeSurferReaders Lut 
 
-    
+    # clear out the id list
+    set vtkFreeSurferReaders(lutIDs) ""
+
     foreach newLut $vtkFreeSurferReaders(lutNames) {
         set nextId -1
 
@@ -6582,6 +6599,7 @@ proc vtkFreeSurferReadersAddLuts {} {
                 puts "$newLut already there (id = $nextId), redefining it"
             }
         }
+        lappend vtkFreeSurferReaders(lutIDs) $nextId
         set Lut($nextId,numberOfColors) 256
 
         switch $newLut {
@@ -6653,7 +6671,11 @@ proc vtkFreeSurferReadersAddLuts {} {
                 set b [expr 1.0 * ($offset*(1 - abs($f)))]
                 Lut($nextId,lut) SetTableValue $i $r $b $g 1.0
             }
-            
+            # set the global vars
+            set Lut($nextId,hueRange) [Lut($nextId,lut) GetHueRange]
+            set Lut($nextId,saturationRange) [Lut($nextId,lut) GetSaturationRange]
+            set Lut($nextId,valueRange) [Lut($nextId,lut) GetValueRange]
+            set Lut($nextId,annoColor) "1 1 1"
         }
         
     }
@@ -6836,6 +6858,35 @@ proc vtkFreeSurferReadersReadScalars { m {fileName ""} } {
                 }
             }
                 
+            # set the lookup table for the scalar field
+            if {$::Module(verbose)} {
+                puts "vtkFreeSurferReadersReadScalars: checking scalar file extension $s to decide on LUT to use"
+            }
+            set lutIndex -1
+            if {$s == "fs"} {
+                # field sign
+                set lutIndex [lsearch $vtkFreeSurferReaders(lutNames) "BlueRed"]
+               
+            }
+            if {$s == "curv" || $s == "thickness"} {
+                set lutIndex [lsearch $vtkFreeSurferReaders(lutNames) "GreenRed"]
+            }
+            if {$s == "retinotopy"} {
+                # use colour wheel 
+                set lutIndex [lsearch $vtkFreeSurferReaders(lutNames) "ColorWheel"]
+            }
+            if {$lutIndex == -1} {
+                # use default 
+                set lutIndex [lsearch $vtkFreeSurferReaders(lutNames) "Heat"]
+            }
+            if {$lutIndex != -1} {
+                set lutID [lindex $vtkFreeSurferReaders(lutIDs) $lutIndex]
+                if {$::Module(verbose)} {
+                    puts "vtkFreeSurferReadersReadScalars: calling ModelsSetScalarsLut $m $lutID, for [lindex $vtkFreeSurferReaders(lutNames) $lutIndex]"
+                }
+                ModelsSetScalarsLut $m $lutID
+            }
+
             # may need to set reader output to "" and delete here
         } else {
             DevWarningWindow "Scalar file does not exist: $scalarFileName"
