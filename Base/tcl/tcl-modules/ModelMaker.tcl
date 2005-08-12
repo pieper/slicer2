@@ -69,8 +69,8 @@ proc ModelMakerInit {} {
     set Module($m,category) "Application"
 
       # Define Tabs
-    set Module($m,row1List) "Help Create Edit Save"
-    set Module($m,row1Name) "{Help} {Create} {Edit} {Save} "
+    set Module($m,row1List) "Help Create Multiple Edit Save"
+    set Module($m,row1Name) "{Help} {Create} {Create Multiple} {Edit} {Save} "
     set Module($m,row1,tab) Create
 
     # Define Procedures
@@ -83,7 +83,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.49 $} {$Date: 2004/09/17 15:38:26 $}]
+        {$Revision: 1.50 $} {$Date: 2005/08/12 21:58:38 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -94,9 +94,17 @@ proc ModelMakerInit {} {
     set ModelMaker(label2) 0
     set ModelMaker(UseSinc) 1
 
+    # Create Multiple Modles
+    set ModelMaker(startName) ""
+    set ModelMaker(endName) ""
+    set ModelMaker(startLabel) -1
+    set ModelMaker(endLabel) -1
+    set ModelMaker(jointSmoothing) 0
+
     # Edit
     set ModelMaker(edit,smooth) 20
     set ModelMaker(prefix) ""
+
 
     #### Splits normals at sharp points by point duplication
     ## Can be "Off" or "On"
@@ -126,11 +134,12 @@ proc ModelMakerUpdateMRML {} {
 
     # Volume menu
     #---------------------------------------------------------------------------
-    set m $ModelMaker(mVolume)
-    $m delete 0 end
-    foreach v $Volume(idList) {
-        $m add command -label [Volume($v,node) GetName] -command \
-            "ModelMakerSetVolume $v"
+    foreach m $ModelMaker(mVolume) {
+        $m delete 0 end
+        foreach v $Volume(idList) {
+            $m add command -label [Volume($v,node) GetName] -command \
+                "ModelMakerSetVolume $v"
+        }
     }
 }
 
@@ -159,12 +168,11 @@ proc ModelMakerBuildGUI {} {
     # Edit
     #   
     #-------------------------------------------
-
+    
     #-------------------------------------------
     # Help frame
     #-------------------------------------------
-    set help "
-Description by Tab:<BR>
+    set help "Description by Tab:<BR>
 <UL>
 <LI><B>Create:</B><BR>Set the <B>Volume</B> to the labelmap you wish to
 create a surface model from.  When you press the <B>Create</B> button
@@ -176,6 +184,10 @@ hard disk until you save it using the <B>Save</B> tab.
 built.  <B>Sinc</B> with 20 smoothing steps is the default as of January 2003; the 
 smoothing in earlier version of Slicer used <B>Laplacian</B> with 5 smoothing
 steps.
+<BR><LI><B>Create Multiple:</B><BR> Create multiple models from a <B>Volume</B> labelmap.
+Uses the Smooth, Decimate, Split Normals values from the Create tab, will use the 
+Filter Type from the Create tab if Joint Smoothing is not on. Joint Smoothing results
+in the created models interlocking exactly, otherwise they are smoothed after creation.
 <BR><LI><B>Edit:</B><BR> Select the model you wish to edit as <B>Active Model</B>
 and then apply one of the effects listed. To transform the polygon points
 by a transform, select a <B>Matrix</B> that already exists.  If you need to
@@ -185,10 +197,8 @@ button.<BR>
 information, such as the volume's position and orientation in space, then
 transform the model to align with the volume under the <B>Transform from 
 ScaledIJK to RAS</B> section.
-<BR><LI><B>Save:</B> Write the model's polygon (*.vtk) file to disk.
-Also save your MRML file by selecting <B>Save</B> from the <B>File</B> menu.
-</UL>
-"
+<BR><LI><B>Save:</B> Write the model's polygon (*.vtk) file to disk. Also save your MRML file by selecting <B>Save</B> from the <B>File</B> menu.</UL>"
+
     regsub -all "\n" $help { } help
     MainHelpApplyTags ModelMaker $help
     MainHelpBuildGUI ModelMaker
@@ -270,6 +280,9 @@ Also save your MRML file by selecting <B>Save</B> from the <B>File</B> menu.
         pack $f.fr$p -side left -padx 0
     }
 
+    
+    
+
     #-------------------------------------------
     # Create->Grid frame
     #-------------------------------------------
@@ -321,6 +334,86 @@ Also save your MRML file by selecting <B>Save</B> from the <B>File</B> menu.
     eval {label $f.l -justify left -text ""} $Gui(WLA)
     pack $f.l -side top -pady 1
     set ModelMaker(msg) $f.l
+
+
+
+    #-------------------------------------------
+    # Multiple frame
+    #-------------------------------------------
+    set fMultiple $Module(ModelMaker,fMultiple)
+    set f $fMultiple
+
+    foreach fr "Volume Label Apply" {
+        frame $f.f$fr -bg $Gui(activeWorkspace)
+        pack $f.f$fr -side top -padx 0 -pady $Gui(pad) -fill x
+    }
+
+    #-------------------------------------------
+    # Multiple->Volume frame
+    #-------------------------------------------
+    set f $fMultiple.fVolume
+    eval {label $f.lVolume -text "Volume:"} $Gui(WLA)
+
+    eval {menubutton $f.mbVolume -text "None" -relief raised -bd 2 -width 18 \
+        -menu $f.mbVolume.m} $Gui(WMBA)
+    eval {menu $f.mbVolume.m} $Gui(WMA)
+    pack $f.lVolume -padx $Gui(pad) -side left -anchor e
+    pack $f.mbVolume -padx $Gui(pad) -side left -anchor w
+
+    # Save widgets for changing
+    lappend ModelMaker(mbVolume) $f.mbVolume
+    lappend ModelMaker(mVolume)  $f.mbVolume.m
+
+    #-------------------------------------------
+    # Multiple->Label frame
+    #-------------------------------------------
+    set f $fMultiple.fLabel
+
+    # label to start making models from
+    eval {button $f.bStartLabel -text "Starting Label:" \
+        -command "ShowLabels \"ModelMakerMultipleLabelCallback start\""} $Gui(WBA)
+    eval {entry $f.eStartLabel -width 6 -textvariable ModelMaker(startLabel)} $Gui(WEA)
+    eval {entry $f.eStartName -width 20 -textvariable ModelMaker(startName)} $Gui(WEA)
+    bind $f.eStartLabel <Return>   {set Label(label) $::ModelMaker(startLabel); LabelsFindLabel; ModelMakerMultipleLabelCallback start}
+    grid $f.bStartLabel $f.eStartLabel $f.eStartName \
+         -padx $Gui(pad) -pady $Gui(pad) -sticky e
+
+    # label to end making models from
+    eval {button $f.bEndLabel -text "Ending Label:" \
+        -command "ShowLabels \"ModelMakerMultipleLabelCallback end\""} $Gui(WBA)
+    eval {entry $f.eEndLabel -width 6 -textvariable ModelMaker(endLabel)} $Gui(WEA)
+    eval {entry $f.eEndName -width 20 -textvariable ModelMaker(endName)} $Gui(WEA)
+    bind $f.eEndLabel <Return> {set Label(label) $::ModelMaker(endLabel) ; LabelsFindLabel; ModelMakerMultipleLabelCallback end}
+    grid $f.bEndLabel $f.eEndLabel $f.eEndName \
+         -padx $Gui(pad) -pady $Gui(pad) -sticky e
+
+
+
+    #-------------------------------------------
+    # Multiple->Apply frame
+    #-------------------------------------------
+    set f $fMultiple.fApply
+
+    eval {checkbutton $f.cJointSmooth \
+       -text "Do joint smoothing" -variable ModelMaker(jointSmooth) -width 19 \
+       -indicatoron 0 -command ModelMakerSetJointSmooth} $Gui(WCA)
+    TooltipAdd $f.cJointSmooth "Select to turn on option to create fully interlocking models, otherwise they will be smoothed separately"
+    pack $f.cJointSmooth -side top -padx 0
+
+    eval {button $f.bAll -text "Create All" -width 15 -command "ModelMakerCreateAll; Render3D"} $Gui(WBA)
+    TooltipAdd $f.bAll "Create models from all non zero labels in the active volume, between start and end labels"
+    set ModelMaker(bCreateAll) $f.bAll
+
+if {0} {
+    eval {button $f.bAllJointSmooth -text "Create Joined" -width 15 -command "ModelMakerCreateAll 1; Render3D"} $Gui(WBA)
+    TooltipAdd $f.bAllJointSmooth "Create smoothly joined models from all non zero labels in the active volume, between start and end labels. Can be very slow."
+    set ModelMaker(bCreateAllJoint) $f.bAllJointSmooth
+}
+    pack $f.bAll -side top -pady $Gui(pad)
+    
+
+ 
+
 
     #-------------------------------------------
     # Edit frame
@@ -487,9 +580,11 @@ Also save your MRML file by selecting <B>Save</B> from the <B>File</B> menu.
 
     eval {button $f.f.bSave -text "Save" -width 5 \
         -command "ModelMakerWrite; Render3D"} $Gui(WBA)
+    eval {button $f.f.bSaveAll -text "Save All" -width 8 \
+        -command "ModelMakerWriteAll; Render3D"} $Gui(WBA)
     eval {button $f.f.bRead -text "Read" -width 5 \
         -command "ModelMakerRead; Render3D"} $Gui(WBA)
-    pack $f.f.bSave $f.f.bRead -side left -padx $Gui(pad)
+    pack $f.f.bSave $f.f.bSaveAll $f.f.bRead -side left -padx $Gui(pad)
 }
 
 #-------------------------------------------------------------------------------
@@ -591,6 +686,43 @@ proc ModelMakerWrite {} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC ModelMakerWriteAll
+# Save all models, picking a directory first and then saving with a file name made 
+# up of the model name and the node number.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ModelMakerWriteAll {} {
+    global ModelMaker Model
+
+    if {$::Module(verbose)} {
+        puts "ModelMakerWriteAll: idList = $Model(idList)"
+    }
+    # set the prefix, will append the model name to it
+    # set ModelMaker(prefix) [MainFileSaveModel $m $ModelMaker(prefix)]
+    set ModelMaker(prefix) [tk_chooseDirectory \
+                                -initialdir $::env(SLICER_HOME) \
+                                -mustexist true \
+                                -title "Select Directory In Which To Save Model Files" \
+                                -parent .tMain ]
+    if {$ModelMaker(prefix) == ""} {
+        return
+    }
+
+    foreach m $Model(idList) {
+        # don't need to check the dirty flag, it will be done further down
+        if {$::Module(verbose)} {
+            puts "Saving with prefix ${ModelMaker(prefix)}"
+        }
+        # Write
+        MainModelsWrite $m [file join ${ModelMaker(prefix)} [Model($m,node) GetName]$m]
+        
+        # Prefix changed, so update the Models->Props tab
+        MainModelsSetActive $m
+    }
+}
+
+#-------------------------------------------------------------------------------
 # .PROC ModelMakerRead
 # 
 # .ARGS
@@ -640,18 +772,39 @@ proc ModelMakerSetVolume {v} {
     set ModelMaker(idVolume) $v
     
     # Change button text
-    $ModelMaker(mbVolume) config -text [Volume($v,node) GetName]
+    foreach m $ModelMaker(mbVolume) {
+        $m config -text [Volume($v,node) GetName]
+    }
+
+    # init multiple model start to the lowest value in the volume (or 1 if zero)
+    set Label(label) [Volume($v,vol) GetRangeLow]
+    if {$Label(label) == 0} {
+        set Label(label) 1
+    }
+
+    # find the name for this label
+    LabelsFindLabel
+    # then set it
+    ModelMakerMultipleLabelCallback start
+
+
+    # now set up the single one, since it uses the high end of the range
 
     # Initialize the label to the highest value in the volume
     set Label(label) [Volume($v,vol) GetRangeHigh]
     LabelsFindLabel
     ModelMakerLabelCallback
     set ModelMaker(label2) [Volume($v,vol) GetRangeLow]
+
+    # For the create multiple models tab - the end is already set up
+    ModelMakerMultipleLabelCallback end
+
 }
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerCreate
-# 
+# Create a model from the voxels in the ModelMaker(idVolume) volume with the label Label(label). 
+# Will turn off the jointSmoothing option before calling ModelMakerMarch, and then return it to it's prior value.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -699,16 +852,31 @@ proc ModelMakerCreate {} {
     set v $ModelMaker(idVolume)
     Model($m,node) SetRasToWld [Volume($v,node) GetRasToWld]
 
+    # adding a special case due to possibility of building multiple models through
+    # successive calls to ModelMakerMarch _ reset jointSmooth to 0, and then reset it
+    set jointSmooth $ModelMaker(jointSmooth)
+    set ModelMaker(jointSmooth) 0
+
     if {[ModelMakerMarch $m $v $ModelMaker(decimate) $ModelMaker(smooth)] != 0} {
         MainModelsDelete $m
+        set ModelMaker(jointSmooth) $jointSmooth
         $ModelMaker(bCreate) config -state normal
         return
     }
+
+    # and reset it to the old value
+    set ModelMaker(jointSmooth) $jointSmooth
+
     $ModelMaker(msg) config -text "\
 Marching cubes: $ModelMaker(t,mcubes) sec.\n\
 Decimate: $ModelMaker(t,decimator) sec.\n\
 Smooth: $ModelMaker(t,smoother) sec.\n\
 $ModelMaker(n,mcubes) polygons reduced to $ModelMaker(n,decimator)."
+
+    if {$::Module(verbose)} {
+        puts "After marching cubes:"
+        DevPrintMatrix4x4 [Model($m,node) GetRasToWld] "Model $m RAS -> WLD"
+    }
 
     # put the model inside the same transform as the source volume
     set nitems [Mrml(dataTree) GetNumberOfItems]
@@ -721,16 +889,240 @@ $ModelMaker(n,mcubes) polygons reduced to $ModelMaker(n,decimator)."
         Mrml(dataTree) RemoveItem $midx
         Mrml(dataTree) InsertAfterItem Volume($v,node) Model($m,node)
         MainUpdateMRML
+        if {$::Module(verbose)} {
+            puts "Model($m,node) placed after item Volume($v,node) in mrml data tree"
+        }
     }
 
+    
 
     MainUpdateMRML
+
+    if {$::Module(verbose)} {
+        puts "After main mrml update:"
+        DevPrintMatrix4x4 [Model($m,node) GetRasToWld] "Model $m RAS -> WLD"
+    }
+
     MainModelsSetActive $m
     $ModelMaker(bCreate) config -state normal
 
 
     set name [Model($m,node) GetName]
     # tk_messageBox -message "The model '$name' has been created."
+
+    return $m
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ModelMakerCreateAll
+# Create all models from the selected range of labels. 
+# Refers to the ModelMaker(jointSmooth) flag, which is set to 1 if wish to do preliminary smoothing so all models fit together like a jigsaw, 0 if wish to smooth models independently
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ModelMakerCreateAll { } {
+    global Model ModelMaker Label Module Gui
+
+    set numModels 0
+
+    # Validate smooth
+    if {[ValidateInt $ModelMaker(smooth)] == 0} {
+        tk_messageBox -message "The number of smoothing iterations must be an integer."
+        return
+    }
+
+    # Validate decimate
+    if {[ValidateInt $ModelMaker(decimate)] == 0} {
+        tk_messageBox -message "The number of decimate iterations must be an integer."
+        return
+    }
+
+    # Disable button to prevent another
+    $ModelMaker(bCreateAll) config -state disabled
+    
+    # get the volume id that holds the labels
+    set volid $ModelMaker(idVolume)
+
+    # get the range of values in the volume
+    set imdata [Volume($volid,vol) GetOutput]
+
+    set startLabel $ModelMaker(startLabel)
+    if {$startLabel < 1} {
+        set startLabel 1
+    }
+
+    set scalarType [$imdata GetScalarType]
+    if {$scalarType == 3} {
+        if {$ModelMaker(endLabel) < 255} {
+            set lastLabel $ModelMaker(endLabel)
+        } else {
+            set lastLabel 255
+        }
+    } 
+
+    set sure [tk_messageBox -type yesno -message "About to create models from labels $startLabel to $lastLabel out of volume $volid, are you sure?"]
+    if {$sure == "no"} {
+        DevInfoWindow "Aborting model creation..."
+        $ModelMaker(bCreateAll) config -state normal
+        return
+    }
+
+    # calculate the histogram, how many of each label
+    if {$::Module(verbose)} {
+        puts "ModelMakerCreateAll: calculating histogram on image data for vol $volid"
+    }
+    catch "histo${volid} Delete"
+    vtkImageAccumulate histo${volid}
+      histo${volid} SetInput $imdata
+    histo${volid} SetComponentExtent 0 $lastLabel 0 0 0 0
+      histo${volid} SetComponentOrigin 0 0 0
+      histo${volid} SetComponentSpacing 1 1 1
+      set Gui(progressText) "Calculating histogram for v=$volid"
+      histo${volid} AddObserver StartEvent MainStartProgress
+      histo${volid} AddObserver ProgressEvent "MainShowProgress histo${volid}"
+      histo${volid} AddObserver EndEvent MainEndProgress
+      histo${volid} Update
+
+    if {$::Module(verbose)} {
+        puts "About to call marching cubes, creating ModelMaker(cubes,$volid)"
+    }
+    catch "ModelMaker(cubes,$volid) Delete"
+    vtkDiscreteMarchingCubes ModelMaker(cubes,$volid)
+      ModelMaker(cubes,$volid) SetInput $imdata
+    if {$::Module(verbose)} {
+        puts "CUTTING DOWN FOR TESTING"
+        set iterations 1
+        puts "calling generate values for [expr $lastLabel - $startLabel + 1] $startLabel $lastLabel"
+    } else {
+        set iterations $ModelMaker(smooth)
+    }
+    ModelMaker(cubes,$volid) GenerateValues [expr $lastLabel - $startLabel + 1] $startLabel $lastLabel
+    
+
+    if {$ModelMaker(jointSmooth) == 1} {
+        set passBand 0.001
+        if {$::Module(verbose)} {
+            puts "Starting joint smoothing, $iterations iterations"
+        }
+        catch "smoother${volid} Delete"
+        vtkWindowedSincPolyDataFilter smoother${volid}
+
+        set Gui(progressText) "Jointly smoothing models"
+        smoother${volid} AddObserver StartEvent MainStartProgress
+        smoother${volid} AddObserver ProgressEvent "MainShowProgress smoother${volid}"
+        smoother${volid} AddObserver EndEvent MainEndProgress
+
+        smoother${volid} SetInput [ModelMaker(cubes,$volid) GetOutput]
+        smoother${volid} SetNumberOfIterations $iterations
+        smoother${volid} BoundarySmoothingOff
+        smoother${volid} FeatureEdgeSmoothingOff
+        smoother${volid} SetFeatureAngle 120
+        smoother${volid} SetPassBand $passBand
+        smoother${volid} NonManifoldSmoothingOn
+        smoother${volid} NormalizeCoordinatesOn
+        # smoother${volid} AddObserver EndEvent "puts \"Smoothing complete\""
+        smoother${volid} Update
+    }
+
+    # now make nodes for all of them
+    if {$::Module(verbose)} {
+        puts "Making model nodes"
+    }
+    
+    for {set i $startLabel} {$i <= $lastLabel} {incr i} {
+        set freq [[[[histo${volid} GetOutput] GetPointData] GetScalars] GetTuple1 $i]
+        if { $freq == 0 } {
+            if {$::Module(verbose)} { 
+                puts "Skipping $i = $freq"
+            }
+            continue
+        } else {
+            if {$::Module(verbose)} { 
+                puts "Working on $i = $freq"
+            }
+        }
+
+        
+        
+        set labelid [MainColorsGetColorFromLabel $i]
+        if { $labelid != "" } {
+            set labelName [Color($labelid,node) GetName]
+        } else {
+            set labelName "unknown"
+        }
+
+        if { $labelName != "unknown" } {
+          
+            if {$::Module(verbose)} {
+                puts "Creating label $i named $labelName"
+            }
+
+
+            # set up the global vars that ModelMakerMarch needs
+        
+            # taking the relevant bits from ModelMakerCreate
+            set ModelMaker(name) $labelName
+            set Label(name) $labelName
+            set Label(label) $i
+
+            set n [MainMrmlAddNode Model]
+            $n SetName  $ModelMaker(name)
+            $n SetColor $Label(name)
+
+            # Guess the prefix
+            set ModelMaker(prefix) $ModelMaker(name)
+
+            # Create the model
+            set m [$n GetID]
+            MainModelsCreate $m
+
+            set v $volid
+            Model($m,node) SetRasToWld [Volume($v,node) GetRasToWld]
+
+            # Make the model!
+            if {[ModelMakerMarch $m $v $ModelMaker(decimate) $ModelMaker(smooth)] != 0} {
+                MainModelsDelete $m
+                $ModelMaker(bCreateAll) config -state normal
+                DevErrorWindow "Problem in ModelMakerMarch for creating all models for vol $v"
+                return
+            }
+
+            # mark the model as unsaved
+            set Model($m,dirty) 1
+
+            # put the model inside the same transform as the source volume
+            set nitems [Mrml(dataTree) GetNumberOfItems]
+            for {set midx 0} {$midx < $nitems} {incr midx} {
+                if { [Mrml(dataTree) GetNthItem $midx] == "Model($m,node)" } {
+                    break
+                }
+            }
+            if { $midx < $nitems } {
+                Mrml(dataTree) RemoveItem $midx
+                Mrml(dataTree) InsertAfterItem Volume($v,node) Model($m,node)
+                MainUpdateMRML
+                if {$::Module(verbose)} {
+                    puts "Model($m,node) placed after item Volume($v,node) in mrml data tree"
+                }
+            }
+            incr numModels
+        }
+    }
+    MainUpdateMRML
+    
+    # set the last one to be active
+    MainModelsSetActive $m
+
+    # update the gui so all entry boxes are okay - Label(label) gets lost before get here, reset it
+    set Label(label) $ModelMaker(endLabel)
+    if {$::Module(verbose)} {
+        puts "Done creating, resetting stuff: Label(label) = $Label(label), Label(name) = $Label(name)"
+    }
+    ModelMakerLabelCallback
+
+    $ModelMaker(bCreateAll) config -state normal
+    
+    DevInfoWindow "Created $numModels models for volume $volid, from $startLabel to $lastLabel"
 
     return $m
 }
@@ -749,6 +1141,43 @@ proc ModelMakerLabelCallback {} {
     set ModelMaker(label2) $Label(label)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ModelMakerMultipleLabelCallback
+# Sets either the start or end label variables, for creating multiple models
+# .ARGS
+# string which one of start or end, otherwise does nothing
+# .END
+#-------------------------------------------------------------------------------
+proc ModelMakerMultipleLabelCallback { which } {
+    global Label ModelMaker Module
+    
+    if {$which == "start"} {
+        if {$::Module(verbose)} {
+            puts "ModelMakerMultipleLabelCallback: $which, setting startName to $Label(name) and startLabel to $Label(label)"
+        }
+        set ModelMaker(startName) $Label(name)
+        set ModelMaker(startLabel) $Label(label)
+        # colour the label name box
+        set w $::Module(ModelMaker,fMultiple).fLabel.eStartName
+        set c [MainColorsGetColorFromLabel $ModelMaker(startLabel)]
+        if {$c != ""} {
+            $w config -bg [MakeColorNormalized [Color($c,node) GetDiffuseColor]] -state normal
+        }
+    } 
+    if {$which == "end"} {
+        if {$::Module(verbose)} {
+            puts "ModelMakerMultipleLabelCallback: $which, setting endName to $Label(name) and endLabel to $Label(label)"
+        }
+        set ModelMaker(endName) $Label(name)
+        set ModelMaker(endLabel) $Label(label)
+        # colour the label name box
+        set w $::Module(ModelMaker,fMultiple).fLabel.eEndName
+        set c [MainColorsGetColorFromLabel $ModelMaker(endLabel)]
+        if {$c != ""} {
+            $w config -bg [MakeColorNormalized [Color($c,node) GetDiffuseColor]] -state normal
+        }
+    }
+}
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerSmoothWrapper
 # 
@@ -921,6 +1350,7 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     [Volume($v,vol) GetOutput] SetOrigin 0 0 0
     
     # Read orientation matrix and permute the images if necessary.
+    catch "rot Delete"
     vtkTransform rot
 
     # special trick to avoid vtk 4.2 legacy hack message 
@@ -938,57 +1368,96 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     # But do this only for label maps
 # BUG crashes:    $p ThresholdBetween $Label(label) $ModelMaker(label2)
     set p thresh
-    vtkImageThreshold $p
-    $p SetInput [Volume($v,vol) GetOutput]
-    $p SetReplaceIn 1
-    $p SetReplaceOut 1
-    $p SetInValue 200
-    $p SetOutValue 0
+    catch "$p Delete"
+    
+    if {$ModelMaker(jointSmooth) == 0} {
+        vtkImageThreshold $p
+        $p SetInput [Volume($v,vol) GetOutput]
+        $p SetReplaceIn 1
+        $p SetReplaceOut 1
+        $p SetInValue 200
+        $p SetOutValue 0
+    } else {
+        vtkThreshold $p
+        $p SetInput [ModelMaker(cubes,$v) GetOutput]
+        $p SetAttributeModeToUseCellData
+    }
+    
+    if {$::Module(verbose)} {
+        puts "Thresholding to $Label(label)"
+    }
     $p ThresholdBetween $Label(label) $Label(label)
     [$p GetOutput] ReleaseDataFlagOn
-    set Gui(progressText) "Threshold $name"
+    set Gui(progressText) "Threshold $name to $Label(label)"
     $p AddObserver StartEvent     MainStartProgress
     $p AddObserver ProgressEvent "MainShowProgress $p"
     $p AddObserver EndEvent       MainEndProgress
 
-    vtkImageToStructuredPoints to
-    to SetInput [thresh GetOutput]
-    to Update
 
-    set p mcubes
-    vtkMarchingCubes $p
-    $p SetInput [to GetOutput]
-    $p SetValue 0 100.5
-    $p ComputeScalarsOff
-    $p ComputeGradientsOff
-    $p ComputeNormalsOff
-    [$p GetOutput] ReleaseDataFlagOn
-    set Gui(progressText) "Marching $name"
-    $p AddObserver StartEvent     MainStartProgress
-    $p AddObserver ProgressEvent "MainShowProgress $p"
-    $p AddObserver EndEvent       MainEndProgress
-    set ModelMaker(t,$p) [expr [lindex [time {$p Update}] 0]/1000000.0]
-    set ModelMaker(n,$p) [[$p GetOutput] GetNumberOfPolys]
+    catch "to Delete"
+    if {$ModelMaker(jointSmooth) == 0} {
+        vtkImageToStructuredPoints to
+        to SetInput [thresh GetOutput]
+        to Update
+    } else {
+        vtkGeometryFilter to
+        to SetInput [thresh GetOutput]
+    }
+    
+    
+    if {$::ModelMaker(jointSmooth) == 0} {
+        set p mcubes
+        catch "$p Delete"
+        vtkMarchingCubes $p
+        $p SetInput [to GetOutput]
+        $p SetValue 0 100.5
+        $p ComputeScalarsOff
+        $p ComputeGradientsOff
+        $p ComputeNormalsOff
+        [$p GetOutput] ReleaseDataFlagOn
+        set Gui(progressText) "Marching $name"
+        $p AddObserver StartEvent     MainStartProgress
+        $p AddObserver ProgressEvent "MainShowProgress $p"
+        $p AddObserver EndEvent       MainEndProgress
+        set ModelMaker(t,$p) [expr [lindex [time {$p Update}] 0]/1000000.0]
+   
 
-    # If there are no polygons, then the smoother gets mad, so stop.
-    if {$ModelMaker(n,$p) == 0} {
-        tk_messageBox -message "No polygons can be created."
-        thresh SetInput ""
-        to SetInput ""
-        mcubes SetInput ""
-        rot Delete
-        thresh Delete
-        to Delete
-        mcubes Delete
-        set ModelMaker(marching) 0
-        eval [Volume($v,vol) GetOutput] SetSpacing $spacing
-        eval [Volume($v,vol) GetOutput] SetOrigin $origin
-        return -1
+        set ModelMaker(n,$p) [[$p GetOutput] GetNumberOfPolys]
+        
+        # If there are no polygons, then the smoother gets mad, so stop.
+        if {$ModelMaker(n,$p) == 0} {
+            tk_messageBox -message "No polygons can be created."
+            thresh SetInput ""
+            to SetInput ""
+            if {$ModelMaker(jointSmooth) == 0} {
+                mcubes SetInput ""
+            }
+            rot Delete
+            thresh Delete
+            to Delete
+            if {$ModelMaker(jointSmooth) == 0} {
+                mcubes Delete
+            }
+            set ModelMaker(marching) 0
+            eval [Volume($v,vol) GetOutput] SetSpacing $spacing
+            eval [Volume($v,vol) GetOutput] SetOrigin $origin
+            return -1
+        }
+    } else {
+        if {$::Module(verbose)} { puts "Skipping marching cubes..."}
+#        set p ModelMaker(cubes,$v)
     }
 
     set p decimator
+    catch "$p Delete"
     vtkDecimate $p
-    $p SetInput [mcubes GetOutput]
+    if {$ModelMaker(jointSmooth) == 0} {
+        $p SetInput [mcubes GetOutput]
+    } else {
+#        $p SetInput [ModelMaker(cubes,$v) GetOutput]
+        $p SetInput [to GetOutput]
+    }
+
     $p SetInitialFeatureAngle 60
     $p SetMaximumIterations $decimateIterations
     $p SetMaximumSubIterations 0
@@ -1005,20 +1474,22 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     set ModelMaker(t,$p) [expr [lindex [time {$p Update}] 0]/1000000.0]
     set ModelMaker(n,$p) [[$p GetOutput] GetNumberOfPolys]
     
+    catch "reverser Delete"
     vtkReverseSense reverser
 
     # Do normals need reversing?
     set mm [rot GetMatrix] 
     if {[$mm Determinant] < 0} {
-#      
-# History: In a note to Samson Timoner, Dave Gering wrote:
-# With some scan orders (AP PA LR RL IS SI), the normals need to be reversed
-# for proper surface rendering. I meant to one day validate that this was
-# happening correctly, but I never got around to making a model from every
-# type of scan order. The popup was to aid my testing, and it certainly
-# shouldn't still be in there!!
-#
-#    tk_messageBox -message Reverse
+
+        #      
+        # History: In a note to Samson Timoner, Dave Gering wrote:
+        # With some scan orders (AP PA LR RL IS SI), the normals need to be reversed
+        # for proper surface rendering. I meant to one day validate that this was
+        # happening correctly, but I never got around to making a model from every
+        # type of scan order. The popup was to aid my testing, and it certainly
+        # shouldn't still be in there!!
+        #
+        #    tk_messageBox -message Reverse
         set p reverser
         $p SetInput [decimator GetOutput]
         $p ReverseNormalsOn
@@ -1029,38 +1500,54 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
         $p AddObserver EndEvent       MainEndProgress
     }
 
-    if { $ModelMaker(UseSinc) == 1} {
-        vtkWindowedSincPolyDataFilter smoother
-        smoother SetPassBand .1
-        if { $smoothIterations == 1 } {
-            DevWarningWindow "Smoothing value of 1 not allowed for Sinc filter.  Using 2 smoothing iterations."
-            set smoothIterations 2
+    if {$::ModelMaker(jointSmooth) == 0} {   
+        catch "smoother Delete"
+        if { $ModelMaker(UseSinc) == 1} {
+            vtkWindowedSincPolyDataFilter smoother
+            smoother SetPassBand .1
+            if { $smoothIterations == 1 } {
+                DevWarningWindow "Smoothing value of 1 not allowed for Sinc filter.  Using 2 smoothing iterations."
+                set smoothIterations 2
+            }
+        } else {
+            vtkSmoothPolyDataFilter smoother
+            # This next line massively rounds corners
+            smoother SetRelaxationFactor .33
+            smoother SetFeatureAngle 60
+            smoother SetConvergence 0
         }
+        smoother SetInput [$p GetOutput]
+        set p smoother
+        $p SetNumberOfIterations $smoothIterations
+        # This next line massively rounds corners
+        $p FeatureEdgeSmoothingOff
+        $p BoundarySmoothingOff
+        [$p GetOutput] ReleaseDataFlagOn
+        set Gui(progressText) "Smoothing $name"
+        $p AddObserver StartEvent     MainStartProgress
+        $p AddObserver ProgressEvent "MainShowProgress $p"
+        $p AddObserver EndEvent       MainEndProgress
+        set ModelMaker(t,$p) [expr [lindex [time {$p Update}] 0]/1000000.0]
     } else {
-        vtkSmoothPolyDataFilter smoother
-    # This next line massively rounds corners
-        smoother SetRelaxationFactor .33
-        smoother SetFeatureAngle 60
-        smoother SetConvergence 0
+        # don't reset p
     }
-    smoother SetInput [$p GetOutput]
-    set p smoother
-    $p SetNumberOfIterations $smoothIterations
-    # This next line massively rounds corners
-    $p FeatureEdgeSmoothingOff
-    $p BoundarySmoothingOff
-    [$p GetOutput] ReleaseDataFlagOn
-    set Gui(progressText) "Smoothing $name"
-    $p AddObserver StartEvent     MainStartProgress
-    $p AddObserver ProgressEvent "MainShowProgress $p"
-    $p AddObserver EndEvent       MainEndProgress
-    set ModelMaker(t,$p) [expr [lindex [time {$p Update}] 0]/1000000.0]
     set ModelMaker(n,$p) [[$p GetOutput] GetNumberOfPolys]
     set ModelMaker($m,nPolys) $ModelMaker(n,$p)
 
     set p transformer
+    catch "$p Delete"
     vtkTransformPolyDataFilter $p
-    $p SetInput [smoother GetOutput]
+    if {$ModelMaker(jointSmooth) == 0} {
+        $p SetInput [smoother GetOutput]
+    } else {
+        if {[$mm Determinant] < 0} {
+            if {$::Module(verbose)} { puts "Using reverser instead of smoother" }
+            $p SetInput [reverser GetOutput]
+        } else {
+            if {$::Module(verbose)} { puts "Using decimator instead of smoother" }
+            $p SetInput  [decimator GetOutput]
+        }
+    }
     $p SetTransform rot
     set Gui(progressText) "Transforming $name"
     $p AddObserver StartEvent     MainStartProgress
@@ -1069,6 +1556,7 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     [$p GetOutput] ReleaseDataFlagOn
 
     set p normals
+    catch "$p Delete"
     vtkPolyDataNormals $p
     $p ComputePointNormals$ModelMaker(PointNormals)
     $p SetInput [transformer GetOutput]
@@ -1081,6 +1569,7 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     [$p GetOutput] ReleaseDataFlagOn
 
     set p stripper
+    catch "$p Delete"
     vtkStripper $p
     $p SetInput [normals GetOutput]
     set Gui(progressText) "Stripping $name"
@@ -1097,8 +1586,10 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     }
     stripper SetOutput ""
     foreach p "to thresh mcubes decimator reverser transformer smoother normals stripper" {
-        $p SetInput ""
-        $p Delete
+        if {[info command $p] != ""} {
+            $p SetInput ""
+            $p Delete
+        }
     }
     rot Delete
 
@@ -1110,3 +1601,16 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     return 0
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ModelMakerSetJointSmooth
+# The value of ModelMaker(jointSmooth) is set elsewhere, it's a flag that
+# determines if when multiple models are created, if they will be smoothly joined 
+# so that they are interlocking exactly, or if the models will be smoothed separately.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ModelMakerSetJointSmooth {} {
+    if {$::Module(verbose)} {
+        puts $::ModelMaker(jointSmooth)
+    }
+}
