@@ -66,8 +66,8 @@ proc ColorsInit {} {
 
     # Define Tabs
     set m Colors
-    set Module($m,row1List) "Help Colors Load"
-    set Module($m,row1Name) "Help {Edit Colors} {Load Colors}"
+    set Module($m,row1List) "Help Colors Scale Load"
+    set Module($m,row1Name) "Help {Edit Colors} {Edit Color Scale} {Load Colors}"
     set Module($m,row1,tab) Colors
 
     # Module Summary Info
@@ -84,7 +84,24 @@ proc ColorsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.28 $} {$Date: 2005/03/24 20:45:39 $}]
+        {$Revision: 1.29 $} {$Date: 2005/08/12 21:59:45 $}]
+
+    # the LUT to affect by the colour scale editing
+    set Color(LUT,currentID) -1
+    # gui values for changing LUTs
+    set Color(LUT,NumberOfColors) 0
+    foreach rangeName {Hue Saturation Value} {
+        set Color(LUT,lower${rangeName}) 0.0
+    }
+    foreach rangeName {Hue Saturation Value} {
+        set Color(LUT,upper${rangeName}) 1.0
+    }
+    foreach col {r g b} {
+        set Color(LUT,annoColor,$col) "0.0"
+    }
+    if {$::Module(verbose)} {
+        puts "ColorsInit: Set Color(LUT,*) values"
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -238,6 +255,79 @@ and use the new ones as your default colors.
     pack $f.bApply -side top -pady $Gui(pad) 
 
 
+
+    #-------------------------------------------
+    # Scale frame
+    #-------------------------------------------
+    set fScale $Module(Colors,fScale)
+    set f $fScale
+
+    frame $f.fPick -bg $Gui(backdrop)
+    pack $f.fPick -side top -fill x -pady $Gui(pad) -padx $Gui(pad)
+
+    foreach subf {NumColours Hue Saturation Value Anno} {
+        frame $f.f${subf} -bg $Gui(activeWorkspace) -relief groove -bd 2
+        pack $f.f${subf} -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+    }
+
+    #-------------------------------------------
+    # Scale->Pick frame
+    #-------------------------------------------
+    set f $fScale.fPick
+
+    DevAddButton $f.bPickLUT "Pick LUT" "ColorsPickLUT $f.bPickLUT" 12
+    pack $f.bPickLUT -side top
+
+    #-------------------------------------------
+    # Scale->NumColours frame
+    #-------------------------------------------
+    set f $fScale.fNumColours
+
+    eval {label $f.lNumberOfColors -text "Number of Colors: "} $Gui(WLA)
+    eval {entry $f.eNumberOfColors -textvariable Color(LUT,NumberOfColors) -width 5} $Gui(WEA)
+    bind $f.eNumberOfColors <Return> "ColorsLUTSetNumberOfColors [$f.eNumberOfColors get]"
+    pack $f.lNumberOfColors $f.eNumberOfColors -padx $Gui(pad) -pady $Gui(pad) -expand 1 -fill x
+
+    #-------------------------------------------
+    # Scale->Hue, Saturation, Value frames
+    #-------------------------------------------
+    foreach frameName {Hue Saturation Value} {
+        set f $fScale.f${frameName}
+        eval {label $f.l${frameName} -text "$frameName Range: "} $Gui(WLA)
+        pack $f.l${frameName} -side top
+
+        frame $f.fSliders -bg $Gui(activeWorkspace)
+        pack $f.fSliders -side top  -fill x -expand 1
+        set f $f.fSliders
+        foreach slider "lower upper" text "Lo Hi" {
+            DevAddLabel $f.l${slider} "$text:"
+            eval {entry $f.e${slider} -width 6 \
+                      -textvariable Color(LUT,${slider}${frameName})} $Gui(WEA)
+            bind $f.e${slider} <Return> "ColorsLUTSetParam ${slider} ${frameName}"
+            # bind $f.e${slider} <FocusOut> "ColorsLUTSetParam ${slider}${frameName}"
+            eval {scale $f.s${slider} -from 0.0 -to 1.0 -length 50 \
+                      -variable Color(LUT,${slider}${frameName}) -resolution 0.1 \
+                      -command "ColorsLUTSetParam ${slider} ${frameName}"} \
+                $Gui(WSA) {-sliderlength 14}
+            grid  $f.l${slider} $f.e${slider} $f.s${slider} -padx 2 -pady $Gui(pad) \
+                -sticky news
+        }
+    }
+
+
+    #-------------------------------------------
+    # Scale->Anno frame
+    #-------------------------------------------
+    set f $fScale.fAnno
+    # r g b values
+    DevAddLabel $f.lAnno "Annotation RGB"
+    foreach col {r g b} {
+        eval {label $f.l$col -text $col } $Gui(WLA)
+        eval {entry $f.e$col -width 3 -textvariable Color(LUT,annoColor,$col)} $Gui(WEA) 
+        bind $f.e$col <Return> "ColorsLUTSetAnno $col"
+        
+    }
+    pack $f.lr $f.er $f.lg $f.eg $f.lb $f.eb -side top -padx $Gui(pad) -fill x
 
     #-------------------------------------------
     # Load frame
@@ -502,4 +592,220 @@ proc ColorsDeleteLabel {} {
 
     ColorsDisplayLabels
     ColorsSelectLabel 0
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ColorsPickLUT
+# Pick a look up table to work with. Sets Color(LUT,currentID).
+# .ARGS
+# button parrentButton button to hang the menu off of
+# .END
+#-------------------------------------------------------------------------------
+proc ColorsPickLUT {parentButton} {
+    global Color Gui
+
+    catch "destroy .mcolorspicklut"
+    eval menu .mcolorspicklut $Gui(WMA)
+
+    set currid $::Color(LUT,currentID)
+
+    foreach l $::Lut(idList) {
+        if {$l >= 0} {
+            if {$l == $currid} {
+                set labeltext "* $l $::Lut($l,name) *"
+            } else {
+                set labeltext "$l $::Lut($l,name)"
+            }
+            .mcolorspicklut insert end command -label $labeltext -command "ColorsSetLUT $l"
+            if {$::Module(verbose)} {
+                puts "ColorsPickLUT: added command to set Color(LUT,currentID) to $l"
+            }
+        }
+    }
+    set x [expr [winfo rootx $parentButton] + 10]
+    set y [expr [winfo rooty $parentButton] + 10]
+    
+    .mcolorspicklut post $x $y
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ColorsSetLUT
+# Set the current LUT id for the Colors module, and set the global vars
+# .ARGS 
+# int id the ID of the look up table to use to set the Colors Module vars
+# .END
+#-------------------------------------------------------------------------------
+proc ColorsSetLUT { id } {
+    global Color Lut
+    
+    if {$id > 0 && [lsearch $Lut(idList) $id] != -1} {
+        set ::Color(LUT,currentID) $id
+        # modify the button text
+        $::Module(Colors,fScale).fPick.bPickLUT configure -text $Lut($Color(LUT,currentID),name)
+
+        # now get the LUT values
+        set Color(LUT,NumberOfColors) [Lut($id,lut) GetNumberOfColors]
+        set Color(LUT,lowerHue) [lindex [Lut($id,lut) GetHueRange] 0]
+        set Color(LUT,upperHue) [lindex [Lut($id,lut) GetHueRange] 1]
+        set Color(LUT,lowerSaturation) [lindex [Lut($id,lut) GetSaturationRange] 0]
+        set Color(LUT,upperSaturation)  [lindex [Lut($id,lut) GetSaturationRange] 1]
+        set Color(LUT,lowerValue)  [lindex [Lut($id,lut) GetValueRange] 0]
+        set Color(LUT,upperRange) [lindex [Lut($id,lut) GetValueRange] 1]
+        set Color(LUT,annoColor,r) [lindex $Lut($id,annoColor) 0]
+        set Color(LUT,annoColor,g) [lindex $Lut($id,annoColor) 1]
+        set Color(LUT,annoColor,b) [lindex $Lut($id,annoColor) 2]
+        
+    } else {
+        puts "ColorsSetLUT: lut id $id is out of range or invalid: $Lut(idList)"
+    }
+    
+    
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ColorsLUTSetNumberOfColors
+# Set the number of colours in the current Color module LUT
+# .ARGS
+# int val number greater than 0
+# .END
+#-------------------------------------------------------------------------------
+proc ColorsLUTSetNumberOfColors { val } {
+    global Color Lut
+
+    set val $Color(LUT,NumberOfColors)
+    if {$::Module(verbose)} { 
+        puts "ColorsLUTSet: varName = NumberOfColors, val = $val, current Color(LUT,NumberOfColors) = $Color(LUT,NumberOfColors), lut id = $Color(LUT,currentID)"
+    }
+
+    set id $Color(LUT,currentID)
+    if {[lsearch $Lut(idList) $id] != -1} {
+        if {$::Module(verbose)} { 
+            puts "ColorsLUTSetNumberOfColors: Setting value for colour table $Lut($id,name): set Lut($id,NumberOfColors) to $val, and set Lut($id,lut) SetNumberOfColors to $val"
+        }
+        # check if val is valid
+        if {$val < 0} {
+            puts "ColorsLUTSetNumberOfColors: Value $val out of range, must be greater than 0"
+            return
+        }
+        set Lut($id,$Color(LUT,NumberOfColors)) $val
+        eval Lut($id,lut) SetNumberOfColors $val
+        
+        Lut($id,lut) Build
+        Render3D
+    } else {
+        if {$::Module(verbose)} {
+            puts "ColorsLUTSetNumberOfColors: Warning: current id not a valid look up table ($id == -1 or not in \"$Lut(idList)\")"
+        }
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC ColorsLUTSetParam
+# Set the colour look up table parameter for the current Color module LUT. 
+# The variable Color(LUT,$hilo$Param) has been set already.
+# .ARGS
+# string hilo one of lower or upper, which end of the range to set 
+# string Param the name of the parameter to set, one of Hue Saturation Value
+# float val value passed in from the slider, not used
+# .END
+#-------------------------------------------------------------------------------
+proc ColorsLUTSetParam { hilo Param {val ""} } {
+    global Color Lut
+
+    set value $Color(LUT,${hilo}${Param})
+    set id $Color(LUT,currentID)
+    if {$::Module(verbose)} { 
+        puts "ColorsLUTSetParam: hilo = $hilo, Param = $Param, value = $value, lut id = $id"
+    }
+
+   
+    if {$id != -1 && [lsearch $Lut(idList) $id] != -1} {
+        if {$::Module(verbose)} { 
+            puts "ColorsLUTSetParam: Setting value for colour table $Lut($id,name)"
+        }
+        # check if val is valid
+        if {$::Module(verbose)} {
+            puts "ColorsLUTSet: value = $value"
+        }
+        if {$value< 0.0 || $value > 1.0} {
+            puts "ColorsLUTSet: Value $value out of range 0.0 to 1.0"
+            return
+        }
+        if {$hilo == "upper"} {
+            set rangeInd 1
+        } else {
+            set rangeInd 0
+        }
+        if {$::Module(verbose)} {
+            puts "ColorsLUTSetParam: $hilo -> $rangeInd, setting Lut($id,[Uncap ${Param}Range])"
+        }
+        if {[info exist Lut($id,[Uncap ${Param}]Range)]} {
+            lset Lut($id,[Uncap ${Param}]Range) $rangeInd $value
+            if {$::Module(verbose)} {
+                puts "\tto $Lut($id,[Uncap ${Param}]Range)"
+                puts "Now calling Set${Param} for Lut($id,lut) with that value, and rebuilding the lut, and rendering"
+            }
+            eval Lut($id,lut) Set${Param}Range $Lut($id,[Uncap ${Param}]Range)
+
+        
+            Lut($id,lut) Build
+            Render3D
+        } else {
+            puts "No [Uncap ${Param}Range] for lut id $id"
+        }
+    } else {
+        puts "Warning: current id not a valid look up table ($id not in \"$Lut(idList)\""
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ColorsLUTSetAnno
+# Set the annotation colour in the current Color module LUT
+# .ARGS
+# char col r, g, or b to set the red, green, or blue
+# .END
+#-------------------------------------------------------------------------------
+proc ColorsLUTSetAnno { col } {
+    global Color Lut
+
+    set val $Color(LUT,annoColor,$col)
+
+    if {$::Module(verbose)} {
+        puts "ColorsLUTSetAnno: $col $val"
+    }
+    set ind -1
+    if {$col == "r"} { set ind 0 }
+    if {$col == "g"} { set ind 1 }
+    if {$col == "b"} { set ind 2 }
+
+    if {$ind == -1} {
+        DevErrorWindow "ColorsLUTSetAnno: Invalid colour $col, must be r, g, or b"
+        return
+    }
+
+    if {$val < 0.0 || $val > 1.0} {
+        DevErrorWindow "ColorsLUTSetAnno: Invalid colour value $val, just be 0.0-1.0.\nResetting to limit."
+        if {$val < 0.0} {
+            set Color(LUT,annoColor,$col) 0.0
+        } else {
+            set Color(LUT,annoColor,$col) 1.0
+        }
+        return
+    }
+
+    set id $Color(LUT,currentID)
+
+    if {[lsearch $Lut(idList) $id] != -1} {
+        if {$::Module(verbose)} { 
+            puts "ColorsLUTSetAnno: Setting value for colour table $Lut($id,name)"
+        }
+        set Color(LUT,annoColor,$col) $val
+        set Lut($id,annoColor) {$Color(LUT,annoColor,r) $Color(LUT,annoColor,g) $Color(LUT,annoColor,b)}
+        # don't do anything else right now, it's for the histogram
+    } else {
+        puts "Warning: current id not a valid look up table ($id not in \"$Lut(idList)\""
+    }
+
+    
 }
