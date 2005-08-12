@@ -48,6 +48,9 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <time.h>
 #include "vtkImageDICOMReader.h"
 
+
+#include "vtkPointData.h"
+
 //------------------------------------------------------------------------------
 vtkMrmlDataVolume* vtkMrmlDataVolume::New()
 {
@@ -258,7 +261,6 @@ void vtkMrmlDataVolume::Update()
   // its alright.
 
   // Create objects that the user hasn't already set
-
   this->CheckImageData();
   // Connect pipeline
   this->Accumulate->SetInput(this->ImageData);
