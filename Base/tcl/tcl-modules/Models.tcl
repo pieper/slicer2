@@ -85,7 +85,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.60 $} {$Date: 2004/04/13 21:00:08 $}]
+            {$Revision: 1.61 $} {$Date: 2005/08/12 21:57:05 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -1060,6 +1060,12 @@ proc ModelsPickScalars { parentButton } {
 
     set m $Model(activeID)
 
+    # if no polydata error and return
+    if {$m == "" || [info command $Model($m,polyData)] == ""} {
+        DevErrorWindow "No active model!"
+        return
+    }
+
     set ptdata [$Model($m,polyData) GetPointData]
     if { [$ptdata GetScalars] != "" } {
         set currscalars [[$ptdata GetScalars] GetName]
@@ -1114,6 +1120,8 @@ proc ModelsPickScalarsCallback { mid ptdata scalars } {
         set lutid [MainLutsGetLutIDByName "Freesurfer"]
         if { $lutid != "" } {
             ModelsSetScalarsLut $mid $lutid "false"
+        } else {
+            puts "WARNING: ModelsPickScalarsCallback failed to find lut id for Freesurfer"
         }
     } else {
         ModelsSetScalarsLut $mid "" "false" ;# tells it to use the default
