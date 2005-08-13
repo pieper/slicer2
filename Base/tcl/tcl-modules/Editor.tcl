@@ -125,7 +125,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.77 $} {$Date: 2005/08/04 02:46:39 $}]
+        {$Revision: 1.78 $} {$Date: 2005/08/13 21:23:27 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -1409,8 +1409,8 @@ proc EditorB1Motion {x y} {
                 "Draw" {
                     if {1} {
                         # this way just inserts the point normally
-                        # (CTJ) do not insert points when mouse is dragged
-                        #Slicer DrawInsertPoint $x $y
+                        # (CTJ) to disable click and drag, comment this line:
+                        Slicer DrawInsertPoint $x $y
                     } else {
                         # this way applies to show the rasterized labelmap
                         # and stores the points to support delete
@@ -2838,8 +2838,8 @@ proc EditorControlB1Motion {x y} {
                 "Draw" {
                     if {1} {
                         # this way just inserts the point normally
-                        # (CTJ) do not insert points when mouse is dragged
-                        #Slicer DrawInsertPoint $x $y
+                        # (CTJ) to disable click and drag, comment this line:
+                        Slicer DrawInsertPoint $x $y
                     } else {
                         # this way applies to show the rasterized labelmap
                         # and stores the points to support delete
