@@ -29,7 +29,7 @@ public:
     void PrintSelf(ostream& os, vtkIndent indent);
 
     // Adds polygon to slice s, position p
-    void SetPolygon(vtkPoints *polygon, int s, int p, int d, int closed, int preshape);
+    void SetPolygon(vtkPoints *polygon, int s, int p, int d, int closed, int preshape, int label);
 
     // Adds polygon to slice s, first empty position
     void SetPolygon(vtkPoints *polygon, int s, int d);
@@ -52,6 +52,9 @@ public:
     // Returns preshape of polygon p in slice s.
     int GetPreshape(int s, int p);
 
+    // Returns label of polygon p in slice s.
+    int GetLabel(int s, int p);
+
     // Resets polygon p in slice s
     void RemovePolygon(int s, int p);
 
@@ -69,6 +72,12 @@ public:
 
     // Returns lowest index after p in which there is a nonempty polygon.
     int ListGetNextRetrievePosition(int s, int p);
+
+    // Returns number of polygons to apply, next time Apply is clicked.
+    int GetNumApplyable(int s);
+
+    // Returns index of qth polygon to apply.
+    int GetApplyable(int s, int q);
 
     // Removes all polygons in the stack
     void Clear();

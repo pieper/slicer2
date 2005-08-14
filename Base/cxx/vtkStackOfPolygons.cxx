@@ -38,7 +38,7 @@ vtkStackOfPolygons::~vtkStackOfPolygons()
         this->PointStack[s]->Delete();
 }
 
-void vtkStackOfPolygons::SetPolygon(vtkPoints *polygon, int s, int p, int d, int closed, int preshape)
+void vtkStackOfPolygons::SetPolygon(vtkPoints *polygon, int s, int p, int d, int closed, int preshape, int label)
 {
     this->PointStack[s]->Reset(p);
     int n = polygon->GetNumberOfPoints();
@@ -51,6 +51,8 @@ void vtkStackOfPolygons::SetPolygon(vtkPoints *polygon, int s, int p, int d, int
     this->PointStack[s]->SetDensity(p, d);
     this->PointStack[s]->SetClosed(p, closed);
     this->PointStack[s]->SetPreshape(p, preshape);
+    this->PointStack[s]->SetLabel(p, label);
+    this->PointStack[s]->UpdateApplyOrder(p);
     if (!this->IsNonEmpty[s]) this->IsNonEmpty[s] = 1;
 }
 
@@ -100,9 +102,15 @@ int vtkStackOfPolygons::GetPreshape(int s, int p)
     return this->PointStack[s]->GetPreshape(p);
 }
 
+int vtkStackOfPolygons::GetLabel(int s, int p)
+{
+    return this->PointStack[s]->GetLabel(p);
+}
+
 void vtkStackOfPolygons::RemovePolygon(int s, int p)
 {
     this->PointStack[s]->Reset(p);
+    this->PointStack[s]->RemoveApplyOrder(p);
 }
 
 int vtkStackOfPolygons::GetNumberOfPoints(int s)
@@ -132,6 +140,16 @@ int vtkStackOfPolygons::ListGetRetrievePosition(int s)
 int vtkStackOfPolygons::ListGetNextRetrievePosition(int s, int p)
 {
     return this->PointStack[s]->GetNextRetrievePosition(p);
+}
+
+int vtkStackOfPolygons::GetNumApplyable(int s)
+{
+    return this->PointStack[s]->GetNumApplyable();
+}
+
+int vtkStackOfPolygons::GetApplyable(int s, int q)
+{
+    return this->PointStack[s]->GetApplyable(q);
 }
 
 void vtkStackOfPolygons::Clear()
