@@ -142,16 +142,16 @@ public:
   vtkBooleanMacro(RangeAuto, int);
 
   void StackSetPolygon(vtkPoints *poly, int s, int p, int d, int closed,
-                       int preshape)
-  {this->PolyStack->SetPolygon(poly, s, p, d, closed, preshape);};
+                       int preshape, int label)
+  {this->PolyStack->SetPolygon(poly, s, p, d, closed, preshape, label);};
   void StackRemovePolygon(int s, int p)
   {this->PolyStack->RemovePolygon(s, p);};
 
   void RasStackRemovePolygon(int s, int p)
   {this->RasPolyStack->RemovePolygon(s, p);};
   void RasStackSetPolygon(vtkPoints *rasPoly, int s, int p, int d, int closed,
-                          int preshape)
-  {this->RasPolyStack->SetPolygon(rasPoly, s, p, d, closed, preshape);};
+                          int preshape, int label)
+  {this->RasPolyStack->SetPolygon(rasPoly, s, p, d, closed, preshape, label);};
 
 protected:
   vtkMrmlDataVolume();
