@@ -7,10 +7,7 @@
 
 
 #include "vtkITKRegistrationFilter.h"
-
-#include "itkHistogramMatchingImageFilter.h"
-#include "itkWarpImageFilter.h"
-#include "itkLinearInterpolateImageFunction.h"
+#include "vtkImageFlip.h"
 
 
 // vtkITKDeformableRegistrationFilter Class
@@ -30,7 +27,8 @@ public:
       return (vtkImageData *) this->vtkImporter->GetOutput();
     }
     else if (idx == 1) {
-      return (vtkImageData *) this->vtkImporterDisplacement->GetOutput();
+      this->vtkFlipDisplacement->Update();
+      return (vtkImageData *) this->vtkFlipDisplacement->GetOutput();
     }
     else {
       return NULL;
@@ -59,6 +57,8 @@ protected:
   // vtk import for output vtk displacement image
   vtkImageImport *vtkImporterDisplacement;
 
+  vtkImageFlip* vtkFlipDisplacement;
+
   // default constructor
   vtkITKDeformableRegistrationFilter () {}; // This is called from New() by vtkStandardNewMacro
 
@@ -83,7 +83,7 @@ private:
   void operator=(const vtkITKDeformableRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKDeformableRegistrationFilter, "$Revision: 1.1 $");
+//vtkCxxRevisionMacro(vtkITKDeformableRegistrationFilter, "$Revision: 1.2 $");
 //vtkStandardNewMacro(vtkITKDeformableRegistrationFilter);
 
 #endif

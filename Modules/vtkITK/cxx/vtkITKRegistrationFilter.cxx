@@ -68,7 +68,7 @@ void vtkITKRegistrationFilter::Update()
   this->UpdateRegistrationParameters();
 
   this->SetCurrentIteration(0);
-
+  this->GetOutput(0)->SetExtent(0,0,0,0,0,0);
   vtkITKImageToImageFilter::Update();
 
   //vtkImporter->Update();
