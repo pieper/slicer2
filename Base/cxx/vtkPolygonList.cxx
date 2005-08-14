@@ -22,7 +22,11 @@ vtkPolygonList* vtkPolygonList::New()
 vtkPolygonList::vtkPolygonList()
 {
     for (int p = 0; p < NUM_POLYGONS; p++)
+    {
         this->Polygons[p] = vtkPoints::New();
+        this->order[p] = -1;
+    }
+    currentOrder = -1;
     this->Samples = vtkPoints::New();
 }
 
@@ -153,6 +157,11 @@ int vtkPolygonList::GetPreshape (int p)
     return this->preshape[p];
 }
 
+int vtkPolygonList::GetLabel (int p)
+{
+    return this->label[p];
+}
+
 void vtkPolygonList::SetDensity (int p, int d)
 {
     this->densities[p] = d;
@@ -166,6 +175,45 @@ void vtkPolygonList::SetClosed (int p, int closed)
 void vtkPolygonList::SetPreshape (int p, int preshape)
 {
     this->preshape[p] = preshape;
+}
+
+void vtkPolygonList::SetLabel (int p, int label)
+{
+    this->label[p] = label;
+}
+
+void vtkPolygonList::UpdateApplyOrder (int p)
+{
+    this->currentOrder++;
+    this->order[this->currentOrder] = p;
+}
+
+void vtkPolygonList::RemoveApplyOrder (int p)
+{
+    // Search for i such that order[i] == p
+    for (int i = 0; i < NUM_POLYGONS; i++)
+        if (this->order[i] == p) break;
+    // If p was in the order array (as expected)
+    if (i < NUM_POLYGONS)
+    {
+        // Move all entries after p back by one slot
+        for (int j = i + 1; j <= this->currentOrder; j++)
+            this->order[j - 1] = this->order[j];
+        this->order[this->currentOrder] = -1;
+        this->currentOrder--;
+    }
+    // If p was not in order array, do nothing; this
+    // would only happen if there is some coding mistake
+}
+
+int vtkPolygonList::GetNumApplyable()
+{
+    return (currentOrder + 1);
+}
+
+int vtkPolygonList::GetApplyable(int q)
+{
+    return order[q];
 }
 
 void vtkPolygonList::Clear ()
