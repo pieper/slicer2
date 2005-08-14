@@ -80,6 +80,7 @@ proc EdDrawInit {} {
     set Ed($e,polynum) -1
     set Ed($e,unapplynum) -1
     set Ed($e,closed) Closed
+    set Ed($e,clear) No
 
     set Ed($e,eventManager) {}
     
@@ -101,14 +102,16 @@ proc EdDrawBuildGUI {} {
 
     frame $f.fRender  -bg $Gui(activeWorkspace)
     frame $f.fMode    -bg $Gui(activeWorkspace)
+    frame $f.fClear   -bg $Gui(activeWorkspace)
     frame $f.fDelete  -bg $Gui(activeWorkspace)
     frame $f.fGrid    -bg $Gui(activeWorkspace)
     frame $f.fBtns    -bg $Gui(activeWorkspace)
     frame $f.fClosed  -bg $Gui(activeWorkspace)
+    frame $f.fShape   -bg $Gui(activeWorkspace)
     frame $f.fApply   -bg $Gui(activeWorkspace)
     frame $f.fToggle  -bg $Gui(activeWorkspace)
-    pack $f.fGrid $f.fBtns $f.fClosed $f.fMode $f.fDelete \
-        $f.fRender $f.fApply -side top -pady 2 -fill x
+    pack $f.fGrid $f.fBtns $f.fClosed $f.fMode $f.fClear $f.fDelete \
+        $f.fRender $f.fShape $f.fApply -side top -pady 2 -fill x
     pack $f.fToggle -side bottom -pady 4 -fill x
     
     EdBuildRenderGUI $Ed(EdDraw,frame).fRender Ed(EdDraw,render)
@@ -129,6 +132,20 @@ proc EdDrawBuildGUI {} {
         pack $f.fMode.r$mode -side left -padx 0 -pady 0
     }
     pack $f.fMode -side top -pady 5 -padx 0 
+
+    #-------------------------------------------
+    # Draw->Clear frame
+    #-------------------------------------------
+    set f $Ed(EdDraw,frame).fClear
+
+    eval {label $f.l -text "Clear labelmap before apply:"} $Gui(WLA)
+    pack $f.l -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
+
+    foreach s "Yes No" text "Yes No" width "4 3" {
+        eval {radiobutton $f.r$s -width $width -indicatoron 0\
+            -text "$text" -value "$s" -variable Ed(EdDraw,clear)} $Gui(WCA)
+        pack $f.r$s -side left -fill x -anchor e
+    }
 
     #-------------------------------------------
     # Draw->Delete frame
@@ -235,21 +252,25 @@ proc EdDrawBuildGUI {} {
     TooltipAdd  $f.cW "Click to see grayscale only."
 
     #-------------------------------------------
-    # Draw->Apply frame
+    # Draw->Shape frame
     #-------------------------------------------
-    set f $Ed(EdDraw,frame).fApply
+    set f $Ed(EdDraw,frame).fShape
 
-    frame $f.f -bg $Gui(activeWorkspace)
-    eval {label $f.f.l -text "Shape:"} $Gui(WLA)
-    pack $f.f.l -side left -padx $Gui(pad)
+    eval {label $f.l -text "Shape:"} $Gui(WLA)
+    pack $f.l -side left -padx $Gui(pad) -pady $Gui(pad) -fill x
 
     foreach shape "Polygon Points" {
-        eval {radiobutton $f.f.r$shape -width [expr [string length $shape]+1] \
+        eval {radiobutton $f.r$shape -width [expr [string length $shape]+1] \
             -text "$shape" -variable Ed(EdDraw,preshape) -value $shape \
             -command "EdDrawUpdate SetShape; RenderActive" \
             -indicatoron 0} $Gui(WCA)
-        pack $f.f.r$shape -side left 
+        pack $f.r$shape -side left -fill x -anchor e
     }
+
+    #-------------------------------------------
+    # Draw->Apply frame
+    #-------------------------------------------
+    set f $Ed(EdDraw,frame).fApply
 
     eval {button $f.bApply -text "Apply" \
         -command "EdDrawApply"} $Gui(WBA) {-width 8}
@@ -257,7 +278,9 @@ proc EdDrawBuildGUI {} {
         -command "EdDrawUnapply; RenderActive"} $Gui(WBA) {-width 8}
 
     # To make Apply, Unapply in same line, make a new frame for them
-    pack $f.f $f.bApply $f.bUnapply -side top -padx $Gui(pad) -pady $Gui(pad)
+    #pack $f.bApply $f.bUnapply -side top -padx $Gui(pad) -pady $Gui(pad)
+    pack $f.bApply -side left -fill x -anchor e
+    pack $f.bUnapply -side left -fill x -anchor e
 }
 
 #-------------------------------------------------------------------------------
@@ -528,20 +551,30 @@ proc EdDrawApply { {delete_pending true} } {
     }
 
     # set polygon and raspolygon in vtkMrmlSlicer and volume object
-    Slicer StackSetPolygon $Slice($Interactor(s),offset) $Ed($e,polynum) $density $closed $preshape
-    Volume($v,vol) StackSetPolygon [Slicer DrawGetPoints] $Slice($Interactor(s),offset) $Ed($e,polynum) $density $closed $preshape
-    set raspoly [Slicer RasStackSetPolygon $Slice($Interactor(s),offset) $Ed($e,polynum) $density $closed $preshape]
-    Volume($v,vol) RasStackSetPolygon $raspoly $Slice($Interactor(s),offset) $Ed($e,polynum) $density $closed $preshape
+    Slicer StackSetPolygon $Slice($Interactor(s),offset) $Ed($e,polynum) $density $closed $preshape $label
+    Volume($v,vol) StackSetPolygon [Slicer DrawGetPoints] $Slice($Interactor(s),offset) $Ed($e,polynum) $density $closed $preshape $label
+    set raspoly [Slicer RasStackSetPolygon $Slice($Interactor(s),offset) $Ed($e,polynum) $density $closed $preshape $label]
+    Volume($v,vol) RasStackSetPolygon $raspoly $Slice($Interactor(s),offset) $Ed($e,polynum) $density $closed $preshape $label
 
     set Ed($e,unapplynum) -1
-    Ed(editor)   Clear
-    for {set p 0} {$p < 20} {incr p} {
+    # (CTJ) For users who want to clear the current slice's labelmap reapply
+    # all manually drawn polygons, there is now a "Clear" option that can be
+    # chosen before applying; represented by the toggle variable Ed($e,clear)
+    if { $Ed($e,clear) == "Yes" } {
+        Ed(editor)   Clear
+    }
+    set numapply [Slicer StackGetNumApplyable $Slice($Interactor(s),offset)]
+    for {set q 0} {$q < $numapply} {incr q} {
+        # Get index p of qth polygon to apply
+        set p [Slicer StackGetApplyable $Slice($Interactor(s),offset) $q]
         set poly [Slicer StackGetPoints $Slice($Interactor(s),offset) $p]
         set n [$poly GetNumberOfPoints]
+        # If polygon empty, don't apply it.  It was already removed above
         if { $n > 0 } {
             Slicer DrawComputeIjkPoints $Slice($Interactor(s),offset) $p
             set points [Slicer GetDrawIjkPoints]
             set preshape [Slicer StackGetPreshape $Slice($Interactor(s),offset) $p]
+            set label [Slicer StackGetLabel $Slice($Interactor(s),offset) $p]
             if { $preshape == 0 } {
                 set shape "Points"
             } else {
@@ -597,6 +630,9 @@ proc EdDrawUnapply {} {
     Slicer DrawDeleteAll
     if { $Ed($e,slice) != $Slice($Interactor(s),offset) } {
         set poly [Slicer StackGetPoints $Slice($Interactor(s),offset)]
+        set ind [Slicer StackGetRetrievePosition $Slice($Interactor(s),offset)]
+        set Label(label) [Slicer StackGetLabel $Slice($Interactor(s),offset) $ind]
+        EdDrawLabel
         # n == -1 if poly is NULL
         set n [Slicer StackGetNumberOfPoints $Slice($Interactor(s),offset)]
         for {set i 0} {$i < $n} {incr i} {
@@ -612,6 +648,8 @@ proc EdDrawUnapply {} {
         if { $Ed($e,polynum) != -1 } {
             set Ed($e,unapplynum) $Ed($e,polynum)
             set poly [Slicer StackGetPoints $Slice($Interactor(s),offset) $Ed($e,polynum)]
+            set Label(label) [Slicer StackGetLabel $Slice($Interactor(s),offset) $Ed($e,polynum)]
+            EdDrawLabel
             set n [$poly GetNumberOfPoints]
             for {set i 0} {$i < $n} {incr i} {
                 set p [$poly GetPoint $i]
