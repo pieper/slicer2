@@ -570,12 +570,12 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
     return this->PolyStack->GetPoints(s, p);
   };
 
-  void StackSetPolygon(int s, int p, int d, int closed, int preshape)
+  void StackSetPolygon(int s, int p, int d, int closed, int preshape, int label)
   {
-      PolyStack->SetPolygon(this->PolyDraw->GetPoints(), s, p, d, closed, preshape);
+      PolyStack->SetPolygon(this->PolyDraw->GetPoints(), s, p, d, closed, preshape, label);
   };
 
-  vtkPoints* RasStackSetPolygon(int s, int p, int d, int closed, int preshape)
+  vtkPoints* RasStackSetPolygon(int s, int p, int d, int closed, int preshape, int label)
   {
       vtkPoints *polygon = this->PolyDraw->GetPoints();
       vtkFloatingPointType *screenPt;
@@ -593,7 +593,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
                                   (vtkFloatingPointType)(rasPt[1]),
                                   (vtkFloatingPointType)(rasPt[2]));
       }
-      RasPolyStack->SetPolygon(rasPts, s, p, d, closed, preshape);
+      RasPolyStack->SetPolygon(rasPts, s, p, d, closed, preshape, label);
       return this->rasPts;
   };
 
@@ -635,6 +635,21 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   int StackGetPreshape(int s, int p)
   {
       return this->PolyStack->GetPreshape(s, p);
+  };
+
+  int StackGetLabel(int s, int p)
+  {
+      return this->PolyStack->GetLabel(s, p);
+  };
+
+  int StackGetNumApplyable(int s)
+  {
+      return this->PolyStack->GetNumApplyable(s);
+  };
+
+  int StackGetApplyable(int s, int q)
+  {
+      return this->PolyStack->GetApplyable(s, q);
   };
 
   void StackClear()
