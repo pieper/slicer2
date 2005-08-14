@@ -83,6 +83,10 @@ public:
   int GetPreshape(int p);
 
   // Description:
+  // Returns label of polygon p.
+  int GetLabel(int p);
+
+  // Description:
   // Sets density of polygon p to d.
   void SetDensity (int p, int d);
 
@@ -93,6 +97,26 @@ public:
   // Description:
   // Sets preshape (points/polygon) of polygon p.
   void SetPreshape (int p, int preshape);
+
+  // Description:
+  // Sets label of polygon p.
+  void SetLabel (int p, int label);
+
+  // Description:
+  // Updates order array for addition of polygon p.
+  void UpdateApplyOrder (int p);
+
+  // Description:
+  // Updates order array for removal of polygon p.
+  void RemoveApplyOrder (int p);
+
+  // Description:
+  // Returns number of polygons to apply next time Apply is clicked.
+  int GetNumApplyable ();
+
+  // Description:
+  // Returns index of qth polygon to apply.
+  int GetApplyable (int q);
 
   // Description:
   // Removes all polygons.
@@ -108,6 +132,9 @@ protected:
   int densities[NUM_POLYGONS]; // Sampling densities
   int closed[NUM_POLYGONS]; // Whether each contour is closed or not
   int preshape[NUM_POLYGONS]; // Preshape (points/polygon) of each contour
+  int label[NUM_POLYGONS]; // Labelmap number for each polygon
+  int order[NUM_POLYGONS]; // Order in which to apply polygons (for overlap)
+  int currentOrder; // Index of highest non-"-1" entry in order array
   Point ctlpoint; // Stores a point for GetFirstPoint and GetLastPoint
   vtkPoints            *Samples;
 };
