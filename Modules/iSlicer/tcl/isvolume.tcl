@@ -432,7 +432,6 @@ itcl::configbody isvolume::volume {
 # Id is strongly prefered because it is unique.
 #-------------------------------------------------------------------------------
 itcl::configbody isvolume::warpvolume {
-
     set volname $itk_option(-warpvolume)
 
     if { $volname == "" } {
@@ -859,6 +858,7 @@ itcl::body isvolume::transform_update {} {
             catch "dispXform Delete"
             vtkGridTransform dispXform 
             dispXform SetDisplacementGrid [::Volume($_warpVolId,vol) GetOutput]
+            $_xform PostMultiply 
             $_xform Concatenate dispXform
         }
     }
@@ -952,7 +952,8 @@ itcl::body isvolume::slicer_volume { {name ""} } {
     # - then copy the image data
     # - then set up the volume node parameters and make it visible in slicer
     #
-
+    
+    $this transform_update
     $_reslice Update
 
     vtkImageData $id

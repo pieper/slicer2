@@ -131,6 +131,7 @@ if { [itcl::find class isregistration] == "" } {
     
 
         variable _name ""
+        variable _volume_serial 0
         # is this the first time we are iterating
         variable _firsttime 1
 
@@ -177,6 +178,7 @@ if { [itcl::find class isregistration] == "" } {
         method get_dimensions {v} {}
         method get_spacing {v} {}
         method set_resample_parameters {} {}
+        method deformation_volume { {name ""} } {}
     }
 }
 
@@ -471,7 +473,7 @@ itcl::body isregistration::step {} {
     if {$itk_option(-verbose)} {
         puts "$i $j $k $itk_option(-source_shrink)"
     }
-    $_reg SetSourceShrinkFactors $i $j $k
+    catch {$_reg SetSourceShrinkFactors $i $j $k}
 
     set i [lindex $itk_option(-target_shrink) 0 ]
     set j [lindex $itk_option(-target_shrink) 1 ]
@@ -480,7 +482,7 @@ itcl::body isregistration::step {} {
         puts "$i $j $k $itk_option(-target_shrink)"
     }
 
-    $_reg SetTargetShrinkFactors $i $j $k
+    catch {$_reg SetTargetShrinkFactors $i $j $k}
 
     $itk_option(-set_metric_option) $_reg;
 
@@ -1044,6 +1046,75 @@ itcl::body isregistration::set_resample_parameters {} {
     $_targetvol set_spacing [lindex $t_spacing 0] [lindex $t_spacing 1] [lindex $t_spacing 2]
 
 }
+
+
+# ------------------------------------------------------------------
+
+itcl::body isregistration::deformation_volume { {name ""} } {
+
+    if { [info command MainMrmlAddNode] == "" } {
+        error "cannot create slicer volume outside of slicer"
+    }
+
+    # add a mrml node
+    set n [MainMrmlAddNode Volume]
+    set i [$n GetID]
+    MainVolumesCreate $i
+    
+    # find a name for the image data that hasn't been taken yet
+    while {1} {
+        set id deform_vol_$_name$_volume_serial
+        if { [info command $id] == "" } {
+            break ;# found a free name
+        } else {
+            incr _volume_serial ;# need to try again
+        }
+    }
+
+    # set the name and description of the volume
+    if { $name == "" } { 
+        $n SetName isvolume-$_volume_serial
+    } else {
+        $n SetName $name
+    }
+    $n SetDescription "Resampled volume"
+    incr _volume_serial
+
+    #
+    # need to construct a deformation volume from the reg output
+    # - make sagittal so we can flip the X axis by specifying
+    #   RL instead of LR
+    # - then copy the image data
+    # - then set up the volume node parameters and make it visible in slicer
+    #
+
+    $_reg Update
+
+    vtkImageData $id
+    eval [$_reg GetOutputDisplacement] SetUpdateExtent [[$_reg GetOutputDisplacement] GetWholeExtent]
+    [$_reg GetOutputDisplacement] Update
+    $id DeepCopy [$_reg GetOutputDisplacement]
+
+    ::Volume($i,node) SetNumScalars 3
+    ::Volume($i,node) SetScalarType [$id GetScalarType]
+
+    eval ::Volume($i,node) SetSpacing [$id GetSpacing]
+    
+    ::Volume($i,node) SetScanOrder LR
+    ::Volume($i,node) SetDimensions [lindex [$id GetDimensions] 0] [lindex [$id GetDimensions] 1]
+    ::Volume($i,node) SetImageRange 1 [lindex [$id GetDimensions] 2]
+    
+    ::Volume($i,node) ComputeRasToIjkFromScanOrder [::Volume($i,node) GetScanOrder]
+    ::Volume($i,vol) SetImageData $id
+    MainUpdateMRML
+
+    #Slicer SetOffset 0 0
+    #MainSlicesSetVolumeAll Back $i
+    #RenderAll
+
+
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC isregistration_demo
