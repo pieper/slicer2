@@ -83,7 +83,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.50 $} {$Date: 2005/08/12 21:58:38 $}]
+        {$Revision: 1.51 $} {$Date: 2005/08/15 18:55:58 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -958,7 +958,9 @@ proc ModelMakerCreateAll { } {
         } else {
             set lastLabel 255
         }
-    } 
+    }  else {
+        set lastLabel $ModelMaker(endLabel)
+    }
 
     set sure [tk_messageBox -type yesno -message "About to create models from labels $startLabel to $lastLabel out of volume $volid, are you sure?"]
     if {$sure == "no"} {
