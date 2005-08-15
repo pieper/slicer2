@@ -329,7 +329,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.41 $} {$Date: 2005/08/15 18:11:54 $}]
+        {$Revision: 1.42 $} {$Date: 2005/08/15 18:18:32 $}]
 
 }
 
@@ -963,9 +963,11 @@ proc vtkFreeSurferReadersSetVolumeFileName {} {
     if {$Module(verbose) == 1} {
         puts "FreeSurferReaders filename: $vtkFreeSurferReaders(VolumeFileName)"
     }
-    if {[string equal [file extension $vtkFreeSurferReaders(VolumeFileName)]  ".mgh"]} { 
+    if {[string equal [file extension $vtkFreeSurferReaders(VolumeFileName)] ".mgh"] ||
+        [string equal [file extension $vtkFreeSurferReaders(VolumeFileName)] ".mgz"]} { 
         set Volume(name) [file rootname [file tail $vtkFreeSurferReaders(VolumeFileName)]]
-    } elseif {[string equal [file extension $vtkFreeSurferReaders(VolumeFileName)]  ".bfloat"]} {
+    } elseif {[string equal [file extension $vtkFreeSurferReaders(VolumeFileName)] ".bfloat"] ||
+              [string equal [file extension $vtkFreeSurferReaders(VolumeFileName)] ".bshort"]} {
         # use the stem of the file, the part between the last directory separator and the underscore
         set bdir [file dirname $vtkFreeSurferReaders(VolumeFileName)]
         regexp "$bdir/(.*)_.*" $vtkFreeSurferReaders(VolumeFileName) match Volume(name)
@@ -5688,7 +5690,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.41 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.42 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
