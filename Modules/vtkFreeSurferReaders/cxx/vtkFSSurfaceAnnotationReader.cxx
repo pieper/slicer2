@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 Program:   Visualization Toolkit
 Module:    $RCSfile: vtkFSSurfaceAnnotationReader.cxx,v $
 Language:  C++
-Date:      $Date: 2005/08/05 19:21:35 $
-Version:   $Revision: 1.6 $
+Date:      $Date: 2005/08/15 17:18:02 $
+Version:   $Revision: 1.7 $
 
 =========================================================================*/
 #include <stdio.h>
@@ -342,7 +342,7 @@ int vtkFSSurfaceAnnotationReader::ReadFSAnnotation()
   
   // Copy the names as a list into a new string. First find the
   // length that the string should be.
-  cerr << "ReadFSAnnotation: Copy the names as a list into a new string\n";
+  vtkDebugMacro(<< "ReadFSAnnotation: Copy the names as a list into a new string\n");
   stringLength = 0;
   for (colorTableEntryIndex = 0; 
        colorTableEntryIndex < numColorTableEntries; 
