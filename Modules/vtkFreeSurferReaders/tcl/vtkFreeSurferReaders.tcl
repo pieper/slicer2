@@ -329,7 +329,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.40 $} {$Date: 2005/08/12 22:03:57 $}]
+        {$Revision: 1.41 $} {$Date: 2005/08/15 18:11:54 $}]
 
 }
 
@@ -650,9 +650,6 @@ proc vtkFreeSurferReadersBuildGUI {} {
     #-------------------------------------------
     set fPlot $Module(vtkFreeSurferReaders,fPlot)
     set f $fPlot
-
-    DevAddLabel $f.lWarning "UNDER CONSTRUCTION"
-    pack $f.lWarning -side top -padx $Gui(pad) -pady 0
 
     DevAddFileBrowse $f vtkFreeSurferReaders "PlotFileName" "Plot header file:" "vtkFreeSurferReadersSetPlotFileName" "fsgd" "\$Volume(DefaultDir)" "Open" "Browse for a plot header file (fsgd)"
 
@@ -1209,13 +1206,13 @@ proc vtkFreeSurferReadersCORApply {} {
         if {[Volume($i,node) GetLabelMap] == 1} {
             MainSlicesSetVolumeAll Label $i
         } else {
-            MainSlicesSetVolumeAll Back $i
+            MainSlicesSetVolumeAll Fore $i
         }
     } else {
         if {[Volume($iCast,node) GetLabelMap] == 1} {
             MainSlicesSetVolumeAll Label $iCast
         } else {
-            MainSlicesSetVolumeAll Back $iCast
+            MainSlicesSetVolumeAll Fore $iCast
         }
     }
 
@@ -1621,11 +1618,11 @@ set useMatrices 0
         set vtkFreeSurferReaders(coloursLoaded) 1
     }
 
-    # display the new volume in the background of all slices if not a label map
+    # display the new volume in the foreground of all slices if not a label map
     if {[Volume($i,node) GetLabelMap] == 1} {
         MainSlicesSetVolumeAll Label $i
     } else {
-        MainSlicesSetVolumeAll Back $i
+        MainSlicesSetVolumeAll Fore $i
     }
 
     # Update all fields that the user changed (not stuff that would need a file reread)
@@ -2260,11 +2257,11 @@ if {$fov < 2000} {
 } else {
     puts "Bfloat reader: warning, not resetting fov, too large: $fov"
 }
-    # display the new volume in the background of all slices if not a label map
+    # display the new volume in the foreground of all slices if not a label map
     if {[Volume($i,node) GetLabelMap] == 1} {
         MainSlicesSetVolumeAll Label $i
     } else {
-        MainSlicesSetVolumeAll Back $i
+        MainSlicesSetVolumeAll Fore $i
     }
 
     # Update all fields that the user changed (not stuff that would need a file reread)
@@ -5691,7 +5688,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.40 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.41 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -5983,7 +5980,7 @@ proc vtkFreeSurferReadersQAReviewSubject { subject } {
                 set islabelmap 0
                 set volID [vtkFreeSurferReadersLoadVolume $filetoload $islabelmap ${subject}-${vol}]
                 # and put it in the foreground
-                MainSlicesSetVolumeAll Back $volID
+                MainSlicesSetVolumeAll Fore $volID
             }
             # make all slices visible
             foreach s {0 1 2} {
