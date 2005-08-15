@@ -84,7 +84,7 @@ proc ColorsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.29 $} {$Date: 2005/08/12 21:59:45 $}]
+        {$Revision: 1.30 $} {$Date: 2005/08/15 22:54:57 $}]
 
     # the LUT to affect by the colour scale editing
     set Color(LUT,currentID) -1
@@ -380,7 +380,15 @@ proc ColorsLoadApply {} {
     puts "ColorsLoadApply: experimental load of a new xml file with colour nodes\n\t$Color(fileName)"
     MainMrmlDeleteColors
     MainMrmlAddColorsFromFile $Color(fileName)
-    # TODO: update the gui's Edit Colors panel now, and the Select a Color canvas
+
+    # update the gui's color list
+    ColorsDisplayColors
+
+    # make the Gui(wLabels) window fail the winfo exists call so that it has to be rebuilt
+    if {[winfo exists $::Gui(wLabels)]} {
+        # TBD: what's the best way to force a rebuild?
+    }
+
     MainColorsUpdateMRML
     RenderAll
 }
@@ -755,7 +763,9 @@ proc ColorsLUTSetParam { hilo Param {val ""} } {
             puts "No [Uncap ${Param}Range] for lut id $id"
         }
     } else {
-        puts "Warning: current id not a valid look up table ($id not in \"$Lut(idList)\""
+        if {$::Module(verbose)} {
+            puts "Warning: current id not a valid look up table ($id not in \"$Lut(idList)\""
+        }
     }
 }
 
