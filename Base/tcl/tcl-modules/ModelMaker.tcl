@@ -83,7 +83,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.51 $} {$Date: 2005/08/15 18:55:58 $}]
+        {$Revision: 1.52 $} {$Date: 2005/08/15 19:24:14 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -99,7 +99,7 @@ proc ModelMakerInit {} {
     set ModelMaker(endName) ""
     set ModelMaker(startLabel) -1
     set ModelMaker(endLabel) -1
-    set ModelMaker(jointSmoothing) 0
+    set ModelMaker(jointSmooth) 0
 
     # Edit
     set ModelMaker(edit,smooth) 20
