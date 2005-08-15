@@ -190,15 +190,23 @@ void vtkPolygonList::UpdateApplyOrder (int p)
 
 void vtkPolygonList::RemoveApplyOrder (int p)
 {
+    int i;
     // Search for i such that order[i] == p
-    for (int i = 0; i < NUM_POLYGONS; i++)
-        if (this->order[i] == p) break;
+    for (i = 0; i < NUM_POLYGONS; i++)
+    {
+        if (this->order[i] == p)
+        {
+            break;
+        }
+    }
     // If p was in the order array (as expected)
     if (i < NUM_POLYGONS)
     {
         // Move all entries after p back by one slot
         for (int j = i + 1; j <= this->currentOrder; j++)
+        {
             this->order[j - 1] = this->order[j];
+        }
         this->order[this->currentOrder] = -1;
         this->currentOrder--;
     }
