@@ -10,11 +10,15 @@ vtkITKDemonsTransformRegistrationFilter::vtkITKDemonsTransformRegistrationFilter
   LinkITKProgressToVTKProgress(m_ITKFilter);
 
   // set identity transform by default
-  vtkMatrix4x4* matrix = vtkMatrix4x4::New();
-  matrix->Identity();
-  this->SetTransformationMatrix(matrix);
-  matrix->Delete();
+  m_Matrix = vtkMatrix4x4::New();
+  m_Matrix->Identity();
+  this->SetTransformationMatrix(m_Matrix);
 
+}
+
+vtkITKDemonsTransformRegistrationFilter::~vtkITKDemonsTransformRegistrationFilter()
+{
+  m_Matrix->Delete();
 }
 
 vtkITKRegistrationFilter::OutputImageType::Pointer vtkITKDemonsTransformRegistrationFilter::GetTransformedOutput()

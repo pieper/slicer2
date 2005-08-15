@@ -101,7 +101,7 @@ protected:
   // default constructor
   vtkITKDemonsTransformRegistrationFilter (); // This is called from New() by vtkStandardNewMacro
 
-  virtual ~vtkITKDemonsTransformRegistrationFilter() {};
+  virtual ~vtkITKDemonsTransformRegistrationFilter();
   //ETX
   
 private:
@@ -109,7 +109,7 @@ private:
   void operator=(const vtkITKDemonsTransformRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKDemonsTransformRegistrationFilter, "$Revision: 1.1 $");
+//vtkCxxRevisionMacro(vtkITKDemonsTransformRegistrationFilter, "$Revision: 1.2 $");
 //vtkStandardNewMacro(vtkITKDemonsTransformRegistrationFilter);
 vtkRegistrationNewMacro(vtkITKDemonsTransformRegistrationFilter);
 
