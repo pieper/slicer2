@@ -71,7 +71,7 @@ proc EdDrawInit {} {
 
     set Ed($e,mode)   Draw
     set Ed($e,delete) Yes
-    set Ed($e,radius) 2
+    set Ed($e,radius) 0
     set Ed($e,shape)  Polygon
     set Ed($e,preshape) Polygon
     set Ed($e,render) Active
