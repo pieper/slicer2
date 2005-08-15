@@ -329,7 +329,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.43 $} {$Date: 2005/08/15 19:23:17 $}]
+        {$Revision: 1.44 $} {$Date: 2005/08/15 19:44:33 $}]
 
 }
 
@@ -3207,7 +3207,7 @@ proc vtkFreeSurferReadersSetLoad {param} {
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersLoadVolume { filename {labelMap 0} {name ""} } {
 
-    if {[file exists $filename)] == 0} {
+    if {[file exists $filename] == 0} {
         DevErrorWindow "Load FreeSurfer Volume: $filename does not exist!"
         return
     }
@@ -3235,7 +3235,7 @@ proc vtkFreeSurferReadersLoadVolume { filename {labelMap 0} {name ""} } {
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersLoadModel { filename {name ""} } {
 
-    if {[file exists $filename)] == 0} {
+    if {[file exists $filename] == 0} {
         DevErrorWindow "Load FreeSurfer Model: $filename does not exist!"
         return
     }
@@ -5383,7 +5383,7 @@ proc vtkFreeSurferReadersSetQASubjects {} {
 proc vtkFreeSurferReadersLoadQA { fname } {
      global vtkFreeSurferReaders
 
-    if {[file exists $fname)] == 0} {
+    if {[file exists $fname] == 0} {
         DevErrorWindow "Load FreeSurfer QA: $fname does not exist!"
         return
     }
@@ -5707,7 +5707,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.43 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.44 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -6943,7 +6943,7 @@ proc vtkFreeSurferReadersReadScalars { m {fileName ""} } {
 proc vtkFreeSurferReadersLoadScalarFile { {fileName ""} } {
     global vtkFreeSurferReaders Model
 
-    if {[file exists $fileName)] == 0} {
+    if {[file exists $fileName] == 0} {
         DevErrorWindow "Load FreeSurfer Scalar: $fileName does not exist!"
         return
     }
