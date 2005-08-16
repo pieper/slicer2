@@ -84,7 +84,7 @@ proc ColorsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.30 $} {$Date: 2005/08/15 22:54:57 $}]
+        {$Revision: 1.31 $} {$Date: 2005/08/16 20:10:12 $}]
 
     # the LUT to affect by the colour scale editing
     set Color(LUT,currentID) -1
@@ -377,19 +377,22 @@ proc ColorsSetFileName {}  {
 #-------------------------------------------------------------------------------
 proc ColorsLoadApply {} {
     global Color
-    puts "ColorsLoadApply: experimental load of a new xml file with colour nodes\n\t$Color(fileName)"
+
+    if {$::Module(verbose)} {
+        puts "ColorsLoadApply: experimental load of a new xml file with colour nodes\n\t$Color(fileName)"
+    }
+
     MainMrmlDeleteColors
     MainMrmlAddColorsFromFile $Color(fileName)
 
     # update the gui's color list
     ColorsDisplayColors
 
-    # make the Gui(wLabels) window fail the winfo exists call so that it has to be rebuilt
-    if {[winfo exists $::Gui(wLabels)]} {
-        # TBD: what's the best way to force a rebuild?
-    }
-
     MainColorsUpdateMRML
+
+    # this call forces a rebuilding of the canvas that displays the colours for label selection
+    LabelsUpdateMRML
+
     RenderAll
 }
 #-------------------------------------------------------------------------------
