@@ -329,7 +329,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.44 $} {$Date: 2005/08/15 19:44:33 $}]
+        {$Revision: 1.45 $} {$Date: 2005/08/18 19:33:41 $}]
 
 }
 
@@ -533,7 +533,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
     #-------------------------------------------
     set f $fVolumes.fDemo
     eval button $f.bDemo -text Demo -command "vtkFreeSurferDemo" $Gui(WBA)
-    pack $f.bDemo  -side left -padx $Gui(pad) -pady 0
+#    pack $f.bDemo  -side left -padx $Gui(pad) -pady 0
 
     #-------------------------------------------
     # Model frame
@@ -5707,7 +5707,18 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.44 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    # env(USER) may not be defined
+    if {[info exists ::env(USER)] == 1} {
+        set username $::env(USER)
+    } else {
+        if {[info exists ::env(USERNAME)] == 1} {
+            set username $::env(USERNAME)
+        } else {
+            puts "WARNING: USER and USERNAME environment variables are not defined, using default"
+            set username "default"
+        }
+    }
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.45 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
