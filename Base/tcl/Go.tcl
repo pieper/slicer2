@@ -818,7 +818,7 @@ if { $SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.96 2005/08/12 18:20:57 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.97 2005/08/18 19:35:21 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
@@ -899,14 +899,15 @@ foreach arg $SLICER(load-freesurfer-model) {
 #
 # read freesurfer scalar command, gets associated with active (last loaded) model
 #
-if { [catch "package require vtkFreeSurferReaders"] } {
-    DevErrorWindow "vtkFreeSurferReaders Module required for --load-freesufer-scalar option."
-} else {
-    foreach arg $SLICER(load-freesurfer-scalar) {
-        vtkFreeSurferReadersLoadScalarFile $arg
+foreach arg $SLICER(load-freesurfer-scalar) {
+    if { [catch "package require vtkFreeSurferReaders"] } {
+        DevErrorWindow "vtkFreeSurferReaders Module required for --load-freesufer-scalar option."
+        break
     }
+    vtkFreeSurferReadersLoadScalarFile $arg
     Render3D
 }
+
 #
 # read in freesurfer QA command line
 # 
