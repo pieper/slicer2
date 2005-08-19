@@ -125,7 +125,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.78 $} {$Date: 2005/08/13 21:23:27 $}]
+        {$Revision: 1.79 $} {$Date: 2005/08/19 00:55:51 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -1229,6 +1229,9 @@ proc EditorB1 {x y} {
             #  - Select: Select/deselect a point
             #  - Insert: Insert a point between two points (CTJ)
             #
+            set coords [EditorClampToOriginalBounds $x $y]
+            set x [lindex $coords 0]
+            set y [lindex $coords 1]
             switch $Ed(EdDraw,mode) {
                 "Draw" {
                     if {1} {
@@ -1407,6 +1410,9 @@ proc EditorB1Motion {x y} {
             #
             switch $Ed(EdDraw,mode) {
                 "Draw" {
+                    set coords [EditorClampToOriginalBounds $x $y]
+                    set x [lindex $coords 0]
+                    set y [lindex $coords 1]
                     if {1} {
                         # this way just inserts the point normally
                         # (CTJ) to disable click and drag, comment this line:
@@ -1427,6 +1433,9 @@ proc EditorB1Motion {x y} {
                     #            puts "Slicer DrawInsertPoint $x $y ijk=$i $j $k s=$s"
                 }
                 "Select" {
+                    set coords [EditorClampToOriginalBounds $x $y]
+                    set x [lindex $coords 0]
+                    set y [lindex $coords 1]
                     Slicer DrawDragSelectBox $x $y
                 }
                 "Move" {
@@ -1455,6 +1464,9 @@ proc EditorB1Release {x y} {
             # Act depending on the draw mode:
             #  - Select: stop drawing the "select" box
             #
+            set coords [EditorClampToOriginalBounds $x $y]
+            set x [lindex $coords 0]
+            set y [lindex $coords 1]
             switch $Ed(EdDraw,mode) {
                 "Select" {
                     Slicer DrawEndSelectBox $x $y
@@ -2791,6 +2803,9 @@ proc EditorControlB1 {x y} {
             #  - Select: Select/deselect a point
             #  - Insert: Insert a point between two points (CTJ)
             #
+            set coords [EditorClampToOriginalBounds $x $y]
+            set x [lindex $coords 0]
+            set y [lindex $coords 1]
             switch $Ed(EdDraw,mode) {
                 "Draw" {
                     if {1} {
@@ -2834,6 +2849,9 @@ proc EditorControlB1Motion {x y} {
             #  - Draw:   Insert a point
             #  - Select: draw the "select" box
             #
+            set coords [EditorClampToOriginalBounds $x $y]
+            set x [lindex $coords 0]
+            set y [lindex $coords 1]
             switch $Ed(EdDraw,mode) {
                 "Draw" {
                     if {1} {
@@ -2869,6 +2887,9 @@ proc EditorControlB1Release {x y} {
             # Act depending on the draw mode:
             #  - Select: stop drawing the "select" box
             #
+            set coords [EditorClampToOriginalBounds $x $y]
+            set x [lindex $coords 0]
+            set y [lindex $coords 1]
             switch $Ed(EdDraw,mode) {
                 "Select" {
                     Slicer DrawEndSelectBox $x $y
@@ -2878,4 +2899,23 @@ proc EditorControlB1Release {x y} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EditorClampToOriginalBounds
+# Clamps x, y into boundaries of the original data volume.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EditorClampToOriginalBounds {x y} {
+    set id [EditorGetOriginalID]
+    set ext [[Volume($id,vol) GetOutput] GetExtent]
+    set xmin [lindex $ext 0]
+    set xmax [lindex $ext 1]
+    set ymin [lindex $ext 2]
+    set ymax [lindex $ext 3]
+    if {$x < $xmin} {set x $xmin}
+    if {$x > $xmax} {set x $xmax}
+    if {$y < $ymin} {set y $ymin}
+    if {$y > $ymax} {set y $ymax}
+    return [list $x $y]
+}
 
