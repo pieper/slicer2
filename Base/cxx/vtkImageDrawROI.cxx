@@ -1386,10 +1386,15 @@ void vtkImageDrawROI::DrawSpline(vtkImageData *outData, int outExt[6])
     double ax0by0c = A * x0 + B * y0 + C;
     // Derivative at p0 is reflection of derivative at p1 (p1dx, p1dy) over the
     // line bisecting the edge connecting p0 and p1
-    double p0dx = p1->x - p0->x + p1dx + 2.0 * (p0->x - p1->x) / p1_p0sq *
-                  ax0by0c;
-    double p0dy = p1->y - p0->y + p1dy + 2.0 * (p0->y - p1->y) / p1_p0sq *
-                  ax0by0c;
+    double p0dx = p1dx;
+    double p0dy = p1dy;
+    if (p1_p0sq > 0.0)
+    {
+        p0dx = p1->x - p0->x + p1dx + 2.0 * (p0->x - p1->x) / p1_p0sq *
+               ax0by0c;
+        p0dy = p1->y - p0->y + p1dy + 2.0 * (p0->y - p1->y) / p1_p0sq *
+               ax0by0c;
+    }
     unsigned char color[3];
     color[0] = 0;
     color[1] = 255;
@@ -1428,10 +1433,15 @@ void vtkImageDrawROI::DrawSpline(vtkImageData *outData, int outExt[6])
     ax0by0c = A * x0 + B * y0 + C;
     // Derivative at p2 is reflection of derivative at p1 (p1dx, p1dy) over the
     // line bisecting the edge connecting p2 and p1
-    p2dx = p1->x - p2->x + p1dx + 2.0 * (p2->x - p1->x) / p1_p2sq *
-           ax0by0c;
-    p2dy = p1->y - p2->y + p1dy + 2.0 * (p2->y - p1->y) / p1_p2sq *
-           ax0by0c;
+    p2dx = p1dx;
+    p2dy = p1dy;
+    if (p1_p2sq > 0.0)
+    {
+        p2dx = p1->x - p2->x + p1dx + 2.0 * (p2->x - p1->x) / p1_p2sq *
+               ax0by0c;
+        p2dy = p1->y - p2->y + p1dy + 2.0 * (p2->y - p1->y) / p1_p2sq *
+               ax0by0c;
+    }
     plx = oneThird * p1dx + p1->x;
     ply = oneThird * p1dy + p1->y;
     prx = p2->x - oneThird * p2dx;
