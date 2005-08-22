@@ -83,11 +83,11 @@ proc fMRIEngineScaleActivation {v} {
 
         set id $fMRIEngine(currentActVolID) 
         if {$id > 0} {
+
             Volume($id,node) AutoThresholdOff
             Volume($id,node) ApplyThresholdOn
-
             Volume($id,node) SetLowerThreshold $t 
-            MainVolumesSetParam ApplyThreshold 
+
             MainVolumesRender
         }
     }
@@ -143,6 +143,207 @@ proc fMRIEngineInspectActVolume {} {
         MainVolumesSetActive $id
         MainVolumesRender
     }
+}
+ 
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineBuildUIForVisualizeTab
+# Creates UI for the visualize tab 
+# .ARGS
+# windowpath parent
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineBuildUIForVisualizeTab {parent} {
+    global fMRIEngine Gui
+
+    set f $parent
+    Notebook-create $f.fNotebook \
+                    -pages {Choose Plot Display} \
+                    -pad 2 \
+                    -bg $Gui(activeWorkspace) \
+                    -height 356 
+    # width 240
+    pack $f.fNotebook -fill both -expand 1
+ 
+    set w [Notebook-frame $f.fNotebook Choose]
+    fMRIEngineBuildUIForChoose $w
+    set w [Notebook-frame $f.fNotebook Plot]
+    fMRIEngineBuildUIForPlot $w
+    set w [Notebook-frame $f.fNotebook Display]
+    fMRIEngineBuildUIForDisplay $w
+}
+
+
+proc fMRIEngineBuildUIForChoose {parent} {
+    global fMRIEngine Gui
+
+    frame $parent.fChoose    -bg $Gui(activeWorkspace)
+    pack $parent.fChoose -side top -fill x -padx 5 -pady 3 
+
+    #-------------------------------------------
+    # Choose a volume tab 
+    #-------------------------------------------
+    set f $parent.fChoose
+    DevAddLabel $f.l "Choose a volume:"
+
+    scrollbar $f.vs -orient vertical -bg $Gui(activeWorkspace)
+    set fMRIEngine(inspectVerScroll) $f.vs
+    listbox $f.lb -height 4 -bg $Gui(activeWorkspace) \
+        -yscrollcommand {$::fMRIEngine(inspectVerScroll) set}
+    set fMRIEngine(inspectListBox) $f.lb
+    $fMRIEngine(inspectVerScroll) configure -command {$fMRIEngine(inspectListBox) yview}
+
+    DevAddButton $f.bGo "Select" "fMRIEngineInspectActVolume" 15 
+ 
+    blt::table $f \
+        0,0 $f.l -cspan 2 -fill x -padx 1 -pady 2 \
+        1,0 $fMRIEngine(inspectListBox) -fill x -padx 1 -pady 1 \
+        1,1 $fMRIEngine(inspectVerScroll) -fill y -padx 1 -pady 1 \
+        2,0 $f.bGo -cspan 2 -padx 1 -pady 5 
+}
+
+
+proc fMRIEngineBuildUIForPlot {parent} {
+    global fMRIEngine Gui
+
+    frame $parent.fPlot -bg $Gui(activeWorkspace)
+    pack $parent.fPlot -side top -fill x -padx 5 -pady 3 
+
+    #-------------------------------------------
+    # Plot frame 
+    #-------------------------------------------
+    set f $parent.fPlot
+    frame $f.fTitle    -bg $Gui(activeWorkspace)
+    frame $f.fHighPass -bg $Gui(activeWorkspace) -relief groove -bd 1
+    frame $f.fOptions  -bg $Gui(activeWorkspace) -relief groove -bd 1 
+    pack $f.fTitle $f.fHighPass $f.fOptions -side top -fill x -padx 5 -pady 2 
+
+    set f $parent.fPlot.fTitle
+    DevAddButton $f.bHelp "?" "fMRIEngineHelpInspectPlotting " 2
+    DevAddLabel $f.lLabel "Time series plotting:"
+    grid $f.bHelp $f.lLabel -padx 1 -pady 5 
+
+    set f $parent.fPlot.fHighPass
+    eval {checkbutton $f.cbHighPass \
+        -variable fMRIEngine(highPass) \
+        -text "Apply high-pass filtering"} $Gui(WEA) 
+    $f.cbHighPass deselect 
+    bind $f.cbHighPass <1> "fMRIEngineUpdateHighPassFiltering"
+
+    DevAddLabel $f.lCutoff "Cutoff:"
+    eval {entry $f.eCutoff -width 17 \
+        -textvariable fMRIEngine(cutoff)} $Gui(WEA)
+    $f.eCutoff config -state disabled
+    set fMRIEngine(gui,cutoffFrequencyEntry) $f.eCutoff
+
+    DevAddButton $f.bFiltering "Filter" "fMRIEngineStartHighPassFiltering" 7 
+    $f.bFiltering config -state disabled
+    set fMRIEngine(gui,highPassFilterButton) $f.bFiltering
+
+    blt::table $f \
+        0,0 $f.cbHighPass -cspan 3 -fill x -padx 1 -pady 3 \
+        1,0 $f.lCutoff -padx 1 -pady 1 \
+        1,1 $f.eCutoff -padx 1 -pady 1 \
+        1,2 $f.bFiltering -padx 2 -pady 1 -fill x 
+
+    # Options frame
+    set f $parent.fPlot.fOptions
+    frame $f.fLong      -bg $Gui(activeWorkspace)
+    frame $f.fHistogram -bg $Gui(activeWorkspace)
+    frame $f.fROI       -bg $Gui(activeWorkspace)
+    pack $f.fLong $f.fHistogram $f.fROI -side top -padx 2 -pady 1 
+
+    set f $parent.fPlot.fOptions.fLong
+    eval {radiobutton $f.rLong -width 12 -text "Timecourse" \
+        -variable fMRIEngine(tcPlottingOption) -value Long \
+        -relief raised -offrelief raised -overrelief raised \
+        -selectcolor white} $Gui(WEA)
+
+    set evList [list {none}]
+    set df [lindex $evList 0] 
+    eval {menubutton $f.mbType -text $df \
+         -relief raised -bd 2 -width 13 \
+         -indicatoron 1 \
+         -menu $f.mbType.m} $Gui(WMBA)
+    eval {menu $f.mbType.m} $Gui(WMA)
+    foreach m $evList  {
+        $f.mbType.m add command -label $m \
+            -command ""
+    }
+    grid $f.rLong $f.mbType -padx 1 -pady 2 
+
+    # Save menubutton for config
+    set fMRIEngine(gui,evsMenuButtonForPlotting) $f.mbType
+    set fMRIEngine(gui,evsMenuForPlotting) $f.mbType.m
+
+    set f $parent.fPlot.fOptions.fHistogram
+    set param Short
+    set name {Peristimulus histogram}
+    eval {radiobutton $f.rShort -width 30 -text $name \
+        -variable fMRIEngine(tcPlottingOption) -value $param \
+        -relief raised -offrelief raised -overrelief raised \
+        -selectcolor white} $Gui(WEA)
+    pack $f.r$param -side top -pady 2 
+
+    set f $parent.fPlot.fOptions.fROI
+    set param ROI 
+    set name ROI 
+    eval {radiobutton $f.r$param -width 30 -text $name \
+        -variable fMRIEngine(tcPlottingOption) -value $param \
+        -relief raised -offrelief raised -overrelief raised \
+        -selectcolor white} $Gui(WEA)
+    pack $f.r$param -side top -pady 2 
+    
+    $f.rROI configure -state disabled
+
+    set fMRIEngine(tcPlottingOption) "" 
+}
+
+
+proc fMRIEngineBuildUIForDisplay {parent} {
+    global fMRIEngine Gui
+
+    frame $parent.fThreshold -bg $Gui(activeWorkspace)
+    pack $parent.fThreshold \
+        -side top -fill x -padx 5 -pady 3 
+
+    #-------------------------------------------
+    # Threshold tab 
+    #-------------------------------------------
+    set f $parent.fThreshold
+    foreach m "Title Params" {
+        frame $f.f${m} -bg $Gui(activeWorkspace)
+        pack $f.f${m} -side top -fill x -pady 2 
+    }
+
+    set f $parent.fThreshold.fTitle 
+    DevAddButton $f.bHelp "?" "fMRIEngineHelpInspectActivationThreshold" 2
+    DevAddLabel $f.lLabel "Activation thresholding:"
+    grid $f.bHelp $f.lLabel -padx 1 -pady 2 
+
+    set f $parent.fThreshold.fParams 
+    frame $f.fStat  -bg $Gui(activeWorkspace) 
+    pack $f.fStat -side top -fill x -padx 2 -pady 1 
+
+    set f $parent.fThreshold.fParams.fStat 
+    DevAddLabel $f.lPV "p Value:"
+    DevAddLabel $f.lTS "t Stat:"
+    set fMRIEngine(pValue) "none"
+    set fMRIEngine(tStat) "none"
+    eval {entry $f.ePV -width 15 \
+        -textvariable fMRIEngine(pValue)} $Gui(WEA)
+    eval {entry $f.eTS -width 15 -state readonly \
+        -textvariable fMRIEngine(tStat)} $Gui(WEA)
+    bind $f.ePV <Return> "fMRIEngineScaleActivation p"
+    TooltipAdd $f.ePV "Input a p value and hit Return to threshold."
+
+    DevAddButton $f.bPlus "+" "fMRIEngineScaleActivation +" 2
+    TooltipAdd $f.bPlus "Increase the p value by 0.01 to threshold."
+    DevAddButton $f.bMinus "-" "fMRIEngineScaleActivation -" 2
+    TooltipAdd $f.bMinus "Decrease the p value by 0.01 to threshold."
+ 
+    grid $f.lPV $f.ePV $f.bPlus $f.bMinus -padx 1 -pady 2 -sticky e
+    grid $f.lTS $f.eTS -padx 1 -pady 2 -sticky e
 }
 
 
