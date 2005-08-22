@@ -145,6 +145,11 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlData : public vtkProcessObject {
     return this->IndirectLUT->GetLookupTable();};
 
   // Description:
+  // Enable or disable FMRI mapping 
+  void EnableFMRIMapping(int yes) {
+      this->IndirectLUT->SetFMRIMapping(yes);};
+
+  // Description:
   // For internal use during Read/Write
   vtkGetObjectMacro(ProcessObject, vtkProcessObject);
 
