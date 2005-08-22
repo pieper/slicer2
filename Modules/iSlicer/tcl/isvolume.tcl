@@ -678,6 +678,7 @@ itcl::body isvolume::transform_update {} {
         if { $res == "vtkImageData" } {
             set ScanOrder "IS"
             set RasToWld "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1"
+            set RasToIJK "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1"
         } else {
             # can't do anything with a class that's not a vtkImageData
             return
@@ -687,6 +688,7 @@ itcl::body isvolume::transform_update {} {
             set id $_VolIdMap($itk_option(-volume))
             set ScanOrder [::Volume($id,node) GetScanOrder]
             set RasToWld [::Volume($id,node) GetRasToWld]
+            set RasToIJK [::Volume($id,node) GetRasToIjkMatrix]
         } else {
             # can't do anything - the volume isn't a vtkImageData or the 
             # index of a slicer Volume node
@@ -703,32 +705,25 @@ itcl::body isvolume::transform_update {} {
     # - a to-be-defined pan-zoom transform will map to the screen
     #
 
-    $_ijkmatrix Identity
-    switch $ScanOrder {
-        #                    -R        -A        -S
-        "LR" { set axes {  0  0 -1  -1  0  0   0  1  0 } }
-        "RL" { set axes {  0  0  1  -1  0  0   0  1  0 } }
-        "IS" { set axes {  1  0  0   0  1  0   0  0  1 } }
-        "SI" { set axes {  1  0  0   0  1  0   0  0 -1 } }
-        "PA" { set axes {  1  0  0   0  0  1   0  1  0 } }
-        "AP" { set axes {  1  0  0   0  0  1   0 -1  0 } }
-        #TODO - gantry tilt not supported
-    }
+    catch "ijk_to_ras Delete"
+    vtkMatrix4x4 ijk_to_ras
+    ijk_to_ras Identity
 
-    set ii 0
     for {set i 0} {$i < 3} {incr i} {
-        for {set j 0} {$j < 3} {incr j} {
-            # transpose for inverse - reslice transform requires it
-            $_ijkmatrix SetElement $j $i [lindex $axes $ii]
-            incr ii
-        }
+        set x [lindex $RasToIJK [expr $i*4]]
+        set y [lindex $RasToIJK [expr $i*4+1]]
+        set z [lindex $RasToIJK [expr $i*4+2]]
+        set l [expr sqrt($x*$x + $y*$y + $z*$z)]
+        ijk_to_ras SetElement 0 $i [expr $x/$l]
+        ijk_to_ras SetElement 1 $i [expr $y/$l]
+        ijk_to_ras SetElement 2 $i [expr $z/$l]
     }
 
-    # TODO - add other orientations here...
+    ijk_to_ras Invert
 
     # desired orenation
-    catch "transposematrix Delete"
-    vtkMatrix4x4 transposematrix
+    catch "ras_to_orient Delete"
+    vtkMatrix4x4 ras_to_orient
 
     switch $itk_option(-orientation) {
         "IS" -
@@ -736,15 +731,18 @@ itcl::body isvolume::transform_update {} {
         "Axial" -
         "Axial(IS)" -
         "axial(IS)" {
-            # nothing, this is the default
-            transposematrix Identity
+            ras_to_orient DeepCopy \
+               -1  0  0  0 \
+                0 -1  0  0 \
+                0  0  1  0 \
+                0  0  0  1    
         }
         "SI" -
         "Axial(SI)" -
         "axial(SI)" {
-            transposematrix DeepCopy \
-                1  0  0  0 \
-                0  1  0  0 \
+            ras_to_orient DeepCopy \
+               -1  0  0  0 \
+                0 -1  0  0 \
                 0  0 -1  0 \
                 0  0  0  1    
         }
@@ -753,19 +751,19 @@ itcl::body isvolume::transform_update {} {
         "Sagittal" - 
         "sagittal(RL)" -
         "Sagittal(RL)" {
-            transposematrix DeepCopy \
-                0  0  1  0 \
+            ras_to_orient DeepCopy \
+                0  0 -1  0 \
                -1  0  0  0 \
-                0  1  0  0 \
+                0 -1  0  0 \
                 0  0  0  1    
         }
         "sagittal(LR)" -
         "Sagittal(LR)" -
         "LR" {
-            transposematrix DeepCopy \
-                0  0 -1  0 \
+            ras_to_orient DeepCopy \
+                0  0  1  0 \
                -1  0  0  0 \
-                0  1  0  0 \
+                0 -1  0  0 \
                 0  0  0  1    
         }
         "PA" -
@@ -773,35 +771,35 @@ itcl::body isvolume::transform_update {} {
         "Coronal" -
         "coronal(PA)" -
         "Coronal(PA)" {
-            transposematrix DeepCopy \
-                1  0  0  0 \
-                0  0 -1  0 \
-                0  1  0  0 \
+            ras_to_orient DeepCopy \
+               -1  0  0  0 \
+                0  0  1  0 \
+                0 -1  0  0 \
                 0  0  0  1    
         }
         "coronal(AP)" -
         "Coronal(AP)" -
         "AP" {
-            transposematrix DeepCopy \
-                1  0  0  0 \
-                0  0  1  0 \
-                0  1  0  0 \
+            ras_to_orient DeepCopy \
+               -1  0  0  0 \
+                0  0 -1  0 \
+                0 -1  0  0 \
                 0  0  0  1    
         }
         "RAS (VTK - Y/A up)" -
         "RAS-VTK" -
         "RAS" {
-            transposematrix DeepCopy \
-               -1  0  0  0 \
-                0 -1  0  0 \
+            ras_to_orient DeepCopy \
+                1  0  0  0 \
+                0  1  0  0 \
                 0  0  1  0 \
                 0  0  0  1    
         }
         "RAS (ITK - Y/A down)" -
         "RAS-ITK" {
-            transposematrix DeepCopy \
-               -1  0  0  0 \
-                0  1  0  0 \
+            ras_to_orient DeepCopy \
+                1  0  0  0 \
+                0 -1  0  0 \
                 0  0  1  0 \
                 0  0  0  1    
         }
@@ -810,13 +808,6 @@ itcl::body isvolume::transform_update {} {
         "CorSlice" {
             # nothing yet
         }
-    }
-
-    #
-    # need to invert the X axis to handle slicer transform
-    #
-    for {set i 0} {$i < 4} {incr i} {
-        transposematrix SetElement 0 $i [expr -1 * [transposematrix GetElement 0 $i]]
     }
 
     #
@@ -834,23 +825,27 @@ itcl::body isvolume::transform_update {} {
     }
 
     transformmatrix Invert
-    for {set i 0} {$i < 4} {incr i} {
-        transformmatrix SetElement 0 $i [expr -1 * [transformmatrix GetElement 0 $i]]
-    }
 
     #
     # now combine the matrices
     # - _ijkmatrix goes from image voxels to RAS
     # - transformmatrix moves the volume in RAS space
-    # - transposematrix picks an orientation to reslice RAS space
+    # - ras_to_orient picks an orientation to reslice RAS space
     #
-    $_ijkmatrix Multiply4x4 $_ijkmatrix transformmatrix $_ijkmatrix
-    $_ijkmatrix Multiply4x4 $_ijkmatrix transposematrix $_ijkmatrix
-    transformmatrix Delete
-    transposematrix Delete
+
+    #ijk_to_ras Multiply4x4 ijk_to_ras transformmatrix ijk_to_ras
+    #ijk_to_ras Multiply4x4 ijk_to_ras ras_to_orient ijk_to_ras
 
     $_xform Identity
-    $_xform Concatenate $_ijkmatrix
+
+    catch "flip Delete"
+    vtkMatrix4x4 flip
+    flip SetElement 1 1 -1
+    $_xform Concatenate flip
+
+    $_xform Concatenate ijk_to_ras
+
+    $_xform Concatenate transformmatrix
 
     # concatenate with displacement field transform
     if { [info exists ::Volume] } {
@@ -858,10 +853,33 @@ itcl::body isvolume::transform_update {} {
             catch "dispXform Delete"
             vtkGridTransform dispXform 
             dispXform SetDisplacementGrid [::Volume($_warpVolId,vol) GetOutput]
-            $_xform PostMultiply 
+            #$_xform PostMultiply 
             $_xform Concatenate dispXform
+            dispXform Delete
         }
     }
+
+    $_xform Concatenate ras_to_orient
+
+    catch "flip2 Delete"
+    vtkMatrix4x4 flip2
+    flip2 SetElement 1 1 -1
+    $_xform Concatenate flip2
+
+    if {0} {
+        puts "isvolume SCAN_ORDER = $ScanOrder"
+        puts "isvolume ORIENT =  $itk_option(-orientation)"
+        puts "isvolume::ijk_to_ras [ijk_to_ras Print]"
+        puts "isvolume::transformmatrix [transformmatrix Print]"
+        puts "isvolume::ras_to_orient [ras_to_orient Print]"
+        puts "isvolume::_xform [$_xform Print]"
+    }
+
+    ijk_to_ras Delete
+    transformmatrix Delete
+    ras_to_orient Delete
+    flip Delete
+    flip2 Delete
 
     $_reslice SetResliceTransform $_xform 
     
@@ -1057,7 +1075,9 @@ proc isvolume_demo {} {
 proc iSlicerUpdateMRML {} {
     
     foreach isv [itcl::find objects -class isvolume] {
+        $isv transform_update
         $isv volmenu_update
+        $isv expose
     }
 }
 
