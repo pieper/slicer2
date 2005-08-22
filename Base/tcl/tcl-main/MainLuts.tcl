@@ -55,12 +55,12 @@ proc MainLutsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainLuts \
-    {$Revision: 1.21 $} {$Date: 2004/03/14 18:41:44 $}]
+    {$Revision: 1.22 $} {$Date: 2005/08/22 15:00:20 $}]
 
     # Create an ID for Labels
     set Lut(idLabel) -1
 
-    set Lut(idList) " 0 1 2 3 4 5 6 $Lut(idLabel)"
+    set Lut(idList) " 0 1 2 3 4 5 6 7 $Lut(idLabel)"
 
     set Lut(0,name) Gray
     set Lut(0,fileName) ""
@@ -118,7 +118,13 @@ proc MainLutsInit {} {
     set Lut(6,saturationRange) "1 1"
     set Lut(6,valueRange) "1 1"
     set Lut(6,annoColor) "1 1 1"
+
+    set Lut(7,name) FMRI 
+    set Lut(7,fileName) ""
+    set Lut(7,numberOfColors) 256 
+    set Lut(7,annoColor) "1 1 0"
 }
+
 
 #-------------------------------------------------------------------------------
 # .PROC MainLutsInit
@@ -138,6 +144,53 @@ proc MainLutsGetLutIDByName {lutname} {
 
 
 #-------------------------------------------------------------------------------
+# .PROC MainLutsBuildLutForFMRI 
+# Creates a colormap for fMRI t volume. 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainLutsBuildLutForFMRI {l} {
+    global Lut
+
+    # Use different numbers of table values for neg and pos
+    # to make sure -1 is represented by blue
+
+    # From green to blue 
+    vtkLookupTable neg 
+    neg SetNumberOfTableValues 23 
+    neg SetHueRange 0.5 0.66667
+    neg SetSaturationRange 1 1
+    neg SetValueRange 1 1
+    neg SetRampToLinear
+    neg Build
+
+    # From red to yellow
+    vtkLookupTable pos 
+    pos SetNumberOfTableValues 20 
+    pos SetHueRange  0 0.16667
+    pos SetSaturationRange 1 1
+    pos SetValueRange 1 1
+    pos SetRampToLinear
+    pos Build
+
+    Lut($l,lut) SetNumberOfTableValues 43 
+    Lut($l,lut) SetRampToLinear
+    Lut($l,lut) Build
+
+    for {set i 0} {$i < 23} {incr i} {
+        set c1 [neg GetTableValue $i] 
+        Lut($l,lut) SetTableValue $i \
+            [lindex $c1 0] [lindex $c1 1] [lindex $c1 2] [lindex $c1 3] 
+    }
+    for {set i 0} {$i < 20} {incr i} {
+        set c2 [pos GetTableValue $i] 
+        Lut($l,lut) SetTableValue [expr $i + 23] \
+            [lindex $c2 0] [lindex $c2 1] [lindex $c2 2] [lindex $c2 3] 
+    }
+}
+
+ 
+#-------------------------------------------------------------------------------
 # .PROC MainLutsBuildVTK
 # 
 # .ARGS
@@ -152,13 +205,17 @@ proc MainLutsBuildVTK {} {
             if {$Lut($l,fileName) == ""} {
             
                 vtkLookupTable Lut($l,lut)
-                foreach param "NumberOfColors HueRange SaturationRange ValueRange" {
-                    eval Lut($l,lut) Set${param} $Lut($l,[Uncap ${param}])
+                if {$l != 7} {
+                    foreach param "NumberOfColors HueRange SaturationRange ValueRange" {
+                        eval Lut($l,lut) Set${param} $Lut($l,[Uncap ${param}])
+                    }
+                    # sp - 2002-11-11 changed default SCurve to Linear to improve
+                    # fidelity of image display
+                    Lut($l,lut) SetRampToLinear
+                    Lut($l,lut) Build
+                } else {
+                    MainLutsBuildLutForFMRI $l
                 }
-                # sp - 2002-11-11 changed default SCurve to Linear to improve
-                # fidelity of image display
-                Lut($l,lut) SetRampToLinear
-                Lut($l,lut) Build
             
             # File
             } else {
