@@ -78,6 +78,8 @@ vtkIndirectLookupTable::vtkIndirectLookupTable()
   this->Direct = 0;
   this->DirectDefaultIndex = 1;
 
+  this->FMRIMapping = 0;
+
   this->LookupTable = NULL;
 }
 
@@ -299,97 +301,127 @@ void vtkIndirectLookupTable::WindowLevel()
   map[offset + inHi] = outHi;
 }
 
+
 // Generate lookup table from window and level.
 // Table is built as a linear ramp, centered at Level and of width Window.
 //----------------------------------------------------------------------------
 void vtkIndirectLookupTable::Build()
 {
-  int numColors;
-  short min   = this->MapRange[0];
-  short max   = this->MapRange[1];
-  long offset = this->MapOffset;
-  short lower = (short)this->GetLowerThreshold();
-  short upper = (short)this->GetUpperThreshold();
-  unsigned short *map       = this->Map->GetPointer(0);
-  unsigned short *directMap = this->DirectMap->GetPointer(0);
-  unsigned short *winLvlMap = this->WinLvlMap->GetPointer(0);
-  
-  // If no changes since last build, then do nothing.
-  if (this->BuildTime > this->GetMTime())
-  {
-    return;
-  }
+    int numColors;
+    short min   = this->MapRange[0];
+    short max   = this->MapRange[1];
+    long offset = this->MapOffset;
+    short lower = (short)this->GetLowerThreshold();
+    short upper = (short)this->GetUpperThreshold();
+    unsigned short *map       = this->Map->GetPointer(0);
+    unsigned short *directMap = this->DirectMap->GetPointer(0);
+    unsigned short *winLvlMap = this->WinLvlMap->GetPointer(0);
 
-  // If there is no lookup table, create one
-  // 256 bins grayscale.
-  if (this->LookupTable == NULL) 
-  {
-    this->LookupTable = vtkLookupTable::New();
-    this->LookupTable->Register(this);
-    this->LookupTable->Delete();
-    this->LookupTable->SetNumberOfColors(256);
-    this->LookupTable->SetSaturationRange(0, 0);
-    this->LookupTable->SetValueRange(0, 1);
-    this->LookupTable->Build();
-  }
-
-  // Set the first color to be transparent for use when a pixel is
-  // outside the threshold
-
-   // Kilian - This Function disables LookupTable->Build() 
-   // Therefore to update a LookupTable you have to delete it, recreate it and assign it to this !  
-  this->LookupTable->SetTableValue(0, 0, 0, 0, 0);
-  
-  // Check that the LookupTable has the right number of colors
-  numColors = this->LookupTable->GetNumberOfColors();
-  if (numColors > (65536 >> 2)) {
-    vtkErrorMacro(<< "Build: LookupTable has too many colors.");
-    return;
-  }
-  if (numColors < 2) {
-    vtkErrorMacro(<< "Build: LookupTable needs at least 2 colors.");
-    return;
-  }
-  
-  // Perform thresholding by overwriting the map with the index to the
-  // transparent color for every pixel value outside the threshold.
-  // The transparent color is always at index 0.
-  // Use the 'direct' for direct mode, and the 'map' otherwise.
-  //
-  if (this->Direct) 
-  {
-      memcpy(map, directMap, (max-min+1)*sizeof(short));
-  } 
-  else 
-  {
-    this->WindowLevel();
-      memcpy(map, winLvlMap, (max-min+1)*sizeof(short));
-  }
-
-  // Apply threshold if desired
-  if (this->GetApplyThreshold())
-  {
-    // "AND" threshold 
-    // show values >= 'lower' AND <= 'upper'
-    // zero values <  'lower' OR  >  'upper'
-    if (lower <= upper) 
+    // If no changes since last build, then do nothing.
+    if (this->BuildTime > this->GetMTime())
     {
-      // Zero out what's < 'lower'
-      memset(map, 0, (lower-min)*sizeof(short));
+        return;
+    }
 
-      // Zero out what's > 'above'
-      memset(&(map[offset+upper+1]), 0, (max-upper)*sizeof(short));
+    // If there is no lookup table, create one
+    // 256 bins grayscale.
+    if (this->LookupTable == NULL) 
+    {
+        this->LookupTable = vtkLookupTable::New();
+        this->LookupTable->Register(this);
+        this->LookupTable->Delete();
+        this->LookupTable->SetNumberOfColors(256);
+        this->LookupTable->SetSaturationRange(0, 0);
+        this->LookupTable->SetValueRange(0, 1);
+        this->LookupTable->Build();
+    }
+
+    // Set the first color to be transparent for use when a pixel is
+    // outside the threshold
+
+    // Kilian - This Function disables LookupTable->Build() 
+    // Therefore to update a LookupTable you have to delete it, recreate it and assign it to this !  
+    this->LookupTable->SetTableValue(0, 0, 0, 0, 0);
+
+    // Check that the LookupTable has the right number of colors
+    numColors = this->LookupTable->GetNumberOfColors();
+    if (numColors > (65536 >> 2)) {
+        vtkErrorMacro(<< "Build: LookupTable has too many colors.");
+        return;
+    }
+    if (numColors < 2) {
+        vtkErrorMacro(<< "Build: LookupTable needs at least 2 colors.");
+        return;
+    }
+
+    // Perform thresholding by overwriting the map with the index to the
+    // transparent color for every pixel value outside the threshold.
+    // The transparent color is always at index 0.
+    // Use the 'direct' for direct mode, and the 'map' otherwise.
+    //
+    if (this->Direct) 
+    {
+        memcpy(map, directMap, (max-min+1)*sizeof(short));
     } 
-    // "OR" threshold
-    // show values <  'upper' OR  > 'lower'
-    // zero values >= 'upper' AND <= 'lower'
     else 
     {
-      // Zero out what's >= 'upper' and <= 'lower'
-      memset(&(map[offset+upper]), 0, (lower-upper+1)*sizeof(short));
+        this->WindowLevel();
+        memcpy(map, winLvlMap, (max-min+1)*sizeof(short));
     }
-  }
-  this->BuildTime.Modified();
+
+    // Apply threshold if desired
+    if (this->GetApplyThreshold())
+    {
+        // Special thresholding for t volume
+        if (this->GetFMRIMapping())
+        {
+            // "AND" threshold 
+            // show values >= 'lower' AND <= 'upper'
+            // zero values <  'lower' OR  >  'upper'
+            if (lower <= upper) 
+            {
+                if (lower != 0)
+                {
+                    long w = abs(lower)*2;
+                    long start = offset-abs(lower)+1;
+
+                    if (start < 0)
+                    {
+                        start = 0;
+                    }
+                    memset(&(map[start]), 0, (w-1)*sizeof(short));
+                }
+            } 
+            else
+            {
+                memset(&(map[offset+upper]), 0, (lower-upper+1)*sizeof(short));
+            }
+        }
+        else
+        {
+            // "AND" threshold 
+            // show values >= 'lower' AND <= 'upper'
+            // zero values <  'lower' OR  >  'upper'
+            if (lower <= upper) 
+            {
+                // Zero out what's < 'lower'
+                memset(map, 0, (lower-min)*sizeof(short));
+
+                // Zero out what's > 'above'
+                memset(&(map[offset+upper+1]), 0, (max-upper)*sizeof(short));
+            } 
+            // "OR" threshold
+            // show values <  'upper' OR  > 'lower'
+            // zero values >= 'upper' AND <= 'lower'
+            else 
+            {
+                // Zero out what's >= 'upper' and <= 'lower'
+                memset(&(map[offset+upper]), 0, (lower-upper+1)*sizeof(short));
+            }
+        }
+    }
+
+    this->BuildTime.Modified();
 }
 
 // get the color for a scalar value
@@ -422,6 +454,7 @@ unsigned char *vtkIndirectLookupTable::MapValue(vtkFloatingPointType v)
   return &lut[map[this->MapOffset + (long)v]];
 }
 
+
 // accelerate the mapping by copying the data in 32-bit chunks instead
 // of 8-bit chunks
 template<class T>
@@ -433,7 +466,7 @@ static void vtkIndirectLookupTableMapData(vtkIndirectLookupTable *self,
   long offset = self->GetMapOffset();
   unsigned char *lut = self->GetLookupTable()->GetPointer(0);
   unsigned short *map = self->GetMap()->GetPointer(0);
-  
+
   // DAVE do this safer
   //
   // Karl Krissian: pb with unsigned ...
@@ -459,8 +492,8 @@ static void vtkIndirectLookupTableMapData(vtkIndirectLookupTable *self,
     long s = (long)v;
 
     // Map s to RGBA
-    int index = offset + s;
-
+    int index;
+ 
     // For VTK_FLOAT or VTK_DOUBLE, we need handle the following case:
     // For instance, we set 2.3 for the lower threshold. All values less than 2.3, 
     // including 2.1 and 2.2, must be thresholded out. 2.1 and 2.2 are special cases
@@ -470,6 +503,10 @@ static void vtkIndirectLookupTableMapData(vtkIndirectLookupTable *self,
     {
         index = offset;
     }
+    else
+    {
+        index = offset + s;
+    }
 
     memcpy(output, &lut[map[index]], 4);
 
@@ -477,6 +514,7 @@ static void vtkIndirectLookupTableMapData(vtkIndirectLookupTable *self,
     input += incr;
   }
 }
+
 
 static void vtkIndirectLookupTableMapShortData(vtkIndirectLookupTable *self, 
   short *input, unsigned char *output, int length, int incr)
@@ -494,69 +532,130 @@ static void vtkIndirectLookupTableMapShortData(vtkIndirectLookupTable *self,
   }
 }
 
-void vtkIndirectLookupTable::MapScalarsThroughTable2(void *input, 
-                        unsigned char *output,
-                        int inputDataType, 
-                        int numberOfValues,
-                        int inputIncrement,
-                        int outputFormat)
-{
 
-  switch (inputDataType)
+static void vtkIndirectLookupTableMapFMRIData(vtkIndirectLookupTable *self, float *input, 
+                                              unsigned char *output, int length, int incr)
+{
+    int i;
+    vtkFloatingPointType *range = self->GetRange();
+    // long offset = self->GetLookupTable()->GetNumberOfTableValues() / 2;
+    long offset = self->GetMapOffset();
+    unsigned char *lut = self->GetLookupTable()->GetPointer(0);
+    unsigned short *map = self->GetMap()->GetPointer(0);
+
+    long min = (long)range[0];
+    long max = (long)range[1];
+
+    float v;
+    for (i = 0; i < length; i++)
     {
-    case VTK_CHAR:
-      vtkIndirectLookupTableMapData(this,(char *)input,
-        output,numberOfValues,inputIncrement);
-      break;
-      
-    case VTK_UNSIGNED_CHAR:
-      vtkIndirectLookupTableMapData(this,(unsigned char *)input,
-        output,numberOfValues,inputIncrement);
-      break;
-      
-    case VTK_SHORT:
-      vtkIndirectLookupTableMapShortData(this,(short *)input,
-        output,numberOfValues,inputIncrement);
-      break;
-      
-    case VTK_UNSIGNED_SHORT:
-      vtkIndirectLookupTableMapData(this,(unsigned short *)input,
-        output,numberOfValues,inputIncrement);
-      break;
-      
-    case VTK_INT:
-      vtkIndirectLookupTableMapData(this,(int *)input,
-        output,numberOfValues,inputIncrement);
-      break;
-      
-    case VTK_UNSIGNED_INT:
-      vtkIndirectLookupTableMapData(this,(unsigned int *)input,
-        output,numberOfValues,inputIncrement);
-      break;
-      
-    case VTK_LONG:
-      vtkIndirectLookupTableMapData(this,(long *)input,
-        output,numberOfValues,inputIncrement);
-      break;
-      
-    case VTK_UNSIGNED_LONG:
-      vtkIndirectLookupTableMapData(this,(unsigned long *)input,
-        output,numberOfValues,inputIncrement);
-      break;
-      
-    case VTK_FLOAT:
-      vtkIndirectLookupTableMapData(this,(float *)input,
-        output,numberOfValues,inputIncrement);
-      break;
-      
-    case VTK_DOUBLE:
-      vtkIndirectLookupTableMapData(this,(double *)input,
-        output,numberOfValues,inputIncrement);
-      break;
-      
-    default:
-      vtkErrorMacro(<< "MapScalarsThroughTable2: Unknown input ScalarType");
-      return;
+        v = *input;
+
+        // Boundary check
+        if ((long)v < min) 
+        {
+            v = min;
+        }
+        else if ((long)v > max)
+        {
+            v = max;
+        }
+        long s = (long)v;
+
+        // Map s to RGBA
+        int index;
+
+        // For VTK_FLOAT or VTK_DOUBLE, we need handle the following case:
+        // For instance, we set 2.3 for the lower threshold. All values less than 2.3, 
+        // including 2.1 and 2.2, must be thresholded out. 2.1 and 2.2 are special cases
+        // here since 2.1, 2.2 and 2.3 all become 2 if we cast them into long, int or short.
+        // The following statment will guarantee the removal of 2.1 and 2.2.
+        if ((v > 0 && v < self->GetLowerThreshold()) || 
+            (v < 0 && v > (-self->GetLowerThreshold())))
+        {
+            index = offset;
+        }
+        else
+        {
+            index = offset + s;
+        }
+
+        memcpy(output, &lut[map[index]], 4);
+
+        output += 4;
+        input += incr;
+    }
+
+}
+
+
+void vtkIndirectLookupTable::MapScalarsThroughTable2(void *input, unsigned char *output,
+                                                     int inputDataType, int numberOfValues,
+                                                     int inputIncrement, int outputFormat)
+{
+    switch (inputDataType)
+    {
+        case VTK_CHAR:
+            vtkIndirectLookupTableMapData(this, (char *)input, output,
+                                          numberOfValues, inputIncrement);
+            break;
+
+        case VTK_UNSIGNED_CHAR:
+            vtkIndirectLookupTableMapData(this, (unsigned char *)input, output,
+                                          numberOfValues, inputIncrement);
+            break;
+
+        case VTK_SHORT:
+            vtkIndirectLookupTableMapShortData(this, (short *)input, output,
+                                               numberOfValues, inputIncrement);
+            break;
+
+        case VTK_UNSIGNED_SHORT:
+            vtkIndirectLookupTableMapData(this, (unsigned short *)input, output,
+                                          numberOfValues, inputIncrement);
+            break;
+
+        case VTK_INT:
+            vtkIndirectLookupTableMapData(this, (int *)input, output,
+                                          numberOfValues, inputIncrement);
+            break;
+
+        case VTK_UNSIGNED_INT:
+            vtkIndirectLookupTableMapData(this, (unsigned int *)input, output,
+                                          numberOfValues, inputIncrement);
+            break;
+
+        case VTK_LONG:
+            vtkIndirectLookupTableMapData(this, (long *)input, output,
+                                          numberOfValues, inputIncrement);
+            break;
+
+        case VTK_UNSIGNED_LONG:
+            vtkIndirectLookupTableMapData(this, (unsigned long *)input, output,
+                                          numberOfValues, inputIncrement);
+            break;
+
+        case VTK_FLOAT:
+            if (this->GetFMRIMapping())
+            {
+                vtkIndirectLookupTableMapFMRIData(this, (float *)input, output, 
+                                                  numberOfValues, inputIncrement);
+            }
+            else
+            {
+                vtkIndirectLookupTableMapData(this,(float *)input, output,
+                                              numberOfValues, inputIncrement);
+            }
+            break;
+
+        case VTK_DOUBLE:
+            vtkIndirectLookupTableMapData(this, (double *)input, output, 
+                                              numberOfValues, inputIncrement);
+            break;
+
+        default:
+            vtkErrorMacro(<< "MapScalarsThroughTable2: Unknown input ScalarType");
+            return;
     }
 }  
 
