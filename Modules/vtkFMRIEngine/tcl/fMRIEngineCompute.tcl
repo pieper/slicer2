@@ -233,13 +233,14 @@ proc fMRIEngineComputeContrasts {} {
                 MainSlicesSetVolumeAll Fore $i
                 MainVolumesSetActive $i
 
-                # set the lower threshold to 1
+                # set the lower threshold to the actLow 
                 Volume($i,node) AutoThresholdOff
                 Volume($i,node) ApplyThresholdOn
-                Volume($i,node) SetLowerThreshold 1
+                Volume($i,node) SetLowerThreshold [fMRIEngine(actVolumeGenerator) GetLowRange]
+                # Volume($i,node) SetLowerThreshold 1
 
-                # set the act volume to the color of iron
-                MainVolumesSetParam LutID 1 
+                # set the act volume to the color of FMRI 
+                MainVolumesSetParam LutID 7 
 
                 set fMRIEngine($i,actLow) [fMRIEngine(actVolumeGenerator) GetLowRange] 
                 set fMRIEngine($i,actHigh) [fMRIEngine(actVolumeGenerator) GetHighRange] 
