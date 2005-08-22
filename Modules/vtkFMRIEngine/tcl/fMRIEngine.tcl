@@ -97,8 +97,8 @@ proc fMRIEngineInit {} {
     #   row2Name = like row1
     #   row2,tab = like row1 
     #
-    set Module($m,row1List) "Help Sequence Setup Compute Inspect"
-    set Module($m,row1Name) "{Help} {Sequence} {Set Up} {Compute} {Inspect}"
+    set Module($m,row1List) "Help Sequence Setup Compute Visualize"
+    set Module($m,row1Name) "{Help} {Sequence} {Set Up} {Compute} {Visualize}"
     set Module($m,row1,tab) Sequence 
 
     # Define Procedures
@@ -155,7 +155,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.10 $} {$Date: 2005/04/28 18:03:56 $}]
+        {$Revision: 1.11 $} {$Date: 2005/08/22 15:27:25 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -268,7 +268,7 @@ proc fMRIEngineBuildGUI {} {
     <B>Compute</B> lets you to choose contrast(s) to compute \
     activation volume(s).
     <BR>
-    <B>Inspect</B> gives you the ability to view the activation \
+    <B>Visualize</B> gives you the ability to view the activation \
     at different thresholds and dynamically plot any voxel \
     time course.
     <BR>
@@ -361,11 +361,11 @@ proc fMRIEngineBuildGUI {} {
     bind $b <1> "fMRIEngineUpdateContrastList" 
 
     #-------------------------------------------
-    # Inspect tab 
+    # Visualize tab 
     #-------------------------------------------
-    set fInspect $Module(fMRIEngine,fInspect)
-    fMRIEngineBuildUIForInspectTab $fInspect
-    set b $Module(fMRIEngine,bInspect)
+    set fVisualize $Module(fMRIEngine,fVisualize)
+    fMRIEngineBuildUIForVisualizeTab $fVisualize
+    set b $Module(fMRIEngine,bVisualize)
     bind $b <1> "fMRIEngineUpdateInspectTab;fMRIEngineUpdateEVsForPlotting"
 }
 
