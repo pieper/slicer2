@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.85 $} {$Date: 2005/08/04 02:45:41 $}]
+    {$Revision: 1.86 $} {$Date: 2005/08/22 15:06:56 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -1197,6 +1197,9 @@ proc MainVolumesSetParam {Param {value ""}} {
         } else {
             Volume($v,vol) UseLabelIndirectLUTOff
             Volume($v,vol) SetLookupTable Lut($value,lut)
+
+            set yes [expr {$value == 7 ? 1 : 0}]
+            Volume($v,vol) EnableFMRIMapping $yes 
         }
         Volume($v,vol) Update
 
