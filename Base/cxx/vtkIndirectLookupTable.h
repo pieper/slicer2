@@ -170,6 +170,11 @@ public:
   // The indirect LUT
   vtkGetObjectMacro(Map,vtkUnsignedShortArray);
 
+  // Description:
+  // Get or set FMRIMapping (branched mapping through the LookupTable) 
+  vtkGetMacro(FMRIMapping, int);
+  vtkSetMacro(FMRIMapping, int);    
+
 protected:
   vtkIndirectLookupTable();
   ~vtkIndirectLookupTable();
@@ -195,6 +200,7 @@ protected:
 
   int Direct;
   int DirectDefaultIndex;
+  int FMRIMapping;
 
   vtkLookupTable *LookupTable;
 
