@@ -77,7 +77,7 @@ int GeneralLinearModel::FitModel(float *timeCourse,
 
     if (DesignMatrix == NULL || Dimensions == NULL) 
     {
-        cout << "Design matix has not been set.\n";
+        cout << "Design matrix has not been set.\n";
         return 1;
     }
 
