@@ -854,6 +854,7 @@ itcl::body isvolume::transform_update {} {
             vtkGridTransform dispXform 
             dispXform SetDisplacementGrid [::Volume($_warpVolId,vol) GetOutput]
             #$_xform PostMultiply 
+            dispXform Inverse
             $_xform Concatenate dispXform
             dispXform Delete
         }
