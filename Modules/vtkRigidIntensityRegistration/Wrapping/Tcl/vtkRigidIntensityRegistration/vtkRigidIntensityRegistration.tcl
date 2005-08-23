@@ -19,6 +19,7 @@ if {[::vtk::load_component vtkRigidIntensityRegistrationTCL] == "" } {
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/TranslationMattesMIRegistration.tcl]
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/TranslationMIGradientDescentRegistration.tcl]
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/KullbackLeiblerRegistration.tcl]
+    source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/DeformableDemonsRegistration.tcl]
 
     # add this module's name to the list of custom modules in order 
     # to have it's init procedure get called, @ModuleName@Init will be 
@@ -31,4 +32,5 @@ if {[::vtk::load_component vtkRigidIntensityRegistrationTCL] == "" } {
     lappend Module(customModules) TranslationMattesMIRegistration
     lappend Module(customModules) TranslationMIGradientDescentRegistration
     lappend Module(customModules) KullbackLeiblerRegistration
+    lappend Module(customModules) DeformableDemonsRegistration
 }
