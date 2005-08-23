@@ -54,7 +54,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <ctime>
 
 
-vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.16 $");
+vtkCxxRevisionMacro(vtkNormalizedCuts, "$Revision: 1.17 $");
 vtkStandardNewMacro(vtkNormalizedCuts);
 
 vtkCxxSetObjectMacro(vtkNormalizedCuts,NormalizedWeightMatrixImage, 
@@ -335,7 +335,6 @@ void vtkNormalizedCuts::ComputeClusters()
   int sampleIdx;
   // keep track of chosen initial centroids
   EmbedSampleType::Pointer centroids = EmbedSampleType::New();
-  EmbedSampleType::Pointer testCentroids = EmbedSampleType::New();
   EmbedVectorType cent;
 
   for (idx1 = 0; idx1 < numberOfClusters; idx1 ++)
@@ -356,6 +355,9 @@ void vtkNormalizedCuts::ComputeClusters()
         {
           const int numTestCentroids = 5;
           
+          // store potential centroids for testing
+          EmbedSampleType::Pointer testCentroids = EmbedSampleType::New();
+
           // measure how good each centroid is (want least similar to others)
           double similarity[numTestCentroids];
 
