@@ -108,13 +108,17 @@ void itk::itkDemonsTransformRegistrationFilter<TImageClass>::GenerateData()
   }
 
   // do the registartion
-  m_Filter->Update();
-
+  try {
+    m_Filter->Update();
+  }
+  catch( ProcessAborted & excp )
+  {
+  }
   //FixedImageType::Pointer fixedImage = this->GetInput();
   m_Warper->SetInput(this->GetInput(1));
   m_Warper->SetOutputSpacing( this->GetInput()->GetSpacing() );
   m_Warper->SetOutputOrigin( this->GetInput()->GetOrigin() );
-  m_Warper->Update();
+  //m_Warper->Update();
   this->GraftOutput(m_Warper->GetOutput());
 
 } // GenerateData
