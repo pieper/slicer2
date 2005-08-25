@@ -135,6 +135,13 @@ proc fMRIEnginePopUpPlot {x y} {
         fMRIEngineCloseTimeCourseWindow
     }
 
+    if {$fMRIEngine(highPass)} {
+        fMRIEngine(actEstimator) EnableHighPassFiltering 1 
+        fMRIEngineCheckCutoff
+    } else {
+        fMRIEngine(actEstimator) EnableHighPassFiltering 0 
+    }
+
     # Plot the time course
     if {[info exists fMRIEngine(timeCourseToplevel)] == 0 } {
         set w .tcren

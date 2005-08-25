@@ -209,10 +209,8 @@ proc fMRIEngineBuildUIForPlot {parent} {
     frame $parent.fPlot -bg $Gui(activeWorkspace)
     pack $parent.fPlot -side top -fill x -padx 5 -pady 3 
 
-    #-------------------------------------------
-    # Plot frame 
-    #-------------------------------------------
     set f $parent.fPlot
+
     frame $f.fTitle    -bg $Gui(activeWorkspace)
     frame $f.fHighPass -bg $Gui(activeWorkspace) -relief groove -bd 1
     frame $f.fOptions  -bg $Gui(activeWorkspace) -relief groove -bd 1 
@@ -228,23 +226,18 @@ proc fMRIEngineBuildUIForPlot {parent} {
         -variable fMRIEngine(highPass) \
         -text "Apply high-pass filtering"} $Gui(WEA) 
     $f.cbHighPass deselect 
-    bind $f.cbHighPass <1> "fMRIEngineUpdateHighPassFiltering"
+    # bind $f.cbHighPass <1> "fMRIEngineCheckCutoff"
 
-    DevAddLabel $f.lCutoff "Cutoff:"
-    eval {entry $f.eCutoff -width 17 \
+    DevAddLabel $f.lCutoff "Frequency cutoff:"
+    eval {entry $f.eCutoff -width 10 \
         -textvariable fMRIEngine(cutoff)} $Gui(WEA)
-    $f.eCutoff config -state disabled
+    # $f.eCutoff config -state disabled
     set fMRIEngine(gui,cutoffFrequencyEntry) $f.eCutoff
 
-    DevAddButton $f.bFiltering "Filter" "fMRIEngineStartHighPassFiltering" 7 
-    $f.bFiltering config -state disabled
-    set fMRIEngine(gui,highPassFilterButton) $f.bFiltering
-
     blt::table $f \
-        0,0 $f.cbHighPass -cspan 3 -fill x -padx 1 -pady 3 \
-        1,0 $f.lCutoff -padx 1 -pady 1 \
-        1,1 $f.eCutoff -padx 1 -pady 1 \
-        1,2 $f.bFiltering -padx 2 -pady 1 -fill x 
+        0,0 $f.lCutoff -padx 1 -pady 3 -fill x \
+        0,1 $f.eCutoff -padx 1 -pady 3 -fill x \
+        1,0 $f.cbHighPass -cspan 2 -fill x -padx 1 -pady 3
 
     # Options frame
     set f $parent.fPlot.fOptions
@@ -510,6 +503,70 @@ proc fMRIEngineBuildUIForInspectTab {parent} {
     $f.rROI configure -state disabled
 
     set fMRIEngine(tcPlottingOption) "" 
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineCheckCutoff
+# Checks and updates the frequency cutoff for high pass filtering 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineCheckCutoff {} {
+    global fMRIEngine
+
+    if {[info command fMRIEngine(actEstimator)] != ""} {
+        set cutoff [string trim $fMRIEngine(cutoff)]
+
+        set b [string is integer -strict $cutoff]
+        set c [string is double -strict $cutoff]
+        if {$cutoff == "" || ($b == 0 && $c == 0)} {
+            set cutoff [fMRIEngineComputeDefaultCutoff]
+        }
+
+        puts "cutoff = $cutoff"
+        set fMRIEngine(cutofff) $cutoff 
+        fMRIEngine(actEstimator) SetCutoff $cutoff
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineComputeDefaultCutoff
+# Calculates a default frequency cutoff from the user input 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineComputeDefaultCutoff {} {
+    global fMRIEngine fMRIModelView
+
+    # http://www-psych.stanford.edu/~kalina/SPM99/Protocols/spm99_analysis_prot.html
+    # The formula is that the cutoff period should be twice the minimum interval 
+    # between consecutive presentation of trials of the same type.
+    
+    # Find out the min interval between consecutive presentation 
+    # of trials of the same type
+    set min 1000000
+    set a -1 
+    for {set r 1} {$r <= $fMRIModelView(Design,numRuns)} {incr r} {
+        for {set i 1} {$i <= $fMRIModelView(Design,Run$r,numConditionEVs)} {incr i} {
+            if {[info exists fMRIModelView(Design,Run$r,Condition$i,Onsets)]} {
+                foreach onset $fMRIModelView(Design,Run$r,Condition$i,Onsets) {
+                    if {$a != -1} {
+                        set b [expr {($onset - $a) * $fMRIEngine($r,tr)}]
+                        if {$b < $min} {
+                            set min $b
+                        }
+                    }
+                    set a $onset
+                }
+            }
+
+        }
+    }
+
+    set f [expr 1 / (2 * $min)]
+    return $f
 }
 
 
