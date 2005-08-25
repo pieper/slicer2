@@ -174,6 +174,13 @@ proc fMRIEngineBuildUIForVisualizeTab {parent} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineBuildUIForChoose
+# Creates UI for the choose tab 
+# .ARGS
+# windowpath parent
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineBuildUIForChoose {parent} {
     global fMRIEngine Gui
 
@@ -202,7 +209,13 @@ proc fMRIEngineBuildUIForChoose {parent} {
         2,0 $f.bGo -cspan 2 -padx 1 -pady 5 
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineBuildUIForPlot
+# Creates UI for the plot tab 
+# .ARGS
+# windowpath parent
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineBuildUIForPlot {parent} {
     global fMRIEngine Gui
 
@@ -217,7 +230,7 @@ proc fMRIEngineBuildUIForPlot {parent} {
     pack $f.fTitle $f.fHighPass $f.fOptions -side top -fill x -padx 5 -pady 2 
 
     set f $parent.fPlot.fTitle
-    DevAddButton $f.bHelp "?" "fMRIEngineHelpInspectPlotting " 2
+    DevAddButton $f.bHelp "?" "fMRIEngineHelpVisualizePlotting" 2
     DevAddLabel $f.lLabel "Time series plotting:"
     grid $f.bHelp $f.lLabel -padx 1 -pady 5 
 
@@ -226,18 +239,21 @@ proc fMRIEngineBuildUIForPlot {parent} {
         -variable fMRIEngine(highPass) \
         -text "Apply high-pass filtering"} $Gui(WEA) 
     $f.cbHighPass deselect 
-    # bind $f.cbHighPass <1> "fMRIEngineCheckCutoff"
+    bind $f.cbHighPass <1> "fMRIEngineToggleCutoff"
 
-    DevAddLabel $f.lCutoff "Frequency cutoff:"
-    eval {entry $f.eCutoff -width 10 \
+    DevAddLabel $f.lCutoff "Cutoff frequency:"
+    eval {entry $f.eCutoff -width 15 \
         -textvariable fMRIEngine(cutoff)} $Gui(WEA)
-    # $f.eCutoff config -state disabled
+    $f.eCutoff config -state disabled
     set fMRIEngine(gui,cutoffFrequencyEntry) $f.eCutoff
 
+    DevAddButton $f.bHelp "?" "fMRIEngineHelpVisualizeHighPassFiltering" 2
+
     blt::table $f \
-        0,0 $f.lCutoff -padx 1 -pady 3 -fill x \
-        0,1 $f.eCutoff -padx 1 -pady 3 -fill x \
-        1,0 $f.cbHighPass -cspan 2 -fill x -padx 1 -pady 3
+        0,0 $f.cbHighPass -cspan 3 -fill x -padx 2 -pady 3 \
+        1,0 $f.bHelp   -padx 0 -pady 3 \
+        1,1 $f.lCutoff -padx 0 -pady 3 \
+        1,2 $f.eCutoff -padx 1 -pady 3
 
     # Options frame
     set f $parent.fPlot.fOptions
@@ -293,6 +309,29 @@ proc fMRIEngineBuildUIForPlot {parent} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineToggleCutoff
+# Enables or disables the entry of cutoff for high pass filtering 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineToggleCutoff {} {
+    global fMRIEngine
+
+    set state [expr {$fMRIEngine(highPass) == 1 ? "disabled" : "normal"}]
+    set hp [expr {$fMRIEngine(highPass) == 1 ? 0 : 1}]
+
+    $fMRIEngine(gui,cutoffFrequencyEntry) config -state $state
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineBuildUIForDisplay
+# Creates UI for the display tab 
+# .ARGS
+# windowpath parent
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineBuildUIForDisplay {parent} {
     global fMRIEngine Gui
 
@@ -310,7 +349,7 @@ proc fMRIEngineBuildUIForDisplay {parent} {
     }
 
     set f $parent.fThreshold.fTitle 
-    DevAddButton $f.bHelp "?" "fMRIEngineHelpInspectActivationThreshold" 2
+    DevAddButton $f.bHelp "?" "fMRIEngineHelpVisualizeActivationThreshold" 2
     DevAddLabel $f.lLabel "Activation thresholding:"
     grid $f.bHelp $f.lLabel -padx 1 -pady 2 
 
@@ -337,172 +376,6 @@ proc fMRIEngineBuildUIForDisplay {parent} {
  
     grid $f.lPV $f.ePV $f.bPlus $f.bMinus -padx 1 -pady 2 -sticky e
     grid $f.lTS $f.eTS -padx 1 -pady 2 -sticky e
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC fMRIEngineBuildUIForInspectTab
-# Creates UI for the inspect tab 
-# .ARGS
-# windowpath parent
-# .END
-#-------------------------------------------------------------------------------
-proc fMRIEngineBuildUIForInspectTab {parent} {
-    global fMRIEngine Gui
-
-    frame $parent.fChoose    -bg $Gui(activeWorkspace)
-    frame $parent.fThreshold -bg $Gui(activeWorkspace) -relief groove -bd 3
-    frame $parent.fPlot      -bg $Gui(activeWorkspace) -relief groove -bd 3
-    pack $parent.fChoose $parent.fThreshold $parent.fPlot \
-        -side top -fill x -padx 5 -pady 3 
-
-    #-------------------------------------------
-    # Choose a volume tab 
-    #-------------------------------------------
-    set f $parent.fChoose
-    DevAddLabel $f.l "Choose a volume:"
-
-    scrollbar $f.vs -orient vertical -bg $Gui(activeWorkspace)
-    set fMRIEngine(inspectVerScroll) $f.vs
-    listbox $f.lb -height 3 -bg $Gui(activeWorkspace) \
-        -yscrollcommand {$::fMRIEngine(inspectVerScroll) set}
-    set fMRIEngine(inspectListBox) $f.lb
-    $fMRIEngine(inspectVerScroll) configure -command {$fMRIEngine(inspectListBox) yview}
-
-    DevAddButton $f.bGo "Select" "fMRIEngineInspectActVolume" 15 
- 
-    blt::table $f \
-        0,0 $f.l -cspan 2 -fill x -padx 1 -pady 2 \
-        1,0 $fMRIEngine(inspectListBox) -fill x -padx 1 -pady 1 \
-        1,1 $fMRIEngine(inspectVerScroll) -fill y -padx 1 -pady 1 \
-        2,0 $f.bGo -cspan 2 -padx 1 -pady 2 
-
-    #-------------------------------------------
-    # Threshold tab 
-    #-------------------------------------------
-    set f $parent.fThreshold
-    foreach m "Title Params" {
-        frame $f.f${m} -bg $Gui(activeWorkspace)
-        pack $f.f${m} -side top -fill x -pady 2 
-    }
-
-    set f $parent.fThreshold.fTitle 
-    DevAddButton $f.bHelp "?" "fMRIEngineHelpInspectActivationThreshold" 2
-    DevAddLabel $f.lLabel "Activation thresholding:"
-    grid $f.bHelp $f.lLabel -padx 1 -pady 2 
-
-    set f $parent.fThreshold.fParams 
-    frame $f.fStat  -bg $Gui(activeWorkspace) 
-    pack $f.fStat -side top -fill x -padx 2 -pady 1 
-
-    set f $parent.fThreshold.fParams.fStat 
-    DevAddLabel $f.lPV "p Value:"
-    DevAddLabel $f.lTS "t Stat:"
-    set fMRIEngine(pValue) "none"
-    set fMRIEngine(tStat) "none"
-    eval {entry $f.ePV -width 10 \
-        -textvariable fMRIEngine(pValue)} $Gui(WEA)
-    eval {entry $f.eTS -width 10 -state readonly \
-        -textvariable fMRIEngine(tStat)} $Gui(WEA)
-    bind $f.ePV <Return> "fMRIEngineScaleActivation p"
-    TooltipAdd $f.ePV "Input a p value and hit Return to threshold."
-
-    DevAddButton $f.bPlus "+" "fMRIEngineScaleActivation +" 2
-    TooltipAdd $f.bPlus "Increase the p value by 0.01 to threshold."
-    DevAddButton $f.bMinus "-" "fMRIEngineScaleActivation -" 2
-    TooltipAdd $f.bMinus "Decrease the p value by 0.01 to threshold."
- 
-    grid $f.lPV $f.ePV $f.bPlus $f.bMinus -padx 1 -pady 2 -sticky e
-    grid $f.lTS $f.eTS -padx 1 -pady 2 -sticky e
-
-    #-------------------------------------------
-    # Plot frame 
-    #-------------------------------------------
-    set f $parent.fPlot
-    frame $f.fTitle    -bg $Gui(activeWorkspace)
-    frame $f.fHighPass -bg $Gui(activeWorkspace) -relief groove -bd 1
-    frame $f.fOptions  -bg $Gui(activeWorkspace) -relief groove -bd 1 
-    pack $f.fTitle $f.fHighPass $f.fOptions -side top -fill x -padx 5 -pady 2 
-
-    set f $parent.fPlot.fTitle
-    DevAddButton $f.bHelp "?" "fMRIEngineHelpInspectPlotting " 2
-    DevAddLabel $f.lLabel "Time series plotting:"
-    grid $f.bHelp $f.lLabel -padx 1 -pady 5 
-
-    set f $parent.fPlot.fHighPass
-    eval {checkbutton $f.cbHighPass \
-        -variable fMRIEngine(highPass) \
-        -text "Apply high-pass filtering"} $Gui(WEA) 
-    $f.cbHighPass deselect 
-    bind $f.cbHighPass <1> "fMRIEngineUpdateHighPassFiltering"
-
-    DevAddLabel $f.lCutoff "Cutoff:"
-    eval {entry $f.eCutoff -width 20 \
-        -textvariable fMRIEngine(cutoff)} $Gui(WEA)
-    $f.eCutoff config -state disabled
-    set fMRIEngine(gui,cutoffFrequencyEntry) $f.eCutoff
-
-    DevAddButton $f.bFiltering "Filter" "fMRIEngineStartHighPassFiltering" 7 
-    $f.bFiltering config -state disabled
-    set fMRIEngine(gui,highPassFilterButton) $f.bFiltering
-
-    blt::table $f \
-        0,0 $f.cbHighPass -cspan 3 -fill x -padx 1 -pady 3 \
-        1,0 $f.lCutoff -padx 1 -pady 1 \
-        1,1 $f.eCutoff -padx 1 -pady 1 \
-        1,2 $f.bFiltering -padx 2 -pady 1 -fill x 
-
-    # Options frame
-    set f $parent.fPlot.fOptions
-    frame $f.fLong      -bg $Gui(activeWorkspace)
-    frame $f.fHistogram -bg $Gui(activeWorkspace)
-    frame $f.fROI       -bg $Gui(activeWorkspace)
-    pack $f.fLong $f.fHistogram $f.fROI -side top -padx 2 -pady 1 
-
-    set f $parent.fPlot.fOptions.fLong
-    eval {radiobutton $f.rLong -width 12 -text "Timecourse" \
-        -variable fMRIEngine(tcPlottingOption) -value Long \
-        -relief raised -offrelief raised -overrelief raised \
-        -selectcolor white} $Gui(WEA)
-
-    set evList [list {none}]
-    set df [lindex $evList 0] 
-    eval {menubutton $f.mbType -text $df \
-         -relief raised -bd 2 -width 13 \
-         -indicatoron 1 \
-         -menu $f.mbType.m} $Gui(WMBA)
-    eval {menu $f.mbType.m} $Gui(WMA)
-    foreach m $evList  {
-        $f.mbType.m add command -label $m \
-            -command ""
-    }
-    grid $f.rLong $f.mbType -padx 1 -pady 2 
-
-    # Save menubutton for config
-    set fMRIEngine(gui,evsMenuButtonForPlotting) $f.mbType
-    set fMRIEngine(gui,evsMenuForPlotting) $f.mbType.m
-
-    set f $parent.fPlot.fOptions.fHistogram
-    set param Short
-    set name {Peristimulus histogram}
-    eval {radiobutton $f.rShort -width 30 -text $name \
-        -variable fMRIEngine(tcPlottingOption) -value $param \
-        -relief raised -offrelief raised -overrelief raised \
-        -selectcolor white} $Gui(WEA)
-    pack $f.r$param -side top -pady 2 
-
-    set f $parent.fPlot.fOptions.fROI
-    set param ROI 
-    set name ROI 
-    eval {radiobutton $f.r$param -width 30 -text $name \
-        -variable fMRIEngine(tcPlottingOption) -value $param \
-        -relief raised -offrelief raised -overrelief raised \
-        -selectcolor white} $Gui(WEA)
-    pack $f.r$param -side top -pady 2 
-    
-    $f.rROI configure -state disabled
-
-    set fMRIEngine(tcPlottingOption) "" 
 }
 
 
@@ -635,27 +508,6 @@ proc fMRIEngineStartHighPassFiltering {} {
     puts "...done"
 }
     
-
-#-------------------------------------------------------------------------------
-# .PROC fMRIEngineUpdateHighPassFiltering
-# Enables or disables the high-pass filtering 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc fMRIEngineUpdateHighPassFiltering {} {
-    global fMRIEngine
-
-    set state [expr {$fMRIEngine(highPass) == 1 ? "disabled" : "normal"}]
-    set hp [expr {$fMRIEngine(highPass) == 1 ? 0 : 1}]
-
-    $fMRIEngine(gui,cutoffFrequencyEntry) config -state $state
-    $fMRIEngine(gui,highPassFilterButton) config -state $state 
-
-    if {[info command fMRIEngine(actEstimator)] != ""} {
-        fMRIEngine(actEstimator) EnableHighPassFiltering $hp 
-    }
-}
-
 
 #-------------------------------------------------------------------------------
 # .PROC fMRIEngineUpdateEVsForPlotting
