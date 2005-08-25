@@ -60,9 +60,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <vtkFMRIEngineConfigure.h>
 #include "vtkFloatArray.h"
 #include "vtkDataObject.h"
-#include "vtkImageFFT.h"
-#include "vtkImageRFFT.h"
-#include "vtkImageIdealHighPass.h"
 #include "vtkActivationDetector.h"
 #include "vtkMultiInputsSimpleImageToImageFilter.h"
 
@@ -86,38 +83,31 @@ public:
 
     // Description:
     // Sets the cutoff frequency.
-    void SetCutoff(float x, float y, float z) {
-        this->XCutoff = x;
-        this->YCutoff = y;
-        this->ZCutoff = z;}
+    void SetCutoff(float c) {
+        this->Cutoff = c;}
 
     // Description:
-    // Enables or disables the high-pass filtering.
-    void EnableHighPassFiltering(int yes) {this->HighPassFiltering = yes;}
+    // Enables or disables high-pass filtering. 
+    void EnableHighPassFiltering(int yes) {
+        this->HighPassFiltering = yes;}
 
     // Description:
-    // Performs the high-pass filtering.
-    void PerformHighPassFiltering();
+    // Gets HighPassFiltering.
+    vtkGetMacro(HighPassFiltering, int);
 
 protected:
     vtkActivationEstimator();
     ~vtkActivationEstimator();
 
     void SimpleExecute(vtkImageData* input,vtkImageData* output);
+    void PerformHighPassFiltering();
 
     int HighPassFiltering;
     float LowerThreshold;
-    float XCutoff;
-    float YCutoff;
-    float ZCutoff;
+    float Cutoff;
 
-    vtkImageFFT *FFT;
-    vtkImageRFFT *RFFT; 
-    vtkImageIdealHighPass *HighPass;
     vtkActivationDetector *Detector;
-
-    // The inputs after high-pass filtering
-    vtkDataObject **HPFilteredInputs;     
+    vtkFloatArray *TimeCourse;
 };
 
 
