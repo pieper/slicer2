@@ -524,8 +524,7 @@ proc fMRIEngineCheckCutoff {} {
             set cutoff [fMRIEngineComputeDefaultCutoff]
         }
 
-        puts "cutoff = $cutoff"
-        set fMRIEngine(cutofff) $cutoff 
+        set fMRIEngine(cutoff) $cutoff 
         fMRIEngine(actEstimator) SetCutoff $cutoff
     }
 }
@@ -565,7 +564,7 @@ proc fMRIEngineComputeDefaultCutoff {} {
         }
     }
 
-    set f [expr 1 / (2 * $min)]
+    set f [expr 1.0 / (2 * $min)]
     return $f
 }
 
