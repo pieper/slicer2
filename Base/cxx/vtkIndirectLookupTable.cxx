@@ -376,10 +376,27 @@ void vtkIndirectLookupTable::Build()
         if (this->GetFMRIMapping())
         {
             // "AND" threshold 
-            // show values >= 'lower' AND <= 'upper'
-            // zero values <  'lower' OR  >  'upper'
+            //
+            // |-------|-------|------|------|--------|-------|
+            // Min    -h      -l      0      +l      +h       Max
+            // show values between -h and -l, and
+            //      values between +l and +h
+            // zero out values less than -h, and
+            //      values between -l and +l, and
+            //      values above +h
             if (lower <= upper) 
             {
+                short high = abs(upper);
+
+                // Zero out values above +h
+                memset(&(map[offset+high+1]), 0, (max-high)*sizeof(short));
+
+                // Zero out values less than -h 
+                long width = (-upper)-min;
+                width = (width < 0 ? 1 : width);
+                memset(map, 0, width*sizeof(short));
+
+                // Zero values between -l and +l
                 if (lower != 0)
                 {
                     long w = abs(lower)*2;
@@ -392,9 +409,10 @@ void vtkIndirectLookupTable::Build()
                     memset(&(map[start]), 0, (w-1)*sizeof(short));
                 }
             } 
+            // Zero out everything
             else
             {
-                memset(&(map[offset+upper]), 0, (lower-upper+1)*sizeof(short));
+                memset(map, 0, (max-min+1)*sizeof(short));
             }
         }
         else
@@ -538,7 +556,6 @@ static void vtkIndirectLookupTableMapFMRIData(vtkIndirectLookupTable *self, floa
 {
     int i;
     vtkFloatingPointType *range = self->GetRange();
-    // long offset = self->GetLookupTable()->GetNumberOfTableValues() / 2;
     long offset = self->GetMapOffset();
     unsigned char *lut = self->GetLookupTable()->GetPointer(0);
     unsigned short *map = self->GetMap()->GetPointer(0);
@@ -565,13 +582,12 @@ static void vtkIndirectLookupTableMapFMRIData(vtkIndirectLookupTable *self, floa
         // Map s to RGBA
         int index;
 
-        // For VTK_FLOAT or VTK_DOUBLE, we need handle the following case:
-        // For instance, we set 2.3 for the lower threshold. All values less than 2.3, 
-        // including 2.1 and 2.2, must be thresholded out. 2.1 and 2.2 are special cases
-        // here since 2.1, 2.2 and 2.3 all become 2 if we cast them into long, int or short.
-        // The following statment will guarantee the removal of 2.1 and 2.2.
-        if ((v > 0 && v < self->GetLowerThreshold()) || 
-            (v < 0 && v > (-self->GetLowerThreshold())))
+        float low = fabs(self->GetLowerThreshold());
+        float high = fabs(self->GetUpperThreshold());
+        if ((v > 0 && v < low)          ||    // low = 2.5, v = 2.1, 2.3, or 2.4 
+            (v < 0 && v > (-low))       ||    // low = -2.5, v = -2.1, -2.3, or -2.4
+            (v > 0 && v > high)         ||    // high = 5.1, v = 5.2 
+            (v < 0 && v < (-high)))           // high = -5.1, v = -5.2
         {
             index = offset;
         }
@@ -585,7 +601,6 @@ static void vtkIndirectLookupTableMapFMRIData(vtkIndirectLookupTable *self, floa
         output += 4;
         input += incr;
     }
-
 }
 
 
