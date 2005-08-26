@@ -135,6 +135,9 @@ void vtkActivationEstimator::SetDetector(vtkActivationDetector *detector)
 
 void vtkActivationEstimator::PerformHighPassFiltering()
 {
+    // We are going to perform high pass filtering on the time course 
+    // of a specific voxel. First, we convert the time course from
+    // a vtkFloatArray to vtkImageData.
     vtkImageData *img = vtkImageData::New();
     img->GetPointData()->SetScalars(this->TimeCourse);
     img->SetDimensions(this->NumberOfInputs, 1, 1);
@@ -142,52 +145,42 @@ void vtkActivationEstimator::PerformHighPassFiltering()
     img->SetSpacing(1.0, 1.0, 1.0);
     img->SetOrigin(0.0, 0.0, 0.0);
 
-    vtkImageAppend *imageAppend  = vtkImageAppend::New();
-    imageAppend->SetAppendAxis(1); 
-
-    // append multiple 1D arrays to a 2D image
-    for (int i = 0; i < this->NumberOfInputs; i++)
-    {
-        vtkImageData *vol = vtkImageData::New();
-        vol->DeepCopy(img);
-        imageAppend->AddInput(vol);
-    }
-
+    // FFT on the vtkImageData
     vtkImageFFT *fft = vtkImageFFT::New();
-    fft->SetInput(imageAppend->GetOutput()); 
+    fft->SetInput(img); 
 
+    // Cut frequency on the vtkImageData on frequence domain
     vtkImageIdealHighPass *highPass = vtkImageIdealHighPass::New();
     highPass->SetInput(fft->GetOutput());
     highPass->SetXCutOff(this->Cutoff);         
     highPass->SetYCutOff(this->Cutoff); 
     highPass->ReleaseDataFlagOff();
 
+    // RFFT on the vtkImageData following frequency cutoff
     vtkImageRFFT *rfft = vtkImageRFFT::New();
     rfft->SetInput(highPass->GetOutput());
 
+    // The vtkImageData now holds two components: real and imaginary.
+    // The real component is the image (time course) we want to plot
     vtkImageExtractComponents *real = vtkImageExtractComponents::New();
     real->SetInput(rfft->GetOutput());
     real->SetComponents(0);
+    real->Update();
 
-    vtkExtractVOI *roi = vtkExtractVOI::New();
-    roi->SetInput(real->GetOutput());
-    roi->SetSampleRate(1, 1, 1); 
-    roi->SetVOI(0, (this->NumberOfInputs-1), 0, 0, 0, 0); 
-    roi->Update();
-
-    vtkDataArray *arr = roi->GetOutput()->GetPointData()->GetScalars();
+    // Update the vtkFloatArray of the time course
+    vtkDataArray *arr = real->GetOutput()->GetPointData()->GetScalars();
     for (int i = 0; i < this->NumberOfInputs; i++) 
     {
         float x = (float) arr->GetComponent(i, 0);
         this->TimeCourse->SetComponent(i, 0, x);
     }
 
-    roi->Delete();
+    // Clean up
+    highPass->Delete();
     real->Delete();
     rfft->Delete();
     fft->Delete();
     img->Delete();
-    imageAppend->Delete();
 }
 
 
