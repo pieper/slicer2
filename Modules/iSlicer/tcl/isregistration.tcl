@@ -1025,12 +1025,20 @@ itcl::body isregistration::set_resample_parameters {} {
             lappend t_dimension $t_dim 
             lappend s_dimension $t_dim 
             lappend t_spacing [lindex $target_spacing $x]
-            lappend s_spacing [expr [lindex $source_spacing $x] * ($s_dim - 1.0)/($t_dim - 1.0)]
+            if {$t_dim > 1} {
+                lappend s_spacing [expr [lindex $source_spacing $x] * ($s_dim - 1.0)/($t_dim - 1.0)]
+            } else {
+                lappend s_spacing 0
+            }
         } else {
             lappend t_dimension $s_dim 
             lappend s_dimension $s_dim 
             lappend s_spacing [lindex $source_spacing $x]
-            lappend t_spacing [expr [lindex $target_spacing $x] * ($t_dim - 1.0)/($s_dim - 1.0)]
+            if {$s_dim > 1} {
+                lappend t_spacing [expr [lindex $target_spacing $x] * ($t_dim - 1.0)/($s_dim - 1.0)]
+            } else {
+                lappend s_spacing 0
+            }
         }
 
     }
