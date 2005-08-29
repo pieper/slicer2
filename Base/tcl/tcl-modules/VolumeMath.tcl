@@ -161,7 +161,7 @@ proc VolumeMathInit {} {
     #   appropriate info when the module is checked in.
     #   
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.40 $} {$Date: 2005/01/28 21:45:01 $}]
+        {$Revision: 1.41 $} {$Date: 2005/08/29 23:31:45 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1039,7 +1039,7 @@ proc VolumeMathSetMathType {} {
     }
     if {$VolumeMath(MathType) != "MaskStat"} {
         pack forget $VolumeMath(MaskStatFButton)
-    pack forget $VolumeMath(maskLabelFrame)
+        pack forget $VolumeMath(maskLabelFrame)
     }
     if {$VolumeMath(MathType) != "Cast"} {
         pack forget $VolumeMath(castTypeFrame)
@@ -1796,6 +1796,7 @@ proc VolumeMathDoMask {} {
     mathThresh ReplaceInOn
     mathThresh ReplaceOutOn
     mathThresh ThresholdBetween $VolumeMath(maskLabel) $VolumeMath(maskLabel) 
+    mathThresh SetOutputScalarType [[Volume($v2,vol) GetOutput] GetScalarType]
 
     # Set up the VolumeMath Mask
 
@@ -1840,12 +1841,14 @@ proc VolumeMathDoMaskStat {} {
         return
     }
     # create the binary volume of the label catch "mathThresh Delete"
+    catch "mathThresh Delete"
     vtkImageThreshold mathThresh
     mathThresh SetInput [Volume($v1,vol) GetOutput]
     mathThresh SetInValue 1
     mathThresh SetOutValue 0
     mathThresh ReplaceOutOn
     mathThresh ThresholdBetween $VolumeMath(maskLabel) $VolumeMath(maskLabel)
+    mathThresh SetOutputScalarType [[Volume($v2,vol) GetOutput] GetScalarType]
     
     # set up the VolumeMath Mask
     catch "MultMath Delete"
@@ -1856,6 +1859,7 @@ proc VolumeMathDoMaskStat {} {
 
     # start copying in the ouput data.
     # taken from MainVolumesCopyData
+    [MultMath GetOutput] Update
     Volume($v3,vol) SetImageData [MultMath GetOutput]
     MainVolumesUpdate $v3
 
@@ -1870,6 +1874,7 @@ proc VolumeMathDoMaskStat {} {
     catch "stat1 Delete"
     vtkImageStatistics stat1
     stat1 IgnoreZeroOn
+    [Volume($v3,vol) GetOutput] Update
     stat1 SetInput [Volume($v3,vol) GetOutput]
     stat1 Update
     
