@@ -434,7 +434,7 @@ itcl::configbody isvolume::volume {
 itcl::configbody isvolume::warpvolume {
     set volname $itk_option(-warpvolume)
 
-    if { $volname == "" } {
+    if { $volname == "" || $volname == $::Volume(idNone) } {
         set volname "None"
     }
 
@@ -446,6 +446,7 @@ itcl::configbody isvolume::warpvolume {
             error "bad volume id $_warpVolId for $volname"
         }
     }
+    $this transform_update
 }
 
 

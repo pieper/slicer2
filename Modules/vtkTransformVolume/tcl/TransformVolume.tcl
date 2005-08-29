@@ -181,7 +181,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.25 $} {$Date: 2005/04/19 22:13:34 $}]
+        {$Revision: 1.26 $} {$Date: 2005/08/29 20:59:51 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -645,7 +645,10 @@ proc TransformVolumeRun {} {
             $TransformVolume(OutputDimensionK)
         
         if {$vDisp != "" && $vDisp != $Volume(idNone)} {
+            puts " TransformVolume : displacement volume [Volume($vDisp,node) GetName]"
             $isv configure -warpvolume [Volume($vDisp,node) GetName]
+        } else {
+            $isv configure -warpvolume $Volume(idNone)
         }
         
         # create result name
@@ -978,11 +981,16 @@ proc TransformVolumeUpdatePreview {} {
             $TransformVolume(OutputDimensionJ) \
             $TransformVolume(OutputDimensionK)
         
+        puts "Preview: dispalcement volume is $vDisp"
         if {$vDisp != "" && $vDisp != $Volume(idNone)} {
             $isv configure -warpvolume [Volume($vDisp,node) GetName]
+        } else {
+            $isv configure -warpvolume $Volume(idNone)
         }
         
         $isv configure -slice [expr int(0.5*$TransformVolume(OutputDimensionK))]
+
+        $isv expose
     }
         
 }

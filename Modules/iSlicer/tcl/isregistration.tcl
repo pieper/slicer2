@@ -1051,6 +1051,9 @@ itcl::body isregistration::set_resample_parameters {} {
 # ------------------------------------------------------------------
 
 itcl::body isregistration::deformation_volume { {name ""} } {
+    if {[$_reg GetAbortExecute] != 0 } {
+        return
+    }
 
     if { [info command MainMrmlAddNode] == "" } {
         error "cannot create slicer volume outside of slicer"
@@ -1089,15 +1092,15 @@ itcl::body isregistration::deformation_volume { {name ""} } {
     #
 
     $_reg Update
-
+    
     vtkImageData $id
     eval [$_reg GetOutputDisplacement] SetUpdateExtent [[$_reg GetOutputDisplacement] GetWholeExtent]
     [$_reg GetOutputDisplacement] Update
     $id DeepCopy [$_reg GetOutputDisplacement]
-
+    
     ::Volume($i,node) SetNumScalars 3
     ::Volume($i,node) SetScalarType [$id GetScalarType]
-
+    
     eval ::Volume($i,node) SetSpacing [$id GetSpacing]
     
     ::Volume($i,node) SetScanOrder LR

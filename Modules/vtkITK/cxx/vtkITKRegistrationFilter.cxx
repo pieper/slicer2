@@ -62,6 +62,8 @@ vtkITKRegistrationFilter::~vtkITKRegistrationFilter()
 
 void vtkITKRegistrationFilter::Update()
 {
+  this->AbortExecuteOff();
+
   this->itkImporterMoving->Update();
   this->itkImporterFixed->Update();
 
