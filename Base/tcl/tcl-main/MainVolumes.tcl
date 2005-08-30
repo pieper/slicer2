@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.86 $} {$Date: 2005/08/22 15:06:56 $}]
+    {$Revision: 1.87 $} {$Date: 2005/08/30 19:26:32 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -208,14 +208,17 @@ proc MainVolumesUpdateMRML {} {
         }
     }
 
-    # Registration
-    foreach v $Volume(idList) {
-        if {$v != $Volume(idList)} {
-            if {$Module(verbose) == 1} {
-                puts "MainVolumesUpdateMRML: calling MainVolumesUpdate on v=$v"
-                # DevErrorWindow "MainVolumesUpdateMRML: calling MainVolumesUpdate on v=$v"
+    # The registration part takes time and seems redundant here - HL.
+    if {0} {
+        # Registration
+        foreach v $Volume(idList) {
+            if {$v != $Volume(idList)} {
+                if {$Module(verbose) == 1} {
+                    puts "MainVolumesUpdateMRML: calling MainVolumesUpdate on v=$v"
+                    # DevErrorWindow "MainVolumesUpdateMRML: calling MainVolumesUpdate on v=$v"
+                }
+                MainVolumesUpdate $v
             }
-            MainVolumesUpdate $v
         }
     }
 
