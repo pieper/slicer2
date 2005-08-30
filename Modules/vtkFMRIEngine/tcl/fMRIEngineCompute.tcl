@@ -122,6 +122,9 @@ proc fMRIEngineComputeContrasts {} {
 
         unset -nocomplain fMRIEngine(actVolumeNames)
 
+        # MRML id for the new volume
+        set i -1
+
         set size [llength $curs]
         for {set ii 0} {$ii < $size} {incr ii} {
             set jj [lindex $curs $ii]
@@ -230,17 +233,11 @@ proc fMRIEngineComputeContrasts {} {
                 # in vtkMrmlDataVolume for float volume, use this function:
                 Volume($i,vol) SetRangeAuto 0
 
-                MainSlicesSetVolumeAll Fore $i
-                MainVolumesSetActive $i
-
                 # set the lower threshold to the actLow 
                 Volume($i,node) AutoThresholdOff
                 Volume($i,node) ApplyThresholdOn
                 Volume($i,node) SetLowerThreshold [fMRIEngine(actVolumeGenerator) GetLowRange]
                 # Volume($i,node) SetLowerThreshold 1
-
-                # set the act volume to the color of FMRI 
-                MainVolumesSetParam LutID 7 
 
                 set fMRIEngine($i,actLow) [fMRIEngine(actVolumeGenerator) GetLowRange] 
                 set fMRIEngine($i,actHigh) [fMRIEngine(actVolumeGenerator) GetHighRange] 
@@ -255,12 +252,14 @@ proc fMRIEngineComputeContrasts {} {
         puts $Gui(progressText)
         MainStartProgress
         MainShowProgress fMRIEngine(actVolumeGenerator) 
-        # Use fMRIEngineUpdateMRML - name of the activation volume is not updated 
-        # on the Active Volume list
-        # Use MainUpdateMRML - updating is slow for adding a new volume if we already
-        # have a long sequence loaded in Slicer
-        fMRIEngineUpdateMRML
-        # MainUpdateMRML
+        MainUpdateMRML
+
+        MainSlicesSetVolumeAll Fore $i
+        MainVolumesSetActive $i
+
+        # set the act volume to the color of FMRI 
+        MainVolumesSetParam LutID 7 
+
         RenderAll
         MainEndProgress
 
