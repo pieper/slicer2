@@ -60,7 +60,7 @@ proc DTMRICalculateScalarsInit {} {
     #------------------------------------
     set m "CalculateScalars"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.10 $} {$Date: 2005/07/20 21:12:43 $}]
+                                 {$Revision: 1.11 $} {$Date: 2005/08/30 01:42:14 $}]
 
     #------------------------------------
     # Variables for producing scalar volumes
@@ -356,14 +356,14 @@ proc DTMRIDoMath {{operation ""}} {
     
     switch -regexp -- $operation {
         {^(Trace|Determinant|D11|D22|D33|MaxEigenvalue|MiddleEigenvalue|MinEigenvalue)$} {
-            set DTMRI(scalars,scaleFactor) [expr 1000.0 / $maxTrace]
+            set DTMRI(scalars,scaleFactor) 1000
         }
         {^(RelativeAnisotropy|FractionalAnisotropy|Mode|LinearMeasure|PlanarMeasure|SphericalMeasure|ColorByOrientation|ColorByMode)$} {
             set DTMRI(scalars,scaleFactor) 1000
         }
     }
     
-    puts "DTMR: scale factor $DTMRI(scalars,scaleFactor)"
+    puts "DTMRI: scale factor $DTMRI(scalars,scaleFactor)"
 
     # create vtk object to do the operation
     vtkTensorMathematics math
