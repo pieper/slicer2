@@ -527,107 +527,6 @@ proc IbrowserIntervalRedraw { } {
 }
 
 
-
-
-#-------------------------------------------------------------------------------
-# .PROC 
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc  IbrowserDeleteIntervalArray { ivalName } {
-
-    set id $::Ibrowser($ivalName,intervalID)
-
-    #--- delete interval info
-    unset -nocomplain ::Ibrowser($id,name)
-    unset -nocomplain ::Ibrowser($id,type)
-    unset -nocomplain ::Ibrowser($id,opacity)
-    unset -nocomplain ::Ibrowser($id,order)
-    for {set v 0 } { $v < $::Ibrowser($id,numDrops) } { incr v } {
-        unset -nocomplain ::Ibrowser($id,v,pos)
-        unset -nocomplain ::Ibrowser($id,v,dropTAG)
-    }
-    unset -nocomplain ::Ibrowser($id,numDrops)
-    unset -nocomplain ::Ibrowser($ivalName,intervalID)
-    #--- delete state variables
-    unset -nocomplain ::Ibrowser($id,orderStatus)
-    unset -nocomplain ::Ibrowser($id,visStatus)
-    unset -nocomplain ::Ibrowser($id,opaqStatus)
-    unset -nocomplain ::Ibrowser($id,holdStatus)
-    unset -nocomplain ::Ibrowser($id,isEmpty)
-    unset -nocomplain ::IbrowserController($id,nametextSelected)
-    unset -nocomplain ::IbrowserController($id,nametextEditing)
-    #--- delete drawing parameters
-    unset -nocomplain ::IbrowserController($id,adaptiveUnitSpanMin)
-    unset -nocomplain ::IbrowserController($id,adaptiveUnitSpanMax)        
-    unset -nocomplain ::IbrowserController($id,adaptiveUnitSpan)
-    unset -nocomplain ::IbrowserController($id,myUnitSpanMin)
-    unset -nocomplain ::IbrowserController($id,myUnitSpanMax)    
-    unset -nocomplain ::IbrowserController($id,myUnitSpan)
-    unset -nocomplain ::IbrowserController($id,pixspan)
-    unset -nocomplain ::IbrowserController($id,pixytop)
-    unset -nocomplain ::IbrowserController($id,pixxstart)
-    unset -nocomplain ::IbrowserController($id,fillCol)    
-    unset -nocomplain ::IbrowserController($id,outlineCol)
-    #--- delete icon image tags
-    foreach imgTag $::IbrowserController(iconImageTagList) {
-        unset -nocomplain ::IbrowserController($id,$imgTag) 
-    }
-    #--- delete icon text tags
-    foreach txtTag $::IbrowserController(iconTextTagList) {
-        unset -nocomplain ::IbrowserController($id,$txtTag) 
-    }
-    #--- delete icon highlight tags
-    foreach hiloTag $::IbrowserController(iconHilightTagList) {
-        unset -nocomplain ::IbrowserController($id,$hiloTag) 
-    }
-    #--- delete interval and drop tags
-    unset -nocomplain ::IbrowserController($id,intervalHILOtag)
-    unset -nocomplain ::IbrowserController($id,allDROPtag)
-
-}
-
-
-
-#-------------------------------------------------------------------------------
-# .PROC IbrowserDeleteIntervalVolumes
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc IbrowserDeleteIntervalVolumes { id } {
-    #--- id of interval to be deleted comes in.
-    #--- must find the id of each volume in the interval
-    #--- and delete it.
-
-    if { $id == $::Ibrowser(FGInterval) } {
-        set ::Ibrowser(FGInterval) $::Ibrowser(none,intervalID)
-    } elseif { $id == $::Ibrowser(BGInterval) } {
-        set ::Ibrowser(BGInterval) $::Ibrowser(none,intervalID)
-    }
-    if { $id == $::Ibrowser(activeInterval) } {
-        IbrowserSetActiveInterval $::Ibrowser(none,intervalID)
-        #set ::Ibrowser(activeInterval) $::Ibrowser(none,intervalID)
-    }
-
-    IbrowserRaiseProgressBar
-    for { set drop 0} { $drop < $::Ibrowser($id,numDrops) } { incr drop } {
-        set i $::Ibrowser($id,$drop,MRMLid)
-        MainMrmlDeleteNodeDuringUpdate Volume $::Ibrowser($id,$drop,MRMLid)
-        if { $::Ibrowser($id,numDrops) != 0 } {
-            set progress [ expr double( $drop ) / double ( $::Ibrowser($id,numDrops) ) ]
-            IbrowserUpdateProgressBar $progress "::"
-        }
-    }
-    MainMrmlClearList
-    MainUpdateMRML
-    RenderAll
-    IbrowserLowerProgressBar
-}
-
-
-
 #-------------------------------------------------------------------------------
 # .PROC IbrowserCopyIntervalVolumes
 # 
@@ -710,6 +609,118 @@ proc IbrowserCopyInterval { sourceName copyName } {
 
 
 
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC 
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc  IbrowserDeleteIntervalArray { ivalName } {
+
+    set id $::Ibrowser($ivalName,intervalID)
+    set name $ivalName
+
+    #--- remove reference to sequence if loaded in MultiVolumeReader
+    if { [ info exists ::MultiVolumeReader(sequenceNames) ] } {
+        set i [ lsearch $::MultiVolumeReader(sequenceNames) $ivalName ]
+        set ::MultiVolumeReader(sequenceNames) \
+            [ lreplace $::MultiVolumeReader(sequenceNames) $i $i ]
+    }
+
+    #--- delete interval info
+    unset -nocomplain ::Ibrowser($id,name)
+    unset -nocomplain ::Ibrowser($id,type)
+    unset -nocomplain ::Ibrowser($id,opacity)
+    unset -nocomplain ::Ibrowser($id,order)
+    for {set v 0 } { $v < $::Ibrowser($id,numDrops) } { incr v } {
+        unset -nocomplain ::Ibrowser($id,v,pos)
+        unset -nocomplain ::Ibrowser($id,v,dropTAG)
+    }
+    unset -nocomplain ::Ibrowser($id,numDrops)
+    unset -nocomplain ::Ibrowser($ivalName,intervalID)
+    #--- delete state variables
+    unset -nocomplain ::Ibrowser($id,orderStatus)
+    unset -nocomplain ::Ibrowser($id,visStatus)
+    unset -nocomplain ::Ibrowser($id,opaqStatus)
+    unset -nocomplain ::Ibrowser($id,holdStatus)
+    unset -nocomplain ::Ibrowser($id,isEmpty)
+    unset -nocomplain ::IbrowserController($id,nametextSelected)
+    unset -nocomplain ::IbrowserController($id,nametextEditing)
+    #--- delete drawing parameters
+    unset -nocomplain ::IbrowserController($id,adaptiveUnitSpanMin)
+    unset -nocomplain ::IbrowserController($id,adaptiveUnitSpanMax)        
+    unset -nocomplain ::IbrowserController($id,adaptiveUnitSpan)
+    unset -nocomplain ::IbrowserController($id,myUnitSpanMin)
+    unset -nocomplain ::IbrowserController($id,myUnitSpanMax)    
+    unset -nocomplain ::IbrowserController($id,myUnitSpan)
+    unset -nocomplain ::IbrowserController($id,pixspan)
+    unset -nocomplain ::IbrowserController($id,pixytop)
+    unset -nocomplain ::IbrowserController($id,pixxstart)
+    unset -nocomplain ::IbrowserController($id,fillCol)    
+    unset -nocomplain ::IbrowserController($id,outlineCol)
+    #--- delete icon image tags
+    foreach imgTag $::IbrowserController(iconImageTagList) {
+        unset -nocomplain ::IbrowserController($id,$imgTag) 
+    }
+    #--- delete icon text tags
+    foreach txtTag $::IbrowserController(iconTextTagList) {
+        unset -nocomplain ::IbrowserController($id,$txtTag) 
+    }
+    #--- delete icon highlight tags
+    foreach hiloTag $::IbrowserController(iconHilightTagList) {
+        unset -nocomplain ::IbrowserController($id,$hiloTag) 
+    }
+    #--- delete interval and drop tags
+    unset -nocomplain ::IbrowserController($id,intervalHILOtag)
+    unset -nocomplain ::IbrowserController($id,allDROPtag)
+
+}
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserDeleteIntervalVolumes
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserDeleteIntervalVolumes { id } {
+    global Volume
+    
+    #--- id of interval to be deleted comes in.
+    #--- must find the id of each volume in the interval
+    #--- and delete it.
+    if { $id == $::Ibrowser(FGInterval) } {
+        set ::Ibrowser(FGInterval) $::Ibrowser(none,intervalID)
+    } elseif { $id == $::Ibrowser(BGInterval) } {
+        set ::Ibrowser(BGInterval) $::Ibrowser(none,intervalID)
+    }
+    if { $id == $::Ibrowser(activeInterval) } {
+        IbrowserSetActiveInterval $::Ibrowser(none,intervalID)
+    }
+    IbrowserRaiseProgressBar
+    #--- delete the MRMLVolumeNodes and MRMLDataVolumes
+    for { set drop 0} { $drop < $::Ibrowser($id,numDrops) } { incr drop } {
+        set i $::Ibrowser($id,$drop,MRMLid)
+        MainMrmlDeleteNodeDuringUpdate "Volume" $i
+        #--- volume data will get flagged for deletion when volume 
+        #--- node is deleted, and then will be deleted during update.
+        if { $::Ibrowser($id,numDrops) != 0 } {
+            set progress [ expr double( $drop ) / double ( $::Ibrowser($id,numDrops) ) ]
+            IbrowserUpdateProgressBar $progress "::"
+        }
+    }
+    MainMrmlClearList
+    MainUpdateMRML
+    RenderAll
+    IbrowserLowerProgressBar
+}
+
+
+
 #-------------------------------------------------------------------------------
 # .PROC IbrowserDeleteInterval
 # 
@@ -727,12 +738,14 @@ proc IbrowserDeleteInterval { ivalName } {
     
     #    delete corresponding array, remove from list, delete drops
     #---------------
+    #--- delete from Ibrowser's list of intervals
     IbrowserDeleteFromList $::Ibrowser($id,name) 
     IbrowserDecrementIntervalCount
+    #--- delete the data
     IbrowserDeleteIntervalVolumes $id
     IbrowserDeleteIntervalDrops $::Ibrowser($id,name)
     IbrowserDeleteIntervalArray $::Ibrowser($id,name)
-    
+
     #    find new global span
     #---------------    
     IbrowserUpdateGlobalXspan
@@ -754,11 +767,6 @@ proc IbrowserDeleteInterval { ivalName } {
     #    intervals...
     #---------------    
     IbrowserUpdateMaxDrops
-    if { $::Ibrowser(ViewDrop) > $::Ibrowser(MaxDrops)} {
-        set ::Ibrowser(LastViewDrop) $::Ibrowser(ViewDrop)
-        set ::Ibrowser(ViewDrop) 0
-        IbrowserSynchronizeAllSliders $::Ibrowser(MaxDrops)
-    }
 
     #    reorder all remaining intervals
     #---------------    
@@ -817,6 +825,7 @@ proc IbrowserDeleteAllIntervals { } {
 #-------------------------------------------------------------------------------
 proc IbrowserUpdateMaxDrops { } {
 
+    #--- first, search thru all intervals and see who has most drops
     set ::Ibrowser(MaxDrops) 0
     foreach id $::Ibrowser(idList) {
         set name $::Ibrowser($id,name)
@@ -824,6 +833,17 @@ proc IbrowserUpdateMaxDrops { } {
             set ::Ibrowser(MaxDrops) $::Ibrowser($id,numDrops)
         }
     }
+
+    #--- if maxdrops has decreased below value of current viewdrop,
+    #--- reset the current viewdrop to zero.
+    #--- (if MaxDrops is N, ViewDrop goes from 0 to N-1)
+    if { [ expr $::Ibrowser(ViewDrop) + 1] > $::Ibrowser(MaxDrops) } {
+        #--- change the index to fit new intervals
+        set ::Ibrowser(LastViewDrop) $::Ibrowser(ViewDrop)
+        set ::Ibrowser(ViewDrop) 0
+    } 
+    
+    #--- update the active range of all sliders
     set top [ expr $::Ibrowser(MaxDrops) - 1 ]
     IbrowserSynchronizeAllSliders $top
 }
@@ -1035,6 +1055,8 @@ proc IbrowserMakeNewInterval { intval ikind spanmin spanmax numDrops } {
     # Initialize interval's state (relflected also by icons)
     #---------------        
     set ::Ibrowser($id,orderStatus) $::Ibrowser($id,order)
+    #--- check to see Slice window settings first. Visible or not?
+    
     set ::Ibrowser($id,visStatus) $::IbrowserController(Info,Ival,isVisible)
     set ::Ibrowser($id,holdStatus) $::IbrowserController(Info,Ival,hold)
     set ::Ibrowser($id,isEmpty) 1 
@@ -1058,6 +1080,12 @@ proc IbrowserMakeNewInterval { intval ikind spanmin spanmax numDrops } {
     set ::IbrowserController($id,allDROPtag) ${id}_dropTAG
     set ::IbrowserController($id,intervalHILOtag)      ${id}_HILO
     
+    #---what drop are we currently indexing and
+    #---looking at in the MainViewer?
+    #---------------    
+    set ::Ibrowser(LastViewDrop) $::Ibrowser(LastViewDrop)
+    set ::Ibrowser(ViewDrop) 0
+
     #size, draw the interval, its icons and hitlite outline
     #---------------    
     IbrowserCreateIcons $::Ibrowser($id,name)
@@ -1071,12 +1099,6 @@ proc IbrowserMakeNewInterval { intval ikind spanmin spanmax numDrops } {
     set ::IbrowserController($id,nametextSelected) 0
     set ::IbrowserController($id,nametextEditing) 0
     
-    #---what drop are we currently indexing and
-    #---looking at in the MainViewer?
-    #---------------    
-    set ::Ibrowser(LastViewDrop) 0
-    set ::Ibrowser(ViewDrop) 0
-
     # create or update the image slider if global span has changed
     #---------------    
     IbrowserUpdateIndexAndSliderBox 
