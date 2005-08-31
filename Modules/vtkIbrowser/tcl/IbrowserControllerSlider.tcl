@@ -185,7 +185,8 @@ proc IbrowserUpdateIndexAndSliderMarker { } {
     set halfspan [expr $pixspan / 2 ]
 
     #--- position the marker at zero.
-    set ::IbrowserController(Slider,ClickX) [ IbrowserUnitValToPixelVal 0 ]
+    #set ::IbrowserController(Slider,ClickX) [ IbrowserUnitValToPixelVal 0 ]
+    set ::IbrowserController(Slider,ClickX) [ IbrowserUnitValToPixelVal $::Ibrowser(ViewDrop) ]
     
     # Create dashed line thru both canvases
     # marking index position
@@ -285,7 +286,6 @@ proc IbrowserUpdateIndexFromAnimControls { } {
 # .END
 #-------------------------------------------------------------------------------
 proc   IbrowserSynchronizeAllSliders { target } {
-
     if { $target == "active" } {
         foreach s "display load select keyframe1 keyframe2" {
             if { [info exists ::Ibrowser(${s}Slider)] } {
