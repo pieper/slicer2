@@ -307,6 +307,7 @@ proc IbrowserBuildUIForAssemble { parent } {
     set f $f.fSelectVolumes
     eval { menubutton $f.mbVolumes -text "select volume" -width 20 -relief raised \
                -height 1 -menu $f.mbVolumes.m -bg $Gui(activeWorkspace) -indicatoron 1 } $Gui(WBA)
+    TooltipAdd $f.mbVolumes "Select a volume from a list."
     eval { menu $f.mbVolumes.m } $Gui(WMA)
     foreach v $::Volume(idList) {
         if { $v != 0 } {
@@ -318,6 +319,7 @@ proc IbrowserBuildUIForAssemble { parent } {
     set ::Ibrowser(New,mAssembleVolume) $f.mbVolumes.m
     eval { button $f.bAdd -text "add" -width 7 -height 1 \
               -command "IbrowserAddVolumeToSequenceList" } $Gui(WBA)
+    TooltipAdd $f.bAdd "Add selected volume to the list of volumes for the interval."
     pack $f.mbVolumes -pady 2 -padx 2 -side left -anchor n -ipady 1
     pack $f.bAdd -side left -padx 5 -pady 2 -anchor n
 
@@ -351,7 +353,9 @@ proc IbrowserBuildUIForAssemble { parent } {
 
     set f $parent.fApply.fButtons
     DevAddButton $f.bApply "apply" "IbrowserAssembleSequence" 7
+    TooltipAdd $f.bApply "Create a new interval containing these volumes, in designated order."
     DevAddButton $f.bCancel "cancel" "IbrowserCancelAssembleSequence" 7
+    TooltipAdd $f.bCancel "Cancel the creation of a new interval using the selected volumes."
     pack $f.bApply -side top -anchor nw -pady 2
     pack $f.bCancel -side top -anchor nw -pady 2
 
@@ -401,11 +405,15 @@ proc IbrowserAssembleSequenceFromSequences { } {
 proc IbrowserAssembleSequenceFromVolumes { } {
     IbrowserRaiseProgressBar
 
+    if { $::Ibrowser(New,assembleList) == "" } {
+        DevErrorWindow "No volumes have been selected."
+        return
+    }
     #--- get the interval started
     set ivalID $::Ibrowser(uniqueNum)
     set ::Ibrowser(loadVol,name) [format "assembleVol%d" $ivalID]
-    #lappend $::MultiVolumeReader(sequenceNames) $iname
     set iname $::Ibrowser(loadVol,name)
+    #lappend $::MultiVolumeReader(sequenceNames) $iname
     set ::Ibrowser($ivalID,name) $iname
     set ::Ibrowser($iname,intervalID) $ivalID
 
@@ -467,12 +475,6 @@ proc IbrowserAssembleSequenceFromVolumes { } {
 #-------------------------------------------------------------------------------
 proc IbrowserCancelAssembleSequence { } {
 
-    if { $::Ibrowser(assembleChoice) == 0 } {
-    } elseif { $::Ibrowser(assembleChoice) == 1 } {
-    } elseif { $::Ibrowser(assembleChoice) == 2 } {
-    }
-
-    puts "canceling sequence"
     #--- empty assembleList
     set ::Ibrowser(New,assembleList) ""
     #--- configure assembleListbox
