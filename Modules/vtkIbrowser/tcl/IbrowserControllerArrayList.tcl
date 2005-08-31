@@ -36,9 +36,9 @@
 #===============================================================================
 # FILE:        IbrowserControllerArrayList.tcl
 # PROCEDURES:  
-#   IbrowserAddToList Aname
-#   IbrowserOrderCompare a b
-#   IbrowserDeleteFromList ival
+#   IbrowserAddToList
+#   IbrowserOrderCompare
+#   IbrowserDeleteFromList
 #==========================================================================auto=
 
 
@@ -50,7 +50,6 @@
 # Adds an element to a list.
 # 
 # .ARGS
-# string Aname
 # .END
 #-------------------------------------------------------------------------------
 proc IbrowserAddToList { Aname } {
@@ -70,8 +69,6 @@ proc IbrowserAddToList { Aname } {
 # based on their orders; from lowest to highest.
 # 
 # .ARGS
-# int a id
-# int b id
 # .END
 #-------------------------------------------------------------------------------
 proc IbrowserOrderCompare { a b } {
@@ -104,7 +101,6 @@ proc IbrowserOrderCompare { a b } {
 # then deletes the array too
 # 
 # .ARGS
-# int ival
 # .END
 #-------------------------------------------------------------------------------
 proc IbrowserDeleteFromList { ival } {
