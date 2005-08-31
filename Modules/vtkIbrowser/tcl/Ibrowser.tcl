@@ -43,6 +43,7 @@
 #   IbrowserExit
 #   IbrowserPushBindings
 #   IbrowserPopBindings
+#   IbrowserCreateBindings  
 #   IbrowserSetDirectory
 #   IbrowserGetIntervalNameFromID
 #   IbrowserGetIntervalIDFromName
@@ -80,9 +81,9 @@ proc IbrowserInit {} {
     set Module($m,author) "Wendy Plesniak, SPL & HCNR, wjp@bwh.harvard.edu"
 
     #---Define tabs
-    set Module($m,row1List) "Help New Display Process"
+    set Module($m,row1List) "Help New Display Process Inspect"
     #set Module($m,row1Name) "{help} {new} {display} {process} {view} {save}"
-    set Module($m,row1Name) "{help} {new} {display} {process}"
+    set Module($m,row1Name) "{help} {new} {display} {process} {inspect}"
     set Module($m,row1,tab) New
 
     #---Procedure definitions
@@ -97,7 +98,7 @@ proc IbrowserInit {} {
     #---Set category and version info
     set Module($m,category) "Alpha"
        lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.11 $} {$Date: 2005/04/18 15:12:20 $}]
+        {$Revision: 1.12 $} {$Date: 2005/08/31 15:00:05 $}]
 
     #---Initialize module-level variables
     #---Global array with the same name as the module. Ibrowser()
@@ -152,7 +153,14 @@ proc IbrowserInit {} {
     set Ibrowser(New,selectedVolumeID) ""
     set Ibrowser(New,assembleList) ""
 
-    #--- Zooming references
+    #--- for Plotting...
+    set ::Ibrowser(plot,NumReferences) 0
+    set ::Ibrowser(plot,plotTitle) ""
+    set ::Ibrowser(plot,plotWidth) 500
+    set ::Ibrowser(plot,plotHeight) 250
+    set ::Ibrowser(plot,plotGeometry) "+335+200"
+
+        #--- Zooming references
     set IbrowserController(zoomfactor) 0
     #--- Location of popup windows
     set IbrowserController(popupX) 375
@@ -176,7 +184,8 @@ proc IbrowserInit {} {
     source ${modulePath}IbrowserSaveGUI.tcl
     source ${modulePath}IbrowserViewGUI.tcl
     source ${modulePath}IbrowserHelpGUI.tcl    
-
+    source ${modulePath}IbrowserInspectGUI.tcl
+    
     #--- These contain extra procs for
     #--- IO / processing / visualization
     #source ${modulePath}IbrowserProcessing/IbrowserProcessingUtils.tcl
@@ -202,6 +211,8 @@ proc IbrowserInit {} {
     source ${modulePath}IbrowserControllerProgressBar.tcl
     source ${modulePath}notebook.tcl
 
+    source ${modulePath}IbrowserPlot.tcl
+    
     #--- Create a new Interval Collection
     #--- set its id, its number of intervals to 0
     #--- set its name to "Collection_0"
@@ -219,6 +230,9 @@ proc IbrowserInit {} {
     #set ::Ibrowser(Process,SelectSequence) $Ibrowser(idNone)
     set ::Ibrowser(Process,reassembleAxis) ""
     set ::VolumeGroupCollection(numCollections) 0
+
+    #--- For plotting...
+    IbrowserCreateBindings
 }
 
 
@@ -252,32 +266,13 @@ proc IbrowserBuildGUI {} {
     #-------------------------------------------
     # Frame Hierarchy:
     #-------------------------------------------
-    # Help
-    # Load
-    #     VolumeOrModel
-    #     ChooseReader
-    #     SetReadInfo
-    #     ApplyReader
-    # Process
-    #     Top
-    #     Bottom
-    # Display
-    #     Top
-    #     Bottom
-    # Save
-    #     Top
-    #     Bottom
-    # View
-    #     Top
-    #     Bottom
-    #-------------------------------------------
 
     IbrowserBuildHelpFrame
     IbrowserBuildLoadFrame
     IbrowserBuildProcessFrame
     IbrowserBuildDisplayFrame
+    IbrowserBuildInspectFrame
     #IbrowserBuildSaveFrame
-    #IbrowserBuildViewFrame
 }
 
 
@@ -293,12 +288,15 @@ proc IbrowserEnter {{toplevelName .controllerGUI} } {
 # Called when this module is entered by a user. 
 
     #pushEventManager $Ibrowser(eventManager)
+
     #--- Create or Raise the Ibrowser Controller
     #--- and push all event bindings onto the stack.
     IbrowserControllerLaunch
 
     
-    #    IbrowserPushBindings
+    #--- activate bindings to trap plot events
+    IbrowserPushBindings
+
     #--- These are Ibrowser windows.
     set ::IbrowserController(topLevel) $toplevelName
     set ::IbrowserController(View,multiVolView) ".controllerMultiVolViewMOCKUP"
@@ -326,7 +324,9 @@ proc IbrowserExit {{toplevelName .controllerGUI}} {
 # Called when this module is exited by a user. 
 
     # popEventManager
-    #   IbrowserPopBindings
+    #--- deactivate bindings to trap plot events
+     IbrowserPopBindings
+
     #--- Lower and iconify the Ibrowser Controller
     if {[winfo exists $toplevelName]} {
         lower $toplevelName
@@ -348,9 +348,9 @@ proc IbrowserPushBindings { } {
     #push onto the even stack a new event manager that
     #deals with events when the Ibrowser module is active
     global Ev Csys
-    EvActivateBindingSet Slice0Events
-    EvActivateBindingSet Slice1Events
-    EvActivateBindingSet Slice2Events
+    EvActivateBindingSet IbrowserSlice0Events
+    EvActivateBindingSet IbrowserSlice1Events
+    EvActivateBindingSet IbrowserSlice2Events
     
 }
 
@@ -366,11 +366,30 @@ proc IbrowserPushBindings { } {
 proc IbrowserPopBindings { } {
     #remove bindings when Ibrowser module is inactive
     global Ev Csys
-    EvDeactivateBindingSet Slice0Events
-    EvDeactivateBindingSet Slice1Events
-    EvDeactivateBindingSet Slice2Events
+    EvDeactivateBindingSet IbrowserSlice0Events
+    EvDeactivateBindingSet IbrowserSlice1Events
+    EvDeactivateBindingSet IbrowserSlice2Events
 
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserCreateBindings  
+# Creates Ibrowser event bindings for the three slice windows 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserCreateBindings { } {
+    global Gui Ev
+
+    EvDeclareEventHandler IbrowserSlicesEvents <1> \
+        { IbrowserPopUpPlot %x %y }
+           
+    EvAddWidgetToBindingSet IbrowserSlice0Events $Gui(fSl0Win) {IbrowserSlicesEvents}
+    EvAddWidgetToBindingSet IbrowserSlice1Events $Gui(fSl1Win) {IbrowserSlicesEvents}
+    EvAddWidgetToBindingSet IbrowserSlice2Events $Gui(fSl2Win) {IbrowserSlicesEvents}    
+}
+
 
 
 
