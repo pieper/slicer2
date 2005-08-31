@@ -14,6 +14,7 @@ SET(LOCAL_MODULE_SRCS
 vtkIbrowserIO.cxx
 vtkIntervalDrop.cxx
 vtkRigidTransformInterpolate.cxx
+vtkVoxelTimeCourseExtractor.cxx
 #vtkIntervalSpan.cxx
 #vtkIntervalHashNode.cxx
 #vtkIntervalHash.cxx
