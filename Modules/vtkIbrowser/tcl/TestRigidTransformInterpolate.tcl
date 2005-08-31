@@ -36,15 +36,8 @@
 #===============================================================================
 # FILE:        TestRigidTransformInterpolate.tcl
 # PROCEDURES:  
-#   TestRigidTransformInterpolate
 #==========================================================================auto=
 
-#-------------------------------------------------------------------------------
-# .PROC TestRigidTransformInterpolate
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc TestRigidTransformInterpolate {} {
 
     catch "rti Delete"
