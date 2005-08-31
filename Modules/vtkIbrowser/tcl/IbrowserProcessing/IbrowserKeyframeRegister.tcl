@@ -725,9 +725,15 @@ proc IbrowserKeyframeUndoInterpolate { } {
             return
         }
     }
+
     
     #--- make note of existing active matrix.
     set id $::Ibrowser(activeInterval)
+    if { ! [info exists ::Ibrowser($id,$i,matrixID)] } {
+        DevErrorWindow "No transforms for this interval! (check current active interval)."
+        return
+    }
+
     set oldtid $::Ibrowser(activeMatrix)
 
     set start $::Ibrowser($id,firstMRMLid)
