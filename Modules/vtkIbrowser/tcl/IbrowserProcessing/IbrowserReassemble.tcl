@@ -36,10 +36,21 @@
 #===============================================================================
 # FILE:        IbrowserReassemble.tcl
 # PROCEDURES:  
+#   IbrowserBuildReassembleGUI
 #   IbrowserCancelReassembleSequence
 #   IbrowserValidReassembleAxis
+#   IbrowserReassembleSequence
 #==========================================================================auto=
 
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserBuildReassembleGUI
+#  Builds the GUI in Slicer's GUI panel for creating a new set of volumes
+#  from a selected set of volumes, by rearranging their slices.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserBuildReassembleGUI { f master } {
 global Gui
 
@@ -115,7 +126,7 @@ proc IbrowserCancelReassembleSequence { } {
 
 #-------------------------------------------------------------------------------
 # .PROC IbrowserValidReassembleAxis
-# 
+# Checks to see if the selected axis is valid.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -129,16 +140,22 @@ proc IbrowserValidReassembleAxis { } {
     }
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC IbrowserReassembleSequence
+# Reassembles selected interval into a new set of volumes.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserReassembleSequence { } {
+global Volume
+#---
 #--- Slices a volume along a selected axis
 #--- and assembles new volumes from slices
 #--- along interval axis.
-proc IbrowserReassembleSequence { } {
-global Volume
 
     if { [ IbrowserValidReassembleAxis ] } {
         IbrowserRaiseProgressBar
-        puts "The axis to vary along interval is: $::Ibrowser(Process,reassembleAxis)"
+        set pcount 0
 
         #--- get the destination interval started
         set dstID $::Ibrowser(uniqueNum)
@@ -149,22 +166,23 @@ global Volume
         
         #--- get info about the source interval
         set srcID $::Ibrowser(activeInterval)
+        if { $srcID == $::Ibrowser(none,intervalID) } {
+            DevErrorWindow "Please choose an interval to process."
+            return
+        }
         set firstVolID $::Ibrowser($srcID,firstMRMLid)
         set lastVolID $::Ibrowser($srcID,lastMRMLid)
         set srcName $::Ibrowser($srcID,name)
 
-        #--- what are the dimensions of the first image volume
+        #--- get the dimensions of the first image volume
         set DimList [ [ ::Volume($firstVolID,vol) GetOutput ] GetDimensions ]
-        set rangeList [ ::Volume($firstVolID,node) GetImageRange ]
         set xmin 0
         set ymin 0
         set zmin 0
         set xmax [expr [ lindex $DimList 0 ] - 1 ]
         set ymax [ expr [ lindex $DimList 1 ] - 1 ]
         set zmax [ expr [ lindex $DimList 2 ] - 1 ]
-        puts "input volumes are [expr $xmax+1] x [expr $ymax+1] x [expr $zmax+1]"
 
-        
         #--- Error check: see if all volumes in the src interval
         #--- have the same dimension; otherwise this will fail.
         #--- Assuming dimensions are returned in vtk space.
@@ -178,11 +196,15 @@ global Volume
                 return
             }
         }
-        puts "all volumes have the same dimension."
-        
-        #--- create $numVols new Volume nodes and volumes.
-        #--- get the corresponding axis in Vtk space for this vol.
-        #--- ok, assuming all volumes have the same dimension...
+
+        #--- User has selected the "reassembleAxis" -- which is
+        #--- the axis (SI, RL, or AP) along which corresponding
+        #--- slices will be collected and arrayed along the interval.
+        #--- For instance: if reassembleAxis = RL, the rightmost
+        #--- slice of each volume in the source interval will be
+        #--- appended to a new volume, which will be placed first
+        #--- in the destination interval, and so on.
+        #--- Get the corresponding axis in Vtk space for this vol.
         set vid $firstVolID
         set newvec [ IbrowserGetRasToVtkAxis \
                          $::Ibrowser(Process,reassembleAxis) \
@@ -190,86 +212,87 @@ global Volume
         #--- unpack the vector into x, y and z
         foreach { x y z } $newvec { }
 
+        #--- set the appropriate append axis.
         if { ($x == 1) || ($x == -1) } {
             #---vary axis 0 along interval
             set appendAxis 0
-            set numVols [ expr $xmax + 1 ]
+            set numDestVols [ expr $xmax + 1 ]
         } elseif { ($y == 1) || ( $y == -1) } {
             #---vary axis 1 along interval
             set appendAxis 1
-            set numVols [ expr $ymax + 1 ]
+            set numDestVols [ expr $ymax + 1 ]
         } elseif { ($z == 1) || ($z == -1) } {
             #---vary axis 2 along interval
             set appendAxis 2
-            set numVols [ expr $zmax + 1 ]
+            set numDestVols [ expr $zmax + 1 ]
         }
-        puts "VTK vector is: $newvec; appendAxis is: $appendAxis"
-        puts "creating $numVols new nodes..."
-        for {set i 0} { $i < $numVols } { incr i } {
+        set numSrcVols $::Ibrowser($srcID,numDrops)
+
+        #--- create all new Volume nodes and volumes.
+        #--- and make a list of ptrs to nodes.
+        for {set i 0} { $i < $numDestVols } { incr i } {
             set node [MainMrmlAddNode Volume ]
             set nodeID [$node GetID ]
             MainVolumesCreate $nodeID
             lappend newnodeList  $node 
         }
-        puts "...created $numVols new nodes"
 
-        #--- Here's what we're going to do:
-        #--- for each [of n = 0 to (numVols-1)] new data volume,
-        #--- extract  nth slices from all m src data vols
-        #--- append them to create nth new data volume.
-        vtkExtractVOI sliceExtractor
-        sliceExtractor SetSampleRate 1 1 1
-        
-        #--- for each new data volume
-        for { set n 0 } { $n < $numVols } { incr n } {
+        #--- Now, here's how the reassemble will work:
+        #--- for each [of n = 0 to (numDestVols-1)] destination volume,
+        #--- extract  nth slices from all m src data vols,
+        #--- and append them to create nth dest volume.
+
+        #--- for each DESTINATION data volume
+        for { set n 0 } { $n < $numDestVols } { incr n } {
+            if { $numDestVols != 0 } {
+                set progress [ expr double ($pcount) / double ($numDestVols) ]
+                IbrowserUpdateProgressBar $progress "::"
+                IbrowserPrintProgressFeedback
+            }
             set dstnode [ lindex $newnodeList $n ]
             set dstnodeID [ $dstnode GetID ]
 
             #--- create the image appender
-            vtkImageAppend sliceAppender
-            sliceAppender SetAppendAxis $appendAxis
-            
-            #--- set the source volume
+            vtkImageAppend appender
+            appender SetAppendAxis $appendAxis
+
+            #--- consider each of m volumes in the SRC sequence,
+            #--- starting with the first.
             set vid $firstVolID
-            sliceExtractor SetInput  [ ::Volume($vid,vol) GetOutput ]
-            #--- consider each volume in the sequence...
-            for { set m 0 } { $m < $::Ibrowser($srcID,numDrops) } { incr m } {
-                vtkImageData vol
-                #--- extract the nth slice
+            for { set m 0 } { $m < $numSrcVols } { incr m } {
+                #--- use each volume in the src sequence as input
+                vtkExtractVOI extract$m
+                extract$m SetInput  [ ::Volume($vid,vol) GetOutput ]
+                extract$m SetSampleRate 1 1 1
+                vtkImageChangeInformation putslice$m
+                
+                #--- extract the nth slice from the src volume
                 if { $appendAxis == 0 } {
-                    sliceExtractor SetVOI $n $n $ymin $ymax $zmin $zmax
-                    puts "setting VOI to be $n $n $ymin $ymax $zmin $zmax"
-                    sliceExtractor Update
-                    set d [ sliceExtractor GetOutput ]
-                    vol DeepCopy $d
-                    vol SetExtent $m $m $ymin $ymax $zmin $zmax                    
+                    extract$m SetVOI $n $n $ymin $ymax $zmin $zmax
+                    putslice$m SetOutputExtentStart $m 0 0  
                 } elseif { $appendAxis == 1 } {
-                    sliceExtractor SetVOI $xmin $xmax $n $n $zmin $zmax
-                    puts "setting VOI to be $xmin $xmax $n $n $zmin $zmax"
-                    sliceExtractor Update
-                    set d [ sliceExtractor GetOutput ]
-                    vol DeepCopy $d
-                    vol SetExtent $xmin $xmax $m $m $zmin $zmax                    
+                    extract$m SetVOI $xmin $xmax $n $n $zmin $zmax
+                    putslice$m SetOutputExtentStart 0 $m 0 
                 } elseif { $appendAxis == 2 } {
-                    sliceExtractor SetVOI $xmin $xmax $ymin $ymax $n $n
-                    puts "setting VOI to be $xmin $xmax $ymin $ymax $n $n"
-                    sliceExtractor Update
-                    set d [ sliceExtractor GetOutput ]
-                    vol DeepCopy $d
-                    vol SetExtent $xmin $xmax $ymin $ymax $m $m                   
+                    extract$m SetVOI $xmin $xmax $ymin $ymax $n $n
+                    putslice$m SetOutputExtentStart 0 0 $m
                 } else {
                     DevErrorWindow "Invalid axis for reassembling volumes."
+                    return
                 }
-                sliceAppender AddInput vol
-                vol Delete
+
+                #--- append this slice to the new n^th destination volume.
+                putslice$m SetInput [ extract$m GetOutput]
+                appender AddInput [ putslice$m GetOutput]
+                #--- look at next volume in the src interval
                 incr vid
             }
 
-            #--- grab the new image data
-            set imdata [ sliceAppender GetOutput ]
+            #--- grab the new image data (appended slices from src volumes)
+            set imdata [ appender GetOutput ]
             $imdata Update
 
-            #--- get info to configure the MRML node.
+            #--- get info about new vtkImageData
             set dim [ $imdata GetDimensions ]
             set dimx [ lindex $dim 0 ]
             set dimy [ lindex $dim 1 ]
@@ -287,13 +310,10 @@ global Volume
             set ystop [expr 1 + [lindex $ext 3]]            
             set zstart [expr 1 + [lindex $ext 4]]
             set zstop [expr 1 + [lindex $ext 5]] 
-            #puts "configuring MrmlVolumeNode $n: "
-            #puts "....pixwid = $pixwid; pixhit = $pixhit; pixdepth = $zSpacing"
-            #puts "....image extent = $xstart $xstop; $ystart $ystop; $zstart $zstop"
-            #puts "....image dimensions: $dimx $dimy $dimz"
-
             
-            #--- configure node
+            #--- get info to configure destination MrmlVolumeNodes:
+            $dstnode SetImageRange $zstart $zstop
+            $dstnode SetDimensions $dimx $dimy
             $dstnode SetName ${dstName}_${n}
             $dstnode SetLabelMap [ ::Volume($firstVolID,node) GetLabelMap ]
             eval $dstnode SetSpacing $pixwid $pixhit $zSpacing
@@ -301,8 +321,6 @@ global Volume
             $dstnode SetNumScalars [ $imdata GetNumberOfScalarComponents ]
             $dstnode SetScanOrder [ ::Volume($firstVolID,node) GetScanOrder ]
             $dstnode SetLittleEndian 1
-            $dstnode SetImageRange 1 [ expr $dimz  ]
-            $dstnode SetDimensions $dimx $dimy
             $dstnode ComputeRasToIjkFromScanOrder [ ::Volume($firstVolID,node) GetScanOrder ]
             $dstnode SetLUTName [ ::Volume($firstVolID,node) GetLUTName ]
             $dstnode SetAutoWindowLevel [ ::Volume($firstVolID,node) GetAutoWindowLevel ]
@@ -313,31 +331,55 @@ global Volume
             $dstnode SetUpperThreshold [ ::Volume($firstVolID,node) GetUpperThreshold ]
             $dstnode SetLowerThreshold [ ::Volume($firstVolID,node) GetLowerThreshold ]
             $dstnode SetFrequencyPhaseSwap [ ::Volume($firstVolID,node) GetFrequencyPhaseSwap ]
-            $dstnode SetInterpolate [ ::Volume($firstVolID,node) GetInterpolate ]
+            $dstnode SetRasToIjkMatrix [ ::Volume($firstVolID,node) GetRasToIjkMatrix ]
+            $dstnode SetRasToVtkMatrix [ ::Volume($firstVolID,node) GetRasToVtkMatrix ]
+            $dstnode SetPositionMatrix [ ::Volume($firstVolID,node) GetPositionMatrix]
+            #--- if there's only one image plane in the destination volume and
+            #--- interpolation is turned on, nothing shows up in Slicer's viewer!
+            if { $numSrcVols < 2 } {
+                $dstnode SetInterpolate 0
+            } else {
+                $dstnode SetInterpolate [ ::Volume($firstVolID,node) GetInterpolate ]
+            }
             ::Volume($dstnodeID,vol) SetImageData  $imdata
+            #puts "New MrmlVolumeNode $dstnodeID:"
+            #puts "----------------------------------------"
+            #puts "new image data dimensions: $dim"
+            #puts "new image data spacing: $zSpacing"
+            #puts "new image data extent: $ext"
+            #puts ""
 
             set ::Ibrowser($dstID,$n,MRMLid) $dstnodeID
 
-            sliceAppender Delete
+            #--- delete the slice appender and slice extractors for this destination volume
+            appender Delete
+            for { set m 0 } { $m < $::Ibrowser($srcID,numDrops) } { incr m } {
+                extract$m Delete
+                putslice$m Delete
+            }
+            #--- update Ibrowser's progress increment
+            incr pcount
         }
 
-        sliceExtractor Delete
+        IbrowserEndProgressFeedback
+        IbrowserLowerProgressBar    
+
         #--- set first and last MRML ids in the interval
         #--- and create a new interval to hold the volumes
         set ::Ibrowser($dstID,firstMRMLid) [ [ lindex $newnodeList 0 ] GetID ]
         set ::Ibrowser($dstID,lastMRMLid) [ [ lindex $newnodeList end ] GetID ]
-        set spanmax [ expr $numVols - 1 ]
+        set spanmax [ expr $numDestVols - 1 ]
         IbrowserMakeNewInterval $dstName $::IbrowserController(Info,Ival,imageIvalType) \
-            0.0 $spanmax $numVols
+            0.0 $spanmax $numDestVols
 
         #--- text the user
         set tt "Created new interval $dstName from volumes."
         IbrowserSayThis $tt 0
 
         IbrowserEndProgressFeedback
-        set tt "New interval $dstName contains reassembled volumes of $srcName."
+        set c $::Ibrowser(Process,reassembleAxis)
+        set tt "New interval $dstName contains $srcName reassembled with $c axis along interval."
         IbrowserSayThis $tt 0
-        IbrowserLowerProgressBar    
         set ::Ibrowser(Process,reassembleAxis) ""
     }
 }
