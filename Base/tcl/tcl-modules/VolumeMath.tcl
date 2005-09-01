@@ -161,7 +161,7 @@ proc VolumeMathInit {} {
     #   appropriate info when the module is checked in.
     #   
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.41 $} {$Date: 2005/08/29 23:31:45 $}]
+        {$Revision: 1.42 $} {$Date: 2005/09/01 14:22:09 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -204,6 +204,9 @@ proc VolumeMathInit {} {
 
     # sp 2003-12-07
     set ::VolumeMath(castType) Char
+    
+    # sp 2005-09-01
+    set ::VolumeMath(statistics,IncludeZeros) 1
 }
 
 #-------------------------------------------------------------------------------
@@ -372,6 +375,9 @@ files. Sometimes it doesn't work.
     #sp - 2003-08-11
     frame $f.fMaskLabel -bg $Gui(activeWorkspace)
     frame $f.fMaskStatButton -bg $Gui(activeWorkspace)
+    #sp - 2005-09-01
+    frame $f.fStatZeros -bg $Gui(activeWorkspace)
+
     frame $f.fCastType -bg $Gui(activeWorkspace)
     frame $f.fPack -bg $Gui(activeWorkspace)
     pack $f.fSelectMath $f.fGrid $f.fResampButton $f.fMaskLabel $f.fMaskStatButton $f.fCastType $f.fPack  -side top -padx 0 -pady $Gui(pad)
@@ -464,6 +470,23 @@ files. Sometimes it doesn't work.
     set VolumeMath(maskLabelFrame) $f
     pack forget $VolumeMath(maskLabelFrame)
 
+    #sp - 2005-09-01 
+    #-------------------------------------------
+    # Math->Stat zeros
+    #-------------------------------------------
+    set f $fMath.fStatZeros
+
+    eval {checkbutton $f.statzeros \
+        -text "Include Zeros" \
+        -variable ::VolumeMath(statistics,IncludeZeros)
+        } $Gui(WCA)
+    TooltipAdd $f.statzeros "Statistics will include zero values in image when selected."
+
+    pack $f.statzeros
+
+    # stat select option
+    set VolumeMath(statZeroFrame) $f
+    pack forget $VolumeMath(statZeroFrame)
 
     #--------*********--------
     # Math->Mask Stat File
@@ -1040,7 +1063,11 @@ proc VolumeMathSetMathType {} {
     if {$VolumeMath(MathType) != "MaskStat"} {
         pack forget $VolumeMath(MaskStatFButton)
         pack forget $VolumeMath(maskLabelFrame)
+        pack forget $VolumeMath(statZeroFrame)
     }
+    if {$VolumeMath(MathType) != "Statistics"} {
+        pack forget $VolumeMath(statZeroFrame)
+    } 
     if {$VolumeMath(MathType) != "Cast"} {
         pack forget $VolumeMath(castTypeFrame)
     }
@@ -1071,6 +1098,7 @@ proc VolumeMathSetMathType {} {
         $b configure -text "V1"
         $c configure -text "and put the results in"
     } elseif {$VolumeMath(MathType) == "Statistics" } {
+        pack $VolumeMath(statZeroFrame)
         $a configure -text "Calculate Statistics of"
         $b configure -text "(not used)"
         $c configure -text "(not used)"
@@ -1085,12 +1113,13 @@ proc VolumeMathSetMathType {} {
         VolumeMathSetMaskLabel
         pack $VolumeMath(maskLabelFrame)
     } elseif {$VolumeMath(MathType) == "MaskStat" } {
-    $a configure -text "Volume to Mask:"
-    $b configure -text "Label Map:"
-    $c configure -text "Masked Output:"
-    VolumeMathSetMaskLabel
-    pack $VolumeMath(maskLabelFrame)
-    VolumeMathSetFileName
+        pack $VolumeMath(statZeroFrame)
+        $a configure -text "Volume to Mask:"
+        $b configure -text "Label Map:"
+        $c configure -text "Masked Output:"
+        VolumeMathSetMaskLabel
+        pack $VolumeMath(maskLabelFrame)
+        VolumeMathSetFileName
         pack $VolumeMath(MaskStatFButton)    
     } elseif {$VolumeMath(MathType) == "Cast" } {
         $a configure -text "Volume to Cast:"
@@ -1426,16 +1455,31 @@ proc VolumeMathDoStatistics {} {
     }
 
     catch "stat Delete"
-    vtkImageStatistics stat
-    stat IgnoreZeroOn
-    stat SetInput [Volume($VolumeMath(Volume2),vol) GetOutput]
-    stat Update
 
-    set msg "Statistics of [Volume($VolumeMath(Volume2),node) GetName]\n"
-    set msg "$msg - Min: [stat GetMin] Max: [stat GetMax]\n"
-    set msg "$msg - Mean [stat GetAverage] +/- std: [stat GetStdev] \n"
-    set msg "$msg \n(zero values ignored)"
-    tk_messageBox -message $msg -type ok
+    if { $VolumeMath(statistics,IncludeZeros) == 0 } {
+        # use slicer's statistics class
+        vtkImageStatistics stat
+        stat IgnoreZeroOn
+        stat SetInput [Volume($VolumeMath(Volume2),vol) GetOutput]
+        stat Update
+
+        set msg "Statistics of [Volume($VolumeMath(Volume2),node) GetName]\n"
+        set msg "$msg - Min: [stat GetMin] Max: [stat GetMax]\n"
+        set msg "$msg - Mean [stat GetAverage] +/- std: [stat GetStdev] \n"
+        set msg "$msg \n(zero values ignored)"
+        tk_messageBox -message $msg -type ok
+    } else {
+        # use vtk's statistics class
+        vtkImageAccumulate stat
+        stat SetInput [Volume($VolumeMath(Volume2),vol) GetOutput]
+        stat Update
+
+        set msg "Statistics of [Volume($VolumeMath(Volume2),node) GetName]\n"
+        set msg "$msg - Min: [lindex [stat GetMin] 0] Max: [lindex [stat GetMax] 0]\n"
+        set msg "$msg - Mean [lindex [stat GetMean] 0] +/- std: [lindex [stat GetStandardDeviation] 0]\n"
+        tk_messageBox -title "Statistics Including Zero Voxels" -message $msg -type ok
+    }
+
 
     stat Delete
 }
@@ -1863,31 +1907,59 @@ proc VolumeMathDoMaskStat {} {
     Volume($v3,vol) SetImageData [MultMath GetOutput]
     MainVolumesUpdate $v3
 
-    MultMath Delete
-    mathThresh Delete
 
     # stuff from VolumeMathDoMath ...
     set v3 $VolumeMath(Volume3)
     MainVolumesUpdate $v3
 
-    # now do the statistics stuff ...
-    catch "stat1 Delete"
-    vtkImageStatistics stat1
-    stat1 IgnoreZeroOn
-    [Volume($v3,vol) GetOutput] Update
-    stat1 SetInput [Volume($v3,vol) GetOutput]
-    stat1 Update
-    
-    set msg1 "Statistics of [Volume($v3,node) GetName] \n"
-    set msg1 "$msg1 - Min: [stat1 GetMin] Max: [stat1 GetMax] \n"
-    set msg1 "$msg1 - Mean: [stat1 GetAverage] +/- std: [stat1 GetStdev] \n"
-    set msg1 "$msg1 \n (zero values ignored)"
-    tk_messageBox -message $msg1 -type ok
+    if { $VolumeMath(statistics,IncludeZeros) == 0 } {
+        # now do the statistics stuff ... using slicer stat calc to ignore zeros
+        catch "stat1 Delete"
+        vtkImageStatistics stat1
+        stat1 IgnoreZeroOn
+        [Volume($v3,vol) GetOutput] Update
+        stat1 SetInput [Volume($v3,vol) GetOutput]
+        stat1 Update
+        
+        set msg1 "Statistics of [Volume($v3,node) GetName] \n"
+        set msg1 "$msg1 - Min: [stat1 GetMin] Max: [stat1 GetMax] \n"
+        set msg1 "$msg1 - Mean: [stat1 GetAverage] +/- std: [stat1 GetStdev] \n"
+        set msg1 "$msg1 \n (zero values ignored)"
+        tk_messageBox -message $msg1 -type ok
 
-    # write data to the file
-    set fileID [open $VolumeMath(fileName) "w"]
-    puts $fileID "$VolumeMath(fileName) \t min \t [stat1 GetMin] \t max \t [stat1 GetMax] \t mean \t [stat1 GetAverage] \t std \t [stat1 GetStdev] \n"
-    close $fileID
+        # write data to the file
+        set fileID [open $VolumeMath(fileName) "w"]
+        puts $fileID "$VolumeMath(fileName) \t min \t [stat1 GetMin] \t max \t [stat1 GetMax] \t mean \t [stat1 GetAverage] \t std \t [stat1 GetStdev] \n"
+        close $fileID
+    } else {
+        # use vtk's statistics class with the labelmap as a stencil
+        catch "stencil Delete"
+        vtkImageToImageStencil stencil
+        stencil SetInput [mathThresh GetOutput]
+        stencil ThresholdBetween 1 1
+
+        catch "stat1 Delete"
+        vtkImageAccumulate stat1
+        stat1 SetInput [Volume($VolumeMath(Volume2),vol) GetOutput]
+        stat1 SetStencil [stencil GetOutput]
+        stat1 Update
+
+        stencil Delete
+
+        set msg "Statistics of [Volume($VolumeMath(Volume2),node) GetName]\n"
+        set msg "$msg - Min: [lindex [stat1 GetMin] 0] Max: [lindex [stat1 GetMax] 0]\n"
+        set msg "$msg - Mean [lindex [stat1 GetMean] 0] +/- std: [lindex [stat1 GetStandardDeviation] 0]\n"
+        tk_messageBox -title "Statistics in Mask Including Zero Voxels" -message $msg -type ok
+
+        # write data to the file
+        set fileID [open $VolumeMath(fileName) "w"]
+        puts $fileID "$VolumeMath(fileName) \t min \t [stat1 GetMin] \t max \t [stat1 GetMax] \t mean \t [stat1 GetMean] \t std \t [stat1 GetStandardDeviation] \n"
+        close $fileID
+    }
+
+
+    MultMath Delete
+    mathThresh Delete
     
     stat1 Delete
 }
