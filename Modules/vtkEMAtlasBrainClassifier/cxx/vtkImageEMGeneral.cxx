@@ -140,41 +140,6 @@ float vtkImageEMGeneral_qgauss_sqrt(float inverse_sigma, float x)
   }  
 }
 
-// Convolution and polynomial multiplication . 
-// This is assuming u and 'this' have the same dimension
-// Convolution and polynomial multiplication . 
-// This is assuming u and 'this' have the same dimension
-/*   void vtkImageEMGeneral::convMatrix(double** mat, double** U, int matYlen, int matXlen, double v[], int vLen) { */
-/*    int i,j; */
-
-/*    // => Utrans[i] represents the i column of U;     */
-/*    double * Utrans  = new double[matYlen], *UtransPtr = Utrans;  */
-/*    double * result  = new double[matYlen], *resultPtr = result; */
-
-/*    for (i = 0; i < matXlen; i++) { */
-/*       for (j = 0; j < matYlen; j++) *(Utrans++) = U[j][i];  */
-/*       Utrans = UtransPtr;  */
-/*       convVector(result,Utrans,matYlen,v,vLen); // Use the i-th Rows of Utrans;  */
-/*       for (j=0; j < matYlen; j++) mat[j][i] = *(result ++); // Write result to this->mat as i-th column */
-/*       result = resultPtr; */
-/*    } */
-/*    delete[] Utrans; */
-/*    delete[] result; */
-/*  }  */
-
-// Same just v is a row vector instead of column one
-// We use the following equation :
-// conv(U,v) = conv(U',v')' => conv(U,v') = conv(U',v)';
-/*   void vtkImageEMGeneral::convMatrixT(double** mat, double** U, int matYlen, int matXlen, double v[], int vLen) { */
-/*    int i; */
-
-/*    // Use the i-th Rows of U = ith Column of U'; */
-/*    // write it to the i-th Row of 'this' => Transpose again */
-/*    for (i = 0; i < matYlen; i++) { */
-/*       convVector(mat[i],U[i],matXlen,v,vLen);   */
-/*    } */
-/*  }  */
-
 // Calculated the determinant for a dim dimensional matrix -> the value is returned 
 // Faster with LU decomposition - look in Numerical Recipecs
  double vtkImageEMGeneral::determinant(double **mat,int dim) {

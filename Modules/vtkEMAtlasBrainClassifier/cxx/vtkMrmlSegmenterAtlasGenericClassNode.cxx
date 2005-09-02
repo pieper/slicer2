@@ -65,19 +65,6 @@ vtkMrmlSegmenterAtlasGenericClassNode::vtkMrmlSegmenterAtlasGenericClassNode() {
 
   this->InputChannelWeights = NULL;
   this->PrintWeights        = 0;
-  this->PrintRegistrationParameters = 0;
-  this->PrintRegistrationSimularityMeasure = 0;
-
-
-  memset(this->RegistrationTranslation,0,3*sizeof(double));
-  memset(this->RegistrationRotation,0,3*sizeof(double));
-  int i;
-  for (i = 0; i < 3; i++) RegistrationScale[i]= 1.0;
-  for (i = 0; i < 6; i++) this->RegistrationCovariance[i] = 1.0;
-  this->RegistrationCovariance[6] = this->RegistrationCovariance[7] = this->RegistrationCovariance[8] = 0.1;
-
-  this->RegistrationClassSpecificRegistrationFlag = 0;
-  this->ExcludeFromIncompleteEStepFlag = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -96,9 +83,10 @@ vtkMrmlSegmenterAtlasGenericClassNode::~vtkMrmlSegmenterAtlasGenericClassNode() 
 }
 
 //----------------------------------------------------------------------------
-void vtkMrmlSegmenterAtlasGenericClassNode::Write(ofstream& of, int nIndent)
+void vtkMrmlSegmenterAtlasGenericClassNode::Write(ofstream& of)
 {
   // Write all attributes not equal to their defaults
+  of << " name='" << this->Name << "'";
   of << " Prob='" << this->Prob << "'";
   if (this->InputChannelWeights && strcmp(this->InputChannelWeights, "")) 
   {
@@ -112,6 +100,54 @@ void vtkMrmlSegmenterAtlasGenericClassNode::Write(ofstream& of, int nIndent)
   }
 
   if (this->PrintWeights) of << " PrintWeights='" << this->PrintWeights << "'";
+}
+
+//----------------------------------------------------------------------------
+// Copy the node's attributes to this object.
+// Does NOT copy: ID, Name
+void vtkMrmlSegmenterAtlasGenericClassNode::Copy(vtkMrmlNode *anode)
+{
+  vtkMrmlNode::MrmlNodeCopy(anode);
+  vtkMrmlSegmenterAtlasGenericClassNode *node = (vtkMrmlSegmenterAtlasGenericClassNode *) anode;
+
+  this->Prob = node->Prob;
+  this->SetInputChannelWeights(node->InputChannelWeights);
+  this->SetLocalPriorWeight(node->LocalPriorWeight);
+  this->SetLocalPriorName(node->LocalPriorName); 
+
+  this->PrintWeights                  = node->PrintWeights;
+}
+
+//----------------------------------------------------------------------------
+void vtkMrmlSegmenterAtlasGenericClassNode::PrintSelf(ostream& os, vtkIndent indent)
+{
+  os << indent << "Name:                               " << (this->Name ? this->Name : "(none)") << "\n"; 
+  os << indent << "Prob:                               " << this->Prob << "\n"; 
+  os << indent << "InputChannelWeights:                " <<
+    (this->InputChannelWeights ? this->InputChannelWeights : "(none)") << "\n";
+
+  os << indent << "LocalPriorWeight:                   " << this->LocalPriorWeight << "\n";
+  os << indent << "LocalPriorName: " <<
+    (this->LocalPriorName ? this->LocalPriorName : "(none)") << "\n";
+
+  os << indent << "PrintWeights:                       " << this->PrintWeights << "\n";
+}
+
+/*
+  this->PrintRegistrationParameters = 0;
+  this->PrintRegistrationSimularityMeasure = 0;
+
+
+  memset(this->RegistrationTranslation,0,3*sizeof(double));
+  memset(this->RegistrationRotation,0,3*sizeof(double));
+  int i;
+  for (i = 0; i < 3; i++) RegistrationScale[i]= 1.0;
+  for (i = 0; i < 6; i++) this->RegistrationCovariance[i] = 1.0;
+  this->RegistrationCovariance[6] = this->RegistrationCovariance[7] = this->RegistrationCovariance[8] = 0.1;
+
+  this->RegistrationClassSpecificRegistrationFlag = 0;
+  this->ExcludeFromIncompleteEStepFlag = 0;
+
   if (this->PrintRegistrationParameters) of << " PrintRegistrationParameters='" << this->PrintRegistrationParameters << "'";
   if (this->PrintRegistrationSimularityMeasure) of << " PrintRegistrationSimularityMeasure='" << this->PrintRegistrationSimularityMeasure << "'";
 
@@ -127,21 +163,7 @@ void vtkMrmlSegmenterAtlasGenericClassNode::Write(ofstream& of, int nIndent)
   of << "'"; 
   if (this->RegistrationClassSpecificRegistrationFlag) of << " RegistrationClassSpecificRegistrationFlag='" << this->RegistrationClassSpecificRegistrationFlag << "'";
   if (this->ExcludeFromIncompleteEStepFlag) of << " ExcludeFromIncompleteEStepFlag='" << this->ExcludeFromIncompleteEStepFlag << "'";
-}
 
-//----------------------------------------------------------------------------
-// Copy the node's attributes to this object.
-// Does NOT copy: ID, Name
-void vtkMrmlSegmenterAtlasGenericClassNode::Copy(vtkMrmlNode *anode)
-{
-  vtkMrmlNode::MrmlNodeCopy(anode);
-  vtkMrmlSegmenterAtlasGenericClassNode *node = (vtkMrmlSegmenterAtlasGenericClassNode *) anode;
-  this->Prob = node->Prob;
-  this->SetInputChannelWeights(node->InputChannelWeights);
-  this->SetLocalPriorWeight(node->LocalPriorWeight);
-  this->SetLocalPriorName(node->LocalPriorName); 
-
-  this->PrintWeights                  = node->PrintWeights;
   this->PrintRegistrationParameters   = node->PrintRegistrationParameters;
   this->PrintRegistrationSimularityMeasure         = node->PrintRegistrationSimularityMeasure;
   this->RegistrationClassSpecificRegistrationFlag = node->RegistrationClassSpecificRegistrationFlag;
@@ -151,20 +173,7 @@ void vtkMrmlSegmenterAtlasGenericClassNode::Copy(vtkMrmlNode *anode)
   memcpy(this->RegistrationRotation, node->RegistrationRotation,3*sizeof(double));
   memcpy(this->RegistrationScale,node->RegistrationScale,3*sizeof(double));
   memcpy(this->RegistrationCovariance,node->RegistrationCovariance,9*sizeof(double));
-}
 
-//----------------------------------------------------------------------------
-void vtkMrmlSegmenterAtlasGenericClassNode::PrintSelf(ostream& os, vtkIndent indent)
-{
-  os << indent << "Prob:                               " << this->Prob << "\n"; 
-  os << indent << "InputChannelWeights:                " <<
-    (this->InputChannelWeights ? this->InputChannelWeights : "(none)") << "\n";
-
-  os << indent << "LocalPriorWeight:                   " << this->LocalPriorWeight << "\n";
-  os << indent << "LocalPriorName: " <<
-    (this->LocalPriorName ? this->LocalPriorName : "(none)") << "\n";
-
-  os << indent << "PrintWeights:                       " << this->PrintWeights << "\n";
   os << indent << "PrintRegistrationParameters:        " << this->PrintRegistrationParameters << "\n";
   os << indent << "PrintRegistrationSimularityMeasure: " << this->PrintRegistrationSimularityMeasure << "\n";
   os << indent << "RegistrationTranslation:            " << this->RegistrationTranslation[0] << ", " << this->RegistrationTranslation[1] << ", " << this->RegistrationTranslation[2] << "\n" ;
@@ -175,6 +184,6 @@ void vtkMrmlSegmenterAtlasGenericClassNode::PrintSelf(ostream& os, vtkIndent ind
   os << "\n" ;
   os << indent << "RegistrationClassSpecificRegistrationFlag: " << this->RegistrationClassSpecificRegistrationFlag << "\n" ;
   os << indent << "ExcludeFromIncompleteEStepFlag:     " << this->ExcludeFromIncompleteEStepFlag << "\n" ;
-}
 
 
+ */

@@ -57,19 +57,6 @@ class VTK_EMATLASBRAINCLASSIFIER_EXPORT vtkMrmlSegmenterAtlasCIMNode : public vt
 public:
   static vtkMrmlSegmenterAtlasCIMNode *New();
   vtkTypeMacro(vtkMrmlSegmenterAtlasCIMNode,vtkMrmlNode);
-  void PrintSelf(ostream& os, vtkIndent indent);
-  
-  // Description:
-  // Write the node's attributes to a MRML file in XML format
-  void Write(ofstream& of, int indent);
-
-  //--------------------------------------------------------------------------
-  // Utility Functions
-  //--------------------------------------------------------------------------
-
-  // Description:
-  // Copy the node's attributes to this object
-  void Copy(vtkMrmlNode *node);
 
   // Variable Set/Get Functions - Name has to be first to properly work with GUI   
   // Description:
@@ -88,6 +75,16 @@ protected:
   ~vtkMrmlSegmenterAtlasCIMNode();
   vtkMrmlSegmenterAtlasCIMNode(const vtkMrmlSegmenterAtlasCIMNode&) {};
   void operator=(const vtkMrmlSegmenterAtlasCIMNode&) {};
+
+  void PrintSelf(ostream& os, vtkIndent indent);
+  
+  // Description:
+  // Write the node's attributes to a MRML file in XML format
+  void Write(ofstream& of);
+
+  // Description:
+  // Copy the node's attributes to this object
+  void Copy(vtkMrmlNode *node);
 
   // I do not know how to better Identify my Images
   char *CIMMatrix;

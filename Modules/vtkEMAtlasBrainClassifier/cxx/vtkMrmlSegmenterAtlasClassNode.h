@@ -48,37 +48,32 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 //#include <iostream.h>
 //#include <fstream.h>
-#include "vtkMrmlSegmenterAtlasGenericClassNode.h"
+#include "vtkMrmlNode.h"
 #include "vtkSlicer.h"
 #include <vtkEMAtlasBrainClassifierConfigure.h>
 
-class VTK_EMATLASBRAINCLASSIFIER_EXPORT vtkMrmlSegmenterAtlasClassNode : public vtkMrmlSegmenterAtlasGenericClassNode
+// This is just the shell to archieve attributes that are holy to this verision 
+class VTK_EMATLASBRAINCLASSIFIER_EXPORT vtkMrmlSegmenterAtlasClassNode : public vtkMrmlNode
 {
 public:
   static vtkMrmlSegmenterAtlasClassNode *New();
   vtkTypeMacro(vtkMrmlSegmenterAtlasClassNode,vtkMrmlNode);
-  void PrintSelf(ostream& os, vtkIndent indent);
+
+  void PrintSelf(ostream& os,vtkIndent indent);
   
   // Description:
   // Write the node's attributes to a MRML file in XML format
-  void Write(ofstream& of, int indent);
-
-  //--------------------------------------------------------------------------
-  // Utility Functions
-  //--------------------------------------------------------------------------
+  void Write(ofstream& of);
 
   // Description:
   // Copy the node's attributes to this object
   void Copy(vtkMrmlNode *node);
+
+
   // Description:
   // Get/Set for SegmenterClass
   vtkGetMacro(Label, int);
   vtkSetMacro(Label, int);
-
-  // Description:
-  // Get/Set for SegmenterClass
-  vtkGetMacro(ShapeParameter, float);
-  vtkSetMacro(ShapeParameter, float);
 
   // Description:
   // Get/Set for SegmenterClass
@@ -94,6 +89,41 @@ public:
   // Get/Set for SegmenterClass
   vtkSetStringMacro(ReferenceStandardFileName);
   vtkGetStringMacro(ReferenceStandardFileName);
+
+  // Description:
+  // Currenly only the following values defined 
+  // 0 = Do not Print out any print quality 
+  // 1 = Do a DICE comparison
+  vtkSetMacro(PrintQuality,int);
+  vtkGetMacro(PrintQuality,int);
+  
+protected:
+  vtkMrmlSegmenterAtlasClassNode();
+  ~vtkMrmlSegmenterAtlasClassNode();
+  vtkMrmlSegmenterAtlasClassNode(const vtkMrmlSegmenterAtlasClassNode&) {};
+  void operator=(const vtkMrmlSegmenterAtlasClassNode&) {};
+
+  // I do not know how to better Identify my Images
+  int    Label;
+
+  char   *LogMean;
+  char   *LogCovariance;
+  float  LocalPriorWeight;
+
+  char   *ReferenceStandardFileName;
+
+  int    PrintQuality;        // Prints out a quality measure of the current result ( 1=  Dice )
+};
+
+#endif
+
+/*
+
+  // Description:
+  // Get/Set for SegmenterClass
+  vtkGetMacro(ShapeParameter, float);
+  vtkSetMacro(ShapeParameter, float);
+
 
   // Description:
   // Get/Set for SegmenterClass
@@ -114,42 +144,16 @@ public:
   vtkGetMacro(PCALogisticBoundary,float);
   vtkSetMacro(PCALogisticBoundary,float);
 
-  // Description:
-  // Currenly only the following values defined 
-  // 0 = Do not Print out any print quality 
-  // 1 = Do a DICE comparison
-  vtkSetMacro(PrintQuality,int);
-  vtkGetMacro(PrintQuality,int);
-  
   vtkSetMacro(PrintPCA,int);
   vtkGetMacro(PrintPCA,int);
 
-protected:
-  vtkMrmlSegmenterAtlasClassNode();
-  ~vtkMrmlSegmenterAtlasClassNode();
-  vtkMrmlSegmenterAtlasClassNode(const vtkMrmlSegmenterAtlasClassNode&) {};
-  void operator=(const vtkMrmlSegmenterAtlasClassNode&) {};
-
-  // I do not know how to better Identify my Images
-  int    Label;
-
   float  ShapeParameter;
-  char   *LogMean;
-  char   *LogCovariance;
-  float  LocalPriorWeight;
-
   char   *PCAMeanName;
 
   float PCALogisticSlope;
   float PCALogisticMin;
   float PCALogisticMax;
   float PCALogisticBoundary;
-
-  char   *ReferenceStandardFileName;
-
-  int    PrintQuality;        // Prints out a quality measure of the current result ( 1=  Dice )
   int    PrintPCA;            // Print out PCA Parameters at each step 
-};
 
-#endif
-
+ */

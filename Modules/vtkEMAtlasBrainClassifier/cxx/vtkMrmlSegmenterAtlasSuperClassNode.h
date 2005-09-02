@@ -48,34 +48,27 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 //#include <iostream.h>
 //#include <fstream.h>
-#include "vtkMrmlSegmenterAtlasGenericClassNode.h"
+#include "vtkMrmlNode.h"
 #include "vtkSlicer.h"
 #include <vtkEMAtlasBrainClassifierConfigure.h>
 
-// For the first stage super class is just a hirachical element, where we just define the name
-// Extensions for later are planned
-// Kilian 07-Oct-02
-
-class VTK_EMATLASBRAINCLASSIFIER_EXPORT vtkMrmlSegmenterAtlasSuperClassNode : public vtkMrmlSegmenterAtlasGenericClassNode
+class VTK_EMATLASBRAINCLASSIFIER_EXPORT vtkMrmlSegmenterAtlasSuperClassNode : public vtkMrmlNode
 {
 public:
   static vtkMrmlSegmenterAtlasSuperClassNode *New();
   vtkTypeMacro(vtkMrmlSegmenterAtlasSuperClassNode,vtkMrmlNode);
+
   void PrintSelf(ostream& os, vtkIndent indent);
   
   // Description:
   // Write the node's attributes to a MRML file in XML format
-  void Write(ofstream& of, int indent);
-
-  //--------------------------------------------------------------------------
-  // Utility Functions
-  //--------------------------------------------------------------------------
+  void Write(ofstream& of);
 
   // Description:
   // Copy the node's attributes to this object
   void Copy(vtkMrmlNode *node);
 
-   // Description:
+  // Description:
   // Get/Set for Segmenter
   vtkSetMacro(NumClasses, int);
   vtkGetMacro(NumClasses, int);
@@ -90,31 +83,6 @@ public:
 
   vtkGetMacro(PrintLabelMap, int);
   vtkSetMacro(PrintLabelMap, int);  
-
- // Description:
-  // Prints out the shape  cost at each voxel 
-  vtkGetMacro(PrintShapeSimularityMeasure, int);
-  vtkSetMacro(PrintShapeSimularityMeasure, int);
-
-  // Description:
-  // Prints out the number of voxels changed from last to this EM iteration
-  vtkGetMacro(PrintEMLabelMapConvergence, int);  
-  vtkSetMacro(PrintEMLabelMapConvergence, int);  
-
-  // Description:
-  // Prints out the difference in percent 
-  vtkGetMacro(PrintEMWeightsConvergence, int);
-  vtkSetMacro(PrintEMWeightsConvergence, int);
-
- // Description:
-  // Prints out the number of voxels changed from last to this MFA iteration
-  vtkGetMacro(PrintMFALabelMapConvergence, int);  
-  vtkSetMacro(PrintMFALabelMapConvergence, int);  
-
-  // Description:
-  // Prints out the difference in percent 
-  vtkGetMacro(PrintMFAWeightsConvergence, int);
-  vtkSetMacro(PrintMFAWeightsConvergence, int);
 
   // Description:  
   // After which criteria should be stopped   
@@ -150,6 +118,61 @@ public:
 
   vtkGetMacro(StopMFAMaxIter,int); 
   vtkSetMacro(StopMFAMaxIter,int); 
+
+protected:
+  vtkMrmlSegmenterAtlasSuperClassNode();
+  ~vtkMrmlSegmenterAtlasSuperClassNode();
+  vtkMrmlSegmenterAtlasSuperClassNode(const vtkMrmlSegmenterAtlasSuperClassNode&) {};
+  void operator=(const vtkMrmlSegmenterAtlasSuperClassNode&) {};
+
+  int NumClasses;
+
+  int PrintFrequency;
+  int PrintBias;
+  int PrintLabelMap;
+
+  int StopEMType;       // After which criteria should be stopped   
+                                // 0 = fixed iterations 
+                                // 1 = Absolut measure 
+                                // 2 = Relative measure
+  float StopEMValue;    // What is the obundary value, note if the number of iterations 
+                                // extend EMiter than stops than
+                                // if (StopEMType = 1) than it is percent
+
+  int StopEMMaxIter;
+
+  int StopMFAType;       
+  float StopMFAValue;    
+  int StopMFAMaxIter;
+};
+
+#endif
+
+/*
+  // Description:
+  // Prints out the shape  cost at each voxel 
+  vtkGetMacro(PrintShapeSimularityMeasure, int);
+  vtkSetMacro(PrintShapeSimularityMeasure, int);
+
+  // Description:
+  // Prints out the number of voxels changed from last to this EM iteration
+  vtkGetMacro(PrintEMLabelMapConvergence, int);  
+  vtkSetMacro(PrintEMLabelMapConvergence, int);  
+
+  // Description:
+  // Prints out the difference in percent 
+  vtkGetMacro(PrintEMWeightsConvergence, int);
+  vtkSetMacro(PrintEMWeightsConvergence, int);
+
+ // Description:
+  // Prints out the number of voxels changed from last to this MFA iteration
+  vtkGetMacro(PrintMFALabelMapConvergence, int);  
+  vtkSetMacro(PrintMFALabelMapConvergence, int);  
+
+  // Description:
+  // Prints out the difference in percent 
+  vtkGetMacro(PrintMFAWeightsConvergence, int);
+  vtkSetMacro(PrintMFAWeightsConvergence, int);
 
   // Description:
   // You can stop the bias calculation after a certain number of iterations
@@ -189,37 +212,13 @@ public:
   vtkSetMacro(RegistrationIndependentSubClassFlag,int);      
  
 
-protected:
-  vtkMrmlSegmenterAtlasSuperClassNode();
-  ~vtkMrmlSegmenterAtlasSuperClassNode();
-  vtkMrmlSegmenterAtlasSuperClassNode(const vtkMrmlSegmenterAtlasSuperClassNode&) {};
-  void operator=(const vtkMrmlSegmenterAtlasSuperClassNode&) {};
-
-  int NumClasses;
-
-  int PrintFrequency;
-  int PrintBias;
-  int PrintLabelMap;
-
   int PrintShapeSimularityMeasure; // Prints out the shape cost at each voxel 
   int PrintEMLabelMapConvergence;  // Prints out the number of voxels changed from last to this iteration
   int PrintEMWeightsConvergence;   // Prints out the difference in percent 
 
-  int StopEMType;       // After which criteria should be stopped   
-                                // 0 = fixed iterations 
-                                // 1 = Absolut measure 
-                                // 2 = Relative measure
-  float StopEMValue;    // What is the obundary value, note if the number of iterations 
-                                // extend EMiter than stops than
-                                // if (StopEMType = 1) than it is percent
-
-  int StopEMMaxIter;
-
   int PrintMFALabelMapConvergence;  
   int PrintMFAWeightsConvergence; 
-  int StopMFAType;       
-  float StopMFAValue;    
-  int StopMFAMaxIter;
+
   int StopBiasCalculation;
 
   int    RegistrationType; 
@@ -229,7 +228,4 @@ protected:
 
   int RegistrationIndependentSubClassFlag;
 
-};
-
-#endif
-
+ */

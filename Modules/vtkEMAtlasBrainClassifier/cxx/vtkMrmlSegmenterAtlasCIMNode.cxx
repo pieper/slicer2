@@ -72,13 +72,10 @@ vtkMrmlSegmenterAtlasCIMNode::~vtkMrmlSegmenterAtlasCIMNode()
 }
 
 //----------------------------------------------------------------------------
-void vtkMrmlSegmenterAtlasCIMNode::Write(ofstream& of, int nIndent)
+void vtkMrmlSegmenterAtlasCIMNode::Write(ofstream& of)
 {
   // Write all attributes not equal to their defaults
-  
-  vtkIndent i1(nIndent);
 
-  of << i1 << "<SegmenterCIM";
   if (this->Name && strcmp(this->Name, "")) 
   {
     of << " name ='" << this->Name << "'";
@@ -87,7 +84,6 @@ void vtkMrmlSegmenterAtlasCIMNode::Write(ofstream& of, int nIndent)
   {
     of << " CIMMatrix='" << this->CIMMatrix << "'";
   }
-  of << "></SegmenterCIM>\n";;
 }
 
 //----------------------------------------------------------------------------
@@ -95,7 +91,6 @@ void vtkMrmlSegmenterAtlasCIMNode::Write(ofstream& of, int nIndent)
 // Does NOT copy: ID, Name
 void vtkMrmlSegmenterAtlasCIMNode::Copy(vtkMrmlNode *anode)
 {
-  vtkMrmlNode::MrmlNodeCopy(anode);
   vtkMrmlSegmenterAtlasCIMNode *node = (vtkMrmlSegmenterAtlasCIMNode *) anode;
 
   this->SetCIMMatrix(node->CIMMatrix); 
@@ -104,7 +99,6 @@ void vtkMrmlSegmenterAtlasCIMNode::Copy(vtkMrmlNode *anode)
 //----------------------------------------------------------------------------
 void vtkMrmlSegmenterAtlasCIMNode::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkMrmlNode::PrintSelf(os,indent);
    os << indent << "Name: " <<
     (this->Name ? this->Name : "(none)") << "\n";
    os << indent << "CIMMatrix: " <<
@@ -112,4 +106,7 @@ void vtkMrmlSegmenterAtlasCIMNode::PrintSelf(ostream& os, vtkIndent indent)
    os << ")\n";
 }
 
-
+// of << indent ..... 
+// of << "></SegmenterCIM>\n";;
+// vtkMrmlNode::MrmlNodeCopy(anode);
+// vtkMrmlNode::PrintSelf(os,indent);

@@ -61,19 +61,6 @@ class VTK_EMATLASBRAINCLASSIFIER_EXPORT vtkMrmlSegmenterAtlasGenericClassNode : 
 public:
   static vtkMrmlSegmenterAtlasGenericClassNode *New();
   vtkTypeMacro(vtkMrmlSegmenterAtlasGenericClassNode,vtkMrmlNode);
-  void PrintSelf(ostream& os, vtkIndent indent);
-  
-  // Description:
-  // Write the node's attributes to a MRML file in XML format
-  void Write(ofstream& of, int indent);
-
-  //--------------------------------------------------------------------------
-  // Utility Functions
-  //--------------------------------------------------------------------------
-
-  // Description:
-  // Copy the node's attributes to this object
-  void Copy(vtkMrmlNode *node);
 
   // Variable Set/Get Functions - Name has to be first to properly work with GUI   
   // Description:
@@ -113,6 +100,34 @@ public:
   vtkGetMacro(PrintWeights, int);
   vtkSetMacro(PrintWeights, int);
 
+protected:
+  vtkMrmlSegmenterAtlasGenericClassNode();
+  ~vtkMrmlSegmenterAtlasGenericClassNode();
+  vtkMrmlSegmenterAtlasGenericClassNode(const vtkMrmlSegmenterAtlasGenericClassNode&) {};
+  void operator=(const vtkMrmlSegmenterAtlasGenericClassNode&) {};
+
+  void PrintSelf(ostream& os, vtkIndent indent);
+  
+  // Description:
+  // Write the node's attributes to a MRML file in XML format
+  void Write(ofstream& of);
+
+  // Description:
+  // Copy the node's attributes to this object
+  void Copy(vtkMrmlNode *node);
+
+
+  double Prob;
+  float  LocalPriorWeight;
+  char   *InputChannelWeights;  
+  int    PrintWeights;
+  char   *LocalPriorName;
+};
+
+#endif
+
+
+/*
   // Description:  
   // Translation from patient case to atlas space   
   vtkGetVector3Macro(RegistrationTranslation, double);
@@ -155,29 +170,14 @@ public:
   vtkSetMacro(ExcludeFromIncompleteEStepFlag,int);
   vtkBooleanMacro(ExcludeFromIncompleteEStepFlag,int);
 
-protected:
-  vtkMrmlSegmenterAtlasGenericClassNode();
-  ~vtkMrmlSegmenterAtlasGenericClassNode();
-  vtkMrmlSegmenterAtlasGenericClassNode(const vtkMrmlSegmenterAtlasGenericClassNode&) {};
-  void operator=(const vtkMrmlSegmenterAtlasGenericClassNode&) {};
-
-  double Prob;
-  float  LocalPriorWeight;
-  char   *InputChannelWeights;  
-  int    PrintWeights;
   int    PrintRegistrationParameters;
   int    PrintRegistrationSimularityMeasure;
-
-  char   *LocalPriorName;
 
   double RegistrationTranslation[3];
   double RegistrationRotation[3];
   double RegistrationScale[3];
   double RegistrationCovariance[9];
   int RegistrationClassSpecificRegistrationFlag; 
-int ExcludeFromIncompleteEStepFlag;
+  int ExcludeFromIncompleteEStepFlag;
 
-};
-
-#endif
-
+ */

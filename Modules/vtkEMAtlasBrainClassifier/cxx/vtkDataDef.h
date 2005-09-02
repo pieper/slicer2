@@ -70,27 +70,6 @@ typedef struct {
   int endindex;   /* Process voxels in the range [startindex, endindex) */
 } convolution_filter_work;
 
-// Function needed both in vtkDataDef and vtkImageEMGeneral
-// Convolution and polynomial multiplication . 
-// This is assuming u and 'this' have the same dimensio
-inline void convVector(float vec[], float u[], int uLen, float v[], int vLen){
-  int stump = vLen /2;
-  int k,j,jMin,jMax;
-  int kMax = uLen + stump;
-  float *uSta =u, *vSta=v;  
-
-  for (k = stump; k <  kMax; k++) {
-    *vec = 0;
-    jMin = (0 > (k - vLen +1) ? 0 : (k - vLen+1) ); // max(0,k-vLen+1):
-    jMax = ((k+1) < uLen ? (k+1) : uLen) ;               // min(k,uLen)+1 
-    u = uSta + jMin; v = vSta + k-jMin;
-    for (j=jMin; j < jMax; j++) 
-      *vec += (*u++) * (*v--);
-    vec ++;
-  }  
-}
-
-
 // ----------------------------------------------------------------------------------------------
 // Definitions for 3D float array EMVolume
 // ----------------------------------------------------------------------------------------------/ 

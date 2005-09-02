@@ -314,11 +314,6 @@ protected:
   // static void convMatrixT(double** mat, double** U, int matYlen, int matXlen, double v[], int vLen);
 
   // Description:
-  // Convolution and polynomial multiplication . 
-  // This is assuming u and 'this' have the same dimensio
-  // static void convVector(double vec[], double u[], int uLen, double v[], int vLen);
-
-  // Description:
   // Calculates Vector * Matrix * Vector
   static double CalculateVectorMatrixVectorOperation(double** mat, double *vec, int offY,int dimY, int offX, int dimX);
 

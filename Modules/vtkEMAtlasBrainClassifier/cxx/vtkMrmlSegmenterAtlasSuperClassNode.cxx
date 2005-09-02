@@ -58,30 +58,19 @@ vtkMrmlSegmenterAtlasSuperClassNode* vtkMrmlSegmenterAtlasSuperClassNode::New()
 //----------------------------------------------------------------------------
 vtkMrmlSegmenterAtlasSuperClassNode::vtkMrmlSegmenterAtlasSuperClassNode() { 
   // vtkMrmlNode's attributes => Tabs following sub classes  
-  this->Indent     = 1;
   this->NumClasses = 0;
 
   this->PrintFrequency      = 0;
   this->PrintBias           = 0;
   this->PrintLabelMap       = 0;
 
-  this->PrintEMLabelMapConvergence  = 0;
-  this->PrintEMWeightsConvergence = 0;
   this->StopEMType  = 0;
   this->StopEMValue = 0.0; 
   this->StopEMMaxIter = 0; 
 
-  this->PrintShapeSimularityMeasure = 0;
-  this->PrintMFALabelMapConvergence  = 0;
-  this->PrintMFAWeightsConvergence = 0;
   this->StopMFAType         = 0;
   this->StopMFAValue        = 0.0; 
   this->StopMFAMaxIter      = 0; 
-  this->StopBiasCalculation = -1;
-  this->RegistrationType    = 0;
-  this->GenerateBackgroundProbability = 0;
-  this->PCAShapeModelType = 0;
-  this->RegistrationIndependentSubClassFlag = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -89,38 +78,23 @@ vtkMrmlSegmenterAtlasSuperClassNode::~vtkMrmlSegmenterAtlasSuperClassNode() {
 }
 
 //----------------------------------------------------------------------------
-void vtkMrmlSegmenterAtlasSuperClassNode::Write(ofstream& of, int nIndent)
+void vtkMrmlSegmenterAtlasSuperClassNode::Write(ofstream& of)
 {
   // Write all attributes not equal to their defaults
   
-  vtkIndent i1(nIndent);
-  of << i1 << "<SegmenterSuperClass";
   if (this->Name && strcmp(this->Name, "")) of << " name ='" << this->Name << "'";
   of << " NumClasses ='" << this->NumClasses << "'";
-  this->vtkMrmlSegmenterAtlasGenericClassNode::Write(of,nIndent);
-  of << " RegistrationType='" << this->RegistrationType << "' ";
-
   of << " PrintBias='" << this->PrintBias << "'";
   of << " PrintLabelMap='" << this->PrintLabelMap << "'";
   of << " PrintFrequency='" << this->PrintFrequency << "'";
 
-  of << " PrintEMLabelMapConvergence='" << this->PrintEMLabelMapConvergence <<  "'";
-  of << " PrintEMWeightsConvergence='" << this->PrintEMWeightsConvergence  <<  "'";
   of << " StopEMType='" << this->StopEMType  <<  "'";
   of << " StopEMValue='" << this->StopEMValue <<  "'";
   of << " StopEMMaxIter='" << this->StopEMMaxIter <<  "'";
 
-  of << " PrintMFALabelMapConvergence='" << this->PrintMFALabelMapConvergence <<  "'";
-  of << " PrintMFAWeightsConvergence='" << this->PrintMFAWeightsConvergence  <<  "'";
   of << " StopMFAType='" << this->StopMFAType  <<  "'";
   of << " StopMFAValue='" << this->StopMFAValue <<  "'";
   of << " StopMFAMaxIter='" << this->StopMFAMaxIter <<  "'";
-  of << " StopStopBiasCalculation='" << this->StopBiasCalculation <<  "'";
-  of << " GenerateBackgroundProbability='" << this->GenerateBackgroundProbability <<  "'";
-  of << " PrintShapeSimularityMeasure='" << this->PrintShapeSimularityMeasure << "'";
-  of << " PCAShapeModelType='" << this->PCAShapeModelType << "'";
-  of << " RegistrationIndependentSubClassFlag='" << this->RegistrationIndependentSubClassFlag << "'";
-  of << ">\n";
 
 }
 
@@ -129,8 +103,6 @@ void vtkMrmlSegmenterAtlasSuperClassNode::Write(ofstream& of, int nIndent)
 // Does NOT copy: ID, Name
 void vtkMrmlSegmenterAtlasSuperClassNode::Copy(vtkMrmlNode *anode)
 {
-  vtkMrmlNode::MrmlNodeCopy(anode);
-  vtkMrmlSegmenterAtlasGenericClassNode::Copy(anode);
   vtkMrmlSegmenterAtlasSuperClassNode *node = (vtkMrmlSegmenterAtlasSuperClassNode *) anode;
 
   this->NumClasses = node->NumClasses;
@@ -139,17 +111,73 @@ void vtkMrmlSegmenterAtlasSuperClassNode::Copy(vtkMrmlNode *anode)
   this->PrintLabelMap  = node->PrintLabelMap;
   this->PrintFrequency = node->PrintFrequency;
 
-  this->PrintEMLabelMapConvergence    = node->PrintEMLabelMapConvergence;
-  this->PrintEMWeightsConvergence     = node->PrintEMWeightsConvergence;
   this->StopEMType            = node->StopEMType;
   this->StopEMValue           = node->StopEMValue; 
   this->StopEMMaxIter   = node->StopEMMaxIter; 
 
-  this->PrintMFALabelMapConvergence   = node->PrintMFALabelMapConvergence;
-  this->PrintMFAWeightsConvergence    = node->PrintMFAWeightsConvergence;
   this->StopMFAType           = node->StopMFAType;
   this->StopMFAValue          = node->StopMFAValue; 
   this->StopMFAMaxIter        = node->StopMFAMaxIter; 
+}
+
+//----------------------------------------------------------------------------
+void vtkMrmlSegmenterAtlasSuperClassNode::PrintSelf(ostream& os, vtkIndent indent)
+{
+  os << indent << "NumClasses:                    "  << this->NumClasses      <<  "\n"; 
+  os << indent << "PrintBias:                     " << this->PrintBias << "\n";
+  os << indent << "PrintLabelMap:                 " << this->PrintLabelMap << "\n";
+  os << indent << "PrintFrequency:                " << this->PrintFrequency << "\n";
+
+  os << indent << "StopEMType:                    " << this->StopEMType  << "\n";
+  os << indent << "StopEMValue:                   " << this->StopEMValue << "\n";
+  os << indent << "StopEMMaxIter:                 " << this->StopEMMaxIter << "\n";
+
+  os << indent << "StopMFAType:                   " << this->StopMFAType  << "\n";
+  os << indent << "StopMFAValue:                  " << this->StopMFAValue << "\n";
+  os << indent << "StopMFAMaxIter:                " << this->StopMFAMaxIter << "\n";
+}
+
+/*
+  this->Indent     = 1;
+  this->PrintEMLabelMapConvergence  = 0;
+  this->PrintEMWeightsConvergence = 0;
+
+  this->PrintShapeSimularityMeasure = 0;
+  this->PrintMFALabelMapConvergence  = 0;
+  this->PrintMFAWeightsConvergence = 0;
+
+  this->StopBiasCalculation = -1;
+  this->RegistrationType    = 0;
+  this->GenerateBackgroundProbability = 0;
+  this->PCAShapeModelType = 0;
+  this->RegistrationIndependentSubClassFlag = 0;
+
+  vtkIndent i1(nIndent);
+  of << i1 << "<SegmenterSuperClass";
+
+  this->vtkMrmlSegmenterAtlasGenericClassNode::Write(of,nIndent);
+  of << " RegistrationType='" << this->RegistrationType << "' ";
+
+  of << " PrintEMLabelMapConvergence='" << this->PrintEMLabelMapConvergence <<  "'";
+  of << " PrintEMWeightsConvergence='" << this->PrintEMWeightsConvergence  <<  "'";
+
+  of << " PrintMFALabelMapConvergence='" << this->PrintMFALabelMapConvergence <<  "'";
+  of << " PrintMFAWeightsConvergence='" << this->PrintMFAWeightsConvergence  <<  "'";
+
+  of << " StopStopBiasCalculation='" << this->StopBiasCalculation <<  "'";
+  of << " GenerateBackgroundProbability='" << this->GenerateBackgroundProbability <<  "'";
+  of << " PrintShapeSimularityMeasure='" << this->PrintShapeSimularityMeasure << "'";
+  of << " PCAShapeModelType='" << this->PCAShapeModelType << "'";
+  of << " RegistrationIndependentSubClassFlag='" << this->RegistrationIndependentSubClassFlag << "'";
+  of << ">\n";
+
+  vtkMrmlNode::MrmlNodeCopy(anode);
+  vtkMrmlSegmenterAtlasGenericClassNode::Copy(anode);
+
+  this->PrintEMLabelMapConvergence    = node->PrintEMLabelMapConvergence;
+  this->PrintEMWeightsConvergence     = node->PrintEMWeightsConvergence;
+  this->PrintMFALabelMapConvergence   = node->PrintMFALabelMapConvergence;
+  this->PrintMFAWeightsConvergence    = node->PrintMFAWeightsConvergence;
   this->StopBiasCalculation   = node->StopBiasCalculation;
 
   this->RegistrationType              = node->RegistrationType;
@@ -157,36 +185,23 @@ void vtkMrmlSegmenterAtlasSuperClassNode::Copy(vtkMrmlNode *anode)
   this->PrintShapeSimularityMeasure   = node->PrintShapeSimularityMeasure;
   this->PCAShapeModelType             = node->PCAShapeModelType;
   this->RegistrationIndependentSubClassFlag = node->RegistrationIndependentSubClassFlag;
-}
 
-//----------------------------------------------------------------------------
-void vtkMrmlSegmenterAtlasSuperClassNode::PrintSelf(ostream& os, vtkIndent indent)
-{
   vtkMrmlNode::PrintSelf(os,indent);
   os << indent << "Name:                          " << (this->Name ? this->Name : "(none)") << "\n";
-  os << indent << "NumClasses:                    "  << this->NumClasses      <<  "\n"; 
   this->vtkMrmlSegmenterAtlasGenericClassNode::PrintSelf(os, indent);
   os << indent << "RegistrationType:              " << this->RegistrationType<< "\n" ;
 
-  os << indent << "PrintBias:                     " << this->PrintBias << "\n";
-  os << indent << "PrintLabelMap:                 " << this->PrintLabelMap << "\n";
-  os << indent << "PrintFrequency:                " << this->PrintFrequency << "\n";
-
   os << indent << "PrintEMLabelMapConvergence:    " << this->PrintEMLabelMapConvergence << "\n";
   os << indent << "PrintEMWeightsConvergence:     " << this->PrintEMWeightsConvergence << "\n";
-  os << indent << "StopEMType:                    " << this->StopEMType  << "\n";
-  os << indent << "StopEMValue:                   " << this->StopEMValue << "\n";
-  os << indent << "StopEMMaxIter:                 " << this->StopEMMaxIter << "\n";
 
   os << indent << "PrintMFALabelMapConvergence:   " << this->PrintMFALabelMapConvergence << "\n";
   os << indent << "PrintMFAWeightsConvergence:    " << this->PrintMFAWeightsConvergence << "\n";
-  os << indent << "StopMFAType:                   " << this->StopMFAType  << "\n";
-  os << indent << "StopMFAValue:                  " << this->StopMFAValue << "\n";
-  os << indent << "StopMFAMaxIter:                " << this->StopMFAMaxIter << "\n";
+
   os << indent << "StopBiasCalculation:           " << this->StopBiasCalculation << "\n";
 
   os << indent << "GenerateBackgroundProbability: " << this->GenerateBackgroundProbability << "\n";
   os << indent << "PrintShapeSimularityMeasure:   " << this->PrintShapeSimularityMeasure << "\n";
   os << indent << "PCAShapeModelType:             " << this->PCAShapeModelType << "\n";
   os << indent << "RegistrationIndependentSubClassFlag: " << this->RegistrationIndependentSubClassFlag << "\n";
-}
+
+ */
