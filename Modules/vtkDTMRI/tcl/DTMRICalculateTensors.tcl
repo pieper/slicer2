@@ -67,7 +67,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.19 $} {$Date: 2005/08/09 22:57:27 $}]
+                                 {$Revision: 1.20 $} {$Date: 2005/09/02 16:49:02 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -1492,17 +1492,25 @@ proc ConvertVolumeToTensors {} {
         }
     }
 
-    # average the two slices of no gradient 
-    # NOTE THIS WILL NOT WORK WITH MORE THAN 2
+ 
     if {$numberOfNoGradientImages > 1} {
       vtkImageMathematics math
       math SetOperationToAdd
 
+      catch "vtkImageCast _cast"
+      _cast SetInput [extract[lindex $offsetsNoGradient 0] GetOutput]
+      _cast SetOutputScalarTypeToFloat
+      _cast Update
+      
       vtkImageData slicebase 
-      slicebase DeepCopy [extract[lindex $offsetsNoGradient 0] GetOutput]
+      slicebase DeepCopy [_cast GetOutput]
       
       for {set k 1} {$k < $numberOfNoGradientImages} {incr k} {
-        set slicechange [extract[lindex $offsetsNoGradient $k] GetOutput]
+        
+        _cast SetInput [extract[lindex $offsetsNoGradient $k] GetOutput]
+        _cast SetOutputScalarTypeToFloat
+    _cast Update
+        set slicechange [_cast GetOutput]
         math SetInput 0 slicebase
         math SetInput 1 $slicechange
         math Update
@@ -1513,12 +1521,20 @@ proc ConvertVolumeToTensors {} {
       math2 SetOperationToMultiplyByK
       math2 SetConstantK [expr 1.0 / $numberOfNoGradientImages]
       math2 SetInput 0 [math GetOutput]
+      math2 SetInput 1 ""
       math2 Update
+      
+      _cast Delete
+      catch "vtkImageCast _cast"
+      _cast SetInput [math2 GetOutput]
+      _cast SetOutputScalarType [[extract[lindex $offsetsNoGradient 0] GetOutput] GetScalarType]
+      _cast Update
+ 
       
       # set the no diffusion input
       #DTMRI SetNoDiffusionImage [extract6 GetOutput]
-      DTMRI SetNoDiffusionImage [math2 GetOutput]
-      set baseline [math2 GetOutput]
+      DTMRI SetNoDiffusionImage [_cast GetOutput]
+      set baseline [_cast GetOutput]
             
       
     } else {
@@ -1574,27 +1590,44 @@ proc ConvertVolumeToTensors {} {
 
 
       # average gradient images for display and checking mechanism. 
-      # NOTE THIS WILL NOT WORK WITH MORE THAN 2
-      vtkImageMathematics math_g
+      catch "vtkImageMathematics math_g"
       math_g SetOperationToAdd
-
+      
+      
+      catch "vtkImageCast _cast_g"
+      _cast_g SetInput [extract[lindex $offsetsGradient 0] GetOutput]
+      _cast_g SetOutputScalarTypeToFloat
+      _cast_g Update
+      
       vtkImageData slicebase
-      slicebase DeepCopy [extract[lindex $offsetsGradient 0] GetOutput]
+      slicebase DeepCopy [_cast_g GetOutput]
+      
       for {set k 1} {$k < $numberOfGradientImages} {incr k} {
-        set slicechange [extract[lindex $offsetsGradient $k] GetOutput]
+        _cast_g SetInput [extract[lindex $offsetsGradient $k] GetOutput]
+        _cast_g SetOutputScalarTypeToFloat
+        _cast_g Update
+    
+        set slicechange [_cast_g GetOutput]
         math_g SetInput 0 slicebase
         math_g SetInput 1 $slicechange
         math_g Update
         slicebase DeepCopy [math_g GetOutput]
       }
       slicebase Delete
-      vtkImageMathematics math2_g
+      catch "vtkImageMathematics math2_g"
       math2_g SetOperationToMultiplyByK
       math2_g SetConstantK [expr 1.0 / $numberOfGradientImages]
       math2_g SetInput 0 [math_g GetOutput]
+      math2_g SetInput 1 ""
       math2_g Update
       
-      set baseline [math2_g GetOutput]
+      _cast_g Delete
+      catch "vtkImageCast _cast_g"
+      _cast_g SetInput [math2_g GetOutput]
+      _cast_g SetOutputScalarType [[extract[lindex $offsetsGradient 0] GetOutput] GetScalarType]
+      _cast_g Update
+      
+      set baseline [_cast_g GetOutput]
  
     #Make a MRML node with BaseLine
      set name [Volume($v,node) GetName]
@@ -1722,14 +1755,18 @@ proc ConvertVolumeToTensors {} {
     if {$numberOfNoGradientImages > 1} {
         math SetOutput ""
         math2 SetOutput ""
+    _cast SetOutput ""
         math Delete
         math2 Delete
+    _cast Delete
     }
     
     math_g SetOutput ""
     math2_g SetOutput ""
     math_g Delete
     math2_g Delete
+    _cast_g SetOutput ""
+    _cast_g Delete
     
     DTMRI SetOutput ""
     DTMRI Delete
