@@ -57,19 +57,7 @@ class VTK_EMATLASBRAINCLASSIFIER_EXPORT vtkMrmlSegmenterAtlasNode : public vtkMr
 public:
   static vtkMrmlSegmenterAtlasNode *New();
   vtkTypeMacro(vtkMrmlSegmenterAtlasNode,vtkMrmlNode);
-  void PrintSelf(ostream& os, vtkIndent indent);
-  
-  // Description:
-  // Write the node's attributes to a MRML file in XML format
-  void Write(ofstream& of, int indent);
 
-  //--------------------------------------------------------------------------
-  // Utility Functions
-  //--------------------------------------------------------------------------
-
-  // Description:
-  // Copy the node's attributes to this object
-  void Copy(vtkMrmlNode *node);
   // Description:
   // Get/Set for Segmenter
   vtkSetMacro(AlreadyRead, int);
@@ -79,11 +67,6 @@ public:
   // Get/Set for Segmenter
   vtkSetMacro(MaxInputChannelDef, int);
   vtkGetMacro(MaxInputChannelDef, int);
-
-  // Description:
-  // Get/Set for Segmenter
-  vtkSetMacro(EMShapeIter, int);
-  vtkGetMacro(EMShapeIter, int);
 
   // Description:
   // Get/Set for Segmenter
@@ -129,12 +112,6 @@ public:
   vtkSetVector3Macro(SegmentationBoundaryMax,int);
   vtkGetVector3Macro(SegmentationBoundaryMax,int);
 
- 
-  // Description:
-  // Get/Set for Segmenter
-  vtkSetMacro(DisplayProb, int);
-  vtkGetMacro(DisplayProb, int);
-
   // Description:
   // Get/Set for Segmenter
   vtkSetMacro(NumberOfTrainingSamples, int);
@@ -152,14 +129,6 @@ public:
   // e.g. weights 
   vtkGetStringMacro(PrintDir);
   vtkSetStringMacro(PrintDir);
-
-
-  // Description:
-  // Define what kind of interpolation you want for the registration function - 
-  // 1 = Linear Affine Registration 
-  // 2 = Nearest Neighbour Affine Registration
-   vtkSetMacro(RegistrationInterpolationType, int);
-   vtkGetMacro(RegistrationInterpolationType, int);
 
 
   // Legacy Variables : 
@@ -182,22 +151,30 @@ protected:
   vtkMrmlSegmenterAtlasNode(const vtkMrmlSegmenterAtlasNode&) {};
   void operator=(const vtkMrmlSegmenterAtlasNode&) {};
 
+  void PrintSelf(ostream& os,vtkIndent indent);
+  
+  // Description:
+  // Write the node's attributes to a MRML file in XML format
+  void Write(ofstream& of);
+
+  // Description:
+  // Copy the node's attributes to this object
+  void Copy(vtkMrmlNode *node);
+
+
   int    AlreadyRead; 
   int    MaxInputChannelDef;
-  int    EMShapeIter;
   int    EMiteration;
   int    MFAiteration;
   double Alpha;
   int    SmWidth;
   int    SmSigma;
-  int    DisplayProb;  // Should the probability displayed in the graph - left it in bc it is more work to take it out - should not be defined here but in GraphNode 
   int    NumberOfTrainingSamples;
   int    IntensityAvgClass;
   char*  PrintDir;
   int    SegmentationBoundaryMin[3];
   int    SegmentationBoundaryMax[3];
 
-  int    RegistrationInterpolationType;
   // These are legacy definitions - we leave them in so we keep compatibility with older versions
   int    NumClasses; //  From July 04 the HeadClass will be defined seperatly from SegmenterNode so that there is no overlap anymore between SuperClassNode and SegmenterNode
 
@@ -205,3 +182,28 @@ protected:
 
 #endif
 
+/*
+
+  // Description:
+  // Get/Set for Segmenter
+  vtkSetMacro(DisplayProb, int);
+  vtkGetMacro(DisplayProb, int);
+ 
+  // Should be deleted 
+  // Description:
+  // Get/Set for Segmenter
+  vtkSetMacro(EMShapeIter, int);
+  vtkGetMacro(EMShapeIter, int);
+
+  // Description:
+  // Define what kind of interpolation you want for the registration function - 
+  // 1 = Linear Affine Registration 
+  // 2 = Nearest Neighbour Affine Registration
+   vtkSetMacro(RegistrationInterpolationType, int);
+   vtkGetMacro(RegistrationInterpolationType, int);
+
+  int    DisplayProb;  // Should the probability displayed in the graph - left it in bc it is more work to take it out - should not be defined here but in GraphNode 
+  int    EMShapeIter;
+  int    RegistrationInterpolationType;
+
+*/

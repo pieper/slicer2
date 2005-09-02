@@ -64,9 +64,9 @@ vtkMrmlSegmenterAtlasSuperClassNode::vtkMrmlSegmenterAtlasSuperClassNode() {
   this->PrintBias           = 0;
   this->PrintLabelMap       = 0;
 
-  this->StopEMType  = 0;
-  this->StopEMValue = 0.0; 
-  this->StopEMMaxIter = 0; 
+  this->StopEMType          = 0;
+  this->StopEMValue         = 0.0; 
+  this->StopEMMaxIter       = 0; 
 
   this->StopMFAType         = 0;
   this->StopMFAValue        = 0.0; 

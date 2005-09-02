@@ -57,19 +57,6 @@ class VTK_EMATLASBRAINCLASSIFIER_EXPORT vtkMrmlSegmenterAtlasInputNode : public 
 public:
   static vtkMrmlSegmenterAtlasInputNode *New();
   vtkTypeMacro(vtkMrmlSegmenterAtlasInputNode,vtkMrmlNode);
-  void PrintSelf(ostream& os, vtkIndent indent);
-  
-  // Description:
-  // Write the node's attributes to a MRML file in XML format
-  void Write(ofstream& of, int indent);
-
-  //--------------------------------------------------------------------------
-  // Utility Functions
-  //--------------------------------------------------------------------------
-
-  // Description:
-  // Copy the node's attributes to this object
-  void Copy(vtkMrmlNode *node);
 
   // Variable Set/Get Functions - Name has to be first to properly work with GUI   
   // Description:
@@ -82,21 +69,34 @@ public:
   vtkSetStringMacro(FileName);
   vtkGetStringMacro(FileName);
 
-  // Description:
-  // Get/Set for SegmenterInput
-  vtkGetMacro(IntensityAvgValuePreDef, double);
-  vtkSetMacro(IntensityAvgValuePreDef, double);
-
 protected:
   vtkMrmlSegmenterAtlasInputNode();
   ~vtkMrmlSegmenterAtlasInputNode();
   vtkMrmlSegmenterAtlasInputNode(const vtkMrmlSegmenterAtlasInputNode&) {};
   void operator=(const vtkMrmlSegmenterAtlasInputNode&) {};
 
+  void PrintSelf(ostream& os,vtkIndent indent);
+  
+  // Description:
+  // Write the node's attributes to a MRML file in XML format
+  void Write(ofstream& of);
+
+  // Description:
+  // Copy the node's attributes to this object
+  void Copy(vtkMrmlNode *node);
+
   // I do not know how to better Identify my Images
   char *FileName;
-  double IntensityAvgValuePreDef;
 };
 
 #endif
 
+/*
+  // Description:
+  // Get/Set for SegmenterInput
+  vtkGetMacro(IntensityAvgValuePreDef, double);
+  vtkSetMacro(IntensityAvgValuePreDef, double);
+
+  double IntensityAvgValuePreDef;
+
+*/
