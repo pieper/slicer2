@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkBVolumeReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/04/12 16:58:02 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2005/09/06 21:22:54 $
+  Version:   $Revision: 1.7.6.1 $
 
 =========================================================================*/
 #include <sys/types.h>
@@ -142,7 +142,7 @@ void vtkBVolumeReader::ExecuteInformation()
              0, this->DataDimensions[1]-1,
              0, this->DataDimensions[2]-1 );
   output->SetScalarType(this->ScalarType);
-  output->SetNumberOfScalarComponents(1);
+  output->SetNumberOfScalarComponents(this->NumTimePoints);
   output->SetSpacing(this->DataSpacing);
   output->SetOrigin(this->DataOrigin);
 }
@@ -150,10 +150,15 @@ void vtkBVolumeReader::ExecuteInformation()
     
 void vtkBVolumeReader::Execute()
 {
-    vtkDebugMacro(<<"Execute\n");
+    vtkDebugMacro(<<"\n\n\nStarting Execute...\n");
     
   vtkImageData *output = this->GetOutput();
 
+  if (output == NULL)
+  {
+      vtkErrorMacro(<<"vtkBVolumeReader: Execute: output is null");
+  }
+  
   // Read the header.
   if (this->ReadVolumeHeader() == 0)
   {
@@ -168,6 +173,7 @@ void vtkBVolumeReader::Execute()
              0, this->DataDimensions[2]-1 );
   output->SetScalarType(this->ScalarType);
   output->SetNumberOfScalarComponents(1);
+  //output->SetNumberOfScalarComponents(this->NumTimePoints);
   output->SetDimensions(this->DataDimensions);
   output->SetSpacing(this->DataSpacing);
   output->SetOrigin(this->DataOrigin);
@@ -179,6 +185,9 @@ void vtkBVolumeReader::Execute()
     {
       output->GetPointData()->SetScalars(newScalars);
       newScalars->Delete();
+      vtkDebugMacro(<<"Execute: number of components in output's point data = " << output->GetPointData()->GetNumberOfComponents() << ", in scalar = " << output->GetPointData()->GetScalars()->GetNumberOfComponents());
+    } else {
+        vtkErrorMacro(<<"vtkBVolumeReader: Execute: scalars are null");
     }
 }
 
@@ -262,15 +271,17 @@ vtkDataArray *vtkBVolumeReader::ReadVolumeData()
   int numRead;
   int numPts;
   int numPtsPerSlice;
+  int totalPoints;
   int numReadTotal;
   int numReadSlice;
+  int tupleNum;
   int slice;
   int elementSize;
   short s;
   int i;
   float f;
 
-    vtkDebugMacro(<<"ReadVolumeData\n");
+    vtkDebugMacro(<<"\n\n\n\n\n\n\n\n\n\n***************\nvtkBvolumeReader: ReadVolumeData\n");
 
   // Read header first.
     if (this->ReadVolumeHeader() == 0)
@@ -286,13 +297,16 @@ vtkDataArray *vtkBVolumeReader::ReadVolumeData()
     return NULL;
   }
 
+//  this->SetProgressText("Reading B volume");
+  
   // Calc the number of values.
   numPts = this->DataDimensions[0] * 
     this->DataDimensions[1] * 
     this->DataDimensions[2];
   numPtsPerSlice = this->DataDimensions[0] * 
-    this->DataDimensions[1];
-
+    this->DataDimensions[1] * this->NumTimePoints;
+  totalPoints =  numPts*this->NumTimePoints;
+  
   // Create the scalar array for the volume. Set the element size for
   // the data we will read. Get a writable pointer to the scalar data
   // so we can read data into it.
@@ -300,6 +314,8 @@ vtkDataArray *vtkBVolumeReader::ReadVolumeData()
   case VTK_SHORT:
     vtkDebugMacro (<< "Creating vtkShortArray");
     shortScalars = vtkShortArray::New();
+    shortScalars->SetNumberOfTuples(numPts);
+    shortScalars->SetNumberOfComponents(this->NumTimePoints);    
     shortScalars->Allocate(numPts);
     destData = (void*) shortScalars->WritePointer(0, numPts);
     short_destData = (short *)destData;
@@ -307,8 +323,10 @@ vtkDataArray *vtkBVolumeReader::ReadVolumeData()
     elementSize = sizeof( short );
     break;
   case VTK_FLOAT:
-    vtkDebugMacro (<< "Creating vtkFloatArray");
+      vtkDebugMacro (<< "Creating vtkFloatArray of size " << numPts);
     floatScalars = vtkFloatArray::New();
+    floatScalars->SetNumberOfTuples(numPts);
+    floatScalars->SetNumberOfComponents(this->NumTimePoints);
     floatScalars->Allocate(numPts);
     destData = (void*) floatScalars->WritePointer(0, numPts);
     float_destData = (float *)destData;
@@ -323,84 +341,122 @@ vtkDataArray *vtkBVolumeReader::ReadVolumeData()
     vtkErrorMacro(<< "Couldn't allocate scalars array.");
     return NULL;
   } 
-  
 
   // For each slice..
   numReadTotal = 0;
+  tupleNum = 0;
   for( sliceNumber = 0; 
        sliceNumber < this->DataDimensions[2];
        sliceNumber++ ) {
 
-    numReadSlice = 0;
+      numReadSlice = 0;
+      
+      // Generate the file name.
+      sprintf( sliceFileName, "%s_%03d.%s", 
+               this->Stem, sliceNumber, this->SliceFileNameExtension );
 
-    // Generate the file name.
-    sprintf( sliceFileName, "%s_%03d.%s", 
-         this->Stem, sliceNumber, this->SliceFileNameExtension );
-
-    // Open the file.
-    fp = fopen( sliceFileName, "rb" );
-    if( !fp ) {
-      vtkErrorMacro(<< "Can't find/open file: " << this->FileName);
-      return NULL;
-    }
-
-    // Read in a time point. We need to do this element by element so
-    // we can do byte swapping.
-    vtkDebugMacro(<< "Reading volume data, slice " << sliceNumber << ", from file " << sliceFileName);
-    // Skip the time points we don't want.
-    fseek( fp, this->CurTimePoint * numPts, SEEK_SET );
-
-    for( int nY = 0; nY < this->DataDimensions[1]; nY++ ) {
-      for( int nX = 0; nX < this->DataDimensions[0]; nX++ ) {
-    switch ( this->ScalarType ) {
-    case VTK_SHORT:
-      numRead = vtkFSIO::ReadShort( fp, s );
-      if( 1 != numRead ) {
-        vtkErrorMacro(<< "Error reading a short slice "
-              << sliceNumber << " x " << nX 
-              << " y " << nY << endl);
-        return NULL;
+      // Open the file.
+      fp = fopen( sliceFileName, "rb" );
+      if( !fp ) {
+          vtkErrorMacro(<< "Can't find/open file: " << this->FileName);
+          return NULL;
       }
-      *short_destData++ = s;
-      break;
-    case VTK_FLOAT:
-      numRead = vtkFSIO::ReadFloat( fp, f );
-      if( 1 != numRead ) {
-        vtkErrorMacro(<< "Error reading a float slice "
-              << sliceNumber << " x " << nX 
-              << " y " << nY << endl);
-        return NULL;
-      }
-      *float_destData++ = f;
-      break;
-    default:
-        vtkErrorMacro(<< "Volume type not supported:" << this->ScalarType);
-      return NULL;
-    }
-    numReadSlice += numRead;
-    numReadTotal += numRead;
-      }
-    }
 
-    if( numReadSlice != numPtsPerSlice ) {
-      vtkErrorMacro(<<"Trying to read " << numPtsPerSlice << " elements "
-            << "for slice " << sliceNumber
-            << ", but only got " << numReadSlice << " of them.");
-      scalars->Delete();
-      return NULL;
-    }
+      vtkDebugMacro(<< "\n\n\n\n\n\n\n\n********************\nStarting to read volume data: slice " << sliceNumber << ", from file " << sliceFileName);      
+      for ( this->CurTimePoint = 0; this->CurTimePoint < this->NumTimePoints; this->CurTimePoint++)
+      {
+          // Read in a time point. We need to do this element by element so
+          // we can do byte swapping.
 
-    // Close the file.
-    fclose(fp);
+          vtkDebugMacro(<< "Starting to read at time point " << this->CurTimePoint);
+          // << ", doing a seek past " << this->CurTimePoint * numPts);
+          
+          // Skip the time points we don't want.
+          // this needs to take into account if it's floats or shorts that
+          // we're skipping. But it shouldn't be necessary, as the reading
+          // increments the file pointer
+          //fseek( fp, this->CurTimePoint * numPts, SEEK_SET );
+
+          vtkDebugMacro(<<"About to read. Max Y = " << this->DataDimensions[1] << ", Max X = " << this->DataDimensions[0]);
+          tupleNum = 0;
+          for( int nY = 0; nY < this->DataDimensions[1]; nY++ ) {
+              for( int nX = 0; nX < this->DataDimensions[0]; nX++ ) {
+                  
+                  if (this->CurTimePoint == 1)
+                  {
+                      //vtkDebugMacro(<<"tupleNum = " << tupleNum << ", nY = " << nY << ", nX = " << nX);
+                  }
+                  switch ( this->ScalarType ) {
+                  case VTK_SHORT:
+                      numRead = vtkFSIO::ReadShort( fp, s );
+                      if( 1 != numRead ) {
+                          vtkErrorMacro(<< "Error reading a short slice "
+                                        << sliceNumber << " x " << nX 
+                                        << " y " << nY << endl);
+                          return NULL;
+                      }
+//                      *short_destData++ = s;
+                      shortScalars->InsertComponent(tupleNum,this->CurTimePoint,s);
+                      break;
+                  case VTK_FLOAT:
+                      numRead = vtkFSIO::ReadFloat( fp, f );
+                      if( 1 != numRead ) {
+                          vtkErrorMacro(<< "Error reading a float slice "
+                                        << sliceNumber << " x " << nX 
+                                        << " y " << nY << endl);
+                          return NULL;
+                      } else {
+                          if (this->CurTimePoint == 1)
+                          {
+                              //vtkDebugMacro(<<"Read a float: " << f);
+                          }
+                      }
+//                      *float_destData++ = f;
+                      floatScalars->InsertComponent(tupleNum,this->CurTimePoint,f);
+                      if (this->CurTimePoint == 1)
+                      {
+                          //vtkDebugMacro(<<"Added float to float_destData");
+                      }
+                      break;
+                  default:
+                      vtkErrorMacro(<< "Volume type not supported:" << this->ScalarType);
+                      return NULL;
+                  }
+                  numReadSlice += numRead;
+                  numReadTotal += numRead;
+                  tupleNum++;
+              }
+              this->UpdateProgress(1.0*numReadTotal/totalPoints);
+          }
+          
+          
+          vtkDebugMacro(<<"Done reading for timepoint " << this->CurTimePoint << ", numReadSlice = " << numReadSlice);
+      }
+      
+      // Close the slice file.
+      fclose(fp);
+      
+      if( numReadSlice != numPtsPerSlice ) {
+          vtkErrorMacro(<<"Trying to read " <<numPtsPerSlice << " elements "
+                        << "for slice " << sliceNumber
+                        << ", but only got " << numReadSlice << " of them.");
+          scalars->Delete();
+          return NULL;
+      }
   }
+
+  this->SetProgressText("");
+  this->UpdateProgress(0.0);
   
-  if( numReadTotal != numPts ) {
-    vtkErrorMacro(<<"Trying to read " << numPts << " elements for volume, "
-          << "but only got " << numRead << " of them.");
+  if( numReadTotal != totalPoints) {
+    vtkErrorMacro(<<"Trying to read " << numPts*this->NumTimePoints << " elements for volume, "
+          << "but only got " << numReadTotal << " of them.");
     scalars->Delete();
     return NULL;
   }
 
+  vtkDebugMacro(<<"Read " << numReadTotal << " total points (numPts = " << numPts << ")\n");
+  vtkDebugMacro(<<"Read: Done, got scalars num components = " << scalars->GetNumberOfComponents());
   // return the scalars.
   return scalars;
 }
@@ -421,7 +477,7 @@ int vtkBVolumeReader::ReadVolumeHeader()
   float tlr, tla, tls, trr, tra, trs, brr, bra, brs, xr, xa, xs, yr, ya, ys;
   int sliceNumber;
   int numSlices;
-  int found;
+  int found = 0;
   int error;
   struct stat fileInfo;
 

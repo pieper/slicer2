@@ -78,7 +78,7 @@ proc LabelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.24 $} {$Date: 2004/11/20 05:26:35 $}]
+        {$Revision: 1.24.10.1 $} {$Date: 2005/09/06 21:25:06 $}]
 
     # Props
     set Label(nameBrowse) ""
@@ -560,7 +560,7 @@ proc LabelsSelectLabelClick {{index ""}} {
     LabelsSelectLabel $index
 
     if {$Label(callback) != ""} {
-        $Label(callback)
+        eval $Label(callback)
     }
 
     # close popup
@@ -576,6 +576,9 @@ proc LabelsSelectLabelClick {{index ""}} {
 proc LabelsSelectLabel {{i ""}} {
     global Label
 
+    if {$::Module(verbose)} {
+        puts "LabelsSelectLabel i = $i"
+    }
     if {$i == ""} {
         set i [$Label(fLabelList) curselection]
     }
@@ -587,6 +590,9 @@ proc LabelsSelectLabel {{i ""}} {
     set labels [Color($c,node) GetLabels]
     set Label(label) [lindex $labels $i]
 
+    if {$::Module(verbose)} {
+        puts "LabelSelectLabel: set Label(label) to $Label(label)"
+    }
     # Update GUI
     set Label(name)    [Color($c,node) GetName]
     set Label(diffuse) [Color($c,node) GetDiffuseColor]
@@ -643,7 +649,9 @@ proc LabelsSetColor {colorName} {
 #-------------------------------------------------------------------------------
 proc LabelsColorWidgets {} {
     global Label 
-
+    if {$::Module(verbose)} {
+        puts "LabelsColorWidgets"
+    }
     foreach w $Label(colorWidgetList) {
         $w config -bg [MakeColorNormalized $Label(diffuse)] -state normal
     }
@@ -655,10 +663,15 @@ proc LabelsColorWidgets {} {
 # Find the color for the current label value, and select the color.
 # .END
 #-------------------------------------------------------------------------------
-proc LabelsFindLabel {} {
+proc LabelsFindLabel { } {
     global Label Mrml
 
+    
     set c [MainColorsGetColorFromLabel $Label(label)]
+
+    if {$::Module(verbose)} {
+        puts "LabelsFindLabel: Label(label) = $Label(label), c= $c"
+    }
     if {$c == ""} {
         # Update GUI
         set Label(activeID) ""
@@ -667,7 +680,9 @@ proc LabelsFindLabel {} {
         LabelsColorWidgets
         return
     }
-    set i [lsearch [Color($c,node) GetLabels] $Label(label)]    
+    set i [lsearch [Color($c,node) GetLabels] $Label(label)]
+
+    if {$::Module(verbose)} { puts "LabelsFindLabel: i = $i, active id = $Label(activeID)" }
 
     if {$Label(activeID) != $c} {
         LabelsSelectColor 0 0 $c
@@ -675,6 +690,7 @@ proc LabelsFindLabel {} {
             LabelsSelectLabel $i
         }
     }
+    if {$::Module(verbose)} { puts "LabelsFindLabel: done" }
 }
 
 #-------------------------------------------------------------------------------

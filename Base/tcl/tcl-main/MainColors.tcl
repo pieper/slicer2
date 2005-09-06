@@ -48,7 +48,7 @@
 
 #-------------------------------------------------------------------------------
 # .PROC MainColorsInit
-# 
+# Set up the global variables for this module
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -57,7 +57,7 @@ proc MainColorsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainColors \
-        {$Revision: 1.18 $} {$Date: 2003/03/19 19:16:23 $}]
+        {$Revision: 1.18.14.1 $} {$Date: 2005/09/06 21:25:04 $}]
 
     set Color(activeID) ""
     set Color(name) ""
@@ -72,7 +72,7 @@ proc MainColorsInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainColorsUpdateMRML
-#
+# Called to update the mrml elements created in the Colors module.
 #
 # .END
 #-------------------------------------------------------------------------------
@@ -124,6 +124,9 @@ proc MainColorsUpdateMRML {} {
  
 #-------------------------------------------------------------------------------
 # .PROC MainColorsSetActive
+# Set Color(activeID) and the color's name.
+# .ARGS 
+# int c id of the color node
 # .END
 #-------------------------------------------------------------------------------
 proc MainColorsSetActive {c} {
@@ -146,8 +149,11 @@ proc MainColorsSetActive {c} {
 #-------------------------------------------------------------------------------
 # .PROC MainColorsAddLabel
 #
-# Creates a new label "newLabel" to the color with ID c
-# returns 1 on success, else 0
+# Creates a new label "newLabel" to the color with ID c.
+# Returns 1 on success, else 0
+# .ARGS
+# int c id of the color node
+# int newLabel value of the new label
 # .END
 #-------------------------------------------------------------------------------
 proc MainColorsAddLabel {c newLabel} {
@@ -185,8 +191,15 @@ proc MainColorsAddLabel {c newLabel} {
 #-------------------------------------------------------------------------------
 # .PROC MainColorsAddColor
 #
-# Creates a new color named "newColor"
-# returns the new color's ID on success, else ""
+# Creates a new color named "name".
+# Returns the new color's ID on success, else ""
+# .ARGS
+# str name name of the new color
+# array diffuseColor rgb value to use
+# array ambient optional, if not empty string, use set the node's ambient value
+# array diffuse optional, if not empty string, use set the node's diffuse
+# array specular optional, if not empty string, use set the node's specular value
+# array power optional, if not empty string, use set the node's  power value
 # .END
 #-------------------------------------------------------------------------------
 proc MainColorsAddColor {name diffuseColor \
@@ -239,6 +252,10 @@ proc MainColorsAddColor {name diffuseColor \
 # .PROC MainColorsDeleteLabel
 #
 # Deletes "delLabel" from Color node "node"
+# .ARGS
+# int c id of the color node
+# int delLabel the color label to delete 
+# .END
 #-------------------------------------------------------------------------------
 proc MainColorsDeleteLabel {c delLabel} {
     global Color
@@ -254,8 +271,9 @@ proc MainColorsDeleteLabel {c delLabel} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainColorsGetColorFromLabel
-#
 # Returns the color ID of a label value, or "" if unsuccessful.
+# .ARGS
+# int label the label being queried
 # .END
 #-------------------------------------------------------------------------------
 proc MainColorsGetColorFromLabel {label} {

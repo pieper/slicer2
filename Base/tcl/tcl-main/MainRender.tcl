@@ -58,7 +58,15 @@ proc Render3D {{scale ""}} {
 
     # don't render when starting/stopping the program
     # or when certain modules need to do a lot of work w/o updates
+    # or if in mainupdatemrml
     if { $View(render_on) == 0 } {
+        return
+    }
+
+    if {$::Module(InMainUpdateMRML) == 1} {
+        if {$::Module(verbose)} { puts "skipping render3d in main update mrml" }
+        # set a flag to call this again at the end
+        set ::Module(RenderFlagForMainUpdateMRML) 1
         return
     }
 

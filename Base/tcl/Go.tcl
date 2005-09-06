@@ -60,9 +60,10 @@ set SLICER(revision) ""
 # when packaging a release for testing, set state to the date as "-YYYY-MM-DD"
 #  otherwise leave it as "-dev"
 
-set SLICER(state) "-dev"
+set SLICER(state) "-MGH"
 
 set SLICER(version) "$SLICER(major_version).$SLICER(minor_version)$SLICER(revision)$SLICER(state)"
+
 
 #
 ######################
@@ -89,6 +90,7 @@ proc Usage { {msg ""} } {
     set msg "$msg\n   --load-freesurfer-volume <COR-.info> : read freesurfer files"
     set msg "$msg\n   --load-freesurfer-label-volume <COR-.info> : read freesurfer label files"
     set msg "$msg\n   --load-freesurfer-model <file> : read freesurfer model file"
+    set msg "$msg\n   --load-freesurfer-scalar <file> : read a freesurfer scalar file for the active model"
     set msg "$msg\n   --load-freesurfer-qa <file> : read freesurfer QA subjects.csh file"
     set msg "$msg\n   --load-bxh <file.bxh> : read bxh file from <file.bxh>"
     set msg "$msg\n   --script <file.tcl> : script to execute after slicer loads"
@@ -116,6 +118,7 @@ set SLICER(load-analyze) ""
 set SLICER(load-freesurfer-volume) ""
 set SLICER(load-freesurfer-label-volume) ""
 set SLICER(load-freesurfer-model) ""
+set SLICER(load-freesurfer-scalar) ""
 set SLICER(load-freesurfer-qa) ""
 set SLICER(load-bxh) ""
 set SLICER(script) ""
@@ -191,6 +194,14 @@ for {set i 0} {$i < $argc} {incr i} {
                 Usage "missing argument for $a\n"
             } else {
                 lappend SLICER(load-freesurfer-model) [lindex $argv $i]
+            }
+        }
+        "--load-freesurfer-scalar" {
+            incr i
+            if { $i == $argc } {
+                Usage "missing argument for $a\n"
+            } else {
+                lappend SLICER(load-freesurfer-scalar) [lindex $argv $i]
             }
         }
         "--load-freesurfer-qa" {
@@ -382,6 +393,24 @@ update
 # (proper environment is set up in launch.tcl)
 #
 
+puts "Loading VTK..."
+set SLICER(VTK_VERSION) [package require vtk]
+
+proc VTK_AT_LEAST {version} {
+
+    foreach "major minor patch" "0 0 0" {}
+    foreach "vtkmajor vtkminor vtkpatch" "0 0 0" {}
+    scan $version "%d.%d.%d" major minor patch
+    scan $::SLICER(VTK_VERSION) "%d.%d.%d" vtkmajor vtkminor vtkpatch
+    if { $major > $vtkmajor } { return 0 }
+    if { $major < $vtkmajor } { return 1 }
+    if { $minor > $vtkminor } { return 0 }
+    if { $minor < $vtkminor } { return 1 }
+    if { $patch > $vtkpatch } { return 0 }
+    if { $patch < $vtkpatch } { return 1 }
+    return 1
+}
+
 puts "Loading Base..."
 package require vtkSlicerBase ;# this pulls in all of slicer
 
@@ -391,6 +420,7 @@ if { $::SLICER(old-voxel-shift) == "true" } {
     _dummy_node SetGlobalVoxelOffset 0.0;
     _dummy_node Delete
 }
+
 
 ## TODO - this is needed to avoid long model loading times on the mac
 # it may go away with future updates to mac osx opengl display lists
@@ -788,7 +818,7 @@ if { $SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.87.2.1 2005/06/06 20:24:53 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.87.2.1.2.1 2005/09/06 21:25:03 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
@@ -839,6 +869,7 @@ foreach arg $SLICER(load-freesurfer-volume) {
         break
     }
     vtkFreeSurferReadersLoadVolume $arg
+    RenderSlices
 }
 
 #
@@ -850,6 +881,7 @@ foreach arg $SLICER(load-freesurfer-label-volume) {
         break
     }
     vtkFreeSurferReadersLoadVolume $arg 1
+    RenderSlices
 }
 
 #
@@ -861,6 +893,19 @@ foreach arg $SLICER(load-freesurfer-model) {
         break
     }
     vtkFreeSurferReadersLoadModel $arg
+    Render3D
+}
+
+#
+# read freesurfer scalar command, gets associated with active (last loaded) model
+#
+foreach arg $SLICER(load-freesurfer-scalar) {
+    if { [catch "package require vtkFreeSurferReaders"] } {
+        DevErrorWindow "vtkFreeSurferReaders Module required for --load-freesufer-scalar option."
+        break
+    }
+    vtkFreeSurferReadersLoadScalarFile $arg
+    Render3D
 }
 
 #
@@ -898,8 +943,8 @@ foreach arg $SLICER(load-bxh) {
 # (for people who type exit into the console)
 #
 rename exit tcl_exit
-proc exit {} {
-    MainExitProgram
+proc exit { "code 0" } {
+    MainExitProgram $code
 }
 
 

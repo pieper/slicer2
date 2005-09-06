@@ -365,6 +365,26 @@ if { ![file exists $::BLT_TEST_FILE] } {
     if { $isWindows } {
         # can't do Windows
     } elseif { $isDarwin } {
+  #       if { ![file exists $SLICER_HOME/isPatchedBLT] } {
+#             if { [file exists $::BLT_PATCH] } {
+#                 puts "Patching..."
+#                 cd $SLICER_LIB/tcl
+#                 runcmd cp $SLICER_HOME/blt-patch.diff $SLICER_LIB/tcl 
+#                 runcmd patch -d blt -p 2< blt-patch.diff
+
+#                 # create a file to make sure BLT isn't patched twice
+#                 runcmd touch $SLICER_HOME/isPatchedBLT
+#                 file delete $SLICER_LIB/tcl/blt-patch.diff
+#             } else { 
+#                 puts "Download BLT patch from Xythos and place in $SLICER_HOME"  
+#                 puts "then run genlib.tcl again.  Download from:"
+#                 puts "https://share.spl.harvard.edu/xythoswfs/webui/share/birn/public/software/External/Patches"
+#                 exit
+#             } 
+#         } else {
+#             puts "BLT already patched."
+#         }
+        
         # this fails, but gets blt far enough along to build what is needed 
         cd $SLICER_LIB/tcl/blt
         runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
@@ -377,6 +397,7 @@ if { ![file exists $::BLT_TEST_FILE] } {
         eval runcmd $::MAKE install
     }
 }
+
 
 ################################################################################
 # Get and build gsl
@@ -446,27 +467,59 @@ if { ![file exists $::VTK_TEST_FILE] } {
             set USE_VTK_ANSI_STDLIB "-DVTK_USE_ANSI_STDLIB:BOOL=ON"
         }
     }
-    
-    runcmd $CMAKE \
-        -G$GENERATOR \
-        -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
-        -DBUILD_SHARED_LIBS:BOOL=ON \
-        -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
-        -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
-        -DBUILD_TESTING:BOOL=OFF \
-        -DVTK_USE_CARBON:BOOL=OFF \
-        -DVTK_USE_X:BOOL=ON \
-        -DVTK_WRAP_TCL:BOOL=ON \
-        -DVTK_USE_HYBRID:BOOL=ON \
-        -DVTK_USE_PATENTED:BOOL=ON \
-        -DTCL_INCLUDE_PATH:PATH=$TCL_INCLUDE_DIR \
-        -DTK_INCLUDE_PATH:PATH=$TCL_INCLUDE_DIR \
-        -DTCL_LIBRARY:FILEPATH=$::VTK_TCL_LIB \
-        -DTK_LIBRARY:FILEPATH=$::VTK_TK_LIB \
-        -DTCL_TCLSH:FILEPATH=$::VTK_TCLSH \
-        $USE_VTK_ANSI_STDLIB \
-        ../VTK
 
+    #
+    # Note - the two banches are identical down to the line starting -DOPENGL...
+    # -- the text needs to be duplicated to avoid quoting problems with paths that have spaces
+    #
+    if { $isLinux && $::tcl_platform(machine) == "x86_64" } {
+        runcmd $CMAKE \
+            -G$GENERATOR \
+            -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
+            -DBUILD_SHARED_LIBS:BOOL=ON \
+            -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
+            -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
+            -DBUILD_TESTING:BOOL=OFF \
+            -DVTK_USE_CARBON:BOOL=OFF \
+            -DVTK_USE_X:BOOL=ON \
+            -DVTK_WRAP_TCL:BOOL=ON \
+            -DVTK_USE_HYBRID:BOOL=ON \
+            -DVTK_USE_PATENTED:BOOL=ON \
+            -DTCL_INCLUDE_PATH:PATH=$TCL_INCLUDE_DIR \
+            -DTK_INCLUDE_PATH:PATH=$TCL_INCLUDE_DIR \
+            -DTCL_LIBRARY:FILEPATH=$::VTK_TCL_LIB \
+            -DTK_LIBRARY:FILEPATH=$::VTK_TK_LIB \
+            -DTCL_TCLSH:FILEPATH=$::VTK_TCLSH \
+            $USE_VTK_ANSI_STDLIB \
+            -DOPENGL_INCLUDE_DIR:PATH=/usr/include \
+            -DOPENGL_gl_LIBRARY:FILEPATH=/usr/lib64/libGL.so \
+            -DOPENGL_glu_LIBRARY:FILEPATH=/usr/lib64/libGLU.so \
+            -DX11_X11_LIB:FILEPATH=/usr/X11R6/lib64/libX11.a \
+            -DX11_Xext_LIB:FILEPATH=/usr/X11R6/lib64/libXext.a \
+            -DCMAKE_MODULE_LINKER_FLAGS:STRING=-L/usr/X11R6/lib64 \
+            -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+            ../VTK
+    } else {
+        runcmd $CMAKE \
+            -G$GENERATOR \
+            -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
+            -DBUILD_SHARED_LIBS:BOOL=ON \
+            -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
+            -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
+            -DBUILD_TESTING:BOOL=OFF \
+            -DVTK_USE_CARBON:BOOL=OFF \
+            -DVTK_USE_X:BOOL=ON \
+            -DVTK_WRAP_TCL:BOOL=ON \
+            -DVTK_USE_HYBRID:BOOL=ON \
+            -DVTK_USE_PATENTED:BOOL=ON \
+            -DTCL_INCLUDE_PATH:PATH=$TCL_INCLUDE_DIR \
+            -DTK_INCLUDE_PATH:PATH=$TCL_INCLUDE_DIR \
+            -DTCL_LIBRARY:FILEPATH=$::VTK_TCL_LIB \
+            -DTK_LIBRARY:FILEPATH=$::VTK_TK_LIB \
+            -DTCL_TCLSH:FILEPATH=$::VTK_TCLSH \
+            $USE_VTK_ANSI_STDLIB \
+            ../VTK
+    }
 
     if { $isDarwin } {
         # Darwin will fail on the first make, then succeed on the second
@@ -482,7 +535,7 @@ if { ![file exists $::VTK_TEST_FILE] } {
             runcmd $::MAKE VTK.SLN /build  $::VTK_BUILD_TYPE
         }
     } else {
-        eval runcmd $::MAKE
+        eval runcmd $::MAKE -j 8
     }
 }
 
@@ -518,7 +571,7 @@ if { ![file exists $::ITK_TEST_FILE] } {
             runcmd $::MAKE ITK.SLN /build  $::VTK_BUILD_TYPE
         }
     } else {
-        eval runcmd $::MAKE 
+        eval runcmd $::MAKE -j 8
     }
 }
 

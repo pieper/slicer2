@@ -460,7 +460,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.120 $} {$Date: 2005/04/15 16:46:32 $}]
+        {$Revision: 1.120.6.1 $} {$Date: 2005/09/06 21:25:03 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -1060,36 +1060,70 @@ proc MainUpdateMRML {} {
     global Module Label
     
     set verbose $Module(verbose)
-    
+    set runTime 0
+    set runList {}
+    # use this as a flag to avoid multiple calls to Render3D, check it in that proc
+    set Module(InMainUpdateMRML) 1
+    # if Render3D was called, this will get reset and can call it at the end
+    set Module(RenderFlagForMainUpdateMRML) 0
+
     # Call each "MRML" routine that's not part of a module
     #-------------------------------------------
-    if {$verbose == 1} {puts "MRML: MainMrml"}
-    MainMrmlUpdateMRML
-    if {$verbose == 1} {puts "MRML: MainColors"}
-    MainColorsUpdateMRML
-    if {$verbose == 1} {puts "MRML: MainVolumes"}
-    MainVolumesUpdateMRML
-    if {$verbose == 1} {puts "MRML: MainVolumes"}
-    MainTensorUpdateMRML
-    if {$verbose == 1} {puts "MRML: MainModels"}
-    MainModelsUpdateMRML
-    if {$verbose == 1} {puts "MRML: MainAlignments"}
-    MainTetraMeshUpdateMRML
-    if {$verbose == 1} {puts "MRML: MainTetraMesh"}
+    set runTime [time MainMrmlUpdateMRML]
+    # if {$verbose == 1} {puts "MRML: MainMrml (time = $runTime)"}
+    lappend runList "[format "%08d" [lindex $runTime 0]] MainMrml"
 
-    MainAlignmentsUpdateMRML
+    set runTime [time MainColorsUpdateMRML]
+    # if {$verbose == 1} {puts "MRML: MainColors (time = $runTime)"}
+    lappend runList "[format "%08d" [lindex $runTime 0]] MainColors"
+
+    set runTime [time MainVolumesUpdateMRML]
+    # if {$verbose == 1} {puts "MRML: MainVolumes (time = $runTime)"}
+    lappend runList "[format "%08d" [lindex $runTime 0]] MainVolumes"
+
+    set runTime [time MainModelsUpdateMRML]
+    # if {$verbose == 1} {puts "MRML: MainModels (time = $runTime)"}
+    lappend runList "[format "%08d" [lindex $runTime 0]] MainModels"
+
+    set runTime [time MainTetraMeshUpdateMRML]
+    # if {$verbose == 1} {puts "MRML: MainTetraMesh (time = $runTime)"}
+    lappend runList "[format "%08d" [lindex $runTime 0]] MainTetraMesh"
+
+    set runTime [time MainAlignmentsUpdateMRML]
+    # if {$verbose == 1} {puts "MRML: MainAlignments (time = $runTime)"}
+    lappend runList "[format "%08d" [lindex $runTime 0]] MainAlignments"
 
     foreach p $Module(procMRML) {
-        if {$verbose == 1} {puts "MRML: $p"}
-        $p
+        set runTime [time $p]
+        # if {$verbose == 1} {puts "MRML: $p (time = $runTime)"}
+        lappend runList "[format "%08d" [lindex $runTime 0]] $p"
     }
 
     # Call each Module's "MRML" routine
     #-------------------------------------------
     foreach m $Module(idList) {
         if {[info exists Module($m,procMRML)] == 1} {
-            if {$verbose == 1} {puts "MRML: $m"}
-            $Module($m,procMRML)
+            set runTime [time $Module($m,procMRML)]
+            # if {$verbose == 1} {puts "MRML: $m (time = $runTime)"}
+            lappend runList "[format "%08d" [lindex $runTime 0]] $m"
+        }
+    }
+
+    set Module(InMainUpdateMRML) 0
+    if {$Module(RenderFlagForMainUpdateMRML)} {
+        if {$::Module(verbose)} {
+            puts "Render3d got flagged, calling it now."
+        }
+        set runTime [time Render3D]
+        lappend runList "[format "%08d" [lindex $runTime 0]] Render3D"
+    }
+
+    
+    if {$::Module(verbose)} {
+        set runList [lsort -decreasing $runList]
+        puts "MainUpdateMRML: Top 10 longest ops:"
+        for {set r 0} {$r < 10 && $r < [llength $runList]} {incr r} {
+            puts "[lindex $runList $r]" 
         }
     }
 }
@@ -1184,7 +1218,7 @@ proc MainRemoveModelActor { m } {
 #-------------------------------------------------------------------------------
 proc MainSetup { {sceneNum "default"}} {
     global Module Gui Volume Slice View Model Color Matrix Options Preset
-        global TetraMesh Tensor
+        global TetraMesh 
 
     # Set current values to preset 0 (user preferences)
     # Change: preset 0 is over written by opening a mrml file, reset to system default if no scene is passed in
@@ -1225,12 +1259,6 @@ proc MainSetup { {sceneNum "default"}} {
     set m [lindex $Model(idList) 0]
     if {$m != ""} {    
         MainModelsSetActive $m
-    }
-
-    # Active Tensor
-    set m [lindex $Tensor(idList) 0]
-    if {$m != ""} {    
-        MainTensorSetActive Tensor $m
     }
 
     # Active TetraMesh
@@ -1861,7 +1889,7 @@ proc MainSaveMRMLQuery { } {
 #  Exit the Program with cleanup
 # .END
 #-------------------------------------------------------------------------------
-proc MainExitProgram { } {
+proc MainExitProgram { "code 0" } {
     global Module View
 
     set View(render_on) 0
@@ -1920,7 +1948,9 @@ proc MainExitProgram { } {
             }
         }
     }
-    tcl_exit
+
+    # this is the original "exit" built in call, but renamed so we can shut down nicely
+    tcl_exit $code
 }
 
 #-------------------------------------------------------------------------------

@@ -4,7 +4,7 @@ set __comment__ {
     tarup.tcl
     sp - 2003-05
 
-    source this file into a running slicer2.1 to make a distribution 
+    source this file into a running slicer2.6 to make a distribution 
     copy of slicer in a new directory based on the currently loaded Modules.
     The resulting program will be self-contained, without intermediate build
     files, CVS directories, and stripped of debugging symbols if possible.
@@ -31,14 +31,87 @@ set __comment__ {
     for windows visual studio 7, the following files are needed for a debug build:
         msvci70d.dll msvcp70d.dll msvcr70d.dll
     for linux redhat7.3
-        ld-2.2.5.so libpthread-0.9.so libstdc++-3-libc6.2-2-2.10.0.so libstdc++.so.5 
+        ld-2.2.5.so libpthread-0.9.so libstdc++-3-libc6.2-2-2.10.0.so libstdc++.so.5  
     for solaris
         libgcc_s.so.1 libstdc++.so.3  
     for darwin
         nothing known
 }
 
-proc tarup { {destdir "auto"} } {
+# returns a list of full paths to libraries that match the input list and that the vtk binary dynamically links to.
+# doesn't work with ++ in the toMatch string
+# on error, return an empty list
+proc GetLinkedLibs { {toMatch {}} } {
+    set liblist ""
+    if {$toMatch == {}} {
+        set toMatch [list "libgcc" "libstdc"]
+    }
+    switch $::tcl_platform(os) {
+        "SunOS" -
+        "Linux" {
+            if {[catch {set lddpath [exec which ldd]} errMsg] == 1} {
+                puts "Using which to find ldd is not working: $errMsg"
+                return ""
+            }
+            # check if it says no first
+            if {[regexp "^no ldd" $lddpath matchVar] == 1} {
+                puts "No ldd in the path: $lddpath"
+                return ""
+            }
+            set lddresults [exec $lddpath $::env(VTK_DIR)/bin/vtk]
+        }
+        "Darwin" {
+            if {[catch {set lddpath [exec which otools]} errMsg] == 1} {
+                puts "Using which to find otools is not working: $errMsg"
+                return ""
+            }
+            # did it find it?
+            if {[regexp "^no otools" $lddpath matchVar] == 1} {
+                puts "No otools in the path: $lddpath"
+                return ""
+            }
+            set lddpath "$lddpath -L"
+            set lddresults [exec $lddpath $::env(VTK_DIR)/bin/vtk]
+        }
+        default { 
+            puts "Unable to get libraries"
+            return ""
+        }
+    }
+    set lddlines [split $lddresults "\n"]
+    foreach l $lddlines {
+        # just grab anyones that match the input strings
+        foreach strToMatch $toMatch {
+            if {[regexp $strToMatch $l matchVar] == 1} {
+                # puts "working on $l"
+                foreach lddtoken [split $l] {
+                    if {[file pathtype $lddtoken] == "absolute"} {
+                        lappend liblist $lddtoken
+                        if {$::Module(verbose)} {
+                            puts "Found [lindex $liblist end]"
+                        }
+                        break
+                    }
+                }
+            } else { 
+                # puts "skipping $l" 
+            }
+        }
+    }
+    if {$::Module(verbose)} {
+        puts "Got library list $liblist"
+    }
+    return $liblist
+}
+
+proc tarup_usage {} {
+    puts "Call 'tarup' to create a binary archive. Optional arguments:"
+    puts "\tdestdir\n\t\tauto, to upload to slicerl (default)\n\t\tbirn, to copy to /usr/local/birn/install/slicer2\n\t\tlocal, to make a local copy."
+    puts "\tincludeSource\n\t\t0, to make a binary release (default)\n\t\t1, to include the cxx directories"
+    puts "Example: tarup local 0"
+}
+
+proc tarup { {destdir "auto"} {includeSource 0} } {
 
     set cwd [pwd]
     cd $::env(SLICER_HOME)
@@ -66,9 +139,14 @@ proc tarup { {destdir "auto"} } {
     }
 
     set create_archive "true"
-    set do_upload "true"
+    if {$destdir == "local"} {
+        set do_upload "false"
+    } else {
+        set do_upload "true"
+    }
     switch $destdir {
-        "auto" {
+        "auto" -
+        "local" {
             if { [info exists ::env(TMPDIR)] } {
                 set destdir [file normalize $::env(TMPDIR)]
             } else {
@@ -83,13 +161,17 @@ proc tarup { {destdir "auto"} } {
                 }
             }
             set date [clock format [clock seconds] -format %Y-%m-%d]
-            set destdir $destdir/slicer$::SLICER(version)-$target-$date
+            if { $::tcl_platform(machine) == "x86_64" } {
+                set destdir $destdir/slicer$::SLICER(version)-${target}_64-$date
+            } else {
+                set destdir $destdir/slicer$::SLICER(version)-$target-$date
+            }
         }
         "birn" {
             set destdir /usr/local/birn/install/slicer2
             set create_archive "false"
             set do_upload "false"
-        }
+        }        
     }
 
     puts "Creating distribution in $destdir..."
@@ -197,13 +279,24 @@ proc tarup { {destdir "auto"} } {
     set checkForSymlinks 1
     switch $::tcl_platform(os) {
       "SunOS" {
-          set sharedLibs [list libgcc_s.so.1 libstdc++.so.3]
-          set sharedSearchPath [split $::env(LD_LIBRARY_PATH) ":"]
+          set sharedLibs [GetLinkedLibs [list libgcc libstd]]
+          if {$sharedLibs == ""} {
+              set sharedLibs [list libgcc_s.so.1 libstdc++.so.3]
+              set sharedSearchPath [split $::env(LD_LIBRARY_PATH) ":"]
+          } else {
+              set sharedSearchPath ""
+              if {$::Module(verbose)} { puts "GetLinkedLibs returned $sharedLibs" }
+          }
       }
       "Linux" {
 #         set sharedLibs [list ld-2.2.5.so libpthread-0.9.so libstdc++-3-libc6.2-2-2.10.0.so]
-          set sharedLibs [list libstdc++-libc6.2-2.so.3 libstdc++.so.5]
-          set sharedSearchPath [split $::env(LD_LIBRARY_PATH) ":"]
+          set sharedLibs [GetLinkedLibs [list libstdc]]
+          if {$sharedLibs == ""} {
+              set sharedLibs [list libstdc++-libc6.2-2.so.3 libstdc++.so.5]
+              set sharedSearchPath [split $::env(LD_LIBRARY_PATH) ":"]
+          } else {
+              set sharedSearchPath ""
+          }
       }
       "Darwin" {
           set sharedLibs [list ]
@@ -216,36 +309,22 @@ proc tarup { {destdir "auto"} } {
           set checkForSymlinks 0
       }
     }
+    set foundLibs ""
     foreach slib $sharedLibs { 
         if {$::Module(verbose)} { puts "LIB $slib"  }
-        # don't copy if it's already in the dest dir
-        if {![file exists [file join $sharedLibDir $slib]]} {
+        # don't copy if it's already in the dest dir (take the tail of the full path to slib)
+        if {![file exists [file join $sharedLibDir [file tail $slib]]]} {
             set slibFound 0
+            if {$sharedSearchPath == ""} {
+                if {$::Module(verbose)} { puts "Should have fully qualified path from GetLinkedLibs for $slib" }
+                lappend foundLibs $slib
+                set slibFound 1
+            }
             foreach spath $sharedSearchPath { 
                 if {$::Module(verbose) && !$slibFound} { puts "checking dir $spath" }
                 if {!$slibFound && [file exists [file join $spath $slib]]} { 
                     if {$::Module(verbose)} { puts "found $slib in dir $spath, copying to $sharedLibDir" }
-                    # check if it's a symlink (but not on windows)
-                    if {$checkForSymlinks} {
-                        set checkpath [file join $spath $slib]
-                        while {[file type $checkpath] == "link"} {
-                            # need to resolve it to a real file so that file copy will work
-                            set sympath [file readlink $checkpath]
-                            if {[file pathtype $sympath] == "relative"} {
-                                # if the link is relative to the last path, take the dirname of the last one 
-                                # and append the new path to it, then normalize it
-                                set checkpath [file normalize [file join [file dirname $checkpath] $sympath]]
-                            }
-                        }
-                        # the links may have changed the name of the library file 
-                        # (ie adding minor version numbers onto the end)
-                        # so copy the new file into the old file name
-                        file copy $checkpath [file join $sharedLibDir $slib]
-                        if {$::Module(verbose)} { puts "copied checkpath $checkpath to $sharedLibDir/$slib" }
-                    } else {
-                        # copy it into the shared vtk bin dir
-                        file copy [file join $spath $slib]  $sharedLibDir
-                    }
+                    lappend foundLibs [file join $spath $slib]
                     set slibFound 1
                 }
             }
@@ -256,6 +335,32 @@ proc tarup { {destdir "auto"} } {
         } else { 
             if {$::Module(verbose)} { puts "$slib is already in $sharedLibDir" } 
         }
+    }
+    foreach slib $foundLibs {
+        # check if it's a symlink (but not on windows)
+        if {$checkForSymlinks} {
+            # at this point each one is a fully qualified path
+            set checkpath $slib
+            while {[file type $checkpath] == "link"} {
+                # need to resolve it to a real file so that file copy will work
+                set sympath [file readlink $checkpath]
+                if {[file pathtype $sympath] == "relative"} {
+                    # if the link is relative to the last path, take the dirname of the last one 
+                    # and append the new path to it, then normalize it
+                    set checkpath [file normalize [file join [file dirname $checkpath] $sympath]]
+                }
+            }
+            # the links may have changed the name of the library file 
+            # (ie adding minor version numbers onto the end)
+            # so copy the new file into the old file name
+            file copy $checkpath [file join $sharedLibDir [file tail $slib]]
+            puts "\tCopied $checkpath to $sharedLibDir/[file tail $slib]" 
+        } else {
+            # copy it into the shared vtk bin dir
+            file copy $slib  $sharedLibDir
+            puts "\tCopied $slib to $sharedLibDir"
+        }
+        
     }
 
     #
@@ -296,6 +401,11 @@ proc tarup { {destdir "auto"} } {
     puts " -- copying SlicerBase files"
     file mkdir $destdir/Base
     file copy -force Base/tcl $destdir/Base
+    if {$includeSource} {
+        file copy -force Base/cxx $destdir/Base
+    }
+    # get the servers directory
+    file copy -force servers $destdir
     file mkdir $destdir/Base/Wrapping/Tcl/vtkSlicerBase
     file copy Base/Wrapping/Tcl/vtkSlicerBase/pkgIndex.tcl $destdir/Base/Wrapping/Tcl/vtkSlicerBase
     file copy Base/Wrapping/Tcl/vtkSlicerBase/vtkSlicerBase.tcl $destdir/Base/Wrapping/Tcl/vtkSlicerBase
@@ -358,6 +468,11 @@ proc tarup { {destdir "auto"} } {
         if { [file exists $moddir/tcl] } {
             file copy -force $moddir/tcl $moddest
         }
+        if {$includeSource} {
+            if { [file exists $moddir/cxx] } {
+                file copy -force $moddir/cxx $moddest
+            }
+        }
         file mkdir $moddest/Wrapping/Tcl/$mod
         file copy $moddir/Wrapping/Tcl/$mod/pkgIndex.tcl $moddest/Wrapping/Tcl/$mod
         file copy $moddir/Wrapping/Tcl/$mod/$mod.tcl $moddest/Wrapping/Tcl/$mod
@@ -409,7 +524,6 @@ proc tarup { {destdir "auto"} } {
     #
     # remove any stray CVS dirs in target
     #
-
     foreach cvsdir [rglob $destdir CVS] {
         file delete -force $cvsdir
     }
@@ -423,7 +537,7 @@ proc tarup { {destdir "auto"} } {
         set archroot [file tail $destdir]
         switch $::tcl_platform(os) {
             "SunOS" {
-                puts " -- making $archroot.tar.gz"
+                puts " -- making $archroot.tar.gz from $destdir"
                 #exec gtar cvfz $archroot.tar.gz $archroot
                 exec tar cfE $archroot.tar $archroot
                 exec gzip -f $archroot.tar
@@ -441,7 +555,7 @@ proc tarup { {destdir "auto"} } {
     }
 
     if { $do_upload == "true" } {
-    set scpdestination "$::env(USER)@slicerl.bwh.harvard.edu:/usr/local/apache2/htdocs/snapshots/slicer2.5"
+        set scpdestination "$::env(USER)@slicerl.bwh.harvard.edu:/usr/local/apache2/htdocs/snapshots/slicer2.5"
         puts " -- upload to $scpdestination"
         switch $::tcl_platform(os) {
             "SunOS" -
@@ -450,7 +564,19 @@ proc tarup { {destdir "auto"} } {
                 exec xterm -e scp $archroot.tar.gz $scpdestination
             }
             default { 
+                puts "rxvt -e scp $archroot.zip $scpdestination &"
                 exec rxvt -e scp $archroot.zip $scpdestination &
+            }
+        }
+    } else {
+        switch $::tcl_platform(os) {
+            "SunOS" -
+            "Linux" - 
+            "Darwin" {
+                puts "Archive complete: [file dirname $destdir]/$archroot.tar.gz"
+            }
+            default { 
+                puts "Archive complete: [file dirname $destdir]/$archroot.zip"
             }
         }
     }
@@ -485,3 +611,4 @@ proc rglob { path {pattern *} } {
     }
 }
 
+tarup_usage

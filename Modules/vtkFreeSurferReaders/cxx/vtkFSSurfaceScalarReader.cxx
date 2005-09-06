@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceScalarReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/04/04 15:35:46 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2005/09/06 21:22:55 $
+  Version:   $Revision: 1.7.6.1 $
 
 =========================================================================*/
 #include "vtkFSSurfaceScalarReader.h"
@@ -91,7 +91,7 @@ void vtkFSSurfaceScalarReader::ReadFSScalars()
       cerr << "ERROR vtkFSSurfaceScalarReader ReadFSScalars() : output is null" << endl;
       return;
   }
-  cerr << "vtkFSSurfaceScalarReader Execute() " << endl;
+  vtkDebugMacro( << "vtkFSSurfaceScalarReader Execute() " << endl);
 
   if (!this->FileName) {
     vtkErrorMacro(<<"vtkFSSurfaceScalarReader Execute: FileName not specified.");

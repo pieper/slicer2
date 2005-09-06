@@ -48,6 +48,9 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <time.h>
 #include "vtkImageDICOMReader.h"
 
+
+#include "vtkPointData.h"
+
 //------------------------------------------------------------------------------
 vtkMrmlDataVolume* vtkMrmlDataVolume::New()
 {
@@ -182,6 +185,7 @@ void vtkMrmlDataVolume::CheckImageData()
     vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) this->MrmlNode;
     node->GetDimensions(dim);
 
+#ifndef SLICER_VTK5
     vtkImageCanvasSource2D *canvas = vtkImageCanvasSource2D::New();
     canvas->SetScalarType(node->GetScalarType());
     canvas->SetNumberOfScalarComponents(node->GetNumScalars());
@@ -197,6 +201,26 @@ void vtkMrmlDataVolume::CheckImageData()
     copy->SetOutput(NULL);
     copy->Delete();
       canvas->Delete();
+#else
+
+    // Make this an empty RGBA image
+    vtkImageData *id = vtkImageData::New();
+    id->SetNumberOfScalarComponents(4);
+    //id->SetScalarType(VTK_UNSIGNED_CHAR);
+    id->SetScalarType(VTK_SHORT);
+    id->SetExtent(0, dim[0]-1, 0, dim[1]-1, 0, 0);
+    id->SetSpacing(node->GetSpacing());
+    id->AllocateScalars();
+
+    // clear the image, just in case
+    //unsigned char *ptr = (unsigned char *)id->GetScalarPointer();
+    //memset (ptr, 0, 4 * dim[0] * dim[1]);
+
+    this->SetImageData(id);
+    id->Delete();
+
+#endif /* !SLICER_VTK5 */
+
   }
 }
 
@@ -229,7 +253,6 @@ void vtkMrmlDataVolume::Update()
   // its alright.
 
   // Create objects that the user hasn't already set
-
   this->CheckImageData();
   // Connect pipeline
   this->Accumulate->SetInput(this->ImageData);
@@ -548,7 +571,12 @@ int vtkMrmlDataVolume::Write()
       writer->AddObserver (vtkCommand::ProgressEvent,
                            this->ProgressObserver);
       // The progress callback function needs a handle to the writer 
+#ifdef SLICER_VTK5
+      // TODO - fix observer for vtk5
+      vtkWarningMacro ("vtkImageWriter is not a vtkProcessObject in vtk5");
+#else
       this->ProcessObject = writer;
+#endif
      
       // Write it
       writer->Write();

@@ -77,7 +77,7 @@
 #   vtkFreeSurferReadersSetColourFileName
 #   vtkFreeSurferReadersGDFInit
 #   vtkFreeSurferReadersGDFPlotBuildWindow iID
-#   vtkFreeSurferReadersGDFFPlotBuildDynamicWindowElements iID
+#   vtkFreeSurferReadersGDFPlotBuildDynamicWindowElements iID
 #   vtkFreeSurferReadersPlotParseHeader ifnHeader
 #   vtkFreeSurferReadersPlotPlotData iID
 #   vtkFreeSurferReadersPlotCalculateSubjectMeasurement iID inSubject
@@ -159,6 +159,7 @@ proc vtkFreeSurferReadersInit {} {
     #
     set vtkFreeSurferReaders(assocFiles) ""
     set vtkFreeSurferReaders(scalars) "thickness curv sulc area"
+    set vtkFreeSurferReaders(scalarsNew) ""
     set vtkFreeSurferReaders(surfaces) "inflated pial smoothwm sphere"
     set vtkFreeSurferReaders(annots) "aparc cma_aparc" 
     set vtkFreeSurferReaders(castToShort) 1
@@ -177,6 +178,14 @@ proc vtkFreeSurferReadersInit {} {
 
     # the default colour table file name
     set vtkFreeSurferReaders(colorTableFilename) [ExpandPath [file join $::PACKAGE_DIR_VTKFREESURFERREADERS ".." ".." ".." tcl "Simple_surface_labels2002.txt"]]
+
+    # for loading in a specific scalar file
+    set vtkFreeSurferReaders(scalarFileName) ""
+
+    # freesurfer specific colour scales
+    set vtkFreeSurferReaders(lutNames) "RedGreen GreenRed Heat BlueRed"
+    # when add the LUTs, append their ids to this list
+    set vtkFreeSurferReaders(lutIDS) ""
 
     # for closing out a scene
     set vtkFreeSurferReaders(idList) ""
@@ -222,6 +231,8 @@ proc vtkFreeSurferReadersInit {} {
     set vtkFreeSurferReaders(QAopacity) $::Slice(opacity)
     set vtkFreeSurferReaders(QAviewmode) $::View(mode)
 
+#    set vtkFreeSurferReaders(PlotFileName) [file normalize [file join .. .. freesurfer data fsgd y_doss-thickness-250rh.fsgd]]
+
     lappend Module($m,fiducialsPointCreatedCallback) FreeSurferReadersFiducialsPointCreatedCallback
 
     # Module Summary Info
@@ -255,8 +266,8 @@ proc vtkFreeSurferReadersInit {} {
     #   row2,tab = like row1 
     #
 
-    set Module($m,row1List) "Help Volumes Models Plot QA"
-    set Module($m,row1Name) "{Help} {Volumes} {Models} {Plot} {QA}"
+    set Module($m,row1List) "Help Display Volumes Models Plot QA"
+    set Module($m,row1Name) "{Help} {Display} {Volumes} {Models} {Plot} {QA}"
     set Module($m,row1,tab) Volumes
 
     # Define Procedures
@@ -318,7 +329,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27 $} {$Date: 2005/04/19 18:26:15 $}]
+        {$Revision: 1.27.6.1 $} {$Date: 2005/09/06 21:22:56 $}]
 
 }
 
@@ -338,10 +349,58 @@ proc vtkFreeSurferReadersBuildGUI {} {
     #-------------------------------------------
     # Help frame
     #-------------------------------------------
-    set help "The vtkFreeSuferReaders module allows you to read in FreeSufer format files.<P>Description by tab:<BR><UL><LI><B>Volumes</B>: Load in COR. mgh volumes.<LI><B>Models</B>: Load in model files (${vtkFreeSurferReaders(surfaces)}) and associate scalars with them.(${vtkFreeSurferReaders(scalars)}).<LI><B>Plot</B>: under development: plot statistical data.<LI><B>QA</B>: under development: Load in a series of freesurfer volume files for quality assurance. Select a subjects dir and volume types to load then press Start QA."
+    set help "The vtkFreeSuferReaders module allows you to read in FreeSufer format files.<P>Description by tab:<BR><<UL><LI><B>Display</B>: Change the display settings for FreeSurfer volumes and models: colour definitions, overlays.<LI><B>Volumes</B>: Load in COR. mgh volumes.<LI><B>Models</B>: Load in model files (${vtkFreeSurferReaders(surfaces)}) and associate scalars with them.(${vtkFreeSurferReaders(scalars)}).<LI><B>Plot</B>: under development: plot statistical data.<LI><B>QA</B>: under development: Load in a series of freesurfer volume files for quality assurance. Select a subjects dir and volume types to load then press Start QA."
     regsub -all "\n" $help {} help
     MainHelpApplyTags vtkFreeSurferReaders $help
     MainHelpBuildGUI vtkFreeSurferReaders
+
+    #-------------------------------------------
+    # Display Frame
+    #-------------------------------------------
+    set fDisplay $Module(vtkFreeSurferReaders,fDisplay)
+    set f $fDisplay
+    DevAddLabel $f.lDisplay "Display Options:"
+    pack $f.lDisplay -side top -padx $Gui(pad) -pady 0
+
+    foreach subf {Colors AnnotColor Scalars} {
+        frame $f.f${subf} -bg $Gui(activeWorkspace)
+        pack $f.f${subf} -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
+    }
+
+    #-------------------------------------------
+    # Display-> Color Frame
+    #-------------------------------------------
+    set f $fDisplay.fColors
+    eval {checkbutton $f.cLoadColours \
+              -text "Load FreeSurfer Colors" -variable vtkFreeSurferReaders(loadColours) -width 23 \
+              -indicatoron 0 -command "vtkFreeSurferReadersSetLoadColours"} $Gui(WCA)
+    TooltipAdd $f.cLoadColours "Load in a FreeSurfer colour definition file when loading a COR label map.\nWARNING: will override other colours, use at your own risk."
+    pack $f.cLoadColours -side top -padx $Gui(pad)
+    DevAddFileBrowse $f vtkFreeSurferReaders "colourFileName" "Colour xml file:" "vtkFreeSurferReadersSetColourFileName" "xml" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer colors file"
+
+
+    #-------------------------------------------
+    # Display->Annotation Color Frame
+    #-------------------------------------------
+    DevAddFileBrowse $fDisplay.fAnnotColor vtkFreeSurferReaders "colorTableFilename" "Annotation Color file:" "vtkFreeSurferReadersSetAnnotColorFileName" "txt" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer annotation colour table file (txt)"
+
+    #-------------------------------------------
+    # Display->Scalars Frame
+    #-------------------------------------------
+    set f $fDisplay.fScalars
+
+#    frame $f.fLoadScalar -bg $Gui(activeWorkspace) 
+#    pack $f.fLoadScalar  -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    DevAddFileBrowse $f vtkFreeSurferReaders "scalarFileName" "Scalar (Overlay) file:" "vtkFreeSurferReadersSetScalarFileName" "thickness curv sulc area w" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer scalar overlay file for the active model"
+    eval {button $f.bLoad -text "Load Scalar File" -width 12 -command "vtkFreeSurferReadersLoadScalarFile"} $Gui(WBA)
+    TooltipAdd $f.bLoad "Load the scalar file and associate it with the active model"
+    pack $f.bLoad  -side top -pady $Gui(pad) -padx $Gui(pad)
+
+    DevAddButton $f.bPick "Pick Scalars" "ModelsPickScalars $f.bPick; Render3D" 12
+    TooltipAdd $f.bPick "Pick scalars to display for active model"
+    DevAddButton $f.bPickLut "Pick Palette" "vtkFreeSurferReadersPickScalarsLut $f.bPickLut; Render3D" 12
+    TooltipAdd $f.bPickLut "Pick which look up table to use to map scalars for active model"
+    pack $f.bPick $f.bPickLut  -side top -pady $Gui(pad) -padx $Gui(pad)
 
     #-------------------------------------------
     # Volumes Frame
@@ -379,14 +438,14 @@ proc vtkFreeSurferReadersBuildGUI {} {
 
     frame $f.fLabelMap -bg $Gui(activeWorkspace)
     frame $f.fCast  -bg $Gui(activeWorkspace)
-    frame $f.fColours -bg $Gui(activeWorkspace)
+    # frame $f.fColours -bg $Gui(activeWorkspace)
     frame $f.fDesc     -bg $Gui(activeWorkspace)
     frame $f.fName -bg $Gui(activeWorkspace)
     frame $f.fApply  -bg $Gui(activeWorkspace)
 
     pack $f.fLabelMap -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fCast -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-    pack $f.fColours -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    # pack $f.fColours -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fDesc -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fName -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fApply -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
@@ -447,9 +506,10 @@ proc vtkFreeSurferReadersBuildGUI {} {
     pack $f.cCastToShort -side top -padx 0
 
     
-    #------------
-    # Volume->Colours
-    #------------
+    if {0} {
+        #------------
+        # Volume->Colours
+        #------------
     set f $fVolumes.fVolume.fColours
     eval {checkbutton $f.cLoadColours \
               -text "Load FreeSurfer Colors" -variable vtkFreeSurferReaders(loadColours) -width 23 \
@@ -457,6 +517,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
     TooltipAdd $f.cLoadColours "Load in a FreeSurfer colour definition file when loading a COR label map.\nWARNING: will override other colours, use at your own risk."
     pack $f.cLoadColours -side top -padx $Gui(pad)
     DevAddFileBrowse $f vtkFreeSurferReaders "colourFileName" "Colour xml file:" "vtkFreeSurferReadersSetColourFileName" "xml" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer colors file"
+}
 
     #------------
     # Volume->Apply 
@@ -472,7 +533,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
     #-------------------------------------------
     set f $fVolumes.fDemo
     eval button $f.bDemo -text Demo -command "vtkFreeSurferDemo" $Gui(WBA)
-    pack $f.bDemo  -side left -padx $Gui(pad) -pady 0
+#    pack $f.bDemo  -side left -padx $Gui(pad) -pady 0
 
     #-------------------------------------------
     # Model frame
@@ -484,16 +545,18 @@ proc vtkFreeSurferReadersBuildGUI {} {
     frame $f.fName -bg $Gui(activeWorkspace)
     frame $f.fSurface -bg $Gui(activeWorkspace)
     frame $f.fScalar -bg $Gui(activeWorkspace)
+    frame $f.fScalarAdd  -bg $Gui(activeWorkspace)
     frame $f.fAnnotation -bg $Gui(activeWorkspace)
-    frame $f.fAnnotColor -bg $Gui(activeWorkspace)
+    # frame $f.fAnnotColor -bg $Gui(activeWorkspace)
     frame $f.fApply  -bg $Gui(activeWorkspace)
  
     pack $f.fName -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
     pack $f.fSurface -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
     pack $f.fScalar -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
+    pack $f.fScalarAdd -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
     pack $f.fAnnotation -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
-    pack $f.fAnnotColor -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
-    DevAddFileBrowse $f.fAnnotColor vtkFreeSurferReaders "colorTableFilename" "Annotation Color file:" "vtkFreeSurferReadersSetAnnotColorFileName" "txt" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer annotation colour table file (txt)"
+   # pack $f.fAnnotColor -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
+   # DevAddFileBrowse $f.fAnnotColor vtkFreeSurferReaders "colorTableFilename" "Annotation Color file:" "vtkFreeSurferReadersSetAnnotColorFileName" "txt" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer annotation colour table file (txt)"
 
     pack $f.fApply -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
 
@@ -530,6 +593,8 @@ proc vtkFreeSurferReadersBuildGUI {} {
     # Model->Scalar 
     #------------
     # curvature (scalar): e.g., lh.thickness, lh.curv, lh.sulc, lh.area
+    vtkFreeSurferReadersBuildModelScalarsGui
+    if {0} {
     set f $Module(vtkFreeSurferReaders,fModels).fScalar
     DevAddLabel $f.lTitle "Load Associated Scalar files:"
     pack $f.lTitle -side top -padx $Gui(pad) -pady 0
@@ -541,6 +606,20 @@ proc vtkFreeSurferReadersBuildGUI {} {
                   -indicatoron 0} $Gui(WCA)
         pack $f.r$scalar -side top -padx 0
     }
+    }
+    #------------
+    # Model->ScalarAdd
+    #------------
+    set f $Module(vtkFreeSurferReaders,fModels).fScalarAdd
+    # let the user specify other scalar file extensions
+    DevAddLabel $f.lScalarAdd "Add a scalar:"
+    pack $f.lScalarAdd -side left -padx $Gui(pad)
+    eval {entry $f.eScalarAdd -textvariable vtkFreeSurferReaders(scalarsNew)  -width 5} $Gui(WEA)
+    pack $f.eScalarAdd -side left -padx $Gui(pad) -expand 1 -fill x
+    TooltipAdd $f.eScalarAdd "Put the suffix of the new scalar type that you wish to load here"
+    # now bind a proc to add this to the assocFiles list.
+    bind $f.eScalarAdd <Return> "vtkFreeSurferReadersScalarSetLoadAddNew"
+
 
     #------------
     # Model->Annotation 
@@ -572,13 +651,29 @@ proc vtkFreeSurferReadersBuildGUI {} {
     set fPlot $Module(vtkFreeSurferReaders,fPlot)
     set f $fPlot
 
-    DevAddLabel $f.lWarning "UNDER CONSTRUCTION"
-    pack $f.lWarning -side top -padx $Gui(pad) -pady 0
-
     DevAddFileBrowse $f vtkFreeSurferReaders "PlotFileName" "Plot header file:" "vtkFreeSurferReadersSetPlotFileName" "fsgd" "\$Volume(DefaultDir)" "Open" "Browse for a plot header file (fsgd)"
-    frame $f.fApply -bg $Gui(activeWorkspace)
 
-    pack $f.fApply -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
+    frame $f.fApply -bg $Gui(activeWorkspace)
+    frame $f.fModel -bg $Gui(activeWorkspace)
+
+    pack $f.fModel $f.fApply -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -expand 1
+
+    #------------
+    # Plot->Model
+    #------------
+    set f $Module(vtkFreeSurferReaders,fPlot).fModel
+
+    DevAddLabel $f.lActive "Active Model: "
+    TooltipAdd $f.lActive "Which model to associate this plot data with"
+
+    eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20 \
+            -menu $f.mbActive.m} $Gui(WMBA)
+    eval {menu $f.mbActive.m} $Gui(WMA)
+    pack $f.lActive $f.mbActive -side left
+
+    # Append widgets to list that gets refreshed during UpdateMRML
+    lappend ::Model(mbActiveList) $f.mbActive
+    lappend ::Model(mActiveList)  $f.mbActive.m
 
     #------------
     # Plot->Apply 
@@ -819,6 +914,10 @@ proc vtkFreeSurferDemo {} {
 proc vtkFreeSurferReadersBuildVTK {} {
     global Module
     if {$Module(verbose) == 1} {puts "proc vtkFreeSurferReaders Build VTK"}
+
+    # add our stuff to the look up table list
+    vtkFreeSurferReadersAddLuts
+
 }
 
 #-------------------------------------------------------------------------------
@@ -830,6 +929,8 @@ proc vtkFreeSurferReadersBuildVTK {} {
 proc vtkFreeSurferReadersEnter {} {
     global Module vtkFreeSurferReaders
     if {$Module(verbose) == 1} {puts "proc vtkFreeSurferReaders ENTER"}
+
+#    pushEventManager vtkFreeSurferReadersEventMgr
 }
 
 
@@ -845,6 +946,8 @@ proc vtkFreeSurferReadersExit {} {
     if {[info exist vtkFreeSurferReaders(gdfReader)]} {
         vtkFreeSurferReaders(gdfReader) Delete
     }
+
+#    popEventManager vtkFreeSurferReadersEventMgr
 }
 
 
@@ -860,9 +963,11 @@ proc vtkFreeSurferReadersSetVolumeFileName {} {
     if {$Module(verbose) == 1} {
         puts "FreeSurferReaders filename: $vtkFreeSurferReaders(VolumeFileName)"
     }
-    if {[string equal [file extension $vtkFreeSurferReaders(VolumeFileName)]  ".mgh"]} { 
+    if {[string equal [file extension $vtkFreeSurferReaders(VolumeFileName)] ".mgh"] ||
+        [string equal [file extension $vtkFreeSurferReaders(VolumeFileName)] ".mgz"]} { 
         set Volume(name) [file rootname [file tail $vtkFreeSurferReaders(VolumeFileName)]]
-    } elseif {[string equal [file extension $vtkFreeSurferReaders(VolumeFileName)]  ".bfloat"]} {
+    } elseif {[string equal [file extension $vtkFreeSurferReaders(VolumeFileName)] ".bfloat"] ||
+              [string equal [file extension $vtkFreeSurferReaders(VolumeFileName)] ".bshort"]} {
         # use the stem of the file, the part between the last directory separator and the underscore
         set bdir [file dirname $vtkFreeSurferReaders(VolumeFileName)]
         regexp "$bdir/(.*)_.*" $vtkFreeSurferReaders(VolumeFileName) match Volume(name)
@@ -922,20 +1027,17 @@ proc vtkFreeSurferReadersApply {} {
     # switch on the file name, it can be:
     # a COR file (*.info that defines the volume) 
     # an mgh file (*.mgh, volume in one file)
+    # an mgz file (*.mgz or *.mgh.gz - a gzippped mgh volume)
     # a bfloat file (*.bfloat)
     if {[string match *.info $vtkFreeSurferReaders(VolumeFileName)]} {
         set vid [vtkFreeSurferReadersCORApply]
     } elseif {[string match *.mgh $vtkFreeSurferReaders(VolumeFileName)]} {
         set vid [vtkFreeSurferReadersMGHApply]
     } elseif {[string match *.mgz $vtkFreeSurferReaders(VolumeFileName)]} {
-        # unzip it first and then send it to vtkFreeSurferReadersMGHApply
-        if {[vtkFreeSurferReadersUncompressMGH] != -1} {
-            set vid [vtkFreeSurferReadersMGHApply]
-        }
+        # the mgh reader will read from a compressed file
+        set vid [vtkFreeSurferReadersMGHApply]
     } elseif {[string match *.mgh.gz $vtkFreeSurferReaders(VolumeFileName)]} {
-        if {[vtkFreeSurferReadersUncompressMGH] != -1} {
-            set vid [vtkFreeSurferReadersMGHApply]
-        }
+    set vid [vtkFreeSurferReadersMGHApply]
     } elseif {[string match *.bhdr $vtkFreeSurferReaders(VolumeFileName)]} {
         set vid [vtkFreeSurferReadersBApply]
     } else {
@@ -1106,13 +1208,13 @@ proc vtkFreeSurferReadersCORApply {} {
         if {[Volume($i,node) GetLabelMap] == 1} {
             MainSlicesSetVolumeAll Label $i
         } else {
-            MainSlicesSetVolumeAll Back $i
+            MainSlicesSetVolumeAll Fore $i
         }
     } else {
         if {[Volume($iCast,node) GetLabelMap] == 1} {
             MainSlicesSetVolumeAll Label $iCast
         } else {
-            MainSlicesSetVolumeAll Back $iCast
+            MainSlicesSetVolumeAll Fore $iCast
         }
     }
 
@@ -1151,11 +1253,6 @@ proc vtkFreeSurferReadersMGHApply {} {
     set n [MainMrmlAddNode Volume]
     set i [$n GetID]
 
-    if {$::Module(verbose)} {
-        # turn debugging on in this node - causes a seg fault
-        # Volume($i,node) DebugOn
-    }
-
     # read in the MGH file
     # Set up the reading
     if {[info command Volume($i,vol,rw)] != ""} {
@@ -1175,8 +1272,6 @@ set useMatrices 0
 
     # have to fudge it a little here, read the header to get the info needed
     if {$::Module(verbose)} {
-        # set it up to be debugging on
-        # Volume($i,vol,rw) DebugOn
         puts "vtkFreeSurferReadersMGHApply:\n\tReading volume header"
     }
 
@@ -1423,7 +1518,7 @@ set useMatrices 0
     set fc [rasmat$i MultiplyPoint 0 0 0 1]
     set lc [rasmat$i MultiplyPoint 0 0 0 1]
 
-    
+    if {$::Module(verbose)} {
         if {[info command DevPrintMatrix4x4] != ""} {
             DevPrintMatrix4x4 rasmat$i "MGH vol $i RAS -> IJK (with scaling, t_ras)"
         } 
@@ -1433,7 +1528,7 @@ set useMatrices 0
         puts  "ftr $ftr"
         puts  "fbr $fbr"
         puts  "ltl $ltl"
-
+    }
     # now do the magic bit
     # Volume($i,node) ComputeRasToIjkFromCorners $fc $ftl $ftr $fbr $lc $ltl
     Volume($i,node) ComputeRasToIjkFromCorners \
@@ -1445,12 +1540,27 @@ set useMatrices 0
         [lindex $ltl 0] [lindex $ltl 1] [lindex $ltl 2]
 
 
-    # Turn off using the ras to vtk matrix, as otherwise the MGH volume is flipped in Y
-    if {$::Module(verbose)} {
-        puts "Turning off UseRasToVtkMatrix on volume $i"
-    }
-    Volume($i,node) UseRasToVtkMatrixOff
+    if {0} {
+        # this is taken care of by flipping the image upon reading it
+        # Turn off using the ras to vtk matrix, as otherwise the MGH volume is flipped in Y
+        if {$::Module(verbose)} {
+            puts "Turning off UseRasToVtkMatrix on volume $i"
+        }
+        Volume($i,node) UseRasToVtkMatrixOff
+    } 
 
+    # when making models from these volumes, they're coming out wrong, since the RasToWld matrix
+    # is still identity. Try setting it to the RasToIjk matrix, minus the position vector
+    for {set mi 0} {$mi < 4} {incr mi} {
+        # skip the position in last column
+        for {set mj 0} { $mj < 3} {incr mj} {
+            [Volume($i,node) GetRasToWld] SetElement $mi $mj [[Volume($i,node) GetRasToIjk] GetElement $mi $mj]
+        }
+    }
+    if {$::Module(verbose)} {
+        puts "Set Volume($i,node)'s RasToWld matrix from the RasToIjk matrix"
+        DevPrintMatrix4x4 [Volume($i,node) GetRasToWld] "Volume $i RAS -> WLD"
+    }
 
 
     # Reads in the volume via the Execute procedure
@@ -1510,11 +1620,11 @@ set useMatrices 0
         set vtkFreeSurferReaders(coloursLoaded) 1
     }
 
-    # display the new volume in the background of all slices if not a label map
+    # display the new volume in the foreground of all slices if not a label map
     if {[Volume($i,node) GetLabelMap] == 1} {
         MainSlicesSetVolumeAll Label $i
     } else {
-        MainSlicesSetVolumeAll Back $i
+        MainSlicesSetVolumeAll Fore $i
     }
 
     # Update all fields that the user changed (not stuff that would need a file reread)
@@ -1600,14 +1710,15 @@ proc vtkFreeSurferReadersShowMGH {i} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC vtkFreeSurferReadersVolumesPropsApplyPre
-# Encapsulates the stuff that volume props apply does before the custom stuff here.
-# So far only validates the voluem name.
+# .PROC vtkFreeSurferReadersBApply
+# Read in the freesurfer Bfloat or Bshort volume specified
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc vtkFreeSurferReadersVolumesPropsApplyPre {} {
-    global vtkFreeSurferReaders Lut Volume Label Module Mrml View
+proc vtkFreeSurferReadersBApply {} {
+    global vtkFreeSurferReaders Module Volume View
+
+    if {![info exists Volume(name)] } { set Volume(name) "FSB"}
 
     set Volume(isDICOM) 0
 
@@ -1619,28 +1730,6 @@ proc vtkFreeSurferReadersVolumesPropsApplyPre {} {
     if {[ValidateName $Volume(name)] == 0} {
         tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores"
         return -1
-    }
-
-    
-    return 1
-}
-
-#-------------------------------------------------------------------------------
-# .PROC vtkFreeSurferReadersBApply
-# Read in the freesurfer Bfloat or Bshort volume specified
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc vtkFreeSurferReadersBApply {} {
-    global vtkFreeSurferReaders Module Volume View
-
-    if {![info exists Volume(name)] } { set Volume(name) "FSB"}
-
-    # encapsulate the standard stuff
-    set retval [vtkFreeSurferReadersVolumesPropsApplyPre]
-    if {$retval == -1} { 
-        puts "Error from vtkFreeSurferReadersVolumesPropsApplyPre, exiting vtkFreeSurferReadersBApply"
-        return
     }
 
     if {$::Module(verbose)} {
@@ -1659,10 +1748,6 @@ proc vtkFreeSurferReadersBApply {} {
         Volume($i,vol,rw) Delete
     }
     vtkBVolumeReader Volume($i,vol,rw)
-    if {$::Module(verbose)} {
-        puts "Setting bvolume reader debug to on for volume $i"
-        Volume($i,vol,rw) DebugOn
-    }
 
     # set the filename  stem
     set stem [file rootname $vtkFreeSurferReaders(VolumeFileName)]
@@ -1729,7 +1814,6 @@ proc vtkFreeSurferReadersBApply {} {
     #--------------------------
     # Set the Volume variables
     #-------------------------
-    set Volume(isDICOM) 0
 
     set scalarType [Volume($i,vol,rw) GetScalarType]
     # Scalar type can be VTK_FLOAT (10), VTK_SHORT (4), 
@@ -1768,6 +1852,7 @@ proc vtkFreeSurferReadersBApply {} {
     set Volume(numScalars) 1
     if {$::Module(verbose)} {
         puts "$vtkFreeSurferReaders(VolumeFileName) numScalars = $Volume(numScalars)"
+        puts "$vtkFreeSurferReaders(VolumeFileName) numComponents = [[Volume($i,vol,rw) GetOutput] GetNumberOfScalarComponents]"
     }
 
     set Volume(littleEndian) 0
@@ -1825,7 +1910,7 @@ proc vtkFreeSurferReadersBApply {} {
     Volume($i,node) SetDimensions [lindex $Volume(dimensions) 0] [lindex $Volume(dimensions) 1]
     # without these, getting a seg fault when debug is turned on in the vtkMrmlVolumeNode
     Volume($i,node) SetLUTName ""
-    Volume($i,node) SetFileType Volume($i,type) 
+    Volume($i,node) SetFileType $Volume($i,type) 
 
 
     #----------------------------------
@@ -1839,6 +1924,12 @@ proc vtkFreeSurferReadersBApply {} {
     set topL [Volume($i,vol,rw) GetTopL]
     set bottomR [Volume($i,vol,rw) GetBottomR]
     set normal [Volume($i,vol,rw) GetNormal]
+
+    set nonzero 0
+    foreach n $normal { if {$n != 0} { incr nonzero}}
+    if {$nonzero != 1} {
+        DevWarningWindow "Volume $i normal is skewed:\n $normal \nVolume may not display properly."
+    }
 
     # Calculate the last top left
     set v1 [list [expr [lindex $topR 0] - [lindex $topL 0]] [expr [lindex $topR 1] - [lindex $topL 1]] [expr [lindex $topR 2] - [lindex $topL 2]]]
@@ -2080,7 +2171,9 @@ if {1} {
     package require tclVectorUtils
     set v3 [tclVectorUtils::VCross $v2 $v1]
     set v3 [tclVectorUtils::VNorm $v3]
-    set v4 [tclVectorUtils::VScale [expr  [lindex $dims 2] *  [lindex $spc 2]] $v3 ]
+# use normal from the volume
+    set v3 $normal
+    set v4 [tclVectorUtils::VScale [expr [lindex $dims 2] *  [lindex $spc 2]] $v3 ]
     set ltl [tclVectorUtils::VAdd $topL $v4]
     if {$::Module(verbose)} {
         puts "About to call ComputeRasToIjkFromCorners:"
@@ -2093,11 +2186,11 @@ if {1} {
 
     Volume($i,node) ComputeRasToIjkFromCorners \
         0 0 0 \
-        [lindex $topL 0] [lindex $topL 1] [lindex $topL 2] \
-        [lindex $topR 0] [lindex $topR 1] [lindex $topR 2] \
-        [lindex $bottomR 0] [lindex $bottomR 1] [lindex $bottomR 2]  \
+        [lindex $topL 0] [expr -1 * [lindex $topL 1]] [lindex $topL 2] \
+        [lindex $topR 0] [expr -1 * [lindex $topR 1]] [lindex $topR 2] \
+        [lindex $bottomR 0] [expr -1 * [lindex $bottomR 1]] [lindex $bottomR 2]  \
         0 0 0 \
-        [lindex $ltl 0] [lindex $ltl 1] [lindex $ltl 2]
+        [lindex $ltl 0] [expr -1 * [lindex $ltl 1]] [lindex $ltl 2]
 }
     # Turn off using the ras to vtk matrix, as otherwise the volume is flipped in Y
     if {$::Module(verbose)} {
@@ -2112,8 +2205,13 @@ if {1} {
         puts "\tFile pattern = [Volume($i,node) GetFilePattern]"
     }
 
+if {$::Module(verbose)} { puts "Right before MainUpdateMRML: vol $i number of components: [[[[Volume($i,vol,rw) GetOutput] GetPointData] GetScalars] GetNumberOfComponents]" }
+
     # Reads in the volume via the Execute procedure
     MainUpdateMRML
+
+puts "Right after MainUpdateMRML, number of components in Volume($i,vol)'s point scalars is [[[[Volume($i,vol) GetOutput] GetPointData] GetScalars ] GetNumberOfComponents]"
+
 
     # If failed, then it's no longer in the idList
     if {[lsearch $Volume(idList) $i] == -1} {
@@ -2150,18 +2248,22 @@ if {1} {
     # if we are successful set the FOV for correct display of this volume
     set dim     [lindex [Volume($i,node) GetDimensions] 0]
     set spacing [lindex [Volume($i,node) GetSpacing] 0]
-    set fov     [expr $dim*$spacing]
+    set fov     [expr $dim * $spacing]
+
+if {$fov < 2000} {
     if {$::Module(verbose)} { 
         puts "Bfloat Reader setting fov to $fov (dim $dim spacing $spacing)"
     }
     set View(fov) $fov
     MainViewSetFov
-
-    # display the new volume in the background of all slices if not a label map
+} else {
+    puts "Bfloat reader: warning, not resetting fov, too large: $fov"
+}
+    # display the new volume in the foreground of all slices if not a label map
     if {[Volume($i,node) GetLabelMap] == 1} {
         MainSlicesSetVolumeAll Label $i
     } else {
-        MainSlicesSetVolumeAll Back $i
+        MainSlicesSetVolumeAll Fore $i
     }
 
     # Update all fields that the user changed (not stuff that would need a file reread)
@@ -2185,6 +2287,12 @@ proc vtkFreeSurferReadersBuildSurface {m} {
     vtkFSSurfaceReader Model($m,reader)
     Model($m,reader) SetFileName $vtkFreeSurferReaders(ModelFileName)
 
+    Model($m,reader) AddObserver StartEvent MainStartProgress
+    # Model($m,reader) ProgressEvent "MainShowProgress Model($m,reader)"
+    # Model($m,reader) EndEvent       MainEndProgress
+    set ::Gui(progressText) "Reading $vtkFreeSurferReaders(ModelFileName)"
+
+
     vtkPolyDataNormals Model($m,normals)
     Model($m,normals) SetSplitting 0
     Model($m,normals) SetInput [Model($m,reader) GetOutput]
@@ -2207,61 +2315,20 @@ proc vtkFreeSurferReadersBuildSurface {m} {
     Model($m,node) SetName $vtkFreeSurferReaders(ModelName)
     Model($m,node) SetFileName $vtkFreeSurferReaders(ModelFileName)
     set Model($m,polyData) [Model($m,stripper) GetOutput]
+
+    if {$::Module(verbose)} { puts "Setting observer on polyData" }
+    $Model($m,polyData) AddObserver StartEvent MainStartProgress
+    # $Model($m,polyData) ProgressEvent "MainShowProgress Model($m,polyData)"
+    # $Model($m,polyData) EndEvent       MainEndProgress
+
     $Model($m,polyData) Update
 
     #-------------------------
-    # read in the other surface files somehow, as additional vectors doesn't work
-
-    if {0} {
-
-    set numSurfaces 0
-    foreach s $vtkFreeSurferReaders(surfaces) {
-        if {[lsearch $vtkFreeSurferReaders(assocFiles) $s] != -1} {
-            incr numSurfaces
-        }
-    }
-    if {$::Module(verbose)} {
-        DevInfoWindow "Have $numSurfaces vector arrays associated with this model, call:\nvtkFreeSurferReadersSetModelVector $m vectorName"
-    }
-    set numSurfacesAdded 0
-    foreach s $vtkFreeSurferReaders(surfaces) {
-        if {[lsearch $vtkFreeSurferReaders(assocFiles) $s] != -1} {
-            set surfaceFileName [file rootname $vtkFreeSurferReaders(ModelFileName)].$s
-            if [file exists $surfaceFileName] {
-                DevInfoWindow "Model $m: Reading in $s file associated with this surface: $surfaceFileName"
-                # need to delete these so that if close the scene and reopen a surface file, these won't still exist
-                if {$::Module(verbose)} {
-                    puts "Deleting Model($m,floatArray$s)..."
-                }
-                catch "Model($m,floatArray$s) Delete"
-                vtkFloatArray Model($m,floatArray$s)
-                Model($m,floatArray$s) SetName $s
-                vtkFSSurfaceReader Model($m,sr$s)
-                
-                Model($m,sr$s) SetFileName $surfaceFileName
-                Model($m,sr$s) SetOutput Model($m,floatArray$s)
-                Model($m,sr$s) Update
-                # may need to call Model($m,sr$s) Execute
-                
-                if {$::Module(verbose)} {
-                    DevInfoWindow "Adding surface named $s to model id $m"
-                }
-                [$Model($m,polyData) GetPointData] AddVector Model($m,floatArray$s)
-                # may have some missing files
-                incr numSurfacesAdded 
-                if {$numSurfacesAdded == 1} {
-                    # set the first one active
-                    [$Model($m,polyData) GetPointData] SetActiveVectors $s
-                }   
-                # may need to set reader output to "" and delete
-            } else {
-                 DevWarningWindow "Surface file does not exist: $surfaceFileName"
-            }
-        }
-    }
-} 
-    #-------------------------
     # read in the scalar files
+    vtkFreeSurferReadersReadScalars $m
+# move this into vtkFreeSurferReadersReadScalars
+    if {0} { 
+
     # check if there's more than one
     set numScalars 0
     foreach s $vtkFreeSurferReaders(scalars) {
@@ -2270,7 +2337,7 @@ proc vtkFreeSurferReadersBuildSurface {m} {
         }
     }
     if {$::Module(verbose)} {
-        DevInfoWindow "Have $numScalars scalar arrays associated with this model, call:\nvtkFreeSurferReadersSetModelScalar $m scalarName"
+        puts "Have $numScalars scalar arrays associated with this model, call:\nvtkFreeSurferReadersSetModelScalar $m scalarName"
     }
     set numScalarsAdded 0
     foreach s $vtkFreeSurferReaders(scalars) {
@@ -2297,6 +2364,7 @@ proc vtkFreeSurferReadersBuildSurface {m} {
                 # if there's going to be more than one, use add array, otherwise just set it
                 if {$numScalars == 1} {
                     [$Model($m,polyData) GetPointData] SetScalars Model($m,floatArray$s)
+                    [$Model($m,polyData) GetPointData] SetActiveScalars $s
                 } else {
                     if {$::Module(verbose)} {
                         DevInfoWindow "Adding scalar named $s to model id $m"
@@ -2306,17 +2374,30 @@ proc vtkFreeSurferReadersBuildSurface {m} {
                     incr numScalarsAdded 
                     if {$numScalarsAdded == 1} {
                         # set the first one active
-                        [$Model($m,polyData) GetPointData] SetActiveScalars $s
+                        [$Model($m,polyData) GetPointData] SetActiveScalars $s                        
                     }
                 }
+                
                 # may need to set reader output to "" and delete here
             } else {
                 DevWarningWindow "Scalar file does not exist: $scalarFileName"
             }
         }
     }
+    set Model(scalarVisibility) 1
+    Model($m,node) SetScalarVisibility 1
+    Model($m,node) SetVisibility 1
+    # auto range on the scalar
+    set Model(scalarVisibilityAuto) 1
     
-
+    set range [$Model($m,polyData) GetScalarRange]
+    set Model(scalarLo) [lindex $range 0]
+    set Model(scalarHi) [lindex $range 1]
+    if {$::Module(verbose)} {
+        puts "Model $m scalar range = $range"
+    }
+}
+# end of stuff moved into scalar reader
     
     foreach r $Module(Renderers) {
         Model($m,mapper,$r) SetInput $Model($m,polyData)
@@ -2402,7 +2483,18 @@ proc vtkFreeSurferReadersBuildSurface {m} {
     set Model($m,dirty) 1
     set Model($m,fly) 1
 
+    MainModelsSetClipping $m $Model(clipping)
+    MainModelsSetVisibility $m $Model(visibility)
+    MainModelsSetOpacity $m $Model(opacity)
+    MainModelsSetCulling $m $Model(culling)
+    MainModelsSetScalarVisibility $m $Model(scalarVisibility)
+    MainModelsSetScalarRange $m $Model(scalarLo) $Model(scalarHi)
+    # MainModelsSetColor $m $Label(name)
+
     MainUpdateMRML
+
+    set ::Gui(progressText) ""
+
     MainModelsSetActive $m
 }
 
@@ -2881,13 +2973,13 @@ proc vtkFreeSurferReadersSetUMLSMapping {} {
 proc vtkFreeSurferReadersReadAnnotations {_id} {
     global vtkFreeSurferReaders Volume Model
 
-    # read in this annot file, it's one up from the surf dir, then down into label
+    # read in the associated annot file, it's one up from the surf dir, then down into label
     set dir [file split [file dirname $vtkFreeSurferReaders(ModelFileName)]]
     set dir [lrange $dir 0 [expr [llength $dir] - 2]]
     lappend dir label
     set dir [eval file join $dir]
     set fname [lrange [file split [file rootname $vtkFreeSurferReaders(ModelFileName)]] end end]
-
+    
     foreach a $vtkFreeSurferReaders(annots) {
         if {[lsearch $vtkFreeSurferReaders(assocFiles) $a] != -1} {
             set annotFileName [eval file join $dir $fname.$a.annot]
@@ -2983,6 +3075,35 @@ proc vtkFreeSurferReadersCheckAnnotError {val} {
     }
     if {$val == 6} {
         DevErrorWindow "ERROR: no colour table defined"
+    }
+    return $val
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersCheckWError
+# references vtkFSSurfaceWFileReader.h. Returns error value (0 means success)
+# after calling DevErrorWindow with a useful message
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersCheckWError {val} {
+    if {$val == 1} {
+        DevErrorWindow "ERROR: output is null"
+    }
+    if {$val == 2} {
+        DevErrorWindow "ERROR: FileName not specified"
+    }
+    if {$val == 3} {
+        DevErrorWindow "ERROR: Could not open file"
+    }
+    if {$val == 4} {
+        DevErrorWindow "ERROR: Number of values in the file is 0 or negative, or greater than number of vertices in the associated scalar file"
+    }
+    if {$val == 5} {
+        DevErrorWindow "ERROR: Error allocating the array of floats"
+    }
+    if {$val == 6} {
+        DevErrorWindow "ERROR: Unexpected EOF"
     }
     return $val
 }
@@ -3086,8 +3207,15 @@ proc vtkFreeSurferReadersSetLoad {param} {
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersLoadVolume { filename {labelMap 0} {name ""} } {
 
+    if {[file exists $filename] == 0} {
+        DevErrorWindow "Load FreeSurfer Volume: $filename does not exist!"
+        return
+    }
+
     set ::Volume(labelMap) $labelMap
     set ::vtkFreeSurferReaders(VolumeFileName) $filename
+
+    
     vtkFreeSurferReadersSetVolumeFileName 
     if { $name != "" } {
         set ::Volume(name) $name
@@ -3106,6 +3234,11 @@ proc vtkFreeSurferReadersLoadVolume { filename {labelMap 0} {name ""} } {
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersLoadModel { filename {name ""} } {
+
+    if {[file exists $filename] == 0} {
+        DevErrorWindow "Load FreeSurfer Model: $filename does not exist!"
+        return
+    }
 
     set ::vtkFreeSurferReaders(ModelFileName) $filename
     vtkFreeSurferReadersSetModelFileName
@@ -3155,10 +3288,20 @@ proc vtkFreeSurferReadersReadMGH {v} {
     vtkMGHReader mghreader
             
     mghreader SetFileName [Volume($v,node) GetFullPrefix]
+
+    # flip it on reading in
+    catch "flipper Delete"
+    vtkImageFlip flipper
+    flipper SetFilteredAxis 1
+    flipper SetInput [mghreader GetOutput]
+
     mghreader Update
     mghreader ReadVolumeHeader
     [[mghreader GetOutput] GetPointData] SetScalars [mghreader ReadVolumeData]
-    Volume($v,vol) SetImageData [mghreader GetOutput]
+
+    # Volume($v,vol) SetImageData [mghreader GetOutput]
+    Volume($v,vol) SetImageData [flipper GetOutput]
+
     mghreader Delete
 }
 
@@ -3171,6 +3314,8 @@ proc vtkFreeSurferReadersReadMGH {v} {
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersReadBfloat {v} {
     global Volume
+
+puts "\n\n\n\nvtkFreeSurferReadersReadBfloat $v - just returns"
 
     if {$::Module(verbose)} {
         puts "vtkFreeSurferReadersReadBfloat: volume id = $v"
@@ -3195,6 +3340,10 @@ proc vtkFreeSurferReadersReadBfloat {v} {
     bfloatreader Update
     bfloatreader SetRegistrationFileName ${stem}.dat
     set regmat [bfloatreader GetRegistrationMatrix]
+
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersReadBfloat: num time points = [bfloatreader GetNumTimePoints]"
+    }
 
 #    Volume($v,vol) SetImageData [bfloatreader GetOutput]
     bfloatreader Delete
@@ -3397,6 +3546,13 @@ proc vtkFreeSurferReadersGDFPlotBuildWindow { iID } {
     set fwClassConfig $wwTop.fwClassConfig
 
 
+    if {[info command $wwTop] != ""} {
+        if {$::Module(verbose)} {
+            DevInfoWindow "Already have a $wwTop, rebuilding anyway"
+        }
+     #   wm deiconify $wwTop
+     #   return
+    }
     # Make the to window and set its title.
     toplevel $wwTop -height 500 -width 500
     wm title $wwTop $vtkFreeSurferReaders(gGDF,$iID,title)
@@ -3426,25 +3582,28 @@ proc vtkFreeSurferReadersGDFPlotBuildWindow { iID } {
     $gwPlot axis configure y -title $vtkFreeSurferReaders(gGDF,$iID,measurementName)
 
     # Make the info label.
-    set vtkFreeSurferReaders(gPlot,$iID,state,info) ""
+    set vtkFreeSurferReaders(gPlot,$iID,state,info) "Vertex number "
     # tkuMakeActiveLabel
     # will need to update this
-    DevAddLabel $lwInfo $vtkFreeSurferReaders(gPlot,$iID,state,info)
+    # DevAddLabel $lwInfo $vtkFreeSurferReaders(gPlot,$iID,state,info)
+    eval {label $lwInfo -textvariable vtkFreeSurferReaders(gPlot,$iID,state,info)}
 
     # Make the variable menu.
     iwidgets::optionmenu $owVar \
         -labeltext "Variable menu" \
-        -command "vtkFreeSurferReadersGDFPlotSetVariable $iID" 
+        -command "vtkFreeSurferReadersPlotSetVariable $iID" 
         # -labelfont $::Gui(WLA)
 
     # Make the mode menu.
     iwidgets::optionmenu $owLegendMode \
         -labeltext "Mode menu" \
-        -command "vtkFreeSurferReadersGDFPlotSetMode $iID" 
+        -command "vtkFreeSurferReadersPlotSetMode $iID" 
         # -labelfont $::Gui(WLA)
     $owLegendMode config -state disabled 
-    $owLegendMode add command subject -label "View by subject"
-    $owLegendMode add command class -label "View by class"
+#    $owLegendMode add command subject -label "View by subject"
+#    $owLegendMode add command class -label "View by class"
+    $owLegendMode insert end subject 
+    $owLegendMode insert end class
     $owLegendMode config -state normal 
 
     # Make a frame for the class controls, which we'll fill in later.
@@ -3468,6 +3627,7 @@ proc vtkFreeSurferReadersGDFPlotBuildWindow { iID } {
     set vtkFreeSurferReaders(gWidgets,$iID,gwPlot)         $gwPlot
     set vtkFreeSurferReaders(gWidgets,$iID,lwInfo)         $lwInfo
     set vtkFreeSurferReaders(gWidgets,$iID,owVar)          $owVar
+    set vtkFreeSurferReaders(gWidgets,$iID,owMode)         $owLegendMode
     set vtkFreeSurferReaders(gWidgets,$iID,fwClassConfig)  [$fwClassConfig childsite]
 
     # Build the dynamic window elements for the window.
@@ -3475,10 +3635,10 @@ proc vtkFreeSurferReadersGDFPlotBuildWindow { iID } {
 
     # Set the variable menu value to the header's default variable
     # index.
-    $owVar config -value $vtkFreeSurferReaders(gGDF,$iID,nDefaultVariable)
+    $owVar select $vtkFreeSurferReaders(gGDF,$iID,nDefaultVariable)
 
     # Set our initial legen mode to class.
-    $owLegendMode config -value class
+    $owLegendMode select class
 
     # Create the pen for our active element.
     $gwPlot pen create activeElement \
@@ -3490,27 +3650,29 @@ proc vtkFreeSurferReadersGDFPlotBuildWindow { iID } {
 
 
 #-------------------------------------------------------------------------------
-# .PROC vtkFreeSurferReadersGDFFPlotBuildDynamicWindowElements
+# .PROC vtkFreeSurferReadersGDFPlotBuildDynamicWindowElements
 # Builds the window elements that are dependant on data, including the
 # variable menu and the class configuration section.
 # .ARGS
 # int iID the id of the window
 # .END
 #-------------------------------------------------------------------------------
-proc vtkFreeSurferReadersGDFFPlotBuildDynamicWindowElements { iID } {
+proc vtkFreeSurferReadersGDFPlotBuildDynamicWindowElements { iID } {
     global vtkFreeSurferReaders
 
     # First delete all entries in the menu. Then for each variable,
     # make an entry with that variable's label. The command for the
     # menu has already been set.
     $vtkFreeSurferReaders(gWidgets,$iID,owVar) config -state disabled
-    set lEntries [$vtkFreeSurferReaders(gWidgets,$iID,owVar) entries]
-    foreach entry $lEntries { 
-        $vtkFreeSurferReaders(gWidgets,$iID,owVar) delete $entry
-    }
-    for { set nVar 0 } { $nVar < $gGDF($iID,cVariables) } { incr nVar } {
-        $vtkFreeSurferReaders(gWidgets,$iID,owVar) add command $nVar \
-            -label "$vtkFreeSurferReaders(gGDF,$iID,variables,$nVar,label)"
+    #   set lEntries [$vtkFreeSurferReaders(gWidgets,$iID,owVar) entries]
+    #foreach entry $lEntries { 
+    #    $vtkFreeSurferReaders(gWidgets,$iID,owVar) delete $entry
+    #}
+
+    $vtkFreeSurferReaders(gWidgets,$iID,owVar) delete 0 end
+    for { set nVar 0 } { $nVar < $vtkFreeSurferReaders(gGDF,$iID,cVariables) } { incr nVar } {
+        $vtkFreeSurferReaders(gWidgets,$iID,owVar) insert $nVar "$vtkFreeSurferReaders(gGDF,$iID,variables,$nVar,label)"
+        
     }
     $vtkFreeSurferReaders(gWidgets,$iID,owVar) config -state normal
 
@@ -3523,27 +3685,30 @@ proc vtkFreeSurferReadersGDFFPlotBuildDynamicWindowElements { iID } {
         set owMarker $vtkFreeSurferReaders(gWidgets,$iID,fwClassConfig).owMarker$nClass
         set owColor  $vtkFreeSurferReaders(gWidgets,$iID,fwClassConfig).owColor$nClass
 
-        DevAddLabel $lw $vtkFreeSurferReaders(gGDF,$iID,classes,$nClass,label) 
+        eval {label $lw -text $vtkFreeSurferReaders(gGDF,$iID,classes,$nClass,label)}
+#        DevAddLabel $lw $vtkFreeSurferReaders(gGDF,$iID,classes,$nClass,label) 
 
         iwidgets::optionmenu $owMarker \
             -command "vtkFreeSurferReadersPlotSetNthClassMarker $iID $nClass" 
             # -labelfont $::Gui(WLA)
         $owMarker config -state disabled
-        foreach marker $kValid(lMarkers) {
-            $owMarker add command $marker -label $marker
+        foreach marker $vtkFreeSurferReaders(kValid,lMarkers) {
+            # $owMarker add command $marker -label $marker
+            $owMarker insert end $marker
         }
         $owMarker config -state normal
-        $owMarker config -value $vtkFreeSurferReaders(gGDF,$iID,classes,$nClass,marker)
+        $owMarker select $vtkFreeSurferReaders(gGDF,$iID,classes,$nClass,marker)
         
         iwidgets::optionmenu $owColor \
             -command "vtkFreeSurferReadersPlotSetNthClassColor $iID $nClass" 
             # -labelfont $::Gui(WLA)
         $owColor config -state disabled
         foreach color $vtkFreeSurferReaders(kValid,lColors) {
-            $owColor add command $color -label $color
+            # $owColor add command $color -label $color
+            $owColor insert end $color
         }
         $owColor config -state normal
-        $owColor config -value $vtkFreeSurferReaders(gGDF,$iID,classes,$nClass,color)
+        $owColor select $vtkFreeSurferReaders(gGDF,$iID,classes,$nClass,color)
         
         # We're packing them in two columns (of three columns each).
         set nCol [expr ($nClass % 2) * 3]
@@ -3559,7 +3724,6 @@ proc vtkFreeSurferReadersGDFFPlotBuildDynamicWindowElements { iID } {
     grid columnconfigure $vtkFreeSurferReaders(gWidgets,$iID,fwClassConfig) 4 -weight 0
     grid columnconfigure $vtkFreeSurferReaders(gWidgets,$iID,fwClassConfig) 5 -weight 0
 }
-
 
 #-------------------------------------------------------------------------------
 # .PROC vtkFreeSurferReadersPlotParseHeader
@@ -3583,266 +3747,172 @@ proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
         puts "Error: $errMsg"
         return -1
     }
+    # Grab all the data and put it into our TCL object.
+    set vtkFreeSurferReaders(gGDF,$ID,title) [vtkFreeSurferReaders(gdfReader) GetTitle]
+    set vtkFreeSurferReaders(gGDF,$ID,measurementName) [vtkFreeSurferReaders(gdfReader) GetMeasurementName]
+    set vtkFreeSurferReaders(gGDF,$ID,subjectName) [vtkFreeSurferReaders(gdfReader) GetSubjectName]
+    set vtkFreeSurferReaders(gGDF,$ID,dataFileName) [vtkFreeSurferReaders(gdfReader) GetDataFileName]
 
-    # Grab all the data and put it into our TCL object. All these gdf*
-    # functions return a list of results. The first is an integer
-    # representing a result code. The second -> whatever is the actual
-    # result of the function.
-    set lResults [vtkFreeSurferReaders(gdfReader) GetTitle $vtkFreeSurferReaders(gGDF,$ID,object) ignore]
-    set err [lindex $lResults 0]
-    if { 0 == $err } {
-        set vtkFreeSurferReaders(gGDF,$ID,title)  [lindex $lResults 1]
-    } else {
-        puts "WARNING: Could not get the graph title."
-        set vtkFreeSurferReaders(gGDF,$ID,title)  "Untitled graph"
-    }
+    set vtkFreeSurferReaders(gGDF,$ID,gd2mtx) [vtkFreeSurferReaders(gdfReader) Getgd2mtx]
 
-    set lResults [vtkFreeSurferReaders(gdfReader) GetMeasurementName $vtkFreeSurferReaders(gGDF,$ID,object) ignore]
-    set err [lindex $lResults 0]
-    if { 0 == $err } {
-        set vtkFreeSurferReaders(gGDF,$ID,measurementName)  [lindex $lResults 1]
-    } else {
-        puts "WARNING: Could not get the measurement label."
-        set vtkFreeSurferReaders(gGDF,$ID,measurementName)  "Measurement"
-    }
-
-    set lResults [vtkFreeSurferReaders(gdfReader) GetSubjectName $vtkFreeSurferReaders(gGDF,$ID,object) ignore]
-    set err [lindex $lResults 0]
-    if { 0 == $err } {
-        set vtkFreeSurferReaders(gGDF,$ID,subjectName)  [lindex $lResults 1]
-    } else {
-        puts "WARNING: Could not get the subject name."
-        set vtkFreeSurferReaders(gGDF,$ID,subjectName) "Unknown"
-    }
-
-
-    set lResults [vtkFreeSurferReaders(gdfReader) GetDataFileName $vtkFreeSurferReaders(gGDF,$ID,object) ignore]
-    set err [lindex $lResults 0]
-    if { 0 == $err } {
-        set vtkFreeSurferReaders(gGDF,$ID,dataFileName)  [lindex $lResults 1]
-    } else {
-        puts "WARNING: Could not get the data file name."
-        set vtkFreeSurferReaders(gGDF,$ID,dataFileName)  "Unknown"
-    }
-
-
-    set lResults [vtkFreeSurferReaders(gdfReader) GetNumClasses $vtkFreeSurferReaders(gGDF,$ID,object)]
-    set err [lindex $lResults 0]
-    if { 0 == $err } {
-        set vtkFreeSurferReaders(gGDF,$ID,cClasses)  [lindex $lResults 1]
-
-        # If they didn't specify color or marker for the class, use
-        # these and increment so all the classes are different.
-        set nColor 0
-        set nMarker 0
-
-        for { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$ID,cClasses) } { incr nClass } {
-
-            set lResults [vtkFreeSurferReaders(gdfReader) GetNthClassLabel $vtkFreeSurferReaders(gGDF,$ID,object) $nClass ignore]
-            set err [lindex $lResults 0]
-            if { 0 == $err } {
-                set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label)  [lindex $lResults 1]
-            } else {
-                puts "WARNING: Could not get ${nClass}th label."
-                set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label) "Class $nClass"
-            }
-            
-            set lResults [vtkFreeSurferReaders(gdfReader) GetNthClassMarker $vtkFreeSurferReaders(gGDF,$ID,object) $nClass ignore]
-            set err [lindex $lResults 0]
-            if { 0 == $err } {
-                set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,marker)  [lindex $lResults 1]
-            } else {
-                puts "WARNING: Could not get ${nClass}th label."
-                set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,marker) ""
-            }
-            
-            
-            # Look for the marker in the array of valid markers. If
-            # it's not found, output a warning and set it to the
-            # default.
-            set n [lsearch -exact $vtkFreeSurferReaders(kValid,lMarkers) \
-                       $vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,marker)]
-            if { $n == -1 } {
-                puts "WARNING: Marker for class $vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label) was invalid."
-                set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,marker) \
-                    [lindex $vtkFreeSurferReaders(kValid,lMarkers) $nMarker]
-                incr nMarker
-                if { $nMarker >= [llength $vtkFreeSurferReaders(kValid,lMarkers)] } {set nMarker 0 }
-            }
-            
-            set lResults [vtkFreeSurferReaders(gdfReader) GetNthClassColor $vtkFreeSurferReaders(gGDF,$ID,object) $nClass ignore]
-            set err [lindex $lResults 0]
-            if { 0 == $err } {
-                set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,color)  [lindex $lResults 1]
-            } else {
-                puts "WARNING: Could not get ${nClass}th label."
-                set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,color) ""
-            }
-            
-
-            # Look for the coclor in the array of valid color. If
-            # it's not found, output a warning and set it to the
-            # default.
-            set n [lsearch -exact $vtkFreeSurferReaders(kValid,lColors) \
-                       $vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,color)]
-            if { $n == -1 } {
-                puts "WARNING: Color for class $vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label) was invalid."
-                set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,color) \
-                    [lindex $vtkFreeSurferReaders(kValid,lColors) $nColor]
-                incr nColor
-                if { $nColor >= [llength $vtkFreeSurferReaders(kValid,lColors)] } { set nColor 0 }
-            }
-            
-            # This is the reverse lookup for a class label -> index.
-            set vtkFreeSurferReaders(gGDF,$ID,classes,$vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label),index) $nClass
-            
-            # Initialize all classes as visible.
-            set vtkFreeSurferReaders(gPlot,$ID,state,classes,$nClass,visible) 1
+    set vtkFreeSurferReaders(gGDF,$ID,cClasses) [vtkFreeSurferReaders(gdfReader) GetNumClasses ]
+    # If they didn't specify color or marker for the class, use
+    # these and increment so all the classes are different.
+    set nColor 0
+    set nMarker 0
+    
+    for { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$ID,cClasses) } { incr nClass } {
+        set retval [vtkFreeSurferReaders(gdfReader) GetNthClassLabel $nClass]
+        if {$retval != [vtkFreeSurferReaders(gdfReader) GetErrVal]} {
+            set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label) $retval
+        } else {
+            puts "WARNING: Could not get ${nClass}th label."
+            set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label) "Class $nClass"
         }
+        set retval [vtkFreeSurferReaders(gdfReader) GetNthClassMarker $nClass]
+        if {$retval != [vtkFreeSurferReaders(gdfReader) GetErrVal]} {
+            set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,marker) $retval
+        } else {
+            puts "WARNING: Could not get ${nClass}th marker."
+            set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,marker) ""
+        }
+        # Look for the marker in the array of valid markers. If
+        # it's not found, output a warning and set it to the
+        # default.
+        set n [lsearch -exact $vtkFreeSurferReaders(kValid,lMarkers) \
+                   $vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,marker)]
+        if { $n == -1 } {
+            puts "WARNING: Marker for class $vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label) was invalid."
+            set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,marker) \
+                [lindex $vtkFreeSurferReaders(kValid,lMarkers) $nMarker]
+            incr nMarker
+            if { $nMarker >= [llength $vtkFreeSurferReaders(kValid,lMarkers)] } {set nMarker 0 }
+        }
+
+        set retval [vtkFreeSurferReaders(gdfReader) GetNthClassColor $nClass]
+        if {$retval != [vtkFreeSurferReaders(gdfReader) GetErrVal]} {
+            set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,color) $retval
+        } else {
+            puts "WARNING: Could not get ${nClass}th colour."
+            set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,color) ""
+        }
+        # Look for the color in the array of valid color. If
+        # it's not found, output a warning and set it to the
+        # default.
+        set n [lsearch -exact $vtkFreeSurferReaders(kValid,lColors) \
+                   $vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,color)]
+        if { $n == -1 } {
+            puts "WARNING: Color for class $vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label) was invalid."
+            set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,color) \
+                [lindex $vtkFreeSurferReaders(kValid,lColors) $nColor]
+            incr nColor
+            if { $nColor >= [llength $vtkFreeSurferReaders(kValid,lColors)] } { set nColor 0 }
+        }
+
+        # This is the reverse lookup for a class label -> index.
+        set vtkFreeSurferReaders(gGDF,$ID,classes,$vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label),index) $nClass
+
+        # Initialize all classes as visible.
+        set vtkFreeSurferReaders(gPlot,$ID,state,classes,$nClass,visible) 1
+   
+    }
+
+    set vtkFreeSurferReaders(gGDF,$ID,cVariables) [vtkFreeSurferReaders(gdfReader) GetNumVariables]
+    for { set nVariable 0 } { $nVariable < $vtkFreeSurferReaders(gGDF,$ID,cVariables) } { incr nVariable } {
+        set retval [vtkFreeSurferReaders(gdfReader) GetNthVariableLabel $nVariable]
+        if {$retval != [vtkFreeSurferReaders(gdfReader) GetErrVal]} {
+            set vtkFreeSurferReaders(gGDF,$ID,variables,$nVariable,label) $retval
+        } else {
+            puts "WARNING: Could not get ${nClass}th label."
+            set vtkFreeSurferReaders(gGDF,$ID,variables,$nVariable,label)  "Variable $nVariable"
+        }
+    }
+
+    set retval [vtkFreeSurferReaders(gdfReader) GetDefaultVariable]
+    if {$retval == "null"} {
+        puts "WARNING: Could not get default variable."
+        set vtkFreeSurferReaders(gGDF,$ID,defaultVariable) $vtkFreeSurferReaders(gGDF,$ID,variables,0,label)
     } else {
-        puts "ERROR: Could not get number of classes."
-        return -1
+       set vtkFreeSurferReaders(gGDF,$ID,defaultVariable) $retval
     }
 
 
-    set lResults [vtkFreeSurferReaders(gdfReader) GetNumVariables $vtkFreeSurferReaders(gGDF,$ID,object)]
-    set err [lindex $lResults 0]
-    if { 0 == $err } {
-        set vtkFreeSurferReaders(gGDF,$ID,cVariables)  [lindex $lResults 1]
+    set vtkFreeSurferReaders(gGDF,$ID,nDefaultVariable)  [vtkFreeSurferReaders(gdfReader) GetDefaultVariableIndex ]
+
+    set vtkFreeSurferReaders(gGDF,$ID,cSubjects) [vtkFreeSurferReaders(gdfReader) GetNumberOfSubjects]
+    for { set nSubject 0 } { $nSubject < $vtkFreeSurferReaders(gGDF,$ID,cSubjects) } { incr nSubject } {
+        set retval [vtkFreeSurferReaders(gdfReader) GetNthSubjectID $nSubject]
+        if {$retval != [vtkFreeSurferReaders(gdfReader) GetErrVal]} {
+            set vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubject,id) $retval
+        } else {
+            puts "WARNING: Could not get ${nSubject}th subject ID."
+            set vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubject,id) 0
+        }
+
+        set retval [vtkFreeSurferReaders(gdfReader) GetNthSubjectClass $nSubject]
+        if {$retval != [vtkFreeSurferReaders(gdfReader) GetErrVal]} {
+            set vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubject,nClass) $retval
+        } else {
+            puts "WARNING: Could not get ${nSubject}th subject class."
+            set vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubject,nClass) ""
+        }
 
         for { set nVariable 0 } \
             { $nVariable < $vtkFreeSurferReaders(gGDF,$ID,cVariables) } { incr nVariable } {
-                
-                set lResults [vtkFreeSurferReaders(gdfReader) GetNthVariableLabel $vtkFreeSurferReaders(gGDF,$ID,object) $nVariable ignore]
-                set err [lindex $lResults 0]
-                if { 0 == $err } {
-                    set vtkFreeSurferReaders(gGDF,$ID,variables,$nVariable,label)  [lindex $lResults 1]
+                set retval [vtkFreeSurferReaders(gdfReader) GetNthSubjectNthValue $nSubject $nVariable]
+                if {$retval != [vtkFreeSurferReaders(gdfReader) GetErrVal]} {
+                    set vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubject,variables,$nVariable,value) $retval
+                    if {$::Module(verbose)} { puts "Plot parse header: set value to \"$vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubject,variables,$nVariable,value)\""}
                 } else {
-                    puts "WARNING: Could not get ${nClass}th label."
-                    set vtkFreeSurferReaders(gGDF,$ID,variables,$nVariable,label)  "Variable $nVariable"
+                    puts "WARNING: Could not value for ${nSubject}th subject ${nVariable}th variable."
+                    set vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubject,variables,$nVariable,value) 0
                 }
-                
-            }
-    } else {
-        puts "ERROR: Could not get number of variables."
-        return -1
+        }
+        # Initialize all subjects as visible.
+        set vtkFreeSurferReaders(gPlot,$ID,state,subjects,$nSubject,visible) 1
     }
-    
-
-    set lResults [vtkFreeSurferReaders(gdfReader) GetDefaultVariable $vtkFreeSurferReaders(gGDF,$ID,object) ignore]
-    set err [lindex $lResults 0]
-    if { 0 == $err } {
-        set vtkFreeSurferReaders(gGDF,$ID,defaultVariable)  [lindex $lResults 1]
-    } else {
-        puts "WARNING: Could not get default variable."
-        set vtkFreeSurferReaders(gGDF,$ID,defaultVariable) $vtkFreeSurferReaders(gGDF,$ID,variables,0,label)
-    }
-
-    set lResults [vtkFreeSurferReaders(gdfReader) GetDefaultVariableIndex $vtkFreeSurferReaders(gGDF,$ID,object)]
-    set err [lindex $lResults 0]
-    if { 0 == $err } {
-        set vtkFreeSurferReaders(gGDF,$ID,nDefaultVariable)  [lindex $lResults 1]
-    } else {
-        puts "WARNING: Could not get default variable index."
-        set vtkFreeSurferReaders(gGDF,$ID,defaultVariable) 0
-    }
-
-    set lResults [vtkFreeSurferReaders(gdfReader) GetNumSubjects $vtkFreeSurferReaders(gGDF,$ID,object)]
-    set err [lindex $lResults 0]
-    if { 0 == $err } {
-        set vtkFreeSurferReaders(gGDF,$ID,cSubjects)  [lindex $lResults 1]
-
-        for { set nSubject 0 } \
-            { $nSubject < $vtkFreeSurferReaders(gGDF,$ID,cSubjects) } { incr nSubject } {
-                
-                set lResults [vtkFreeSurferReaders(gdfReader) GetNthSubjectID $vtkFreeSurferReaders(gGDF,$ID,object) $nSubject ignore]
-                set err [lindex $lResults 0]
-                if { 0 == $err } {
-                    set vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubject,id)  [lindex $lResults 1]
-                } else {
-                    puts "WARNING: Could not get ${nSubject}th subject."
-                    set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label) "Subject $nSubject"
-                }
-                
-                set lResults [vtkFreeSurferReaders(gdfReader) GetNthSubjectClass $vtkFreeSurferReaders(gGDF,$ID,object) $nSubject]
-                set err [lindex $lResults 0]
-                if { 0 == $err } {
-                    set vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubject,nClass)  [lindex $lResults 1]
-                } else {
-                    puts "WARNING: Could not get ${nSubject}th subject."
-                    set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label) 0
-                }
-                
-                
-                for { set nVariable 0 } \
-                    { $nVariable < $vtkFreeSurferReaders(gGDF,$ID,cVariables) } { incr nVariable } {
-                        
-                        set lResults [vtkFreeSurferReaders(gdfReader) GetNthSubjectNthValue \
-                                          $vtkFreeSurferReaders(gGDF,$ID,object) $nSubject $nVariable]
-                        set err [lindex $lResults 0]
-                        if { 0 == $err } {
-                            set vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubject,variables,$nVariable,value) \
-                                [lindex $lResults 1]
-                        } else {
-                            puts "WARNING: Could not value for ${nSubject}th subject ${nVariable}th variable."
-                            set vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubject,variables,$nVariable,value) 0
-                        }
-                    }
-                
-                # Initialize all subjects as visible.
-                set vtkFreeSurferReaders(gPlot,$ID,state,subjects,$nSubject,visible) 1
-            }
-    } else {
-        puts "ERROR: Could not get number of subjects."
-        return -1
-    }
-    
-
+     
     # This groups the subjects by the class they are in. For each
     # class, for each subject, if the subject is in the class, assign
     # the subject index to that subject-in-class index.
     for  { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$ID,cClasses) } { incr nClass } {
         set nSubjInClass 0
         for { set nSubj 0 } { $nSubj < $vtkFreeSurferReaders(gGDF,$ID,cSubjects) } { incr nSubj } {
-            if { $vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubj,nClass) == $nClass } {
+            if { [vtkFreeSurferReadersGDFPlotGetClassIndexFromLabel $ID $vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubj,nClass)] == $nClass } {
                 set vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,subjects,$nSubjInClass,index) $nSubj
                 incr nSubjInClass
             }
         }
-    }
-    
+    }           
+
     # We now have a header.
     set vtkFreeSurferReaders(gGDF,$ID,bReadHeader) 1
 
     # Start out trying to find the offset/slope for a class/var.
-    set vtkFreeSurferReaders(gPlot,$ID,state,bTryRegressionLine) 1
+    set vtkFreeSurferReaders(gPlot,0,state,bTryRegressionLine) 1
 
     # If we have a window, build the dynamic elements.
     if { [info exists vtkFreeSurferReaders(gWidgets,$ID,bWindowBuilt)] && 
          $vtkFreeSurferReaders(gWidgets,$ID,bWindowBuilt) } {
-        vtkFreeSurferReadersPlotBuildDynamicWindowElements $ID
+        vtkFreeSurferReadersGDFPlotBuildDynamicWindowElements $ID
     }
 
-    if { 0 } {
-        puts "$vtkFreeSurferReaders(gGDF,$ID,cClasses) classes:"
-        for { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$ID,cClasses) } { incr nClass } {
-            puts "$nClass: label=$vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label) marker=$vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,marker) color=$vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,color) reverse index=$vtkFreeSurferReaders(gGDF,$ID,classes,$vtkFreeSurferReaders(gGDF,$ID,classes,$nClass,label),index)"
-        }
-        
-        puts "$vtkFreeSurferReaders(gGDF,$ID,cVariables) variables:"
-        for { set nVar 0 } { $nVar < $vtkFreeSurferReaders(gGDF,$ID,cVariables) } { incr nVar } {
-            puts "$nVar: label=$vtkFreeSurferReaders(gGDF,$ID,variables,$nVar,label)"
-        }
-        
-        puts "$vtkFreeSurferReaders(gGDF,$ID,cSubjects) subjects:"
-        for { set nSubj 0 } { $nSubj < $vtkFreeSurferReaders(gGDF,$ID,cSubjects) } { incr nSubj } {
-            puts "$nSubj: id=$vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubj,id) class=$vtkFreeSurferReaders(gGDF,$ID,subjects,$nSubj,nClass)"
-        }
-    }
-    
     lappend vtkFreeSurferReaders(gGDF,lID) $ID
+
+    if {$::Module(verbose)} {
+        puts "PlotParseHeader: finished reading header, got id $ID"
+    }
     return $ID
 }
+
+
+
+
+
+
+
+
+
 
 #-------------------------------------------------------------------------------
 # .PROC vtkFreeSurferReadersPlotPlotData
@@ -3850,117 +3920,206 @@ proc vtkFreeSurferReadersPlotParseHeader { ifnHeader } {
 # can be called any time the data is changed to completely redraw it
 # from scratch.
 # .ARGS
-# int iID the id of the window
+# int iID the id of the vertex to plot
+# int dID the id of the data file to plot, can be found in $::vtkFreeSurferReaders(gGDF,dataID)
 # .END
 #-------------------------------------------------------------------------------
-proc vtkFreeSurferReadersPlotPlotData { iID } {
+proc vtkFreeSurferReadersPlotPlotData { iID dID} {
     global vtkFreeSurferReaders
 
     # Don't plot if the window isn't built or we don't have data.
-    if { ![info exists vtkFreeSurferReaders(gWidgets,$iID,bWindowBuilt)] ||
-         ![info exists vtkFreeSurferReaders(gGDF,$iID,bReadHeader)] ||
-         !$vtkFreeSurferReaders(gWidgets,$iID,bWindowBuilt) || 
-         !$vtkFreeSurferReaders(gGDF,$iID,bReadHeader) } {
-        puts "vtkFreeSurferReadersPlotPlotData: the window isn't built or we don't have data"
+    if { ![info exists vtkFreeSurferReaders(gWidgets,$dID,bWindowBuilt)] ||
+         ![info exists vtkFreeSurferReaders(gGDF,$dID,bReadHeader)] ||
+         !$vtkFreeSurferReaders(gWidgets,$dID,bWindowBuilt) || 
+         !$vtkFreeSurferReaders(gGDF,$dID,bReadHeader) } {
+        if {$::Module(verbose)} {
+            puts "vtkFreeSurferReadersPlotPlotData: the window isn't built or we don't have data"
+        }
         return
     }
 
-    set gw $vtkFreeSurferReaders(gWidgets,$iID,gwPlot)
+    if {$::Module(verbose)} { puts "\nvtkFreeSurferReadersPlotPlotData iID = $iID, dID = $dID" }
+
+    # update the info label variable
+    set vtkFreeSurferReaders(gPlot,$dID,state,info) "Vertex number $iID"
+
+    set gw $vtkFreeSurferReaders(gWidgets,$dID,gwPlot)
 
     # Set the x axis title to the label of the current variable.
+    set labelid [$vtkFreeSurferReaders(gWidgets,$dID,owVar) index select]
     $gw axis configure x \
-        -title $vtkFreeSurferReaders(gGDF,$iID,variables,$vtkFreeSurferReaders(gPlot,$iID,state,nVariable),label)
+        -title $vtkFreeSurferReaders(gGDF,$dID,variables,$labelid,label)
+
+    # set up autorange
+    $gw axis configure x -autorange 1
 
     # Remove all the elements and markers from the graph.
     set lElements [$gw element names *]
     foreach element $lElements {
+        if {$::Module(verbose)} { puts "deleting element $element" }
         $gw element delete $element
     }
     set lMarkers [$gw marker names *]
     foreach marker $lMarkers {
+        if {$::Module(verbose)} { puts "deleting marker $marker" }
         $gw marker delete $marker
     }
     
     # If we have no points, return.
     if { ![info exists vtkFreeSurferReaders(gPlot,$iID,state,lPoints)] || 
          [llength $vtkFreeSurferReaders(gPlot,$iID,state,lPoints)] == 0 } {
+        if {$::Module(verbose)} {
+            puts "Warning: no points to plot for vertex $iID, data $dID!"
+            puts "Trying to read in data..."
+        }
+        vtkFreeSurferReadersPlotBuildPointList $iID vtkFreeSurferReaders(plot,$dID,scalars)
+        # return here, as plot build point list will call plot plot data
         return
     }
 
     # Depending on our legend mode, we'll draw by class or subject.
-    if { $vtkFreeSurferReaders(gPlot,$iID,state,legend) == "class" } {
-    
+    if { $vtkFreeSurferReaders(gPlot,$dID,state,legend) == "class" } {
+   
         # For each class, for each subject, if the subject's class is
         # the same as the current class, get its data points and add
         # them to a list. Then draw the entire list of data in the
         # class's color/marker. If the class is hidden, set the color
         # to white (so it shows up white in the legend) and hide the
         # element.
-        for  { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$iID,cClasses) } { incr nClass } {
+        set xmin 0
+        set xmax 0
+        set ymin 0
+        set ymax 0
+        for  { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$dID,cClasses) } { incr nClass } {
             
             set lData {}
             set nSubjInClass 0
-            for { set nSubj 0 } { $nSubj < $vtkFreeSurferReaders(gGDF,$iID,cSubjects) } { incr nSubj } {
-                
-                if { $vtkFreeSurferReaders(gGDF,$iID,subjects,$nSubj,nClass) == $nClass } {
+
+            if {$::Module(verbose)} { puts "Starting loop: nClass = $nClass" }
+
+            for { set nSubj 0 } { $nSubj < $vtkFreeSurferReaders(gGDF,$dID,cSubjects) } { incr nSubj } {
+                set classIndex [vtkFreeSurferReadersGDFPlotGetClassIndexFromLabel $dID $vtkFreeSurferReaders(gGDF,$dID,subjects,$nSubj,nClass)]
+                if {$::Module(verbose)} {
+                    puts "by class: nSubj = $nSubj, classIndex = $classIndex" 
+                }
+                if { $classIndex == $nClass } {
                     
                     if { $vtkFreeSurferReaders(gPlot,$iID,state,pointsChanged) } {
                         vtkFreeSurferReadersPlotCalculateSubjectMeasurement $iID $nSubj
                     }
                     
-                    set vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,variable) \
-                        $vtkFreeSurferReaders(gGDF,$iID,subjects,$nSubj,variables,$vtkFreeSurferReaders(gPlot,$iID,state,nVariable),value)
+                    set vtkFreeSurferReaders(gPlot,$dID,state,data,subjects,$nSubj,variable) $vtkFreeSurferReaders(gGDF,$dID,subjects,$nSubj,variables,$vtkFreeSurferReaders(gPlot,$dID,state,nVariable),value)
+
                     
-                    lappend lData $vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,variable)
+                    lappend lData $vtkFreeSurferReaders(gPlot,$dID,state,data,subjects,$nSubj,variable)
                     lappend lData $vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,measurement)
+                    if {$xmin == $xmax == $ymin == $ymax} {
+                        set xmin $vtkFreeSurferReaders(gPlot,$dID,state,data,subjects,$nSubj,variable)
+                        set xmax $xmin
+                        set ymin $vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,measurement)
+                        set ymax $ymin
+                    } else {
+                        if {$vtkFreeSurferReaders(gPlot,$dID,state,data,subjects,$nSubj,variable) < $xmin} {
+                            set xmin $vtkFreeSurferReaders(gPlot,$dID,state,data,subjects,$nSubj,variable)
+                        } else {
+                            if {$vtkFreeSurferReaders(gPlot,$dID,state,data,subjects,$nSubj,variable) > $xmax} {
+                                set xmax $vtkFreeSurferReaders(gPlot,$dID,state,data,subjects,$nSubj,variable)
+                            }
+                        }
+                        if {$vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,measurement) < $ymin} {
+                            set ymin $vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,measurement)
+                        } else {
+                            if {$vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,measurement) > $ymax} {
+                                set ymax $vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,measurement)
+                            }
+                        }
+                    }
                 }
             }
             
-            if { $vtkFreeSurferReaders(gPlot,$iID,state,classes,$nClass,visible) } {
+            if { $vtkFreeSurferReaders(gPlot,$dID,state,classes,$nClass,visible) } {
                 set bHide 0
-                set color $vtkFreeSurferReaders(gGDF,$iID,classes,$nClass,color)
+                set color $vtkFreeSurferReaders(gGDF,$dID,classes,$nClass,color)
             } else {
                 set bHide 1
                 set color white
             }
-            $gw element create $vtkFreeSurferReaders(gGDF,$iID,classes,$nClass,label) \
+            if {$::Module(verbose)} { puts "creating element $vtkFreeSurferReaders(gGDF,$dID,classes,$nClass,label)" }
+            $gw element create $vtkFreeSurferReaders(gGDF,$dID,classes,$nClass,label) \
                 -data $lData \
-                -symbol $vtkFreeSurferReaders(gGDF,$iID,classes,$nClass,marker) \
+                -symbol $vtkFreeSurferReaders(gGDF,$dID,classes,$nClass,marker) \
                 -color $color -linewidth 0 -outlinewidth 1 -hide $bHide \
                 -activepen activeElement
+            
+            if {$::Module(verbose)} {
+                puts "By classes: data = $lData"
+            }
         }
+        if {$::Module(verbose)} {
+                puts "By classes: xmin $xmin, xmax $xmax, ymin $ymin, ymax $ymax"
+        }
+        $gw axis configure x -min $xmin -max $xmax
+        $gw axis configure y -min $ymin -max $ymax
         
     } else {
-        
         
         # For each subject, if the points have changed, calculate the #
         # measurements. Get the variable value. If the subject is visible,
         # set # the hide flag to 0 and the color to the subject's class
         # color, else # set the hide flag to 1 and set the color to
         # white. Create the # element.
-        for { set nSubj 0 } { $nSubj < $vtkFreeSurferReaders(gGDF,$iID,cSubjects) } { incr nSubj } {
+        set xmin 0
+        set xmax 0
+        set ymin 0
+        set ymax 0
+        for { set nSubj 0 } { $nSubj < $vtkFreeSurferReaders(gGDF,$dID,cSubjects) } { incr nSubj } {
             
             if { $vtkFreeSurferReaders(gPlot,$iID,state,pointsChanged) } {
                 vtkFreeSurferReadersPlotCalculateSubjectMeasurement $iID $nSubj
             }
-            
+            # set this to the index of the variable
             set vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,variable) \
-                $vtkFreeSurferReaders(gGDF,$iID,subjects,$nSubj,variables,$vtkFreeSurferReaders(gPlot,$iID,state,nVariable),value)
-            
-            if {  $vtkFreeSurferReaders(gPlot,$iID,state,subjects,$nSubj,visible) } {
+                $vtkFreeSurferReaders(gGDF,$dID,subjects,$nSubj,variables,$vtkFreeSurferReaders(gPlot,$dID,state,nVariable),value)
+            set classIndex $vtkFreeSurferReaders(gGDF,$dID,classes,$vtkFreeSurferReaders(gGDF,$dID,subjects,$nSubj,nClass),index)
+            if {  $vtkFreeSurferReaders(gPlot,$dID,state,subjects,$nSubj,visible) } {
                 set bHide 0
-                set color $vtkFreeSurferReaders(gGDF,$iID,classes,$vtkFreeSurferReaders(gGDF,$iID,subjects,$nSubj,nClass),color)
+                set color $vtkFreeSurferReaders(gGDF,$dID,classes,$classIndex,color)
             } else {
                 set bHide 1
                 set color white
             }
-            $gw element create $vtkFreeSurferReaders(gGDF,$iID,subjects,$nSubj,id) \
-                -data [list $vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,variable) \
+            if {$xmin == $xmax  == $ymin == $ymax} {
+                set xmin $vtkFreeSurferReaders(gPlot,$dID,state,data,subjects,$nSubj,variable)
+                set xmax $xmin
+                set ymin $vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,measurement)
+                set ymax $ymin
+            } else {
+                if {$vtkFreeSurferReaders(gPlot,$dID,state,data,subjects,$nSubj,variable) < $xmin} {
+                    set xmin $vtkFreeSurferReaders(gPlot,$dID,state,data,subjects,$nSubj,variable)
+                } else {
+                    if {$vtkFreeSurferReaders(gPlot,$dID,state,data,subjects,$nSubj,variable) > $xmax} {
+                        set xmax $vtkFreeSurferReaders(gPlot,$dID,state,data,subjects,$nSubj,variable)
+                    }
+                }
+                if {$vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,measurement) < $ymin} {
+                    set ymin $vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,measurement)
+                } else {
+                    if {$vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,measurement) > $ymax} {
+                        set ymax $vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,measurement)
+                    }
+                }
+            }
+            if {$::Module(verbose)} { puts "creating element $vtkFreeSurferReaders(gGDF,$dID,subjects,$nSubj,id)" }
+            $gw element create $vtkFreeSurferReaders(gGDF,$dID,subjects,$nSubj,id) \
+                -data [list $vtkFreeSurferReaders(gPlot,$dID,state,data,subjects,$nSubj,variable) \
                            $vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,measurement)] \
-                -symbol $vtkFreeSurferReaders(gGDF,$iID,classes,$vtkFreeSurferReaders(gGDF,$iID,subjects,$nSubj,nClass),marker) \
+                -symbol $vtkFreeSurferReaders(gGDF,$dID,classes,$classIndex,marker) \
                 -color $color -linewidth 0 -outlinewidth 1 -hide $bHide \
                 -activepen activeElement
+            if {$::Module(verbose)} { puts "Created gw  element for subj $nSubj: $vtkFreeSurferReaders(gPlot,$dID,state,data,subjects,$nSubj,variable) $vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$nSubj,measurement)" }
         }
+        $gw axis configure x -min $xmin -max $xmax
+        $gw axis configure y -min $ymin -max $ymax
     }
 
     # If we're trying to draw the regression line, for each class, if
@@ -3972,57 +4131,215 @@ proc vtkFreeSurferReadersPlotPlotData { iID } {
     # false, so we won't try drawing it again.
     if { $vtkFreeSurferReaders(gPlot,$iID,state,bTryRegressionLine) } {
 
-        for  { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$iID,cClasses) } { incr nClass } {
-        
-            if { $vtkFreeSurferReaders(gPlot,$iID,state,classes,$nClass,visible) } {
-        
-                set nVar $vtkFreeSurferReaders(gPlot,$iID,state,nVariable)
+        # init the variables
+        for  { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$dID,cClasses) } { incr nClass } {
+            if { $vtkFreeSurferReaders(gPlot,$dID,state,classes,$nClass,visible) } {
+            
+                set thisClass $vtkFreeSurferReaders(gGDF,$dID,classes,$nClass,label)
+                if {$::Module(verbose)} {
+                    puts "init vars thisClass = $thisClass"
+                }
+                set offsetArray($thisClass,N) 0
+                set offsetArray($thisClass,sumx) 0
+                set offsetArray($thisClass,sumy) 0
+                set offsetArray($thisClass,sumxx) 0
+                set offsetArray($thisClass,sumxy) 0
                 
-                # Calc the avg offset and slope for all points.
-                set offset 0
-                set slope 0
-                set cGood 0
-                foreach lPoint $vtkFreeSurferReaders(gPlot,$iID,state,lPoints) {
-                    scan $lPoint "%d %d %d" x y z
-                    set lResults [vtkFreeSurferReaders(gdfReader) OffsetSlope $vtkFreeSurferReaders(gGDF,$iID,object) \
-                                      $nClass $nVar $x $y $z]
-                    set err [lindex $lResults 0]
-                    if { 0 == $err } {
-                        set offset [expr $offset + [lindex $lResults 1]]
-                        set slope [expr $slope + [lindex $lResults 2]]
-                        incr cGood
-                    } else {
-                        set vtkFreeSurferReaders(gPlot,$iID,state,bTryRegressionLine) 0
-                        break
-                    }
-                    
-                    if { $cGood > 0 } {
-                        set x1 -200
-                        set y1 [expr ($slope * $x1) + $offset]
-                        set x2 200
-                        set y2 [expr ($slope * $x2) + $offset]
-                        
-                        $gw marker create line \
-                            -coords [list $x1 $y1 $x2 $y2] \
-                            -outline $vtkFreeSurferReaders(gGDF,$iID,classes,$nClass,color) \
-                            -dashes {5 5}
-                    }
+                set slopeArray($thisClass,N) 0
+                set slopeArray($thisClass,sumx) 0
+                set slopeArray($thisClass,sumy) 0
+                set slopeArray($thisClass,sumxx) 0
+                set slopeArray($thisClass,sumxy) 0
+            } 
+        }
+        # go through the subjects, adding the appropriate values on a per class basis
+        for {set sid 0} {$sid < $vtkFreeSurferReaders(gGDF,$dID,cSubjects)} {incr sid} {
+            set subjClass $vtkFreeSurferReaders(gGDF,$dID,subjects,$sid,nClass)
+            if {$vtkFreeSurferReaders(gPlot,$dID,state,classes,[vtkFreeSurferReadersGDFPlotGetClassIndexFromLabel $dID $subjClass],visible)} {
+                # get the subject's variable value and measurement
+                set x $vtkFreeSurferReaders(gGDF,$dID,subjects,$sid,variables,$labelid,value)
+                # measurement
+                set y [lindex [lindex $vtkFreeSurferReaders(gPlot,$iID,state,lPoints) $sid] 0]
+
+            
+                incr offsetArray($subjClass,N)
+                set offsetArray($subjClass,sumx) [expr $offsetArray($subjClass,sumx) + $x]
+                set offsetArray($subjClass,sumy) [expr $offsetArray($subjClass,sumy) + $y]
+                set offsetArray($subjClass,sumxx) [expr $offsetArray($subjClass,sumxx) + ($x * $x)]
+                set offsetArray($subjClass,sumxy) [expr $offsetArray($subjClass,sumxy) + ($x * $y)]
+
+                incr slopeArray($subjClass,N) 
+                set slopeArray($subjClass,sumx) [expr $slopeArray($subjClass,sumx) + $x]
+                set slopeArray($subjClass,sumy) [expr $slopeArray($subjClass,sumy) + $y]
+                set slopeArray($subjClass,sumxx) [expr $slopeArray($subjClass,sumxx) + ($x * $x)]
+                set slopeArray($subjClass,sumxy) [expr $slopeArray($subjClass,sumxy) + ($x * $y)]
+            }
+        }
+
+        # if it's the same slope for all lines, calc that first
+        if {$vtkFreeSurferReaders(gGDF,$dID,gd2mtx) == "doss"} {
+            set slopeArray(N) 0
+            set slopeArray(sumx) 0
+            set slopeArray(sumy) 0
+            set slopeArray(sumxx) 0
+            set slopeArray(sumxy) 0
+            # sum together values from all classes
+            for  { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$dID,cClasses) } { incr nClass } {
+                if { $vtkFreeSurferReaders(gPlot,$dID,state,classes,$nClass,visible) }  {
+            
+                    set thisClass $vtkFreeSurferReaders(gGDF,$dID,classes,$nClass,label)
+                    set slopeArray(N) [expr $slopeArray(N) + $slopeArray($thisClass,N)]
+                    set slopeArray(sumx) [expr $slopeArray(sumx) + $slopeArray($thisClass,sumx)]
+                    set slopeArray(sumy) [expr $slopeArray(sumy) + $slopeArray($thisClass,sumy)]
+                    set slopeArray(sumxx) [expr $slopeArray(sumxx) + $slopeArray($thisClass,sumxx)]
+                    set slopeArray(sumxy) [expr $slopeArray(sumxy) + $slopeArray($thisClass,sumxy)]
                 }
             }
+            if {$slopeArray(N) > 0} {
+                set slope [expr (($slopeArray(N) * $slopeArray(sumxy)) - ($slopeArray(sumx) * $slopeArray(sumy))) / ( ($slopeArray(N) * $slopeArray(sumxx)) - ($slopeArray(sumx)*$slopeArray(sumx)))]
+                if {$::Module(verbose)} {
+                    puts "Slope for all classes: N = $slopeArray(N), sumx = $slopeArray(sumx), sumy = $slopeArray(sumy), sumxx = $slopeArray(sumxx), sumxy = $slopeArray(sumxy)"
+                    puts "Got slope for all classes : $slope"
+                }
+            } else {
+                set slope 0
+            }
+        }
+
+        # now calculate the slope and offset for all classes
+        for  { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$dID,cClasses) } { incr nClass } {
+            if { $vtkFreeSurferReaders(gPlot,$dID,state,classes,$nClass,visible) }  {
+                set thisClass $vtkFreeSurferReaders(gGDF,$dID,classes,$nClass,label)
+
+                # if it's a different slope for each class, calc it, otherwise use the already calcd slope
+                if {$vtkFreeSurferReaders(gGDF,$dID,gd2mtx) == "dods"} {
+                    if {$slopeArray($thisClass,N) > 0} {
+                        set slope [expr (($slopeArray(thisClass,N) * $slopeArray($thisClass,sumxy)) - ($slopeArray($thisClass,sumx) * $slopeArray($thisClass,sumy))) / ( ($slopeArray($thisClass,N) * $slopeArray($thisClass,sumxx)) - ($slopeArray($thisClass,sumx)*$slopeArray($thisClass,sumx)))] 
+                        if {$::Module(verbose)} {
+                            puts "Got slope $slope for class $thisClass"
+                        }
+                    } else {
+                        set slope 0
+                    }
+                } 
+
+                if {$offsetArray($thisClass,N) > 0} {
+                    set offset  [expr (($offsetArray($thisClass,sumxx) * $offsetArray($thisClass,sumy)) - ($offsetArray($thisClass,sumx) * $offsetArray($thisClass,sumxy)))/(($offsetArray($thisClass,N) * $offsetArray($thisClass,sumxx)) - ($offsetArray($thisClass,sumx) * $offsetArray($thisClass,sumx)))]
+                    if {$::Module(verbose)} {
+                            puts "Got offset $offset for class $thisClass"
+                        }
+                    
+                } else {
+                    puts "Warning: offset for $thisClass hasn't got enough good points: $offsetArray($thisClass,N)"
+                    set offset 0
+                }
+
+                # now calculate the y values at the min and max x of the graph, and make a line between them
+                set x1 $xmin
+                set y1 [expr ($slope * $x1) + $offset]
+                set x2 $xmax
+                set y2 [expr ($slope * $x2) + $offset]
+                if {$::Module(verbose)} { puts "New way: class $thisClass, offset = $offset, slope = $slope (xmin $xmin, xmax $xmax)"} 
+                $gw marker create line \
+                    -coords [list $x1 $y1 $x2 $y2] \
+                    -outline $vtkFreeSurferReaders(gGDF,$dID,classes,$nClass,color) \
+                    -dashes {5 5}
+            }
+        }
+
+
+
+        if {0} { 
+
+            puts "\n\n\nTrying the old way"
+            if {$vtkFreeSurferReaders(gGDF,$dID,gd2mtx) == "doss"} {
+                puts "WARNING: will not be calculating regression line for this different offset, same slope case."
+            }
+
+            for  { set nClass 0 } { $nClass < $vtkFreeSurferReaders(gGDF,$dID,cClasses) } { incr nClass } {
+        
+                if {$::Module(verbose)} { 
+                    puts "Regression line: nClass = $nClass"
+                }
+                if { $vtkFreeSurferReaders(gPlot,$dID,state,classes,$nClass,visible) } {
+                    
+                    set nVar $vtkFreeSurferReaders(gPlot,$dID,state,nVariable)
+                    set nSubjs $vtkFreeSurferReaders(gGDF,$dID,cSubjects)
+                    set thisClass $vtkFreeSurferReaders(gGDF,$dID,classes,$nClass,label)
+                    
+                    set cGood 0
+                    if {$vtkFreeSurferReaders(gGDF,$dID,gd2mtx) == "dods"} {                    
+                        set sumxy 0
+                        set sumx 0
+                        set sumy 0
+                        set sumxx 0
+                    } 
+                    # for each subject 
+                    for {set sid 0} {$sid < $vtkFreeSurferReaders(gGDF,$dID,cSubjects)} {incr sid} {
+                        # get the class 
+                        if {$vtkFreeSurferReaders(gGDF,$dID,subjects,$sid,nClass) == $thisClass} {
+                            # if it matches the one we're looking for
+                            # get the subject's variable value and measurement
+                            set x $vtkFreeSurferReaders(gGDF,$dID,subjects,$sid,variables,$labelid,value)
+                            # measurement
+                            set y [lindex [lindex $vtkFreeSurferReaders(gPlot,$iID,state,lPoints) $sid] 0]
+                            
+                            # add it to the offset/slope calc for this class
+                            if {$vtkFreeSurferReaders(gGDF,$dID,gd2mtx) == "dods"} {
+                                set sumxy [expr $sumxy + ($x * $y)]
+                                set sumx [expr $sumx + $x]
+                                set sumy [expr $sumy + $y]
+                                set sumxx [expr $sumxx + ($x * $x)]
+                            }
+                            incr cGood
+                            # if {$::Module(verbose)} { puts "subject id = $sid x = $x y = $y" }
+                        }
+                    }
+                
+                    if { $cGood > 0 } {
+                    
+                        if {$vtkFreeSurferReaders(gGDF,$dID,gd2mtx) == "dods"} {
+                            if {$::Module(verbose)} { 
+                                puts "class $thisClass, sumx = $sumx, sumy = $sumy, cGood = $cGood, sumxx = $sumxx, sumxy = $sumxy"
+                            }
+                            set slope [expr (($cGood * $sumxy) - ($sumx * $sumy)) / ( ($cGood * $sumxx) - ($sumx*$sumx))]
+                            set offset [expr (($sumxx * $sumy) - ($sumx * $sumxy))/(($cGood * $sumxx) - ($sumx * $sumx))]
+                            
+                            set x1 $xmin
+                            set y1 [expr ($slope * $x1) + $offset]
+                            set x2 $xmax
+                            set y2 [expr ($slope * $x2) + $offset]
+                            if {$::Module(verbose)} { puts "Original: class $thisClass, offset = $offset, slope = $slope (xmin $xmin, xmax $xmax)"} 
+                            $gw marker create line \
+                                -coords [list $x1 $y1 $x2 $y2] \
+                                -outline $vtkFreeSurferReaders(gGDF,$dID,classes,$nClass,color) \
+                                -dashes {2 2}
+                        }
+                    } else {
+                        if {$::Module(verbose)} { 
+                            puts "Not enough good points $cGood"
+                        }
+                    }
+                }
+
+            }
+        } 
+        # end of trying it the old way
             
-            if { $vtkFreeSurferReaders(gPlot,$iID,state,bTryRegressionLine) == 0 } { break }
+        if { $vtkFreeSurferReaders(gPlot,$iID,state,bTryRegressionLine) == 0 } { 
+            break 
         }
     }
-    
     set vtkFreeSurferReaders(gPlot,$iID,state,pointsChanged) 0
 }
+
 
 #-------------------------------------------------------------------------------
 # .PROC vtkFreeSurferReadersPlotCalculateSubjectMeasurement
 # Accesses and calculates the (averaged if necessary) measurment
 # values at the current point(s). Stores the values in gPlot.
 # .ARGS
-# int iID the id of the window
+# int iID the id of the point
 # string inSubject the subject to calculate for
 # .END
 #-------------------------------------------------------------------------------
@@ -4032,21 +4349,41 @@ proc vtkFreeSurferReadersPlotCalculateSubjectMeasurement { iID inSubject } {
     # Get the average of the points we've been given.
     set meas 0
     set cGood 0
+    set notGood 0
+
+    set meas [lindex [lindex $vtkFreeSurferReaders(gPlot,$iID,state,lPoints) $inSubject] 0]
+
+if {0} {
+
     foreach lPoint $vtkFreeSurferReaders(gPlot,$iID,state,lPoints) {
-    
-        scan $lPoint "%d %d %d" x y z
-        set lResults [vtkFreeSurferReaders(gdfReader) GetNthSubjectMeasurement $vtkFreeSurferReaders(gGDF,$iID,object) \
-                          $inSubject $x $y $z]
-        set err [lindex $lResults 0]
-        if { 0 == $err } {
-            set meas [expr $meas + [lindex $lResults 1]]
-            incr cGood
+        set meas [expr $meas + [lindex $lPoint 0]]
+        incr cGood
+        if {0} {
+        if {$lPoint != ""} {
+            if {$::Module(verbose)} { puts "lPoint = $lPoint" }
+            scan $lPoint "%d %d %d" x y z
+            set lResults [vtkFreeSurferReadersGetNthSubjectMeasurement $vtkFreeSurferReaders(gGDF,$iID,object) \
+                              $inSubject $x $y $z]
+            set err [lindex $lResults 0]
+            if { 0 == $err } {
+                set meas [expr $meas + [lindex $lResults 1]]
+                incr cGood
+            }
+        } else {
+            incr notGood
+        }
         }
     }
+    
     if { $cGood > 0 } {
         set meas [expr $meas / $cGood.0]
     }
-    
+
+}
+
+    if {$::Module(verbose)} { 
+#        puts "CalculateSubjectMeasurement: meas = $meas"
+    }
     # Store the values in gPlot.
     set vtkFreeSurferReaders(gPlot,$iID,state,data,subjects,$inSubject,measurement) $meas
 }
@@ -4085,7 +4422,7 @@ proc vtkFreeSurferReadersGDFPlotHilightElement { iID iElement } {
 proc vtkFreeSurferReadersGDFPlotUnhilightElement { iID iElement } {
     global vtkFreeSurferReaders
     $vtkFreeSurferReaders(gWidgets,$iID,gwPlot) legend deactivate $iElement
-    $vtkFreeSurferReadersgWidgets,$iID,gwPlot) element deactivate $iElement
+    $vtkFreeSurferReaders(gWidgets,$iID,gwPlot) element deactivate $iElement
 }
 
 
@@ -4161,6 +4498,9 @@ proc vtkFreeSurferReadersGDFPlotUnfocusElement { iID } {
 proc vtkFreeSurferReadersGDFPlotFocusElement { iID iElement inSubjInClass iX iY } {
     global vtkFreeSurferReaders
 
+    if {$::Module(verbose)} {
+        puts "GDFPlotFocusElement: iID $iID iElement $iElement inSubjInClass $inSubjInClass iX $iX iY $iY"
+    }
     # Set the highlighted element name and highlight the element.
     set vtkFreeSurferReaders(gPlot,$iID,state,hiElement) $iElement
     vtkFreeSurferReadersGDFPlotHilightElement $iID $vtkFreeSurferReaders(gPlot,$iID,state,hiElement)
@@ -4169,7 +4509,7 @@ proc vtkFreeSurferReadersGDFPlotFocusElement { iID iElement inSubjInClass iX iY 
     # just the element name, otherwise we're getting the class name in
     # the element name so get the class index, then use that and the
     # parameter we got (index of the data point, also the
-    # subject-in-class index) to get th subject index, and then the
+    # subject-in-class index) to get the subject index, and then the
     # subject name.
     if { $vtkFreeSurferReaders(gPlot,$iID,state,legend) == "subject" } {
         set sId $iElement
@@ -4285,7 +4625,7 @@ proc vtkFreeSurferReadersGDFPlotCBLegendLeave { iID igw } {
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersGDFPlotCBLegendClick { iID igw } {
     vtkFreeSurferReadersGDFPlotToggleVisibility $iID [$igw legend get current]
-    vtkFreeSurferReadersGDFPlotPlotData $iID
+    vtkFreeSurferReadersPlotPlotData $iID $::vtkFreeSurferReaders(gGDF,dataID)
 }
 
 #-------------------------------------------------------------------------------
@@ -4323,8 +4663,12 @@ proc vtkFreeSurferReadersGDFPlotRead { ifnHeader } {
     if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
         return -1
     }
-    set ID [vtkFreeSurferReadersGDFPlotParseHeader $ifnHeader]
-    return $ID
+    # read the header
+    set vtkFreeSurferReaders(gGDF,dataID) [vtkFreeSurferReadersGDFPlotParseHeader $ifnHeader]
+
+
+    
+    return $vtkFreeSurferReaders(gGDF,dataID)
 }
 
 #-------------------------------------------------------------------------------
@@ -4368,7 +4712,7 @@ proc vtkFreeSurferReadersPlotShowWindow { iID } {
     }
     if { ![info exists vtkFreeSurferReaders(gWidgets,$iID,bWindowBuilt)] ||
          !$vtkFreeSurferReaders(gWidgets,$iID,bWindowBuilt) } {
-        vtkFreeSurferReadersPlotBuildWindow $iID
+        vtkFreeSurferReadersGDFPlotBuildWindow $iID
     }
     wm deiconify $vtkFreeSurferReaders(gWidgets,$iID,wwTop)
     if { [info exists vtkFreeSurferReaders(gWidgets,$iID,state,window,geometry)] } {
@@ -4402,14 +4746,19 @@ proc vtkFreeSurferReadersPlotHideWindow { iID } {
 # Set the current variable.
 #  .ARGS
 # int iID window identifier
-# string inVariable input value to use in setting the current variable.
+# int vID the vertex identifier
 # .END
 #-------------------------------------------------------------------------------
-proc vtkFreeSurferReadersPlotSetVariable { iID inVariable } {
+proc vtkFreeSurferReadersPlotSetVariable { iID {vID 0} } {
+# inVariable
     global vtkFreeSurferReaders 
     if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
         puts "vtkFreeSurferReadersPlotSetVariable: gb lib not loaded."
         return 
+    }
+    if {[catch {set inVariable [$vtkFreeSurferReaders(gWidgets,$iID,owVar) index select]} errmsg] == 1} {
+        puts "ID $iID not found: $errmsg"
+        return
     }
     if { [lsearch $vtkFreeSurferReaders(gGDF,lID) $iID] == -1 } { 
         puts "ID $iID not found"
@@ -4418,23 +4767,25 @@ proc vtkFreeSurferReadersPlotSetVariable { iID inVariable } {
 
     set vtkFreeSurferReaders(gPlot,$iID,state,nVariable) $inVariable
 
-    vtkFreeSurferReadersPlotPlotData $iID
+    # need the vertex id here
+    vtkFreeSurferReadersPlotPlotData $vID $::vtkFreeSurferReaders(gGDF,dataID)
 }
 
 #-------------------------------------------------------------------------------
-# .PROC vtkFreeSurferReadersPlotSetVariable
+# .PROC vtkFreeSurferReadersPlotSetMode
 # Set legend mode to subject or class.
 #  .ARGS
 # int iID window identifier
 # string iMode legend mode, valid values are subject and class
 # .END
 #-------------------------------------------------------------------------------
-proc vtkFreeSurferReadersPlotSetMode { iID iMode } {
+proc vtkFreeSurferReadersPlotSetMode { iID } {
     global vtkFreeSurferReaders
     if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
         puts "vtkFreeSurferReadersPlotSetMode: gb lib not loaded."
         return 
     }
+    set iMode  [$vtkFreeSurferReaders(gWidgets,$iID,owMode) get select]
     if { [lsearch $vtkFreeSurferReaders(gGDF,lID) $iID] == -1 } { 
         puts "ID $iID not found"
         return 
@@ -4445,7 +4796,7 @@ proc vtkFreeSurferReadersPlotSetMode { iID iMode } {
 
     set vtkFreeSurferReaders(gPlot,$iID,state,legend) $iMode
 
-    vtkFreeSurferReadersPlotPlotData $iID
+    vtkFreeSurferReadersPlotPlotData $iID $::vtkFreeSurferReaders(gGDF,dataID)
 }
 
 #-------------------------------------------------------------------------------
@@ -4457,12 +4808,14 @@ proc vtkFreeSurferReadersPlotSetMode { iID iMode } {
 # string iMarker value to set, needs to be in the list vtkFreeSurferReaders(kValid,lMarkers)
 # .END
 #-------------------------------------------------------------------------------
-proc vtkFreeSurferReadersPlotSetNthClassMarker { iID inClass iMarker } {
+proc vtkFreeSurferReadersPlotSetNthClassMarker { iID inClass } {
     global vtkFreeSurferReaders
     if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
         puts "vtkFreeSurferReadersPlotSetNthClassMarker: gb lib not loaded."
         return 
     }
+
+    set iMarker [$vtkFreeSurferReaders(gWidgets,$iID,fwClassConfig).owMarker$inClass get select]
     if { [lsearch $vtkFreeSurferReaders(gGDF,lID) $iID] == -1 } { 
         puts "ID $iID not found"
         return 
@@ -4476,7 +4829,7 @@ proc vtkFreeSurferReadersPlotSetNthClassMarker { iID inClass iMarker } {
 
     set vtkFreeSurferReaders(gGDF,$iID,classes,$inClass,marker) $iMarker
 
-    vtkFreeSurferReadersPlotPlotData $iID
+    vtkFreeSurferReadersPlotPlotData $iID $::vtkFreeSurferReaders(gGDF,dataID)
 }
 
 #-------------------------------------------------------------------------------
@@ -4488,12 +4841,14 @@ proc vtkFreeSurferReadersPlotSetNthClassMarker { iID inClass iMarker } {
 # string iColor colour to set nth class to, must appear in vtkFreeSurferReaders(kValid,lColors) 
 # .END
 #-------------------------------------------------------------------------------
-proc vtkFreeSurferReadersPlotSetNthClassColor { iID inClass iColor } {
+proc vtkFreeSurferReadersPlotSetNthClassColor { iID inClass } {
     global vtkFreeSurferReaders 
     if { !$vtkFreeSurferReaders(gbLibLoaded) } { 
         puts "vtkFreeSurferReadersPlotSetNthClassColor: gb lib not loaded."
         return 
     }
+
+    set iColor [$vtkFreeSurferReaders(gWidgets,$iID,fwClassConfig).owColor$inClass get select]
     if { [lsearch $vtkFreeSurferReaders(gGDF,lID) $iID] == -1 } { 
         puts "ID $iID not found"
         return 
@@ -4507,7 +4862,7 @@ proc vtkFreeSurferReadersPlotSetNthClassColor { iID inClass iColor } {
 
     set vtkFreeSurferReaders(gGDF,$iID,classes,$inClass,color) $iColor
 
-    vtkFreeSurferReadersPlotPlotData $iID
+    vtkFreeSurferReadersPlotPlotData $iID $::vtkFreeSurferReaders(gGDF,dataID)
 }
 
 #-------------------------------------------------------------------------------
@@ -4540,7 +4895,7 @@ proc vtkFreeSurferReadersPlotSetPoint { iID iX iY iZ } {
 # .PROC vtkFreeSurferReadersPlotBeginPointList
 # Resets the point list to empty.
 # .ARGS
-# int iID the id of the window
+# int iID the id of the vertex
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersPlotBeginPointList { iID } {
@@ -4549,9 +4904,12 @@ proc vtkFreeSurferReadersPlotBeginPointList { iID } {
         puts "vtkFreeSurferReadersPlotBeginPointList: gb lib not loaded."
         return 
     }
+# don't do this, as the lID list only lists the data file ids
+    if {0} {
     if { [lsearch $vtkFreeSurferReaders(gGDF,lID) $iID] == -1 } { 
         puts "ID $iID not found"
         return 
+    }
     }
     set vtkFreeSurferReaders(gPlot,$iID,state,lPoints) {}
 }
@@ -4560,7 +4918,7 @@ proc vtkFreeSurferReadersPlotBeginPointList { iID } {
 # .PROC vtkFreeSurferReadersPlotAddPoint
 # Adds the point to the point list for the given window
 # .ARGS
-# int iID the id of the window
+# int iID the id of the vertex
 # int iX the x coordinate of the point to add
 # int iY the y coordinate of the point to add
 # int iZ the z coordinate of the point to add
@@ -4572,9 +4930,12 @@ proc vtkFreeSurferReadersPlotAddPoint { iID iX iY iZ } {
         puts "vtkFreeSurferReadersPlotAddPoint: gb lib not loaded."
         return 
     }
+# this checks theplot window id, not necessary
+    if {0} {
     if { [lsearch $vtkFreeSurferReaders(gGDF,lID) $iID] == -1 } { 
         puts "ID $iID not found"
         return 
+    }
     }
     lappend vtkFreeSurferReaders(gPlot,$iID,state,lPoints) [list $iX $iY $iZ]
     set vtkFreeSurferReaders(gPlot,$iID,state,pointsChanged) 1
@@ -4584,7 +4945,7 @@ proc vtkFreeSurferReadersPlotAddPoint { iID iX iY iZ } {
 # .PROC vtkFreeSurferReadersPlotEndPointList
 # Plots the data after the list is done
 # .ARGS
-# int iID the id of the window to plot
+# int iID the id of the vertex to plot
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersPlotEndPointList { iID } {
@@ -4593,11 +4954,14 @@ proc vtkFreeSurferReadersPlotEndPointList { iID } {
         puts "vtkFreeSurferReadersPlotEndPointList: gb lib not loaded."
         return 
     }
+# this is checking the plot window, rather than the vertex
+    if {0} {
     if { [lsearch $vtkFreeSurferReaders(gGDF,lID) $iID] == -1 } { 
         puts "ID $iID not found"
         return 
     }
-    vtkFreeSurferReadersPlotPlotData $iID
+    }
+    vtkFreeSurferReadersPlotPlotData $iID $::vtkFreeSurferReaders(gGDF,dataID)
 }
 
 #-------------------------------------------------------------------------------
@@ -4710,22 +5074,88 @@ proc vtkFreeSurferReadersSetPlotFileName {} {
 # .END
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersPlotApply {} {
-    global vtkFreeSurferReaders
-    if {!$::Module(verbose)} {
-        DevInfoWindow "In development... probably not working"
-    }
+    global vtkFreeSurferReaders Volume
+
+    puts "About to read $vtkFreeSurferReaders(PlotFileName)..."
     if {$::Module(verbose)} {
         puts "vtkFreeSurferReadersPlotApply: starting"
     }
     vtkFreeSurferReadersGDFInit
-    if {$::Module(verbose)} {
-        vtkFreeSurferReaders(gdfReader) DebugOn
+    set vtkFreeSurferReaders(gGDF,dataID) [vtkFreeSurferReadersPlotParseHeader $vtkFreeSurferReaders(PlotFileName)]
+
+    # now read the data
+    set datafilename [vtkFreeSurferReaders(gdfReader) GetDataFileName]
+    # if it's a bfloat or a bshort, pass in the .bhdr version to the reader apply
+    if {[file extension $datafilename] == ".bfloat" || 
+        [file extension $datafilename] == ".bshort"} {
+        # take off the first slice number if it's present
+        set datafilename [string trimright [file rootname $datafilename] "_0"].bhdr
     }
-#    set fsgdfID [vtkFreeSurferReadersPlotParseHeader $vtkFreeSurferReaders(PlotFileName)]
+    if {[file pathtype $datafilename] == "relative"} {
+         set datafilename [file normalize [file join [file dirname $vtkFreeSurferReaders(PlotFileName)] $datafilename]]
+    }
+    set vtkFreeSurferReaders(VolumeFileName) $datafilename
+    set stem [file rootname $vtkFreeSurferReaders(VolumeFileName)]
+    set Volume(name) [vtkFreeSurferReaders(gdfReader) GetTitle]
 
     if {$::Module(verbose)} {
-        vtkFreeSurferReaders(gdfReader) DebugOff
+        puts "vtkFreeSurferReadersGDFPlotRead: read the header $vtkFreeSurferReaders(PlotFileName), now about to try reading the data file $vtkFreeSurferReaders(VolumeFileName)"
     }
+
+    # this isn't working so well, so save the scalars as a vtkDataArray    
+    # set dataID [vtkFreeSurferReadersApply]
+    catch "mybreader Delete"
+    vtkBVolumeReader mybreader
+    set ::Gui(progressText) "Reading b data volume"
+    mybreader AddObserver StartEvent MainStartProgress
+    mybreader AddObserver ProgressEvent "MainShowProgress mybreader"
+    mybreader AddObserver EndEvent MainEndProgress
+
+    mybreader SetFileName $vtkFreeSurferReaders(VolumeFileName)
+    mybreader SetFilePrefix $stem
+    mybreader SetStem $stem
+    set retval [mybreader ReadVolumeHeader]
+    if {$retval == 0} {
+        puts "ERROR reading  $vtkFreeSurferReaders(VolumeFileName)"
+        mybreader Delete
+        return -1
+    }
+    set vtkFreeSurferReaders(plot,$vtkFreeSurferReaders(gGDF,dataID),scalars) [mybreader ReadVolumeData]
+    set scalarsVar vtkFreeSurferReaders(plot,$vtkFreeSurferReaders(gGDF,dataID),scalars)
+    mybreader Delete
+    MainEndProgress
+
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersGDFPlotRead: read data file, got id $scalarsVar"
+    }
+
+    # link it in with the active model
+    # set modelname [$Module(vtkFreeSurferReaders,fPlot).fModel.mbActive cget -text]
+    # get the model id of the active model (assume that the linking still works), otherwise
+    # need to figure out which of $Model(idList) is $modelname
+    set mid $::Model(activeID)
+    set vtkFreeSurferReaders(plot,$vtkFreeSurferReaders(gGDF,dataID),modelID) $mid
+
+    # set it to be pickable
+    ::Model($mid,actor,viewRen) SetPickable 1
+
+    bind $::Gui(fViewWin) <ButtonRelease-1> {vtkFreeSurferReadersPickPlot %W %x %y}
+
+
+    # now add the points to the lPoint list for vertex 0
+    vtkFreeSurferReadersPlotBuildPointList 0 $scalarsVar 
+
+    # now build the plot window
+    if {$::Module(verbose)} {
+        puts "Building plot window for $vtkFreeSurferReaders(gGDF,dataID), data id $scalarsVar"
+    }
+    vtkFreeSurferReadersGDFPlotBuildWindow $vtkFreeSurferReaders(gGDF,dataID)
+
+    # and plot stuff by setting the mode to the default
+    set vtkFreeSurferReaders(gPlot,$vtkFreeSurferReaders(gGDF,dataID),state,nVariable) 0
+    vtkFreeSurferReadersPlotSetMode $vtkFreeSurferReaders(gGDF,dataID)
+
+    return $vtkFreeSurferReaders(gGDF,dataID)
 }
 
 #-------------------------------------------------------------------------------
@@ -4751,6 +5181,11 @@ proc vtkFreeSurferReadersPlotCancel {} {
 #-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersUncompressMGH {} {
     global vtkFreeSurferReaders Module
+
+    # new changes, mgh reader will deal with this so return 0
+    if {$::Module(verbose)} { puts "vtkFreeSurferReadersUncompressMGH: letting the mgh reader uncompress it" }
+    return 0
+
 
     # if this is the first time we've hit an zipped mgh file, set up the uncompression program (and the temp dir?)
     if {$vtkFreeSurferReaders(MGHDecompressorExec) == "" ||
@@ -4945,6 +5380,11 @@ proc vtkFreeSurferReadersSetQASubjects {} {
 proc vtkFreeSurferReadersLoadQA { fname } {
      global vtkFreeSurferReaders
 
+    if {[file exists $fname] == 0} {
+        DevErrorWindow "Load FreeSurfer QA: $fname does not exist!"
+        return
+    }
+
     # set the file name
     set vtkFreeSurferReaders(QASubjectsFileName) $fname
     vtkFreeSurferReadersSetQASubjectsFileName
@@ -5000,7 +5440,7 @@ proc vtkFreeSurferReadersQASetLoad {voltype} {
 #-------------------------------------------------------------------------------
 # .PROC vtkFreeSurferReadersQASetLoadAddNew
 # If the vtkFreeSurferReaders(QAVolTypeNew) isn't empty, and is not on the list 
-# of types to check for, add it to the list kept in vtkFreeSurferReaders(QAVolTypeNew).
+# of types to check for, add it to the list kept in vtkFreeSurferReaders(QAVolFiles).
 # Makes sure that label map volumes (asegs) are always at the front of the list.
 # .ARGS
 # .END
@@ -5264,7 +5704,18 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set fname [file join $vtkFreeSurferReaders(QADirName) $subject $vtkFreeSurferReaders(QASubjectFileName)]
     if {$::Module(verbose)} { puts "vtkFreeSurferReadersRecordSubjectQA fname = $fname" }
 
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $::env(USER) Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    # env(USER) may not be defined
+    if {[info exists ::env(USER)] == 1} {
+        set username $::env(USER)
+    } else {
+        if {[info exists ::env(USERNAME)] == 1} {
+            set username $::env(USERNAME)
+        } else {
+            puts "WARNING: USER and USERNAME environment variables are not defined, using default"
+            set username "default"
+        }
+    }
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.1 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -5556,7 +6007,7 @@ proc vtkFreeSurferReadersQAReviewSubject { subject } {
                 set islabelmap 0
                 set volID [vtkFreeSurferReadersLoadVolume $filetoload $islabelmap ${subject}-${vol}]
                 # and put it in the foreground
-                MainSlicesSetVolumeAll Back $volID
+                MainSlicesSetVolumeAll Fore $volID
             }
             # make all slices visible
             foreach s {0 1 2} {
@@ -5832,7 +6283,7 @@ proc vtkFreeSurferReadersQAMakeNewSubjectsCsh { subjectsDir { subset  "Review" }
     }
 
     set scriptsDirName  [file join $subjectsDir scripts]
-    if {![info isdirectory $scriptsDirName]} {
+    if {![file isdirectory $scriptsDirName]} {
         # create the scripts directory
         if {[catch {file mkdir $scriptsDirName} errmsg] == 1} {
             DevErrorWindow "Can't create directory $scriptsDirName: $errmsg\nWill write to standard error."
@@ -5890,3 +6341,632 @@ proc vtkFreeSurferReadersQAMakeNewSubjectsCsh { subjectsDir { subset  "Review" }
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersPlotBuildPointList 
+# Adds data points to the plotter's point list
+# .ARGS
+# int pointID the vertex id of the window to plot
+# int scalarVar the variable that points to the scalar volume data
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersPlotBuildPointList {pointID scalarVar} {
+    global vtkFreeSurferReaders
+
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersPlotBuildPointList pointID $pointID, scalarVar $scalarVar"
+    }
+
+    # clear out the list
+    vtkFreeSurferReadersPlotBeginPointList $pointID
+
+    # add to it, just the subject data for this vertex
+    set numPoints [[subst $$scalarVar] GetNumberOfTuples]
+    set numSubjects [[subst $$scalarVar] GetNumberOfComponents]
+    if {$::Module(verbose)} { puts "BuildPointList: got numPoints = $numPoints, numSubjects = $numSubjects" }
+
+
+    if {$pointID >= $numPoints || $pointID < 0} { 
+        puts "ERROR: cannot build a graph data list for point $pointID, valid range is 0 to [expr $numPoints-1]"
+        return
+    }
+
+    for {set sid 0} {$sid < $numSubjects} {incr sid} {
+        set pointList [[subst $$scalarVar] GetComponent $pointID $sid]
+        vtkFreeSurferReadersPlotAddPoint $pointID [lindex $pointList 0] [lindex $pointList 1] [lindex $pointList 2]
+    }
+
+    # try using regression on this vertex to get the line
+    set vtkFreeSurferReaders(gPlot,$pointID,state,bTryRegressionLine) 1
+
+    # and finish (plot)
+    vtkFreeSurferReadersPlotEndPointList $pointID
+    
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersPickPlot
+#
+# .ARGS
+# windowpath widget the window in which a point was picked
+# int x x coord of the pick
+# int y y coord of the pick
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersPickPlot {widget x y} {
+    global vtkFreeSurferReaders Point Module Model viewRen Select
+
+    set testPickers 0
+    set verb $::Module(verbose) 
+    set ::Module(verbose) 0
+
+    if {$::Module(verbose)} { 
+        puts "\nvtkFreeSurferReadersPickPlot: widget = $widget, x = $x, y = $y"
+        puts "Getting picked point for plotting" 
+    }
+
+    
+    if {$testPickers} {
+        # vtkFastCellPicker
+        set fastPickMs [time {set retval [SelectPick Select(picker) $widget $x $y]}]
+        if {$::Module(verbose)} {
+            puts "vtkFastCellPicker took $fastPickMs, retval = $retval, tolerance = [Select(picker) GetTolerance]"
+            puts "\tvtkFastCellPicker cell id = [Select(picker) GetCellId]"
+        }
+        
+
+        # vtkPickFilter
+        catch "wldPicker Delete"
+        vtkWorldPointPicker wldPicker
+        set wldPickMS [time {set retval [wldPicker Pick $x $y 0.0 viewRen]}]
+        if {$::Module(verbose)} {
+            puts "vtkWorldPointPicker time = $wldPickMS, retval = $retval"
+        }
+        set wldPt [wldPicker GetPickPosition]
+        
+        catch "pickFilter Delete"
+        vtkPickFilter pickFilter
+        # assume model 0 for now, need to pass in polydata GetOutput
+        pickFilter AddInput $Model(0,polyData)
+        pickFilter SetWorldPoint [lindex $wldPt 0] [lindex $wldPt 1] [lindex $wldPt 2] 
+        pickFilter PickCellOn
+        pickFilter Update
+        set cellpickMs [time {set cellID [pickFilter GetCellId]}]
+        if {$::Module(verbose)} {          
+            puts "\tvtkPickFilter get cell id time = $cellpickMs"
+            puts "\tvtkPickFilter using model 0"
+            puts "\tvtkPickFilter cell id = $cellID"
+        }
+
+
+        if {0} {
+            # this is way too slow
+            # vtkCellPicker
+            set pickMs [time {set retval [SelectPick Point(picker) $widget $x $y]}]
+            if {$::Module(verbose)} {
+                puts "vtkCellPicker took $pickMs"
+                puts "\tvtkCellPicker cell id = [Point(picker) GetCellId]"
+            }
+            if { $retval != 0} {
+                # check for a model
+                set actor [Point(picker) GetActor]
+                set Point(model) ""
+                set modelID -1
+                foreach id $Model(idList) {
+                    foreach r $Module(Renderers) {
+                        if { $actor == "Model($id,actor,$r)" } {
+                            set Point(model) Model($id,actor,$r)
+                            set modelID $id
+                        }
+                    }
+                }
+                if {$vtkFreeSurferReaders(plot,$vtkFreeSurferReaders(gGDF,dataID),modelID) != $modelID} {
+                    puts "Can't plot a point on model $modelID, only on $vtkFreeSurferReaders(plot,$vtkFreeSurferReaders(gGDF,dataID),modelID)"
+                    return
+                }
+                
+                set cellId [Point(picker) GetCellId]
+                if {$::Module(verbose)} {
+                    puts "\tPoint(model) = $Point(model)"
+                    # cellId = $cellId
+                }
+            }
+        }
+    }
+    # use a point picker to get the point the cursor was over, then pass that in to the plotter
+    set pointpickMs [time {set retval [SelectPick Select(ptPicker) $widget $x $y]}]
+    if {$::Module(verbose)} { 
+        puts "vtkPointPicker took $pointpickMs" 
+        puts "\ttolerance = [Select(ptPicker) GetTolerance]"
+    }
+    if {$retval != 0} {
+        set pid [Select(ptPicker) GetPointId]
+        if {$::Module(verbose)} {
+            puts -nonewline "\tPoint id = $pid\n\tIn cells:"
+            # find the cells that it's part of
+            catch "cellIds Delete"
+            vtkIdList cellIds
+            $Model(0,polyData) GetPointCells $pid cellIds
+            for {set i 0} {$i < [cellIds GetNumberOfIds]} {incr i} {
+                puts -nonewline " [cellIds GetId $i]"
+            }
+            puts "\n"
+        }
+        # check against the scalars array
+        if {[$vtkFreeSurferReaders(plot,$vtkFreeSurferReaders(gGDF,dataID),scalars) GetNumberOfComponents] < $pid} {
+            if {$::Module(verbose)} {
+                puts "\tPlotting point $pid, data id = $vtkFreeSurferReaders(gGDF,dataID)"
+            }
+            set ::Module(verbose) $verb
+            vtkFreeSurferReadersPlotPlotData $pid $vtkFreeSurferReaders(gGDF,dataID) 
+        }
+    } else {
+        if {$::Module(verbose)} {
+            puts "\tSelect(ptPicker) didn't find anything at $x $y"
+        }
+    }
+    set ::Module(verbose) $verb
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersBuildModelScalarsGui
+# Will build or rebuild the $Module(vtkFreeSurferReaders,fModels).fScalar frame 
+# so that it holds radio buttons for all of the scalars to load
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersBuildModelScalarsGui { {f ""} } {
+    global vtkFreeSurferReaders Module Gui
+
+    if {$f == ""} {
+        set f $Module(vtkFreeSurferReaders,fModels).fScalar
+    }
+
+    if {[info command $f.lTitle] == ""} {
+        DevAddLabel $f.lTitle "Load Associated Scalar files:"
+        pack $f.lTitle -side top -padx $Gui(pad) -pady 0
+    }
+    foreach scalar $vtkFreeSurferReaders(scalars) {
+        if {[info command $f.r$scalar] == ""} {
+            if {$::Module(verbose)} {
+                puts "vtkFreeSurferReadersBuildModelScalarsGui: adding button for $scalar"
+            }
+            eval {checkbutton $f.r$scalar \
+                      -text "$scalar" -command "vtkFreeSurferReadersSetLoad $scalar" \
+                      -variable vtkFreeSurferReaders(assocFiles,$scalar) \
+                      -width 9 \
+                      -indicatoron 0} $Gui(WCA)
+            pack $f.r$scalar -side top -padx 0
+        } else {
+            if {$::Module(verbose)} {
+                puts "vtkFreeSurferReadersBuildModelScalarsGui: $scalar already has a button"
+            }
+        }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersScalarSetLoadAddNew
+# If the vtkFreeSurferReaders(scalarsNew) isn't empty, and is not on the list 
+# of scalars to load with a surface, vtkFreeSurferReaders(assocFiles), add it to 
+# the list kept in scalars and redraw the radio buttons.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersScalarSetLoadAddNew {} {
+    global vtkFreeSurferReaders
+
+    set rebuildGui 0
+    # if the scalarsNew isn't empty, and not on the list of types to check for, add it
+    if {$vtkFreeSurferReaders(scalarsNew) != ""} {
+        # has more than one been added?
+        foreach newscalar $vtkFreeSurferReaders(scalarsNew) {
+            if {[lsearch $vtkFreeSurferReaders(scalars) $newscalar] == -1} {
+                # put it at the end
+                lappend vtkFreeSurferReaders(scalars) $newscalar
+                incr rebuildGui
+            }
+        }
+    }
+    if {$rebuildGui > 0} {
+        # add a radio button for new ones
+        if {$::Module(verbose)} { 
+            puts "vtkFreeSurferReadersScalarsSetLoadAddNew: rebuilding the gui"
+        }
+        vtkFreeSurferReadersBuildModelScalarsGui
+    }
+
+    # now reset the list to empty
+    set vtkFreeSurferReaders(scalarsNew) ""
+
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersScalarsSetLoadAddNew: now loading $vtkFreeSurferReaders(scalars)"
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersAddLuts
+# Add FreeSurfer look up tables to the Lut(idLabel) list, and build vtk obj for them.
+# Adds a table for each name listed in vtkFreeSurferReaders(lutNames).
+# Will create a table with a unique id. Will overwrite the last lut in the id list
+# who's name matches if it has already been created.
+# Saves the IDs in vtkFreeSurferReaders(lutIDs)
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersAddLuts {} {
+    global vtkFreeSurferReaders Lut 
+
+    # clear out the id list
+    set vtkFreeSurferReaders(lutIDs) ""
+
+    foreach newLut $vtkFreeSurferReaders(lutNames) {
+        set nextId -1
+
+        # has this lut name already been added?
+        foreach lid $Lut(idList) {
+            if {$Lut($lid,name) == $newLut} {
+                set nextId $lid
+            }
+        }
+        if {$nextId == -1} {
+            # find the next id
+            set nextId [expr [lindex [lsort -integer $Lut(idList)] end] + 1]
+            if {$::Module(verbose)} {
+                puts "vtkFreeSurferReadersAddLuts: next id = $nextId"
+                puts "vtkFreeSurferReadersAddLuts adding $newLut lut"
+            }
+            lappend Lut(idList) $nextId
+            set Lut($nextId,name) "$newLut"
+            set Lut($nextId,fileName) ""
+        } else {
+            if {$::Module(verbose)} {
+                puts "$newLut already there (id = $nextId), redefining it"
+            }
+        }
+        lappend vtkFreeSurferReaders(lutIDs) $nextId
+        set Lut($nextId,numberOfColors) 256
+
+        switch $newLut {
+            "RedGreen" {
+                set Lut($nextId,hueRange) "0 .8"
+                set Lut($nextId,saturationRange) "1 1"
+                set Lut($nextId,valueRange) "1 0"
+                set Lut($nextId,annoColor) "1 1 0"
+            }
+            "GreenRed" {
+                
+                if {0} {
+                    # calc'd later
+                    set Lut($nextId,hueRange) ".8 0"
+                    set Lut($nextId,saturationRange) "1 1"
+                    set Lut($nextId,valueRange) "0 1"
+                    set Lut($nextId,annoColor) "1 1 0"
+                }
+            }
+            "Heat" {
+                set Lut($nextId,hueRange) "0 .8"
+                set Lut($nextId,saturationRange) "1 1"
+                set Lut($nextId,valueRange) "1 1"
+                set Lut($nextId,annoColor) "1 0 0"
+            }
+            "BlueRed" {
+                set Lut($nextId,hueRange) ".8 0"
+                set Lut($nextId,saturationRange) "1 1"
+                set Lut($nextId,valueRange) "1 1"
+                set Lut($nextId,annoColor) "1 0 1"
+            }
+            default {
+                puts "Unknown look up table name $newLut, using Gray's values"
+                set Lut($nextId,hueRange) $Lut(0,hueRange)
+                set Lut($nextId,saturationRange) $Lut(0,saturationRange)
+                set Lut($nextId,valueRange) $Lut(0,valueRange)
+                set Lut($nextId,annoColor) $Lut(0,annoColor)
+            }
+        }
+        # build vtk if not already allocated
+        if {[info command Lut($nextId,lut)] == ""} {
+            vtkLookupTable Lut($nextId,lut)
+        }
+        if {$newLut != "GreenRed"} {
+            foreach param "NumberOfColors HueRange SaturationRange ValueRange" {
+                eval Lut($nextId,lut) Set${param} $Lut($nextId,[Uncap ${param}])
+            }
+            Lut($nextId,lut) SetRampToLinear
+            Lut($nextId,lut) Build
+        } else {
+            # brightening value
+            set offset 0.1
+            # insert the min/max values
+            set b  [expr 1.0 * ($offset  + 0.95*(1.0-$offset))]
+            Lut($nextId,lut) SetTableValue 0 0.0 0.0 $b 1.0
+            Lut($nextId,lut) SetTableValue 255 $b $b 0.0 1.0
+            # then build the rest of them
+            for {set i 1} {$i < 255} {incr i} {
+                # the r and g are flipped half way through the scale
+                set curv [expr ($i - 127.0) / 254.0]
+                set f [expr tanh($curv)]
+                if {$f > 0} {
+                    set r [expr 1.0 * ($offset + 0.95*(1.0-$offset)*abs($f))]
+                    set g [expr 1.0 * ($offset * (1.0 - abs($f)))]
+                } else {
+                    set r [expr 1.0 * ($offset * (1.0 - abs($f)))]
+                    set g [expr 1.0 * ($offset + 0.95*(1.0-$offset)*abs($f))]
+                }
+                set b [expr 1.0 * ($offset*(1 - abs($f)))]
+                Lut($nextId,lut) SetTableValue $i $r $b $g 1.0
+            }
+            # set the global vars
+            set Lut($nextId,hueRange) [Lut($nextId,lut) GetHueRange]
+            set Lut($nextId,saturationRange) [Lut($nextId,lut) GetSaturationRange]
+            set Lut($nextId,valueRange) [Lut($nextId,lut) GetValueRange]
+            set Lut($nextId,annoColor) "1 1 1"
+        }
+        
+    }
+
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersPickScalarsLut
+# Pick which FreeSurfer color lookup table to use with active model.
+# Names of the look up tables are held in $vtkFreeSurferReaders(lutNames)
+# .ARGS
+# widget parentButton the button to add a drop down menu to
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersPickScalarsLut { parentButton } {
+    global vtkFreeSurferReaders Gui
+
+    set m $::Model(activeID)
+    if {$m == ""} { 
+        if {$::Module(verbose)} {
+            puts "WARNING: vtkFreeSurferReadersPickScalarsLut Model(activeID) is empty! Returning..."
+        }
+        return 
+    }
+
+    catch "destroy .mFSpickscalarslut"
+    eval menu .mFSpickscalarslut $Gui(WMA)
+
+    set ren [lindex $::Module(Renderers) 0]
+    set currlut [Model($m,mapper,$ren) GetLookupTable]
+
+    set numcmds 0
+    foreach l $::Lut(idList) {
+        # is this a FS one?
+        if {[lsearch $vtkFreeSurferReaders(lutNames) $::Lut($l,name)] != -1} {
+            if {$::Module(verbose)} {
+                puts "got an fs one, l = $l"
+            }
+            if { "Lut($l,lut)" == $currlut } {
+                set labeltext "* $::Lut($l,name) *"
+            } else {
+                set labeltext "$::Lut($l,name)"
+            }
+            .mFSpickscalarslut insert end command -label $labeltext \
+                -command "ModelsSetScalarsLut $m $l \; Render3D"
+            incr numcmds
+        } else {
+            if {$::Module(verbose)} {
+                puts "skipping $l, name = $::Lut($l,name)"
+            }
+        }
+    }
+    set x [expr [winfo rootx $parentButton] + 10]
+    set y [expr [winfo rooty $parentButton] + 10]
+    
+    if {$numcmds > 0} {
+        .mFSpickscalarslut post $x $y
+    } else {
+        DevWarningWindow "WARNING: no FS colour look up tables, call vtkFreeSurferReadersAddLuts"
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersSetScalarFileName
+# vtkFreeSurferReaders(scalarFileName) is set elsewhere.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersSetScalarFileName {} {
+    global vtkFreeSurferReaders Volume
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersSetScalarFileName: scalar file name set to $vtkFreeSurferReaders(scalarFileName)"
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersReadScalars
+# read in the scalar overlays associated with a model id
+# .ARGS
+# int m the model id 
+# path fileName optional, can be built from the ModelFileName and the assocFiles
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersReadScalars { m {fileName ""} } {
+   
+    global vtkFreeSurferReaders Model Module
+
+    # a list of files to load
+    set scalarFileList ""
+
+    if {$m == "" || $m == -1} {
+        DevErrorWindow "ReadScalars: invalid model id $m. Load or set an active model"
+        return
+    }
+
+    if {$fileName == ""} {
+        # build up the list of files to load
+
+        # check if there's more than one
+        set numScalars 0
+        foreach s $vtkFreeSurferReaders(scalars) {
+            if {[lsearch $vtkFreeSurferReaders(assocFiles) $s] != -1} {
+                incr numScalars
+            }
+        }
+        if {$::Module(verbose)} {
+            puts "Have $numScalars scalar arrays associated with this model, call:\nvtkFreeSurferReadersSetModelScalar $m scalarName"
+        }
+        foreach s $vtkFreeSurferReaders(scalars) {
+            if {[lsearch $vtkFreeSurferReaders(assocFiles) $s] != -1} {
+                lappend scalarFileList [file rootname $vtkFreeSurferReaders(ModelFileName)].$s
+            }
+        }
+    } else {
+        # check to see how many scalars are there already
+        set numScalars [expr [[$Model($m,polyData) GetPointData] GetNumberOfArrays] + 1]
+        if {$::Module(verbose)} {
+            puts "Reading in one file, it will be scalar number $numScalars"
+        }
+        set scalarFileList $fileName
+    }
+
+    set numScalarsAdded 0
+    foreach scalarFileName $scalarFileList {
+        if [file exists $scalarFileName] {
+            set s [string trimleft [file extension $scalarFileName] "."]
+            puts "Model $m: Reading in file $s associated with this surface: $scalarFileName"
+            # need to delete these so that if close the scene and reopen a surface file, these won't still exist
+            if {$::Module(verbose)} {
+                puts "Deleting Model($m,floatArray$s)..."
+            }
+            catch "Model($m,floatArray$s) Delete"
+            vtkFloatArray Model($m,floatArray$s)
+            Model($m,floatArray$s) SetName $s
+
+            # should check here that using the right kind of surface scalar reader
+            if {$s == "w"} {
+                catch "Model($m,swr$s) Delete"
+                vtkFSSurfaceWFileReader Model($m,swr$s)
+
+                Model($m,swr$s) SetFileName $scalarFileName
+                Model($m,swr$s) SetOutput Model($m,floatArray$s)
+
+                # set the total number of vertices in the associated model
+                Model($m,swr$s) SetNumberOfVertices [[$Model($m,polyData) GetPointData] GetNumberOfTuples]
+
+                if {$::Module(verbose)} {
+                    Model($m,swr$s) DebugOn
+                }
+                set retval [Model($m,swr$s) ReadWFile]
+                if {[vtkFreeSurferReadersCheckWError $retval] != 0} {
+                    DevErrorWindow "vtkFreeSurferReadersReadScalars: Error reading $fileName, returning..."
+                    return
+                }
+            } else {
+                catch "Model($m,ssr$s) Delete"
+                vtkFSSurfaceScalarReader Model($m,ssr$s)
+
+                Model($m,ssr$s) SetFileName $scalarFileName
+                # this doesn't work on solaris, can't cast float array to vtkdataobject
+                Model($m,ssr$s) SetOutput Model($m,floatArray$s)
+                
+                Model($m,ssr$s) ReadFSScalars
+            }
+            
+            # if there's going to be more than one, use add array, otherwise just set it
+            if {$numScalars == 1} {
+                [$Model($m,polyData) GetPointData] SetScalars Model($m,floatArray$s)
+                [$Model($m,polyData) GetPointData] SetActiveScalars $s
+            } else {
+                if {$::Module(verbose)} {
+                    DevInfoWindow "Adding scalar named $s to model id $m"
+                }
+                [$Model($m,polyData) GetPointData] AddArray Model($m,floatArray$s)
+                # may have some missing files
+                incr numScalarsAdded 
+                if {$numScalarsAdded == 1} {
+                    # set the first one active
+                    [$Model($m,polyData) GetPointData] SetActiveScalars $s                        
+                }
+            }
+                
+            # set the lookup table for the scalar field
+            if {$::Module(verbose)} {
+                puts "vtkFreeSurferReadersReadScalars: checking scalar file extension $s to decide on LUT to use"
+            }
+            set lutIndex -1
+            if {$s == "fs"} {
+                # field sign
+                set lutIndex [lsearch $vtkFreeSurferReaders(lutNames) "BlueRed"]
+               
+            }
+            if {$s == "curv" || $s == "thickness"} {
+                set lutIndex [lsearch $vtkFreeSurferReaders(lutNames) "GreenRed"]
+            }
+            if {$s == "retinotopy"} {
+                # use colour wheel 
+                set lutIndex [lsearch $vtkFreeSurferReaders(lutNames) "ColorWheel"]
+            }
+            if {$lutIndex == -1} {
+                # use default 
+                set lutIndex [lsearch $vtkFreeSurferReaders(lutNames) "Heat"]
+            }
+            if {$lutIndex != -1} {
+                set lutID [lindex $vtkFreeSurferReaders(lutIDs) $lutIndex]
+                if {$::Module(verbose)} {
+                    puts "vtkFreeSurferReadersReadScalars: calling ModelsSetScalarsLut $m $lutID, for [lindex $vtkFreeSurferReaders(lutNames) $lutIndex]"
+                }
+                ModelsSetScalarsLut $m $lutID
+            }
+
+            # may need to set reader output to "" and delete here
+        } else {
+            DevWarningWindow "Scalar file does not exist: $scalarFileName"
+        }
+    }
+
+    if {$numScalarsAdded >= 1} {
+        set Model(scalarVisibility) 1
+        Model($m,node) SetScalarVisibility 1
+        Model($m,node) SetVisibility 1
+        # auto range on the scalar
+        set Model(scalarVisibilityAuto) 1
+    
+        set range [$Model($m,polyData) GetScalarRange]
+        set Model(scalarLo) [lindex $range 0]
+        set Model(scalarHi) [lindex $range 1]
+        if {$::Module(verbose)} {
+            puts "Model $m scalar range = $range"
+        }
+    }
+    
+    if {$fileName != ""} {
+        # if this wasn't called from vtkFreeSurferReadersBuildSurface, need to set a few things
+        MainModelsSetScalarVisibility $m $Model(scalarVisibility)
+        MainModelsSetScalarRange $m $Model(scalarLo) $Model(scalarHi)
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersLoadScalarFile
+# Sets up and reads in a scalar file for the active model, using vtkFreeSurferReaders(scalarFileName). Can be
+# called to load a file from the command line, if fileName is not an empty string, it will over ride 
+# vtkFreeSurferReaders(scalarFileName), otherwise load scalarFileName
+# .ARGS
+# path fileName path to a scalar file, defaults to empty string.
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersLoadScalarFile { {fileName ""} } {
+    global vtkFreeSurferReaders Model
+
+    if {[file exists $fileName] == 0} {
+        DevErrorWindow "Load FreeSurfer Scalar: $fileName does not exist!"
+        return
+    }
+
+    if {$fileName != ""} {
+        set vtkFreeSurferReaders(scalarFileName) $fileName 
+    }
+
+    # check that there's an active model
+    set m $Model(activeID)
+    
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersLoadScalar: for model id $m, loading scalar file name = $vtkFreeSurferReaders(scalarFileName)"
+    }
+
+    # read in the scalar for this model 
+    vtkFreeSurferReadersReadScalars $m $vtkFreeSurferReaders(scalarFileName)
+}

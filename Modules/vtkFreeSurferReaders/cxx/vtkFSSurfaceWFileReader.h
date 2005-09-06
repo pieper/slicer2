@@ -38,43 +38,81 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 /*=========================================================================
 
   Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkFSIO.h,v $
+  Module:    $RCSfile: vtkFSSurfaceWFileReader.h,v $
   Language:  C++
   Date:      $Date: 2005/09/06 21:22:55 $
-  Version:   $Revision: 1.4.6.1 $
+  Version:   $Revision: 1.2.2.1 $
 
 =========================================================================*/
-// .NAME vtkFSIO - Some IO functions for irregular FreeSurface files.
+
+// .NAME vtkFSSurfaceWFileReader - read a surface w file (*.w) file
+// from Freesurfer tools
 // .SECTION Description
-// Some simple functions for doing silly things like reading three
-// byte ints, common in FreeSurfer file types.
+// Reads a surface w file file from FreeSurfer and outputs a
+// vtkFloatArray. Use the SetFileName function to specify the file
+// name. The number of values in the array should be equal to the
+// number of vertices/points in the surface.
 
-#ifndef __vtkFSIO_h
-#define __vtkFSIO_h
+#ifndef __vtkFSSurfaceWFileReader_h
+#define __vtkFSSurfaceWFileReader_h
 
-#include <stdio.h>
-#include <zlib.h>
+#include <vtkFreeSurferReadersConfigure.h>
+#include "vtkDataReader.h"
+#include "vtkPolyData.h"
+#include "vtkFloatArray.h"
+
+// file type magic numbers
+const int FS_NEW_SCALAR_MAGIC_NUMBER = 16777215;
+
+// error codes
+const int FS_ERROR_W_NONE = 0;
+const int FS_ERROR_W_OUTPUT_NULL = 1;
+const int FS_ERROR_W_NO_FILENAME = 2;
+const int FS_ERROR_W_OPEN = 3;
+const int FS_ERROR_W_NUM_VALUES = 4;
+const int FS_ERROR_W_ALLOC = 5;
+const int FS_ERROR_W_EOF = 6;
+
+class VTK_FREESURFERREADERS_EXPORT vtkFSSurfaceWFileReader : public vtkDataReader
+{
+public:
+  static vtkFSSurfaceWFileReader *New();
+  vtkTypeMacro(vtkFSSurfaceWFileReader,vtkDataReader);
+  void PrintSelf(ostream& os, vtkIndent indent);
+
+  vtkFloatArray *GetOutput()
+    {return this->scalars; };
+  void SetOutput(vtkFloatArray *output)
+    {this->scalars = output; };
+
+  int ReadWFile();
+
+    vtkGetMacro(NumberOfVertices,int);
+    vtkSetMacro(NumberOfVertices,int);
+
+protected:
+  vtkFSSurfaceWFileReader();
+  ~vtkFSSurfaceWFileReader();
+
+  vtkFloatArray *scalars;
 
 
-class  vtkFSIO {
- public:
+    // Description:
+    // this is the number of vertices in the associated model file,
+    // there may not be as many value in this scalar file as there
+    // are vertices
+    int NumberOfVertices;
+    
+  int ReadInt3 (FILE* iFile, int& oInt);
+  int ReadInt2 (FILE* iFile, int& oInt);
+  int ReadFloat (FILE* iFile, float& oInt);
 
-  static vtkFSIO *New () { return NULL; }
-
-  // These use FILE types instead of file streams for no good reason,
-  // simply because the old code from which this is adapted is
-  // C-based.
-  static int ReadShort (FILE* iFile, short& oShort);
-  static int ReadInt (FILE* iFile, int& oInt);
-  static int ReadInt3 (FILE* iFile, int& oInt);
-  static int ReadInt2 (FILE* iFile, int& oInt);
-  static int ReadFloat (FILE* iFile, float& oFloat);
-
-  static int ReadShortZ (gzFile iFile, short& oShort);
-  static int ReadIntZ (gzFile iFile, int& oInt);
- static int ReadInt3Z (gzFile iFile, int& oInt);
- static int ReadInt2Z (gzFile iFile, int& oInt);
-  static int ReadFloatZ (gzFile iFile, float& oFloat);
+private:
+  vtkFSSurfaceWFileReader(const vtkFSSurfaceWFileReader&);  // Not implemented.
+  void operator=(const vtkFSSurfaceWFileReader&);  // Not implemented.
 };
 
+
 #endif
+
+

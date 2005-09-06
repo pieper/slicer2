@@ -36,6 +36,9 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
 #include "vtkFastCellPicker.h"
+#include "vtkObjectFactory.h"
+
+vtkStandardNewMacro(vtkFastCellPicker);
 
 vtkFastCellPicker::vtkFastCellPicker()
 {

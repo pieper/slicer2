@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSIO.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/04/04 15:35:46 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2005/09/06 21:22:55 $
+  Version:   $Revision: 1.3.6.1 $
 
 =========================================================================*/
 
@@ -61,6 +61,19 @@ int vtkFSIO::ReadShort (FILE* iFile, short& oShort) {
   return result;
 }
 
+int vtkFSIO::ReadShortZ (gzFile iFile, short& oShort) {
+
+  short s = 0;
+  int result ;
+
+  // Read an short. Swap if we need to. Return the value.
+  result = gzread (iFile, &s, sizeof(short));
+  vtkByteSwap::Swap2BE (&s);
+  oShort = s;
+
+  return result;
+}
+
 int vtkFSIO::ReadInt (FILE* iFile, int& oInt) {
 
   int i = 0;
@@ -71,6 +84,16 @@ int vtkFSIO::ReadInt (FILE* iFile, int& oInt) {
   vtkByteSwap::Swap4BE (&i);
   oInt = i;
 
+  return result;
+}
+
+int vtkFSIO::ReadIntZ (gzFile iFile, int& oInt) {
+  int i = 0;
+  int result;
+
+  result = gzread(iFile, &i, sizeof(int));
+  vtkByteSwap::Swap4BE(&i);
+  oInt = i;
   return result;
 }
 
@@ -88,6 +111,21 @@ int vtkFSIO::ReadInt3 (FILE* iFile, int& oInt) {
   return result;
 }
 
+int vtkFSIO::ReadInt3Z (gzFile iFile, int& oInt) {
+
+  int i = 0;
+  int result ;
+
+  // Read three bytes. Swap if we need to. Stuff into a full sized int
+  // and return.
+  result = gzread (iFile, &i, 3*sizeof(int));
+  vtkByteSwap::Swap4BE (&i);
+  oInt = ((i>>8) & 0xffffff);
+
+  return result;
+}
+
+
 int vtkFSIO::ReadInt2 (FILE* iFile, int& oInt) {
 
   int i = 0;
@@ -95,6 +133,19 @@ int vtkFSIO::ReadInt2 (FILE* iFile, int& oInt) {
 
   // Read two bytes. Swap if we need to. Return the value
   result = fread (&i, 2, 1, iFile);
+  vtkByteSwap::Swap4BE (&i);
+  oInt = i;
+  
+  return result;
+}
+
+int vtkFSIO::ReadInt2Z (gzFile iFile, int& oInt) {
+
+  int i = 0;
+  int result ;
+
+  // Read two bytes. Swap if we need to. Return the value
+  result = gzread (iFile, &i, 2*sizeof(int));
   vtkByteSwap::Swap4BE (&i);
   oInt = i;
   
@@ -114,5 +165,15 @@ int vtkFSIO::ReadFloat (FILE* iFile, float& oFloat) {
   return result;
 }
 
+int vtkFSIO::ReadFloatZ (gzFile iFile, float& oFloat) {
 
+  float f = 0;
+  int result ;
 
+  // Read a float. Swap if we need to. Return the value
+  result = gzread (iFile, &f, sizeof(float));
+  vtkByteSwap::Swap4BE (&f);
+  oFloat = f;
+  
+  return result;
+}

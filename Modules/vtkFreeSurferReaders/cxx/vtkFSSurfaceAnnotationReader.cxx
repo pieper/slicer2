@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 Program:   Visualization Toolkit
 Module:    $RCSfile: vtkFSSurfaceAnnotationReader.cxx,v $
 Language:  C++
-Date:      $Date: 2005/04/04 15:35:46 $
-Version:   $Revision: 1.5 $
+Date:      $Date: 2005/09/06 21:22:55 $
+Version:   $Revision: 1.5.6.1 $
 
 =========================================================================*/
 #include <stdio.h>
@@ -148,7 +148,7 @@ int vtkFSSurfaceAnnotationReader::ReadFSAnnotation()
       return -1;
   }
   
-  vtkDebugMacro( << "ReadFSAnnotation: Reading surface annotation data...\n");
+  vtkDebugMacro( << "ReadFSAnnotation: Reading surface annotation data... from " << this->FileName << "\n");
   
   // Try to open the file.
   annotFile = fopen (this->FileName, "rb");
@@ -342,7 +342,7 @@ int vtkFSSurfaceAnnotationReader::ReadFSAnnotation()
   
   // Copy the names as a list into a new string. First find the
   // length that the string should be.
-  cerr << "ReadFSAnnotation: Copy the names as a list into a new string\n";
+  vtkDebugMacro(<< "ReadFSAnnotation: Copy the names as a list into a new string\n");
   stringLength = 0;
   for (colorTableEntryIndex = 0; 
        colorTableEntryIndex < numColorTableEntries; 

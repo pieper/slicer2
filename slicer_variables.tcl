@@ -73,6 +73,7 @@ set ::VTK_DIR  $::SLICER_LIB/VTK-build
 set ::VTK_SRC_DIR $::SLICER_LIB/VTK
 set ::VTK_BUILD_TYPE ""
 set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
+set ::KWWIDGETS_DIR  $::SLICER_LIB/Widgets-build
 set ::ITK_BINARY_PATH $::SLICER_LIB/Insight-build
 set ::TCL_BIN_DIR $::SLICER_LIB/tcl-build/bin
 set ::TCL_LIB_DIR $::SLICER_LIB/tcl-build/lib
@@ -102,6 +103,7 @@ switch $tcl_platform(os) {
         set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh8.4
         set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/libITKCommon.so
         set ::TK_EVENT_PATCH $SLICER_HOME/tkEventPatch.diff
+        set ::BLT_PATCH $SLICER_HOME/blt-patch.diff
     }
     "Windows NT" {
     # Windows NT currently covers WinNT, Win2000, XP Home, XP Pro
@@ -132,8 +134,8 @@ switch $tcl_platform(os) {
         set ::COMPILER_PATH "/local/os/bin"
         set ::COMPILER "g++"
         set ::CMAKE $::CMAKE_PATH/bin/cmake
-        # set ::MAKE "gmake -j15"
-        set ::MAKE "gmake"
+        set ::MAKE "gmake -j15"
+        # set ::MAKE "gmake"
     }
     "Linux" {
         set ::VTKSLICERBASE_BUILD_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/vtkSlicerBase.so
@@ -149,7 +151,7 @@ switch $tcl_platform(os) {
         set ::VTKSLICERBASE_BUILD_TCL_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/vtkSlicerBaseTCL.dylib
         set ::GENERATOR "Unix Makefiles" 
         set ::COMPILER_PATH "/usr/bin"
-        set ::COMPILER "c++"
+        set ::COMPILER "g++-3.3"
         set ::CMAKE $::CMAKE_PATH/bin/cmake
         set ::MAKE make
     }

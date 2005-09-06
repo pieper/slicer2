@@ -141,6 +141,15 @@ if { [info exists env(SLICER_MODULES)] } {
     }
 }
 
+set fd [open "${slicer_home}/DartTestfile.txt" "w"]
+puts $fd "SUBDIRS(Base/builds/$env(BUILD))"
+puts $fd "SUBDIRS(Modules)"
+close $fd
+
+set fd [open "${baseModulePath}/DartTestfile.txt" "w"]
+foreach dir $modulePaths {
+  puts $fd "SUBDIRS (\"[file root [file tail $dir]]/builds/$env(BUILD)\")"
+}
 
 set TARGETS ""
 foreach dir $modulePaths {
@@ -282,9 +291,12 @@ if { $CLEANFLAG } {
 # go through each target module and do cmake then build
 # - use custom cmake argument if specified
 #
+set numTargets [llength $TARGETS]
+set numCompleted 0
+puts "Found $numTargets target(s) to build"
 set failed ""
 foreach target $TARGETS {
-
+    incr numCompleted
     puts "\n----\nprocessing $target..."
 
     set build $target/builds/$env(BUILD) 
@@ -366,6 +378,7 @@ foreach target $TARGETS {
             }
         }
     }
+    puts "Finished $numCompleted of $numTargets targets." 
 }
 
 if { [llength $failed] } {

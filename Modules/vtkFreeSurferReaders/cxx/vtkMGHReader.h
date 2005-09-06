@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkMGHReader.h,v $
   Language:  C++
-  Date:      $Date: 2005/04/04 15:35:08 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2005/09/06 21:22:56 $
+  Version:   $Revision: 1.4.6.1 $
 
 =========================================================================*/
 // .NAME vtkMGHReader - read an MGH (.mgh) volume file from Freesurfer tools
@@ -59,6 +59,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkPointData.h"
 #include "vtkVolumeReader.h"
 #include "vtkTransform.h"
+#include <zlib.h>
 
 // Header sizes.
 const int FS_DIMENSION_HEADER_SIZE = sizeof(int) * 7;
@@ -147,6 +148,7 @@ protected:
 private:
   vtkMGHReader(const vtkMGHReader&);  // Not implemented.
   void operator=(const vtkMGHReader&);  // Not implemented.
+
 };
 
 #endif

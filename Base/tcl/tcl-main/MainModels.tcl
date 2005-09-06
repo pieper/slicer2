@@ -88,7 +88,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.61 $} {$Date: 2004/09/17 13:42:42 $}]
+        {$Revision: 1.61.10.1 $} {$Date: 2005/09/06 21:25:04 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -330,7 +330,12 @@ proc MainModelsRead {m} {
     # If fileName = "", then do nothing
     set fileName [Model($m,node) GetFullFileName]
     if {$fileName == ""} {
-        DevWarningWindow "MainModelsRead: empty filename"
+        # this can happen if the model was just created
+        if {$Module(verbose)} {
+            DevWarningWindow "MainModelsRead: empty filename for Model($m,node)"
+        } else {
+            puts "MainModelsRead: empty filename for Model($m,node)"
+        }
         return
     }
 
@@ -1108,7 +1113,7 @@ proc MainModelsWrite {m prefix} {
     #
     if {$Model($m,dirty) == 0} {
         set resp [tk_messageBox -message \
-            "This model has not been changed
+                      "Model $m [Model($m,node) GetName] has not been changed
 since the last time it was saved.\n\nSave anyway?" -type okcancel]
         if { $resp == "cancel" } {
             return

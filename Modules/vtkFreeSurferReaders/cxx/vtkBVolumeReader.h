@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkBVolumeReader.h,v $
   Language:  C++
-  Date:      $Date: 2005/04/12 16:58:17 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2005/09/06 21:22:54 $
+  Version:   $Revision: 1.5.6.1 $
 
 =========================================================================*/
 // .NAME vtkBVolumeReader - read a binary volume file from Freesurfer tools
@@ -117,7 +117,12 @@ public:
     
 
     vtkGetMacro(ScalarType,int);
+    vtkGetMacro(NumTimePoints,int);
 //    vtkGetVectorMacro(DataSpacing,int,3);
+
+    // Description:
+  // Reads the MGH file and creates an array of values. - exposed for gdf reading
+  vtkDataArray *ReadVolumeData();
     
 protected:
   vtkBVolumeReader();
@@ -172,11 +177,6 @@ protected:
     float BottomR[3];
     float Normal[3];
     
-  // Description:
-  // Reads the MGH file and creates an array of values.
-  vtkDataArray *ReadVolumeData();
-
-
   void FindStemFromFilePrefixOrFileName();
   void GuessTypeFromStem();
 
