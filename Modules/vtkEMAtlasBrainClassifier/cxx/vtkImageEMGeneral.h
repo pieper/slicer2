@@ -108,6 +108,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define EMSEGMENT_TABLE_SIZE_MULTI    10000   // For multiple images
 #define EMSEGMENT_TABLE_EPSILON       1e-4    // Cut of for smallest eps value: x < Eps  => GausTable(x) = 0
 #define EMSEGMENT_TABLE_EPSILON_MULTI 1e-3    // Cut of for smallest eps value: x < Eps  => GausTable(x) = 0
+
+// How many quality measures are used 
+#define EMSEGMENT_NUM_OF_QUALITY_MEASURE 1
+
 //ETX
 class VTK_EMATLASBRAINCLASSIFIER_EXPORT vtkImageEMGeneral : public vtkImageMultipleInputFilter
 {

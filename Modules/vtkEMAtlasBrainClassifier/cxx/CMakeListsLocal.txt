@@ -14,7 +14,6 @@ IF (WIN32)
     SET (LOCAL_MODULE_SRCS
         vtkDataDef.cxx
         vtkFileOps.cxx
-        vtkThread.cxx
 
 	vtkMrmlSegmenterAtlasGenericClassNode.cxx 
         vtkMrmlSegmenterAtlasClassNode.cxx    	
@@ -24,10 +23,10 @@ IF (WIN32)
         vtkMrmlSegmenterAtlasNode.cxx 
 
         vtkImageEMGeneral.cxx
-        # vtkImageEMGenericClass.cxx
-        # vtkImageEMAtlasClass.cxx
-        # vtkImageEMAtlasSuperClass.cxx
-        # vtkImageEMAtlasSegmenter.cxx
+        vtkImageEMGenericClass.cxx
+        vtkImageEMAtlasClass.cxx
+        vtkImageEMAtlasSuperClass.cxx
+        vtkImageEMAtlasSegmenter.cxx
     )
     SET_SOURCE_FILES_PROPERTIES ( vtkThread.cxx ABSTRACT )
 ELSE (WIN32)
@@ -44,12 +43,10 @@ ELSE (WIN32)
         vtkMrmlSegmenterAtlasNode.cxx 
 
         vtkImageEMGeneral.cxx
-        # vtkImageEMGenericClass.cxx
-        # vtkImageEMAtlasClass.cxx
-        # vtkImageEMAtlasSuperClass.cxx
-        # vtkImageEMAtlasSegmenter.cxx
-
-
+        vtkImageEMGenericClass.cxx
+        vtkImageEMAtlasClass.cxx
+        vtkImageEMAtlasSuperClass.cxx
+        vtkImageEMAtlasSegmenter.cxx
     )
 ENDIF (WIN32)
 
