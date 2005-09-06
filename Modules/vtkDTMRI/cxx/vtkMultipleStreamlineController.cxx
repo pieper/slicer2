@@ -1427,22 +1427,21 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROIIntersectWithROI2()
       return;      
     }
 
-  // check ROI's value of interest
-  if (this->InputROIValue <= 0)
-    {
-      vtkErrorMacro("Input ROI value has not been set or is 0. (value is "  << this->InputROIValue << ".");
-      return;      
-    }
   // make sure it is short type
   if (this->InputROI->GetScalarType() != VTK_SHORT)
     {
       vtkErrorMacro("Input ROI is not of type VTK_SHORT");
       return;      
     }
+  // make sure it is short type
+  if (this->InputROI2->GetScalarType() != VTK_SHORT)
+    {
+      vtkErrorMacro("Input ROI is not of type VTK_SHORT");
+      return;      
+    }
 
   // Create transformation matrices to go backwards from streamline points to ROI space
-  // This is used to access ROI2, it has to have same 
-  // dimensions and location as seeding ROI for now.
+  // This is used to access ROI2.
   vtkTransform *WorldToROI2 = vtkTransform::New();
   WorldToROI2->SetMatrix(this->ROI2ToWorld->GetMatrix());
   WorldToROI2->Inverse();
@@ -1541,7 +1540,7 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROIIntersectWithROI2()
                           short *tmp = (short *) this->InputROI2->GetScalarPointer(pt);
                           if (tmp != NULL)
                             {
-                              if (*tmp > 0) {
+                              if (*tmp == this->InputROI2Value) {
                                 intersects = 1;
                               }
                             }

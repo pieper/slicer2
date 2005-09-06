@@ -80,7 +80,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.26 $} {$Date: 2005/07/28 20:01:23 $}]
+                                 {$Revision: 1.27 $} {$Date: 2005/09/06 23:21:38 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -237,8 +237,12 @@ proc DTMRITractographyInit {} {
     set DTMRI(ROI2Labelmap) $Volume(idNone)
     # Label value indicating seed location
     set DTMRI(ROILabel) $DTMRI(defaultLabel)
+    # Label value indicating seed location
+    set DTMRI(ROI2Label) $DTMRI(defaultLabel)
     # Color value corresponding to the label
     set DTMRI(ROILabelColorID) ""
+    # Color value corresponding to the label
+    set DTMRI(ROI2LabelColorID) ""
 
     #------------------------------------
     # Tab 3: Display of (all) streamlines
@@ -596,7 +600,7 @@ proc DTMRITractographyBuildGUI {} {
     # Tract->Notebook->Seeding->ROIMethod frame
     #-------------------------------------------
     set f $fSeeding.fROIMethod
-    foreach frame "ROI ChooseLabel ROI2 Apply" {
+    foreach frame "ROI ChooseLabel ROI2 ChooseLabel2 Apply" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx $Gui(pad) -pady 2 -fill both
     }
@@ -651,6 +655,32 @@ proc DTMRITractographyBuildGUI {} {
         DTMRI $f $name "Selection ROI (Optional):" Pack \
         "Tracts will selected if they pass through this ROI.\nChoose None to skip this step." \
         13
+
+    #-------------------------------------------
+    # Tract->Notebook->Seeding->ROIMethod->ChooseLabel2 frame
+    #-------------------------------------------
+    set f $fSeeding.fROIMethod.fChooseLabel2
+    
+    # label in input ROI for seeding
+    eval {button $f.bOutput -text "Select Label:" \
+              -command "ShowLabels DTMRIUpdateROI2LabelWidgetFromShowLabels"} $Gui(WBA)
+    eval {entry $f.eOutput -width 4 \
+              -textvariable DTMRI(ROI2Label)} $Gui(WEA)
+
+    bind $f.eOutput <Return>   "DTMRIUpdateLabelWidget ROI2Label"
+    eval {entry $f.eName -width 14 \
+              -textvariable DTMRI(ROI2LabelName)} $Gui(WEA) \
+        {-bg $Gui(activeWorkspace) -state disabled}
+    grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
+    grid $f.eOutput $f.eName -sticky w
+    # save for changing color later
+    set DTMRI(ROI2LabelWidget) $f.eName
+
+    set tip \
+        "Choose the color (label) of the region of interest."
+    TooltipAdd  $f.bOutput $tip
+    TooltipAdd  $f.eOutput $tip
+    TooltipAdd  $f.eName $tip
 
     #-------------------------------------------
     # Tract->Notebook->Seeding->ROIMethod->Apply frame
@@ -1086,6 +1116,21 @@ proc DTMRIUpdateROILabelWidgetFromShowLabels {} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIUpdateROILabelWidgetFromShowLabels
+# Callback after ShowLabels window receives a label selection
+# from the user.  Calls DTMRIUpdateLabelWidgetFromShowLabels
+# with an argument (which is not possible to do directly as the
+# callback proc).
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc DTMRIUpdateROI2LabelWidgetFromShowLabels {} {
+
+    DTMRIUpdateLabelWidgetFromShowLabels ROI2Label
+
+}
+
 
 
 #-------------------------------------------------------------------------------
@@ -1320,7 +1365,8 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI
-# 
+# Seed streamlines in all points in ROI, keep those that pass through
+# ROI2.  
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1387,6 +1433,8 @@ proc DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI {{verbose 1}} {
     DTMRI(vtk,streamlineControl) SetInputROIValue $DTMRI(ROILabel)
 
     DTMRI(vtk,streamlineControl) SetInputROI2 [castVSaveROI GetOutput]
+    DTMRI(vtk,streamlineControl) SetInputROI2Value $DTMRI(ROI2Label)
+    
     
     # Get positioning information from the MRML node for the seed ROI
     # world space (what you see in the viewer) to ijk (array) space
@@ -1408,12 +1456,14 @@ proc DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI {{verbose 1}} {
 
     # create all streamlines
     puts "Original number of tracts: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
+
+    
     DTMRI(vtk,streamlineControl) SeedStreamlinesFromROIIntersectWithROI2
     puts "New number of tracts will be: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
-    puts "Creating and displaying new tracts..."
 
     # actually display streamlines 
     # (this is the slow part since it causes pipeline execution)
+    puts "Creating and displaying new tracts..."
     DTMRI(vtk,streamlineControl) AddStreamlinesToScene
 
     castVSeedROI Delete

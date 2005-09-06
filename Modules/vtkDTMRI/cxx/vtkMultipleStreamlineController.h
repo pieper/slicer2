@@ -212,6 +212,9 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   vtkSetClampMacro(InputROIValue, int, 1, VTK_SHORT_MAX);
   vtkGetMacro(InputROIValue, int);
 
+  vtkSetClampMacro(InputROI2Value, int, 1, VTK_SHORT_MAX);
+  vtkGetMacro(InputROI2Value, int);
+
   // Description
   // Streamlines will be started at locations with these values in the InputROI.
   // The value must be greater than 0. A 0 value is not allowed because it
@@ -381,6 +384,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   vtkImageData *OutputROIForColoring;
   vtkCollection *InputRenderers;
   int InputROIValue;
+  int InputROI2Value;
   vtkShortArray *InputMultipleROIValues;
   
   vtkDoubleArray *ConvolutionKernel;

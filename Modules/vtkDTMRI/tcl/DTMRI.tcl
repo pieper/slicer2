@@ -501,7 +501,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.103 $} {$Date: 2005/07/20 21:10:03 $}]
+                  {$Revision: 1.104 $} {$Date: 2005/09/06 23:21:38 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -639,6 +639,7 @@ proc DTMRIUpdateMRML {} {
     # Update label widgets.  This is because if the colormap changes,
     # then the widget colors may have to change.
     DTMRIUpdateLabelWidget ROILabel
+    DTMRIUpdateLabelWidget ROI2Label
     DTMRIUpdateLabelWidget TractLabel
     DTMRIUpdateLabelWidget MaskLabel
 
