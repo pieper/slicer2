@@ -453,14 +453,22 @@ proc DevUpdateNodeSelectButton { type ArrayName Label Name { CommandSet "DevSele
                     set test 0
                 }
             }
+
+ 
+
             if $test {
+                set colbreak [MainVolumesBreakVolumeMenu $m] 
                 $m add command -label [${type}($v,node) GetName] \
-            -command "$CommandSet $type $v $ArrayName $Label $Name; $Command2Set"
+                    -command "$CommandSet $type $v $ArrayName $Label $Name; $Command2Set" \
+                    -columnbreak $colbreak
         }
     }
+
+    set colbreak [MainVolumesBreakVolumeMenu $m] 
     if {$New} {
         $m add command -label "Create New" \
-       -command "$CommandSet $type -5 $ArrayName $Label $Name"
+            -command "$CommandSet $type -5 $ArrayName $Label $Name" \
+            -columnbreak $colbreak
     }
 }
 

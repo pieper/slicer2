@@ -125,7 +125,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.79 $} {$Date: 2005/08/19 00:55:51 $}]
+        {$Revision: 1.80 $} {$Date: 2005/09/06 21:06:18 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -288,8 +288,10 @@ proc EditorUpdateMRML {} {
     set m $Editor(mOriginal)
     $m delete 0 end
     foreach v $Volume(idList) {
-        $m add command -label [Volume($v,node) GetName] -command \
-            "EditorSetOriginal $v; RenderAll"
+        set colbreak [MainVolumesBreakVolumeMenu $m] 
+        $m add command -label [Volume($v,node) GetName] \
+            -command "EditorSetOriginal $v; RenderAll" \
+            -columnbreak $colbreak
     }
 
     # Working Volume menu
@@ -299,8 +301,10 @@ proc EditorUpdateMRML {} {
     set idWorking ""
     foreach v $Volume(idList) {
         if {$v != $Volume(idNone) && $v != $Editor(idComposite)} {
-            $m add command -label [Volume($v,node) GetName] -command \
-                "EditorSetWorking $v; RenderAll"
+            set colbreak [MainVolumesBreakVolumeMenu $m] 
+            $m add command -label [Volume($v,node) GetName] \
+                -command "EditorSetWorking $v; RenderAll" \
+                -columnbreak $colbreak
         }
     }
 

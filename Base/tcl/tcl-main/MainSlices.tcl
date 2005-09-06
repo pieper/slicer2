@@ -109,7 +109,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.56 $} {$Date: 2005/07/27 21:48:24 $}]
+        {$Revision: 1.57 $} {$Date: 2005/09/06 21:01:57 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"
@@ -601,23 +601,9 @@ proc MainSlicesUpdateMRML {} {
             
             foreach pre "$Slice($s,controls)" {
                 set m $pre.$suffix
-
                 $m delete 0 end
                 foreach v $Volume(idList) {
-
-                    set volnum [$m index end]
-                    set colbreak 0
-                    if {$volnum != "none"} {
-                        # first pass through, get the end index returned as none, 
-                        # second pass get 0. Have to bump it up one to get proper
-                        # column breaking
-                        incr volnum
-                        # every 40 entries, start a new column in the volumes list
-                        if {[expr fmod($volnum,40)] == 0} {
-                            set colbreak 1
-                        }
-                    }
-                
+                    set colbreak [MainVolumesBreakVolumeMenu $m] 
                     $m add command -label [Volume($v,node) GetName] \
                         -command "MainSlicesSetVolumeAll $layer $v; \
                         MainViewerHideSliceControls; RenderAll" \
@@ -630,19 +616,9 @@ proc MainSlicesUpdateMRML {} {
 
             foreach pre "$Slice($s,controls)" {
                 set m $pre.$suffix
-
                 $m delete 0 end
                 foreach v $Volume(idList) {
-
-                    set volnum [$m index end]
-                    set colbreak 0
-                    if {$volnum != "none"} {
-                        incr volnum
-                        if {[expr fmod($volnum,40)] == 0} {
-                            set colbreak 1
-                        }
-                    }
-
+                    set colbreak [MainVolumesBreakVolumeMenu $m] 
                     $m add command -label [Volume($v,node) GetName] \
                         -command "MainSlicesSetVolume ${layer} ${s} $v; \
                         MainViewerHideSliceControls; RenderBoth $s" \
