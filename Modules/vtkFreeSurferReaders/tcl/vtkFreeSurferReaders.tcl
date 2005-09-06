@@ -56,7 +56,6 @@
 #   vtkFreeSurferReadersSetSurfaceVisibility i vis
 #   vtkFreeSurferReadersSetModelScalar modelID scalarName
 #   vtkFreeSurferReadersSetModelVector modelID vectorName
-#   vtkFreeSurferReadersDisplayPopup modelID
 #   vtkFreeSurferReadersMainFileCloseUpdate
 #   vtkFreeSurferReadersAddColors tags
 #   vtkFreeSurferReadersCORHeaderRead file
@@ -215,6 +214,7 @@ proc vtkFreeSurferReadersInit {} {
     set vtkFreeSurferReaders(QAUseSubjectsFile) 0
     set vtkFreeSurferReaders(QADefaultView) "Normal"
     set vtkFreeSurferReaders(QAResultsList) {Approve Exclude Resegment Review}
+    set vtkFreeSurferReaders(QAResultsListTooltips) {"Approve this segmentation as is" "Exclude this volume from further processing" "Flag this volume to be resegmented, as there are errors" "Get a second opinion on this volume"}
     set vtkFreeSurferReaders(scan) 0
     set vtkFreeSurferReaders(scanStep) 1
     set vtkFreeSurferReaders(scanStartCOR) -128
@@ -228,7 +228,7 @@ proc vtkFreeSurferReadersInit {} {
     set vtkFreeSurferReaders(QAtime) 0
     # save these settings and put them back after done qa
     set vtkFreeSurferReaders(QAcast) $vtkFreeSurferReaders(castToShort)
-    set vtkFreeSurferReaders(QAopacity) $::Slice(opacity)
+    set vtkFreeSurferReaders(sliceOpacity) $::Slice(opacity)
     set vtkFreeSurferReaders(QAviewmode) $::View(mode)
 
 #    set vtkFreeSurferReaders(PlotFileName) [file normalize [file join .. .. freesurfer data fsgd y_doss-thickness-250rh.fsgd]]
@@ -329,7 +329,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.45 $} {$Date: 2005/08/18 19:33:41 $}]
+        {$Revision: 1.46 $} {$Date: 2005/09/06 21:55:24 $}]
 
 }
 
@@ -371,13 +371,18 @@ proc vtkFreeSurferReadersBuildGUI {} {
     # Display-> Color Frame
     #-------------------------------------------
     set f $fDisplay.fColors
+
     eval {checkbutton $f.cLoadColours \
-              -text "Load FreeSurfer Colors" -variable vtkFreeSurferReaders(loadColours) -width 23 \
+              -text "Auto Load FreeSurfer Colors" -variable vtkFreeSurferReaders(loadColours) -width 23 \
               -indicatoron 0 -command "vtkFreeSurferReadersSetLoadColours"} $Gui(WCA)
-    TooltipAdd $f.cLoadColours "Load in a FreeSurfer colour definition file when loading a COR label map.\nWARNING: will override other colours, use at your own risk."
+    TooltipAdd $f.cLoadColours "Load in a FreeSurfer colour definition file when loading a label map.\nWARNING: will override other colours, use at your own risk."
     pack $f.cLoadColours -side top -padx $Gui(pad)
     DevAddFileBrowse $f vtkFreeSurferReaders "colourFileName" "Colour xml file:" "vtkFreeSurferReadersSetColourFileName" "xml" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer colors file"
 
+
+    DevAddButton $f.bLoadColours "Apply" "vtkFreeSurferReadersLoadColour"
+    TooltipAdd $f.bLoadColours "Load the colour file now. Warning: overwrites other colours"
+    pack $f.bLoadColours -side top 
 
     #-------------------------------------------
     # Display->Annotation Color Frame
@@ -391,7 +396,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
 
 #    frame $f.fLoadScalar -bg $Gui(activeWorkspace) 
 #    pack $f.fLoadScalar  -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-    DevAddFileBrowse $f vtkFreeSurferReaders "scalarFileName" "Scalar (Overlay) file:" "vtkFreeSurferReadersSetScalarFileName" "thickness curv sulc area w" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer scalar overlay file for the active model"
+    DevAddFileBrowse $f vtkFreeSurferReaders "scalarFileName" "Scalar (Overlay) file:" "vtkFreeSurferReadersSetScalarFileName" "thickness curv sulc w area" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer scalar overlay file for the active model"
     eval {button $f.bLoad -text "Load Scalar File" -width 12 -command "vtkFreeSurferReadersLoadScalarFile"} $Gui(WBA)
     TooltipAdd $f.bLoad "Load the scalar file and associate it with the active model"
     pack $f.bLoad  -side top -pady $Gui(pad) -padx $Gui(pad)
@@ -722,7 +727,8 @@ proc vtkFreeSurferReadersBuildGUI {} {
     set vtkFreeSurferReaders(qaSubjectsListbox) $qaSubjectNameListBox
     pack $f.slbQASubjects  -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
-    # if the list of subjects has already been set, populate it
+    # if the list of subjects has already been set, populate it (use subjects file flag is 0 until pick one)
+    vtkFreeSurferReadersSetQASubjects
     vtkFreeSurferReadersQAResetSubjectsListBox
 
     DevAddLabel $f.lClick "Click on Subjects you wish to load for QA\nOR set a subjects file name below"
@@ -1196,10 +1202,8 @@ proc vtkFreeSurferReadersCORApply {} {
         if {$::Module(verbose)} {
             puts "vtkFreeSurferReadersCORApply: loading colour file $vtkFreeSurferReaders(colourFileName)."
         }
-        # piggy back on the Color module
-        set ::Color(fileName) $vtkFreeSurferReaders(colourFileName)
-        ColorsLoadApply
-        set vtkFreeSurferReaders(coloursLoaded) 1
+        vtkFreeSurferReadersLoadColour
+        
     }
 
 
@@ -2367,7 +2371,7 @@ proc vtkFreeSurferReadersBuildSurface {m} {
                     [$Model($m,polyData) GetPointData] SetActiveScalars $s
                 } else {
                     if {$::Module(verbose)} {
-                        DevInfoWindow "Adding scalar named $s to model id $m"
+                        puts "Adding scalar named $s to model id $m"
                     }
                     [$Model($m,polyData) GetPointData] AddArray Model($m,floatArray$s)
                     # may have some missing files
@@ -2564,58 +2568,6 @@ proc vtkFreeSurferReadersSetModelVector {modelID {vectorName ""}} {
         DevInfoWindow "Model $modelID does not have a vector field named $vectorName.\nPossible options are: orig $::vtkFreeSurferReaders(surfaces)"
     } else {
         Render3D
-    }
-}
-
-#-------------------------------------------------------------------------------
-# .PROC vtkFreeSurferReadersDisplayPopup
-# A convenience pop up window that will allow you to set the active vectors and scalars for a model
-# .ARGS
-# int modelID the id of the model to build the gui for
-# .END
-#-------------------------------------------------------------------------------
-proc vtkFreeSurferReadersDisplayPopup {modelID} {
-    global vtkFreeSurferReaders Volume Model Gui
-
-    DevInfoWindow "Not working 100%... use at your own risk"
-
-    set _w .freeSurferDisplay$modelID
-    catch "destroy $_w"
-    toplevel $_w
-    wm title $_w "FreeSurfer Model $modelID Display Options"
-    frame $_w.fSurfaces -bg $Gui(activeWorkspace) -relief groove -bd 1
-    frame $_w.fScalars -bg $Gui(activeWorkspace) -relief groove -bd 1
-    pack $_w.fSurfaces $_w.fScalars -side top -fill x -pady $Gui(pad) -expand 1
-
-    #--------
-    # surfaces
-    #--------
-    if {0} {
-    set f $_w.fSurfaces
-    DevAddLabel $f.lTitle "Possible Surface Models:"
-    pack $f.lTitle -side top -padx $Gui(pad) -pady 0
-    foreach surface {orig $vtkFreeSurferReaders(surfaces)} {
-        eval {checkbutton $f.c$surface \
-                  -text $surface -command "vtkFreeSurferReadersSetModelVector $modelID" \
-                  -variable vtkFreeSurferReaders(currentSurface)
-                  -width 9 \
-                  -indicatoron 0} $Gui(WCA)
-        pack $f.c$surface -side top -padx 0
-    }
-    }
-    #---------
-    # scalars
-    #---------
-    set f $_w.fScalars
-    DevAddLabel $f.lTitle "Possible Scalar Models:"
-    pack $f.lTitle -side top -padx $Gui(pad) -pady 0
-    foreach scalar "$vtkFreeSurferReaders(scalars) $vtkFreeSurferReaders(annots)" {
-        eval {checkbutton $f.c$scalar \
-                  -text $scalar -command "vtkFreeSurferReadersSetModelScalar $modelID" \
-                  -variable vtkFreeSurferReaders(current$scalar) \
-                  -width 9 \
-                  -indicatoron 0} $Gui(WCA)
-        pack $f.c$scalar -side top -padx 0
     }
 }
 
@@ -3135,8 +3087,6 @@ proc vtkFreeSurferReadersModelApply {} {
 
     vtkFreeSurferReadersBuildSurface $i
     vtkFreeSurferReadersReadAnnotations $i
-    # pop up a window allowing you to choose which vectors and scalars to see
-    # vtkFreeSurferReadersDisplayPopup $i
 
     # allow use of other module GUIs
     set Volumes(freeze) 0
@@ -5495,6 +5445,12 @@ proc vtkFreeSurferReadersStartQA {} {
         puts "\t vols to load = $vtkFreeSurferReaders(QAVolFiles)"
     }
 
+    if {$vtkFreeSurferReaders(QASubjects) == ""} {
+        DevInfoWindow "No subjects selected."
+        return
+    }
+
+
     # close out anything that's open
     puts "Closing all volumes to start QA"
     MainFileClose
@@ -5508,7 +5464,7 @@ proc vtkFreeSurferReadersStartQA {} {
     }
 
     # set the foreground opacity level 
-    set vtkFreeSurferReaders(QAopacity) $::Slice(opacity)
+    set vtkFreeSurferReaders(sliceOpacity) $::Slice(opacity)
     set ::Slice(opacity) $vtkFreeSurferReaders(QAOpacity)
     MainSlicesSetOpacityAll
 
@@ -5545,7 +5501,9 @@ proc vtkFreeSurferReadersQAResetSubjectsListBox {} {
     }
 
     if {[info exist vtkFreeSurferReaders(QASubjectNames)] && $vtkFreeSurferReaders(QASubjectNames) != "" && [info exist vtkFreeSurferReaders(qaSubjectsListbox)]} {
-        if {$::Module(verbose)} { puts "vtkFreeSurferReadersQAResetSubjectsListBox: Using already set QASubjectNames" }
+        if {$::Module(verbose)} { 
+            puts "vtkFreeSurferReadersQAResetSubjectsListBox: Using already set QASubjectNames, clearing out list box and repopulating it" 
+        }
         # clear out the old stuff
         $vtkFreeSurferReaders(qaSubjectsListbox) delete 0 end
         # use for instead of foreach to preserve ordering
@@ -5556,7 +5514,9 @@ proc vtkFreeSurferReadersQAResetSubjectsListBox {} {
             $vtkFreeSurferReaders(qaSubjectsListbox) selection set end end
         }
     } else {
-        if {$::Module(verbose)} { puts "Clearing the box if there's an empty list" }
+        if {$::Module(verbose)} { 
+            puts "Clearing the box if there's an empty list" 
+        }
         if {[info exist vtkFreeSurferReaders(QASubjectNames)] && $vtkFreeSurferReaders(QASubjectNames) == "" && [info exist vtkFreeSurferReaders(qaSubjectsListbox)]} {
             # have an empty subjects list, clear the box 
             $vtkFreeSurferReaders(qaSubjectsListbox) delete 0 end
@@ -5637,8 +5597,10 @@ proc vtkFreeSurferReadersBuildQAInteractor { subject vol } {
     pack $f.eNotes -side left -padx $Gui(pad) -expand 1 -fill x
 
     set f .top${subject}${vol}.f1.fEval
-    foreach eval $vtkFreeSurferReaders(QAResultsList) {
+    foreach eval $vtkFreeSurferReaders(QAResultsList) \
+        tip $vtkFreeSurferReaders(QAResultsListTooltips) {
         DevAddButton $f.b$eval $eval "vtkFreeSurferReadersRecordSubjectQA $subject $vol $eval"
+        TooltipAdd $f.b$eval "$tip"
         pack $f.b$eval -side left -padx $Gui(pad) -expand 1
     }
 }
@@ -5718,7 +5680,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
             set username "default"
         }
     }
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.45 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.46 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -6107,9 +6069,24 @@ proc vtkFreeSurferReadersQAStop {} {
     set vtkFreeSurferReaders(castToShort) $vtkFreeSurferReaders(QAcast)
     MainViewerSetMode $vtkFreeSurferReaders(QAviewmode)
     
-    set ::Slice(opacity) $vtkFreeSurferReaders(QAopacity)
+    set ::Slice(opacity) $vtkFreeSurferReaders(sliceOpacity)
     MainSlicesSetOpacityAll
     
+    # reselect the subjects in case the user selected something elsewhere
+    foreach s $vtkFreeSurferReaders(QASubjects) {
+        # get the index of this subject
+        for {set listIndex 0} {$listIndex < [$vtkFreeSurferReaders(qaSubjectsListbox) size]} {incr listIndex} {
+            set thisSubj [$vtkFreeSurferReaders(qaSubjectsListbox) get $listIndex]
+            if {$thisSubj == $s} {
+                # select it
+                if {$::Module(verbose)} {
+                    puts "Reselecting $listIndex as $thisSubj == $s"
+                }
+                $vtkFreeSurferReaders(qaSubjectsListbox) selection set $listIndex $listIndex
+            }
+        }
+    }
+
     # also write out the overall QA message to a file
     set fname [file join $vtkFreeSurferReaders(QADirName) QA-[clock format [clock seconds] -format "%Y-%m-%d-%T-%Z"].log]
     if {[catch {set fid [open $fname "w"]} errmsg] == 1} {
@@ -6169,7 +6146,7 @@ proc vtkFreeSurferReadersQASummary {} {
         # make the window
         toplevel .top${summaryName}
     
-        foreach fname {Summary Display NewQA} {
+        foreach fname {Summary Display NewQA Cancel} {
             frame .top${summaryName}.f${fname} -bg $Gui(activeWorkspace)
             pack .top${summaryName}.f${fname}  -side top -padx $Gui(pad) -pady 0 -fill x
         }
@@ -6197,6 +6174,12 @@ proc vtkFreeSurferReadersQASummary {} {
             TooltipAdd $f.b$newqa "Create a new subjects.csh file to review subjects with volumes marked as $newqa"
             pack $f.b$newqa -side left -padx $Gui(pad) -expand 1
         }
+
+        # cancel, close the window
+        set f .top${summaryName}.fCancel
+        DevAddButton $f.bCancel "Cancel" "wm withdraw .top${summaryName}"
+        TooltipAdd $f.bCancel "Close the window without writing any new subject .csh files"
+        pack $f.bCancel -side top -pady $Gui(pad) -expand 1
     }
 
     set summaryHTMLString "<h2>QA Summary for $subjectsDir</h2>"
@@ -6629,12 +6612,22 @@ proc vtkFreeSurferReadersAddLuts {} {
         lappend vtkFreeSurferReaders(lutIDs) $nextId
         set Lut($nextId,numberOfColors) 256
 
+        # build vtk if not already allocated
+        if {[info command Lut($nextId,lut)] == ""} {
+            vtkLookupTable Lut($nextId,lut)
+        }
+
         switch $newLut {
             "RedGreen" {
                 set Lut($nextId,hueRange) "0 .8"
                 set Lut($nextId,saturationRange) "1 1"
                 set Lut($nextId,valueRange) "1 0"
                 set Lut($nextId,annoColor) "1 1 0"
+                foreach param "NumberOfColors HueRange SaturationRange ValueRange" {
+                    eval Lut($nextId,lut) Set${param} $Lut($nextId,[Uncap ${param}])
+                }
+                Lut($nextId,lut) SetRampToLinear
+                Lut($nextId,lut) Build
             }
             "GreenRed" {
                 
@@ -6645,18 +6638,135 @@ proc vtkFreeSurferReadersAddLuts {} {
                     set Lut($nextId,valueRange) "0 1"
                     set Lut($nextId,annoColor) "1 1 0"
                 }
+                # brightening value
+                set offset 0.1
+                # insert the min/max values
+                set b  [expr 1.0 * ($offset  + 0.95*(1.0-$offset))]
+                Lut($nextId,lut) SetTableValue 0 0.0 0.0 $b 1.0
+                Lut($nextId,lut) SetTableValue 255 $b $b 0.0 1.0
+                # then build the rest of them
+                for {set i 1} {$i < 255} {incr i} {
+                    # the r and g are flipped half way through the scale
+                    set curv [expr ($i - 127.0) / 254.0]
+                    set f [expr tanh($curv)]
+                    if {$f > 0} {
+                        set r [expr 1.0 * ($offset + 0.95*(1.0-$offset)*abs($f))]
+                        set g [expr 1.0 * ($offset * (1.0 - abs($f)))]
+                    } else {
+                        set r [expr 1.0 * ($offset * (1.0 - abs($f)))]
+                        set g [expr 1.0 * ($offset + 0.95*(1.0-$offset)*abs($f))]
+                    }
+                    set b [expr 1.0 * ($offset*(1 - abs($f)))]
+                    Lut($nextId,lut) SetTableValue $i $r $b $g 1.0
+                }
+                # set the global vars
+                set Lut($nextId,hueRange) [Lut($nextId,lut) GetHueRange]
+                set Lut($nextId,saturationRange) [Lut($nextId,lut) GetSaturationRange]
+                set Lut($nextId,valueRange) [Lut($nextId,lut) GetValueRange]
+                set Lut($nextId,annoColor) "1 1 1"
             }
-            "Heat" {
-                set Lut($nextId,hueRange) "0 .8"
-                set Lut($nextId,saturationRange) "1 1"
-                set Lut($nextId,valueRange) "1 1"
-                set Lut($nextId,annoColor) "1 0 0"
-            }
+            "Heat" -
             "BlueRed" {
-                set Lut($nextId,hueRange) ".8 0"
-                set Lut($nextId,saturationRange) "1 1"
-                set Lut($nextId,valueRange) "1 1"
-                set Lut($nextId,annoColor) "1 0 1"
+                set useNew 1
+                if {$newLut == "Heat"} {
+                    set invphaseflag 0
+                    
+                    if {!$useNew} { 
+                        # calc it later
+                        set Lut($nextId,hueRange) "0.55 .75"
+                        set Lut($nextId,saturationRange) "1 1"
+                        set Lut($nextId,valueRange) "1 1"
+                        set Lut($nextId,annoColor) "1 0 0"
+                        set Lut($nextId,alphaRange) "0.0 1.0"
+                        foreach param "NumberOfColors HueRange SaturationRange ValueRange" {
+                            eval Lut($nextId,lut) Set${param} $Lut($nextId,[Uncap ${param}])
+                        }
+                        Lut($nextId,lut) SetRampToLinear
+                        Lut($nextId,lut) Build
+
+                        # adjust the blue values a bit
+                        for {set c 0} {$c < $Lut($nextId,numberOfColors)} {incr c} {
+                            set rgba [Lut($nextId,lut) GetTableValue $c]
+                            set r [lindex $rgba 0]
+                            set g [lindex $rgba 1]
+                            set b [lindex $rgba 2]
+                            set a [lindex $rgba 3]
+                            
+                            if {$::Module(verbose)} { 
+                                puts -nonewline "Heat: $c: initial blue = $b (r=$r, g=$g),"
+                            }
+                            # set b [expr $b + .1]
+                            set b [expr 0.2 + 1.0 * $c / $Lut($nextId,numberOfColors)]
+                            if {$b > 1.0} { 
+                                set b [expr $b - 1.0] 
+                            }
+                            if {$::Module(verbose)} {
+                                puts "resetting blue to $b"
+                            }
+                            Lut($nextId,lut) SetTableValue $c $r $g $b $a
+                        }
+                   }
+                } else {
+                    set invphaseflag 1
+                    if {!$useNew} {
+                        # BlueRed
+                        # calc it as inverse of the Head one 
+                        set Lut($nextId,hueRange) ".8 0"
+                        set Lut($nextId,saturationRange) "1 1"
+                        set Lut($nextId,valueRange) "1 1"
+                        set Lut($nextId,annoColor) "1 0 1"
+                    }
+                }
+                if {$useNew} {
+                set truncphaseflag 1
+                set fthresh -100.0
+                set fmid 50
+                set tmpoffset 0.25
+                set fslope 1.0
+                set r 0.0
+                set g 0.0
+                set b 0.0
+                for {set c 0} {$c < $Lut($nextId,numberOfColors)} {incr c} {
+                    set f [expr 1.0 * $c / $Lut($nextId,numberOfColors)]
+                    set fcurv $f
+                    if {$invphaseflag == 1} {
+                        set f [expr 0.0 - $f]
+                    } 
+                    if {$truncphaseflag && $f < 0} {
+                        set f 0.0
+                    }
+                    if {[expr abs($f)] > $fthresh && [expr abs($f)] < $fmid} {
+                        set ftmp [expr abs($f)]
+                        set c1 [expr 1.0 / ($fmid - $fthresh)]
+                        if {$fcurv != 1.0} {
+                            set c2tmp [expr ($fmid - $fthresh) * ($fmid - $fthresh)]
+                            set c2 [expr ($fmid - $fthresh - $fcurv * $c1 * $c2tmp) / ((1.0 - $fcurv) * ($fmid - $fthresh))]
+                        } else {
+                            set c2 0.0
+                        }
+                        set ftmp [expr $fcurv * $c1 * ($ftmp - $fthresh) * ($ftmp - $fthresh) + $c2*(1.0 - $fcurv)*($ftmp - $fthresh) + $fthresh]
+                        if {$f < 0.0} {
+                            set f [expr 0.0 - $ftmp]
+                        } else {
+                            set f $ftmp
+                        }
+                    }
+                    if {$f >= 0.0} {
+                        set r [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid-$fthresh):0.0) + (($f < $fthresh)?0.0:($f < $fmid)?($f - $fthresh)/($fmid - $fthresh):1.0)]
+                        set g [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0) + (($f < $fmid)?0.0:($f < $fmid + 1.0/$fslope)?1.0*($f-$fmid)*$fslope:1)]
+                        set b [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0)]
+                    } else {
+                        set f [expr 0.0 - $f]
+                        set b [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0) + (($f < $fthresh)?0.0:($f < $fmid)?($f - $fthresh)/($fmid - $fthresh):1.0)]
+                        set g [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0) + (($f < $fmid)?0.0:($f < $fmid + 1.0/$fslope)?1.0*($f-$fmid)*$fslope:1)]
+                        set r [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0 - ($f - $fthresh) / ($fmid - $fthresh):0)]
+                    }
+                    if {$::Module(verbose)} {
+                        puts "$invphaseflag : $c $r $g $b"
+                    }
+                    Lut($nextId,lut) SetTableValue $c $r $g $b 1.0
+                }
+                } 
             }
             default {
                 puts "Unknown look up table name $newLut, using Gray's values"
@@ -6664,45 +6774,12 @@ proc vtkFreeSurferReadersAddLuts {} {
                 set Lut($nextId,saturationRange) $Lut(0,saturationRange)
                 set Lut($nextId,valueRange) $Lut(0,valueRange)
                 set Lut($nextId,annoColor) $Lut(0,annoColor)
-            }
-        }
-        # build vtk if not already allocated
-        if {[info command Lut($nextId,lut)] == ""} {
-            vtkLookupTable Lut($nextId,lut)
-        }
-        if {$newLut != "GreenRed"} {
-            foreach param "NumberOfColors HueRange SaturationRange ValueRange" {
-                eval Lut($nextId,lut) Set${param} $Lut($nextId,[Uncap ${param}])
-            }
-            Lut($nextId,lut) SetRampToLinear
-            Lut($nextId,lut) Build
-        } else {
-            # brightening value
-            set offset 0.1
-            # insert the min/max values
-            set b  [expr 1.0 * ($offset  + 0.95*(1.0-$offset))]
-            Lut($nextId,lut) SetTableValue 0 0.0 0.0 $b 1.0
-            Lut($nextId,lut) SetTableValue 255 $b $b 0.0 1.0
-            # then build the rest of them
-            for {set i 1} {$i < 255} {incr i} {
-                # the r and g are flipped half way through the scale
-                set curv [expr ($i - 127.0) / 254.0]
-                set f [expr tanh($curv)]
-                if {$f > 0} {
-                    set r [expr 1.0 * ($offset + 0.95*(1.0-$offset)*abs($f))]
-                    set g [expr 1.0 * ($offset * (1.0 - abs($f)))]
-                } else {
-                    set r [expr 1.0 * ($offset * (1.0 - abs($f)))]
-                    set g [expr 1.0 * ($offset + 0.95*(1.0-$offset)*abs($f))]
+                foreach param "NumberOfColors HueRange SaturationRange ValueRange" {
+                    eval Lut($nextId,lut) Set${param} $Lut($nextId,[Uncap ${param}])
                 }
-                set b [expr 1.0 * ($offset*(1 - abs($f)))]
-                Lut($nextId,lut) SetTableValue $i $r $b $g 1.0
+                Lut($nextId,lut) SetRampToLinear
+                Lut($nextId,lut) Build
             }
-            # set the global vars
-            set Lut($nextId,hueRange) [Lut($nextId,lut) GetHueRange]
-            set Lut($nextId,saturationRange) [Lut($nextId,lut) GetSaturationRange]
-            set Lut($nextId,valueRange) [Lut($nextId,lut) GetValueRange]
-            set Lut($nextId,annoColor) "1 1 1"
         }
         
     }
@@ -6849,9 +6926,6 @@ proc vtkFreeSurferReadersReadScalars { m {fileName ""} } {
                 # set the total number of vertices in the associated model
                 Model($m,swr$s) SetNumberOfVertices [[$Model($m,polyData) GetPointData] GetNumberOfTuples]
 
-                if {$::Module(verbose)} {
-                    Model($m,swr$s) DebugOn
-                }
                 set retval [Model($m,swr$s) ReadWFile]
                 if {[vtkFreeSurferReadersCheckWError $retval] != 0} {
                     DevErrorWindow "vtkFreeSurferReadersReadScalars: Error reading $fileName, returning..."
@@ -6874,7 +6948,7 @@ proc vtkFreeSurferReadersReadScalars { m {fileName ""} } {
                 [$Model($m,polyData) GetPointData] SetActiveScalars $s
             } else {
                 if {$::Module(verbose)} {
-                    DevInfoWindow "Adding scalar named $s to model id $m"
+                    puts "Adding scalar named $s to model id $m"
                 }
                 [$Model($m,polyData) GetPointData] AddArray Model($m,floatArray$s)
                 # may have some missing files
@@ -6954,13 +7028,13 @@ proc vtkFreeSurferReadersReadScalars { m {fileName ""} } {
 proc vtkFreeSurferReadersLoadScalarFile { {fileName ""} } {
     global vtkFreeSurferReaders Model
 
-    if {[file exists $fileName] == 0} {
-        DevErrorWindow "Load FreeSurfer Scalar: $fileName does not exist!"
-        return
-    }
-
     if {$fileName != ""} {
         set vtkFreeSurferReaders(scalarFileName) $fileName 
+    }
+
+    if {[file exists $vtkFreeSurferReaders(scalarFileName)] == 0} {
+        DevErrorWindow "Load FreeSurfer Scalar: $vtkFreeSurferReaders(scalarFileName) does not exist!"
+        return
     }
 
     # check that there's an active model
@@ -6972,4 +7046,19 @@ proc vtkFreeSurferReadersLoadScalarFile { {fileName ""} } {
 
     # read in the scalar for this model 
     vtkFreeSurferReadersReadScalars $m $vtkFreeSurferReaders(scalarFileName)
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersLoadColour
+# Piggy backs on the Color module by setting Color(fileName) from vtkFreeSurferReaders(colourFileName),
+# then loads them in and sets the  vtkFreeSurferReaders(coloursLoaded) flag to 1.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersLoadColour {} {
+    global vtkFreeSurferReaders
+
+        set ::Color(fileName) $vtkFreeSurferReaders(colourFileName)
+    ColorsLoadApply
+    set vtkFreeSurferReaders(coloursLoaded) 1
 }
