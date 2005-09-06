@@ -64,7 +64,7 @@ proc DTMRITractClusterInit {} {
     #------------------------------------
     set m "TractCluster"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.14 $} {$Date: 2005/06/20 02:38:33 $}]
+                                 {$Revision: 1.15 $} {$Date: 2005/09/06 15:10:15 $}]
 
     set DTMRI(TractCluster,NumberOfClusters) 3
     set DTMRI(TractCluster,Sigma) 25
@@ -73,11 +73,12 @@ proc DTMRITractClusterInit {} {
     set DTMRI(TractCluster,ShapeFeature,menu) {MeanAndCovariance Hausdorff EndPoints}
     set DTMRI(TractCluster,EmbeddingNormalization) RowSum
     set DTMRI(TractCluster,EmbeddingNormalization,menu) {RowSum LengthOne None}
+    set DTMRI(TractCluster,NumberOfEigenvectors) 2
 
-    set DTMRI(TractCluster,SettingsList,Names) {{Number of Clusters} Sigma N ShapeFeature EmbedNormalization}
-    set DTMRI(TractCluster,SettingsList,Variables) {NumberOfClusters Sigma HausdorffN ShapeFeature EmbeddingNormalization}
-    set DTMRI(TractCluster,SettingsList,VariableTypes) {entry entry entry menu menu}
-    set DTMRI(TractCluster,SettingsList,Tooltips) {{Number of clusters (colors) when grouping tracts} {Similarity/distance tradeoff} {For Hausdorff shape feature, use every Nth point on the tract in computation.} {How to measure tract similarity} {How to normalize the vectors used in clustering}}
+    set DTMRI(TractCluster,SettingsList,Names) {{Number of Clusters} Sigma N ShapeFeature EmbedNormalization NumberOfEigenvectors}
+    set DTMRI(TractCluster,SettingsList,Variables) {NumberOfClusters Sigma HausdorffN ShapeFeature EmbeddingNormalization NumberOfEigenvectors}
+    set DTMRI(TractCluster,SettingsList,VariableTypes) {entry entry entry menu menu entry}
+    set DTMRI(TractCluster,SettingsList,Tooltips) {{Number of clusters (colors) when grouping tracts} {Similarity/distance tradeoff} {For Hausdorff shape feature, use every Nth point on the tract in computation.} {How to measure tract similarity} {How to normalize the vectors used in clustering} {Advanced: related to number of clusters inherent in the data}}
 
     # for viewing matrices
     vtkImageMagnify DTMRI(TractCluster,vtk,imageMagnify)
@@ -216,25 +217,29 @@ proc DTMRITractClusterBuildGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRITractClusterApplyUserSettings
-# 
+# Apply all settings from GUI into the vtk objects
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRITractClusterApplyUserSettings {} {
     global DTMRI 
 
+    # vtk object that encapsulates the clustering pipeline
     set clusterer [DTMRI(vtk,streamlineControl) GetTractClusterer]
-    set classifier [$clusterer GetNormalizedCuts]
-    set features [$clusterer GetTractShapeFeatures]
 
-    #$features DebugOn
+    # parameters that get passed down into itk clusterer
+    $clusterer SetNumberOfClusters $DTMRI(TractCluster,NumberOfClusters)
+    $clusterer SetEmbeddingNormalizationTo$DTMRI(TractCluster,EmbeddingNormalization)
+    $clusterer SetNumberOfEigenvectors $DTMRI(TractCluster,NumberOfEigenvectors)
 
-    # Apply all variables from the GUI into the objects
+    $clusterer DebugOn
+
+    # parameters of the object that computes the affinity matrix
+    set features [$clusterer GetTractAffinityCalculator]
     $features SetSigma $DTMRI(TractCluster,Sigma)
     $features SetHausdorffN $DTMRI(TractCluster,HausdorffN)
-    $classifier SetNumberOfClusters $DTMRI(TractCluster,NumberOfClusters)
     $features SetFeatureTypeTo$DTMRI(TractCluster,ShapeFeature)
-    $classifier SetEmbeddingNormalizationTo$DTMRI(TractCluster,EmbeddingNormalization)
+
 }
 
 #-------------------------------------------------------------------------------
@@ -249,10 +254,10 @@ proc DTMRITractClusterComputeClusters {} {
     DTMRITractClusterApplyUserSettings
 
     puts "[DTMRI(vtk,streamlineControl) GetNumberOfStreamlines] streamlines"
-    puts "Calling ComputeStreamlineFeatures"
+    puts "Running clustering..."
     #DTMRI(vtk,streamlineControl) ClusterTracts
     DTMRI(vtk,streamlineControl) ClusterTracts 1
-    puts "ComputeStreamlineFeatures Done"
+    puts "Done clustering."
 
     Render3D
 

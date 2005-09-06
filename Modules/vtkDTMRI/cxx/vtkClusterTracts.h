@@ -38,19 +38,20 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // .NAME vtkClusterTracts - Cluster paths obtained through tractography.
 
 // .SECTION Description
-// Wrapper around the classes vtkTractShapeFeatures and vtkNormalizedCuts.
+// Wrapper around the classes vtkTractShapeFeatures and itkSpectralClustering
 // Outputs class labels from clustering input tract paths.
 
 // .SECTION See Also
-// vtkTractShapeFeatures vtkNormalizedCuts 
+// vtkTractShapeFeatures itkSpectralClustering 
 
 #ifndef __vtkClusterTracts_h
 #define __vtkClusterTracts_h
 
 #include "vtkDTMRIConfigure.h"
 #include "vtkObject.h"
-#include "vtkNormalizedCuts.h"
+#include "itkSpectralClustering.h"
 #include "vtkTractShapeFeatures.h"
+#include "vtkUnsignedIntArray.h"
 
 // Forward declarations to avoid including header files here.
 // Goes along with use of new vtkCxxSetObjectMacro
@@ -67,51 +68,102 @@ class VTK_DTMRI_EXPORT vtkClusterTracts : public vtkObject
   vtkTypeRevisionMacro(vtkClusterTracts,vtkObject);
   void PrintSelf(ostream& os, vtkIndent indent);
 
+  //BTX
+  typedef vtkUnsignedIntArray OutputType;
+  //ETX
+
+  // Description
+  // User interface parameter to itk clustering class:
+  // Number of output clusters
+  vtkSetMacro(NumberOfClusters,unsigned int);
+  vtkGetMacro(NumberOfClusters,unsigned int);
+
+  // Description
+  // User interface parameter to itk clustering class:
+  // Number of eigenvectors to use in embedding
+  vtkSetMacro(NumberOfEigenvectors,unsigned int);
+  vtkGetMacro(NumberOfEigenvectors,unsigned int);
+
+  // Description
+  // User interface parameter to itk clustering class:
+  // Type of normalization of embedding vectors
+  int GetEmbeddingNormalization()
+    {
+      return this->ClusteringAlgorithm->GetEmbeddingNormalization();
+    }
+
+  // Description
+  // User interface parameter to itk clustering class:
+  // Type of normalization of embedding vectors:
+  // Normalized cuts normalization of embedding vectors
+  void SetEmbeddingNormalizationToRowSum()
+    {
+      this->ClusteringAlgorithm->SetEmbeddingNormalizationToRowSum();
+    };
+
+  // Description
+  // User interface parameter to itk clustering class:
+  // Type of normalization of embedding vectors:
+  // Spectral clustering normalization of embedding vectors
+  void SetEmbeddingNormalizationToLengthOne()
+    {
+      this->ClusteringAlgorithm->SetEmbeddingNormalizationToLengthOne();
+    };
+
+  // Description
+  // User interface parameter to itk clustering class:
+  // Type of normalization of embedding vectors:
+  // No normalization of embedding vectors 
+  void SetEmbeddingNormalizationToNone()
+    {
+      this->ClusteringAlgorithm->SetEmbeddingNormalizationToNone();
+    };
 
   // Description
   // Set/Get input to this class: a collection of vtkHyperStreamlinePoints
   virtual void SetInputStreamlines(vtkCollection*);
   vtkGetObjectMacro(InputStreamlines, vtkCollection);
 
+
+  // Description
+  // For direct access to the tract affinity matrix calculation class,
+  // to set parameters from the user interface.
+  vtkGetObjectMacro(TractAffinityCalculator, vtkTractShapeFeatures);
+
   // Description
   // Compute the output. Call this before requesting the output.
   void ComputeClusters();
 
-  // Use ETX/BTX to exclude ITK objects from VTK-style wrapping
-  //BTX
-  typedef vtkNormalizedCuts::OutputClassifierType::OutputType OutputType;
 
   // Description
-  // Get the output (note, can't be accessed from tcl).
   // This gives a list in which each input tract is assigned a class.
   // If there is an error in computation or ComputeClusters has not been
   // called, this will return a NULL pointer.
-  OutputType *GetOutputMembershipSample()
+  vtkGetObjectMacro(OutputClusterLabels,vtkUnsignedIntArray);
+  vtkUnsignedIntArray *GetOutput()
     {
-      if (this->NormalizedCuts->GetOutputClassifier())
-        {
-          return(this->NormalizedCuts->GetOutputClassifier()->GetOutput());
-        }
-      else
-        {
-          return(NULL);
-        }
+      return(this->GetOutputClusterLabels());
     }
-  //ETX
 
-  // Description
-  // Access the underlying classes who perform the clustering function.
-  // For setting parameters of these classes.
-  vtkGetObjectMacro(NormalizedCuts, vtkNormalizedCuts);
-  vtkGetObjectMacro(TractShapeFeatures, vtkTractShapeFeatures);
-  
  protected:
   vtkClusterTracts();
   ~vtkClusterTracts();
 
   vtkCollection *InputStreamlines;
-  vtkNormalizedCuts *NormalizedCuts;
-  vtkTractShapeFeatures *TractShapeFeatures;
+
+  //BTX
+  // It is important to use the special pointer or the
+  // object will delete itself.
+  itk::SpectralClustering::Pointer ClusteringAlgorithm;
+  //ETX
+
+  vtkTractShapeFeatures *TractAffinityCalculator;
+
+  vtkUnsignedIntArray *OutputClusterLabels;
+
+  unsigned int NumberOfClusters;
+  unsigned int NumberOfEigenvectors;
+  int          EmbeddingNormalization;
 
  private:
   vtkClusterTracts(const vtkClusterTracts&); // Not implemented.

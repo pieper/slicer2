@@ -52,7 +52,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "itkCovarianceCalculator.h"
 #include "itkVector.h"
 #include "itkEuclideanDistance.h"
-#include "itkSymmetricEigenSystem.h"
+#include "itkSymmetricEigenAnalysis.h"
 
 // for debug output of features
 #include "vtkImageData.h"
@@ -60,7 +60,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 
-vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.8 $");
+vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.9 $");
 vtkStandardNewMacro(vtkTractShapeFeatures);
 
 vtkCxxSetObjectMacro(vtkTractShapeFeatures, InputStreamlines, vtkCollection);
@@ -69,8 +69,6 @@ vtkCxxSetObjectMacro(vtkTractShapeFeatures, InputStreamlines, vtkCollection);
 vtkTractShapeFeatures::vtkTractShapeFeatures()
 {
   this->InputStreamlines = NULL;
-  this->InterTractDistanceMatrix = NULL;
-  this->InterTractSimilarityMatrix = NULL;
   this->InterTractDistanceMatrixImage = NULL;
   this->InterTractSimilarityMatrixImage = NULL;
 
@@ -87,15 +85,6 @@ vtkTractShapeFeatures::~vtkTractShapeFeatures()
   if (this->InputStreamlines)
     this->InputStreamlines->Delete();
 
-  if ( this->InterTractDistanceMatrix )
-    {
-      delete this->InterTractDistanceMatrix;
-    }
-
-  if ( this->InterTractSimilarityMatrix )
-    {
-      delete this->InterTractSimilarityMatrix;
-    }
 }
 
 void vtkTractShapeFeatures::PrintSelf(ostream& os, vtkIndent indent)
@@ -107,12 +96,12 @@ void vtkTractShapeFeatures::PrintSelf(ostream& os, vtkIndent indent)
 
 vtkImageData * vtkTractShapeFeatures::GetInterTractSimilarityMatrixImage()
 {
-  return (this->ConvertVNLMatrixToVTKImage(this->InterTractSimilarityMatrix,this->InterTractSimilarityMatrixImage));
+  return (this->ConvertVNLMatrixToVTKImage(&m_InterTractSimilarityMatrix,this->InterTractSimilarityMatrixImage));
 }
 
 vtkImageData * vtkTractShapeFeatures::GetInterTractDistanceMatrixImage()
 {
-  return (this->ConvertVNLMatrixToVTKImage(this->InterTractDistanceMatrix,this->InterTractDistanceMatrixImage));
+  return (this->ConvertVNLMatrixToVTKImage(&m_InterTractDistanceMatrix,this->InterTractDistanceMatrixImage));
 }
 
 vtkImageData * vtkTractShapeFeatures::ConvertVNLMatrixToVTKImage(OutputType *matrix, vtkImageData *image)
@@ -124,8 +113,8 @@ vtkImageData * vtkTractShapeFeatures::ConvertVNLMatrixToVTKImage(OutputType *mat
 
       if (matrix != NULL)
         {
-          int rows = matrix->rows();
-          int cols = matrix->cols();
+          int rows = matrix->Rows();
+          int cols = matrix->Cols();
           image->SetDimensions(cols,rows,1);
           image->SetScalarTypeToDouble();
           image->AllocateScalars();
@@ -157,6 +146,9 @@ void vtkTractShapeFeatures::GetPointsFromHyperStreamlinePointsSubclass(TractPoin
   // clear the contents of the list sample
   sample->Clear();
 
+  // set the measurement vector size
+  sample->SetMeasurementVectorSize(3);
+  
   hs0 = currStreamline->GetOutput()->GetPoints();
   numPts=hs0->GetNumberOfPoints();
   for (ptidx = 0; ptidx < numPts; ptidx++)
@@ -191,20 +183,12 @@ void vtkTractShapeFeatures::ComputeFeatures()
       this->InterTractSimilarityMatrixImage->Delete();
     }
 
-  // Set up our matrices (the matrix class provided by vnl)
-  // This also inits to 0.
-  if ( this->InterTractDistanceMatrix )
-    {
-      delete this->InterTractDistanceMatrix;
-    }
-  this->InterTractDistanceMatrix = 
-    new OutputType(N,N,0);
-  if ( this->InterTractSimilarityMatrix )
-    {
-      delete this->InterTractSimilarityMatrix;
-    }
-  this->InterTractSimilarityMatrix = 
-    new OutputType(N,N,0);
+  // Set up our output matrices.  Set size and init to 0.
+  m_InterTractDistanceMatrix.SetSize(N,N);
+  m_InterTractDistanceMatrix.Fill(0);
+
+  m_InterTractSimilarityMatrix.SetSize(N,N);
+  m_InterTractSimilarityMatrix.Fill(0);
 
   switch (this->FeatureType)
     {
@@ -343,8 +327,8 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
           double tmp = sumDist/countDist;
           // for 90 %
           //double tmp = sumDist + 1.28*sqrt(sumSqDist);
-          (*this->InterTractDistanceMatrix)[i][j] += tmp/2;
-          (*this->InterTractDistanceMatrix)[j][i] += tmp/2;
+          m_InterTractDistanceMatrix(i,j) += tmp/2;
+          m_InterTractDistanceMatrix(j,i) += tmp/2;
           //(*this->InterTractDistanceMatrix)[i][j] += i+j;
         }
     }
@@ -359,8 +343,8 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
       for (int idx2 = 0; idx2 < numberOfStreamlines; idx2++)
         {
           // save the similarity in a matrix
-          (*this->InterTractSimilarityMatrix)[idx1][idx2] = 
-            exp(-((*this->InterTractDistanceMatrix)[idx1][idx2])/sigmasq);
+          m_InterTractSimilarityMatrix(idx1,idx2) = 
+            exp(-(m_InterTractDistanceMatrix(idx1,idx2))/sigmasq);
         }
     }
   vtkDebugMacro( "Hausdorff distances computed." );
@@ -388,9 +372,6 @@ void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
   FeatureListType::Pointer features = FeatureListType::New();
   FeatureVectorType fv;
 
-  // put each tract's points onto the list for covariance computation
-  TractPointsListType::Pointer sample = TractPointsListType::New();
-
   // get ready to traverse streamline collection.
   this->InputStreamlines->InitTraversal();
   // TO DO: make sure this is a vtkHyperStreamlinePoints object
@@ -407,7 +388,9 @@ void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
 
   while(currStreamline)
     {
+
       // Get the tract path's points on an itk list sample object
+      TractPointsListType::Pointer sample = TractPointsListType::New();
       this->GetPointsFromHyperStreamlinePointsSubclass(sample, currStreamline);
       
       vtkDebugMacro("num points: " << sample->Size() );
@@ -416,7 +399,13 @@ void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
       covarianceAlgorithm->SetInputSample( sample );
       // the covariance algorithm will output the mean and covariance matrix
       covarianceAlgorithm->SetMean( 0 );
-      covarianceAlgorithm->Update();
+      try {
+        covarianceAlgorithm->Update();
+      }
+      catch (itk::ExceptionObject &e) {
+        vtkErrorMacro("Error in covariance computation: " << e);
+        return;
+      }
 
       vtkDebugMacro( "Mean = " << *(covarianceAlgorithm->GetMean()) );
 
@@ -430,25 +419,43 @@ void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
       // so its entries have the same scaling as the mean values
       // algorithm: diagonalize, take sqrt of eigenvalues, recreate matrix
       // sqrtm(A) = E * sqrt(D) * E' where D is a diagonal matrix.
-      typedef itk::SymmetricEigenSystem< double, 3 > EigenType;
-      EigenType::Pointer eig = EigenType::New();
-      eig->SetMatrix(&cov);
-      eig->Update();
-      EigenType::EigenValueArrayType eigenvals = *(eig->GetEigenValues());
-      eigenvals[0] = sqrt(eigenvals[0]);
-      eigenvals[1] = sqrt(eigenvals[1]);
-      eigenvals[2] = sqrt(eigenvals[2]);
-      EigenType::EigenVectorArrayType eigenvects = *(eig->GetEigenVectors());
 
+      typedef CovarianceAlgorithmType::OutputType InputMatrixType;
+      typedef itk::FixedArray< double, 3 > EigenValuesArrayType;
+      typedef itk::Matrix< double, 3, 3 > EigenVectorMatrixType;
+      typedef itk::SymmetricEigenAnalysis< InputMatrixType,  
+        EigenValuesArrayType, EigenVectorMatrixType > SymmetricEigenAnalysisType;
+      
+      // output storage
+      EigenValuesArrayType eigenvalues;
+      EigenVectorMatrixType eigenvectors;
+      
+      SymmetricEigenAnalysisType eig(3);
+      
+      try {
+        eig.SetDimension(3);
+        eig.ComputeEigenValuesAndVectors(cov,eigenvalues, eigenvectors);
+      }
+      catch (itk::ExceptionObject &e) {
+        vtkErrorMacro("Error in eigensystem computation: " << e);
+        return;
+      }
+
+      vtkDebugMacro( "Eigenvalues = " << eigenvalues );
+      vtkDebugMacro( "Eigenvectors = " << eigenvectors );
+
+      eigenvalues[0] = sqrt(eigenvalues[0]);
+      eigenvalues[1] = sqrt(eigenvalues[1]);
+      eigenvalues[2] = sqrt(eigenvalues[2]);
 
       // Normalize for tract length. We want orientation information
       // to not be swamped by length information.  So make the trace
       // of the covariance matrix equal one.
       //double norm;
-      //norm = eigenvals[0]+eigenvals[1]+eigenvals[2];
-      //eigenvals[0] = eigenvals[0]/norm;
-      //eigenvals[1] = eigenvals[1]/norm;
-      //eigenvals[2] = eigenvals[2]/norm;
+      //norm = eigenvalues[0]+eigenvalues[1]+eigenvalues[2];
+      //eigenvalues[0] = eigenvalues[0]/norm;
+      //eigenvalues[1] = eigenvalues[1]/norm;
+      //eigenvalues[2] = eigenvalues[2]/norm;
 
       for (int i = 0; i < 3; i++)
         {
@@ -461,17 +468,17 @@ void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
         {
           // sum outer product matrix from each eigenvalue lambda*vv'
           // the ith eigenvector is in column i of the eigenvector matrix
-          cov[0][0]=eigenvects[0][i]*eigenvects[0][i]*eigenvals[i];
-          cov[0][1]=eigenvects[0][i]*eigenvects[1][i]*eigenvals[i];
-          cov[0][2]=eigenvects[0][i]*eigenvects[2][i]*eigenvals[i];
+          cov[0][0]=eigenvectors[0][i]*eigenvectors[0][i]*eigenvalues[i];
+          cov[0][1]=eigenvectors[0][i]*eigenvectors[1][i]*eigenvalues[i];
+          cov[0][2]=eigenvectors[0][i]*eigenvectors[2][i]*eigenvalues[i];
 
-          cov[1][0]=eigenvects[1][i]*eigenvects[0][i]*eigenvals[i];
-          cov[1][1]=eigenvects[1][i]*eigenvects[1][i]*eigenvals[i];
-          cov[1][2]=eigenvects[1][i]*eigenvects[2][i]*eigenvals[i];
+          cov[1][0]=eigenvectors[1][i]*eigenvectors[0][i]*eigenvalues[i];
+          cov[1][1]=eigenvectors[1][i]*eigenvectors[1][i]*eigenvalues[i];
+          cov[1][2]=eigenvectors[1][i]*eigenvectors[2][i]*eigenvalues[i];
 
-          cov[2][0]=eigenvects[2][i]*eigenvects[0][i]*eigenvals[i];
-          cov[2][1]=eigenvects[2][i]*eigenvects[1][i]*eigenvals[i];
-          cov[2][2]=eigenvects[2][i]*eigenvects[2][i]*eigenvals[i];
+          cov[2][0]=eigenvectors[2][i]*eigenvectors[0][i]*eigenvalues[i];
+          cov[2][1]=eigenvectors[2][i]*eigenvectors[1][i]*eigenvalues[i];
+          cov[2][2]=eigenvectors[2][i]*eigenvectors[2][i]*eigenvalues[i];
         }
  
       // TEST
@@ -492,9 +499,9 @@ void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
       fv[8]=cov[2][2];
 
       // test (minor?) eigenvector as feature, gives ori of tract plane
-      //fv[9] = eigenvects[0][2];
-      //fv[10] = eigenvects[1][2];
-      //fv[11] = eigenvects[2][2];
+      //fv[9] = eigenvectors[0][2];
+      //fv[10] = eigenvectors[1][2];
+      //fv[11] = eigenvectors[2][2];
       
       // Save this path's features on the list
       features->PushBack( fv );
@@ -539,18 +546,18 @@ void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
       while( iter2 != features->End() )
         {
           // save the distance in a matrix
-          (*this->InterTractDistanceMatrix)[idx1][idx2] = distanceMetric->
+          m_InterTractDistanceMatrix(idx1,idx2) = distanceMetric->
             Evaluate( iter1.GetMeasurementVector(), 
                       iter2.GetMeasurementVector() );
 
           // save the similarity in a matrix
-          (*this->InterTractSimilarityMatrix)[idx1][idx2] = 
-            exp(-((*this->InterTractDistanceMatrix)[idx1][idx2])/sigmasq);
+          m_InterTractSimilarityMatrix(idx1,idx2) = 
+            exp(-(m_InterTractDistanceMatrix(idx1,idx2))/sigmasq);
 
           vtkDebugMacro( "id1 = " << iter1.GetInstanceIdentifier()  
                          << " id2 = " << iter2.GetInstanceIdentifier()  
                          << " distance = "
-                         << (*this->InterTractDistanceMatrix)[idx1][idx2] );
+                         << m_InterTractDistanceMatrix(idx1,idx2) );
           ++iter2 ;
           idx2++;
         }
@@ -669,11 +676,11 @@ void vtkTractShapeFeatures::ComputeFeaturesEndPoints()
             distmin = dist_A1_B2 + dist_A2_B1;
 
           // save this total distance in a matrix
-          (*this->InterTractDistanceMatrix)[idxr][idxc] = distmin;       
+          m_InterTractDistanceMatrix(idxr,idxc) = distmin;       
           
           // save the similarity in a matrix
-          (*this->InterTractSimilarityMatrix)[idxr][idxc] = 
-            exp(-((*this->InterTractDistanceMatrix)[idxr][idxc])/sigmasq);
+          m_InterTractSimilarityMatrix(idxr,idxc) = 
+            exp(-(m_InterTractDistanceMatrix(idxr,idxc))/sigmasq);
 
           // increment to the next tract to compare
           ++iter2 ;

@@ -1,9 +1,10 @@
 //
-// testCluster.cxx: Test code for vtkNormalizedCuts.
+// testITKCluster.cxx: Test code for itkSpectralClustering class.
 // 
 // Creates ideal sample input and runs clustering.
 // Produces 3 text files:
 //   inputClusters.txt   (input cluster indices)
+//   inputMatrix.txt   (input similarity matrix)
 //   embed.txt           (embedding vectors)
 //   outputClusters.txt  (output cluster indices)
 // Also outputs the normalized weight matrix as an image.
@@ -12,14 +13,9 @@
 // Apparently it is not written to the directory where I run the file.)
 //
 
+#include <fstream>
 #include <iostream>
-#include "vtkNormalizedCuts.h"
-#include "vnl/vnl_matrix.h"
-
-// for outputting images
-#include "vtkPNGWriter.h"
-#include "vtkImageCast.h"
-#include "vtkImageMathematics.h"
+#include "itkSpectralClustering.h"
 
 int main(int argc, char* argv[])
 {
@@ -32,96 +28,95 @@ int main(int argc, char* argv[])
 
   // create input test data
   // -----------------------
-
   // number of things to cluster
-  int n = 21;
+  int numberOfItemsToCluster = 21;
 
-  // matrix W (for weights)
-  vnl_matrix<double> W(n,n,0); 
-  
-  // now make a simulated perfect matrix, block diagonal
+  typedef itk::SpectralClustering::AffinityMatrixType AffinityMatrixType;
+  AffinityMatrixType affinityMatrix;
+  affinityMatrix.SetSize( numberOfItemsToCluster, numberOfItemsToCluster );
+
+
+  // now make a simulated perfect input list (matrix), block diagonal
   // within-cluster similarity = 1 and all other entries = 0;
-  int numberOfClusters = 3;
-  int clusterSize = n/numberOfClusters;
-  int clusterIdx = 1;
-  ofstream fileInputClusters;
-  fileInputClusters.open("inputClusters.txt");
 
-  for (int row = 0; row < W.rows(); row++)
+  int numberOfClusters = 3;
+  int numberOfEigenvectors = 2;
+  int clusterSize = numberOfItemsToCluster/numberOfClusters;
+  int clusterIdx = 1;
+  std::ofstream fileInputClusters;
+  fileInputClusters.open("inputClusters.txt");
+  std::ofstream fileInputMatrix;
+  fileInputMatrix.open("inputMatrix.txt");
+
+  for (int row = 0; row < numberOfItemsToCluster; row++)
     {
       if (row == clusterIdx*clusterSize)
         clusterIdx++;
 
       // output cluster indices to disk
-      fileInputClusters << clusterIdx << endl;
+      fileInputClusters << clusterIdx << std::endl;
 
-      for (int col = 0; col < W.cols(); col++)
+
+      for (int col = 0; col < numberOfItemsToCluster; col++)
         {
-          if (col < clusterIdx*clusterSize)
+          affinityMatrix(row,col) = 0;
+          if (col < clusterIdx*clusterSize && col >= (clusterIdx-1)*clusterSize)
             {
-              W[row][col] = 1;
+              affinityMatrix(row,col) = 1;
             }
+
+          affinityMatrix(row,col) = affinityMatrix(row,col) + 0.1;
+
+          // output matrix values to disk
+          fileInputMatrix << affinityMatrix(row,col) << " ";
         }
+
+      // output matrix values to disk (newline at end of row)
+      fileInputMatrix << std::endl;
+
     }
   fileInputClusters.close();
+  fileInputMatrix.close();
 
 
 
   // Now create the cluster-er and set its input
   // -----------------------
-  vtkNormalizedCuts *spectralCluster = vtkNormalizedCuts::New();
-  spectralCluster->SetInputWeightMatrix(&W);
+  itk::SpectralClustering::Pointer spectralCluster = itk::SpectralClustering::New();
+  spectralCluster->DebugOn();
+
+  spectralCluster->SetInput( affinityMatrix );
   spectralCluster->SetNumberOfClusters(numberOfClusters);
+  spectralCluster->SetNumberOfEigenvectors(numberOfEigenvectors);
+
   // For debug/test, this outputs the embedding vectors in a file (embed.txt)
   spectralCluster->SaveEmbeddingVectorsOn();
-  spectralCluster->ComputeClusters();
+  spectralCluster->SaveEigenvectorsOn();
 
+  spectralCluster->SetEmbeddingNormalizationToNone();
+
+
+  // Run it
+  // -----------------------
+  spectralCluster->Update();
 
 
   // Now print/save the input and output
   // -----------------------
-  // print cluster numbers
-  vtkNormalizedCuts::OutputClassifierType::OutputType * membershipSample =  
-    spectralCluster->GetOutputClassifier()->GetOutput();
-  if (membershipSample == NULL)
-    {
-      cerr << "Error: clusters have not been computed." << endl;
-      return 1;      
-    }
-  // Iterate over all class labels and save the info
-  vtkNormalizedCuts::OutputClassifierType::OutputType::ConstIterator iter = 
-    membershipSample->Begin();
+  spectralCluster->Print( std::cout );
+  std::cout << spectralCluster->GetInput()->Get() << std::endl;
+  std::cout << spectralCluster->GetOutputClusters() << std::endl;
+  itk::SpectralClustering::OutputType output = spectralCluster->GetOutputClusters();
 
-  ofstream fileOutputClusters;
+  std::ofstream fileOutputClusters;
   fileOutputClusters.open("outputClusters.txt");
 
-  int idx = 0;
-  while ( iter != membershipSample->End() )
+  for (int row = 0; row < numberOfItemsToCluster; row++)
     {
-      cout <<"index = " << idx << "class label = " << iter.GetClassLabel() << endl;
-      fileOutputClusters << iter.GetClassLabel() << endl;
-      idx++;
-      ++iter;
+      std::cout <<"index = " << row << "   class label = " << output[row] << std::endl;
+      fileOutputClusters << output[row] << std::endl;
     }
   fileOutputClusters.close();
-
-  // Write normalized matrix to disk as an image
-  vtkImageMathematics *scale = vtkImageMathematics::New();
-  scale->SetOperationToMultiplyByK();
-  scale->SetConstantK(100);
-  scale->SetInput1(spectralCluster->GetNormalizedWeightMatrixImage());
-  vtkImageCast *cast = vtkImageCast::New();
-  cast->SetOutputScalarTypeToUnsignedChar();
-  cast->SetInput(scale->GetOutput());
-  vtkPNGWriter *writer = vtkPNGWriter::New();
-  writer->SetInput(cast->GetOutput());
-  writer->SetFileName("NormalizedWeightMatrix.png");
-  writer->Write();
-  writer->Delete();
-  cast->Delete();
-  scale->Delete();
-
-  spectralCluster->Delete();
 
   return 0;
 }

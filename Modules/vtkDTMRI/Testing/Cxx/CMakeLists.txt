@@ -12,6 +12,16 @@ ELSE(VTK_FOUND)
         MESSAGE(FATAL_ERROR "Could not find VTK")
 ENDIF(VTK_FOUND)
 
+INCLUDE_DIRECTORIES( 
+   ${SANDBOX_DIR}/SlicerTractClusteringImplementation/Code 
+   ${SANDBOX_DIR}/SpectralClustering
+)
+
+
+
+LINK_DIRECTORIES( 
+   ${SANDBOX_DIR}/bin
+)
 
 FOREACH(test testCluster)
   ADD_EXECUTABLE("${MODULE_NAME}.${test}" "${test}.cxx")

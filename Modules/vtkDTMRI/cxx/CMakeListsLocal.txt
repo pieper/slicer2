@@ -30,13 +30,12 @@ vtkStreamlineConvolve.cxx
 vtkPruneStreamline.cxx
 #vtkHyperStreamlineDTMRI.cxx
 vtkTractShapeFeatures.cxx
-vtkNormalizedCuts.cxx
 vtkClusterTracts.cxx
 vtkMrmlTractGroupNode.cxx
 vtkMrmlTractsNode.cxx
-vtkSeedTracts.cxx
-vtkDisplayTracts.cxx
-vtkSaveTracts.cxx
+#vtkSeedTracts.cxx
+#vtkDisplayTracts.cxx
+#vtkSaveTracts.cxx
 )
 
 ## classes that one does not want tcl wrapped
@@ -59,6 +58,7 @@ INCLUDE_DIRECTORIES(
 #${VTKMYCLASS_SOURCE_DIR}/include
 )
 
+
 #### if you code depends on SlicerBase, uncomment the 
 #### INCLUDE_DIRECTORIES and LINK_LIBRARIES
 #### lines below
@@ -67,10 +67,17 @@ INCLUDE_DIRECTORIES(
    ${VTKSLICERBASE_SOURCE_DIR}/cxx 
    ${VTKSLICERBASE_BUILD_DIR}
    ${VTKTENSORUTIL_SOURCE_DIR}/cxx
-   ${VTKTENSORUTIL_BUILD_DIR} 
+   ${VTKTENSORUTIL_BUILD_DIR}
+   ${SANDBOX_DIR}/SlicerTractClusteringImplementation/Code 
+   ${SANDBOX_DIR}/SpectralClustering
+
 )
 
-LINK_LIBRARIES (${VTKSLICERBASE_BUILD_LIB} ${VTKSLICERBASE_BUILD_TCL_LIB} ${VTKTENSORUTIL_BUILD_LIB} ${VTKTENSORUTIL_BUILD_TCL_LIB} )
+LINK_DIRECTORIES( 
+   ${SANDBOX_DIR}/bin
+)
+
+LINK_LIBRARIES (${VTKSLICERBASE_BUILD_LIB} ${VTKSLICERBASE_BUILD_TCL_LIB} ${VTKTENSORUTIL_BUILD_LIB} ${VTKTENSORUTIL_BUILD_TCL_LIB} SlicerClustering ITKAffinityClustering )
 
 
 ADD_LIBRARY ( ${LOCAL_LIBRARY_BASENAME} ${LOCAL_MODULE_SRCS})

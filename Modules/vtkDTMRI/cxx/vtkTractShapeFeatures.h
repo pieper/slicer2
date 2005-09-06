@@ -51,7 +51,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkDTMRIConfigure.h"
 #include "vtkObject.h"
 #include "itkListSample.h"
-#include "itkMatrix.h"
+#include "itkVariableSizeMatrix.h"
 
 // Forward declarations to avoid including header files here.
 // Goes along with use of new vtkCxxSetObjectMacro
@@ -94,22 +94,23 @@ class VTK_DTMRI_EXPORT vtkTractShapeFeatures : public vtkObject
   //BTX
   // (wrapping doesn't work here so exclude this with BTX)
   // Description
-  // Use the matrix format provided by vnl for the output distance
+  // Use the matrix format provided by ITK for the output distance
   // and similarity matrices
-  typedef vnl_matrix<double> OutputType;
+  typedef double AffinityMatrixValueType;
+  typedef itk::VariableSizeMatrix< AffinityMatrixValueType > OutputType;
 
   // Description
   // Returns the output distance matrix after computation
   OutputType * GetOutputDistanceMatrix() 
     {
-      return this->InterTractDistanceMatrix;
+      return &m_InterTractDistanceMatrix;
     };
 
   // Description
   // Returns the output similarity/weight matrix after computation
   OutputType * GetOutputSimilarityMatrix() 
     {
-      return this->InterTractSimilarityMatrix;
+      return &m_InterTractSimilarityMatrix;
     };
   //ETX
 
@@ -165,8 +166,8 @@ class VTK_DTMRI_EXPORT vtkTractShapeFeatures : public vtkObject
   // list of all points on a tract path
   typedef itk::Statistics::ListSample< XYZVectorType > TractPointsListType;
 
-  OutputType *InterTractDistanceMatrix;
-  OutputType *InterTractSimilarityMatrix;
+  OutputType m_InterTractDistanceMatrix;
+  OutputType m_InterTractSimilarityMatrix;
 
   void GetPointsFromHyperStreamlinePointsSubclass(TractPointsListType::Pointer sample, vtkHyperStreamlinePoints *currStreamline);
   //ETX

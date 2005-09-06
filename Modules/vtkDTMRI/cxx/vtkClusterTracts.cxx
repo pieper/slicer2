@@ -43,31 +43,32 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 // classes for tract clustering
 #include "vtkTractShapeFeatures.h"
-#include "vtkNormalizedCuts.h"
 
 // itk object for exception handling
 #include "itkExceptionObject.h"
 
-vtkCxxRevisionMacro(vtkClusterTracts, "$Revision: 1.5 $");
+vtkCxxRevisionMacro(vtkClusterTracts, "$Revision: 1.6 $");
 vtkStandardNewMacro(vtkClusterTracts);
 
 vtkCxxSetObjectMacro(vtkClusterTracts, InputStreamlines, vtkCollection);
 
 vtkClusterTracts::vtkClusterTracts()
 {
-  this->NormalizedCuts = vtkNormalizedCuts::New();
-  this->TractShapeFeatures = vtkTractShapeFeatures::New();
+  this->ClusteringAlgorithm = itk::SpectralClustering::New();
+  this->TractAffinityCalculator = vtkTractShapeFeatures::New();
 
   this->InputStreamlines = NULL;
-
+  this->OutputClusterLabels = NULL;
 }
 
 vtkClusterTracts::~vtkClusterTracts()
 {
-  this->NormalizedCuts->Delete();
-  this->TractShapeFeatures->Delete();
+  //this->ClusteringAlgorithm->Delete();
+  this->TractAffinityCalculator->Delete();
   if (this->InputStreamlines)
     this->InputStreamlines->Delete();
+  if (this->OutputClusterLabels)
+    this->OutputClusterLabels->Delete();
 }
 
 
@@ -75,15 +76,20 @@ void vtkClusterTracts::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
 
-  this->NormalizedCuts->PrintSelf(os,indent);
-  this->TractShapeFeatures->PrintSelf(os,indent);
+  this->ClusteringAlgorithm->Print( std::cout );
+  this->TractAffinityCalculator->PrintSelf(os,indent);
   if (this->InputStreamlines)
     this->InputStreamlines->PrintSelf(os,indent);
+  if (this->OutputClusterLabels)
+    this->OutputClusterLabels->PrintSelf(os,indent);
 }
 
 void vtkClusterTracts::ComputeClusters()
 {
 
+  vtkDebugMacro("Updating...");
+
+  // Error checking:
   // test we have a streamline collection.
   if (this->InputStreamlines == NULL)
     {
@@ -91,24 +97,33 @@ void vtkClusterTracts::ComputeClusters()
       return;      
     }
 
+  // Error checking:
   // Make sure we have at least twice as many streamlines as the number of
   // eigenvectors we are using (really we need at least one more than
   // this number to manage to calculate the eigenvectors, but double
   // is more reasonable).
-  if (this->InputStreamlines->GetNumberOfItems() <  2*this->NormalizedCuts->GetNumberOfEigenvectors())
+  if (this->InputStreamlines->GetNumberOfItems() <  2*(this->ClusteringAlgorithm->GetNumberOfEigenvectors()))
     {
       vtkErrorMacro("At least " << 
-                    2*this->NormalizedCuts->GetNumberOfEigenvectors()  
+                    2*this->ClusteringAlgorithm->GetNumberOfEigenvectors()  
                     << " tract paths are needed for clustering");
       return;      
 
     }    
 
-  this->TractShapeFeatures->SetInputStreamlines(this->InputStreamlines);
-  //this->TractShapeFeatures->DebugOn();
+  // Set the parameters from the user
+  this->ClusteringAlgorithm->DebugOn();
+  this->ClusteringAlgorithm->SetNumberOfClusters(this->NumberOfClusters);
+  this->ClusteringAlgorithm->SetNumberOfEigenvectors(this->NumberOfEigenvectors);
 
+
+  // Set up the pipelines and run them
+  this->TractAffinityCalculator->SetInputStreamlines(this->InputStreamlines);
+  //this->TractAffinityCalculator->DebugOn();
+
+  vtkDebugMacro("Computing affinity matrix");
   try {
-    this->TractShapeFeatures->ComputeFeatures();
+    this->TractAffinityCalculator->ComputeFeatures();
   }
   catch (itk::ExceptionObject &e) {
     vtkErrorMacro("Error in vtkTractShapeFeatures->ComputeFeatures: " << e);
@@ -119,18 +134,44 @@ void vtkClusterTracts::ComputeClusters()
     return;
   }
 
-  //this->NormalizedCuts->DebugOn();
-  this->NormalizedCuts->SetInputWeightMatrix(this->TractShapeFeatures->GetOutputSimilarityMatrix());
+  cout << "affinity matrix rows: " << this->TractAffinityCalculator->GetOutputSimilarityMatrix()->Rows() << std::endl;
 
+  cout << "affinity matrix cols: " << this->TractAffinityCalculator->GetOutputSimilarityMatrix()->Cols() << std::endl;
+
+  //this->ClusteringAlgorithm->DebugOn();
+  this->ClusteringAlgorithm->SetInput(*(this->TractAffinityCalculator->GetOutputSimilarityMatrix()));
+
+  vtkDebugMacro("Computing clusters");
   try {
-    this->NormalizedCuts->ComputeClusters();
+    this->ClusteringAlgorithm->Update();
   }
   catch (itk::ExceptionObject &e) {
-    vtkErrorMacro("Error in vtkNormalizedCuts->ComputeClusters: " << e);
+    vtkErrorMacro("Error in itkSpectralClustering->ComputeClusters: " << e);
     return;
   }
   catch (...) {
-    vtkErrorMacro("Error in vtkNormalizedCuts:ComputeClusters");
+    vtkErrorMacro("Error in itkSpectralClustering:ComputeClusters");
     return;
   }
+
+
+  // copy the cluster labels into our vtk format (hide itk objects
+  // within this class)
+
+  itk::AffinityClustering::OutputType output = this->ClusteringAlgorithm->GetOutputClusters();
+
+  if (this->OutputClusterLabels)
+    this->OutputClusterLabels->Delete();
+  this->OutputClusterLabels = vtkUnsignedIntArray::New();
+  
+  this->OutputClusterLabels->SetNumberOfValues(this->InputStreamlines->GetNumberOfItems());
+
+  std::cout << "output size: " << output.Size() << std::endl;
+
+  for (int row = 0; row < this->InputStreamlines->GetNumberOfItems(); row++)
+    {
+      this->OutputClusterLabels->SetValue(row,output[row]);
+      std::cout <<"index = " << row << "   class label = " << output[row] << std::endl;
+    }
+
 }

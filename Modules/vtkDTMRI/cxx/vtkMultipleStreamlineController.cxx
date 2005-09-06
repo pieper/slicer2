@@ -1974,13 +1974,12 @@ void vtkMultipleStreamlineController::DeleteStreamlinesNotPassTest()
 void vtkMultipleStreamlineController::SaveTractClustersAsTextFiles(char *filename)
 {
   std::stringstream fileNameStr;
-  int idx=0;
   ofstream filePoints, fileAttribs, fileLabels;
   vtkHyperStreamline *currStreamline;
 
-  vtkClusterTracts::OutputType * membershipSample =  this->TractClusterer->GetOutputMembershipSample();
+  vtkClusterTracts::OutputType *clusters =  this->TractClusterer->GetOutput();
 
-  if (membershipSample == NULL)
+  if (clusters == 0)
     {
       vtkErrorMacro("Error: clusters have not been computed.");
       return;      
@@ -2029,15 +2028,12 @@ void vtkMultipleStreamlineController::SaveTractClustersAsTextFiles(char *filenam
 
 
   // Iterate over all class labels and save the info
-  vtkClusterTracts::OutputType::ConstIterator iter = membershipSample->Begin();
-
-  while ( iter != membershipSample->End() )
+  for (int idx = 0; idx < clusters->GetNumberOfTuples(); idx++)
     {
-      vtkDebugMacro("index = " << idx << "class label = " << iter.GetClassLabel());
+      vtkDebugMacro("index = " << idx << "class label = " << clusters->GetValue(idx));
       
       currStreamline= (vtkHyperStreamline *) 
         this->Streamlines->GetItemAsObject(idx);
-
       
       if (currStreamline) 
         {
@@ -2047,15 +2043,13 @@ void vtkMultipleStreamlineController::SaveTractClustersAsTextFiles(char *filenam
               this->SaveStreamlineAsTextFile(filePoints,fileAttribs,(vtkHyperStreamlinePoints *) currStreamline);
             }
           // Save the class label to disk also
-          fileLabels << iter.GetClassLabel() << endl;
+          fileLabels << clusters->GetValue(idx) << endl;
         }
       else
         {
           vtkErrorMacro("Streamline " << idx << " not found.");
         }
       
-      idx++;
-      ++iter;
     }
 
   // Close text files
@@ -2073,19 +2067,18 @@ void vtkMultipleStreamlineController::ClusterTracts(int tmp)
   // First make sure none of the streamlines have 0 length
   this->CleanStreamlines();
 
-  int numberOfClusters= this->TractClusterer->GetNormalizedCuts()->GetNumberOfClusters();
+  int numberOfClusters= this->TractClusterer->GetNumberOfClusters();
 
   this->TractClusterer->SetInputStreamlines(this->Streamlines);
   this->TractClusterer->ComputeClusters();
-  vtkClusterTracts::OutputType * membershipSample =  this->TractClusterer->GetOutputMembershipSample();
 
-  if (membershipSample == NULL)
+  vtkClusterTracts::OutputType *clusters =  this->TractClusterer->GetOutput();
+
+  if (clusters == 0)
     {
-      vtkErrorMacro("Error when computing clusters.");
+      vtkErrorMacro("Error: clusters have not been computed.");
       return;      
     }
-
-  vtkClusterTracts::OutputType::ConstIterator iter = membershipSample->Begin();
 
   // Color tracts based on class membership...
   vtkLookupTable *lut = vtkLookupTable::New();
@@ -2094,30 +2087,26 @@ void vtkMultipleStreamlineController::ClusterTracts(int tmp)
   lut->Build();
 
   double rgba[4];
-  int idx1=0;
   vtkActor *currActor;
   vtkPolyDataMapper *currMapper;
-  while ( iter != membershipSample->End() )
+  for (int idx = 0; idx < clusters->GetNumberOfTuples(); idx++)
     {
-      vtkDebugMacro("measurement vector = " << iter.GetMeasurementVector() << "class label = " << iter.GetClassLabel());
+      vtkDebugMacro("index = " << idx << "class label = " << clusters->GetValue(idx));
       
-      currActor = (vtkActor *) this->Actors->GetItemAsObject(idx1);
-      currMapper = (vtkPolyDataMapper *) this->Mappers->GetItemAsObject(idx1);
+      currActor = (vtkActor *) this->Actors->GetItemAsObject(idx);
+      currMapper = (vtkPolyDataMapper *) this->Mappers->GetItemAsObject(idx);
 
       if (currActor && currMapper) 
         {
-          lut->GetColor(iter.GetClassLabel(),rgba);
+          lut->GetColor(clusters->GetValue(idx),rgba);
           vtkDebugMacro("rgb " << rgba[0] << " " << rgba[1] << " " << rgba[2]); 
           currActor->GetProperty()->SetColor(rgba[0],rgba[1],rgba[2]); 
           currMapper->SetScalarVisibility(0);
         }
       else
         {
-          vtkErrorMacro("Classified actor " << idx1 << " not found.");
+          vtkErrorMacro("Classified actor " << idx << " not found.");
         }
-      
-      idx1++;
-      ++iter;
     }
 
 }
@@ -2142,14 +2131,20 @@ void vtkMultipleStreamlineController::CleanStreamlines()
 
       if (currStreamline == NULL)
         {
-          vtkErrorMacro( << "No streamline " << index);
+          vtkErrorMacro( "No streamline " << index);
           return;
         }
+
+      vtkDebugMacro( "streamline " << i << "length " << 
+                     currStreamline->GetHyperStreamline0()->GetNumberOfPoints() +
+                     currStreamline->GetHyperStreamline1()->GetNumberOfPoints());
 
       if (currStreamline->GetHyperStreamline0()->GetNumberOfPoints() +
           currStreamline->GetHyperStreamline1()->GetNumberOfPoints() < 5)
         {
-          vtkErrorMacro( << "Remove short streamline " << i);
+          vtkErrorMacro( "Remove short streamline " << i << "length " << 
+                         currStreamline->GetHyperStreamline0()->GetNumberOfPoints() +
+                         currStreamline->GetHyperStreamline1()->GetNumberOfPoints());
           // Delete the streamline from the collections
           this->DeleteStreamline(index);
         }
@@ -2160,166 +2155,9 @@ void vtkMultipleStreamlineController::CleanStreamlines()
         }
 
     }
+
 }
 
-
-// Do clustering, then display one actor per cluster
-//----------------------------------------------------------------------------
-void vtkMultipleStreamlineController::SeedStreamlinesFromROIClusterAndDisplay()
-{
-  //  ------------------------------------
-  // Remove all other streamlines so counts of actors/streamlines/etc are not broken
-  // for after this code runs (new streamlines are removed at the end of this function)
-  this->DeleteAllStreamlines();
-
-  //  ------------------------------------
-  // Create streamlines.
-  //this->SeedStreamlinesFromROI();
-  this->SeedStreamlinesEvenlyInROI();
-
-  //  ------------------------------------
-  // Clean up input
-  // First make sure none of the streamlines have 0 length
-  // can't call this, it calls regular delete which deletes a non-existent actor
-  //this->CleanStreamlines();
-  int numStreamlines, index;
-  vtkHyperStreamlinePoints *currStreamline;
-
-  numStreamlines = this->Streamlines->GetNumberOfItems();
-  index = 0;
-  for (int i = 0; i < numStreamlines; i++)
-    {
-      vtkDebugMacro( << "Cleaning streamline " << i << " : " << index);
-
-      // Get the streamline
-      currStreamline = (vtkHyperStreamlinePoints *) 
-        this->Streamlines->GetItemAsObject(index);
-
-      if (currStreamline == NULL)
-        {
-          vtkErrorMacro( << "No streamline " << index);
-          return;
-        }
-
-      // force path calculation
-      currStreamline->Update();
-
-      if (currStreamline->GetHyperStreamline0()->GetNumberOfPoints() +
-          currStreamline->GetHyperStreamline1()->GetNumberOfPoints() < 5)
-        {
-          vtkErrorMacro( << "Remove short streamline " << i);
-          // Delete the streamline from the collections
-          //this->DeleteStreamline(index);
-          this->Streamlines->RemoveItem(index);
-          currStreamline->Delete();
-        }
-      else
-        {
-          // Only increment if we haven't deleted one (and shortened the list)
-          index++;
-        }
-
-    }
-
-  //  ------------------------------------
-  // Cluster
-  int numberOfClusters= this->TractClusterer->GetNormalizedCuts()->GetNumberOfClusters();
-
-  this->TractClusterer->SetInputStreamlines(this->Streamlines);
-  this->TractClusterer->ComputeClusters();
-  vtkClusterTracts::OutputType * membershipSample =  this->TractClusterer->GetOutputMembershipSample();
-
-  if (membershipSample == NULL)
-    {
-      vtkErrorMacro("Error when computing clusters.");
-      return;      
-    }
-
-  //  ------------------------------------
-  // Display them with one actor per color
-  // Do NOT call the create graphics objects, etc code
-  vtkClusterTracts::OutputType::ConstIterator iter = membershipSample->Begin();
-
-  // Color tracts based on class membership...
-  vtkLookupTable *lut = vtkLookupTable::New();
-  lut->SetTableRange (0, numberOfClusters-1);
-  lut->SetNumberOfTableValues (numberOfClusters);
-  lut->Build();
-
-  double rgba[4];
-
-  int numClasses = membershipSample->GetNumberOfClasses();
-  vtkAppendPolyData **appenders = new vtkAppendPolyData *[numClasses];
-  vtkActor **actors = new vtkActor *[numClasses];
-  vtkPolyDataMapper **mappers = new vtkPolyDataMapper* [numClasses];
-
-  // Create transformation matrix to place actors in scene
-  vtkTransform *currTransform=vtkTransform::New();
-  currTransform->SetMatrix(this->WorldToTensorScaledIJK->GetMatrix());
-  currTransform->Inverse();
-  vtkRenderer *currRenderer;
-
-  // Assign colors to clusters, do pipeline, add actors to renderers
-  for (int i=0; i < membershipSample->GetNumberOfClasses(); i++)
-    {
-      appenders[i] = vtkAppendPolyData::New();
-      actors[i] = vtkActor::New();
-      mappers[i] = vtkPolyDataMapper::New();
-
-      lut->GetColor(i,rgba);
-      actors[i]->GetProperty()->SetColor(rgba[0],rgba[1],rgba[2]); 
-      mappers[i]->SetScalarVisibility(0);
-      vtkErrorMacro("rgb " << rgba[0] << " " << rgba[1] << " " << rgba[2]); 
-
-      // Hook up the pipeline
-      mappers[i]->SetInput(appenders[i]->GetOutput());
-      actors[i]->SetMapper(mappers[i]);
-      
-      // Place the actor correctly in the scene
-      actors[i]->SetUserMatrix(currTransform->GetMatrix());
-
-      // add to the scene (to each renderer)
-      // This is the same as MainAddActor in Main.tcl.
-      this->InputRenderers->InitTraversal();
-      currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
-      while(currRenderer)
-        {
-          currRenderer->AddActor(actors[i]);
-          currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
-        }
-      
-    }
-
-  // Append each class's polydata together
-  index=0;
-  int appenderIdx;
-  while ( iter != membershipSample->End() )
-    {
-      vtkDebugMacro("measurement vector = " << iter.GetMeasurementVector() << "class label = " << iter.GetClassLabel());
-
-      appenderIdx = iter.GetClassLabel();
-
-      currStreamline = (vtkHyperStreamlinePoints *) 
-        this->Streamlines->GetItemAsObject(index);
-      if (currStreamline != NULL)
-        {
-          // Append this streamline to the rest of the polydatas for its class
-          appenders[appenderIdx]->AddInput(currStreamline->GetOutput());
-        }
-     
-      index++;
-      ++iter;
-    }
-
-  //  ------------------------------------
-  // Save them to disk since we are about to delete the streamlines
-  this->SaveTractClustersAsTextFiles("embed");
-
-  //  ------------------------------------
-  // Since we don't have matching actors and mappers, remove the streamlines
-  // they will not go away until the mappers/actors do, however.
-  this->Streamlines->RemoveAllItems();
-}
 
 
 // Color in volume with color ID of streamline passing through it.
