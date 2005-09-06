@@ -84,16 +84,16 @@ proc ColorsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.28.6.1 $} {$Date: 2005/09/06 21:25:04 $}]
+        {$Revision: 1.28.6.2 $} {$Date: 2005/09/06 22:01:25 $}]
 
     # the LUT to affect by the colour scale editing
     set Color(LUT,currentID) -1
     # gui values for changing LUTs
     set Color(LUT,NumberOfColors) 0
-    foreach rangeName {Hue Saturation Value} {
+    foreach rangeName {Hue Saturation Value Alpha} {
         set Color(LUT,lower${rangeName}) 0.0
     }
-    foreach rangeName {Hue Saturation Value} {
+    foreach rangeName {Hue Saturation Value Alpha} {
         set Color(LUT,upper${rangeName}) 1.0
     }
     foreach col {r g b} {
@@ -265,7 +265,7 @@ and use the new ones as your default colors.
     frame $f.fPick -bg $Gui(backdrop)
     pack $f.fPick -side top -fill x -pady $Gui(pad) -padx $Gui(pad)
 
-    foreach subf {NumColours Hue Saturation Value Anno} {
+    foreach subf {NumColours Hue Saturation Value Alpha Ramp Anno} {
         frame $f.f${subf} -bg $Gui(activeWorkspace) -relief groove -bd 2
         pack $f.f${subf} -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
     }
@@ -289,9 +289,9 @@ and use the new ones as your default colors.
     pack $f.lNumberOfColors $f.eNumberOfColors -padx $Gui(pad) -pady $Gui(pad) -expand 1 -fill x
 
     #-------------------------------------------
-    # Scale->Hue, Saturation, Value frames
+    # Scale->Hue, Saturation, Value, Alpha frames
     #-------------------------------------------
-    foreach frameName {Hue Saturation Value} {
+    foreach frameName {Hue Saturation Value Alpha} {
         set f $fScale.f${frameName}
         eval {label $f.l${frameName} -text "$frameName Range: "} $Gui(WLA)
         pack $f.l${frameName} -side top
@@ -306,14 +306,13 @@ and use the new ones as your default colors.
             bind $f.e${slider} <Return> "ColorsLUTSetParam ${slider} ${frameName}"
             # bind $f.e${slider} <FocusOut> "ColorsLUTSetParam ${slider}${frameName}"
             eval {scale $f.s${slider} -from 0.0 -to 1.0 -length 50 \
-                      -variable Color(LUT,${slider}${frameName}) -resolution 0.1 \
+                      -variable Color(LUT,${slider}${frameName}) -resolution 0.01 \
                       -command "ColorsLUTSetParam ${slider} ${frameName}"} \
                 $Gui(WSA) {-sliderlength 14}
             grid  $f.l${slider} $f.e${slider} $f.s${slider} -padx 2 -pady $Gui(pad) \
                 -sticky news
         }
     }
-
 
     #-------------------------------------------
     # Scale->Anno frame
@@ -327,7 +326,21 @@ and use the new ones as your default colors.
         bind $f.e$col <Return> "ColorsLUTSetAnno $col"
         
     }
-    pack $f.lr $f.er $f.lg $f.eg $f.lb $f.eb -side top -padx $Gui(pad) -fill x
+    pack $f.lr $f.er $f.lg $f.eg $f.lb $f.eb -side left -padx $Gui(pad) -fill x
+
+    #-------------------------------------------
+    # Scale->Ramp frame
+    #-------------------------------------------
+    set f $fScale.fRamp
+    DevAddLabel $f.lRamp "Ramp: "
+    eval {menubutton $f.mbRamp -text "default" -relief raised -bd 2 -width 20 \
+            -menu $f.mbRamp.m} $Gui(WMBA)
+    eval {menu $f.mbRamp.m} $Gui(WMA)
+    foreach r {Linear SCurve SQRT} {
+        $f.mbRamp.m insert end command -label $r -command "ColorsLUTSetRamp $r"
+    }
+    set Color(mbRamp) $f.mbRamp
+    pack $f.lRamp $f.mbRamp -side left
 
     #-------------------------------------------
     # Load frame
@@ -662,6 +675,8 @@ proc ColorsSetLUT { id } {
         set Color(LUT,upperSaturation)  [lindex [Lut($id,lut) GetSaturationRange] 1]
         set Color(LUT,lowerValue)  [lindex [Lut($id,lut) GetValueRange] 0]
         set Color(LUT,upperRange) [lindex [Lut($id,lut) GetValueRange] 1]
+        set Color(LUT,lowerAlpha) [lindex [Lut($id,lut) GetAlphaRange] 0]
+        set Color(LUT,upperAlpha) [lindex [Lut($id,lut) GetAlphaRange] 1]
         set Color(LUT,annoColor,r) [lindex $Lut($id,annoColor) 0]
         set Color(LUT,annoColor,g) [lindex $Lut($id,annoColor) 1]
         set Color(LUT,annoColor,b) [lindex $Lut($id,annoColor) 2]
@@ -717,7 +732,7 @@ proc ColorsLUTSetNumberOfColors { val } {
 # The variable Color(LUT,$hilo$Param) has been set already.
 # .ARGS
 # string hilo one of lower or upper, which end of the range to set 
-# string Param the name of the parameter to set, one of Hue Saturation Value
+# string Param the name of the parameter to set, one of Hue Saturation Value Alpha
 # float val value passed in from the slider, not used
 # .END
 #-------------------------------------------------------------------------------
@@ -739,7 +754,7 @@ proc ColorsLUTSetParam { hilo Param {val ""} } {
         if {$::Module(verbose)} {
             puts "ColorsLUTSet: value = $value"
         }
-        if {$value< 0.0 || $value > 1.0} {
+        if {($value< 0.0 || $value > 1.0)} {
             puts "ColorsLUTSet: Value $value out of range 0.0 to 1.0"
             return
         }
@@ -767,7 +782,7 @@ proc ColorsLUTSetParam { hilo Param {val ""} } {
         }
     } else {
         if {$::Module(verbose)} {
-            puts "Warning: current id not a valid look up table ($id not in \"$Lut(idList)\""
+            puts "Warning: current id not a valid look up table ($id == -1 or not in \"$Lut(idList)\""
         }
     }
 }
@@ -821,4 +836,22 @@ proc ColorsLUTSetAnno { col } {
     }
 
     
+}
+
+proc ColorsLUTSetRamp { ramp } {
+    global Color Lut
+
+    set id $Color(LUT,currentID)
+
+    if {[lsearch $Lut(idList) $id] != -1} {
+        if {$::Module(verbose)} { 
+            puts "ColorsLUTSetRamp: Setting ramp value for colour table $Lut($id,name) to $ramp"
+        }
+        $Color(mbRamp) configure -text $ramp
+        eval Lut($id,lut) SetRampTo${ramp}
+        Lut($id,lut) Build
+        Render3D
+    } else {
+        puts "ColorsLUTSetRamp: colour table $id not in Lut(idList)"
+    }
 }
