@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.87 $} {$Date: 2005/08/30 19:26:32 $}]
+    {$Revision: 1.88 $} {$Date: 2005/09/06 21:02:48 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -190,18 +190,7 @@ proc MainVolumesUpdateMRML {} {
     foreach m $Volume(mActiveList) {
         $m delete 0 end
         foreach v $Volume(idList) {
-            set volnum [$m index end]
-            set colbreak 0
-            if {$volnum != "none"} {
-                # first pass through, get the end index returned as none, 
-                # second pass get 0. Have to bump it up one to get proper
-                # column breaking
-                incr volnum
-                # every 40 entries, start a new column in the volumes list
-                if {[expr fmod($volnum,40)] == 0} {
-                    set colbreak 1
-                }
-            }
+            set colbreak [MainVolumesBreakVolumeMenu $m] 
             $m add command -label [Volume($v,node) GetName] \
                 -command "MainVolumesSetActive $v" \
                 -columnbreak $colbreak
@@ -224,6 +213,31 @@ proc MainVolumesUpdateMRML {} {
 
     # In case we changed the name of the active transform
     MainVolumesSetActive $Volume(activeID)
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainVolumesBreakVolumeMenu
+# 
+# .ARGS
+# menu  The volume menu 
+# .END
+#-------------------------------------------------------------------------------
+proc MainVolumesBreakVolumeMenu {menu} {
+
+    set volnum [$menu index end]
+    set colbreak 0
+    if {$volnum != "none"} {
+        # first pass through, get the end index returned as none, 
+        # second pass get 0. Have to bump it up one to get proper
+        # column breaking
+        incr volnum
+
+        # every 40 entries, start a new column in the volumes list
+        if {[expr fmod($volnum,40)] == 0} {
+            set colbreak 1
+        }
+    }
+    return $colbreak
 }
 
 #-------------------------------------------------------------------------------
