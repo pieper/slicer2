@@ -58,7 +58,8 @@ puts stderr "SLICER_HOME is $::SLICER_HOME"
 
 set ::CMAKE_TAG "CMake-2-0-6"
 set ::VTK_TAG "VTK-Slicer-2-5"
-set ::ITK_TAG "ITK-Slicer-2-5"
+# get the latest ITK from CVS
+set ::ITK_TAG "HEAD"
 set ::TCL_TAG "core-8-4-6"
 set ::TK_TAG "core-8-4-6"
 set ::ITCL_TAG "itcl-3-2-1"
@@ -84,6 +85,7 @@ set ::GSL_INC_DIR $::SLICER_LIB/gsl/include
 set ::GSL_SRC_DIR $::SLICER_LIB/gsl-build/gsl-mirror/gsl
 set ::SOV_BINARY_DIR " "
 set ::XVNC_EXECUTABLE " "
+
 
 # Files to test if library has already been built by genlib.tcl.
 

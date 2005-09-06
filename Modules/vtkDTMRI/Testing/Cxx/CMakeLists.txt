@@ -13,14 +13,12 @@ ELSE(VTK_FOUND)
 ENDIF(VTK_FOUND)
 
 INCLUDE_DIRECTORIES( 
-   ${SANDBOX_DIR}/SlicerTractClusteringImplementation/Code 
-   ${SANDBOX_DIR}/SpectralClustering
+   ${SANDBOX_SRC_DIR}/SlicerTractClusteringImplementation/Code 
+   ${SANDBOX_SRC_DIR}/SpectralClustering
 )
 
-
-
 LINK_DIRECTORIES( 
-   ${SANDBOX_DIR}/bin
+   ${SANDBOX_BUILD_DIR}
 )
 
 FOREACH(test testCluster)

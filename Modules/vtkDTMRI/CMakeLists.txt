@@ -60,10 +60,14 @@ SET (VTKTENSORUTIL_BUILD_TCL_LIB CACHE PATH
 
 # This is the location of the NAMIC Sandbox (in-progress ITK code)
 # Used for clustering
-SET ( SANDBOX_DIR
-/csail/vision-welg1/lauren/Sandbox/NAMICSandBox
+SET ( SANDBOX_SRC_DIR
+    ${SLICER_LIB}/NAMICSandBox
+) 
+SET ( SANDBOX_BUILD_DIR
+    ${SLICER_LIB}/NAMICSandBox-build/bin
 ) 
 
+MESSAGE ("Sandbox is: ${SANDBOX_SRC_DIR} and build ${SANDBOX_BUILD_DIR}")
 
 #
 # If everything is OK, then go into the sub directories and build.

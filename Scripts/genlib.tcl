@@ -32,6 +32,13 @@ if {[info exists ::env(CVS)]} {
     set ::CVS cvs
 }
 
+# for subversion repositories (Sandbox)
+if {[info exists ::env(SVN)]} {
+    set ::SVN $::env(SVN)
+} else {
+    set ::SVN svn
+}
+
 # when using this on window, some things will have to be run from the cygwin terminal
 set winMsg "Sorry, this isn't all automated for windows. Open a cygwin terminal and do the following:\n"
 
@@ -577,3 +584,46 @@ if { ![file exists $::ITK_TEST_FILE] } {
     }
 }
 
+
+
+################################################################################
+# Get and build the sandbox
+cd $SLICER_LIB
+
+runcmd $::SVN checkout http://www.na-mic.org:8000/svn/NAMICSandBox
+
+file mkdir $SLICER_LIB/NAMICSandBox-build
+cd $SLICER_LIB/NAMICSandBox-build
+
+runcmd $CMAKE \
+    -G$GENERATOR \
+    -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
+    -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
+    -DBUILD_SHARED_LIBS:BOOL=ON \
+    -DBUILD_EXAMPLES:BOOL=OFF \
+    -DBUILD_TESTING:BOOL=OFF \
+    -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
+    -DVTK_DIR:PATH=$VTK_DIR \
+    -DITK_DIR:FILEPATH=$ITK_BINARY_PATH \
+    ../NAMICSandBox
+
+if {$isWindows} {
+    puts "Please edit genlib with the sandbox compile line for windows"
+    if { $MSVC6 } {
+        #runcmd $::MAKE ITK.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
+    } else {
+        #runcmd $::MAKE ITK.SLN /build  $::VTK_BUILD_TYPE
+    }
+} else {
+
+    # Just build the two libraries we need, not the rest of the sandbox.
+    # This line builds the SlicerClustering library.
+    # It also causes the SpectralClustering lib to build, 
+    # since SlicerClustering depends on it.
+    # Later in the slicer Module build process, 
+    # vtkDTMRI links to SlicerClustering.
+    # At some point in the future, the classes in these libraries
+    # will become part of ITK and this will no longer be needed.
+    cd $SLICER_LIB/NAMICSandBox-build/SlicerTractClusteringImplementation   
+    eval runcmd $::MAKE -j 8
+}
