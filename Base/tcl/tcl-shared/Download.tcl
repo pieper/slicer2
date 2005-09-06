@@ -120,7 +120,7 @@ proc Download_UrlToFile { url file {chunk 4096} } {
 
 proc Download_ProgressStart {UrlAdress FileLocation} {
     global Gui
- 
+    puts "Start downloading from the web .... " 
     set w .wDownload
     set Gui(wDownload) $w
 
@@ -218,6 +218,7 @@ proc Download_PrintProtocol {maxTabLength token} {
 
 # Cleans up memory after you comppleted down
 proc Download_FinishedDownloading {token} {
+  puts "... finshed downloading" 
   http::cleanup $token 
 }
 
