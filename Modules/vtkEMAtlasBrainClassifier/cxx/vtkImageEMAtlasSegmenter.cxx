@@ -2093,7 +2093,7 @@ static void vtkImageEMAtlasSegmenterExecute(vtkImageEMAtlasSegmenter *self,float
 // the datas data types.
 void vtkImageEMAtlasSegmenter::ExecuteData(vtkDataObject *)
 {
-  cout << "Public Version" << endl;
+  cout << "EMAtlasBrainClassifier Version" << endl;
   void *outPtr;
   int idx1, i;
   int NumProbMap = 0;

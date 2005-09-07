@@ -101,7 +101,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.11 $} {$Date: 2005/09/07 05:07:03 $}]
+        {$Revision: 1.12 $} {$Date: 2005/09/07 05:09:21 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -113,8 +113,8 @@ proc EMAtlasBrainClassifierInit {} {
     set EMAtlasBrainClassifier(Save,XMLFile) 1
 
     # Debug 
-    # set EMAtlasBrainClassifier(WorkingDirectory) "$Mrml(dir)/EMSeg"    
-    set EMAtlasBrainClassifier(WorkingDirectory) "/data/projects/EMAtlasClassifierValidationV2"
+    set EMAtlasBrainClassifier(WorkingDirectory) "$Mrml(dir)/EMSeg"    
+    # set EMAtlasBrainClassifier(WorkingDirectory) "/data/projects/EMAtlasClassifierValidationV2"
     set EMAtlasBrainClassifier(DefaultAtlasDir)  "$env(SLICER_HOME)/Modules/vtkEMAtlasBrainClassifier/atlas"   
     set EMAtlasBrainClassifier(AtlasDir)         $EMAtlasBrainClassifier(DefaultAtlasDir)  
     set EMAtlasBrainClassifier(XMLTemplate)      "$env(SLICER_HOME)/Modules/vtkEMAtlasBrainClassifier/template5_c2.xml"     
