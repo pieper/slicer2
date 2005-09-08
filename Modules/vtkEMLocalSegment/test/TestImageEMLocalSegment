@@ -6,7 +6,7 @@ endif
 
 setenv SLICER_HOME ../../..
 
-if ($OS == Linux) then   
+if ($OS == linux) then   
     setenv VTK_EXE $SLICER_HOME/slicer2-linux-x86
 endif 
 

@@ -288,7 +288,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.58 $} {$Date: 2005/05/10 21:55:58 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.59 $} {$Date: 2005/09/08 04:40:05 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -2792,6 +2792,7 @@ proc EMSegmentChangeSuperClassName {Active SuperClass} {
 #-------------------------------------------------------------------------------
 proc EMSegmentStartEM { {save_mode "save"} } {
    global EMSegment Volume Mrml env tcl_platform
+   puts "============= Start EMSegmentStartEM ===============" 
    # ----------------------------------------------
    # 1. Update Values
    # ----------------------------------------------
@@ -2885,9 +2886,9 @@ proc EMSegmentStartEM { {save_mode "save"} } {
        $EMSegment(MA-lRun) configure -text "Error occured during Segmentation"
    } else {
        if {$WarningFlag} {
-       $EMSegment(MA-lRun) configure -text "Segmentation compledted sucessfull\n with warnings! Please read report!"
+       $EMSegment(MA-lRun) configure -text "Segmentation completed sucessfull\n with warnings! Please read report!"
        } else {
-       $EMSegment(MA-lRun) configure -text "Segmentation compledted sucessfull"
+       $EMSegment(MA-lRun) configure -text "Segmentation completed sucessfull"
        }
        incr EMSegment(SegmentIndex)
 
