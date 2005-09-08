@@ -78,13 +78,15 @@ proc LabelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.24.10.1 $} {$Date: 2005/09/06 21:25:06 $}]
+        {$Revision: 1.24.10.2 $} {$Date: 2005/09/08 18:05:21 $}]
 
     # Props
     set Label(nameBrowse) ""
     set Label(activeID) ""
     set Label(label) ""
     set Label(name) ""
+    # so other modules can have their own label names set
+    set Label(nameList) {Label(name)}
     set Label(diffuse) "1 1 1"
     set Label(dim) 200
     set Label(gridDim) 8
@@ -114,7 +116,10 @@ proc LabelsUpdateMRML {} {
     if {$Color(idList) == ""} {
         set Label(activeID) ""
         set Label(nameBrowse) ""
-        set Label(name) ""
+#        set Label(name) ""
+        foreach name $Label(nameList) {
+            set $name ""
+        }
         set Label(label) ""
         set Label(diffuse) "0 0 0"
         return
@@ -594,7 +599,10 @@ proc LabelsSelectLabel {{i ""}} {
         puts "LabelSelectLabel: set Label(label) to $Label(label)"
     }
     # Update GUI
-    set Label(name)    [Color($c,node) GetName]
+#    set Label(name)    [Color($c,node) GetName]
+    foreach name $Label(nameList) {
+        set $name [Color($c,node) GetName]
+    }
     set Label(diffuse) [Color($c,node) GetDiffuseColor]
     LabelsColorWidgets
 }
@@ -626,7 +634,10 @@ proc LabelsSetColor {colorName} {
     }
     if {$c == ""} {
         # Update GUI
-        set Label(name)    ""
+        # set Label(name)    ""
+        foreach name $Label(nameList) {
+            set $name ""
+        }
         set Label(diffuse) "0 0 0"
         LabelsColorWidgets
         return
@@ -636,7 +647,10 @@ proc LabelsSetColor {colorName} {
     set Label(label) [lindex $labels $i]
 
     # Update GUI
-    set Label(name)    [Color($c,node) GetName]
+    # set Label(name)    [Color($c,node) GetName]
+    foreach name $Label(nameList) {
+        set $name [Color($c,node) GetName]
+    }
     set Label(diffuse) [Color($c,node) GetDiffuseColor]
     LabelsColorWidgets
 }
@@ -675,7 +689,10 @@ proc LabelsFindLabel { } {
     if {$c == ""} {
         # Update GUI
         set Label(activeID) ""
-        set Label(name)    ""
+        # set Label(name)    ""
+        foreach name $Label(nameList) {
+            set $name ""
+        }
         set Label(diffuse) "0 0 0"
         LabelsColorWidgets
         return
