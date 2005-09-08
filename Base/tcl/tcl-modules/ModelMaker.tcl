@@ -83,7 +83,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.52 $} {$Date: 2005/08/15 19:24:14 $}]
+        {$Revision: 1.53 $} {$Date: 2005/09/08 18:23:23 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -296,6 +296,10 @@ ScaledIJK to RAS</B> section.
         grid $f.e$Param -sticky w
     }
 
+    # In LabelsSelectLabel, Label(name) is set, let it know that it needs to set
+    # ModelMaker(name) as well
+    lappend ::Label(nameList) ::ModelMaker(name)
+
     #-------------------------------------------
     # Create->Filter frame
     #-------------------------------------------
@@ -371,19 +375,19 @@ ScaledIJK to RAS</B> section.
 
     # label to start making models from
     eval {button $f.bStartLabel -text "Starting Label:" \
-        -command "ShowLabels \"ModelMakerMultipleLabelCallback start\""} $Gui(WBA)
+        -command "ModelMakerSetStartLabelButtonCallback"} $Gui(WBA)
     eval {entry $f.eStartLabel -width 6 -textvariable ModelMaker(startLabel)} $Gui(WEA)
     eval {entry $f.eStartName -width 20 -textvariable ModelMaker(startName)} $Gui(WEA)
-    bind $f.eStartLabel <Return>   {set Label(label) $::ModelMaker(startLabel); LabelsFindLabel; ModelMakerMultipleLabelCallback start}
+    bind $f.eStartLabel <Return>   {ModelMakerSetStartLabelReturnCallback}
     grid $f.bStartLabel $f.eStartLabel $f.eStartName \
          -padx $Gui(pad) -pady $Gui(pad) -sticky e
 
     # label to end making models from
     eval {button $f.bEndLabel -text "Ending Label:" \
-        -command "ShowLabels \"ModelMakerMultipleLabelCallback end\""} $Gui(WBA)
+        -command "ModelMakerSetEndLabelButtonCallback"} $Gui(WBA)
     eval {entry $f.eEndLabel -width 6 -textvariable ModelMaker(endLabel)} $Gui(WEA)
     eval {entry $f.eEndName -width 20 -textvariable ModelMaker(endName)} $Gui(WEA)
-    bind $f.eEndLabel <Return> {set Label(label) $::ModelMaker(endLabel) ; LabelsFindLabel; ModelMakerMultipleLabelCallback end}
+    bind $f.eEndLabel <Return> {ModelMakerSetEndLabelReturnCallback}
     grid $f.bEndLabel $f.eEndLabel $f.eEndName \
          -padx $Gui(pad) -pady $Gui(pad) -sticky e
 
@@ -769,6 +773,10 @@ proc ModelMakerEnter {} {
 proc ModelMakerSetVolume {v} {
     global ModelMaker Volume Label
 
+    if {$::Module(verbose)} {
+        puts "\nModelMakerSetVolume, Label(label) = $Label(label)"
+    }
+
     set ModelMaker(idVolume) $v
     
     # Change button text
@@ -924,6 +932,8 @@ proc ModelMakerCreateAll { } {
     global Model ModelMaker Label Module Gui
 
     set numModels 0
+    set skippedModels ""
+    set madeModels ""
 
     # Validate smooth
     if {[ValidateInt $ModelMaker(smooth)] == 0} {
@@ -1037,11 +1047,13 @@ proc ModelMakerCreateAll { } {
             if {$::Module(verbose)} { 
                 puts "Skipping $i = $freq"
             }
+            lappend skippedModels $i
             continue
         } else {
             if {$::Module(verbose)} { 
                 puts "Working on $i = $freq"
             }
+            lappend madeModels $i
         }
 
         
@@ -1124,7 +1136,18 @@ proc ModelMakerCreateAll { } {
 
     $ModelMaker(bCreateAll) config -state normal
     
-    DevInfoWindow "Created $numModels models for volume $volid, from $startLabel to $lastLabel"
+    set msg "Finished creating models for volume $volid."
+    if {[llength $madeModels] != 0} {
+        append msg "\nCreated $numModels models: $madeModels."
+    } else {
+        append msg "\nCreated no models"
+    }
+    if {[llength $skippedModels] != 0} {
+        append msg "\nSkipped these labels, as no voxels were present: $skippedModels"
+    } else {
+        append msg "\nNo labels skipped."
+    }
+    DevInfoWindow $msg
 
     return $m
 }
@@ -1137,6 +1160,10 @@ proc ModelMakerCreateAll { } {
 #-------------------------------------------------------------------------------
 proc ModelMakerLabelCallback {} {
     global Label ModelMaker
+
+    if {$::Module(verbose)} {
+        puts "ModelMakerLabelCallback, Label(callback) = $Label(callback)"
+    }
 
     set ModelMaker(name)   $Label(name)
 
@@ -1179,6 +1206,12 @@ proc ModelMakerMultipleLabelCallback { which } {
             $w config -bg [MakeColorNormalized [Color($c,node) GetDiffuseColor]] -state normal
         }
     }
+    # if the Label(callback) is left as ModelMakerMultipleLabelCallback, setting the values via
+    # the entry boxes won't work
+    if {$::Module(verbose)} {
+        puts "ModelMakerMultipleLabelCallback: Setting Label(callback) to empty"
+    }
+    set ::Label(callback) ""
 }
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerSmoothWrapper
@@ -1615,4 +1648,76 @@ proc ModelMakerSetJointSmooth {} {
     if {$::Module(verbose)} {
         puts $::ModelMaker(jointSmooth)
     }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ModelMakerSetStartLabelButtonCallback
+# Called when select the button to set the start label. Calls ShowLabels with the 
+# multiple model maker callback with the start flag.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ModelMakerSetStartLabelButtonCallback {} {
+    if {$::Module(verbose)} { 
+        puts "ModelMakerSetStartLabelButtonCallback: calling ShowLabels with start mult calback"
+    }
+    ShowLabels "ModelMakerMultipleLabelCallback start"
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ModelMakerSetStartLabelReturnCallback
+# Called when hit return in the start label entry box. 
+# Sets Label(label) from entry, calls LabelsFindLabel, then the model maker multiple 
+# call back with the start flag.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ModelMakerSetStartLabelReturnCallback {} {
+
+    set ::Label(label) $::ModelMaker(startLabel)
+
+    if {$::Module(verbose)} { 
+        puts "ModelMakerSetStartLabelReturnCallback: Label(label) = $::Label(label). Calling LabelsFindLabel."
+    }
+    LabelsFindLabel
+
+    if {$::Module(verbose)} { 
+        puts "ModelMakerSetStartLabelReturnCallback: now about to call ModelMakerMultipleLabelCallback start"
+    }
+
+    ModelMakerMultipleLabelCallback start
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ModelMakerSetEndLabelButtonCallback
+# Called when select the button to set the end label. Calls ShowLabels with the 
+# multiple model maker callback with the end flag.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ModelMakerSetEndLabelButtonCallback {} {
+    if {$::Module(verbose)} { 
+        puts "ModelMakerSetEndLabelButtonCallback calling mult callback with end"
+    }
+    ShowLabels "ModelMakerMultipleLabelCallback end" 
+
+    
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ModelMakerSetEndLabelReturnCallback
+# Called when hit return in the end label entry box. 
+# Sets Label(label) from entry, calls LabelsFindLabel, then the model maker multiple 
+# call back with the end flag.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ModelMakerSetEndLabelReturnCallback {} {
+    if {$::Module(verbose)} { 
+        puts "ModelMakerSetEndLabelReturnCallback: setting label to $::ModelMaker(endLabel)"
+    }
+    set ::Label(label) $::ModelMaker(endLabel)
+    LabelsFindLabel
+
+    ModelMakerMultipleLabelCallback end
 }
