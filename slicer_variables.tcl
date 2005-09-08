@@ -109,6 +109,19 @@ switch $tcl_platform(os) {
     }
     "Windows NT" {
     # Windows NT currently covers WinNT, Win2000, XP Home, XP Pro
+
+        ## override GSL dir to match pre-compiled binaries
+        set ::GSL_SRC_DIR $::SLICER_LIB/gsl-build/gsl
+
+        #
+        ### Set your peferred build type: 
+        #
+        #set ::VTK_BUILD_TYPE RelWithDebInfo ;# good if you have the full (expensive) compiler
+        #set ::VTK_BUILD_TYPE Release  ;# faster, but no debugging
+        set ::VTK_BUILD_TYPE Debug  ;# a good default
+
+        #  
+        set ::env(VTK_BUILD_TYPE) $VTK_BUILD_TYPE
         set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh84.exe
         set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish84.exe
         set ::ITCL_TEST_FILE $::TCL_LIB_DIR/itcl3.2/itcl32.dll
@@ -119,10 +132,11 @@ switch $tcl_platform(os) {
         set ::VTK_TCL_LIB $::TCL_LIB_DIR/tcl84.lib
         set ::VTK_TK_LIB $::TCL_LIB_DIR/tk84.lib
         set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh84.exe
-        set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/$VTK_BUILD_TYPE/libITKCommon.dll
+        set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/$VTK_BUILD_TYPE/ITKCommon.dll
     }
     default {
-    puts stderr "Could not match platform."
+        puts stderr "Could not match platform \"$tcl_platform(os)\"."
+        exit
     }
 }
 
@@ -162,15 +176,6 @@ switch $tcl_platform(os) {
         # that if it doesn't match above it must be windows
         # (VC7 is Visual C++ 7.0, also known as the .NET version)
 
-        #
-        ### Set your peferred build type: 
-        #
-
-        #set ::VTK_BUILD_TYPE RelWithDebInfo ;# good if you have the full (expensive) compiler
-        #set ::VTK_BUILD_TYPE Release  ;# faster, but no debugging
-        set ::VTK_BUILD_TYPE Debug  ;# a good default
-
-        set ::env(VTK_BUILD_TYPE) $VTK_BUILD_TYPE
 
         set ::VTKSLICERBASE_BUILD_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/$::VTK_BUILD_TYPE/vtkSlicerBase.lib
         set ::VTKSLICERBASE_BUILD_TCL_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/$::VTK_BUILD_TYPE/vtkSlicerBaseTCL.lib
