@@ -5,12 +5,12 @@ lappend SLICER_MODULE_ARG "-DVTKEMLOCAL_BUILD_DIR:PATH=$SLICER_HOME/Modules/vtkE
 
 switch $tcl_platform(os) {
     "Linux" {
-       lappend SLICER_MODULE_ARG "-DVTKEMATLAS_BUILD_LIB:PATH=$SLICER_HOME/Modules/vtkEMAtlasBrainClassifier/builds/$env(BUILD)/bin/libvtkEMLocalSegment.so"
-       lappend SLICER_MODULE_ARG "-DVTKEMATLAS_BUILD_TCL_LIB:PATH=$SLICER_HOME/Modules/vtkEMAtlasBrainClassifier/builds/$env(BUILD)/bin/libvtkEMLocalSegmentTCL.lib" 
+       lappend SLICER_MODULE_ARG "-DVTKEMATLAS_BUILD_LIB:PATH=$SLICER_HOME/Modules/vtkEMAtlasBrainClassifier/builds/$env(BUILD)/bin/libvtkEMAtlasBrainClassifier.so"
+       lappend SLICER_MODULE_ARG "-DVTKEMATLAS_BUILD_TCL_LIB:PATH=$SLICER_HOME/Modules/vtkEMAtlasBrainClassifier/builds/$env(BUILD)/bin/libvtkEMAtlasBrainClassifierTCL.lib" 
     }
     default {
-         lappend SLICER_MODULE_ARG "-DVTKEMATLAS_BUILD_LIB:PATH=$SLICER_HOME/Modules/vtkEMAtlasBrainClassifier/builds/$env(BUILD)/bin/debug/vtkEMLocalSegment.lib"
-         lappend SLICER_MODULE_ARG "-DVTKEMATLAS_BUILD_TCL_LIB:PATH=$SLICER_HOME/Modules/vtkEMAtlasBrainClassifier/builds/$env(BUILD)/bin/debug/vtkEMLocalSegmentTCL.lib" 
+         lappend SLICER_MODULE_ARG "-DVTKEMATLAS_BUILD_LIB:PATH=$SLICER_HOME/Modules/vtkEMAtlasBrainClassifier/builds/$env(BUILD)/bin/debug/vtkEMAtlasBrainClassifier.lib"
+         lappend SLICER_MODULE_ARG "-DVTKEMATLAS_BUILD_TCL_LIB:PATH=$SLICER_HOME/Modules/vtkEMAtlasBrainClassifier/builds/$env(BUILD)/bin/debug/vtkEMAtlasBrainClassifierTCL.lib" 
     } 
 }
 
