@@ -228,11 +228,8 @@ protected:
   //BTX
   // Description:
   // Checks all intput image if they have coresponding dimensions 
-#if EM_VTK_OLD_SETTINGS
-  int CheckInputImage(vtkImageData * inData,int DataTypeOrig, float DataSpacingOrig[3], int num);
-#else 
   int CheckInputImage(vtkImageData * inData,int DataTypeOrig, vtkFloatingPointType DataSpacingOrig[3], int num);
-#endif
+
   // Description:
   // Resets the error flag and messages 
   void ResetMessageSettings();  

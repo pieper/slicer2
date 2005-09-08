@@ -39,6 +39,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkObjectFactory.h"
 #include "vtkImageData.h"
 
+#include "vtkImageEMGeneral.h"
+// Defines 
+// #define EMSEGMENT_NUM_OF_QUALITY_MEASURE 1
+
 //------------------------------------------------------------------------
 vtkImageEMLocalClass* vtkImageEMLocalClass::New()
 {
@@ -224,11 +228,7 @@ int vtkImageEMLocalClass::CheckAndAssignImageData(vtkImageData *inData, int outE
 int vtkImageEMLocalClass::CheckInputImage(vtkImageData * inData,int DataTypeOrig, int num, int outExt[6]) {
   // Check if InData is defined 
   int inExt[6];
-#if EM_VTK_OLD_SETTINGS
-  float DataSpacingNew[3];
-#else 
   vtkFloatingPointType DataSpacingNew[3];
-#endif
 
   if (inData == 0) {
     vtkEMAddErrorMessage("CheckInputImage: Input "<< num << " must be specified.");

@@ -40,12 +40,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkImageEMLocalClass_h 
   
 #include <vtkEMLocalSegmentConfigure.h> 
-
-
 #include "vtkImageEMGenericClass.h"
 #include "vtkSlicer.h"
 
-#define EMSEGMENT_NUM_OF_QUALITY_MEASURE 1
+// #define EMSEGMENT_NUM_OF_QUALITY_MEASURE 1
 
 class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalClass : public vtkImageEMGenericClass
 {

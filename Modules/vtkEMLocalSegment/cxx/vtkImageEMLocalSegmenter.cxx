@@ -39,6 +39,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // EMLocal =  using EM Algorithm with Local Tissue Class Probability
 #include "vtkImageEMLocalSegmenter.h"
 #include "vtkObjectFactory.h"
+#include "vtkTimeDef.h"
 
 // ------------------------------------------------------------------
 // To Communicate with Samson
@@ -493,13 +494,8 @@ int vtkImageEMLocalSegmenter::GetDimensionZ() {
 }
 
 //------------------------------------------------------------------------------
-#if EM_VTK_OLD_SETTINGS
-int vtkImageEMLocalSegmenter::CheckInputImage(vtkImageData * inData,int DataTypeOrig, float DataSpacingOrig[3], int num) {
-  float DataSpacingNew[3];
-#else 
 int vtkImageEMLocalSegmenter::CheckInputImage(vtkImageData * inData,int DataTypeOrig, vtkFloatingPointType DataSpacingOrig[3], int num) {
   vtkFloatingPointType DataSpacingNew[3];
-#endif
 
   int inExt[6];
 
@@ -2264,8 +2260,9 @@ void vtkImageEMLocalSegmenter::ExecuteData(vtkDataObject *)
     this->DebugImage = NULL; 
   }
 
-#if (EMVERBOSE)
+#if (EMVERBOSE || 1)
  {
+   cout << "Kilian: Debugging " << endl;
     vtkIndent indent;
     this->PrintSelf(cout,indent); 
  }
