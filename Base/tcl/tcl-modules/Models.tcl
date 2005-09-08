@@ -85,7 +85,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.61 $} {$Date: 2005/08/12 21:57:05 $}]
+            {$Revision: 1.62 $} {$Date: 2005/09/08 20:43:14 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -1127,7 +1127,7 @@ proc ModelsPickScalarsCallback { mid ptdata scalars } {
         ModelsSetScalarsLut $mid "" "false" ;# tells it to use the default
     }
 
-    if { $::Model(scalarVisibilityAuto) } {
+    if { $::Model(scalarVisibilityAuto) == "1" } {
         ModelsPropsApplyButNotToNew
     }
 
