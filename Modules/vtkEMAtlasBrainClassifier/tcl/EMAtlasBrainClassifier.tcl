@@ -101,7 +101,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.12 $} {$Date: 2005/09/07 05:09:21 $}]
+        {$Revision: 1.13 $} {$Date: 2005/09/09 01:14:47 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -1382,15 +1382,7 @@ proc EMAtlasBrainClassifier_SetVtkAtlasSuperClassSetting {SuperClass} {
             EMSegment(Cattrib,$i,vtkImageEMClass) SetLogCovariance $EMSegment(Cattrib,$i,LogCovariance,$y,$x) $y $x
           }
       }
-      if {$EMSegment(IntensityAvgClass) == $EMSegment(Cattrib,$i,Label)} {
-          # Transfere Intensity correction filter stuff
-          set index 0
-          EMSegment(vtkEMSegment) EMSetIntensityAvgClass  EMSegment(Cattrib,$i,vtkImageEMClass)
-          foreach v $EMSegment(SelVolList,VolumeList) {       
-             EMSegment(vtkEMSegment) SetIntensityAvgValuePreDef $EMSegment(IntensityAvgValue,$v) $index
-             incr index
-          } 
-      }
+
       # Setup Quality Related information
       if {($EMSegment(Cattrib,$i,ReferenceStandardData) !=  $Volume(idNone)) && $EMSegment(Cattrib,$i,PrintQuality) } {
         EMSegment(Cattrib,$i,vtkImageEMClass) SetReferenceStandard [Volume($EMSegment(Cattrib,$i,ReferenceStandardData),vol) GetOutput]

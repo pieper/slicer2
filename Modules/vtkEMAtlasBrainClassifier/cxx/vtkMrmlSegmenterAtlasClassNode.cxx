@@ -120,7 +120,6 @@ void vtkMrmlSegmenterAtlasClassNode::Write(ofstream& of)
 void vtkMrmlSegmenterAtlasClassNode::Copy(vtkMrmlNode *anode)
 {
   vtkMrmlSegmenterAtlasClassNode *node = (vtkMrmlSegmenterAtlasClassNode *) anode;
-
   this->SetLabel(node->Label);
   this->SetLogMean(node->LogMean);
   this->SetLogCovariance(node->LogCovariance);

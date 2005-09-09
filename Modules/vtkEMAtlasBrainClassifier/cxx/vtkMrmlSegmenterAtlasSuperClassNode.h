@@ -66,7 +66,7 @@ public:
 
   // Description:
   // Copy the node's attributes to this object
-  void Copy(vtkMrmlNode *node);
+  void Copy(vtkMrmlNode *anode);
 
   // Description:
   // Get/Set for Segmenter

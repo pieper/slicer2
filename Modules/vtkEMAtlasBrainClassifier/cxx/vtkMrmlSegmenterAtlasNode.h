@@ -46,8 +46,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkMrmlSegmenterAtlasNode_h
 #define __vtkMrmlSegmenterAtlasNode_h
 
-//#include <iostream.h>
-//#include <fstream.h>
 #include "vtkMrmlNode.h"
 #include "vtkSlicer.h"
 #include <vtkEMAtlasBrainClassifierConfigure.h>
@@ -118,11 +116,6 @@ public:
   vtkGetMacro(NumberOfTrainingSamples, int);
 
   // Description:
-  // Get/Set for Segmenter
-  vtkSetMacro(IntensityAvgClass, int);
-  vtkGetMacro(IntensityAvgClass, int);
-
-  // Description:
   // The work directory for this segmentation 
   // Necessarry for EM to spid out intermediate results 
   // it will generate the necessary subdirectories from here 
@@ -161,7 +154,6 @@ protected:
   // Copy the node's attributes to this object
   void Copy(vtkMrmlNode *node);
 
-
   int    AlreadyRead; 
   int    MaxInputChannelDef;
   int    EMiteration;
@@ -170,7 +162,6 @@ protected:
   int    SmWidth;
   int    SmSigma;
   int    NumberOfTrainingSamples;
-  int    IntensityAvgClass;
   char*  PrintDir;
   int    SegmentationBoundaryMin[3];
   int    SegmentationBoundaryMax[3];
@@ -189,6 +180,11 @@ protected:
   vtkSetMacro(DisplayProb, int);
   vtkGetMacro(DisplayProb, int);
  
+  // Description:
+  // Get/Set for Segmenter
+  // vtkSetMacro(IntensityAvgClass, int);
+  // vtkGetMacro(IntensityAvgClass, int);
+
   // Should be deleted 
   // Description:
   // Get/Set for Segmenter
@@ -205,5 +201,6 @@ protected:
   int    DisplayProb;  // Should the probability displayed in the graph - left it in bc it is more work to take it out - should not be defined here but in GraphNode 
   int    EMShapeIter;
   int    RegistrationInterpolationType;
+  int    IntensityAvgClass;
 
 */

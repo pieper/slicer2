@@ -81,8 +81,6 @@ vtkMrmlSegmenterAtlasSuperClassNode::~vtkMrmlSegmenterAtlasSuperClassNode() {
 void vtkMrmlSegmenterAtlasSuperClassNode::Write(ofstream& of)
 {
   // Write all attributes not equal to their defaults
-  
-  if (this->Name && strcmp(this->Name, "")) of << " name ='" << this->Name << "'";
   of << " NumClasses ='" << this->NumClasses << "'";
   of << " PrintBias='" << this->PrintBias << "'";
   of << " PrintLabelMap='" << this->PrintLabelMap << "'";
@@ -104,20 +102,19 @@ void vtkMrmlSegmenterAtlasSuperClassNode::Write(ofstream& of)
 void vtkMrmlSegmenterAtlasSuperClassNode::Copy(vtkMrmlNode *anode)
 {
   vtkMrmlSegmenterAtlasSuperClassNode *node = (vtkMrmlSegmenterAtlasSuperClassNode *) anode;
-
   this->NumClasses = node->NumClasses;
 
   this->PrintBias      = node->PrintBias;
   this->PrintLabelMap  = node->PrintLabelMap;
   this->PrintFrequency = node->PrintFrequency;
 
-  this->StopEMType            = node->StopEMType;
-  this->StopEMValue           = node->StopEMValue; 
-  this->StopEMMaxIter   = node->StopEMMaxIter; 
+  this->StopEMType     = node->StopEMType;
+  this->StopEMValue    = node->StopEMValue; 
+  this->StopEMMaxIter  = node->StopEMMaxIter; 
 
-  this->StopMFAType           = node->StopMFAType;
-  this->StopMFAValue          = node->StopMFAValue; 
-  this->StopMFAMaxIter        = node->StopMFAMaxIter; 
+  this->StopMFAType    = node->StopMFAType;
+  this->StopMFAValue   = node->StopMFAValue; 
+  this->StopMFAMaxIter = node->StopMFAMaxIter; 
 }
 
 //----------------------------------------------------------------------------

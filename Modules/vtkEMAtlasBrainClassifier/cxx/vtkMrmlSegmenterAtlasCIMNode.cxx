@@ -106,7 +106,3 @@ void vtkMrmlSegmenterAtlasCIMNode::PrintSelf(ostream& os, vtkIndent indent)
    os << ")\n";
 }
 
-// of << indent ..... 
-// of << "></SegmenterCIM>\n";;
-// vtkMrmlNode::MrmlNodeCopy(anode);
-// vtkMrmlNode::PrintSelf(os,indent);

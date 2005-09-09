@@ -35,10 +35,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 =========================================================================auto=*/
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
-#include <math.h>
+//#include <stdio.h>
+//#include <ctype.h>
+//#include <string.h>
+//#include <math.h>
 #include "vtkMrmlSegmenterAtlasNode.h"
 #include "vtkObjectFactory.h"
 
@@ -67,7 +67,6 @@ vtkMrmlSegmenterAtlasNode::vtkMrmlSegmenterAtlasNode()
   this->SmWidth     = 1;
   this->SmSigma     = 1;
   this->NumberOfTrainingSamples = 0;
-  this->IntensityAvgClass = -1;
   this->PrintDir = NULL;
   for (int i=0; i < 3; i++) {
     this->SegmentationBoundaryMin[i] = 0; // Lower bound of the boundary box where the image gets segments.
@@ -108,7 +107,6 @@ void vtkMrmlSegmenterAtlasNode::Write(ofstream& of)
   of << "'";
 
   of << " NumberOfTrainingSamples ='"    << this->NumberOfTrainingSamples << "'";
-  of << " IntensityAvgClass ='"          << this->IntensityAvgClass << "'";
 
   if (this->PrintDir && strcmp(this->PrintDir, "")) 
   of << " PrintDir ='"                   << this->PrintDir << "'";
@@ -119,6 +117,7 @@ void vtkMrmlSegmenterAtlasNode::Write(ofstream& of)
 // Does NOT copy: ID, Name and PrintDir
 void vtkMrmlSegmenterAtlasNode::Copy(vtkMrmlNode *anode)
 {
+  vtkMrmlNode::MrmlNodeCopy(anode);
   vtkMrmlSegmenterAtlasNode *node = (vtkMrmlSegmenterAtlasNode *) anode;
 
   this->MaxInputChannelDef         = node->MaxInputChannelDef;
@@ -128,7 +127,6 @@ void vtkMrmlSegmenterAtlasNode::Copy(vtkMrmlNode *anode)
   this->SmWidth                    = node->SmWidth;
   this->SmSigma                    = node->SmSigma;
   this->NumberOfTrainingSamples    = node->NumberOfTrainingSamples;
-  this->IntensityAvgClass          = node->IntensityAvgClass;
 
   memcpy(this->SegmentationBoundaryMin, node->SegmentationBoundaryMin, sizeof(int)*3);
   memcpy(this->SegmentationBoundaryMax, node->SegmentationBoundaryMax, sizeof(int)*3);
@@ -137,6 +135,7 @@ void vtkMrmlSegmenterAtlasNode::Copy(vtkMrmlNode *anode)
 //----------------------------------------------------------------------------
 void vtkMrmlSegmenterAtlasNode::PrintSelf(ostream& os, vtkIndent indent)
 {
+  vtkMrmlNode::PrintSelf(os,indent);
   os << indent << "AlreadyRead: "               << this->AlreadyRead     <<  "\n"; 
   os << indent << "MaxInputChannelDef: "        << this->MaxInputChannelDef <<  "\n"; 
   os << indent << "EMiteration: "               << this->EMiteration     <<  "\n"; 
@@ -145,7 +144,6 @@ void vtkMrmlSegmenterAtlasNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "SmWidth: "                   << this->SmWidth <<  "\n"; 
   os << indent << "SmSigma: "                   << this->SmSigma <<  "\n"; 
   os << indent << "NumberOfTrainingSamples: "   << this->NumberOfTrainingSamples <<  "\n"; 
-  os << indent << "IntensityAvgClass: "         << this->IntensityAvgClass << "\n";
   os << indent << "PrintDir: "                  << this->PrintDir << "\n"; 
   os << indent << "SegmentationBoundaryMin: " ;
   int i;

@@ -121,6 +121,7 @@ void vtkMrmlSegmenterAtlasGenericClassNode::Copy(vtkMrmlNode *anode)
 //----------------------------------------------------------------------------
 void vtkMrmlSegmenterAtlasGenericClassNode::PrintSelf(ostream& os, vtkIndent indent)
 {
+  vtkMrmlNode::PrintSelf(os,indent);
   os << indent << "Name:                               " << (this->Name ? this->Name : "(none)") << "\n"; 
   os << indent << "Prob:                               " << this->Prob << "\n"; 
   os << indent << "InputChannelWeights:                " <<

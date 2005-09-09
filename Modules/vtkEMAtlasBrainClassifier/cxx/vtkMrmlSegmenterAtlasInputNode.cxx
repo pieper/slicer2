@@ -91,8 +91,8 @@ void vtkMrmlSegmenterAtlasInputNode::Write(ofstream& of)
 // Does NOT copy: ID, Name
 void vtkMrmlSegmenterAtlasInputNode::Copy(vtkMrmlNode *anode)
 {
+  vtkMrmlNode::MrmlNodeCopy(anode);
   vtkMrmlSegmenterAtlasInputNode *node = (vtkMrmlSegmenterAtlasInputNode *) anode;
-
   this->SetFileName(node->FileName); 
 }
 
