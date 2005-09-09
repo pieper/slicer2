@@ -163,15 +163,15 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
             EMSegment(Cattrib,$i,vtkImageEMClass) SetLogCovariance $EMSegment(Cattrib,$i,LogCovariance,$y,$x) $y $x
           }
       }
-      if {$EMSegment(IntensityAvgClass) == $EMSegment(Cattrib,$i,Label)} {
-          # Transfere Intensity correction filter stuff
-          set index 0
-          EMSegment(vtkEMSegment) SetIntensityAvgClass  EMSegment(Cattrib,$i,vtkImageEMClass)
-          foreach v $EMSegment(SelVolList,VolumeList) {       
-             EMSegment(vtkEMSegment) SetIntensityAvgValuePreDef $EMSegment(IntensityAvgValue,$v) $index
-             incr index
-          } 
-      }
+      # if {$EMSegment(IntensityAvgClass) == $EMSegment(Cattrib,$i,Label)} {
+      #     # Transfere Intensity correction filter stuff
+      #     set index 0
+      #     EMSegment(vtkEMSegment) SetIntensityAvgClass  EMSegment(Cattrib,$i,vtkImageEMClass)
+      #     foreach v $EMSegment(SelVolList,VolumeList) {       
+      #        EMSegment(vtkEMSegment) SetIntensityAvgValuePreDef $EMSegment(IntensityAvgValue,$v) $index
+      #        incr index
+      #     } 
+      # }
       # Setup Quality Related information
       if {($EMSegment(Cattrib,$i,ReferenceStandardData) !=  $Volume(idNone)) && $EMSegment(Cattrib,$i,PrintQuality) } {
         EMSegment(Cattrib,$i,vtkImageEMClass) SetReferenceStandard [Volume($EMSegment(Cattrib,$i,ReferenceStandardData),vol) GetOutput]
@@ -287,15 +287,15 @@ proc EMSegmentSetVtkLocalSuperClassSetting {SuperClass} {
             EMSegment(Cattrib,$i,vtkImageEMClass) SetLogCovariance $EMSegment(Cattrib,$i,LogCovariance,$y,$x) $y $x
           }
       }
-      if {$EMSegment(IntensityAvgClass) == $EMSegment(Cattrib,$i,Label)} {
-          # Transfere Intensity correction filter stuff
-          set index 0
-          EMSegment(vtkEMSegment) EMSetIntensityAvgClass  EMSegment(Cattrib,$i,vtkImageEMClass)
-          foreach v $EMSegment(SelVolList,VolumeList) {       
-             EMSegment(vtkEMSegment) SetIntensityAvgValuePreDef $EMSegment(IntensityAvgValue,$v) $index
-             incr index
-          } 
-      }
+      # if {$EMSegment(IntensityAvgClass) == $EMSegment(Cattrib,$i,Label)} {
+      #     # Transfere Intensity correction filter stuff
+      #     set index 0
+      #     EMSegment(vtkEMSegment) EMSetIntensityAvgClass  EMSegment(Cattrib,$i,vtkImageEMClass)
+      #     foreach v $EMSegment(SelVolList,VolumeList) {       
+      #        EMSegment(vtkEMSegment) SetIntensityAvgValuePreDef $EMSegment(IntensityAvgValue,$v) $index
+      #        incr index
+      #     } 
+      # }
       # Setup Quality Related information
       if {($EMSegment(Cattrib,$i,ReferenceStandardData) !=  $Volume(idNone)) && $EMSegment(Cattrib,$i,PrintQuality) } {
         EMSegment(Cattrib,$i,vtkImageEMClass) SetReferenceStandard [Volume($EMSegment(Cattrib,$i,ReferenceStandardData),vol) GetOutput]
@@ -351,7 +351,7 @@ proc EMSegmentAlgorithmStart { } {
    EMSegment(vtkEMSegment) SetNumberOfTrainingSamples $EMSegment(NumberOfTrainingSamples)
 
    if {$EMSegment(SegmentMode)} {
-    EMSegment(vtkEMSegment) SetNumEMShapeIter  $EMSegment(EMShapeIter)  
+       # EMSegment(vtkEMSegment) SetNumEMShapeIter  $EMSegment(EMShapeIter)  
        if {[EMSegmentSetVtkPrivateSuperClassSetting 0]} { return 0 }
    }  else {
        if {[EMSegmentSetVtkLocalSuperClassSetting 0]} { return 0 }

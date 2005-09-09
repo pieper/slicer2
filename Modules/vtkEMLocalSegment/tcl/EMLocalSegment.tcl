@@ -193,7 +193,7 @@ proc EMSegmentInit {} {
     #} 
     set EMSegment(SegmentMode) 0
     if {$::Module(verbose)} {
-        puts "Debugging - just loadin local version"
+        puts "Debugging - just loading local version"
     }
 
     # Source EMSegmentAlgorithm.tcl File 
@@ -288,7 +288,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.59 $} {$Date: 2005/09/08 04:40:05 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.60 $} {$Date: 2005/09/09 01:07:49 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -375,7 +375,7 @@ proc EMSegmentInit {} {
 
     # Needed for intensity correction 
     # IntensityAvgClass <0 => intensity correction is enabled
-    set EMSegment(IntensityAvgClass) -1
+    # set EMSegment(IntensityAvgClass) -1
 
     # Bias Field will not be printed
     # Kilian Generally simplify structure so that you have to do the least amount of work when you enter new variables 
@@ -470,15 +470,16 @@ proc EMSegmentInit {} {
 
     set EMSegment(SuperClass) -1
     set EMSegment(NumClassesNew) 1
-         
+    
     foreach NodeType "$EMSegment(MrmlNode,TypeList) SegmenterGenericClass" {
         set blubList [EMSegmentDefineNodeAttributeList $NodeType]
         set EMSegment(MrmlNode,$NodeType,SetList)       [lindex $blubList 0]
+    # puts "$NodeType -- $EMSegment(MrmlNode,$NodeType,SetList)"
         set EMSegment(MrmlNode,$NodeType,SetListLower)  [lindex $blubList 1]
         set EMSegment(MrmlNode,$NodeType,AttributeList) [lindex $blubList 2]
         set EMSegment(MrmlNode,$NodeType,InitValueList) [lindex $blubList 3]
     }
-   
+
     set EMSegment(MrmlNode,JointSegmenterSuperClassAndClass,AttributeList) "$EMSegment(MrmlNode,SegmenterGenericClass,AttributeList) $EMSegment(MrmlNode,SegmenterSuperClass,AttributeList) $EMSegment(MrmlNode,SegmenterClass,AttributeList)"
     set EMSegment(MrmlNode,JointSegmenterSuperClassAndClass,InitValueList) "$EMSegment(MrmlNode,SegmenterGenericClass,InitValueList) $EMSegment(MrmlNode,SegmenterSuperClass,InitValueList) $EMSegment(MrmlNode,SegmenterClass,InitValueList)"
 
@@ -1045,12 +1046,12 @@ Description of the tabs:
     EMSegmentDefineLocalProb $f.fBox1.fLeft.fProb Cl $Sclass 1
     pack $EMSegment(mbCl-ProbVolumeSelect) -side left -padx 1 -pady 0 
 
-    DevAddLabel $f.fBox1.fLeft.fShape.lShape "Shape Parameter: "
-    eval {entry $f.fBox1.fLeft.fShape.eShape -width 4 -textvariable EMSegment(Cattrib,$Sclass,ShapeParameter) } $Gui(WEA)
-    set EMSegment(Cl-eShapeParameter)  $f.fBox1.fLeft.fShape.eShape
+    #DevAddLabel $f.fBox1.fLeft.fShape.lShape "Shape Parameter: "
+    #eval {entry $f.fBox1.fLeft.fShape.eShape -width 4 -textvariable EMSegment(Cattrib,$Sclass,ShapeParameter) } $Gui(WEA)
+    # set EMSegment(Cl-eShapeParameter)  $f.fBox1.fLeft.fShape.eShape
 
     EMSegmentBuildWeightPannel $f $Sclass 0
-    pack $f.fBox1.fLeft.fShape.lShape $f.fBox1.fLeft.fShape.eShape -side left
+    # pack $f.fBox1.fLeft.fShape.lShape $f.fBox1.fLeft.fShape.eShape -side left
 
     #Define Color
     DevAddLabel $f.fBox1.fColor.lColorLabel "Color/Label:"
@@ -1316,9 +1317,9 @@ Description of the tabs:
     pack $f.fSect1.fCol$i -side left -padx 0 -pady $Gui(pad) 
     }
 
-    DevAddLabel $f.fSect1.fCol1.lESI "EM - Shape:"
-    eval {entry $f.fSect1.fCol2.eESI -width 4 -textvariable EMSegment(EMShapeIter) } $Gui(WEA)
-    TooltipAdd $f.fSect1.fCol2.eESI "Number of EM - Shaoe Iterations"
+    # DevAddLabel $f.fSect1.fCol1.lESI "EM - Shape:"
+    # eval {entry $f.fSect1.fCol2.eESI -width 4 -textvariable EMSegment(EMShapeIter) } $Gui(WEA)
+    # TooltipAdd $f.fSect1.fCol2.eESI "Number of EM - Shaoe Iterations"
 
     DevAddLabel $f.fSect1.fCol1.lEMI "EM-Iterations:"
     eval {entry $f.fSect1.fCol2.eEMI -width 4 -textvariable EMSegment(Cattrib,0,StopEMMaxIter) } $Gui(WEA)
@@ -1368,7 +1369,9 @@ Description of the tabs:
     set menu $f.fSect1.fCol2.mbIntensityClass.m
     DevAddLabel  $f.fSect1.fCol1.lIntensityClass "Intensity Class:"
     #Define Menu button
-    set IntResult [EMSegmentFindClassAndTestfromIntClass $EMSegment(IntensityAvgClass)]
+    # set IntResult [EMSegmentFindClassAndTestfromIntClass $EMSegment(IntensityAvgClass)]
+    set IntResult "-1 None" 
+
     set IntText [lindex $IntResult 1]
     set IntClass [lindex $IntResult 0]
 
@@ -1458,8 +1461,8 @@ Description of the tabs:
     DevAddLabel $f.fSect1.fCol2.lEmpty8 ""
 
     # Pack 2. Block
-    pack $f.fSect1.fCol1.lESI -side top -padx $Gui(pad) -pady 2 -anchor w 
-    pack $f.fSect1.fCol2.eESI -side top -anchor w
+    # pack $f.fSect1.fCol1.lESI -side top -padx $Gui(pad) -pady 2 -anchor w 
+    # pack $f.fSect1.fCol2.eESI -side top -anchor w
 
     pack $f.fSect1.fCol1.lEMI $f.fSect1.fCol1.lMRFI $f.fSect1.fCol1.lAlpha -side top -padx $Gui(pad) -pady 2 -anchor w 
     pack $f.fSect1.fCol2.eEMI $f.fSect1.fCol2.eMRFI $f.fSect1.fCol2.eAlpha -side top -anchor w
@@ -1650,8 +1653,19 @@ proc EMSegmentDefineNodeAttributeList {MrmlNodeType} {
     set InitList ""
 
     vtkMrml${MrmlNodeType}Node blub
-    set nMethods [blub ListMethods] 
-    set nMethods "[lrange $nMethods [expr [lsearch $nMethods vtkMrml${MrmlNodeType}Node:]+ 1] end]"
+    set nMethods [blub ListMethods]
+
+    set MrmlAtlasNodeType vtkMrmlSegmenterAtlas[string range $MrmlNodeType 9 end]Node:
+    if {([lsearch $nMethods $MrmlAtlasNodeType] > -1)} {
+    # puts "==>>>>>>>>>>>> Atlas exists for $MrmlNodeType "
+    set StartSearch $MrmlAtlasNodeType
+    } else {
+        # puts "==>>>>>>>>>>>> No Atlas exists for $MrmlNodeType "
+        set StartSearch vtkMrml${MrmlNodeType}Node:
+    }
+
+    set nMethods "[lrange $nMethods [expr [lsearch $nMethods $StartSearch]+ 1] end]"
+    # puts "---------- \n$nMethods" 
    
     # Cut out everyhting than it is not directly connected with the MrmlSegmenterNode!  
     # If you want to change it just take the SetOptions out - that is why I am duing it 
@@ -1663,11 +1677,11 @@ proc EMSegmentDefineNodeAttributeList {MrmlNodeType} {
           lappend SetListLower [string tolower $SetCommand] 
           set Attribute [string range $SetCommand 3 end] 
           lappend AttributeList $Attribute
+      # puts $Attribute
           lappend InitList "[blub Get$Attribute]" 
         }
     }
     blub Delete
-
 
     return "{$SetList} {$SetListLower} {$AttributeList} {$InitList}" 
 }
@@ -1766,7 +1780,7 @@ proc EMSegmentUpdateMRML {} {
     # -------------------------------------------------
     if {$EMSegment(UseSamples) == 1} {set EMSegment(UseSamples) 0;EMSegmentUseSamples 1}
     EMSegmentUpdateVolumeList   
-    set IntensityAvgClass $EMSegment(IntensityAvgClass)
+    # set IntensityAvgClass $EMSegment(IntensityAvgClass)
     # Store Parent SuperClasses and its left over children that have not yet been read in
     set SclassMemory ""
 
@@ -1844,8 +1858,8 @@ proc EMSegmentUpdateMRML {} {
          } else {
             set CurrentClassList 0
          }
-         set IntensityAvgClass                     [Segmenter($pid,node) GetIntensityAvgClass]  
-         set OldIntensityAvgClass  $EMSegment(IntensityAvgClass)
+         # set IntensityAvgClass                     [Segmenter($pid,node) GetIntensityAvgClass]  
+         # set OldIntensityAvgClass  $EMSegment(IntensityAvgClass)
 
      # Define all parameters without special consideration
      set EMiteration 0 
@@ -1863,7 +1877,7 @@ proc EMSegmentUpdateMRML {} {
         set EMSegment(Cattrib,0,StopEMMaxIter) $EMiteration
         set EMSegment(Cattrib,0,StopMFAMaxIter) $MFAiteration
      }
-         set EMSegment(IntensityAvgClass) $OldIntensityAvgClass 
+         # set EMSegment(IntensityAvgClass) $OldIntensityAvgClass 
 
        } elseif {$ClassName == "vtkMrmlSegmenterGraphNode" } {
           # --------------------------------------------------
@@ -1891,7 +1905,7 @@ proc EMSegmentUpdateMRML {} {
               set VolID [lindex $Volume(idList) $VolIndex] 
               set EMSegment(AllVolList,ActiveID) [lsearch -exact $EMSegment(AllVolList,VolumeList) $VolID]
               EMSegmentTransfereVolume All
-              set EMSegment(IntensityAvgValue,$VolID) [SegmenterInput($pid,node) GetIntensityAvgValuePreDef]
+              # set EMSegment(IntensityAvgValue,$VolID) [SegmenterInput($pid,node) GetIntensityAvgValuePreDef]
           }
        } elseif {$ClassName == "vtkMrmlSegmenterSuperClassNode" } {
          # puts "Start vtkMrmlSegmenterSuperClassNode"
@@ -2095,9 +2109,9 @@ proc EMSegmentUpdateMRML {} {
     set item [Mrml(dataTree) GetNextItem]
   }
   # Do not update before end of class is read 
-  if {$EMSegment(IntensityAvgClass) != $IntensityAvgClass} {
-      EMSegmentChangeIntensityClass [lindex [EMSegmentFindClassAndTestfromIntClass $IntensityAvgClass] 0] 0
-  }
+  #if {$EMSegment(IntensityAvgClass) != $IntensityAvgClass} {
+  #    EMSegmentChangeIntensityClass [lindex [EMSegmentFindClassAndTestfromIntClass $IntensityAvgClass] 0] 0
+  #}
   # puts "Hey SuperClass $EMSegment(SuperClass)  $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)" 
   foreach cl $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) {
       if {$EMSegment(Cattrib,$cl,IsSuperClass) == 0} {EMSegmentUpdateLocalProb OT-ProbVolumeSelect,$cl $cl }
@@ -2498,7 +2512,7 @@ proc EMSegmentSaveSetting {FileFlag {FileName -1} {CheckToProceed 1} } {
     # Has to be done once so that everything works in the future
     if { [Segmenter($pid,node) GetEMiteration] }  { Segmenter($pid,node) SetEMiteration 0 }
     if { [Segmenter($pid,node) GetMFAiteration] } { Segmenter($pid,node) SetMFAiteration 0 }
-    Segmenter($pid,node) SetEMShapeIter                 $EMSegment(EMShapeIter)
+    # Segmenter($pid,node) SetEMShapeIter                 $EMSegment(EMShapeIter)
     Segmenter($pid,node) SetAlpha                       $EMSegment(Alpha)  
     Segmenter($pid,node) SetSmWidth                     $EMSegment(SmWidth)  
     Segmenter($pid,node) SetSmSigma                     $EMSegment(SmSigma)  
@@ -2508,7 +2522,7 @@ proc EMSegmentSaveSetting {FileFlag {FileName -1} {CheckToProceed 1} } {
 
     Segmenter($pid,node) SetDisplayProb                 $EMSegment(Graph,DisplayProb)  
     Segmenter($pid,node) SetNumberOfTrainingSamples     $EMSegment(NumberOfTrainingSamples)
-    Segmenter($pid,node) SetIntensityAvgClass           $EMSegment(IntensityAvgClass)
+    # Segmenter($pid,node) SetIntensityAvgClass           $EMSegment(IntensityAvgClass)
    
     Segmenter($pid,node) SetPrintDir                    "$EMSegment(PrintDir)"
 
@@ -2536,9 +2550,9 @@ proc EMSegmentSaveSetting {FileFlag {FileName -1} {CheckToProceed 1} } {
        # Set Values
        set pid [$id GetID]
        SegmenterInput($pid,node) SetFileName   [Volume($v,node) GetName]
-       if {$EMSegment(IntensityAvgClass) > -1} {
-         SegmenterInput($pid,node) SetIntensityAvgValuePreDef $EMSegment(IntensityAvgValue,$v)
-       }
+       # if {$EMSegment(IntensityAvgClass) > -1} {
+       #  SegmenterInput($pid,node) SetIntensityAvgValuePreDef $EMSegment(IntensityAvgValue,$v)
+       # }
    }
    # -------------------------------------------------------------------
    # 4.) SegmenterSuperClass - Class - CIM
@@ -2635,7 +2649,7 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
           SegmenterClass($pid,node) SetName                "$EMSegment(Cattrib,$i,Label)"
           SegmenterClass($pid,node) SetLabel               $EMSegment(Cattrib,$i,Label)
           SegmenterClass($pid,node) SetProb                $EMSegment(Cattrib,$i,Prob)
-          SegmenterClass($pid,node) SetShapeParameter      $EMSegment(Cattrib,$i,ShapeParameter)
+          # SegmenterClass($pid,node) SetShapeParameter      $EMSegment(Cattrib,$i,ShapeParameter)
           SegmenterClass($pid,node) SetLocalPriorWeight $EMSegment(Cattrib,$i,LocalPriorWeight)    
           set v $EMSegment(Cattrib,$i,ProbabilityData)
           if {$v != $Volume(idNone) } {
@@ -3030,8 +3044,8 @@ proc EMSegmentClickLabel {{Sclass ""} {ActiveGui ""} {label ""} {colorcode ""} }
     # If the gui should be shanged too set ActiveGui = 1
     if {$ActiveGui == ""} {set ActiveGui 1}
  
-    set ChangeIntensityMenu 0
-    if {$EMSegment(Cattrib,$Sclass,Label) == $EMSegment(IntensityAvgClass)} {set ChangeIntensityMenu 1}
+    # set ChangeIntensityMenu 0
+    # if {$EMSegment(Cattrib,$Sclass,Label) == $EMSegment(IntensityAvgClass)} {set ChangeIntensityMenu 1}
 
     if {$label == ""} {
         set EMSegment(Cattrib,$Sclass,Label) $Label(label)    
@@ -3102,11 +3116,11 @@ proc EMSegmentClickLabel {{Sclass ""} {ActiveGui ""} {label ""} {colorcode ""} }
         -activebackground $EMSegment(Cattrib,$Sclass,ColorCode) -text $EMSegment(Cattrib,$Sclass,Label)
     }
 
-    if {$ChangeIntensityMenu} {
-       set EMSegment(IntensityAvgClass) $EMSegment(Cattrib,$Sclass,Label)
-          $EMSegment(DE-mbIntClass) configure -bg $EMSegment(Cattrib,$Sclass,ColorCode) \
-          -activebackground $EMSegment(Cattrib,$Sclass,ColorCode) -text $EMSegment(Cattrib,$Sclass,Label) 
-    }
+    #if {$ChangeIntensityMenu} {
+    #   set EMSegment(IntensityAvgClass) $EMSegment(Cattrib,$Sclass,Label)
+    #      $EMSegment(DE-mbIntClass) configure -bg $EMSegment(Cattrib,$Sclass,ColorCode) \
+    #      -activebackground $EMSegment(Cattrib,$Sclass,ColorCode) -text $EMSegment(Cattrib,$Sclass,Label) 
+    #}
 }
 
 #-------------------------------------------------------------------------------
@@ -3204,7 +3218,7 @@ proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
      # 4.) Change Class Panels 
      $EMSegment(DE-mbIntClass).m delete [expr $ClassIndex + 1] [expr $ClassIndex + 1]
      # Check if it is currently selected => if so change to none
-     if {$EMSegment(IntensityAvgClass) == $Sclass} {EMSegmentChangeIntensityClass -1 1}
+     # if {$EMSegment(IntensityAvgClass) == $Sclass} {EMSegmentChangeIntensityClass -1 1}
 
      # 5.) Delete Node!
      if {$EMSegment(Cattrib,$Sclass,Node) != "" && $DeleteNode} {
@@ -3806,7 +3820,7 @@ proc EMSegmentChangeClass {Sclass} {
     $EMSegment(Cl-cSuperClass) config -variable EMSegment(Cattrib,$Sclass,IsSuperClass)
  
     foreach prob $EMSegment(eGlobalProb) { $prob config  -textvariable EMSegment(Cattrib,$Sclass,Prob)}
-    $EMSegment(Cl-eShapeParameter) config  -textvariable EMSegment(Cattrib,$Sclass,ShapeParameter)
+    # $EMSegment(Cl-eShapeParameter) config  -textvariable EMSegment(Cattrib,$Sclass,ShapeParameter)
     $EMSegment(Cl-f0-ePriorWeight) config -textvariable EMSegment(Cattrib,$Sclass,LocalPriorWeight)
     $EMSegment(Cl-f1-ePriorWeight) config -textvariable EMSegment(Cattrib,$Sclass,LocalPriorWeight)
 
@@ -3893,18 +3907,18 @@ proc EMSegmentUpdateClassNavigationButton { } {
 proc EMSegmentChangeIntensityClass {Sclass reset} {
     global EMSegment Gui
     if {$Sclass > 0} {
-       set EMSegment(IntensityAvgClass) $EMSegment(Cattrib,$Sclass,Label)
+       # set EMSegment(IntensityAvgClass) $EMSegment(Cattrib,$Sclass,Label)
        $EMSegment(DE-mbIntClass) config -bg $EMSegment(Cattrib,$Sclass,ColorCode) -activebackground $EMSegment(Cattrib,$Sclass,ColorCode) -text $EMSegment(Cattrib,$Sclass,Label)
     } else {
-       set EMSegment(IntensityAvgClass) -1 
+       # set EMSegment(IntensityAvgClass) -1 
        eval {$EMSegment(DE-mbIntClass) config -text "None"}  $Gui(WMBA)
     }
     # Reset Values 
-    if { ($EMSegment(NumInputChannel)) && $reset } {
-       foreach v $EMSegment(SelVolList,VolumeList) {
-          set EMSegment(IntensityAvgValue,$v) -1.0 
-       }
-    }
+    #if { ($EMSegment(NumInputChannel)) && $reset } {
+    #   foreach v $EMSegment(SelVolList,VolumeList) {
+    #      set EMSegment(IntensityAvgValue,$v) -1.0 
+    #   }
+    #}
 }
 
 #-------------------------------------------------------------------------------
@@ -4212,9 +4226,9 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses {HeadClass 1
             if {($EMSegment(Cattrib,$i,EndNode) != "") && $DeleteNode} {lappend  MrmlNodeDeleteList "EndSegmenterClass [$EMSegment(Cattrib,$i,EndNode) GetID]" }
           }
       
-      if  {$EMSegment(Cattrib,$i,Label) ==  $EMSegment(IntensityAvgClass)} {
-          EMSegmentChangeIntensityClass -1 1
-      }
+      # if  {$EMSegment(Cattrib,$i,Label) ==  $EMSegment(IntensityAvgClass)} {
+      #     EMSegmentChangeIntensityClass -1 1
+      #}
     
       # Delete Additonal CIM Fields
       # Free the variables 
