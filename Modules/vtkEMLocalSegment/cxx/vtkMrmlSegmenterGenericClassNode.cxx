@@ -58,16 +58,9 @@ vtkMrmlSegmenterGenericClassNode* vtkMrmlSegmenterGenericClassNode::New()
 //----------------------------------------------------------------------------
 vtkMrmlSegmenterGenericClassNode::vtkMrmlSegmenterGenericClassNode() { 
   // vtkMrmlNode's attributes => Tabs following sub classes  
-  this->Prob       = 0.0;
 
-  this->LocalPriorWeight = 1.0;
-  this->LocalPriorName   = NULL; 
-
-  this->InputChannelWeights = NULL;
-  this->PrintWeights        = 0;
   this->PrintRegistrationParameters = 0;
   this->PrintRegistrationSimularityMeasure = 0;
-
 
   memset(this->RegistrationTranslation,0,3*sizeof(double));
   memset(this->RegistrationRotation,0,3*sizeof(double));
@@ -81,37 +74,11 @@ vtkMrmlSegmenterGenericClassNode::vtkMrmlSegmenterGenericClassNode() {
 }
 
 //----------------------------------------------------------------------------
-vtkMrmlSegmenterGenericClassNode::~vtkMrmlSegmenterGenericClassNode() { 
-  if (this->InputChannelWeights) {
-    delete [] this->InputChannelWeights;
-    this->InputChannelWeights = NULL;
-  }
-
-  if (this->LocalPriorName)
-  {
-    delete [] this->LocalPriorName;
-    this->LocalPriorName = NULL;
-  }
-
-}
-
-//----------------------------------------------------------------------------
-void vtkMrmlSegmenterGenericClassNode::Write(ofstream& of, int nIndent)
+void vtkMrmlSegmenterGenericClassNode::Write(ofstream& of)
 {
   // Write all attributes not equal to their defaults
-  of << " Prob='" << this->Prob << "'";
-  if (this->InputChannelWeights && strcmp(this->InputChannelWeights, "")) 
-  {
-    of << " InputChannelWeights='" << this->InputChannelWeights << "'";
-  }
-  of << " LocalPriorWeight='" << this->LocalPriorWeight << "'";
+  vtkMrmlSegmenterAtlasGenericClassNode::Write(of);
 
-  if (this->LocalPriorName && strcmp(this->LocalPriorName, "")) 
-  {
-    of << " LocalPriorName='" << this->LocalPriorName << "'";
-  }
-
-  if (this->PrintWeights) of << " PrintWeights='" << this->PrintWeights << "'";
   if (this->PrintRegistrationParameters) of << " PrintRegistrationParameters='" << this->PrintRegistrationParameters << "'";
   if (this->PrintRegistrationSimularityMeasure) of << " PrintRegistrationSimularityMeasure='" << this->PrintRegistrationSimularityMeasure << "'";
 
@@ -134,14 +101,9 @@ void vtkMrmlSegmenterGenericClassNode::Write(ofstream& of, int nIndent)
 // Does NOT copy: ID, Name
 void vtkMrmlSegmenterGenericClassNode::Copy(vtkMrmlNode *anode)
 {
-  vtkMrmlNode::MrmlNodeCopy(anode);
+  vtkMrmlSegmenterAtlasGenericClassNode::Copy(anode);
   vtkMrmlSegmenterGenericClassNode *node = (vtkMrmlSegmenterGenericClassNode *) anode;
-  this->Prob = node->Prob;
-  this->SetInputChannelWeights(node->InputChannelWeights);
-  this->SetLocalPriorWeight(node->LocalPriorWeight);
-  this->SetLocalPriorName(node->LocalPriorName); 
 
-  this->PrintWeights                  = node->PrintWeights;
   this->PrintRegistrationParameters   = node->PrintRegistrationParameters;
   this->PrintRegistrationSimularityMeasure         = node->PrintRegistrationSimularityMeasure;
   this->RegistrationClassSpecificRegistrationFlag = node->RegistrationClassSpecificRegistrationFlag;
@@ -156,15 +118,7 @@ void vtkMrmlSegmenterGenericClassNode::Copy(vtkMrmlNode *anode)
 //----------------------------------------------------------------------------
 void vtkMrmlSegmenterGenericClassNode::PrintSelf(ostream& os, vtkIndent indent)
 {
-  os << indent << "Prob:                               " << this->Prob << "\n"; 
-  os << indent << "InputChannelWeights:                " <<
-    (this->InputChannelWeights ? this->InputChannelWeights : "(none)") << "\n";
-
-  os << indent << "LocalPriorWeight:                   " << this->LocalPriorWeight << "\n";
-  os << indent << "LocalPriorName: " <<
-    (this->LocalPriorName ? this->LocalPriorName : "(none)") << "\n";
-
-  os << indent << "PrintWeights:                       " << this->PrintWeights << "\n";
+  this->vtkMrmlSegmenterAtlasGenericClassNode::PrintSelf(os,indent);
   os << indent << "PrintRegistrationParameters:        " << this->PrintRegistrationParameters << "\n";
   os << indent << "PrintRegistrationSimularityMeasure: " << this->PrintRegistrationSimularityMeasure << "\n";
   os << indent << "RegistrationTranslation:            " << this->RegistrationTranslation[0] << ", " << this->RegistrationTranslation[1] << ", " << this->RegistrationTranslation[2] << "\n" ;

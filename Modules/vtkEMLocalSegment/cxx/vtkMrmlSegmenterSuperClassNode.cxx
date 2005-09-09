@@ -35,10 +35,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 =========================================================================auto=*/
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
-#include <math.h>
+//#include <stdio.h>
+//#include <ctype.h>
+//#include <string.h>
+//#include <math.h>
 #include "vtkMrmlSegmenterSuperClassNode.h"
 #include "vtkObjectFactory.h"
 
@@ -59,62 +59,36 @@ vtkMrmlSegmenterSuperClassNode* vtkMrmlSegmenterSuperClassNode::New()
 vtkMrmlSegmenterSuperClassNode::vtkMrmlSegmenterSuperClassNode() { 
   // vtkMrmlNode's attributes => Tabs following sub classes  
   this->Indent     = 1;
-  this->NumClasses = 0;
-
-  this->PrintFrequency      = 0;
-  this->PrintBias           = 0;
-  this->PrintLabelMap       = 0;
 
   this->PrintEMLabelMapConvergence  = 0;
   this->PrintEMWeightsConvergence = 0;
-  this->StopEMType  = 0;
-  this->StopEMValue = 0.0; 
-  this->StopEMMaxIter = 0; 
-
   this->PrintShapeSimularityMeasure = 0;
   this->PrintMFALabelMapConvergence  = 0;
   this->PrintMFAWeightsConvergence = 0;
-  this->StopMFAType         = 0;
-  this->StopMFAValue        = 0.0; 
-  this->StopMFAMaxIter      = 0; 
+
   this->StopBiasCalculation = -1;
   this->RegistrationType    = 0;
   this->GenerateBackgroundProbability = 0;
   this->PCAShapeModelType = 0;
   this->RegistrationIndependentSubClassFlag = 0;
-}
-
-//----------------------------------------------------------------------------
-vtkMrmlSegmenterSuperClassNode::~vtkMrmlSegmenterSuperClassNode() { 
+  this->AtlasNode = vtkMrmlSegmenterAtlasSuperClassNode::New();
 }
 
 //----------------------------------------------------------------------------
 void vtkMrmlSegmenterSuperClassNode::Write(ofstream& of, int nIndent)
 {
-  // Write all attributes not equal to their defaults
-  
+  // Write all attributes not equal to their default
   vtkIndent i1(nIndent);
   of << i1 << "<SegmenterSuperClass";
-  if (this->Name && strcmp(this->Name, "")) of << " name ='" << this->Name << "'";
-  of << " NumClasses ='" << this->NumClasses << "'";
-  this->vtkMrmlSegmenterGenericClassNode::Write(of,nIndent);
-  of << " RegistrationType='" << this->RegistrationType << "' ";
-
-  of << " PrintBias='" << this->PrintBias << "'";
-  of << " PrintLabelMap='" << this->PrintLabelMap << "'";
-  of << " PrintFrequency='" << this->PrintFrequency << "'";
+  this->vtkMrmlSegmenterGenericClassNode::Write(of);
+  this->AtlasNode->Write(of);
 
   of << " PrintEMLabelMapConvergence='" << this->PrintEMLabelMapConvergence <<  "'";
   of << " PrintEMWeightsConvergence='" << this->PrintEMWeightsConvergence  <<  "'";
-  of << " StopEMType='" << this->StopEMType  <<  "'";
-  of << " StopEMValue='" << this->StopEMValue <<  "'";
-  of << " StopEMMaxIter='" << this->StopEMMaxIter <<  "'";
-
   of << " PrintMFALabelMapConvergence='" << this->PrintMFALabelMapConvergence <<  "'";
   of << " PrintMFAWeightsConvergence='" << this->PrintMFAWeightsConvergence  <<  "'";
-  of << " StopMFAType='" << this->StopMFAType  <<  "'";
-  of << " StopMFAValue='" << this->StopMFAValue <<  "'";
-  of << " StopMFAMaxIter='" << this->StopMFAMaxIter <<  "'";
+
+  of << " RegistrationType='" << this->RegistrationType << "' ";
   of << " StopStopBiasCalculation='" << this->StopBiasCalculation <<  "'";
   of << " GenerateBackgroundProbability='" << this->GenerateBackgroundProbability <<  "'";
   of << " PrintShapeSimularityMeasure='" << this->PrintShapeSimularityMeasure << "'";
@@ -129,29 +103,16 @@ void vtkMrmlSegmenterSuperClassNode::Write(ofstream& of, int nIndent)
 // Does NOT copy: ID, Name
 void vtkMrmlSegmenterSuperClassNode::Copy(vtkMrmlNode *anode)
 {
-  vtkMrmlNode::MrmlNodeCopy(anode);
   vtkMrmlSegmenterGenericClassNode::Copy(anode);
   vtkMrmlSegmenterSuperClassNode *node = (vtkMrmlSegmenterSuperClassNode *) anode;
-
-  this->NumClasses = node->NumClasses;
-
-  this->PrintBias      = node->PrintBias;
-  this->PrintLabelMap  = node->PrintLabelMap;
-  this->PrintFrequency = node->PrintFrequency;
+  this->AtlasNode->Copy(node);
 
   this->PrintEMLabelMapConvergence    = node->PrintEMLabelMapConvergence;
   this->PrintEMWeightsConvergence     = node->PrintEMWeightsConvergence;
-  this->StopEMType            = node->StopEMType;
-  this->StopEMValue           = node->StopEMValue; 
-  this->StopEMMaxIter   = node->StopEMMaxIter; 
-
   this->PrintMFALabelMapConvergence   = node->PrintMFALabelMapConvergence;
   this->PrintMFAWeightsConvergence    = node->PrintMFAWeightsConvergence;
-  this->StopMFAType           = node->StopMFAType;
-  this->StopMFAValue          = node->StopMFAValue; 
-  this->StopMFAMaxIter        = node->StopMFAMaxIter; 
-  this->StopBiasCalculation   = node->StopBiasCalculation;
 
+  this->StopBiasCalculation   = node->StopBiasCalculation;
   this->RegistrationType              = node->RegistrationType;
   this->GenerateBackgroundProbability = node->GenerateBackgroundProbability;
   this->PrintShapeSimularityMeasure   = node->PrintShapeSimularityMeasure;
@@ -162,27 +123,14 @@ void vtkMrmlSegmenterSuperClassNode::Copy(vtkMrmlNode *anode)
 //----------------------------------------------------------------------------
 void vtkMrmlSegmenterSuperClassNode::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkMrmlNode::PrintSelf(os,indent);
-  os << indent << "Name:                          " << (this->Name ? this->Name : "(none)") << "\n";
-  os << indent << "NumClasses:                    "  << this->NumClasses      <<  "\n"; 
   this->vtkMrmlSegmenterGenericClassNode::PrintSelf(os, indent);
+  this->AtlasNode->PrintSelf(os,indent);
   os << indent << "RegistrationType:              " << this->RegistrationType<< "\n" ;
-
-  os << indent << "PrintBias:                     " << this->PrintBias << "\n";
-  os << indent << "PrintLabelMap:                 " << this->PrintLabelMap << "\n";
-  os << indent << "PrintFrequency:                " << this->PrintFrequency << "\n";
-
   os << indent << "PrintEMLabelMapConvergence:    " << this->PrintEMLabelMapConvergence << "\n";
   os << indent << "PrintEMWeightsConvergence:     " << this->PrintEMWeightsConvergence << "\n";
-  os << indent << "StopEMType:                    " << this->StopEMType  << "\n";
-  os << indent << "StopEMValue:                   " << this->StopEMValue << "\n";
-  os << indent << "StopEMMaxIter:                 " << this->StopEMMaxIter << "\n";
 
   os << indent << "PrintMFALabelMapConvergence:   " << this->PrintMFALabelMapConvergence << "\n";
   os << indent << "PrintMFAWeightsConvergence:    " << this->PrintMFAWeightsConvergence << "\n";
-  os << indent << "StopMFAType:                   " << this->StopMFAType  << "\n";
-  os << indent << "StopMFAValue:                  " << this->StopMFAValue << "\n";
-  os << indent << "StopMFAMaxIter:                " << this->StopMFAMaxIter << "\n";
   os << indent << "StopBiasCalculation:           " << this->StopBiasCalculation << "\n";
 
   os << indent << "GenerateBackgroundProbability: " << this->GenerateBackgroundProbability << "\n";

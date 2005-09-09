@@ -35,10 +35,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 =========================================================================auto=*/
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
-#include <math.h>
+//#include <stdio.h>
+//#include <ctype.h>
+//#include <string.h>
+//#include <math.h>
 #include "vtkMrmlSegmenterInputNode.h"
 #include "vtkObjectFactory.h"
 
@@ -56,23 +56,6 @@ vtkMrmlSegmenterInputNode* vtkMrmlSegmenterInputNode::New()
 }
 
 //----------------------------------------------------------------------------
-vtkMrmlSegmenterInputNode::vtkMrmlSegmenterInputNode()
-{
-  this->FileName = NULL;
-  this->IntensityAvgValuePreDef = 0;
-}
-
-//----------------------------------------------------------------------------
-vtkMrmlSegmenterInputNode::~vtkMrmlSegmenterInputNode()
-{
-  if (this->FileName)
-  {
-    delete [] this->FileName;
-    this->FileName = NULL;
-  }
-}
-
-//----------------------------------------------------------------------------
 void vtkMrmlSegmenterInputNode::Write(ofstream& of, int nIndent)
 {
   // Write all attributes not equal to their defaults
@@ -80,38 +63,13 @@ void vtkMrmlSegmenterInputNode::Write(ofstream& of, int nIndent)
   vtkIndent i1(nIndent);
 
   of << i1 << "<SegmenterInput";
-  if (this->Name && strcmp(this->Name, "")) 
-  {
-    of << " name ='" << this->Name << "'";
-  }
-  if (this->FileName && strcmp(this->FileName, "")) 
-  {
-    of << " FileName='" << this->FileName << "'";
-  }
-  of << " IntensityAvgValuePreDef ='"    << this->IntensityAvgValuePreDef << "'";
+  this->vtkMrmlSegmenterAtlasInputNode::Write(of);
   of << "></SegmenterInput>\n";;
-}
-
-//----------------------------------------------------------------------------
-// Copy the node's attributes to this object.
-// Does NOT copy: ID, Name
-void vtkMrmlSegmenterInputNode::Copy(vtkMrmlNode *anode)
-{
-  vtkMrmlNode::MrmlNodeCopy(anode);
-  vtkMrmlSegmenterInputNode *node = (vtkMrmlSegmenterInputNode *) anode;
-
-  this->SetFileName(node->FileName); 
-  this->IntensityAvgValuePreDef = node->IntensityAvgValuePreDef;
 }
 
 //----------------------------------------------------------------------------
 void vtkMrmlSegmenterInputNode::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkMrmlNode::PrintSelf(os,indent);
-   os << indent << "Name: " <<
-    (this->Name ? this->Name : "(none)") << "\n";
-   os << indent << "FileName: " <<
-    (this->FileName ? this->FileName : "(none)") << "\n";
-   os << indent << "IntensityAvgValuePreDef:"          << this->IntensityAvgValuePreDef << "\n";
-   os << ")\n";
+  this->vtkMrmlNode::PrintSelf(os,indent);
+  this->vtkMrmlSegmenterAtlasInputNode::PrintSelf(os,indent);
 }

@@ -51,6 +51,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMrmlSegmenterGenericClassNode.h"
 #include "vtkSlicer.h"
 #include <vtkEMLocalSegmentConfigure.h>
+#include "vtkMrmlSegmenterAtlasClassNode.h"
 
 class VTK_EMLOCALSEGMENT_EXPORT vtkMrmlSegmenterClassNode : public vtkMrmlSegmenterGenericClassNode
 {
@@ -70,30 +71,6 @@ public:
   // Description:
   // Copy the node's attributes to this object
   void Copy(vtkMrmlNode *node);
-  // Description:
-  // Get/Set for SegmenterClass
-  vtkGetMacro(Label, int);
-  vtkSetMacro(Label, int);
-
-  // Description:
-  // Get/Set for SegmenterClass
-  vtkGetMacro(ShapeParameter, float);
-  vtkSetMacro(ShapeParameter, float);
-
-  // Description:
-  // Get/Set for SegmenterClass
-  vtkSetStringMacro(LogMean);
-  vtkGetStringMacro(LogMean);
-
-  // Description:
-  // Get/Set for SegmenterClass
-  vtkSetStringMacro(LogCovariance);
-  vtkGetStringMacro(LogCovariance);
-
-  // Description:
-  // Get/Set for SegmenterClass
-  vtkSetStringMacro(ReferenceStandardFileName);
-  vtkGetStringMacro(ReferenceStandardFileName);
 
   // Description:
   // Get/Set for SegmenterClass
@@ -113,16 +90,24 @@ public:
 
   vtkGetMacro(PCALogisticBoundary,float);
   vtkSetMacro(PCALogisticBoundary,float);
-
-  // Description:
-  // Currenly only the following values defined 
-  // 0 = Do not Print out any print quality 
-  // 1 = Do a DICE comparison
-  vtkSetMacro(PrintQuality,int);
-  vtkGetMacro(PrintQuality,int);
   
   vtkSetMacro(PrintPCA,int);
   vtkGetMacro(PrintPCA,int);
+
+  int GetLabel() {return AtlasClassNode->GetLabel();}
+  void SetLabel(int init) {AtlasClassNode->SetLabel(init);}
+
+  char* GetLogMean()  {return AtlasClassNode->GetLogMean();}
+  void SetLogMean(char* init) {AtlasClassNode->SetLogMean(init);}
+
+  char* GetLogCovariance()  {return AtlasClassNode->GetLogCovariance();}
+  void SetLogCovariance(char* init) {AtlasClassNode->SetLogCovariance(init);}
+
+  char* GetReferenceStandardFileName()  {return AtlasClassNode->GetReferenceStandardFileName();}
+  void SetReferenceStandardFileName(char* init) {AtlasClassNode->SetReferenceStandardFileName(init);}
+
+  int GetPrintQuality()  {return AtlasClassNode->GetPrintQuality();}
+  void SetPrintQuality(int init) {AtlasClassNode->SetPrintQuality(init);}
 
 protected:
   vtkMrmlSegmenterClassNode();
@@ -130,26 +115,17 @@ protected:
   vtkMrmlSegmenterClassNode(const vtkMrmlSegmenterClassNode&) {};
   void operator=(const vtkMrmlSegmenterClassNode&) {};
 
-  // I do not know how to better Identify my Images
-  int    Label;
+  vtkMrmlSegmenterAtlasClassNode *AtlasClassNode;
 
-  float  ShapeParameter;
-  char   *LogMean;
-  char   *LogCovariance;
-  float  LocalPriorWeight;
-
-  char   *PCAMeanName;
-
+  char  *PCAMeanName;
   float PCALogisticSlope;
   float PCALogisticMin;
   float PCALogisticMax;
   float PCALogisticBoundary;
-
-  char   *ReferenceStandardFileName;
-
-  int    PrintQuality;        // Prints out a quality measure of the current result ( 1=  Dice )
-  int    PrintPCA;            // Print out PCA Parameters at each step 
+  int   PrintPCA;            // Print out PCA Parameters at each step 
 };
 
 #endif
+// I believe it is from Samson -> throw out 
+// float  ShapeParameter;
 

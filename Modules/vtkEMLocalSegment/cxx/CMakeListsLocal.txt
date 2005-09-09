@@ -36,25 +36,24 @@ IF (WIN32)
     SET_SOURCE_FILES_PROPERTIES ( vtkThread.cxx ABSTRACT )
 ELSE (WIN32)
     SET (LOCAL_MODULE_SRCS
-#        vtkTimeDef.h
-
-#         vtkImageEMLocalSuperClass.cxx
-#         vtkImageEMLocalClass.cxx
-#         vtkImageEMLocalSegmenter.cxx
-# 
-#          vtkImageEMMarkov.cxx
-# 
-#     	vtkMrmlEndSegmenterNode.cxx 
-# 	vtkMrmlSegmenterGenericClassNode.cxx 
-#         vtkMrmlSegmenterClassNode.cxx    	
+         vtkTimeDef.h
+         vtkImageEMMarkov.cxx
+ 
+         vtkImageEMLocalSuperClass.cxx
+         vtkImageEMLocalClass.cxx
+         vtkImageEMLocalSegmenter.cxx
+ 
+         vtkMrmlSegmenterNode.cxx 
+     	 vtkMrmlEndSegmenterNode.cxx 
+         vtkMrmlSegmenterGenericClassNode.cxx 
+         vtkMrmlSegmenterClassNode.cxx    	
          vtkMrmlEndSegmenterClassNode.cxx  
-#         vtkMrmlSegmenterSuperClassNode.cxx 
-#         vtkMrmlEndSegmenterSuperClassNode.cxx
-#         vtkMrmlSegmenterInputNode.cxx  
-#         vtkMrmlSegmenterCIMNode.cxx 
-#         vtkMrmlSegmenterGraphNode.cxx 
-#         vtkMrmlSegmenterNode.cxx 
-#         vtkMrmlSegmenterPCAEigenNode.cxx
+         vtkMrmlSegmenterSuperClassNode.cxx 
+         vtkMrmlEndSegmenterSuperClassNode.cxx
+         vtkMrmlSegmenterInputNode.cxx  
+         vtkMrmlSegmenterCIMNode.cxx 
+         vtkMrmlSegmenterGraphNode.cxx 
+         vtkMrmlSegmenterPCAEigenNode.cxx
     )
 ENDIF (WIN32)
 

@@ -46,17 +46,15 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkMrmlSegmenterNode_h
 #define __vtkMrmlSegmenterNode_h
 
-//#include <iostream.h>
-//#include <fstream.h>
-#include "vtkMrmlNode.h"
-#include "vtkSlicer.h"
 #include <vtkEMLocalSegmentConfigure.h>
+#include "vtkMrmlSegmenterAtlasNode.h"
 
-class VTK_EMLOCALSEGMENT_EXPORT vtkMrmlSegmenterNode : public vtkMrmlNode
+class VTK_EMLOCALSEGMENT_EXPORT vtkMrmlSegmenterNode : public vtkMrmlSegmenterAtlasNode
 {
 public:
   static vtkMrmlSegmenterNode *New();
   vtkTypeMacro(vtkMrmlSegmenterNode,vtkMrmlNode);
+
   void PrintSelf(ostream& os, vtkIndent indent);
   
   // Description:
@@ -70,89 +68,17 @@ public:
   // Description:
   // Copy the node's attributes to this object
   void Copy(vtkMrmlNode *node);
+
+  // Should be deleted - from Samson
   // Description:
   // Get/Set for Segmenter
-  vtkSetMacro(AlreadyRead, int);
-  vtkGetMacro(AlreadyRead, int);
-
-  // Description:
-  // Get/Set for Segmenter
-  vtkSetMacro(MaxInputChannelDef, int);
-  vtkGetMacro(MaxInputChannelDef, int);
-
-  // Description:
-  // Get/Set for Segmenter
-  vtkSetMacro(EMShapeIter, int);
-  vtkGetMacro(EMShapeIter, int);
-
-  // Description:
-  // Get/Set for Segmenter
-  void SetEMiteration(int init) {
-    // the public version still works that way  - later do it 
-    //vtkWarningMacro(<<"You have an older XML Version for EMSegmenter - EMiteration is not defined anymore as part of vtMRMLSegmenterNode"<< endl 
-    //                <<"We still read in values but update your XML File to new structure to erase this error message" );
-    this->EMiteration  = init;
-  }
-
-  vtkGetMacro(EMiteration, int);
-
-  // Description:
-  // Get/Set for Segmenter
-  void SetMFAiteration(int init) {
-    // the public version still works that way  -later uncomment it 
-    //vtkWarningMacro(<<"You have an older XML Version for EMSegmenter - MFAiteration is not defined anymore as part of vtMRMLSegmenterNode"<< endl 
-    //                <<"We still read in values but update your XML File to new structure to erase this error message" );
-    this->MFAiteration  = init;
-  }
-  vtkGetMacro(MFAiteration, int);
-
-  // Description:
-  // Get/Set for Segmenter
-  vtkSetMacro(Alpha, double);
-  vtkGetMacro(Alpha, double);
-
-  // Description:
-  // Get/Set for Segmenter
-  vtkSetMacro(SmWidth, int);
-  vtkGetMacro(SmWidth, int);
-
-  // Description:
-  // Get/Set for Segmenter
-  vtkSetMacro(SmSigma, int);
-  vtkGetMacro(SmSigma, int);
-
-  // Description:
-  // Replacement for Start - EndSlice Bounding Box can be 3D
-  vtkSetVector3Macro(SegmentationBoundaryMin, int);
-  vtkGetVector3Macro(SegmentationBoundaryMin,int);
-
-  vtkSetVector3Macro(SegmentationBoundaryMax,int);
-  vtkGetVector3Macro(SegmentationBoundaryMax,int);
-
+  // vtkSetMacro(EMShapeIter, int);
+  // vtkGetMacro(EMShapeIter, int);
  
   // Description:
   // Get/Set for Segmenter
   vtkSetMacro(DisplayProb, int);
   vtkGetMacro(DisplayProb, int);
-
-  // Description:
-  // Get/Set for Segmenter
-  vtkSetMacro(NumberOfTrainingSamples, int);
-  vtkGetMacro(NumberOfTrainingSamples, int);
-
-  // Description:
-  // Get/Set for Segmenter
-  vtkSetMacro(IntensityAvgClass, int);
-  vtkGetMacro(IntensityAvgClass, int);
-
-  // Description:
-  // The work directory for this segmentation 
-  // Necessarry for EM to spid out intermediate results 
-  // it will generate the necessary subdirectories from here 
-  // e.g. weights 
-  vtkGetStringMacro(PrintDir);
-  vtkSetStringMacro(PrintDir);
-
 
   // Description:
   // Define what kind of interpolation you want for the registration function - 
@@ -161,45 +87,14 @@ public:
    vtkSetMacro(RegistrationInterpolationType, int);
    vtkGetMacro(RegistrationInterpolationType, int);
 
-
-  // Legacy Variables : 
-  // The tree is a 1D list of nodes, it does not know anything about hireachies 
-  //  => Never delete variables from vtkMrml..Node.h if for some XML files you use them 
-  // and you cannot update them easily in LoadMRML
-
-  // Description:
-  // Get/Set for Segmenter
-  void SetNumClasses(int init) {
-    vtkWarningMacro(<<"You have an older XML Version for EMSegmenter - NumClasses is not defined anymore as part of vtMRMLSegmenterNode"<< endl 
-                    <<"We still read in values but update your XML File to new structure to erase this error message" );
-    this->NumClasses  = init;
-  }
-  vtkGetMacro(NumClasses, int);
-
 protected:
   vtkMrmlSegmenterNode();
-  ~vtkMrmlSegmenterNode();
+  ~vtkMrmlSegmenterNode(){};
   vtkMrmlSegmenterNode(const vtkMrmlSegmenterNode&) {};
   void operator=(const vtkMrmlSegmenterNode&) {};
 
-  int    AlreadyRead; 
-  int    MaxInputChannelDef;
-  int    EMShapeIter;
-  int    EMiteration;
-  int    MFAiteration;
-  double Alpha;
-  int    SmWidth;
-  int    SmSigma;
   int    DisplayProb;  // Should the probability displayed in the graph - left it in bc it is more work to take it out - should not be defined here but in GraphNode 
-  int    NumberOfTrainingSamples;
-  int    IntensityAvgClass;
-  char*  PrintDir;
-  int    SegmentationBoundaryMin[3];
-  int    SegmentationBoundaryMax[3];
-
   int    RegistrationInterpolationType;
-  // These are legacy definitions - we leave them in so we keep compatibility with older versions
-  int    NumClasses; //  From July 04 the HeadClass will be defined seperatly from SegmenterNode so that there is no overlap anymore between SuperClassNode and SegmenterNode
 
 };
 

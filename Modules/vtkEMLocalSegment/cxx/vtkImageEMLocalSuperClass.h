@@ -40,8 +40,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkImageEMLocalSuperClass_h 
   
 #include <vtkEMLocalSegmentConfigure.h> 
-
-
 #include "vtkImageEMLocalClass.h"
 #include "vtkSlicer.h"
 

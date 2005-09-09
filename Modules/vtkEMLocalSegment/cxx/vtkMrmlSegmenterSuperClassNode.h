@@ -43,18 +43,25 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // affects volumes and models that appear below it in the MRML file.  
 // Multiple matrices can be concatenated together. 
 
+//                                                                    vtkMrmlSegmenterAtlasClassNode
+//                                                                                  ||
+//                                                                                  \/
+//                                                                   |-> vtkMrmlSegmenterClassNode
+//                                                                   |
+//  vtkMrmlNode -> vtkMrmlSegmenterAtlasGenericClassNode -> vtkMrmlSegmenterGenericClassNode
+//                                                                   |
+//                                                                   |-> vtkMrmlSegmenterSuperClassNode
+//                                                                                  /\
+//                                                                                  ||
+//                                                                   vtkMrmlSegmenterAtlasSuperClassNode
+
 #ifndef __vtkMrmlSegmenterSuperClassNode_h
 #define __vtkMrmlSegmenterSuperClassNode_h
 
-//#include <iostream.h>
-//#include <fstream.h>
 #include "vtkMrmlSegmenterGenericClassNode.h"
 #include "vtkSlicer.h"
 #include <vtkEMLocalSegmentConfigure.h>
-
-// For the first stage super class is just a hirachical element, where we just define the name
-// Extensions for later are planned
-// Kilian 07-Oct-02
+#include "vtkMrmlSegmenterAtlasSuperClassNode.h"
 
 class VTK_EMLOCALSEGMENT_EXPORT vtkMrmlSegmenterSuperClassNode : public vtkMrmlSegmenterGenericClassNode
 {
@@ -75,21 +82,19 @@ public:
   // Copy the node's attributes to this object
   void Copy(vtkMrmlNode *node);
 
-   // Description:
-  // Get/Set for Segmenter
-  vtkSetMacro(NumClasses, int);
-  vtkGetMacro(NumClasses, int);
+  int  GetNumClasses() {return AtlasNode->GetNumClasses();}
+  void SetNumClasses(int init) {AtlasNode->SetNumClasses(init);}
 
   // Description:
   // Print out the result after how many steps  (-1 == just last result, 0 = No Printing, i> 0 => every i-th slice )
-  vtkGetMacro(PrintFrequency, int);
-  vtkSetMacro(PrintFrequency, int);
+  int  GetPrintFrequency() {return AtlasNode->GetPrintFrequency();}
+  void SetPrintFrequency(int init) {AtlasNode->SetPrintFrequency(init);}
 
-  vtkGetMacro(PrintBias, int);
-  vtkSetMacro(PrintBias, int);
+  int  GetPrintBias() {return AtlasNode->GetPrintBias();}
+  void SetPrintBias(int init) {AtlasNode->SetPrintBias(init);}
 
-  vtkGetMacro(PrintLabelMap, int);
-  vtkSetMacro(PrintLabelMap, int);  
+  int  GetPrintLabelMap() {return AtlasNode->GetPrintLabelMap();}
+  void SetPrintLabelMap(int init) {AtlasNode->SetPrintLabelMap(init);}
 
  // Description:
   // Prints out the shape  cost at each voxel 
@@ -121,35 +126,34 @@ public:
   // 0 = fixed iterations 
   // 1 = Absolut measure 
   // 2 = Relative measure 
-  vtkGetMacro(StopEMType,int); 
-  vtkSetMacro(StopEMType,int); 
+  int  GetStopEMType() {return AtlasNode->GetStopEMType();}
+  void SetStopEMType(int init) {AtlasNode->SetStopEMType(init);}
   
   // Description:  
   // What is the obundary value, note if the number of iterations 
   // extend EMiter than stops than
-  vtkGetMacro(StopEMValue,float);      
-  vtkSetMacro(StopEMValue,float); 
+  float GetStopEMValue() {return AtlasNode->GetStopEMValue();}
+  void SetStopEMValue(float init) {AtlasNode->SetStopEMValue(init);}
 
-  vtkGetMacro(StopEMMaxIter,int); 
-  vtkSetMacro(StopEMMaxIter,int); 
-
+  int  GetStopEMMaxIter() {return AtlasNode->GetStopEMMaxIter();}
+  void SetStopEMMaxIter(int init) {AtlasNode->SetStopEMMaxIter(init);}
 
   // Description:  
   // After which criteria should be stopped   
   // 0 = fixed iterations 
   // 1 = Absolut measure 
   // 2 = Relative measure 
-  vtkGetMacro(StopMFAType,int); 
-  vtkSetMacro(StopMFAType,int); 
-  
+  int  GetStopMFAType() {return AtlasNode->GetStopMFAType();}
+  void SetStopMFAType(int init) {AtlasNode->SetStopMFAType(init);}
+
   // Description:  
   // What is the obundary value, note if the number of iterations 
   // extend MFAiter than stops than
-  vtkGetMacro(StopMFAValue,float);      
-  vtkSetMacro(StopMFAValue,float); 
+  float  GetStopMFAValue() {return AtlasNode->GetStopMFAValue();}
+  void SetStopMFAValue(float init) {AtlasNode->SetStopMFAValue(init);}
 
-  vtkGetMacro(StopMFAMaxIter,int); 
-  vtkSetMacro(StopMFAMaxIter,int); 
+  int  GetStopMFAMaxIter() {return AtlasNode->GetStopMFAMaxIter();}
+  void SetStopMFAMaxIter(int init) {AtlasNode->SetStopMFAMaxIter(init);}
 
   // Description:
   // You can stop the bias calculation after a certain number of iterations
@@ -178,7 +182,6 @@ public:
   vtkGetMacro(PCAShapeModelType,int); 
   vtkSetMacro(PCAShapeModelType,int); 
 
-
   // Desciption:
   // This flag is for the registration cost function. By default all subclasses are seen as one. 
   // In some cases this causes a loss of contrast within the cost function so that the registration is not as reliable, 
@@ -191,44 +194,23 @@ public:
 
 protected:
   vtkMrmlSegmenterSuperClassNode();
-  ~vtkMrmlSegmenterSuperClassNode();
+  ~vtkMrmlSegmenterSuperClassNode(){this->AtlasNode->Delete();};
   vtkMrmlSegmenterSuperClassNode(const vtkMrmlSegmenterSuperClassNode&) {};
   void operator=(const vtkMrmlSegmenterSuperClassNode&) {};
 
-  int NumClasses;
-
-  int PrintFrequency;
-  int PrintBias;
-  int PrintLabelMap;
+  vtkMrmlSegmenterAtlasSuperClassNode *AtlasNode;
 
   int PrintShapeSimularityMeasure; // Prints out the shape cost at each voxel 
   int PrintEMLabelMapConvergence;  // Prints out the number of voxels changed from last to this iteration
   int PrintEMWeightsConvergence;   // Prints out the difference in percent 
-
-  int StopEMType;       // After which criteria should be stopped   
-                                // 0 = fixed iterations 
-                                // 1 = Absolut measure 
-                                // 2 = Relative measure
-  float StopEMValue;    // What is the obundary value, note if the number of iterations 
-                                // extend EMiter than stops than
-                                // if (StopEMType = 1) than it is percent
-
-  int StopEMMaxIter;
-
   int PrintMFALabelMapConvergence;  
   int PrintMFAWeightsConvergence; 
-  int StopMFAType;       
-  float StopMFAValue;    
-  int StopMFAMaxIter;
+
   int StopBiasCalculation;
-
-  int    RegistrationType; 
+  int RegistrationType; 
   int GenerateBackgroundProbability;
-
   int PCAShapeModelType;
-
   int RegistrationIndependentSubClassFlag;
-
 };
 
 #endif

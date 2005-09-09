@@ -46,27 +46,20 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkMrmlSegmenterGenericClassNode_h
 #define __vtkMrmlSegmenterGenericClassNode_h
 
-//#include <iostream.h>
-//#include <fstream.h>
-#include "vtkMrmlNode.h"
-#include "vtkSlicer.h"
 #include <vtkEMLocalSegmentConfigure.h>
+#include "vtkMrmlSegmenterAtlasGenericClassNode.h"
 
 // For the first stage super class is just a hirachical element, where we just define the name
 // Extensions for later are planned
 // Kilian 07-Oct-02
 
-class VTK_EMLOCALSEGMENT_EXPORT vtkMrmlSegmenterGenericClassNode : public vtkMrmlNode
+class VTK_EMLOCALSEGMENT_EXPORT vtkMrmlSegmenterGenericClassNode : public vtkMrmlSegmenterAtlasGenericClassNode
 {
 public:
   static vtkMrmlSegmenterGenericClassNode *New();
   vtkTypeMacro(vtkMrmlSegmenterGenericClassNode,vtkMrmlNode);
   void PrintSelf(ostream& os, vtkIndent indent);
   
-  // Description:
-  // Write the node's attributes to a MRML file in XML format
-  void Write(ofstream& of, int indent);
-
   //--------------------------------------------------------------------------
   // Utility Functions
   //--------------------------------------------------------------------------
@@ -74,44 +67,6 @@ public:
   // Description:
   // Copy the node's attributes to this object
   void Copy(vtkMrmlNode *node);
-
-  // Variable Set/Get Functions - Name has to be first to properly work with GUI   
-  // Description:
-  // Just is listed here so that it properly works with automatic GUI - nothing really is changed 
-  vtkSetStringMacro(Name);
-  vtkGetStringMacro(Name);
- 
-  // Any Variables afterwards 
-  // Description:
-  // Get/Set for Segmenter
-  vtkSetMacro(Prob, double);
-  vtkGetMacro(Prob, double);
-
-  // Description:
-  // This variable allows to control the influence of the LocalPrioir in the segmentation process 
-  // LocalPriorWeight = 1.0 default setting; 0.0 => LocalPrior is ignored
-  // Note: this variable is applied to all the subclasses during the segmentation bc the subclasses define the local Prior 
-  vtkGetMacro(LocalPriorWeight,float);
-  vtkSetMacro(LocalPriorWeight,float);
-
-  // Description:
-  // Get/Set for SegmenterClass - define name of spatial prior
-  vtkSetStringMacro(LocalPriorName);
-  vtkGetStringMacro(LocalPriorName);
-
-  // Description:
-  // This paramters allows the individual influence of each channel in the segmentation process 
-  // by default 
-  // The weight confidence measure describes the confidence in the weights form the EM algorithm
-  // where the length(InputChannelWeights) = # of input channels 
-  // Note: this variable is applied to all the subclasses during the segmentation bc the subclasses define the Tissue Cass Distributioon 
-  vtkSetStringMacro(InputChannelWeights);
-  vtkGetStringMacro(InputChannelWeights);
-
-  // Description:
-  // Print out Weights (1 = Normal 2=as shorts normed to 1000)   
-  vtkGetMacro(PrintWeights, int);
-  vtkSetMacro(PrintWeights, int);
 
   // Description:  
   // Translation from patient case to atlas space   
@@ -157,14 +112,14 @@ public:
 
 protected:
   vtkMrmlSegmenterGenericClassNode();
-  ~vtkMrmlSegmenterGenericClassNode();
+  ~vtkMrmlSegmenterGenericClassNode(){};
   vtkMrmlSegmenterGenericClassNode(const vtkMrmlSegmenterGenericClassNode&) {};
   void operator=(const vtkMrmlSegmenterGenericClassNode&) {};
 
-  double Prob;
-  float  LocalPriorWeight;
-  char   *InputChannelWeights;  
-  int    PrintWeights;
+  // Description:
+  // Write the node's attributes to a MRML file in XML format
+  void Write(ofstream& of);
+
   int    PrintRegistrationParameters;
   int    PrintRegistrationSimularityMeasure;
 
@@ -174,8 +129,8 @@ protected:
   double RegistrationRotation[3];
   double RegistrationScale[3];
   double RegistrationCovariance[9];
-  int RegistrationClassSpecificRegistrationFlag; 
-int ExcludeFromIncompleteEStepFlag;
+  int    RegistrationClassSpecificRegistrationFlag; 
+  int    ExcludeFromIncompleteEStepFlag;
 
 };
 

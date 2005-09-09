@@ -48,15 +48,16 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 //#include <iostream.h>
 //#include <fstream.h>
-#include "vtkMrmlNode.h"
-#include "vtkSlicer.h"
-#include <vtkEMLocalSegmentConfigure.h>
 
-class VTK_EMLOCALSEGMENT_EXPORT vtkMrmlSegmenterInputNode : public vtkMrmlNode
+#include <vtkEMLocalSegmentConfigure.h>
+#include "vtkMrmlSegmenterAtlasInputNode.h"
+
+class VTK_EMLOCALSEGMENT_EXPORT vtkMrmlSegmenterInputNode : public vtkMrmlSegmenterAtlasInputNode 
 {
 public:
   static vtkMrmlSegmenterInputNode *New();
   vtkTypeMacro(vtkMrmlSegmenterInputNode,vtkMrmlNode);
+
   void PrintSelf(ostream& os, vtkIndent indent);
   
   // Description:
@@ -69,33 +70,18 @@ public:
 
   // Description:
   // Copy the node's attributes to this object
-  void Copy(vtkMrmlNode *node);
+  void Copy(vtkMrmlNode *node) {this->vtkMrmlSegmenterAtlasInputNode::Copy(node);}
 
-  // Variable Set/Get Functions - Name has to be first to properly work with GUI   
-  // Description:
-  // Just is listed here so that it properly works with automatic GUI - nothing really is changed 
-  vtkSetStringMacro(Name);
-  vtkGetStringMacro(Name);
- 
-  // Description:
+  // Description: - not used anymore
   // Get/Set for SegmenterInput
-  vtkSetStringMacro(FileName);
-  vtkGetStringMacro(FileName);
-
-  // Description:
-  // Get/Set for SegmenterInput
-  vtkGetMacro(IntensityAvgValuePreDef, double);
-  vtkSetMacro(IntensityAvgValuePreDef, double);
+  // vtkGetMacro(IntensityAvgValuePreDef, double);
+  // vtkSetMacro(IntensityAvgValuePreDef, double);
 
 protected:
-  vtkMrmlSegmenterInputNode();
-  ~vtkMrmlSegmenterInputNode();
+  vtkMrmlSegmenterInputNode(){};
+  ~vtkMrmlSegmenterInputNode(){};
   vtkMrmlSegmenterInputNode(const vtkMrmlSegmenterInputNode&) {};
   void operator=(const vtkMrmlSegmenterInputNode&) {};
-
-  // I do not know how to better Identify my Images
-  char *FileName;
-  double IntensityAvgValuePreDef;
 };
 
 #endif

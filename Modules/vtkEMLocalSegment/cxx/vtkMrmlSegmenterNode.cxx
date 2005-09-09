@@ -35,10 +35,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 =========================================================================auto=*/
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
-#include <math.h>
+//#include <stdio.h>
+//#include <ctype.h>
+//#include <string.h>
+//#include <math.h>
 #include "vtkMrmlSegmenterNode.h"
 #include "vtkObjectFactory.h"
 
@@ -59,37 +59,8 @@ vtkMrmlSegmenterNode* vtkMrmlSegmenterNode::New()
 vtkMrmlSegmenterNode::vtkMrmlSegmenterNode()
 {
   this->Indent             = 1;
-  // This is a flag so we can see if we already read the node 
-  this->AlreadyRead        = 0;
-  this->MaxInputChannelDef    = 0;
-  this->EMShapeIter        = 1;
-  this->EMiteration        = 0;
-  this->MFAiteration       = 0;
-  this->Alpha              = 0.0;   
-  this->SmWidth     = 1;
-  this->SmSigma     = 1;
   this->DisplayProb     = 0;
-  this->NumberOfTrainingSamples = 0;
-  this->IntensityAvgClass = -1;
-  this->PrintDir = NULL;
-  for (int i=0; i < 3; i++) {
-    this->SegmentationBoundaryMin[i] = 0; // Lower bound of the boundary box where the image gets segments.
-    this->SegmentationBoundaryMax[i] = 0;// Upper bound of the boundary box where the image gets segments.
-  }
   this->RegistrationInterpolationType = 0;
-
-  // Legacy variables to stay compatibale with older versions - cannot delete it 
-  this->NumClasses         = 0;
-
-}
-
-//----------------------------------------------------------------------------
-vtkMrmlSegmenterNode::~vtkMrmlSegmenterNode()
-{
-  if (this->PrintDir) {
-    delete [] this->PrintDir;
-    this->PrintDir = NULL;
-  }
 }
 
 //----------------------------------------------------------------------------
@@ -98,30 +69,9 @@ void vtkMrmlSegmenterNode::Write(ofstream& of, int nIndent)
   // Write all attributes not equal to their defaults
   
   vtkIndent i1(nIndent);
-
   of << i1 << "<Segmenter";
-  of << " MaxInputChannelDef ='"         << this->MaxInputChannelDef << "'";
-  of << " EMShapeIter ='"                << this->EMShapeIter << "'";
-  if (this->EMiteration)  of << " EMiteration ='"  << this->EMiteration << "'";
-  if (this->MFAiteration) of << " MFAiteration ='" << this->MFAiteration << "'";
-  of << " Alpha ='"                      << this->Alpha << "'";
-  of << " SmWidth ='"                    << this->SmWidth << "'";
-  of << " SmSigma ='"                    << this->SmSigma << "'";
-  of << " SegmentationBoundaryMin ='" ;
-  int i;
-  for (i=0; i < 3; i++) of << this->SegmentationBoundaryMin[i]<< " " ; // Upper bound of the boundary box where the image gets segments.
-  of << "'";
-
-  of << " SegmentationBoundaryMax ='" ;
-  for (i=0; i < 3; i++) of << this->SegmentationBoundaryMax[i]<< " " ; // Upper bound of the boundary box where the image gets segments.
-  of << "'";
-
+  this->vtkMrmlSegmenterAtlasNode::Write(of);
   of << " DisplayProb  ='"               << this->DisplayProb  << "'";
-  of << " NumberOfTrainingSamples ='"    << this->NumberOfTrainingSamples << "'";
-  of << " IntensityAvgClass ='"          << this->IntensityAvgClass << "'";
-
-  if (this->PrintDir && strcmp(this->PrintDir, "")) 
-  of << " PrintDir ='"                   << this->PrintDir << "'";
   if (this->RegistrationInterpolationType) of << " RegistrationInterpolationType ='"<< this->RegistrationInterpolationType << "'";
   of << ">\n";;
 }
@@ -131,50 +81,17 @@ void vtkMrmlSegmenterNode::Write(ofstream& of, int nIndent)
 // Does NOT copy: ID, Name and PrintDir
 void vtkMrmlSegmenterNode::Copy(vtkMrmlNode *anode)
 {
-  vtkMrmlNode::MrmlNodeCopy(anode);
+  this->vtkMrmlSegmenterAtlasNode::Copy(anode);
   vtkMrmlSegmenterNode *node = (vtkMrmlSegmenterNode *) anode;
-
-  this->MaxInputChannelDef         = node->MaxInputChannelDef;
-  this->EMiteration                = node->EMiteration;
-  this->MFAiteration               = node->MFAiteration;
-  this->Alpha                      = node->Alpha;   
-  this->SmWidth                    = node->SmWidth;
-  this->SmSigma                    = node->SmSigma;
   this->DisplayProb                = node->DisplayProb;
-  this->NumberOfTrainingSamples    = node->NumberOfTrainingSamples;
-  this->IntensityAvgClass          = node->IntensityAvgClass;
-
-  memcpy(this->SegmentationBoundaryMin, node->SegmentationBoundaryMin, sizeof(int)*3);
-  memcpy(this->SegmentationBoundaryMax, node->SegmentationBoundaryMax, sizeof(int)*3);
-
   this->RegistrationInterpolationType = node->RegistrationInterpolationType;
 }
 
 //----------------------------------------------------------------------------
 void vtkMrmlSegmenterNode::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkMrmlNode::PrintSelf(os,indent);
-  os << indent << "AlreadyRead: "               << this->AlreadyRead     <<  "\n"; 
-  os << indent << "MaxInputChannelDef: "        << this->MaxInputChannelDef <<  "\n"; 
-  os << indent << "EMShapeIter: "               << this->EMShapeIter     <<  "\n"; 
-  os << indent << "EMiteration: "               << this->EMiteration     <<  "\n"; 
-  os << indent << "MFAiteration: "              << this->MFAiteration <<  "\n"; 
-  os << indent << "Alpha: "                     << this->Alpha <<  "\n"; 
-  os << indent << "SmWidth: "                   << this->SmWidth <<  "\n"; 
-  os << indent << "SmSigma: "                   << this->SmSigma <<  "\n"; 
+  this->vtkMrmlSegmenterNode::PrintSelf(os, indent);
   os << indent << "DisplayProb: "               << this->DisplayProb <<  "\n"; 
-  os << indent << "NumberOfTrainingSamples: "   << this->NumberOfTrainingSamples <<  "\n"; 
-  os << indent << "IntensityAvgClass: "         << this->IntensityAvgClass << "\n";
-  os << indent << "PrintDir: "                  << this->PrintDir << "\n"; 
-  os << indent << "SegmentationBoundaryMin: " ;
-  int i;
-  for (i=0; i < 3; i++) os << this->SegmentationBoundaryMin[i] << " " ; // Upper bound of the boundary box where the image gets segments.
-  os << "\n";
-
-  os << indent << "SegmentationBoundaryMax: " ;
-  for (i=0; i < 3; i++) os << this->SegmentationBoundaryMax[i] << " " ; // Upper bound of the boundary box where the image gets segments.
-
   os << indent << "RegistrationInterpolationType: " << this->RegistrationInterpolationType << "\n";  
   os << "\n";
-
 }

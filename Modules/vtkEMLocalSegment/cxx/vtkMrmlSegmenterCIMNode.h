@@ -46,13 +46,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef __vtkMrmlSegmenterCIMNode_h
 #define __vtkMrmlSegmenterCIMNode_h
 
-//#include <iostream.h>
-//#include <fstream.h>
-#include "vtkMrmlNode.h"
-#include "vtkSlicer.h"
 #include <vtkEMLocalSegmentConfigure.h>
+#include "vtkMrmlSegmenterAtlasCIMNode.h"
 
-class VTK_EMLOCALSEGMENT_EXPORT vtkMrmlSegmenterCIMNode : public vtkMrmlNode
+class VTK_EMLOCALSEGMENT_EXPORT vtkMrmlSegmenterCIMNode : public vtkMrmlSegmenterAtlasCIMNode
 {
 public:
   static vtkMrmlSegmenterCIMNode *New();
@@ -71,26 +68,11 @@ public:
   // Copy the node's attributes to this object
   void Copy(vtkMrmlNode *node);
 
-  // Variable Set/Get Functions - Name has to be first to properly work with GUI   
-  // Description:
-  // Just is listed here so that it properly works with automatic GUI - nothing really is changed 
-  vtkSetStringMacro(Name);
-  vtkGetStringMacro(Name);
- 
-  // Any Variables afterwards 
-  // Description:
-  // Get/Set for SegmenterCIM
-  vtkSetStringMacro(CIMMatrix);
-  vtkGetStringMacro(CIMMatrix);
-
 protected:
-  vtkMrmlSegmenterCIMNode();
-  ~vtkMrmlSegmenterCIMNode();
+  vtkMrmlSegmenterCIMNode(){};
+  ~vtkMrmlSegmenterCIMNode(){};
   vtkMrmlSegmenterCIMNode(const vtkMrmlSegmenterCIMNode&) {};
   void operator=(const vtkMrmlSegmenterCIMNode&) {};
-
-  // I do not know how to better Identify my Images
-  char *CIMMatrix;
 };
 
 #endif

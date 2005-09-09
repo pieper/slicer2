@@ -60,53 +60,25 @@ vtkMrmlSegmenterClassNode::vtkMrmlSegmenterClassNode()
 {
   // vtkMrmlNode's attributes => Tabs following sub classes  
   this->Indent     = 1;
-  this->Label            = 0;
-
-  this->ShapeParameter   = 0.0;
-
-  this->LogMean          = NULL;
-  this->LogCovariance    = NULL;
-
   this->PCAMeanName      = NULL; 
-  this->ReferenceStandardFileName     = NULL; 
-  
   this->PCALogisticSlope = 1.0;
   this->PCALogisticMin   = 0.0;
   this->PCALogisticMax   = 20.0;
   this->PCALogisticBoundary = 9.5;
-
-
-  this->PrintQuality        = 0;
   this->PrintPCA            = 0;
+  this->AtlasClassNode = vtkMrmlSegmenterAtlasClassNode::New();
 }
 
 //----------------------------------------------------------------------------
 vtkMrmlSegmenterClassNode::~vtkMrmlSegmenterClassNode()
 {
-  if (this->LogMean)
-  {
-    delete [] this->LogMean;
-    this->LogMean = NULL;
-  }
-  if (this->LogCovariance)
-  {
-    delete [] this->LogCovariance;
-    this->LogCovariance = NULL;
-  }
-  
   if (this->PCAMeanName)
   {
     delete [] this->PCAMeanName;
     this->PCAMeanName = NULL;
   }
-
-  if (this->ReferenceStandardFileName)
-  {
-    delete [] this->ReferenceStandardFileName;
-    this->ReferenceStandardFileName = NULL;
-  }
-
-
+  
+  this->AtlasClassNode->Delete();
 }
 
 //----------------------------------------------------------------------------
@@ -117,40 +89,18 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
   vtkIndent i1(nIndent);
 
   of << i1 << "<SegmenterClass";
-  if (this->Name && strcmp(this->Name, ""))  {
-    of << " name ='" << this->Name << "'";
-  }
-  of << " Label='" << this->Label << "'";
-
-  this->vtkMrmlSegmenterGenericClassNode::Write(of,nIndent);
-
-  of << " ShapeParameter='" << this->ShapeParameter << "'";
-  
-  if (this->LogMean && strcmp(this->LogMean, "")) 
-  {
-    of << " LogMean='" << this->LogMean << "'";
-  }
-  if (this->LogCovariance && strcmp(this->LogCovariance, "")) 
-  {
-    of << " LogCovariance='" << this->LogCovariance << "'";
-  }
+  this->vtkMrmlSegmenterGenericClassNode::Write(of);
+  this->AtlasClassNode->Write(of);
 
   if (this->PCAMeanName && strcmp( this->PCAMeanName, "")) 
   {
     of << " PCAMeanName='" << this->PCAMeanName << "'";
   }
 
-  if (this->ReferenceStandardFileName && strcmp(this->ReferenceStandardFileName, "")) 
-  {
-    of << " ReferenceStandardFileName='" << this->ReferenceStandardFileName << "'";
-  }
-
   of << " PCALogisticSlope ='" << this->PCALogisticSlope << "'"; 
   of << " PCALogisticMin ='" << this->PCALogisticMin << "'"; 
   of << " PCALogisticMax ='" << this->PCALogisticMax << "'"; 
   of << " PCALogisticBoundary ='" << this->PCALogisticBoundary << "'"; 
-
-  of << " PrintQuality='" << this->PrintQuality << "'";
   of << " PrintPCA='" << this->PrintPCA << "'";
 
   of << ">\n";
@@ -161,51 +111,27 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
 // Does NOT copy: ID, Name
 void vtkMrmlSegmenterClassNode::Copy(vtkMrmlNode *anode)
 {
-  vtkMrmlNode::MrmlNodeCopy(anode);
   vtkMrmlSegmenterGenericClassNode::Copy(anode);
-
   vtkMrmlSegmenterClassNode *node = (vtkMrmlSegmenterClassNode *) anode;
 
-  this->SetLabel(node->Label);
-  this->SetShapeParameter(node->ShapeParameter);
-  this->SetLogMean(node->LogMean);
-  this->SetLogCovariance(node->LogCovariance);
+  this->AtlasClassNode->Copy(node->AtlasClassNode);
   this->SetPCAMeanName(node->PCAMeanName);
-  this->SetReferenceStandardFileName(node->ReferenceStandardFileName);
-
   this->SetPCALogisticSlope(node->PCALogisticSlope);
   this->SetPCALogisticMin(node->PCALogisticMin);
   this->SetPCALogisticMax(node->PCALogisticMax);
   this->SetPCALogisticBoundary(node->PCALogisticBoundary);
-
-  this->SetPrintQuality(node->PrintQuality);
   this->SetPrintPCA(node->PrintPCA);
 }
 
 //----------------------------------------------------------------------------
 void vtkMrmlSegmenterClassNode::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkMrmlNode::PrintSelf(os,indent);
-   os << indent << "Name: " <<
-    (this->Name ? this->Name : "(none)") << "\n";
-   os << indent << "Label: " << this->Label << "\n";
-  this->vtkMrmlSegmenterGenericClassNode::PrintSelf(os, indent);
-
-   os << indent << "ShapeParameter: " << this->ShapeParameter << "\n";
-
-   os << indent << "LogMean: " <<
-    (this->LogMean ? this->LogMean : "(none)") << "\n";
-   os << indent << "LogCovariance: " <<
-    (this->LogCovariance ? this->LogCovariance : "(none)") << "\n";
-
-   os << indent << "ReferenceStandardFileName: " <<  (this->ReferenceStandardFileName ? this->ReferenceStandardFileName : "(none)") << "\n"; 
+   this->vtkMrmlSegmenterGenericClassNode::PrintSelf(os, indent);
+   this->AtlasClassNode->PrintSelf(os,indent);
    os << indent << "PCAMeanName:               " <<  (this->PCAMeanName ? this->PCAMeanName : "(none)") << "\n"; 
-
-   os << indent << "PrintQuality:              " << this->PrintQuality << "\n";
    os << indent << "PrintPCA:                  " << this->PrintPCA << "\n";
    os << indent << "PCALogisticSlope:          " << this->PCALogisticSlope << "\n"; 
    os << indent << "PCALogisticMin:            " << this->PCALogisticMin << "\n"; 
    os << indent << "PCALogisticMax:            " << this->PCALogisticMax << "\n"; 
    os << indent << "PCALogisticBoundary:       " << this->PCALogisticBoundary << "\n"; 
-
 }

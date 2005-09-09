@@ -35,10 +35,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 =========================================================================auto=*/
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
-#include <math.h>
 #include "vtkMrmlSegmenterCIMNode.h"
 #include "vtkObjectFactory.h"
 
@@ -56,37 +52,13 @@ vtkMrmlSegmenterCIMNode* vtkMrmlSegmenterCIMNode::New()
 }
 
 //----------------------------------------------------------------------------
-vtkMrmlSegmenterCIMNode::vtkMrmlSegmenterCIMNode()
-{
-  this->CIMMatrix = NULL; 
-}
-
-//----------------------------------------------------------------------------
-vtkMrmlSegmenterCIMNode::~vtkMrmlSegmenterCIMNode()
-{
-  if (this->CIMMatrix)
-  {
-    delete [] this->CIMMatrix;
-    this->CIMMatrix = NULL;
-  }
-}
-
-//----------------------------------------------------------------------------
 void vtkMrmlSegmenterCIMNode::Write(ofstream& of, int nIndent)
 {
-  // Write all attributes not equal to their defaults
   
   vtkIndent i1(nIndent);
 
   of << i1 << "<SegmenterCIM";
-  if (this->Name && strcmp(this->Name, "")) 
-  {
-    of << " name ='" << this->Name << "'";
-  }
-  if (this->CIMMatrix && strcmp(this->CIMMatrix, "")) 
-  {
-    of << " CIMMatrix='" << this->CIMMatrix << "'";
-  }
+  this->vtkMrmlSegmenterAtlasCIMNode::Write(of);
   of << "></SegmenterCIM>\n";;
 }
 
@@ -96,20 +68,14 @@ void vtkMrmlSegmenterCIMNode::Write(ofstream& of, int nIndent)
 void vtkMrmlSegmenterCIMNode::Copy(vtkMrmlNode *anode)
 {
   vtkMrmlNode::MrmlNodeCopy(anode);
-  vtkMrmlSegmenterCIMNode *node = (vtkMrmlSegmenterCIMNode *) anode;
-
-  this->SetCIMMatrix(node->CIMMatrix); 
+  this->vtkMrmlSegmenterAtlasCIMNode::Copy(anode);
 }
 
 //----------------------------------------------------------------------------
 void vtkMrmlSegmenterCIMNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkMrmlNode::PrintSelf(os,indent);
-   os << indent << "Name: " <<
-    (this->Name ? this->Name : "(none)") << "\n";
-   os << indent << "CIMMatrix: " <<
-    (this->CIMMatrix ? this->CIMMatrix : "(none)") << "\n";
-   os << ")\n";
+  vtkMrmlSegmenterAtlasCIMNode::PrintSelf(os,indent);
 }
 
 
