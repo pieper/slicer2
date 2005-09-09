@@ -329,7 +329,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27.6.2 $} {$Date: 2005/09/06 21:57:36 $}]
+        {$Revision: 1.27.6.3 $} {$Date: 2005/09/09 20:28:13 $}]
 
 }
 
@@ -396,7 +396,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
 
 #    frame $f.fLoadScalar -bg $Gui(activeWorkspace) 
 #    pack $f.fLoadScalar  -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-    DevAddFileBrowse $f vtkFreeSurferReaders "scalarFileName" "Scalar (Overlay) file:" "vtkFreeSurferReadersSetScalarFileName" "thickness curv sulc w area" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer scalar overlay file for the active model"
+    DevAddFileBrowse $f vtkFreeSurferReaders "scalarFileName" "Scalar (Overlay) file:" "vtkFreeSurferReadersSetScalarFileName" "" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer scalar overlay file for the active model (thickness curv sulc area w)"
     eval {button $f.bLoad -text "Load Scalar File" -width 12 -command "vtkFreeSurferReadersLoadScalarFile"} $Gui(WBA)
     TooltipAdd $f.bLoad "Load the scalar file and associate it with the active model"
     pack $f.bLoad  -side top -pady $Gui(pad) -padx $Gui(pad)
@@ -5677,7 +5677,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
             set username "default"
         }
     }
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.2 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.3 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -6715,54 +6715,124 @@ proc vtkFreeSurferReadersAddLuts {} {
                     }
                 }
                 if {$useNew} {
-                set truncphaseflag 1
-                set fthresh -100.0
-                set fmid 50
-                set tmpoffset 0.25
-                set fslope 1.0
-                set r 0.0
-                set g 0.0
-                set b 0.0
-                for {set c 0} {$c < $Lut($nextId,numberOfColors)} {incr c} {
-                    set f [expr 1.0 * $c / $Lut($nextId,numberOfColors)]
-                    set fcurv $f
-                    if {$invphaseflag == 1} {
-                        set f [expr 0.0 - $f]
-                    } 
-                    if {$truncphaseflag && $f < 0} {
-                        set f 0.0
+                    set truncphaseflag 1
+                    
+                    set fthresh .5
+                    set fmid -.5
+                    set tmpoffset 0.23
+                    set fslope .85
+                    set r 0.0
+                    set g 0.0
+                    set b 0.0
+
+                    # zero out the table
+                    for {set c 0} {$c < $Lut($nextId,numberOfColors)} {incr c} {
+                        Lut($nextId,lut) SetTableValue $c 0.0 0.0 0.0 0.5
                     }
-                    if {[expr abs($f)] > $fthresh && [expr abs($f)] < $fmid} {
-                        set ftmp [expr abs($f)]
-                        set c1 [expr 1.0 / ($fmid - $fthresh)]
-                        if {$fcurv != 1.0} {
-                            set c2tmp [expr ($fmid - $fthresh) * ($fmid - $fthresh)]
-                            set c2 [expr ($fmid - $fthresh - $fcurv * $c1 * $c2tmp) / ((1.0 - $fcurv) * ($fmid - $fthresh))]
-                        } else {
-                            set c2 0.0
+
+                    # this part calculates the blue part of the LUT properly
+                    set halfcols [expr $Lut($nextId,numberOfColors) / 2]
+                    # set c -$halfcols
+                    for {set c 0} {$c < $halfcols} {incr c} {
+                        set f [expr 1.0 * $c / $Lut($nextId,numberOfColors)]
+                        set fcurv $f
+                        if {$invphaseflag == 1} {
+                            set f [expr 0.0 - $f]
+                        } 
+                        if {$truncphaseflag && $f < 0} {
+                            set f 0.0
                         }
-                        set ftmp [expr $fcurv * $c1 * ($ftmp - $fthresh) * ($ftmp - $fthresh) + $c2*(1.0 - $fcurv)*($ftmp - $fthresh) + $fthresh]
-                        if {$f < 0.0} {
-                            set f [expr 0.0 - $ftmp]
+                        if {[expr abs($f)] > $fthresh && [expr abs($f)] < $fmid} {
+                            set ftmp [expr abs($f)]
+                            set c1 [expr 1.0 / ($fmid - $fthresh)]
+                            if {$fcurv != 1.0} {
+                                set c2tmp [expr ($fmid - $fthresh) * ($fmid - $fthresh)]
+                                set c2 [expr ($fmid - $fthresh - $fcurv * $c1 * $c2tmp) / ((1.0 - $fcurv) * ($fmid - $fthresh))]
+                            } else {
+                                set c2 0.0
+                            }
+                            set ftmp [expr $fcurv * $c1 * ($ftmp - $fthresh) * ($ftmp - $fthresh) + $c2*(1.0 - $fcurv)*($ftmp - $fthresh) + $fthresh]
+                            if {$f < 0.0} {
+                                set f [expr 0.0 - $ftmp]
+                            } else {
+                                set f $ftmp
+                            }
+                        }
+                        if {$f >= 0.0} {
+                            set r [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid-$fthresh):0.0) + (($f < $fthresh)?0.0:($f < $fmid)?($f - $fthresh)/($fmid - $fthresh):1.0)]
+                            set g [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0) + (($f < $fmid)?0.0:($f < $fmid + 1.0/$fslope)?1.0*($f-$fmid)*$fslope:1)]
+#                            set b [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0)]
+                            set b [expr (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0)]
                         } else {
-                            set f $ftmp
+                            set f [expr 0.0 - $f]
+                            set b [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0) + (($f < $fthresh)?0.0:($f < $fmid)?($f - $fthresh)/($fmid - $fthresh):1.0)]
+                            set g [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0) + (($f < $fmid)?0.0:($f < $fmid + 1.0/$fslope)?1.0*($f-$fmid)*$fslope:1)]
+                            set r [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0 - ($f - $fthresh) / ($fmid - $fthresh):0)]
+                        }
+                        
+                        if {$c >= 0} {
+                            if {$::Module(verbose) && $newLut == "Heat"} {
+                                # set b 1.0
+                                puts [format "%4d: f=%3.5f r=%3.5f g=%3.5f b=%3.5f" $c $f $r $g $b]
+                                
+                            }
+                            Lut($nextId,lut) SetTableValue $c $r $g $b 1.0
                         }
                     }
-                    if {$f >= 0.0} {
-                        set r [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid-$fthresh):0.0) + (($f < $fthresh)?0.0:($f < $fmid)?($f - $fthresh)/($fmid - $fthresh):1.0)]
-                        set g [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0) + (($f < $fmid)?0.0:($f < $fmid + 1.0/$fslope)?1.0*($f-$fmid)*$fslope:1)]
-                        set b [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0)]
-                    } else {
-                        set f [expr 0.0 - $f]
-                        set b [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0) + (($f < $fthresh)?0.0:($f < $fmid)?($f - $fthresh)/($fmid - $fthresh):1.0)]
-                        set g [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0) + (($f < $fmid)?0.0:($f < $fmid + 1.0/$fslope)?1.0*($f-$fmid)*$fslope:1)]
-                        set r [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0 - ($f - $fthresh) / ($fmid - $fthresh):0)]
+
+
+                    # now do the orange/red part of the LUT
+                    if {$::Module(verbose) && $newLut == "Heat"} { puts "Red part\n" }
+                    
+                    set fthresh 0.7
+                    set fmid .8
+                    set tmpoffset 0.25
+                    set fslope 4.0
+                    for {set c $halfcols} {$c < $Lut($nextId,numberOfColors)} {incr c} {
+                        set f [expr 1.0 * $c / $Lut($nextId,numberOfColors)]
+                        set fcurv $f
+                        if {$invphaseflag == 1} {
+                            set f [expr 0.0 - $f]
+                        } 
+                        if {$truncphaseflag && $f < 0} {
+                            set f 0.0
+                        }
+                        if {[expr abs($f)] > $fthresh && [expr abs($f)] < $fmid} {
+                            set ftmp [expr abs($f)]
+                            set c1 [expr 1.0 / ($fmid - $fthresh)]
+                            if {$fcurv != 1.0} {
+                                set c2tmp [expr ($fmid - $fthresh) * ($fmid - $fthresh)]
+                                set c2 [expr ($fmid - $fthresh - $fcurv * $c1 * $c2tmp) / ((1.0 - $fcurv) * ($fmid - $fthresh))]
+                            } else {
+                                set c2 0.0
+                            }
+                            set ftmp [expr $fcurv * $c1 * ($ftmp - $fthresh) * ($ftmp - $fthresh) + $c2*(1.0 - $fcurv)*($ftmp - $fthresh) + $fthresh]
+                            if {$f < 0.0} {
+                                set f [expr 0.0 - $ftmp]
+                            } else {
+                                set f $ftmp
+                            }
+                        }
+                        if {$f >= 0.0} {
+                            set r [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid-$fthresh):0.0) + (($f < $fthresh)?0.0:($f < $fmid)?($f - $fthresh)/($fmid - $fthresh):1.0)]
+                            set g [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0) + (($f < $fmid)?0.0:($f < $fmid + 1.0/$fslope)?1.0*($f-$fmid)*$fslope:1)]
+                           set b [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0)]
+#                            set b [expr (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0)]
+                        } else {
+                            set f [expr 0.0 - $f]
+                            set b [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0) + (($f < $fthresh)?0.0:($f < $fmid)?($f - $fthresh)/($fmid - $fthresh):1.0)]
+                            set g [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0) + (($f < $fmid)?0.0:($f < $fmid + 1.0/$fslope)?1.0*($f-$fmid)*$fslope:1)]
+                            set r [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0 - ($f - $fthresh) / ($fmid - $fthresh):0)]
+                        }
+                        if {$c >= 0} {
+                            if {$::Module(verbose) && $newLut == "Heat"} {
+                                # set b 1.0
+                                puts [format "%4d: f=%3.5f r=%3.5f g=%3.5f b=%3.5f" $c $f $r $g $b]
+                                
+                            }
+                            Lut($nextId,lut) SetTableValue $c $r $g $b 1.0
+                        }
                     }
-                    if {$::Module(verbose)} {
-                        puts "$invphaseflag : $c $r $g $b"
-                    }
-                    Lut($nextId,lut) SetTableValue $c $r $g $b 1.0
-                }
                 } 
             }
             default {
@@ -7030,7 +7100,7 @@ proc vtkFreeSurferReadersLoadScalarFile { {fileName ""} } {
     }
 
     if {[file exists $vtkFreeSurferReaders(scalarFileName)] == 0} {
-        DevErrorWindow "Load FreeSurfer Scalar: $vtkFreeSurferReaders(scalarFileName) does not exist!"
+        DevErrorWindow "Load FreeSurfer Scalar: file \"$vtkFreeSurferReaders(scalarFileName)\" does not exist!"
         return
     }
 
