@@ -2260,9 +2260,8 @@ void vtkImageEMLocalSegmenter::ExecuteData(vtkDataObject *)
     this->DebugImage = NULL; 
   }
 
-#if (EMVERBOSE || 1)
+#if (EMVERBOSE)
  {
-   cout << "Kilian: Debugging " << endl;
     vtkIndent indent;
     this->PrintSelf(cout,indent); 
  }
