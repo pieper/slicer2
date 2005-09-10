@@ -288,7 +288,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.60 $} {$Date: 2005/09/09 01:07:49 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.61 $} {$Date: 2005/09/10 01:26:14 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -4147,7 +4147,6 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses {HeadClass 1
     # Initialize 
     
     set NumClasses [llength $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)] 
-    # puts "EMSegmentCreateDeleteClasses: ChangeGui $ChangeGui DeleteNode $DeleteNode NumClasses $NumClasses EMSegment(NumClassesNew) $EMSegment(NumClassesNew) EMSegment(SuperClass) $EMSegment(SuperClass)"
 
     if {$EMSegment(NumClassesNew) == $NumClasses} { return  "" }
     # ---------------------------------------------------------------------------------
@@ -4157,9 +4156,9 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses {HeadClass 1
     if {$EMSegment(NumClassesNew) < $NumClasses} {
        # Update Button if necessary
        set DeleteList [lrange $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) $EMSegment(NumClassesNew) end]
-       set f $EMSegment(CIM-fMatrix)
-
        set SuperClassClassList $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList)
+
+
        # Destory elements from list
        # Have to do it here otherwise I have problems with EMSegmentUpdateMRML which is automatically called when deleting a node 
        set EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) [lrange $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) 0 [expr $EMSegment(NumClassesNew) -1]] 
@@ -4168,16 +4167,18 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses {HeadClass 1
        foreach i $DeleteList { 
           # It is a super class => destroy also all sub classes
           if {$EMSegment(Cattrib,$i,IsSuperClass)} {
+        # -----------------------------
+        # Delete all Subclasses
             set SuperClass $EMSegment(SuperClass)
-            set NumClassesNew $EMSegment(NumClassesNew)
+            set NumClassesNew $EMSegment(NumClassesNew)            
             set EMSegment(SuperClass) $i
             set EMSegment(NumClassesNew) 0
-        # You have to delete nodes at the end so that Update Mrml is not called
-        set MrmlNodeDeleteList "$MrmlNodeDeleteList [EMSegmentCreateDeleteClasses 0 $DeleteNode $InitClasses 0]"
-
+            set MrmlNodeDeleteList "$MrmlNodeDeleteList [EMSegmentCreateDeleteClasses 0 $DeleteNode $InitClasses 0]"
             set EMSegment(SuperClass) $SuperClass 
             set EMSegment(NumClassesNew) $NumClassesNew
-         
+
+        # -----------------------------
+        # Delete SuperClass Specific entires 
             # Delete from menu list 
             set index 0
             foreach j $EMSegment(GlobalClassList) {
@@ -4196,11 +4197,11 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses {HeadClass 1
             if {$EMSegment(Cattrib,$i,Node) != "" && $DeleteNode} { 
               lappend  MrmlNodeDeleteList "SegmenterSuperClass [$EMSegment(Cattrib,$i,Node) GetID]"
               foreach dir $EMSegment(CIMList) {
-          if {$EMSegment(Cattrib,$i,CIMMatrix,$dir,Node) != ""}  {lappend  MrmlNodeDeleteList "SegmenterCIM [$EMSegment(Cattrib,$i,CIMMatrix,$dir,Node) GetID]"}
+                if {$EMSegment(Cattrib,$i,CIMMatrix,$dir,Node) != ""}  {lappend  MrmlNodeDeleteList "SegmenterCIM [$EMSegment(Cattrib,$i,CIMMatrix,$dir,Node) GetID]"}
               } 
               if {$EMSegment(Cattrib,$i,EndNode) != ""} {lappend  MrmlNodeDeleteList "EndSegmenterSuperClass [$EMSegment(Cattrib,$i,EndNode) GetID]" }
             }
-      } else {
+          } else {
             # ----------------------------------------------------
             # Delete normal class
             # ----------------------------------------------------
@@ -4224,54 +4225,68 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses {HeadClass 1
             # Delete Node from Graph 
             if {($EMSegment(Cattrib,$i,Node) != "") && $DeleteNode} { lappend  MrmlNodeDeleteList "SegmenterClass [$EMSegment(Cattrib,$i,Node) GetID]" }
             if {($EMSegment(Cattrib,$i,EndNode) != "") && $DeleteNode} {lappend  MrmlNodeDeleteList "EndSegmenterClass [$EMSegment(Cattrib,$i,EndNode) GetID]" }
-          }
+    }
+    # ===============================================
+    # Applies to both SuperClass and Class
+    # ===============================================
+
+    # ===============================================
+        # Add to MrmlNodeDeleteList 
+        foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
+            if {[lindex $EigenList 3] != "" && $DeleteNode} {lappend  MrmlNodeDeleteList "MainMrmlDeleteNode SegmenterPCAEigen [[lindex $EigenList 3] GetID]" }
+        }
+        
+    # ===============================================
+        # Destory GUI
+    set f $EMSegment(CIM-fMatrix)
+
+
+        foreach j $SuperClassClassList {
+              if {[lsearch $DeleteList $j] < 0} {
+                if {$ChangeGui} {destroy $f.fLine$j.eCol$i}
+              } 
+        }
+
+        # Overview Table
+        destroy $EMSegment(fTableOverview)$i      
+        # Delete Additonal CIM Fields
+        # Free the variables 
+        if {$ChangeGui} { 
+            destroy $f.fLineL.l$i
+            destroy $f.fLine$i
+        }
+
+    # ===============================================
+        # Unset all variables
+        array unset EMSegment Cattrib,$EMSegment(SuperClass),CIMMatrix,$i,*
+        array unset EMSegment Cattrib,$i,* 
+        foreach j $SuperClassClassList {
+              if {[lsearch $DeleteList $j] < 0} {
+                array unset EMSegment Cattrib,$EMSegment(SuperClass),CIMMatrix,$j,$i,*
+              } 
+        }
       
-      # if  {$EMSegment(Cattrib,$i,Label) ==  $EMSegment(IntensityAvgClass)} {
-      #     EMSegmentChangeIntensityClass -1 1
-      #}
-    
-      # Delete Additonal CIM Fields
-      # Free the variables 
-      if {$ChangeGui} { 
-          destroy $f.fLineL.l$i
-          destroy $f.fLine$i
+    # ===============================================
+        # Update GUI
+        if {$ChangeGui} {EMSegmentSetCIMMatrix} 
+        
+        # Recaluclate Probabilites
+        EMSegmentCalcProb
+        # Have to change this to first class of child or other!
+        if {$ChangeGui && ($EMSegment(SuperClass) !=  $EMSegment(Class))} {
+            EMSegmentChangeClass [lindex $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) 0]
+        } else {
+            EMSegmentUpdateClassNavigationButton 
+        }
       }
-
-      # Class Definition
-      foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
-          if {[lindex $EigenList 3] != "" && $DeleteNode} {lappend  MrmlNodeDeleteList "MainMrmlDeleteNode SegmenterPCAEigen [[lindex $EigenList 3] GetID]" }
-      }
-      
-      foreach j $SuperClassClassList {
-            if {[lsearch $DeleteList $j] < 0} {
-        if {$ChangeGui} {destroy $f.fLine$j.eCol$i}
-        array unset EMSegment Cattrib,$EMSegment(SuperClass),CIMMatrix,$j,$i,*
-            } 
-      }
-      # Overview Table
-      destroy $EMSegment(fTableOverview)$i      
-      if {$ChangeGui} {EMSegmentSetCIMMatrix} 
-
-      # Update Values of new Class
-      # Recaluclate Probabilites
-      EMSegmentCalcProb
-      # Have to change this to first class of child or other!
-      if {$ChangeGui && ($EMSegment(SuperClass) !=  $EMSegment(Class))} {
-          EMSegmentChangeClass [lindex $EMSegment(Cattrib,$EMSegment(SuperClass),ClassList) 0]
-      } else {
-          EMSegmentUpdateClassNavigationButton 
-      }
-
-      # Unset all variables
-      array unset EMSegment Cattrib,$EMSegment(SuperClass),CIMMatrix,$i,*
-      array unset EMSegment Cattrib,$i,* 
-      }
-       # We know it was the head class so delete it 
+      # ===============================================
+      # Delete MrmlNodes 
+      # We know it was the head class so delete it 
       if {$DeleteNode && $HeadClass} {
-      foreach entry $MrmlNodeDeleteList {
-          MainMrmlDeleteNode [lindex $entry 0] [lindex $entry 1] 
-      }
-      set MrmlNodeDeleteList ""
+          foreach entry $MrmlNodeDeleteList {
+            MainMrmlDeleteNode [lindex $entry 0] [lindex $entry 1] 
+          }
+          set MrmlNodeDeleteList ""
       }
       return $MrmlNodeDeleteList
    }
