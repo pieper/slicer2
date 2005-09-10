@@ -164,18 +164,6 @@ class VTK_EMATLASBRAINCLASSIFIER_EXPORT vtkImageEMAtlasSegmenter : public vtkIma
   // Intensity Correction 
   // -----------------------------------------------------
 
-  // Sets the class given as intensity class 
-  void SetIntensityAvgClass(vtkImageEMAtlasClass *init) {this->IntensityAvgClass = init;}
-
-  //BTX
-  vtkImageEMAtlasClass* GetIntensityAvgClass() {return this->IntensityAvgClass;}
-  //ETX  
-  double GetIntensityAvgValuePreDef(int index) {return this->IntensityAvgValuePreDef[index];}
-  void SetIntensityAvgValuePreDef(double value, int index);
-
-  double GetIntensityAvgValueCurrent(int index) {return this->IntensityAvgValueCurrent[index];}
-  void SetIntensityAvgValueCurrent(double value, int index) {this->IntensityAvgValueCurrent[index] = value;}
- 
   //BTX
   vtkImageEMAtlasSuperClass* GetActiveSuperClass() {return this->activeSuperClass;}
   vtkImageEMAtlasSuperClass* GetHeadClass() {return this->HeadClass;}
@@ -252,14 +240,6 @@ protected:
   int Extent[6];                  // Extent of images - needed for several inputs 
 
   int NumberOfTrainingSamples;    // Number of Training Samples Probability Image has been summed up over !  
-
-  //BTX
-  vtkImageEMAtlasClass *IntensityAvgClass;          // Label of Tissue class for which Intensity value is defined, = -1 => no intensity correction
-
-  //ETX 
-  double* IntensityAvgValuePreDef;  // Average intensity gray value (not log gray value) for the class and every input channel - this is predefined
-  double* IntensityAvgValueCurrent; // Average intensity gray value (not log gray value) of the current image 
-  //BTX
 
   vtkImageEMAtlasSuperClass *activeSuperClass;   // Currently Active Super Class -> Important for interface with TCL
   classType    activeClassType;

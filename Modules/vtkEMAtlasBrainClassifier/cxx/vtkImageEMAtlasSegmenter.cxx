@@ -72,14 +72,11 @@ vtkImageEMAtlasSegmenter::vtkImageEMAtlasSegmenter()
   this->NumberOfTrainingSamples = 0;     // Number of Training Samples Probability Image has been summed up over !
   this->ImageProd = 0;                   // Size of Image = maxX*maxY*maxZ
 
-  this->IntensityAvgClass = NULL;          // Label of Tissue class for which Intensity value is defined, = -1 => no intensity correction 
-
   this->HeadClass = NULL;
   this->activeSuperClass = NULL;
   this->activeClass      = NULL;
   this->activeClassType  = SUPERCLASS;
 
-  this->IntensityAvgValuePreDef = NULL;this->IntensityAvgValueCurrent = NULL; 
 }
 
 //------------------------------------------------------------------------------
@@ -101,15 +98,6 @@ void vtkImageEMAtlasSegmenter::PrintSelf(ostream& os,vtkIndent indent) {
    os << indent << "NumInputImages:             " << this->NumInputImages << "\n";
    os << indent << "PrintDir:                   " << (this->PrintDir ? this->PrintDir : "(none)") << "\n"; 
    os << indent << "NumberOfTrainingSamples:    " << this->NumberOfTrainingSamples << "\n";
-   os << indent << "IntensityAvgValuePreDef:    "; 
-   for (i = 0; i< this->NumInputImages;i++) os << this->IntensityAvgValuePreDef[i] << " ";
-   os  << "\n";
-   os << indent << "IntensityAvgValueCurrent:   ";
-   for (i = 0; i< this->NumInputImages;i++) os << this->IntensityAvgValueCurrent[i] << " ";
-   os  << "\n";
-   os << indent << "IntensityAvgClass:          " ;
-   if (this->IntensityAvgClass) os << this->IntensityAvgClass->GetLabel() << "\n";
-   else  os << "(none)\n";
    os << indent << "activeSuperClass:           " ;
    if (this->activeSuperClass) os << this->activeSuperClass->GetLabel() << "\n";
    else os << "(none) \n"; 
@@ -200,63 +188,6 @@ int EMAtlasSegment_CalcWeightedCovariance(vtkImageEMAtlasSegmenter* self,double*
   return 1;
 }
 
-//------------------------------------------------------------------------------
-template <class Tin, class Tprob>
-static double vtkImageEMAtlasSegmenterCalculateIntensityCorrection(vtkImageEMAtlasSegmenter* self, Tin *in1Ptr, Tprob *ProbDataPtr, int InputIndex,int inIncY, int inIncZ) {
-  vtkImageEMAtlasClass* IntensityAvgClass = self->GetIntensityAvgClass();
-  // Intensity correction is disabled !
-  if (IntensityAvgClass == NULL) return 0.0;
-  int z,y,x;
-  double result;
-  if (IntensityAvgClass->GetProbDataWeight() == 0.0) {
-    vtkEMAddWarningMessageSelf("vtkImageEMAtlasSegmenterCalculateIntensityCorrection:No probability data map defined for class "<< IntensityAvgClass->GetLabel() << ". Intensity correction is deactivated !");
-    return 0.0;
-  }
-
-  int ProbDataIncY   = IntensityAvgClass->GetProbDataIncY();
-  int ProbDataIncZ   = IntensityAvgClass->GetProbDataIncZ();
-  int ImageMaxZ      = self->GetDimensionZ();
-  int ImageMaxY      = self->GetDimensionY();
-  int ImageMaxX      = self->GetDimensionX();
-  int SampleCount   = 0;
-  double SampleValue = 0.0;
-  int border = int(0.95 * double(self->GetNumberOfTrainingSamples()));
-  Tprob* ProbDataCopyPtr = ProbDataPtr;
-  for (z=0; z < ImageMaxZ; z++) {
-    for (y=0; y < ImageMaxY; y++) {
-      for (x=0; x < ImageMaxX; x++) {
-    if (int(*ProbDataCopyPtr) > border) {
-      SampleCount ++;
-      SampleValue += double(* in1Ptr);
-    }
-    ProbDataCopyPtr ++;
-    in1Ptr ++;
-      }
-      in1Ptr += inIncY;
-      ProbDataCopyPtr += ProbDataIncY;
-    }
-    in1Ptr += inIncZ;
-    ProbDataCopyPtr += ProbDataIncZ;
-  }
-  ProbDataCopyPtr = ProbDataPtr;
-  if (SampleCount) {
-    result = SampleValue /double(SampleCount);
-    // printf("IntensityCorrection:: Input: %d Samples: %d Average: %.4f",InputIndex,SampleCount, result); 
-    cout << "IntensityCorrection:: Input: "<< InputIndex << " Samples: " << SampleCount << " Average: "<< result; 
-    self->SetIntensityAvgValueCurrent(result,InputIndex); 
-    if (self->GetIntensityAvgValuePreDef(InputIndex) < 0.0) {
-      cout << endl;
-      return 0.0;
-    }
-    result -= self->GetIntensityAvgValuePreDef(InputIndex);
-    if (fabs(result) < 1e-3) result = 0.0;
-    cout << " Delta Correction: "<< result << endl;
-    return result;
-  }
-  vtkEMAddWarningMessageSelf("vtkImageEMAtlasSegmenterCalculateIntensityCorrection::No samples could be taken for intensity correction for image " << InputIndex <<".  Intensity correction is deactivated !");
-  return 0.0;
-}
-
 //----------------------------------------------------------------------------
 // This templated function executes the filter for any type of data.
 template <class T>
@@ -272,7 +203,6 @@ static void vtkImageEMAtlasSegmenterReadInputChannel(vtkImageEMAtlasSegmenter *s
   int ImageMaxX = self->GetDimensionX();
 
   int index = 0; 
-  double IntensityCorrection;
 
   // Get increments to march through data 
   in1Data->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
@@ -289,38 +219,11 @@ static void vtkImageEMAtlasSegmenterReadInputChannel(vtkImageEMAtlasSegmenter *s
   in1Ptr += jump;
 
   // cout << "jump " << jump << "BoundaryDataIncY " << BoundaryDataIncY << " BoundaryDataIncZ " << BoundaryDataIncZ << endl;
- 
-  vtkImageEMAtlasClass* IntensityAvgClass = self->GetIntensityAvgClass();
-  if (IntensityAvgClass == NULL) {
-    cout <<"vtkImageEMAtlasSegmenterReadInputChannel: Intensiy correction not activated!" << endl;
-    IntensityCorrection = 0.0;
-  } else {
 
-    switch (in1Data->GetScalarType()) {
-       case VTK_DOUBLE:         IntensityCorrection = vtkImageEMAtlasSegmenterCalculateIntensityCorrection(self,in1Ptr,(double*) IntensityAvgClass->GetProbDataPtr(),InputIndex, BoundaryDataIncY, BoundaryDataIncZ); break;
-       case VTK_FLOAT:          IntensityCorrection = vtkImageEMAtlasSegmenterCalculateIntensityCorrection(self,in1Ptr,(float*) IntensityAvgClass->GetProbDataPtr(), InputIndex, BoundaryDataIncY, BoundaryDataIncZ); break; 
-       case VTK_LONG:           IntensityCorrection = vtkImageEMAtlasSegmenterCalculateIntensityCorrection(self,in1Ptr,(long*) IntensityAvgClass->GetProbDataPtr(),InputIndex, BoundaryDataIncY, BoundaryDataIncZ); break; 
-       case VTK_UNSIGNED_LONG:  IntensityCorrection = vtkImageEMAtlasSegmenterCalculateIntensityCorrection(self,in1Ptr,(unsigned long*) IntensityAvgClass->GetProbDataPtr(),InputIndex, BoundaryDataIncY, BoundaryDataIncZ); break; 
-       case VTK_INT:            IntensityCorrection = vtkImageEMAtlasSegmenterCalculateIntensityCorrection(self,in1Ptr,(int*) IntensityAvgClass->GetProbDataPtr(),InputIndex, BoundaryDataIncY, BoundaryDataIncZ); break; 
-       case VTK_UNSIGNED_INT:   IntensityCorrection = vtkImageEMAtlasSegmenterCalculateIntensityCorrection(self,in1Ptr,(unsigned int*) IntensityAvgClass->GetProbDataPtr(),InputIndex, BoundaryDataIncY, BoundaryDataIncZ); break; 
-       case VTK_SHORT:          IntensityCorrection = vtkImageEMAtlasSegmenterCalculateIntensityCorrection(self,in1Ptr,(short*) IntensityAvgClass->GetProbDataPtr(),InputIndex, BoundaryDataIncY, BoundaryDataIncZ); break; 
-       case VTK_UNSIGNED_SHORT: IntensityCorrection = vtkImageEMAtlasSegmenterCalculateIntensityCorrection(self,in1Ptr,(unsigned short*) IntensityAvgClass->GetProbDataPtr(),InputIndex, BoundaryDataIncY, BoundaryDataIncZ); break; 
-       case VTK_CHAR:           IntensityCorrection = vtkImageEMAtlasSegmenterCalculateIntensityCorrection(self,in1Ptr,(char*) IntensityAvgClass->GetProbDataPtr(),InputIndex, BoundaryDataIncY, BoundaryDataIncZ); break; 
-       case VTK_UNSIGNED_CHAR:  IntensityCorrection = vtkImageEMAtlasSegmenterCalculateIntensityCorrection(self,in1Ptr,(unsigned char*) IntensityAvgClass->GetProbDataPtr(),InputIndex, BoundaryDataIncY, BoundaryDataIncZ); break; 
-      default:
-        cout << "vtkImageEMAtlasSegmenterReadInputChannel: Unknown ScalarType" << endl;
-        return;
-    } 
-
-  }
   for (idxZ = 0; idxZ < ImageMaxZ ; idxZ++) { 
     for (idxY = 0; idxY <  ImageMaxY; idxY++) {
       for (idxR = 0; idxR < ImageMaxX; idxR++) {
-    if (double(* in1Ptr) >  IntensityCorrection) {
-      InputVector[index][InputIndex] = log(float(* in1Ptr) +1 - IntensityCorrection);
-    } else {
-      InputVector[index][InputIndex] = 0.0;
-    }
+    InputVector[index][InputIndex] = log(float(* in1Ptr) +1);
     index ++; 
     in1Ptr++;
       }
@@ -529,25 +432,7 @@ void vtkImageEMAtlasSegmenter::SetNumInputImages(int number) {
      vtkEMAddErrorMessage( "Number of input images was previously defined ! ");
     return;
   }
-  if (number > 0 ) {
-    this->IntensityAvgValuePreDef = new double[number];
-    this->IntensityAvgValueCurrent = new double[number];
- 
-    for (int z=0; z < number; z++) {  
-      this->IntensityAvgValuePreDef[z] = -1.0;
-      this->IntensityAvgValueCurrent[z] = -1.0;
-    }
-  }
   this->NumInputImages = number;
-}
-
-//------------------------------------------------------------------------------
-void vtkImageEMAtlasSegmenter::SetIntensityAvgValuePreDef(double value, int index){
-  if ((index<0) || (index > this->NumInputImages)) {
-     vtkEMAddErrorMessage("vtkImageEMAtlasSegmenter::SetIntensityAvgValue: Incorrect input");
-    return;
-  }
-  this->IntensityAvgValuePreDef[index] = value;
 }
 
 // --------------------------------------------------------------------------------------------------------------------------
@@ -1048,13 +933,10 @@ void vtkImageEMAtlasSegmenter::DetermineLabelMap(short* LabelMap, int NumTotalTy
 //------------------------------------------------------------------------------
 // Special Vector and Matrix functions
 void vtkImageEMAtlasSegmenter::DeleteVariables() {
-  if (this->IntensityAvgValuePreDef)  delete[] this->IntensityAvgValuePreDef;
-  if (this->IntensityAvgValueCurrent) delete[] this->IntensityAvgValueCurrent;
   if (this->PrintDir) delete[] this->PrintDir;
 
   this->NumInputImages = 0 ;
-  this->IntensityAvgValuePreDef = NULL;this->IntensityAvgValueCurrent = NULL;this->PrintDir = NULL;
-  this->IntensityAvgClass;this->activeSuperClass = NULL;this->activeClass = NULL;
+  this->PrintDir = NULL;this->activeSuperClass = NULL;this->activeClass = NULL;
 
 }
 
