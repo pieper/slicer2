@@ -113,7 +113,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.108 $} {$Date: 2005/07/01 15:15:58 $}]
+            {$Revision: 1.109 $} {$Date: 2005/09/11 21:20:48 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -1075,7 +1075,7 @@ proc VolumesPropsApply {} {
 
     # first file
     # Generic reader does not need first file, it uses FilePrefix 
-    if {[file exists $Volume(firstFile)] == 0 &&  [Volume($m,node) GetFileType] != "Generic" } {
+    if {[file exists $Volume(firstFile)] == 0 &&  $m != "NEW" && [Volume($m,node) GetFileType] != "Generic" } {
         tk_messageBox -message "The first file $Volume(firstFile) must exist, if you haven't saved a newly created volume, please press cancel and then go to the Editor Module, Volumes tab, Save button"
         return
     }
