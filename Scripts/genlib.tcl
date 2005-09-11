@@ -599,7 +599,7 @@ runcmd $CMAKE \
     -G$GENERATOR \
     -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
     -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
-    -DBUILD_SHARED_LIBS:BOOL=ON \
+    -DBUILD_SHARED_LIBS:BOOL=OFF \
     -DBUILD_EXAMPLES:BOOL=OFF \
     -DBUILD_TESTING:BOOL=OFF \
     -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
@@ -608,11 +608,10 @@ runcmd $CMAKE \
     ../NAMICSandBox
 
 if {$isWindows} {
-    puts "Please edit genlib with the sandbox compile line for windows"
     if { $MSVC6 } {
-        #runcmd $::MAKE ITK.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
+        runcmd $::MAKE NAMICSandBox.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
     } else {
-        #runcmd $::MAKE ITK.SLN /build  $::VTK_BUILD_TYPE
+        runcmd $::MAKE NAMICSandBox.SLN /build  $::VTK_BUILD_TYPE
     }
 } else {
 
