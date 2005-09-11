@@ -7,7 +7,7 @@
 
 
 #include "vtkITKDeformableRegistrationFilter.h"
-#include "itkDemonsTransformRegistrationFilterF3.h"
+#include "itkDemonsTransformRegistrationFilterFF.h"
 
 #include <itkAffineTransform.h> 
 
@@ -92,7 +92,7 @@ protected:
 
   vtkMatrix4x4 *m_Matrix;
 
-  itk::itkDemonsTransformRegistrationFilterF3::Pointer m_ITKFilter;
+  itk::itkDemonsTransformRegistrationFilterFF::Pointer m_ITKFilter;
 
   virtual vtkITKDeformableRegistrationFilter::DeformationFieldType::Pointer GetDisplacementOutput();
 
@@ -113,7 +113,7 @@ private:
   void operator=(const vtkITKDemonsTransformRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKDemonsTransformRegistrationFilter, "$Revision: 1.4 $");
+//vtkCxxRevisionMacro(vtkITKDemonsTransformRegistrationFilter, "$Revision: 1.5 $");
 //vtkStandardNewMacro(vtkITKDemonsTransformRegistrationFilter);
 vtkRegistrationNewMacro(vtkITKDemonsTransformRegistrationFilter);
 

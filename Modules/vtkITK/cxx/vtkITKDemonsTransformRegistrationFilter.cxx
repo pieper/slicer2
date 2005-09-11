@@ -6,7 +6,7 @@ vtkITKDemonsTransformRegistrationFilter::vtkITKDemonsTransformRegistrationFilter
   StandardDeviations = 1.0;
   CurrentIteration = 0;
   
-  m_ITKFilter = itk::itkDemonsTransformRegistrationFilterF3::New();
+  m_ITKFilter = itk::itkDemonsTransformRegistrationFilterFF::New();
   LinkITKProgressToVTKProgress(m_ITKFilter);
 
   // set identity transform by default

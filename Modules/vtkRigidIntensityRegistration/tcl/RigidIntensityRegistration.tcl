@@ -152,7 +152,7 @@ proc RigidIntensityRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.16 $} {$Date: 2005/08/23 15:16:19 $}]
+        {$Revision: 1.17 $} {$Date: 2005/09/11 14:43:55 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -226,8 +226,8 @@ proc RigidIntensityRegistrationBuildSubGui {f} {
     eval {menu $f.mbType.m} $Gui(WMA)
     pack  $f.mbType -side left -pady 1 -padx $Gui(pad)
     # Add menu items
-    foreach RegType {{MI} {TranslationMI} {TranslationMattesMI} {VersorMattesMI} {AffineMattesMI} {DeformableDemons} {KL}} \
-        name {{Rigid MI} {Translation MI} {Translation Mattes MI} {Rigid Mattes MI} {Affine Mattes MI} {Deformable Demons} {KL}} { 
+    foreach RegType {{MI} {TranslationMI} {TranslationMattesMI} {VersorMattesMI} {AffineMattesMI} {DeformableDemons} {DeformableBSpline} {KL}} \
+        name {{Rigid MI} {Translation MI} {Translation Mattes MI} {Rigid Mattes MI} {Affine Mattes MI} {Deformable Demons} {Deformable BSpline} {KL}} { 
             set RigidIntensityRegistration($RegType) $name 
             $f.mbType.m add command -label $name \
                 -command "RigidIntensityRegistrationSetRegType $RegType"
@@ -246,7 +246,7 @@ proc RigidIntensityRegistrationBuildSubGui {f} {
     #
     # Swappable Frames for MI/KL methods
     #
-    foreach type "MI TranslationMI TranslationMattesMI VersorMattesMI AffineMattesMI DeformableDemons KL" {
+    foreach type "MI TranslationMI TranslationMattesMI VersorMattesMI AffineMattesMI DeformableDemons DeformableBSpline KL" {
         frame $f.f${type} -bg $Gui(activeWorkspace)
         place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
         set RigidIntensityRegistration(f${type}) $f.f${type}
@@ -259,6 +259,7 @@ proc RigidIntensityRegistrationBuildSubGui {f} {
     AffineMattesMIRegistrationBuildSubGui $f.fAffineMattesMI
     TranslationMattesMIRegistrationBuildSubGui $f.fTranslationMattesMI
     DeformableDemonsRegistrationBuildSubGui $f.fDeformableDemons
+    DeformableBSplineRegistrationBuildSubGui $f.fDeformableBSpline
     KullbackLeiblerRegistrationBuildSubGui $f.fKL
     set fKL $f.fKL
 }

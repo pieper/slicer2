@@ -29,6 +29,6 @@ void vtkITKDeformableRegistrationFilter::Update()
 {
   vtkITKRegistrationFilter::Update();
 
-  //vtkImporterDisplacement->Update();
+  vtkImporterDisplacement->Update();
 }
 
