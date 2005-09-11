@@ -60,7 +60,7 @@ proc DTMRICalculateScalarsInit {} {
     #------------------------------------
     set m "CalculateScalars"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.11 $} {$Date: 2005/08/30 01:42:14 $}]
+                                 {$Revision: 1.12 $} {$Date: 2005/09/11 18:39:46 $}]
 
     #------------------------------------
     # Variables for producing scalar volumes
@@ -349,7 +349,12 @@ proc DTMRIDoMath {{operation ""}} {
     set rangeyy [[[$input GetPointData] GetTensors] GetRange 4]
     set rangezz [[[$input GetPointData] GetTensors] GetRange 8]
     
-    set maxTrace [expr [lindex $rangexx 1] + [lindex $rangeyy 1] + [lindex $rangezz 1]]
+    # handle case where value is too small for a float (e.g. 2.122e-314)
+    scan [lindex $rangexx 1] "%g" frangexx
+    scan [lindex $rangeyy 1] "%g" frangeyy
+    scan [lindex $rangezz 1] "%g" frangezz
+
+    set maxTrace [expr $frangexx + $frangeyy + $frangezz]
     
     puts "Running oper: $operation"
     puts "Max Trace: $maxTrace"
