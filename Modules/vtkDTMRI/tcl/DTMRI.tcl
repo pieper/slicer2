@@ -501,7 +501,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.104 $} {$Date: 2005/09/06 23:21:38 $}]
+                  {$Revision: 1.105 $} {$Date: 2005/09/11 18:38:37 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -596,6 +596,7 @@ proc DTMRIUpdateMRML {} {
         # in case transformation matrices have moved around
         # our tensor data, set up the tractography matrix again.
         # transform from World coords to scaledIJK of the tensors
+        catch "transform Delete"
         vtkTransform transform
         DTMRICalculateActorMatrix transform $t    
         transform Inverse
