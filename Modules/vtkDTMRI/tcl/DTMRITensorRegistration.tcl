@@ -90,7 +90,7 @@ proc DTMRITensorRegistrationInit {} {
     #------------------------------------
     set m "TensorRegistration"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.12 $} {$Date: 2005/07/27 07:15:24 $}]
+                                 {$Revision: 1.13 $} {$Date: 2005/09/11 21:22:11 $}]
 
     # Does the AG module exist? If not the registration tab will not be displayed
     if {[catch "package require vtkAG"]} {
@@ -1592,9 +1592,9 @@ proc DTMRIRegRun {} {
       warp SetIntensityTransform $DTMRI(reg,inttfm)
       set intesity_transform_object 1
           
-      }  else  {
+  }  else  {
       set intesity_transform_object 0
-      }
+  }
 
       warp Update
       TransformDTMRI Concatenate warp
