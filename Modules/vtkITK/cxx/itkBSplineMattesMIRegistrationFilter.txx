@@ -208,7 +208,7 @@ void
 itk::itkBSplineMattesMIRegistrationFilter<TImageClass>::SetTransformParameters()
 {
   typedef TransformType::RegionType RegionType;
-  typename RegionType bsplineRegion;
+  RegionType bsplineRegion;
   typename RegionType::SizeType   gridSizeOnImage;
   typename RegionType::SizeType   gridBorderSize;
   typename RegionType::SizeType   totalGridSize;
@@ -220,12 +220,13 @@ itk::itkBSplineMattesMIRegistrationFilter<TImageClass>::SetTransformParameters()
   bsplineRegion.SetSize( totalGridSize );
 
   typedef TransformType::SpacingType SpacingType;
-  typename SpacingType spacing = this->GetInput()->GetSpacing();
+  SpacingType spacing = this->GetInput()->GetSpacing();
 
   typedef TransformType::OriginType OriginType;
-  typename OriginType origin = this->GetInput()->GetOrigin();
+  OriginType origin = this->GetInput()->GetOrigin();
 
-  FixedImageType::SizeType fixedImageSize = this->GetInput()->GetBufferedRegion().GetSize();
+  typename FixedImageType::SizeType fixedImageSize;
+  fixedImageSize = this->GetInput()->GetBufferedRegion().GetSize();
 
   for(unsigned int r=0; r < 3; r++)
     {

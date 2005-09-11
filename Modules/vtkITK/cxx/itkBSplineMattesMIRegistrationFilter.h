@@ -231,8 +231,8 @@ protected:
 
   // Transform parameters
   typedef TransformType::ParametersType     ParametersType;
-  typename ParametersType                        m_InitialParameters;
-  typename ParametersType                        m_FinalParameters;
+  ParametersType                        m_InitialParameters;
+  ParametersType                        m_FinalParameters;
 
   // Deformation field
   typename DeformationFieldType::Pointer         m_DeformationField;
