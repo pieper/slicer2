@@ -281,30 +281,57 @@ static void vtkImageWarpSSDExecute2(vtkImageData* t,T1* tptr,
     for(int y=ext[2];y<=ext[3];++y)
       {
       for(int x=ext[0];x<=ext[1];++x)
-    {
-    float v=0;
-    for(int c=0;c<comp;++c)
-      {
-      v += pow(float(*tptr) - float(*sptr),2);
-      ++tptr;
-      ++sptr;
-      }
-    if(mptr)
-      {
-      v*=*mptr/255.;
-      }
-    ssd+=v;
+        {
+        double v=0;
+        for(int c=0;c<comp;++c)
+          {
+            if (isnan(*tptr))
+              {
+              cout << "tptr nan at x " << x
+                   << " y " << y
+                   << " z " << z
+                   << "." << endl;
+              cout.flush();
+              break;
+              }
+            if (isnan(*sptr))
+              {
+              cout << "sptr nan at x " << x
+                   << " y " << y
+                   << " z " << z
+                   << "." << endl;
+              cout.flush();
+              break;
+              }
+          v += pow(double(*tptr) - double(*sptr), (double)2.);
+          ++tptr;
+          ++sptr;
+          }
+        if(mptr)
+          {
+          v*=*mptr/255.;
+          }
+        ssd+=v;
 
-    if(mptr)
-      {
-      ++mptr;
+        if(mptr)
+          {
+          ++mptr;
+          }
+        }
       }
-    }
-      }
+      cout << "z: " << z
+           << " ssd " << ssd
+           << "." << endl;
+      cout.flush();
     }
   int* dims=t->GetDimensions();
   int n=dims[0]*dims[1]*dims[2];
   res=sqrt(ssd)/n;
+      cout << "n: " << n
+           << " ssd " << ssd
+           << " res " << res
+           << "." << endl;
+      cout.flush();
 }
 
 template <class T>
@@ -473,19 +500,19 @@ void vtkImageWarp::InternalUpdate()
       {
       int* dims = this->Targets[l]->GetDimensions();
       if(this->Verbose)
-    {
-    cout << "Level: " << l
-         << ". Size: " << dims[0] << " " << dims[1] << " " << dims[2]
-         << ". Max iter: " << (l+1)*this->MaximumIterations
-         << ". Std dev: " << StdDev
-         << "." << endl;
-    }
+        {
+        cout << "Level: " << l
+             << ". Size: " << dims[0] << " " << dims[1] << " " << dims[2]
+             << ". Max iter: " << (l+1)*this->MaximumIterations
+             << ". Std dev: " << StdDev
+             << "." << endl;
+        }
 
       vtkImageData* mask=0;
       if(this->Masks.size()!=0)
-    {
-    mask=this->Masks[l];
-    }
+        {
+        mask=this->Masks[l];
+        }
 
       // Build the registration pipeline at level l
       // Set Transform to current displacement grid.
@@ -498,169 +525,169 @@ void vtkImageWarp::InternalUpdate()
       double lastssd=10000000000.0;
       double ssd=0;
       for(int i=0;i<(l+1)*this->MaximumIterations;++i)
-    {
-
-
-        // pipeline objects
-        vtkImageReslice* reslice = 0;
-        // As tensor reorientation is very slow, only do it
-    // every reslicetensorinterv steps.
-    if(!this->ResliceTensors)
-      {
-      reslice = vtkImageReslice::New();
-        }
-        else
-      {
-      if(i%reslicetensorinterv)
         {
-        reslice = vtkImageReslice::New();
-        }
-      else
-        {
-        reslice = vtkImageResliceST::New();
-        }
-      }
-        vtkImageTransformIntensity* transint = vtkImageTransformIntensity::New();
-
-        vtkImageWarpForce* force = 0;
-
-        switch(this->ForceType)
-          {
-          case VTK_IMAGE_WARP_DM:
-            force = vtkImageWarpDMForce::New();
-            break;
-          case VTK_IMAGE_WARP_OF:
-            force = vtkImageWarpOFForce::New();
-            break;
-          default:
-            vtkErrorMacro(<< "Unknown warp force");
-            break;
-          }
-        vtkImageMathematics* addvelo = vtkImageMathematics::New();
-        vtkImageGaussianSmooth* smooth = vtkImageGaussianSmooth::New();
-
-        // reslice source
-        reslice->SetInput(this->Sources[l]);
-        reslice->SetResliceTransform(this->GeneralTransform);
-        reslice->SetInformationInput(this->Targets[l]);
-        reslice->WrapOff();
-        reslice->MirrorOff();
-        reslice->SetInterpolationMode(this->GetInterpolation());
-        reslice->ReleaseDataFlagOn();
-
-        // find intensity correction
-        // initialize intensity transformation
-        if(this->IntensityTransform)
-      {
-      this->IntensityTransform->SetTarget(this->Targets[l]);
-      this->IntensityTransform->SetSource(reslice->GetOutput());
-        this->IntensityTransform->SetMask(mask);
-      }
-      
-        // correct source intensities
-        transint->SetInput(reslice->GetOutput());
-        transint->SetIntensityTransform(this->IntensityTransform);
-        
-        // compute force
-        force->SetTarget(this->Targets[l]);
-        force->SetSource(transint->GetOutput());
-        force->SetDisplacement(this->Displacements[l]);
-        force->SetMask(mask);
-      
-        // combine previous and new forces
-        addvelo->SetInput1(this->Displacements[l]);
-        addvelo->SetInput2(force->GetOutput());
-        addvelo->SetOperationToAdd();
-      
-        // smooth deformation
-        smooth->SetInput(addvelo->GetOutput());
-        smooth->SetStandardDeviations(StdDev,StdDev,StdDev);
 
 
+            // pipeline objects
+            vtkImageReslice* reslice = 0;
+            // As tensor reorientation is very slow, only do it
+            // every reslicetensorinterv steps.
+            if(!this->ResliceTensors)
+              {
+              reslice = vtkImageReslice::New();
+              }
+              else
+                {
+                if(i%reslicetensorinterv)
+                  {
+                  reslice = vtkImageReslice::New();
+                  }
+                  else
+                  {
+                  reslice = vtkImageResliceST::New();
+                  }
+                }
+            vtkImageTransformIntensity* transint = vtkImageTransformIntensity::New();
+
+            vtkImageWarpForce* force = 0;
+
+            switch(this->ForceType)
+              {
+              case VTK_IMAGE_WARP_DM:
+                force = vtkImageWarpDMForce::New();
+                break;
+              case VTK_IMAGE_WARP_OF:
+                force = vtkImageWarpOFForce::New();
+                break;
+              default:
+                vtkErrorMacro(<< "Unknown warp force");
+                break;
+              }
+            vtkImageMathematics* addvelo = vtkImageMathematics::New();
+            vtkImageGaussianSmooth* smooth = vtkImageGaussianSmooth::New();
+
+            // reslice source
+            reslice->SetInput(this->Sources[l]);
+            reslice->SetResliceTransform(this->GeneralTransform);
+            reslice->SetInformationInput(this->Targets[l]);
+            reslice->WrapOff();
+            reslice->MirrorOff();
+            reslice->SetInterpolationMode(this->GetInterpolation());
+            reslice->ReleaseDataFlagOn();
+
+            // find intensity correction
+            // initialize intensity transformation
+            if(this->IntensityTransform)
+              {
+              this->IntensityTransform->SetTarget(this->Targets[l]);
+              this->IntensityTransform->SetSource(reslice->GetOutput());
+              this->IntensityTransform->SetMask(mask);
+              }
+          
+            // correct source intensities
+            transint->SetInput(reslice->GetOutput());
+            transint->SetIntensityTransform(this->IntensityTransform);
+            
+            // compute force
+            force->SetTarget(this->Targets[l]);
+            force->SetSource(transint->GetOutput());
+            force->SetDisplacement(this->Displacements[l]);
+            force->SetMask(mask);
+          
+            // combine previous and new forces
+            addvelo->SetInput1(this->Displacements[l]);
+            addvelo->SetInput2(force->GetOutput());
+            addvelo->SetOperationToAdd();
+          
+            // smooth deformation
+            smooth->SetInput(addvelo->GetOutput());
+            smooth->SetStandardDeviations(StdDev,StdDev,StdDev);
 
 
 
 
-    if(this->UseSSD)
-          {
-          ssd=this->SSD(this->Targets[l],transint->GetOutput(),mask);
-          }
-    if(this->Verbose)
-      {
-      cout << "\r  Iteration " << i << ":";
-          if(this->UseSSD)
-            { 
-            cout << " SSD=" << ssd
-                 << " Diff=" << lastssd-ssd
-                 << " Epsilon=" << lastssd*ssde
-                 << "          ";
-            }
-      cout.flush();
-      }
 
-    if(this->UseSSD &&
-       ((lastssd-ssd)<=(lastssd*ssde)) &&
-       (i>=this->MinimumIterations))
-      {
-      break;
-      }
-    lastssd = ssd;
 
-        // This triggers the warping.
-    smooth->Update();
-     this->Displacements[l]->DeepCopy(smooth->GetOutput());
+            if(this->UseSSD)
+              {
+              ssd=this->SSD(this->Targets[l],transint->GetOutput(),mask);
+              }
+            if(this->Verbose)
+              {
+              cout << "\r  Iteration " << i << ":";
+                  if(this->UseSSD)
+                    { 
+                    cout << " SSD=" << ssd
+                         << " Diff=" << lastssd-ssd
+                         << " Epsilon=" << lastssd*ssde
+                         << "          ";
+                    }
+              cout.flush();
+              }
 
-    reslice->Delete();
-        transint->Delete();
-        force->Delete();
-        addvelo->Delete();
-        smooth->Delete();
+            if(this->UseSSD &&
+               ((lastssd-ssd)<=(lastssd*ssde)) &&
+               (i>=this->MinimumIterations))
+              {
+              break;
+              }
+            lastssd = ssd;
 
-    } // end i (iterations)
+            // This triggers the warping.
+            smooth->Update();
+            this->Displacements[l]->DeepCopy(smooth->GetOutput());
+
+            reslice->Delete();
+            transint->Delete();
+            force->Delete();
+            addvelo->Delete();
+            smooth->Delete();
+
+        } // end i (iterations)
 
       
       if(this->Verbose)
-    {
-    cout << endl;
-    }
+        {
+        cout << endl;
+        }
       }
     
-    // if at last level, decrease smoothing
-    if(l==0  && StdDev>MinStdDev)
-      {
-      StdDev-=0.25;
-      if(StdDev<MinStdDev)
-    {
-    StdDev=MinStdDev;
-    }
-      l=1;
-      }
-    else
-      {
-      cout << "Update pyramid...";
-      this->UpdatePyramid(l);
-      cout << "Done" << endl;
+      // if at last level, decrease smoothing
+      if(l==0  && StdDev>MinStdDev)
+        {
+        StdDev-=0.25;
+        if(StdDev<MinStdDev)
+          {
+          StdDev=MinStdDev;
+          }
+        l=1;
+        }
+      else
+        {
+        cout << "Update pyramid...";
+        this->UpdatePyramid(l);
+        cout << "Done" << endl;
       }
     }
     
-  // what we computed is the inverse displacement, so we need to add
-  // the displacement the transform, and invert it so it represents a
-  // forward transform.
+    // what we computed is the inverse displacement, so we need to add
+    // the displacement the transform, and invert it so it represents a
+    // forward transform.
     if(this->Verbose)
      {  cout << "start invert displacement " ;
-      cout.flush();
-    }
+        cout.flush();
+     }
   
-  this->SetDisplacementGrid(this->Displacements[0]);
-  this->Inverse();
+    this->SetDisplacementGrid(this->Displacements[0]);
+    this->Inverse();
   
-  this->FreePyramid();
+    this->FreePyramid();
 
-  this->vtkGridTransform::InternalUpdate();
- if(this->Verbose)
-   {  cout << "Finish free pyramid and internal update for vtkGridTransform "; 
-       cout.flush();
-    }
+    this->vtkGridTransform::InternalUpdate();
+    if(this->Verbose)
+     {  cout << "Finish free pyramid and internal update for vtkGridTransform "; 
+        cout.flush();
+     }
 }
 
 void vtkImageWarp::PrintSelf(::ostream& os, vtkIndent indent)
