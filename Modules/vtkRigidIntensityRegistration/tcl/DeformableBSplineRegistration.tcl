@@ -155,7 +155,7 @@ proc DeformableBSplineRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2005/09/11 14:43:55 $}]
+        {$Revision: 1.2 $} {$Date: 2005/09/12 16:19:39 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -461,14 +461,14 @@ proc DeformableBSplineRegistrationCoarseParam {} {
     set RigidIntensityRegistration(Repeat) 0
 
     set DeformableBSplineRegistration(Resample) 4
-    set DeformableBSplineRegistration(GridSize) 4
+    set DeformableBSplineRegistration(GridSize) 5
     set DeformableBSplineRegistration(CostFunctionConvergenceFactor) 1e+7
     set DeformableBSplineRegistration(ProjectedGradientTolerance) 1e-4
     set DeformableBSplineRegistration(MaximumNumberOfIterations) 100
-    set DeformableBSplineRegistration(MaximumNumberOfEvaluations) 100
-    set DeformableBSplineRegistration(MaximumNumberOfCorrections) 6
-    set DeformableBSplineRegistration(NumberOfHistogramBins) 50
-    set DeformableBSplineRegistration(NumberOfSpatialSamples) 10000
+    set DeformableBSplineRegistration(MaximumNumberOfEvaluations) 2000
+    set DeformableBSplineRegistration(MaximumNumberOfCorrections) 20
+    set DeformableBSplineRegistration(NumberOfHistogramBins) 100
+    set DeformableBSplineRegistration(NumberOfSpatialSamples) 25000
 }
 
 
@@ -487,13 +487,13 @@ proc DeformableBSplineRegistrationFineParam {} {
     set RigidIntensityRegistration(Repeat) 0
 
     set DeformableBSplineRegistration(Resample) 2
-    set DeformableBSplineRegistration(GridSize) 8
+    set DeformableBSplineRegistration(GridSize) 10
     set DeformableBSplineRegistration(CostFunctionConvergenceFactor) 1e+7
     set DeformableBSplineRegistration(ProjectedGradientTolerance) 1e-4
-    set DeformableBSplineRegistration(MaximumNumberOfIterations) 400
-    set DeformableBSplineRegistration(MaximumNumberOfEvaluations) 400
-    set DeformableBSplineRegistration(MaximumNumberOfCorrections) 10
-    set DeformableBSplineRegistration(NumberOfHistogramBins) 50
+    set DeformableBSplineRegistration(MaximumNumberOfIterations) 200
+    set DeformableBSplineRegistration(MaximumNumberOfEvaluations) 2000
+    set DeformableBSplineRegistration(MaximumNumberOfCorrections) 20
+    set DeformableBSplineRegistration(NumberOfHistogramBins) 200
     set DeformableBSplineRegistration(NumberOfSpatialSamples) 50000
 
 }
@@ -514,13 +514,13 @@ proc DeformableBSplineRegistrationGSlowParam {} {
 
 
     set DeformableBSplineRegistration(Resample) 2
-    set DeformableBSplineRegistration(GridSize) 10
+    set DeformableBSplineRegistration(GridSize) 12
     set DeformableBSplineRegistration(CostFunctionConvergenceFactor) 1e+7
     set DeformableBSplineRegistration(ProjectedGradientTolerance) 1e-4
     set DeformableBSplineRegistration(MaximumNumberOfIterations) 400
-    set DeformableBSplineRegistration(MaximumNumberOfEvaluations) 400
-    set DeformableBSplineRegistration(MaximumNumberOfCorrections) 12
-    set DeformableBSplineRegistration(NumberOfHistogramBins) 50
+    set DeformableBSplineRegistration(MaximumNumberOfEvaluations) 2000
+    set DeformableBSplineRegistration(MaximumNumberOfCorrections) 20
+    set DeformableBSplineRegistration(NumberOfHistogramBins) 256
     set DeformableBSplineRegistration(NumberOfSpatialSamples) 100000
 
 }
@@ -543,9 +543,9 @@ proc DeformableBSplineRegistrationVerySlowParam {} {
     set DeformableBSplineRegistration(CostFunctionConvergenceFactor) 1e+7
     set DeformableBSplineRegistration(ProjectedGradientTolerance) 1e-4
     set DeformableBSplineRegistration(MaximumNumberOfIterations) 1000
-    set DeformableBSplineRegistration(MaximumNumberOfEvaluations) 1000
-    set DeformableBSplineRegistration(MaximumNumberOfCorrections) 12
-    set DeformableBSplineRegistration(NumberOfHistogramBins) 50
+    set DeformableBSplineRegistration(MaximumNumberOfEvaluations) 2000
+    set DeformableBSplineRegistration(MaximumNumberOfCorrections) 20
+    set DeformableBSplineRegistration(NumberOfHistogramBins) 256
     set DeformableBSplineRegistration(NumberOfSpatialSamples) 100000
 
 }
