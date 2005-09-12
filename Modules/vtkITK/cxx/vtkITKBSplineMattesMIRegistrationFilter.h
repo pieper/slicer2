@@ -10,6 +10,7 @@
 #include "itkBSplineMattesMIRegistrationFilterFF.h"
 
 #include <itkAffineTransform.h> 
+#include <itkExceptionObject.h>
 
 #include "vtkMatrix4x4.h"
 #include "vtkProcessObject.h"
@@ -145,7 +146,7 @@ private:
   void operator=(const vtkITKBSplineMattesMIRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKBSplineMattesMIRegistrationFilter, "$Revision: 1.1 $");
+//vtkCxxRevisionMacro(vtkITKBSplineMattesMIRegistrationFilter, "$Revision: 1.2 $");
 //vtkStandardNewMacro(vtkITKBSplineMattesMIRegistrationFilter);
 vtkRegistrationNewMacro(vtkITKBSplineMattesMIRegistrationFilter);
 
@@ -193,23 +194,27 @@ public:
   { 
     const OptimizerType * optimizer = 
       dynamic_cast< const OptimizerType * >( object );
-
+    
     if( typeid( event ) != typeid( itk::IterationEvent ) ) {
       return;
     }
     if (optimizer) {
       int iter = m_registration->GetCurrentIteration();
-     m_fo << "Iteration = " << iter << std::endl;
-     m_fo << "Metric = " << optimizer->GetValue() << std::endl;
+      double progress = (iter + 0.0)/m_registration->GetMaximumNumberOfIterations();
+      m_registration->UpdateProgress( progress );     
+      
+      m_fo << "Iteration = " << iter  << "  Metric = " << optimizer->GetValue() << std::endl;
       m_registration->SetCurrentIteration(iter+1);
       if (m_registration->GetAbortExecute()) {
         m_registration->AbortIterations();
+        throw itk::ProcessAborted(__FILE__,__LINE__);
       }
     }
     else {
-     m_fo << "Error in BSplineMattesMIRegistrationFilterCommand::Execute" << std::endl;
+      m_fo << "Error in BSplineMattesMIRegistrationFilterCommand::Execute" << std::endl;
     }
     m_fo.flush();
+    
   }
 };
 //ETX
