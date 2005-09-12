@@ -41,6 +41,8 @@ if {[file exists $Dir/vtkEMAtlasBrainClassifier.h] == 0 } {
     }
 }
 
+set Dir $SLICER_HOME/Modules/vtkEMLocalSegment/cxx
+
 if {($tcl_platform(os) == "Windows NT") &&([file exists ${Dir}/vtkThread.h] == 0) } {
     if {[catch "file copy $SLICER_HOME/Modules/vtkEMAtlasBrainClassifier/cxx/vtkThread.h ${Dir}/."] || [catch "file copy $SLICER_HOME/Modules/vtkEMAtlasBrainClassifier/cxx/vtkThread.cxx ${Dir}/."]} {
     puts "Error: Failed copying $SLICER_HOME/Modules/vtkEMAtlasBrainClassifier/cxx/vtkThread.* to ${Dir}/."
