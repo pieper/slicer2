@@ -1083,7 +1083,7 @@ proc IbrowserMakeNewInterval { intval ikind spanmin spanmax numDrops } {
     #---what drop are we currently indexing and
     #---looking at in the MainViewer?
     #---------------    
-    set ::Ibrowser(LastViewDrop) $::Ibrowser(LastViewDrop)
+    set ::Ibrowser(LastViewDrop) $::Ibrowser(ViewDrop)
     set ::Ibrowser(ViewDrop) 0
 
     #size, draw the interval, its icons and hitlite outline
