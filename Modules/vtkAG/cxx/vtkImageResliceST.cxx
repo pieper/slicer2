@@ -818,13 +818,13 @@ static void vtkAllocBackground(vtkImageReslice *self, T **background_ptr,
     for (i = 0; i < numComponents; i++)
       {
       if (i < 4)
-    {
-    vtkResliceClamp(self->GetBackgroundColor()[i],background[i]);
-    }
+        {
+        vtkResliceClamp(self->GetBackgroundColor()[i],background[i]);
+        }
       else
-    {
-    background[i] = 0;
-    }
+        {
+        background[i] = 0;
+        }
       }
     }
 }
@@ -854,14 +854,14 @@ static void vtkGetResliceInterpFunc(vtkImageReslice *self,
     switch (self->GetInterpolationMode())
       {
       case VTK_RESLICE_NEAREST:
-    *interpolate = &vtkNearestNeighborInterpolationRepeat;
-    break;
+        *interpolate = &vtkNearestNeighborInterpolationRepeat;
+        break;
       case VTK_RESLICE_LINEAR:
-    *interpolate = &vtkTrilinearInterpolationRepeat;
-    break;
+        *interpolate = &vtkTrilinearInterpolationRepeat;
+        break;
       case VTK_RESLICE_CUBIC:
-    *interpolate = &vtkTricubicInterpolationRepeat;
-    break;
+        *interpolate = &vtkTricubicInterpolationRepeat;
+        break;
       }
     }
   else
@@ -869,14 +869,14 @@ static void vtkGetResliceInterpFunc(vtkImageReslice *self,
     switch (self->GetInterpolationMode())
       {
       case VTK_RESLICE_NEAREST:
-    *interpolate = &vtkNearestNeighborInterpolation;
-    break;
+        *interpolate = &vtkNearestNeighborInterpolation;
+        break;
       case VTK_RESLICE_LINEAR:
-    *interpolate = &vtkTrilinearInterpolation;
-    break;
+        *interpolate = &vtkTrilinearInterpolation;
+        break;
       case VTK_RESLICE_CUBIC:
-    *interpolate = &vtkTricubicInterpolation;
-    break;
+        *interpolate = &vtkTricubicInterpolation;
+        break;
       }
     }    
 }
@@ -974,55 +974,55 @@ static void vtkImageResliceSTExecute(vtkImageResliceST *self,
     for (idY = outExt[2]; idY <= outExt[3]; idY++)
       {
       if (!id) 
-    {
-    if (!(count%target)) 
-      {
-      self->UpdateProgress(count/(50.0*target));
-      }
-    count++;
-    }
+        {
+        if (!(count%target)) 
+          {
+          self->UpdateProgress(count/(50.0*target));
+          }
+        count++;
+        }
       
       for (idX = outExt[0]; idX <= outExt[1]; idX++)
-    {
-    point[0] = idX*outSpacing[0] + outOrigin[0];
-    point[1] = idY*outSpacing[1] + outOrigin[1];
-    point[2] = idZ*outSpacing[2] + outOrigin[2];
+        {
+        point[0] = idX*outSpacing[0] + outOrigin[0];
+        point[1] = idY*outSpacing[1] + outOrigin[1];
+        point[2] = idZ*outSpacing[2] + outOrigin[2];
 
-    if (matrix)
-      {
-      point[3] = 1.0f;
-      matrix->MultiplyPoint(point,point);
-      f = 1.0f/point[3];
-      point[0] *= f; // deal with w if the matrix
-      point[1] *= f; //   was a Homogeneous transform
-      point[2] *= f;
-      }
-    if (transform)
-      {
+        if (matrix)
+          {
+          point[3] = 1.0f;
+          matrix->MultiplyPoint(point,point);
+          f = 1.0f/point[3];
+          point[0] *= f; // deal with w if the matrix
+          point[1] *= f; //   was a Homogeneous transform
+          point[2] *= f;
+          }
+        if (transform)
+          {
           transform->InternalTransformDerivative(point,point,derivatives);
-      }
+          }
         
-    point[0] = (point[0] - inOrigin[0])*inInvSpacing[0];
-    point[1] = (point[1] - inOrigin[1])*inInvSpacing[1];
-    point[2] = (point[2] - inOrigin[2])*inInvSpacing[2];
-    interpolate(point, inPtr, outvox, background, 
-            numscalars, inExt, inInc);
+        point[0] = (point[0] - inOrigin[0])*inInvSpacing[0];
+        point[1] = (point[1] - inOrigin[1])*inInvSpacing[1];
+        point[2] = (point[2] - inOrigin[2])*inInvSpacing[2];
+        interpolate(point, inPtr, outvox, background, 
+                numscalars, inExt, inInc);
     
-    // If derivatives is a unit matrix, no tensor reorientation.
-    int deriv=0;
-    s=1e-10;
-    for(i=0;i<3;i++)
-      {
-      if ((derivatives[i][i]<(1-s))||(derivatives[i][i]>(1+s))) {deriv=1;}
-      }
-    if ((derivatives[0][1]>s)||(derivatives[0][1]<-s)) {deriv=1;}
-    if ((derivatives[0][2]>s)||(derivatives[0][2]<-s)) {deriv=1;}
-    if ((derivatives[1][2]>s)||(derivatives[1][2]<-s)) {deriv=1;}
+        // If derivatives is a unit matrix, no tensor reorientation.
+        int deriv=0;
+        s=1e-10;
+        for(i=0;i<3;i++)
+          {
+          if ((derivatives[i][i]<(1-s))||(derivatives[i][i]>(1+s))) {deriv=1;}
+          }
+        if ((derivatives[0][1]>s)||(derivatives[0][1]<-s)) {deriv=1;}
+        if ((derivatives[0][2]>s)||(derivatives[0][2]<-s)) {deriv=1;}
+        if ((derivatives[1][2]>s)||(derivatives[1][2]<-s)) {deriv=1;}
 
-    if (deriv) //(outvoxzero==0)
-      {
-      // Tensor reorientation using the
-      // Preservation of Principal Components method
+        if (deriv) //(outvoxzero==0)
+          {
+          // Tensor reorientation using the
+          // Preservation of Principal Components method
       
           // tensor
           D[0][0]        =outvox[numscalars-6];
@@ -1032,18 +1032,18 @@ static void vtkImageResliceSTExecute(vtkImageResliceST *self,
           D[1][2]=D[2][1]=outvox[numscalars-2];
           D[2][2]        =outvox[numscalars-1];
 
-      // tensor eigenvalue decomposition
-       for (i=0;i<3;i++)
-        {
-        DTemp[i] = D[i];
-        eTemp[i] = e[i];
-        }
-      tTemp=t;
+          // tensor eigenvalue decomposition
+          for (i=0;i<3;i++)
+            {
+            DTemp[i] = D[i];
+            eTemp[i] = e[i];
+            }
+          tTemp=t;
 
-      // DTemp = D;
-      // eTemp = e;
-      vtkMath::JacobiN(DTemp,3,tTemp,eTemp);
-      ew[0]=t[0];ew[1]=t[1];ew[2]=t[2];
+          // DTemp = D;
+          // eTemp = e;
+          vtkMath::JacobiN(DTemp,3,tTemp,eTemp);
+          ew[0]=t[0];ew[1]=t[1];ew[2]=t[2];
 
           // Restore tensor, JacobiN damages it, don't know why
           D[0][0]        =outvox[numscalars-6];
@@ -1053,124 +1053,124 @@ static void vtkImageResliceSTExecute(vtkImageResliceST *self,
           D[1][2]=D[2][1]=outvox[numscalars-2];
           D[2][2]        =outvox[numscalars-1];
 
-       // columns are eigenvectors from large to small
-      e1[0]=e[0][0]; e1[1]=e[1][0]; e1[2]=e[2][0];
-      e2[0]=e[0][1]; e2[1]=e[1][1]; e2[2]=e[2][1];
-      // e.F instead of F.e because of row-eigenv.
-      vtkMath::Multiply3x3(derivatives,e,n);
+          // columns are eigenvectors from large to small
+          e1[0]=e[0][0]; e1[1]=e[1][0]; e1[2]=e[2][0];
+          e2[0]=e[0][1]; e2[1]=e[1][1]; e2[2]=e[2][1];
+          // e.F instead of F.e because of row-eigenv.
+          vtkMath::Multiply3x3(derivatives,e,n);
       
-      for (i=0;i<3;i++)
-        {
-        n1[i] = n[i][0];
-        n2[i] = n[i][1];
-        }
-      s=vtkMath::Norm(n1,3);
-      c=vtkMath::Norm(n2,3);
-      for (i=0;i<3;i++)
-        {
-        n1[i] = n1[i]/s;
-        n2[i] = n2[i]/c;
-        }
-
-      // Step 1 PPD: Rotate e1 to n1
-      // If e1=n1, R1 = unit matrix
-      R1[0][0]=R1[1][1]=R1[2][2]=1;
-      R1[0][1]=R1[0][2]=R1[1][0]=R1[1][2]=R1[2][0]=R1[2][1]=0;
-      vtkMath::Cross(n1,e1,t);
-      s=vtkMath::Norm(t,3);
-      if (s>1e-8)
-        // n1 != e1
-        {
           for (i=0;i<3;i++)
             {
-            t[i]=t[i]/s;
+            n1[i] = n[i][0];
+            n2[i] = n[i][1];
             }
-          
-        theta= acos(vtkMath::Dot(n1,e1)/(vtkMath::Norm(n1,3)*vtkMath::Norm(e1,3)));
-        if (theta>=pi) {theta=theta-pi;}
-        omega[0][0] = omega[1][1] = omega[2][2] = 0;
-        omega[1][0] = t[2]; omega[0][1] = -t[2];
-        omega[2][0] = -t[1]; omega[0][2] = t[1];
-        omega[2][1] = t[0]; omega[1][2] = -t[0];
-        // omega^2
-        vtkMath::Multiply3x3(omega,omega,omega2);
-
-        // Rodrigues' formula for the Rotation Matrix
-        //R = I + omega*sin(theta) + omega^2*(1-cos(theta))
-        s = sin(theta); c = (1-cos(theta));
-        for (i=0;i<3;++i)
-          {
-          for (int j=0;j<3;++j)
+          s=vtkMath::Norm(n1,3);
+          c=vtkMath::Norm(n2,3);
+          for (i=0;i<3;i++)
             {
-            R1[i][j] = R1[i][j] + s*omega[i][j];
-            R1[i][j] = R1[i][j] + c*omega2[i][j];
+            n1[i] = n1[i]/s;
+            n2[i] = n2[i]/c;
             }
-          }
+
+          // Step 1 PPD: Rotate e1 to n1
+          // If e1=n1, R1 = unit matrix
+          R1[0][0]=R1[1][1]=R1[2][2]=1;
+          R1[0][1]=R1[0][2]=R1[1][0]=R1[1][2]=R1[2][0]=R1[2][1]=0;
+          vtkMath::Cross(n1,e1,t);
+          s=vtkMath::Norm(t,3);
+          if (s>1e-8)
+            // n1 != e1
+            {
+              for (i=0;i<3;i++)
+                {
+                t[i]=t[i]/s;
+                }
+          
+            theta= acos(vtkMath::Dot(n1,e1)/(vtkMath::Norm(n1,3)*vtkMath::Norm(e1,3)));
+            if (theta>=pi) {theta=theta-pi;}
+            omega[0][0] = omega[1][1] = omega[2][2] = 0;
+            omega[1][0] = t[2]; omega[0][1] = -t[2];
+            omega[2][0] = -t[1]; omega[0][2] = t[1];
+            omega[2][1] = t[0]; omega[1][2] = -t[0];
+            // omega^2
+            vtkMath::Multiply3x3(omega,omega,omega2);
+
+            // Rodrigues' formula for the Rotation Matrix
+            //R = I + omega*sin(theta) + omega^2*(1-cos(theta))
+            s = sin(theta); c = (1-cos(theta));
+            for (i=0;i<3;++i)
+              {
+              for (int j=0;j<3;++j)
+                {
+                R1[i][j] = R1[i][j] + s*omega[i][j];
+                R1[i][j] = R1[i][j] + c*omega2[i][j];
+                }
+              }
         
-        } // end R1
+            } // end R1
       
         
-      theta = vtkMath::Dot(n1,n2);
-      for (i=0;i<3;i++)
-        {
-        Pn2[i] = n2[i] - theta*n1[i];
-        }
-      s=vtkMath::Norm(Pn2,3);
-      for (i=0;i<3;i++)
-        {
-        Pn2[i] /= s;
-        }
+          theta = vtkMath::Dot(n1,n2);
+          for (i=0;i<3;i++)
+            {
+            Pn2[i] = n2[i] - theta*n1[i];
+            }
+          s=vtkMath::Norm(Pn2,3);
+          for (i=0;i<3;i++)
+            {
+            Pn2[i] /= s;
+            }
       
-      vtkMath::Multiply3x3(R1,e,n);
-      R1e1[0]=n[0][0];R1e1[1]=n[1][0];R1e1[2]=n[2][0];
-      R1e2[0]=n[0][1];R1e2[1]=n[1][1];R1e2[2]=n[2][1];
-      s = vtkMath::Norm(R1e1,3);
-      for (i=0;i<3;i++)
-        {
-        R1e1[i] = R1e1[i]/s;
-        }
-      theta = acos(vtkMath::Dot(R1e2,Pn2)/(vtkMath::Norm(R1e2,3)*vtkMath::Norm(Pn2,3)));
+          vtkMath::Multiply3x3(R1,e,n);
+          R1e1[0]=n[0][0];R1e1[1]=n[1][0];R1e1[2]=n[2][0];
+          R1e2[0]=n[0][1];R1e2[1]=n[1][1];R1e2[2]=n[2][1];
+          s = vtkMath::Norm(R1e1,3);
+          for (i=0;i<3;i++)
+            {
+            R1e1[i] = R1e1[i]/s;
+            }
+          theta = acos(vtkMath::Dot(R1e2,Pn2)/(vtkMath::Norm(R1e2,3)*vtkMath::Norm(Pn2,3)));
           if (theta>=pi) {theta=theta-pi;}
-      omega[0][0] = omega[1][1] = omega[2][2] = 0;
-      omega[1][0] = R1e1[2]; omega[0][1] = -R1e1[2];
-      omega[2][0] = -R1e1[1]; omega[0][2] = R1e1[1];
-      omega[2][1] = R1e1[0]; omega[1][2] = -R1e1[0];
-      // omega^2
-      vtkMath::Multiply3x3(omega,omega,omega2);
+          omega[0][0] = omega[1][1] = omega[2][2] = 0;
+          omega[1][0] = R1e1[2]; omega[0][1] = -R1e1[2];
+          omega[2][0] = -R1e1[1]; omega[0][2] = R1e1[1];
+          omega[2][1] = R1e1[0]; omega[1][2] = -R1e1[0];
+          // omega^2
+          vtkMath::Multiply3x3(omega,omega,omega2);
 
-      // Rodrigues' formula for the Rotation Matrix
-      //R = I + omega*sin(theta) + omega^2*(1-cos(theta))
-      R2[0][0]=R2[1][1]=R2[2][2]=1;
-      R2[0][1]=R2[0][2]=R2[1][0]=R2[1][2]=R2[2][0]=R2[2][1]=0;
-      s = sin(theta); c = (1-cos(theta));
-      for (i=0;i<3;++i)
-        {
-        for (int j=0;j<3;++j)
-          {
-          R2[i][j] += s*omega[i][j];
-          R2[i][j] += c*omega2[i][j];
-          }
-        }
-      vtkMath::Multiply3x3(R2,R1,R);
-
-      // Now reorient tensor by R.D.Rt
-      vtkMath::Multiply3x3(R,D,U);
-      vtkMath::Transpose3x3(R,n);   // Rt
-      vtkMath::Multiply3x3(U,n,U);
+          // Rodrigues' formula for the Rotation Matrix
+          //R = I + omega*sin(theta) + omega^2*(1-cos(theta))
+          R2[0][0]=R2[1][1]=R2[2][2]=1;
+          R2[0][1]=R2[0][2]=R2[1][0]=R2[1][2]=R2[2][0]=R2[2][1]=0;
+          s = sin(theta); c = (1-cos(theta));
+          for (i=0;i<3;++i)
+            {
+            for (int j=0;j<3;++j)
+              {
+              R2[i][j] += s*omega[i][j];
+              R2[i][j] += c*omega2[i][j];
+              }
+            }
+          vtkMath::Multiply3x3(R2,R1,R);
+    
+          // Now reorient tensor by R.D.Rt
+          vtkMath::Multiply3x3(R,D,U);
+          vtkMath::Transpose3x3(R,n);   // Rt
+          vtkMath::Multiply3x3(U,n,U);
       
           if (0)
             {
-        // Tensor reorientation using the Finite Strain method
-        vtkMath::SingularValueDecomposition3x3(derivatives,U,w,VT);
+            // Tensor reorientation using the Finite Strain method
+            vtkMath::SingularValueDecomposition3x3(derivatives,U,w,VT);
 
             // VT=U.VT
             vtkMath::Multiply3x3(U,VT,VT);
             // U=VT^t  (in reality (U.VT)^t)
-        //for(int i=0;i<3;++i)
-        //Modofied by Liu
+            //for(int i=0;i<3;++i)
+            //Modofied by Liu
             for(i=0;i<3;++i)
               {
-                U[i][i]=VT[i][i];
+              U[i][i]=VT[i][i];
               for(int j=i+1;j<3;++j)
                 {
                 U[i][j]=VT[j][i];
@@ -1179,38 +1179,39 @@ static void vtkImageResliceSTExecute(vtkImageResliceST *self,
               }
 
             // T'=(U.VT)^t . T . U.VT
-        vtkMath::Multiply3x3(U,D,U);
+            vtkMath::Multiply3x3(U,D,U);
             vtkMath::Multiply3x3(U,VT,U);
-        } //Finite Strain
+            } //Finite Strain
 
           }  //deriv
-    if (deriv) //(derivatives is not unit matrix)
-      {
-            *outPtr++ = T(U[0][0]);
+
+        if (deriv) //(derivatives is not unit matrix)
+          {
+          *outPtr++ = T(U[0][0]);
           *outPtr++ = T(U[0][1]);
           *outPtr++ = T(U[0][2]);
           *outPtr++ = T(U[1][1]);
           *outPtr++ = T(U[1][2]);
           *outPtr++ = T(U[2][2]);
-      }
-    else
-      {
-            *outPtr++ = T(outvox[numscalars-6]);
+          }
+          else
+          {
+          *outPtr++ = T(outvox[numscalars-6]);
           *outPtr++ = T(outvox[numscalars-5]);
           *outPtr++ = T(outvox[numscalars-4]);
           *outPtr++ = T(outvox[numscalars-3]);
           *outPtr++ = T(outvox[numscalars-2]);
           *outPtr++ = T(outvox[numscalars-1]);
       
-      }
+          }
     
-    //     interpolate(point, inPtr, outPtr, background, 
-    //             numscalars, inExt, inInc);
-    //         outPtr+=6;
-    }
-      outPtr += outIncY;
+          //     interpolate(point, inPtr, outPtr, background, 
+          //             numscalars, inExt, inInc);
+          //         outPtr+=6;
+        }
+        outPtr += outIncY;
       }
-    outPtr += outIncZ;
+      outPtr += outIncZ;
     }
 
   vtkFreeBackground(self,&background);
