@@ -501,7 +501,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.105 $} {$Date: 2005/09/11 18:38:37 $}]
+                  {$Revision: 1.106 $} {$Date: 2005/09/15 19:45:29 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -609,25 +609,30 @@ proc DTMRIUpdateMRML {} {
     
      # Do MRML update for Tensor Registration tab. Necessary because
      # multiple lists are used.
-     if {([catch "package require vtkAG"]==0)&&([info exist DTMRI(reg,AG)])} {
-       # This is needed to handle deletion of tensors.
-       if {[catch "Tensor($DTMRI(InputTensorSource),node) GetName"]==1} {
-     set DTMRI(InputTensorSource) $Tensor(idNone)
-         $DTMRI(mbInputTensorSource) config -text None
-       }
-       if {[catch "Tensor($DTMRI(InputTensorTarget),node) GetName"]==1} {
-     set DTMRI(InputTensorTarget) $Tensor(idNone)
-         $DTMRI(mbInputTensorTarget) config -text None
-       }
-       if {[catch "Tensor($DTMRI(ResultTensor),node) GetName"]==1} {
-     set DTMRI(ResultTensor) -5
-       }
-       DevUpdateNodeSelectButton Tensor DTMRI InputTensorSource   InputTensorSource   DevSelectNode
-       DevUpdateNodeSelectButton Tensor DTMRI InputTensorTarget   InputTensorTarget   DevSelectNode 0 0 0 DTMRIReg2DUpdate
-       DevUpdateNodeSelectButton Tensor DTMRI ResultTensor  ResultTensor  DevSelectNode  0 1 0
-       DevSelectNode Tensor $DTMRI(ResultTensor) DTMRI ResultTensor ResultTensor
-       DevUpdateNodeSelectButton Volume DTMRI InputCoregVol InputCoregVol DevSelectNode
+     # If the tensor reg module file exists it has set this variable
+     if {[info exist DTMRI(reg,AG)]} {
+         # If it found all its libraries it set this to 1
+         if {$DTMRI(reg,AG) == 1} {
+             # This is needed to handle deletion of tensors.
+             if {[catch "Tensor($DTMRI(InputTensorSource),node) GetName"]==1} {
+                 set DTMRI(InputTensorSource) $Tensor(idNone)
+                 $DTMRI(mbInputTensorSource) config -text None
+             }
+             if {[catch "Tensor($DTMRI(InputTensorTarget),node) GetName"]==1} {
+                 set DTMRI(InputTensorTarget) $Tensor(idNone)
+                 $DTMRI(mbInputTensorTarget) config -text None
+             }
+             if {[catch "Tensor($DTMRI(ResultTensor),node) GetName"]==1} {
+                 set DTMRI(ResultTensor) -5
+             }
+             DevUpdateNodeSelectButton Tensor DTMRI InputTensorSource   InputTensorSource   DevSelectNode
+             DevUpdateNodeSelectButton Tensor DTMRI InputTensorTarget   InputTensorTarget   DevSelectNode 0 0 0 DTMRIReg2DUpdate
+             DevUpdateNodeSelectButton Tensor DTMRI ResultTensor  ResultTensor  DevSelectNode  0 1 0
+             DevSelectNode Tensor $DTMRI(ResultTensor) DTMRI ResultTensor ResultTensor
+             DevUpdateNodeSelectButton Volume DTMRI InputCoregVol InputCoregVol DevSelectNode
+         }
      }
+
           
     DevUpdateNodeSelectButton Volume DTMRI InputODF InputODF DevSelectNode
     
