@@ -159,7 +159,7 @@ proc vtkFreeSurferReadersInit {} {
     set vtkFreeSurferReaders(assocFiles) ""
     set vtkFreeSurferReaders(scalars) "thickness curv sulc area"
     set vtkFreeSurferReaders(scalarsNew) ""
-    set vtkFreeSurferReaders(surfaces) "inflated pial smoothwm sphere"
+    set vtkFreeSurferReaders(surfaces) "inflated pial smoothwm sphere white orig"
     set vtkFreeSurferReaders(annots) "aparc cma_aparc" 
     set vtkFreeSurferReaders(castToShort) 1
     # flag to load in free surfer colour file when loading a label map
@@ -329,7 +329,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27.6.3 $} {$Date: 2005/09/09 20:28:13 $}]
+        {$Revision: 1.27.6.4 $} {$Date: 2005/09/15 22:11:16 $}]
 
 }
 
@@ -2482,7 +2482,33 @@ proc vtkFreeSurferReadersBuildSurface {m} {
         set RemovedModels($m) 0
     }
 
-    MainModelsSetColor $m
+
+    # figure out the colour from the model file name
+    set colourName ""
+
+    if {[file rootname [file tail $vtkFreeSurferReaders(ModelFileName)]] == "rh"} {
+        set colourName "Right-"
+    } elseif {[file rootname [file tail $vtkFreeSurferReaders(ModelFileName)]] == "lh"} {
+        set colourName "Left-"
+    }
+    
+    if {[file extension [file tail $vtkFreeSurferReaders(ModelFileName)]] == ".pial"} {
+        append colourName "Cerebral-Cortex"
+    } elseif {[file extension [file tail $vtkFreeSurferReaders(ModelFileName)]] == ".white" || 
+        [file extension [file tail $vtkFreeSurferReaders(ModelFileName)]] == ".smoothwm"} {
+        append colourName "Cerebral-White-Matter"
+    } elseif {[file extension [file tail $vtkFreeSurferReaders(ModelFileName)]] == ".sphere" || 
+        [file extension [file tail $vtkFreeSurferReaders(ModelFileName)]] == ".inflated"} {
+        append colourName "Cerebral-Exterior"
+    } else {
+        append colourName "undetermined"
+    }
+    if {$::Module(verbose)} {
+        puts "Using colour name $colourName for $vtkFreeSurferReaders(ModelFileName)"
+    }
+    MainModelsSetColor $m $colourName
+
+
     MainAddModelActor $m
     set Model($m,dirty) 1
     set Model($m,fly) 1
@@ -2501,6 +2527,7 @@ proc vtkFreeSurferReadersBuildSurface {m} {
 
     MainModelsSetActive $m
 }
+
 
 #-------------------------------------------------------------------------------
 # .PROC vtkFreeSurferReadersSetSurfaceVisibility
@@ -5677,7 +5704,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
             set username "default"
         }
     }
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.3 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.4 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
