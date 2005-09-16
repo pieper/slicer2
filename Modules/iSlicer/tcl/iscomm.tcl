@@ -133,10 +133,16 @@ itcl::body iscomm::send { imagedata } {
     $spw SetInput $imagedata
     $spw SetWriteToOutputString 1
     $spw SetFileTypeToBinary
+    $spw Write
+
+    # TODO: writing ascii to string fails in vtk!
+    #$spw SetFileTypeToASCII
+
 
     # TODO - it appears we can't get the full binary string in tcl!
 
-    ::comm::comm send $port "puts hoot"
+    puts "[$spw GetOutputString]"
+    ::comm::comm send $port "set imagedata \"[$spw GetOutputString]\""
 } 
 
 itcl::body iscomm::accept { chan fid addr remport } {
@@ -146,13 +152,16 @@ itcl::body iscomm::accept { chan fid addr remport } {
 
 proc iscomm_demo { {mode "server"} } {
 
+    # create an iscomm instance named 'c'
     catch {rename c ""}
     iscomm c $mode
 
     switch $mode {
         "server" {
+            # do nothing
         }
         "client" {
+            # try sending a simple image data to the server
             catch "es Delete"
             vtkImageEllipsoidSource es
             [es GetOutput] Update
