@@ -56,7 +56,7 @@ proc MainHelpInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainHelp \
-        {$Revision: 1.19 $} {$Date: 2004/12/22 16:57:52 $}]
+        {$Revision: 1.20 $} {$Date: 2005/09/16 16:23:15 $}]
 
     set Help(tagNormal)   "-font {times 10}"
     set Help(tagItalic)   "-font {times 10 italic}"
@@ -360,6 +360,25 @@ proc MainHelpLaunchBrowser {{section ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainHelpLaunchBrowserURL {url} {
+
+
+    #
+    # fancy quoting - probably windows specific!
+    #
+    if { $::tcl_platform(platform) == "windows" } {
+        set slashslash [expr [string first "//" $url] + 1]
+        if { $slashslash != 0 } {
+            set proto [string range $url 0 $slashslash] ;# eg. http://
+            set addr [string range $url [expr $slashslash + 1] end] ;# eg. www.google.com/hoot
+            set slash [string first "/" $addr]
+            if { $slash != -1 } {
+                set site [string range $addr 0 $slash] ;# eg. www.google.com/
+                set args [string range $addr [expr $slash+1] end] ;# eg. hoot
+                set url "${proto}${site}\"${args}"  ;# <<----- NOTE! only one " to separate (don't ask)
+                puts " $proto + $site + $args = $url"
+            }
+        }
+    }
 
     if { $::Path(browserPath) != "unknown" } {
         set ret [catch "exec $::Path(browserPath) $url &" res]
