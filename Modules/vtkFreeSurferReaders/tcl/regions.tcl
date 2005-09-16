@@ -54,9 +54,8 @@ if { [itcl::find class regions] == "" } {
         public variable model "" {}
         public variable annotfile "" {}
         public variable talfile "" {}
-        public variable browser {/usr/bin/mozilla} {}
         public variable site "google" {}
-        public variable wlabel "Brodmann" {}
+        public variable wlabel "None" {}
         public variable arrow "" {}
         public variable arrowout "" {}
         public variable javapath "" {}
@@ -77,7 +76,7 @@ if { [itcl::find class regions] == "" } {
         public variable fsumls "" {}
 
         variable _sites "arrowsmith pubmed jneurosci UMLS-Browser google ibvd mediator all "
-        variable _wlabels "Brodmann Talairach Freesurfer" 
+        variable _wlabels "Brodmann Talairach Freesurfer None" 
         variable _terms ""
 
         variable _name ""
@@ -87,7 +86,7 @@ if { [itcl::find class regions] == "" } {
         variable _B ""
         variable _labellistbox ""
         variable _modelmenu ""
-        variable _id ""
+        variable _id ""  ;# index into slicer Model list for the selected model
 
         variable _labels
         variable _mtx
@@ -212,29 +211,13 @@ itcl::body regions::constructor {args} {
     pack $cs.query -side left
     button $cs.stats -text "Get Statistics" -command "$this statistics"
     pack $cs.stats -side left
-    button $cs.smart -text "SMART Atlas" -command "exec $browser http://imhotep.ucsd.edu:7873/haiyun/jnlp/atlas.jnlp &"
+    button $cs.smart -text "SMART Atlas" -command "MainHelpLaunchBrowserURL http://imhotep.ucsd.edu:7873/haiyun/jnlp/atlas.jnlp &"
     pack $cs.smart -side bottom
-    button $cs.connect -text "Connectivity Tool (BAMS)" -command "exec $browser http://brancusi.usc.edu/bkms/about.html &"
+    button $cs.connect -text "Connectivity Tool (BAMS)" -command "MainHelpLaunchBrowserURL http://brancusi.usc.edu/bkms/about.html &"
     pack $cs.connect -side left
-    button $cs.braininfo -text "BrainInfo" -command "exec $browser http://braininfo.rprc.washington.edu/mainmenu.html &"
+    button $cs.braininfo -text "BrainInfo" -command "MainHelpLaunchBrowserURL http://braininfo.rprc.washington.edu/mainmenu.html &"
     pack $cs.braininfo -side left
     
-    #
-    # try to determine browser automatically
-    #
-    set mozpaths { 
-        "/usr/bin/mozilla" 
-        "/usr/local/mozilla/bin/mozilla" 
-        "/local/os/bin/mozilla" 
-        "c:/Program Files/mozilla.org/Mozilla/mozilla.exe"
-    } 
-    foreach mozpath $mozpaths {
-        if { [file exists $mozpath] } {
-            $this configure -browser $mozpath
-            break
-        }
-    }
-
     #
     # try to determine temp dir automatically
     #
@@ -465,6 +448,9 @@ itcl::body regions::query {} {
     }
 
     regsub -all " " $terms "+" terms
+
+    puts "query $site with $terms"
+
     switch $site {
         "arrowsmith" {
             set query [open $arrow r]
@@ -483,22 +469,22 @@ itcl::body regions::query {} {
             }
             close $query
             close $queryout
-            exec $browser -geometry 600x800 $arrowout 2> /dev/null &       
+            MainHelpLaunchBrowserURL -geometry 600x800 $arrowout 2> /dev/null &       
         }
 
         "google" {
-            catch "exec \"$browser\" http://www.google.com/search?q=$terms &"
+            MainHelpLaunchBrowserURL http://www.google.com/search?q=$terms
         }
         "pubmed" {
-            catch "exec \"$browser\" http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=search&db=PubMed&term=$terms &"
+            MainHelpLaunchBrowserURL http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=search&db=PubMed&term=$terms
         }
         "UMLS-Browser" {
             set address http://ape.ucsd.edu/srb/cgi-bin/umls.cgi?id=$umlsid
             puts $address
-            catch "exec \"$browser\" $address &"
+            MainHelpLaunchBrowserURL $address
         }
         "jneurosci" {
-            catch "exec \"$browser\" http://www.jneurosci.org/cgi/search?volume=&firstpage=&sendit=Search&author1=&author2=&titleabstract=&fulltext=$terms &"
+            MainHelpLaunchBrowserURL http://www.jneurosci.org/cgi/search?volume=&firstpage=&sendit=Search&author1=&author2=&titleabstract=&fulltext=$terms
         }
         "ccdb" {
             # check for fiducials with matching UMLS ids
@@ -516,20 +502,21 @@ itcl::body regions::query {} {
                 # at which point the _ccdb var will be set so we can just query it for the search string
                 set searchURL [[$this cget -_ccdb] cget -searchURL]
                 puts "Close $browser in order to continue using Slicer.\nOpening $browser with URL \$searchURL"
-                catch "exec \"$browser\" $searchURL"
+                MainHelpLaunchBrowserURL $searchURL
             }
         }
         "ibvd" {
-            catch "exec \"$browser\" http://www.cma.mgh.harvard.edu/ibvd/search.php?f_submission=true&f_free=$terms &"
+            regsub -all "\\+" $terms "," commaterms
+            MainHelpLaunchBrowserURL http://www.cma.mgh.harvard.edu/ibvd/search.php?f_submission=true&f_free=$commaterms
         }
         "all" {
-            catch "exec \"$browser\" http://www.google.com/search?q=$terms &"
-            catch "exec \"$browser\" http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=search&db=PubMed&term=$terms &"
-            catch "exec \"$browser\" http://www.jneurosci.org/cgi/search?volume=&firstpage=&sendit=Search&author1=&author2=&titleabstract=&fulltext=$terms &"
-            catch "exec \"$browser\" http://donor.ucsd.edu/CCDB/servlet/project1.SearchBrief?id=&keyword=&psname=&producttype=single+tilt&cell=&structure=${terms}&organ=brain&protein=&name=mouse&Submit=Submit"
+            MainHelpLaunchBrowserURL http://www.google.com/search?q=$terms
+            MainHelpLaunchBrowserURL http://www.ncbi.nlm.nih.gov/entrez/query.fcgi?cmd=search&db=PubMed&term=$terms
+            MainHelpLaunchBrowserURL http://www.jneurosci.org/cgi/search?volume=&firstpage=&sendit=Search&author1=&author2=&titleabstract=&fulltext=$terms
+            MainHelpLaunchBrowserURL http://donor.ucsd.edu/CCDB/servlet/project1.SearchBrief?id=&keyword=&psname=&producttype=single+tilt&cell=&structure=${terms}&organ=brain&protein=&name=mouse&Submit=Submit
         }
         "mediator" {
-            tk_messageBox -title "Slicer" -message "Mediator interface not yet implemented." -type ok -icon error
+            tk_messageBox -title "Slicer" -message "Mediator does not exist." -type ok -icon error
         }
     }
 }
@@ -556,18 +543,33 @@ itcl::body regions::findptscalars {} {
     $_labellistbox delete 0 end
     set _ptlabels ""
     
+
+    array set modelid "" ;# keep track of model ids for selections
+
+    #
+    # look through all the fiducials and add info based on the anatomical lookup
+    #
     foreach id $Point(idList) {
 
         set _xyz [Point($id,node) GetXYZ]
         set ptinfo "pt $id"
 
-        # if there's a surface registered, do the lookup on that
+        #
+        # if there's a surface registered for this class, do the lookup on the 
+        # scalar field for that surface
+        #
+        set use_selected 0
         if { $_id != "" } {
             set minpt 0
             set mapper [$Point($id,actor) GetMapper]
             if { [$mapper GetInput] != $Model($_id,polyData) } {
-                    puts "Point $id wasn't picked on $model"
+                set use_selected 1
             }
+        } 
+
+        if { $use_selected } {
+            # find the point id (loop through vertices of the give face)
+            # - this is quick because there are probably only 3 verts
             set pts [$Model($_id,polyData) GetPoints]
             set cell [$Model($_id,polyData) GetCell $Point($id,cellId)]
             set npts [$cell GetNumberOfPoints]
@@ -581,6 +583,8 @@ itcl::body regions::findptscalars {} {
                     set minpt [$cell GetPointId $n]
                 }
             }
+
+            # see if there is a scalar field named 'labels' to get names from
             set scalars [[$Model($_id,polyData) GetPointData] GetScalars]
             set scalars [[$Model($_id,polyData) GetPointData] GetArray "labels"] 
             if { $scalars == "" } {
@@ -588,20 +592,36 @@ itcl::body regions::findptscalars {} {
                 return
             }
             set s [$scalars GetValue $minpt]
-            lappend _ptlabels $_labels($s)
-            set fsurferlab $_labels($s)
+            if { ![info exists _labels($s)] } {
+                lappend _ptlabels "unknown"
+                set fsurferlab "unknown"
+            } else {
+                lappend _ptlabels $_labels($s)
+                set fsurferlab $_labels($s)
+            }
             set umlslabel0 $fsurferlab
             $this umls
             set fsumls $umlsid
             set ptinfo ""
-        if { $mindist > 2} {
-            set ptinfo "" 
-        } elseif { $umlsid == "" } {
-            set ptinfo "pt $id - Freesurfer - $fsurferlab ($s)"
-        } else {
-            set ptinfo "pt $id - Freesurfer - $fsurferlab ($s) - UMLS ID $umlsid"
+
+            if { $mindist > 2} {
+                set ptinfo "" 
+            } elseif { $umlsid == "" } {
+                set ptinfo "pt $id - Freesurfer - $fsurferlab ($s)"
+            } else {
+                set ptinfo "pt $id - Freesurfer - $fsurferlab ($s) - UMLS ID $umlsid"
+            }
+        } else { 
+            # check if other model was picked and add it's name
+            if { $Point($id,actor) != "" } {
+                scan $Point($id,actor) "Model(%d," modelid($id)
+                if { [info exists modelid($id)] } {
+                    set ptinfo "pt $id - Name - [Model([set modelid($id)],node) GetName]"
+                    lappend _ptlabels [Model([set modelid($id)],node) GetName]
+                }
+            }
         }
-        }
+
         if { [Point($id,node) GetDescription] != "" } {
             regsub -all -- "_" [Point($id,node) GetDescription] " " lab
             set ptinfo "$ptinfo - $lab"
@@ -630,7 +650,10 @@ itcl::body regions::findptscalars {} {
  
     }
 
-    if { $_id != "" && [info commands vtkCard] != "" } {
+    #
+    # create the text cards for the fiducials
+    #
+    if { ($_id != "" || [array get modelid] != "") && [info commands vtkCard] != "" } {
 
         catch {[QA_sorter GetCards] RemoveAllItems}
         catch "QA_sorter Delete"
@@ -666,7 +689,15 @@ itcl::body regions::findptscalars {} {
             tc-$id SetBoxEdgeColor 1 0 0
             tc-$id SetOpacityBase 0.7
             tc-$id SetBoxEdgeWidth 0.15
-            eval tc-$id SetOffsetActorAndMarker Model($_id,actor,viewRen) [Point($id,node) GetXYZ] 0 0 -10
+            set offsetid ""
+            if { $_id != "" } {
+                set offsetid $_id
+            } elseif { [info exists modelid($id)] } {
+                set offsetid [set modelid($id)]
+            }
+            if { $offsetid != "" } {
+                eval tc-$id SetOffsetActorAndMarker Model($offsetid,actor,viewRen) [Point($id,node) GetXYZ] 0 0 -10
+            }
             tc-$id AddActors viewRen
         }
 
@@ -676,7 +707,10 @@ itcl::body regions::findptscalars {} {
 }
 
 itcl::body regions::umls {} {
-    set umls [open $umlsfile r]
+
+    if { [catch {umls [open $umlsfile r]} umls] } {
+        return
+    }
     gets $umls line
     set n 0
     while { ![eof $umls] } {
@@ -686,7 +720,7 @@ itcl::body regions::umls {} {
         set label($n,2) [lindex $labelline 3]
         set n [expr ($n + 1)]
         gets $umls line
-        }
+    }
     close $umls
     for {set i 0} {$i < $n} {incr i} {
         if {$umlslabel0 == $label($i,0)} {
@@ -890,6 +924,7 @@ proc QueryAtlas_fdemo { {demodata c:/pieper/bwh/data/fbirn-phantom-staple/averag
     
     set _fstcldir [file normalize $::PACKAGE_DIR_VTKFREESURFERREADERS/../../../tcl]
 
+    catch "itcl::delete object r"
     regions r
 
     r configure -arrow $_fstcldir/QueryA.html
@@ -999,6 +1034,7 @@ proc QueryAtlas_mdemo { {demodata c:/pieper/bwh/data/MGH-Siemens15-SP.1-uw} } {
     
     set _fstcldir [file normalize $::PACKAGE_DIR_VTKFREESURFERREADERS/../../../tcl]
 
+    catch "itcl::delete object r"
     regions r
 
     r configure -arrow $_fstcldir/QueryA.html
