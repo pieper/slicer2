@@ -27,6 +27,7 @@ vtkBIRNCard.cxx
 vtkTextureFontManager.cxx
 vtkFontParameters.cxx
 vtkEdgeGradient.cxx
+vtkTclHelper.cxx
 )
 
 ## classes that one does not want tcl wrapped
@@ -58,7 +59,8 @@ ${VTK_SRC_DIR}/Utilities/freetype/include
 #   ${VTKSLICERBASE_SOURCE_DIR}/cxx 
 #   ${VTKSLICERBASE_BUILD_DIR}
 #)
-#LINK_LIBRARIES (${VTKSLICERBASE_BUILD_LIB})
+
+LINK_LIBRARIES (${TCL_LIBRARY})
 
 
 # Add additional directories to look in for libraries
