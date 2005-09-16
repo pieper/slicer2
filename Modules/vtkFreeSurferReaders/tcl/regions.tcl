@@ -506,6 +506,7 @@ itcl::body regions::query {} {
             }
         }
         "ibvd" {
+            regsub -all "Left\\+" $terms "" terms ;# TODO ivbd has a different way of handling side
             regsub -all "\\+" $terms "," commaterms
             MainHelpLaunchBrowserURL http://www.cma.mgh.harvard.edu/ibvd/search.php?f_submission=true&f_free=$commaterms
         }
