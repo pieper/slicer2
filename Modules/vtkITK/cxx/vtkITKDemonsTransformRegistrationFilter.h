@@ -9,11 +9,17 @@
 #include "vtkITKDeformableRegistrationFilter.h"
 #include "itkDemonsTransformRegistrationFilterFF.h"
 
+//#include "itkCurvatureRegistrationFilter.h"
+//#include "itkFastSymmetricForcesDemonsRegistrationFunction.h"
+
+#include "itkMultiResolutionPDEDeformableRegistration.h"
+
 #include <itkAffineTransform.h> 
 
 #include "vtkMatrix4x4.h"
 #include "vtkProcessObject.h"
 #include "vtkImageData.h"
+#include "vtkUnsignedIntArray.h"
 
 #include <fstream>
 #include <string>
@@ -35,8 +41,25 @@ public:
   vtkSetMacro(StandardDeviations, double);
   vtkGetMacro(StandardDeviations, double);
 
-  vtkSetMacro(NumIterations, int);
-  vtkGetMacro(NumIterations, int);
+  // Description
+  // The Max Number of Iterations at each multi-resolution level.
+  vtkSetObjectMacro(MaxNumberOfIterations,vtkUnsignedIntArray);
+  vtkGetObjectMacro(MaxNumberOfIterations,vtkUnsignedIntArray);
+
+  // Description:
+  // Reset the Multiresolution Settings
+  // It blanks the Min/Max Step and NumberOfIterations
+  void ResetMultiResolutionSettings() {
+    MaxNumberOfIterations->Reset();
+  };
+
+
+  // Description:
+  // Set the max number of iterations at each level
+  // Generally less than 5000, 2500 is OK.
+  // Must set the same number of Learning Rates as Iterations
+  void SetNextMaxNumberOfIterations(const int num)
+  { MaxNumberOfIterations->InsertNextValue(num); };
 
   void SetAbort(int abort) {
     this->AbortExecuteOn();
@@ -80,13 +103,17 @@ public:
     SetFixedInput(input);
   };
 
+  int GetCurrentLevel() {
+    return m_ITKFilter->GetCurrentLevel();
+  }
+
 protected:
  //BTX
   typedef itk::AffineTransform<double, 3> TransformType;
 
 
   double StandardDeviations;
-  int    NumIterations;
+  vtkUnsignedIntArray  *MaxNumberOfIterations;
   int    CurrentIteration;
   double MetricValue;
 
@@ -113,7 +140,7 @@ private:
   void operator=(const vtkITKDemonsTransformRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKDemonsTransformRegistrationFilter, "$Revision: 1.5 $");
+//vtkCxxRevisionMacro(vtkITKDemonsTransformRegistrationFilter, "$Revision: 1.6 $");
 //vtkStandardNewMacro(vtkITKDemonsTransformRegistrationFilter);
 vtkRegistrationNewMacro(vtkITKDemonsTransformRegistrationFilter);
 
@@ -156,7 +183,14 @@ protected:
     InternalImageType,
     InternalImageType,
     DeformationFieldType>   RegistrationFilterType;
-  
+  /***
+  typedef itk::CurvatureRegistrationFilter<
+                                InternalImageType,
+                                InternalImageType,
+                                DeformationFieldType,
+                                itk::FastSymmetricForcesDemonsRegistrationFunction<InternalImageType,InternalImageType,DeformationFieldType> >   RegistrationFilterType;
+  ***/
+
 public:
   
   void Execute(itk::Object *caller, const itk::EventObject & event)
@@ -172,13 +206,33 @@ public:
       return;
     }
     if (filter) {
+      unsigned int level = m_registration->GetCurrentLevel();
       int iter = m_registration->GetCurrentIteration();
-     m_fo << "Iteration = " << iter << std::endl;
-     m_fo << "Metric = " << filter->GetMetric() << std::endl;
+      m_fo << "Iteration = " << iter << "   Metric = " << filter->GetMetric() << std::endl;
       m_registration->SetCurrentIteration(iter+1);
       if (m_registration->GetAbortExecute()) {
         m_registration->AbortIterations();
       }
+float maxNumIter = 0;
+      std::vector<float> maxProgressIter;
+      int i;
+      for( i=0; i< m_registration->GetMaxNumberOfIterations()->GetNumberOfTuples();i++) {
+        maxProgressIter.push_back( m_registration->GetMaxNumberOfIterations()->GetValue(i) );
+        maxNumIter += m_registration->GetMaxNumberOfIterations()->GetValue(i);
+      }
+      if (maxNumIter == 0) {
+        maxNumIter = 1;
+      }
+      for( i=0; i< m_registration->GetMaxNumberOfIterations()->GetNumberOfTuples();i++) {
+        maxProgressIter[i] = maxProgressIter[i]/maxNumIter;
+      }
+      double progress = 0;
+      for( i=0; i< level; i++) {
+        progress += maxProgressIter[i];
+      }
+      progress += (iter + 0.0)/m_registration->GetMaxNumberOfIterations()->GetValue(level) * maxProgressIter[level];
+      
+      m_registration->UpdateProgress( progress );
     }
     else {
      m_fo << "Error in DemonsTransformRegistrationFilterCommand::Execute" << std::endl;

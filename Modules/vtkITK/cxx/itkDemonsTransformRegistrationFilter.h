@@ -18,6 +18,12 @@
 #include "itkTransform.h"
 #include "itkResampleImageFilter.h"
 #include "itkImageFileWriter.h"
+#include "itkMultiResolutionPDEDeformableRegistration.h"
+#include "itkDenseFrequencyContainer.h"
+
+//#include "itkCurvatureRegistrationFilter.h"
+//#include "itkFastSymmetricForcesDemonsRegistrationFunction.h"
+
 
 //BTX
 namespace itk 
@@ -45,6 +51,9 @@ public:
 
   typedef itk::Transform<double, 3, 3 > TransformType;
   
+  /** UnsignedIntArray type. */
+  typedef Array<unsigned int> UnsignedIntArray;
+
   /** Method for creation through the object factory. */
   itkNewMacro(Self);  
 
@@ -67,8 +76,13 @@ public:
   itkSetMacro(StandardDeviations, double);
   itkGetMacro(StandardDeviations, double);
 
-  itkSetMacro(NumIterations, int);
-  itkGetMacro(NumIterations, int);
+  /** Set the number of iterations per level. */
+  itkSetMacro( NumberOfIterations, UnsignedIntArray );
+  itkGetMacro( NumberOfIterations, UnsignedIntArray );
+
+  itkSetMacro(NumberOfLevels, int);
+  itkGetMacro(NumberOfLevels, int);
+
 
   itkSetMacro(CurrentIteration, int);
   itkGetMacro(CurrentIteration, int);
@@ -80,15 +94,21 @@ public:
 
   virtual void AbortIterations() {
     m_Filter->SetAbortGenerateData(true);
+    m_MultiResFilter->StopRegistration ();
   };
 
+  int GetCurrentLevel() { return  m_MultiResFilter->GetCurrentLevel();};
+
   unsigned long AddIterationObserver (itk::Command *observer );
+
 protected:
 
   void  GenerateData ();
 
+  unsigned short                       m_NumberOfLevels;
+  UnsignedIntArray                     m_NumberOfIterations;
+
   double m_StandardDeviations;
-  int    m_NumIterations;
   int    m_CurrentIteration;
   bool   m_WriteInputs;
   
@@ -128,7 +148,25 @@ protected:
                                 InternalImageType,
                                 InternalImageType,
                                 DeformationFieldType>   RegistrationFilterType;
+
+  /*****
+  typedef itk::FastSymmetricForcesDemonsRegistrationFunction<InternalImageType,InternalImageType,DeformationFieldType>   ImageForceFunctionType;
+
+  typedef itk::CurvatureRegistrationFilter<
+                                InternalImageType,
+                                InternalImageType,
+                                DeformationFieldType,
+                                ImageForceFunctionType>   RegistrationFilterType;
+  *****/
+
   RegistrationFilterType::Pointer m_Filter;
+
+  typedef itk::MultiResolutionPDEDeformableRegistration<
+                                InternalImageType,
+                                InternalImageType,
+                                DeformationFieldType >   MultiResRegistrationFilterType;
+
+  MultiResRegistrationFilterType::Pointer m_MultiResFilter;
 
   // Warper and interpolator
   typedef itk::WarpImageFilter<

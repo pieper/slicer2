@@ -98,6 +98,15 @@ void itk::itkBSplineMattesMIRegistrationFilter<TImageClass>::GenerateData()
   
   m_Registration->SetInitialTransformParameters( m_Transform->GetParameters() );
   
+  if (m_WriteInputs) {
+    m_Writer->SetInput(m_Registration->GetFixedImage());
+    m_Writer->SetFileName( "bspline_fixed.nrrd" );
+    m_Writer->Update();
+    m_Writer->SetInput(m_Registration->GetMovingImage());
+    m_Writer->SetFileName( "bspline_moving.nrrd" );
+    m_Writer->Update();
+  }
+  
   // do the registartion
   try { 
     m_Registration->StartRegistration(); 
@@ -111,15 +120,6 @@ void itk::itkBSplineMattesMIRegistrationFilter<TImageClass>::GenerateData()
   
   m_FinalParameters = m_Registration->GetLastTransformParameters();
   m_Transform->SetParameters( m_FinalParameters ); 
-  
-  if (m_WriteInputs) {
-    m_Writer->SetInput(m_Registration->GetFixedImage());
-    m_Writer->SetFileName( "bspline_fixed.nrrd" );
-    m_Writer->Update();
-    m_Writer->SetInput(m_Registration->GetMovingImage());
-    m_Writer->SetFileName( "bspline_moving.nrrd" );
-    m_Writer->Update();
-  }
   
   this->ComputeDeformationField();
   

@@ -1,8 +1,12 @@
 #include "vtkITKDemonsTransformRegistrationFilter.h" // This class
 
+typedef itk::Array<unsigned int> UnsignedIntArray;
+typedef itk::Array<double> DoubleArray;
+
 vtkITKDemonsTransformRegistrationFilter::vtkITKDemonsTransformRegistrationFilter()
 {
-  NumIterations = 100;
+  this->MaxNumberOfIterations = vtkUnsignedIntArray::New();
+  this->SetNextMaxNumberOfIterations(100);
   StandardDeviations = 1.0;
   CurrentIteration = 0;
   
@@ -42,7 +46,13 @@ void vtkITKDemonsTransformRegistrationFilter::CreateRegistrationPipeline()
 
 void vtkITKDemonsTransformRegistrationFilter::UpdateRegistrationParameters()
 {
-  m_ITKFilter->SetNumIterations(NumIterations);
+  UnsignedIntArray NumIterations(this->GetMaxNumberOfIterations()->GetNumberOfTuples());
+  for(int i=0; i< this->GetMaxNumberOfIterations()->GetNumberOfTuples();i++) {
+    NumIterations[i] = this->GetMaxNumberOfIterations()->GetValue(i);
+  }
+  m_ITKFilter->SetNumberOfLevels(this->GetMaxNumberOfIterations()->GetNumberOfTuples());
+  m_ITKFilter->SetNumberOfIterations(NumIterations);
+
   m_ITKFilter->SetStandardDeviations(StandardDeviations);
   //m_ITKFilter->Update();
 }

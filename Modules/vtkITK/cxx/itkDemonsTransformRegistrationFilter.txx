@@ -11,7 +11,9 @@ itk::itkDemonsTransformRegistrationFilter<TImageClass>::itkDemonsTransformRegist
 {
   this->SetNumberOfRequiredInputs( 2 );  
 
-  m_NumIterations = 100;
+  m_NumberOfIterations = UnsignedIntArray(1);
+  m_NumberOfIterations.Fill(10);
+
   m_StandardDeviations = 1.0;
   m_CurrentIteration = 0;
   m_WriteInputs = false;
@@ -42,17 +44,22 @@ itk::itkDemonsTransformRegistrationFilter<TImageClass>::itkDemonsTransformRegist
 
   // create Demons m_Filter
   m_Filter = RegistrationFilterType::New();
+  //m_Filter->SetTimeStep( 1 );
+  //m_Filte->SetConstraintWeight( 0.1 );
+
+  m_MultiResFilter = MultiResRegistrationFilterType::New();
+  m_MultiResFilter->SetRegistrationFilter( m_Filter );
 
   // set registration input
-  m_Filter->SetFixedImage( m_FixedImageCaster->GetOutput() );
-  m_Filter->SetMovingImage( m_Matcher->GetOutput() );
+  m_MultiResFilter->SetFixedImage( m_FixedImageCaster->GetOutput() );
+  m_MultiResFilter->SetMovingImage( m_Matcher->GetOutput() );
 
   // create wrapper
   m_Warper = WarperType::New();
   m_Interpolator = InterpolatorType::New();
 
   m_Warper->SetInterpolator( m_Interpolator );
-  m_Warper->SetDeformationField( m_Filter->GetOutput() );
+  m_Warper->SetDeformationField( m_MultiResFilter->GetOutput() );
 
   // writer 
   m_Writer = ImageWriterType::New();
@@ -90,6 +97,7 @@ void itk::itkDemonsTransformRegistrationFilter<TImageClass>::GenerateData()
   m_Matcher->Update();
 
   // set registration parameters
+  /***
   if (m_Filter->GetNumberOfIterations() != m_NumIterations ) {
     m_Filter->SetNumberOfIterations( m_NumIterations );
   }
@@ -97,19 +105,29 @@ void itk::itkDemonsTransformRegistrationFilter<TImageClass>::GenerateData()
   if ( stddev[0] != m_StandardDeviations ) {
     m_Filter->SetStandardDeviations( m_StandardDeviations );
   }
+  ***/
+
+  unsigned int *nIterations = new unsigned int [m_NumberOfLevels];
+
+  for(int i=0; i< this->m_NumberOfIterations.GetNumberOfElements();i++) {
+    nIterations[i] = m_NumberOfIterations.GetElement(i);
+  }
+
+  m_MultiResFilter->SetNumberOfLevels( m_NumberOfLevels );
+  m_MultiResFilter->SetNumberOfIterations( nIterations );
 
   if (m_WriteInputs) {
-    m_Writer->SetInput(m_Filter->GetFixedImage());
+    m_Writer->SetInput(m_MultiResFilter->GetFixedImage());
     m_Writer->SetFileName( "demons_fixed.nrrd" );
     m_Writer->Update();
-    m_Writer->SetInput(m_Filter->GetMovingImage());
+    m_Writer->SetInput(m_MultiResFilter->GetMovingImage());
     m_Writer->SetFileName( "demons_moving.nrrd" );
     m_Writer->Update();
   }
 
   // do the registartion
   try {
-    m_Filter->Update();
+    m_MultiResFilter->Update();
   }
   catch( ProcessAborted & excp )
   {
@@ -120,6 +138,7 @@ void itk::itkDemonsTransformRegistrationFilter<TImageClass>::GenerateData()
   m_Warper->SetOutputOrigin( this->GetInput()->GetOrigin() );
   //m_Warper->Update();
   this->GraftOutput(m_Warper->GetOutput());
+  delete [] nIterations;
 
 } // GenerateData
 
@@ -127,7 +146,7 @@ template <class TImageClass>
 typename itk::itkDemonsTransformRegistrationFilter<TImageClass>::DeformationFieldType * 
 itk::itkDemonsTransformRegistrationFilter<TImageClass>::GetDeformationField(void)
 {
-  return static_cast<DeformationFieldType *> (m_Filter->GetOutput());
+  return static_cast<DeformationFieldType *> (m_MultiResFilter->GetOutput());
 } // GetDeformationField
 
 template <class TImageClass>
