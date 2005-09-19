@@ -1099,7 +1099,7 @@ itcl::body isregistration::deformation_volume { {name ""} } {
     # - then set up the volume node parameters and make it visible in slicer
     #
 
-    $_reg Update
+    #$_reg Update
     
     vtkImageData $id
     eval [$_reg GetOutputDisplacement] SetUpdateExtent [[$_reg GetOutputDisplacement] GetWholeExtent]
