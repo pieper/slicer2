@@ -155,7 +155,7 @@ proc DeformableDemonsRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2005/08/15 20:22:28 $}]
+        {$Revision: 1.2 $} {$Date: 2005/09/19 18:46:47 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -442,8 +442,8 @@ proc DeformableDemonsRegistrationCoarseParam {} {
 
     set RigidIntensityRegistration(Repeat) 0
 
-    set DeformableDemonsRegistration(Resample)       6
-    set DeformableDemonsRegistration(UpdateIterations) 100
+    set DeformableDemonsRegistration(Resample)       2
+    set DeformableDemonsRegistration(UpdateIterations) "100 100"
     set DeformableDemonsRegistration(StandardDeviations) 1.0
 }
 
@@ -462,8 +462,8 @@ proc DeformableDemonsRegistrationFineParam {} {
 
     set RigidIntensityRegistration(Repeat) 0
 
-    set DeformableDemonsRegistration(Resample)       4
-    set DeformableDemonsRegistration(UpdateIterations) 400
+    set DeformableDemonsRegistration(Resample)       2
+    set DeformableDemonsRegistration(UpdateIterations) "100 100 100"
     set DeformableDemonsRegistration(StandardDeviations) 1.0
 }
 
@@ -481,8 +481,8 @@ proc DeformableDemonsRegistrationGSlowParam {} {
 
     set RigidIntensityRegistration(Repeat) 0
 
-    set DeformableDemonsRegistration(Resample)       3
-    set DeformableDemonsRegistration(UpdateIterations) 500
+    set DeformableDemonsRegistration(Resample)       2
+    set DeformableDemonsRegistration(UpdateIterations) "200 300 400"
     set DeformableDemonsRegistration(StandardDeviations) 1.0
 }
 
@@ -499,8 +499,8 @@ proc DeformableDemonsRegistrationVerySlowParam {} {
 
     set RigidIntensityRegistration(Repeat) 0
 
-    set DeformableDemonsRegistration(Resample)       2
-    set DeformableDemonsRegistration(UpdateIterations) 1000
+    set DeformableDemonsRegistration(Resample)       1
+    set DeformableDemonsRegistration(UpdateIterations) "400 500 1000"
     set DeformableDemonsRegistration(StandardDeviations) 1.0
 }
 
@@ -701,8 +701,12 @@ proc DeformableDemonsRegistrationSetMetricOption { vtkITKMI } {
 proc DeformableDemonsRegistrationSetOptimizerOption { vtkITKMI } {
     global DeformableDemonsRegistration
     
-    $vtkITKMI SetNumIterations $DeformableDemonsRegistration(UpdateIterations)
-    
+    $vtkITKMI ResetMultiResolutionSettings
+
+    foreach iter  $DeformableDemonsRegistration(UpdateIterations) {
+        $vtkITKMI SetNextMaxNumberOfIterations $iter
+    }
+
     $vtkITKMI SetStandardDeviations $DeformableDemonsRegistration(StandardDeviations)
 }
 
