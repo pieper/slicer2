@@ -51,6 +51,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkStreamlineConvolve.h"
 #include "vtkPruneStreamline.h"
 #include "vtkTubeFilter.h"
+#include "vtkProbeFilter.h"
 
 #include <sstream>
 
@@ -654,23 +655,8 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
             collectionOfModels->GetItemAsObject(currColor);
         }
 
-      // transform models so that they are written in the coordinate
-      // system in which they are displayed.
-      // Currently this class displays them with 
-      // currActor->SetUserMatrix(currTransform->GetMatrix());
-      currTransformer = vtkTransformPolyDataFilter::New();
-      currTransform = vtkTransform::New();
-      currTransform->SetMatrix(currActor->GetUserMatrix());
-      currTransformer->SetTransform(currTransform);
-      currTransformer->SetInput(currStreamline->GetOutput());
-
       // Append this streamline to the chosen model using the appender
-      currAppender->AddInput(currTransformer->GetOutput());
-
-      // call Delete on both to decrement the reference count
-      // so that when we delete the appender they delete too.
-      currTransformer->Delete();
-      currTransform->Delete();
+      currAppender->AddInput(currStreamline->GetOutput());
 
       // get next objects in collections
       currStreamline= (vtkHyperStreamline *)
@@ -690,17 +676,47 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
   currAppender = (vtkAppendPolyData *) 
     collectionOfModels->GetNextItemAsObject();
   idx=0;
+
+  // Create transformation matrix for writing paths.
+  // This was used to place actors in scene.
+  // (scaled IJK to world)
+  currTransform=vtkTransform::New();
+  currTransform->SetMatrix(this->WorldToTensorScaledIJK->GetMatrix());
+  currTransform->Inverse();
+
   while(currAppender)
     {
       cout << idx << endl;
-      writer->SetInput(currAppender->GetOutput());
+
+      // First find the tensors that correspond to each point on the paths.
+      // Note the paths are still in the scaled IJK coordinate system
+      // so the probing makes sense.
+      vtkProbeFilter *probe = vtkProbeFilter::New();
+      probe->SetSource(this->InputTensorField);
+      probe->SetInput(currAppender->GetOutput());
+      probe->Update();
+
+      // Next transform models so that they are written in the coordinate
+      // system in which they are displayed. (world coordinates, RAS + transforms)
+      currTransformer = vtkTransformPolyDataFilter::New();
+      currTransformer->SetTransform(currTransform);
+      currTransformer->SetInput(probe->GetPolyDataOutput());
+      // NOTE this does not transform the tensors, we need to write 
+      // a filter to rotate them.
+
+      writer->SetInput(currTransformer->GetOutput());
+
+      // Write as binary
       writer->SetFileType(2);
+
       // clear the buffer (set to empty string)
       fileNameStr.str("");
       fileNameStr << filename << '_' << idx << ".vtk";
       writer->SetFileName(fileNameStr.str().c_str());
       writer->Write();
-      
+      probe->Delete();
+      currTransformer->Delete();
+
       // Delete it (but it survives until the collection it's on is deleted).
       currAppender->Delete();
 
@@ -801,6 +817,7 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
   writer->Delete();
   tree->Delete();
   colorTreeTwo->Delete();
+  currTransform->Delete();
 
 }
 
