@@ -329,7 +329,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27.6.4 $} {$Date: 2005/09/15 22:11:16 $}]
+        {$Revision: 1.27.6.5 $} {$Date: 2005/09/20 18:58:36 $}]
 
 }
 
@@ -2958,17 +2958,18 @@ proc vtkFreeSurferReadersReadAnnotations {_id} {
     lappend dir label
     set dir [eval file join $dir]
     set fname [lrange [file split [file rootname $vtkFreeSurferReaders(ModelFileName)]] end end]
-    
+
     foreach a $vtkFreeSurferReaders(annots) {
         if {[lsearch $vtkFreeSurferReaders(assocFiles) $a] != -1} {
-            set annotFileName [eval file join $dir $fname.$a.annot]
+            set annotFileName [file join $dir $fname.$a.annot]
+
             if [file exists $annotFileName] {
-                DevInfoWindow "Model $_id: Reading in $a file associated with this model: $annotFileName"
+                DevInfoWindow "Model $_id: Reading in $a file associated with this model:\n$annotFileName"
                 set scalaridx [[$Model($_id,polyData) GetPointData] SetActiveScalars "labels"] 
                     
                 if { $scalaridx == "-1" } {
                     if {$::Module(verbose)} {
-                        DevInfoWindow "labels scalar doesn't exist for model $_id, creating"
+                        puts "labels scalar doesn't exist for model $_id, creating"
                     }
                     set scalars scalars_$a
                     catch "$scalars Delete"
@@ -3023,7 +3024,7 @@ proc vtkFreeSurferReadersReadAnnotations {_id} {
                 MainModelsSetScalarVisibility $_id 1
                 Render3D
             } else {
-                DevInfoWindow "Model $_id: $a file does not exist: $annotFileName"
+                DevInfoWindow "Model $_id: $a file cannot be found: $annotFileName"
             }
         }
     }
@@ -5704,7 +5705,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
             set username "default"
         }
     }
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.4 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.5 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
