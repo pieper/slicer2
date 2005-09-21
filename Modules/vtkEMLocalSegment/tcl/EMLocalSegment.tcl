@@ -288,7 +288,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.61 $} {$Date: 2005/09/10 01:26:14 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.62 $} {$Date: 2005/09/21 07:54:31 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -561,7 +561,7 @@ proc EMSegmentInit {} {
     set EMSegment(NumClassesNew) 4 
     set EMSegment(Cattrib,0,ColorCode) $Gui(activeWorkspace)
     set EMSegment(Cattrib,0,ColorGraphCode) #ffb2b2 
-    set EMSegment(Cattrib,0,LocalPriorWeight)
+    set EMSegment(Cattrib,0,LocalPriorWeight) 1.0
 
     # Create SubClasses 
     EMSegmentCreateDeleteClasses 1 1 1
