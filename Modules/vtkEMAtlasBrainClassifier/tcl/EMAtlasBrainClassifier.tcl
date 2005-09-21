@@ -57,6 +57,11 @@
 #   EMAtlasBrainClassifierRegistration inTarget inSource
 #   EMAtlasBrainClassifierResample inTarget inSource outResampled
 #==========================================================================auto=
+
+##################
+# Gui - Slicer 
+##################
+
 #-------------------------------------------------------------------------------
 # .PROC EMAtlasBrainClassifierInit
 #  The "Init" procedure is called automatically by the slicer.  
@@ -101,7 +106,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.17 $} {$Date: 2005/09/21 17:54:54 $}]
+        {$Revision: 1.18 $} {$Date: 2005/09/21 18:53:54 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -163,6 +168,7 @@ proc EMAtlasBrainClassifierInit {} {
     set EMAtlasBrainClassifier(Cattrib,0,Name) "Head"
     set EMAtlasBrainClassifier(Cattrib,0,Label) $EMAtlasBrainClassifier(Cattrib,0,Name)
     set EMAtlasBrainClassifier(BatchMode) 0
+    set EMAtlasBrainClassifier(SegmentationMode) EMAtlasBrainClassifier
 
     set EMAtlasBrainClassifier(eventManager) {}
 }
@@ -380,73 +386,6 @@ proc EMAtlasBrainClassifierUpdateMRML { } {
     DevUpdateNodeSelectButton Volume EMAtlasBrainClassifier Seg-T2WSelect  Volume,T2W
 }
 
-
-#-------------------------------------------------------------------------------
-# .PROC  EMAtlasBrainClassifierDeleteClasses  
-# Deletes all classes
-# .ARGS
-# SuperClass class to start with 
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifierDeleteClasses {SuperClass} {
-    global EMAtlasBrainClassifier
-    # Initialize 
-
-    set NumClasses [llength $EMAtlasBrainClassifier(Cattrib,$SuperClass,ClassList)] 
-    if {$NumClasses == 0} { return }
-    foreach i $EMAtlasBrainClassifier(Cattrib,$SuperClass,ClassList) {
-    # It is a super class => destroy also all sub classes
-    if {$EMAtlasBrainClassifier(Cattrib,$i,IsSuperClass)} {
-        # -----------------------------
-        # Delete all Subclasses
-            EMAtlasBrainClassifierDeleteClasses $i
-    }
-        array unset EMAtlasBrainClassifier Cattrib,$SuperClass,CIMMatrix,$i,*
-        array unset EMAtlasBrainClassifier Cattrib,$i,* 
-    }
-    set EMAtlasBrainClassifier(Cattrib,$SuperClass,ClassList) ""
-    if {$SuperClass == 0} {set EMAtlasBrainClassifier(ClassIndex) 1}
-}
-
-#-------------------------------------------------------------------------------
-# .PROC  EMAtlasBrainClassifierCreateClasses  
-# Create classes
-# .ARGS
-# SuperClass class to start with 
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifierCreateClasses {SuperClass Number} {
-    global EMAtlasBrainClassifier Volume
-
-    set Cstart $EMAtlasBrainClassifier(ClassIndex)
-    incr EMAtlasBrainClassifier(ClassIndex) $Number 
-    for {set i $Cstart} {$i < $EMAtlasBrainClassifier(ClassIndex) } {incr i 1} {
-      lappend EMAtlasBrainClassifier(Cattrib,$SuperClass,ClassList) $i 
-      foreach NodeAttribute "$EMAtlasBrainClassifier(MrmlNode,JointSegmenterSuperClassAndClass,AttributeList)" InitValue "$EMAtlasBrainClassifier(MrmlNode,JointSegmenterSuperClassAndClass,InitValueList)" {
-        set EMAtlasBrainClassifier(Cattrib,$i,$NodeAttribute) "$InitValue"  
-      }
-      set EMAtlasBrainClassifier(Cattrib,$i,Prob) 0.0 
-      set EMAtlasBrainClassifier(Cattrib,$i,ClassList) ""
-      set EMAtlasBrainClassifier(Cattrib,$i,IsSuperClass) 0
-
-      for {set y 0} {$y <  $EMAtlasBrainClassifier(MaxInputChannelDef)} {incr y} {
-          set  EMAtlasBrainClassifier(Cattrib,$i,LogMean,$y) -1
-          for {set x 0} {$x <  $EMAtlasBrainClassifier(MaxInputChannelDef)} {incr x} { 
-             set EMAtlasBrainClassifier(Cattrib,$i,LogCovariance,$y,$x) 0.0
-          }
-      }
-      set EMAtlasBrainClassifier(Cattrib,$i,ProbabilityData) $Volume(idNone)
-      set EMAtlasBrainClassifier(Cattrib,$i,ReferenceStandardData) $Volume(idNone)
-      for {set j $Cstart} {$j < $EMAtlasBrainClassifier(ClassIndex) } {incr j 1} {
-      foreach k $EMAtlasBrainClassifier(CIMList) {
-          if {$i == $j} {set EMAtlasBrainClassifier(Cattrib,$SuperClass,CIMMatrix,$i,$j,$k) 1
-              } else {set EMAtlasBrainClassifier(Cattrib,$SuperClass,CIMMatrix,$i,$j,$k) 0}
-      }
-      }
-    }
-}
-
-
 #-------------------------------------------------------------------------------
 # .PROC EMAtlasBrainClassifierDefineNodeAttributeList
 # Filters out all the SetCommands of a node 
@@ -486,6 +425,999 @@ proc EMAtlasBrainClassifierDefineNodeAttributeList {MrmlNodeType} {
 
     return "{$SetList} {$SetListLower} {$AttributeList} {$InitList}" 
 }
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierDefineWorkingDirectory
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifierDefineWorkingDirectory {} {
+    global EMAtlasBrainClassifier
+    set dir [tk_chooseDirectory -initialdir $EMAtlasBrainClassifier(WorkingDirectory)]
+    if { $dir == "" } {
+    return
+    }
+    set EMAtlasBrainClassifier(WorkingDirectory) "$dir"    
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierDefineAtlasDir
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifierDefineAtlasDir {} {
+    global EMAtlasBrainClassifier
+    set dir [tk_chooseDirectory -initialdir $EMAtlasBrainClassifier(AtlasDir) -title "Atlas Directory"]
+    if { $dir == "" } {
+    return
+    }
+    set EMAtlasBrainClassifier(AtlasDir) "$dir"    
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierDefineXMLTemplate
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifierDefineXMLTemplate {} {
+    global EMAtlasBrainClassifier
+    set file [tk_getOpenFile -title "XML Template File" -filetypes {{XML {.xml} }} -defaultextension .xml -initialdir [file dirname $EMAtlasBrainClassifier(XMLTemplate)]]
+    if { $file == "" } {
+    return
+    }
+    set EMAtlasBrainClassifier(XMLTemplate) "$file"    
+}
+
+
+
+##################
+# Miscelaneous 
+##################
+
+#-------------------------------------------------------------------------------
+# .PROC  EMAtlasBrainClassifierCreateClasses  
+# Create classes
+# .ARGS
+# SuperClass class to start with 
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifierCreateClasses {SuperClass Number} {
+    global EMAtlasBrainClassifier Volume
+
+    set Cstart $EMAtlasBrainClassifier(ClassIndex)
+    incr EMAtlasBrainClassifier(ClassIndex) $Number 
+    for {set i $Cstart} {$i < $EMAtlasBrainClassifier(ClassIndex) } {incr i 1} {
+      lappend EMAtlasBrainClassifier(Cattrib,$SuperClass,ClassList) $i 
+      foreach NodeAttribute "$EMAtlasBrainClassifier(MrmlNode,JointSegmenterSuperClassAndClass,AttributeList)" InitValue "$EMAtlasBrainClassifier(MrmlNode,JointSegmenterSuperClassAndClass,InitValueList)" {
+        set EMAtlasBrainClassifier(Cattrib,$i,$NodeAttribute) "$InitValue"  
+      }
+      set EMAtlasBrainClassifier(Cattrib,$i,Prob) 0.0 
+      set EMAtlasBrainClassifier(Cattrib,$i,ClassList) ""
+      set EMAtlasBrainClassifier(Cattrib,$i,IsSuperClass) 0
+
+      for {set y 0} {$y <  $EMAtlasBrainClassifier(MaxInputChannelDef)} {incr y} {
+          set  EMAtlasBrainClassifier(Cattrib,$i,LogMean,$y) -1
+          for {set x 0} {$x <  $EMAtlasBrainClassifier(MaxInputChannelDef)} {incr x} { 
+             set EMAtlasBrainClassifier(Cattrib,$i,LogCovariance,$y,$x) 0.0
+          }
+      }
+      set EMAtlasBrainClassifier(Cattrib,$i,ProbabilityData) $Volume(idNone)
+      set EMAtlasBrainClassifier(Cattrib,$i,ReferenceStandardData) $Volume(idNone)
+      for {set j $Cstart} {$j < $EMAtlasBrainClassifier(ClassIndex) } {incr j 1} {
+      foreach k $EMAtlasBrainClassifier(CIMList) {
+          if {$i == $j} {set EMAtlasBrainClassifier(Cattrib,$SuperClass,CIMMatrix,$i,$j,$k) 1
+              } else {set EMAtlasBrainClassifier(Cattrib,$SuperClass,CIMMatrix,$i,$j,$k) 0}
+      }
+      }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierVolumeWriter
+# 
+# .ARGS
+# int VolID volume id specifying what to write out
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifierVolumeWriter {VolID} {
+    global Volume Editor
+
+    set prefix [MainFileGetRelativePrefix [Volume($VolID,node) GetFilePrefix]]
+    set Editor(fileformat) Standard
+ 
+    # Note : I changed vtkMrmlDataVolume.cxx so that MainVolumeWrite also works for 
+    #        for volumes that do not start at slice 1. If it does not get checked into 
+    #        the general version just do the following to overcome the problem after
+    #        executing MainVolumesWrite:
+    #        - Check if largest slice m is present 
+    #        - if not => slices start at 1 .. n => move everything to m -n + 1 ,..., m 
+    
+    MainVolumesWrite $VolID $prefix 
+    # RM unnecssary xml file 
+    catch {file delete -force [file join [file dirname [Volume($VolID,node) GetFullPrefix]] [Volume($VolID,node) GetFilePrefix]].xml }
+}
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierLoadAtlasVolume
+# In the future should probably be more independent but should work for right now 
+# .ARGS
+# path GeneralDir
+# path AtlasDir
+# string AtlasName
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifierLoadAtlasVolume {GeneralDir AtlasDir AtlasName XMLAtlasKey} {
+    global Volume EMAtlasBrainClassifier
+
+    # Create Node 
+    MainMrmlBuildTreesVersion2.0 "$XMLAtlasKey"
+    set VolID [expr $Volume(nextID) -1]
+
+    # Replace key values
+    Volume($VolID,node) SetFilePrefix "$GeneralDir/$AtlasDir/I"
+    Volume($VolID,node) SetFullPrefix "$GeneralDir/$AtlasDir/I"
+    Volume($VolID,node) SetName       $AtlasName
+
+    # Read in Volume
+    MainVolumesUpdateMRML
+    MainUpdateMRML
+
+    return $VolID 
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierResetEMSegment
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifierResetEMSegment { } {
+    global EMSegment 
+    eval {global} $EMSegment(MrmlNode,TypeList) 
+
+    EMSegmentChangeClass 0
+    set EMSegment(NumClassesNew) 0
+    EMSegmentCreateDeleteClasses 1 1 0
+    # now delete Nodes of Superclass 0
+    if {$EMSegment(Cattrib,0,Node) != ""} {    
+    MainMrmlDeleteNode SegmenterSuperClass [$EMSegment(Cattrib,0,Node) GetID]
+    set EMSegment(Cattrib,0,Node) ""
+    }
+
+    foreach dir $EMSegment(CIMList) {
+    if {$EMSegment(Cattrib,0,CIMMatrix,$dir,Node) != ""}  {
+        MainMrmlDeleteNode SegmenterCIM [$EMSegment(Cattrib,0,CIMMatrix,$dir,Node) GetID]
+        set EMSegment(Cattrib,0,CIMMatrix,$dir,Node) ""
+    }
+    } 
+
+    if {$EMSegment(Cattrib,0,EndNode) != ""} {
+    lappend  MrmlNodeDeleteList "EndSegmenterSuperClass [$EMSegment(Cattrib,0,EndNode) GetID]" 
+    set EMSegment(Cattrib,0,EndNode) ""
+    }
+
+    # Delete All Remaining Segmenter Nodes that we might have forgotten 
+    # Should only be node Segmenter and InputImages 
+    set EMSegment(SegmenterNode) ""
+
+    foreach node $EMSegment(MrmlNode,TypeList) {
+    upvar #0 $node Array    
+    foreach id $Array(idList) {
+        # Add to the deleteList
+        lappend Array(idListDelete) $id
+
+        # Remove from the idList
+        set i [lsearch $Array(idList) $id]
+        set Array(idList) [lreplace $Array(idList) $i $i]
+
+        # Remove node from tree, and delete it
+        Mrml(dataTree) RemoveItem ${node}($id,node)
+        ${node}($id,node) Delete
+    }
+    }
+    MainUpdateMRML
+    foreach node $EMSegment(MrmlNode,TypeList) {set ${node}(idListDelete) "" }
+    MainMrmlUpdateIdLists "$EMSegment(MrmlNode,TypeList)"
+
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierDeleteAllVolumeNodesButSPGRAndT2W
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifierDeleteAllVolumeNodesButSPGRAndT2W { } {
+   global  EMAtlasBrainClassifier Volume Mrml 
+
+   foreach id $Volume(idList) {
+        if {($id != $Volume(idNone)) && ($id != $EMAtlasBrainClassifier(Volume,SPGR)) && ($id != $EMAtlasBrainClassifier(Volume,T2W)) } {
+            # Add to the deleteList
+            lappend Volume(idListDelete) $id
+
+            # Remove from the idList
+            set i [lsearch $Volume(idList) $id]
+            set Volume(idList) [lreplace $Volume(idList) $i $i]
+
+            # Remove node from tree, and delete it
+            Mrml(dataTree) RemoveItem Volume($id,node)
+            Volume($id,node) Delete
+        }
+    }
+    MainUpdateMRML
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifier_InitilizePipeline 
+# Checks parameters and sets up Mrml Tree
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifier_InitilizePipeline { } {
+    global EMAtlasBrainClassifier Volume Mrml 
+
+    if {($EMAtlasBrainClassifier(Volume,SPGR) == $Volume(idNone)) || ($EMAtlasBrainClassifier(Volume,T2W) == $Volume(idNone))} {
+      DevErrorWindow "Please define both SPGR and T2W before starting the segmentation" 
+      return 0
+    } 
+
+    if {([Volume($EMAtlasBrainClassifier(Volume,SPGR),node) GetName] == "NormedSPGR") || ([Volume($EMAtlasBrainClassifier(Volume,T2W),node) GetName] == "NormedT2W") } {
+      DevErrorWindow "Please rename the SPGR and T2W Volume. They cannot be named NormedSPGR or NormedT2W" 
+      return 0
+    }
+
+    if {[EMAtlasBrainClassifierReadXMLFile $EMAtlasBrainClassifier(XMLTemplate)] == "" } {
+      DevErrorWindow "Could not read template file $EMAtlasBrainClassifier(XMLTemplate) or it was empty!" 
+      return 0
+    }
+
+    set EMAtlasBrainClassifier(WorkingDirectory) [file normalize $EMAtlasBrainClassifier(WorkingDirectory)]
+    set Mrml(dir) $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation
+
+    EMAtlasBrainClassifierDeleteAllVolumeNodesButSPGRAndT2W
+    EMAtlasBrainClassifierResetEMSegment 
+
+    return 1
+}
+
+##################
+# XML 
+##################
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierReadXMLFile
+# 
+# .ARGS
+# path FileName
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifierReadXMLFile { FileName } {
+    global EMAtlasBrainClassifier
+    if {[catch {set fid [open $FileName r]} errmsg] == 1} {
+      puts $errmsg
+      return ""
+    }
+
+    set file [read $fid]
+
+    if {[catch {close $fid} errorMessage]} {
+    puts "Could not close file : ${errorMessage}"
+        return ""
+    }
+    return $file 
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierGrepLine
+# 
+# .ARGS
+# string input
+# string search_string
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifierGrepLine {input search_string} {
+    set foundIndex [string first $search_string  $input]
+    if {$foundIndex < 0} {
+        return "-1 -1"
+    }
+
+    set start [expr [string last "\n" [string range $input 0 [expr $foundIndex -1]]] +1]
+    set last  [string first "\n" [string range  $input $start end]]
+
+    if  {$last < 0} { set last  [expr [string length $input] -1] 
+    } else { incr last $start}
+    return "$start $last"
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierReadNextKey
+# 
+# .ARGS
+# string input
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifierReadNextKey {input} {
+    if {([regexp "^(\[^=\]*)\[\n\t \]*=\[\n\t \]*\['\"\](\[^'\"\]*)\['\"\](.*)$" \
+             $input match key value input] != 0) && ([string equal -length 1 $input "/"] == 0)} {
+    return "$key $value "
+    }
+    return "" 
+}
+
+##################
+# Normalize
+##################
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifier_Normalize
+# 
+# .ARGS
+# int VolIDInput input volume id
+# int VolIDOutput output volume id
+# string Mode
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifier_Normalize { Mode } {
+    global Volume EMAtlasBrainClassifier
+
+    puts "=========== Normalize $Mode ============ "
+
+    # Normalize Data
+    vtkImageData outData 
+    set VolIDInput $EMAtlasBrainClassifier(Volume,${Mode}) 
+    EMAtlasBrainClassifier_NormalizeVolume [Volume($VolIDInput,vol) GetOutput] outData $Mode
+
+    # Put Normilzed Data into Mrml Structure
+    set VolIDOutput [DevCreateNewCopiedVolume $VolIDInput "" "Normed$Mode"]
+    Volume($VolIDOutput,vol) SetImageData outData 
+    outData Delete
+
+    set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/[string tolower $Mode]/[file tail [Volume($EMAtlasBrainClassifier(Volume,${Mode}),node) GetFilePrefix]]norm"
+    puts "--- $EMAtlasBrainClassifier(WorkingDirectory) $Prefix"
+    Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
+    Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
+    Volume($VolIDOutput,node) SetFilePattern "%s.%03d"
+    Volume($VolIDOutput,node) SetLittleEndian $EMAtlasBrainClassifier(LittleEndian)
+
+    set EMAtlasBrainClassifier(Volume,Normalized${Mode}) $VolIDOutput
+
+    # Clean Up 
+    MainUpdateMRML
+    RenderAll
+
+    if {$EMAtlasBrainClassifier(Save,$Mode)} {
+    EMAtlasBrainClassifierVolumeWriter $VolIDOutput  
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifier_NormalizeVolume
+# 
+# .ARGS
+# vtkImageData vol 
+# vtkImageData out
+# string Mode
+# .END
+#-------------------------------------------------------------------------------
+# Kilian: I need this so I can also run it without MRML structure 
+proc EMAtlasBrainClassifier_NormalizeVolume { Vol OutVol Mode } {
+    global Volume Matrix EMAtlasBrainClassifier
+    puts "Number Of Scalar: [$Vol GetNumberOfScalarComponents]" 
+    vtkImageData hist
+    # Generate Histogram with 1000 bins 
+    vtkImageAccumulate ia
+    ia SetInput $Vol
+    ia SetComponentSpacing 1 1 1
+    ia SetComponentOrigin 0 0 0
+    ia SetComponentExtent 0 1000 0 0 0 0
+    ia Update
+    hist DeepCopy [ia GetOutput]
+  
+    # Get maximum image value 
+    set max [lindex [ia GetMax] 0]
+    puts "Absolute Max: $max"
+    set count 0
+    set i 0
+
+    # Find out the intensity value which is an uppwer bound for 99% of the voxels 
+    # => Cut of the tail of the the histogram
+    set Extent [$Vol GetExtent]
+    set Boundary [expr ([lindex $Extent 1] - [lindex $Extent 0] +1) * ([lindex $Extent 3] - [lindex $Extent 2] +1) * ([lindex $Extent 5] - [lindex $Extent 4] +1) * 0.99]
+    while {$i < $max && $count < $Boundary} {    
+      set val [hist GetScalarComponentAsFloat $i 0 0 0]
+      set count [expr $count + $val]
+      incr i
+    }
+
+    # max is now the upper bound intensity value for 99% of the voxels  
+    set max $i 
+    set min 0
+    puts "Max: $max"
+    puts "Min: $min"
+    set width [expr $max / 5]
+    puts "Width: $width"
+    set fwidth [expr 1.0 / $width ]
+    
+    # Smooth histogram by applying a window of width with 20% of the intensity value 
+    set sHistMax  [expr ($max - $min) - $width]
+    for {set x 0} {$x <= $sHistMax } {incr x} { 
+      set sHist($x) 0
+      for {set k 0} {$k <= $width} {incr k} {
+        set sHist($x) [expr [hist GetScalarComponentAsFloat [expr $x + $k] 0 0 0] + $sHist($x)]
+      }
+      set sHist($x) [expr $sHist($x) * $fwidth]
+    }
+   
+    # Define the lower intensity value for calculating the mean of the historgram
+    # - When noise is set to 0 then we reached the first peak in the smoothed out histogram
+    #   We considere this area noise (or background) and therefore exclude it for the definition of the normalization factor  
+    # - When through is set we reached the first minimum after the first peak which defines the lower bound of the intensity 
+    #   value considered for calculating the Expected value of the histogram 
+    set x [expr $min + 1]
+    set trough [expr $min - 1]
+    set noise 1
+    incr  sHistMax -2 
+    while {$x < $sHistMax && $trough < $min} {
+       if {$noise == 1 && $sHist($x) > $sHist([expr $x + 1]) && $x > $min} {
+          set noise 0
+       } elseif { $sHist($x) < $sHist([expr $x + 1]) && $sHist([expr $x + 1]) < $sHist([expr $x + 2]) && $sHist([expr $x +2]) < $sHist([expr $x + 3]) } {
+          set trough $x
+       }
+       incr x
+    }
+
+    puts "Threshold: $trough"
+
+    # Calculate the mean intensity value of the voxels with range [trough, max]  
+    vtkImageAccumulate ia2
+    ia2 SetInput $Vol
+    ia2 SetComponentSpacing 1 1 1
+    ia2 SetComponentOrigin $trough 0 0
+    ia2 SetComponentExtent 0 [expr $max - $trough] 0 0 0 0
+    ia2 Update
+    hist DeepCopy [ia2 GetOutput]
+    set i $trough
+    set total 0
+    set num 0
+    while {$i < [expr $width * 5]} {    
+      set val [hist GetScalarComponentAsFloat [expr $i - $trough] 0 0 0]
+      set total [expr $total + ($i * $val)]
+      set num [expr $num + $val]
+      incr i
+    }
+    # Normalize image by factor M which is the expect value in this range 
+    set M [expr $total * 1.0 / $num]
+
+    puts "M: $M"
+
+    vtkImageMathematics im
+    im SetInput1 $Vol
+    im SetConstantK [expr ($EMAtlasBrainClassifier(Normalize,$Mode) / $M)]
+    puts "Mode: $Mode"
+     
+
+    im SetOperationToMultiplyByK
+    im Update 
+    $OutVol DeepCopy [im GetOutput]
+
+    ia Delete
+    im Delete
+    ia2 Delete
+    hist Delete
+    puts "Done"
+} 
+ 
+
+##################
+# Registration
+##################
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifier_AtlasList 
+# Defines list of atlases to be registered 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifier_AtlasList { } {
+    global  EMAtlasBrainClassifier   
+    set XMLTemplateText [EMAtlasBrainClassifierReadXMLFile $EMAtlasBrainClassifier(XMLTemplate)]
+
+    set RegisterAtlasDirList "" 
+    set RegisterAtlasNameList "" 
+    
+    set NextLineIndex [EMAtlasBrainClassifierGrepLine "$XMLTemplateText" "<SegmenterClass"] 
+
+    while {$NextLineIndex != "-1 -1"} {
+      set Line [string range "$XMLTemplateText" [lindex $NextLineIndex 0] [lindex $NextLineIndex 1]]
+      set PriorPrefixIndex [string first "LocalPriorPrefix"  "$Line"]
+      set PriorNameIndex   [string first "LocalPriorName"  "$Line"]
+      
+      if {($PriorPrefixIndex > -1) && ($PriorNameIndex > -1)} {
+          set ResultPrefix [lindex [EMAtlasBrainClassifierReadNextKey  "[string range \"$Line\" $PriorPrefixIndex end]"] 1]
+          set AtlasDir [file tail [file dirname $ResultPrefix]]
+          set AtlasName   [lindex [EMAtlasBrainClassifierReadNextKey  "[string range \"$Line\" $PriorNameIndex end]"] 1]
+      
+          if {($ResultPrefix != "") && ($AtlasName != "") && ([lsearch $RegisterAtlasNameList "$AtlasName"] < 0) && ($AtlasDir != "") } {
+          lappend  RegisterAtlasDirList "$AtlasDir"
+          lappend  RegisterAtlasNameList "$AtlasName"
+          }
+      
+      }
+      set XMLTemplateText  [string range "$XMLTemplateText" [expr [lindex $NextLineIndex 1] +1] end]
+      set NextLineIndex [EMAtlasBrainClassifierGrepLine "$XMLTemplateText" "<SegmenterClass"] 
+    }
+    return "{$RegisterAtlasDirList} {$RegisterAtlasNameList}" 
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifier_RegistrationInitialize 
+# Checks if atlas has to be dowloaded and if registration is necessary. Return values 
+# -1 Atlas does not exist and could not be downloaded
+#  0 Registered Atlas exists 
+#  1 Atlas exists but has to be registered 
+# .ARGS
+# string RegisterAtlasDirList List of Atlases to be loaded
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifier_RegistrationInitialize {RegisterAtlasDirList} {
+    global EMAtlasBrainClassifier
+
+    # ---------------------------------------------------------------
+    # Check if we load the module for the first time 
+    if {$EMAtlasBrainClassifier(AtlasDir) == $EMAtlasBrainClassifier(DefaultAtlasDir)} {
+    set UploadNeeded 0 
+    foreach atlas "spgr $RegisterAtlasDirList" {
+        if {[file exists [file join $EMAtlasBrainClassifier(AtlasDir) $atlas I.001]] == 0} {
+        set UploadNeeded 1
+            break
+            }
+        }
+        if {$UploadNeeded && ([EMAtlasBrainClassifierDownloadAtlas] == 0)} { return -1}
+    }
+
+    # ---------------------------------------------------------------
+    # Check if we need to run registration
+    puts "=========== Initilize Registration of Atlas to Case  ============ "
+
+    set RunRegistrationFlag 0 
+    set StartSlice [format "%03d" [lindex [Volume($EMAtlasBrainClassifier(Volume,NormalizedSPGR),node) GetImageRange] 0]]
+    foreach Dir "$RegisterAtlasDirList" {
+       if {[file exists $EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I.$StartSlice] == 0  } {
+          set RunRegistrationFlag 1 
+          break 
+       }
+    }
+    
+    if {$RunRegistrationFlag == 0 && ($EMAtlasBrainClassifier(BatchMode) == 0)} {
+      if {[DevYesNo "We found already an atlas in $EMAtlasBrainClassifier(WorkingDirectory)/atlas. Do you still want to register ? " ] == "yes" } {
+        set RunRegistrationFlag 1
+      }
+    } 
+    # ---------------------------------------------------------------
+    # Check if proper template file exist
+    if {$RunRegistrationFlag == 1} {
+    set XMLAtlasTemplateFile $EMAtlasBrainClassifier(AtlasDir)/template_atlas.xml
+    if {[EMAtlasBrainClassifierReadXMLFile $XMLAtlasTemplateFile] == "" } {
+        DevErrorWindow "Could not read template file $XMLAtlasTemplateFile or it was empty!" 
+        return -1
+    }
+         
+        set XMLAtlasKey [MainMrmlReadVersion2.x $XMLAtlasTemplateFile]
+        if {$XMLAtlasKey == 0 } {return -1}
+        
+        if {[lindex [lindex $XMLAtlasKey 0] 0] != "Volume"} {
+              DevErrorWindow "Template file $XMLAtlasTemplateFile is not of the correct format!" 
+              return -1
+        }
+    }
+
+    return $RunRegistrationFlag
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifier_AtlasRegistration 
+# Registers MRI of atlas and resamles atlas volume 
+# .ARGS
+# string  RegisterAtlasDirList  List of atlas directories to be loaded
+# string  RegisterAtlasNameList List of atlas names to be loaded
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifier_AtlasRegistration {RegisterAtlasDirList RegisterAtlasNameList } {
+   global EMAtlasBrainClassifier Volume  
+
+   # ---------------------------------------------------------------
+   # Set up Registration 
+
+   # Read Atlas Parameters from XML file (how to load volumes)
+   set XMLAtlasKey [MainMrmlReadVersion2.x $EMAtlasBrainClassifier(AtlasDir)/template_atlas.xml] 
+  
+   # Load Atlas SPGR 
+   set TemplateIDInput $EMAtlasBrainClassifier(Volume,NormalizedSPGR)
+   set VolIDSource      [EMAtlasBrainClassifierLoadAtlasVolume $EMAtlasBrainClassifier(AtlasDir) spgr  AtlasSPGR "$XMLAtlasKey"]
+   if {$VolIDSource == "" } {return}
+   set EMAtlasBrainClassifier(Volume,AtlasSPGR) $VolIDSource
+  
+   # Target file is the normalized SPGR
+   set VolIDTarget $EMAtlasBrainClassifier(Volume,NormalizedSPGR)
+   if {$VolIDTarget == "" } {return}
+  
+   # ---------------------------------------------------------------
+   # Register Atlas SPGR to Normalized SPGR 
+   puts "============= Start registeration"  
+  
+   EMAtlasBrainClassifierRegistration $VolIDTarget $VolIDSource
+
+   # Define Registration output volume 
+   set VolIDOutput [DevCreateNewCopiedVolume $TemplateIDInput "" "RegisteredSPGR"]
+
+   # Resample the Atlas SPGR
+   EMAtlasBrainClassifierResample  $VolIDTarget $VolIDSource $VolIDOutput
+  
+   # Clean up 
+   if {$EMAtlasBrainClassifier(Save,Atlas)} {
+      set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/spgr/I"
+      Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
+      Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
+      Volume($VolIDOutput,node) SetLittleEndian $EMAtlasBrainClassifier(LittleEndian)
+  
+      EMAtlasBrainClassifierVolumeWriter $VolIDOutput
+   }
+   MainMrmlDeleteNode Volume $VolIDSource 
+   MainUpdateMRML
+   RenderAll
+  
+   # ---------------------------------------------------------------
+   # Resample atlas files
+   foreach Dir "$RegisterAtlasDirList" Name "$RegisterAtlasNameList" {
+      puts "=========== Resample Atlas $Name  ============ "
+      # Load In the New Atlases
+      set VolIDInput [EMAtlasBrainClassifierLoadAtlasVolume $EMAtlasBrainClassifier(AtlasDir) $Dir Atlas_$Name "$XMLAtlasKey"]
+      # Define Registration output volumes
+      set VolIDOutput [DevCreateNewCopiedVolume $TemplateIDInput "" "$Name"]
+      set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I"
+      Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
+      Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
+      Volume($VolIDOutput,node) SetLittleEndian $EMAtlasBrainClassifier(LittleEndian)
+  
+      # Resample the Atlas
+      EMAtlasBrainClassifierResample  $VolIDTarget $VolIDInput $VolIDOutput  
+  
+      # Clean up 
+      if {$EMAtlasBrainClassifier(Save,Atlas)} {EMAtlasBrainClassifierVolumeWriter $VolIDOutput}
+      MainMrmlDeleteNode Volume $VolIDInput 
+      MainUpdateMRML
+      RenderAll
+  }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifier_LoadAtlas
+# Load the alredy registered atlas 
+# .ARGS
+# string  RegisterAtlasDirList  List of atlas directories to be loaded
+# string  RegisterAtlasNameList List of atlas names to be loaded
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifier_LoadAtlas {RegisterAtlasDirList RegisterAtlasNameList } {
+  global EMAtlasBrainClassifier Volume  
+  set VolIDInput $EMAtlasBrainClassifier(Volume,SPGR)
+  foreach Dir "$RegisterAtlasDirList" Name "$RegisterAtlasNameList" {
+    puts "=========== Load Atlas $Name  ============ "
+    set VolIDOutput [DevCreateNewCopiedVolume $VolIDInput "" "$Name"]
+    Volume($VolIDOutput,node) SetFilePrefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I"
+    Volume($VolIDOutput,node) SetFullPrefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I" 
+    Volume($VolIDOutput,node) SetLittleEndian $EMAtlasBrainClassifier(LittleEndian)
+    MainVolumesRead $VolIDOutput
+    RenderAll
+  }      
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierDownloadAtlas
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifierDownloadAtlas { } {
+    global EMAtlasBrainClassifier tcl_platform
+    set text "The first time this module is used the Atlas data has to be dowloaded"
+    set text "$text\nThis might take a while, so if you do not want to continue at "
+    set text "$text\nthis point just press 'cancel'. \n"
+    set text "$text\nIf you want to continue and you have PROBLEMS downloading the data please do the following:"
+    set text "$text\nDowload the data from http://na-mic.org/Wiki/index.php/Slicer:Data_EMAtlas"
+    set text "$text\nto [file dirname $EMAtlasBrainClassifier(AtlasDir)]"
+    set text "$text\nand uncompress the file."       
+         
+    if {$EMAtlasBrainClassifier(BatchMode)} {
+    puts "$text"
+    } else {
+    if {[DevOKCancel "$text" ] != "ok"} { return 0}
+    }
+
+    DownloadInit
+
+    if {$tcl_platform(os) == "Linux"} { 
+       set urlAddress "http://na-mic.org/Wiki/images/8/8d/VtkEMAtlasBrainClassifier_AtlasDefault.tar.gz" 
+       set outputFile "[file dirname $EMAtlasBrainClassifier(AtlasDir)]/atlas.tar.gz"
+    } else {
+      set urlAddress "http://na-mic.org/Wiki/images/5/57/VtkEMAtlasBrainClassifier_AtlasDefault.zip"
+      set outputFile "[file dirname $EMAtlasBrainClassifier(AtlasDir)]/atlas.zip"
+    }
+
+    catch {exec rm -f $outputFile}
+    catch {exec rm -rf $EMAtlasBrainClassifier(AtlasDir)}
+
+    if {[DownloadFile "$urlAddress" "$outputFile"] == 0} {
+      return 0
+    }
+
+    puts "Start extracting $outputFile ...." 
+    if {$tcl_platform(os) == "Linux"} { 
+    catch {exec rm -f [file rootname $outputFile]}
+    puts "exec gunzip $outputFile"
+    set OKFlag [catch {exec gunzip -f $outputFile} errormsg]
+    if {$OKFlag == 0} {
+        catch {exec rm -f atlas}
+        puts "exec tar xf [file rootname $outputFile]]"
+        set OKFlag [catch {exec tar xf [file rootname $outputFile]} errormsg]
+        if {$OKFlag == 0} {
+        puts "exec mv atlas ${EMAtlasBrainClassifier(AtlasDir)}/"
+        set OKFlag [catch {exec mv atlas ${EMAtlasBrainClassifier(AtlasDir)}/}  errormsg]
+        }
+    }
+    set RMFile [file rootname $outputFile]
+    } else {
+    set OKFlag [catch {exec unzip -o -qq $outputFile}  errormsg] 
+    set RMFile $outputFile
+    } 
+    puts "... finished extracting"
+    if {$OKFlag == 1} {
+      DevErrorWindow "Could not uncompress $outputFile because of the following error message:\n$errormsg\nPlease manually uncompress the file."
+      return 0
+    } 
+
+    if {$EMAtlasBrainClassifier(BatchMode)} {
+    puts "Atlas installation completed!" 
+    } else {
+    DevInfoWindow "Atlas installation completed!" 
+    }
+
+    catch {exec rm -f $RMFile} 
+    return 1
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierRegistration
+# 
+# .ARGS
+# int inTarget input target volume id
+# int inSource
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifierRegistration {inTarget inSource} {
+    global EMAtlasBrainClassifier Volume AG 
+   
+    
+    catch "Target Delete"
+    catch "Source Delete"
+    vtkImageData Target
+    vtkImageData Source
+
+    puts "Initialize Source and Target"
+    #If source and target have two channels, combine them into one vtkImageData object 
+    Target DeepCopy  [ Volume($inTarget,vol) GetOutput]
+    Source DeepCopy  [ Volume($inSource,vol) GetOutput]
+    
+    # Initial transform stuff
+    catch "TransformEMAtlasBrainClassifier Delete"
+    vtkGeneralTransform TransformEMAtlasBrainClassifier
+    puts "No initial transform"
+    TransformEMAtlasBrainClassifier PostMultiply 
+
+    ## to be changed to EMAtlaspreprocess
+    AGPreprocess Source Target $inSource $inTarget
+
+    if { [info commands __dummy_transform] == ""} {
+            vtkTransform __dummy_transform
+    }
+
+    puts "Start the linear registration"
+    ###### Linear Tfm ######
+    catch "GCR Delete"
+    vtkImageGCR GCR
+    GCR SetVerbose 1
+
+    # Set i/o
+    GCR SetTarget Target
+    GCR SetSource Source
+    GCR PostMultiply 
+ 
+    # Set parameters
+    GCR SetInput  __dummy_transform  
+    [GCR GetGeneralTransform] SetInput TransformEMAtlasBrainClassifier
+    ## Metric: 1=GCR-L1,2=GCR-L2,3=Correlation,4=MI
+    GCR SetCriterion       4 
+    ## Tfm type: -1=translation, 0=rigid, 1=similarity, 2=affine
+    GCR SetTransformDomain 2 
+    ## 2D registration only?
+    GCR SetTwoD 0
+  
+    # Do it!
+    GCR Update     
+    TransformEMAtlasBrainClassifier Concatenate [[GCR GetGeneralTransform] GetConcatenatedTransform 1]
+
+    # puts "For debigging only linear registration"     
+    if {1} {
+      ###### Warp #######
+      catch "warp Delete"
+      vtkImageWarp warp
+      
+      # Set i/o
+      warp SetSource Source
+      warp SetTarget Target 
+      
+      # Set the parameters
+      warp SetVerbose 2
+      [warp GetGeneralTransform] SetInput TransformEMAtlasBrainClassifier
+      ## do tensor registration?
+      warp SetResliceTensors 0 
+      ## 1=demon, 2=optical flow 
+      warp SetForceType 1          
+      warp SetMinimumIterations  0 
+      warp SetMaximumIterations  50
+      ## What does it mean?
+      warp SetMinimumLevel -1  
+      warp SetMaximumLevel -1  
+      ## Use SSD? 1 or 0 
+      warp SetUseSSD 1
+      warp SetSSDEpsilon  1e-3    
+      warp SetMinimumStandardDeviation 0.85 
+      warp SetMaximumStandardDeviation 1.25     
+
+      # Do it!
+      warp Update
+      TransformEMAtlasBrainClassifier Concatenate warp
+    }
+  # save the transform
+  set EMAtlasBrainClassifier(Transform) TransformEMAtlasBrainClassifier
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierResample
+# 
+# .ARGS
+# int inTarget input target volume id
+# int inSource volume id
+# vtkImageData outResampled
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifierResample {inTarget inSource outResampled} {
+    global EMAtlasBrainClassifier Volume Gui
+    
+    catch "Source Delete"
+    vtkImageData Source  
+    Source DeepCopy  [ Volume($inSource,vol) GetOutput]
+    catch "Target Delete"
+    vtkImageData Target
+    Target DeepCopy  [ Volume($inTarget,vol) GetOutput]
+    AGPreprocess Source Target $inSource $inTarget
+  
+    catch "Cast Delete"
+    vtkImageCast Cast
+    Cast SetInput Source
+    Cast SetOutputScalarType [Target GetScalarType] 
+
+    catch "ITrans Delete"
+    vtkImageTransformIntensity ITrans
+    ITrans SetInput [Cast GetOutput]
+
+    catch "Reslicer Delete"
+    vtkImageReslice Reslicer
+    Reslicer SetInput [ITrans GetOutput]
+    Reslicer SetInterpolationMode 1
+    
+    # We have to invers the transform before we reslice the grid.     
+    Reslicer SetResliceTransform [$EMAtlasBrainClassifier(Transform)  GetInverse]
+    
+    # Reslicer SetInformationInput Target
+    Reslicer SetInformationInput Target
+    # Do it!
+    Reslicer Update
+
+    catch "Resampled Delete"
+    vtkImageData Resampled
+    Resampled DeepCopy [Reslicer GetOutput]
+
+    Volume($outResampled,vol) SetImageData  Resampled
+    Resampled SetOrigin 0 0 0
+    Source Delete
+    Target Delete
+    Cast Delete
+    ITrans Delete
+    Reslicer Delete
+}
+
+
+##################
+# EM Segmeneter 
+##################
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifier_InitilizeSegmentation
+# Initilizes parameters for Segmentation with EMAtlasClassifier 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifier_InitilizeSegmentation { } {
+    global EMAtlasBrainClassifier Volume EMSegment
+
+    # Read XML File  
+    catch {exec mkdir $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation} 
+    set tags [MainMrmlReadVersion2.x $EMAtlasBrainClassifier(XMLTemplate)]
+    set tags [MainMrmlAddColors $tags]
+    MainMrmlBuildTreesVersion2.0 $tags
+    MainUpdateMRML
+
+    if {$EMAtlasBrainClassifier(SegmentationMode) == "EMAtlasBrainClassifier" } {EMAtlasBrainClassifierInitializeValues }
+
+    # Set Segmentation Boundary  so that if you have images of other dimension it will segment them correctly
+    set VolID $EMAtlasBrainClassifier(Volume,SPGR)
+    set Range [Volume($VolID,node) GetImageRange]
+
+    set EMSegment(SegmentationBoundaryMax,0) [lindex [Volume($VolID,node) GetDimensions] 0]
+    set EMSegment(SegmentationBoundaryMax,1) [lindex [Volume($VolID,node) GetDimensions] 1]
+    set EMSegment(SegmentationBoundaryMax,2) [expr [lindex $Range 1] - [lindex $Range 0] + 1] 
+
+    set EMAtlasBrainClassifier(SegmentationBoundaryMax,0) $EMSegment(SegmentationBoundaryMax,0) 
+    set EMAtlasBrainClassifier(SegmentationBoundaryMax,1) $EMSegment(SegmentationBoundaryMax,1) 
+    set EMAtlasBrainClassifier(SegmentationBoundaryMax,2) $EMSegment(SegmentationBoundaryMax,2) 
+
+    if {$EMAtlasBrainClassifier(SegmentationMode) == "EMAtlasBrainClassifier" } { 
+    set pid $EMAtlasBrainClassifier(vtkMrmlSegmenterNode)
+    eval Segmenter($pid,node) SetSegmentationBoundaryMin "1 1 1"
+    eval Segmenter($pid,node) SetSegmentationBoundaryMax "$EMAtlasBrainClassifier(SegmentationBoundaryMax,0) $EMAtlasBrainClassifier(SegmentationBoundaryMax,1) $EMAtlasBrainClassifier(SegmentationBoundaryMax,2)"
+    }
+}
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC  EMAtlasBrainClassifierDeleteClasses  
+# Deletes all classes
+# .ARGS
+# SuperClass class to start with 
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifierDeleteClasses {SuperClass} {
+    global EMAtlasBrainClassifier
+    # Initialize 
+
+    set NumClasses [llength $EMAtlasBrainClassifier(Cattrib,$SuperClass,ClassList)] 
+    if {$NumClasses == 0} { return }
+    foreach i $EMAtlasBrainClassifier(Cattrib,$SuperClass,ClassList) {
+    # It is a super class => destroy also all sub classes
+    if {$EMAtlasBrainClassifier(Cattrib,$i,IsSuperClass)} {
+        # -----------------------------
+        # Delete all Subclasses
+            EMAtlasBrainClassifierDeleteClasses $i
+    }
+        array unset EMAtlasBrainClassifier Cattrib,$SuperClass,CIMMatrix,$i,*
+        array unset EMAtlasBrainClassifier Cattrib,$i,* 
+    }
+    set EMAtlasBrainClassifier(Cattrib,$SuperClass,ClassList) ""
+    if {$SuperClass == 0} {set EMAtlasBrainClassifier(ClassIndex) 1}
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC EMAtlasBrainClassifierInitializeValues 
@@ -733,976 +1665,6 @@ proc EMAtlasBrainClassifierInitializeValues { } {
     }    
     set item [Mrml(dataTree) GetNextItem]
   }
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifierDefineWorkingDirectory
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifierDefineWorkingDirectory {} {
-    global EMAtlasBrainClassifier
-    set dir [tk_chooseDirectory -initialdir $EMAtlasBrainClassifier(WorkingDirectory)]
-    if { $dir == "" } {
-    return
-    }
-    set EMAtlasBrainClassifier(WorkingDirectory) "$dir"    
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifierDefineAtlasDir
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifierDefineAtlasDir {} {
-    global EMAtlasBrainClassifier
-    set dir [tk_chooseDirectory -initialdir $EMAtlasBrainClassifier(AtlasDir) -title "Atlas Directory"]
-    if { $dir == "" } {
-    return
-    }
-    set EMAtlasBrainClassifier(AtlasDir) "$dir"    
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifierDefineXMLTemplate
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifierDefineXMLTemplate {} {
-    global EMAtlasBrainClassifier
-    set file [tk_getOpenFile -title "XML Template File" -filetypes {{XML {.xml} }} -defaultextension .xml -initialdir [file dirname $EMAtlasBrainClassifier(XMLTemplate)]]
-    if { $file == "" } {
-    return
-    }
-    set EMAtlasBrainClassifier(XMLTemplate) "$file"    
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifier_Normalize
-# 
-# .ARGS
-# int VolIDInput input volume id
-# int VolIDOutput output volume id
-# string Mode
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_Normalize { Mode } {
-    global Volume EMAtlasBrainClassifier
-
-    puts "=========== Normalize $Mode ============ "
-
-    # Normalize Data
-    vtkImageData outData 
-    set VolIDInput $EMAtlasBrainClassifier(Volume,${Mode}) 
-    EMAtlasBrainClassifier_NormalizeVolume [Volume($VolIDInput,vol) GetOutput] outData $Mode
-
-    # Put Normilzed Data into Mrml Structure
-    set VolIDOutput [DevCreateNewCopiedVolume $VolIDInput "" "Normed$Mode"]
-    Volume($VolIDOutput,vol) SetImageData outData 
-    outData Delete
-
-    set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/[string tolower $Mode]/[file tail [Volume($EMAtlasBrainClassifier(Volume,${Mode}),node) GetFilePrefix]]norm"
-    puts "--- $EMAtlasBrainClassifier(WorkingDirectory) $Prefix"
-    Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
-    Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
-    Volume($VolIDOutput,node) SetFilePattern "%s.%03d"
-    Volume($VolIDOutput,node) SetLittleEndian $EMAtlasBrainClassifier(LittleEndian)
-
-    set EMAtlasBrainClassifier(Volume,Normalized${Mode}) $VolIDOutput
-
-    # Clean Up 
-    MainUpdateMRML
-    RenderAll
-
-    if {$EMAtlasBrainClassifier(Save,$Mode)} {
-    EMAtlasBrainClassifierVolumeWriter $VolIDOutput  
-    }
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifier_NormalizeVolume
-# 
-# .ARGS
-# vtkImageData vol 
-# vtkImageData out
-# string Mode
-# .END
-#-------------------------------------------------------------------------------
-# Kilian: I need this so I can also run it without MRML structure 
-proc EMAtlasBrainClassifier_NormalizeVolume { Vol OutVol Mode } {
-    global Volume Matrix EMAtlasBrainClassifier
-    puts "Number Of Scalar: [$Vol GetNumberOfScalarComponents]" 
-    vtkImageData hist
-    # Generate Histogram with 1000 bins 
-    vtkImageAccumulate ia
-    ia SetInput $Vol
-    ia SetComponentSpacing 1 1 1
-    ia SetComponentOrigin 0 0 0
-    ia SetComponentExtent 0 1000 0 0 0 0
-    ia Update
-    hist DeepCopy [ia GetOutput]
-  
-    # Get maximum image value 
-    set max [lindex [ia GetMax] 0]
-    puts "Absolute Max: $max"
-    set count 0
-    set i 0
-
-    # Find out the intensity value which is an uppwer bound for 99% of the voxels 
-    # => Cut of the tail of the the histogram
-    set Extent [$Vol GetExtent]
-    set Boundary [expr ([lindex $Extent 1] - [lindex $Extent 0] +1) * ([lindex $Extent 3] - [lindex $Extent 2] +1) * ([lindex $Extent 5] - [lindex $Extent 4] +1) * 0.99]
-    while {$i < $max && $count < $Boundary} {    
-      set val [hist GetScalarComponentAsFloat $i 0 0 0]
-      set count [expr $count + $val]
-      incr i
-    }
-
-    # max is now the upper bound intensity value for 99% of the voxels  
-    set max $i 
-    set min 0
-    puts "Max: $max"
-    puts "Min: $min"
-    set width [expr $max / 5]
-    puts "Width: $width"
-    set fwidth [expr 1.0 / $width ]
-    
-    # Smooth histogram by applying a window of width with 20% of the intensity value 
-    set sHistMax  [expr ($max - $min) - $width]
-    for {set x 0} {$x <= $sHistMax } {incr x} { 
-      set sHist($x) 0
-      for {set k 0} {$k <= $width} {incr k} {
-        set sHist($x) [expr [hist GetScalarComponentAsFloat [expr $x + $k] 0 0 0] + $sHist($x)]
-      }
-      set sHist($x) [expr $sHist($x) * $fwidth]
-    }
-   
-    # Define the lower intensity value for calculating the mean of the historgram
-    # - When noise is set to 0 then we reached the first peak in the smoothed out histogram
-    #   We considere this area noise (or background) and therefore exclude it for the definition of the normalization factor  
-    # - When through is set we reached the first minimum after the first peak which defines the lower bound of the intensity 
-    #   value considered for calculating the Expected value of the histogram 
-    set x [expr $min + 1]
-    set trough [expr $min - 1]
-    set noise 1
-    incr  sHistMax -2 
-    while {$x < $sHistMax && $trough < $min} {
-       if {$noise == 1 && $sHist($x) > $sHist([expr $x + 1]) && $x > $min} {
-          set noise 0
-       } elseif { $sHist($x) < $sHist([expr $x + 1]) && $sHist([expr $x + 1]) < $sHist([expr $x + 2]) && $sHist([expr $x +2]) < $sHist([expr $x + 3]) } {
-          set trough $x
-       }
-       incr x
-    }
-
-    puts "Threshold: $trough"
-
-    # Calculate the mean intensity value of the voxels with range [trough, max]  
-    vtkImageAccumulate ia2
-    ia2 SetInput $Vol
-    ia2 SetComponentSpacing 1 1 1
-    ia2 SetComponentOrigin $trough 0 0
-    ia2 SetComponentExtent 0 [expr $max - $trough] 0 0 0 0
-    ia2 Update
-    hist DeepCopy [ia2 GetOutput]
-    set i $trough
-    set total 0
-    set num 0
-    while {$i < [expr $width * 5]} {    
-      set val [hist GetScalarComponentAsFloat [expr $i - $trough] 0 0 0]
-      set total [expr $total + ($i * $val)]
-      set num [expr $num + $val]
-      incr i
-    }
-    # Normalize image by factor M which is the expect value in this range 
-    set M [expr $total * 1.0 / $num]
-
-    puts "M: $M"
-
-    vtkImageMathematics im
-    im SetInput1 $Vol
-    im SetConstantK [expr ($EMAtlasBrainClassifier(Normalize,$Mode) / $M)]
-    puts "Mode: $Mode"
-     
-
-    im SetOperationToMultiplyByK
-    im Update 
-    $OutVol DeepCopy [im GetOutput]
-
-    ia Delete
-    im Delete
-    ia2 Delete
-    hist Delete
-    puts "Done"
-} 
- 
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifierVolumeWriter
-# 
-# .ARGS
-# int VolID volume id specifying what to write out
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifierVolumeWriter {VolID} {
-    global Volume Editor
-
-    set prefix [MainFileGetRelativePrefix [Volume($VolID,node) GetFilePrefix]]
-    set Editor(fileformat) Standard
- 
-    # Note : I changed vtkMrmlDataVolume.cxx so that MainVolumeWrite also works for 
-    #        for volumes that do not start at slice 1. If it does not get checked into 
-    #        the general version just do the following to overcome the problem after
-    #        executing MainVolumesWrite:
-    #        - Check if largest slice m is present 
-    #        - if not => slices start at 1 .. n => move everything to m -n + 1 ,..., m 
-    
-    MainVolumesWrite $VolID $prefix 
-    # RM unnecssary xml file 
-    catch {file delete -force [file join [file dirname [Volume($VolID,node) GetFullPrefix]] [Volume($VolID,node) GetFilePrefix]].xml }
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifierReadXMLFile
-# 
-# .ARGS
-# path FileName
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifierReadXMLFile { FileName } {
-    global EMAtlasBrainClassifier
-    if {[catch {set fid [open $FileName r]} errmsg] == 1} {
-      puts $errmsg
-      return ""
-    }
-
-    set file [read $fid]
-
-    if {[catch {close $fid} errorMessage]} {
-    puts "Could not close file : ${errorMessage}"
-        return ""
-    }
-    return $file 
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifierGrepLine
-# 
-# .ARGS
-# string input
-# string search_string
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifierGrepLine {input search_string} {
-    set foundIndex [string first $search_string  $input]
-    if {$foundIndex < 0} {
-        return "-1 -1"
-    }
-
-    set start [expr [string last "\n" [string range $input 0 [expr $foundIndex -1]]] +1]
-    set last  [string first "\n" [string range  $input $start end]]
-
-    if  {$last < 0} { set last  [expr [string length $input] -1] 
-    } else { incr last $start}
-    return "$start $last"
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifierReadNextKey
-# 
-# .ARGS
-# string input
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifierReadNextKey {input} {
-    if {([regexp "^(\[^=\]*)\[\n\t \]*=\[\n\t \]*\['\"\](\[^'\"\]*)\['\"\](.*)$" \
-             $input match key value input] != 0) && ([string equal -length 1 $input "/"] == 0)} {
-    return "$key $value "
-    }
-    return "" 
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifierLoadAtlasVolume
-# In the future should probably be more independent but should work for right now 
-# .ARGS
-# path GeneralDir
-# path AtlasDir
-# string AtlasName
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifierLoadAtlasVolume {GeneralDir AtlasDir AtlasName XMLAtlasKey} {
-    global Volume EMAtlasBrainClassifier
-
-    # Create Node 
-    MainMrmlBuildTreesVersion2.0 "$XMLAtlasKey"
-    set VolID [expr $Volume(nextID) -1]
-
-    # Replace key values
-    Volume($VolID,node) SetFilePrefix "$GeneralDir/$AtlasDir/I"
-    Volume($VolID,node) SetFullPrefix "$GeneralDir/$AtlasDir/I"
-    Volume($VolID,node) SetName       $AtlasName
-
-    # Read in Volume
-    MainVolumesUpdateMRML
-    MainUpdateMRML
-
-    return $VolID 
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifierResetEMSegment
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifierResetEMSegment { } {
-    global EMSegment 
-    eval {global} $EMSegment(MrmlNode,TypeList) 
-
-    EMSegmentChangeClass 0
-    set EMSegment(NumClassesNew) 0
-    EMSegmentCreateDeleteClasses 1 1 0
-    # now delete Nodes of Superclass 0
-    if {$EMSegment(Cattrib,0,Node) != ""} {    
-    MainMrmlDeleteNode SegmenterSuperClass [$EMSegment(Cattrib,0,Node) GetID]
-    set EMSegment(Cattrib,0,Node) ""
-    }
-
-    foreach dir $EMSegment(CIMList) {
-    if {$EMSegment(Cattrib,0,CIMMatrix,$dir,Node) != ""}  {
-        MainMrmlDeleteNode SegmenterCIM [$EMSegment(Cattrib,0,CIMMatrix,$dir,Node) GetID]
-        set EMSegment(Cattrib,0,CIMMatrix,$dir,Node) ""
-    }
-    } 
-
-    if {$EMSegment(Cattrib,0,EndNode) != ""} {
-    lappend  MrmlNodeDeleteList "EndSegmenterSuperClass [$EMSegment(Cattrib,0,EndNode) GetID]" 
-    set EMSegment(Cattrib,0,EndNode) ""
-    }
-
-    # Delete All Remaining Segmenter Nodes that we might have forgotten 
-    # Should only be node Segmenter and InputImages 
-    set EMSegment(SegmenterNode) ""
-
-    foreach node $EMSegment(MrmlNode,TypeList) {
-    upvar #0 $node Array    
-    foreach id $Array(idList) {
-        # Add to the deleteList
-        lappend Array(idListDelete) $id
-
-        # Remove from the idList
-        set i [lsearch $Array(idList) $id]
-        set Array(idList) [lreplace $Array(idList) $i $i]
-
-        # Remove node from tree, and delete it
-        Mrml(dataTree) RemoveItem ${node}($id,node)
-        ${node}($id,node) Delete
-    }
-    }
-    MainUpdateMRML
-    foreach node $EMSegment(MrmlNode,TypeList) {set ${node}(idListDelete) "" }
-    MainMrmlUpdateIdLists "$EMSegment(MrmlNode,TypeList)"
-
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifierDeleteAllVolumeNodesButSPGRAndT2W
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifierDeleteAllVolumeNodesButSPGRAndT2W { } {
-   global  EMAtlasBrainClassifier Volume Mrml 
-
-   foreach id $Volume(idList) {
-        if {($id != $Volume(idNone)) && ($id != $EMAtlasBrainClassifier(Volume,SPGR)) && ($id != $EMAtlasBrainClassifier(Volume,T2W)) } {
-            # Add to the deleteList
-            lappend Volume(idListDelete) $id
-
-            # Remove from the idList
-            set i [lsearch $Volume(idList) $id]
-            set Volume(idList) [lreplace $Volume(idList) $i $i]
-
-            # Remove node from tree, and delete it
-            Mrml(dataTree) RemoveItem Volume($id,node)
-            Volume($id,node) Delete
-        }
-    }
-    MainUpdateMRML
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifier_InitilizePipeline 
-# Checks parameters and sets up Mrml Tree
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_InitilizePipeline { } {
-    global EMAtlasBrainClassifier Volume Mrml 
-
-    if {($EMAtlasBrainClassifier(Volume,SPGR) == $Volume(idNone)) || ($EMAtlasBrainClassifier(Volume,T2W) == $Volume(idNone))} {
-      DevErrorWindow "Please define both SPGR and T2W before starting the segmentation" 
-      return 0
-    } 
-
-    if {([Volume($EMAtlasBrainClassifier(Volume,SPGR),node) GetName] == "NormedSPGR") || ([Volume($EMAtlasBrainClassifier(Volume,T2W),node) GetName] == "NormedT2W") } {
-      DevErrorWindow "Please rename the SPGR and T2W Volume. They cannot be named NormedSPGR or NormedT2W" 
-      return 0
-    }
-
-    if {[EMAtlasBrainClassifierReadXMLFile $EMAtlasBrainClassifier(XMLTemplate)] == "" } {
-      DevErrorWindow "Could not read template file $EMAtlasBrainClassifier(XMLTemplate) or it was empty!" 
-      return 0
-    }
-
-    set EMAtlasBrainClassifier(WorkingDirectory) [file normalize $EMAtlasBrainClassifier(WorkingDirectory)]
-    set Mrml(dir) $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation
-
-    EMAtlasBrainClassifierDeleteAllVolumeNodesButSPGRAndT2W
-    EMAtlasBrainClassifierResetEMSegment 
-
-    return 1
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifier_AtlasList 
-# Defines list of atlases to be registered 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_AtlasList { } {
-    global  EMAtlasBrainClassifier   
-    set XMLTemplateText [EMAtlasBrainClassifierReadXMLFile $EMAtlasBrainClassifier(XMLTemplate)]
-
-    set RegisterAtlasDirList "" 
-    set RegisterAtlasNameList "" 
-    
-    set NextLineIndex [EMAtlasBrainClassifierGrepLine "$XMLTemplateText" "<SegmenterClass"] 
-
-    while {$NextLineIndex != "-1 -1"} {
-      set Line [string range "$XMLTemplateText" [lindex $NextLineIndex 0] [lindex $NextLineIndex 1]]
-      set PriorPrefixIndex [string first "LocalPriorPrefix"  "$Line"]
-      set PriorNameIndex   [string first "LocalPriorName"  "$Line"]
-      
-      if {($PriorPrefixIndex > -1) && ($PriorNameIndex > -1)} {
-          set ResultPrefix [lindex [EMAtlasBrainClassifierReadNextKey  "[string range \"$Line\" $PriorPrefixIndex end]"] 1]
-          set AtlasDir [file tail [file dirname $ResultPrefix]]
-          set AtlasName   [lindex [EMAtlasBrainClassifierReadNextKey  "[string range \"$Line\" $PriorNameIndex end]"] 1]
-      
-          if {($ResultPrefix != "") && ($AtlasName != "") && ([lsearch $RegisterAtlasNameList "$AtlasName"] < 0) && ($AtlasDir != "") } {
-          lappend  RegisterAtlasDirList "$AtlasDir"
-          lappend  RegisterAtlasNameList "$AtlasName"
-          }
-      
-      }
-      set XMLTemplateText  [string range "$XMLTemplateText" [expr [lindex $NextLineIndex 1] +1] end]
-      set NextLineIndex [EMAtlasBrainClassifierGrepLine "$XMLTemplateText" "<SegmenterClass"] 
-    }
-    return "{$RegisterAtlasDirList} {$RegisterAtlasNameList}" 
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifier_RegistrationInitialize 
-# Checks if atlas has to be dowloaded and if registration is necessary. Return values 
-# -1 Atlas does not exist and could not be downloaded
-#  0 Registered Atlas exists 
-#  1 Atlas exists but has to be registered 
-# .ARGS
-# string RegisterAtlasDirList List of Atlases to be loaded
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_RegistrationInitialize {RegisterAtlasDirList} {
-    global EMAtlasBrainClassifier
-
-    # ---------------------------------------------------------------
-    # Check if we load the module for the first time 
-    if {$EMAtlasBrainClassifier(AtlasDir) == $EMAtlasBrainClassifier(DefaultAtlasDir)} {
-    set UploadNeeded 0 
-    foreach atlas "spgr $RegisterAtlasDirList" {
-        if {[file exists [file join $EMAtlasBrainClassifier(AtlasDir) $atlas I.001]] == 0} {
-        set UploadNeeded 1
-            break
-            }
-        }
-        if {$UploadNeeded && ([EMAtlasBrainClassifierDownloadAtlas] == 0)} { return -1}
-    }
-
-    # ---------------------------------------------------------------
-    # Check if we need to run registration
-    puts "=========== Initilize Registration of Atlas to Case  ============ "
-
-    set RunRegistrationFlag 0 
-    set StartSlice [format "%03d" [lindex [Volume($EMAtlasBrainClassifier(Volume,NormalizedSPGR),node) GetImageRange] 0]]
-    foreach Dir "$RegisterAtlasDirList" {
-       if {[file exists $EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I.$StartSlice] == 0  } {
-          set RunRegistrationFlag 1 
-          break 
-       }
-    }
-    
-    if {$RunRegistrationFlag == 0 && ($EMAtlasBrainClassifier(BatchMode) == 0)} {
-      if {[DevYesNo "We found already an atlas in $EMAtlasBrainClassifier(WorkingDirectory)/atlas. Do you still want to register ? " ] == "yes" } {
-        set RunRegistrationFlag 1
-      }
-    } 
-    # ---------------------------------------------------------------
-    # Check if proper template file exist
-    if {$RunRegistrationFlag == 1} {
-    set XMLAtlasTemplateFile $EMAtlasBrainClassifier(AtlasDir)/template_atlas.xml
-    if {[EMAtlasBrainClassifierReadXMLFile $XMLAtlasTemplateFile] == "" } {
-        DevErrorWindow "Could not read template file $XMLAtlasTemplateFile or it was empty!" 
-        return -1
-    }
-         
-        set XMLAtlasKey [MainMrmlReadVersion2.x $XMLAtlasTemplateFile]
-        if {$XMLAtlasKey == 0 } {return -1}
-        
-        if {[lindex [lindex $XMLAtlasKey 0] 0] != "Volume"} {
-              DevErrorWindow "Template file $XMLAtlasTemplateFile is not of the correct format!" 
-              return -1
-        }
-    }
-
-    return $RunRegistrationFlag
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifier_AtlasRegistration 
-# Registers MRI of atlas and resamles atlas volume 
-# .ARGS
-# string  RegisterAtlasDirList  List of atlas directories to be loaded
-# string  RegisterAtlasNameList List of atlas names to be loaded
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_AtlasRegistration {RegisterAtlasDirList RegisterAtlasNameList } {
-   global EMAtlasBrainClassifier Volume  
-
-   # ---------------------------------------------------------------
-   # Set up Registration 
-
-   # Read Atlas Parameters from XML file (how to load volumes)
-   set XMLAtlasKey [MainMrmlReadVersion2.x $EMAtlasBrainClassifier(AtlasDir)/template_atlas.xml] 
-  
-   # Load Atlas SPGR 
-   set TemplateIDInput $EMAtlasBrainClassifier(Volume,NormalizedSPGR)
-   set VolIDSource      [EMAtlasBrainClassifierLoadAtlasVolume $EMAtlasBrainClassifier(AtlasDir) spgr  AtlasSPGR "$XMLAtlasKey"]
-   if {$VolIDSource == "" } {return}
-   set EMAtlasBrainClassifier(Volume,AtlasSPGR) $VolIDSource
-  
-   # Target file is the normalized SPGR
-   set VolIDTarget $EMAtlasBrainClassifier(Volume,NormalizedSPGR)
-   if {$VolIDTarget == "" } {return}
-  
-   # ---------------------------------------------------------------
-   # Register Atlas SPGR to Normalized SPGR 
-   puts "============= Start registeration"  
-  
-   EMAtlasBrainClassifierRegistration $VolIDTarget $VolIDSource
-
-   # Define Registration output volume 
-   set VolIDOutput [DevCreateNewCopiedVolume $TemplateIDInput "" "RegisteredSPGR"]
-
-   # Resample the Atlas SPGR
-   EMAtlasBrainClassifierResample  $VolIDTarget $VolIDSource $VolIDOutput
-  
-   # Clean up 
-   if {$EMAtlasBrainClassifier(Save,Atlas)} {
-      set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/spgr/I"
-      Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
-      Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
-      Volume($VolIDOutput,node) SetLittleEndian $EMAtlasBrainClassifier(LittleEndian)
-  
-      EMAtlasBrainClassifierVolumeWriter $VolIDOutput
-   }
-   MainMrmlDeleteNode Volume $VolIDSource 
-   MainUpdateMRML
-   RenderAll
-  
-   # ---------------------------------------------------------------
-   # Resample atlas files
-   foreach Dir "$RegisterAtlasDirList" Name "$RegisterAtlasNameList" {
-      puts "=========== Resample Atlas $Name  ============ "
-      # Load In the New Atlases
-      set VolIDInput [EMAtlasBrainClassifierLoadAtlasVolume $EMAtlasBrainClassifier(AtlasDir) $Dir Atlas_$Name "$XMLAtlasKey"]
-      # Define Registration output volumes
-      set VolIDOutput [DevCreateNewCopiedVolume $TemplateIDInput "" "$Name"]
-      set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I"
-      Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
-      Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
-      Volume($VolIDOutput,node) SetLittleEndian $EMAtlasBrainClassifier(LittleEndian)
-  
-      # Resample the Atlas
-      EMAtlasBrainClassifierResample  $VolIDTarget $VolIDInput $VolIDOutput  
-  
-      # Clean up 
-      if {$EMAtlasBrainClassifier(Save,Atlas)} {EMAtlasBrainClassifierVolumeWriter $VolIDOutput}
-      MainMrmlDeleteNode Volume $VolIDInput 
-      MainUpdateMRML
-      RenderAll
-  }
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifier_LoadAtlas
-# Load the alredy registered atlas 
-# .ARGS
-# string  RegisterAtlasDirList  List of atlas directories to be loaded
-# string  RegisterAtlasNameList List of atlas names to be loaded
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_LoadAtlas {RegisterAtlasDirList RegisterAtlasNameList } {
-  global EMAtlasBrainClassifier Volume  
-  set VolIDInput $EMAtlasBrainClassifier(Volume,SPGR)
-  foreach Dir "$RegisterAtlasDirList" Name "$RegisterAtlasNameList" {
-    puts "=========== Load Atlas $Name  ============ "
-    set VolIDOutput [DevCreateNewCopiedVolume $VolIDInput "" "$Name"]
-    Volume($VolIDOutput,node) SetFilePrefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I"
-    Volume($VolIDOutput,node) SetFullPrefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I" 
-    Volume($VolIDOutput,node) SetLittleEndian $EMAtlasBrainClassifier(LittleEndian)
-    MainVolumesRead $VolIDOutput
-    RenderAll
-  }      
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifier_InitilizeSegmentation
-# Initilizes parameters for Segmentation with EMAtlasClassifier 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_InitilizeSegmentation { } {
-    global EMAtlasBrainClassifier Volume EMSegment
-
-    # Read XML File  
-    catch {exec mkdir $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation} 
-    set tags [MainMrmlReadVersion2.x $EMAtlasBrainClassifier(XMLTemplate)]
-    set tags [MainMrmlAddColors $tags]
-    MainMrmlBuildTreesVersion2.0 $tags
-    MainUpdateMRML
-
-    EMAtlasBrainClassifierInitializeValues
-
-    # Set Segmentation Boundary  so that if you have images of other dimension it will segment them correctly
-    set VolID $EMAtlasBrainClassifier(Volume,SPGR)
-    set Range [Volume($VolID,node) GetImageRange]
-
-    set EMSegment(SegmentationBoundaryMax,0) [lindex [Volume($VolID,node) GetDimensions] 0]
-    set EMSegment(SegmentationBoundaryMax,1) [lindex [Volume($VolID,node) GetDimensions] 1]
-    set EMSegment(SegmentationBoundaryMax,2) [expr [lindex $Range 1] - [lindex $Range 0] + 1] 
-
-    set EMAtlasBrainClassifier(SegmentationBoundaryMax,0) $EMSegment(SegmentationBoundaryMax,0) 
-    set EMAtlasBrainClassifier(SegmentationBoundaryMax,1) $EMSegment(SegmentationBoundaryMax,1) 
-    set EMAtlasBrainClassifier(SegmentationBoundaryMax,2) $EMSegment(SegmentationBoundaryMax,2) 
-
-    set pid $EMAtlasBrainClassifier(vtkMrmlSegmenterNode)
-    eval Segmenter($pid,node) SetSegmentationBoundaryMin "1 1 1"
-    eval Segmenter($pid,node) SetSegmentationBoundaryMax "$EMAtlasBrainClassifier(SegmentationBoundaryMax,0) $EMAtlasBrainClassifier(SegmentationBoundaryMax,1) $EMAtlasBrainClassifier(SegmentationBoundaryMax,2)"
-
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifier_SaveSegmentation
-# Saves segmentation results 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_SaveSegmentation { } {
-  global EMAtlasBrainClassifier Volume 
-  if {$EMAtlasBrainClassifier(LatestLabelMap) == $Volume(idNone)} { 
-    DevErrorWindow "Error: Could not segment subject"
-  } else {
-    set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation/EMResult"
-    puts ""
-    puts "Write results to $Prefix"
-    set VolIDOutput $EMAtlasBrainClassifier(LatestLabelMap)
-    Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
-    Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
-    EMAtlasBrainClassifierVolumeWriter $VolIDOutput
-  }
-  # Change xml directory
-  if {$EMAtlasBrainClassifier(Save,XMLFile)}      {MainMrmlWrite  $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation/segmentation.xml}
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifierStartSegmentation
-# This defines the segmentation pipeline
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifierStartSegmentation { } {
-    # ---------------------------------------------------------------
-    # Setup Pipeline
-    if {[EMAtlasBrainClassifier_InitilizePipeline] == 0} { return }  
-
-    # ---------------------------------------------------------------
-    # Normalize images
-    foreach input "SPGR T2W" {
-    EMAtlasBrainClassifier_Normalize $input
-    }
-
-    # ---------------------------------------------------------------
-    # Determine list of atlas 
-    # (to be registered and resampled from template file)
-    set Result [EMAtlasBrainClassifier_AtlasList]
-    set RegisterAtlasDirList [lindex $Result 0]
-    set RegisterAtlasNameList [lindex $Result 1]
-  
-    # ---------------------------------------------------------------
-    # Register Atlases 
-    if {$RegisterAtlasDirList != "" } {
-       set RunRegistrationFlag [EMAtlasBrainClassifier_RegistrationInitialize "$RegisterAtlasDirList"] 
-       if {$RunRegistrationFlag < 0} {return} 
-       if {$RunRegistrationFlag} { 
-      EMAtlasBrainClassifier_AtlasRegistration "$RegisterAtlasDirList" "$RegisterAtlasNameList"
-       } else {
-          puts "============= Skip registration - For Debugging - Only works if little endian of machine is the same as when the atlas was resampled" 
-      EMAtlasBrainClassifier_LoadAtlas "$RegisterAtlasDirList" "$RegisterAtlasNameList"
-       }
-    }
-
-
-    # ---------------------------------------------------------------------- 
-    # Segment Image 
-
-    puts "=========== Segment Image ============ "
-    # Start algorithm
-    EMAtlasBrainClassifier_InitilizeSegmentation  
-    # Kilian: Make options of of different algorithm versions-if possible (check before list of possibilities and than just check how variable is set 
-    EMAtlasBrainClassifier_StartEM
-    EMAtlasBrainClassifier_SaveSegmentation  
-    puts "=========== Finished  ============ "
-}
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifierDownloadAtlas
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifierDownloadAtlas { } {
-    global EMAtlasBrainClassifier tcl_platform
-    set text "The first time this module is used the Atlas data has to be dowloaded"
-    set text "$text\nThis might take a while, so if you do not want to continue at "
-    set text "$text\nthis point just press 'cancel'. \n"
-    set text "$text\nIf you want to continue and you have PROBLEMS downloading the data please do the following:"
-    set text "$text\nDowload the data from http://na-mic.org/Wiki/index.php/Slicer:Data_EMAtlas"
-    set text "$text\nto [file dirname $EMAtlasBrainClassifier(AtlasDir)]"
-    set text "$text\nand uncompress the file."       
-         
-    if {$EMAtlasBrainClassifier(BatchMode)} {
-    puts "$text"
-    } else {
-    if {[DevOKCancel "$text" ] != "ok"} { return 0}
-    }
-
-    DownloadInit
-
-    if {$tcl_platform(os) == "Linux"} { 
-       set urlAddress "http://na-mic.org/Wiki/images/8/8d/VtkEMAtlasBrainClassifier_AtlasDefault.tar.gz" 
-       set outputFile "[file dirname $EMAtlasBrainClassifier(AtlasDir)]/atlas.tar.gz"
-    } else {
-      set urlAddress "http://na-mic.org/Wiki/images/5/57/VtkEMAtlasBrainClassifier_AtlasDefault.zip"
-      set outputFile "[file dirname $EMAtlasBrainClassifier(AtlasDir)]/atlas.zip"
-    }
-
-    catch {exec rm -f $outputFile}
-    catch {exec rm -rf $EMAtlasBrainClassifier(AtlasDir)}
-
-    if {[DownloadFile "$urlAddress" "$outputFile"] == 0} {
-      return 0
-    }
-
-    puts "Start extracting $outputFile ...." 
-    if {$tcl_platform(os) == "Linux"} { 
-    catch {exec rm -f [file rootname $outputFile]}
-    puts "exec gunzip $outputFile"
-    set OKFlag [catch {exec gunzip -f $outputFile} errormsg]
-    if {$OKFlag == 0} {
-        catch {exec rm -f atlas}
-        puts "exec tar xf [file rootname $outputFile]]"
-        set OKFlag [catch {exec tar xf [file rootname $outputFile]} errormsg]
-        if {$OKFlag == 0} {
-        puts "exec mv atlas ${EMAtlasBrainClassifier(AtlasDir)}/"
-        set OKFlag [catch {exec mv atlas ${EMAtlasBrainClassifier(AtlasDir)}/}  errormsg]
-        }
-    }
-    set RMFile [file rootname $outputFile]
-    } else {
-    set OKFlag [catch {exec unzip -o -qq $outputFile}  errormsg] 
-    set RMFile $outputFile
-    } 
-    puts "... finished extracting"
-    if {$OKFlag == 1} {
-      DevErrorWindow "Could not uncompress $outputFile because of the following error message:\n$errormsg\nPlease manually uncompress the file."
-      return 0
-    } 
-
-    if {$EMAtlasBrainClassifier(BatchMode)} {
-    puts "Atlas installation completed!" 
-    } else {
-    DevInfoWindow "Atlas installation completed!" 
-    }
-
-    catch {exec rm -f $RMFile} 
-    return 1
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifierRegistration
-# 
-# .ARGS
-# int inTarget input target volume id
-# int inSource
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifierRegistration {inTarget inSource} {
-    global EMAtlasBrainClassifier Volume AG 
-   
-    
-    catch "Target Delete"
-    catch "Source Delete"
-    vtkImageData Target
-    vtkImageData Source
-
-    puts "Initialize Source and Target"
-    #If source and target have two channels, combine them into one vtkImageData object 
-    Target DeepCopy  [ Volume($inTarget,vol) GetOutput]
-    Source DeepCopy  [ Volume($inSource,vol) GetOutput]
-    
-    # Initial transform stuff
-    catch "TransformEMAtlasBrainClassifier Delete"
-    vtkGeneralTransform TransformEMAtlasBrainClassifier
-    puts "No initial transform"
-    TransformEMAtlasBrainClassifier PostMultiply 
-
-    ## to be changed to EMAtlaspreprocess
-    AGPreprocess Source Target $inSource $inTarget
-
-    if { [info commands __dummy_transform] == ""} {
-            vtkTransform __dummy_transform
-    }
-
-    puts "Start the linear registration"
-    ###### Linear Tfm ######
-    catch "GCR Delete"
-    vtkImageGCR GCR
-    GCR SetVerbose 1
-
-    # Set i/o
-    GCR SetTarget Target
-    GCR SetSource Source
-    GCR PostMultiply 
- 
-    # Set parameters
-    GCR SetInput  __dummy_transform  
-    [GCR GetGeneralTransform] SetInput TransformEMAtlasBrainClassifier
-    ## Metric: 1=GCR-L1,2=GCR-L2,3=Correlation,4=MI
-    GCR SetCriterion       4 
-    ## Tfm type: -1=translation, 0=rigid, 1=similarity, 2=affine
-    GCR SetTransformDomain 2 
-    ## 2D registration only?
-    GCR SetTwoD 0
-  
-    # Do it!
-    GCR Update     
-    TransformEMAtlasBrainClassifier Concatenate [[GCR GetGeneralTransform] GetConcatenatedTransform 1]
-
-    # puts "For debigging only linear registration"     
-    if {1} {
-      ###### Warp #######
-      catch "warp Delete"
-      vtkImageWarp warp
-      
-      # Set i/o
-      warp SetSource Source
-      warp SetTarget Target 
-      
-      # Set the parameters
-      warp SetVerbose 2
-      [warp GetGeneralTransform] SetInput TransformEMAtlasBrainClassifier
-      ## do tensor registration?
-      warp SetResliceTensors 0 
-      ## 1=demon, 2=optical flow 
-      warp SetForceType 1          
-      warp SetMinimumIterations  0 
-      warp SetMaximumIterations  50
-      ## What does it mean?
-      warp SetMinimumLevel -1  
-      warp SetMaximumLevel -1  
-      ## Use SSD? 1 or 0 
-      warp SetUseSSD 1
-      warp SetSSDEpsilon  1e-3    
-      warp SetMinimumStandardDeviation 0.85 
-      warp SetMaximumStandardDeviation 1.25     
-
-      # Do it!
-      warp Update
-      TransformEMAtlasBrainClassifier Concatenate warp
-    }
-  # save the transform
-  set EMAtlasBrainClassifier(Transform) TransformEMAtlasBrainClassifier
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifierResample
-# 
-# .ARGS
-# int inTarget input target volume id
-# int inSource volume id
-# vtkImageData outResampled
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifierResample {inTarget inSource outResampled} {
-    global EMAtlasBrainClassifier Volume Gui
-    
-    catch "Source Delete"
-    vtkImageData Source  
-    Source DeepCopy  [ Volume($inSource,vol) GetOutput]
-    catch "Target Delete"
-    vtkImageData Target
-    Target DeepCopy  [ Volume($inTarget,vol) GetOutput]
-    AGPreprocess Source Target $inSource $inTarget
-  
-    catch "Cast Delete"
-    vtkImageCast Cast
-    Cast SetInput Source
-    Cast SetOutputScalarType [Target GetScalarType] 
-
-    catch "ITrans Delete"
-    vtkImageTransformIntensity ITrans
-    ITrans SetInput [Cast GetOutput]
-
-    catch "Reslicer Delete"
-    vtkImageReslice Reslicer
-    Reslicer SetInput [ITrans GetOutput]
-    Reslicer SetInterpolationMode 1
-    
-    # We have to invers the transform before we reslice the grid.     
-    Reslicer SetResliceTransform [$EMAtlasBrainClassifier(Transform)  GetInverse]
-    
-    # Reslicer SetInformationInput Target
-    Reslicer SetInformationInput Target
-    # Do it!
-    Reslicer Update
-
-    catch "Resampled Delete"
-    vtkImageData Resampled
-    Resampled DeepCopy [Reslicer GetOutput]
-
-    Volume($outResampled,vol) SetImageData  Resampled
-    Resampled SetOrigin 0 0 0
-    Source Delete
-    Target Delete
-    Cast Delete
-    ITrans Delete
-    Reslicer Delete
 }
 
 #-------------------------------------------------------------------------------
@@ -1986,30 +1948,6 @@ proc EMAtlasBrainClassifier_AlgorithmStart { } {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC  EMAtlasBrainClassifier_SuperClassChildren 
-# Finds out the all children, grandchildren and ... of a super class
-# .ARGS
-# string SuperClass
-# .END
-#-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_SuperClassChildren {SuperClass} {
-    global EMAtlasBrainClassifier
-    if {$EMAtlasBrainClassifier(Cattrib,$SuperClass,IsSuperClass) == 0} {
-      return     $EMAtlasBrainClassifier(Cattrib,$SuperClass,Label)
-    }
-    set result ""
-    foreach i $EMAtlasBrainClassifier(Cattrib,$SuperClass,ClassList) {
-       if {$EMAtlasBrainClassifier(Cattrib,$i,IsSuperClass)} {
-           # it is defined as SetType<TYPE> <ID>  
-           set result "$result [EMAtlasBrainClassifierSuperClassChildren $i]" 
-       } else {
-           lappend result $EMAtlasBrainClassifier(Cattrib,$i,Label)  
-       }
-     } 
-     return $result
-}
-
-#-------------------------------------------------------------------------------
 # .PROC EMAtlasBrainClassifier_DeleteVtkEMSuperClass
 # Delete vtkImageEMSuperClass and children attached to it 
 # .ARGS
@@ -2040,20 +1978,114 @@ proc EMAtlasBrainClassifier_DeleteVtkEMAtlasBrainClassifier { } {
      EMAtlasBrainClassifier_DeleteVtkEMSuperClass 0
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifier_SaveSegmentation
+# Saves segmentation results 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifier_SaveSegmentation { } {
+  global EMAtlasBrainClassifier Volume 
+  if {$EMAtlasBrainClassifier(LatestLabelMap) == $Volume(idNone)} { 
+    DevErrorWindow "Error: Could not segment subject"
+  } else {
+    set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation/EMResult"
+    puts ""
+    puts "Write results to $Prefix"
+    set VolIDOutput $EMAtlasBrainClassifier(LatestLabelMap)
+    Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
+    Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
+    EMAtlasBrainClassifierVolumeWriter $VolIDOutput
+  }
+  # Change xml directory
+  if {$EMAtlasBrainClassifier(Save,XMLFile)}      {MainMrmlWrite  $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation/segmentation.xml}
+}
+
+
+##################
+# Core Functions 
+##################
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierStartSegmentation
+# This defines the segmentation pipeline
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifierStartSegmentation { } {
+    global EMAtlasBrainClassifier EMSegment
+
+    # ---------------------------------------------------------------
+    # Setup Pipeline
+    if {[EMAtlasBrainClassifier_InitilizePipeline] == 0} { return }  
+
+    # ---------------------------------------------------------------
+    # Normalize images
+    foreach input "SPGR T2W" {
+    EMAtlasBrainClassifier_Normalize $input
+    }
+
+    # ---------------------------------------------------------------
+    # Determine list of atlas 
+    # (to be registered and resampled from template file)
+    set Result [EMAtlasBrainClassifier_AtlasList]
+    set RegisterAtlasDirList [lindex $Result 0]
+    set RegisterAtlasNameList [lindex $Result 1]
+  
+    # ---------------------------------------------------------------
+    # Register Atlases 
+    if {$RegisterAtlasDirList != "" } {
+       set RunRegistrationFlag [EMAtlasBrainClassifier_RegistrationInitialize "$RegisterAtlasDirList"] 
+       if {$RunRegistrationFlag < 0} {return} 
+       if {$RunRegistrationFlag} { 
+          EMAtlasBrainClassifier_AtlasRegistration "$RegisterAtlasDirList" "$RegisterAtlasNameList"
+       } else {
+          puts "============= Skip registration - For Debugging - Only works if little endian of machine is the same as when the atlas was resampled" 
+          EMAtlasBrainClassifier_LoadAtlas "$RegisterAtlasDirList" "$RegisterAtlasNameList"
+       }
+    }
+
+
+    # ---------------------------------------------------------------------- 
+    # Segment Image 
+
+    puts "=========== Segment Image ============ "
+    # Start algorithm
+    EMAtlasBrainClassifier_InitilizeSegmentation  
+
+    # If you want to run the segmentatition pipeline with other EM Segmentation versions just added it here 
+    switch $EMAtlasBrainClassifier(SegmentationMode) {
+        "EMLocalSegment"         { EMSegmentStartEM 
+                               set EMAtlasBrainClassifier(LatestLabelMap) $EMSegment(LatestLabelMap) 
+                                 }
+        "EMPrivateSegment"       { # Just run EMAtlasBrainClassifer another time but now in mode EMAtlasBrainClassifier 
+                               # Save Mrml Tree to xml file 
+                                   # Delete everything
+                                   # check if segmentation script exists and run it 
+                                   # Return
+                             }
+    "EMAtlasBrainClassifier" { EMAtlasBrainClassifier_StartEM }
+    default   {DevErrorWindow "Error: Segmentation mode $EMAtlasBrainClassifier(SegmentationMode) is unknown"; return }
+    }
+    EMAtlasBrainClassifier_SaveSegmentation  
+    puts "=========== Finished  ============ "
+}
 
 #-------------------------------------------------------------------------------
 # .PROC EMAtlasBrainClassifier_BatchMode 
 # Run it from batch mode 
 # The function automatically segments MR images into background, skin, CSF, white matter, and gray matter"
-# Execute: slicer2-... <XML-File> --exec EMAtlasBrainClassifier_BatchMode "
+# Execute: slicer2-... <XML-File> --exec "EMAtlasBrainClassifier_BatchMode <SegmentationMode>"
 # <XML-File> = The first volume defines the spgr image and the second volume defines the aligned t2w images"
 #             The directory of the XML-File defines the working directory" 
+# <SegmmentationMode> = Optional - you can run a variaty of different versions, such as EMLocalSegment
+#                       which is the version defined in vtkEMLocalSegment
 # .ARGS
 # 
 # .END
 #-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_BatchMode { } {
-    global File Mrml EMAtlasBrainClassifier Volume
+proc EMAtlasBrainClassifier_BatchMode {{SegmentationMode EMAtlasBrainClassifier} } {
+    global Mrml EMAtlasBrainClassifier Volume
  
     set EMAtlasBrainClassifier(WorkingDirectory) $Mrml(dir)
     set EMAtlasBrainClassifier(Volume,SPGR) [Volume(1,node) GetID]
@@ -2066,7 +2098,9 @@ proc EMAtlasBrainClassifier_BatchMode { } {
     set EMAtlasBrainClassifier(Save,T2W)  1
     set EMAtlasBrainClassifier(BatchMode) 1
 
+    set EMAtlasBrainClassifier(SegmentationMode) $SegmentationMode
 
     EMAtlasBrainClassifierStartSegmentation
     MainExitProgram
 }
+
