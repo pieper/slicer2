@@ -52,6 +52,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkPruneStreamline.h"
 #include "vtkTubeFilter.h"
 #include "vtkProbeFilter.h"
+#include "vtkPointData.h"
+#include "vtkMath.h"
 
 #include <sstream>
 
@@ -123,6 +125,10 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
 
   // for tract clustering
   this->TractClusterer = vtkClusterTracts::New();
+
+  // init to identity
+  this->TensorRotationMatrix = vtkMatrix4x4::New();
+
 }
 
 //----------------------------------------------------------------------------
@@ -572,6 +578,7 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
                                                                 vtkMrmlTree *colorTree)
 {
   vtkHyperStreamline *currStreamline;
+  vtkTubeFilter *currTubeFilter;
   vtkActor *currActor;
   vtkCollection *collectionOfModels;
   vtkAppendPolyData *currAppender;
@@ -593,12 +600,14 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
   
   // traverse streamline collection, grouping streamlines into models by color
   this->Streamlines->InitTraversal();
+  this->TubeFilters->InitTraversal();
   this->Actors->InitTraversal();
   currStreamline= (vtkHyperStreamline *)this->Streamlines->GetNextItemAsObject();
+  currTubeFilter= (vtkTubeFilter *) this->TubeFilters->GetNextItemAsObject();
   currActor= (vtkActor *)this->Actors->GetNextItemAsObject();
 
   // test we have actors and streamlines
-  if (currActor == NULL || currStreamline == NULL)
+  if (currActor == NULL || currStreamline == NULL || currTubeFilter == NULL)
     {
       vtkErrorMacro("No streamlines have been created yet.");
       return;      
@@ -615,7 +624,7 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
   B[0]=rgb[2];
 
   cout << "Traverse STREAMLINES" << endl;
-  while(currStreamline && currActor)
+  while(currStreamline && currActor && currTubeFilter)
     {
       cout << "stream " << currStreamline << endl;
       currColor=0;
@@ -656,11 +665,17 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
         }
 
       // Append this streamline to the chosen model using the appender
-      currAppender->AddInput(currStreamline->GetOutput());
-
+      if (this->SaveForAnalysis) {
+        currAppender->AddInput(currStreamline->GetOutput());
+      } 
+      else {
+        currAppender->AddInput(currTubeFilter->GetOutput());        
+      }
       // get next objects in collections
       currStreamline= (vtkHyperStreamline *)
         this->Streamlines->GetNextItemAsObject();
+      currTubeFilter= (vtkTubeFilter *)
+        this->TubeFilters->GetNextItemAsObject();
       currActor = (vtkActor *) this->Actors->GetNextItemAsObject();
     }
 
@@ -688,23 +703,100 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
     {
       cout << idx << endl;
 
-      // First find the tensors that correspond to each point on the paths.
-      // Note the paths are still in the scaled IJK coordinate system
-      // so the probing makes sense.
-      vtkProbeFilter *probe = vtkProbeFilter::New();
-      probe->SetSource(this->InputTensorField);
-      probe->SetInput(currAppender->GetOutput());
-      probe->Update();
 
-      // Next transform models so that they are written in the coordinate
-      // system in which they are displayed. (world coordinates, RAS + transforms)
-      currTransformer = vtkTransformPolyDataFilter::New();
-      currTransformer->SetTransform(currTransform);
-      currTransformer->SetInput(probe->GetPolyDataOutput());
-      // NOTE this does not transform the tensors, we need to write 
-      // a filter to rotate them.
+      if (this->SaveForAnalysis) {
+        // First find the tensors that correspond to each point on the paths.
+        // Note the paths are still in the scaled IJK coordinate system
+        // so the probing makes sense.
+        vtkProbeFilter *probe = vtkProbeFilter::New();
+        probe->SetSource(this->InputTensorField);
+        probe->SetInput(currAppender->GetOutput());
+        probe->Update();
+        
+        // Next transform models so that they are written in the coordinate
+        // system in which they are displayed. (world coordinates, RAS + transforms)
+        currTransformer = vtkTransformPolyDataFilter::New();
+        currTransformer->SetTransform(currTransform);
+        currTransformer->SetInput(probe->GetPolyDataOutput());
+        currTransformer->Update();
+        
+        // Here we rotate the tensors into the same (world) coordinate system.
+        // -------------------------------------------------
+        int numPts = probe->GetPolyDataOutput()->GetNumberOfPoints();
+        vtkFloatArray *newTensors = vtkFloatArray::New();
+        newTensors->SetNumberOfComponents(9);
+        newTensors->Allocate(9*numPts);
+        
+        double (*matrix)[4] = this->TensorRotationMatrix->Element;
+        double tensor[9];
+        double tensor3x3[3][3];
+        double temp3x3[3][3];
+        double matrix3x3[3][3];
+        double matrixTranspose3x3[3][3];
+        for (int row = 0; row < 3; row++)
+          {
+            for (int col = 0; col < 3; col++)
+              {
+                matrix3x3[row][col] = matrix[row][col];
+                matrixTranspose3x3[row][col] = matrix[col][row];
+              }
+          }
+        
+        
+        vtkDataArray *oldTensors = probe->GetOutput()->GetPointData()->GetTensors();
+        
+        for (vtkIdType i = 0; i < numPts; i++)
+          {
+            oldTensors->GetTuple(i,tensor);
+            int idx = 0;
+            for (int row = 0; row < 3; row++)
+              {
+                for (int col = 0; col < 3; col++)
+                  {
+                    tensor3x3[row][col] = tensor[idx];
+                    idx++;
+                  }
+              }          
+            // rotate by our matrix
+            // R T R'
+            vtkMath::Multiply3x3(matrix3x3,tensor3x3,temp3x3);
+            vtkMath::Multiply3x3(temp3x3,matrixTranspose3x3,tensor3x3);
+            
+            idx =0;
+            for (int row = 0; row < 3; row++)
+              {
+                for (int col = 0; col < 3; col++)
+                  {
+                    tensor[idx] = tensor3x3[row][col];
+                    idx++;
+                  }
+              }  
+            newTensors->InsertNextTuple(tensor);
+          }
+        
+        vtkPolyData *data = vtkPolyData::New();
+        data->SetLines(currTransformer->GetOutput()->GetLines());
+        data->SetPoints(currTransformer->GetOutput()->GetPoints());
+        data->GetPointData()->SetTensors(newTensors);
+      // End of tensor rotation code.
+      // -------------------------------------------------
 
-      writer->SetInput(currTransformer->GetOutput());
+      writer->SetInput(data);
+      probe->Delete();
+      }
+      else {
+        // Else we are saving just the output tube
+        // Next transform models so that they are written in the coordinate
+        // system in which they are displayed. (world coordinates, RAS + transforms)
+        currTransformer = vtkTransformPolyDataFilter::New();
+        currTransformer->SetTransform(currTransform);
+        currTransformer->SetInput(currAppender->GetOutput());
+        currTransformer->Update();
+
+        writer->SetInput(currTransformer->GetOutput());
+
+      }
+
 
       // Write as binary
       writer->SetFileType(2);
@@ -714,7 +806,6 @@ void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
       fileNameStr << filename << '_' << idx << ".vtk";
       writer->SetFileName(fileNameStr.str().c_str());
       writer->Write();
-      probe->Delete();
       currTransformer->Delete();
 
       // Delete it (but it survives until the collection it's on is deleted).

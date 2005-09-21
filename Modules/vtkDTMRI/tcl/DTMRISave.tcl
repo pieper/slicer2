@@ -55,8 +55,9 @@ proc DTMRISaveInit {} {
     #------------------------------------
     set m "Save"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.6 $} {$Date: 2005/07/20 21:13:31 $}]
+                                 {$Revision: 1.7 $} {$Date: 2005/09/21 02:26:48 $}]
 
+    set DTMRI(Save,type) visualization
 }
 
 
@@ -86,12 +87,11 @@ proc DTMRISaveBuildGUI {} {
     frame $f.fActive    -bg $Gui(backdrop) -relief sunken -bd 2
     pack $f.fActive -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     
-    foreach frame "Top Middle Bottom" {
+    foreach frame "Top Bottom" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
     $f.fTop configure  -relief groove -bd 3 
-    $f.fMiddle configure  -relief groove -bd 3 
     $f.fBottom configure  -relief groove -bd 3 
 
     #-------------------------------------------
@@ -108,28 +108,40 @@ proc DTMRISaveBuildGUI {} {
     lappend Tensor(mbActiveList) $f.mbActive
     lappend Tensor(mActiveList) $f.mbActive.m
 
+
     #-------------------------------------------
     # Save->Top frame
     #-------------------------------------------
     set f $fSave.fTop
 
-    DevAddButton $f.bSave "Save Tensors" {DTMRIWriteStructuredPoints $DTMRI(devel,fileName)}
-    pack $f.bSave -side top -padx $Gui(pad) -pady $Gui(pad)
-    TooltipAdd $f.bSave "Save tensor data (Active DTMRI) to vtk file format."
+    foreach frame "Type Apply" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
+    }
 
     #-------------------------------------------
-    # Save->Middle frame
+    # Save->Top->Type frame
     #-------------------------------------------
-    set f $fSave.fMiddle
-    frame $f.fButton  -bg $Gui(activeWorkspace)
-    pack $f.fButton -side top -padx $Gui(pad) -pady $Gui(pad)
+    set f $fSave.fTop.fType
 
-    set f $fSave.fMiddle.fButton
-    DevAddButton $f.bApply "Save tract points" \
-        {DTMRISaveStreamlinesAsIJKPoints}
-    TooltipAdd $f.bApply "Save text file(s) with the tract paths.\n This does not save vtk models."
+    DevAddLabel $f.l "Save tracts for:"
+    pack $f.l -side top -padx $Gui(pad) -pady $Gui(pad)
 
-    pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad) 
+    foreach text {visualization analysis} tip {"Save slicer models (tubes)." "Save tract paths (lines) and tensors."} {
+        eval {radiobutton $f.rType$text -text $text -variable DTMRI(Save,type) \
+                  -value $text } $Gui(WRA)
+        TooltipAdd $f.rType$text $tip
+        pack $f.rType$text -side top -padx $Gui(pad) -pady $Gui(pad)
+    }
+
+    #-------------------------------------------
+    # Save->Top->Apply frame
+    #-------------------------------------------
+    set f $fSave.fTop.fApply
+    DevAddButton $f.bApply "Save tracts" \
+        {puts "Saving streamlines"; DTMRISaveStreamlinesAsModel}
+    pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
+    TooltipAdd  $f.bApply "Save tracts to vtk file(s).\nEach color of tract will become a separate model.\n Choose the initial part of the filename, and models\nwill be saved as filename_0.vtk, filename_1.vtk, etc."
 
 
     #-------------------------------------------
@@ -137,55 +149,12 @@ proc DTMRISaveBuildGUI {} {
     #-------------------------------------------
     set f $fSave.fBottom
 
-    foreach frame "Entries" {
-        frame $f.f$frame -bg $Gui(activeWorkspace)
-        pack $f.f$frame -side top -padx 0 -pady 1 -fill x
-    }
-
-    #-------------------------------------------
-    # Save->Bottom->Entries frame
-    #-------------------------------------------
-    set f $fSave.fBottom.fEntries
-    foreach frame "Info1 Apply1 Info2 Apply2" {
-        frame $f.f$frame -bg $Gui(activeWorkspace)
-        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
-    }
-
-    #-------------------------------------------
-    # Save->Bottom->Entries->Info1 frame
-    #-------------------------------------------
-    set f $fSave.fBottom.fEntries.fInfo1
-    DevAddLabel $f.l "Save the tracts you have created."
-    pack $f.l -side top -padx $Gui(pad) -pady $Gui(pad)
-
-    #-------------------------------------------
-    # Save->Bottom->Entries->Apply1 frame
-    #-------------------------------------------
-    set f $fSave.fBottom.fEntries.fApply1
-    DevAddButton $f.bApply "Save tracts in model file(s)" \
-        {puts "Saving streamlines"; DTMRISaveStreamlinesAsModel}
-    pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
-    TooltipAdd  $f.bApply "Save tracts to vtk file(s).\nEach color of tract will become a separate model.\n Choose the initial part of the filename, and models\nwill be saved as filename_0.vtk, filename_1.vtk, etc.\nThen you can load the models into slicer\n(they must be re-added to the mrml tree)."
-
-    #-------------------------------------------
-    # Save->Bottom->Entries->Info2 frame
-    #-------------------------------------------
-    set f $fSave.fBottom.fEntries.fInfo2
-    DevAddLabel $f.l "Save currently visible tracts as a polyline.\n Useful for further processing on tracts.\nONLY DEVELOPERS"
-    pack $f.l -side top -padx $Gui(pad) -pady $Gui(pad)
-
-    #-------------------------------------------
-    # Save->Bottom->Entries->Apply2 frame
-    #-------------------------------------------
-    set f $fSave.fBottom.fEntries.fApply2
-    DevAddButton $f.bApply "Save tracts in vtk file" \
-        {puts "Saving streamlines"; DTMRISaveStreamlinesAsPolyLines "" tracts}
-    pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
-    TooltipAdd  $f.bApply "Save visible tracts to vtk file as a set of polylines."
+    DevAddButton $f.bSave "Save Tensors" {DTMRIWriteStructuredPoints $DTMRI(devel,fileName)}
+    pack $f.bSave -side top -padx $Gui(pad) -pady $Gui(pad)
+    TooltipAdd $f.bSave "Save tensor data (Active DTMRI) to vtk structured points file format."
 
 
 }
-
 
 
 #-------------------------------------------------------------------------------
@@ -222,104 +191,6 @@ proc DTMRISaveStreamlinesAsIJKPoints {{verbose "1"}} {
 
 } 
 
-#-------------------------------------------------------------------------------
-# .PROC DTMRISaveStreamlinesAsPolyLines
-# Save all points from the streamline paths as polyline in a vtkfile
-# .ARGS
-# path subdir subdirectory to save the models in
-# string name the filename prefix of each model
-# int verbose default is 1 
-# .END
-#-------------------------------------------------------------------------------
-proc DTMRISaveStreamlinesAsPolyLines {subdir name {verbose "1"}} {
-    global DTMRI
-
-    set thelist $DTMRI(vtk,streamline,idList)
-    set thePoints ""
-    set filename "NONE"
-    
-    set filename [tk_getSaveFile -defaultextension ".vtk" -title "Save Streamlines as polyline"]
-    if { $filename == "" } {
-        return
-    }
-    
-    
-    #Write streamlines to a vtkPolyData file with lines
-    
-    #1. Count total number of points
-    set numpts 0
-    foreach id $thelist {
-        set streamln streamln,$id
-        
-        foreach dir {0 1} {
-            set numpts [expr $numpts + [[DTMRI(vtk,$streamln) GetHyperStreamline$dir] GetNumberOfPoints]]
-        }
-    }
-    
-    #2. Fill point data and cell data
-    vtkPolyData p
-    vtkCellArray c
-    vtkPoints pt
-    
-    pt SetNumberOfPoints $numpts
-    
-    #global id for cell
-    set idcell 0
-    #global id for points
-    set idp 0
-    foreach id $thelist {
-        set streamln streamln,$id
-        
-        foreach dir {0 1} {
-            set cellnumpts [[DTMRI(vtk,$streamln) GetHyperStreamline$dir] GetNumberOfPoints]
-            c InsertNextCell $cellnumpts
-            #Get transformation matrix: IJK -> RAS
-            set matrix [DTMRI(vtk,$streamln,actor) GetUserMatrix]
-            
-            for {set i 0} {$i < $cellnumpts} {incr i} {
-                set ijkpoint [[DTMRI(vtk,$streamln) GetHyperStreamline$dir] GetPoint $i]
-                set raspoint [$matrix MultiplyPoint [lindex $ijkpoint 0] [lindex $ijkpoint 1] [lindex $ijkpoint 2] 1]
-                #If we want to save points in ijk
-                #eval "pt SetPoint $idp" [[DTMRI(vtk,$streamln) GetHyperStreamline$dir] GetPoint $i]
-                
-                #If we want to save points in ras
-                pt SetPoint $idp [lindex $raspoint 0] [lindex $raspoint 1] [lindex $raspoint 2]
-                
-                c InsertCellPoint $idp
-                incr idp
-                
-            }   
-            incr idcell
-        }
-    }
-    
-    #3. Build polydata
-    p SetLines c
-    p SetPoints pt
-    p Update
-    
-    
-    #4. Write PolyData
-    vtkPolyDataWriter w
-    w SetFileName [file join $subdir $filename]  
-    w SetInput p
-    w SetFileTypeToASCII
-    w Write 
-
-    #5. Delete Objects
-    w Delete
-    p Delete
-    c Delete
-    pt Delete
-
-    # let user know something happened
-    if {$verbose == "1"} {
-        set msg "Wrote streamlines as vtk files, last file was $filename"
-        tk_messageBox -message $msg
-    }
-
-
-}
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRISaveStreamlinesAsModel
@@ -330,7 +201,8 @@ proc DTMRISaveStreamlinesAsPolyLines {subdir name {verbose "1"}} {
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRISaveStreamlinesAsModel {{verbose "1"}} {
-    
+    global DTMRI Tensor
+
     # check we have streamlines
     if {[DTMRI(vtk,streamlineControl) GetNumberOfStreamlines] < 1} {
         set msg "There are no tracts to save. Please create tracts first."
@@ -347,9 +219,25 @@ proc DTMRISaveStreamlinesAsModel {{verbose "1"}} {
     # set name for models in slicer interface
     set modelname [file root [file tail $filename]]
 
+    # Set the matrix for rotating tensors into world space
+    vtkTransform trans
+    set t $Tensor(activeID)
+    DTMRICalculateIJKtoRASRotationMatrix trans $t
+    DTMRI(vtk,streamlineControl) SetTensorRotationMatrix [trans GetMatrix]
+
+    # Set whether to save polylines and tensors or just tubes
+    if {$DTMRI(Save,type) == "analysis"} {
+        DTMRI(vtk,streamlineControl) SaveForAnalysisOn
+    } else {
+        DTMRI(vtk,streamlineControl) SaveForAnalysisOff
+    }
+
     # save the models as well as a MRML file with their colors
     DTMRI(vtk,streamlineControl) SaveStreamlinesAsPolyData \
         $filename $modelname Mrml(colorTree)
+
+    # decrease reference count of the transform
+    trans Delete
 
     # let user know something happened
     if {$verbose == "1"} {
@@ -372,7 +260,14 @@ proc DTMRIWriteStructuredPoints {filename} {
 
     set t $Tensor(activeID)
 
-    set filename [tk_getSaveFile -defaultextension ".vtk" -title "Save tensor as vtkstructurepoints"]
+    # check we have tensors
+    if {$t =="" } {
+        set msg "There are no tensors to save."
+        tk_messageBox -message $msg
+        return
+    }
+
+    set filename [tk_getSaveFile -defaultextension ".vtk" -title "Save tensor as vtkStructuredPoints"]
     if { $filename == "" } {
         return
     }

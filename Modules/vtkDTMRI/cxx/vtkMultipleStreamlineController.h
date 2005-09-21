@@ -350,6 +350,23 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // Get object that performs clustering (to set parameters)
   vtkGetObjectMacro(TractClusterer,vtkClusterTracts);
 
+  // Example usage is as follows:
+  // 1) If tensors are to be saved in a coordinate system
+  //    that is not IJK (array-based), and the whole volume is
+  //    being rotated, each tensor needs also to be rotated.
+  //    First find the matrix that positions your tensor volume.
+  //    This is how the entire volume is positioned, not 
+  //    the matrix that positions an arbitrary reformatted slice.
+  // 2) Remove scaling and translation from this matrix; we
+  //    just need to rotate each tensor.
+  // 3) Set TensorRotationMatrix to this rotation matrix.
+  //
+  vtkSetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
+  vtkGetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
+
+  vtkSetMacro(SaveForAnalysis,int);
+  vtkGetMacro(SaveForAnalysis,int);
+  vtkBooleanMacro(SaveForAnalysis,int);
 
   // Description
   // To do list:
@@ -425,6 +442,10 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   vtkClusterTracts *TractClusterer;
 
   unsigned long ErrorCode;
+
+  vtkMatrix4x4 *TensorRotationMatrix;
+
+  int SaveForAnalysis;
 };
 
 #endif
