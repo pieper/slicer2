@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainMrml \
-    {$Revision: 1.107 $} {$Date: 2005/03/07 20:27:13 $}]
+    {$Revision: 1.107.6.1 $} {$Date: 2005/09/21 21:56:31 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -1660,7 +1660,7 @@ proc MainMrmlDeleteColors {} {
 # Reads in colour information from a given xml file, adding to the mrml tree.
 # Returns -1 if it cannot read the file, 1 on success.
 # .ARGS
-# fileName the name of the xml file to open and search for colours
+# string fileName the name of the xml file to open and search for colours
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlAddColorsFromFile {fileName} {
