@@ -2387,10 +2387,11 @@ proc fMRIModelViewSetupOrthogonalityImage { c refX refY dmatHit dmatWid cmatHit 
     set i 1
     set vcount 0
     while { $i <= $run1EVs } {
-        #--- screen out unwanted EVs
-        set ev1 [ string first "dt" $::fMRIModelView(Design,Run1,EV$i,SignalType) ]
-        set bb1 [ string first "baseline" $::fMRIModelView(Design,Run1,EV$i,SignalType) ]
-        if { ($ev1 < 0) && ($bb1 < 0)} {
+        #--- screen out unwanted EVs; just pick out conditionEVs
+        set deriv1 [ string first "_dt" $::fMRIModelView(Design,Run1,EV$i,SignalType) ]
+        set bline1 [ string first "baseline" $::fMRIModelView(Design,Run1,EV$i,SignalType) ]
+        set basis1 [ string first "DCbasis"  $::fMRIModelView(Design,Run1,EV$i,SignalType) ]
+        if { ($deriv1 < 0) && ($bline1 < 0) && ($basis1 < 0) } {
             set v1 $::fMRIModelView(Data,Run1,EV$i,EVData)
             set len1 [ llength $v1 ]
             set magv1 [ fMRIModelViewComputeVectorMagnitude $v1 $len1 ]
@@ -2402,10 +2403,11 @@ proc fMRIModelViewSetupOrthogonalityImage { c refX refY dmatHit dmatWid cmatHit 
             set j 1
             
             while { $j <=  $run1EVs } {
-                #--- screen out unwanted EVs
-                set ev2 [ string first "dt" $::fMRIModelView(Design,Run1,EV$j,SignalType) ]
-                set bb2 [ string first "baseline" $::fMRIModelView(Design,Run1,EV$j,SignalType) ]
-                if { ($ev2 < 0) && ($bb2 < 0)} {
+                #--- screen out unwanted EVs; just pick out conditionEVs
+                set deriv2 [ string first "_dt" $::fMRIModelView(Design,Run1,EV$j,SignalType) ]
+                set bline2 [ string first "baseline" $::fMRIModelView(Design,Run1,EV$j,SignalType) ]
+                set basis2 [ string first "DCbasis"  $::fMRIModelView(Design,Run1,EV$j,SignalType) ]
+                if { ($deriv2 < 0) && ($bline2 < 0) && ($basis2 < 0) } {
                     #-- compute vector dot product and vector magnitude.
                     set v2 $::fMRIModelView(Data,Run1,EV$j,EVData) 
                     set len2 [ llength $v2 ]
