@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceScalarReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/09/06 21:22:55 $
-  Version:   $Revision: 1.7.6.1 $
+  Date:      $Date: 2005/09/21 21:58:16 $
+  Version:   $Revision: 1.7.6.2 $
 
 =========================================================================*/
 #include "vtkFSSurfaceScalarReader.h"
@@ -136,7 +136,7 @@ void vtkFSSurfaceScalarReader::ReadFSScalars()
     vtkErrorMacro (<< "vtkFSSurfaceScalarReader.cxx Execute: Number of vertices is 0 or negative, can't process file.");
       return;
   }
-   
+  
   // Make our float array.
   scalars = (float*) calloc (numValues, sizeof(float));
 
@@ -160,8 +160,18 @@ void vtkFSSurfaceScalarReader::ReadFSScalars()
     }
 
     scalars[vIndex] = fvalue;
-  }
 
+    if (numValues < 10000 ||
+        (vIndex % 100) == 0)
+    {
+        this->UpdateProgress(1.0*vIndex/numValues);
+    }
+    
+  }
+  
+  this->SetProgressText("");
+  this->UpdateProgress(0.0);
+  
   // Close the file.
   fclose (scalarFile);
 

@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/09/06 21:22:55 $
-  Version:   $Revision: 1.7.6.1 $
+  Date:      $Date: 2005/09/21 21:58:15 $
+  Version:   $Revision: 1.7.6.2 $
 
 =========================================================================*/
 #include "vtkFSSurfaceReader.h"
@@ -335,7 +335,10 @@ void vtkFSSurfaceReader::Execute()
       }
       
 #endif
-      this->UpdateProgress(1.0*thisStep/totalSteps);
+      if ((thisStep % 100) == 0)
+      {
+          this->UpdateProgress(1.0*thisStep/totalSteps);
+      }
   }
 
   // For each face...
@@ -382,7 +385,10 @@ void vtkFSSurfaceReader::Execute()
     
     // Add the face to the list.
     outputFaces->InsertNextCell (numVerticesPerFace, faceIndices);
-    this->UpdateProgress(1.0*thisStep/totalSteps);
+    if ((thisStep % 100) == 0)
+    {
+        this->UpdateProgress(1.0*thisStep/totalSteps);
+    }
     
   }
   
@@ -483,7 +489,10 @@ void vtkFSSurfaceReader::Execute()
               faceNormal[2] /= length;
           }
 
-          this->UpdateProgress(1.0*thisStep/totalSteps);
+          if ((thisStep % 100) == 0)
+          {
+              this->UpdateProgress(1.0*thisStep/totalSteps);
+          }
           
           // Add the final normal to the array.
           outputNormals->InsertNextTuple(faceNormal);

@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceWFileReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/09/06 21:22:55 $
-  Version:   $Revision: 1.3.2.1 $
+  Date:      $Date: 2005/09/21 21:58:16 $
+  Version:   $Revision: 1.3.2.2 $
 
 =========================================================================*/
 #include "vtkFSSurfaceWFileReader.h"
@@ -178,8 +178,17 @@ int vtkFSSurfaceWFileReader::ReadWFile()
     // Set the value in the scalars array based on the index we read
     // in, not the index in our for loop.
     scalars[vIndexFromFile] = fvalue;
+
+    if (numValues < 10000 ||
+        (vIndex % 100) == 0)
+    {
+        this->UpdateProgress(1.0*vIndex/numValues);
+    }
   }
 
+  this->SetProgressText("");
+  this->UpdateProgress(0.0);
+  
   // Close the file.
   fclose (wFile);
 
