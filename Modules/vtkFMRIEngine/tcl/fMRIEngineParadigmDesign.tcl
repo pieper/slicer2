@@ -287,13 +287,14 @@ proc fMRIEngineDeleteCondition {} {
         set run [string trim $run]
         set title [string trim $title]
         set found [lsearch -exact $fMRIEngine($run,conditionList) $title]
-
         if {$found >= 0} {
             $fMRIEngine(condsListBox) delete $curs 
 
             if {! $fMRIEngine(checkbuttonRunIdentical)} {
                 set fMRIEngine($run,conditionList) \
                     [lreplace $fMRIEngine($run,conditionList) $found $found]
+                #--- wjp added.
+                fMRIModelViewDeleteConditionName $run $title
                 unset -nocomplain fMRIEngine($run,$title,title)
                 unset -nocomplain fMRIEngine($run,$title,startVol)
                 unset -nocomplain fMRIEngine($run,$title,onsets)
@@ -302,6 +303,8 @@ proc fMRIEngineDeleteCondition {} {
                 for {set r 1} {$r <= $fMRIEngine(noOfRuns)} {incr r} {
                     set fMRIEngine($r,conditionList) \
                         [lreplace $fMRIEngine($r,conditionList) $found $found]
+                    #--- wjp added.
+                    fMRIModelViewDeleteConditionName $r $title
                     unset -nocomplain fMRIEngine($r,$title,title)
                     unset -nocomplain fMRIEngine($r,$title,startVol)
                     unset -nocomplain fMRIEngine($r,$title,onsets)
@@ -310,7 +313,7 @@ proc fMRIEngineDeleteCondition {} {
             }
 
             fMRIEngineShowConditions 
-       }
+        }
     } else {
         DevErrorWindow "Select a condition to delete."
     }
@@ -511,6 +514,8 @@ proc fMRIEngineAddCondition {} {
     if {! $fMRIEngine(checkbuttonRunIdentical)} { 
         if {$found == -1} {
             lappend fMRIEngine($currRun,conditionList) $title
+            #--- WJP: moved this from inside SortUserInput
+            fMRIModelViewAddConditionName $r $title
         } else {
             if {$fMRIEngine($currRun,tr) == $tr                     &&
                 $fMRIEngine($currRun,$title,title) == $title        &&
@@ -533,6 +538,8 @@ proc fMRIEngineAddCondition {} {
         for {set r 1} {$r <= $fMRIEngine(noOfRuns)} {incr r} {
             if {$found == -1} {
                 lappend fMRIEngine($r,conditionList) $title
+                #--- WJP: moved this from inside SortUserInput
+                fMRIModelViewAddConditionName $r $title
             } else {
                 if {$fMRIEngine($r,tr) == $tr                     &&
                     $fMRIEngine($r,$title,title) == $title        &&

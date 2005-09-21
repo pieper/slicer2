@@ -88,6 +88,7 @@ proc fMRIModelViewSortUserInput { } {
             set ::fMRIModelView(Design,Run$r,numConditions) $len
 
             set i 0
+            #--- Specify each condition inside each run...
             while {$i < $len} {
                 set title [lindex $fMRIEngine($r,conditionList) $i]
                 set indx [expr $i+1]
@@ -129,10 +130,9 @@ proc fMRIModelViewSortUserInput { } {
         set ::fMRIModelView(Design,Run$r,numAdditionalEVs) 0
     }
 
-
     #---
     #--- Additional EVs for detrending? User specifies:
-    # by default, ev for baseline is off
+    #--- by default, ev for baseline is off
     for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
         set ::fMRIModelView(Design,Run$r,UsePolyBasis) 0
         set ::fMRIModelView(Design,Run$r,UseSplineBasis) 0
@@ -140,33 +140,64 @@ proc fMRIModelViewSortUserInput { } {
         unset -nocomplain ::fMRIModelView(Design,evNames)
         unset -nocomplain ::fMRIModelView(Design,evs)
     }
- 
+
     #---    
     #--- Regular signal types used for condition-derived EVs:
+    #--- baseline,
     #--- boxcar,
-    #--- boxcar_dt,
-    #--- boxcar_cHRF_dt,
+    #--- boxcar_dt1,
+    #--- boxcar_dt2,
+    #--- boxcar_dt3,
     #--- boxcar_cHRF,
+    #--- boxcar_cHRF_dt1,
+    #--- boxcar_cHRF_dt2,
+    #--- boxcar_cHRF_dt3,
     #--- halfsine,
-    #--- halfsine_dt,
-    #--- halfsine_cHRF_dt,
+    #--- halfsine_dt1,
+    #--- halfsine_dt2,
+    #--- halfsine_dt3,
     #--- halfsine_cHRF,
+    #--- halfsine_cHRF_dt1,
+    #--- halfsine_cHRF_dt2,
+    #--- halfsine_cHRF_dt3,
     #--- linearEffect, and
     #--- quadraticEffect.
     #--- These variables get generated during signal modeling
     #--- of conditions, and selection of additional EVs.
     #--- So here, ::fMRIModelView(Design,EV1,SignalType)
     #--- corresponds to condition1.
+    #---
+    #--- wjp 09/02/06 Might be a problem here: not all evs with
+    #--- names map to a condition (adding derivatives adds new
+    #--- names of evs in the list.
+
     for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
+        #---wjp 09/19/05 adding this unset. ConditionNames keeps getting appended.
+        #unset -nocomplain ::fMRIModelView(Design,Run$r,ConditionNames)
         set count 1 
         foreach title $fMRIEngine($r,namesOfEVs) {
-            set wf $fMRIEngine($r,$title,signalType)
-            fMRIModelViewSetEVSignalType $r $count $wf 
-            fMRIModelViewAddConditionName $r $count $title 
+            set wf $::fMRIEngine($r,$title,signalType)
+            fMRIModelViewSetEVCondition $r $count $::fMRIEngine($r,$title,myCondition)
+            fMRIModelViewSetEVSignalType $r $count $wf
+            #--- WJP: moving the adding of ConditionName to fMRIEngineAddCondition 
+            #fMRIModelViewAddConditionName $r $title 
             incr count
         }
     }
     
+    #--- wjp 09/02/05
+    #--- add to the count of additional EVs if temporal derivatives are used in
+    #--- modeling, as these EVs have been automatically created above.
+    for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
+        foreach title $fMRIEngine($r,namesOfEVs) {
+            set sig $::fMRIEngine($r,$title,signalType)
+            set addEV [ string first "dt" $sig  ]
+            if { $addEV >= 0 } {
+                incr ::fMRIModelView(Design,Run$r,numAdditionalEVs)
+            }
+        }
+    }
+
     #--- compute totalEVs across runs.
     set sum 0
     for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
@@ -179,13 +210,19 @@ proc fMRIModelViewSortUserInput { } {
     #--- Additional EV: use for modeling baseline
     for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
         if { $::fMRIModelView(Design,Run$r,UseBaseline) } {
-            set j [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + 1 ]
+            set j [ expr \
+                        $::fMRIModelView(Design,Run$r,numConditionEVs) + \
+                        $::fMRIModelView(Design,Run$r,numAdditionalEVs) + 1 ]
+            #--- wjp added.
+            fMRIModelViewSetEVCondition $r $j "none"
             fMRIModelViewSetEVSignalType $r $j "baseline"
             #--- have added another ev, so:
             #--- increment the number of additional EVs,
             incr ::fMRIModelView(Design,Run$r,numAdditionalEVs)
         }
     }
+
+    
     #--- update totalEVs
     set sum 0
     for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
@@ -202,10 +239,11 @@ proc fMRIModelViewSortUserInput { } {
     #--- appropriate number of basis funcs.
     set numDCbasis 7
     for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
-        set j [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + \
-                    $::fMRIModelView(Design,Run$r,numAdditionalEVs) + 1 ]
+        set j [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + $::fMRIModelView(Design,Run$r,numAdditionalEVs) + 1 ]
         if { $::fMRIModelView(Design,Run$r,UseDCBasis) } {
             for { set b 0 } { $b < $numDCbasis } { incr b } {
+                #--- wjp added
+                fMRIModelViewSetEVCondition $r $j "none"
                 fMRIModelViewSetEVSignalType $r $j "DCbasis$b"
                 #--- have added another ev, so:
                 #--- increment the number of additional EVs,
@@ -214,6 +252,8 @@ proc fMRIModelViewSortUserInput { } {
             }
         }
     }
+
+
     #--- update totalEVs
     set sum 0
     for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
@@ -221,6 +261,43 @@ proc fMRIModelViewSortUserInput { } {
                       + $::fMRIModelView(Design,Run$r,numAdditionalEVs) ]
     }
     set ::fMRIModelView(Design,totalEVs) $sum
+
+    #---    
+    #--- these auto-generated titles & labels of EVs derived from
+    #--- user-specified conditions in each run, and the additional
+    #--- requested regressors.
+    #--- If temporal derivatives have been requested in modeling, additional
+    #--- ev's are automatically created in GenerateEVName and GenerateEVLabel.
+    #--- these will be added into the count below.
+    if { $::fMRIModelView(Design,identicalRuns) } {
+        #--- copy EVnames derived from user-specified conditions thru
+        #--- signal modeling, and additional EVs too.
+        for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
+            set copyrun 1
+            set k 1
+            set numevs [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + \
+                            $::fMRIModelView(Design,Run$r,numAdditionalEVs) ]
+            for { set i 1 } { $i <= $numevs } { incr i } {
+                fMRIModelViewGenerateEVName $i $copyrun
+                fMRIModelViewGenerateEVLabel $k
+                incr k
+            }
+        }
+    } else {
+        #--- specify condition names for each run separately.
+        #--- run 1
+        for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
+            set k 1
+            set numevs [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + \
+                             $::fMRIModelView(Design,Run$r,numAdditionalEVs) ]
+            for { set i 1 } { $i <= $numevs } { incr i } {
+                fMRIModelViewGenerateEVName $i $r
+                fMRIModelViewGenerateEVLabel $k
+                incr k
+            }
+        }
+    }
+
 
     #---
     #--- assume that t-contrasts will be available in vector form
@@ -263,38 +340,6 @@ proc fMRIModelViewSortUserInput { } {
         incr i
     }
 
-    #---    
-    #--- these auto-generated titles & labels of EVs derived from
-    #--- user-specified conditions in each run, and the additional
-    #--- requested regressors.
-    if { $::fMRIModelView(Design,identicalRuns) } {
-        #--- copy EVnames derived from user-specified conditions thru
-        #--- signal modeling, and additional EVs too.
-        for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
-            set copyrun 1
-            set k 1
-            set numevs [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + \
-                            $::fMRIModelView(Design,Run$r,numAdditionalEVs) ]
-            for { set i 1 } { $i <= $numevs } { incr i } {
-                fMRIModelViewGenerateEVName $i $copyrun
-                fMRIModelViewGenerateEVLabel $k
-                incr k
-            }
-        }
-    } else {
-        #--- specify condition names for each run separately.
-        #--- run 1
-        for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
-            set k 1
-            set numevs [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + \
-                             $::fMRIModelView(Design,Run$r,numAdditionalEVs) ]
-            for { set i 1 } { $i <= $numevs } { incr i } {
-                fMRIModelViewGenerateEVName $i $r
-                fMRIModelViewGenerateEVLabel $k
-                incr k
-            }
-        }
-    }
 
     #--- this is the number of files read in, and their fake filenames
     set numFiles 0

@@ -452,7 +452,14 @@ proc fMRIEngineSortEVsForStat {x y z} {
         set seqName $fMRIEngine($run,sequenceName)
         set vols $MultiVolumeReader($seqName,noOfVolumes) 
  
+        #--- wjp added 09/21/05: filter out temporal derivative EVs
         foreach name $fMRIEngine($r,namesOfEVs) {
+            set tst [ string first "dt" $name ]
+            if  { $tst < 0 } {
+                lappend conditionEVs $name
+            }
+        }
+        foreach name $conditionEVs {
             set onsetsStr $fMRIEngine($r,$name,onsets)
             set onsetsStr [string trim $onsetsStr]
             regsub -all {( )+} $onsetsStr " " onsetsStr 
@@ -567,7 +574,16 @@ proc fMRIEngineCreateCurvesFromTimeCourse {i j k} {
     }
  
     unset -nocomplain fMRIEngine(allEVs)
-    set fMRIEngine(allEVs) $fMRIEngine($run,namesOfEVs)
+    #set fMRIEngine(allEVs) $fMRIEngine($run,namesOfEVs)
+
+    #--- wjp added 09/21/05: filter out temporal derivative EVs
+    foreach name $fMRIEngine($run,namesOfEVs) {
+        set tst [ string first "dt" $name ]
+        if  { $tst < 0 } {
+            lappend conditionEVs $name
+        }
+    }
+    set fMRIEngine(allEVs) $conditionEVs
     set fMRIEngine(allEVs) [lappend fMRIEngine(allEVs) baseline]
 
     # For each ev, there are multiple sections which may not be 

@@ -46,7 +46,7 @@
 #   fMRIModelViewSetConditionIntensities r cnum clist
 #   fMRIModelViewSetTContrast cnum clist
 #   fMRIModelViewSetEVSignalType r evnum signal
-#   fMRIModelViewAddConditionName r cnum cname
+#   fMRIModelViewAddConditionName r cname
 #   fMRIModelViewSetTContrastName cnum cname
 #   fMRIModelViewSetTContrastLabel cnum
 #   fMRIModelViewGenerateEVName evnum r
@@ -214,6 +214,7 @@ proc fMRIModelViewLaunchModelView { {toplevelName .wfMRIModelView} } {
     fMRIModelViewSetFonts
     fMRIModelViewSetColors
 
+    #--- get user's paradigm design and modeling input
     fMRIModelViewSortUserInput
 
     #--- if there's no model to view, nothing will happen.
@@ -268,6 +269,8 @@ proc fMRIModelViewLaunchModelView { {toplevelName .wfMRIModelView} } {
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIModelViewGenerateModel { {toplevelName .wfMRIModelView} } {
+
+
     #---
     #--- fMRIModelViewGenerateModel gets run each time someone
     #--- enters a new condition, updates signal modeling on that
@@ -275,6 +278,21 @@ proc fMRIModelViewGenerateModel { {toplevelName .wfMRIModelView} } {
     #--- if window is already up, also update the visual display
     #---
     if { [winfo exists $toplevelName] } {
+        #--- wjp: added 09/19/05
+        fMRIEngineCountEVs
+        if {$::fMRIEngine(noOfSpecifiedRuns) == 0} {
+            DevErrorWindow "No run has been specified."
+            return
+        }
+
+        for {set r 1} {$r <= $::fMRIEngine(noOfSpecifiedRuns)} {incr r} { 
+            if {! [info exists ::fMRIEngine($r,noOfEVs)]} {
+                DevErrorWindow "Complete signal modeling first for run$r."
+                return
+            }
+        }
+        #--- wjp: end of addition 09/19/05
+        
         fMRIModelViewLaunchModelView
         set ::fMRIModelView(Layout,NoDisplay) 0
     } else {
@@ -446,6 +464,20 @@ proc fMRIModelViewSetTContrast { cnum clist } {
 }
 
 
+
+
+proc fMRIModelViewSetEVCondition { r evnum myCondition } {
+    #--- if an ev (like a derivative signal) maps to a condition
+    #--- number, record it here. "none" means no condition
+    #--- We do this because, in order to construct the signal for this
+    #--- EV, having access to the condition's onsets and durations
+    #--- will be necessary.
+    set ::fMRIModelView(Design,Run$r,EV$evnum,myCondition) $myCondition
+
+}
+
+
+
 #-------------------------------------------------------------------------------
 # .PROC fMRIModelViewSetEVSignalType
 # 
@@ -466,15 +498,23 @@ proc fMRIModelViewSetEVSignalType { r evnum signal } {
 # 
 # .ARGS
 # int r
-# int cnum
 # string cname
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIModelViewAddConditionName { r cnum cname } {
+proc fMRIModelViewAddConditionName { r cname } {
     #---
     lappend ::fMRIModelView(Design,Run$r,ConditionNames) $cname
 }
 
+
+
+proc fMRIModelViewDeleteConditionName  { r cname } {
+
+    #---
+    set i [ lsearch -exact $::fMRIModelView(Design,Run$r,ConditionNames) $cname ]
+    set ::fMRIModelView(Design,Run$r,ConditionNames) [ lreplace $::fMRIModelView(Design,Run$r,ConditionNames) $i $i ]
+
+}
 
 #-------------------------------------------------------------------------------
 # .PROC fMRIModelViewSetTContrastName
@@ -520,25 +560,48 @@ proc fMRIModelViewSetTContrastLabel { cnum } {
 #-------------------------------------------------------------------------------
 proc fMRIModelViewGenerateEVName { evnum r } {
  
-    set j [ expr $evnum - 1 ]
-    set basename [ lindex $::fMRIModelView(Design,Run$r,ConditionNames) $j ]
+    #--- WJP changed 09/19/05 get the EV's condition:
+    set i $::fMRIModelView(Design,Run$r,EV$evnum,myCondition)
+    if { $i != "none" } {
+        set i [ expr $i - 1 ]
+        set basename [ lindex $::fMRIModelView(Design,Run$r,ConditionNames) $i ]
+    } else {
+        set basename ""
+    }
+
     set type $::fMRIModelView(Design,Run$r,EV$evnum,SignalType)
     if { $type == "boxcar" } {
         lappend ::fMRIModelView(Design,evNames) "$basename.boxcar"
-    } elseif { $type == "boxcar_dt" } {
-        lappend ::fMRIModelView(Design,evNames) "$basename.boxcar.dt"
+    } elseif { $type == "boxcar_dt1" } {
+        lappend ::fMRIModelView(Design,evNames) "$basename.boxcar.dt1"
+    } elseif { $type == "boxcar_dt2" } {
+        lappend ::fMRIModelView(Design,evNames) "$basename.boxcar.dt2"        
+    } elseif { $type == "boxcar_dt3" } {
+        lappend ::fMRIModelView(Design,evNames) "$basename.boxcar.dt3"
     } elseif { $type == "boxcar_cHRF" } {
         lappend ::fMRIModelView(Design,evNames) "$basename.boxcar.HRF"
-    } elseif { $type == "boxcar_cHRF_dt" } {
-        lappend ::fMRIModelView(Design,evNames) "$basename.boxcar.HRF.dt"
+    } elseif { $type == "boxcar_cHRF_dt1" } {
+        lappend ::fMRIModelView(Design,evNames) "$basename.boxcar.HRF.dt1"
+    } elseif { $type == "boxcar_cHRF_dt2" } {
+        lappend ::fMRIModelView(Design,evNames) "$basename.boxcar.HRF.dt2"
+    } elseif { $type == "boxcar_cHRF_dt3" } {
+        lappend ::fMRIModelView(Design,evNames) "$basename.boxcar.HRF.dt3"
     } elseif { $type == "halfsine" } {
         lappend ::fMRIModelView(Design,evNames) "$basename.halfsine"
-    } elseif { $type == "halfsine_dt" } {        
-        lappend ::fMRIModelView(Design,evNames) "$basename.halfsine.dt"
+    } elseif { $type == "halfsine_dt1" } {        
+        lappend ::fMRIModelView(Design,evNames) "$basename.halfsine.dt1"
+    } elseif { $type == "halfsine_dt2" } {        
+        lappend ::fMRIModelView(Design,evNames) "$basename.halfsine.dt2"
+    } elseif { $type == "halfsine_dt3" } {        
+        lappend ::fMRIModelView(Design,evNames) "$basename.halfsine.dt3"
     } elseif { $type == "halfsine_cHRF" } {
         lappend ::fMRIModelView(Design,evNames) "$basename.halfsine.HRF"
-    } elseif { $type == "halfsine_cHRF_dt" } {
-        lappend ::fMRIModelView(Design,evNames) "$basename.halfsine.HRF.dt"
+    } elseif { $type == "halfsine_cHRF_dt1" } {
+        lappend ::fMRIModelView(Design,evNames) "$basename.halfsine.HRF.dt1"
+    } elseif { $type == "halfsine_cHRF_dt2" } {
+        lappend ::fMRIModelView(Design,evNames) "$basename.halfsine.HRF.dt2"
+    } elseif { $type == "halfsine_cHRF_dt3" } {
+        lappend ::fMRIModelView(Design,evNames) "$basename.halfsine.HRF.dt3"
     } elseif { $type == "baseline" } {
         lappend ::fMRIModelView(Design,evNames) "baseline"
     } elseif { $type == "DCbasis0" } {
@@ -1102,79 +1165,50 @@ proc fMRIModelViewBuildEVImages { r i imgwid } {
 #-------------------------------------------------------------------------------
 proc fMRIModelViewBuildModelSignals { r i imghit imgwid signalType } {
 
-        if { ($::fMRIModelView(Design,identicalRuns)) && ($r > 1) } {
-            #--- just reuse signal from first Run.
-            set ::fMRIModelView(Data,Run$r,EV$i,Signal) $::fMRIModelView(Data,Run1,EV$i,Signal)
+    if { ($::fMRIModelView(Design,identicalRuns)) && ($r > 1) } {
+        #--- just reuse signal from first Run.
+        set ::fMRIModelView(Data,Run$r,EV$i,Signal) $::fMRIModelView(Data,Run1,EV$i,Signal)
+    } else {
+        #---
+        #--- signal
+        #--- and create a corresponding Signal list filled with zeros for actual modeling;
+        #--- list has a value for each sec in the sequence, rather than only at scan timepoints.
+        #--- usually this will have more samples in it than the image does.
+        set samples  [ expr ($::fMRIModelView(Design,Run$r,numTimePoints) * \
+                                 $::fMRIModelView(Design,Run$r,TR))  / \
+                           $::fMRIModelView(Design,Run$r,TimeIncrement) ]
+        #--- first zero it out.
+        for { set t 0 } { $t < $samples } { incr t } {
+            lappend ::fMRIModelView(Data,Run$r,EV$i,Signal) 0.0
+        }
+        
+        #--- if this EV is associated with a user-specified condition, then insert
+        #--- requested or default signal footprints into the image and signal 
+        #--- where appropriate. First, find the condition it's associated with.
+        set listIndex 0
+        if { [ info exists ::fMRIModelView(Design,Run$r,EV$i,myCondition) ] } {
+            set myCondition $::fMRIModelView(Design,Run$r,EV$i,myCondition)             
         } else {
-            #---
-            #--- signal
-            #--- and create a corresponding Signal list filled with zeros for actual modeling;
-            #--- list has a value for each sec in the sequence, rather than only at scan timepoints.
-            #--- usually this will have more samples in it than the image does.
-            set samples  [ expr ($::fMRIModelView(Design,Run$r,numTimePoints) * \
-                               $::fMRIModelView(Design,Run$r,TR))  / \
-                               $::fMRIModelView(Design,Run$r,TimeIncrement) ]
-
-            for { set t 0 } { $t < $samples } { incr t } {
-                lappend ::fMRIModelView(Data,Run$r,EV$i,Signal) 0.0
-            }
-            
-            #--- if this image is associated with a user-specified condition, then insert
-            #--- requested or default signal footprints into the image and signal 
-            #--- where appropriate 
-            set listIndex 0
-            if { [ info exists ::fMRIModelView(Design,Run$r,Condition$i,Onsets) ] } {
-                foreach onset $::fMRIModelView(Design,Run$r,Condition$i,Onsets) {
-                set duration [lindex $::fMRIModelView(Design,Run$r,Condition$i,Durations) $listIndex ]
+            set myCondition "none"
+        }
+        #--- now, if that's a valid condition, use its duration and onsets to build basic wave
+        if { [ info exists ::fMRIModelView(Design,Run$r,Condition$myCondition,Onsets) ] } {
+            foreach onset $::fMRIModelView(Design,Run$r,Condition$myCondition,Onsets) {
+                set duration [lindex $::fMRIModelView(Design,Run$r,Condition$myCondition,Durations) $listIndex ]
                 #--- compute footprint for each event or epoch;
-                #--- depending on the signal type
-                #--- SIGNALS:
-                if { $signalType == "boxcar" } {
-                    #--- BOXCAR
+                #--- depending on the signal type, and insert into signal at each onset.
+                set useBox [ string first "boxcar" $signalType ]
+                if { $useBox >= 0 } {
                     fMRIModelViewComputeBoxCar $onset $duration $imgwid $r $i
-                } elseif { $signalType == "boxcar_dt" } {
-                    #--- BOXCAR + TEMPORAL DERIVATIVE
-                    fMRIModelViewComputeBoxCar $onset $duration $imgwid $r $i
-                } elseif { $signalType == "boxcar_cHRF" } {
-                    #--- BOXCAR convolved with HRF
-                    fMRIModelViewComputeBoxCar $onset $duration $imgwid $r $i
-                } elseif { $signalType == "boxcar_cHRF_dt" } {                    
-                    #--- BOXCAR convolved with HRF + TEMPORAL DERIVATIVE
-                    fMRIModelViewComputeBoxCar $onset $duration $imgwid $r $i
-                } elseif { $signalType == "halfsine" } {
-                    #--- HALFSINE
-                    fMRIModelViewComputeHalfSine $onset $duration $imgwid $r $i
-                } elseif { $signalType == "halfsine_dt" } {
-                    #--- HALFSINE + TEMPORAL DERIVATIVE
-                    fMRIModelViewComputeHalfSine $onset $duration $imgwid $r $i
-                } elseif { $signalType == "halfsine_cHRF" } {                    
-                    #--- HALFSINE convolved with HRF
-                    fMRIModelViewComputeHalfSine $onset $duration $imgwid $r $i
-                } elseif { $signalType == "halfsine_cHRF_dt" } {
-                    #--- HALFSINE convolved with HRF + TEMPORAL DERIVATIVE
+                }
+                set useSine [ string first "halfsine" $signalType ] 
+                if { $useSine >= 0 } {
                     fMRIModelViewComputeHalfSine $onset $duration $imgwid $r $i
                 }
                 incr listIndex
             }
         }
         
-        #--- Add in temporal derivatives if requested:
-        #--- Here, I'm computing the derivative of
-        #--- signal (sampled at every time increment)
-        #--- and downsampling the result to generate
-        #--- the images (for visualizing the model) and
-        #--- the lists of EVdata (sampled at every
-        #--- timepoint) for now.
-        if { $signalType == "boxcar_dt" } {
-            fMRIModelViewAddDerivatives $imgwid $imghit $r $i
-        } elseif { $signalType == "halfsine_dt" } {
-            fMRIModelViewAddDerivatives $imgwid $imghit $r $i
-        } elseif { $signalType == "boxcar_cHRF_dt" } {
-            fMRIModelViewAddDerivatives $imgwid $imghit $r $i
-        } elseif { $signalType == "halfsine_cHRF_dt" } {
-            fMRIModelViewAddDerivatives $imgwid $imghit $r $i
-        }
-
         #--- Convolve with HRF if requested:
         #--- I'm computing convolution of the signal
         #--- (sampled at every time increment)
@@ -1183,16 +1217,34 @@ proc fMRIModelViewBuildModelSignals { r i imghit imgwid signalType } {
         #--- generate the images (for visualizing the
         #--- model) and the lists of EVdata (sampled at
         #--- every timepoint) for now. 
-        if { $signalType == "boxcar_cHRF_dt" } {
+        set useConv [ string first "HRF" $signalType ]
+        if { $useConv >= 0 } {
             fMRIModelViewConvolveWithHRF $imgwid $imghit $r $i 
-        } elseif { $signalType == "boxcar_cHRF" } {
-            fMRIModelViewConvolveWithHRF $imgwid $imghit $r $i 
-        } elseif { $signalType == "halfsine_cHRF_dt" } {
-            fMRIModelViewConvolveWithHRF $imgwid $imghit $r $i 
-        }  elseif { $signalType == "halfsine_cHRF" } {
-            fMRIModelViewConvolveWithHRF $imgwid $imghit $r $i
         }
 
+        #--- Add in temporal derivatives if requested:
+        #--- Here, I'm computing the derivative of
+        #--- signal (sampled at every time increment)
+        #--- and downsampling the result to generate
+        #--- the images (for visualizing the model) and
+        #--- the lists of EVdata (sampled at every
+        #--- timepoint) for now.
+        #--- add first derivative as an EV if requested.
+        set useDerivs [ string first "dt" $signalType ]
+        if { $useDerivs >= 0 } {
+            fMRIModelViewAddDerivatives $imgwid $imghit $r $i            
+        }
+        #--- add second derivative as an EV if requested.
+        set useDeriv2 [ string first "dt2" $signalType ]
+        set useDeriv3 [ string first "dt3" $signalType ]
+        if { ($useDeriv2 >= 0) || ($useDeriv3 >= 0) } {
+            fMRIModelViewAddDerivatives $imgwid $imghit $r $i            
+        }
+        #--- add third derivative as an EV if requested.
+        if { $useDeriv3 >= 0 } {
+            fMRIModelViewAddDerivatives $imgwid $imghit $r $i            
+        }
+        
         #--- add constant baseline image, signal and evdata by default?
         if { $signalType == "baseline" } {
             fMRIModelViewBuildBaseline $imgwid $imghit $r $i
@@ -1256,8 +1308,11 @@ proc fMRIModelViewLongestEpochSpacing { } {
         }
     }
     set ::fMRIModelView(Design,longestEpoch) $T
-    #--- let fmax = 0.9/T (just less than the lowest frequency in paradigm)
-    #--- and let's compute seven frequencies that span that band.
+    #--- fmin is the cutoff frequency of the high-pass filter (lowest frequency
+    #--- that we let pass through. Choose to let fmin = 0.9/T (just less than the
+    #--- lowest frequency in paradigm). Is this too strict? Should user specify cutoff?
+    #--- could choose 0.5/T or 0.66/T instead as default to be more conservative.
+    #--- For now let's compute seven frequencies that span that band.
     set num [ expr double ($::fMRIModelView(Design,numCosineBases)) ]
     set ::fMRIModelView(Design,CosineBasisIncrement) [ expr (0.9/$T) / $num ]
 }
@@ -1605,7 +1660,12 @@ proc fMRIModelViewAddDerivatives { imgwid imghit r evnum } {
         }
         #--- compute derivative 
         set deriv [ expr ( ($thissamp - $lastsamp) + ($nextsamp - $thissamp)) / $dt ]
-        set newval [ expr  $thissamp - $deriv ]
+        #--- use this value for newval if need to add
+        #--- the derivative to the waveform to create EV.
+        #set newval [ expr  $thissamp - $deriv ]
+        #--- use this value for newval if need to use
+        #--- the derivatives directly in the design matrix.
+        set newval $deriv
         lappend derivData $newval
     }
 
@@ -2315,38 +2375,62 @@ proc fMRIModelViewSetupOrthogonalityImage { c refX refY dmatHit dmatWid cmatHit 
     set x2 [ expr $x1 + ($dim * $n) ]
     set y1 [ expr $refY +  $dmatHit + $cmatHit + $::fMRIModelView(Layout,ButtonHit) ]
     set y2 [ expr $y1 + ($dim * $n) ]
+    set run1EVs [ expr $::fMRIModelView(Design,Run1,numConditionEVs) + \
+                     $::fMRIModelView(Design,Run1,numAdditionalEVs) ]
 
-    #--- compute and fill elements 
+    #-- fix in progress: replace that with this...
+    #--- Compute and fill elements of orthogonality matrix.
+    #--- Only want to compute orthogonality for condition EVs here;
+    #--- (not include derivatives or baselines or discrete cosine filter functions etc.)
+    #--- So screen out those unwanted EVs, and use condition-related ones.. 
     #--- assume all runs have identical EVs, so just use Run 1
-    for { set i 1 } { $i <= $n } { incr i } {
-        set v1 $::fMRIModelView(Data,Run1,EV$i,EVData) 
-        set len1 [ llength $v1 ]
-        set magv1 [ fMRIModelViewComputeVectorMagnitude $v1 $len1 ]
-        #--- some rectangle draw y coords
-        set b1 [ expr $y1 + ($dim * ($i-1)) ]
-        set b2 [ expr $b1 + $dim ]
-
-        for { set j $i } { $j <= $n } { incr j } {
-            #--- compute vector dot product and vector magnitude
-            set v2 $::fMRIModelView(Data,Run1,EV$j,EVData) 
-            set len2 [ llength $v2 ]
-            set vdot [ fMRIModelViewComputeDotProduct $v1 $v2 $len2]
-            set vdot [ expr abs ( $vdot ) ]
-            set magv2 [ fMRIModelViewComputeVectorMagnitude $v2 $len2 ]
-            #--- let zero mean correlated; 1 mean uncorrelated
-            if {$magv1 == 0.0 || $magv2 == 0.0} {
-                set val 0.0
-            } else {
-                set val [ expr 1.0 - ($vdot / ( $magv1 * $magv2)) ]
+    set i 1
+    set vcount 0
+    while { $i <= $run1EVs } {
+        #--- screen out unwanted EVs
+        set ev1 [ string first "dt" $::fMRIModelView(Design,Run1,EV$i,SignalType) ]
+        set bb1 [ string first "baseline" $::fMRIModelView(Design,Run1,EV$i,SignalType) ]
+        if { ($ev1 < 0) && ($bb1 < 0)} {
+            set v1 $::fMRIModelView(Data,Run1,EV$i,EVData)
+            set len1 [ llength $v1 ]
+            set magv1 [ fMRIModelViewComputeVectorMagnitude $v1 $len1 ]
+            #--- some rectangle draw y coords
+            set b1 [ expr $y1 + ($dim * $vcount) ]
+            set b2 [ expr $b1 + $dim ]
+            incr vcount
+            set hcount 0
+            set j 1
+            
+            while { $j <=  $run1EVs } {
+                #--- screen out unwanted EVs
+                set ev2 [ string first "dt" $::fMRIModelView(Design,Run1,EV$j,SignalType) ]
+                set bb2 [ string first "baseline" $::fMRIModelView(Design,Run1,EV$j,SignalType) ]
+                if { ($ev2 < 0) && ($bb2 < 0)} {
+                    #-- compute vector dot product and vector magnitude.
+                    set v2 $::fMRIModelView(Data,Run1,EV$j,EVData) 
+                    set len2 [ llength $v2 ]
+                    set vdot [ fMRIModelViewComputeDotProduct $v1 $v2 $len2]
+                    set vdot [ expr abs ( $vdot ) ]
+                    set magv2 [ fMRIModelViewComputeVectorMagnitude $v2 $len2 ]
+                    #--- let zero mean correlated; 1 mean uncorrelated
+                    if {$magv1 == 0.0 || $magv2 == 0.0} {
+                        set val 0.0
+                    } else {
+                        set val [ expr 1.0 - ($vdot / ( $magv1 * $magv2)) ]
+                    }
+                    #--- convert range from [ 0 to 1 ] to [ 0 to 255 ]
+                    set fillval [ expr round ($val * 255) ]
+                    set hexval [ format "#%02x%02x%02x" $fillval $fillval $fillval ]
+                    #--- draw a filled rect
+                    set a1 [ expr $x1 + ($dim *  $hcount) ]
+                    set a2 [ expr $a1 + $dim ]
+                    $c create rect $a1 $b1 $a2 $b2 -outline $hexval -width 1 -fill $hexval
+                    incr hcount
+                }
+                incr j
             }
-            #--- convert range from [ 0 to 1 ] to [ 0 to 255 ]
-            set fillval [ expr round ($val * 255) ]
-            set hexval [ format "#%02x%02x%02x" $fillval $fillval $fillval ]
-            #--- draw a filled rect
-            set a1 [ expr $x1 + ($dim *  ($j-1)) ]
-            set a2 [ expr $a1 + $dim ]
-            $c create rect $a1 $b1 $a2 $b2 -outline $hexval -width 1 -fill $hexval
         }
+        incr i
     }
 
     #--- draw columns.
@@ -2415,8 +2499,11 @@ proc fMRIModelViewLabelTContrastNames { c refX refY dmatHit cmatHit } {
         set x1 [ expr $refX -  ($numchars * $pixelsPerChar) - \
                      ( $::fMRIModelView(Layout,HSpace)) ]
         # Haiying's change
-        # $c create text  $x1 $y1 -text "$name - " -anchor center 
-        $c create text  $x1 $y1 -text "$name" -anchor center \
+        #$c create text  $x1 $y1 -text "$name - " -anchor center 
+        #$c create text  $x1 $y1 -text "$name" -anchor center 
+        #--- WJP change
+        set x1 [ expr $refX - $::fMRIModelView(Layout,HSpace) ]
+        $c create text  $x1 $y1 -text "$name - " -anchor e \
             -font $::fMRIModelView(UI,Smallfont) -fill $::fMRIModelView(Colors,hexblack)
         set y1 [ expr $y1 + $inc ]
     }
@@ -2750,6 +2837,7 @@ proc fMRIModelViewClearUserInput { } {
             $::fMRIModelView(Design,Run$r,numAdditionalEVs) ]
         for { set i 1 } { $i <= $evs } { incr i } {
             unset -nocomplain ::fMRIModelView(Design,Run$r,EV$i,SignalType)
+            unset -nocomplain ::fMRIModelView(Design,Run$r,EV$i,myCondition)
         }
 
         for { set r 1 } { $r < $::fMRIModelView(Design,numRuns) } { incr r } {

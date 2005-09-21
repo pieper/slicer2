@@ -532,9 +532,16 @@ proc fMRIEngineUpdateEVsForPlotting {} {
     }
 
     if {[llength $fMRIEngine($run,namesOfEVs)] > 0} {
+        #--- wjp added 09/21/05: filter out temporal derivative EV names
+        foreach name $fMRIEngine($run,namesOfEVs) {
+            set tst [ string first "dt" $name ]
+            if  { $tst < 0 } {
+                lappend conditionEVs $name
+            }
+        }
         $fMRIEngine(gui,evsMenuForPlotting) delete 0 end
         set count 1 
-        foreach name $fMRIEngine($run,namesOfEVs) { 
+        foreach name $conditionEVs { 
             $fMRIEngine(gui,evsMenuForPlotting) add command -label $name \
                 -command "fMRIEngineSelectEVForPlotting $name $count"
 

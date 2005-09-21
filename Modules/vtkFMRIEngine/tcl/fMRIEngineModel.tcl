@@ -196,7 +196,9 @@ proc fMRIEngineClearModel {} {
     fMRIEngineSelectConvolutionForSignalModeling {none} 
     fMRIEngineSelectHighpassForSignalModeling {none} 
     fMRIEngineSelectLowpassForSignalModeling {none}
-    set fMRIEngine(checkbuttonTempDerivative) 0
+    #--- wjp 09/01/05
+    set fMRIEngine(numDerivatives) 0
+    #set fMRIEngine(checkbuttonTempDerivative) 0
     set fMRIEngine(checkbuttonGlobalEffects)  0
 
     set size [$fMRIEngine(evsListBox) size]

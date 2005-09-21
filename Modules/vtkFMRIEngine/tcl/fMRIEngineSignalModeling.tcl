@@ -158,23 +158,44 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
     #-----------------------
     # Temporal derivative 
     #-----------------------
-    DevAddButton $f.bTempHelp "?" "fMRIEngineHelpSetupTempDerivative" 2 
-    eval {checkbutton $f.cTemp \
-        -variable fMRIEngine(checkbuttonTempDerivative) \
-        -text "Add temporal derivative"} $Gui(WEA) 
-    $f.cTemp deselect 
+    DevAddLabel $f.lDeriv "Derivatives:"
+    DevAddButton $f.bDerivHelp "?" "fMRIEngineHelpSetupTempDerivative" 2 
+    #--- wjp changed 09/01/05
+    set ::fMRIEngine(numDerivatives) 0
+    set ::fMRIEngine(curDerivativesForSignal) $::fMRIEngine(numDerivatives)
+    set ::fMRIEngine(derivOptions) [ list {none} {1st} {1st+2nd} {1st+2nd+3rd} ]
+    set df [lindex $::fMRIEngine(derivOptions) 0 ]
+    eval { menubutton $f.mbDeriv -text $df \
+               -relief raised -bd 2 -width 15 \
+               -indicatoron 1 \
+               -menu $f.mbDeriv.m } $Gui(WMBA)
+    eval {menu $f.mbDeriv.m } $Gui(WMA)
+    foreach m $::fMRIEngine(derivOptions) {
+        $f.mbDeriv.m add command -label $m \
+            -command "fMRIEngineSelectNumDerivativesForSignalModeling $m"
+    }
+    set ::fMRIEngine(gui,derivativeMenuButtonForSignal) $f.mbDeriv
+
+    #eval {entry $f.cTemp 
+    #    -variable fMRIEngine(checkbuttonTempDerivative) 
+    #   -text "Add temporal derivative"} $Gui(WEA) 
+    #$f.cTemp deselect 
 
     blt::table $f \
-        0,0 $f.lCond -padx 1 -pady 1 \
-        0,1 $f.mbType -fill x -padx 1 -pady 1 \
-        1,0 $f.lWave -padx 1 -pady 1 \
-        1,1 $f.mbType2 -fill x -padx 1 -pady 1 \
+        0,0 $f.lCond -padx 1 -pady 1 -anchor e \
+        0,1 $f.mbType -fill x -padx 1 -pady 1 -anchor w \
+        1,0 $f.lWave -padx 1 -pady 1 -anchor e \
+        1,1 $f.mbType2 -fill x -padx 1 -pady 1 -anchor w \
         1,2 $f.bWaveHelp -padx 1 -pady 1 \
-        2,0 $f.lConv -padx 1 -pady 1 -fill x \
-        2,1 $f.mbType3 -fill x -padx 1 -pady 1 \
+        2,0 $f.lConv -padx 1 -pady 1 -fill x -anchor e \
+        2,1 $f.mbType3 -fill x -padx 1 -pady 1 -anchor w \
         2,2 $f.bConvHelp -padx 1 -pady 1 \
-        3,0 $f.cTemp -cspan 2 -fill x -padx 5 -pady 1 \
-        3,2 $f.bTempHelp -padx 1 -pady 1
+        3,0 $f.lDeriv -fill x -padx 1 -pady 1 -anchor e \
+        3,1 $f.mbDeriv -padx 1 -pady 1 -anchor w \
+        3,2 $f.bDerivHelp -padx 1 -pady 1
+    
+        #3,0 $f.cTemp -cspan 2 -fill x -padx 5 -pady 1 
+
 
     #-------------------------------------------
     # Middle frame 
@@ -331,6 +352,7 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
     #-------------------------------------------
     # Estimate frame 
     #-------------------------------------------
+    puts "creating estimate frame"
     set f $parent.fEstimate
     frame $f.fTop      -bg $Gui(activeWorkspace)
     frame $f.fBot    -bg $Gui(activeWorkspace)
@@ -365,11 +387,17 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
     set fMRIEngine(gui,runListMenuForModelFitting) $f.mbType.m
 
     grid $f.bHelp $f.bEstimate $f.mbType -padx 1 -pady 2 
-
+    puts "created estimate frame"
 #    set f $parent.fEstimate.fBot
 #    DevAddButton $f.bView "View Coefficients" "fMRIEngineViewCoefficients" 27 
 #    grid $f.bView -padx 1 -pady 2 
 }
+
+
+
+
+
+
 
 
 #-------------------------------------------------------------------------------
@@ -533,6 +561,25 @@ proc fMRIEngineSelectConvolutionForSignalModeling {conv} {
 }
 
 
+
+proc fMRIEngineSelectNumDerivativesForSignalModeling { option } {
+
+
+    if { ($option == "none")  || ($option == 0) } {
+        set ::fMRIEngine(numDerivatives) 0
+    } elseif { ($option == "1st") || ($option == 1) } {
+        set ::fMRIEngine(numDerivatives) 1
+    } elseif { ($option == "1st+2nd") || ($option == 2) } {
+        set ::fMRIEngine(numDerivatives) 2
+    } else {
+        set ::fMRIEngine(numDerivatives) 3        
+    }
+    $::fMRIEngine(gui,derivativeMenuButtonForSignal) config -text $option
+    set ::fMRIEngine(curDerivativesForSignal) $::fMRIEngine(numDerivatives)
+}
+
+
+
 #-------------------------------------------------------------------------------
 # .PROC fMRIEngineSelectHighpassForSignalModeling
 # 
@@ -581,7 +628,11 @@ proc fMRIEngineAddOrEditEV {} {
 
     set wform $fMRIEngine(curWaveFormForSignal) 
     set conv  $fMRIEngine(curConvolutionForSignal) 
-    set deriv $fMRIEngine(checkbuttonTempDerivative) 
+    
+    #--- wjp 09/01/06
+    set deriv $fMRIEngine(curDerivativesForSignal)
+    set con $::fMRIEngine(curConditionForSignal)
+    #set deriv $fMRIEngine(checkbuttonTempDerivative) 
     set hpass $fMRIEngine(curHighpassForSignal)
     set lpass $fMRIEngine(curLowpassForSignal) 
     set effes $fMRIEngine(checkbuttonGlobalEffects) 
@@ -593,6 +644,8 @@ proc fMRIEngineAddOrEditEV {} {
         }
     }
 
+    #--- Deleting evs from the evlistbox
+    #--- that use the same condition...
     set i 0
     set found -1 
     set index -1
@@ -711,10 +764,14 @@ proc fMRIEngineShowEVToEdit {} {
             fMRIEngineSelectConditionForSignalModeling   $fMRIEngine($ev,condition,ev)  
             fMRIEngineSelectWaveFormForSignalModeling    $fMRIEngine($ev,waveform,ev)   
             fMRIEngineSelectConvolutionForSignalModeling $fMRIEngine($ev,convolution,ev)
+            #fMRIEngineSelectNumDerivativesForSignalModeling $fMRIEngine($ev,derivative,ev)
+            set m [ lindex $::fMRIEngine(derivOptions) $::fMRIEngine($ev,derivative,ev) ]
+            fMRIEngineSelectNumDerivativesForSignalModeling $m
             fMRIEngineSelectHighpassForSignalModeling    $fMRIEngine($ev,highpass,ev) 
             fMRIEngineSelectLowpassForSignalModeling     $fMRIEngine($ev,lowpass,ev) 
- 
-            set fMRIEngine(checkbuttonTempDerivative) $fMRIEngine($ev,derivative,ev)
+            #--- wjp 09/06/05
+            set fMRIEngine(numDerivatives) $fMRIEngine($ev,derivative,ev)
+            #set fMRIEngine(checkbuttonTempDerivative) $fMRIEngine($ev,derivative,ev)
             set fMRIEngine(checkbuttonGlobalEffects)  $fMRIEngine($ev,globaleffects,ev) 
         }
     } else {
@@ -735,7 +792,7 @@ proc fMRIEngineAddInputVolumes {run} {
 
     if {$run == "none"} {
         return
-    }
+   }
 
     set start $run
     set last $run
@@ -906,7 +963,8 @@ proc fMRIEngineAddRegressors {run} {
 proc fMRIEngineCountEVs {} {
     global fMRIEngine
 
-    # cleaning
+    #--- wjp 09/02/05 changed derivative modeling
+    # cleaning up
     for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} { 
         set ::fMRIModelView(Design,Run$r,UseBaseline) 0
         set ::fMRIModelView(Design,Run$r,UseDCBasis) 0 
@@ -918,7 +976,8 @@ proc fMRIEngineCountEVs {} {
     set i 0
     set size [$fMRIEngine(evsListBox) size]
     while {$i < $size} {  
-        set ev [$fMRIEngine(evsListBox) get $i] 
+        set ev [$fMRIEngine(evsListBox) get $i]
+        unset -nocomplain namelist
         if {$ev != ""} {
             set found [string first "baseline" $ev]
             if {$found >= 0} {
@@ -935,38 +994,19 @@ proc fMRIEngineCountEVs {} {
                 set deriv $fMRIEngine($ev,derivative,ev)
                 set hpass $fMRIEngine($ev,highpass,ev)
                 set title $fMRIEngine($ev,title,ev)
-
-                # Names of EVs for each run
-                lappend fMRIEngine($run,namesOfEVs) $title
-
-                # Number of EVs for each run
-                if {! [info exists fMRIEngine($run,noOfEVs)]} {
-                    set fMRIEngine($run,noOfEVs) 1
-                } else {
-                    incr fMRIEngine($run,noOfEVs) 
-                }
-
-                # DCBasis
-                if {$hpass == "Discrete Cosine"} {
-                    set ::fMRIModelView(Design,Run$run,UseDCBasis) 1
-                }
-
-                # EV signal type
-                if {$deriv} {
-                    if {$conv == "none"} {
-                        if {$wform == "Box Car"} {
-                            set wf "boxcar_dt"
-                        } else {
-                            set wf "halfsine_dt"
-                        }
-                    } else {
-                        if {$wform == "Box Car"} {
-                            set wf "boxcar_cHRF_dt"
-                        } else {
-                            set wf "halfsine_cHRF_dt"
-                        }
-                    }
-                } else {
+                set mycon [ lsearch $::fMRIEngine($run,conditionList) $title ]
+                incr mycon
+                
+                #--- wjp 09/02/05
+                #--- accrue names of EVs for each run inside each
+                #--- individual case; and count up number of EVs
+                #--- for each run inside each case too. Made this change
+                #--- because adding derivatives ADDS more EVs
+                #--- instead of REPLACING the original paradigm signal,
+                #--- which is how we mistakenly implemented it at first.
+                #--- EV signal type: tedious, but try it for now...
+                #--- First, if we're NOT using temporal derivatives in modeling...
+                if { $deriv == 0 } {
                     if {$conv == "none"} {
                         if {$wform == "Box Car"} {
                             set wf "boxcar"
@@ -980,15 +1020,104 @@ proc fMRIEngineCountEVs {} {
                             set wf "halfsine_cHRF"
                         }
                     }
+                    #--- append name, count ev, and set signal type
+                    lappend namelist $title
+                    #--- add the namelist to fMRIEngine($r,namesOfEVs)
+                    fMRIEngineAppendEVNamesToRun $run $namelist
+                    fMRIEngineIncrementEVCountForRun $run 1
+                    set fMRIEngine($run,$title,signalType) $wf                    
+                    set ::fMRIEngine($run,$title,myCondition) $mycon
+                } else { 
+                    #--- Now if we ARE using temporal derivatives in modeling
+                    if {$conv == "none"} {
+                        if {$wform == "Box Car"} {
+                            set base "boxcar"
+                            if { $deriv == 1 } {
+                                set wf "boxcar_dt1"
+                                #--- append names, count ev, and set signal type
+                                lappend namelist $title ${title}_dt1
+                                set numevs 2
+                            } elseif { $deriv == 2 } {
+                                set wf "boxcar_dt2"
+                                lappend namelist $title ${title}_dt1 ${title}_dt2
+                                set numevs 3
+                            } elseif { $deriv == 3 } {
+                                set wf "boxcar _dt3"
+                                lappend namelist $title ${title}_dt1 ${title}_dt2 ${title}_dt3
+                                set numevs 4
+                            }
+                        } else {
+                            set base "halfsine"
+                            if { $deriv == 1 } {
+                                set wf "halfsine_dt1"
+                                lappend namelist $title ${title}_dt1
+                                set numevs 2
+                            } elseif { $deriv == 2 } {
+                                set wf "halfsine_dt2"
+                                lappend namelist $title ${title}_dt1 ${title}_dt2
+                                set numevs 3
+                            } elseif { $deriv == 3 } {
+                                set wf "halfsine_dt3"
+                                lappend namelist $title ${title}_dt1 ${title}_dt2 ${title}_dt3
+                                set numevs 4
+                            }
+                        }
+                    } else {
+                        if {$wform == "Box Car"} {
+                            set base "boxcar_cHRF"
+                            if { $deriv == 1 } {
+                                set wf "boxcar_cHRF_dt1"
+                                lappend namelist $title ${title}_dt1
+                                set numevs 2
+                            } elseif { $deriv == 2 } {
+                                set wf "boxcar_cHRF_dt2"
+                                lappend namelist $title ${title}_dt1 ${title}_dt2
+                                set numevs 3
+                            } elseif { $deriv == 3 } {
+                                set wf "boxcar _cHRF_dt3"
+                                lappend namelist $title ${title}_dt1 ${title}_dt2 ${title}_dt3
+                                set numevs 4
+                            }
+                        } else {
+                            set base "halfsine_cHRF"
+                            if { $deriv == 1 } {
+                                set wf "halfsine_cHRF_dt1"
+                                lappend namelist $title ${title}_dt1
+                                set numevs 2
+                            } elseif { $deriv == 2 } {
+                                set wf "halfsine_cHRF_dt2"
+                                lappend namelist $title ${title}_dt1 ${title}_dt2
+                                set numevs 3
+                            } elseif { $deriv == 3 } {
+                                set wf "halfsine_cHRF_dt3"
+                                lappend namelist $title ${title}_dt1 ${title}_dt2 ${title}_dt3
+                                set numevs 4
+                            }
+                        }
+                    }
+                    fMRIEngineAppendEVNamesToRun $run $namelist
+                    fMRIEngineIncrementEVCountForRun $run $numevs
+                    set ::fMRIEngine($run,$title,myCondition) $mycon                    
+                    fMRIEngineAddDerivativeSignalsToRun  $run $title $base $deriv $mycon
                 }
-                # Signal types of EVs for each run
-                set fMRIEngine($run,$title,signalType) $wf
+                # DCBasis
+                if {$hpass == "Discrete Cosine"} {
+                    set ::fMRIModelView(Design,Run$run,UseDCBasis) 1
+                    #---WJP: 09/15/05
+                    #lappend fMRIEngine($run,namesOfEVs) $title
+                    #if {! [info exists fMRIEngine($run,noOfEVs)]} {
+                    #    set fMRIEngine($run,noOfEVs) 1
+                    #} else {
+                    #    incr fMRIEngine($run,noOfEVs) 
+                    #}
+                }
             }
-        } 
+        }
         incr i
     }
-
-    # re-order the name lists
+    #--- Re-order the name lists of all runs to match the order of EVs
+    #--- in the first run. This organizes the design matrix so that
+    #--- appropriate EVs from each run are combined in analysis.
     for {set r 2} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} { 
         unset -nocomplain names
         foreach name $fMRIEngine(1,namesOfEVs) {
@@ -1003,6 +1132,63 @@ proc fMRIEngineCountEVs {} {
         set fMRIEngine($r,namesOfEVs) [concat $names $fMRIEngine($r,namesOfEVs)] 
     }
 }
+
+
+
+
+
+
+proc  fMRIEngineAppendEVNamesToRun { run namelist } {
+
+    # Append list of  names of EVs for each run.
+    foreach n $namelist {
+        lappend ::fMRIEngine($run,namesOfEVs) $n
+    }
+}
+
+
+
+
+
+proc  fMRIEngineIncrementEVCountForRun { run numToAdd } {
+
+    # Count number of EVs for each run
+    if {! [info exists ::fMRIEngine($run,noOfEVs)]} {
+        set ::fMRIEngine($run,noOfEVs) $numToAdd
+    } else {
+        set ::fMRIEngine($run,noOfEVs) [expr $::fMRIEngine($run,noOfEVs) + $numToAdd ]
+    }
+}
+
+
+
+
+
+proc fMRIEngineAddDerivativeSignalsToRun { run title base derivnum condition } {
+
+    #--- Recording the signal type of each derivative signal and
+    #--- associating these derivative signals (used in the linear regression)
+    #--- with the condition for which they are modeling latency.
+    #--- We do this because the derivative signals are generated by
+    #--- first building the waveform with appropriately specified onsets and
+    #--- durations, and THEN taking the derivative(s) of it.
+    set ::fMRIEngine($run,$title,signalType) $base
+    if { $derivnum > 0 } {
+        set ::fMRIEngine($run,${title}_dt1,signalType) "${base}_dt1"
+        set ::fMRIEngine($run,${title}_dt1,myCondition) $condition
+    }
+    if {$derivnum > 1 } {
+        set ::fMRIEngine($run,${title}_dt2,signalType) "${base}_dt2"
+        set ::fMRIEngine($run,${title}_dt2,myCondition) $condition
+    }
+    if {$derivnum > 2 } {
+        set ::fMRIEngine($run,${title}_dt3,signalType) "${base}_dt3"
+        set ::fMRIEngine($run,${title}_dt3,myCondition) $condition
+    }
+}
+
+
+
 
 
 #-------------------------------------------------------------------------------
