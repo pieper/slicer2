@@ -84,7 +84,7 @@ proc ColorsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.28.6.2 $} {$Date: 2005/09/06 22:01:25 $}]
+        {$Revision: 1.28.6.3 $} {$Date: 2005/09/21 21:56:01 $}]
 
     # the LUT to affect by the colour scale editing
     set Color(LUT,currentID) -1
@@ -677,9 +677,11 @@ proc ColorsSetLUT { id } {
         set Color(LUT,upperRange) [lindex [Lut($id,lut) GetValueRange] 1]
         set Color(LUT,lowerAlpha) [lindex [Lut($id,lut) GetAlphaRange] 0]
         set Color(LUT,upperAlpha) [lindex [Lut($id,lut) GetAlphaRange] 1]
-        set Color(LUT,annoColor,r) [lindex $Lut($id,annoColor) 0]
-        set Color(LUT,annoColor,g) [lindex $Lut($id,annoColor) 1]
-        set Color(LUT,annoColor,b) [lindex $Lut($id,annoColor) 2]
+        if {[info exist Lut($id,annoColor)]} {
+            set Color(LUT,annoColor,r) [lindex $Lut($id,annoColor) 0]
+            set Color(LUT,annoColor,g) [lindex $Lut($id,annoColor) 1]
+            set Color(LUT,annoColor,b) [lindex $Lut($id,annoColor) 2]
+        }
         
     } else {
         puts "ColorsSetLUT: lut id $id is out of range or invalid: $Lut(idList)"
