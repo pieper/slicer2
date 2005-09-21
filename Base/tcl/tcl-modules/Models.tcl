@@ -85,7 +85,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.60.10.1 $} {$Date: 2005/09/06 21:25:05 $}]
+            {$Revision: 1.60.10.2 $} {$Date: 2005/09/21 21:54:19 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -1121,13 +1121,13 @@ proc ModelsPickScalarsCallback { mid ptdata scalars } {
         if { $lutid != "" } {
             ModelsSetScalarsLut $mid $lutid "false"
         } else {
-            puts "WARNING: ModelsPickScalarsCallback failed to find lut id for Freesurfer"
+            puts "WARNING: ModelsPickScalarsCallback $mid : failed to find lut id for Freesurfer"
         }
     } else {
         ModelsSetScalarsLut $mid "" "false" ;# tells it to use the default
     }
 
-    if { $::Model(scalarVisibilityAuto) } {
+    if { $::Model(scalarVisibilityAuto) == "1" } {
         ModelsPropsApplyButNotToNew
     }
 
