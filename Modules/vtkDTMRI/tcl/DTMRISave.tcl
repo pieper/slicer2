@@ -55,7 +55,7 @@ proc DTMRISaveInit {} {
     #------------------------------------
     set m "Save"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.7 $} {$Date: 2005/09/21 02:26:48 $}]
+                                 {$Revision: 1.8 $} {$Date: 2005/09/21 18:03:52 $}]
 
     set DTMRI(Save,type) visualization
 }
@@ -138,7 +138,7 @@ proc DTMRISaveBuildGUI {} {
     # Save->Top->Apply frame
     #-------------------------------------------
     set f $fSave.fTop.fApply
-    DevAddButton $f.bApply "Save tracts" \
+    DevAddButton $f.bApply "Save Tracts" \
         {puts "Saving streamlines"; DTMRISaveStreamlinesAsModel}
     pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
     TooltipAdd  $f.bApply "Save tracts to vtk file(s).\nEach color of tract will become a separate model.\n Choose the initial part of the filename, and models\nwill be saved as filename_0.vtk, filename_1.vtk, etc."
