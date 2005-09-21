@@ -101,7 +101,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.15 $} {$Date: 2005/09/15 18:09:29 $}]
+        {$Revision: 1.16 $} {$Date: 2005/09/21 07:56:09 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -162,6 +162,7 @@ proc EMAtlasBrainClassifierInit {} {
     set EMAtlasBrainClassifier(Cattrib,0,IsSuperClass) 1
     set EMAtlasBrainClassifier(Cattrib,0,Name) "Head"
     set EMAtlasBrainClassifier(Cattrib,0,Label) $EMAtlasBrainClassifier(Cattrib,0,Name)
+    set EMAtlasBrainClassifier(BatchMode) 0
 
     set EMAtlasBrainClassifier(eventManager) {}
 }
@@ -533,6 +534,7 @@ proc EMAtlasBrainClassifierInitializeValues { } {
     set item [Mrml(dataTree) GetNextItem]
     while { $item != "" } {
        set ClassName [$item GetClassName]
+
        if { $ClassName == "vtkMrmlSegmenterNode" } {
           # --------------------------------------------------
           # 2.) Check if we already work on this Segmenter
@@ -540,10 +542,10 @@ proc EMAtlasBrainClassifierInitializeValues { } {
           # -------------------------------------------------
           set pid [$item GetID]
           set EMAtlasBrainClassifier(vtkMrmlSegmenterNode) $pid
-      set VolumeNameList ""
-      foreach VolID $Volume(idList) {
-          lappend VolumeNameList "[Volume($VolID,node) GetName]"
-      }
+          set VolumeNameList ""
+          foreach VolID $Volume(idList) {
+            lappend VolumeNameList "[Volume($VolID,node) GetName]"
+          }
           
           # --------------------------------------------------
           # 3.) Update variables 
@@ -883,9 +885,13 @@ proc EMAtlasBrainClassifier_Normalize { VolIDInput VolIDOutput Mode } {
     im SetInput1 $Vol
     im SetConstantK [expr ($EMAtlasBrainClassifier(Normalize,$Mode) / $M)]
     puts "Mode: $Mode"
- 
+     
+
     im SetOperationToMultiplyByK
+    im Update 
+
     Volume($VolIDOutput,vol) SetImageData [im GetOutput]
+
     ia Delete
     im Delete
     ia2 Delete
@@ -903,9 +909,17 @@ proc EMAtlasBrainClassifier_Normalize { VolIDInput VolIDOutput Mode } {
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierVolumeWriter {VolID} {
     global Volume Editor
+
     set prefix [MainFileGetRelativePrefix [Volume($VolID,node) GetFilePrefix]]
     set Editor(fileformat) Standard
  
+    # Note : I changed vtkMrmlDataVolume.cxx so that MainVolumeWrite also works for 
+    #        for volumes that do not start at slice 1. If it does not get checked into 
+    #        the general version just do the following to overcome the problem after
+    #        executing MainVolumesWrite:
+    #        - Check if largest slice m is present 
+    #        - if not => slices start at 1 .. n => move everything to m -n + 1 ,..., m 
+    
     MainVolumesWrite $VolID $prefix 
     # RM unnecssary xml file 
     catch {file delete -force [file join [file dirname [Volume($VolID,node) GetFullPrefix]] [Volume($VolID,node) GetFilePrefix]].xml }
@@ -1092,6 +1106,8 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
 
     # ---------------------------------------------------------------
     # Check if input is set
+    set EMAtlasBrainClassifier(WorkingDirectory) [file normalize $EMAtlasBrainClassifier(WorkingDirectory)]
+
     if {($EMAtlasBrainClassifier(Volume,SPGR) == $Volume(idNone)) || ($EMAtlasBrainClassifier(Volume,T2W) == $Volume(idNone))} {
     DevErrorWindow "Please define both SPGR and T2W before starting the segmentation" 
     return 
@@ -1117,6 +1133,7 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
       set VolIDInput $EMAtlasBrainClassifier(Volume,${input})
       set VolIDOutput [DevCreateNewCopiedVolume $VolIDInput "" "Normed$input"]
       set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/[string tolower $input]/[file tail [Volume($EMAtlasBrainClassifier(Volume,${input}),node) GetFilePrefix]]norm"
+      puts "--- $EMAtlasBrainClassifier(WorkingDirectory) $Prefix"
       Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
       Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
       Volume($VolIDOutput,node) SetFilePattern "%s.%03d"
@@ -1130,8 +1147,9 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
       # Clean Up 
       MainUpdateMRML
       RenderAll
+
       if {$EMAtlasBrainClassifier(Save,$input)} {
-        EMAtlasBrainClassifierVolumeWriter $VolIDOutput  
+          EMAtlasBrainClassifierVolumeWriter $VolIDOutput  
       }
      }
     }
@@ -1195,14 +1213,16 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
 
        puts "=========== Register atlas spgr with patient ============ "
        set RunRegistrationFlag 0 
+
+       set StartSlice [format "%03d" [lindex [Volume($EMAtlasBrainClassifier(Volume,NormalizedSPGR),node) GetImageRange] 0]]
        foreach Dir "$RegisterAtlasDirList" {
-          if {[file exists $EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I.001] == 0  } {
+          if {[file exists $EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I.$StartSlice] == 0  } {
              set RunRegistrationFlag 1 
              break 
           }
        }
 
-       if {$RunRegistrationFlag == 0 } {
+       if {$RunRegistrationFlag == 0 && ($EMAtlasBrainClassifier(BatchMode) == 0)} {
          if {[DevYesNo "We found already an atlas in $EMAtlasBrainClassifier(WorkingDirectory)/atlas. Do you still want to register ? " ] == "yes" } {
            set RunRegistrationFlag 1
          }
@@ -1252,7 +1272,7 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
              set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/spgr/I"
              Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
              Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
-         Volume($VolIDOutput,node) SetLittleEndian $EMAtlasBrainClassifier(LittleEndian)
+             Volume($VolIDOutput,node) SetLittleEndian $EMAtlasBrainClassifier(LittleEndian)
 
              EMAtlasBrainClassifierVolumeWriter $VolIDOutput
           }
@@ -1305,7 +1325,7 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     # Read XML File  
     catch {exec mkdir $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation} 
     set tags [MainMrmlReadVersion2.x $EMAtlasBrainClassifier(XMLTemplate)]
-    set tags [MainMrmlAddColors $tags]
+    # set tags [MainMrmlAddColors $tags]
     MainMrmlBuildTreesVersion2.0 $tags
     MainUpdateMRML
 
@@ -1328,7 +1348,6 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     eval Segmenter($pid,node) SetSegmentationBoundaryMax "$EMAtlasBrainClassifier(SegmentationBoundaryMax,0) $EMAtlasBrainClassifier(SegmentationBoundaryMax,1) $EMAtlasBrainClassifier(SegmentationBoundaryMax,2)"
 
     puts "=========== Segment Image ============ "
-    # return
     # Start algorithm 
     EMAtlasBrainClassifier_StartEM
 
@@ -1365,21 +1384,27 @@ proc EMAtlasBrainClassifierDownloadAtlas { } {
     set text "$text\nto [file dirname $EMAtlasBrainClassifier(AtlasDir)]"
     set text "$text\nand uncompress the file."       
          
-    if {[DevOKCancel "$text" ] != "ok"} { return 0}
-    DownloadInit
-    if {$tcl_platform(os) == "Linux"} { 
-    set urlAddress "http://na-mic.org/Wiki/images/8/8d/VtkEMAtlasBrainClassifier_AtlasDefault.tar.gz" 
-    set outputFile "[file dirname $EMAtlasBrainClassifier(AtlasDir)]/atlas.tar.gz"
+    if {$EMAtlasBrainClassifier(BatchMode)} {
+    puts "$text"
     } else {
-    set urlAddress "http://na-mic.org/Wiki/images/5/57/VtkEMAtlasBrainClassifier_AtlasDefault.zip"
-    set outputFile "[file dirname $EMAtlasBrainClassifier(AtlasDir)]/atlas.zip"
+    if {[DevOKCancel "$text" ] != "ok"} { return 0}
+    }
+
+    DownloadInit
+
+    if {$tcl_platform(os) == "Linux"} { 
+       set urlAddress "http://na-mic.org/Wiki/images/8/8d/VtkEMAtlasBrainClassifier_AtlasDefault.tar.gz" 
+       set outputFile "[file dirname $EMAtlasBrainClassifier(AtlasDir)]/atlas.tar.gz"
+    } else {
+      set urlAddress "http://na-mic.org/Wiki/images/5/57/VtkEMAtlasBrainClassifier_AtlasDefault.zip"
+      set outputFile "[file dirname $EMAtlasBrainClassifier(AtlasDir)]/atlas.zip"
     }
 
     catch {exec rm -f $outputFile}
     catch {exec rm -rf $EMAtlasBrainClassifier(AtlasDir)}
 
     if {[DownloadFile "$urlAddress" "$outputFile"] == 0} {
-    return 0
+      return 0
     }
 
     puts "Start extracting $outputFile ...." 
@@ -1403,10 +1428,16 @@ proc EMAtlasBrainClassifierDownloadAtlas { } {
     } 
     puts "... finished extracting"
     if {$OKFlag == 1} {
-    DevErrorWindow "Could not uncompress $outputFile because of the following error message:\n$errormsg\nPlease manually uncompress the file."
-    return 0
+      DevErrorWindow "Could not uncompress $outputFile because of the following error message:\n$errormsg\nPlease manually uncompress the file."
+      return 0
     } 
+
+    if {$EMAtlasBrainClassifier(BatchMode)} {
+    puts "Atlas installation completed!" 
+    } else {
     DevInfoWindow "Atlas installation completed!" 
+    }
+
     catch {exec rm -f $RMFile} 
     return 1
 }
@@ -1624,9 +1655,17 @@ proc EMAtlasBrainClassifier_StartEM { } {
        $EMSegment(MA-lRun) configure -text "Error occured during Segmentation"
    } else {
        if {$WarningFlag} {
-          $EMSegment(MA-lRun) configure -text "Segmentation compledted sucessfull\n with warnings! Please read report!"
+       if {$EMAtlasBrainClassifier(BatchMode)} {
+           puts "Segmentation compledted sucessfull with warnings! Please read report!"
+       } else { 
+           $EMSegment(MA-lRun) configure -text "Segmentation compledted sucessfull\n with warnings! Please read report!"
+       }
        } else {
-          $EMSegment(MA-lRun) configure -text "Segmentation completed sucessfull"
+       if {$EMAtlasBrainClassifier(BatchMode)} {
+           puts "Segmentation completed sucessfull"
+       } else {
+           $EMSegment(MA-lRun) configure -text "Segmentation completed sucessfull"
+       }
        }
        incr EMAtlasBrainClassifier(SegmentIndex)
 
@@ -1648,7 +1687,7 @@ proc EMAtlasBrainClassifier_StartEM { } {
        # ----------------------------------------------
        # 5. Recover Values 
        # ----------------------------------------------
-        MainUpdateMRML
+       MainUpdateMRML
    
        # This is necessary so that the data is updated correctly.
        # If the programmers forgets to call it, it looks like nothing
@@ -1891,6 +1930,7 @@ proc EMAtlasBrainClassifier_DeleteVtkEMAtlasBrainClassifier { } {
      EMAtlasBrainClassifier_DeleteVtkEMSuperClass 0
 }
 
+
 #-------------------------------------------------------------------------------
 # .PROC EMAtlasBrainClassifier_BatchMode 
 # Run it from batch mode 
@@ -1908,6 +1948,15 @@ proc EMAtlasBrainClassifier_BatchMode { } {
     set EMAtlasBrainClassifier(WorkingDirectory) $Mrml(dir)
     set EMAtlasBrainClassifier(Volume,SPGR) [Volume(1,node) GetID]
     set EMAtlasBrainClassifier(Volume,T2W)  [Volume(2,node) GetID]
+
+    # If you set EMAtlasBrainClassifier(BatchMode) to 1 also 
+    # set EMAtlasBrainClassifier(Save,*) otherwise when saving xml file 
+    # warning window comes up 
+    set EMAtlasBrainClassifier(Save,SPGR) 1
+    set EMAtlasBrainClassifier(Save,T2W)  1
+    set EMAtlasBrainClassifier(BatchMode) 1
+
+
     EMAtlasBrainClassifierStartSegmentation
     MainExitProgram
 }
