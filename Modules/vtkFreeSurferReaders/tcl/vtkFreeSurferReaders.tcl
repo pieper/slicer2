@@ -329,7 +329,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27.6.5 $} {$Date: 2005/09/20 18:58:36 $}]
+        {$Revision: 1.27.6.6 $} {$Date: 2005/09/21 16:05:22 $}]
 
 }
 
@@ -2287,14 +2287,20 @@ proc vtkFreeSurferReadersBuildSurface {m} {
     if {$Module(verbose) == 1} { 
         puts "\nvtkFreeSurferReadersBuildSurface\n"
     }
+
     # set up the reader
+    catch "Model($m,reader) Delete"
     vtkFSSurfaceReader Model($m,reader)
+    if {$::Module(verbose)} {
+        Model($m,reader) DebugOn
+    }
+
     Model($m,reader) SetFileName $vtkFreeSurferReaders(ModelFileName)
 
     Model($m,reader) AddObserver StartEvent MainStartProgress
-    # Model($m,reader) ProgressEvent "MainShowProgress Model($m,reader)"
-    # Model($m,reader) EndEvent       MainEndProgress
-    set ::Gui(progressText) "Reading $vtkFreeSurferReaders(ModelFileName)"
+    Model($m,reader) AddObserver ProgressEvent "MainShowProgress Model($m,reader)"
+    Model($m,reader) AddObserver EndEvent       MainEndProgress
+    set ::Gui(progressText) "Reading [file tail $vtkFreeSurferReaders(ModelFileName)]"
 
 
     vtkPolyDataNormals Model($m,normals)
@@ -5705,7 +5711,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
             set username "default"
         }
     }
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.5 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.6 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
