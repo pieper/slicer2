@@ -18,6 +18,7 @@
 #include <vtkStructuredPointsWriter.h>
 using namespace std;
 
+
 static void Write(vtkImageData* image,const char* filename)
 {
   vtkStructuredPointsWriter* writer = vtkStructuredPointsWriter::New();
@@ -285,24 +286,6 @@ static void vtkImageWarpSSDExecute2(vtkImageData* t,T1* tptr,
         double v=0;
         for(int c=0;c<comp;++c)
           {
-            if (isnan(*tptr))
-              {
-              cout << "tptr nan at x " << x
-                   << " y " << y
-                   << " z " << z
-                   << "." << endl;
-              cout.flush();
-              break;
-              }
-            if (isnan(*sptr))
-              {
-              cout << "sptr nan at x " << x
-                   << " y " << y
-                   << " z " << z
-                   << "." << endl;
-              cout.flush();
-              break;
-              }
           v += pow(double(*tptr) - double(*sptr), (double)2.);
           ++tptr;
           ++sptr;
