@@ -170,9 +170,9 @@ proc vtkFreeSurferReadersInit {} {
     # it's in the Module's tcl directory. Try setting it from the slicer home
     # environment variable first, otherwise, assume search  is starting from slicer home
     if {[info exists env(SLICER_HOME)] == 1} {
-        set vtkFreeSurferReaders(colourFileName) [file join $env(SLICER_HOME) Modules vtkFreeSurferReaders tcl ColorsFreesurfer.xml]
+        set vtkFreeSurferReaders(colourFileName) [file join $env(SLICER_HOME) Modules vtkFreeSurferReaders tcl FreeSurferColorLUT.txt]
     } else {
-        set vtkFreeSurferReaders(colourFileName) [file join Modules vtkFreeSurferReaders tcl ColorsFreesurfer.xml]
+        set vtkFreeSurferReaders(colourFileName) [file join Modules vtkFreeSurferReaders tcl FreeSurferColorLUT.txt]
     }
 
     # the default colour table file name
@@ -329,7 +329,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27.6.7 $} {$Date: 2005/09/21 22:01:27 $}]
+        {$Revision: 1.27.6.8 $} {$Date: 2005/09/22 22:06:21 $}]
 
 }
 
@@ -377,10 +377,10 @@ proc vtkFreeSurferReadersBuildGUI {} {
               -indicatoron 0 -command "vtkFreeSurferReadersSetLoadColours"} $Gui(WCA)
     TooltipAdd $f.cLoadColours "Load in a FreeSurfer colour definition file when loading a label map.\nWARNING: will override other colours, use at your own risk."
     pack $f.cLoadColours -side top -padx $Gui(pad)
-    DevAddFileBrowse $f vtkFreeSurferReaders "colourFileName" "Colour xml file:" "vtkFreeSurferReadersSetColourFileName" "xml" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer colors file"
+    DevAddFileBrowse $f vtkFreeSurferReaders "colourFileName" "Colour file:" "vtkFreeSurferReadersSetColourFileName" "" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer colors file (xml txt)"
 
 
-    DevAddButton $f.bLoadColours "Load" "vtkFreeSurferReadersLoadColour"
+    DevAddButton $f.bLoadColours "Load" "vtkFreeSurferReadersLoadColour 1"
     TooltipAdd $f.bLoadColours "Load the colour file now. Warning: overwrites other colours"
     pack $f.bLoadColours -side top 
 
@@ -546,19 +546,6 @@ proc vtkFreeSurferReadersBuildGUI {} {
     TooltipAdd $f.cCastToShort "Cast this volume to short when reading it in. This allows use of the editing tools."
     pack $f.cCastToShort -side top -padx 0
 
-    
-    if {0} {
-        #------------
-        # Volume->Colours
-        #------------
-    set f $fVolumes.fVolume.fColours
-    eval {checkbutton $f.cLoadColours \
-              -text "Load FreeSurfer Colors" -variable vtkFreeSurferReaders(loadColours) -width 23 \
-              -indicatoron 0 -command "vtkFreeSurferReadersSetLoadColours"} $Gui(WCA)
-    TooltipAdd $f.cLoadColours "Load in a FreeSurfer colour definition file when loading a COR label map.\nWARNING: will override other colours, use at your own risk."
-    pack $f.cLoadColours -side top -padx $Gui(pad)
-    DevAddFileBrowse $f vtkFreeSurferReaders "colourFileName" "Colour xml file:" "vtkFreeSurferReadersSetColourFileName" "xml" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer colors file"
-}
 
     #------------
     # Volume->Apply 
@@ -1218,8 +1205,9 @@ proc vtkFreeSurferReadersCORApply {} {
         $vtkFreeSurferReaders(loadColours) &&
         $vtkFreeSurferReaders(coloursLoaded) != 1} {
         if {$::Module(verbose)} {
-            puts "vtkFreeSurferReadersCORApply: loading colour file $vtkFreeSurferReaders(colourFileName)."
+            puts "vtkFreeSurferReadersCORApply: loading colour file $vtkFreeSurferReaders(colourFileName) by calling vtkFreeSurferReadersLoadColour."
         }
+        # the argument will delete (1, default) or append (0) to the current colour list
         vtkFreeSurferReadersLoadColour
         
     }
@@ -1634,12 +1622,9 @@ set useMatrices 0
         $vtkFreeSurferReaders(loadColours) &&
         $vtkFreeSurferReaders(coloursLoaded) != 1} {
         if {$::Module(verbose)} {
-            puts "vtkFreeSurferReadersCORApply: loading colour file $vtkFreeSurferReaders(colourFileName)."
+            puts "vtkFreeSurferReadersMGHApply: loading colour file $vtkFreeSurferReaders(colourFileName)."
         }
-        # piggy back on the Color module
-        set ::Color(fileName) $vtkFreeSurferReaders(colourFileName)
-        ColorsLoadApply
-        set vtkFreeSurferReaders(coloursLoaded) 1
+        vtkFreeSurferReadersLoadColour
     }
 
     # display the new volume in the foreground of all slices if not a label map
@@ -3418,6 +3403,108 @@ proc vtkFreeSurferReadersSetColourFileName {} {
     if {$::Module(verbose)} {
         puts "vtkFreeSurferReadersSetColourFileName: colour file name set to $vtkFreeSurferReaders(colourFileName)"
     }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersLoadColour
+# Reads in an xml or a text FreeSurfer colour file.
+# xml reading piggy backs on the Color module by setting Color(fileName) from 
+# vtkFreeSurferReaders(colourFileName), then loading.
+# Can also read in a text file. The format is
+# id<white space>name<white-space>r<w-s>g<w-s>b<w-s>a\n
+# where r, g, b go from 0-255. a is not used.
+# Comments are preceded by hash marks at the start of the line.
+# Converts to colour nodes with the diffuse colours set to the input colours divided by 255.
+# Sets the vtkFreeSurferReaders(coloursLoaded) flag to 0, and then to 1 on sucess.
+# .ARGS
+# int overwriteFlag if 1, delete the old colours, else, append to them. Defaults to 1
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersLoadColour { {overwriteFlag 1}} {
+    global vtkFreeSurferReaders
+
+    set numColours 0
+    set tagsColours ""
+    set vtkFreeSurferReaders(coloursLoaded) 0
+    if {$::Module(verbose)} {
+        puts "vtkFreeSurferReadersLoadColour $vtkFreeSurferReaders(colourFileName)"
+    }
+
+    # check if have an xml file already
+    if {[file ext $vtkFreeSurferReaders(colourFileName)] == ".xml"} {
+        # load via the xml loading proc in the Colors module
+        if {$::Module(verbose)} {
+            puts "vtkFreeSurferReadersLoadColour: Got an xml file"
+        }
+        set ::Color(fileName) $vtkFreeSurferReaders(colourFileName)
+        ColorsLoadApply $overwriteFlag
+    } elseif {[file ext $vtkFreeSurferReaders(colourFileName)] == ".txt"} {
+        # open the text file for parsing 
+        if {[catch {set fd [open $vtkFreeSurferReaders(colourFileName) r]} errmsg] == 1} {
+            DevErrorWindow "ERROR opening $vtkFreeSurferReaders(colourFileName):\n$errmsg"
+            return
+        }
+        # read in 
+        while {![eof $fd]} {
+            set line [gets $fd]
+            # don't process if it's a commented out line
+            if {[regexp "^\#(.*)" $line matchVar commentStr] == 1} {
+ #                 if {$::Module(verbose)} { puts "vtkFreeSurferReadersLoadColour: got a comment line:\n$line" }
+            } else {
+                # if {$::Module(verbose)} { puts "vtkFreeSurferReadersLoadColour: working on line:\n$line" }
+                set linelist ""
+                foreach elem [split $line] {
+                    if {$elem != {}} {
+                        lappend linelist $elem
+                    }
+                }
+                if {[llength $linelist] == 6} {
+                    # got the id, name, rgba
+                    incr numColours
+                    foreach {id name r g b a} $linelist {
+                        if {$::Module(verbose)} {
+                            puts "id = $id, name = $name, r = $r, g = $g, b = $b, a = $a"
+                        }
+                    }
+                    # now add to the colour tags list
+                    lappend tagColours [list Color [list options ""] [list name $name] [list diffusecolor [expr $r/255.0] [expr $g/255.0] [expr $b/255.0]] [list labels $id]]
+                } else {
+                    # if {$::Module(verbose)} { puts "skipping line $linelist" }
+                }
+            }
+        }
+        # close the file
+        close $fd
+
+        if {$::Module(verbose)} {
+            puts "vtkFreeSurferReadersLoadColour: found $numColours colours in the file"
+            puts "colour tags = \n$tagColours\n"
+        }
+        if {$numColours > 0} {
+            
+            # got some new colours, saved them in the tagsColours, so build the new nodes
+
+            if {$overwriteFlag == 1} {
+                MainMrmlDeleteColors
+            }
+            MainMrmlBuildTreesVersion2.0 $tagColours
+            
+            # update the gui's color list
+            ColorsDisplayColors
+            MainColorsUpdateMRML
+            # rebuild the canvas
+            LabelsUpdateMRML
+            # show changes
+            RenderAll
+        } else {
+            DevWarningWindow "No colours found in $vtkFreeSurferReaders(colourFileName)"
+            return
+        }
+    } else {
+        DevErrorWindow "Cannot load the colour file due to an unknown extension: $vtkFreeSurferReaders(colourFileName)"
+        return
+    }
+    set vtkFreeSurferReaders(coloursLoaded) 1
 }
 
 #-------------------------------------------------------------------------------
@@ -5698,7 +5785,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
             set username "default"
         }
     }
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.7 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.8 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -7188,17 +7275,3 @@ proc vtkFreeSurferReadersLoadAnnotationFile { {fileName ""} } {
     vtkFreeSurferReadersReadAnnotation $a $m $vtkFreeSurferReaders(annotFileName)
 }
 
-#-------------------------------------------------------------------------------
-# .PROC vtkFreeSurferReadersLoadColour
-# Piggy backs on the Color module by setting Color(fileName) from vtkFreeSurferReaders(colourFileName),
-# then loads them in and sets the  vtkFreeSurferReaders(coloursLoaded) flag to 1.
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc vtkFreeSurferReadersLoadColour {} {
-    global vtkFreeSurferReaders
-
-        set ::Color(fileName) $vtkFreeSurferReaders(colourFileName)
-    ColorsLoadApply
-    set vtkFreeSurferReaders(coloursLoaded) 1
-}
