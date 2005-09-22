@@ -59,9 +59,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkProperty.h"
 #include "vtkLookupTable.h"
 
-// to be moved
-#include "vtkClusterTracts.h"
-#include "vtkDoubleArray.h"
 
 class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
 {
@@ -137,33 +134,7 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
   vtkSetObjectMacro(StreamlineLookupTable, vtkLookupTable);
   vtkGetObjectMacro(StreamlineLookupTable, vtkLookupTable);
 
-  // Description
-  // This should be moved.
-  // Color tracts based on clustering.
-  // Colors the paths that have already been created using this class.
-  // The argument (int tmp) is only there because under windows the 
-  // wrapping failed with no argument.
-  void ClusterTracts(int tmp);
-
-  // Description
-  // Get object that performs clustering (to set parameters)
-  vtkGetObjectMacro(TractClusterer,vtkClusterTracts);
-
   
-  //Description
-  // This should be moved.
-  // Find the streamlines that pass through the set of ROI values
-  // stored in InputMultipleROIValues. This operation is performed
-  // by convolving  the streamline with the kernel ConvolutionKernel.
-  void FindStreamlinesThatPassThroughROI();
-  void HighlightStreamlinesPassTest();
-  void DeleteStreamlinesNotPassTest();
-  // Description
-  // Convolution Kernel that is used to convolve the fiber with when
-  // finding the ROIs that the fiber passes through
-  vtkSetObjectMacro(ConvolutionKernel, vtkDoubleArray);
-  vtkGetObjectMacro(ConvolutionKernel, vtkDoubleArray);
-
  protected:
   vtkDisplayTracts();
   ~vtkDisplayTracts();
@@ -172,13 +143,6 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
   void CreateGraphicsObjects();
   void ApplyUserSettingsToGraphicsObject(int index);
   void DeleteStreamline(int index);
-
-  // To be moved
-  vtkClusterTracts *TractClusterer;
-  // Remove 0-length streamlines before clustering.
-  void CleanStreamlines();
-  // To be moved
-  vtkDoubleArray *ConvolutionKernel;
 
   vtkTransform *WorldToTensorScaledIJK;
 
