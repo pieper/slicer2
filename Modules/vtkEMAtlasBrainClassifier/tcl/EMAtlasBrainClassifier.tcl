@@ -106,7 +106,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.18 $} {$Date: 2005/09/21 18:53:54 $}]
+        {$Revision: 1.19 $} {$Date: 2005/09/22 01:32:36 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -1358,7 +1358,7 @@ proc EMAtlasBrainClassifierResample {inTarget inSource outResampled} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_InitilizeSegmentation { } {
+proc EMAtlasBrainClassifier_InitilizeSegmentation {ValueFlag} {
     global EMAtlasBrainClassifier Volume EMSegment
 
     # Read XML File  
@@ -1368,7 +1368,7 @@ proc EMAtlasBrainClassifier_InitilizeSegmentation { } {
     MainMrmlBuildTreesVersion2.0 $tags
     MainUpdateMRML
 
-    if {$EMAtlasBrainClassifier(SegmentationMode) == "EMAtlasBrainClassifier" } {EMAtlasBrainClassifierInitializeValues }
+    if {$ValueFlag } {EMAtlasBrainClassifierInitializeValues }
 
     # Set Segmentation Boundary  so that if you have images of other dimension it will segment them correctly
     set VolID $EMAtlasBrainClassifier(Volume,SPGR)
@@ -1382,10 +1382,10 @@ proc EMAtlasBrainClassifier_InitilizeSegmentation { } {
     set EMAtlasBrainClassifier(SegmentationBoundaryMax,1) $EMSegment(SegmentationBoundaryMax,1) 
     set EMAtlasBrainClassifier(SegmentationBoundaryMax,2) $EMSegment(SegmentationBoundaryMax,2) 
 
-    if {$EMAtlasBrainClassifier(SegmentationMode) == "EMAtlasBrainClassifier" } { 
-    set pid $EMAtlasBrainClassifier(vtkMrmlSegmenterNode)
-    eval Segmenter($pid,node) SetSegmentationBoundaryMin "1 1 1"
-    eval Segmenter($pid,node) SetSegmentationBoundaryMax "$EMAtlasBrainClassifier(SegmentationBoundaryMax,0) $EMAtlasBrainClassifier(SegmentationBoundaryMax,1) $EMAtlasBrainClassifier(SegmentationBoundaryMax,2)"
+    if {$ValueFlag } { 
+      set pid $EMAtlasBrainClassifier(vtkMrmlSegmenterNode)
+      eval Segmenter($pid,node) SetSegmentationBoundaryMin "1 1 1"
+      eval Segmenter($pid,node) SetSegmentationBoundaryMax "$EMAtlasBrainClassifier(SegmentationBoundaryMax,0) $EMAtlasBrainClassifier(SegmentationBoundaryMax,1) $EMAtlasBrainClassifier(SegmentationBoundaryMax,2)"
     }
 }
 
@@ -2051,23 +2051,29 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
 
     puts "=========== Segment Image ============ "
     # Start algorithm
-    EMAtlasBrainClassifier_InitilizeSegmentation  
-
     # If you want to run the segmentatition pipeline with other EM Segmentation versions just added it here 
     switch $EMAtlasBrainClassifier(SegmentationMode) {
-        "EMLocalSegment"         { EMSegmentStartEM 
-                               set EMAtlasBrainClassifier(LatestLabelMap) $EMSegment(LatestLabelMap) 
+        "EMLocalSegment"         {  EMAtlasBrainClassifier_InitilizeSegmentation  0
+                                    EMSegmentStartEM 
+                                    set EMAtlasBrainClassifier(LatestLabelMap) $EMSegment(LatestLabelMap) 
+                                    EMAtlasBrainClassifier_SaveSegmentation  
                                  }
-        "EMPrivateSegment"       { # Just run EMAtlasBrainClassifer another time but now in mode EMAtlasBrainClassifier 
-                               # Save Mrml Tree to xml file 
-                                   # Delete everything
-                                   # check if segmentation script exists and run it 
-                                   # Return
-                             }
-    "EMAtlasBrainClassifier" { EMAtlasBrainClassifier_StartEM }
-    default   {DevErrorWindow "Error: Segmentation mode $EMAtlasBrainClassifier(SegmentationMode) is unknown"; return }
+        "EMPrivateSegment"       {  EMAtlasBrainClassifier_InitilizeSegmentation  1
+                                    set XMLFile $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation/segmentation.xml
+                                    MainMrmlWrite $XMLFile 
+                                    MainMrmlDeleteAll 
+                                    if {[info exists EMSegment(SegmentMode)] == 0} {
+                                       DevErrorWindow "Please source EMSegmentBatch before starting running in this mode"
+                                       return
+                    }  
+                                    Segmentation $XMLFile 
+                                 }
+        "EMAtlasBrainClassifier" {  EMAtlasBrainClassifier_InitilizeSegmentation  1
+                                    EMAtlasBrainClassifier_StartEM 
+                                    EMAtlasBrainClassifier_SaveSegmentation  
+                                 }
+         default   {DevErrorWindow "Error: Segmentation mode $EMAtlasBrainClassifier(SegmentationMode) is unknown"; return }
     }
-    EMAtlasBrainClassifier_SaveSegmentation  
     puts "=========== Finished  ============ "
 }
 
