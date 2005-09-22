@@ -970,6 +970,7 @@ proc fMRIEngineCountEVs {} {
         set ::fMRIModelView(Design,Run$r,UseDCBasis) 0 
         unset -nocomplain fMRIEngine($r,noOfEVs)
         unset -nocomplain fMRIEngine($r,namesOfEVs)
+        unset -nocomplain fMRIEngine($r,namesOfConditionEVs)
     }
 
     # how many real (not including baseline and DCBasis) evs for each run
@@ -1130,6 +1131,18 @@ proc fMRIEngineCountEVs {} {
             }
         }
         set fMRIEngine($r,namesOfEVs) [concat $names $fMRIEngine($r,namesOfEVs)] 
+    }
+
+    #--- wjp add: this lists EVs that are associated only with conditions
+    for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
+        foreach name $::fMRIEngine($r,namesOfEVs) {
+            set deriv [ string first "_dt" $name ]
+            set bline [ string first "baseline" $name ]
+            set basis [ string first "DCbasis" $name ]
+            if { ($deriv < 0 ) && ( $bline < 0 ) && ( $basis < 0 ) } {
+                lappend ::fMRIEngine($r,namesOfConditionEVs) $name
+            }
+        }
     }
 }
 

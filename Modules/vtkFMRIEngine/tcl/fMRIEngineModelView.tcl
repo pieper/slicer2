@@ -1309,12 +1309,14 @@ proc fMRIModelViewLongestEpochSpacing { } {
     }
     set ::fMRIModelView(Design,longestEpoch) $T
     #--- fmin is the cutoff frequency of the high-pass filter (lowest frequency
-    #--- that we let pass through. Choose to let fmin = 0.9/T (just less than the
-    #--- lowest frequency in paradigm). Is this too strict? Should user specify cutoff?
-    #--- could choose 0.5/T or 0.66/T instead as default to be more conservative.
-    #--- For now let's compute seven frequencies that span that band.
+    #--- that we let pass through. Choose to let fmin = 0.666666/T (just less than the
+    #--- lowest frequency in paradigm). As recommended in S.M. Smith, "Preparing fMRI
+    #--- data for statistical analysis, in 'Functional MRI, an introduction to methods', Jezzard,
+    #--- Matthews, Smith Eds. 2002, Oxford University Press.
+    #--- By default, we compute seven frequencies that span that band.
+    #--- Seven is dumb. how many do we really need?
     set num [ expr double ($::fMRIModelView(Design,numCosineBases)) ]
-    set ::fMRIModelView(Design,CosineBasisIncrement) [ expr (0.9/$T) / $num ]
+    set ::fMRIModelView(Design,CosineBasisIncrement) [ expr (0.666666/$T) / $num ]
 }
 
 
