@@ -210,7 +210,7 @@ proc fMRIEngineDrawPlotShort {x y z} {
 
     set count 1
     set noVols 0
-    foreach ev $fMRIEngine(allEVs) {
+    foreach ev $fMRIEngine(allConditionEVs) {
         set len [llength $fMRIEngine($ev,max)]
         # We have end points overlapping in the graph
         if {$noVols > 0} {
@@ -238,11 +238,11 @@ proc fMRIEngineDrawPlotShort {x y z} {
 
     # colors for lines
     set allColors [list red purple pink blue orange yellow]
-    set len [llength $fMRIEngine(allEVs)]
+    set len [llength $fMRIEngine(allConditionEVs)]
     set colors [lrange $allColors 0 [expr $len-2]]
     lappend colors black
 
-    foreach ev $fMRIEngine(allEVs) \
+    foreach ev $fMRIEngine(allConditionEVs) \
             color $colors {
         # cleaning
         if {[info exists fMRIEngine(curve$ev)] &&
@@ -319,18 +319,18 @@ proc fMRIEngineShowData {{loc 0}} {
         set fMRIEngine(currIndexForDataShow) 0
     } elseif {$loc == -2} {
         set fMRIEngine(currIndexForDataShow) \
-            [expr ($fMRIEngine(currIndexForDataShow)+1) % [llength $fMRIEngine(allEVs)]]
+            [expr ($fMRIEngine(currIndexForDataShow)+1) % [llength $fMRIEngine(allConditionEVs)]]
     } else {
         set i [expr $fMRIEngine(currIndexForDataShow)-1]
         if {$i < 0} {
             set fMRIEngine(currIndexForDataShow) \
-                [expr [llength $fMRIEngine(allEVs)]-1]
+                [expr [llength $fMRIEngine(allConditionEVs)]-1]
         } else {
             set fMRIEngine(currIndexForDataShow) $i
         }
     }
 
-    set ev [lindex $fMRIEngine(allEVs) $fMRIEngine(currIndexForDataShow)]
+    set ev [lindex $fMRIEngine(allConditionEVs) $fMRIEngine(currIndexForDataShow)]
     if {[info exists fMRIEngine(dataToplevel)]} { 
         fMRIEngineCloseDataWindow
     }
@@ -397,8 +397,8 @@ proc fMRIEngineSortEVsForStat {x y z} {
         unset -nocomplain fMRIEngine($r,timeCourse)
         unset -nocomplain fMRIEngine($r,fakeTimeCourse)
     }
-    if {[info exists fMRIEngine(allEVs)]} {
-        foreach name $fMRIEngine(allEVs) {
+    if {[info exists fMRIEngine(allConditionEVs)]} {
+        foreach name $fMRIEngine(allConditionEVs) {
             unset -nocomplain fMRIEngine(count$name)
             if {[info exists fMRIEngine($name,noOfSections)]} {
                 for {set c 1} {$c <= $fMRIEngine($name,noOfSections)} {incr c} {
@@ -557,8 +557,8 @@ proc fMRIEngineCreateCurvesFromTimeCourse {i j k} {
     global fMRIEngine
 
     # Cleaning
-    if {[info exists fMRIEngine(allEVs)]} {
-        foreach name $fMRIEngine(allEVs) {
+    if {[info exists fMRIEngine(allConditionEVs)]} {
+        foreach name $fMRIEngine(allConditionEVs) {
             unset -nocomplain fMRIEngine($name,max)
             unset -nocomplain fMRIEngine($name,min)
             unset -nocomplain fMRIEngine($name,ave)
@@ -573,23 +573,16 @@ proc fMRIEngineCreateCurvesFromTimeCourse {i j k} {
         set run 1
     }
  
-    unset -nocomplain fMRIEngine(allEVs)
-    #set fMRIEngine(allEVs) $fMRIEngine($run,namesOfEVs)
-
-    #--- wjp added 09/21/05: filter out temporal derivative EVs
-    foreach name $fMRIEngine($run,namesOfEVs) {
-        set tst [ string first "dt" $name ]
-        if  { $tst < 0 } {
-            lappend conditionEVs $name
-        }
-    }
-    set fMRIEngine(allEVs) $conditionEVs
-    set fMRIEngine(allEVs) [lappend fMRIEngine(allEVs) baseline]
+    unset -nocomplain fMRIEngine(allConditionEVs)
+    #---wjp changed 09/21/05 --only use conditionEVs
+    #set fMRIEngine(allConditionEVs) $fMRIEngine($run,namesOfEVs)
+    set fMRIEngine(allConditionEVs) $fMRIEngine($run,namesOfConditionEVs)
+    set fMRIEngine(allConditionEVs) [lappend fMRIEngine(allConditionEVs) baseline]
 
     # For each ev, there are multiple sections which may not be 
     # identical in length. Pick up the bigest length for the
     # following calculation:
-    foreach ev $fMRIEngine(allEVs) {
+    foreach ev $fMRIEngine(allConditionEVs) {
         set no $fMRIEngine($ev,noOfSections)
         set maxLen 1
         for {set k 1} {$k <= $no} {incr k} {
@@ -601,7 +594,7 @@ proc fMRIEngineCreateCurvesFromTimeCourse {i j k} {
         set fMRIEngine($ev,sectionLength) $maxLen
     }
 
-    foreach ev $fMRIEngine(allEVs) {
+    foreach ev $fMRIEngine(allConditionEVs) {
         set no $fMRIEngine($ev,noOfSections)
         set len $fMRIEngine($ev,sectionLength)
         
