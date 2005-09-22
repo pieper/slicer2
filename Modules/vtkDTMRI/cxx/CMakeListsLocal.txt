@@ -33,9 +33,9 @@ vtkTractShapeFeatures.cxx
 vtkClusterTracts.cxx
 vtkMrmlTractGroupNode.cxx
 vtkMrmlTractsNode.cxx
-#vtkSeedTracts.cxx
-#vtkDisplayTracts.cxx
-#vtkSaveTracts.cxx
+vtkSeedTracts.cxx
+vtkDisplayTracts.cxx
+vtkSaveTracts.cxx
 )
 
 ## classes that one does not want tcl wrapped
