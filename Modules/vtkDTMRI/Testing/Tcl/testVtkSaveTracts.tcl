@@ -105,8 +105,14 @@ vtkSaveTracts saveTracts
 
 saveTracts SetStreamlines [seedTracts GetStreamlines]
 saveTracts SetTubeFilters [displayTracts GetTubeFilters]
+saveTracts SetActors [displayTracts GetActors]
 
-saveTracts SaveStreamlinesAsPolyData tractsScene tract
+saveTracts SaveStreamlinesAsPolyData tractsVisualization tractV
+
+saveTracts DebugOn
+saveTracts SaveForAnalysisOn
+saveTracts SetInputTensorField $input
+saveTracts SaveStreamlinesAsPolyData tractsAnalysis tractA
 
 #######################  END Save tracts  #############################
 

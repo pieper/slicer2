@@ -42,12 +42,23 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkTransformPolyDataFilter.h"
 #include "vtkMrmlModelNode.h"
 
-#include "vtkPolyDataSource.h"
+//#include "vtkPolyDataSource.h"
 #include "vtkPolyData.h"
+#include "vtkTubeFilter.h"
+#include "vtkProbeFilter.h"
+#include "vtkPointData.h"
+#include "vtkMath.h"
+
+#include "vtkActor.h"
+#include "vtkProperty.h"
 
 #include <sstream>
 
-#include "vtkImageWriter.h"
+#include "vtkHyperStreamline.h"
+#include "vtkHyperStreamlinePoints.h"
+#include "vtkPreciseHyperStreamlinePoints.h"
+
+//#include "vtkImageWriter.h"
 
 //------------------------------------------------------------------------------
 vtkSaveTracts* vtkSaveTracts::New()
@@ -67,11 +78,15 @@ vtkSaveTracts::vtkSaveTracts()
 {
   // Initialize these to identity, so if the user doesn't set them it's okay.
   this->WorldToTensorScaledIJK = vtkTransform::New();
+  this->TensorRotationMatrix = vtkMatrix4x4::New();
 
   // collections
   this->Streamlines = NULL;
   this->TubeFilters = NULL;
-
+  this->Actors = NULL;
+  
+  // settings
+  this->SaveForAnalysis = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -83,11 +98,11 @@ vtkSaveTracts::~vtkSaveTracts()
 }
 
 
-void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
-                                                                char *name)
+void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,                                                                char *name)
 {
   this->SaveStreamlinesAsPolyData(filename, name, NULL);
 }
+
 
 // NOTE: Limit currently is 1000 models (1000 different input colors is max).
 //----------------------------------------------------------------------------
@@ -95,74 +110,139 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
                                               char *name,
                                               vtkMrmlTree *colorTree)
 {
-  vtkPolyData *currStreamline;
+  vtkHyperStreamline *currStreamline;
+  vtkTubeFilter *currTubeFilter;
+  vtkActor *currActor;
   vtkCollection *collectionOfModels;
   vtkAppendPolyData *currAppender;
   vtkPolyDataWriter *writer;
   vtkTransformPolyDataFilter *currTransformer;
   vtkTransform *currTransform;
+  double R[1000], G[1000], B[1000];
+  int arraySize=1000;
+  int lastColor;
+  int currColor, newColor, idx, found;
+  vtkFloatingPointType rgb_vtk_float[3];
+  double rgb[3];
   std::stringstream fileNameStr;
   vtkMrmlTree *tree;
   vtkMrmlModelNode *currNode;
   vtkMrmlColorNode *currColorNode;
   std::stringstream colorNameStr;
   vtkMrmlTree *colorTreeTwo;
-  vtkPolyDataSource *source;
 
-  // traverse streamline collection
+
+  // Test that we have required input
+  if (this->Streamlines == 0) 
+    {
+      vtkErrorMacro("You need to set the Streamlines before saving tracts.");
+      return;
+    }
+  if (this->TubeFilters == 0) 
+    {
+      vtkErrorMacro("You need to set the TubeFilters before saving tracts.");
+      return;
+    }
+  if (this->Actors == 0) 
+    {
+      vtkErrorMacro("You need to set the Actors before saving tracts.");
+      return;
+    }
+
+  // If saving for analysis need to have tensors to save
+  if (this->SaveForAnalysis) 
+    {
+      if (this->InputTensorField == 0) 
+        {      
+          vtkErrorMacro("You need to set the InputTensorField when using SaveForAnalysis.");
+          return;
+        }
+    }
+
+  // traverse streamline collection, grouping streamlines into models by color
+  this->Streamlines->InitTraversal();
   this->TubeFilters->InitTraversal();
-  source = dynamic_cast <vtkPolyDataSource *> 
-    (this->TubeFilters->GetNextItemAsObject());
+  this->Actors->InitTraversal();
+  currStreamline= (vtkHyperStreamline *)this->Streamlines->GetNextItemAsObject();
+  currTubeFilter= (vtkTubeFilter *) this->TubeFilters->GetNextItemAsObject();
+  currActor= (vtkActor *)this->Actors->GetNextItemAsObject();
 
   // test we have actors and streamlines
-  if (currStreamline == NULL)
+  if (currActor == NULL || currStreamline == NULL || currTubeFilter == NULL)
     {
       vtkErrorMacro("No streamlines have been created yet.");
       return;      
     }
 
   // init things with the first streamline.
+  currActor->GetProperty()->GetColor(rgb);
   currAppender = vtkAppendPolyData::New();
   collectionOfModels = vtkCollection::New();
   collectionOfModels->AddItem((vtkObject *)currAppender);
+  lastColor=0;
+  R[0]=rgb[0];
+  G[0]=rgb[1];
+  B[0]=rgb[2];
 
-  vtkDebugMacro("Traverse STREAMLINES");
-  while(source)
+  cout << "Traverse STREAMLINES" << endl;
+  while(currStreamline && currActor && currTubeFilter)
     {
-      
-      currStreamline = source->GetOutput();
-      vtkDebugMacro("stream " << currStreamline);
+      cout << "stream " << currStreamline << endl;
+      currColor=0;
+      newColor=1;
+      // If we have this color already, store its index in currColor
+      while (currColor<=lastColor && currColor<arraySize)
+        {
+          currActor->GetProperty()->GetColor(rgb);
+          if (rgb[0]==R[currColor] &&
+              rgb[1]==G[currColor] &&
+              rgb[2]==B[currColor])
+            {
+              newColor=0;
+              break;
+            }
+          currColor++;
+        }
 
-      // transform models so that they are written in the coordinate
-      // system in which they are displayed.
-      // Currently this class displays them with 
-      // currActor->SetUserMatrix(currTransform->GetMatrix());
-      currTransformer = vtkTransformPolyDataFilter::New();
-      currTransform = vtkTransform::New();
-      
-      // CONVERT this to get the right matrix
-      //currTransform->SetMatrix(currActor->GetUserMatrix());
+      // if this is a new color, we must create a new model to save.
+      if (newColor)
+        {
+          // add an appender to the collection of models.
+          currAppender = vtkAppendPolyData::New();
+          collectionOfModels->AddItem((vtkObject *)currAppender);
+          // increment count of colors
+          lastColor=currColor;
+          // save this color's info in the array
+          R[currColor]=rgb[0];
+          G[currColor]=rgb[1];
+          B[currColor]=rgb[2];
 
-      currTransformer->SetTransform(currTransform);
-      currTransformer->SetInput(currStreamline);
+        }
+      else
+        {
+          // use the appender number currColor that we found in the while loop
+          currAppender = (vtkAppendPolyData *) 
+            collectionOfModels->GetItemAsObject(currColor);
+        }
 
       // Append this streamline to the chosen model using the appender
-      currAppender->AddInput(currTransformer->GetOutput());
-
-      // call Delete on both to decrement the reference count
-      // so that when we delete the appender they delete too.
-      currTransformer->Delete();
-      currTransform->Delete();
-
+      if (this->SaveForAnalysis) {
+        currAppender->AddInput(currStreamline->GetOutput());
+      } 
+      else {
+        currAppender->AddInput(currTubeFilter->GetOutput());        
+      }
       // get next objects in collections
-      source = dynamic_cast <vtkPolyDataSource *> 
-        (this->TubeFilters->GetNextItemAsObject());
+      currStreamline= (vtkHyperStreamline *)
+        this->Streamlines->GetNextItemAsObject();
+      currTubeFilter= (vtkTubeFilter *)
+        this->TubeFilters->GetNextItemAsObject();
+      currActor = (vtkActor *) this->Actors->GetNextItemAsObject();
     }
 
 
   // traverse appender collection (collectionOfModels) and write each to disk
-  vtkDebugMacro("Traverse APPENDERS");
-
+  cout << "Traverse APPENDERS" << endl;
   writer = vtkPolyDataWriter::New();
   tree = vtkMrmlTree::New();
   // object to hold any new colors we encounter (not on input color tree)
@@ -171,19 +251,140 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
   collectionOfModels->InitTraversal();
   currAppender = (vtkAppendPolyData *) 
     collectionOfModels->GetNextItemAsObject();
-  int idx=0;
+  idx=0;
+
+  // Create transformation matrix for writing paths.
+  // This was used to place actors in scene.
+  // (scaled IJK to world)
+  currTransform=vtkTransform::New();
+  currTransform->SetMatrix(this->WorldToTensorScaledIJK->GetMatrix());
+  currTransform->Inverse();
+
   while(currAppender)
     {
-      vtkDebugMacro("appender index: " << idx);
+      cout << idx << endl;
 
-      writer->SetInput(currAppender->GetOutput());
+
+      if (this->SaveForAnalysis) {
+        // First find the tensors that correspond to each point on the paths.
+        // Note the paths are still in the scaled IJK coordinate system
+        // so the probing makes sense.
+        vtkProbeFilter *probe = vtkProbeFilter::New();
+        probe->SetSource(this->InputTensorField);
+        probe->SetInput(currAppender->GetOutput());
+        vtkDebugMacro("Probing tensors");
+        probe->Update();
+
+
+        // Next transform models so that they are written in the coordinate
+        // system in which they are displayed. (world coordinates, RAS + transforms)
+        currTransformer = vtkTransformPolyDataFilter::New();
+        currTransformer->SetTransform(currTransform);
+        currTransformer->SetInput(probe->GetPolyDataOutput());
+        vtkDebugMacro("Transforming PolyData");
+        currTransformer->Update();
+        
+        // Here we rotate the tensors into the same (world) coordinate system.
+        // -------------------------------------------------
+        vtkDebugMacro("Rotating tensors");
+        int numPts = probe->GetPolyDataOutput()->GetNumberOfPoints();
+        vtkFloatArray *newTensors = vtkFloatArray::New();
+        newTensors->SetNumberOfComponents(9);
+        newTensors->Allocate(9*numPts);
+        
+        vtkDebugMacro("Rotating tensors: init");
+        double (*matrix)[4] = this->TensorRotationMatrix->Element;
+        double tensor[9];
+        double tensor3x3[3][3];
+        double temp3x3[3][3];
+        double matrix3x3[3][3];
+        double matrixTranspose3x3[3][3];
+        for (int row = 0; row < 3; row++)
+          {
+            for (int col = 0; col < 3; col++)
+              {
+                matrix3x3[row][col] = matrix[row][col];
+                matrixTranspose3x3[row][col] = matrix[col][row];
+              }
+          }
+        
+        vtkDebugMacro("Rotating tensors: get tensors from probe");        
+        vtkDataArray *oldTensors = probe->GetOutput()->GetPointData()->GetTensors();
+        
+        vtkDebugMacro("Rotating tensors: rotate");
+        for (vtkIdType i = 0; i < numPts; i++)
+          {
+            oldTensors->GetTuple(i,tensor);
+            int idx = 0;
+            for (int row = 0; row < 3; row++)
+              {
+                for (int col = 0; col < 3; col++)
+                  {
+                    tensor3x3[row][col] = tensor[idx];
+                    idx++;
+                  }
+              }          
+            // rotate by our matrix
+            // R T R'
+            vtkMath::Multiply3x3(matrix3x3,tensor3x3,temp3x3);
+            vtkMath::Multiply3x3(temp3x3,matrixTranspose3x3,tensor3x3);
+            
+            idx =0;
+            for (int row = 0; row < 3; row++)
+              {
+                for (int col = 0; col < 3; col++)
+                  {
+                    tensor[idx] = tensor3x3[row][col];
+                    idx++;
+                  }
+              }  
+            newTensors->InsertNextTuple(tensor);
+          }
+        
+        vtkDebugMacro("Rotating tensors: add to new pd");
+        vtkPolyData *data = vtkPolyData::New();
+        data->SetLines(currTransformer->GetOutput()->GetLines());
+        data->SetPoints(currTransformer->GetOutput()->GetPoints());
+        data->GetPointData()->SetTensors(newTensors);
+        vtkDebugMacro("Done rotating tensors");
+        // End of tensor rotation code.
+        // -------------------------------------------------
+        
+        writer->SetInput(data);
+        probe->Delete();
+      }
+      else {
+        // Else we are saving just the output tube
+        // Next transform models so that they are written in the coordinate
+        // system in which they are displayed. (world coordinates, RAS + transforms)
+        currTransformer = vtkTransformPolyDataFilter::New();
+        currTransformer->SetTransform(currTransform);
+        currTransformer->SetInput(currAppender->GetOutput());
+        currTransformer->Update();
+
+        writer->SetInput(currTransformer->GetOutput());
+
+      }
+
+
+      // Write as binary
       writer->SetFileType(2);
+
+      // Check for scalars
+      int ScalarVisibility = 0;
+      double range[2];
+      if (writer->GetInput()->GetPointData()->GetScalars()) {
+        ScalarVisibility = 1;
+        writer->GetInput()->GetPointData()->GetScalars()->GetRange(range);
+      }
+
       // clear the buffer (set to empty string)
       fileNameStr.str("");
-      fileNameStr << name << '_' << idx << ".vtk";
+      fileNameStr << filename << '_' << idx << ".vtk";
       writer->SetFileName(fileNameStr.str().c_str());
       writer->Write();
-      
+      currTransformer->Delete();
+
       // Delete it (but it survives until the collection it's on is deleted).
       currAppender->Delete();
 
@@ -191,24 +392,61 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
       currNode=vtkMrmlModelNode::New();
       currNode->SetFullFileName(fileNameStr.str().c_str());
       currNode->SetFileName(fileNameStr.str().c_str());
-      currNode->BackfaceCullingOff();
       // use the name argument to name the model (name label in slicer GUI)
       fileNameStr.str("");
       fileNameStr << name << '_' << idx;
       currNode->SetName(fileNameStr.str().c_str());
       currNode->SetDescription("Model of a DTMRI tract");
 
-      // CONVERT this to use some info in this class
-      //if (this->ScalarVisibility) currNode->ScalarVisibilityOn();
 
+      if (ScalarVisibility) {
+        currNode->ScalarVisibilityOn();
+        currNode->SetScalarRange(range);
+      }
       currNode->ClippingOn();
 
-      // CONVERT this to use some info in this class
-      //currNode->SetScalarRange(this->StreamlineLookupTable->GetTableRange());
 
       // Find the name of the color if it's on the input color tree.
-      // CONVERT this to use the new LUT and tract group IDs
-      // tie the node to its color
+      found = 0;
+      if (colorTree)
+        {
+          colorTree->InitTraversal();
+          currColorNode = (vtkMrmlColorNode *) colorTree->GetNextItemAsObject();
+          while (currColorNode)
+            {
+              currColorNode->GetDiffuseColor(rgb_vtk_float);
+              if (rgb_vtk_float[0]==R[idx] &&
+                  rgb_vtk_float[1]==G[idx] &&
+                  rgb_vtk_float[2]==B[idx])              
+                {
+                  found = 1;
+                  currNode->SetColor(currColorNode->GetName());
+                  break;
+                }
+              currColorNode = (vtkMrmlColorNode *) 
+                colorTree->GetNextItemAsObject();
+            }
+        }
+
+      // If we didn't find the color on the input color tree, 
+      // make a node for it then put it onto the new color tree.
+      if (found == 0) 
+        {
+          currColorNode = vtkMrmlColorNode::New();
+          rgb_vtk_float[0] = R[idx];
+          rgb_vtk_float[1] = G[idx];
+          rgb_vtk_float[2] = B[idx];
+          currColorNode->SetDiffuseColor(rgb_vtk_float);
+          colorNameStr.str("");
+          colorNameStr << "class_" << idx ;
+          currColorNode->SetName(colorNameStr.str().c_str());
+          currNode->SetColor(currColorNode->GetName());
+          // add it to the MRML tree with new colors
+          colorTreeTwo->AddItem(currColorNode);
+          // call Delete to decrement the reference count
+          // so that when we delete the tree the nodes delete too.
+          currColorNode->Delete();
+        }
 
       // add it to the MRML file
       tree->AddItem(currNode);
@@ -230,8 +468,6 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
             colorTree->GetNextItemAsObject();
         }
     }
-  
-  // CONVERT this to use the new LUT and tract group labels
   // Also add any new colors we found
   colorTreeTwo->InitTraversal();
   currColorNode = (vtkMrmlColorNode *) colorTreeTwo->GetNextItemAsObject();      
@@ -254,8 +490,13 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
   writer->Delete();
   tree->Delete();
   colorTreeTwo->Delete();
+  currTransform->Delete();
 
 }
+
+
+
+
 
 
 

@@ -38,7 +38,12 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // .NAME vtkMultipleStreamlineController - 
 // .SECTION Description
 // Handles save functionality for objects representing tracts.
-//
+// Takes as input collections of streamline objects.
+// Can use SaveForAnalysis mode (saves tensors at each point
+// of the input polydata, for this an InputTensorField is needed).
+// Otherwise just saves the input polydata.
+// Input is grouped by color (according to color from input actor
+// collection) and each color is saved as a separate polydata file.
 
 #ifndef __vtkMultipleStreamlineController_h
 #define __vtkMultipleStreamlineController_h
@@ -48,12 +53,9 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkObjectFactory.h"
 #include "vtkCollection.h"
 #include "vtkTransform.h"
-
 #include "vtkMrmlTree.h"
+#include "vtkImageData.h"
 
-#include "vtkHyperStreamline.h"
-#include "vtkHyperStreamlinePoints.h"
-#include "vtkPreciseHyperStreamlinePoints.h"
 
 
 class VTK_DTMRI_EXPORT vtkSaveTracts : public vtkObject
@@ -82,19 +84,55 @@ class VTK_DTMRI_EXPORT vtkSaveTracts : public vtkObject
                                  vtkMrmlTree *colorTree);
 
   // Description
-  // Inputs to this class (things we may save)
+  // Input to this class (things we may save)
   vtkSetObjectMacro(Streamlines, vtkCollection);
+
+  // Description
+  // Input to this class (things we may save)
   vtkSetObjectMacro(TubeFilters, vtkCollection);
+
+  // Description
+  // Input to this class (to save tensors along tract path)
+  vtkSetObjectMacro(InputTensorField, vtkImageData);
+
+  // Description
+  // Input to this class (for grabbing colors). This 
+  // may change to a colorID array.
+  vtkSetObjectMacro(Actors, vtkCollection);
+
+  // Example usage is as follows:
+  // 1) If tensors are to be saved in a coordinate system
+  //    that is not IJK (array-based), and the whole volume is
+  //    being rotated, each tensor needs also to be rotated.
+  //    First find the matrix that positions your tensor volume.
+  //    This is how the entire volume is positioned, not 
+  //    the matrix that positions an arbitrary reformatted slice.
+  // 2) Remove scaling and translation from this matrix; we
+  //    just need to rotate each tensor.
+  // 3) Set TensorRotationMatrix to this rotation matrix.
+  //
+  vtkSetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
+  vtkGetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
+
+  vtkSetMacro(SaveForAnalysis,int);
+  vtkGetMacro(SaveForAnalysis,int);
+  vtkBooleanMacro(SaveForAnalysis,int);
 
  protected:
   vtkSaveTracts();
   ~vtkSaveTracts();
 
+  vtkImageData *InputTensorField;
+
   vtkTransform *WorldToTensorScaledIJK;
+  vtkMatrix4x4 *TensorRotationMatrix;
 
   vtkCollection *Streamlines;
   vtkCollection *TubeFilters;
+  vtkCollection *Actors;
 
+
+  int SaveForAnalysis;
 };
 
 #endif
