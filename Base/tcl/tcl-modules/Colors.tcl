@@ -84,7 +84,7 @@ proc ColorsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.28.6.3 $} {$Date: 2005/09/21 21:56:01 $}]
+        {$Revision: 1.28.6.4 $} {$Date: 2005/09/22 21:54:13 $}]
 
     # the LUT to affect by the colour scale editing
     set Color(LUT,currentID) -1
@@ -359,14 +359,18 @@ and use the new ones as your default colors.
     DevAddFileBrowse $f Color fileName "MRML color file:" "ColorsSetFileName" "xml" "" "Open" "Open a Color MRML file"
     eval {button $f.bLoad -text "Load" -width 7 \
               -command "ColorsLoadApply"} $Gui(WBA)
-    pack $f.bLoad -side top -pady $Gui(pad) 
+    TooltipAdd $f.bLoad "Deletes old colors"
+    eval {button $f.bAppend -text "Append Colors" -width 14 \
+              -command "ColorsLoadApply 0"} $Gui(WBA)
+    TooltipAdd $f.bAppend "Appends to color list"
+    pack $f.bLoad $f.bAppend -side top -pady $Gui(pad) 
 
     #-------------------------------------------
     # Load->Bot
     #-------------------------------------------
 
     set f $fLoad.fBot
-    eval {label $f.lWarning -text "Warning: Still experimental,\nNOT fully functional"} $Gui(WLA)
+    eval {label $f.lWarning -text "Appending colors will show the first color name\nfor that label on mouse roll over of label maps."} $Gui(WLA)
     pack $f.lWarning -side top -pady $Gui(pad)
                                                                                             
 }
@@ -386,16 +390,19 @@ proc ColorsSetFileName {}  {
 # .PROC ColorsLoadApply
 # 
 # .ARGS
+# int deleteFlag if 1, delete the old colours, else, don't, add to them. Defaults to 1
 # .END
 #-------------------------------------------------------------------------------
-proc ColorsLoadApply {} {
+proc ColorsLoadApply { {deleteFlag 1}} {
     global Color
 
     if {$::Module(verbose)} {
-        puts "ColorsLoadApply: experimental load of a new xml file with colour nodes\n\t$Color(fileName)"
+        puts "ColorsLoadApply: load of a new xml file with colour nodes\n\t$Color(fileName)"
     }
 
-    MainMrmlDeleteColors
+    if {$deleteFlag == 1} {
+        MainMrmlDeleteColors
+    }
     MainMrmlAddColorsFromFile $Color(fileName)
 
     # update the gui's color list
