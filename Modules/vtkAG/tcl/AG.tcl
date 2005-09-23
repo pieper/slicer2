@@ -172,7 +172,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.13 $} {$Date: 2005/08/05 14:09:49 $}]
+        {$Revision: 1.14 $} {$Date: 2005/09/23 17:24:51 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -2289,10 +2289,10 @@ proc RunAG {} {
       if { ($AG(InputVolMask)   != $Volume(idNone)) } {
           catch "Mask Delete"
     
-      vtkImageData Mask
+          vtkImageData Mask
 
-      Mask DeepCopy  [ Volume($AG(InputVolMask),vol) GetOutput]
-      warp SetMask Mask
+          Mask DeepCopy  [ Volume($AG(InputVolMask),vol) GetOutput]
+          warp SetMask Mask
  
       }
 
@@ -2317,11 +2317,11 @@ proc RunAG {} {
       puts "RunAG 4"
  
       if {[AGIntensityTransform Source] == 0 } {
-      warp SetIntensityTransform $AG(tfm)
-      set intesity_transform_object 1
+          warp SetIntensityTransform $AG(tfm)
+          set intesity_transform_object 1
           
       }  else  {
-      set intesity_transform_object 0
+          set intesity_transform_object 0
       }
 
       # This is necessary so that the data is updated correctly.
