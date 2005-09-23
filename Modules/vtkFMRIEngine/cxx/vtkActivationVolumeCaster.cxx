@@ -64,26 +64,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 vtkStandardNewMacro(vtkActivationVolumeCaster);
 
-
 vtkActivationVolumeCaster::vtkActivationVolumeCaster()
 {
-    this->MrmlDataVolume = NULL;
 }
-
-
-void vtkActivationVolumeCaster::SetMrmlDataVolume(vtkMrmlDataVolume *vol)
-{
-    if (vol != NULL)
-    {
-        this->MrmlDataVolume = vol;
-        this->SetInput(this->MrmlDataVolume->GetOutput());
-    }
-}
-
 
 void vtkActivationVolumeCaster::SimpleExecute(vtkImageData *input, vtkImageData* output)
 {
-    if (this->MrmlDataVolume == NULL)
+    if (this->GetInput() == NULL)
     {
         vtkErrorMacro( << "No input image data in this filter.");
         return;
@@ -103,57 +90,54 @@ void vtkActivationVolumeCaster::SimpleExecute(vtkImageData *input, vtkImageData*
     vtkDataArray *scalarsOutput = output->GetPointData()->GetScalars();
     vtkDataArray *scalarsInput = input->GetPointData()->GetScalars();
 
-    float low = fabs(this->MrmlDataVolume->GetIndirectLUT()->GetLowerThreshold());
-    float high = fabs(this->MrmlDataVolume->GetIndirectLUT()->GetUpperThreshold());
+    float low = fabs(this->LowerThreshold);
+    float high = fabs(this->UpperThreshold);
 
     // Apply threshold if desired
-    if (this->MrmlDataVolume->GetIndirectLUT()->GetApplyThreshold())
+    if (low <= high) 
     {
-        if (low <= high) 
+        // Voxel iteration through the entire image volume
+        for (int kk = 0; kk < imgDim[2]; kk++)
         {
-            // Voxel iteration through the entire image volume
-            for (int kk = 0; kk < imgDim[2]; kk++)
+            for (int jj = 0; jj < imgDim[1]; jj++)
             {
-                for (int jj = 0; jj < imgDim[1]; jj++)
+                for (int ii = 0; ii < imgDim[0]; ii++)
                 {
-                    for (int ii = 0; ii < imgDim[0]; ii++)
-                    {
-                        short val = 0;
-                        float v = (float) scalarsInput->GetComponent(indx, 0);
+                    short val = 0;
+                    float v = (float) scalarsInput->GetComponent(indx, 0);
 
-                        // Zero out values according to the FMRI mapping:
-                        //
-                        // |-------|-------|------|------|--------|-------|
-                        // Min    -h      -l      0      +l      +h       Max
-                        // show values between -h and -l, and
-                        //      values between +l and +h
-                        // zero out values less than -h, and
-                        //      values between -l and +l, and
-                        //      values above +h
-                        if ((v < low && v > (-low))  ||
+                    // Zero out values according to the FMRI mapping:
+                    //
+                    // |-------|-------|------|------|--------|-------|
+                    // Min    -h      -l      0      +l      +h       Max
+                    // show values between -h and -l, and
+                    //      values between +l and +h
+                    // zero out values less than -h, and
+                    //      values between -l and +l, and
+                    //      values above +h
+                    if ((v < low && v > (-low))  ||
                             (v > high)               ||
                             (v < (-high)))           
-                        {
-                            val = 0;
-                        }
-                        else
-                        {
-                            // All remaining values are kept positive shorts.
-                            // A volume may appear differently in slicer if we 
-                            // turn on/off the interpolation.
-                            val = (short) (ceil(fabs(v)));
-                        }
-                        scalarsOutput->SetComponent(indx++, 0, val);
+                    {
+                        val = 0;
                     }
+                    else
+                    {
+                        // All remaining values are kept positive shorts.
+                        // A volume may appear differently in slicer if we 
+                        // turn on/off the interpolation.
+                        val = (short) (ceil(fabs(v)));
+                    }
+                    scalarsOutput->SetComponent(indx++, 0, val);
                 }
             }
-        }    
-        // Zero out everything
-        else
-        {
-            short *ptr = (short *) output->GetScalarPointer();
-            memset(ptr, 0, imgDim[0]*imgDim[1]*imgDim[2]*sizeof(short));
         }
+    }    
+    // Zero out everything
+    else
+    {
+        short *ptr = (short *) output->GetScalarPointer();
+        memset(ptr, 0, imgDim[0]*imgDim[1]*imgDim[2]*sizeof(short));
     }
 
     double range[2];

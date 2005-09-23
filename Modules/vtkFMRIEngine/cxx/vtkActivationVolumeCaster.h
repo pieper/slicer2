@@ -59,7 +59,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <vtkFMRIEngineConfigure.h>
 #include "vtkSimpleImageToImageFilter.h" 
-#include "vtkMrmlDataVolume.h"
 
 class  VTK_FMRIENGINE_EXPORT vtkActivationVolumeCaster : public vtkSimpleImageToImageFilter
 {
@@ -73,13 +72,15 @@ public:
     vtkGetMacro(HighRange, short);
 
     // Description:
-    // Set the mrml data volume 
-    void SetMrmlDataVolume(vtkMrmlDataVolume *vol);
+    // Sets the lower/upper threshold  
+    vtkSetMacro(LowerThreshold, float);
+    vtkSetMacro(UpperThreshold, float);
 
 protected:
     vtkActivationVolumeCaster();
 
-    vtkMrmlDataVolume  *MrmlDataVolume;
+    float LowerThreshold;
+    float UpperThreshold;
     short LowRange;
     short HighRange;
 
