@@ -86,7 +86,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.61.6.1 $} {$Date: 2005/09/06 21:25:04 $}]
+        {$Revision: 1.61.6.2 $} {$Date: 2005/09/23 20:30:26 $}]
 
     set File(filePrefix) data
 }
@@ -330,13 +330,32 @@ proc MainFileSaveAs {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileSaveAsApply {} {
-    global File Mrml
+    global File Mrml Model
 
     # Prefix cannot be blank
     if {$File(filePrefix) == ""} {
         tk_messageBox -message "A file name must be specified"
     }
-    
+
+    # are all the models saved?
+    set unsavedModels ""
+    foreach m $Model(idList) {
+        if {[info exists Model($m,dirty)] == 1} {
+            if {$Model($m,dirty) == 1} {
+                lappend unsavedModels [Model($m,node) GetName]
+            }
+        }
+    }
+    if {[llength $unsavedModels] != 0} {
+        set msg "The polygon data for the following surface models are unsaved:\n$unsavedModels\nDo you wish to save the scene without the model(s)?"
+        if {[tk_messageBox -message $msg -type yesno] == no} {
+            if {!$::Module(verbose)} {
+                DevInfoWindow "You can save your models in the ModelMaker module, in the Save tab"
+            }
+            return
+        }
+    }
+
     # Relative to root
     set filename [file join $Mrml(dir) $File(filePrefix).xml]
 
