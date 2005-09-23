@@ -158,7 +158,7 @@ if { [itcl::find class isvolume] == "" } {
         method screensave { filename {imagetype "PNM"} } {} ;# TODO should be moved to superclass
         method volmenu_update {} {}
         method transform_update {} {}
-        method slicer_volume { {name ""} } {}
+        method slicer_volume { {name ""} {label_map "false"} } {}
         method set_spacing  {spacingI spacingJ spacingK} {}
         method set_dimensions  {dimensionI dimensionJ dimensionK} {}
         method scanorder{} {}
@@ -855,7 +855,7 @@ itcl::body isvolume::transform_update {} {
             vtkGridTransform dispXform 
             dispXform SetDisplacementGrid [::Volume($_warpVolId,vol) GetOutput]
             #$_xform PostMultiply 
-            dispXform Inverse
+            #dispXform Inverse
             $_xform Concatenate dispXform
             dispXform Delete
         }
@@ -935,7 +935,7 @@ itcl::body isvolume::screensave { filename {imagetype "PNM"} } {
 
 # ------------------------------------------------------------------
 
-itcl::body isvolume::slicer_volume { {name ""} } {
+itcl::body isvolume::slicer_volume { {name ""} {label_map "false"} } {
 
     if { [info command MainMrmlAddNode] == "" } {
         error "cannot create slicer volume outside of slicer"
@@ -989,6 +989,11 @@ itcl::body isvolume::slicer_volume { {name ""} } {
     ::Volume($i,node) SetScanOrder $itk_option(-orientation)
     ::Volume($i,node) SetDimensions [lindex [$id GetDimensions] 0] [lindex [$id GetDimensions] 1]
     ::Volume($i,node) SetImageRange 1 [lindex $_dimensions 2]
+
+    if { $label_map != "false" } {
+        ::Volume($i,node) SetLabelMap 1
+    }
+
     
     ::Volume($i,node) ComputeRasToIjkFromScanOrder [::Volume($i,node) GetScanOrder]
     Volume($i,vol) SetImageData $id
