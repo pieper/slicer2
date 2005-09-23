@@ -83,7 +83,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.49.10.3 $} {$Date: 2005/09/23 20:34:30 $}]
+        {$Revision: 1.49.10.4 $} {$Date: 2005/09/23 20:46:14 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -1023,9 +1023,8 @@ proc ModelMakerCreateAll { } {
       ModelMaker(cubes,$volid) SetInput $imdata
     if {$::Module(verbose)} {
         puts "calling generate values for [expr $lastLabel - $startLabel + 1] $startLabel $lastLabel"
-    } else {
-        set iterations $ModelMaker(smooth)
     }
+    set iterations $ModelMaker(smooth)
     ModelMaker(cubes,$volid) GenerateValues [expr $lastLabel - $startLabel + 1] $startLabel $lastLabel
     
 
