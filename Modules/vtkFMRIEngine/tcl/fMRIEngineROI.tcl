@@ -406,10 +406,9 @@ proc fMRIEngineBuildUIForROIBlob {parent} {
     pack $f.l -side top -fill x -pady 2 -padx 3 
 
     set f $parent.fTop
-    DevAddButton $f.bCast "Cast the activation" "fMRIEngineCastActivation" 15 
-    DevAddButton $f.bCreate "Create label map" "fMRIEngineCreateLabelMap" 15 
-    pack $f.bCast $f.bCreate -side top -fill x -pady 2 -padx 5
-
+    DevAddButton $f.bCast "Cast the activation" "fMRIEngineCastActivation" 25 
+    DevAddButton $f.bCreate "Create label map" "fMRIEngineCreateLabelMap" 25 
+    pack $f.bCast $f.bCreate -side top -pady 2 -padx 5
 }
 
 
@@ -464,6 +463,8 @@ proc fMRIEngineCreateLabelMap {} {
             set Ed(EdThreshold,interact) "Slices"
             EdThresholdApply
 
+            MainSlicesSetVolumeAll Fore Volume(idNone) 
+            MainSlicesSetVolumeAll Back Volume(idNone) 
             RenderAll
 
             return
@@ -494,7 +495,13 @@ proc fMRIEngineCastActivation {} {
             }
             vtkActivationVolumeCaster fMRIEngine(actVolumeCaster)
 
-            fMRIEngine(actVolumeCaster) SetMrmlDataVolume Volume($id,vol)
+            set low [[Volume($id,vol) GetIndirectLUT] GetLowerThreshold]
+            set high [[Volume($id,vol) GetIndirectLUT] GetUpperThreshold]
+            fMRIEngine(actVolumeCaster) SetLowerThreshold $low
+            fMRIEngine(actVolumeCaster) SetUpperThreshold $high
+
+            fMRIEngine(actVolumeCaster) SetInput [Volume($id,vol) GetOutput] 
+
             set act [fMRIEngine(actVolumeCaster) GetOutput]
             $act Update
 
