@@ -37,9 +37,9 @@
 # FILE:        fMRIEngineInspect.tcl
 # PROCEDURES:  
 #   fMRIEngineScaleActivation no
-#   fMRIEngineUpdateInspectTab
+#   fMRIEngineUpdateViewTab
 #   fMRIEngineInspectActVolume
-#   fMRIEngineBuildUIForInspectTab parent
+#   fMRIEngineBuildUIForViewTab parent
 #   fMRIEngineUpdateEVsForPlotting
 #   fMRIEngineSelectEVForPlotting ev count
 #==========================================================================auto=
@@ -95,12 +95,12 @@ proc fMRIEngineScaleActivation {v} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC fMRIEngineUpdateInspectTab
+# .PROC fMRIEngineUpdateViewTab
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineUpdateInspectTab {} {
+proc fMRIEngineUpdateViewTab {} {
     global fMRIEngine Gui Volume
 
     set fMRIEngine(tcPlottingOption) "" 
@@ -147,13 +147,13 @@ proc fMRIEngineInspectActVolume {} {
  
 
 #-------------------------------------------------------------------------------
-# .PROC fMRIEngineBuildUIForVisualizeTab
-# Creates UI for the visualize tab 
+# .PROC fMRIEngineBuildUIForViewTab
+# Creates UI for the view tab 
 # .ARGS
 # windowpath parent
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineBuildUIForVisualizeTab {parent} {
+proc fMRIEngineBuildUIForViewTab {parent} {
     global fMRIEngine Gui
 
     set f $parent
@@ -230,7 +230,7 @@ proc fMRIEngineBuildUIForPlot {parent} {
     pack $f.fTitle $f.fHighPass $f.fOptions -side top -fill x -padx 5 -pady 2 
 
     set f $parent.fPlot.fTitle
-    DevAddButton $f.bHelp "?" "fMRIEngineHelpVisualizePlotting" 2
+    DevAddButton $f.bHelp "?" "fMRIEngineHelpViewPlotting" 2
     DevAddLabel $f.lLabel "Time series plotting:"
     grid $f.bHelp $f.lLabel -padx 1 -pady 5 
 
@@ -247,7 +247,7 @@ proc fMRIEngineBuildUIForPlot {parent} {
     $f.eCutoff config -state disabled
     set fMRIEngine(gui,cutoffFrequencyEntry) $f.eCutoff
 
-    DevAddButton $f.bHelp "?" "fMRIEngineHelpVisualizeHighPassFiltering" 2
+    DevAddButton $f.bHelp "?" "fMRIEngineHelpViewHighPassFiltering" 2
 
     blt::table $f \
         0,0 $f.cbHighPass -cspan 3 -fill x -padx 2 -pady 3 \
@@ -349,7 +349,7 @@ proc fMRIEngineBuildUIForDisplay {parent} {
     }
 
     set f $parent.fThreshold.fTitle 
-    DevAddButton $f.bHelp "?" "fMRIEngineHelpVisualizeActivationThreshold" 2
+    DevAddButton $f.bHelp "?" "fMRIEngineHelpViewActivationThreshold" 2
     DevAddLabel $f.lLabel "Activation thresholding:"
     grid $f.bHelp $f.lLabel -padx 1 -pady 2 
 

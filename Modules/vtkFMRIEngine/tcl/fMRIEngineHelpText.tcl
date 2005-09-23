@@ -51,8 +51,8 @@
 #   fMRIEngineHelpSetupEstimate
 #   fMRIEngineHelpSetupContrasts
 #   fMRIEngineHelpComputeActivationVolume
-#   fMRIEngineHelpVisualizeActivationThreshold
-#   fMRIEngineHelpVisualizePlotting
+#   fMRIEngineHelpViewActivationThreshold
+#   fMRIEngineHelpViewPlotting
 #==========================================================================auto=
 
 proc fMRIEngineGetHelpWinID { } {
@@ -345,19 +345,19 @@ proc fMRIEngineHelpComputeActivationVolume { } {
     set txt "<H3>Computing an activation volume</H3>
 <P> After both estimating the model (computing the parameters B^) and defining contrasts, a two-sided T-test can be computed to test for evidence of each effect of interest. The output of each statistical test is a volume of T-statistics that represent the probability of brain activation at individual voxels.
 <P> To produce a statistical map from the fMRIEngine's <I>Compute</I> GUI, a contrast is selected and an associated output activation volume is named. The <I>compute</I> button generates the named volume of statistics and displays it in Slicer's main Viewer using a rainbow color palette; blue color indicates voxels with a lower T-score and red color indicates voxels with a high T-score. To view brain activation in the context of the subject's anatomy, this volume may be overlayed onto a co-registered high resolution structural scan in Slicer's Viewer. For display purposes, the window, level and threshold of the activation volume may be adjusted -- without altering the underlying T-statistics -- using the sliders in the <I>Display</I> tab of the Volumes module.
-<P>In the fMRIEngine's <I>Visualize</I> panel, the p-values may be thresholded to an appropriate significance level."
+<P>In the fMRIEngine's <I>View</I> panel, the p-values may be thresholded to an appropriate significance level."
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt    
 }
 
 
 #-------------------------------------------------------------------------------
-# .PROC fMRIEngineHelpVisualizeActivationThreshold
+# .PROC fMRIEngineHelpViewActivationThreshold
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineHelpVisualizeActivationThreshold { } {
-    #--- Visualize 
+proc fMRIEngineHelpViewActivationThreshold { } {
+    #--- View 
     #--- How to threshold activation?
     #--- Relationship between p-value, t-value
     #--- what is activation scale?
@@ -371,13 +371,13 @@ proc fMRIEngineHelpVisualizeActivationThreshold { } {
 
 
 #-------------------------------------------------------------------------------
-# .PROC fMRIEngineHelpVisualizeHighPassFiltering
+# .PROC fMRIEngineHelpViewHighPassFiltering
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineHelpVisualizeHighPassFiltering { } {
-    #--- Visualize 
+proc fMRIEngineHelpViewHighPassFiltering { } {
+    #--- View 
     #--- Default cutoff frequency
     set i [ fMRIEngineGetHelpWinID ]
     set txt "<H3>Default cutoff frequency</H3>
@@ -390,13 +390,13 @@ proc fMRIEngineHelpVisualizeHighPassFiltering { } {
 
 
 #-------------------------------------------------------------------------------
-# .PROC fMRIEngineHelpVisualizePlotting
+# .PROC fMRIEngineHelpViewPlotting
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineHelpVisualizePlotting { } {
-    #--- Visualize 
+proc fMRIEngineHelpViewPlotting { } {
+    #--- View 
     #--- Types of plotting
     set i [ fMRIEngineGetHelpWinID ]
     set txt "<H3>Voxel timecourse plotting</H3>
