@@ -85,7 +85,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.62 $} {$Date: 2005/09/08 20:43:14 $}]
+            {$Revision: 1.63 $} {$Date: 2005/09/23 21:24:22 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -218,6 +218,7 @@ proc ModelsBuildGUI {} {
     #   Bot
     #     Basic
     #     Advanced
+    #     Adv2
     # Clip
     #   Help
     #   Grid
@@ -332,7 +333,8 @@ proc ModelsBuildGUI {} {
 
     frame $f.fTop -bg $Gui(backdrop) -relief sunken -bd 2
     frame $f.fBot -bg $Gui(activeWorkspace) -height 300
-    pack $f.fTop $f.fBot -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+    pack $f.fTop -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+    pack $f.fBot -side top -pady $Gui(pad) -padx $Gui(pad) -fill both -expand true
 
     #-------------------------------------------
     # Props->Bot frame
@@ -340,7 +342,7 @@ proc ModelsBuildGUI {} {
     set f $fProps.fBot
 
     # add FreeSurfer
-    foreach type "Basic Advanced" {
+    foreach type "Basic Advanced Adv2" {
         frame $f.f${type} -bg $Gui(activeWorkspace)
         place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
         set Model(f${type}) $f.f${type}
@@ -379,7 +381,7 @@ proc ModelsBuildGUI {} {
     eval {label $f.l -text "Properties:"} $Gui(BLA)
     frame $f.f -bg $Gui(backdrop)
     # add FreeSurfer
-    foreach p "Basic Advanced" {
+    foreach p "Basic Advanced Adv2" {
         eval {radiobutton $f.f.r$p \
                 -text "$p" -command "ModelsSetPropertyType" \
                 -variable Model(propertyType) -value $p -width 8 \
@@ -415,6 +417,17 @@ proc ModelsBuildGUI {} {
     #    pack $f.fClipping $f.fCulling $f.fScalars $f.fDesc $f.fApply \
             #        -side top -fill x -pady $Gui(pad)
     pack $f.fClipping $f.fCulling $f.fScalars $f.fDesc  \
+            -side top -fill x -pady $Gui(pad)
+
+    #-------------------------------------------
+    # Props->Bot->Adv2 frame
+    #-------------------------------------------
+    set f $fProps.fBot.fAdv2
+
+    frame $f.fVectors -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fTensors -bg $Gui(activeWorkspace) -relief groove -bd 3
+
+    pack $f.fVectors $f.fTensors \
             -side top -fill x -pady $Gui(pad)
 
     #-------------------------------------------
@@ -630,8 +643,6 @@ proc ModelsBuildGUI {} {
     bind $f.eHi <FocusOut> "ModelsPropsApplyButNotToNew; Render3D"
     pack $f.l $f.eLo $f.eHi -side left -padx $Gui(pad)
 
-
-
     #-------------------------------------------
     # Props->Bot->Advanced->Desc frame
     #-------------------------------------------
@@ -653,6 +664,69 @@ proc ModelsBuildGUI {} {
     #        DevAddButton $f.bApply "Apply" "ModelsPropsApply; Render3D" 8
     #        DevAddButton $f.bCancel "Cancel" "ModelsPropsCancel" 8
     #        grid $f.bApply $f.bCancel -padx $Gui(pad) -pady $Gui(pad)
+
+
+    #-------------------------------------------
+    # Props->Bot->Adv2->Vectors frame
+    #-------------------------------------------
+    set f $fProps.fBot.fAdv2.fVectors
+    frame $f.fVisible -bg $Gui(activeWorkspace)
+    pack $f.fVisible -side top -pady $Gui(pad)
+
+    #-------------------------------------------
+    # Props->Bot->Adv2->Vectors->Visible frame
+    #-------------------------------------------
+    set f $fProps.fBot.fAdv2.fVectors.fVisible
+
+    DevAddLabel $f.l "Vectors Visible:"
+    frame $f.f -bg $Gui(activeWorkspace)
+    pack $f.l $f.f -side left -padx $Gui(pad) -pady 0
+    foreach text "{Yes} {No}" \
+            value "1 0" \
+            width "4 4" {
+        eval {radiobutton $f.f.rMode$value -width $width \
+                -text "$text" -value "$value" -variable Model(vectorVisibility) \
+                -command "ModelsPropsApplyButNotToNew; Render3D" \
+                -indicatoron 0} $Gui(WCA)
+        pack $f.f.rMode$value -side left
+    }
+
+    #-------------------------------------------
+    # Props->Bot->Adv2->Tensors frame
+    #-------------------------------------------
+    set f $fProps.fBot.fAdv2.fTensors
+    frame $f.fVisible -bg $Gui(activeWorkspace)
+    frame $f.fScaleFactor   -bg $Gui(activeWorkspace)
+    pack $f.fVisible $f.fScaleFactor -side top -pady $Gui(pad)
+
+    #-------------------------------------------
+    # Props->Bot->Adv2->Tensors->Visible frame
+    #-------------------------------------------
+    set f $fProps.fBot.fAdv2.fTensors.fVisible
+
+    DevAddLabel $f.l "Tensors Visible:"
+    frame $f.f -bg $Gui(activeWorkspace)
+    pack $f.l $f.f -side left -padx $Gui(pad) -pady 0
+    foreach text "{Yes} {No}" \
+            value "1 0" \
+            width "4 4" {
+        eval {radiobutton $f.f.rMode$value -width $width \
+                -text "$text" -value "$value" -variable Model(tensorVisibility) \
+                -command "ModelsPropsApplyButNotToNew; Render3D" \
+                -indicatoron 0} $Gui(WCA)
+        pack $f.f.rMode$value -side left
+    }
+
+    #-------------------------------------------
+    # Props->Bot->Adv2->Tensors->ScaleFactor frame
+    #-------------------------------------------
+    set f $fProps.fBot.fAdv2.fTensors.fScaleFactor
+
+    DevAddLabel $f.l "Scale Factor:"
+    eval {entry $f.e -textvariable Model(tensorScaleFactor) \
+            -width 4} $Gui(WEA)
+    bind $f.e <Return> "ModelsPropsApplyButNotToNew"
+    pack $f.l $f.e -side left -padx $Gui(pad) -pady 0
 
 
     #-------------------------------------------
@@ -976,6 +1050,10 @@ proc ModelsPropsApply {} {
     MainModelsSetCulling $m $Model(culling)
     MainModelsSetScalarVisibility $m $Model(scalarVisibility)
     MainModelsSetScalarRange $m $Model(scalarLo) $Model(scalarHi)
+    MainModelsSetVectorVisibility $m $Model(vectorVisibility)
+    MainModelsSetVectorScaleFactor $m $Model(vectorScaleFactor)
+    MainModelsSetTensorVisibility $m $Model(tensorVisibility)
+    MainModelsSetTensorScaleFactor $m $Model(tensorScaleFactor)
     MainModelsSetColor $m $Label(name)
 
     # If tabs are frozen, then return to the "freezer"

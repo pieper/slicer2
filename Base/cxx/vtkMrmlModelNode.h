@@ -121,6 +121,18 @@ public:
   vtkSetMacro(ScalarVisibility, int);
 
   // Description:
+  // Indicates whether to render the vector value associated with each polygon vertex
+  vtkBooleanMacro(VectorVisibility, int);
+  vtkGetMacro(VectorVisibility, int);
+  vtkSetMacro(VectorVisibility, int);
+
+  // Description:
+  // Indicates whether to render the tensor value associated with each polygon vertex
+  vtkBooleanMacro(TensorVisibility, int);
+  vtkGetMacro(TensorVisibility, int);
+  vtkSetMacro(TensorVisibility, int);
+
+  // Description:
   // Range of scalar values to render rather than the single color designated by colorName
   vtkSetVector2Macro(ScalarRange, vtkFloatingPointType);
   vtkGetVector2Macro(ScalarRange, vtkFloatingPointType);
@@ -152,6 +164,8 @@ protected:
   int Clipping;
   int BackfaceCulling;
   int ScalarVisibility;
+  int VectorVisibility;
+  int TensorVisibility;
 
   // Arrays
   vtkFloatingPointType ScalarRange[2];

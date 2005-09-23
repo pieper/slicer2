@@ -88,7 +88,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.62 $} {$Date: 2005/08/12 21:54:15 $}]
+        {$Revision: 1.63 $} {$Date: 2005/09/23 21:24:22 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -106,6 +106,10 @@ proc MainModelsInit {} {
     set Model(clipping) 0
     set Model(culling) 1
     set Model(scalarVisibility) 0
+    set Model(vectorVisibility) 0
+    set Model(vectorScaleFactor) 1
+    set Model(tensorVisibility) 0
+    set Model(tensorScaleFactor) 200
     set Model(scalarLo) 0
     set Model(scalarHi) 100
     set Model(desc) ""
@@ -418,6 +422,8 @@ proc MainModelsInitGUIVariables {m} {
     set Model($m,visibility)       [Model($m,node) GetVisibility]
     set Model($m,opacity)          [Model($m,node) GetOpacity]
     set Model($m,scalarVisibility) [Model($m,node) GetScalarVisibility]
+    set Model($m,vectorVisibility) [Model($m,node) GetScalarVisibility]
+    set Model($m,tensorVisibility) [Model($m,node) GetScalarVisibility]
     set Model($m,backfaceCulling)  [Model($m,node) GetBackfaceCulling]
     set Model($m,clipping)         [Model($m,node) GetClipping]
     # set expansion to 1 if variable doesn't exist
@@ -588,6 +594,12 @@ proc MainModelsCreateGUI {f m {hlevel 0}} {
     $men add check -label "Scalar Visibility" \
         -variable Model($m,scalarVisibility) \
         -command "MainModelsSetScalarVisibility $m; Render3D"
+    $men add check -label "Vector Visibility" \
+        -variable Model($m,vectorVisibility) \
+        -command "MainModelsSetVectorVisibility $m; Render3D"
+    $men add check -label "Tensor Visibility" \
+        -variable Model($m,tensorVisibility) \
+        -command "MainModelsSetTensorVisibility $m; Render3D"
     $men add check -label "Scalar Bar" \
         -variable Model($m,displayScalarBar) \
         -command "MainModelsToggleScalarBar $m; Render3D"
@@ -783,6 +795,8 @@ proc MainModelsSetActive {m} {
         set Model(opacity)          [default GetOpacity]
         set Model(culling)          [default GetBackfaceCulling]
         set Model(scalarVisibility) [default GetScalarVisibility]
+        set Model(vectorVisibility) [default GetVectorVisibility]
+        set Model(tensorVisibility) [default GetTensorVisibility]
         set Model(scalarLo)         [lindex [default GetScalarRange] 0]
         set Model(scalarHi)         [lindex [default GetScalarRange] 1]
         set Model(desc)             [default GetDescription]
@@ -800,6 +814,8 @@ proc MainModelsSetActive {m} {
         set Model(opacity)          [Model($m,node) GetOpacity]
         set Model(culling)          [Model($m,node) GetBackfaceCulling]
         set Model(scalarVisibility) [Model($m,node) GetScalarVisibility]
+        set Model(vectorVisibility) [Model($m,node) GetVectorVisibility]
+        set Model(tensorVisibility) [Model($m,node) GetTensorVisibility]
         set Model(scalarLo)         [lindex [Model($m,node) GetScalarRange] 0]
         set Model(scalarHi)         [lindex [Model($m,node) GetScalarRange] 1]
         set Model(desc)             [Model($m,node) GetDescription]
@@ -1077,6 +1093,135 @@ proc MainModelsSetScalarRange {m lo hi} {
         set Model(scalarHi) $hi
     }
 }
+
+proc MainModelsSetVectorVisibility {m {value ""}} {
+    global Model Module
+        
+    if {$value != ""} {
+        set Model($m,vectorVisibility) $value
+    }
+    Model($m,node) SetVectorVisibility $Model($m,vectorVisibility)
+
+    #Model($m,mapper,$Model(activeRenderer)) SetScalarVisibility \
+    #    [Model($m,node) GetScalarVisibility]
+    
+    puts "Vector visibility currently not implemented"
+
+    # If this is the active model, update GUI
+    if {$m == $Model(activeID)} {
+            set Model(vectorVisibility) [Model($m,node) GetVectorVisibility]
+    }
+}
+
+proc MainModelsSetVectorScaleFactor {m {value ""}} {
+    global Model Module
+        
+    if {$value != ""} {
+        set Model($m,vectorScaleFactor) $value
+    }
+
+    puts "Vector scale factor currently not implemented"
+    
+}
+
+proc MainModelsSetTensorVisibility {m {value ""}} {
+    global Model Module
+        
+    # if no change, return
+    if {$Model($m,tensorVisibility) == $value} {
+    return
+    }
+
+    # if empty string, return
+    if {$value == ""} {
+    return
+    }
+
+    # save previous value
+    set prevTensorVisibility $Model($m,tensorVisibility)
+
+    # set new value
+    set Model($m,tensorVisibility) $value
+    Model($m,node) SetTensorVisibility $Model($m,tensorVisibility)
+
+    # set up or remove display pipelines
+    if {$Model($m,tensorVisibility) == 1} {
+    catch {vtkSphereSource Model($m,sphereSource)}
+    Model($m,sphereSource) SetThetaResolution 12
+    Model($m,sphereSource) SetPhiResolution 12
+    
+    catch {vtkInteractiveTensorGlyph Model($m,tensorGlyph)}
+    Model($m,tensorGlyph) SetInput $Model($m,polyData)
+    #Model($m,tensorGlyph) SetSource [lineSource GetOutput]
+    Model($m,tensorGlyph) SetSource [Model($m,sphereSource) GetOutput]
+    Model($m,tensorGlyph) SetScaleFactor $Model(tensorScaleFactor)
+
+    catch {vtkActor Model($m,tensorGlyphActor)}
+    catch {vtkPolyDataMapper Model($m,tensorGlyphMapper)}
+    
+    # Update for scalar range
+    Model($m,tensorGlyph) Update
+    scan [[Model($m,tensorGlyph) GetOutput] GetScalarRange] \
+        "%f %f" s1 s2
+    Model($m,tensorGlyphMapper) SetScalarRange $s1 $s2
+
+    # Scalar visibility/color same as model color
+    Model($m,tensorGlyphMapper) SetScalarVisibility \
+        $Model($m,scalarVisibility)
+    set c $Model($m,colorID)
+    if {$c == ""} {
+    } else {
+        set prop [Model($m,tensorGlyphActor) GetProperty ]
+            $prop SetAmbient       [Color($c,node) GetAmbient]
+            $prop SetDiffuse       [Color($c,node) GetDiffuse]
+            $prop SetSpecular      [Color($c,node) GetSpecular]
+            $prop SetSpecularPower [Color($c,node) GetPower]
+            eval $prop SetColor    [Color($c,node) GetDiffuseColor]
+    }    
+
+    Model($m,tensorGlyphActor) SetMapper Model($m,tensorGlyphMapper)
+    
+    catch {vtkPolyDataNormals Model($m,tensorNormals)}
+    Model($m,tensorNormals) SetInput [Model($m,tensorGlyph) GetOutput]
+    
+    Model($m,tensorGlyphMapper) SetInput [Model($m,tensorNormals) GetOutput]
+    
+    MainAddActor Model($m,tensorGlyphActor)
+
+    } else {
+
+    # if we were displaying tensors, stop.
+    if {$prevTensorVisibility == 1} {
+        MainRemoveActor Model($m,tensorGlyphActor)
+        
+        # Also delete the pipeline
+        Model($m,sphereSource) Delete
+        Model($m,tensorGlyph) Delete
+        Model($m,tensorGlyphActor) Delete
+        Model($m,tensorGlyphMapper) Delete
+        Model($m,tensorNormals) Delete
+    }
+    }
+
+    # If this is the active model, update GUI
+    if {$m == $Model(activeID)} {
+            set Model(tensorVisibility) [Model($m,node) GetTensorVisibility]
+    }
+}
+
+proc MainModelsSetTensorScaleFactor {m {value ""}} {
+    global Model Module
+        
+    if {$value != ""} {
+        set Model($m,tensorScaleFactor) $value
+    }
+
+    # if our pipeline is set up set the value in the object
+    if {$Model($m,tensorVisibility) == 1} {
+    Model($m,tensorGlyph) SetScaleFactor $Model(tensorScaleFactor)
+    }
+}
+
  
 #-------------------------------------------------------------------------------
 # .PROC MainModelsRegisterModel

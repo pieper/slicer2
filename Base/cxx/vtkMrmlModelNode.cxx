@@ -70,6 +70,8 @@ vtkMrmlModelNode::vtkMrmlModelNode()
   this->Clipping = 0;
   this->BackfaceCulling = 1;
   this->ScalarVisibility = 0;
+  this->VectorVisibility = 0;
+  this->TensorVisibility = 0;
   
   // Arrays
   this->ScalarRange[0] = 0;
