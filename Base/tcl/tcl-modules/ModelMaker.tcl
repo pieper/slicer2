@@ -83,7 +83,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.49.10.2 $} {$Date: 2005/09/08 18:08:18 $}]
+        {$Revision: 1.49.10.3 $} {$Date: 2005/09/23 20:34:30 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -405,7 +405,7 @@ ScaledIJK to RAS</B> section.
     pack $f.cJointSmooth -side top -padx 0
 
     eval {button $f.bAll -text "Create All" -width 15 -command "ModelMakerCreateAll; Render3D"} $Gui(WBA)
-    TooltipAdd $f.bAll "Create models from all non zero labels in the active volume, between start and end labels"
+    TooltipAdd $f.bAll "Create models from all non zero labels in the active volume, between start and end labels. Uses settings from the Create tab."
     set ModelMaker(bCreateAll) $f.bAll
 
 if {0} {
@@ -735,11 +735,18 @@ proc ModelMakerWriteAll {} {
 proc ModelMakerRead {} {
     global ModelMaker Model Mrml
 
+    
     # Show user a File dialog box
     set m $Model(activeID)
     set ModelMaker(prefix) [MainFileOpenModel $m $ModelMaker(prefix)]
-    if {$ModelMaker(prefix) == ""} {return}
-    
+    if {$ModelMaker(prefix) == ""} {
+        if {::Module(verbose)} { puts "ModelMakerRead: empty prefix for model $m" }
+        return
+    }
+
+    if {::Module(verbose)} {
+        puts "ModelMakerRead, active model = $m, prefix = $ModelMaker(prefix)"
+    }
     # Read
     Model($m,node) SetFileName $ModelMaker(prefix).vtk
     Model($m,node) SetFullFileName \
@@ -854,6 +861,9 @@ proc ModelMakerCreate {} {
 
     # Create the model
     set m [$n GetID]
+    if {$::Module(verbose)} {
+        puts "ModelMakerCreate m = $m"
+    }
     MainModelsCreate $m
 
     # Registration
@@ -869,6 +879,9 @@ proc ModelMakerCreate {} {
         MainModelsDelete $m
         set ModelMaker(jointSmooth) $jointSmooth
         $ModelMaker(bCreate) config -state normal
+        if {$::Module(verbose)} {
+            puts "ERROR: ModelMakerMarch failed, deleted model $m, model id list = $::Model(idList), Model(idListDelete) = $Model(idListDelete)"
+        }
         return
     }
 
@@ -934,6 +947,8 @@ proc ModelMakerCreateAll { } {
     set numModels 0
     set skippedModels ""
     set madeModels ""
+    # set this model id to an invalid number as no models might be made
+    set m -1
 
     # Validate smooth
     if {[ValidateInt $ModelMaker(smooth)] == 0} {
@@ -963,9 +978,14 @@ proc ModelMakerCreateAll { } {
 
     set scalarType [$imdata GetScalarType]
     if {$scalarType == 3} {
+        if {$startLabel > 255} {
+            puts "WARNING: data scalar type is char, using start label of 255 instead of $startLabel"
+            set startLabel 255
+        }
         if {$ModelMaker(endLabel) < 255} {
             set lastLabel $ModelMaker(endLabel)
         } else {
+            puts "WARNING: data scalar type is char, using end label of 255 instead of $lastLabel"
             set lastLabel 255
         }
     }  else {
@@ -996,14 +1016,12 @@ proc ModelMakerCreateAll { } {
       histo${volid} Update
 
     if {$::Module(verbose)} {
-        puts "About to call marching cubes, creating ModelMaker(cubes,$volid)"
+        puts "About to call marching cubes, creating ModelMaker(cubes,$volid): startLabel = $startLabel, lastLabel = $lastLabel"
     }
     catch "ModelMaker(cubes,$volid) Delete"
     vtkDiscreteMarchingCubes ModelMaker(cubes,$volid)
       ModelMaker(cubes,$volid) SetInput $imdata
     if {$::Module(verbose)} {
-        puts "CUTTING DOWN FOR TESTING"
-        set iterations 1
         puts "calling generate values for [expr $lastLabel - $startLabel + 1] $startLabel $lastLabel"
     } else {
         set iterations $ModelMaker(smooth)
@@ -1125,7 +1143,9 @@ proc ModelMakerCreateAll { } {
     MainUpdateMRML
     
     # set the last one to be active
-    MainModelsSetActive $m
+    if {$numModels > 0} {
+        MainModelsSetActive $m
+    }
 
     # update the gui so all entry boxes are okay - Label(label) gets lost before get here, reset it
     set Label(label) $ModelMaker(endLabel)
@@ -1160,10 +1180,6 @@ proc ModelMakerCreateAll { } {
 #-------------------------------------------------------------------------------
 proc ModelMakerLabelCallback {} {
     global Label ModelMaker
-
-    if {$::Module(verbose)} {
-        puts "ModelMakerLabelCallback, Label(callback) = $Label(callback)"
-    }
 
     set ModelMaker(name)   $Label(name)
 
@@ -1461,7 +1477,7 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
         
         # If there are no polygons, then the smoother gets mad, so stop.
         if {$ModelMaker(n,$p) == 0} {
-            tk_messageBox -message "No polygons can be created."
+            tk_messageBox -message "Cannot create a model from label $Label(label).\nNo polygons can be created,\nthere may be no voxels with this label in the volume."
             thresh SetInput ""
             to SetInput ""
             if {$ModelMaker(jointSmooth) == 0} {
