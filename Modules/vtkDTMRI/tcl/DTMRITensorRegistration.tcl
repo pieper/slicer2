@@ -90,7 +90,7 @@ proc DTMRITensorRegistrationInit {} {
     #------------------------------------
     set m "TensorRegistration"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.14 $} {$Date: 2005/09/23 13:19:13 $}]
+                                 {$Revision: 1.15 $} {$Date: 2005/09/23 17:30:05 $}]
 
     # Does the AG module exist? If not the registration tab will not be displayed
     if {[catch "package require vtkAG"]} {
@@ -882,6 +882,48 @@ proc DTMRIRegCheckErrors {} {
     return 0
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIRegDeformationVolume
+#  Export the grid transform deformation to slicer's mrml tree for use
+#  with the TransformVolume module
+#  .END
+#-------------------------------------------------------------------------------
+proc DTMRIRegDeformationVolume {}  {
+     global DTMRI Volume Tensor Slice
+
+    if { [info command warp] == "" } {
+        DevErrorWindow "No Grid Transform yet"
+        return
+    }
+
+    # add a mrml node
+    set n [MainMrmlAddNode Volume]
+    set i [$n GetID]
+    MainVolumesCreate $i
+    
+    # set the name and description of the volume
+    $n SetName Deformation
+    $n SetDescription "Deformation volume"
+
+    set id "warp_image"
+    catch "$id Delete"
+    vtkImageData  $id
+    $id DeepCopy [warp GetDisplacementGrid]
+    
+    ::Volume($i,node) SetNumScalars 3
+    ::Volume($i,node) SetScalarType [$id GetScalarType]
+    
+    eval ::Volume($i,node) SetSpacing [$id GetSpacing]
+    
+    ::Volume($i,node) SetScanOrder LR
+    ::Volume($i,node) SetDimensions [lindex [$id GetDimensions] 0] [lindex [$id GetDimensions] 1]
+    ::Volume($i,node) SetImageRange 1 [lindex [$id GetDimensions] 2]
+    
+    ::Volume($i,node) ComputeRasToIjkFromScanOrder [::Volume($i,node) GetScanOrder]
+    ::Volume($i,vol) SetImageData $id
+    $id Delete
+    MainUpdateMRML
+}
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRIRegPrepareResultVolume
