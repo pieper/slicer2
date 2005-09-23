@@ -48,6 +48,8 @@ iscomm - a class for sending vtk objects between slicer instances
 
 note: this isn't a widget
 
+Uses vtkTclHelper, currently compiled in vtkQueryAtlas package
+
 # TODO : 
 
 }
@@ -70,10 +72,13 @@ if { [itcl::find class iscomm] == "" } {
       public variable local 1  ;# do (0) or don't (1) accept remote connections
 
       variable _name
+      variable _tcl
       variable _channel ""
 
       # client methods
-      method send { imagedata } {}
+      method GetImageData { remotename localname } {}
+      method SendImageDataScalars { name } {}
+      method RecvImageDataScalars { name } {}
 
       # server methods
       method accept {chan fid addr remport} {}
@@ -91,9 +96,24 @@ itcl::body iscomm::constructor {args} {
         error "iscomm doesn't work without the tcllib comm package"
     }
 
+    if { [catch "package require vtkQueryAtlas"] } {
+        error "iscomm doesn't work without the tcllib vtkQueryAtlas package"
+    }
+
     # make a unique name associated with this object
     set _name [namespace tail $this]
 
+    # create a tcl helper that will copy vtk binary data into 
+    # tcl variables and channels
+    set _tcl ::tcl_$_name
+    vtkTclHelper $_tcl
+
+    # special trick to let the tcl helper know what interp to use
+    set tag [$_tcl AddObserver ModifiedEvent ""]
+    $_tcl SetInterpFromCommand $tag
+
+
+    # create a listening channel for the server
     if { [lindex $args 0] == "server" } {
         set _channel [::comm::comm new ::channel_$_name -port $port -local $local -listen 1]
         ::comm::comm hook incoming "$this accept \$chan \$fid \$addr \$remport"
@@ -103,6 +123,7 @@ itcl::body iscomm::constructor {args} {
 
 itcl::body iscomm::destructor {} {
     
+    catch "$_tcl Delete"
     if { $_channel != "" } {
         $_channel destroy
     }
@@ -125,24 +146,29 @@ itcl::configbody iscomm::port {
 # ------------------------------------------------------------------
 
 
-itcl::body iscomm::send { imagedata } {
+itcl::body iscomm::GetImageData { remotename localname } {
 
-    set spw ::spw_${_name}
-    catch "$spw Delete"
-    vtkStructuredPointsWriter $spw
-    $spw SetInput $imagedata
-    $spw SetWriteToOutputString 1
-    $spw SetFileTypeToBinary
-    $spw Write
+    vtkImageData $localname
+    eval $localname SetDimensions [::comm::comm send $port "$remotename GetDimensions"]
+    eval $localname SetScalarType [::comm::comm send $port "$remotename GetScalarType"]
+    eval $localname SetNumberOfScalarComponents [::comm::comm send $port "$remotename GetNumberOfScalarComponents"]
+    $localname AllocateScalars
+    ::comm::comm send $port "c SendImageDataScalars $remotename"
+    $this RecvImageDataScalars $localname
 
-    # TODO: writing ascii to string fails in vtk!
-    #$spw SetFileTypeToASCII
+    ::comm::comm send $port "puts hoot"
+} 
 
+itcl::body iscomm::SendImageDataScalars { name } {
+    set sock [::comm::comm configure -socket]
+    $_tcl SetImageData $name
+    $_tcl SendImageDataScalars $sock 
+} 
 
-    # TODO - it appears we can't get the full binary string in tcl!
-
-    puts "[$spw GetOutputString]"
-    ::comm::comm send $port "set imagedata \"[$spw GetOutputString]\""
+itcl::body iscomm::RecvImageDataScalars { name } {
+    set sock [::comm::comm configure -socket]
+    $_tcl SetImageData $name
+    $_tcl RecvImageDataScalars $sock 
 } 
 
 itcl::body iscomm::accept { chan fid addr remport } {
@@ -150,22 +176,34 @@ itcl::body iscomm::accept { chan fid addr remport } {
     puts "accept $chan $fid $addr $remport"
 }
 
+# ------------------------------------------------------------------
+#                             DEMOS
+# ------------------------------------------------------------------
+
 proc iscomm_demo { {mode "server"} } {
 
     # create an iscomm instance named 'c'
-    catch {rename c ""}
+    catch {itcl::delete object c }
     iscomm c $mode
 
     switch $mode {
         "server" {
-            # do nothing
-        }
-        "client" {
-            # try sending a simple image data to the server
+            # we are sitting waiting for requests
+
+            # create a simple image data that the client can ask for
+            catch "e Delete"
+            vtkImageData e
             catch "es Delete"
             vtkImageEllipsoidSource es
-            [es GetOutput] Update
-            c send [es GetOutput]
+            es SetOutput e
+            e Update
+        }
+        "client" {
+            catch "es Delete"
+            c GetImageData e ecopy
+
+            puts "Got ecopy"
+            puts [ecopy Print]
         }
     }
 } 
