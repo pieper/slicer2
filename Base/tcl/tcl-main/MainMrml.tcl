@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainMrml \
-    {$Revision: 1.107.6.1 $} {$Date: 2005/09/21 21:56:31 $}]
+    {$Revision: 1.107.6.2 $} {$Date: 2005/09/23 20:27:08 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -228,7 +228,7 @@ proc MainMrmlPrint {tags} {
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlClearList
 # 
-# Delete the Id list for each data type
+# Delete the entries in the list of Ids to delete for the data type in Mrml(nodeTypeList)
 #
 # .ARGS
 # .END
