@@ -181,7 +181,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.26 $} {$Date: 2005/08/29 20:59:51 $}]
+        {$Revision: 1.27 $} {$Date: 2005/09/23 17:30:54 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -633,6 +633,11 @@ proc TransformVolumeRun {} {
         } else {
             $isv configure -interpolation "NearestNeighbor"
         }
+        if {[Volume($v,node) GetLabelMap] != 0} {
+            set label_map "true"
+        } else {
+            set label_map "false"
+        }
 
         TransformVolumePermuteDimensions
         TransformVolumePermuteSpacing
@@ -672,7 +677,7 @@ proc TransformVolumeRun {} {
         }
 
         # get the volume
-        $isv slicer_volume $resVolName
+        $isv slicer_volume $resVolName $label_map
         
     }
 
