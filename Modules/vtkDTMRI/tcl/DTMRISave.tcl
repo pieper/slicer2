@@ -55,7 +55,7 @@ proc DTMRISaveInit {} {
     #------------------------------------
     set m "Save"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.8 $} {$Date: 2005/09/21 18:03:52 $}]
+                                 {$Revision: 1.9 $} {$Date: 2005/09/23 02:32:15 $}]
 
     set DTMRI(Save,type) visualization
 }
@@ -158,41 +158,6 @@ proc DTMRISaveBuildGUI {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC DTMRISaveStreamlinesAsIJKPoints
-# Save all points from the streamline paths as text files
-# .ARGS
-# int verbose default is 1 
-# .END
-#-------------------------------------------------------------------------------
-proc DTMRISaveStreamlinesAsIJKPoints {{verbose "1"}} {
-    
-    # check we have streamlines
-    if {[DTMRI(vtk,streamlineControl) GetNumberOfStreamlines] < 1} {
-        set msg "There are no tracts to save. Please create tracts first."
-        tk_messageBox -message $msg
-        return
-    }
-
-    # set base filename for all stored files
-    set filename [tk_getSaveFile  -title "Save Tracts: Choose Initial Filename"]
-    if { $filename == "" } {
-        return
-    }
-
-    # save the tracts
-    DTMRI(vtk,streamlineControl) SaveStreamlinesAsTextFiles \
-        $filename 
-
-    # let user know something happened
-    if {$verbose == "1"} {
-        set msg "Finished writing tracts. The filenames are: $filename*.txt"
-        tk_messageBox -message $msg
-    }
-
-} 
-
-
-#-------------------------------------------------------------------------------
 # .PROC DTMRISaveStreamlinesAsModel
 # Save all streamlines as a vtk model(s).
 # Each color is written as a separate model.
@@ -219,25 +184,18 @@ proc DTMRISaveStreamlinesAsModel {{verbose "1"}} {
     # set name for models in slicer interface
     set modelname [file root [file tail $filename]]
 
-    # Set the matrix for rotating tensors into world space
-    vtkTransform trans
-    set t $Tensor(activeID)
-    DTMRICalculateIJKtoRASRotationMatrix trans $t
-    DTMRI(vtk,streamlineControl) SetTensorRotationMatrix [trans GetMatrix]
+    # get the object that performs saving
+    set saveTracts [DTMRI(vtk,streamlineControl) GetSaveTracts]
 
     # Set whether to save polylines and tensors or just tubes
     if {$DTMRI(Save,type) == "analysis"} {
-        DTMRI(vtk,streamlineControl) SaveForAnalysisOn
+        $saveTracts SaveForAnalysisOn
     } else {
-        DTMRI(vtk,streamlineControl) SaveForAnalysisOff
+        $saveTracts SaveForAnalysisOff
     }
 
     # save the models as well as a MRML file with their colors
-    DTMRI(vtk,streamlineControl) SaveStreamlinesAsPolyData \
-        $filename $modelname Mrml(colorTree)
-
-    # decrease reference count of the transform
-    trans Delete
+    $saveTracts SaveStreamlinesAsPolyData $filename $modelname Mrml(colorTree)
 
     # let user know something happened
     if {$verbose == "1"} {

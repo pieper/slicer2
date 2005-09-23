@@ -35,7 +35,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 =========================================================================auto=*/
-// .NAME vtkMultipleStreamlineController - 
+// .NAME vtkSaveTracts - 
 // .SECTION Description
 // Handles save functionality for objects representing tracts.
 // Takes as input collections of streamline objects.
@@ -45,8 +45,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // Input is grouped by color (according to color from input actor
 // collection) and each color is saved as a separate polydata file.
 
-#ifndef __vtkMultipleStreamlineController_h
-#define __vtkMultipleStreamlineController_h
+#ifndef __vtkSaveTracts_h
+#define __vtkSaveTracts_h
 
 #include "vtkDTMRIConfigure.h"
 #include "vtkObject.h"
@@ -113,6 +113,13 @@ class VTK_DTMRI_EXPORT vtkSaveTracts : public vtkObject
   //
   vtkSetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
   vtkGetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
+
+  // Description
+  // Transformation used to place streamlines in scene 
+  // (actually inverse of this transform). Needed to save
+  // paths in world coordinates.
+  vtkSetObjectMacro(WorldToTensorScaledIJK, vtkTransform);
+  vtkGetObjectMacro(WorldToTensorScaledIJK, vtkTransform);
 
   vtkSetMacro(SaveForAnalysis,int);
   vtkGetMacro(SaveForAnalysis,int);

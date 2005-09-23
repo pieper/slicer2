@@ -1,10 +1,20 @@
 # Imitate the Hyper.tcl script from VTK, but use our 
 # vtkMultiStreamlineController class
 
-#package require vtk
-#package require vtkinteraction
-#package require vtkSlicerBase
 package require vtkDTMRI
+
+# generate input tensor data
+vtkPointLoad ptLoad
+    ptLoad SetLoadValue 100.0
+    ptLoad SetSampleDimensions 20 20 20
+    ptLoad ComputeEffectiveStressOn
+    ptLoad SetModelBounds -10 10 -10 10 -10 10
+set input [ptLoad GetOutput]
+
+# this is needed so the streamControl object can
+# check whether the streamline start points are inside
+# the data.  Otherwise the data bounds aren't correct yet.
+ptLoad Update
 
 # Create the RenderWindow, Renderer and interactive renderer
 #
@@ -15,16 +25,20 @@ vtkRenderWindowInteractor iren
     iren SetRenderWindow renWin
 
 
+
 # Our class for managing streamlines
+#-----------------------------------
 vtkMultipleStreamlineController streamControl
 streamControl DebugOn
 
-# Renderers
+# Set input renderers for display
+#-----------------------------------
 vtkCollection renderers
 renderers AddItem ren1
 streamControl SetInputRenderers renderers
 
-# Type of streamlines to create
+# Set type of streamlines to create
+#-----------------------------------
 streamControl UseVtkHyperStreamlinePoints
 vtkHyperStreamlinePoints exampleObject
 exampleObject  IntegrateMinorEigenvector
@@ -41,29 +55,21 @@ exampleObject SetMaxCurvature 10
 # Give the streamControl this object to copy new ones from
 streamControl SetVtkHyperStreamlinePointsSettings exampleObject
 
-#
-# generate tensors
-vtkPointLoad ptLoad
-    ptLoad SetLoadValue 100.0
-    ptLoad SetSampleDimensions 20 20 20
-    ptLoad ComputeEffectiveStressOn
-    ptLoad SetModelBounds -10 10 -10 10 -10 10
-set input [ptLoad GetOutput]
 
 # Set the tensors as input to the streamline controller
+#-----------------------------------
 streamControl SetInputTensorField $input
 streamControl ScalarVisibilityOn
 
-# this is needed so the streamControl object can
-# check whether the streamline start points are inside
-# the data.  Otherwise the data bounds aren't correct yet.
-ptLoad Update
-
+# Set seed points and display the result
+#-----------------------------------
 streamControl SeedStreamlineFromPoint 9 9 -9
 streamControl SeedStreamlineFromPoint -9 -9 -9
 streamControl SeedStreamlineFromPoint 9 -9 -9
 streamControl SeedStreamlineFromPoint -9 9 -9
 streamControl AddStreamlinesToScene
+
+
 
 
 # plane for context
@@ -120,5 +126,16 @@ iren AddObserver UserEvent {wm deiconify .vtkInteract}
 
 # prevent the tk window from showing up then start the event loop
 wm withdraw .
+
+
+# Now test saving tracts
+#-----------------------------------------
+set saveTracts [streamControl GetSaveTracts]
+
+$saveTracts SaveStreamlinesAsPolyData tractsVisualization tractV
+$saveTracts DebugOn
+$saveTracts SaveForAnalysisOn
+$saveTracts SetInputTensorField $input
+$saveTracts SaveStreamlinesAsPolyData tractsAnalysis tractA
 
 

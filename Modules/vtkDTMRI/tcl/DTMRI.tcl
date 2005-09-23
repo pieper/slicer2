@@ -501,7 +501,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.106 $} {$Date: 2005/09/15 19:45:29 $}]
+                  {$Revision: 1.107 $} {$Date: 2005/09/23 02:32:15 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -602,6 +602,14 @@ proc DTMRIUpdateMRML {} {
         transform Inverse
         DTMRI(vtk,streamlineControl) SetWorldToTensorScaledIJK transform
         transform Delete 
+
+        # Set the matrix for rotating tensors into world space
+        vtkTransform transform
+        DTMRICalculateIJKtoRASRotationMatrix transform $t
+        DTMRI(vtk,streamlineControl) SetTensorRotationMatrix \
+            [transform GetMatrix]
+        transform Delete
+
     }
     
      # Do MRML update of Tensor nodes.

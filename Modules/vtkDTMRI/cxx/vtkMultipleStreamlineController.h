@@ -62,12 +62,13 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkActor.h"
 #include "vtkProperty.h"
 #include "vtkLookupTable.h"
-#include "vtkMrmlTree.h"
 #include "vtkShortArray.h"
 #include "vtkDoubleArray.h"
 #include "vtkPolyData.h"
 #include "vtkIntArray.h"
+
 #include "vtkClusterTracts.h"
+#include "vtkSaveTracts.h"
 
 
 #define USE_VTK_HYPERSTREAMLINE 0
@@ -99,12 +100,6 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // that pass through ROI2.
   void SeedStreamlinesFromROIIntersectWithROI2();
 
-  // Description
-  // Seed each streamline, cause it to Update, save its info to disk
-  // and then Delete it.  This is a way to seed in the whole brain
-  // without running out of memory. Nothing is displayed in the renderers.
-  // Both the models and the lines of points (text files) are saved.
-  void SeedAndSaveStreamlinesFromROI(char *pointsFilename, char *modelFilename);
   // Description
   // Seed streamlines with a certain density within the ROI.
   // The ROI here is a mask, of the white matter for example, and the output
@@ -145,38 +140,6 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // in the collection.
   int GetStreamlineIndexFromActor(vtkActor *pickedActor);
 
-  // Description
-  // Save streamlines as vtkPolyData models.
-  // Streamlines are grouped into model files based on their color.
-  // Files are saved as filename_0.vtk, filename_1.vtk, etc.
-  // A MRML file is saved as filename.xml.
-  // The MRML model names are name_0, name_1, etc.
-  void SaveStreamlinesAsPolyData(char *filename, char *name);
-
-  // Description
-  // Save streamlines as text files (one streamline per file).
-  // This can be replaced by a better file format.
-  void SaveStreamlinesAsTextFiles(char *filename);
-
-  // Description
-  // Save all streamlines in one text file, save FA in another, and save
-  // the class labels in a third.  Temporary function to write
-  // matlab-readable data from the slicer.
-  // This should be replaced by a better file format.
-  void SaveTractClustersAsTextFiles(char *filename);
-
-  // Description
-  // Save streamlines as vtkPolyData models.
-  // Streamlines are grouped into model files based on their color.
-  // Files are saved as filename_0.vtk, filename_1.vtk, etc.
-  // A MRML file is saved as filename.xml.
-  // The MRML model names are name_0, name_1, etc.  
-  // The optional colorTree argument lets us find and save in MRML
-  // the text names of the colors of each streamline.
-  void SaveStreamlinesAsPolyData(char *filename, char *name, 
-                                 vtkMrmlTree *colorTree);
-  
-  
   //Description
   // Find the streamlines that pass through the set of ROI values
   // stored in InputMultipleROIValues. This operation is performed
@@ -184,7 +147,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   void FindStreamlinesThatPassThroughROI();
 
 
- void ColorROIFromStreamlines();
+  void ColorROIFromStreamlines();
   
   //Description
   // Convert Streamline from Points representation to PolyLines
@@ -201,7 +164,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   
   // Description
   // Input tensor field in which to seed streamlines
-  vtkSetObjectMacro(InputTensorField, vtkImageData);
+  void SetInputTensorField(vtkImageData *tensorField);
   vtkGetObjectMacro(InputTensorField, vtkImageData);
 
   // Description
@@ -261,8 +224,14 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // Transformation used in seeding streamlines.  Their start
   // points are specified in the coordinate system of the ROI volume.
   // Transform world coordinates into scaled ijk of the tensor field.
-  vtkSetObjectMacro(WorldToTensorScaledIJK, vtkTransform);
+  void SetWorldToTensorScaledIJK(vtkTransform *);
   vtkGetObjectMacro(WorldToTensorScaledIJK, vtkTransform);
+
+  // Description
+  // Rotation used when placing tensors in scene (to align with the tracts
+  // which are transformed by the inverse of WorldToTensorScaledIJK)
+  // Used when saving tensors along tract paths.
+  void SetTensorRotationMatrix(vtkMatrix4x4 *trans);
 
   // Description
   // List of the output vtkHyperStreamlines (or subclasses)
@@ -350,30 +319,9 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // Get object that performs clustering (to set parameters)
   vtkGetObjectMacro(TractClusterer,vtkClusterTracts);
 
-  // Example usage is as follows:
-  // 1) If tensors are to be saved in a coordinate system
-  //    that is not IJK (array-based), and the whole volume is
-  //    being rotated, each tensor needs also to be rotated.
-  //    First find the matrix that positions your tensor volume.
-  //    This is how the entire volume is positioned, not 
-  //    the matrix that positions an arbitrary reformatted slice.
-  // 2) Remove scaling and translation from this matrix; we
-  //    just need to rotate each tensor.
-  // 3) Set TensorRotationMatrix to this rotation matrix.
-  //
-  vtkSetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
-  vtkGetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
-
-  vtkSetMacro(SaveForAnalysis,int);
-  vtkGetMacro(SaveForAnalysis,int);
-  vtkBooleanMacro(SaveForAnalysis,int);
-
   // Description
-  // To do list:
-  // Add Print function
-  // Add save functions
-  // Add observers for progress/implement progress updating
-  // Add check on all inputs
+  // Get object that performs saving (to set parameters)
+  vtkGetObjectMacro(SaveTracts,vtkSaveTracts);
 
  protected:
   vtkMultipleStreamlineController();
@@ -385,8 +333,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   void DeleteStreamline(int index);
   int PointWithinTensorData(double *point, double *pointw);
   vtkHyperStreamline *CreateHyperStreamline();
-  void SaveStreamlineAsTextFile(ofstream &filePoints,ofstream &fileAttribs,
-                                vtkHyperStreamlinePoints *currStreamline);
+
   // Remove 0-length streamlines before clustering.
   void CleanStreamlines();
 
@@ -434,18 +381,12 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // from changing the integration direction.
   int IntegrationDirection;
 
-  // Description:
-  // The error code contains a possible error that occured while
-  // writing a file.
-  vtkSetMacro( ErrorCode, unsigned long );
 
   vtkClusterTracts *TractClusterer;
 
-  unsigned long ErrorCode;
+  vtkSaveTracts *SaveTracts;
 
-  vtkMatrix4x4 *TensorRotationMatrix;
 
-  int SaveForAnalysis;
 };
 
 #endif

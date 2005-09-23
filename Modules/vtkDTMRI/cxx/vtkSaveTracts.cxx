@@ -42,7 +42,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkTransformPolyDataFilter.h"
 #include "vtkMrmlModelNode.h"
 
-//#include "vtkPolyDataSource.h"
 #include "vtkPolyData.h"
 #include "vtkTubeFilter.h"
 #include "vtkProbeFilter.h"
@@ -84,6 +83,9 @@ vtkSaveTracts::vtkSaveTracts()
   this->Streamlines = NULL;
   this->TubeFilters = NULL;
   this->Actors = NULL;
+
+  // optional input data
+  this->InputTensorField = NULL;
   
   // settings
   this->SaveForAnalysis = 0;

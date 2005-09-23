@@ -40,20 +40,12 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkPolyDataMapper.h"
 #include "vtkActor.h"
 #include "vtkRenderer.h"
-#include "vtkAppendPolyData.h"
-#include "vtkPolyDataWriter.h"
-#include "vtkTransformPolyDataFilter.h"
-#include "vtkMrmlModelNode.h"
 #include "vtkFloatArray.h"
-#include "vtkIntArray.h"
-#include "vtkErrorCode.h"
 #include "vtkCellArray.h"
 #include "vtkStreamlineConvolve.h"
 #include "vtkPruneStreamline.h"
 #include "vtkTubeFilter.h"
-#include "vtkProbeFilter.h"
 #include "vtkPointData.h"
-#include "vtkMath.h"
 
 #include <sstream>
 
@@ -123,11 +115,21 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
   this->StreamlinesAsPolyLines = vtkPolyData::New();
   this->StreamlineIdPassTest = vtkIntArray::New();
 
+ 
+  // Helper classes
+  // ---------------
+
   // for tract clustering
   this->TractClusterer = vtkClusterTracts::New();
 
-  // init to identity
-  this->TensorRotationMatrix = vtkMatrix4x4::New();
+  // for tract saving
+  this->SaveTracts = vtkSaveTracts::New();
+
+  // Helper class pipelines
+  // ----------------------
+  this->SaveTracts->SetStreamlines(this->Streamlines);
+  this->SaveTracts->SetTubeFilters(this->TubeFilters);
+  this->SaveTracts->SetActors(this->Actors);
 
 }
 
@@ -148,7 +150,75 @@ vtkMultipleStreamlineController::~vtkMultipleStreamlineController()
   this->StreamlinesAsPolyLines->Delete();
   this->StreamlineLookupTable->Delete();
   this->StreamlineIdPassTest->Delete();
+
+  // delete helper classes
+  this->TractClusterer->Delete();
+  this->SaveTracts->Delete();  
+  
 }
+
+
+//----------------------------------------------------------------------------
+void vtkMultipleStreamlineController::SetInputTensorField(vtkImageData *tensorField)
+{
+  
+  vtkDebugMacro("Setting input tensor field.");
+
+  // Decrease reference count of old object
+  if (this->InputTensorField != 0)
+    this->InputTensorField->UnRegister(this);
+
+  // Set new value in this class
+  this->InputTensorField = tensorField;
+
+  // Increase reference count of new object
+  if (this->InputTensorField != 0)
+    this->InputTensorField->Register(this);
+
+  // This class has changed
+  this->Modified();
+
+  // helper class pipelines
+  // ----------------------
+  this->SaveTracts->SetInputTensorField(this->InputTensorField);
+
+}
+
+//----------------------------------------------------------------------------
+void vtkMultipleStreamlineController::SetWorldToTensorScaledIJK(vtkTransform *trans)
+{
+  
+  vtkDebugMacro("Setting WorldToTensorScaledIJK.");
+
+  // Decrease reference count of old object
+  if (this->WorldToTensorScaledIJK != 0)
+    this->WorldToTensorScaledIJK->UnRegister(this);
+
+  // Set new value in this class
+  this->WorldToTensorScaledIJK = trans;
+
+  // Increase reference count of new object
+  if (this->WorldToTensorScaledIJK != 0)
+    this->WorldToTensorScaledIJK->Register(this);
+
+  // This class has changed
+  this->Modified();
+
+  // helper class pipelines
+  // ----------------------
+  this->SaveTracts->SetWorldToTensorScaledIJK(this->WorldToTensorScaledIJK);
+
+}
+
+//----------------------------------------------------------------------------
+void vtkMultipleStreamlineController::SetTensorRotationMatrix(vtkMatrix4x4 *trans)
+{
+
+  // helper class pipelines
+  // ----------------------
+  this->SaveTracts->SetTensorRotationMatrix(trans);
+}
+
 
 //----------------------------------------------------------------------------
 void vtkMultipleStreamlineController::SetScalarVisibility(int value)
@@ -437,483 +507,6 @@ int vtkMultipleStreamlineController::GetStreamlineIndexFromActor(vtkActor *picke
   // so now "not found" is -1, and >=0 are valid indices
   return(index);
 }
-
-// Save only one streamline. Called from within functions that save 
-// many streamlines in a loop.
-// Current format is x1,y1,z1 x2,y2,z2 x3,y3,z3 \n
-void vtkMultipleStreamlineController::SaveStreamlineAsTextFile(ofstream &filePoints,
-                                                               ofstream &fileAttribs,
-                                                               vtkHyperStreamlinePoints *currStreamline)
-{
-  vtkPoints *hs0, *hs1;
-  vtkFloatArray *attr0, *attr1;
-  int ptidx, numPts;
-  double point[3];
-
-  
-  //GetHyperStreamline0/1 and write their points.
-  hs0=currStreamline->GetHyperStreamline0();
-  hs1=currStreamline->GetHyperStreamline1();
-  attr0=currStreamline->GetFractionalAnisotropy0();
-  attr1=currStreamline->GetFractionalAnisotropy1();
-  
-  // Write the first one in reverse order since both lines
-  // travel outward from the initial point.
-  // Also, skip the first point in the second line since it
-  // is a duplicate of the initial point.
-  numPts=hs0->GetNumberOfPoints();
-  ptidx=numPts-1;
-  while (ptidx >= 0)
-    {
-      hs0->GetPoint(ptidx,point);
-      filePoints << point[0] << "," << point[1] << "," << point[2] << " ";
-      fileAttribs << attr0->GetValue(ptidx) << ",";
-      ptidx--;
-    }
-  numPts=hs1->GetNumberOfPoints();
-  ptidx=1;
-  while (ptidx < numPts)
-    {
-      hs1->GetPoint(ptidx,point);
-      filePoints << point[0] << "," << point[1] << "," << point[2] << " ";
-      fileAttribs << attr1->GetValue(ptidx) << ",";
-      ptidx++;
-    }
-  filePoints << endl;
-  fileAttribs << endl;
-}
-
-
-void vtkMultipleStreamlineController::SaveStreamlinesAsTextFiles(char *filename)
-{ 
-  std::stringstream fileNameStr;
-  vtkHyperStreamlinePoints *currStreamline;
-  ofstream filePoints;
-  ofstream fileAttribs;
-  int idx;
-
-  // traverse streamline collection
-  this->Streamlines->InitTraversal();
-  // TO DO: make sure this is a vtkHyperStreamlinePoints object
-  currStreamline= (vtkHyperStreamlinePoints *)this->Streamlines->GetNextItemAsObject();
-  
-  // test we have streamlines
-  if (currStreamline == NULL)
-    {
-      vtkErrorMacro("No streamlines have been created yet.");
-      return;      
-    }
-
-
-  cout << "Traverse STREAMLINES" << endl;
-
-  idx=0;
-  while(currStreamline)
-    {
-      cout << "stream " << currStreamline << endl;
-      
-      fileNameStr.str("");
-      fileNameStr << filename << '_' << idx << ".txt";
-      filePoints.open(fileNameStr.str().c_str());
-      if (filePoints.fail())
-        {
-          vtkErrorMacro("Write: Could not open file " << fileNameStr.str().c_str());
-          cerr << "Write: Could not open file " << fileNameStr.str().c_str();
-#if (VTK_MAJOR_VERSION <= 5)      
-          this->SetErrorCode(2);
-#else
-          this->SetErrorCode(vtkErrorCode::GetErrorCodeFromString("CannotOpenFileError"));
-#endif
-          return;
-        }
-
-      fileNameStr.str("");
-      fileNameStr << filename << '_' << idx << "feats.txt";
-      fileAttribs.open(fileNameStr.str().c_str());
-      if (fileAttribs.fail())
-        {
-          vtkErrorMacro("Write: Could not open file " << fileNameStr.str().c_str());
-          cerr << "Write: Could not open file " << fileNameStr.str().c_str();
-#if (VTK_MAJOR_VERSION <= 5)      
-          this->SetErrorCode(2);
-#else
-          this->SetErrorCode(vtkErrorCode::GetErrorCodeFromString("CannotOpenFileError"));
-#endif
-          return;
-        }
-
-      this->SaveStreamlineAsTextFile(filePoints, fileAttribs,
-                                     currStreamline);
-      
-      // Close files
-      filePoints.close();
-      fileAttribs.close();
-      
-      // get next object in collection
-      currStreamline= (vtkHyperStreamlinePoints *)
-        this->Streamlines->GetNextItemAsObject();
-
-      idx++;
-    }
-
-#if (VTK_MAJOR_VERSION <= 5)      
-  this->SetErrorCode(0);
-#else
-  this->SetErrorCode(vtkErrorCode::GetErrorCodeFromString("NoError"));
-#endif
-  
-}
-
-
-void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
-                                                                char *name)
-{
-  this->SaveStreamlinesAsPolyData(filename, name, NULL);
-}
-
-// NOTE: Limit currently is 1000 models (1000 different input colors is max).
-//----------------------------------------------------------------------------
-void vtkMultipleStreamlineController::SaveStreamlinesAsPolyData(char *filename,
-                                                                char *name,
-                                                                vtkMrmlTree *colorTree)
-{
-  vtkHyperStreamline *currStreamline;
-  vtkTubeFilter *currTubeFilter;
-  vtkActor *currActor;
-  vtkCollection *collectionOfModels;
-  vtkAppendPolyData *currAppender;
-  vtkPolyDataWriter *writer;
-  vtkTransformPolyDataFilter *currTransformer;
-  vtkTransform *currTransform;
-  double R[1000], G[1000], B[1000];
-  int arraySize=1000;
-  int lastColor;
-  int currColor, newColor, idx, found;
-  vtkFloatingPointType rgb_vtk_float[3];
-  double rgb[3];
-  std::stringstream fileNameStr;
-  vtkMrmlTree *tree;
-  vtkMrmlModelNode *currNode;
-  vtkMrmlColorNode *currColorNode;
-  std::stringstream colorNameStr;
-  vtkMrmlTree *colorTreeTwo;
-  
-  // traverse streamline collection, grouping streamlines into models by color
-  this->Streamlines->InitTraversal();
-  this->TubeFilters->InitTraversal();
-  this->Actors->InitTraversal();
-  currStreamline= (vtkHyperStreamline *)this->Streamlines->GetNextItemAsObject();
-  currTubeFilter= (vtkTubeFilter *) this->TubeFilters->GetNextItemAsObject();
-  currActor= (vtkActor *)this->Actors->GetNextItemAsObject();
-
-  // test we have actors and streamlines
-  if (currActor == NULL || currStreamline == NULL || currTubeFilter == NULL)
-    {
-      vtkErrorMacro("No streamlines have been created yet.");
-      return;      
-    }
-
-  // init things with the first streamline.
-  currActor->GetProperty()->GetColor(rgb);
-  currAppender = vtkAppendPolyData::New();
-  collectionOfModels = vtkCollection::New();
-  collectionOfModels->AddItem((vtkObject *)currAppender);
-  lastColor=0;
-  R[0]=rgb[0];
-  G[0]=rgb[1];
-  B[0]=rgb[2];
-
-  cout << "Traverse STREAMLINES" << endl;
-  while(currStreamline && currActor && currTubeFilter)
-    {
-      cout << "stream " << currStreamline << endl;
-      currColor=0;
-      newColor=1;
-      // If we have this color already, store its index in currColor
-      while (currColor<=lastColor && currColor<arraySize)
-        {
-          currActor->GetProperty()->GetColor(rgb);
-          if (rgb[0]==R[currColor] &&
-              rgb[1]==G[currColor] &&
-              rgb[2]==B[currColor])
-            {
-              newColor=0;
-              break;
-            }
-          currColor++;
-        }
-
-      // if this is a new color, we must create a new model to save.
-      if (newColor)
-        {
-          // add an appender to the collection of models.
-          currAppender = vtkAppendPolyData::New();
-          collectionOfModels->AddItem((vtkObject *)currAppender);
-          // increment count of colors
-          lastColor=currColor;
-          // save this color's info in the array
-          R[currColor]=rgb[0];
-          G[currColor]=rgb[1];
-          B[currColor]=rgb[2];
-
-        }
-      else
-        {
-          // use the appender number currColor that we found in the while loop
-          currAppender = (vtkAppendPolyData *) 
-            collectionOfModels->GetItemAsObject(currColor);
-        }
-
-      // Append this streamline to the chosen model using the appender
-      if (this->SaveForAnalysis) {
-        currAppender->AddInput(currStreamline->GetOutput());
-      } 
-      else {
-        currAppender->AddInput(currTubeFilter->GetOutput());        
-      }
-      // get next objects in collections
-      currStreamline= (vtkHyperStreamline *)
-        this->Streamlines->GetNextItemAsObject();
-      currTubeFilter= (vtkTubeFilter *)
-        this->TubeFilters->GetNextItemAsObject();
-      currActor = (vtkActor *) this->Actors->GetNextItemAsObject();
-    }
-
-
-  // traverse appender collection (collectionOfModels) and write each to disk
-  cout << "Traverse APPENDERS" << endl;
-  writer = vtkPolyDataWriter::New();
-  tree = vtkMrmlTree::New();
-  // object to hold any new colors we encounter (not on input color tree)
-  colorTreeTwo = vtkMrmlTree::New();
-
-  collectionOfModels->InitTraversal();
-  currAppender = (vtkAppendPolyData *) 
-    collectionOfModels->GetNextItemAsObject();
-  idx=0;
-
-  // Create transformation matrix for writing paths.
-  // This was used to place actors in scene.
-  // (scaled IJK to world)
-  currTransform=vtkTransform::New();
-  currTransform->SetMatrix(this->WorldToTensorScaledIJK->GetMatrix());
-  currTransform->Inverse();
-
-  while(currAppender)
-    {
-      cout << idx << endl;
-
-
-      if (this->SaveForAnalysis) {
-        // First find the tensors that correspond to each point on the paths.
-        // Note the paths are still in the scaled IJK coordinate system
-        // so the probing makes sense.
-        vtkProbeFilter *probe = vtkProbeFilter::New();
-        probe->SetSource(this->InputTensorField);
-        probe->SetInput(currAppender->GetOutput());
-        probe->Update();
-        
-        // Next transform models so that they are written in the coordinate
-        // system in which they are displayed. (world coordinates, RAS + transforms)
-        currTransformer = vtkTransformPolyDataFilter::New();
-        currTransformer->SetTransform(currTransform);
-        currTransformer->SetInput(probe->GetPolyDataOutput());
-        currTransformer->Update();
-        
-        // Here we rotate the tensors into the same (world) coordinate system.
-        // -------------------------------------------------
-        int numPts = probe->GetPolyDataOutput()->GetNumberOfPoints();
-        vtkFloatArray *newTensors = vtkFloatArray::New();
-        newTensors->SetNumberOfComponents(9);
-        newTensors->Allocate(9*numPts);
-        
-        double (*matrix)[4] = this->TensorRotationMatrix->Element;
-        double tensor[9];
-        double tensor3x3[3][3];
-        double temp3x3[3][3];
-        double matrix3x3[3][3];
-        double matrixTranspose3x3[3][3];
-        for (int row = 0; row < 3; row++)
-          {
-            for (int col = 0; col < 3; col++)
-              {
-                matrix3x3[row][col] = matrix[row][col];
-                matrixTranspose3x3[row][col] = matrix[col][row];
-              }
-          }
-        
-        
-        vtkDataArray *oldTensors = probe->GetOutput()->GetPointData()->GetTensors();
-        
-        for (vtkIdType i = 0; i < numPts; i++)
-          {
-            oldTensors->GetTuple(i,tensor);
-            int idx = 0;
-            for (int row = 0; row < 3; row++)
-              {
-                for (int col = 0; col < 3; col++)
-                  {
-                    tensor3x3[row][col] = tensor[idx];
-                    idx++;
-                  }
-              }          
-            // rotate by our matrix
-            // R T R'
-            vtkMath::Multiply3x3(matrix3x3,tensor3x3,temp3x3);
-            vtkMath::Multiply3x3(temp3x3,matrixTranspose3x3,tensor3x3);
-            
-            idx =0;
-            for (int row = 0; row < 3; row++)
-              {
-                for (int col = 0; col < 3; col++)
-                  {
-                    tensor[idx] = tensor3x3[row][col];
-                    idx++;
-                  }
-              }  
-            newTensors->InsertNextTuple(tensor);
-          }
-        
-        vtkPolyData *data = vtkPolyData::New();
-        data->SetLines(currTransformer->GetOutput()->GetLines());
-        data->SetPoints(currTransformer->GetOutput()->GetPoints());
-        data->GetPointData()->SetTensors(newTensors);
-      // End of tensor rotation code.
-      // -------------------------------------------------
-
-      writer->SetInput(data);
-      probe->Delete();
-      }
-      else {
-        // Else we are saving just the output tube
-        // Next transform models so that they are written in the coordinate
-        // system in which they are displayed. (world coordinates, RAS + transforms)
-        currTransformer = vtkTransformPolyDataFilter::New();
-        currTransformer->SetTransform(currTransform);
-        currTransformer->SetInput(currAppender->GetOutput());
-        currTransformer->Update();
-
-        writer->SetInput(currTransformer->GetOutput());
-
-      }
-
-
-      // Write as binary
-      writer->SetFileType(2);
-
-      // clear the buffer (set to empty string)
-      fileNameStr.str("");
-      fileNameStr << filename << '_' << idx << ".vtk";
-      writer->SetFileName(fileNameStr.str().c_str());
-      writer->Write();
-      currTransformer->Delete();
-
-      // Delete it (but it survives until the collection it's on is deleted).
-      currAppender->Delete();
-
-      // Also write a MRML file: add to MRML tree
-      currNode=vtkMrmlModelNode::New();
-      currNode->SetFullFileName(fileNameStr.str().c_str());
-      currNode->SetFileName(fileNameStr.str().c_str());
-      // use the name argument to name the model (name label in slicer GUI)
-      fileNameStr.str("");
-      fileNameStr << name << '_' << idx;
-      currNode->SetName(fileNameStr.str().c_str());
-      currNode->SetDescription("Model of a DTMRI tract");
-      if (this->ScalarVisibility) currNode->ScalarVisibilityOn();
-      currNode->ClippingOn();
-      currNode->SetScalarRange(this->StreamlineLookupTable->GetTableRange());
-
-      // Find the name of the color if it's on the input color tree.
-      found = 0;
-      if (colorTree)
-        {
-          colorTree->InitTraversal();
-          currColorNode = (vtkMrmlColorNode *) colorTree->GetNextItemAsObject();
-          while (currColorNode)
-            {
-              currColorNode->GetDiffuseColor(rgb_vtk_float);
-              if (rgb_vtk_float[0]==R[idx] &&
-                  rgb_vtk_float[1]==G[idx] &&
-                  rgb_vtk_float[2]==B[idx])              
-                {
-                  found = 1;
-                  currNode->SetColor(currColorNode->GetName());
-                  break;
-                }
-              currColorNode = (vtkMrmlColorNode *) 
-                colorTree->GetNextItemAsObject();
-            }
-        }
-
-      // If we didn't find the color on the input color tree, 
-      // make a node for it then put it onto the new color tree.
-      if (found == 0) 
-        {
-          currColorNode = vtkMrmlColorNode::New();
-          rgb_vtk_float[0] = R[idx];
-          rgb_vtk_float[1] = G[idx];
-          rgb_vtk_float[2] = B[idx];
-          currColorNode->SetDiffuseColor(rgb_vtk_float);
-          colorNameStr.str("");
-          colorNameStr << "class_" << idx ;
-          currColorNode->SetName(colorNameStr.str().c_str());
-          currNode->SetColor(currColorNode->GetName());
-          // add it to the MRML tree with new colors
-          colorTreeTwo->AddItem(currColorNode);
-          // call Delete to decrement the reference count
-          // so that when we delete the tree the nodes delete too.
-          currColorNode->Delete();
-        }
-
-      // add it to the MRML file
-      tree->AddItem(currNode);
-
-      currAppender = (vtkAppendPolyData *) 
-        collectionOfModels->GetNextItemAsObject();
-      idx++;
-    } 
-
-  // If we had color inputs put them at the end of the MRML file
-  if (colorTree)
-    {
-      colorTree->InitTraversal();
-      currColorNode = (vtkMrmlColorNode *) colorTree->GetNextItemAsObject();      
-      while (currColorNode)
-        {
-          tree->AddItem(currColorNode);
-          currColorNode = (vtkMrmlColorNode *) 
-            colorTree->GetNextItemAsObject();
-        }
-    }
-  // Also add any new colors we found
-  colorTreeTwo->InitTraversal();
-  currColorNode = (vtkMrmlColorNode *) colorTreeTwo->GetNextItemAsObject();      
-  while (currColorNode)
-    {
-      tree->AddItem(currColorNode);
-      currColorNode = (vtkMrmlColorNode *) 
-        colorTreeTwo->GetNextItemAsObject();
-    }
-  
-  // Write the MRML file
-  fileNameStr.str("");
-  fileNameStr << filename << ".xml";
-  tree->Write((char *)fileNameStr.str().c_str());
-
-  cout << "DELETING" << endl;
-
-  // Delete all objects we created
-  collectionOfModels->Delete();
-  writer->Delete();
-  tree->Delete();
-  colorTreeTwo->Delete();
-  currTransform->Delete();
-
-}
-
-
-
 
 
 // Test whether the given point is in bounds (inside the input data)
@@ -1709,230 +1302,6 @@ void vtkMultipleStreamlineController::SeedStreamlinesFromROIIntersectWithROI2()
 }
 
 
-
-// Seed each streamline, cause it to Update, save its info to disk
-// and then Delete it.  This is a way to seed in the whole brain
-// without running out of memory. Nothing is displayed in the renderers.
-// Some defaults for deciding when to save (min length) are hard-coded
-// here for now.
-//----------------------------------------------------------------------------
-void vtkMultipleStreamlineController::SeedAndSaveStreamlinesFromROI(char *pointsFilename, char *modelFilename)
-{
-  int idxX, idxY, idxZ;
-  int maxX, maxY, maxZ;
-  int inIncX, inIncY, inIncZ;
-  int inExt[6];
-  double point[3], point2[3];
-  unsigned long count = 0;
-  unsigned long target;
-  int count2 = 0;
-  short *inPtr;
-  vtkHyperStreamlinePoints *newStreamline;
-  vtkTransform *transform;
-  vtkTransformPolyDataFilter *transformer;
-  vtkPolyDataWriter *writer;
-  std::stringstream fileNameStr;
-  int idx;
-  ofstream filePoints, fileAttribs;
-
-  // test we have input
-  if (this->InputROI == NULL)
-    {
-      vtkErrorMacro("No ROI input.");
-      return;      
-    }
-  if (this->InputTensorField == NULL)
-    {
-      vtkErrorMacro("No tensor data input.");
-      return;      
-    }
-  // check ROI's value of interest
-  if (this->InputROIValue <= 0)
-    {
-      vtkErrorMacro("Input ROI value has not been set or is 0. (value is "  << this->InputROIValue << ".");
-      return;      
-    }
-  // make sure it is short type
-  if (this->InputROI->GetScalarType() != VTK_SHORT)
-    {
-      vtkErrorMacro("Input ROI is not of type VTK_SHORT");
-      return;      
-    }
-
-
-  // make sure we are creating objects with points
-  this->UseVtkHyperStreamlinePoints();
-
-  // Create transformation matrix to place actors in scene
-  // This is used to transform the models before writing them to disk
-  transform=vtkTransform::New();
-  transform->SetMatrix(this->WorldToTensorScaledIJK->GetMatrix());
-  transform->Inverse();
-  transformer=vtkTransformPolyDataFilter::New();
-  transformer->SetTransform(transform);
-
-  writer = vtkPolyDataWriter::New();
-
-  // currently this filter is not multithreaded, though in the future 
-  // it could be (especially if it inherits from an image filter class)
-  this->InputROI->GetWholeExtent(inExt);
-  this->InputROI->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
-
-  // find the region to loop over
-  maxX = inExt[1] - inExt[0];
-  maxY = inExt[3] - inExt[2]; 
-  maxZ = inExt[5] - inExt[4];
-
-  //cout << "Dims: " << maxX << " " << maxY << " " << maxZ << endl;
-  //cout << "Incr: " << inIncX << " " << inIncY << " " << inIncZ << endl;
-
-
-  // Save all points to the same text file.
-  fileNameStr << pointsFilename << ".3dpts";
-
-  // Open file
-  filePoints.open(fileNameStr.str().c_str());
-  if (filePoints.fail())
-    {
-      vtkErrorMacro("Write: Could not open file " 
-                    << fileNameStr.str().c_str());
-      cerr << "Write: Could not open file " << fileNameStr.str().c_str();
-#if (VTK_MAJOR_VERSION <= 5)      
-      this->SetErrorCode(2);
-#else
-      this->SetErrorCode(vtkErrorCode::GetErrorCodeFromString("CannotOpenFileError"));
-#endif
-      return;
-    }                   
-
-  // Save all features (FA) to the same text file.
-  fileNameStr.str("");
-  fileNameStr << pointsFilename << ".3dfeats";
-
-  // Open file
-  fileAttribs.open(fileNameStr.str().c_str());
-  if (fileAttribs.fail())
-    {
-      vtkErrorMacro("Write: Could not open file " 
-                    << fileNameStr.str().c_str());
-      cerr << "Write: Could not open file " << fileNameStr.str().c_str();
-#if (VTK_MAJOR_VERSION <= 5)      
-      this->SetErrorCode(2);
-#else
-      this->SetErrorCode(vtkErrorCode::GetErrorCodeFromString("CannotOpenFileError"));
-#endif
-      return;
-    }                   
-
-
-  // for progress notification
-  target = (unsigned long)((maxZ+1)*(maxY+1)/50.0);
-  target++;
-
-  // start point in input integer field
-  inPtr = (short *) this->InputROI->GetScalarPointerForExtent(inExt);
-
-  // filename index
-  idx=0;
-
-  for (idxZ = 0; idxZ <= maxZ; idxZ++)
-    {
-      //for (idxY = 0; !this->AbortExecute && idxY <= maxY; idxY++)
-      for (idxY = 0; idxY <= maxY; idxY++)
-        {
-          if (!(count%target)) 
-            {
-              //this->UpdateProgress(count/(50.0*target) + (maxZ+1)*(maxY+1));
-              //cout << (count/(50.0*target) + (maxZ+1)*(maxY+1)) << endl;
-              //cout << "progress: " << count << endl;
-              // just output numbers from 1 to 50.
-              cout << count2 << endl;
-              count2++;
-            }
-          count++;
-          
-          for (idxX = 0; idxX <= maxX; idxX++)
-            {
-              // If the point is equal to the ROI value then seed here.
-              if (*inPtr == this->InputROIValue)
-                {
-                  vtkDebugMacro( << "start streamline at: " << idxX << " " <<
-                                 idxY << " " << idxZ);
-
-                  // First transform to world space.
-                  point[0]=idxX;
-                  point[1]=idxY;
-                  point[2]=idxZ;
-                  this->ROIToWorld->TransformPoint(point,point2);
-                  // Now transform to scaled ijk of the input tensors
-                  this->WorldToTensorScaledIJK->TransformPoint(point2,point);
-
-                  // make sure it is within the bounds of the tensor dataset
-                  if (this->PointWithinTensorData(point,point2))
-                    {
-                      // Now create a streamline 
-                      newStreamline=(vtkHyperStreamlinePoints *) 
-                        this->CreateHyperStreamline();
-                      
-                      // Set its input information.
-                      newStreamline->SetInput(this->InputTensorField);
-                      newStreamline->SetStartPosition(point[0],point[1],point[2]);
-                      //newStreamline->DebugOn();
-                      
-                      // Force it to execute
-                      newStreamline->Update();
-
-                      // See if we like it enough to write
-                      if (newStreamline->GetHyperStreamline0()->
-                          GetNumberOfPoints() + newStreamline->
-                          GetHyperStreamline1()->GetNumberOfPoints() > 56)
-                        {
-                          
-                          // transform model
-                          transformer->SetInput(newStreamline->GetOutput());
-                          
-                          // Save the model to disk
-                          writer->SetInput(transformer->GetOutput());
-                          writer->SetFileType(2);
-                          
-                          // clear the buffer (set to empty string)
-                          fileNameStr.str("");
-                          fileNameStr << modelFilename << '_' << idx << ".vtk";
-                          writer->SetFileName(fileNameStr.str().c_str());
-                          writer->Write();
-                          
-                          // Save the center points to disk
-                          this->SaveStreamlineAsTextFile(filePoints,fileAttribs,newStreamline);
-
-                          idx++;
-                        }
-
-                      // Delete objects
-                      newStreamline->Delete();
-
-                    }
-                }
-              inPtr++;
-              inPtr += inIncX;
-            }
-          inPtr += inIncY;
-        }
-      inPtr += inIncZ;
-    }
-
-  transform->Delete();
-  transformer->Delete();
-  writer->Delete();
-
-  // Close text file
-  filePoints.close();
-  fileAttribs.close();
-  
-  // Tell user how many we wrote
-  cout << "Wrote " << idx << "model files." << endl;
-
-}
-
 void vtkMultipleStreamlineController::ConvertStreamlinesToPolyLines()
 {
 
@@ -2073,98 +1442,6 @@ void vtkMultipleStreamlineController::DeleteStreamlinesNotPassTest()
   }
 }
  
-
-
-// Output streamlines in our temporary matlab text format, along
-// with FA and class number
-//----------------------------------------------------------------------------
-void vtkMultipleStreamlineController::SaveTractClustersAsTextFiles(char *filename)
-{
-  std::stringstream fileNameStr;
-  ofstream filePoints, fileAttribs, fileLabels;
-  vtkHyperStreamline *currStreamline;
-
-  vtkClusterTracts::OutputType *clusters =  this->TractClusterer->GetOutput();
-
-  if (clusters == 0)
-    {
-      vtkErrorMacro("Error: clusters have not been computed.");
-      return;      
-    }
-
-
-  // Open text files
-
-  // Save all points to one text file.
-  fileNameStr << filename << ".3dpts";
-  // Open file
-  filePoints.open(fileNameStr.str().c_str());
-  if (filePoints.fail())
-    {
-      vtkErrorMacro("Write: Could not open file " 
-                    << fileNameStr.str().c_str());
-      cerr << "Write: Could not open file " << fileNameStr.str().c_str();
-      return;
-    }                   
-
-  // Save all features (FA) to one text file.
-  fileNameStr.str("");
-  fileNameStr << filename << ".3dfeats";
-  // Open file
-  fileAttribs.open(fileNameStr.str().c_str());
-  if (fileAttribs.fail())
-    {
-      vtkErrorMacro("Write: Could not open file " 
-                    << fileNameStr.str().c_str());
-      cerr << "Write: Could not open file " << fileNameStr.str().c_str();
-      return;
-    }                   
-
-  // Save all class labels to one text file.
-  fileNameStr.str("");
-  fileNameStr << filename << ".3dlabels";
-  // Open file
-  fileLabels.open(fileNameStr.str().c_str());
-  if (fileLabels.fail())
-    {
-      vtkErrorMacro("Write: Could not open file " 
-                    << fileNameStr.str().c_str());
-      cerr << "Write: Could not open file " << fileNameStr.str().c_str();
-      return;
-    }                   
-
-
-  // Iterate over all class labels and save the info
-  for (int idx = 0; idx < clusters->GetNumberOfTuples(); idx++)
-    {
-      vtkDebugMacro("index = " << idx << "class label = " << clusters->GetValue(idx));
-      
-      currStreamline= (vtkHyperStreamline *) 
-        this->Streamlines->GetItemAsObject(idx);
-      
-      if (currStreamline) 
-        {
-          // Save the center points to disk
-          if (currStreamline->IsA("vtkHyperStreamlinePoints"))
-            {
-              this->SaveStreamlineAsTextFile(filePoints,fileAttribs,(vtkHyperStreamlinePoints *) currStreamline);
-            }
-          // Save the class label to disk also
-          fileLabels << clusters->GetValue(idx) << endl;
-        }
-      else
-        {
-          vtkErrorMacro("Streamline " << idx << " not found.");
-        }
-      
-    }
-
-  // Close text files
-  filePoints.close();
-  fileAttribs.close();
-  fileLabels.close();
-}
-
 
 // Call the tract clustering object, and then color our hyperstreamlines
 // according to their cluster numbers.
