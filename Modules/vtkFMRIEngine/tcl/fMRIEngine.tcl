@@ -97,8 +97,8 @@ proc fMRIEngineInit {} {
     #   row2Name = like row1
     #   row2,tab = like row1 
     #
-    set Module($m,row1List) "Help Sequence Setup Compute Visualize"
-    set Module($m,row1Name) "{Help} {Sequence} {Set Up} {Compute} {Visualize}"
+    set Module($m,row1List) "Help Sequence Setup ROI Compute View"
+    set Module($m,row1Name) "{Help} {Sequence} {Set Up} {ROI} {Compute} {View}"
     set Module($m,row1,tab) Sequence 
 
     # Define Procedures
@@ -155,7 +155,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.11 $} {$Date: 2005/08/22 15:27:25 $}]
+        {$Revision: 1.12 $} {$Date: 2005/09/23 17:04:25 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -179,6 +179,7 @@ proc fMRIEngineInit {} {
 
     # Source all appropriate tcl files here. 
     source "$fMRIEngine(modulePath)/tcl/notebook.tcl"
+    source "$fMRIEngine(modulePath)/tcl/fMRIEngineROI.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEnginePlot.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineModel.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineInspect.tcl"
@@ -268,7 +269,7 @@ proc fMRIEngineBuildGUI {} {
     <B>Compute</B> lets you to choose contrast(s) to compute \
     activation volume(s).
     <BR>
-    <B>Visualize</B> gives you the ability to view the activation \
+    <B>View</B> gives you the ability to view the activation \
     at different thresholds and dynamically plot any voxel \
     time course.
     <BR>
@@ -353,6 +354,14 @@ proc fMRIEngineBuildGUI {} {
     bind $b <1> "fMRIEngineUpdateSetupTab" 
 
     #-------------------------------------------
+    # ROI tab 
+    #-------------------------------------------
+    set fROI $Module(fMRIEngine,fROI)
+    fMRIEngineBuildUIForROITab $fROI
+    set b $Module(fMRIEngine,bROI)
+    bind $b <1> "fMRIEngineUpdateLabelMapList;fMRIEngineUpdateBGVolumeList"
+ 
+    #-------------------------------------------
     # Compute tab 
     #-------------------------------------------
     set fCompute $Module(fMRIEngine,fCompute)
@@ -361,12 +370,12 @@ proc fMRIEngineBuildGUI {} {
     bind $b <1> "fMRIEngineUpdateContrastList" 
 
     #-------------------------------------------
-    # Visualize tab 
+    # View tab 
     #-------------------------------------------
-    set fVisualize $Module(fMRIEngine,fVisualize)
-    fMRIEngineBuildUIForVisualizeTab $fVisualize
-    set b $Module(fMRIEngine,bVisualize)
-    bind $b <1> "fMRIEngineUpdateInspectTab;fMRIEngineUpdateEVsForPlotting"
+    set fView $Module(fMRIEngine,fView)
+    fMRIEngineBuildUIForViewTab $fView
+    set b $Module(fMRIEngine,bView)
+    bind $b <1> "fMRIEngineUpdateViewTab;fMRIEngineUpdateEVsForPlotting"
 }
 
 
