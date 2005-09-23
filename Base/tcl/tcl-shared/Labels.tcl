@@ -78,7 +78,7 @@ proc LabelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.24.10.2 $} {$Date: 2005/09/08 18:05:21 $}]
+        {$Revision: 1.24.10.3 $} {$Date: 2005/09/23 20:24:59 $}]
 
     # Props
     set Label(nameBrowse) ""
@@ -683,9 +683,6 @@ proc LabelsFindLabel { } {
     
     set c [MainColorsGetColorFromLabel $Label(label)]
 
-    if {$::Module(verbose)} {
-        puts "LabelsFindLabel: Label(label) = $Label(label), c= $c"
-    }
     if {$c == ""} {
         # Update GUI
         set Label(activeID) ""
@@ -699,15 +696,12 @@ proc LabelsFindLabel { } {
     }
     set i [lsearch [Color($c,node) GetLabels] $Label(label)]
 
-    if {$::Module(verbose)} { puts "LabelsFindLabel: i = $i, active id = $Label(activeID)" }
-
     if {$Label(activeID) != $c} {
         LabelsSelectColor 0 0 $c
         if {$i != -1} {
             LabelsSelectLabel $i
         }
     }
-    if {$::Module(verbose)} { puts "LabelsFindLabel: done" }
 }
 
 #-------------------------------------------------------------------------------
