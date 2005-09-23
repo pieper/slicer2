@@ -88,7 +88,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.61.10.1 $} {$Date: 2005/09/06 21:25:04 $}]
+        {$Revision: 1.61.10.2 $} {$Date: 2005/09/23 20:29:55 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -130,19 +130,28 @@ proc MainModelsInit {} {
 proc MainModelsUpdateMRML {} {
     global Model Gui Module Color ModelGroup
 
+    if {$::Module(verbose)} {
+        puts "MainModelsUpdateMRML"
+    }
     # Build any new models
     #--------------------------------------------------------
     foreach m $Model(idList) {
         if {[MainModelsCreate $m] > 0} {
             
+            if {$::Module(verbose)} {
+                puts "MainModelsUpdateMRML: MainModelsCreate $m returned > 0"
+            }
             # Mark it as not being created on the fly 
             # since it was added from the Data module or read in from MRML
             set Model($m,fly) 0
             
             # Read
             if {[MainModelsRead $m] < 0} {
-            # failed
-            MainMrmlDeleteNodeDuringUpdate Model $m
+                # failed
+                MainMrmlDeleteNodeDuringUpdate Model $m
+                if {$::Module(verbose)} {
+                    puts "MainModelsUpdateMRML: failed to read, deleted model $m"
+                }
             }
         }
     }
@@ -290,8 +299,14 @@ proc MainModelsCreate {m} {
     # See if it already exists
     foreach r $Module(Renderers) {
         if {[info command Model($m,actor,$r)] != ""} {
-        return 0
+            if {$::Module(verbose)} {
+                puts "MainModelsCreate: model $m already in renderer $r, returning 0"
+            }
+            return 0
         }
+    }
+    if {$::Module(verbose)} {
+        puts "MainModelsCreate: model $m actor does not exist, continuing to create"
     }
 
     MainModelsShouldBeAVtkClass    $m    
@@ -306,6 +321,7 @@ proc MainModelsCreate {m} {
     #MainModelsCreateGUI $Gui(wModels).fGrid $m
 
     MainAddModelActor $m
+    if {$::Module(verbose)} { puts "MainModelsCreate: added actor for $m"}
     
     # Mark it as unsaved and created on the fly.
     # If it actually isn't being created on the fly, I can't tell that from
@@ -441,10 +457,16 @@ proc MainModelsDelete {m} {
     global Model View Gui Dag Module
 
     # If we've already deleted this one, then do nothing
-        foreach r $Module(Renderers) {
+    foreach r $Module(Renderers) {
         if {[info command Model($m,actor,$r)] == ""} {
-        return 0
+            if {$::Module(verbose)} {
+                puts "MainModelsDelete: model $m does not exist in renderer $r, returning 0 (assuming gone)"
+            }
+            return 0
         }
+    }
+    if {$::Module(verbose)} {
+        puts "MainModelsDelete: calling MainRemoveModelActor $m"
     }
 
     # Remove actors from renderers
@@ -454,8 +476,8 @@ proc MainModelsDelete {m} {
     # Delete VTK objects (and remove commands from TCL namespace)
     Model($m,clipper) Delete
         foreach r $Module(Renderers) {
-        Model($m,mapper,$r) Delete    
-        Model($m,actor,$r) Delete
+            Model($m,mapper,$r) Delete    
+            Model($m,actor,$r) Delete
     }
     Model($m,rasToWld) Delete
 
@@ -471,6 +493,12 @@ proc MainModelsDelete {m} {
 
     MainModelsDeleteGUI $Gui(wModels).fGrid $m
     
+    # delete the model node
+    if {$::Module(verbose)} {
+        puts "WARNING: MainModelsDelete trying something new, calling MainMrmlDeleteNode Model $m"
+    }
+    MainMrmlDeleteNode Model $m
+
     return 1
 }
 
