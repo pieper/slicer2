@@ -90,7 +90,7 @@ proc DTMRITensorRegistrationInit {} {
     #------------------------------------
     set m "TensorRegistration"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.13 $} {$Date: 2005/09/11 21:22:11 $}]
+                                 {$Revision: 1.14 $} {$Date: 2005/09/23 13:19:13 $}]
 
     # Does the AG module exist? If not the registration tab will not be displayed
     if {[catch "package require vtkAG"]} {
@@ -223,7 +223,7 @@ proc DTMRITensorRegistrationBuildGUI {} {
                         -pages {{Main} {Tfm} {Prmd} {Adv} {Help}} \
                         -pad 2 \
                         -bg $Gui(activeWorkspace) \
-                        -height 300 \
+                        -height 350 \
                         -width 240
     pack $f.fNotebook -fill both -expand 1
 
@@ -236,7 +236,7 @@ proc DTMRITensorRegistrationBuildGUI {} {
     set FrameHelp [Notebook:frame $f {Help}] 
     
     foreach frame "$FrameMain $FrameTfm $FramePrmd $FrameAdvanced $FrameHelp" {
-    $frame configure -relief groove -bd 3
+        $frame configure -relief groove -bd 3
     }
 
     #-------------------------------------------
@@ -247,8 +247,8 @@ proc DTMRITensorRegistrationBuildGUI {} {
     pack $f -side top -padx $Gui(pad) -pady $Gui(pad) -fill x 
     
     DevAddLabel $f.lWelcome "Tensor Registration"
-    $f.lWelcome configure -fg White -font {helvetica 10 bold}  -bg $Gui(backdrop) -bd 0 -relief groove
-    pack $f.lWelcome -side top -padx $Gui(pad) -pady $Gui(pad)
+    $f.lWelcome configure -fg White -font {helvetica 8 bold}  -bg $Gui(backdrop) -bd 0 -relief groove
+    pack $f.lWelcome -side top -padx $Gui(pad) 
 
     #-------------------------------------------
     # Regist->Main frame->Title
@@ -257,8 +257,8 @@ proc DTMRITensorRegistrationBuildGUI {} {
     frame $f -bg $Gui(activeWorkspace)
     pack $f -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
     DevAddLabel $f.lnumber "Main screen"
-    $f.lnumber configure -font {helvetica 10 bold}
-    pack $f.lnumber -side top -padx $Gui(pad) -pady $Gui(pad) -anchor w
+    $f.lnumber configure -font {helvetica 8 bold}
+    pack $f.lnumber -side top -padx $Gui(pad) -anchor w
 
     #-------------------------------------------
     # Regist->Main frame->Input/Output Frame
