@@ -59,7 +59,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "vtkImageData.h"
 #include "vtkPointData.h"
 #include "vtkDataArray.h"
-#include <fstream.h>
+#include <fstream>
 
 
 vtkStandardNewMacro(vtkActivationVolumeCaster);
