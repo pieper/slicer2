@@ -106,7 +106,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.19 $} {$Date: 2005/09/22 01:32:36 $}]
+        {$Revision: 1.20 $} {$Date: 2005/09/24 23:45:29 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -1216,7 +1216,7 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource} {
     #If source and target have two channels, combine them into one vtkImageData object 
     Target DeepCopy  [ Volume($inTarget,vol) GetOutput]
     Source DeepCopy  [ Volume($inSource,vol) GetOutput]
-    
+
     # Initial transform stuff
     catch "TransformEMAtlasBrainClassifier Delete"
     vtkGeneralTransform TransformEMAtlasBrainClassifier
@@ -1225,6 +1225,7 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource} {
 
     ## to be changed to EMAtlaspreprocess
     AGPreprocess Source Target $inSource $inTarget
+
 
     if { [info commands __dummy_transform] == ""} {
             vtkTransform __dummy_transform
@@ -1285,6 +1286,7 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource} {
 
       # Do it!
       warp Update
+
       TransformEMAtlasBrainClassifier Concatenate warp
     }
   # save the transform
@@ -1707,6 +1709,7 @@ proc EMAtlasBrainClassifier_StartEM { } {
    set NumInputImagesSet [EMAtlasBrainClassifier_AlgorithmStart] 
 
    EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) Update
+
    if {[EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) GetErrorFlag]} {
        set ErrorFlag 1
        DevErrorWindow "Error Report: \n[EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) GetErrorMessages]Fix errors before resegmenting !"
@@ -2013,7 +2016,7 @@ proc EMAtlasBrainClassifier_SaveSegmentation { } {
 # .END
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierStartSegmentation { } {
-    global EMAtlasBrainClassifier EMSegment
+    global EMAtlasBrainClassifier EMSegment env
 
     # ---------------------------------------------------------------
     # Setup Pipeline
@@ -2022,7 +2025,7 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     # ---------------------------------------------------------------
     # Normalize images
     foreach input "SPGR T2W" {
-    EMAtlasBrainClassifier_Normalize $input
+      EMAtlasBrainClassifier_Normalize $input
     }
 
     # ---------------------------------------------------------------
@@ -2060,12 +2063,15 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
                                  }
         "EMPrivateSegment"       {  EMAtlasBrainClassifier_InitilizeSegmentation  1
                                     set XMLFile $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation/segmentation.xml
-                                    MainMrmlWrite $XMLFile 
+                                    MainMrmlWrite $XMLFile
                                     MainMrmlDeleteAll 
-                                    if {[info exists EMSegment(SegmentMode)] == 0} {
-                                       DevErrorWindow "Please source EMSegmentBatch before starting running in this mode"
+                                    MainVolumesUpdateMRML
+                                    set EMSegment(VolNumber) 0
+                                    set DoNotStart 1 
+                                if {[catch {source [file join $env(SLICER_HOME) Modules/vtkEMPrivateSegment/tcl/EMSegmentBatch.tcl]} ErrorMsg]} {
+                                       DevErrorWindow "Cannot source EMSegmentBatch. Error: $ErrorMsg"
                                        return
-                    }  
+                    }
                                     Segmentation $XMLFile 
                                  }
         "EMAtlasBrainClassifier" {  EMAtlasBrainClassifier_InitilizeSegmentation  1
@@ -2105,7 +2111,8 @@ proc EMAtlasBrainClassifier_BatchMode {{SegmentationMode EMAtlasBrainClassifier}
     set EMAtlasBrainClassifier(BatchMode) 1
 
     set EMAtlasBrainClassifier(SegmentationMode) $SegmentationMode
-
+    SplashKill
+ 
     EMAtlasBrainClassifierStartSegmentation
     MainExitProgram
 }
