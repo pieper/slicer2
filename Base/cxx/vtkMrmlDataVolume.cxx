@@ -556,14 +556,16 @@ int vtkMrmlDataVolume::Write()
     {
       // Make the z extent equal the desired range of image numbers
       // so that the writer will start on the right image number (.001 not .000)
-      int tmpExt[6], saveExt[6], range[2];
+      int tmpExt[6], saveExt[6], saveWholeExt[6], range[2];
       this->ImageData->GetExtent(saveExt);
+      this->ImageData->GetWholeExtent(saveWholeExt);
       this->ImageData->GetExtent(tmpExt);
       
       node->GetImageRange(range);
       tmpExt[4] = range[0];
       tmpExt[5] = range[1];
       this->ImageData->SetExtent(tmpExt);
+      this->ImageData->SetWholeExtent(tmpExt);
 
       // Set up the image writer
       vtkImageWriter *writer = vtkImageWriter::New();
@@ -594,6 +596,7 @@ int vtkMrmlDataVolume::Write()
 
       // Reset the original extent of the data
       this->ImageData->SetExtent(saveExt);
+      this->ImageData->SetWholeExtent(saveWholeExt);
     }  // end if ReadWrite is NULL
   else 
     {
