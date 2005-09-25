@@ -34,6 +34,9 @@ public:
     vtkSetObjectMacro(ImageData, vtkImageData);
     vtkGetObjectMacro(ImageData, vtkImageData);
 
+    void SendImageDataScalars(char *sockname);
+    void ReceiveImageDataScalars(char *sockname);
+
     const char *Execute (char *Command);
 
     /*
