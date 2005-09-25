@@ -80,7 +80,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.28 $} {$Date: 2005/09/25 21:52:17 $}]
+                                 {$Revision: 1.29 $} {$Date: 2005/09/25 22:35:55 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -1600,10 +1600,12 @@ proc DTMRIFindStreamlinesThroughROI { {verbose 1} } {
     }  
     
     # set up the input segmented volume
-    DTMRI(vtk,streamlineControl) SetInputROI [Volume($v,vol) GetOutput] 
-    DTMRI(vtk,streamlineControl) SetInputROIValue $DTMRI(ROILabel)
-    DTMRI(vtk,streamlineControl) SetInputMultipleROIValues DTMRI(vtk,ListLabels)
-    DTMRI(vtk,streamlineControl) SetConvolutionKernel DTMRI(vtk,convKernel)
+    set ROISelectTracts [DTMRI(vtk,streamlineControl) GetROISelectTracts]
+
+    $ROISelectTracts SetInputROI [Volume($v,vol) GetOutput] 
+    $ROISelectTracts SetInputROIValue $DTMRI(ROILabel)
+    $ROISelectTracts SetInputMultipleROIValues DTMRI(vtk,ListLabels)
+    $ROISelectTracts SetConvolutionKernel DTMRI(vtk,convKernel)
 
     # Get positioning information from the MRML node
     # world space (what you see in the viewer) to ijk (array) space
@@ -1611,16 +1613,16 @@ proc DTMRIFindStreamlinesThroughROI { {verbose 1} } {
     transform SetMatrix [Volume($v,node) GetWldToIjk]
     # now it's ijk to world
     transform Inverse
-    DTMRI(vtk,streamlineControl) SetROIToWorld transform
+    $ROISelectTracts SetROIToWorld transform
     transform Delete
 
     # create all streamlines
     puts "Original number of tracts: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
-    DTMRI(vtk,streamlineControl) FindStreamlinesThatPassThroughROI
+    $ROISelectTracts FindStreamlinesThatPassThroughROI
     puts "New number of tracts will be: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
     
     puts "Creating and displaying new tracts..."
-    DTMRI(vtk,streamlineControl) HighlightStreamlinesPassTest
+    $ROISelectTracts HighlightStreamlinesPassTest
     # actually display streamlines 
     # (this is the slow part since it causes pipeline execution)
     DTMRI(vtk,streamlineControl) AddStreamlinesToScene

@@ -173,6 +173,10 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // Get object that performs seeding (to set parameters)
   vtkGetObjectMacro(SeedTracts,vtkSeedTracts);
 
+  // Description
+  // Get object that performs ROI filtering for tract selection (to set parameters)
+  vtkGetObjectMacro(ROISelectTracts,vtkROISelectTracts);
+
  protected:
   vtkMultipleStreamlineController();
   ~vtkMultipleStreamlineController();

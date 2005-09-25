@@ -108,6 +108,9 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
   // for creating tracts
   this->SeedTracts = vtkSeedTracts::New();
 
+  // for ROI-based filtering of tracts
+  this->ROISelectTracts = vtkROISelectTracts::New();
+
   // Helper class pipelines
   // ----------------------
   this->SaveTracts->SetStreamlines(this->Streamlines);
@@ -116,6 +119,8 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
 
   this->SeedTracts->SetStreamlines(this->Streamlines);
 
+  this->ROISelectTracts->SetStreamlines(this->Streamlines);
+  this->ROISelectTracts->SetActors(this->Actors);
 }
 
 //----------------------------------------------------------------------------
@@ -138,7 +143,7 @@ vtkMultipleStreamlineController::~vtkMultipleStreamlineController()
   this->TractClusterer->Delete();
   this->SaveTracts->Delete();  
   this->SeedTracts->Delete();  
-  
+  this->ROISelectTracts->Delete();  
 }
 
 
@@ -193,6 +198,8 @@ void vtkMultipleStreamlineController::SetWorldToTensorScaledIJK(vtkTransform *tr
   // ----------------------
   this->SaveTracts->SetWorldToTensorScaledIJK(this->WorldToTensorScaledIJK);
   this->SeedTracts->SetWorldToTensorScaledIJK(this->WorldToTensorScaledIJK);
+
+  this->ROISelectTracts->SetWorldToTensorScaledIJK(this->WorldToTensorScaledIJK);
 
 }
 
