@@ -177,6 +177,11 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // Get object that performs ROI filtering for tract selection (to set parameters)
   vtkGetObjectMacro(ROISelectTracts,vtkROISelectTracts);
 
+  // Description
+  // Get object that colors in an ROI with color of tracts passing
+  // through the ROI.
+  vtkGetObjectMacro(ColorROIFromTracts,vtkColorROIFromTracts);
+
  protected:
   vtkMultipleStreamlineController();
   ~vtkMultipleStreamlineController();
