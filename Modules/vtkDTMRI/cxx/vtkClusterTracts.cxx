@@ -47,7 +47,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // itk object for exception handling
 #include "itkExceptionObject.h"
 
-vtkCxxRevisionMacro(vtkClusterTracts, "$Revision: 1.6 $");
+vtkCxxRevisionMacro(vtkClusterTracts, "$Revision: 1.7 $");
 vtkStandardNewMacro(vtkClusterTracts);
 
 vtkCxxSetObjectMacro(vtkClusterTracts, InputStreamlines, vtkCollection);
@@ -112,14 +112,12 @@ void vtkClusterTracts::ComputeClusters()
     }    
 
   // Set the parameters from the user
-  this->ClusteringAlgorithm->DebugOn();
   this->ClusteringAlgorithm->SetNumberOfClusters(this->NumberOfClusters);
   this->ClusteringAlgorithm->SetNumberOfEigenvectors(this->NumberOfEigenvectors);
 
 
   // Set up the pipelines and run them
   this->TractAffinityCalculator->SetInputStreamlines(this->InputStreamlines);
-  //this->TractAffinityCalculator->DebugOn();
 
   vtkDebugMacro("Computing affinity matrix");
   try {
@@ -138,7 +136,6 @@ void vtkClusterTracts::ComputeClusters()
 
   cout << "affinity matrix cols: " << this->TractAffinityCalculator->GetOutputSimilarityMatrix()->Cols() << std::endl;
 
-  //this->ClusteringAlgorithm->DebugOn();
   this->ClusteringAlgorithm->SetInput(*(this->TractAffinityCalculator->GetOutputSimilarityMatrix()));
 
   vtkDebugMacro("Computing clusters");
