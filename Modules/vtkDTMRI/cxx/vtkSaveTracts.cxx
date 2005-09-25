@@ -354,6 +354,10 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
         
         writer->SetInput(data);
         probe->Delete();
+
+        // Write as ASCII for easier reading into matlab
+        writer->SetFileTypeToASCII();
+
       }
       else {
         // Else we are saving just the output tube
@@ -366,11 +370,11 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
 
         writer->SetInput(currTransformer->GetOutput());
 
+        // Write as binary
+        writer->SetFileTypeToBinary();
+
       }
 
-
-      // Write as binary
-      writer->SetFileType(2);
 
       // Check for scalars
       int ScalarVisibility = 0;

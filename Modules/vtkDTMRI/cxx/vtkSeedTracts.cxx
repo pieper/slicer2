@@ -78,6 +78,10 @@ vtkSeedTracts::vtkSeedTracts()
   this->InputMultipleROIValues = NULL;
   this->InputROI2 = NULL;
 
+  // Coloring belongs in another class
+  this->InputROIForColoring = NULL;
+  this->OutputROIForColoring = NULL;
+
   // if the user doesn't set these they will be ignored
   this->VtkHyperStreamlineSettings=NULL;
   this->VtkHyperStreamlinePointsSettings=NULL;
@@ -100,6 +104,7 @@ vtkSeedTracts::~vtkSeedTracts()
 {
   // matrices
   this->ROIToWorld->Delete();
+  this->ROI2ToWorld->Delete();
   this->WorldToTensorScaledIJK->Delete();
   
   // volumes
@@ -247,6 +252,7 @@ vtkHyperStreamline * vtkSeedTracts::CreateHyperStreamline()
     }
   return (NULL);
 }
+
 
 // Test whether the given point is in bounds (inside the input data)
 //----------------------------------------------------------------------------
@@ -474,7 +480,7 @@ void vtkSeedTracts::SeedStreamlinesInROI()
 // seed in each voxel in the ROI, only keep paths that intersect the
 // second ROI
 //----------------------------------------------------------------------------
-void vtkSeedTracts::SeedStreamlinesInROIIntersectWithROI2()
+void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
 {
 
   int idxX, idxY, idxZ;
@@ -504,22 +510,21 @@ void vtkSeedTracts::SeedStreamlinesInROIIntersectWithROI2()
       return;      
     }
 
-  // check ROI's value of interest
-  if (this->InputROIValue <= 0)
-    {
-      vtkErrorMacro("Input ROI value has not been set or is 0. (value is "  << this->InputROIValue << ".");
-      return;      
-    }
   // make sure it is short type
   if (this->InputROI->GetScalarType() != VTK_SHORT)
     {
       vtkErrorMacro("Input ROI is not of type VTK_SHORT");
       return;      
     }
+  // make sure it is short type
+  if (this->InputROI2->GetScalarType() != VTK_SHORT)
+    {
+      vtkErrorMacro("Input ROI is not of type VTK_SHORT");
+      return;      
+    }
 
   // Create transformation matrices to go backwards from streamline points to ROI space
-  // This is used to access ROI2, it has to have same 
-  // dimensions and location as seeding ROI for now.
+  // This is used to access ROI2.
   vtkTransform *WorldToROI2 = vtkTransform::New();
   WorldToROI2->SetMatrix(this->ROI2ToWorld->GetMatrix());
   WorldToROI2->Inverse();
@@ -618,7 +623,7 @@ void vtkSeedTracts::SeedStreamlinesInROIIntersectWithROI2()
                           short *tmp = (short *) this->InputROI2->GetScalarPointer(pt);
                           if (tmp != NULL)
                             {
-                              if (*tmp > 0) {
+                              if (*tmp == this->InputROI2Value) {
                                 intersects = 1;
                               }
                             }
@@ -677,7 +682,6 @@ void vtkSeedTracts::SeedStreamlinesInROIIntersectWithROI2()
     }
 
 }
-
 
 
 // Seed each streamline, cause it to Update, save its info to disk

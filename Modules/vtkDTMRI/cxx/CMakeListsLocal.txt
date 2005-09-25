@@ -36,6 +36,8 @@ vtkMrmlTractsNode.cxx
 vtkSeedTracts.cxx
 vtkDisplayTracts.cxx
 vtkSaveTracts.cxx
+vtkROISelectTracts.cxx
+vtkColorROIFromTracts.cxx
 )
 
 ## classes that one does not want tcl wrapped

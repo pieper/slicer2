@@ -48,13 +48,11 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkDTMRIConfigure.h"
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"
+
 #include "vtkImageData.h"
 #include "vtkTransform.h"
-#include "vtkShortArray.h"
-#include "vtkDoubleArray.h"
-#include "vtkPolyData.h"
-#include "vtkIntArray.h"
 #include "vtkCollection.h"
+#include "vtkShortArray.h"
 
 #include "vtkHyperStreamline.h"
 #include "vtkHyperStreamlinePoints.h"
@@ -87,7 +85,7 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   // Description
   // Start a streamline from each voxel in ROI, keep those paths
   // that pass through ROI2.
-  void SeedStreamlinesInROIIntersectWithROI2();
+  void SeedStreamlinesFromROIIntersectWithROI2();
 
   // Description
   // Seed each streamline, cause it to Update, save its info to disk
@@ -135,6 +133,15 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   vtkGetObjectMacro(InputROI2, vtkImageData);
 
   // Description
+  // Input ROI volume to color with the ID of the streamlines through the ROI
+  vtkSetObjectMacro(InputROIForColoring, vtkImageData);
+  vtkGetObjectMacro(InputROIForColoring, vtkImageData);
+
+  // Description
+  // Output ROI volume, colored with the ID of the streamlines through the ROI
+  vtkGetObjectMacro(OutputROIForColoring, vtkImageData);
+
+  // Description
   // Transformation used in seeding streamlines.  Their start
   // points are specified in the coordinate system of the ROI volume.
   // Transform the ijk coordinates of the ROI to world coordinates.
@@ -156,8 +163,8 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
 
   // Description
   // List of the output vtkHyperStreamlines (or subclasses)
+  vtkSetObjectMacro(Streamlines, vtkCollection);
   vtkGetObjectMacro(Streamlines, vtkCollection);
-
 
   // Description
   // Type of vtkHyperStreamline subclass to create.
@@ -215,8 +222,11 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   vtkImageData *InputTensorField;
   vtkImageData *InputROI;
   vtkImageData *InputROI2;
+  vtkImageData *InputROIForColoring;
+  vtkImageData *OutputROIForColoring;
 
   int InputROIValue;
+  int InputROI2Value;
   vtkShortArray *InputMultipleROIValues;
   
   int PointWithinTensorData(double *point, double *pointw);

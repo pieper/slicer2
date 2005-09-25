@@ -88,7 +88,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.64 $} {$Date: 2005/09/25 15:57:47 $}]
+        {$Revision: 1.65 $} {$Date: 2005/09/25 20:14:05 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -1133,16 +1133,12 @@ proc MainModelsSetTensorVisibility {m {value ""}} {
     return
     }
 
-    # if empty string, return
-    if {$value == ""} {
-    return
+    # set new value
+    # if the value is "" that means the GUI already toggled the value
+    if {$value != ""} {
+        set Model($m,tensorVisibility) $value
     }
 
-    # save previous value
-    set prevTensorVisibility $Model($m,tensorVisibility)
-
-    # set new value
-    set Model($m,tensorVisibility) $value
     Model($m,node) SetTensorVisibility $Model($m,tensorVisibility)
 
     # set up or remove display pipelines
@@ -1187,7 +1183,6 @@ proc MainModelsSetTensorVisibility {m {value ""}} {
     } else {
 
     # if we were displaying tensors, stop.
-    if {$prevTensorVisibility == 1} {
         MainRemoveActor Model($m,tensorGlyphActor)
         
         # Also delete the pipeline
@@ -1196,7 +1191,6 @@ proc MainModelsSetTensorVisibility {m {value ""}} {
         Model($m,tensorGlyphActor) Delete
         Model($m,tensorGlyphMapper) Delete
         Model($m,tensorNormals) Delete
-    }
     }
 
     # If this is the active model, update GUI
