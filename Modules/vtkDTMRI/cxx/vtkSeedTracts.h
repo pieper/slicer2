@@ -68,7 +68,6 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   static vtkSeedTracts *New();
   vtkTypeMacro(vtkSeedTracts,vtkObject);
 
-
   // Description
   // Start a streamline from each voxel which has the value InputROIValue
   // in the InputROI volume.  Streamlines are added to the vtkCollection
@@ -76,7 +75,7 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   void SeedStreamlinesInROI();
   
   // Description
-  // Start a streamline from each voxel which has the values store in
+  // Start a streamline from each voxel which has the values stored in
   // the vtkShortArray InputMultipleROIValues
   // in the InputROI volume.  Streamlines are added to the vtkCollection
   // this->Streamlines.
@@ -111,6 +110,8 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   // ROI.
   vtkSetClampMacro(InputROIValue, int, 1, VTK_SHORT_MAX);
   vtkGetMacro(InputROIValue, int);
+  vtkSetClampMacro(InputROI2Value, int, 1, VTK_SHORT_MAX);
+  vtkGetMacro(InputROI2Value, int);
 
   // Description
   // Streamlines will be started at locations with these values in the InputROI.
@@ -131,15 +132,6 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   // will be displayed).
   vtkSetObjectMacro(InputROI2, vtkImageData);
   vtkGetObjectMacro(InputROI2, vtkImageData);
-
-  // Description
-  // Input ROI volume to color with the ID of the streamlines through the ROI
-  vtkSetObjectMacro(InputROIForColoring, vtkImageData);
-  vtkGetObjectMacro(InputROIForColoring, vtkImageData);
-
-  // Description
-  // Output ROI volume, colored with the ID of the streamlines through the ROI
-  vtkGetObjectMacro(OutputROIForColoring, vtkImageData);
 
   // Description
   // Transformation used in seeding streamlines.  Their start
@@ -222,8 +214,6 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   vtkImageData *InputTensorField;
   vtkImageData *InputROI;
   vtkImageData *InputROI2;
-  vtkImageData *InputROIForColoring;
-  vtkImageData *OutputROIForColoring;
 
   int InputROIValue;
   int InputROI2Value;

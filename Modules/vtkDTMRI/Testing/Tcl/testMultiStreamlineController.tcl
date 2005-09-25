@@ -39,7 +39,8 @@ streamControl SetInputRenderers renderers
 
 # Set type of streamlines to create
 #-----------------------------------
-streamControl UseVtkHyperStreamlinePoints
+set seedTracts [streamControl GetSeedTracts]
+$seedTracts UseVtkHyperStreamlinePoints
 vtkHyperStreamlinePoints exampleObject
 exampleObject  IntegrateMinorEigenvector
 exampleObject SetMaximumPropagationDistance 18.0
@@ -52,8 +53,8 @@ exampleObject SetNumberOfSides 18
 # botttom of the cube.
 exampleObject SetMinFractionalAnisotropy 0
 exampleObject SetMaxCurvature 10
-# Give the streamControl this object to copy new ones from
-streamControl SetVtkHyperStreamlinePointsSettings exampleObject
+# Give the $seedTracts this object to copy new ones from
+$seedTracts SetVtkHyperStreamlinePointsSettings exampleObject
 
 
 # Set the tensors as input to the streamline controller
@@ -63,14 +64,14 @@ streamControl ScalarVisibilityOn
 
 # Set seed points and display the result
 #-----------------------------------
-streamControl SeedStreamlineFromPoint 9 9 -9
-streamControl SeedStreamlineFromPoint -9 -9 -9
-streamControl SeedStreamlineFromPoint 9 -9 -9
-streamControl SeedStreamlineFromPoint -9 9 -9
+$seedTracts SeedStreamlineFromPoint 9 9 -9
+$seedTracts SeedStreamlineFromPoint -9 -9 -9
+$seedTracts SeedStreamlineFromPoint 9 -9 -9
+$seedTracts SeedStreamlineFromPoint -9 9 -9
+
+# Display
+streamControl DebugOn
 streamControl AddStreamlinesToScene
-
-
-
 
 # plane for context
 #

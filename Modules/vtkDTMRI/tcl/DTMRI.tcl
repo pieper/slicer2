@@ -501,7 +501,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.107 $} {$Date: 2005/09/23 02:32:15 $}]
+                  {$Revision: 1.108 $} {$Date: 2005/09/25 21:52:17 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -1382,12 +1382,13 @@ proc DTMRIBuildVTK {} {
 
     # these are example objects used in creation of hyperstreamlines
     set streamline "streamlineControl,vtkHyperStreamlinePoints"
+    set seedTracts [DTMRI(vtk,streamlineControl) GetSeedTracts]
     vtkHyperStreamlinePoints DTMRI(vtk,$streamline) 
-    DTMRI(vtk,streamlineControl) SetVtkHyperStreamlinePointsSettings \
+    $seedTracts SetVtkHyperStreamlinePointsSettings \
         DTMRI(vtk,$streamline)
     set streamline "streamlineControl,vtkPreciseHyperStreamlinePoints"
     vtkPreciseHyperStreamlinePoints DTMRI(vtk,$streamline)
-    DTMRI(vtk,streamlineControl) SetVtkPreciseHyperStreamlinePointsSettings \
+    $seedTracts SetVtkPreciseHyperStreamlinePointsSettings \
         DTMRI(vtk,$streamline)
     
 

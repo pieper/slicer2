@@ -78,10 +78,6 @@ vtkSeedTracts::vtkSeedTracts()
   this->InputMultipleROIValues = NULL;
   this->InputROI2 = NULL;
 
-  // Coloring belongs in another class
-  this->InputROIForColoring = NULL;
-  this->OutputROIForColoring = NULL;
-
   // if the user doesn't set these they will be ignored
   this->VtkHyperStreamlineSettings=NULL;
   this->VtkHyperStreamlinePointsSettings=NULL;

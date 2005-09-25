@@ -93,6 +93,8 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
   // the number of actors displayed in the scene
   this->NumberOfVisibleActors=0;
 
+  // radius of the tube which is displayed
+  this->TubeRadius = 0.5;
  
   // Helper classes
   // ---------------

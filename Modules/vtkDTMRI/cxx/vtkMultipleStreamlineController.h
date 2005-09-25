@@ -146,8 +146,8 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
 
   // Description
   // Radius of displayed tube
-  vtkSetClampMacro(TubeRadius, int, 0, VTK_INT_MAX);
-  vtkGetMacro(TubeRadius, int);
+  vtkSetClampMacro(TubeRadius, float, 0, VTK_FLOAT_MAX);
+  vtkGetMacro(TubeRadius, float);
 
   // Description
   // Lookup table for all displayed streamlines
@@ -168,6 +168,10 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // Description
   // Get object that performs saving (to set parameters)
   vtkGetObjectMacro(SaveTracts,vtkSaveTracts);
+
+  // Description
+  // Get object that performs seeding (to set parameters)
+  vtkGetObjectMacro(SeedTracts,vtkSeedTracts);
 
  protected:
   vtkMultipleStreamlineController();
@@ -192,7 +196,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   vtkCollection *Actors;
 
   int NumberOfVisibleActors;
-  int TubeRadius;
+  float TubeRadius;
   vtkProperty *StreamlineProperty;
  
   int ScalarVisibility;

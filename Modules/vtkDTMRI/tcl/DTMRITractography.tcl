@@ -80,7 +80,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.27 $} {$Date: 2005/09/06 23:21:38 $}]
+                                 {$Revision: 1.28 $} {$Date: 2005/09/25 21:52:17 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -895,7 +895,7 @@ proc DTMRISelectStartHyperStreamline {x y z {render "true"} } {
     DTMRIUpdateStreamlineSettings
 
     # actually create and display the streamline
-    DTMRI(vtk,streamlineControl) SeedStreamlineFromPoint $x $y $z
+    [DTMRI(vtk,streamlineControl) GetSeedTracts] SeedStreamlineFromPoint $x $y $z
     DTMRI(vtk,streamlineControl) AddStreamlinesToScene
 
     # Force pipeline execution and render scene
@@ -915,12 +915,14 @@ proc DTMRISelectStartHyperStreamline {x y z {render "true"} } {
 proc DTMRIUpdateStreamlineSettings {} {
     global DTMRI
 
+    set seedTracts [DTMRI(vtk,streamlineControl) GetSeedTracts]
+
     # set up type of streamline to create
     switch $DTMRI(stream,tractingMethod) {
         "BSpline" {
 
             # What type of streamline object to create
-            DTMRI(vtk,streamlineControl) UseVtkPreciseHyperStreamlinePoints
+            $seedTracts UseVtkPreciseHyperStreamlinePoints
 
             # apply correct settings to example streamline object
             set streamline "streamlineControl,vtkPreciseHyperStreamlinePoints"
@@ -948,7 +950,7 @@ proc DTMRIUpdateStreamlineSettings {} {
 
         "NoSpline" {
             # What type of streamline object to create
-            DTMRI(vtk,streamlineControl) UseVtkHyperStreamlinePoints
+            $seedTracts UseVtkHyperStreamlinePoints
 
             # apply correct settings to example streamline object
             set streamline "streamlineControl,vtkHyperStreamlinePoints"
@@ -1329,8 +1331,9 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
     castVSeedROI Update
 
     # set up the input segmented volume
-    DTMRI(vtk,streamlineControl) SetInputROI [castVSeedROI GetOutput] 
-    DTMRI(vtk,streamlineControl) SetInputROIValue $DTMRI(ROILabel)
+    set seedTracts [DTMRI(vtk,streamlineControl) GetSeedTracts]
+    $seedTracts SetInputROI [castVSeedROI GetOutput] 
+    $seedTracts SetInputROIValue $DTMRI(ROILabel)
 
     # color the streamlines like this ROI
     set DTMRI(TractLabel) $DTMRI(ROILabel)
@@ -1345,12 +1348,12 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
     transform SetMatrix [Volume($v,node) GetWldToIjk]
     # now it's ijk to world
     transform Inverse
-    DTMRI(vtk,streamlineControl) SetROIToWorld transform
+    $seedTracts SetROIToWorld transform
     transform Delete
 
     # create all streamlines
     puts "Original number of tracts: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
-    DTMRI(vtk,streamlineControl) SeedStreamlinesFromROI
+    $seedTracts SeedStreamlinesInROI
     puts "New number of tracts will be: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
     puts "Creating and displaying new tracts..."
 
@@ -1429,11 +1432,12 @@ proc DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI {{verbose 1}} {
     castVSaveROI Update
 
     # set up the input segmented volumes
-    DTMRI(vtk,streamlineControl) SetInputROI [castVSeedROI GetOutput]
-    DTMRI(vtk,streamlineControl) SetInputROIValue $DTMRI(ROILabel)
+    set seedTracts [DTMRI(vtk,streamlineControl) GetSeedTracts]
+    $seedTracts SetInputROI [castVSeedROI GetOutput]
+    $seedTracts SetInputROIValue $DTMRI(ROILabel)
 
-    DTMRI(vtk,streamlineControl) SetInputROI2 [castVSaveROI GetOutput]
-    DTMRI(vtk,streamlineControl) SetInputROI2Value $DTMRI(ROI2Label)
+    $seedTracts SetInputROI2 [castVSaveROI GetOutput]
+    $seedTracts SetInputROI2Value $DTMRI(ROI2Label)
     
     
     # Get positioning information from the MRML node for the seed ROI
@@ -1442,7 +1446,7 @@ proc DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI {{verbose 1}} {
     transform SetMatrix [Volume($vSeedROI,node) GetWldToIjk]
     # now it's ijk to world
     transform Inverse
-    DTMRI(vtk,streamlineControl) SetROIToWorld transform
+    $seedTracts SetROIToWorld transform
     transform Delete
 
     # Get positioning information from the MRML node for the second ROI
@@ -1451,14 +1455,14 @@ proc DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI {{verbose 1}} {
     transform SetMatrix [Volume($vSaveROI,node) GetWldToIjk]
     # now it's ijk to world
     transform Inverse
-    DTMRI(vtk,streamlineControl) SetROI2ToWorld transform
+    $seedTracts SetROI2ToWorld transform
     transform Delete
 
     # create all streamlines
     puts "Original number of tracts: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
 
     
-    DTMRI(vtk,streamlineControl) SeedStreamlinesFromROIIntersectWithROI2
+    $seedTracts SeedStreamlinesFromROIIntersectWithROI2
     puts "New number of tracts will be: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
 
     # actually display streamlines 
@@ -1469,72 +1473,6 @@ proc DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI {{verbose 1}} {
     castVSeedROI Delete
     castVSaveROI Delete
 }
-
-
-
-#-------------------------------------------------------------------------------
-# .PROC DTMRISeedStreamlinesEvenlyInMask
-# Seeds streamlines at all points in a segmentation.
-# .ARGS
-# int verbose defaults to 1
-# .END
-#-------------------------------------------------------------------------------
-proc DTMRISeedStreamlinesEvenlyInMask {{verbose 1}} {
-    global DTMRI Label Tensor Volume
-
-    set t $Tensor(activeID)
-    set v $DTMRI(ROILabelmap)
-
-    # make sure they are using a segmentation (labelmap)
-    if {[Volume($v,node) GetLabelMap] != 1} {
-        set name [Volume($v,node) GetName]
-        set msg "The volume $name is not a label map (segmented ROI). Continue anyway?"
-        if {[tk_messageBox -type yesno -message $msg] == "no"} {
-            return
-        }
-
-    }
-
-    # ask for user confirmation first
-    if {$verbose == "1"} {
-        set name [Volume($v,node) GetName]
-        set msg "About to seed streamlines in all labelled voxels of volume $name.  This may take a while, so make sure the Tracts settings are what you want first. Go ahead?"
-        if {[tk_messageBox -type yesno -message $msg] == "no"} {
-            return
-        }
-    }
-
-    # set mode to On (the Display Tracts button will go On)
-    set DTMRI(mode,visualizationType,tractsOn) On
-
-    # make sure the settings are current
-    DTMRIUpdateTractColor
-    DTMRIUpdateStreamlineSettings
-    
-    # set up the input segmented volume
-    DTMRI(vtk,streamlineControl) SetInputROI [Volume($v,vol) GetOutput] 
-    DTMRI(vtk,streamlineControl) SetInputROIValue $DTMRI(ROILabel)
-
-    # Get positioning information from the MRML node
-    # world space (what you see in the viewer) to ijk (array) space
-    vtkTransform transform
-    transform SetMatrix [Volume($v,node) GetWldToIjk]
-    # now it's ijk to world
-    transform Inverse
-    DTMRI(vtk,streamlineControl) SetROIToWorld transform
-    transform Delete
-
-    # create all streamlines
-    puts "Original number of tracts: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
-    DTMRI(vtk,streamlineControl) SeedStreamlinesEvenlyInROI 
-    puts "New number of tracts will be: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
-    puts "Creating and displaying new tracts..."
-
-    # actually display streamlines 
-    # (this is the slow part since it causes pipeline execution)
-    DTMRI(vtk,streamlineControl) AddStreamlinesToScene
-}
-
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRISeedAndSaveStreamlinesFromSegmentation
@@ -1596,8 +1534,9 @@ proc DTMRISeedAndSaveStreamlinesFromSegmentation {{verbose 1}} {
     DTMRIUpdateStreamlineSettings
 
     # set up the input segmented volume
-    DTMRI(vtk,streamlineControl) SetInputROI [Volume($v,vol) GetOutput] 
-    DTMRI(vtk,streamlineControl) SetInputROIValue $DTMRI(ROILabel)
+    set seedTracts [DTMRI(vtk,streamlineControl) GetSeedTracts]
+    $seedTracts SetInputROI [Volume($v,vol) GetOutput] 
+    $seedTracts SetInputROIValue $DTMRI(ROILabel)
 
     # Get positioning information from the MRML node
     # world space (what you see in the viewer) to ijk (array) space
@@ -1605,12 +1544,12 @@ proc DTMRISeedAndSaveStreamlinesFromSegmentation {{verbose 1}} {
     transform SetMatrix [Volume($v,node) GetWldToIjk]
     # now it's ijk to world
     transform Inverse
-    DTMRI(vtk,streamlineControl) SetROIToWorld transform
+    $seedTracts SetROIToWorld transform
     transform Delete
 
     # create all streamlines
     puts "Starting to seed streamlines. Files will be $filename*.*"
-    DTMRI(vtk,streamlineControl) SeedAndSaveStreamlinesFromROI \
+    $seedTracts SeedAndSaveStreamlinesFromROI \
         $filename  $filename2
 
     # let user know something happened
