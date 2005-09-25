@@ -64,7 +64,7 @@ proc DTMRITractClusterInit {} {
     #------------------------------------
     set m "TractCluster"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.15 $} {$Date: 2005/09/06 15:10:15 $}]
+                                 {$Revision: 1.16 $} {$Date: 2005/09/25 23:07:36 $}]
 
     set DTMRI(TractCluster,NumberOfClusters) 3
     set DTMRI(TractCluster,Sigma) 25
@@ -140,7 +140,7 @@ proc DTMRITractClusterBuildGUI {} {
     frame $f.fSettings -bg  $Gui(activeWorkspace) -relief groove -bd 2
     pack $f.fSettings -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
-    foreach frame "Apply Save" {
+    foreach frame "Apply" {
         frame $f.f$frame -bg  $Gui(activeWorkspace) 
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     }
@@ -202,16 +202,6 @@ proc DTMRITractClusterBuildGUI {} {
     TooltipAdd  $f.b "Apply above settings and cluster tracts.\nEach cluster will get a unique color."
 
 
-    #-------------------------------------------
-    # TractCluster->Bottom->Save frame
-    #-------------------------------------------
-    set f $fCluster.fBottom.fSave
-    DevAddButton $f.bSave "Save clusters" \
-        {DTMRIractClusterSaveTractClusters}
-
-    TooltipAdd $f.bSave "Save text files with the tract paths, FA, and class lebals.\n This does not save vtk models, please save those under Display->Tracts->SaveTracts."
-
-    pack $f.bSave -side top -padx $Gui(pad) -pady $Gui(pad) 
 
 }
 
@@ -481,128 +471,6 @@ proc DTMRITractClusterAdvancedViewMatrices {} {
     }
 
 }
-
-
-#-------------------------------------------------------------------------------
-# .PROC DTMRIractClusterSaveTractClusters
-# Save all points from the streamline paths as text files
-# .ARGS
-# int verbose default is 1 
-# .END
-#-------------------------------------------------------------------------------
-proc DTMRIractClusterSaveTractClusters {{verbose "1"}} {
-    
-    # check we have streamlines
-    if {[DTMRI(vtk,streamlineControl) GetNumberOfStreamlines] < 1} {
-        set msg "There are no tracts to save. Please create tracts first."
-        tk_messageBox -message $msg
-        return
-    }
-
-    # set base filename for all stored files
-    set filename [tk_getSaveFile  -title "Save Tracts: Choose Initial Filename"]
-    if { $filename == "" } {
-        return
-    }
-
-    # save the tracts
-    DTMRI(vtk,streamlineControl) SaveTractClustersAsTextFiles \
-        $filename 
-
-    # let user know something happened
-    if {$verbose == "1"} {
-        set msg "Finished writing tracts. The filenames are: $filename*.*"
-        tk_messageBox -message $msg
-    }
-
-} 
-
-#-------------------------------------------------------------------------------
-# .PROC DTMRITractClusterTest
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc DTMRITractClusterTest {} {
-    global DTMRI Label Tensor Volume
-
-    set t $Tensor(activeID)
-    set v $Volume(activeID)
-
-    # make sure they are using a segmentation (labelmap)
-    if {[Volume($v,node) GetLabelMap] != 1} {
-        set name [Volume($v,node) GetName]
-        set msg "The volume $name is not a label map (segmented ROI). Continue anyway?"
-        if {[tk_messageBox -type yesno -message $msg] == "no"} {
-            return
-        }
-
-    }
-
-    # ask for user confirmation first
-    set name [Volume($v,node) GetName]
-    set msg "About to seed streamlines in all labelled voxels of volume $name.  This may take a while, so make sure the Tracts settings are what you want first. Go ahead?"
-    if {[tk_messageBox -type yesno -message $msg] == "no"} {
-        return
-    }
-
-    # set mode to On (the Display Tracts button will go On)
-    set DTMRI(mode,visualizationType,tractsOn) On
-
-    # make sure the settings are current
-    DTMRIUpdateTractColor
-    DTMRIUpdateStreamlineSettings
-    
-    # set up the input segmented volume
-    DTMRI(vtk,streamlineControl) SetInputROI [Volume($v,vol) GetOutput] 
-    DTMRI(vtk,streamlineControl) SetInputROIValue $Label(label)
-
-    # Get positioning information from the MRML node
-    # world space (what you see in the viewer) to ijk (array) space
-    vtkTransform transform
-    transform SetMatrix [Volume($v,node) GetWldToIjk]
-    # now it's ijk to world
-    transform Inverse
-    DTMRI(vtk,streamlineControl) SetROIToWorld transform
-    transform Delete
-
-    # Apply the settings for number of clusters, etc.
-    DTMRITractClusterApplyUserSettings
-
-    # create all streamlines
-    puts "Original number of tracts: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
-    DTMRI(vtk,streamlineControl) SeedStreamlinesFromROIClusterAndDisplay
-    puts "New number of tracts is: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
-
-    Render3D
-}
-
-#-------------------------------------------------------------------------------
-# .PROC DTMRITractClusterTestUndo
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc DTMRITractClusterTestUndo {} {
-    global DTMRI Module
-
-    set numActors $DTMRI(TractCluster,NumberOfClusters)
-
-    foreach ren $Module(Renderers) {
-
-        set actors [$ren GetActors]
-        set index [expr [$actors GetNumberOfItems] -1]
-
-        for {set i 0} {$i < $numActors} {incr i} {
-            set actor [$actors GetItemAsObject $index]
-            $ren RemoveActor $actor
-            $actor Delete
-            set index [expr $index - 1]
-        }
-    }  
-    Render3D
-}
-
 
 proc DTMRITractClusterColorBack {vol} {
     global DTMRI Volume
