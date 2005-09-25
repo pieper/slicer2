@@ -85,7 +85,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.63 $} {$Date: 2005/09/23 21:24:22 $}]
+            {$Revision: 1.64 $} {$Date: 2005/09/25 15:57:48 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -697,7 +697,8 @@ proc ModelsBuildGUI {} {
     set f $fProps.fBot.fAdv2.fTensors
     frame $f.fVisible -bg $Gui(activeWorkspace)
     frame $f.fScaleFactor   -bg $Gui(activeWorkspace)
-    pack $f.fVisible $f.fScaleFactor -side top -pady $Gui(pad)
+    frame $f.fColor  -bg $Gui(activeWorkspace)
+    pack $f.fVisible $f.fScaleFactor $f.fColor -side top -pady $Gui(pad)
 
     #-------------------------------------------
     # Props->Bot->Adv2->Tensors->Visible frame
@@ -728,6 +729,27 @@ proc ModelsBuildGUI {} {
     bind $f.e <Return> "ModelsPropsApplyButNotToNew"
     pack $f.l $f.e -side left -padx $Gui(pad) -pady 0
 
+    #-------------------------------------------
+    # Props->Bot->Adv2->Tensors->Color frame
+    #-------------------------------------------
+    set f $fProps.fBot.fAdv2.fTensors.fColor
+
+    DevAddLabel $f.lVis "Color By:"
+    eval {menubutton $f.mbVis -text $Model(tensorGlyphColor) \
+          -relief raised -bd 2 -width 22 \
+          -menu $f.mbVis.m} $Gui(WMBA)
+    eval {menu $f.mbVis.m} $Gui(WMA)
+    pack $f.lVis $f.mbVis -side left -pady 1 -padx $Gui(pad)
+    # Add menu items
+    set visList "SolidColor LinearMeasure PlanarMeasure SphericalMeasure RelativeAnisotropy FractionalAnisotropy"
+    foreach vis $visList {
+        $f.mbVis.m add command -label $vis \
+        -command "set Model(tensorGlyphColor) $vis; MainModelsSetTensorColor; Render3D"
+    }
+    # save menubutton for config
+    set Model(mbTensorGlyphColor) $f.mbVis
+    # Add a tooltip
+    TooltipAdd $f.mbVis "Select tensor shape measure to color tensors by."
 
     #-------------------------------------------
     # Clip frame

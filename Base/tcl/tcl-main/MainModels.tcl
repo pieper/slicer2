@@ -88,7 +88,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.63 $} {$Date: 2005/09/23 21:24:22 $}]
+        {$Revision: 1.64 $} {$Date: 2005/09/25 15:57:47 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -109,6 +109,7 @@ proc MainModelsInit {} {
     set Model(vectorVisibility) 0
     set Model(vectorScaleFactor) 1
     set Model(tensorVisibility) 0
+    set Model(tensorGlyphColor) LinearMeasure
     set Model(tensorScaleFactor) 200
     set Model(scalarLo) 0
     set Model(scalarHi) 100
@@ -1145,42 +1146,37 @@ proc MainModelsSetTensorVisibility {m {value ""}} {
     Model($m,node) SetTensorVisibility $Model($m,tensorVisibility)
 
     # set up or remove display pipelines
+    # The catch statements are to avoid trying to create the same
+    # object again if this is called more than once.
     if {$Model($m,tensorVisibility) == 1} {
     catch {vtkSphereSource Model($m,sphereSource)}
     Model($m,sphereSource) SetThetaResolution 12
     Model($m,sphereSource) SetPhiResolution 12
     
-    catch {vtkInteractiveTensorGlyph Model($m,tensorGlyph)}
+    # try to create the vtkTensorUtil module's glyph class
+    set err [catch {vtkInteractiveTensorGlyph Model($m,tensorGlyph)}]
+    if {$err != 0} {
+    # if we don't have that module create the standard vtk one
+    puts "vtkInteractiveTensorGlyph not found, creating vtkTensorGlyph."
+    catch {vtkTensorGlyph Model($m,tensorGlyph)}
+    }
+
     Model($m,tensorGlyph) SetInput $Model($m,polyData)
     #Model($m,tensorGlyph) SetSource [lineSource GetOutput]
     Model($m,tensorGlyph) SetSource [Model($m,sphereSource) GetOutput]
     Model($m,tensorGlyph) SetScaleFactor $Model(tensorScaleFactor)
 
-    catch {vtkActor Model($m,tensorGlyphActor)}
+    catch {vtkLODActor Model($m,tensorGlyphActor)}
     catch {vtkPolyDataMapper Model($m,tensorGlyphMapper)}
-    
-    # Update for scalar range
-    Model($m,tensorGlyph) Update
-    scan [[Model($m,tensorGlyph) GetOutput] GetScalarRange] \
-        "%f %f" s1 s2
-    Model($m,tensorGlyphMapper) SetScalarRange $s1 $s2
-
-    # Scalar visibility/color same as model color
-    Model($m,tensorGlyphMapper) SetScalarVisibility \
-        $Model($m,scalarVisibility)
-    set c $Model($m,colorID)
-    if {$c == ""} {
-    } else {
-        set prop [Model($m,tensorGlyphActor) GetProperty ]
-            $prop SetAmbient       [Color($c,node) GetAmbient]
-            $prop SetDiffuse       [Color($c,node) GetDiffuse]
-            $prop SetSpecular      [Color($c,node) GetSpecular]
-            $prop SetSpecularPower [Color($c,node) GetPower]
-            eval $prop SetColor    [Color($c,node) GetDiffuseColor]
-    }    
-
     Model($m,tensorGlyphActor) SetMapper Model($m,tensorGlyphMapper)
+
+    # default lookup table colormap
+    [Model($m,tensorGlyphMapper) GetLookupTable] \
+    SetHueRange .6667 0.0
     
+    # Set up coloring as chosen on the menu
+    MainModelsSetTensorColor
+
     catch {vtkPolyDataNormals Model($m,tensorNormals)}
     Model($m,tensorNormals) SetInput [Model($m,tensorGlyph) GetOutput]
     
@@ -1222,6 +1218,48 @@ proc MainModelsSetTensorScaleFactor {m {value ""}} {
     }
 }
 
+proc MainModelsSetTensorColor {} {
+    global Model 
+    
+    # display new color type
+    $Model(mbTensorGlyphColor) config -text $Model(tensorGlyphColor)
+
+    set m $Model(activeID)
+    if {$Model($m,tensorVisibility) == 1} {
+
+    if {$Model(tensorGlyphColor) == "SolidColor"} {
+        Model($m,tensorGlyphMapper) ScalarVisibilityOff
+
+        # Set color same as model color
+        set c $Model($m,colorID)
+        if {$c == ""} {
+        } else {
+        set prop [Model($m,tensorGlyphActor) GetProperty ]
+        $prop SetAmbient       [Color($c,node) GetAmbient]
+        $prop SetDiffuse       [Color($c,node) GetDiffuse]
+        $prop SetSpecular      [Color($c,node) GetSpecular]
+        $prop SetSpecularPower [Color($c,node) GetPower]
+        eval $prop SetColor    [Color($c,node) GetDiffuseColor]
+        }    
+
+    } else {
+        set err [catch {Model($m,tensorGlyph) \
+                ColorGlyphsWith$Model(tensorGlyphColor)}]
+        if {$err != 0} {
+        # if we don't have vtkInteractiveTensorGlyph
+        puts "Cannot color glyphs when using vtkTensorGlyph."
+        } else {
+        Model($m,tensorGlyphMapper) ScalarVisibilityOn
+        }
+
+        # Update for scalar range
+        Model($m,tensorGlyph) Update
+        scan [[Model($m,tensorGlyph) GetOutput] GetScalarRange] \
+        "%f %f" s1 s2
+        Model($m,tensorGlyphMapper) SetScalarRange $s1 $s2
+    }
+    }
+}
  
 #-------------------------------------------------------------------------------
 # .PROC MainModelsRegisterModel
