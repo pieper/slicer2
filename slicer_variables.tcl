@@ -160,7 +160,7 @@ switch $tcl_platform(os) {
         set ::COMPILER_PATH "/usr/bin"
         set ::COMPILER "g++"
         set ::CMAKE $::CMAKE_PATH/bin/cmake
-        set ::MAKE "make -j5"
+        set ::MAKE make
     }
     "Darwin" {
         set ::VTKSLICERBASE_BUILD_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/vtkSlicerBase.dylib
