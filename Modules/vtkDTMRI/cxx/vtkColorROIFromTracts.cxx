@@ -62,7 +62,10 @@ vtkColorROIFromTracts::vtkColorROIFromTracts()
 
   this->InputROIForColoring = NULL;
   this->OutputROIForColoring = NULL;
-
+  this->Streamlines = NULL;
+  this->Actors = NULL;
+  this->WorldToTensorScaledIJK = NULL;
+  this->ROIToWorld = NULL;
 }
 
 //----------------------------------------------------------------------------
