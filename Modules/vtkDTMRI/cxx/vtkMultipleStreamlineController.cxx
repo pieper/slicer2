@@ -513,6 +513,18 @@ int vtkMultipleStreamlineController::GetStreamlineIndexFromActor(vtkActor *picke
 //----------------------------------------------------------------------------
 void vtkMultipleStreamlineController::ClusterTracts(int tmp)
 {
+  if (this->Streamlines == 0)
+    {
+      vtkErrorMacro("Streamlines are NULL.");
+      return;      
+    }
+
+  if (this->Streamlines->GetNumberOfItems() < 1)
+    {
+      vtkErrorMacro("No streamlines exist.");
+      return;      
+    }
+
   // First make sure none of the streamlines have 0 length
   this->CleanStreamlines();
 
