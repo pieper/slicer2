@@ -47,7 +47,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // itk object for exception handling
 #include "itkExceptionObject.h"
 
-vtkCxxRevisionMacro(vtkClusterTracts, "$Revision: 1.7 $");
+vtkCxxRevisionMacro(vtkClusterTracts, "$Revision: 1.8 $");
 vtkStandardNewMacro(vtkClusterTracts);
 
 vtkCxxSetObjectMacro(vtkClusterTracts, InputStreamlines, vtkCollection);
@@ -110,6 +110,11 @@ void vtkClusterTracts::ComputeClusters()
       return;      
 
     }    
+
+  // Make sure the clustering algorithm thinks it has been modified.
+  // We want it to execute every time since the k-means initialization
+  // is random. So there should be a new result every time clustering is run.
+  this->ClusteringAlgorithm->Modified();
 
   // Set the parameters from the user
   this->ClusteringAlgorithm->SetNumberOfClusters(this->NumberOfClusters);
