@@ -501,7 +501,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.108 $} {$Date: 2005/09/25 21:52:17 $}]
+                  {$Revision: 1.109 $} {$Date: 2005/09/27 20:49:03 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -1437,7 +1437,10 @@ proc DTMRIBuildVTK {} {
     set DTMRI(vtk,ivps) DTMRI(vtk,rk4)
 
     #Objects for finding streamlines through several ROIS
-    vtkShortArray DTMRI(vtk,ListLabels)
+    vtkROISelectTracts DTMRI(vtk,ROISelectTracts)
+    DTMRI(vtk,ROISelectTracts) SetStreamlineController DTMRI(vtk,streamlineControl)
+    vtkShortArray DTMRI(vtk,ListANDLabels)
+    vtkShortArray DTMRI(vtk,ListNOTLabels)
     vtkDoubleArray DTMRI(vtk,convKernel)    
     
     #Get Kernel 

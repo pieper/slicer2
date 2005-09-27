@@ -80,7 +80,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.30 $} {$Date: 2005/09/25 23:10:22 $}]
+                                 {$Revision: 1.31 $} {$Date: 2005/09/27 20:49:20 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -274,8 +274,11 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     # Variable to Find tracts that pass through ROI values
     #------------------------------------
-    set DTMRI(stream,ListLabels) {0}
-
+    set DTMRI(stream,ListANDLabels) ""
+    set DTMRI(stream,ListNOTLabels) ""
+    set DTMRI(stream,threshhold) 1
+    set DTMRI(stream,threshold,max) 4
+    set DTMRI(stream,threshold,min) 1
 }
 
 
@@ -705,7 +708,7 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
     set f $fSeeding.fEntries.fFindTracts
     
-    foreach frame "Title ListLabels Apply" {
+    foreach frame "Title ListANDLabels ListNOTLabels Sensitivity Apply1 Apply2" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
     }
@@ -721,27 +724,58 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
     # Tract->Notebook->Seeding->Entries->FindTracts->ListLabels frame
     #-------------------------------------------
-    set f $fSeeding.fEntries.fFindTracts.fListLabels
+    set f $fSeeding.fEntries.fFindTracts.fListANDLabels
     
     DevAddLabel $f.l "List of labels:"
+    pack $f.l
     
-    eval {entry $f.eName -width 25 \
-              -textvariable DTMRI(stream,ListLabels)} $Gui(WEA) \
+     DevAddLabel $f.lAND "AND:"
+    eval {entry $f.eAND -width 25 \
+              -textvariable DTMRI(stream,ListANDLabels)} $Gui(WEA) \
         {-bg $Gui(activeWorkspace)}
     
-    pack $f.l $f.eName -side left
+    pack $f.lAND $f.eAND -side left
+    
+    set f $fSeeding.fEntries.fFindTracts.fListNOTLabels
+    
+    DevAddLabel $f.lNOT "NOT:"
+    eval {entry $f.eNOT -width 25 \
+              -textvariable DTMRI(stream,ListNOTLabels)} $Gui(WEA) \
+        {-bg $Gui(activeWorkspace)}
+    
+    pack $f.lNOT $f.eNOT -side left
+    
+    set f $fSeeding.fEntries.fFindTracts.fSensitivity
+    
+    DevAddLabel $f.l "Sensitivity (H<->L):"
+    
+    eval {scale $f.s -from $DTMRI(stream,threshold,min) \
+                     -to $DTMRI(stream,threshold,max)    \
+          -variable  DTMRI(stream,threshold) \
+          -orient vertical     \
+          -resolution 1      \
+          } $Gui(WSA)
+      
+    pack $f.l $f.s -side left
     
     #-------------------------------------------
     # Tract->Notebook->Seeding->Entries->FindTracts->Apply frame
     #-------------------------------------------
-    set f $fSeeding.fEntries.fFindTracts.fApply
+    set f $fSeeding.fEntries.fFindTracts.fApply1
     
-    DevAddButton $f.bApply "Find 'Tracts' through ROI" \
+    DevAddButton $f.bApply1 "Find 'Tracts' through ROI" \
         {DTMRIFindStreamlinesThroughROI}
-    pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
+    pack $f.bApply1 -side top -padx $Gui(pad) -pady $Gui(pad)
 
-
-
+    set f $fSeeding.fEntries.fFindTracts.fApply2
+    DevAddButton $f.bApply2 "Apply" \
+        {DTMRIDeleteStreamlinesNotPassTest}
+    DevAddButton $f.bApply3 "Reset" \
+        {DTMRIResetStreamlinesThroughROI}
+        
+    pack $f.bApply2 $f.bApply3 -side left -padx $Gui(pad) -pady $Gui(pad)
+    
+    
     ##########################################################
     #
     #  Display Frame
@@ -1590,22 +1624,33 @@ proc DTMRIFindStreamlinesThroughROI { {verbose 1} } {
     DTMRIUpdateStreamlineSettings
     
     #Define list of ROI Values
-    set numLabels [llength $DTMRI(stream,ListLabels)]
+   set numLabels [llength $DTMRI(stream,ListANDLabels)]
     
-    DTMRI(vtk,ListLabels) SetNumberOfValues $numLabels
+    DTMRI(vtk,ListANDLabels) SetNumberOfValues $numLabels
     set idx 0
-    foreach value $DTMRI(stream,ListLabels) {
-        eval "DTMRI(vtk,ListLabels) SetValue" $idx $value
+    foreach value $DTMRI(stream,ListANDLabels) {
+        eval "DTMRI(vtk,ListANDLabels) SetValue" $idx $value
         incr idx
-    }  
+    }
     
+    set numLabels [llength $DTMRI(stream,ListNOTLabels)]
+    
+    DTMRI(vtk,ListNOTLabels) SetNumberOfValues $numLabels
+    set idx 0
+    foreach value $DTMRI(stream,ListNOTLabels) {
+        eval "DTMRI(vtk,ListNOTLabels) SetValue" $idx $value
+        incr idx
+    }    
+ 
     # set up the input segmented volume
-    set ROISelectTracts [DTMRI(vtk,streamlineControl) GetROISelectTracts]
-
+    set ROISelectTracts DTMRI(vtk,ROISelectTracts)
+    
     $ROISelectTracts SetInputROI [Volume($v,vol) GetOutput] 
     $ROISelectTracts SetInputROIValue $DTMRI(ROILabel)
-    $ROISelectTracts SetInputMultipleROIValues DTMRI(vtk,ListLabels)
-    $ROISelectTracts SetConvolutionKernel DTMRI(vtk,convKernel)
+    $ROISelectTracts SetInputANDROIValues DTMRI(vtk,ListANDLabels)
+    $ROISelectTracts SetInputNOTROIValues DTMRI(vtk,ListNOTLabels)
+    $ROISelectTracts SetConvolutionKernel DTMRI(vtk,convKernel)    
+    
 
     # Get positioning information from the MRML node
     # world space (what you see in the viewer) to ijk (array) space
@@ -1625,10 +1670,24 @@ proc DTMRIFindStreamlinesThroughROI { {verbose 1} } {
     $ROISelectTracts HighlightStreamlinesPassTest
     # actually display streamlines 
     # (this is the slow part since it causes pipeline execution)
-    DTMRI(vtk,streamlineControl) AddStreamlinesToScene
+    Render3D
 }
 
+proc DTMRIDeleteStreamlinesNotPassTest { {verbose 1} } {
 
+  global DTMRI
+  
+  DTMRI(vtk,ROISelectTracts) DeleteStreamlinesNotPassTest
+  Render3D
+}
+
+proc DTMRIResetStreamlinesThroughROI { {verbose 1} } {
+
+  global DTMRI
+  
+  DTMRI(vtk,ROISelectTracts) ResetStreamlinesPassTest
+  Render3D
+}  
 
 proc DTMRITractographyColorROIFromStreamlines {} {
     global DTMRI Label Volume
