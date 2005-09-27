@@ -91,8 +91,11 @@ public:
 
   // Description:
   // Specify an array with the ROI signatures.
-  vtkSetObjectMacro(ROIValues,vtkShortArray);
-  vtkGetObjectMacro(ROIValues,vtkShortArray);
+  vtkSetObjectMacro(ANDROIValues,vtkShortArray);
+  vtkGetObjectMacro(ANDROIValues,vtkShortArray);
+  
+  vtkSetObjectMacro(NOTROIValues,vtkShortArray);
+  vtkGetObjectMacro(NOTROIValues,vtkShortArray);
   
   // Description:
   // List of streamlines Ids that pass the test
@@ -110,11 +113,12 @@ protected:
 
   void Execute();
   
-  vtkShortArray *ROIValues;
+  vtkShortArray *ANDROIValues;
+  vtkShortArray *NOTROIValues;
   vtkIntArray *StreamlineIdPassTest;
   int Threshold;
   
-  int TestForStreamline(int *streamlineTest,int npts);
+  int TestForStreamline(int *streamlineANDTest,int npts, int *streamlineNOTTest, int npts);
   
 private:
   vtkPruneStreamline(const vtkPruneStreamline&);  // Not implemented.

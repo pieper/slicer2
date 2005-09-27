@@ -64,21 +64,23 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkDataArray.h"
 #include "vtkMath.h"
 
-#define VTK_MARGIN 0.3
+#define VTK_MARGIN 0.1
 
-vtkCxxRevisionMacro(vtkPruneStreamline, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkPruneStreamline, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkPruneStreamline);
 
 vtkPruneStreamline::vtkPruneStreamline()
 {
-  this->ROIValues = NULL;
+  this->ANDROIValues = NULL;
+  this->NOTROIValues = NULL;
   this->Threshold = 1;
   this->StreamlineIdPassTest = vtkIntArray::New();
 }
 
 vtkPruneStreamline::~vtkPruneStreamline()
 {
-  this->SetROIValues(NULL);
+  this->SetANDROIValues(NULL);
+  this->SetNOTROIValues(NULL);
   this->StreamlineIdPassTest->Delete();
 }
 
@@ -86,7 +88,7 @@ void vtkPruneStreamline::Execute()
 {
   vtkPoints *inPts;
   vtkPoints *newPts;
-  vtkIdType numPts, numCells, numStreamlines, numROIs;
+  vtkIdType numPts, numCells, numStreamlines, numANDROIs, numNOTROIs;
   vtkPolyData *input = this->GetInput();
   vtkPolyData *output = this->GetOutput();
   vtkPointData *pd=input->GetPointData(), *outPD=output->GetPointData();
@@ -98,7 +100,7 @@ void vtkPruneStreamline::Execute()
 
   // Check input
   //
-  if ( this->ROIValues == NULL )
+  if ( this->ANDROIValues == NULL && this->NOTROIValues)
     {
     vtkErrorMacro(<<"No ROIs defined!");
     return;
@@ -123,8 +125,15 @@ void vtkPruneStreamline::Execute()
   numPts = inPts->GetNumberOfPoints();
   inScalars = input->GetPointData()->GetScalars();
   
-  numROIs = this->ROIValues->GetNumberOfTuples();
-  
+  if (this->ANDROIValues)
+    numANDROIs = this->ANDROIValues->GetNumberOfTuples();
+  else
+    numANDROIs = 0;
+  if (this->NOTROIValues)
+    numNOTROIs = this->NOTROIValues->GetNumberOfTuples();
+  else
+    numNOTROIs = 0; 
+    
   numStreamlines = numCells/2;
 
   cout<<"Number of streamlines to attemp pruning: "<<numStreamlines<<endl;
@@ -177,7 +186,8 @@ void vtkPruneStreamline::Execute()
 
   StreamlineIdPassTest->Initialize();
   StreamlineIdPassTest->Allocate(numStreamlines);
-  int *streamlineTest = new int[numROIs]; 
+  int *streamlineANDTest = new int[numANDROIs]; 
+  int *streamlineNOTTest = new int[numNOTROIs];
   
   //Data to store result  
   newPts = vtkPoints::New();
@@ -193,9 +203,13 @@ void vtkPruneStreamline::Execute()
   for(int sId=0; sId<numStreamlines; sId++) {
   
     //Set array to zero
-    for (int i=0; i<numROIs;i++)
-      streamlineTest[i] = 0;
+    for (int i=0; i<numANDROIs;i++)
+      streamlineANDTest[i] = 0;
  
+    
+    for (int i=0; i<numNOTROIs;i++)
+      streamlineNOTTest[i] = 0;
+    
     
     for(int cellId=0; cellId<2; cellId++) {
      cout<<"Cell ID: "<<cellId<<endl;
@@ -206,21 +220,30 @@ void vtkPruneStreamline::Execute()
          
     val=inScalars->GetComponent(ptId[j],0);
     //cout<<"Value: "<<val<<endl;
-    for(int rId=0;rId<numROIs;rId++) {
+    for(int rId=0;rId<numANDROIs;rId++) {
       
-      rval0 = ROIValues->GetValue(rId);
+      rval0 = ANDROIValues->GetValue(rId);
       if(val>(rval0-VTK_MARGIN) && val<(rval0+VTK_MARGIN)) {
         //We got response for this ROI
-        streamlineTest[rId] += 1; 
+        streamlineANDTest[rId] += 1; 
         break;
-      }  
- 
-        }
+       }
+     }
+      
+    for(int rId=0;rId<numNOTROIs;rId++) {
+      
+      rval0 = NOTROIValues->GetValue(rId);
+      if(val>(rval0-VTK_MARGIN) && val<(rval0+VTK_MARGIN)) {
+        //We got response for this ROI
+        streamlineNOTTest[rId] += 1; 
+        break;
+       }
+     } 
     
      } //end j loop throught cell points
    } //end cellId  
  
-   test=this->TestForStreamline(streamlineTest, numROIs);
+   test=this->TestForStreamline(streamlineANDTest,numANDROIs,streamlineNOTTest, numNOTROIs);
       
    //Copy cell info to output
    if(test ==1) {
@@ -239,7 +262,8 @@ void vtkPruneStreamline::Execute()
  
  this->UpdateProgress (.8);
  
- delete streamlineTest; 
+ delete streamlineANDTest;
+ delete streamlineNOTTest; 
  StreamlineIdPassTest->Squeeze();
      
   // Define output    
@@ -254,7 +278,7 @@ void vtkPruneStreamline::Execute()
 }       
        
   
-int vtkPruneStreamline::TestForStreamline(int* streamlineTest,int npts)
+int vtkPruneStreamline::TestForStreamline(int* streamlineANDTest, int nptsAND, int *streamlineNOTTest, int nptsNOT)
 {
 
   int i;
@@ -262,20 +286,21 @@ int vtkPruneStreamline::TestForStreamline(int* streamlineTest,int npts)
   test =0;
   
   //cout<<"StreamlineTest: "<<endl;
-  for(i=0;i<npts;i++) {
-    cout<<streamlineTest[i]<<endl;
+  for(i=0;i<nptsAND;i++) {
+    cout<<streamlineANDTest[i]<<endl;
   }  
   
-  for(i=0;i<npts;i++) {    
-    if(streamlineTest[i]>this->Threshold)
-      test +=1; 
+  test = 1;
+  for(i=0;i<nptsAND;i++) {
+    test = test && (streamlineANDTest[i]>this->Threshold);    
+  }
+  
+  for(i=0;i<nptsNOT;i++) {
+    test = test && (streamlineNOTTest[i]<=this->Threshold);    
   }
   cout<<"Test result: "<<test<<endl;
-         
-  if(test==npts)
-    return 1;
-  else
-    return 0;  
+  
+  return test;        
     
 }  
   
@@ -285,11 +310,19 @@ unsigned long vtkPruneStreamline::GetMTime()
   unsigned long mTime=this->MTime.GetMTime();
   unsigned long transMTime;
 
-  if ( this->ROIValues )
+  if ( this->ANDROIValues )
     {
-    transMTime = this->ROIValues->GetMTime();
+    transMTime = this->ANDROIValues->GetMTime();
     mTime = ( transMTime > mTime ? transMTime : mTime );
     }
+    
+   if ( this->NOTROIValues )
+    {
+    transMTime = this->NOTROIValues->GetMTime();
+    mTime = ( transMTime > mTime ? transMTime : mTime );
+    }
+       
+    
 
   return mTime;
 }
@@ -298,5 +331,6 @@ void vtkPruneStreamline::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
 
-  os << indent << "Array of ROI Values: " << this->ROIValues << "\n";
+  os << indent << "Array of AND ROI Values: " << this->ANDROIValues << "\n";  
+  os << indent << "Array of NOT ROI Values: " << this->NOTROIValues << "\n";
 }
