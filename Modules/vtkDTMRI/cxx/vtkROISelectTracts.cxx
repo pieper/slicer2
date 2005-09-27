@@ -65,18 +65,20 @@ vtkROISelectTracts::vtkROISelectTracts()
   // matrices
   // Initialize these to identity, so if the user doesn't set them it's okay.
   this->ROIToWorld = vtkTransform::New();
-  this->ROI2ToWorld = vtkTransform::New();
-  this->WorldToTensorScaledIJK = vtkTransform::New();
   
   // The user may need to set these, depending on class usage
   this->InputROI = NULL;
-  this->InputROIValue = -1;
-  this->InputMultipleROIValues = NULL;
   this->InputROI2 = NULL;
+  this->InputROIValue = -1;
+  this->InputANDROIValues = NULL;
+  this->InputNOTROIValues = NULL;
+  this->StreamlineController = NULL;
 
   // collections
   this->Streamlines = NULL;
   this->Actors = NULL;
+  this->ColorActors = vtkDoubleArray::New();
+  this->ColorActors->SetNumberOfComponents(3);
 
   // for fibers selecting fibers that pass through a ROI
   this->StreamlinesAsPolyLines = vtkPolyData::New();
@@ -89,12 +91,12 @@ vtkROISelectTracts::~vtkROISelectTracts()
 {
   // matrices
   this->ROIToWorld->Delete();
-  this->ROI2ToWorld->Delete();
-  this->WorldToTensorScaledIJK->Delete();
   
   // volumes
   if (this->InputROI) this->InputROI->Delete();
-  if (this->InputROI2) this->InputROI->Delete();
+  if (this->InputROI2) this->InputROI2->Delete();
+  
+  this->ColorActors->Delete();
 
 }
 
@@ -171,6 +173,12 @@ void vtkROISelectTracts::FindStreamlinesThatPassThroughROI()
       vtkErrorMacro("You must set the Streamlines before using this class.");
       return;
     }
+  if (this->ConvolutionKernel == NULL)
+    {
+    vtkErrorMacro("You must set a convolution kernel.");
+    return;
+    }
+  
 
   cout<<"Converting Streamlines to PolyLines"<<endl;
   this->ConvertStreamlinesToPolyLines();
@@ -181,13 +189,31 @@ void vtkROISelectTracts::FindStreamlinesThatPassThroughROI()
   //Create minipipeline
   conv->SetStreamlines(this->StreamlinesAsPolyLines);
   conv->SetInput(this->InputROI);
-  conv->SetKernel7x7x7(this->ConvolutionKernel);
+  
+  int val = this->ConvolutionKernel->GetNumberOfTuples();
+  if (val == 27)
+    {
+    conv->SetKernel3x3x3(this->ConvolutionKernel);
+    }
+  else if(val == (5*5*5))
+    {
+    conv->SetKernel5x5x5(this->ConvolutionKernel);
+    }
+  else if(val == (7*7*7))
+    {
+    conv->SetKernel7x7x7(this->ConvolutionKernel);
+    }  
+   else {
+     vtkErrorMacro("Kernel dimensions does not fit.");
+    } 
+      
   cout<<"Updtating vtkStreamlineConvolve"<<endl;
   conv->Update();
  
   finder->SetInput(conv->GetOutput());
-  finder->SetROIValues(this->InputMultipleROIValues);
-  finder->SetThreshold(1);
+  finder->SetANDROIValues(this->InputANDROIValues);
+  finder->SetNOTROIValues(this->InputNOTROIValues);
+  finder->SetThreshold(this->PassThreshold);
  
   //Update minipipeline
   cout<<"Updating vtkPruneStreamline"<<endl;
@@ -222,7 +248,45 @@ void vtkROISelectTracts::HighlightStreamlinesPassTest()
 
   int numStr = this->StreamlineIdPassTest->GetNumberOfTuples();
   cout<<"Number of Streamlines that pass test: "<<numStr<<endl;
+    
+  if (numStr == 0)
+    return;
+  
+  //Save color of actors. If coloractor is filled restore the value of
+  // the actors. If not, fill coloractor with new values 
+  double *color;
   vtkActor *currActor;
+  if (this->ColorActors->GetNumberOfTuples()==this->Actors->GetNumberOfItems())
+    {
+    for (int i=0;i<this->Actors->GetNumberOfItems();i++) {
+      currActor = (vtkActor *) this->Actors->GetItemAsObject(i);
+      color = this->ColorActors->GetTuple(i);
+      currActor->GetProperty()->SetColor(color[0],color[1],color[2]);
+      currActor->GetProperty()->SetOpacity(1);
+     }  
+    }
+   else if (this->ColorActors->GetNumberOfTuples()>0) {
+     //User might delete/add some fibers.
+     //Set all the actors to the same color as a hack
+     color = this->ColorActors->GetTuple(0);
+     for (int i=0;i<this->Actors->GetNumberOfItems();i++) {
+      currActor = (vtkActor *) this->Actors->GetItemAsObject(i);
+      currActor->GetProperty()->SetColor(color[0],color[1],color[2]);
+      currActor->GetProperty()->SetOpacity(1);
+     }
+    }        
+    else {
+     // Store colors
+     this->ColorActors->Reset();
+     this->ColorActors->SetNumberOfTuples(this->Actors->GetNumberOfItems());
+     for (int i=0;i<this->Actors->GetNumberOfItems();i++) {
+      currActor = (vtkActor *) this->Actors->GetItemAsObject(i);
+      color = currActor->GetProperty()->GetColor();
+      this->ColorActors->SetTuple(i,color);
+     } 
+    }  
+          
+
   int idx=0;
   for (int i=0;i<this->Streamlines->GetNumberOfItems();i++) {
     strId = this->StreamlineIdPassTest->GetValue(idx);
@@ -235,11 +299,44 @@ void vtkROISelectTracts::HighlightStreamlinesPassTest()
     else {
       currActor = (vtkActor *) this->Actors->GetItemAsObject(i);
       currActor->GetProperty()->SetColor(1,0,0);
-      cout<<"Streamline Id: "<<strId<<endl;
+      //cout<<"Streamline Id: "<<strId<<endl;
       idx++;
     }  
      
   }
+}
+
+void vtkROISelectTracts::ResetStreamlinesPassTest()
+{
+ 
+ //Restore actors colors
+  double *color;
+  vtkActor *currActor;
+  if (this->ColorActors->GetNumberOfTuples()==this->Actors->GetNumberOfItems())
+    {
+    for (int i=0;i<this->Actors->GetNumberOfItems();i++) {
+      currActor = (vtkActor *) this->Actors->GetItemAsObject(i);
+      color = this->ColorActors->GetTuple(i);
+      currActor->GetProperty()->SetColor(color[0],color[1],color[2]);
+      currActor->GetProperty()->SetOpacity(1);
+     }  
+    }
+   else if (this->ColorActors->GetNumberOfTuples()>0) {
+     //User might delete/add some fibers.
+     //Set all the actors to the same color as a hack
+     color = this->ColorActors->GetTuple(0);
+     for (int i=0;i<this->Actors->GetNumberOfItems();i++) {
+      currActor = (vtkActor *) this->Actors->GetItemAsObject(i);
+      currActor->GetProperty()->SetColor(color[0],color[1],color[2]);
+      currActor->GetProperty()->SetOpacity(1);
+     } 
+   }
+ 
+  //Reset color actors
+  this->ColorActors->Reset();
+ 
+ //Reset streamline Id pass test
+  this->StreamlineIdPassTest->Reset();
 }
 
 void vtkROISelectTracts::DeleteStreamlinesNotPassTest()
@@ -256,18 +353,34 @@ void vtkROISelectTracts::DeleteStreamlinesNotPassTest()
   int numStr = this->StreamlineIdPassTest->GetNumberOfTuples();
   cout<<"Number of Streamlines that pass test: "<<numStr<<endl;
 
-  int idx=0;
-  for (int i=0;i<this->Streamlines->GetNumberOfItems();i++) {
+  //nothing to delete.
+  if (numStr == 0)
+    return;
+
+  // The collection is a FILO list (First in - Last out).
+  // We run the list backwards
+  vtkActor *currActor;
+  double *color;
+  
+  int idx=numStr-1;
+  for (int i=this->Streamlines->GetNumberOfItems()-1;i>=0;i--) {
     strId = this->StreamlineIdPassTest->GetValue(idx);
-    cout<<"Streamline Id: "<<strId<<endl;
     if(strId!=i) {
-      //this->DeleteStreamline(i);
-      vtkErrorMacro("Can't delete streamline yet in vtkROISelectTracts");
+      this->StreamlineController->DeleteStreamline(i);
     }
     else {
-      idx++;
+      //cout<<"Streamline Id: "<<strId<<endl;
+      //Restore original color
+      currActor = (vtkActor *) this->Actors->GetItemAsObject(i);
+      color = this->ColorActors->GetTuple(i);
+      currActor->GetProperty()->SetColor(color[0],color[1],color[2]);
+      idx--;
     }  
      
   }
+  
+  //Reset list of Streamlines Ids that pass the test
+  this->StreamlineIdPassTest->Reset(); 
+  this->ColorActors->Reset(); 
+  
 }
- 

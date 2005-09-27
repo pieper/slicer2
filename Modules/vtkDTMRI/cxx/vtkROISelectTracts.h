@@ -52,9 +52,11 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkDoubleArray.h"
 #include "vtkIntArray.h"
 #include "vtkShortArray.h"
+#include "vtkDoubleArray.h"
 #include "vtkCollection.h"
 #include "vtkPolyData.h"
 #include "vtkImageData.h"
+#include "vtkMultipleStreamlineController.h"
 
 class VTK_DTMRI_EXPORT vtkROISelectTracts : public vtkObject
 {
@@ -70,19 +72,6 @@ class VTK_DTMRI_EXPORT vtkROISelectTracts : public vtkObject
   vtkGetObjectMacro(ROIToWorld, vtkTransform);
 
   // Description
-  // Transformation used in seeding streamlines.  This is for the 
-  // second ROI volume.
-  vtkSetObjectMacro(ROI2ToWorld, vtkTransform);
-  vtkGetObjectMacro(ROI2ToWorld, vtkTransform);
-
-  // Description
-  // Transformation used in seeding streamlines.  Their start
-  // points are specified in the coordinate system of the ROI volume.
-  // Transform world coordinates into scaled ijk of the tensor field.
-  vtkSetObjectMacro(WorldToTensorScaledIJK, vtkTransform);
-  vtkGetObjectMacro(WorldToTensorScaledIJK, vtkTransform);
-
-  // Description
   // Convolution Kernel that is used to convolve the fiber with when
   // finding the ROIs that the fiber passes through
   vtkSetObjectMacro(ConvolutionKernel, vtkDoubleArray);
@@ -91,17 +80,15 @@ class VTK_DTMRI_EXPORT vtkROISelectTracts : public vtkObject
   // Description
   // Get Streamlines as Polylines
   vtkGetObjectMacro(StreamlinesAsPolyLines,vtkPolyData);
-  
+   
   // Description
-  // List of the input vtkHyperStreamlines (or subclasses)
-  vtkSetObjectMacro(Streamlines, vtkCollection);
-  vtkGetObjectMacro(Streamlines, vtkCollection);
-
-  // Description
-  // Input to this class (for setting colors/transparency). This 
-  // may change to a colorID array.
-  vtkSetObjectMacro(Actors, vtkCollection);
-
+  // Class that controls streamlines creation and display
+  void SetStreamlineController(vtkMultipleStreamlineController *controller) {
+     StreamlineController = controller;
+     Streamlines = controller->GetStreamlines();
+     Actors = controller->GetActors();
+  };   
+     
   // Description
   // Streamlines will be started at locations with this value in the InputROI.
   // The value must be greater than 0. A 0 value is not allowed because it
@@ -111,13 +98,22 @@ class VTK_DTMRI_EXPORT vtkROISelectTracts : public vtkObject
   vtkGetMacro(InputROIValue, int);
 
   // Description
-  // Streamlines will be started at locations with these values in the InputROI.
-  // The value must be greater than 0. A 0 value is not allowed because it
-  // would allow users to accidentally start streamlines outside of their
-  // ROI.
-  vtkSetObjectMacro(InputMultipleROIValues,vtkShortArray);
-  vtkGetObjectMacro(InputMultipleROIValues,vtkShortArray);
-
+  // ROI labels that fibers will pass through (AND operation).
+  vtkSetObjectMacro(InputANDROIValues,vtkShortArray);
+  vtkGetObjectMacro(InputANDROIValues,vtkShortArray);
+  
+  // Description
+  // ROI labels that fibers will not pass through (NOT operation).
+  vtkSetObjectMacro(InputNOTROIValues,vtkShortArray);
+  vtkGetObjectMacro(InputNOTROIValues,vtkShortArray);
+  
+  
+  // Description
+  // Threshold to pass the test and define that a streamline pass a given
+  // set of ROI's define in the ADN list and NOT list.
+  vtkSetMacro(PassThreshold,int);
+  vtkGetMacro(PassThreshold,int);
+  
   // Description
   // Input ROI volume for testing tract/ROI intersection
   vtkSetObjectMacro(InputROI, vtkImageData);
@@ -136,11 +132,14 @@ class VTK_DTMRI_EXPORT vtkROISelectTracts : public vtkObject
   void HighlightStreamlinesPassTest();
   
   void DeleteStreamlinesNotPassTest();
+  
+  void ResetStreamlinesPassTest();
 
  protected:
   vtkROISelectTracts();
   ~vtkROISelectTracts();
 
+  vtkMultipleStreamlineController *StreamlineController;
   vtkCollection *Streamlines;
   vtkCollection *Actors;
 
@@ -149,18 +148,20 @@ class VTK_DTMRI_EXPORT vtkROISelectTracts : public vtkObject
 
   int InputROIValue;
   int InputROI2Value;
-  vtkShortArray *InputMultipleROIValues;
-  
+ 
   vtkTransform *ROIToWorld;
-  vtkTransform *ROI2ToWorld;
-  vtkTransform *WorldToTensorScaledIJK;
-
+ 
+  vtkShortArray *InputANDROIValues;
+  vtkShortArray *InputNOTROIValues;
+  int PassThreshold;
+  
   vtkDoubleArray *ConvolutionKernel;
   
   vtkPolyData *StreamlinesAsPolyLines;
   vtkIntArray *StreamlineIdPassTest;
   
-
+  vtkDoubleArray *ColorActors;
+  
 };
 
 #endif
