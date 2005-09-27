@@ -395,20 +395,29 @@ proc fMRIEngineSelectBG {lb} {
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineBuildUIForROIBlob {parent} {
-    global fMRIEngine Gui
+    global fMRIEngine Gui Label
 
-    frame $parent.fTitle  -bg $Gui(activeWorkspace)
+    frame $parent.fColor  -bg $Gui(activeWorkspace)
     frame $parent.fTop -bg $Gui(activeWorkspace)
-    pack $parent.fTitle $parent.fTop -side top -fill x -pady 5 -padx 5 
+    pack $parent.fColor $parent.fTop -side top -fill x -pady 5 -padx 5 
 
-    set f $parent.fTitle
-    DevAddLabel $f.l "Create a label map from blob:"
-    pack $f.l -side top -fill x -pady 2 -padx 3 
+    set f $parent.fColor
+    DevAddLabel $f.lColor "Color: "    
+    #--- popup panel for color selection.
+    scan $Label(diffuse) "%f %f %f" r g b
+    set r [expr round($r * 255)]
+    set g [expr round($g * 255)]
+    set b [expr round($b * 255)]
+    set fMRIEngine(labelMapColor) [format \#%02X%02X%02X $r $g $b]
+    eval { button $f.bColorSelection -width 10 -textvariable Label(name) \
+               -command "ShowColors" -bg $Gui(activeWorkspace) -fg black}
+    TooltipAdd $f.bColorSelection "Choose a color for the label map."
+    grid $f.lColor $f.bColorSelection -sticky w -row 1 -columnspan 2 -pady 2 -padx 1
+    lappend Label(colorWidgetList) $f.bColorSelection
 
     set f $parent.fTop
-    DevAddButton $f.bCast "Cast the activation" "fMRIEngineCastActivation" 25 
-    DevAddButton $f.bCreate "Create label map" "fMRIEngineCreateLabelMap" 25 
-    pack $f.bCast $f.bCreate -side top -pady 2 -padx 5
+    DevAddButton $f.bCreate "Create label map from activation blob" "fMRIEngineCreateLabelMap" 35 
+    pack $f.bCreate -side top -pady 2 -padx 5
 }
 
 
@@ -419,59 +428,85 @@ proc fMRIEngineBuildUIForROIBlob {parent} {
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineCreateLabelMap {} {
+
+    set r [fMRIEngineCastActivation]
+    # Got error!
+    if {$r == 1} {
+        return
+    }
+
+    fMRIEngineCreateLabelMapReal 
+}
+
+ 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineCreateLabelMapReal
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineCreateLabelMapReal {} {
     global fMRIEngine Editor Ed Volume Slice 
 
     set n $Volume(idNone)
     foreach s $Slice(idList) {
         set id $Slice($s,foreVolID)
         if {$n != $id} {
-
-            #---------------------------------
-            # Editor->Volumes->Setup
-            #---------------------------------
-            EditorSetOriginal $id 
-            EditorSetWorking "NEW" 
-            set Editor(nameWorking) "Working"
-
-            #---------------------------------
-            # Editor->Details->to (press) ->Th
-            #---------------------------------
-            set e "EdThreshold"
-            # Remember prev
-            set prevID $Editor(activeID)
-            # Set new
-            set Editor(activeID) $e 
-            set Editor(btn) $e 
-
-            # Reset Display
-            if {$e != "EdNone"} {
-                EditorResetDisplay
-                RenderAll
-            }
-
-            if {$e != $prevID} {
-                EditorExitEffect $prevID
-                # execute enter procedure
-                EditorUpdateEffect
-            }
-
-            #---------------------------------
-            # Editor->Details->Th
-            #---------------------------------
-            set Ed(EdThreshold,lower) 1
-            set Ed(EdThreshold,upper) $Ed(EdThreshold,rangeHigh)
-            set Ed(EdThreshold,interact) "Slices"
-            EdThresholdApply
-
-            MainSlicesSetVolumeAll Fore Volume(idNone) 
-            MainSlicesSetVolumeAll Back Volume(idNone) 
-            RenderAll
-
-            return
+            continue
         }
     }
- 
-    DevErrorWindow "Put a valid activation volume (already cast to short) into the foreground for label map creation."
+
+    if {$n == $id} {
+        DevErrorWindow "Put your activation volume into the foreground."
+        return 1 
+    }
+
+    #---------------------------------
+    # Editor->Volumes->Setup
+    #---------------------------------
+    EditorSetOriginal $id 
+    EditorSetWorking "NEW" 
+    set Editor(nameWorking) "Working"
+
+    #---------------------------------
+    # Editor->Details->to (press) ->Th
+    #---------------------------------
+    set e "EdThreshold"
+    # Remember prev
+    set prevID $Editor(activeID)
+    # Set new
+    set Editor(activeID) $e 
+    set Editor(btn) $e 
+
+    # Reset Display
+    if {$e != "EdNone"} {
+        EditorResetDisplay
+        RenderAll
+    }
+
+    if {$e != $prevID} {
+        EditorExitEffect $prevID
+        # execute enter procedure
+        EditorUpdateEffect
+    }
+
+    #---------------------------------
+    # Editor->Details->Th
+    #---------------------------------
+    set Ed(EdThreshold,lower) 1
+    set Ed(EdThreshold,upper) $Ed(EdThreshold,rangeHigh)
+    set Ed(EdThreshold,interact) "Slices"
+    EdThresholdApply
+
+    MainSlicesSetVolumeAll Fore Volume(idNone) 
+
+    set id $fMRIEngine(activeActivationID)
+    Volume($id,node) InterpolateOff
+    MainSlicesSetVolumeAll Back $id 
+
+    RenderAll
+
+    return 0
 }
 
 
@@ -488,71 +523,76 @@ proc fMRIEngineCastActivation {} {
     foreach s $Slice(idList) {
         set id $Slice($s,foreVolID)
         if {$n != $id} {
-            # always uses a new instance of vtkActivationVolumeCaster 
-            if {[info commands fMRIEngine(actVolumeCaster)] != ""} {
-                fMRIEngine(actVolumeCaster) Delete
-                unset -nocomplain fMRIEngine(actVolumeCaster)
-            }
-            vtkActivationVolumeCaster fMRIEngine(actVolumeCaster)
-
-            set low [[Volume($id,vol) GetIndirectLUT] GetLowerThreshold]
-            set high [[Volume($id,vol) GetIndirectLUT] GetUpperThreshold]
-            fMRIEngine(actVolumeCaster) SetLowerThreshold $low
-            fMRIEngine(actVolumeCaster) SetUpperThreshold $high
-
-            fMRIEngine(actVolumeCaster) SetInput [Volume($id,vol) GetOutput] 
-
-            set act [fMRIEngine(actVolumeCaster) GetOutput]
-            $act Update
-
-            # add a mrml node
-            set n [MainMrmlAddNode Volume]
-            set i [$n GetID]
-            MainVolumesCreate $i
-
-            # set the name and description of the volume
-            if {! [info exists fMRIEngine(actCastVolNameExt)]} {
-                set fMRIEngine(actCastVolNameExt) 1 
-            } else { 
-                incr fMRIEngine(actCastVolNameExt)
-            }
-            set name "actCastVol-$fMRIEngine(actCastVolNameExt)"
-            $n SetName "$name" 
-            $n SetDescription "$name"
-
-            eval Volume($i,node) SetSpacing [$act GetSpacing]
-            Volume($i,node) SetScanOrder [Volume($fMRIEngine(firstMRMLid),node) GetScanOrder]
-            Volume($i,node) SetNumScalars [$act GetNumberOfScalarComponents]
-            set ext [$act GetWholeExtent]
-            Volume($i,node) SetImageRange [expr 1 + [lindex $ext 4]] [expr 1 + [lindex $ext 5]]
-            Volume($i,node) SetScalarType [$act GetScalarType]
-            Volume($i,node) SetDimensions [lindex [$act GetDimensions] 0] [lindex [$act GetDimensions] 1]
-            Volume($i,node) ComputeRasToIjkFromScanOrder [Volume($i,node) GetScanOrder]
-
-            Volume($i,vol) SetImageData $act
-
-            Volume($i,vol) SetRangeLow [fMRIEngine(actVolumeCaster) GetLowRange] 
-            Volume($i,vol) SetRangeHigh [fMRIEngine(actVolumeCaster) GetHighRange] 
-
-            # set the lower threshold to the actLow 
-            Volume($i,node) AutoThresholdOff
-            Volume($i,node) ApplyThresholdOn
-            Volume($i,node) SetLowerThreshold [fMRIEngine(actVolumeCaster) GetLowRange]
-            Volume($i,node) InterpolateOff
-
-            MainUpdateMRML
-            MainSlicesSetVolumeAll Fore $i
-            MainVolumesSetActive $i
-            RenderAll
-
-            return
+            continue 
         }
     }
- 
-    DevErrorWindow "Put a valid activation volume into the foreground for casting."
+
+    if {$n == $id} {
+        DevErrorWindow "Put your activation volume into the foreground."
+        return 1 
+    }
+
+    set fMRIEngine(activeActivationID) $id
+
+    # always uses a new instance of vtkActivationVolumeCaster 
+    if {[info commands fMRIEngine(actVolumeCaster)] != ""} {
+        fMRIEngine(actVolumeCaster) Delete
+        unset -nocomplain fMRIEngine(actVolumeCaster)
+    }
+    vtkActivationVolumeCaster fMRIEngine(actVolumeCaster)
+
+    set low [[Volume($id,vol) GetIndirectLUT] GetLowerThreshold]
+    set high [[Volume($id,vol) GetIndirectLUT] GetUpperThreshold]
+    fMRIEngine(actVolumeCaster) SetLowerThreshold $low
+    fMRIEngine(actVolumeCaster) SetUpperThreshold $high
+
+    fMRIEngine(actVolumeCaster) SetInput [Volume($id,vol) GetOutput] 
+
+    set act [fMRIEngine(actVolumeCaster) GetOutput]
+    $act Update
+
+    # add a mrml node
+    set n [MainMrmlAddNode Volume]
+    set i [$n GetID]
+    MainVolumesCreate $i
+
+    # set the name and description of the volume
+    if {! [info exists fMRIEngine(actCastVolNameExt)]} {
+        set fMRIEngine(actCastVolNameExt) 1 
+    } else { 
+        incr fMRIEngine(actCastVolNameExt)
+    }
+    set name "actCastVol-$fMRIEngine(actCastVolNameExt)"
+    $n SetName "$name" 
+    $n SetDescription "$name"
+
+    eval Volume($i,node) SetSpacing [$act GetSpacing]
+    Volume($i,node) SetScanOrder [Volume($fMRIEngine(firstMRMLid),node) GetScanOrder]
+    Volume($i,node) SetNumScalars [$act GetNumberOfScalarComponents]
+    set ext [$act GetWholeExtent]
+    Volume($i,node) SetImageRange [expr 1 + [lindex $ext 4]] [expr 1 + [lindex $ext 5]]
+    Volume($i,node) SetScalarType [$act GetScalarType]
+    Volume($i,node) SetDimensions [lindex [$act GetDimensions] 0] [lindex [$act GetDimensions] 1]
+    Volume($i,node) ComputeRasToIjkFromScanOrder [Volume($i,node) GetScanOrder]
+
+    Volume($i,vol) SetImageData $act
+
+    Volume($i,vol) SetRangeLow [fMRIEngine(actVolumeCaster) GetLowRange] 
+    Volume($i,vol) SetRangeHigh [fMRIEngine(actVolumeCaster) GetHighRange] 
+
+    # set the lower threshold to the actLow 
+    Volume($i,node) AutoThresholdOff
+    Volume($i,node) ApplyThresholdOn
+    Volume($i,node) SetLowerThreshold [fMRIEngine(actVolumeCaster) GetLowRange]
+    Volume($i,node) InterpolateOff
+
+    MainUpdateMRML
+    MainSlicesSetVolumeAll Fore $i
+    MainVolumesSetActive $i
+    RenderAll
+
+    return 0
 } 
-
-
 
 
 #-------------------------------------------------------------------------------
