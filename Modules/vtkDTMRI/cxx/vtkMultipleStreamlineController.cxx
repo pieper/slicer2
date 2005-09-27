@@ -108,9 +108,6 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
   // for creating tracts
   this->SeedTracts = vtkSeedTracts::New();
 
-  // for ROI-based filtering of tracts
-  this->ROISelectTracts = vtkROISelectTracts::New();
-
   // for coloring an ROI based on tract color
   this->ColorROIFromTracts = vtkColorROIFromTracts::New();
 
@@ -121,9 +118,6 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
   this->SaveTracts->SetActors(this->Actors);
 
   this->SeedTracts->SetStreamlines(this->Streamlines);
-
-  this->ROISelectTracts->SetStreamlines(this->Streamlines);
-  this->ROISelectTracts->SetActors(this->Actors);
 
   this->ColorROIFromTracts->SetStreamlines(this->Streamlines);
   this->ColorROIFromTracts->SetActors(this->Actors);
@@ -149,7 +143,6 @@ vtkMultipleStreamlineController::~vtkMultipleStreamlineController()
   this->TractClusterer->Delete();
   this->SaveTracts->Delete();  
   this->SeedTracts->Delete();  
-  this->ROISelectTracts->Delete();  
   this->ColorROIFromTracts->Delete(); 
 }
 
@@ -205,7 +198,6 @@ void vtkMultipleStreamlineController::SetWorldToTensorScaledIJK(vtkTransform *tr
   // ----------------------
   this->SaveTracts->SetWorldToTensorScaledIJK(this->WorldToTensorScaledIJK);
   this->SeedTracts->SetWorldToTensorScaledIJK(this->WorldToTensorScaledIJK);
-  this->ROISelectTracts->SetWorldToTensorScaledIJK(this->WorldToTensorScaledIJK);
   this->ColorROIFromTracts->SetWorldToTensorScaledIJK(this->WorldToTensorScaledIJK);
 }
 

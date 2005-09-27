@@ -67,7 +67,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkClusterTracts.h"
 #include "vtkSaveTracts.h"
 #include "vtkSeedTracts.h"
-#include "vtkROISelectTracts.h"
 #include "vtkColorROIFromTracts.h"
 
 class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
@@ -93,6 +92,8 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // Description
   // Delete all streamlines
   void DeleteAllStreamlines();
+
+  void DeleteStreamline(int index);
 
   // Description
   // Get the internal index of the chosen actor, if it is a streamline
@@ -173,9 +174,6 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // Get object that performs seeding (to set parameters)
   vtkGetObjectMacro(SeedTracts,vtkSeedTracts);
 
-  // Description
-  // Get object that performs ROI filtering for tract selection (to set parameters)
-  vtkGetObjectMacro(ROISelectTracts,vtkROISelectTracts);
 
   // Description
   // Get object that colors in an ROI with color of tracts passing
@@ -189,7 +187,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // functions not accessible to the user
   void CreateGraphicsObjects();
   void ApplyUserSettingsToGraphicsObject(int index);
-  void DeleteStreamline(int index);
+
 
   // Remove 0-length streamlines before clustering.
   void CleanStreamlines();
@@ -215,7 +213,6 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   vtkClusterTracts *TractClusterer;
   vtkSaveTracts *SaveTracts;
   vtkSeedTracts *SeedTracts;
-  vtkROISelectTracts *ROISelectTracts;
   vtkColorROIFromTracts *ColorROIFromTracts;
 
 
