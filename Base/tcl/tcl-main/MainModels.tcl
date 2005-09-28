@@ -88,7 +88,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.65 $} {$Date: 2005/09/25 20:14:05 $}]
+        {$Revision: 1.66 $} {$Date: 2005/09/28 15:13:18 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -1149,6 +1149,12 @@ proc MainModelsSetTensorVisibility {m {value ""}} {
     Model($m,sphereSource) SetThetaResolution 12
     Model($m,sphereSource) SetPhiResolution 12
     
+    # use random sampling of the points to show
+    catch {vtkMaskPoints Model($m,maskPoints)}
+    Model($m,maskPoints) SetInput $Model($m,polyData)
+    Model($m,maskPoints) SetMaximumNumberOfPoints 1000
+    Model($m,maskPoints) RandomModeOn
+
     # try to create the vtkTensorUtil module's glyph class
     set err [catch {vtkInteractiveTensorGlyph Model($m,tensorGlyph)}]
     if {$err != 0} {
@@ -1157,7 +1163,7 @@ proc MainModelsSetTensorVisibility {m {value ""}} {
     catch {vtkTensorGlyph Model($m,tensorGlyph)}
     }
 
-    Model($m,tensorGlyph) SetInput $Model($m,polyData)
+    Model($m,tensorGlyph) SetInput [Model($m,maskPoints) GetOutput]
     #Model($m,tensorGlyph) SetSource [lineSource GetOutput]
     Model($m,tensorGlyph) SetSource [Model($m,sphereSource) GetOutput]
     Model($m,tensorGlyph) SetScaleFactor $Model(tensorScaleFactor)
