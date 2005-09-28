@@ -462,7 +462,7 @@ proc fMRIEngineSelectRun {run} {
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineSelectSequence {seq} {
-    global fMRIEngine Ibrowser MultiVolumeReader
+    global fMRIEngine Ibrowser MultiVolumeReader Volume
 
     # configure menubutton
     $fMRIEngine(gui,sequenceMenuButton) config -text $seq
@@ -483,10 +483,16 @@ proc fMRIEngineSelectSequence {seq} {
         }
     }
 
+
     # Sets range for the volume slider
     $fMRIEngine(slider) configure -from 1 -to $fMRIEngine(noOfVolumes)
     # Sets the first volume in the sequence as the active volume
     MainVolumesSetActive $fMRIEngine(firstMRMLid)
+
+    # In the Load tab of Sequence, we use the value of Volume(name) for 
+    # Load status - the latest load volume. However, proc MainVolumesSetActive
+    # set Volume(name) the first volume name. That's why we need clean it again:
+    set Volume(name) ""
 }
 
 
