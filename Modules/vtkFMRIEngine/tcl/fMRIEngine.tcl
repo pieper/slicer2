@@ -155,7 +155,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.12 $} {$Date: 2005/09/23 17:04:25 $}]
+        {$Revision: 1.13 $} {$Date: 2005/09/28 15:26:41 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -458,7 +458,9 @@ proc fMRIEngineCloseGPLWindow {} {
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineEnter {} {
-    global fMRIEngine
+    global fMRIEngine Volume
+
+    set Volume(name) ""
 
     fMRIEngineUpdateSequences
 
