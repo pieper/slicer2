@@ -84,7 +84,7 @@ proc ColorsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.28.6.4 $} {$Date: 2005/09/22 21:54:13 $}]
+        {$Revision: 1.28.6.5 $} {$Date: 2005/09/28 16:49:41 $}]
 
     # the LUT to affect by the colour scale editing
     set Color(LUT,currentID) -1
@@ -359,7 +359,7 @@ and use the new ones as your default colors.
     DevAddFileBrowse $f Color fileName "MRML color file:" "ColorsSetFileName" "xml" "" "Open" "Open a Color MRML file"
     eval {button $f.bLoad -text "Load" -width 7 \
               -command "ColorsLoadApply"} $Gui(WBA)
-    TooltipAdd $f.bLoad "Deletes old colors"
+    TooltipAdd $f.bLoad "Deletes old colors - models using them will have unexpected colors"
     eval {button $f.bAppend -text "Append Colors" -width 14 \
               -command "ColorsLoadApply 0"} $Gui(WBA)
     TooltipAdd $f.bAppend "Appends to color list"
@@ -404,6 +404,11 @@ proc ColorsLoadApply { {deleteFlag 1}} {
         MainMrmlDeleteColors
     }
     MainMrmlAddColorsFromFile $Color(fileName)
+
+    if {$deleteFlag == 1} {
+        # check that all models have valid colour ids
+        ColorsVerifyModelColorIDs
+    }
 
     # update the gui's color list
     ColorsDisplayColors
@@ -847,6 +852,11 @@ proc ColorsLUTSetAnno { col } {
     
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ColorsLUTSetRamp
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc ColorsLUTSetRamp { ramp } {
     global Color Lut
 
@@ -862,5 +872,49 @@ proc ColorsLUTSetRamp { ramp } {
         Render3D
     } else {
         puts "ColorsLUTSetRamp: colour table $id not in Lut(idList)"
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ColorsVerifyModelColorIDs
+# Called after deleting the colours, to make sure that any models that were
+# assigned colour ids before they were deleted, now have a valid default colour id
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ColorsVerifyModelColorIDs {} {
+    global Color Model
+
+    set numChanges 0
+    set changeList ""
+
+    # find a default id
+    set defaultNodeID 0
+    while {[info command Color($defaultNodeID,node)] == "" ||
+           [Color($defaultNodeID,node) GetName] == "Black"} { 
+        incr defaultNodeID 
+        if {$defaultNodeID > 1000} {
+            puts "ColorsVerifyModelColorIDs: can't find a colour node!\nLoad some Colors!"
+            return
+        }
+    }
+    if {$::Module(verbose)} {
+        puts "ColorsVerifyModelColorIDs: found a default node id $defaultNodeID, named [Color($defaultNodeID,node) GetName]"
+    }
+
+    # now check to see if I need to use it
+    foreach m $Model(idList) {
+        # get the colour id
+        if {$Model($m,colorID) == ""} {
+            set Model($m,colorID) $defaultNodeID
+            incr numChanges
+            lappend changeList [Model($m,node) GetName]
+            if {$::Module(verbose)} {
+                puts "ColorsVerifyModelColorIDs: reset model $m"
+            }
+        }
+    }
+    if {$numChanges > 0} {
+        DevInfoWindow "Loading colours left $numChanges models without a default colour id, reset their colours:\n$changeList"
     }
 }
