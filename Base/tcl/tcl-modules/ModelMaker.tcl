@@ -83,7 +83,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.53 $} {$Date: 2005/09/08 18:23:23 $}]
+        {$Revision: 1.54 $} {$Date: 2005/09/28 16:27:49 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -187,7 +187,7 @@ steps.
 <BR><LI><B>Create Multiple:</B><BR> Create multiple models from a <B>Volume</B> labelmap.
 Uses the Smooth, Decimate, Split Normals values from the Create tab, will use the 
 Filter Type from the Create tab if Joint Smoothing is not on. Joint Smoothing results
-in the created models interlocking exactly, otherwise they are smoothed after creation.
+in the created models interlocking exactly (before decimation), otherwise they are smoothed after creation.
 <BR><LI><B>Edit:</B><BR> Select the model you wish to edit as <B>Active Model</B>
 and then apply one of the effects listed. To transform the polygon points
 by a transform, select a <B>Matrix</B> that already exists.  If you need to
@@ -405,7 +405,7 @@ ScaledIJK to RAS</B> section.
     pack $f.cJointSmooth -side top -padx 0
 
     eval {button $f.bAll -text "Create All" -width 15 -command "ModelMakerCreateAll; Render3D"} $Gui(WBA)
-    TooltipAdd $f.bAll "Create models from all non zero labels in the active volume, between start and end labels"
+    TooltipAdd $f.bAll "Create models from all non zero labels in the active volume, between start and end labels. Uses settings from the Create tab."
     set ModelMaker(bCreateAll) $f.bAll
 
 if {0} {
@@ -680,7 +680,10 @@ proc ModelMakerWrite {} {
     # Show user a File dialog box
     set m $Model(activeID)
     set ModelMaker(prefix) [MainFileSaveModel $m $ModelMaker(prefix)]
-    if {$ModelMaker(prefix) == ""} {return}
+    if {$ModelMaker(prefix) == ""} {
+        if {::Module(verbose)} { puts "ModelMakerWrite: empty prefix for model $m" }
+        return
+    }
 
     # Write
     MainModelsWrite $m $ModelMaker(prefix)
@@ -710,6 +713,7 @@ proc ModelMakerWriteAll {} {
                                 -title "Select Directory In Which To Save Model Files" \
                                 -parent .tMain ]
     if {$ModelMaker(prefix) == ""} {
+        if {::Module(verbose)} { puts "ModelMakerWriteAll: empty prefix for model $m" }
         return
     }
 
@@ -738,7 +742,10 @@ proc ModelMakerRead {} {
     # Show user a File dialog box
     set m $Model(activeID)
     set ModelMaker(prefix) [MainFileOpenModel $m $ModelMaker(prefix)]
-    if {$ModelMaker(prefix) == ""} {return}
+    if {$ModelMaker(prefix) == ""} {
+        if {::Module(verbose)} { puts "ModelMakerRead: empty prefix for model $m" }
+        return
+    }
     
     # Read
     Model($m,node) SetFileName $ModelMaker(prefix).vtk
@@ -934,6 +941,8 @@ proc ModelMakerCreateAll { } {
     set numModels 0
     set skippedModels ""
     set madeModels ""
+    # set this model id to an invalid number as no models might be made
+    set m -1
 
     # Validate smooth
     if {[ValidateInt $ModelMaker(smooth)] == 0} {
@@ -960,9 +969,13 @@ proc ModelMakerCreateAll { } {
     if {$startLabel < 1} {
         set startLabel 1
     }
-
+    
     set scalarType [$imdata GetScalarType]
     if {$scalarType == 3} {
+        if {$startLabel > 255} {
+            puts "WARNING: data scalar type is char, using start label of 255 instead of $startLabel"
+            set startLabel 255
+        }
         if {$ModelMaker(endLabel) < 255} {
             set lastLabel $ModelMaker(endLabel)
         } else {
@@ -1001,13 +1014,8 @@ proc ModelMakerCreateAll { } {
     catch "ModelMaker(cubes,$volid) Delete"
     vtkDiscreteMarchingCubes ModelMaker(cubes,$volid)
       ModelMaker(cubes,$volid) SetInput $imdata
-    if {$::Module(verbose)} {
-        puts "CUTTING DOWN FOR TESTING"
-        set iterations 1
-        puts "calling generate values for [expr $lastLabel - $startLabel + 1] $startLabel $lastLabel"
-    } else {
-        set iterations $ModelMaker(smooth)
-    }
+    set iterations $ModelMaker(smooth)
+    
     ModelMaker(cubes,$volid) GenerateValues [expr $lastLabel - $startLabel + 1] $startLabel $lastLabel
     
 
@@ -1018,6 +1026,8 @@ proc ModelMakerCreateAll { } {
         }
         catch "smoother${volid} Delete"
         vtkWindowedSincPolyDataFilter smoother${volid}
+        # save it for use in modelmakermarch
+        set ModelMaker(jointSmoother,$volid) smoother${volid}
 
         set Gui(progressText) "Jointly smoothing models"
         smoother${volid} AddObserver StartEvent MainStartProgress
@@ -1125,7 +1135,9 @@ proc ModelMakerCreateAll { } {
     MainUpdateMRML
     
     # set the last one to be active
-    MainModelsSetActive $m
+    if {$numModels > 0} {
+        MainModelsSetActive $m
+    }
 
     # update the gui so all entry boxes are okay - Label(label) gets lost before get here, reset it
     set Label(label) $ModelMaker(endLabel)
@@ -1414,7 +1426,8 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
         $p SetOutValue 0
     } else {
         vtkThreshold $p
-        $p SetInput [ModelMaker(cubes,$v) GetOutput]
+        # use the output of the smoother
+        $p SetInput [$ModelMaker(jointSmoother,$v) GetOutput]
         $p SetAttributeModeToUseCellData
     }
     
@@ -1461,7 +1474,7 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
         
         # If there are no polygons, then the smoother gets mad, so stop.
         if {$ModelMaker(n,$p) == 0} {
-            tk_messageBox -message "No polygons can be created."
+            tk_messageBox -message "Cannot create a model from label $Label(label).\nNo polygons can be created,\nthere may be no voxels with this label in the volume."
             thresh SetInput ""
             to SetInput ""
             if {$ModelMaker(jointSmooth) == 0} {
