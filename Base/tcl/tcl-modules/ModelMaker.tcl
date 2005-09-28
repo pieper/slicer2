@@ -83,7 +83,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.49.10.4 $} {$Date: 2005/09/23 20:46:14 $}]
+        {$Revision: 1.49.10.5 $} {$Date: 2005/09/28 16:11:40 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -187,7 +187,7 @@ steps.
 <BR><LI><B>Create Multiple:</B><BR> Create multiple models from a <B>Volume</B> labelmap.
 Uses the Smooth, Decimate, Split Normals values from the Create tab, will use the 
 Filter Type from the Create tab if Joint Smoothing is not on. Joint Smoothing results
-in the created models interlocking exactly, otherwise they are smoothed after creation.
+in the created models interlocking exactly (before decimation), otherwise they are smoothed after creation.
 <BR><LI><B>Edit:</B><BR> Select the model you wish to edit as <B>Active Model</B>
 and then apply one of the effects listed. To transform the polygon points
 by a transform, select a <B>Matrix</B> that already exists.  If you need to
@@ -1035,6 +1035,8 @@ proc ModelMakerCreateAll { } {
         }
         catch "smoother${volid} Delete"
         vtkWindowedSincPolyDataFilter smoother${volid}
+        # save it for use in modelmakermarch
+        set ModelMaker(jointSmoother,$volid) smoother${volid}
 
         set Gui(progressText) "Jointly smoothing models"
         smoother${volid} AddObserver StartEvent MainStartProgress
@@ -1429,7 +1431,8 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
         $p SetOutValue 0
     } else {
         vtkThreshold $p
-        $p SetInput [ModelMaker(cubes,$v) GetOutput]
+        # use the output of the smoother
+        $p SetInput [$ModelMaker(jointSmoother,$v) GetOutput]
         $p SetAttributeModeToUseCellData
     }
     
