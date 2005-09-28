@@ -98,7 +98,7 @@ proc IbrowserInit {} {
     #---Set category and version info
     set Module($m,category) "Alpha"
        lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.12 $} {$Date: 2005/08/31 15:00:05 $}]
+        {$Revision: 1.13 $} {$Date: 2005/09/28 15:20:14 $}]
 
     #---Initialize module-level variables
     #---Global array with the same name as the module. Ibrowser()
@@ -286,6 +286,8 @@ proc IbrowserBuildGUI {} {
 #-------------------------------------------------------------------------------
 proc IbrowserEnter {{toplevelName .controllerGUI} } {
 # Called when this module is entered by a user. 
+
+    set ::Volume(name) ""
 
     #pushEventManager $Ibrowser(eventManager)
 
