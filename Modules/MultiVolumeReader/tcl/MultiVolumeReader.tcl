@@ -152,7 +152,7 @@ proc MultiVolumeReaderInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.22 $} {$Date: 2005/05/04 20:37:15 $}]
+        {$Revision: 1.23 $} {$Date: 2005/09/28 15:21:41 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -274,14 +274,11 @@ proc MultiVolumeReaderBuildGUI {parent {status 0}} {
 
     set f $parent.fReaderConfig.fStatus
     DevAddLabel $f.lVName "Load status (latest loaded volume):"
-    set MultiVolumeReader(emptyLoadStatus) ""
+
     eval {entry $f.eVName -width 30 \
         -state normal \
-        -textvariable MultiVolumeReader(emptyLoadStatus)} $Gui(WEA)
+        -textvariable Volume(name)} $Gui(WEA)
     pack $f.lVName $f.eVName -side top -padx $Gui(pad) -pady 2 
-    if {$status == 1} {
-        set MultiVolumeReader(loadStatusEntry) $f.eVName
-    }
     
     #-------------------------------------------
     # Volume navigation 
@@ -472,11 +469,6 @@ proc MultiVolumeReaderLoad {{status 0}} {
     unset -nocomplain MultiVolumeReader(lastMRMLid)
     unset -nocomplain MultiVolumeReader(volumeExtent)
 
-    if {[info exists MultiVolumeReader(loadStatusEntry)]} {
-        $MultiVolumeReader(loadStatusEntry) configure -textvariable \
-            Volume(name)
-    }
-
     switch $MultiVolumeReader(fileExtension) {
         ".hdr" {
             set val [MultiVolumeReaderLoadAnalyze]
@@ -506,11 +498,6 @@ proc MultiVolumeReaderLoad {{status 0}} {
     # Sets the first volume in the sequence as the active volume
     MainVolumesSetActive $MultiVolumeReader(firstMRMLid)
 
-    if {[info exists MultiVolumeReader(loadStatusEntry)]} {
-        $MultiVolumeReader(loadStatusEntry) configure -textvariable \
-            MultiVolumeReader(emptyLoadStatus)
-    }
-
     if {$status} {
         # Info for a loaded sequence
         lappend MultiVolumeReader(sequenceNames) $sequenceName
@@ -522,6 +509,7 @@ proc MultiVolumeReaderLoad {{status 0}} {
     }
 
     set MultiVolumeReader(filter) ""
+    set Volume(name) ""
 
     return 0
 }   
@@ -680,5 +668,3 @@ proc MultiVolumeReaderLoadDICOM {} {
 
     return 0
 }
-
-

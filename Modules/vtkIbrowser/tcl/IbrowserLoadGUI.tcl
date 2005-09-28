@@ -639,13 +639,10 @@ proc IbrowserMultiVolumeReaderBuildGUI {parent {status 0}} {
     pack $f.fVName  -pady 2
     set f $f.fVName
     DevAddLabel $f.lVName "loading volume:"
-    set MultiVolumeReader(emptyLoadStatus) ""
+    set Volume(name) ""
     eval { label $f.lvolname -width 30 -bg $::Gui(activeWorkspace) \
-               -textvariable MultiVolumeReader(emptyLoadStatus)}
+        -textvariable Volume(name)}
     pack $f.lVName $f.lvolname -side top -padx $Gui(pad) -pady 2 
-    if {$status == 1} {
-        set MultiVolumeReader(loadStatusEntry) $f.lvolname
-    }
 
     # The Navigate frame
     set f $parent.fVolumeNav
