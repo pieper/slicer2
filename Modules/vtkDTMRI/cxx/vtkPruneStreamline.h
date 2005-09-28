@@ -118,7 +118,7 @@ protected:
   vtkIntArray *StreamlineIdPassTest;
   int Threshold;
   
-  int TestForStreamline(int *streamlineANDTest,int npts, int *streamlineNOTTest, int npts);
+  int TestForStreamline(int *streamlineANDTest,int nptsAND, int *streamlineNOTTest, int nptsNOT);
   
 private:
   vtkPruneStreamline(const vtkPruneStreamline&);  // Not implemented.
