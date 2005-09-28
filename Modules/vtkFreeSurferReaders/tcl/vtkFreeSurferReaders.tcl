@@ -329,7 +329,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27.6.8 $} {$Date: 2005/09/22 22:06:21 $}]
+        {$Revision: 1.27.6.9 $} {$Date: 2005/09/28 16:56:58 $}]
 
 }
 
@@ -381,7 +381,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
 
 
     DevAddButton $f.bLoadColours "Load" "vtkFreeSurferReadersLoadColour 1"
-    TooltipAdd $f.bLoadColours "Load the colour file now. Warning: overwrites other colours"
+    TooltipAdd $f.bLoadColours "Load the colour file now. Warning: deletes other colours, previous models' colours will be reset"
     pack $f.bLoadColours -side top 
 
     #-------------------------------------------
@@ -3485,10 +3485,15 @@ proc vtkFreeSurferReadersLoadColour { {overwriteFlag 1}} {
             # got some new colours, saved them in the tagsColours, so build the new nodes
 
             if {$overwriteFlag == 1} {
-                MainMrmlDeleteColors
+                MainMrmlDeleteColors                
             }
             MainMrmlBuildTreesVersion2.0 $tagColours
             
+            if {$overwriteFlag == 1} {
+                # should check here to make sure all models have valid colour id's
+                ColorsVerifyModelColorIDs
+            }
+
             # update the gui's color list
             ColorsDisplayColors
             MainColorsUpdateMRML
@@ -5357,17 +5362,23 @@ proc vtkFreeSurferReadersSetQASubjects {} {
     if {!$vtkFreeSurferReaders(QAUseSubjectsFile)} {
         set dir $vtkFreeSurferReaders(QADirName)
         if { $dir != "" } {
-            set files [glob -nocomplain $dir/*]
+
             
-            foreach f $files {
-                if { [file isdirectory $f] &&
-                     [file exists [file join $f mri]]} {
-                    lappend dirs $f
-                    lappend subjectnames [file tail $f]
-                } 
-                if {$::Module(verbose)} {
-                    if {[file isdirectory $f] && ![file exists [file join $f mri]]} {
-                        puts "Skipping subject dir $f, no mri subdirectory"
+            set retval [tk_messageBox -type yesno -message "About to search in $dir for FreeSurfer subjects. Continue?\n\nOperation may hang if greater than 1000 subject dirs are present, can reset dir in vtkFreeSurferReaders QA tab."]
+            if {$retval == "yes"} {
+
+                set files [glob -nocomplain $dir/*]
+            
+                foreach f $files {
+                    if { [file isdirectory $f] &&
+                         [file exists [file join $f mri]]} {
+                        lappend dirs $f
+                        lappend subjectnames [file tail $f]
+                    } 
+                    if {$::Module(verbose)} {
+                        if {[file isdirectory $f] && ![file exists [file join $f mri]]} {
+                            puts "Skipping subject dir $f, no mri subdirectory"
+                        }
                     }
                 }
             }
@@ -5785,7 +5796,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
             set username "default"
         }
     }
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.8 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.9 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
