@@ -155,7 +155,7 @@ proc DeformableBSplineRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2005/09/12 16:19:39 $}]
+        {$Revision: 1.3 $} {$Date: 2005/09/29 20:00:38 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -458,8 +458,6 @@ proc DeformableBSplineRegistrationSetLevel {} {
 proc DeformableBSplineRegistrationCoarseParam {} {
     global DeformableBSplineRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(Repeat) 0
-
     set DeformableBSplineRegistration(Resample) 4
     set DeformableBSplineRegistration(GridSize) 5
     set DeformableBSplineRegistration(CostFunctionConvergenceFactor) 1e+7
@@ -483,8 +481,6 @@ proc DeformableBSplineRegistrationCoarseParam {} {
 #-------------------------------------------------------------------------------
 proc DeformableBSplineRegistrationFineParam {} {
     global DeformableBSplineRegistration RigidIntensityRegistration
-
-    set RigidIntensityRegistration(Repeat) 0
 
     set DeformableBSplineRegistration(Resample) 2
     set DeformableBSplineRegistration(GridSize) 10
@@ -510,9 +506,6 @@ proc DeformableBSplineRegistrationFineParam {} {
 proc DeformableBSplineRegistrationGSlowParam {} {
     global DeformableBSplineRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(Repeat) 0
-
-
     set DeformableBSplineRegistration(Resample) 2
     set DeformableBSplineRegistration(GridSize) 12
     set DeformableBSplineRegistration(CostFunctionConvergenceFactor) 1e+7
@@ -535,8 +528,6 @@ proc DeformableBSplineRegistrationGSlowParam {} {
 #-------------------------------------------------------------------------------
 proc DeformableBSplineRegistrationVerySlowParam {} {
     global DeformableBSplineRegistration RigidIntensityRegistration
-
-    set RigidIntensityRegistration(Repeat) 0
 
     set DeformableBSplineRegistration(Resample) 1
     set DeformableBSplineRegistration(GridSize) 12
@@ -604,6 +595,8 @@ proc DeformableBSplineRegistrationExit {} {
 #-------------------------------------------------------------------------------
 proc DeformableBSplineRegistrationAutoRun {} {
     global Matrix DeformableBSplineRegistration RigidIntensityRegistration
+
+    set RigidIntensityRegistration(Repeat) 0
 
     if {[RigidIntensityRegistrationSetUp] == 0} {
       return 0

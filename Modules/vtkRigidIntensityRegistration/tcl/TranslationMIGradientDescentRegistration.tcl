@@ -155,7 +155,7 @@ proc TranslationMIGradientDescentRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2005/08/08 20:42:39 $}]
+        {$Revision: 1.6 $} {$Date: 2005/09/29 20:00:38 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -355,7 +355,7 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
     foreach value "1 0" text "Yes No" width "4 3" {
         eval {radiobutton $f.f.r$value -width $width \
               -indicatoron 0 -text "$text" -value "$value" \
-              -variable RigidIntensityRegistration(Repeat) } $Gui(WCA)
+              -variable TranslationMIGradientDescentRegistration(Repeat) } $Gui(WCA)
         pack $f.f.r$value -side left -fill x -anchor w
     }
 
@@ -483,9 +483,9 @@ proc TranslationMIGradientDescentRegistrationSetLevel {} {
 proc TranslationMIGradientDescentRegistrationCoarseParam {} {
     global TranslationMIGradientDescentRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
-    set RigidIntensityRegistration(TargetShrinkFactors)   "1 1 1"
-    set RigidIntensityRegistration(Repeat) 1
+    set TranslationMIGradientDescentRegistration(SourceShrinkFactors)   "1 1 1"
+    set TranslationMIGradientDescentRegistration(TargetShrinkFactors)   "1 1 1"
+    set TranslationMIGradientDescentRegistration(Repeat) 1
 
     # If Wells, Viola, Atsumi, etal, 
     # used 2 and 4. Wells claims exact number not critical (personal communication)
@@ -513,9 +513,9 @@ proc TranslationMIGradientDescentRegistrationCoarseParam {} {
 proc TranslationMIGradientDescentRegistrationFineParam {} {
     global TranslationMIGradientDescentRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
-    set RigidIntensityRegistration(TargetShrinkFactors)   "1 1 1"
-    set RigidIntensityRegistration(Repeat) 1
+    set TranslationMIGradientDescentRegistration(SourceShrinkFactors)   "1 1 1"
+    set TranslationMIGradientDescentRegistration(TargetShrinkFactors)   "1 1 1"
+    set TranslationMIGradientDescentRegistration(Repeat) 1
 
     # If Wells, Viola, Atsumi, etal, 
     # used 2 and 4. Wells claims exact number not critical (personal communication)
@@ -542,9 +542,9 @@ proc TranslationMIGradientDescentRegistrationFineParam {} {
 proc TranslationMIGradientDescentRegistrationGSlowParam {} {
     global TranslationMIGradientDescentRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(SourceShrinkFactors)   "2 2 2"
-    set RigidIntensityRegistration(TargetShrinkFactors)   "2 2 2"
-    set RigidIntensityRegistration(Repeat) 0
+    set TranslationMIGradientDescentRegistration(SourceShrinkFactors)   "2 2 2"
+    set TranslationMIGradientDescentRegistration(TargetShrinkFactors)   "2 2 2"
+    set TranslationMIGradientDescentRegistration(Repeat) 0
 
     # If Wells, Viola, Atsumi, etal, 
     # used 2 and 4. Wells claims exact number not critical (personal communication)
@@ -570,9 +570,9 @@ proc TranslationMIGradientDescentRegistrationGSlowParam {} {
 proc TranslationMIGradientDescentRegistrationVerySlowParam {} {
     global TranslationMIGradientDescentRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(SourceShrinkFactors)   "4 4 4"
-    set RigidIntensityRegistration(TargetShrinkFactors)   "4 4 4"
-    set RigidIntensityRegistration(Repeat) 0
+    set TranslationMIGradientDescentRegistration(SourceShrinkFactors)   "4 4 4"
+    set TranslationMIGradientDescentRegistration(TargetShrinkFactors)   "4 4 4"
+    set TranslationMIGradientDescentRegistration(Repeat) 0
 
     # If Wells, Viola, Atsumi, etal, 
     # used 2 and 4. Wells claims exact number not critical (personal communication)
@@ -682,6 +682,10 @@ proc TranslationMIGradientDescentRegistrationAutoRun {} {
         wm withdraw .mi
         isregistration .mi.reg
     #}
+    
+    set RigidIntensityRegistration(SourceShrinkFactors) $TranslationMIGradientDescentRegistrationStop(SourceShrinkFactors)
+    set RigidIntensityRegistration(TargetShrinkFactors) $TranslationMIGradientDescentRegistrationStop(TargetShrinkFactors)
+    set RigidIntensityRegistration(Repeat) $TranslationMIGradientDescentRegistrationStop(Repeat)
 
     .mi.reg config \
         -source          $RigidIntensityRegistration(sourceId)          \

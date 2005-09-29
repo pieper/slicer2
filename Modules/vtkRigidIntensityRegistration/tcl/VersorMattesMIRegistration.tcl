@@ -155,7 +155,7 @@ proc VersorMattesMIRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8 $} {$Date: 2005/08/08 20:42:40 $}]
+        {$Revision: 1.9 $} {$Date: 2005/09/29 20:00:38 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -355,7 +355,7 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
     foreach value "1 0" text "Yes No" width "4 3" {
         eval {radiobutton $f.f.r$value -width $width \
               -indicatoron 0 -text "$text" -value "$value" \
-              -variable RigidIntensityRegistration(Repeat) } $Gui(WCA)
+              -variable VersorMattesMIRegistration(Repeat) } $Gui(WCA)
         pack $f.f.r$value -side left -fill x -anchor w
     }
 
@@ -474,9 +474,9 @@ proc VersorMattesMIRegistrationSetLevel {} {
 proc VersorMattesMIRegistrationCoarseParam {} {
     global VersorMattesMIRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
-    set RigidIntensityRegistration(TargetShrinkFactors)   "1 1 1"
-    set RigidIntensityRegistration(Repeat) 1
+    set VersorMattesMIRegistration(SourceShrinkFactors)   "1 1 1"
+    set VersorMattesMIRegistration(TargetShrinkFactors)   "1 1 1"
+    set VersorMattesMIRegistration(Repeat) 1
 
     # If Wells, Viola, Atsumi, etal, 
     # used 2 and 4. Wells claims exact number not critical (personal communication)
@@ -506,9 +506,9 @@ proc VersorMattesMIRegistrationCoarseParam {} {
 proc VersorMattesMIRegistrationFineParam {} {
     global VersorMattesMIRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
-    set RigidIntensityRegistration(TargetShrinkFactors)   "1 1 1"
-    set RigidIntensityRegistration(Repeat) 1
+    set VersorMattesMIRegistration(SourceShrinkFactors)   "1 1 1"
+    set VersorMattesMIRegistration(TargetShrinkFactors)   "1 1 1"
+    set VersorMattesMIRegistration(Repeat) 1
 
     # If Wells, Viola, Atsumi, etal, 
     # used 2 and 4. Wells claims exact number not critical (personal communication)
@@ -537,9 +537,9 @@ proc VersorMattesMIRegistrationFineParam {} {
 proc VersorMattesMIRegistrationGSlowParam {} {
     global VersorMattesMIRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(SourceShrinkFactors)   "2 2 2"
-    set RigidIntensityRegistration(TargetShrinkFactors)   "2 2 2"
-    set RigidIntensityRegistration(Repeat) 0
+    set VersorMattesMIRegistration(SourceShrinkFactors)   "2 2 2"
+    set VersorMattesMIRegistration(TargetShrinkFactors)   "2 2 2"
+    set VersorMattesMIRegistration(Repeat) 0
 
     # If Wells, Viola, Atsumi, etal, 
     # used 2 and 4. Wells claims exact number not critical (personal communication)
@@ -567,9 +567,9 @@ proc VersorMattesMIRegistrationGSlowParam {} {
 proc VersorMattesMIRegistrationVerySlowParam {} {
     global VersorMattesMIRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(SourceShrinkFactors)   "4 4 4"
-    set RigidIntensityRegistration(TargetShrinkFactors)   "4 4 4"
-    set RigidIntensityRegistration(Repeat) 0
+    set VersorMattesMIRegistration(SourceShrinkFactors)   "4 4 4"
+    set VersorMattesMIRegistration(TargetShrinkFactors)   "4 4 4"
+    set VersorMattesMIRegistration(Repeat) 0
 
     # If Wells, Viola, Atsumi, etal, 
     # used 2 and 4. Wells claims exact number not critical (personal communication)
@@ -670,6 +670,9 @@ proc VersorMattesMIRegistrationAutoRun {} {
         wm withdraw .mi
         isregistration .mi.reg
     #}
+    set RigidIntensityRegistration(SourceShrinkFactors) $VersorMattesMIRegistration(SourceShrinkFactors)
+    set RigidIntensityRegistration(TargetShrinkFactors) $VersorMattesMIRegistration(TargetShrinkFactors)
+    set RigidIntensityRegistration(Repeat) $VersorMattesMIRegistration(Repeat)
 
     .mi.reg config \
         -source          $RigidIntensityRegistration(sourceId)          \

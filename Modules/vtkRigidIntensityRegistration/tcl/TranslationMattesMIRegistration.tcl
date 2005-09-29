@@ -155,7 +155,7 @@ proc TranslationMattesMIRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.5 $} {$Date: 2005/08/08 20:42:40 $}]
+        {$Revision: 1.6 $} {$Date: 2005/09/29 20:00:38 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -355,7 +355,7 @@ will not work. Also, arbitrary cascades of transforms are not allowed. All of th
     foreach value "1 0" text "Yes No" width "4 3" {
         eval {radiobutton $f.f.r$value -width $width \
               -indicatoron 0 -text "$text" -value "$value" \
-              -variable RigidIntensityRegistration(Repeat) } $Gui(WCA)
+              -variable TranslationMattesMIRegistration(Repeat) } $Gui(WCA)
         pack $f.f.r$value -side left -fill x -anchor w
     }
 
@@ -471,9 +471,9 @@ proc TranslationMattesMIRegistrationSetLevel {} {
 proc TranslationMattesMIRegistrationCoarseParam {} {
     global TranslationMattesMIRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
-    set RigidIntensityRegistration(TargetShrinkFactors)   "1 1 1"
-    set RigidIntensityRegistration(Repeat) 1
+    set TranslationMattesMIRegistration(SourceShrinkFactors)   "1 1 1"
+    set TranslationMattesMIRegistration(TargetShrinkFactors)   "1 1 1"
+    set TranslationMattesMIRegistration(Repeat) 1
 
     # If Wells, Viola, Atsumi, etal, 
     # used 2 and 4. Wells claims exact number not critical (personal communication)
@@ -502,9 +502,9 @@ proc TranslationMattesMIRegistrationCoarseParam {} {
 proc TranslationMattesMIRegistrationFineParam {} {
     global TranslationMattesMIRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(SourceShrinkFactors)   "1 1 1"
-    set RigidIntensityRegistration(TargetShrinkFactors)   "1 1 1"
-    set RigidIntensityRegistration(Repeat) 1
+    set TranslationMattesMIRegistration(SourceShrinkFactors)   "1 1 1"
+    set TranslationMattesMIRegistration(TargetShrinkFactors)   "1 1 1"
+    set TranslationMattesMIRegistration(Repeat) 1
 
     # If Wells, Viola, Atsumi, etal, 
     # used 2 and 4. Wells claims exact number not critical (personal communication)
@@ -532,9 +532,9 @@ proc TranslationMattesMIRegistrationFineParam {} {
 proc TranslationMattesMIRegistrationGSlowParam {} {
     global TranslationMattesMIRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(SourceShrinkFactors)   "2 2 2"
-    set RigidIntensityRegistration(TargetShrinkFactors)   "2 2 2"
-    set RigidIntensityRegistration(Repeat) 0
+    set TranslationMattesMIRegistration(SourceShrinkFactors)   "2 2 2"
+    set TranslationMattesMIRegistration(TargetShrinkFactors)   "2 2 2"
+    set TranslationMattesMIRegistration(Repeat) 0
 
     # If Wells, Viola, Atsumi, etal, 
     # used 2 and 4. Wells claims exact number not critical (personal communication)
@@ -561,9 +561,9 @@ proc TranslationMattesMIRegistrationGSlowParam {} {
 proc TranslationMattesMIRegistrationVerySlowParam {} {
     global TranslationMattesMIRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(SourceShrinkFactors)   "4 4 4"
-    set RigidIntensityRegistration(TargetShrinkFactors)   "4 4 4"
-    set RigidIntensityRegistration(Repeat) 0
+    set TranslationMattesMIRegistration(SourceShrinkFactors)   "4 4 4"
+    set TranslationMattesMIRegistration(TargetShrinkFactors)   "4 4 4"
+    set TranslationMattesMIRegistration(Repeat) 0
 
     # If Wells, Viola, Atsumi, etal, 
     # used 2 and 4. Wells claims exact number not critical (personal communication)
@@ -664,6 +664,10 @@ proc TranslationMattesMIRegistrationAutoRun {} {
         wm withdraw .mi
         isregistration .mi.reg
     #}
+
+    set RigidIntensityRegistration(SourceShrinkFactors) $TranslationMattesMIRegistration(SourceShrinkFactors)
+    set RigidIntensityRegistration(TargetShrinkFactors) $TranslationMattesMIRegistration(TargetShrinkFactors)
+    set RigidIntensityRegistration(Repeat) $TranslationMattesMIRegistration(Repeat)
 
     .mi.reg config \
         -source          $RigidIntensityRegistration(sourceId)          \
