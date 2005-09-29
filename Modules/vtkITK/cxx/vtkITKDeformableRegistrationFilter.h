@@ -27,8 +27,12 @@ public:
       return (vtkImageData *) this->vtkImporter->GetOutput();
     }
     else if (idx == 1) {
-      this->vtkFlipDisplacement->Update();
-      return (vtkImageData *) this->vtkFlipDisplacement->GetOutput();
+      // NO FLIP version
+      return (vtkImageData *) this->vtkImporterDisplacement->GetOutput();
+      // END NO FLIP version
+
+      //this->vtkFlipDisplacement->Update();
+      //return (vtkImageData *) this->vtkFlipDisplacement->GetOutput();
     }
     else {
       return NULL;
@@ -83,7 +87,7 @@ private:
   void operator=(const vtkITKDeformableRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKDeformableRegistrationFilter, "$Revision: 1.2 $");
+//vtkCxxRevisionMacro(vtkITKDeformableRegistrationFilter, "$Revision: 1.3 $");
 //vtkStandardNewMacro(vtkITKDeformableRegistrationFilter);
 
 #endif
