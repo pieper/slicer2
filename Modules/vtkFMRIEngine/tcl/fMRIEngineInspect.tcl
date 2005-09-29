@@ -419,10 +419,10 @@ proc fMRIEngineComputeDefaultCutoff {} {
     # Find out the min interval between consecutive presentation 
     # of trials of the same type
     set min 1000000
-    set a -1 
     for {set r 1} {$r <= $fMRIModelView(Design,numRuns)} {incr r} {
         for {set i 1} {$i <= $fMRIModelView(Design,Run$r,numConditionEVs)} {incr i} {
             if {[info exists fMRIModelView(Design,Run$r,Condition$i,Onsets)]} {
+                set a -1 
                 foreach onset $fMRIModelView(Design,Run$r,Condition$i,Onsets) {
                     if {$a != -1} {
                         set b [expr {($onset - $a) * $fMRIEngine($r,tr)}]
@@ -433,7 +433,6 @@ proc fMRIEngineComputeDefaultCutoff {} {
                     set a $onset
                 }
             }
-
         }
     }
 
