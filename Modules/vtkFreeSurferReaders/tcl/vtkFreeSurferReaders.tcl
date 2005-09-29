@@ -333,7 +333,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27.6.10 $} {$Date: 2005/09/29 14:10:53 $}]
+        {$Revision: 1.27.6.11 $} {$Date: 2005/09/29 14:32:09 $}]
 
 }
 
@@ -2309,9 +2309,6 @@ proc vtkFreeSurferReadersBuildSurface {m} {
     # set up the reader
     catch "Model($m,reader) Delete"
     vtkFSSurfaceReader Model($m,reader)
-    if {$::Module(verbose)} {
-        Model($m,reader) DebugOn
-    }
 
     Model($m,reader) SetFileName $vtkFreeSurferReaders(ModelFileName)
 
@@ -5815,7 +5812,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
             set username "default"
         }
     }
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.10 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.11 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -6140,15 +6137,12 @@ proc vtkFreeSurferReadersQAReviewSubject { subject } {
 
     if {$numLoaded == 0} {
         DevWarningWindow "No volumes loaded for subject $subject, skipping.\nTried: $vtkFreeSurferReaders(QAVolFiles)"
-        puts "returning, no volumes"
-        return
+    } else {
+        # scan through slices now
+        set vtkFreeSurferReaders(QAtime) 0
+        $::Module(vtkFreeSurferReaders,fQA).fBtns.play on
+        vtkFreeSurferReadersStepFrame
     }
-
-    # scan through slices now
-    set vtkFreeSurferReaders(QAtime) 0
-    $::Module(vtkFreeSurferReaders,fQA).fBtns.play on
-    vtkFreeSurferReadersStepFrame
-
     # is this the last subject?
     if {$subject == [lindex $vtkFreeSurferReaders(QASubjects) end]} {
         vtkFreeSurferReadersBuildQAInteractorStop
@@ -6237,7 +6231,9 @@ proc vtkFreeSurferReadersQAStop {} {
     }
 
     # also write out the overall QA message to a file
-    set fname [file join $vtkFreeSurferReaders(QADirName) QA-[clock format [clock seconds] -format "%Y-%m-%d-%T-%Z"].log]
+    set fname [file join $vtkFreeSurferReaders(QADirName) QA-[clock format [clock seconds] -format "%Y-%m-%d-%X-Z"].log]
+    # make sure there are no spaces in the file name
+    set fname [join [split $fname] "-"]
     if {[catch {set fid [open $fname "w"]} errmsg] == 1} {
         puts "Can't write to QA file $fname.\nCopy and paste this if you want to save it:\n $vtkFreeSurferReaders(QAmsg)"
         DevErrorWindow "Cannot open file for writing about this QA run:\nfilename = $fname\n$errmsg"
