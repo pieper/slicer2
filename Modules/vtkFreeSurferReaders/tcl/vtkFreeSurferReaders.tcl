@@ -333,7 +333,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27.6.11 $} {$Date: 2005/09/29 14:32:09 $}]
+        {$Revision: 1.27.6.12 $} {$Date: 2005/09/29 15:04:45 $}]
 
 }
 
@@ -5382,7 +5382,6 @@ proc vtkFreeSurferReadersSetQASubjects {} {
                 set vtkFreeSurferReaders(QAAlwaysGlob) 1
             }
             if {$retval == "yes" || $retval == "cancel"} {
-
                 set files [glob -nocomplain $dir/*]
             
                 foreach f $files {
@@ -5812,7 +5811,10 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
             set username "default"
         }
     }
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.11 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set timemsg "[clock format [clock seconds] -format "%D-%T-%Z"]"
+    # take out any spaces from the time zone
+    set timemsg [join [split $timemsg] "-"]
+    set msg "$timemsg $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.12 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -6231,7 +6233,7 @@ proc vtkFreeSurferReadersQAStop {} {
     }
 
     # also write out the overall QA message to a file
-    set fname [file join $vtkFreeSurferReaders(QADirName) QA-[clock format [clock seconds] -format "%Y-%m-%d-%X-Z"].log]
+    set fname [file join $vtkFreeSurferReaders(QADirName) QA-[clock format [clock seconds] -format "%Y-%m-%d-%H-%M-%S-%Z"].log]
     # make sure there are no spaces in the file name
     set fname [join [split $fname] "-"]
     if {[catch {set fid [open $fname "w"]} errmsg] == 1} {
@@ -6425,8 +6427,9 @@ proc vtkFreeSurferReadersQAMakeNewSubjectsCsh { subjectsDir { subset  "Review" }
     }
 
     # write a time stamped subset csh
-    set fname [file join $scriptsDirName subjects${subset}-[clock format [clock seconds] -format "%Y-%m-%d-%T-%Z"].csh]
-
+    set fname [file join $scriptsDirName subjects${subset}-[clock format [clock seconds] -format "%Y-%m-%d-%H-%M-%S-%Z"].csh]
+    # take out any spaces
+    set fname [join [split $fname] "-"]
     if {$::Module(verbose)} { puts "fname = $fname" }
     if {[catch {set fid [open $fname "w"]} errmsg] == 1} {
         DevErrorWindow "Can't open $fname for writing, file contents will be on stderr"
