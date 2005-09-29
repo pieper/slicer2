@@ -88,6 +88,7 @@ option add *isregistration.vtk_itk_reg   "vtkITKVersorMattesMiVersorRegistration
 option add *isregistration.set_metric_option  "" widgetDefault
 option add *isregistration.set_optimizer_option  "" widgetDefault
 option add *isregistration.resample        1 widgetDefault
+option add *isregistration.normalize        1 widgetDefault
 ## for debugging
 option add *isregistration.verbose         1 widgetDefault
 
@@ -111,6 +112,7 @@ if { [itcl::find class isregistration] == "" } {
         itk_option define -target target Target {0}
         itk_option define -source source Source {0}
         itk_option define -resample resample Resample 0
+        itk_option define -normalize normalize Normalize 1
         itk_option define -transform transform Transform {}
         itk_option define -resolution resolution Resolution 128
         itk_option define -target_shrink target_shrink Target_shrink {1 1 1}
@@ -332,11 +334,20 @@ itcl::configbody isregistration::vtk_itk_reg {
     puts [$_matrix Print]
  
     # need to explicitly call update with vtk 4.4 -- TODO figure out why...
-    [$_targetnorm GetOutput] Update
-    [$_sourcenorm GetOutput] Update
 
-    $_reg SetTargetImage [$_targetnorm GetOutput]
-    $_reg SetSourceImage [$_sourcenorm GetOutput]
+    if {$itk_option(-normalize) != 0} {
+        [$_targetnorm GetOutput] Update
+        [$_sourcenorm GetOutput] Update
+
+        $_reg SetTargetImage [$_targetnorm GetOutput]
+        $_reg SetSourceImage [$_sourcenorm GetOutput]
+    } else {
+        [$_targetcast GetOutput] Update
+        [$_sourcecast GetOutput] Update
+        
+        $_reg SetTargetImage [$_targetcast GetOutput]
+        $_reg SetSourceImage [$_sourcecast GetOutput]
+    }
 }
 
 
@@ -503,6 +514,9 @@ itcl::body isregistration::step {} {
 
     $_reg Modified
     
+    #$_sourcecast Update
+    #$_targetcast Update
+
     $_sourcenorm Update
     $_targetnorm Update
 
