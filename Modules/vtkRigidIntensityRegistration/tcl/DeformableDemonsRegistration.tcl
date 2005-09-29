@@ -155,7 +155,7 @@ proc DeformableDemonsRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2005/09/19 18:46:47 $}]
+        {$Revision: 1.3 $} {$Date: 2005/09/29 19:57:46 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -166,8 +166,11 @@ proc DeformableDemonsRegistrationInit {} {
     #
 
     ## put here to show MI specific param
+    set DeformableDemonsRegistration(NumberOfHistogramLevels)  20
     set DeformableDemonsRegistration(StandardDeviations)  1.0
-    set DeformableDemonsRegistration(UpdateIterations) 200
+    set DeformableDemonsRegistration(UpdateFieldStandardDeviations)  0.0
+    set DeformableDemonsRegistration(UpdateIterations) 50
+    set DeformableDemonsRegistration(ThresholdAtMeanIntensity)  1
     set DeformableDemonsRegistration(Resample) 1
     set DeformableDemonsRegistration(defVolName) "deformation_volume"
 
@@ -378,11 +381,17 @@ proc DeformableDemonsRegistrationBuildSubGui {f} {
                    {Resample} \
                    {UpdateIterations} \
                    {StandardDeviations} \
+                   {UpdateFieldStandardDeviations} \
+                   {NumberOfHistogramLevels} \
+                   {ThresholdAtMeanIntensity} \
                    } name \
                   { \
                    {Resample Dimension Reduction} \
                    {Update Iterations} \
                    {Standard Deviations} \
+                   {UpdateField StandardDeviations} \
+                   {Number Of Histogram Levels} \
+                   {Threshold At Mean Intensity} \
                    } {
         set f $fadvanced.fParam
         frame $f.f$param   -bg $Gui(activeWorkspace)
@@ -440,11 +449,12 @@ proc DeformableDemonsRegistrationSetLevel {} {
 proc DeformableDemonsRegistrationCoarseParam {} {
     global DeformableDemonsRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(Repeat) 0
-
-    set DeformableDemonsRegistration(Resample)       2
-    set DeformableDemonsRegistration(UpdateIterations) "100 100"
+    set DeformableDemonsRegistration(Resample)       3
+    set DeformableDemonsRegistration(UpdateIterations) "50 50"
     set DeformableDemonsRegistration(StandardDeviations) 1.0
+    set DeformableDemonsRegistration(UpdateFieldStandardDeviations) 0
+    set DeformableDemonsRegistration(ThresholdAtMeanIntensity) 1
+    set DeformableDemonsRegistration(NumberOfHistogramLevels) 20
 }
 
 
@@ -460,11 +470,12 @@ proc DeformableDemonsRegistrationCoarseParam {} {
 proc DeformableDemonsRegistrationFineParam {} {
     global DeformableDemonsRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(Repeat) 0
-
     set DeformableDemonsRegistration(Resample)       2
-    set DeformableDemonsRegistration(UpdateIterations) "100 100 100"
+    set DeformableDemonsRegistration(UpdateIterations) "100 50 30"
     set DeformableDemonsRegistration(StandardDeviations) 1.0
+    set DeformableDemonsRegistration(UpdateFieldStandardDeviations) 0
+    set DeformableDemonsRegistration(ThresholdAtMeanIntensity) 1
+    set DeformableDemonsRegistration(NumberOfHistogramLevels) 20
 }
 
 
@@ -479,11 +490,12 @@ proc DeformableDemonsRegistrationFineParam {} {
 proc DeformableDemonsRegistrationGSlowParam {} {
     global DeformableDemonsRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(Repeat) 0
-
-    set DeformableDemonsRegistration(Resample)       2
-    set DeformableDemonsRegistration(UpdateIterations) "200 300 400"
+    set DeformableDemonsRegistration(Resample)       1
+    set DeformableDemonsRegistration(UpdateIterations) "100 50"
     set DeformableDemonsRegistration(StandardDeviations) 1.0
+    set DeformableDemonsRegistration(UpdateFieldStandardDeviations) 1.0
+    set DeformableDemonsRegistration(ThresholdAtMeanIntensity) 1
+    set DeformableDemonsRegistration(NumberOfHistogramLevels) 20
 }
 
 #-------------------------------------------------------------------------------
@@ -497,11 +509,12 @@ proc DeformableDemonsRegistrationGSlowParam {} {
 proc DeformableDemonsRegistrationVerySlowParam {} {
     global DeformableDemonsRegistration RigidIntensityRegistration
 
-    set RigidIntensityRegistration(Repeat) 0
-
     set DeformableDemonsRegistration(Resample)       1
-    set DeformableDemonsRegistration(UpdateIterations) "400 500 1000"
+    set DeformableDemonsRegistration(UpdateIterations) "100 100 50"
     set DeformableDemonsRegistration(StandardDeviations) 1.0
+    set DeformableDemonsRegistration(UpdateFieldStandardDeviations) 1.0
+    set DeformableDemonsRegistration(ThresholdAtMeanIntensity) 1
+    set DeformableDemonsRegistration(NumberOfHistogramLevels) 20
 }
 
 
@@ -588,7 +601,10 @@ proc DeformableDemonsRegistrationAutoRun {} {
         isregistration .mi.reg
     #}
 
+    set RigidIntensityRegistration(Repeat) 0
+
     .mi.reg config \
+        -normalize  0 \
         -source          $RigidIntensityRegistration(sourceId)          \
         -target          $RigidIntensityRegistration(targetId)          \
         -update_procedure RigidIntensityRegistrationUpdateParam        \
@@ -708,6 +724,13 @@ proc DeformableDemonsRegistrationSetOptimizerOption { vtkITKMI } {
     }
 
     $vtkITKMI SetStandardDeviations $DeformableDemonsRegistration(StandardDeviations)
+    $vtkITKMI SetUpdateFieldStandardDeviations $DeformableDemonsRegistration(UpdateFieldStandardDeviations)
+    $vtkITKMI SetNumberOfHistogramLevels $DeformableDemonsRegistration(NumberOfHistogramLevels)
+    if {$DeformableDemonsRegistration(ThresholdAtMeanIntensity) != 0} {
+        $vtkITKMI ThresholdAtMeanIntensityOn
+    } else {
+        $vtkITKMI ThresholdAtMeanIntensityOff
+    }
 }
 
 proc RigidIntensityRegistrationCheckParametersDeformableDemons {} {
