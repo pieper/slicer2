@@ -21,6 +21,7 @@ itk::itkBSplineMattesMIRegistrationFilter<TImageClass>::itkBSplineMattesMIRegist
   m_MaximumNumberOfCorrections = 12;
   m_NumberOfHistogramBins = 50;
   m_NumberOfSpatialSamples = 100000;
+  m_BackgroundLevel = 0;   
 
   m_CurrentIteration = 0;
   m_WriteInputs = false;

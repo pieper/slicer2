@@ -73,8 +73,17 @@ public:
   }
 
 
+  itkSetMacro(ThresholdAtMeanIntensity, bool);
+  itkGetMacro(ThresholdAtMeanIntensity, bool);
+
+  itkSetMacro(NumberOfHistogramLevels, int);
+  itkGetMacro(NumberOfHistogramLevels, int);
+
   itkSetMacro(StandardDeviations, double);
   itkGetMacro(StandardDeviations, double);
+
+  itkSetMacro(UpdateFieldStandardDeviations, double);
+  itkGetMacro(UpdateFieldStandardDeviations, double);
 
   /** Set the number of iterations per level. */
   itkSetMacro( NumberOfIterations, UnsignedIntArray );
@@ -82,7 +91,6 @@ public:
 
   itkSetMacro(NumberOfLevels, int);
   itkGetMacro(NumberOfLevels, int);
-
 
   itkSetMacro(CurrentIteration, int);
   itkGetMacro(CurrentIteration, int);
@@ -108,6 +116,9 @@ protected:
   unsigned short                       m_NumberOfLevels;
   UnsignedIntArray                     m_NumberOfIterations;
 
+  int    m_NumberOfHistogramLevels;
+  bool   m_ThresholdAtMeanIntensity;
+  double m_UpdateFieldStandardDeviations;
   double m_StandardDeviations;
   int    m_CurrentIteration;
   bool   m_WriteInputs;

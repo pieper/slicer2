@@ -14,7 +14,14 @@ itk::itkDemonsTransformRegistrationFilter<TImageClass>::itkDemonsTransformRegist
   m_NumberOfIterations = UnsignedIntArray(1);
   m_NumberOfIterations.Fill(10);
 
+  m_BackgroundLevel = 0;
+
+  m_NumberOfHistogramLevels = 20;
+  m_ThresholdAtMeanIntensity = true;
+
   m_StandardDeviations = 1.0;
+  m_UpdateFieldStandardDeviations = 0.0;
+
   m_CurrentIteration = 0;
   m_WriteInputs = false;
 
@@ -35,9 +42,11 @@ itk::itkDemonsTransformRegistrationFilter<TImageClass>::itkDemonsTransformRegist
   // match the intensities of two images
   m_Matcher = MatchingFilterType::New();
 
-  m_Matcher->SetNumberOfHistogramLevels( 1024 );
+  m_Matcher->SetNumberOfHistogramLevels( m_NumberOfHistogramLevels );
   m_Matcher->SetNumberOfMatchPoints( 7 );
-  m_Matcher->ThresholdAtMeanIntensityOn();
+  if (m_ThresholdAtMeanIntensity) {
+    m_Matcher->ThresholdAtMeanIntensityOn();
+  }
 
   m_Matcher->SetInput( m_MovingImageCaster->GetOutput() );
   m_Matcher->SetReferenceImage( m_FixedImageCaster->GetOutput() );
@@ -88,24 +97,30 @@ void itk::itkDemonsTransformRegistrationFilter<TImageClass>::GenerateData()
   m_Resampler->SetDefaultPixelValue( m_BackgroundLevel );
   m_Resampler->Update();
 
+  if (m_WriteInputs) {
+    m_Writer->SetInput(this->GetInput());
+    m_Writer->SetFileName( "demons_in_fixed.nrrd" );
+    m_Writer->Update();
+    m_Writer->SetInput(m_Resampler->GetOutput());
+    m_Writer->SetFileName( "demons_in_moving.nrrd" );
+    m_Writer->Update();
+  }
+
   m_FixedImageCaster->SetInput( this->GetInput() );
-  m_MovingImageCaster->SetInput( m_Resampler->GetInput() );
+  m_MovingImageCaster->SetInput( m_Resampler->GetOutput() );
 
   m_FixedImageCaster->Update();
   m_MovingImageCaster->Update();
 
+  m_Matcher->SetNumberOfHistogramLevels( m_NumberOfHistogramLevels );
+  m_Matcher->SetNumberOfMatchPoints( 7 );
+  if (m_ThresholdAtMeanIntensity) {
+    m_Matcher->ThresholdAtMeanIntensityOn();
+  }
+  else {
+    m_Matcher->ThresholdAtMeanIntensityOff();
+  }
   m_Matcher->Update();
-
-  // set registration parameters
-  /***
-  if (m_Filter->GetNumberOfIterations() != m_NumIterations ) {
-    m_Filter->SetNumberOfIterations( m_NumIterations );
-  }
-  const double *stddev = m_Filter->GetStandardDeviations();
-  if ( stddev[0] != m_StandardDeviations ) {
-    m_Filter->SetStandardDeviations( m_StandardDeviations );
-  }
-  ***/
 
   unsigned int *nIterations = new unsigned int [m_NumberOfLevels];
 
@@ -115,6 +130,23 @@ void itk::itkDemonsTransformRegistrationFilter<TImageClass>::GenerateData()
 
   m_MultiResFilter->SetNumberOfLevels( m_NumberOfLevels );
   m_MultiResFilter->SetNumberOfIterations( nIterations );
+
+  if (m_StandardDeviations > 0.001) {
+    m_Filter->SetSmoothDeformationField (true);
+    m_Filter->SetStandardDeviations( m_StandardDeviations );
+  }
+  else {
+    m_Filter->SetSmoothDeformationField (false);
+
+  }
+
+  if (m_UpdateFieldStandardDeviations > 0.001) {
+    m_Filter->SetSmoothUpdateField (true);
+    m_Filter->SetUpdateFieldStandardDeviations ( m_UpdateFieldStandardDeviations );
+  }
+  else {
+    m_Filter->SetSmoothUpdateField  (false);
+  }
 
   if (m_WriteInputs) {
     m_Writer->SetInput(m_MultiResFilter->GetFixedImage());
@@ -139,6 +171,13 @@ void itk::itkDemonsTransformRegistrationFilter<TImageClass>::GenerateData()
   //m_Warper->Update();
   this->GraftOutput(m_Warper->GetOutput());
   delete [] nIterations;
+
+  if (m_WriteInputs) {
+    m_Writer->SetInput(m_Warper->GetOutput());
+    m_Writer->SetFileName( "demons_out_xformed.nrrd" );
+    m_Writer->Update();
+  }
+
 
 } // GenerateData
 
