@@ -449,7 +449,7 @@ proc fMRIEngineSortEVsForStat {x y z} {
     # sort out EVs
     for {set r $first} {$r <= $last} {incr r} {
         set tc $fMRIEngine($r,timeCourse)
-        set seqName $fMRIEngine($run,sequenceName)
+        set seqName $fMRIEngine($r,sequenceName)
         set vols $MultiVolumeReader($seqName,noOfVolumes) 
  
         #--- wjp added 09/21/05: filter out temporal derivative EVs
