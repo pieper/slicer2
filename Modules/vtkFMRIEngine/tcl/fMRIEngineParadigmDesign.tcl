@@ -515,7 +515,7 @@ proc fMRIEngineAddCondition {} {
         if {$found == -1} {
             lappend fMRIEngine($currRun,conditionList) $title
             #--- WJP: moved this from inside SortUserInput
-            fMRIModelViewAddConditionName $r $title
+            fMRIModelViewAddConditionName $currRun $title
         } else {
             if {$fMRIEngine($currRun,tr) == $tr                     &&
                 $fMRIEngine($currRun,$title,title) == $title        &&
