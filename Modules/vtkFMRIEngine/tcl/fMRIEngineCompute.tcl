@@ -242,6 +242,12 @@ proc fMRIEngineComputeContrasts {} {
                 set fMRIEngine($i,actLow) [fMRIEngine(actVolumeGenerator) GetLowRange] 
                 set fMRIEngine($i,actHigh) [fMRIEngine(actVolumeGenerator) GetHighRange] 
 
+                MainSlicesSetVolumeAll Fore $i
+                MainVolumesSetActive $i
+
+                # set the act volume to the color of FMRI 
+                MainVolumesSetParam LutID 7 
+
                 MainEndProgress
                 puts "...done"
             }
@@ -253,13 +259,6 @@ proc fMRIEngineComputeContrasts {} {
         MainStartProgress
         MainShowProgress fMRIEngine(actVolumeGenerator) 
         MainUpdateMRML
-
-        MainSlicesSetVolumeAll Fore $i
-        MainVolumesSetActive $i
-
-        # set the act volume to the color of FMRI 
-        MainVolumesSetParam LutID 7 
-
         RenderAll
         MainEndProgress
 
