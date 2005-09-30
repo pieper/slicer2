@@ -161,7 +161,7 @@ proc VolumeMathInit {} {
     #   appropriate info when the module is checked in.
     #   
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.42 $} {$Date: 2005/09/01 14:22:09 $}]
+        {$Revision: 1.43 $} {$Date: 2005/09/30 18:10:21 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -206,7 +206,7 @@ proc VolumeMathInit {} {
     set ::VolumeMath(castType) Char
     
     # sp 2005-09-01
-    set ::VolumeMath(statistics,IncludeZeros) 1
+    set ::VolumeMath(statistics,IncludeZeros) 0
 }
 
 #-------------------------------------------------------------------------------
