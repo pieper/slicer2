@@ -333,7 +333,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27.6.12 $} {$Date: 2005/09/29 15:04:45 $}]
+        {$Revision: 1.27.6.13 $} {$Date: 2005/09/30 21:12:55 $}]
 
 }
 
@@ -825,6 +825,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
     # QA -> Options
     #-----------
     set f $fQA.fOptions
+    $f configure -bd 1 -relief sunken
 
     eval {label $f.ltitle -text "Options:"} $Gui(WLA)
     pack $f.ltitle -expand 1
@@ -3106,6 +3107,19 @@ proc vtkFreeSurferReadersModelApply {} {
     vtkFreeSurferReadersBuildSurface $i
     vtkFreeSurferReadersReadAnnotations $i
 
+    # make sure it's pickable
+    ::Model($i,actor,viewRen) SetPickable 1
+    # and allow browsing scalar values via clicks on it
+    set bindstr [bind $::Gui(fViewWin)]
+    if {$bindstr == "" || [regexp ".ButtonRelease-2." $bindstr matchVar] == 0} {
+        # only bind if not bound before
+        if {$::Module(verbose)} { puts "binding again: $bindstr" }
+        bind $::Gui(fViewWin) <ButtonRelease-2> {vtkFreeSurferReadersPickScalar %W %x %y}
+    } else {
+        if {$::Module(verbose)} { puts "not binding again: $bindstr" }
+    }
+
+        
     # allow use of other module GUIs
     set Volumes(freeze) 0
     # If tabs are frozen, then return to the "freezer"
@@ -5814,7 +5828,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set timemsg "[clock format [clock seconds] -format "%D-%T-%Z"]"
     # take out any spaces from the time zone
     set timemsg [join [split $timemsg] "-"]
-    set msg "$timemsg $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.12 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "$timemsg $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.13 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -6641,6 +6655,95 @@ proc vtkFreeSurferReadersPickPlot {widget x y} {
         }
     }
     set ::Module(verbose) $verb
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersPickPlot
+# Get the scalar value at the picked point, on the active model
+# .ARGS
+# windowpath widget the window in which a point was picked
+# int x x coord of the pick
+# int y y coord of the pick
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersPickScalar {widget x y} {
+    global vtkFreeSurferReaders Point Module Model viewRen Select
+
+    if {$::Module(verbose)} { puts "vtkFreeSurferReadersPickScalar: widget = $widget, x = $x, y = $y"
+    }
+
+    # use a point picker to get the point the cursor was over, 
+    # then pass that in to the display widget
+    set pointpickMs [time {set retval [SelectPick Select(ptPicker) $widget $x $y]}]
+    if {$::Module(verbose)} { 
+        puts "vtkPointPicker took $pointpickMs" 
+    }
+    if {$retval != 0} {
+        set pid [Select(ptPicker) GetPointId]
+        # check against the scalar array' size
+        set mid $Model(activeID)
+        set ptData [$Model($mid,polyData) GetPointData]
+        set scalars [$ptData GetScalars]
+        if {$scalars != ""} {
+            set numTuples [$scalars GetNumberOfTuples]
+            if {$::Module(verbose)} { puts "pid = $pid, numTuples = $numTuples for model $mid" }
+            if {$pid >= 0 && $pid < $numTuples} {
+                # get the scalar value
+                set val [[[$Model($mid,polyData) GetPointData] GetScalars] GetValue $pid]
+                if {$::Module(verbose)} { puts "pid $pid val = $val" }
+                vtkFreeSurferReadersShowScalarValue $mid $pid $val
+            } else {
+                if {$::Module(verbose)} { puts "pid $pid out of range of $numTuples for model $mid" }
+            }
+        } else {
+            if {$::Module(verbose)} { puts "No scalars in model $mid"}
+        }
+
+    } else {
+        if {$::Module(verbose)} {
+            puts "\tSelect(ptPicker) didn't find anything at $x $y"
+        }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersShowScalarValue
+# Build or redisplay a pop up window with the picked scalar value
+# .ARGS
+# int mid model id
+# int pid point id (vertex number)
+# float val scalar value
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersShowScalarValue {mid pid val} {
+    global vtkFreeSurferReaders Gui
+
+    if {$::Module(verbose)} {  puts "mid = $mid, pid = $pid, val = $val" }
+
+    set w .topScalars${mid}
+    if {[info command $w] != ""} {
+        if {$::Module(verbose)} { puts "Already have a $w" }
+        wm deiconify $w
+        $w.f.lScalar configure -text "Scalar Value = $val"
+        $w.f.lPoint configure -text "Point id = $pid"
+    } else {
+        # build it
+        toplevel $w
+        wm geometry $w +[winfo x .tViewer]+10
+        wm title $w "Model $mid [Model($mid,node) GetName]"
+
+        frame $w.f -bg $Gui(activeWorkspace)
+        pack $w.f -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+        eval {label $w.f.lScalar -text "Scalar Value = $val" -width 40} $Gui(WLA)
+        eval {label $w.f.lModel -text "Model id = $mid" -width 40} $Gui(WLA)
+        eval {label $w.f.lPoint -text "Point id = $pid" -width 40} $Gui(WLA)
+        pack $w.f.lScalar $w.f.lModel $w.f.lPoint -side top 
+
+        DevAddButton $w.f.bClose "Close" "wm withdraw $w"
+        pack $w.f.bClose -side top -pady $Gui(pad) -expand 1
+    }
+
 }
 
 #-------------------------------------------------------------------------------
