@@ -80,7 +80,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.31 $} {$Date: 2005/09/27 20:49:20 $}]
+                                 {$Revision: 1.32 $} {$Date: 2005/09/30 18:10:54 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -277,7 +277,7 @@ proc DTMRITractographyInit {} {
     set DTMRI(stream,ListANDLabels) ""
     set DTMRI(stream,ListNOTLabels) ""
     set DTMRI(stream,threshhold) 1
-    set DTMRI(stream,threshold,max) 4
+    set DTMRI(stream,threshold,max) 100
     set DTMRI(stream,threshold,min) 1
 }
 
@@ -748,7 +748,9 @@ proc DTMRITractographyBuildGUI {} {
     set f $fSeeding.fEntries.fFindTracts.fSensitivity
     
     DevAddLabel $f.l "Sensitivity (H<->L):"
-    
+    eval {entry $f.e -width 3 \
+                      -textvariable DTMRI(stream,threshold)} \
+                $Gui(WEA)
     eval {scale $f.s -from $DTMRI(stream,threshold,min) \
                      -to $DTMRI(stream,threshold,max)    \
           -variable  DTMRI(stream,threshold) \
@@ -756,7 +758,7 @@ proc DTMRITractographyBuildGUI {} {
           -resolution 1      \
           } $Gui(WSA)
       
-    pack $f.l $f.s -side left
+    pack $f.l $f.e $f.s -side left
     
     #-------------------------------------------
     # Tract->Notebook->Seeding->Entries->FindTracts->Apply frame
