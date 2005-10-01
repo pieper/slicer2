@@ -155,7 +155,7 @@ proc DeformableDemonsRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2005/09/29 19:57:46 $}]
+        {$Revision: 1.4 $} {$Date: 2005/10/01 17:52:06 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -454,7 +454,7 @@ proc DeformableDemonsRegistrationCoarseParam {} {
     set DeformableDemonsRegistration(StandardDeviations) 1.0
     set DeformableDemonsRegistration(UpdateFieldStandardDeviations) 0
     set DeformableDemonsRegistration(ThresholdAtMeanIntensity) 1
-    set DeformableDemonsRegistration(NumberOfHistogramLevels) 20
+    set DeformableDemonsRegistration(NumberOfHistogramLevels) 40
 }
 
 
@@ -473,9 +473,9 @@ proc DeformableDemonsRegistrationFineParam {} {
     set DeformableDemonsRegistration(Resample)       2
     set DeformableDemonsRegistration(UpdateIterations) "100 50 30"
     set DeformableDemonsRegistration(StandardDeviations) 1.0
-    set DeformableDemonsRegistration(UpdateFieldStandardDeviations) 0
+    set DeformableDemonsRegistration(UpdateFieldStandardDeviations) 1.0
     set DeformableDemonsRegistration(ThresholdAtMeanIntensity) 1
-    set DeformableDemonsRegistration(NumberOfHistogramLevels) 20
+    set DeformableDemonsRegistration(NumberOfHistogramLevels) 50
 }
 
 
@@ -495,7 +495,7 @@ proc DeformableDemonsRegistrationGSlowParam {} {
     set DeformableDemonsRegistration(StandardDeviations) 1.0
     set DeformableDemonsRegistration(UpdateFieldStandardDeviations) 1.0
     set DeformableDemonsRegistration(ThresholdAtMeanIntensity) 1
-    set DeformableDemonsRegistration(NumberOfHistogramLevels) 20
+    set DeformableDemonsRegistration(NumberOfHistogramLevels) 50
 }
 
 #-------------------------------------------------------------------------------
@@ -514,7 +514,7 @@ proc DeformableDemonsRegistrationVerySlowParam {} {
     set DeformableDemonsRegistration(StandardDeviations) 1.0
     set DeformableDemonsRegistration(UpdateFieldStandardDeviations) 1.0
     set DeformableDemonsRegistration(ThresholdAtMeanIntensity) 1
-    set DeformableDemonsRegistration(NumberOfHistogramLevels) 20
+    set DeformableDemonsRegistration(NumberOfHistogramLevels) 50
 }
 
 
