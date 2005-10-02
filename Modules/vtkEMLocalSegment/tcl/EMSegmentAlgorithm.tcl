@@ -391,10 +391,6 @@ proc EMSegmentAlgorithmStart { } {
    if {$EMSegment(SegmentMode)}  {
        # New Private Variables 
        EMSegment(vtkEMSegment) SetRegistrationInterpolationType  $EMSegment(RegistrationInterpolationType)      
-       # Powell is more robust
-       EMSegment(vtkEMSegment) SetRegistrationMAPAlgorithmToPowell 
-       # EMSegment(vtkEMSegment) SetRegistrationMAPAlgorithmToSimplex 
-
    } else {
        EMSegment(vtkEMSegment) SetNumIter         $EMSegment(Cattrib,0,StopEMMaxIter) 
        EMSegment(vtkEMSegment) SetNumRegIter      $EMSegment(Cattrib,0,StopMFAMaxIter) 
