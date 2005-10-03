@@ -333,7 +333,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27.6.13 $} {$Date: 2005/09/30 21:12:55 $}]
+        {$Revision: 1.27.6.14 $} {$Date: 2005/10/03 18:24:28 $}]
 
 }
 
@@ -5828,7 +5828,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set timemsg "[clock format [clock seconds] -format "%D-%T-%Z"]"
     # take out any spaces from the time zone
     set timemsg [join [split $timemsg] "-"]
-    set msg "$timemsg $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.13 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "$timemsg $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.14 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -6658,7 +6658,7 @@ proc vtkFreeSurferReadersPickPlot {widget x y} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC vtkFreeSurferReadersPickPlot
+# .PROC vtkFreeSurferReadersPickScalar
 # Get the scalar value at the picked point, on the active model
 # .ARGS
 # windowpath widget the window in which a point was picked
@@ -6680,25 +6680,44 @@ proc vtkFreeSurferReadersPickScalar {widget x y} {
     }
     if {$retval != 0} {
         set pid [Select(ptPicker) GetPointId]
-        # check against the scalar array' size
-        set mid $Model(activeID)
-        set ptData [$Model($mid,polyData) GetPointData]
-        set scalars [$ptData GetScalars]
-        if {$scalars != ""} {
-            set numTuples [$scalars GetNumberOfTuples]
-            if {$::Module(verbose)} { puts "pid = $pid, numTuples = $numTuples for model $mid" }
-            if {$pid >= 0 && $pid < $numTuples} {
-                # get the scalar value
-                set val [[[$Model($mid,polyData) GetPointData] GetScalars] GetValue $pid]
-                if {$::Module(verbose)} { puts "pid $pid val = $val" }
-                vtkFreeSurferReadersShowScalarValue $mid $pid $val
+#        set mid $Model(activeID)
+        # get the model
+        set actors [Select(ptPicker) GetActors]
+        if {$::Module(verbose)} { puts "Actors = $actors" }
+        if {[$actors GetNumberOfItems] > 0} {
+            $actors InitTraversal
+            set a [$actors GetNextActor]
+            if {[regexp {^Model[(](.*),actor,viewRen[)]} $a matchVar mid] == 1} {
+                if {$::Module(verbose)} { puts "got model id $mid" }
             } else {
-                if {$::Module(verbose)} { puts "pid $pid out of range of $numTuples for model $mid" }
+                if {$::Module(verbose)} { puts "found no model id, using 0" }
+                set mid 0
             }
-        } else {
-            if {$::Module(verbose)} { puts "No scalars in model $mid"}
         }
 
+        # check against the scalar array' size
+        if {[info exists Model($mid,polyData)] == 1} {
+            set ptData [$Model($mid,polyData) GetPointData]
+            set scalars [$ptData GetScalars]
+            if {$scalars != ""} {
+                set numTuples [$scalars GetNumberOfTuples]
+                if {$::Module(verbose)} { puts "pid = $pid, numTuples = $numTuples for model $mid" }
+                if {$pid >= 0 && $pid < $numTuples} {
+                    # get the scalar value
+                    set val [[[$Model($mid,polyData) GetPointData] GetScalars] GetValue $pid]
+                    if {$::Module(verbose)} { puts "pid $pid val = $val" }
+                    vtkFreeSurferReadersShowScalarValue $mid $pid $val
+                } else {
+                    if {$::Module(verbose)} { puts "pid $pid out of range of $numTuples for model $mid" }
+                }
+            } else {
+                if {$::Module(verbose)} { puts "No scalars in model $mid"}
+            }
+        } else {
+            if {$::Module(verbose)} {
+                puts "no poly data for model $mid"
+            }
+        }
     } else {
         if {$::Module(verbose)} {
             puts "\tSelect(ptPicker) didn't find anything at $x $y"
