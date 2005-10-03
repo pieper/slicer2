@@ -243,8 +243,11 @@ if { ![file exists $tclTestFile] } {
     file mkdir $SLICER_LIB/tcl
     cd $SLICER_LIB/tcl
 
-    runcmd cvs -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/tcl login
-    runcmd cvs -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tcl checkout -r $tclTag tcl
+    runcmd cvs -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
+    runcmd cvs -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $tclTag tcl
+
+#    runcmd cvs -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/tcl login
+#    runcmd cvs -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tcl checkout -r $tclTag tcl
 
     if {$isWindows} {
         # can't do windows
@@ -260,8 +263,11 @@ if { ![file exists $tclTestFile] } {
 if { ![file exists $tkTestFile] } {
     cd $SLICER_LIB/tcl
 
-    runcmd cvs -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/tktoolkit login
-    runcmd cvs -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tktoolkit checkout -r $tkTag tk
+    runcmd cvs -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
+    runcmd cvs -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $tkTag tk
+
+#    runcmd cvs -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/tktoolkit login
+#    runcmd cvs -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/tktoolkit checkout -r $tkTag tk
 
     if {$isWindows} {
         # can't do windows
@@ -277,8 +283,11 @@ if { ![file exists $tkTestFile] } {
 if { ![file exists $itclTestFile] } {
     cd $SLICER_LIB/tcl
 
-    runcmd cvs -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/incrtcl login
-    runcmd cvs -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/incrtcl checkout -r $itclTag incrTcl
+    runcmd cvs -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
+    runcmd cvs -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $itclTag incrTcl
+
+#    runcmd cvs -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/incrtcl login
+#    runcmd cvs -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/incrtcl checkout -r $itclTag incrTcl
 
     cd $SLICER_LIB/tcl/incrTcl
 
@@ -295,8 +304,11 @@ if { ![file exists $itclTestFile] } {
 if { ![file exists $iwidgetsTestFile] } {
     cd $SLICER_LIB/tcl
 
-    runcmd cvs -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/incrtcl login
-    runcmd cvs -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/incrtcl checkout -r $iwidgetsTag iwidgets
+    runcmd cvs -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
+    runcmd cvs -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $iwidgetsTag iwidgets
+
+#    runcmd cvs -d :pserver:anonymous:@cvs.sourceforge.net:/cvsroot/incrtcl login
+#    runcmd cvs -z3 -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/incrtcl checkout -r $iwidgetsTag iwidgets
 
 
     if {$isWindows} {
@@ -318,8 +330,11 @@ if { ![file exists $iwidgetsTestFile] } {
 if { ![file exists $bltTestFile] } {
     cd $SLICER_LIB/tcl
     
-    runcmd cvs -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt login
-    runcmd cvs -z3 -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt co -r $bltTag blt
+    runcmd cvs -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
+    runcmd cvs -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co -r $bltTag blt
+    
+#    runcmd cvs -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt login
+#    runcmd cvs -z3 -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/blt co -r $bltTag blt
 
     if {$isWindows} {
         # can't do windows
@@ -341,7 +356,7 @@ if { ![file exists $gslTestFile] } {
     file mkdir $SLICER_LIB/gsl
 
     cd $SLICER_LIB/gsl-build
-    
+
     runcmd cvs -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl login
     runcmd cvs -z3 -d:pserver:anoncvs:anoncvs@sources.redhat.com:/cvs/gsl co -r $gslTag gsl
 
