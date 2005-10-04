@@ -333,7 +333,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27.6.15 $} {$Date: 2005/10/03 21:49:26 $}]
+        {$Revision: 1.27.6.16 $} {$Date: 2005/10/04 18:28:51 $}]
 
 }
 
@@ -479,7 +479,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
 
     set f $fVolumes.fVolume
 
-    DevAddFileBrowse $f  vtkFreeSurferReaders "VolumeFileName" "FreeSurfer File:" "vtkFreeSurferReadersSetVolumeFileName" "" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer volume file (.info, .mgh, .bhdr)" 
+    DevAddFileBrowse $f  vtkFreeSurferReaders "VolumeFileName" "FreeSurfer File:" "vtkFreeSurferReadersSetVolumeFileName" "" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer volume file (.info, .mgh, .mgz, .bhdr)" 
 
     frame $f.fLabelMap -bg $Gui(activeWorkspace)
     frame $f.fCast  -bg $Gui(activeWorkspace)
@@ -1597,6 +1597,26 @@ set useMatrices 0
     # Volume($i,vol) SetImageData [Volume($i,vol,rw) GetOutput]
 
 
+    # if the volume type isn't short, try casting to short so can edit it
+    set iCast -1
+    if {$Volume(scalarType) != "Short"} {
+        if {$vtkFreeSurferReaders(castToShort)} {
+            if {$::Module(verbose)} {
+                puts "vtkFreeSurferReadersMGHApply: Casting volume to short."
+            }
+            set iCast [vtkFreeSurferReadersCast $i Short]
+            if {$iCast != -1} {
+                DevInfoWindow "Cast input volume to Short, use [Volume($i,node) GetName]-Short for editing."
+            } else {
+                puts "Tried casting volume to short, returned $iCast"
+            }
+        }
+    } else {
+        if {$::Module(verbose)} {
+            puts "Scalar type is short, not casting"
+        }
+    }
+
     # Clean up
 
     # If failed, then it's no longer in the idList
@@ -1644,10 +1664,18 @@ set useMatrices 0
     }
 
     # display the new volume in the foreground of all slices if not a label map
-    if {[Volume($i,node) GetLabelMap] == 1} {
-        MainSlicesSetVolumeAll Label $i
+    if {$iCast == -1} {
+        if {[Volume($i,node) GetLabelMap] == 1} {
+            MainSlicesSetVolumeAll Label $i
+        } else {
+            MainSlicesSetVolumeAll Fore $i
+        }
     } else {
-        MainSlicesSetVolumeAll Fore $i
+        if {[Volume($iCast,node) GetLabelMap] == 1} {
+             MainSlicesSetVolumeAll Label $iCast
+        } else {
+            MainSlicesSetVolumeAll Fore $iCast
+        }
     }
 
     # Update all fields that the user changed (not stuff that would need a file reread)
@@ -5828,7 +5856,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set timemsg "[clock format [clock seconds] -format "%D-%T-%Z"]"
     # take out any spaces from the time zone
     set timemsg [join [split $timemsg] "-"]
-    set msg "$timemsg $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.15 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "$timemsg $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.16 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
