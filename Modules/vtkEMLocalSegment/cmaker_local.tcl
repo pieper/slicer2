@@ -4,7 +4,9 @@ set SLICER_MODULE_ARG "-DVTKEMATLAS_SOURCE_DIR:PATH=$SLICER_HOME/Modules/vtkEMAt
 lappend SLICER_MODULE_ARG "-DVTKEMLOCAL_BUILD_DIR:PATH=$SLICER_HOME/Modules/vtkEMAtlasBrainClassifier/builds/$env(BUILD)" 
 
 switch $tcl_platform(os) {
-    "Linux" {
+    "Linux" -
+    "SunOS" 
+      {
        lappend SLICER_MODULE_ARG "-DVTKEMATLAS_BUILD_LIB:PATH=$SLICER_HOME/Modules/vtkEMAtlasBrainClassifier/builds/$env(BUILD)/bin/libvtkEMAtlasBrainClassifier.so"
        lappend SLICER_MODULE_ARG "-DVTKEMATLAS_BUILD_TCL_LIB:PATH=$SLICER_HOME/Modules/vtkEMAtlasBrainClassifier/builds/$env(BUILD)/bin/libvtkEMAtlasBrainClassifierTCL.lib" 
     }
