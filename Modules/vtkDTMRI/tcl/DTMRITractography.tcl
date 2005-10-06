@@ -80,7 +80,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.32 $} {$Date: 2005/09/30 18:10:54 $}]
+                                 {$Revision: 1.33 $} {$Date: 2005/10/06 02:40:48 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -1652,7 +1652,7 @@ proc DTMRIFindStreamlinesThroughROI { {verbose 1} } {
     $ROISelectTracts SetInputANDROIValues DTMRI(vtk,ListANDLabels)
     $ROISelectTracts SetInputNOTROIValues DTMRI(vtk,ListNOTLabels)
     $ROISelectTracts SetConvolutionKernel DTMRI(vtk,convKernel)    
-    
+    $ROISelectTracts SetPassThreshold $DTMRI(stream,threshold)
 
     # Get positioning information from the MRML node
     # world space (what you see in the viewer) to ijk (array) space
