@@ -73,6 +73,8 @@ vtkROISelectTracts::vtkROISelectTracts()
   this->InputANDROIValues = NULL;
   this->InputNOTROIValues = NULL;
   this->StreamlineController = NULL;
+  
+  this->ConvolutionKernel = NULL;
 
   // collections
   this->Streamlines = NULL;
