@@ -122,10 +122,10 @@ void vtkActivationVolumeCaster::SimpleExecute(vtkImageData *input, vtkImageData*
                     }
                     else
                     {
-                        // All remaining values are kept positive shorts.
+                        // 9 = t positive voxels; 3 = negative voxels
                         // A volume may appear differently in slicer if we 
                         // turn on/off the interpolation.
-                        val = (short) (ceil(fabs(v)));
+                        val = (v >= 0 ? 9 : 3);
                     }
                     scalarsOutput->SetComponent(indx++, 0, val);
                 }
