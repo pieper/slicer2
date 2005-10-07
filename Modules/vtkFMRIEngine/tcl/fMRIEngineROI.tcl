@@ -60,12 +60,21 @@
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineBuildUIForROITab {parent} {
-    global fMRIEngine Gui
+    global fMRIEngine Gui Module
 
-    frame $parent.fTasks   -bg $Gui(activeWorkspace) 
-    pack $parent.fTasks -side top -fill x -pady 3 -padx 5 
-
-    fMRIEngineBuildUIForROITasks $parent.fTasks
+    set f $Module(fMRIEngine,fROI)
+    Notebook-create $f.fNotebook \
+                    -pages {{Region Map} Stats} \
+                    -pad 2 \
+                    -bg $Gui(activeWorkspace) \
+                    -height 356 \
+                    -width 240
+    pack $f.fNotebook -fill both -expand 1
+ 
+    set w [Notebook-frame $f.fNotebook {Region Map}]
+    fMRIEngineBuildUIForROIRegionMap $w
+    set w [Notebook-frame $f.fNotebook Stats]
+    fMRIEngineBuildUIForROIStats $w
 }
 
 
@@ -92,8 +101,8 @@ proc fMRIEngineBuildUIForROITasks {parent} {
     pack $f.bHelp -side left -padx 1 -pady 1 
  
     # Build pulldown task menu 
-    eval {label $f.l -text "Label map:"} $Gui(BLA)
-    pack $f.l -side left -padx $Gui(pad) -fill x -anchor w
+    # eval {label $f.l -text "Label map:"} $Gui(BLA)
+    # pack $f.l -side left -padx $Gui(pad) -fill x -anchor w
 
     # Paradigm design is default task 
     set taskList [list {Load} {Choose} {Create}]
@@ -395,29 +404,259 @@ proc fMRIEngineSelectBG {lb} {
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineBuildUIForROIBlob {parent} {
-    global fMRIEngine Gui Label
+    global fMRIEngine Gui Module
+}
 
-    frame $parent.fColor  -bg $Gui(activeWorkspace)
-    frame $parent.fTop -bg $Gui(activeWorkspace)
-    pack $parent.fColor $parent.fTop -side top -fill x -pady 5 -padx 5 
 
-    set f $parent.fColor
-    DevAddLabel $f.lColor "Color: "    
-    #--- popup panel for color selection.
-    scan $Label(diffuse) "%f %f %f" r g b
-    set r [expr round($r * 255)]
-    set g [expr round($g * 255)]
-    set b [expr round($b * 255)]
-    set fMRIEngine(labelMapColor) [format \#%02X%02X%02X $r $g $b]
-    eval { button $f.bColorSelection -width 10 -textvariable Label(name) \
-               -command "ShowColors" -bg $Gui(activeWorkspace) -fg black}
-    TooltipAdd $f.bColorSelection "Choose a color for the label map."
-    grid $f.lColor $f.bColorSelection -sticky w -row 1 -columnspan 2 -pady 2 -padx 1
-    lappend Label(colorWidgetList) $f.bColorSelection
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineBuildUIForLabelmap
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineBuildUIForROIRegionMap {parent} {
+    global fMRIEngine Gui Label 
+
+    frame $parent.fTasks   -bg $Gui(activeWorkspace) 
+    pack $parent.fTasks -side top -fill x -pady 3 -padx 5 
+
+    fMRIEngineBuildUIForROITasks $parent.fTasks
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineBuildUIForROIBlob
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineBuildUIForROIBlob {parent} {
+    global fMRIEngine Gui Label 
+
+    frame $parent.fTop -bg $Gui(activeWorkspace) -relief groove -bd 2
+    pack $parent.fTop -side top -fill x -pady 5 -padx 5 
+
+    #---------------------------------
+    # Make label map 
+    #---------------------------------
+ 
+    set f $parent.fTop
+    frame $f.fTitle -bg $Gui(activeWorkspace)
+    frame $f.fButtons -bg $Gui(activeWorkspace)
+    pack $f.fTitle $f.fButtons -side top -fill x -pady 3 -padx 5 
+
+    set f $parent.fTop.fTitle
+    DevAddLabel $f.lTitle "Make label map from activation blob:"    
+    pack $f.lTitle -side top -fill x -pady 1 -padx 3 
+ 
+    set f $parent.fTop.fButtons
+    DevAddButton $f.bApply "Apply" "fMRIEngineCreateLabelMap" 26 
+    pack $f.bApply -side top -pady 1 -padx 5
+ 
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineBuildUIForROIStats
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineBuildUIForROIStats {parent} {
+    global fMRIEngine Gui Label 
+
+    frame $parent.fTop -bg $Gui(activeWorkspace) -relief groove -bd 2
+    pack $parent.fTop -side top -fill x -pady 5 -padx 5 
+
+    #---------------------------------
+    # ROI analysis 
+    #---------------------------------
 
     set f $parent.fTop
-    DevAddButton $f.bCreate "Create label map from activation blob" "fMRIEngineCreateLabelMap" 35 
-    pack $f.bCreate -side top -pady 2 -padx 5
+    frame $f.fTitle -bg $Gui(activeWorkspace)
+    frame $f.fButtons -bg $Gui(activeWorkspace)
+    pack $f.fTitle $f.fButtons -side top -fill x -pady 3 -padx 5 
+
+    set f $parent.fTop.fTitle
+    DevAddLabel $f.lTitle "ROI analysis:"    
+    pack $f.lTitle -side top -fill x -pady 1 -padx 3 
+
+    set f $parent.fTop.fButtons
+    DevAddButton $f.bIntensity "Intensity stats" "fMRIEngineDoROIStats intensity" 26 
+    DevAddButton $f.bT "t stats" "fMRIEngineDoROIStats t" 26 
+    DevAddButton $f.bTimecourse "Plot averaged timecourse" "fMRIEnginePlotAveragedTimecourse" 26 
+    pack $f.bIntensity $f.bT $f.bTimecourse -side top -pady 1 -padx 0 
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineDoROIStats
+# 
+# .ARGS
+# string type type = 1 for intensity; type = 2 for t 
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineDoROIStats {type} {
+
+    set r 1 
+    switch $type {
+        "intensity" {
+            set r [fMRIEngineComputeROIIntensityStats]
+        }
+        "t" {
+            set r [fMRIEngineComputeROITStats]
+        }
+    }
+
+    if {$r == 0} {
+        fMRIEnginePlotROIStats $type
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineComputeROIIntensityStats
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineComputeROIIntensityStats {} {
+
+    return 1 
+
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineComputeROITStats
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineComputeROITStats {} {
+    global fMRIEngine Volume Slice
+
+    set n $Volume(idNone)
+    set tId $n 
+    set lId $n 
+    foreach s $Slice(idList) {
+        if {$tId == $n} {
+            set tId $Slice($s,backVolID)
+        }
+        if {$lId == $n} {
+            set lId $Slice($s,labelVolID)
+        }
+    }
+
+    if {$n == $tId} {
+        DevErrorWindow "Put your activation volume into the background."
+        return 1 
+    }
+    if {$n == $lId} {
+        DevErrorWindow "Your label map is not visible."
+        return 1 
+    }
+
+    # always uses a new instance of vtkActivationROIStats 
+    if {[info commands fMRIEngine(actROIStats)] != ""} {
+        fMRIEngine(actROIStats) Delete
+        unset -nocomplain fMRIEngine(actROIStats)
+    }
+    vtkActivationROIStats fMRIEngine(actROIStats)
+
+    fMRIEngine(actROIStats) AddInput [Volume($lId,vol) GetOutput]
+    fMRIEngine(actROIStats) AddInput [Volume($tId,vol) GetOutput]
+    fMRIEngine(actROIStats) Update 
+
+    set fMRIEngine(t,count) [fMRIEngine(actROIStats) GetCount] 
+    set fMRIEngine(t,max)   [fMRIEngine(actROIStats) GetMax] 
+    set fMRIEngine(t,min)   [fMRIEngine(actROIStats) GetMin] 
+    set fMRIEngine(t,mean)  [fMRIEngine(actROIStats) GetMean] 
+
+    return 0
+
+}
+ 
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineCloseROIStatsWindow
+# Cleans up if the data window is closed 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineCloseROIStatsWindow {} {
+    global fMRIEngine
+
+    if {[info exists fMRIEngine(roiStatsTable)]} {
+        destroy $fMRIEngine(roiStatsTable)
+        unset -nocomplain fMRIEngine(roiStatsTable)
+    }
+
+    if {[info exists fMRIEngine(roiStatsToplevel)]} {
+        destroy $fMRIEngine(roiStatsToplevel)
+        unset -nocomplain fMRIEngine(roiStatsToplevel)
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEnginePlotROIStats
+# 
+# .ARGS
+# string type type can be "intensity," or "t." 
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEnginePlotROIStats {type} {
+    global fMRIEngine
+
+    fMRIEngineCloseROIStatsWindow
+
+    set w .roiStatsWin
+    toplevel $w
+    wm title $w "ROI Stats for t" 
+    wm minsize $w 250 160 
+    # wm geometry $w "+898+200" 
+    # wm geometry $w "+850+200" 
+    wm geometry $w "+320+440" 
+
+    # data table headers
+    label $w.count -text "Count" -font fixed
+    label $w.max -text "Max" -font fixed
+    label $w.min -text "Min" -font fixed
+    label $w.mean -text "Mean" -font fixed
+    blt::table $w \
+        $w.count 0,0 $w.max 0,1 $w.min 0,2 $w.mean 0,3
+
+    label $w.countVal -text $fMRIEngine($type,count) -font fixed
+    label $w.maxVal -text $fMRIEngine($type,max) -font fixed
+    label $w.minVal -text $fMRIEngine($type,min) -font fixed
+    label $w.meanVal -text $fMRIEngine($type,mean) -font fixed
+
+    # todo: expression didn't have numeric value
+    set count 1
+    blt::table $w \
+        $w.countVal $count,0 $w.maxVal $count,1 \
+        $w.minVal $count,2 $w.meanVal $count,3
+
+    button $w.bClose -text "Close" -font fixed -command "fMRIEngineCloseROIStatsWindow"
+    incr count
+    blt::table $w $w.bClose $count,2 
+
+    wm protocol $w WM_DELETE_WINDOW "fMRIEngineCloseROIStatsWindow" 
+    set fMRIEngine(roiStatsToplevel) $w
+    set fMRIEngine(roiStatsTable) $w.table
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEnginePlotAveragedTimecourse
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEnginePlotAveragedTimecourse {} {
+
+    puts "fMRIEnginePlotAveragedTimecourse"
 }
 
 
@@ -446,7 +685,7 @@ proc fMRIEngineCreateLabelMap {} {
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineCreateLabelMapReal {} {
-    global fMRIEngine Editor Ed Volume Slice 
+    global fMRIEngine Editor Ed Volume Slice Label Gui
 
     set n $Volume(idNone)
     foreach s $Slice(idList) {
@@ -461,16 +700,30 @@ proc fMRIEngineCreateLabelMapReal {} {
         return 1 
     }
 
-    #---------------------------------
-    # Editor->Volumes->Setup
-    #---------------------------------
-    EditorSetOriginal $id 
-    EditorSetWorking "NEW" 
-    set Editor(nameWorking) "Working"
+    set Gui(progressText) "Creating label map..."
+    puts $Gui(progressText)
 
     #---------------------------------
-    # Editor->Details->to (press) ->Th
+    # Create label map 
     #---------------------------------
+
+    EditorEnter
+
+    # Editor->Volumes->Setup
+    #-----------------------
+    EditorSetOriginal $id 
+    EditorSetWorking "NEW" 
+
+    set actName [Volume($fMRIEngine(activeActivationID),node) GetName]
+    set t $fMRIEngine(tStat)
+    # Say t = 3.3. Dot is not allowed in the volume name in slicer
+    # the regsub replaces . by dot.
+    regsub -all {\.} $t dot t 
+    set Editor(nameWorking) "$actName-t$t-labelMap" 
+
+    # Editor->Details->to 
+    # (press) ->Th
+    #-----------------------
     set e "EdThreshold"
     # Remember prev
     set prevID $Editor(activeID)
@@ -479,32 +732,74 @@ proc fMRIEngineCreateLabelMapReal {} {
     set Editor(btn) $e 
 
     # Reset Display
-    if {$e != "EdNone"} {
-        EditorResetDisplay
-        RenderAll
-    }
+    EditorResetDisplay
+    RenderAll
+    EditorExitEffect $prevID
+    # execute enter procedure
+    EditorUpdateEffect
 
-    if {$e != $prevID} {
-        EditorExitEffect $prevID
-        # execute enter procedure
-        EditorUpdateEffect
-    }
-
-    #---------------------------------
     # Editor->Details->Th
-    #---------------------------------
-    set Ed(EdThreshold,lower) 1
-    set Ed(EdThreshold,upper) $Ed(EdThreshold,rangeHigh)
-    set Ed(EdThreshold,interact) "Slices"
+    #-----------------------
+    set Label(label) 2 
+    set Ed($e,lower) 1 
+    set Ed($e,upper) $Ed(EdThreshold,rangeHigh) 
+    set Ed($e,interact) "3D"
     EdThresholdApply
 
-    MainSlicesSetVolumeAll Fore Volume(idNone) 
+    #---------------------------------
+    # Identify islands in label map:
+    # each label has a unique value (id)
+    #---------------------------------
+
+    # Editor->Details->to 
+    # (press) ->II
+    #-----------------------
+    set e "EdIdentifyIslands"
+    # Remember prev
+    set prevID $Editor(activeID)
+    set Editor(activeID) $e 
+    set Editor(btn) $e 
+
+    EditorResetDisplay
+    RenderAll
+    EditorExitEffect $prevID
+    EditorUpdateEffect
+
+    # Editor->Details->II
+    #-----------------------
+    set Ed($e,inputLabel) 0
+    set Ed($e,scope) "3D"
+    EdIdentifyIslandsApply
+
+    #---------------------------------
+    # Change all labels to high values 
+    # so that they all display white in
+    # slicer
+    #---------------------------------
+ 
+    # always uses a new instance of vtkLabelMapModifier
+    if {[info commands fMRIEngine(labelMapModifier)] != ""} {
+        fMRIEngine(labelMapModifier) Delete
+        unset -nocomplain fMRIEngine(labelMapModifier)
+    }
+    vtkLabelMapModifier fMRIEngine(labelMapModifier)
+
+    set id [MIRIADSegmentGetVolumeByName $Editor(nameWorking)] 
+    set lmVol [Volume($id,vol) GetOutput] 
+    fMRIEngine(labelMapModifier) SetInput $lmVol 
+    fMRIEngine(labelMapModifier) Update 
+    $lmVol DeepCopy [fMRIEngine(labelMapModifier) GetOutput]
+
+    MainUpdateMRML
+    RenderAll
+    EditorExit
 
     set id $fMRIEngine(activeActivationID)
     Volume($id,node) InterpolateOff
     MainSlicesSetVolumeAll Back $id 
-
+    MainUpdateMRML
     RenderAll
+    puts "...done"
 
     return 0
 }
