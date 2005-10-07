@@ -34,6 +34,8 @@ vtkActivationVolumeGenerator.cxx
 vtkActivationDetector.cxx
 vtkCDF.cxx
 vtkActivationVolumeCaster.cxx
+vtkActivationROIStats.cxx
+vtkLabelMapModifier.cxx
 )
 
 ## classes that one does not want tcl wrapped
