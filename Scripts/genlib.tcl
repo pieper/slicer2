@@ -611,7 +611,19 @@ if {$isWindows} {
     if { $MSVC6 } {
         runcmd $::MAKE NAMICSandBox.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
     } else {
-        runcmd $::MAKE NAMICSandBox.SLN /build  $::VTK_BUILD_TYPE
+        #runcmd $::MAKE NAMICSandBox.SLN /build  $::VTK_BUILD_TYPE
+
+        # These two lines fail on windows because the .sln file has a problem.
+        # Perhaps this is a cmake issue.
+        #cd $SLICER_LIB/NAMICSandBox-build/SlicerTractClusteringImplementation
+        #runcmd $::MAKE SlicerClustering.SLN /build  $::VTK_BUILD_TYPE
+
+        # Building within the subdirectory works
+        cd $SLICER_LIB/NAMICSandBox-build/SlicerTractClusteringImplementation/Code
+        runcmd $::MAKE SlicerClustering.vcproj /build  $::VTK_BUILD_TYPE
+        # However then it doesn't pick up this needed library
+        cd $SLICER_LIB/NAMICSandBox-build/SpectralClustering
+        runcmd $::MAKE SpectralClustering.SLN /build  $::VTK_BUILD_TYPE
     }
 } else {
 
