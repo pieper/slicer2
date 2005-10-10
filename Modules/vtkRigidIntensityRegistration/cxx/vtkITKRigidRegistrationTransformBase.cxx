@@ -53,6 +53,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // itk classes
 // All the MI Registration Stuff
 #include "MIRegistration.h"
+#include "vnl/vnl_sample.h"
 #include "vnl/vnl_math.h"
 
 //----------------------------------------------------------------------------
