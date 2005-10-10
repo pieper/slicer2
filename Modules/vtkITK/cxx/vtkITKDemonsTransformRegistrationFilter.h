@@ -158,7 +158,7 @@ private:
   void operator=(const vtkITKDemonsTransformRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKDemonsTransformRegistrationFilter, "$Revision: 1.7 $");
+//vtkCxxRevisionMacro(vtkITKDemonsTransformRegistrationFilter, "$Revision: 1.8 $");
 //vtkStandardNewMacro(vtkITKDemonsTransformRegistrationFilter);
 vtkRegistrationNewMacro(vtkITKDemonsTransformRegistrationFilter);
 
@@ -232,25 +232,16 @@ public:
         m_registration->AbortIterations();
       }
       float maxNumIter = 0;
-      std::vector<float> maxProgressIter;
-      int i;
-      for( i=0; i< m_registration->GetMaxNumberOfIterations()->GetNumberOfTuples();i++) {
-        maxProgressIter.push_back( m_registration->GetMaxNumberOfIterations()->GetValue(i) );
+
+      for( int i=0; i< m_registration->GetMaxNumberOfIterations()->GetNumberOfTuples();i++) {
         maxNumIter += m_registration->GetMaxNumberOfIterations()->GetValue(i);
       }
       if (maxNumIter == 0) {
         maxNumIter = 1;
       }
-      for( i=0; i< m_registration->GetMaxNumberOfIterations()->GetNumberOfTuples();i++) {
-        maxProgressIter[i] = maxProgressIter[i]/maxNumIter;
-      }
-      double progress = 0;
-      for( i=0; i< level; i++) {
-        progress += maxProgressIter[i];
-      }
-      progress += (iter + 0.0)/m_registration->GetMaxNumberOfIterations()->GetValue(level) * maxProgressIter[level];
+      double progress = (iter + 1.0)/maxNumIter;
       
-      //m_registration->UpdateProgress( progress );
+      m_registration->UpdateProgress( progress );
     }
     else {
      m_fo << "Error in DemonsTransformRegistrationFilterCommand::Execute" << std::endl;

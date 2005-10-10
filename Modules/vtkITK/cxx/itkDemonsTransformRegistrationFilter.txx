@@ -82,7 +82,7 @@ void itk::itkDemonsTransformRegistrationFilter<TImageClass>::GenerateData()
   progress->SetMiniPipelineFilter(this);
 
   //progress->RegisterInternalFilter(m_Matcher,.1f);
-  progress->RegisterInternalFilter(m_Filter,1.f);
+  //progress->RegisterInternalFilter(m_Filter,1.f);
   //progress->RegisterInternalFilter(m_Warper,.1f);
 
   // resample moving image using transform
