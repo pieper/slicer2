@@ -131,6 +131,12 @@ void itk::itkBSplineMattesMIRegistrationFilter<TImageClass>::GenerateData()
   m_Warper->SetOutputOrigin( this->GetInput()->GetOrigin() );
   //m_Warper->Update();
   this->GraftNthOutput(0, m_Warper->GetOutput());
+
+  if (m_WriteInputs) {
+    m_Writer->SetInput(m_Warper->GetOutput());
+    m_Writer->SetFileName( "bspline_out_xformed.nrrd" );
+    m_Writer->Update();
+  }
   
 } // GenerateData
 
@@ -195,9 +201,9 @@ itk::itkBSplineMattesMIRegistrationFilter<TImageClass>::ComputeDeformationField(
     index = fi.GetIndex();
     deformationField->TransformIndexToPhysicalPoint( index, fixedPoint );
     movingPoint = m_Transform->TransformPoint( fixedPoint );
-    displacement[0] = movingPoint[0] - fixedPoint[0];
-    displacement[1] = movingPoint[1] - fixedPoint[1];
-    displacement[2] = movingPoint[2] - fixedPoint[2];
+    displacement[0] = fixedPoint[0] - movingPoint[0];
+    displacement[1] = fixedPoint[1] - movingPoint[1];
+    displacement[2] = fixedPoint[2] - movingPoint[2];
     fi.Set( displacement );
     ++fi;
   }
