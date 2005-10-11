@@ -274,7 +274,8 @@ proc VolGenericApply {} {
 
     vtkITKArchetypeImageSeriesReader genreader
     genreader SetArchetype $Volume(VolGeneric,FileName)
-    genreader SetOutputScalarTypeTo$Volume(scalarType)
+    genreader SetOutputScalarTypeToNative
+#    genreader SetDesiredCoordinateOrientationToNative
    
     # flip the image data going from ITK to VTK
     vtkImageFlip Volume($i,vol,rw)
@@ -504,12 +505,14 @@ proc VolGenericReaderProc {v} {
     vtkITKArchetypeImageSeriesReader genreader
     genreader SetArchetype [Volume($v,node) GetFullPrefix]
     genreader SetOutputScalarType [Volume($v,node) GetScalarType]
+#    genreader SetDesiredCoordinateOrientationToNative
+    genreader SetOutputScalarTypeToNative
+
 
     catch "flip Delete"
     vtkImageFlip flip
     flip SetFilteredAxis 1
     flip SetInput  [genreader GetOutput]   
-
     flip Update
     Volume($v,vol) SetImageData [flip GetOutput]
 
