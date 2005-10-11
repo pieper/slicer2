@@ -83,7 +83,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.54 $} {$Date: 2005/09/28 16:27:49 $}]
+        {$Revision: 1.55 $} {$Date: 2005/10/11 11:06:07 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -999,24 +999,35 @@ proc ModelMakerCreateAll { } {
     catch "histo${volid} Delete"
     vtkImageAccumulate histo${volid}
       histo${volid} SetInput $imdata
-    histo${volid} SetComponentExtent 0 $lastLabel 0 0 0 0
+      histo${volid} SetComponentExtent 0 1023 0 0 0 0
       histo${volid} SetComponentOrigin 0 0 0
       histo${volid} SetComponentSpacing 1 1 1
       set Gui(progressText) "Calculating histogram for v=$volid"
       histo${volid} AddObserver StartEvent MainStartProgress
       histo${volid} AddObserver ProgressEvent "MainShowProgress histo${volid}"
       histo${volid} AddObserver EndEvent MainEndProgress
-      histo${volid} Update
 
     if {$::Module(verbose)} {
         puts "About to call marching cubes, creating ModelMaker(cubes,$volid)"
     }
     catch "ModelMaker(cubes,$volid) Delete"
     vtkDiscreteMarchingCubes ModelMaker(cubes,$volid)
+
+    # The spacing is accounted for in the rasToVtk transform, 
+    # so we have to remove it here, or mcubes will use it.
+    set spacing [$imdata GetSpacing]
+    set origin  [$imdata GetOrigin]
+    $imdata SetSpacing 1 1 1
+    $imdata SetOrigin 0 0 0
       ModelMaker(cubes,$volid) SetInput $imdata
+      set Gui(progressText) "Discrete Marching Cubes for v=$volid"
+      ModelMaker(cubes,$volid) AddObserver StartEvent MainStartProgress
+      ModelMaker(cubes,$volid) AddObserver ProgressEvent "MainShowProgress ModelMaker(cubes,$volid)"
+      ModelMaker(cubes,$volid) AddObserver EndEvent MainEndProgress
     set iterations $ModelMaker(smooth)
     
     ModelMaker(cubes,$volid) GenerateValues [expr $lastLabel - $startLabel + 1] $startLabel $lastLabel
+      ModelMaker(cubes,$volid) Update 
     
 
     if {$ModelMaker(jointSmooth) == 1} {
@@ -1051,6 +1062,7 @@ proc ModelMakerCreateAll { } {
         puts "Making model nodes"
     }
     
+    histo${volid} Update
     for {set i $startLabel} {$i <= $lastLabel} {incr i} {
         set freq [[[[histo${volid} GetOutput] GetPointData] GetScalars] GetTuple1 $i]
         if { $freq == 0 } {
@@ -1072,7 +1084,7 @@ proc ModelMakerCreateAll { } {
         if { $labelid != "" } {
             set labelName [Color($labelid,node) GetName]
         } else {
-            set labelName "unknown"
+            set labelName "unknown_$i"
         }
 
         if { $labelName != "unknown" } {
@@ -1104,6 +1116,8 @@ proc ModelMakerCreateAll { } {
             Model($m,node) SetRasToWld [Volume($v,node) GetRasToWld]
 
             # Make the model!
+    eval $imdata SetSpacing $spacing
+    eval $imdata SetOrigin $origin
             if {[ModelMakerMarch $m $v $ModelMaker(decimate) $ModelMaker(smooth)] != 0} {
                 MainModelsDelete $m
                 $ModelMaker(bCreateAll) config -state normal
@@ -1434,6 +1448,7 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     if {$::Module(verbose)} {
         puts "Thresholding to $Label(label)"
     }
+
     $p ThresholdBetween $Label(label) $Label(label)
     [$p GetOutput] ReleaseDataFlagOn
     set Gui(progressText) "Threshold $name to $Label(label)"
