@@ -123,11 +123,6 @@ class VTK_DTMRI_EXPORT vtkImageDiffusionTensor : public vtkImageMultipleInputFil
   vtkGetMacro(B,vtkFloatingPointType);
   vtkSetMacro(B,vtkFloatingPointType);
 
-  // Description:
-  // Scale factor that exists in input image data
-  vtkGetMacro(InputScaleFactor,vtkFloatingPointType);
-  vtkSetMacro(InputScaleFactor,vtkFloatingPointType);
-
   // Description
   // Transformation of the tensors (for RAS coords, for example)
   // The gradient vectors are multiplied by this matrix
@@ -157,10 +152,8 @@ class VTK_DTMRI_EXPORT vtkImageDiffusionTensor : public vtkImageMultipleInputFil
 
   int NumberOfGradients;
 
-  // Lauren remove this factor?
   vtkFloatingPointType Regularization;
   vtkFloatingPointType B;
-  vtkFloatingPointType InputScaleFactor;
   vtkFloatingPointType Alpha;
   vtkFloatingPointType Beta;
 

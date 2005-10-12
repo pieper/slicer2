@@ -72,8 +72,6 @@ vtkImageDiffusionTensor::vtkImageDiffusionTensor()
   // this is LeBihan's b factor for physical MR gradient parameters 
   // (same number as C-F uses)
   this->B = 750;
-  // scaling of the short data on disk is by 1000
-  this->InputScaleFactor = 1000;
 
   this->Alpha = 10;
   this->Beta = 0.1;
@@ -232,7 +230,7 @@ static void vtkImageDiffusionTensorExecute(vtkImageDiffusionTensor *self,
   unsigned long target;
   double So, Sk, fk;
   int numInputs, k,i,j,idx, gradientIdx;
-  float val, b, inputScaling, alpha, beta;
+  float val, b, alpha, beta;
 #ifdef DTMRI_REGULARIZATION_ON
   float r
 #endif
@@ -278,7 +276,6 @@ static void vtkImageDiffusionTensorExecute(vtkImageDiffusionTensor *self,
   numInputs = self->GetNumberOfInputs();
   //r = self->GetRegularization();
   b = self->GetB();
-  inputScaling = self->GetInputScaleFactor();
   alpha = self->GetAlpha();
   beta = self->GetBeta();
 
@@ -311,7 +308,7 @@ static void vtkImageDiffusionTensorExecute(vtkImageDiffusionTensor *self,
                 }
 
               // no diffusion image
-              So = (double)*inPtrs[0]/inputScaling;
+              So = (double)*inPtrs[0];
               // make sure not less than 0
               if (So < 0)
                 So = 0;
@@ -320,7 +317,7 @@ static void vtkImageDiffusionTensorExecute(vtkImageDiffusionTensor *self,
               for (k = 1; k < numInputs; k++)
                 {
                   // diffusion from kth gradient
-                  Sk = (double)*inPtrs[k]/inputScaling;
+                  Sk = (double)*inPtrs[k];
                   
                   // make sure not less than 0
                   if (Sk < 0)
