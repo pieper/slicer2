@@ -67,7 +67,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.20 $} {$Date: 2005/09/02 16:49:02 $}]
+                                 {$Revision: 1.21 $} {$Date: 2005/10/12 01:03:34 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -1105,7 +1105,6 @@ proc ConvertVolumeToTensors {} {
 
     # DTMRI creation filter
     catch "vtkImageDiffusionTensor DTMRI"
-    DTMRI SetInputScaleFactor 100
     
     if {$DTMRI(convert,nrrd) == 0} {
     puts "Loading pattern"
@@ -1286,7 +1285,6 @@ proc ConvertVolumeToTensors {} {
 
     #Hardcode specific parameters for MOSAIC. Experimental.
     if {$DTMRI(convert,order) == "MOSAIC"} {
-      DTMRI SetInputScaleFactor 1
       DTMRI SetAlpha 50
       set scanorder "IS"
       trans Identity
@@ -1296,7 +1294,6 @@ proc ConvertVolumeToTensors {} {
       }
     }
     
-    DTMRI SetInputScaleFactor 1
     DTMRI SetAlpha 50
     
     DTMRI SetTransform trans
