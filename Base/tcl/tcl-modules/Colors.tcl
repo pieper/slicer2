@@ -84,7 +84,7 @@ proc ColorsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.28.6.5 $} {$Date: 2005/09/28 16:49:41 $}]
+        {$Revision: 1.28.6.6 $} {$Date: 2005/10/12 19:59:00 $}]
 
     # the LUT to affect by the colour scale editing
     set Color(LUT,currentID) -1
@@ -632,7 +632,9 @@ proc ColorsDeleteLabel {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ColorsPickLUT
-# Pick a look up table to work with. Sets Color(LUT,currentID).
+# Pick a look up table to work with. Sets Color(LUT,currentID). Will leave out luts
+# from the pick list that are missing functions to set NumberOfColors, HueRange, SaturationRange, 
+# ValueRange, AlphaRange.
 # .ARGS
 # button parrentButton button to hang the menu off of
 # .END
@@ -647,14 +649,23 @@ proc ColorsPickLUT {parentButton} {
 
     foreach l $::Lut(idList) {
         if {$l >= 0} {
-            if {$l == $currid} {
-                set labeltext "* $l $::Lut($l,name) *"
+            # only use LUTs that support the Range values that the interface allows access to
+            if {[catch "Lut($l,lut) GetHueRange" errMsg] == 0 &&
+                [catch "Lut($l,lut) GetSaturationRange" errMsg] == 0 &&
+                [catch "Lut($l,lut) GetValueRange" errMsg] == 0} {
+                if {$l == $currid} {
+                    set labeltext "* $l $::Lut($l,name) *"
+                } else {
+                    set labeltext "$l $::Lut($l,name)"
+                }
+                .mcolorspicklut insert end command -label $labeltext -command "ColorsSetLUT $l"
+                if {$::Module(verbose)} {
+                    puts "ColorsPickLUT: added command to set Color(LUT,currentID) to $l"
+                }
             } else {
-                set labeltext "$l $::Lut($l,name)"
-            }
-            .mcolorspicklut insert end command -label $labeltext -command "ColorsSetLUT $l"
-            if {$::Module(verbose)} {
-                puts "ColorsPickLUT: added command to set Color(LUT,currentID) to $l"
+                if {$::Module(verbose)} {
+                    puts "ColorsPickLUT: skipped lut $l, it doesn't support range commands"
+                }
             }
         }
     }
@@ -674,7 +685,7 @@ proc ColorsPickLUT {parentButton} {
 proc ColorsSetLUT { id } {
     global Color Lut
     
-    if {$id > 0 && [lsearch $Lut(idList) $id] != -1} {
+    if {$id >= 0 && [lsearch $Lut(idList) $id] != -1} {
         set ::Color(LUT,currentID) $id
         # modify the button text
         $::Module(Colors,fScale).fPick.bPickLUT configure -text $Lut($Color(LUT,currentID),name)
