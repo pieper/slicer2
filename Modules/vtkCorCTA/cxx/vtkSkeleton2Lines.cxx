@@ -235,6 +235,14 @@ void vtkSkeleton2Lines::ExecuteData(vtkDataObject* output)
   endpoints->SetScalarType(VTK_UNSIGNED_CHAR);
   endpoints->SetNumberOfScalarComponents(1);
   endpoints->AllocateScalars();
+  
+  endpointsPtr=(unsigned char*)endpoints->GetScalarPointer();
+  for (int i = 0 ; i< loopid->GetNumberOfPoints() ; i++) {
+     *endpointsPtr = 0;
+     endpointsPtr++;
+  }   
+  
+  
   //fprintf(stderr,"end point image allocated...\n");
   this->UpdateProgress(0.1);
 
@@ -314,27 +322,27 @@ void vtkSkeleton2Lines::ExecuteData(vtkDataObject* output)
       meanx = meany = meanz = 0;
       for (z1 = z; z1<=z+1;z1++)
         for (y1 = y;y1<=y+1;y1++)
-       for(x1 = x;x1<=x+1;x1++) {
+          for(x1 = x;x1<=x+1;x1++) {
           
-          if((*(unsigned short *)InputImage->GetScalarPointer(x1,y1,z1))>0) {
+            if((*(unsigned short *)InputImage->GetScalarPointer(x1,y1,z1))>0) {
              meanx += x1;
-         meany += y1;
-         meanz += z1; 
-         //Buffer the point id of the loop point
-         loopidPtr=(short*)loopid->GetScalarPointer(x1,y1,z1);
+             meany += y1;
+             meanz += z1; 
+             //Buffer the point id of the loop point
+             loopidPtr=(short*)loopid->GetScalarPointer(x1,y1,z1);
                  *loopidPtr=iPoint;
-          }
+            }
+      }  
           
           //Add point to the centerline     
           surfPoints->InsertPoint(iPoint,meanx*1.0/n,meany*1.0/n,meanz*1.0/n); 
           iPoint++;
-       }
        
      } //end iff
      
-    }
-   }
-   }             
+    } //end for x
+   }// end for y
+  }//end for z             
 
 
   //--------------- Create the lines ----------------------
@@ -428,7 +436,7 @@ void vtkSkeleton2Lines::ExecuteData(vtkDataObject* output)
         //surfCell->InsertCellPoint(*(unsigned short*)pointid->GetScalarPointer(x0,y0,z0));
         pointIds->InsertNextId(*(unsigned short*)pointid->GetScalarPointer(x0,y0,z0));
             //fprintf(stderr,"(%2d %2d %2d) ",x0,y0,z0);
-    x1 = x2;
+        x1 = x2;
         y1 = y2;
         z1 = z2;
             found = TRUE;
