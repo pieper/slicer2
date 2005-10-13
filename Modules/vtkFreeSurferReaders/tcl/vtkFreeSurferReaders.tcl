@@ -209,7 +209,12 @@ proc vtkFreeSurferReadersInit {} {
     }
     # if this is not set to 1, will query user if they wish to look for subjects in the SUBJECTS_DIR dir
     # if too many subjects (fails with 2k) are there, slicer may hang
+
+
     set vtkFreeSurferReaders(QAAlwaysGlob) 0
+
+
+
     set vtkFreeSurferReaders(QAVolTypes) {aseg brain filled nu norm orig T1 wm}
     set vtkFreeSurferReaders(QADefaultVolTypes) {aseg norm}
     set vtkFreeSurferReaders(QAVolTypeNew) ""
@@ -333,7 +338,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27.6.16 $} {$Date: 2005/10/04 18:28:51 $}]
+        {$Revision: 1.27.6.17 $} {$Date: 2005/10/13 16:25:54 $}]
 
 }
 
@@ -436,7 +441,8 @@ proc vtkFreeSurferReadersBuildGUI {} {
     TooltipAdd $f.bPick "Pick scalars to display for active model"
     DevAddButton $f.bPickLut "Pick Palette" "vtkFreeSurferReadersPickScalarsLut $f.bPickLut; Render3D" 12
     TooltipAdd $f.bPickLut "Pick which look up table to use to map scalars for active model"
-    pack $f.bPick $f.bPickLut  -side left -pady 1 -padx $Gui(pad)
+    DevAddButton $f.bEditLut "Edit Palette" "vtkFreeSurferReadersEditScalarsLut" 13
+    pack $f.bPick $f.bPickLut $f.bEditLut -side left -pady 1 -padx 1
 
     #-------------------------------------------
     # Display->Scalars->Annot Frame
@@ -1300,6 +1306,13 @@ set useMatrices 0
     if {$::Module(verbose)} {
         puts "vtkFreeSurferReadersMGHApply:\n\tReading volume header"
     }
+
+    # add some progress reporting
+    Volume($i,vol,rw) AddObserver StartEvent MainStartProgress
+    Volume($i,vol,rw) AddObserver ProgressEvent "MainShowProgress Volume($i,vol,rw)"
+    Volume($i,vol,rw) AddObserver EndEvent       MainEndProgress
+    set ::Gui(progressText) "Reading [file tail $vtkFreeSurferReaders(VolumeFileName)]"
+
 
     Volume($i,vol,rw) ReadVolumeHeader
     
@@ -3297,6 +3310,12 @@ proc vtkFreeSurferReadersReadMGH {v} {
     catch "mghreader Delete"
     vtkMGHReader mghreader
             
+    mghreader AddObserver StartEvent MainStartProgress
+    mghreader AddObserver ProgressEvent "MainShowProgress mghreader"
+    mghreader AddObserver EndEvent       MainEndProgress
+    set ::Gui(progressText) "Reading mgh"
+
+
     mghreader SetFileName [Volume($v,node) GetFullPrefix]
 
     # flip it on reading in
@@ -3313,6 +3332,9 @@ proc vtkFreeSurferReadersReadMGH {v} {
     Volume($v,vol) SetImageData [flipper GetOutput]
 
     mghreader Delete
+
+    MainEndProgress
+
 }
 
 #-------------------------------------------------------------------------------
@@ -5856,7 +5878,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set timemsg "[clock format [clock seconds] -format "%D-%T-%Z"]"
     # take out any spaces from the time zone
     set timemsg [join [split $timemsg] "-"]
-    set msg "$timemsg $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.16 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "$timemsg $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.17 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -6733,8 +6755,10 @@ proc vtkFreeSurferReadersPickScalar {widget x y} {
                 if {$pid >= 0 && $pid < $numTuples} {
                     # get the scalar value
                     set val [[[$Model($mid,polyData) GetPointData] GetScalars] GetValue $pid]
-                    if {$::Module(verbose)} { puts "pid $pid val = $val" }
-                    vtkFreeSurferReadersShowScalarValue $mid $pid $val
+                    # get the colour that it's mapped to
+                    set col [[Model($mid,mapper,viewRen) GetLookupTable] GetColor $val]
+                    if {$::Module(verbose)} { puts "pid $pid val = $val, colour = $col" }
+                    vtkFreeSurferReadersShowScalarValue $mid $pid $val $col
                 } else {
                     if {$::Module(verbose)} { puts "pid $pid out of range of $numTuples for model $mid" }
                 }
@@ -6753,6 +6777,11 @@ proc vtkFreeSurferReadersPickScalar {widget x y} {
     }
 }
 
+proc vtkFSRMapit {mid pid} {
+    set val [[[$::Model($mid,polyData) GetPointData] GetScalars] GetValue $pid]
+    set col [[Model($mid,mapper,viewRen) GetLookupTable] GetColor $val]
+    puts "$pid: val = $val, rgb = $col"
+}
 #-------------------------------------------------------------------------------
 # .PROC vtkFreeSurferReadersShowScalarValue
 # Build or redisplay a pop up window with the picked scalar value
@@ -6760,9 +6789,10 @@ proc vtkFreeSurferReadersPickScalar {widget x y} {
 # int mid model id
 # int pid point id (vertex number)
 # float val scalar value
+# string col the colour that the scalar value has mapped to
 # .END
 #-------------------------------------------------------------------------------
-proc vtkFreeSurferReadersShowScalarValue {mid pid val} {
+proc vtkFreeSurferReadersShowScalarValue {mid pid val col} {
     global vtkFreeSurferReaders Gui
 
     if {$::Module(verbose)} {  puts "mid = $mid, pid = $pid, val = $val" }
@@ -6772,6 +6802,7 @@ proc vtkFreeSurferReadersShowScalarValue {mid pid val} {
         if {$::Module(verbose)} { puts "Already have a $w" }
         wm deiconify $w
         $w.f.lScalar configure -text "Scalar Value = $val"
+        $w.f.lColour configure -text "Display Colour = $col"
         $w.f.lPoint configure -text "Point id = $pid"
     } else {
         # build it
@@ -6783,9 +6814,10 @@ proc vtkFreeSurferReadersShowScalarValue {mid pid val} {
         pack $w.f -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
         eval {label $w.f.lScalar -text "Scalar Value = $val" -width 40} $Gui(WLA)
+        eval {label $w.f.lColour -text "Display Colour = $col" -width 40} $Gui(WLA)
         eval {label $w.f.lModel -text "Model id = $mid" -width 40} $Gui(WLA)
         eval {label $w.f.lPoint -text "Point id = $pid" -width 40} $Gui(WLA)
-        pack $w.f.lScalar $w.f.lModel $w.f.lPoint -side top 
+        pack $w.f.lScalar $w.f.lColour $w.f.lModel $w.f.lPoint -side top 
 
         DevAddButton $w.f.bClose "Close" "wm withdraw $w"
         pack $w.f.bClose -side top -pady $Gui(pad) -expand 1
@@ -6885,6 +6917,8 @@ proc vtkFreeSurferReadersAddLuts {} {
     # clear out the id list
     set vtkFreeSurferReaders(lutIDs) ""
 
+    set useCXXTable 1
+
     foreach newLut $vtkFreeSurferReaders(lutNames) {
         set nextId -1
 
@@ -6912,112 +6946,86 @@ proc vtkFreeSurferReadersAddLuts {} {
         lappend vtkFreeSurferReaders(lutIDs) $nextId
         set Lut($nextId,numberOfColors) 256
 
-        # build vtk if not already allocated
-        if {[info command Lut($nextId,lut)] == ""} {
-            vtkLookupTable Lut($nextId,lut)
-        }
+        
 
-        switch $newLut {
-            "RedGreen" {
-                set Lut($nextId,hueRange) "0 .8"
-                set Lut($nextId,saturationRange) "1 1"
-                set Lut($nextId,valueRange) "1 0"
-                set Lut($nextId,annoColor) "1 1 0"
-                foreach param "NumberOfColors HueRange SaturationRange ValueRange" {
-                    eval Lut($nextId,lut) Set${param} $Lut($nextId,[Uncap ${param}])
+        if {$useCXXTable == 1} {
+            # build vtk if not already allocated
+            if {[info command Lut($nextId,lut)] == "" || [Lut($nextId,lut) GetClassName] != "vtkFSLookupTable"} {
+                catch "Lut($nextId,lut) Delete"
+                vtkFSLookupTable Lut($nextId,lut)
+                if {$::Module(verbose)} {
+                    Lut($nextId,lut) DebugOn
                 }
-                Lut($nextId,lut) SetRampToLinear
-                Lut($nextId,lut) Build
             }
-            "GreenRed" {
-                
-                if {0} {
-                    # calc'd later
-                    set Lut($nextId,hueRange) ".8 0"
+            
+            Lut($nextId,lut) SetLutTypeTo${newLut}
+            # hack to get some output from the ones not defined yet in vtkFSLookupTable
+            switch $newLut {
+                "RedGreen" {
+                    Lut($nextId,lut) SetLutTypeToGreenRed
+                    Lut($nextId,lut) ReverseOn
+                }
+                "BlueRed" {
+                    Lut($nextId,lut) SetLutTypeToHeat
+                }
+                "RedBlue" {
+                    Lut($nextId,lut) SetLutTypeToHeat
+                    Lut($nextId,lut) ReverseOn
+                }
+            }
+        } else {
+            # the original way of definining the luts, using vtkLookupTable
+            if {[info command Lut($nextId,lut)] == "" || [Lut($nextId,lut) GetClassName] != "vtkLookupTable"}  {
+                catch "Lut($nextId,lut) Delete"
+                vtkLookupTable Lut($nextId,lut)
+            }
+        
+            switch $newLut {
+                "RedGreen" {
+                    set Lut($nextId,hueRange) "0 .8"
                     set Lut($nextId,saturationRange) "1 1"
-                    set Lut($nextId,valueRange) "0 1"
+                    set Lut($nextId,valueRange) "1 0"
                     set Lut($nextId,annoColor) "1 1 0"
-                }
-                # brightening value
-                set offset 0.1
-                # insert the min/max values
-                set b  [expr 1.0 * ($offset  + 0.95*(1.0-$offset))]
-                Lut($nextId,lut) SetTableValue 0 0.0 0.0 $b 1.0
-                Lut($nextId,lut) SetTableValue 255 $b $b 0.0 1.0
-                # then build the rest of them
-                for {set i 1} {$i < 255} {incr i} {
-                    # the r and g are flipped half way through the scale
-                    set curv [expr ($i - 127.0) / 254.0]
-                    set f [expr tanh($curv)]
-                    if {$f > 0} {
-                        set r [expr 1.0 * ($offset + 0.95*(1.0-$offset)*abs($f))]
-                        set g [expr 1.0 * ($offset * (1.0 - abs($f)))]
-                    } else {
-                        set r [expr 1.0 * ($offset * (1.0 - abs($f)))]
-                        set g [expr 1.0 * ($offset + 0.95*(1.0-$offset)*abs($f))]
+                    foreach param "NumberOfColors HueRange SaturationRange ValueRange" {
+                        eval Lut($nextId,lut) Set${param} $Lut($nextId,[Uncap ${param}])
                     }
-                    set b [expr 1.0 * ($offset*(1 - abs($f)))]
-                    Lut($nextId,lut) SetTableValue $i $r $b $g 1.0
+                    Lut($nextId,lut) SetRampToLinear
+                    Lut($nextId,lut) Build
                 }
-                # set the global vars
-                set Lut($nextId,hueRange) [Lut($nextId,lut) GetHueRange]
-                set Lut($nextId,saturationRange) [Lut($nextId,lut) GetSaturationRange]
-                set Lut($nextId,valueRange) [Lut($nextId,lut) GetValueRange]
-                set Lut($nextId,annoColor) "1 1 1"
-            }
-            "Heat" -
-            "BlueRed" {
-                set useNew 1
-                if {$newLut == "Heat"} {
-                    set invphaseflag 0
-                    
-                    if {!$useNew} { 
-                        # calc it later
-                        set Lut($nextId,hueRange) "0.55 .75"
-                        set Lut($nextId,saturationRange) "1 1"
-                        set Lut($nextId,valueRange) "1 1"
-                        set Lut($nextId,annoColor) "1 0 0"
-                        set Lut($nextId,alphaRange) "0.0 1.0"
-                        foreach param "NumberOfColors HueRange SaturationRange ValueRange" {
-                            eval Lut($nextId,lut) Set${param} $Lut($nextId,[Uncap ${param}])
+                "GreenRed" {
+                    # brightening value
+                    set offset 0.1
+                    # insert the min/max values
+                    set b  [expr 1.0 * ($offset  + 0.95*(1.0-$offset))]
+                    Lut($nextId,lut) SetTableValue 0 0.0 0.0 $b 1.0
+                    Lut($nextId,lut) SetTableValue 255 $b $b 0.0 1.0
+                    # then build the rest of them
+                    for {set i 1} {$i < 255} {incr i} {
+                        # the r and g are flipped half way through the scale
+                        set curv [expr ($i - 127.0) / 254.0]
+                        set f [expr tanh($curv)]
+                        if {$f > 0} {
+                            set r [expr 1.0 * ($offset + 0.95*(1.0-$offset)*abs($f))]
+                            set g [expr 1.0 * ($offset * (1.0 - abs($f)))]
+                        } else {
+                            set r [expr 1.0 * ($offset * (1.0 - abs($f)))]
+                            set g [expr 1.0 * ($offset + 0.95*(1.0-$offset)*abs($f))]
                         }
-                        Lut($nextId,lut) SetRampToLinear
-                        Lut($nextId,lut) Build
-
-                        # adjust the blue values a bit
-                        for {set c 0} {$c < $Lut($nextId,numberOfColors)} {incr c} {
-                            set rgba [Lut($nextId,lut) GetTableValue $c]
-                            set r [lindex $rgba 0]
-                            set g [lindex $rgba 1]
-                            set b [lindex $rgba 2]
-                            set a [lindex $rgba 3]
-                            
-                            if {$::Module(verbose)} { 
-                                puts -nonewline "Heat: $c: initial blue = $b (r=$r, g=$g),"
-                            }
-                            # set b [expr $b + .1]
-                            set b [expr 0.2 + 1.0 * $c / $Lut($nextId,numberOfColors)]
-                            if {$b > 1.0} { 
-                                set b [expr $b - 1.0] 
-                            }
-                            if {$::Module(verbose)} {
-                                puts "resetting blue to $b"
-                            }
-                            Lut($nextId,lut) SetTableValue $c $r $g $b $a
-                        }
-                   }
-                } else {
-                    set invphaseflag 1
-                    if {!$useNew} {
-                        # BlueRed
-                        # calc it as inverse of the Head one 
-                        set Lut($nextId,hueRange) ".8 0"
-                        set Lut($nextId,saturationRange) "1 1"
-                        set Lut($nextId,valueRange) "1 1"
-                        set Lut($nextId,annoColor) "1 0 1"
+                        set b [expr 1.0 * ($offset*(1 - abs($f)))]
+                        Lut($nextId,lut) SetTableValue $i $r $b $g 1.0
                     }
+                    # set the global vars
+                    set Lut($nextId,hueRange) [Lut($nextId,lut) GetHueRange]
+                    set Lut($nextId,saturationRange) [Lut($nextId,lut) GetSaturationRange]
+                    set Lut($nextId,valueRange) [Lut($nextId,lut) GetValueRange]
+                    set Lut($nextId,annoColor) "1 1 1"
                 }
-                if {$useNew} {
+                "Heat" -
+                "BlueRed" {
+                    set useNew 1
+                    if {$newLut == "Heat"} {
+                        set invphaseflag 1
+                    }
                     set truncphaseflag 1
                     
                     set fthresh .5
@@ -7027,12 +7035,12 @@ proc vtkFreeSurferReadersAddLuts {} {
                     set r 0.0
                     set g 0.0
                     set b 0.0
-
+                    
                     # zero out the table
                     for {set c 0} {$c < $Lut($nextId,numberOfColors)} {incr c} {
                         Lut($nextId,lut) SetTableValue $c 0.0 0.0 0.0 0.5
                     }
-
+                    
                     # this part calculates the blue part of the LUT properly
                     set halfcols [expr $Lut($nextId,numberOfColors) / 2]
                     # set c -$halfcols
@@ -7064,7 +7072,7 @@ proc vtkFreeSurferReadersAddLuts {} {
                         if {$f >= 0.0} {
                             set r [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid-$fthresh):0.0) + (($f < $fthresh)?0.0:($f < $fmid)?($f - $fthresh)/($fmid - $fthresh):1.0)]
                             set g [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0) + (($f < $fmid)?0.0:($f < $fmid + 1.0/$fslope)?1.0*($f-$fmid)*$fslope:1)]
-#                            set b [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0)]
+                            #                            set b [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0)]
                             set b [expr (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0)]
                         } else {
                             set f [expr 0.0 - $f]
@@ -7082,8 +7090,8 @@ proc vtkFreeSurferReadersAddLuts {} {
                             Lut($nextId,lut) SetTableValue $c $r $g $b 1.0
                         }
                     }
-
-
+                    
+                    
                     # now do the orange/red part of the LUT
                     if {$::Module(verbose) && $newLut == "Heat"} { puts "Red part\n" }
                     
@@ -7119,8 +7127,8 @@ proc vtkFreeSurferReadersAddLuts {} {
                         if {$f >= 0.0} {
                             set r [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid-$fthresh):0.0) + (($f < $fthresh)?0.0:($f < $fmid)?($f - $fthresh)/($fmid - $fthresh):1.0)]
                             set g [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0) + (($f < $fmid)?0.0:($f < $fmid + 1.0/$fslope)?1.0*($f-$fmid)*$fslope:1)]
-                           set b [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0)]
-#                            set b [expr (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0)]
+                            set b [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0)]
+                            #                            set b [expr (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0)]
                         } else {
                             set f [expr 0.0 - $f]
                             set b [expr $tmpoffset * (($f < $fthresh)?1.0:($f < $fmid)?1.0-($f - $fthresh)/($fmid - $fthresh):0) + (($f < $fthresh)?0.0:($f < $fmid)?($f - $fthresh)/($fmid - $fthresh):1.0)]
@@ -7136,20 +7144,21 @@ proc vtkFreeSurferReadersAddLuts {} {
                             Lut($nextId,lut) SetTableValue $c $r $g $b 1.0
                         }
                     }
-                } 
-            }
-            default {
-                puts "Unknown look up table name $newLut, using Gray's values"
-                set Lut($nextId,hueRange) $Lut(0,hueRange)
-                set Lut($nextId,saturationRange) $Lut(0,saturationRange)
-                set Lut($nextId,valueRange) $Lut(0,valueRange)
-                set Lut($nextId,annoColor) $Lut(0,annoColor)
-                foreach param "NumberOfColors HueRange SaturationRange ValueRange" {
-                    eval Lut($nextId,lut) Set${param} $Lut($nextId,[Uncap ${param}])
                 }
-                Lut($nextId,lut) SetRampToLinear
-                Lut($nextId,lut) Build
+                default {
+                    puts "Unknown look up table name $newLut, using Gray's values"
+                    set Lut($nextId,hueRange) $Lut(0,hueRange)
+                    set Lut($nextId,saturationRange) $Lut(0,saturationRange)
+                    set Lut($nextId,valueRange) $Lut(0,valueRange)
+                    set Lut($nextId,annoColor) $Lut(0,annoColor)
+                    foreach param "NumberOfColors HueRange SaturationRange ValueRange" {
+                        eval Lut($nextId,lut) Set${param} $Lut($nextId,[Uncap ${param}])
+                    }
+                    Lut($nextId,lut) SetRampToLinear
+                    Lut($nextId,lut) Build
+                }
             }
+            # end of bypassing old look up tables
         }
         
     }
@@ -7194,7 +7203,7 @@ proc vtkFreeSurferReadersPickScalarsLut { parentButton } {
                 set labeltext "$::Lut($l,name)"
             }
             .mFSpickscalarslut insert end command -label $labeltext \
-                -command "ModelsSetScalarsLut $m $l \; Render3D"
+                -command "ModelsSetScalarsLut $m $l \; Render3D \; if {\"[info command .fsEditLut]\" == \".fsEditLut\"} { vtkFreeSurferReadersEditScalarsLut }"
             incr numcmds
         } else {
             if {$::Module(verbose)} {
@@ -7223,6 +7232,68 @@ proc vtkFreeSurferReadersSetScalarFileName {} {
     if {$::Module(verbose)} {
         puts "vtkFreeSurferReadersSetScalarFileName: scalar file name set to $vtkFreeSurferReaders(scalarFileName)"
     }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersEditScalarsLut
+# Builds and or pops up a frame that allows editing of the freesurfer look up tables.
+# Starts from the lut used by the active model, reset it via the Pick Palette button on 
+# the Display tab.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc vtkFreeSurferReadersEditScalarsLut {} {
+    global vtkFreeSurferReaders Gui Model
+
+    set m $Model(activeID)
+    set ren [lindex $::Module(Renderers) 0]
+    set currlut [Model($m,mapper,$ren) GetLookupTable]
+    set w .fsEditLut
+
+    # is it not build already?
+    if {[info command $w] == ""} {
+        toplevel $w 
+        wm title $w "Edit FreeSurfer Color Lookup Tables"
+
+        frame $w.f -bg $Gui(activeWorkspace)
+        pack $w.f -side top -fill x
+
+        DevAddLabel $w.f.lLut "[$currlut GetLutTypeString]"
+        pack $w.f.lLut -side top
+
+        foreach c {LowThresh HiThresh Reverse Truncate Offset Slope Blufact FMid} {
+            frame $w.f.f$c -bg $Gui(activeWorkspace) -relief groove 
+            pack $w.f.f$c -side top -fill x -expand 1
+
+            set f $w.f.f$c
+            DevAddLabel $f.l$c $c
+            DevAddEntry vtkFreeSurferReaders LUT$c $f.e$c
+            bind $f.e$c <Return> "vtkFreeSurferReadersSetLutParam $c"
+            pack $f.l$c $f.e$c -side left -expand 1
+        }
+        DevAddButton $w.f.bClose "Close" "wm withdraw $w"
+        pack $w.f.bClose -side top -pady $Gui(pad) -expand 1
+    } else {
+        wm deiconify $w
+    }
+    # now set all the vars
+    $w.f.lLut configure -text "[$currlut GetLutTypeString]"
+    foreach c {LowThresh HiThresh Reverse Truncate Offset Slope Blufact FMid} {
+        set vtkFreeSurferReaders(LUT${c}) [$currlut Get${c}]
+    }
+}
+
+proc vtkFreeSurferReadersSetLutParam {param} {
+    global vtkFreeSurferReaders Model
+
+    set m $Model(activeID)
+    set ren [lindex $::Module(Renderers) 0]
+    set l [Model($m,mapper,$ren) GetLookupTable]
+    
+    $l Set${param} $vtkFreeSurferReaders(LUT${param})
+
+    Render3D
+
 }
 
 #-------------------------------------------------------------------------------
