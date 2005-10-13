@@ -15,6 +15,7 @@ vtkFSSurfaceScalarReader.cxx
 vtkFSSurfaceWFileReader.cxx
 vtkFSSurfaceAnnotationReader.cxx
 vtkGDFReader.cxx
+vtkFSLookupTable.cxx
 # vtkPickFilter.cxx
 )
 
