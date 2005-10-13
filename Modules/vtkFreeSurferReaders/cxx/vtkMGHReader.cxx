@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkMGHReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/09/06 21:22:56 $
-  Version:   $Revision: 1.7.6.1 $
+  Date:      $Date: 2005/10/13 15:23:09 $
+  Version:   $Revision: 1.7.6.2 $
 
 =========================================================================*/
 #include "vtkMGHReader.h"
@@ -311,6 +311,7 @@ vtkDataArray *vtkMGHReader::ReadVolumeData()
                   }
               }
           }
+          this->UpdateProgress(1.0*nZ/this->DataDimensions[2]);
       }
   }
 
@@ -318,6 +319,8 @@ vtkDataArray *vtkMGHReader::ReadVolumeData()
   //  fclose(fp);
   gzclose(fp);
 
+  this->SetProgressText("");
+  this->UpdateProgress(0.0);
   
   // return the scalars.
   return scalars;
