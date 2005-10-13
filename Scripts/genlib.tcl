@@ -50,10 +50,12 @@ proc Usage { {msg ""} } {
     set msg "$msg\n  \[options\] is one of the following:"
     set msg "$msg\n   --help : prints this message and exits"
     set msg "$msg\n   --clean : delete the target first"
+    set msg "$msg\n   --release : compile with optimization flags"
     puts stderr $msg
 }
 
 set GENLIB(clean) "false"
+set isRelease 0
 set strippedargs ""
 set argc [llength $argv]
 for {set i 0} {$i < $argc} {incr i} {
@@ -62,6 +64,9 @@ for {set i 0} {$i < $argc} {incr i} {
         "--clean" -
         "-f" {
             set GENLIB(clean) "true"
+        }
+        "--release" {
+            set isRelease 1
         }
         "--help" -
         "-h" {
@@ -146,6 +151,11 @@ if { [file exists $localvarsfile] } {
 } else {
     puts "stderr: $localvarsfile not found - use this file to set up your build"
     exit 1
+}
+
+if ($isRelease) {
+    set ::env(VTK_BUILD_TYPE) "Release"
+    puts "Overriding slicer_variables.tcl; VTK_BUILD_TYPE is $::env(VTK_BUILD_TYPE)"
 }
 
 #initialize platform variables
