@@ -304,12 +304,12 @@ void vtkSkeleton2Lines::ExecuteData(vtkDataObject* output)
   this->UpdateProgress(0.45);
 
  //Check for local loops in 2x2x2 neighborhoods and extract mean point of loops
- inputPtr = (unsigned short*)InputImage->GetScalarPointer();
  vtkIdType inc[3];
  InputImage->GetIncrements(inc);
   
   for(z=0;z<=tz-2;z++) {
   for(y=0;y<=ty-2;y++) {
+    inputPtr = (unsigned short*)InputImage->GetScalarPointer(0,y,z);
   for(x=0;x<=tx-2;x++) {
     
         n = ((*inputPtr) > 0) + (*(inputPtr+inc[0]) > 0) + (*(inputPtr+inc[1]) > 0) + (*(inputPtr+inc[0]+inc[1]) > 0) + 
@@ -330,16 +330,17 @@ void vtkSkeleton2Lines::ExecuteData(vtkDataObject* output)
              meanz += z1; 
              //Buffer the point id of the loop point
              loopidPtr=(short*)loopid->GetScalarPointer(x1,y1,z1);
-                 *loopidPtr=iPoint;
-            }
-      }  
+             *loopidPtr=iPoint;
+            
+        } 
+        }  
           
           //Add point to the centerline     
           surfPoints->InsertPoint(iPoint,meanx*1.0/n,meany*1.0/n,meanz*1.0/n); 
           iPoint++;
        
      } //end iff
-     
+     inputPtr++;
     } //end for x
    }// end for y
   }//end for z             
@@ -347,6 +348,7 @@ void vtkSkeleton2Lines::ExecuteData(vtkDataObject* output)
 
   //--------------- Create the lines ----------------------
   n_lines = 0;
+  //inputPtr=(unsigned short*)InputImage->GetScalarPointer();
   for(e=0;e<=tab_ext.NbElts()-1;e++) {
 
     x0 = tab_ext[e].x;
@@ -376,23 +378,23 @@ void vtkSkeleton2Lines::ExecuteData(vtkDataObject* output)
         y1 = y0+neighbors_place[l][1];
         z1 = z0+neighbors_place[l][2];
         if (CoordOK(InputImage,x1,y1,z1) && *(unsigned short*)neighbors->GetScalarPointer(x1,y1,z1)>0) {
-      found = TRUE;
-        // position on the next neighbor 
-        l0 = l+1;
+          found = TRUE;
+          // position on the next neighbor 
+          l0 = l+1;
           break;
         }
       }
 
       if (!found) {
         vtkErrorMacro("General mess");
-    //Deallocate and return
-    neighbors->Delete();
+        //Deallocate and return
+        neighbors->Delete();
         pointid->Delete();
         loopid->Delete();
         endpoints->Delete();
-    surfCell->Delete();
+        surfCell->Delete();
         surfPoints->Delete();
-    return;
+        return;
       }
 
       // Decide if the line must be created
@@ -404,10 +406,11 @@ void vtkSkeleton2Lines::ExecuteData(vtkDataObject* output)
         continue;
       } else {
         // Insert new line
-    if (pointid0 > -1) {
-             pointIds->InsertNextId(*(short*)loopid->GetScalarPointer(x0,y0,z0));
-    }
-    pointIds->InsertNextId(*(unsigned short*)pointid->GetScalarPointer(x0,y0,z0));
+    pointIds->Reset();
+       if (pointid0 > -1) {
+         pointIds->InsertNextId(pointid0);
+       }
+       pointIds->InsertNextId(*(unsigned short*)pointid->GetScalarPointer(x0,y0,z0));
         
        }    
     
@@ -425,20 +428,20 @@ void vtkSkeleton2Lines::ExecuteData(vtkDataObject* output)
           z2 = z1+neighbors_place[l][2];
 
           if (!((x2==x0)&&(y2==y0)&&(z2==z0)) &&
-         CoordOK(InputImage,x2,y2,z2) &&
+                CoordOK(InputImage,x2,y2,z2) &&
              *(unsigned short*)neighbors->GetScalarPointer(x2,y2,z2)>0) {
-        neighborsPtr=(unsigned short*)neighbors->GetScalarPointer(x1,y1,z1);
-        *neighborsPtr=0;
-        x0 = x1;
-        y0 = y1;
-        z0 = z1;
-            // Add the point to the line
-        //surfCell->InsertCellPoint(*(unsigned short*)pointid->GetScalarPointer(x0,y0,z0));
-        pointIds->InsertNextId(*(unsigned short*)pointid->GetScalarPointer(x0,y0,z0));
+             neighborsPtr=(unsigned short*)neighbors->GetScalarPointer(x1,y1,z1);
+             *neighborsPtr=0;
+             x0 = x1;
+             y0 = y1;
+             z0 = z1;
+             // Add the point to the line
+             //surfCell->InsertCellPoint(*(unsigned short*)pointid->GetScalarPointer(x0,y0,z0));
+             pointIds->InsertNextId(*(unsigned short*)pointid->GetScalarPointer(x0,y0,z0));
             //fprintf(stderr,"(%2d %2d %2d) ",x0,y0,z0);
-        x1 = x2;
-        y1 = y2;
-        z1 = z2;
+            x1 = x2;
+            y1 = y2;
+            z1 = z2;
             found = TRUE;
             break;
           }
