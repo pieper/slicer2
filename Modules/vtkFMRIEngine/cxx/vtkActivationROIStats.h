@@ -79,6 +79,9 @@ public:
     vtkGetMacro(Min, float);
     vtkGetMacro(Mean, float);
 
+    vtkSetMacro(Label, int);
+    vtkGetMacro(Label, int);
+
 protected:
     vtkActivationROIStats();
     ~vtkActivationROIStats();
@@ -87,6 +90,8 @@ protected:
 
     vtkFloatArray *TimeCourse;
     vtkFloatArray *Points;
+
+    int Label;
 
     int Count;
     float Max;

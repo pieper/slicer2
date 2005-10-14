@@ -142,7 +142,7 @@ void vtkActivationROIStats::SimpleExecute(vtkImageData *inputs, vtkImageData* ou
                 {
                     short *l  
                         = (short *)this->GetInput(0)->GetScalarPointer(ii, jj, kk);
-                    if (*l != 0)
+                    if (*l == this->Label)
                     {
                         float *t  
                             = (float *)this->GetInput(1)->GetScalarPointer(ii, jj, kk);
@@ -167,3 +167,4 @@ void vtkActivationROIStats::SimpleExecute(vtkImageData *inputs, vtkImageData* ou
     this->Mean = total / indx;
     this->Count = indx;
 }
+
