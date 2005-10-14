@@ -61,33 +61,32 @@ proc fMRIEngineScaleActivation {v} {
 
         set dof [expr $MultiVolumeReader(noOfVolumes) - 1]
 
-        if {$fMRIEngine(pValue) == "none"} {
-            set fMRIEngine(pValue) 0
+        if {[ValidateInt $fMRIEngine(pValue)] == 0 &&
+            [ValidateFloat $fMRIEngine(pValue)] == 0} {
+            DevErrorWindow "p Value must be a floating point or integer number."
+            return
         }
-        if {$v == "+"} {
-            set fMRIEngine(pValue) [expr {$fMRIEngine(pValue) + 0.01}] 
-        }
-        if {$v == "-"} {
-            set fMRIEngine(pValue) [expr {$fMRIEngine(pValue) - 0.01}] 
-        }
-        if {$fMRIEngine(pValue) < 0} {
-            set fMRIEngine(pValue) 0.0
-        }
-        if {$fMRIEngine(pValue) > 1} {
-            set fMRIEngine(pValue) 1.0 
-        }
+
+        set delta [expr {$v == "+" ? 0.01 : -0.01}]
+        set fMRIEngine(pValue) [expr {$fMRIEngine(pValue) + $delta}] 
+        set fMRIEngine(pValue) [expr {$fMRIEngine(pValue) < 0.0 ? 0.0 : $fMRIEngine(pValue)}] 
+        set fMRIEngine(pValue) [expr {$fMRIEngine(pValue) > 1.0 ? 1.0 : $fMRIEngine(pValue)}] 
  
-        set t [cdf p2t $fMRIEngine(pValue) $dof]
-        cdf Delete
-        set fMRIEngine(tStat) [format "%.1f" $t]
+        if {$fMRIEngine(pValue) > 0.0} {
+            set t [cdf p2t $fMRIEngine(pValue) $dof]
+            cdf Delete
+            set fMRIEngine(tStat) [format "%.1f" $t]
+        } else {
+            set fMRIEngine(tStat) "Inf" 
+            # 32767 = max of signed short
+            set t 32767.0
+        }
 
         set id $fMRIEngine(currentActVolID) 
         if {$id > 0} {
-
             Volume($id,node) AutoThresholdOff
             Volume($id,node) ApplyThresholdOn
             Volume($id,node) SetLowerThreshold $t 
-
             MainVolumesRender
         }
     }
@@ -360,8 +359,8 @@ proc fMRIEngineBuildUIForDisplay {parent} {
     set f $parent.fThreshold.fParams.fStat 
     DevAddLabel $f.lPV "p Value:"
     DevAddLabel $f.lTS "t Stat:"
-    set fMRIEngine(pValue) "none"
-    set fMRIEngine(tStat) "none"
+    set fMRIEngine(pValue) "0.0"
+    set fMRIEngine(tStat) "Inf"
     eval {entry $f.ePV -width 15 \
         -textvariable fMRIEngine(pValue)} $Gui(WEA)
     eval {entry $f.eTS -width 15 -state readonly \
