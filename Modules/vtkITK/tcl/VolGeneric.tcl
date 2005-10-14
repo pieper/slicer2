@@ -505,9 +505,8 @@ proc VolGenericReaderProc {v} {
     vtkITKArchetypeImageSeriesReader genreader
     genreader SetArchetype [Volume($v,node) GetFullPrefix]
     genreader SetOutputScalarType [Volume($v,node) GetScalarType]
-#    genreader SetDesiredCoordinateOrientationToNative
     genreader SetOutputScalarTypeToNative
-
+#    genreader SetDesiredCoordinateOrientationToNative
 
     catch "flip Delete"
     vtkImageFlip flip
