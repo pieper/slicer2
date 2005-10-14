@@ -155,7 +155,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.13 $} {$Date: 2005/09/28 15:26:41 $}]
+        {$Revision: 1.14 $} {$Date: 2005/10/14 14:51:48 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -165,10 +165,10 @@ proc fMRIEngineInit {} {
     #   the procedures in this module and others need to access.
     #
     set fMRIEngine(dir)  ""
+    set fMRIEngine(currentTab) "Sequence"
     set fMRIEngine(modulePath) "$env(SLICER_HOME)/Modules/vtkFMRIEngine"
 
     set fMRIEngine(baselineEVsAdded) 0
- 
 
     # For now, spew heavily.
     # this bypasses the command line setting of --verbose or -v
@@ -359,7 +359,8 @@ proc fMRIEngineBuildGUI {} {
     set fROI $Module(fMRIEngine,fROI)
     fMRIEngineBuildUIForROITab $fROI
     set b $Module(fMRIEngine,bROI)
-    bind $b <1> "fMRIEngineUpdateLabelMapList;fMRIEngineUpdateBGVolumeList"
+    bind $b <1> "fMRIEngineUpdateLabelMapList;fMRIEngineUpdateBGVolumeList; \
+        fMRIEngineUpdateCondsForROIPlot"
  
     #-------------------------------------------
     # Compute tab 
@@ -529,9 +530,28 @@ proc fMRIEngineCreateBindings {} {
     global Gui Ev
 
     EvDeclareEventHandler fMRIEngineSlicesEvents <1> \
-        { fMRIEnginePopUpPlot %x %y }
-           
+        {set xc %x; set yc %y; fMRIEngineProcessMouseEvent $xc $yc}
+
     EvAddWidgetToBindingSet FMRISlice0Events $Gui(fSl0Win) {fMRIEngineSlicesEvents}
     EvAddWidgetToBindingSet FMRISlice1Events $Gui(fSl1Win) {fMRIEngineSlicesEvents}
     EvAddWidgetToBindingSet FMRISlice2Events $Gui(fSl2Win) {fMRIEngineSlicesEvents}    
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineProcessMouseEvent
+# Processes mouse click on the three slice windows
+# .ARGS
+# x the X coordinate; y the Y coordinate
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineProcessMouseEvent {x y} {
+    global fMRIEngine 
+
+    if {$fMRIEngine(currentTab) == "ROI"} {
+        fMRIEngineClickROI $x $y
+    } elseif {$fMRIEngine(currentTab) == "Inspect"} {
+        fMRIEnginePopUpPlot $x $y
+    } else {
+    }
 }
