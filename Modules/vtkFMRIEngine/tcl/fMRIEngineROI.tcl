@@ -105,7 +105,7 @@ proc fMRIEngineBuildUIForROITasks {parent} {
     # pack $f.l -side left -padx $Gui(pad) -fill x -anchor w
 
     # Paradigm design is default task 
-    set taskList [list {Load} {Choose} {Create}]
+    set taskList [list {Load} {Choose} {New}]
     set df [lindex $taskList 0] 
     eval {menubutton $f.mbTask -text $df \
           -relief raised -bd 2 -width 33 \
@@ -121,7 +121,7 @@ proc fMRIEngineBuildUIForROITasks {parent} {
     set count 1
     set cList [list {Shape} {Anatomy} {Blob}]
     foreach mi $taskList {
-        if {$mi == "Create"} {
+        if {$mi == "New"} {
             $f.mbTask.m add cascade -label $mi -menu $f.mbTask.m.sub
             set m2 [eval {menu $f.mbTask.m.sub -tearoff 0} $Gui(WMA)]
             foreach c $cList {
@@ -465,30 +465,161 @@ proc fMRIEngineBuildUIForROIBlob {parent} {
 proc fMRIEngineBuildUIForROIStats {parent} {
     global fMRIEngine Gui Label 
 
-    frame $parent.fTop -bg $Gui(activeWorkspace) -relief groove -bd 2
-    pack $parent.fTop -side top -fill x -pady 5 -padx 5 
+    frame $parent.fNote -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    frame $parent.fShow -bg $Gui(activeWorkspace)
+    frame $parent.fPlot -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    frame $parent.fReset -bg $Gui(activeWorkspace)
+    pack $parent.fNote -side top -fill x -pady 5 -padx 5 
+    pack $parent.fShow -side top -fill x -pady 5 -padx 20 
+    pack $parent.fPlot -side top -fill x -pady 5 -padx 5 
+    pack $parent.fReset -side top -fill x -pady 5 -padx 20 
 
-    #---------------------------------
-    # ROI analysis 
-    #---------------------------------
+    set f $parent.fNote
+    set fMRIEngine(roiStatsNote) "Select label(s) by\n clicking region(s)."
+    eval {label $f.lNote -width 30 -bg $Gui(activeWorkspace) \
+        -textvariable fMRIEngine(roiStatsNote)}
+    pack $f.lNote -side top -fill x -pady 1 -padx 3 
 
-    set f $parent.fTop
-    frame $f.fTitle -bg $Gui(activeWorkspace)
-    frame $f.fButtons -bg $Gui(activeWorkspace)
-    pack $f.fTitle $f.fButtons -side top -fill x -pady 3 -padx 5 
+    set f $parent.fShow
+    DevAddButton $f.bShow "Show stats" "fMRIEngineDoROIStats t" 20 
+    pack $f.bShow -side top -fill x -pady 1 -padx 3 
 
-    set f $parent.fTop.fTitle
-    DevAddLabel $f.lTitle "ROI analysis:"    
-    pack $f.lTitle -side top -fill x -pady 1 -padx 3 
+    set f $parent.fPlot
+    frame $f.fConds        -bg $Gui(activeWorkspace)
+    frame $f.fTimecourse   -bg $Gui(activeWorkspace)
+    frame $f.fPeristimulus -bg $Gui(activeWorkspace)
+    frame $f.fPlot         -bg $Gui(activeWorkspace)
+    pack $f.fConds $f.fTimecourse $f.fPeristimulus $f.fPlot -side top -padx 2 -pady 1 
 
-    set f $parent.fTop.fButtons
-    DevAddButton $f.bIntensity "Intensity stats" "fMRIEngineDoROIStats intensity" 26 
-    DevAddButton $f.bT "t stats" "fMRIEngineDoROIStats t" 26 
-    DevAddButton $f.bTimecourse "Plot averaged timecourse" "fMRIEnginePlotAveragedTimecourse" 26 
-    pack $f.bIntensity $f.bT $f.bTimecourse -side top -pady 1 -padx 0 
+    set f $parent.fPlot.fConds
+    DevAddLabel $f.lLabel "Condition:"
+
+    set condList [list {none}]
+    set df [lindex $condList 0] 
+    eval {menubutton $f.mbType -text $df \
+         -relief raised -bd 2 -width 15 \
+         -indicatoron 1 \
+         -menu $f.mbType.m} $Gui(WMBA)
+    eval {menu $f.mbType.m} $Gui(WMA)
+    foreach m $condList  {
+        $f.mbType.m add command -label $m \
+            -command ""
+    }
+    grid $f.lLabel $f.mbType -padx 1 -pady 3 
+    # Save menubutton for config
+    set fMRIEngine(gui,condsMenuButtonROI) $f.mbType
+    set fMRIEngine(gui,condsMenuROI) $f.mbType.m
+
+    set f $parent.fPlot.fTimecourse
+    set param Long 
+    set name {Timecourse}
+    eval {radiobutton $f.r$param -width 25 -text $name \
+        -variable fMRIEngine(tcPlottingOption) -value $param \
+        -relief raised -offrelief raised -overrelief raised \
+        -selectcolor white} $Gui(WEA)
+    pack $f.r$param -side top -pady 2 
+
+    set f $parent.fPlot.fPeristimulus
+    set param Short 
+    set name {Peristimulus histogram}
+    eval {radiobutton $f.r$param -width 25 -text $name \
+        -variable fMRIEngine(tcPlottingOption) -value $param \
+        -relief raised -offrelief raised -overrelief raised \
+        -selectcolor white} $Gui(WEA)
+    pack $f.r$param -side top -pady 2 
+
+    set f $parent.fPlot.fPlot
+    DevAddButton $f.bPlot "Plot timecourse" "fMRIEnginePlotAveragedTimecourse" 20 
+    pack $f.bPlot -side top -pady 5 -padx 1 
+    set fMRIEngine(tcPlottingOption) ""
+
+    set f $parent.fReset
+    DevAddButton $f.bReset "Reset labelmap" "fMRIEngineResetLabelMap" 20 
+    pack $f.bReset -side top -fill x -pady 1 -padx 2 
+
+}
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineUpdateCondsForROIPlot
+# Updates condition list for ROI timecourse plotting 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineUpdateCondsForROIPlot {} {
+    global fMRIEngine
+
+    set run $fMRIEngine(curRunForModelFitting)
+    if {$run == "none"} {
+        return
+    }
+
+    if {$run == "combined"} {
+        set run 1
+    }
+
+    if {! [info exists fMRIEngine($run,namesOfConditionEVs)]} {
+        return
+    }
+
+    if {[llength $fMRIEngine($run,namesOfConditionEVs)] > 0} {
+        #--- wjp changed 09/21/05: filter out temporal derivative EV names
+        $fMRIEngine(gui,condsMenuROI) delete 0 end
+        set count 1 
+        foreach name $fMRIEngine($run,namesOfConditionEVs) { 
+            $fMRIEngine(gui,condsMenuROI) add command -label $name \
+                -command "fMRIEngineSelectCondForROIPlot $name $count"
+
+            fMRIEngineSelectCondForROIPlot $name $count 
+            incr count
+        }
+    }
+} 
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineSelectCondForROIPlot
+# 
+# .ARGS
+# string cond 
+# int count
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineSelectCondForROIPlot {cond count} {
+    global fMRIEngine 
+
+    # configure menubutton
+    $fMRIEngine(gui,condsMenuButtonROI) config -text $cond
+    set fMRIEngine(curEVIndexForPlotting) $count 
+    set fMRIEngine(curEVForPlotting) $cond 
+
+    if {[info exists fMRIEngine(timeCourseToplevel)] &&
+        $fMRIEngine(tcPlottingOption) == "Long"} {
+            set x $fMRIEngine(x,voxelIndex)
+            set y $fMRIEngine(y,voxelIndex)
+            set z $fMRIEngine(z,voxelIndex)
+
+            # re-plot due to condition switch
+            fMRIEngineDrawPlotLong $x $y $z
+    }
 }
 
 
+proc fMRIEngineResetLabelMap {} {
+    global fMRIEngine Slicer Volume Interactor
+
+    if {[info exists fMRIEngine(roiStatsLabelMapOriginal)]} {
+        set s $Interactor(s)
+        set foreNode [[Slicer GetForeVolume $s] GetMrmlNode]
+        set v [$foreNode GetID]
+        Volume($v,vol) SetImageData $fMRIEngine(roiStatsLabelMapOriginal)
+
+        MainVolumesUpdate $v
+        MainUpdateMRML
+        RenderAll
+    }
+}
+
+ 
 #-------------------------------------------------------------------------------
 # .PROC fMRIEngineDoROIStats
 # 
@@ -566,6 +697,7 @@ proc fMRIEngineComputeROITStats {} {
 
     fMRIEngine(actROIStats) AddInput [Volume($lId,vol) GetOutput]
     fMRIEngine(actROIStats) AddInput [Volume($tId,vol) GetOutput]
+    fMRIEngine(actROIStats) SetLabel 16 
     fMRIEngine(actROIStats) Update 
 
     set fMRIEngine(t,count) [fMRIEngine(actROIStats) GetCount] 
@@ -904,7 +1036,7 @@ proc fMRIEngineSetROITask {task} {
 
     set l $task
     if {$task != "Choose" && $task != "Load"} {
-        set l "Create"
+        set l "New"
     }
 
     # configure menubutton
@@ -989,4 +1121,93 @@ proc fMRIEngineUpdateLabelMapList {} {
         }
     }
 }
+
+
+proc fMRIEngineClickROI {x y} {
+    global fMRIEngine Interactor Ed Editor Volume
+
+    set s $Interactor(s)
+
+    set backNode [[Slicer GetBackVolume $s] GetMrmlNode]
+    set backName [$backNode GetName]
+    if {$backName == "None"} {
+        DevErrorWindow "Put your activation volume in the background (Bg)."
+        return
+    }
+
+    set foreNode [[Slicer GetForeVolume $s] GetMrmlNode]
+    set foreName [$foreNode GetName]
+    set labelMap [$foreNode GetLabelMap]
+    if {$foreName == "None" || $labelMap != "1"} {
+        DevErrorWindow "Put your labelmap volume in the foreground (Fg)."
+        return
+    }
+
+    set labelNode [[Slicer GetLabelVolume $s] GetMrmlNode]
+    set labelName [$labelNode GetName]
+    if {$labelName == "None"} {
+        DevErrorWindow "Make your labelmap visible (in Lb)."
+        return
+    }
+
+    # Save a copy of the labelmap volume
+    if {! [info exists fMRIEngine(roiStatsLabelMapOriginal)]} {
+        vtkImageData data
+
+        set v [$foreNode GetID]
+        data DeepCopy [Volume($v,vol) GetOutput]
+        set fMRIEngine(roiStatsLabelMapOriginal) data
+    }
+     
+    # The value of forePix is the labelmap of the region selected.
+    set xs $x
+    set ys $y
+    scan [MainInteractorXY $s $xs $ys] "%d %d %d %d" xs ys x y
+    set forePix [$Interactor(activeSlicer) GetForePixel $s $x $y]
+
+    # The colors of all labels are white although they have 
+    # different values. If a label is clicked, we are trying
+    # to change its color (i.e. change its value). If the same
+    # label is clicked again, it will be changed back to its original.
+
+    # The background has a value of 0
+    if {$forePix > 0} {
+        EditorEnter
+
+        set e EdChangeLabel
+        set v [$foreNode GetID]
+        EditorSetOriginal [$backNode GetID] 
+ 
+        set prevID $Editor(activeID)
+        set Editor(activeID) $e 
+        set Editor(btn) $e 
+        EditorResetDisplay
+        RenderAll
+        EditorExitEffect $prevID
+        EditorUpdateEffect
+
+        set Ed($e,inputLabel) $forePix
+        # 16 = color of domino
+        set Label(label) 16 
+        EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
+
+        set fg       $Ed($e,inputLabel)
+        set fgNew    $Label(label)
+        Ed(editor)   ChangeLabel $fg $fgNew
+        Ed(editor)   SetInput ""
+        Ed(editor)   UseInputOff
+
+        EdUpdateAfterApplyEffect $v
+
+        EditorExit
+    }
+}
+
+
+proc fMRIEngineShowROIStats {} {
+    global fMRIEngine 
+
+    puts "do nothing in ROI."
+}
+
 
