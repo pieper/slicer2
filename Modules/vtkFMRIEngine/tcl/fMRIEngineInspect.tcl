@@ -235,75 +235,75 @@ proc fMRIEngineBuildUIForPlot {parent} {
     grid $f.bHelp $f.lLabel -padx 1 -pady 5 
 
     set f $parent.fPlot.fHighPass
+    frame $f.fButton -bg $Gui(activeWorkspace)
+    frame $f.fLabel  -bg $Gui(activeWorkspace)
+    frame $f.fEntry  -bg $Gui(activeWorkspace)
+    pack $f.fButton $f.fLabel $f.fEntry -side top -fill x -padx 5 -pady 2 
+
+    set f $parent.fPlot.fHighPass.fButton
     eval {checkbutton $f.cbHighPass \
         -variable fMRIEngine(highPass) \
+        -width 25 \
         -text "Apply high-pass filtering"} $Gui(WEA) 
     $f.cbHighPass deselect 
+    pack $f.cbHighPass -side top -padx 5 -pady 2 
     bind $f.cbHighPass <1> "fMRIEngineToggleCutoff"
 
+    set f $parent.fPlot.fHighPass.fLabel
+    DevAddButton $f.bHelp "?" "fMRIEngineHelpViewHighPassFiltering" 2
     DevAddLabel $f.lCutoff "Cutoff frequency:"
-    eval {entry $f.eCutoff -width 15 \
+    grid $f.bHelp $f.lCutoff -padx 1 -pady 1 
+
+    set f $parent.fPlot.fHighPass.fEntry
+    eval {entry $f.eCutoff -width 28 \
         -textvariable fMRIEngine(cutoff)} $Gui(WEA)
     $f.eCutoff config -state disabled
     set fMRIEngine(gui,cutoffFrequencyEntry) $f.eCutoff
-
-    DevAddButton $f.bHelp "?" "fMRIEngineHelpViewHighPassFiltering" 2
-
-    blt::table $f \
-        0,0 $f.cbHighPass -cspan 3 -fill x -padx 2 -pady 3 \
-        1,0 $f.bHelp   -padx 0 -pady 3 \
-        1,1 $f.lCutoff -padx 0 -pady 3 \
-        1,2 $f.eCutoff -padx 1 -pady 3
+    pack $f.eCutoff -side top -padx 5 -pady 2 
 
     # Options frame
     set f $parent.fPlot.fOptions
-    frame $f.fLong      -bg $Gui(activeWorkspace)
-    frame $f.fHistogram -bg $Gui(activeWorkspace)
-    frame $f.fROI       -bg $Gui(activeWorkspace)
-    pack $f.fLong $f.fHistogram $f.fROI -side top -padx 2 -pady 1 
+    frame $f.fConds        -bg $Gui(activeWorkspace)
+    frame $f.fTimecourse   -bg $Gui(activeWorkspace)
+    frame $f.fPeristimulus -bg $Gui(activeWorkspace)
+    pack $f.fConds $f.fTimecourse $f.fPeristimulus -side top -padx 2 -pady 1 
 
-    set f $parent.fPlot.fOptions.fLong
-    eval {radiobutton $f.rLong -width 12 -text "Timecourse" \
-        -variable fMRIEngine(tcPlottingOption) -value Long \
-        -relief raised -offrelief raised -overrelief raised \
-        -selectcolor white} $Gui(WEA)
+    set f $parent.fPlot.fOptions.fConds
+    DevAddLabel $f.lLabel "Condition:"
 
-    set evList [list {none}]
-    set df [lindex $evList 0] 
+    set condList [list {none}]
+    set df [lindex $condList 0] 
     eval {menubutton $f.mbType -text $df \
-         -relief raised -bd 2 -width 13 \
+         -relief raised -bd 2 -width 15 \
          -indicatoron 1 \
          -menu $f.mbType.m} $Gui(WMBA)
     eval {menu $f.mbType.m} $Gui(WMA)
-    foreach m $evList  {
+    foreach m $condList  {
         $f.mbType.m add command -label $m \
             -command ""
     }
-    grid $f.rLong $f.mbType -padx 1 -pady 2 
-
+    grid $f.lLabel $f.mbType -padx 1 -pady 2 
     # Save menubutton for config
-    set fMRIEngine(gui,evsMenuButtonForPlotting) $f.mbType
-    set fMRIEngine(gui,evsMenuForPlotting) $f.mbType.m
+    set fMRIEngine(gui,condsMenuButtonForPlotting) $f.mbType
+    set fMRIEngine(gui,condsMenuForPlotting) $f.mbType.m
 
-    set f $parent.fPlot.fOptions.fHistogram
-    set param Short
+    set f $parent.fPlot.fOptions.fTimecourse
+    set param Long 
+    set name {Timecourse}
+    eval {radiobutton $f.r$param -width 25 -text $name \
+        -variable fMRIEngine(tcPlottingOption) -value $param \
+        -relief raised -offrelief raised -overrelief raised \
+        -selectcolor white} $Gui(WEA)
+    pack $f.r$param -side top -pady 2 
+
+    set f $parent.fPlot.fOptions.fPeristimulus
+    set param Short 
     set name {Peristimulus histogram}
-    eval {radiobutton $f.rShort -width 30 -text $name \
+    eval {radiobutton $f.r$param -width 25 -text $name \
         -variable fMRIEngine(tcPlottingOption) -value $param \
         -relief raised -offrelief raised -overrelief raised \
         -selectcolor white} $Gui(WEA)
     pack $f.r$param -side top -pady 2 
-
-    set f $parent.fPlot.fOptions.fROI
-    set param ROI 
-    set name ROI 
-    eval {radiobutton $f.r$param -width 30 -text $name \
-        -variable fMRIEngine(tcPlottingOption) -value $param \
-        -relief raised -offrelief raised -overrelief raised \
-        -selectcolor white} $Gui(WEA)
-    pack $f.r$param -side top -pady 2 
-    
-    $f.rROI configure -state disabled
 
     set fMRIEngine(tcPlottingOption) "" 
 }
@@ -532,10 +532,10 @@ proc fMRIEngineUpdateEVsForPlotting {} {
 
     if {[llength $fMRIEngine($run,namesOfConditionEVs)] > 0} {
         #--- wjp changed 09/21/05: filter out temporal derivative EV names
-        $fMRIEngine(gui,evsMenuForPlotting) delete 0 end
+        $fMRIEngine(gui,condsMenuForPlotting) delete 0 end
         set count 1 
         foreach name $fMRIEngine($run,namesOfConditionEVs) { 
-            $fMRIEngine(gui,evsMenuForPlotting) add command -label $name \
+            $fMRIEngine(gui,condsMenuForPlotting) add command -label $name \
                 -command "fMRIEngineSelectEVForPlotting $name $count"
 
             fMRIEngineSelectEVForPlotting $name $count 
@@ -557,7 +557,7 @@ proc fMRIEngineSelectEVForPlotting {ev count} {
     global fMRIEngine 
 
     # configure menubutton
-    $fMRIEngine(gui,evsMenuButtonForPlotting) config -text $ev
+    $fMRIEngine(gui,condsMenuButtonForPlotting) config -text $ev
     set fMRIEngine(curEVIndexForPlotting) $count 
     set fMRIEngine(curEVForPlotting) $ev 
 
