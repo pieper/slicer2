@@ -66,8 +66,8 @@ proc slicerd_sock_fileevent {sock} {
     switch -glob $line {
         "ls*" {
             puts "listing of scene"
-            foreach id $::Volume(idList) {
-                puts -nonewline $sock "$id \"[Volume($id,node) GetName]\" "
+            foreach volid $::Volume(idList) {
+                puts -nonewline $sock "$volid \"[Volume($volid,node) GetName]\" "
             }
             puts $sock ""
             flush $sock
@@ -78,20 +78,20 @@ proc slicerd_sock_fileevent {sock} {
                 flush $sock
                 return
             }
-            set id [lindex $line 1]
-            if { [info command Volume($id,vol)] == "" } {
+            set volid [lindex $line 1]
+            if { [info command Volume($volid,vol)] == "" } {
                 # if the id isn't a number, try looking by name as a pattern
-                set ids [MainVolumesGetVolumesByNamePattern $id]
+                set ids [MainVolumesGetVolumesByNamePattern $volid]
                 if { [llength $ids] != 1 } {
                     puts $sock "get error: bad id"
                     flush $sock
                     return
                 } 
-                set id $ids ;# there's only one and it's our target
+                set volid $ids ;# there's only one and it's our target
             }
             # TODO: should add direction cosines and label_map status
-            set im [Volume($id,vol) GetOutput]
-            puts $sock "image $id" 
+            set im [Volume($volid,vol) GetOutput]
+            puts $sock "image $volid" 
             puts $sock "dimensions [$im GetDimensions]" 
             puts $sock "spacing [$im GetSpacing]" 
             puts $sock "components [$im GetNumberOfScalarComponents]" 
@@ -134,14 +134,14 @@ proc slicerd_sock_fileevent {sock} {
             $n SetName $name
             $n SetDescription "Imported via slicerd"
     
-            set id ::imagedata-[info cmdcount]
-            vtkImageData $id
-            eval $id SetDimensions $dimensions
-            $id SetNumberOfScalarComponents $components
-            $id SetScalarType $scalar_type
-            $id AllocateScalars
+            set idata ::imagedata-[info cmdcount]
+            vtkImageData $idata
+            eval $idata SetDimensions $dimensions
+            $idata SetNumberOfScalarComponents $components
+            $idata SetScalarType $scalar_type
+            $idata AllocateScalars
 
-            ::tcl_$sock SetImageData $id
+            ::tcl_$sock SetImageData $idata
             fconfigure $sock -translation binary -encoding binary
             ::tcl_$sock ReceiveImageDataScalars $sock
             fconfigure $sock -translation auto
@@ -149,25 +149,28 @@ proc slicerd_sock_fileevent {sock} {
             ::Volume($i,node) SetNumScalars $components
             ::Volume($i,node) SetScalarType $scalar_type
 
-            eval ::Volume($i,node) SetSpacing [$id GetSpacing]
     
             ::Volume($i,node) SetDimensions [lindex $dimensions 0] [lindex $dimensions 1]
             ::Volume($i,node) SetImageRange 1 [lindex $dimensions 2]
             catch "flip Delete"
             vtkImageFlip flip
             flip SetFilteredAxis 1
-            flip SetInput $id
+            flip SetInput $idata
             flip Update
             Volume($i,vol) SetImageData [flip GetOutput]
             Volume($i,vol) Update
             slicerd_parse_space_directions $i $space_origin $space_directions
-            $id Delete
+            $idata Delete
             flip Delete
             MainUpdateMRML
 
             Slicer SetOffset 0 0
             MainSlicesSetVolumeAll Back $i
             RenderAll
+        }
+        "eval*" {
+            puts $sock [eval $line]
+            flush $sock
         }
         default {
             puts $sock "unknown command $line"
@@ -180,7 +183,7 @@ proc slicerd_sock_fileevent {sock} {
 # convert nrrd-style space directions line into vtk/slicer info
 # - unfortunately, this is some nasty math to do in tcl
 #
-proc slicerd_parse_space_directions {id space_origin space_directions} {
+proc slicerd_parse_space_directions {volid space_origin space_directions} {
 
     #
     # parse the 'space directions' and 'space origin' information into
@@ -229,11 +232,9 @@ proc slicerd_parse_space_directions {id space_origin space_directions} {
     
 puts "SetSpacing $spacei $spacej $spacek"
 
-    [Volume($id,vol) GetOutput] SetSpacing $spacei $spacej $spacek
+    ::Volume($volid,node) SetSpacing $spacei $spacej $spacek
 
 puts $unit_space_directions
-
-set space_origin "117.5 -93 119"
 
     #
     # fill the ijk to ras matrix
@@ -244,15 +245,16 @@ set space_origin "117.5 -93 119"
     for {set i 0} {$i < 3} {incr i} {
         for {set j 0} {$j < 3} {incr j} {
             set val [lindex $space_directions [expr 3 * $i + $j]]
-            Ijk_matrix SetElement $i $j $val
+            Ijk_matrix SetElement $j $i $val
         }
         set val [lindex $space_origin $i]
         Ijk_matrix SetElement $i 3 $val
     }
 
+puts "Ijk_matrix Print"
 puts [Ijk_matrix Print]
 
-    set dims [[Volume($id,vol) GetOutput] GetDimensions]
+    set dims [[Volume($volid,vol) GetOutput] GetDimensions]
 
     # first top left - start at zero, and add origin to all later
     set ftl "0 0 0"
@@ -282,7 +284,7 @@ puts [Ijk_matrix Print]
 
     puts "ftl ftr fbr ltl"
     puts "$ftl   $ftr   $fbr   $ltl"
-    eval Volume($i,node) ComputeRasToIjkFromCorners "0 0 0" $ftl $ftr $fbr "0 0 0" $ltl
+    eval Volume($volid,node) ComputeRasToIjkFromCorners "0 0 0" $ftl $ftr $fbr "0 0 0" $ltl
 
     Ijk_matrix Delete
 }
