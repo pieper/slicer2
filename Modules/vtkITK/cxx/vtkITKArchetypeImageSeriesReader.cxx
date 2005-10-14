@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/10/10 11:20:29 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2005/10/14 02:04:03 $
+  Version:   $Revision: 1.4 $
 
   Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -56,7 +56,7 @@
 #include "itkGDCMImageIO.h"
 #include <itksys/SystemTools.hxx>
 
-vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.3 $");
+vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.4 $");
 vtkStandardNewMacro(vtkITKArchetypeImageSeriesReader);
 
 //----------------------------------------------------------------------------
@@ -253,6 +253,10 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
     itk::ImageFileReader<ImageType>::Pointer imageReader =
       itk::ImageFileReader<ImageType>::New();
     imageReader->SetFileName(this->FileNames[0].c_str());
+    if (isDicomFile)
+      {
+      imageReader->SetImageIO(dicomIO);
+      }
 
     if (this->UseNativeCoordinateOrientation)
       {
@@ -294,6 +298,10 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
     itk::ImageSeriesReader<ImageType>::Pointer seriesReader =
       itk::ImageSeriesReader<ImageType>::New();
     seriesReader->SetFileNames(this->FileNames);
+    if (isDicomFile)
+      {
+      seriesReader->SetImageIO(dicomIO);
+      }
     
     if (this->UseNativeCoordinateOrientation)
       {
