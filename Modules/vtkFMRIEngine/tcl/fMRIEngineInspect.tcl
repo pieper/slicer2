@@ -67,8 +67,11 @@ proc fMRIEngineScaleActivation {v} {
             return
         }
 
-        set delta [expr {$v == "+" ? 0.01 : -0.01}]
+        set delta 0.0
+        set delta [expr {$v == "+" ? 0.01 : $delta}]
+        set delta [expr {$v == "-" ? -0.01 : $delta}]
         set fMRIEngine(pValue) [expr {$fMRIEngine(pValue) + $delta}] 
+
         set fMRIEngine(pValue) [expr {$fMRIEngine(pValue) < 0.0 ? 0.0 : $fMRIEngine(pValue)}] 
         set fMRIEngine(pValue) [expr {$fMRIEngine(pValue) > 1.0 ? 1.0 : $fMRIEngine(pValue)}] 
  
