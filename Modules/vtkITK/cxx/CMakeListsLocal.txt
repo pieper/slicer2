@@ -42,6 +42,7 @@ vtkITKImageToImageFilterULUL.h
 vtkITKImageToImageFilterUSUL.h
 vtkITKImageToImageFilterUSUS.h
 vtkITKImageToImageFilterSS.h
+vtkITKImageWriter.cxx
 vtkITKIsolatedConnectedImageFilter.cxx
 vtkITKLaplacianSegmentationLevelSetImageFilter.h
 vtkITKNeighborhoodConnectedImageFilter.h
