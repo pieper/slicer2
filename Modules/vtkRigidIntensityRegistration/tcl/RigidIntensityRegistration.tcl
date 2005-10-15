@@ -152,7 +152,7 @@ proc RigidIntensityRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.17 $} {$Date: 2005/09/11 14:43:55 $}]
+        {$Revision: 1.18 $} {$Date: 2005/10/15 19:57:57 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -502,7 +502,7 @@ proc RigidIntensityRegistrationGantryTiltTest {vId} {
 
   set det [[Volume($vId,node) GetPosition] Determinant]
   set risidual [expr abs(abs($det) - 1)]
-    if {$risidual > 0.01} {
+    if {$risidual > 0.1} {
         return 0
     }
  return 1
