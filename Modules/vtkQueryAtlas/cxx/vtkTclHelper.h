@@ -24,11 +24,6 @@ public:
 
     static vtkTclHelper *New();
 
-    /*
-    vtkGetMacro(AlwaysResort, int);  
-    vtkSetMacro(AlwaysResort, int);  
-    */
-
     void SetInterpFromCommand(unsigned long tag);
 
     vtkSetObjectMacro(ImageData, vtkImageData);
@@ -36,15 +31,7 @@ public:
 
     void SendImageDataScalars(char *sockname);
     void ReceiveImageDataScalars(char *sockname);
-
     const char *Execute (char *Command);
-
-    /*
-    vtkGetObjectMacro(Cards, vtkCollection);  
-    vtkGetObjectMacro(TextureTexts, vtkCollection);  
-
-    void DepthSort();
-    */
 
 
 protected:
