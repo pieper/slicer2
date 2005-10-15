@@ -12,6 +12,10 @@
 #include "vtkImageWarpOFForce.h"
 #include "vtkObjectFactory.h"
 
+#ifdef WIN32
+#include <float.h>
+#endif
+
 //Modified by Liu
 //using namespace std;
 
@@ -505,7 +509,8 @@ void vtkImageWarp::InternalUpdate()
       // where the hell can I find a portable include file 
       // that defines DBL_MAX?
       // double lastssd=DBL_MAX;
-      double lastssd=10000000000.0;
+      //double lastssd=10000000000.0;
+      double lastssd=VTK_DOUBLE_MAX;
       double ssd=0;
       for(int i=0;i<(l+1)*this->MaximumIterations;++i)
         {
@@ -520,7 +525,7 @@ void vtkImageWarp::InternalUpdate()
               reslice = vtkImageReslice::New();
               }
               else
-                {
+              {
                 if(i%reslicetensorinterv)
                   {
                   reslice = vtkImageReslice::New();
@@ -529,7 +534,7 @@ void vtkImageWarp::InternalUpdate()
                   {
                   reslice = vtkImageResliceST::New();
                   }
-                }
+              }
             vtkImageTransformIntensity* transint = vtkImageTransformIntensity::New();
 
             vtkImageWarpForce* force = 0;
@@ -585,11 +590,6 @@ void vtkImageWarp::InternalUpdate()
             // smooth deformation
             smooth->SetInput(addvelo->GetOutput());
             smooth->SetStandardDeviations(StdDev,StdDev,StdDev);
-
-
-
-
-
 
             if(this->UseSSD)
               {
