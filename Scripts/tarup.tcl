@@ -116,6 +116,10 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
     set cwd [pwd]
     cd $::env(SLICER_HOME)
 
+    # need to figure out which version of windows visual studio was used to build
+    # so we need the original variables
+    source $::env(SLICER_HOME)/slicer_variables.tcl
+
     ### Some simple error checking to see if the directories exist
 
     foreach dirname "VTK_DIR VTK_SRC_DIR ITK_BINARY_PATH TCL_BIN_DIR GSL_LIB_DIR" {
@@ -303,7 +307,18 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
           set sharedSearchPath [split $::env(DYLD_LIBRARY_PATH) ":"]
       }
       default {
-          set sharedLibs [list msvci70d.dll msvci70.dll msvcp70d.dll msvcp70.dll msvcr70d.dll msvcr70.dll]
+          switch $::GENERATOR {
+              "Visual Studio 7" {
+                  set sharedLibs [list msvci70d.dll msvci70.dll msvcp70d.dll msvcp70.dll msvcr70d.dll msvcr70.dll]
+              }
+              "Visual Studio 7 .NET 2003" {
+                  set sharedLibs [list msvcp71d.dll msvcp71.dll msvcr71d.dll msvcr71.dll]
+              }
+              default {
+                  error "unknown build system for tarup: $GENERATOR"
+              }
+        
+          }
           set sharedSearchPath [concat [split $::env(PATH) ";"] $::env(LD_LIBRARY_PATH)]
           set sharedLibDir $destdir/Lib/$::env(BUILD)/VTK-build/bin/$::env(VTK_BUILD_TYPE)
           set checkForSymlinks 0
