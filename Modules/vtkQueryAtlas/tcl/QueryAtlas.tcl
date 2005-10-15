@@ -101,9 +101,9 @@ proc QueryAtlasInit {} {
    #
 
 
-   set Module($m,row1List) "Help BIRN"
-   set Module($m,row1Name) "{Help} {BIRN}"
-   set Module($m,row1,tab) BIRN
+   set Module($m,row1List) "Help Query BIRN"
+   set Module($m,row1Name) "{Help} {Query} {BIRN}"
+   set Module($m,row1,tab) "Query"
    set Module($m,row2List) ""
    set Module($m,row2Name) ""
    set Module($m,row2,tab) ""
@@ -171,7 +171,7 @@ proc QueryAtlasInit {} {
    #   appropriate revision number and date when the module is checked in.
    #   
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.3 $} {$Date: 2005/04/20 22:33:46 $}]
+       {$Revision: 1.4 $} {$Date: 2005/10/15 19:56:56 $}]
 
    # Initialize module-level variables
    #------------------------------------
@@ -474,6 +474,18 @@ proc QueryAtlasBuildGUI {} {
     MainHelpApplyTags QueryAtlas $help
     MainHelpBuildGUI QueryAtlas
 
+    #-------------------------------------------
+    # Query frame
+    #-------------------------------------------
+    set fQuery $Module(QueryAtlas,fQuery)
+    set f $fQuery
+
+    DevAddButton $f.bQueryAtlasmDemo "Morphometry Demo" "QueryAtlas_mdemo"
+    DevAddButton $f.bQueryAtlasfDemo "Function Demo" "QueryAtlas_fdemo"
+
+    pack $f.bQueryAtlasmDemo -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    pack $f.bQueryAtlasfDemo -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
 
     #-------------------------------------------
     # BIRN frame
@@ -598,4 +610,5 @@ proc QueryAtlasExit {} {
     #
     popEventManager
 
+    QueryAtlasBIRNExit 
 }
