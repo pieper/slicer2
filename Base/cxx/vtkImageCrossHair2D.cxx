@@ -374,6 +374,12 @@ void vtkImageCrossHair2D::ExecuteData(vtkDataObject *out)
   // let superclass allocate data
   this->vtkImageInPlaceFilter::ExecuteData(out);
 
+    if (!this->ShowCursor)
+    {
+        // don't bother with the error checks if the cursor is off
+        return;
+    }
+
   if ( this->GetInput()->GetDataObjectType() != VTK_IMAGE_DATA )
   { vtkWarningMacro ("was sent non-image data data object");
     return;
