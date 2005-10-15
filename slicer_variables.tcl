@@ -35,7 +35,7 @@ set windows "win32"
 #
 # set the default locations for the main components
 #
-switch $tcl_platform(os) {
+switch $::tcl_platform(os) {
     "SunOS" { set ::env(BUILD) $solaris }
     "Linux" { set ::env(BUILD) $linux }
     "Darwin" { set ::env(BUILD) $darwin }
@@ -69,7 +69,7 @@ set ::GSL_TAG "release-1-4"
 
 # Set library, binary, etc. paths...
 
-set ::SLICER_LIB $SLICER_HOME/Lib/$::env(BUILD)
+set ::SLICER_LIB $::SLICER_HOME/Lib/$::env(BUILD)
 set ::VTK_DIR  $::SLICER_LIB/VTK-build
 set ::VTK_SRC_DIR $::SLICER_LIB/VTK
 set ::VTK_BUILD_TYPE ""
@@ -89,7 +89,7 @@ set ::XVNC_EXECUTABLE " "
 
 # Files to test if library has already been built by genlib.tcl.
 
-switch $tcl_platform(os) {
+switch $::tcl_platform(os) {
     "SunOS" -
     "Linux" -
     "Darwin" {
@@ -104,8 +104,8 @@ switch $tcl_platform(os) {
         set ::VTK_TK_LIB $::TCL_LIB_DIR/libtk8.4.so
         set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh8.4
         set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/libITKCommon.so
-        set ::TK_EVENT_PATCH $SLICER_HOME/tkEventPatch.diff
-        set ::BLT_PATCH $SLICER_HOME/blt-patch.diff
+        set ::TK_EVENT_PATCH $::SLICER_HOME/tkEventPatch.diff
+        set ::BLT_PATCH $::SLICER_HOME/blt-patch.diff
     }
     "Windows NT" {
     # Windows NT currently covers WinNT, Win2000, XP Home, XP Pro
@@ -121,28 +121,28 @@ switch $tcl_platform(os) {
         set ::VTK_BUILD_TYPE Debug  ;# a good default
 
         #  
-        set ::env(VTK_BUILD_TYPE) $VTK_BUILD_TYPE
+        set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
         set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh84.exe
         set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish84.exe
         set ::ITCL_TEST_FILE $::TCL_LIB_DIR/itcl3.2/itcl32.dll
         set ::IWIDGETS_TEST_FILE $::TCL_LIB_DIR/iwidgets4.0.2/iwidgets.tcl
         set ::BLT_TEST_FILE $::TCL_BIN_DIR/BLT24.dll
         set ::GSL_TEST_FILE $::GSL_LIB_DIR/gsl.lib
-        set ::VTK_TEST_FILE $::VTK_DIR/bin/$VTK_BUILD_TYPE/vtk.exe
+        set ::VTK_TEST_FILE $::VTK_DIR/bin/$::VTK_BUILD_TYPE/vtk.exe
         set ::VTK_TCL_LIB $::TCL_LIB_DIR/tcl84.lib
         set ::VTK_TK_LIB $::TCL_LIB_DIR/tk84.lib
         set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh84.exe
-        set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/$VTK_BUILD_TYPE/ITKCommon.dll
+        set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/$::VTK_BUILD_TYPE/ITKCommon.dll
     }
     default {
-        puts stderr "Could not match platform \"$tcl_platform(os)\"."
+        puts stderr "Could not match platform \"$::tcl_platform(os)\"."
         exit
     }
 }
 
 # System dependant variables
 
-switch $tcl_platform(os) {
+switch $::tcl_platform(os) {
     "SunOS" {
         set ::VTKSLICERBASE_BUILD_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/vtkSlicerBase.so
         set ::VTKSLICERBASE_BUILD_TCL_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/vtkSlicerBaseTCL.so
@@ -193,7 +193,7 @@ switch $tcl_platform(os) {
         #set MSVC6 1
 
         if {[info exists ::env(MSVC6)]} {
-            set MSVC6 $::env(MSVC6)
+            set ::MSVC6 $::env(MSVC6)
         } else {
         }
 
