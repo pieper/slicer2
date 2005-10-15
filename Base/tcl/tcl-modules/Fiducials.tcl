@@ -104,7 +104,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.56 $} {$Date: 2005/07/27 21:54:33 $}]
+        {$Revision: 1.57 $} {$Date: 2005/10/15 19:51:00 $}]
     
     # Initialize module-level variables
     
@@ -1915,7 +1915,7 @@ proc FiducialsDeletePoint {fid pid {noUpdate 0}} {
         set index [lsearch $Fiducials($fid,pointIdList,$r) $pid]
         if { $index != -1 } {
             # remove the id from the list
-            set Fiducials($fid,pointIdList) [lreplace $Fiducials($fid,pointIdList) $index $index]
+            set Fiducials($fid,pointIdList) [lreplace $Fiducials($fid,pointIdList,$r) $index $index]
 
             # remove the point/scalar for this 2d fid so that no glyph will be displayed at that point
             set sid [FiducialsScalarIdFromPointId2D $fid $pid $r]
