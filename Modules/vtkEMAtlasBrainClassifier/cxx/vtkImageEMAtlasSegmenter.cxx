@@ -961,7 +961,9 @@ int vtkImageEMAtlasSegmenter::MF_Approx_Workpile(float **w_m_input,unsigned char
 #else 
   workpile_t workpile;
   vtkThread thread;
-  numthreads = vtkThreadNumCpus(void) ;
+  // Sylvain did not like this because different results are produced on different machines - Kilian
+  // numthreads = vtkThreadNumCpus(void) ;
+  numthreads = 1;
 
   assert((numthreads <= MAXMFAPPROXIMATIONWORKERTHREADS) && (numthreads > 0));
 
