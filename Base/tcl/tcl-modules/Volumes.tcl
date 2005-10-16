@@ -113,7 +113,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.109 $} {$Date: 2005/09/11 21:20:48 $}]
+            {$Revision: 1.110 $} {$Date: 2005/10/16 15:50:37 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -141,6 +141,7 @@ proc VolumesInit {} {
     set Volumes(prefixSave) ""
     set Volumes(prefixCORSave) ""
     set Volumes(prefixNrrdSave) ""
+    set Volumes(prefixGenericSave) ""
 
     set Volumes(exportFileType) Radiological
     set Volumes(exportFileTypeList) {Radiological Neurological}
@@ -718,8 +719,10 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     frame $f.fFile -bg $Gui(activeWorkspace) -relief groove -bd 3
     frame $f.fCORFile -bg $Gui(activeWorkspace) -relief groove -bd 3
     frame $f.fNrrdFile -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fGenericFile -bg $Gui(activeWorkspace) -relief groove -bd 3
 
     pack $f.fActive -side top -pady $Gui(pad) -padx $Gui(pad)
+    pack $f.fGenericFile  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
     pack $f.fFile  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
     eval {label $fExport.l -text "Export Analyze Format\nWarning: there is a pixel shift\nbug in the output\nOnly isometric voxels exported"} $Gui(WLA)
     pack  $fExport.l -side top -padx $Gui(pad)    
@@ -742,6 +745,44 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     # Append widgets to list that gets refreshed during UpdateMRML
     lappend Volume(mbActiveList) $f.mbActive
     lappend Volume(mActiveList)  $f.mbActive.m
+
+
+    #-------------------------------------------
+    # Export->GenericFilename frame
+    #-------------------------------------------
+
+    set f $fExport.fGenericFile
+
+    eval {button $f.bWrite -text "Save" -width 5 \
+        -command "VolumesGenericExport"} $Gui(WBA)
+    TooltipAdd $f.bWrite "Save the Volume."
+    pack  $f.bWrite -side bottom -padx $Gui(pad)    
+
+    DevAddFileBrowse $f Volumes "prefixGenericSave" "Generic File:" "" "\$Volumes(extentionGenericSave)" "\$Volume(DefaultDir)" "Save" "Browse for a file location (will save image file and .nhdr file to directory)" "Absolute"
+
+    eval {label $f.l -text "Select File Type"} $Gui(BLA)
+    pack $f.l -side left -padx $Gui(pad) -pady 0
+
+    set Volumes(extentionGenericSave) ".nrrd"
+
+    eval {menubutton $f.mbType -text "NRRD(.nrrd)" \
+            -relief raised -bd 2 -width 20 \
+            -menu $f.mbType.m} $Gui(WMBA) 
+    eval {menu $f.mbType.m} $Gui(WMA)
+    pack  $f.mbType -side left -padx $Gui(pad) -pady 1
+
+   # Add menu items
+    foreach FileType {{hdr} {nrrd} {nhdr} {mhd} {mha} {nii} {img} {img.gz} {vtk}} \
+        name {{"Analyze (.hdr)"} {"NRRD(.nrrd)"} {"NRRD(.nhrd)"} {"Meta (.mhd)"} {"Meta (.mha)"} {"Nifti (.nii)"} {"Nifti (.img)"} {"Nifti (.img.gz)"} {"VTK (.vtk)"}} { 
+            set Volumes($FileType) $name 
+            $f.mbType.m add command -label $name \
+                -command "VolumesGenericExportSetFileType $FileType"
+        }
+    # save menubutton for config
+    set Volume(gui,mbSaveFileType) $f.mbType
+    # put a tooltip over the menu
+    TooltipAdd $f.mbType \
+            "Choose file type."
 
 
     #-------------------------------------------
@@ -2216,6 +2257,57 @@ proc VolumesNrrdExport {} {
 
     close $fp
 
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC VolumesGenericExport
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc VolumesGenericExportSetFileType {fileType} {
+    global Volume Volumes
+    set Volumes(extentionGenericSave) $fileType
+
+    $Volume(gui,mbSaveFileType) config -text $Volumes($fileType)
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolumesGenericExport
+# - export to any  Format 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc VolumesGenericExport {} {
+    
+    global Volume Volumes
+    
+    # get the chosen volume
+    set v $Volume(activeID)
+
+    if { $v == 0 } {
+        DevInfoWindow "VolumesGenericExport: Please select a volume to export."
+        return
+    }
+    
+    if { $Volumes(prefixGenericSave) == "" } {
+        DevInfoWindow "VolumesGenericExport: Please select a filename."
+        return
+    }
+    if { [file extension $Volumes(prefixGenericSave)] != ".$Volumes(extentionGenericSave)"} {
+        DevInfoWindow "VolumesGenericExport: File name: $Volumes(prefixGenericSave) does not match the type that you selected: $Volumes(extentionGenericSave)"
+        return
+    }
+
+    # set Volumes(prefixGenericSave) [file root $Volumes(prefixGenericSave)] 
+
+    catch "export_iwriter Delete"
+    vtkITKImageWriter export_iwriter 
+    export_iwriter SetInput [Volume($v,vol) GetOutput]
+    export_iwriter SetFileName $Volumes(prefixGenericSave)
+    export_iwriter Write
+    export_iwriter Delete
 }
 
 #-------------------------------------------------------------------------------
