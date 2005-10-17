@@ -74,7 +74,7 @@ public:
 
     vtkGetMacro(NumberOfColors,int);
     vtkSetMacro(NumberOfColors,int);
-    
+
 protected:
     vtkFSLookupTable();
     ~vtkFSLookupTable();
@@ -116,6 +116,9 @@ protected:
 
     /// Number of colours, from standard lut, not used
     int NumberOfColors;
+
+    /// output of colour computation
+    unsigned char RGBA[4];
 };
 
 #endif
