@@ -50,15 +50,20 @@ char *vtkFSLookupTable::GetLutTypeString ()
 {
     switch (this->LutType) {
     case FSLUTHEAT:
-        return "Heat";
+      return "Heat"; 
+      break;
     case FSLUTGREENRED:
-        return "GreenRed";
+      return "GreenRed";
+      break;
     case FSLUTREDGREEN:
         return "RedGreen";
+        break;
     case FSLUTBLUERED:
         return "BlueRed";
+        break;
     case FSLUTREDBLUE:
         return "RedBlue";
+        break;
     default:
         return "Unknown";
     }
@@ -88,6 +93,13 @@ void vtkFSLookupTable::SetLutTypeToHeat()
        this->Reverse = 0;
        this->FMid = 10;
     */
+    this->FMid = 2.0;
+    this->LowThresh = -10.0;
+    this->Reverse = 0;
+    this->Truncate = 0;
+    this->Offset = 2.0;
+    this->Slope = 1.5;
+    this->FMid = 2.0;
 }
 
 void vtkFSLookupTable::SetLutTypeToBlueRed()
@@ -132,13 +144,14 @@ void vtkFSLookupTable::SetRange(double lo, double hi)
 /// Given a scalar value v, return an rgba color value
 unsigned char *vtkFSLookupTable::MapValue(double val)
 {
-
-    unsigned char retval[4];
+  // return array, set to rgba as 0-255
+  //    unsigned char retval[4];
     /// variables for the heat colour scale
     float f, ftmp, c1, c2, fcurv;
     /// variables for the green red colour scale
     float curv;
     
+    /// the final calculated values, red, green, blue, alpha 
     float r, g, b, a;
 
     r = 0.0;
@@ -238,13 +251,21 @@ unsigned char *vtkFSLookupTable::MapValue(double val)
     }
 
 //    vtkDebugMacro(<<"R = " << r << ", G = " << g << ", B = " << b << endl);
-    
+    /*
     retval[0] = (unsigned char)(r * 255.0);
     retval[1] = (unsigned char)(g * 255.0);
     retval[2] = (unsigned char)(b * 255.0);
     retval[3] = (unsigned char)(a * 255.0);
     
     return retval;
+    */
+
+    this->RGBA[0] = (unsigned char)(r * 255.0);
+    this->RGBA[1] = (unsigned char)(g * 255.0);
+    this->RGBA[2] = (unsigned char)(b * 255.0);
+    this->RGBA[3] = (unsigned char)(a * 255.0);
+    
+    return this->RGBA;
 }
 
 /// passes val to MapValue
@@ -261,7 +282,6 @@ void vtkFSLookupTable::MapScalarsThroughTable2(void *input, unsigned char *outpu
                                int inputDataType, int numberOfValues,
                                int inputIncrement, int outputIncrement)
 {
-    unsigned char *outPtr;
     int n;
     double rgb[3];
     double val;
