@@ -338,7 +338,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27.6.17 $} {$Date: 2005/10/13 16:25:54 $}]
+        {$Revision: 1.27.6.18 $} {$Date: 2005/10/17 18:51:39 $}]
 
 }
 
@@ -358,7 +358,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
     #-------------------------------------------
     # Help frame
     #-------------------------------------------
-    set help "The vtkFreeSuferReaders module allows you to read in FreeSufer format files.<P>Description by tab:<BR><<UL><LI><B>Display</B>: Change the display settings for FreeSurfer volumes and models: colour definitions, overlays.<LI><B>Volumes</B>: Load in COR. mgh volumes.<LI><B>Models</B>: Load in model files (${vtkFreeSurferReaders(surfaces)}) and associate scalars with them.(${vtkFreeSurferReaders(scalars)}).<LI><B>Plot</B>: under development: plot statistical data.<LI><B>QA</B>: under development: Load in a series of freesurfer volume files for quality assurance. Select a subjects dir and volume types to load then press Start QA."
+    set help "The vtkFreeSuferReaders module allows you to read in FreeSufer format files, and display the data.<P>Description by tab:<BR><UL><LI><B>Display</B>: Change the display settings for FreeSurfer volumes and models: colour definitions (segmentation and parcellation), scalar overlays for models  and their color palettes (load .w files here).<LI><B>Volumes</B>: Load in COR, mgh and mgz, bshort and bfloat volumes. Segmentations (label maps) can auto-load FS colours from a separate file.<LI><B>Models</B>: Load in model files (${vtkFreeSurferReaders(surfaces)}) and associate scalars with them.(${vtkFreeSurferReaders(scalars)}). Use a middle mouse button click on models with scalar overlays to view the scalar values and colour mapping.<LI><B>Plot</B>: plot statistical data from group studies. Load in a group descriptor file and associate it with a model, right click on the model to plot data at that vertex.<LI><B>QA</B>: under development: Load in a series of freesurfer volume files for quality assurance - scans through the volume slices according to user set options, writes out notes and decision by reviewer to files in the subjects directory (Summarise QA results button will pop up all subjects, allow set up of subject subsets for further review). Select a subjects directory and volume types to load then press Start QA."
     regsub -all "\n" $help {} help
     MainHelpApplyTags vtkFreeSurferReaders $help
     MainHelpBuildGUI vtkFreeSurferReaders
@@ -762,7 +762,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
     set f $fQA.fVolumes.fVolSelect
 
     DevAddLabel $f.lVolumesSelect "Volumes you wish to load for each subject:"
-    pack $f.lVolumesSelect  -side top -padx $Gui(pad) -pady 0
+    pack $f.lVolumesSelect  -side top -padx $Gui(pad) -pady 0 -expand 1
 
     foreach voltype $vtkFreeSurferReaders(QAVolTypes) {
         # turn on the default ones
@@ -774,7 +774,6 @@ proc vtkFreeSurferReadersBuildGUI {} {
         eval {checkbutton $f.c$voltype \
                   -text $voltype -command "vtkFreeSurferReadersQASetLoad $voltype" \
                   -variable vtkFreeSurferReaders(QAVolFiles,$voltype) \
-                  -width 4 \
                   -indicatoron 0} $Gui(WCA)
         set vtkFreeSurferReaders(QAVolFiles,$voltype) $defaultOn
         vtkFreeSurferReadersQASetLoad $voltype
@@ -5878,7 +5877,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set timemsg "[clock format [clock seconds] -format "%D-%T-%Z"]"
     # take out any spaces from the time zone
     set timemsg [join [split $timemsg] "-"]
-    set msg "$timemsg $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.17 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "$timemsg $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.18 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
