@@ -161,7 +161,7 @@ proc FSLReaderInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    lappend Module(versions) [ParseCVSInfo $m  {$Revision: 1.9 $} {$Date: 2005/07/11 21:15:48 $}]
+    lappend Module(versions) [ParseCVSInfo $m  {$Revision: 1.10 $} {$Date: 2005/10/19 22:48:49 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -609,75 +609,95 @@ proc FSLReaderLoadVolumes {} {
     # Load stats files 
     # ---------------------
     if {! [info exists FSLReader(statsVolumeNames)]} {
-        set statsPat [file join $featDir stats $pat] 
-        set statsFiles [glob -nocomplain $statsPat]
-
-        AnalyzeSetVolumeNamePrefix "stats/" 
-        unset -nocomplain AnalyzeCache(MRMLid)
+        set statsPath [file join $featDir stats]
         unset -nocomplain FSLReader(statsVolumeNames)
-        foreach f $statsFiles { 
-            # VolAnalyzeApply without argument is for Cindy's data (IS scan order) 
-            # VolAnalyzeApply "PA" is for Chandlee's data (PA scan order) 
-            # set id [VolAnalyzeApply "PA"]
-            # lappend mrmlIds [VolAnalyzeApply]
-            set AnalyzeCache(fileName) $f 
-            set val [AnalyzeApply]
-            if {$val == 1} {
-                set FSLReader(loadVolumesError) $val 
-                return 
+
+        if {! [file exists $statsPath]} {
+            DevErrorWindow "stats directory doesn't exist: $statsPath."
+            set FSLReader(statsVolumeNames) ""
+        } else {
+            set statsPat [file join $featDir stats $pat] 
+            set statsFiles [glob -nocomplain $statsPat]
+
+            AnalyzeSetVolumeNamePrefix "stats/" 
+            unset -nocomplain AnalyzeCache(MRMLid)
+            unset -nocomplain FSLReader(statsVolumeNames)
+            foreach f $statsFiles { 
+                # VolAnalyzeApply without argument is for Cindy's data (IS scan order) 
+                # VolAnalyzeApply "PA" is for Chandlee's data (PA scan order) 
+                # set id [VolAnalyzeApply "PA"]
+                # lappend mrmlIds [VolAnalyzeApply]
+                set AnalyzeCache(fileName) $f 
+                set val [AnalyzeApply]
+                if {$val == 1} {
+                    set FSLReader(loadVolumesError) $val 
+                    return 
+                }
+                lappend FSLReader(statsVolumeNames) $Volume(name)
             }
-            lappend FSLReader(statsVolumeNames) $Volume(name)
         }
     }
 
     # Load reg_standard/stats files 
     # ---------------------
     if {! [info exists FSLReader(stdStatsVolumeNames)]} {
-        set regPat [file join $featDir reg_standard stats $pat] 
-        set regFiles [glob -nocomplain $regPat]
-
-        AnalyzeSetVolumeNamePrefix "reg_std/stats/" 
-        unset -nocomplain AnalyzeCache(MRMLid)
+        set regPath [file join $featDir reg_standard stats]
         unset -nocomplain FSLReader(stdStatsVolumeNames)
-        foreach f $regFiles { 
-            set AnalyzeCache(fileName) $f 
-            set val [AnalyzeApply]
-            if {$val == 1} {
-                set FSLReader(loadVolumesError) $val 
-                return 
+
+        if {! [file exists $regPath]} {
+            DevErrorWindow "reg_standard stats directory doesn't exist: $regPath."
+            set FSLReader(stdStatsVolumeNames) ""
+        } else {
+            set regPat [file join $featDir reg_standard stats $pat] 
+            set regFiles [glob -nocomplain $regPat]
+
+            AnalyzeSetVolumeNamePrefix "reg_std/stats/" 
+            unset -nocomplain AnalyzeCache(MRMLid)
+            foreach f $regFiles { 
+                set AnalyzeCache(fileName) $f 
+                set val [AnalyzeApply]
+                if {$val == 1} {
+                    set FSLReader(loadVolumesError) $val 
+                    return 
+                }
+                lappend FSLReader(stdStatsVolumeNames) $Volume(name)
             }
-            lappend FSLReader(stdStatsVolumeNames) $Volume(name)
         }
     }
 
     # Load functional images 
     # ---------------------
     if {$FSLReader(timeCourse) && (! [info exists FSLReader(noOfFuncVolumes)])} {
-        unset -nocomplain FSLReader(noOfFuncVolumes)
+        set FSLReader(noOfFuncVolumes) 0
         set func_data [file join $featDir "filtered_func_data.hdr"] 
-        lappend funcFiles $func_data 
 
-        AnalyzeSetVolumeNamePrefix "" 
-        unset -nocomplain AnalyzeCache(MRMLid)
-        if {[info commands FSLReader(timecourseExtractor)] != ""} {
-            FSLReader(timecourseExtractor) Delete
-            unset -nocomplain FSLReader(timecourseExtractor)
-        }
-        vtkTimecourseExtractor FSLReader(timecourseExtractor)
+        if {! [file exists $func_data]} {
+            DevErrorWindow "filtered_func_data image doesn't exist: $func_data."
+        } else {
+            lappend funcFiles $func_data 
 
-        foreach f $funcFiles { 
-            set AnalyzeCache(fileName) $f 
-            set val [AnalyzeApply]
-            if {$val == 1} {
-                set FSLReader(loadVolumesError) $val 
-                return 
+            AnalyzeSetVolumeNamePrefix "" 
+            unset -nocomplain AnalyzeCache(MRMLid)
+            if {[info commands FSLReader(timecourseExtractor)] != ""} {
+                FSLReader(timecourseExtractor) Delete
+                unset -nocomplain FSLReader(timecourseExtractor)
             }
-        }
+            vtkTimecourseExtractor FSLReader(timecourseExtractor)
 
-        set FSLReader(noOfFuncVolumes) [llength $AnalyzeCache(MRMLid)]
-        foreach id $AnalyzeCache(MRMLid) { 
-            Volume($id,vol) Update
-            FSLReader(timecourseExtractor) AddInput [Volume($id,vol) GetOutput]
+            foreach f $funcFiles { 
+                set AnalyzeCache(fileName) $f 
+                set val [AnalyzeApply]
+                if {$val == 1} {
+                    set FSLReader(loadVolumesError) $val 
+                    return 
+                }
+            }
+
+            set FSLReader(noOfFuncVolumes) [llength $AnalyzeCache(MRMLid)]
+            foreach id $AnalyzeCache(MRMLid) { 
+                Volume($id,vol) Update
+                FSLReader(timecourseExtractor) AddInput [Volume($id,vol) GetOutput]
+            }
         }
     }
 
@@ -686,12 +706,23 @@ proc FSLReaderLoadVolumes {} {
     if {! [info exists FSLReader(backgroundVolumeNames)]} {
         set backFiles ""
         set standard [file join $featDir "standard.hdr"] 
-        set link [file readlink $standard]
-        set standard $link
-        lappend backFiles $standard 
+        if {[file exists $standard]} {
+            set type [file type $standard]
+            if {$type == "link"} {
+                set link [file readlink $standard]
+                set standard $link
+            }
+            lappend backFiles $standard 
+        } else {
+            DevErrorWindow "Standard image doesn't exist."
+        }
 
         set example_func [file join $featDir "example_func.hdr"] 
-        lappend backFiles $example_func 
+        if {[file exists $example_func]} {
+            lappend backFiles $example_func 
+        } else {
+            DevErrorWindow "example_func image doesn't exist."
+        }
 
         if {[llength $backFiles] > 0} {
             AnalyzeSetVolumeNamePrefix "" 
