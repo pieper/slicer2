@@ -69,6 +69,7 @@ char *vtkFSLookupTable::GetLutTypeString ()
     }
 }
 
+// reset all the values in case one was changed
 void vtkFSLookupTable::SetLutTypeToHeat()
 {
     // values from tcl for blue part
@@ -105,21 +106,57 @@ void vtkFSLookupTable::SetLutTypeToHeat()
 void vtkFSLookupTable::SetLutTypeToBlueRed()
 {
     this->LutType = FSLUTBLUERED;
+    this->LowThresh = -10000.0;
+    this->HiThresh =   10000.0;
+    this->Reverse = 0;
+    this->Truncate = 0;
+    this->Offset = 0.25;
+    this->Slope = 1.0;
+    this->Blufact = 1.0;
+    this->FMid = 0.0;
+    this->NumberOfColors = 256;
 }
 
 void vtkFSLookupTable::SetLutTypeToRedBlue()
 {
     this->LutType = FSLUTREDBLUE;
+    this->LowThresh = -10000.0;
+    this->HiThresh =   10000.0;
+    this->Reverse = 1;
+    this->Truncate = 0;
+    this->Offset = 0.25;
+    this->Slope = 1.0;
+    this->Blufact = 1.0;
+    this->FMid = 0.0;
+    this->NumberOfColors = 256;
 }
 
 void vtkFSLookupTable::SetLutTypeToRedGreen()
 {
     this->LutType = FSLUTREDGREEN;
+    this->LowThresh = -10000.0;
+    this->HiThresh =   10000.0;
+    this->Reverse = 0;
+    this->Truncate = 0;
+    this->Offset = 0.25;
+    this->Slope = 1.0;
+    this->Blufact = 1.0;
+    this->FMid = 0.0;
+    this->NumberOfColors = 256;
 }
 
 void vtkFSLookupTable::SetLutTypeToGreenRed()
 {
     this->LutType = FSLUTGREENRED;
+    this->LowThresh = -10000.0;
+    this->HiThresh =   10000.0;
+    this->Reverse = 1;
+    this->Truncate = 0;
+    this->Offset = 0.25;
+    this->Slope = 1.0;
+    this->Blufact = 1.0;
+    this->FMid = 0.0;
+    this->NumberOfColors = 256;
 }
 
 double *vtkFSLookupTable::GetRange()
@@ -144,8 +181,6 @@ void vtkFSLookupTable::SetRange(double lo, double hi)
 /// Given a scalar value v, return an rgba color value
 unsigned char *vtkFSLookupTable::MapValue(double val)
 {
-  // return array, set to rgba as 0-255
-  //    unsigned char retval[4];
     /// variables for the heat colour scale
     float f, ftmp, c1, c2, fcurv;
     /// variables for the green red colour scale
@@ -210,6 +245,12 @@ unsigned char *vtkFSLookupTable::MapValue(double val)
             r = 
                 this->Offset*((f < this->LowThresh)?1:(f < this->FMid)?1 - (f - this->LowThresh)/(this->FMid - this->LowThresh):0);
         }
+
+        this->RGBA[0] = (unsigned char)(r * 255.0);
+        this->RGBA[1] = (unsigned char)(g * 255.0);
+        this->RGBA[2] = (unsigned char)(b * 255.0);
+        this->RGBA[3] = (unsigned char)(a * 255.0);
+
         break;
     case FSLUTGREENRED:
         curv = val;
@@ -236,6 +277,12 @@ unsigned char *vtkFSLookupTable::MapValue(double val)
             }
             b = 255 * (this->Offset*this->Blufact*(1 - fabs(f)));
         }
+
+        this->RGBA[0] = (unsigned char)(r);
+        this->RGBA[1] = (unsigned char)(g);
+        this->RGBA[2] = (unsigned char)(b);
+        this->RGBA[3] = (unsigned char)(a);
+
         break;
     case FSLUTREDGREEN:
 //        vtkErrorMacro(<<"Not doing anything for Red Green just yet\n");
@@ -250,20 +297,7 @@ unsigned char *vtkFSLookupTable::MapValue(double val)
         vtkErrorMacro(<<"Unknown look up table type " << this->LutType);
     }
 
-//    vtkDebugMacro(<<"R = " << r << ", G = " << g << ", B = " << b << endl);
-    /*
-    retval[0] = (unsigned char)(r * 255.0);
-    retval[1] = (unsigned char)(g * 255.0);
-    retval[2] = (unsigned char)(b * 255.0);
-    retval[3] = (unsigned char)(a * 255.0);
-    
-    return retval;
-    */
-
-    this->RGBA[0] = (unsigned char)(r * 255.0);
-    this->RGBA[1] = (unsigned char)(g * 255.0);
-    this->RGBA[2] = (unsigned char)(b * 255.0);
-    this->RGBA[3] = (unsigned char)(a * 255.0);
+//    vtkDebugMacro(<<"R = " << this->RGBA[1] << ", G = " <<  this->RGBA[2] << ", B = " <<  this->RGBA[3] << endl);
     
     return this->RGBA;
 }
