@@ -157,7 +157,7 @@ proc vtkFreeSurferReadersInit {} {
     #   the procedures in this module and others need to access.
     #
     set vtkFreeSurferReaders(assocFiles) ""
-    set vtkFreeSurferReaders(scalars) "thickness curv sulc area"
+    set vtkFreeSurferReaders(scalars) "thickness curv avg_curv sulc area"
     set vtkFreeSurferReaders(scalarsNew) ""
     set vtkFreeSurferReaders(surfaces) "inflated pial smoothwm sphere white orig"
     set vtkFreeSurferReaders(annots) "aparc cma_aparc" 
@@ -338,7 +338,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27.6.18 $} {$Date: 2005/10/17 18:51:39 $}]
+        {$Revision: 1.27.6.19 $} {$Date: 2005/10/19 23:52:01 $}]
 
 }
 
@@ -428,7 +428,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
     # Display->Scalars->Scalar Frame
     #-------------------------------------------
     set f $fDisplay.fScalars.fScalar
-    DevAddFileBrowse $f vtkFreeSurferReaders "scalarFileName" "Scalar (Overlay) file:" "vtkFreeSurferReadersSetScalarFileName" "" {[file dirname $::Model(FileName)]} "Open" "Browse for a FreeSurfer scalar overlay file for the active model (thickness curv sulc area w)"
+    DevAddFileBrowse $f vtkFreeSurferReaders "scalarFileName" "Scalar (Overlay) file:" "vtkFreeSurferReadersSetScalarFileName" "" {[file dirname $::Model(FileName)]} "Open" "Browse for a FreeSurfer scalar overlay file for the active model (thickness curv avg_curv sulc area w)"
     eval {button $f.bLoad -text "Load Scalar File" -width 12 -command "vtkFreeSurferReadersLoadScalarFile"} $Gui(WBA)
     TooltipAdd $f.bLoad "Load the scalar file and associate it with the active model"
     pack $f.bLoad  -side top -pady 1 -padx 1
@@ -739,6 +739,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
 
     # alternately, read in the list of subjects from a file
     DevAddFileBrowse $f vtkFreeSurferReaders "QASubjectsFileName" "File with subject list:" {vtkFreeSurferReadersSetQASubjectsFileName ; vtkFreeSurferReadersSetQASubjects ; vtkFreeSurferReadersQAResetSubjectsListBox } "csh" "\$vtkFreeSurferReaders(QADirName)" "Open" "Browse for the subjects.csh containing a list of subjects"
+    TooltipAdd $f.f "Browse for subjects.csh containing list of subjects (can be generated through 'Summarise QA Results')"
 
     DevAddButton $f.bSummary "Summarise QA results" vtkFreeSurferReadersQASummary
     TooltipAdd $f.bSummary "Summarise QA tests run in this subjects directory, set up new subjects.csh"
@@ -3150,11 +3151,12 @@ proc vtkFreeSurferReadersModelApply {} {
     # make sure it's pickable
     ::Model($i,actor,viewRen) SetPickable 1
     # and allow browsing scalar values via clicks on it
+    set buttonNum 3
     set bindstr [bind $::Gui(fViewWin)]
-    if {$bindstr == "" || [regexp ".ButtonRelease-2." $bindstr matchVar] == 0} {
+    if {$bindstr == "" || [regexp ".ButtonRelease-${buttonNum}." $bindstr matchVar] == 0} {
         # only bind if not bound before
         if {$::Module(verbose)} { puts "binding again: $bindstr" }
-        bind $::Gui(fViewWin) <ButtonRelease-2> {vtkFreeSurferReadersPickScalar %W %x %y}
+        bind $::Gui(fViewWin) <ButtonRelease-${buttonNum}> {vtkFreeSurferReadersPickScalar %W %x %y}
     } else {
         if {$::Module(verbose)} { puts "not binding again: $bindstr" }
     }
@@ -5439,7 +5441,7 @@ proc vtkFreeSurferReadersSetQASubjects {} {
         if { $dir != "" } {
             set retval "yes"
             if {!$vtkFreeSurferReaders(QAAlwaysGlob)} {
-                set retval [tk_messageBox -type yesnocancel -message "About to search in $dir for FreeSurfer subjects. Continue? Press Cancel to always search.\n\nOperation may hang if greater than 1000 subject dirs are present, can reset dir in vtkFreeSurferReaders QA tab."]
+                set retval [tk_messageBox -type yesnocancel -title "Subject directory check" -message "About to search in $dir for FreeSurfer subjects. Continue? \nPress Cancel to not ask again and always search.\n\nOperation may hang if greater than 1000 subject dirs are present, can reset dir in vtkFreeSurferReaders QA tab."]
             }
             if {$retval == "cancel"} {
                 set vtkFreeSurferReaders(QAAlwaysGlob) 1
@@ -5865,10 +5867,10 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
 
     # env(USER) may not be defined
     if {[info exists ::env(USER)] == 1} {
-        set username $::env(USER)
+        set username "$::env(USER)"
     } else {
         if {[info exists ::env(USERNAME)] == 1} {
-            set username $::env(USERNAME)
+            set username "$::env(USERNAME)"
         } else {
             puts "WARNING: USER and USERNAME environment variables are not defined, using default"
             set username "default"
@@ -5877,7 +5879,10 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set timemsg "[clock format [clock seconds] -format "%D-%T-%Z"]"
     # take out any spaces from the time zone
     set timemsg [join [split $timemsg] "-"]
-    set msg "$timemsg $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.18 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    # make up the message with single quotes between each one for easy parsing later, 
+    # leave out ones on the end as will get empty strings there
+    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.19 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
+puts $msg
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -6422,21 +6427,50 @@ proc vtkFreeSurferReadersQASummary {} {
                     set line [gets $fid]
                                         
                     # break up the line
-                    set newline [split $line \"]
+                    set newline [split [string trim $line] \"]
+                    # Pre October 2005:
                     # get bits of the line that are in quotes and reassemble them
                     # they're the second and fourth tokens in the line, leave them alone
                     # and split the first and third tokens by spaces
                     set dateuserver [split [string trim [lindex $newline 0]]]
-                    set filerev [lindex $newline 1]
-                    set machosvervoleval [split [string trim [lindex $newline 2]]]
-                    set notes [lindex $newline 3]
 
-                    # save the tokens for this user in an array, used later for building new review files
-                    foreach token [split $dateuserver] fld {time user slicerver} { 
-                        set $fld $token
-                    }
-                    foreach token [split $machosvervoleval] fld {machine os osver vol eval} {
-                        set $fld $token
+                    if {[regexp {^(\d\d)/(\d\d)/(\d\d)-.*} $dateuserver matchVar day mo yr] == 1} {
+                        if {($yr <= 5 && $mo <= 10)} {
+                            # if the regexp was sucessful, check the year and mo to make sure we're earlier than oct 2005 so that
+                            # we're using the old style string where not everything is in quotes
+                            if {$::Module(verbose)} {
+                                puts "QA: have an old style string earlier than Oct 05: $dateuserver"
+                            }
+                            
+                            set filerev [lindex $newline 1]
+                            set machosvervoleval [split [string trim [lindex $newline 2]]]
+                            set notes [lindex $newline 3]
+                            
+                            # save the tokens for this user in an array, used later for building new review files
+                            foreach token [split $dateuserver] fld {time user slicerver} { 
+                                set $fld $token
+                            }
+                            foreach token [split $machosvervoleval] fld {machine os osver vol eval} {
+                                set $fld $token
+                            }
+                        } else {
+                            # it's the new version
+                            if {$::Module(verbose)} {
+                                puts "Parsed out the date for this line, it's more recent than oct 05: $dateuserver"
+                            }
+                            foreach token $newline fld {time user slicerver filerev machine os osver vol eval notes} {
+                                set $fld $token
+                            }
+                        }
+                    } else {
+                        # assume that it's using the new version with quotes
+                        if {$::Module(verbose)} {
+                            puts "New version qa parsing.\nTokenized line = '$newline'"
+                        }
+                        foreach token $newline fld {time user slicerver filerev machine os osver vol eval notes} {
+                            set $fld $token
+                            if {$::Module(verbose)} { puts "QA parsing: fld $fld set to token $token" }
+                        }
                     }
                     # save the information - the file may contain multiple evals of a volume,
                     # just interested in the last one, so over writing is fine (only overwrites in the variable, prints out all of them)
@@ -7270,6 +7304,12 @@ proc vtkFreeSurferReadersEditScalarsLut {} {
             bind $f.e$c <Return> "vtkFreeSurferReadersSetLutParam $c"
             pack $f.l$c $f.e$c -side left -expand 1
         }
+
+        # this relies on the fact that the set lut type to functions sets all the values, call 
+        # something to trigger a remapping of all the scalars
+        DevAddButton $w.f.bReset "Reset" "$currlut SetLutTypeTo[$currlut GetLutTypeString] ; vtkFreeSurferReadersEditScalarsLut ; Render3D"
+        # pack $w.f.bReset -side top -pady $Gui(pad) -expand 1
+
         DevAddButton $w.f.bClose "Close" "wm withdraw $w"
         pack $w.f.bClose -side top -pady $Gui(pad) -expand 1
     } else {
@@ -7422,7 +7462,7 @@ proc vtkFreeSurferReadersReadScalars { m {fileName ""} } {
                 set lutIndex [lsearch $vtkFreeSurferReaders(lutNames) "BlueRed"]
                
             }
-            if {$s == "curv" || $s == "thickness"} {
+            if {$s == "curv" || $s == "avg_curv" || $s == "thickness"} {
                 set lutIndex [lsearch $vtkFreeSurferReaders(lutNames) "GreenRed"]
             }
             if {$s == "retinotopy"} {
@@ -7431,6 +7471,7 @@ proc vtkFreeSurferReadersReadScalars { m {fileName ""} } {
             }
             if {$lutIndex == -1} {
                 # use default 
+                puts "Warning: scalar extension $s doesn't match known extensions, using Heat colour scale"
                 set lutIndex [lsearch $vtkFreeSurferReaders(lutNames) "Heat"]
             }
             if {$lutIndex != -1} {
