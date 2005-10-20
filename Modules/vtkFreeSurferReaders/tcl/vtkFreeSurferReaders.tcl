@@ -205,7 +205,7 @@ proc vtkFreeSurferReadersInit {} {
             vtkFreeSurferReadersSetQASubjects
         }
     } else {
-        set vtkFreeSurferReaders(QADirName) $::env(SLICER_HOME)
+        set vtkFreeSurferReaders(QADirName) ""
     }
     # if this is not set to 1, will query user if they wish to look for subjects in the SUBJECTS_DIR dir
     # if too many subjects (fails with 2k) are there, slicer may hang
@@ -338,7 +338,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27.6.19 $} {$Date: 2005/10/19 23:52:01 $}]
+        {$Revision: 1.27.6.20 $} {$Date: 2005/10/20 17:26:17 $}]
 
 }
 
@@ -5881,8 +5881,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set timemsg [join [split $timemsg] "-"]
     # make up the message with single quotes between each one for easy parsing later, 
     # leave out ones on the end as will get empty strings there
-    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.19 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
-puts $msg
+    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.20 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
