@@ -237,7 +237,12 @@ proc MainInteractorCursor {s xs ys x y} {
             set scalarType [Volume($v,node) GetScalarType]
             # VTK_FLOAT = 10; VTK_DOUBLE = 11
             set b [expr {$scalarType == 10 || $scalarType == 11}]
-            set Anno($m$f) [expr {$b == 1 ? "%.1f" : $Anno(pixelDispFormat)}] 
+            #set Anno($m$f) [expr {$b == 1 ? "%.1f" : $Anno(pixelDispFormat)}] 
+            if { ($b == 1) && ($Anno(pixelDispFormat) == "%.f") }  {
+                set Anno($m$f) "%6.2f"
+            } else {
+                set Anno($m$f) $Anno(pixelDispFormat)
+            }
         }
     }
 
