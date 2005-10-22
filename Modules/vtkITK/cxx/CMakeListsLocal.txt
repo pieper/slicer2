@@ -45,6 +45,7 @@ vtkITKImageToImageFilterSS.h
 vtkITKImageWriter.cxx
 vtkITKIsolatedConnectedImageFilter.cxx
 vtkITKLaplacianSegmentationLevelSetImageFilter.h
+vtkITKMRIBiasFieldCorrectionImageFilter.h
 vtkITKNeighborhoodConnectedImageFilter.h
 vtkITKNormalizeImageFilter.cxx
 vtkITKPDEDeformableRegistrationFilter.h
