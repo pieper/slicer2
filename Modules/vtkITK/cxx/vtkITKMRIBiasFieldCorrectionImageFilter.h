@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKMRIBiasFieldCorrectionImageFilter.h,v $
   Language:  C++
-  Date:      $Date: 2005/10/22 16:48:24 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2005/10/22 20:22:53 $
+  Version:   $Revision: 1.2 $
 */
 // .NAME vtkITKMRIBiasFieldCorrectionImageFilter - Wrapper class around itk::MRIBiasFieldCorrectionImageFilterImageFilter
 // .SECTION Description
@@ -67,36 +67,63 @@ class VTK_EXPORT vtkITKMRIBiasFieldCorrectionImageFilter : public vtkITKImageToI
   static vtkITKMRIBiasFieldCorrectionImageFilter *New();
   vtkTypeRevisionMacro(vtkITKMRIBiasFieldCorrectionImageFilter, vtkITKImageToImageFilterFF);
 
-  void SetTissueClassStatistics( vtkDoubleArray *classMeans, vtkDoubleArray *classSigmas )
+  void SetTissueClassMeans( vtkDoubleArray *classMeans )
   {
-    itk::Array<double> itkClassMeans( classMeans->GetNumberOfTuples() ) ;
-    itk::Array<double> itkClassSigmas( classSigmas->GetNumberOfTuples() ) ;
-    
-    for(int i=0; i< classMeans->GetNumberOfTuples();i++) {
-      itkClassMeans[i] = classMeans->GetValue(i);
-      itkClassSigmas[i] = classSigmas->GetValue(i);
+    this->_classMeans->DeepCopy( classMeans );
+
+    if ( this->_classMeans->GetNumberOfTuples() != this->_classSigmas->GetNumberOfTuples() ) {
+      this->_classSigmas->SetNumberOfTuples( this->_classMeans->GetNumberOfTuples() );
+      this->_classSigmas->DeepCopy( classMeans );
     }
-    this->GetImageFilterPointer()->SetTissueClassStatistics (itkClassMeans, itkClassSigmas);
+
+    this->SetTissueClassStatistics();
   }
 
-  bool GetUsingSlabIdentification ()
+  void SetTissueClassSigmas( vtkDoubleArray *classSigmas )
+  {
+    this->_classSigmas->DeepCopy( classSigmas );
+
+    if ( this->_classMeans->GetNumberOfTuples() != this->_classSigmas->GetNumberOfTuples() ) {
+      this->_classMeans->SetNumberOfTuples( this->_classSigmas->GetNumberOfTuples() );
+      this->_classMeans->DeepCopy( classSigmas );
+    }
+
+    this->SetTissueClassStatistics();
+  }
+
+  int GetUsingSlabIdentification ()
   {
     DelegateITKOutputMacro ( GetUsingSlabIdentification );
   };
-  void SetUsingSlabIdentification( bool value )
+  void SetUsingSlabIdentification( int value )
   {
-    DelegateITKInputMacro ( SetUsingSlabIdentification, value );
+    DelegateITKInputMacro ( SetUsingSlabIdentification, (bool)value );
+  };
+  void UsingSlabIdentificationOff()
+  {
+    SetUsingSlabIdentification(false);
+  };
+  void UsingSlabIdentificationOn()
+  {
+    SetUsingSlabIdentification(true);
   };
 
-  bool GetUsingInterSliceIntensityCorrection ()
+  int GetUsingInterSliceIntensityCorrection ()
   {
     DelegateITKOutputMacro ( GetUsingInterSliceIntensityCorrection );
   };
-  void SetUsingInterSliceIntensityCorrection( bool value )
+  void SetUsingInterSliceIntensityCorrection( int value )
   {
-    DelegateITKInputMacro ( SetUsingInterSliceIntensityCorrection, value );
+    DelegateITKInputMacro ( SetUsingInterSliceIntensityCorrection, (bool)value );
   };
-
+  void UsingInterSliceIntensityCorrectionOn()
+  {
+    SetUsingInterSliceIntensityCorrection(true);
+  }
+  void UsingInterSliceIntensityCorrectionOff()
+  {
+    SetUsingInterSliceIntensityCorrection(false);
+  }
 
   int GetVolumeCorrectionMaximumIteration ()
   {
@@ -177,10 +204,32 @@ class VTK_EXPORT vtkITKMRIBiasFieldCorrectionImageFilter : public vtkITKImageToI
 protected:
   //BTX
   typedef itk::MRIBiasFieldCorrectionFilter<Superclass::InputImageType,Superclass::InputImageType,Superclass::InputImageType> ImageFilterType;
-  vtkITKMRIBiasFieldCorrectionImageFilter() : Superclass ( ImageFilterType::New() ) {};
-  ~vtkITKMRIBiasFieldCorrectionImageFilter() {};
+  vtkITKMRIBiasFieldCorrectionImageFilter() : Superclass ( ImageFilterType::New() ) 
+  {
+    _classMeans =  vtkDoubleArray::New();
+    _classSigmas = vtkDoubleArray::New();
+  };
+  ~vtkITKMRIBiasFieldCorrectionImageFilter() 
+  {
+    _classMeans->Delete();
+    _classSigmas->Delete();
+  };
   ImageFilterType* GetImageFilterPointer() { return dynamic_cast<ImageFilterType*> ( m_Filter.GetPointer() ); }
 
+  void SetTissueClassStatistics()
+  {
+    itk::Array<double> itkClassMeans( _classMeans->GetNumberOfTuples() ) ;
+    itk::Array<double> itkClassSigmas( _classSigmas->GetNumberOfTuples() ) ;
+    
+    for(int i=0; i< _classMeans->GetNumberOfTuples();i++) {
+      itkClassMeans[i] = _classMeans->GetValue(i);
+      itkClassSigmas[i] = _classSigmas->GetValue(i);
+    }
+    this->GetImageFilterPointer()->SetTissueClassStatistics (itkClassMeans, itkClassSigmas);
+  }
+
+  vtkDoubleArray *_classMeans;
+  vtkDoubleArray *_classSigmas;
   //ETX
   
 private:
@@ -188,7 +237,7 @@ private:
   void operator=(const vtkITKMRIBiasFieldCorrectionImageFilter&);  // Not implemented.
 };
 
-vtkCxxRevisionMacro(vtkITKMRIBiasFieldCorrectionImageFilter, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkITKMRIBiasFieldCorrectionImageFilter, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkITKMRIBiasFieldCorrectionImageFilter);
 
 #endif
