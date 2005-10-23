@@ -148,8 +148,8 @@ proc VolGenericBuildGUI {parentFrame} {
     foreach type $Volume(scalarTypeMenu) {
         $m add command -label $type -command "VolGenericSetScalarType $type"
     }
-    pack $f.lscalarType -side left -padx $Gui(pad) -fill x -anchor w
-    pack $f.mbscalarType -side left -padx $Gui(pad) -expand 1 -fill x 
+    #pack $f.lscalarType -side left -padx $Gui(pad) -fill x -anchor w
+    #pack $f.mbscalarType -side left -padx $Gui(pad) -expand 1 -fill x 
     
 
     # LabelMap
@@ -181,7 +181,8 @@ proc VolGenericBuildGUI {parentFrame} {
     #-------------------------------------------
     set f $parentFrame.fApply
         
-    DevAddButton $f.bApply "Apply" "set Volume(fileType) Generic; VolGenericApply; VolumesSetPropertyType VolHeader" 8
+    #DevAddButton $f.bApply "Apply" "set Volume(fileType) Generic; VolGenericApply; VolumesSetPropertyType VolHeader; RenderAll" 8
+    DevAddButton $f.bApply "Apply" "set Volume(fileType) Generic; VolGenericApply; RenderAll" 8
     DevAddButton $f.bCancel "Cancel" "VolumesPropsCancel" 8
     grid $f.bApply $f.bCancel -padx $Gui(pad)
 }
@@ -272,12 +273,14 @@ proc VolGenericApply {} {
         Volume($i,vol,rw) Delete
     }
 
+    catch "genreader Delete"
     vtkITKArchetypeImageSeriesReader genreader
     genreader SetArchetype $Volume(VolGeneric,FileName)
     genreader SetOutputScalarTypeToNative
 #    genreader SetDesiredCoordinateOrientationToNative
    
     # flip the image data going from ITK to VTK
+    catch "Volume($i,vol,rw)  Delete"
     vtkImageFlip Volume($i,vol,rw)
     Volume($i,vol,rw) SetFilteredAxis 1
     Volume($i,vol,rw) SetInput  [genreader GetOutput]   
@@ -287,7 +290,13 @@ proc VolGenericApply {} {
     }
 
     set imdata [Volume($i,vol,rw) GetOutput]
-    $imdata UpdateInformation
+
+    if {[catch "$imdata UpdateInformation"]} {
+        DevErrorWindow "Cannot read file $Volume(VolGeneric,FileName)"
+        VolGenericMainFileCloseUpdate
+        MainMrmlDeleteNode Volume $i
+        return;
+    }
 
     set Volume(isDICOM) 0
     set Volume($i,type) "Generic"
@@ -398,6 +407,7 @@ proc VolGenericApply {} {
     eval Volume($i,node) ComputeRasToIjkFromCorners "0 0 0" $ftl $ftr $fbr "0 0 0" $ltl
 
     Ijk_matrix Delete
+    genreader Delete
 
     # so can read in the volume
     if {$Module(verbose) == 1} {
@@ -424,6 +434,14 @@ proc VolGenericApply {} {
     # allow use of other module GUIs
     set Volume(freeze) 0
 
+    # REMOVE THIS IF YOU WANT TO USE PROP MENU AFTERWARDS
+    # Unfreeze
+    if {$Module(freezer) != ""} {
+        set cmd "Tab $Module(freezer)"
+        set Module(freezer) ""
+        eval $cmd
+    }
+
     # set active volume on all menus
     MainVolumesSetActive $i
 
@@ -442,7 +460,6 @@ proc VolGenericApply {} {
     } else {
         MainSlicesSetVolumeAll Back $i
     }
-
 
     return $i
 }
