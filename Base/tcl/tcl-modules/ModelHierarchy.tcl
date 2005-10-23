@@ -157,7 +157,7 @@ proc ModelHierarchyInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.15 $} {$Date: 2004/04/23 14:53:23 $}]
+        {$Revision: 1.15.10.1 $} {$Date: 2005/10/23 18:24:35 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -381,6 +381,7 @@ proc ModelHierarchyEnter {} {
             }
             set CurrentModelID [SharedModelLookup [$node GetModelRefID]]
             if {$CurrentModelID != -1} {
+                if {[winfo exist $f.l$CurrentModelID] == 0} {
                     eval {label $f.l$CurrentModelID -text "[Model($CurrentModelID,node) GetName]"} $Gui(WLA)
                     bindtags $f.l$CurrentModelID [list DragDrop $f.l$CurrentModelID Label . all]
                     
@@ -392,6 +393,10 @@ proc ModelHierarchyEnter {} {
                     pack $l1_command $f.l$CurrentModelID -in $f.f1_$CurrentModelID -side left
                     lower $f.f1_$CurrentModelID
                     incr numLines
+                } else {
+
+                    DevErrorWindow "Duplicate model reference number [$node GetModelRefID], cannot create interface"
+                }
             }
         }
         set node [Mrml(dataTree) GetNextItem]
