@@ -250,6 +250,7 @@ proc VolNrrdApply {} {
 
     if {![nrrdReader CanReadFile $Volume(VolNrrd,FileName)]} {
         DevErrorWindow "Cannot read file $Volume(VolNrrd,FileName)"
+        MainMrmlDeleteNode Volume $i
         return
     }
     nrrdReader SetFileName $Volume(VolNrrd,FileName)
