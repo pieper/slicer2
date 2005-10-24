@@ -44,7 +44,7 @@
 #   fMRIEngineBuildUIForROIShape
 #   fMRIEngineBuildUIForROIAnatomy
 #   fMRIEngineSelectBG
-#   fMRIEngineBuildUIForROIBlob
+#   fMRIEngineBuildUIForROIActivation
 #   fMRIEngineCreateLabelMap
 #   fMRIEngineCastActivation
 #   fMRIEngineSetROITask task
@@ -119,7 +119,7 @@ proc fMRIEngineBuildUIForROITasks {parent} {
 
     # Add menu items
     set count 1
-    set cList [list {Shape} {Anatomy} {Blob}]
+    set cList [list {Shape} {Anatomy} {Activation}]
     foreach mi $taskList {
         if {$mi == "New"} {
             $f.mbTask.m add cascade -label $mi -menu $f.mbTask.m.sub
@@ -139,7 +139,7 @@ proc fMRIEngineBuildUIForROITasks {parent} {
     #-------------------------------------------
     set f $parent.fBot
 
-    set fList [list {Load} {Choose} {Shape} {Anatomy} {Blob}]
+    set fList [list {Load} {Choose} {Shape} {Anatomy} {Activation}]
     set count 1
     foreach m $fList {
         # Makes a frame for each submodule
@@ -326,7 +326,7 @@ proc fMRIEngineBuildUIForROIShape {parent} {
         1,1 $fMRIEngine(ShapeBGVerScroll) -fill y -padx 1 -pady 1
 
     set f $parent.fTop.fButtons
-    DevAddButton $f.bCompute "Select" "fMRIEngineSelectBG {ShapeBGListBox}" 10 
+    DevAddButton $f.bCompute "Go to Editor Module" "fMRIEngineSelectBG {ShapeBGListBox}" 20 
     grid $f.bCompute -padx 1 -pady 3
 }
 
@@ -370,7 +370,7 @@ proc fMRIEngineBuildUIForROIAnatomy {parent} {
         1,1 $fMRIEngine(AnatomyBGVerScroll) -fill y -padx 1 -pady 1
 
     set f $parent.fTop.fButtons
-    DevAddButton $f.bCompute "Select" "fMRIEngineSelectBG {AnatomyBGListBox}" 10 
+    DevAddButton $f.bCompute "Go to Editor Module" "fMRIEngineSelectBG {AnatomyBGListBox}" 20 
     grid $f.bCompute -padx 1 -pady 3
 }
 
@@ -398,12 +398,12 @@ proc fMRIEngineSelectBG {lb} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC fMRIEngineBuildUIForROIBlob
+# .PROC fMRIEngineBuildUIForROIActivation
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineBuildUIForROIBlob {parent} {
+proc fMRIEngineBuildUIForROIActivation {parent} {
     global fMRIEngine Gui Module
 }
 
@@ -425,32 +425,22 @@ proc fMRIEngineBuildUIForROIRegionMap {parent} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC fMRIEngineBuildUIForROIBlob
+# .PROC fMRIEngineBuildUIForROIActivation
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineBuildUIForROIBlob {parent} {
+proc fMRIEngineBuildUIForROIActivation {parent} {
     global fMRIEngine Gui Label 
 
-    frame $parent.fTop -bg $Gui(activeWorkspace) -relief groove -bd 2
+    frame $parent.fTop -bg $Gui(activeWorkspace)
     pack $parent.fTop -side top -fill x -pady 5 -padx 5 
 
     #---------------------------------
     # Make label map 
     #---------------------------------
- 
     set f $parent.fTop
-    frame $f.fTitle -bg $Gui(activeWorkspace)
-    frame $f.fButtons -bg $Gui(activeWorkspace)
-    pack $f.fTitle $f.fButtons -side top -fill x -pady 3 -padx 5 
-
-    set f $parent.fTop.fTitle
-    DevAddLabel $f.lTitle "Make label map from activation blob:"    
-    pack $f.lTitle -side top -fill x -pady 1 -padx 3 
- 
-    set f $parent.fTop.fButtons
-    DevAddButton $f.bApply "Apply" "fMRIEngineCreateLabelMap" 26 
+    DevAddButton $f.bApply "Create label map from activation" "fMRIEngineCreateLabelMap" 26 
     pack $f.bApply -side top -pady 1 -padx 5
  
 }
@@ -1057,7 +1047,7 @@ proc fMRIEngineSetROITask {task} {
         "Anatomy" {
             set count 4 
         }
-        "Blob" {
+        "Activation" {
             set count 5 
         }
     }
