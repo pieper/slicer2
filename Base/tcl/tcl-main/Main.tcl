@@ -460,7 +460,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.120.6.1 $} {$Date: 2005/09/06 21:25:03 $}]
+        {$Revision: 1.120.6.2 $} {$Date: 2005/10/24 21:48:58 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -1729,7 +1729,11 @@ $itkMsg"
                 MsgPopup Version $x $y $msg {About Slicer}
             }
             "Copyright" {
-                MsgPopup Copyright $x $y "\
+                if {[info exist ::Comment(copyright)] == 1} {
+if {$::Module(verbose)} { puts "using Comment(copyright)" }
+                    MsgPopup Copyright $x $y $::Comment(copyright)
+                } else {
+                    MsgPopup Copyright $x $y "\
 (c) Copyright 2004 Massachusetts Institute of Technology
 
 Permission is hereby granted, without payment, to copy, modify, display 
@@ -1749,6 +1753,7 @@ A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
 
 THE SOFTWARE IS PROVIDED \"AS IS.\"  MIT HAS NO OBLIGATION TO PROVIDE 
 MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS."
+                }
             }
             "Documentation" {
                 MsgPopup Documentation $x $y "\
