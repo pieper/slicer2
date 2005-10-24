@@ -193,7 +193,7 @@ proc fMRIEngineBuildUIForChoose {parent} {
     # Choose a volume tab 
     #-------------------------------------------
     set f $parent.fChoose
-    DevAddLabel $f.l "Choose a volume:"
+    DevAddLabel $f.l "Choose a volume to view:"
 
     scrollbar $f.vs -orient vertical -bg $Gui(activeWorkspace)
     set fMRIEngine(inspectVerScroll) $f.vs
