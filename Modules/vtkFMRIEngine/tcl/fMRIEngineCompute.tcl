@@ -90,7 +90,7 @@ proc fMRIEngineBuildUIForComputeTab {parent} {
     # Bottom frame 
     #-------------------------------------------
     set f $parent.fBot
-    DevAddLabel $f.l "Computing volume for this contrast:"
+    DevAddLabel $f.l "Volume being computed:"
     eval {entry $f.eStatus -width 20 \
                 -textvariable fMRIEngine(actVolName)} $Gui(WEA)
     pack $f.l $f.eStatus -side top -expand false -fill x -padx 5 -pady 3 
