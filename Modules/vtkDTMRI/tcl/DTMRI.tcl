@@ -501,7 +501,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.109 $} {$Date: 2005/09/27 20:49:03 $}]
+                  {$Revision: 1.110 $} {$Date: 2005/10/24 15:58:36 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -1532,6 +1532,12 @@ proc DTMRICalculateActorMatrix {transform t} {
     # Grab the node whose data we want to position 
     set node Tensor($t,node)
 
+    if { [info command $node] == "" } {
+        # the node doesn't exist (probably being deleted)
+        # so bail out here
+        return
+    }
+
     # the user matrix is either the reformat matrix
     # to place the slice, OR it needs to place the entire 
     # DTMRI volume.
@@ -1586,6 +1592,12 @@ proc DTMRICalculateActorMatrix {transform t} {
 #-------------------------------------------------------------------------------
 proc DTMRICalculateIJKtoRASRotationMatrix {transform t} {
     global Volume Tensor
+
+    if { [info command Tensor($t,node)] == "" } {
+        # the node doesn't exist (probably being deleted)
+        # so bail out here
+        return
+    }
 
     # --------------------------------------------------------
     # Rotate DTMRIs to RAS  (actually to World space)
