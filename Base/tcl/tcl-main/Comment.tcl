@@ -1,10 +1,10 @@
 #=auto==========================================================================
 # (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
-#
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,13 +32,14 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        Comment.tcl
 # PROCEDURES:  
-#   PrintCopyright fid isTcl
-#   ProcessFile file
-#   CopyrightFile filename
+#   CommentInit verbose
+#   PrintCopyright fid isTcl verbose
+#   ProcessFile file verbose
+#   CopyrightFile filename verbose
 #   CommentFile filename verbose
 #   Polish data
 #   ProcessModule modpath verbose
@@ -48,11 +49,30 @@
 # .PROC CommentInit
 # Sets a global variable for the copyright file name
 # .ARGS
+# int verbose set this flag to 1 if you want to see debugging print outs, default is 0
 # .END
 #-------------------------------------------------------------------------------
 proc CommentInit { {verbose 0} } {
     global Comment
 
+    if {[info exist ::env(SLICER_HOME)] == 0} {
+        if {[info exist ::SLICER_HOME] == 1} { 
+            set ::env(SLICER_HOME) $::SLICER_HOME
+        } else {
+            set cwd [pwd]
+            cd [file dirname [info script]]
+            cd ..
+            cd ..
+            cd ..
+            cd ..
+            set ::env(SLICER_HOME) [pwd]
+            
+            cd $cwd
+        }
+        if {$verbose} {
+            puts "reset env slicer home to $::env(SLICER_HOME)"
+        }
+    }
     set Comment(copyrightFileName) [file join $::env(SLICER_HOME) Doc copyright.txt]
 
     # read in the copyright
@@ -87,6 +107,7 @@ proc CommentInit { {verbose 0} } {
 # .ARGS
 # str fid  File ID returned from opening the file
 # int isTcl 1 if this is a TCL file, and 0 otherwise
+# int verbose set this flag to 1 to see debugging print outs, defaults to 0
 # .END
 #-------------------------------------------------------------------------------
 proc PrintCopyright {fid isTcl {verbose 0} } {
@@ -112,7 +133,7 @@ proc PrintCopyright {fid isTcl {verbose 0} } {
         foreach l [split $Comment(copyright) "\n"] {
             puts $fid "$l"
         }
-        puts "=========================================================================auto=*/"
+        puts $fid "=========================================================================auto=*/"
     }
 }
 
@@ -123,6 +144,7 @@ proc PrintCopyright {fid isTcl {verbose 0} } {
 # depending on the file's type.
 # .ARGS
 # str file  the path of the file to parse, relative to slicer/program
+# int verbose set this flag to 1 to see debugging print outs, defaults to 0
 # .END
 #-------------------------------------------------------------------------------
 proc ProcessFile {file {verbose 0}} {
@@ -148,6 +170,7 @@ proc ProcessFile {file {verbose 0}} {
 # generated comments, and adding new ones.
 # .ARGS
 # str filename the name of the file to edit
+# int verbose set this flag to 1 to see debugging print outs, defaults to 0
 # .END
 #-------------------------------------------------------------------------------
 proc CopyrightFile {filename {verbose 0} } {
