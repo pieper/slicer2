@@ -113,7 +113,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.110 $} {$Date: 2005/10/16 15:50:37 $}]
+            {$Revision: 1.111 $} {$Date: 2005/10/24 15:59:09 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -763,7 +763,7 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     eval {label $f.l -text "Select File Type"} $Gui(BLA)
     pack $f.l -side left -padx $Gui(pad) -pady 0
 
-    set Volumes(extentionGenericSave) ".nrrd"
+    set Volumes(extentionGenericSave) "nrrd"
 
     eval {menubutton $f.mbType -text "NRRD(.nrrd)" \
             -relief raised -bd 2 -width 20 \
