@@ -56,7 +56,7 @@ proc MainHelpInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainHelp \
-        {$Revision: 1.20 $} {$Date: 2005/09/16 16:23:15 $}]
+        {$Revision: 1.21 $} {$Date: 2005/10/25 16:09:22 $}]
 
     set Help(tagNormal)   "-font {times 10}"
     set Help(tagItalic)   "-font {times 10 italic}"
@@ -374,7 +374,8 @@ proc MainHelpLaunchBrowserURL {url} {
             if { $slash != -1 } {
                 set site [string range $addr 0 $slash] ;# eg. www.google.com/
                 set args [string range $addr [expr $slash+1] end] ;# eg. hoot
-                set url "${proto}${site}\"${args}"  ;# <<----- NOTE! only one " to separate (don't ask)
+                regsub -all "&" $args "\"&" args ;# seems a single quote is needed to pass to windows
+                set url "${proto}${site}${args}"  
                 puts " $proto + $site + $args = $url"
             }
         }
