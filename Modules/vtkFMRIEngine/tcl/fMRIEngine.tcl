@@ -155,7 +155,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.14 $} {$Date: 2005/10/14 14:51:48 $}]
+        {$Revision: 1.15 $} {$Date: 2005/10/25 19:53:51 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -179,7 +179,6 @@ proc fMRIEngineInit {} {
 
     # Source all appropriate tcl files here. 
     source "$fMRIEngine(modulePath)/tcl/notebook.tcl"
-    source "$fMRIEngine(modulePath)/tcl/fMRIEngineROI.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEnginePlot.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineModel.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineInspect.tcl"
@@ -190,6 +189,7 @@ proc fMRIEngineInit {} {
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineModelView.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineSignalModeling.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineParadigmDesign.tcl"
+    source "$fMRIEngine(modulePath)/tcl/fMRIEngineRegionAnalysis.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineUserInputForModelView.tcl"
 }
 
@@ -359,7 +359,7 @@ proc fMRIEngineBuildGUI {} {
     set fROI $Module(fMRIEngine,fROI)
     fMRIEngineBuildUIForROITab $fROI
     set b $Module(fMRIEngine,bROI)
-    bind $b <1> "fMRIEngineUpdateLabelMapList;fMRIEngineUpdateBGVolumeList; \
+    bind $b <1> "fMRIEngineUpdateBGVolumeList; \
         fMRIEngineUpdateCondsForROIPlot"
  
     #-------------------------------------------
