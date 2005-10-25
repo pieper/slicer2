@@ -589,7 +589,7 @@ itcl::body regions::findptscalars {} {
             set scalars [[$Model($_id,polyData) GetPointData] GetScalars]
             set scalars [[$Model($_id,polyData) GetPointData] GetArray "labels"] 
             if { $scalars == "" } {
-                DevErrorWindow "No labels loaded for Model [Model(0,node) GetName)]"
+                DevErrorWindow "No labels loaded for Model [Model(0,node) GetName]"
                 return
             }
             set s [$scalars GetValue $minpt]
