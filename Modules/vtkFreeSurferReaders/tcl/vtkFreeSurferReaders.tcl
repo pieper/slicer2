@@ -338,7 +338,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27.6.20 $} {$Date: 2005/10/20 17:26:17 $}]
+        {$Revision: 1.27.6.21 $} {$Date: 2005/10/25 22:05:17 $}]
 
 }
 
@@ -5881,7 +5881,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set timemsg [join [split $timemsg] "-"]
     # make up the message with single quotes between each one for easy parsing later, 
     # leave out ones on the end as will get empty strings there
-    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.20 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
+    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.21 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -6993,10 +6993,6 @@ proc vtkFreeSurferReadersAddLuts {} {
             Lut($nextId,lut) SetLutTypeTo${newLut}
             # hack to get some output from the ones not defined yet in vtkFSLookupTable
             switch $newLut {
-                "RedGreen" {
-                    Lut($nextId,lut) SetLutTypeToGreenRed
-                    Lut($nextId,lut) ReverseOn
-                }
                 "BlueRed" {
                     Lut($nextId,lut) SetLutTypeToHeat
                 }
@@ -7321,6 +7317,14 @@ proc vtkFreeSurferReadersEditScalarsLut {} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC vtkFreeSurferReadersSetLutParam
+# Set a vtkFSLookupTable class parmeter, for the active model's look up table
+# .ARGS
+# string param the parameter to change, read from the vtkFreeSurferReaders areay as 
+# LUTparam
+# .END
+#-------------------------------------------------------------------------------
 proc vtkFreeSurferReadersSetLutParam {param} {
     global vtkFreeSurferReaders Model
 
@@ -7461,7 +7465,7 @@ proc vtkFreeSurferReadersReadScalars { m {fileName ""} } {
                 set lutIndex [lsearch $vtkFreeSurferReaders(lutNames) "BlueRed"]
                
             }
-            if {$s == "curv" || $s == "avg_curv" || $s == "thickness"} {
+            if {$s == "curv" || $s == "avg_curv" || $s == "sulc" || $s == "thickness"} {
                 set lutIndex [lsearch $vtkFreeSurferReaders(lutNames) "GreenRed"]
             }
             if {$s == "retinotopy"} {
