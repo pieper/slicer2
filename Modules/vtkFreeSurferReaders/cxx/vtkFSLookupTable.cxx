@@ -1,3 +1,40 @@
+/*=auto=========================================================================
+
+(c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+This software ("3D Slicer") is provided by The Brigham and Women's 
+Hospital, Inc. on behalf of the copyright holders and contributors.
+Permission is hereby granted, without payment, to copy, modify, display 
+and distribute this software and its documentation, if any, for  
+research purposes only, provided that (1) the above copyright notice and 
+the following four paragraphs appear on all copies of this software, and 
+(2) that source code to any modifications to this software be made 
+publicly available under terms no more restrictive than those in this 
+License Agreement. Use of this software constitutes acceptance of these 
+terms and conditions.
+
+3D Slicer Software has not been reviewed or approved by the Food and 
+Drug Administration, and is for non-clinical, IRB-approved Research Use 
+Only.  In no event shall data or images generated through the use of 3D 
+Slicer Software be used in the provision of patient care.
+
+IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+POSSIBILITY OF SUCH DAMAGE.
+
+THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+NON-INFRINGEMENT.
+
+THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+
+
+=========================================================================auto=*/
 #include "vtkFSLookupTable.h"
 
 vtkFSLookupTable* vtkFSLookupTable::New()
@@ -72,28 +109,7 @@ char *vtkFSLookupTable::GetLutTypeString ()
 // reset all the values in case one was changed
 void vtkFSLookupTable::SetLutTypeToHeat()
 {
-    // values from tcl for blue part
-    this->LutType = FSLUTHEAT;
-    /*
-    this->Reverse = 1;
-    this->Truncate = 1;
-    this->LowThresh = 0.5;
-    this->FMid = -0.5;
-    this->Offset = 0.23;
-    this->Slope = 0.85;
-    */
-    /* red orange part 
-       this->LowThresh = 0.7;
-       this->FMid = 0.8;
-       this->Offset = 0.25;
-       this->Slope = 4.0;
-    */
-       // tweaking
-    /*
-       this->Truncate = 1;
-       this->Reverse = 0;
-       this->FMid = 10;
-    */
+    this->LutType = FSLUTHEAT;   
     this->FMid = 2.0;
     this->LowThresh = -10.0;
     this->Reverse = 0;
@@ -150,7 +166,7 @@ void vtkFSLookupTable::SetLutTypeToGreenRed()
     this->LutType = FSLUTGREENRED;
     this->LowThresh = -10000.0;
     this->HiThresh =   10000.0;
-    this->Reverse = 1;
+    this->Reverse = 0;
     this->Truncate = 0;
     this->Offset = 0.25;
     this->Slope = 1.0;
@@ -253,6 +269,7 @@ unsigned char *vtkFSLookupTable::MapValue(double val)
 
         break;
     case FSLUTGREENRED:
+        // 
         curv = val;
         if (curv < this->LowThresh)
         {
@@ -286,7 +303,38 @@ unsigned char *vtkFSLookupTable::MapValue(double val)
         break;
     case FSLUTREDGREEN:
 //        vtkErrorMacro(<<"Not doing anything for Red Green just yet\n");
-            break;
+        // from GREENRED, just switch green and red values
+        curv = val;
+        if (curv < this->LowThresh)
+        {
+            b = 255 * (this->Offset/this->Blufact + 0.95*(1-this->Offset/this->Blufact)); /* yellow */
+            r = g = 0 ;
+        }
+        else if (curv > this->HiThresh)
+        {
+            r = g = 255 * (this->Offset/this->Blufact + 0.95*(1-this->Offset/this->Blufact)); /* yellow */
+            b = 0 ;
+        }
+        else
+        {
+            f = tanh(this->Slope*(curv-this->FMid));
+            if (f>0) {
+                g = 255 * (this->Offset/this->Blufact + 0.95*(1-this->Offset/this->Blufact)*fabs(f));
+                r = 255 * (this->Offset/this->Blufact*(1 - fabs(f)));
+            }
+            else {
+                g = 255 * (this->Offset/this->Blufact*(1 - fabs(f)));
+                r = 255 * (this->Offset/this->Blufact + 0.95*(1-this->Offset/this->Blufact)*fabs(f));
+            }
+            b = 255 * (this->Offset*this->Blufact*(1 - fabs(f)));
+        }
+
+        this->RGBA[0] = (unsigned char)(r);
+        this->RGBA[1] = (unsigned char)(g);
+        this->RGBA[2] = (unsigned char)(b);
+        this->RGBA[3] = (unsigned char)(a);
+
+        break;
     case FSLUTBLUERED:
 //        vtkErrorMacro(<<"Not doing anything for Blue Red just yet\n");
         break;
