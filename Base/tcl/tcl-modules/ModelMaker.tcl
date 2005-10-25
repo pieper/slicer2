@@ -83,7 +83,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.49.10.5 $} {$Date: 2005/09/28 16:11:40 $}]
+        {$Revision: 1.49.10.6 $} {$Date: 2005/10/25 19:23:04 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -680,7 +680,10 @@ proc ModelMakerWrite {} {
     # Show user a File dialog box
     set m $Model(activeID)
     set ModelMaker(prefix) [MainFileSaveModel $m $ModelMaker(prefix)]
-    if {$ModelMaker(prefix) == ""} {return}
+    if {$ModelMaker(prefix) == ""} {
+        if {$::Module(verbose)} { puts "ModelMakeWrite: empty prefix for model $m" }
+        return
+    }
 
     # Write
     MainModelsWrite $m $ModelMaker(prefix)
@@ -710,6 +713,7 @@ proc ModelMakerWriteAll {} {
                                 -title "Select Directory In Which To Save Model Files" \
                                 -parent .tMain ]
     if {$ModelMaker(prefix) == ""} {
+        if {$::Module(verbose)} { puts "ModelMakeWrite: empty prefix for model $m" }
         return
     }
 
@@ -740,13 +744,14 @@ proc ModelMakerRead {} {
     set m $Model(activeID)
     set ModelMaker(prefix) [MainFileOpenModel $m $ModelMaker(prefix)]
     if {$ModelMaker(prefix) == ""} {
-        if {::Module(verbose)} { puts "ModelMakerRead: empty prefix for model $m" }
+        if {$::Module(verbose)} { puts "ModelMakerRead: empty prefix for model $m" }
         return
     }
 
-    if {::Module(verbose)} {
+    if {$::Module(verbose)} {
         puts "ModelMakerRead, active model = $m, prefix = $ModelMaker(prefix)"
     }
+
     # Read
     Model($m,node) SetFileName $ModelMaker(prefix).vtk
     Model($m,node) SetFullFileName \
@@ -1006,27 +1011,36 @@ proc ModelMakerCreateAll { } {
     catch "histo${volid} Delete"
     vtkImageAccumulate histo${volid}
       histo${volid} SetInput $imdata
-    histo${volid} SetComponentExtent 0 $lastLabel 0 0 0 0
+      # histo${volid} SetComponentExtent 0 $lastlabel 0 0 0 0
+      histo${volid} SetComponentExtent 0 1023 0 0 0 0
       histo${volid} SetComponentOrigin 0 0 0
       histo${volid} SetComponentSpacing 1 1 1
       set Gui(progressText) "Calculating histogram for v=$volid"
       histo${volid} AddObserver StartEvent MainStartProgress
       histo${volid} AddObserver ProgressEvent "MainShowProgress histo${volid}"
       histo${volid} AddObserver EndEvent MainEndProgress
-      histo${volid} Update
 
     if {$::Module(verbose)} {
-        puts "About to call marching cubes, creating ModelMaker(cubes,$volid): startLabel = $startLabel, lastLabel = $lastLabel"
+        puts "About to call marching cubes, creating ModelMaker(cubes,$volid)"
     }
     catch "ModelMaker(cubes,$volid) Delete"
     vtkDiscreteMarchingCubes ModelMaker(cubes,$volid)
+
+    # The spacing is accounted for in the rasToVtk transform, 
+    # so we have to remove it here, or mcubes will use it.
+    set spacing [$imdata GetSpacing]
+    set origin  [$imdata GetOrigin]
+    $imdata SetSpacing 1 1 1
+    $imdata SetOrigin 0 0 0
       ModelMaker(cubes,$volid) SetInput $imdata
-    if {$::Module(verbose)} {
-        puts "calling generate values for [expr $lastLabel - $startLabel + 1] $startLabel $lastLabel"
-    }
+      set Gui(progressText) "Discrete Marching Cubes for v=$volid"
+      ModelMaker(cubes,$volid) AddObserver StartEvent MainStartProgress
+      ModelMaker(cubes,$volid) AddObserver ProgressEvent "MainShowProgress ModelMaker(cubes,$volid)"
+      ModelMaker(cubes,$volid) AddObserver EndEvent MainEndProgress
     set iterations $ModelMaker(smooth)
+
     ModelMaker(cubes,$volid) GenerateValues [expr $lastLabel - $startLabel + 1] $startLabel $lastLabel
-    
+      ModelMaker(cubes,$volid) Update 
 
     if {$ModelMaker(jointSmooth) == 1} {
         set passBand 0.001
@@ -1060,6 +1074,7 @@ proc ModelMakerCreateAll { } {
         puts "Making model nodes"
     }
     
+    histo${volid} Update
     for {set i $startLabel} {$i <= $lastLabel} {incr i} {
         set freq [[[[histo${volid} GetOutput] GetPointData] GetScalars] GetTuple1 $i]
         if { $freq == 0 } {
@@ -1081,7 +1096,7 @@ proc ModelMakerCreateAll { } {
         if { $labelid != "" } {
             set labelName [Color($labelid,node) GetName]
         } else {
-            set labelName "unknown"
+            set labelName "unknown_$i"
         }
 
         if { $labelName != "unknown" } {
@@ -1113,6 +1128,8 @@ proc ModelMakerCreateAll { } {
             Model($m,node) SetRasToWld [Volume($v,node) GetRasToWld]
 
             # Make the model!
+            eval $imdata SetSpacing $spacing
+            eval $imdata SetOrigin $origin
             if {[ModelMakerMarch $m $v $ModelMaker(decimate) $ModelMaker(smooth)] != 0} {
                 MainModelsDelete $m
                 $ModelMaker(bCreateAll) config -state normal
@@ -1181,6 +1198,10 @@ proc ModelMakerCreateAll { } {
 #-------------------------------------------------------------------------------
 proc ModelMakerLabelCallback {} {
     global Label ModelMaker
+
+    if {$::Module(verbose)} {
+        puts "ModelMakerLabelCallback, Label(callback) = $Label(callback)"
+    }
 
     set ModelMaker(name)   $Label(name)
 
@@ -1439,6 +1460,7 @@ proc ModelMakerMarch {m v decimateIterations smoothIterations} {
     if {$::Module(verbose)} {
         puts "Thresholding to $Label(label)"
     }
+
     $p ThresholdBetween $Label(label) $Label(label)
     [$p GetOutput] ReleaseDataFlagOn
     set Gui(progressText) "Threshold $name to $Label(label)"
