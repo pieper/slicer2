@@ -61,13 +61,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "vtkFloatArray.h"
 #include "vtkDataObject.h"
 #include "vtkActivationDetector.h"
-#include "vtkMultiInputsSimpleImageToImageFilter.h"
+#include "vtkMultipleInputsImageToImageFilter.h"
 
-class  VTK_FMRIENGINE_EXPORT vtkActivationEstimator : public vtkMultiInputsSimpleImageToImageFilter
+class  VTK_FMRIENGINE_EXPORT vtkActivationEstimator : public vtkMultipleInputsImageToImageFilter
 {
 public:
     static vtkActivationEstimator *New();
-    vtkTypeMacro(vtkActivationEstimator, vtkMultiInputsSimpleImageToImageFilter);
+    vtkTypeMacro(vtkActivationEstimator, vtkMultipleInputsImageToImageFilter);
 
     // Description:
     // Returns the time course of a specified voxel (i, j, k).
