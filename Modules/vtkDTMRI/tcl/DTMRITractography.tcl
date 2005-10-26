@@ -80,7 +80,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.34 $} {$Date: 2005/10/26 04:54:54 $}]
+                                 {$Revision: 1.35 $} {$Date: 2005/10/26 22:09:21 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -1676,10 +1676,9 @@ proc DTMRIFindStreamlinesThroughROI { {verbose 1} } {
     transform Delete
 
     # create all streamlines
-    puts "Original number of tracts: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
+    puts "Initial number of tracts: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
     $ROISelectTracts FindStreamlinesThatPassThroughROI
-    puts "New number of tracts will be: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
-    
+ 
     puts "Creating and displaying new tracts..."
     $ROISelectTracts HighlightStreamlinesPassTest
     # actually display streamlines 
@@ -1692,6 +1691,7 @@ proc DTMRIDeleteStreamlinesNotPassTest { {verbose 1} } {
   global DTMRI
   
   DTMRI(vtk,ROISelectTracts) DeleteStreamlinesNotPassTest
+  puts "Final number of tracts: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
   Render3D
 }
 
