@@ -79,6 +79,7 @@ vtkDisplayTracts::vtkDisplayTracts()
   // Streamline parameters for all streamlines
   this->ScalarVisibility=0;
   this->Clipping=0;
+  this->ClipFunction = NULL;
 
   // for tube filter
   this->TubeRadius = 0.5;
