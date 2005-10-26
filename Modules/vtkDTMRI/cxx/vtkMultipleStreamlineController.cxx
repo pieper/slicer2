@@ -37,11 +37,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 #include "vtkMultipleStreamlineController.h"
 #include "vtkLookupTable.h"
-#include "vtkPolyDataMapper.h"
-#include "vtkActor.h"
 #include "vtkRenderer.h"
 #include "vtkFloatArray.h"
-#include "vtkTubeFilter.h"
 #include "vtkPointData.h"
 
 #include "vtkHyperStreamline.h"
@@ -50,7 +47,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include <sstream>
 
-#include "vtkImageWriter.h"
+#include "vtkPolyDataMapper.h"
 
 //------------------------------------------------------------------------------
 vtkMultipleStreamlineController* vtkMultipleStreamlineController::New()
@@ -77,25 +74,7 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
   
   // collections
   this->Streamlines = vtkCollection::New();
-  this->Mappers = vtkCollection::New();
-  this->TubeFilters = vtkCollection::New();
-  this->Actors = vtkCollection::New();
 
-  // Streamline parameters for all streamlines
-  this->ScalarVisibility=0;
-
-  // user-accessible property and lookup table for all streamlines
-  this->StreamlineProperty = vtkProperty::New();
-  this->StreamlineLookupTable = vtkLookupTable::New();
-  // default: make 0 dark blue, not red
-  this->StreamlineLookupTable->SetHueRange(.6667, 0.0);
-
-  // the number of actors displayed in the scene
-  this->NumberOfVisibleActors=0;
-
-  // radius of the tube which is displayed
-  this->TubeRadius = 0.5;
- 
   // Helper classes
   // ---------------
 
@@ -105,6 +84,9 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
   // for tract saving
   this->SaveTracts = vtkSaveTracts::New();
 
+  // for tract display
+  this->DisplayTracts = vtkDisplayTracts::New();
+
   // for creating tracts
   this->SeedTracts = vtkSeedTracts::New();
 
@@ -113,14 +95,17 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
 
   // Helper class pipelines
   // ----------------------
-  this->SaveTracts->SetStreamlines(this->Streamlines);
-  this->SaveTracts->SetTubeFilters(this->TubeFilters);
-  this->SaveTracts->SetActors(this->Actors);
 
   this->SeedTracts->SetStreamlines(this->Streamlines);
 
-  this->ColorROIFromTracts->SetStreamlines(this->Streamlines);
-  this->ColorROIFromTracts->SetActors(this->Actors);
+  this->DisplayTracts->SetStreamlines(this->Streamlines);
+
+  this->SaveTracts->SetStreamlines(this->DisplayTracts->GetClippedStreamlines());
+  this->SaveTracts->SetTubeFilters(this->DisplayTracts->GetTubeFilters());
+  this->SaveTracts->SetActors(this->DisplayTracts->GetActors());
+
+  this->ColorROIFromTracts->SetStreamlines(this->DisplayTracts->GetClippedStreamlines());
+  this->ColorROIFromTracts->SetActors(this->DisplayTracts->GetActors());
 }
 
 //----------------------------------------------------------------------------
@@ -132,12 +117,6 @@ vtkMultipleStreamlineController::~vtkMultipleStreamlineController()
   if (this->InputTensorField) this->InputTensorField->Delete();
 
   this->InputRenderers->Delete();
-  this->Streamlines->Delete();
-  this->Mappers->Delete();
-  this->Actors->Delete();
-  this->TubeFilters->Delete();
-
-  this->StreamlineLookupTable->Delete();
 
   // delete helper classes
   this->TractClusterer->Delete();
@@ -175,6 +154,32 @@ void vtkMultipleStreamlineController::SetInputTensorField(vtkImageData *tensorFi
 }
 
 //----------------------------------------------------------------------------
+void vtkMultipleStreamlineController::SetInputRenderers(vtkCollection *renderers)
+{
+  
+  vtkDebugMacro("Setting input renderers.");
+
+  // Decrease reference count of old object
+  if (this->InputRenderers != 0)
+    this->InputRenderers->UnRegister(this);
+
+  // Set new value in this class
+  this->InputRenderers = renderers;
+
+  // Increase reference count of new object
+  if (this->InputRenderers != 0)
+    this->InputRenderers->Register(this);
+
+  // This class has changed
+  this->Modified();
+
+  // helper class pipelines
+  // ----------------------
+  this->DisplayTracts->SetRenderers(this->InputRenderers);
+
+}
+
+//----------------------------------------------------------------------------
 void vtkMultipleStreamlineController::SetWorldToTensorScaledIJK(vtkTransform *trans)
 {
   
@@ -198,6 +203,7 @@ void vtkMultipleStreamlineController::SetWorldToTensorScaledIJK(vtkTransform *tr
   // ----------------------
   this->SaveTracts->SetWorldToTensorScaledIJK(this->WorldToTensorScaledIJK);
   this->SeedTracts->SetWorldToTensorScaledIJK(this->WorldToTensorScaledIJK);
+  this->DisplayTracts->SetWorldToTensorScaledIJK(this->WorldToTensorScaledIJK);
   this->ColorROIFromTracts->SetWorldToTensorScaledIJK(this->WorldToTensorScaledIJK);
 }
 
@@ -210,180 +216,6 @@ void vtkMultipleStreamlineController::SetTensorRotationMatrix(vtkMatrix4x4 *tran
   this->SaveTracts->SetTensorRotationMatrix(trans);
 }
 
-
-//----------------------------------------------------------------------------
-void vtkMultipleStreamlineController::SetScalarVisibility(int value)
-{
-  vtkPolyDataMapper *currMapper;
-
-  // test if we are changing the value before looping through all streamlines
-  if (this->ScalarVisibility != value)
-    {
-      this->ScalarVisibility = value;
-      // apply this to ALL streamlines
-      // traverse actor collection and make all visible
-      this->Mappers->InitTraversal();
-      currMapper= (vtkPolyDataMapper *)this->Mappers->GetNextItemAsObject();
-      while(currMapper)
-        {
-          currMapper->SetScalarVisibility(this->ScalarVisibility);
-          currMapper= (vtkPolyDataMapper *)this->Mappers->GetNextItemAsObject();      
-        }
-    }
-}
-
-// Set the properties of one streamline's graphics objects as requested
-// by the user
-//----------------------------------------------------------------------------
-void vtkMultipleStreamlineController::ApplyUserSettingsToGraphicsObject(int index)
-{
-  vtkPolyDataMapper *currMapper;
-  vtkActor *currActor;
-  vtkTubeFilter *currTubeFilter;
-
-  currActor = (vtkActor *) this->Actors->GetItemAsObject(index);
-  currMapper = (vtkPolyDataMapper *) this->Mappers->GetItemAsObject(index);
-  currTubeFilter = (vtkTubeFilter *) this->TubeFilters->GetItemAsObject(index);
-
-  // set the Actor's properties according to the sample 
-  // object that the user can access.
-  currActor->GetProperty()->SetAmbient(this->StreamlineProperty->GetAmbient());
-  currActor->GetProperty()->SetDiffuse(this->StreamlineProperty->GetDiffuse());
-  currActor->GetProperty()->SetSpecular(this->StreamlineProperty->GetSpecular());
-  currActor->GetProperty()->
-    SetSpecularPower(this->StreamlineProperty->GetSpecularPower());
-  currActor->GetProperty()->SetColor(this->StreamlineProperty->GetColor());    
-  // Set the scalar visibility as desired by the user
-  currMapper->SetScalarVisibility(this->ScalarVisibility);
-  // Set the tube width as desired by the user
-  currTubeFilter->SetRadius(this->TubeRadius);
-
-}
-
-// Make actors, mappers, and lookup tables as needed for streamlines
-// in the collection.
-//----------------------------------------------------------------------------
-void vtkMultipleStreamlineController::CreateGraphicsObjects()
-{
-  int numStreamlines, numActorsCreated;
-  vtkHyperStreamline *currStreamline;
-  vtkPolyDataMapper *currMapper;
-  vtkActor *currActor;
-  vtkTransform *currTransform;
-  vtkRenderer *currRenderer;
-  vtkTubeFilter *currTubeFilter;
-
-  // Find out how many streamlines we have, and if they all have actors
-  numStreamlines = this->Streamlines->GetNumberOfItems();
-  numActorsCreated = this->Actors->GetNumberOfItems();
-
-  vtkDebugMacro(<< "in CreateGraphicsObjects " << numActorsCreated << "  " << numStreamlines);
-
-  // If we have already made all of the object needed, stop here.
-  if (numActorsCreated == numStreamlines) 
-    return;
-
-  // Create transformation matrix to place actors in scene
-  currTransform=vtkTransform::New();
-  currTransform->SetMatrix(this->WorldToTensorScaledIJK->GetMatrix());
-  currTransform->Inverse();
-
-  // Make actors and etc. for all streamlines that need them
-  while (numActorsCreated < numStreamlines) 
-    {
-      // Get the streamline
-      currStreamline = (vtkHyperStreamline *)
-        this->Streamlines->GetItemAsObject(numActorsCreated);
-
-      // Now create the objects needed
-      currActor = vtkActor::New();
-      this->Actors->AddItem((vtkObject *)currActor);
-      currMapper = vtkPolyDataMapper::New();
-      this->Mappers->AddItem((vtkObject *)currMapper);
-      currTubeFilter = vtkTubeFilter::New();
-      this->TubeFilters->AddItem((vtkObject *)currTubeFilter);
-
-      // Apply user's visualization settings to these objects
-      this->ApplyUserSettingsToGraphicsObject(numActorsCreated);
-
-      // Hook up the pipeline
-      currTubeFilter->SetInput(currStreamline->GetOutput());
-      currMapper->SetInput(currTubeFilter->GetOutput());
-      currMapper->SetLookupTable(this->StreamlineLookupTable);
-      currMapper->UseLookupTableScalarRangeOn();
-      currActor->SetMapper(currMapper);
-      
-      // Place the actor correctly in the scene
-      currActor->SetUserMatrix(currTransform->GetMatrix());
-
-      // add to the scene (to each renderer)
-      // This is the same as MainAddActor in Main.tcl.
-      this->InputRenderers->InitTraversal();
-      currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
-      while(currRenderer)
-        {
-          currRenderer->AddActor(currActor);
-          currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
-        }
-      
-      // Increment the count of actors we have created
-      numActorsCreated++;
-    }
-
-
-  // For debugging print this info again
-  // Find out how many streamlines we have, and if they all have actors
-  numStreamlines = this->Streamlines->GetNumberOfItems();
-  numActorsCreated = this->Actors->GetNumberOfItems();
-
-  vtkDebugMacro(<< "in CreateGraphicsObjects " << numActorsCreated << "  " << numStreamlines);
-
-}
-
-//----------------------------------------------------------------------------
-void vtkMultipleStreamlineController::AddStreamlinesToScene()
-{
-  vtkActor *currActor;
-  int index;
-
-  // make objects if needed
-  this->CreateGraphicsObjects();
-
-  // traverse actor collection and make all visible
-  // only do the ones that are not visible now
-  // this code assumes any invisible ones are at the end of the
-  // list since they were just created.
-  index = this->NumberOfVisibleActors;
-  while (index < this->Actors->GetNumberOfItems())
-    {
-      currActor = (vtkActor *) this->Actors->GetItemAsObject(index);
-      currActor->VisibilityOn();
-      index++;
-    }
-
-  // the number of actors displayed in the scene
-  this->NumberOfVisibleActors=this->Actors->GetNumberOfItems();
-}
-
-
-
-//----------------------------------------------------------------------------
-void vtkMultipleStreamlineController::RemoveStreamlinesFromScene()
-{
-  vtkActor *currActor;
-
-  // traverse actor collection and make all invisible
-  this->Actors->InitTraversal();
-  currActor= (vtkActor *)this->Actors->GetNextItemAsObject();
-  while(currActor)
-    {
-      currActor->VisibilityOff();
-      currActor= (vtkActor *)this->Actors->GetNextItemAsObject();      
-    }
-
-  // the number of actors displayed in the scene
-  this->NumberOfVisibleActors=0;
-}
 
 //----------------------------------------------------------------------------
 void vtkMultipleStreamlineController::DeleteAllStreamlines()
@@ -407,32 +239,14 @@ void vtkMultipleStreamlineController::DeleteAllStreamlines()
 //----------------------------------------------------------------------------
 void vtkMultipleStreamlineController::DeleteStreamline(int index)
 {
-  vtkRenderer *currRenderer;
-  //vtkLookupTable *currLookupTable;
-  vtkPolyDataMapper *currMapper;
-  vtkTubeFilter *currTubeFilter;
   vtkHyperStreamline *currStreamline;
-  vtkActor *currActor;
 
-  vtkDebugMacro( << "Deleting actor " << index);
-  currActor = (vtkActor *) this->Actors->GetItemAsObject(index);
-  if (currActor != NULL)
-    {
-      currActor->VisibilityOff();
-      this->NumberOfVisibleActors--;
-      // Remove from the scene (from each renderer)
-      // Just like MainRemoveActor in Main.tcl.
-      this->InputRenderers->InitTraversal();
-      currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
-      while(currRenderer)
-        {
-          vtkDebugMacro( << "rm actor from renderer " << currRenderer);
-          currRenderer->RemoveActor(currActor);
-          currRenderer= (vtkRenderer *)this->InputRenderers->GetNextItemAsObject();
-        }
-      this->Actors->RemoveItem(index);
-      currActor->Delete();
-    }
+  // Helper class
+  // Delete display (actor, mapper)
+  vtkDebugMacro( << "Calling DisplayTracts DeleteStreamline" );
+  this->DisplayTracts->DeleteStreamline(index);
+
+
   vtkDebugMacro( << "Delete stream" );
   currStreamline = (vtkHyperStreamline *)
     this->Streamlines->GetItemAsObject(index);
@@ -440,22 +254,6 @@ void vtkMultipleStreamlineController::DeleteStreamline(int index)
     {
       this->Streamlines->RemoveItem(index);
       currStreamline->Delete();
-    }
-
-  vtkDebugMacro( << "Delete mapper" );
-  currMapper = (vtkPolyDataMapper *) this->Mappers->GetItemAsObject(index);
-  if (currMapper != NULL)
-    {
-      this->Mappers->RemoveItem(index);
-      currMapper->Delete();
-    }
-
-  vtkDebugMacro( << "Delete tubeFilter" );
-  currTubeFilter = (vtkTubeFilter *) this->TubeFilters->GetItemAsObject(index);
-  if (currTubeFilter != NULL)
-    {
-      this->TubeFilters->RemoveItem(index);
-      currTubeFilter->Delete();
     }
 
   vtkDebugMacro( << "Done deleting streamline");
@@ -469,7 +267,7 @@ void vtkMultipleStreamlineController::DeleteStreamline(vtkActor *pickedActor)
 {
   int index;
 
-  index = this->GetStreamlineIndexFromActor(pickedActor);
+  index = this->DisplayTracts->GetStreamlineIndexFromActor(pickedActor);
 
   if (index >=0)
     {
@@ -477,52 +275,32 @@ void vtkMultipleStreamlineController::DeleteStreamline(vtkActor *pickedActor)
     }
 }
 
-// Get the index into all of the collections corresponding to the picked
-// actor.
-//----------------------------------------------------------------------------
-int vtkMultipleStreamlineController::GetStreamlineIndexFromActor(vtkActor *pickedActor)
-{
-  int index;
-
-  vtkDebugMacro( << "Picked actor (present?): " << pickedActor);
-  // find the actor on the collection.
-  // nonzero index means item was found.
-  index = this->Actors->IsItemPresent(pickedActor);
-
-  // the index returned was 1-based but actually to get items
-  // from the list we must use 0-based indices.  Very
-  // strange but this is necessary.
-  index--;
-
-  // so now "not found" is -1, and >=0 are valid indices
-  return(index);
-}
-
-
-
 // Call the tract clustering object, and then color our hyperstreamlines
 // according to their cluster numbers.
 //----------------------------------------------------------------------------
 void vtkMultipleStreamlineController::ClusterTracts(int tmp)
 {
-  if (this->Streamlines == 0)
+  //vtkCollection *streamlines = this->Streamlines;
+  vtkCollection *streamlines = this->DisplayTracts->GetClippedStreamlines();
+
+  if (streamlines == 0)
     {
       vtkErrorMacro("Streamlines are NULL.");
       return;      
     }
 
-  if (this->Streamlines->GetNumberOfItems() < 1)
+  if (streamlines->GetNumberOfItems() < 1)
     {
       vtkErrorMacro("No streamlines exist.");
       return;      
     }
 
   // First make sure none of the streamlines have 0 length
-  this->CleanStreamlines();
+  this->CleanStreamlines(streamlines);
 
   int numberOfClusters= this->TractClusterer->GetNumberOfClusters();
 
-  this->TractClusterer->SetInputStreamlines(this->Streamlines);
+  this->TractClusterer->SetInputStreamlines(streamlines);
   this->TractClusterer->ComputeClusters();
 
   vtkClusterTracts::OutputType *clusters =  this->TractClusterer->GetOutput();
@@ -546,8 +324,8 @@ void vtkMultipleStreamlineController::ClusterTracts(int tmp)
     {
       vtkDebugMacro("index = " << idx << "class label = " << clusters->GetValue(idx));
       
-      currActor = (vtkActor *) this->Actors->GetItemAsObject(idx);
-      currMapper = (vtkPolyDataMapper *) this->Mappers->GetItemAsObject(idx);
+      currActor = (vtkActor *) this->DisplayTracts->GetActors()->GetItemAsObject(idx);
+      currMapper = (vtkPolyDataMapper *) this->DisplayTracts->GetMappers()->GetItemAsObject(idx);
 
       if (currActor && currMapper) 
         {
@@ -566,13 +344,14 @@ void vtkMultipleStreamlineController::ClusterTracts(int tmp)
 
 // Remove any streamlines with 0 length
 //----------------------------------------------------------------------------
-void vtkMultipleStreamlineController::CleanStreamlines()
+void vtkMultipleStreamlineController::CleanStreamlines(vtkCollection *streamlines)
 {
   int numStreamlines, index;
   vtkHyperStreamlinePoints *currStreamline;
 
 
-  numStreamlines = this->Streamlines->GetNumberOfItems();
+
+  numStreamlines = streamlines->GetNumberOfItems();
   index = 0;
   for (int i = 0; i < numStreamlines; i++)
     {
@@ -580,7 +359,7 @@ void vtkMultipleStreamlineController::CleanStreamlines()
 
       // Get the streamline
       currStreamline = (vtkHyperStreamlinePoints *) 
-        this->Streamlines->GetItemAsObject(index);
+        streamlines->GetItemAsObject(index);
 
       if (currStreamline == NULL)
         {

@@ -80,7 +80,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.33 $} {$Date: 2005/10/06 02:40:48 $}]
+                                 {$Revision: 1.34 $} {$Date: 2005/10/26 04:54:54 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -896,7 +896,8 @@ proc DTMRISelectChooseHyperStreamline {x y z} {
     set actor [DTMRI(vtk,picker) GetActor]
 
     set DTMRI(activeStreamlineID) \
-        [DTMRI(vtk,streamlineControl) GetStreamlineIndexFromActor $actor]
+        [[DTMRI(vtk,streamlineControl) GetDisplayTracts] \
+             GetStreamlineIndexFromActor $actor]
 }
 
 #-------------------------------------------------------------------------------
@@ -932,7 +933,7 @@ proc DTMRISelectStartHyperStreamline {x y z {render "true"} } {
 
     # actually create and display the streamline
     [DTMRI(vtk,streamlineControl) GetSeedTracts] SeedStreamlineFromPoint $x $y $z
-    DTMRI(vtk,streamlineControl) AddStreamlinesToScene
+    [DTMRI(vtk,streamlineControl) GetDisplayTracts] AddStreamlinesToScene
 
     # Force pipeline execution and render scene
     #------------------------------------
@@ -997,6 +998,15 @@ proc DTMRIUpdateStreamlineSettings {} {
             
         }
     }
+
+    # No matter what kind we are making, set the display parameters
+    set radius [DTMRI(vtk,$streamline) GetRadius]
+    set sides [DTMRI(vtk,$streamline) GetNumberOfSides]
+    
+    set display [DTMRI(vtk,streamlineControl) GetDisplayTracts]
+    $display SetTubeRadius $radius
+    $display SetTubeNumberOfSides $sides
+    
 }
 
 
@@ -1194,7 +1204,9 @@ proc DTMRIUpdateTractColor {{mode ""}} {
     if {$mode == ""} {
         set mode $DTMRI(mode,tractColor)
     }
-    
+
+    set displayTracts [DTMRI(vtk,streamlineControl) GetDisplayTracts]
+
     # whether scalars should be displayed
     switch $mode {
         "SolidColor" {
@@ -1206,7 +1218,7 @@ proc DTMRIUpdateTractColor {{mode ""}} {
             $DTMRI(gui,mbTractColor)    config -text $mode
 
             # set up properties of the new actors we will create
-            set prop [DTMRI(vtk,streamlineControl) GetStreamlineProperty] 
+            set prop [$displayTracts GetStreamlineProperty] 
             if { $c != "" } {
                 #$prop SetAmbient       [Color($c,node) GetAmbient]
                 #$prop SetDiffuse       [Color($c,node) GetDiffuse]
@@ -1216,7 +1228,7 @@ proc DTMRIUpdateTractColor {{mode ""}} {
             }
 
             # display solid colors instead of scalars
-            DTMRI(vtk,streamlineControl) ScalarVisibilityOff
+            $displayTracts ScalarVisibilityOff
         }
         "MultiColor" {
             # put the volume we wish to color by as the Scalars field 
@@ -1239,12 +1251,12 @@ proc DTMRIUpdateTractColor {{mode ""}} {
                 #[[Tensor($t,data) GetOutput] GetPointData] SetScalars \
                     #    [[[Volume($v,vol) GetOutput] GetPointData] GetScalars]
 
-                DTMRI(vtk,streamlineControl) ScalarVisibilityOn
-                eval {[DTMRI(vtk,streamlineControl) GetStreamlineLookupTable] \
+                $displayTracts ScalarVisibilityOn
+                eval {[$displayTracts GetStreamlineLookupTable] \
                           SetRange} [[Volume($v,vol) GetOutput] GetScalarRange]
                 
                 # set up properties of the new actors we will create
-                set prop [DTMRI(vtk,streamlineControl) GetStreamlineProperty] 
+                set prop [$displayTracts GetStreamlineProperty] 
                 # By default make them brighter than slicer default colors
                 # slicer's colors have ambient 0, diffuse 1, and specular 0
                 #$prop SetAmbient       0.5
@@ -1273,7 +1285,7 @@ proc DTMRIUpdateTractColor {{mode ""}} {
 proc DTMRIRemoveAllStreamlines {} {
     global DTMRI
 
-    DTMRI(vtk,streamlineControl) RemoveStreamlinesFromScene
+    [DTMRI(vtk,streamlineControl) GetDisplayTracts] RemoveStreamlinesFromScene
     Render3D
 }
 
@@ -1286,7 +1298,7 @@ proc DTMRIRemoveAllStreamlines {} {
 proc DTMRIAddAllStreamlines {} {
     global DTMRI
 
-    DTMRI(vtk,streamlineControl) AddStreamlinesToScene
+    [DTMRI(vtk,streamlineControl) GetDisplayTracts] AddStreamlinesToScene
     Render3D
 }
 
@@ -1395,7 +1407,7 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
 
     # actually display streamlines 
     # (this is the slow part since it causes pipeline execution)
-    DTMRI(vtk,streamlineControl) AddStreamlinesToScene
+    [DTMRI(vtk,streamlineControl) GetDisplayTracts] AddStreamlinesToScene
 
     castVSeedROI Delete
 }
@@ -1504,7 +1516,7 @@ proc DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI {{verbose 1}} {
     # actually display streamlines 
     # (this is the slow part since it causes pipeline execution)
     puts "Creating and displaying new tracts..."
-    DTMRI(vtk,streamlineControl) AddStreamlinesToScene
+    [DTMRI(vtk,streamlineControl) GetDisplayTracts] AddStreamlinesToScene
 
     castVSeedROI Delete
     castVSaveROI Delete
@@ -1737,3 +1749,43 @@ proc DTMRITractographyColorROIFromStreamlines {} {
     RenderAll
 }
 
+
+proc DTMRITractographySetClipping {val} {
+    global Tensor
+
+    if {$val ==  "1"} {
+        # Use the current clip planes from the models GUI
+        # copy its properties into a new object since
+        # we have to transform it.
+        vtkImplicitBoolean clipPlanes
+        clipPlanes SetOperationType [Slice(clipPlanes) GetOperationType]
+        set functions [Slice(clipPlanes) GetFunction]
+        $functions InitTraversal
+        set func [$functions GetNextItemAsObject]
+
+        while {$func != ""} {
+            puts $func
+            eval {clipPlanes AddFunction} $func
+            set func [$functions GetNextItemAsObject]            
+        }
+
+        # They have to be transformed into scaled IJK of the tensors
+        catch "transform Delete"
+        vtkTransform transform
+        # WorldToTensorScaledIJK
+        set t $Tensor(activeID)
+        DTMRICalculateActorMatrix transform $t    
+        #transform Inverse
+        clipPlanes SetTransform transform
+        transform Delete  
+        
+        [DTMRI(vtk,streamlineControl) GetDisplayTracts] \
+            SetClipFunction clipPlanes
+        clipPlanes Delete
+    }
+
+    # Turn clipping on/off
+    [DTMRI(vtk,streamlineControl) GetDisplayTracts] \
+        SetClipping $val
+    
+}

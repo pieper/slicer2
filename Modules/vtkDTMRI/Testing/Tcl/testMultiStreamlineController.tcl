@@ -60,7 +60,7 @@ $seedTracts SetVtkHyperStreamlinePointsSettings exampleObject
 # Set the tensors as input to the streamline controller
 #-----------------------------------
 streamControl SetInputTensorField $input
-streamControl ScalarVisibilityOn
+[streamControl GetDisplayTracts] ScalarVisibilityOn
 
 # Set seed points and display the result
 #-----------------------------------
@@ -71,7 +71,7 @@ $seedTracts SeedStreamlineFromPoint -9 9 -9
 
 # Display
 streamControl DebugOn
-streamControl AddStreamlinesToScene
+[streamControl GetDisplayTracts] AddStreamlinesToScene
 
 # plane for context
 #
@@ -140,3 +140,10 @@ $saveTracts SetInputTensorField $input
 $saveTracts SaveStreamlinesAsPolyData tractsAnalysis tractA
 
 
+puts [[[streamControl GetDisplayTracts] GetClippedStreamlines] Print]
+
+# test deletion
+streamControl DeleteStreamline \
+    [[[streamControl GetDisplayTracts] GetActors] GetItemAsObject 2]
+
+#streamControl DeleteStreamline 2

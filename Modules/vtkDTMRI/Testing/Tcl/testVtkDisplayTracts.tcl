@@ -92,6 +92,8 @@ renderers AddItem ren1
 # Our class for streamline display
 vtkDisplayTracts displayTracts
 
+displayTracts DebugOn
+
 displayTracts SetStreamlines [seedTracts GetStreamlines]
 displayTracts SetRenderers renderers
 displayTracts AddStreamlinesToScene
@@ -155,4 +157,9 @@ iren AddObserver UserEvent {wm deiconify .vtkInteract}
 # prevent the tk window from showing up then start the event loop
 wm withdraw .
 
+
+# test deletion
+displayTracts DeleteStreamline 2
+
+displayTracts DeleteStreamline [[displayTracts GetActors] GetItemAsObject 2]
 

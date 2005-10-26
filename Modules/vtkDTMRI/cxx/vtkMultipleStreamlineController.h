@@ -66,6 +66,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "vtkClusterTracts.h"
 #include "vtkSaveTracts.h"
+#include "vtkDisplayTracts.h"
 #include "vtkSeedTracts.h"
 #include "vtkColorROIFromTracts.h"
 
@@ -76,30 +77,18 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   vtkTypeMacro(vtkMultipleStreamlineController,vtkObject);
 
   // Description
-  // Make all of the streamlines visible in the renderer.
-  void AddStreamlinesToScene();
-
-  // Description
-  // Hide all streamlines (turn off their visibility);
-  void RemoveStreamlinesFromScene();
-
-  // Description
   // Delete one streamline.  The input is a pointer to the actor you
-  // wish to delete.  All associated objects are deleted and removed 
-  // from the collections.
+  // wish to delete.  This method finds the index and calls DeleteStreamline.
   void DeleteStreamline(vtkActor *pickedActor);
 
   // Description
   // Delete all streamlines
   void DeleteAllStreamlines();
 
-  void DeleteStreamline(int index);
-
   // Description
-  // Get the internal index of the chosen actor, if it is a streamline
-  // in the collection.
-  int GetStreamlineIndexFromActor(vtkActor *pickedActor);
-
+  // Delete a particular streamline. Also calls method in vtkDisplayTracts
+  // to delete graphics objects for this streamline.
+  void DeleteStreamline(int index);
 
   // Description
   // Input tensor field in which to seed streamlines
@@ -120,40 +109,16 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
 
   // Description
   // List of the output vtkHyperStreamlines (or subclasses)
-  vtkGetObjectMacro(Streamlines, vtkCollection);
-  vtkGetObjectMacro(Actors, vtkCollection);
-  vtkGetObjectMacro(Mappers, vtkCollection);
-  vtkGetObjectMacro(TubeFilters, vtkCollection);
-  int GetNumberOfStreamlines() {return this->Streamlines->GetNumberOfItems();}
+  // These are what you see (could be clipped by the user)
+  vtkCollection *GetStreamlines() {return this->DisplayTracts->GetClippedStreamlines();}
+
+  int GetNumberOfStreamlines() {return this->GetStreamlines()->GetNumberOfItems();}
 
   // Description
   // Input: list of the renderers whose scenes will have streamlines
   // added.
-  vtkSetObjectMacro(InputRenderers, vtkCollection);
+  void SetInputRenderers( vtkCollection *);
   vtkGetObjectMacro(InputRenderers, vtkCollection);
-
-  // Description
-  // Control actor properties of created streamlines by setting
-  // them in this vtkProperty object.  Its parameters are copied
-  // into the streamline actors.
-  vtkSetObjectMacro(StreamlineProperty, vtkProperty);
-  vtkGetObjectMacro(StreamlineProperty, vtkProperty);
-
-  // Description
-  // controls scalar visibility of actors created in this class
-  void SetScalarVisibility(int);
-  vtkGetMacro(ScalarVisibility,int);
-  vtkBooleanMacro(ScalarVisibility,int);
-
-  // Description
-  // Radius of displayed tube
-  vtkSetClampMacro(TubeRadius, float, 0, VTK_FLOAT_MAX);
-  vtkGetMacro(TubeRadius, float);
-
-  // Description
-  // Lookup table for all displayed streamlines
-  vtkSetObjectMacro(StreamlineLookupTable, vtkLookupTable);
-  vtkGetObjectMacro(StreamlineLookupTable, vtkLookupTable);
 
   // Description
   // Color tracts based on clustering.
@@ -174,6 +139,9 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // Get object that performs seeding (to set parameters)
   vtkGetObjectMacro(SeedTracts,vtkSeedTracts);
 
+  // Description
+  // Get object that performs display (to set parameters)
+  vtkGetObjectMacro(DisplayTracts,vtkDisplayTracts);
 
   // Description
   // Get object that colors in an ROI with color of tracts passing
@@ -184,34 +152,19 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   vtkMultipleStreamlineController();
   ~vtkMultipleStreamlineController();
 
-  // functions not accessible to the user
-  void CreateGraphicsObjects();
-  void ApplyUserSettingsToGraphicsObject(int index);
-
-
-  // Remove 0-length streamlines before clustering.
-  void CleanStreamlines();
-
   vtkTransform *WorldToTensorScaledIJK;
 
   vtkImageData *InputTensorField;
   vtkCollection *InputRenderers;
 
   vtkCollection *Streamlines;
-  vtkCollection *Mappers;
-  vtkCollection *TubeFilters;
-  vtkCollection *Actors;
 
-  int NumberOfVisibleActors;
-  float TubeRadius;
-  vtkProperty *StreamlineProperty;
- 
-  int ScalarVisibility;
-  vtkLookupTable *StreamlineLookupTable;
-
-
+  // Remove 0-length streamlines before clustering.
+  void CleanStreamlines(vtkCollection *streamlines);
   vtkClusterTracts *TractClusterer;
+
   vtkSaveTracts *SaveTracts;
+  vtkDisplayTracts *DisplayTracts;
   vtkSeedTracts *SeedTracts;
   vtkColorROIFromTracts *ColorROIFromTracts;
 

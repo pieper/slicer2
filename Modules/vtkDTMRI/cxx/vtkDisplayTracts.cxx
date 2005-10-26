@@ -40,14 +40,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkRenderer.h"
 #include "vtkAppendPolyData.h"
 #include "vtkTubeFilter.h"
-
-// to be moved
-#include "vtkStreamlineConvolve.h"
-#include "vtkPruneStreamline.h"
-
-// to be changed
-#include "vtkHyperStreamlinePoints.h"
-#include "vtkHyperStreamline.h"
+#include "vtkClipPolyData.h"
 
 
 //------------------------------------------------------------------------------
@@ -74,15 +67,23 @@ vtkDisplayTracts::vtkDisplayTracts()
   // so if the user doesn't set them it's okay.
   this->WorldToTensorScaledIJK = vtkTransform::New();
 
-  // collections
+  // input collections
   this->Streamlines = NULL;
+
+  // internal/output collections
+  this->ClippedStreamlines = vtkCollection::New();
   this->Mappers = vtkCollection::New();
   this->TubeFilters = vtkCollection::New();
   this->Actors = vtkCollection::New();
 
   // Streamline parameters for all streamlines
   this->ScalarVisibility=0;
+  this->Clipping=0;
 
+  // for tube filter
+  this->TubeRadius = 0.5;
+  this->TubeNumberOfSides = 4;
+ 
   // user-accessible property and lookup table for all streamlines
   this->StreamlineProperty = vtkProperty::New();
   this->StreamlineLookupTable = vtkLookupTable::New();
@@ -101,6 +102,7 @@ vtkDisplayTracts::~vtkDisplayTracts()
 
   this->Renderers->Delete();
   this->Streamlines->Delete();
+  this->ClippedStreamlines->Delete();
   this->Mappers->Delete();
   this->Actors->Delete();
   this->TubeFilters->Delete();
@@ -129,6 +131,97 @@ void vtkDisplayTracts::SetScalarVisibility(int value)
     }
 }
 
+
+//----------------------------------------------------------------------------
+void vtkDisplayTracts::SetClipping(int value)
+{
+  vtkHyperStreamline *currStreamline;
+  vtkTubeFilter *currTubeFilter;
+  vtkPolyDataSource *clippedStreamline;
+  
+  // test if we are changing the value before looping through all streamlines
+  if (this->Clipping != value)
+    {
+
+      if (value)
+        {
+          if (!this->ClipFunction)
+            {
+              vtkErrorMacro("Set the ClipFunction before turning clipping on");
+              return;
+            }
+        }
+
+      this->Clipping = value;
+
+
+      // clear storage for these streamlines
+      this->ClippedStreamlines->RemoveAllItems();      
+      
+          
+      // apply this to ALL streamlines
+      // traverse streamline collection and clip each one
+      this->Streamlines->InitTraversal();
+      this->TubeFilters->InitTraversal();
+      
+      currStreamline = (vtkHyperStreamline *)
+        this->Streamlines->GetNextItemAsObject();
+      currTubeFilter = (vtkTubeFilter *)
+        this->TubeFilters->GetNextItemAsObject();
+      
+      while (currStreamline && currTubeFilter)
+        {
+          // clip or not, depending on this->Clipping
+          clippedStreamline = this->ClipStreamline(currStreamline);
+
+          // Make sure we are displaying clipped streamline
+          // this corresponds to contents of ClippedStreamlines collection
+          currTubeFilter->SetInput(clippedStreamline->GetOutput());
+
+          currTubeFilter = (vtkTubeFilter *)
+            this->TubeFilters->GetNextItemAsObject();
+          currStreamline = (vtkHyperStreamline *)
+            this->Streamlines->GetNextItemAsObject();
+        }
+    }
+}
+
+
+// Handle clipping/not clipping a single streamline
+//----------------------------------------------------------------------------
+vtkPolyDataSource * vtkDisplayTracts::ClipStreamline(vtkHyperStreamline *currStreamline) 
+{
+
+  if (this->Clipping) 
+    {
+      
+      // Turn clipping on
+      // Put a clipped streamline onto the collection
+      vtkClipPolyData *currClipper = vtkClipPolyData::New();
+      currClipper->SetInput(currStreamline->GetOutput());
+      currClipper->SetClipFunction(this->ClipFunction);
+      //currClipper->SetValue(0.0);
+      currClipper->Update();
+      
+      this->ClippedStreamlines->AddItem((vtkObject *) currClipper);
+      
+      // The object survives as long as it is on the
+      // collection. (until clipping is turned off)
+      currClipper->Delete();
+
+      return currClipper;
+    }
+  else
+    {
+      // Turn clipping off
+      // Put the original streamline onto the collection
+      this->ClippedStreamlines->AddItem((vtkObject *) currStreamline);
+      return currStreamline;
+    }
+
+}
+
+
 // Set the properties of one streamline's graphics objects as requested
 // by the user
 //----------------------------------------------------------------------------
@@ -152,10 +245,11 @@ void vtkDisplayTracts::ApplyUserSettingsToGraphicsObject(int index)
   currActor->GetProperty()->SetColor(this->StreamlineProperty->GetColor());    
   // Set the scalar visibility as desired by the user
   currMapper->SetScalarVisibility(this->ScalarVisibility);
-  // Set the tube width as desired by the user
-  // TEST this should be specified separately from hyperstreamline settings
-  // CONVERT this to get its info from the GUI
-  //currTubeFilter->SetRadius(this->VtkHyperStreamlinePointsSettings->GetRadius());
+
+  // Set the tube width and number of sides as desired by the user
+  currTubeFilter->SetRadius(this->TubeRadius);
+
+  currTubeFilter->SetNumberOfSides(this->TubeNumberOfSides);
 
 }
 
@@ -165,7 +259,9 @@ void vtkDisplayTracts::ApplyUserSettingsToGraphicsObject(int index)
 void vtkDisplayTracts::CreateGraphicsObjects()
 {
   int numStreamlines, numActorsCreated;
-  vtkHyperStreamline *currStreamline;
+  // for next vtk version:
+  //vtkPolyDataAlgorithm *currStreamline;
+  vtkPolyDataSource *currStreamline;
   vtkPolyDataMapper *currMapper;
   vtkActor *currActor;
   vtkTransform *currTransform;
@@ -178,7 +274,7 @@ void vtkDisplayTracts::CreateGraphicsObjects()
 
   vtkDebugMacro(<< "in CreateGraphicsObjects " << numActorsCreated << "  " << numStreamlines);
 
-  // If we have already made all of the object needed, stop here.
+  // If we have already made all of the objects needed, stop here.
   if (numActorsCreated == numStreamlines) 
     return;
 
@@ -190,9 +286,11 @@ void vtkDisplayTracts::CreateGraphicsObjects()
   // Make actors and etc. for all streamlines that need them
   while (numActorsCreated < numStreamlines) 
     {
-      // Get the streamline
-      currStreamline = (vtkHyperStreamline *)
-        this->Streamlines->GetItemAsObject(numActorsCreated);
+      // Handle clipping/not clipping
+      // Now use the clipped/not clipped streamline for the rest
+      currStreamline = 
+        this->ClipStreamline((vtkHyperStreamline *)
+                             this->Streamlines->GetItemAsObject(numActorsCreated));
 
       // Now create the objects needed
       currActor = vtkActor::New();
@@ -290,7 +388,7 @@ void vtkDisplayTracts::DeleteAllStreamlines()
   int numStreamlines, i;
 
   i=0;
-  numStreamlines = this->Streamlines->GetNumberOfItems();
+  numStreamlines = this->ClippedStreamlines->GetNumberOfItems();
   while (i < numStreamlines)
     {
       vtkDebugMacro( << "Deleting streamline " << i);
@@ -332,14 +430,13 @@ void vtkDisplayTracts::DeleteStreamline(int index)
       this->Actors->RemoveItem(index);
       currActor->Delete();
     }
+
   vtkDebugMacro( << "Delete stream" );
-  currStreamline = (vtkHyperStreamline *)
-    this->Streamlines->GetItemAsObject(index);
-  if (currStreamline != NULL)
-    {
-      this->Streamlines->RemoveItem(index);
-      currStreamline->Delete();
-    }
+  // Remove from collection.
+  // If we are clipping this should delete it.
+  // Otherwise it removes a reference to the one still 
+  // on the Streamlines collection.
+  this->ClippedStreamlines->RemoveItem(index);
 
   vtkDebugMacro( << "Delete mapper" );
   currMapper = (vtkPolyDataMapper *) this->Mappers->GetItemAsObject(index);

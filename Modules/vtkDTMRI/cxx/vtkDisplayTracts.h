@@ -37,14 +37,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 // .NAME vtkDisplayTracts - 
 // .SECTION Description
-// Creates and manages a vtkCollection of vtkHyperStreamlines.
+// Displays a vtkCollection of vtkHyperStreamlines.
 //
-// Individual streamlines can be started at a point, or 
-// many can be started inside a region of interest.
-// Subclasses of vtkHyperStreamline may be created instead
-// of the default vtkHyperStreamline class.
-// This class also creates collections of mappers and actors
-// for the streamlines, and can control their visibility in the scene.
 //
 
 #ifndef __vtkDisplayTracts_h
@@ -58,7 +52,11 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkActor.h"
 #include "vtkProperty.h"
 #include "vtkLookupTable.h"
-
+#include "vtkImplicitFunction.h"
+#include "vtkHyperStreamline.h"
+// for next vtk version:
+//#include "vtkPolyDataAlgorithm.h"
+#include "vtkPolyDataSource.h"
 
 class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
 {
@@ -68,8 +66,18 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
 
   // Description
   // Set the streamlines that we would like to visualize
-  vtkSetObjectMacro(Streamlines, vtkCollection);
   vtkGetObjectMacro(Streamlines, vtkCollection);
+  vtkSetObjectMacro(Streamlines, vtkCollection);
+
+  // Description
+  // Number of sides of the tube displayed around each (hyper)streamline
+  vtkGetMacro(TubeNumberOfSides, unsigned int);
+  vtkSetMacro(TubeNumberOfSides, unsigned int);
+
+  // Description
+  // Radius of the tube displayed around each (hyper)streamline
+  vtkGetMacro(TubeRadius, float);
+  vtkSetMacro(TubeRadius, float);
 
   // Description
   // Transformation that was used in seeding streamlines.  Their start
@@ -95,6 +103,10 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
   void DeleteStreamline(vtkActor *pickedActor);
 
   // Description
+  // Delete one streamline.
+  void DeleteStreamline(int index);
+
+  // Description
   // Delete all streamlines
   void DeleteAllStreamlines();
 
@@ -109,6 +121,11 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
   vtkGetObjectMacro(Mappers, vtkCollection);
   vtkGetObjectMacro(TubeFilters, vtkCollection);
   int GetNumberOfStreamlines() {return this->Streamlines->GetNumberOfItems();}
+
+  // Description
+  // Get modified streamlines
+  vtkSetObjectMacro(ClippedStreamlines, vtkCollection);
+  vtkGetObjectMacro(ClippedStreamlines, vtkCollection);
 
   // Description
   // Input: list of the renderers whose scenes will have streamlines
@@ -130,6 +147,15 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
   vtkBooleanMacro(ScalarVisibility,int);
 
   // Description
+  // controls clipping of tracts/streamlines
+  void SetClipping(int);
+  vtkGetMacro(Clipping,int);
+  vtkBooleanMacro(Clipping,int);
+
+  vtkSetObjectMacro(ClipFunction, vtkImplicitFunction );
+  vtkGetObjectMacro(ClipFunction, vtkImplicitFunction );
+
+  // Description
   // Lookup table for all displayed streamlines
   vtkSetObjectMacro(StreamlineLookupTable, vtkLookupTable);
   vtkGetObjectMacro(StreamlineLookupTable, vtkLookupTable);
@@ -142,13 +168,14 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
   // functions not accessible to the user
   void CreateGraphicsObjects();
   void ApplyUserSettingsToGraphicsObject(int index);
-  void DeleteStreamline(int index);
+  vtkPolyDataSource *ClipStreamline(vtkHyperStreamline *streamline);
 
   vtkTransform *WorldToTensorScaledIJK;
 
   vtkCollection *Renderers;
 
   vtkCollection *Streamlines;
+  vtkCollection *ClippedStreamlines;
   vtkCollection *Mappers;
   vtkCollection *TubeFilters;
   vtkCollection *Actors;
@@ -157,9 +184,14 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
   vtkProperty *StreamlineProperty;
  
   int ScalarVisibility;
+  int Clipping;
 
   vtkLookupTable *StreamlineLookupTable;
 
+  float TubeRadius;
+  unsigned int TubeNumberOfSides;
+
+  vtkImplicitFunction *ClipFunction;
 
 };
 

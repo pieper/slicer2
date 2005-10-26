@@ -86,7 +86,7 @@ class VTK_DTMRI_EXPORT vtkROISelectTracts : public vtkObject
   void SetStreamlineController(vtkMultipleStreamlineController *controller) {
      StreamlineController = controller;
      Streamlines = controller->GetStreamlines();
-     Actors = controller->GetActors();
+     Actors = controller->GetDisplayTracts()->GetActors();
   };   
      
   // Description
