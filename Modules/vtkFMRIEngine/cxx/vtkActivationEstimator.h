@@ -59,6 +59,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <vtkFMRIEngineConfigure.h>
 #include "vtkFloatArray.h"
+#include "vtkShortArray.h"
 #include "vtkDataObject.h"
 #include "vtkActivationDetector.h"
 #include "vtkMultipleInputsImageToImageFilter.h"
@@ -74,6 +75,10 @@ public:
     vtkFloatArray *GetTimeCourse(int i, int j, int k);
 
     // Description:
+    // Returns the time course of the defined ROI. 
+    vtkFloatArray *GetRegionTimeCourse();
+
+    // Description:
     // Sets the activation detector.
     void SetDetector(vtkActivationDetector *detector);
 
@@ -83,8 +88,11 @@ public:
 
     // Description:
     // Sets the cutoff frequency.
-    void SetCutoff(float c) {
-        this->Cutoff = c;}
+    void SetCutoff(float c) {this->Cutoff = c;}
+
+    // Description:
+    // Sets the indices of all voxels in the defined ROI.
+    void SetRegionVoxels(vtkShortArray *voxels) {this->RegionVoxels = voxels;}
 
     // Description:
     // Enables or disables high-pass filtering. 
@@ -108,6 +116,8 @@ protected:
 
     vtkActivationDetector *Detector;
     vtkFloatArray *TimeCourse;
+    vtkFloatArray *RegionTimeCourse;
+    vtkShortArray *RegionVoxels;
 };
 
 

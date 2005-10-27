@@ -58,6 +58,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #include <vtkFMRIEngineConfigure.h>
+#include "vtkShortArray.h"
 #include "vtkFloatArray.h"
 #include "vtkDataObject.h"
 #include "vtkMultipleInputsImageToImageFilter.h"
@@ -69,8 +70,9 @@ public:
     vtkTypeMacro(vtkActivationRegionStats, vtkMultipleInputsImageToImageFilter);
 
     // Description:
-    // Returns the averaged timecourse 
-    vtkFloatArray *GetAveragedTimecourse();
+    // Returns the indices of all voxels in the defined ROI, 
+    // in the labelmap volumes
+    vtkShortArray *GetRegionVoxels();
 
     // Description:
     // Gets the ROI stats 
@@ -88,8 +90,12 @@ protected:
 
     void SimpleExecute(vtkImageData* input,vtkImageData* output);
 
-    vtkFloatArray *TimeCourse;
-    vtkFloatArray *Points;
+    // the indices (i, j, k) of all voxels in the defined ROI, 
+    // in the labelmap volume.
+    vtkShortArray *Indices;  
+
+    // the intensities of all voxels in the defined ROI 
+    vtkFloatArray *Intensities;
 
     int Label;
 

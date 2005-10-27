@@ -81,6 +81,8 @@ vtkActivationEstimator::vtkActivationEstimator()
 
     this->Detector = NULL; 
     this->TimeCourse = NULL; 
+    this->RegionTimeCourse = NULL;
+    this->RegionVoxels = NULL;
 }
 
 
@@ -90,6 +92,58 @@ vtkActivationEstimator::~vtkActivationEstimator()
     {
         this->TimeCourse->Delete();
     }
+    if (this->RegionTimeCourse != NULL)
+    {
+        this->RegionTimeCourse->Delete();
+    }
+    if (this->RegionVoxels != NULL)
+    {
+        this->RegionVoxels->Delete();
+    }
+}
+
+
+vtkFloatArray *vtkActivationEstimator::GetRegionTimeCourse()
+{
+    // Checks the input list
+    if (this->NumberOfInputs == 0 || this->GetInput(0) == NULL)
+    {
+        vtkErrorMacro( <<"No input image data in this filter.");
+        return NULL;
+    }
+
+    if (this->RegionVoxels == NULL)
+    {
+        vtkErrorMacro( <<"Indices of all voxels in the ROI is required.");
+        return NULL;
+    }
+
+    if (this->RegionTimeCourse != NULL) 
+    {
+        this->RegionTimeCourse->Delete();
+    }
+    this->RegionTimeCourse = vtkFloatArray::New();
+    this->RegionTimeCourse->SetNumberOfTuples(this->NumberOfInputs);
+    this->RegionTimeCourse->SetNumberOfComponents(1);
+
+    short *val;
+    int size = this->RegionTimeCourse->GetNumberOfTuples();
+    for (int ii = 0; ii < this->NumberOfInputs; ii++)
+    {
+        int total = 0;
+        for (int jj = 0; jj < size; jj++)
+        {
+            int x = (int)this->TimeCourse->GetComponent(jj, 0);
+            int y = (int)this->TimeCourse->GetComponent(jj, 1);
+            int z = (int)this->TimeCourse->GetComponent(jj, 2);
+            val = (short *)this->GetInput(ii)->GetScalarPointer(x, y, z); 
+            total += *val;
+        }
+
+        this->TimeCourse->SetComponent(ii, 0, (short)(total/size)); 
+    }
+
+    return this->RegionTimeCourse;
 }
 
 
