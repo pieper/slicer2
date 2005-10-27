@@ -135,7 +135,9 @@ itcl::body dup::constructor {args} {
 
     eval itk_initialize $args
 
-    $this prefs
+    if { [$this prefs] != "okay" } {
+        return
+    }
 
     foreach p {sort deidentify review upload} {
         [set _$p] configure -parent $this
@@ -286,6 +288,7 @@ itcl::body dup::prefs { } {
         set resp [tk_messageBox -type okcancel -message "A preferences file must be created for you.\n\nClick Ok to continue or Cancel to exit"]
         if { $resp == "cancel" } {
             itcl::delete object $this
+            return ""
         }
 
         file mkdir $::env(HOME)/.birndup    
@@ -308,6 +311,8 @@ itcl::body dup::prefs { } {
     }
     array set _prefs [array get userprefs]
     $this pref_save
+
+    return "okay"
 }
 
 itcl::body dup::pref_save { } {
@@ -390,6 +395,10 @@ proc BIRNDUPInterface {} {
     }
 
     dup .t
-    .t activate
-    wm geometry .t 900x700+50+50
+
+    if { [info command .t] != "" } {
+        # if the user didn't cancel, keep going...
+        .t activate
+        wm geometry .t 900x700+50+50
+    }
 }
