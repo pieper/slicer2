@@ -519,7 +519,7 @@ proc fMRIEngineBuildUIForROIStats {parent} {
     pack $f.r$param -side top -pady 2 
 
     set f $parent.fPlot.fPlot
-    DevAddButton $f.bPlot "Plot timecourse" "fMRIEnginePlotAveragedTimecourse" 20 
+    DevAddButton $f.bPlot "Plot timecourse" "fMRIEnginePlotRegionTimecourse" 20 
     pack $f.bPlot -side top -pady 5 -padx 1 
     set fMRIEngine(tcPlottingOption) ""
 
@@ -771,14 +771,46 @@ proc fMRIEnginePlotROIStats {type} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC fMRIEnginePlotAveragedTimecourse
+# .PROC fMRIEnginePlotRegionTimecourse
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEnginePlotAveragedTimecourse {} {
+proc fMRIEnginePlotRegionTimecourse {} {
+    global fMRIEngine Slice Volume
 
-    puts "fMRIEnginePlotAveragedTimecourse"
+    set nId $Volume(idNone)
+    set lId $nId 
+    foreach s $Slice(idList) {
+        if {$lId == $nId} {
+            set lId $Slice($s,labelVolID)
+        }
+    }
+
+    if {$nId == $lId} {
+        DevErrorWindow "Your label map is not visible."
+        return  
+    }
+
+    # always uses a new instance of vtkActivationRegionStats 
+    if {[info commands fMRIEngine(actROIStats)] != ""} {
+        fMRIEngine(actROIStats) Delete
+        unset -nocomplain fMRIEngine(actROIStats)
+    }
+    vtkActivationRegionStats fMRIEngine(actROIStats)
+
+    # Get all voxel indices in the labelmap volume, 
+    # which are inside the defined ROI.
+    fMRIEngine(actROIStats) AddInput [Volume($lId,vol) GetOutput]
+    fMRIEngine(actROIStats) SetLabel 16 
+    fMRIEngine(actROIStats) Update 
+    set voxels [fMRIEngine(actROIStats) GetRegionVoxels]
+
+    fMRIEngine(actEstimator) SetRegionVoxels $voxels
+    set fMRIEngine(timecourse) [fMRIEngine(actEstimator) GetRegionTimeCourse] 
+    set fMRIEngine(timecoursePlot) "region"
+ 
+    fMRIEnginePlotTimecourse 
 }
 
 
@@ -1153,10 +1185,9 @@ proc fMRIEngineClickROI {x y} {
 
     # The colors of all labels are white although they have 
     # different values. If a label is clicked, we are trying
-    # to change its color (i.e. change its value). If the same
-    # label is clicked again, it will be changed back to its original.
+    # to change its color (i.e. change its value). 
 
-    # The background has a value of 0
+    # The background has a value > 0
     if {$forePix > 0} {
         EditorEnter
 
