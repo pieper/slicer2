@@ -155,7 +155,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.15 $} {$Date: 2005/10/25 19:53:51 $}]
+        {$Revision: 1.16 $} {$Date: 2005/10/27 19:45:29 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -176,6 +176,13 @@ proc fMRIEngineInit {} {
     
     # Creates bindings
     fMRIEngineCreateBindings 
+
+    # error if no private segment
+    if { [catch "package require BLT"] } {
+        DevErrorWindow "Must have the BLT package for building fMRIEngine UI \
+        and plotting time course."
+        return
+    }
 
     # Source all appropriate tcl files here. 
     source "$fMRIEngine(modulePath)/tcl/notebook.tcl"
@@ -220,13 +227,6 @@ proc fMRIEngineInit {} {
 #-------------------------------------------------------------------------------
 proc fMRIEngineBuildGUI {} {
     global Gui fMRIEngine Module Volume Model
-
-    # error if no private segment
-    if { [catch "package require BLT"] } {
-        DevErrorWindow "Must have the BLT package for building fMRIEngine UI \
-        and plotting time course."
-        return
-    }
 
     # A frame has already been constructed automatically for each tab.
     # A frame named "FMRI" can be referenced as follows:
@@ -551,7 +551,10 @@ proc fMRIEngineProcessMouseEvent {x y} {
     if {$fMRIEngine(currentTab) == "ROI"} {
         fMRIEngineClickROI $x $y
     } elseif {$fMRIEngine(currentTab) == "Inspect"} {
-        fMRIEnginePopUpPlot $x $y
+        set fMRIEngine(voxelLocation,x) $x
+        set fMRIEngine(voxelLocation,y) $y
+        set fMRIEngine(timecoursePlot) "voxel"
+        fMRIEnginePlotTimecourse
     } else {
     }
 }

@@ -50,84 +50,20 @@
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
-# .PROC fMRIEnginePopUpPlot
-# This routine pops up a plot of a selected voxel's response over
-# time, overlayed onto a reference signal. This reference may be the
-# experimental protocol, or the protocol convolved with a hemodynamic
-# response function.
+# .PROC fMRIEnginePlotTimecourse 
+# This routine pops up a plot of a selected voxel's response or averaged response 
+# of a region of voxels over time, overlayed onto a reference signal. 
+# This reference may be the experimental protocol, or the protocol convolved with 
+# a hemodynamic response function.
 # .ARGS
-# int x the selected point's x coord
-# int y the selected point's y coord
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEnginePopUpPlot {x y} {
-    global fMRIEngine MultiVolumeReader Gui
+proc fMRIEnginePlotTimecourse {} {
+    global fMRIEngine
 
-    if {$fMRIEngine(currentTab) != "Inspect"} {
+    # if we cannot get voxel timecourse, do nothing.
+    if {$fMRIEngine(timecoursePlot) == "voxel" && [fMRIEngineGetVoxelTimecourse] == 1} {
         return
-    }
-
-    # Checks time course plotting option
-    switch $fMRIEngine(tcPlottingOption) {
-        "" {
-            return
-        }
-        "Long" {
-            set plotTitle "Timecourse Plot"
-            set plotGeometry "+335+200"
-            set plotHeight 250 
-
-            if {$MultiVolumeReader(noOfVolumes) > 150} { 
-                set plotWidth 700
-                set graphWidth 700
-            } else {
-                set plotWidth 500
-                set graphWidth 500
-            }
-        }
-        "Short" {
-            set plotTitle "Peristimulus Histogram"
-            set plotHeight 250 
-            set plotGeometry "+335+200"
-
-            if {$MultiVolumeReader(noOfVolumes) > 150} { 
-                set plotWidth 700
-                set graphWidth 700
-            } else {
-                set plotWidth 500
-                set graphWidth 500
-            }
-        }
-        "ROI" {
-            puts "ROI plotting is being constructed."
-            return
-        }
-    }
-
-#    if {! [info exists fMRIEngine(firstMRMLid)] ||
-#        ! [info exists fMRIEngine(lastMRMLid)]} {
-        # DevErrorWindow "Please load volume sequence first."
-#        return
-#    }
-
-    # Get the indices of selected voxel. Then, check
-    # these indices against the dimensions of the volume.
-    # If they're good values, assemble the selected voxel's
-    # time-course, the reference signal, and plot both.
-    scan [fMRIEngineGetVoxelFromSelection $x $y] "%d %d %d" i j k
-    if {$i == -1} {
-        return
-    }
-
-    scan [fMRIEngineGetDataVolumeDimensions] "%d %d %d %d %d %d" \
-        xmin ymin zmin xmax ymax zmax
-
-    # Check to make sure that the selected voxel
-    # is within the data volume. If not, return.
-    set argstr "$i $j $k $xmin $ymin $zmin $xmax $ymax $zmax"
-    if {[ fMRIEngineCheckSelectionAgainstVolumeLimits $argstr] == 0} {
-        # DevErrorWindow "Selected voxel not in volume."
-        return 
     }
 
     if {[info exists fMRIEngine(timeCourseToplevel)] &&
@@ -135,11 +71,37 @@ proc fMRIEnginePopUpPlot {x y} {
         fMRIEngineCloseTimeCourseWindow
     }
 
-    if {$fMRIEngine(highPass)} {
-        fMRIEngine(actEstimator) EnableHighPassFiltering 1 
-        fMRIEngineCheckCutoff
+    fMRIEngineMakeTimecoursePlotWindow
+    fMRIEngineDrawPlot$fMRIEngine(tcPlottingOption)
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineMakeTimecoursePlotWindow
+# Makes a toplevel window for timecourse plotting
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineMakeTimecoursePlotWindow {} {
+    global fMRIEngine MultiVolumeReader
+
+    # Checks time course plotting option
+    if {$fMRIEngine(tcPlottingOption) == "Long"} {
+        set plotTitle "Timecourse Plot"
+    } else {    
+        set plotTitle "Peristimulus Histogram"
+    }
+
+    set plotGeometry "+335+200"
+    set plotHeight 250 
+
+    if {[info exists MultiVolumeReader(noOfVolumes)] &&
+        $MultiVolumeReader(noOfVolumes) > 150} { 
+        set plotWidth 700
+        set graphWidth 700
     } else {
-        fMRIEngine(actEstimator) EnableHighPassFiltering 0 
+        set plotWidth 500
+        set graphWidth 500
     }
 
     # Plot the time course
@@ -179,11 +141,54 @@ proc fMRIEnginePopUpPlot {x y} {
     } else {
         $fMRIEngine(timeCourseGraph) axis configure x -title "Volume Number" 
     }
+}
 
-    fMRIEngineDrawPlot$fMRIEngine(tcPlottingOption) $i $j $k 
-    set fMRIEngine(x,voxelIndex) $i
-    set fMRIEngine(y,voxelIndex) $j
-    set fMRIEngine(z,voxelIndex) $k
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineGetVoxelTimecourse 
+# Gets the timecourse of the selected voxel
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineGetVoxelTimecourse {} {
+    global fMRIEngine
+
+    set x $fMRIEngine(voxelLocation,x)
+    set y $fMRIEngine(voxelLocation,y)
+
+    # Get the indices of selected voxel. Then, check
+    # these indices against the dimensions of the volume.
+    # If they're good values, assemble the selected voxel's
+    # time-course, the reference signal, and plot both.
+    scan [fMRIEngineGetVoxelFromSelection $x $y] "%d %d %d" i j k
+    if {$i == -1} {
+        return 1
+    }
+
+    scan [fMRIEngineGetDataVolumeDimensions] "%d %d %d %d %d %d" \
+        xmin ymin zmin xmax ymax zmax
+
+    # Check to make sure that the selected voxel
+    # is within the data volume. If not, return.
+    set argstr "$i $j $k $xmin $ymin $zmin $xmax $ymax $zmax"
+    if {[ fMRIEngineCheckSelectionAgainstVolumeLimits $argstr] == 0} {
+        # DevErrorWindow "Selected voxel not in volume."
+        return 1 
+    }
+
+    if {$fMRIEngine(highPass)} {
+        fMRIEngine(actEstimator) EnableHighPassFiltering 1 
+        fMRIEngineCheckCutoff
+    } else {
+        fMRIEngine(actEstimator) EnableHighPassFiltering 0 
+    }
+    set fMRIEngine(timecourse) [fMRIEngine(actEstimator) GetTimeCourse $i $j $k]
+
+    set fMRIEngine(voxelLocation,x) $i
+    set fMRIEngine(voxelLocation,y) $j
+    set fMRIEngine(voxelLocation,z) $k
+
+    return 0
 }
 
 
@@ -191,18 +196,15 @@ proc fMRIEnginePopUpPlot {x y} {
 # .PROC fMRIEngineDrawPlotShort
 # Draws time course plot in short format 
 # .ARGS
-# int x the x index of voxel whose time course is to be plotted
-# int y the y index of voxel whose time course is to be plotted
-# int z the z index of voxel whose time course is to be plotted
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineDrawPlotShort {x y z} {
+proc fMRIEngineDrawPlotShort {} {
     global fMRIEngine
 
     # Creates curves from time course
-    fMRIEngineCreateCurvesFromTimeCourse $x $y $z
+    fMRIEngineCreateCurvesFromTimeCourse
 
-    set timeCourse [fMRIEngine(actEstimator) GetTimeCourse $x $y $z]
+    set timeCourse $fMRIEngine(timecourse)
     set myRange [$timeCourse GetRange]
     set timeCourseYMin [lindex $myRange 0]
     set max [lindex $myRange 1]
@@ -289,11 +291,14 @@ proc fMRIEngineDrawPlotShort {x y z} {
         $fMRIEngine(timeCourseGraph) marker delete $fMRIEngine(voxelIndices)
     }
  
-    set fMRIEngine(voxelIndices) voxelIndices
-    $fMRIEngine(timeCourseGraph) marker create text -text "Voxel: ($x,$y,$z)" \
-        -coords {$noVols $timeCourseYMax} \
-        -yoffset 5 -xoffset -70 -name $fMRIEngine(voxelIndices) -under yes -bg white \
-        -font fixed 
+    if {$fMRIEngine(timecoursePlot) == "voxel"} {
+        set fMRIEngine(voxelIndices) voxelIndices
+        $fMRIEngine(timeCourseGraph) marker create text \
+            -text "Voxel: ($fMRIEngine(voxelLocation,x),$fMRIEngine(voxelLocation,y),$fMRIEngine(voxelLocation,z))" \
+            -coords {$noVols $timeCourseYMax} \
+            -yoffset 5 -xoffset -70 -name $fMRIEngine(voxelIndices) -under yes -bg white \
+            -font fixed 
+    }
 
     set fMRIEngine(curPlotting) "Short"
 }
@@ -386,10 +391,9 @@ proc fMRIEngineShowData {{loc 0}} {
 # .PROC fMRIEngineSortEVsForStat
 # Sorts EVs into different bins 
 # .ARGS
-# (x, y, z) index of the voxel whose time course is to be plotted
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineSortEVsForStat {x y z} {
+proc fMRIEngineSortEVsForStat {} {
     global fMRIEngine MultiVolumeReader
 
     # cleaning
@@ -409,7 +413,7 @@ proc fMRIEngineSortEVsForStat {x y z} {
     }
 
     # signal (response) time course
-    set oriTimeCourse [fMRIEngine(actEstimator) GetTimeCourse $x $y $z]
+    set oriTimeCourse $fMRIEngine(timecourse)
     set totalVolumes [$oriTimeCourse GetNumberOfTuples]
     set run $fMRIEngine(curRunForModelFitting)
 
@@ -548,12 +552,9 @@ proc fMRIEngineSortEVsForStat {x y z} {
 # .PROC fMRIEngineCreateCurvesFromTimeCourse
 # Creates curves for short format time course plotting 
 # .ARGS
-# int i the i index of voxel whose time course is to be plotted
-# int j the j index of voxel whose time course is to be plotted
-# int k the k index of voxel whose time course is to be plotted
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineCreateCurvesFromTimeCourse {i j k} {
+proc fMRIEngineCreateCurvesFromTimeCourse {} {
     global fMRIEngine
 
     # Cleaning
@@ -566,7 +567,7 @@ proc fMRIEngineCreateCurvesFromTimeCourse {i j k} {
         }
     }
 
-    fMRIEngineSortEVsForStat $i $j $k 
+    fMRIEngineSortEVsForStat
 
     set run $fMRIEngine(curRunForModelFitting)
     if {$run == "combined"} {
@@ -635,12 +636,9 @@ proc fMRIEngineCreateCurvesFromTimeCourse {i j k} {
 # .PROC fMRIEngineDrawPlotLong
 # Draws time course plot in long format 
 # .ARGS
-# int x the x index of voxel whose time course is to be plotted
-# int y the y index of voxel whose time course is to be plotted
-# int z the z index of voxel whose time course is to be plotted
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineDrawPlotLong {x y z} {
+proc fMRIEngineDrawPlotLong {} {
     global fMRIEngine fMRIModelView 
 
     # clean variables
@@ -648,7 +646,7 @@ proc fMRIEngineDrawPlotLong {x y z} {
     unset -nocomplain fMRIEngine(evArray,plotting)
 
     # signal (response) time course
-    set timeCourse [fMRIEngine(actEstimator) GetTimeCourse $x $y $z]
+    set timeCourse $fMRIEngine(timecourse)
     set myRange [$timeCourse GetRange]
     set timeCourseYMin [lindex $myRange 0]
     set max [lindex $myRange 1]
@@ -739,10 +737,14 @@ proc fMRIEngineDrawPlotLong {x y z} {
         -symbol none -color blue -linewidth 1 
 
     # Voxel indices
-    $fMRIEngine(timeCourseGraph) marker create text -text "Voxel: ($x,$y,$z)" \
+    if {$fMRIEngine(timecoursePlot) == "voxel"} {
+        set fMRIEngine(voxelIndices) voxelIndices
+        $fMRIEngine(timeCourseGraph) marker create text \
+            -text "Voxel: ($fMRIEngine(voxelLocation,x),$fMRIEngine(voxelLocation,y),$fMRIEngine(voxelLocation,z))" \
         -coords {$totalVolumes $timeCourseYMax} \
         -yoffset 5 -xoffset -70 -name $fMRIEngine(voxelIndices) -under yes -bg white \
         -font fixed 
+    }
 
     set fMRIEngine(curPlotting) "Long"
 }
@@ -911,3 +913,4 @@ proc fMRIEngineCheckSelectionAgainstVolumeLimits {argstr} {
 
     return 1 
 }
+
