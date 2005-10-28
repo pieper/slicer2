@@ -68,6 +68,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 vtkStandardNewMacro(vtkActivationVolumeGenerator);
 
 
+
 vtkActivationVolumeGenerator::vtkActivationVolumeGenerator()
 {
     this->StandardError = 0.0;
@@ -287,7 +288,7 @@ void vtkActivationVolumeGenerator::ComputeStandardError(float rss)
     //            the given contrast
     // ------------------------------------------------------
     float r = (float)gsl_matrix_get(this->result, 0, 0); 
-    this->StandardError = (float)sqrt(mrss*r);
+    this->StandardError = (float)sqrt(fabs(mrss*r));
 }
 
 
@@ -379,3 +380,5 @@ void vtkActivationVolumeGenerator::SimpleExecute(vtkImageData *input, vtkImageDa
     this->LowRange = range[0];
     this->HighRange = range[1];
 }
+
+
