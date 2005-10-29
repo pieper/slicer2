@@ -21,7 +21,7 @@
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.15 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.16 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -44,7 +44,6 @@ vtkNRRDReader::~vtkNRRDReader()
     MeasurementFrameMatrix->Delete();
     MeasurementFrameMatrix = NULL;
   }  
-  
   
   if (HeaderKeys) {
     delete [] HeaderKeys;

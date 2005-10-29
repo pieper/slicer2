@@ -37,9 +37,9 @@ void ITKWriteVTKImage(vtkImageData *inputImage, char *fileName,
       mag[i] = 1;
     }
     mag[i] = sqrt(mag[i]);
-    if (i == 1) { // Y flip
-      mag[i] = -mag[i];
-    }
+    //if (i == 1) { // Y flip
+      //mag[i] = -mag[i];
+    //}
   }
   for ( i=0; i<3; i++) {
     for (int j=0; j<3; j++) {
