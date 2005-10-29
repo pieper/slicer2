@@ -113,7 +113,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.111 $} {$Date: 2005/10/24 15:59:09 $}]
+            {$Revision: 1.112 $} {$Date: 2005/10/29 20:04:19 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -2220,6 +2220,7 @@ proc VolumesNrrdExport {} {
     catch "export_matrix Delete"
     vtkMatrix4x4 export_matrix
     eval export_matrix DeepCopy [Volume($v,node) GetRasToVtkMatrix]
+
     export_matrix Invert
     export_matrix Transpose
     set space_directions [format "(%g, %g, %g) (%g, %g, %g) (%g, %g, %g)" \
@@ -2233,7 +2234,6 @@ proc VolumesNrrdExport {} {
         [export_matrix GetElement 2 1]\
         [export_matrix GetElement 2 2] ]
     export_matrix Delete
-
 
     set fp [open $Volumes(prefixNrrdSave).nhdr "w"]
 
@@ -2302,12 +2302,19 @@ proc VolumesGenericExport {} {
 
     # set Volumes(prefixGenericSave) [file root $Volumes(prefixGenericSave)] 
 
+    catch "export_matrix Delete"
+    vtkMatrix4x4 export_matrix
+    eval export_matrix DeepCopy [Volume($v,node) GetRasToIjkMatrix]
+
     catch "export_iwriter Delete"
     vtkITKImageWriter export_iwriter 
     export_iwriter SetInput [Volume($v,vol) GetOutput]
     export_iwriter SetFileName $Volumes(prefixGenericSave)
+    export_iwriter SetRasToIJKMatrix export_matrix
     export_iwriter Write
+
     export_iwriter Delete
+    export_matrix Delete
 }
 
 #-------------------------------------------------------------------------------
