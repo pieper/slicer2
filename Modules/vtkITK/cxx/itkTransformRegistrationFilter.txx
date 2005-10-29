@@ -4,6 +4,8 @@
 #include "itkTransformRegistrationFilter.h" // This class
 #include "itkProgressAccumulator.h"
 
+#define WRITE_INPUTS 0
+
 namespace itk
 {
 
@@ -61,6 +63,10 @@ itk::itkTransformRegistrationFilter<TImageClass, TOptimizerClass, TTransformerCl
   m_ResampleMovingImage = false;
   m_IsAborted = false;
 
+  // writer 
+  m_WriterFixed = FixedImageWriterType::New();
+  m_WriterMoving = MovingImageWriterType::New();
+
 } // itkTransformRegistrationFilter
 
 template <class TImageClass, class TOptimizerClass, class TTransformerClass, class TMetricClass >
@@ -93,6 +99,15 @@ itk::itkTransformRegistrationFilter<TImageClass, TOptimizerClass, TTransformerCl
   
   m_Registration->SetInitialTransformParameters( m_Transform->GetParameters() );
   
+  if (WRITE_INPUTS) {
+    m_WriterFixed->SetInput(this->GetInput());
+    m_WriterFixed->SetFileName( "linear_in_fixed.nrrd" );
+    m_WriterFixed->Update();
+    m_WriterMoving->SetInput( this->GetInput(1));
+    m_WriterMoving->SetFileName( "linear_in_moving.nrrd" );
+    m_WriterMoving->Update();
+  }
+
   try { 
     m_Registration->StartRegistration(); 
   } 

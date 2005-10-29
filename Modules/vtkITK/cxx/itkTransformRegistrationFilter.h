@@ -19,6 +19,7 @@
 #include "itkMultiResolutionImageRegistrationMethod.h"
 
 #include "itkTimeProbesCollectorBase.h"
+#include "itkImageFileWriter.h"
 
 //BTX
 
@@ -162,6 +163,12 @@ protected:
   typedef MultiResolutionImageRegistrationMethod< 
                                     FixedImageType, 
                                     MovingImageType >    RegistrationType;
+
+  // Writer
+  typedef itk::ImageFileWriter< FixedImageType  >    FixedImageWriterType;      
+  typename FixedImageWriterType::Pointer m_WriterFixed;
+  typedef itk::ImageFileWriter< MovingImageType  >    MovingImageWriterType;      
+  typename MovingImageWriterType::Pointer m_WriterMoving;
 
   void  GenerateData ();
 
