@@ -156,7 +156,7 @@ proc ITKFiltersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.6 $} {$Date: 2005/04/19 19:11:53 $}]
+        {$Revision: 1.7 $} {$Date: 2005/10/30 15:43:31 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -176,7 +176,8 @@ proc ITKFiltersInit {} {
                                 GradientMagnitudeImageFilter \
                                 TobogganImageFilter \
                                 DanielssonDistanceMapImageFilter \
-                                DiscreteGaussianImageFilter "
+                                DiscreteGaussianImageFilter \
+                                MRIBiasFieldCorrectionImageFilter"
      
     set ITKFilters(filter) GradientAnisotropicDiffusionImageFilter
     set filter $ITKFilters(filter)
@@ -185,18 +186,21 @@ proc ITKFiltersInit {} {
     
     set param SetConductanceParameter
     set ITKFilters($filter,$param) 1
+    set ITKFilters($filter,$param,type) "scalar"
     set ITKFilters($filter,$param,text) "Conductance"
     set ITKFilters($filter,$param,maxmin) "1 10"
     set ITKFilters($filter,$param,res) 0.1
     set ITKFilters($filter,$param,widget) "scale"
     set param SetNumberOfIterations
     set ITKFilters($filter,$param) 1
+    set ITKFilters($filter,$param,type) "scalar"
     set ITKFilters($filter,$param,text) "Num. Iterations"
     set ITKFilters($filter,$param,maxmin) "1 15"
     set ITKFilters($filter,$param,res) 1
     set ITKFilters($filter,$param,widget) "scale"                             
     set param SetTimeStep
     set ITKFilters($filter,$param) 0.1
+    set ITKFilters($filter,$param,type) "scalar"
     set ITKFilters($filter,$param,text) "Time Step"
     set ITKFilters($filter,$param,maxmin) "0.1 1"
     set ITKFilters($filter,$param,res) 0.1
@@ -208,6 +212,7 @@ proc ITKFiltersInit {} {
     set ITKFilters($filter,params) SetConductanceParameter
     set param SetConductanceParameter
     set ITKFilters($filter,$param) 1
+    set ITKFilters($filter,$param,type) "scalar"
     set ITKFilters($filter,$param,text) "Conductance"
     set ITKFilters($filter,$param,maxmin) "1 10"
     set ITKFilters($filter,$param,res) 1
@@ -230,6 +235,7 @@ proc ITKFiltersInit {} {
     set ITKFilters($filter,params) "SetSquaredDistance"
     set param SetSquaredDistance
     set ITKFilters($filter,$param) 1
+    set ITKFilters($filter,$param,type) "scalar"
     set ITKFilters($filter,$param,maxmin) "1 0"
     set ITKFilters($filter,$param,text) "Square Distance"
     set ITKFilters($filter,$param,widget) "boolean"
@@ -238,17 +244,118 @@ proc ITKFiltersInit {} {
     set ITKFilters($filter,params) "SetVariance SetUseImageSpacing"
     set param SetVariance
     set ITKFilters($filter,$param) 1
+    set ITKFilters($filter,$param,type) "scalar"
     set ITKFilters($filter,$param,maxmin) "0.7 10"
     set ITKFilters($filter,$param,res) 0.1
     set ITKFilters($filter,$param,text) "Variance"
     set ITKFilters($filter,$param,widget) "scale" 
     set param SetUseImageSpacing
     set ITKFilters($filter,$param) 1
+    set ITKFilters($filter,$param,type) "scalar"
     set ITKFilters($filter,$param,maxmin) "1 0"
     set ITKFilters($filter,$param,text) "Use Image Spacing"
     set ITKFilters($filter,$param,widget) "boolean"
     
-     
+    set filter "MRIBiasFieldCorrectionImageFilter"
+    set ITKFilters($filter,params) "SetTissueClassMeans \
+                                    SetTissueClassSigmas \
+                                    SetUsingSlabIdentification \
+                                    SetUsingInterSliceIntensityCorrection \
+                                    SetVolumeCorrectionMaximumIteration \
+                                    SetInterSliceCorrectionMaximumIteration \
+                                    SetBiasFieldDegree \
+                                    SetSlabNumberOfSamples \
+                                    SetSlicingDirection \
+                                    SetSlabBackgroundMinimumThreshold \
+                                    SetOptimizerGrowthFactor \
+                                    SetOptimizerInitialRadius \
+                                    SetSlabTolerance" 
+
+    set param SetTissueClassMeans
+    set ITKFilters($filter,$param) 100
+    set ITKFilters($filter,$param,type) "darray"
+    set ITKFilters($filter,$param,text) "Tissue Class Means"
+    set ITKFilters($filter,$param,widget) "entry" 
+    set param SetTissueClassSigmas
+    set ITKFilters($filter,$param) 10
+    set ITKFilters($filter,$param,type) "darray"
+    set ITKFilters($filter,$param,text) "Tissue Class Sigmas"
+    set ITKFilters($filter,$param,widget) "entry" 
+    set param SetUsingSlabIdentification
+    set ITKFilters($filter,$param) 1
+    set ITKFilters($filter,$param,type) "scalar"
+    set ITKFilters($filter,$param,maxmin) "1 0"
+    set ITKFilters($filter,$param,text) "Use Slab Identification"
+    set ITKFilters($filter,$param,widget) "boolean"
+    set param SetUsingInterSliceIntensityCorrection
+    set ITKFilters($filter,$param) 1
+    set ITKFilters($filter,$param,type) "scalar"
+    set ITKFilters($filter,$param,maxmin) "1 0"
+    set ITKFilters($filter,$param,text) "Use Inter-Slice Intensity Correction"
+    set ITKFilters($filter,$param,widget) "boolean"
+    set param SetVolumeCorrectionMaximumIteration
+    set ITKFilters($filter,$param) 100
+    set ITKFilters($filter,$param,type) "scalar"
+    set ITKFilters($filter,$param,text) "Volume Correction Maximum Iteration"
+    set ITKFilters($filter,$param,maxmin) "0 1000"
+    set ITKFilters($filter,$param,res) 100
+    set ITKFilters($filter,$param,widget) "scale"
+    set param SetInterSliceCorrectionMaximumIteration
+    set ITKFilters($filter,$param) 100
+    set ITKFilters($filter,$param,type) "scalar"
+    set ITKFilters($filter,$param,text) "Inter-Slice Correction Maximum Iteration"
+    set ITKFilters($filter,$param,maxmin) "0 1000"
+    set ITKFilters($filter,$param,res) 100
+    set ITKFilters($filter,$param,widget) "scale"
+    set param SetBiasFieldDegree
+    set ITKFilters($filter,$param) 3
+    set ITKFilters($filter,$param,type) "scalar"
+    set ITKFilters($filter,$param,text) "Bias Field Degree"
+    set ITKFilters($filter,$param,maxmin) "1 10"
+    set ITKFilters($filter,$param,res) 1
+    set ITKFilters($filter,$param,widget) "scale"
+    set param SetSlabNumberOfSamples
+    set ITKFilters($filter,$param) 10
+    set ITKFilters($filter,$param,type) "scalar"
+    set ITKFilters($filter,$param,text) "Slab Number Of Samples"
+    set ITKFilters($filter,$param,maxmin) "1 100"
+    set ITKFilters($filter,$param,res) 1
+    set ITKFilters($filter,$param,widget) "scale"
+    set param SetSlicingDirection
+    set ITKFilters($filter,$param) 2
+    set ITKFilters($filter,$param,type) "scalar"
+    set ITKFilters($filter,$param,text) "Slicing Direction"
+    set ITKFilters($filter,$param,maxmin) "1 3"
+    set ITKFilters($filter,$param,res) 1
+    set ITKFilters($filter,$param,widget) "scale"
+    set param SetSlabBackgroundMinimumThreshold
+    set ITKFilters($filter,$param) 0
+    set ITKFilters($filter,$param,type) "scalar"
+    set ITKFilters($filter,$param,text) "Slab Background Minimum Threshold"
+    set ITKFilters($filter,$param,maxmin) "0 100"
+    set ITKFilters($filter,$param,res) 1
+    set ITKFilters($filter,$param,widget) "scale"
+    set param SetOptimizerGrowthFactor
+    set ITKFilters($filter,$param) 1.01
+    set ITKFilters($filter,$param,type) "scalar"
+    set ITKFilters($filter,$param,text) "ptimizer Growth Factor"
+    set ITKFilters($filter,$param,maxmin) "1 2"
+    set ITKFilters($filter,$param,res) 0.01
+    set ITKFilters($filter,$param,widget) "scale"
+    set param SetOptimizerInitialRadius
+    set ITKFilters($filter,$param) 0.02
+    set ITKFilters($filter,$param,type) "scalar"
+    set ITKFilters($filter,$param,text) "Optimizer Initial Radius"
+    set ITKFilters($filter,$param,maxmin) "0 1"
+    set ITKFilters($filter,$param,res) 0.01
+    set ITKFilters($filter,$param,widget) "scale"
+    set param SetSlabTolerance
+    set ITKFilters($filter,$param) 0
+    set ITKFilters($filter,$param,type) "scalar"
+    set ITKFilters($filter,$param,text) "Slab Tolerance"
+    set ITKFilters($filter,$param,maxmin) "0 10"
+    set ITKFilters($filter,$param,res) 0.1
+    set ITKFilters($filter,$param,widget) "scale"
 }
 
 
@@ -341,7 +448,7 @@ proc ITKFiltersBuildGUI {} {
     set fMain $Module(ITKFilters,fMain)
     set f $fMain
     
-    foreach frame "Top Middle Floating Bottom" {
+    foreach frame "Top Middle Bottom Floating" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
 
         pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
@@ -405,7 +512,7 @@ proc ITKFiltersBuildGUI {} {
     
     set f $fMain.fFloating
     set f $fMain.fFloating
-    $f config -height 100
+    $f config -height 500
     foreach filter $ITKFilters(filters) {
         frame $f.f$filter -bg $Gui(activeWorkspace)
         #for raising one frame at a time
@@ -489,7 +596,16 @@ proc vtkITKGUIFilter { filter } {
                 pack $fwidget.l$param $fwidget.e$param $fwidget.s$param \
                     -side left -padx $Gui(pad) -pady 0
             }
-        
+            "entry" {
+                eval {label $fwidget.l$param -text $ITKFilters($filter,$param,text)\
+                    -width 12 -justify right } $Gui(WLA)
+
+                eval {entry $fwidget.e$param -justify right -width 40 \
+                    -textvariable ITKFilters($filter,$param)  } $Gui(WEA)
+
+                pack $fwidget.l$param $fwidget.e$param \
+                    -side left -padx $Gui(pad) -pady 0
+            }
             "boolean" {
                 DevAddLabel $fwidget.l$param $ITKFilters($filter,$param,text)
 
@@ -599,9 +715,21 @@ proc ITKFiltersApply {} {
     vtkITK$filter _filter
 
     foreach param $ITKFilters($filter,params) {
-        _filter $param $ITKFilters($filter,$param)
+        switch -exact -- $ITKFilters($filter,$param,type) {
+            "scalar" {
+                _filter $param $ITKFilters($filter,$param)
+            }
+            "darray" {
+                catch "vals Delete"
+                vtkDoubleArray vals
+                foreach val $ITKFilters($filter,$param) {
+                    vals InsertNextValue $val
+                }
+                _filter $param vals
+                vals Delete
+            }
+        }
     }
-
     _filter SetInput [_cast GetOutput]
 
 
