@@ -62,7 +62,7 @@ proc fMRIEnginePlotTimecourse {} {
     global fMRIEngine
 
     # if we cannot get voxel timecourse, do nothing.
-    if {$fMRIEngine(timecoursePlot) == "voxel" && [fMRIEngineGetVoxelTimecourse] == 1} {
+    if {$fMRIEngine(timecoursePlot) == "Voxel" && [fMRIEngineGetVoxelTimecourse] == 1} {
         return
     }
 
@@ -87,9 +87,9 @@ proc fMRIEngineMakeTimecoursePlotWindow {} {
 
     # Checks time course plotting option
     if {$fMRIEngine(tcPlottingOption) == "Long"} {
-        set plotTitle "Timecourse Plot"
+        set plotTitle "$fMRIEngine(timecoursePlot) Timecourse Plot"
     } else {    
-        set plotTitle "Peristimulus Histogram"
+        set plotTitle "$fMRIEngine(timecoursePlot) Peristimulus Histogram"
     }
 
     set plotGeometry "+335+200"
@@ -291,7 +291,7 @@ proc fMRIEngineDrawPlotShort {} {
         $fMRIEngine(timeCourseGraph) marker delete $fMRIEngine(voxelIndices)
     }
  
-    if {$fMRIEngine(timecoursePlot) == "voxel"} {
+    if {$fMRIEngine(timecoursePlot) == "Voxel"} {
         set fMRIEngine(voxelIndices) voxelIndices
         $fMRIEngine(timeCourseGraph) marker create text \
             -text "Voxel: ($fMRIEngine(voxelLocation,x),$fMRIEngine(voxelLocation,y),$fMRIEngine(voxelLocation,z))" \
@@ -737,7 +737,7 @@ proc fMRIEngineDrawPlotLong {} {
         -symbol none -color blue -linewidth 1 
 
     # Voxel indices
-    if {$fMRIEngine(timecoursePlot) == "voxel"} {
+    if {$fMRIEngine(timecoursePlot) == "Voxel"} {
         set fMRIEngine(voxelIndices) voxelIndices
         $fMRIEngine(timeCourseGraph) marker create text \
             -text "Voxel: ($fMRIEngine(voxelLocation,x),$fMRIEngine(voxelLocation,y),$fMRIEngine(voxelLocation,z))" \

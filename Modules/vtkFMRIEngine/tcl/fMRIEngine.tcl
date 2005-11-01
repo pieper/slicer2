@@ -155,7 +155,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.17 $} {$Date: 2005/11/01 17:52:54 $}]
+        {$Revision: 1.18 $} {$Date: 2005/11/01 20:45:22 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -558,7 +558,7 @@ proc fMRIEngineProcessMouseEvent {x y} {
 
         set fMRIEngine(voxelLocation,x) $x
         set fMRIEngine(voxelLocation,y) $y
-        set fMRIEngine(timecoursePlot) "voxel"
+        set fMRIEngine(timecoursePlot) "Voxel"
         fMRIEnginePlotTimecourse
     } else {
     }
