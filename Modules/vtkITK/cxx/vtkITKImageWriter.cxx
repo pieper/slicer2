@@ -23,11 +23,12 @@ void ITKWriteVTKImage(vtkImageData *inputImage, char *fileName,
 
   ijkToRasMatrix->Transpose();
 
-  ImageType::DirectionType direction;
+  typename ImageType::DirectionType direction;
   direction.SetIdentity();
 
   double mag[3];
-  for (int i=0; i<3; i++) {
+  int i;
+  for (i=0; i<3; i++) {
     // normalize vectors
     mag[i] = 0;
     for (int j=0; j<3; j++) {
@@ -42,22 +43,23 @@ void ITKWriteVTKImage(vtkImageData *inputImage, char *fileName,
     //}
   }
   for ( i=0; i<3; i++) {
-    for (int j=0; j<3; j++) {
+    int j;
+    for (j=0; j<3; j++) {
       direction[j][i] =  ijkToRasMatrix->GetElement(i,j)/mag[i];
     }
   }
   
   // itk import for input itk images
-  typedef itk::VTKImageImport<ImageType> ImageImportType;
-  ImageImportType::Pointer itkImporter = ImageImportType::New();
+  typedef typename itk::VTKImageImport<ImageType> ImageImportType;
+  typename ImageImportType::Pointer itkImporter = ImageImportType::New();
 
   // vtk export for  vtk image
   vtkImageExport* vtkExporter = vtkImageExport::New();  
   vtkImageFlip* vtkFlip = vtkImageFlip::New();
 
   // writer 
-  typedef itk::ImageFileWriter<ImageType> ImageWriterType;      
-  ImageWriterType::Pointer   itkImageWriter =  ImageWriterType::New();
+  typedef typename itk::ImageFileWriter<ImageType> ImageWriterType;      
+  typename ImageWriterType::Pointer   itkImageWriter =  ImageWriterType::New();
 
   // set pipeline for the image
   vtkFlip->SetInput( inputImage );
