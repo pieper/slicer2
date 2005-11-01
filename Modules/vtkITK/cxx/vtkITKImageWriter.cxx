@@ -24,6 +24,7 @@ void ITKWriteVTKImage(vtkImageData *inputImage, char *fileName,
   ijkToRasMatrix->Transpose();
 
   typename ImageType::DirectionType direction;
+  typename ImageType::PointType origin;
   direction.SetIdentity();
 
   double mag[3];
@@ -43,6 +44,7 @@ void ITKWriteVTKImage(vtkImageData *inputImage, char *fileName,
     //}
   }
   for ( i=0; i<3; i++) {
+    origin[i] =  ijkToRasMatrix->GetElement(3,i);
     int j;
     for (j=0; j<3; j++) {
       direction[j][i] =  ijkToRasMatrix->GetElement(i,j)/mag[i];
@@ -74,6 +76,8 @@ void ITKWriteVTKImage(vtkImageData *inputImage, char *fileName,
   // write image
   itkImageWriter->SetInput(itkImporter->GetOutput());
   itkImporter->GetOutput()->SetDirection(direction);
+  itkImporter->GetOutput()->Update();
+  itkImporter->GetOutput()->SetOrigin(origin);
   itkImageWriter->SetFileName( fileName );
   itkImageWriter->Update();
 
