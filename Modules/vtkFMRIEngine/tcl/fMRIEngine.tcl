@@ -155,7 +155,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.16 $} {$Date: 2005/10/27 19:45:29 $}]
+        {$Revision: 1.17 $} {$Date: 2005/11/01 17:52:54 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -551,6 +551,11 @@ proc fMRIEngineProcessMouseEvent {x y} {
     if {$fMRIEngine(currentTab) == "ROI"} {
         fMRIEngineClickROI $x $y
     } elseif {$fMRIEngine(currentTab) == "Inspect"} {
+        if {$fMRIEngine(tcPlottingOption) == ""} {
+            DevErrorWindow "Timecourse or Peristimulus histogram?"
+            return  
+        }
+
         set fMRIEngine(voxelLocation,x) $x
         set fMRIEngine(voxelLocation,y) $y
         set fMRIEngine(timecoursePlot) "voxel"
