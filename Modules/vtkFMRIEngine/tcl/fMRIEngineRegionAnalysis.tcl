@@ -440,7 +440,7 @@ proc fMRIEngineBuildUIForROIActivation {parent} {
     # Make label map 
     #---------------------------------
     set f $parent.fTop
-    DevAddButton $f.bApply "Create label map from activation" "fMRIEngineCreateLabelMap" 30 
+    DevAddButton $f.bApply "Create label map from activation" "fMRIEngineCreateLabelMap" 33 
     pack $f.bApply -side top -pady 1 -padx 5
 }
 
@@ -691,7 +691,7 @@ proc fMRIEngineComputeROITStats {} {
 
     set count [fMRIEngine(actROIStats) GetCount] 
     if {$count < 1} {
-        DevErrorWindow "No region has been selected."
+        DevErrorWindow "No label has been selected."
         return 1
     }
 
@@ -823,7 +823,7 @@ proc fMRIEnginePlotRegionTimecourse {} {
 
     fMRIEngine(actEstimator) SetRegionVoxels $voxels
     set fMRIEngine(timecourse) [fMRIEngine(actEstimator) GetRegionTimeCourse] 
-    set fMRIEngine(timecoursePlot) "region"
+    set fMRIEngine(timecoursePlot) "Region"
     fMRIEnginePlotTimecourse 
 }
 
