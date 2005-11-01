@@ -440,9 +440,8 @@ proc fMRIEngineBuildUIForROIActivation {parent} {
     # Make label map 
     #---------------------------------
     set f $parent.fTop
-    DevAddButton $f.bApply "Create label map from activation" "fMRIEngineCreateLabelMap" 26 
+    DevAddButton $f.bApply "Create label map from activation" "fMRIEngineCreateLabelMap" 30 
     pack $f.bApply -side top -pady 1 -padx 5
- 
 }
 
 
@@ -519,7 +518,7 @@ proc fMRIEngineBuildUIForROIStats {parent} {
     pack $f.r$param -side top -pady 2 
 
     set f $parent.fPlot.fPlot
-    DevAddButton $f.bPlot "Plot timecourse" "fMRIEnginePlotRegionTimecourse" 20 
+    DevAddButton $f.bPlot "Plot time series" "fMRIEnginePlotRegionTimecourse" 20 
     pack $f.bPlot -side top -pady 5 -padx 1 
     set fMRIEngine(tcPlottingOption) ""
 
@@ -690,7 +689,13 @@ proc fMRIEngineComputeROITStats {} {
     fMRIEngine(actROIStats) SetLabel 16 
     fMRIEngine(actROIStats) Update 
 
-    set fMRIEngine(t,count) [fMRIEngine(actROIStats) GetCount] 
+    set count [fMRIEngine(actROIStats) GetCount] 
+    if {$count < 1} {
+        DevErrorWindow "No region has been selected."
+        return 1
+    }
+
+    set fMRIEngine(t,count) $count 
     set fMRIEngine(t,max)   [fMRIEngine(actROIStats) GetMax] 
     set fMRIEngine(t,min)   [fMRIEngine(actROIStats) GetMin] 
     set fMRIEngine(t,mean)  [fMRIEngine(actROIStats) GetMean] 
@@ -779,6 +784,11 @@ proc fMRIEnginePlotROIStats {type} {
 proc fMRIEnginePlotRegionTimecourse {} {
     global fMRIEngine Slice Volume
 
+    if {$fMRIEngine(tcPlottingOption) == ""} {
+        DevErrorWindow "Timecourse or Peristimulus histogram?"
+        return  
+    }
+
     set nId $Volume(idNone)
     set lId $nId 
     foreach s $Slice(idList) {
@@ -788,7 +798,7 @@ proc fMRIEnginePlotRegionTimecourse {} {
     }
 
     if {$nId == $lId} {
-        DevErrorWindow "Your label map is not visible."
+        DevErrorWindow "Label map is not visible."
         return  
     }
 
@@ -804,12 +814,16 @@ proc fMRIEnginePlotRegionTimecourse {} {
     fMRIEngine(actROIStats) AddInput [Volume($lId,vol) GetOutput]
     fMRIEngine(actROIStats) SetLabel 16 
     fMRIEngine(actROIStats) Update 
+
     set voxels [fMRIEngine(actROIStats) GetRegionVoxels]
+    if {$voxels == ""} {
+        DevErrorWindow "No region has been selected."
+        return
+    }
 
     fMRIEngine(actEstimator) SetRegionVoxels $voxels
     set fMRIEngine(timecourse) [fMRIEngine(actEstimator) GetRegionTimeCourse] 
     set fMRIEngine(timecoursePlot) "region"
- 
     fMRIEnginePlotTimecourse 
 }
 
