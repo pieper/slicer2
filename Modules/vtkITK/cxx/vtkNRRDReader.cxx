@@ -21,7 +21,7 @@
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.16 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.17 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -330,7 +330,13 @@ void vtkNRRDReader::ExecuteInformation()
 
    vtkMatrix4x4::Invert(IjkToRasMatrix, RasToIjkMatrix);
    for (i=0; i < this->nrrd->dim; i++) {
-       RasToIjkMatrix->SetElement(i, 3, (dataExtent[2*i+1] - dataExtent[2*i])/2.0);
+     if ( AIR_EXISTS(this->nrrd->axis[i].min) ) { // is the min NaN?
+       origins[i] = this->nrrd->axis[i].min;
+     }
+     else {
+       origins[i] = (dataExtent[2*i+1] - dataExtent[2*i])/2.0;
+     }
+     RasToIjkMatrix->SetElement(i, 3, origins[i]);
    }
    RasToIjkMatrix->SetElement(3,3,1.0);
    IjkToRasMatrix->Delete();
