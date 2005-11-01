@@ -127,20 +127,22 @@ vtkFloatArray *vtkActivationEstimator::GetRegionTimeCourse()
     this->RegionTimeCourse->SetNumberOfComponents(1);
 
     short *val;
-    int size = this->RegionTimeCourse->GetNumberOfTuples();
+    int size = this->RegionVoxels->GetNumberOfTuples();
+
     for (int ii = 0; ii < this->NumberOfInputs; ii++)
     {
         int total = 0;
         for (int jj = 0; jj < size; jj++)
         {
-            int x = (int)this->TimeCourse->GetComponent(jj, 0);
-            int y = (int)this->TimeCourse->GetComponent(jj, 1);
-            int z = (int)this->TimeCourse->GetComponent(jj, 2);
+            short x = (short)this->RegionVoxels->GetComponent(jj, 0);
+            short y = (short)this->RegionVoxels->GetComponent(jj, 1);
+            short z = (short)this->RegionVoxels->GetComponent(jj, 2);
+
             val = (short *)this->GetInput(ii)->GetScalarPointer(x, y, z); 
             total += *val;
         }
 
-        this->TimeCourse->SetComponent(ii, 0, (short)(total/size)); 
+        this->RegionTimeCourse->SetComponent(ii, 0, (short)(total/size)); 
     }
 
     return this->RegionTimeCourse;

@@ -116,13 +116,10 @@ void vtkActivationRegionStats::SimpleExecute(vtkImageData *inputs, vtkImageData*
 
         // Array holding the indices of all voxels in
         // the defined ROI.
-        if (this->Indices == NULL)
-        {
-            this->Indices = vtkShortArray::New();
-            this->Indices->SetNumberOfTuples(dim[0]*dim[1]*dim[2]);
-            this->Indices->SetNumberOfComponents(3);
-        }
-
+        vtkShortArray *tmpArray = vtkShortArray::New();
+        tmpArray->SetNumberOfTuples(dim[0]*dim[1]*dim[2]);
+        tmpArray->SetNumberOfComponents(3);
+        
         int indx = 0;
         // Voxel iteration through the entire image volume
         for (int kk = 0; kk < dim[2]; kk++)
@@ -135,14 +132,43 @@ void vtkActivationRegionStats::SimpleExecute(vtkImageData *inputs, vtkImageData*
                         = (short *)this->GetInput(0)->GetScalarPointer(ii, jj, kk);
                     if (*l == this->Label)
                     {
-                        this->Indices->SetComponent(indx, 0, ii);
-                        this->Indices->SetComponent(indx, 1, jj);
-                        this->Indices->SetComponent(indx++, 2, kk);
+                        tmpArray->SetComponent(indx, 0, (short)ii);
+                        tmpArray->SetComponent(indx, 1, (short)jj);
+                        tmpArray->SetComponent(indx, 2, (short)kk);
+                        indx++;
                     }
                 }
             } 
         }
-        this->Indices->Resize(indx);
+
+        if (indx > 0) 
+        {
+            // Array holding the indices of all voxels in
+            // the defined ROI.
+            if (this->Indices != NULL)
+            {
+                this->Indices->Delete();
+            }
+            this->Indices = vtkShortArray::New();
+            this->Indices->SetNumberOfTuples(indx);
+            this->Indices->SetNumberOfComponents(3);
+
+            for (int ii = 0; ii < indx; ii++) {
+                short c1 = (short)tmpArray->GetComponent(ii, 0);
+                short c2 = (short)tmpArray->GetComponent(ii, 1);
+                short c3 = (short)tmpArray->GetComponent(ii, 2);
+
+                // always use InsertTuple3, instead of SetTuple3
+                // since the former handles memory allocation if needed.
+                this->Indices->InsertTuple3(ii, c1, c2, c3);
+            }
+            tmpArray->Delete();
+        }
+        else
+        {
+            this->Indices->Delete();
+            this->Indices = NULL;
+        }
     }
     // this->NumberOfInputs == 2
     else
