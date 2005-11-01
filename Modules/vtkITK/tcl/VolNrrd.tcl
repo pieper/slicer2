@@ -266,6 +266,12 @@ proc VolNrrdApply {} {
 
     set imdata [Volume($i,vol,rw) GetOutput]
 
+    if {[catch "$imdata UpdateInformation"]} {
+        DevErrorWindow "Cannot read file $Volume(VolNrrd,FileName)"
+        MainMrmlDeleteNode Volume $i
+        return;
+    }
+
     $imdata UpdateInformation
 
     if {$Module(verbose) == 1} {

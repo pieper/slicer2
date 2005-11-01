@@ -277,7 +277,7 @@ proc VolGenericApply {} {
     vtkITKArchetypeImageSeriesReader genreader
     genreader SetArchetype $Volume(VolGeneric,FileName)
     genreader SetOutputScalarTypeToNative
-#    genreader SetDesiredCoordinateOrientationToNative
+    genreader SetDesiredCoordinateOrientationToNative
    
     # flip the image data going from ITK to VTK
     catch "Volume($i,vol,rw)  Delete"
@@ -360,9 +360,7 @@ proc VolGenericApply {} {
     Volume($i,node) SetScalarType [$imdata GetScalarType]
     Volume($i,node) SetDimensions [lindex $Volume(dimensions) 0] [lindex $Volume(dimensions) 1]
 
-
-    Volume($i,node) ComputeScanOrderFromRasToIjk [genreader GetRasToIjkMatrix]
-    set Volume(scanOrder)  [Volume($i,node) GetScanOrder]
+    set Volume(scanOrder)  [Volume($i,node) ComputeScanOrderFromRasToIjk [genreader GetRasToIjkMatrix]]
     puts "Scan order: $Volume(scanOrder)"
     Volume($i,node) SetScanOrder $Volume(scanOrder)
 
@@ -376,35 +374,7 @@ proc VolGenericApply {} {
     Ijk_matrix DeepCopy [genreader GetRasToIjkMatrix]
     Ijk_matrix Invert
 
-    # first top left - start at zero, and add origin to all later
-    set ftl "0 0 0"
-    # first top right = width * row vector
-    set ftr [lrange [Ijk_matrix MultiplyPoint [lindex $dims 0] 0 0 0] 0 2]
-    # first bottom right = ftr + height * column vector
-    set column_vec [lrange [Ijk_matrix MultiplyPoint 0 [lindex $dims 1] 0 0] 0 2]
-    set fbr ""
-    foreach ftr_e $ftr column_vec_e $column_vec {
-        lappend fbr [expr $ftr_e + $column_vec_e]
-    }
-    # last top left = ftl + slice vector  (and ftl is zero)
-    set ltl [lrange [Ijk_matrix MultiplyPoint 0 0 [lindex $dims 2] 0] 0 2]
-
-    puts "ftl ftr fbr ltl"
-    puts "$ftl   $ftr   $fbr   $ltl"
-
-    # add the origin offset 
-    set origin [lrange [Ijk_matrix MultiplyPoint 0 0 0 1] 0 2]
-    foreach corner "ftl ftr fbr ltl" {
-        set new_corner ""
-        foreach corner_e [set $corner] origin_e $origin {
-            lappend new_corner [expr $corner_e + $origin_e]
-        }
-        set $corner $new_corner
-    }
-
-    puts "ftl ftr fbr ltl"
-    puts "$ftl   $ftr   $fbr   $ltl"
-    eval Volume($i,node) ComputeRasToIjkFromCorners "0 0 0" $ftl $ftr $fbr "0 0 0" $ltl
+    VolumesComputeNodeMatricesFromIjkToRasMatrix $i Ijk_matrix $dims
 
     Ijk_matrix Delete
     genreader Delete
@@ -523,7 +493,7 @@ proc VolGenericReaderProc {v} {
     genreader SetArchetype [Volume($v,node) GetFullPrefix]
     genreader SetOutputScalarType [Volume($v,node) GetScalarType]
     genreader SetOutputScalarTypeToNative
-#    genreader SetDesiredCoordinateOrientationToNative
+    genreader SetDesiredCoordinateOrientationToNative
 
     catch "flip Delete"
     vtkImageFlip flip
