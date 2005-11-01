@@ -113,7 +113,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.112 $} {$Date: 2005/10/29 20:04:19 $}]
+            {$Revision: 1.113 $} {$Date: 2005/11/01 19:55:47 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -2406,3 +2406,48 @@ proc VolumesVtkToSlicerScalarType {type} {
     }
     return ""
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC VolumesComputeNodeMatricesFromIjkToRasMatrix
+#  ComputeNodeMatricesFromIjkToRasMatrix
+# .ARGS
+#  node id,  IjkToRasMatrix, dimensions list
+# .END
+#-------------------------------------------------------------------------------
+proc VolumesComputeNodeMatricesFromIjkToRasMatrix {volumeNode ijkToRasMatrix dims} {
+
+    # first top left - start at zero, and add origin to all later
+    set ftl "0 0 0"
+
+    # first top right = width * row vector
+    set ftr [lrange [$ijkToRasMatrix MultiplyPoint [expr [lindex $dims 0]] 0 0 0] 0 2]
+
+    # first bottom right = ftr + height * column vector
+    set column_vec [lrange [$ijkToRasMatrix MultiplyPoint 0 [expr [lindex $dims 1]] 0 0] 0 2]
+    set fbr ""
+    foreach ftr_e $ftr column_vec_e $column_vec {
+        lappend fbr [expr $ftr_e + $column_vec_e]
+    }
+
+    # last top left = ftl + slice vector  (and ftl is zero)
+    set ltl [lrange [$ijkToRasMatrix MultiplyPoint 0 0 [expr [lindex $dims 2]] 0] 0 2]
+
+    puts "ftl ftr fbr ltl"
+    puts "$ftl   $ftr   $fbr   $ltl"
+
+    # add the origin offset 
+    set origin [lrange [$ijkToRasMatrix MultiplyPoint 0 0 0 1] 0 2]
+    foreach corner "ftl ftr fbr ltl" {
+        set new_corner ""
+        foreach corner_e [set $corner] origin_e $origin {
+            lappend new_corner [expr $corner_e + $origin_e]
+        }
+        set $corner $new_corner
+    }
+
+    puts "ftl ftr fbr ltl"
+    puts "$ftl   $ftr   $fbr   $ltl"
+    eval ::Volume($volumeNode,node) ComputeRasToIjkFromCorners "0 0 0" $ftl $ftr $fbr "0 0 0" $ltl 0
+}
+
