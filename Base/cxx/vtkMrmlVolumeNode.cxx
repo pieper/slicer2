@@ -894,7 +894,7 @@ void vtkMrmlVolumeNode::ComputeRasToIjkFromScanOrder(char *order)
 //----------------------------------------------------------------------------
 int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
   vtkFloatingPointType *fc, vtkFloatingPointType *ftl, vtkFloatingPointType *ftr, vtkFloatingPointType *fbr,
-  vtkFloatingPointType *lc, vtkFloatingPointType *ltl)
+  vtkFloatingPointType *lc, vtkFloatingPointType *ltl, vtkFloatingPointType zoffset)
 {
   // Note: fc and lc are not used.
 
@@ -1024,22 +1024,22 @@ int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
   // ftl in Ijk coordinates
   Ijk_->SetElement(0,0,0.0-offset);
   Ijk_->SetElement(1,0,0.0-offset);  
-  Ijk_->SetElement(2,0,0.5-offset);  // Not 0.0
+  Ijk_->SetElement(2,0,zoffset-offset);  // Not 0.0
   Ijk_->SetElement(3,0,1.0);  
   // ftr in Ijk coordinates
   Ijk_->SetElement(0,1,(vtkFloatingPointType)nx-offset);  
   Ijk_->SetElement(1,1,0.0-offset);  
-  Ijk_->SetElement(2,1,0.5-offset);  // Not 0.0
+  Ijk_->SetElement(2,1,zoffset-offset);  // Not 0.0
   Ijk_->SetElement(3,1,1.0);  
   // fbr in Ijk coordinates
   Ijk_->SetElement(0,2,(vtkFloatingPointType)nx-offset);  
   Ijk_->SetElement(1,2,(vtkFloatingPointType)ny-offset);  
-  Ijk_->SetElement(2,2,0.5-offset);  // Not 0.0
+  Ijk_->SetElement(2,2,zoffset-offset);  // Not 0.0
   Ijk_->SetElement(3,2,1.0);  
   // ltl in Ijk coordinates
   Ijk_->SetElement(0,3,0.0-offset);  
   Ijk_->SetElement(1,3,0.0-offset);  
-  Ijk_->SetElement(2,3,(vtkFloatingPointType)(nz-1)+0.5-offset); // Not nz-1
+  Ijk_->SetElement(2,3,(vtkFloatingPointType)(nz-1)+zoffset-offset); // Not nz-1
   Ijk_->SetElement(3,3,1.0);  
 
   // Pack Ras matrix with "Corner Points"

@@ -292,8 +292,16 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
 
   // Description:
   // Compute the rasToIjkMatrix from the corner points of the volume.
+
   int ComputeRasToIjkFromCorners(vtkFloatingPointType *fc, vtkFloatingPointType *ftl, vtkFloatingPointType *ftr, 
-    vtkFloatingPointType *fbr, vtkFloatingPointType *lc, vtkFloatingPointType *ltl);
+    vtkFloatingPointType *fbr, vtkFloatingPointType *lc, vtkFloatingPointType *ltl, vtkFloatingPointType zoffset);
+
+  int ComputeRasToIjkFromCorners(vtkFloatingPointType *fc, vtkFloatingPointType *ftl, vtkFloatingPointType *ftr, 
+                                 vtkFloatingPointType *fbr, vtkFloatingPointType *lc, vtkFloatingPointType *ltl)
+  {
+    return ComputeRasToIjkFromCorners( fc,  ftl,  ftr, fbr,  lc,  ltl, 0.5);
+  };
+
   int ComputeRasToIjkFromCorners(
     vtkFloatingPointType fcR,  vtkFloatingPointType fcA,  vtkFloatingPointType fcS,
     vtkFloatingPointType ftlR, vtkFloatingPointType ftlA, vtkFloatingPointType ftlS, 
@@ -309,6 +317,23 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
     lc[0]=lcR; lc[1]=lcA; lc[2]=lcS;
     ltl[0]=ltlR; ltl[1]=ltlA; ltl[2]=ltlS;
     return(this->ComputeRasToIjkFromCorners(fc, ftl, ftr, fbr, lc, ltl));};
+
+int ComputeRasToIjkFromCorners(
+    vtkFloatingPointType fcR,  vtkFloatingPointType fcA,  vtkFloatingPointType fcS,
+    vtkFloatingPointType ftlR, vtkFloatingPointType ftlA, vtkFloatingPointType ftlS, 
+    vtkFloatingPointType ftrR, vtkFloatingPointType ftrA, vtkFloatingPointType ftrS, 
+    vtkFloatingPointType fbrR, vtkFloatingPointType fbrA, vtkFloatingPointType fbrS, 
+    vtkFloatingPointType lcR,  vtkFloatingPointType lcA,  vtkFloatingPointType lcS, 
+    vtkFloatingPointType ltlR, vtkFloatingPointType ltlA, vtkFloatingPointType ltlS,
+    vtkFloatingPointType zoffset) {
+    vtkFloatingPointType fc[3], ftl[3], ftr[3], fbr[3], lc[3], ltl[3];
+    fc[0]=fcR; fc[1]=fcA; fc[2]=fcS;
+    ftl[0]=ftlR; ftl[1]=ftlA; ftl[2]=ftlS;
+    ftr[0]=ftrR; ftr[1]=ftrA; ftr[2]=ftrS;
+    fbr[0]=fbrR; fbr[1]=fbrA; fbr[2]=fbrS;
+    lc[0]=lcR; lc[1]=lcA; lc[2]=lcS;
+    ltl[0]=ltlR; ltl[1]=ltlA; ltl[2]=ltlS;
+    return(this->ComputeRasToIjkFromCorners(fc, ftl, ftr, fbr, lc, ltl, zoffset));};
 
   // Description:
   // The matrix that transforms a point in RAS space to IJK space. 
