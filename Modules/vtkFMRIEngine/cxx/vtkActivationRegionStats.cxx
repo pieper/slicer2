@@ -141,6 +141,11 @@ void vtkActivationRegionStats::SimpleExecute(vtkImageData *inputs, vtkImageData*
             } 
         }
 
+        if (this->Indices != NULL)
+        {
+            this->Indices->Delete();
+            this->Indices = NULL;
+        }
         if (indx > 0) 
         {
             // Array holding the indices of all voxels in
@@ -162,13 +167,8 @@ void vtkActivationRegionStats::SimpleExecute(vtkImageData *inputs, vtkImageData*
                 // since the former handles memory allocation if needed.
                 this->Indices->InsertTuple3(ii, c1, c2, c3);
             }
-            tmpArray->Delete();
         }
-        else
-        {
-            this->Indices->Delete();
-            this->Indices = NULL;
-        }
+        tmpArray->Delete();
     }
     // this->NumberOfInputs == 2
     else
