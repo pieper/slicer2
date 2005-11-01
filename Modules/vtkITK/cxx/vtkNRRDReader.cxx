@@ -21,7 +21,7 @@
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.17 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.18 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -304,13 +304,6 @@ void vtkNRRDReader::ExecuteInformation()
        if ( !AIR_EXISTS(spacings[i]) ) { // is the spacing NaN?
          spacings[i] = 1.0;
        }
-       if ( AIR_EXISTS(this->nrrd->axis[i].min) ) { // is the min NaN?
-         origins[i] = this->nrrd->axis[i].min;
-       }
-       else { // If min has not been set, assume a default.
-         // An ITK image _must_ have a valid origin.
-         origins[i] = 0;
-       }
        
        // get IJK to RAS direction vector
        for (int j=0; j<this->nrrd->spaceDim; j++) {
@@ -328,17 +321,17 @@ void vtkNRRDReader::ExecuteInformation()
      }
    }
 
-   vtkMatrix4x4::Invert(IjkToRasMatrix, RasToIjkMatrix);
    for (i=0; i < this->nrrd->dim; i++) {
-     if ( AIR_EXISTS(this->nrrd->axis[i].min) ) { // is the min NaN?
-       origins[i] = this->nrrd->axis[i].min;
+     if (AIR_EXISTS(nrrd->spaceOrigin[i])) {
+       origins[i] = nrrd->spaceOrigin[i];
      }
      else {
        origins[i] = (dataExtent[2*i+1] - dataExtent[2*i])/2.0;
      }
-     RasToIjkMatrix->SetElement(i, 3, origins[i]);
+     IjkToRasMatrix->SetElement(i, 3, origins[i]);
    }
-   RasToIjkMatrix->SetElement(3,3,1.0);
+   IjkToRasMatrix->SetElement(3,3,1.0);
+   vtkMatrix4x4::Invert(IjkToRasMatrix, RasToIjkMatrix);
    IjkToRasMatrix->Delete();
 
    this->SetDataSpacing(spacings);
