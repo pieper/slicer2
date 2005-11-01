@@ -4,14 +4,14 @@ exec tclsh "$0" "$@"
 
 
 #
-# slicerput - sp 2005-90-23
+# slicerput - sp 2005-09-23
 # - communicates with slicerd
 # - reads nrrd streams from stdin and puts them into slicer
 #
 
 array set nrrd_to_vtk_types { char 2 "unsigned char" 3 short 4 ushort 5 int 6 uint 7 float 10 double 11 }
 
-set name [lindex argv 1]
+set name [lindex $argv 0]
 if { $name == "" } {
     set name "from_slicerput"
 }
@@ -41,13 +41,13 @@ while { [gets stdin line] > 0 } {
             }
         }
         "sizes:*" {
-            set dimensions [lrange $line 1 3]
+            set dimensions [lrange $line 1 end]
         }
         "space directions:*" {
-            set space_directions [lrange $line 2 4]
+            set space_directions [lrange $line 2 end]
         }
         "space origin:*" {
-            set space_origin [lindex $line 2]
+            set space_origin [lrange $line 2 end]
         }
     }
 }
