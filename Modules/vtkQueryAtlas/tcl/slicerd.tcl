@@ -233,6 +233,7 @@ proc slicerd_parse_space_directions {volid space_origin space_directions} {
 puts "SetSpacing $spacei $spacej $spacek"
 
     ::Volume($volid,node) SetSpacing $spacei $spacej $spacek
+    [::Volume($volid,vol) GetOutput] SetSpacing $spacei $spacej $spacek
 
 puts $unit_space_directions
 
