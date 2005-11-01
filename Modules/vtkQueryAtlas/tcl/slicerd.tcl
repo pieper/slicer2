@@ -2,7 +2,26 @@
 #
 # experimental slicer daemon - sp 2005-09-23
 # - meant to be as simple as possible
+# - only one server socket listening at a time
+# - checks with the user on first connection to see if it's okay to accept connections
 #
+
+
+set __comment {
+
+    # a noop -- just copy image onto itself
+    c:/pieper/bwh/slicer2/latest/slicer2/Modules/vtkQueryAtlas/tcl/slicerget.tcl 1 \
+        | c:/pieper/bwh/slicer2/latest/slicer2/Modules/vtkQueryAtlas/tcl/slicerput.tcl noop
+
+    # put external data into slicer
+    unu 1op abs -i d:/data/bunny-small.nrrd | c:/pieper/bwh/slicer2/latest/slicer2/Modules/vtkQueryAtlas/tcl/slicerput.tcl 
+
+    # run an external command and put the data back into slicer
+    c:/pieper/bwh/slicer2/latest/slicer2/Modules/vtkQueryAtlas/tcl/slicerget.tcl 1 \
+        | unu 1op abs -i - \
+        | c:/pieper/bwh/slicer2/latest/slicer2/Modules/vtkQueryAtlas/tcl/slicerput.tcl abs
+
+}
 
 # this package contains the vtkTclHelper
 package require vtkQueryAtlas
@@ -13,18 +32,21 @@ package require vtkQueryAtlas
 #
 proc slicerd_start { {port 18943} } {
 
-    set sock [socket -server slicerd_sock_cb $port]
-
-    return $sock
+    set ::SLICERD(serversock) [socket -server slicerd_sock_cb $port]
 }
 
 #
 # shuts down the socket
+# - frees the tcl helper if it exists
 #
-proc slicerd_stop { sock } {
+proc slicerd_stop { } {
 
-    set _tcl ::tcl_$sock
+    if { ![info exists SLICERD(serversock)] } {
+        return
+    }
+    set _tcl ::tcl_$SLICERD(serversock)
     catch "$_tcl Delete"
+    catch "unset ::SLICERD(approved)"
 
     close $sock
 }
@@ -33,6 +55,18 @@ proc slicerd_stop { sock } {
 # accepts new connections
 #
 proc slicerd_sock_cb { sock addr port } {
+
+    if { ![info exists ::SLICERD(approved)] } {
+        set ::SLICERD(approved) [tk_messageBox \
+                    -type yesno \
+                    -title "Slicer Daemon" \
+                    -message "Connection Attemped from $addr.\n\nAllow external connections?"]
+    }
+
+    if { $::SLICERD(approved)  == "no" } {
+        close $sock
+        return
+    }
 
     #
     # create a tcl helper for this socket
@@ -89,18 +123,58 @@ proc slicerd_sock_fileevent {sock} {
                 } 
                 set volid $ids ;# there's only one and it's our target
             }
+
+            # calculate the space directions and origin
+            catch "export_matrix Delete"
+            vtkMatrix4x4 export_matrix
+            eval export_matrix DeepCopy [Volume($volid,node) GetRasToVtkMatrix]
+            export_matrix Invert
+            export_matrix Transpose
+            set space_origin [format "(%g, %g, %g)" \
+                [export_matrix GetElement 3 0]\
+                [expr -1. * [export_matrix GetElement 3 1]]\
+                [export_matrix GetElement 3 2] ]
+            set space_directions [format "(%g, %g, %g) (%g, %g, %g) (%g, %g, %g)" \
+                [export_matrix GetElement 0 0]\
+                [export_matrix GetElement 0 1]\
+                [export_matrix GetElement 0 2]\
+                [expr -1. * [export_matrix GetElement 1 0]]\
+                [expr -1. * [export_matrix GetElement 1 1]]\
+                [expr -1. * [export_matrix GetElement 1 2]]\
+                [export_matrix GetElement 2 0]\
+                [export_matrix GetElement 2 1]\
+                [export_matrix GetElement 2 2] ]
+            export_matrix Delete
+
             # TODO: should add direction cosines and label_map status
             set im [Volume($volid,vol) GetOutput]
+
+            puts stderr "image $volid" 
+            puts stderr "scalar_type [$im GetScalarType]" 
+            puts stderr "dimensions [$im GetDimensions]" 
+            puts stderr "space_origin $space_origin"
+            puts stderr "space_directions $space_directions"
+
+            fconfigure $sock -translation auto
             puts $sock "image $volid" 
-            puts $sock "dimensions [$im GetDimensions]" 
-            puts $sock "spacing [$im GetSpacing]" 
-            puts $sock "components [$im GetNumberOfScalarComponents]" 
             puts $sock "scalar_type [$im GetScalarType]" 
-            ::tcl_$sock SetImageData $im
+            puts $sock "dimensions [$im GetDimensions]" 
+            puts $sock "space_origin $space_origin"
+            puts $sock "space_directions $space_directions"
+            flush $sock
+
+            catch "export_flip Delete"
+            vtkImageFlip export_flip
+            export_flip SetInput $im
+            export_flip SetFilteredAxis 1
+            [export_flip GetOutput] Update
+
+            ::tcl_$sock SetImageData [export_flip GetOutput]
             fconfigure $sock -translation binary
-            ::tcl_$sock SendImageDataScalars
+            ::tcl_$sock SendImageDataScalars $sock
             fconfigure $sock -translation auto
             flush $sock
+            catch "export_flip Delete"
         }
         "put" {
             gets $sock line
@@ -117,9 +191,9 @@ proc slicerd_sock_fileevent {sock} {
             gets $sock dimensions
             set dimensions [lrange $dimensions 1 3]
             gets $sock space_origin
-            set space_origin [lindex $space_origin 1]
+            set space_origin [lrange $space_origin 1 end]
             gets $sock space_directions
-            set space_directions [lrange $space_directions 1 3]
+            set space_directions [lrange $space_directions 1 end]
             gets $sock components
             set components [lindex $components 1]
             gets $sock scalar_type
@@ -198,6 +272,8 @@ proc slicerd_parse_space_directions {volid space_origin space_directions} {
     regsub -all "\\)" $space_directions " " space_directions
     regsub -all "\\," $space_directions " " space_directions
 
+puts "space_origin $space_origin"
+puts "space_directions $space_directions"
 
     #
     # normalize and save length for each space direction vector
