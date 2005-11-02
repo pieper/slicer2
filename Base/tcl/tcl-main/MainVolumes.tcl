@@ -72,7 +72,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.88 $} {$Date: 2005/09/06 21:02:48 $}]
+    {$Revision: 1.89 $} {$Date: 2005/11/02 22:01:42 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -1018,6 +1018,7 @@ proc MainVolumesSetActive {v} {
         set Volume(rangeLow)    [Volume($v,vol) GetRangeLow]
         set Volume(rangeHigh)   [Volume($v,vol) GetRangeHigh]
         set Volume(rangeAuto)   [Volume($v,vol) GetRangeAuto]
+        set Volume(scalarType)  [Volume($v,node) GetScalarType]
         MainVolumesUpdateSliderRange
 
         # Update GUI
@@ -1181,6 +1182,7 @@ proc MainVolumesSetParam {Param {value ""}} {
 
         # Clip window/level/threshold with the range
         Volume($v,vol) Update
+        set Volume(scalarType) [Volume($v,node) GetScalarType]
         foreach item "Window Level UpperThreshold LowerThreshold" {
             set Volume([Uncap $item]) [Volume($v,node) Get$item]
         }
@@ -1270,16 +1272,27 @@ proc MainVolumesSetParam {Param {value ""}} {
 proc MainVolumesUpdateSliderRange {} {
     global Volume
 
+    # The resolution of sliders may be changed due to the
+    # scalar type of the volume:
+    # resolution = 0.5 for VTK_FLOAT or VTK_DOUBLE
+    # resolution = 1 for others
+    set b 0
+    if {[info exists Volume(scalarType)]} {
+        # VTK_FLOAT = 10; VTK_DOUBLE = 11
+        set b [expr {$Volume(scalarType) == 10 || $Volume(scalarType) == 11}]
+    }
+    set res [expr {$b == 1 ? 0.5 : 1}]
+
     # Change GUI
     # width = hi - lo + 1 = (hi+1) - (lo-1) - 1
     set width [expr $Volume(rangeHigh) - $Volume(rangeLow) - 1]
     if {$width < 1} {set width 1}
 
     foreach s $Volume(sLevelList) {
-        $s config -from $Volume(rangeLow) -to $Volume(rangeHigh)
+        $s config -from $Volume(rangeLow) -to $Volume(rangeHigh) -resolution $res 
     }
     foreach s $Volume(sWindowList) {
-        $s config -from 1 -to $width
+        $s config -from 1 -to $width -resolution $res 
     }
 }
 
