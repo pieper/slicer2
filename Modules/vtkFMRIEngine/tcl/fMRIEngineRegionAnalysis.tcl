@@ -740,7 +740,7 @@ proc fMRIEnginePlotROIStats {type} {
 
     set w .roiStatsWin
     toplevel $w
-    wm title $w "ROI Stats for t" 
+    wm title $w "Region Stats" 
     wm minsize $w 250 160 
     # wm geometry $w "+898+200" 
     # wm geometry $w "+850+200" 
@@ -817,7 +817,7 @@ proc fMRIEnginePlotRegionTimecourse {} {
 
     set voxels [fMRIEngine(actROIStats) GetRegionVoxels]
     if {$voxels == ""} {
-        DevErrorWindow "No region has been selected."
+        DevErrorWindow "No label has been selected."
         return
     }
 
