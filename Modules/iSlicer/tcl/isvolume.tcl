@@ -819,8 +819,15 @@ itcl::body isvolume::transform_update {} {
     catch "transformmatrix Delete"
     vtkMatrix4x4 transformmatrix
 
-    if { $itk_option(-transform) != "" } {
-        eval transformmatrix DeepCopy $itk_option(-transform)
+    if { $itk_option(-transform) != ""} {
+        switch [$itk_option(-transform) GetClassName] {
+            "vtkTransform" {
+                eval transformmatrix DeepCopy [$itk_option(-transform) GetMatrix]
+            }
+            "vtkMatrix4x4" {
+                eval transformmatrix DeepCopy $itk_option(-transform)
+            }
+        }
     } else {
         eval transformmatrix DeepCopy $RasToWld
     }
