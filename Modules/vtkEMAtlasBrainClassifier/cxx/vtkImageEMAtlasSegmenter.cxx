@@ -39,6 +39,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // EMAtlas =  using EM Algorithm with Local Tissue Class Probability
 #include "vtkImageEMAtlasSegmenter.h"
 #include "vtkObjectFactory.h"
+#include "vtkImageAccumulate.h"
 
 //------------------------------------------------------------------------------
 // Define Procedures for vtkImageEMAtlasSegmenter
@@ -421,6 +422,17 @@ int vtkImageEMAtlasSegmenter::CheckInputImage(vtkImageData * inData,int DataType
   if ((DataSpacingOrig[0] !=  DataSpacingNew[0]) || (DataSpacingOrig[1] !=  DataSpacingNew[1]) || (DataSpacingOrig[2] !=  DataSpacingNew[2])) 
     vtkEMAddErrorMessage("CheckInputImage: Data Spacing of input images is unequal" );
   // Kilian Check for orientation has to be done in TCL !!!!
+
+  // Needed bc Sylvain sometimes gives me input images with negative values and then claims that my program does not 
+  // work anymore 
+  vtkImageAccumulate *ia = vtkImageAccumulate::New();
+  ia->SetInput(inData);
+  ia->Update();
+  double *min = ia->GetMin();
+  if (min[0] < 0) 
+    vtkEMAddErrorMessage("CheckInputImage: input images have negative values"); 
+  ia->Delete();
+
   return this->GetErrorFlag();
 }
 
@@ -868,7 +880,7 @@ void vtkImageEMAtlasSegmenter::PrintIntermediateResultsToFile(int iter, float **
     // Fill the other spaces 
         index ++;
       } else {
-    index += NumChildClasses[c];
+         index += NumChildClasses[c];
       }
     }
     cout << "===================================================" << endl;

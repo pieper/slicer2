@@ -106,7 +106,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.20 $} {$Date: 2005/09/24 23:45:29 $}]
+        {$Revision: 1.21 $} {$Date: 2005/11/03 23:20:01 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -676,6 +676,20 @@ proc EMAtlasBrainClassifier_InitilizePipeline { } {
       DevErrorWindow "Could not read template file $EMAtlasBrainClassifier(XMLTemplate) or it was empty!" 
       return 0
     }
+  
+    # check if the input is positive
+    foreach input "SPGR T2W" {
+       set VolIDInput $EMAtlasBrainClassifier(Volume,${input})        
+       vtkImageAccumulate ia
+       ia SetInput [Volume($VolIDInput,vol) GetOutput]
+       ia Update
+       if {[lindex [ia GetMin] 0] < 0} {
+          DevErrorWindow "The volume assigned to input ${input} has negative values. The segmentation method only works for input with non-negtive values!" 
+          ia Delete 
+          return 0
+       } 
+       ia Delete
+    }
 
     set EMAtlasBrainClassifier(WorkingDirectory) [file normalize $EMAtlasBrainClassifier(WorkingDirectory)]
     set Mrml(dir) $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation
@@ -792,7 +806,7 @@ proc EMAtlasBrainClassifier_Normalize { Mode } {
     RenderAll
 
     if {$EMAtlasBrainClassifier(Save,$Mode)} {
-    EMAtlasBrainClassifierVolumeWriter $VolIDOutput  
+       EMAtlasBrainClassifierVolumeWriter $VolIDOutput  
     }
 }
 
