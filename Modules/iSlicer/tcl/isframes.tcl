@@ -117,6 +117,8 @@ if { [itcl::find class isframes] == "" } {
 
       method next     {}   {}
       method entrycallback {}   {}
+      
+      method pre_destroy {} {}
     }
 }
 
@@ -334,6 +336,25 @@ itcl::body isframes::entrycallback {} {
     if { $_endentry_value != "" } {
         $this configure -end $_endentry_value
     }
+}
+
+# use this method to clean up the vtk class instances before calling
+# the destructor -- this is a hack to deal with improper cleanup of the vtk
+# render windows and vtkTkRenderWidget
+
+itcl::body isframes::pre_destroy {} {
+
+    tk_messageBox -message "pre_destroy"
+    [$_tkrw GetRenderWindow] Delete
+    after idle "destroy $_tkrw"
+    $_ren Delete
+    $_mapper Delete
+    $_actor Delete
+
+    set _tkrw  ""
+    set _ren  ""
+    set _mapper ""
+    set _actor ""
 }
 
 #-------------------------------------------------------------------------------
