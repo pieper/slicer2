@@ -351,7 +351,7 @@ proc getStudyApproval {study_path} {
     destroy $ROOT.gonogo
 
     if { $rvalue == -1 } {
-        exit
+        exit 0
     }
 
     foreach s [array names series_approval] {
@@ -375,6 +375,7 @@ proc mpClose {view} {
 
 
     [$mp_file($view,w).isf task] off
+    $mp_file($view,w).isf pre_destroy
     update idletasks
     catch "destroy $mp_file($view,w)"
 
@@ -520,7 +521,7 @@ proc main {} {
 
     if { [catch "package require iSlicer"] } {
         DevErrorWindow "Need iSlicer Module to run this program.  Please update Slicer"
-        exit
+        exit 1
     }
 
 
@@ -537,7 +538,7 @@ proc main {} {
 
     if { $indir == "" } {
         # No directory specified, go ahead and quit
-        exit
+        exit 0
     }
 
     set upload_series_list ""
@@ -576,7 +577,7 @@ proc main {} {
 
     getDone $upload_file $defer_file
 
-    exit
+    exit 0
 }
 
 
