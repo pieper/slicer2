@@ -347,7 +347,7 @@ void vtkMultipleStreamlineController::ClusterTracts(int tmp)
 void vtkMultipleStreamlineController::CleanStreamlines(vtkCollection *streamlines)
 {
   int numStreamlines, index;
-  vtkHyperStreamlinePoints *currStreamline;
+  vtkPolyDataSource *currStreamline;
 
 
 
@@ -358,7 +358,7 @@ void vtkMultipleStreamlineController::CleanStreamlines(vtkCollection *streamline
       vtkDebugMacro( << "Cleaning streamline " << i << " : " << index);
 
       // Get the streamline
-      currStreamline = (vtkHyperStreamlinePoints *) 
+      currStreamline = (vtkPolyDataSource *) 
         streamlines->GetItemAsObject(index);
 
       if (currStreamline == NULL)
@@ -368,15 +368,12 @@ void vtkMultipleStreamlineController::CleanStreamlines(vtkCollection *streamline
         }
 
       vtkDebugMacro( "streamline " << i << "length " << 
-                     currStreamline->GetHyperStreamline0()->GetNumberOfPoints() +
-                     currStreamline->GetHyperStreamline1()->GetNumberOfPoints());
+                     currStreamline->GetOutput()->GetNumberOfPoints());
 
-      if (currStreamline->GetHyperStreamline0()->GetNumberOfPoints() +
-          currStreamline->GetHyperStreamline1()->GetNumberOfPoints() < 5)
+      if (currStreamline->GetOutput()->GetNumberOfPoints() < 5)
         {
           vtkErrorMacro( "Remove short streamline " << i << "length " << 
-                         currStreamline->GetHyperStreamline0()->GetNumberOfPoints() +
-                         currStreamline->GetHyperStreamline1()->GetNumberOfPoints());
+                         currStreamline->GetOutput()->GetNumberOfPoints());
           // Delete the streamline from the collections
           this->DeleteStreamline(index);
         }
