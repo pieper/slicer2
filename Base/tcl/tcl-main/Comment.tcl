@@ -1,10 +1,10 @@
 #=auto==========================================================================
 # (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
-#
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,17 +32,74 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        Comment.tcl
 # PROCEDURES:  
-#   PrintCopyright fid isTcl
-#   ProcessFile file
-#   CopyrightFile filename
+#   CommentInit verbose
+#   PrintCopyright fid isTcl verbose
+#   ProcessFile file verbose
+#   CopyrightFile filename verbose
 #   CommentFile filename verbose
 #   Polish data
 #   ProcessModule modpath verbose
 #==========================================================================auto=
+
+#-------------------------------------------------------------------------------
+# .PROC CommentInit
+# Sets a global variable for the copyright file name
+# .ARGS
+# int verbose set this flag to 1 if you want to see debugging print outs, default is 0
+# .END
+#-------------------------------------------------------------------------------
+proc CommentInit { {verbose 0} } {
+    global Comment
+
+    if {[info exist ::env(SLICER_HOME)] == 0} {
+        if {[info exist ::SLICER_HOME] == 1} { 
+            set ::env(SLICER_HOME) $::SLICER_HOME
+        } else {
+            set cwd [pwd]
+            cd [file dirname [info script]]
+            cd ..
+            cd ..
+            cd ..
+            cd ..
+            set ::env(SLICER_HOME) [pwd]
+            
+            cd $cwd
+        }
+        if {$verbose} {
+            puts "reset env slicer home to $::env(SLICER_HOME)"
+        }
+    }
+    set Comment(copyrightFileName) [file join $::env(SLICER_HOME) Doc copyright copyright.txt]
+
+    # read in the copyright
+    if {[catch {set fid [open $Comment(copyrightFileName) r]} errmsg] == 1} {
+        puts "CommentInit: error opening file $Comment(copyrightFileName): $errmsg"
+        set Comment(copyright) "(c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved."
+    } else {
+        set Comment(copyright) [read $fid]
+        close $fid
+    }
+    # check to see that the copyright year is current
+    set thisYear [clock format [clock seconds] -format %Y]
+    if {[regexp {^\(c\) Copyright (\d\d\d\d) .*} $Comment(copyright) matchVar yr] == 1} {
+        if {$verbose} {
+            puts "Year in file = $yr, this year = $thisYear"
+        }
+        if {$yr != $thisYear} {
+            puts "Warning: updating year in copyright text to $thisYear from $yr"
+            regsub -all " $yr " $Comment(copyright) " $thisYear " Comment(copyright)
+        }
+    }
+
+    # can now call split on line breaks to get each line
+    if {$verbose} {
+        puts "got copyright:\n$Comment(copyright)"
+    }
+}
 
 #-------------------------------------------------------------------------------
 # .PROC PrintCopyright
@@ -51,89 +108,34 @@
 # .ARGS
 # str fid  File ID returned from opening the file
 # int isTcl 1 if this is a TCL file, and 0 otherwise
+# int verbose set this flag to 1 to see debugging print outs, defaults to 0
 # .END
 #-------------------------------------------------------------------------------
 proc PrintCopyright {fid isTcl {verbose 0} } {
 
+    global Comment
+
+    if {[info exist Comment(copyrightFileName)] == 0 ||
+        [info exist Comment(copyright)] == 0} {
+        # set the vars
+        CommentInit
+    }
+
     if {$verbose} {
-        puts "PrintCopyright: isTcl = $isTcl"
+        puts "PrintCopyright: isTcl = $isTcl, copyright file is $Comment(copyrightFileName) and text has been set"
     }
 
     if {$isTcl == 1} {
-        puts $fid \
-"# (c) Copyright [clock format [clock seconds] -format %Y] Brigham and Women's Hospital (BWH) All Rights Reserved.
-#
-# This software (\"3D Slicer\") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
-# Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
-# research purposes only, provided that (1) the above copyright notice and 
-# the following four paragraphs appear on all copies of this software, and 
-# (2) that source code to any modifications to this software be made 
-# publicly available under terms no more restrictive than those in this 
-# License Agreement. Use of this software constitutes acceptance of these 
-# terms and conditions.
-# 
-# 3D Slicer Software has not been reviewed or approved by the Food and 
-# Drug Administration, and is for non-clinical, IRB-approved Research Use 
-# Only.  In no event shall data or images generated through the use of 3D 
-# Slicer Software be used in the provision of patient care.
-# 
-# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-# POSSIBILITY OF SUCH DAMAGE.
-# 
-# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-# NON-INFRINGEMENT.
-# 
-# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS 
-# IS.\" THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-# 
-#"
+        foreach l [split  $Comment(copyright) "\n"] {
+            puts $fid "\# $l"
+        }
     } else {
-        puts $fid "/*=auto=========================================================================
-
-(c) Copyright [clock format [clock seconds] -format %Y] Brigham and Women's Hospital (BWH) All Rights Reserved.
-
-This software (\"3D Slicer\") is provided by The Brigham and Women's 
-Hospital, Inc. on behalf of the copyright holders and contributors.
-Permission is hereby granted, without payment, to copy, modify, display 
-and distribute this software and its documentation, if any, for  
-research purposes only, provided that (1) the above copyright notice and 
-the following four paragraphs appear on all copies of this software, and 
-(2) that source code to any modifications to this software be made 
-publicly available under terms no more restrictive than those in this 
-License Agreement. Use of this software constitutes acceptance of these 
-terms and conditions.
-
-3D Slicer Software has not been reviewed or approved by the Food and 
-Drug Administration, and is for non-clinical, IRB-approved Research Use 
-Only.  In no event shall data or images generated through the use of 3D 
-Slicer Software be used in the provision of patient care.
-
-IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-POSSIBILITY OF SUCH DAMAGE.
-
-THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-NON-INFRINGEMENT.
-
-THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS 
-IS.\" THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-
-
-=========================================================================auto=*/"
-     }
+        puts $fid "/*=auto=========================================================================\n"
+        foreach l [split $Comment(copyright) "\n"] {
+            puts $fid "$l"
+        }
+        puts $fid "=========================================================================auto=*/"
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -143,6 +145,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # depending on the file's type.
 # .ARGS
 # str file  the path of the file to parse, relative to slicer/program
+# int verbose set this flag to 1 to see debugging print outs, defaults to 0
 # .END
 #-------------------------------------------------------------------------------
 proc ProcessFile {file {verbose 0}} {
@@ -168,6 +171,7 @@ proc ProcessFile {file {verbose 0}} {
 # generated comments, and adding new ones.
 # .ARGS
 # str filename the name of the file to edit
+# int verbose set this flag to 1 to see debugging print outs, defaults to 0
 # .END
 #-------------------------------------------------------------------------------
 proc CopyrightFile {filename {verbose 0} } {
