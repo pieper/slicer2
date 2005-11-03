@@ -164,7 +164,7 @@ itcl::body dup_deidentify::run {dir} {
         $parent log "finished deidentify of $dir"
 
         $parent log "starting rendering of $dir"
-        foreach ser [glob $dir/*-anon] {
+        foreach ser [glob -nocomplain $dir/*-anon] {
             puts "rendering $ser"
             $parent log "rendering $ser"
 
