@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,7 +32,7 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        Main.tcl
 # PROCEDURES:  
@@ -42,30 +42,35 @@
 #   MainBuildGUI
 #   MainRebuildModuleGui ModuleName
 #   MainBuildModuleTabs ModuleName
+#   MainCheckScrollLimits args
 #   MainUpdateMRML
 #   MainAddActor a
 #   MainAddModelActor m
 #   MainRemoveActor a
 #   MainRemoveModelActor m
-#   MainSetup
-#   IsModule
-#   Tab
+#   MainSetup sceneNum
+#   IsModule m
+#   Tab m row tab
 #   MainSetScrollbarHeight reqHeight
-#   MainSetScrollbarHeight
-#   MainSetScrollbarVisibility
-#   MainSetScrollbarVisibility
+#   MainSetScrollbarVisibility vis
 #   MainResizeDisplayFrame
 #   MainStartProgress
-#   MainShowProgress
+#   MainShowProgress filter
 #   MainEndProgress
-#   MainMenu
+#   MainMenu menu command
 #   MainExitQuery
 #   MainSaveMRMLQuery 
-#   MainExitProgram
-#   Distance
-#   FormatCVSInfo
+#   MainExitProgram code
+#   Distance aArray bArray
+#   Normalize aArray
+#   Cross aArray bArray cArray
+#   ParseCVSInfo module args
+#   FormatCVSInfo versions
 #   FormatModuleInfo
 #   FormatModuleCredits
+#   FormatModuleCategories
+#   MainBuildCategoryIDLists
+#   MainBuildCategoryMenu
 #==========================================================================auto=
 
 
@@ -395,7 +400,7 @@ Unexpected behaviour may occur."
 # .PROC MainInit
 #
 # Sets path names.
-# Calls the GuiInit
+# Calls the GuiInit.
 # Calls all the Init of the Tabs.
 # .END
 #-------------------------------------------------------------------------------
@@ -460,7 +465,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.123 $} {$Date: 2005/07/19 20:38:56 $}]
+        {$Revision: 1.124 $} {$Date: 2005/11/03 22:04:56 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -477,9 +482,9 @@ proc MainInit {} {
 #-------------------------------------------------------------------------------
 # .PROC MainBuildVTK
 #
-# Creaters the instance of vtkMrmlSlicer: Slicer
-# Inits the Slicer: FieldofView, NoneVolume and LabelWL (a lookup table)
-# Creates the vtk Renderer
+# Creaters the instance of vtkMrmlSlicer: Slicer. 
+# Inits the Slicer: FieldofView, NoneVolume and LabelWL (a lookup table).
+# Creates the vtk Renderer.
 # Puts purple sphere at origin of 3D window.
 # Calls each Tab's BuildVTK: The VTK Pipeline.
 # .END
@@ -950,7 +955,7 @@ proc MainBuildGUI {} {
 # 
 # Erase the old Gui for a module and build a new one.
 # Should call MainUpdateMRML when done so that the Module
-# has the correct Volumes, Models, etc. listed
+# has the correct Volumes, Models, etc. listed.
 #
 # This primarily exists for the tester.
 #
@@ -1034,8 +1039,13 @@ proc MainBuildModuleTabs {ModuleName}  {
     }
 }
 
-    
+#-------------------------------------------------------------------------------
+# .PROC MainCheckScrollLimits
 # This procedure allows scrolling only if the entire frame is not visible
+# .ARGS
+# list args a list containing the canvas and the view.
+# .END
+#-------------------------------------------------------------------------------
 proc MainCheckScrollLimits {args} {
     
     set canvas [lindex $args 0]
@@ -1052,7 +1062,7 @@ proc MainCheckScrollLimits {args} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainUpdateMRML
-# 
+# Call each "MRML" routine that's not part of a module, then each module's MRML routine.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1131,11 +1141,11 @@ proc MainUpdateMRML {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainAddActor
-#  Use this method if you want to add an actor that IS NOT A MODEL
-#  If your actor is a model, use MainAddModelActor
+#  Use this method if you want to add an actor that IS NOT A MODEL.
+#  If your actor is a model, use MainAddModelActor.
 #
-#  With this procedure, the actor is added  to all existing Renderers
-#  If you want to add your actor to a specific renderer, for example viewRen 
+#  With this procedure, the actor is added  to all existing Renderers.
+#  If you want to add your actor to a specific renderer, for example viewRen,
 #  use the vtk call:
 #          viewRen AddActor $actor
 # .ARGS
@@ -1160,7 +1170,7 @@ proc MainAddActor { a } {
 #  existing Renderer. 
 #  This allows each renderer to display the same models with different 
 #  properties (ie we want the bladder to be visible in the Endoscopic
-#  View, but not the MainView)
+#  View, but not the MainView).
 # .ARGS
 # int m the id of the model whose actor you want to add
 # .END
@@ -1213,7 +1223,7 @@ proc MainRemoveModelActor { m } {
 # Called when a scene (mrml file) is opened or closed, and when the
 # program starts.
 # .ARGS
-# sceneNum which preset set of values to restore to, 0 should be user prefs, default are system prefs
+# int sceneNum which preset set of values to restore to, 0 should be user prefs, default are system prefs
 # .END
 #-------------------------------------------------------------------------------
 proc MainSetup { {sceneNum "default"}} {
@@ -1282,8 +1292,9 @@ proc MainSetup { {sceneNum "default"}} {
 
 #-------------------------------------------------------------------------------
 # .PROC IsModule
-# 
+# Checks for the input module id number in the Module(idList), returns 1 if found, 0 otherwise.
 # .ARGS
+# int m module id
 # .END
 #-------------------------------------------------------------------------------
 proc IsModule {m} {
@@ -1298,11 +1309,14 @@ proc IsModule {m} {
 #-------------------------------------------------------------------------------
 # .PROC Tab
 # 
-# Command for switching to a new Row or Tab
+# Command for switching to a new Row or Tab.
 # Checks to see if we might be frozen -- i.e. not supposed to switch to
 # a new frame.
 #
 # .ARGS
+# int m module id
+# int row row id
+# int tab  tab id
 # .END
 #-------------------------------------------------------------------------------
 proc Tab {m {row ""} {tab ""}} {
@@ -1482,14 +1496,7 @@ proc Tab {m {row ""} {tab ""}} {
 # height required by the active panel
 #
 # .ARGS
-#  int reqHeight
-# .END
-#-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# .PROC MainSetScrollbarHeight
-# 
-# .ARGS
+#  int reqHeight height required by the active panel
 # .END
 #-------------------------------------------------------------------------------
 proc MainSetScrollbarHeight {reqHeight} {
@@ -1508,17 +1515,11 @@ proc MainSetScrollbarHeight {reqHeight} {
 # .PROC MainSetScrollbarVisibility
 #
 # If the scrollbar is visible and we are not in a help panel =>
-# raise the scrollbar so that the user can scroll down the panel 
+# raise the scrollbar so that the user can scroll down the panel.
 # 
 # Otherwise => lower the scrollbar
-#
-# .END
-#-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# .PROC MainSetScrollbarVisibility
-# 
 # .ARGS
+# bool vis optional argument, defaults to empty string, if 0 or 1 is used to set scrollbar visibility flag
 # .END
 #-------------------------------------------------------------------------------
 proc MainSetScrollbarVisibility {{vis ""}} {
@@ -1539,10 +1540,9 @@ proc MainSetScrollbarVisibility {{vis ""}} {
     
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MainResizeDisplayFrame
-# 
+# Resizes the display frame, trying to be intelligent about it.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1597,6 +1597,8 @@ proc MainStartProgress {} {
 # .PROC MainShowProgress
 #
 # Displays progress bar (for when reading off disk, making models, etc.)
+# .ARGS
+# string filter the name of the vtk variable that will provide progress updates, via a call to GetProgress.
 # .END
 #-------------------------------------------------------------------------------
 proc MainShowProgress {filter} {
@@ -1650,6 +1652,8 @@ proc MainEndProgress {} {
 # .PROC MainMenu
 # 
 # .ARGS
+# string menu which menu was chosen: File, Help, View
+# string command the element from the menu that was clicked on
 # .END
 #-------------------------------------------------------------------------------
 proc MainMenu {menu cmd} {
@@ -1729,26 +1733,44 @@ $itkMsg"
                 MsgPopup Version $x $y $msg {About Slicer}
             }
             "Copyright" {
-                MsgPopup Copyright $x $y "\
-(c) Copyright 2004 Massachusetts Institute of Technology
+                if {[info exist ::Comment(copyright)] == 1} {
+                    if {$::Module(verbose)} { puts "using Comment(copyright)" }
+                    MsgPopup Copyright $x $y $::Comment(copyright)
+                } else {
+                    MsgPopup Copyright $x $y "\
+(c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 
+This software (\"3D Slicer\") is provided by The Brigham and Women's 
+Hospital, Inc. on behalf of the copyright holders and contributors.
 Permission is hereby granted, without payment, to copy, modify, display 
-and distribute this software and its documentation, if any, for any purpose, 
-provided that the above copyright notice and the following three paragraphs 
-appear on all copies of this software.  Use of this software constitutes 
-acceptance of these terms and conditions.
+and distribute this software and its documentation, if any, for  
+research purposes only, provided that (1) the above copyright notice and 
+the following four paragraphs appear on all copies of this software, and 
+(2) that source code to any modifications to this software be made 
+publicly available under terms no more restrictive than those in this 
+License Agreement. Use of this software constitutes acceptance of these 
+terms and conditions.
 
-IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, 
-INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE 
-AND ITS DOCUMENTATION, EVEN IF MIT HAS BEEN ADVISED OF THE POSSIBILITY OF 
-SUCH DAMAGE.
+3D Slicer Software has not been reviewed or approved by the Food and 
+Drug Administration, and is for non-clinical, IRB-approved Research Use 
+Only.  In no event shall data or images generated through the use of 3D 
+Slicer Software be used in the provision of patient care.
 
-MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING, 
-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR 
-A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+POSSIBILITY OF SUCH DAMAGE.
 
-THE SOFTWARE IS PROVIDED \"AS IS.\"  MIT HAS NO OBLIGATION TO PROVIDE 
-MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS."
+THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+NON-INFRINGEMENT.
+
+THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS 
+IS.\" THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS."
+                }
             }
             "Documentation" {
                 MsgPopup Documentation $x $y "\
@@ -1887,6 +1909,8 @@ proc MainSaveMRMLQuery { } {
 # .PROC MainExitProgram
 #
 #  Exit the Program with cleanup
+# .ARGS
+# int code optional exit code, defaults to 0
 # .END
 #-------------------------------------------------------------------------------
 proc MainExitProgram { "code 0" } {
@@ -1955,8 +1979,10 @@ proc MainExitProgram { "code 0" } {
 
 #-------------------------------------------------------------------------------
 # .PROC Distance
-# 
+# Returns the distance between two 3D points.
 # .ARGS
+# string aArray name of the first three element array
+# string bArray name of the second three element array
 # .END
 #-------------------------------------------------------------------------------
 proc Distance {aArray bArray} {
@@ -1972,7 +1998,11 @@ proc Distance {aArray bArray} {
 }
 
 #-------------------------------------------------------------------------------
-# Normalize a = |a|
+# .PROC Normalize
+# a = |a|
+# .ARGS
+# string aArray name of the 3 element vector to normalize
+# .END
 #-------------------------------------------------------------------------------
 proc Normalize {aArray} {
     upvar $aArray a
@@ -1988,7 +2018,13 @@ proc Normalize {aArray} {
 }
 
 #-------------------------------------------------------------------------------
-# Cross a = b x c 
+# .PROC Cross
+# a = b x c 
+# .ARGS
+# string aArray result vector
+# string bArray first vector in cross product
+# string cArray second vector in cross product
+# .END
 #-------------------------------------------------------------------------------
 proc Cross {aArray bArray cArray} {
     upvar $aArray a
@@ -2000,7 +2036,14 @@ proc Cross {aArray bArray cArray} {
     set a(z) [expr $b(x)*$c(y) - $c(x)*$b(y)]
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ParseCVSInfo
 # Remove $ and spaces from CVS version info
+# .ARGS
+# string module name of the module
+# string args list of elements to parse
+# .END
+#-------------------------------------------------------------------------------
 proc ParseCVSInfo {module args} {
     set l $module 
     foreach a $args {
@@ -2013,6 +2056,7 @@ proc ParseCVSInfo {module args} {
 # .PROC FormatCVSInfo
 # Format module version info string for display from help on main menu
 # .ARGS
+# string versions list of cvs version strings
 # .END
 #-------------------------------------------------------------------------------
 proc FormatCVSInfo {versions} {
@@ -2048,7 +2092,7 @@ proc FormatModuleInfo {} {
 
 #-------------------------------------------------------------------------------
 # .PROC FormatModuleCredits
-# 
+# Format the module credits for display from Help menu
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -2135,8 +2179,6 @@ proc MainBuildCategoryIDLists {} {
             if {$Module(verbose)} { puts "Not sorting module list, category = $cat"}
         }
     }
-
-
 }
 
 #-------------------------------------------------------------------------------
@@ -2146,7 +2188,6 @@ proc MainBuildCategoryIDLists {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-
 proc MainBuildCategoryMenu {} {
     global Module Gui
 
