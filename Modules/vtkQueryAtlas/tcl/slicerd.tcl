@@ -32,6 +32,8 @@ package require vtkQueryAtlas
 #
 proc slicerd_start { {port 18943} } {
 
+    set sock [socket -server slicerd_sock_cb $port]
+
     set ::SLICERD(serversock) [socket -server slicerd_sock_cb $port]
 }
 
@@ -272,6 +274,7 @@ proc slicerd_parse_space_directions {volid space_origin space_directions} {
     regsub -all "\\)" $space_directions " " space_directions
     regsub -all "\\," $space_directions " " space_directions
 
+
 puts "space_origin $space_origin"
 puts "space_directions $space_directions"
 
@@ -306,15 +309,13 @@ puts "space_directions $space_directions"
         lappend unit_space_directions [expr $dir / $spacek]
     }
     
-puts "SetSpacing $spacei $spacej $spacek"
-
     ::Volume($volid,node) SetSpacing $spacei $spacej $spacek
     [::Volume($volid,vol) GetOutput] SetSpacing $spacei $spacej $spacek
 
-puts $unit_space_directions
 
     #
     # fill the ijk to ras matrix
+    # - use it to calculate the slicer internal matrices (RasToIjk etc)
     #
     catch "Ijk_matrix Delete"
     vtkMatrix4x4 Ijk_matrix
@@ -328,40 +329,12 @@ puts $unit_space_directions
         Ijk_matrix SetElement $i 3 $val
     }
 
-puts "Ijk_matrix Print"
+    set dims [[::Volume($volid,vol) GetOutput] GetDimensions]
+
+    VolumesComputeNodeMatricesFromIjkToRasMatrix $volid Ijk_matrix $dims
+
 puts [Ijk_matrix Print]
-
-    set dims [[Volume($volid,vol) GetOutput] GetDimensions]
-
-    # first top left - start at zero, and add origin to all later
-    set ftl "0 0 0"
-    # first top right = width * row vector
-    set ftr [lrange [Ijk_matrix MultiplyPoint [lindex $dims 0] 0 0 0] 0 2]
-    # first bottom right = ftr + height * column vector
-    set column_vec [lrange [Ijk_matrix MultiplyPoint 0 [lindex $dims 1] 0 0] 0 2]
-    set fbr ""
-    foreach ftr_e $ftr column_vec_e $column_vec {
-        lappend fbr [expr $ftr_e + $column_vec_e]
-    }
-    # last top left = ftl + slice vector  (and ftl is zero)
-    set ltl [lrange [Ijk_matrix MultiplyPoint 0 0 [lindex $dims 2] 0] 0 2]
-
-    puts "ftl ftr fbr ltl"
-    puts "$ftl   $ftr   $fbr   $ltl"
-
-    # add the origin offset 
-    set origin [lrange [Ijk_matrix MultiplyPoint 0 0 0 1] 0 2]
-    foreach corner "ftl ftr fbr ltl" {
-        set new_corner ""
-        foreach corner_e [set $corner] origin_e $origin {
-            lappend new_corner [expr $corner_e + $origin_e]
-        }
-        set $corner $new_corner
-    }
-
-    puts "ftl ftr fbr ltl"
-    puts "$ftl   $ftr   $fbr   $ltl"
-    eval Volume($volid,node) ComputeRasToIjkFromCorners "0 0 0" $ftl $ftr $fbr "0 0 0" $ltl
 
     Ijk_matrix Delete
 }
+
