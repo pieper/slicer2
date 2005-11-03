@@ -659,7 +659,7 @@ foreach name $found {
 }
 
 # Suppress unwanted (need a more PC term for this) modules
-foreach name [list $suppressed $ignored] {
+foreach name [concat $suppressed $ignored] {
     set i [lsearch $ordered $name]
     if {$i != -1} {
         set ordered [lreplace $ordered $i $i]
@@ -818,7 +818,7 @@ if { $SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.97 2005/08/18 19:35:21 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.98 2005/11/03 22:26:55 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
