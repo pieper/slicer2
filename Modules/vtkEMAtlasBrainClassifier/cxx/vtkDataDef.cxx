@@ -83,7 +83,7 @@ void EMVolume::Conv(double *v,int vLen) {
 
 
 
-inline void EMVolume::ConvY(float *v, int vLen) {
+void EMVolume::ConvY(float *v, int vLen) {
   int x,y,z;
 
   // => Utrans[i] represents the i column of U;    
@@ -115,7 +115,7 @@ inline void EMVolume::ConvY(float *v, int vLen) {
 // Same just v is a row vector instead of column one
 // We use the following equation :
 // conv(U,v) = conv(U',v')' => conv(U,v') = conv(U',v)';
-inline void EMVolume::ConvX(float *v, int vLen) {
+void EMVolume::ConvX(float *v, int vLen) {
   int x,i,MaxYZ;
 
   // Use the i-th Rows of U = ith Column of U';
@@ -197,7 +197,7 @@ inline void EMVolume::ConvZ(EMVolume &src,float *v,int vLen) {
 }
 
 // No unecessary memrory -> faster
-inline void EMVolume::ConvZ(float *v, int vLen) {
+void EMVolume::ConvZ(float *v, int vLen) {
   int z,i;
 
   // Use the i-th Rows of U = ith Column of U';
