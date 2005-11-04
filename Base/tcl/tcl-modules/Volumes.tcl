@@ -113,7 +113,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.113 $} {$Date: 2005/11/01 19:55:47 $}]
+            {$Revision: 1.114 $} {$Date: 2005/11/04 20:05:25 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -2451,3 +2451,88 @@ proc VolumesComputeNodeMatricesFromIjkToRasMatrix {volumeNode ijkToRasMatrix dim
     eval ::Volume($volumeNode,node) ComputeRasToIjkFromCorners "0 0 0" $ftl $ftr $fbr "0 0 0" $ltl 0
 }
 
+#-------------------------------------------------------------------------------
+# .PROC VolumesComputeNodeMatricesFromIjkToRasMatrix2
+#  ComputeNodeMatricesFromIjkToRasMatrix
+# .ARGS
+#  node id,  IjkToRasMatrix, dimensions list
+# columns of IjkToRasMatrix are space direction vectors and space origin
+# the matrix includes spacing
+# .END
+#-------------------------------------------------------------------------------
+proc VolumesComputeNodeMatricesFromIjkToRasMatrix2 {volumeNode ijkToRasMatrix dims} {
+
+    catch "RasToIjk Delete"
+    catch "VtkToRas Delete"
+    catch "RasToVtk Delete"
+    catch "Spacing Delete"
+    catch "Position Delete"
+    vtkMatrix4x4 RasToIjk
+    vtkMatrix4x4 VtkToRas
+    vtkMatrix4x4 RasToVtk
+    vtkMatrix4x4 Spacing
+    vtkMatrix4x4 Position
+
+puts "ijkToRasMatrix" 
+puts [$ijkToRasMatrix Print]
+
+    # RasToIjk is simply the inverse of ijkToRas
+    RasToIjk DeepCopy $ijkToRasMatrix
+    RasToIjk Invert
+    set strRasToIjk [Volume($volumeNode,node) GetMatrixToString RasToIjk]
+    Volume($volumeNode,node) SetRasToIjkMatrix $strRasToIjk
+
+    # VtkToRas is maps vtk pixel coords to Ras
+    # - y is at the bottom
+    # -- second space direction is negated
+    # -- y origin is moved to other end of image along y
+    VtkToRas DeepCopy $ijkToRasMatrix
+    for {set row 0} {$row < 3} {incr row} {
+        VtkToRas SetElement $row 1 [expr -1 * [VtkToRas GetElement $row 1]]
+    }
+    set yext [expr [lindex $dims 1] - 1]
+    set vtkOrigin [$ijkToRasMatrix MultiplyPoint 0 $yext 0 1]
+puts "vtkOrigin" 
+puts $vtkOrigin 
+    for {set row 0} {$row < 3} {incr row} {
+        VtkToRas SetElement $row 3 [lindex $vtkOrigin $row]
+    }
+    # RasToVtk is inverse of VtkToRas
+    RasToVtk DeepCopy VtkToRas
+    RasToVtk Invert
+    set strRasToVtk [Volume($volumeNode,node) GetMatrixToString RasToVtk]
+    Volume($volumeNode,node) SetRasToVtkMatrix $strRasToVtk
+
+puts "VtkToRas" 
+puts [VtkToRas Print]
+
+puts "RasToVtk" 
+puts [RasToVtk Print]
+
+    # calculate the PositionMatrix
+    # VtkToRas = Position * Spacing
+    # VtkToRas * Spacing(-1) = Position 
+    # - spacing is diagonal matrix with the pixel spacings 
+    Spacing Identity
+    set spacing [Volume($volumeNode,node) GetSpacing]
+    for {set row 0} {$row < 3} {incr row} {
+        Spacing SetElement $row $row [lindex $spacing $row]
+    }
+    Spacing Invert
+    # A * B -> C    
+    VtkToRas Multiply4x4  VtkToRas Spacing  Position
+    set strPosition [Volume($volumeNode,node) GetMatrixToString Position]
+    Volume($volumeNode,node) SetPositionMatrix $strPosition
+
+puts "Spacing" 
+puts [Spacing Print]
+
+puts "Position" 
+puts [Position Print]
+
+    RasToIjk Delete
+    VtkToRas Delete
+    RasToVtk Delete
+    Spacing Delete
+    Position Delete
+}
