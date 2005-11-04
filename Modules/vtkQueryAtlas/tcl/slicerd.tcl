@@ -134,8 +134,8 @@ proc slicerd_sock_fileevent {sock} {
             export_matrix Transpose
             set space_origin [format "(%g, %g, %g)" \
                 [export_matrix GetElement 3 0]\
-                [expr -1. * [export_matrix GetElement 3 1]]\
-                [export_matrix GetElement 3 2] ]
+                [export_matrix GetElement 3 1]\
+                [expr -1. * [export_matrix GetElement 3 2]] ]
             set space_directions [format "(%g, %g, %g) (%g, %g, %g) (%g, %g, %g)" \
                 [export_matrix GetElement 0 0]\
                 [export_matrix GetElement 0 1]\
