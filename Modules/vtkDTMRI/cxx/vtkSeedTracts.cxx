@@ -599,8 +599,10 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
                       
                       // for each point on the path, test
                       // the nearest voxel for path/ROI intersection.
-                      vtkPoints *hs0=newStreamline->GetHyperStreamline0();
-                      vtkPoints *hs1=newStreamline->GetHyperStreamline1();
+                      vtkPoints * hs0
+                        = newStreamline->GetOutput()->GetCell(0)->GetPoints();
+                      vtkPoints * hs1
+                        = newStreamline->GetOutput()->GetCell(1)->GetPoints();
                       int numPts=hs0->GetNumberOfPoints();
                       int ptidx=0;
                       int pt[3];
@@ -843,9 +845,7 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
                       newStreamline->Update();
 
                       // See if we like it enough to write
-                      if (newStreamline->GetHyperStreamline0()->
-                          GetNumberOfPoints() + newStreamline->
-                          GetHyperStreamline1()->GetNumberOfPoints() > 56)
+                      if (newStreamline->GetOutput()->GetNumberOfPoints() > 56)
                         {
                           
                           // transform model
@@ -903,17 +903,14 @@ void vtkSeedTracts::SaveStreamlineAsTextFile(ofstream &filePoints,
                                              vtkHyperStreamlinePoints *currStreamline)
 {
   vtkPoints *hs0, *hs1;
-  vtkFloatArray *attr0, *attr1;
   int ptidx, numPts;
   double point[3];
 
   
   //GetHyperStreamline0/1 and write their points.
-  hs0=currStreamline->GetHyperStreamline0();
-  hs1=currStreamline->GetHyperStreamline1();
-  attr0=currStreamline->GetFractionalAnisotropy0();
-  attr1=currStreamline->GetFractionalAnisotropy1();
-  
+  hs0=currStreamline->GetOutput()->GetCell(0)->GetPoints();
+  hs1=currStreamline->GetOutput()->GetCell(1)->GetPoints();
+
   // Write the first one in reverse order since both lines
   // travel outward from the initial point.
   // Also, skip the first point in the second line since it
@@ -924,7 +921,6 @@ void vtkSeedTracts::SaveStreamlineAsTextFile(ofstream &filePoints,
     {
       hs0->GetPoint(ptidx,point);
       filePoints << point[0] << "," << point[1] << "," << point[2] << " ";
-      fileAttribs << attr0->GetValue(ptidx) << ",";
       ptidx--;
     }
   numPts=hs1->GetNumberOfPoints();
@@ -933,11 +929,10 @@ void vtkSeedTracts::SaveStreamlineAsTextFile(ofstream &filePoints,
     {
       hs1->GetPoint(ptidx,point);
       filePoints << point[0] << "," << point[1] << "," << point[2] << " ";
-      fileAttribs << attr1->GetValue(ptidx) << ",";
       ptidx++;
     }
   filePoints << endl;
-  fileAttribs << endl;
+
 }
 
 

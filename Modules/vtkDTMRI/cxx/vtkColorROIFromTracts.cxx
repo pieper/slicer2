@@ -37,11 +37,11 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 
 #include "vtkColorROIFromTracts.h"
-
-#include "vtkHyperStreamline.h"
-#include "vtkHyperStreamlinePoints.h"
 #include "vtkActor.h"
 #include "vtkProperty.h"
+#include "vtkPolyData.h"
+#include "vtkPolyDataSource.h"
+#include "vtkCell.h"
 
 //------------------------------------------------------------------------------
 vtkColorROIFromTracts* vtkColorROIFromTracts::New()
@@ -102,8 +102,8 @@ void vtkColorROIFromTracts::ColorROIFromStreamlines()
   
   // prepare to traverse streamline collection
   this->Streamlines->InitTraversal();
-  vtkHyperStreamlinePoints *currStreamline = 
-    dynamic_cast<vtkHyperStreamlinePoints *> (this->Streamlines->GetNextItemAsObject());
+  vtkPolyDataSource *currStreamline = 
+    dynamic_cast<vtkPolyDataSource *> (this->Streamlines->GetNextItemAsObject());
   
   // test we have streamlines
   if (currStreamline == NULL)
@@ -202,8 +202,9 @@ void vtkColorROIFromTracts::ColorROIFromStreamlines()
       
       // for each point on the path, test
       // the nearest voxel for path/ROI intersection.
-      vtkPoints *hs0=currStreamline->GetHyperStreamline0();
-      vtkPoints *hs1=currStreamline->GetHyperStreamline1();
+      vtkPoints * hs0=currStreamline->GetOutput()->GetCell(0)->GetPoints();
+      vtkPoints * hs1=currStreamline->GetOutput()->GetCell(1)->GetPoints();
+
       int ptidx=0;
       int pt[3];
       double point[3], point2[3];
@@ -269,7 +270,7 @@ void vtkColorROIFromTracts::ColorROIFromStreamlines()
         }                          
       
       // get next objects in collections
-      currStreamline = dynamic_cast<vtkHyperStreamlinePoints *> 
+      currStreamline = dynamic_cast<vtkPolyDataSource *> 
         (this->Streamlines->GetNextItemAsObject());
       currActor = (vtkActor *) this->Actors->GetNextItemAsObject();
     }

@@ -42,7 +42,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkPolyData.h"
 #include "vtkPointData.h"
 #include "vtkFloatArray.h"
-
+#include "vtkCell.h"
 
 #include "vtkTractShapeFeatures.h"
 
@@ -60,7 +60,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 
-vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.9 $");
+vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.10 $");
 vtkStandardNewMacro(vtkTractShapeFeatures);
 
 vtkCxxSetObjectMacro(vtkTractShapeFeatures, InputStreamlines, vtkCollection);
@@ -600,8 +600,8 @@ void vtkTractShapeFeatures::ComputeFeaturesEndPoints()
       vtkPoints *hs0, *hs1;
 
       // GetHyperStreamline0/1 
-      hs0=currStreamline->GetHyperStreamline0();
-      hs1=currStreamline->GetHyperStreamline1();
+      hs0=currStreamline->GetOutput()->GetCell(0)->GetPoints();
+      hs1=currStreamline->GetOutput()->GetCell(1)->GetPoints();
 
       // Get both endpoints
       hs0->GetPoint(hs0->GetNumberOfPoints()-1,point);
