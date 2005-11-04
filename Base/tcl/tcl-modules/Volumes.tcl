@@ -113,7 +113,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.114 $} {$Date: 2005/11/04 20:05:25 $}]
+            {$Revision: 1.115 $} {$Date: 2005/11/04 21:11:34 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -848,9 +848,11 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     # Frames
     frame $f.fActive -bg $Gui(backdrop) -relief sunken -bd 2
     frame $f.fRange  -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fLabelOutline -bg $Gui(activeWorkspace) -relief groove -bd 3
 
     pack $f.fActive -side top -pady $Gui(pad) -padx $Gui(pad)
     pack $f.fRange  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+    pack $f.fLabelOutline  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
 
     #-------------------------------------------
     # Other->Active frame
@@ -909,6 +911,15 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
             "MainVolumesSetParam Range${slider}; MainVolumesRender"
         grid $f.l${slider} $f.e${slider}  -padx 2 -pady $Gui(pad) -sticky w
     }
+
+    #-------------------------------------------
+    # Other->LabelOutline frame
+    #-------------------------------------------
+    set f $fOther.fLabelOutline
+
+    DevAddButton $f.bCreateLabelVolume "Create New Label Outline Volume" "VolumesCreateNewLabelOutline"
+    TooltipAdd $f.bCreateLabelVolume "Copies active volume (must be a labelmap) and then filters it to outlines only"
+    pack $f.bCreateLabelVolume
 }
     
 
@@ -2535,4 +2546,53 @@ puts [Position Print]
     RasToVtk Delete
     Spacing Delete
     Position Delete
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC VolumesCreateNewLabelOutline
+# Add a new volume to the mrml tree, that just has the outline
+# .ARGS 
+# int v optional volume id, uses Volume(activeID) if empty string
+# .END
+#-------------------------------------------------------------------------------
+proc VolumesCreateNewLabelOutline { {v ""} } {
+
+    global Volume
+
+    if {$v == ""} {
+        # get the chosen volume
+        set v $Volume(activeID)
+    }
+
+    # is it a label map?
+    if {[Volume($v,node) GetLabelMap] != 1} {
+        DevErrorWindow "Label outline only works for volumes which are label maps, choose a different active volume"
+        return
+    }
+
+    # add a node to the mrml tree
+    set name "[Volume($v,node) GetName]-outline"
+    set outlineID [DevCreateNewCopiedVolume $v "" $name]
+    set node  [Volume($outlineID,vol) GetMrmlNode]
+    Mrml(dataTree) RemoveItem $node 
+    set nodeBefore [Volume($v,vol) GetMrmlNode]
+    Mrml(dataTree) InsertAfterItem $nodeBefore $node
+    MainUpdateMRML
+
+    catch "labelOutline Delete"
+    vtkImageLabelOutline labelOutline
+    # defaults should be okay
+    
+    labelOutline AddObserver StartEvent MainStartProgress
+    labelOutline AddObserver ProgressEvent "MainShowProgress labelOutline"
+    labelOutline AddObserver EndEvent MainEndProgress
+    set ::Gui(progressText) "Creating label outline"
+
+    labelOutline SetInput [Volume($v,vol) GetOutput]
+    labelOutline Update
+
+    # now save it back into the tree
+    Volume($outlineID,vol) SetImageData [labelOutline GetOutput]
+    MainVolumesUpdate $outlineID
 }
