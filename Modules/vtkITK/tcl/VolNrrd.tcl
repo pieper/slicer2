@@ -351,7 +351,10 @@ proc VolNrrdApply {} {
     Ijk_matrix DeepCopy [nrrdReader GetRasToIjkMatrix]
     Ijk_matrix Invert
 
-    VolumesComputeNodeMatricesFromIjkToRasMatrix $i Ijk_matrix $dims
+puts [Ijk_matrix Print]
+
+    #VolumesComputeNodeMatricesFromIjkToRasMatrix $i Ijk_matrix $dims
+    VolumesComputeNodeMatricesFromIjkToRasMatrix2 $i Ijk_matrix $dims
 
     Ijk_matrix Delete
 
