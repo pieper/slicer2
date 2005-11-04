@@ -68,7 +68,7 @@ vtkEstimateDiffusionTensor::vtkEstimateDiffusionTensor()
   // may be set by user
   this->Transform = NULL;
 
-  this->NumberOfRequiredInputs = 7;
+  this->NumberOfRequiredInputs = 1;
   this->NumberOfGradients = 7;
   this->PinvA = NULL;
   this->A = NULL;
@@ -77,6 +77,10 @@ vtkEstimateDiffusionTensor::vtkEstimateDiffusionTensor()
   // this is LeBihan's b factor for physical MR gradient parameters 
   // (same number as C-F uses)
   this->B = vtkDoubleArray::New();
+  this->B->SetNumberOfComponents(1);
+  this->B->SetNumberOfTuples(this->NumberOfGradients);
+  for (int i=0; i<this->NumberOfGradients;i++)
+    this->B->SetValue(i,1000);
 
   // Internal variable to scale the B values, so we get a
   // much better conditioned matrix so solve the Tensor model
@@ -164,9 +168,10 @@ void vtkEstimateDiffusionTensor::SetNumberOfGradients(int num)
       vtkDebugMacro ("setting num gradients to " << num);
       // internal array for storage of gradient vectors
       this->DiffusionGradient->SetNumberOfTuples(num);
+      this->B->SetNumberOfTuples(num);
       // this class's info
       this->NumberOfGradients = num;
-      this->NumberOfRequiredInputs = num;
+      //this->NumberOfRequiredInputs = num;
       this->Modified();
     }
   this->DiffusionGradient->Reset();
@@ -179,6 +184,7 @@ void vtkEstimateDiffusionTensor::ExecuteInformation(vtkImageData **inDatas,
 {
   // We always want to output input[0] scalars Type
   outData->SetScalarType(inDatas[0]->GetScalarType());
+  outData->SetNumberOfScalarComponents(1);
 
 }
 
@@ -196,7 +202,8 @@ void vtkEstimateDiffusionTensor::ExecuteData(vtkDataObject *out)
   
   if (this->GetNumberOfInputs() == 1) {
     //Check if this input is multicomponent and match the number of  gradients
-    if (this->GetInput()->GetNumberOfScalarComponents() != this->NumberOfGradients) {
+    int ncomp = this->GetInput()->GetPointData()->GetScalars()->GetNumberOfComponents();
+    if (ncomp != this->NumberOfGradients) {
       vtkErrorMacro("The input has to have a number of components equal to the number of gradients");
       return;
     }  
@@ -263,6 +270,7 @@ void vtkEstimateDiffusionTensor::ExecuteData(vtkDataObject *out)
   
   
   // jump back into normal pipeline: call standard superclass method here
+  //Do not jump to do the proper allocation of output data
   this->vtkImageMultipleInputFilter::ExecuteData(out);
   
   //Deallocate Internals
@@ -280,7 +288,7 @@ static void vtkEstimateDiffusionTensorExecute(vtkEstimateDiffusionTensor *self,
                                            vtkImageData **inDatas, 
                                            T ** inPtrs,
                                            vtkImageData *outData, 
-                                           float * outPtr,
+                                           T * outPtr,
                                            int outExt[6], int id)
 {
   int idxX, idxY, idxZ;
@@ -386,6 +394,7 @@ static void vtkEstimateDiffusionTensorExecute(vtkEstimateDiffusionTensor *self,
 
               // Pixel operation              
               outTensors->SetTuple(ptId,(float *)outT);
+
               // copy no diffusion data through for scalars
               *outPtr = (T) B0;
               
@@ -449,7 +458,7 @@ void vtkEstimateDiffusionTensor::ThreadedExecute(vtkImageData **inDatas,
     {
       vtkTemplateMacro7(vtkEstimateDiffusionTensorExecute, this, 
                         inDatas, (VTK_TT **)(inPtrs),
-                        outData, (float *)(outPtr), 
+                        outData, (VTK_TT *)(outPtr), 
                         outExt, id);
     default:
       vtkErrorMacro(<< "Execute: Unknown ScalarType");
