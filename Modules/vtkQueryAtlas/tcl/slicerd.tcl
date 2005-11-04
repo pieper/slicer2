@@ -32,8 +32,6 @@ package require vtkQueryAtlas
 #
 proc slicerd_start { {port 18943} } {
 
-    set sock [socket -server slicerd_sock_cb $port]
-
     set ::SLICERD(serversock) [socket -server slicerd_sock_cb $port]
 }
 
@@ -129,22 +127,21 @@ proc slicerd_sock_fileevent {sock} {
             # calculate the space directions and origin
             catch "export_matrix Delete"
             vtkMatrix4x4 export_matrix
-            eval export_matrix DeepCopy [Volume($volid,node) GetRasToVtkMatrix]
+            eval export_matrix DeepCopy [Volume($volid,node) GetRasToIjkMatrix]
             export_matrix Invert
-            export_matrix Transpose
             set space_origin [format "(%g, %g, %g)" \
-                [export_matrix GetElement 3 0]\
-                [export_matrix GetElement 3 1]\
-                [expr -1. * [export_matrix GetElement 3 2]] ]
+                [export_matrix GetElement 0 3]\
+                [export_matrix GetElement 1 3]\
+                [export_matrix GetElement 2 3] ]
             set space_directions [format "(%g, %g, %g) (%g, %g, %g) (%g, %g, %g)" \
                 [export_matrix GetElement 0 0]\
-                [export_matrix GetElement 0 1]\
-                [export_matrix GetElement 0 2]\
-                [expr -1. * [export_matrix GetElement 1 0]]\
-                [expr -1. * [export_matrix GetElement 1 1]]\
-                [expr -1. * [export_matrix GetElement 1 2]]\
+                [export_matrix GetElement 1 0]\
                 [export_matrix GetElement 2 0]\
+                [export_matrix GetElement 0 1]\
+                [export_matrix GetElement 1 1]\
                 [export_matrix GetElement 2 1]\
+                [export_matrix GetElement 0 2]\
+                [export_matrix GetElement 1 2]\
                 [export_matrix GetElement 2 2] ]
             export_matrix Delete
 
@@ -331,7 +328,7 @@ puts "space_directions $space_directions"
 
     set dims [[::Volume($volid,vol) GetOutput] GetDimensions]
 
-    VolumesComputeNodeMatricesFromIjkToRasMatrix $volid Ijk_matrix $dims
+    VolumesComputeNodeMatricesFromIjkToRasMatrix2 $volid Ijk_matrix $dims
 
 puts [Ijk_matrix Print]
 
