@@ -44,25 +44,25 @@ update
 # bump major when incompatibile changes happen either within slicer
 # or in vtk or tcl
 
-set SLICER(major_version) 2
+set ::SLICER(major_version) 2
 
 # bump minor when features accumulate to a stable state for release
 
-set SLICER(minor_version) 6
+set ::SLICER(minor_version) 6
 
 # bump revision for something that has been given out to non-developers
 # (e.g. bump revsion before packaging, then again after packaging
 #  so there's a unique label for the packaged version)
 
-set SLICER(revision) ""
+set ::SLICER(revision) ""
 
 # when packaging a release for distribution, set state to ""
 # when packaging a release for testing, set state to the date as "-YYYY-MM-DD"
 #  otherwise leave it as "-dev"
 
-set SLICER(state) "-dev"
+set ::SLICER(state) "-dev"
 
-set SLICER(version) "$SLICER(major_version).$SLICER(minor_version)$SLICER(revision)$SLICER(state)"
+set ::SLICER(version) "$::SLICER(major_version).$::SLICER(minor_version)$::SLICER(revision)$::SLICER(state)"
 
 
 #
@@ -100,30 +100,30 @@ proc Usage { {msg ""} } {
     set msg "$msg\n   --old-voxel-shift : start slicer with voxel coords in corner not center of image pixel"
     set msg "$msg\n   --immediate-mode : turn on immediate mode rendering (slower)"
     puts stderr $msg
-    tk_messageBox -message $msg -title $SLICER(version) -type ok
+    tk_messageBox -message $msg -title $::SLICER(version) -type ok
 }
 
 #
 # simple arg parsing 
 #
-set SLICER(threaded) "true"
-set SLICER(tkcon) "true"
+set ::SLICER(threaded) "true"
+set ::SLICER(tkcon) "true"
 set verbose 0
 set Module(verbose) 0
-set SLICER(load-dicom) ""
-set SLICER(crystal-eyes-stereo) "false"
-set SLICER(old-voxel-shift) "false"
-set SLICER(immediate-mode) "false"
-set SLICER(load-analyze) ""
-set SLICER(load-freesurfer-volume) ""
-set SLICER(load-freesurfer-label-volume) ""
-set SLICER(load-freesurfer-model) ""
-set SLICER(load-freesurfer-scalar) ""
-set SLICER(load-freesurfer-qa) ""
-set SLICER(load-bxh) ""
-set SLICER(script) ""
-set SLICER(exec) ""
-set SLICER(versionInfo) ""
+set ::SLICER(load-dicom) ""
+set ::SLICER(crystal-eyes-stereo) "false"
+set ::SLICER(old-voxel-shift) "false"
+set ::SLICER(immediate-mode) "false"
+set ::SLICER(load-analyze) ""
+set ::SLICER(load-freesurfer-volume) ""
+set ::SLICER(load-freesurfer-label-volume) ""
+set ::SLICER(load-freesurfer-model) ""
+set ::SLICER(load-freesurfer-scalar) ""
+set ::SLICER(load-freesurfer-qa) ""
+set ::SLICER(load-bxh) ""
+set ::SLICER(script) ""
+set ::SLICER(exec) ""
+set ::SLICER(versionInfo) ""
 set strippedargs ""
 set argc [llength $argv]
 for {set i 0} {$i < $argc} {incr i} {
@@ -142,13 +142,13 @@ for {set i 0} {$i < $argc} {incr i} {
         "--enable-stereo" {
             # this needs to be set when using frame sequential stereo, interlaced and
             # red blue stereo work without this flag being set
-            set SLICER(crystal-eyes-stereo) "true"
+            set ::SLICER(crystal-eyes-stereo) "true"
         }
         "--no-threads" {
-            set SLICER(threaded) "false"
+            set ::SLICER(threaded) "false"
         }
         "--no-tkcon" {
-            set SLICER(tkcon) "false"
+            set ::SLICER(tkcon) "false"
         }
         "--load-dicom" {
             incr i
@@ -158,9 +158,9 @@ for {set i 0} {$i < $argc} {incr i} {
                 set dicomarg [lindex $argv $i]
                 if { [file type $dicomarg] == "file" } {
                     # user picked a file, load all dicoms in same dir
-                    lappend SLICER(load-dicom) [file dir $dicomarg]
+                    lappend ::SLICER(load-dicom) [file dir $dicomarg]
                 } else {
-                    lappend SLICER(load-dicom) $dicomarg
+                    lappend ::SLICER(load-dicom) $dicomarg
                 }
             }
         }
@@ -169,7 +169,7 @@ for {set i 0} {$i < $argc} {incr i} {
             if { $i == $argc } {
                 Usage "missing argument for $a\n"
             } else {
-                lappend SLICER(load-analyze) [lindex $argv $i]
+                lappend ::SLICER(load-analyze) [lindex $argv $i]
             }
         }
         "--load-freesurfer-volume" {
@@ -177,7 +177,7 @@ for {set i 0} {$i < $argc} {incr i} {
             if { $i == $argc } {
                 Usage "missing argument for $a\n"
             } else {
-                lappend SLICER(load-freesurfer-volume) [lindex $argv $i]
+                lappend ::SLICER(load-freesurfer-volume) [lindex $argv $i]
             }
         }
         "--load-freesurfer-label-volume" {
@@ -185,7 +185,7 @@ for {set i 0} {$i < $argc} {incr i} {
             if { $i == $argc } {
                 Usage "missing argument for $a\n"
             } else {
-                lappend SLICER(load-freesurfer-label-volume) [lindex $argv $i]
+                lappend ::SLICER(load-freesurfer-label-volume) [lindex $argv $i]
             }
         }
         "--load-freesurfer-model" {
@@ -193,7 +193,7 @@ for {set i 0} {$i < $argc} {incr i} {
             if { $i == $argc } {
                 Usage "missing argument for $a\n"
             } else {
-                lappend SLICER(load-freesurfer-model) [lindex $argv $i]
+                lappend ::SLICER(load-freesurfer-model) [lindex $argv $i]
             }
         }
         "--load-freesurfer-scalar" {
@@ -201,7 +201,7 @@ for {set i 0} {$i < $argc} {incr i} {
             if { $i == $argc } {
                 Usage "missing argument for $a\n"
             } else {
-                lappend SLICER(load-freesurfer-scalar) [lindex $argv $i]
+                lappend ::SLICER(load-freesurfer-scalar) [lindex $argv $i]
             }
         }
         "--load-freesurfer-qa" {
@@ -209,7 +209,7 @@ for {set i 0} {$i < $argc} {incr i} {
             if { $i == $argc } {
                 Usage "missing argument for $a\n"
             } else {
-                lappend SLICER(load-freesurfer-qa) [lindex $argv $i]
+                lappend ::SLICER(load-freesurfer-qa) [lindex $argv $i]
             }
         }
         "--load-bxh" {
@@ -217,27 +217,27 @@ for {set i 0} {$i < $argc} {incr i} {
             if { $i == $argc } {
                 Usage "missing argument for $a\n"
             } else {
-                lappend SLICER(load-bxh) [lindex $argv $i]
+                lappend ::SLICER(load-bxh) [lindex $argv $i]
             }
         }
         "--old-voxel-shift" {
-            set SLICER(old-voxel-shift) "true"
+            set ::SLICER(old-voxel-shift) "true"
         }
         "--immediate-mode" {
-            set SLICER(immediate-mode) "true"
+            set ::SLICER(immediate-mode) "true"
         }
         "--script" {
             incr i
             if { $i == $argc } {
                 Usage "missing argument for $a\n"
             } else {
-                set SLICER(script) [lindex $argv $i]
+                set ::SLICER(script) [lindex $argv $i]
             }
         }
         "--exec*" {
             set embeddedarg ""
             scan $a "--exec%s" embeddedarg
-            set SLICER(exec) "$SLICER(exec) $embeddedarg"
+            set ::SLICER(exec) "$::SLICER(exec) $embeddedarg"
             incr i
             if { $i == $argc && $embeddedarg == ""} {
                 Usage "missing argument for $a\n"
@@ -247,13 +247,13 @@ for {set i 0} {$i < $argc} {incr i} {
                     if { [string match "--*" $term] } {
                         break
                     } else {
-                        set SLICER(exec) "$SLICER(exec) $term"
+                        set ::SLICER(exec) "$::SLICER(exec) $term"
                         incr i
                     } 
                 }
                 # allow a ".," to mean ";" in argument to facilitate scripting
                 # (it looks like a semicolon turned on it side
-                regsub -all ".," $SLICER(exec) ";" SLICER(exec)
+                regsub -all ".," $::SLICER(exec) ";" ::SLICER(exec)
             }
         }
         "--all-info" {
@@ -275,7 +275,7 @@ for {set i 0} {$i < $argc} {incr i} {
                 }
             }
             # add in the compiler info after MainBoot is called
-            set SLICER(versionInfo)  "ProgramName: $execName ProgramArguments: $argv\nTimeStamp: [clock format [clock seconds] -format "%D-%T-%Z"] User: $env(USER) Machine: $tcl_platform(machine) Platform: $tcl_platform(os) PlatformVersion: $tcl_platform(osVersion)"
+            set ::SLICER(versionInfo)  "ProgramName: $execName ProgramArguments: $argv\nTimeStamp: [clock format [clock seconds] -format "%D-%T-%Z"] User: $::env(USER) Machine: $tcl_platform(machine) Platform: $tcl_platform(os) PlatformVersion: $tcl_platform(osVersion)"
 
         }
         "-*" {
@@ -297,14 +297,14 @@ if {$argc > 1 } {
 
 
 #
-# Determine Slicer's home directory from the SLICER_HOME environment 
+# Determine Slicer's home directory from the ::SLICER_HOME environment 
 # variable, or the root directory of this script ($argv0).
 #
-if {[info exists env(SLICER_HOME)] == 0 || $env(SLICER_HOME) == ""} {
+if {[info exists ::env(::SLICER_HOME)] == 0 || $::env(::SLICER_HOME) == ""} {
     # set prog [file dirname $argv0]
     set prog [file dirname [info script]]
 } else {
-    set prog [file join $env(SLICER_HOME) Base/tcl]
+    set prog [file join $::env(::SLICER_HOME) Base/tcl]
 }
 # Don't use "."
 if {$prog == "."} {
@@ -360,7 +360,7 @@ proc SplashShow { {delayms 7000} } {
     label .splash.t2 -text "See www.slicer.org for license details." -bg white -fg red -font $splashfont
     place .splash.t1 -relx 0.5 -rely 0.70 -anchor center
     place .splash.t2 -relx 0.5 -rely 0.80 -anchor center
-    label .splash.v -text "Version: $SLICER(version)" -bg white -fg darkblue -font $splashfont
+    label .splash.v -text "Version: $::SLICER(version)" -bg white -fg darkblue -font $splashfont
     place .splash.v -relx 0.5 -rely 0.95 -anchor center
     after $delayms SplashKill
     SplashRaise
@@ -375,7 +375,7 @@ SplashShow
 #
 # startup with the tkcon
 #
-if { $SLICER(tkcon) == "true" } { 
+if { $::SLICER(tkcon) == "true" } { 
     set av $argv; set argv "" ;# keep tkcon from trying to interpret command line args
     source $prog/tkcon.tcl
     ::tkcon::Init
@@ -394,7 +394,7 @@ update
 #
 
 puts "Loading VTK..."
-set SLICER(VTK_VERSION) [package require vtk]
+set ::SLICER(VTK_VERSION) [package require vtk]
 
 proc VTK_AT_LEAST {version} {
 
@@ -441,8 +441,8 @@ package require vtkinteraction
 # turn off if user wants - re-enabled threading by default
 # based on Raul's fixes to vtkImageReformat 2002-11-26
 #
-puts "threaded is $SLICER(threaded)"
-if { $SLICER(threaded) == "false" } {
+puts "threaded is $::SLICER(threaded)"
+if { $::SLICER(threaded) == "false" } {
     vtkMultiThreader tempMultiThreader
     tempMultiThreader SetGlobalDefaultNumberOfThreads 1
     tempMultiThreader Delete
@@ -514,7 +514,7 @@ proc ReadModuleNames {filename} {
 #
 # Looks for all the modules.
 # For example, for a non-essential module, looks first for ./tcl-modules/*.tcl
-# Then looks for $SLICER_HOME/program/tcl-modules/*.tcl
+# Then looks for $::SLICER_HOME/program/tcl-modules/*.tcl
 #
 # .END
 #-------------------------------------------------------------------------------
@@ -598,12 +598,12 @@ proc GetFullPath {name ext {dir "" } {verbose 0}} {
 # .PROC START_THE_SLICER
 #
 # Looks in ./tcl-shared ./tcl-modules and ./tcl-shared for names of tcl files
-# Also looks in $central/tcl-shared ... (which is $SLICER_HOME/program/..)
+# Also looks in $central/tcl-shared ... (which is $::SLICER_HOME/program/..)
 #
 # Source those files
 # Boot the slicer
 #
-# If the environment variable SLICER_SCRIPT exist, 
+# If the environment variable ::SLICER_SCRIPT exist, 
 # and it points to a tcl file, source the file. 
 # Then, if the function SlicerScript exists, run it after booting.
 #
@@ -666,7 +666,7 @@ foreach name [concat $suppressed $ignored] {
     }
 }
 
-foreach m $env(SLICER_MODULES_TO_REQUIRE) {
+foreach m $::env(SLICER_MODULES_TO_REQUIRE) {
     if {[lsearch $m $ignored] == -1} {
         puts "Loading Module $m..."
         if { [catch {package require $m} errVal] } {
@@ -683,8 +683,8 @@ foreach m $env(SLICER_MODULES_TO_REQUIRE) {
 # Source the modules that haven't been package required
 set foundOrdered ""
 foreach name $ordered {
-    if {[lsearch $env(SLICER_MODULES_TO_REQUIRE) $name] == -1 &&
-        [lsearch $env(SLICER_MODULES_TO_REQUIRE) vtk${name}] == -1} {
+    if {[lsearch $::env(SLICER_MODULES_TO_REQUIRE) $name] == -1 &&
+        [lsearch $::env(SLICER_MODULES_TO_REQUIRE) vtk${name}] == -1} {
         # the module hasn't been package required yet, so the tcl file hasn't been sourced,
         # so this should be a Base module that needs to be sourced
         if { [info command ${name}Init] == "" } {
@@ -758,7 +758,7 @@ foreach Entry $foundOrdered {
 
 # Source Base shared files either locally or globally
 # For example for a module MyModule, we look for
-# ./tcl-modules/MyModule.tcl and then for $SLICER_HOME/Base/tcl/tcl-modules/MyModule.tcl
+# ./tcl-modules/MyModule.tcl and then for $::SLICER_HOME/Base/tcl/tcl-modules/MyModule.tcl
 # Similar for tcl-shared and tcl-main
 
 set shared [FindNames tcl-shared]
@@ -805,7 +805,7 @@ MainBoot [lindex $argv 0]
 set ::View(render_on) 1
 
 ### print out the versioning info
-if { $SLICER(versionInfo) != "" } {
+if { $::SLICER(versionInfo) != "" } {
     # have to get the compiler information after MainBoot
     set compilerVersion [Slicer GetCompilerVersion]
     set compilerName [Slicer GetCompilerName]
@@ -818,7 +818,7 @@ if { $SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.98 2005/11/03 22:26:55 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.99 2005/11/05 16:25:54 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
@@ -843,14 +843,14 @@ __vtkVersionInstance Delete
 # - if it's "", it will be ignored
 # - note: the flag can be set if a directory is specified on the command line
 #
-foreach arg $SLICER(load-dicom) {
+foreach arg $::SLICER(load-dicom) {
     DICOMLoadStudy $arg
 }
 
 #
 # read analyze volumes specified on command line
 #
-foreach arg $SLICER(load-analyze) {
+foreach arg $::SLICER(load-analyze) {
     if { [catch "package require vtkCISGFile"] } {
         DevErrorWindow "vtkCISGFile Module required for --load-analyze option."
         break
@@ -863,7 +863,7 @@ foreach arg $SLICER(load-analyze) {
 #
 # read freesurfer data command line
 #
-foreach arg $SLICER(load-freesurfer-volume) {
+foreach arg $::SLICER(load-freesurfer-volume) {
     if { [catch "package require vtkFreeSurferReaders"] } {
         DevErrorWindow "vtkFreeSurferReaders Module required for --load-freesufer-volume option."
         break
@@ -875,7 +875,7 @@ foreach arg $SLICER(load-freesurfer-volume) {
 #
 # read freesurfer data command line
 #
-foreach arg $SLICER(load-freesurfer-label-volume) {
+foreach arg $::SLICER(load-freesurfer-label-volume) {
     if { [catch "package require vtkFreeSurferReaders"] } {
         DevErrorWindow "vtkFreeSurferReaders Module required for --load-freesufer-label-volume option."
         break
@@ -887,7 +887,7 @@ foreach arg $SLICER(load-freesurfer-label-volume) {
 #
 # read freesurfer data command line
 #
-foreach arg $SLICER(load-freesurfer-model) {
+foreach arg $::SLICER(load-freesurfer-model) {
     if { [catch "package require vtkFreeSurferReaders"] } {
         DevErrorWindow "vtkFreeSurferReaders Module required for --load-freesufer-model option."
         break
@@ -899,7 +899,7 @@ foreach arg $SLICER(load-freesurfer-model) {
 #
 # read freesurfer scalar command, gets associated with active (last loaded) model
 #
-foreach arg $SLICER(load-freesurfer-scalar) {
+foreach arg $::SLICER(load-freesurfer-scalar) {
     if { [catch "package require vtkFreeSurferReaders"] } {
         DevErrorWindow "vtkFreeSurferReaders Module required for --load-freesufer-scalar option."
         break
@@ -911,7 +911,7 @@ foreach arg $SLICER(load-freesurfer-scalar) {
 #
 # read in freesurfer QA command line
 # 
-foreach arg $SLICER(load-freesurfer-qa) {
+foreach arg $::SLICER(load-freesurfer-qa) {
     if { [catch "package require vtkFreeSurferReaders"] } {
         DevErrorWindow "vtkFreeSurferReaders Module required for --load-freesufer-qa option."
         break
@@ -924,7 +924,7 @@ foreach arg $SLICER(load-freesurfer-qa) {
 #
 # read bxh volumes specified on command line
 #
-foreach arg $SLICER(load-bxh) {
+foreach arg $::SLICER(load-bxh) {
     if { [catch "package require vtkCISGFile"] } {
         DevErrorWindow "vtkCISGFile Module required for --load-bxh option."
         break
@@ -948,15 +948,15 @@ proc exit { "code 0" } {
 }
 
 
-### Did someone set the SLICER_SCRIPT environment variable
+### Did someone set the ::SLICER_SCRIPT environment variable
 ### If they did and it is a tcl file, source it.
 ### If the SlicerScript function exists, run it
 
-if {[info exists env(SLICER_SCRIPT)] != 0 && $env(SLICER_SCRIPT) != ""} {
+if {[info exists ::env(SLICER_SCRIPT)] != 0 && $::env(SLICER_SCRIPT) != ""} {
 
     ## Is it a tcl file
-    if {[regexp "\.tcl$\s*$" $env(SLICER_SCRIPT)] == 1} {
-        source $env(SLICER_SCRIPT)
+    if {[regexp "\.tcl$\s*$" $::env(SLICER_SCRIPT)] == 1} {
+        source $::env(SLICER_SCRIPT)
         if {[info commands SlicerScript] != ""} {
             puts "Running slicer script..."
             SlicerScript
@@ -967,11 +967,11 @@ if {[info exists env(SLICER_SCRIPT)] != 0 && $env(SLICER_SCRIPT) != ""} {
 
 ### or run a script specified on the command line with --script
 
-if { $SLICER(script) != "" } {
-    source $SLICER(script)
+if { $::SLICER(script) != "" } {
+    source $::SLICER(script)
 }
 
-if { $SLICER(exec) != "" } {
-    eval $SLICER(exec)
+if { $::SLICER(exec) != "" } {
+    eval $::SLICER(exec)
 }
 
