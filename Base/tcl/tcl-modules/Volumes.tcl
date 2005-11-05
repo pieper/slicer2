@@ -113,7 +113,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.115 $} {$Date: 2005/11/04 21:11:34 $}]
+            {$Revision: 1.116 $} {$Date: 2005/11/05 23:30:03 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -2595,4 +2595,47 @@ proc VolumesCreateNewLabelOutline { {v ""} } {
     # now save it back into the tree
     Volume($outlineID,vol) SetImageData [labelOutline GetOutput]
     MainVolumesUpdate $outlineID
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolumesComputeNodeMatricesFromRasToIjkMatrix
+#  Compute Node Matrices From RasToIjkMatrix
+# .ARGS
+#  node id,  RasToIjkMatrix
+# the matrix includes spacing
+# .END
+#-------------------------------------------------------------------------------
+proc VolumesComputeNodeMatricesFromRasToIjkMatrix {volumeNode RasToIjkMatrix} {
+    catch "RasToVtkMatrix Delete"
+    vtkMatrix4x4 RasToVtkMatrix
+    RasToVtkMatrix DeepCopy $RasToIjkMatrix
+    
+    RasToVtkMatrix SetElement 1 0 [expr -1. * [RasToVtkMatrix GetElement 1 0]]
+    RasToVtkMatrix SetElement 1 1 [expr -1. * [RasToVtkMatrix GetElement 1 1]]
+    RasToVtkMatrix SetElement 1 2 [expr -1. * [RasToVtkMatrix GetElement 1 2]]
+    
+    Volume($volumeNode,node) SetRasToIjkMatrix [Volume($volumeNode,node) GetMatrixToString $RasToIjkMatrix]
+    Volume($volumeNode,node) SetRasToVtkMatrix [Volume($volumeNode,node) GetMatrixToString RasToVtkMatrix]
+    Volume($volumeNode,node) ComputePositionMatrixFromRasToVtk RasToVtkMatrix
+    
+    RasToVtkMatrix Delete
+    
+    if {0} {
+        # this version should have worked but it does not for some reason...
+        
+        catch "IjkToRasMatrix Delete"
+        vtkMatrix4x4 IjkToRasMatrix
+        IjkToRasMatrix DeepCopy $RasToIjkMatrix
+        IjkToRasMatrix Invert
+        
+        catch "RasToVtkMatrix Delete"
+        vtkMatrix4x4 RasToVtkMatrix
+        RasToVtkMatrix DeepCopy IjkToRasMatrix
+        
+        RasToVtkMatrix SetElement 0 1 [expr -1. * [RasToVtkMatrix GetElement 0 1]]
+        RasToVtkMatrix SetElement 1 1 [expr -1. * [RasToVtkMatrix GetElement 1 1]]
+        RasToVtkMatrix SetElement 2 1 [expr -1. * [RasToVtkMatrix GetElement 2 1]]
+        #RasToVtkMatrix SetElement 3 1 [expr -1. * [RasToVtkMatrix GetElement 3 1]]
+        RasToVtkMatrix Invert
+    }
 }
