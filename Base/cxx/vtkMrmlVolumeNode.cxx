@@ -1098,6 +1098,40 @@ int vtkMrmlVolumeNode::ComputeRasToIjkFromCorners(
   return(0);
 }
 
+void 
+vtkMrmlVolumeNode::ComputePositionMatrixFromRasToVtk(vtkMatrix4x4* RasToVtkMatrix)
+{
+  // Figure out the "Position Matrix" which converts
+  // from scaled Vtk coordinates to Ras coordinates.
+  // Formula: Position = VtkToRas*Inverse(ScaleMat)
+  //        or  RasToVtk*Position=Inverse(ScaleMat)
+  // where ScaleMat is a diagonal scaling matrix with diagonal
+  // elements equal to the pixel size and slice thickness.
+  vtkFloatingPointType tmp;
+  vtkMatrix4x4 *InvScale_ = vtkMatrix4x4::New();
+  vtkMatrix4x4 *Position_ = vtkMatrix4x4::New();
+
+  InvScale_->Identity();
+  Position_->Identity();
+
+  for (int i=0;i<3;i++) 
+  {
+    tmp=this->Spacing[i];
+    tmp=(tmp<=0.0)?(1.0):(1.0/tmp);
+    InvScale_->SetElement(i,i,tmp);
+  }
+  // Solve RasToVtk*Position=InvScale for Position.
+  SolveABeqCforB(RasToVtkMatrix, Position_, InvScale_);
+
+  // Convert matrices to strings
+  this->SetPositionMatrix(GetMatrixToString(Position_));
+
+  // Clean up
+  InvScale_->Delete();
+  Position_->Delete();
+}
+
+
 // Added by Attila Tanacs 10/10/2000 1/4/02
 
 // DICOMFileList

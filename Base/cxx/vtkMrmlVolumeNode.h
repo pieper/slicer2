@@ -287,6 +287,8 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
   void ComputeRasToIjkFromScanOrder(char *order);
   static char* ComputeScanOrderFromRasToIjk(vtkMatrix4x4 *RasToIjk);
 
+  void ComputePositionMatrixFromRasToVtk(vtkMatrix4x4* RasToVtkMatrix);
+
   void SetScanOrder(char *s);
   vtkGetStringMacro(ScanOrder);
 
