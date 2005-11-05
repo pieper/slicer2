@@ -42,6 +42,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkPolyData.h"
 #include "vtkPolyDataSource.h"
 #include "vtkCell.h"
+#include <vector>
 
 //------------------------------------------------------------------------------
 vtkColorROIFromTracts* vtkColorROIFromTracts::New()
