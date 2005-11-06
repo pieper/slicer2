@@ -276,20 +276,26 @@ proc VolGenericApply {} {
     catch "genreader Delete"
     vtkITKArchetypeImageSeriesReader genreader
     genreader SetArchetype $Volume(VolGeneric,FileName)
+    genreader UpdateInformation
     genreader SetOutputScalarTypeToNative
     genreader SetDesiredCoordinateOrientationToNative
    
-    # flip the image data going from ITK to VTK
-    catch "Volume($i,vol,rw)  Delete"
-    vtkImageFlip Volume($i,vol,rw)
-    Volume($i,vol,rw) SetFilteredAxis 1
-    Volume($i,vol,rw) SetInput  [genreader GetOutput]   
 
-    if {$Module(verbose) == 1} {
-        puts "VolGenericApply: set Generic filename to [Volume($i,vol,rw) GetFileName]\nCalling Update on volume $i"
+    if { 0 } {
+        # flip the image data going from ITK to VTK
+        catch "Volume($i,vol,rw)  Delete"
+        vtkImageFlip Volume($i,vol,rw)
+        Volume($i,vol,rw) SetFilteredAxis 1
+        Volume($i,vol,rw) SetInput  [genreader GetOutput]   
+
+        if {$Module(verbose) == 1} {
+            puts "VolGenericApply: set Generic filename to [Volume($i,vol,rw) GetFileName]\nCalling Update on volume $i"
+        }
+
+        set imdata [Volume($i,vol,rw) GetOutput]
+    } else {
+        set imdata [genreader GetOutput]
     }
-
-    set imdata [Volume($i,vol,rw) GetOutput]
 
     if {[catch "$imdata UpdateInformation"]} {
         DevErrorWindow "Cannot read file $Volume(VolGeneric,FileName)"
@@ -374,7 +380,7 @@ proc VolGenericApply {} {
     Ijk_matrix DeepCopy [genreader GetRasToIjkMatrix]
     Ijk_matrix Invert
 
-    VolumesComputeNodeMatricesFromIjkToRasMatrix $i Ijk_matrix $dims
+    VolumesComputeNodeMatricesFromIjkToRasMatrix2 $i Ijk_matrix $dims
 
     Ijk_matrix Delete
     genreader Delete
@@ -456,7 +462,6 @@ proc VolGenericMainFileCloseUpdate {} {
             viewRen RemoveActor  Volume(VolGeneric,$f,curveactor)
             Volume(VolGeneric,$f,curveactor) Delete
             Volume(VolGeneric,$f,mapper) Delete
-            Volume($f,vol,rw) Delete
         }
         if {[info exists Volume($f,vol,rw)] == 1} {
             if {$Module(verbose) == 1} {
@@ -500,7 +505,13 @@ proc VolGenericReaderProc {v} {
     flip SetFilteredAxis 1
     flip SetInput  [genreader GetOutput]   
     flip Update
-    Volume($v,vol) SetImageData [flip GetOutput]
+
+    catch "flip2 Delete"
+    vtkImageFlip flip2
+    flip2 SetFilteredAxis 2
+    flip2 SetInput  [flip GetOutput]   
+    flip2 Update
+    Volume($v,vol) SetImageData [flip2 GetOutput]
 
     flip Delete
     genreader Delete
