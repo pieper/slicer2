@@ -32,7 +32,17 @@
 #include "vtkMedicalImageReader2.h"
 #include "vtkMatrix4x4.h"
 
+//#include "vtkDataObject.h"
+//#include "vtkImageData.h"
+
+#include "vtkPointData.h"
+
 #include "NrrdIO/NrrdIO.h"
+
+#define SCALARS 1
+#define VECTORS 2
+#define NORMALS 3
+#define TENSORS 4
 
 class VTK_ITK_EXPORT vtkNRRDReader : public vtkMedicalImageReader2
 {
@@ -76,6 +86,23 @@ public:
     {
       return "NRRD - Nearly Raw Raster Data";
     }
+
+  // Description:
+  // Point data field type
+  vtkSetMacro(PointDataType,int);
+  vtkGetMacro(PointDataType,int);
+  
+  // Description:
+  // Set the data type: int, float....
+  vtkSetMacro(DataType,int);
+  vtkGetMacro(DataType,int);
+  
+  // Description:
+  //Number of components
+  vtkSetMacro(NumberOfComponents,int);
+  vtkGetMacro(NumberOfComponents,int);
+  
+
 
   int NrrdToVTKScalarType( const int nrrdPixelType ) const
   {
@@ -162,60 +189,21 @@ public:
     }
   }
 
-  const char *NrrdGetSpaceString ( Nrrd* nrrd ) const
-  {
-      return (airEnumStr(nrrdSpace, nrrd->space));
-#if 0
-  switch( nrrd->space )
-    {
-    default:
-    case nrrdSpaceUnknown:
-        return "unknown";
-    break;
-    case nrrdSpaceRightAnteriorSuperior:
-        return "right-anterior-superior"; /*  1: NIFTI-1 (right-handed) */
-    break;
-    case nrrdSpaceLeftAnteriorSuperior:
-        return "left-anterior-superior"; /*  2: standard Analyze (left-handed) */
-    break;
-    case nrrdSpaceLeftPosteriorSuperior:     
-        return "left-posterior-superior"; /*  3: DICOM 3.0 (right-handed) */
-    break;
-    case nrrdSpaceRightAnteriorSuperiorTime:     
-        return "right-anterior-superior-time"; /*  4 */
-    break;
-    case nrrdSpaceLeftAnteriorSuperiorTime:     
-        return "left-anterior-superior-time"; /*  5 */
-    break;
-    case nrrdSpaceLeftPosteriorSuperiorTime:     
-        return "left-posterior-superior-time"; /*  6 */
-    break;
-    case nrrdSpaceScannerXYZ:     
-        return "scanner-xyz"; /*  7: ACR/NEMA 2.0 (pre-DICOM 3.0) */
-    break;
-    case nrrdSpaceScannerXYZTime:     
-        return "scanner-xyz-time"; /*  8 */
-    break;
-    case nrrdSpace3DRightHanded:     
-        return "3d-right-handed"; /*  9 */
-    break;
-    case nrrdSpace3DLeftHanded:     
-        return "3d-left-handed"; /*  10 */
-    break;
-    case nrrdSpace3DRightHandedTime:     
-        return "3d-right-handed-time"; /*  11 */
-    break;
-    case nrrdSpace3DLeftHandedTime:     
-        return "3d-left-handed-time"; /*  12 */
-    break;
-    }
-#endif
-  }
+vtkImageData * AllocateOutputData(vtkDataObject *out);
+void AllocatePointData(vtkImageData *out);
 
 protected:
   vtkNRRDReader();
   ~vtkNRRDReader();
 
+  int nrrdFlip(Nrrd *nout, const Nrrd *nin, unsigned int axis);
+  void _nrrdAxisInfoCopy(NrrdAxisInfo *dest, const NrrdAxisInfo *src, int bitflag);
+  void _nrrdSpaceVecScaleAdd2(double sum[NRRD_SPACE_DIM_MAX], 
+                       double sclA, const double vecA[NRRD_SPACE_DIM_MAX],
+                       double sclB, const double vecB[NRRD_SPACE_DIM_MAX]);
+  void _nrrdSpaceVecCopy(double dst[NRRD_SPACE_DIM_MAX], 
+                  const double src[NRRD_SPACE_DIM_MAX]);
+                         
   vtkMatrix4x4* RasToIjkMatrix;
   vtkMatrix4x4* MeasurementFrameMatrix;
 
@@ -223,6 +211,10 @@ protected:
   char* CurrentFileName;
 
   Nrrd *nrrd;
+
+  int PointDataType;
+  int DataType;
+  int NumberOfComponents;
 
   //BTX
   std::map <std::string, std::string> HeaderKeyValue;
