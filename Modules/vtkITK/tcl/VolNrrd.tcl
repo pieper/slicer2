@@ -260,11 +260,13 @@ proc VolNrrdApply {} {
     }
     # flip the image data going from ITK to VTK
     catch "Volume($i,vol,rw)  Delete"
-    vtkImageFlip Volume($i,vol,rw)
-    Volume($i,vol,rw) SetFilteredAxis 1
-    Volume($i,vol,rw) SetInput  [nrrdReader GetOutput]   
+    #vtkImageFlip Volume($i,vol,rw)
+    #Volume($i,vol,rw) SetFilteredAxis 1
+    #Volume($i,vol,rw) SetInput  [nrrdReader GetOutput]   
 
-    set imdata [Volume($i,vol,rw) GetOutput]
+    vtkNRRDReader Volume($i,vol,rw) 
+    #set imdata [Volume($i,vol,rw) GetOutput]
+    set imdata [nrrdReader GetOutput]
 
     if {[catch "$imdata UpdateInformation"]} {
         DevErrorWindow "Cannot read file $Volume(VolNrrd,FileName)"
@@ -272,6 +274,7 @@ proc VolNrrdApply {} {
         return;
     }
 
+    nrrdReader UpdateInformation
     $imdata UpdateInformation
 
     if {$Module(verbose) == 1} {
@@ -351,10 +354,7 @@ proc VolNrrdApply {} {
     Ijk_matrix DeepCopy [nrrdReader GetRasToIjkMatrix]
     Ijk_matrix Invert
 
-puts [Ijk_matrix Print]
-
-    #VolumesComputeNodeMatricesFromIjkToRasMatrix $i Ijk_matrix $dims
-    VolumesComputeNodeMatricesFromIjkToRasMatrix2 $i Ijk_matrix $dims
+    VolumesComputeNodeMatricesFromIjkToRasMatrix $i Ijk_matrix $dims
 
     Ijk_matrix Delete
 
@@ -469,16 +469,36 @@ proc VolNrrdReaderProc {v} {
   
     nrrdReader1 SetFileName [Volume($v,node) GetFullPrefix]
 
-    catch "flip Delete"
-    vtkImageFlip flip
-    flip SetFilteredAxis 1
-    flip SetInput  [nrrdReader1 GetOutput]   
+    nrrdReader1 Update
+    puts "[[nrrdReader1 GetOutput] Print]"
     
-    flip Update
+    catch "ap Delete"
+    vtkImageAppend ap
+    ap SetAppendAxis 2
+    set ncomp [[nrrdReader1 GetOutput] GetNumberOfScalarComponents]
+    puts "Num comp: $ncomp"
+    if { $ncomp > 3 } {
+       for {set i 0} {$i < $ncomp} {incr i} {
+         catch "e$i Delete"
+     vtkImageExtractComponents e$i
+     e$i SetInput [nrrdReader1 GetOutput]
+     e$i SetComponents $i
+     e$i Update
+     ap AddInput [e$i GetOutput]
+    }
+    ap Update  
+        for {set i 0} {$i <$ncomp} {incr i} {
+      e$i Delete
+    }
+    }       
     
-    Volume($v,vol) SetImageData [flip GetOutput]
-
-    flip Delete
+    #Volume($v,vol) SetImageData [nrrdReader1 GetOutput]
+    Volume($v,vol) SetImageData [ap GetOutput]
+    set n [[[[nrrdReader1 GetOutput] GetPointData] GetScalars] GetNumberOfComponents]
+    Volume($v,node) SetNumScalars $n
+    
+    #flip Delete
+    ap Delete
     nrrdReader1 Delete
 
     set Volume(fileType) ""
