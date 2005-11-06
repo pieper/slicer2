@@ -67,7 +67,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.21 $} {$Date: 2005/10/12 01:03:34 $}]
+                                 {$Revision: 1.22 $} {$Date: 2005/11/06 18:24:48 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -1851,9 +1851,9 @@ proc DTMRIComputeRasToIjkFromCorners {refnode node extent} {
   _Ijk SetElement 2 3 [expr ([lindex $extent 5] - [lindex $extent 4])/2.0]  
   
   #Trick: Negate y axis to compensate for flip in nrrd.
-  _Ijk SetElement 1 0 [expr -1 * [_Ijk GetElement 1 0]]
-  _Ijk SetElement 1 1 [expr -1 * [_Ijk GetElement 1 1]]
-  _Ijk SetElement 1 2 [expr -1 * [_Ijk GetElement 1 2]]
+  #_Ijk SetElement 1 0 [expr -1 * [_Ijk GetElement 1 0]]
+  #_Ijk SetElement 1 1 [expr -1 * [_Ijk GetElement 1 1]]
+  #_Ijk SetElement 1 2 [expr -1 * [_Ijk GetElement 1 2]]
   
   #Invert to obtain IjkToRas transform
   _Ijk Invert
@@ -1862,33 +1862,9 @@ proc DTMRIComputeRasToIjkFromCorners {refnode node extent} {
               [expr [lindex $extent 3] - [lindex $extent 2] + 1] \
               [expr [lindex $extent 5] - [lindex $extent 4] + 1]"           
   
-   # first top left - start at zero, and add origin to all later
-   set ftl "0 0 0"
-   # first top right = width * row vector
-   set ftr [lrange [_Ijk MultiplyPoint [lindex $dims 0] 0 0 0] 0 2]
-   # first bottom right = ftr + height * column vector
-   set column_vec [lrange [_Ijk MultiplyPoint 0 [lindex $dims 1] 0 0] 0 2]
-   set fbr ""
-   foreach ftr_e $ftr column_vec_e $column_vec {
-        lappend fbr [expr $ftr_e + $column_vec_e]
-    }
-    # last top left = ftl + slice vector  (and ftl is zero)
-    set ltl [lrange [_Ijk MultiplyPoint 0 0 [lindex $dims 2] 0] 0 2]
+  VolumesComputeNodeMatricesFromIjkToRasMatrix [$node GetID] _Ijk $dims
 
-
-    # add the origin offset 
-    set origin [lrange [_Ijk MultiplyPoint 0 0 0 1] 0 2]
-    foreach corner "ftl ftr fbr ltl" {
-        set new_corner ""
-        foreach corner_e [set $corner] origin_e $origin {
-            lappend new_corner [expr $corner_e + $origin_e]
-        }
-        set $corner $new_corner
-    }
-
-    eval $node ComputeRasToIjkFromCorners "0 0 0" $ftl $ftr $fbr "0 0 0" $ltl
-
-    _Ijk Delete
-    MainUpdateMRML
+  _Ijk Delete
+  MainUpdateMRML
 
 }
