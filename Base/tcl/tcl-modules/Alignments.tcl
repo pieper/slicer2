@@ -149,7 +149,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.34 $} {$Date: 2005/01/28 21:45:00 $}]
+            {$Revision: 1.35 $} {$Date: 2005/11/07 22:32:42 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -322,9 +322,9 @@ proc AlignmentsBuildGUI {} {
        <UL> 
           <LI> The <B>FidAlign</B> tab allows selection of corresponding fiducial points on the volume to move and the reference volume. Once this button is pressed, the screen is split into half and the volume to move is displayed in the screen on the right while the reference volume is displayed on the left. The screen color indicates which screen is the active one (yellow) and which one is the inactive one (blue). The active screen is set either by the motion of the mouse or the radio buttons found on the control panel. It is important to note that only the control panel for the active volume is shown. In the FidAlign mode, pick at least three corresponding points on each of the volumes and click the apply button to obtain a coarse registration of the two volumes. Click the cancel button to exit the fiducial selection mode. The matrix is set to the transformation matrix that was used to coarsly align the volume to move with the reference volume. This matrix can be set as the active matrix for <B>Intensity</B> registration or the matrix can be manually adjusted using the sliders on the manual tab. 
           <LI> The <B>Intensity</B> button performs automatic registration.. This will set the matrix to the transformation matrix needed to align the <B>Volume to Move</B> with the <B>Reference Vol.</B>.<BR><B>TIP:</B> Set the <B>Run Speed</B> to <I>Fast</I> if the 2 volumes are already roughly aligned. Click on the <I>View color correspondence between the two overlayed images</I> button to visually assess the quality of registration. When the reference volume(red) and the volume to move(blue) overlap, they form a pink color.
-          <LI> The <B>TPS</B> button will be used to access registration using the thin plate spline method in the future. It is currently not available in this version. 
        </UL>
     </UL>"
+# <LI> The <B>TPS</B> button will be used to access registration using the thin plate spline method in the future. It is currently not available in this version. 
     regsub -all "\n" $help { } help
     MainHelpApplyTags Alignments $help
     MainHelpBuildGUI  Alignments
@@ -691,7 +691,7 @@ proc AlignmentsBuildGUI {} {
     frame $f.fTop -bg $Gui(backdrop) -relief sunken -bd 2
     frame $f.fMid -bg $Gui(activeWorkspace) -relief sunken -bd 2
     frame $f.fBot  -bg $Gui(activeWorkspace) -height 1000
-    pack $f.fTop $f.fMid $f.fBot -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+    pack $f.fTop $f.fMid $f.fBot -side top -pady $Gui(pad) -padx $Gui(pad) -fill x -expand 1
 
     #-------------------------------------------
     # Auto->Bot frame
@@ -699,7 +699,8 @@ proc AlignmentsBuildGUI {} {
     set f $fAuto.fBot
 
     #Frames for FidAlign, TPS and Intensity and a "choose alignment" screen
-    foreach type "AlignBegin FidAlign Intensity TPS" {
+    # took out TPS
+    foreach type "AlignBegin FidAlign Intensity" {
         frame $f.f${type} -bg $Gui(activeWorkspace)
         place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
         set Matrix(f${type}) $f.f${type}
@@ -713,7 +714,7 @@ proc AlignmentsBuildGUI {} {
 
     frame $f.fActive -bg $Gui(backdrop)
     frame $f.fVolumes -bg $Gui(backdrop)
-    pack $f.fActive $f.fVolumes -side top -padx $Gui(pad) -pady 2
+    pack $f.fActive $f.fVolumes -side top -padx $Gui(pad) -pady 2 -expand 1 -fill x
 
     #-------------------------------------------
     # Auto->Top->Active frame
@@ -761,7 +762,7 @@ proc AlignmentsBuildGUI {} {
     set f $fAuto.fMid
 
     frame $f.fType -bg $Gui(activeWorkspace) -bg $Gui(backdrop) -relief sunken
-    pack $f.fType -side top -fill x
+    pack $f.fType -side top -fill x -expand 1
 
     #-------------------------------------------
     # Auto->Mid->Type frame
@@ -770,16 +771,17 @@ proc AlignmentsBuildGUI {} {
 
     eval {label $f.l -text "Registration Mode:"} $Gui(BLA)
     frame $f.fmodes -bg $Gui(backdrop)
-    foreach mode "FidAlign Intensity TPS" text "Fiducials Intensity TPS" {
+    # took out TPS
+    foreach mode "FidAlign Intensity" text "Fiducials Intensity" {
         eval {radiobutton $f.fmodes.r$mode \
             -text "$text" -command "AlignmentsSetRegistrationMode" \
             -variable Matrix(regMode) -value $mode -width 10 \
             -indicatoron 0} $Gui(WRA)
         set Matrix(r${mode}) $f.fmodes.r$mode
-        pack $f.fmodes.r$mode -side left -padx 0
+        pack $f.fmodes.r$mode -side left -padx $Gui(pad) -fill x -expand 1
     }
-    pack $f.l -side top
-    pack $f.fmodes -side left -padx $Gui(pad) -fill x -anchor w
+    pack $f.l -side top -fill x -expand 1
+    pack $f.fmodes -side left -padx $Gui(pad) -fill x -anchor w -expand 1
 
     #-------------------------------------------
     # Auto->Bot->AlignBegin Frame
@@ -790,7 +792,7 @@ proc AlignmentsBuildGUI {} {
     pack $f.fTitle -pady 60
 
     frame $f.fColorCorresp -bg $Gui(activeWorkspace) -bd 2
-    pack $f.fColorCorresp -fill x -side top -padx 0 -pady 0
+    pack $f.fColorCorresp -fill x -side top -padx 0 -pady 0 -expand 1
     set f $f.fColorCorresp
 
     eval {checkbutton $f.cColorCorresp -variable Matrix(colorCorresp) \
@@ -817,7 +819,7 @@ proc AlignmentsBuildGUI {} {
     frame $f.fApply -bg $Gui(activeWorkspace)
 
     pack $f.fFidViewParams $f.fFidLists $f.fApply \
-        -side top -fill x -pady $Gui(pad)
+        -side top -fill x -pady $Gui(pad) -expand 1
 
     #-------------------------------------------
     # Auto->Bot->FidViewParams Frame
@@ -901,6 +903,8 @@ proc AlignmentsBuildGUI {} {
 
     grid $f.bApply $f.bCancel -padx $Gui(pad)
 
+    if {0} {
+        # don't build the frame contents, put it back in when it works
     #-------------------------------------------
     # Auto->Bot->TPS Frame
     #-------------------------------------------
@@ -1104,6 +1108,7 @@ proc AlignmentsBuildGUI {} {
     #eval {button $f.bSave -text "Save Warped Volume" \
      #  -command "AlignmentsWhichCommand"} $Gui(WBA) {-width 20}
     #pack $f.bSave -padx $Gui(pad) -pady $Gui(pad)
+}
 
     #-------------------------------------------
     # Auto->Bot->Intensity Frame
@@ -2138,20 +2143,22 @@ proc AlignmentsSetRegistrationMode {} {
         }
         AlignmentsFidAlignGo
         return
-    } elseif {$Matrix(f$Matrix(regMode)) == "$Matrix(fTPS)"} {
-        if {$::Module(verbose)} {
-            puts "you are in the Thin plate spline registration mode"
-        }
-        #TPS is not currently implemented in this version.
-        raise $Matrix(f$Matrix(regMode))
-        return
     } elseif {$Matrix(f$Matrix(regMode)) == "$Matrix(fIntensity)"} {
         if {$::Module(verbose)} {
             puts "you are in the registration by itensity mode"
         }
         raise $Matrix(f$Matrix(regMode))
         focus $Matrix(f$Matrix(regMode))
-    }
+    } 
+
+    # elseif {$Matrix(f$Matrix(regMode)) == "$Matrix(fTPS)"} {
+    #    if {$::Module(verbose)} {
+    #        puts "you are in the Thin plate spline registration mode"
+    # }
+    #    #TPS is not currently implemented in this version.
+    #    raise $Matrix(f$Matrix(regMode))
+    #    return
+    # }
 }
 
 #-------------------------------------------------------------------------------
