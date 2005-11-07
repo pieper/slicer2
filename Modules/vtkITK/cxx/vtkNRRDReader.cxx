@@ -35,7 +35,7 @@
 #include "vtkFloatArray.h" 
 
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.19 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.20 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -487,10 +487,6 @@ void vtkNRRDReader::ExecuteInformation()
       }
     }
 
-  // Fix: flipping in y axis to put data in the proper raster order
-  for (int i=0;i<3;i++)
-    IjkToRasMatrix->SetElement(i,1,-IjkToRasMatrix->GetElement(i,1));
-
   // Figure out origin
   if (3 == nrrd->spaceDim)
     {
@@ -542,7 +538,7 @@ void vtkNRRDReader::ExecuteInformation()
    IjkToRasMatrix->Delete();
 
    this->SetDataSpacing(spacings);
-   this->SetDataOrigin(origins);
+   //this->SetDataOrigin(origins);
    this->SetDataExtent(dataExtent);
 
    // Push extra key/value pair data into an itkDataDictionary
@@ -835,8 +831,8 @@ void vtkNRRDReader::ExecuteData(vtkDataObject *output)
    
      Nrrd *nflip = nrrdNew(); 
      nrrdCopy(nflip, this->nrrd);
-       unsigned int domainAxisNum, domainAxisIdx[NRRD_DIM_MAX];
-   domainAxisNum = nrrdDomainAxesGet(nrrd, domainAxisIdx);
+     unsigned int domainAxisNum, domainAxisIdx[NRRD_DIM_MAX];
+     domainAxisNum = nrrdDomainAxesGet(nrrd, domainAxisIdx);
      this->nrrdFlip(this->nrrd, nflip, domainAxisIdx[1]);
      nrrdNuke(nflip);
     
