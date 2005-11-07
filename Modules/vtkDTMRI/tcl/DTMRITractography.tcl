@@ -80,7 +80,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.35 $} {$Date: 2005/10/26 22:09:21 $}]
+                                 {$Revision: 1.36 $} {$Date: 2005/11/07 01:00:30 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -262,12 +262,13 @@ proc DTMRITractographyInit {} {
     # Non-labelmap volume that can be used for coloring tracts
     set DTMRI(ColorByVolume) $Volume(idNone)
 
-
-
-
-
-
-
+    # whether we are currently clipping tracts with slice planes
+    set DTMRI(mode,visualizationType,tractsClip) 0ff
+    set DTMRI(mode,visualizationType,tractsClipList) {On Off}
+    set DTMRI(mode,visualizationType,tractsClipList,tooltip) \
+        [list \
+             "Clip tracts with slice planes. Clipping settings are in Models->Clip." \
+             "Do not clip tracts." ]
     
     set DTMRI(activeStreamlineID) ""
     
@@ -789,7 +790,7 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
     set f $fDisplay
 
-    foreach frame "OnOffDelete ColorBy ColorByVol" {
+    foreach frame "OnOffDelete ColorBy ColorByVol Clip" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     }
@@ -846,6 +847,27 @@ proc DTMRITractographyBuildGUI {} {
     DevAddSelectButton  DTMRI $f $name "Color by Volume:" Pack \
         "First select Color by MultiColor, \nthen select the volume to use \nto color the tracts. \nFor example to color by FA, \ncreate the FA volume using the \n<More...> tab in this module, \nthen the <Scalars> tab.  \nThen select that volume from this list." \
         13
+
+    #-------------------------------------------
+    # Tract->Notebook->Display->Clip frame
+    #-------------------------------------------
+    set f $fDisplay.fClip
+
+    eval {label $f.lVis -text "Clip 'Tracts': "} $Gui(WLA)
+    pack $f.lVis -side left -pady $Gui(pad) -padx $Gui(pad)
+    # Add menu items
+    foreach vis $DTMRI(mode,visualizationType,tractsClipList) \
+        tip $DTMRI(mode,visualizationType,tractsClipList,tooltip) {
+            eval {radiobutton $f.r$vis \
+                      -text $vis \
+                      -command "DTMRITractographySetClipping" \
+                      -value $vis \
+                      -variable DTMRI(mode,visualizationType,tractsClip) \
+                      -indicatoron 0} $Gui(WCA)
+
+            pack $f.r$vis -side left -fill x
+            TooltipAdd $f.r$vis $tip
+        }    
 
 }
 
@@ -1750,10 +1772,30 @@ proc DTMRITractographyColorROIFromStreamlines {} {
 }
 
 
-proc DTMRITractographySetClipping {val} {
-    global Tensor
+proc DTMRITractographySetClipping {{val ""}} {
+    global Tensor DTMRI
+
+    if {$val ==""} {
+        switch $DTMRI(mode,visualizationType,tractsClip) {
+            "On" {
+                set val 1
+            }
+            "Off" {
+                set val 0
+            }
+        }
+    }
 
     if {$val ==  "1"} {
+        
+        if {[[Slice(clipPlanes) GetFunction] GetNumberOfItems] < 1} {
+            set DTMRI(mode,visualizationType,tractsClip) Off
+            set message "First select slice planes to clip by in the Models->Clip tab."
+            tk_messageBox  -message $message
+            return
+        }
+
+
         # Use the current clip planes from the models GUI
         # copy its properties into a new object since
         # we have to transform it.
@@ -1787,5 +1829,8 @@ proc DTMRITractographySetClipping {val} {
     # Turn clipping on/off
     [DTMRI(vtk,streamlineControl) GetDisplayTracts] \
         SetClipping $val
+
+    # display it
+    Render3D
     
 }
