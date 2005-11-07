@@ -113,7 +113,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.116 $} {$Date: 2005/11/05 23:30:03 $}]
+            {$Revision: 1.117 $} {$Date: 2005/11/07 19:18:04 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -2605,37 +2605,33 @@ proc VolumesCreateNewLabelOutline { {v ""} } {
 # the matrix includes spacing
 # .END
 #-------------------------------------------------------------------------------
-proc VolumesComputeNodeMatricesFromRasToIjkMatrix {volumeNode RasToIjkMatrix} {
+proc VolumesComputeNodeMatricesFromRasToIjkMatrix {volumeNode RasToIjkMatrix dims} {
+        
+    catch "IjkToRasMatrix Delete"
+    vtkMatrix4x4 IjkToRasMatrix
+    IjkToRasMatrix DeepCopy $RasToIjkMatrix
+    IjkToRasMatrix Invert
+    
     catch "RasToVtkMatrix Delete"
     vtkMatrix4x4 RasToVtkMatrix
-    RasToVtkMatrix DeepCopy $RasToIjkMatrix
+    RasToVtkMatrix DeepCopy IjkToRasMatrix
     
-    RasToVtkMatrix SetElement 1 0 [expr -1. * [RasToVtkMatrix GetElement 1 0]]
-    RasToVtkMatrix SetElement 1 1 [expr -1. * [RasToVtkMatrix GetElement 1 1]]
-    RasToVtkMatrix SetElement 1 2 [expr -1. * [RasToVtkMatrix GetElement 1 2]]
+    for {set row 0} {$row < 3} {incr row} {
+        RasToVtkMatrix SetElement $row 1 [expr -1 * [RasToVtkMatrix GetElement $row 1]]
+    }
+    
+    set yext [expr [lindex $dims 1] - 1]
+    set vtkOrigin [IjkToRasMatrix MultiplyPoint 0 $yext 0 1]
+
+    for {set row 0} {$row < 3} {incr row} {
+        RasToVtkMatrix SetElement $row 3 [lindex $vtkOrigin $row]
+    }
+    
+    RasToVtkMatrix Invert
     
     Volume($volumeNode,node) SetRasToIjkMatrix [Volume($volumeNode,node) GetMatrixToString $RasToIjkMatrix]
     Volume($volumeNode,node) SetRasToVtkMatrix [Volume($volumeNode,node) GetMatrixToString RasToVtkMatrix]
     Volume($volumeNode,node) ComputePositionMatrixFromRasToVtk RasToVtkMatrix
     
     RasToVtkMatrix Delete
-    
-    if {0} {
-        # this version should have worked but it does not for some reason...
-        
-        catch "IjkToRasMatrix Delete"
-        vtkMatrix4x4 IjkToRasMatrix
-        IjkToRasMatrix DeepCopy $RasToIjkMatrix
-        IjkToRasMatrix Invert
-        
-        catch "RasToVtkMatrix Delete"
-        vtkMatrix4x4 RasToVtkMatrix
-        RasToVtkMatrix DeepCopy IjkToRasMatrix
-        
-        RasToVtkMatrix SetElement 0 1 [expr -1. * [RasToVtkMatrix GetElement 0 1]]
-        RasToVtkMatrix SetElement 1 1 [expr -1. * [RasToVtkMatrix GetElement 1 1]]
-        RasToVtkMatrix SetElement 2 1 [expr -1. * [RasToVtkMatrix GetElement 2 1]]
-        #RasToVtkMatrix SetElement 3 1 [expr -1. * [RasToVtkMatrix GetElement 3 1]]
-        RasToVtkMatrix Invert
-    }
 }
