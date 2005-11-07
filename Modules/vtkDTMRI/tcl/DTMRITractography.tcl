@@ -80,7 +80,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.36 $} {$Date: 2005/11/07 01:00:30 $}]
+                                 {$Revision: 1.37 $} {$Date: 2005/11/07 01:51:35 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -1724,52 +1724,6 @@ proc DTMRIResetStreamlinesThroughROI { {verbose 1} } {
   DTMRI(vtk,ROISelectTracts) ResetStreamlinesPassTest
   Render3D
 }  
-
-proc DTMRITractographyColorROIFromStreamlines {} {
-    global DTMRI Label Volume
-
-    set v $DTMRI(ROILabelmap)
-
-    # make sure they are using a segmentation (labelmap)
-    if {[Volume($v,node) GetLabelMap] != 1} {
-        set name [Volume($v,node) GetName]
-        set msg "The volume $name is not a label map (segmented ROI). Continue anyway?"
-        if {[tk_messageBox -type yesno -message $msg] == "no"} {
-            return
-        }
-
-    }
-
-    # set up the input segmented volume
-    set ColorROIFromTracts [DTMRI(vtk,streamlineControl) GetColorROIFromTracts]
-
-    $ColorROIFromTracts SetInputROIForColoring [Volume($v,vol) GetOutput] 
-    #$ColorROIFromTracts SetInputROIValue $DTMRI(ROILabel)
-
-    # Get positioning information from the MRML node
-    # world space (what you see in the viewer) to ijk (array) space
-    vtkTransform transform
-    transform SetMatrix [Volume($v,node) GetWldToIjk]
-    # now it's ijk to world
-    transform Inverse
-    $ColorROIFromTracts SetROIToWorld transform
-    transform Delete
-
-    $ColorROIFromTracts ColorROIFromStreamlines
-
-    set output [$ColorROIFromTracts GetOutputROIForColoring]
-
-    # export output to the slicer environment:
-    # slicer MRML volume creation and display
-    set v2 [DevCreateNewCopiedVolume $v "Color back from clusters" "TractColors_$v"]
-    Volume($v2,vol) SetImageData $output
-    MainVolumesUpdate $v2
-    # tell the node what type of data so MRML file will be okay
-    Volume($v2,node) SetScalarType [$output GetScalarType]
-    # display this volume so the user knows something happened
-    MainSlicesSetVolumeAll Back $v2
-    RenderAll
-}
 
 
 proc DTMRITractographySetClipping {{val ""}} {

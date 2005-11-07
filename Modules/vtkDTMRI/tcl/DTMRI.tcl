@@ -489,7 +489,7 @@ proc DTMRIInit {} {
     
     # List of all submodules (most are tcl files for tabs within this module)
     #------------------------------------
-    set DTMRI(submodulesList) "TensorRegistration ODF TractCluster Tractography Glyphs CalculateTensors CalculateScalars Mask Save"
+    set DTMRI(submodulesList) "TensorRegistration ODF TractCluster Tractography Glyphs CalculateTensors CalculateScalars Mask Save VoxelizeTracts"
     
     # Module Summary Info
     #------------------------------------
@@ -501,7 +501,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.110 $} {$Date: 2005/10/24 15:58:36 $}]
+                  {$Revision: 1.111 $} {$Date: 2005/11/07 01:51:34 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -510,8 +510,8 @@ proc DTMRIInit {} {
     set Module($m,row1Name) "{Help} {Input} {Conv} {Glyph} {Tract} {ROI}"
     set Module($m,row1,tab) Input
     # Use these lines to add a second row of tabs
-    set Module($m,row2List) "Scalars Regist TC Save ODF VTK"
-    set Module($m,row2Name) "{Scalars} {Reg} {TC} {Save} {ODF} {VTK}"
+    set Module($m,row2List) "Scalars Regist TC Save ODF Vox VTK"
+    set Module($m,row2Name) "{Scalars} {Reg} {TC} {Save} {ODF} {Vox} {VTK}"
     set Module($m,row2,tab) Scalars
     
   
@@ -647,6 +647,7 @@ proc DTMRIUpdateMRML {} {
     DevUpdateNodeSelectButton Volume DTMRI MaskLabelmap MaskLabelmap DevSelectNode 0 0 1 DTMRIUpdate
     DevUpdateNodeSelectButton Volume DTMRI ROILabelmap ROILabelmap DevSelectNode 0 0 1
     DevUpdateNodeSelectButton Volume DTMRI ROI2Labelmap ROI2Labelmap DevSelectNode 1 0 1
+    DevUpdateNodeSelectButton Volume DTMRI VoxTractsROILabelmap VoxTractsROILabelmap DevSelectNode 0 0 1
     DevUpdateNodeSelectButton Volume DTMRI ColorByVolume ColorByVolume DevSelectNode 0 0 0 DTMRIUpdateTractColorToMulti
     DevUpdateNodeSelectButton Volume DTMRI convertID convertID DevSelectNode 0 0 1 DTMRIConvertUpdate
 
