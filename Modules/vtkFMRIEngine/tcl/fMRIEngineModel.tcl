@@ -163,7 +163,7 @@ proc fMRIEngineClearModel {} {
  
     # clear paradigm design panel
     set fMRIEngine(paradigmDesignType) blocked
-    set fMRIEngine(checkbuttonRunIdentical) 1
+    set fMRIEngine(checkbuttonRunIdentical) 0
     
     fMRIEngineSelectRunForConditionConfig 1
 
@@ -195,7 +195,8 @@ proc fMRIEngineClearModel {} {
     fMRIEngineSelectWaveFormForSignalModeling {Box Car} 
     fMRIEngineSelectConvolutionForSignalModeling {none} 
     fMRIEngineSelectHighpassForSignalModeling {none} 
-    fMRIEngineSelectLowpassForSignalModeling {none}
+    fMRIEngineInitDefaultHighpassTemporalCutoff 
+    #fMRIEngineSelectLowpassForSignalModeling {none}
     #--- wjp 09/01/05
     set fMRIEngine(numDerivatives) 0
     #set fMRIEngine(checkbuttonTempDerivative) 0
@@ -214,7 +215,7 @@ proc fMRIEngineClearModel {} {
             unset -nocomplain fMRIEngine($ev,convolution,ev)
             unset -nocomplain fMRIEngine($ev,derivative,ev)
             unset -nocomplain fMRIEngine($ev,highpass,ev) 
-            unset -nocomplain fMRIEngine($ev,lowpass,ev) 
+            #unset -nocomplain fMRIEngine($ev,lowpass,ev) 
             unset -nocomplain fMRIEngine($ev,globaleffects,ev)
         }
         incr i
@@ -256,13 +257,18 @@ proc fMRIEngineClearModel {} {
 proc fMRIEngineViewModel {} {
     global fMRIEngine
 
-    fMRIEngineCountEVs
-
+    #--- wjp 10/27/05 -- need to count evs before viewing model...
     if {$fMRIEngine(noOfSpecifiedRuns) == 0} {
         DevErrorWindow "No run has been specified."
         return
     }
 
+    if { ! [ fMRIEngineCountEVs] } {
+        return
+    }
+
+    #--- are EVs defined for each specified run?
+    #--- If not, don't view
     for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} { 
         if {! [info exists fMRIEngine($r,noOfEVs)]} {
             DevErrorWindow "Complete signal modeling first for run$r."
@@ -270,7 +276,27 @@ proc fMRIEngineViewModel {} {
         }
     }
 
-    fMRIModelViewLaunchModelView
+    #--- brittle test to see if all evs are defined yet for each run.
+    #--- If not, don't view
+    set count 0
+    set size [$::fMRIEngine(evsListBox) size]
+    for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} { 
+        #--- count number of conditions in each run.
+        set conds [ llength $::fMRIEngine($r,conditionList)  ]
+        set count [ expr $count + $conds ]
+    }
+    #--- add in baseline per run
+    set count2 [ expr $count + $::fMRIEngine(noOfSpecifiedRuns) ]
+    #--- are all conditions modeled?
+    if { ($size != $count) && ($size != $count2) } {
+        DevErrorWindow "Please model all conditions first"
+        return
+    }
+
+    #--- looks reasonable. Count evs and launch view.
+    if { [ fMRIEngineCountEVs ] } {
+        fMRIModelViewLaunchModelView
+    }
 }
 
 
@@ -286,7 +312,7 @@ proc fMRIEngineBuildUIForTasks {parent} {
 
     frame $parent.fTop  -bg $Gui(backdrop)
     frame $parent.fHelp -bg $Gui(activeWorkspace)
-    frame $parent.fBot  -bg $Gui(activeWorkspace) -height 465 
+    frame $parent.fBot  -bg $Gui(activeWorkspace) -height 510
     pack $parent.fTop $parent.fHelp $parent.fBot \
         -side top -fill x -pady 2 -padx 5 
 
@@ -302,7 +328,7 @@ proc fMRIEngineBuildUIForTasks {parent} {
     pack $f.l -side left -padx $Gui(pad) -fill x -anchor w
 
     # Paradigm design is default task 
-    set taskList [list {Paradigm Design} {Signal Modeling} {Contrasts}]
+    set taskList [list {Paradigm} {Modeling} {Estimation} {Contrasts}]
     set df [lindex $taskList 0] 
     eval {menubutton $f.mbTask -text $df \
           -relief raised -bd 2 -width 33 \
@@ -340,11 +366,14 @@ proc fMRIEngineBuildUIForTasks {parent} {
         frame $f.f$count -bg $Gui(activeWorkspace) 
         place $f.f$count -relwidth 1.0 -relx 0.0 -relheight 1.0 -rely 0.0 
         switch $m {
-            "Paradigm Design" {
+            "Paradigm" {
                 fMRIEngineBuildUIForParadigmDesign $f.f$count
             }
-            "Signal Modeling" {
+            "Modeling" {
                 fMRIEngineBuildUIForSignalModeling $f.f$count
+            }
+            "Estimation" {
+                fMRIEngineBuildUIForModelEstimation $f.f$count
             }
             "Contrasts" {
                 fMRIEngineBuildUIForContrasts $f.f$count
@@ -377,15 +406,18 @@ proc fMRIEngineSetModelTask {task} {
 
     set count -1 
     switch $task {
-        "Paradigm Design" {
+        "Paradigm" {
             set count 1
         }
-        "Signal Modeling" {
+        "Modeling" {
             set count 2
             fMRIEngineUpdateConditionsForSignalModeling
        }
-        "Contrasts" {
+        "Estimation" {
             set count 3
+        }
+        "Contrasts" {
+            set count 4
         }
     }
 

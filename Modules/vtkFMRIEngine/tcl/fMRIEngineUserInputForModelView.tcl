@@ -54,6 +54,19 @@ proc fMRIModelViewSortUserInput { } {
     set ::fMRIModelView(Design,identicalRuns) $fMRIEngine(checkbuttonRunIdentical)
     set ::fMRIModelView(Layout,NoDisplay) 0
 
+    #--- this is the number of files read in, and their fake filenames
+    set numFiles 0
+    unset -nocomplain ::fMRIModelView(Design,fileNames)
+    for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
+        set ::fMRIModelView(Design,Run$r,numTimePoints) $::MultiVolumeReader(noOfVolumes)        
+        for { set i 0 } { $i < $::fMRIModelView(Design,Run$r,numTimePoints) } { incr i } {
+            fMRIModelViewAddFileName "Run$r-0$i.img"
+            incr numFiles
+        }
+    }
+    set ::fMRIModelView(Design,totalTimePoints) $numFiles
+
+    
     #---
     #--- Design types supported: blocked, event-related, or mixed
     #--- default is 'blocked'
@@ -232,17 +245,19 @@ proc fMRIModelViewSortUserInput { } {
     set ::fMRIModelView(Design,totalEVs) $sum
 
 
-    #---    
-    #--- for now, create a set of 7 of these basis functions
-    #--- with fixed frequencies. But, probably want to query
-    #--- user for a cutoff frequency, below which to span with
-    #--- appropriate number of basis funcs.
-    set numDCbasis 7
+    #--- open: new DCbasis code wjp 11/03/05
+    #--- compute how many cosines we'll need per each run.
     for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
-        set j [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + $::fMRIModelView(Design,Run$r,numAdditionalEVs) + 1 ]
+        if { $::fMRIEngine(Design,Run$r,useCustomCutoff) == 0 } {
+            fMRIEngineComputeDefaultHighpassTemporalCutoff  $r
+        }
+        fMRIModelViewFindNumCosineBasis $r
+        #--- add the correct number of basis functions.
+        set j [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + \
+                    $::fMRIModelView(Design,Run$r,numAdditionalEVs) + 1 ]
         if { $::fMRIModelView(Design,Run$r,UseDCBasis) } {
+            set numDCbasis $::fMRIEngine(Design,Run$r,numCosines)
             for { set b 0 } { $b < $numDCbasis } { incr b } {
-                #--- wjp added
                 fMRIModelViewSetEVCondition $r $j "none"
                 fMRIModelViewSetEVSignalType $r $j "DCbasis$b"
                 #--- have added another ev, so:
@@ -252,7 +267,7 @@ proc fMRIModelViewSortUserInput { } {
             }
         }
     }
-
+    #--- close: new DCbasis code
 
     #--- update totalEVs
     set sum 0
@@ -341,17 +356,6 @@ proc fMRIModelViewSortUserInput { } {
     }
 
 
-    #--- this is the number of files read in, and their fake filenames
-    set numFiles 0
-    unset -nocomplain ::fMRIModelView(Design,fileNames)
-    for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
-        set ::fMRIModelView(Design,Run$r,numTimePoints) $::MultiVolumeReader(noOfVolumes)        
-        for { set i 0 } { $i < $::fMRIModelView(Design,Run$r,numTimePoints) } { incr i } {
-            fMRIModelViewAddFileName "Run$r-0$i.img"
-            incr numFiles
-        }
-    }
-    set ::fMRIModelView(Design,totalTimePoints) $numFiles
 }
 
 

@@ -351,7 +351,7 @@ proc fMRIEngineShowData {{loc 0}} {
     label $w.vol -text "VolIndex" -font fixed
     label $w.min -text "Min" -font fixed
     label $w.max -text "Max" -font fixed
-    label $w.ave -text "Mean" -font fixed
+    label $w.ave -text "Average" -font fixed
     blt::table $w \
         $w.vol 0,0 $w.min 0,1 $w.max 0,2 $w.ave 0,3
 

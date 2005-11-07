@@ -90,7 +90,7 @@ proc fMRIEngineBuildUIForComputeTab {parent} {
     # Bottom frame 
     #-------------------------------------------
     set f $parent.fBot
-    DevAddLabel $f.l "Volume being computed:"
+    DevAddLabel $f.l "Computing volume for this contrast:"
     eval {entry $f.eStatus -width 20 \
                 -textvariable fMRIEngine(actVolName)} $Gui(WEA)
     pack $f.l $f.eStatus -side top -expand false -fill x -padx 5 -pady 3 
@@ -242,12 +242,6 @@ proc fMRIEngineComputeContrasts {} {
                 set fMRIEngine($i,actLow) [fMRIEngine(actVolumeGenerator) GetLowRange] 
                 set fMRIEngine($i,actHigh) [fMRIEngine(actVolumeGenerator) GetHighRange] 
 
-                MainSlicesSetVolumeAll Fore $i
-                MainVolumesSetActive $i
-
-                # set the act volume to the color of FMRI 
-                MainVolumesSetParam LutID 7 
-
                 MainEndProgress
                 puts "...done"
             }
@@ -259,6 +253,13 @@ proc fMRIEngineComputeContrasts {} {
         MainStartProgress
         MainShowProgress fMRIEngine(actVolumeGenerator) 
         MainUpdateMRML
+
+        MainSlicesSetVolumeAll Fore $i
+        MainVolumesSetActive $i
+
+        # set the act volume to the color of FMRI 
+        MainVolumesSetParam LutID 7 
+
         RenderAll
         MainEndProgress
 

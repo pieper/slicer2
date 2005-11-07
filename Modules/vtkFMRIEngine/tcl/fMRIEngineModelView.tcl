@@ -61,7 +61,6 @@
 #   fMRIModelViewBuildEVData r i
 #   fMRIModelViewBuildEVImages r i imgw
 #   fMRIModelViewBuildModelSignals r i imghit imgwid signalType
-#   fMRIModelViewLongestEpochSpacing
 #   fMRIModelViewBuildDCBasis imgwid imghit r evnum freq
 #   fMRIModelViewBuildBaseline imgwid imghit r evnum
 #   fMRIModelViewComputeBoxCar onset duration imgwid r i
@@ -278,8 +277,11 @@ proc fMRIModelViewGenerateModel { {toplevelName .wfMRIModelView} } {
     #--- if window is already up, also update the visual display
     #---
     if { [winfo exists $toplevelName] } {
+
         #--- wjp: added 09/19/05
-        fMRIEngineCountEVs
+        if { ! [ fMRIEngineCountEVs ] } {
+            return
+        }
         if {$::fMRIEngine(noOfSpecifiedRuns) == 0} {
             DevErrorWindow "No run has been specified."
             return
@@ -990,7 +992,7 @@ proc fMRIModelViewBuildDesignMatrix { c refX refY dmatHit dmatWid borderWid } {
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIModelViewBuildEVData { r i } {
-    
+
     if { ($::fMRIModelView(Design,identicalRuns)) && ($r > 1) } {
         #--- just reuse data first Run.
         set ::fMRIModelView(Data,Run$r,EV$i,EVData) $::fMRIModelView(Data,Run1,EV$i,EVData)
@@ -1055,7 +1057,7 @@ proc fMRIModelViewBuildEVData { r i } {
                         incr indx
                     }
                 }
-            } 
+            }
         } elseif { $signalType == "baseline" } {
             #--- generate this analytic functions directly.
             for { set t 0 } { $t < $timepoints } { incr t } {
@@ -1067,7 +1069,7 @@ proc fMRIModelViewBuildEVData { r i } {
             set evlen [ expr double($::fMRIModelView(Design,Run$r,numTimePoints)) ]
             set ::fMRIModelView(Data,Run$r,EV$i,EVData) [ fMRIModelViewGaussianDownsampleList \
                 $i $r $siglen $evlen $::fMRIModelView(Data,Run$r,EV$i,Signal) ]
-        } 
+        }
         #---
         #--- rescales range of evData to [-1.0 and 1.0]
         #---
@@ -1086,7 +1088,7 @@ proc fMRIModelViewBuildEVData { r i } {
         set ::fMRIModelView(Data,Run$r,EV$i,EVData) [ fMRIModelViewRangemapList  \
             $::fMRIModelView(Data,Run$r,EV$i,EVData) 1.0 0.0 ]
         return 1
-    } 
+    }
 }
 
 
@@ -1251,47 +1253,100 @@ proc fMRIModelViewBuildModelSignals { r i imghit imgwid signalType } {
         }
 
         #--- add DCT images, signals and evdata if requested.
-        if { $signalType == "DCbasis0" } {
-            #--- hardcode this here for now.
-            #--- later generate an appropriate number of basis funcs
-            #--- based on the calculated increment
-            set ::fMRIModelView(Design,numCosineBases) 7
-            fMRIModelViewLongestEpochSpacing
-            set f $::fMRIModelView(Design,CosineBasisIncrement)
-            fMRIModelViewBuildDCBasis $imgwid $imghit $r $i $f
-        } elseif { $signalType == "DCbasis1" } {
-            set f [ expr $::fMRIModelView(Design,CosineBasisIncrement) * 2.0 ]
-            fMRIModelViewBuildDCBasis $imgwid $imghit $r $i $f
-        } elseif { $signalType == "DCbasis2" } {
-            set f [ expr $::fMRIModelView(Design,CosineBasisIncrement) * 3.0 ]
-            fMRIModelViewBuildDCBasis $imgwid $imghit $r $i $f
-        } elseif { $signalType == "DCbasis3" } {
-            set f [ expr $::fMRIModelView(Design,CosineBasisIncrement) * 4.0 ]
-            fMRIModelViewBuildDCBasis $imgwid $imghit $r $i $f
-        } elseif { $signalType == "DCbasis4" } {
-            set f [ expr $::fMRIModelView(Design,CosineBasisIncrement) * 5.0 ]
-            fMRIModelViewBuildDCBasis $imgwid $imghit $r $i $f
-        } elseif { $signalType == "DCbasis5" } {
-            set f [ expr $::fMRIModelView(Design,CosineBasisIncrement) * 6.0 ]
-            fMRIModelViewBuildDCBasis $imgwid $imghit $r $i $f
-        } elseif { $signalType == "DCbasis6" } {
-            set f [ expr $::fMRIModelView(Design,CosineBasisIncrement) * 7.0 ]
-            fMRIModelViewBuildDCBasis $imgwid $imghit $r $i $f
+        set useDCBasis [ string first "DCbasis" $signalType ]
+        if { $useDCBasis == 0 } {
+            set numBases $::fMRIEngine(Design,Run$r,numCosines)
+            set fcutoff [ expr 1.0 / $::fMRIEngine(Design,Run$r,HighpassCutoff) ]
+            set ::fMRIModelView(Design,Run$r,CosineBasisIncrement) [ expr $fcutoff / $numBases ]
+            #--- a little error checking...
+            if { $fcutoff <= 0 } {
+                DevErrorWindow "Trend modeling cutoff frequency is invalid; model is bad."
+                #--- return
+            }
+            set basisCount 0
+            while { $basisCount < $numBases } {
+                set sigName "DCbasis$basisCount"
+                if { $signalType == $sigName } {
+                    fMRIModelViewBuildDCBasis $imgwid $imghit $r $i [ expr $basisCount + 1 ]
+                }
+                incr basisCount
+            }
         }
     }
 }
 
 
+
+proc fMRIModelViewFindNumCosineBasis { run } {
+
+    set N $::fMRIModelView(Design,Run$run,numTimePoints)
+    set TR $::fMRIModelView(Design,Run$run,TR)
+    set TC $::fMRIEngine(Design,Run$run,HighpassCutoff)
+    set fc [ expr ( 1.0 / $TC ) ]
+    #--- think this is right...
+    #--- have cos (PI*u(2t+1) / 2N) as the basic basis functions ...
+    #--- Tcutoff/TR is the cutoff period in samples.
+    #--- 2PI TR / Tcutoff is max cutoff omega;
+    #--- so to find out how many basis functions we need,
+    #--- take (PI*u(2t+1)/2N) and pull out omega,
+    #--- set it equal to cutoff omega, and solve for u.
+    #--- u is the number of frequencies (basis functions) we need.
+    #--- get something like this.
+    set k [ expr floor ( 2.0 * $TR * $N / $TC)  ]
+    #--- because we don't want the DC term (baseline models this...)
+    set k [expr $k - 1]
+    set ::fMRIEngine(Design,Run$run,numCosines) $k
+}
+
+    
+
 #-------------------------------------------------------------------------------
-# .PROC fMRIModelViewLongestEpochSpacing
-# 
+# .PROC fMRIModelViewBuildDCBasis
+# Discrete Cosine basis functions to capture drift
 # .ARGS
+# int imgwid
+# int imghit
+# int r
+# int evnum
+# int freq
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIModelViewLongestEpochSpacing { } {
+proc fMRIModelViewBuildDCBasis { imgwid imghit r evnum k } {
+
+
+    #--- cos ( (PI t / 2N) * (2k + 1) where k is the cos.
+    set  siglen [ llength $::fMRIModelView(Data,Run$r,EV$evnum,Signal) ]
+    set inc $::fMRIModelView(Design,Run$r,TimeIncrement)
+    set N [ expr $::fMRIModelView(Design,Run$r,numTimePoints) * \
+                $::fMRIModelView(Design,Run$r,TR) ]
+    set t 0.0
+    for { set y 0 } { $y < $siglen} { incr y } {
+        set v [ expr cos ( (3.14159 * (2.0 * $t + 1.0) * $k / (2.0 * $N)) ) ]
+
+        if { $t == 0.0 } {
+            set v [ expr $v / sqrt (2.0) ]
+        }
+        set ::fMRIModelView(Data,Run$r,EV$evnum,Signal) \
+            [ lreplace $::fMRIModelView(Data,Run$r,EV$evnum,Signal) $y $y $v ]
+        set t [ expr $t + $inc ]
+    }
+
+}
+
+
+
+
+
+proc fMRIModelViewLongestEpochSpacing { r } {
+
     #---
     set T 0.0
-    for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
+    #--- wjp 10/17/05 compute longest epoch in this run.
+    if { ( [ info exists ::fMRIModelView(Design,numRuns) ] ) &&
+         ( [ info exists ::fMRIModelView(Design,Run$r,numConditions) ] ) &&
+         ( [ info exists ::fMRIModelView(Design,Run$r,Condition1,Onsets) ] ) &&
+         ( [ info exists ::fMRIModelView(Design,Run$r,TR) ] ) } {
+
         for { set c 1 } { $c <= $::fMRIModelView(Design,Run$r,numConditions) } { incr c } {
             #--- compute interval between epochs in seconds
             set lastOnset 0
@@ -1306,65 +1361,23 @@ proc fMRIModelViewLongestEpochSpacing { } {
                 incr i
             }
         }
+        set ::fMRIModelView(Design,Run$r,longestEpoch) $T
+        return 1
+    } else {
+        DevErrorWindow "Specify run(s) and condition(s) before modeling."
+        return 0
     }
-    set ::fMRIModelView(Design,longestEpoch) $T
-    #--- fmin is the cutoff frequency of the high-pass filter (lowest frequency
-    #--- that we let pass through. Choose to let fmin = 0.666666/T (just less than the
-    #--- lowest frequency in paradigm). As recommended in S.M. Smith, "Preparing fMRI
-    #--- data for statistical analysis, in 'Functional MRI, an introduction to methods', Jezzard,
-    #--- Matthews, Smith Eds. 2002, Oxford University Press.
-    #--- By default, we compute seven frequencies that span that band.
-    #--- Seven is dumb. how many do we really need?
-    set num [ expr double ($::fMRIModelView(Design,numCosineBases)) ]
-    set ::fMRIModelView(Design,CosineBasisIncrement) [ expr (0.666666/$T) / $num ]
-}
 
-
-#-------------------------------------------------------------------------------
-# .PROC fMRIModelViewBuildDCBasis
-# Discrete Cosine basis functions to capture drift
-# basis functions look like:
-# cos [ (2PI u / 2M) * (2t + 1) ] where M is the number of samples
-# .ARGS
-# int imgwid
-# int imghit
-# int r
-# int evnum
-# int freq
-# .END
-#-------------------------------------------------------------------------------
-proc fMRIModelViewBuildDCBasis { imgwid imghit r evnum freq } {
-
-    set min 100000.0
-    set max -10000.0
-    #set u [ expr $freq * $::fMRIModelView(Design,Run$r,TR) ]
-    #--- build signal
-    set siglen [ llength $::fMRIModelView(Data,Run$r,EV$evnum,Signal) ]
-    set inc $::fMRIModelView(Design,Run$r,TimeIncrement) 
-    set M [ expr $::fMRIModelView(Design,Run$r,numTimePoints) * \
-               $::fMRIModelView(Design,Run$r,TR) ] 
-    set u [ expr $freq * $M  * 2.0 ]
-    set t 0.0
-    for { set y 0 } { $y < $siglen} { incr y } {
-        set v [ expr cos ( (2.0 * $t + 1.0 ) * (3.14159 * $u) / (2.0 * $M)) ]
-        if { $t == 0 } {
-            set v [ expr $v / sqrt(2.0) ]
-        } 
-        if { $v > $max } {
-            set max $v
-        }
-        if {$v < $min } {
-            set min $v
-        }
-        set ::fMRIModelView(Data,Run$r,EV$evnum,Signal) \
-            [ lreplace $::fMRIModelView(Data,Run$r,EV$evnum,Signal) $y $y $v ]
-        set t [ expr $t + $inc ]
-    }
 }
 
 
 
+
+
+
+
 #-------------------------------------------------------------------------------
+
 # .PROC fMRIModelViewBuildBaseline
 # build a constant basis function to capture baseline.
 # signal first

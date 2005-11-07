@@ -222,8 +222,8 @@ proc fMRIEngineHelpSetupTempDerivative { } {
     #--- What is adding temporal derivatives?
     set i [ fMRIEngineGetHelpWinID ]
     set txt "<H3>Temporal derivatives</H3>
-<P> Adding temporal derivatives to a stimulus function, or a stimulus function convolved with the HRF is a another way of creating an EV with a small onset delay for each stimulus presentation, in effort to better fit the observed voxel timecourse data.
-<P> Once all signal modeling for an EV has been completed, clicking the <I>OK</I> button will add the resulting EV to a list displayed at the bottom of the GUI panel. Any EV in this list may be selected and either edited or deleted using the associated <I>edit</I> and <I>delete</I> buttons. When all conditions have been modeled and any EVs for noise modeling have been specified, the model can be estimated by clicking the <I>estimate</I> button."
+<P> Adding temporal derivatives to a stimulus function, or a stimulus function convolved with the HRF is a way to account for a small onset delay in the response to each stimulus presentation, in effort to better fit the observed voxel timecourse data. In this interface, you can choose to add the first, first and second, or first, second and third temporal derivatives of the stimulus waveform to the model.
+<P> Once all signal modeling for an EV has been completed, clicking the <I>add to model</I> button will add the resulting EV to a list displayed at the bottom of the GUI panel. Any EV in this list may be selected and either edited or deleted using the associated <I>edit</I> and <I>delete</I> buttons. When all conditions have been modeled and any EVs for noise modeling have been specified, the model can be estimated by proceeding to the <I>estimate</I> step."
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
 }
 
@@ -237,11 +237,23 @@ proc fMRIEngineHelpSetupHighpassFilter { } {
     #--- Setup->Signal
     #--- What is highpass filtering?
     set i [ fMRIEngineGetHelpWinID ]
-    set txt "<H3>High-pass filtering</H3>
+    set txt "<H3>Nuissance signal modeling</H3>
 <P> In fMRI data, the voxel timecourse may contain drift that manifests as a slow intensity variation over time. One way to remove this nuisance signal is to introduce low frequency EVs into the linear model which will capture slowly varying processes in the data. Cosines, polynomials, splines or exploratory functions are often used for this purpose, though it remains difficult to specify a drift model that is equally valid for every fMRI dataset.
-<P> The fMRIEngine currently provides a set of commonly used Discrete Cosine Transform basis functions to model drift. High-pass filtering the data with the default <I>DCbasis</I> generates a set of seven additional explanatory variables that separate low frequencies (below the frequency corresponding to the lowest rate of stimuli presentation in the entire paradigm) from the signal of interest in the observed data. These additional EVs will show up as extra columns in the design matrix.
-<P> The default cutoff period for high-pass filtering is set (as recommended in S.M. Smith, 'Preparing fMRI data for statistical analysis', in <I>Functional MRI, an introduction to methods</I>, P. Jezzard, P.M. Matthews, and S.M. Smith, Eds., 2002, Oxford University Press) at 1.5 times the maximum time interval between the most infrequently occuring event or epoch in the paradigm, multiplied by TR. (The reciprocal of this value represents the cutoff frequency in Hz.) The cutoff period is displayed in the entry widget, where the user may also specify a different cutoff period instead.
+<P> The fMRIEngine currently provides a set of commonly used Discrete Cosine Transform basis functions to model drift. Modeling slow intensity variation with the default <I>DCbasis</I> generates an appropriate set of additional explanatory variables that separate low frequencies (below the frequency corresponding to the lowest rate of stimuli presentation in the entire paradigm) from the signal of interest in the observed data. These additional EVs will show up as extra columns in the design matrix, for each run to which they're applied. A conservative cutoff period, which is lower than the longest period in the current run's paradigm is chosen by default. A custom cutoff period (specified as a multiple of TR) may be chosen as well.
 <P> Once a condition has been modeled, clicking the <I>OK</I> button will add the resulting EV to a list displayed at the bottom of the GUI panel. Any EV in this list may be selected and either edited or deleted using the associated <I>edit</I> and <I>delete</I> buttons. Once all conditions have been modeled and any EVs for noise modeling have been specified, the model can be estimated by clicking the <I>estimate</I> button."
+    DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
+
+}
+
+
+
+proc fMRIEngineHelpSelectHighpassCutoff { } {
+    set i [ fMRIEngineGetHelpWinID ]
+    set txt "<H3>Nuissance signal frequency characteristics</H3>
+<P> The default cutoff period for nuissance signal modeling is set (as recommended in S.M. Smith, 'Preparing fMRI data for statistical analysis', in <I>Functional MRI, an introduction to methods</I>, P. Jezzard, P.M. Matthews, and S.M. Smith, Eds., 2002, Oxford University Press) at 1.5 times the maximum time interval between the most infrequently occuring event or epoch in the paradigm, multiplied by TR. (The reciprocal of this value represents the cutoff frequency in Hz.)
+<P> Use of this default cutoff period is selected by default in the interface, and also by clicking the 'use default' button 
+in  the GUI panel. The default period value (as a multiple of TR) is displayed in the entry widget once the full model is computed; prior 
+to that, the text 'default' will be shown in the widget.  The user may also specify a different (custom) cutoff period instead by typing that value (as a multiple of TR) directly into the entry widget and hitting 'enter'."
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
 }
 
@@ -257,7 +269,13 @@ proc fMRIEngineHelpSetupLowpassFilter { } {
     #--- What is Lowpass filter?
     set i [ fMRIEngineGetHelpWinID ]
     set txt "<H3>Low-pass filtering</H3>
-<P> Not yet available."
+<P> Lowpass temporal filtering can be used to reduce high frequency noise, like physiological oscillations due to heart beat or respiration, in each voxel's timecourse. Commonly, the lowpass filtering is accomplished using a simple linear convolution with a Gaussian filter kernel. This operation effectively blurs the values contained in the voxel timecourse. In order to limit the amount of blurring, a fairly narrow Gaussian kernel is used; each sample in the timecourse will be replaced with its original value plus a small fraction of the values of its immediate temporal neighbors.
+<P> As noted in S.M Smith, 'Preparing fMRI data for statistical analysis', in <I>Funtional MRI, an introduction to methods</I>, P. Jezzard, P.M. Matthews, and S.M Smith, Eds., 2002, Oxford University Press, care should be taken when using temporal lowpass filtering since the operation can have undesired consequences in later stages of analysis. 
+<P><B>When to use temporal lowpass filtering </B>
+<P> A lowpass filter can be applied to the voxel timecourse in order to minimize its colored autocorrelation structure, by overwhelming it with a new and know structure. If the resulting noise is white and Gaussian distributed, the embedded signal of interest may be optimally detected in a known fashion. This approach to noise modeling may be described as a 'coloring' approach (see Friston et al., 2000, 'To smooth or not to smooth? Bias and efficiency in fMRItime-series analysis. <I>NeuroImage</I> 12(4):466-477), and distinguished from a 'whitening' approach (see Worsely et al. 2002, A general statistical analysis for fMRI data. <I>NeuroImage</I>, 15(1):1-15). The whitening approach attempts to turn the original colored autocorrelation structure into a white form.
+<P> In event-related experiments with rapidly changing signals of interest, blurring may surpress narrow peaks present in the timecourse due to brief stimulation periods. Blurring also increases data smoothness (temporal autocorrelation, or correlation of the errors separated by a fixed time lag). Even without blurring, errors in the estimates of the regression weights are not independent in time. Using the least squares estimate of the regression weights without modeling the temporal correlation structure can cause biases in the estimated error of the regression weight estimates (PEs).
+<P> Lowpass filtering should not be used if the data is pre-whitened during statistical analysis. Currently, no pre-whitening options are present in the fMRIEngine, but these are being developed. Once they are available, the lowpass filtering option will be eliminated.
+<P> The default lowpass filter full-width half-maxium (FWHM) is given as the TR for the run being modeled, but a narrower or wider filter kernel can be configured using the entry widget."
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
 }
 

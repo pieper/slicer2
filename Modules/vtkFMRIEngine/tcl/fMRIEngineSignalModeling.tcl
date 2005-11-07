@@ -40,7 +40,7 @@
 #   fMRIEngineViewCoefficients
 #   fMRIEngineSelectRunForModelFitting run
 #   fMRIEngineUpdateRunsForModelFitting
-#   fMRIEngineUpdateConditionsForSignalModeling
+#   fMRIEngineUpdateConditionsForSignalModeling 
 #   fMRIEngineSelectConditionForSignalModeling condition
 #   fMRIEngineSelectWaveFormForSignalModeling form
 #   fMRIEngineSelectConvolutionForSignalModeling conv
@@ -66,23 +66,37 @@
 proc fMRIEngineBuildUIForSignalModeling {parent} {
     global fMRIEngine Gui
 
-    frame $parent.fModeling     -bg $Gui(activeWorkspace) -relief groove -bd 1 
-    frame $parent.fAddiModeling -bg $Gui(activeWorkspace) -relief groove -bd 1 
     frame $parent.fChoices      -bg $Gui(activeWorkspace)
+    frame $parent.fModeling     -bg $Gui(activeWorkspace) -relief groove -bd 1 
+    frame $parent.fFiltering -bg $Gui(activeWorkspace) -relief groove -bd 1 
+    frame $parent.fMoreModeling -bg $Gui(activeWorkspace) -relief groove -bd 1
     frame $parent.fOK           -bg $Gui(activeWorkspace)
     frame $parent.fEVs          -bg $Gui(activeWorkspace) -relief groove -bd 1
     frame $parent.fEstimate     -bg $Gui(activeWorkspace) -relief groove -bd 1
  
-    pack $parent.fModeling $parent.fAddiModeling $parent.fChoices $parent.fOK \
-        $parent.fEVs $parent.fEstimate -side top -fill x -pady 2 -padx 1 
+    pack $parent.fChoices $parent.fModeling $parent.fFiltering $parent.fMoreModeling \
+        $parent.fOK $parent.fEVs  -side top -fill x -pady 2 -padx 1
 
     #-------------------------------------------
-    # Top frame 
+    # Choices frame 
+    #-------------------------------------------
+    set f $parent.fChoices
+    eval {checkbutton $f.cApplyAll \
+              -variable fMRIEngine(checkbuttonApplyAllConditions) \
+              -indicatoron 1 -relief flat -text "Model all conditions identically" \
+              -command "fMRIEngineSelectAllConditionsForSignalModeling" } $Gui(WEA) 
+    $f.cApplyAll deselect 
+    pack $f.cApplyAll -padx 1 -pady 2 -fill x
+
+
+    #-------------------------------------------
+    # Modeling frame 
     #-------------------------------------------
     set f $parent.fModeling
     frame $f.fTitle -bg $Gui(activeWorkspace)
     frame $f.fMenus -bg $Gui(activeWorkspace)
     pack $f.fTitle $f.fMenus -side top -fill x -pady 1 -padx 1 
+
 
     #-----------------------
     # Menus 
@@ -90,7 +104,7 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
 
     set f $parent.fModeling.fTitle
     DevAddLabel $f.l "Model a condition:" 
-    pack $f.l -side top -pady 3 -fill x
+    pack $f.l -side top -pady 7 -fill x
 
     set f $parent.fModeling.fMenus
 
@@ -104,9 +118,11 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
           -indicatoron 1 \
           -menu $f.mbType.m} $Gui(WMBA)
     eval {menu $f.mbType.m} $Gui(WMA)
+    #bind $f.mbType <1> "fMRIEngineUpdateConditionsForSignalModeling"
+    
     foreach m $condiList  {
         $f.mbType.m add command -label $m \
-            -command ""
+            -command "fMRIEngineSelectConditionForSignalModeling $m"
     }
 
     # Save menubutton for config
@@ -176,11 +192,6 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
     }
     set ::fMRIEngine(gui,derivativeMenuButtonForSignal) $f.mbDeriv
 
-    #eval {entry $f.cTemp 
-    #    -variable fMRIEngine(checkbuttonTempDerivative) 
-    #   -text "Add temporal derivative"} $Gui(WEA) 
-    #$f.cTemp deselect 
-
     blt::table $f \
         0,0 $f.lCond -padx 1 -pady 1 -anchor e \
         0,1 $f.mbType -fill x -padx 1 -pady 1 -anchor w \
@@ -194,32 +205,33 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
         3,1 $f.mbDeriv -padx 1 -pady 1 -anchor w \
         3,2 $f.bDerivHelp -padx 1 -pady 1
     
-        #3,0 $f.cTemp -cspan 2 -fill x -padx 5 -pady 1 
-
-
     #-------------------------------------------
-    # Middle frame 
+    # Filtering frame 
     #-------------------------------------------
-    set f $parent.fAddiModeling
+    set f $parent.fFiltering
     frame $f.fTitle    -bg $Gui(activeWorkspace)
-    frame $f.fContents -bg $Gui(activeWorkspace)
+    frame $f.fHighpass -bg $Gui(activeWorkspace) -relief groove -bd 1 
+    #frame $f.fLowpass -bg $Gui(activeWorkspace) -relief groove -bd 1 
+    frame $f.fGlobalEffects -bg $Gui(activeWorkspace) -relief groove -bd 1 
     frame $f.fActions  -bg $Gui(activeWorkspace)
-    pack $f.fTitle $f.fContents $f.fActions -side top -fill x -pady 1 -padx 1 
+    #commenting out lowpass frame 10/16/05
+    #pack $f.fTitle $f.fHighpass $f.fLowpass $f.fGlobalEffects $f.fActions -side top -fill x -pady 1 -padx 1 
+    pack $f.fTitle $f.fHighpass $f.fGlobalEffects $f.fActions -side top -fill x -pady 1 -padx 1 
 
     #-----------------------
-    # Menus 
+    # Filtering->Title
+    # Filtering->Highpass
+    # Filtering->Lowpass
+    # Filtering->GlobalEffects
     #-----------------------
+    set f $parent.fFiltering.fTitle
+    DevAddLabel $f.l "Nuissance signal modeling:" 
+    pack $f.l -side top -pady 7 -fill x
 
-    set f $parent.fAddiModeling.fTitle
-    DevAddLabel $f.l "Additional modeling:" 
-    pack $f.l -side top -pady 3 -fill x
-
-    set f $parent.fAddiModeling.fContents
-
-    # Build pulldown menu for highpass filters  
-    DevAddLabel $f.lHighpass "Highpass filter:"
+    #--- highpass filter
+    set f $parent.fFiltering.fHighpass
+    DevAddLabel $f.lHighpass "Trend model:"
     DevAddButton $f.bHighpassHelp "?" "fMRIEngineHelpSetupHighpassFilter" 2 
- 
     set highpassFilters [list {none} {Discrete Cosine}]
     set df [lindex $highpassFilters 0] 
     eval {menubutton $f.mbType -text $df \
@@ -236,76 +248,106 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
     set fMRIEngine(gui,highpassMenuForSignal) $f.mbType.m
     set fMRIEngine(curHighpassForSignal) $df 
 
-    # Build pulldown menu for lowpass filters 
-    DevAddLabel $f.lLowpass "Lowpass filter:"
-    DevAddButton $f.bLowpassHelp "?" "fMRIEngineHelpSetupLowpassFilter" 2 
- 
-    set lowpassFilters [list {none}]
-    set df [lindex $lowpassFilters 0] 
-    eval {menubutton $f.mbType2 -text $df \
-          -relief raised -bd 2 -width 15 \
-          -indicatoron 1 \
-          -menu $f.mbType2.m} $Gui(WMBA)
-    eval {menu $f.mbType2.m} $Gui(WMA)
-
-    foreach m $lowpassFilters  {
-        $f.mbType2.m add command -label $m \
-            -command "fMRIEngineSelectLowpassForSignalModeling \{$m\}" 
-    }
-    set fMRIEngine(gui,lowpassMenuButtonForSignal) $f.mbType2
-    set fMRIEngine(gui,lowpassMenuForSignal) $f.mbType2.m
-    set fMRIEngine(curLowpassForSignal) $df
-
-    $fMRIEngine(gui,lowpassMenuButtonForSignal) configure -state disabled
-
-    #-----------------------
-    # Remove global effects 
-    #-----------------------
-    DevAddButton $f.bEffectsHelp "?" "fMRIEngineHelpSetupGlobalFX" 2 
-
-    eval {checkbutton $f.cEffects \
-        -variable fMRIEngine(checkbuttonGlobalEffects) \
-        -text "Remove global effects"} $Gui(WEA) 
-    $f.cEffects deselect 
-    $f.cEffects configure -state disabled 
-
-    #-----------------------
-    # Custom 
-    #-----------------------
-    DevAddLabel $f.lCustom "Custom:"
-    DevAddButton $f.bCustomHelp "?" "fMRIEngineHelpSetupCustomFX" 2 
-
-    eval {entry $f.eCustom -width 18 -state disabled \
-        -textvariable fMRIEngine(entry,custom)} $Gui(WEA)
-
+    #--- just wiring this in now... 10/04/05
+    set ::fMRIEngine(curRunForSignal) 0
+    DevAddLabel $f.lCutoff "Cutoff period:"
+    eval {entry $f.eCutoff -width 18  \
+        -textvariable fMRIEngine(entry,highpassCutoff) } $Gui(WEA)
+    bind $f.eCutoff <Return> "fMRIEngineSelectCustomHighpassTemporalCutoff"
+    set ::fMRIEngine(entry,highpassCutoff) "default"
+    DevAddButton $f.bHighpassCutoffHelp "?" "fMRIEngineHelpSelectHighpassCutoff" 2 
+    DevAddButton $f.bHighpassDefault "use default cutoff" "fMRIEngineSelectDefaultHighpassTemporalCutoff" 2
     blt::table $f \
         0,0 $f.lHighpass -padx 1 -pady 1 \
         0,1 $f.mbType -fill x -padx 1 -pady 1 \
         0,2 $f.bHighpassHelp -padx 1 -pady 1 \
-        1,0 $f.lLowpass -padx 1 -pady 1 \
-        1,1 $f.mbType2 -fill x -padx 1 -pady 1 \
-        1,2 $f.bLowpassHelp -padx 1 -pady 1 \
-        2,0 $f.cEffects -cspan 2 -fill x -padx 5 -pady 1 \
-        2,2 $f.bEffectsHelp -padx 1 -pady 1 \
-        3,0 $f.lCustom -padx 1 -pady 1 \
-        3,1 $f.eCustom -fill x -padx 1 -pady 1 \
-        3,2 $f.bCustomHelp -padx 1 -pady 1 
+        1,0 $f.lCutoff -padx 1 -pady 1 \
+        1,1 $f.eCutoff -fill x -padx 1 -pady 1 \
+        1,2 $f.bHighpassCutoffHelp -padx 1 -pady 1 \
+        2,1 $f.bHighpassDefault -padx 1 -fill x -pady 1
 
-    #-------------------------------------------
-    # Choices frame 
-    #-------------------------------------------
-    set f $parent.fChoices
-    eval {checkbutton $f.cApplyAll \
-        -variable fMRIEngine(checkbuttonApplyAllConditions) \
-        -text "Apply to all conditions"} $Gui(WEA) 
-    $f.cApplyAll deselect 
-    pack $f.cApplyAll -padx 1 -pady 2 -fill x
+    #comment out lowpass; forget temporal smoothing for now.
+    if { 0 } {
+        #--- lowpass filter
+        #set f $parent.fFiltering.fLowpass
+        #DevAddLabel $f.lLowpass "Lowpass:"
+        #DevAddButton $f.bLowpassHelp "?" "fMRIEngineHelpSetupLowpassFilter" 2 
+        #set lowpassFilters [list {none} {Gaussian}]
+        #set df [lindex $lowpassFilters 0] 
+        #eval {menubutton $f.mbType2 -text $df \
+        #          -relief raised -bd 2 -width 15 \
+        #         -indicatoron 1 \
+        #        -menu $f.mbType2.m} $Gui(WMBA)
+        #eval {menu $f.mbType2.m} $Gui(WMA)
+
+        #foreach m $lowpassFilters  {
+        #   $f.mbType2.m add command -label $m \
+        #      -command "fMRIEngineSelectLowpassForSignalModeling \{$m\}" 
+        #}
+        #set fMRIEngine(gui,lowpassMenuButtonForSignal) $f.mbType2
+        #set fMRIEngine(gui,lowpassMenuForSignal) $f.mbType2.m
+        #set fMRIEngine(curLowpassForSignal) $df
+
+        #DevAddLabel $f.lCutoff "FWHM (s):"
+        #eval {entry $f.eCutoff -width 18 -state disabled \
+        #          -textvariable fMRIEngine(entry,lowpassCutoff)} $Gui(WEA)
+        #set ::fMRIEngine(entry,lowpassCutoff) 0.0
+        #DevAddButton $f.bLowpassCutoffHelp "?" "fMRIEngineHelpSetupLowpassFilter" 2  
+        #DevAddButton $f.bLowpassDefault "use default FWHM" "fMRIEngineSelectLowpassTemporalCutoff" 2
+        #blt::table $f \
+        #    0,0 $f.lLowpass -padx 1 -pady 1 \
+        #   0,1 $f.mbType2 -fill x -padx 1 -pady 1 \
+        #  0,2 $f.bLowpassHelp -padx 1 -pady 1 \
+        #    1,0 $f.lCutoff -padx 1 -pady 1 \
+        #   1,1 $f.eCutoff -fill x -padx 1 -pady 1 \
+        #  1,2 $f.bLowpassCutoffHelp -padx 1 -pady 1 \
+        #    2,1 $f.bLowpassDefault -padx 1 -fill x -pady 1
+    }
+    
+
+    #--- remove global effects
+    #--- why oh why does this checkbutton show up with sunken relief???
+    set f $parent.fFiltering.fGlobalEffects
+    DevAddLabel $f.lIntensity "Intensity:"
+    eval {checkbutton $f.cEffects \
+        -variable fMRIEngine(checkbuttonGlobalEffects) \
+        -relief flat -indicatoron 1 -text "remove global effects" -anchor w } $Gui(WEA) 
+    DevAddButton $f.bEffectsHelp "?" "fMRIEngineHelpSetupGlobalFX" 2 
+    $f.cEffects deselect 
+    $f.cEffects configure -state disabled 
+    blt::table $f \
+        0,0 $f.lIntensity -padx 2 -pady 1 -anchor e \
+        0,1 $f.cEffects -fill x -padx 1 -pady 1 -anchor e \
+        0,2 $f.bEffectsHelp -padx 1 -pady 1 -anchor e
+
+
+    #-----------------------
+    # Custom 
+    #-----------------------
+    set f $parent.fMoreModeling
+    frame $f.fTitle    -bg $Gui(activeWorkspace)
+    frame $f.fCustom -bg $Gui(activeWorkspace) -relief groove -bd 1 
+    pack $f.fTitle $f.fCustom -side top -fill x -pady 1 -padx 0
+
+    DevAddLabel $f.fTitle.lTitle "Additional modeling:" 
+    pack $f.fTitle.lTitle -side top -pady 7 -fill x
+
+    set f $parent.fMoreModeling.fCustom
+    DevAddLabel $f.lCustom "Custom:"
+    eval {entry $f.eCustom -width 18 -state disabled \
+        -textvariable fMRIEngine(entry,custom)} $Gui(WEA)
+    DevAddButton $f.bCustomHelp "?" "fMRIEngineHelpSetupCustomFX" 2 
+    blt::table $f \
+        0,0 $f.lCustom -padx 1 -pady 1 -anchor e \
+        0,1 $f.eCustom -fill x -padx 1 -pady 1 -anchor e \
+        0,2 $f.bCustomHelp -padx 1 -pady 1 -anchor e
+    
 
     #-------------------------------------------
     # OK frame 
     #-------------------------------------------
     set f $parent.fOK
-    DevAddButton $f.bOK "OK" "fMRIEngineAddOrEditEV" 6 
+    DevAddButton $f.bOK "add to model" "fMRIEngineAddOrEditEV" 13 
     grid $f.bOK -padx 1 -pady 3 
 
     #-------------------------------------------
@@ -349,55 +391,68 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
     DevAddButton $f.bDelete "Delete" "fMRIEngineDeleteEV" 6 
     grid $f.bView $f.bDelete -padx 2 -pady 3 
 
-    #-------------------------------------------
-    # Estimate frame 
-    #-------------------------------------------
-    puts "creating estimate frame"
-    set f $parent.fEstimate
-    frame $f.fTop      -bg $Gui(activeWorkspace)
-    frame $f.fBot    -bg $Gui(activeWorkspace)
-    pack $f.fTop $f.fBot -side top -fill x -pady 1 -padx 2 
 
-    set f $parent.fEstimate.fTop
-
-    DevAddButton $f.bHelp "?" "fMRIEngineHelpSetupEstimate" 2
-    DevAddButton $f.bEstimate "Fit Model" "fMRIEngineFitModel" 15 
-
-    set runList [list {none}]
-    set df [lindex $runList 0] 
-    eval {menubutton $f.mbType -text $df \
-        -relief raised -bd 2 -width 9 \
-        -indicatoron 1 \
-        -menu $f.mbType.m} $Gui(WMBA)
-#    bind $f.mbType <1> "fMRIEngineUpdateRunsForModelFitting" 
-    eval {menu $f.mbType.m} $Gui(WMA)
-    TooltipAdd $f.mbType "Specify which run is going to be used for LM model fitting.\
-    \nSelect 'combined' if you have multiple runs and want to use them all."
-
-    # Add menu items
-    foreach m $runList  {
-        $f.mbType.m add command -label $m \
-            -command "fMRIEngineUpdateRunsForModelFitting" 
-    }
-
-    set fMRIEngine(curRunForModelFitting) run1 
-
-    # Save menubutton for config
-    set fMRIEngine(gui,runListMenuButtonForModelFitting) $f.mbType
-    set fMRIEngine(gui,runListMenuForModelFitting) $f.mbType.m
-
-    grid $f.bHelp $f.bEstimate $f.mbType -padx 1 -pady 2 
-    puts "created estimate frame"
-#    set f $parent.fEstimate.fBot
-#    DevAddButton $f.bView "View Coefficients" "fMRIEngineViewCoefficients" 27 
-#    grid $f.bView -padx 1 -pady 2 
 }
 
 
 
 
+proc fMRIEngineBuildUIForModelEstimation {parent} {
+    global Gui fMRIEngine
+    
+    frame $parent.fEstimate -bg $::Gui(activeWorkspace) -relief groove -bd 1
+    pack $parent.fEstimate -side top -fill x -pady 4 -padx 1
 
+    #-------------------------------------------
+    # Estimate frame 
+    #-------------------------------------------
+    set f $parent.fEstimate
+    frame $f.fTop      -bg $::Gui(activeWorkspace)
+    #frame $f.fBot    -bg $::Gui(activeWorkspace)
+    #pack $f.fTop $f.fBot -side top -fill x -pady 1 -padx 2 
+    pack $f.fTop -side top -fill x -pady 1 -padx 2 
 
+    set f $parent.fEstimate.fTop
+    #--- add a title
+    DevAddLabel $f.lTitle "Estimate model:" 
+    #--- add a label for choosing run
+    DevAddLabel $f.lRun "Choose run(s):" 
+    #--- add run menu
+    set runList [list {none}]
+    set df [lindex $runList 0] 
+    eval {menubutton $f.mbWhichRun -text $df \
+        -relief raised -bd 2 -width 9 \
+        -indicatoron 1 \
+        -menu $f.mbWhichRun.m} $::Gui(WMBA)
+#    bind $f.mbWhichRun <1> "fMRIEngineUpdateRunsForModelFitting" 
+    eval {menu $f.mbWhichRun.m} $::Gui(WMA)
+    TooltipAdd $f.mbWhichRun "Specify which run is going to be used for LM model fitting.\
+    \nSelect 'combined' if you have multiple runs and want to use them all."
+    #--- Add menu items
+    foreach m $runList  {
+        $f.mbWhichRun.m add command -label $m \
+            -command "fMRIEngineUpdateRunsForModelFitting" 
+    }
+    #--- add buttons for estimating
+    DevAddButton $f.bHelp "?" "fMRIEngineHelpSetupEstimate" 2
+    DevAddButton $f.bEstimate "Fit Model" "fMRIEngineFitModel" 15 
+
+    set fMRIEngine(curRunForModelFitting) run1 
+    # Save menubutton for config
+    set fMRIEngine(gui,runListMenuButtonForModelFitting) $f.mbWhichRun
+    set fMRIEngine(gui,runListMenuForModelFitting) $f.mbWhichRun.m
+
+    blt::table $f \
+        0,0 $f.lTitle -padx 2 -pady 7 -anchor c -fill x \
+        1,0 $f.lRun -padx 2 -pady 1 -anchor e \
+        1,1 $f.mbWhichRun -padx 1 -pady 1 -anchor e -fill x \
+        2,1 $f.bEstimate -padx 1 -pady 1 -anchor e -fill x \
+        2,2 $f.bHelp -padx 1 -pady 1 -anchor e 
+
+#    set f $parent.fEstimate.fBot
+#    DevAddButton $f.bView "View Coefficients" "fMRIEngineViewCoefficients" 27 
+
+}
 
 
 #-------------------------------------------------------------------------------
@@ -409,7 +464,11 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
 proc fMRIEngineViewCoefficients {} {
     global fMRIEngine 
 
+
 }
+
+
+
 
 
 #-------------------------------------------------------------------------------
@@ -431,6 +490,9 @@ proc fMRIEngineSelectRunForModelFitting {run} {
         set fMRIEngine(curRunForModelFitting) $r 
     }
 }
+
+
+
 
  
 #-------------------------------------------------------------------------------
@@ -468,19 +530,70 @@ proc fMRIEngineUpdateRunsForModelFitting {} {
 }
 
 
+
+
+
+
+proc fMRIEngineSelectAllConditionsForSignalModeling { } {
+    global fMRIEngine
+    
+    if { $fMRIEngine(checkbuttonApplyAllConditions) } {
+        $fMRIEngine(gui,conditionsMenuButtonForSignal) config -text "all"
+        set fMRIEngine(curConditionForSignal) "all"
+    } else {
+        $fMRIEngine(gui,conditionsMenuButtonForSignal) config -text "none"
+        set fMRIEngine(curConditionForSignal) "none"
+    }
+}
+
+
+
+
+
+proc fMRIEngineSelectConditionForSignalModeling { cond } {
+    global fMRIEngine 
+    #--- cancel the 'allconditions' button by selecting a condition from menu
+    #--- and select the newly specified appropriate condition
+    if { $cond == "all"} {
+        set ::fMRIEngine(checkbuttonApplyAllConditions) 1
+    } else {
+        set ::fMRIEngine(checkbuttonApplyAllConditions) 0
+    }
+    #--- which run are we talking about?
+    set fMRIEngine(curConditionForSignal) $cond
+    $fMRIEngine(gui,conditionsMenuButtonForSignal) config -text $cond
+    set ::fMRIEngine(curRunForSignal) [ fMRIEngineGetRunForCurrentCondition ]
+
+    #--- display the current selection for run's cosine transforms
+    set r $::fMRIEngine(curRunForSignal)
+    if { [info exists ::fMRIEngine(Design,Run$r,HighpassCutoff)] } {
+        set ::fMRIEngine(entry,highpassCutoff) $::fMRIEngine(Design,Run$r,HighpassCutoff)
+    } else {
+        set ::fMRIEngine(entry,highpassCutoff) "default"
+    }
+}
+
+
+
+
+
 #-------------------------------------------------------------------------------
 # .PROC fMRIEngineUpdateConditionsForSignalModeling
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineUpdateConditionsForSignalModeling {} {
+proc fMRIEngineUpdateConditionsForSignalModeling { } {
     global fMRIEngine 
 
+    #--- reset the checkbox.
+    set ::fMRIEngine(checkbuttonApplyAllConditions) 0
+    
+    #--- regenerate conditions menu and callbacks
     $fMRIEngine(gui,conditionsMenuForSignal) delete 0 end 
     set start 1
     set end $fMRIEngine(noOfSpecifiedRuns)
-
+    #--- list all conditions for each run...
     set firstCondition ""
     set i $start
     while {$i <= $end} {
@@ -495,38 +608,51 @@ proc fMRIEngineUpdateConditionsForSignalModeling {} {
                 if {$firstCondition == ""} {
                     set firstCondition $l
                 }
-
                 incr count
             }
         }
-
         incr i 
     }
-
+    #--- add the none and all options onto the list at the end
     if {$firstCondition == ""} {
         set firstCondition "none"
         $fMRIEngine(gui,conditionsMenuForSignal) add command -label "none" \
             -command "fMRIEngineSelectConditionForSignalModeling none"
     }
-
-    fMRIEngineSelectConditionForSignalModeling $firstCondition 
+    $fMRIEngine(gui,conditionsMenuForSignal) add command -label "all" \
+        -command "fMRIEngineSelectConditionForSignalModeling all"            
 }
 
 
-#-------------------------------------------------------------------------------
-# .PROC fMRIEngineSelectConditionForSignalModeling
-# 
-# .ARGS
-# string condition
-# .END
-#-------------------------------------------------------------------------------
-proc fMRIEngineSelectConditionForSignalModeling {condition} {
-    global fMRIEngine 
 
-    # configure menubutton
-    $fMRIEngine(gui,conditionsMenuButtonForSignal) config -text $condition
-    set fMRIEngine(curConditionForSignal) $condition 
+
+
+proc fMRIEngineGetRunForCurrentCondition { } {
+
+    #--- this sets current run as 1 if all conditions are being
+    #--- modeled the same way; returns 0 if no conditions are
+    #--- currently selected, and pulls the run number out of haiying'
+    #--- if some condition name is selected.
+    set c $::fMRIEngine(curConditionForSignal)
+    if { $c == "all" } {
+        return 1
+    } elseif { $c == "none" } {
+        return 0
+    } else {
+        set i [ string first "r" $::fMRIEngine(curConditionForSignal) ]
+        set j [ string first ":" $::fMRIEngine(curConditionForSignal) ]
+        set start [ expr $i + 1]
+        set stop [ expr $j - 1]
+        if { $start <= $stop } {
+            set currun [ string range $::fMRIEngine(curConditionForSignal) $start $stop ]
+        }
+        return $currun
+    }
 }
+
+
+
+
 
 
 #-------------------------------------------------------------------------------
@@ -580,6 +706,7 @@ proc fMRIEngineSelectNumDerivativesForSignalModeling { option } {
 
 
 
+
 #-------------------------------------------------------------------------------
 # .PROC fMRIEngineSelectHighpassForSignalModeling
 # 
@@ -590,26 +717,139 @@ proc fMRIEngineSelectNumDerivativesForSignalModeling { option } {
 proc fMRIEngineSelectHighpassForSignalModeling {pass} {
     global fMRIEngine 
 
-   # configure menubutton
+   #--- configure menubutton
     $fMRIEngine(gui,highpassMenuButtonForSignal) config -text $pass
     set fMRIEngine(curHighpassForSignal) $pass 
 }
 
 
-#-------------------------------------------------------------------------------
-# .PROC fMRIEngineSelectLowpassForSignalModeling
-# 
-# .ARGS
-# string pass
-# .END
+
+
+proc fMRIEngineInitDefaultHighpassTemporalCutoff { } {
+    set ::fMRIEngine(entry,highpassCutoff) "default"
+}
+
+
+
+proc fMRIEngineSelectDefaultHighpassTemporalCutoff { } {
+
+    #--- set default cutoff frequency for the chosen highpass temporal filter
+    set run $::fMRIEngine(curRunForSignal)
+    if { ![ info exists ::fMRIEngine(curConditionForSignal) ]} {
+        DevErrorWindow "Either no runs have been defined or no condition is selected."
+        set ::fMRIEngine(entry,highpassCutoff) "default"
+        return
+    }
+    if { $run <= 0 } {
+        DevErrorWindow "No runs have been defined yet!"
+        #--- reset widget to default state
+        set ::fMRIEngine(entry,highpassCutoff) "default"
+        return
+    }
+    set ::fMRIEngine(entry,highpassCutoff) "default"
+    if { $run != 0 } {
+        set ::fMRIEngine(Design,Run$run,useCustomCutoff) 0
+        set ::fMRIEngine(Design,Run$run,HighpassCutoff) "default"
+    }
+}
+
+
+
+proc fMRIEngineSelectCustomHighpassTemporalCutoff { } {
+
+    set run $::fMRIEngine(curRunForSignal)
+    if { $run <= 0 } {
+        DevErrorWindow "No runs have been defined yet!"
+        #--- reset widget to default state
+        set ::fMRIEngine(entry,highpassCutoff) "default"
+        return
+    }
+    if { ($::fMRIEngine(entry,highpassCutoff) == "default") && ($::fMRIEngine(Design,Run$run,useCustomCutoff)) } {
+        DevErrorWindow "Please click button to select default cutoff."
+        return
+    }
+    #--- check to see if it's a valid entry....
+    if { $::fMRIEngine(entry,highpassCutoff) != "default" } {
+        set tst $::fMRIEngine(entry,highpassCutoff)
+        if { (! [ string is integer -strict $tst]) && (! [ string is double -strict $tst]) } {
+            DevErrorWindow "Cutoff period must be either an integer or floating point value"
+            fMRIEngineSelectDefaultHighpassTemporalCutoff 
+            return
+        }
+        if { $tst == 0 || $tst == 0.0 } {
+            DevErrorWindow "Cutoff period should be non-zero."
+            fMRIEngineSelectDefaultHighpassTemporalCutoff 
+            set $::fMRIEngine(Design,Run$run,useCustomCutoff) 0
+            return
+        }
+        #--- set custom cutoff frequency for the chosen highpass temporal filter
+        if { $run != 0 } {
+            set ::fMRIEngine(Design,Run$run,useCustomCutoff) 1
+            set ::fMRIEngine(Design,Run$run,HighpassCutoff)  $::fMRIEngine(entry,highpassCutoff) 
+        }
+    }
+}
+
+
+
+
+proc fMRIEngineComputeDefaultHighpassTemporalCutoff { r } {
+
+    #--- Here's how the default cutoff frequency is computed:
+    #--- fmin is the cutoff frequency of the high-pass filter (lowest frequency
+    #--- that we let pass through. Choose to let fmin = 0.666666/T (just less than the
+    #--- lowest frequency in paradigm). As recommended in S.M. Smith, "Preparing fMRI
+    #--- data for statistical analysis, in 'Functional MRI, an introduction to methods', Jezzard,
+    #--- Matthews, Smith Eds. 2002, Oxford University Press.
+
+    if { [ fMRIModelViewLongestEpochSpacing $r ] } {
+        set T $::fMRIModelView(Design,Run$r,longestEpoch)
+        #--- set the model parameter, cutoff Period
+        set ::fMRIEngine(Design,Run$r,HighpassCutoff)  [ expr 1.5 * $T ]
+        set ::fMRIEngine(entry,highpassCutoff) $::fMRIEngine(Design,Run$r,HighpassCutoff)
+        #--- update the GUI
+        #set ::fMRIEngine(entry,highpassCutoff) $::fMRIEngine(Design,Run$r,HighpassCutoff)
+    } else {
+        #--- set the model parameter
+        set ::fMRIEngine(Design,Run$r,HighpassCutoff) 0.0
+        #--- update the GUI
+        #set ::fMRIEngine(entry,highpassCutoff) 0.0
+    }
+
+}
+
+
+
 #-------------------------------------------------------------------------------
 proc fMRIEngineSelectLowpassForSignalModeling {pass} {
     global fMRIEngine 
 
+   #--- configure menubutton
    # configure menubutton
     $fMRIEngine(gui,lowpassMenuButtonForSignal) config -text $pass
-    set fMRIEngine(curLowpassForSignal) $pass 
+    set fMRIEngine(curLowpassForSignal) $pass
+    fMRIEngineSelectLowpassTemporalCutoff
 }
+
+
+
+
+proc fMRIEngineSelectLowpassTemporalCutoff { } {
+    global fMRIEngine 
+
+    #--- set default cutoff frequency for the lowpass temporal filter
+    if { [ info exists ::fMRIModelView(Design,Run1,TR) ] } {
+        set ::fMRIModelView(Design,LowpassCutoff) $::fMRIModelView(Design,Run1,TR)
+    } else {
+        DevErrorWindow "Lowpass: Specify run(s) and condition(s) before modeling."
+        set ::fMRIModelView(Design,LowpassCutoff) 0.0
+    }
+}
+
+
+
+
+
 
 #-------------------------------------------------------------------------------
 # .PROC fMRIEngineAddOrEditEV
@@ -621,9 +861,15 @@ proc fMRIEngineAddOrEditEV {} {
     global fMRIEngine 
 
     set con $fMRIEngine(curConditionForSignal)
-    if {$con == "none"} {
+    if { ($con == "none") && (!$fMRIEngine(checkbuttonApplyAllConditions)) } {
         DevErrorWindow "Select a valid condition."
         return
+    }
+    #--- wjp 11/02/05
+    #--- if current condition is "all", then just pick the first in the list.
+    if {$con == "all"} {
+        set conditiontitle [lindex $fMRIEngine($0,conditionList) $count]
+        set con "r$i:$title"
     }
 
     set wform $fMRIEngine(curWaveFormForSignal) 
@@ -631,12 +877,12 @@ proc fMRIEngineAddOrEditEV {} {
     
     #--- wjp 09/01/06
     set deriv $fMRIEngine(curDerivativesForSignal)
-    set con $::fMRIEngine(curConditionForSignal)
     #set deriv $fMRIEngine(checkbuttonTempDerivative) 
     set hpass $fMRIEngine(curHighpassForSignal)
-    set lpass $fMRIEngine(curLowpassForSignal) 
+    #set lpass $fMRIEngine(curLowpassForSignal) 
     set effes $fMRIEngine(checkbuttonGlobalEffects) 
-    set ev "$con:$wform:$conv:$deriv:$hpass:$lpass:$effes"
+    #set ev "$con:$wform:$conv:$deriv:$hpass:$lpass:$effes"
+    set ev "$con:$wform:$conv:$deriv:$hpass:$effes"
     if {[info exists fMRIEngine($ev,ev)]} {
         DevErrorWindow "This EV already exists:\n$ev"
         if {! $fMRIEngine(checkbuttonApplyAllConditions)} {
@@ -684,7 +930,8 @@ proc fMRIEngineAddOrEditEV {} {
             set title [string range $v [expr $i2+1] end] 
             set title [string trim $title]
 
-            set ev "$v:$wform:$conv:$deriv:$hpass:$lpass:$effes"
+            #set ev "$v:$wform:$conv:$deriv:$hpass:$lpass:$effes"
+            set ev "$v:$wform:$conv:$deriv:$hpass:$effes"
 
             if {$fMRIEngine(checkbuttonApplyAllConditions) ||
                 ((! $fMRIEngine(checkbuttonApplyAllConditions)) && $con == $v)} {
@@ -697,7 +944,7 @@ proc fMRIEngineAddOrEditEV {} {
                 set fMRIEngine($ev,convolution,ev)   $conv
                 set fMRIEngine($ev,derivative,ev)    $deriv
                 set fMRIEngine($ev,highpass,ev)      $hpass
-                set fMRIEngine($ev,lowpass,ev)       $lpass
+                #set fMRIEngine($ev,lowpass,ev)       $lpass
                 set fMRIEngine($ev,globaleffects,ev) $effes
 
                 $fMRIEngine(evsListBox) insert end $ev
@@ -736,7 +983,7 @@ proc fMRIEngineDeleteEV {{index -1}} {
             unset -nocomplain fMRIEngine($ev,convolution,ev)
             unset -nocomplain fMRIEngine($ev,derivative,ev)
             unset -nocomplain fMRIEngine($ev,highpass,ev) 
-            unset -nocomplain fMRIEngine($ev,lowpass,ev) 
+            #unset -nocomplain fMRIEngine($ev,lowpass,ev) 
             unset -nocomplain fMRIEngine($ev,globaleffects,ev)
         }
 
@@ -761,14 +1008,14 @@ proc fMRIEngineShowEVToEdit {} {
         set ev [$fMRIEngine(evsListBox) get $curs] 
         if {$ev != "" &&
             [info exists fMRIEngine($ev,ev)]} {
-            fMRIEngineSelectConditionForSignalModeling   $fMRIEngine($ev,condition,ev)  
+            fMRIEngineSelectConditionForSignalModeling   $fMRIEngine($ev,condition,ev)
             fMRIEngineSelectWaveFormForSignalModeling    $fMRIEngine($ev,waveform,ev)   
             fMRIEngineSelectConvolutionForSignalModeling $fMRIEngine($ev,convolution,ev)
             #fMRIEngineSelectNumDerivativesForSignalModeling $fMRIEngine($ev,derivative,ev)
             set m [ lindex $::fMRIEngine(derivOptions) $::fMRIEngine($ev,derivative,ev) ]
             fMRIEngineSelectNumDerivativesForSignalModeling $m
             fMRIEngineSelectHighpassForSignalModeling    $fMRIEngine($ev,highpass,ev) 
-            fMRIEngineSelectLowpassForSignalModeling     $fMRIEngine($ev,lowpass,ev) 
+            #fMRIEngineSelectLowpassForSignalModeling     $fMRIEngine($ev,lowpass,ev) 
             #--- wjp 09/06/05
             set fMRIEngine(numDerivatives) $fMRIEngine($ev,derivative,ev)
             #set fMRIEngine(checkbuttonTempDerivative) $fMRIEngine($ev,derivative,ev)
@@ -889,19 +1136,21 @@ proc fMRIEngineAddRegressors {run} {
     }
     vtkFloatArray fMRIEngine(designMatrix)
 
-    #--- Additional EVs: baseline and DCBasis
+    #--- Additional EVs: baseline and DCBasis for each run...
     for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
         set fMRIEngine($r,totalEVs) [expr $fMRIEngine($r,noOfEVs)]
         if {$::fMRIModelView(Design,Run$r,UseBaseline)} {
             incr fMRIEngine($r,totalEVs)
         }
         if {$::fMRIModelView(Design,Run$r,UseDCBasis)} {
-            set fMRIEngine($r,totalEVs) [expr $fMRIEngine($r,totalEVs)+7]
+            set fMRIEngine($r,totalEVs) [expr $fMRIEngine($r,totalEVs) + \
+                                            $::fMRIEngine(Design,Run$r,numCosines) ]
         }
     }
-
+    #--- if runs are being analyzed separately...
     if {$run != "combined"} {
         # single run
+        set ::fMRIEngine($run,totalEVs) [ expr int ($::fMRIEngine($run,totalEVs)) ]
         fMRIEngine(designMatrix) SetNumberOfComponents $fMRIEngine($run,totalEVs)
         set seqName $fMRIEngine($run,sequenceName)
         set vols $MultiVolumeReader($seqName,noOfVolumes) 
@@ -916,8 +1165,7 @@ proc fMRIEngineAddRegressors {run} {
             }
         }
     } else {
-        # runs combined
-
+        # runs are being combined together and analyzed together.
         if {[fMRIEngineCheckMultiRuns] == 1} {
             return 1
         }
@@ -1130,7 +1378,12 @@ proc fMRIEngineCountEVs {} {
                     [lreplace $fMRIEngine($r,namesOfEVs) $found $found]
             }
         }
-        set fMRIEngine($r,namesOfEVs) [concat $names $fMRIEngine($r,namesOfEVs)] 
+        if { ! [ info exists names] } {
+            DevErrorWindow "Runs can't be combined; EV names across runs may differ."
+            return 0
+        } else {
+            set fMRIEngine($r,namesOfEVs) [concat $names $fMRIEngine($r,namesOfEVs)]
+        }
     }
 
     #--- wjp add: this lists EVs that are associated only with conditions
@@ -1144,6 +1397,7 @@ proc fMRIEngineCountEVs {} {
             }
         }
     }
+    return 1
 }
 
 
@@ -1223,7 +1477,9 @@ proc fMRIEngineFitModel {} {
         return
     }
 
-    fMRIEngineCountEVs
+    if { ! [ fMRIEngineCountEVs] } {
+        return
+    }
 
     set start $fMRIEngine(curRunForModelFitting)
     set last $start

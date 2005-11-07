@@ -74,8 +74,7 @@ proc fMRIEngineBuildUIForParadigmDesign {parent} {
     set f $parent.fTop
     frame $f.fUp      -bg $Gui(activeWorkspace) 
     frame $f.fMiddle  -bg $Gui(activeWorkspace) -relief groove -bd 1 
-    frame $f.fDown    -bg $Gui(activeWorkspace)
-    pack $f.fUp $f.fMiddle $f.fDown -side top -fill x -pady 1 -padx 2 
+    pack $f.fUp $f.fMiddle -side top -fill x -pady 2 -padx 2 
  
     set f $parent.fTop.fUp
     frame $f.fChoice  -bg $Gui(activeWorkspace) 
@@ -98,71 +97,81 @@ proc fMRIEngineBuildUIForParadigmDesign {parent} {
     grid $f.bHelp $f.rblocked $f.revent-related $f.rmixed \
         -padx 0 -pady 1 -sticky e
 
-    set f $parent.fTop.fUp.fLabel
-    eval {checkbutton $f.cRunIdentical \
-        -variable fMRIEngine(checkbuttonRunIdentical) \
-        -text "All runs are identical"} $Gui(WEA) 
-    bind $f.cRunIdentical <1> "fMRIEngineSelectRunForConditionConfig 1" 
-#    bind $f.cRunIdentical <1> "fMRIEngineIdenticalizeConditions" 
-    $f.cRunIdentical select 
 
+    set f $parent.fTop.fUp.fLabel
     # Build pulldown menu for all runs 
-    DevAddLabel $f.lConf "Configure a condition for run#:"
+    DevAddLabel $f.lTitle "Describe run(s):"
+    DevAddLabel $f.lConf "Run:"
     set runList [list {1}]
     set df [lindex $runList 0] 
     eval {menubutton $f.mbType -text $df \
         -relief raised -bd 2 -width 4 \
         -indicatoron 1 \
         -menu $f.mbType.m} $Gui(WMBA)
-    bind $f.mbType <1> "fMRIEngineUpdateRunsForConditionConfig" 
-    eval {menu $f.mbType.m} $Gui(WMA)
+    # Save menubutton for config
+    bind $f.mbType <1> "fMRIEngineUpdateRunsForConditionConfig"
+    set fMRIEngine(gui,runListMenuButtonForConditionConfig) $f.mbType
 
+    eval {menu $f.mbType.m} $Gui(WMA)
+    set fMRIEngine(gui,runListMenuForConditionConfig) $f.mbType.m
     # Add menu items
     foreach m $runList  {
         $f.mbType.m add command -label $m \
-            -command "fMRIEngineUpdateRunsForConditionConfig" 
+            -command "fMRIEngineSelectRunForConditionConfig $m"
     }
 
+
+    eval {checkbutton $f.cRunIdentical \
+              -variable fMRIEngine(checkbuttonRunIdentical) \
+              -text "All runs are identical" \
+              -command "fMRIEngineSelectAllRunsForConditionConfig" } $Gui(WEA) 
+    #--- wjp 10/25/05 which condition to start with?
+    #$f.cRunIdentical select 
+    $f.cRunIdentical deselect 
+    
+    fMRIEngineSelectRunForConditionConfig 1
     set fMRIEngine(curRunForConditionConfig) 1
 
-    # Save menubutton for config
-    set fMRIEngine(gui,runListMenuButtonForConditionConfig) $f.mbType
-    set fMRIEngine(gui,runListMenuForConditionConfig) $f.mbType.m
 
+
+    #--- TR and volume to start on apply to all conditions in a run, 
+    #--- and so should only be specified once per run.
+    eval {label $f.lTR -text "TR:"} $Gui(WLA)
+    eval {entry $f.eTR -width 23 -textvariable ::fMRIEngine(entry,tr)} $Gui(WEA)
+    eval {label $f.lStartVol -text "Start Vol:"} $Gui(WLA)
+    eval {entry $f.eStartVol -width 23 -textvariable fMRIEngine(entry,startVol)} $Gui(WEA)
     blt::table $f \
         0,0 $f.cRunIdentical -cspan 2 -fill x -padx 3 -pady 3 \
-        1,0 $f.lConf -padx 2 -pady 3 \
-        1,1 $f.mbType -fill x -padx 2 -pady 3 
+        1,0 $f.lTitle -padx 2 -pady 3 -fill x -cspan 2 \
+        2,0 $f.lConf -padx 2 -pady 1 -anchor e \
+        2,1 $f.mbType -fill x -padx 2 -pady 1 -anchor w \
+        3,0 $f.lTR -padx 2 -pady 1 -anchor e \
+        3,1 $f.eTR -padx 2 -pady 1 -anchor w \
+        4,0 $f.lStartVol -padx 2 -pady 1 -anchor e \
+        4,1 $f.eStartVol -padx 2 -pady 1 -anchor w
 
     set f $parent.fTop.fMiddle
-    # Entry fields (the loop makes a frame for each variable)
-    set fMRIEngine(paramConfigLabels) \
-        [list {Title} {TR} {Start Vol} {Onsets} {Durations}]
-    set fMRIEngine(paramConfigEntries) \
-        [list title tr startVol onsets durations]
-    set i 0      
-    set len [llength $fMRIEngine(paramConfigLabels)]
-    while {$i < $len} { 
+    DevAddLabel $f.lTitle "Condition(s):"
 
-        set name [lindex $fMRIEngine(paramConfigLabels) $i]
-        set param [lindex $fMRIEngine(paramConfigEntries) $i]
- 
-        eval {label $f.l$param -text "$name:"} $Gui(WLA)
-        eval {entry $f.e$param -width 23 -textvariable fMRIEngine(entry,$param)} $Gui(WEA)
-
-        grid $f.l$param $f.e$param -padx 1 -pady 1 -sticky e
-        grid $f.e$param -sticky w
-
-        incr i
-    }
-
-    #-----------------------
-    # Add or update 
-    #-----------------------
-    set f $parent.fTop.fDown
+    #--- add a frame to schedule the conditions for each run.
+    eval {label $f.ltitle -text "Name:"} $Gui(WLA)
+    eval {entry $f.etitle -width 18 -textvariable fMRIEngine(entry,title)} $Gui(WEA)
+    eval {label $f.lonsets -text "Onsets (TRs):"} $Gui(WLA)
+    eval {entry $f.eonsets -width 18 -textvariable fMRIEngine(entry,onsets)} $Gui(WEA)
+    eval {label $f.ldurations -text "Durations (TRs):"} $Gui(WLA)
+    eval {entry $f.edurations -width 18 -textvariable fMRIEngine(entry,durations)} $Gui(WEA)
     DevAddButton $f.bOK "OK" "fMRIEngineAddOrEditCondition" 6 
-    grid $f.bOK -padx 1 -pady 2 
 
+    blt::table $f \
+        0,0 $f.lTitle -padx 2 -pady 3 -fill x -cspan 2 \
+        1,0 $f.ltitle -padx 2 -pady 1 -anchor e \
+        1,1 $f.etitle -fill x -padx 2 -pady 1 -anchor w \
+        2,0 $f.lonsets -padx 2 -pady 1 -anchor e \
+        2,1 $f.eonsets -padx 2 -pady 1 -anchor w \
+        3,0 $f.ldurations -padx 2 -pady 1 -anchor e \
+        3,1 $f.edurations -padx 2 -pady 1 -anchor w \
+        4,1 $f.bOK -padx 2 -pady 3 -anchor w
+    
     #-------------------------------------------
     # Bottom frame 
     #-------------------------------------------
@@ -174,7 +183,7 @@ proc fMRIEngineBuildUIForParadigmDesign {parent} {
 
     set f $parent.fBot.fUp
     # Build pulldown menu for all runs 
-    DevAddLabel $f.l "Specified conditions for run#:"
+    DevAddLabel $f.l "Defined conditions for run#:"
     set runList [list {1}]
     set df [lindex $runList 0] 
     eval {menubutton $f.mbType -text $df \
@@ -208,7 +217,7 @@ proc fMRIEngineBuildUIForParadigmDesign {parent} {
     $fMRIEngine(condsVerScroll) configure -command {$fMRIEngine(condsListBox) yview}
 
     blt::table $f \
-        0,0 $fMRIEngine(condsListBox) -padx 1 -pady 1 \
+        0,0 $fMRIEngine(condsListBox) -padx 1 -pady 1 -fill x \
         0,1 $fMRIEngine(condsVerScroll) -fill y -padx 1 -pady 1
 
     #-----------------------
@@ -319,6 +328,18 @@ proc fMRIEngineDeleteCondition {} {
     }
 }
 
+proc fMRIEngineSelectAllRunsForConditionConfig { } {
+    global fMRIEngine
+
+    # configure menubutton and set default run#1 for configuration
+    if { $fMRIEngine(checkbuttonRunIdentical) && $fMRIEngine(noOfRuns) >= 1 } {
+            $fMRIEngine(gui,runListMenuButtonForConditionConfig) config -text "all"
+    } else {
+        $fMRIEngine(gui,runListMenuButtonForConditionConfig) config -text 1
+    }
+    set fMRIEngine(curRunForConditionConfig) 1
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC fMRIEngineSelectRunForConditionConfig
@@ -327,13 +348,24 @@ proc fMRIEngineDeleteCondition {} {
 # string run
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineSelectRunForConditionConfig {run} {
+proc fMRIEngineSelectRunForConditionConfig { run } {
     global fMRIEngine 
 
-    # configure menubutton
-    $fMRIEngine(gui,runListMenuButtonForConditionConfig) config -text $run
-    set fMRIEngine(curRunForConditionConfig) $run 
+    #--- configure menubutton and set run for configuration:
+    #--- if all runs are identical, we configure run number 1
+    #--- and copy its configuration to other runs later.
+    if { $run == "all" } {
+        set ::fMRIEngine(checkbuttonRunIdentical) 1
+        set fMRIEngine(curRunForConditionConfig) 1
+        $fMRIEngine(gui,runListMenuButtonForConditionConfig) config -text $run
+    } else {
+        set ::fMRIEngine(checkbuttonRunIdentical) 0
+        set fMRIEngine(curRunForConditionConfig) $run
+        $fMRIEngine(gui,runListMenuButtonForConditionConfig) config -text $run
+    }
+
 }
+
 
 
 #-------------------------------------------------------------------------------
@@ -342,28 +374,27 @@ proc fMRIEngineSelectRunForConditionConfig {run} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineUpdateRunsForConditionConfig {} {
+proc fMRIEngineUpdateRunsForConditionConfig { } {
     global fMRIEngine 
 
-    if {! $fMRIEngine(checkbuttonRunIdentical)} {
-        set runs [string trim $fMRIEngine(noOfRuns)]
-        if {$runs < 1} {
-            DevErrorWindow "No of runs must be at least 1."
-        } else { 
-            $fMRIEngine(gui,runListMenuForConditionConfig) delete 0 end
-            set count 1
-            while {$count <= $runs} {
-                $fMRIEngine(gui,runListMenuForConditionConfig) add command -label $count \
-                    -command "fMRIEngineSelectRunForConditionConfig $count"
-                incr count
-            } 
-        }
-    } else {
+    #--- regenerate the menu. Then configure the menu button
+    set runs [string trim $fMRIEngine(noOfRuns)]
+    if {$runs < 1} {
+        DevErrorWindow "No of runs must be at least 1."
+    } else { 
         $fMRIEngine(gui,runListMenuForConditionConfig) delete 0 end
-        $fMRIEngine(gui,runListMenuForConditionConfig) add command -label 1\
-            -command "fMRIEngineSelectRunForConditionConfig 1"
+        set count 1
+        while {$count <= $runs} {
+            $fMRIEngine(gui,runListMenuForConditionConfig) add command -label $count \
+                -command "fMRIEngineSelectRunForConditionConfig $count"
+            incr count
+        } 
+        $fMRIEngine(gui,runListMenuForConditionConfig) add command -label "all" \
+            -command "fMRIEngineSelectRunForConditionConfig all"                
     }
 }
+
+
 
 
 #-------------------------------------------------------------------------------
@@ -382,6 +413,8 @@ proc fMRIEngineSelectRunForConditionShow {run} {
 
     fMRIEngineShowConditions 
 }
+
+
 
  
 #-------------------------------------------------------------------------------
@@ -426,7 +459,7 @@ proc fMRIEngineIdenticalizeConditions {} {
 
     # If we have multiple runs, copy all conditions of Run# 1 
     # to the rest of runs.
-    if {$fMRIEngine(checkbuttonRunIdentical)} {
+    if { $fMRIEngine(checkbuttonRunIdentical) } {
         set runs [string trim $fMRIEngine(noOfRuns)]
         if {$runs > 1} {
             $fMRIEngine(gui,runListMenuForConditionConfig) delete 0 end
@@ -439,7 +472,6 @@ proc fMRIEngineIdenticalizeConditions {} {
 
                 incr count
             } 
-
             fMRIEngineShowConditions 
         }
     } 

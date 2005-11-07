@@ -119,9 +119,10 @@ proc fMRIEngineBuildUIForSelect {parent} {
     #------------------------------
     set f $parent.fTop.fSeqs
 
-    DevAddLabel $f.lNo "How many runs:"
+    DevAddLabel $f.lNo "Number of runs:"
     eval {entry $f.eRun -width 17 \
         -textvariable fMRIEngine(noOfRuns)} $Gui(WEA)
+    bind $f.eRun  <Leave> "fMRIEngineCheckNumRuns"     
     set fMRIEngine(noOfRuns) 1
 
     # Build pulldown menu for all loaded sequences 
@@ -174,7 +175,7 @@ proc fMRIEngineBuildUIForSelect {parent} {
     # OK  
     #------------------------------
     set f $parent.fTop.fOK
-    DevAddButton $f.bOK "OK" "fMRIEngineAddSeq-RunMatch" 6 
+    DevAddButton $f.bOK "Add" "fMRIEngineAddSeq-RunMatch" 6 
     grid $f.bOK -padx 2 
 
     #-----------------------
@@ -414,6 +415,16 @@ proc fMRIEngineAddSeq-RunMatch {} {
     }
     if {$found == -1} {
         $fMRIEngine(evsListBox) insert 0 "r$fMRIEngine(currentSelectedRun):baseline" 
+    }
+}
+
+
+proc fMRIEngineCheckNumRuns { } {
+
+    #--- fMRIEngine(noOfRuns) must be an integer.
+    if { ! [string is digit $::fMRIEngine(noOfRuns) ] } {
+        DevErrorWindow "Number of runs must be an integer value."
+        set ::fMRIEngine(noOfRuns) 1
     }
 }
 
