@@ -77,6 +77,8 @@ proc MainFileInit {} {
         set Path(printHeader) [file join $Path(program) [file join bin print_header_NT.exe]]
     } elseif {$Gui(linux) == 1} {
         set Path(printHeader) [file join $Path(program) [file join bin print_header_linux]]
+    } elseif {$Gui(mac) == 1} {
+        set Path(printHeader) [file join $Path(program) [file join bin print_header-darwin]]
     } else {
         set Path(printHeader) [file join $Path(program) [file join bin print_header]]
     }
@@ -86,7 +88,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.63 $} {$Date: 2005/07/28 15:53:23 $}]
+        {$Revision: 1.64 $} {$Date: 2005/11/08 20:13:01 $}]
 
     set File(filePrefix) data
 }
