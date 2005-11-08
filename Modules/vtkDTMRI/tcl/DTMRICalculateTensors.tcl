@@ -67,7 +67,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.23 $} {$Date: 2005/11/08 02:52:29 $}]
+                                 {$Revision: 1.24 $} {$Date: 2005/11/08 03:50:06 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -599,7 +599,10 @@ proc DTMRIConvertUpdate {} {
     }
     
     #Check for baseline
-    if {$Volume($key) == " 0  0  0"} {
+    set val $Volume($key)
+    if {[lindex $val 0] == 0 && \
+        [lindex $val 1] == 0 && \
+    [lindex $val 2] == 0} {
       #Check for NEX
       set keynex "$nexprefix$grad"
       if {[info exists Volume($keynex)]} {
