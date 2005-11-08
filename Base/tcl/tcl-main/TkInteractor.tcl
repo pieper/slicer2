@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,27 +32,28 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        TkInteractor.tcl
 # PROCEDURES:  
-#   CreateAndBindTkEvents 
-#   Expose
-#   UpdateRenderer
-#   Enter
-#   Leave
-#   StartMotion
-#   EndMotion
-#   Rotate
-#   Pitch
-#   Yaw
-#   Roll
-#   LR
-#   BF
-#   UD
-#   Pan
-#   Zoom
-#   Reset
+#   CreateAndBindTkEvents  widget
+#   Expose widget
+#   Render
+#   UpdateRenderer widget x y
+#   Enter widget x y
+#   Leave widget x y
+#   StartMotion widget x y
+#   EndMotion widget x y
+#   Rotate widget x y
+#   Pitch widget x y
+#   Yaw widget x y
+#   Roll widget x y
+#   LR widget x y
+#   BF widget x y
+#   UD widget x y
+#   Pan widget x y
+#   Zoom widget x y
+#   Reset widget x y
 #   Wireframe
 #   Surface
 #==========================================================================auto=
@@ -60,19 +61,20 @@
 #-------------------------------------------------------------------------------
 # .PROC CreateAndBindTkEvents 
 # 
-#  This procedure creates 3 types of event sets:
+#  This procedure creates 3 types of event sets:<br>
 #  - regular events set: events that are always associated with the widget
-#     ( e.g KeyPress-u brings up the interactor)
+#     ( e.g KeyPress-u brings up the interactor)<br>
 #  - mouse click event set: events associated with mouse buttons pressed or 
 #    released. If a Csys is selected, the motion events will be applied to the
 #    selected Csys. Otherwise, the motion events are applied to the virtual
-#    camera of the renderer where the user clicked the mouse.
+#    camera of the renderer where the user clicked the mouse. <br>
 #  - motion events set: events to interact with the selected item from the 
-#    mouse click event (either a Csys or a virtual camera).
-#
+#    mouse click event (either a Csys or a virtual camera).<br>
+# <br>
 #   Then those 3 event sets are bound to the widget and all 3 bindings 
 #   are activated
 # .ARGS
+# windowpath widget the window for which to make bindings
 # .END
 #-------------------------------------------------------------------------------
 proc CreateAndBindTkEvents { widget } {
@@ -134,7 +136,7 @@ proc CreateAndBindTkEvents { widget } {
            # pick cell 0 by default
            TempCellPicker SetTolerance 0.0001
            if { [SelectPick TempCellPicker %W %x %y] != 0} {
-               puts "not a slice"
+               puts "CreateAndBindTkEvents: Navigator: not a slice"
                set x [lindex $Select(xyz) 0]
                set y [lindex $Select(xyz) 1]
                set z [lindex $Select(xyz) 2]
@@ -161,6 +163,8 @@ proc CreateAndBindTkEvents { widget } {
 # .PROC Expose
 # a litle more complex than just "bind $widget <Expose> {%W Render}"
 # we have to handle all pending expose events otherwise they queue up.
+# .ARGS
+# windowpath widget element to operate upon
 # .END
 #-------------------------------------------------------------------------------
 proc Expose {widget} {
@@ -177,8 +181,13 @@ proc Expose {widget} {
 # Global variable keeps track of whether active renderer was found
 set RendererFound 0
 
-# Create event bindings
+#-------------------------------------------------------------------------------  
+# .PROC Render
+# Set the current light's position and focal point, then call Render3D.
 #
+# .ARGS  
+# .END  
+#-------------------------------------------------------------------------------  
 proc Render {} {
     global CurrentCamera CurrentLight CurrentRenderWindow
     global View
@@ -193,6 +202,9 @@ proc Render {} {
 # .PROC UpdateRenderer
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc UpdateRenderer {widget x y} {
@@ -243,6 +255,9 @@ proc UpdateRenderer {widget x y} {
 # .PROC Enter
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc Enter {widget x y} {
@@ -259,6 +274,9 @@ proc Enter {widget x y} {
 # .PROC Leave
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc Leave {widget x y} {
@@ -273,6 +291,9 @@ proc Leave {widget x y} {
 # .PROC StartMotion
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc StartMotion {widget x y} {
@@ -304,6 +325,9 @@ proc StartMotion {widget x y} {
 # .PROC EndMotion
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc EndMotion {widget x y} {
@@ -319,6 +343,9 @@ proc EndMotion {widget x y} {
 # .PROC Rotate
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc Rotate {widget x y} {
@@ -359,6 +386,9 @@ proc Rotate {widget x y} {
 # .PROC Pitch
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc Pitch {widget x y} {
@@ -384,6 +414,9 @@ proc Pitch {widget x y} {
 # .PROC Yaw
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc Yaw {widget x y} {
@@ -409,6 +442,9 @@ proc Yaw {widget x y} {
 # .PROC Roll
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc Roll {widget x y} {
@@ -432,8 +468,11 @@ proc Roll {widget x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC LR
-# 
+# Sets the Endoscopic camera X position. 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc LR {widget x y} {
@@ -459,8 +498,11 @@ proc LR {widget x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC BF
-# 
+# Set's the endocsopic camera's Y position
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc BF {widget x y} {
@@ -485,8 +527,11 @@ proc BF {widget x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC UD
-# 
+# Set's the endoscopic camera's Z position
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc UD {widget x y} {
@@ -513,6 +558,9 @@ proc UD {widget x y} {
 # .PROC Pan
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc Pan {widget x y} {
@@ -599,6 +647,9 @@ proc Pan {widget x y} {
 # .PROC Zoom
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc Zoom {widget x y} {
@@ -606,6 +657,13 @@ proc Zoom {widget x y} {
     global LastX LastY
     global RendererFound
     global View Module
+
+    if {$::View(parallelProjection) == 1} {
+        if {$::Module(verbose)} { 
+            puts "TkInteractor Zoom: parallel proj on = $::View(parallelProjection), no zooming allowed" 
+        }
+        return
+    }
 
     if { ! $RendererFound } { return }
 
@@ -642,8 +700,7 @@ proc Zoom {widget x y} {
         }
     }
 
-
-    Render
+   Render
 }
 
 
@@ -652,6 +709,9 @@ proc Zoom {widget x y} {
 # .PROC Reset
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc Reset {widget x y} {
@@ -693,7 +753,7 @@ proc Reset {widget x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC Wireframe
-# 
+# Set all actors in the current renderer to be represented as wire frame, then Render. 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -714,7 +774,7 @@ proc Wireframe {} {
 
 #-------------------------------------------------------------------------------
 # .PROC Surface
-# 
+# Set all actors in the current renderer to be represented as surfaces, then Render. 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
