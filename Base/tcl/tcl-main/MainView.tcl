@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,34 +32,37 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        MainView.tcl
 # PROCEDURES:  
 #   MainViewInit
 #   MainViewBuildVTK
 #   MainViewBuildGUI
-#   MainViewSelectView
-#   MainViewSetBackgroundColor
-#   MainViewSetBackgroundColor
-#   MainViewSetFov
+#   MainViewSelectView p
+#   MainViewSetBackgroundColor col
+#   MainViewSetTextureResolution res
+#   MainViewSetTextureInterpolation interpolationFlag
+#   MainViewSetFov sceneNum
 #   MainViewSetParallelProjection
 #   MainViewSetTexture
 #   MainViewLightFollowCamera
-#   MainViewNavReset
+#   MainViewNavReset x y cmd
 #   MainViewRotate dir deg
-#   MainViewNavRotate
+#   MainViewNavRotate W x y cmd
 #   MainViewSetStereo
 #   MainViewSpin
-#   MainViewSetWelcome
+#   MainViewRock
+#   MainViewSetWelcome win
 #   MainViewResetFocalPoint
-#   MainViewSetFocalPoint
-#   MainViewStorePresets
+#   MainViewSetFocalPoint x y z
+#   MainViewStorePresets p
+#   MainViewRecallPresets p
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewInit
-# 
+# Initialise global variables.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -82,7 +85,7 @@ textureInterpolation='On' textureResolution='512'"
 
     set m MainView
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.52 $} {$Date: 2005/05/28 20:21:14 $}]
+    {$Revision: 1.53 $} {$Date: 2005/11/08 17:59:55 $}]
 
     set View(viewerHeightNormal) 656
     set View(viewerWidth)  956 
@@ -140,7 +143,7 @@ textureInterpolation='On' textureResolution='512'"
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewBuildVTK
-# 
+# Build the vtk elements for this module.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -180,7 +183,7 @@ proc MainViewBuildVTK {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewBuildGUI
-# 
+# Build the GUI
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -358,7 +361,7 @@ proc MainViewBuildGUI {} {
     eval {checkbutton $f.cParallel \
         -text "Parallel" -variable View(parallelProjection) -width 7 \
         -indicatoron 0 -command "MainViewSetParallelProjection"} $Gui(WCA)
-        TooltipAdd $f.cParallel "Toggle parallel/perspective projection"
+        TooltipAdd $f.cParallel "Toggle parallel/perspective projection. No zooming in parallel projection mode."
 
      # Opacity Label
      eval {label $f.lSlice3DOpacity -text "Slice Opacity:"} $Gui(WLA)
@@ -374,8 +377,9 @@ proc MainViewBuildGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewSelectView
-# 
+# Select a saved view.
 # .ARGS
+# int p view id
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewSelectView {p} {
@@ -393,7 +397,7 @@ proc MainViewSelectView {p} {
 #  \"Midnight\",\"Black\" or \"White\"
 #
 # .ARGS
-# col value of the color
+# string col value of the color, optional, use View(bgName) if not set
 # .END
 #-----------------------------------------------------------------------------
 proc MainViewSetBackgroundColor {{col ""}} {
@@ -441,12 +445,11 @@ proc MainViewSetBackgroundColor {{col ""}} {
     }
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MainViewSetTextureResolution
 # sets the texture resolution
 # .ARGS
-# res resolution to set it to
+# int res resolution to set it to
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewSetTextureResolution { {res 512}} {
@@ -461,7 +464,7 @@ proc MainViewSetTextureResolution { {res 512}} {
 # .PROC MainViewSetTextureInterpolation
 # sets the texture interpolation to On or Off
 # .ARGS
-# interpolationFlag value to set interpolation flag to
+# boolean interpolationFlag value to set interpolation flag to, defaults to On
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewSetTextureInterpolation { {interpolationFlag "On"}} {
@@ -474,9 +477,9 @@ proc MainViewSetTextureInterpolation { {interpolationFlag "On"}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewSetFov
-# 
+# Set the field of view for Slicer object, Anno and Slices.
 # .ARGS
-# sceneNum if default, reset the main view's camera, otherwise leave it alone
+# int sceneNum if default, reset the main view's camera, otherwise leave it alone
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewSetFov { {sceneNum "default"} } {
@@ -499,6 +502,7 @@ proc MainViewSetFov { {sceneNum "default"} } {
 #-------------------------------------------------------------------------------
 # .PROC MainViewSetParallelProjection
 # Turn on/off parallel projection for the camera.
+# Uses View(parallelProjection) to get the flag value.
 # 
 # .ARGS
 # .END
@@ -545,7 +549,7 @@ proc MainViewSetTexture {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewLightFollowCamera
-# 
+# Reset the position and focal point of all lights to the View(viewCam) position and focal point.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -562,14 +566,16 @@ proc MainViewLightFollowCamera {} {
         eval $currentLight SetPosition   [$View(viewCam) GetPosition]
         eval $currentLight SetFocalPoint [$View(viewCam) GetFocalPoint]
     }
-    }
-
-
+}
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewNavReset
 #
 # Returns 1 if window should be rendered
+# .ARGS
+# int x
+# int y
+# string cmd defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewNavReset {x y {cmd ""}} {
@@ -674,6 +680,10 @@ proc MainViewRotate {dir {deg rotate}} {
 # .PROC MainViewNavRotate
 # 
 # .ARGS
+# windowpath W 
+# int x
+# int y
+# string cmd defaults to empty string 
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewNavRotate {W x y {cmd ""}} {
@@ -705,7 +715,7 @@ proc MainViewNavRotate {W x y {cmd ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewSetStereo
-# 
+# Checks the View(stereo) flag, and resets the view window.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -724,18 +734,16 @@ proc MainViewSetStereo {} {
 # .PROC MainViewSpin
 #
 # To spin, set View(spinDir) = 1;
-# Then call MainViewSpin
+# Then call MainViewSpin. 
 # To stop spinning, set View(spinDir) = 0;
-#
+# <br>
 # Note that this calls MainViewRotate, which calls Render3D
 # so that saving a spinning movie is easy, simply turn on View(movie).
-#
-# Rotates the 3D Window in the direction View(spinDir) 
-# Rotates View(spinDegrees) degrees
+# <br>
+# Rotates the 3D Window in the direction View(spinDir).
+# Rotates View(spinDegrees) degrees.
 # Waits some amount of time given by View(spinMs).
 # Then repeats.
-#
-#
 #
 # .ARGS
 # .END
@@ -783,8 +791,9 @@ proc MainViewRock {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewSetWelcome
-# 
+# Switch between the controls and the logo window.
 # .ARGS
+# string win name of the current window that's on top
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewSetWelcome {win} {
@@ -819,7 +828,7 @@ proc MainViewSetWelcome {win} {
         
 #-------------------------------------------------------------------------------
 # .PROC MainViewResetFocalPoint
-# 
+# Calls MainViewSetFocalPoint with the origin.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -831,8 +840,11 @@ proc MainViewResetFocalPoint {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewSetFocalPoint
-# 
+# Set the view camera's focal point and the slices focal point, update the anno focal point
 # .ARGS
+# float x x coordinate of new focal point
+# float y y coordinate of new focal point
+# float z z coordinate of new focal point
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewSetFocalPoint {x y z} {
@@ -861,8 +873,10 @@ proc MainViewSetFocalPoint {x y z} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewStorePresets
-# 
+# store the presets for this view id. camera values, texture resolution, mode, 
+# background colour.
 # .ARGS
+# int p view id
 # .END
 #-------------------------------------------------------------------------------
 proc MainViewStorePresets {p} {
@@ -883,7 +897,14 @@ proc MainViewStorePresets {p} {
     if {$::Module(verbose)} { puts "Done MainViewStorePresets" }
 
 }
-        
+
+#-------------------------------------------------------------------------------
+# .PROC MainViewRecallPresets
+# Set the view camera, textures, etc. from the saved values to restore a view.
+# .ARGS
+# int p id of the saved view
+# .END
+#-------------------------------------------------------------------------------
 proc MainViewRecallPresets {p} {
     global Preset View
 
