@@ -35,7 +35,7 @@
 #include "vtkFloatArray.h" 
 
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.20 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.21 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -840,10 +840,9 @@ void vtkNRRDReader::ExecuteData(vtkDataObject *output)
      //size_t datasize = data->GetScalarSize() * 
      //               data->GetNumberOfScalarComponents() *
      //               dims[0] * dims[1] * dims[2];
-     cout<<"Element Size: "<<nrrdElementSize(nrrd)<<"Element number: "<<nrrdElementNumber(nrrd)<<endl;
+     
      memcpy(ptr, this->nrrd->data,
              nrrdElementSize(nrrd)*nrrdElementNumber(nrrd));
-      cout<<"Mem copy done"<<endl;
       
      //I don't know about this.
      //nrrdNuke(nrrd);
@@ -894,7 +893,7 @@ vtkNRRDReader::nrrdFlip(Nrrd *nout, const Nrrd *nin, unsigned int axis) {
     perm[si] = nin->axis[axis].size-1-si;
   }
   /* nrrdBasicInfoCopy called by nrrdShuffle() */
-  if (nrrdShuffle(nout, nin, axis, perm)
+  if (this->nrrdShuffle(nout, nin, axis, perm)
       || nrrdContentSet(nout, func, nin, "%d", axis)) {
     sprintf(err, "%s:", me);
     biffAdd(NRRD, err); airMopError(mop); return 1;
@@ -942,6 +941,139 @@ vtkNRRDReader::nrrdFlip(Nrrd *nout, const Nrrd *nin, unsigned int axis) {
   return 0;
 }
 
+
+/*
+******** nrrdShuffle
+**
+** rearranges hyperslices of a nrrd along a given axis according to
+** given permutation.  This could be used to on a 4D array,
+** representing a 3D volume of vectors, to re-order the vector 
+** components.
+**
+** the given permutation array must allocated for at least as long as
+** the input nrrd along the chosen axis.  perm[j] = i means that the
+** value at position j in the _new_ array should come from position i
+** in the _old_array.  The standpoint is from the new, looking at
+** where to find the values amid the old array (perm answers "what do
+** I put here", not "where do I put this").  This allows multiple
+** positions in the new array to copy from the same old position, and
+** insures that there is an source for all positions along the new
+** array.
+*/
+int
+vtkNRRDReader::nrrdShuffle(Nrrd *nout, const Nrrd *nin, unsigned int axis,
+            const size_t *perm) {
+  char me[]="nrrdShuffle", func[]="shuffle", err[AIR_STRLEN_MED],
+    buff1[NRRD_DIM_MAX*30], buff2[AIR_STRLEN_SMALL];
+  unsigned int 
+    ai, ldim, len,
+    cIn[NRRD_DIM_MAX+1],
+    cOut[NRRD_DIM_MAX+1];
+  size_t idxIn, idxOut, lineSize, numLines, size[NRRD_DIM_MAX], *lsize;
+  char *dataIn, *dataOut;
+
+  if (!(nin && nout && perm)) {
+    sprintf(err, "%s: got NULL pointer", me);
+    biffAdd(NRRD, err); return 1;
+  }
+  if (nout == nin) {
+    sprintf(err, "%s: nout==nin disallowed", me);
+    biffAdd(NRRD, err); return 1;
+  }
+  if (!( axis < nin->dim )) {
+    sprintf(err, "%s: axis %d outside valid range [0,%d]", 
+            me, axis, nin->dim-1);
+    biffAdd(NRRD, err); return 1;
+  }
+  len = nin->axis[axis].size;
+  for (ai=0; ai<len; ai++) {
+    if (!( perm[ai] < len )) {
+      sprintf(err, "%s: perm[%d] (" _AIR_SIZE_T_CNV
+              ") outside valid range [0,%d]", me, ai, perm[ai], len-1);
+      biffAdd(NRRD, err); return 1;
+    }
+  }
+  /* this shouldn't actually be necessary ... */
+  if (!nrrdElementSize(nin)) {
+    sprintf(err, "%s: nrrd reports zero element size!", me);
+    biffAdd(NRRD, err); return 1;
+  }
+  /* set information in new volume */
+  nout->blockSize = nin->blockSize;
+  nrrdAxisInfoGet_nva(nin, nrrdAxisInfoSize, size);
+  if (nrrdMaybeAlloc_nva(nout, nin->type, nin->dim, size)) {
+    sprintf(err, "%s: failed to allocate output", me);
+    biffAdd(NRRD, err); return 1;
+  }
+  if (nrrdAxisInfoCopy(nout, nin, NULL, NRRD_AXIS_INFO_NONE)) {
+    sprintf(err, "%s:", me);
+    biffAdd(NRRD, err); return 1;
+  }
+  /* the min and max along the shuffled axis are now meaningless */
+  nout->axis[axis].min = nout->axis[axis].max = AIR_NAN;
+  /* do the safe thing first */
+  nout->axis[axis].kind = this->nrrdKindAltered(nin->axis[axis].kind, AIR_FALSE);
+  /* try cleverness */
+  if (!nrrdStateKindNoop) {
+    if (0 == nrrdKindSize(nin->axis[axis].kind)
+        || nrrdKindStub == nin->axis[axis].kind
+        || nrrdKindScalar == nin->axis[axis].kind
+        || nrrdKind2Vector == nin->axis[axis].kind
+        || nrrdKind3Color == nin->axis[axis].kind
+        || nrrdKind4Color == nin->axis[axis].kind
+        || nrrdKind3Vector == nin->axis[axis].kind
+        || nrrdKind3Gradient == nin->axis[axis].kind
+        || nrrdKind3Normal == nin->axis[axis].kind
+        || nrrdKind4Vector == nin->axis[axis].kind) {
+      /* these kinds have no intrinsic ordering */
+      nout->axis[axis].kind = nin->axis[axis].kind;
+    }
+  }
+  /* the skinny */
+  lineSize = 1;
+  for (ai=0; ai<axis; ai++) {
+    lineSize *= nin->axis[ai].size;
+  }
+  numLines = nrrdElementNumber(nin)/lineSize;
+  lineSize *= nrrdElementSize(nin);
+  lsize = size + axis;
+  ldim = nin->dim - axis;
+  dataIn = (char *)nin->data;
+  dataOut = (char *)nout->data;
+  memset(cIn, 0, (NRRD_DIM_MAX+1)*sizeof(int));
+  memset(cOut, 0, (NRRD_DIM_MAX+1)*sizeof(int));
+  for (idxOut=0; idxOut<numLines; idxOut++) {
+    memcpy(cIn, cOut, ldim*sizeof(int));
+    cIn[0] = perm[cOut[0]];
+    NRRD_INDEX_GEN(idxIn, cIn, lsize, ldim);
+    NRRD_INDEX_GEN(idxOut, cOut, lsize, ldim);
+    memcpy(dataOut + idxOut*lineSize, dataIn + idxIn*lineSize, lineSize);
+    NRRD_COORD_INCR(cOut, lsize, ldim, 0);
+  }
+  /* content */
+  strcpy(buff1, "");
+  for (ai=0; ai<nin->dim; ai++) {
+    sprintf(buff2, "%s" _AIR_SIZE_T_CNV, (ai ? "," : ""), perm[ai]);
+    strcat(buff1, buff2);
+  }
+  if (nrrdContentSet(nout, func, nin, "%s", buff1)) {
+    sprintf(err, "%s:", me);
+    biffAdd(NRRD, err); return 1;
+  }
+  if (nrrdBasicInfoCopy(nout, nin,
+                        NRRD_BASIC_INFO_DATA_BIT
+                        | NRRD_BASIC_INFO_TYPE_BIT
+                        | NRRD_BASIC_INFO_BLOCKSIZE_BIT
+                        | NRRD_BASIC_INFO_DIMENSION_BIT
+                        | NRRD_BASIC_INFO_CONTENT_BIT
+                        | NRRD_BASIC_INFO_COMMENTS_BIT
+                        | NRRD_BASIC_INFO_KEYVALUEPAIRS_BIT)) {
+    sprintf(err, "%s:", me);
+    biffAdd(NRRD, err); return 1;
+  }
+
+  return 0;
+}        
 
 /*
 ** _nrrdAxisInfoCopy
@@ -1016,3 +1148,28 @@ vtkNRRDReader::_nrrdSpaceVecCopy(double dst[NRRD_SPACE_DIM_MAX],
   }
 }
 
+/*
+** _nrrdKindAltered:
+**
+** implements logic for how kind should be updated when samples 
+** along the axis are altered
+*/
+int
+vtkNRRDReader::nrrdKindAltered(int kindIn, int resampling) {
+  int kindOut;
+
+  if (nrrdStateKindNoop) {
+    kindOut = nrrdKindUnknown;
+    /* HEY: setting the kindOut to unknown is arguably not a no-op.
+       It is more like pointedly and stubbornly simplistic. So maybe
+       nrrdStateKindNoop could be renamed ... */
+  } else {
+    if (nrrdKindIsDomain(kindIn)
+        || (0 == nrrdKindSize(kindIn) && !resampling)) {
+      kindOut = kindIn;
+    } else {
+      kindOut = nrrdKindUnknown;
+    }
+  }
+  return kindOut;
+}

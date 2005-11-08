@@ -197,12 +197,16 @@ protected:
   ~vtkNRRDReader();
 
   int nrrdFlip(Nrrd *nout, const Nrrd *nin, unsigned int axis);
+  int nrrdShuffle(Nrrd *nout, const Nrrd *nin, unsigned int axis,
+            const size_t *perm);
   void _nrrdAxisInfoCopy(NrrdAxisInfo *dest, const NrrdAxisInfo *src, int bitflag);
   void _nrrdSpaceVecScaleAdd2(double sum[NRRD_SPACE_DIM_MAX], 
                        double sclA, const double vecA[NRRD_SPACE_DIM_MAX],
                        double sclB, const double vecB[NRRD_SPACE_DIM_MAX]);
   void _nrrdSpaceVecCopy(double dst[NRRD_SPACE_DIM_MAX], 
                   const double src[NRRD_SPACE_DIM_MAX]);
+          
+  int nrrdKindAltered(int kindIn, int resampling);
                          
   vtkMatrix4x4* RasToIjkMatrix;
   vtkMatrix4x4* MeasurementFrameMatrix;
