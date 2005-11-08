@@ -5,8 +5,8 @@ package require vtk
 # library is uniquely available through this module
 #
 
-#if {[info commands vtkRealignResample] != "" ||
-#    [::vtk::load_component vtkRealignResampleTCL] == ""} {
+if {[info commands vtkRealignResample] != "" ||
+    [::vtk::load_component vtkRealignResampleTCL] == ""} {
     global PACKAGE_DIR_VTKRealignResample
     package provide vtkRealignResample 1.0
 
@@ -17,4 +17,4 @@ package require vtk
     # called by the Slicer Base code
     global Module
     lappend Module(customModules) RealignResample
-#}
+}
