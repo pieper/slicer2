@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,45 +32,47 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        MainInteractor.tcl
 # PROCEDURES:  
 #   MainInteractorInit
-#   MainInteractorBind
-#   MainInteractorXY
-#   MainInteractorCursor
-#   MainInteractorKeyPress
-#   MainInteractorMotion
-#   MainInteractorShiftMotion
-#   MainInteractorB1
-#   MainInteractorShiftB1
-#   MainInteractorB1Release
-#   MainInteractorShiftB1Release
-#   MainInteractorB1Motion
-#   MainInteractorControlB1Motion
-#   MainInteractorAltB1Motion
-#   MainInteractorB2Motion
-#   MainInteractorB3Motion
-#   MainInteractorPan
-#   MainInteractorZoom
-#   MainInteractorWindowLevel
-#   MainInteractorThreshold
-#   MainInteractorExpose
+#   MainInteractorBind widget
+#   MainInteractorXY s x y
+#   MainInteractorCursor s xs ys x y
+#   MainInteractorKeyPress key widget x y
+#   MainInteractorMotion widget x y
+#   MainInteractorShiftMotion widget x y
+#   MainInteractorB1 widget x y
+#   MainInteractorShiftB1 widget x y
+#   MainInteractorB1Release widget x y
+#   MainInteractorShiftB1Release widget x y
+#   MainInteractorB1Motion widget x y
+#   MainInteractorControlB1Motion widget x y
+#   MainInteractorAltB1Motion widget x y
+#   MainInteractorB2Motion widget x y
+#   MainInteractorB3Motion widget x y
+#   MainInteractorPan s x y xLast yLast
+#   MainInteractorZoom s x y xLast yLast
+#   MainInteractorWindowLevel s x y xLast yLast
+#   MainInteractorThreshold s x y xLast yLast
+#   MainInteractorExpose widget
 #   MainInteractorRender
-#   MainInteractorEnter
-#   MainInteractorExit
-#   MainInteractorStartMotion
-#   MainInteractorEndMotion
-#   MainInteractorReset
-#   PixelsToMm
-#   Distance3D
-#   Angle2D
+#   MainInteractorEnter widget x y
+#   MainInteractorExit widget
+#   MainInteractorStartMotion widget x y
+#   MainInteractorEndMotion widget x y
+#   MainInteractorReset widget x y
+#   PixelsToMm pix fov dim mag
+#   Distance3D x1 y1 z1 x2 y2 z2
+#   Angle2D ax1 ay1 ax2 ay2 bx1 by1 bx2 by2
+#   MainInteractorControlB1   widget x y
+#   MainInteractorControlB1Release   widget x y
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorInit
-# 
+# Set up default variables, set the active Slicer instance.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -92,8 +94,9 @@ proc MainInteractorInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorBind
-# 
+# Set up bindings on the view window.
 # .ARGS
+# windowpath widget the widget for which the bindings are being added.
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorBind {widget} {
@@ -192,12 +195,16 @@ proc MainInteractorBind {widget} {
 # .PROC MainInteractorXY
 #
 # returns 'xs ys x y'
-#
+# <br>
 # (xs, ys) is the point relative to the lower, left corner 
 # of the slice window (0-255 or 0-511).
-#
+# <br>
 # (x, y) is the point with Zoom and Double taken into consideration
 # (zoom=2 means range is 64-128 instead of 1-256)
+# .ARGS
+# int s the slice window number
+# int x location in x that was selected
+# int y location in y that was selected
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorXY {s x y} {
@@ -219,6 +226,11 @@ proc MainInteractorXY {s x y} {
 # .PROC MainInteractorCursor
 # 
 # .ARGS
+# int s slice window number
+# int xs
+# int ys
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorCursor {s xs ys x y} {
@@ -344,6 +356,11 @@ proc MainInteractorCursor {s xs ys x y} {
 #
 # Up and Down moves the slice offset.
 # Left and Right calles EditApplyFilter from Edit.tcl
+# .ARGS
+# string key  one of Right, Left, Up, Down, Delete, d, c, 0, g, Ctla, Ctlx, Ctlc, Ctlv, Ctld
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorKeyPress {key widget x y} {
@@ -500,6 +517,9 @@ proc MainInteractorKeyPress {key widget x y} {
 # .PROC MainInteractorMotion
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorMotion {widget x y} {
@@ -528,6 +548,9 @@ proc MainInteractorMotion {widget x y} {
 # .PROC MainInteractorShiftMotion
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorShiftMotion {widget x y} {
@@ -584,6 +607,9 @@ proc MainInteractorShiftMotion {widget x y} {
 # .PROC MainInteractorB1
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorB1 {widget x y} {
@@ -615,6 +641,9 @@ proc MainInteractorB1 {widget x y} {
 # .PROC MainInteractorShiftB1
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorShiftB1 {widget x y} {
@@ -631,6 +660,9 @@ proc MainInteractorShiftB1 {widget x y} {
 # .PROC MainInteractorB1Release
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorB1Release {widget x y} {
@@ -659,6 +691,9 @@ proc MainInteractorB1Release {widget x y} {
 # .PROC MainInteractorShiftB1Release
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorShiftB1Release {widget x y} {
@@ -678,6 +713,9 @@ proc MainInteractorShiftB1Release {widget x y} {
 # .PROC MainInteractorB1Motion
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorB1Motion {widget x y} {
@@ -711,6 +749,9 @@ proc MainInteractorB1Motion {widget x y} {
 # .PROC MainInteractorControlB1Motion
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorControlB1Motion {widget x y} {
@@ -751,6 +792,9 @@ proc MainInteractorControlB1Motion {widget x y} {
 # .PROC MainInteractorAltB1Motion
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorAltB1Motion {widget x y} {
@@ -788,6 +832,9 @@ proc MainInteractorAltB1Motion {widget x y} {
 # .PROC MainInteractorB2Motion
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorB2Motion {widget x y} {
@@ -817,6 +864,9 @@ proc MainInteractorB2Motion {widget x y} {
 # .PROC MainInteractorB3Motion
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorB3Motion {widget x y} {
@@ -852,14 +902,20 @@ proc MainInteractorB3Motion {widget x y} {
     # Render this slice
     MainInteractorRender
 }
-# >> Bouix 4/23/03 reversed to the old method to solve the bug when drawing
+
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorPan
-# 
+# Pan the 2D slices.
+# Bouix 4/23/03 reversed to the old method to solve the bug when drawing
 # .ARGS
+# int s slice number
+# int x current x location
+# int y current y location
+# int xLast last x location
+# int yLast last y location
 # .END
 #-------------------------------------------------------------------------------
- proc MainInteractorPan {s x y xLast yLast} {
+proc MainInteractorPan {s x y xLast yLast} {
      global View
 
      set dx [expr $xLast - $x]
@@ -905,15 +961,19 @@ proc MainInteractorB3Motion {widget x y} {
 #     $Interactor(activeSlicer) Update
 #     RenderAll
 # }
-#<< Bouix
+
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorZoom
-# 
+# Bouix 4/23/03 Changed back to old zoom to account for the drawing problem
 # .ARGS
+# int s slice window id
+# int x
+# int y
+# int xLast
+# int yLast
 # .END
 #-------------------------------------------------------------------------------
-# >> Bouix 4/23/03 Changed back to old zoom to account for the drawing problem
- proc MainInteractorZoom {s x y xLast yLast} {
+proc MainInteractorZoom {s x y xLast yLast} {
 
      set dy [expr $yLast - $y]
 
@@ -931,8 +991,7 @@ proc MainInteractorB3Motion {widget x y} {
      Anno($s,msg,mapper)  SetInput "ZOOM: x $z"
 
      MainSlicesSetZoom $s $z
- }
-
+}
 
 # New version by Attila Tanacs 11/07/01
 # proc MainInteractorZoom {s x y xLast yLast} {
@@ -969,6 +1028,11 @@ proc MainInteractorB3Motion {widget x y} {
 # .PROC MainInteractorWindowLevel
 # 
 # .ARGS
+# int s slice window number
+# int x current x location
+# int y current y location
+# int xLast last x location
+# int yLast last y location
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorWindowLevel {s x y xLast yLast} {
@@ -998,6 +1062,11 @@ proc MainInteractorWindowLevel {s x y xLast yLast} {
 # .PROC MainInteractorThreshold
 # 
 # .ARGS
+# int s slice window number
+# int x current x location
+# int y current y location
+# int xLast last x location
+# int yLast last y location
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorThreshold {s x y xLast yLast} {
@@ -1027,6 +1096,8 @@ proc MainInteractorThreshold {s x y xLast yLast} {
 # .PROC MainInteractorExpose
 # a litle more complex than just "bind $widget <Expose> {%W Render}"
 # we have to handle all pending expose events otherwise they que up.
+# .ARGS
+# windowpath widget
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorExpose {widget} {
@@ -1047,7 +1118,7 @@ proc MainInteractorExpose {widget} {
  
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorRender
-# 
+# Render the Interactor slice in 2d and in 3d if it's visible.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1067,6 +1138,9 @@ proc MainInteractorRender {} {
 # .PROC MainInteractorEnter
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorEnter {widget x y} {
@@ -1098,6 +1172,7 @@ proc MainInteractorEnter {widget x y} {
 # .PROC MainInteractorExit
 # 
 # .ARGS
+# windowpath widget
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorExit {widget} {
@@ -1129,6 +1204,9 @@ proc MainInteractorExit {widget} {
 # .PROC MainInteractorStartMotion
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorStartMotion {widget x y} {
@@ -1153,6 +1231,9 @@ proc MainInteractorStartMotion {widget x y} {
 # .PROC MainInteractorEndMotion
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorEndMotion {widget x y} {
@@ -1173,6 +1254,9 @@ proc MainInteractorEndMotion {widget x y} {
 # .PROC MainInteractorReset
 # 
 # .ARGS
+# windowpath widget
+# int x
+# int y
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorReset {widget x y} {
@@ -1185,21 +1269,31 @@ proc MainInteractorReset {widget x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC PixelsToMm
-# 
+# mm = pix * fov/dim / mag
+# pix = mm * dim/fox * mag 
 # .ARGS
+# int pix
+# float fov
+# float dim
+# float mag
 # .END
 #-------------------------------------------------------------------------------
 proc PixelsToMm {pix fov dim mag} {
-    # mm = pix * fov/dim / mag
-    # pix = mm * dim/fox * mag
+
 
     return [expr int($pix * $fov/$dim / $mag + 0.5)]
 }
 
 #-------------------------------------------------------------------------------
 # .PROC Distance3D
-# 
+# Returns distance between two points
 # .ARGS
+# float x1 x of first point  
+# float y1 y of first point
+# float z1 z of first point
+# float x2 x of second point  
+# float y2 y of second point
+# float z2 z of second point
 # .END
 #-------------------------------------------------------------------------------
 proc Distance3D {x1 y1 z1 x2 y2 z2} {
@@ -1211,13 +1305,21 @@ proc Distance3D {x1 y1 z1 x2 y2 z2} {
 
 #-------------------------------------------------------------------------------
 # .PROC Angle2D
-# 
+# Returns the angle in degrees between two vectors defined by two points each.
 # .ARGS
+# float ax1 first point on first vector
+# float ay1 first point on first vector
+# float ax2 second point on first vector
+# float ay2 second point on first vector
+# float bx1 first point on second vector
+# float by1 first point on second vector
+# float bx2 second point on second vector
+# float by2 second point on second vector
 # .END
 #-------------------------------------------------------------------------------
 proc Angle2D {ax1 ay1 ax2 ay2 bx1 by1 bx2 by2} {
 
-    # Form vector 'a'=[ax ay] with magnitude 'am' 
+    # Form vector 'a'=[ax ay] with magnitude 'am'   
     set ax [expr $ax2 - $ax1]
     set ay [expr $ay2 - $ay1]
     set am [expr sqrt($ax*$ax + $ay*$ay)]
@@ -1246,6 +1348,9 @@ proc Angle2D {ax1 ay1 ax2 ay2 bx1 by1 bx2 by2} {
 # .PROC MainInteractorControlB1  
 #  
 # .ARGS  
+# windowpath widget
+# int x
+# int y
 # .END  
 #-------------------------------------------------------------------------------  
 proc MainInteractorControlB1 {widget x y} {  
@@ -1267,7 +1372,10 @@ proc MainInteractorControlB1 {widget x y} {
 #-------------------------------------------------------------------------------  
 # .PROC MainInteractorControlB1Release  
 #  
-# .ARGS  
+# .ARGS
+# windowpath widget
+# int x
+# int y 
 # .END  
 #-------------------------------------------------------------------------------  
 proc MainInteractorControlB1Release {widget x y} {  
