@@ -121,6 +121,48 @@ class VTK_DTMRI_EXPORT vtkSaveTracts : public vtkObject
   vtkSetObjectMacro(WorldToTensorScaledIJK, vtkTransform);
   vtkGetObjectMacro(WorldToTensorScaledIJK, vtkTransform);
 
+  // Description
+  // Coordinate system in which to save tracts.
+  void SetOutputCoordinateSystemToWorld(){
+   this->SetOutputCoordinateSystem(1);}
+
+  // Description
+  // Coordinate system in which to save tracts.
+  // This is IJK (array) coordinates with voxel scaling.
+  void SetOutputCoordinateSystemToScaledIJK(){
+   this->SetOutputCoordinateSystem(2);}
+
+  // Description
+  // Coordinate system in which to save tracts.
+  // This is IJK (array) coordinates with voxel scaling,
+  // and the center of the original tensor volume is at the origin.
+  // This is useful when the tensor image data has been registered
+  // in this coordinate system.
+  void SetOutputCoordinateSystemToCenteredScaledIJK(){
+   this->SetOutputCoordinateSystem(3);}
+
+  // Description
+  // Coordinate system in which to save tracts.
+  vtkSetMacro(OutputCoordinateSystem, int);
+  vtkGetMacro(OutputCoordinateSystem, int);
+
+  // Description
+  // Used to "center" the scaled IJK coords. This is 
+  // used when the coordinate system is CenteredScaledIJK.
+  // This is the extent of the original tensor volume.
+  vtkSetVector6Macro(ExtentForCenteredScaledIJK, int);
+  vtkGetVector6Macro(ExtentForCenteredScaledIJK, int);
+
+  // Description
+  // Used to "center" the scaled IJK coords. This is 
+  // used when the coordinate system is CenteredScaledIJK.
+  // This is the voxel scaling (size in mm) of the original tensor volume.
+  vtkSetVector3Macro(ScalingForCenteredScaledIJK, float);
+  vtkGetVector3Macro(ScalingForCenteredScaledIJK, float);
+
+  // Description
+  // Save for Analysis == 1 means save polylines with tensors.
+  // Otherwise save tube vtk polydata models.
   vtkSetMacro(SaveForAnalysis,int);
   vtkGetMacro(SaveForAnalysis,int);
   vtkBooleanMacro(SaveForAnalysis,int);
@@ -140,6 +182,10 @@ class VTK_DTMRI_EXPORT vtkSaveTracts : public vtkObject
 
 
   int SaveForAnalysis;
+  int OutputCoordinateSystem;
+  int ExtentForCenteredScaledIJK[6];
+  float ScalingForCenteredScaledIJK[3];
 };
+
 
 #endif

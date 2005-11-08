@@ -89,14 +89,31 @@ vtkSaveTracts::vtkSaveTracts()
   
   // settings
   this->SaveForAnalysis = 0;
+  
+  // default to world coordinates
+  this->OutputCoordinateSystem = 1;
+
+  // default to values that will cause no centering
+  // i.e. unless these are set, CenteredScaledIJK
+  // is the same as scaledIJK.
+  this->ExtentForCenteredScaledIJK[0] = 0;
+  this->ExtentForCenteredScaledIJK[1] = 0;
+  this->ExtentForCenteredScaledIJK[2] = 0;
+  this->ExtentForCenteredScaledIJK[3] = 0;
+  this->ExtentForCenteredScaledIJK[4] = 0;
+  this->ExtentForCenteredScaledIJK[5] = 0;
+
+  this->ScalingForCenteredScaledIJK[0] = 1;
+  this->ScalingForCenteredScaledIJK[1] = 1;
+  this->ScalingForCenteredScaledIJK[2] = 1;
 }
 
 //----------------------------------------------------------------------------
 vtkSaveTracts::~vtkSaveTracts()
 {
   this->WorldToTensorScaledIJK->Delete();
-  if (this->Streamlines) this->Streamlines->Delete();
-  if (this->TubeFilters) this->TubeFilters->Delete();
+  this->TensorRotationMatrix->Delete();
+
 }
 
 
@@ -256,11 +273,38 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
   idx=0;
 
   // Create transformation matrix for writing paths.
-  // This was used to place actors in scene.
-  // (scaled IJK to world)
   currTransform=vtkTransform::New();
-  currTransform->SetMatrix(this->WorldToTensorScaledIJK->GetMatrix());
-  currTransform->Inverse();
+  switch (this->OutputCoordinateSystem) 
+    {
+    case 1:
+      // World (RAS plus any applied slicer matrices) coords
+      // This was used to place actors in scene.
+      // (scaled IJK to world)
+      currTransform->SetMatrix(this->WorldToTensorScaledIJK->GetMatrix());
+      currTransform->Inverse();        
+      break;
+    case 2:
+      // Scaled IJK coordinate system
+      // Do nothing, leaving the currTransform as the identity matrix
+      break;
+    case 3:
+      // CenteredScaledIJK
+      // Here we need to translate so the origin is in the center
+      // of the original tensor volume's cube.
+      float translation[3];
+      translation[0] = this->ExtentForCenteredScaledIJK[1]
+        - this->ExtentForCenteredScaledIJK[0];
+      translation[1] = this->ExtentForCenteredScaledIJK[3]
+        - this->ExtentForCenteredScaledIJK[2];
+      translation[2] = this->ExtentForCenteredScaledIJK[5]
+        - this->ExtentForCenteredScaledIJK[4];
+      translation[0] = translation[0]*this->ScalingForCenteredScaledIJK[0]*.5;
+      translation[1] = translation[1]*this->ScalingForCenteredScaledIJK[1]*.5;
+      translation[2] = translation[2]*this->ScalingForCenteredScaledIJK[2]*.5;
+      currTransform->Translate(-translation[0],-translation[1],
+                               -translation[2]);
+      break;
+    }
 
   while(currAppender)
     {

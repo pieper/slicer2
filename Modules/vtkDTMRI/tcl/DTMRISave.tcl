@@ -55,9 +55,10 @@ proc DTMRISaveInit {} {
     #------------------------------------
     set m "Save"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.9 $} {$Date: 2005/09/23 02:32:15 $}]
+                                 {$Revision: 1.10 $} {$Date: 2005/11/08 22:48:42 $}]
 
     set DTMRI(Save,type) visualization
+    set DTMRI(Save,coords) World
 }
 
 
@@ -114,7 +115,7 @@ proc DTMRISaveBuildGUI {} {
     #-------------------------------------------
     set f $fSave.fTop
 
-    foreach frame "Type Apply" {
+    foreach frame "Type Coords Apply" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
     }
@@ -127,11 +128,48 @@ proc DTMRISaveBuildGUI {} {
     DevAddLabel $f.l "Save tracts for:"
     pack $f.l -side top -padx $Gui(pad) -pady $Gui(pad)
 
+    foreach frame "Buttons" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad)
+    }
+
+    #-------------------------------------------
+    # Save->Top->Type->Buttons frame
+    #-------------------------------------------
+    set f $fSave.fTop.fType.fButtons
+
     foreach text {visualization analysis} tip {"Save slicer models (tubes)." "Save tract paths (lines) and tensors."} {
         eval {radiobutton $f.rType$text -text $text -variable DTMRI(Save,type) \
-                  -value $text } $Gui(WRA)
+                  -value $text -indicatoron 0 } $Gui(WCA)
         TooltipAdd $f.rType$text $tip
-        pack $f.rType$text -side top -padx $Gui(pad) -pady $Gui(pad)
+        pack $f.rType$text -side left -padx 0 -pady $Gui(pad)
+    }
+
+
+
+    #-------------------------------------------
+    # Save->Top->Coords frame
+    #-------------------------------------------
+    set f $fSave.fTop.fCoords
+
+    DevAddLabel $f.l "Coordinate System:"
+    pack $f.l -side top -padx $Gui(pad) -pady $Gui(pad)
+
+    foreach frame "Buttons" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) 
+    }
+
+    #-------------------------------------------
+    # Save->Top->Coords->Buttons frame
+    #-------------------------------------------
+    set f $fSave.fTop.fCoords.fButtons
+
+    foreach text {Default ScaledIJK CenteredScaledIJK} value {World ScaledIJK CenteredScaledIJK} tip {"What you see in the viewer (World coordinates) is the default.\nChoose this unless you have a specific reason to need another coordinate system." "Coordinates of tensor volume (advanced)." "Centered coordinates (origin in center) of tensor volume (advanced)."} {
+        eval {radiobutton $f.rCoords$text -text $text -variable DTMRI(Save,coords) \
+                  -value $value -indicatoron 0} $Gui(WCA)
+        TooltipAdd $f.rCoords$text $tip
+        pack $f.rCoords$text -side left -padx 0 -pady $Gui(pad)
     }
 
     #-------------------------------------------
@@ -192,6 +230,28 @@ proc DTMRISaveStreamlinesAsModel {{verbose "1"}} {
         $saveTracts SaveForAnalysisOn
     } else {
         $saveTracts SaveForAnalysisOff
+    }
+
+    # Set up the coordinate system in which to save
+    # World ScaledIJK CenteredScaledIJK
+    switch $DTMRI(Save,coords) {
+        "World" {
+            $saveTracts SetOutputCoordinateSystemToWorld
+        }
+        "ScaledIJK" {
+            $saveTracts SetOutputCoordinateSystemToScaledIJK
+        }
+        "CenteredScaledIJK" {
+            $saveTracts SetOutputCoordinateSystemToCenteredScaledIJK
+            set t $Tensor(activeID)
+            if {$t != ""} {
+                eval {$saveTracts SetExtentForCenteredScaledIJK} \
+                    [[Tensor($t,data) GetOutput] GetWholeExtent]
+                eval {$saveTracts SetScalingForCenteredScaledIJK} \
+                    [[Tensor($t,data) GetOutput] GetSpacing]
+            }
+        }
+
     }
 
     # save the models as well as a MRML file with their colors
