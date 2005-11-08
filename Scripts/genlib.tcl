@@ -462,7 +462,7 @@ if { ![file exists $::GSL_TEST_FILE] } {
     # check if gsl_multifit.h is in the right location
     if { ![file exists $SLICER_LIB/gsl/include/gsl/gsl_multifit.h] } {
         puts "GSL built in the wrong place; moving file to $SLICER_LIB/gsl/include/gsl/gsl_multifit.h."
-        file copy $SLICER_LIB/gsl/include/gsl_multifit.h $SLICER_LIB/gsl/include/gsl/gsl_multifit.h
+        file copy $SLICER_LIB/gsl/include/*.h $SLICER_LIB/gsl/include/gsl/
     }
 
 }
