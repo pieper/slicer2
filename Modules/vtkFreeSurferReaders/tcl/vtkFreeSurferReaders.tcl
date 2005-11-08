@@ -329,7 +329,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.46 $} {$Date: 2005/09/06 21:55:24 $}]
+        {$Revision: 1.47 $} {$Date: 2005/11/08 16:09:24 $}]
 
 }
 
@@ -3429,58 +3429,58 @@ proc vtkFreeSurferReadersGDFInit {} {
 # .PROC vtkFreeSurferReadersGDFPlotBuildWindow
 # Creates the window for plotting into.
 # vtkFreeSurferReaders(gGDF) - information gleaned from the header file.
-#   lID - list of IDs
-#   ID
-#     bReadHeader - whether or not his GDF is parsed correctly
-#     title - title of the graph
-#     measurementName - label for the measurement
-#     subjectName - subject name
-#     dataFileName - data file name
-#     cClasses - number of classes
-#     classes,n - n is 0 -> cClasses
-#       label - label for this class
-#       marker - marker for this class
-#       color - color for this class
-#       subjects,n - n is 0 -> num subjects in this class
-#         index - index of the subject
-#     classes,label - label is the label
-#       index - index is the index of this label
-#     cVariables - number of variables
-#     variables,n - n is 0 -> cVariables
-#       label - label for this variable
-#     nDefaultVariable - index of default variable
-#     cSubjects - number of subjects
-#     subjects,n - n is 0 -> cSubjects
-#       id - label of this subject
-#       nClass - index of class of this subject
-#       variables,n - n is 0 -> cVariables
-#         value - value for this variable for this subject
-# vtkFreeSurferReaders(gPlot) - information about the plot, including current state.n
-#   ID
-#     state
-#       nVariable - the index of the current variable
-#       info - the info string displayed in lwInfo
-#       lPoints - list of points
-#       pointsChanged - dirty flag for points
-#       data,subjects,n - where n is 0 -> cSubjects
-#         variable - variable value for this subject (for state,nVariable)
-#         measurement - measurement value for this subject
-#       hiElement - name of hilighted element in plot
-#       subjects,n - where n is 0 -> cSubjects
-#         visible - whether or not is visible
-#       classes,n - where n is 0 -> cClasses
-#         visible - whether or not is visible
-#       legend - subject or class
-#       bTryRegressionLine - whether or not to try getting the offset/slope
-# vtkFreeSurferReaders(gWidgets) - names of widgets
-#   ID
-#     wwTop - the top window
-#     gwPlot - the graph widget
-#     lwInfo - the info label widget
-#     bWindowBuilt - boolean indicating if the window has been built
-#     state
-#       window
-#         geometry - if hidden and reshown, will appear with same geometry
+# <br>   lID - list of IDs
+# <br>   ID
+# <br>     bReadHeader - whether or not his GDF is parsed correctly
+# <br>     title - title of the graph
+# <br>     measurementName - label for the measurement
+# <br>     subjectName - subject name
+# <br>     dataFileName - data file name
+# <br>     cClasses - number of classes
+# <br>     classes,n - n is 0 -> cClasses
+# <br>       label - label for this class
+# <br>       marker - marker for this class
+# <br>       color - color for this class
+# <br>       subjects,n - n is 0 -> num subjects in this class
+# <br>         index - index of the subject
+# <br>     classes,label - label is the label
+# <br>       index - index is the index of this label
+# <br>     cVariables - number of variables
+# <br>     variables,n - n is 0 -> cVariables
+# <br>       label - label for this variable
+# <br>     nDefaultVariable - index of default variable
+# <br>     cSubjects - number of subjects
+# <br>     subjects,n - n is 0 -> cSubjects
+# <br>       id - label of this subject
+# <br>       nClass - index of class of this subject
+# <br>       variables,n - n is 0 -> cVariables
+# <br>         value - value for this variable for this subject
+# <br> vtkFreeSurferReaders(gPlot) - information about the plot, including current state.n
+# <br>   ID
+# <br>     state
+# <br>       nVariable - the index of the current variable
+# <br>       info - the info string displayed in lwInfo
+# <br>       lPoints - list of points
+# <br>       pointsChanged - dirty flag for points
+# <br>       data,subjects,n - where n is 0 -> cSubjects
+# <br>         variable - variable value for this subject (for state,nVariable)
+# <br>         measurement - measurement value for this subject
+# <br>       hiElement - name of hilighted element in plot
+# <br>       subjects,n - where n is 0 -> cSubjects
+# <br>         visible - whether or not is visible
+# <br>       classes,n - where n is 0 -> cClasses
+# <br>         visible - whether or not is visible
+# <br>       legend - subject or class
+# <br>       bTryRegressionLine - whether or not to try getting the offset/slope
+# <br> vtkFreeSurferReaders(gWidgets) - names of widgets
+# <br>   ID
+# <br>     wwTop - the top window
+# <br>     gwPlot - the graph widget
+# <br>     lwInfo - the info label widget
+# <br>     bWindowBuilt - boolean indicating if the window has been built
+# <br>     state
+# <br>       window
+# <br>         geometry - if hidden and reshown, will appear with same geometry
 # .ARGS
 # int iID window id 
 # .END
@@ -5680,7 +5680,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
             set username "default"
         }
     }
-    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.46 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
+    set msg "[clock format [clock seconds] -format "%D-%T-%Z"] $username Slicer-$::SLICER(version) \"[ParseCVSInfo FreeSurferQA {$Revision: 1.47 $}]\" $::tcl_platform(machine) $::tcl_platform(os) $::tcl_platform(osVersion) $vol $eval \"$vtkFreeSurferReaders($subject,$vol,Notes)\""
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
