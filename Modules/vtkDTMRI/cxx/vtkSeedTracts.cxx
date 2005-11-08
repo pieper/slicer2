@@ -705,7 +705,7 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   vtkPolyDataWriter *writer;
   std::stringstream fileNameStr;
   int idx;
-  ofstream filePoints, fileAttribs;
+  ofstream filePoints, fileCoordinateSystemInfo;
 
   // test we have input
   if (this->InputROI == NULL)
@@ -743,6 +743,34 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   transformer=vtkTransformPolyDataFilter::New();
   transformer->SetTransform(transform);
 
+
+  // Store information to put points into 
+  // centered scaled IJK space, instead of just
+  // leaving them in scaled IJK. This way the output
+  // can be transformed into Lilla Zollei's coordinate
+  // system so we can use her registration.
+  // Open file
+  // Save all points to the same text file.
+  fileNameStr << pointsFilename << ".coords";
+  fileCoordinateSystemInfo.open(fileNameStr.str().c_str());
+  if (fileCoordinateSystemInfo.fail())
+    {
+      vtkErrorMacro("Write: Could not open file " 
+                    << fileNameStr.str().c_str());
+      cerr << "Write: Could not open file " << fileNameStr.str().c_str();
+      return;
+    }        
+  int extent[6];
+  double spacing[3];
+  fileCoordinateSystemInfo << "extent of tensor volume" << endl; 
+  this->InputTensorField->GetWholeExtent(extent);
+  fileCoordinateSystemInfo << extent[0] << " " << extent[1] << " " << extent[2] << 
+    " " << extent[3] << " " << extent[4] << " " << extent[5] << endl;
+  fileCoordinateSystemInfo << "voxel dimensions of tensor volume" << endl; 
+  this->InputTensorField->GetSpacing(spacing);
+  fileCoordinateSystemInfo << spacing[0] << " " << spacing[1] << " " << spacing[2] << endl;
+  fileCoordinateSystemInfo.close();
+  
   writer = vtkPolyDataWriter::New();
 
   // currently this filter is not multithreaded, though in the future 
@@ -760,6 +788,7 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
 
 
   // Save all points to the same text file.
+  fileNameStr.str("");
   fileNameStr << pointsFilename << ".3dpts";
 
   // Open file
@@ -771,21 +800,6 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
       cerr << "Write: Could not open file " << fileNameStr.str().c_str();
       return;
     }                   
-
-  // Save all features (FA) to the same text file.
-  fileNameStr.str("");
-  fileNameStr << pointsFilename << ".3dfeats";
-
-  // Open file
-  fileAttribs.open(fileNameStr.str().c_str());
-  if (fileAttribs.fail())
-    {
-      vtkErrorMacro("Write: Could not open file " 
-                    << fileNameStr.str().c_str());
-      cerr << "Write: Could not open file " << fileNameStr.str().c_str();
-      return;
-    }                   
-
 
   // for progress notification
   target = (unsigned long)((maxZ+1)*(maxY+1)/50.0);
@@ -862,7 +876,7 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
                           writer->Write();
                           
                           // Save the center points to disk
-                          this->SaveStreamlineAsTextFile(filePoints,fileAttribs,newStreamline);
+                          this->SaveStreamlineAsTextFile(filePoints,newStreamline);
 
                           idx++;
                         }
@@ -886,20 +900,17 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
 
   // Close text file
   filePoints.close();
-  fileAttribs.close();
   
   // Tell user how many we wrote
   cout << "Wrote " << idx << "model files." << endl;
 
 }
 
-// OLD code, will be removed.
 // Save only one streamline. Called from within functions that save 
 // many streamlines in a loop.
 // Current format is x1,y1,z1 x2,y2,z2 x3,y3,z3 \n
 //----------------------------------------------------------------------------
 void vtkSeedTracts::SaveStreamlineAsTextFile(ofstream &filePoints,
-                                             ofstream &fileAttribs,
                                              vtkHyperStreamlinePoints *currStreamline)
 {
   vtkPoints *hs0, *hs1;

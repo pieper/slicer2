@@ -80,7 +80,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.37 $} {$Date: 2005/11/07 01:51:35 $}]
+                                 {$Revision: 1.38 $} {$Date: 2005/11/08 23:53:51 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -1619,7 +1619,7 @@ proc DTMRISeedAndSaveStreamlinesFromSegmentation {{verbose 1}} {
 
     # create all streamlines
     puts "Starting to seed streamlines. Files will be $filename*.*"
-    $seedTracts SeedAndSaveStreamlinesFromROI \
+    $seedTracts SeedAndSaveStreamlinesInROI \
         $filename  $filename2
 
     # let user know something happened

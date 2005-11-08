@@ -199,8 +199,7 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   vtkSeedTracts();
   ~vtkSeedTracts();
 
-  // OLD code, should be removed.
-  void SaveStreamlineAsTextFile(ofstream &filePoints,ofstream &fileAttribs,
+  void SaveStreamlineAsTextFile(ofstream &filePoints,
                                 vtkHyperStreamlinePoints *currStreamline);
 
   vtkHyperStreamline *CreateHyperStreamline();
