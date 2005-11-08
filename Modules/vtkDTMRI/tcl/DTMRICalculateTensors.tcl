@@ -67,7 +67,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.22 $} {$Date: 2005/11/06 18:24:48 $}]
+                                 {$Revision: 1.23 $} {$Date: 2005/11/08 02:52:29 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -1196,29 +1196,29 @@ proc ConvertVolumeToTensors {} {
     
     if {$DTMRI(convert,nrrd)} {
     
-      #Get RAS To Ijk Matrix
-      catch "vtkMatrix4x4 _RasToIjk"
-      _RasToIjk DeepCopy [Volume($v,node) GetRasToIjk]
+      #Get RAS To vtk Matrix
+      catch "vtkMatrix4x4 _RasToVtk"
+      eval "_RasToVtk DeepCopy" [Volume($v,node) GetRasToVtkMatrix]
       #Ignore translation
-      _RasToIjk SetElement 0 3 0
-      _RasToIjk SetElement 1 3 0
-      _RasToIjk SetElement 2 3 0
+      _RasToVtk SetElement 0 3 0
+      _RasToVtk SetElement 1 3 0
+      _RasToVtk SetElement 2 3 0
       
       #Set measurement frame matrix
       catch "vtkMatrix4x4 _MF"
       foreach axis "0 1 2" {
         set axdir [lindex $DTMRI(convert,measurementframe) $axis]
         foreach c "0 1 2" {
-      _MF SetElement $c $axis [lindex $axdir $c]
-    }
+          _MF SetElement $c $axis [lindex $axdir $c]
+        }
       }
             
       trans PostMultiply
       trans SetMatrix _MF
-      trans Concatenate _RasToIjk
+      trans Concatenate _RasToVtk
       trans Update
       
-      _RasToIjk Delete
+      _RasToVtk Delete
       _MF Delete
       
     } else {         
@@ -1840,31 +1840,28 @@ proc DTMRICreateNewVolume {volume name desc scanOrder} {
 proc DTMRIComputeRasToIjkFromCorners {refnode node extent} {
 
   #Get Ras to Ijk Matrix from reference volume
-  catch "_Ijk Delete"
-  vtkMatrix4x4 _Ijk
-  _Ijk DeepCopy [$refnode GetRasToIjk]
+  catch "_Ras Delete"
+  vtkMatrix4x4 _Ras
+  eval "_Ras DeepCopy" [$refnode GetRasToIjkMatrix]
   
   #Set Translation to center of the output volume.
   #This is a particular thing of the slicer: all volumes are centered in their centroid.
-  _Ijk SetElement 0 3 [expr ([lindex $extent 1] - [lindex $extent 0])/2.0]
-  _Ijk SetElement 1 3 [expr ([lindex $extent 3] - [lindex $extent 2])/2.0]
-  _Ijk SetElement 2 3 [expr ([lindex $extent 5] - [lindex $extent 4])/2.0]  
+  _Ras SetElement 0 3 [expr ([lindex $extent 1] - [lindex $extent 0])/2.0]
+  _Ras SetElement 1 3 [expr ([lindex $extent 3] - [lindex $extent 2])/2.0]
+  _Ras SetElement 2 3 [expr ([lindex $extent 5] - [lindex $extent 4])/2.0]  
   
   #Trick: Negate y axis to compensate for flip in nrrd.
   #_Ijk SetElement 1 0 [expr -1 * [_Ijk GetElement 1 0]]
   #_Ijk SetElement 1 1 [expr -1 * [_Ijk GetElement 1 1]]
   #_Ijk SetElement 1 2 [expr -1 * [_Ijk GetElement 1 2]]
-  
-  #Invert to obtain IjkToRas transform
-  _Ijk Invert
-  
+    
   set dims "[expr [lindex $extent 1] - [lindex $extent 0] + 1] \
               [expr [lindex $extent 3] - [lindex $extent 2] + 1] \
               [expr [lindex $extent 5] - [lindex $extent 4] + 1]"           
   
-  VolumesComputeNodeMatricesFromIjkToRasMatrix [$node GetID] _Ijk $dims
+  VolumesComputeNodeMatricesFromRasToIjkMatrix [$node GetID] _Ras $dims
 
-  _Ijk Delete
+  _Ras Delete
   MainUpdateMRML
 
 }
