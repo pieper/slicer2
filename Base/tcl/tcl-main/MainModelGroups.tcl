@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,19 +32,20 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        MainModelGroups.tcl
 # PROCEDURES:  
-#   MainModelGroupsCreateGUI
+#   MainModelGroupsCreateGUI f m hlevel
+#   MainModelGroupsRefreshGUI mg c
 #   MainModelGroupsPopupCallback
-#   MainModelGroupsSetActive
-#   MainModelGroupsSetVisibility
-#   MainModelGroupsSetOpacityInit
-#   MainModelGroupsSetOpacity
-#   MainModelGroupsSetExpansion
-#   MainModelGroupsDeleteGUI
-#   MainModelGroupsDelete
+#   MainModelGroupsSetActive m
+#   MainModelGroupsSetVisibility modelgroup value
+#   MainModelGroupsSetOpacityInit m widget grouponly value
+#   MainModelGroupsSetOpacity modelgroup grouponly
+#   MainModelGroupsSetExpansion frame widget mg nochange
+#   MainModelGroupsDeleteGUI f mg
+#   MainModelGroupsDelete f mg
 #==========================================================================auto=
 
 
@@ -53,6 +54,9 @@
 # Makes the popup menu that comes up when you right-click a model group.
 # This is made for each new model group.
 # .ARGS
+# windowpath f where to create the gui elements
+# int m model group id
+# int hlevel hierarchy level
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelGroupsCreateGUI {f m {hlevel 0}} {
@@ -134,6 +138,15 @@ proc MainModelGroupsCreateGUI {f m {hlevel 0}} {
 
     return 1
 }
+
+#-------------------------------------------------------------------------------
+# .PROC MainModelGroupsRefreshGUI
+# Find the colour for the model group and configure the buttons and slider
+# .ARGS
+# int mg model group id
+# int c colour node id
+# .END
+#-------------------------------------------------------------------------------
 proc MainModelGroupsRefreshGUI {mg c} {
     global Model
     
@@ -144,9 +157,10 @@ proc MainModelGroupsRefreshGUI {mg c} {
 
     # Find the color for this model group
     if {$c != ""} {
-    set rgb [Color($c,node) GetDiffuseColor]
+        set rgb [Color($c,node) GetDiffuseColor]
     } else {
-    set rgb "0 0 0"
+        set rgb "0 0 0"
+        if {$::Module(verbose)} { puts "MainModelGroupsRefreshGUI: setting rgb to 0 0 0" }
     }
     set color [MakeColorNormalized $rgb]
 
@@ -161,7 +175,7 @@ proc MainModelGroupsRefreshGUI {mg c} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelGroupsPopupCallback
-# 
+# Set the colours and expansions for the groups.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -193,11 +207,11 @@ proc MainModelGroupsPopupCallback {} {
     MainUpdateMRML
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MainModelGroupsSetActive
-# 
+# Set the active model group to the given id
 # .ARGS
+# int m model group id
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelGroupsSetActive {m} {
@@ -206,11 +220,12 @@ proc MainModelGroupsSetActive {m} {
     set ActiveModelGroup $m
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MainModelGroupsSetVisibility
-# 
+# Set the visibility for all nodes in a group.
 # .ARGS
+# int modelgroup the model group id
+# string value defaults to empty string, if set, is used as the visibility value
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelGroupsSetVisibility {modelgroup {value ""}} {
@@ -266,11 +281,14 @@ proc MainModelGroupsSetVisibility {modelgroup {value ""}} {
     }
 }
 
-    
 #-------------------------------------------------------------------------------
 # .PROC MainModelGroupsSetOpacityInit
-# 
+# Sets the arguments to the MainModelGroupsSetOpacity command.
 # .ARGS
+# int m model group id
+# windowpath widget the widget to configure
+# boolean grouponly defaults to 0, argument to the command
+# string value  defaults to empty string, not used
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelGroupsSetOpacityInit {m widget {grouponly 0} {value ""}} {
@@ -278,11 +296,12 @@ proc MainModelGroupsSetOpacityInit {m widget {grouponly 0} {value ""}} {
     $widget config -command "MainModelGroupsSetOpacity $m $grouponly; Render3D"
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MainModelGroupsSetOpacity
-# 
+# Set the opacity of the models in a model group
 # .ARGS
+# int modelgroup the id of the model group
+# boolean grouponly flags diffferent setting behaviours 
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelGroupsSetOpacity {modelgroup {grouponly 0}} {
@@ -341,11 +360,14 @@ proc MainModelGroupsSetOpacity {modelgroup {grouponly 0}} {
     }
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MainModelGroupsSetExpansion
-# 
+# Expand model groups in the gui.
 # .ARGS
+# windowpath frame the base gui frame 
+# windowpath widget the widget that we're configuring
+# int mg model group id
+# int nochange defaults to 0
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelGroupsSetExpansion {frame widget mg {nochange 0}} {
@@ -405,6 +427,7 @@ proc MainModelGroupsSetExpansion {frame widget mg {nochange 0}} {
             grid $frame.lg1_$m $frame.hcg$m $frame.cg$m $frame.eg$m $frame.sg$m
             MainModelGroupsSetExpansion $frame "" $m 1
         }
+            if {$::Module(verbose)} { puts "MainModelGroupsSetExpansion: about to call mainupdate mrml, expansion is 1" }
         MainUpdateMRML
     }
 
@@ -413,11 +436,12 @@ proc MainModelGroupsSetExpansion {frame widget mg {nochange 0}} {
                 $Model(fScrolledGUI)
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MainModelGroupsDeleteGUI
-# 
+# Destroy the tk widgets for this group
 # .ARGS
+# windowpath f the path to the group's widgets
+# int mg the model group id
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelGroupsDeleteGUI {f mg} {
@@ -437,11 +461,12 @@ proc MainModelGroupsDeleteGUI {f mg} {
     return 1
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MainModelGroupsDelete
-# 
+# Delete the tcl vars for this model group, and then call to delete the gui for it.
 # .ARGS
+# windowpath f the path to the group's widgets
+# int mg the model group id
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelGroupsDelete {f mg} {
