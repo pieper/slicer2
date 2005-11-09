@@ -63,7 +63,7 @@ Authors: Michael McKenna, David Small, Steve Pieper.
 #include "vtkCollection.h"
 
 
-vtkCxxRevisionMacro(vtkEdgeGradient, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkEdgeGradient, "$Revision: 1.1.2.1 $");
 vtkStandardNewMacro(vtkEdgeGradient);
 
 
@@ -114,7 +114,7 @@ void vtkEdgeGradient::MakeImageData(unsigned char *alpha, unsigned char *intensi
                     int a = 255;
 
                     // distance from the corner of the rect, to form a semi-circle
-                    vtkFloatingPointType d = sqrt(x*x + y*y) / (vtkFloatingPointType)GetWidth();
+                    vtkFloatingPointType d = sqrt((float)(x*x + y*y)) / (vtkFloatingPointType)GetWidth();
                     if (d < .25) a = (int)(255. * d * 4.);
                     else if (d > .75) {
                         if ( d > 1.) d = 1.;
@@ -196,7 +196,7 @@ vtkEdgeGradient *vtkEdgeGradient::filter_image(unsigned char *src, unsigned char
     
     if (filter > max_filter) filter = max_filter;
     
-    maxdist = (int) (2*sqrt(filter*filter + filter*filter));
+    maxdist = (int) (2*sqrt((float)(filter*filter + filter*filter)));
     
     div = 0;
     count = 0;
@@ -205,7 +205,7 @@ vtkEdgeGradient *vtkEdgeGradient::filter_image(unsigned char *src, unsigned char
     for(yy=-filter; yy<filter; yy++) {
         for(xx=-filter; xx<filter; xx++) {
             count++;
-            *kernal_ptr = maxdist - (int) (2*sqrt(xx*xx + yy*yy));
+            *kernal_ptr = maxdist - (int) (2*sqrt((float)(xx*xx + yy*yy)));
             div += *kernal_ptr;
             kernal_ptr++;
         }
