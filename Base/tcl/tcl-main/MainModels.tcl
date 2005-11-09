@@ -88,7 +88,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.66 $} {$Date: 2005/09/28 15:13:18 $}]
+        {$Revision: 1.67 $} {$Date: 2005/11/09 23:02:29 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -175,7 +175,6 @@ proc MainModelsUpdateMRML {} {
     #--------------------------------------------------------
     
     foreach m $Model(idList) {
-        
         # save the current active renderer
         set activeRenderer $Model(activeRenderer)
         foreach rend $Module(Renderers) {
@@ -190,12 +189,15 @@ proc MainModelsUpdateMRML {} {
             eval Model($m,mapper,$rend) SetScalarRange [Model($m,node) GetScalarRange]
         }
         set Model(activeRenderer) $activeRenderer
-        
-        foreach mg $ModelGroup(idList) {
-            # second parameter "1" means: this group only, doesn't affect
-            # anything that is below in the hierarchy
-            catch {MainModelGroupsSetOpacity $mg 1}
-        }
+    }
+
+    # Set the opacity for each model group
+    #--------------------------------------------------------
+    foreach mg $ModelGroup(idList) {
+        if {$::Module(verbose)} { puts "MainModelsUpdateMRML: set group opacity for group $mg" }
+        # second parameter "1" means: this group only, doesn't affect
+        # anything that is below in the hierarchy
+        catch {MainModelGroupsSetOpacity $mg 1}
     }
 
     # Form the Active Model menu 
@@ -353,6 +355,9 @@ proc MainModelsRead {m} {
 
     # Reader
     set suffix [file extension $fileName]
+    if {$::Module(verbose)} {
+        puts "MainModelsRead: filName = $fileName, suffix = $suffix"
+    }
     if {$suffix == ".g"} {
         vtkBYUReader reader
         reader SetGeometryFileName $fileName
@@ -360,6 +365,9 @@ proc MainModelsRead {m} {
         vtkPolyDataReader reader
         reader SetFileName $fileName
     }  elseif {$suffix == ".orig" || $suffix == ".inflated" || $suffix == ".pial"} {
+        if {$::Module(verbose)} {
+            puts "Setting up for reading in a freeurfer file $fileName"
+        }
         # read in a free surfer file
         vtkFSSurfaceReader reader
         reader SetFileName $fileName
